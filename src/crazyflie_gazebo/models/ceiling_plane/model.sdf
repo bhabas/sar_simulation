@@ -1,0 +1,48 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="ceiling_plane">
+    <static>true</static>
+    <link name="ceiling">
+      <pose frame=''>0 0 1.5 0 0 0</pose>
+      <collision name="ceiling_collision">
+        <geometry>
+          <box>
+            <size>4 4 0.01</size>
+          </box>
+        </geometry>
+        <surface>
+          <bounce>
+            <restitution_coefficient>0</restitution_coefficient>
+            <threshold>1000000</threshold>
+          </bounce>
+          <contact>
+             <collide_bitmask>65535</collide_bitmask>
+             <min_depth>0.01</min_depth>
+          </contact>
+          <friction>
+            <ode>
+              <mu>100000</mu>
+              <mu2>100000</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="ceiling_visual">
+        <cast_shadows>false</cast_shadows>
+        <transparency>0.7</transparency>
+        <geometry>
+          <box>
+            <size>0.5 0.5 0.01</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/White</name>
+            <!-- <name>Gazebo/CeilingTiled</name> -->
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>
