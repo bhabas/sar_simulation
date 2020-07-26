@@ -6,11 +6,17 @@ from queue import Queue
 import matplotlib.pyplot as plt
 import time
 import os, subprocess, signal
+import rospy
+
+from sensor_msgs.msg import LaserScan
+from sensor_msgs.msg import Image
+
+from cv_bridge import CvBridge
 
 class CrazyflieEnv:
     def __init__(self, port_self, port_remote):
         print("Init CrazyflieEnv")
-
+        rospy.init_node("crazyflie_env_node",anonymous=True)
         self.launch_sim()
         
         self.port_self_ = port_self
@@ -35,7 +41,49 @@ class CrazyflieEnv:
         self.receiverThread.start()
         self.senderThread = Thread(target=self.sendThread, args=())
         self.senderThread.daemon = True
+
+        self.laser_msg = LaserScan
+        self.laser_dist = 0
+        self.laserThread = Thread(target = self.lsrThread, args=())
+        self.laserThread.daemon=True
+        self.laserThread.start()
+
+        self.camera_msg = Image
+        self.cv_image = np.array(0)
+        self.cameraThread = Thread(target = self.camThread, args=())
+        self.cameraThread.daemon=True
+        self.cameraThread.start()
+
+        self.bridge = CvBridge()
         #self.senderThread.start()
+
+    # delay time defined in ms
+    def delay_env_time(self,t_start,t_delay):
+        while (self.getTime() - t_start < t_delay/10000):
+                    pass
+
+    def cam_callback(self,data):
+        self.camera_msg = data
+        self.cv_image = self.bridge.imgmsg_to_cv2(self.camera_msg, desired_encoding='mono8')
+        #self.camera_pixels = self.camera_msg.data
+
+    def camThread(self):
+        print('Start Camera Thread')
+        self.laser_sub = rospy.Subscriber('/camera/image_raw',Image,self.cam_callback)
+        rospy.spin()
+    
+    def scan_callback(self,data):
+        self.laser_msg = data
+        if  self.laser_msg.ranges[0] == float('Inf'):
+            self.laser_dist = 4 # max sesnsor dist
+        else:
+            self.laser_dist = self.laser_msg.ranges[0]
+
+    def lsrThread(self):
+        print('Start Laser Scanner Thread')
+        self.laser_sub = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
+        rospy.spin()
+
 
     def __del__(self):
         self.isRunning_ = False
@@ -45,7 +93,7 @@ class CrazyflieEnv:
         self.gazebo_p_ = subprocess.Popen(
             "gnome-terminal --disable-factory -e '/home/bader/catkin_ws/src/4.\ rl/src/launch_gazebo.bash'", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
-        time.sleep(15)
+        time.sleep(5)
         self.controller_p_ = subprocess.Popen(
             "gnome-terminal --disable-factory -e '/home/bader/catkin_ws/src/4.\ rl/src/launch_controller.bash'", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
