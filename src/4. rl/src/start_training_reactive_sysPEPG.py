@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import numpy as np
 import time
 from crazyflie_env import CrazyflieEnv
@@ -13,7 +14,8 @@ alpha_sigma = np.array([[0.1],[0.3]])
 agent = rlsysPEPGAgent_reactive(_alpha_mu=alpha_mu, _alpha_sigma=alpha_sigma, _gamma=0.95, _n_rollout=5)
 
 
-h_ceiling = 1.5
+h_ceiling = 1.5 # meters
+t_delay = 30 # ms
 
 username = 'bader' # change to system user
 start_time0 = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
@@ -53,7 +55,7 @@ for k_ep in range(1000):
     k_run = 0
     while k_run < 2*agent.n_rollout_:
 
-        #print("Episode # %d run # %d" %(k_ep,k_run))
+        print("Episode # %d run # %d" %(k_ep,k_run))
         state = env.reset()
 
         k_step = 0
@@ -70,6 +72,7 @@ for k_ep in range(1000):
         
         RREV_trigger = theta_rl[0, k_run]
 
+        image_now = env.cv_image
         while True:
             time.sleep(5e-4)
             state = env.state_current_
@@ -77,9 +80,14 @@ for k_ep in range(1000):
             position = state[1:4]
             orientation_q = state[4:8]
             vel = state[8:11]
-            omega = state[11:14]
-            d = h_ceiling - position[2]
             vz, vx = vel[2], vel[0]
+            omega = state[11:14]
+
+            image_prev = image_now
+            image_now = env.cv_image
+            d = env.laser_dist # added distance sensor with noise
+
+            #d = h_ceiling - position[2]
             RREV, omega_y = vz/d, vx/d
 
             qw = orientation_q[0]
@@ -90,15 +98,13 @@ for k_ep in range(1000):
 
             if (RREV > RREV_trigger) and (not pitch_triggered):
                 print('------------- pitch starts -------------')
-                print( 'vz=%.3f, vx=%.3f, RREV=%.3f, d=%.3f' %(vz, vx, RREV, d) )
+                print( 'vz=%.3f, vx=%.3f, RREV=%.3f, d=%.3f' %(vz, vx, RREV, d) )   
                 start_time_pitch = env.getTime()
                 env.enableSticky(1)
 
                 q_d = theta_rl[1,k_run] * RREV
-                t_delay = 500 # ms
-                while (env.getTime() - start_time_pitch < t_delay/10000):
-                    print(env.getTime() - start_time_pitch)
-                    pass 
+                
+                env.delay_env_time(t_start=start_time_pitch,t_delay=t_delay) # added delay
                 action = {'type':'rate', 'x':0.0, 'y':q_d, 'z':0.0, 'additional':0.0}
                 env.step(action)
                 pitch_triggered = True
@@ -133,9 +139,9 @@ for k_ep in range(1000):
             if done_rollout:
                 env.logDataFlag = False
                 reward[k_run] = agent.calculate_reward(_state=track_state, _h_ceiling=h_ceiling)
-                plt.plot(k_ep,reward[k_run],'k*')
+                '''plt.plot(k_ep,reward[k_run],'k*')
                 plt.draw()
-                plt.pause(0.001)
+                plt.pause(0.001)'''
                 
                 k_run = k_run + 1
                 #print( 'x=%.3f, y=%.3f, z=%.3f' %(position[0], position[1], position[2]) )
