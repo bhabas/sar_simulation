@@ -17,7 +17,7 @@ agent = rlsysPEPGAgent_reactive(_alpha_mu=alpha_mu, _alpha_sigma=alpha_sigma, _g
 h_ceiling = 1.5 # meters
 t_delay = 30 # ms
 
-username = 'bader' # change to system user
+username = 'bhabas' # change to system user
 start_time0 = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
 file_name = '/home/'+username+'/catkin_ws/src/4. rl/src/log/' + start_time0 + '.xls'
 #file_log, sheet = env.create_xls(start_time=start_time0, sigma=sigma, alpha=alpha, file_name=file_name)

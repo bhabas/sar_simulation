@@ -11,7 +11,7 @@ import rospy
 from sensor_msgs.msg import LaserScan
 from sensor_msgs.msg import Image
 
-from cv_bridge import CvBridge
+# from cv_bridge import CvBridge
 
 class CrazyflieEnv:
     def __init__(self, port_self, port_remote):
@@ -42,47 +42,47 @@ class CrazyflieEnv:
         self.senderThread = Thread(target=self.sendThread, args=())
         self.senderThread.daemon = True
 
-        self.laser_msg = LaserScan
-        self.laser_dist = 0
-        self.laserThread = Thread(target = self.lsrThread, args=())
-        self.laserThread.daemon=True
-        self.laserThread.start()
+        # self.laser_msg = LaserScan
+        # self.laser_dist = 0
+        # self.laserThread = Thread(target = self.lsrThread, args=())
+        # self.laserThread.daemon=True
+        # self.laserThread.start()
 
-        self.camera_msg = Image
-        self.cv_image = np.array(0)
-        self.cameraThread = Thread(target = self.camThread, args=())
-        self.cameraThread.daemon=True
-        self.cameraThread.start()
+        # self.camera_msg = Image
+        # self.cv_image = np.array(0)
+        # self.cameraThread = Thread(target = self.camThread, args=())
+        # self.cameraThread.daemon=True
+        # self.cameraThread.start()
 
-        self.bridge = CvBridge()
-        #self.senderThread.start()
+        # self.bridge = CvBridge()
+        # #self.senderThread.start()
 
     # delay time defined in ms
     def delay_env_time(self,t_start,t_delay):
         while (self.getTime() - t_start < t_delay/10000):
                     pass
 
-    def cam_callback(self,data):
-        self.camera_msg = data
-        self.cv_image = self.bridge.imgmsg_to_cv2(self.camera_msg, desired_encoding='mono8')
-        #self.camera_pixels = self.camera_msg.data
+    # def cam_callback(self,data):
+    #     self.camera_msg = data
+    #     self.cv_image = self.bridge.imgmsg_to_cv2(self.camera_msg, desired_encoding='mono8')
+    #     #self.camera_pixels = self.camera_msg.data
 
-    def camThread(self):
-        print('Start Camera Thread')
-        self.laser_sub = rospy.Subscriber('/camera/image_raw',Image,self.cam_callback)
-        rospy.spin()
+    # def camThread(self):
+    #     print('Start Camera Thread')
+    #     self.laser_sub = rospy.Subscriber('/camera/image_raw',Image,self.cam_callback)
+    #     rospy.spin()
     
-    def scan_callback(self,data):
-        self.laser_msg = data
-        if  self.laser_msg.ranges[0] == float('Inf'):
-            self.laser_dist = 4 # max sesnsor dist
-        else:
-            self.laser_dist = self.laser_msg.ranges[0]
+    # def scan_callback(self,data):
+    #     self.laser_msg = data
+    #     if  self.laser_msg.ranges[0] == float('Inf'):
+    #         self.laser_dist = 4 # max sesnsor dist
+    #     else:
+    #         self.laser_dist = self.laser_msg.ranges[0]
 
-    def lsrThread(self):
-        print('Start Laser Scanner Thread')
-        self.laser_sub = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
-        rospy.spin()
+    # def lsrThread(self):
+    #     print('Start Laser Scanner Thread')
+    #     self.laser_sub = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
+    #     rospy.spin()
 
 
     def __del__(self):
@@ -91,11 +91,11 @@ class CrazyflieEnv:
 
     def launch_sim(self):
         self.gazebo_p_ = subprocess.Popen(
-            "gnome-terminal --disable-factory -e '/home/bader/catkin_ws/src/4.\ rl/src/launch_gazebo.bash'", 
+            "gnome-terminal --disable-factory -e '/home/bhabas/catkin_ws/src/4.\ rl/src/launch_gazebo.bash'", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(5)
         self.controller_p_ = subprocess.Popen(
-            "gnome-terminal --disable-factory -e '/home/bader/catkin_ws/src/4.\ rl/src/launch_controller.bash'", 
+            "gnome-terminal --disable-factory -e '/home/bhabas/catkin_ws/src/4.\ rl/src/launch_controller.bash'", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(5)
 
@@ -133,7 +133,7 @@ class CrazyflieEnv:
     def reset(self):
         self.enableSticky(0)
         for k in range(20):
-            subprocess.Popen('/home/bader/catkin_ws/src/4.\ rl/src/reset_world.bash >/dev/null 2>&1 &', 
+            subprocess.Popen('/home/bhabas/catkin_ws/src/4.\ rl/src/reset_world.bash >/dev/null 2>&1 &', 
                 close_fds=True, preexec_fn=os.setsid, shell=True)
             time.sleep(0.1)
         time.sleep(3)
