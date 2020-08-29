@@ -91,11 +91,11 @@ class CrazyflieEnv:
 
     def launch_sim(self):
         self.gazebo_p_ = subprocess.Popen(
-            "gnome-terminal --disable-factory -e '/home/bhabas/catkin_ws/src/4.\ rl/src/launch_gazebo.bash'", 
+            "gnome-terminal --disable-factory -e '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_gazebo.bash'", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(5)
         self.controller_p_ = subprocess.Popen(
-            "gnome-terminal --disable-factory -e '/home/bhabas/catkin_ws/src/4.\ rl/src/launch_controller.bash'", 
+            "gnome-terminal --disable-factory -e '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_controller.bash'", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(5)
 
@@ -133,7 +133,7 @@ class CrazyflieEnv:
     def reset(self):
         self.enableSticky(0)
         for k in range(20):
-            subprocess.Popen('/home/bhabas/catkin_ws/src/4.\ rl/src/reset_world.bash >/dev/null 2>&1 &', 
+            subprocess.Popen('/home/bhabas/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/reset_world.bash >/dev/null 2>&1 &', 
                 close_fds=True, preexec_fn=os.setsid, shell=True)
             time.sleep(0.1)
         time.sleep(3)

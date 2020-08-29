@@ -32,7 +32,7 @@
         <transparency>0.7</transparency>
         <geometry>
           <box>
-            <size>1 1 0.01</size>
+            <size>0.5 0.5 0.01</size>
           </box>
         </geometry>
         <material>

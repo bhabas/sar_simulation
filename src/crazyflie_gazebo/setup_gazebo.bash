@@ -17,7 +17,7 @@ BUILD_DIR=$2
 
 # setup Gazebo env and update package path
 export GAZEBO_PLUGIN_PATH=$GAZEBO_PLUGIN_PATH:${BUILD_DIR}
-export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:${SRC_DIR}/src/crazyflie_gazebo/models
+export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:${SRC_DIR}/src/crazyflie_simulation/src/crazyflie_gazebo/models
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${BUILD_DIR}
 
 echo -e "GAZEBO_PLUGIN_PATH $GAZEBO_PLUGIN_PATH"

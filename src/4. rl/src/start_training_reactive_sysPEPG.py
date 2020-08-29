@@ -19,7 +19,7 @@ t_delay = 30 # ms
 
 username = 'bhabas' # change to system user
 start_time0 = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-file_name = '/home/'+username+'/catkin_ws/src/4. rl/src/log/' + start_time0 + '.xls'
+file_name = '/home/'+username+'/catkin_ws/src/src/crazyflie_simulation/4. rl/src/log/' + start_time0 + '.xls'
 #file_log, sheet = env.create_xls(start_time=start_time0, sigma=sigma, alpha=alpha, file_name=file_name)
 
 plt.figure()
@@ -72,7 +72,7 @@ for k_ep in range(1000):
         
         RREV_trigger = theta_rl[0, k_run]
 
-        image_now = env.cv_image
+        # image_now = env.cv_image
         while True:
             time.sleep(5e-4)
             state = env.state_current_
@@ -83,11 +83,11 @@ for k_ep in range(1000):
             vz, vx = vel[2], vel[0]
             omega = state[11:14]
 
-            image_prev = image_now
-            image_now = env.cv_image
-            d = env.laser_dist # added distance sensor with noise
+            # image_prev = image_now
+            # image_now = env.cv_image
+            # d = env.laser_dist # added distance sensor with noise
 
-            #d = h_ceiling - position[2]
+            d = h_ceiling - position[2]
             RREV, omega_y = vz/d, vx/d
 
             qw = orientation_q[0]
