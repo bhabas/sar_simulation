@@ -88,14 +88,14 @@ class CrazyflieEnv:
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(5)
 
-    def reset(self):
+    def reset(self): #Spends 2 seconds resetting the world and 3 seconds waiting after that
         self.enableSticky(0)
-        for k in range(20):
+        for k in range(1): # Why 20?
             subprocess.Popen("/home/bhabas/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/reset_world.bash >/dev/null 2>&1 &", 
                 close_fds=True, preexec_fn=os.setsid, shell=True)
                 # "">> /dev/null" redirects standard output (stdout) to /dev/null, which discards it.
             time.sleep(0.1)
-        time.sleep(3)
+        # time.sleep(3)
         return self.state_current_
     
     def recvThread(self):

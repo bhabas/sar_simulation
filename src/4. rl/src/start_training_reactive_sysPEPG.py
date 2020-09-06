@@ -6,12 +6,14 @@ from crazyflie_env import CrazyflieEnv
 from rl_syspepg import rlsysPEPGAgent_reactive
 import matplotlib.pyplot as plt
 
-
+## Initialize the environment
 env = CrazyflieEnv(port_self=18050, port_remote=18060)
 print("Environment done")
-alpha_mu = np.array([[0.1],[0.3]])
-alpha_sigma = np.array([[0.1],[0.3]])
-agent = rlsysPEPGAgent_reactive(_alpha_mu=alpha_mu, _alpha_sigma=alpha_sigma, _gamma=0.95, _n_rollout=5)
+
+## Learning rates and agent
+alpha_mu = np.array([[0.2],[0.2]])
+alpha_sigma = np.array([[0.1],[0.1]])
+agent = rlsysPEPGAgent_reactive(_alpha_mu=alpha_mu, _alpha_sigma=alpha_sigma, _gamma=0.95, _n_rollout=2)
 
 ## Define initial parameters for gaussian function
 agent.mu_ = np.array([[4.0], [-5.0]])   # Initial estimates of mu: size (2 x 1)
@@ -22,6 +24,8 @@ agent.sigma_history_ = copy.copy(agent.sigma_)
 
 h_ceiling = 1.5 # meters
 t_delay = 30 # ms
+
+
 
 username = 'bhabas' # change to system user
 start_time0 = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
@@ -63,7 +67,7 @@ for k_ep in range(1000):
 
     done = False
     reward = np.zeros(shape=(2*agent.n_rollout_,1))
-    reward[:] = np.nan                      # initialize reward to be NaN array, size n_rollout x 1
+    reward[:] = np.nan  # initialize reward to be NaN array, size n_rollout x 1
     theta_rl, epsilon_rl = agent.get_theta()
     print( "theta_rl = ")
     np.set_printoptions(precision=3, suppress=True)
