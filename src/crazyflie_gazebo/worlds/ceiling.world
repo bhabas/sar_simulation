@@ -13,6 +13,14 @@
     <include>
       <uri>model://ceiling_plane</uri>
     </include>
+
+    <!-- Default camera pose -->
+    <gui>
+      <camera name="user_camera">
+          <pose frame=''>1.46335 1.15128 2.2309 0 0.657 -2.532</pose>
+      </camera>
+    </gui>
+
     <physics name='default_physics' default='0' type='ode'>
       <gravity>0 0 -9.8066</gravity>
       <ode>
