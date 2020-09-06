@@ -16,15 +16,13 @@ alpha_sigma = np.array([[0.1],[0.1]])
 agent = rlsysPEPGAgent_reactive(_alpha_mu=alpha_mu, _alpha_sigma=alpha_sigma, _gamma=0.95, _n_rollout=2)
 
 ## Define initial parameters for gaussian function
-agent.mu_ = np.array([[4.0], [-5.0]])   # Initial estimates of mu: size (2 x 1)
-agent.sigma_ = np.array([[0.5], [2.0]])      # Initial estimates of sigma: size (2 x 1)
+agent.mu_ = np.array([[3.0], [-5.0]])   # Initial estimates of mu: size (2 x 1)
+agent.sigma_ = np.array([[2], [2]])      # Initial estimates of sigma: size (2 x 1)
 agent.mu_history_ = copy.copy(agent.mu_)  # Creates another array of self.mu_ and attaches it to self.mu_history_
 agent.sigma_history_ = copy.copy(agent.sigma_)
 
 
 h_ceiling = 1.5 # meters
-t_delay = 30 # ms
-
 
 
 username = 'bhabas' # change to system user
@@ -74,7 +72,7 @@ for k_ep in range(1000):
     print(theta_rl[0,:], "--> RREV")
     print(theta_rl[1,:], "--> Gain")
 
-
+    ct = env.getTime()
 
     # ============================
     ##          Run 
@@ -105,8 +103,11 @@ for k_ep in range(1000):
 
         while True:
             time.sleep(5e-4) # Time step size
+            k_step = k_step + 1 # Time step
+
+            ## Define current state
             state = env.state_current_
-            k_step = k_step + 1
+            
             position = state[1:4]
             orientation_q = state[4:8]
             vel = state[8:11]
@@ -120,50 +121,57 @@ for k_ep in range(1000):
             qx = orientation_q[1]
             qy = orientation_q[2]
             qz = orientation_q[3]
-            theta = np.arcsin( -2*(qx*qz-qw*qy) )         # obtained from matlab "edit quat2eul.m"
+            # theta = np.arcsin( -2*(qx*qz-qw*qy) ) # obtained from matlab "edit quat2eul.m"
 
             ## Enable sticky feet and rotation
-            if (RREV > RREV_trigger) and (not pitch_triggered):
-                print('------------- pitch starts -------------')
-                print( 'vz=%.3f, vx=%.3f, RREV=%.3f, d=%.3f' %(vz, vx, RREV, d) )   
+            if (RREV > RREV_trigger) and (pitch_triggered == False):
                 start_time_pitch = env.getTime()
                 env.enableSticky(1)
-
                 q_d = theta_rl[1,k_run] * RREV
+
+                print('------------- pitch starts -------------')
+                print( 'vz=%.3f, vx=%.3f, RREV=%.3f, qd=%.3f' %(vz, vx, RREV, qd) )   
+                print("Pitch Time: %.3f" %start_time_pitch)
                 
-                env.delay_env_time(t_start=start_time_pitch,t_delay=t_delay) # added delay
+                env.delay_env_time(t_start=start_time_pitch,t_delay=30) # Artificial delay to mimic communication lag [ms]
                 action = {'type':'rate', 'x':0.0, 'y':q_d, 'z':0.0, 'additional':0.0}
-                env.step(action)
+                env.step(action) # Start rotation and mark rotation triggered
                 pitch_triggered = True
 
-            ## If time exceed limits complete rollout    
+            ## If time since triggered pitch exceeds [0.7s]   
             if pitch_triggered and ((env.getTime()-start_time_pitch) > 0.7):
+                # print("Rollout Completed: Pitch Triggered")
+                # print("Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch)))
                 done_rollout = True
 
+            ## If time since rollout start exceeds [1.5s]
             if (env.getTime() - start_time_rollout) > 1.5:
+                print("Rollout Completed: Time Exceeded")
+                print("Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout)))
                 done_rollout = True
             
-            ## Error collection
-            if any( np.isnan(state) ):     # gazebo sim becomes unstable, relaunch simulation
-                print("Find NAN!!!!!")
+           ## If nan is found in state vector repeat sim run
+            if any(np.isnan(state)): # gazebo sim becomes unstable, relaunch simulation
+                print("NAN found in state vector")
                 env.logDataFlag = False
                 env.close_sim()
                 env.launch_sim()
                 if k_run > 0:
                     k_run = k_run - 1
                 break
-
-            if (np.abs(position[0]) > 0.6) or (np.abs(position[1]) > 0.6):
+            
+            if (np.abs(position[0]) > 1.0) or (np.abs(position[1]) > 1.0):
                 print("Reset improperly!!!!!")
                 env.logDataFlag = False
                 break
-
+            
+            ## Keep record of state vector every 10 time steps
             ## Each iteration changes state vector from [14,] into (state2)[14,1] 
             ##      First iteration: track_state = state2 vector
             ##      Every 10 iter: append track_state columns with current state2 vector 
             state2 = state[1:,np.newaxis]
             if track_state is None:
-                track_state = state2
+                track_state = state2 # replace w/ state_history variable for track_state
             else:
                 if k_step%10==0:
                     track_state = np.append(track_state, state2, axis=1)
@@ -177,7 +185,8 @@ for k_ep in range(1000):
                 plt.title("Episode: %d Run: %d" %(k_ep, k_run+1))
                 # If figure gets locked on fullscreen, press ctrl+f untill it's fixed (there's lag due to process running)
                 plt.draw()
-                fig.canvas.flush_events()
+                plt.pause(0.001)
+                # fig.canvas.flush_events()
                 
                 k_run = k_run + 1
                 #print( 'x=%.3f, y=%.3f, z=%.3f' %(position[0], position[1], position[2]) )

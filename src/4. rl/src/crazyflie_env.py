@@ -45,7 +45,7 @@ class CrazyflieEnv:
         os.killpg(self.controller_p_.pid, signal.SIGTERM)
         time.sleep(5)
         os.killpg(self.gazebo_p_.pid, signal.SIGTERM)
-        time.sleep(20)  
+        time.sleep(5)  
 
     def delay_env_time(self,t_start,t_delay):
         # delay time defined in ms
@@ -95,7 +95,7 @@ class CrazyflieEnv:
                 close_fds=True, preexec_fn=os.setsid, shell=True)
                 # "">> /dev/null" redirects standard output (stdout) to /dev/null, which discards it.
             time.sleep(0.1)
-        # time.sleep(3)
+        # time.sleep(0.1)
         return self.state_current_
     
     def recvThread(self):
