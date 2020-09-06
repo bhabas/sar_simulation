@@ -88,9 +88,14 @@ class CrazyflieEnv:
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(5)
 
-    # def pause(self): #Pause simulation
-    #     os.system("rosservice call gazebo/pause_physics")
-    #     return self.state_current_
+    def pause(self): #Pause simulation
+        os.system("rosservice call gazebo/pause_physics")
+        return self.state_current_
+
+    def resume(self): #Resume simulation
+        os.system("rosservice call gazebo/unpause_physics")
+        return self.state_current_
+
 
     def reset(self): #Spends 2 seconds resetting the world and 3 seconds waiting after that
         self.enableSticky(0)
