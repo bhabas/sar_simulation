@@ -1,2 +1,2 @@
 #!/bin/bash
-rosservice call /gazebo/reset_world &
+rosservice call /gazebo/reset_world & # resets model poses

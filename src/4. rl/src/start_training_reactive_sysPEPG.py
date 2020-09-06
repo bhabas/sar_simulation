@@ -6,6 +6,8 @@ from crazyflie_env import CrazyflieEnv
 from rl_syspepg import rlsysPEPGAgent_reactive
 import matplotlib.pyplot as plt
 
+import os
+
 ## Initialize the environment
 env = CrazyflieEnv(port_self=18050, port_remote=18060)
 print("Environment done")
@@ -104,7 +106,6 @@ for k_ep in range(1000):
         while True:
             time.sleep(5e-4) # Time step size
             k_step = k_step + 1 # Time step
-
             ## Define current state
             state = env.state_current_
             
@@ -130,7 +131,7 @@ for k_ep in range(1000):
                 q_d = theta_rl[1,k_run] * RREV
 
                 print('------------- pitch starts -------------')
-                print( 'vz=%.3f, vx=%.3f, RREV=%.3f, qd=%.3f' %(vz, vx, RREV, qd) )   
+                print( 'vz=%.3f, vx=%.3f, RREV=%.3f, qd=%.3f' %(vz, vx, RREV, q_d) )   
                 print("Pitch Time: %.3f" %start_time_pitch)
                 
                 env.delay_env_time(t_start=start_time_pitch,t_delay=30) # Artificial delay to mimic communication lag [ms]
@@ -140,8 +141,8 @@ for k_ep in range(1000):
 
             ## If time since triggered pitch exceeds [0.7s]   
             if pitch_triggered and ((env.getTime()-start_time_pitch) > 0.7):
-                # print("Rollout Completed: Pitch Triggered")
-                # print("Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch)))
+                print("Rollout Completed: Pitch Triggered")
+                print("Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch)))
                 done_rollout = True
 
             ## If time since rollout start exceeds [1.5s]
@@ -162,6 +163,7 @@ for k_ep in range(1000):
             
             if (np.abs(position[0]) > 1.0) or (np.abs(position[1]) > 1.0):
                 print("Reset improperly!!!!!")
+                # env.pause()
                 env.logDataFlag = False
                 break
             
