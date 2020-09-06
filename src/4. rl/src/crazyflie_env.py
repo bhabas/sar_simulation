@@ -7,10 +7,10 @@ import matplotlib.pyplot as plt
 import time
 import os, subprocess, signal
 import rospy
+import shlex
 
-from sensor_msgs.msg import LaserScan
-from sensor_msgs.msg import Image
-
+# from sensor_msgs.msg import LaserScan
+# from sensor_msgs.msg import Image
 # from cv_bridge import CvBridge
 
 class CrazyflieEnv:
@@ -89,7 +89,21 @@ class CrazyflieEnv:
         self.isRunning_ = False
         self.fd_.close()
 
+
+
     def launch_sim(self):
+        ## There's some issue with the external shells that cause it to hang up on missed landings as it just sits on the ground
+        # self.gazebo_p_ = subprocess.Popen(shlex.split(
+        #     'gnome-terminal -x bash -c "~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_gazebo.bash"'),
+        #     close_fds=True, preexec_fn=os.setsid)
+        #     ### wait till open?
+        # time.sleep(5)
+        
+        # self.controller_p_ = subprocess.Popen(shlex.split(
+        #     'gnome-terminal --tab -x bash -c "~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_controller.bash"'),
+        #     close_fds=True, preexec_fn=os.setsid)
+        # time.sleep(5)     
+
         self.gazebo_p_ = subprocess.Popen(
             "gnome-terminal --disable-factory -e '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_gazebo.bash'", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
