@@ -160,7 +160,7 @@ class rlPEPGAgent_reactive:
         self.alpha_mu_, self.alpha_sigma_,  = _alpha_mu, _alpha_sigma
         self.gamma_, self.n_rollout_ = _gamma, _n_rollout
 
-        self.mu_ = np.array([[5.0], [-10.0]])           # mu    is size of  2 x 1
+        self.mu_ = np.array([[1.5], [-10.0]])           # mu    is size of  2 x 1
         self.sigma_ = np.array([[0.5], [0.5]])         # sigma is size of  2 x 1
         self.mu_history_ = copy.copy(self.mu_)
         self.sigma_history_ = copy.copy(self.sigma_)
@@ -246,9 +246,9 @@ class rlsysPEPGAgent_reactive:
         self.alpha_mu_, self.alpha_sigma_,  = _alpha_mu, _alpha_sigma
         self.gamma_, self.n_rollout_ = _gamma, _n_rollout
 
-        self.mu_ = np.array([[5.0], [-10.0]])           # mu    is size of  2 x 1
-        self.sigma_ = np.array([[0.5], [0.5]])         # sigma is size of  2 x 1
-        self.mu_history_ = copy.copy(self.mu_)
+        self.mu_ = np.array([[5.0], [-10.0]])   # Initial estimates of mu: size (2 x 1)
+        self.sigma_ = np.array([[1], [1]])      # Initial estimates of sigma: size (2 x 1)
+        self.mu_history_ = copy.copy(self.mu_)  # Creates another array of self.mu_ and attaches it to self.mu_history_
         self.sigma_history_ = copy.copy(self.sigma_)
         self.reward_history_ = np.array([0])
 
@@ -258,6 +258,8 @@ class rlsysPEPGAgent_reactive:
         epsilon = _epsilon
         b = self.get_baseline(_span=3)
         m_reward = 125      # max reward
+
+        ## Decaying Learning Rate:
         #self.alpha_mu_ = self.alpha_mu_ * 0.9
         #self.alpha_sigma_ = self.alpha_sigma_ * 0.9
 
@@ -269,7 +271,7 @@ class rlsysPEPGAgent_reactive:
         self.mu_ = self.mu_ + self.alpha_mu_*np.dot(T,r_T)
         self.sigma_ = self.sigma_ + self.alpha_sigma_*np.dot(S,r_S)
 
-        for k in range(self.sigma_.size):
+        for k in range(self.sigma_.size): #  If sigma oversteps negative then assume convergence
             if self.sigma_[k] <= 0:
                 self.sigma_[k] = 0.001
         
@@ -286,6 +288,9 @@ class rlsysPEPGAgent_reactive:
 
         theta = np.append(theta_plus, theta_minus, axis=1)
 
+
+        ## Caps values of RREV to be greater than zero and Gain to be neg so
+        # the system doesnt fight itself learning which direction to rotate
         for k_n in range(2*self.n_rollout_):
             if theta[0,k_n] < 0:
                 theta[0,k_n] = 0.001
@@ -309,17 +314,19 @@ class rlsysPEPGAgent_reactive:
 
         z = state[2,:]
         quat = state[4:7,:]
-        quat = np.append(quat, state[3,:][np.newaxis,:], axis=0)          # rearrange quat as scalar-last format used in scipy Rotation
+        # Rearrange quat as scalar-last format used in scipy Rotation
+        # [qw,qx,qy,qz]' => quat = [qx,qy,qz,qw]'
+        quat = np.append(quat, state[3,:][np.newaxis,:], axis=0)  # rearrange quat as scalar-last format used in scipy Rotation
 
         r1 = z / h_ceiling
 
         r2 = np.zeros_like(r1)
         for k_quat in range(quat.shape[-1]):
             R = Rotation.from_quat(quat[:,k_quat])
-            b3 = R.as_matrix()[:,2]                         # body z-axis
+            b3 = R.as_matrix()[:,2] # body z-axis
 
             r2[k_quat] = np.dot(b3, np.array([0,0,-1]))
-            if (r2[k_quat]>0.8) and (z[k_quat] > 0.8*h_ceiling):            # further incentivize when b3 is very close to -z axis
+            if (r2[k_quat]>0.8) and (z[k_quat] > 0.8*h_ceiling):  # further incentivize when b3 is very close to -z axis
                 r2[k_quat] = r2[k_quat]*5
             elif z[k_quat] < 0.5*h_ceiling:
                 r2[k_quat] = 0
