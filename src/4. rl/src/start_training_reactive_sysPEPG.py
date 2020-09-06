@@ -98,7 +98,7 @@ for k_ep in range(1000):
         
         RREV_trigger = theta_rl[0, k_run]
 
-        # image_now = env.cv_image
+
         while True:
             time.sleep(5e-4) # Time step size
             state = env.state_current_
@@ -108,10 +108,6 @@ for k_ep in range(1000):
             vel = state[8:11]
             vz, vx = vel[2], vel[0]
             omega = state[11:14]
-
-            # image_prev = image_now
-            # image_now = env.cv_image
-            # d = env.laser_dist # added distance sensor with noise
 
             d = h_ceiling - position[2]
             RREV, omega_y = vz/d, vx/d

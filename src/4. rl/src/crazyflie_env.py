@@ -40,19 +40,31 @@ class CrazyflieEnv:
         self.senderThread.daemon = True
 
         # #self.senderThread.start()
+    
+    def close_sim(self):
+        os.killpg(self.controller_p_.pid, signal.SIGTERM)
+        time.sleep(5)
+        os.killpg(self.gazebo_p_.pid, signal.SIGTERM)
+        time.sleep(20)  
 
-    # delay time defined in ms
     def delay_env_time(self,t_start,t_delay):
+        # delay time defined in ms
         while (self.getTime() - t_start < t_delay/10000):
                     pass
-
-
 
     def __del__(self):
         self.isRunning_ = False
         self.fd_.close()
 
 
+    def enableSticky(self, enable):      # enable=0 disable sticky, enable=1 enable sticky
+        header = 11
+        buf = struct.pack('5d', header, enable, 0, 0, 0)
+        self.fd_.sendto(buf, self.addr_remote_send_)
+        time.sleep(0.001)               # the sleep time after enableSticky(0) must be small s.t. the gazebo simulation is satble. Because the simulation after joint removed becomes unstable quickly.
+    
+    def getTime(self):
+        return self.state_current_[0]
 
     def launch_sim(self):
         ## There's some issue with the external shells that cause it to hang up on missed landings as it just sits on the ground
@@ -76,42 +88,12 @@ class CrazyflieEnv:
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(5)
 
-    def close_sim(self):
-        os.killpg(self.controller_p_.pid, signal.SIGTERM)
-        time.sleep(5)
-        os.killpg(self.gazebo_p_.pid, signal.SIGTERM)
-        time.sleep(20)     
-
-    def step(self, action):
-        if action['type'] == 'pos':
-            header = 1
-        elif action['type'] == 'vel':
-            header = 2
-        elif action['type'] == 'att':
-            header = 3
-        elif action['type'] == 'rate':
-            header = 4
-        else:
-            print("no such action")
-        x = action['x']
-        y = action['y']
-        z = action['z']
-        additional = action['additional']
-
-        buf = struct.pack('5d', header, x, y, z, additional)
-        self.fd_.sendto(buf, self.addr_remote_send_)
-        #self.queue_command.put(buf, block=False)
-
-        reward = 0
-        done = 0
-        info = 0
-        return self.state_current_, reward, done, info
-
     def reset(self):
         self.enableSticky(0)
         for k in range(20):
-            subprocess.Popen('/home/bhabas/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/reset_world.bash >/dev/null 2>&1 &', 
+            subprocess.Popen("/home/bhabas/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/reset_world.bash >/dev/null 2>&1 &", 
                 close_fds=True, preexec_fn=os.setsid, shell=True)
+                # "">> /dev/null" redirects standard output (stdout) to /dev/null, which discards it.
             time.sleep(0.1)
         time.sleep(3)
         return self.state_current_
@@ -167,19 +149,37 @@ class CrazyflieEnv:
             else:
                 print("Send to controller failed!")'''
 
-    def getTime(self):
-        return self.state_current_[0]
+   
 
-    def enableSticky(self, enable):      # enable=0 disable sticky, enable=1 enable sticky
-        header = 11
-        buf = struct.pack('5d', header, enable, 0, 0, 0)
+    def step(self, action):
+        if action['type'] == 'pos':
+            header = 1
+        elif action['type'] == 'vel':
+            header = 2
+        elif action['type'] == 'att':
+            header = 3
+        elif action['type'] == 'rate':
+            header = 4
+        else:
+            print("no such action")
+        x = action['x']
+        y = action['y']
+        z = action['z']
+        additional = action['additional']
+
+        buf = struct.pack('5d', header, x, y, z, additional)
         self.fd_.sendto(buf, self.addr_remote_send_)
-        time.sleep(0.001)               # the sleep time after enableSticky(0) must be small s.t. the gazebo simulation is satble. Because the simulation after joint removed becomes unstable quickly.
+        #self.queue_command.put(buf, block=False)
 
-    def plotFigure(self):
-        plt.figure()
-        plt.plot(self.path_[0,:],self.path_[8,:], self.path_[0,:],self.path_[9,:], self.path_[0,:],self.path_[10,:])
-        plt.show()
+        reward = 0
+        done = 0
+        info = 0
+        return self.state_current_, reward, done, info
+
+    # def plotFigure(self):
+    #     plt.figure()
+    #     plt.plot(self.path_[0,:],self.path_[8,:], self.path_[0,:],self.path_[9,:], self.path_[0,:],self.path_[10,:])
+    #     plt.show()
     
     def create_xls(self, start_time, sigma, alpha, file_name):
         file_log =  xlwt.Workbook()
