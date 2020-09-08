@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 
 import os
 
+
+
+
 ## Initialize the environment
 env = CrazyflieEnv(port_self=18050, port_remote=18060)
 print("Environment done")
