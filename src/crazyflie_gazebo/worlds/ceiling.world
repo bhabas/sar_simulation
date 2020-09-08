@@ -17,7 +17,7 @@
     <!-- Default camera pose -->
     <gui>
       <camera name="user_camera">
-          <pose frame=''>1.46335 1.15128 2.2309 0 0.657 -2.532</pose>
+          <pose frame=''>0.742784 -2.36472 2.09182 0 0.485 1.82319</pose>
       </camera>
     </gui>
 
@@ -39,7 +39,7 @@
       </ode>
       <max_step_size>0.001</max_step_size>
       <real_time_factor>1</real_time_factor>
-      <real_time_update_rate>100</real_time_update_rate>
+      <real_time_update_rate>250</real_time_update_rate>
       <magnetic_field>6.0e-6 2.3e-5 -4.2e-5</magnetic_field>
     </physics>
     <wind>
