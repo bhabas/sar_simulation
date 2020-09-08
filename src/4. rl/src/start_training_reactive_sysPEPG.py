@@ -93,7 +93,7 @@ for k_ep in range(1000):
         start_time_rollout = env.getTime()
         start_time_pitch = None
         pitch_triggered = False
-        track_state = None
+        state_history = None
         
         env.logDataFlag = True
 
@@ -175,15 +175,15 @@ for k_ep in range(1000):
             ##      First iteration: track_state = state2 vector
             ##      Every 10 iter: append track_state columns with current state2 vector 
             state2 = state[1:,np.newaxis]
-            if track_state is None:
-                track_state = state2 # replace w/ state_history variable for track_state
+            if state_history is None:
+                state_history = state2 # replace w/ state_history variable for track_state
             else:
                 if k_step%10==0:
-                    track_state = np.append(track_state, state2, axis=1)
+                    state_history = np.append(state_history, state2, axis=1)
 
             if done_rollout:
                 env.logDataFlag = False
-                reward[k_run] = agent.calculate_reward(_state=track_state, _h_ceiling=h_ceiling)
+                reward[k_run] = agent.calculate_reward(_state=state_history, _h_ceiling=h_ceiling)
 
                 ## Episode Plotting
                 plt.plot(k_ep,reward[k_run],marker = "_", color = "black", alpha = 0.5) 
