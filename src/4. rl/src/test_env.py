@@ -3,6 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time, copy, os
+import pos_and_vel as pv
 
 from crazyflie_env import CrazyflieEnv
 
@@ -32,8 +33,10 @@ while run == True:
 
     ## Mu input:
     s = input("Input mu:")
-    mu = list(map(float, s.split()))
-    mu = np.asarray(mu)
+    num = list(map(float, s.split()))
+    num = np.asarray(num)
+    mu = num[:2]
+    vel = num[2:]
     # mu = np.array([[3.0], [-5.0]])
 
 
@@ -58,10 +61,11 @@ while run == True:
 
 
 
-
+    
 # ---------------------------------- Rollout --------------------------------- #
     action = {'type':'vel', 'x':vx_ini, 'y':0.0, 'z':vz_ini, 'additional':0.0}
     env.step(action=action)
+    # pv.gazebo_IC(vz=vel[0])
 
     RREV_trigger = mu[0]
 
