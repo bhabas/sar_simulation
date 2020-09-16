@@ -9,8 +9,6 @@ import matplotlib.pyplot as plt
 import os
 
 
-
-
 ## Initialize the environment
 env = CrazyflieEnv(port_self=18050, port_remote=18060)
 print("Environment done")
@@ -18,11 +16,11 @@ print("Environment done")
 ## Learning rates and agent
 alpha_mu = np.array([[0.2],[0.2]])
 alpha_sigma = np.array([[0.1],[0.1]])
-agent = rlsysPEPGAgent_reactive(_alpha_mu=alpha_mu, _alpha_sigma=alpha_sigma, _gamma=0.95, _n_rollout=2)
+agent = rlsysPEPGAgent_reactive(_alpha_mu=alpha_mu, _alpha_sigma=alpha_sigma, _gamma=0.95, _n_rollout=4)
 
 ## Define initial parameters for gaussian function
-agent.mu_ = np.array([[3.0], [-5.0]])   # Initial estimates of mu: size (2 x 1)
-agent.sigma_ = np.array([[2], [2]])      # Initial estimates of sigma: size (2 x 1)
+agent.mu_ = np.array([[5.0], [-10.0]])   # Initial estimates of mu: size (2 x 1)
+agent.sigma_ = np.array([[1], [1]])      # Initial estimates of sigma: size (2 x 1)
 agent.mu_history_ = copy.copy(agent.mu_)  # Creates another array of self.mu_ and attaches it to self.mu_history_
 agent.sigma_history_ = copy.copy(agent.sigma_)
 
@@ -30,7 +28,7 @@ agent.sigma_history_ = copy.copy(agent.sigma_)
 h_ceiling = 1.5 # meters
 
 
-username = 'bhabas' # change to system user
+username = 'bader' # change to system user
 start_time0 = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
 file_name = '/home/'+username+'/catkin_ws/src/src/crazyflie_simulation/4. rl/src/log/' + start_time0 + '.xls'
 #file_log, sheet = env.create_xls(start_time=start_time0, sigma=sigma, alpha=alpha, file_name=file_name)
@@ -52,16 +50,13 @@ plt.show()
 ##          Episode 
 # ============================
 for k_ep in range(1000):
-    
-    vz_ini = 3.0 #+ np.random.rand()
-    vx_ini = 0.0 #np.random.rand()
+
 
     print("=============================================")
     print("STARTING Episode # %d" %k_ep)
     print("=============================================")
 
     print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
-    print("Vz_ini: %.3f \t Vx_ini: %.3f" %(vz_ini, vx_ini))
     mu = agent.mu_
     sigma = agent.sigma_
     print("RREV=%.3f, \t theta2=%.3f" %(mu[0], mu[1]))
@@ -85,7 +80,14 @@ for k_ep in range(1000):
     k_run = 0
     while k_run < 2*agent.n_rollout_:
 
+            
+        vz_ini = 2.5 + np.random.rand()
+        vx_ini = 0.5 #np.random.rand()
+        vy_ini = 0.0
+
         print("Episode # %d run # %d" %(k_ep,k_run))
+        print("Vz_ini: %.3f \t Vx_ini: %.3f" %(vz_ini, vx_ini))
+
         state = env.reset()
 
         k_step = 0
@@ -100,7 +102,9 @@ for k_ep in range(1000):
         # ============================
         ##          Rollout 
         # ============================
-        action = {'type':'vel', 'x':vx_ini, 'y':0.0, 'z':vz_ini, 'additional':0.0}
+        action = {'type':'vel', 'x':vx_ini, 'y':vy_ini, 'z':vz_ini, 'additional':0.0}
+        #action = {'type':'pos', 'x':0.0, 'y':0.0, 'z':1.0, 'additional':0.0}
+
         env.step(action=action)
         
         RREV_trigger = theta_rl[0, k_run]
@@ -184,7 +188,7 @@ for k_ep in range(1000):
             if done_rollout:
                 env.logDataFlag = False
                 reward[k_run] = agent.calculate_reward(_state=state_history, _h_ceiling=h_ceiling)
-
+                print("Reward = %d" %(reward[k_run]))
                 ## Episode Plotting
                 plt.plot(k_ep,reward[k_run],marker = "_", color = "black", alpha = 0.5) 
                 plt.title("Episode: %d Run: %d" %(k_ep, k_run+1))
