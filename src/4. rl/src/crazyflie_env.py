@@ -29,7 +29,7 @@ class CrazyflieEnv:
 
         self.queue_command = Queue(3)
         self.path_all_ = np.zeros(shape=(14,8000,1))
-        self.state_current_ = np.zeros(shape=(14))
+        self.state_current = np.zeros(shape=(14))
         self.logDataFlag = False
 
         self.isRunning_ = True
@@ -64,7 +64,7 @@ class CrazyflieEnv:
         time.sleep(0.001)               # the sleep time after enableSticky(0) must be small s.t. the gazebo simulation is satble. Because the simulation after joint removed becomes unstable quickly.
     
     def getTime(self):
-        return self.state_current_[0]
+        return self.state_current[0]
 
     def launch_sim(self):
         ## There's some issue with the external shells that cause it to hang up on missed landings as it just sits on the ground
@@ -90,18 +90,18 @@ class CrazyflieEnv:
 
     def pause(self): #Pause simulation
         os.system("rosservice call gazebo/pause_physics")
-        return self.state_current_
+        return self.state_current
 
     def resume(self): #Resume simulation
         os.system("rosservice call gazebo/unpause_physics")
-        return self.state_current_
+        return self.state_current
 
 
     def reset(self): #Spends 2 seconds resetting the world and 3 seconds waiting after that
         self.enableSticky(0)
         os.system("rosservice call gazebo/reset_world")
         # time.sleep(0.1)
-        return self.state_current_
+        return self.state_current
     
     def recvThread(self):
         print("Start recvThread")
@@ -113,9 +113,9 @@ class CrazyflieEnv:
 
             data, addr_remote_ = self.fd_.recvfrom(112)     # 1 double = 8 bytes
             px,py,pz,q0,q1,q2,q3,vx,vy,vz,p,q,r,sim_time = struct.unpack('14d',data)
-            self.state_current_ = np.array([sim_time, px,py,pz,q0,q1,q2,q3,vx,vy,vz,p,q,r])
+            self.state_current = np.array([sim_time, px,py,pz,q0,q1,q2,q3,vx,vy,vz,p,q,r])
 
-            if any( np.isnan( self.state_current_ ) ):
+            if any( np.isnan( self.state_current ) ):
                 self.logDataFlag = False
                 path = None
             
@@ -179,7 +179,7 @@ class CrazyflieEnv:
         reward = 0
         done = 0
         info = 0
-        return self.state_current_, reward, done, info
+        return self.state_current, reward, done, info
 
     # def plotFigure(self):
     #     plt.figure()
