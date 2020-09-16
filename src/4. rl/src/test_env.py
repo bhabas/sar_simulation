@@ -26,7 +26,7 @@ while run == True:
 
 # -------------------------------- Parameters -------------------------------- #
 
-    vz_ini = 3.0 #+ np.random.rand()
+    vz_ini = 0.5 #+ np.random.rand()
     vx_ini = 0.0 #np.random.rand()
     h_ceiling = 1.5
 
@@ -63,7 +63,7 @@ while run == True:
 
     
 # ---------------------------------- Rollout --------------------------------- #
-    action = {'type':'vel', 'x':vx_ini, 'y':0.0, 'z':vz_ini, 'additional':0.0}
+    action = {'type':'vel', 'x':vx_ini, 'y':0.0, 'z':vel, 'additional':0.0}
     env.step(action=action)
     # pv.gazebo_IC(vz=vel[0])
 

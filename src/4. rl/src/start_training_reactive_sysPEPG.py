@@ -18,7 +18,7 @@ print("Environment done")
 ## Learning rates and agent
 alpha_mu = np.array([[0.2],[0.2]])
 alpha_sigma = np.array([[0.1],[0.1]])
-agent = rlsysPEPGAgent_reactive(_alpha_mu=alpha_mu, _alpha_sigma=alpha_sigma, _gamma=0.95, _n_rollout=2)
+agent = rlsysPEPGAgent_reactive(_alpha_mu=alpha_mu, _alpha_sigma=alpha_sigma, _gamma=0.95, _n_rollout=4)
 
 ## Define initial parameters for gaussian function
 agent.mu_ = np.array([[3.0], [-5.0]])   # Initial estimates of mu: size (2 x 1)
@@ -53,8 +53,9 @@ plt.show()
 # ============================
 for k_ep in range(1000):
     
-    vz_ini = 3.0 #+ np.random.rand()
-    vx_ini = 0.0 #np.random.rand()
+    vz_ini = 3.0 + np.random.uniform(low=-0.5, high=0.5)
+
+    vx_ini = 0.0
 
     print("=============================================")
     print("STARTING Episode # %d" %k_ep)
@@ -187,11 +188,12 @@ for k_ep in range(1000):
 
                 ## Episode Plotting
                 plt.plot(k_ep,reward[k_run],marker = "_", color = "black", alpha = 0.5) 
-                plt.title("Episode: %d Run: %d" %(k_ep, k_run+1))
+                plt.title("Episode: %d Run: %d # Rollouts: %d" %(k_ep, k_run+1,agent.n_rollout_))
                 # If figure gets locked on fullscreen, press ctrl+f untill it's fixed (there's lag due to process running)
                 plt.draw()
                 plt.pause(0.001)
                 # fig.canvas.flush_events()
+                
                 
                 k_run = k_run + 1
                 #print( 'x=%.3f, y=%.3f, z=%.3f' %(position[0], position[1], position[2]) )
