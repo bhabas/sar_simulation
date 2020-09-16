@@ -92,7 +92,7 @@ for k_ep in range(1000):
         vy_ini = 0.0
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
-        print("\n !-----------Episode # %d run # %d---------!" %(k_ep,k_run))
+        print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
         print("RREV: %.3f \t gain1: %.3f \t gain2: %.3f" %(theta_rl[0,k_run], theta_rl[1,k_run],theta_rl[2,k_run]))
         print("Vz_ini: %.3f \t Vx_ini: %.3f \t Vy_ini: %.3f" %(vz_ini, vx_ini, vy_ini))
 
@@ -200,7 +200,7 @@ for k_ep in range(1000):
                 env.logDataFlag = False
                 reward[k_run] = agent.calculate_reward(_state=state_history, _h_ceiling=h_ceiling)
                 print("Reward = %d" %(reward[k_run]))
-                print("!-----End Run-----! \n")
+                print("!------------------------End Run------------------------! \n")
                 ## Episode Plotting
                 plt.plot(k_ep,reward[k_run],marker = "_", color = "black", alpha = 0.5) 
                 plt.title("Episode: %d Run: %d" %(k_ep, k_run+1))
