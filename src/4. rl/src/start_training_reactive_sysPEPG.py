@@ -37,9 +37,9 @@ h_ceiling = 1.5 # meters
 
 
 start_time0 = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-file_name = '/home/'+username+'/catkin_ws/src/src/crazyflie_simulation/4. rl/src/log/' + start_time0 + '.xls'
+file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + start_time0 + '.csv'
 # file_log, sheet = env.create_xls(start_time=start_time0, sigma=agent.sigma, alpha=agent.alpha, file_name=file_name)
-
+env.create_xls2(start_time=start_time0, file_name=file_name)
 
 ## Initial figure setup
 plt.ion()  # interactive on
@@ -204,6 +204,8 @@ for k_ep in range(1000):
             else:
                 if k_step%10==0:
                     state_history = np.append(state_history, state2, axis=1)
+                    env.add_xls2(state)
+
 
             if done_rollout:
                 env.logDataFlag = False
