@@ -39,7 +39,7 @@ class CrazyflieEnv:
         self.senderThread = Thread(target=self.sendThread, args=())
         self.senderThread.daemon = True
 
-        # #self.senderThread.start()
+        #self.senderThread.start()
     
     def close_sim(self):
         os.killpg(self.controller_p_.pid, signal.SIGTERM)
@@ -80,11 +80,11 @@ class CrazyflieEnv:
         # time.sleep(5)     
 
         self.gazebo_p_ = subprocess.Popen(
-            "gnome-terminal --disable-factory -e '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_gazebo.bash'", 
+            "gnome-terminal --disable-factory -e '/home/bader/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_gazebo.bash'", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(5)
         self.controller_p_ = subprocess.Popen(
-            "gnome-terminal --disable-factory -e '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_controller.bash'", 
+            "gnome-terminal --disable-factory -e '/home/bader/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_controller.bash'", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(5)
 
@@ -100,7 +100,7 @@ class CrazyflieEnv:
     def reset(self): #Spends 2 seconds resetting the world and 3 seconds waiting after that
         self.enableSticky(0)
         os.system("rosservice call gazebo/reset_world")
-        # time.sleep(0.1)
+        time.sleep(1)
         return self.state_current_
     
     def recvThread(self):
