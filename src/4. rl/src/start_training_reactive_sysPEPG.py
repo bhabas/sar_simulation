@@ -5,9 +5,9 @@ import time,copy
 from crazyflie_env import CrazyflieEnv
 from rl_syspepg import rlsysPEPGAgent_reactive
 import matplotlib.pyplot as plt
-
+from math import sin,cos
 import os
-
+from scipy.spatial.transform import Rotation as R
 '''
 mu = [5.267,-10.228,-4.713]
 z -> 2.5 3.5 sseems to fail at lower vz
@@ -19,9 +19,9 @@ env = CrazyflieEnv(port_self=18050, port_remote=18060)
 print("Environment done")
 
 ## Learning rates and agent
-alpha_mu = np.array([[0.2],[0.2],[0.2]])
-alpha_sigma = np.array([[0.1],[0.1],[0.1]])
-agent = rlsysPEPGAgent_reactive(_alpha_mu=alpha_mu, _alpha_sigma=alpha_sigma, _gamma=0.95, _n_rollout=8)
+alpha_mu = np.array([[0.1],[0.1],[0.1]])
+alpha_sigma = np.array([[0.05],[0.05],[0.05]])
+agent = rlsysPEPGAgent_reactive(_alpha_mu=alpha_mu, _alpha_sigma=alpha_sigma, _gamma=0.95, _n_rollout=5)
 
 ## Define initial parameters for gaussian function
 agent.mu_ = np.array([[5.27], [-10.23],[-4.71]])   # Initial estimates of mu: size (2 x 1)
@@ -89,7 +89,7 @@ for k_ep in range(1000):
             
         vz_ini = 2.75 + np.random.rand()   # [2.5 , 2.5]
         vx_ini = -0.5 + np.random.rand()  # [-0.5, 0.5]
-        vy_ini = 0.0
+        vy_ini = -0.5 + np.random.rand()
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
         print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
@@ -137,7 +137,13 @@ for k_ep in range(1000):
             qx = orientation_q[1]
             qy = orientation_q[2]
             qz = orientation_q[3]
-            # theta = np.arcsin( -2*(qx*qz-qw*qy) ) # obtained from matlab "edit quat2eul.m"
+
+            r = R.from_quat([qx,qy,qz,qw])
+            b3 = r.as_matrix()[:,2] # body z-axis
+            b3y =  np.dot(b3, np.array([0,0,1]))
+            r = r.as_euler('zyx', degrees=True)
+            #print(r)
+            theta = np.arcsin( -2*(qx*qz-qw*qy) ) # obtained from matlab "edit quat2eul.m"
 
             ## Enable sticky feet and rotation
             if (RREV > RREV_trigger) and (pitch_triggered == False):
@@ -145,11 +151,13 @@ for k_ep in range(1000):
                 env.enableSticky(1)
 
                 # add term to adjust for tilt 
-                q_d = theta_rl[1,k_run] * RREV + theta_rl[2,k_run]*omega_x
+                q_d = theta_rl[1,k_run] * RREV + theta_rl[2,k_run]*omega_x*(1-b3y)#sin(r[1]*3.14159/180)
                 # torque on x axis to adjust for vy
-                r_d = 0.0 #r_d = theta_rl[3,k_run] * omega_y
+                r_d = 0 # theta_rl[3,k_run] * omega_y
                 print('----- pitch starts -----')
-                print( 'vz=%.3f, vx=%.3f, vy=%.3f,RREV=%.3f,omega_y=%.3f qd=%.3f' %(vz, vx,vy, RREV, omega_y, q_d) )   
+                print( 'vz=%.3f, vx=%.3f, vy=%.3f' %(vz, vx,vy))
+                print('r[0] = %.3f, r[1] = %.3f, r[2] = %.3f , b3y = %.3f' %(r[0],r[1],r[2],b3y))
+                print('RREV=%.3f,omega_y=%.3f,omega_x=%.3f, qd=%.3f' %( RREV, omega_y, omega_x,q_d) )   
                 print("Pitch Time: %.3f" %start_time_pitch)
                 
                 env.delay_env_time(t_start=start_time_pitch,t_delay=30) # Artificial delay to mimic communication lag [ms]
