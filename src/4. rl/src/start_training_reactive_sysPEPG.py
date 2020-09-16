@@ -8,19 +8,24 @@ import matplotlib.pyplot as plt
 
 import os
 
+'''
+mu = [5.267,-10.228,-4.713]
+z -> 2.5 3.5 sseems to fail at lower vz
+x -> -0.5 0.5
 
+'''
 ## Initialize the environment
 env = CrazyflieEnv(port_self=18050, port_remote=18060)
 print("Environment done")
 
 ## Learning rates and agent
-alpha_mu = np.array([[0.2],[0.2]])
-alpha_sigma = np.array([[0.1],[0.1]])
-agent = rlsysPEPGAgent_reactive(_alpha_mu=alpha_mu, _alpha_sigma=alpha_sigma, _gamma=0.95, _n_rollout=4)
+alpha_mu = np.array([[0.2],[0.2],[0.2]])
+alpha_sigma = np.array([[0.1],[0.1],[0.1]])
+agent = rlsysPEPGAgent_reactive(_alpha_mu=alpha_mu, _alpha_sigma=alpha_sigma, _gamma=0.95, _n_rollout=8)
 
 ## Define initial parameters for gaussian function
-agent.mu_ = np.array([[5.0], [-10.0]])   # Initial estimates of mu: size (2 x 1)
-agent.sigma_ = np.array([[1], [1]])      # Initial estimates of sigma: size (2 x 1)
+agent.mu_ = np.array([[5.27], [-10.23],[-4.71]])   # Initial estimates of mu: size (2 x 1)
+agent.sigma_ = np.array([[0.5], [0.5],[0.5]])      # Initial estimates of sigma: size (2 x 1)
 agent.mu_history_ = copy.copy(agent.mu_)  # Creates another array of self.mu_ and attaches it to self.mu_history_
 agent.sigma_history_ = copy.copy(agent.sigma_)
 
@@ -59,8 +64,8 @@ for k_ep in range(1000):
     print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
     mu = agent.mu_
     sigma = agent.sigma_
-    print("RREV=%.3f, \t theta2=%.3f" %(mu[0], mu[1]))
-    print("sig1=%.3f, \t sig2  =%.3f" %(sigma[0], sigma[1]))
+    print("RREV=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1],mu[2]))
+    print("sig1=%.3f, \t sig2=%.3f, \t sig3=%.3f" %(sigma[0], sigma[1],sigma[2]))
     print()
 
     done = False
@@ -71,6 +76,7 @@ for k_ep in range(1000):
     np.set_printoptions(precision=3, suppress=True)
     print(theta_rl[0,:], "--> RREV")
     print(theta_rl[1,:], "--> Gain")
+    print(theta_rl[2,:], "--> omega_x Gain")
 
     ct = env.getTime()
 
@@ -81,12 +87,14 @@ for k_ep in range(1000):
     while k_run < 2*agent.n_rollout_:
 
             
-        vz_ini = 2.5 + np.random.rand()
-        vx_ini = 0.5 #np.random.rand()
+        vz_ini = 2.75 + np.random.rand()   # [2.5 , 2.5]
+        vx_ini = -0.5 + np.random.rand()  # [-0.5, 0.5]
         vy_ini = 0.0
+        # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
-        print("Episode # %d run # %d" %(k_ep,k_run))
-        print("Vz_ini: %.3f \t Vx_ini: %.3f" %(vz_ini, vx_ini))
+        print("\n !-----------Episode # %d run # %d---------!" %(k_ep,k_run))
+        print("RREV: %.3f \t gain1: %.3f \t gain2: %.3f" %(theta_rl[0,k_run], theta_rl[1,k_run],theta_rl[2,k_run]))
+        print("Vz_ini: %.3f \t Vx_ini: %.3f \t Vy_ini: %.3f" %(vz_ini, vx_ini, vy_ini))
 
         state = env.reset()
 
@@ -119,11 +127,11 @@ for k_ep in range(1000):
             position = state[1:4]
             orientation_q = state[4:8]
             vel = state[8:11]
-            vz, vx = vel[2], vel[0]
+            vz, vx, vy= vel[2], vel[0], vel[1]
             omega = state[11:14]
 
             d = h_ceiling - position[2]
-            RREV, omega_y = vz/d, vx/d
+            RREV, omega_y ,omega_x = vz/d, vx/d, vy/d
 
             qw = orientation_q[0]
             qx = orientation_q[1]
@@ -135,14 +143,17 @@ for k_ep in range(1000):
             if (RREV > RREV_trigger) and (pitch_triggered == False):
                 start_time_pitch = env.getTime()
                 env.enableSticky(1)
-                q_d = theta_rl[1,k_run] * RREV
 
-                print('------------- pitch starts -------------')
-                print( 'vz=%.3f, vx=%.3f, RREV=%.3f, qd=%.3f' %(vz, vx, RREV, q_d) )   
+                # add term to adjust for tilt 
+                q_d = theta_rl[1,k_run] * RREV + theta_rl[2,k_run]*omega_x
+                # torque on x axis to adjust for vy
+                r_d = 0.0 #r_d = theta_rl[3,k_run] * omega_y
+                print('----- pitch starts -----')
+                print( 'vz=%.3f, vx=%.3f, vy=%.3f,RREV=%.3f,omega_y=%.3f qd=%.3f' %(vz, vx,vy, RREV, omega_y, q_d) )   
                 print("Pitch Time: %.3f" %start_time_pitch)
                 
                 env.delay_env_time(t_start=start_time_pitch,t_delay=30) # Artificial delay to mimic communication lag [ms]
-                action = {'type':'rate', 'x':0.0, 'y':q_d, 'z':0.0, 'additional':0.0}
+                action = {'type':'rate', 'x':r_d, 'y':q_d, 'z':0.0, 'additional':0.0}
                 env.step(action) # Start rotation and mark rotation triggered
                 pitch_triggered = True
 
@@ -189,6 +200,7 @@ for k_ep in range(1000):
                 env.logDataFlag = False
                 reward[k_run] = agent.calculate_reward(_state=state_history, _h_ceiling=h_ceiling)
                 print("Reward = %d" %(reward[k_run]))
+                print("!-----End Run-----! \n")
                 ## Episode Plotting
                 plt.plot(k_ep,reward[k_run],marker = "_", color = "black", alpha = 0.5) 
                 plt.title("Episode: %d Run: %d" %(k_ep, k_run+1))
