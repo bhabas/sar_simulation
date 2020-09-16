@@ -9,8 +9,8 @@ class rlsysPEPGAgent_reactive:
         self.alpha_mu_, self.alpha_sigma_,  = _alpha_mu, _alpha_sigma
         self.gamma_, self.n_rollout_ = _gamma, _n_rollout
 
-        self.mu_ = np.array([[5.0], [-10.0]])   # Initial estimates of mu: size (2 x 1)
-        self.sigma_ = np.array([[1], [1]])      # Initial estimates of sigma: size (2 x 1)
+        self.mu_ = np.array([[5.0], [-10.0],[10.0]])   # Initial estimates of mu: size (2 x 1)
+        self.sigma_ = np.array([[1], [1],[1]])      # Initial estimates of sigma: size (2 x 1)
         self.mu_history_ = copy.copy(self.mu_)  # Creates another array of self.mu_ and attaches it to self.mu_history_
         self.sigma_history_ = copy.copy(self.sigma_)
         self.reward_history_ = np.array([0])
