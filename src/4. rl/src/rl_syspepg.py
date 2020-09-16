@@ -11,11 +11,11 @@ class rlsysPEPGAgent_reactive:
 
         self.mu = np.array([[5.0], [-10.0]])   # Initial estimates of mu: size (2 x 1)
         self.sigma = np.array([[1], [1]])      # Initial estimates of sigma: size (2 x 1)
-        self.mu_history = copy.copy(self.mu)  # Creates another array of self.mu_ and attaches it to self.mu_history_
+        self.mu_history = copy.copy(self.mu)  # Creates another array of self.mu and attaches it to self.mu_history_
         self.sigma_history = copy.copy(self.sigma)
         self.reward_history = np.array([0])
 
-    def calculate_reward(self, state, h_ceiling): # _state is size 13 x timesteps
+    def calculate_reward(self, state, h_ceiling): # state is size 13 x timesteps
             state = state
             h_ceiling = h_ceiling
             h_delta = 0.02 # 0.044
