@@ -16,23 +16,23 @@ class CrazyflieEnv:
         rospy.init_node("crazyflie_env_node",anonymous=True)
         self.launch_sim()
         
-        self.port_self_ = port_self
-        self.port_remote_ = port_remote
+        self.port_self = port_self
+        self.port_remote = port_remote
 
-        self.fd_ = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.fd_.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 112)       # set receive buffer size to be 112 bytes (1 double = 8 bytes)
-        self.fd_.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 40)        # set send buffer size to be 40 bytes. Both 112 bytes and 40 bytes are lower than the minimum value, so buffer size will be set as minimum value. See "'man 7 socket"
-        self.fd_.bind( ("", self.port_self_) )
-        self.addr_remote_send_ = ("", self.port_remote_)
+        self.fd = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.fd.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 112)       # set receive buffer size to be 112 bytes (1 double = 8 bytes)
+        self.fd.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 40)        # set send buffer size to be 40 bytes. Both 112 bytes and 40 bytes are lower than the minimum value, so buffer size will be set as minimum value. See "'man 7 socket"
+        self.fd.bind( ("", self.port_self) )
+        self.addr_remote_send = ("", self.port_remote)
         buf = struct.pack('5d', 2, 0, 0, 0, 0)
-        self.fd_.sendto(buf, self.addr_remote_send_)
+        self.fd.sendto(buf, self.addr_remote_send)
 
         self.queue_command = Queue(3)
-        self.path_all_ = np.zeros(shape=(14,8000,1))
-        self.state_current_ = np.zeros(shape=(14))
+        self.path_all = np.zeros(shape=(14,8000,1))
+        self.state_current = np.zeros(shape=(14))
         self.logDataFlag = False
 
-        self.isRunning_ = True
+        self.isRunning = True
         self.receiverThread = Thread(target=self.recvThread, args=())
         self.receiverThread.daemon = True
         self.receiverThread.start()
@@ -42,9 +42,9 @@ class CrazyflieEnv:
         # #self.senderThread.start()
     
     def close_sim(self):
-        os.killpg(self.controller_p_.pid, signal.SIGTERM)
+        os.killpg(self.controller_p.pid, signal.SIGTERM)
         time.sleep(5)
-        os.killpg(self.gazebo_p_.pid, signal.SIGTERM)
+        os.killpg(self.gazebo_p.pid, signal.SIGTERM)
         time.sleep(5)  
 
     def delay_env_time(self,t_start,t_delay):
@@ -53,18 +53,18 @@ class CrazyflieEnv:
                     pass
 
     def __del__(self):
-        self.isRunning_ = False
-        self.fd_.close()
+        self.isRunning = False
+        self.fd.close()
 
 
     def enableSticky(self, enable):      # enable=0 disable sticky, enable=1 enable sticky
         header = 11
         buf = struct.pack('5d', header, enable, 0, 0, 0)
-        self.fd_.sendto(buf, self.addr_remote_send_)
+        self.fd.sendto(buf, self.addr_remote_send)
         time.sleep(0.001)               # the sleep time after enableSticky(0) must be small s.t. the gazebo simulation is satble. Because the simulation after joint removed becomes unstable quickly.
     
     def getTime(self):
-        return self.state_current_[0]
+        return self.state_current[0]
 
     def launch_sim(self):
         ## There's some issue with the external shells that cause it to hang up on missed landings as it just sits on the ground
@@ -79,43 +79,43 @@ class CrazyflieEnv:
         #     close_fds=True, preexec_fn=os.setsid)
         # time.sleep(5)     
 
-        self.gazebo_p_ = subprocess.Popen(
+        self.gazebo_p = subprocess.Popen(
             "gnome-terminal --disable-factory -e '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_gazebo.bash'", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(5)
-        self.controller_p_ = subprocess.Popen(
+        self.controller_p = subprocess.Popen(
             "gnome-terminal --disable-factory -e '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_controller.bash'", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(5)
 
     def pause(self): #Pause simulation
         os.system("rosservice call gazebo/pause_physics")
-        return self.state_current_
+        return self.state_current
 
     def resume(self): #Resume simulation
         os.system("rosservice call gazebo/unpause_physics")
-        return self.state_current_
+        return self.state_current
 
 
     def reset(self): #Spends 2 seconds resetting the world and 3 seconds waiting after that
         self.enableSticky(0)
         os.system("rosservice call gazebo/reset_world")
         # time.sleep(0.1)
-        return self.state_current_
+        return self.state_current
     
     def recvThread(self):
         print("Start recvThread")
         path = None
         
         k_run = 0
-        while self.isRunning_:
+        while self.isRunning:
             k_run = k_run + 1
 
-            data, addr_remote_ = self.fd_.recvfrom(112)     # 1 double = 8 bytes
+            data, addr_remote_ = self.fd.recvfrom(112)     # 1 double = 8 bytes
             px,py,pz,q0,q1,q2,q3,vx,vy,vz,p,q,r,sim_time = struct.unpack('14d',data)
-            self.state_current_ = np.array([sim_time, px,py,pz,q0,q1,q2,q3,vx,vy,vz,p,q,r])
+            self.state_current = np.array([sim_time, px,py,pz,q0,q1,q2,q3,vx,vy,vz,p,q,r])
 
-            if any( np.isnan( self.state_current_ ) ):
+            if any( np.isnan( self.state_current ) ):
                 self.logDataFlag = False
                 path = None
             
@@ -129,7 +129,7 @@ class CrazyflieEnv:
                 k = k + 1
             
             if not self.logDataFlag and path is not None:
-                self.path_all_ = np.append(self.path_all_, path, axis=2)
+                self.path_all = np.append(self.path_all, path, axis=2)
                 path = None
                 
             '''if k_run%50 == 1:
@@ -144,11 +144,11 @@ class CrazyflieEnv:
             
     def sendThread(self):
         print("Start sendThread")
-        while self.isRunning_:
+        while self.isRunning:
             #time.sleep(0.5)
             #buf = struct.pack('5d', 2.0, 1.1, 2.2, 3.3, 4.4)
             buf = self.queue_command.get(block=True)
-            len = self.fd_.sendto(buf, self.addr_remote_send_)
+            len = self.fd.sendto(buf, self.addr_remote_send)
             '''if len>0:
                 print("Send to controller succeed!")
             else:
@@ -173,13 +173,13 @@ class CrazyflieEnv:
         additional = action['additional']
 
         buf = struct.pack('5d', header, x, y, z, additional)
-        self.fd_.sendto(buf, self.addr_remote_send_)
+        self.fd.sendto(buf, self.addr_remote_send)
         #self.queue_command.put(buf, block=False)
 
         reward = 0
         done = 0
         info = 0
-        return self.state_current_, reward, done, info
+        return self.state_current, reward, done, info
 
     # def plotFigure(self):
     #     plt.figure()

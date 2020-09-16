@@ -18,13 +18,13 @@ print("Environment done")
 ## Learning rates and agent
 alpha_mu = np.array([[0.2],[0.2]])
 alpha_sigma = np.array([[0.1],[0.1]])
-agent = rlsysPEPGAgent_reactive(_alpha_mu=alpha_mu, _alpha_sigma=alpha_sigma, _gamma=0.95, _n_rollout=4)
+agent = rlsysPEPGAgent_reactive(alpha_mu,alpha_sigma, gamma=0.95, n_rollout=4)
 
 ## Define initial parameters for gaussian function
-agent.mu_ = np.array([[3.0], [-5.0]])   # Initial estimates of mu: size (2 x 1)
-agent.sigma_ = np.array([[2], [2]])      # Initial estimates of sigma: size (2 x 1)
-agent.mu_history_ = copy.copy(agent.mu_)  # Creates another array of self.mu_ and attaches it to self.mu_history_
-agent.sigma_history_ = copy.copy(agent.sigma_)
+agent.mu = np.array([[3.0], [-5.0]])   # Initial estimates of mu: size (2 x 1)
+agent.sigma = np.array([[2], [2]])      # Initial estimates of sigma: size (2 x 1)
+agent.mu_history = copy.copy(agent.mu)  # Creates another array of self.mu_ and attaches it to self.mu_history_
+agent.sigma_history = copy.copy(agent.sigma)
 
 
 h_ceiling = 1.5 # meters
@@ -33,7 +33,7 @@ h_ceiling = 1.5 # meters
 username = 'bhabas' # change to system user
 start_time0 = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
 file_name = '/home/'+username+'/catkin_ws/src/src/crazyflie_simulation/4. rl/src/log/' + start_time0 + '.xls'
-#file_log, sheet = env.create_xls(start_time=start_time0, sigma=sigma, alpha=alpha, file_name=file_name)
+# file_log, sheet = env.create_xls(start_time=start_time0, sigma=agent.sigma, alpha=agent.alpha, file_name=file_name)
 
 
 ## Initial figure setup
@@ -63,14 +63,14 @@ for k_ep in range(1000):
 
     print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
     print("Vz_ini: %.3f \t Vx_ini: %.3f" %(vz_ini, vx_ini))
-    mu = agent.mu_
-    sigma = agent.sigma_
+    mu = agent.mu
+    sigma = agent.sigma
     print("RREV=%.3f, \t theta2=%.3f" %(mu[0], mu[1]))
     print("sig1=%.3f, \t sig2  =%.3f" %(sigma[0], sigma[1]))
     print()
 
     done = False
-    reward = np.zeros(shape=(2*agent.n_rollout_,1))
+    reward = np.zeros(shape=(2*agent.n_rollout,1))
     reward[:] = np.nan  # initialize reward to be NaN array, size n_rollout x 1
     theta_rl, epsilon_rl = agent.get_theta()
     print( "theta_rl = ")
@@ -84,7 +84,7 @@ for k_ep in range(1000):
     ##          Run 
     # ============================
     k_run = 0
-    while k_run < 2*agent.n_rollout_:
+    while k_run < 2*agent.n_rollout:
 
         print("Episode # %d run # %d" %(k_ep,k_run))
         state = env.reset()
@@ -111,7 +111,7 @@ for k_ep in range(1000):
             time.sleep(5e-4) # Time step size
             k_step = k_step + 1 # Time step
             ## Define current state
-            state = env.state_current_
+            state = env.state_current
             
             position = state[1:4]
             orientation_q = state[4:8]
@@ -184,11 +184,11 @@ for k_ep in range(1000):
 
             if done_rollout:
                 env.logDataFlag = False
-                reward[k_run] = agent.calculate_reward(_state=state_history, _h_ceiling=h_ceiling)
+                reward[k_run] = agent.calculate_reward(state_history,h_ceiling)
 
                 ## Episode Plotting
                 plt.plot(k_ep,reward[k_run],marker = "_", color = "black", alpha = 0.5) 
-                plt.title("Episode: %d Run: %d # Rollouts: %d" %(k_ep, k_run+1,agent.n_rollout_))
+                plt.title("Episode: %d Run: %d # Rollouts: %d" %(k_ep, k_run+1,agent.n_rollout))
                 # If figure gets locked on fullscreen, press ctrl+f untill it's fixed (there's lag due to process running)
                 plt.draw()
                 plt.pause(0.001)
@@ -201,7 +201,7 @@ for k_ep in range(1000):
 
     if not any( np.isnan(reward) ):
         print("Episode # %d training, average reward %.3f" %(k_ep, np.mean(reward)))
-        agent.train(_theta = theta_rl, _reward=reward, _epsilon=epsilon_rl)
+        agent.train(theta_rl,reward,epsilon_rl)
 
         plt.plot(k_ep,np.mean(reward),'ro')
         plt.draw()
