@@ -22,26 +22,26 @@ username = "bhabas"
 env = CrazyflieEnv(port_self=18050, port_remote=18060)
 print("Environment done")
 
-## Learning rates and agent
+## Learning rate
 alpha_mu = np.array([[0.1],[0.1],[0.1]])
 alpha_sigma = np.array([[0.05],[0.05],[0.05]])
 
-## Define initial parameters for gaussian function
-mu = np.array([[2.5], [-5.0],[0.0]])   # Initial estimates of mu: size (2 x 1)
-sigma = np.array([[1.0], [1.0],[1.0]])      # Initial estimates of sigma: size (2 x 1)
+## Initial parameters for gaussian function
+mu = np.array([[2.5],[-5.0],[0.0]])   # Initial estimates of mu: 
+sigma = np.array([[1.0],[1.0],[1.0]])      # Initial estimates of sigma: 
 agent = rlsysPEPGAgent_reactive(alpha_mu,alpha_sigma, mu,sigma, gamma=0.95,n_rollout=3)
 
 
 h_ceiling = 1.5 # meters
 
 
-start_time0 = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
-file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time0 + '.csv'
+start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
+file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time + '.csv'
 env.create_csv(file_name)
 
 ## Initial figure setup
-plt.ion()  # interactive on
 fig = plt.figure()
+plt.ion()  # interactive on
 plt.grid()
 plt.xlim([-10,100])
 plt.ylim([0,150])
@@ -85,6 +85,8 @@ for k_ep in range(1000):
     # ============================
     k_run = 0
     while k_run < 2*agent.n_rollout:
+
+        error_str = ""
 
             
         vz_ini = 3.25 + np.random.uniform(low=-0.5, high=0.5)   # [2.75, 3.75]
@@ -156,9 +158,9 @@ for k_ep in range(1000):
                 r_d = 0 # theta_rl[3,k_run] * omega_y
 
                 print('----- pitch starts -----')
-                print( 'vz=%.3f, vx=%.3f, vy=%.3f' %(vz, vx,vy))
-                print('r[0] = %.3f, r[1] = %.3f, r[2] = %.3f , b3y = %.3f' %(r[0],r[1],r[2],b3y))
-                print('RREV=%.3f,omega_y=%.3f,omega_x=%.3f, qd=%.3f' %( RREV, omega_y, omega_x,q_d) )   
+                print('vz=%.3f, vx=%.3f, vy=%.3f' %(vz, vx,vy))
+                print('r[0]=%.3f, r[1]=%.3f, r[2]=%.3f, b3y=%.3f' %(r[0],r[1],r[2],b3y))
+                print('RREV=%.3f, omega_y=%.3f, omega_x=%.3f, qd=%.3f' %( RREV, omega_y, omega_x,q_d) )   
                 print("Pitch Time: %.3f" %start_time_pitch)
                 
                 env.delay_env_time(t_start=start_time_pitch,t_delay=30) # Artificial delay to mimic communication lag [ms]
@@ -186,12 +188,12 @@ for k_ep in range(1000):
            ## If nan is found in state vector repeat sim run
             if any(np.isnan(state)): # gazebo sim becomes unstable, relaunch simulation
                 print("NAN found in state vector")
-                env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run)
                 env.logDataFlag = False
                 env.close_sim()
                 env.launch_sim()
+                error_str = "Error: NAN found"
                 if k_run > 0:
-                    k_run = k_run - 1
+                    k_run -= 1
                 break
             
             if (np.abs(position[0]) > 1.0) or (np.abs(position[1]) > 1.0):
@@ -230,6 +232,12 @@ for k_ep in range(1000):
                 k_run = k_run + 1
                 #print( 'x=%.3f, y=%.3f, z=%.3f' %(position[0], position[1], position[2]) )
                 break
+        
+        env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run,reward[k_run],error_str)
+
+
+
+
 
     if not any( np.isnan(reward) ):
         print("Episode # %d training, average reward %.3f" %(k_ep, np.mean(reward)))
