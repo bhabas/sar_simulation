@@ -25,20 +25,18 @@ print("Environment done")
 ## Learning rates and agent
 alpha_mu = np.array([[0.1],[0.1],[0.1]])
 alpha_sigma = np.array([[0.05],[0.05],[0.05]])
-agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, gamma=0.95, n_rollout=1)
 
 ## Define initial parameters for gaussian function
-agent.mu = np.array([[5.27], [-10.23],[-4.71]])   # Initial estimates of mu: size (2 x 1)
-agent.sigma = np.array([[0.5], [0.5],[0.5]])      # Initial estimates of sigma: size (2 x 1)
-agent.mu_history = copy.copy(agent.mu)  # Creates another array of self.mu_ and attaches it to self.mu_history_
-agent.sigma_history = copy.copy(agent.sigma)
+mu = np.array([[2.5], [-5.0],[0.0]])   # Initial estimates of mu: size (2 x 1)
+sigma = np.array([[1.0], [1.0],[1.0]])      # Initial estimates of sigma: size (2 x 1)
+agent = rlsysPEPGAgent_reactive(alpha_mu,alpha_sigma, mu,sigma, gamma=0.95,n_rollout=3)
 
 
 h_ceiling = 1.5 # meters
 
 
-start_time0 = time.strftime(username + '_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
-file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + start_time0 + '.csv'
+start_time0 = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
+file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time0 + '.csv'
 env.create_csv(file_name)
 
 ## Initial figure setup
@@ -90,12 +88,12 @@ for k_ep in range(1000):
 
             
         vz_ini = 3.25 + np.random.uniform(low=-0.5, high=0.5)   # [2.75, 3.75]
-        vx_ini = 0 + np.random.uniform(low=-0.5, high=0.5)  # [-0.5, 0.5]
-        vy_ini = 0 + np.random.uniform(low=-0.5, high=0.5) # [-0.5, 0.5]
+        vx_ini = 0# + np.random.uniform(low=-0.5, high=0.5)  # [-0.5, 0.5]
+        vy_ini = 0# + np.random.uniform(low=-0.5, high=0.5) # [-0.5, 0.5]
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
         print("\n!-------------------Episode:%d Run: %d-----------------!" %(k_ep,k_run))
-        print("RREV: %.3f \t gain1: %.3f \t \t gain2: %.3f" %(theta_rl[0,k_run], theta_rl[1,k_run],theta_rl[2,k_run]))
+        print("RREV: %.3f \t gain1: %.3f \t gain2: %.3f" %(theta_rl[0,k_run], theta_rl[1,k_run],theta_rl[2,k_run]))
         print("Vz_ini: %.3f \t Vx_ini: %.3f \t Vy_ini: %.3f" %(vz_ini, vx_ini, vy_ini))
 
         state = env.reset()
@@ -168,6 +166,11 @@ for k_ep in range(1000):
                 env.step(action) # Start rotation and mark rotation triggered
                 pitch_triggered = True
 
+
+            # ============================
+            ##    Termination Criteria 
+            # ============================
+
             ## If time since triggered pitch exceeds [0.7s]   
             if pitch_triggered and ((env.getTime()-start_time_pitch) > 0.7):
                 # print("Rollout Completed: Pitch Triggered")
@@ -183,6 +186,7 @@ for k_ep in range(1000):
            ## If nan is found in state vector repeat sim run
             if any(np.isnan(state)): # gazebo sim becomes unstable, relaunch simulation
                 print("NAN found in state vector")
+                env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run)
                 env.logDataFlag = False
                 env.close_sim()
                 env.launch_sim()
@@ -222,7 +226,7 @@ for k_ep in range(1000):
                 plt.pause(0.001)
                 # fig.canvas.flush_events()
                 
-                
+                env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run,reward[k_run])
                 k_run = k_run + 1
                 #print( 'x=%.3f, y=%.3f, z=%.3f' %(position[0], position[1], position[2]) )
                 break

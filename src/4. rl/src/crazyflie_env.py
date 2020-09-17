@@ -187,6 +187,12 @@ class CrazyflieEnv:
         info = 0
         return self.state_current, reward, done, info
 
+
+
+
+    # ============================
+    ##       Data Recording 
+    # ============================
     def create_csv(self,file_name):
         self.file_name = file_name
         with open(self.file_name, mode='w') as state_file:
@@ -202,7 +208,7 @@ class CrazyflieEnv:
             'gamma','reward'])
 
 
-    def append_csv(self,agent,state,k_ep,k_run): 
+    def append_csv(self,agent,state,k_ep,k_run,reward=0): 
         with open(self.file_name, mode='a') as state_file:
             state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             state_writer.writerow([
@@ -213,54 +219,4 @@ class CrazyflieEnv:
                 state[4], state[5], state[6], state[7], # qx,qy,qz,qw
                 state[8], state[9],state[10], # vx,vy,vz
                 state[11],state[12],state[13], # wx,wy,wz
-                agent.gamma
-                ])
-
-
-
-
-
-    def create_xls(self, start_time, sigma, alpha, file_name):
-        file_log =  xlwt.Workbook()
-        sheet = file_log.add_sheet('Learning process')
-        sheet.write(0,0, start_time)
-        sheet.write(0,1, 'sigma')
-        sheet.write(0,2, sigma)
-        sheet.write(0,3, 'alpha')
-        sheet.write(0,4, alpha)
-
-        sheet.write(1,0, 'Ep')
-        sheet.write(1,1, 'Date')
-        sheet.write(1,2, 'Time')
-        sheet.write(1,3, 'Vz_d (m/s)')
-        sheet.write(1,4, 'Vx_d (m/s)')
-        sheet.write(1,5, 'RREV (rad/s)')
-        sheet.write(1,6, 'omega_y (rad/s)')
-        sheet.write(1,7, 'Action (q deg/s)')
-        sheet.write(1,8, 'Reward')
-        sheet.write(1,9, 'Distance (m)')
-        sheet.write(1,10, 'Angle (deg)')
-        sheet.write(1,11, 'Theta')
-        file_log.save(file_name)
-
-        return file_log, sheet
-
-    
-    def add_record_xls(self, file_log, sheet, file_name,
-            k_ep, start_time1, start_time2,
-            vz_ini, vx_ini, state, action, reward, info, theta):
-        sheet.write(k_ep+2,0, k_ep+1)
-        sheet.write(k_ep+2,1, start_time1)
-        sheet.write(k_ep+2,2, start_time2)
-        sheet.write(k_ep+2,3, np.around(vz_ini,3))
-        sheet.write(k_ep+2,4, np.around(vx_ini,3))
-        sheet.write(k_ep+2,5, np.around(state[0],3))
-        sheet.write(k_ep+2,6, np.around(state[1],3))
-        sheet.write(k_ep+2,7, np.around(action,3))
-        sheet.write(k_ep+2,8, np.around(reward,3))
-        sheet.write(k_ep+2,9, np.around(info[0],3))
-        sheet.write(k_ep+2,10, np.around(info[1],3))
-        sheet.write(k_ep+2,11, np.around(theta[0],3))
-        sheet.write(k_ep+2,12, np.around(theta[1],3))
-        sheet.write(k_ep+2,13, np.around(theta[2],3))
-        file_log.save(file_name)
+                agent.gamma,reward])
