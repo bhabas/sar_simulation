@@ -37,7 +37,7 @@ agent.sigma_history = copy.copy(agent.sigma)
 h_ceiling = 1.5 # meters
 
 
-start_time0 = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+start_time0 = time.strftime(username + '_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
 file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + start_time0 + '.csv'
 env.create_csv(file_name)
 
@@ -206,12 +206,12 @@ for k_ep in range(1000):
             else:
                 if k_step%10==0:
                     state_history = np.append(state_history, state2, axis=1)
-                    env.append_csv(agent,state,k_ep,k_run)
+                    env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run)
 
 
             if done_rollout:
                 env.logDataFlag = False
-                reward[k_run] = agent.calculate_reward(state=state_history, h_ceiling=h_ceiling)
+                reward[k_run] = agent.calculate_reward(state_history,h_ceiling)
                 print("Reward = %d" %(reward[k_run]))
                 print("!------------------------End Run------------------------! \n")
                 ## Episode Plotting
