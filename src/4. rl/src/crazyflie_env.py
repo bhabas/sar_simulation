@@ -86,11 +86,11 @@ class CrazyflieEnv:
 
         wd = os.getcwd()
         self.gazebo_p = subprocess.Popen(
-            "gnome-terminal --disable-factory -e 'src/4.\ rl/src/launch_gazebo.bash'", 
+            "gnome-terminal --disable-factory -- src/4.\ rl/src/launch_gazebo.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True,cwd=wd)
         time.sleep(5)
         self.controller_p = subprocess.Popen(
-            "gnome-terminal --disable-factory -e 'src/4.\ rl/src/launch_controller.bash'", 
+            "gnome-terminal --disable-factory -- src/4.\ rl/src/launch_controller.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True,cwd=wd)
         time.sleep(5)
 
@@ -194,7 +194,7 @@ class CrazyflieEnv:
             state_writer.writerow([
             'k_ep','k_run',
             'alpha_mu','alpha_sig','mu','sigma','reward',
-            't','x','y','z','qx','qy','qz','qw','vx','vy','vz','wx','wy','wz'])
+            't','x','y','z','qx','qy','qz','qw','vx','vy','vz','wx','wy','wz','gamma'])
 
 
     def append_csv(self,agent,state,k_ep,k_run): 

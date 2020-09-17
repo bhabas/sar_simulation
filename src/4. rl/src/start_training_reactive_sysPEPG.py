@@ -11,7 +11,7 @@ from rl_syspepg import rlsysPEPGAgent_reactive
 
 '''
 mu = [5.267,-10.228,-4.713]
-z -> 2.5 3.5 sseems to fail at lower vz
+z -> 2.5 3.5 seems to fail at lower vz
 x -> -0.5 0.5
 
 '''
