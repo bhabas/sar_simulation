@@ -25,7 +25,7 @@ print("Environment done")
 ## Learning rates and agent
 alpha_mu = np.array([[0.1],[0.1],[0.1]])
 alpha_sigma = np.array([[0.05],[0.05],[0.05]])
-agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, gamma=0.95, n_rollout=5)
+agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, gamma=0.95, n_rollout=1)
 
 ## Define initial parameters for gaussian function
 agent.mu = np.array([[5.27], [-10.23],[-4.71]])   # Initial estimates of mu: size (2 x 1)
@@ -40,7 +40,6 @@ h_ceiling = 1.5 # meters
 start_time0 = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
 file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + start_time0 + '.csv'
 env.create_csv(file_name)
-# file_log, sheet = env.create_xls(start_time=start_time0, sigma=agent.sigma, alpha=agent.alpha, file_name=file_name)
 
 ## Initial figure setup
 plt.ion()  # interactive on
@@ -75,7 +74,8 @@ for k_ep in range(1000):
     reward[:] = np.nan  # initialize reward to be NaN array, size n_rollout x 1
     theta_rl, epsilon_rl = agent.get_theta()
     print( "theta_rl = ")
-    np.set_printoptions(precision=3, suppress=True)
+
+    np.set_printoptions(precision=2, suppress=True)
     print(theta_rl[0,:], "--> RREV")
     print(theta_rl[1,:], "--> Gain")
     print(theta_rl[2,:], "--> omega_x Gain")
@@ -89,9 +89,9 @@ for k_ep in range(1000):
     while k_run < 2*agent.n_rollout:
 
             
-        vz_ini = 2.75 + np.random.rand()   # [2.5 , 2.5]
-        vx_ini = -0.5 + np.random.rand()  # [-0.5, 0.5]
-        vy_ini = -0.5 + np.random.rand()
+        vz_ini = 3.25 + np.random.uniform(low=-0.5, high=0.5)   # [2.75, 3.75]
+        vx_ini = 0 + np.random.uniform(low=-0.5, high=0.5)  # [-0.5, 0.5]
+        vy_ini = 0 + np.random.uniform(low=-0.5, high=0.5) # [-0.5, 0.5]
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
         print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
@@ -153,9 +153,10 @@ for k_ep in range(1000):
                 env.enableSticky(1)
 
                 # add term to adjust for tilt 
-                q_d = theta_rl[1,k_run] * RREV + theta_rl[2,k_run]*omega_x*(1-b3y)#sin(r[1]*3.14159/180)
+                q_d = theta_rl[1,k_run]*RREV + theta_rl[2,k_run]*omega_x*(1-b3y)#sin(r[1]*3.14159/180)
                 # torque on x axis to adjust for vy
                 r_d = 0 # theta_rl[3,k_run] * omega_y
+
                 print('----- pitch starts -----')
                 print( 'vz=%.3f, vx=%.3f, vy=%.3f' %(vz, vx,vy))
                 print('r[0] = %.3f, r[1] = %.3f, r[2] = %.3f , b3y = %.3f' %(r[0],r[1],r[2],b3y))
@@ -205,7 +206,7 @@ for k_ep in range(1000):
             else:
                 if k_step%10==0:
                     state_history = np.append(state_history, state2, axis=1)
-                    env.add_xls2(state)
+                    env.append_csv(agent,state,k_ep,k_run)
 
 
             if done_rollout:

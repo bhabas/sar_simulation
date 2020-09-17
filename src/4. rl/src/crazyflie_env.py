@@ -193,17 +193,18 @@ class CrazyflieEnv:
             state_writer = csv.writer(state_file, delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
             state_writer.writerow([
             'k_ep','k_run',
-            'alpha','mu','sigma','reward',
+            'alpha_mu','alpha_sig','mu','sigma','reward',
             't','x','y','z','qx','qy','qz','qw','vx','vy','vz','wx','wy','wz'])
 
 
-    
-    def add_csv(self,state):
+    def append_csv(self,agent,state,k_ep,k_run): 
         with open(self.file_name, mode='a') as state_file:
             state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            state_writer.writerow(state)
-        #df1 = pd.DataFrame(state_history)
-        #df1.to_excel(self.file_name)
+            state_writer.writerow([k_ep,k_run])
+
+
+
+
 
     def create_xls(self, start_time, sigma, alpha, file_name):
         file_log =  xlwt.Workbook()
