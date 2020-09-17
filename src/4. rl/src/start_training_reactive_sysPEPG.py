@@ -37,7 +37,7 @@ agent.sigma_history = copy.copy(agent.sigma)
 h_ceiling = 1.5 # meters
 
 
-start_time0 = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+start_time0 = time.strftime(username + '_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
 file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + start_time0 + '.csv'
 env.create_csv(file_name)
 
