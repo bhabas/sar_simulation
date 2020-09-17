@@ -1,18 +1,18 @@
 import numpy as np
-import socket
+import pandas as pd
+import matplotlib.pyplot as plt
+
+import socket, struct
 from threading import Thread
 import struct
 from queue import Queue
-import matplotlib.pyplot as plt
+
 import time
-import os, subprocess, signal
+import os, subprocess, signal, shlex
 import rospy
-import shlex
-import os
 import csv
 
-# import xlsxwriter
-import pandas as pd
+
 
 class CrazyflieEnv:
     def __init__(self, port_self, port_remote):
@@ -187,21 +187,18 @@ class CrazyflieEnv:
         info = 0
         return self.state_current, reward, done, info
 
-    # def plotFigure(self):
-    #     plt.figure()
-    #     plt.plot(self.path_[0,:],self.path_[8,:], self.path_[0,:],self.path_[9,:], self.path_[0,:],self.path_[10,:])
-    #     plt.show()
-    
-    def create_xls2(self,start_time,file_name):
+    def create_csv(self,file_name):
         self.file_name = file_name
         with open(self.file_name, mode='w') as state_file:
-            state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            state_writer.writerow(['t','x','y','z','qx','qy','qz','qw','vx','vy','vz','wx','wy','wz'])
+            state_writer = csv.writer(state_file, delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            state_writer.writerow([
+            'k_ep','k_run',
+            'alpha','mu','sigma','reward',
+            't','x','y','z','qx','qy','qz','qw','vx','vy','vz','wx','wy','wz'])
 
-        #df1 = pd.DataFrame(['x','y','z','vx','vy','vz','qx','qy','qz','qw','wx','wy','wz'])  
-        #df1.to_excel(self.file_name)    
+
     
-    def add_xls2(self,state):
+    def add_csv(self,state):
         with open(self.file_name, mode='a') as state_file:
             state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             state_writer.writerow(state)

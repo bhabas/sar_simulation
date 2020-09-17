@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import time,copy
-from crazyflie_env import CrazyflieEnv
-from rl_syspepg import rlsysPEPGAgent_reactive
+import time,copy,os
 import matplotlib.pyplot as plt
 from math import sin,cos
-import os
 from scipy.spatial.transform import Rotation as R
+
+from crazyflie_env import CrazyflieEnv
+from rl_syspepg import rlsysPEPGAgent_reactive
+
 '''
 mu = [5.267,-10.228,-4.713]
 z -> 2.5 3.5 sseems to fail at lower vz
@@ -24,7 +25,7 @@ print("Environment done")
 ## Learning rates and agent
 alpha_mu = np.array([[0.1],[0.1],[0.1]])
 alpha_sigma = np.array([[0.05],[0.05],[0.05]])
-agent = rlsysPEPGAgent_reactive(alpha_mu=alpha_mu, alpha_sigma=alpha_sigma, gamma=0.95, n_rollout=5)
+agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, gamma=0.95, n_rollout=5)
 
 ## Define initial parameters for gaussian function
 agent.mu = np.array([[5.27], [-10.23],[-4.71]])   # Initial estimates of mu: size (2 x 1)
@@ -38,8 +39,8 @@ h_ceiling = 1.5 # meters
 
 start_time0 = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
 file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + start_time0 + '.csv'
+env.create_csv(file_name)
 # file_log, sheet = env.create_xls(start_time=start_time0, sigma=agent.sigma, alpha=agent.alpha, file_name=file_name)
-env.create_xls2(start_time=start_time0, file_name=file_name)
 
 ## Initial figure setup
 plt.ion()  # interactive on

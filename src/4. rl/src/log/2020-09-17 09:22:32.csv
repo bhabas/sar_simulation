@@ -1,0 +1,2 @@
+k_ep,k_run,alpha,mu,sigma,reward,t,x,y,z,qx,qy,qz,qw,vx,vy,vz,wx,wy,wz
+1,1,"[0.1,0.1,0.1]","[5,-10.0,1]"
