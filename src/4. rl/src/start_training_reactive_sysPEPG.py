@@ -94,8 +94,8 @@ for k_ep in range(1000):
         vy_ini = 0 + np.random.uniform(low=-0.5, high=0.5) # [-0.5, 0.5]
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
-        print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
-        print("RREV: %.3f \t gain1: %.3f \t gain2: %.3f" %(theta_rl[0,k_run], theta_rl[1,k_run],theta_rl[2,k_run]))
+        print("\n!-------------------Episode:%d Run: %d-----------------!" %(k_ep,k_run))
+        print("RREV: %.3f \t gain1: %.3f \t \t gain2: %.3f" %(theta_rl[0,k_run], theta_rl[1,k_run],theta_rl[2,k_run]))
         print("Vz_ini: %.3f \t Vx_ini: %.3f \t Vy_ini: %.3f" %(vz_ini, vx_ini, vy_ini))
 
         state = env.reset()
@@ -170,14 +170,14 @@ for k_ep in range(1000):
 
             ## If time since triggered pitch exceeds [0.7s]   
             if pitch_triggered and ((env.getTime()-start_time_pitch) > 0.7):
-                print("Rollout Completed: Pitch Triggered")
-                print("Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch)))
+                # print("Rollout Completed: Pitch Triggered")
+                # print("Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch)))
                 done_rollout = True
 
             ## If time since rollout start exceeds [1.5s]
             if (env.getTime() - start_time_rollout) > 1.5:
-                print("Rollout Completed: Time Exceeded")
-                print("Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout)))
+                # print("Rollout Completed: Time Exceeded")
+                # print("Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout)))
                 done_rollout = True
             
            ## If nan is found in state vector repeat sim run
