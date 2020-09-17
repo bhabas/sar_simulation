@@ -15,10 +15,10 @@ x -> -0.5 0.5
 
 '''
 # Enter username here ********
-username = "bader"
+username = "bhabas"
 
 ## Initialize the environment
-env = CrazyflieEnv(port_self=18050, port_remote=18060,username=username)
+env = CrazyflieEnv(port_self=18050, port_remote=18060)
 print("Environment done")
 
 ## Learning rates and agent

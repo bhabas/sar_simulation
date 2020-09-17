@@ -8,16 +8,15 @@ import time
 import os, subprocess, signal
 import rospy
 import shlex
-
+import os
 import csv
 
-import xlsxwriter
+# import xlsxwriter
 import pandas as pd
 
 class CrazyflieEnv:
-    def __init__(self, port_self, port_remote,username):
+    def __init__(self, port_self, port_remote):
         print("Init CrazyflieEnv")
-        self.username = username
         rospy.init_node("crazyflie_env_node",anonymous=True)
         self.launch_sim()
         
@@ -85,13 +84,14 @@ class CrazyflieEnv:
         #     close_fds=True, preexec_fn=os.setsid)
         # time.sleep(5)     
 
+        wd = os.getcwd()
         self.gazebo_p = subprocess.Popen(
-            "gnome-terminal --disable-factory -e '/home/"+self.username+"/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_gazebo.bash'", 
-            close_fds=True, preexec_fn=os.setsid, shell=True)
+            "gnome-terminal --disable-factory -e 'src/4.\ rl/src/launch_gazebo.bash'", 
+            close_fds=True, preexec_fn=os.setsid, shell=True,cwd=wd)
         time.sleep(5)
         self.controller_p = subprocess.Popen(
-            "gnome-terminal --disable-factory -e '/home/"+self.username+"/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_controller.bash'", 
-            close_fds=True, preexec_fn=os.setsid, shell=True)
+            "gnome-terminal --disable-factory -e 'src/4.\ rl/src/launch_controller.bash'", 
+            close_fds=True, preexec_fn=os.setsid, shell=True,cwd=wd)
         time.sleep(5)
 
     def pause(self): #Pause simulation
