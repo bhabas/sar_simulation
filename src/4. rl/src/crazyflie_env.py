@@ -193,14 +193,28 @@ class CrazyflieEnv:
             state_writer = csv.writer(state_file, delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
             state_writer.writerow([
             'k_ep','k_run',
-            'alpha_mu','alpha_sig','mu','sigma','reward',
-            't','x','y','z','qx','qy','qz','qw','vx','vy','vz','wx','wy','wz','gamma'])
+            'alpha_mu','alpha_sig',
+            'mu','sigma',
+            't','x','y','z',
+            'qx','qy','qz','qw',
+            'vx','vy','vz',
+            'wx','wy','wz',
+            'gamma','reward'])
 
 
     def append_csv(self,agent,state,k_ep,k_run): 
         with open(self.file_name, mode='a') as state_file:
             state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            state_writer.writerow([k_ep,k_run])
+            state_writer.writerow([
+                k_ep,k_run,
+                agent.alpha_mu.T,agent.alpha_sigma.T,
+                agent.mu.T,agent.sigma.T,
+                state[0],state[1],state[2],state[3], # t,x,y,z
+                state[4], state[5], state[6], state[7], # qx,qy,qz,qw
+                state[8], state[9],state[10], # vx,vy,vz
+                state[11],state[12],state[13], # wx,wy,wz
+                agent.gamma
+                ])
 
 
 
