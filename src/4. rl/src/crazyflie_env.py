@@ -86,11 +86,11 @@ class CrazyflieEnv:
 
         wd = os.getcwd()
         self.gazebo_p = subprocess.Popen(
-            "gnome-terminal --disable-factory -e 'src/4.\ rl/src/launch_gazebo.bash'", 
+            "gnome-terminal --disable-factory -- src/4.\ rl/src/launch_gazebo.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True,cwd=wd)
         time.sleep(5)
         self.controller_p = subprocess.Popen(
-            "gnome-terminal --disable-factory -e 'src/4.\ rl/src/launch_controller.bash'", 
+            "gnome-terminal --disable-factory -- src/4.\ rl/src/launch_controller.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True,cwd=wd)
         time.sleep(5)
 
@@ -193,17 +193,18 @@ class CrazyflieEnv:
             state_writer = csv.writer(state_file, delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
             state_writer.writerow([
             'k_ep','k_run',
-            'alpha','mu','sigma','reward',
-            't','x','y','z','qx','qy','qz','qw','vx','vy','vz','wx','wy','wz'])
+            'alpha_mu','alpha_sig','mu','sigma','reward',
+            't','x','y','z','qx','qy','qz','qw','vx','vy','vz','wx','wy','wz','gamma'])
 
 
-    
-    def add_csv(self,state):
+    def append_csv(self,agent,state,k_ep,k_run): 
         with open(self.file_name, mode='a') as state_file:
             state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            state_writer.writerow(state)
-        #df1 = pd.DataFrame(state_history)
-        #df1.to_excel(self.file_name)
+            state_writer.writerow([k_ep,k_run])
+
+
+
+
 
     def create_xls(self, start_time, sigma, alpha, file_name):
         file_log =  xlwt.Workbook()
