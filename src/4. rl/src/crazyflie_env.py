@@ -205,7 +205,8 @@ class CrazyflieEnv:
             'qx','qy','qz','qw',
             'vx','vy','vz',
             'wx','wy','wz',
-            'gamma','reward',
+            'gamma','reward','reward_avg',
+            "","","","","","","","", # Place holders
             'error'])
 
 
@@ -220,7 +221,8 @@ class CrazyflieEnv:
                 state[4], state[5], state[6], state[7], # qx,qy,qz,qw
                 state[8], state[9],state[10], # vx,vy,vz
                 state[11],state[12],state[13], # wx,wy,wz
-                agent.gamma,np.around(reward,2),
+                agent.gamma,np.around(reward,2),"",
+                "","","","","","","","", # Place holders
                 error])
 
 

@@ -4,6 +4,7 @@ import numpy as np
 import time,copy,os
 import matplotlib.pyplot as plt
 from math import sin,cos
+from numpy.core.fromnumeric import repeat
 from scipy.spatial.transform import Rotation as R
 
 from crazyflie_env import CrazyflieEnv
@@ -56,6 +57,8 @@ plt.show()
 # ============================
 for k_ep in range(1000):
 
+    # os.system("python3 start_training_reactive_sysPEPG > output.txt")
+
     print("=============================================")
     print("STARTING Episode # %d" %k_ep)
     print("=============================================")
@@ -85,8 +88,8 @@ for k_ep in range(1000):
     # ============================
     k_run = 0
     while k_run < 2*agent.n_rollout:
-        
-
+              
+        repeat_run= False
         error_str = ""
 
         vz_ini = 3.25 + np.random.uniform(low=-0.5, high=0.5)   # [2.75, 3.75]
@@ -205,7 +208,8 @@ for k_ep in range(1000):
                 env.close_sim()
                 env.launch_sim()
                 error_str = "Error: NAN found in state vector"
-                k_run -= 1 # Repeat this run
+                repeat_run = True
+                break
 
             
             if (np.abs(position[0]) > 1.0) or (np.abs(position[1]) > 1.0):
@@ -245,7 +249,11 @@ for k_ep in range(1000):
         
         env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run,reward[k_run,0],error=error_str)
         env.append_csv_blank()
-        k_run = k_run + 1
+
+        if repeat_run == True:
+            k_run = k_run # Repeat run w/ same parameters
+        else:
+            k_run += 1 # Move on to next run
 
 
     if not any( np.isnan(reward) ):
@@ -256,8 +264,4 @@ for k_ep in range(1000):
         plt.draw()
         plt.pause(0.001)
 
-        # env.add_record_xls(file_log=file_log, sheet=sheet, file_name=file_name,
-        #     k_ep=k_ep, start_time1=start_time11, start_time2=start_time12,
-        #     vz_ini=vz_ini, vx_ini=vx_ini, state=state, action=action[0],
-        #     reward=reward, info=info, theta=theta)
 
