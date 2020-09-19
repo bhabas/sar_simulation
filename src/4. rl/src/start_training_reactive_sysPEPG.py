@@ -29,7 +29,7 @@ alpha_sigma = np.array([[0.05],[0.05],[0.05]])
 ## Initial parameters for gaussian function
 mu = np.array([[2.5],[-5.0],[0.0]])   # Initial estimates of mu: 
 sigma = np.array([[1.0],[1.0],[1.0]])      # Initial estimates of sigma: 
-agent = rlsysPEPGAgent_reactive(alpha_mu,alpha_sigma, mu,sigma, gamma=0.95,n_rollout=3)
+agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=3)
 
 
 h_ceiling = 1.5 # meters
@@ -85,10 +85,10 @@ for k_ep in range(1000):
     # ============================
     k_run = 0
     while k_run < 2*agent.n_rollout:
+        
 
         error_str = ""
 
-            
         vz_ini = 3.25 + np.random.uniform(low=-0.5, high=0.5)   # [2.75, 3.75]
         vx_ini = 0# + np.random.uniform(low=-0.5, high=0.5)  # [-0.5, 0.5]
         vy_ini = 0# + np.random.uniform(low=-0.5, high=0.5) # [-0.5, 0.5]
@@ -105,8 +105,8 @@ for k_ep in range(1000):
         start_time_rollout = env.getTime()
         start_time_pitch = None
         pitch_triggered = False
-        state_history = None
         
+        state_history = None
         env.logDataFlag = True
 
         # ============================
@@ -147,7 +147,9 @@ for k_ep in range(1000):
             #print(r)
             theta = np.arcsin( -2*(qx*qz-qw*qy) ) # obtained from matlab "edit quat2eul.m"
 
-            ## Enable sticky feet and rotation
+            # ============================
+            ##    Pitch Criteria 
+            # ============================
             if (RREV > RREV_trigger) and (pitch_triggered == False):
                 start_time_pitch = env.getTime()
                 env.enableSticky(1)
@@ -175,31 +177,42 @@ for k_ep in range(1000):
 
             ## If time since triggered pitch exceeds [0.7s]   
             if pitch_triggered and ((env.getTime()-start_time_pitch) > 0.7):
-                # print("Rollout Completed: Pitch Triggered")
-                # print("Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch)))
+                # I don't like this formatting, feel free to improve on
+                error_1 = "Rollout Completed: Pitch Triggered  "
+                error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch))
+                # print(error_1 + "\n" + error_2)
+
+                error_str = error_1 + error_2
                 done_rollout = True
 
             ## If time since rollout start exceeds [1.5s]
             if (env.getTime() - start_time_rollout) > 1.5:
-                # print("Rollout Completed: Time Exceeded")
-                # print("Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout)))
+                error_1 = "Rollout Completed: Time Exceeded   "
+                error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
+                # print(error_1 + "\n" + error_2)
+
+                error_str = error_1 + error_2
                 done_rollout = True
             
-           ## If nan is found in state vector repeat sim run
+
+            # ============================
+            ##          Errors  
+            # ============================
+            ## If nan is found in state vector repeat sim run
             if any(np.isnan(state)): # gazebo sim becomes unstable, relaunch simulation
                 print("NAN found in state vector")
                 env.logDataFlag = False
                 env.close_sim()
                 env.launch_sim()
-                error_str = "Error: NAN found"
-                if k_run > 0:
-                    k_run -= 1
-                break
+                error_str = "Error: NAN found in state vector"
+                k_run -= 1 # Repeat this run
+
             
             if (np.abs(position[0]) > 1.0) or (np.abs(position[1]) > 1.0):
-                print("Reset improperly!!!!!")
+                print("Reset improperly/Position outside bounding box")
                 # env.pause()
                 env.logDataFlag = False
+                error_str = "Reset improperly/Position outside bounding box"
                 break
             
             ## Keep record of state vector every 10 time steps
@@ -222,21 +235,17 @@ for k_ep in range(1000):
                 print("!------------------------End Run------------------------! \n")
                 ## Episode Plotting
                 plt.plot(k_ep,reward[k_run],marker = "_", color = "black", alpha = 0.5) 
-                plt.title("Episode: %d Run: %d # Rollouts: %d" %(k_ep, k_run+1,agent.n_rollout))
+                plt.title("Episode: %d Run: %d # Rollouts: %d" %(k_ep,k_run+1,agent.n_rollout))
                 # If figure gets locked on fullscreen, press ctrl+f untill it's fixed (there's lag due to process running)
                 plt.draw()
                 plt.pause(0.001)
-                # fig.canvas.flush_events()
-                
-                env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run,reward[k_run])
-                k_run = k_run + 1
-                #print( 'x=%.3f, y=%.3f, z=%.3f' %(position[0], position[1], position[2]) )
+                # fig.canvas.flush_events()                
                 break
         
-        env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run,reward[k_run],error_str)
-
-
-
+        
+        env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run,reward[k_run,0],error=error_str)
+        env.append_csv_blank()
+        k_run = k_run + 1
 
 
     if not any( np.isnan(reward) ):

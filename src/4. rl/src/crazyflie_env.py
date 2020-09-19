@@ -220,5 +220,11 @@ class CrazyflieEnv:
                 state[4], state[5], state[6], state[7], # qx,qy,qz,qw
                 state[8], state[9],state[10], # vx,vy,vz
                 state[11],state[12],state[13], # wx,wy,wz
-                agent.gamma,reward,
+                agent.gamma,np.around(reward,2),
                 error])
+
+
+    def append_csv_blank(self): 
+        with open(self.file_name, mode='a') as state_file:
+            state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            state_writer.writerow([])
