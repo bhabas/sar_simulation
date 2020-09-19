@@ -106,7 +106,7 @@ class CrazyflieEnv:
     def reset(self): #Spends 2 seconds resetting the world and 3 seconds waiting after that
         self.enableSticky(0)
         os.system("rosservice call gazebo/reset_world")
-        time.sleep(1)
+        time.sleep(2)
         return self.state_current
     
     def recvThread(self):
@@ -171,8 +171,11 @@ class CrazyflieEnv:
             header = 3
         elif action['type'] == 'rate':
             header = 4
+        elif action['type'] == 'stop':
+            header = 5
         else:
             print("no such action")
+
         x = action['x']
         y = action['y']
         z = action['z']
@@ -196,7 +199,7 @@ class CrazyflieEnv:
         self.file_name = file_name
         with open(self.file_name, mode='w') as state_file:
             state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            state_writer.writerow(['t','x','y','z','qx','qy','qz','qw','vx','vy','vz','wx','wy','wz'])
+            state_writer.writerow(['t','x','y','z','qx','qy','qz','qw','vx','vy','vz','wx','wy','wz','eul1','eul2','eul3'])
 
         #df1 = pd.DataFrame(['x','y','z','vx','vy','vz','qx','qy','qz','qw','wx','wy','wz'])  
         #df1.to_excel(self.file_name)    
