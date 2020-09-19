@@ -3,7 +3,7 @@ import copy
 import scipy.io
 from scipy.spatial.transform import Rotation
 import matplotlib.pyplot as plt
-
+from math import asin
 class rlsysPEPGAgent_reactive:
     def __init__(self, alpha_mu, alpha_sigma, gamma=0.95, n_rollout = 6):
         self.alpha_mu, self.alpha_sigma,  = alpha_mu, alpha_sigma
@@ -33,14 +33,14 @@ class rlsysPEPGAgent_reactive:
                 R = Rotation.from_quat(quat[:,k_quat])
                 b3 = R.as_matrix()[:,2] # body z-axis
 
-                r2[k_quat] = np.dot(b3, np.array([0,0,-1]))
+                r2[k_quat] = asin(np.dot(b3, np.array([0,0,-1])))
                 #if (r2[k_quat]>0.8) and (z[k_quat] > 0.8*h_ceiling):  # further incentivize when b3 is very close to -z axis
                 #    r2[k_quat] = r2[k_quat]*5
-                if z[k_quat] < 0.7*h_ceiling:
+                if z[k_quat] < 0.3*h_ceiling:
                     r2[k_quat] = 0
             
-            r = r1 + r2
-            #r = np.multiply(r1,r2)/100.0
+            #r = r1 + r2
+            r = np.multiply(r1,r2)
             #print(r)
             r_cum = np.zeros_like(r)
             r_cum1 = np.zeros_like(r1)
@@ -61,7 +61,7 @@ class rlsysPEPGAgent_reactive:
             #print(r_cum1[-1],r_cum2[-1])
             #r_cum2[-1] = r_cum2[-1]*float(z[-1] > 1.2)
             if r_cum.size > 0:
-                cum = r_cum1[-1]*r_cum2[-1]
+                cum = r_cum1[-1]*(r_cum2[-1])
                 print(cum)
                 return 600 + 550 + cum # float(z[-1]>1.2)*cum
                 # max 1150 min -550 -> 0 - 1700
@@ -85,10 +85,10 @@ class rlsysPEPGAgent_reactive:
                 theta[0,k_n] = 0.001
             if theta[1,k_n] > 0:
                 theta[1,k_n] = 0
-            #if theta[2,k_n] > 0:
-            #    theta[1,k_n] = 0
-            #if theta[3,k_n] < 0:
-            #    theta[1,k_n] = 0
+            '''if theta[2,k_n] > 0:
+                theta[1,k_n] = 0
+            if theta[3,k_n] < 0:
+                theta[1,k_n] = 0'''
 
         return theta, epsilon
 
@@ -106,7 +106,7 @@ class rlsysPEPGAgent_reactive:
         reward_minus = reward[self.n_rollout:]
         epsilon = epsilon
         b = self.get_baseline(span=3)
-        m_reward = 2300      # max reward
+        m_reward = 3000#2300      # max reward
 
         ## Decaying Learning Rate:
         #self.alpha_mu = self. * 0.9

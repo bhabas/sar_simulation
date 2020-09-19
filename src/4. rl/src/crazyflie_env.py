@@ -106,6 +106,7 @@ class CrazyflieEnv:
     def reset(self): #Spends 2 seconds resetting the world and 3 seconds waiting after that
         self.enableSticky(0)
         os.system("rosservice call gazebo/reset_world")
+        self.enableSticky(0)
         time.sleep(2)
         return self.state_current
     

@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from math import sin,cos
 import os
 from scipy.spatial.transform import Rotation
+from math import asin
 '''
 RREV=5.240, 	 theta1=-10.250, 	 theta2=-5.206, 	 theta3=5.622
 sig1=0.008, 	 sig2=0.001, 	 sig3=0.377, 	 sig2=0.001,
@@ -24,7 +25,18 @@ RREV=5.342, 	 theta1=-10.186, 	 theta2=-5.303, 	 theta3=5.870
 sig1=0.001, 	 sig2=0.010, 	 sig3=0.026, 	 sig2=0.598,
 adjusted + 40 reward
 '''
+'''
+alpha_mu = np.array([[0.1],[0.1],[0.2] ,[0.2]])
+alpha_sigma = np.array([[0.1],[0.1],[0.1],[0.1]])
+agent = rlsysPEPGAgent_reactive(alpha_mu=alpha_mu, alpha_sigma=alpha_sigma, gamma=0.95, n_rollout=5)
 
+## Define initial parameters for gaussian function
+agent.mu = np.array([[5.0], [-10.0],[-5.21],[5.6]])   # Initial estimates of mu: size (2 x 1)
+agent.sigma = np.array([[1.0], [1.0],[0.25],[0.25]])      # Initial estimates of sigma: size (2 x 1)
+agent.mu_history = copy.copy(agent.mu)  # Creates another array of self.mu_ and attaches it to self.mu_history_
+agent.sigma_history = copy.copy(agent.sigma)
+
+'''
 
 '''
 mu = [5.267,-10.228,-4.713]
@@ -40,13 +52,13 @@ env = CrazyflieEnv(port_self=18050, port_remote=18060,username=username)
 print("Environment done")
 
 ## Learning rates and agent
-alpha_mu = np.array([[0.1],[0.1] ]) #,[0.2] ,[0.2]])
-alpha_sigma = np.array([[0.1],[0.1] ])#,[0.1],[0.1]])
+alpha_mu = np.array([[0.1],[0.1] ]) #,[0.8] ,[0.8]])
+alpha_sigma = np.array([[0.05],[0.05] ]) #,[0.03],[0.03]])
 agent = rlsysPEPGAgent_reactive(alpha_mu=alpha_mu, alpha_sigma=alpha_sigma, gamma=0.95, n_rollout=5)
 
 ## Define initial parameters for gaussian function
-agent.mu = np.array([[5.0], [-10.0] ])#,[-5.21],[5.6]])   # Initial estimates of mu: size (2 x 1)
-agent.sigma = np.array([[1.0], [1.0] ])#,[0.25],[0.25]])      # Initial estimates of sigma: size (2 x 1)
+agent.mu = np.array([[3.5], [-5.0] ])#,[-6.0],[7.0]])   # Initial estimates of mu: size (2 x 1)
+agent.sigma = np.array([[2.0], [3.0] ]) #,[0.5],[0.5]])      # Initial estimates of sigma: size (2 x 1)
 agent.mu_history = copy.copy(agent.mu)  # Creates another array of self.mu_ and attaches it to self.mu_history_
 agent.sigma_history = copy.copy(agent.sigma)
 
@@ -63,8 +75,8 @@ file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src
 plt.ion()  # interactive on
 fig = plt.figure()
 plt.grid()
-plt.xlim([-1,50])
-plt.ylim([-1,2500])
+plt.xlim([-1,20])
+plt.ylim([-1,3000])
 plt.xlabel("Episode")
 plt.ylabel("Reward")
 plt.title("Episode: %d Run: %d" %(0,0))
@@ -95,8 +107,8 @@ for k_ep in range(1000):
     np.set_printoptions(precision=3, suppress=True)
     print(theta_rl[0,:], "--> RREV")
     print(theta_rl[1,:], "--> Gain")
-    print(theta_rl[1,:], "--> omega_x Gain")
-    print(theta_rl[1,:], "--> omega_y Gain")
+    #print(theta_rl[2,:], "--> omega_x Gain")
+    #print(theta_rl[3,:], "--> omega_y Gain")
 
     ct = env.getTime()
 
@@ -108,8 +120,8 @@ for k_ep in range(1000):
 
             
         vz_ini = 3.0 + np.random.rand()   # [2.5 , 2.5]
-        vx_ini = -0.5 + np.random.rand()  # [-0.5, 0.5]
-        vy_ini = -0.5 + np.random.rand()
+        vx_ini = (-0.5 + np.random.rand())*2.0  # [-0.5, 0.5]
+        vy_ini = (-0.5 + np.random.rand())*2.0
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
         '''
@@ -127,6 +139,9 @@ for k_ep in range(1000):
         print("Vz_ini: %.3f \t Vx_ini: %.3f \t Vy_ini: %.3f" %(vz_ini, vx_ini, vy_ini))
 
         state = env.reset()
+        print(state[2],state[3])
+        if abs(state[2]) > 0.1 or abs(state[3]) > 0.1:
+            state = env.reset()
         #action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
         #env.step(action)
 
@@ -202,9 +217,9 @@ for k_ep in range(1000):
                 env.enableSticky(1)
 
                 # add term to adjust for tilt 
-                q_d = theta_rl[1,k_run] * RREV #+ theta_rl[2,k_run]*omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
+                q_d = theta_rl[1,k_run] * RREV # + theta_rl[2,k_run]*omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
                 # torque on x axis to adjust for vy
-                r_d = 0.0#theta_rl[3,k_run] * omega_y
+                r_d = 0.0 #theta_rl[3,k_run] * omega_y
                 print('----- pitch starts -----')
                 print( 'vz=%.3f, vx=%.3f, vy=%.3f' %(vz, vx,vy))
                 print('r[0] = %.3f, r[1] = %.3f, r[2] = %.3f , b3y = %.3f' %(r[0],r[1],r[2],b3y))
@@ -232,6 +247,7 @@ for k_ep in range(1000):
             if any(np.isnan(state)): # gazebo sim becomes unstable, relaunch simulation
                 print("NAN found in state vector")
                 print(state)
+                time.sleep(20)
                 env.logDataFlag = False
                 env.close_sim()
                 env.launch_sim()
