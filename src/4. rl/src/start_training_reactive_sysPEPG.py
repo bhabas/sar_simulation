@@ -7,7 +7,25 @@ from rl_syspepg import rlsysPEPGAgent_reactive
 import matplotlib.pyplot as plt
 from math import sin,cos
 import os
-from scipy.spatial.transform import Rotation as R
+from scipy.spatial.transform import Rotation
+'''
+RREV=5.240, 	 theta1=-10.250, 	 theta2=-5.206, 	 theta3=5.622
+sig1=0.008, 	 sig2=0.001, 	 sig3=0.377, 	 sig2=0.001,
+alpha_mu = np.array([[0.3],[0.3],[0.1],[0.2]])
+alpha_sigma = np.array([[0.2],[0.2],[0.05],[0.1]])
+agent = rlsysPEPGAgent_reactive(alpha_mu=alpha_mu, alpha_sigma=alpha_sigma, gamma=0.95, n_rollout=5)
+
+## Define initial parameters for gaussian function
+agent.mu = np.array([[5.27], [-10.23],[-4.71],[5.0]])   # Initial estimates of mu: size (2 x 1)
+agent.sigma = np.array([[0.5], [0.5],[0.5],[1.0]]) 
+reward max 60
+
+RREV=5.342, 	 theta1=-10.186, 	 theta2=-5.303, 	 theta3=5.870
+sig1=0.001, 	 sig2=0.010, 	 sig3=0.026, 	 sig2=0.598,
+adjusted + 40 reward
+'''
+
+
 '''
 mu = [5.267,-10.228,-4.713]
 z -> 2.5 3.5 sseems to fail at lower vz
@@ -22,13 +40,13 @@ env = CrazyflieEnv(port_self=18050, port_remote=18060,username=username)
 print("Environment done")
 
 ## Learning rates and agent
-alpha_mu = np.array([[0.1],[0.1],[0.1]])
-alpha_sigma = np.array([[0.05],[0.05],[0.05]])
+alpha_mu = np.array([[0.1],[0.1] ]) #,[0.2] ,[0.2]])
+alpha_sigma = np.array([[0.1],[0.1] ])#,[0.1],[0.1]])
 agent = rlsysPEPGAgent_reactive(alpha_mu=alpha_mu, alpha_sigma=alpha_sigma, gamma=0.95, n_rollout=5)
 
 ## Define initial parameters for gaussian function
-agent.mu = np.array([[5.27], [-10.23],[-4.71]])   # Initial estimates of mu: size (2 x 1)
-agent.sigma = np.array([[0.5], [0.5],[0.5]])      # Initial estimates of sigma: size (2 x 1)
+agent.mu = np.array([[5.0], [-10.0] ])#,[-5.21],[5.6]])   # Initial estimates of mu: size (2 x 1)
+agent.sigma = np.array([[1.0], [1.0] ])#,[0.25],[0.25]])      # Initial estimates of sigma: size (2 x 1)
 agent.mu_history = copy.copy(agent.mu)  # Creates another array of self.mu_ and attaches it to self.mu_history_
 agent.sigma_history = copy.copy(agent.sigma)
 
@@ -39,14 +57,14 @@ h_ceiling = 1.5 # meters
 start_time0 = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
 file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + start_time0 + '.csv'
 # file_log, sheet = env.create_xls(start_time=start_time0, sigma=agent.sigma, alpha=agent.alpha, file_name=file_name)
-env.create_xls2(start_time=start_time0, file_name=file_name)
+#env.create_xls2(start_time=start_time0, file_name=file_name)
 
 ## Initial figure setup
 plt.ion()  # interactive on
 fig = plt.figure()
 plt.grid()
-plt.xlim([-10,100])
-plt.ylim([0,150])
+plt.xlim([-1,50])
+plt.ylim([-1,2500])
 plt.xlabel("Episode")
 plt.ylabel("Reward")
 plt.title("Episode: %d Run: %d" %(0,0))
@@ -65,8 +83,8 @@ for k_ep in range(1000):
     print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
     mu = agent.mu
     sigma = agent.sigma
-    print("RREV=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1],mu[2]))
-    print("sig1=%.3f, \t sig2=%.3f, \t sig3=%.3f" %(sigma[0], sigma[1],sigma[2]))
+    print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1],mu[1],mu[1]))
+    print("sig1=%.3f, \t sig2=%.3f, \t sig3=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1],sigma[1],sigma[1]))
     print()
 
     done = False
@@ -77,7 +95,8 @@ for k_ep in range(1000):
     np.set_printoptions(precision=3, suppress=True)
     print(theta_rl[0,:], "--> RREV")
     print(theta_rl[1,:], "--> Gain")
-    print(theta_rl[2,:], "--> omega_x Gain")
+    print(theta_rl[1,:], "--> omega_x Gain")
+    print(theta_rl[1,:], "--> omega_y Gain")
 
     ct = env.getTime()
 
@@ -88,16 +107,28 @@ for k_ep in range(1000):
     while k_run < 2*agent.n_rollout:
 
             
-        vz_ini = 2.75 + np.random.rand()   # [2.5 , 2.5]
+        vz_ini = 3.0 + np.random.rand()   # [2.5 , 2.5]
         vx_ini = -0.5 + np.random.rand()  # [-0.5, 0.5]
         vy_ini = -0.5 + np.random.rand()
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
+        '''
+        vx        vy       vz         suceess?
+          1   |  1    |   3      |       yes (off by .2)
+          -1  |  1    |   3      |      sometimes rests improperly (off by .2)
+          -1  |  -1   |   3      |       more unstable(off by .2)
+         1    |  -1   |   3      |       yes (off by .2)
+
+
+
+        '''
         print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
-        print("RREV: %.3f \t gain1: %.3f \t gain2: %.3f" %(theta_rl[0,k_run], theta_rl[1,k_run],theta_rl[2,k_run]))
+        print("RREV: %.3f \t gain1: %.3f \t gain2: %.3f \t gain3: %.3f" %(theta_rl[0,k_run], theta_rl[1,k_run],theta_rl[1,k_run],theta_rl[1,k_run]))
         print("Vz_ini: %.3f \t Vx_ini: %.3f \t Vy_ini: %.3f" %(vz_ini, vx_ini, vy_ini))
 
         state = env.reset()
+        #action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
+        #env.step(action)
 
         k_step = 0
         done_rollout = False
@@ -106,6 +137,8 @@ for k_ep in range(1000):
         pitch_triggered = False
         state_history = None
         
+        flip_flag = False
+
         env.logDataFlag = True
 
         # ============================
@@ -139,12 +172,29 @@ for k_ep in range(1000):
             qy = orientation_q[2]
             qz = orientation_q[3]
 
-            r = R.from_quat([qx,qy,qz,qw])
-            b3 = r.as_matrix()[:,2] # body z-axis
-            b3y =  np.dot(b3, np.array([0,0,1]))
-            r = r.as_euler('zyx', degrees=True)
+            R = Rotation.from_quat([qx,qy,qz,qw])
+            R = R.as_matrix()
+            angle = R[1,1]
+            b3 = R[2,:]
+            #print(angle, b3[0],b3[1],b3[2])
+            if b3[2] < 0.0 and not flip_flag:
+                #print(angle)
+                action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
+                env.step(action)
+                print("Flipped!! Shut motors")
+                flip_flag = True
+            
+            #b3 = r.as_matrix()[:,2] # body z-axis
+            #b3y =  np.dot(b3, np.array([0,0,1]))
+            b3y=0
+            r = [0,0,0]#r.as_euler('zyx', degrees=True)
+            eul1,eul2,eul3 = r[0],r[1],r[2]
             #print(r)
             theta = np.arcsin( -2*(qx*qz-qw*qy) ) # obtained from matlab "edit quat2eul.m"
+
+            if not pitch_triggered and k_step % 10 == 0:
+                pass
+                #env.add_xls2(np.append(state,[eul1,eul2,eul3]))
 
             ## Enable sticky feet and rotation
             if (RREV > RREV_trigger) and (pitch_triggered == False):
@@ -152,9 +202,9 @@ for k_ep in range(1000):
                 env.enableSticky(1)
 
                 # add term to adjust for tilt 
-                q_d = theta_rl[1,k_run] * RREV + theta_rl[2,k_run]*omega_x*(1-b3y)#sin(r[1]*3.14159/180)
+                q_d = theta_rl[1,k_run] * RREV #+ theta_rl[2,k_run]*omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
                 # torque on x axis to adjust for vy
-                r_d = 0 # theta_rl[3,k_run] * omega_y
+                r_d = 0.0#theta_rl[3,k_run] * omega_y
                 print('----- pitch starts -----')
                 print( 'vz=%.3f, vx=%.3f, vy=%.3f' %(vz, vx,vy))
                 print('r[0] = %.3f, r[1] = %.3f, r[2] = %.3f , b3y = %.3f' %(r[0],r[1],r[2],b3y))
@@ -181,6 +231,7 @@ for k_ep in range(1000):
            ## If nan is found in state vector repeat sim run
             if any(np.isnan(state)): # gazebo sim becomes unstable, relaunch simulation
                 print("NAN found in state vector")
+                print(state)
                 env.logDataFlag = False
                 env.close_sim()
                 env.launch_sim()
@@ -188,7 +239,7 @@ for k_ep in range(1000):
                     k_run = k_run - 1
                 break
             
-            if (np.abs(position[0]) > 1.0) or (np.abs(position[1]) > 1.0):
+            if (np.abs(position[0]) > 3.0) or (np.abs(position[1]) > 3.0):
                 print("Reset improperly!!!!!")
                 # env.pause()
                 env.logDataFlag = False
@@ -204,10 +255,11 @@ for k_ep in range(1000):
             else:
                 if k_step%10==0:
                     state_history = np.append(state_history, state2, axis=1)
-                    env.add_xls2(state)
 
 
             if done_rollout:
+                action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
+                env.step(action)
                 env.logDataFlag = False
                 reward[k_run] = agent.calculate_reward(state=state_history, h_ceiling=h_ceiling)
                 print("Reward = %d" %(reward[k_run]))
@@ -228,7 +280,7 @@ for k_ep in range(1000):
     if not any( np.isnan(reward) ):
         print("Episode # %d training, average reward %.3f" %(k_ep, np.mean(reward)))
         agent.train(theta_rl,reward,epsilon_rl)
-
+        print(reward)
         plt.plot(k_ep,np.mean(reward),'ro')
         plt.draw()
         plt.pause(0.001)
