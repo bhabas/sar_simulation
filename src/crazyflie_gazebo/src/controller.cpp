@@ -192,9 +192,9 @@ void Controller::controlThread()
                                 {0.25,  7.6859225,  -7.6859225, 41.914296},  {0.25, -7.6859225, 7.6859225,  41.914296}};    // calculated by Matlab
     double J[3][3] = {{1.65717e-05, 0, 0}, {0, 1.66556e-05, 0}, {0, 0, 2.92617e-05}};
 
-    double f_thrust;
+    double f_thrust =0;
     double f_hover = (0.025 + 0.00075*4)*9.8066;
-    double tau[3];
+    double tau[3] =  {0,0,0};
     double FT[4];
     double f[4];
     double motorspeed_square[4];
@@ -327,7 +327,7 @@ void Controller::controlThread()
             else
             {
                 omega_d[0] = control_cmd[1];    omega_d[1] = control_cmd[2];    omega_d[2] = control_cmd[3];
-                omega_d[0] = omega[0]; omega_d[2] = omega[2]; // so doesnt try to correct itself
+                omega_d[0] = omega[0] + control_cmd[1] ; omega_d[2] = omega[2] + control_cmd[3]; // so doesnt try to correct itself
                 e_R[0]=0; e_R[1]=0; e_R[2]=0;
                 math::matAddsMat(e_omega, omega, omega_d, 3, 2);            // e_omega = omega - omega_d
             }
