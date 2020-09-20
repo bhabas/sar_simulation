@@ -4,8 +4,9 @@ import numpy as np
 import time,copy,os
 import matplotlib.pyplot as plt
 from math import sin,cos
+import os
+from scipy.spatial.transform import Rotation
 from numpy.core.fromnumeric import repeat
-from scipy.spatial.transform import Rotation as R
 
 from crazyflie_env import CrazyflieEnv
 from rl_syspepg import rlsysPEPGAgent_reactive
@@ -16,12 +17,27 @@ z -> 2.5 3.5 seems to fail at lower vz
 x -> -0.5 0.5
 
 '''
+
+'''
+## Learning rates and agent
+alpha_mu = np.array([[0.1],[0.1] ]) #,[0.8] ,[0.8]])
+alpha_sigma = np.array([[0.05],[0.05] ]) #,[0.03],[0.03]])
+agent = rlsysPEPGAgent_reactive(alpha_mu=alpha_mu, alpha_sigma=alpha_sigma, gamma=0.95, n_rollout=5)
+
+## Define initial parameters for gaussian function
+agent.mu = np.array([[3.5], [-5.0] ])#,[-6.0],[7.0]])   # Initial estimates of mu: size (2 x 1)
+agent.sigma = np.array([[2.0], [3.0] ]) #,[0.5],[0.5]])      # Initial estimates of sigma: size (2 x 1)
+agent.mu_history = copy.copy(agent.mu)  # Creates another
+'''
+
+
 # Enter username here ********
 username = "bhabas"
 
 ## Initialize the environment
 env = CrazyflieEnv(port_self=18050, port_remote=18060)
 print("Environment done")
+
 
 ## Learning rate
 alpha_mu = np.array([[0.1],[0.1],[0.1]])
@@ -36,6 +52,7 @@ agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_ro
 h_ceiling = 1.5 # meters
 
 
+
 start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
 file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time + '.csv'
 env.create_csv(file_name)
@@ -44,8 +61,8 @@ env.create_csv(file_name)
 fig = plt.figure()
 plt.ion()  # interactive on
 plt.grid()
-plt.xlim([-10,100])
-plt.ylim([0,150])
+plt.xlim([-1,60])
+plt.ylim([-1,400])
 plt.xlabel("Episode")
 plt.ylabel("Reward")
 plt.title("Episode: %d Run: %d" %(0,0))
@@ -66,8 +83,8 @@ for k_ep in range(1000):
     print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
     mu = agent.mu
     sigma = agent.sigma
-    print("RREV=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1],mu[2]))
-    print("sig1=%.3f, \t sig2=%.3f, \t sig3=%.3f" %(sigma[0], sigma[1],sigma[2]))
+    print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1],mu[1],mu[1]))
+    print("sig1=%.3f, \t sig2=%.3f, \t sig3=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1],sigma[1],sigma[1]))
     print()
 
     done = False
@@ -79,7 +96,8 @@ for k_ep in range(1000):
     np.set_printoptions(precision=2, suppress=True)
     print(theta_rl[0,:], "--> RREV")
     print(theta_rl[1,:], "--> Gain")
-    print(theta_rl[2,:], "--> omega_x Gain")
+    #print(theta_rl[2,:], "--> omega_x Gain")
+    #print(theta_rl[3,:], "--> omega_y Gain")
 
     ct = env.getTime()
 
@@ -92,16 +110,33 @@ for k_ep in range(1000):
         repeat_run= False
         error_str = ""
 
-        vz_ini = 3.25 + np.random.uniform(low=-0.5, high=0.5)   # [2.75, 3.75]
-        vx_ini = 0# + np.random.uniform(low=-0.5, high=0.5)  # [-0.5, 0.5]
-        vy_ini = 0# + np.random.uniform(low=-0.5, high=0.5) # [-0.5, 0.5]
+            
+        vz_ini = 2.75 + np.random.rand()   # [2.5 , 2.5]
+        vx_ini = (-0.5 + np.random.rand())*4.0  # [-0.5, 0.5]
+        vy_ini = (-0.5 + np.random.rand())*4.0
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
-        print("\n!-------------------Episode:%d Run: %d-----------------!" %(k_ep,k_run))
-        print("RREV: %.3f \t gain1: %.3f \t gain2: %.3f" %(theta_rl[0,k_run], theta_rl[1,k_run],theta_rl[2,k_run]))
+        '''
+        vx        vy       vz         suceess?
+          1   |  1    |   3      |       yes (off by .2)
+          -1  |  1    |   3      |      sometimes rests improperly (off by .2)
+          -1  |  -1   |   3      |       more unstable(off by .2)
+         1    |  -1   |   3      |       yes (off by .2)
+
+
+
+        '''
+        print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
+        print("RREV: %.3f \t gain1: %.3f \t gain2: %.3f \t gain3: %.3f" %(theta_rl[0,k_run], theta_rl[1,k_run],theta_rl[1,k_run],theta_rl[1,k_run]))
+
         print("Vz_ini: %.3f \t Vx_ini: %.3f \t Vy_ini: %.3f" %(vz_ini, vx_ini, vy_ini))
 
         state = env.reset()
+        print(state[2],state[3])
+        if abs(state[2]) > 0.1 or abs(state[3]) > 0.1:
+            state = env.reset()
+        #action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
+        #env.step(action)
 
         k_step = 0
         done_rollout = False
@@ -109,6 +144,8 @@ for k_ep in range(1000):
         start_time_pitch = None
         pitch_triggered = False
         
+        flip_flag = False
+
         state_history = None
         env.logDataFlag = True
 
@@ -136,19 +173,33 @@ for k_ep in range(1000):
             omega = state[11:14]
 
             d = h_ceiling - position[2]
-            RREV, omega_y ,omega_x = vz/d, vx/d, vy/d
+            RREV, omega_y ,omega_x = vz/d, (vx**2)/d, vy/d
 
             qw = orientation_q[0]
             qx = orientation_q[1]
             qy = orientation_q[2]
             qz = orientation_q[3]
 
-            r = R.from_quat([qx,qy,qz,qw])
-            b3 = r.as_matrix()[:,2] # body z-axis
-            b3y =  np.dot(b3, np.array([0,0,1]))
-            r = r.as_euler('zyx', degrees=True)
+            R = Rotation.from_quat([qx,qy,qz,qw])
+            R = R.as_matrix()
+            angle = R[1,1]
+            b3 = R[2,:]
+            #print(angle, b3[0],b3[1],b3[2])
+            if b3[2] < 0.0 and not flip_flag:
+                #print(angle)
+                action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
+                env.step(action)
+                print("Flipped!! Shut motors")
+                flip_flag = True
+            
+            #b3 = r.as_matrix()[:,2] # body z-axis
+            #b3y =  np.dot(b3, np.array([0,0,1]))
+            b3y=0
+            r = [0,0,0]#r.as_euler('zyx', degrees=True)
+            eul1,eul2,eul3 = r[0],r[1],r[2]
             #print(r)
             theta = np.arcsin( -2*(qx*qz-qw*qy) ) # obtained from matlab "edit quat2eul.m"
+
 
             # ============================
             ##    Pitch Criteria 
@@ -158,15 +209,18 @@ for k_ep in range(1000):
                 env.enableSticky(1)
 
                 # add term to adjust for tilt 
-                q_d = theta_rl[1,k_run]*RREV + theta_rl[2,k_run]*omega_x*(1-b3y)#sin(r[1]*3.14159/180)
+                qRREV = theta_rl[1,k_run] * RREV 
+                #qomega = theta_rl[2,k_run]*(omega[1])
+                q_d = qRREV # + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
                 # torque on x axis to adjust for vy
-                r_d = 0 # theta_rl[3,k_run] * omega_y
+                r_d = 0.0 #theta_rl[3,k_run] * omega_y
 
                 print('----- pitch starts -----')
                 print('vz=%.3f, vx=%.3f, vy=%.3f' %(vz, vx,vy))
                 print('r[0]=%.3f, r[1]=%.3f, r[2]=%.3f, b3y=%.3f' %(r[0],r[1],r[2],b3y))
                 print('RREV=%.3f, omega_y=%.3f, omega_x=%.3f, qd=%.3f' %( RREV, omega_y, omega_x,q_d) )   
                 print("Pitch Time: %.3f" %start_time_pitch)
+                #print('wy = %.3f , qomega = %.3f , qRREV = %.3f' %(omega[1],qomega,qRREV))
                 
                 env.delay_env_time(t_start=start_time_pitch,t_delay=30) # Artificial delay to mimic communication lag [ms]
                 action = {'type':'rate', 'x':r_d, 'y':q_d, 'z':0.0, 'additional':0.0}
@@ -204,6 +258,8 @@ for k_ep in range(1000):
             ## If nan is found in state vector repeat sim run
             if any(np.isnan(state)): # gazebo sim becomes unstable, relaunch simulation
                 print("NAN found in state vector")
+                print(state)
+                time.sleep(5)
                 env.logDataFlag = False
                 env.close_sim()
                 env.launch_sim()
@@ -212,8 +268,8 @@ for k_ep in range(1000):
                 break
 
             
-            if (np.abs(position[0]) > 1.0) or (np.abs(position[1]) > 1.0):
-                print("Reset improperly/Position outside bounding box")
+            if (np.abs(position[0]) > 3.0) or (np.abs(position[1]) > 3.0):
+                print("Reset improperly!!!!!")
                 # env.pause()
                 env.logDataFlag = False
                 error_str = "Reset improperly/Position outside bounding box"
@@ -231,11 +287,12 @@ for k_ep in range(1000):
                     state_history = np.append(state_history, state2, axis=1)
                     env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run)
 
-
             if done_rollout:
+                action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
+                env.step(action)
                 env.logDataFlag = False
-                reward[k_run] = agent.calculate_reward(state_history,h_ceiling)
-                print("Reward = %d" %(reward[k_run]))
+                reward[k_run] = agent.calculate_reward(state=state_history, h_ceiling=h_ceiling)
+                print("Reward = %.3f" %(reward[k_run]))
                 print("!------------------------End Run------------------------! \n")
                 ## Episode Plotting
                 plt.plot(k_ep,reward[k_run],marker = "_", color = "black", alpha = 0.5) 
@@ -259,7 +316,7 @@ for k_ep in range(1000):
     if not any( np.isnan(reward) ):
         print("Episode # %d training, average reward %.3f" %(k_ep, np.mean(reward)))
         agent.train(theta_rl,reward,epsilon_rl)
-
+        print(reward)
         plt.plot(k_ep,np.mean(reward),'ro')
         plt.draw()
         plt.pause(0.001)

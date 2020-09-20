@@ -1,6 +1,7 @@
 #include "controller.h"
 #include "math_linear_algebra.h"
 #include <iomanip>      // provides std::setprecision
+#include <math.h>
 
 void Controller::Load(int port_number_gazebo)
 {
@@ -149,7 +150,7 @@ void Controller::controlThread()
     float motorspeed[4];
     MotorCommand motorspeed_structure;
     double control_cmd[5];
-    int type;
+    int type =5;
     double position[3];
     double orientation_q[4];
     double eul[3];
@@ -172,10 +173,13 @@ void Controller::controlThread()
     double p_d[3];
     double e_x[3];
 
+    // only kp_v and kp_R12 matter for vel control
     double kp_x = 0.15;
     double kd_x = 0.1;
-    double kp_v = 3;
-    double kp_R12 = 0.5;
+
+    double kp_v = 3.25;  //3.0
+    double kp_R12 = 0.55;//0.4; // 0.5
+
     double kd_R12 = 0.1;
     double kp_R34 = 1e-5;
     double kd_R34 = 5e-4;
@@ -188,9 +192,9 @@ void Controller::controlThread()
                                 {0.25,  7.6859225,  -7.6859225, 41.914296},  {0.25, -7.6859225, 7.6859225,  41.914296}};    // calculated by Matlab
     double J[3][3] = {{1.65717e-05, 0, 0}, {0, 1.66556e-05, 0}, {0, 0, 2.92617e-05}};
 
-    double f_thrust;
+    double f_thrust =0;
     double f_hover = (0.025 + 0.00075*4)*9.8066;
-    double tau[3];
+    double tau[3] =  {0,0,0};
     double FT[4];
     double f[4];
     double motorspeed_square[4];
@@ -323,14 +327,14 @@ void Controller::controlThread()
             else
             {
                 omega_d[0] = control_cmd[1];    omega_d[1] = control_cmd[2];    omega_d[2] = control_cmd[3];
-                
+                omega_d[0] = omega[0] + control_cmd[1] ; omega_d[2] = omega[2] + control_cmd[3]; // so doesnt try to correct itself
                 e_R[0]=0; e_R[1]=0; e_R[2]=0;
                 math::matAddsMat(e_omega, omega, omega_d, 3, 2);            // e_omega = omega - omega_d
             }
 
-            if (R[2][2] > 0.7)
-                f_thrust = f_hover / R[2][2];
-            else
+            //if (R[2][2] > 0.7)
+             //   f_thrust = f_hover / R[2][2];
+            //else
                 f_thrust = f_hover / 0.7;
             
             math::matTimesScalar(tmp8, e_R, -kp_R34, 3, 1);                  // -k_R * e_R
@@ -451,8 +455,11 @@ void Controller::controlThread()
         math::matTimesScalar(motorspeed_square, f, c_T, 4, 2);
         for(int k_ms_s=0;k_ms_s<4;k_ms_s++)
         {
-            if(motorspeed_square[k_ms_s]<0)
-                motorspeed_square[k_ms_s] = 0;
+            if(motorspeed_square[k_ms_s]<0) {
+                motorspeed_square[k_ms_s] = 0;}
+            else if (isnan(motorspeed_square[k_ms_s])) {
+                motorspeed_square[k_ms_s] = 0; }
+
         }
         if(type == 3 || type == 4)
         {
@@ -472,8 +479,7 @@ void Controller::controlThread()
                     std::cout<<"Shutdown motors"<<std::endl;*/
                 motorspeed_square[0] = 0;   motorspeed_square[1] = 0;   motorspeed_square[2] = 0;   motorspeed_square[3] = 0;
             }
-            if ( k_run%50 == 1 )
-                std::cout<<"motor speed ["<< motorspeed[0]<<", "<< motorspeed[1]<<", "<< motorspeed[2]<<", "<<motorspeed[3]<<"]"<<std::endl;
+            
         }
         /*if(type == 2)
         {
@@ -486,9 +492,10 @@ void Controller::controlThread()
                 std::cout<<"motor speed ["<< motorspeed[0]<<", "<< motorspeed[1]<<", "<< motorspeed[2]<<", "<<motorspeed[3]<<"]"<<std::endl;
         }*/
 
-        std::cout << "f_thrust = " << f_thrust << std::endl;
-        std::cout << "tau1  = " << tau[0] << " \t ta2 = " << tau[1] << std::endl;
-        
+        //std::cout << "f_thrust = " << f_thrust << std::endl;
+        //std::cout << "tau1  = " << tau[0] << " \t ta2 = " << tau[1] << std::endl;
+        if ( k_run%50 == 1 )
+                std::cout<<"motor speed ["<< motorspeed[0]<<", "<< motorspeed[1]<<", "<< motorspeed[2]<<", "<<motorspeed[3]<<"]"<<std::endl;
         motorspeed[0] = sqrt(motorspeed_square[0]);
         motorspeed[1] = sqrt(motorspeed_square[1]);
         motorspeed[2] = sqrt(motorspeed_square[2]);

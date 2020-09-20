@@ -106,7 +106,8 @@ class CrazyflieEnv:
     def reset(self): #Spends 2 seconds resetting the world and 3 seconds waiting after that
         self.enableSticky(0)
         os.system("rosservice call gazebo/reset_world")
-        time.sleep(1)
+        self.enableSticky(0)
+        time.sleep(2)
         return self.state_current
     
     def recvThread(self):
@@ -171,8 +172,11 @@ class CrazyflieEnv:
             header = 3
         elif action['type'] == 'rate':
             header = 4
+        elif action['type'] == 'stop':
+            header = 5
         else:
             print("no such action")
+
         x = action['x']
         y = action['y']
         z = action['z']
