@@ -5,12 +5,12 @@ from scipy.spatial.transform import Rotation
 import matplotlib.pyplot as plt
 from math import asin,pi
 class rlsysPEPGAgent_reactive:
-    def __init__(self, alpha_mu, alpha_sigma, gamma=0.95, n_rollout = 6):
+    def __init__(self, alpha_mu, alpha_sigma, mu,sigma,gamma=0.95, n_rollout = 6):
         self.alpha_mu, self.alpha_sigma,  = alpha_mu, alpha_sigma
         self.gamma, self.n_rollout = gamma, n_rollout
+        self.mu = mu
+        self.sigma = sigma
 
-        self.mu = np.array([[5.0], [-10.0],[10.0]])   # Initial estimates of mu: size (2 x 1)
-        self.sigma = np.array([[1], [1],[1]])      # Initial estimates of sigma: size (2 x 1)
         self.mu_history = copy.copy(self.mu)  # Creates another array of self.mu and attaches it to self.mu_history
         self.sigma_history = copy.copy(self.sigma)
         self.reward_history = np.array([0])

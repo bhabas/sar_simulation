@@ -1,23 +1,22 @@
 import numpy as np
-import socket
+import pandas as pd
+import matplotlib.pyplot as plt
+
+import socket, struct
 from threading import Thread
 import struct
 from queue import Queue
-import matplotlib.pyplot as plt
-import time
-import os, subprocess, signal
-import rospy
-import shlex
 
+import time
+import os, subprocess, signal, shlex
+import rospy
 import csv
 
-import xlsxwriter
-import pandas as pd
+
 
 class CrazyflieEnv:
-    def __init__(self, port_self, port_remote,username):
+    def __init__(self, port_self, port_remote):
         print("Init CrazyflieEnv")
-        self.username = username
         rospy.init_node("crazyflie_env_node",anonymous=True)
         self.launch_sim()
         
@@ -85,13 +84,14 @@ class CrazyflieEnv:
         #     close_fds=True, preexec_fn=os.setsid)
         # time.sleep(5)     
 
+        wd = os.getcwd()
         self.gazebo_p = subprocess.Popen(
-            "gnome-terminal --disable-factory -e '/home/"+self.username+"/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_gazebo.bash'", 
-            close_fds=True, preexec_fn=os.setsid, shell=True)
+            "gnome-terminal --disable-factory -- src/4.\ rl/src/launch_gazebo.bash", 
+            close_fds=True, preexec_fn=os.setsid, shell=True,cwd=wd)
         time.sleep(5)
         self.controller_p = subprocess.Popen(
-            "gnome-terminal --disable-factory -e '/home/"+self.username+"/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_controller.bash'", 
-            close_fds=True, preexec_fn=os.setsid, shell=True)
+            "gnome-terminal --disable-factory -- src/4.\ rl/src/launch_controller.bash", 
+            close_fds=True, preexec_fn=os.setsid, shell=True,cwd=wd)
         time.sleep(5)
 
     def pause(self): #Pause simulation
@@ -191,68 +191,46 @@ class CrazyflieEnv:
         info = 0
         return self.state_current, reward, done, info
 
-    # def plotFigure(self):
-    #     plt.figure()
-    #     plt.plot(self.path_[0,:],self.path_[8,:], self.path_[0,:],self.path_[9,:], self.path_[0,:],self.path_[10,:])
-    #     plt.show()
-    
-    def create_xls2(self,start_time,file_name):
+
+
+
+    # ============================
+    ##       Data Recording 
+    # ============================
+    def create_csv(self,file_name):
         self.file_name = file_name
         with open(self.file_name, mode='w') as state_file:
-            state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            state_writer.writerow(['t','x','y','z','qx','qy','qz','qw','vx','vy','vz','wx','wy','wz','eul1','eul2','eul3'])
+            state_writer = csv.writer(state_file, delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            state_writer.writerow([
+            'k_ep','k_run',
+            'alpha_mu','alpha_sig',
+            'mu','sigma',
+            't','x','y','z',
+            'qx','qy','qz','qw',
+            'vx','vy','vz',
+            'wx','wy','wz',
+            'gamma','reward','reward_avg',
+            "","","","","","","","", # Place holders
+            'error'])
 
-        #df1 = pd.DataFrame(['x','y','z','vx','vy','vz','qx','qy','qz','qw','wx','wy','wz'])  
-        #df1.to_excel(self.file_name)    
-    
-    def add_xls2(self,state):
+
+    def append_csv(self,agent,state,k_ep,k_run,reward=0,error=""): 
         with open(self.file_name, mode='a') as state_file:
             state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            state_writer.writerow(state)
-        #df1 = pd.DataFrame(state_history)
-        #df1.to_excel(self.file_name)
+            state_writer.writerow([
+                k_ep,k_run,
+                agent.alpha_mu.T,agent.alpha_sigma.T,
+                agent.mu.T,agent.sigma.T,
+                state[0],state[1],state[2],state[3], # t,x,y,z
+                state[4], state[5], state[6], state[7], # qx,qy,qz,qw
+                state[8], state[9],state[10], # vx,vy,vz
+                state[11],state[12],state[13], # wx,wy,wz
+                agent.gamma,np.around(reward,2),"",
+                "","","","","","","","", # Place holders
+                error])
 
-    def create_xls(self, start_time, sigma, alpha, file_name):
-        file_log =  xlwt.Workbook()
-        sheet = file_log.add_sheet('Learning process')
-        sheet.write(0,0, start_time)
-        sheet.write(0,1, 'sigma')
-        sheet.write(0,2, sigma)
-        sheet.write(0,3, 'alpha')
-        sheet.write(0,4, alpha)
 
-        sheet.write(1,0, 'Ep')
-        sheet.write(1,1, 'Date')
-        sheet.write(1,2, 'Time')
-        sheet.write(1,3, 'Vz_d (m/s)')
-        sheet.write(1,4, 'Vx_d (m/s)')
-        sheet.write(1,5, 'RREV (rad/s)')
-        sheet.write(1,6, 'omega_y (rad/s)')
-        sheet.write(1,7, 'Action (q deg/s)')
-        sheet.write(1,8, 'Reward')
-        sheet.write(1,9, 'Distance (m)')
-        sheet.write(1,10, 'Angle (deg)')
-        sheet.write(1,11, 'Theta')
-        file_log.save(file_name)
-
-        return file_log, sheet
-
-    
-    def add_record_xls(self, file_log, sheet, file_name,
-            k_ep, start_time1, start_time2,
-            vz_ini, vx_ini, state, action, reward, info, theta):
-        sheet.write(k_ep+2,0, k_ep+1)
-        sheet.write(k_ep+2,1, start_time1)
-        sheet.write(k_ep+2,2, start_time2)
-        sheet.write(k_ep+2,3, np.around(vz_ini,3))
-        sheet.write(k_ep+2,4, np.around(vx_ini,3))
-        sheet.write(k_ep+2,5, np.around(state[0],3))
-        sheet.write(k_ep+2,6, np.around(state[1],3))
-        sheet.write(k_ep+2,7, np.around(action,3))
-        sheet.write(k_ep+2,8, np.around(reward,3))
-        sheet.write(k_ep+2,9, np.around(info[0],3))
-        sheet.write(k_ep+2,10, np.around(info[1],3))
-        sheet.write(k_ep+2,11, np.around(theta[0],3))
-        sheet.write(k_ep+2,12, np.around(theta[1],3))
-        sheet.write(k_ep+2,13, np.around(theta[2],3))
-        file_log.save(file_name)
+    def append_csv_blank(self): 
+        with open(self.file_name, mode='a') as state_file:
+            state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            state_writer.writerow([])

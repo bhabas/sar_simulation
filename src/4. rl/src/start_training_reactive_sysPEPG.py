@@ -1,46 +1,19 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import time,copy
-from crazyflie_env import CrazyflieEnv
-from rl_syspepg import rlsysPEPGAgent_reactive
+import time,copy,os
 import matplotlib.pyplot as plt
 from math import sin,cos
 import os
 from scipy.spatial.transform import Rotation
-from math import asin
-'''
-RREV=5.240, 	 theta1=-10.250, 	 theta2=-5.206, 	 theta3=5.622
-sig1=0.008, 	 sig2=0.001, 	 sig3=0.377, 	 sig2=0.001,
-alpha_mu = np.array([[0.3],[0.3],[0.1],[0.2]])
-alpha_sigma = np.array([[0.2],[0.2],[0.05],[0.1]])
-agent = rlsysPEPGAgent_reactive(alpha_mu=alpha_mu, alpha_sigma=alpha_sigma, gamma=0.95, n_rollout=5)
+from numpy.core.fromnumeric import repeat
 
-## Define initial parameters for gaussian function
-agent.mu = np.array([[5.27], [-10.23],[-4.71],[5.0]])   # Initial estimates of mu: size (2 x 1)
-agent.sigma = np.array([[0.5], [0.5],[0.5],[1.0]]) 
-reward max 60
-
-RREV=5.342, 	 theta1=-10.186, 	 theta2=-5.303, 	 theta3=5.870
-sig1=0.001, 	 sig2=0.010, 	 sig3=0.026, 	 sig2=0.598,
-adjusted + 40 reward
-'''
-'''
-alpha_mu = np.array([[0.1],[0.1],[0.2] ,[0.2]])
-alpha_sigma = np.array([[0.1],[0.1],[0.1],[0.1]])
-agent = rlsysPEPGAgent_reactive(alpha_mu=alpha_mu, alpha_sigma=alpha_sigma, gamma=0.95, n_rollout=5)
-
-## Define initial parameters for gaussian function
-agent.mu = np.array([[5.0], [-10.0],[-5.21],[5.6]])   # Initial estimates of mu: size (2 x 1)
-agent.sigma = np.array([[1.0], [1.0],[0.25],[0.25]])      # Initial estimates of sigma: size (2 x 1)
-agent.mu_history = copy.copy(agent.mu)  # Creates another array of self.mu_ and attaches it to self.mu_history_
-agent.sigma_history = copy.copy(agent.sigma)
-
-'''
+from crazyflie_env import CrazyflieEnv
+from rl_syspepg import rlsysPEPGAgent_reactive
 
 '''
 mu = [5.267,-10.228,-4.713]
-z -> 2.5 3.5 sseems to fail at lower vz
+z -> 2.5 3.5 seems to fail at lower vz
 x -> -0.5 0.5
 
 '''
@@ -57,58 +30,36 @@ agent.sigma = np.array([[2.0], [3.0] ]) #,[0.5],[0.5]])      # Initial estimates
 agent.mu_history = copy.copy(agent.mu)  # Creates another
 '''
 
-'''
-## Learning rates and agent
-alpha_mu = np.array([[0.8],[0.8] ])#,[0.2] ]) #,[0.8] ,[0.8]])
-alpha_sigma = np.array([[0.5],[0.5] ])# ,[0.1] ]) #,[0.03],[0.03]])
-agent = rlsysPEPGAgent_reactive(alpha_mu=alpha_mu, alpha_sigma=alpha_sigma, gamma=0.95, n_rollout=5)
 
-## Define initial parameters for gaussian function
-agent.mu = np.array([[0.0], [0.0] ])#,[-5.0]])#,[-6.0],[7.0]])   # Initial estimates of mu: size (2 x 1)
-agent.sigma = np.array([[5.0], [5.0] ])#, [2.0]]) #,[0.5],[0.5]])      # Initial estimates of sigma: size (2 x 1)
-agent.mu_history = copy.copy(agent.mu)  # Creates another array of self.mu_ and attaches it to self.mu_history_
-agent.sigma_history = copy.copy(agent.sigma)
-'''
-
-'''
-alpha_mu = np.array([[0.088],[0.088] ])#,[0.2] ]) #,[0.8] ,[0.8]])
-alpha_sigma = np.array([[0.088],[0.088] ])# ,[0.1] ]) #,[0.03],[0.03]])
-agent = rlsysPEPGAgent_reactive(alpha_mu=alpha_mu, alpha_sigma=alpha_sigma, gamma=0.95, n_rollout=5)
-
-## Define initial parameters for gaussian function
-agent.mu = np.array([[5.159], [-7.57] ])#,[-5.0]])#,[-6.0],[7.0]])   # Initial estimates of mu: size (2 x 1)
-agent.sigma = np.array([[0.002], [0.085] ])
-'''
 # Enter username here ********
-username = "bader"
+username = "bhabas"
 
 ## Initialize the environment
-env = CrazyflieEnv(port_self=18050, port_remote=18060,username=username)
+env = CrazyflieEnv(port_self=18050, port_remote=18060)
 print("Environment done")
 
-## Learning rates and agent
-alpha_mu = np.array([[0.8],[0.8] ])#,[0.2] ]) #,[0.8] ,[0.8]])
-alpha_sigma = np.array([[0.5],[0.5] ])# ,[0.1] ]) #,[0.03],[0.03]])
-agent = rlsysPEPGAgent_reactive(alpha_mu=alpha_mu, alpha_sigma=alpha_sigma, gamma=0.95, n_rollout=5)
 
-## Define initial parameters for gaussian function
-agent.mu = np.array([[0.0], [0.0] ])#,[-5.0]])#,[-6.0],[7.0]])   # Initial estimates of mu: size (2 x 1)
-agent.sigma = np.array([[5.0], [5.0] ])#, [2.0]]) #,[0.5],[0.5]])      # Initial estimates of sigma: size (2 x 1)
-agent.mu_history = copy.copy(agent.mu)  # Creates another array of self.mu_ and attaches it to self.mu_history_
-agent.sigma_history = copy.copy(agent.sigma)
+## Learning rate
+alpha_mu = np.array([[0.1],[0.1],[0.1]])
+alpha_sigma = np.array([[0.05],[0.05],[0.05]])
+
+## Initial parameters for gaussian function
+mu = np.array([[2.5],[-5.0],[0.0]])   # Initial estimates of mu: 
+sigma = np.array([[1.0],[1.0],[1.0]])      # Initial estimates of sigma: 
+agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=3)
 
 
 h_ceiling = 1.5 # meters
 
 
-start_time0 = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + start_time0 + '.csv'
-# file_log, sheet = env.create_xls(start_time=start_time0, sigma=agent.sigma, alpha=agent.alpha, file_name=file_name)
-#env.create_xls2(start_time=start_time0, file_name=file_name)
+
+start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
+file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time + '.csv'
+env.create_csv(file_name)
 
 ## Initial figure setup
-plt.ion()  # interactive on
 fig = plt.figure()
+plt.ion()  # interactive on
 plt.grid()
 plt.xlim([-1,60])
 plt.ylim([-1,400])
@@ -122,6 +73,8 @@ plt.show()
 ##          Episode 
 # ============================
 for k_ep in range(1000):
+
+    # os.system("python3 start_training_reactive_sysPEPG > output.txt")
 
     print("=============================================")
     print("STARTING Episode # %d" %k_ep)
@@ -139,7 +92,8 @@ for k_ep in range(1000):
     reward[:] = np.nan  # initialize reward to be NaN array, size n_rollout x 1
     theta_rl, epsilon_rl = agent.get_theta()
     print( "theta_rl = ")
-    np.set_printoptions(precision=3, suppress=True)
+
+    np.set_printoptions(precision=2, suppress=True)
     print(theta_rl[0,:], "--> RREV")
     print(theta_rl[1,:], "--> Gain")
     #print(theta_rl[2,:], "--> omega_x Gain")
@@ -152,6 +106,9 @@ for k_ep in range(1000):
     # ============================
     k_run = 0
     while k_run < 2*agent.n_rollout:
+              
+        repeat_run= False
+        error_str = ""
 
             
         vz_ini = 2.75 + np.random.rand()   # [2.5 , 2.5]
@@ -171,6 +128,7 @@ for k_ep in range(1000):
         '''
         print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
         print("RREV: %.3f \t gain1: %.3f \t gain2: %.3f \t gain3: %.3f" %(theta_rl[0,k_run], theta_rl[1,k_run],theta_rl[1,k_run],theta_rl[1,k_run]))
+
         print("Vz_ini: %.3f \t Vx_ini: %.3f \t Vy_ini: %.3f" %(vz_ini, vx_ini, vy_ini))
 
         state = env.reset()
@@ -185,10 +143,10 @@ for k_ep in range(1000):
         start_time_rollout = env.getTime()
         start_time_pitch = None
         pitch_triggered = False
-        state_history = None
         
         flip_flag = False
 
+        state_history = None
         env.logDataFlag = True
 
         # ============================
@@ -242,11 +200,10 @@ for k_ep in range(1000):
             #print(r)
             theta = np.arcsin( -2*(qx*qz-qw*qy) ) # obtained from matlab "edit quat2eul.m"
 
-            if not pitch_triggered and k_step % 10 == 0:
-                pass
-                #env.add_xls2(np.append(state,[eul1,eul2,eul3]))
 
-            ## Enable sticky feet and rotation
+            # ============================
+            ##    Pitch Criteria 
+            # ============================
             if (RREV > RREV_trigger) and (pitch_triggered == False):
                 start_time_pitch = env.getTime()
                 env.enableSticky(1)
@@ -257,10 +214,11 @@ for k_ep in range(1000):
                 q_d = qRREV # + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
                 # torque on x axis to adjust for vy
                 r_d = 0.0 #theta_rl[3,k_run] * omega_y
+
                 print('----- pitch starts -----')
-                print( 'vz=%.3f, vx=%.3f, vy=%.3f' %(vz, vx,vy))
-                print('r[0] = %.3f, r[1] = %.3f, r[2] = %.3f , b3y = %.3f' %(r[0],r[1],r[2],b3y))
-                print('RREV=%.3f,omega_y=%.3f,omega_x=%.3f, qd=%.3f' %( RREV, omega_y, omega_x,q_d) )   
+                print('vz=%.3f, vx=%.3f, vy=%.3f' %(vz, vx,vy))
+                print('r[0]=%.3f, r[1]=%.3f, r[2]=%.3f, b3y=%.3f' %(r[0],r[1],r[2],b3y))
+                print('RREV=%.3f, omega_y=%.3f, omega_x=%.3f, qd=%.3f' %( RREV, omega_y, omega_x,q_d) )   
                 print("Pitch Time: %.3f" %start_time_pitch)
                 #print('wy = %.3f , qomega = %.3f , qRREV = %.3f' %(omega[1],qomega,qRREV))
                 
@@ -269,19 +227,35 @@ for k_ep in range(1000):
                 env.step(action) # Start rotation and mark rotation triggered
                 pitch_triggered = True
 
+
+            # ============================
+            ##    Termination Criteria 
+            # ============================
+
             ## If time since triggered pitch exceeds [0.7s]   
             if pitch_triggered and ((env.getTime()-start_time_pitch) > 0.7):
-                print("Rollout Completed: Pitch Triggered")
-                print("Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch)))
+                # I don't like this formatting, feel free to improve on
+                error_1 = "Rollout Completed: Pitch Triggered  "
+                error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch))
+                # print(error_1 + "\n" + error_2)
+
+                error_str = error_1 + error_2
                 done_rollout = True
 
             ## If time since rollout start exceeds [1.5s]
             if (env.getTime() - start_time_rollout) > 1.5:
-                print("Rollout Completed: Time Exceeded")
-                print("Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout)))
+                error_1 = "Rollout Completed: Time Exceeded   "
+                error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
+                # print(error_1 + "\n" + error_2)
+
+                error_str = error_1 + error_2
                 done_rollout = True
             
-           ## If nan is found in state vector repeat sim run
+
+            # ============================
+            ##          Errors  
+            # ============================
+            ## If nan is found in state vector repeat sim run
             if any(np.isnan(state)): # gazebo sim becomes unstable, relaunch simulation
                 print("NAN found in state vector")
                 print(state)
@@ -289,14 +263,16 @@ for k_ep in range(1000):
                 env.logDataFlag = False
                 env.close_sim()
                 env.launch_sim()
-                if k_run > 0:
-                    k_run = k_run - 1
+                error_str = "Error: NAN found in state vector"
+                repeat_run = True
                 break
+
             
             if (np.abs(position[0]) > 3.0) or (np.abs(position[1]) > 3.0):
                 print("Reset improperly!!!!!")
                 # env.pause()
                 env.logDataFlag = False
+                error_str = "Reset improperly/Position outside bounding box"
                 break
             
             ## Keep record of state vector every 10 time steps
@@ -309,7 +285,7 @@ for k_ep in range(1000):
             else:
                 if k_step%10==0:
                     state_history = np.append(state_history, state2, axis=1)
-
+                    env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run)
 
             if done_rollout:
                 action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
@@ -320,16 +296,22 @@ for k_ep in range(1000):
                 print("!------------------------End Run------------------------! \n")
                 ## Episode Plotting
                 plt.plot(k_ep,reward[k_run],marker = "_", color = "black", alpha = 0.5) 
-                plt.title("Episode: %d Run: %d # Rollouts: %d" %(k_ep, k_run+1,agent.n_rollout))
+                plt.title("Episode: %d Run: %d # Rollouts: %d" %(k_ep,k_run+1,agent.n_rollout))
                 # If figure gets locked on fullscreen, press ctrl+f untill it's fixed (there's lag due to process running)
                 plt.draw()
                 plt.pause(0.001)
-                # fig.canvas.flush_events()
-                
-                
-                k_run = k_run + 1
-                #print( 'x=%.3f, y=%.3f, z=%.3f' %(position[0], position[1], position[2]) )
+                # fig.canvas.flush_events()                
                 break
+        
+        
+        env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run,reward[k_run,0],error=error_str)
+        env.append_csv_blank()
+
+        if repeat_run == True:
+            k_run = k_run # Repeat run w/ same parameters
+        else:
+            k_run += 1 # Move on to next run
+
 
     if not any( np.isnan(reward) ):
         print("Episode # %d training, average reward %.3f" %(k_ep, np.mean(reward)))
@@ -339,8 +321,4 @@ for k_ep in range(1000):
         plt.draw()
         plt.pause(0.001)
 
-        # env.add_record_xls(file_log=file_log, sheet=sheet, file_name=file_name,
-        #     k_ep=k_ep, start_time1=start_time11, start_time2=start_time12,
-        #     vz_ini=vz_ini, vx_ini=vx_ini, state=state, action=action[0],
-        #     reward=reward, info=info, theta=theta)
 
