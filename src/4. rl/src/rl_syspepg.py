@@ -3,7 +3,7 @@ import copy
 import scipy.io
 from scipy.spatial.transform import Rotation
 import matplotlib.pyplot as plt
-from math import asin
+from math import asin,pi
 class rlsysPEPGAgent_reactive:
     def __init__(self, alpha_mu, alpha_sigma, gamma=0.95, n_rollout = 6):
         self.alpha_mu, self.alpha_sigma,  = alpha_mu, alpha_sigma
@@ -26,20 +26,20 @@ class rlsysPEPGAgent_reactive:
             # [qw,qx,qy,qz]' => quat = [qx,qy,qz,qw]'
             quat = np.append(quat, state[3,:][np.newaxis,:], axis=0)  # rearrange quat as scalar-last format used in scipy Rotation
 
-            r1 = 3.0*z / h_ceiling
+            r1 = z / h_ceiling
 
             r2 = np.zeros_like(r1)
             for k_quat in range(quat.shape[-1]):
                 R = Rotation.from_quat(quat[:,k_quat])
                 b3 = R.as_matrix()[:,2] # body z-axis
 
-                r2[k_quat] = asin(np.dot(b3, np.array([0,0,-1])))
+                r2[k_quat] = 0.5*(np.dot(b3, np.array([0,0,-1]))) + 0.5
                 #if (r2[k_quat]>0.8) and (z[k_quat] > 0.8*h_ceiling):  # further incentivize when b3 is very close to -z axis
                 #    r2[k_quat] = r2[k_quat]*5
-                if z[k_quat] < 0.3*h_ceiling:
-                    r2[k_quat] = 0
-            
+                #if z[k_quat] < 0.3*h_ceiling:
+                #    r2[k_quat] = 0
             #r = r1 + r2
+            #print(r1,r2)
             r = np.multiply(r1,r2)
             #print(r)
             r_cum = np.zeros_like(r)
@@ -62,8 +62,8 @@ class rlsysPEPGAgent_reactive:
             #r_cum2[-1] = r_cum2[-1]*float(z[-1] > 1.2)
             if r_cum.size > 0:
                 cum = r_cum1[-1]*(r_cum2[-1])
-                print(cum,r_cum[-1])
-                return 600 + 550 + cum # float(z[-1]>1.2)*cum
+                print(r_cum[-1],cum,r_cum1[-1],r_cum2[-1])
+                return   cum # float(z[-1]>1.2)*cum
                 # max 1150 min -550 -> 0 - 1700
             else:
                 return np.nan
@@ -106,8 +106,9 @@ class rlsysPEPGAgent_reactive:
         reward_minus = reward[self.n_rollout:]
         epsilon = epsilon
         b = self.get_baseline(span=3)
-        m_reward = 3000#2300      # max reward
-
+        m_reward = 400#3000#2300      # max reward
+        reward_ave = np.mean(reward)
+       
         ## Decaying Learning Rate:
         #self.alpha_mu = self. * 0.9
         #self.alpha_sigma = self.alpha_sigma * 0.9
@@ -117,8 +118,22 @@ class rlsysPEPGAgent_reactive:
         r_T = (reward_plus - reward_minus) / (2*m_reward - reward_plus - reward_minus)
         r_S = ((reward_plus + reward_minus)/2 - b) / (m_reward - b)
         
-        self.mu = self.mu + self.alpha_mu*np.dot(T,r_T)
+        lr_scale = 1.0 - reward_ave/m_reward
+        b2 = self.get_baseline(2)
+        print(len(self.reward_history))
+        print(self.reward_history.size)
+        if len(self.reward_history) > 8:
+            if b2 < m_reward*0.75:
+                lr_scale = 5.0*b2
+            else:
+                lr_scale = 1.0 - reward_ave/m_reward
+
+        self.alpha_mu = np.array([[lr_scale],[lr_scale]])#0.95
+        self.alpha_sigma = np.array([[lr_scale],[lr_scale]])  #0.95
+        print(self.alpha_mu,self.alpha_sigma)
+        self.mu = self.mu + self.alpha_mu*(np.dot(T,r_T))
         self.sigma = self.sigma + self.alpha_sigma*np.dot(S,r_S)
+
 
         for k in range(self.sigma.size): #  If sigma oversteps negative then assume convergence
             if self.sigma[k] <= 0:

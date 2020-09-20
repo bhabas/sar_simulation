@@ -56,6 +56,29 @@ agent.mu = np.array([[3.5], [-5.0] ])#,[-6.0],[7.0]])   # Initial estimates of m
 agent.sigma = np.array([[2.0], [3.0] ]) #,[0.5],[0.5]])      # Initial estimates of sigma: size (2 x 1)
 agent.mu_history = copy.copy(agent.mu)  # Creates another
 '''
+
+'''
+## Learning rates and agent
+alpha_mu = np.array([[0.8],[0.8] ])#,[0.2] ]) #,[0.8] ,[0.8]])
+alpha_sigma = np.array([[0.5],[0.5] ])# ,[0.1] ]) #,[0.03],[0.03]])
+agent = rlsysPEPGAgent_reactive(alpha_mu=alpha_mu, alpha_sigma=alpha_sigma, gamma=0.95, n_rollout=5)
+
+## Define initial parameters for gaussian function
+agent.mu = np.array([[0.0], [0.0] ])#,[-5.0]])#,[-6.0],[7.0]])   # Initial estimates of mu: size (2 x 1)
+agent.sigma = np.array([[5.0], [5.0] ])#, [2.0]]) #,[0.5],[0.5]])      # Initial estimates of sigma: size (2 x 1)
+agent.mu_history = copy.copy(agent.mu)  # Creates another array of self.mu_ and attaches it to self.mu_history_
+agent.sigma_history = copy.copy(agent.sigma)
+'''
+
+'''
+alpha_mu = np.array([[0.088],[0.088] ])#,[0.2] ]) #,[0.8] ,[0.8]])
+alpha_sigma = np.array([[0.088],[0.088] ])# ,[0.1] ]) #,[0.03],[0.03]])
+agent = rlsysPEPGAgent_reactive(alpha_mu=alpha_mu, alpha_sigma=alpha_sigma, gamma=0.95, n_rollout=5)
+
+## Define initial parameters for gaussian function
+agent.mu = np.array([[5.159], [-7.57] ])#,[-5.0]])#,[-6.0],[7.0]])   # Initial estimates of mu: size (2 x 1)
+agent.sigma = np.array([[0.002], [0.085] ])
+'''
 # Enter username here ********
 username = "bader"
 
@@ -64,13 +87,13 @@ env = CrazyflieEnv(port_self=18050, port_remote=18060,username=username)
 print("Environment done")
 
 ## Learning rates and agent
-alpha_mu = np.array([[0.05],[0.05] ])#,[0.2] ]) #,[0.8] ,[0.8]])
-alpha_sigma = np.array([[0.1],[0.1]  ])#,[0.1] ]) #,[0.03],[0.03]])
+alpha_mu = np.array([[0.8],[0.8] ])#,[0.2] ]) #,[0.8] ,[0.8]])
+alpha_sigma = np.array([[0.5],[0.5] ])# ,[0.1] ]) #,[0.03],[0.03]])
 agent = rlsysPEPGAgent_reactive(alpha_mu=alpha_mu, alpha_sigma=alpha_sigma, gamma=0.95, n_rollout=5)
 
 ## Define initial parameters for gaussian function
-agent.mu = np.array([[5.28], [-7.35] ])#,[-2.7]])#,[-6.0],[7.0]])   # Initial estimates of mu: size (2 x 1)
-agent.sigma = np.array([[0.25], [0.5] ])#, [1.0]]) #,[0.5],[0.5]])      # Initial estimates of sigma: size (2 x 1)
+agent.mu = np.array([[0.0], [0.0] ])#,[-5.0]])#,[-6.0],[7.0]])   # Initial estimates of mu: size (2 x 1)
+agent.sigma = np.array([[5.0], [5.0] ])#, [2.0]]) #,[0.5],[0.5]])      # Initial estimates of sigma: size (2 x 1)
 agent.mu_history = copy.copy(agent.mu)  # Creates another array of self.mu_ and attaches it to self.mu_history_
 agent.sigma_history = copy.copy(agent.sigma)
 
@@ -88,7 +111,7 @@ plt.ion()  # interactive on
 fig = plt.figure()
 plt.grid()
 plt.xlim([-1,60])
-plt.ylim([-1,3000])
+plt.ylim([-1,400])
 plt.xlabel("Episode")
 plt.ylabel("Reward")
 plt.title("Episode: %d Run: %d" %(0,0))
@@ -131,7 +154,7 @@ for k_ep in range(1000):
     while k_run < 2*agent.n_rollout:
 
             
-        vz_ini = 3.0 + 1.5*np.random.rand()   # [2.5 , 2.5]
+        vz_ini = 2.75 + np.random.rand()   # [2.5 , 2.5]
         vx_ini = (-0.5 + np.random.rand())*4.0  # [-0.5, 0.5]
         vy_ini = (-0.5 + np.random.rand())*4.0
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
@@ -192,7 +215,7 @@ for k_ep in range(1000):
             omega = state[11:14]
 
             d = h_ceiling - position[2]
-            RREV, omega_y ,omega_x = vz/d, vx/d, vy/d
+            RREV, omega_y ,omega_x = vz/d, (vx**2)/d, vy/d
 
             qw = orientation_q[0]
             qx = orientation_q[1]
@@ -230,8 +253,8 @@ for k_ep in range(1000):
 
                 # add term to adjust for tilt 
                 qRREV = theta_rl[1,k_run] * RREV 
-                #qomega = theta_rl[2,k_run]*omega[1]
-                q_d = qRREV #+ qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
+                #qomega = theta_rl[2,k_run]*(omega[1])
+                q_d = qRREV # + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
                 # torque on x axis to adjust for vy
                 r_d = 0.0 #theta_rl[3,k_run] * omega_y
                 print('----- pitch starts -----')
@@ -293,7 +316,7 @@ for k_ep in range(1000):
                 env.step(action)
                 env.logDataFlag = False
                 reward[k_run] = agent.calculate_reward(state=state_history, h_ceiling=h_ceiling)
-                print("Reward = %d" %(reward[k_run]))
+                print("Reward = %.3f" %(reward[k_run]))
                 print("!------------------------End Run------------------------! \n")
                 ## Episode Plotting
                 plt.plot(k_ep,reward[k_run],marker = "_", color = "black", alpha = 0.5) 
