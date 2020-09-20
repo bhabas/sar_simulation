@@ -62,7 +62,7 @@ class rlsysPEPGAgent_reactive:
             #r_cum2[-1] = r_cum2[-1]*float(z[-1] > 1.2)
             if r_cum.size > 0:
                 cum = r_cum1[-1]*(r_cum2[-1])
-                print(cum)
+                print(cum,r_cum[-1])
                 return 600 + 550 + cum # float(z[-1]>1.2)*cum
                 # max 1150 min -550 -> 0 - 1700
             else:
