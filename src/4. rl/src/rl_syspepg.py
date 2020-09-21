@@ -162,10 +162,10 @@ class rlsysPEPGAgent_reactive:
         self.mu = self.mu + self.alpha_mu*(np.dot(T,r_T))
         self.sigma = self.sigma + self.alpha_sigma*np.dot(S,r_S)
 
-        '''if self.mu[0][0] < 0:
-            self.mu[0][0] = 0.1
-        if self.mu[1][0] > 0:
-            self.mu[1][0] = -0.1'''
+        '''if self.mu[0,0] < 0:
+            self.mu[0,0] = 0.1
+        if self.mu[1,0] > 0:
+            self.mu[1,0] = -0.1'''
         '''for k in range(self.sigma.size): #  If sigma oversteps negative then assume convergence
             if self.sigma[k] <= 0:
                 self.sigma[k] = 0.001'''
