@@ -43,12 +43,12 @@ print("Environment done")
 
 
 ## Learning rate
-alpha_mu = np.array([[2.0],[2.0] ] )#,[0.1]])
-alpha_sigma = np.array([[1.0],[1.0] ])#,[0.05]])
+alpha_mu = np.array([[1.0],[2.0] ] )#,[0.1]])
+alpha_sigma = np.array([[2.0],[1.0] ])#,[0.05]])
 
 ## Initial parameters for gaussian function
-mu = np.array([[2.0],[-2.0] ])#,[0.0]])   # Initial estimates of mu: 
-sigma = np.array([[1.0],[1.0]   ])#,[1.0]])      # Initial estimates of sigma: 
+mu = np.array([[1.0],[-1.0] ])#,[0.0]])   # Initial estimates of mu: 
+sigma = np.array([[2.0],[2.0]   ])#,[1.0]])      # Initial estimates of sigma: 
 agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=5)
 
 
@@ -113,10 +113,10 @@ for k_ep in range(1000):
         repeat_run= False
         error_str = ""
 
-            
-        vz_ini = 2.5 + np.random.rand()   # [2.5 , 2.5]
-        vx_ini = (-0.5 + np.random.rand())*4.0  # [-0.5, 0.5]
-        vy_ini = (-0.5 + np.random.rand())*4.0
+        vz_ini = 3.0 + np.random.uniform(low=-0.5, high=0.5)   # [2.75, 3.75]
+        vx_ini = 0 + np.random.uniform(low=-2.0, high=2.0)  # [-0.5, 0.5]
+        vy_ini = 0 + np.random.uniform(low=-2.0, high=2.0) # [-0.5, 0.5]
+
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
         '''radius = 2.0*np.random.rand()
@@ -322,6 +322,7 @@ for k_ep in range(1000):
         #env.append_csv_blank()
 
         if repeat_run == True:
+            # return to previous run to catch potential missed glitches in gazebo (they are usually caught in the next run)
             k_run -= 1 # Repeat run w/ same parameters
         else:
             k_run += 1 # Move on to next run
