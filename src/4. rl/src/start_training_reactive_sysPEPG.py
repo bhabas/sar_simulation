@@ -3,7 +3,7 @@
 import numpy as np
 import time,copy,os
 import matplotlib.pyplot as plt
-from math import sin,cos
+from math import sin,cos,pi
 import os
 from scipy.spatial.transform import Rotation
 from numpy.core.fromnumeric import repeat
@@ -29,10 +29,13 @@ agent.mu = np.array([[3.5], [-5.0] ])#,[-6.0],[7.0]])   # Initial estimates of m
 agent.sigma = np.array([[2.0], [3.0] ]) #,[0.5],[0.5]])      # Initial estimates of sigma: size (2 x 1)
 agent.mu_history = copy.copy(agent.mu)  # Creates another
 '''
-
+'''
+mu = np.array([[2.0],[-2.0] ])#,[0.0]])   # Initial estimates of mu: 
+sigma = np.array([[1.0],[1.0]   ])#,[1.0]])
+'''
 
 # Enter username here ********
-username = "bhabas"
+username = "bader"
 
 ## Initialize the environment
 env = CrazyflieEnv(port_self=18050, port_remote=18060)
@@ -40,13 +43,13 @@ print("Environment done")
 
 
 ## Learning rate
-alpha_mu = np.array([[0.1],[0.1],[0.1]])
-alpha_sigma = np.array([[0.05],[0.05],[0.05]])
+alpha_mu = np.array([[2.0],[2.0] ] )#,[0.1]])
+alpha_sigma = np.array([[1.0],[1.0] ])#,[0.05]])
 
 ## Initial parameters for gaussian function
-mu = np.array([[2.5],[-5.0],[0.0]])   # Initial estimates of mu: 
-sigma = np.array([[1.0],[1.0],[1.0]])      # Initial estimates of sigma: 
-agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=3)
+mu = np.array([[2.0],[-2.0] ])#,[0.0]])   # Initial estimates of mu: 
+sigma = np.array([[1.0],[1.0]   ])#,[1.0]])      # Initial estimates of sigma: 
+agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=5)
 
 
 h_ceiling = 1.5 # meters
@@ -55,14 +58,14 @@ h_ceiling = 1.5 # meters
 
 start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
 file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time + '.csv'
-env.create_csv(file_name)
+#env.create_csv(file_name)
 
 ## Initial figure setup
 fig = plt.figure()
 plt.ion()  # interactive on
 plt.grid()
-plt.xlim([-1,60])
-plt.ylim([-1,400])
+plt.xlim([-1,40])
+plt.ylim([-1,25])
 plt.xlabel("Episode")
 plt.ylabel("Reward")
 plt.title("Episode: %d Run: %d" %(0,0))
@@ -111,10 +114,17 @@ for k_ep in range(1000):
         error_str = ""
 
             
-        vz_ini = 2.75 + np.random.rand()   # [2.5 , 2.5]
+        vz_ini = 2.5 + np.random.rand()   # [2.5 , 2.5]
         vx_ini = (-0.5 + np.random.rand())*4.0  # [-0.5, 0.5]
         vy_ini = (-0.5 + np.random.rand())*4.0
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
+
+        '''radius = 2.0*np.random.rand()
+        direction = 2.0*pi*np.random.rand() 
+        vx_ini = radius*sin(direction)
+        vy_ini = radius*cos(direction)'''
+
+
 
         '''
         vx        vy       vz         suceess?
@@ -161,6 +171,7 @@ for k_ep in range(1000):
 
 
         while True:
+                
             time.sleep(5e-4) # Time step size
             k_step = k_step + 1 # Time step
             ## Define current state
@@ -256,10 +267,11 @@ for k_ep in range(1000):
             ##          Errors  
             # ============================
             ## If nan is found in state vector repeat sim run
-            if any(np.isnan(state)): # gazebo sim becomes unstable, relaunch simulation
+            if any(np.isnan(state)) or env.timeout: # gazebo sim becomes unstable, relaunch simulation
                 print("NAN found in state vector")
+                print(env.timeout)
                 print(state)
-                time.sleep(5)
+                time.sleep(1)
                 env.logDataFlag = False
                 env.close_sim()
                 env.launch_sim()
@@ -273,6 +285,7 @@ for k_ep in range(1000):
                 # env.pause()
                 env.logDataFlag = False
                 error_str = "Reset improperly/Position outside bounding box"
+                repeat_run = True
                 break
             
             ## Keep record of state vector every 10 time steps
@@ -285,13 +298,14 @@ for k_ep in range(1000):
             else:
                 if k_step%10==0:
                     state_history = np.append(state_history, state2, axis=1)
-                    env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run)
+                    #env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run)
 
             if done_rollout:
                 action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
                 env.step(action)
                 env.logDataFlag = False
                 reward[k_run] = agent.calculate_reward(state=state_history, h_ceiling=h_ceiling)
+                time.sleep(0.01)
                 print("Reward = %.3f" %(reward[k_run]))
                 print("!------------------------End Run------------------------! \n")
                 ## Episode Plotting
@@ -304,11 +318,11 @@ for k_ep in range(1000):
                 break
         
         
-        env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run,reward[k_run,0],error=error_str)
-        env.append_csv_blank()
+        #env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run,reward[k_run,0],error=error_str)
+        #env.append_csv_blank()
 
         if repeat_run == True:
-            k_run = k_run # Repeat run w/ same parameters
+            k_run -= 1 # Repeat run w/ same parameters
         else:
             k_run += 1 # Move on to next run
 

@@ -12,6 +12,7 @@ import os, subprocess, signal, shlex
 import rospy
 import csv
 
+from socket import timeout
 
 
 class CrazyflieEnv:
@@ -29,7 +30,7 @@ class CrazyflieEnv:
         self.fd.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 40)        # set send buffer size to be 40 bytes. Both 112 bytes and 40 bytes are lower than the minimum value, so buffer size will be set as minimum value. See "'man 7 socket"
         self.fd.bind( ("", self.port_self) )
         self.addr_remote_send = ("", self.port_remote)
-        buf = struct.pack('5d', 2, 0, 0, 0, 0)
+        buf = struct.pack('5d', 5, 0, 0, 0, 0)
         self.fd.sendto(buf, self.addr_remote_send)
 
         self.queue_command = Queue(3)
@@ -48,9 +49,9 @@ class CrazyflieEnv:
     
     def close_sim(self):
         os.killpg(self.controller_p.pid, signal.SIGTERM)
-        time.sleep(5)
+        time.sleep(4)
         os.killpg(self.gazebo_p.pid, signal.SIGTERM)
-        time.sleep(5)  
+        time.sleep(4)  
 
     def delay_env_time(self,t_start,t_delay):
         # delay time defined in ms
@@ -73,24 +74,24 @@ class CrazyflieEnv:
 
     def launch_sim(self):
         ## There's some issue with the external shells that cause it to hang up on missed landings as it just sits on the ground
-        # self.gazebo_p_ = subprocess.Popen(shlex.split(
-        #     'gnome-terminal -x bash -c "~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_gazebo.bash"'),
-        #     close_fds=True, preexec_fn=os.setsid)
-        #     ### wait till open?
-        # time.sleep(5)
+        '''self.gazebo_p = subprocess.Popen(shlex.split(
+            'gnome-terminal -x bash -c "~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_gazebo.bash"'),
+            close_fds=True, preexec_fn=os.setsid)
+            ### wait till open?
+        time.sleep(5)
         
-        # self.controller_p_ = subprocess.Popen(shlex.split(
-        #     'gnome-terminal --tab -x bash -c "~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_controller.bash"'),
-        #     close_fds=True, preexec_fn=os.setsid)
-        # time.sleep(5)     
+        self.controller_p = subprocess.Popen(shlex.split(
+            'gnome-terminal --tab -x bash -c "~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_controller.bash"'),
+            close_fds=True, preexec_fn=os.setsid)
+        time.sleep(5)    ''' 
 
         wd = os.getcwd()
         self.gazebo_p = subprocess.Popen(
-            "gnome-terminal --disable-factory -- src/4.\ rl/src/launch_gazebo.bash", 
+            "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_gazebo.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True,cwd=wd)
         time.sleep(5)
         self.controller_p = subprocess.Popen(
-            "gnome-terminal --disable-factory -- src/4.\ rl/src/launch_controller.bash", 
+            "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_controller.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True,cwd=wd)
         time.sleep(5)
 
@@ -118,9 +119,16 @@ class CrazyflieEnv:
         while self.isRunning:
             k_run = k_run + 1
 
-            data, addr_remote = self.fd.recvfrom(112)     # 1 double = 8 bytes
-            px,py,pz,q0,q1,q2,q3,vx,vy,vz,p,q,r,sim_time = struct.unpack('14d',data)
-            self.state_current = np.array([sim_time, px,py,pz,q0,q1,q2,q3,vx,vy,vz,p,q,r])
+            try:
+                data, addr_remote = self.fd.recvfrom(112)     # 1 double = 8 bytes
+                px,py,pz,q0,q1,q2,q3,vx,vy,vz,p,q,r,sim_time = struct.unpack('14d',data)
+                self.state_current = np.array([sim_time, px,py,pz,q0,q1,q2,q3,vx,vy,vz,p,q,r])
+                self.timeout = False
+            
+            except timeout:
+                self.timeout = True
+
+    
 
             if any( np.isnan( self.state_current ) ):
                 self.logDataFlag = False
