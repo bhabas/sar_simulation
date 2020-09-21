@@ -43,12 +43,14 @@ sigma = np.array([[1.0],[1.0]   ])#,[1.0]])
 ## Initialize the environment
 env = CrazyflieEnv(port_self=18050, port_remote=18060)
 print("Environment done")
+ep_start = 0 # Default episode start position
 
 ## Initialize the user and data recording
 username = getpass.getuser()
 start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
 file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time + '.csv'
-env.create_csv(file_name,record = False)
+env.create_csv(file_name,record = True)
+
 
 
 
@@ -61,11 +63,13 @@ mu = np.array([[2.0],[-2.0] ])#,[0.0]])   # Initial estimates of mu:
 sigma = np.array([[1.0],[1.0]   ])#,[1.0]])      # Initial estimates of sigma: 
 
 
-data_path = "/home/bhabas/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/bhabas_2020-09-21_14:01:57.csv"
+## Uncomment and input starting episode and data_path to recorded csv file to run
+# ep_start = 9
+# data_path = '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/bhabas_2020-09-21_16:35:43.csv'
+# alpha_mu, alpha_sigma, mu, sigma = env.load_csv(data_path,ep_start)
 
 
-
-agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=5)
+agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=1)
 
 
 h_ceiling = 1.5 # meters
@@ -87,7 +91,7 @@ plt.show()
 # ============================
 ##          Episode 
 # ============================
-for k_ep in range(1000):
+for k_ep in range(ep_start,1000):
 
     # os.system("python3 start_training_reactive_sysPEPG > output.txt")
 
