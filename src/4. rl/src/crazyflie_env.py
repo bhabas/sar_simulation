@@ -205,40 +205,49 @@ class CrazyflieEnv:
     # ============================
     ##       Data Recording 
     # ============================
-    def create_csv(self,file_name):
+    def create_csv(self,file_name,record=False):
         self.file_name = file_name
-        with open(self.file_name, mode='w') as state_file:
-            state_writer = csv.writer(state_file, delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            state_writer.writerow([
-            'k_ep','k_run',
-            'alpha_mu','alpha_sig',
-            'mu','sigma',
-            't','x','y','z',
-            'qx','qy','qz','qw',
-            'vx','vy','vz',
-            'wx','wy','wz',
-            'gamma','reward','reward_avg',
-            "","","","","","","","", # Place holders
-            'error'])
+        self.record = record
 
-
-    def append_csv(self,agent,state,k_ep,k_run,reward=0,error=""): 
-        with open(self.file_name, mode='a') as state_file:
-            state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            state_writer.writerow([
-                k_ep,k_run,
-                agent.alpha_mu.T,agent.alpha_sigma.T,
-                agent.mu.T,agent.sigma.T,
-                state[0],state[1],state[2],state[3], # t,x,y,z
-                state[4], state[5], state[6], state[7], # qx,qy,qz,qw
-                state[8], state[9],state[10], # vx,vy,vz
-                state[11],state[12],state[13], # wx,wy,wz
-                agent.gamma,np.around(reward,2),"",
+        if self.record == True:
+            with open(self.file_name, mode='w') as state_file:
+                state_writer = csv.writer(state_file, delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                state_writer.writerow([
+                'k_ep','k_run',
+                'alpha_mu','alpha_sig',
+                'mu','sigma',
+                't','x','y','z',
+                'qx','qy','qz','qw',
+                'vx','vy','vz',
+                'wx','wy','wz',
+                'gamma','reward','reward_avg',
                 "","","","","","","","", # Place holders
-                error])
+                'error'])
+
+
+    def append_csv(self,agent,state,k_ep,k_run,reward=0,error=""):
+        if self.record == True:
+
+            with open(self.file_name, mode='a') as state_file:
+                state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                state_writer.writerow([
+                    k_ep,k_run,
+                    agent.alpha_mu.T,agent.alpha_sigma.T,
+                    agent.mu.T,agent.sigma.T,
+                    state[0],state[1],state[2],state[3], # t,x,y,z
+                    state[4], state[5], state[6], state[7], # qx,qy,qz,qw
+                    state[8], state[9],state[10], # vx,vy,vz
+                    state[11],state[12],state[13], # wx,wy,wz
+                    agent.gamma,np.around(reward,2),"",
+                    "","","","","","","","", # Place holders
+                    error])
 
 
     def append_csv_blank(self): 
-        with open(self.file_name, mode='a') as state_file:
-            state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            state_writer.writerow([])
+        if self.record == True:
+            with open(self.file_name, mode='a') as state_file:
+                state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                state_writer.writerow([])
+
+    def load_data(self):
+        pass
