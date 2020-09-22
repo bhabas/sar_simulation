@@ -139,8 +139,9 @@ class CrazyflieEnv:
                     path = np.zeros(shape=(14,8000,1))
                     k = 0
                 if k%50==0:
-                    path[:,int(k/50),0] = np.array([sim_time,px,py,pz,q0,q1,q2,q3,vx,vy,vz,p,q,r])
+                    # path[:,int(k/50),0] = np.array([sim_time,px,py,pz,q0,q1,q2,q3,vx,vy,vz,p,q,r])
                     #path[:,k,0] = np.array([[sim_time],[px],[py],[pz],[q0],[q1],[q2],[q3],[vx],[vy],[vz],[p],[q],[r]])
+                    pass
                 k = k + 1
             
             if not self.logDataFlag and path is not None:
@@ -205,40 +206,63 @@ class CrazyflieEnv:
     # ============================
     ##       Data Recording 
     # ============================
-    def create_csv(self,file_name):
+    def create_csv(self,file_name,record=False):
         self.file_name = file_name
-        with open(self.file_name, mode='w') as state_file:
-            state_writer = csv.writer(state_file, delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            state_writer.writerow([
-            'k_ep','k_run',
-            'alpha_mu','alpha_sig',
-            'mu','sigma',
-            't','x','y','z',
-            'qx','qy','qz','qw',
-            'vx','vy','vz',
-            'wx','wy','wz',
-            'gamma','reward','reward_avg',
-            "","","","","","","","", # Place holders
-            'error'])
+        self.record = record
 
-
-    def append_csv(self,agent,state,k_ep,k_run,reward=0,error=""): 
-        with open(self.file_name, mode='a') as state_file:
-            state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            state_writer.writerow([
-                k_ep,k_run,
-                agent.alpha_mu.T,agent.alpha_sigma.T,
-                agent.mu.T,agent.sigma.T,
-                state[0],state[1],state[2],state[3], # t,x,y,z
-                state[4], state[5], state[6], state[7], # qx,qy,qz,qw
-                state[8], state[9],state[10], # vx,vy,vz
-                state[11],state[12],state[13], # wx,wy,wz
-                agent.gamma,np.around(reward,2),"",
+        if self.record == True:
+            with open(self.file_name, mode='w') as state_file:
+                state_writer = csv.writer(state_file, delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                state_writer.writerow([
+                'k_ep','k_run',
+                'alpha_mu','alpha_sig',
+                'mu','sigma',
+                't','x','y','z',
+                'qx','qy','qz','qw',
+                'vx','vy','vz',
+                'wx','wy','wz',
+                'gamma','reward','reward_avg','n_rollouts'
                 "","","","","","","","", # Place holders
-                error])
+                'error'])
+
+
+    def append_csv(self,agent,state,k_ep,k_run,reward=0,error=""):
+        if self.record == True:
+
+            with open(self.file_name, mode='a') as state_file:
+                state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                state_writer.writerow([
+                    k_ep,k_run,
+                    agent.alpha_mu.T,agent.alpha_sigma.T,
+                    agent.mu.T,agent.sigma.T,
+                    state[0],state[1],state[2],state[3], # t,x,y,z
+                    state[4], state[5], state[6], state[7], # qx,qy,qz,qw
+                    state[8], state[9],state[10], # vx,vy,vz
+                    state[11],state[12],state[13], # wx,wy,wz
+                    agent.gamma,np.around(reward,2),"",agent.n_rollout,
+                    "","","","","","","", # Place holders
+                    error])
 
 
     def append_csv_blank(self): 
-        with open(self.file_name, mode='a') as state_file:
-            state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            state_writer.writerow([])
+        if self.record == True:
+            with open(self.file_name, mode='a') as state_file:
+                state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                state_writer.writerow([])
+
+    def load_csv(self,datapath,k_ep):
+        ## Load csv and seperate first run of the selected episode
+        df = pd.read_csv(datapath)
+        ep_data = df.loc[ (df['k_ep'] == k_ep) & (df['k_run'] == 0)]
+        
+        ## Create a list of the main values to be loaded
+        vals = []
+        for k in range(2,6):
+            val = ep_data.iloc[0,k]
+            val_edited = np.fromstring(val[2:-2], dtype=float, sep=' ')
+            val_array = val_edited.reshape(1,-1).T
+            vals.append(val_array)
+
+        alpha_mu,alpha_sig, mu, sigma = vals
+
+        return alpha_mu,alpha_sig,mu,sigma

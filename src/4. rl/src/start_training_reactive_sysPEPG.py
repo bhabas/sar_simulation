@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import time,copy,os
+import time,copy,os,getpass
 import matplotlib.pyplot as plt
 from math import sin,cos,pi,sqrt
 import os
@@ -34,12 +34,24 @@ mu = np.array([[2.0],[-2.0] ])#,[0.0]])   # Initial estimates of mu:
 sigma = np.array([[1.0],[1.0]   ])#,[1.0]])
 '''
 
-# Enter username here ********
-username = "bader"
+
+# ============================
+##     Sim Initialization 
+# ============================
+
 
 ## Initialize the environment
 env = CrazyflieEnv(port_self=18050, port_remote=18060)
 print("Environment done")
+ep_start = 0 # Default episode start position
+
+## Initialize the user and data recording
+username = getpass.getuser()
+start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
+file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time + '.csv'
+env.create_csv(file_name,record = True)
+
+
 
 
 ## Learning rate
@@ -53,13 +65,21 @@ sigma = np.array([[3.0],[3.0] ])#, [0.5]])      # Initial estimates of sigma:
 agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=7)
 
 
+
+
+
+## Uncomment and input starting episode and data_path to recorded csv file to run
+# ep_start = 9
+# data_path = '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/bhabas_2020-09-21_16:35:43.csv'
+# alpha_mu, alpha_sigma, mu, sigma = env.load_csv(data_path,ep_start)
+
+
+agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=1)
+
+
 h_ceiling = 1.5 # meters
 
 
-
-start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
-file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time + '.csv'
-#env.create_csv(file_name)
 
 ## Initial figure setup
 fig = plt.figure()
@@ -76,7 +96,7 @@ plt.show()
 # ============================
 ##          Episode 
 # ============================
-for k_ep in range(1000):
+for k_ep in range(ep_start,1000):
 
     # os.system("python3 start_training_reactive_sysPEPG > output.txt")
 
@@ -146,8 +166,8 @@ for k_ep in range(1000):
         print(state[2],state[3])
         if abs(state[2]) > 0.1 or abs(state[3]) > 0.1:
             state = env.reset()
-        #action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
-        #env.step(action)
+        action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
+        env.step(action)
 
         k_step = 0
         done_rollout = False
@@ -300,7 +320,7 @@ for k_ep in range(1000):
             else:
                 if k_step%10==0:
                     state_history = np.append(state_history, state2, axis=1)
-                    #env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run)
+                    env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run)
 
             if done_rollout:
                 action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
@@ -320,8 +340,8 @@ for k_ep in range(1000):
                 break
         
         
-        #env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run,reward[k_run,0],error=error_str)
-        #env.append_csv_blank()
+        env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run,reward[k_run,0],error=error_str)
+        env.append_csv_blank()
 
         if repeat_run == True:
             # return to previous run to catch potential missed glitches in gazebo (they are usually caught in the next run)
