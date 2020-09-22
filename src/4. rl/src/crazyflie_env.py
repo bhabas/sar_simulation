@@ -22,20 +22,29 @@ from cv_bridge import CvBridge
 class CrazyflieEnv:
     def __init__(self, port_self, port_remote):
         print("Init CrazyflieEnv")
-        rospy.init_node("crazyflie_env_node",anonymous=True)
+        # Initializes the ROS node for the process. Can only have one nod in a rospy process
+        rospy.init_node("crazyflie_env_node",anonymous=True) 
         self.launch_sim()
-        
+    
 
         self.port_self = port_self
         self.port_remote = port_remote
 
-        self.fd = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.fd.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 112)       # set receive buffer size to be 112 bytes (1 double = 8 bytes)
-        self.fd.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 40)        # set send buffer size to be 40 bytes. Both 112 bytes and 40 bytes are lower than the minimum value, so buffer size will be set as minimum value. See "'man 7 socket"
-        self.fd.bind( ("", self.port_self) )
+        # Python socket guide: https://realpython.com/python-sockets/
+        self.fd = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # fd = file descriptor
+        
+        # set receive buffer size to be 112 bytes aka 14 doubles (1 double = 8 bytes)
+        self.fd.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 112) # setsockopt = set socket options
+
+        # set send buffer size to be 40 bytes. Both 112 bytes and 40 bytes are lower than 
+        # the minimum value, so buffer size will be set as minimum value. See "'man 7 socket"
+        self.fd.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 40)  
+
+
+        self.fd.bind( ("", self.port_self) ) # bind() associates the socket with specific network interface and port number
         self.addr_remote_send = ("", self.port_remote)
-        buf = struct.pack('5d', 5, 0, 0, 0, 0)
-        self.fd.sendto(buf, self.addr_remote_send)
+        buf = struct.pack('5d', 5, 0, 0, 0, 0) # Represent 5 vals given as doubles in byte format
+        self.fd.sendto(buf, self.addr_remote_send) # Send these bytes to this address
 
         self.queue_command = Queue(3)
         self.path_all = np.zeros(shape=(14,8000,1))
@@ -118,25 +127,15 @@ class CrazyflieEnv:
 
     def launch_sim(self):
         ## There's some issue with the external shells that cause it to hang up on missed landings as it just sits on the ground
-        '''self.gazebo_p = subprocess.Popen(shlex.split(
-            'gnome-terminal -x bash -c "~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_gazebo.bash"'),
-            close_fds=True, preexec_fn=os.setsid)
-            ### wait till open?
-        time.sleep(5)
-        
-        self.controller_p = subprocess.Popen(shlex.split(
-            'gnome-terminal --tab -x bash -c "~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_controller.bash"'),
-            close_fds=True, preexec_fn=os.setsid)
-        time.sleep(5)    ''' 
-
-        wd = os.getcwd()
+       
         self.gazebo_p = subprocess.Popen(
             "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_gazebo.bash", 
-            close_fds=True, preexec_fn=os.setsid, shell=True,cwd=wd)
+            close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(5)
+
         self.controller_p = subprocess.Popen(
             "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_controller.bash", 
-            close_fds=True, preexec_fn=os.setsid, shell=True,cwd=wd)
+            close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(5)
 
     def pause(self): #Pause simulation
@@ -157,12 +156,8 @@ class CrazyflieEnv:
     
     def recvThread(self):
         print("Start recvThread")
-        path = None
-        
-        k_run = 0
         while self.isRunning:
-            k_run = k_run + 1
-
+ 
             try:
                 data, addr_remote = self.fd.recvfrom(112)     # 1 double = 8 bytes
                 px,py,pz,q0,q1,q2,q3,vx,vy,vz,p,q,r,sim_time = struct.unpack('14d',data)
@@ -171,49 +166,14 @@ class CrazyflieEnv:
             
             except timeout:
                 self.timeout = True
-
-    
-
-            '''if any( np.isnan( self.state_current ) ):
-                self.logDataFlag = False
-                path = None
-            
-            if self.logDataFlag:
-                if path is None:
-                    path = np.zeros(shape=(14,8000,1))
-                    k = 0
-                if k%50==0:
-                    path[:,int(k/50),0] = np.array([sim_time,px,py,pz,q0,q1,q2,q3,vx,vy,vz,p,q,r])
-                    #path[:,k,0] = np.array([[sim_time],[px],[py],[pz],[q0],[q1],[q2],[q3],[vx],[vy],[vz],[p],[q],[r]])
-                k = k + 1
-            
-            if not self.logDataFlag and path is not None:
-                self.path_all = np.append(self.path_all, path, axis=2)
-                path = None'''
-                
-            '''if k_run%50 == 1:
-                # print("received data ", data, " from ", addr_remote)
-                print("=============================================================")
-                print( 'Position: px=%.3f, py=%.3f, pz=%.3f' %(px, py, pz) )
-                print( 'Orientat: q0=%.3f, q1=%.3f, q2=%.3f q3=%.3f' %(q0, q1, q2, q3) )
-                print( 'Velocity: vx=%.3f, vy=%.3f, vz=%.3f' %(vx, vy, vz) )
-                print( 'AnguRate: p =%.3f, q =%.3f, r =%.3f' %(p, q, r) )
-                print( 'SimTime : time =%.3f' %(sim_time) )'''
             
             
     def sendThread(self):
         print("Start sendThread")
         while self.isRunning:
-            #time.sleep(0.5)
-            #buf = struct.pack('5d', 2.0, 1.1, 2.2, 3.3, 4.4)
             buf = self.queue_command.get(block=True)
             len = self.fd.sendto(buf, self.addr_remote_send)
-            '''if len>0:
-                print("Send to controller succeed!")
-            else:
-                print("Send to controller failed!")'''
 
-   
 
     def step(self, action):
         if action['type'] == 'pos':
@@ -249,40 +209,63 @@ class CrazyflieEnv:
     # ============================
     ##       Data Recording 
     # ============================
-    def create_csv(self,file_name):
+    def create_csv(self,file_name,record=False):
         self.file_name = file_name
-        with open(self.file_name, mode='w') as state_file:
-            state_writer = csv.writer(state_file, delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            state_writer.writerow([
-            'k_ep','k_run',
-            'alpha_mu','alpha_sig',
-            'mu','sigma',
-            't','x','y','z',
-            'qx','qy','qz','qw',
-            'vx','vy','vz',
-            'wx','wy','wz',
-            'gamma','reward','reward_avg',
-            "","","","","","","","", # Place holders
-            'error'])
+        self.record = record
 
-
-    def append_csv(self,agent,state,k_ep,k_run,reward=0,error=""): 
-        with open(self.file_name, mode='a') as state_file:
-            state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            state_writer.writerow([
-                k_ep,k_run,
-                agent.alpha_mu.T,agent.alpha_sigma.T,
-                agent.mu.T,agent.sigma.T,
-                state[0],state[1],state[2],state[3], # t,x,y,z
-                state[4], state[5], state[6], state[7], # qx,qy,qz,qw
-                state[8], state[9],state[10], # vx,vy,vz
-                state[11],state[12],state[13], # wx,wy,wz
-                agent.gamma,np.around(reward,2),"",
+        if self.record == True:
+            with open(self.file_name, mode='w') as state_file:
+                state_writer = csv.writer(state_file, delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                state_writer.writerow([
+                'k_ep','k_run',
+                'alpha_mu','alpha_sig',
+                'mu','sigma',
+                't','x','y','z',
+                'qx','qy','qz','qw',
+                'vx','vy','vz',
+                'wx','wy','wz',
+                'gamma','reward','reward_avg','n_rollouts'
                 "","","","","","","","", # Place holders
-                error])
+                'error'])
+
+
+    def append_csv(self,agent,state,k_ep,k_run,reward=0,error=""):
+        if self.record == True:
+
+            with open(self.file_name, mode='a') as state_file:
+                state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                state_writer.writerow([
+                    k_ep,k_run,
+                    agent.alpha_mu.T,agent.alpha_sigma.T,
+                    agent.mu.T,agent.sigma.T,
+                    state[0],state[1],state[2],state[3], # t,x,y,z
+                    state[4], state[5], state[6], state[7], # qx,qy,qz,qw
+                    state[8], state[9],state[10], # vx,vy,vz
+                    state[11],state[12],state[13], # wx,wy,wz
+                    agent.gamma,np.around(reward,2),"",agent.n_rollout,
+                    "","","","","","","", # Place holders
+                    error])
 
 
     def append_csv_blank(self): 
-        with open(self.file_name, mode='a') as state_file:
-            state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            state_writer.writerow([])
+        if self.record == True:
+            with open(self.file_name, mode='a') as state_file:
+                state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                state_writer.writerow([])
+
+    def load_csv(self,datapath,k_ep):
+        ## Load csv and seperate first run of the selected episode
+        df = pd.read_csv(datapath)
+        ep_data = df.loc[ (df['k_ep'] == k_ep) & (df['k_run'] == 0)]
+        
+        ## Create a list of the main values to be loaded
+        vals = []
+        for k in range(2,6):
+            val = ep_data.iloc[0,k]
+            val_edited = np.fromstring(val[2:-2], dtype=float, sep=' ')
+            val_array = val_edited.reshape(1,-1).T
+            vals.append(val_array)
+
+        alpha_mu,alpha_sig, mu, sigma = vals
+
+        return alpha_mu,alpha_sig,mu,sigma
