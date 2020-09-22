@@ -1,7 +1,7 @@
 *.pyc
 # Byte-compiled / optimized / DLL files
 __pycache__/
-log/
+src/4. rl/src/log/*.csv
 *.py[cod]
 *$py.class
 
