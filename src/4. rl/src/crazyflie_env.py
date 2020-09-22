@@ -14,6 +14,10 @@ import csv
 
 from socket import timeout
 
+from sensor_msgs.msg import LaserScan
+from sensor_msgs.msg import Image
+
+from cv_bridge import CvBridge
 
 class CrazyflieEnv:
     def __init__(self, port_self, port_remote):
@@ -45,8 +49,48 @@ class CrazyflieEnv:
         self.senderThread = Thread(target=self.sendThread, args=())
         self.senderThread.daemon = True
 
+        
+        self.laser_msg = LaserScan # Laser Scan Message Variable
+        self.laser_dist = 0
+        # Start Laser Scanner data reciever thread
+        self.laserThread = Thread(target = self.lsrThread, args=())
+        self.laserThread.daemon=True
+        self.laserThread.start()
+
+        self.bridge = CvBridge() # Object to transform ros msg to cv image (np array)
+        self.camera_msg = Image # Image Message Variable
+        self.cv_image = np.array(0)
+        # Start Camera data reciever thread
+        self.cameraThread = Thread(target = self.camThread, args=())
+        self.cameraThread.daemon=True
+        self.cameraThread.start()
+
         #self.senderThread.start()
     
+    def cam_callback(self,data): # callback function for camera subscriber
+        self.camera_msg = data
+        self.cv_image = self.bridge.imgmsg_to_cv2(self.camera_msg, desired_encoding='mono8')
+        #self.camera_pixels = self.camera_msg.data
+
+    def camThread(self): # Thread for recieving camera messages
+        print('Start Camera Thread')
+        self.camera_sub = rospy.Subscriber('/camera/image_raw',Image,self.cam_callback)
+        rospy.spin()
+    
+    def scan_callback(self,data): # callback function for laser subsriber
+        self.laser_msg = data
+        if  self.laser_msg.ranges[0] == float('Inf'):
+            # sets dist to 4 m if sensor reads Infinity (no walls)
+            self.laser_dist = 4 # max sesnsor dist
+        else:
+            self.laser_dist = self.laser_msg.ranges[0]
+
+    def lsrThread(self): # Thread for recieving laser scan messages
+        print('Start Laser Scanner Thread')
+        self.laser_sub = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
+        rospy.spin()
+
+
     def close_sim(self):
         os.killpg(self.controller_p.pid, signal.SIGTERM)
         time.sleep(4)
