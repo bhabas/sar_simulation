@@ -130,7 +130,7 @@ class CrazyflieEnv:
 
     
 
-            if any( np.isnan( self.state_current ) ):
+            '''if any( np.isnan( self.state_current ) ):
                 self.logDataFlag = False
                 path = None
             
@@ -146,7 +146,7 @@ class CrazyflieEnv:
             
             if not self.logDataFlag and path is not None:
                 self.path_all = np.append(self.path_all, path, axis=2)
-                path = None
+                path = None'''
                 
             '''if k_run%50 == 1:
                 # print("received data ", data, " from ", addr_remote)
