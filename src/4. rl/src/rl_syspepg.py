@@ -81,7 +81,7 @@ class rlsysPEPGAgent_reactive:
                 print("[dot]     r1r2  = %.3f \t r1asin(r2) = %.3f" %(r_cum[-1],r_cumtest[-1]))
                 print("[end only]r1r2 cum = %.3f \t r1asin(r2) = %.3f" %(cum/20.0,r_cum1[-1]*r_cum2test[-1]/20.0))
                 #print(r_cum[-1],cum,r_cum1[-1],r_cum2[-1])
-                if r1[-1] > 0.98 and r2[-1] > 0.98:
+                if r1[-1] > 0.97 and r2[-1] > 0.98:
                     return r_cum[-1] + 5
                 elif r1[-1] > 0.95 and r2[-1] > 0.95:
                     return r_cum[-1] + 4
@@ -111,9 +111,9 @@ class rlsysPEPGAgent_reactive:
             if theta[0,k_n] < 0:
                 theta[0,k_n] = 0.001
             if theta[1,k_n] > 0:
-                theta[1,k_n] = 0
-            '''if theta[2,k_n] > 0:
-                theta[1,k_n] = 0
+                theta[1,k_n] = -0.001
+            '''if theta[2,k_n] < 0:
+                theta[1,k_n] = 0.001
             if theta[3,k_n] < 0:
                 theta[1,k_n] = 0'''
 
@@ -133,7 +133,7 @@ class rlsysPEPGAgent_reactive:
         reward_minus = reward[self.n_rollout:]
         epsilon = epsilon
         b = self.get_baseline(span=3)
-        m_reward = 25.0#400.0#3000#2300      # max reward
+        m_reward = 26.0#400.0#3000#2300      # max reward
         reward_ave = np.mean(reward)
        
         ## Decaying Learning Rate:
@@ -145,20 +145,22 @@ class rlsysPEPGAgent_reactive:
         r_T = (reward_plus - reward_minus) / (2*m_reward - reward_plus - reward_minus)
         r_S = ((reward_plus + reward_minus)/2 - b) / (m_reward - b)
         
-        lr_scale = 1.0 - reward_ave/m_reward
-        b2 = self.get_baseline(3)
+        lr_scale = 1.0 - reward_ave/m_reward # try squaring?
+        explore_factor = 1.5
+        b2 = self.get_baseline(5)
         print(len(self.reward_history))
         print(self.reward_history.size)
-        '''if len(self.reward_history) > 6:
-            if b2 < m_reward*0.75:
+        if len(self.reward_history) > 20:
+            if b2 < m_reward*0.7:
                 lr_scale = 5.0*(1.0 - b2/m_reward)
             elif b2 < m_reward*(0.85):
-                lr_scale = 2.0*(1.0 - b2/m_reward)'''
+                lr_scale = 2.0*(1.0 - b2/m_reward)
 
-        self.alpha_mu = np.array([[lr_scale],[lr_scale]])#0.95
-        self.alpha_sigma = np.array([[lr_scale/2.0],[lr_scale/2.0]])  #0.95
+        lr_sigma = (lr_scale**explore_factor)/explore_factor
+        self.alpha_mu = np.array([[lr_scale],[lr_scale] ])#,[lr_scale]])#0.95
+        self.alpha_sigma = np.array([[lr_sigma],[lr_sigma] ])#,[lr_sigma]])  #0.95
         print(self.alpha_mu,self.alpha_sigma)
-
+        print(np.dot(T,r_T),np.dot(S,r_S))
         self.mu = self.mu + self.alpha_mu*(np.dot(T,r_T))
         self.sigma = self.sigma + self.alpha_sigma*np.dot(S,r_S)
 
@@ -166,9 +168,9 @@ class rlsysPEPGAgent_reactive:
             self.mu[0,0] = 0.1
         if self.mu[1,0] > 0:
             self.mu[1,0] = -0.1'''
-        '''for k in range(self.sigma.size): #  If sigma oversteps negative then assume convergence
+        for k in range(self.sigma.size): #  If sigma oversteps negative then assume convergence
             if self.sigma[k] <= 0:
-                self.sigma[k] = 0.001'''
+                self.sigma[k] = 0.05
         
         self.mu_history = np.append(self.mu_history, self.mu, axis=1)
         self.sigma_history = np.append(self.sigma_history, self.sigma, axis=1)

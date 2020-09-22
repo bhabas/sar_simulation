@@ -3,7 +3,7 @@
 import numpy as np
 import time,copy,os
 import matplotlib.pyplot as plt
-from math import sin,cos,pi
+from math import sin,cos,pi,sqrt
 import os
 from scipy.spatial.transform import Rotation
 from numpy.core.fromnumeric import repeat
@@ -43,13 +43,14 @@ print("Environment done")
 
 
 ## Learning rate
-alpha_mu = np.array([[1.0],[2.0] ] )#,[0.1]])
-alpha_sigma = np.array([[2.0],[1.0] ])#,[0.05]])
+alpha_mu = np.array([[1.0],[2.0] ])#[2.0]] )#,[0.1]])
+alpha_sigma = np.array([[2.0],[3.0] ])#, [1.0]])#,[0.05]])
 
+# seems to be unstable if mu is close to zero (coverges to deterinistic)
 ## Initial parameters for gaussian function
-mu = np.array([[1.0],[-1.0] ])#,[0.0]])   # Initial estimates of mu: 
-sigma = np.array([[2.0],[2.0]   ])#,[1.0]])      # Initial estimates of sigma: 
-agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=5)
+mu = np.array([[0],[0] ])#,[1.5]])   # Initial estimates of mu: 
+sigma = np.array([[3.0],[3.0] ])#, [0.5]])      # Initial estimates of sigma: 
+agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=7)
 
 
 h_ceiling = 1.5 # meters
@@ -64,7 +65,7 @@ file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src
 fig = plt.figure()
 plt.ion()  # interactive on
 plt.grid()
-plt.xlim([-1,40])
+plt.xlim([-1,80])
 plt.ylim([-1,25])
 plt.xlabel("Episode")
 plt.ylabel("Reward")
@@ -113,9 +114,9 @@ for k_ep in range(1000):
         repeat_run= False
         error_str = ""
 
-        vz_ini = 3.0 + np.random.uniform(low=-0.5, high=0.5)   # [2.75, 3.75]
-        vx_ini = 0 + np.random.uniform(low=-2.0, high=2.0)  # [-0.5, 0.5]
-        vy_ini = 0 + np.random.uniform(low=-2.0, high=2.0) # [-0.5, 0.5]
+        vz_ini = np.random.uniform(low=2.5, high=3.5)   # [2.75, 3.75]
+        vx_ini = np.random.uniform(low=-1.5, high=1.5)  # [-0.5, 0.5]
+        vy_ini = np.random.uniform(low=-1.5, high=1.5) # [-0.5, 0.5]
 
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
@@ -184,7 +185,7 @@ for k_ep in range(1000):
             omega = state[11:14]
 
             d = h_ceiling - position[2]
-            RREV, omega_y ,omega_x = vz/d, (vx**2)/d, vy/d
+            RREV, omega_y ,omega_x = vz/d, vx/d, vy/d
 
             qw = orientation_q[0]
             qx = orientation_q[1]
@@ -219,10 +220,11 @@ for k_ep in range(1000):
                 start_time_pitch = env.getTime()
                 env.enableSticky(1)
 
+                wn = sqrt(omega_x**2 + omega_y**2)
                 # add term to adjust for tilt 
                 qRREV = theta_rl[1,k_run] * RREV 
-                #qomega = theta_rl[2,k_run]*(omega[1])
-                q_d = qRREV # + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
+                #qomega = theta_rl[2,k_run]*wn
+                q_d = qRREV# + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
                 # torque on x axis to adjust for vy
                 r_d = 0.0 #theta_rl[3,k_run] * omega_y
 
@@ -280,7 +282,7 @@ for k_ep in range(1000):
                 break
 
             
-            if (np.abs(position[0]) > 3.0) or (np.abs(position[1]) > 3.0):
+            if (np.abs(position[0]) > 3.5) or (np.abs(position[1]) > 3.5):
                 print("Reset improperly!!!!!")
                 # env.pause()
                 env.logDataFlag = False
@@ -323,7 +325,8 @@ for k_ep in range(1000):
 
         if repeat_run == True:
             # return to previous run to catch potential missed glitches in gazebo (they are usually caught in the next run)
-            k_run -= 1 # Repeat run w/ same parameters
+            if k_run > 0:
+                k_run -= 1 # Repeat run w/ same parameters
         else:
             k_run += 1 # Move on to next run
 
