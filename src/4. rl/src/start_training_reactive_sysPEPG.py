@@ -72,6 +72,9 @@ plt.ylabel("Reward")
 plt.title("Episode: %d Run: %d" %(0,0))
 plt.show() 
 
+# Variables for current and previous image from camera sensor
+image_prev = np.array(0)
+image_now = np.array(0)
 
 # ============================
 ##          Episode 
@@ -110,7 +113,10 @@ for k_ep in range(1000):
     # ============================
     k_run = 0
     while k_run < 2*agent.n_rollout:
-              
+        
+        # take initial camera measurements 
+        image_now = env.cv_image.flatten()
+        image_prev = env.cv_image.flatten()
         repeat_run= False
         error_str = ""
 
@@ -184,13 +190,26 @@ for k_ep in range(1000):
             vz, vx, vy= vel[2], vel[0], vel[1]
             omega = state[11:14]
 
-            d = h_ceiling - position[2]
+            
+            #d = h_ceiling - position[2]
+
+            # Use noisy distance measurement from sensor
+            d = env.laser_dist
+            #print(d)
             RREV, omega_y ,omega_x = vz/d, vx/d, vy/d
 
             qw = orientation_q[0]
             qx = orientation_q[1]
             qy = orientation_q[2]
             qz = orientation_q[3]
+
+            image_now=env.cv_image.flatten() # collect current image and flatten to 1d
+            #print(image_now)
+            # concatente previous image, current image, and visual cues for training data
+            training_data = np.concatenate((image_prev,image_now,np.array([RREV*1000,omega_y*1000]))).astype(int)
+            image_prev = image_now # update image
+
+            #print(data)
 
             R = Rotation.from_quat([qx,qy,qz,qw])
             R = R.as_matrix()
@@ -234,8 +253,12 @@ for k_ep in range(1000):
                 print('RREV=%.3f, omega_y=%.3f, omega_x=%.3f, qd=%.3f' %( RREV, omega_y, omega_x,q_d) )   
                 print("Pitch Time: %.3f" %start_time_pitch)
                 #print('wy = %.3f , qomega = %.3f , qRREV = %.3f' %(omega[1],qomega,qRREV))
+
+                # randomly sample noise delay with mean = 30ms and sigma = 5
+                t_delay = np.random.normal(30.0,5.0)
+                print("t_delay = %.3f" %(t_delay))
+                env.delay_env_time(t_start=start_time_pitch,t_delay=t_delay) # Artificial delay to mimic communication lag [ms]
                 
-                env.delay_env_time(t_start=start_time_pitch,t_delay=30) # Artificial delay to mimic communication lag [ms]
                 action = {'type':'rate', 'x':r_d, 'y':q_d, 'z':0.0, 'additional':0.0}
                 env.step(action) # Start rotation and mark rotation triggered
                 pitch_triggered = True
