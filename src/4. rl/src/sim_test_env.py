@@ -30,7 +30,7 @@ start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
 file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time + '_testenv.csv'
 env.create_csv(file_name,record = True)
 
-
+## Initial variables
 h_ceiling = 1.5
 k_run = 0
 
@@ -42,7 +42,8 @@ while True:
     num = list(map(float, mu_str.split()))
     mu = np.asarray(num)
 
-    agent = rlsysPEPGAgent_reactive(0,0,mu,0)
+    ## Placeholders need to be arrays for formatting reasons
+    agent = rlsysPEPGAgent_reactive(np.asarray(0),np.asarray(0),mu,np.asarray(0))
 
     ## v_ini input:
     v_str = input("Input V_ini (vz,vx,vy): ")
@@ -70,13 +71,14 @@ while True:
 
 
     state = env.reset()
+    env.IC_csv(agent,np.around(state,decimals=3),'sim',k_run,v_ini = v_ini)
 
     ## If spawn position is off then reset position again
     x_pos,y_pos = state[2],state[3]
     print("Spawn Pos: x=%.3f \t y=%.3f" %(x_pos,y_pos))
     if abs(x_pos) > 0.1 or abs(y_pos) > 0.1:
         state = env.reset()
-
+    
 
     action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
     env.step(action)
@@ -92,7 +94,6 @@ while True:
 
     state_history = None
 
-
     # ============================
     ##          Rollout 
     # ============================
@@ -101,6 +102,7 @@ while True:
     RREV_trigger = mu[0]
 
     error_str = ''
+    reward = 0
     t_step=0
     while True:
                 
@@ -243,8 +245,6 @@ while True:
         if done_rollout:
             action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
             env.step(action)
-
-            
             reward = agent.calculate_reward(state_history,h_ceiling)
             print(reward)
             
@@ -253,12 +253,15 @@ while True:
             break
         
 
-    # env.append_csv(agent,np.around(state,decimals=3),'',k_run,reward,error=error_str)
+
+    env.append_csv(agent,np.around(state,decimals=3),'sim',k_run,reward,error=error_str)
+    env.append_csv_blank()
 
     run = bool(input("Enter to Run Again:"))
-    if run == True:
+    if run == True: # If input other than 'Enter' break to end of script
         break
-    k_run += 1
+    else:
+        k_run += 1
 
 
 

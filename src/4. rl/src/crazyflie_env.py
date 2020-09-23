@@ -225,6 +225,22 @@ class CrazyflieEnv:
                 "","","","","","","","", # Place holders
                 'error'])
 
+    def IC_csv(self,agent,state,k_ep,k_run,reward=0,error="",v_ini = [0,0,0]):
+        if self.record == True:
+            with open(self.file_name, mode='a') as state_file:
+                state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                state_writer.writerow([
+                    k_ep,k_run,
+                    agent.alpha_mu.T,agent.alpha_sigma.T,
+                    agent.mu.T,agent.sigma.T,
+                    state[0],state[1],state[2],state[3], # t,x,y,z
+                    state[4], state[5], state[6], state[7], # qx,qy,qz,qw
+                    v_ini[1], v_ini[2],v_ini[0], # vx,vy,vz
+                    state[11],state[12],state[13], # wx,wy,wz
+                    agent.gamma,np.around(reward,2),"",agent.n_rollout,
+                    "","","","","","","", # Place holders
+                    error])
+
 
     def append_csv(self,agent,state,k_ep,k_run,reward=0,error=""):
         if self.record == True:
