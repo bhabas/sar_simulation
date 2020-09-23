@@ -73,8 +73,8 @@ while True:
         state = env.reset()
 
 
-    # action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
-    # env.step(action)
+    action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
+    env.step(action)
 
 
     done = False
@@ -233,8 +233,14 @@ while True:
                 state_history = np.append(state_history, state2, axis=1)
                 # env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run)
 
+        if done_rollout:
+            action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
+            env.step(action)
 
-    run = bool(input("Run again?:"))
+            print("!------------------------End Run------------------------! \n")
+            break
+        
+    run = bool(input("Enter to Run Again:"))
     if run == True:
         break
     k_run += 1
