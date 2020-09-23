@@ -10,7 +10,7 @@ from numpy.core.fromnumeric import repeat
 
 from crazyflie_env import CrazyflieEnv
 from rl_syspepg import rlsysPEPGAgent_reactive
-from rl_cma import CMA_basic
+from rl_cma import CMA_basic,CMA
 
 '''
 mu = [5.267,-10.228,-4.713]
@@ -49,11 +49,13 @@ alpha_sigma = np.array([[2.0],[3.0] ])#, [1.0]])#,[0.05]])
 
 # seems to be unstable if mu is close to zero (coverges to deterinistic)
 ## Initial parameters for gaussian function
-mu = np.array([[3.0],[-3.0] ])#,[1.5]])   # Initial estimates of mu: 
-sigma = np.array([[1.0],[1.0],[-0.8] ])#, [0.5]])      # Initial estimates of sigma: 
+#mu = np.array([[3.0],[-3.0] ])#,[1.5]])   # Initial estimates of mu: 
+#sigma = np.array([[1.0],[1.0],[-0.8] ])#, [0.5]])      # Initial estimates of sigma: 
 #agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=7)
 
-agent = CMA_basic(mu,sigma,N_best=0.3,n_rollout=10)
+#agent = CMA_basic(mu,sigma,N_best=0.3,n_rollout=10)
+agent = CMA(n=2)
+n_rollout = 6
 
 h_ceiling = 1.5 # meters
 
@@ -90,8 +92,13 @@ for k_ep in range(1000):
     print("=============================================")
 
     print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
-    mu = agent.mu
-    sigma = agent.sigma
+    #mu = agent.mu
+    #sigma = agent.sigma
+    #print(mu)
+    #print(sigma)
+
+    mu = agent.xmean
+    sigma = np.array([agent.C[0,0],agent.C[1,1],agent.C[0,1]])
     print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1],mu[1],mu[1]))
     print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1],sigma[2],sigma[1]))
     print()
@@ -126,8 +133,8 @@ for k_ep in range(1000):
         error_str = ""
 
         vz_ini = np.random.uniform(low=2.5, high=3.5)   # [2.75, 3.75]
-        vx_ini = np.random.uniform(low=-1.5, high=1.5)  # [-0.5, 0.5]
-        vy_ini = np.random.uniform(low=-1.5, high=1.5) # [-0.5, 0.5]
+        vx_ini = 0.0#np.random.uniform(low=-1.5, high=1.5)  # [-0.5, 0.5]
+        vy_ini = 0.0#np.random.uniform(low=-1.5, high=1.5) # [-0.5, 0.5]
 
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
@@ -252,7 +259,7 @@ for k_ep in range(1000):
                 # add term to adjust for tilt 
                 qRREV = theta_rl[1,k_run] * RREV 
                 #qomega = theta_rl[2,k_run]*wn
-                q_d = qRREV# + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
+                q_d = -qRREV# + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
                 # torque on x axis to adjust for vy
                 r_d = 0.0 #theta_rl[3,k_run] * omega_y
 
