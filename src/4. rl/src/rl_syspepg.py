@@ -4,8 +4,20 @@ import scipy.io
 from scipy.spatial.transform import Rotation
 import matplotlib.pyplot as plt
 from math import asin,pi
+
 class rlsysPEPGAgent_reactive:
     def __init__(self, alpha_mu, alpha_sigma, mu,sigma,gamma=0.95, n_rollout = 6):
+        """[summary]
+
+        Args:
+            alpha_mu (np.array): <u_learning rate
+            alpha_sigma (np.array): Sigma_learning rate
+            mu (np.array): Parameter means
+            sigma (np.array): Parameter Standard Deviations
+            gamma (float, optional): Discount Factor. Defaults to 0.95.
+            n_rollout (int, optional): Rollouts per episode. Defaults to 6.
+        """        
+
         self.alpha_mu, self.alpha_sigma,  = alpha_mu, alpha_sigma
         self.gamma, self.n_rollout = gamma, n_rollout
         self.mu = mu
@@ -76,22 +88,24 @@ class rlsysPEPGAgent_reactive:
             if r_cum.size > 0:
 
                 cum = r_cum1[-1]*(r_cum2[-1])
-                print(r1[-1],r2[-1])
+                # print(r1[-1],r2[-1])
                 
-                print("[dot]     r1r2  = %.3f \t r1asin(r2) = %.3f" %(r_cum[-1],r_cumtest[-1]))
-                print("[end only]r1r2 cum = %.3f \t r1asin(r2) = %.3f" %(cum/20.0,r_cum1[-1]*r_cum2test[-1]/20.0))
+                # print("[dot]     r1r2  = %.3f \t r1asin(r2) = %.3f" %(r_cum[-1],r_cumtest[-1]))
+                # print("[end only]r1r2 cum = %.3f \t r1asin(r2) = %.3f" %(cum/20.0,r_cum1[-1]*r_cum2test[-1]/20.0))
                 #print(r_cum[-1],cum,r_cum1[-1],r_cum2[-1])
                 if r1[-1] > 0.98 and r2[-1] > 0.98:
-                    return r_cum[-1] + 5
+                    r_cum[-1] += 5
                 elif r1[-1] > 0.95 and r2[-1] > 0.95:
-                    return r_cum[-1] + 4
+                    r_cum[-1] += 4
                 elif r1[-1] > 0.90 and r2[-1] > 0.8:
-                    return r_cum[-1] + 3
+                    r_cum[-1] += 3
                 elif r1[-1] > 0.9 and r2[-1] > 0.5:
-                    return r_cum[-1] + 2
+                    r_cum[-1] += 2
                 else:
-                    return   r_cum[-1] # float(z[-1]>1.2)*cum
+                    pass # float(z[-1]>1.2)*cum
                 # max 1150 min -550 -> 0 - 1700
+
+                return np.around(r_cum[-1],2)
             else:
                 return np.nan
 
@@ -134,7 +148,7 @@ class rlsysPEPGAgent_reactive:
         epsilon = epsilon
         b = self.get_baseline(span=3)
         m_reward = 25.0#400.0#3000#2300      # max reward
-        reward_ave = np.mean(reward)
+        reward_avg = np.mean(reward)
        
         ## Decaying Learning Rate:
         #self.alpha_mu = self. * 0.9
@@ -145,7 +159,7 @@ class rlsysPEPGAgent_reactive:
         r_T = (reward_plus - reward_minus) / (2*m_reward - reward_plus - reward_minus)
         r_S = ((reward_plus + reward_minus)/2 - b) / (m_reward - b)
         
-        lr_scale = 1.0 - reward_ave/m_reward
+        lr_scale = 1.0 - reward_avg/m_reward
         b2 = self.get_baseline(3)
         print(len(self.reward_history))
         print(self.reward_history.size)

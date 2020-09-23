@@ -9,7 +9,9 @@ from scipy.spatial.transform import Rotation
 from numpy.core.fromnumeric import repeat
 
 from crazyflie_env import CrazyflieEnv
+from rl_syspepg import rlsysPEPGAgent_reactive
 
+os.system("clear")
 
 # ============================
 ##     Sim Initialization 
@@ -21,11 +23,12 @@ env = CrazyflieEnv(port_self=18050, port_remote=18060)
 print("Environment done")
 
 
+
 ## Initialize the user and data recording
 username = getpass.getuser()
 start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
 file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time + '_testenv.csv'
-# env.create_csv(file_name,record = True)
+env.create_csv(file_name,record = True)
 
 
 h_ceiling = 1.5
@@ -35,25 +38,27 @@ k_run = 0
 while True:
 
     ## Mu input:
-    mu_str = input("Input mu:")
+    mu_str = input("Input mu values: ")
     num = list(map(float, mu_str.split()))
     mu = np.asarray(num)
 
-    # ## v_ini input:
-    # v_str = input("Input V_ini")
-    # num = list(map(float, v_str.split()))
-    # v_ini = np.asarray(num)
+    agent = rlsysPEPGAgent_reactive(0,0,mu,0)
 
-    # vz_ini,vx_ini,vy_ini = v_ini
+    ## v_ini input:
+    v_str = input("Input V_ini (vz,vx,vy): ")
+    num = list(map(float, v_str.split()))
+    v_ini = np.asarray(num)
 
-    vz_ini = 3.0
-    vx_ini = 0.0 
-    vy_ini = 0.0
+    vz_ini,vx_ini,vy_ini = v_ini
+
+    # vz_ini = 3.0
+    # vx_ini = 0.0 
+    # vy_ini = 0.0
     
 
 
     print("=============================================")
-    print("         Trial Run: %d" %k_run)
+    print("              Trial Run: %d" %k_run)
     print("=============================================")
 
 
@@ -95,7 +100,7 @@ while True:
     env.step(action=action)
     RREV_trigger = mu[0]
 
-
+    error_str = ''
     t_step=0
     while True:
                 
@@ -155,7 +160,7 @@ while True:
 
             # add term to adjust for tilt 
             qRREV = mu[1] * RREV 
-            #qomega = theta_rl[2,k_run]*(omega[1])
+            # qomega = theta_rl[2,k_run]*(omega[1])
             q_d = qRREV # + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
             # torque on x axis to adjust for vy
             r_d = 0.0 #theta_rl[3,k_run] * omega_y
@@ -163,7 +168,8 @@ while True:
             print('----- pitch starts -----')
             print('vz=%.3f, vx=%.3f, vy=%.3f' %(vz,vx,vy))
             print('r[0]=%.3f, r[1]=%.3f, r[2]=%.3f, b3y=%.3f' %(r[0],r[1],r[2],b3y))
-            print('RREV=%.3f, omega_y=%.3f, omega_x=%.3f, qd=%.3f' %( RREV, omega_y, omega_x,q_d) )   
+            print('RREV=%.3f, omega_y=%.3f, omega_x=%.3f, qd=%.3f' %( RREV, omega_y, omega_x,q_d) ) 
+            print()  
             print("Pitch Time: %.3f" %(start_time_pitch))
             #print('wy = %.3f , qomega = %.3f , qRREV = %.3f' %(omega[1],qomega,qRREV))
             
@@ -195,6 +201,12 @@ while True:
 
             error_str = error_1 + error_2
             done_rollout = True
+
+        ## If position exceeds ceiling bounds mark error
+        if (np.abs(position[0]) > 3.0) or (np.abs(position[1]) > 3.0):
+            error_str = "Reset improperly/Position outside bounding box"
+            print(error_str)
+            break
         
 
         # ============================
@@ -214,32 +226,35 @@ while True:
             repeat_run = True
             break
 
-        
-        if (np.abs(position[0]) > 3.0) or (np.abs(position[1]) > 3.0):
-            print("Reset improperly!!!!!")
-            error_str = "Reset improperly/Position outside bounding box"
-            repeat_run = True
-            break
+
+
         
         ## Keep record of state vector every 10 time steps
-        ## Each iteration changes state vector from [14,] into (state2)[14,1] 
-        ##      First iteration: track_state = state2 vector
-        ##      Every 10 iter: append track_state columns with current state2 vector 
-        state2 = state[1:,np.newaxis]
+        temp = state[1:].reshape(-1,1) # Remove time from state vector and reshape to [13,1]
         if state_history is None:
-            state_history = state2 # replace w/ state_history variable for track_state
+            state_history = temp # Instantiate state_history variable
         else:
             if t_step%10==0:
-                state_history = np.append(state_history, state2, axis=1)
-                # env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run)
+                state_history = np.append(state_history, temp, axis=1)
+                env.append_csv(agent,np.around(state,decimals=3),'sim',k_run)
+
+
 
         if done_rollout:
             action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
             env.step(action)
 
+            
+            reward = agent.calculate_reward(state_history,h_ceiling)
+            print(reward)
+            
+
             print("!------------------------End Run------------------------! \n")
             break
         
+
+    # env.append_csv(agent,np.around(state,decimals=3),'',k_run,reward,error=error_str)
+
     run = bool(input("Enter to Run Again:"))
     if run == True:
         break
