@@ -33,24 +33,25 @@ env.create_csv(file_name,record = True)
 ## Initial variables
 h_ceiling = 1.5
 k_run = 0
-
+reset_vals = True
 
 while True:
 
-    ## Mu input:
-    mu_str = input("Input mu values: ")
-    num = list(map(float, mu_str.split()))
-    mu = np.asarray(num)
+    if reset_vals == True:
+        ## Mu input:
+        mu_str = input("Input mu values: ")
+        num = list(map(float, mu_str.split()))
+        mu = np.asarray(num)
 
-    ## Placeholders need to be arrays for formatting reasons
-    agent = rlsysPEPGAgent_reactive(np.asarray(0),np.asarray(0),mu,np.asarray(0))
+        ## Placeholders need to be arrays for formatting reasons
+        agent = rlsysPEPGAgent_reactive(np.asarray(0),np.asarray(0),mu,np.asarray(0))
 
-    ## v_ini input:
-    v_str = input("Input V_ini (vz,vx,vy): ")
-    num = list(map(float, v_str.split()))
-    v_ini = np.asarray(num)
+        ## v_ini input:
+        v_str = input("Input V_ini (vz,vx,vy): ")
+        num = list(map(float, v_str.split()))
+        v_ini = np.asarray(num)
 
-    vz_ini,vx_ini,vy_ini = v_ini
+        vz_ini,vx_ini,vy_ini = v_ini
 
     # vz_ini = 3.0
     # vx_ini = 0.0 
@@ -257,11 +258,16 @@ while True:
     env.append_csv(agent,np.around(state,decimals=3),'sim',k_run,reward,error=error_str)
     env.append_csv_blank()
 
-    run = bool(input("Enter to Run Again:"))
-    if run == True: # If input other than 'Enter' break to end of script
-        break
-    else:
+    str = input("Input: \n(1): To play again \n(2): To repeat scenario \n(3): Game over :( \n")
+    if str == '1':
         k_run += 1
+        reset_vals = True
+
+    elif str == '2':
+        reset_vals = False
+    else: 
+        break
+
 
 
 
