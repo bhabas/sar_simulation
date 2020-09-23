@@ -10,6 +10,7 @@ from numpy.core.fromnumeric import repeat
 
 from crazyflie_env import CrazyflieEnv
 from rl_syspepg import rlsysPEPGAgent_reactive
+from rl_cma import CMA_basic
 
 '''
 mu = [5.267,-10.228,-4.713]
@@ -43,15 +44,16 @@ print("Environment done")
 
 
 ## Learning rate
-alpha_mu = np.array([[1.0],[2.0] ])#[2.0]] )#,[0.1]])
+alpha_mu = np.array([[3.0],[2.0] ])#[2.0]] )#,[0.1]])
 alpha_sigma = np.array([[2.0],[3.0] ])#, [1.0]])#,[0.05]])
 
 # seems to be unstable if mu is close to zero (coverges to deterinistic)
 ## Initial parameters for gaussian function
-mu = np.array([[0],[0] ])#,[1.5]])   # Initial estimates of mu: 
-sigma = np.array([[3.0],[3.0] ])#, [0.5]])      # Initial estimates of sigma: 
-agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=7)
+mu = np.array([[3.0],[-3.0] ])#,[1.5]])   # Initial estimates of mu: 
+sigma = np.array([[1.0],[1.0],[-0.8] ])#, [0.5]])      # Initial estimates of sigma: 
+#agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=7)
 
+agent = CMA_basic(mu,sigma,N_best=0.3,n_rollout=10)
 
 h_ceiling = 1.5 # meters
 
@@ -91,13 +93,16 @@ for k_ep in range(1000):
     mu = agent.mu
     sigma = agent.sigma
     print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1],mu[1],mu[1]))
-    print("sig1=%.3f, \t sig2=%.3f, \t sig3=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1],sigma[1],sigma[1]))
+    print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1],sigma[2],sigma[1]))
     print()
 
     done = False
-    reward = np.zeros(shape=(2*agent.n_rollout,1))
+    #reward = np.zeros(shape=(2*agent.n_rollout,1))
+    reward = np.zeros(shape=(agent.n_rollout,1))
     reward[:] = np.nan  # initialize reward to be NaN array, size n_rollout x 1
-    theta_rl, epsilon_rl = agent.get_theta()
+    #theta_rl, epsilon_rl = agent.get_theta()
+    theta_rl = agent.get_theta()
+
     print( "theta_rl = ")
 
     np.set_printoptions(precision=2, suppress=True)
@@ -112,11 +117,11 @@ for k_ep in range(1000):
     ##          Run 
     # ============================
     k_run = 0
-    while k_run < 2*agent.n_rollout:
+    while k_run < agent.n_rollout:#2*agent.n_rollout:
         
         # take initial camera measurements 
-        image_now = env.cv_image.flatten()
-        image_prev = env.cv_image.flatten()
+        #image_now = env.cv_image.flatten()
+        #image_prev = env.cv_image.flatten()
         repeat_run= False
         error_str = ""
 
@@ -126,6 +131,7 @@ for k_ep in range(1000):
 
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
+        # iniitial condition in terms of mag and angle
         '''radius = 2.0*np.random.rand()
         direction = 2.0*pi*np.random.rand() 
         vx_ini = radius*sin(direction)
@@ -191,10 +197,10 @@ for k_ep in range(1000):
             omega = state[11:14]
 
             
-            #d = h_ceiling - position[2]
+            d = h_ceiling - position[2]
 
             # Use noisy distance measurement from sensor
-            d = env.laser_dist
+            #d = env.laser_dist
             #print(d)
             RREV, omega_y ,omega_x = vz/d, vx/d, vy/d
 
@@ -203,11 +209,11 @@ for k_ep in range(1000):
             qy = orientation_q[2]
             qz = orientation_q[3]
 
-            image_now=env.cv_image.flatten() # collect current image and flatten to 1d
+            #image_now=env.cv_image.flatten() # collect current image and flatten to 1d
             #print(image_now)
             # concatente previous image, current image, and visual cues for training data
-            training_data = np.concatenate((image_prev,image_now,np.array([RREV*1000,omega_y*1000]))).astype(int)
-            image_prev = image_now # update image
+            #training_data = np.concatenate((image_prev,image_now,np.array([RREV*1000,omega_y*1000]))).astype(int)
+            #image_prev = image_now # update image
 
             #print(data)
 
@@ -217,9 +223,12 @@ for k_ep in range(1000):
             b3 = R[2,:]
             #print(angle, b3[0],b3[1],b3[2])
             if b3[2] < 0.0 and not flip_flag:
+                # check if crazyflie flipped 
+
                 #print(angle)
                 action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
                 env.step(action)
+                # shut off motors for the rest of the run
                 print("Flipped!! Shut motors")
                 flip_flag = True
             
@@ -356,7 +365,8 @@ for k_ep in range(1000):
 
     if not any( np.isnan(reward) ):
         print("Episode # %d training, average reward %.3f" %(k_ep, np.mean(reward)))
-        agent.train(theta_rl,reward,epsilon_rl)
+        #agent.train(theta_rl,reward,epsilon_rl)
+        agent.train(theta_rl,reward)
         print(reward)
         plt.plot(k_ep,np.mean(reward),'ro')
         plt.draw()
