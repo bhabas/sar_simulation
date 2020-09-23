@@ -2,6 +2,11 @@
 
 namespace math {
 
+float clamp(float value, float min, float max) {
+  if (value < min) return min;
+  if (value > max) return max;
+  return value;
+}
 void hat(double *result, double *vector)
 {
     double m[3][3] = {{0,0,0}, {0,0,0}, {0,0,0}};
