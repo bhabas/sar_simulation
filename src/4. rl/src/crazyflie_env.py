@@ -104,7 +104,7 @@ class CrazyflieEnv:
         return self.state_current
 
 
-    def reset(self): #Spends 2 seconds resetting the world and 3 seconds waiting after that
+    def reset(self): # Disable sticky then places spawn_model at origin
         self.enableSticky(0)
         os.system("rosservice call gazebo/reset_world")
         self.enableSticky(0)

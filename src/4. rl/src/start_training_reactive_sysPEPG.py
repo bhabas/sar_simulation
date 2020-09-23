@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import time,copy,os,getpass
+import time,os,getpass
 import matplotlib.pyplot as plt
 from math import sin,cos,pi
 import os
@@ -146,9 +146,9 @@ for k_ep in range(ep_start,1000):
 
         '''
         vx        vy       vz         suceess?
-          1   |  1    |   3      |       yes (off by .2)
-          -1  |  1    |   3      |      sometimes rests improperly (off by .2)
-          -1  |  -1   |   3      |       more unstable(off by .2)
+         1    |   1   |   3      |       yes (off by .2)
+        -1    |   1   |   3      |      sometimes rests improperly (off by .2)
+        -1    |  -1   |   3      |       more unstable(off by .2)
          1    |  -1   |   3      |       yes (off by .2)
 
 
@@ -160,13 +160,17 @@ for k_ep in range(ep_start,1000):
         print("Vz_ini: %.3f \t Vx_ini: %.3f \t Vy_ini: %.3f" %(vz_ini, vx_ini, vy_ini))
 
         state = env.reset()
-        print(state[2],state[3])
-        if abs(state[2]) > 0.1 or abs(state[3]) > 0.1:
+
+        ## If spawn position is off then reset position again
+        x_pos,y_pos = state[2],state[3]
+        print("Spawn Pos: x=%.3f \t y=%.3f" %(x_pos,y_pos))
+        if abs(x_pos) > 0.1 or abs(y_pos) > 0.1:
             state = env.reset()
+
         action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
         env.step(action)
 
-        k_step = 0
+        t_step = 0
         done_rollout = False
         start_time_rollout = env.getTime()
         start_time_pitch = None
@@ -191,7 +195,7 @@ for k_ep in range(ep_start,1000):
         while True:
                 
             time.sleep(5e-4) # Time step size
-            k_step = k_step + 1 # Time step
+            t_step = t_step + 1 # Time step
             ## Define current state
             state = env.state_current
             
@@ -314,7 +318,7 @@ for k_ep in range(ep_start,1000):
             if state_history is None:
                 state_history = state2 # replace w/ state_history variable for track_state
             else:
-                if k_step%10==0:
+                if t_step%10==0:
                     state_history = np.append(state_history, state2, axis=1)
                     env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run)
 
