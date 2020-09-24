@@ -3,13 +3,14 @@
 import numpy as np
 import time,os,getpass
 import matplotlib.pyplot as plt
-from math import sin,cos,pi
+from math import sin,cos,pi,sqrt
 import os
 from scipy.spatial.transform import Rotation
 from numpy.core.fromnumeric import repeat
 
 from crazyflie_env import CrazyflieEnv
 from rl_syspepg import rlsysPEPGAgent_reactive
+from rl_cma import CMA_basic,CMA
 
 '''
 mu = [5.267,-10.228,-4.713]
@@ -55,14 +56,13 @@ env.create_csv(file_name,record = True)
 
 
 ## Learning rate
-alpha_mu = np.array([[1.0],[2.0] ] )#,[0.1]])
-alpha_sigma = np.array([[2.0],[1.0] ])#,[0.05]])
+alpha_mu = np.array([[3.0],[2.0] ])#[2.0]] )#,[0.1]])
+alpha_sigma = np.array([[2.0],[3.0] ])#, [1.0]])#,[0.05]])
 
+# seems to be unstable if mu is close to zero (coverges to deterinistic)
 ## Initial parameters for gaussian function
-
-mu = np.array([[1.0],[-1.0] ])#,[0.0]])   # Initial estimates of mu: 
-sigma = np.array([[2.0],[2.0]   ])#,[1.0]])      # Initial estimates of sigma: 
-agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=5)
+mu = np.array([[3.0],[-3.0] ])#,[1.5]])   # Initial estimates of mu: 
+sigma = np.array([[1.0],[1.0] , [0.5]])      # Initial estimates of sigma: 
 
 
 ## Uncomment and input starting episode and data_path to recorded csv file to run
@@ -71,8 +71,11 @@ agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_ro
 # alpha_mu, alpha_sigma, mu, sigma = env.load_csv(data_path,ep_start)
 
 
-agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=1)
 
+# For CMA_basic, make sure simga has 3 inputs / for pepg it must be 2
+#agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=7)
+agent = CMA_basic(mu,sigma,N_best=0.3,n_rollout=10)
+#agent = CMA(n=2) # number of problem dimensions
 
 h_ceiling = 1.5 # meters
 
@@ -83,12 +86,15 @@ fig = plt.figure()
 plt.ion()  # interactive on
 plt.grid()
 plt.xlim([-1,40])
-plt.ylim([-1,25])
+plt.ylim([-1,20])  # change limit depending on reward function defenition
 plt.xlabel("Episode")
 plt.ylabel("Reward")
 plt.title("Episode: %d Run: %d" %(0,0))
 plt.show() 
 
+# Variables for current and previous image from camera sensor
+image_prev = np.array(0)
+image_now = np.array(0)
 
 # ============================
 ##          Episode 
@@ -104,14 +110,22 @@ for k_ep in range(ep_start,1000):
     print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
     mu = agent.mu
     sigma = agent.sigma
+    #print(mu)
+    #print(sigma)
+
+    #mu = agent.xmean
+    #sigma = np.array([agent.C[0,0],agent.C[1,1],agent.C[0,1]])
     print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1],mu[1],mu[1]))
-    print("sig1=%.3f, \t sig2=%.3f, \t sig3=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1],sigma[1],sigma[1]))
+    print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1],sigma[1],sigma[1]))
     print()
 
     done = False
     reward = np.zeros(shape=(2*agent.n_rollout,1))
+    #reward = np.zeros(shape=(agent.n_rollout,1))
     reward[:] = np.nan  # initialize reward to be NaN array, size n_rollout x 1
-    theta_rl, epsilon_rl = agent.get_theta()
+    #theta_rl, epsilon_rl = agent.get_theta()
+    theta_rl,epsilon = agent.get_theta()
+
     print( "theta_rl = ")
 
     np.set_printoptions(precision=2, suppress=True)
@@ -126,17 +140,21 @@ for k_ep in range(ep_start,1000):
     ##          Run 
     # ============================
     k_run = 0
-    while k_run < 2*agent.n_rollout:
-              
+    while k_run < 2*agent.n_rollout:#2*agent.n_rollout:
+        
+        # take initial camera measurements 
+        #image_now = env.cv_image.flatten()
+        #image_prev = env.cv_image.flatten()
         repeat_run= False
         error_str = ""
 
-        vz_ini = 3.0 + np.random.uniform(low=-0.5, high=0.5)   # [2.75, 3.75]
-        vx_ini = 0 + np.random.uniform(low=-2.0, high=2.0)  # [-0.5, 0.5]
-        vy_ini = 0 + np.random.uniform(low=-2.0, high=2.0) # [-0.5, 0.5]
+        vz_ini = np.random.uniform(low=2.5, high=3.5)   # [2.75, 3.75]
+        vx_ini = 0.0#np.random.uniform(low=-1.5, high=1.5)  # [-0.5, 0.5]
+        vy_ini = 0.0#np.random.uniform(low=-1.5, high=1.5) # [-0.5, 0.5]
 
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
+        # iniitial condition in terms of mag and angle
         '''radius = 2.0*np.random.rand()
         direction = 2.0*pi*np.random.rand() 
         vx_ini = radius*sin(direction)
@@ -205,13 +223,26 @@ for k_ep in range(ep_start,1000):
             vz, vx, vy= vel[2], vel[0], vel[1]
             omega = state[11:14]
 
+            
             d = h_ceiling - position[2]
-            RREV, omega_y ,omega_x = vz/d, (vx**2)/d, vy/d
+
+            # Use noisy distance measurement from sensor
+            #d = env.laser_dist
+            #print(d)
+            RREV, omega_y ,omega_x = vz/d, vx/d, vy/d
 
             qw = orientation_q[0]
             qx = orientation_q[1]
             qy = orientation_q[2]
             qz = orientation_q[3]
+
+            #image_now=env.cv_image.flatten() # collect current image and flatten to 1d
+            #print(image_now)
+            # concatente previous image, current image, and visual cues for training data
+            #training_data = np.concatenate((image_prev,image_now,np.array([RREV*1000,omega_y*1000]))).astype(int)
+            #image_prev = image_now # update image
+
+            #print(data)
 
             R = Rotation.from_quat([qx,qy,qz,qw])
             R = R.as_matrix()
@@ -219,9 +250,12 @@ for k_ep in range(ep_start,1000):
             b3 = R[2,:]
             #print(angle, b3[0],b3[1],b3[2])
             if b3[2] < 0.0 and not flip_flag:
+                # check if crazyflie flipped 
+
                 #print(angle)
                 action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
                 env.step(action)
+                # shut off motors for the rest of the run
                 print("Flipped!! Shut motors")
                 flip_flag = True
             
@@ -241,10 +275,11 @@ for k_ep in range(ep_start,1000):
                 start_time_pitch = env.getTime()
                 env.enableSticky(1)
 
+                wn = sqrt(omega_x**2 + omega_y**2)
                 # add term to adjust for tilt 
                 qRREV = theta_rl[1,k_run] * RREV 
-                #qomega = theta_rl[2,k_run]*(omega[1])
-                q_d = qRREV # + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
+                #qomega = theta_rl[2,k_run]*wn
+                q_d = qRREV# + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
                 # torque on x axis to adjust for vy
                 r_d = 0.0 #theta_rl[3,k_run] * omega_y
 
@@ -254,8 +289,12 @@ for k_ep in range(ep_start,1000):
                 print('RREV=%.3f, omega_y=%.3f, omega_x=%.3f, qd=%.3f' %( RREV, omega_y, omega_x,q_d) )   
                 print("Pitch Time: %.3f" %start_time_pitch)
                 #print('wy = %.3f , qomega = %.3f , qRREV = %.3f' %(omega[1],qomega,qRREV))
+
+                # randomly sample noise delay with mean = 30ms and sigma = 5
+                t_delay = np.random.normal(30.0,5.0)
+                #print("t_delay = %.3f" %(t_delay))
+                #env.delay_env_time(t_start=start_time_pitch,t_delay=t_delay) # Artificial delay to mimic communication lag [ms]
                 
-                env.delay_env_time(t_start=start_time_pitch,t_delay=30) # Artificial delay to mimic communication lag [ms]
                 action = {'type':'rate', 'x':r_d, 'y':q_d, 'z':0.0, 'additional':0.0}
                 env.step(action) # Start rotation and mark rotation triggered
                 pitch_triggered = True
@@ -302,7 +341,7 @@ for k_ep in range(ep_start,1000):
                 break
 
             
-            if (np.abs(position[0]) > 3.0) or (np.abs(position[1]) > 3.0):
+            if (np.abs(position[0]) > 3.5) or (np.abs(position[1]) > 3.5):
                 print("Reset improperly!!!!!")
                 # env.pause()
                 env.logDataFlag = False
@@ -345,14 +384,16 @@ for k_ep in range(ep_start,1000):
 
         if repeat_run == True:
             # return to previous run to catch potential missed glitches in gazebo (they are usually caught in the next run)
-            k_run -= 1 # Repeat run w/ same parameters
+            if k_run > 0:
+                k_run -= 1 # Repeat run w/ same parameters
         else:
             k_run += 1 # Move on to next run
 
 
     if not any( np.isnan(reward) ):
         print("Episode # %d training, average reward %.3f" %(k_ep, np.mean(reward)))
-        agent.train(theta_rl,reward,epsilon_rl)
+        #agent.train(theta_rl,reward,epsilon_rl)
+        agent.train(theta_rl,reward,epsilon)
         print(reward)
         plt.plot(k_ep,np.mean(reward),'ro')
         plt.draw()

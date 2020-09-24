@@ -4,6 +4,8 @@
 
 namespace math {
 
+float clamp(float value, float min, float max);
+
 void hat(double *result, double *vector);
 
 void dehat(double *result, double *matrix);

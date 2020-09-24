@@ -2,6 +2,8 @@
 #include "math_linear_algebra.h"
 #include <iomanip>      // provides std::setprecision
 #include <math.h>
+#include <algorithm>
+#include <stdint.h>
 
 void Controller::Load(int port_number_gazebo)
 {
@@ -144,7 +146,6 @@ void Controller::recvThread_rl()
 
 void Controller::controlThread()
 {
-    bool updatedcontroller = true;
     double state_full[14];
     StateFull state_full_structure;
     float motorspeed[4];
@@ -193,6 +194,7 @@ void Controller::controlThread()
     double J[3][3] = {{1.65717e-05, 0, 0}, {0, 1.66556e-05, 0}, {0, 0, 2.92617e-05}};
 
     double f_thrust =0;
+    // might need to adjust weight to real case (sdf file too)
     double f_hover = (0.025 + 0.00075*4)*9.8066;
     double tau[3] =  {0,0,0};
     double FT[4];
@@ -246,7 +248,6 @@ void Controller::controlThread()
         //std::cout << "vx = " << control_cmd[1] << std::endl;
         //std::cout << "vz = " << control_cmd[3] << std::endl;
 
-    if (updatedcontroller){
         type = control_cmd[0];
         math::quat2rotm_Rodrigue((double *) R, orientation_q);
         if (type == 1 || type == 2)
@@ -352,101 +353,13 @@ void Controller::controlThread()
             tau[0]=0; tau[1]=0; tau[2]=0;
         }
         
-    }
-
-
-
-      //  old script 
-    else {
-        type = control_cmd[0];
-        if (type==2)            // velocity control
-        {
-            v_d[0] = control_cmd[1];    v_d[1] = control_cmd[2];    v_d[2] = control_cmd[3];
-            //std::cout<<"velocity command ["<< v_d[0]<<", "<< v_d[1]<<", "<< v_d[2]<<"]"<<std::endl;
-            math::quat2rotm_Rodrigue((double *) R, orientation_q);
-
-            math::matAddsMat(e_v, v_d, vel, 3, 2);                      // e_v = v_d - v
-            math::matTimesScalar(tmp21, e_v, kp_v, 3, 1);               // kp_v * e_v
-            tmp22[0] = 0; tmp22[1] = 0; tmp22[2] = f_hover;             // mg * e_3
-            math::matAddsMat(tmp23, tmp21, tmp22, 3, 1);                // kp_v*e_v + mg*e_3
-            tmp24[0] = 0;   tmp24[1] = 0;   tmp24[2] = 0;               // kd_v * e_a
-            math::matAddsMat(tmp25, tmp23, tmp24, 3, 1);                // kp_v*e_v + kd_v * e_a + mg*e_3
-            math::matTimesScalar(b3_d, tmp25, sqrt(math::dot(tmp25, tmp25, 3)), 3, 2);     // normalize
-            b1_d[0] = 1; b1_d[1] = 0; b1_d[2] = 0;
-            math::hat((double *) b3_d_hat, b3_d);
-            math::matTimesVec(b2_d,(double *) b3_d_hat, b1_d, 3);
-            math::matTimesScalar(b2_d, b2_d, sqrt(math::dot(b2_d, b2_d, 3)), 3, 2);     // normalize
-            math::hat((double *) b2_d_hat, b2_d);
-            math::matTimesVec(b1_d,(double *) b2_d_hat, b3_d, 3);
-            R_d[0][0] = b1_d[0];    R_d[0][1] = b2_d[0];    R_d[0][2] = b3_d[0];
-            R_d[1][0] = b1_d[1];    R_d[1][1] = b2_d[1];    R_d[1][2] = b3_d[1];
-            R_d[2][0] = b1_d[2];    R_d[2][1] = b2_d[2];    R_d[2][2] = b3_d[2];
-            f_thrust = math::dot(tmp25, b3_d, 3);
-            //std::cout<<"f_thrust = "<<f_thrust<<std::endl;
-        }
-        else if(type == 3)      // attitude control
-        {
-            eul[0] = control_cmd[1];    eul[1] = control_cmd[2];    eul[2] = control_cmd[3];
-            //std::cout<<"Attitude command ["<< eul[0]<<", "<< eul[1]<<", "<< eul[2]<<"]"<<std::endl;
-            math::quat2rotm_Rodrigue((double *) R, orientation_q);
-
-            R_d[0][0] = cos(eul[1]);    R_d[0][1] = 0;      R_d[0][2] = sin(eul[1]);
-            R_d[1][0] = 0;              R_d[1][1] = 1;      R_d[1][2] = 0;
-            R_d[2][0] = -sin(eul[1]);   R_d[2][1] = 0;      R_d[2][2] = cos(eul[1]);
-            f_thrust = 0;
-        }
-        else if(type == 4)
-        {
-            omega_d[0] = control_cmd[1];    omega_d[1] = control_cmd[2];    omega_d[2] = control_cmd[3];
-            //std::cout<<"Omega command ["<< omega_d[0]<<", "<< omega_d[1]<<", "<< omega_d[2]<<"]"<<std::endl;
-            math::quat2rotm_Rodrigue((double *) R, orientation_q);
-            R_d[0][0] = R[0][0];    R_d[0][1] = 0;    R_d[0][2] = R[0][2];
-            R_d[1][0] = R[1][0];    R_d[1][1] = 1;    R_d[1][2] = R[1][2];
-            R_d[2][0] = R[2][0];    R_d[2][1] = 0;    R_d[2][2] = R[2][2];
-            //std::memcpy(R_d, R, sizeof(R));
-            f_thrust = 0;
-        }
-        else
-            std::cout<<"Invalid command"<<std::endl;
+        // clamped thrust to 2 times the weight
+        // might want to limit motorspeed instead?
+        // values are much lower sometimes (very concerning) ( 5.0 -> 0.6)!!
+        double f_max = 0.6; //2.0*f_hover;
+        double f_clamped =  math::clamp(f_thrust,0.0,f_max);
         
-        math::matTranspose((double *) tmp1,(double *) R_d, 3);
-        math::matTranspose((double *) tmp2,(double *) R, 3);
-        math::matTimesMat((double *) tmp3,(double *) tmp1,(double *) R);
-        math::matTimesMat((double *) tmp4,(double *) tmp2,(double *) R_d);      // R' * R_d
-        math::matAddsMat((double *) tmp5,(double *) tmp3,(double *) tmp4, 3*3, 2);
-        math::matTimesScalar((double *) tmp6,(double *) tmp5, 0.5, 3*3, 1);
-        math::dehat(e_R,(double *) tmp6);
-        math::matTimesVec(tmp14, (double *) tmp4, omega_d, 3);          // R' * R_d * omega_d
-        if (type==4)
-            math::matAddsMat(e_omega, omega, tmp14, 3, 2);                  // omega - R'*R_d*omega_d
-        else
-        {
-            //e_omega[0]=0;   e_omega[1]=0;   e_omega[2]=0;
-            std::memcpy(e_omega, omega, sizeof(omega)); 
-        }
-        /*if ( (type==4) && (k_run%10 == 1))
-            std::cout<<"e_omega ["<< e_omega[0]<<", "<< e_omega[1]<<", "<< e_omega[2]<<"]"<<std::endl;*/
-        //std::memcpy(e_omega, omega, sizeof(omega));                 // e_omega = omega - R'*R_d*omega_d
-        math::matTimesScalar(tmp8, e_R, -kp_R, 3, 1);               // -kp_R * e_R
-        if (type==4)
-            math::matTimesScalar(tmp9, e_omega, -kd_R, 3, 1);           // -kd_R * e_omega
-        else
-            math::matTimesScalar(tmp9, e_omega, -kd_R2, 3, 1);
-        math::matTimesVec(tmp10, (double *) J, omega, 3);           // J * omega
-        math::hat((double *) tmp11, omega);                         // omega_hat
-        math::matTimesVec(tmp12, (double *) tmp11, tmp10, 3);       // omega x J*omega
-        math::matAddsMat(tmp13, tmp8, tmp9, 3, 1);
-        math::matAddsMat(tau, tmp13, tmp12, 3, 1);
-    }
 
-        /*std::cout<<"e_R hat is :"<<std::endl;           // confirm result with matlab
-        std::cout<<tmp6[0][0]<<", "<<tmp6[0][1]<<", "<<tmp6[0][2]<<std::endl;
-        std::cout<<tmp6[1][0]<<", "<<tmp6[1][1]<<", "<<tmp6[1][2]<<std::endl;
-        std::cout<<tmp6[2][0]<<", "<<tmp6[2][1]<<", "<<tmp6[2][2]<<std::endl;*/
-        //std::cout<<"e_R is :["<<e_R[0]<<", "<<e_R[1]<<", "<<e_R[2]<<"] "<<std::endl;
-
-        //f_thrust = f_hover + kp_x*(1.0 - position[2]) + kd_x*(0 - vel[2]);
-        // f_thrust = f_hover + kp_v*(0 - vel[2]);
         FT[0] = f_thrust;
         FT[1] = tau[0];
         FT[2] = tau[1];
@@ -494,8 +407,10 @@ void Controller::controlThread()
 
         //std::cout << "f_thrust = " << f_thrust << std::endl;
         //std::cout << "tau1  = " << tau[0] << " \t ta2 = " << tau[1] << std::endl;
-        if ( k_run%50 == 1 )
+        if ( k_run%50 == 1 ) {
                 std::cout<<"motor speed ["<< motorspeed[0]<<", "<< motorspeed[1]<<", "<< motorspeed[2]<<", "<<motorspeed[3]<<"]"<<std::endl;
+                //std::cout << "thrust = " << f_thrust << " clamped = " << f_clamped << std::endl;
+        }
         motorspeed[0] = sqrt(motorspeed_square[0]);
         motorspeed[1] = sqrt(motorspeed_square[1]);
         motorspeed[2] = sqrt(motorspeed_square[2]);
