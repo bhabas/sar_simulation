@@ -84,7 +84,7 @@ class ES:
         if r_cum.size > 0:
 
             cum = r_cum1[-1]*(r_cum2[-1])
-            print(r1[-1],r2[-1])
+            print('r_cum1: %.3f \t r_cum2: %.3f' %(r1[-1],r2[-1]))
             
             print("[dot]     r1r2  = %.3f \t r1asin(r2) = %.3f" %(r_cum[-1],r_cumtest[-1]))
             print("[end only]r1r2 cum = %.3f \t r1asin(r2) = %.3f" %(cum/20.0,r_cum1[-1]*r_cum2test[-1]/20.0))
@@ -103,15 +103,10 @@ class ES:
             elif r1[-1] > 0.9 and r2[-1] > 0.5:
                 return r_cum[-1] + 2
             else:'''
-            return   r_cum[-1] # float(z[-1]>1.2)*cum
+            return   np.around(r_cum[-1],2) # float(z[-1]>1.2)*cum
             # max 1150 min -550 -> 0 - 1700
         else:
             return np.nan
-
-    def get_theta(self):
-        # ovveride this with algorithm specifics
-        pass
-      
 
     def get_baseline(self, span):
         # should be the same
@@ -122,10 +117,6 @@ class ES:
 
         return b
 
-
-    def train(self, theta, reward, epsilon):
-        # ovveride this with algorithm specifics
-        pass
 
 class rlsysPEPGAgent_reactive(ES):
     def __init__(self, alpha_mu, alpha_sigma, mu,sigma,gamma=0.95, n_rollout = 6):
@@ -162,7 +153,7 @@ class rlsysPEPGAgent_reactive(ES):
         ## Caps values of RREV to be greater than zero and Gain to be neg so
         # the system doesnt fight itself learning which direction to rotate
         for k_n in range(2*self.n_rollout):
-            if theta[0,k_n] < 0:
+            if theta[0,k_n] < 0: # 
                 theta[0,k_n] = 0.001
             if theta[1,k_n] > 0:
                 theta[1,k_n] = -0.001

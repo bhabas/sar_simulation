@@ -12,28 +12,6 @@ from crazyflie_env import CrazyflieEnv
 from rl_syspepg import rlsysPEPGAgent_reactive
 from rl_cma import CMA_basic,CMA
 
-'''
-mu = [5.267,-10.228,-4.713]
-z -> 2.5 3.5 seems to fail at lower vz
-x -> -0.5 0.5
-
-'''
-
-'''
-## Learning rates and agent
-alpha_mu = np.array([[0.1],[0.1] ]) #,[0.8] ,[0.8]])
-alpha_sigma = np.array([[0.05],[0.05] ]) #,[0.03],[0.03]])
-agent = rlsysPEPGAgent_reactive(alpha_mu=alpha_mu, alpha_sigma=alpha_sigma, gamma=0.95, n_rollout=5)
-
-## Define initial parameters for gaussian function
-agent.mu = np.array([[3.5], [-5.0] ])#,[-6.0],[7.0]])   # Initial estimates of mu: size (2 x 1)
-agent.sigma = np.array([[2.0], [3.0] ]) #,[0.5],[0.5]])      # Initial estimates of sigma: size (2 x 1)
-agent.mu_history = copy.copy(agent.mu)  # Creates another
-'''
-'''
-mu = np.array([[2.0],[-2.0] ])#,[0.0]])   # Initial estimates of mu: 
-sigma = np.array([[1.0],[1.0]   ])#,[1.0]])
-'''
 
 
 # ============================
@@ -59,7 +37,7 @@ env.create_csv(file_name,record = True)
 alpha_mu = np.array([[3.0],[2.0] ])#[2.0]] )#,[0.1]])
 alpha_sigma = np.array([[2.0],[3.0] ])#, [1.0]])#,[0.05]])
 
-# seems to be unstable if mu is close to zero (coverges to deterinistic)
+# seems to be unstable if mu is close to zero (coverges to deterimistic)
 ## Initial parameters for gaussian function
 mu = np.array([[3.0],[-3.0] ])#,[1.5]])   # Initial estimates of mu: 
 sigma = np.array([[1.0],[1.0] , [0.5]])      # Initial estimates of sigma: 
@@ -162,20 +140,12 @@ for k_ep in range(ep_start,1000):
 
 
 
-        '''
-        vx        vy       vz         suceess?
-         1    |   1   |   3      |       yes (off by .2)
-        -1    |   1   |   3      |      sometimes rests improperly (off by .2)
-        -1    |  -1   |   3      |       more unstable(off by .2)
-         1    |  -1   |   3      |       yes (off by .2)
-
-
-
-        '''
         print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
         print("RREV: %.3f \t gain1: %.3f \t gain2: %.3f \t gain3: %.3f" %(theta_rl[0,k_run], theta_rl[1,k_run],theta_rl[1,k_run],theta_rl[1,k_run]))
-
         print("Vz_ini: %.3f \t Vx_ini: %.3f \t Vy_ini: %.3f" %(vz_ini, vx_ini, vy_ini))
+
+
+
 
         state = env.reset()
 
@@ -185,6 +155,9 @@ for k_ep in range(ep_start,1000):
         if abs(x_pos) > 0.1 or abs(y_pos) > 0.1:
             state = env.reset()
 
+
+
+
         action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
         env.step(action)
 
@@ -193,11 +166,10 @@ for k_ep in range(ep_start,1000):
         start_time_rollout = env.getTime()
         start_time_pitch = None
         pitch_triggered = False
-        
         flip_flag = False
 
         state_history = None
-        env.logDataFlag = True
+
 
         # ============================
         ##          Rollout 
@@ -222,14 +194,12 @@ for k_ep in range(ep_start,1000):
             vel = state[8:11]
             vz, vx, vy= vel[2], vel[0], vel[1]
             omega = state[11:14]
-
-            
             d = h_ceiling - position[2]
 
             # Use noisy distance measurement from sensor
             #d = env.laser_dist
             #print(d)
-            RREV, omega_y ,omega_x = vz/d, vx/d, vy/d
+            RREV, omega_y ,omega_x = vz/d, vx/d, vy/d # omega_y/x are OF velocities not angular velocities of the body
 
             qw = orientation_q[0]
             qx = orientation_q[1]
@@ -265,7 +235,6 @@ for k_ep in range(ep_start,1000):
             r = [0,0,0]#r.as_euler('zyx', degrees=True)
             eul1,eul2,eul3 = r[0],r[1],r[2]
             #print(r)
-            theta = np.arcsin( -2*(qx*qz-qw*qy) ) # obtained from matlab "edit quat2eul.m"
 
 
             # ============================
@@ -295,8 +264,10 @@ for k_ep in range(ep_start,1000):
                 #print("t_delay = %.3f" %(t_delay))
                 #env.delay_env_time(t_start=start_time_pitch,t_delay=t_delay) # Artificial delay to mimic communication lag [ms]
                 
+
+                ## Start rotation and mark rotation as triggered
                 action = {'type':'rate', 'x':r_d, 'y':q_d, 'z':0.0, 'additional':0.0}
-                env.step(action) # Start rotation and mark rotation triggered
+                env.step(action) 
                 pitch_triggered = True
 
 
@@ -333,7 +304,6 @@ for k_ep in range(ep_start,1000):
                 print(env.timeout)
                 print(state)
                 time.sleep(1)
-                env.logDataFlag = False
                 env.close_sim()
                 env.launch_sim()
                 error_str = "Error: NAN found in state vector"
@@ -343,8 +313,6 @@ for k_ep in range(ep_start,1000):
             
             if (np.abs(position[0]) > 3.5) or (np.abs(position[1]) > 3.5):
                 print("Reset improperly!!!!!")
-                # env.pause()
-                env.logDataFlag = False
                 error_str = "Reset improperly/Position outside bounding box"
                 repeat_run = True
                 break
@@ -353,7 +321,7 @@ for k_ep in range(ep_start,1000):
             ## Each iteration changes state vector from [14,] into (state2)[14,1] 
             ##      First iteration: track_state = state2 vector
             ##      Every 10 iter: append track_state columns with current state2 vector 
-            state2 = state[1:,np.newaxis]
+            state2 = state[1:, np.newaxis]
             if state_history is None:
                 state_history = state2 # replace w/ state_history variable for track_state
             else:
@@ -364,8 +332,7 @@ for k_ep in range(ep_start,1000):
             if done_rollout:
                 action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
                 env.step(action)
-                env.logDataFlag = False
-                reward[k_run] = agent.calculate_reward(state=state_history, h_ceiling=h_ceiling)
+                reward[k_run] = agent.calculate_reward(state_history,h_ceiling)
                 time.sleep(0.01)
                 print("Reward = %.3f" %(reward[k_run]))
                 print("!------------------------End Run------------------------! \n")
@@ -382,10 +349,9 @@ for k_ep in range(ep_start,1000):
         env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run,reward[k_run,0],error=error_str)
         env.append_csv_blank()
 
-        if repeat_run == True:
+        if repeat_run == True & k_run > 0:
             # return to previous run to catch potential missed glitches in gazebo (they are usually caught in the next run)
-            if k_run > 0:
-                k_run -= 1 # Repeat run w/ same parameters
+            k_run -= 1 # Repeat previous (not current) run 
         else:
             k_run += 1 # Move on to next run
 
