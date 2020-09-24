@@ -378,8 +378,8 @@ for k_ep in range(ep_start,1000):
 
     if not any( np.isnan(reward) ):
         print("Episode # %d training, average reward %.3f" %(k_ep, np.mean(reward)))
-        #agent.train(theta_rl,reward,epsilon_rl)
-        agent.train(theta_rl,reward,epsilon)
+        agent.train(theta_rl,reward,epsilon_rl)
+        #agent.train(theta_rl,reward,epsilon)
         print(reward)
         plt.plot(k_ep,np.mean(reward),'ro')
         plt.draw()
