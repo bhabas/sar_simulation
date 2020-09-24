@@ -23,40 +23,13 @@ from rl_cma import CMA_basic,CMA
 env = CrazyflieEnv(port_self=18050, port_remote=18060)
 print("Environment done")
 ep_start = 0 # Default episode start position
+h_ceiling = 1.5 # meters
 
 ## Initialize the user and data recording
 username = getpass.getuser()
 start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
 file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time + '.csv'
 env.create_csv(file_name,record = True)
-
-
-
-
-## Learning rate
-alpha_mu = np.array([[3.0],[2.0] ])#[2.0]] )#,[0.1]])
-alpha_sigma = np.array([[2.0],[3.0] ])#, [1.0]])#,[0.05]])
-
-# seems to be unstable if mu is close to zero (coverges to deterimistic)
-## Initial parameters for gaussian function
-mu = np.array([[3.0],[-3.0] ])#,[1.5]])   # Initial estimates of mu: 
-sigma = np.array([[1.0],[1.0] , [0.5]])      # Initial estimates of sigma: 
-
-
-## Uncomment and input starting episode and data_path to recorded csv file to run
-# ep_start = 9
-# data_path = '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/bhabas_2020-09-21_16:35:43.csv'
-# alpha_mu, alpha_sigma, mu, sigma = env.load_csv(data_path,ep_start)
-
-
-
-# For CMA_basic, make sure simga has 3 inputs / for pepg it must be 2
-#agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=7)
-agent = CMA_basic(mu,sigma,N_best=0.3,n_rollout=10)
-#agent = CMA(n=2) # number of problem dimensions
-
-h_ceiling = 1.5 # meters
-
 
 
 ## Initial figure setup
@@ -74,10 +47,73 @@ plt.show()
 image_prev = np.array(0)
 image_now = np.array(0)
 
+
+
+
+# ============================
+##          SyS-PEPG 
+# ============================
+
+## Learning rate
+alpha_mu = np.array([[0.2],[0.2] ])#[2.0]] )#,[0.1]])
+alpha_sigma = np.array([[0.1],[0.1] ])#, [1.0]])#,[0.05]])
+
+## Initial parameters for gaussian function
+mu = np.array([[3.0],[-3.0] ])#,[1.5]])   # Initial estimates of mu: 
+sigma = np.array([[1.0],[1.0]])      # Initial estimates of sigma: 
+
+
+agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=2)
+
+
+# ============================
+##           CMA 
+# ============================
+
+# seems to be unstable if mu is close to zero (coverges to deterimistic)
+## Initial parameters for gaussian function
+# mu = np.array([[3.0],[-3.0] ])#,[1.5]])   # Initial estimates of mu: 
+# sigma = np.array([[1.0],[1.0] , [0.5]])      # Initial estimates of sigma: 
+
+# # For CMA_basic, make sure simga has 3 inputs / for pepg it must be 2
+# agent = CMA_basic(mu,sigma,N_best=0.3,n_rollout=10)
+# #agent = CMA(n=2) # number of problem dimensions
+
+
+
+
+
+
+
+# ============================
+##        Data Loading 
+# ============================
+
+## Uncomment and input starting episode and data_path to recorded csv file to run
+# ep_start = 9
+# data_path = '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/bhabas_2020-09-21_16:35:43.csv'
+# alpha_mu, alpha_sigma, mu, sigma = env.load_csv(data_path,ep_start)
+
+
+
+
+
+
+
 # ============================
 ##          Episode 
 # ============================
 for k_ep in range(ep_start,1000):
+
+
+    mu = agent.mu
+    sigma = agent.sigma
+
+    #mu = agent.xmean
+    #sigma = np.array([agent.C[0,0],agent.C[1,1],agent.C[0,1]])
+
+    ct = env.getTime()
+    done = False
 
     # os.system("python3 start_training_reactive_sysPEPG > output.txt")
 
@@ -86,25 +122,19 @@ for k_ep in range(ep_start,1000):
     print("=============================================")
 
     print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
-    mu = agent.mu
-    sigma = agent.sigma
-    #print(mu)
-    #print(sigma)
 
-    #mu = agent.xmean
-    #sigma = np.array([agent.C[0,0],agent.C[1,1],agent.C[0,1]])
-    print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1],mu[1],mu[1]))
-    print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1],sigma[1],sigma[1]))
+    print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1], mu[1], mu[1]))
+    print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1], sigma[1], sigma[1]))
     print()
 
-    done = False
+    
     reward = np.zeros(shape=(2*agent.n_rollout,1))
     #reward = np.zeros(shape=(agent.n_rollout,1))
     reward[:] = np.nan  # initialize reward to be NaN array, size n_rollout x 1
-    #theta_rl, epsilon_rl = agent.get_theta()
-    theta_rl,epsilon = agent.get_theta()
+    theta_rl, epsilon_rl = agent.get_theta()
+    # theta_rl,epsilon = agent.get_theta()
 
-    print( "theta_rl = ")
+    print("theta_rl = ")
 
     np.set_printoptions(precision=2, suppress=True)
     print(theta_rl[0,:], "--> RREV")
@@ -112,7 +142,7 @@ for k_ep in range(ep_start,1000):
     #print(theta_rl[2,:], "--> omega_x Gain")
     #print(theta_rl[3,:], "--> omega_y Gain")
 
-    ct = env.getTime()
+
 
     # ============================
     ##          Run 
@@ -123,22 +153,12 @@ for k_ep in range(ep_start,1000):
         # take initial camera measurements 
         #image_now = env.cv_image.flatten()
         #image_prev = env.cv_image.flatten()
-        repeat_run= False
-        error_str = ""
+        
 
-        vz_ini = np.random.uniform(low=2.5, high=3.5)   # [2.75, 3.75]
-        vx_ini = 0.0#np.random.uniform(low=-1.5, high=1.5)  # [-0.5, 0.5]
-        vy_ini = 0.0#np.random.uniform(low=-1.5, high=1.5) # [-0.5, 0.5]
-
+        vz_ini = np.random.uniform(low=2.5, high=3.5)
+        vx_ini = 0.0#np.random.uniform(low=-1.5, high=1.5)
+        vy_ini = 0.0#np.random.uniform(low=-1.5, high=1.5)
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
-
-        # iniitial condition in terms of mag and angle
-        '''radius = 2.0*np.random.rand()
-        direction = 2.0*pi*np.random.rand() 
-        vx_ini = radius*sin(direction)
-        vy_ini = radius*cos(direction)'''
-
-
 
         print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
         print("RREV: %.3f \t gain1: %.3f \t gain2: %.3f \t gain3: %.3f" %(theta_rl[0,k_run], theta_rl[1,k_run],theta_rl[1,k_run],theta_rl[1,k_run]))
@@ -146,9 +166,7 @@ for k_ep in range(ep_start,1000):
 
 
 
-
         state = env.reset()
-
         ## If spawn position is off then reset position again
         x_pos,y_pos = state[2],state[3]
         print("Spawn Pos: x=%.3f \t y=%.3f" %(x_pos,y_pos))
@@ -169,6 +187,8 @@ for k_ep in range(ep_start,1000):
         flip_flag = False
 
         state_history = None
+        repeat_run= False
+        error_str = ""
 
 
         # ============================
