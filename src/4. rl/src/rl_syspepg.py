@@ -8,9 +8,10 @@ from math import asin,pi,ceil
 # Parent Evolutionary Strategy Class
 # pepg and cma inherit common methods 
 class ES:
-    def __init__(self,gamma=0.95, n_rollout = 6):
+    def __init__(self,gamma=0.8, n_rollout = 6):
         # ovveride this for necessary hyperparameters
         self.gamma, self.n_rollout = gamma, n_rollout
+
 
     def calculate_reward(self, state, h_ceiling): # state is size 13 x timesteps
         # should be the same for each algorithm
@@ -43,7 +44,7 @@ class ES:
 
         # multioply elements of r1 and r2 for total reward at each step
         r = np.multiply(r1,r2)
-
+        rplus = r1 + r2
         # testing different reward functions
         rtest = np.multiply(r1,r2test)
         #print(r)
@@ -57,7 +58,12 @@ class ES:
         temp2=0
         temptest = 0
         temp2test =0
+        tempplus = 0
+        r_cumplus = np.zeros_like(rplus)
         for k_r in range(0,len(r)):
+            tempplus = rplus[k_r] + self.gamma*tempplus
+            r_cumplus = tempplus
+
             temp = r[k_r] + self.gamma*temp   # sum of r
             r_cum[k_r] = temp
 
@@ -82,12 +88,13 @@ class ES:
             
             print("[dot]     r1r2  = %.3f \t r1asin(r2) = %.3f" %(r_cum[-1],r_cumtest[-1]))
             print("[end only]r1r2 cum = %.3f \t r1asin(r2) = %.3f" %(cum/20.0,r_cum1[-1]*r_cum2test[-1]/20.0))
+            print(r_cumplus)
             #print(r_cum[-1],cum,r_cum1[-1],r_cum2[-1])
 
             # Give extra reward if landed
             # these heights+oreintations tend to match up with 4,3,2,1 legs landing.
             # not perfect but does a good job rewarding landing more than other run
-            if r1[-1] > 0.97 and r2[-1] > 0.98:
+            '''if r1[-1] > 0.97 and r2[-1] > 0.98:
                 return r_cum[-1] + 5
             elif r1[-1] > 0.95 and r2[-1] > 0.95:
                 return r_cum[-1] + 4
@@ -95,8 +102,8 @@ class ES:
                 return r_cum[-1] + 3
             elif r1[-1] > 0.9 and r2[-1] > 0.5:
                 return r_cum[-1] + 2
-            else:
-                return   r_cum[-1] # float(z[-1]>1.2)*cum
+            else:'''
+            return   r_cum[-1] # float(z[-1]>1.2)*cum
             # max 1150 min -550 -> 0 - 1700
         else:
             return np.nan
