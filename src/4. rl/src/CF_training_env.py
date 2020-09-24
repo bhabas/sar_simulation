@@ -63,7 +63,7 @@ mu = np.array([[3.0],[-3.0] ])#,[1.5]])   # Initial estimates of mu:
 sigma = np.array([[1.0],[1.0]])      # Initial estimates of sigma: 
 
 
-agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=2)
+#agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=2)
 
 
 # ============================
@@ -77,7 +77,7 @@ agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_ro
 
 # # For CMA_basic, make sure simga has 3 inputs / for pepg it must be 2
 # agent = CMA_basic(mu,sigma,N_best=0.3,n_rollout=10)
-# #agent = CMA(n=2) # number of problem dimensions
+agent = CMA(n=2) # number of problem dimensions
 
 
 
@@ -124,7 +124,7 @@ for k_ep in range(ep_start,1000):
     print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
 
     print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1], mu[1], mu[1]))
-    print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1], sigma[1], sigma[1]))
+    print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1], sigma[2], sigma[1]))
     print()
 
     
@@ -331,8 +331,8 @@ for k_ep in range(ep_start,1000):
                 break
 
             
-            if (np.abs(position[0]) > 3.5) or (np.abs(position[1]) > 3.5):
-                print("Reset improperly!!!!!")
+            if (np.abs(position[0]) > 5.0) or (np.abs(position[1]) > 5.0):
+                print("Reset improperly / Out of bounds !!!!!")
                 error_str = "Reset improperly/Position outside bounding box"
                 repeat_run = True
                 break
