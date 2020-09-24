@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import time,copy,os
+import time,os,getpass
 import matplotlib.pyplot as plt
 from math import sin,cos,pi,sqrt
 import os
@@ -35,12 +35,24 @@ mu = np.array([[2.0],[-2.0] ])#,[0.0]])   # Initial estimates of mu:
 sigma = np.array([[1.0],[1.0]   ])#,[1.0]])
 '''
 
-# Enter username here ********
-username = "bader"
+
+# ============================
+##     Sim Initialization 
+# ============================
+
 
 ## Initialize the environment
 env = CrazyflieEnv(port_self=18050, port_remote=18060)
 print("Environment done")
+ep_start = 0 # Default episode start position
+
+## Initialize the user and data recording
+username = getpass.getuser()
+start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
+file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time + '.csv'
+env.create_csv(file_name,record = True)
+
+
 
 
 ## Learning rate
@@ -53,6 +65,13 @@ mu = np.array([[3.0],[-3.0] ])#,[1.5]])   # Initial estimates of mu:
 sigma = np.array([[1.0],[1.0] , [0.5]])      # Initial estimates of sigma: 
 
 
+## Uncomment and input starting episode and data_path to recorded csv file to run
+# ep_start = 9
+# data_path = '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/bhabas_2020-09-21_16:35:43.csv'
+# alpha_mu, alpha_sigma, mu, sigma = env.load_csv(data_path,ep_start)
+
+
+
 # For CMA_basic, make sure simga has 3 inputs / for pepg it must be 2
 #agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=7)
 agent = CMA_basic(mu,sigma,N_best=0.3,n_rollout=10)
@@ -60,9 +79,7 @@ agent = CMA_basic(mu,sigma,N_best=0.3,n_rollout=10)
 
 h_ceiling = 1.5 # meters
 
-start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
-file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time + '.csv'
-env.create_csv(file_name)
+
 
 ## Initial figure setup
 fig = plt.figure()
@@ -82,7 +99,7 @@ image_now = np.array(0)
 # ============================
 ##          Episode 
 # ============================
-for k_ep in range(1000):
+for k_ep in range(ep_start,1000):
 
     # os.system("python3 start_training_reactive_sysPEPG > output.txt")
 
@@ -147,9 +164,9 @@ for k_ep in range(1000):
 
         '''
         vx        vy       vz         suceess?
-          1   |  1    |   3      |       yes (off by .2)
-          -1  |  1    |   3      |      sometimes rests improperly (off by .2)
-          -1  |  -1   |   3      |       more unstable(off by .2)
+         1    |   1   |   3      |       yes (off by .2)
+        -1    |   1   |   3      |      sometimes rests improperly (off by .2)
+        -1    |  -1   |   3      |       more unstable(off by .2)
          1    |  -1   |   3      |       yes (off by .2)
 
 
@@ -161,13 +178,17 @@ for k_ep in range(1000):
         print("Vz_ini: %.3f \t Vx_ini: %.3f \t Vy_ini: %.3f" %(vz_ini, vx_ini, vy_ini))
 
         state = env.reset()
-        print(state[2],state[3])
-        if abs(state[2]) > 0.1 or abs(state[3]) > 0.1:
-            state = env.reset()
-        #action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
-        #env.step(action)
 
-        k_step = 0
+        ## If spawn position is off then reset position again
+        x_pos,y_pos = state[2],state[3]
+        print("Spawn Pos: x=%.3f \t y=%.3f" %(x_pos,y_pos))
+        if abs(x_pos) > 0.1 or abs(y_pos) > 0.1:
+            state = env.reset()
+
+        action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
+        env.step(action)
+
+        t_step = 0
         done_rollout = False
         start_time_rollout = env.getTime()
         start_time_pitch = None
@@ -192,7 +213,7 @@ for k_ep in range(1000):
         while True:
                 
             time.sleep(5e-4) # Time step size
-            k_step = k_step + 1 # Time step
+            t_step = t_step + 1 # Time step
             ## Define current state
             state = env.state_current
             
@@ -336,7 +357,7 @@ for k_ep in range(1000):
             if state_history is None:
                 state_history = state2 # replace w/ state_history variable for track_state
             else:
-                if k_step%10==0:
+                if t_step%10==0:
                     state_history = np.append(state_history, state2, axis=1)
                     env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run)
 
@@ -358,8 +379,8 @@ for k_ep in range(1000):
                 break
         
         
-        #env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run,reward[k_run,0],error=error_str)
-        #env.append_csv_blank()
+        env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run,reward[k_run,0],error=error_str)
+        env.append_csv_blank()
 
         if repeat_run == True:
             # return to previous run to catch potential missed glitches in gazebo (they are usually caught in the next run)

@@ -129,6 +129,17 @@ class ES:
 
 class rlsysPEPGAgent_reactive(ES):
     def __init__(self, alpha_mu, alpha_sigma, mu,sigma,gamma=0.95, n_rollout = 6):
+        """[summary]
+
+        Args:
+            alpha_mu (np.array): <u_learning rate
+            alpha_sigma (np.array): Sigma_learning rate
+            mu (np.array): Parameter means
+            sigma (np.array): Parameter Standard Deviations
+            gamma (float, optional): Discount Factor. Defaults to 0.95.
+            n_rollout (int, optional): Rollouts per episode. Defaults to 6.
+        """        
+
         self.alpha_mu, self.alpha_sigma,  = alpha_mu, alpha_sigma
         self.gamma, self.n_rollout = gamma, n_rollout
         self.mu = mu
@@ -167,8 +178,9 @@ class rlsysPEPGAgent_reactive(ES):
         reward_minus = reward[self.n_rollout:]
         epsilon = epsilon
         b = self.get_baseline(span=3)
+
         m_reward = 26.0#400.0#3000#2300      # max reward
-        reward_ave = np.mean(reward)
+        reward_avg = np.mean(reward)
        
         ## Decaying Learning Rate:
         #self.alpha_mu = self. * 0.9
@@ -178,12 +190,13 @@ class rlsysPEPGAgent_reactive(ES):
         S = (T*T - self.sigma*self.sigma)/abs(self.sigma)
         r_T = (reward_plus - reward_minus) / (2*m_reward - reward_plus - reward_minus)
         r_S = ((reward_plus + reward_minus)/2 - b) / (m_reward - b)
-        
+
          # Defeine learning rate scale depending on reward recieved
-        lr_scale = 1.0 - reward_ave/m_reward # try squaring?
+        lr_scale = 1.0 - reward_avg/m_reward # try squaring?
 
         explore_factor = 1.5 # determines how much faster sigma alpha decreases than mu alpha
         b2 = self.get_baseline(5)
+
         print(len(self.reward_history))
         print(self.reward_history.size)
 
