@@ -49,28 +49,27 @@ alpha_sigma = np.array([[2.0],[3.0] ])#, [1.0]])#,[0.05]])
 
 # seems to be unstable if mu is close to zero (coverges to deterinistic)
 ## Initial parameters for gaussian function
-#mu = np.array([[3.0],[-3.0] ])#,[1.5]])   # Initial estimates of mu: 
-#sigma = np.array([[1.0],[1.0],[-0.8] ])#, [0.5]])      # Initial estimates of sigma: 
-#agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=7)
+mu = np.array([[3.0],[-3.0] ])#,[1.5]])   # Initial estimates of mu: 
+sigma = np.array([[1.0],[1.0] , [0.5]])      # Initial estimates of sigma: 
 
-#agent = CMA_basic(mu,sigma,N_best=0.3,n_rollout=10)
-agent = CMA(n=2)
-n_rollout = 6
+
+# For CMA_basic, make sure simga has 3 inputs / for pepg it must be 2
+#agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=7)
+agent = CMA_basic(mu,sigma,N_best=0.3,n_rollout=10)
+#agent = CMA(n=2) # number of problem dimensions
 
 h_ceiling = 1.5 # meters
 
-
-
 start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
 file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time + '.csv'
-#env.create_csv(file_name)
+env.create_csv(file_name)
 
 ## Initial figure setup
 fig = plt.figure()
 plt.ion()  # interactive on
 plt.grid()
-plt.xlim([-1,80])
-plt.ylim([-1,25])
+plt.xlim([-1,40])
+plt.ylim([-1,20])  # change limit depending on reward function defenition
 plt.xlabel("Episode")
 plt.ylabel("Reward")
 plt.title("Episode: %d Run: %d" %(0,0))
@@ -92,23 +91,23 @@ for k_ep in range(1000):
     print("=============================================")
 
     print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
-    #mu = agent.mu
-    #sigma = agent.sigma
+    mu = agent.mu
+    sigma = agent.sigma
     #print(mu)
     #print(sigma)
 
-    mu = agent.xmean
-    sigma = np.array([agent.C[0,0],agent.C[1,1],agent.C[0,1]])
+    #mu = agent.xmean
+    #sigma = np.array([agent.C[0,0],agent.C[1,1],agent.C[0,1]])
     print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1],mu[1],mu[1]))
-    print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1],sigma[2],sigma[1]))
+    print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1],sigma[1],sigma[1]))
     print()
 
     done = False
-    #reward = np.zeros(shape=(2*agent.n_rollout,1))
-    reward = np.zeros(shape=(agent.n_rollout,1))
+    reward = np.zeros(shape=(2*agent.n_rollout,1))
+    #reward = np.zeros(shape=(agent.n_rollout,1))
     reward[:] = np.nan  # initialize reward to be NaN array, size n_rollout x 1
     #theta_rl, epsilon_rl = agent.get_theta()
-    theta_rl = agent.get_theta()
+    theta_rl,epsilon = agent.get_theta()
 
     print( "theta_rl = ")
 
@@ -124,7 +123,7 @@ for k_ep in range(1000):
     ##          Run 
     # ============================
     k_run = 0
-    while k_run < agent.n_rollout:#2*agent.n_rollout:
+    while k_run < 2*agent.n_rollout:#2*agent.n_rollout:
         
         # take initial camera measurements 
         #image_now = env.cv_image.flatten()
@@ -259,7 +258,7 @@ for k_ep in range(1000):
                 # add term to adjust for tilt 
                 qRREV = theta_rl[1,k_run] * RREV 
                 #qomega = theta_rl[2,k_run]*wn
-                q_d = -qRREV# + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
+                q_d = qRREV# + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
                 # torque on x axis to adjust for vy
                 r_d = 0.0 #theta_rl[3,k_run] * omega_y
 
@@ -272,8 +271,8 @@ for k_ep in range(1000):
 
                 # randomly sample noise delay with mean = 30ms and sigma = 5
                 t_delay = np.random.normal(30.0,5.0)
-                print("t_delay = %.3f" %(t_delay))
-                env.delay_env_time(t_start=start_time_pitch,t_delay=t_delay) # Artificial delay to mimic communication lag [ms]
+                #print("t_delay = %.3f" %(t_delay))
+                #env.delay_env_time(t_start=start_time_pitch,t_delay=t_delay) # Artificial delay to mimic communication lag [ms]
                 
                 action = {'type':'rate', 'x':r_d, 'y':q_d, 'z':0.0, 'additional':0.0}
                 env.step(action) # Start rotation and mark rotation triggered
@@ -339,7 +338,7 @@ for k_ep in range(1000):
             else:
                 if k_step%10==0:
                     state_history = np.append(state_history, state2, axis=1)
-                    #env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run)
+                    env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run)
 
             if done_rollout:
                 action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
@@ -373,7 +372,7 @@ for k_ep in range(1000):
     if not any( np.isnan(reward) ):
         print("Episode # %d training, average reward %.3f" %(k_ep, np.mean(reward)))
         #agent.train(theta_rl,reward,epsilon_rl)
-        agent.train(theta_rl,reward)
+        agent.train(theta_rl,reward,epsilon)
         print(reward)
         plt.plot(k_ep,np.mean(reward),'ro')
         plt.draw()
