@@ -225,7 +225,7 @@ class CrazyflieEnv:
                 'vx','vy','vz',
                 'wx','wy','wz',
                 'gamma','reward','reward_avg','n_rollouts'
-                "","","","","","","","", # Place holders
+                'RREV','omega_x','omega_u',"","","","","", # Place holders
                 'error'])
 
     def IC_csv(self,agent,state,k_ep,k_run,reward=0,error="",v_ini = [0,0,0]):
@@ -245,8 +245,10 @@ class CrazyflieEnv:
                     error])
 
 
-    def append_csv(self,agent,state,k_ep,k_run,reward=0,error=""):
+    def append_csv(self,agent,state,k_ep,k_run,sensor,reward=0,error=""):
         if self.record == True:
+            state = np.around(state,3)
+            sensor = np.around(sensor,3)
 
             with open(self.file_name, mode='a') as state_file:
                 state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -259,7 +261,7 @@ class CrazyflieEnv:
                     state[8], state[9],state[10], # vx,vy,vz
                     state[11],state[12],state[13], # wx,wy,wz
                     agent.gamma,np.around(reward,2),"",agent.n_rollout,
-                    "","","","","","","", # Place holders
+                    sensor[0],sensor[1],sensor[2],"","","","", # Place holders
                     error])
 
 

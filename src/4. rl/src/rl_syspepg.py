@@ -155,8 +155,8 @@ class rlsysPEPGAgent_reactive(ES):
         for k_n in range(2*self.n_rollout):
             if theta[0,k_n] < 0: # 
                 theta[0,k_n] = 0.001
-            if theta[1,k_n] > 0:
-                theta[1,k_n] = -0.001
+            # if theta[1,k_n] > 0:
+            #     theta[1,k_n] = -0.001
             '''if theta[2,k_n] < 0:
                 theta[1,k_n] = 0.001
             if theta[3,k_n] < 0:

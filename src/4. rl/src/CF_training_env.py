@@ -55,15 +55,15 @@ image_now = np.array(0)
 # ============================
 
 ## Learning rate
-alpha_mu = np.array([[0.2],[0.2] ])#[2.0]] )#,[0.1]])
-alpha_sigma = np.array([[0.1],[0.1] ])#, [1.0]])#,[0.05]])
+alpha_mu = np.array([[0.2],[0.2],[0.2] ])#[2.0]] )#,[0.1]])
+alpha_sigma = np.array([[0.1],[0.1],[0.1] ])#, [1.0]])#,[0.05]])
 
 ## Initial parameters for gaussian function
-mu = np.array([[3.0],[-3.0] ])#,[1.5]])   # Initial estimates of mu: 
-sigma = np.array([[1.0],[1.0]])      # Initial estimates of sigma: 
+mu = np.array([[3.0],[3.0],[0] ])#,[1.5]])   # Initial estimates of mu: 
+sigma = np.array([[1.0],[1.0],[0]])      # Initial estimates of sigma: 
 
 
-agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=2)
+agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=5)
 
 
 # ============================
@@ -123,23 +123,22 @@ for k_ep in range(ep_start,1000):
 
     print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
 
-    print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1], mu[1], mu[1]))
-    print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1], sigma[1], sigma[1]))
+    print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1], mu[2], mu[1]))
+    print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1], sigma[2], sigma[1]))
     print()
 
     
     reward = np.zeros(shape=(2*agent.n_rollout,1))
     #reward = np.zeros(shape=(agent.n_rollout,1))
     reward[:] = np.nan  # initialize reward to be NaN array, size n_rollout x 1
-    theta_rl, epsilon_rl = agent.get_theta()
-    # theta_rl,epsilon = agent.get_theta()
+    theta_rl,epsilon = agent.get_theta()
 
     print("theta_rl = ")
 
     np.set_printoptions(precision=2, suppress=True)
     print(theta_rl[0,:], "--> RREV")
     print(theta_rl[1,:], "--> Gain")
-    #print(theta_rl[2,:], "--> omega_x Gain")
+    print(theta_rl[2,:], "--> v_x Gain")
     #print(theta_rl[3,:], "--> omega_y Gain")
 
 
@@ -148,7 +147,7 @@ for k_ep in range(ep_start,1000):
     ##          Run 
     # ============================
     k_run = 0
-    while k_run < 2*agent.n_rollout:#2*agent.n_rollout:
+    while k_run < 2*agent.n_rollout:
         
         # take initial camera measurements 
         #image_now = env.cv_image.flatten()
@@ -156,12 +155,12 @@ for k_ep in range(ep_start,1000):
         
 
         vz_ini = np.random.uniform(low=2.5, high=3.5)
-        vx_ini = 0.0#np.random.uniform(low=-1.5, high=1.5)
+        vx_ini = np.random.uniform(low=-1.5, high=1.5)
         vy_ini = 0.0#np.random.uniform(low=-1.5, high=1.5)
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
         print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
-        print("RREV: %.3f \t gain1: %.3f \t gain2: %.3f \t gain3: %.3f" %(theta_rl[0,k_run], theta_rl[1,k_run],theta_rl[1,k_run],theta_rl[1,k_run]))
+        print("RREV: %.3f \t gain1: %.3f \t gain2: %.3f \t gain3: %.3f" %(theta_rl[0,k_run], theta_rl[1,k_run],theta_rl[2,k_run],theta_rl[1,k_run]))
         print("Vz_ini: %.3f \t Vx_ini: %.3f \t Vy_ini: %.3f" %(vz_ini, vx_ini, vy_ini))
 
 
@@ -190,6 +189,7 @@ for k_ep in range(ep_start,1000):
         repeat_run= False
         error_str = ""
 
+        vx_avg = 0
 
         # ============================
         ##          Rollout 
@@ -219,8 +219,8 @@ for k_ep in range(ep_start,1000):
             # Use noisy distance measurement from sensor
             #d = env.laser_dist
             #print(d)
-            RREV, omega_y ,omega_x = vz/d, vx/d, vy/d # omega_y/x are OF velocities not angular velocities of the body
-
+            RREV, omega_y, omega_x = vz/d, vx/d, vy/d # omega_y/x are OF velocities not angular velocities of the body
+            sensor_data = [RREV, omega_y, omega_x] # simplifying for data recording
             qw = orientation_q[0]
             qx = orientation_q[1]
             qy = orientation_q[2]
@@ -264,16 +264,19 @@ for k_ep in range(ep_start,1000):
                 start_time_pitch = env.getTime()
                 env.enableSticky(1)
 
-                wn = sqrt(omega_x**2 + omega_y**2)
+                
+                
+                vx_avg = vx_avg + 0.5*(vx-vx_avg) # Exponentially weighted average of x velocity
+                # future implementation on velocity estimate
+
                 # add term to adjust for tilt 
-                qRREV = theta_rl[1,k_run] * RREV 
-                #qomega = theta_rl[2,k_run]*wn
-                q_d = qRREV# + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
+
+                q_d = theta_rl[1,k_run] * RREV *np.sign(vx_avg) #+ theta_rl[2,k_run]*vx_avg
                 # torque on x axis to adjust for vy
                 r_d = 0.0 #theta_rl[3,k_run] * omega_y
 
                 print('----- pitch starts -----')
-                print('vz=%.3f, vx=%.3f, vy=%.3f' %(vz, vx,vy))
+                print('vz=%.3f, vx=%.3f, vy=%.3f' %(vz,vx,vy))
                 print('r[0]=%.3f, r[1]=%.3f, r[2]=%.3f, b3y=%.3f' %(r[0],r[1],r[2],b3y))
                 print('RREV=%.3f, omega_y=%.3f, omega_x=%.3f, qd=%.3f' %( RREV, omega_y, omega_x,q_d) )   
                 print("Pitch Time: %.3f" %start_time_pitch)
@@ -347,7 +350,7 @@ for k_ep in range(ep_start,1000):
             else:
                 if t_step%10==0:
                     state_history = np.append(state_history, state2, axis=1)
-                    env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run)
+                    env.append_csv(agent,state,k_ep,k_run,sensor_data)
 
             if done_rollout:
                 action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
@@ -366,7 +369,7 @@ for k_ep in range(ep_start,1000):
                 break
         
         
-        env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run,reward[k_run,0],error=error_str)
+        env.append_csv(agent,state,k_ep,k_run,sensor_data,reward=reward[k_run,0],error=error_str)
         env.append_csv_blank()
 
         if repeat_run == True & k_run > 0:
