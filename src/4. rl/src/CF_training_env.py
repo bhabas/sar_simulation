@@ -77,7 +77,7 @@ agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_ro
 
 # # For CMA_basic, make sure simga has 3 inputs / for pepg it must be 2
 # agent = CMA_basic(mu,sigma,N_best=0.3,n_rollout=10)
-agent = CMA(n=2) # number of problem dimensions
+# agent = CMA(n=2) # number of problem dimensions
 
 
 
@@ -219,8 +219,8 @@ for k_ep in range(ep_start,1000):
             # Use noisy distance measurement from sensor
             #d = env.laser_dist
             #print(d)
-            RREV, omega_y, omega_x = vz/d, vx/d, vy/d # omega_y/x are OF velocities not angular velocities of the body
-            sensor_data = [RREV, omega_y, omega_x] # simplifying for data recording
+            RREV, omega_yOF, omega_xOF = vz/d, vx/d, vy/d # omega_y,x are angular velocities of ceiling, not angular velocities of the body
+            sensor_data = [RREV, omega_yOF, omega_xOF] # simplifying for data recording
             qw = orientation_q[0]
             qx = orientation_q[1]
             qy = orientation_q[2]
@@ -278,7 +278,7 @@ for k_ep in range(ep_start,1000):
                 print('----- pitch starts -----')
                 print('vz=%.3f, vx=%.3f, vy=%.3f' %(vz,vx,vy))
                 print('r[0]=%.3f, r[1]=%.3f, r[2]=%.3f, b3y=%.3f' %(r[0],r[1],r[2],b3y))
-                print('RREV=%.3f, omega_y=%.3f, omega_x=%.3f, qd=%.3f' %( RREV, omega_y, omega_x,q_d) )   
+                print('RREV=%.3f, omega_y=%.3f, omega_x=%.3f, qd=%.3f' %( RREV, omega_yOF, omega_xOF,q_d) )   
                 print("Pitch Time: %.3f" %start_time_pitch)
                 #print('wy = %.3f , qomega = %.3f , qRREV = %.3f' %(omega[1],qomega,qRREV))
 

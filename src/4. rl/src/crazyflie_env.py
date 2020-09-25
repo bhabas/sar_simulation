@@ -116,11 +116,11 @@ class CrazyflieEnv:
         self.fd.close()
 
 
-    def enableSticky(self, enable):      # enable=0 disable sticky, enable=1 enable sticky
+    def enableSticky(self, enable): # enable=0 disable sticky, enable=1 enable sticky
         header = 11
         buf = struct.pack('5d', header, enable, 0, 0, 0)
         self.fd.sendto(buf, self.addr_remote_send)
-        time.sleep(0.001)               # the sleep time after enableSticky(0) must be small s.t. the gazebo simulation is satble. Because the simulation after joint removed becomes unstable quickly.
+        time.sleep(0.001) # the sleep time after enableSticky(0) must be small s.t. the gazebo simulation is satble. Because the simulation after joint removed becomes unstable quickly.
     
     def getTime(self):
         return self.state_current[0]
@@ -150,7 +150,6 @@ class CrazyflieEnv:
     def reset(self): # Disable sticky then places spawn_model at origin
         self.enableSticky(0)
         os.system("rosservice call gazebo/reset_world")
-        self.enableSticky(0)
         time.sleep(2)
         return self.state_current
     
@@ -175,16 +174,16 @@ class CrazyflieEnv:
             len = self.fd.sendto(buf, self.addr_remote_send)
 
 
-    def step(self, action):
-        if action['type'] == 'pos':
+    def step(self, action): # Controller works to attain these values
+        if action['type'] == 'pos': # position (x,y,z) 
             header = 1
-        elif action['type'] == 'vel':
+        elif action['type'] == 'vel': # velocity (vx,vy,vz)
             header = 2
-        elif action['type'] == 'att':
+        elif action['type'] == 'att': # attitude: orientation (heading/yaw, pitch, roll/bank)
             header = 3
-        elif action['type'] == 'rate':
+        elif action['type'] == 'rate': # rotation rate (w_x:roll,w_y:pitch,w_z:yaw)
             header = 4
-        elif action['type'] == 'stop':
+        elif action['type'] == 'stop': # ???
             header = 5
         else:
             print("no such action")
