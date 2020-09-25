@@ -77,7 +77,7 @@ agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_ro
 
 # # For CMA_basic, make sure simga has 3 inputs / for pepg it must be 2
 # agent = CMA_basic(mu,sigma,N_best=0.3,n_rollout=10)
-# #agent = CMA(n=2) # number of problem dimensions
+agent = CMA(n=2) # number of problem dimensions
 
 
 
@@ -334,8 +334,8 @@ for k_ep in range(ep_start,1000):
                 break
 
             
-            if (np.abs(position[0]) > 3.5) or (np.abs(position[1]) > 3.5):
-                print("Reset improperly!!!!!")
+            if (np.abs(position[0]) > 5.0) or (np.abs(position[1]) > 5.0):
+                print("Reset improperly / Out of bounds !!!!!")
                 error_str = "Reset improperly/Position outside bounding box"
                 repeat_run = True
                 break
@@ -381,8 +381,8 @@ for k_ep in range(ep_start,1000):
 
     if not any( np.isnan(reward) ):
         print("Episode # %d training, average reward %.3f" %(k_ep, np.mean(reward)))
-        #agent.train(theta_rl,reward,epsilon_rl)
-        agent.train(theta_rl,reward,epsilon)
+        agent.train(theta_rl,reward,epsilon_rl)
+        #agent.train(theta_rl,reward,epsilon)
         print(reward)
         plt.plot(k_ep,np.mean(reward),'ro')
         plt.draw()
