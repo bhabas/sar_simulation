@@ -38,6 +38,7 @@ reset_vals = True
 while True:
 
     if reset_vals == True:
+
         ## Mu input:
         mu_str = input("Input mu values: ")
         num = list(map(float, mu_str.split()))
@@ -46,12 +47,18 @@ while True:
         ## Placeholders need to be arrays for formatting reasons
         agent = rlsysPEPGAgent_reactive(np.asarray(0),np.asarray(0),mu,np.asarray(0))
 
-        ## v_ini input:
-        v_str = input("Input V_ini (vz,vx,vy): ")
-        num = list(map(float, v_str.split()))
-        v_ini = np.asarray(num)
-
-        vz_ini,vx_ini,vy_ini = v_ini
+        while True:
+            try:
+                
+                v_str = input("Input V_ini (vz,vx,vy): ")
+                num = list(map(float, v_str.split()))
+                v_ini = np.asarray(num)
+                vz_ini,vx_ini,vy_ini = v_ini
+                if len(v_ini) != 3:
+                    raise Exception()
+                break
+            except:
+                print("Enter vz,vx,vy")
 
     # vz_ini = 3.0
     # vx_ini = 0.0 
@@ -65,14 +72,14 @@ while True:
 
 
     print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
-    print("Vz_ini: %.3f \t Vx_ini: %.3f \t  Vy_ini:%.3f" %(vz_ini, vx_ini, vy_ini))
     print("RREV=%.3f, \t Gain=%.3f" %(mu[0], mu[1]))
+    print("Vz_ini: %.3f \t Vx_ini: %.3f \t  Vy_ini:%.3f" %(vz_ini, vx_ini, vy_ini))
     print()
 
 
 
     state = env.reset()
-    env.IC_csv(agent,np.around(state,decimals=3),'sim',k_run,v_ini = v_ini)
+    env.IC_csv(agent,state,'sim',k_run,v_ini = v_ini)
 
     ## If spawn position is off then reset position again
     x_pos,y_pos = state[2],state[3]
