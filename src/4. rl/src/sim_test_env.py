@@ -127,8 +127,8 @@ while True:
         omega = state[11:14]
 
         d = h_ceiling - position[2]
-        RREV, omega_yOF, omega_xOF = vz/d, vx/d, vy/d # omega_y,x are angular velocities of ceiling, not angular velocities of the body
-        sensor_data = [RREV, omega_yOF, omega_xOF] # simplifying for data recording
+        RREV, OF_y, OF_x = vz/d, vx/d, vy/d # OF_x,y are optical flows of the ceiling assuming no body rotation
+        sensor_data = [RREV, OF_y, OF_x] # simplifying for data recording
 
         qw = orientation_q[0]
         qx = orientation_q[1]
@@ -179,7 +179,7 @@ while True:
             print('----- pitch starts -----')
             print('vz=%.3f, vx=%.3f, vy=%.3f' %(vz,vx,vy))
             print('r[0]=%.3f, r[1]=%.3f, r[2]=%.3f, b3y=%.3f' %(r[0],r[1],r[2],b3y))
-            print('RREV=%.3f, omega_y=%.3f, omega_x=%.3f, qd=%.3f' %( RREV, omega_yOF, omega_xOF,q_d) ) 
+            print('RREV=%.3f, omega_y=%.3f, omega_x=%.3f, qd=%.3f' %( RREV, OF_y, OF_x,q_d) ) 
             print()  
             print("Pitch Time: %.3f" %(start_time_pitch))
             #print('wy = %.3f , qomega = %.3f , qRREV = %.3f' %(omega[1],qomega,qRREV))

@@ -123,7 +123,7 @@ class rlsysPEPGAgent_reactive(ES):
         """[summary]
 
         Args:
-            alpha_mu (np.array): <u_learning rate
+            alpha_mu (np.array): mu_learning rate
             alpha_sigma (np.array): Sigma_learning rate
             mu (np.array): Parameter means
             sigma (np.array): Parameter Standard Deviations

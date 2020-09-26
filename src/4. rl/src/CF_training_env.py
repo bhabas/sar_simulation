@@ -57,16 +57,15 @@ image_now = np.array(0)
 ##          SyS-PEPG 
 # ============================
 
-## Learning rate
-alpha_mu = np.array([[0.2],[0.2]])#[2.0]] )#,[0.1]])
-alpha_sigma = np.array([[0.1],[0.1]])#, [1.0]])#,[0.05]])
+# ## Learning rate
+# alpha_mu = np.array([[0.2],[0.2]])#[2.0]] )#,[0.1]])
+# alpha_sigma = np.array([[0.1],[0.1]])#, [1.0]])#,[0.05]])
 
-## Initial parameters for gaussian function
-mu = np.array([[3.0],[3.0]])#,[1.5]])   # Initial estimates of mu: 
-sigma = np.array([[1.0],[1.0]])      # Initial estimates of sigma: 
+# ## Initial parameters for gaussian function
+# mu = np.array([[3.0],[3.0]])#,[1.5]])   # Initial estimates of mu: 
+# sigma = np.array([[1.0],[1.0]])      # Initial estimates of sigma: 
 
-
-agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=1)
+# agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=1)
 
 
 # ============================
@@ -75,15 +74,15 @@ agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_ro
 
 # seems to be unstable if mu is close to zero (coverges to deterimistic)
 ## Initial parameters for gaussian function
-# mu = np.array([[3.0],[-3.0] ])#,[1.5]])   # Initial estimates of mu: 
-# sigma = np.array([[1.0],[1.0] , [0.5]])      # Initial estimates of sigma: 
+mu = np.array([[3.0],[-3.0] ])#,[1.5]])   # Initial estimates of mu: 
+sigma = np.array([[1.0],[1.0] , [0.5]])      # Initial estimates of sigma: 
 
 # # For CMA_basic, make sure simga has 3 inputs / for pepg it must be 2
 # agent = CMA_basic(mu,sigma,N_best=0.3,n_rollout=10)
 
 
 # agent = CMA(n=2,gamma = 0.9) # number of problem dimensions
-# agent = CMA_sym(n=2,gamma=0.9)
+agent = CMA_sym(n=2,gamma=0.9)
 
 
 
@@ -230,8 +229,8 @@ for k_ep in range(ep_start,1000):
             # Use noisy distance measurement from sensor
             #d = env.laser_dist
             #print(d)
-            RREV, omega_yOF, omega_xOF = vz/d, vx/d, vy/d # omega_y,x are angular velocities of ceiling, not angular velocities of the body
-            sensor_data = [RREV, omega_yOF, omega_xOF] # simplifying for data recording
+            RREV, OF_y, OF_x = vz/d, vx/d, vy/d # OF_x,y are optical flows of the ceiling assuming no body rotation
+            sensor_data = [RREV, OF_y, OF_x] # simplifying for data recording
             qw = orientation_q[0]
             qx = orientation_q[1]
             qy = orientation_q[2]
@@ -277,15 +276,11 @@ for k_ep in range(ep_start,1000):
 
                 
                 ## bhabas work
-                vx_avg = vx_avg + 0.5*(vx-vx_avg) # Exponentially weighted average of vx
-                # future implementation on velocity estimate
+                # vx_avg = vx_avg + 0.5*(vx-vx_avg) # Exponentially weighted average of vx
+                # # future implementation on velocity estimate
 
-                q_RREV = theta_rl[1,k_run] * RREV 
-                q_d = q_RREV *np.sign(vx_avg) #+ theta_rl[2,k_run]*vx_avg
-
-
-
-
+                # q_RREV = theta_rl[1,k_run] * RREV 
+                # q_d = q_RREV *np.sign(vx_avg) #+ theta_rl[2,k_run]*vx_avg
 
 
 
@@ -299,19 +294,19 @@ for k_ep in range(ep_start,1000):
                 #qomega = theta_rl[2,k_run]*wn
                 #q_roll = qRREV*sin(angle_omega)
                 #q_pitch = -qRREV*cos(angle_omega)
-                q_d = qRREV# + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
+                q_pitch = qRREV# + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
 
 
 
 
 
                 # torque on x axis to adjust for vy
-                r_d = 0.0 #theta_rl[3,k_run] * omega_y
+                q_roll = 0.0 #theta_rl[3,k_run] * omega_y
 
                 print('----- pitch starts -----')
                 print('vz=%.3f, vx=%.3f, vy=%.3f' %(vz,vx,vy))
                 print('r[0]=%.3f, r[1]=%.3f, r[2]=%.3f, b3y=%.3f' %(r[0],r[1],r[2],b3y))
-                print('RREV=%.3f, omega_y=%.3f, omega_x=%.3f, qd=%.3f' %( RREV, omega_yOF, omega_xOF,q_d) )   
+                print('RREV=%.3f, OF_y=%.3f, OF_x=%.3f, q_pitch=%.3f' %( RREV, OF_y, OF_x,q_pitch) )   
                 print("Pitch Time: %.3f" %start_time_pitch)
                 #print('wy = %.3f , qomega = %.3f , qRREV = %.3f' %(omega[1],qomega,qRREV))
 
@@ -322,9 +317,7 @@ for k_ep in range(ep_start,1000):
                 
 
                 ## Start rotation and mark rotation as triggered
-                #action = {'type':'rate', 'x':q_roll, 'y':q_pitch, 'z':0.0, 'additional':0.0}    
-
-                action = {'type':'rate', 'x':r_d, 'y':q_d, 'z':0.0, 'additional':0.0}
+                action = {'type':'rate', 'x':q_roll, 'y':q_pitch, 'z':0.0, 'additional':0.0}    
                 env.step(action) 
                 pitch_triggered = True
 
@@ -379,16 +372,15 @@ for k_ep in range(ep_start,1000):
                 break
             
             ## Keep record of state vector every 10 time steps
-            ## Each iteration changes state vector from [14,] into (state2)[14,1] 
-            ##      First iteration: track_state = state2 vector
-            ##      Every 10 iter: append track_state columns with current state2 vector 
             state2 = state[1:, np.newaxis]
             if state_history is None:
-                state_history = state2 # replace w/ state_history variable for track_state
+                state_history = state2 
             else:
-                if t_step%10==0:
+                if t_step%10==0: # Append state_history columns with current state2 vector 
                     state_history = np.append(state_history, state2, axis=1)
                     env.append_csv(agent,state,k_ep,k_run,sensor_data)
+
+
 
             if done_rollout:
                 action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
@@ -414,7 +406,6 @@ for k_ep in range(ep_start,1000):
             # return to previous run to catch potential missed glitches in gazebo (they are usually caught in the next run)
             if k_run > 0:
                 k_run -= 1 # Repeat previous (not current) run 
-            
         else:
             k_run += 1 # Move on to next run
 
@@ -422,8 +413,6 @@ for k_ep in range(ep_start,1000):
     if not any( np.isnan(reward) ):
         print("Episode # %d training, average reward %.3f" %(k_ep, np.mean(reward)))
         agent.train(theta_rl,reward,epsilon_rl)
-        #agent.train(theta_rl,reward,epsilon)
-        #print(reward)
         plt.plot(k_ep,np.mean(reward),'ro')
         plt.draw()
         plt.pause(0.001)
