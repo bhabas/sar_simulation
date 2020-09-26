@@ -22,8 +22,11 @@ from rl_cma import CMA_basic,CMA,CMA_sym
 ## Initialize the environment
 env = CrazyflieEnv(port_self=18050, port_remote=18060)
 print("Environment done")
+
+## Sim Parameters
 ep_start = 0 # Default episode start position
 h_ceiling = 1.5 # meters
+extra_time = 0.2
 
 ## Initialize the user and data recording
 username = getpass.getuser()
@@ -55,15 +58,15 @@ image_now = np.array(0)
 # ============================
 
 ## Learning rate
-alpha_mu = np.array([[0.2],[0.2],[0.2] ])#[2.0]] )#,[0.1]])
-alpha_sigma = np.array([[0.1],[0.1],[0.1] ])#, [1.0]])#,[0.05]])
+alpha_mu = np.array([[0.2],[0.2]])#[2.0]] )#,[0.1]])
+alpha_sigma = np.array([[0.1],[0.1]])#, [1.0]])#,[0.05]])
 
 ## Initial parameters for gaussian function
-mu = np.array([[3.0],[3.0],[0] ])#,[1.5]])   # Initial estimates of mu: 
-sigma = np.array([[1.0],[1.0],[0]])      # Initial estimates of sigma: 
+mu = np.array([[3.0],[3.0]])#,[1.5]])   # Initial estimates of mu: 
+sigma = np.array([[1.0],[1.0]])      # Initial estimates of sigma: 
 
 
-agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=5)
+agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=1)
 
 
 # ============================
@@ -77,9 +80,11 @@ agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_ro
 
 # # For CMA_basic, make sure simga has 3 inputs / for pepg it must be 2
 # agent = CMA_basic(mu,sigma,N_best=0.3,n_rollout=10)
-agent = CMA(n=2,gamma = 0.9) # number of problem dimensions
-agent = CMA_sym(n=2,gamma=0.9)
-extra_time = 0.2
+
+
+# agent = CMA(n=2,gamma = 0.9) # number of problem dimensions
+# agent = CMA_sym(n=2,gamma=0.9)
+
 
 
 
@@ -123,22 +128,22 @@ for k_ep in range(ep_start,1000):
 
     print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
 
-    print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1], mu[2], mu[1]))
-    print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1], sigma[2], sigma[1]))
+    print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1], mu[1], mu[1]))
+    print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1], sigma[1], sigma[1]))
     print()
 
     
     reward = np.zeros(shape=(2*agent.n_rollout,1))
     #reward = np.zeros(shape=(agent.n_rollout,1))
     reward[:] = np.nan  # initialize reward to be NaN array, size n_rollout x 1
-    theta_rl,epsilon = agent.get_theta()
+    theta_rl,epsilon_rl = agent.get_theta()
 
     print("theta_rl = ")
 
     np.set_printoptions(precision=2, suppress=True)
     print(theta_rl[0,:], "--> RREV")
     print(theta_rl[1,:], "--> Gain")
-    print(theta_rl[2,:], "--> v_x Gain")
+    # print(theta_rl[2,:], "--> v_x Gain")
     #print(theta_rl[3,:], "--> omega_y Gain")
 
 
@@ -166,7 +171,7 @@ for k_ep in range(ep_start,1000):
         #vy_ini = v_mag*sin(angle)
 
         print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
-        print("RREV: %.3f \t gain1: %.3f \t gain2: %.3f \t gain3: %.3f" %(theta_rl[0,k_run], theta_rl[1,k_run],theta_rl[2,k_run],theta_rl[1,k_run]))
+        print("RREV: %.3f \t gain1: %.3f \t gain2: %.3f \t gain3: %.3f" %(theta_rl[0,k_run], theta_rl[1,k_run],theta_rl[1,k_run],theta_rl[1,k_run]))
         print("Vz_ini: %.3f \t Vx_ini: %.3f \t Vy_ini: %.3f" %(vz_ini, vx_ini, vy_ini))
 
 
