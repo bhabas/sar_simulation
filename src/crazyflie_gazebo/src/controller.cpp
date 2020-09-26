@@ -328,7 +328,7 @@ void Controller::controlThread()
             else
             {
                 omega_d[0] = control_cmd[1];    omega_d[1] = control_cmd[2];    omega_d[2] = control_cmd[3];
-                omega_d[0] = omega[0] + control_cmd[1] ; omega_d[2] = omega[2] + control_cmd[3]; // so doesnt try to correct itself
+                omega_d[0] = omega[0] + control_cmd[1]; omega_d[2] = omega[2] + control_cmd[3]; // so doesnt try to correct itself
                 e_R[0]=0; e_R[1]=0; e_R[2]=0;
                 math::matAddsMat(e_omega, omega, omega_d, 3, 2);            // e_omega = omega - omega_d
             }

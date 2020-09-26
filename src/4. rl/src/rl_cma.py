@@ -3,6 +3,7 @@ import copy
 from rl_syspepg import ES
 from math import floor,log,sqrt,ceil
 import time
+
 class CMA(ES):
     # adapted from https://arxiv.org/pdf/1604.00772.pdf
     def __init__(self,n,gamma = 0.8):
@@ -14,12 +15,12 @@ class CMA(ES):
 
         # initialize mean and learning rate
         self.mu = np.random.rand(self.N,1)
-        self.mu = np.array([[1.0],[5.0]])
+        self.mu = np.array([[8.0],[8.0]])
         self.sigma_lr = 0.5
         self.counteval = 0
 
 
-        self.lamda =   4.0 + 4.0 + floor(3.0*log(self.N))  # number of population members
+        self.lamda =  4.0 +  4.0 + floor(3.0*log(self.N))  # number of population members
         self.n_rollout = int(self.lamda/2.0)  # same as lamda
         self.mu_s = floor(self.lamda/4) # number of sample members from each populatoin //added floor /2
         
@@ -49,9 +50,9 @@ class CMA(ES):
         
         self.sigma = np.array([self.C[0,0],self.C[1,1],self.C[1,0] ])
         # try defining B and D from C instead
-        #self.C = 2*np.identity(self.N)
-        #self.D,self.B = np.linalg.eig(self.C)    
-        #self.D = np.diag(self.D)
+        self.C = 2*np.identity(self.N)
+        self.D,self.B = np.linalg.eig(self.C)    
+        self.D = np.diag(self.D)
 
         
         self.eigeneval = 0      # counter  
@@ -71,11 +72,13 @@ class CMA(ES):
 
             #arx = self.mu + self.sigma_lr*(np.dot(self.B*self.D,mm) )  # add mutation    % Eq.40       
             arx = self.mu + self.sigma_lr*(self.B.dot(self.D)).dot(mm) # mutate child using covariance matrix and base mean
+            #try adding mu - sigma for symmetric sampling
+            
             #print(arx)
             #print(arx2)
             self.arx[0,k] = arx[0]*(arx[0] > 0)  # enforce stricly postive values (gain rate is negated in start_training.py)
             self.arx[1,k] = arx[1]*(arx[0] > 0)
-            self.counteval +=1 # increase species number counter
+            self.counteval +=2 # increase species number counter
 
         theta = copy.copy(self.arx)
         return theta,0
@@ -131,7 +134,7 @@ class CMA(ES):
         print(self.D)
 
         self.sigma = np.array([self.C[0,0],self.C[1,1],self.C[1,0] ])
-        self.D = np.diag(self.D)
+        self.D = np.sqrt(np.diag(self.D))
         print(self.D)
         print(np.sqrt(np.diag(self.D)))
         #self.D = np.sqrt(np.diag(self.D))
@@ -142,6 +145,36 @@ class CMA(ES):
         #print(self.D)
         #print(self.B)
         #print(self.C)
+
+class CMA_sym(CMA):
+    def get_theta(self): # try 16 pop / sym might make it okay
+        # construct new population of lamda children  
+        lamda = int(self.lamda)
+        self.arz = np.zeros((self.N,lamda)) 
+        self.arx = np.zeros((self.N,lamda)) 
+        for k in range(0,int(lamda/2)): # need lamda to be even so 20/4 = 5 bad 24/4 = 6 good 
+            mm = np.random.randn(self.N,1) # standard normally distributed vector 
+            #print(mm) 
+            self.arz[0,k] = mm[0]   # base mean for rrev
+            self.arz[1,k] = mm [1]  # base mean for gain rate
+            #print(self.arz)
+
+            #arx = self.mu + self.sigma_lr*(np.dot(self.B*self.D,mm) )  # add mutation    % Eq.40       
+            arx = self.mu + self.sigma_lr*(self.B.dot(self.D)).dot(mm) # mutate child using covariance matrix and base mean
+            arx2 = self.mu - self.sigma_lr*(self.B.dot(self.D)).dot(mm) # symmetric sample
+            #try adding mu - sigma for symmetric sampling
+            print(arx,arx2)
+            #print(arx)
+            #print(arx2)
+            self.arx[0,2*k] = arx[0]*(arx[0] > 0)  # enforce stricly postive values (gain rate is negated in start_training.py)
+            self.arx[1,2*k] = arx[1]*(arx[0] > 0)
+
+            self.arx[0,2*k +1] = arx2[0]*(arx2[0] > 0)  # enforce stricly postive values (gain rate is negated in start_training.py)
+            self.arx[1,2*k + 1] = arx2[1]*(arx2[0] > 0)
+            self.counteval +=1 # increase species number counter
+
+        theta = copy.copy(self.arx)
+        return theta,0
 
 if __name__ == "__main__":
     es = CMA(2)
