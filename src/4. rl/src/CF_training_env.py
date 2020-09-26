@@ -3,14 +3,14 @@
 import numpy as np
 import time,os,getpass
 import matplotlib.pyplot as plt
-from math import sin,cos,pi,sqrt
+from math import sin,cos,pi,sqrt,atan,atan2
 import os
 from scipy.spatial.transform import Rotation
 from numpy.core.fromnumeric import repeat
 
 from crazyflie_env import CrazyflieEnv
 from rl_syspepg import rlsysPEPGAgent_reactive
-from rl_cma import CMA_basic,CMA
+from rl_cma import CMA_basic,CMA,CMA_sym
 
 
 
@@ -37,7 +37,7 @@ fig = plt.figure()
 plt.ion()  # interactive on
 plt.grid()
 plt.xlim([-1,40])
-plt.ylim([-1,20])  # change limit depending on reward function defenition
+plt.ylim([-1,10])  # change limit depending on reward function defenition
 plt.xlabel("Episode")
 plt.ylabel("Reward")
 plt.title("Episode: %d Run: %d" %(0,0))
@@ -77,9 +77,9 @@ agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_ro
 
 # # For CMA_basic, make sure simga has 3 inputs / for pepg it must be 2
 # agent = CMA_basic(mu,sigma,N_best=0.3,n_rollout=10)
-# agent = CMA(n=2) # number of problem dimensions
-
-
+agent = CMA(n=2,gamma = 0.9) # number of problem dimensions
+agent = CMA_sym(n=2,gamma=0.9)
+extra_time = 0.2
 
 
 
@@ -158,6 +158,12 @@ for k_ep in range(ep_start,1000):
         vx_ini = np.random.uniform(low=-1.5, high=1.5)
         vy_ini = 0.0#np.random.uniform(low=-1.5, high=1.5)
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
+
+        #v_mag = np.random.uniform(low=0.0,high=2.0)
+        #angle = np.random.uniform(low=0.0,high=2.0*pi)
+
+        #vx_ini = v_mag*cos(angle)
+        #vy_ini = v_mag*sin(angle)
 
         print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
         print("RREV: %.3f \t gain1: %.3f \t gain2: %.3f \t gain3: %.3f" %(theta_rl[0,k_run], theta_rl[1,k_run],theta_rl[2,k_run],theta_rl[1,k_run]))
@@ -265,13 +271,35 @@ for k_ep in range(ep_start,1000):
                 env.enableSticky(1)
 
                 
-                
-                vx_avg = vx_avg + 0.5*(vx-vx_avg) # Exponentially weighted average of x velocity
+                ## bhabas work
+                vx_avg = vx_avg + 0.5*(vx-vx_avg) # Exponentially weighted average of vx
                 # future implementation on velocity estimate
 
-                # add term to adjust for tilt 
+                q_RREV = theta_rl[1,k_run] * RREV 
+                q_d = q_RREV *np.sign(vx_avg) #+ theta_rl[2,k_run]*vx_avg
 
-                q_d = theta_rl[1,k_run] * RREV *np.sign(vx_avg) #+ theta_rl[2,k_run]*vx_avg
+
+
+
+
+
+
+                ## bader work
+                # wn = sqrt(omega_x**2 + omega_y**2)
+
+                # angle_omega = pi + atan2(omega_y,omega_x)
+
+                # add term to adjust for tilt 
+                qRREV = theta_rl[1,k_run] * RREV 
+                #qomega = theta_rl[2,k_run]*wn
+                #q_roll = qRREV*sin(angle_omega)
+                #q_pitch = -qRREV*cos(angle_omega)
+                q_d = qRREV# + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
+
+
+
+
+
                 # torque on x axis to adjust for vy
                 r_d = 0.0 #theta_rl[3,k_run] * omega_y
 
@@ -289,6 +317,8 @@ for k_ep in range(ep_start,1000):
                 
 
                 ## Start rotation and mark rotation as triggered
+                #action = {'type':'rate', 'x':q_roll, 'y':q_pitch, 'z':0.0, 'additional':0.0}    
+
                 action = {'type':'rate', 'x':r_d, 'y':q_d, 'z':0.0, 'additional':0.0}
                 env.step(action) 
                 pitch_triggered = True
@@ -299,7 +329,7 @@ for k_ep in range(ep_start,1000):
             # ============================
 
             ## If time since triggered pitch exceeds [0.7s]   
-            if pitch_triggered and ((env.getTime()-start_time_pitch) > 0.7):
+            if pitch_triggered and ((env.getTime()-start_time_pitch) > (0.7 + extra_time)):
                 # I don't like this formatting, feel free to improve on
                 error_1 = "Rollout Completed: Pitch Triggered  "
                 error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch))
@@ -309,7 +339,7 @@ for k_ep in range(ep_start,1000):
                 done_rollout = True
 
             ## If time since rollout start exceeds [1.5s]
-            if (env.getTime() - start_time_rollout) > 1.5:
+            if (env.getTime() - start_time_rollout) > (1.5 + extra_time):
                 error_1 = "Rollout Completed: Time Exceeded   "
                 error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
                 # print(error_1 + "\n" + error_2)
@@ -337,6 +367,9 @@ for k_ep in range(ep_start,1000):
             if (np.abs(position[0]) > 5.0) or (np.abs(position[1]) > 5.0):
                 print("Reset improperly / Out of bounds !!!!!")
                 error_str = "Reset improperly/Position outside bounding box"
+                time.sleep(5)
+                env.close_sim()
+                env.launch_sim()
                 repeat_run = True
                 break
             
@@ -371,19 +404,21 @@ for k_ep in range(ep_start,1000):
         
         env.append_csv(agent,state,k_ep,k_run,sensor_data,reward=reward[k_run,0],error=error_str)
         env.append_csv_blank()
-
-        if repeat_run == True & k_run > 0:
+        time.sleep(0.01)
+        if repeat_run == True:
             # return to previous run to catch potential missed glitches in gazebo (they are usually caught in the next run)
-            k_run -= 1 # Repeat previous (not current) run 
+            if k_run > 0:
+                k_run -= 1 # Repeat previous (not current) run 
+            
         else:
             k_run += 1 # Move on to next run
 
-
+    print(reward)
     if not any( np.isnan(reward) ):
         print("Episode # %d training, average reward %.3f" %(k_ep, np.mean(reward)))
         agent.train(theta_rl,reward,epsilon_rl)
         #agent.train(theta_rl,reward,epsilon)
-        print(reward)
+        #print(reward)
         plt.plot(k_ep,np.mean(reward),'ro')
         plt.draw()
         plt.pause(0.001)
