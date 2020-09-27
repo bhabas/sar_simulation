@@ -3,7 +3,7 @@ import copy
 import scipy.io
 from scipy.spatial.transform import Rotation
 import matplotlib.pyplot as plt
-from math import asin,pi,ceil
+from math import asin,pi,ceil,floor
 
 # Parent Evolutionary Strategy Class
 # pepg and cma inherit common methods 
@@ -117,6 +117,65 @@ class ES:
 
         return b
 
+class rlEM_PEPGAgent(ES):
+    def __init__(self,mu,sigma,gamma=0.95, n_rollout = 6):
+        self.gamma, self.n_rollout = gamma, n_rollout
+        self.mu = mu
+        self.sigma = sigma
+
+        self.n = 2*n_rollout
+        self.alpha_mu, self.alpha_sigma  = np.array([[0],[0]]),np.array([[0],[0]])
+        self.mu_history = copy.copy(self.mu)  # Creates another array of self.mu and attaches it to self.mu_history
+        self.sigma_history = copy.copy(self.sigma)
+        self.reward_history = np.array([0])
+
+    def get_theta(self):
+        x = np.random.normal(self.mu[0,0],self.sigma[0,0],[1,self.n])
+        y = np.random.normal(self.mu[1,0],self.sigma[1,0],[1,self.n])
+        #print(x)
+        #print(y)
+        theta = np.append(x,y,axis = 0)
+
+        for k_n in range(self.n):
+            if theta[0,k_n] < 0: # 
+                theta[0,k_n] = 0.001
+            if theta[1,k_n] > 0:
+                theta[1,k_n] = -0.001
+
+        return theta , 0
+
+    def train(self,theta,reward,epsilon):
+
+        summary = np.concatenate((np.transpose(theta),reward),axis=1)
+        summary = np.transpose(summary[summary[:,2].argsort()[::-1]])
+        print(summary)
+
+        k = floor(self.n/2)
+
+        S_theta = (summary[0:2,0:k].dot(summary[2,0:k].reshape(k,1)))
+        S_reward = np.sum(summary[2,0:k])
+
+        S_diff = np.square(summary[0:2,0:k] - self.mu).dot(summary[2,0:k].reshape(k,1))
+
+        
+        self.mu = S_theta/S_reward
+        self.sigma = np.sqrt(S_diff/S_reward)
+
+        '''S_theta = np.dot(theta,reward)
+        S_reward = np.sum(reward)
+        S_diff = np.square(theta - self.mu).dot(reward)'''
+
+
+
+
+
+if __name__ == "__main__":
+    mu = np.array([[1.0],[-2.0]])
+    sigma = np.array([[0.5],[1.5]])
+    agent = rlEM_PEPGAgent(mu,sigma)
+    theta = agent.get_theta()
+    reward = np.array([[1.0],[2.0],[0.3],[4.0],[2.0],[1.5] ])
+    agent.train(theta,reward)
 
 class rlsysPEPGAgent_reactive(ES):
     def __init__(self, alpha_mu, alpha_sigma, mu,sigma,gamma=0.95, n_rollout = 6):
@@ -155,15 +214,52 @@ class rlsysPEPGAgent_reactive(ES):
         for k_n in range(2*self.n_rollout):
             if theta[0,k_n] < 0: # 
                 theta[0,k_n] = 0.001
-            # if theta[1,k_n] > 0:
-            #     theta[1,k_n] = -0.001
-            '''if theta[2,k_n] < 0:
-                theta[1,k_n] = 0.001
-            if theta[3,k_n] < 0:
-                theta[1,k_n] = 0'''
+            if theta[1,k_n] > 0:
+                theta[1,k_n] = -0.001
+
 
         return theta, epsilon
 
+    def train(self, theta, reward, epsilon):
+        reward_plus = reward[0:self.n_rollout]
+        reward_minus = reward[self.n_rollout:]
+        epsilon = epsilon
+        b = self.get_baseline(span=3)
+
+        m_reward = 26.0#400.0#3000#2300      # max reward
+        reward_avg = np.mean(reward)
+       
+        ## Decaying Learning Rate:
+        #self.alpha_mu = self. * 0.9
+        #self.alpha_sigma = self.alpha_sigma * 0.9
+
+        T = epsilon
+        S = (T*T - self.sigma*self.sigma)/abs(self.sigma)
+        r_T = (reward_plus - reward_minus) / (2*m_reward - reward_plus - reward_minus)
+        r_S = ((reward_plus + reward_minus)/2 - b) / (m_reward - b)
+
+
+
+        self.mu = self.mu + self.alpha_mu*(np.dot(T,r_T))
+        self.sigma = self.sigma + self.alpha_sigma*np.dot(S,r_S)
+
+        '''if self.mu[0,0] < 0:
+            self.mu[0,0] = 0.1
+        if self.mu[1,0] > 0:
+            self.mu[1,0] = -0.1'''
+        for k in range(self.sigma.size): #  If sigma oversteps negative then assume convergence
+            if self.sigma[k] <= 0:
+                self.sigma[k] = 0.05
+        
+        self.mu_history = np.append(self.mu_history, self.mu, axis=1)
+        self.sigma_history = np.append(self.sigma_history, self.sigma, axis=1)
+        self.reward_history = np.append(self.reward_history, np.mean(reward))
+
+
+
+
+
+class rlsysPEPGAgent_adaptive(rlsysPEPGAgent_reactive):
     def train(self, theta, reward, epsilon):
         reward_plus = reward[0:self.n_rollout]
         reward_minus = reward[self.n_rollout:]
@@ -192,6 +288,7 @@ class rlsysPEPGAgent_reactive(ES):
         print(self.reward_history.size)
 
         # burst exploration if algorithim gets stuck at local optimum
+        # CAUSES OVERSHOOTING
         if len(self.reward_history) > 20:
             if b2 < m_reward*0.7: # increase sigma alot of reward low
                 lr_scale = 5.0*(1.0 - b2/m_reward)
@@ -221,7 +318,109 @@ class rlsysPEPGAgent_reactive(ES):
         self.reward_history = np.append(self.reward_history, np.mean(reward))
 
 
+class rlsysPEPGAgent_cov(rlsysPEPGAgent_reactive): # doesnt work breaks independance assumption at high sxy
+    # covariance matrix becomes non semi positive definite (eigenvalue < 0)
+    # need update rule based on multivariate gaussian
+    def get_theta(self):
+        mu = np.array([self.mu[0,0],self.mu[1,0]])
+        zeros = np.zeros_like(mu)
+        sigma = np.array([[self.sigma[0,0],self.sigma[2,0]],[self.sigma[2,0],self.sigma[1,0]]])
+
+        epsilon = np.random.multivariate_normal(zeros,sigma,[1, self.n_rollout])
+        epsilon = epsilon[0,:,:]
+        epsilon = np.transpose(epsilon)
+        print(epsilon)
+        theta_plus = (self.mu + epsilon)
+        theta_minus = (self.mu - epsilon)
+        theta = np.append(theta_plus, theta_minus, axis=1)
+
+        ## Caps values of RREV to be greater than zero and Gain to be neg so
+        # the system doesnt fight itself learning which direction to rotate
+        for k_n in range(2*self.n_rollout):
+            #print(k_n)
+            if theta[0,k_n] < 0: # 
+                theta[0,k_n] = 0.001
+            if theta[1,k_n] > 0:
+                theta[1,k_n] = -0.001
+
+        return theta, epsilon
+
+    def train(self, theta, reward, epsilon):
+        reward_plus = reward[0:self.n_rollout]
+        reward_minus = reward[self.n_rollout:]
+        epsilon = epsilon
+        b = self.get_baseline(span=3)
+
+        m_reward = 21.0 # max reward
+        reward_avg = np.mean(reward)
+
+        sigma = np.array([[self.sigma[0,0]],[self.sigma[1,0]]])
+
+        T = epsilon
+        S = (T*T - sigma*sigma)/abs(sigma)
+        r_T = (reward_plus - reward_minus) / (2*m_reward - reward_plus - reward_minus)
+        r_S = ((reward_plus + reward_minus)/2 - b) / (m_reward - b)
+
+         # Defeine learning rate scale depending on reward recieved
+        sigma = np.array([self.sigma[0,0],self.sigma[1,0]])
+        lr_scale = min(1.0 - reward_avg/m_reward,1) # try squaring?
+
+        explore_factor = 1.0 # determines how much faster sigma alpha decreases than mu alpha
 
 
+        lr_sigma = (lr_scale**explore_factor)/explore_factor # adjust sigma alpha
+        # update new learning rates
+        # These only depend on the current episode
+        self.alpha_mu = np.array([[lr_scale],[lr_scale] ])#,[lr_scale]])#0.95
+        self.alpha_sigma = np.array([[lr_sigma],[lr_sigma] ])#,[lr_sigma]])  #0.95
+        #print(self.alpha_mu,self.alpha_sigma)
+        #print(np.dot(T,r_T),np.dot(S,r_S))
+        self.mu = self.mu + self.alpha_mu*(np.dot(T,r_T))
+        sigupdate = lr_sigma*np.dot(S,r_S)
+        print(sigupdate)
+        print(self.sigma)
+        print(lr_sigma)
+        print(np.dot(T,r_T))
+        self.sigma[0,0] = self.sigma[0,0] + lr_sigma*sigupdate[0]
+        self.sigma[1,0] = self.sigma[1,0] + lr_sigma*sigupdate[1]
 
+        summary = np.concatenate((np.transpose(theta),reward),axis=1)
+        summary = np.transpose(summary[summary[:,2].argsort()[::-1]])
+        print(summary)
+        summary_top = summary[:,0:self.n_rollout]
+        r_ave_top = np.mean(summary_top[2,:])
+        x_ave_top = np.mean(summary_top[0,:])
+        y_ave_top = np.mean(summary_top[1,:])
+        cov_top = np.sum(np.dot(summary_top[0,:]-x_ave_top,summary_top[1,:]-y_ave_top))
+        print("cov = %.3f" %(cov_top))
+        T_xy = (r_ave_top - b) / (m_reward - b)
+        rrr = r_ave_top/m_reward
+        lr_sigxy = min((r_ave_top/m_reward)**2,1)
+        self.sigma[2,0] = (1-rrr)*self.sigma[2,0] + rrr*lr_sigxy*(cov_top - self.sigma[2,0])
+        #self.sigma[2,0] = (1-rrr)*self.sigma[2,0] + rrr*lr_sigma*(cov_top-self.simga[2,0])/4 # maybe dont need
+        C = np.array([[self.sigma[0,0],self.sigma[2,0]],[self.sigma[2,0],self.sigma[1,0]]])
+        w,v = np.linalg.eig(C)
+        print(w)
+        for i in range(2):
+            if w[i] < 0:
+                w[i] = 0.01
+        print(w)
+        print(w)
+        C2 = np.dot(np.dot(v,np.diag(w)),np.transpose(v))
+        C = C2
+        self.sigma[0,0] = C[0,0]
+        self.sigma[1,0] = C[1,1]
+        self.sigma[2,0] = C[1,0]
+        v.dot(np.diag(w)).dot(v)
+        print(C2)
+        print(C)
+        
+        print(v)
+        for k in range(self.sigma.size-1): #  If sigma oversteps negative then assume convergence
+            if self.sigma[k] <= 0:
+                self.sigma[k] = 0.05
+        
+        self.mu_history = np.append(self.mu_history, self.mu, axis=1)
+        self.sigma_history = np.append(self.sigma_history, self.sigma, axis=1)
+        self.reward_history = np.append(self.reward_history, np.mean(reward))
     
