@@ -24,10 +24,27 @@
 
     <physics name='default_physics' default='0' type='ode'>
       <gravity>0 0 -9.8066</gravity>
+      <!-- <bullet>
+        <solver>
+          <type>sequential_impulse</type>
+          <min_step_size>0.001</min_step_size>
+          <iters>50</iters>
+          <sor>1.3</sor>
+        </solver>
+        <constraints>
+          <cfm>0.1</cfm>
+          <erp>0.2</erp>
+          <contact_surface_layer>0.0005</contact_surface_layer>
+          <split_impulse>5</split_impulse>
+          <split_impulse_penetration_threshold>0.0005</split_impulse_penetration_threshold>
+        </constraints>
+      </bullet> -->
+
+
       <ode>
         <solver>
           <type>quick</type>
-          <iters>800</iters>
+          <iters>500</iters>
           <sor>1.3</sor>
           <use_dynamic_moi_rescaling>0</use_dynamic_moi_rescaling>
         </solver>
@@ -35,10 +52,10 @@
           <cfm>0.1</cfm>
           <erp>0.2</erp>
           <contact_max_correcting_vel>5</contact_max_correcting_vel>
-          <contact_surface_layer>0.0005</contact_surface_layer>
+          <contact_surface_layer>0.0001</contact_surface_layer>
         </constraints>
-        <!-- <implicit_spring_damper>1</implicit_spring_damper> -->
       </ode>
+      
       <max_step_size>0.001</max_step_size>
       <real_time_factor>0</real_time_factor>
       <real_time_update_rate>250</real_time_update_rate>

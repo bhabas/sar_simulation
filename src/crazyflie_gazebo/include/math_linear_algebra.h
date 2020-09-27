@@ -4,7 +4,7 @@
 
 namespace math {
 
-float clamp(float value, float min, float max);
+double clamp(double value, double min, double max);
 
 void hat(double *result, double *vector);
 
