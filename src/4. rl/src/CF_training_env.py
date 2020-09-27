@@ -9,7 +9,7 @@ from scipy.spatial.transform import Rotation
 from numpy.core.fromnumeric import repeat
 
 from crazyflie_env import CrazyflieEnv
-from rl_syspepg import rlsysPEPGAgent_reactive
+from rl_syspepg import rlsysPEPGAgent_reactive , rlsysPEPGAgent_cov, rlEM_PEPGAgent
 from rl_cma import CMA_basic,CMA,CMA_sym
 
 
@@ -37,7 +37,7 @@ fig = plt.figure()
 plt.ion()  # interactive on
 plt.grid()
 plt.xlim([-1,40])
-plt.ylim([-1,10])  # change limit depending on reward function defenition
+plt.ylim([-1,25])  # change limit depending on reward function defenition
 plt.xlabel("Episode")
 plt.ylabel("Reward")
 plt.title("Episode: %d Run: %d" %(0,0))
@@ -56,15 +56,16 @@ image_now = np.array(0)
 
 ## Learning rate
 alpha_mu = np.array([[0.2],[0.2] ])#[2.0]] )#,[0.1]])
-alpha_sigma = np.array([[0.1],[0.1] ])#, [1.0]])#,[0.05]])
+alpha_sigma = np.array([[0.1],[0.1]  ])#, [1.0]])#,[0.05]])
 
 ## Initial parameters for gaussian function
-mu = np.array([[3.0],[-3.0] ])#,[1.5]])   # Initial estimates of mu: 
-sigma = np.array([[1.0],[1.0]])      # Initial estimates of sigma: 
+mu = np.array([[0.0],[0.0] ])#,[1.5]])   # Initial estimates of mu: 
+sigma = np.array([[3.0],[3.0]])      # Initial estimates of sigma: 
 
 
 #agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=2)
-
+#agent = rlsysPEPGAgent_cov(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=4)
+agent = rlEM_PEPGAgent(mu,sigma,n_rollout=5)
 
 # ============================
 ##           CMA 
@@ -77,9 +78,9 @@ sigma = np.array([[1.0],[1.0]])      # Initial estimates of sigma:
 
 # # For CMA_basic, make sure simga has 3 inputs / for pepg it must be 2
 # agent = CMA_basic(mu,sigma,N_best=0.3,n_rollout=10)
-agent = CMA(n=2,gamma = 0.9) # number of problem dimensions
-agent = CMA_sym(n=2,gamma=0.9)
-extra_time = 0.2
+#agent = CMA(n=2,gamma = 0.9) # number of problem dimensions
+#agent = CMA_sym(n=2,gamma=0.9)
+extra_time = 0.0 # 0.2
 
 
 
@@ -124,7 +125,7 @@ for k_ep in range(ep_start,1000):
     print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
 
     print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1], mu[1], mu[1]))
-    print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1], sigma[2], sigma[1]))
+    print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1], sigma[1], sigma[1]))
     print()
 
     
@@ -178,8 +179,6 @@ for k_ep in range(ep_start,1000):
         print("Spawn Pos: x=%.3f \t y=%.3f" %(x_pos,y_pos))
         if abs(x_pos) > 0.1 or abs(y_pos) > 0.1:
             state = env.reset()
-
-
 
 
         action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
