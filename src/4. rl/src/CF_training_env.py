@@ -12,7 +12,7 @@ from crazyflie_env import CrazyflieEnv
 from rl_syspepg import rlsysPEPGAgent_reactive , rlsysPEPGAgent_cov, rlEM_PEPGAgent
 from rl_cma import CMA_basic,CMA,CMA_sym
 
-
+os.system("clear")
 
 # ============================
 ##     Sim Initialization 
@@ -22,11 +22,6 @@ from rl_cma import CMA_basic,CMA,CMA_sym
 ## Initialize the environment
 env = CrazyflieEnv(port_self=18050, port_remote=18060)
 print("Environment done")
-
-## Sim Parameters
-ep_start = 0 # Default episode start position
-h_ceiling = 1.5 # meters
-extra_time = 0.2
 
 ## Initialize the user and data recording
 username = getpass.getuser()
@@ -50,13 +45,17 @@ plt.show()
 image_prev = np.array(0)
 image_now = np.array(0)
 
+## Sim Parameters
+ep_start = 0 # Default episode start position
+h_ceiling = 1.5 # meters
+extra_time = 0.0
+
 
 
 
 # ============================
-##          SyS-PEPG 
+##           PEPG 
 # ============================
-
 
 ## Learning rate
 alpha_mu = np.array([[0.2],[0.2] ])#[2.0]] )#,[0.1]])
@@ -86,7 +85,9 @@ agent = rlEM_PEPGAgent(mu,sigma,n_rollout=10)
 
 #agent = CMA(n=2,gamma = 0.9) # number of problem dimensions
 #agent = CMA_sym(n=2,gamma=0.9)
-extra_time = 0.0 # 0.2
+
+
+# extra_time = 0.0 # 0.2   # **** Moved this to be with the other sim params above
 
 
 
@@ -120,7 +121,6 @@ for k_ep in range(ep_start,1000):
     #mu = agent.xmean
     #sigma = np.array([agent.C[0,0],agent.C[1,1],agent.C[0,1]])
 
-    ct = env.getTime()
     done = False
 
     # os.system("python3 start_training_reactive_sysPEPG > output.txt")
@@ -131,9 +131,11 @@ for k_ep in range(ep_start,1000):
 
     print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
 
+
     print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1], mu[2], mu[1]))
     print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1], sigma[2], sigma[1]))
     print()
+
 
     
     reward = np.zeros(shape=(2*agent.n_rollout,1))
@@ -166,6 +168,7 @@ for k_ep in range(ep_start,1000):
         vx_ini = np.random.uniform(low=-1.5, high=1.5)
         vx_ini = np.random.normal(0.0,1.0)
         vy_ini = 0.0#np.random.uniform(low=-1.5, high=1.5)
+        v_ini = [vz_ini,vx_ini,vy_ini]
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
         #v_mag = np.random.uniform(low=0.0,high=2.0)
@@ -181,6 +184,10 @@ for k_ep in range(ep_start,1000):
 
 
         state = env.reset()
+        env.IC_csv(agent,state,'sim',k_run,v_ini = v_ini)
+
+
+
         ## If spawn position is off then reset position again
         x_pos,y_pos = state[2],state[3]
         print("Spawn Pos: x=%.3f \t y=%.3f" %(x_pos,y_pos))
@@ -192,6 +199,7 @@ for k_ep in range(ep_start,1000):
         env.step(action)
 
         t_step = 0
+        
         done_rollout = False
         start_time_rollout = env.getTime()
         start_time_pitch = None

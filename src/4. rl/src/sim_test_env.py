@@ -30,8 +30,9 @@ file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src
 env.create_csv(file_name,record = True)
 
 
-## Initial variables
-h_ceiling = 1.5
+## Sim Parameters
+h_ceiling = 1.5 # meters
+extra_time = 0.2
 k_run = 0
 reset_vals = True
 
@@ -39,10 +40,18 @@ while True:
 
     if reset_vals == True:
 
-        ## Mu input:
-        mu_str = input("Input mu values: ")
-        num = list(map(float, mu_str.split()))
-        mu = np.asarray(num)
+        while True:
+            try:
+                ## Mu input:
+                mu_str = input("Input mu values: ")
+                num = list(map(float, mu_str.split()))
+                mu = np.asarray(num)
+
+                if len(mu) != 2:
+                    raise Exception()
+                break
+            except:
+                print("Error: Enter mu_1 and mu_2")
 
         ## Placeholders need to be arrays for formatting reasons
         agent = rlsysPEPGAgent_reactive(np.asarray(0),np.asarray(0),mu,np.asarray(0))
@@ -58,11 +67,7 @@ while True:
                     raise Exception()
                 break
             except:
-                print("Enter vz,vx,vy")
-
-    # vz_ini = 3.0
-    # vx_ini = 0.0 
-    # vy_ini = 0.0
+                print("Error: Enter vz,vx,vy")
     
 
 
@@ -74,7 +79,7 @@ while True:
     print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
     print("RREV=%.3f, \t Gain=%.3f" %(mu[0], mu[1]))
     print("Vz_ini: %.3f \t Vx_ini: %.3f \t  Vy_ini:%.3f" %(vz_ini, vx_ini, vy_ini))
-    print()
+    print('\n')
 
 
 
@@ -91,16 +96,22 @@ while True:
     action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
     env.step(action)
 
-
-    done = False
+    t_step =0
     done_rollout = False
-    flip_flag = False
-
     start_time_rollout = env.getTime()
     start_time_pitch = None
     pitch_triggered = False
+    flip_flag = False
+    crash_flag = False
 
     state_history = None
+    error_str = ''
+
+    done = False
+    repeat_run = False
+    reward = 0
+    
+   
 
     # ============================
     ##          Rollout 
@@ -109,9 +120,9 @@ while True:
     env.step(action=action)
     RREV_trigger = mu[0]
 
-    error_str = ''
-    reward = 0
-    t_step=0
+    
+
+
     while True:
                 
         time.sleep(5e-4) # Time step size
@@ -142,16 +153,22 @@ while True:
         #print(angle, b3[0],b3[1],b3[2])
 
 
-
-        ## First time CF flips past 90 deg turn off motors 
+        # ============================
+        ##    Motor Shutdown Criteria 
+        # ============================
         if b3[2] < 0.0 and not flip_flag:
-            #print(angle)
+            # check if crazyflie flipped 
             action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
             env.step(action)
-            print("Flipped!! Motors shut down")
+            # shut off motors for the rest of the run
+            print("Flipped!! Shut motors")
             flip_flag = True
-        
 
+        if ((d < 0.05) and (not crash_flag) and (not flip_flag)): # might need to adjust this 
+            action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
+            env.step(action)
+            print("Crashed!! Shut motors")
+            crash_flag = True
 
         #b3 = r.as_matrix()[:,2] # body z-axis
         #b3y =  np.dot(b3, np.array([0,0,1]))
@@ -159,8 +176,7 @@ while True:
         r = [0,0,0]#r.as_euler('zyx', degrees=True)
         eul1,eul2,eul3 = r[0],r[1],r[2]
         #print(r)
-        theta = np.arcsin( -2*(qx*qz-qw*qy) ) # obtained from matlab "edit quat2eul.m"
-
+  
 
         # ============================
         ##    Pitch Criteria 
@@ -172,20 +188,19 @@ while True:
             # add term to adjust for tilt 
             qRREV = mu[1] * RREV 
             # qomega = theta_rl[2,k_run]*(omega[1])
-            q_d = qRREV # + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
+            q_pitch = qRREV # + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
             # torque on x axis to adjust for vy
-            r_d = 0.0 #theta_rl[3,k_run] * omega_y
+            q_roll = 0.0 #theta_rl[3,k_run] * omega_y
 
             print('----- pitch starts -----')
             print('vz=%.3f, vx=%.3f, vy=%.3f' %(vz,vx,vy))
             print('r[0]=%.3f, r[1]=%.3f, r[2]=%.3f, b3y=%.3f' %(r[0],r[1],r[2],b3y))
-            print('RREV=%.3f, omega_y=%.3f, omega_x=%.3f, qd=%.3f' %( RREV, OF_y, OF_x,q_d) ) 
-            print()  
+            print('RREV=%.3f, OF_y=%.3f, OF_x=%.3f, q_pitch=%.3f' %( RREV, OF_y, OF_x,q_pitch) ) 
             print("Pitch Time: %.3f" %(start_time_pitch))
             #print('wy = %.3f , qomega = %.3f , qRREV = %.3f' %(omega[1],qomega,qRREV))
             
             env.delay_env_time(t_start=start_time_pitch,t_delay=30) # Artificial delay to mimic communication lag [ms]
-            action = {'type':'rate', 'x':r_d, 'y':q_d, 'z':0.0, 'additional':0.0}
+            action = {'type':'rate', 'x':q_roll, 'y':q_pitch, 'z':0.0, 'additional':0.0}
             env.step(action) # Start rotation and mark rotation triggered
             pitch_triggered = True
 
@@ -195,7 +210,7 @@ while True:
         # ============================
 
         ## If time since triggered pitch exceeds [0.7s]   
-        if pitch_triggered and ((env.getTime()-start_time_pitch) > 0.7):
+        if pitch_triggered and ((env.getTime()-start_time_pitch) > 0.7 + extra_time):
             # I don't like this formatting, feel free to improve on
             error_1 = "Rollout Completed: Pitch Triggered  "
             error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch))
@@ -205,7 +220,7 @@ while True:
             done_rollout = True
 
         ## If time since rollout start exceeds [1.5s]
-        if (env.getTime() - start_time_rollout) > 1.5:
+        if (env.getTime() - start_time_rollout) > (1.5 + extra_time):
             error_1 = "Rollout Completed: Time Exceeded   "
             error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
             print(error_1 + "\n" + error_2)
@@ -224,22 +239,30 @@ while True:
         ##          Errors  
         # ============================
         ## If nan is found in state vector repeat sim run
-        if any(np.isnan(state)) or env.timeout: # gazebo sim becomes unstable, relaunch simulation
+        if any(np.isnan(state)): # gazebo sim becomes unstable, relaunch simulation
             print("NAN found in state vector")
-            print(env.timeout)
-            print(state)
-            time.sleep(1)
-
-            env.close_sim()
-            env.launch_sim()
-
             error_str = "Error: NAN found in state vector"
             repeat_run = True
             break
 
-
-
+        elif env.timeout:
+            print("Controller reciever thread timed out")
+            error_str = "Error: Controller Timeout"
+            repeat_run = True
+            break
         
+        elif (np.abs(position[0]) > 5.0) or (np.abs(position[1]) > 5.0):
+            # might just need to increase bounds (not necessarily an error)
+            print("Reset improperly / Out of bounds !!!!!")
+            error_str = "Reset improperly/Position outside bounding box"
+            repeat_run = True
+            break
+            
+
+
+        # ============================
+        ##      Record Keeping  
+        # ============================
         ## Keep record of state vector every 10 time steps
         temp = state[1:].reshape(-1,1) # Remove time from state vector and reshape to [13,1]
         if state_history is None:
@@ -265,6 +288,12 @@ while True:
 
     env.append_csv(agent,state,'sim',k_run,sensor_data,reward,error=error_str)
     env.append_csv_blank()
+
+
+    if repeat_run == True:
+        time.sleep(1)
+        env.close_sim()
+        env.launch_sim()
 
     str = input("Input: \n(1): To play again \n(2): To repeat scenario \n(3): Game over :( \n")
     if str == '1':
