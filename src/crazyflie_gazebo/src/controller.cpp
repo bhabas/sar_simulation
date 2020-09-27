@@ -217,9 +217,9 @@ void Controller::controlThread()
             std::memcpy(control_cmd, control_cmd_, sizeof(control_cmd));
         else if ( (control_cmd_[0]>10) && (control_cmd_[1]<0.5) )
         {
-            std::cout<<"======================================="<<std::endl;
+            //std::cout<<"======================================="<<std::endl;
             //std::cout<<"Enter reset mode"<<std::endl;
-            motorspeed[0] = 0;  motorspeed[1] = 0;  motorspeed[2] = 0;  motorspeed[3] = 0;
+            motorspeed[0] = 0.0;  motorspeed[1] = 0.0;  motorspeed[2] = 0.0;  motorspeed[3] = 0.0;
             sendto(fd_gazebo_, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
 
             control_cmd_[0] = 2; control_cmd_[1] = 0; control_cmd_[2] = 0; control_cmd_[3] = 0; control_cmd_[4] = 0;
@@ -333,9 +333,9 @@ void Controller::controlThread()
                 math::matAddsMat(e_omega, omega, omega_d, 3, 2);            // e_omega = omega - omega_d
             }
 
-            //if (R[2][2] > 0.7)
-             //   f_thrust = f_hover / R[2][2];
-            //else
+            if (R[2][2] > 0.7)
+                f_thrust = f_hover / R[2][2];
+            else
                 f_thrust = f_hover / 0.7;
             
             math::matTimesScalar(tmp8, e_R, -kp_R34, 3, 1);                  // -k_R * e_R
@@ -356,16 +356,17 @@ void Controller::controlThread()
         // clamped thrust to 2 times the weight
         // might want to limit motorspeed instead?
         // values are much lower sometimes (very concerning) ( 5.0 -> 0.6)!!
-        double f_max = 0.6; //2.0*f_hover;
-        double f_clamped =  math::clamp(f_thrust,0.0,f_max);
+        //double f_max = 0.6; //2.0*f_hover;
+        //double f_clamped =  math::clamp(f_thrust,0.0,f_max);
         
-
-        FT[0] = f_thrust;
+        //f_clamped = 0.6;
+        FT[0] = f_thrust;//f_thrust;
         FT[1] = tau[0];
         FT[2] = tau[1];
         FT[3] = tau[2];
         math::matTimesVec(f, (double *) Gamma_inv, FT, 4);
         math::matTimesScalar(motorspeed_square, f, c_T, 4, 2);
+        //std::cout << motorspeed_square[0] << std::endl;
         for(int k_ms_s=0;k_ms_s<4;k_ms_s++)
         {
             if(motorspeed_square[k_ms_s]<0) {
@@ -407,14 +408,21 @@ void Controller::controlThread()
 
         //std::cout << "f_thrust = " << f_thrust << std::endl;
         //std::cout << "tau1  = " << tau[0] << " \t ta2 = " << tau[1] << std::endl;
-        if ( k_run%50 == 1 ) {
-                std::cout<<"motor speed ["<< motorspeed[0]<<", "<< motorspeed[1]<<", "<< motorspeed[2]<<", "<<motorspeed[3]<<"]"<<std::endl;
-                //std::cout << "thrust = " << f_thrust << " clamped = " << f_clamped << std::endl;
-        }
+        //std::cout << "thrust = " << f_thrust << " clamped = " << f_clamped << std::endl;
+        
         motorspeed[0] = sqrt(motorspeed_square[0]);
         motorspeed[1] = sqrt(motorspeed_square[1]);
         motorspeed[2] = sqrt(motorspeed_square[2]);
         motorspeed[3] = sqrt(motorspeed_square[3]);
+        double ms_min = 0.0;
+        double ms_max = 3420.0;
+        for (int i =0; i<4;i++) { // clamp motor speed (based on max thrust (0.6) speed)
+            motorspeed[i] = math::clamp(motorspeed[i],ms_min,ms_max);
+        }
+        // std::cout causing wierd behavior?????
+        //if ( k_run%50 == 1 ) {
+        //        std::cout<<"motor speed ["<< motorspeed[0]<<", "<< motorspeed[1]<<", "<< motorspeed[2]<<", "<<motorspeed[3]<<"]"<<std::endl;
+        //}   
         //std::memcpy(motorspeed_structure.data, motorspeed, sizeof(motorspeed));
         //queue_motorspeed_.enqueue(motorspeed_structure);
         sendto(fd_gazebo_, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
