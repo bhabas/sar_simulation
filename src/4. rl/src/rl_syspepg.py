@@ -124,17 +124,22 @@ class rlEM_PEPGAgent(ES):
         self.sigma = sigma
 
         self.n = 2*n_rollout
+        self.d = len(self.mu)
         self.alpha_mu, self.alpha_sigma  = np.array([[0],[0]]),np.array([[0],[0]])
         self.mu_history = copy.copy(self.mu)  # Creates another array of self.mu and attaches it to self.mu_history
         self.sigma_history = copy.copy(self.sigma)
         self.reward_history = np.array([0])
 
     def get_theta(self):
-        x = np.random.normal(self.mu[0,0],self.sigma[0,0],[1,self.n])
-        y = np.random.normal(self.mu[1,0],self.sigma[1,0],[1,self.n])
+        theta = np.zeros((self.d,self.n))
+        for dim in range(0,self.d):
+            theta[dim,:] = np.random.normal(self.mu[dim,0],self.sigma[dim,0],[1,self.n])
+        #x = np.random.normal(self.mu[0,0],self.sigma[0,0],[1,self.n])
+        #y = np.random.normal(self.mu[1,0],self.sigma[1,0],[1,self.n])
         #print(x)
         #print(y)
-        theta = np.append(x,y,axis = 0)
+        print(theta)
+        #theta = np.append(x,y,axis = 0)
 
         for k_n in range(self.n):
             if theta[0,k_n] < 0: # 
@@ -147,15 +152,15 @@ class rlEM_PEPGAgent(ES):
     def train(self,theta,reward,epsilon):
 
         summary = np.concatenate((np.transpose(theta),reward),axis=1)
-        summary = np.transpose(summary[summary[:,2].argsort()[::-1]])
+        summary = np.transpose(summary[summary[:,self.d].argsort()[::-1]])
         print(summary)
 
         k = floor(self.n/2)
 
-        S_theta = (summary[0:2,0:k].dot(summary[2,0:k].reshape(k,1)))
-        S_reward = np.sum(summary[2,0:k])
+        S_theta = (summary[0:self.d,0:k].dot(summary[self.d,0:k].reshape(k,1)))
+        S_reward = np.sum(summary[self.d,0:k])
 
-        S_diff = np.square(summary[0:2,0:k] - self.mu).dot(summary[2,0:k].reshape(k,1))
+        S_diff = np.square(summary[0:self.d,0:k] - self.mu).dot(summary[self.d,0:k].reshape(k,1))
 
         
         self.mu = S_theta/(S_reward +0.001)
