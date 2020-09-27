@@ -23,12 +23,12 @@ env = CrazyflieEnv(port_self=18050, port_remote=18060)
 print("Environment done")
 
 
-
 ## Initialize the user and data recording
 username = getpass.getuser()
 start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
 file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time + '_testenv.csv'
 env.create_csv(file_name,record = True)
+
 
 ## Initial variables
 h_ceiling = 1.5
@@ -38,6 +38,7 @@ reset_vals = True
 while True:
 
     if reset_vals == True:
+
         ## Mu input:
         mu_str = input("Input mu values: ")
         num = list(map(float, mu_str.split()))
@@ -46,12 +47,18 @@ while True:
         ## Placeholders need to be arrays for formatting reasons
         agent = rlsysPEPGAgent_reactive(np.asarray(0),np.asarray(0),mu,np.asarray(0))
 
-        ## v_ini input:
-        v_str = input("Input V_ini (vz,vx,vy): ")
-        num = list(map(float, v_str.split()))
-        v_ini = np.asarray(num)
-
-        vz_ini,vx_ini,vy_ini = v_ini
+        while True:
+            try:
+                
+                v_str = input("Input V_ini (vz,vx,vy): ")
+                num = list(map(float, v_str.split()))
+                v_ini = np.asarray(num)
+                vz_ini,vx_ini,vy_ini = v_ini
+                if len(v_ini) != 3:
+                    raise Exception()
+                break
+            except:
+                print("Enter vz,vx,vy")
 
     # vz_ini = 3.0
     # vx_ini = 0.0 
@@ -65,14 +72,14 @@ while True:
 
 
     print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
-    print("Vz_ini: %.3f \t Vx_ini: %.3f \t  Vy_ini:%.3f" %(vz_ini, vx_ini, vy_ini))
     print("RREV=%.3f, \t Gain=%.3f" %(mu[0], mu[1]))
+    print("Vz_ini: %.3f \t Vx_ini: %.3f \t  Vy_ini:%.3f" %(vz_ini, vx_ini, vy_ini))
     print()
 
 
 
     state = env.reset()
-    env.IC_csv(agent,np.around(state,decimals=3),'sim',k_run,v_ini = v_ini)
+    env.IC_csv(agent,state,'sim',k_run,v_ini = v_ini)
 
     ## If spawn position is off then reset position again
     x_pos,y_pos = state[2],state[3]
@@ -120,7 +127,8 @@ while True:
         omega = state[11:14]
 
         d = h_ceiling - position[2]
-        RREV, omega_y ,omega_x = vz/d, (vx**2)/d, vy/d
+        RREV, OF_y, OF_x = vz/d, vx/d, vy/d # OF_x,y are optical flows of the ceiling assuming no body rotation
+        sensor_data = [RREV, OF_y, OF_x] # simplifying for data recording
 
         qw = orientation_q[0]
         qx = orientation_q[1]
@@ -171,7 +179,7 @@ while True:
             print('----- pitch starts -----')
             print('vz=%.3f, vx=%.3f, vy=%.3f' %(vz,vx,vy))
             print('r[0]=%.3f, r[1]=%.3f, r[2]=%.3f, b3y=%.3f' %(r[0],r[1],r[2],b3y))
-            print('RREV=%.3f, omega_y=%.3f, omega_x=%.3f, qd=%.3f' %( RREV, omega_y, omega_x,q_d) ) 
+            print('RREV=%.3f, omega_y=%.3f, omega_x=%.3f, qd=%.3f' %( RREV, OF_y, OF_x,q_d) ) 
             print()  
             print("Pitch Time: %.3f" %(start_time_pitch))
             #print('wy = %.3f , qomega = %.3f , qRREV = %.3f' %(omega[1],qomega,qRREV))
@@ -206,7 +214,7 @@ while True:
             done_rollout = True
 
         ## If position exceeds ceiling bounds mark error
-        if (np.abs(position[0]) > 3.0) or (np.abs(position[1]) > 3.0):
+        if (np.abs(position[0]) > 20) or (np.abs(position[1]) > 20):
             error_str = "Reset improperly/Position outside bounding box"
             print(error_str)
             break
@@ -239,7 +247,7 @@ while True:
         else:
             if t_step%10==0:
                 state_history = np.append(state_history, temp, axis=1)
-                env.append_csv(agent,np.around(state,decimals=3),'sim',k_run)
+                env.append_csv(agent,state,'sim',k_run,sensor_data)
 
 
 
@@ -255,7 +263,7 @@ while True:
         
 
 
-    env.append_csv(agent,np.around(state,decimals=3),'sim',k_run,reward,error=error_str)
+    env.append_csv(agent,state,'sim',k_run,sensor_data,reward,error=error_str)
     env.append_csv_blank()
 
     str = input("Input: \n(1): To play again \n(2): To repeat scenario \n(3): Game over :( \n")

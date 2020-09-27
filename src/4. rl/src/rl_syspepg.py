@@ -182,7 +182,7 @@ class rlsysPEPGAgent_reactive(ES):
         """[summary]
 
         Args:
-            alpha_mu (np.array): <u_learning rate
+            alpha_mu (np.array): mu_learning rate
             alpha_sigma (np.array): Sigma_learning rate
             mu (np.array): Parameter means
             sigma (np.array): Parameter Standard Deviations
@@ -216,6 +216,7 @@ class rlsysPEPGAgent_reactive(ES):
                 theta[0,k_n] = 0.001
             if theta[1,k_n] > 0:
                 theta[1,k_n] = -0.001
+
 
         return theta, epsilon
 
