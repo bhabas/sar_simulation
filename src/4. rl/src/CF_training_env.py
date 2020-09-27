@@ -59,8 +59,8 @@ alpha_mu = np.array([[0.2],[0.2] ])#[2.0]] )#,[0.1]])
 alpha_sigma = np.array([[0.1],[0.1]  ])#, [1.0]])#,[0.05]])
 
 ## Initial parameters for gaussian function
-mu = np.array([[0.0],[0.0] ])#,[1.5]])   # Initial estimates of mu: 
-sigma = np.array([[3.0],[3.0]])      # Initial estimates of sigma: 
+mu = np.array([[5.0],[-5.0] ])#,[1.5]])   # Initial estimates of mu: 
+sigma = np.array([[1.0],[1.0]])      # Initial estimates of sigma: 
 
 
 #agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=2)
@@ -190,6 +190,7 @@ for k_ep in range(ep_start,1000):
         start_time_pitch = None
         pitch_triggered = False
         flip_flag = False
+        crash_flag = False
 
         state_history = None
         repeat_run= False
@@ -238,21 +239,33 @@ for k_ep in range(ep_start,1000):
             #image_prev = image_now # update image
 
             #print(data)
-
+            #if d < 0.3:
+            #    print(d)
             R = Rotation.from_quat([qx,qy,qz,qw])
             R = R.as_matrix()
             angle = R[1,1]
             b3 = R[2,:]
             #print(angle, b3[0],b3[1],b3[2])
+
+            # ============================
+            ##    Motor Shutdown Criteria 
+            # ============================
             if b3[2] < 0.0 and not flip_flag:
                 # check if crazyflie flipped 
-
-                #print(angle)
                 action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
                 env.step(action)
                 # shut off motors for the rest of the run
                 print("Flipped!! Shut motors")
                 flip_flag = True
+            
+            #print(d)
+            
+            if ((d < 0.05) and (not crash_flag) and (not flip_flag)): # might need to adjust this 
+                action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
+                env.step(action)
+                print("Crashed!! Shut motors")
+                crash_flag = True
+
             
             #b3 = r.as_matrix()[:,2] # body z-axis
             #b3y =  np.dot(b3, np.array([0,0,1]))
@@ -333,27 +346,29 @@ for k_ep in range(ep_start,1000):
             ##          Errors  
             # ============================
             ## If nan is found in state vector repeat sim run
-            if any(np.isnan(state)) or env.timeout: # gazebo sim becomes unstable, relaunch simulation
+            if any(np.isnan(state)): # gazebo sim becomes unstable, relaunch simulation
                 print("NAN found in state vector")
-                print(env.timeout)
-                print(state)
-                time.sleep(1)
-                env.close_sim()
-                env.launch_sim()
                 error_str = "Error: NAN found in state vector"
                 repeat_run = True
                 break
 
-            
-            if (np.abs(position[0]) > 5.0) or (np.abs(position[1]) > 5.0):
-                print("Reset improperly / Out of bounds !!!!!")
-                error_str = "Reset improperly/Position outside bounding box"
-                time.sleep(5)
-                env.close_sim()
-                env.launch_sim()
+            elif env.timeout:
+                print("Controller reciever thread timed out")
+                error_str = "Error: Controller Timeout"
                 repeat_run = True
                 break
             
+            elif (np.abs(position[0]) > 5.0) or (np.abs(position[1]) > 5.0):
+                # might just need to increase bounds (not necessarily an error)
+                print("Reset improperly / Out of bounds !!!!!")
+                error_str = "Reset improperly/Position outside bounding box"
+                repeat_run = True
+                break
+            
+
+            # ============================
+            ##      Record Keeping  
+            # ============================
             ## Keep record of state vector every 10 time steps
             ## Each iteration changes state vector from [14,] into (state2)[14,1] 
             ##      First iteration: track_state = state2 vector
@@ -365,6 +380,7 @@ for k_ep in range(ep_start,1000):
                 if t_step%10==0:
                     state_history = np.append(state_history, state2, axis=1)
                     env.append_csv(agent,np.around(state,decimals=3),k_ep,k_run)
+
 
             if done_rollout:
                 action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
@@ -387,6 +403,9 @@ for k_ep in range(ep_start,1000):
         env.append_csv_blank()
         time.sleep(0.01)
         if repeat_run == True:
+            time.sleep(1)
+            env.close_sim()
+            env.launch_sim()
             # return to previous run to catch potential missed glitches in gazebo (they are usually caught in the next run)
             if k_run > 0:
                 k_run -= 1 # Repeat previous (not current) run 
