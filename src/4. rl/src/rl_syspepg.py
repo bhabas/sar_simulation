@@ -158,7 +158,7 @@ class rlEM_PEPGAgent(ES):
         S_diff = np.square(summary[0:2,0:k] - self.mu).dot(summary[2,0:k].reshape(k,1))
 
         
-        self.mu = S_theta/(S_reward + 0.001)
+        self.mu = S_theta/(S_reward +0.001)
         self.sigma = np.sqrt(S_diff/(S_reward + 0.001))
 
         '''S_theta = np.dot(theta,reward)
