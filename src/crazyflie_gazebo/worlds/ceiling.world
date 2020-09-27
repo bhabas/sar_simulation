@@ -17,7 +17,8 @@
     <!-- Default camera pose -->
     <gui>
       <camera name="user_camera">
-          <pose frame=''>0.742784 -2.36472 2.09182 0 0.485 1.82319</pose>
+          <pose frame=''>0.0 -3.0 1.2 0 0.12 1.57</pose>
+          <!-- <pose>my custom pose as a six-tuple(x,y,z,roll,pitch,yaw)</pose> -->
       </camera>
     </gui>
 
