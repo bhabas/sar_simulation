@@ -136,7 +136,7 @@ class CrazyflieEnv:
         self.controller_p = subprocess.Popen(
             "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_controller.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
-        time.sleep(5)
+        time.sleep(1)
 
     def pause(self): #Pause simulation
         os.system("rosservice call gazebo/pause_physics")
@@ -151,7 +151,7 @@ class CrazyflieEnv:
         self.enableSticky(0)
         os.system("rosservice call gazebo/reset_world")
         self.enableSticky(0)
-        time.sleep(2)
+        time.sleep(0.1)
         return self.state_current
     
     def recvThread(self):
