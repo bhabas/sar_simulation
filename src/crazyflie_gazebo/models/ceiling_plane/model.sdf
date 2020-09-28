@@ -37,9 +37,12 @@
         </geometry>
         <material>
           <script>
-            <name>Gazebo/White</name>
+            <!-- <name>Gazebo/White</name> -->
+            
             <!-- <name>Gazebo/CeilingTiled</name> -->
-            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <!-- <uri>model://materials/scripts/Stripe.material</uri> -->
+            <uri>model://ceiling_plane/materials/scripts/Stripe.material</uri>
+            <name>Gazebo/Stripe</name>
           </script>
         </material>
       </visual>

@@ -195,7 +195,7 @@ void Controller::controlThread()
 
     double f_thrust =0;
     // might need to adjust weight to real case (sdf file too)
-    double f_hover = (0.025 + 0.00075*4)*9.8066;
+    double f_hover = (0.026 + 0.00075*4)*9.8066;
     double tau[3] =  {0,0,0};
     double FT[4];
     double f[4];

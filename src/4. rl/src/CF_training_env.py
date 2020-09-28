@@ -9,7 +9,7 @@ from scipy.spatial.transform import Rotation
 from numpy.core.fromnumeric import repeat
 
 from crazyflie_env import CrazyflieEnv
-from rl_syspepg import rlsysPEPGAgent_reactive , rlsysPEPGAgent_cov, rlEM_PEPGAgent
+from rl_syspepg import rlsysPEPGAgent_reactive , rlsysPEPGAgent_cov, rlEM_PEPGAgent, rlEM_PEPG_CovAgent
 from rl_cma import CMA_basic,CMA,CMA_sym
 
 os.system("clear")
@@ -62,14 +62,14 @@ alpha_mu = np.array([[0.2],[0.2] ])#[2.0]] )#,[0.1]])
 alpha_sigma = np.array([[0.1],[0.1]  ])#, [1.0]])#,[0.05]])
 
 ## Initial parameters for gaussian function
-mu = np.array([[5.0],[-5.0] ])#,[1.5]])   # Initial estimates of mu: 
-sigma = np.array([[1.0],[1.0]])      # Initial estimates of sigma: 
+mu = np.array([[5.0],[-5.0] ])# ,[1.5]])#,[1.5]])   # Initial estimates of mu: 
+sigma = np.array([[2.0],[2.0] ,[0.0] ])# ,[0.75]])      # Initial estimates of sigma: 
 
 
 #agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=2)
 #agent = rlsysPEPGAgent_cov(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=4)
-agent = rlEM_PEPGAgent(mu,sigma,n_rollout=5)
-
+#agent = rlEM_PEPGAgent(mu,sigma,n_rollout=10)
+agent = rlEM_PEPG_CovAgent(mu,sigma,n_rollout=5)
 
 # ============================
 ##           CMA 
@@ -77,8 +77,8 @@ agent = rlEM_PEPGAgent(mu,sigma,n_rollout=5)
 
 # seems to be unstable if mu is close to zero (coverges to deterimistic)
 ## Initial parameters for gaussian function
-mu = np.array([[3.0],[-3.0] ])#,[1.5]])   # Initial estimates of mu: 
-sigma = np.array([[1.0],[1.0] , [0.5]])      # Initial estimates of sigma: 
+#mu = np.array([[3.0],[-3.0] ])#,[1.5]])   # Initial estimates of mu: 
+#sigma = np.array([[1.0],[1.0] , [0.5]])      # Initial estimates of sigma: 
 
 # # For CMA_basic, make sure simga has 3 inputs / for pepg it must be 2
 # agent = CMA_basic(mu,sigma,N_best=0.3,n_rollout=10)
@@ -132,8 +132,10 @@ for k_ep in range(ep_start,1000):
     print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
 
     print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1], mu[1], mu[1]))
-    print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1], sigma[1], sigma[1]))
+
+    print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1], sigma[2], sigma[1]))
     print('\n')
+
 
     
     reward = np.zeros(shape=(2*agent.n_rollout,1))
@@ -146,7 +148,7 @@ for k_ep in range(ep_start,1000):
     np.set_printoptions(precision=2, suppress=True)
     print(theta_rl[0,:], "--> RREV")
     print(theta_rl[1,:], "--> Gain")
-    # print(theta_rl[2,:], "--> v_x Gain")
+    #print(theta_rl[2,:], "--> v_x Gain")
     #print(theta_rl[3,:], "--> omega_y Gain")
 
 
@@ -164,6 +166,7 @@ for k_ep in range(ep_start,1000):
 
         vz_ini = np.random.uniform(low=2.5, high=3.5)
         vx_ini = np.random.uniform(low=-1.5, high=1.5)
+        vx_ini = 0.0#np.random.normal(0.0,1.0)
         vy_ini = 0.0#np.random.uniform(low=-1.5, high=1.5)
         v_ini = [vz_ini,vx_ini,vy_ini]
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
@@ -311,11 +314,11 @@ for k_ep in range(ep_start,1000):
                 # angle_omega = pi + atan2(omega_y,omega_x)
 
                 # add term to adjust for tilt 
-                qRREV = theta_rl[1,k_run] * RREV 
+                qRREV = theta_rl[1,k_run]*RREV #+ theta_rl[2,k_run]*abs(OF_y)
                 #qomega = theta_rl[2,k_run]*wn
                 #q_roll = qRREV*sin(angle_omega)
                 #q_pitch = -qRREV*cos(angle_omega)
-                q_pitch = qRREV# + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
+                q_pitch = qRREV*np.sign(OF_y)# + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
 
 
 
@@ -332,7 +335,7 @@ for k_ep in range(ep_start,1000):
                 #print('wy = %.3f , qomega = %.3f , qRREV = %.3f' %(omega[1],qomega,qRREV))
 
                 # randomly sample noise delay with mean = 30ms and sigma = 5
-                t_delay = np.random.normal(30.0,5.0)
+                #t_delay = np.random.normal(30.0,5.0)
                 #print("t_delay = %.3f" %(t_delay))
                 #env.delay_env_time(t_start=start_time_pitch,t_delay=t_delay) # Artificial delay to mimic communication lag [ms]
                 
