@@ -9,7 +9,8 @@ from scipy.spatial.transform import Rotation
 from numpy.core.fromnumeric import repeat
 
 from crazyflie_env import CrazyflieEnv
-from rl_syspepg import rlsysPEPGAgent_reactive , rlsysPEPGAgent_cov, rlEM_PEPGAgent, rlEM_PEPG_CovAgent
+from rl_syspepg import rlsysPEPGAgent_reactive ,rlsysPEPGAgent_cov
+from rl_EM import rlEM_PEPGAgent, rlEM_PEPG_CovAgent, rlEM_OutlierAgent , rlEMsys_PEPGAgent
 from rl_cma import CMA_basic,CMA,CMA_sym
 
 
@@ -59,18 +60,23 @@ image_now = np.array(0)
 
 
 ## Learning rate
-alpha_mu = np.array([[0.2],[0.2] ])#[2.0]] )#,[0.1]])
+alpha_mu = np.array([[0.2],[0.2]])#[2.0]] )#,[0.1]])
 alpha_sigma = np.array([[0.1],[0.1]  ])#, [1.0]])#,[0.05]])
 
 ## Initial parameters for gaussian function
-mu = np.array([[5.0],[-5.0] ])# ,[1.5]])#,[1.5]])   # Initial estimates of mu: 
-sigma = np.array([[2.0],[2.0] ,[0.0] ])# ,[0.75]])      # Initial estimates of sigma: 
+mu = np.array([[5.0],[-5.0] , [1.5] ])# ,[1.5]])#,[1.5]])   # Initial estimates of mu: 
+sigma = np.array([[1.5],[1.5] ,[1.0] ])# ,[0.75]])      # Initial estimates of sigma: 
 
-
+# noise tests all started at:
+#mu = np.array([[5.0],[-5.0] ])
+#sigma = np.array([[3.0],[3.0] ])
+#  
 #agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=2)
 #agent = rlsysPEPGAgent_cov(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=4)
-#agent = rlEM_PEPGAgent(mu,sigma,n_rollout=10)
-agent = rlEM_PEPG_CovAgent(mu,sigma,n_rollout=5)
+#agent = rlEM_PEPGAgent(mu,sigma,n_rollout=5)
+#agent = rlEM_OutlierAgent(mu,sigma,n_rollout=5) # diverges?
+#agent = rlEM_PEPG_CovAgent(mu,sigma,n_rollout=5)
+agent = rlEMsys_PEPGAgent(mu,sigma,n_rollout=5)
 
 # ============================
 ##           CMA 
@@ -131,7 +137,7 @@ for k_ep in range(ep_start,1000):
 
     print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
 
-    print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1], mu[1], mu[1]))
+    print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1], mu[2], mu[1]))
     print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1], sigma[2], sigma[1]))
     print()
 
@@ -146,7 +152,7 @@ for k_ep in range(ep_start,1000):
     np.set_printoptions(precision=2, suppress=True)
     print(theta_rl[0,:], "--> RREV")
     print(theta_rl[1,:], "--> Gain")
-    #print(theta_rl[2,:], "--> v_x Gain")
+    print(theta_rl[2,:], "--> v_x Gain")
     #print(theta_rl[3,:], "--> omega_y Gain")
 
 
@@ -162,9 +168,9 @@ for k_ep in range(ep_start,1000):
         #image_prev = env.cv_image.flatten()
         
 
-        vz_ini = np.random.uniform(low=2.5, high=3.5)
-        vx_ini = np.random.uniform(low=-1.5, high=1.5)
-        vx_ini = 0.0#np.random.normal(0.0,1.0)
+        vz_ini = np.random.uniform(low=2.5, high=4.0)
+        vx_ini = np.random.uniform(low=-2.5, high=2.5)
+        #vx_ini = 0.0#np.random.normal(0.0,1.0)
         vy_ini = 0.0#np.random.uniform(low=-1.5, high=1.5)
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
@@ -175,7 +181,7 @@ for k_ep in range(ep_start,1000):
         #vy_ini = v_mag*sin(angle)
 
         print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
-        print("RREV: %.3f \t gain1: %.3f \t gain2: %.3f \t gain3: %.3f" %(theta_rl[0,k_run], theta_rl[1,k_run],theta_rl[1,k_run],theta_rl[1,k_run]))
+        print("RREV: %.3f \t gain1: %.3f \t gain2: %.3f \t gain3: %.3f" %(theta_rl[0,k_run], theta_rl[1,k_run],theta_rl[2,k_run],theta_rl[1,k_run]))
         print("Vz_ini: %.3f \t Vx_ini: %.3f \t Vy_ini: %.3f" %(vz_ini, vx_ini, vy_ini))
 
 
@@ -231,7 +237,9 @@ for k_ep in range(ep_start,1000):
             d = h_ceiling - position[2]
 
             # Use noisy distance measurement from sensor
-            #d = env.laser_dist
+            #d = env.laser_dist # there is some systematic bias
+            #<mean>0.0</mean>
+            #<stddev>0.02</stddev>
             #print(d)
             RREV, OF_y, OF_x = vz/d, vx/d, vy/d # OF_x,y are optical flows of the ceiling assuming no body rotation
             sensor_data = [RREV, OF_y, OF_x] # simplifying for data recording
@@ -306,7 +314,7 @@ for k_ep in range(ep_start,1000):
                 # angle_omega = pi + atan2(omega_y,omega_x)
 
                 # add term to adjust for tilt 
-                qRREV = theta_rl[1,k_run]*RREV #+ theta_rl[2,k_run]*abs(OF_y)
+                qRREV = theta_rl[1,k_run]*RREV + theta_rl[2,k_run]*abs(OF_y)
                 #qomega = theta_rl[2,k_run]*wn
                 #q_roll = qRREV*sin(angle_omega)
                 #q_pitch = -qRREV*cos(angle_omega)
@@ -324,6 +332,7 @@ for k_ep in range(ep_start,1000):
                 print('r[0]=%.3f, r[1]=%.3f, r[2]=%.3f, b3y=%.3f' %(r[0],r[1],r[2],b3y))
                 print('RREV=%.3f, OF_y=%.3f, OF_x=%.3f, q_pitch=%.3f' %( RREV, OF_y, OF_x,q_pitch) )   
                 print("Pitch Time: %.3f" %start_time_pitch)
+                #print('d_est = %.3f, d_act = %.3f' %(d,d_acutal))
                 #print('wy = %.3f , qomega = %.3f , qRREV = %.3f' %(omega[1],qomega,qRREV))
 
                 # randomly sample noise delay with mean = 30ms and sigma = 5
@@ -422,6 +431,8 @@ for k_ep in range(ep_start,1000):
         env.append_csv_blank()
         time.sleep(0.01)
         if repeat_run == True:
+            time.sleep(1)
+            env.close_sim()
             time.sleep(1)
             env.close_sim()
             env.launch_sim()
