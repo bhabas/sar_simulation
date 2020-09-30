@@ -8,7 +8,7 @@ import struct
 from queue import Queue
 
 import time
-import os, subprocess, signal, getpass, pyautogui
+import os, subprocess, signal
 import rospy
 import csv
 
@@ -20,11 +20,16 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 
 class CrazyflieEnv:
-    def __init__(self, port_self, port_remote):
+    def __init__(self, port_self, port_remote,username):
         print("Init CrazyflieEnv")
+
+        self.user = username   
+        if self.user == 'bhabas':
+            import pyautogui    
+        
         # Initializes the ROS node for the process. Can only have one nod in a rospy process
         rospy.init_node("crazyflie_env_node",anonymous=True) 
-        self.launch_sim()
+        self.launch_sim() 
     
 
         self.port_self = port_self
@@ -127,9 +132,7 @@ class CrazyflieEnv:
 
     def launch_sim(self):
         ## There's some issue with the external shells that cause it to hang up on missed landings as it just sits on the ground
-        user = getpass.getuser()
-
-        if user == 'bhabas':
+        if self.user == 'bhabas':
             pyautogui.click(x=2700,y=0)
 
         self.gazebo_p = subprocess.Popen(
