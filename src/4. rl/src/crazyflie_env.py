@@ -133,12 +133,12 @@ class CrazyflieEnv:
             pyautogui.click(x=2700,y=0)
 
         self.gazebo_p = subprocess.Popen(
-            "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_gazebo.bash", 
+            "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/utility/launch_gazebo.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(5)
 
         self.controller_p = subprocess.Popen(
-            "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_controller.bash", 
+            "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/utility/launch_controller.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(1)
 
