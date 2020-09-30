@@ -59,13 +59,13 @@ class CrazyflieEnv:
         self.senderThread.daemon = True
 
         
-        '''self.laser_msg = LaserScan # Laser Scan Message Variable
+        self.laser_msg = LaserScan # Laser Scan Message Variable
         self.laser_dist = 0
         # Start Laser Scanner data reciever thread
         self.laserThread = Thread(target = self.lsrThread, args=())
         self.laserThread.daemon=True
         self.laserThread.start()
-
+        '''
         self.bridge = CvBridge() # Object to transform ros msg to cv image (np array)
         self.camera_msg = Image # Image Message Variable
         self.cv_image = np.array(0)

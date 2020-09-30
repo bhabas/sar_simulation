@@ -40,7 +40,7 @@
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>model://crazyflie/crazyflie.dae</uri>
+            <uri>model://crazyflie_landing_gears/meshes/crazyflie.dae</uri>
           </mesh>
         </geometry>
         <material>
@@ -68,7 +68,7 @@
         <noise>
             <type>gaussian</type>
             <mean>0.0</mean>
-            <stddev>0.02</stddev>
+            <stddev>0.05</stddev>
         </noise>
         <scan>
             <horizontal>
@@ -173,7 +173,7 @@
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>model://crazyflie/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_landing_gears/meshes/crazyflie_prop.dae</uri>
           </mesh>
         </geometry>
         <material>
@@ -238,7 +238,7 @@
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>model://crazyflie/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_landing_gears/meshes/crazyflie_prop.dae</uri>
           </mesh>
         </geometry>
         <material>
@@ -303,7 +303,7 @@
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>model://crazyflie/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_landing_gears/meshes/crazyflie_prop.dae</uri>
           </mesh>
         </geometry>
         <material>
@@ -368,7 +368,7 @@
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>model://crazyflie/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_landing_gears/meshes/crazyflie_prop.dae</uri>
           </mesh>
         </geometry>
         <material>
