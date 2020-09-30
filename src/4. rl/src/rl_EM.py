@@ -36,8 +36,6 @@ class rlEM_PEPGAgent(ES):
                 theta[0,k_n] = 0.001
             if theta[1,k_n] > 0:
                 theta[1,k_n] = -0.001
-            if theta[2,k_n] < 0:
-                theta[2,k_n] = 0.001
 
         return theta , 0
 
@@ -115,13 +113,7 @@ class rlEM_MatrixAgent(rlEM_PEPGAgent): # ignore this
         self.sigma = np.array([ [sii[0,0]],[sii[1,0]],[sij]])
 
 
-if __name__ == "__main__":
-    mu = np.array([[1.0],[-2.0]])
-    sigma = np.array([[0.5],[1.5],[0.0]])
-    agent = rlEM_MatrixAgent(mu,sigma)
-    theta,epsilon = agent.get_theta()
-    reward = np.array([[1.0],[2.0],[0.3],[4.0] ])
-    agent.train(theta,reward,0)
+
 
 class rlEM_OutlierAgent(rlEM_PEPGAgent):
     def train(self,theta,reward,epsilon):
@@ -161,8 +153,6 @@ class rlEMsys_PEPGAgent(rlEM_PEPGAgent):
                 theta[0,k_n] = 0.001
             if theta[1,k_n] > 0:
                 theta[1,k_n] = -0.001
-            if theta[2,k_n] < 0:
-                theta[2,k_n] = 0.001
 
         return theta , 0
 
@@ -190,18 +180,26 @@ class rlEM_PEPG_CovAgent(rlEM_PEPGAgent):
         # mueff format for np multivariate normal function
         mu = np.array([self.mu[0,0],self.mu[1,0]])
 
-
-        sigma = np.array([[self.sigma[0,0],self.sigma[2,0]],[self.sigma[2,0],self.sigma[1,0]]])
+        sigma = np.array([[self.sigma[0,0]**2,self.sigma[2,0]],[self.sigma[2,0],self.sigma[1,0]**2]])
         v,w = np.linalg.eig(sigma)
         print(v)
         print(w)
 
+        # normal
+
         theta = np.random.multivariate_normal(mu,sigma,[1, int(self.n_rollout*2)])
         theta = theta[0,:,:]
         theta = np.transpose(theta)
-        #print(theta)
-        #print(theta.shape)
-        #print(type(theta))
+
+        # symmetric sampling
+        '''zeros = np.array([0.0,0.0])
+        epsilon = np.random.multivariate_normal(zeros,sigma,self.n_rollout)
+        epsilon = np.transpose(epsilon)
+        
+        thetaplus = self.mu + epsilon
+        thetaminus = self.mu - epsilon
+        theta = np.append(thetaplus,thetaminus,axis=1)'''
+
         for k_n in range(self.n):
             if theta[0,k_n] < 0: # 
                 theta[0,k_n] = 0.001
@@ -224,12 +222,19 @@ class rlEM_PEPG_CovAgent(rlEM_PEPGAgent):
         S_ij = S_ij[0]
 
         sii = np.sqrt(S_diff/(S_reward + 0.001))
-        sij = np.sign(S_ij)*np.sqrt(abs(S_ij)/(S_reward + 0.001)) # no need for sqrt
-        #sij = S_ij/(S_reward + 0.001)) this should be correct update term from derivation
+        #sij = np.sign(S_ij)*np.sqrt(abs(S_ij)/(S_reward + 0.001)) # no need for sqrt
+        sij = S_ij/(S_reward + 0.001) # this should be correct update term from derivation
 
         self.mu = S_theta/(S_reward +0.001)
         self.sigma = np.array([ [sii[0,0]],[sii[1,0]],[sij]])
 
 
-
+if __name__ == "__main__":
+    mu = np.array([[1.0],[-4.0]])
+    sigma = np.array([[0.1],[1.5],[0.0]])
+    #agent = rlEM_MatrixAgent(mu,sigma)
+    agent = rlEM_PEPG_CovAgent(mu,sigma,n_rollout=3)
+    theta,epsilon = agent.get_theta()
+    reward = np.array([[1.0],[2.0],[0.3],[4.0],[2.5],[1.2] ])
+    agent.train(theta,reward,0)
 
