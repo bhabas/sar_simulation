@@ -8,7 +8,7 @@ import struct
 from queue import Queue
 
 import time
-import os, subprocess, signal, shlex
+import os, subprocess, signal, getpass, pyautogui
 import rospy
 import csv
 
@@ -127,7 +127,11 @@ class CrazyflieEnv:
 
     def launch_sim(self):
         ## There's some issue with the external shells that cause it to hang up on missed landings as it just sits on the ground
-       
+        user = getpass.getuser()
+
+        if user == 'bhabas':
+            pyautogui.click(x=2700,y=0)
+
         self.gazebo_p = subprocess.Popen(
             "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/launch_gazebo.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
