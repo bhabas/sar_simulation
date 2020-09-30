@@ -21,11 +21,11 @@ os.system("clear")
 
 
 ## Initialize the environment
-env = CrazyflieEnv(port_self=18050, port_remote=18060)
+username = getpass.getuser()
+env = CrazyflieEnv(port_self=18050, port_remote=18060,username = username)
 print("Environment done")
 
 ## Initialize the user and data recording
-username = getpass.getuser()
 start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
 file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time + '.csv'
 env.create_csv(file_name,record = True)
