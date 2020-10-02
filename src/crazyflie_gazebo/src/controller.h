@@ -28,7 +28,7 @@ class Controller
             senderThread_gazebo_.join();
             receiverThread_rl_.join();
             controllerThread_.join();
-            close(fd_gazebo_);
+            close(fd_gazebo);
         }
 
         void Load(int gazebo_port_number);
@@ -38,9 +38,9 @@ class Controller
         void controlThread();
 
     private:
-        int fd_gazebo_;
-        int fd_gazebo_SNDBUF_;
-        int fd_gazebo_RCVBUF_;
+        int fd_gazebo;
+        int fd_gazebo_SNDBUF;
+        int fd_gazebo_RCVBUF;
         int port_number_gazebo_;
         struct sockaddr_in sockaddr_local_gazebo_;
         struct sockaddr_in sockaddr_remote_gazebo_;

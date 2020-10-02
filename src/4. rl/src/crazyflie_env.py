@@ -7,11 +7,11 @@ from threading import Thread
 import struct
 from queue import Queue
 
-import time
+import time, getpass
 import os, subprocess, signal
 import rospy
 import csv
-
+import pyautogui
 from socket import timeout
 
 from sensor_msgs.msg import LaserScan
@@ -23,7 +23,7 @@ class CrazyflieEnv:
     def __init__(self, port_self, port_remote,username):
         print("Init CrazyflieEnv")
 
-        self.user = username   
+        self.user = getpass.getuser()   
         if self.user == 'bhabas':
             import pyautogui    
         
