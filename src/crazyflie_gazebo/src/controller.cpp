@@ -4,7 +4,7 @@
 #include <math.h>
 #include <algorithm>
 #include <stdint.h>
-
+#include <eigen3/Eigen/Dense>
 
 using namespace std;
 
@@ -434,11 +434,26 @@ void Controller::controlThread()
     }
 }
 
+
+
 int main()
 {
     Controller controller;
     
     controller.Load(18080);
+
+    using namespace Eigen;
+    MatrixXd m(2,2);
+    m(0,0) = 3;
+    m(1,0) = 2.5;
+    m(0,1) = -1;
+    m(1,1) = m(1,0) + m(0,1);
+    std::cout << "Here is the matrix m:\n" << m << std::endl;
+    VectorXd v(2);
+    v(0) = 4;
+    v(1) = v(0) - 1;
+    std::cout << "Here is the vector v:\n" << v << std::endl;
+
 
     /*double result[3][3];
     double quat[4] = {9,7,3,7};
