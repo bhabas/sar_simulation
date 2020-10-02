@@ -14,60 +14,60 @@ void Controller::Load(int port_number_gazebo)
     fd_gazebo_SNDBUF = 16;         // 16 bytes is 4 float
     fd_gazebo_RCVBUF = 112;        // 112 bytes is 14 double
     if (setsockopt(fd_gazebo, SOL_SOCKET, SO_SNDBUF, &fd_gazebo_SNDBUF, sizeof(fd_gazebo_SNDBUF))<0)
-        cout<<"fd_gazebo_ setting SNDBUF failed"<<endl;
+        cout<<"fd_gazebo setting SNDBUF failed"<<endl;
     if (setsockopt(fd_gazebo, SOL_SOCKET, SO_RCVBUF, &fd_gazebo_RCVBUF, sizeof(fd_gazebo_RCVBUF))<0)
-        cout<<"fd_gazebo_ setting RCVBUF failed"<<endl;
-    port_number_gazebo_ = port_number_gazebo;
+        cout<<"fd_gazebo setting RCVBUF failed"<<endl;
+    port_number_gazebo = port_number_gazebo;
 
-    memset(&sockaddr_local_gazebo_, 0, sizeof(sockaddr_local_gazebo_));
-    sockaddr_local_gazebo_.sin_family = AF_INET;
-    sockaddr_local_gazebo_.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("127.0.0.1");
-    sockaddr_local_gazebo_.sin_port = htons(18070);
+    memset(&sockaddr_local_gazebo, 0, sizeof(sockaddr_local_gazebo));
+    sockaddr_local_gazebo.sin_family = AF_INET;
+    sockaddr_local_gazebo.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("127.0.0.1");
+    sockaddr_local_gazebo.sin_port = htons(18070);
     
-    if (bind(fd_gazebo, (struct sockaddr*)&sockaddr_local_gazebo_, sizeof(sockaddr_local_gazebo_))<0)
+    if (bind(fd_gazebo, (struct sockaddr*)&sockaddr_local_gazebo, sizeof(sockaddr_local_gazebo))<0)
         cout<<"Socket binding to Gazebo failed"<<endl;
     else
         cout<<"Socket binding to Gazebo succeeded"<<endl; 
 
-    memset(&sockaddr_remote_gazebo_, 0, sizeof(sockaddr_remote_gazebo_));
-    sockaddr_remote_gazebo_.sin_family = AF_INET;
-    sockaddr_remote_gazebo_.sin_addr.s_addr = htonl(INADDR_ANY);
-    sockaddr_remote_gazebo_.sin_port = htons(port_number_gazebo_);
-    sockaddr_remote_gazebo_len_ = sizeof(sockaddr_remote_gazebo_);
+    memset(&sockaddr_remote_gazebo, 0, sizeof(sockaddr_remote_gazebo));
+    sockaddr_remote_gazebo.sin_family = AF_INET;
+    sockaddr_remote_gazebo.sin_addr.s_addr = htonl(INADDR_ANY);
+    sockaddr_remote_gazebo.sin_port = htons(port_number_gazebo);
+    sockaddr_remote_gazebo_len = sizeof(sockaddr_remote_gazebo);
     
     float buf[4] = {100.0,100.0,100.0,100.0};
     int len = 0;
     for(int k=0; k<2; k++)
-        len = sendto(fd_gazebo, buf, sizeof(buf),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sizeof(sockaddr_remote_gazebo_));
+        len = sendto(fd_gazebo, buf, sizeof(buf),0, (struct sockaddr*)&sockaddr_remote_gazebo, sizeof(sockaddr_remote_gazebo));
     if(len>0)
         cout<<"Send initial motor speed "<<len<<" byte to Gazebo Succeeded! Avoiding threads mutual locking"<<endl;
     else
         cout<<"Send initial motor speed to Gazebo FAILED! Threads will mutual lock"<<endl;
 
-    fd_rl_ = socket(AF_INET, SOCK_DGRAM, 0);
-    fd_rl_SNDBUF_ = 112;        // 112 bytes is 14 double
-    fd_rl_RCVBUF_ = 40;         // 40 bytes is 5 double
-    if (setsockopt(fd_rl_, SOL_SOCKET, SO_SNDBUF, &fd_rl_SNDBUF_, sizeof(fd_rl_SNDBUF_))<0)
-        cout<<"fd_rl_ setting SNDBUF failed"<<endl;
-    if (setsockopt(fd_rl_, SOL_SOCKET, SO_RCVBUF, &fd_rl_RCVBUF_, sizeof(fd_rl_RCVBUF_))<0)
-        cout<<"fd_rl_ setting RCVBUF failed"<<endl;
-    memset(&sockaddr_local_rl_, 0, sizeof(sockaddr_local_rl_));
-    sockaddr_local_rl_.sin_family = AF_INET;
-    sockaddr_local_rl_.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("127.0.0.1");
-    sockaddr_local_rl_.sin_port = htons(18060);
-    if (bind(fd_rl_, (struct sockaddr*)&sockaddr_local_rl_, sizeof(sockaddr_local_rl_))<0)
+    fd_rl = socket(AF_INET, SOCK_DGRAM, 0);
+    fd_rl_SNDBUF = 112;        // 112 bytes is 14 double
+    fd_rl_RCVBUF = 40;         // 40 bytes is 5 double
+    if (setsockopt(fd_rl, SOL_SOCKET, SO_SNDBUF, &fd_rl_SNDBUF, sizeof(fd_rl_SNDBUF))<0)
+        cout<<"fd_rl setting SNDBUF failed"<<endl;
+    if (setsockopt(fd_rl, SOL_SOCKET, SO_RCVBUF, &fd_rl_RCVBUF, sizeof(fd_rl_RCVBUF))<0)
+        cout<<"fd_rl setting RCVBUF failed"<<endl;
+    memset(&sockaddr_local_rl, 0, sizeof(sockaddr_local_rl));
+    sockaddr_local_rl.sin_family = AF_INET;
+    sockaddr_local_rl.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("127.0.0.1");
+    sockaddr_local_rl.sin_port = htons(18060);
+    if (bind(fd_rl, (struct sockaddr*)&sockaddr_local_rl, sizeof(sockaddr_local_rl))<0)
         cout<<"Socket binding to RL failed"<<endl;
     else
         cout<<"Socket binding to RL succeeded"<<endl;
     
-    isRunning_ = true;
-    receiverThread_gazebo_ = thread(&Controller::recvThread_gazebo, this);
-    //senderThread_gazebo_ = thread(&Controller::sendThread_gazebo, this);
-    receiverThread_rl_ = thread(&Controller::recvThread_rl, this);
+    isRunning = true;
+    receiverThread_gazebo = thread(&Controller::recvThread_gazebo, this);
+    // senderThread_gazebo = thread(&Controller::sendThread_gazebo, this);
+    receiverThread_rl = thread(&Controller::recvThread_rl, this);
     controllerThread_ = thread(&Controller::controlThread, this);
 
-    queue_states_ = moodycamel::BlockingReaderWriterQueue<StateFull>(5);
-    queue_motorspeed_ = moodycamel::BlockingReaderWriterQueue<MotorCommand>(5);
+    queue_states = moodycamel::BlockingReaderWriterQueue<StateFull>(5);
+    queue_motorspeed = moodycamel::BlockingReaderWriterQueue<MotorCommand>(5);
 }
 
 void Controller::recvThread_gazebo()
@@ -75,10 +75,10 @@ void Controller::recvThread_gazebo()
     double state_full[14];
     StateFull state_full_structure;
 
-    while(isRunning_)
+    while(isRunning)
     {
         //cout<<"[recvThread_gazebo] Receiving crazyflie states from Gazebo"<<endl;
-        int len = recvfrom(fd_gazebo, state_full, sizeof(state_full),0, (struct sockaddr*)&sockaddr_remote_gazebo_, &sockaddr_remote_gazebo_len_);
+        int len = recvfrom(fd_gazebo, state_full, sizeof(state_full),0, (struct sockaddr*)&sockaddr_remote_gazebo, &sockaddr_remote_gazebo_len);
 
         /*if(len>0)
         {
@@ -89,8 +89,8 @@ void Controller::recvThread_gazebo()
         }*/
 
         memcpy(state_full_structure.data, state_full, sizeof(state_full));
-        queue_states_.enqueue(state_full_structure);
-        sendto(fd_rl_, state_full, sizeof(state_full),0, (struct sockaddr*)&sockaddr_remote_rl_, sockaddr_remote_rl_len_);
+        queue_states.enqueue(state_full_structure);
+        sendto(fd_rl, state_full, sizeof(state_full),0, (struct sockaddr*)&sockaddr_remote_rl, sockaddr_remote_rl_len);
     }
 }
 
@@ -99,13 +99,13 @@ void Controller::sendThread_gazebo()
     float motorspeed[4];
     MotorCommand motorspeed_structure;
 
-    while(isRunning_)
+    while(isRunning)
     {
-        queue_motorspeed_.wait_dequeue(motorspeed_structure);
+        queue_motorspeed.wait_dequeue(motorspeed_structure);
         memcpy(motorspeed, motorspeed_structure.data, sizeof(motorspeed));
 
         //cout<<"[recvThread_rl] sending motor speed to Gazebo"<<endl;
-        int len=sendto(fd_gazebo, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
+        int len=sendto(fd_gazebo, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo, sockaddr_remote_gazebo_len);
         if(len>0)
             cout<<"[recvThread_rl] sent motor speed ["<<motorspeed[0]<<", "<<motorspeed[1]<<", "<<motorspeed[2]<<", "<<motorspeed[3]<<"]"<<endl;
         else
@@ -118,10 +118,10 @@ void Controller::recvThread_rl()
 {
     float motorspeed_fake[4] = {0,0,0,0};
 
-    while(isRunning_)
+    while(isRunning)
     {
         //cout<<"[recvThread_rl] Receiving command from RL"<<endl;
-        int len = recvfrom(fd_rl_, control_cmd_, sizeof(control_cmd_),0, (struct sockaddr*)&sockaddr_remote_rl_, &sockaddr_remote_rl_len_);
+        int len = recvfrom(fd_rl, control_cmd, sizeof(control_cmd),0, (struct sockaddr*)&sockaddr_remote_rl, &sockaddr_remote_rl_len);
 
         /*if(len>0)
         {
@@ -130,13 +130,13 @@ void Controller::recvThread_rl()
                 cout<<control_cmd_[k]<<", ";
             cout<<"\n";
         }*/
-        if(control_cmd_[0]>10)
+        if(control_cmd[0]>10)
         {
             
-            motorspeed_fake[0] = -control_cmd_[0];
-            motorspeed_fake[1] = control_cmd_[1];
+            motorspeed_fake[0] = -control_cmd[0];
+            motorspeed_fake[1] = control_cmd[1];
             //cout<<"Send sticky command command: "<< motorspeed_fake[0]<<", "<<motorspeed_fake[1]<<endl;
-            sendto(fd_gazebo, motorspeed_fake, sizeof(motorspeed_fake),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
+            sendto(fd_gazebo, motorspeed_fake, sizeof(motorspeed_fake),0, (struct sockaddr*)&sockaddr_remote_gazebo, sockaddr_remote_gazebo_len);
 
             /*if (control_cmd_[1]<0.5)     // reset_world signal
             {
@@ -210,25 +210,25 @@ void Controller::controlThread()
 
     unsigned int k_run = 0;
 
-    while(isRunning_)
+    while(isRunning)
     {
         k_run++;
 
-        queue_states_.wait_dequeue(state_full_structure);
+        queue_states.wait_dequeue(state_full_structure);
         memcpy(state_full, state_full_structure.data, sizeof(state_full));
-        if (control_cmd_[0]<10)
-            memcpy(control_cmd, control_cmd_, sizeof(control_cmd));
-        else if ( (control_cmd_[0]>10) && (control_cmd_[1]<0.5) )
+        if (control_cmd[0]<10)
+            memcpy(control_cmd, control_cmd, sizeof(control_cmd));
+        else if ( (control_cmd[0]>10) && (control_cmd[1]<0.5) )
         {
             //cout<<"======================================="<<endl;
             //cout<<"Enter reset mode"<<endl;
             motorspeed[0] = 0.0;  motorspeed[1] = 0.0;  motorspeed[2] = 0.0;  motorspeed[3] = 0.0;
-            sendto(fd_gazebo, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
+            sendto(fd_gazebo, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo, sockaddr_remote_gazebo_len);
 
-            control_cmd_[0] = 2; control_cmd_[1] = 0; control_cmd_[2] = 0; control_cmd_[3] = 0; control_cmd_[4] = 0;
+            control_cmd[0] = 2; control_cmd[1] = 0; control_cmd[2] = 0; control_cmd[3] = 0; control_cmd[4] = 0;
             sleep(3);
             for(int k_temp=1;k_temp<5;k_temp++)
-                queue_states_.wait_dequeue(state_full_structure);
+                queue_states.wait_dequeue(state_full_structure);
             memcpy(state_full, state_full_structure.data, sizeof(state_full));
         }
 
@@ -428,7 +428,7 @@ void Controller::controlThread()
         //}   
         //memcpy(motorspeed_structure.data, motorspeed, sizeof(motorspeed));
         //queue_motorspeed_.enqueue(motorspeed_structure);
-        sendto(fd_gazebo, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
+        sendto(fd_gazebo, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo, sockaddr_remote_gazebo_len);
     
     
     }

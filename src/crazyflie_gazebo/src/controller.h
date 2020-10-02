@@ -23,10 +23,10 @@ class Controller
         //Controller();
         ~Controller()
         {
-            isRunning_ = false;
-            receiverThread_gazebo_.join();
-            senderThread_gazebo_.join();
-            receiverThread_rl_.join();
+            isRunning = false;
+            receiverThread_gazebo.join();
+            senderThread_gazebo.join();
+            receiverThread_rl.join();
             controllerThread_.join();
             close(fd_gazebo);
         }
@@ -41,25 +41,25 @@ class Controller
         int fd_gazebo;
         int fd_gazebo_SNDBUF;
         int fd_gazebo_RCVBUF;
-        int port_number_gazebo_;
-        struct sockaddr_in sockaddr_local_gazebo_;
-        struct sockaddr_in sockaddr_remote_gazebo_;
-        socklen_t sockaddr_remote_gazebo_len_;
-        int fd_rl_;
-        int fd_rl_SNDBUF_;
-        int fd_rl_RCVBUF_;
-        struct sockaddr_in sockaddr_local_rl_;
-        struct sockaddr_in sockaddr_remote_rl_;
-        socklen_t sockaddr_remote_rl_len_;
+        int port_number_gazebo;
+        struct sockaddr_in sockaddr_local_gazebo;
+        struct sockaddr_in sockaddr_remote_gazebo;
+        socklen_t sockaddr_remote_gazebo_len;
+        int fd_rl;
+        int fd_rl_SNDBUF;
+        int fd_rl_RCVBUF;
+        struct sockaddr_in sockaddr_local_rl;
+        struct sockaddr_in sockaddr_remote_rl;
+        socklen_t sockaddr_remote_rl_len;
 
-        bool isRunning_;
-        std::thread receiverThread_gazebo_;
-        std::thread senderThread_gazebo_;
-        std::thread receiverThread_rl_;
+        bool isRunning;
+        std::thread receiverThread_gazebo;
+        std::thread senderThread_gazebo;
+        std::thread receiverThread_rl;
         std::thread controllerThread_;
 
-        moodycamel::BlockingReaderWriterQueue<StateFull> queue_states_;
-        moodycamel::BlockingReaderWriterQueue<MotorCommand> queue_motorspeed_;
+        moodycamel::BlockingReaderWriterQueue<StateFull> queue_states;
+        moodycamel::BlockingReaderWriterQueue<MotorCommand> queue_motorspeed;
         
-        double control_cmd_[5] = {2,0,0,0.0,0};
+        double control_cmd[5] = {2,0,0,0.0,0};
 };
