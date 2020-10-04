@@ -4,6 +4,7 @@
 #include <math.h>
 #include <algorithm>
 #include <stdint.h>
+#include <Eigen/Dense>
 
 void Controller::Load(int port_number_gazebo)
 {
@@ -174,6 +175,13 @@ void Controller::controlThread()
     double p_d[3];
     double e_x[3];
 
+    //k = [0.8, 0.2, 3e-2, 2.3e-3]       # k_x, k_v, k_R, k_omega
+    //double kp_x = 0.8;
+    //double kp_v = 0.2;
+    //double kp_R12 = 3e-2;
+    //double kp_R34 = 3e-2;
+    //double kd_R12 = 3e-3;
+    //double kd_R34 = 3e-3;
     // only kp_v and kp_R12 matter for vel control
     double kp_x = 0.15;
     double kd_x = 0.1;
@@ -185,9 +193,9 @@ void Controller::controlThread()
     double kp_R34 = 1e-5;
     double kd_R34 = 5e-4;
 
-    double kp_R = 1e-5;
-    double kd_R = 5e-4;
-    double kd_R2 = 1e-6;
+    //double kp_R = 1e-5;
+    //double kd_R = 5e-4;
+    //double kd_R2 = 1e-6;
     double c_T = 1.2819184e-8;
     double Gamma_inv[4][4] = {  {0.25,  -7.6859225, -7.6859225, -41.914296}, {0.25, 7.6859225,  7.6859225,  -41.914296}, 
                                 {0.25,  7.6859225,  -7.6859225, 41.914296},  {0.25, -7.6859225, 7.6859225,  41.914296}};    // calculated by Matlab

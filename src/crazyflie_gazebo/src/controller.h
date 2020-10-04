@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <Eigen/Dense>
 //#include <boost/thread/thread.hpp>
 #include <thread>
 
