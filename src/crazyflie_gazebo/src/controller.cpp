@@ -220,6 +220,11 @@ void Controller::controlThread()
         {0, 0, 2.92617e-05}};
 
 
+
+    // =====================================
+    //    Array -> Matrix -> Array Example
+    // =====================================
+
     // cout J array
     std::cout << "C array:\n";
     for (int i = 0; i < 3; ++i) {
@@ -229,11 +234,26 @@ void Controller::controlThread()
     std::cout << "\n";
     }
 
-    // convert J to eigen matrix
 
-    // creates matrix type: (3,3) and RowMajor to match c++ array format
-    typedef Matrix<double, 3, 3, RowMajor> Matrix3dRM; 
-    cout << Map<Matrix3dRM> (&J[0][0]) << endl; // Not quite sure what &J[0][0] does but it works
+    // Map J array to eigen matrix
+    typedef Matrix<double, 3, 3, RowMajor> RowMatrix3d; 
+        // - creates shortcut for matrix type: 3x3 double and RowMajor to match c++ array format
+    Map<RowMatrix3d> J_eig(&J[0][0]); // Not quite sure what &J[0][0] does but it works
+    cout << "Eigen matrix:\n" << J_eig << endl;
+
+
+    // Maps J_eig matrix to J_2 array
+    double J_2[3][3];
+    Map<RowMatrix3d> (&J_2[0][0],3,3) = J_eig;
+
+    std::cout << "C array2:\n";
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            std::cout << J_2[i][j] << " ";
+    }
+    std::cout << "\n";
+    }
+
 
 
 
