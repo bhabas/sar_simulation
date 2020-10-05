@@ -7,7 +7,7 @@
 
 #include <eigen3/Eigen/Dense>
  
-using Eigen::MatrixXd;
+using namespace Eigen;
  
 
 using namespace std;
@@ -153,17 +153,26 @@ void Controller::recvThread_rl()
 
 void Controller::controlThread()
 {
-    double state_full[14];
+    
+
+
+    // Recieved state array
     StateFull state_full_structure;
+    double state_full[14];
+
+    // Recieved states
+    double position[3];
+    double orientation_q[4];
+    double vel[3];
+    double omega[3];
+
+
     float motorspeed[4];
     MotorCommand motorspeed_structure;
     double control_cmd[5];
     int type =5;
-    double position[3];
-    double orientation_q[4];
+
     double eul[3];
-    double vel[3];
-    double omega[3];
 
     double R[3][3];
     double R_d[3][3] = {{1,0,0}, {0,1,0}, {0,0,1}};
@@ -184,6 +193,7 @@ void Controller::controlThread()
     // only kp_v and kp_R12 matter for vel control
     double kp_x = 0.15;
     double kd_x = 0.1;
+    
 
     double kp_v = 3.25;  //3.0
     double kp_R12 = 0.55;//0.4; // 0.5
@@ -196,14 +206,49 @@ void Controller::controlThread()
     double kd_R = 5e-4;
     double kd_R2 = 1e-6;
     double c_T = 1.2819184e-8;
-    double Gamma_inv[4][4] = {  {0.25,  -7.6859225, -7.6859225, -41.914296}, {0.25, 7.6859225,  7.6859225,  -41.914296}, 
-                                {0.25,  7.6859225,  -7.6859225, 41.914296},  {0.25, -7.6859225, 7.6859225,  41.914296}};    // calculated by Matlab
-    double J[3][3] = {{1.65717e-05, 0, 0}, {0, 1.66556e-05, 0}, {0, 0, 2.92617e-05}};
+
+    double Gamma_inv[4][4] = {  
+        {0.25, -7.6859225, -7.6859225, -41.914296}, 
+        {0.25,  7.6859225,  7.6859225, -41.914296}, 
+        {0.25,  7.6859225, -7.6859225,  41.914296},  
+        {0.25, -7.6859225,  7.6859225,  41.914296}};    // calculated by Matlab
+
+
+    double J[3][3] = { // Rotational Inertia array
+        {1.65717e-05, 1, 0}, 
+        {0, 1.66556e-05, 0}, 
+        {0, 0, 2.92617e-05}};
+
+
+    // cout J array
+    std::cout << "C array:\n";
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            std::cout << J[i][j] << " ";
+    }
+    std::cout << "\n";
+    }
+
+    // convert J to eigen matrix
+
+    // creates matrix type: (3,3) and RowMajor to match c++ array format
+    typedef Matrix<double, 3, 3, RowMajor> Matrix3dRM; 
+    cout << Map<Matrix3dRM> (&J[0][0]) << endl; // Not quite sure what &J[0][0] does but it works
+
+
 
     double f_thrust =0;
     // might need to adjust weight to real case (sdf file too)
     double f_hover = (0.026 + 0.00075*4)*9.8066;
     double tau[3] =  {0,0,0};
+
+
+    Map<Vector3d> v1(tau); // uses v1 as a Vector3d object
+    cout << v1.transpose() << endl;
+
+
+
+
     double FT[4];
     double f[4];
     double motorspeed_square[4];
@@ -220,6 +265,8 @@ void Controller::controlThread()
 
         queue_states.wait_dequeue(state_full_structure);
         memcpy(state_full, state_full_structure.data, sizeof(state_full));
+        // state_full is binary data of state in hex format (0x7f8f747d2c60 = initial state)
+
         if (control_cmd[0]<10)
             memcpy(control_cmd, control_cmd, sizeof(control_cmd));
         else if ( (control_cmd[0]>10) && (control_cmd[1]<0.5) )
@@ -236,10 +283,14 @@ void Controller::controlThread()
             memcpy(state_full, state_full_structure.data, sizeof(state_full));
         }
 
+        // Copying values of pose, attitude, vel, and omega from received states in hex byte format?
         memcpy(position, state_full, sizeof(position));
         memcpy(orientation_q, state_full+3,  sizeof(orientation_q));
         memcpy(vel, state_full+7, sizeof(vel));
         memcpy(omega, state_full+10, sizeof(omega));
+
+
+
 
         //cout<<"Altitude: "<<position[2]<<endl;
         //cout<<"Velocity: "<<std::fixed<<std::setprecision(2)<<"["<<vel[0]<<", "<<vel[1]<<", "<<vel[2]<<"]"<<endl;
@@ -440,16 +491,15 @@ void Controller::controlThread()
 
 int main(){
     Controller controller;
-    
     controller.Load(18080);
 
-
-    MatrixXd m(2,2);
-    m(0,0) = 3;
-    m(1,0) = 2.5;
-    m(0,1) = -1;
-    m(1,1) = m(1,0) + m(0,1);
-    std::cout << m << std::endl;
+    cout << "\n==========\n" << endl;
+    // MatrixXd m(2,2);
+    // m(0,0) = 3;
+    // m(1,0) = 2.5;
+    // m(0,1) = -1;
+    // m(1,1) = m(1,0) + m(0,1);
+    // std::cout << m << std::endl;
 
 
     /*double result[3][3];

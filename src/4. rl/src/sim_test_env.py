@@ -4,7 +4,7 @@ import numpy as np
 import time,os,getpass
 import matplotlib.pyplot as plt
 from math import sin,cos,pi
-import os
+import os, getpass
 from scipy.spatial.transform import Rotation
 from numpy.core.fromnumeric import repeat
 
@@ -19,7 +19,7 @@ os.system("clear")
 
 
 ## Initialize the environment
-env = CrazyflieEnv(port_self=18050, port_remote=18060)
+env = CrazyflieEnv(port_self=18050, port_remote=18060,username = "bhabas")
 print("Environment done")
 
 
@@ -27,7 +27,7 @@ print("Environment done")
 username = getpass.getuser()
 start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
 file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time + '_testenv.csv'
-env.create_csv(file_name,record = True)
+env.create_csv(file_name,record = False)
 
 
 ## Sim Parameters
