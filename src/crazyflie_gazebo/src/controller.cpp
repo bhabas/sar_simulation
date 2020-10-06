@@ -287,28 +287,28 @@ void Controller::controlThread()
         memcpy(state_full, state_full_structure.data, sizeof(state_full));
 
 
-        // if (control_cmd_[0]<10) // What does this do?
-        //     memcpy(control_cmd, control_cmd_, sizeof(control_cmd));
-        // else if ( (control_cmd_[0]>10) && (control_cmd_[1]<0.5) )
-        // {
-        //     //cout<<"======================================="<<endl;
-        //     //cout<<"Enter reset mode"<<endl;
-        //     motorspeed[0] = 0.0;  
-        //     motorspeed[1] = 0.0;  
-        //     motorspeed[2] = 0.0;  
-        //     motorspeed[3] = 0.0;
-        //     sendto(fd_gazebo_, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
+        if (control_cmd_[0]<10) // What does this do?
+            memcpy(control_cmd, control_cmd_, sizeof(control_cmd));
+        else if ( (control_cmd_[0]>10) && (control_cmd_[1]<0.5) )
+        {
+            //cout<<"======================================="<<endl;
+            //cout<<"Enter reset mode"<<endl;
+            motorspeed[0] = 0.0;  
+            motorspeed[1] = 0.0;  
+            motorspeed[2] = 0.0;  
+            motorspeed[3] = 0.0;
+            sendto(fd_gazebo_, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
 
-        //     control_cmd_[0] = 2; 
-        //     control_cmd_[1] = 0; 
-        //     control_cmd_[2] = 0; 
-        //     control_cmd_[3] = 0; 
-        //     control_cmd_[4] = 0;
-        //     sleep(3);
-        //     for(int k_temp=1;k_temp<5;k_temp++)
-        //         queue_states_.wait_dequeue(state_full_structure);
-        //     memcpy(state_full, state_full_structure.data, sizeof(state_full));
-        // }
+            control_cmd_[0] = 2; 
+            control_cmd_[1] = 0; 
+            control_cmd_[2] = 0; 
+            control_cmd_[3] = 0; 
+            control_cmd_[4] = 0;
+            sleep(3);
+            for(int k_temp=1;k_temp<5;k_temp++)
+                queue_states_.wait_dequeue(state_full_structure);
+            memcpy(state_full, state_full_structure.data, sizeof(state_full));
+        }
 
         memcpy(position, state_full, sizeof(position));
         memcpy(orientation_q, state_full+3,  sizeof(orientation_q));
