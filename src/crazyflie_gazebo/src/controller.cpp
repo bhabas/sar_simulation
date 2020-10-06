@@ -27,7 +27,7 @@ void Controller::Load(int port_number_gazebo)
     if (bind(fd_gazebo_, (struct sockaddr*)&sockaddr_local_gazebo_, sizeof(sockaddr_local_gazebo_))<0)
         std::cout<<"Socket binding to Gazebo failed"<<std::endl;
     else
-        std::cout<<"Socket binding to Gazebo succeed"<<std::endl; 
+        std::cout<<"Socket binding to Gazebo succeeded"<<std::endl; 
 
     memset(&sockaddr_remote_gazebo_, 0, sizeof(sockaddr_remote_gazebo_));
     sockaddr_remote_gazebo_.sin_family = AF_INET;
@@ -40,7 +40,7 @@ void Controller::Load(int port_number_gazebo)
     for(int k=0; k<2; k++)
         len = sendto(fd_gazebo_, buf, sizeof(buf),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sizeof(sockaddr_remote_gazebo_));
     if(len>0)
-        std::cout<<"Send initial motor speed "<<len<<" byte to Gazebo Succeed! Avoiding threads mutual locking"<<std::endl;
+        std::cout<<"Send initial motor speed "<<len<<" byte to Gazebo Succeeded! Avoiding threads mutual locking"<<std::endl;
     else
         std::cout<<"Send initial motor speed to Gazebo FAILED! Threads will mutual lock"<<std::endl;
 
@@ -58,7 +58,7 @@ void Controller::Load(int port_number_gazebo)
     if (bind(fd_rl_, (struct sockaddr*)&sockaddr_local_rl_, sizeof(sockaddr_local_rl_))<0)
         std::cout<<"Socket binding to RL failed"<<std::endl;
     else
-        std::cout<<"Socket binding to RL succeed"<<std::endl;
+        std::cout<<"Socket binding to RL succeeded"<<std::endl;
     
     isRunning_ = true;
     receiverThread_gazebo_ = std::thread(&Controller::recvThread_gazebo, this);
@@ -162,7 +162,11 @@ void Controller::controlThread()
     double omega[3];
 
     double R[3][3];
-    double R_d[3][3] = {{1,0,0}, {0,1,0}, {0,0,1}};
+    double R_d[3][3] = {
+        {1,0,0}, 
+        {0,1,0}, 
+        {0,0,1}};
+
     double e_R[3];
     
     double omega_d[3];
@@ -192,8 +196,11 @@ void Controller::controlThread()
     double kd_R = 5e-4;
     double kd_R2 = 1e-6;
     double c_T = 1.2819184e-8;
-    double Gamma_inv[4][4] = {  {0.25,  -7.6859225, -7.6859225, -41.914296}, {0.25, 7.6859225,  7.6859225,  -41.914296}, 
-                                {0.25,  7.6859225,  -7.6859225, 41.914296},  {0.25, -7.6859225, 7.6859225,  41.914296}};    // calculated by Matlab
+    double Gamma_inv[4][4] = {  
+        {0.25, -7.6859225, -7.6859225, -41.914296}, 
+        {0.25,  7.6859225,  7.6859225, -41.914296}, 
+        {0.25,  7.6859225, -7.6859225,  41.914296},  
+        {0.25, -7.6859225,  7.6859225,  41.914296}};    // calculated by Matlab
     double J[3][3] = {{1.65717e-05, 0, 0}, {0, 1.66556e-05, 0}, {0, 0, 2.92617e-05}};
 
     double f_thrust =0;
@@ -222,10 +229,17 @@ void Controller::controlThread()
         {
             //std::cout<<"======================================="<<std::endl;
             //std::cout<<"Enter reset mode"<<std::endl;
-            motorspeed[0] = 0.0;  motorspeed[1] = 0.0;  motorspeed[2] = 0.0;  motorspeed[3] = 0.0;
+            motorspeed[0] = 0.0;  
+            motorspeed[1] = 0.0;  
+            motorspeed[2] = 0.0;  
+            motorspeed[3] = 0.0;
             sendto(fd_gazebo_, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
 
-            control_cmd_[0] = 2; control_cmd_[1] = 0; control_cmd_[2] = 0; control_cmd_[3] = 0; control_cmd_[4] = 0;
+            control_cmd_[0] = 2; 
+            control_cmd_[1] = 0; 
+            control_cmd_[2] = 0; 
+            control_cmd_[3] = 0; 
+            control_cmd_[4] = 0;
             sleep(3);
             for(int k_temp=1;k_temp<5;k_temp++)
                 queue_states_.wait_dequeue(state_full_structure);
@@ -236,8 +250,6 @@ void Controller::controlThread()
         std::memcpy(orientation_q, state_full+3,  sizeof(orientation_q));
         std::memcpy(vel, state_full+7, sizeof(vel));
         std::memcpy(omega, state_full+10, sizeof(omega));
-
-        std::cout << "this is another test" << std::endl;
 
         //std::cout<<"Altitude: "<<position[2]<<std::endl;
         //std::cout<<"Velocity: "<<std::fixed<<std::setprecision(2)<<"["<<vel[0]<<", "<<vel[1]<<", "<<vel[2]<<"]"<<std::endl;
@@ -259,14 +271,18 @@ void Controller::controlThread()
         {
             if (type==1)    // position control
             {
-                p_d[0] = control_cmd[1];    p_d[1] = control_cmd[2];    p_d[2] = control_cmd[3];
+                p_d[0] = control_cmd[1];    
+                p_d[1] = control_cmd[2];    
+                p_d[2] = control_cmd[3];
                 math::matAddsMat(e_x, position, p_d, 3, 2);       // e_x = pos - p_d
                 memcpy(e_v, vel, sizeof(vel));            // e_v = v - v_d
 
             }
             else            // velocity control
             {
-                v_d[0] = control_cmd[1];    v_d[1] = control_cmd[2];    v_d[2] = control_cmd[3];
+                v_d[0] = control_cmd[1];    
+                v_d[1] = control_cmd[2];    
+                v_d[2] = control_cmd[3];
                 e_x[0]=0; e_x[1]=0; e_x[2]=0;
                 // myMemCpy(e_x, position, sizeof(position));              // e_x = pos - p_d
                 math::matAddsMat(e_v, vel, v_d, 3, 2);                        // e_v = v - v_d
