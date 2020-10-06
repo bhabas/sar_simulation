@@ -149,7 +149,10 @@ void Controller::recvThread_rl()
 }
 
 void Controller::controlThread()
-{
+{   
+    typedef Matrix<double, 3, 3, RowMajor> RowMatrix3d; 
+
+
     double state_full[14];
     StateFull state_full_structure;
     float motorspeed[4];
@@ -204,10 +207,53 @@ void Controller::controlThread()
         {0.25, -7.6859225,  7.6859225,  41.914296}};    // calculated by Matlab
     double J[3][3] = {{1.65717e-05, 0, 0}, {0, 1.66556e-05, 0}, {0, 0, 2.92617e-05}};
 
+
+    // =====================================
+    //    Array -> Matrix -> Array Example
+    // =====================================
+
+    // // cout J array
+    // std::cout << "C array:\n";
+    // for (int i = 0; i < 3; ++i) {
+    //     for (int j = 0; j < 3; ++j) {
+    //         std::cout << J[i][j] << " ";
+    // }
+    // std::cout << "\n";
+    // }
+
+
+    // // Map J array to eigen matrix
+    // typedef Matrix<double, 3, 3, RowMajor> RowMatrix3d; 
+    //     // - creates shortcut for matrix type: 3x3 double and RowMajor to match c++ array format
+    // Map<RowMatrix3d> J_eig(&J[0][0]); // Not quite sure what &J[0][0] does but it works
+    // cout << "Eigen matrix:\n" << J_eig << endl;
+
+
+    // // Maps J_eig matrix to J_2 array
+    // double J_2[3][3];
+    // Map<RowMatrix3d> (&J_2[0][0],3,3) = J_eig;
+
+    // std::cout << "C array2:\n";
+    // for (int i = 0; i < 3; ++i) {
+    //     for (int j = 0; j < 3; ++j) {
+    //         std::cout << J_2[i][j] << " ";
+    // }
+    // std::cout << "\n";
+    // }
+
+
+
     double f_thrust =0;
     // might need to adjust weight to real case (sdf file too)
     double f_hover = (0.026 + 0.00075*4)*9.8066;
     double tau[3] =  {0,0,0};
+    
+    Map<RowVector3d> v1(tau); // uses v1 as a Vector3d object
+    Map<Vector3d> v2(tau);
+    cout << v1 << endl;
+    cout << v2 << endl;
+
+
     double FT[4];
     double f[4];
     double motorspeed_square[4];
