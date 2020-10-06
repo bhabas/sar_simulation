@@ -159,53 +159,68 @@ void Controller::controlThread()
     MotorCommand motorspeed_structure;
     double control_cmd[5];
     int type =5;
+
+    // State Declarations
     double position[3];
     double orientation_q[4];
     double eul[3];
     double vel[3];
     double omega[3];
 
+    // Rotation Matrices
     double R[3][3];
     double R_d[3][3] = {
         {1,0,0}, 
         {0,1,0}, 
         {0,0,1}};
-
     double e_R[3];
+
     
     double omega_d[3];
     double e_omega[3];
+
     double b1_d[3];
     double b2_d[3];
     double b3_d[3];
     double b2_d_hat[3][3];
     double b3_d_hat[3][3];
+
     double v_d[3];// = {0.0, 0, 1.0};
     double e_v[3];
+    
     double p_d[3];
     double e_x[3];
 
+
+    // CONTROLLER GAINS
     // only kp_v and kp_R12 matter for vel control
     double kp_x = 0.15;
     double kd_x = 0.1;
 
     double kp_v = 3.25;  //3.0
     double kp_R12 = 0.55;//0.4; // 0.5
-
     double kd_R12 = 0.1;
+
     double kp_R34 = 1e-5;
     double kd_R34 = 5e-4;
 
     double kp_R = 1e-5;
     double kd_R = 5e-4;
+
     double kd_R2 = 1e-6;
-    double c_T = 1.2819184e-8;
-    double Gamma_inv[4][4] = {  
+
+    double c_T = 1.2819184e-8; // Motor constant
+
+    double Gamma_inv[4][4] = {  //????
         {0.25, -7.6859225, -7.6859225, -41.914296}, 
         {0.25,  7.6859225,  7.6859225, -41.914296}, 
         {0.25,  7.6859225, -7.6859225,  41.914296},  
         {0.25, -7.6859225,  7.6859225,  41.914296}};    // calculated by Matlab
-    double J[3][3] = {{1.65717e-05, 0, 0}, {0, 1.66556e-05, 0}, {0, 0, 2.92617e-05}};
+
+    double J[3][3] = { // Rotational Inertia
+        {1.65717e-05, 0, 0}, 
+        {0, 1.66556e-05, 0}, 
+        {0, 0, 2.92617e-05}};
 
 
     // =====================================
@@ -247,7 +262,7 @@ void Controller::controlThread()
     // might need to adjust weight to real case (sdf file too)
     double f_hover = (0.026 + 0.00075*4)*9.8066;
     double tau[3] =  {0,0,0};
-    
+
     Map<RowVector3d> v1(tau); // uses v1 as a Vector3d object
     Map<Vector3d> v2(tau);
     cout << v1 << endl;
@@ -270,47 +285,37 @@ void Controller::controlThread()
 
         queue_states_.wait_dequeue(state_full_structure);
         memcpy(state_full, state_full_structure.data, sizeof(state_full));
-        if (control_cmd_[0]<10)
-            memcpy(control_cmd, control_cmd_, sizeof(control_cmd));
-        else if ( (control_cmd_[0]>10) && (control_cmd_[1]<0.5) )
-        {
-            //cout<<"======================================="<<endl;
-            //cout<<"Enter reset mode"<<endl;
-            motorspeed[0] = 0.0;  
-            motorspeed[1] = 0.0;  
-            motorspeed[2] = 0.0;  
-            motorspeed[3] = 0.0;
-            sendto(fd_gazebo_, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
 
-            control_cmd_[0] = 2; 
-            control_cmd_[1] = 0; 
-            control_cmd_[2] = 0; 
-            control_cmd_[3] = 0; 
-            control_cmd_[4] = 0;
-            sleep(3);
-            for(int k_temp=1;k_temp<5;k_temp++)
-                queue_states_.wait_dequeue(state_full_structure);
-            memcpy(state_full, state_full_structure.data, sizeof(state_full));
-        }
+
+        // if (control_cmd_[0]<10) // What does this do?
+        //     memcpy(control_cmd, control_cmd_, sizeof(control_cmd));
+        // else if ( (control_cmd_[0]>10) && (control_cmd_[1]<0.5) )
+        // {
+        //     //cout<<"======================================="<<endl;
+        //     //cout<<"Enter reset mode"<<endl;
+        //     motorspeed[0] = 0.0;  
+        //     motorspeed[1] = 0.0;  
+        //     motorspeed[2] = 0.0;  
+        //     motorspeed[3] = 0.0;
+        //     sendto(fd_gazebo_, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
+
+        //     control_cmd_[0] = 2; 
+        //     control_cmd_[1] = 0; 
+        //     control_cmd_[2] = 0; 
+        //     control_cmd_[3] = 0; 
+        //     control_cmd_[4] = 0;
+        //     sleep(3);
+        //     for(int k_temp=1;k_temp<5;k_temp++)
+        //         queue_states_.wait_dequeue(state_full_structure);
+        //     memcpy(state_full, state_full_structure.data, sizeof(state_full));
+        // }
 
         memcpy(position, state_full, sizeof(position));
         memcpy(orientation_q, state_full+3,  sizeof(orientation_q));
         memcpy(vel, state_full+7, sizeof(vel));
         memcpy(omega, state_full+10, sizeof(omega));
 
-        //cout<<"Altitude: "<<position[2]<<endl;
-        //cout<<"Velocity: "<<std::fixed<<std::setprecision(2)<<"["<<vel[0]<<", "<<vel[1]<<", "<<vel[2]<<"]"<<endl;
 
-        //if (fmod(prev_sim_time_,1.0) == 0)      // fmod is the operator % for double
-        /*{
-            cout<<"============================================================="<<endl;
-            cout<<"position = ["<<position[0]<<", "<<position[1]<<", "<<position[2]<<"]"<<endl;
-            cout<<"orientation_q = ["<<orientation_q[0]<<", "<<orientation_q[1]<<", "<<orientation_q[2]<<", "<<orientation_q[3]<<"]"<<endl;
-            cout<<"vel = ["<<vel[0]<<", "<<vel[1]<<", "<<vel[2]<<"]"<<endl;
-            cout<<"omega = ["<<omega[0]<<", "<<omega[1]<<", "<<omega[2]<<"]"<<endl;
-        }*/
-        //cout << "vx = " << control_cmd[1] << endl;
-        //cout << "vz = " << control_cmd[3] << endl;
 
         type = control_cmd[0];
         math::quat2rotm_Rodrigue((double *) R, orientation_q);
@@ -338,7 +343,13 @@ void Controller::controlThread()
                                        
             math::matTimesScalar(tmp24, e_x, -kp_x, 3, 1);                     // -k_x * e_x
             math::matTimesScalar(tmp21, e_v, -kp_v, 3, 1);                     // -k_v * e_v
-            tmp22[0] = 0; tmp22[1] = 0; tmp22[2] = f_hover;        // mg * e_3
+
+
+            tmp22[0] = 0; 
+            tmp22[1] = 0; 
+            tmp22[2] = f_hover;        // mg * e_3
+
+
             math::matAddsMat(tmp23, tmp21, tmp22, 3, 1);                      // k_v*e_v + mg*e_3
             math::matAddsMat(tmp25, tmp23, tmp24, 3, 1);                      // -k_x*e_x + -k_v*e_v + mg*e_3
             if (tmp25[2]<0)
@@ -445,7 +456,9 @@ void Controller::controlThread()
         }
         if(type == 3 || type == 4)
         {
-            motorspeed_square[0]=(motorspeed_square[0]+motorspeed_square[2])/2;     motorspeed_square[2]=motorspeed_square[0];
+            motorspeed_square[0]= (motorspeed_square[0]+motorspeed_square[2])/2;     
+            motorspeed_square[2]=motorspeed_square[0];
+
             //motorspeed_square[1]=2*motorspeed_square[1];     motorspeed_square[3]=2*motorspeed_square[3];
             /*for(int k_ms_s=0;k_ms_s<4;k_ms_s++)
             {
@@ -455,11 +468,16 @@ void Controller::controlThread()
                     motorspeed_square[k_ms_s] = 4 * motorspeed_square[k_ms_s];
             }*/
             //motorspeed_square[0] = 3052*3052;   motorspeed_square[2] = 3052*3052;
+
+
             if(R[2][2]<0)
             {
                 /*if (k_run%100 == 1)
                     cout<<"Shutdown motors"<<endl;*/
-                motorspeed_square[0] = 0;   motorspeed_square[1] = 0;   motorspeed_square[2] = 0;   motorspeed_square[3] = 0;
+                motorspeed_square[0] = 0;   
+                motorspeed_square[1] = 0;   
+                motorspeed_square[2] = 0;   
+                motorspeed_square[3] = 0;
             }
             
         }
@@ -482,6 +500,7 @@ void Controller::controlThread()
         motorspeed[1] = sqrt(motorspeed_square[1]);
         motorspeed[2] = sqrt(motorspeed_square[2]);
         motorspeed[3] = sqrt(motorspeed_square[3]);
+
         double ms_min = 0.0;
         double ms_max = 3420.0;
         for (int i =0; i<4;i++) { // clamp motor speed (based on max thrust (0.6) speed)
