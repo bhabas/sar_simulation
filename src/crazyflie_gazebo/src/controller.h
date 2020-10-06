@@ -61,5 +61,5 @@ class Controller
         moodycamel::BlockingReaderWriterQueue<StateFull> queue_states_;
         moodycamel::BlockingReaderWriterQueue<MotorCommand> queue_motorspeed_;
         
-        double control_cmd_[5] = {2,0,0,0.0,0};
+        double control_cmd_recvd[5] = {2,0,0,0.0,0};
 };
