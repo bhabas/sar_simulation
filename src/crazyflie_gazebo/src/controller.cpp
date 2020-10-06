@@ -71,6 +71,21 @@ void Controller::Load(int port_number_gazebo)
     queue_motorspeed_ = moodycamel::BlockingReaderWriterQueue<MotorCommand>(5);
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void Controller::recvThread_gazebo()
 {
     double state_full[14];
@@ -95,6 +110,7 @@ void Controller::recvThread_gazebo()
     }
 }
 
+
 void Controller::sendThread_gazebo()
 {
     float motorspeed[4];
@@ -114,6 +130,23 @@ void Controller::sendThread_gazebo()
     }
     
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void Controller::recvThread_rl()
 {
@@ -148,6 +181,25 @@ void Controller::recvThread_rl()
     }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void Controller::controlThread()
 {   
     typedef Matrix<double, 3, 3, RowMajor> RowMatrix3d; 
@@ -158,7 +210,8 @@ void Controller::controlThread()
     float motorspeed[4];
     MotorCommand motorspeed_structure;
     double control_cmd[5];
-    int type =5;
+    int type = 5;
+    double control_vals[3];
 
     // State Declarations
     double position[3];
@@ -258,6 +311,28 @@ void Controller::controlThread()
 
 
 
+    // =====================================
+    //        Vector -> Array Example
+    // =====================================
+    // double a[3] = {1,2,3};
+    // RowVector3d aE(1,2,3);
+
+    // cout << "C array: " << a[0] << " " << a[1] << " " <<  a[2] << " " << a << endl;
+    // cout << "Eig Vector: " << aE << endl;
+
+    // Map<RowVector3d>(&a[0],1,3) = aE;
+    // cout << "C array: " << a[0] << " " << a[1] << " " <<  a[2] << " " << a << endl;
+
+
+
+
+
+    // double *a2; 
+    // a2 = aE.data();
+    // cout << "C array: " << a2[0] << " " << a2[1] << " " <<  a2[2] << " " << a << endl;
+
+
+
     double f_thrust =0;
     // might need to adjust weight to real case (sdf file too)
     double f_hover = (0.026 + 0.00075*4)*9.8066;
@@ -265,8 +340,7 @@ void Controller::controlThread()
 
     Map<RowVector3d> v1(tau); // uses v1 as a Vector3d object
     Map<Vector3d> v2(tau);
-    cout << v1 << endl;
-    cout << v2 << endl;
+  
 
 
     double FT[4];
@@ -283,12 +357,16 @@ void Controller::controlThread()
     {
         k_run++;
 
+        // Define state_full from recieved Gazebo states
         queue_states_.wait_dequeue(state_full_structure);
         memcpy(state_full, state_full_structure.data, sizeof(state_full));
 
 
-        if (control_cmd_recvd[0]<10) // What does this do?
+        // Define control_cmd from recieved control_cmd
+        if (control_cmd_recvd[0]<10) // There is a case where control_cmd_recvd becomes 11 but I'm not sure why?
             memcpy(control_cmd, control_cmd_recvd, sizeof(control_cmd)); // Rename received control_cmd for reasons
+
+
         // else if ( (control_cmd_recvd[0]>10) && (control_cmd_recvd[1]<0.5) )
         // {
         //     //cout<<"======================================="<<endl;
@@ -310,48 +388,90 @@ void Controller::controlThread()
         //     memcpy(state_full, state_full_structure.data, sizeof(state_full));
         // }
 
+
+        // Seperate state values from state_full
         memcpy(position, state_full, sizeof(position));
         memcpy(orientation_q, state_full+3,  sizeof(orientation_q));
         memcpy(vel, state_full+7, sizeof(vel));
         memcpy(omega, state_full+10, sizeof(omega));
 
+        // Redefine state values in vector format
+        Map<RowVector3d> pos_vec(position);
+        Map<RowVector3d> att_vec(orientation_q);
+        Map<RowVector3d> vel_vec(vel);
+        Map<RowVector3d> omega_vec(omega);
 
+        
 
         type = control_cmd[0];
+        // define control vals from 1:3 in control array and map to vector
+        memcpy(control_vals, control_cmd+1, sizeof(control_vals)); 
+        Map<RowVector3d> control_valsE(control_vals);
+
+        RowVector3d p_d_Eig; // Pose-desired
+        RowVector3d e_x_Eig; // Pose-Error
+
+        RowVector3d v_d_Eig; // Vel-desired
+        RowVector3d e_v_Eig; // Vel-error
+
+
+        double e_x[3];
+
+
         math::quat2rotm_Rodrigue((double *) R, orientation_q);
         if (type == 1 || type == 2)
         {
-            if (type==1)    // position control
+            if (type==1) // position error calc 
             {
-                p_d[0] = control_cmd[1];    
-                p_d[1] = control_cmd[2];    
-                p_d[2] = control_cmd[3];
-                math::matAddsMat(e_x, position, p_d, 3, 2);       // e_x = pos - p_d
-                memcpy(e_v, vel, sizeof(vel));            // e_v = v - v_d
+                
+                // Remove?
+
+                // // // p_d[0] = control_cmd[1];    
+                // // // p_d[1] = control_cmd[2];    
+                // // // p_d[2] = control_cmd[3];
+                // // // math::matAddsMat(e_x, position, p_d, 3, 2);       // e_x = pos - p_d
+                // // // memcpy(e_v, vel, sizeof(vel));            // e_v = v - v_d
+
+                p_d_Eig = control_valsE; // Set desired position from thread
+                e_x_Eig = pos_vec - p_d_Eig; //  Position Error
 
             }
-            else            // velocity control
-            {
-                v_d[0] = control_cmd[1];    
-                v_d[1] = control_cmd[2];    
-                v_d[2] = control_cmd[3];
-                e_x[0]=0; e_x[1]=0; e_x[2]=0;
-                // myMemCpy(e_x, position, sizeof(position));              // e_x = pos - p_d
-                math::matAddsMat(e_v, vel, v_d, 3, 2);                        // e_v = v - v_d
+            else  // velocity error calc
+            {   
+                // Not sure why this is here?
+                // // // myMemCpy(e_x, position, sizeof(position));              // e_x = pos - p_d
+                // // // e_x[0]=0; 
+                // // // e_x[1]=0; 
+                // // // e_x[2]=0;
+
+              
+
+                v_d_Eig = control_valsE; // velocity desired
+                e_v_Eig = vel_vec - v_d_Eig; // velocity error 
+                
 
             }
-                                       
-            math::matTimesScalar(tmp24, e_x, -kp_x, 3, 1);                     // -k_x * e_x
-            math::matTimesScalar(tmp21, e_v, -kp_v, 3, 1);                     // -k_v * e_v
+
+            RowVector3d tmp21_Eig;
+            RowVector3d tmp24_Eig;
+
+
+            tmp24_Eig = -kp_x*e_x_Eig;
+            Map<RowVector3d>(&tmp24[0],1,3) = tmp24_Eig;
+            tmp21_Eig = -kp_v*e_v_Eig; 
+            Map<RowVector3d>(&tmp21[0],1,3) = tmp21_Eig;
+
 
 
             tmp22[0] = 0; 
             tmp22[1] = 0; 
             tmp22[2] = f_hover;        // mg * e_3
 
-
             math::matAddsMat(tmp23, tmp21, tmp22, 3, 1);                      // k_v*e_v + mg*e_3
             math::matAddsMat(tmp25, tmp23, tmp24, 3, 1);                      // -k_x*e_x + -k_v*e_v + mg*e_3
+
+            
+
             if (tmp25[2]<0)
                 tmp25[2] = 1e-2;
             math::matTimesScalar(b3_d, tmp25, (double)sqrt(math::dot(tmp25, tmp25, 3)), 3, 2);     // normalize
@@ -533,9 +653,9 @@ int main()
     cout<<result[1][0]<<", "<<result[1][1]<<", "<<result[1][2]<<endl;
     cout<<result[2][0]<<", "<<result[2][1]<<", "<<result[2][2]<<endl;*/
 
-    Matrix2d a;
-    a << 1,2,3,4;
-    cout << a << endl;
+
+    
+
 
     while(1)
     {

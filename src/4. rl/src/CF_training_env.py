@@ -63,7 +63,7 @@ alpha_mu = np.array([[0.2],[0.2]])#[2.0]] )#,[0.1]])
 alpha_sigma = np.array([[0.1],[0.1]  ])#, [1.0]])#,[0.05]])
 
 ## Initial parameters for gaussian function
-mu = np.array([[5.0],[-5.0] , [1.5] ])# ,[1.5]])#,[1.5]])   # Initial estimates of mu: 
+mu = np.array([[5.0],[-10.0], [1.5] ])# ,[1.5]])#,[1.5]])   # Initial estimates of mu: 
 sigma = np.array([[1.5],[1.5] ,[1.0] ])# ,[0.75]])      # Initial estimates of sigma: 
 
 # noise tests all started at:
@@ -75,7 +75,7 @@ sigma = np.array([[1.5],[1.5] ,[1.0] ])# ,[0.75]])      # Initial estimates of s
 #agent = rlEM_PEPGAgent(mu,sigma,n_rollout=5)
 #agent = rlEM_OutlierAgent(mu,sigma,n_rollout=5) # diverges?
 #agent = rlEM_PEPG_CovAgent(mu,sigma,n_rollout=5)
-agent = rlEMsys_PEPGAgent(mu,sigma,n_rollout=5)
+agent = rlEMsys_PEPGAgent(mu,sigma,n_rollout=2)
 
 # ============================
 ##           CMA 
