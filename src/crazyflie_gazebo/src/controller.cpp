@@ -234,6 +234,8 @@ void Controller::controlThread()
         std::memcpy(vel, state_full+7, sizeof(vel));
         std::memcpy(omega, state_full+10, sizeof(omega));
 
+        std::cout << "this is another test" << std::endl;
+
         //std::cout<<"Altitude: "<<position[2]<<std::endl;
         //std::cout<<"Velocity: "<<std::fixed<<std::setprecision(2)<<"["<<vel[0]<<", "<<vel[1]<<", "<<vel[2]<<"]"<<std::endl;
 
