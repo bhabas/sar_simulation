@@ -9,6 +9,7 @@ double clamp(double value, double min, double max) {
 }
 void hat(double *result, double *vector)
 {
+    // Pass in vector and get a skew-symmetric matrix representation
     double m[3][3] = {{0,0,0}, {0,0,0}, {0,0,0}};
 
     m[2][1] = vector[0];
@@ -23,11 +24,14 @@ void hat(double *result, double *vector)
 
 void dehat(double *result, double *matrix)
 {
+    // Pass in skew symmetric matrix and get a vector
     double vector[3];
     double tmp[3][3];
 
     std::memcpy(tmp, matrix, sizeof(tmp));
 
+    // why double the value and take average and not just the first value?
+    // a[0] = a1-(-a1)/2 vs a[0] = a1
     vector[0] = (tmp[2][1] - tmp[1][2])/2;
     vector[1] = (tmp[0][2] - tmp[2][0])/2;
     vector[2] = (tmp[1][0] - tmp[0][1])/2;
