@@ -4,6 +4,9 @@
 #include <math.h>
 #include <algorithm>
 #include <stdint.h>
+#include <Eigen/Dense>
+
+using namespace Eigen;
 
 void Controller::Load(int port_number_gazebo)
 {
@@ -447,6 +450,10 @@ int main()
     std::cout<<result[0][0]<<", "<<result[0][1]<<", "<<result[0][2]<<std::endl;
     std::cout<<result[1][0]<<", "<<result[1][1]<<", "<<result[1][2]<<std::endl;
     std::cout<<result[2][0]<<", "<<result[2][1]<<", "<<result[2][2]<<std::endl;*/
+
+    Matrix2d a;
+    a << 1,2,3,4;
+    std::cout << a << std::endl;
 
     while(1)
     {
