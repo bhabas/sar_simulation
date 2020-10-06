@@ -349,7 +349,7 @@ void Controller::controlThread()
 
     double tmp1[3][3];  double tmp2[3][3];  double tmp3[3][3];  double tmp4[3][3];  double tmp5[3][3];  double tmp6[3][3];
     double tmp7[3]; double tmp8[3]; double tmp9[3]; double tmp10[3];    double tmp11[3][3]; double tmp12[3];    double tmp13[3];    double tmp14[3];
-    double tmp21[3];    double tmp22[3];    double tmp23[3];    double tmp24[3];    double tmp25[3];
+    double tmp21[3];    double tmp22[3];    double tmp23[3];    double tmp24[3];    double f_total_thrust[3];
 
     unsigned int k_run = 0;
 
@@ -408,6 +408,9 @@ void Controller::controlThread()
         memcpy(control_vals, control_cmd+1, sizeof(control_vals)); 
         Map<RowVector3d> control_valsE(control_vals);
 
+
+
+        // These declarations will be fixed later ====================
         RowVector3d p_d_Eig; // Pose-desired
         RowVector3d e_x_Eig; // Pose-Error
 
@@ -423,9 +426,7 @@ void Controller::controlThread()
         {
             if (type==1) // position error calc 
             {
-                
                 // Remove?
-
                 // // // p_d[0] = control_cmd[1];    
                 // // // p_d[1] = control_cmd[2];    
                 // // // p_d[2] = control_cmd[3];
@@ -434,7 +435,6 @@ void Controller::controlThread()
 
                 p_d_Eig = control_valsE; // Set desired position from thread
                 e_x_Eig = pos_vec - p_d_Eig; //  Position Error
-
             }
             else  // velocity error calc
             {   
@@ -443,38 +443,25 @@ void Controller::controlThread()
                 // // // e_x[0]=0; 
                 // // // e_x[1]=0; 
                 // // // e_x[2]=0;
-
-              
-
                 v_d_Eig = control_valsE; // velocity desired
                 e_v_Eig = vel_vec - v_d_Eig; // velocity error 
                 
-
             }
-
-            RowVector3d tmp21_Eig;
-            RowVector3d tmp24_Eig;
-
-
-            tmp24_Eig = -kp_x*e_x_Eig;
-            Map<RowVector3d>(&tmp24[0],1,3) = tmp24_Eig;
-            tmp21_Eig = -kp_v*e_v_Eig; 
-            Map<RowVector3d>(&tmp21[0],1,3) = tmp21_Eig;
+            e_x_Eig << 0,0,0; // Errors will need to be set to zero when not being used ============
 
 
 
-            tmp22[0] = 0; 
-            tmp22[1] = 0; 
-            tmp22[2] = f_hover;        // mg * e_3
+            // Calculate the Total Thrust (f)
 
-            math::matAddsMat(tmp23, tmp21, tmp22, 3, 1);                      // k_v*e_v + mg*e_3
-            math::matAddsMat(tmp25, tmp23, tmp24, 3, 1);                      // -k_x*e_x + -k_v*e_v + mg*e_3
+            RowVector3d e3_Eig(0,0,1);
+            RowVector3d f_Eig; // total thrust
+     
+            f_Eig = -kp_x*e_x_Eig + -kp_v*e_v_Eig + f_hover*e3_Eig;
+            Map<RowVector3d>(&f_total_thrust[0],1,3) = f_Eig; // converts eigen matrix to c++ array
 
-            
-
-            if (tmp25[2]<0)
-                tmp25[2] = 1e-2;
-            math::matTimesScalar(b3_d, tmp25, (double)sqrt(math::dot(tmp25, tmp25, 3)), 3, 2);     // normalize
+            if (f_total_thrust[2]<0)
+                f_total_thrust[2] = 1e-2;
+            math::matTimesScalar(b3_d, f_total_thrust, (double)sqrt(math::dot(f_total_thrust, f_total_thrust, 3)), 3, 2);     // normalize
             b1_d[0] = 1; b1_d[1] = 0; b1_d[2] = 0;
             math::hat((double *) b3_d_hat, b3_d);
             math::matTimesVec(b2_d,(double *) b3_d_hat, b1_d, 3);
@@ -495,7 +482,7 @@ void Controller::controlThread()
             memcpy(e_omega, omega, sizeof(omega));
 
             double b3[3] = {R[0][2], R[1][2], R[2][2]};
-            f_thrust = math::dot(tmp25, b3, 3);
+            f_thrust = math::dot(f_total_thrust, b3, 3);
 
             math::matTimesScalar(tmp8, e_R, -kp_R12, 3, 1);                  // -k_R * e_R
             math::matTimesScalar(tmp9, e_omega, -kd_R12, 3, 1);          // -k_omega * e_omega
