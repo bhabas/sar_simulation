@@ -7,6 +7,7 @@
 #include <Eigen/Dense>
 
 using namespace Eigen;
+using namespace std;
 
 void Controller::Load(int port_number_gazebo)
 {
@@ -14,9 +15,9 @@ void Controller::Load(int port_number_gazebo)
     fd_gazebo_SNDBUF_ = 16;         // 16 bytes is 4 float
     fd_gazebo_RCVBUF_ = 112;        // 112 bytes is 14 double
     if (setsockopt(fd_gazebo_, SOL_SOCKET, SO_SNDBUF, &fd_gazebo_SNDBUF_, sizeof(fd_gazebo_SNDBUF_))<0)
-        std::cout<<"fd_gazebo_ setting SNDBUF failed"<<std::endl;
+        cout<<"fd_gazebo_ setting SNDBUF failed"<<endl;
     if (setsockopt(fd_gazebo_, SOL_SOCKET, SO_RCVBUF, &fd_gazebo_RCVBUF_, sizeof(fd_gazebo_RCVBUF_))<0)
-        std::cout<<"fd_gazebo_ setting RCVBUF failed"<<std::endl;
+        cout<<"fd_gazebo_ setting RCVBUF failed"<<endl;
     port_number_gazebo_ = port_number_gazebo;
 
     memset(&sockaddr_local_gazebo_, 0, sizeof(sockaddr_local_gazebo_));
@@ -25,9 +26,9 @@ void Controller::Load(int port_number_gazebo)
     sockaddr_local_gazebo_.sin_port = htons(18070);
     
     if (bind(fd_gazebo_, (struct sockaddr*)&sockaddr_local_gazebo_, sizeof(sockaddr_local_gazebo_))<0)
-        std::cout<<"Socket binding to Gazebo failed"<<std::endl;
+        cout<<"Socket binding to Gazebo failed"<<endl;
     else
-        std::cout<<"Socket binding to Gazebo succeeded"<<std::endl; 
+        cout<<"Socket binding to Gazebo succeeded"<<endl; 
 
     memset(&sockaddr_remote_gazebo_, 0, sizeof(sockaddr_remote_gazebo_));
     sockaddr_remote_gazebo_.sin_family = AF_INET;
@@ -40,25 +41,25 @@ void Controller::Load(int port_number_gazebo)
     for(int k=0; k<2; k++)
         len = sendto(fd_gazebo_, buf, sizeof(buf),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sizeof(sockaddr_remote_gazebo_));
     if(len>0)
-        std::cout<<"Send initial motor speed "<<len<<" byte to Gazebo Succeeded! Avoiding threads mutual locking"<<std::endl;
+        cout<<"Send initial motor speed "<<len<<" byte to Gazebo Succeeded! Avoiding threads mutual locking"<<endl;
     else
-        std::cout<<"Send initial motor speed to Gazebo FAILED! Threads will mutual lock"<<std::endl;
+        cout<<"Send initial motor speed to Gazebo FAILED! Threads will mutual lock"<<endl;
 
     fd_rl_ = socket(AF_INET, SOCK_DGRAM, 0);
     fd_rl_SNDBUF_ = 112;        // 112 bytes is 14 double
     fd_rl_RCVBUF_ = 40;         // 40 bytes is 5 double
     if (setsockopt(fd_rl_, SOL_SOCKET, SO_SNDBUF, &fd_rl_SNDBUF_, sizeof(fd_rl_SNDBUF_))<0)
-        std::cout<<"fd_rl_ setting SNDBUF failed"<<std::endl;
+        cout<<"fd_rl_ setting SNDBUF failed"<<endl;
     if (setsockopt(fd_rl_, SOL_SOCKET, SO_RCVBUF, &fd_rl_RCVBUF_, sizeof(fd_rl_RCVBUF_))<0)
-        std::cout<<"fd_rl_ setting RCVBUF failed"<<std::endl;
+        cout<<"fd_rl_ setting RCVBUF failed"<<endl;
     memset(&sockaddr_local_rl_, 0, sizeof(sockaddr_local_rl_));
     sockaddr_local_rl_.sin_family = AF_INET;
     sockaddr_local_rl_.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("127.0.0.1");
     sockaddr_local_rl_.sin_port = htons(18060);
     if (bind(fd_rl_, (struct sockaddr*)&sockaddr_local_rl_, sizeof(sockaddr_local_rl_))<0)
-        std::cout<<"Socket binding to RL failed"<<std::endl;
+        cout<<"Socket binding to RL failed"<<endl;
     else
-        std::cout<<"Socket binding to RL succeeded"<<std::endl;
+        cout<<"Socket binding to RL succeeded"<<endl;
     
     isRunning_ = true;
     receiverThread_gazebo_ = std::thread(&Controller::recvThread_gazebo, this);
@@ -77,18 +78,18 @@ void Controller::recvThread_gazebo()
 
     while(isRunning_)
     {
-        //std::cout<<"[recvThread_gazebo] Receiving crazyflie states from Gazebo"<<std::endl;
+        //cout<<"[recvThread_gazebo] Receiving crazyflie states from Gazebo"<<endl;
         int len = recvfrom(fd_gazebo_, state_full, sizeof(state_full),0, (struct sockaddr*)&sockaddr_remote_gazebo_, &sockaddr_remote_gazebo_len_);
 
         /*if(len>0)
         {
-            std::cout<<"Enqueue full State:";
+            cout<<"Enqueue full State:";
             for(int k=0;k<13;k++)
-                std::cout<<state_full[k]<<", ";
-            std::cout<<"\n";
+                cout<<state_full[k]<<", ";
+            cout<<"\n";
         }*/
 
-        std::memcpy(state_full_structure.data, state_full, sizeof(state_full));
+        memcpy(state_full_structure.data, state_full, sizeof(state_full));
         queue_states_.enqueue(state_full_structure);
         sendto(fd_rl_, state_full, sizeof(state_full),0, (struct sockaddr*)&sockaddr_remote_rl_, sockaddr_remote_rl_len_);
     }
@@ -102,14 +103,14 @@ void Controller::sendThread_gazebo()
     while(isRunning_)
     {
         queue_motorspeed_.wait_dequeue(motorspeed_structure);
-        std::memcpy(motorspeed, motorspeed_structure.data, sizeof(motorspeed));
+        memcpy(motorspeed, motorspeed_structure.data, sizeof(motorspeed));
 
-        //std::cout<<"[recvThread_rl] sending motor speed to Gazebo"<<std::endl;
+        //cout<<"[recvThread_rl] sending motor speed to Gazebo"<<endl;
         int len=sendto(fd_gazebo_, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
         if(len>0)
-            std::cout<<"[recvThread_rl] sent motor speed ["<<motorspeed[0]<<", "<<motorspeed[1]<<", "<<motorspeed[2]<<", "<<motorspeed[3]<<"]"<<std::endl;
+            cout<<"[recvThread_rl] sent motor speed ["<<motorspeed[0]<<", "<<motorspeed[1]<<", "<<motorspeed[2]<<", "<<motorspeed[3]<<"]"<<endl;
         else
-            std::cout<<"[recvThread_rl] sending motor speed to Gazebo FAILED!"<<std::endl;
+            cout<<"[recvThread_rl] sending motor speed to Gazebo FAILED!"<<endl;
     }
     
 }
@@ -120,22 +121,22 @@ void Controller::recvThread_rl()
 
     while(isRunning_)
     {
-        //std::cout<<"[recvThread_rl] Receiving command from RL"<<std::endl;
+        //cout<<"[recvThread_rl] Receiving command from RL"<<endl;
         int len = recvfrom(fd_rl_, control_cmd_, sizeof(control_cmd_),0, (struct sockaddr*)&sockaddr_remote_rl_, &sockaddr_remote_rl_len_);
 
         /*if(len>0)
         {
-            std::cout<<"Enqueue control command: ";
+            cout<<"Enqueue control command: ";
             for(int k=0;k<5;k++)
-                std::cout<<control_cmd_[k]<<", ";
-            std::cout<<"\n";
+                cout<<control_cmd_[k]<<", ";
+            cout<<"\n";
         }*/
         if(control_cmd_[0]>10)
         {
             
             motorspeed_fake[0] = -control_cmd_[0];
             motorspeed_fake[1] = control_cmd_[1];
-            //std::cout<<"Send sticky command command: "<< motorspeed_fake[0]<<", "<<motorspeed_fake[1]<<std::endl;
+            //cout<<"Send sticky command command: "<< motorspeed_fake[0]<<", "<<motorspeed_fake[1]<<endl;
             sendto(fd_gazebo_, motorspeed_fake, sizeof(motorspeed_fake),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
 
             /*if (control_cmd_[1]<0.5)     // reset_world signal
@@ -222,13 +223,13 @@ void Controller::controlThread()
         k_run++;
 
         queue_states_.wait_dequeue(state_full_structure);
-        std::memcpy(state_full, state_full_structure.data, sizeof(state_full));
+        memcpy(state_full, state_full_structure.data, sizeof(state_full));
         if (control_cmd_[0]<10)
-            std::memcpy(control_cmd, control_cmd_, sizeof(control_cmd));
+            memcpy(control_cmd, control_cmd_, sizeof(control_cmd));
         else if ( (control_cmd_[0]>10) && (control_cmd_[1]<0.5) )
         {
-            //std::cout<<"======================================="<<std::endl;
-            //std::cout<<"Enter reset mode"<<std::endl;
+            //cout<<"======================================="<<endl;
+            //cout<<"Enter reset mode"<<endl;
             motorspeed[0] = 0.0;  
             motorspeed[1] = 0.0;  
             motorspeed[2] = 0.0;  
@@ -243,27 +244,27 @@ void Controller::controlThread()
             sleep(3);
             for(int k_temp=1;k_temp<5;k_temp++)
                 queue_states_.wait_dequeue(state_full_structure);
-            std::memcpy(state_full, state_full_structure.data, sizeof(state_full));
+            memcpy(state_full, state_full_structure.data, sizeof(state_full));
         }
 
-        std::memcpy(position, state_full, sizeof(position));
-        std::memcpy(orientation_q, state_full+3,  sizeof(orientation_q));
-        std::memcpy(vel, state_full+7, sizeof(vel));
-        std::memcpy(omega, state_full+10, sizeof(omega));
+        memcpy(position, state_full, sizeof(position));
+        memcpy(orientation_q, state_full+3,  sizeof(orientation_q));
+        memcpy(vel, state_full+7, sizeof(vel));
+        memcpy(omega, state_full+10, sizeof(omega));
 
-        //std::cout<<"Altitude: "<<position[2]<<std::endl;
-        //std::cout<<"Velocity: "<<std::fixed<<std::setprecision(2)<<"["<<vel[0]<<", "<<vel[1]<<", "<<vel[2]<<"]"<<std::endl;
+        //cout<<"Altitude: "<<position[2]<<endl;
+        //cout<<"Velocity: "<<std::fixed<<std::setprecision(2)<<"["<<vel[0]<<", "<<vel[1]<<", "<<vel[2]<<"]"<<endl;
 
         //if (fmod(prev_sim_time_,1.0) == 0)      // fmod is the operator % for double
         /*{
-            std::cout<<"============================================================="<<std::endl;
-            std::cout<<"position = ["<<position[0]<<", "<<position[1]<<", "<<position[2]<<"]"<<std::endl;
-            std::cout<<"orientation_q = ["<<orientation_q[0]<<", "<<orientation_q[1]<<", "<<orientation_q[2]<<", "<<orientation_q[3]<<"]"<<std::endl;
-            std::cout<<"vel = ["<<vel[0]<<", "<<vel[1]<<", "<<vel[2]<<"]"<<std::endl;
-            std::cout<<"omega = ["<<omega[0]<<", "<<omega[1]<<", "<<omega[2]<<"]"<<std::endl;
+            cout<<"============================================================="<<endl;
+            cout<<"position = ["<<position[0]<<", "<<position[1]<<", "<<position[2]<<"]"<<endl;
+            cout<<"orientation_q = ["<<orientation_q[0]<<", "<<orientation_q[1]<<", "<<orientation_q[2]<<", "<<orientation_q[3]<<"]"<<endl;
+            cout<<"vel = ["<<vel[0]<<", "<<vel[1]<<", "<<vel[2]<<"]"<<endl;
+            cout<<"omega = ["<<omega[0]<<", "<<omega[1]<<", "<<omega[2]<<"]"<<endl;
         }*/
-        //std::cout << "vx = " << control_cmd[1] << std::endl;
-        //std::cout << "vz = " << control_cmd[3] << std::endl;
+        //cout << "vx = " << control_cmd[1] << endl;
+        //cout << "vz = " << control_cmd[3] << endl;
 
         type = control_cmd[0];
         math::quat2rotm_Rodrigue((double *) R, orientation_q);
@@ -387,7 +388,7 @@ void Controller::controlThread()
         FT[3] = tau[2];
         math::matTimesVec(f, (double *) Gamma_inv, FT, 4);
         math::matTimesScalar(motorspeed_square, f, c_T, 4, 2);
-        //std::cout << motorspeed_square[0] << std::endl;
+        //cout << motorspeed_square[0] << endl;
         for(int k_ms_s=0;k_ms_s<4;k_ms_s++)
         {
             if(motorspeed_square[k_ms_s]<0) {
@@ -411,7 +412,7 @@ void Controller::controlThread()
             if(R[2][2]<0)
             {
                 /*if (k_run%100 == 1)
-                    std::cout<<"Shutdown motors"<<std::endl;*/
+                    cout<<"Shutdown motors"<<endl;*/
                 motorspeed_square[0] = 0;   motorspeed_square[1] = 0;   motorspeed_square[2] = 0;   motorspeed_square[3] = 0;
             }
             
@@ -424,12 +425,12 @@ void Controller::controlThread()
                     motorspeed_square[k_ms_s] = 0;
             }
             if ( k_run%50 == 1 )
-                std::cout<<"motor speed ["<< motorspeed[0]<<", "<< motorspeed[1]<<", "<< motorspeed[2]<<", "<<motorspeed[3]<<"]"<<std::endl;
+                cout<<"motor speed ["<< motorspeed[0]<<", "<< motorspeed[1]<<", "<< motorspeed[2]<<", "<<motorspeed[3]<<"]"<<endl;
         }*/
 
-        //std::cout << "f_thrust = " << f_thrust << std::endl;
-        //std::cout << "tau1  = " << tau[0] << " \t ta2 = " << tau[1] << std::endl;
-        //std::cout << "thrust = " << f_thrust << " clamped = " << f_clamped << std::endl;
+        //cout << "f_thrust = " << f_thrust << endl;
+        //cout << "tau1  = " << tau[0] << " \t ta2 = " << tau[1] << endl;
+        //cout << "thrust = " << f_thrust << " clamped = " << f_clamped << endl;
         
         motorspeed[0] = sqrt(motorspeed_square[0]);
         motorspeed[1] = sqrt(motorspeed_square[1]);
@@ -440,11 +441,11 @@ void Controller::controlThread()
         for (int i =0; i<4;i++) { // clamp motor speed (based on max thrust (0.6) speed)
             motorspeed[i] = math::clamp(motorspeed[i],ms_min,ms_max);
         }
-        // std::cout causing wierd behavior?????
+        // cout causing wierd behavior?????
         //if ( k_run%50 == 1 ) {
-        //        std::cout<<"motor speed ["<< motorspeed[0]<<", "<< motorspeed[1]<<", "<< motorspeed[2]<<", "<<motorspeed[3]<<"]"<<std::endl;
+        //        cout<<"motor speed ["<< motorspeed[0]<<", "<< motorspeed[1]<<", "<< motorspeed[2]<<", "<<motorspeed[3]<<"]"<<endl;
         //}   
-        //std::memcpy(motorspeed_structure.data, motorspeed, sizeof(motorspeed));
+        //memcpy(motorspeed_structure.data, motorspeed, sizeof(motorspeed));
         //queue_motorspeed_.enqueue(motorspeed_structure);
         sendto(fd_gazebo_, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
     
@@ -462,14 +463,14 @@ int main()
     double quat[4] = {9,7,3,7};
     math::quat2rotm_Rodrigue((double *) result, quat);
 
-    std::cout<<"Rotation matrix is :"<<std::endl;           // confirm result with matlab
-    std::cout<<result[0][0]<<", "<<result[0][1]<<", "<<result[0][2]<<std::endl;
-    std::cout<<result[1][0]<<", "<<result[1][1]<<", "<<result[1][2]<<std::endl;
-    std::cout<<result[2][0]<<", "<<result[2][1]<<", "<<result[2][2]<<std::endl;*/
+    cout<<"Rotation matrix is :"<<endl;           // confirm result with matlab
+    cout<<result[0][0]<<", "<<result[0][1]<<", "<<result[0][2]<<endl;
+    cout<<result[1][0]<<", "<<result[1][1]<<", "<<result[1][2]<<endl;
+    cout<<result[2][0]<<", "<<result[2][1]<<", "<<result[2][2]<<endl;*/
 
     Matrix2d a;
     a << 1,2,3,4;
-    std::cout << a << std::endl;
+    cout << a << endl;
 
     while(1)
     {
