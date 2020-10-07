@@ -397,26 +397,26 @@ void Controller::controlThread()
         memcpy(omega, state_full+10, sizeof(omega));
 
         // Redefine state values in vector format
-        Map<RowVector3d> pos_vec(position);
-        Map<RowVector3d> att_vec(orientation_q);
-        Map<RowVector3d> vel_vec(vel);
-        Map<RowVector3d> omega_vec(omega);
+        Map<Vector3d> pos_vec(position);
+        Map<Vector3d> att_vec(orientation_q);
+        Map<Vector3d> vel_vec(vel);
+        Map<Vector3d> omega_vec(omega);
 
         
 
         type = control_cmd[0];
         // define control vals from 1:3 in control array and map to vector
         memcpy(control_vals, control_cmd+1, sizeof(control_vals)); 
-        Map<RowVector3d> control_valsE(control_vals);
+        Map<Vector3d> control_valsE(control_vals);
 
 
 
         // These declarations will be fixed later ====================
-        RowVector3d p_d_Eig; // Pose-desired
-        RowVector3d e_x_Eig; // Pose-Error
+        Vector3d p_d_Eig; // Pose-desired
+        Vector3d e_x_Eig; // Pose-Error
 
-        RowVector3d v_d_Eig; // Vel-desired
-        RowVector3d e_v_Eig; // Vel-error
+        Vector3d v_d_Eig; // Vel-desired
+        Vector3d e_v_Eig; // Vel-error
 
 
         double e_x[3];
@@ -456,8 +456,8 @@ void Controller::controlThread()
 
             // =========== Calculate the Total Thrust (f) ===========
 
-            RowVector3d e3_Eig(0,0,1);
-            RowVector3d f_total_thrust_Eig; // total thrust
+            Vector3d e3_Eig(0,0,1);
+            Vector3d f_total_thrust_Eig; // total thrust
      
             f_total_thrust_Eig = -kp_x*e_x_Eig + -kp_v*e_v_Eig + f_hover*e3_Eig; // This is in terms of the global axes (e1,e2,e3) 
             Map<RowVector3d>(&f_total_thrust[0],1,3) = f_total_thrust_Eig; // converts eigen matrix to c++ array ===============
@@ -474,9 +474,9 @@ void Controller::controlThread()
 
 
             // =========== Calculate desired body fixed axes ===========
-            RowVector3d b1_d_Eig; // b1d: desired direction of body fixed axis in parametric form
-            RowVector3d b2_d_Eig;
-            RowVector3d b3_d_Eig;
+            Vector3d b1_d_Eig; // b1d: desired direction of body fixed axis in parametric form
+            Vector3d b2_d_Eig;
+            Vector3d b3_d_Eig;
 
             b1_d_Eig << 1,0,0; // What is this axis lining up with???? ===============
             b3_d_Eig = f_total_thrust_Eig.normalized(); 
@@ -499,7 +499,7 @@ void Controller::controlThread()
             RowMatrix3d e_R_Eig;
 
 
-            R_d_Eig << b1_d_Eig.transpose(),b2_d_Eig.transpose(),b3_d_Eig.transpose(); // concatinating column vectors of desired body axes
+            R_d_Eig << b1_d_Eig,b2_d_Eig,b3_d_Eig; // concatinating column vectors of desired body axes
 
 
 
