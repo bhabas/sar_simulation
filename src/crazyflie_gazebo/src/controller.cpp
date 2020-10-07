@@ -423,6 +423,8 @@ void Controller::controlThread()
 
 
         math::quat2rotm_Rodrigue((double *) R, orientation_q);
+        Map<RowMatrix3d> R_eig(&R[0][0]);
+
 
 
         if (type == 1 || type == 2)
@@ -472,7 +474,6 @@ void Controller::controlThread()
 
 
 
-
             // =========== Calculate desired body fixed axes ===========
             Vector3d b1_d_Eig; // b1d: desired direction of body fixed axis in parametric form
             Vector3d b2_d_Eig;
@@ -494,6 +495,8 @@ void Controller::controlThread()
 
 
 
+
+
             // =========== Calculate Rotational Error Matrix ===========
             Matrix3d R_d_Eig;
             RowMatrix3d e_R_Eig;
@@ -501,25 +504,12 @@ void Controller::controlThread()
 
             R_d_Eig << b1_d_Eig,b2_d_Eig,b3_d_Eig; // concatinating column vectors of desired body axes
 
+            e_R_Eig = 0.5*(R_d_Eig.transpose()*R_eig - R_eig.transpose()*R_d_Eig);        
+            Map<RowMatrix3d> (&tmp6[0][0],3,3) = e_R_Eig;
 
 
-            R_d[0][0] = b1_d[0];    R_d[0][1] = b2_d[0];    R_d[0][2] = b3_d[0];
-            R_d[1][0] = b1_d[1];    R_d[1][1] = b2_d[1];    R_d[1][2] = b3_d[1];
-            R_d[2][0] = b1_d[2];    R_d[2][1] = b2_d[2];    R_d[2][2] = b3_d[2];
-            
-            Map<RowMatrix3d> R_d2(&R_d[0][0]);
-            cout << "\n \n =====================\n \n" << endl;
-            cout << R_d2-R_d_Eig << endl;
-
-        
 
 
-            math::matTranspose((double *) tmp1,(double *) R_d, 3);                                // R_d'
-            math::matTranspose((double *) tmp2,(double *) R, 3);                                  // R'
-            math::matTimesMat((double *) tmp3,(double *) tmp1,(double *) R);                      // R_d' * R
-            math::matTimesMat((double *) tmp4,(double *) tmp2,(double *) R_d);                    // R' * R_d
-            math::matAddsMat((double *) tmp5,(double *) tmp3,(double *) tmp4, 3*3, 2);
-            math::matTimesScalar((double *) tmp6,(double *) tmp5, 0.5, 3*3, 1);
             math::dehat(e_R,(double *) tmp6);
             memcpy(e_omega, omega, sizeof(omega));
 
