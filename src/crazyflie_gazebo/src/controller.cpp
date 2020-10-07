@@ -452,10 +452,10 @@ void Controller::controlThread()
         memcpy(omega, state_full+10, sizeof(omega));
 
         // Redefine state values in vector format
-        Map<Vector3d> pos_vec(position);
-        Map<Vector3d> att_vec(orientation_q);
-        Map<Vector3d> vel_vec(vel);
-        Map<Vector3d> omega_vec(omega);
+        Map<Vector3d> pos_Eig(position);
+        Map<Vector3d> att_Eig(orientation_q);
+        Map<Vector3d> vel_Eig(vel);
+        Map<Vector3d> omega_Eig(omega);
 
         
 
@@ -477,6 +477,9 @@ void Controller::controlThread()
         double e_x[3];
 
 
+
+
+
         math::quat2rotm_Rodrigue((double *) R, orientation_q);
         Map<RowMatrix3d> R_eig(&R[0][0]);
 
@@ -486,27 +489,15 @@ void Controller::controlThread()
         {
             if (type==1) // position error calc 
             {
-                // Remove?
-                // // // p_d[0] = control_cmd[1];    
-                // // // p_d[1] = control_cmd[2];    
-                // // // p_d[2] = control_cmd[3];
-                // // // math::matAddsMat(e_x, position, p_d, 3, 2);       // e_x = pos - p_d
-                // // // memcpy(e_v, vel, sizeof(vel));            // e_v = v - v_d
-
                 p_d_Eig = control_valsE; // Set desired position from thread
-                e_x_Eig = pos_vec - p_d_Eig; //  Position Error
+                e_x_Eig = pos_Eig - p_d_Eig; //  Position Error
             }
             else  // velocity error calc
             {   
-                // Not sure why this is here?
-                // // // myMemCpy(e_x, position, sizeof(position));              // e_x = pos - p_d
-                // // // e_x[0]=0; 
-                // // // e_x[1]=0; 
-                // // // e_x[2]=0;
                 v_d_Eig = control_valsE; // velocity desired
-                e_v_Eig = vel_vec - v_d_Eig; // velocity error 
-                
+                e_v_Eig = vel_Eig - v_d_Eig; // velocity error 
             }
+
             e_x_Eig << 0,0,0; // Errors will need to be set to zero when not being used ============
 
 
@@ -563,25 +554,25 @@ void Controller::controlThread()
 
 
             
-
-
-
             memcpy(e_omega, omega, sizeof(omega)); // This doesnt make sense? =======================
+            Vector3d e_omega_Eig;
+            e_omega_Eig = omega_Eig; // This is wrong and purely temporary to keep consistent with the current controller =============
 
 
-            // =========== Calculate Moment Vector =========== //
 
+            // =========== Calculate Moment Vector (tau/M)=========== //
 
+            Vector3d tau_Eig;
+            Matrix3d J_Eig;
+            J_Eig<< 1.65717e-05, 0, 0,
+                    0, 1.66556e-05, 0,
+                    0, 0, 2.92617e-05;
 
-            math::matTimesScalar(tmp8, e_R, -kp_R12, 3, 1);              // -k_R * e_R
-            math::matTimesScalar(tmp9, e_omega, -kd_R12, 3, 1);          // -k_omega * e_omega
+            tau_Eig = -kp_R12*e_R_Eig + -kd_R12*e_omega_Eig + omega_Eig.cross(J_Eig*omega_Eig);
 
+            Map<RowVector3d>(&tau[0],1,3) = tau_Eig; // converts eigen matrix to c++ array ===============
+            math::matAddsMat(tau, tmp13, tmp12, 3, 1);                   // Moment Vector Tau
 
-            math::matTimesVec(tmp10, (double *) J, omega, 3);            // J * omega
-            math::hat((double *) tmp11, omega);                          // omega_hat
-            math::matTimesVec(tmp12, (double *) tmp11, tmp10, 3);        // omega x J*omega
-            math::matAddsMat(tmp13, tmp8, tmp9, 3, 1);
-            math::matAddsMat(tau, tmp13, tmp12, 3, 1); // Moment Vector Tau
 
 
 
@@ -596,7 +587,10 @@ void Controller::controlThread()
         {
             if (type == 3)          // attitude control
             {
-                eul[0] = control_cmd[1];    eul[1] = control_cmd[2];    eul[2] = control_cmd[3];
+                eul[0] = control_cmd[1];    
+                eul[1] = control_cmd[2];    
+                eul[2] = control_cmd[3];
+
                 R_d[0][0] = (double)cos(eul[1]);    R_d[0][1] = 0;      R_d[0][2] = (double)sin(eul[1]);
                 R_d[1][0] = 0;                      R_d[1][1] = 1;      R_d[1][2] = 0;
                 R_d[2][0] = -(double)sin(eul[1]);   R_d[2][1] = 0;      R_d[2][2] = (double)cos(eul[1]);
@@ -610,11 +604,17 @@ void Controller::controlThread()
                 math::dehat(e_R,(double *) tmp6);
                 memcpy(e_omega, omega, sizeof(omega));
             }
-            else
+            else // Angular velocity control
             {
-                omega_d[0] = control_cmd[1];    omega_d[1] = control_cmd[2];    omega_d[2] = control_cmd[3];
-                omega_d[0] = omega[0] + control_cmd[1]; omega_d[2] = omega[2] + control_cmd[3]; // so doesnt try to correct itself
-                e_R[0]=0; e_R[1]=0; e_R[2]=0;
+                omega_d[0] = control_cmd[1];    
+                omega_d[1] = control_cmd[2];    
+                omega_d[2] = control_cmd[3];
+
+                omega_d[0] = omega[0] + control_cmd[1]; 
+                omega_d[2] = omega[2] + control_cmd[3]; // so doesnt try to correct itself
+                e_R[0]=0; 
+                e_R[1]=0; 
+                e_R[2]=0;
                 math::matAddsMat(e_omega, omega, omega_d, 3, 2);            // e_omega = omega - omega_d
             }
 
@@ -632,19 +632,20 @@ void Controller::controlThread()
             math::matAddsMat(tau, tmp13, tmp12, 3, 1);
 
         }
-        else
+        else // If command[0] = 5 stop all thrust
         {
             f_thrust = 0;
-            tau[0]=0; tau[1]=0; tau[2]=0;
+            tau[0]=0; 
+            tau[1]=0; 
+            tau[2]=0;
         }
         
-        // clamped thrust to 2 times the weight
-        // might want to limit motorspeed instead?
-        // values are much lower sometimes (very concerning) ( 5.0 -> 0.6)!!
-        //double f_max = 0.6; //2.0*f_hover;
-        //double f_clamped =  math::clamp(f_thrust,0.0,f_max);
+
+
         
-        //f_clamped = 0.6;
+
+        
+
         FT[0] = f_thrust;//f_thrust;
         FT[1] = tau[0];
         FT[2] = tau[1];
@@ -665,16 +666,6 @@ void Controller::controlThread()
             motorspeed_square[0]= (motorspeed_square[0]+motorspeed_square[2])/2;     
             motorspeed_square[2]=motorspeed_square[0];
 
-            //motorspeed_square[1]=2*motorspeed_square[1];     motorspeed_square[3]=2*motorspeed_square[3];
-            /*for(int k_ms_s=0;k_ms_s<4;k_ms_s++)
-            {
-                if(motorspeed_square[k_ms_s]<0)
-                    motorspeed_square[k_ms_s] = 0;
-                else
-                    motorspeed_square[k_ms_s] = 4 * motorspeed_square[k_ms_s];
-            }*/
-            //motorspeed_square[0] = 3052*3052;   motorspeed_square[2] = 3052*3052;
-
 
             if(R[2][2]<0)
             {
@@ -687,20 +678,7 @@ void Controller::controlThread()
             }
             
         }
-        /*if(type == 2)
-        {
-            for(int k_ms_s=0;k_ms_s<4;k_ms_s++)
-            {
-                if(motorspeed_square[k_ms_s]<0)
-                    motorspeed_square[k_ms_s] = 0;
-            }
-            if ( k_run%50 == 1 )
-                cout<<"motor speed ["<< motorspeed[0]<<", "<< motorspeed[1]<<", "<< motorspeed[2]<<", "<<motorspeed[3]<<"]"<<endl;
-        }*/
 
-        //cout << "f_thrust = " << f_thrust << endl;
-        //cout << "tau1  = " << tau[0] << " \t ta2 = " << tau[1] << endl;
-        //cout << "thrust = " << f_thrust << " clamped = " << f_clamped << endl;
         
         motorspeed[0] = sqrt(motorspeed_square[0]);
         motorspeed[1] = sqrt(motorspeed_square[1]);
