@@ -232,9 +232,10 @@ void Controller::controlThread()
     double omega_d[3];
     double e_omega[3];
 
-    double b1_d[3];
+    double b1_d[3]; // b1d desired direction of body fixed axis in parametric form
     double b2_d[3];
     double b3_d[3];
+
     double b2_d_hat[3][3];
     double b3_d_hat[3][3];
 
@@ -451,21 +452,38 @@ void Controller::controlThread()
 
 
 
-            // Calculate the Total Thrust (f)
+            // =========== Calculate the Total Thrust (f) ===========
 
             RowVector3d e3_Eig(0,0,1);
-            RowVector3d f_Eig; // total thrust
+            RowVector3d f_total_thrust_Eig; // total thrust
      
-            f_Eig = -kp_x*e_x_Eig + -kp_v*e_v_Eig + f_hover*e3_Eig;
-            Map<RowVector3d>(&f_total_thrust[0],1,3) = f_Eig; // converts eigen matrix to c++ array
+            f_total_thrust_Eig = -kp_x*e_x_Eig + -kp_v*e_v_Eig + f_hover*e3_Eig; // This is in terms of the global axes (e1,e2,e3) 
+            Map<RowVector3d>(&f_total_thrust[0],1,3) = f_total_thrust_Eig; // converts eigen matrix to c++ array ===============
 
-            if (f_total_thrust[2]<0)
-                f_total_thrust[2] = 1e-2;
-            math::matTimesScalar(b3_d, f_total_thrust, (double)sqrt(math::dot(f_total_thrust, f_total_thrust, 3)), 3, 2);     // normalize
-            b1_d[0] = 1; b1_d[1] = 0; b1_d[2] = 0;
-            math::hat((double *) b3_d_hat, b3_d);
-            math::matTimesVec(b2_d,(double *) b3_d_hat, b1_d, 3);
-            math::matTimesScalar(b2_d, b2_d, (double)sqrt(math::dot(b2_d, b2_d, 3)), 3, 2);     // normalize
+            // If the prescribed thrust is globally z-negative then turn thrust 
+            // off so it doesn't dive bomb in a firey explosion of death (or break)
+            if (f_total_thrust[2]<0) 
+                f_total_thrust[2] = 0.01;
+
+
+            // =========== Calculate desired body fixed axes ===========
+            RowVector3d b1_d_Eig; // b1d: desired direction of body fixed axis in parametric form
+            RowVector3d b2_d_Eig;
+            RowVector3d b3_d_Eig;
+
+            b1_d_Eig << 1,0,0;
+            b3_d_Eig = f_total_thrust_Eig.normalized(); 
+            b2_d_Eig = b3_d_Eig.cross(b1_d_Eig);
+            b2_d_Eig.normalize();
+            
+
+            
+            Map<RowVector3d>(&b1_d[0],1,3) = b1_d_Eig; // converts eigen matrix to c++ array ===============
+            Map<RowVector3d>(&b3_d[0],1,3) = b3_d_Eig;
+            Map<RowVector3d>(&b2_d[0],1,3) = b2_d_Eig; // converts eigen matrix to c++ array ===============
+
+
+
             math::hat((double *) b2_d_hat, b2_d);
             math::matTimesVec(b1_d,(double *) b2_d_hat, b3_d, 3);
             R_d[0][0] = b1_d[0];    R_d[0][1] = b2_d[0];    R_d[0][2] = b3_d[0];
@@ -640,8 +658,6 @@ int main()
     cout<<result[1][0]<<", "<<result[1][1]<<", "<<result[1][2]<<endl;
     cout<<result[2][0]<<", "<<result[2][1]<<", "<<result[2][2]<<endl;*/
 
-
-    
 
 
     while(1)
