@@ -185,7 +185,61 @@ void Controller::recvThread_rl()
 
 
 
+Vector3d vee(Matrix3d a_hat) // Input a skew-symmetric matrix and output corresponding vector
+{
 
+    /* Convert skew-symmetric matrix a_hat into vector a
+
+    a_hat = [  0   -a3   a2 ]
+            [  a3   0   -a1 ]
+            [ -a2   a1   0  ]
+
+
+    a = [ a1 ] 
+        [ a2 ] 
+        [ a3 ]
+
+    */
+
+    Vector3d a;
+    Matrix3d tmp;
+
+    tmp = (a_hat - a_hat.transpose())/2; // Not sure why this is done
+
+    a(0) = tmp(2,1);
+    a(1) = tmp(0,2);
+    a(2) = tmp(1,0);
+
+    return a;
+}
+
+Matrix3d hat(Vector3d a) // Input a hat vector and output corresponding skew-symmetric matrix
+{ 
+  // You hat a vector and get a skew-symmetric matrix
+  // You dehat/vee a skew-symmetric matrix and get a vector
+
+    /* Convert a into skew symmetric matrix a_hat
+    a = [ a1 ] 
+        [ a2 ] 
+        [ a3 ]
+ 
+    a_hat = [  0   -a3   a2 ]
+            [  a3   0   -a1 ]
+            [ -a2   a1   0  ]
+    ]
+    */
+    Matrix3d a_hat;
+    a_hat(2,1) =  a(0);
+    a_hat(1,2) = -a(0);
+
+    a_hat(0,2) =  a(1);
+    a_hat(2,0) = -a(1);
+
+    a_hat(1,0) =  a(2);
+    a_hat(0,1) = -a(2);
+
+    return a_hat;
+}
 
 
 
@@ -251,9 +305,10 @@ void Controller::controlThread()
     double kp_x = 0.15;
     double kd_x = 0.1;
 
-    double kp_v = 3.25;  //3.0
-    double kp_R12 = 0.55;//0.4; // 0.5
-    double kd_R12 = 0.1;
+    double kp_v = 3.25;
+
+    double kp_R12 = 0.55;// Kp_R
+    double kd_R12 = 0.1; // Kd_R
 
     double kp_R34 = 1e-5;
     double kd_R34 = 5e-4;
@@ -456,7 +511,7 @@ void Controller::controlThread()
 
 
 
-            // =========== Calculate the Total Thrust (f) ===========
+            // =========== Calculate the Total Thrust (f) =========== // 
 
             Vector3d e3_Eig(0,0,1);
             Vector3d f_total_thrust_Eig; // total thrust
@@ -473,8 +528,7 @@ void Controller::controlThread()
 
 
 
-
-            // =========== Calculate desired body fixed axes ===========
+            // =========== Calculate desired body fixed axes =========== // 
             Vector3d b1_d_Eig; // b1d: desired direction of body fixed axis in parametric form
             Vector3d b2_d_Eig;
             Vector3d b3_d_Eig;
@@ -497,32 +551,45 @@ void Controller::controlThread()
 
 
 
-            // =========== Calculate Rotational Error Matrix ===========
+            // =========== Calculate Rotational Error Matrix =========== // 
             Matrix3d R_d_Eig;
-            RowMatrix3d e_R_Eig;
+            Vector3d e_R_Eig;
 
 
             R_d_Eig << b1_d_Eig,b2_d_Eig,b3_d_Eig; // concatinating column vectors of desired body axes
-
-            e_R_Eig = 0.5*(R_d_Eig.transpose()*R_eig - R_eig.transpose()*R_d_Eig);        
-            Map<RowMatrix3d> (&tmp6[0][0],3,3) = e_R_Eig;
-
+            e_R_Eig = vee(0.5*(R_d_Eig.transpose()*R_eig - R_eig.transpose()*R_d_Eig));
+            Map<RowVector3d>(&e_R[0],1,3) = e_R_Eig; // converts eigen matrix to c++ array ===============
 
 
 
-            math::dehat(e_R,(double *) tmp6);
-            memcpy(e_omega, omega, sizeof(omega));
+            
 
-            double b3[3] = {R[0][2], R[1][2], R[2][2]};
-            f_thrust = math::dot(f_total_thrust, b3, 3);
 
-            math::matTimesScalar(tmp8, e_R, -kp_R12, 3, 1);                  // -k_R * e_R
+
+            memcpy(e_omega, omega, sizeof(omega)); // This doesnt make sense? =======================
+
+
+            // =========== Calculate Moment Vector =========== //
+
+
+
+            math::matTimesScalar(tmp8, e_R, -kp_R12, 3, 1);              // -k_R * e_R
             math::matTimesScalar(tmp9, e_omega, -kd_R12, 3, 1);          // -k_omega * e_omega
-            math::matTimesVec(tmp10, (double *) J, omega, 3);             // J * omega
-            math::hat((double *) tmp11, omega);                           // omega_hat
-            math::matTimesVec(tmp12, (double *) tmp11, tmp10, 3);         // omega x J*omega
+
+
+            math::matTimesVec(tmp10, (double *) J, omega, 3);            // J * omega
+            math::hat((double *) tmp11, omega);                          // omega_hat
+            math::matTimesVec(tmp12, (double *) tmp11, tmp10, 3);        // omega x J*omega
             math::matAddsMat(tmp13, tmp8, tmp9, 3, 1);
-            math::matAddsMat(tau, tmp13, tmp12, 3, 1);
+            math::matAddsMat(tau, tmp13, tmp12, 3, 1); // Moment Vector Tau
+
+
+
+            double b3[3] = { // current orientation of b3 vector
+                R[0][2], 
+                R[1][2], 
+                R[2][2]};
+            f_thrust = math::dot(f_total_thrust, b3, 3);
 
         }
         else if (type == 3 || type==4)
@@ -657,6 +724,8 @@ void Controller::controlThread()
     }
 }
 
+
+
 int main()
 {
     Controller controller;
@@ -671,6 +740,23 @@ int main()
     cout<<result[0][0]<<", "<<result[0][1]<<", "<<result[0][2]<<endl;
     cout<<result[1][0]<<", "<<result[1][1]<<", "<<result[1][2]<<endl;
     cout<<result[2][0]<<", "<<result[2][1]<<", "<<result[2][2]<<endl;*/
+
+
+    Matrix3d a_hat;
+    Vector3d a;
+
+    // a <<1,2,3;
+
+    // cout << a << endl << endl;
+
+    // a_hat = hat(a);
+    // cout << a_hat << endl << endl;
+
+    // a = vee(a_hat);
+    // cout << a << endl;
+
+
+
 
 
 
