@@ -423,6 +423,8 @@ void Controller::controlThread()
 
 
         math::quat2rotm_Rodrigue((double *) R, orientation_q);
+
+
         if (type == 1 || type == 2)
         {
             if (type==1) // position error calc 
@@ -466,30 +468,52 @@ void Controller::controlThread()
                 f_total_thrust[2] = 0.01;
 
 
+
+
+
+
+
             // =========== Calculate desired body fixed axes ===========
             RowVector3d b1_d_Eig; // b1d: desired direction of body fixed axis in parametric form
             RowVector3d b2_d_Eig;
             RowVector3d b3_d_Eig;
 
-            b1_d_Eig << 1,0,0;
+            b1_d_Eig << 1,0,0; // What is this axis lining up with???? ===============
             b3_d_Eig = f_total_thrust_Eig.normalized(); 
             b2_d_Eig = b3_d_Eig.cross(b1_d_Eig);
             b2_d_Eig.normalize();
             
+            // b1_d_Eig = b2_d_Eig.cross(b3_d_Eig); // Not sure why Pan redefined this axis? =============
+            // b1_d_Eig.normalize(); 
 
             
             Map<RowVector3d>(&b1_d[0],1,3) = b1_d_Eig; // converts eigen matrix to c++ array ===============
-            Map<RowVector3d>(&b3_d[0],1,3) = b3_d_Eig;
+            Map<RowVector3d>(&b3_d[0],1,3) = b3_d_Eig; // converts eigen matrix to c++ array ===============
             Map<RowVector3d>(&b2_d[0],1,3) = b2_d_Eig; // converts eigen matrix to c++ array ===============
 
 
 
-            math::hat((double *) b2_d_hat, b2_d);
-            math::matTimesVec(b1_d,(double *) b2_d_hat, b3_d, 3);
+
+            // =========== Calculate Rotational Error Matrix ===========
+            Matrix3d R_d_Eig;
+            RowMatrix3d e_R_Eig;
+
+
+            R_d_Eig << b1_d_Eig.transpose(),b2_d_Eig.transpose(),b3_d_Eig.transpose(); // concatinating column vectors of desired body axes
+
+
+
             R_d[0][0] = b1_d[0];    R_d[0][1] = b2_d[0];    R_d[0][2] = b3_d[0];
             R_d[1][0] = b1_d[1];    R_d[1][1] = b2_d[1];    R_d[1][2] = b3_d[1];
             R_d[2][0] = b1_d[2];    R_d[2][1] = b2_d[2];    R_d[2][2] = b3_d[2];
             
+            Map<RowMatrix3d> R_d2(&R_d[0][0]);
+            cout << "\n \n =====================\n \n" << endl;
+            cout << R_d2-R_d_Eig << endl;
+
+        
+
+
             math::matTranspose((double *) tmp1,(double *) R_d, 3);                                // R_d'
             math::matTranspose((double *) tmp2,(double *) R, 3);                                  // R'
             math::matTimesMat((double *) tmp3,(double *) tmp1,(double *) R);                      // R_d' * R
