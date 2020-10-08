@@ -41,7 +41,7 @@ void Controller::Load(int port_number_gazebo)
     for(int k=0; k<2; k++)
         len = sendto(fd_gazebo_, buf, sizeof(buf),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sizeof(sockaddr_remote_gazebo_));
     if(len>0)
-        cout<<"Send initial motor speed "<<len<<" byte to Gazebo Succeeded! Avoiding threads mutual locking"<<endl;
+        cout<<"Send initial motor speed ["<<len<<" bytes] to Gazebo Succeeded! Avoiding threads mutual locking"<<endl;
     else
         cout<<"Send initial motor speed to Gazebo FAILED! Threads will mutual lock"<<endl;
 
@@ -57,9 +57,9 @@ void Controller::Load(int port_number_gazebo)
     sockaddr_local_rl_.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("127.0.0.1");
     sockaddr_local_rl_.sin_port = htons(18060);
     if (bind(fd_rl_, (struct sockaddr*)&sockaddr_local_rl_, sizeof(sockaddr_local_rl_))<0)
-        cout<<"Socket binding to RL failed"<<endl;
+        cout<<"Socket binding to crazyflie_env.py failed"<<endl;
     else
-        cout<<"Socket binding to RL succeeded"<<endl;
+        cout<<"Socket binding to crazyflie_env.py succeeded"<<endl;
     
     isRunning_ = true;
     receiverThread_gazebo_ = std::thread(&Controller::recvThread_gazebo, this);
@@ -435,6 +435,10 @@ void Controller::controlThread()
 
 
 
+
+
+
+
         math::quat2rotm_Rodrigue((double *) R, orientation_q);
         Map<RowMatrix3d> R_Eig(&R[0][0]);
 
@@ -611,88 +615,22 @@ void Controller::controlThread()
                motorspeed_square_Eig(k_motor) = 0;}
         }
         Map<RowVector4d>(&motorspeed_square[0],1,4) = motorspeed_square_Eig; // converts eigen matrix to c++ array ===============
-        // clear up to here
-        
+ 
 
-        // =========== Eigen Calcs =========== //
-        double temp_Eig;
-        if(type == 3 || type == 4)
-        {   
-            // This sort of locks us in pitch only? (Or is it actually roll?) ================
-            // If att or rate control, average motor 0,2 square_speeds  Why? ======================
-
-            
-            temp_Eig = 1/2*(motorspeed_square_Eig(0)+motorspeed_square_Eig(2)); // clear
-            motorspeed_square_Eig(0) = temp_Eig; // clear
-            motorspeed_square_Eig(2) = temp_Eig; // clear
-
-            if(R_Eig(2,2)<0) // If CF angle goes past horizontal shut motors off. Verify this =====================
-            {
-                motorspeed_square_Eig(0) = 0;
-                motorspeed_square_Eig(1) = 0;
-                motorspeed_square_Eig(2) = 0;
-                motorspeed_square_Eig(3) = 0;
-            }
+        if(R_Eig(2,2)<0) 
+        {
+            motorspeed_square_Eig(0) = 0;
+            motorspeed_square_Eig(1) = 0;
+            motorspeed_square_Eig(2) = 0;
+            motorspeed_square_Eig(3) = 0;
         }
-        // Output: motorspeed_square_Eig
-
-        
-
-        // =========== C++ Calcs =========== //
-        double temp;
-        if(type == 3 || type == 4)
-        {   
             
-            temp = (motorspeed_square[0]+motorspeed_square[2])/2;
-            motorspeed_square[0]= temp;     
-            motorspeed_square[2]= temp;
 
-            if(R[2][2]<0) 
-            {
-                motorspeed_square[0] = 0;   
-                motorspeed_square[1] = 0;   
-                motorspeed_square[2] = 0;   
-                motorspeed_square[3] = 0;
-            }
-            
-        }
 
         // =========== Testing =========== //
-        Map<Vector4d> motorspeed_square_C(motorspeed_square);
-        // cout << motorspeed_square_Eig(3)-motorspeed_square[3] << endl; // These are all cleared indivually
-       
-        // cout << motorspeed_square_Eig.transpose() - motorspeed_square_C.transpose() << endl; // Together they don't???????
-        // motorspeed 1 and 3 dont agree between the two - look above for why
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        motorspeed[0] = sqrt(motorspeed_square[0]);
-        motorspeed[1] = sqrt(motorspeed_square[1]);
-        motorspeed[2] = sqrt(motorspeed_square[2]);
-        motorspeed[3] = sqrt(motorspeed_square[3]);
-
-
-        // Map<RowVector4f> mtr_speed(motorspeed); // I can't get these to match
-        // cout << mtr_speed.cast<double>()-motorspeed_Eig.transpose() << endl;
-
-        // Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Eig.cast <float> (); // converts eigen matrix to c++ array ===============
+        motorspeed_Eig = motorspeed_square_Eig.array().sqrt();
+        Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Eig.cast <float> (); // converts eigen matrix to c++ array ===============
 
 
 
@@ -729,21 +667,6 @@ int main()
     cout<<result[0][0]<<", "<<result[0][1]<<", "<<result[0][2]<<endl;
     cout<<result[1][0]<<", "<<result[1][1]<<", "<<result[1][2]<<endl;
     cout<<result[2][0]<<", "<<result[2][1]<<", "<<result[2][2]<<endl;*/
-
-
-  
-    Vector3d b;
-    Vector3d c;
-    b << 1,4,25;
-    c = b.array().sqrt();
-
-    cout << c.transpose() << endl;
-    cout << b.dot(c) << endl;
-
-
-
-  
- 
 
 
 
