@@ -462,7 +462,7 @@ void Controller::controlThread()
         type = control_cmd[0];
         // define control vals from 1:3 in control array and map to vector
         memcpy(control_vals, control_cmd+1, sizeof(control_vals)); 
-        Map<Vector3d> control_valsE(control_vals);
+        Map<Vector3d> control_vals_Eig(control_vals);
 
 
 
@@ -473,8 +473,19 @@ void Controller::controlThread()
         Vector3d v_d_Eig; // Vel-desired
         Vector3d e_v_Eig; // Vel-error
 
+        Matrix3d R_d_Eig; // Rotation-desired
+        Vector3d e_R_Eig; // Rotation-error
 
-        double e_x[3];
+        Vector3d omega_d_Eig; // Omega-desired
+        Vector3d e_omega_Eig; // Omega-error
+
+        Vector3d tau_Eig;
+        Matrix3d J_Eig;
+        J_Eig<< 1.65717e-05, 0, 0,
+                0, 1.66556e-05, 0,
+                0, 0, 2.92617e-05;
+
+
 
 
 
@@ -483,18 +494,16 @@ void Controller::controlThread()
         math::quat2rotm_Rodrigue((double *) R, orientation_q);
         Map<RowMatrix3d> R_Eig(&R[0][0]);
 
-
-
         if (type == 1 || type == 2)
         {
             if (type==1) // position error calc 
             {
-                p_d_Eig = control_valsE; // Set desired position from thread
+                p_d_Eig = control_vals_Eig; // Set desired position from thread
                 e_x_Eig = pos_Eig - p_d_Eig; //  Position Error
             }
             else  // velocity error calc
             {   
-                v_d_Eig = control_valsE; // velocity desired
+                v_d_Eig = control_vals_Eig; // velocity desired
                 e_v_Eig = vel_Eig - v_d_Eig; // velocity error 
             }
 
@@ -543,8 +552,7 @@ void Controller::controlThread()
 
 
             // =========== Calculate Rotational Error Matrix =========== // 
-            Matrix3d R_d_Eig;
-            Vector3d e_R_Eig;
+            
 
 
             R_d_Eig << b1_d_Eig,b2_d_Eig,b3_d_Eig; // concatinating column vectors of desired body axes
@@ -553,20 +561,17 @@ void Controller::controlThread()
 
 
 
+            // Just fix code so omega_d = zero
+            memcpy(e_omega, omega, sizeof(omega)); // This is a trick to have because omega_d set = 0 so e_omega = omega-omega_d ======================= 
             
-            memcpy(e_omega, omega, sizeof(omega)); // This doesnt make sense? =======================
-            Vector3d e_omega_Eig;
+            
             e_omega_Eig = omega_Eig; // This is wrong and purely temporary to keep consistent with the current controller =============
 
 
 
             // =========== Calculate Moment Vector (tau/M)=========== //
 
-            Vector3d tau_Eig;
-            Matrix3d J_Eig;
-            J_Eig<< 1.65717e-05, 0, 0,
-                    0, 1.66556e-05, 0,
-                    0, 0, 2.92617e-05;
+
 
             tau_Eig = -kp_R12*e_R_Eig + -kd_R12*e_omega_Eig + omega_Eig.cross(J_Eig*omega_Eig);
             Map<RowVector3d>(&tau[0],1,3) = tau_Eig; // converts eigen matrix to c++ array ===============
@@ -579,62 +584,63 @@ void Controller::controlThread()
             f_thrust = f_total_thrust_Eig.dot(b3_Eig);
 
 
-        }
+        } // Pick up here ***************
         else if (type == 3 || type==4)
         {
-            if (type == 3)          // attitude control
-            {
-                eul[0] = control_cmd[1];    
-                eul[1] = control_cmd[2];    
-                eul[2] = control_cmd[3];
 
-                R_d[0][0] = (double)cos(eul[1]);    R_d[0][1] = 0;      R_d[0][2] = (double)sin(eul[1]);
-                R_d[1][0] = 0;                      R_d[1][1] = 1;      R_d[1][2] = 0;
-                R_d[2][0] = -(double)sin(eul[1]);   R_d[2][1] = 0;      R_d[2][2] = (double)cos(eul[1]);
+            Vector3d eul_Eig;
+
+            if (type == 3) // attitude control
+            {
                 
-                math::matTranspose((double *) tmp1,(double *) R_d, 3);                                // R_d'
-                math::matTranspose((double *) tmp2,(double *) R, 3);                                  // R'
-                math::matTimesMat((double *) tmp3,(double *) tmp1,(double *) R);                      // R_d' * R
-                math::matTimesMat((double *) tmp4,(double *) tmp2,(double *) R_d);                    // R' * R_d
-                math::matAddsMat((double *) tmp5,(double *) tmp3,(double *) tmp4, 3*3, 2);
-                math::matTimesScalar((double *) tmp6,(double *) tmp5, 0.5, 3*3, 1);
-                math::dehat(e_R,(double *) tmp6);
+
+                eul_Eig = control_vals_Eig;
+
+                R_d_Eig  <<  cos(eul[1]),  0,  sin(eul[1]),
+                             0,            1,  0,
+                            -sin(eul[1]),  0,  cos(eul[1]);
+
+                e_R_Eig = vee(0.5*(R_d_Eig.transpose()*R_Eig - R_Eig.transpose()*R_d_Eig));
+                e_omega_Eig = omega_Eig; // This is wrong and purely temporary to keep consistent with the current controller =============
+
+                Map<RowVector3d>(&e_R[0],1,3) = e_R_Eig; // converts eigen matrix to c++ array ===============
+
                 memcpy(e_omega, omega, sizeof(omega));
             }
             else // Angular velocity control
             {
-                omega_d[0] = control_cmd[1];    
-                omega_d[1] = control_cmd[2];    
-                omega_d[2] = control_cmd[3];
+                omega_d_Eig = control_vals_Eig;
 
-                omega_d[0] = omega[0] + control_cmd[1]; 
-                omega_d[2] = omega[2] + control_cmd[3]; // so doesnt try to correct itself
-                e_R[0]=0; 
-                e_R[1]=0; 
-                e_R[2]=0;
-                math::matAddsMat(e_omega, omega, omega_d, 3, 2);            // e_omega = omega - omega_d
+                omega_d_Eig(0) = omega_Eig(0) + omega_d_Eig(0); // I can't quite follow this ================
+                omega_d_Eig(2) = omega_Eig(2) + omega_d_Eig(2);
+                
+                e_R_Eig << 0,0,0;
+                Map<RowVector3d>(&e_R[0],1,3) = e_R_Eig; // converts eigen matrix to c++ array ===============
+
+                e_omega_Eig = omega_Eig - omega_d_Eig;
+                Map<RowVector3d>(&e_omega[0],1,3) = e_omega_Eig; // converts eigen matrix to c++ array ===============
+
+
             }
 
-            if (R[2][2] > 0.7)
-                f_thrust = f_hover / R[2][2];
-            else
-                f_thrust = f_hover / 0.7;
-            
-            math::matTimesScalar(tmp8, e_R, -kp_R34, 3, 1);                  // -k_R * e_R
-            math::matTimesScalar(tmp9, e_omega, -kd_R34, 3, 1);          // -k_omega * e_omega
-            math::matTimesVec(tmp10, (double *) J, omega, 3);             // J * omega
-            math::hat((double *) tmp11, omega);                           // omega_hat
-            math::matTimesVec(tmp12, (double *) tmp11, tmp10, 3);         // omega x J*omega
-            math::matAddsMat(tmp13, tmp8, tmp9, 3, 1);
-            math::matAddsMat(tau, tmp13, tmp12, 3, 1);
+            if (R_Eig(2,2) > 0.7) // Why? It sets a cap for some reason ================
+                f_thrust = f_hover/R_Eig(2,2);
+            else 
+                f_thrust = f_hover/0.7;
+
+
+
+            tau_Eig = -kp_R34*e_R_Eig + -kd_R34*e_omega_Eig + omega_Eig.cross(J_Eig*omega_Eig); 
+            Map<RowVector3d>(&tau[0],1,3) = tau_Eig; // converts eigen matrix to c++ array ===============
+
 
         }
         else // If command[0] = 5 stop all thrust
         {
             f_thrust = 0;
-            tau[0]=0; 
-            tau[1]=0; 
-            tau[2]=0;
+            tau_Eig << 0,0,0;
+            Map<RowVector3d>(&tau[0],1,3) = tau_Eig; // converts eigen matrix to c++ array ===============
+
         }
         
 
