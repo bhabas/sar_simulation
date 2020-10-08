@@ -332,70 +332,12 @@ void Controller::controlThread()
         {0, 0, 2.92617e-05}};
 
 
-    // =====================================
-    //    Array -> Matrix -> Array Example
-    // =====================================
-
-    // // cout J array
-    // std::cout << "C array:\n";
-    // for (int i = 0; i < 3; ++i) {
-    //     for (int j = 0; j < 3; ++j) {
-    //         std::cout << J[i][j] << " ";
-    // }
-    // std::cout << "\n";
-    // }
-
-
-    // // Map J array to eigen matrix
-    // typedef Matrix<double, 3, 3, RowMajor> RowMatrix3d; 
-    //     // - creates shortcut for matrix type: 3x3 double and RowMajor to match c++ array format
-    // Map<RowMatrix3d> J_eig(&J[0][0]); // Not quite sure what &J[0][0] does but it works
-    // cout << "Eigen matrix:\n" << J_eig << endl;
-
-
-    // // Maps J_eig matrix to J_2 array
-    // double J_2[3][3];
-    // Map<RowMatrix3d> (&J_2[0][0],3,3) = J_eig;
-
-    // std::cout << "C array2:\n";
-    // for (int i = 0; i < 3; ++i) {
-    //     for (int j = 0; j < 3; ++j) {
-    //         std::cout << J_2[i][j] << " ";
-    // }
-    // std::cout << "\n";
-    // }
-
-
-
-    // =====================================
-    //        Vector -> Array Example
-    // =====================================
-    // double a[3] = {1,2,3};
-    // RowVector3d aE(1,2,3);
-
-    // cout << "C array: " << a[0] << " " << a[1] << " " <<  a[2] << " " << a << endl;
-    // cout << "Eig Vector: " << aE << endl;
-
-    // Map<RowVector3d>(&a[0],1,3) = aE;
-    // cout << "C array: " << a[0] << " " << a[1] << " " <<  a[2] << " " << a << endl;
-
-
-
-
-
-    // double *a2; 
-    // a2 = aE.data();
-    // cout << "C array: " << a2[0] << " " << a2[1] << " " <<  a2[2] << " " << a << endl;
-
-
 
     double f_thrust =0;
     // might need to adjust weight to real case (sdf file too)
     double f_hover = (0.026 + 0.00075*4)*9.8066;
     double tau[3] =  {0,0,0};
 
-    Map<RowVector3d> v1(tau); // uses v1 as a Vector3d object
-    Map<Vector3d> v2(tau);
   
 
 
@@ -485,9 +427,11 @@ void Controller::controlThread()
                 0, 1.66556e-05, 0,
                 0, 0, 2.92617e-05;
 
-
-
-
+        Matrix4d Gamma_inv_Eig; // Calculated by Matlab but not sure what it is
+        Gamma_inv_Eig << 0.25, -7.6859225, -7.6859225, -41.914296,
+                         0.25,  7.6859225,  7.6859225, -41.914296,
+                         0.25,  7.6859225, -7.6859225,  41.914296,
+                         0.25, -7.6859225,  7.6859225,  41.914296;
 
 
 
@@ -520,7 +464,7 @@ void Controller::controlThread()
             Map<RowVector3d>(&f_total_thrust[0],1,3) = f_total_thrust_Eig; // converts eigen matrix to c++ array ===============
 
             // If the prescribed thrust is globally z-negative then turn thrust 
-            // off so it doesn't dive bomb in a firey explosion of death (or break)
+            // off so it doesn't dive bomb in a fiery explosion of death (or break)
             if (f_total_thrust[2]<0) 
                 f_total_thrust[2] = 0.01;
 
@@ -555,7 +499,7 @@ void Controller::controlThread()
             
 
 
-            R_d_Eig << b1_d_Eig,b2_d_Eig,b3_d_Eig; // concatinating column vectors of desired body axes
+            R_d_Eig << b1_d_Eig, b2_d_Eig, b3_d_Eig; // concatinating column vectors of desired body axes
             e_R_Eig = vee(0.5*(R_d_Eig.transpose()*R_Eig - R_Eig.transpose()*R_d_Eig));
             Map<RowVector3d>(&e_R[0],1,3) = e_R_Eig; // converts eigen matrix to c++ array ===============
 
@@ -643,37 +587,68 @@ void Controller::controlThread()
 
         }
         
+        Vector4d FT_Eig;
+        Vector4d f_Eig;
+        Vector4d motorspeed_square_Eig;
+        Vector4d motorspeed_Eig;
 
 
+        FT_Eig << f_thrust, tau_Eig; // Not sure on title [f_thrust, tau(0), tau(1), tau(2)]
+
+        f_Eig = Gamma_inv_Eig*FT_Eig; // I dont like not knowing where this comes from. 
+        // Finish implementing Eigen than make corrections to algorithm from Geo paper =======================================
+        motorspeed_square_Eig = f_Eig/c_T; 
+        
         
 
-        
-
-        FT[0] = f_thrust;//f_thrust;
-        FT[1] = tau[0];
-        FT[2] = tau[1];
-        FT[3] = tau[2];
-        math::matTimesVec(f, (double *) Gamma_inv, FT, 4);
-        math::matTimesScalar(motorspeed_square, f, c_T, 4, 2);
-        //cout << motorspeed_square[0] << endl;
-        for(int k_ms_s=0;k_ms_s<4;k_ms_s++)
+        // If squared motorspeed^2 is negative cap at zero
+        // Why that'd be the case? I don't know
+        for(int k_motor=0;k_motor<4;k_motor++)
         {
-            if(motorspeed_square[k_ms_s]<0) {
-                motorspeed_square[k_ms_s] = 0;}
-            else if (isnan(motorspeed_square[k_ms_s])) {
-                motorspeed_square[k_ms_s] = 0; }
-
+            if(motorspeed_square_Eig(k_motor)<0){
+                motorspeed_square_Eig(k_motor) = 0;}
+            else if (isnan(motorspeed_square_Eig(k_motor))){
+               motorspeed_square_Eig(k_motor) = 0;}
         }
+        Map<RowVector4d>(&motorspeed_square[0],1,4) = motorspeed_square_Eig; // converts eigen matrix to c++ array ===============
+        // clear up to here
+        
+
+        // =========== Eigen Calcs =========== //
+        double temp_Eig;
         if(type == 3 || type == 4)
-        {
-            motorspeed_square[0]= (motorspeed_square[0]+motorspeed_square[2])/2;     
-            motorspeed_square[2]=motorspeed_square[0];
+        {   
+            // This sort of locks us in pitch only? (Or is it actually roll?) ================
+            // If att or rate control, average motor 0,2 square_speeds  Why? ======================
 
+            
+            temp_Eig = 1/2*(motorspeed_square_Eig(0)+motorspeed_square_Eig(2)); // clear
+            motorspeed_square_Eig(0) = temp_Eig; // clear
+            motorspeed_square_Eig(2) = temp_Eig; // clear
 
-            if(R[2][2]<0)
+            if(R_Eig(2,2)<0) // If CF angle goes past horizontal shut motors off. Verify this =====================
             {
-                /*if (k_run%100 == 1)
-                    cout<<"Shutdown motors"<<endl;*/
+                motorspeed_square_Eig(0) = 0;
+                motorspeed_square_Eig(1) = 0;
+                motorspeed_square_Eig(2) = 0;
+                motorspeed_square_Eig(3) = 0;
+            }
+        }
+        // Output: motorspeed_square_Eig
+
+        
+
+        // =========== C++ Calcs =========== //
+        double temp;
+        if(type == 3 || type == 4)
+        {   
+            
+            temp = (motorspeed_square[0]+motorspeed_square[2])/2;
+            motorspeed_square[0]= temp;     
+            motorspeed_square[2]= temp;
+
+            if(R[2][2]<0) 
+            {
                 motorspeed_square[0] = 0;   
                 motorspeed_square[1] = 0;   
                 motorspeed_square[2] = 0;   
@@ -682,17 +657,50 @@ void Controller::controlThread()
             
         }
 
-        
+        // =========== Testing =========== //
+        Map<Vector4d> motorspeed_square_C(motorspeed_square);
+        // cout << motorspeed_square_Eig(3)-motorspeed_square[3] << endl; // These are all cleared indivually
+       
+        // cout << motorspeed_square_Eig.transpose() - motorspeed_square_C.transpose() << endl; // Together they don't???????
+        // motorspeed 1 and 3 dont agree between the two - look above for why
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         motorspeed[0] = sqrt(motorspeed_square[0]);
         motorspeed[1] = sqrt(motorspeed_square[1]);
         motorspeed[2] = sqrt(motorspeed_square[2]);
         motorspeed[3] = sqrt(motorspeed_square[3]);
 
-        double ms_min = 0.0;
-        double ms_max = 3420.0;
-        for (int i =0; i<4;i++) { // clamp motor speed (based on max thrust (0.6) speed)
-            motorspeed[i] = math::clamp(motorspeed[i],ms_min,ms_max);
-        }
+
+        // Map<RowVector4f> mtr_speed(motorspeed); // I can't get these to match
+        // cout << mtr_speed.cast<double>()-motorspeed_Eig.transpose() << endl;
+
+        // Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Eig.cast <float> (); // converts eigen matrix to c++ array ===============
+
+
+
+        // double ms_min = 0.0;
+        // double ms_max = 3420.0;
+        // for (int i =0; i<4;i++) { // clamp motor speed (based on max thrust (0.6) speed)
+        //     motorspeed[i] = math::clamp(motorspeed[i],ms_min,ms_max);
+        // }
         // cout causing wierd behavior?????
         //if ( k_run%50 == 1 ) {
         //        cout<<"motor speed ["<< motorspeed[0]<<", "<< motorspeed[1]<<", "<< motorspeed[2]<<", "<<motorspeed[3]<<"]"<<endl;
@@ -723,11 +731,18 @@ int main()
     cout<<result[2][0]<<", "<<result[2][1]<<", "<<result[2][2]<<endl;*/
 
 
-    Matrix2d a;
-    a << 1,2,3,4;
+  
     Vector3d b;
-    b << 1,2,3;
+    Vector3d c;
+    b << 1,4,25;
+    c = b.array().sqrt();
 
+    cout << c.transpose() << endl;
+    cout << b.dot(c) << endl;
+
+
+
+  
  
 
 

@@ -28,7 +28,7 @@ print("Environment done")
 ## Initialize the user and data recording
 start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
 file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time + '.csv'
-env.create_csv(file_name,record = True)
+env.create_csv(file_name,record = False)
 
 
 ## Initial figure setup
@@ -64,7 +64,7 @@ alpha_sigma = np.array([[0.1],[0.1]  ])#, [1.0]])#,[0.05]])
 
 ## Initial parameters for gaussian function
 mu = np.array([[5.0],[-10.0], [1.5] ])# ,[1.5]])#,[1.5]])   # Initial estimates of mu: 
-sigma = np.array([[1.5],[1.5] ,[1.0] ])# ,[0.75]])      # Initial estimates of sigma: 
+sigma = np.array([[0.25],[0.25] ,[0.25] ])# ,[0.75]])      # Initial estimates of sigma: 
 
 # noise tests all started at:
 #mu = np.array([[5.0],[-5.0] ])
@@ -169,8 +169,8 @@ for k_ep in range(ep_start,1000):
         #image_prev = env.cv_image.flatten()
         
 
-        vz_ini = np.random.uniform(low=2.5, high=4.0)
-        vx_ini = np.random.uniform(low=-2.5, high=2.5)
+        vz_ini = np.random.uniform(low=2.5, high=2.6)
+        vx_ini = np.random.uniform(low=2.0, high=4.0)
         #vx_ini = 0.0#np.random.normal(0.0,1.0)
         vy_ini = 0.0#np.random.uniform(low=-1.5, high=1.5)
         v_ini = [vz_ini,vx_ini,vy_ini]
