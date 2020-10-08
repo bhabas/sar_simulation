@@ -481,7 +481,7 @@ void Controller::controlThread()
 
 
         math::quat2rotm_Rodrigue((double *) R, orientation_q);
-        Map<RowMatrix3d> R_eig(&R[0][0]);
+        Map<RowMatrix3d> R_Eig(&R[0][0]);
 
 
 
@@ -548,7 +548,7 @@ void Controller::controlThread()
 
 
             R_d_Eig << b1_d_Eig,b2_d_Eig,b3_d_Eig; // concatinating column vectors of desired body axes
-            e_R_Eig = vee(0.5*(R_d_Eig.transpose()*R_eig - R_eig.transpose()*R_d_Eig));
+            e_R_Eig = vee(0.5*(R_d_Eig.transpose()*R_Eig - R_Eig.transpose()*R_d_Eig));
             Map<RowVector3d>(&e_R[0],1,3) = e_R_Eig; // converts eigen matrix to c++ array ===============
 
 
@@ -569,18 +569,15 @@ void Controller::controlThread()
                     0, 0, 2.92617e-05;
 
             tau_Eig = -kp_R12*e_R_Eig + -kd_R12*e_omega_Eig + omega_Eig.cross(J_Eig*omega_Eig);
-
             Map<RowVector3d>(&tau[0],1,3) = tau_Eig; // converts eigen matrix to c++ array ===============
-            math::matAddsMat(tau, tmp13, tmp12, 3, 1);                   // Moment Vector Tau
 
 
 
+            // =========== Calculate f_thrust =========== // (I'm not sure what this does yet)
+            Vector3d b3_Eig;
+            b3_Eig = R_Eig.col(2); // current orientation of b3 vector
+            f_thrust = f_total_thrust_Eig.dot(b3_Eig);
 
-            double b3[3] = { // current orientation of b3 vector
-                R[0][2], 
-                R[1][2], 
-                R[2][2]};
-            f_thrust = math::dot(f_total_thrust, b3, 3);
 
         }
         else if (type == 3 || type==4)
@@ -720,20 +717,12 @@ int main()
     cout<<result[2][0]<<", "<<result[2][1]<<", "<<result[2][2]<<endl;*/
 
 
-    Matrix3d a_hat;
-    Vector3d a;
+    Matrix2d a;
+    a << 1,2,3,4;
+    Vector3d b;
+    b << 1,2,3;
 
-    // a <<1,2,3;
-
-    // cout << a << endl << endl;
-
-    // a_hat = hat(a);
-    // cout << a_hat << endl << endl;
-
-    // a = vee(a_hat);
-    // cout << a << endl;
-
-
+ 
 
 
 
