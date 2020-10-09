@@ -185,7 +185,7 @@ void Controller::recvThread_rl()
 
 
 
-Vector3d vee(Matrix3d a_hat) // Input a skew-symmetric matrix and output corresponding vector
+Vector3d dehat(Matrix3d a_hat) // Input a skew-symmetric matrix and output corresponding vector
 {
 
     /* Convert skew-symmetric matrix a_hat into vector a
@@ -216,7 +216,7 @@ Vector3d vee(Matrix3d a_hat) // Input a skew-symmetric matrix and output corresp
 Matrix3d hat(Vector3d a) // Input a hat vector and output corresponding skew-symmetric matrix
 { 
   // You hat a vector and get a skew-symmetric matrix
-  // You dehat/vee a skew-symmetric matrix and get a vector
+  // You dehat/dehat a skew-symmetric matrix and get a vector
 
     /* Convert a into skew symmetric matrix a_hat
     a = [ a1 ] 
@@ -258,7 +258,6 @@ void Controller::controlThread()
 {   
     typedef Matrix<double, 3, 3, RowMajor> RowMatrix3d; 
 
-
     double state_full[14];
     StateFull state_full_structure;
     float motorspeed[4];
@@ -267,20 +266,20 @@ void Controller::controlThread()
     double control_cmd[5];
     int type = 5;
     double control_vals[3];
+    Vector3d control_vals_Eig;
 
     // State Declarations
-    double position[3];
+
     double orientation_q[4];
     double eul[3];
-    double vel[3];
-    double omega[3];
+
 
     // Rotation Matrices
     double R[3][3];
 
 
 
-    Vector3d p_d_Eig; // Pose-desired
+    Vector3d x_d_Eig; // Pose-desired
     Vector3d e_x_Eig; // Pose-Error
 
     Vector3d v_d_Eig; // Vel-desired
@@ -321,6 +320,14 @@ void Controller::controlThread()
     Vector3d b3_Eig;
     Vector3d eul_Eig;
 
+    Vector3d pos_Eig;
+    Vector4d att_Eig;
+    Vector3d vel_Eig;
+    Vector3d omega_Eig;
+
+    double t;
+
+
     
 
 
@@ -347,7 +354,10 @@ void Controller::controlThread()
 
     double f_thrust =0;
     // might need to adjust weight to real case (sdf file too)
-    double f_hover = (0.026 + 0.00075*4)*9.8066;
+
+    double m = 0.026 + 0.00075*4; // Mass [kg]
+    double g = 9.8066; // Gravitational acceleration [m/s^2]
+    double f_hover = m*g; // Force to hover
  
 
   
@@ -365,74 +375,53 @@ void Controller::controlThread()
     {
         k_run++;
 
-        // Define state_full from recieved Gazebo states
+        // Define state_full from recieved Gazebo states and break into corresponding vectors
         queue_states_.wait_dequeue(state_full_structure);
         memcpy(state_full, state_full_structure.data, sizeof(state_full));
 
+        Map<Matrix<double,1,14>> state_full_Eig(state_full_structure.data);      
+        pos_Eig = state_full_Eig.segment(0,3);
+        att_Eig = state_full_Eig.segment(3,4);
+        vel_Eig = state_full_Eig.segment(7,3);
+        omega_Eig = state_full_Eig.segment(10,3);
+        t = state_full_Eig(13);
+    
 
         // Define control_cmd from recieved control_cmd
         if (control_cmd_recvd[0]<10) // There is a case where control_cmd_recvd becomes 11 but I'm not sure why?
-            memcpy(control_cmd, control_cmd_recvd, sizeof(control_cmd)); 
+            memcpy(control_cmd, control_cmd_recvd, sizeof(control_cmd)); // Compiler doesn't work without this line for some reason? 
+            Map<Matrix<double,5,1>> control_cmd_Eig(control_cmd_recvd); 
 
-        // else if ( (control_cmd_recvd[0]>10) && (control_cmd_recvd[1]<0.5) )
-        // {
-        //     //cout<<"======================================="<<endl;
-        //     //cout<<"Enter reset mode"<<endl;
-        //     motorspeed[0] = 0.0;  
-        //     motorspeed[1] = 0.0;  
-        //     motorspeed[2] = 0.0;  
-        //     motorspeed[3] = 0.0;
-        //     sendto(fd_gazebo_, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
+        type = control_cmd_Eig(0);
+        control_vals_Eig = control_cmd_Eig.segment(1,3);
 
-        //     control_cmd_recvd[0] = 2; 
-        //     control_cmd_recvd[1] = 0; 
-        //     control_cmd_recvd[2] = 0; 
-        //     control_cmd_recvd[3] = 0; 
-        //     control_cmd_recvd[4] = 0;
-        //     sleep(3);
-        //     for(int k_temp=1;k_temp<5;k_temp++)
-        //         queue_states_.wait_dequeue(state_full_structure);
-        //     memcpy(state_full, state_full_structure.data, sizeof(state_full));
-        // }
-
-
-        // Seperate state values from state_full
-        memcpy(position, state_full, sizeof(position));
         memcpy(orientation_q, state_full+3,  sizeof(orientation_q));
-        memcpy(vel, state_full+7, sizeof(vel));
-        memcpy(omega, state_full+10, sizeof(omega));
-
-        // Redefine state values in vector format
-        Map<Vector3d> pos_Eig(position);
-        Map<Vector3d> att_Eig(orientation_q);
-        Map<Vector3d> vel_Eig(vel);
-        Map<Vector3d> omega_Eig(omega);
-
-        
-
-        type = control_cmd[0];
-        // define control vals from 1:3 in control array and map to vector
-        memcpy(control_vals, control_cmd+1, sizeof(control_vals)); 
-        Map<Vector3d> control_vals_Eig(control_vals);
 
 
 
 
 
-
-
-
+        // Extract current rotation matrix from quaternion data (Still needs to be brought into Eigen Lib)====================
+        // Map<RowVector4d>(&orientation_q[0],1,3) = att_Eig;
         math::quat2rotm_Rodrigue((double *) R, orientation_q);
         Map<RowMatrix3d> R_Eig(&R[0][0]);
 
+        Vector3d ddx_d_Eig;
+
         if (type == 1 || type == 2)
         {
-            if (type==1) // position error calc 
-            {
-                p_d_Eig = control_vals_Eig; // Set desired position from thread
-                e_x_Eig = pos_Eig - p_d_Eig; //  Position Error
+            if (type == 1) // position error calc 
+            {   
+                
+                x_d_Eig = control_vals_Eig; // Set desired position from thread
+                // ddx_d_Eig << 0,0,0; // Set desired acceleration from thread (default to zero for our typical use)
+
+                // x_d_Eig = _______ // Set desired position from a path function e.g. [cos(pi*t),sin(pi*t),2]
+                // ddx_d_Eig = ______ // Set desired acceleration from a path function e.g. [-pi^2*cos(pi*t),-pi^2*sin(pi*t),0]
+
+                e_x_Eig = pos_Eig - x_d_Eig; //  Position Error
             }
-            else  // velocity error calc
+            else if (type == 2) // velocity error calc
             {   
                 v_d_Eig = control_vals_Eig; // velocity desired
                 e_v_Eig = vel_Eig - v_d_Eig; // velocity error 
@@ -442,8 +431,9 @@ void Controller::controlThread()
 
 
 
-            // =========== Calculate the Total Thrust (f) =========== //      
-            f_total_thrust_Eig = -kp_x*e_x_Eig + -kp_v*e_v_Eig + f_hover*e3_Eig; // This is in terms of the global axes (e1,e2,e3) 
+            // =========== Calculate the Total Thrust (f) =========== //  
+
+            f_total_thrust_Eig = -kp_x*e_x_Eig + -kp_v*e_v_Eig + f_hover*e3_Eig; // This is in terms of the global axes [x,y,z] => [e1,e2,e3] 
             
 
             // If the prescribed thrust is globally z-negative then turn thrust 
@@ -453,14 +443,9 @@ void Controller::controlThread()
 
             
 
+            // =========== Calculate desired body fixed axes =========== //
 
-
-
-
-            // =========== Calculate desired body fixed axes =========== // 
-
-
-            b1_d_Eig << 1,0,0; // What is this axis lining up with???? ===============
+            b1_d_Eig << 1,0,0; // Defines the desired orientation of CF (Facing positive x-axis)
             b3_d_Eig = f_total_thrust_Eig.normalized(); 
             b2_d_Eig = b3_d_Eig.cross(b1_d_Eig);
             b2_d_Eig.normalize();
@@ -472,8 +457,7 @@ void Controller::controlThread()
 
             // =========== Calculate Rotational Error Matrix =========== // 
             R_d_Eig << b1_d_Eig, b2_d_Eig, b3_d_Eig; // concatinating column vectors of desired body axes
-            e_R_Eig = vee(0.5*(R_d_Eig.transpose()*R_Eig - R_Eig.transpose()*R_d_Eig));
-
+            e_R_Eig = dehat(0.5*(R_d_Eig.transpose()*R_Eig - R_Eig.transpose()*R_d_Eig));
 
 
 
@@ -482,18 +466,12 @@ void Controller::controlThread()
             e_omega_Eig = omega_Eig; // This is wrong way and purely temporary to keep consistent with the current controller =============
 
 
-
             // =========== Calculate Moment Vector (tau or M) =========== //
             tau_Eig = -kp_R12*e_R_Eig + -kd_R12*e_omega_Eig + omega_Eig.cross(J_Eig*omega_Eig);
             
-
-
-
             // =========== Calculate f_thrust =========== // (I'm not sure what this does yet)
-
             b3_Eig = R_Eig.col(2); // current orientation of b3 vector
             f_thrust = f_total_thrust_Eig.dot(b3_Eig);
-
 
         } 
         else if (type == 3 || type==4)
@@ -502,16 +480,14 @@ void Controller::controlThread()
             {
                 eul_Eig = control_vals_Eig;
 
-                R_d_Eig  <<  cos(eul[1]),  0,  sin(eul[1]),
+                R_d_Eig  <<  cos(eul_Eig(1)),  0,  sin(eul_Eig(1)),
                              0,            1,  0,
-                            -sin(eul[1]),  0,  cos(eul[1]);
+                            -sin(eul_Eig(1)),  0,  cos(eul_Eig(1));
 
-                e_R_Eig = vee(0.5*(R_d_Eig.transpose()*R_Eig - R_Eig.transpose()*R_d_Eig));
+                e_R_Eig = dehat(0.5*(R_d_Eig.transpose()*R_Eig - R_Eig.transpose()*R_d_Eig));
                 e_omega_Eig = omega_Eig; // This is the wrong way and purely temporary to keep consistent with the current controller =============
-
-                
             }
-            else // Angular velocity control
+            else if (type == 4)// Angular velocity control
             {
                 omega_d_Eig = control_vals_Eig;
 
@@ -520,8 +496,6 @@ void Controller::controlThread()
                 
                 e_R_Eig << 0,0,0;
                 e_omega_Eig = omega_Eig - omega_d_Eig;
-                
-
             }
 
             if (R_Eig(2,2) > 0.7) // Why? It sets a cap for some reason ================
@@ -529,14 +503,9 @@ void Controller::controlThread()
             else 
                 f_thrust = f_hover/0.7;
 
-
-
             tau_Eig = -kp_R34*e_R_Eig + -kd_R34*e_omega_Eig + omega_Eig.cross(J_Eig*omega_Eig); 
-            
-
-
         }
-        else // If command[0] = 5 stop all thrust
+        else if (type == 5)// If command[0] = 5 stop all thrust
         {
             f_thrust = 0;
             tau_Eig << 0,0,0;
@@ -544,11 +513,8 @@ void Controller::controlThread()
         }
         
 
-
         FT_Eig << f_thrust, tau_Eig; // Not sure on title [f_thrust, tau(0), tau(1), tau(2)]
-
         f_Eig = Gamma_inv_Eig*FT_Eig; // I dont like not knowing where this comes from. 
-        // Finish implementing Eigen then make corrections to algorithm from GTC paper =======================================
         motorspeed_square_Eig = f_Eig/c_T; 
         
         
@@ -609,6 +575,12 @@ int main()
     cout<<result[0][0]<<", "<<result[0][1]<<", "<<result[0][2]<<endl;
     cout<<result[1][0]<<", "<<result[1][1]<<", "<<result[1][2]<<endl;
     cout<<result[2][0]<<", "<<result[2][1]<<", "<<result[2][2]<<endl;*/
+
+    RowVector4d a(1,2,3,4);
+    cout << "a: " << a << endl;
+    cout << a.segment(1,3) << endl;
+
+
 
 
 
