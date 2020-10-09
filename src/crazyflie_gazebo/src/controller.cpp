@@ -263,6 +263,7 @@ void Controller::controlThread()
     StateFull state_full_structure;
     float motorspeed[4];
     MotorCommand motorspeed_structure;
+
     double control_cmd[5];
     int type = 5;
     double control_vals[3];
@@ -276,28 +277,51 @@ void Controller::controlThread()
 
     // Rotation Matrices
     double R[3][3];
-    double R_d[3][3] = {
-        {1,0,0}, 
-        {0,1,0}, 
-        {0,0,1}};
-    double e_R[3];
+
+
+
+    Vector3d p_d_Eig; // Pose-desired
+    Vector3d e_x_Eig; // Pose-Error
+
+    Vector3d v_d_Eig; // Vel-desired
+    Vector3d e_v_Eig; // Vel-error
+
+    Matrix3d R_d_Eig; // Rotation-desired
+    Vector3d e_R_Eig; // Rotation-error
+
+    Vector3d omega_d_Eig; // Omega-desired
+    Vector3d e_omega_Eig; // Omega-error
+
+    Vector3d tau_Eig;
+    Matrix3d J_Eig;
+    J_Eig<< 1.65717e-05, 0, 0,
+        0, 1.66556e-05, 0,
+        0, 0, 2.92617e-05;
+
+    Matrix4d Gamma_inv_Eig; // Calculated by Matlab but not sure what it is
+    Gamma_inv_Eig << 0.25, -7.6859225, -7.6859225, -41.914296,
+                     0.25,  7.6859225,  7.6859225, -41.914296,
+                     0.25,  7.6859225, -7.6859225,  41.914296,
+                     0.25, -7.6859225,  7.6859225,  41.914296;
+
+    // gamma = np.mat( [[1,1,1,1], [-d,d,d,-d], [-d,d,-d,d], [-c_tau,-c_tau,c_tau,c_tau]] )
+
+    Vector3d e3_Eig(0,0,1);
+    Vector3d f_total_thrust_Eig; // total thrust        
+
+    Vector3d b1_d_Eig; // b1d: desired direction of body fixed axis in parametric form
+    Vector3d b2_d_Eig;
+    Vector3d b3_d_Eig;
+
+    Vector4d FT_Eig;
+    Vector4d f_Eig;
+    Vector4d motorspeed_square_Eig;
+    Vector4d motorspeed_Eig;
+
+    Vector3d b3_Eig;
+    Vector3d eul_Eig;
 
     
-    double omega_d[3];
-    double e_omega[3];
-
-    double b1_d[3]; // b1d desired direction of body fixed axis in parametric form
-    double b2_d[3];
-    double b3_d[3];
-
-    double b2_d_hat[3][3];
-    double b3_d_hat[3][3];
-
-    double v_d[3];// = {0.0, 0, 1.0};
-    double e_v[3];
-    
-    double p_d[3];
-    double e_x[3];
 
 
     // CONTROLLER GAINS
@@ -320,34 +344,20 @@ void Controller::controlThread()
 
     double c_T = 1.2819184e-8; // Motor constant
 
-    double Gamma_inv[4][4] = {  //????
-        {0.25, -7.6859225, -7.6859225, -41.914296}, 
-        {0.25,  7.6859225,  7.6859225, -41.914296}, 
-        {0.25,  7.6859225, -7.6859225,  41.914296},  
-        {0.25, -7.6859225,  7.6859225,  41.914296}};    // calculated by Matlab
-
-    double J[3][3] = { // Rotational Inertia
-        {1.65717e-05, 0, 0}, 
-        {0, 1.66556e-05, 0}, 
-        {0, 0, 2.92617e-05}};
-
-
 
     double f_thrust =0;
     // might need to adjust weight to real case (sdf file too)
     double f_hover = (0.026 + 0.00075*4)*9.8066;
-    double tau[3] =  {0,0,0};
+ 
 
   
 
 
-    double FT[4];
-    double f[4];
-    double motorspeed_square[4];
 
-    double tmp1[3][3];  double tmp2[3][3];  double tmp3[3][3];  double tmp4[3][3];  double tmp5[3][3];  double tmp6[3][3];
-    double tmp7[3]; double tmp8[3]; double tmp9[3]; double tmp10[3];    double tmp11[3][3]; double tmp12[3];    double tmp13[3];    double tmp14[3];
-    double tmp21[3];    double tmp22[3];    double tmp23[3];    double tmp24[3];    double f_total_thrust[3];
+   
+
+
+
 
     unsigned int k_run = 0;
 
@@ -362,8 +372,7 @@ void Controller::controlThread()
 
         // Define control_cmd from recieved control_cmd
         if (control_cmd_recvd[0]<10) // There is a case where control_cmd_recvd becomes 11 but I'm not sure why?
-            memcpy(control_cmd, control_cmd_recvd, sizeof(control_cmd)); // Rename received control_cmd for reasons
-
+            memcpy(control_cmd, control_cmd_recvd, sizeof(control_cmd)); 
 
         // else if ( (control_cmd_recvd[0]>10) && (control_cmd_recvd[1]<0.5) )
         // {
@@ -408,32 +417,6 @@ void Controller::controlThread()
 
 
 
-        // These declarations will be fixed later ====================
-        Vector3d p_d_Eig; // Pose-desired
-        Vector3d e_x_Eig; // Pose-Error
-
-        Vector3d v_d_Eig; // Vel-desired
-        Vector3d e_v_Eig; // Vel-error
-
-        Matrix3d R_d_Eig; // Rotation-desired
-        Vector3d e_R_Eig; // Rotation-error
-
-        Vector3d omega_d_Eig; // Omega-desired
-        Vector3d e_omega_Eig; // Omega-error
-
-        Vector3d tau_Eig;
-        Matrix3d J_Eig;
-        J_Eig<< 1.65717e-05, 0, 0,
-                0, 1.66556e-05, 0,
-                0, 0, 2.92617e-05;
-
-        Matrix4d Gamma_inv_Eig; // Calculated by Matlab but not sure what it is
-        Gamma_inv_Eig << 0.25, -7.6859225, -7.6859225, -41.914296,
-                         0.25,  7.6859225,  7.6859225, -41.914296,
-                         0.25,  7.6859225, -7.6859225,  41.914296,
-                         0.25, -7.6859225,  7.6859225,  41.914296;
-
-
 
 
 
@@ -459,27 +442,23 @@ void Controller::controlThread()
 
 
 
-            // =========== Calculate the Total Thrust (f) =========== // 
-
-            Vector3d e3_Eig(0,0,1);
-            Vector3d f_total_thrust_Eig; // total thrust
-     
+            // =========== Calculate the Total Thrust (f) =========== //      
             f_total_thrust_Eig = -kp_x*e_x_Eig + -kp_v*e_v_Eig + f_hover*e3_Eig; // This is in terms of the global axes (e1,e2,e3) 
-            Map<RowVector3d>(&f_total_thrust[0],1,3) = f_total_thrust_Eig; // converts eigen matrix to c++ array ===============
+            
 
             // If the prescribed thrust is globally z-negative then turn thrust 
             // off so it doesn't dive bomb in a fiery explosion of death (or break)
-            if (f_total_thrust[2]<0) 
-                f_total_thrust[2] = 0.01;
+            if (f_total_thrust_Eig(2)<0)
+                f_total_thrust_Eig(2) = 0.01;
+
+            
 
 
 
 
 
             // =========== Calculate desired body fixed axes =========== // 
-            Vector3d b1_d_Eig; // b1d: desired direction of body fixed axis in parametric form
-            Vector3d b2_d_Eig;
-            Vector3d b3_d_Eig;
+
 
             b1_d_Eig << 1,0,0; // What is this axis lining up with???? ===============
             b3_d_Eig = f_total_thrust_Eig.normalized(); 
@@ -489,59 +468,38 @@ void Controller::controlThread()
             // b1_d_Eig = b2_d_Eig.cross(b3_d_Eig); // Not sure why Pan redefined this axis? =============
             // b1_d_Eig.normalize(); 
 
-            
-            Map<RowVector3d>(&b1_d[0],1,3) = b1_d_Eig; // converts eigen matrix to c++ array ===============
-            Map<RowVector3d>(&b3_d[0],1,3) = b3_d_Eig; // converts eigen matrix to c++ array ===============
-            Map<RowVector3d>(&b2_d[0],1,3) = b2_d_Eig; // converts eigen matrix to c++ array ===============
-
-
-
-
 
 
             // =========== Calculate Rotational Error Matrix =========== // 
-            
-
-
             R_d_Eig << b1_d_Eig, b2_d_Eig, b3_d_Eig; // concatinating column vectors of desired body axes
             e_R_Eig = vee(0.5*(R_d_Eig.transpose()*R_Eig - R_Eig.transpose()*R_d_Eig));
-            Map<RowVector3d>(&e_R[0],1,3) = e_R_Eig; // converts eigen matrix to c++ array ===============
 
 
 
-            // Just fix code so omega_d = zero
-            memcpy(e_omega, omega, sizeof(omega)); // This is a trick to have because omega_d set = 0 so e_omega = omega-omega_d ======================= 
-            
-            
-            e_omega_Eig = omega_Eig; // This is wrong and purely temporary to keep consistent with the current controller =============
+
+            // Just fix code so omega_d = zero          
+            // This is a trick to have because omega_d set = 0 so e_omega = omega-omega_d ======================= 
+            e_omega_Eig = omega_Eig; // This is wrong way and purely temporary to keep consistent with the current controller =============
 
 
 
-            // =========== Calculate Moment Vector (tau/M)=========== //
-
-
-
+            // =========== Calculate Moment Vector (tau or M) =========== //
             tau_Eig = -kp_R12*e_R_Eig + -kd_R12*e_omega_Eig + omega_Eig.cross(J_Eig*omega_Eig);
-            Map<RowVector3d>(&tau[0],1,3) = tau_Eig; // converts eigen matrix to c++ array ===============
+            
 
 
 
             // =========== Calculate f_thrust =========== // (I'm not sure what this does yet)
-            Vector3d b3_Eig;
+
             b3_Eig = R_Eig.col(2); // current orientation of b3 vector
             f_thrust = f_total_thrust_Eig.dot(b3_Eig);
 
 
-        } // Pick up here ***************
+        } 
         else if (type == 3 || type==4)
         {
-
-            Vector3d eul_Eig;
-
             if (type == 3) // attitude control
             {
-                
-
                 eul_Eig = control_vals_Eig;
 
                 R_d_Eig  <<  cos(eul[1]),  0,  sin(eul[1]),
@@ -549,11 +507,9 @@ void Controller::controlThread()
                             -sin(eul[1]),  0,  cos(eul[1]);
 
                 e_R_Eig = vee(0.5*(R_d_Eig.transpose()*R_Eig - R_Eig.transpose()*R_d_Eig));
-                e_omega_Eig = omega_Eig; // This is wrong and purely temporary to keep consistent with the current controller =============
+                e_omega_Eig = omega_Eig; // This is the wrong way and purely temporary to keep consistent with the current controller =============
 
-                Map<RowVector3d>(&e_R[0],1,3) = e_R_Eig; // converts eigen matrix to c++ array ===============
-
-                memcpy(e_omega, omega, sizeof(omega));
+                
             }
             else // Angular velocity control
             {
@@ -563,11 +519,8 @@ void Controller::controlThread()
                 omega_d_Eig(2) = omega_Eig(2) + omega_d_Eig(2);
                 
                 e_R_Eig << 0,0,0;
-                Map<RowVector3d>(&e_R[0],1,3) = e_R_Eig; // converts eigen matrix to c++ array ===============
-
                 e_omega_Eig = omega_Eig - omega_d_Eig;
-                Map<RowVector3d>(&e_omega[0],1,3) = e_omega_Eig; // converts eigen matrix to c++ array ===============
-
+                
 
             }
 
@@ -579,7 +532,7 @@ void Controller::controlThread()
 
 
             tau_Eig = -kp_R34*e_R_Eig + -kd_R34*e_omega_Eig + omega_Eig.cross(J_Eig*omega_Eig); 
-            Map<RowVector3d>(&tau[0],1,3) = tau_Eig; // converts eigen matrix to c++ array ===============
+            
 
 
         }
@@ -587,20 +540,15 @@ void Controller::controlThread()
         {
             f_thrust = 0;
             tau_Eig << 0,0,0;
-            Map<RowVector3d>(&tau[0],1,3) = tau_Eig; // converts eigen matrix to c++ array ===============
-
+            
         }
         
-        Vector4d FT_Eig;
-        Vector4d f_Eig;
-        Vector4d motorspeed_square_Eig;
-        Vector4d motorspeed_Eig;
 
 
         FT_Eig << f_thrust, tau_Eig; // Not sure on title [f_thrust, tau(0), tau(1), tau(2)]
 
         f_Eig = Gamma_inv_Eig*FT_Eig; // I dont like not knowing where this comes from. 
-        // Finish implementing Eigen than make corrections to algorithm from Geo paper =======================================
+        // Finish implementing Eigen then make corrections to algorithm from GTC paper =======================================
         motorspeed_square_Eig = f_Eig/c_T; 
         
         
@@ -614,7 +562,7 @@ void Controller::controlThread()
             else if (isnan(motorspeed_square_Eig(k_motor))){
                motorspeed_square_Eig(k_motor) = 0;}
         }
-        Map<RowVector4d>(&motorspeed_square[0],1,4) = motorspeed_square_Eig; // converts eigen matrix to c++ array ===============
+        
  
 
         if(R_Eig(2,2)<0) 
@@ -624,14 +572,9 @@ void Controller::controlThread()
             motorspeed_square_Eig(2) = 0;
             motorspeed_square_Eig(3) = 0;
         }
-            
-
-
-        // =========== Testing =========== //
 
         motorspeed_Eig = motorspeed_square_Eig.array().sqrt();
-        Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Eig.cast <float> (); // converts eigen matrix to c++ array ===============
-
+        Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Eig.cast <float> (); // Converts motorspeeds to C++ array for data transmission
 
 
         // double ms_min = 0.0;
@@ -639,12 +582,11 @@ void Controller::controlThread()
         // for (int i =0; i<4;i++) { // clamp motor speed (based on max thrust (0.6) speed)
         //     motorspeed[i] = math::clamp(motorspeed[i],ms_min,ms_max);
         // }
+
         // cout causing wierd behavior?????
         //if ( k_run%50 == 1 ) {
         //        cout<<"motor speed ["<< motorspeed[0]<<", "<< motorspeed[1]<<", "<< motorspeed[2]<<", "<<motorspeed[3]<<"]"<<endl;
         //}   
-        //memcpy(motorspeed_structure.data, motorspeed, sizeof(motorspeed));
-        //queue_motorspeed_.enqueue(motorspeed_structure);
         sendto(fd_gazebo_, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
     
     
