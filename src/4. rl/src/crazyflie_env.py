@@ -25,7 +25,8 @@ class CrazyflieEnv:
 
         self.user = username   
         if self.user == 'bhabas':
-            import pyautogui    
+            # import pyautogui    
+            pass
         
         # Initializes the ROS node for the process. Can only have one nod in a rospy process
         rospy.init_node("crazyflie_env_node",anonymous=True) 

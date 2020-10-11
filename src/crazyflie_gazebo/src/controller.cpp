@@ -446,6 +446,7 @@ void Controller::controlThread()
             // =========== Calculate desired body fixed axes =========== //
 
             b1_d_Eig << 1,0,0; // Defines the desired orientation of CF (Facing positive x-axis)
+            // b1 is unit basis vector from COG to propeller (one?)
             b3_d_Eig = f_total_thrust_Eig.normalized(); 
             b2_d_Eig = b3_d_Eig.cross(b1_d_Eig);
             b2_d_Eig.normalize();
