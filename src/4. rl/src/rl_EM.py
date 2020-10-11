@@ -33,9 +33,9 @@ class rlEM_PEPGAgent(ES):
 
         for k_n in range(self.n):
             if theta[0,k_n] < 0: # 
-                theta[0,k_n] = 0.001
-            if theta[1,k_n] > 0:
-                theta[1,k_n] = -0.001
+                theta[0,k_n] = 0.001 
+            #if theta[1,k_n] > 0:
+            #    theta[1,k_n] = -0.001
 
         return theta , 0
 
@@ -60,6 +60,42 @@ class rlEM_PEPGAgent(ES):
         S_reward = np.sum(reward)
         S_diff = np.square(theta - self.mu).dot(reward)'''
 
+class rlEM_AdaptiveAgent(rlEM_PEPGAgent):
+    def train(self,theta,reward,epsilon):
+        reward_mean = np.mean(reward) # try baseline
+        print(len(self.reward_history))
+        if len(self.reward_history == 1):
+            self.reward_history[0] = reward_mean
+        else:
+            self.reward_history = np.append(self.reward_history, reward_mean)
+
+        print(reward_mean)
+        reward_b = np.zeros_like(reward)
+        b = self.get_baseline(span=3)
+        print(b)
+        for count,r in enumerate(reward):
+            reward_b[count] = max(0,r - b)
+
+        summary = np.concatenate((theta.T,reward,reward_b),axis=1)
+        summary = (summary[summary[:,self.d].argsort()[::-1]]).T
+        print(summary)
+
+
+        S_theta = summary[0:self.d,:]@summary[self.d+1,:].reshape(self.n,1)
+        print("S theta = ", S_theta)
+        S_reward = np.sum(summary[self.d+1,:])
+        S_diff = np.square(summary[0:self.d,:] - self.mu)@(summary[self.d+1,:].reshape(self.n,1))
+        print("S_sigma = ",S_diff)
+
+        sii = np.sqrt(S_diff/(S_reward + 0.001))
+        #sij = np.sign(S_ij)*np.sqrt(abs(S_ij)/(S_reward + 0.001)) # no need for sqrt
+        #sij = S_ij/(S_reward + 0.001) # this should be correct update term from derivation
+
+        self.mu =  S_theta/(S_reward +0.001)
+        self.sigma = np.array([[sii[0,0]]])
+
+        self.mu_history = np.append(self.mu_history, self.mu, axis=1)
+        self.sigma_history = np.append(self.sigma_history, self.sigma, axis=1)
 
 class rlEM_MatrixAgent(rlEM_PEPGAgent): # ignore this
     def get_theta(self):
@@ -228,12 +264,149 @@ class rlEM_PEPG_CovAgent(rlEM_PEPGAgent):
         self.mu = S_theta/(S_reward +0.001)
         self.sigma = np.array([ [sii[0,0]],[sii[1,0]],[sij]])
 
+class rlEM_AdaptiveCovAgent(rlEM_PEPG_CovAgent):
+    def get_theta(self):
+        mu = np.array([self.mu[0,0],self.mu[1,0]])
 
+        sigma = np.array([[self.sigma[0,0]**2,self.sigma[2,0]],[self.sigma[2,0],self.sigma[1,0]**2]])
+        v,w = np.linalg.eig(sigma)
+        print(v)
+        print(w)
+
+        zeros = np.array([0.0,0.0])
+        epsilon = np.random.multivariate_normal(zeros,sigma,self.n_rollout)
+        epsilon = np.transpose(epsilon)
+        
+        thetaplus = self.mu + epsilon
+        thetaminus = self.mu - epsilon
+        theta = np.append(thetaplus,thetaminus,axis=1)
+
+        for k_n in range(self.n):
+            if theta[0,k_n] < 0: # 
+                theta[0,k_n] = 0.001
+            if theta[1,k_n] > 0:
+                theta[1,k_n] = -0.001
+        return theta , 0
+
+    def train(self,theta,reward,epsilon):
+        reward_mean = np.mean(reward) # try baseline
+        print(len(self.reward_history))
+        if len(self.reward_history == 1):
+            self.reward_history[0] = reward_mean
+        else:
+            self.reward_history = np.append(self.reward_history, reward_mean)
+
+        print(reward_mean)
+        reward_b = np.zeros_like(reward)
+        b = self.get_baseline(span=3)
+        print(b)
+        for count,r in enumerate(reward):
+            reward_b[count] = max(0,r - b)
+
+        summary = np.concatenate((theta.T,reward,reward_b),axis=1)
+        summary = (summary[summary[:,self.d].argsort()[::-1]]).T
+        print(summary)
+
+
+        S_theta = summary[0:self.d,:]@summary[self.d+1,:].reshape(self.n,1)
+        print("S theta = ", S_theta)
+        S_reward = np.sum(summary[self.d+1,:])
+        S_diff = np.square(summary[0:self.d,:] - self.mu)@(summary[self.d+1,:].reshape(self.n,1))
+        print("S_sigma = ",S_diff)
+        S_ij = ((summary[0,:] - self.mu[0,0])*(summary[1,:] - self.mu[1,0]))@(summary[self.d+1,:].reshape(self.n,1))
+        S_ij = S_ij[0]
+
+        sii = np.sqrt(S_diff/(S_reward + 0.001))
+        #sij = np.sign(S_ij)*np.sqrt(abs(S_ij)/(S_reward + 0.001)) # no need for sqrt
+        sij = S_ij/(S_reward + 0.001) # this should be correct update term from derivation
+
+        self.mu =  S_theta/(S_reward +0.001)
+        self.sigma = np.array([ [sii[0,0]],[sii[1,0]],[sij]])
+
+        self.mu_history = np.append(self.mu_history, self.mu, axis=1)
+        self.sigma_history = np.append(self.sigma_history, self.sigma, axis=1)
+
+        #print(self.mu)
+        #print(self.sigma)
+
+class rlEM_AdaptiveCovAgent3D(rlEM_PEPG_CovAgent):
+    def get_theta(self):
+        mu = np.array([self.mu[0,0],self.mu[1,0],self.mu[2,0]])
+        # s = sxx syy szz sxy sxz syz
+        sigma = np.array([[self.sigma[0,0]**2,self.sigma[3,0],self.sigma[4,0]],[self.sigma[3,0],self.sigma[1,0]**2,self.sigma[5,0]],[self.sigma[4,0],self.sigma[5,0],self.sigma[2,0]**2]   ])
+        #sigma = np.array([[self.sigma[0,0]**2,self.sigma[2,0]],[self.sigma[2,0],self.sigma[1,0]**2]])
+        v,w = np.linalg.eig(sigma)
+        print(v)
+        print(w)
+
+        zeros = np.array([0.0,0.0,0.0])
+        epsilon = np.random.multivariate_normal(zeros,sigma,self.n_rollout)
+        epsilon = np.transpose(epsilon)
+        
+        thetaplus = self.mu + epsilon
+        thetaminus = self.mu - epsilon
+        theta = np.append(thetaplus,thetaminus,axis=1)
+
+        for k_n in range(self.n):
+            if theta[0,k_n] < 0: # 
+                theta[0,k_n] = 0.001
+            if theta[1,k_n] > 0:
+                theta[1,k_n] = -0.001
+            if theta[2,k_n] < 0:
+                theta[2,k_n] = 0.001
+        return theta , 0
+
+    def train(self,theta,reward,epsilon):
+        reward_mean = np.mean(reward) # try baseline
+        print(len(self.reward_history))
+        if len(self.reward_history == 1):
+            self.reward_history[0] = reward_mean
+        else:
+            self.reward_history = np.append(self.reward_history, reward_mean)
+
+        print(reward_mean)
+        reward_b = np.zeros_like(reward)
+        b = self.get_baseline(span=3)
+        print(b)
+        for count,r in enumerate(reward):
+            reward_b[count] = max(0,r - b)
+
+        summary = np.concatenate((theta.T,reward,reward_b),axis=1)
+        summary = (summary[summary[:,self.d].argsort()[::-1]]).T
+        print(summary)
+
+
+        S_theta = summary[0:self.d,:]@summary[self.d+1,:].reshape(self.n,1)
+        print("S theta = ", S_theta)
+        S_reward = np.sum(summary[self.d+1,:])
+        S_diff = np.square(summary[0:self.d,:] - self.mu)@(summary[self.d+1,:].reshape(self.n,1))
+        print("S_sigma = ",S_diff)
+        S_xy = ((summary[0,:] - self.mu[0,0])*(summary[1,:] - self.mu[1,0]))@(summary[self.d+1,:].reshape(self.n,1))
+        S_xz = ((summary[0,:] - self.mu[0,0])*(summary[2,:] - self.mu[2,0]))@(summary[self.d+1,:].reshape(self.n,1))
+        S_yz = ((summary[1,:] - self.mu[1,0])*(summary[2,:] - self.mu[2,0]))@(summary[self.d+1,:].reshape(self.n,1))
+        S_xy = S_xy[0]
+        S_xz = S_xz[0]
+        S_yz = S_yz[0]
+
+
+        sii = np.sqrt(S_diff/(S_reward + 0.001))
+        #sij = np.sign(S_ij)*np.sqrt(abs(S_ij)/(S_reward + 0.001)) # no need for sqrt
+        sxy = S_xy/(S_reward + 0.001) # this should be correct update term from derivation
+        sxz = S_xz/(S_reward + 0.001)
+        syz = S_yz/(S_reward + 0.001)
+        self.mu =  S_theta/(S_reward +0.001)
+        self.sigma = np.array([ [sii[0,0]],[sii[1,0]],[sii[2,0]],[sxy],[sxz],[syz]])
+
+        self.mu_history = np.append(self.mu_history, self.mu, axis=1)
+        self.sigma_history = np.append(self.sigma_history, self.sigma, axis=1)
+
+        print(self.mu)
+        print(self.sigma)
 if __name__ == "__main__":
     mu = np.array([[1.0],[-4.0]])
     sigma = np.array([[0.1],[1.5],[0.0]])
     #agent = rlEM_MatrixAgent(mu,sigma)
-    agent = rlEM_PEPG_CovAgent(mu,sigma,n_rollout=3)
+    agent = rlEM_AdaptiveCovAgent(mu,sigma,n_rollout=3)
     theta,epsilon = agent.get_theta()
     reward = np.array([[1.0],[2.0],[0.3],[4.0],[2.5],[1.2] ])
     agent.train(theta,reward,0)
