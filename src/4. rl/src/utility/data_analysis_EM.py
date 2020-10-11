@@ -37,12 +37,12 @@ def clean_data(data):
     end['k_ep'] = end['k_ep'].astype(int)
     return end
         
-def get_average_reward(data):
+def get_average_reward(data,maxindex):
     
     k_ep = (max(data['k_ep']))
     reward_avg =[]
     #print(data)
-    for i in range(0,21):#k_ep): # 1 less than final
+    for i in range(0,maxindex):#k_ep): # 1 less than final
         rr = data[data['k_ep']==i]
         #print(rr['reward'])
         for j in range(10-len(rr)):
@@ -51,21 +51,21 @@ def get_average_reward(data):
         reward_avg.append(rr['reward'].mean()) 
     return reward_avg
 
-def get_mu(data):
+def get_mu(data,maxindex):
     k_ep = max(data['k_ep'])
 
     mudata = data['mu']
     mu = []
-    for i in range(0,21):
+    for i in range(0,maxindex):
         mu.append(mudata[i*10])
     #print(mu)
     return mu
 
-def get_sigma(data):
+def get_sigma(data,maxindex):
     k_ep = max(data['k_ep'])
     sigma = []
     sigmadata = data['sigma']
-    for i in range(0,21):
+    for i in range(0,maxindex):
         sigma.append(sigmadata[i*10])
     #print(mu)
     return sigma
@@ -101,6 +101,12 @@ def extract_mu(mu):
 f_EM = 'em_sameIC'
 f_EM = 'em_55good'
 f_EM = 'EM_final'
+f_EM = 'PEPGadaptive55'
+
+#f_EM = 'PEPGadaptive1_exp'
+
+
+
 
 path_EM = '/home/bader/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/%s.csv' %(f_EM)
 
@@ -108,6 +114,7 @@ path_EM = '/home/bader/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/%s.c
 f_EMsym = 'emsym_sameIC'
 f_EMsym = 'emsym_55good'
 f_EMsym = 'EMsym_final'
+#f_EMsym = 'PEPGadaptive1baseline_exp'
 
 path_EMsym = '/home/bader/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/%s.csv' %(f_EMsym)
 
@@ -115,6 +122,9 @@ path_EMsym = '/home/bader/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/%
 f_EMcov = 'emcov_sameIC'
 f_EMcov = 'emcov_55_good'
 f_EMcov = 'EMcov_finalmidfail'
+f_EMcov = 'EMadaptivecov55'
+#f_EMcov = 'EMcovadaptive_rightexp'
+
 
 path_EMcov = '/home/bader/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/%s.csv' %(f_EMcov)
 
@@ -137,22 +147,23 @@ end = clean_data(df_EM)
 end_EMsym = clean_data(df_EMsym)
 end_EMcov = clean_data(df_EMcov)
 
-r = get_average_reward(end)
-rsym = get_average_reward(end_EMsym)
-rcov = get_average_reward(end_EMcov)
+max_index = 10
+r = get_average_reward(end,max_index)
+rsym = get_average_reward(end_EMsym,max_index)
+rcov = get_average_reward(end_EMcov,max_index)
 
 
-sigma = get_sigma(end)
-sigmasym = get_sigma(end_EMsym)
-sigmacov = get_sigma(end_EMcov)
+sigma = get_sigma(end,max_index)
+sigmasym = get_sigma(end_EMsym,max_index)
+sigmacov = get_sigma(end_EMcov,max_index)
 
 s1x,s1y = extract_sigma(sigma)
 s2x,s2y = extract_sigma(sigmasym)
 s3x,s3y,s3xy = extract_sigma(sigmacov,1)
 
-mu = get_mu(end)
-musym = get_mu(end_EMsym)
-mucov = get_mu(end_EMcov)
+mu = get_mu(end,max_index)
+musym = get_mu(end_EMsym,max_index)
+mucov = get_mu(end_EMcov,max_index)
 
 mu1x ,mu1y = extract_mu(mu)
 mu2x ,mu2y = extract_mu(musym)
@@ -211,14 +222,18 @@ plt.figure(1)
 plt.subplot(231)
 
 plt.plot(r,'b-')
-plt.plot(rsym,'r-')
+#plt.plot(rsym,'r-')
 plt.plot(rcov,'g-')
 plt.title('Reward')
-plt.legend(('EM','EMsym', 'EMcov'))
+#plt.legend(('EM','EMsym', 'EMcov'))
+plt.legend(('Adaptive PEPG', 'Adaptive EMCOV'))
+#plt.legend(('Adaptive PEPG', 'Adaptive PEPG b', 'Adaptive EMCOV'))
+
+
 
 plt.subplot(232)
 plt.plot(mu1x,'b-.')
-plt.plot(mu2x,'r-.')
+#plt.plot(mu2x,'r-.')
 plt.plot(mu3x,'g-.')
 plt.title('$\mu_{RREV}$')
 
@@ -227,21 +242,21 @@ plt.title('$\mu_{RREV}$')
 #plt.figure(3)
 plt.subplot(233)
 plt.plot((mu1y),'b-.')
-plt.plot((mu2y),'r-.')
+#plt.plot((mu2y),'r-.')
 plt.plot((mu3y),'g-.')
 plt.title('$\mu_{gain rate}$')
 
 
 plt.subplot(234)
 plt.plot((s1x),'b--')
-plt.plot((s2x),'r--')
+#plt.plot((s2x),'r--')
 plt.plot((s3x),'g--')
 plt.title('$\sigma_x$')
 
 
 plt.subplot(235)
 plt.plot((s1y),'b--')
-plt.plot((s2y),'r--')
+#plt.plot((s2y),'r--')
 plt.plot((s3y),'g--')
 plt.title('$\sigma_y$')
 
