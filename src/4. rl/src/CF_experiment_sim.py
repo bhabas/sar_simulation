@@ -9,10 +9,10 @@ from scipy.spatial.transform import Rotation
 from numpy.core.fromnumeric import repeat
 
 from crazyflie_env import CrazyflieEnv
-from rl_EM import rlEM_PEPGAgent, rlEM_PEPG_CovAgent, rlEMsys_PEPGAgent
-from rl_syspepg import rlsysPEPGAgent_reactive
+from rl_EM import rlEM_PEPGAgent, rlEM_PEPG_CovAgent, rlEMsys_PEPGAgent, rlEM_AdaptiveCovAgent
+from rl_syspepg import rlsysPEPGAgent_reactive ,rlsysPEPGAgent_adaptive
 
-
+np.random.seed(0)
 os.system("clear")
 
 # ============================
@@ -45,7 +45,7 @@ plt.show()
 ## Sim Parameters
 ep_start = 0 # Default episode start position
 h_ceiling = 1.5 # meters
-extra_time = 0.0
+extra_time = 1.0
 
 
 # ============================
@@ -53,17 +53,18 @@ extra_time = 0.0
 # ============================
 
 ## Initial parameters for gaussian function
-mu = np.array([[6.0],[-6.0]  ])# ,[1.5]])#,[1.5]])   # Initial estimates of mu: 
-sigma = np.array([[1.0],[1.0] ])# ,[0.75]])      # Initial estimates of sigma: 
+mu = np.array([[4.2],[-5.0]  ])# ,[1.5]])#,[1.5]])   # Initial estimates of mu: 
+sigma = np.array([[0.1],[0.1] ,[0.0]])# ,[0.75]])      # Initial estimates of sigma: 
 
 alpha_mu = np.array([[0.2],[0.2]])#[2.0]] )#,[0.1]])
 alpha_sigma = np.array([[0.1],[0.1]  ])#, [1.0]])#,[0.05]])
 
 #agent = rlEM_PEPG_CovAgent(mu,sigma,n_rollout=5)
-agent = rlsysPEPGAgent_reactive(alpha_mu,alpha_sigma,mu,sigma,n_rollout=5)
+#agent = rlsysPEPGAgent_reactive(alpha_mu,alpha_sigma,mu,sigma,n_rollout=5)
 #agent = rlEM_PEPGAgent(mu,sigma,n_rollout=4)
 #agent = rlEMsys_PEPGAgent(mu,sigma,n_rollout=5)
-
+agent = rlEM_AdaptiveCovAgent(mu,sigma,n_rollout=5)
+#agent = rlsysPEPGAgent_adaptive(alpha_mu,alpha_sigma,mu,sigma,n_rollout=5)
 # ============================
 ##          Episode 
 # ============================
@@ -84,7 +85,7 @@ for k_ep in range(ep_start,1000):
     print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
 
     print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1], mu[1], mu[1]))
-    print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1], sigma[1], sigma[1]))
+    print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1], sigma[2], sigma[1]))
     print('\n')
 
 
@@ -115,10 +116,10 @@ for k_ep in range(ep_start,1000):
         #image_prev = env.cv_image.flatten()
         
 
-        vz_ini = np.random.uniform(low=2.0, high=2.5)
-        vx_ini = np.random.uniform(low=-0.5, high=0.5)
+        vz_ini = np.random.uniform(low=2.0, high=3.0)
+        vx_ini = 0.0#np.random.uniform(low=-0.5, high=0.5)
         #vx_ini = np.random.normal(0.0,1.0)
-        vy_ini = np.random.uniform(low=-0.5, high=0.5)
+        vy_ini = 0.0#np.random.uniform(low=-0.5, high=0.5)
         v_ini = [vz_ini,vx_ini,vy_ini]
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
@@ -243,9 +244,9 @@ for k_ep in range(ep_start,1000):
                 print("Pitch Time: %.3f" %start_time_pitch)
 
                 # randomly sample noise delay with mean = 30ms and sigma = 5
-                t_delay = max(np.random.normal(30.0,10.0),0.0)
-                print("t_delay = %.3f" %(t_delay))
-                env.delay_env_time(t_start=start_time_pitch,t_delay=t_delay) # Artificial delay to mimic communication lag [ms]
+                #t_delay = max(np.random.normal(30.0,10.0),0.0)
+                #print("t_delay = %.3f" %(t_delay))
+                #env.delay_env_time(t_start=start_time_pitch,t_delay=t_delay) # Artificial delay to mimic communication lag [ms]
                 
                 action = {'type':'rate', 'x':q_roll, 'y':q_pitch, 'z':0.0, 'additional':0.0}    
                 env.step(action) 
