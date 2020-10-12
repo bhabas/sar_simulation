@@ -274,9 +274,10 @@ void Controller::controlThread()
 
     Vector3d pos; // current position [m]
     Vector3d vel; // current velocity [m]
-    Vector4d att; // current attitude [rad] (quat form)
-    Vector3d eul; // current attitude [rad] (roll, pitch, yaw angles)
+    Vector4d quat_Eig; // current attitude [rad] (quat form)
+    Vector3d eul_d; // current attitude [rad] (roll, pitch, yaw angles)
     Vector3d omega; // current angular velocity [rad/s]
+
     
     double R[3][3];
 
@@ -284,7 +285,7 @@ void Controller::controlThread()
     // State Error and Prescriptions
     Vector3d x_d; // Pose-desired [m] 
     Vector3d v_d; // Velocity-desired [m/s]
-    Vector3d a_d; // Acceleration-desired [m/s]
+    Vector3d a_d(0,0,0); // Acceleration-desired [m/s]
 
     Matrix3d R_d; // Rotation-desired (pitch, roll, yaw euler angles)
     Vector3d omega_d; // Omega-desired
@@ -318,9 +319,9 @@ void Controller::controlThread()
 
     
 
-    Vector3d b1; // Desired yaw direction of body-fixed axis (COM to prop #1)
-    Vector3d b2; // Desired body-fixed axis normal to b1 and b3
-    Vector3d b3; // Desired body-fixed vertical axis
+    Vector3d b1_d; // Desired yaw direction of body-fixed axis (COM to prop #1)
+    Vector3d b2_d; // Desired body-fixed axis normal to b1 and b3
+    Vector3d b3_d; // Desired body-fixed vertical axis
 
 
     Vector3d f_thrust_ideal; // Ideal thrust vector to minimize error   
@@ -334,7 +335,7 @@ void Controller::controlThread()
     Vector4d motorspeed_square;
     Vector4d motorspeed_Eig; // motorspee
 
-    Vector3d b3_Eig; // body-fixed vertical axis
+    Vector3d b3; // body-fixed vertical axis
     
 
 
@@ -395,10 +396,13 @@ void Controller::controlThread()
 
         Map<Matrix<double,1,14>> state_full_Eig(state_full_structure.data); // Convert threaded array to Eigen vector     
         pos = state_full_Eig.segment(0,3);
-        att = state_full_Eig.segment(3,4);
+        quat_Eig = state_full_Eig.segment(3,4);
         vel = state_full_Eig.segment(7,3);
         omega = state_full_Eig.segment(10,3);
         t = state_full_Eig(13);
+
+        
+
     
 
         // Define control_cmd from recieved control_cmd
@@ -411,18 +415,27 @@ void Controller::controlThread()
 
         type = control_cmd_Eig(0); // Command type
         control_vals = control_cmd_Eig.segment(1,3);
-        flag = control_cmd_Eig(4);
+        ctrl_flag = control_cmd_Eig(4);
 
-        memcpy(orientation_q, state_full+3,  sizeof(orientation_q));
+        
+        Eigen::Quaterniond q;
+        q = quat_Eig;
+        q.normalize();
+        cout << q.coeffs() << endl << endl;
+        Matrix3d R_Eig2;
 
+        // R_Eig2 = q.toRotationMatrix().eulerAngles(0,1,2);
 
+        
 
-
-
+        memcpy(orientation_q, state_full+3,  sizeof(orientation_q)); // orientation_q(w,x,y,z)
         // Extract current rotation matrix from quaternion data (Still needs to be brought into Eigen Lib)====================
-        // Map<RowVector4d>(&orientation_q[0],1,3) = att;
+        // Map<RowVector4d>(&orientation_q[0],1,3) = quat_Eig;
         math::quat2rotm_Rodrigue((double *) R, orientation_q);
         Map<RowMatrix3d> R_Eig(&R[0][0]);
+
+        // cout << R_Eig2 - R_Eig<< endl << endl << endl;
+
 
         
 
@@ -460,9 +473,9 @@ void Controller::controlThread()
             //
             // https://www.youtube.com/watch?v=A27knigjGS4&list=PL_onPhFCkVQhuPiUxUW2lFHB39QsavEEA&index=46
 
-            b3_Eig = R_Eig.col(2); // current orientation of b3 vector
-            f_thrust_ideal = -kp_x*e_x + -kp_v*e_v + f_hover*e3 + m*a_d; // thrust error vector
-            f_thrust = f_thrust_ideal.dot(b3_Eig); // ideal thrust projected onto b3
+            b3 = R_Eig.col(2); // current orientation of b3 vector
+            f_thrust_ideal = -kp_x*e_x + -kp_v*e_v + m*g*e3 - m*a_d; // thrust error vector
+            f_thrust = f_thrust_ideal.dot(b3); // ideal thrust projected onto b3
 
             // If the prescribed thrust is globally z-negative then turn thrust 
             // off so it doesn't dive bomb in a fiery explosion of death (or break)
@@ -474,15 +487,15 @@ void Controller::controlThread()
             // =========== Calculate desired body-fixed axes =========== //
             // Defines the desired yaw angle of CF (Facing positive x-axis)
 
-            b1 << 1,0,0;  // b1 is unit basis vector from COG to propeller (one?)
-            b3 = f_thrust_ideal.normalized(); // body-fixed vertical axis
+            b1_d << 1,0,0;  // b1 is unit basis vector from COG to propeller (one?)
+            b3_d= f_thrust_ideal.normalized(); // body-fixed vertical axis
 
-            b2 = b3.cross(b1); // body-fixed axis to prop (2?)
-            b2.normalize();
+            b2_d = b3_d.cross(b1_d); // body-fixed axis to prop (2?)
+            b2_d.normalize();
             
 
             // =========== Calculate Rotational Error Matrix =========== // 
-            R_d << b1, b2, b3; // concatinating column vectors of desired body axes
+            R_d << b1_d, b2_d, b3_d; // concatinating column vectors of desired body axes
             e_R = dehat(0.5*(R_d.transpose()*R_Eig - R_Eig.transpose()*R_d));
 
 
@@ -502,11 +515,11 @@ void Controller::controlThread()
         {
             if (type == 3) // attitude control
             {
-                eul = control_vals;
+                eul_d = control_vals;
 
-                R_d  <<  cos(eul(1)),  0,  sin(eul(1)), // This is locking us in only pitch ==========
+                R_d  <<  cos(eul_d(1)),  0,  sin(eul_d(1)), // This is locking us in only pitch ==========
                              0,            1,  0,
-                            -sin(eul(1)),  0,  cos(eul(1));
+                            -sin(eul_d(1)),  0,  cos(eul_d(1));
 
                 e_R = dehat(0.5*(R_d.transpose()*R_Eig - R_Eig.transpose()*R_d));
                 e_omega = omega; // This is the wrong way and purely temporary to keep consistent with the current controller =============
