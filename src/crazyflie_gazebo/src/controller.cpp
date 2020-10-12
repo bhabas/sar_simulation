@@ -289,7 +289,7 @@ void Controller::controlThread()
 
     Matrix3d R_d; // Rotation-desired (pitch, roll, yaw euler angles)
     Vector3d omega_d; // Omega-desired
-    Vector3d domega_d;
+    Vector3d domega_d(0,0,0);
 
     Vector3d e_x; // Pose-Error
     Vector3d e_v; // Vel-error 
@@ -506,8 +506,8 @@ void Controller::controlThread()
 
 
             // =========== Calculate Moment Vector (tau or M) =========== //
-            tau = -kp_R12*e_R + -kd_R12*e_omega + omega.cross(J*omega); // + ____________
-            
+            tau = -kp_R12*e_R + -kd_R12*e_omega + omega.cross(J*omega) 
+                    + J*(hat(omega_d)*R_Eig.transpose()*R_d*omega_d - R_Eig.transpose()*R_d*domega_d); 
 
 
         } 
