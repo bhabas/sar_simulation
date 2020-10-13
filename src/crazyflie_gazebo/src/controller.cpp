@@ -1,5 +1,4 @@
 #include "controller.h"
-#include "math_linear_algebra.h"
 #include <iomanip>      // provides std::setprecision
 #include <math.h>
 #include <algorithm>
