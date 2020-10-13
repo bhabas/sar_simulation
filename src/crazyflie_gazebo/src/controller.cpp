@@ -1,9 +1,18 @@
-#include "controller.h"
+        // FT << f_thrust, tau; // Controller prescribed thrust and moments
+        // f = Gamma_inv*FT; // Eq.5 - Convert prescribed thrust and moments to individual motor thrusts
+        // motorspeed_square = f/c_T; // 
+        
+        
+
+
+        // motorspeed_Eig = motorspeed_square.array().sqrt();
+        // Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Eig.cast <float> (); // Converts motorspeeds to C++ array for data transmission#include "controller.h"
 #include <iomanip>      // provides std::setprecision
 #include <math.h>
 #include <algorithm>
 #include <stdint.h>
 #include <Eigen/Dense>
+
 
 using namespace Eigen;
 using namespace std;
@@ -286,6 +295,7 @@ void Controller::controlThread()
     Vector3d v_d; // Velocity-desired [m/s]
     Vector3d a_d(0,0,0); // Acceleration-desired [m/s]
 
+
     Matrix3d R_d; // Rotation-desired (pitch, roll, yaw euler angles)
     Vector3d omega_d; // Omega-desired
     Vector3d domega_d(0,0,0);
@@ -329,6 +339,7 @@ void Controller::controlThread()
     Vector4d FT;
     Vector4d f;
 
+
     
 
     Vector4d motorspeed_square;
@@ -357,10 +368,10 @@ void Controller::controlThread()
     double kp_R34 = 1e-5; // Are these for roll and pitch?
     double kd_R34 = 5e-4;
 
+
     double kp_R = 1e-5;
     double kd_R = 5e-4;
     double kd_R2 = 1e-6;
-
     double c_T = 1.2819184e-8; // Motor constant
 
 

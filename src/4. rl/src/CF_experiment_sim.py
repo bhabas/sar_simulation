@@ -9,9 +9,8 @@ from scipy.spatial.transform import Rotation
 from numpy.core.fromnumeric import repeat
 
 from crazyflie_env import CrazyflieEnv
-from rl_syspepg import rlsysPEPGAgent_reactive ,rlsysPEPGAgent_cov, rlsysPEPGAgent_adaptive
-from rl_EM import rlEM_PEPGAgent, rlEM_PEPG_CovAgent, rlEM_OutlierAgent , rlEMsys_PEPGAgent,rlEM_AdaptiveCovAgent, rlEM_AdaptiveCovAgent3D, rlEM_AdaptiveAgent
-from rl_cma import CMA_basic,CMA,CMA_sym
+from rl_EM import rlEM_PEPGAgent, rlEM_PEPG_CovAgent, rlEMsys_PEPGAgent, rlEM_AdaptiveCovAgent
+from rl_syspepg import rlsysPEPGAgent_reactive ,rlsysPEPGAgent_adaptive
 
 np.random.seed(0)
 os.system("clear")
@@ -29,7 +28,7 @@ print("Environment done")
 ## Initialize the user and data recording
 start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
 file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time + '.csv'
-env.create_csv(file_name,record = False)
+env.create_csv(file_name,record = True)
 
 
 ## Initial figure setup
@@ -43,86 +42,29 @@ plt.ylabel("Reward")
 plt.title("Episode: %d Run: %d" %(0,0))
 plt.show() 
 
-# Variables for current and previous image from camera sensor
-image_prev = np.array(0)
-image_now = np.array(0)
-
 ## Sim Parameters
 ep_start = 0 # Default episode start position
 h_ceiling = 1.5 # meters
-extra_time = 0.0
-
-
+extra_time = 1.0
 
 
 # ============================
-##           PEPG 
+##          EM PEPG 
 # ============================
-
-## Learning rate
-alpha_mu = np.array([[0.2]])#[2.0]] )#,[0.1]])
-alpha_sigma = np.array([[0.1] ])#, [1.0]])#,[0.05]])
 
 ## Initial parameters for gaussian function
+mu = np.array([[4.2],[-5.0]  ])# ,[1.5]])#,[1.5]])   # Initial estimates of mu: 
+sigma = np.array([[0.1],[0.1] ,[0.0]])# ,[0.75]])      # Initial estimates of sigma: 
 
-mu = np.array([[4.0]])# ,[1.5]])#,[1.5]])   # Initial estimates of mu: 
-sigma = np.array([[1.0]])#,[0.0]])# ,[0.75]])      # Initial estimates of sigma: 
+alpha_mu = np.array([[0.2],[0.2]])#[2.0]] )#,[0.1]])
+alpha_sigma = np.array([[0.1],[0.1]  ])#, [1.0]])#,[0.05]])
 
-# noise tests all started at:
-#mu = np.array([[5.0],[-5.0] ])
-#sigma = np.array([[3.0],[3.0] ])
-#  
-agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=5)
-#agent = rlsysPEPGAgent_cov(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=4)
-#agent = rlEM_PEPGAgent(mu,sigma,n_rollout=5)
-#agent = rlsysPEPGAgent_adaptive(alpha_mu,alpha_sigma,mu,sigma,n_rollout=10)
-#agent = rlEM_OutlierAgent(mu,sigma,n_rollout=5) # diverges?
 #agent = rlEM_PEPG_CovAgent(mu,sigma,n_rollout=5)
-
+#agent = rlsysPEPGAgent_reactive(alpha_mu,alpha_sigma,mu,sigma,n_rollout=5)
+#agent = rlEM_PEPGAgent(mu,sigma,n_rollout=4)
 #agent = rlEMsys_PEPGAgent(mu,sigma,n_rollout=5)
-#agent = rlEM_AdaptiveCovAgent(mu,sigma,gamma=0.95,n_rollout=5)
-#agent = rlEM_AdaptiveCovAgent3D(mu,sigma,gamma=0.95,n_rollout=5)
-
-
-#agent = rlEM_AdaptiveAgent(mu,sigma,n_rollout=5)
-# ============================
-##           CMA 
-# ============================
-
-# seems to be unstable if mu is close to zero (coverges to deterimistic)
-## Initial parameters for gaussian function
-#mu = np.array([[3.0],[-3.0] ])#,[1.5]])   # Initial estimates of mu: 
-#sigma = np.array([[1.0],[1.0] , [0.5]])      # Initial estimates of sigma: 
-
-# # For CMA_basic, make sure simga has 3 inputs / for pepg it must be 2
-# agent = CMA_basic(mu,sigma,N_best=0.3,n_rollout=10)
-
-#agent = CMA(n=2,gamma = 0.9) # number of problem dimensions
-#agent = CMA_sym(n=2,gamma=0.9)
-
-
-# extra_time = 0.0 # 0.2   # **** Moved this to be with the other sim params above
-
-
-
-
-
-
-# ============================
-##        Data Loading 
-# ============================
-
-## Uncomment and input starting episode and data_path to recorded csv file to run
-# ep_start = 9
-# data_path = '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/bhabas_2020-09-21_16:35:43.csv'
-# alpha_mu, alpha_sigma, mu, sigma = env.load_csv(data_path,ep_start)
-
-
-
-
-
-
-
+agent = rlEM_AdaptiveCovAgent(mu,sigma,n_rollout=5)
+#agent = rlsysPEPGAgent_adaptive(alpha_mu,alpha_sigma,mu,sigma,n_rollout=5)
 # ============================
 ##          Episode 
 # ============================
@@ -131,9 +73,6 @@ for k_ep in range(ep_start,1000):
 
     mu = agent.mu
     sigma = agent.sigma
-
-    #mu = agent.xmean
-    #sigma = np.array([agent.C[0,0],agent.C[1,1],agent.C[0,1]])
 
     done = False
 
@@ -145,8 +84,8 @@ for k_ep in range(ep_start,1000):
 
     print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
 
-    print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[0], mu[0], mu[0]))
-    print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[0], sigma[0], sigma[0]))
+    print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1], mu[1], mu[1]))
+    print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1], sigma[2], sigma[1]))
     print('\n')
 
 
@@ -160,7 +99,7 @@ for k_ep in range(ep_start,1000):
 
     np.set_printoptions(precision=2, suppress=True)
     print(theta_rl[0,:], "--> RREV")
-    #print(theta_rl[1,:], "--> Gain")
+    print(theta_rl[1,:], "--> Gain")
     #print(theta_rl[2,:], "--> v_x Gain")
     #print(theta_rl[3,:], "--> omega_y Gain")
 
@@ -177,12 +116,10 @@ for k_ep in range(ep_start,1000):
         #image_prev = env.cv_image.flatten()
         
 
-
         vz_ini = np.random.uniform(low=2.0, high=3.0)
-        #vx_ini = np.random.uniform(low=-2.5, high=2.5)
-        vx_ini = 0.0#np.random.normal(0.0,1.0)
-
-        vy_ini = 0.0#np.random.uniform(low=-1.5, high=1.5)
+        vx_ini = 0.0#np.random.uniform(low=-0.5, high=0.5)
+        #vx_ini = np.random.normal(0.0,1.0)
+        vy_ini = 0.0#np.random.uniform(low=-0.5, high=0.5)
         v_ini = [vz_ini,vx_ini,vy_ini]
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
@@ -193,7 +130,7 @@ for k_ep in range(ep_start,1000):
         #vy_ini = v_mag*sin(angle)
 
         print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
-        print("RREV: %.3f \t gain1: %.3f \t gain2: %.3f \t gain3: %.3f" %(theta_rl[0,k_run], theta_rl[0,k_run],theta_rl[0,k_run],theta_rl[0,k_run]))
+        print("RREV: %.3f \t gain1: %.3f \t gain2: %.3f \t gain3: %.3f" %(theta_rl[0,k_run], theta_rl[1,k_run],theta_rl[1,k_run],theta_rl[1,k_run]))
         print("Vz_ini: %.3f \t Vx_ini: %.3f \t Vy_ini: %.3f" %(vz_ini, vx_ini, vy_ini))
 
 
@@ -221,6 +158,7 @@ for k_ep in range(ep_start,1000):
         pitch_triggered = False
         flip_flag = False
         crash_flag = False
+        wall_flag = False
 
         state_history = None
         repeat_run= False
@@ -244,7 +182,9 @@ for k_ep in range(ep_start,1000):
             time.sleep(5e-4) # Time step size
             t_step = t_step + 1 # Time step
             ## Define current state
-            state = env.state_current
+
+            if not wall_flag: # If hit wall, assume stuck and keep old state (velocities not needed)
+                state = env.state_current
             
             position = state[1:4]
             orientation_q = state[4:8]
@@ -253,11 +193,6 @@ for k_ep in range(ep_start,1000):
             omega = state[11:14]
             d = h_ceiling - position[2]
 
-            # Use noisy distance measurement from sensor
-            #d = env.laser_dist # there is some systematic bias
-            #<mean>0.0</mean>
-            #<stddev>0.02</stddev>
-            #print(d)
             RREV, OF_y, OF_x = vz/d, vx/d, vy/d # OF_x,y are optical flows of the ceiling assuming no body rotation
             sensor_data = [RREV, OF_y, OF_x] # simplifying for data recording
             qw = orientation_q[0]
@@ -265,21 +200,10 @@ for k_ep in range(ep_start,1000):
             qy = orientation_q[2]
             qz = orientation_q[3]
 
-            #image_now=env.cv_image.flatten() # collect current image and flatten to 1d
-            #print(image_now)
-            # concatente previous image, current image, and visual cues for training data
-            #training_data = np.concatenate((image_prev,image_now,np.array([RREV*1000,omega_y*1000]))).astype(int)
-            #image_prev = image_now # update image
-
-            #print(data)
-            #if d < 0.3:
-            #    print(d)
             R = Rotation.from_quat([qx,qy,qz,qw])
             R = R.as_matrix()
             angle = R[1,1]
             b3 = R[2,:]
-            #print(angle, b3[0],b3[1],b3[2])
-
             # ============================
             ##    Motor Shutdown Criteria 
             # ============================
@@ -290,24 +214,19 @@ for k_ep in range(ep_start,1000):
                 # shut off motors for the rest of the run
                 print("Flipped!! Shut motors")
                 flip_flag = True
-            
-            #print(d)
-            
+                        
             if ((d < 0.05) and (not crash_flag) and (not flip_flag)): # might need to adjust this 
                 action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
                 env.step(action)
                 print("Crashed!! Shut motors")
                 crash_flag = True
 
+            if ((abs(position[0]) > 0.5) or (abs(position[1]) > 0.5)) and not wall_flag:
+                action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
+                env.step(action)
+                print("Hit wall!! Shut motors")
+                wall_flag = True
             
-            #b3 = r.as_matrix()[:,2] # body z-axis
-            #b3y =  np.dot(b3, np.array([0,0,1]))
-            b3y=0
-            r = [0,0,0]#r.as_euler('zyx', degrees=True)
-            eul1,eul2,eul3 = r[0],r[1],r[2]
-            #print(r)
-
-
             # ============================
             ##    Pitch Criteria 
             # ============================
@@ -315,54 +234,20 @@ for k_ep in range(ep_start,1000):
                 start_time_pitch = env.getTime()
                 env.enableSticky(1)
 
-                
-                ## bhabas work
-                # vx_avg = vx_avg + 0.5*(vx-vx_avg) # Exponentially weighted average of vx
-                # # future implementation on velocity estimate
-
-                # q_RREV = theta_rl[1,k_run] * RREV 
-                # q_d = q_RREV *np.sign(vx_avg) #+ theta_rl[2,k_run]*vx_avg
-
-
-
-                ## bader work
-                # wn = sqrt(omega_x**2 + omega_y**2)
-
-                #angle_omega = pi + atan2(OF_x,OF_y)
-                #print(angle_omega)
-
-                # add term to adjust for tilt 
-                #qRREV = theta_rl[1,k_run]*RREV + theta_rl[2,k_run]*OF_y
-                #qomega = theta_rl[2,k_run]*
-                
-                #angle_omega = pi/2 #sqrt(2)/2.0
-                #q_roll = -qRREV*sin(angle_omega)
-                #q_pitch = qRREV*cos(angle_omega)
-                #q_pitch = qRREV*np.sign(OF_y)# + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
-
-                qRREV = -(RREV + 1/3)
-                q_pitch = RREV*qRREV*np.sign(OF_y)
-
-
-
-                # torque on x axis to adjust for vy
-                q_roll = 0.0 #theta_rl[3,k_run] * omega_y
+                qRREV = theta_rl[1,k_run]*RREV
+                q_pitch = qRREV*np.sign(OF_y)
+                q_roll = 0.0 
 
                 print('----- pitch starts -----')
                 print('vz=%.3f, vx=%.3f, vy=%.3f' %(vz,vx,vy))
-                print('r[0]=%.3f, r[1]=%.3f, r[2]=%.3f, b3y=%.3f' %(r[0],r[1],r[2],b3y))
-                print('RREV=%.3f, OF_y=%.3f, OF_x=%.3f, q_pitch=%.3f, q_RREV=%.3f' %( RREV, OF_y, OF_x,q_pitch,qRREV) )   
+                print('RREV=%.3f, OF_y=%.3f, OF_x=%.3f, q_pitch=%.3f' %( RREV, OF_y, OF_x,q_pitch) )   
                 print("Pitch Time: %.3f" %start_time_pitch)
-                #print('d_est = %.3f, d_act = %.3f' %(d,d_acutal))
-                #print('wy = %.3f , qomega = %.3f , qRREV = %.3f' %(omega[1],qomega,qRREV))
 
                 # randomly sample noise delay with mean = 30ms and sigma = 5
-                t_delay = 0 #np.random.normal(30.0,5.0)
-                print("t_delay = %.3f" %(t_delay))
+                #t_delay = max(np.random.normal(30.0,10.0),0.0)
+                #print("t_delay = %.3f" %(t_delay))
                 #env.delay_env_time(t_start=start_time_pitch,t_delay=t_delay) # Artificial delay to mimic communication lag [ms]
                 
-
-                ## Start rotation and mark rotation as triggered
                 action = {'type':'rate', 'x':q_roll, 'y':q_pitch, 'z':0.0, 'additional':0.0}    
                 env.step(action) 
                 pitch_triggered = True
@@ -428,10 +313,8 @@ for k_ep in range(ep_start,1000):
                     state_history = np.append(state_history, state2, axis=1)
                     env.append_csv(agent,state,k_ep,k_run,sensor_data)
 
-
-
-
             if done_rollout:
+                print('Final Position = (%.3f , %.3f) m' %(position[0],position[1]))
                 action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
                 env.step(action)
                 reward[k_run] = agent.calculate_reward(state_history,h_ceiling)
@@ -447,10 +330,10 @@ for k_ep in range(ep_start,1000):
                 # fig.canvas.flush_events()                
                 break
         
-        
         env.append_csv(agent,state,k_ep,k_run,sensor_data,reward=reward[k_run,0],error=error_str)
         env.append_csv_blank()
         time.sleep(0.01)
+
         if repeat_run == True:
             time.sleep(1)
             env.close_sim()
@@ -463,11 +346,13 @@ for k_ep in range(ep_start,1000):
         else:
             k_run += 1 # Move on to next run
 
+    print(reward)
+
     if not any( np.isnan(reward) ):
         print("Episode # %d training, average reward %.3f" %(k_ep, np.mean(reward)))
+        #env.append_csv(agent,reward_avg = np.mean(reward))
+        #env.append_csv_blank()
         agent.train(theta_rl,reward,epsilon_rl)
         plt.plot(k_ep,np.mean(reward),'ro')
         plt.draw()
         plt.pause(0.001)
-
-
