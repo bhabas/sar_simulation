@@ -392,15 +392,14 @@ void Controller::controlThread()
 
         // Define state_full from recieved Gazebo states and break into corresponding vectors
         queue_states_.wait_dequeue(state_full_structure);
-        memcpy(state_full, state_full_structure.data, sizeof(state_full));
+        // memcpy(state_full, state_full_structure.data, sizeof(state_full));
 
         Map<Matrix<double,1,14>> state_full_Eig(state_full_structure.data); // Convert threaded array to Eigen vector     
-        pos = state_full_Eig.segment(0,3);
+        pos = state_full_Eig.segment(0,3); // .segment(index,num of positions)
         quat_Eig = state_full_Eig.segment(3,4);
         vel = state_full_Eig.segment(7,3);
         omega = state_full_Eig.segment(10,3);
         t = state_full_Eig(13);
-
         
 
     
@@ -412,32 +411,20 @@ void Controller::controlThread()
 
 
 
-
         type = control_cmd_Eig(0); // Command type
         control_vals = control_cmd_Eig.segment(1,3);
         ctrl_flag = control_cmd_Eig(4);
 
-        
-        Eigen::Quaterniond q;
-        q = quat_Eig;
-        q.normalize();
-        cout << q.coeffs() << endl << endl;
-        Matrix3d R_Eig2;
-
-        // R_Eig2 = q.toRotationMatrix().eulerAngles(0,1,2);
 
         
-
-        memcpy(orientation_q, state_full+3,  sizeof(orientation_q)); // orientation_q(w,x,y,z)
-        // Extract current rotation matrix from quaternion data (Still needs to be brought into Eigen Lib)====================
-        // Map<RowVector4d>(&orientation_q[0],1,3) = quat_Eig;
-        math::quat2rotm_Rodrigue((double *) R, orientation_q);
-        Map<RowMatrix3d> R_Eig(&R[0][0]);
-
-        // cout << R_Eig2 - R_Eig<< endl << endl << endl;
-
-
+        Vector3d qvector = quat_Eig.segment(1,3);
+        Vector3d omega_t;
+        Matrix3d R_Eig;
+        double theta = 2*acos(quat_Eig(0));
+        omega_t = qvector*1/sin(0.5*theta);
+        R_Eig = Matrix3d::Identity(3,3) + sin(theta)*hat(omega_t) + (1-cos(theta))*hat(omega_t)*hat(omega_t);
         
+
 
         if (type == 1 || type == 2)
         {

@@ -143,7 +143,7 @@ void quat2rotm_Rodrigue(double * result, double * quaternion)
     //std::cout<<"quaternion norm: "<<quat_len<<std::endl;
 
     matTimesScalar(quat, quat, quat_len, 4, 2);
-    //std::cout<<"quaternion normalized is: ["<<quat[0]<<", "<<quat[1]<<", "<<quat[2]<<", "<<quat[3]<<"]"<<std::endl;
+    // std::cout<<"quaternion normalized is: ["<<quat[0]<<", "<<quat[1]<<", "<<quat[2]<<", "<<quat[3]<<"]"<<std::endl;
 
     double q0 = quat[0];
     double q1 = quat[1];
@@ -153,22 +153,34 @@ void quat2rotm_Rodrigue(double * result, double * quaternion)
     double theta = 2*acos(q0);
     double omega[3] = {0,0,0};
     double qvector[3] = {q1,q2,q3};
-    if(theta!=0)
-        matTimesScalar(omega, qvector, sin(theta/2), 3, 2);
-
-    double omega_hat[3][3] = { {0,-omega[2],omega[1]}, {omega[2],0,-omega[0]}, {-omega[1],omega[0],0} };
+    if(theta!=0) //
+        matTimesScalar(omega, qvector, sin(theta/2), 3, 2); // qvector*1/sin(0.5*theta)
+    // std::cout << "Math QVec: " << quat[0] << " | " << quat[1] << " | "<< quat[2] << " | " << quat[3] << std::endl;
+    // std::cout << "Math Angle: " << theta << std::endl;
+    // std::cout << "Math: " << omega[0] << " | " << omega[1] << " | "<< omega[2] << std::endl << std::endl;
+    double omega_hat[3][3] = { 
+        {   0,         -omega[2],    omega[1]}, 
+        { omega[2],     0,          -omega[0]}, 
+        {-omega[1],     omega[0],    0       }};
 
     double tmp1[3][3];
     double tmp2[3][3];
     double tmp3[3][3];
     double tmp4[3][3];
 
-    double I[3][3] = {{1,0,0}, {0,1,0}, {0,0,1}};
-    matTimesScalar((double *) tmp1,(double *) omega_hat, sin(theta), 3*3, 1);
-    matTimesMat((double *)tmp2, (double *)omega_hat, (double *)omega_hat);
-    matTimesScalar((double *)tmp3, (double *)tmp2, 1-cos(theta), 3*3, 1);
-    matAddsMat((double *) tmp4,(double *) I,(double *) tmp1, 3*3, 1);
-    matAddsMat((double *) rotm,(double *) tmp4,(double *) tmp3, 3*3, 1);
+    double I[3][3] = { // Identity matrix
+        {1,0,0}, 
+        {0,1,0}, 
+        {0,0,1}};
+
+        
+    // rotm = I(3x3) + sin(theta)*omega_hat(3x3) + (1-cos(theta))*omega_hat^2 (3x3)
+    matTimesScalar((double *) tmp1,(double *) omega_hat, sin(theta), 3*3, 1); // sin(theta)*omega_hat(3x3)
+    matTimesMat((double *)tmp2, (double *)omega_hat, (double *)omega_hat); // omega_hat(3x3)*omega_hat(3x3)
+    matTimesScalar((double *)tmp3, (double *)tmp2, 1-cos(theta), 3*3, 1); // (1-cos(theta))*omega_hat^2 (3x3)
+    matAddsMat((double *) tmp4,(double *) I,(double *) tmp1, 3*3, 1); // I(3x3) + sin(theta)*omega_hat(3x3)
+    matAddsMat((double *) rotm,(double *) tmp4,(double *) tmp3, 3*3, 1); 
+    
     
     std::memcpy(result, rotm, sizeof(rotm));
     
