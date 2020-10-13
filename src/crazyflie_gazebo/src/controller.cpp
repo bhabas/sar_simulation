@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <stdint.h>
 #include <Eigen/Dense>
+#include "controller.h"
 
 
 using namespace Eigen;
