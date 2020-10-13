@@ -41,7 +41,7 @@ void Controller::Load(int port_number_gazebo)
     for(int k=0; k<2; k++)
         len = sendto(fd_gazebo_, buf, sizeof(buf),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sizeof(sockaddr_remote_gazebo_));
     if(len>0)
-        cout<<"Send initial motor speed ["<<len<<" bytes] to Gazebo Succeeded! \n Avoiding threads mutual locking"<<endl;
+        cout<<"Send initial motor speed ["<<len<<" bytes] to Gazebo Succeeded! \nAvoiding threads mutual locking"<<endl;
     else
         cout<<"Send initial motor speed to Gazebo FAILED! Threads will mutual lock"<<endl;
 
@@ -412,17 +412,17 @@ void Controller::controlThread()
 
 
         type = control_cmd_Eig(0); // Command type
-        control_vals = control_cmd_Eig.segment(1,3);
-        ctrl_flag = control_cmd_Eig(4);
+        control_vals = control_cmd_Eig.segment(1,3); // Command values
+        ctrl_flag = control_cmd_Eig(4); // Controller On/Off switch (To be implemented)
 
 
-        
-        Vector3d qvector = quat_Eig.segment(1,3);
-        Vector3d omega_t;
-        Matrix3d R_Eig;
-        double theta = 2*acos(quat_Eig(0));
-        omega_t = qvector*1/sin(0.5*theta);
-        R_Eig = Matrix3d::Identity(3,3) + sin(theta)*hat(omega_t) + (1-cos(theta))*hat(omega_t)*hat(omega_t);
+
+        // Quaternion to Rotation Matrix Conversion
+        Quaterniond q;
+        q.w() = quat_Eig(0);
+        q.vec() = quat_Eig.segment(1,3);
+        Matrix3d R_Eig = q.normalized().toRotationMatrix(); 
+        // I'm not sure if this from Body->World or World->Body
         
 
 
@@ -590,16 +590,6 @@ int main()
     Controller controller;
     
     controller.Load(18080);
-
-    /*double result[3][3];
-    double quat[4] = {9,7,3,7};
-    math::quat2rotm_Rodrigue((double *) result, quat);
-
-    cout<<"Rotation matrix is :"<<endl;           // confirm result with matlab
-    cout<<result[0][0]<<", "<<result[0][1]<<", "<<result[0][2]<<endl;
-    cout<<result[1][0]<<", "<<result[1][1]<<", "<<result[1][2]<<endl;
-    cout<<result[2][0]<<", "<<result[2][1]<<", "<<result[2][2]<<endl;*/
-
 
 
     while(1)
