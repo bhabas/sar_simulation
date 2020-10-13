@@ -25,7 +25,8 @@ class CrazyflieEnv:
 
         self.user = username   
         if self.user == 'bhabas':
-            import pyautogui    
+            # import pyautogui    
+            pass
         
         # Initializes the ROS node for the process. Can only have one nod in a rospy process
         rospy.init_node("crazyflie_env_node",anonymous=True) 
@@ -161,14 +162,14 @@ class CrazyflieEnv:
 
         return self.state_current
     
-    def recvThread(self):
+    def recvThread(self): # Recieve position data from Gazebo?
         print("Start recvThread")
         while self.isRunning:
  
             try:
                 data, addr_remote = self.fd.recvfrom(112)     # 1 double = 8 bytes
-                px,py,pz,q0,q1,q2,q3,vx,vy,vz,p,q,r,sim_time = struct.unpack('14d',data)
-                self.state_current = np.array([sim_time, px,py,pz,q0,q1,q2,q3,vx,vy,vz,p,q,r])
+                px,py,pz,qw,qx,qy,qz,vx,vy,vz,p,q,r,sim_time = struct.unpack('14d',data)
+                self.state_current = np.array([sim_time, px,py,pz,qw,qx,qy,qz,vx,vy,vz,p,q,r])
                 self.timeout = False
             
             except timeout:

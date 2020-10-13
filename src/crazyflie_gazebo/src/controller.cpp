@@ -1,5 +1,4 @@
 #include "controller.h"
-#include "math_linear_algebra.h"
 #include <iomanip>      // provides std::setprecision
 #include <math.h>
 #include <algorithm>
@@ -41,7 +40,7 @@ void Controller::Load(int port_number_gazebo)
     for(int k=0; k<2; k++)
         len = sendto(fd_gazebo_, buf, sizeof(buf),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sizeof(sockaddr_remote_gazebo_));
     if(len>0)
-        cout<<"Send initial motor speed "<<len<<" byte to Gazebo Succeeded! Avoiding threads mutual locking"<<endl;
+        cout<<"Send initial motor speed ["<<len<<" bytes] to Gazebo Succeeded! \nAvoiding threads mutual locking"<<endl;
     else
         cout<<"Send initial motor speed to Gazebo FAILED! Threads will mutual lock"<<endl;
 
@@ -57,9 +56,9 @@ void Controller::Load(int port_number_gazebo)
     sockaddr_local_rl_.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("127.0.0.1");
     sockaddr_local_rl_.sin_port = htons(18060);
     if (bind(fd_rl_, (struct sockaddr*)&sockaddr_local_rl_, sizeof(sockaddr_local_rl_))<0)
-        cout<<"Socket binding to RL failed"<<endl;
+        cout<<"Socket binding to crazyflie_env.py failed"<<endl;
     else
-        cout<<"Socket binding to RL succeeded"<<endl;
+        cout<<"Socket binding to crazyflie_env.py succeeded"<<endl;
     
     isRunning_ = true;
     receiverThread_gazebo_ = std::thread(&Controller::recvThread_gazebo, this);
@@ -70,6 +69,21 @@ void Controller::Load(int port_number_gazebo)
     queue_states_ = moodycamel::BlockingReaderWriterQueue<StateFull>(5);
     queue_motorspeed_ = moodycamel::BlockingReaderWriterQueue<MotorCommand>(5);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void Controller::recvThread_gazebo()
 {
@@ -95,6 +109,7 @@ void Controller::recvThread_gazebo()
     }
 }
 
+
 void Controller::sendThread_gazebo()
 {
     float motorspeed[4];
@@ -114,6 +129,23 @@ void Controller::sendThread_gazebo()
     }
     
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void Controller::recvThread_rl()
 {
@@ -148,375 +180,409 @@ void Controller::recvThread_rl()
     }
 }
 
+
+
+
+
+Vector3d dehat(Matrix3d a_hat) // Input a skew-symmetric matrix and output corresponding vector
+{
+
+    /* Convert skew-symmetric matrix a_hat into vector a
+
+    a_hat = [  0   -a3   a2 ]
+            [  a3   0   -a1 ]
+            [ -a2   a1   0  ]
+
+
+    a = [ a1 ] 
+        [ a2 ] 
+        [ a3 ]
+
+    */
+
+    Vector3d a;
+    Matrix3d tmp;
+
+    tmp = (a_hat - a_hat.transpose())/2; // Not sure why this is done
+
+    a(0) = tmp(2,1);
+    a(1) = tmp(0,2);
+    a(2) = tmp(1,0);
+
+    return a;
+}
+
+Matrix3d hat(Vector3d a) // Input a hat vector and output corresponding skew-symmetric matrix
+{ 
+  // You hat a vector and get a skew-symmetric matrix
+  // You dehat/dehat a skew-symmetric matrix and get a vector
+
+    /* Convert a into skew symmetric matrix a_hat
+    a = [ a1 ] 
+        [ a2 ] 
+        [ a3 ]
+ 
+    a_hat = [  0   -a3   a2 ]
+            [  a3   0   -a1 ]
+            [ -a2   a1   0  ]
+    ]
+    */
+    Matrix3d a_hat;
+    a_hat(2,1) =  a(0);
+    a_hat(1,2) = -a(0);
+
+    a_hat(0,2) =  a(1);
+    a_hat(2,0) = -a(1);
+
+    a_hat(1,0) =  a(2);
+    a_hat(0,1) = -a(2);
+
+    return a_hat;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void Controller::controlThread()
 {   
     typedef Matrix<double, 3, 3, RowMajor> RowMatrix3d; 
-
 
     double state_full[14];
     StateFull state_full_structure;
     float motorspeed[4];
     MotorCommand motorspeed_structure;
+
+    int type = 5; // Command type {1:Pos, 2:Vel, 3:Att, 4:Omega, 5:Stop}
+    int ctrl_flag; // On/Off switch for controller
     double control_cmd[5];
-    int type =5;
+    Vector3d control_vals;
+    
 
     // State Declarations
-    double position[3];
     double orientation_q[4];
-    double eul[3];
-    double vel[3];
-    double omega[3];
 
-    // Rotation Matrices
+    Vector3d pos; // current position [m]
+    Vector3d vel; // current velocity [m]
+    Vector4d quat_Eig; // current attitude [rad] (quat form)
+    Vector3d eul_d; // current attitude [rad] (roll, pitch, yaw angles)
+    Vector3d omega; // current angular velocity [rad/s]
+
+    
     double R[3][3];
-    double R_d[3][3] = {
-        {1,0,0}, 
-        {0,1,0}, 
-        {0,0,1}};
-    double e_R[3];
 
     
-    double omega_d[3];
-    double e_omega[3];
+    // State Error and Prescriptions
+    Vector3d x_d; // Pose-desired [m] 
+    Vector3d v_d; // Velocity-desired [m/s]
+    Vector3d a_d(0,0,0); // Acceleration-desired [m/s]
 
-    double b1_d[3];
-    double b2_d[3];
-    double b3_d[3];
-    double b2_d_hat[3][3];
-    double b3_d_hat[3][3];
+    Matrix3d R_d; // Rotation-desired (pitch, roll, yaw euler angles)
+    Vector3d omega_d; // Omega-desired
+    Vector3d domega_d(0,0,0);
 
-    double v_d[3];// = {0.0, 0, 1.0};
-    double e_v[3];
+    Vector3d e_x; // Pose-Error
+    Vector3d e_v; // Vel-error 
+    Vector3d e_R; // Rotation-error
+    Vector3d e_omega; // Omega-error
+
     
-    double p_d[3];
-    double e_x[3];
+
+    Matrix3d J; // Rotational Inertia of CF
+    J<< 1.65717e-05, 0, 0,
+        0, 1.66556e-05, 0,
+        0, 0, 2.92617e-05;
+
+    Matrix4d Gamma_inv; // Calculated by Matlab but not sure what it is
+    Gamma_inv << 0.25, -7.6859225, -7.6859225, -41.914296,
+                     0.25,  7.6859225,  7.6859225, -41.914296,
+                     0.25,  7.6859225, -7.6859225,  41.914296,
+                     0.25, -7.6859225,  7.6859225,  41.914296;
 
 
-    // CONTROLLER GAINS
+    Matrix4d Gamma;
+
+
+    // gamma = np.mat( [[1,1,1,1], [-d,d,d,-d], [-d,d,-d,d], [-c_tau,-c_tau,c_tau,c_tau]] )
+
+    Vector3d e3(0,0,1); // Global z-axis
+
+    
+
+    Vector3d b1_d; // Desired yaw direction of body-fixed axis (COM to prop #1)
+    Vector3d b2_d; // Desired body-fixed axis normal to b1 and b3
+    Vector3d b3_d; // Desired body-fixed vertical axis
+
+
+    Vector3d f_thrust_ideal; // Ideal thrust vector to minimize error   
+    Vector3d tau; // Moment control vector
+    
+    Vector4d FT;
+    Vector4d f;
+
+    
+
+    Vector4d motorspeed_square;
+    Vector4d motorspeed_Eig; // motorspee
+
+    Vector3d b3; // body-fixed vertical axis
+    
+
+
+    
+
+
+    double t;
+
+
+    
+
+
+    // Controller Values
     // only kp_v and kp_R12 matter for vel control
-    double kp_x = 0.15;
-    double kd_x = 0.1;
+    double kp_x = 0.15; // Positional Gain
+    double kp_v = 3.25; // Velocity Gain
 
-    double kp_v = 3.25;  //3.0
-    double kp_R12 = 0.55;//0.4; // 0.5
-    double kd_R12 = 0.1;
-
-    double kp_R34 = 1e-5;
+    double kp_R12 = 0.55;// Kp_R
+    double kd_R12 = 0.1; // Kd_R
+    double kp_R34 = 1e-5; // Are these for roll and pitch?
     double kd_R34 = 5e-4;
 
     double kp_R = 1e-5;
     double kd_R = 5e-4;
-
     double kd_R2 = 1e-6;
 
     double c_T = 1.2819184e-8; // Motor constant
 
-    double Gamma_inv[4][4] = {  //????
-        {0.25, -7.6859225, -7.6859225, -41.914296}, 
-        {0.25,  7.6859225,  7.6859225, -41.914296}, 
-        {0.25,  7.6859225, -7.6859225,  41.914296},  
-        {0.25, -7.6859225,  7.6859225,  41.914296}};    // calculated by Matlab
 
-    double J[3][3] = { // Rotational Inertia
-        {1.65717e-05, 0, 0}, 
-        {0, 1.66556e-05, 0}, 
-        {0, 0, 2.92617e-05}};
-
-
-    // =====================================
-    //    Array -> Matrix -> Array Example
-    // =====================================
-
-    // // cout J array
-    // std::cout << "C array:\n";
-    // for (int i = 0; i < 3; ++i) {
-    //     for (int j = 0; j < 3; ++j) {
-    //         std::cout << J[i][j] << " ";
-    // }
-    // std::cout << "\n";
-    // }
-
-
-    // // Map J array to eigen matrix
-    // typedef Matrix<double, 3, 3, RowMajor> RowMatrix3d; 
-    //     // - creates shortcut for matrix type: 3x3 double and RowMajor to match c++ array format
-    // Map<RowMatrix3d> J_eig(&J[0][0]); // Not quite sure what &J[0][0] does but it works
-    // cout << "Eigen matrix:\n" << J_eig << endl;
-
-
-    // // Maps J_eig matrix to J_2 array
-    // double J_2[3][3];
-    // Map<RowMatrix3d> (&J_2[0][0],3,3) = J_eig;
-
-    // std::cout << "C array2:\n";
-    // for (int i = 0; i < 3; ++i) {
-    //     for (int j = 0; j < 3; ++j) {
-    //         std::cout << J_2[i][j] << " ";
-    // }
-    // std::cout << "\n";
-    // }
-
-
-
-    double f_thrust =0;
+    double f_thrust = 0;
     // might need to adjust weight to real case (sdf file too)
-    double f_hover = (0.026 + 0.00075*4)*9.8066;
-    double tau[3] =  {0,0,0};
 
-    Map<RowVector3d> v1(tau); // uses v1 as a Vector3d object
-    Map<Vector3d> v2(tau);
-    cout << v1 << endl;
-    cout << v2 << endl;
+    double m = 0.026 + 0.00075*4; // Mass [kg]
+    double g = 9.8066; // Gravitational acceleration [m/s^2]
+    double f_hover = m*g; // Force to hover
 
 
-    double FT[4];
-    double f[4];
-    double motorspeed_square[4];
+    double d; //= ___; // distance from COM to prop
+    double c_Tf;// = _____ // Ratio between km and kf (Not sure what these correspond to)
+    Gamma << 1,    1,     1,    1,
+                 0,   -d,     0,    d,
+                 d,    0,    -d,    0,
+                -c_Tf, c_Tf, -c_Tf, c_Tf;
+ 
 
-    double tmp1[3][3];  double tmp2[3][3];  double tmp3[3][3];  double tmp4[3][3];  double tmp5[3][3];  double tmp6[3][3];
-    double tmp7[3]; double tmp8[3]; double tmp9[3]; double tmp10[3];    double tmp11[3][3]; double tmp12[3];    double tmp13[3];    double tmp14[3];
-    double tmp21[3];    double tmp22[3];    double tmp23[3];    double tmp24[3];    double tmp25[3];
+  
 
-    unsigned int k_run = 0;
+
+    unsigned int k_run = 0; // Run counter
 
     while(isRunning_)
     {
         k_run++;
 
+        // Define state_full from recieved Gazebo states and break into corresponding vectors
         queue_states_.wait_dequeue(state_full_structure);
-        memcpy(state_full, state_full_structure.data, sizeof(state_full));
+        // memcpy(state_full, state_full_structure.data, sizeof(state_full));
 
+        Map<Matrix<double,1,14>> state_full_Eig(state_full_structure.data); // Convert threaded array to Eigen vector     
+        pos = state_full_Eig.segment(0,3); // .segment(index,num of positions)
+        quat_Eig = state_full_Eig.segment(3,4);
+        vel = state_full_Eig.segment(7,3);
+        omega = state_full_Eig.segment(10,3);
+        t = state_full_Eig(13);
+        
 
-        if (control_cmd_recvd[0]<10) // What does this do?
-            memcpy(control_cmd, control_cmd_recvd, sizeof(control_cmd)); // Rename received control_cmd for reasons
-        // else if ( (control_cmd_recvd[0]>10) && (control_cmd_recvd[1]<0.5) )
-        // {
-        //     //cout<<"======================================="<<endl;
-        //     //cout<<"Enter reset mode"<<endl;
-        //     motorspeed[0] = 0.0;  
-        //     motorspeed[1] = 0.0;  
-        //     motorspeed[2] = 0.0;  
-        //     motorspeed[3] = 0.0;
-        //     sendto(fd_gazebo_, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
+    
 
-        //     control_cmd_recvd[0] = 2; 
-        //     control_cmd_recvd[1] = 0; 
-        //     control_cmd_recvd[2] = 0; 
-        //     control_cmd_recvd[3] = 0; 
-        //     control_cmd_recvd[4] = 0;
-        //     sleep(3);
-        //     for(int k_temp=1;k_temp<5;k_temp++)
-        //         queue_states_.wait_dequeue(state_full_structure);
-        //     memcpy(state_full, state_full_structure.data, sizeof(state_full));
-        // }
-
-        memcpy(position, state_full, sizeof(position));
-        memcpy(orientation_q, state_full+3,  sizeof(orientation_q));
-        memcpy(vel, state_full+7, sizeof(vel));
-        memcpy(omega, state_full+10, sizeof(omega));
+        // Define control_cmd from recieved control_cmd
+        if (control_cmd_recvd[0]<10) // There is a case where control_cmd_recvd becomes 11 but I'm not sure why?
+            memcpy(control_cmd, control_cmd_recvd, sizeof(control_cmd)); // Compiler doesn't work without this line for some reason? 
+            Map<Matrix<double,5,1>> control_cmd_Eig(control_cmd_recvd); 
 
 
 
-        type = control_cmd[0];
-        math::quat2rotm_Rodrigue((double *) R, orientation_q);
+        type = control_cmd_Eig(0); // Command type
+        control_vals = control_cmd_Eig.segment(1,3); // Command values
+        ctrl_flag = control_cmd_Eig(4); // Controller On/Off switch (To be implemented)
+
+
+
+        // Quaternion to Rotation Matrix Conversion
+        Quaterniond q;
+        q.w() = quat_Eig(0);
+        q.vec() = quat_Eig.segment(1,3);
+        Matrix3d R_Eig = q.normalized().toRotationMatrix(); 
+        // I'm not sure if this from Body->World or World->Body
+        
+
+
         if (type == 1 || type == 2)
         {
-            if (type==1)    // position control
-            {
-                p_d[0] = control_cmd[1];    
-                p_d[1] = control_cmd[2];    
-                p_d[2] = control_cmd[3];
-                math::matAddsMat(e_x, position, p_d, 3, 2);       // e_x = pos - p_d
-                memcpy(e_v, vel, sizeof(vel));            // e_v = v - v_d
+            if (type == 1) // position error calc 
+            {   
+                
+                x_d = control_vals; // Set desired position from thread
+                a_d << 0,0,0; // Set desired acceleration from thread (default to zero for our typical use)
 
+                // x_d = _______ // Set desired position from a path function e.g. [cos(pi*t),sin(pi*t),2]
+                // v_d = ______ // Set desired velocity from a path function e.g. [-pi*sin(pi*t),pi*cos(pi*t),0]
+                // a_d = ______ // Set desired acceleration from a path function e.g. [-pi^2*cos(pi*t),-pi^2*sin(pi*t),0]
+
+                e_x = pos - x_d; //  Position Error
             }
-            else            // velocity control
-            {
-                v_d[0] = control_cmd[1];    
-                v_d[1] = control_cmd[2];    
-                v_d[2] = control_cmd[3];
-                e_x[0]=0; e_x[1]=0; e_x[2]=0;
-                // myMemCpy(e_x, position, sizeof(position));              // e_x = pos - p_d
-                math::matAddsMat(e_v, vel, v_d, 3, 2);                        // e_v = v - v_d
-
+            else if (type == 2) // velocity error calc
+            {   
+                v_d = control_vals; // velocity desired
+                e_v = vel - v_d; // velocity error 
             }
-                                       
-            math::matTimesScalar(tmp24, e_x, -kp_x, 3, 1);                     // -k_x * e_x
-            math::matTimesScalar(tmp21, e_v, -kp_v, 3, 1);                     // -k_v * e_v
+
+            e_x << 0,0,0; // Errors will need to be set to zero when not being used ============
 
 
-            tmp22[0] = 0; 
-            tmp22[1] = 0; 
-            tmp22[2] = f_hover;        // mg * e_3
 
+            // =========== Calculate the prescribed thrust =========== //  
+            // 
+            // This is in terms of the global axes [x,y,z] => [e1,e2,e3] 
+            // 
+            // Calculates total error in 3D space and the required thrust vector to exponentially minimize it
+            // but because thrust is locked in b3 direction, while error vector can point anywhere,
+            // we project the vector onto b3 to get "close" and then use the moments to align it
+            //
+            // https://www.youtube.com/watch?v=A27knigjGS4&list=PL_onPhFCkVQhuPiUxUW2lFHB39QsavEEA&index=46
 
-            math::matAddsMat(tmp23, tmp21, tmp22, 3, 1);                      // k_v*e_v + mg*e_3
-            math::matAddsMat(tmp25, tmp23, tmp24, 3, 1);                      // -k_x*e_x + -k_v*e_v + mg*e_3
-            if (tmp25[2]<0)
-                tmp25[2] = 1e-2;
-            math::matTimesScalar(b3_d, tmp25, (double)sqrt(math::dot(tmp25, tmp25, 3)), 3, 2);     // normalize
-            b1_d[0] = 1; b1_d[1] = 0; b1_d[2] = 0;
-            math::hat((double *) b3_d_hat, b3_d);
-            math::matTimesVec(b2_d,(double *) b3_d_hat, b1_d, 3);
-            math::matTimesScalar(b2_d, b2_d, (double)sqrt(math::dot(b2_d, b2_d, 3)), 3, 2);     // normalize
-            math::hat((double *) b2_d_hat, b2_d);
-            math::matTimesVec(b1_d,(double *) b2_d_hat, b3_d, 3);
-            R_d[0][0] = b1_d[0];    R_d[0][1] = b2_d[0];    R_d[0][2] = b3_d[0];
-            R_d[1][0] = b1_d[1];    R_d[1][1] = b2_d[1];    R_d[1][2] = b3_d[1];
-            R_d[2][0] = b1_d[2];    R_d[2][1] = b2_d[2];    R_d[2][2] = b3_d[2];
+            b3 = R_Eig.col(2); // current orientation of b3 vector
+            f_thrust_ideal = -kp_x*e_x + -kp_v*e_v + m*g*e3 - m*a_d; // thrust error vector
+            f_thrust = f_thrust_ideal.dot(b3); // ideal thrust projected onto b3
+
+            // If the prescribed thrust is globally z-negative then turn thrust 
+            // off so it doesn't dive bomb in a fiery explosion of death (or break)
+            if (f_thrust_ideal(2)<0)
+                f_thrust_ideal(2) = 0.01;
+
             
-            math::matTranspose((double *) tmp1,(double *) R_d, 3);                                // R_d'
-            math::matTranspose((double *) tmp2,(double *) R, 3);                                  // R'
-            math::matTimesMat((double *) tmp3,(double *) tmp1,(double *) R);                      // R_d' * R
-            math::matTimesMat((double *) tmp4,(double *) tmp2,(double *) R_d);                    // R' * R_d
-            math::matAddsMat((double *) tmp5,(double *) tmp3,(double *) tmp4, 3*3, 2);
-            math::matTimesScalar((double *) tmp6,(double *) tmp5, 0.5, 3*3, 1);
-            math::dehat(e_R,(double *) tmp6);
-            memcpy(e_omega, omega, sizeof(omega));
 
-            double b3[3] = {R[0][2], R[1][2], R[2][2]};
-            f_thrust = math::dot(tmp25, b3, 3);
+            // =========== Calculate desired body-fixed axes =========== //
+            // Defines the desired yaw angle of CF (Facing positive x-axis)
 
-            math::matTimesScalar(tmp8, e_R, -kp_R12, 3, 1);                  // -k_R * e_R
-            math::matTimesScalar(tmp9, e_omega, -kd_R12, 3, 1);          // -k_omega * e_omega
-            math::matTimesVec(tmp10, (double *) J, omega, 3);             // J * omega
-            math::hat((double *) tmp11, omega);                           // omega_hat
-            math::matTimesVec(tmp12, (double *) tmp11, tmp10, 3);         // omega x J*omega
-            math::matAddsMat(tmp13, tmp8, tmp9, 3, 1);
-            math::matAddsMat(tau, tmp13, tmp12, 3, 1);
+            b1_d << 1,0,0;  // b1 is unit basis vector from COG to propeller (one?)
+            b3_d= f_thrust_ideal.normalized(); // body-fixed vertical axis
 
-        }
+            b2_d = b3_d.cross(b1_d); // body-fixed axis to prop (2?)
+            b2_d.normalize();
+            
+
+            // =========== Calculate Rotational Error Matrix =========== // 
+            R_d << b1_d, b2_d, b3_d; // concatinating column vectors of desired body axes
+            e_R = dehat(0.5*(R_d.transpose()*R_Eig - R_Eig.transpose()*R_d));
+
+
+
+            // Just fix code so omega_d = zero          
+            // This is a trick to have because omega_d set = 0 so e_omega = omega-omega_d ======================= 
+            e_omega = omega; // This is wrong way and purely temporary to keep consistent with the current controller =============
+
+
+            // =========== Calculate Moment Vector (tau or M) =========== //
+            tau = -kp_R12*e_R + -kd_R12*e_omega + omega.cross(J*omega) 
+                    + J*(hat(omega_d)*R_Eig.transpose()*R_d*omega_d - R_Eig.transpose()*R_d*domega_d); 
+
+
+        } 
         else if (type == 3 || type==4)
         {
-            if (type == 3)          // attitude control
+            if (type == 3) // attitude control
             {
-                eul[0] = control_cmd[1];    eul[1] = control_cmd[2];    eul[2] = control_cmd[3];
-                R_d[0][0] = (double)cos(eul[1]);    R_d[0][1] = 0;      R_d[0][2] = (double)sin(eul[1]);
-                R_d[1][0] = 0;                      R_d[1][1] = 1;      R_d[1][2] = 0;
-                R_d[2][0] = -(double)sin(eul[1]);   R_d[2][1] = 0;      R_d[2][2] = (double)cos(eul[1]);
+                eul_d = control_vals;
+
+                R_d  <<  cos(eul_d(1)),  0,  sin(eul_d(1)), // This is locking us in only pitch ==========
+                             0,            1,  0,
+                            -sin(eul_d(1)),  0,  cos(eul_d(1));
+
+                e_R = dehat(0.5*(R_d.transpose()*R_Eig - R_Eig.transpose()*R_d));
+                e_omega = omega; // This is the wrong way and purely temporary to keep consistent with the current controller =============
+            }
+            else if (type == 4)// Angular velocity control
+            {
+                omega_d = control_vals;
+
+                omega_d(0) = omega(0) + omega_d(0); // I can't quite follow this ================
+                omega_d(2) = omega(2) + omega_d(2);
                 
-                math::matTranspose((double *) tmp1,(double *) R_d, 3);                                // R_d'
-                math::matTranspose((double *) tmp2,(double *) R, 3);                                  // R'
-                math::matTimesMat((double *) tmp3,(double *) tmp1,(double *) R);                      // R_d' * R
-                math::matTimesMat((double *) tmp4,(double *) tmp2,(double *) R_d);                    // R' * R_d
-                math::matAddsMat((double *) tmp5,(double *) tmp3,(double *) tmp4, 3*3, 2);
-                math::matTimesScalar((double *) tmp6,(double *) tmp5, 0.5, 3*3, 1);
-                math::dehat(e_R,(double *) tmp6);
-                memcpy(e_omega, omega, sizeof(omega));
-            }
-            else
-            {
-                omega_d[0] = control_cmd[1];    omega_d[1] = control_cmd[2];    omega_d[2] = control_cmd[3];
-                omega_d[0] = omega[0] + control_cmd[1]; omega_d[2] = omega[2] + control_cmd[3]; // so doesnt try to correct itself
-                e_R[0]=0; e_R[1]=0; e_R[2]=0;
-                math::matAddsMat(e_omega, omega, omega_d, 3, 2);            // e_omega = omega - omega_d
+                e_R << 0,0,0;
+                e_omega = omega - omega_d;
             }
 
-            if (R[2][2] > 0.7)
-                f_thrust = f_hover / R[2][2];
-            else
-                f_thrust = f_hover / 0.7;
-            
-            math::matTimesScalar(tmp8, e_R, -kp_R34, 3, 1);                  // -k_R * e_R
-            math::matTimesScalar(tmp9, e_omega, -kd_R34, 3, 1);          // -k_omega * e_omega
-            math::matTimesVec(tmp10, (double *) J, omega, 3);             // J * omega
-            math::hat((double *) tmp11, omega);                           // omega_hat
-            math::matTimesVec(tmp12, (double *) tmp11, tmp10, 3);         // omega x J*omega
-            math::matAddsMat(tmp13, tmp8, tmp9, 3, 1);
-            math::matAddsMat(tau, tmp13, tmp12, 3, 1);
+            if (R_Eig(2,2) > 0.7) // If pitch angle is > 45 deg then divide by cos of pitch angle? ===========
+                f_thrust = f_hover/R_Eig(2,2);
+            else 
+                f_thrust = f_hover/0.7; // Otherwise divide hover
 
+            tau = -kp_R34*e_R + -kd_R34*e_omega + omega.cross(J*omega); 
         }
-        else
+        else if (type == 5)// If command[0] = 5 stop all thrust
         {
             f_thrust = 0;
-            tau[0]=0; tau[1]=0; tau[2]=0;
-        }
-        
-        // clamped thrust to 2 times the weight
-        // might want to limit motorspeed instead?
-        // values are much lower sometimes (very concerning) ( 5.0 -> 0.6)!!
-        //double f_max = 0.6; //2.0*f_hover;
-        //double f_clamped =  math::clamp(f_thrust,0.0,f_max);
-        
-        //f_clamped = 0.6;
-        FT[0] = f_thrust;//f_thrust;
-        FT[1] = tau[0];
-        FT[2] = tau[1];
-        FT[3] = tau[2];
-        math::matTimesVec(f, (double *) Gamma_inv, FT, 4);
-        math::matTimesScalar(motorspeed_square, f, c_T, 4, 2);
-        //cout << motorspeed_square[0] << endl;
-        for(int k_ms_s=0;k_ms_s<4;k_ms_s++)
-        {
-            if(motorspeed_square[k_ms_s]<0) {
-                motorspeed_square[k_ms_s] = 0;}
-            else if (isnan(motorspeed_square[k_ms_s])) {
-                motorspeed_square[k_ms_s] = 0; }
-
-        }
-        if(type == 3 || type == 4)
-        {
-            motorspeed_square[0]= (motorspeed_square[0]+motorspeed_square[2])/2;     
-            motorspeed_square[2]=motorspeed_square[0];
-
-            //motorspeed_square[1]=2*motorspeed_square[1];     motorspeed_square[3]=2*motorspeed_square[3];
-            /*for(int k_ms_s=0;k_ms_s<4;k_ms_s++)
-            {
-                if(motorspeed_square[k_ms_s]<0)
-                    motorspeed_square[k_ms_s] = 0;
-                else
-                    motorspeed_square[k_ms_s] = 4 * motorspeed_square[k_ms_s];
-            }*/
-            //motorspeed_square[0] = 3052*3052;   motorspeed_square[2] = 3052*3052;
-
-
-            if(R[2][2]<0)
-            {
-                /*if (k_run%100 == 1)
-                    cout<<"Shutdown motors"<<endl;*/
-                motorspeed_square[0] = 0;   
-                motorspeed_square[1] = 0;   
-                motorspeed_square[2] = 0;   
-                motorspeed_square[3] = 0;
-            }
+            tau << 0,0,0;
             
         }
-        /*if(type == 2)
-        {
-            for(int k_ms_s=0;k_ms_s<4;k_ms_s++)
-            {
-                if(motorspeed_square[k_ms_s]<0)
-                    motorspeed_square[k_ms_s] = 0;
-            }
-            if ( k_run%50 == 1 )
-                cout<<"motor speed ["<< motorspeed[0]<<", "<< motorspeed[1]<<", "<< motorspeed[2]<<", "<<motorspeed[3]<<"]"<<endl;
-        }*/
-
-        //cout << "f_thrust = " << f_thrust << endl;
-        //cout << "tau1  = " << tau[0] << " \t ta2 = " << tau[1] << endl;
-        //cout << "thrust = " << f_thrust << " clamped = " << f_clamped << endl;
         
-        motorspeed[0] = sqrt(motorspeed_square[0]);
-        motorspeed[1] = sqrt(motorspeed_square[1]);
-        motorspeed[2] = sqrt(motorspeed_square[2]);
-        motorspeed[3] = sqrt(motorspeed_square[3]);
 
-        double ms_min = 0.0;
-        double ms_max = 3420.0;
-        for (int i =0; i<4;i++) { // clamp motor speed (based on max thrust (0.6) speed)
-            motorspeed[i] = math::clamp(motorspeed[i],ms_min,ms_max);
+        FT << f_thrust, tau; // Controller prescribed thrust and moments
+        f = Gamma_inv*FT; // Eq.5 - Convert prescribed thrust and moments to individual motor thrusts
+        motorspeed_square = f/c_T; // 
+        
+        
+
+        // If squared motorspeed^2 is negative cap at zero
+        // Why that'd be the case? I don't know
+        for(int k_motor=0;k_motor<4;k_motor++)
+        {
+            if(motorspeed_square(k_motor)<0){
+                motorspeed_square(k_motor) = 0;}
+            else if (isnan(motorspeed_square(k_motor))){
+               motorspeed_square(k_motor) = 0;}
         }
+        
+ 
+
+        if(R_Eig(2,2)<0) // If pitch angle goes less than 90 deg then shut off motors
+        {
+            motorspeed_square(0) = 0;
+            motorspeed_square(1) = 0;
+            motorspeed_square(2) = 0;
+            motorspeed_square(3) = 0;
+        }
+
+        motorspeed_Eig = motorspeed_square.array().sqrt();
+        Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Eig.cast <float> (); // Converts motorspeeds to C++ array for data transmission
+
+
+        // double ms_min = 0.0;
+        // double ms_max = 3420.0;
+        // for (int i =0; i<4;i++) { // clamp motor speed (based on max thrust (0.6) speed)
+        //     motorspeed[i] = math::clamp(motorspeed[i],ms_min,ms_max);
+        // }
+
         // cout causing wierd behavior?????
         //if ( k_run%50 == 1 ) {
         //        cout<<"motor speed ["<< motorspeed[0]<<", "<< motorspeed[1]<<", "<< motorspeed[2]<<", "<<motorspeed[3]<<"]"<<endl;
         //}   
-        //memcpy(motorspeed_structure.data, motorspeed, sizeof(motorspeed));
-        //queue_motorspeed_.enqueue(motorspeed_structure);
         sendto(fd_gazebo_, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
     
     
     }
 }
+
+
 
 int main()
 {
@@ -524,18 +590,6 @@ int main()
     
     controller.Load(18080);
 
-    /*double result[3][3];
-    double quat[4] = {9,7,3,7};
-    math::quat2rotm_Rodrigue((double *) result, quat);
-
-    cout<<"Rotation matrix is :"<<endl;           // confirm result with matlab
-    cout<<result[0][0]<<", "<<result[0][1]<<", "<<result[0][2]<<endl;
-    cout<<result[1][0]<<", "<<result[1][1]<<", "<<result[1][2]<<endl;
-    cout<<result[2][0]<<", "<<result[2][1]<<", "<<result[2][2]<<endl;*/
-
-    Matrix2d a;
-    a << 1,2,3,4;
-    cout << a << endl;
 
     while(1)
     {
