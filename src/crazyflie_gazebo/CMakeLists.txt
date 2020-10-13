@@ -175,8 +175,8 @@ add_library(gazebo_sticky_foot SHARED src/gazebo_sticky_foot.cpp)
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/drone_training_node.cpp)
 
-add_executable(controller src/controller.cpp src/math_linear_algebra.cpp)
-#add_dependencies(controller include/math_linear_algebra.h ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(controller src/controller.cpp)
+#add_dependencies(controller include/ ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use

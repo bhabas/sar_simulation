@@ -4,6 +4,7 @@ __pycache__/
 src/4. rl/src/log/*.csv
 *.py[cod]
 *$py.class
+.vscode
 
 # C extensions
 *.so

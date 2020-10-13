@@ -25,7 +25,8 @@ class CrazyflieEnv:
 
         self.user = username   
         if self.user == 'bhabas':
-            import pyautogui    
+            # import pyautogui    
+            pass
         
         # Initializes the ROS node for the process. Can only have one nod in a rospy process
         rospy.init_node("crazyflie_env_node",anonymous=True) 
@@ -132,8 +133,7 @@ class CrazyflieEnv:
 
     def launch_sim(self):
         ## There's some issue with the external shells that cause it to hang up on missed landings as it just sits on the ground
-        if self.user == 'bhabas':
-            pyautogui.click(x=2700,y=0)
+
 
         self.gazebo_p = subprocess.Popen(
             "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/utility/launch_gazebo.bash", 
@@ -162,14 +162,14 @@ class CrazyflieEnv:
 
         return self.state_current
     
-    def recvThread(self):
+    def recvThread(self): # Recieve position data from Gazebo?
         print("Start recvThread")
         while self.isRunning:
  
             try:
                 data, addr_remote = self.fd.recvfrom(112)     # 1 double = 8 bytes
-                px,py,pz,q0,q1,q2,q3,vx,vy,vz,p,q,r,sim_time = struct.unpack('14d',data)
-                self.state_current = np.array([sim_time, px,py,pz,q0,q1,q2,q3,vx,vy,vz,p,q,r])
+                px,py,pz,qw,qx,qy,qz,vx,vy,vz,p,q,r,sim_time = struct.unpack('14d',data)
+                self.state_current = np.array([sim_time, px,py,pz,qw,qx,qy,qz,vx,vy,vz,p,q,r])
                 self.timeout = False
             
             except timeout:
