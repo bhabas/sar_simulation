@@ -300,17 +300,10 @@ void Controller::controlThread()
         0, 1.66556e-05, 0,
         0, 0, 2.92617e-05;
 
-    Matrix4d Gamma_inv; // Calculated by Matlab but not sure what it is
-    Gamma_inv << 0.25, -7.6859225, -7.6859225, -41.914296,
-                0.25,  7.6859225,  7.6859225, -41.914296,
-                0.25,  7.6859225, -7.6859225,  41.914296,
-                0.25, -7.6859225,  7.6859225,  41.914296;
-
 
     Matrix4d Gamma;
 
 
-    
     Vector3d e3(0,0,1); // Global z-axis
 
     
@@ -336,7 +329,7 @@ void Controller::controlThread()
     Matrix3d R;
 
     Quaterniond q;
-    Vector3d A;
+
 
     
 
@@ -348,12 +341,12 @@ void Controller::controlThread()
 
 
     // Controller Values
-    // only kd_x and kp_R12 matter for vel control
-    double kp_x = 0.15; // Positional Gain
-    double kd_x = 3.25; // Velocity Gain
 
-    double kp_R = 0.55;// Kp_R
-    double kd_R = 0.1; // Kd_R
+    double kp_x = 3.5e6; // Positional Gain
+    double kd_x = 10e5; // Velocity Gain
+
+    double kp_R = 0.0015;// Kp_R
+    double kd_R = 0.00075; // Kd_R
 
 
     double c_T = 1.2819184e-8; // Motor constant
@@ -370,7 +363,7 @@ void Controller::controlThread()
     double d = 0.040; // distance from COM to prop
     double d_p = d*sin(M_1_PI/4);
     // double c_Tf = 0.006; // Ratio between km and kf (Not sure what these correspond to)
-    double c_Tf = c_T;
+    double c_Tf = 0.0037;
     
     Gamma <<1,     1,     1,     1,
             d_p,   d_p,  -d_p,  -d_p, 
@@ -450,15 +443,30 @@ void Controller::controlThread()
         e_omega = omega - R.transpose()*R_d*omega_d; // Angular vel error
 
         // =========== Calculate Control Equations =========== // 
-        F_thrust = A.dot(b3); // Thrust control value
+        F_thrust = F_thrust_ideal.dot(b3); // Thrust control value
         M = -kp_R*e_R + -kd_R*e_omega + omega.cross(J*omega) // Moment control vector
                 - J*(hat(omega)*R.transpose()*R_d*omega_d - R.transpose()*R_d*domega_d);
 
         FM << F_thrust,M; // Thrust-Moment control vector
 
         f = Gamma.inverse()*FM; // Propeller thrusts
-        // motorspeed_Eig = (f*1/c_Tf).array().sqrt();
-        cout << R << "\n+++++++++++++++\n" << R_d << endl << endl;
+        motorspeed_square = (f*1/c_Tf);
+
+
+        // If CF overshoots it will prescribe a negative 
+        // force which it can't do so we cap the command at zero 
+        // (potentially higher to reduce startup time)
+        for(int k_motor=0;k_motor<4;k_motor++) 
+        {
+            if(motorspeed_square(k_motor)<0){
+                motorspeed_square(k_motor) = 0;}
+            else if (isnan(motorspeed_square(k_motor))){
+               motorspeed_square(k_motor) = 0;}
+        }
+        
+        
+        motorspeed_Eig = motorspeed_square.array().sqrt();
+        cout << motorspeed_Eig.transpose() << endl << endl;
 
         
 
