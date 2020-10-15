@@ -61,25 +61,25 @@ while True:
 
 
     if (1.0 <= t <= 1.5): 
-        action = {'type':'pos', 'x':0.0, 'y':0.0, 'z':0.75, 'ctrl_flag':1}
+        action = {'type':'pos', 'x':0.0, 'y':0.0, 'z':1.00, 'ctrl_flag':1}
         env.step(action)
 
-    if (3.5 <= t <= 3.55):
-        action = {'type':'pos', 'x':0.0, 'y':0.0, 'z':1.5, 'ctrl_flag':1}
-        env.step(action)
-        action = {'type':'vel', 'x':0.0, 'y':0.0, 'z':0.0, 'ctrl_flag':0}
-        env.step(action)
+    # if (3.5 <= t <= 3.55):
+    #     action = {'type':'pos', 'x':0.0, 'y':0.0, 'z':1.5, 'ctrl_flag':1}
+    #     env.step(action)
+    #     action = {'type':'vel', 'x':0.0, 'y':0.0, 'z':0.0, 'ctrl_flag':0}
+    #     env.step(action)
 
     qw,qx,qy,qz = orientation_q
     R = Rotation.from_quat([qx,qy,qz,qw])
     yaw,roll,pitch = R.as_euler('zxy',degrees=False)
     # print(R.as_euler('zxy',degrees=False))
 
-    pos_hist.append(pos[2])
+    pos_hist.append(pitch)
     t_hist.append(t)
 
     # print(env.getTime() - start_time_rolloout)
-    if (env.getTime() - start_time_rolloout) > (5):
+    if (env.getTime() - start_time_rolloout) > (7):
         break
 
     # ============================
