@@ -8,8 +8,9 @@
 using namespace Eigen;
 using namespace std;
 
+
 void Controller::Load(int port_number_gazebo)
-{
+{   cout << setprecision(3);
     fd_gazebo_ = socket(AF_INET, SOCK_DGRAM, 0);
     fd_gazebo_SNDBUF_ = 16;         // 16 bytes is 4 float
     fd_gazebo_RCVBUF_ = 112;        // 112 bytes is 14 double
@@ -156,16 +157,9 @@ void Controller::recvThread_rl()
         //cout<<"[recvThread_rl] Receiving command from RL"<<endl;
         int len = recvfrom(fd_rl_, control_cmd_recvd, sizeof(control_cmd_recvd),0, (struct sockaddr*)&sockaddr_remote_rl_, &sockaddr_remote_rl_len_);
 
-        /*if(len>0)
+
+        if(control_cmd_recvd[0]>10) // If header is 11 then enable sticky
         {
-            cout<<"Enqueue control command: ";
-            for(int k=0;k<5;k++)
-                cout<<control_cmd_recvd[k]<<", ";
-            cout<<"\n";
-        }*/
-        if(control_cmd_recvd[0]>10)
-        {
-            
             motorspeed_fake[0] = -control_cmd_recvd[0];
             motorspeed_fake[1] = control_cmd_recvd[1];
             //cout<<"Send sticky command command: "<< motorspeed_fake[0]<<", "<<motorspeed_fake[1]<<endl;
@@ -254,7 +248,7 @@ Matrix3d hat(Vector3d a) // Input a hat vector and output corresponding skew-sym
 
 
 void Controller::controlThread()
-{   
+{
     typedef Matrix<double, 3, 3, RowMajor> RowMatrix3d; 
 
     double state_full[14];
@@ -344,9 +338,13 @@ void Controller::controlThread()
 
     double kp_x = 1.0; // Positional Gain
     double kd_x = 0.658; // Velocity Gain
-
     double kp_R = -0.55;// Kp_R
     double kd_R = 0; //0.036e4; // Kd_R
+
+    double kp_xf = 1; // Positional Gain Flag
+    double kd_xf = 1; // Velocity Gain Flag
+    double kp_Rf = 1; // Attitude Gain Flag
+    double kd_Rf = 1; // Anglular Rate Gain Flag
 
 
     double c_T = 1.2819184e-8; // Motor constant
@@ -374,6 +372,14 @@ void Controller::controlThread()
 
   
     unsigned int k_run = 0; // Run counter
+
+
+    // =========== Trajectory Definitions =========== //
+    x_d << 0,0,0;
+    v_d << 0,0,0;
+    a_d << 0,0,0;
+    b1_d << 1,0,0;
+
 
     while(isRunning_)
     {
@@ -406,24 +412,46 @@ void Controller::controlThread()
         control_vals = control_cmd_Eig.segment(1,3); // Command values
         ctrl_flag = control_cmd_Eig(4); // Controller On/Off switch (To be implemented)
 
+        switch(type){
+            case 1:
+                x_d << control_vals;
+                // if (ctrl_flag == 0) kp_xf = 0;
+                break;
+            case 2:
+                v_d << control_vals;
+                if (ctrl_flag == 0){
+                    kd_xf = 0;
+                } 
+                break;
+        }
+
+        // if (type == 1){
+        //     x_d << control_vals;
+        // }
+        // else if(type ==2){
+        //     v_d << control_vals;
+        //     if (ctrl_flag == 0){
+        //         cout << "error" << endl;
+        //     }
+        // }
+        
+        // cout << pos(2) << "\t|" << x_d.transpose() << "\t|" << t << endl;
+        cout << control_cmd_Eig.transpose() << endl;
+
+
+
+
+
+
+
 
         // =========== Rotation Matrix Calculation =========== //
-        
+        // I'm not sure if this from Body->World or World->Body
         q.w() = quat_Eig(0);
         q.vec() = quat_Eig.segment(1,3);
         R = q.normalized().toRotationMatrix(); // Quaternion to Rotation Matrix Conversion
-        // I'm not sure if this from Body->World or World->Body
-
-
-        // =========== Trajectory Definitions =========== //
-        x_d << 0,0,1.0;
-        v_d << 0,0,0;
-        a_d << 0,0,0;
-
-        b1_d << 1,0,0;
-
-        e3 << 0,0,1; 
         b3 = R*e3;
+
 
 
         // =========== Calculate Translational Errors =========== //
@@ -431,7 +459,7 @@ void Controller::controlThread()
         e_v = vel - v_d;
 
         // =========== Calculate Desired Body-Fixed Axes =========== //
-        F_thrust_ideal = -kp_x*e_x + -kd_x*e_v + m*g*e3 + m*a_d; // ideal control thrust vector
+        F_thrust_ideal = -kp_x*kp_xf*e_x + -kd_x*kd_xf*e_v + m*g*e3 + m*a_d; // ideal control thrust vector
         b3_d = F_thrust_ideal.normalized(); // desired body-fixed vertical axis
         b2_d = b3_d.cross(b1_d).normalized(); // body-fixed horizontal axis
 
@@ -443,7 +471,7 @@ void Controller::controlThread()
 
         // =========== Calculate Control Equations =========== // 
         F_thrust = F_thrust_ideal.dot(b3); // Thrust control value
-        M = -kp_R*e_R + -kd_R*e_omega + omega.cross(J*omega) // Moment control vector
+        M = -kp_R*kp_Rf*e_R + -kd_R*kd_Rf*e_omega + omega.cross(J*omega) // Moment control vector
                 - J*(hat(omega)*R.transpose()*R_d*omega_d - R.transpose()*R_d*domega_d);
 
         FM << F_thrust,M; // Thrust-Moment control vector
@@ -466,7 +494,7 @@ void Controller::controlThread()
         
         motorspeed_Eig = motorspeed_square.array().sqrt();
 
-        cout << FM.transpose() << " | " << pos(2) << endl << endl;
+        // cout << FM.transpose() << " | " << pos(2) << endl << endl;
 
         // cout << motorspeed_Eig.transpose() << " | " << pos(2) << endl << endl;
 

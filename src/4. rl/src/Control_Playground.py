@@ -38,7 +38,13 @@ t_step =0
 start_time_rolloout = env.getTime()
 done = False
 
+
+
 while True:
+
+
+
+                
             
     time.sleep(5e-4) # Time step size
     t_step = t_step + 1 # Time step
@@ -53,6 +59,17 @@ while True:
     omega = state[11:14]
     t = state[0]
 
+
+    if (1.0 <= t <= 1.5): 
+        action = {'type':'pos', 'x':0.0, 'y':0.0, 'z':0.75, 'ctrl_flag':1}
+        env.step(action)
+
+    if (3.5 <= t <= 3.55):
+        action = {'type':'pos', 'x':0.0, 'y':0.0, 'z':1.5, 'ctrl_flag':1}
+        env.step(action)
+        action = {'type':'vel', 'x':0.0, 'y':0.0, 'z':0.0, 'ctrl_flag':0}
+        env.step(action)
+
     qw,qx,qy,qz = orientation_q
     R = Rotation.from_quat([qx,qy,qz,qw])
     yaw,roll,pitch = R.as_euler('zxy',degrees=False)
@@ -62,7 +79,7 @@ while True:
     t_hist.append(t)
 
     # print(env.getTime() - start_time_rolloout)
-    if (env.getTime() - start_time_rolloout) > (4):
+    if (env.getTime() - start_time_rolloout) > (5):
         break
 
     # ============================

@@ -49,13 +49,12 @@ class CrazyflieEnv:
 
         self.fd.bind( ("", self.port_self) ) # bind() associates the socket with specific network interface and port number
         self.addr_remote_send = ("", self.port_remote)
-        buf = struct.pack('5d', 5, 0, 0, 0, 0) # Represent 5 vals given as doubles in byte format
-        self.fd.sendto(buf, self.addr_remote_send) # Send these bytes to this address
+        # buf = struct.pack('5d', 12, 0, 0, 0, 0) # Represent 5 vals given as doubles in byte format # Why is this being sent?
+        # self.fd.sendto(buf, self.addr_remote_send) # Send these bytes to this address
 
         self.queue_command = Queue(3)
         self.path_all = np.zeros(shape=(14,8000,1))
         self.state_current = np.zeros(shape=(14))
-        self.logDataFlag = False
 
         self.isRunning = True
         self.receiverThread = Thread(target=self.recvThread, args=())
@@ -123,7 +122,7 @@ class CrazyflieEnv:
 
 
     def enableSticky(self, enable): # enable=0 disable sticky, enable=1 enable sticky
-        header = 11
+        header = 10
         buf = struct.pack('5d', header, enable, 0, 0, 0)
         self.fd.sendto(buf, self.addr_remote_send)
         time.sleep(0.001) # the sleep time after enableSticky(0) must be small s.t. the gazebo simulation is satble. Because the simulation after joint removed becomes unstable quickly.
@@ -200,10 +199,14 @@ class CrazyflieEnv:
         x = action['x']
         y = action['y']
         z = action['z']
-        additional = action['additional']
+        additional = action['ctrl_flag']
 
-        buf = struct.pack('5d', header, x, y, z, additional)
+        buf = struct.pack('5d', header, x, y, z, additional) # Send command
         self.fd.sendto(buf, self.addr_remote_send)
+        time.sleep(0.1)
+        buf = struct.pack('5d', 0,0,0,0,1) # Send blank command so controller doesn't keep redefining values
+        self.fd.sendto(buf, self.addr_remote_send)
+
         #self.queue_command.put(buf, block=False)
 
         reward = 0
