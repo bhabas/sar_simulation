@@ -10,9 +10,9 @@
       <uri>model://ground_plane</uri>
     </include>
     <!-- A ceiling plane -->
-    <include>
+    <!-- <include>
       <uri>model://ceiling_plane</uri>
-    </include>
+    </include> -->
 
     <!-- Default camera pose -->
     <gui>

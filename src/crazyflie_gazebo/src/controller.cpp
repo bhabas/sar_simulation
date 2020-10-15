@@ -342,11 +342,11 @@ void Controller::controlThread()
 
     // Controller Values
 
-    double kp_x = 3.5e6; // Positional Gain
-    double kd_x = 10e5; // Velocity Gain
+    double kp_x = 1.0; // Positional Gain
+    double kd_x = 0.658; // Velocity Gain
 
-    double kp_R = 0.0015;// Kp_R
-    double kd_R = 0.00075; // Kd_R
+    double kp_R = -0.55;// Kp_R
+    double kd_R = 0; //0.036e4; // Kd_R
 
 
     double c_T = 1.2819184e-8; // Motor constant
@@ -364,6 +364,7 @@ void Controller::controlThread()
     double d_p = d*sin(M_1_PI/4);
     // double c_Tf = 0.006; // Ratio between km and kf (Not sure what these correspond to)
     double c_Tf = 0.0037;
+    c_Tf = 1.2819184e-8;
     
     Gamma <<1,     1,     1,     1,
             d_p,   d_p,  -d_p,  -d_p, 
@@ -372,8 +373,6 @@ void Controller::controlThread()
  
 
   
-
-
     unsigned int k_run = 0; // Run counter
 
     while(isRunning_)
@@ -417,7 +416,7 @@ void Controller::controlThread()
 
 
         // =========== Trajectory Definitions =========== //
-        x_d << 0,0,0.5;
+        x_d << 0,0,1.0;
         v_d << 0,0,0;
         a_d << 0,0,0;
 
@@ -466,7 +465,10 @@ void Controller::controlThread()
         
         
         motorspeed_Eig = motorspeed_square.array().sqrt();
-        cout << motorspeed_Eig.transpose() << endl << endl;
+
+        cout << FM.transpose() << " | " << pos(2) << endl << endl;
+
+        // cout << motorspeed_Eig.transpose() << " | " << pos(2) << endl << endl;
 
         
 
