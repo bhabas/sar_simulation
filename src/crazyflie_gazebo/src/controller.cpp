@@ -279,7 +279,7 @@ void Controller::controlThread()
     Vector3d a_d(0,0,0); // Acceleration-desired [m/s]
 
     Matrix3d R_d; // Rotation-desired 
-    Matrix3d R_d2; // Rotation-desired (ZXY Euler angles)
+    Matrix3d R_d_custom; // Rotation-desired (ZXY Euler angles)
     Vector3d omega_d; // Omega-desired
     Vector3d domega_d(0,0,0);
 
@@ -297,6 +297,7 @@ void Controller::controlThread()
 
 
     Matrix4d Gamma;
+    Matrix4d Gamma_I;
 
 
     Vector3d e3(0,0,1); // Global z-axis
@@ -343,12 +344,12 @@ void Controller::controlThread()
 
     double kp_x = 1.0; // Positional Gain
     double kd_x = 0.658; // Velocity Gain
-    double kp_R = -0.0055*0;// Kp_R
+    double kp_R = 0.1;// Kp_R
     double kd_R = 0; //0.036e4; // Kd_R
 
     double kp_xf = 1; // Positional Gain Flag
     double kd_xf = 1; // Velocity Gain Flag
-    double kp_Rf = 1; // Attitude Gain Flag
+    double kp_Rf = 0; // Attitude Gain Flag
     double kd_Rf = 1; // Anglular Rate Gain Flag
 
 
@@ -362,9 +363,13 @@ void Controller::controlThread()
     double g = 9.8066; // Gravitational acceleration [m/s^2]
     double f_hover = m*g; // Force to hover
 
+    double yaw;
+    double pitch;
+    double roll;
+
 
     double d = 0.040; // distance from COM to prop
-    double d_p = d*sin(M_1_PI/4);
+    double d_p = d*sin(M_PI/4);
     // double c_Tf = 0.006; // Ratio between km and kf (Not sure what these correspond to)
     double c_Tf = 0.0037;
     c_Tf = 1.2819184e-8;
@@ -373,11 +378,13 @@ void Controller::controlThread()
             d_p,   d_p,  -d_p,  -d_p, 
             d_p,  -d_p,  -d_p,   d_p, 
             c_Tf, -c_Tf,  c_Tf, -c_Tf;
+
+    Gamma_I = Gamma.inverse();
  
 
   
     unsigned int k_run = 0; // Run counter
-
+    double case3_flag = 0;
 
     // =========== Trajectory Definitions =========== //
     x_d << 0,0,0;
@@ -423,22 +430,34 @@ void Controller::controlThread()
             case 1: // Position
                 x_d << control_vals;
                 if (ctrl_flag == 0) kp_xf = 0;
+                else kp_xf = 1;
                 break;
             case 2: // Velocity
                 v_d << control_vals;
                 if (ctrl_flag == 0) kd_xf = 0;
+                else kd_xf = 1;
                 break;
             case 3: // Attitude [Implementation needs to be finished]
-                // How to work off R_d2 only when needed?
-                eul_d << control_vals;
-                // R_d2 = AngleAxisf(eul_d(2), Vector3f::UnitZ()) // Yaw
+                // How to work off R_d_custom only when needed?
+                // eul_d << control_vals;
+                // R_d_custom = AngleAxisf(eul_d(2), Vector3f::UnitZ()) // Yaw
                 //         * AngleAxisf(eul_d(0), Vector3f::UnitX()) // Roll
                 //         * AngleAxisf(eul_d(1), Vector3f::UnitY()); // Pitch
+                R_d_custom << 0.9961947,  0.0000000,  0.0871557,
+                        0.0000000,  1.0000000,  0.0000000,
+                        -0.0871557,  0.0000000,  0.9961947; // 5 deg pitch
+                
+                case3_flag = 1;
+
                 if (ctrl_flag == 0) kp_Rf = 0;
+                else kp_Rf = 1;
+
                 break;
+
             case 4: // Ang. Velocity
                 omega_d << control_vals;
                 if (ctrl_flag == 0) kd_Rf = 0;
+                else kd_Rf = 1;
                 break;
             case 5: // Stop Motors
                 break;
@@ -455,8 +474,14 @@ void Controller::controlThread()
         q.w() = quat_Eig(0);
         q.vec() = quat_Eig.segment(1,3);
         R = q.normalized().toRotationMatrix(); // Quaternion to Rotation Matrix Conversion
-        eul = R.eulerAngles(2,0,1); // Euler angles ZXY
+        
+        // 
+        roll = atan2(R(2,1),R(2,2)); 
+        pitch = atan2(-R(2,0),sqrt(R(2,1)*R(2,1)+R(2,2)*R(2,2)));
+        yaw = atan2(R(1,0),R(0,0));
+        
         b3 = R*e3;
+
 
 
         // =========== Translational Errors & Desired Body-Fixed Axes =========== //
@@ -472,6 +497,10 @@ void Controller::controlThread()
         // =========== Rotational Errors =========== // 
         R_d << b2_d.cross(b3_d).normalized(),b2_d,b3_d; // Desired rotational axis
                                                         // b2_d x b3_d != b1_d (look at derivation)
+        if (case3_flag == 1){
+            R_d = R_d_custom;
+        }
+        
         e_R = 0.5*dehat(R_d.transpose()*R - R.transpose()*R_d); // Rotational error
         e_omega = omega - R.transpose()*R_d*omega_d; // Angular vel error
 
@@ -487,7 +516,7 @@ void Controller::controlThread()
 
 
         // =========== Propellar Thrusts/Speeds =========== //
-        f = Gamma.inverse()*FM; // Propeller thrusts
+        f = Gamma_I*FM; // Propeller thrusts
         motorspeed_square = (f*1/c_Tf);
         motorspeed_Eig = motorspeed_square.array().sqrt();
 
@@ -504,11 +533,22 @@ void Controller::controlThread()
         }
         
 
-        // cout << e_R.transpose() << " | " << pos(2) << "\t" <<eul.transpose() << endl;
-        // cout << R_d.transpose()*R - R.transpose()*R_d << endl << endl;
-        cout << e_R.transpose() << " | " << 0.5*dehat(R_d.transpose()*R - R.transpose()*R_d).transpose() << endl << endl;
 
-        // cout << motorspeed_Eig.transpose() << " | " << pos(2) << endl << endl;
+        // cout << t << " | " << pos(2) << " | " << pitch*180/M_PI << endl;
+        if (t >= 3.0){
+        cout << "t: " << t << "\tkpx: " << kp_x << " \tkdx: " << kd_x << " \tkpR: " << kp_R << " \tkdR: " << kd_R << endl <<
+        "pos: " << pos.transpose() << "\tex: " << e_x.transpose() << endl <<
+        "vel: " << vel.transpose() << "\t ev: " << e_v.transpose() << endl <<
+        "u1: " << F_thrust_ideal.transpose() <<   "\n\n" << 
+        "R:\n" << R << "\n\n" << 
+        "R_d:\n" << R_d << "\n\n" << 
+        "FM: " << FM.transpose() << "\n\n" << 
+        "GI: \n" << Gamma_I << "\n\n" <<
+        "f: " << f.transpose() << "\n\n" << 
+        "MS: " << motorspeed_Eig.transpose() << 
+        " \n=============== " << endl; 
+        }
+         // cout << motorspeed_Eig.transpose() << " | " << pos(2) << endl << endl;
 
         
         Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Eig.cast <float> (); // Converts motorspeeds to C++ array for data transmission

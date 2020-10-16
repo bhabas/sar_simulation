@@ -2,6 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 
 import time,os,getpass
 import os
@@ -28,11 +29,13 @@ t_hist = []
 fig = plt.figure()
 plt.grid()
 plt.xlabel("Time (s)")
-plt.ylim([0,1.5])
+plt.ylabel("Pitch Angle (deg)")
+plt.ylim([-10,10])
 
 
 
 state = env.reset()
+
 t_step =0
 
 start_time_rolloout = env.getTime()
@@ -40,11 +43,8 @@ done = False
 
 
 
+
 while True:
-
-
-
-                
             
     time.sleep(5e-4) # Time step size
     t_step = t_step + 1 # Time step
@@ -61,25 +61,26 @@ while True:
 
 
     if (1.0 <= t <= 1.5): 
-        action = {'type':'pos', 'x':0.0, 'y':0.0, 'z':1.00, 'ctrl_flag':1}
+        action = {'type':'pos', 'x':0.0, 'y':0.0, 'z':0.5, 'ctrl_flag':1}
         env.step(action)
 
-    # if (3.5 <= t <= 3.55):
-    #     action = {'type':'pos', 'x':0.0, 'y':0.0, 'z':1.5, 'ctrl_flag':1}
-    #     env.step(action)
-    #     action = {'type':'vel', 'x':0.0, 'y':0.0, 'z':0.0, 'ctrl_flag':0}
-    #     env.step(action)
 
+    if (3.0 <= t):
+        # turn on attitude control and pause sim
+        action = {'type':'att', 'x':0.0, 'y':0.0, 'z':0.0, 'ctrl_flag':1} 
+        env.step(action) # Set 5 deg pitch
+        # os.system("""rosservice call /gazebo/set_model_state '{model_state: { model_name: crazyflie_landing_gears, pose: { position: { x: 0, y: 0 ,z: 0.35 }, orientation: {x: 0, y: 0.0436194, z: 0, w: 0.9990482 } }, twist: { linear: {x: 0 , y: 0 ,z: 0 } ,angular: { x: 0 , y: 0, z: 0 } } , reference_frame: world } }'""")
+        os.system("rosservice call gazebo/pause_physics")
     qw,qx,qy,qz = orientation_q
     R = Rotation.from_quat([qx,qy,qz,qw])
     yaw,roll,pitch = R.as_euler('zxy',degrees=False)
     # print(R.as_euler('zxy',degrees=False))
 
-    pos_hist.append(pitch)
+    pos_hist.append(pitch*180/(math.pi))
     t_hist.append(t)
 
     # print(env.getTime() - start_time_rolloout)
-    if (env.getTime() - start_time_rolloout) > (7):
+    if (env.getTime() - start_time_rolloout) > (4):
         break
 
     # ============================
