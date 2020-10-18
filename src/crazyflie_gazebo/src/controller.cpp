@@ -369,7 +369,10 @@ void Controller::controlThread()
     double d_p = d*sin(M_PI/4);
     // double c_Tf = 0.006; // Ratio between km and kf (Not sure what these correspond to)
     double kf = 0.005022;
-    double c_Tf = 1.2819184e-8;
+    double km = 1.858e-05;
+    double c_Tf = km/kf;
+    c_Tf = 1.2819184e-08;
+    kf = 1.2819184e-08; // Totally the wrong assumption
    
     
     Gamma << 1,     1,      1,     1,
@@ -520,7 +523,7 @@ void Controller::controlThread()
 
         // =========== Propellar Thrusts/Speeds =========== //
         f = Gamma_I*FM; // Propeller thrusts
-        motorspeed_square = (f*1/c_Tf);
+        motorspeed_square = (f*1/kf);
         motorspeed_Eig = motorspeed_square.array().sqrt();
 
 

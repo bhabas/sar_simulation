@@ -1029,8 +1029,8 @@
       <timeConstantUp>0.0001</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
       <maxRotVelocity>3052</maxRotVelocity>
-      <motorConstant>1.2819184e-08</motorConstant>
-      <momentConstant>0.005964552</momentConstant>
+      <motorConstant>1.2819184e-08</motorConstant> <!-- Not sure what these constants mean, kf?-->
+      <momentConstant>0.005964552</momentConstant> <!-- Not sure what this constant mean, km?-->
       <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
       <motorNumber>0</motorNumber>
       <rotorDragCoefficient>9.1785e-07</rotorDragCoefficient>
