@@ -10,7 +10,7 @@ using namespace std;
 
 
 void Controller::Load(int port_number_gazebo)
-{   cout << setprecision(3);
+{   cout << setprecision(4);
     fd_gazebo_ = socket(AF_INET, SOCK_DGRAM, 0);
     fd_gazebo_SNDBUF_ = 16;         // 16 bytes is 4 float
     fd_gazebo_RCVBUF_ = 112;        // 112 bytes is 14 double
@@ -342,10 +342,7 @@ void Controller::controlThread()
 
     // Controller Values
 
-    double kp_x = 1.0; // Positional Gain
-    double kd_x = 0.658; // Velocity Gain
-    double kp_R = 0.1;// Kp_R
-    double kd_R = 0; //0.036e4; // Kd_R
+
 
     double kp_xf = 1; // Positional Gain Flag
     double kd_xf = 1; // Velocity Gain Flag
@@ -371,13 +368,14 @@ void Controller::controlThread()
     double d = 0.040; // distance from COM to prop
     double d_p = d*sin(M_PI/4);
     // double c_Tf = 0.006; // Ratio between km and kf (Not sure what these correspond to)
+    double kf = 0.005022;
     double c_Tf = 0.0037;
-    c_Tf = 1.2819184e-8;
+   
     
-    Gamma <<1,     1,     1,     1,
-            d_p,   d_p,  -d_p,  -d_p, 
-            d_p,  -d_p,  -d_p,   d_p, 
-            c_Tf, -c_Tf,  c_Tf, -c_Tf;
+    Gamma << 1,     1,      1,     1,
+            -d_p,  d_p,    d_p,  -d_p, 
+            -d_p,  d_p,   -d_p,   d_p, 
+            -c_Tf,-c_Tf,  c_Tf,  c_Tf;
 
     Gamma_I = Gamma.inverse();
  
@@ -391,6 +389,11 @@ void Controller::controlThread()
     v_d << 0,0,0;
     a_d << 0,0,0;
     b1_d << 1,0,0;
+
+    double kp_x = 0.8; // Positional Gain
+    double kd_x = 0.4; // Velocity Gain
+    double kp_R = 0.0001;// Kp_R
+    double kd_R = 0; //0.036e4; // Kd_R
 
 
     while(isRunning_)
@@ -517,7 +520,7 @@ void Controller::controlThread()
 
         // =========== Propellar Thrusts/Speeds =========== //
         f = Gamma_I*FM; // Propeller thrusts
-        motorspeed_square = (f*1/c_Tf);
+        motorspeed_square = (f*1/kf);
         motorspeed_Eig = motorspeed_square.array().sqrt();
 
 
@@ -538,10 +541,13 @@ void Controller::controlThread()
         if (t >= 3.0){
         cout << "t: " << t << "\tkpx: " << kp_x << " \tkdx: " << kd_x << " \tkpR: " << kp_R << " \tkdR: " << kd_R << endl <<
         "pos: " << pos.transpose() << "\tex: " << e_x.transpose() << endl <<
-        "vel: " << vel.transpose() << "\t ev: " << e_v.transpose() << endl <<
+        "vel: " << vel.transpose() << "\tev: " << e_v.transpose() << endl <<
         "u1: " << F_thrust_ideal.transpose() <<   "\n\n" << 
         "R:\n" << R << "\n\n" << 
         "R_d:\n" << R_d << "\n\n" << 
+        "e_R: " << e_R.transpose() << endl <<
+        "omega: " << omega.transpose() << "\te_w: " << e_omega.transpose() << endl <<
+        "u2: " << M.transpose() << endl <<
         "FM: " << FM.transpose() << "\n\n" << 
         "GI: \n" << Gamma_I << "\n\n" <<
         "f: " << f.transpose() << "\n\n" << 
