@@ -194,7 +194,7 @@ void GazeboMotorModel::UpdateForcesAndMoments() {
     gzerr << "Aliasing on motor [" << motor_number_ << "] might occur. Consider making smaller simulation time steps or raising the rotor_velocity_slowdown_sim_ param.\n";
   }
   double real_motor_velocity = motor_rot_vel_ * rotor_velocity_slowdown_sim_;
-  double force = real_motor_velocity * real_motor_velocity * motor_constant_;
+  double force = real_motor_velocity * real_motor_velocity * motor_constant_; // Kf for Geometric Tracking Controlelr
   // gzmsg<<"real_motor_velocity="<<real_motor_velocity<<"    force="<<force<<"\n";
 
   // scale down force linearly with forward speed
