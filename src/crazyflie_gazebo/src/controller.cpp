@@ -295,6 +295,12 @@ void Controller::controlThread()
         0, 1.66556e-05, 0,
         0, 0, 2.92617e-05;
 
+    // Matrix3d J_temp;
+    // J_temp << 16.5717,0.8308,0.7183,
+    //           0.8308,16.6556,1.8002,
+    //           0.7183,1.8002,29.2617; // Sourced from J. Forster
+    // J = J_temp*1e-6;
+
 
     Matrix4d Gamma;
     Matrix4d Gamma_I;

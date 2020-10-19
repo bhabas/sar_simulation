@@ -137,7 +137,7 @@
     
     </link>
 
-    <link name='rotor_0'>
+    <link name='rotor_0b'>
       <pose frame=''>0.032527 -0.032527 0.0425 0 -0 0</pose>
       <inertial>
         <pose frame=''>0 0 0 0 -0 0</pose>
@@ -151,7 +151,7 @@
           <izz>9.01687e-06</izz>
         </inertia>
       </inertial>
-      <collision name='rotor_0_collision'>
+      <collision name='rotor_0b_collision'>
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <cylinder>
@@ -168,7 +168,7 @@
           </friction>
         </surface>
       </collision>
-      <visual name='rotor_0_visual'>
+      <visual name='rotor_0b_visual'>
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
@@ -186,8 +186,8 @@
       <gravity>1</gravity>
       <velocity_decay/>
     </link>
-    <joint name='rotor_0_joint' type='revolute'>
-      <child>rotor_0</child>
+    <joint name='rotor_0b_joint' type='revolute'>
+      <child>rotor_0b</child>
       <parent>base_link</parent>
       <axis>
         <xyz>0 0 1</xyz>
@@ -1023,12 +1023,12 @@
     <!-- ======================= plugins ======================= -->
     <plugin name='front_right_motor_model' filename='libgazebo_motor_model.so'>
       <robotNamespace/>
-      <jointName>rotor_0_joint</jointName>
-      <linkName>rotor_0</linkName>
+      <jointName>rotor_0b_joint</jointName>
+      <linkName>rotor_0b</linkName>
       <turningDirection>ccw</turningDirection>
       <timeConstantUp>0.0001</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
-      <maxRotVelocity>3052</maxRotVelocity>
+      <maxRotVelocity>3052</maxRotVelocity> <!-- -->
       <motorConstant>1.2819184e-08</motorConstant> <!-- Not sure what these constants mean, kf?-->
       <momentConstant>0.005964552</momentConstant> <!-- Not sure what this constant mean, km?-->
       <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>

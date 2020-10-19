@@ -49,7 +49,7 @@ while True:
     time.sleep(5e-4) # Time step size
     t_step = t_step + 1 # Time step
 
-    ## Define current state
+        ## Define current state
     state = env.state_current
 
     pos = state[1:4]
@@ -60,28 +60,39 @@ while True:
     t = state[0]
 
 
-    if (1.0 <= t <= 1.5): 
+    qw,qx,qy,qz = orientation_q
+    # R = Rotation.from_quat([qx,qy,qz,qw])
+    # yaw,roll,pitch = R.as_euler('zxy',degrees=False)
+    # print(R.as_euler('zxy',degrees=False))
+
+    # pos_hist.append(pitch*180/(math.pi))
+    # t_hist.append(t)
+
+
+
+    # ============================
+    ##      Control Profiles
+    # ============================
+
+
+    if (1.0 <= t <= 1.1): 
         action = {'type':'pos', 'x':0.0, 'y':0.0, 'z':0.5, 'ctrl_flag':1}
         env.step(action)
 
 
     if (3.0 <= t):
+        pass
         # turn on attitude control and pause sim
         # action = {'type':'att', 'x':0.0, 'y':0.0, 'z':0.0, 'ctrl_flag':1} 
         # env.step(action) # Set 5 deg pitch
     #     # os.system("""rosservice call /gazebo/set_model_state '{model_state: { model_name: crazyflie_landing_gears, pose: { position: { x: 0, y: 0 ,z: 0.35 }, orientation: {x: 0, y: 0.0436194, z: 0, w: 0.9990482 } }, twist: { linear: {x: 0 , y: 0 ,z: 0 } ,angular: { x: 0 , y: 0, z: 0 } } , reference_frame: world } }'""")
-        os.system("rosservice call gazebo/pause_physics")
-    qw,qx,qy,qz = orientation_q
-    R = Rotation.from_quat([qx,qy,qz,qw])
-    yaw,roll,pitch = R.as_euler('zxy',degrees=False)
-    # print(R.as_euler('zxy',degrees=False))
+        # os.system("rosservice call gazebo/pause_physics")
 
-    pos_hist.append(pitch*180/(math.pi))
-    t_hist.append(t)
 
-    # print(env.getTime() - start_time_rolloout)
-    if (env.getTime() - start_time_rolloout) > (4):
-        break
+
+
+
+
 
     # ============================
     ##          Errors  
