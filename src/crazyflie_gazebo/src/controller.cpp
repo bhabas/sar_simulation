@@ -386,6 +386,10 @@ void Controller::controlThread()
             -d_p,  d_p,   -d_p,   d_p, 
             -c_Tf,-c_Tf,  c_Tf,  c_Tf;
 
+    Gamma << 1,     1,      1,     1,
+             d_p,  d_p,    -d_p,  -d_p, 
+            -d_p,  d_p,   d_p,   -d_p, 
+            -c_Tf, c_Tf,  -c_Tf,  c_Tf;
     Gamma_I = Gamma.inverse();
  
 
@@ -544,7 +548,7 @@ void Controller::controlThread()
                 motorspeed_Eig(k_motor) = 0;}
         }
         
-
+        // motorspeed_Eig << 50,0,0,0;
 
         // cout << t << " | " << pos(2) << " | " << pitch*180/M_PI << endl;
         if (t >= 3.0){

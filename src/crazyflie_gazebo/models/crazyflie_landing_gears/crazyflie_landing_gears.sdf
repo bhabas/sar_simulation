@@ -136,138 +136,7 @@
     </sensor>
     
     </link>
-
-    <link name='rotor_0b'>
-      <pose frame=''>0.032527 -0.032527 0.0425 0 -0 0</pose>
-      <inertial>
-        <pose frame=''>0 0 0 0 -0 0</pose>
-        <mass>0.00075</mass>
-        <inertia>
-          <ixx>1.61875e-07</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>8.86375e-06</iyy>
-          <iyz>0</iyz>
-          <izz>9.01687e-06</izz>
-        </inertia>
-      </inertial>
-      <collision name='rotor_0b_collision'>
-        <pose frame=''>0 0 0 0 -0 0</pose>
-        <geometry>
-          <cylinder>
-            <length>0.002</length>
-            <radius>0.02</radius>
-          </cylinder>
-        </geometry>
-        <surface>
-          <contact>
-            <ode/>
-          </contact>
-          <friction>
-            <ode/>
-          </friction>
-        </surface>
-      </collision>
-      <visual name='rotor_0b_visual'>
-        <pose frame=''>0 0 0 0 -0 0</pose>
-        <geometry>
-          <mesh>
-            <scale>1 1 1</scale>
-            <uri>model://crazyflie_landing_gears/meshes/crazyflie_prop.dae</uri>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <!-- <name>Gazebo/Blue</name> -->
-            <!-- <uri>file://media/materials/scripts/gazebo.material</uri> -->
-          </script>
-        </material>
-      </visual>
-      <gravity>1</gravity>
-      <velocity_decay/>
-    </link>
-    <joint name='rotor_0b_joint' type='revolute'>
-      <child>rotor_0b</child>
-      <parent>base_link</parent>
-      <axis>
-        <xyz>0 0 1</xyz>
-        <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
-        </limit>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0</spring_stiffness>
-        </dynamics>
-        <use_parent_model_frame>1</use_parent_model_frame>
-      </axis>
-    </joint>
-    <link name='rotor_1b'>
-      <pose frame=''>-0.032527 0.032527 0.0425 0 -0 0</pose>
-      <inertial>
-        <pose frame=''>0 0 0 0 -0 0</pose>
-        <mass>0.00075</mass>
-        <inertia>
-          <ixx>1.61875e-07</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>8.86375e-06</iyy>
-          <iyz>0</iyz>
-          <izz>9.01687e-06</izz>
-        </inertia>
-      </inertial>
-      <collision name='rotor_1b_collision'>
-        <pose frame=''>0 0 0 0 -0 0</pose>
-        <geometry>
-          <cylinder>
-            <length>0.002</length>
-            <radius>0.02</radius>
-          </cylinder>
-        </geometry>
-        <surface>
-          <contact>
-            <ode/>
-          </contact>
-          <friction>
-            <ode/>
-          </friction>
-        </surface>
-      </collision>
-      <visual name='rotor_1b_visual'>
-        <pose frame=''>0 0 0 0 -0 0</pose>
-        <geometry>
-          <mesh>
-            <scale>1 1 1</scale>
-            <uri>model://crazyflie_landing_gears/meshes/crazyflie_prop.dae</uri>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <!-- <name>Gazebo/Blue</name> -->
-            <!-- <uri>file://media/materials/scripts/gazebo.material</uri> -->
-          </script>
-        </material>
-      </visual>
-      <gravity>1</gravity>
-      <velocity_decay/>
-    </link>
-    <joint name='rotor_1b_joint' type='revolute'>
-      <child>rotor_1b</child>
-      <parent>base_link</parent>
-      <axis>
-        <xyz>0 0 1</xyz>
-        <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
-        </limit>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0</spring_stiffness>
-        </dynamics>
-        <use_parent_model_frame>1</use_parent_model_frame>
-      </axis>
-    </joint>
-    <link name='rotor_2b'>
+    <link name='rotor_1'>
       <pose frame=''>0.032527 0.032527 0.0425 0 -0 0</pose>
       <inertial>
         <pose frame=''>0 0 0 0 -0 0</pose>
@@ -281,7 +150,7 @@
           <izz>9.01687e-06</izz>
         </inertia>
       </inertial>
-      <collision name='rotor_2b_collision'>
+      <collision name='rotor_1_collision'>
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <cylinder>
@@ -298,7 +167,7 @@
           </friction>
         </surface>
       </collision>
-      <visual name='rotor_2b_visual'>
+      <visual name='rotor_1_visual'>
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
@@ -316,8 +185,8 @@
       <gravity>1</gravity>
       <velocity_decay/>
     </link>
-    <joint name='rotor_2b_joint' type='revolute'>
-      <child>rotor_2b</child>
+    <joint name='rotor_1_joint' type='revolute'>
+      <child>rotor_1</child>
       <parent>base_link</parent>
       <axis>
         <xyz>0 0 1</xyz>
@@ -332,7 +201,74 @@
         <use_parent_model_frame>1</use_parent_model_frame>
       </axis>
     </joint>
-    <link name='rotor_3b'>
+
+    <link name='rotor_2'>
+      <pose frame=''>-0.032527 0.032527 0.0425 0 -0 0</pose>
+      <inertial>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <mass>0.00075</mass>
+        <inertia>
+          <ixx>1.61875e-07</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>8.86375e-06</iyy>
+          <iyz>0</iyz>
+          <izz>9.01687e-06</izz>
+        </inertia>
+      </inertial>
+      <collision name='rotor_2_collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.002</length>
+            <radius>0.02</radius>
+          </cylinder>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='rotor_2_visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://crazyflie_landing_gears/meshes/crazyflie_prop.dae</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <!-- <name>Gazebo/Blue</name> -->
+            <!-- <uri>file://media/materials/scripts/gazebo.material</uri> -->
+          </script>
+        </material>
+      </visual>
+      <gravity>1</gravity>
+      <velocity_decay/>
+    </link>
+    <joint name='rotor_2_joint' type='revolute'>
+      <child>rotor_2</child>
+      <parent>base_link</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+    </joint>
+
+    <link name='rotor_3'>
       <pose frame=''>-0.032527 -0.032527 0.0425 0 -0 0</pose>
       <inertial>
         <pose frame=''>0 0 0 0 -0 0</pose>
@@ -346,7 +282,7 @@
           <izz>9.01687e-06</izz>
         </inertia>
       </inertial>
-      <collision name='rotor_3b_collision'>
+      <collision name='rotor_3_collision'>
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <cylinder>
@@ -363,7 +299,7 @@
           </friction>
         </surface>
       </collision>
-      <visual name='rotor_3b_visual'>
+      <visual name='rotor_3_visual'>
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
@@ -381,8 +317,8 @@
       <gravity>1</gravity>
       <velocity_decay/>
     </link>
-    <joint name='rotor_3b_joint' type='revolute'>
-      <child>rotor_3b</child>
+    <joint name='rotor_3_joint' type='revolute'>
+      <child>rotor_3</child>
       <parent>base_link</parent>
       <axis>
         <xyz>0 0 1</xyz>
@@ -397,6 +333,73 @@
         <use_parent_model_frame>1</use_parent_model_frame>
       </axis>
     </joint>
+
+    <link name='rotor_4'>
+      <pose frame=''>0.032527 -0.032527 0.0425 0 -0 0</pose>
+      <inertial>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <mass>0.00075</mass>
+        <inertia>
+          <ixx>1.61875e-07</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>8.86375e-06</iyy>
+          <iyz>0</iyz>
+          <izz>9.01687e-06</izz>
+        </inertia>
+      </inertial>
+      <collision name='rotor_4_collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.002</length>
+            <radius>0.02</radius>
+          </cylinder>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='rotor_4_visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://crazyflie_landing_gears/meshes/crazyflie_prop.dae</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <!-- <name>Gazebo/Blue</name> -->
+            <!-- <uri>file://media/materials/scripts/gazebo.material</uri> -->
+          </script>
+        </material>
+      </visual>
+      <gravity>1</gravity>
+      <velocity_decay/>
+    </link>
+    <joint name='rotor_4_joint' type='revolute'>
+      <child>rotor_4</child>
+      <parent>base_link</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+    </joint>
+
 
     <!-- ======================= landing gears ======================= -->
     <!--landing gears 0-->
@@ -1021,28 +1024,29 @@
 
 
     <!-- ======================= plugins ======================= -->
-    <plugin name='front_right_motor_model' filename='libgazebo_motor_model.so'>
+    <plugin name='front_left_motor_model' filename='libgazebo_motor_model.so'>
       <robotNamespace/>
-      <jointName>rotor_0b_joint</jointName>
-      <linkName>rotor_0b</linkName>
+      <jointName>rotor_1_joint</jointName>
+      <linkName>rotor_1</linkName>
       <turningDirection>ccw</turningDirection>
       <timeConstantUp>0.0001</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
-      <maxRotVelocity>3052</maxRotVelocity> <!-- -->
-      <motorConstant>1.2819184e-08</motorConstant> <!-- Not sure what these constants mean, kf?-->
-      <momentConstant>0.005964552</momentConstant> <!-- Not sure what this constant mean, km?-->
+      <maxRotVelocity>3052</maxRotVelocity>
+      <motorConstant>1.2819184e-08</motorConstant> <!-- This is K_f -->
+      <momentConstant>0.005964552</momentConstant> <!-- This may be K_m?-->
       <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
       <motorNumber>0</motorNumber>
       <rotorDragCoefficient>9.1785e-07</rotorDragCoefficient>
       <rollingMomentCoefficient>1e-07</rollingMomentCoefficient>
-      <motorSpeedPubTopic>/motor_speed/0</motorSpeedPubTopic>
+      <motorSpeedPubTopic>/motor_speed/0</motorSpeedPubTopic> <!-- Motor speed topic for motor #1 -->
       <rotorVelocitySlowdownSim>20</rotorVelocitySlowdownSim>
     </plugin>
+
     <plugin name='back_left_motor_model' filename='libgazebo_motor_model.so'>
       <robotNamespace/>
-      <jointName>rotor_1b_joint</jointName>
-      <linkName>rotor_1b</linkName>
-      <turningDirection>ccw</turningDirection>
+      <jointName>rotor_2_joint</jointName>
+      <linkName>rotor_2</linkName>
+      <turningDirection>cw</turningDirection>
       <timeConstantUp>0.0001</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
       <maxRotVelocity>3052</maxRotVelocity>
@@ -1055,11 +1059,12 @@
       <motorSpeedPubTopic>/motor_speed/1</motorSpeedPubTopic>
       <rotorVelocitySlowdownSim>20</rotorVelocitySlowdownSim>
     </plugin>
-    <plugin name='front_left_motor_model' filename='libgazebo_motor_model.so'>
+
+    <plugin name='back_right_motor_model' filename='libgazebo_motor_model.so'>
       <robotNamespace/>
-      <jointName>rotor_2b_joint</jointName>
-      <linkName>rotor_2b</linkName>
-      <turningDirection>cw</turningDirection>
+      <jointName>rotor_3_joint</jointName>
+      <linkName>rotor_3</linkName>
+      <turningDirection>ccw</turningDirection>
       <timeConstantUp>0.0001</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
       <maxRotVelocity>3052</maxRotVelocity>
@@ -1072,23 +1077,28 @@
       <motorSpeedPubTopic>/motor_speed/2</motorSpeedPubTopic>
       <rotorVelocitySlowdownSim>20</rotorVelocitySlowdownSim>
     </plugin>
-    <plugin name='back_right_motor_model' filename='libgazebo_motor_model.so'>
+
+    <plugin name='front_right_motor_model' filename='libgazebo_motor_model.so'>
       <robotNamespace/>
-      <jointName>rotor_3b_joint</jointName>
-      <linkName>rotor_3b</linkName>
+      <jointName>rotor_4_joint</jointName>
+      <linkName>rotor_4</linkName>
       <turningDirection>cw</turningDirection>
       <timeConstantUp>0.0001</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
-      <maxRotVelocity>3052</maxRotVelocity>
-      <motorConstant>1.2819184e-08</motorConstant>
-      <momentConstant>0.005964552</momentConstant>
+      <maxRotVelocity>3052</maxRotVelocity> <!-- -->
+      <motorConstant>1.2819184e-08</motorConstant> 
+      <momentConstant>0.005964552</momentConstant> 
       <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
       <motorNumber>3</motorNumber>
       <rotorDragCoefficient>9.1785e-07</rotorDragCoefficient>
       <rollingMomentCoefficient>1e-07</rollingMomentCoefficient>
-      <motorSpeedPubTopic>/motor_speed/3</motorSpeedPubTopic>
+      <motorSpeedPubTopic>/motor_speed/3</motorSpeedPubTopic> 
       <rotorVelocitySlowdownSim>20</rotorVelocitySlowdownSim>
     </plugin>
+
+
+
+
     <plugin name='mavlink' filename='libgazebo_mavlink.so'>
       <robotNamespace/>
       <linkName>base_link</linkName>
