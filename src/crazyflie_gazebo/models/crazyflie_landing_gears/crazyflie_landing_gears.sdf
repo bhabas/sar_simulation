@@ -202,7 +202,7 @@
         <use_parent_model_frame>1</use_parent_model_frame>
       </axis>
     </joint>
-    <link name='rotor_1'>
+    <link name='rotor_1b'>
       <pose frame=''>-0.032527 0.032527 0.0425 0 -0 0</pose>
       <inertial>
         <pose frame=''>0 0 0 0 -0 0</pose>
@@ -216,7 +216,7 @@
           <izz>9.01687e-06</izz>
         </inertia>
       </inertial>
-      <collision name='rotor_1_collision'>
+      <collision name='rotor_1b_collision'>
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <cylinder>
@@ -233,7 +233,7 @@
           </friction>
         </surface>
       </collision>
-      <visual name='rotor_1_visual'>
+      <visual name='rotor_1b_visual'>
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
@@ -251,8 +251,8 @@
       <gravity>1</gravity>
       <velocity_decay/>
     </link>
-    <joint name='rotor_1_joint' type='revolute'>
-      <child>rotor_1</child>
+    <joint name='rotor_1b_joint' type='revolute'>
+      <child>rotor_1b</child>
       <parent>base_link</parent>
       <axis>
         <xyz>0 0 1</xyz>
@@ -267,7 +267,7 @@
         <use_parent_model_frame>1</use_parent_model_frame>
       </axis>
     </joint>
-    <link name='rotor_2'>
+    <link name='rotor_2b'>
       <pose frame=''>0.032527 0.032527 0.0425 0 -0 0</pose>
       <inertial>
         <pose frame=''>0 0 0 0 -0 0</pose>
@@ -281,7 +281,7 @@
           <izz>9.01687e-06</izz>
         </inertia>
       </inertial>
-      <collision name='rotor_2_collision'>
+      <collision name='rotor_2b_collision'>
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <cylinder>
@@ -298,7 +298,7 @@
           </friction>
         </surface>
       </collision>
-      <visual name='rotor_2_visual'>
+      <visual name='rotor_2b_visual'>
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
@@ -316,8 +316,8 @@
       <gravity>1</gravity>
       <velocity_decay/>
     </link>
-    <joint name='rotor_2_joint' type='revolute'>
-      <child>rotor_2</child>
+    <joint name='rotor_2b_joint' type='revolute'>
+      <child>rotor_2b</child>
       <parent>base_link</parent>
       <axis>
         <xyz>0 0 1</xyz>
@@ -332,7 +332,7 @@
         <use_parent_model_frame>1</use_parent_model_frame>
       </axis>
     </joint>
-    <link name='rotor_3'>
+    <link name='rotor_3b'>
       <pose frame=''>-0.032527 -0.032527 0.0425 0 -0 0</pose>
       <inertial>
         <pose frame=''>0 0 0 0 -0 0</pose>
@@ -346,7 +346,7 @@
           <izz>9.01687e-06</izz>
         </inertia>
       </inertial>
-      <collision name='rotor_3_collision'>
+      <collision name='rotor_3b_collision'>
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <cylinder>
@@ -363,7 +363,7 @@
           </friction>
         </surface>
       </collision>
-      <visual name='rotor_3_visual'>
+      <visual name='rotor_3b_visual'>
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
@@ -381,8 +381,8 @@
       <gravity>1</gravity>
       <velocity_decay/>
     </link>
-    <joint name='rotor_3_joint' type='revolute'>
-      <child>rotor_3</child>
+    <joint name='rotor_3b_joint' type='revolute'>
+      <child>rotor_3b</child>
       <parent>base_link</parent>
       <axis>
         <xyz>0 0 1</xyz>
@@ -1040,8 +1040,8 @@
     </plugin>
     <plugin name='back_left_motor_model' filename='libgazebo_motor_model.so'>
       <robotNamespace/>
-      <jointName>rotor_1_joint</jointName>
-      <linkName>rotor_1</linkName>
+      <jointName>rotor_1b_joint</jointName>
+      <linkName>rotor_1b</linkName>
       <turningDirection>ccw</turningDirection>
       <timeConstantUp>0.0001</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
@@ -1057,8 +1057,8 @@
     </plugin>
     <plugin name='front_left_motor_model' filename='libgazebo_motor_model.so'>
       <robotNamespace/>
-      <jointName>rotor_2_joint</jointName>
-      <linkName>rotor_2</linkName>
+      <jointName>rotor_2b_joint</jointName>
+      <linkName>rotor_2b</linkName>
       <turningDirection>cw</turningDirection>
       <timeConstantUp>0.0001</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
@@ -1074,8 +1074,8 @@
     </plugin>
     <plugin name='back_right_motor_model' filename='libgazebo_motor_model.so'>
       <robotNamespace/>
-      <jointName>rotor_3_joint</jointName>
-      <linkName>rotor_3</linkName>
+      <jointName>rotor_3b_joint</jointName>
+      <linkName>rotor_3b</linkName>
       <turningDirection>cw</turningDirection>
       <timeConstantUp>0.0001</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
