@@ -1032,8 +1032,8 @@
       <timeConstantUp>0.0001</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
       <maxRotVelocity>3052</maxRotVelocity>
-      <motorConstant>1.2819184e-08</motorConstant> <!-- This is K_f -->
-      <momentConstant>0.005964552</momentConstant> <!-- This may be K_m?-->
+      <motorConstant>2.21e-8</motorConstant> <!-- This is K_f -->
+      <momentConstant>0.00612</momentConstant> <!-- This may be C_tf-->
       <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
       <motorNumber>0</motorNumber>
       <rotorDragCoefficient>9.1785e-07</rotorDragCoefficient>
@@ -1050,8 +1050,8 @@
       <timeConstantUp>0.0001</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
       <maxRotVelocity>3052</maxRotVelocity>
-      <motorConstant>1.2819184e-08</motorConstant>
-      <momentConstant>0.005964552</momentConstant>
+      <motorConstant>2.21e-8</motorConstant>
+      <momentConstant>0.00612</momentConstant>
       <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
       <motorNumber>1</motorNumber>
       <rotorDragCoefficient>9.1785e-07</rotorDragCoefficient>
@@ -1068,8 +1068,8 @@
       <timeConstantUp>0.0001</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
       <maxRotVelocity>3052</maxRotVelocity>
-      <motorConstant>1.2819184e-08</motorConstant>
-      <momentConstant>0.005964552</momentConstant>
+      <motorConstant>2.21e-8</motorConstant>
+      <momentConstant>0.00612</momentConstant>
       <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
       <motorNumber>2</motorNumber>
       <rotorDragCoefficient>9.1785e-07</rotorDragCoefficient>
@@ -1086,8 +1086,8 @@
       <timeConstantUp>0.0001</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
       <maxRotVelocity>3052</maxRotVelocity> <!-- -->
-      <motorConstant>1.2819184e-08</motorConstant> 
-      <momentConstant>0.005964552</momentConstant> 
+      <motorConstant>2.21e-8</motorConstant> 
+      <momentConstant>0.00612</momentConstant> 
       <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
       <motorNumber>3</motorNumber>
       <rotorDragCoefficient>9.1785e-07</rotorDragCoefficient>

@@ -11,6 +11,7 @@ using namespace std;
 
 void Controller::Load(int port_number_gazebo)
 {   cout << setprecision(4);
+    cout << fixed;
     fd_gazebo_ = socket(AF_INET, SOCK_DGRAM, 0);
     fd_gazebo_SNDBUF_ = 16;         // 16 bytes is 4 float
     fd_gazebo_RCVBUF_ = 112;        // 112 bytes is 14 double
@@ -340,7 +341,7 @@ void Controller::controlThread()
     
 
 
-    double t;
+    double t = 0;
 
 
     
@@ -352,11 +353,11 @@ void Controller::controlThread()
 
     double kp_xf = 1; // Positional Gain Flag
     double kd_xf = 1; // Velocity Gain Flag
-    double kp_Rf = 0; // Attitude Gain Flag
+    double kp_Rf = 1; // Attitude Gain Flag
     double kd_Rf = 1; // Anglular Rate Gain Flag
 
 
-    double c_T = 1.2819184e-8; // Motor constant
+
 
 
     double F_thrust = 0;
@@ -373,45 +374,37 @@ void Controller::controlThread()
 
     double d = 0.040; // distance from COM to prop
     double d_p = d*sin(M_PI/4);
-    // double c_Tf = 0.006; // Ratio between km and kf (Not sure what these correspond to)
-    double kf = 0.005022;
-    double km = 1.858e-05;
-    double c_Tf = km/kf;
-    c_Tf = 1.2819184e-08;
-    kf = 1.2819184e-08; // Totally the wrong assumption
-   
-    
-    Gamma << 1,     1,      1,     1,
-            -d_p,  d_p,    d_p,  -d_p, 
-            -d_p,  d_p,   -d_p,   d_p, 
-            -c_Tf,-c_Tf,  c_Tf,  c_Tf;
 
-    Gamma << 1,     1,      1,     1,
-             d_p,  d_p,    -d_p,  -d_p, 
-            -d_p,  d_p,   d_p,   -d_p, 
-            -c_Tf, c_Tf,  -c_Tf,  c_Tf;
+    double kf = 2.21e-8;
+    double c_Tf = 0.00612;
+
+
+    Gamma << 1,     1,     1,     1,
+             d_p,   d_p,  -d_p,  -d_p, 
+            -d_p,   d_p,   d_p,  -d_p, 
+             c_Tf,  -c_Tf, c_Tf,  -c_Tf;
     Gamma_I = Gamma.inverse();
  
 
   
-    unsigned int k_run = 0; // Run counter
+    unsigned int t_step = 0; // Run counter
     double case3_flag = 0;
 
     // =========== Trajectory Definitions =========== //
-    x_d << 0,0,0;
+    x_d << 0,0,0.5;
     v_d << 0,0,0;
     a_d << 0,0,0;
     b1_d << 1,0,0;
 
     double kp_x = 0.8; // Positional Gain
     double kd_x = 0.4; // Velocity Gain
-    double kp_R = 0.0001;// Kp_R
-    double kd_R = 0; //0.036e4; // Kd_R
+    double kp_R = 0.2;// Kp_R
+    double kd_R = 0.01; // Kd_R
 
 
     while(isRunning_)
     {
-        k_run++;
+        t_step++;
 
         // =========== State Definitions =========== //
 
@@ -454,11 +447,6 @@ void Controller::controlThread()
                 else kd_xf = 1;
                 break;
             case 3: // Attitude [Implementation needs to be finished]
-                // How to work off R_d_custom only when needed?
-                // eul_d << control_vals;
-                // R_d_custom = AngleAxisf(eul_d(2), Vector3f::UnitZ()) // Yaw
-                //         * AngleAxisf(eul_d(0), Vector3f::UnitX()) // Roll
-                //         * AngleAxisf(eul_d(1), Vector3f::UnitY()); // Pitch
                 R_d_custom << 0.9961947,  0.0000000,  0.0871557,
                         0.0000000,  1.0000000,  0.0000000,
                         -0.0871557,  0.0000000,  0.9961947; // 5 deg pitch
@@ -491,10 +479,11 @@ void Controller::controlThread()
         q.vec() = quat_Eig.segment(1,3);
         R = q.normalized().toRotationMatrix(); // Quaternion to Rotation Matrix Conversion
         
-        // 
-        roll = atan2(R(2,1),R(2,2)); 
-        pitch = atan2(-R(2,0),sqrt(R(2,1)*R(2,1)+R(2,2)*R(2,2)));
-        yaw = atan2(R(1,0),R(0,0));
+
+        yaw = atan2(R(1,0), R(0,0));
+        roll = atan2(R(2,1), R(2,2)); 
+        pitch = atan2(-R(2,0), sqrt(R(2,1)*R(2,1)+R(2,2)*R(2,2)));
+        
         
         b3 = R*e3;
 
@@ -516,6 +505,13 @@ void Controller::controlThread()
         if (case3_flag == 1){
             R_d = R_d_custom;
         }
+
+
+        // if (t>=3.0){
+        //         R_d << 0.9848077,  0.0000000,  0.1736482,
+        //                 0.0000000,  1.0000000,  0.0000000,
+        //                 -0.1736482,  0.0000000,  0.9848077; // 10 deg pitch
+        // }
         
         e_R = 0.5*dehat(R_d.transpose()*R - R.transpose()*R_d); // Rotational error
         e_omega = omega - R.transpose()*R_d*omega_d; // Angular vel error
@@ -548,14 +544,11 @@ void Controller::controlThread()
                 motorspeed_Eig(k_motor) = 0;}
         }
         
-        if (t>= 3.1){
-            motorspeed_Eig << 2530,2330,2530,2330;
-        }
-        
 
-        // cout << t << " | " << pos(2) << " | " << pitch*180/M_PI << endl;
-        if (t >= 3.0){
-        cout << "t: " << t << "\tkpx: " << kp_x << " \tkdx: " << kd_x << " \tkpR: " << kp_R << " \tkdR: " << kd_R << endl <<
+
+        // cout << motorspeed_Eig.transpose() << " | " << pos(2) << " | " << pitch*180/M_PI << endl;
+        // if (t >= 2.5){
+        // cout << "t: " << t << "\tkpx: " << kp_x << " \tkdx: " << kd_x << " \tkpR: " << kp_R << " \tkdR: " << kd_R << endl <<
         // "pos: " << pos.transpose() << "\tex: " << e_x.transpose() << endl <<
         // "vel: " << vel.transpose() << "\tev: " << e_v.transpose() << endl <<
         // "u1: " << F_thrust_ideal.transpose() <<   "\n\n" << 
@@ -567,11 +560,16 @@ void Controller::controlThread()
         // "FM: " << FM.transpose() << "\n\n" << 
         // "GI: \n" << Gamma_I << "\n\n" <<
         // "f: " << f.transpose() << "\n\n" << 
-        "MS: " << motorspeed_Eig.transpose() << 
-        " \n=============== " << endl; 
-        }
-         // cout << motorspeed_Eig.transpose() << " | " << pos(2) << endl << endl;
+        // "MS: " << motorspeed_Eig.transpose() << 
+        // " \n=============== " << endl; 
+        // }
 
+
+        if (t_step%50 == 0){
+            cout << t <<  " |\t" << pitch*180/M_PI  << " |\t" << pos(2) <<  " |\t" << FM.transpose() << endl;
+        }
+        
+        // motorspeed_Eig << 50,50,50,50;
         
         Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Eig.cast <float> (); // Converts motorspeeds to C++ array for data transmission
         sendto(fd_gazebo_, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
