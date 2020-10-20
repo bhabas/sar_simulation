@@ -548,22 +548,25 @@ void Controller::controlThread()
                 motorspeed_Eig(k_motor) = 0;}
         }
         
-        // motorspeed_Eig << 50,0,0,0;
+        if (t>= 3.1){
+            motorspeed_Eig << 2530,2330,2530,2330;
+        }
+        
 
         // cout << t << " | " << pos(2) << " | " << pitch*180/M_PI << endl;
         if (t >= 3.0){
         cout << "t: " << t << "\tkpx: " << kp_x << " \tkdx: " << kd_x << " \tkpR: " << kp_R << " \tkdR: " << kd_R << endl <<
-        "pos: " << pos.transpose() << "\tex: " << e_x.transpose() << endl <<
-        "vel: " << vel.transpose() << "\tev: " << e_v.transpose() << endl <<
-        "u1: " << F_thrust_ideal.transpose() <<   "\n\n" << 
-        "R:\n" << R << "\n\n" << 
-        "R_d:\n" << R_d << "\n\n" << 
-        "e_R: " << e_R.transpose() << endl <<
-        "omega: " << omega.transpose() << "\te_w: " << e_omega.transpose() << endl <<
-        "u2: " << M.transpose() << endl <<
-        "FM: " << FM.transpose() << "\n\n" << 
-        "GI: \n" << Gamma_I << "\n\n" <<
-        "f: " << f.transpose() << "\n\n" << 
+        // "pos: " << pos.transpose() << "\tex: " << e_x.transpose() << endl <<
+        // "vel: " << vel.transpose() << "\tev: " << e_v.transpose() << endl <<
+        // "u1: " << F_thrust_ideal.transpose() <<   "\n\n" << 
+        // "R:\n" << R << "\n\n" << 
+        // "R_d:\n" << R_d << "\n\n" << 
+        // "e_R: " << e_R.transpose() << endl <<
+        // "omega: " << omega.transpose() << "\te_w: " << e_omega.transpose() << endl <<
+        // "u2: " << M.transpose() << endl <<
+        // "FM: " << FM.transpose() << "\n\n" << 
+        // "GI: \n" << Gamma_I << "\n\n" <<
+        // "f: " << f.transpose() << "\n\n" << 
         "MS: " << motorspeed_Eig.transpose() << 
         " \n=============== " << endl; 
         }
