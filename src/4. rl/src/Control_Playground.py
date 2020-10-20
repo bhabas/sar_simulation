@@ -2,6 +2,8 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
+import csv
 import math
 
 import time,os,getpass
@@ -23,7 +25,7 @@ username = getpass.getuser()
 ## Initialize the environment
 env = CrazyflieEnv(port_self=18050, port_remote=18060,username =username)
 print("Environment done")
-pos_hist = []
+a_hist = []
 t_hist = []
 
 fig = plt.figure()
@@ -41,6 +43,10 @@ t_step =0
 start_time_rolloout = env.getTime()
 done = False
 
+filename = "src/4. rl/src/log/km_test.csv"
+with open(filename,mode='w') as csvfile:
+    writer = csv.writer(csvfile,delimiter = ',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    writer.writerow(['Time [s]','Omega_x','Omega_y','Omega_z'])
 
 
 
@@ -65,8 +71,15 @@ while True:
     # yaw,roll,pitch = R.as_euler('zxy',degrees=False)
     # print(R.as_euler('zxy',degrees=False))
 
-    # pos_hist.append(pitch*180/(math.pi))
-    # t_hist.append(t)
+    # a_hist.append(pitch*180/(math.pi))
+    a_hist.append(omega[2])
+    t_hist.append(t)
+
+
+    with open(filename,mode='a') as csvfile:
+        writer = csv.writer(csvfile,delimiter = ',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        writer.writerow([t,omega[0],omega[1],omega[2]])
+        
 
 
 
@@ -90,8 +103,8 @@ while True:
 
 
 
-
-
+    if (t >= 6.0):
+        break
 
 
     # ============================
@@ -111,8 +124,8 @@ while True:
         break
 
 
-# plt.plot(t_hist,pos_hist)
-# plt.show()
+plt.plot(t_hist,a_hist)
+plt.show()
 
         
             

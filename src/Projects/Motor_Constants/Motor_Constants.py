@@ -1,9 +1,12 @@
+# %%
+
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 from scipy import optimize
 
 
-# Motor calcs sourced from: https://github.com/PX4/sitl_gazebo/issues/110
+# %%
 # Values sourced from: https://wiki.bitcraze.io/misc:investigations:thrust
 amps = np.array([0.24,0.37,0.56,0.75,0.94,1.15,1.37,1.59,1.83,2.11,2.39,2.71,3.06,3.46,3.88,4.44])
 thrust_g = np.array([0,1.6,4.8,7.9,10.9,13.9,17.3,21,24.4,28.6,32.8,37.3,41.7,46,51.9,57.9])
@@ -19,11 +22,8 @@ V_Rated = 4.2 # V
 amps_Rated = 1.0 # Amps
 
 
-
-## How is the max current 1.0 amps but the test would draw over 4.4 amps?
-
-
 #region Motor Caclulations
+# Motor calcs sourced from: https://github.com/PX4/sitl_gazebo/issues/110
 # Max Rotational Velocity = Kv * Max Applied Voltage * Max Motor Efficiency * 2π / 60 []
 # Motor Constant = Thrust / (Ω) ²
 # Moment Constant = 60 / (2π * Kv)
@@ -37,9 +37,7 @@ amps_Rated = 1.0 # Amps
 # ρ Air density at 20ºC: 1.2041 [kg/m³]
 #endregion
 
-plt.figure(2)
-plt.plot(V,thrust_g) # This graph doesn't match their graph
-
+data = pd.read_csv("src/Projects/Motor_Constants/Forster_Thrust_cmd.csv").to_numpy()
 
 
 ## Fit thrust to omega for k_f constant
@@ -50,7 +48,7 @@ def test_func(x, a):
     return a *x*x
 
 params, params_covariance = optimize.curve_fit(test_func, x_data, y_data)
-print(params/4)
+print("kf = ",params/4)
 
 plt.scatter(x_data, y_data, label='Data')
 plt.plot(x_data, test_func(x_data, params[0]),
@@ -61,3 +59,18 @@ plt.xlabel("Omega rad/s")
 plt.ylabel("Thrust N")
 plt.grid(True)
 plt.show()
+
+
+# # ============================
+# ##      K_m Gazebo Test  
+# # ============================
+
+# df = pd.read_csv('/home/bhabas/catkin_ws/src/crazyflie_simulation/src/Projects/Motor_Constants/km_test.csv')
+# arr = df.to_numpy()
+
+# t = arr[1:,0]
+# omega_z = arr[1:,3]
+
+# plt.figure(2)
+# plt.scatter(t,omega_z)
+# plt.show()
