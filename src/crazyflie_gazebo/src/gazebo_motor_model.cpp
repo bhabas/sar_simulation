@@ -177,7 +177,7 @@ void GazeboMotorModel::OnUpdate(const common::UpdateInfo& _info) {
 }
 
 void GazeboMotorModel::VelocityCallback(CommandMotorSpeedPtr &rot_velocities) {
-  if(rot_velocities->motor_speed_size() < motor_number_) {
+  if(rot_velocities->motor_speed_size() < motor_number_) { // This may be where motor speeds are coming in?
     std::cout  << "You tried to access index " << motor_number_
       << " of the MotorSpeed message array which is of size " << rot_velocities->motor_speed_size() << "." << std::endl;
   } else ref_motor_rot_vel_ = std::min(static_cast<double>(rot_velocities->motor_speed(motor_number_)), static_cast<double>(max_rot_velocity_));
@@ -193,8 +193,8 @@ void GazeboMotorModel::UpdateForcesAndMoments() {
   if (motor_rot_vel_ / (2 * M_PI) > 1 / (2 * sampling_time_)) {
     gzerr << "Aliasing on motor [" << motor_number_ << "] might occur. Consider making smaller simulation time steps or raising the rotor_velocity_slowdown_sim_ param.\n";
   }
-  double real_motor_velocity = motor_rot_vel_ * rotor_velocity_slowdown_sim_;
-  double force = real_motor_velocity * real_motor_velocity * motor_constant_; // Kf for Geometric Tracking Controlelr
+  double real_motor_velocity = motor_rot_vel_ * rotor_velocity_slowdown_sim_; // Velocity is slowed down in Line 273 so it's speed it back up for calcs
+  double force = real_motor_velocity * real_motor_velocity * motor_constant_; // Kf for Geometric Tracking Controller
   // gzmsg<<"real_motor_velocity="<<real_motor_velocity<<"    force="<<force<<"\n";
 
   // scale down force linearly with forward speed
@@ -270,7 +270,7 @@ void GazeboMotorModel::UpdateForcesAndMoments() {
 #endif
   }
 #else
-  joint_->SetVelocity(0, turning_direction_ * ref_motor_rot_vel / rotor_velocity_slowdown_sim_);
+  joint_->SetVelocity(0, turning_direction_ * ref_motor_rot_vel / rotor_velocity_slowdown_sim_); // Visual velocity is being set here
 #endif /* if 0 */
 }
 

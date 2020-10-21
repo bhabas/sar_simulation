@@ -396,10 +396,10 @@ void Controller::controlThread()
     a_d << 0,0,0;
     b1_d << 1,0,0;
 
-    double kp_x = 0.8; // Positional Gain
-    double kd_x = 0.4; // Velocity Gain
+    double kp_x = 0.3; // Positional Gain
+    double kd_x = 0.2; // Velocity Gain
     double kp_R = 0.2;// Kp_R
-    double kd_R = 0.01; // Kd_R
+    double kd_R = 0.03; // Kd_R
 
 
     while(isRunning_)
@@ -531,7 +531,7 @@ void Controller::controlThread()
         f = Gamma_I*FM; // Propeller thrusts
         motorspeed_square = (f*1/kf);
         motorspeed_Eig = motorspeed_square.array().sqrt();
-
+        motorspeed_Eig << 2*M_PI,2*M_PI,2*M_PI,2*M_PI;
 
         // If CF overshoots it will prescribe a negative 
         // force which it can't do so we cap the command at zero 
@@ -539,9 +539,15 @@ void Controller::controlThread()
         for(int k_motor=0;k_motor<4;k_motor++) 
         {
             if(motorspeed_Eig(k_motor)<0){
-                motorspeed_Eig(k_motor) = 0;}
+                motorspeed_Eig(k_motor) = 0;
+            }
             else if (isnan(motorspeed_Eig(k_motor))){
-                motorspeed_Eig(k_motor) = 0;}
+                motorspeed_Eig(k_motor) = 0;
+            }
+            else if(motorspeed_Eig(k_motor)>= 2500){ // Max rotation speed (rad/s)
+                cout << "Motorspeed capped - Motor: " << k_motor << endl;
+            }
+        
         }
         
 
@@ -569,7 +575,7 @@ void Controller::controlThread()
             cout << t <<  " |\t" << pitch*180/M_PI  << " |\t" << pos(2) <<  " |\t" << FM.transpose() << endl;
         }
         
-        // motorspeed_Eig << 50,50,50,50;
+        
         
         Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Eig.cast <float> (); // Converts motorspeeds to C++ array for data transmission
         sendto(fd_gazebo_, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);

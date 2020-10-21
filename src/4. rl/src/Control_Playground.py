@@ -28,6 +28,7 @@ print("Environment done")
 pitch_hist = []
 t_hist = []
 z_hist = []
+vz_hist = []
 
 
 
@@ -40,19 +41,19 @@ t_step =0
 start_time_rolloout = env.getTime()
 done = False
 
-filename = "src/4. rl/src/log/km_test.csv"
+filename = "src/4. rl/src/log/Gazebo_acc_test.csv"
 with open(filename,mode='w') as csvfile:
     writer = csv.writer(csvfile,delimiter = ',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-    writer.writerow(['Time [s]','Omega_x','Omega_y','Omega_z'])
+    # writer.writerow(['Time [s]','Omega_x','Omega_y','Omega_z'])
 
 
 
 while True:
+    
             
     time.sleep(5e-4) # Time step size
-    t_step = t_step + 1 # Time step
 
-        ## Define current state
+    ## Define current state
     state = env.state_current
 
     pos = state[1:4]
@@ -68,15 +69,19 @@ while True:
     yaw,roll,pitch = R.as_euler('zxy',degrees=True)
     # print(R.as_euler('zxy',degrees=False))
 
-    # a_hist.append(pitch*180/(math.pi))
-    pitch_hist.append(pitch)
-    t_hist.append(t)
-    z_hist.append(pos[2])
 
 
-    with open(filename,mode='a') as csvfile:
-        writer = csv.writer(csvfile,delimiter = ',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        writer.writerow([t,omega[0],omega[1],omega[2]])
+   
+    if (t_step%20 == 0):
+        pitch_hist.append(pitch)
+        t_hist.append(t)
+        z_hist.append(pos[2])
+        vz_hist.append(vz)
+
+
+        with open(filename,mode='a') as csvfile:
+            writer = csv.writer(csvfile,delimiter = ',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            writer.writerow([t,pos[2],vz])
         
 
 
@@ -100,7 +105,7 @@ while True:
 
 
 
-    if (t >= 10):
+    if (t >= 2):
         break
 
 
@@ -120,6 +125,8 @@ while True:
     #     repeat_run = True
     #     break
 
+    t_step += 1
+
 fig, ax1 = plt.subplots()
 plt.grid()
 
@@ -128,11 +135,17 @@ ax1.set_ylabel('Pitch Angle (deg)')
 ax1.set_ylim([-15,15])
 ax1.plot(t_hist,pitch_hist)
 
+# ax2 = ax1.twinx()
+# color = 'tab:red'
+# ax2.set_ylabel('Z (m)', color=color)
+# ax2.tick_params(axis='y', labelcolor=color)
+# ax2.plot(t_hist,z_hist,color)
+
 ax2 = ax1.twinx()
 color = 'tab:red'
-ax2.set_ylabel('Z (m)', color=color)
+ax2.set_ylabel('Vz (m/s)', color=color)
 ax2.tick_params(axis='y', labelcolor=color)
-ax2.plot(t_hist,z_hist,color)
+ax2.plot(t_hist,vz_hist,color)
 
 fig.tight_layout
 plt.show()
