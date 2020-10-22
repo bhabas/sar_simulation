@@ -395,8 +395,8 @@ void Controller::controlThread()
     
 
 
-    double att_control_flag = 0;
-    double motorstop_flag = 0;
+    double att_control_flag = 0; // Controls implementation
+    double motorstop_flag = 0; // Controls stop implementation
 
 
 
@@ -453,7 +453,7 @@ void Controller::controlThread()
         }
 
 
-        t_step++;
+        
         
         // =========== Trajectory Definitions =========== //
         x_d << 0,0,1.5;
@@ -588,6 +588,7 @@ void Controller::controlThread()
         sendto(fd_gazebo_, motorspeed, sizeof(motorspeed),0, // Send motorspeeds to Gazebo -> gazebo_motor_model?
                 (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_); 
 
+        t_step++;
     }
 }
 
@@ -596,7 +597,6 @@ void Controller::controlThread()
 int main()
 {
     Controller controller;
-    
     controller.Load(18080);
 
 
