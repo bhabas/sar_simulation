@@ -2,9 +2,10 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 import pandas as pd
 import csv
-import math
+
 
 import time,os,getpass
 import os
@@ -25,28 +26,62 @@ username = getpass.getuser()
 ## Initialize the environment
 env = CrazyflieEnv(port_self=18050, port_remote=18060,username =username)
 print("Environment done")
-pitch_hist = []
-t_hist = []
-z_hist = []
-vz_hist = []
 
 
 
 
 
 state = env.reset()
-
-t_step =0
-
+t_step = 0
 start_time_rolloout = env.getTime()
 done = False
 
-filename = "src/4. rl/src/log/Gazebo_acc_test.csv"
-with open(filename,mode='w') as csvfile:
-    writer = csv.writer(csvfile,delimiter = ',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-    # writer.writerow(['Time [s]','Omega_x','Omega_y','Omega_z'])
 
 
+
+
+def live_plotter(x_vec,y1_data,line1,y2_data,line2):
+    if line1==[]:
+        plt.ion()
+        fig, ax1 = plt.subplots()
+        
+        ax1.grid()
+        ax1.set_ylim([-45,90])   
+        ax1.set_ylabel("Pitch: [deg]") 
+        line1, = ax1.plot(x_vec,y1_data)
+
+        ax2 = ax1.twinx()
+        color = 'tab:red'
+        ax2.set_ylabel('Pos: Z [m]', color=color)
+        ax2.set_ylim([0,1.5]) 
+        ax2.tick_params(axis='y', labelcolor=color)
+        line2, = ax2.plot(x_vec,y2_data,color = color)
+
+        plt.show()
+
+    line1.set_ydata(y1_data)    
+    line2.set_ydata(y2_data)
+
+    plt.pause(0.000001)
+    
+    return line1,line2
+
+
+
+
+# filename = "src/4. rl/src/log/Gazebo_acc_test.csv"
+# with open(filename,mode='w') as csvfile:
+#     writer = csv.writer(csvfile,delimiter = ',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+#     # writer.writerow(['Time [s]','Omega_x','Omega_y','Omega_z'])
+
+
+
+size = 200
+x_vec = np.arange(size)/100
+y_vec1 = np.zeros(len(x_vec))
+y_vec2 = np.zeros(len(x_vec))
+line1 = []
+line2 = []
 
 while True:
     
@@ -67,21 +102,21 @@ while True:
     qw,qx,qy,qz = orientation_q
     R = Rotation.from_quat([qx,qy,qz,qw])
     yaw,roll,pitch = R.as_euler('zxy',degrees=True)
-    # print(R.as_euler('zxy',degrees=False))
+
+    
+    # y_vec1[-1] = pitch
+    # y_vec2[-1] = pos[2]
+    # line1,line2 = live_plotter(x_vec,y_vec1,line1,y_vec2,line2)
+    # y_vec1 = np.append(y_vec1[1:],0.0)
+    # y_vec2 = np.append(y_vec2[1:],0.0)
 
 
 
-   
-    if (t_step%20 == 0):
-        pitch_hist.append(pitch)
-        t_hist.append(t)
-        z_hist.append(pos[2])
-        vz_hist.append(vz)
+        
 
-
-        with open(filename,mode='a') as csvfile:
-            writer = csv.writer(csvfile,delimiter = ',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            writer.writerow([t,pos[2],vz])
+    #     with open(filename,mode='a') as csvfile:
+    #         writer = csv.writer(csvfile,delimiter = ',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    #         writer.writerow([t,pos[2],vz])
         
 
 
@@ -105,9 +140,6 @@ while True:
 
 
 
-    if (t >= 2):
-        break
-
 
     # ============================
     ##          Errors  
@@ -127,28 +159,6 @@ while True:
 
     t_step += 1
 
-fig, ax1 = plt.subplots()
-plt.grid()
-
-ax1.set_xlabel('Time (s)')
-ax1.set_ylabel('Pitch Angle (deg)')
-ax1.set_ylim([-15,15])
-ax1.plot(t_hist,pitch_hist)
-
-# ax2 = ax1.twinx()
-# color = 'tab:red'
-# ax2.set_ylabel('Z (m)', color=color)
-# ax2.tick_params(axis='y', labelcolor=color)
-# ax2.plot(t_hist,z_hist,color)
-
-ax2 = ax1.twinx()
-color = 'tab:red'
-ax2.set_ylabel('Vz (m/s)', color=color)
-ax2.tick_params(axis='y', labelcolor=color)
-ax2.plot(t_hist,vz_hist,color)
-
-fig.tight_layout
-plt.show()
 
 
 

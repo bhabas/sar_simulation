@@ -390,21 +390,45 @@ void Controller::controlThread()
     unsigned int t_step = 0; // Run counter
     double case3_flag = 0;
 
-    // =========== Trajectory Definitions =========== //
-    x_d << 0,0,0.5;
-    v_d << 0,0,0;
-    a_d << 0,0,0;
-    b1_d << 1,0,0;
 
-    double kp_x = 0.3; // Positional Gain
-    double kd_x = 0.2; // Velocity Gain
-    double kp_R = 0.2;// Kp_R
-    double kd_R = 0.03; // Kd_R
+
+    double kp_x = 0.1; // Positional Gain
+    double kd_x = 0.08; // Velocity Gain
+    double kp_R = 0.08;// Kp_R
+    double kd_R = 0.005; // Kd_R
+    double w;
 
 
     while(isRunning_)
     {
         t_step++;
+        
+        // =========== Trajectory Definitions =========== //
+        // x_d << 0.5*t, 0.5*sin(w*t),1.5+0.25*cos(w*t);
+        // v_d << 2,0.5*cos(w*t),-0.25*sin(w*t);
+        // a_d << 0,-0.5*sin(w*t),-0.25*cos(w*t);
+
+
+        x_d << 0,0,1.5;
+        v_d << 0,0,0;
+        a_d << 0,0,0;
+        b1_d << 1,0,0;
+      
+        // if (t>=8.1){
+        // w = 3.0; // rad/s
+        // x_d << (cos(M_PI/2 + t*w)*cos(t))/2, 0, (cos(M_PI/2 + t*w)*sin(t))/2 + 1;
+        // v_d << (sin(t*w)*sin(t))/2 - (w*cos(t*w)*cos(t))/2, 0, - (sin(t*w)*cos(t))/2 - (w*cos(t*w)*sin(t))/2;
+        // a_d  << (sin(t*w)*cos(t))/2 + w*cos(t*w)*sin(t) + (pow(w,2)*sin(t*w)*cos(t))/2, 0, (sin(t*w)*sin(t))/2 - w*cos(t*w)*cos(t) + (pow(w,2)*sin(t*w)*sin(t))/2;
+        // b1_d << 1,0,0;
+        // }
+        // if (t>=20){
+        // w = 2.0; // rad/s
+        // double b = 0.5;
+        // x_d << b*cos(t*w), b*sin(t*w), 1.5;
+        // v_d << -b*w*sin(t*w), b*w*cos(t*w), 0;
+        // a_d << -b*pow(w,2)*cos(t*w), -b*pow(w,2)*sin(t*w), 0;
+        // b1_d << 1,0,0;
+        // }
 
         // =========== State Definitions =========== //
 
@@ -479,11 +503,9 @@ void Controller::controlThread()
         q.vec() = quat_Eig.segment(1,3);
         R = q.normalized().toRotationMatrix(); // Quaternion to Rotation Matrix Conversion
         
-
         yaw = atan2(R(1,0), R(0,0));
         roll = atan2(R(2,1), R(2,2)); 
         pitch = atan2(-R(2,0), sqrt(R(2,1)*R(2,1)+R(2,2)*R(2,2)));
-        
         
         b3 = R*e3;
 
@@ -531,7 +553,7 @@ void Controller::controlThread()
         f = Gamma_I*FM; // Propeller thrusts
         motorspeed_square = (f*1/kf);
         motorspeed_Eig = motorspeed_square.array().sqrt();
-        motorspeed_Eig << 2*M_PI,2*M_PI,2*M_PI,2*M_PI;
+
 
         // If CF overshoots it will prescribe a negative 
         // force which it can't do so we cap the command at zero 
@@ -541,39 +563,40 @@ void Controller::controlThread()
             if(motorspeed_Eig(k_motor)<0){
                 motorspeed_Eig(k_motor) = 0;
             }
-            else if (isnan(motorspeed_Eig(k_motor))){
+            else if(isnan(motorspeed_Eig(k_motor))){
                 motorspeed_Eig(k_motor) = 0;
             }
             else if(motorspeed_Eig(k_motor)>= 2500){ // Max rotation speed (rad/s)
-                cout << "Motorspeed capped - Motor: " << k_motor << endl;
+                // cout << "Motorspeed capped - Motor: " << k_motor << endl;
+                motorspeed_Eig(k_motor) = 2500;
             }
-        
         }
         
 
 
         // cout << motorspeed_Eig.transpose() << " | " << pos(2) << " | " << pitch*180/M_PI << endl;
-        // if (t >= 2.5){
-        // cout << "t: " << t << "\tkpx: " << kp_x << " \tkdx: " << kd_x << " \tkpR: " << kp_R << " \tkdR: " << kd_R << endl <<
-        // "pos: " << pos.transpose() << "\tex: " << e_x.transpose() << endl <<
-        // "vel: " << vel.transpose() << "\tev: " << e_v.transpose() << endl <<
-        // "u1: " << F_thrust_ideal.transpose() <<   "\n\n" << 
-        // "R:\n" << R << "\n\n" << 
-        // "R_d:\n" << R_d << "\n\n" << 
-        // "e_R: " << e_R.transpose() << endl <<
-        // "omega: " << omega.transpose() << "\te_w: " << e_omega.transpose() << endl <<
-        // "u2: " << M.transpose() << endl <<
-        // "FM: " << FM.transpose() << "\n\n" << 
-        // "GI: \n" << Gamma_I << "\n\n" <<
-        // "f: " << f.transpose() << "\n\n" << 
-        // "MS: " << motorspeed_Eig.transpose() << 
-        // " \n=============== " << endl; 
-        // }
-
-
-        if (t_step%50 == 0){
-            cout << t <<  " |\t" << pitch*180/M_PI  << " |\t" << pos(2) <<  " |\t" << FM.transpose() << endl;
+        if (t_step%100 == 0){
+        cout << "t: " << t << "\tkpx: " << kp_x << " \tkdx: " << kd_x << " \tkpR: " << kp_R << " \tkdR: " << kd_R << endl <<
+        "x_d: " << x_d.transpose() << endl <<
+        "pos: " << pos.transpose() << "\tex: " << e_x.transpose() << endl <<
+        "vel: " << vel.transpose() << "\tev: " << e_v.transpose() << endl <<
+        "u1: " << F_thrust_ideal.transpose() <<   "\n\n" << 
+        "R:\n" << R << "\n\n" << 
+        "R_d:\n" << R_d << "\n\n" << 
+        "Yaw: " << yaw*180/M_PI << "\tRoll: " << roll*180/M_PI << "\tPitch: " << pitch*180/M_PI << endl <<
+        "e_R: " << e_R.transpose() << "e_R (deg): " << e_R.transpose()*180/M_PI << endl <<
+        "omega: " << omega.transpose() << "\te_w: " << e_omega.transpose() << endl <<
+        "u2: " << M.transpose() << endl <<
+        "FM: " << FM.transpose() << "\n\n" << 
+        "f: " << f.transpose() << "\n\n" << 
+        "MS: " << motorspeed_Eig.transpose() << 
+        " \n=============== " << endl; 
         }
+
+
+        // if (t_step%50 == 0){
+        //     cout << t <<  " |\t" << pitch*180/M_PI  << " |\t" << pos(2) <<  " |\t" << FM.transpose() << endl;
+        // }
         
         
         
