@@ -265,29 +265,30 @@ void Controller::controlThread()
 
     // State Declarations
 
-    Vector3d pos; // current position [m]
-    Vector3d vel; // current velocity [m]
-    Vector4d quat_Eig; // current attitude [rad] (quat form)
-    Vector3d eul_d; // current attitude [rad] (roll, pitch, yaw angles)
-    Vector3d omega; // current angular velocity [rad/s]
+    Vector3d pos; // Current position [m]
+    Vector3d vel; // Current velocity [m]
+    Vector4d quat_Eig; // Current attitude [rad] (quat form)
+    Vector3d eul; // Current attitude [rad] (roll, pitch, yaw angles)
+    Vector3d omega; // Current angular velocity [rad/s]
 
     
 
     
     // State Error and Prescriptions
-    Vector3d x_d; // Pose-desired [m] 
+    Vector3d x_d; // Pos-desired [m] 
     Vector3d v_d; // Velocity-desired [m/s]
     Vector3d a_d(0,0,0); // Acceleration-desired [m/s]
 
     Matrix3d R_d; // Rotation-desired 
     Matrix3d R_d_custom; // Rotation-desired (ZXY Euler angles)
-    Vector3d omega_d; // Omega-desired
-    Vector3d domega_d(0,0,0);
+    Vector3d eul_d; // Desired attitude (ZXY Euler angles) [rad] (roll, pitch, yaw angles)
+    Vector3d omega_d; // Omega-desired [rad/s]
+    Vector3d domega_d(0,0,0); // Omega-Accl. [rad/s^2]
 
-    Vector3d e_x; // Pose-Error
-    Vector3d e_v; // Vel-error 
-    Vector3d e_R; // Rotation-error
-    Vector3d e_omega; // Omega-error
+    Vector3d e_x; // Pos-Error [m]
+    Vector3d e_v; // Vel-error  [m/s]
+    Vector3d e_R; // Rotation-error [rad]
+    Vector3d e_omega; // Omega-error [rad/s]
 
     
 
@@ -303,7 +304,7 @@ void Controller::controlThread()
     // J = J_temp*1e-6;
 
 
-    Matrix4d Gamma;
+    Matrix4d Gamma; // Thrust-Moment control vector conversion matrix
     Matrix4d Gamma_I;
 
 
@@ -317,118 +318,168 @@ void Controller::controlThread()
 
 
     Vector3d F_thrust_ideal; // Ideal thrust vector to minimize error   
-    Vector3d M; // Moment control vector
+    Vector3d M; // Moment control vector [Nm]
     
-    Vector4d FM; // Thrust & Moment control vector (4x1)
-    Vector4d f;
+    Vector4d FM; // Thrust-Moment control vector (4x1)
+    Vector4d f; // Propeller thrusts [N]
 
     
 
-    Vector4d motorspeed_square;
-    Vector4d motorspeed_Eig; // motorspee
+    Vector4d motorspeed_square; // Squared motorspeeds [rad/s]
+    Vector4d motorspeed_Eig; // Motorspeeds [rad/s]
 
-    Vector3d b3; // body-fixed vertical axis
+    Vector3d b3; // Body-fixed vertical axis
     
 
     Quaterniond q;
-    Matrix3d R;
-    Vector3d eul;
-
-
+    Matrix3d R; // Body-Global Rotation Matrix
     
 
 
     
 
 
-    double t = 0;
+    
+
+
+    
 
 
     
 
 
     // Controller Values
+    double kp_x = 0.1;   // Pos. Gain
+    double kd_x = 0.08;  // Pos. derivative Gain
+    double kp_R = 0.08;  // Rot. Gain
+    double kd_R = 0.005; // Rot. derivative Gain
+
+    // Controller Flags
+    double kp_xf = 1; // Pos. Gain Flag
+    double kd_xf = 1; // Pos. derivative Gain Flag
+    double kp_Rf = 1; // Rot. Gain Flag
+    double kd_Rf = 1; // Rot. derivative Gain Flag
 
 
 
-    double kp_xf = 1; // Positional Gain Flag
-    double kd_xf = 1; // Velocity Gain Flag
-    double kp_Rf = 1; // Attitude Gain Flag
-    double kd_Rf = 1; // Anglular Rate Gain Flag
 
 
-
-
-
-    double F_thrust = 0;
+    double F_thrust;
     // might need to adjust weight to real case (sdf file too)
-
     double m = 0.026 + 0.00075*4; // Mass [kg]
     double g = 9.8066; // Gravitational acceleration [m/s^2]
-    double f_hover = m*g; // Force to hover
+    double t = 0; // Time from Gazebo [s]
+    unsigned int t_step = 0; // t_step counter
 
-    double yaw;
-    double pitch;
-    double roll;
+    double yaw; // Z-axis [rad/s]
+    double roll; // X-axis [rad/s]
+    double pitch; // Y-axis [rad/s]
+    
 
 
-    double d = 0.040; // distance from COM to prop
+    double d = 0.040; // Distance from COM to prop [m]
     double d_p = d*sin(M_PI/4);
 
-    double kf = 2.21e-8;
-    double c_Tf = 0.00612;
+    double kf = 2.21e-8; // Thrust constant [N/(rad/s)^2]
+    double c_Tf = 0.00612; // Moment Constant [Nm/N]
 
 
-    Gamma << 1,     1,     1,     1,
+    Gamma << 1,     1,     1,     1, // Motor thrusts = Gamma*Force/Moment vec
              d_p,   d_p,  -d_p,  -d_p, 
             -d_p,   d_p,   d_p,  -d_p, 
              c_Tf,  -c_Tf, c_Tf,  -c_Tf;
-    Gamma_I = Gamma.inverse();
+    Gamma_I = Gamma.inverse(); // Calc here once to reduce calc load
  
 
   
-    unsigned int t_step = 0; // Run counter
-    double case3_flag = 0;
+    
+
+
+    double att_control_flag = 0;
+    double motorstop_flag = 0;
 
 
 
-    double kp_x = 0.1; // Positional Gain
-    double kd_x = 0.08; // Velocity Gain
-    double kp_R = 0.08;// Kp_R
-    double kd_R = 0.005; // Kd_R
-    double w;
+   
+    double w; // Angular frequency for trajectories [rad/s]
+    double b; // Amplitude for trajectories [m]
 
 
     while(isRunning_)
     {
+        // =========== Control Definitions =========== //
+        // Define control_cmd from recieved control_cmd
+        if (control_cmd_recvd[0]<10) // 
+            memcpy(control_cmd, control_cmd_recvd, sizeof(control_cmd)); // Compiler doesn't work without this line for some reason? 
+            Map<Matrix<double,5,1>> control_cmd_Eig(control_cmd_recvd); 
+
+        type = control_cmd_Eig(0); // Command type
+        control_vals = control_cmd_Eig.segment(1,3); // Command values
+        ctrl_flag = control_cmd_Eig(4); // Controller On/Off switch
+
+        switch(type){ // Define Desired Values
+
+            case 1: // Position
+                x_d << control_vals;
+                if (ctrl_flag == 0) kp_xf = 0;
+                else kp_xf = 1;
+                break;
+
+            case 2: // Velocity
+                v_d << control_vals;
+                if (ctrl_flag == 0) kd_xf = 0;
+                else kd_xf = 1;
+                break;
+
+            case 3: // Attitude [Implementation needs to be finished]
+                R_d_custom << 0.9961947,  0.0000000,  0.0871557,
+                        0.0000000,  1.0000000,  0.0000000,
+                        -0.0871557,  0.0000000,  0.9961947; // 5 deg pitch
+                att_control_flag = 1;
+
+                if (ctrl_flag == 0) kp_Rf = 0;
+                else kp_Rf = 1;
+                break;
+
+            case 4: // Ang. Velocity
+                omega_d << control_vals;
+                if (ctrl_flag == 0) kd_Rf = 0;
+                else kd_Rf = 1;
+                break;
+
+            case 5: // Stop Motors
+                motorstop_flag = 0;
+                break;
+        }
+
+
         t_step++;
         
         // =========== Trajectory Definitions =========== //
-        // x_d << 0.5*t, 0.5*sin(w*t),1.5+0.25*cos(w*t);
-        // v_d << 2,0.5*cos(w*t),-0.25*sin(w*t);
-        // a_d << 0,-0.5*sin(w*t),-0.25*cos(w*t);
-
-
         x_d << 0,0,1.5;
         v_d << 0,0,0;
         a_d << 0,0,0;
         b1_d << 1,0,0;
+
       
-        // if (t>=8.1){
+        // if (t>=8.1){ // Vertical Petal Traj.
         // w = 3.0; // rad/s
         // x_d << (cos(M_PI/2 + t*w)*cos(t))/2, 0, (cos(M_PI/2 + t*w)*sin(t))/2 + 1;
         // v_d << (sin(t*w)*sin(t))/2 - (w*cos(t*w)*cos(t))/2, 0, - (sin(t*w)*cos(t))/2 - (w*cos(t*w)*sin(t))/2;
         // a_d  << (sin(t*w)*cos(t))/2 + w*cos(t*w)*sin(t) + (pow(w,2)*sin(t*w)*cos(t))/2, 0, (sin(t*w)*sin(t))/2 - w*cos(t*w)*cos(t) + (pow(w,2)*sin(t*w)*sin(t))/2;
         // b1_d << 1,0,0;
         // }
-        // if (t>=20){
+
+        // if (t>=20){ // Horizontal Circle Traj.
         // w = 2.0; // rad/s
-        // double b = 0.5;
+        // b = 0.5;
         // x_d << b*cos(t*w), b*sin(t*w), 1.5;
         // v_d << -b*w*sin(t*w), b*w*cos(t*w), 0;
         // a_d << -b*pow(w,2)*cos(t*w), -b*pow(w,2)*sin(t*w), 0;
         // b1_d << 1,0,0;
         // }
+
+
 
         // =========== State Definitions =========== //
 
@@ -444,75 +495,24 @@ void Controller::controlThread()
         t = state_full_Eig(13); 
         
 
-    
-        // =========== Control Definitions =========== //
-        // Define control_cmd from recieved control_cmd
-        if (control_cmd_recvd[0]<10) // 
-            memcpy(control_cmd, control_cmd_recvd, sizeof(control_cmd)); // Compiler doesn't work without this line for some reason? 
-            Map<Matrix<double,5,1>> control_cmd_Eig(control_cmd_recvd); 
-
-
-
-        type = control_cmd_Eig(0); // Command type
-        control_vals = control_cmd_Eig.segment(1,3); // Command values
-        ctrl_flag = control_cmd_Eig(4); // Controller On/Off switch (To be implemented)
-
-
-
-        switch(type){ // Define Desired Values
-            case 1: // Position
-                x_d << control_vals;
-                if (ctrl_flag == 0) kp_xf = 0;
-                else kp_xf = 1;
-                break;
-            case 2: // Velocity
-                v_d << control_vals;
-                if (ctrl_flag == 0) kd_xf = 0;
-                else kd_xf = 1;
-                break;
-            case 3: // Attitude [Implementation needs to be finished]
-                R_d_custom << 0.9961947,  0.0000000,  0.0871557,
-                        0.0000000,  1.0000000,  0.0000000,
-                        -0.0871557,  0.0000000,  0.9961947; // 5 deg pitch
-                
-                case3_flag = 1;
-
-                if (ctrl_flag == 0) kp_Rf = 0;
-                else kp_Rf = 1;
-
-                break;
-
-            case 4: // Ang. Velocity
-                omega_d << control_vals;
-                if (ctrl_flag == 0) kd_Rf = 0;
-                else kd_Rf = 1;
-                break;
-            case 5: // Stop Motors
-                break;
-        }
-
- 
-
-
 
 
         // =========== Rotation Matrix =========== //
-        // I'm not sure if this from Body->World or World->Body
+        // R changes Body axes to be in terms of Global axes
         // https://www.andre-gaschler.com/rotationconverter/
         q.w() = quat_Eig(0);
         q.vec() = quat_Eig.segment(1,3);
         R = q.normalized().toRotationMatrix(); // Quaternion to Rotation Matrix Conversion
         
-        yaw = atan2(R(1,0), R(0,0));
+        yaw = atan2(R(1,0), R(0,0)); 
         roll = atan2(R(2,1), R(2,2)); 
         pitch = atan2(-R(2,0), sqrt(R(2,1)*R(2,1)+R(2,2)*R(2,2)));
         
-        b3 = R*e3;
-
+        b3 = R*e3; // body vertical axis in terms of global axes
 
 
         // =========== Translational Errors & Desired Body-Fixed Axes =========== //
-        e_x = pos - x_d;
+        e_x = pos - x_d; 
         e_v = vel - v_d;
 
         F_thrust_ideal = -kp_x*kp_xf*e_x + -kd_x*kd_xf*e_v + m*g*e3 + m*a_d; // ideal control thrust vector
@@ -524,19 +524,12 @@ void Controller::controlThread()
         // =========== Rotational Errors =========== // 
         R_d << b2_d.cross(b3_d).normalized(),b2_d,b3_d; // Desired rotational axis
                                                         // b2_d x b3_d != b1_d (look at derivation)
-        if (case3_flag == 1){
+
+        if (att_control_flag == 1){ // [Attitude control will be implemented here]
             R_d = R_d_custom;
         }
-
-
-        // if (t>=3.0){
-        //         R_d << 0.9848077,  0.0000000,  0.1736482,
-        //                 0.0000000,  1.0000000,  0.0000000,
-        //                 -0.1736482,  0.0000000,  0.9848077; // 10 deg pitch
-        // }
-        
         e_R = 0.5*dehat(R_d.transpose()*R - R.transpose()*R_d); // Rotational error
-        e_omega = omega - R.transpose()*R_d*omega_d; // Angular vel error
+        e_omega = omega - R.transpose()*R_d*omega_d; // Ang vel error
 
 
 
@@ -551,13 +544,11 @@ void Controller::controlThread()
 
         // =========== Propellar Thrusts/Speeds =========== //
         f = Gamma_I*FM; // Propeller thrusts
-        motorspeed_square = (f*1/kf);
+        motorspeed_square = (1/kf*f);
         motorspeed_Eig = motorspeed_square.array().sqrt();
 
 
-        // If CF overshoots it will prescribe a negative 
-        // force which it can't do so we cap the command at zero 
-        // (potentially higher to reduce startup time)
+        // Cap motor thrusts between 0 and 2500 rad/s
         for(int k_motor=0;k_motor<4;k_motor++) 
         {
             if(motorspeed_Eig(k_motor)<0){
@@ -574,8 +565,7 @@ void Controller::controlThread()
         
 
 
-        // cout << motorspeed_Eig.transpose() << " | " << pos(2) << " | " << pitch*180/M_PI << endl;
-        if (t_step%100 == 0){
+        if (t_step%100 == 0){ // General Debugging output
         cout << "t: " << t << "\tkpx: " << kp_x << " \tkdx: " << kd_x << " \tkpR: " << kp_R << " \tkdR: " << kd_R << endl <<
         "x_d: " << x_d.transpose() << endl <<
         "pos: " << pos.transpose() << "\tex: " << e_x.transpose() << endl <<
@@ -593,15 +583,10 @@ void Controller::controlThread()
         " \n=============== " << endl; 
         }
 
-
-        // if (t_step%50 == 0){
-        //     cout << t <<  " |\t" << pitch*180/M_PI  << " |\t" << pos(2) <<  " |\t" << FM.transpose() << endl;
-        // }
-        
-        
-        
+     
         Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Eig.cast <float> (); // Converts motorspeeds to C++ array for data transmission
-        sendto(fd_gazebo_, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
+        sendto(fd_gazebo_, motorspeed, sizeof(motorspeed),0, // Send motorspeeds to Gazebo -> gazebo_motor_model?
+                (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_); 
 
     }
 }
