@@ -152,7 +152,7 @@ class CrazyflieEnv:
         time.sleep(5)
 
         self.controller_p = subprocess.Popen(
-            "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/utility/launch_controller.bash", 
+            "gnome-terminal --disable-factory --geometry 80x29 -- ~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/utility/launch_controller.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(1)
 
@@ -195,15 +195,17 @@ class CrazyflieEnv:
 
 
     def step(self, action): # Controller works to attain these values
-        if action['type'] == 'pos': # position (x,y,z) 
+        if action['type'] == 'home': # default desired values/traj.
+            header = 0
+        elif action['type'] == 'pos':  # position (x,y,z) 
             header = 1
-        elif action['type'] == 'vel': # velocity (vx,vy,vz)
+        elif action['type'] == 'vel':  # velocity (vx,vy,vz)
             header = 2
-        elif action['type'] == 'att': # attitude: orientation (heading/yaw, pitch, roll/bank)
+        elif action['type'] == 'att':  # attitude: orientation (heading/yaw, pitch, roll/bank)
             header = 3
-        elif action['type'] == 'rate': # rotation rate (w_x:roll,w_y:pitch,w_z:yaw)
+        elif action['type'] == 'omega': # rotation rate (w_x:roll,w_y:pitch,w_z:yaw)
             header = 4
-        elif action['type'] == 'stop': # ???
+        elif action['type'] == 'stop': # cut motors
             header = 5
         else:
             print("no such action")
@@ -213,11 +215,11 @@ class CrazyflieEnv:
         z = action['z']
         additional = action['ctrl_flag']
 
-        buf = struct.pack('5d', header, x, y, z, additional) # Send command
-        self.fd.sendto(buf, self.addr_Ctrl)
+        cmd = struct.pack('5d', header, x, y, z, additional) # Send command
+        self.fd.sendto(cmd, self.addr_Ctrl)
         time.sleep(0.1)
-        buf = struct.pack('5d', 0,0,0,0,1) # Send blank command so controller doesn't keep redefining values
-        self.fd.sendto(buf, self.addr_Ctrl)
+        cmd = struct.pack('5d',99,0,0,0,1) # Send blank command so controller doesn't keep redefining values
+        self.fd.sendto(cmd, self.addr_Ctrl)
 
         #self.queue_command.put(buf, block=False)
 

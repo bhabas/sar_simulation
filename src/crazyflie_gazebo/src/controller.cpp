@@ -285,17 +285,28 @@ void Controller::controlThread()
 
     
 
+    // Default desired States
+    Vector3d x_d_Def(0,0,0.5); // Pos-desired (Default) [m] 
+    Vector3d v_d_Def(0,0,0); // Velocity-desired (Default) [m/s]
+    Vector3d a_d_Def(0,0,0); // Acceleration-desired (Default) [m/s]
+    Vector3d b1_d_Def(1,0,0); // Desired global pointing direction (Default)
+
     
+
     // State Error and Prescriptions
     Vector3d x_d; // Pos-desired [m] 
     Vector3d v_d; // Velocity-desired [m/s]
-    Vector3d a_d(0,0,0); // Acceleration-desired [m/s]
+    Vector3d a_d; // Acceleration-desired [m/s]
 
     Matrix3d R_d; // Rotation-desired 
     Matrix3d R_d_custom; // Rotation-desired (ZXY Euler angles)
     Vector3d eul_d; // Desired attitude (ZXY Euler angles) [rad] (roll, pitch, yaw angles)
     Vector3d omega_d; // Omega-desired [rad/s]
     Vector3d domega_d(0,0,0); // Omega-Accl. [rad/s^2]
+
+    Vector3d b1_d; // Desired yaw direction of body-fixed axis (COM to prop #1)
+    Vector3d b2_d; // Desired body-fixed axis normal to b1 and b3
+    Vector3d b3_d; // Desired body-fixed vertical axis
 
     Vector3d e_x; // Pos-Error [m]
     Vector3d e_v; // Vel-error  [m/s]
@@ -324,9 +335,7 @@ void Controller::controlThread()
 
     
 
-    Vector3d b1_d; // Desired yaw direction of body-fixed axis (COM to prop #1)
-    Vector3d b2_d; // Desired body-fixed axis normal to b1 and b3
-    Vector3d b3_d; // Desired body-fixed vertical axis
+
 
 
     Vector3d F_thrust_ideal; // Ideal thrust vector to minimize error   
@@ -349,17 +358,6 @@ void Controller::controlThread()
 
 
     
-
-
-    
-
-
-    
-
-
-    
-
-
     // Controller Values
     double kp_x = 0.1;   // Pos. Gain
     double kd_x = 0.08;  // Pos. derivative Gain
@@ -408,7 +406,7 @@ void Controller::controlThread()
 
 
     double att_control_flag = 0; // Controls implementation
-    double motorstop_flag = 0; // Controls stop implementation
+    double motorstop_flag = 1; // Controls stop implementation
 
 
 
@@ -416,65 +414,16 @@ void Controller::controlThread()
     double w; // Angular frequency for trajectories [rad/s]
     double b; // Amplitude for trajectories [m]
 
+    // =========== Trajectory Definitions =========== //
+    x_d << x_d_Def;
+    v_d << v_d_Def;
+    a_d << a_d_Def;
+    b1_d << b1_d_Def;
 
     while(isRunning_)
     {
-        // =========== Control Definitions =========== //
-        // Define control_cmd from recieved control_cmd
-        if (control_cmd_recvd[0]<10) // Change to != 10 to check if not a sticky foot command
-            memcpy(control_cmd, control_cmd_recvd, sizeof(control_cmd)); // Compiler doesn't work without this line for some reason? 
-            Map<Matrix<double,5,1>> control_cmd_Eig(control_cmd_recvd); 
-
-        type = control_cmd_Eig(0); // Command type
-        control_vals = control_cmd_Eig.segment(1,3); // Command values
-        ctrl_flag = control_cmd_Eig(4); // Controller On/Off switch
-
-        switch(type){ // Define Desired Values
-
-            case 1: // Position
-                x_d << control_vals;
-                if (ctrl_flag == 0) kp_xf = 0; // if flag is zero turn off respective controller // Kp = control flag
-                else kp_xf = 1;
-                break;
-
-            case 2: // Velocity
-                v_d << control_vals;
-                if (ctrl_flag == 0) kd_xf = 0;
-                else kd_xf = 1;
-                break;
-
-            case 3: // Attitude [Implementation needs to be finished]
-                eul_d << control_vals;
-                // R_d from eul_d
-                R_d_custom << 0.9961947,  0.0000000,  0.0871557,
-                        0.0000000,  1.0000000,  0.0000000,
-                        -0.0871557,  0.0000000,  0.9961947; // 5 deg pitch
-                att_control_flag = 1;
-
-                if (ctrl_flag == 0) kp_Rf = 0;
-                else kp_Rf = 1;
-                break;
-
-            case 4: // Ang. Velocity
-                omega_d << control_vals;
-                if (ctrl_flag == 0) kd_Rf = 0;
-                else kd_Rf = 1;
-                break;
-
-            case 5: // Stop Motors
-                motorstop_flag = 0;
-                break;
-        }
-
 
         
-        
-        // =========== Trajectory Definitions =========== //
-        x_d << 0,0,1.5;
-        v_d << 0,0,0;
-        a_d << 0,0,0;
-        b1_d << 1,0,0;
-
       
         // if (t>=8.1){ // Vertical Petal Traj.
         // w = 3.0; // rad/s
@@ -492,6 +441,66 @@ void Controller::controlThread()
         // a_d << -b*pow(w,2)*cos(t*w), -b*pow(w,2)*sin(t*w), 0;
         // b1_d << 1,0,0;
         // }
+
+
+
+        // =========== Control Definitions =========== //
+        // Define control_cmd from recieved control_cmd
+        if (control_cmd_recvd[0]<10) // Change to != 10 to check if not a sticky foot command
+            memcpy(control_cmd, control_cmd_recvd, sizeof(control_cmd)); // Compiler doesn't work without this line for some reason? 
+            Map<Matrix<double,5,1>> control_cmd_Eig(control_cmd_recvd); 
+
+        type = control_cmd_Eig(0); // Command type
+        control_vals = control_cmd_Eig.segment(1,3); // Command values
+        ctrl_flag = control_cmd_Eig(4); // Controller On/Off switch
+
+        switch(type){ // Define Desired Values
+
+            case 0: // Return to home
+                x_d << x_d_Def;
+                v_d << v_d_Def;
+                a_d << a_d_Def;
+                b1_d << b1_d_Def;
+
+                kp_xf=1,kd_xf=1,kp_Rf=1,kd_Rf=1; // Reset control flags
+                motorstop_flag=1;
+                break;
+
+            case 1: // Position
+                x_d << control_vals;
+                kp_xf = ctrl_flag;
+                break;
+
+            case 2: // Velocity
+                v_d << control_vals;
+                kd_xf = ctrl_flag;
+                break;
+
+            case 3: // Attitude [Implementation needs to be finished]
+                eul_d << control_vals;
+                kp_Rf = ctrl_flag;
+
+                // R_d from eul_d
+                R_d_custom << 0.9961947,  0.0000000,  0.0871557,
+                        0.0000000,  1.0000000,  0.0000000,
+                        -0.0871557,  0.0000000,  0.9961947; // 5 deg pitch
+                att_control_flag = 1;
+                break;
+
+            case 4: // Ang. Velocity
+                omega_d << control_vals;
+                kd_Rf = ctrl_flag;
+                break;
+
+            case 5: // Stop Motors
+                motorstop_flag = ctrl_flag;
+                break;
+        }
+
+
+        
+        
+        
 
 
 
@@ -579,11 +588,16 @@ void Controller::controlThread()
                 motorspeed_Eig(k_motor) = 2500;
             }
         }
+
+        if(motorstop_flag == 0){ // Shutoff all motors
+            motorspeed_Eig << 0,0,0,0;
+        }
         
 
 
         if (t_step%100 == 0){ // General Debugging output
-        cout << "t: " << t << "\tkpx: " << kp_x << " \tkdx: " << kd_x << " \tkpR: " << kp_R << " \tkdR: " << kd_R << endl <<
+        cout << "t: " << t << "\tCmd: " << control_cmd_Eig.transpose() << endl <<
+        "kpx: " << kp_x << " \tkdx: " << kd_x << " \tkpR: " << kp_R << " \tkdR: " << kd_R << endl <<
         "x_d: " << x_d.transpose() << endl <<
         "pos: " << pos.transpose() << "\tex: " << e_x.transpose() << endl <<
         "vel: " << vel.transpose() << "\tev: " << e_v.transpose() << endl <<

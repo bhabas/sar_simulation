@@ -3,10 +3,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-import pandas as pd
-import csv
 
 
+import threading
 import time,os,getpass
 import os
 from scipy.spatial.transform import Rotation
@@ -75,6 +74,36 @@ def live_plotter(x_vec,y1_data,line1,y2_data,line2):
 #     # writer.writerow(['Time [s]','Omega_x','Omega_y','Omega_z'])
 
 
+def cmd_send():
+    while True:
+        cmd_dict = {0:'home',1:'pos',2:'vel',3:'att',4:'omega',5:'stop'}
+        val = float(input("\nCmd Type (0:home,1:pos,2:vel,3:att,4:omega,5:stop): "))
+        cmd_str = cmd_dict[val]
+
+        if cmd_str=='home' or cmd_str == 'stop':
+            ctrl_vals = [0,0,0]
+            ctrl_flag = 0
+        else:
+            try:
+                ctrl_vals = input("\nControl Vals (x,y,z): ")
+                ctrl_vals = [float(i) for i in ctrl_vals.split(',')]
+                if len(ctrl_vals) != 3:
+                    raise Exception()
+            except:
+                print("Error: x,y,z")
+            ctrl_flag = float(input("\nController On/Off (1,0): "))
+
+        action = {'type':cmd_str, 'x':ctrl_vals[0], 'y':ctrl_vals[1], 'z':ctrl_vals[2], 'ctrl_flag':ctrl_flag}
+        env.step(action)
+     
+
+
+
+input_thread = threading.Thread(target=cmd_send,args=())
+input_thread.start()
+
+
+
 
 size = 200
 x_vec = np.arange(size)/100
@@ -84,7 +113,9 @@ line1 = []
 line2 = []
 
 while True:
+
     
+        
             
     time.sleep(5e-4) # Time step size
 
@@ -104,11 +135,11 @@ while True:
     yaw,roll,pitch = R.as_euler('zxy',degrees=True)
 
     
-    y_vec1[-1] = pitch
-    y_vec2[-1] = pos[2]
-    line1,line2 = live_plotter(x_vec,y_vec1,line1,y_vec2,line2)
-    y_vec1 = np.append(y_vec1[1:],0.0)
-    y_vec2 = np.append(y_vec2[1:],0.0)
+    # y_vec1[-1] = pitch
+    # y_vec2[-1] = pos[2]
+    # line1,line2 = live_plotter(x_vec,y_vec1,line1,y_vec2,line2)
+    # y_vec1 = np.append(y_vec1[1:],0.0)
+    # y_vec2 = np.append(y_vec2[1:],0.0)
 
 
 
@@ -126,8 +157,8 @@ while True:
     # ============================
 
 
-    # if (1.0 <= t <= 1.1): 
-    #     action = {'type':'pos', 'x':0.0, 'y':0.0, 'z':0.5, 'ctrl_flag':1}
+    # if (3.0 <= t <= 3.1): 
+    #     action = {'type':'pos', 'x':0.5, 'y':0.0, 'z':1.5, 'ctrl_flag':1}
     #     env.step(action)
 
 
@@ -135,9 +166,7 @@ while True:
     #     # turn on attitude control and pause sim
     #     action = {'type':'att', 'x':0.0, 'y':0.0, 'z':0.0, 'ctrl_flag':1} 
     #     env.step(action) # Set 5 deg pitch
-    # #     # os.system("""rosservice call /gazebo/set_model_state '{model_state: { model_name: crazyflie_landing_gears, pose: { position: { x: 0, y: 0 ,z: 0.35 }, orientation: {x: 0, y: 0.0436194, z: 0, w: 0.9990482 } }, twist: { linear: {x: 0 , y: 0 ,z: 0 } ,angular: { x: 0 , y: 0, z: 0 } } , reference_frame: world } }'""")
-    #     # os.system("rosservice call gazebo/pause_physics")
-
+   
 
 
 
