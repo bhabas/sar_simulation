@@ -10,9 +10,9 @@
       <uri>model://ground_plane</uri>
     </include>
     <!-- A ceiling plane -->
-    <!-- <include>
+    <include>
       <uri>model://ceiling_plane</uri>
-    </include> -->
+    </include>
 
     <!-- Default camera pose -->
     <gui>
@@ -51,7 +51,7 @@
         <constraints>
           <cfm>0.1</cfm>
           <erp>0.2</erp>
-          <contact_max_correcting_vel>5</contact_max_correcting_vel>
+          <contact_max_correcting_vel>1</contact_max_correcting_vel>
           <contact_surface_layer>0.0001</contact_surface_layer>
         </constraints>
       </ode>

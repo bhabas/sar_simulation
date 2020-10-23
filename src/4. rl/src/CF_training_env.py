@@ -168,8 +168,9 @@ for k_ep in range(ep_start,1000):
         vz_ini = np.random.uniform(low=2.5, high=2.6)
         vx_ini = np.random.uniform(low=2.0, high=4.0)
         vx_ini = 0.0
-        vy_ini = 0.0
-        v_ini = [vz_ini,vx_ini,vy_ini] # [m/s]
+        vy_ini = 0.5
+        vz_ini = 1.5
+        v_ini = [vx_ini,vy_ini,vz_ini] # [m/s]
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
 
@@ -181,19 +182,14 @@ for k_ep in range(ep_start,1000):
 
 
         state = env.reset()
+        env.step('home',[0,0,0],ctrl_flag=1) # Should be z=0.03 but needs integral controller for error offset
+
         env.IC_csv(agent,state,'sim',k_run,v_ini = v_ini)
 
 
 
-        # ## If spawn position is off then reset position again
-        # x_pos,y_pos = state[2],state[3]
-        # print("Spawn Pos: x=%.3f \t y=%.3f" %(x_pos,y_pos))
-        # if abs(x_pos) > 0.1 or abs(y_pos) > 0.1:
-        #     state = env.reset()
-
-
-        action = {'type':'pos', 'x':0.0, 'y':0.0, 'z':0.23, 'ctrl_flag':1} # Should be z=0.03 but needs integral controller for accuracy
-        env.step(action)
+        
+        
 
         t_step = 0
         
@@ -208,22 +204,22 @@ for k_ep in range(ep_start,1000):
         repeat_run= False
         error_str = ""
 
-        vx_avg = 0
 
         # ============================
         ##          Rollout 
         # ============================
-        action = {'type':'vel', 'x':vx_ini, 'y':vy_ini, 'z':vz_ini, 'ctrl_flag':1}
-        env.step(action)
         
-        
+        env.step('vel',v_ini,ctrl_flag=1)
+        env.step('pos',[0,0,0],ctrl_flag=0)
         RREV_trigger = theta_rl[0, k_run]
 
 
         while True:
                 
             time.sleep(5e-4) # Time step size
-            t_step = t_step + 1 # Time step
+            t_step += 1
+
+
             ## Define current state
             state = env.state_current
             
@@ -234,11 +230,7 @@ for k_ep in range(ep_start,1000):
             omega = state[11:14]
             d = h_ceiling - position[2]
 
-            # Use noisy distance measurement from sensor
-            #d = env.laser_dist # there is some systematic bias
-            #<mean>0.0</mean>
-            #<stddev>0.02</stddev>
-            #print(d)
+
             RREV, OF_y, OF_x = vz/d, vx/d, vy/d # OF_x,y are optical flows of the ceiling assuming no body rotation
             sensor_data = [RREV, OF_y, OF_x] # simplifying for data recording
             qw = orientation_q[0]
@@ -246,49 +238,28 @@ for k_ep in range(ep_start,1000):
             qy = orientation_q[2]
             qz = orientation_q[3]
 
-            #image_now=env.cv_image.flatten() # collect current image and flatten to 1d
-            #print(image_now)
-            # concatente previous image, current image, and visual cues for training data
-            #training_data = np.concatenate((image_prev,image_now,np.array([RREV*1000,omega_y*1000]))).astype(int)
-            #image_prev = image_now # update image
 
-            #print(data)
-            #if d < 0.3:
-            #    print(d)
+
+
             R = Rotation.from_quat([qx,qy,qz,qw])
             R = R.as_matrix()
-            angle = R[1,1]
-            b3 = R[2,:]
-            #print(angle, b3[0],b3[1],b3[2])
+            b3 = R[2,:] # Vertical body axis
+
 
             # ============================
-            ##    Motor Shutdown Criteria 
+            ##   Motor Shutdown Criteria 
             # ============================
-            if b3[2] < 0.0 and not flip_flag:
-                # check if crazyflie flipped 
-                action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
-                env.step(action)
-                # shut off motors for the rest of the run
+            if b3[2] < 0.0 and not flip_flag: # check if crazyflie flipped 
+                env.step('stop',[0,0,0],ctrl_flag=0) # shut off motors for the rest of the run
                 print("Flipped!! Shut motors")
                 flip_flag = True
             
-            #print(d)
-            
             if ((d < 0.05) and (not crash_flag) and (not flip_flag)): # might need to adjust this 
-                action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
-                env.step(action)
+                env.step('stop',[0,0,0],ctrl_flag=0)
                 print("Crashed!! Shut motors")
                 crash_flag = True
 
             
-            #b3 = r.as_matrix()[:,2] # body z-axis
-            #b3y =  np.dot(b3, np.array([0,0,1]))
-            b3y=0
-            r = [0,0,0]#r.as_euler('zyx', degrees=True)
-            eul1,eul2,eul3 = r[0],r[1],r[2]
-            #print(r)
-
-
             # ============================
             ##    Pitch Criteria 
             # ============================
@@ -296,52 +267,30 @@ for k_ep in range(ep_start,1000):
                 start_time_pitch = env.getTime()
                 env.enableSticky(1)
 
-                
-                ## bhabas work
-                # vx_avg = vx_avg + 0.5*(vx-vx_avg) # Exponentially weighted average of vx
-                # # future implementation on velocity estimate
-
-                # q_RREV = theta_rl[1,k_run] * RREV 
-                # q_d = q_RREV *np.sign(vx_avg) #+ theta_rl[2,k_run]*vx_avg
-
-
-
-                ## bader work
-                # wn = sqrt(omega_x**2 + omega_y**2)
-
-                # angle_omega = pi + atan2(omega_y,omega_x)
-
-                # add term to adjust for tilt 
                 qRREV = theta_rl[1,k_run]*RREV + theta_rl[2,k_run]*abs(OF_y)
-                #qomega = theta_rl[2,k_run]*wn
-                #q_roll = qRREV*sin(angle_omega)
-                #q_pitch = -qRREV*cos(angle_omega)
-                q_pitch = qRREV*np.sign(OF_y)# + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
 
-
+                pitch_rate = qRREV*np.sign(OF_y)# + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
 
 
 
                 # torque on x axis to adjust for vy
-                q_roll = 0.0 #theta_rl[3,k_run] * omega_y
+                roll_rate = 0.0 #theta_rl[3,k_run] * omega_y
 
                 print('----- pitch starts -----')
                 print('vz=%.3f, vx=%.3f, vy=%.3f' %(vz,vx,vy))
-                print('r[0]=%.3f, r[1]=%.3f, r[2]=%.3f, b3y=%.3f' %(r[0],r[1],r[2],b3y))
-                print('RREV=%.3f, OF_y=%.3f, OF_x=%.3f, q_pitch=%.3f' %( RREV, OF_y, OF_x,q_pitch) )   
+                print('RREV=%.3f, OF_y=%.3f, OF_x=%.3f, q_pitch=%.3f' %( RREV, OF_y, OF_x,pitch_rate) )   
                 print("Pitch Time: %.3f" %start_time_pitch)
                 #print('d_est = %.3f, d_act = %.3f' %(d,d_acutal))
                 #print('wy = %.3f , qomega = %.3f , qRREV = %.3f' %(omega[1],qomega,qRREV))
 
-                # randomly sample noise delay with mean = 30ms and sigma = 5
                 #t_delay = np.random.normal(30.0,5.0)
                 #print("t_delay = %.3f" %(t_delay))
                 #env.delay_env_time(t_start=start_time_pitch,t_delay=t_delay) # Artificial delay to mimic communication lag [ms]
                 
 
                 ## Start rotation and mark rotation as triggered
-                action = {'type':'rate', 'x':q_roll, 'y':q_pitch, 'z':0.0, 'additional':0.0}    
-                env.step(action) 
+                env.step('vel',[0,0,0],ctrl_flag=0) # turn off vel control
+                env.step('omega',[roll_rate,pitch_rate,0.0],ctrl_flag=1) # set ang rate control
                 pitch_triggered = True
 
 
@@ -409,8 +358,8 @@ for k_ep in range(ep_start,1000):
 
 
             if done_rollout:
-                action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
-                env.step(action)
+
+                env.step('stop',[0,0,0],ctrl_flag=0)
                 reward[k_run] = agent.calculate_reward(state_history,h_ceiling)
                 time.sleep(0.01)
                 print("Reward = %.3f" %(reward[k_run]))

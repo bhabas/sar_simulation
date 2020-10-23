@@ -194,7 +194,7 @@ class CrazyflieEnv:
             len = self.fd.sendto(buf, self.addr_Ctrl)
 
 
-    def step(self,action,ctrl_vals,ctrl_flag=1): # Controller works to attain these values
+    def step(self,action,ctrl_vals=[0,0,0],ctrl_flag=1): # Controller works to attain these values
         if action =='home': # default desired values/traj.
             header = 0
         elif action =='pos':  # position (x,y,z) 

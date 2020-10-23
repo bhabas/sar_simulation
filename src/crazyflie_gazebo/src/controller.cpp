@@ -286,7 +286,7 @@ void Controller::controlThread()
     
 
     // Default desired States
-    Vector3d x_d_Def(0,0,0.1); // Pos-desired (Default) [m] 
+    Vector3d x_d_Def(0,0,0.23); // Pos-desired (Default) [m] 
     Vector3d v_d_Def(0,0,0); // Velocity-desired (Default) [m/s]
     Vector3d a_d_Def(0,0,0); // Acceleration-desired (Default) [m/s]
     Vector3d b1_d_Def(1,0,0); // Desired global pointing direction (Default)
@@ -599,19 +599,22 @@ void Controller::controlThread()
         cout << "t: " << t << "\tCmd: " << control_cmd_Eig.transpose() << endl <<
         "kpx: " << kp_x << " \tkdx: " << kd_x << " \tkpR: " << kp_R << " \tkdR: " << kd_R << endl <<
         "x_d: " << x_d.transpose() << endl <<
+        "v_d: " << v_d.transpose() << endl <<
+        "omega_d: " << omega_d.transpose() << endl <<
+        endl << 
         "pos: " << pos.transpose() << "\tex: " << e_x.transpose() << endl <<
         "vel: " << vel.transpose() << "\tev: " << e_v.transpose() << endl <<
-        "u1: " << F_thrust_ideal.transpose() <<   "\n\n" << 
+        "omega: " << omega.transpose() << "\te_w: " << e_omega.transpose() << endl <<
+        endl << 
         "R:\n" << R << "\n\n" << 
         "R_d:\n" << R_d << "\n\n" << 
         "Yaw: " << yaw*180/M_PI << "\tRoll: " << roll*180/M_PI << "\tPitch: " << pitch*180/M_PI << endl <<
-        "e_R: " << e_R.transpose() << "e_R (deg): " << e_R.transpose()*180/M_PI << endl <<
-        "omega: " << omega.transpose() << "\te_w: " << e_omega.transpose() << endl <<
-        "u2: " << M.transpose() << endl <<
-        "FM: " << FM.transpose() << "\n\n" << 
-        "f: " << f.transpose() << "\n\n" << 
-        "MS: " << motorspeed_Eig.transpose() << 
-        " \n=============== " << endl; 
+        "e_R: " << e_R.transpose() << "\te_R (deg): " << e_R.transpose()*180/M_PI << endl <<
+        endl <<
+        "FM: " << FM.transpose() << endl <<
+        "f: " << f.transpose() << endl <<
+        "MS: " << motorspeed_Eig.transpose() << endl <<
+        "=============== " << endl; 
         }
 
      
