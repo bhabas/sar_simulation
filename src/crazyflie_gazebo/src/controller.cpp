@@ -12,13 +12,18 @@ using namespace std;
 void Controller::Load(int port_number_gazebo)
 {   cout << setprecision(4);
     cout << fixed;
+
+    // =========== Gazebo Server/Client? Connection =========== //
     fd_gazebo_ = socket(AF_INET, SOCK_DGRAM, 0);
     fd_gazebo_SNDBUF_ = 16;         // 16 bytes is 4 float
     fd_gazebo_RCVBUF_ = 112;        // 112 bytes is 14 double
+
     if (setsockopt(fd_gazebo_, SOL_SOCKET, SO_SNDBUF, &fd_gazebo_SNDBUF_, sizeof(fd_gazebo_SNDBUF_))<0)
         cout<<"fd_gazebo_ setting SNDBUF failed"<<endl;
+
     if (setsockopt(fd_gazebo_, SOL_SOCKET, SO_RCVBUF, &fd_gazebo_RCVBUF_, sizeof(fd_gazebo_RCVBUF_))<0)
         cout<<"fd_gazebo_ setting RCVBUF failed"<<endl;
+
     port_number_gazebo_ = port_number_gazebo;
 
     memset(&sockaddr_local_gazebo_, 0, sizeof(sockaddr_local_gazebo_));
@@ -46,6 +51,10 @@ void Controller::Load(int port_number_gazebo)
     else
         cout<<"Send initial motor speed to Gazebo FAILED! Threads will mutual lock"<<endl;
 
+
+
+
+    // =========== Python RL Server/Client? Connection =========== //
     fd_rl_ = socket(AF_INET, SOCK_DGRAM, 0);
     fd_rl_SNDBUF_ = 112;        // 112 bytes is 14 double
     fd_rl_RCVBUF_ = 40;         // 40 bytes is 5 double
@@ -252,10 +261,13 @@ void Controller::controlThread()
 {
     typedef Matrix<double, 3, 3, RowMajor> RowMatrix3d; 
 
-    double state_full[14];
+    
     StateFull state_full_structure;
-    float motorspeed[4];
     MotorCommand motorspeed_structure;
+
+    float motorspeed[4];
+    double state_full[14];
+    
 
     int type = 5; // Command type {1:Pos, 2:Vel, 3:Att, 4:Omega, 5:Stop}
     int ctrl_flag; // On/Off switch for controller
@@ -322,15 +334,15 @@ void Controller::controlThread()
     
     Vector4d FM; // Thrust-Moment control vector (4x1)
     Vector4d f; // Propeller thrusts [N]
+    double F_thrust;
 
     
 
     Vector4d motorspeed_square; // Squared motorspeeds [rad/s]
     Vector4d motorspeed_Eig; // Motorspeeds [rad/s]
 
-    Vector3d b3; // Body-fixed vertical axis
-    
 
+    Vector3d b3; // Body-fixed vertical axis
     Quaterniond q;
     Matrix3d R; // Body-Global Rotation Matrix
     
@@ -364,7 +376,7 @@ void Controller::controlThread()
 
 
 
-    double F_thrust;
+
     // might need to adjust weight to real case (sdf file too)
     double m = 0.026 + 0.00075*4; // Mass [kg]
     double g = 9.8066; // Gravitational acceleration [m/s^2]
@@ -409,7 +421,7 @@ void Controller::controlThread()
     {
         // =========== Control Definitions =========== //
         // Define control_cmd from recieved control_cmd
-        if (control_cmd_recvd[0]<10) // 
+        if (control_cmd_recvd[0]<10) // Change to != 10 to check if not a sticky foot command
             memcpy(control_cmd, control_cmd_recvd, sizeof(control_cmd)); // Compiler doesn't work without this line for some reason? 
             Map<Matrix<double,5,1>> control_cmd_Eig(control_cmd_recvd); 
 
@@ -421,7 +433,7 @@ void Controller::controlThread()
 
             case 1: // Position
                 x_d << control_vals;
-                if (ctrl_flag == 0) kp_xf = 0;
+                if (ctrl_flag == 0) kp_xf = 0; // if flag is zero turn off respective controller // Kp = control flag
                 else kp_xf = 1;
                 break;
 
@@ -432,6 +444,8 @@ void Controller::controlThread()
                 break;
 
             case 3: // Attitude [Implementation needs to be finished]
+                eul_d << control_vals;
+                // R_d from eul_d
                 R_d_custom << 0.9961947,  0.0000000,  0.0871557,
                         0.0000000,  1.0000000,  0.0000000,
                         -0.0871557,  0.0000000,  0.9961947; // 5 deg pitch
@@ -495,6 +509,9 @@ void Controller::controlThread()
         t = state_full_Eig(13); 
         
 
+        // =========== Controller Explanation =========== //
+        // https://www.youtube.com/watch?v=A27knigjGS4&list=PL_onPhFCkVQhuPiUxUW2lFHB39QsavEEA&index=46
+        // Derived from DOI's: 10.1002/asjc.567 (T. Lee) & 10.13140/RG.2.2.12876.92803/1 (M. Fernando)
 
 
         // =========== Rotation Matrix =========== //
@@ -597,8 +614,7 @@ void Controller::controlThread()
 int main()
 {
     Controller controller;
-    controller.Load(18080);
-
+    controller.Load(18080); // Run controller as a thread
 
     while(1)
     {

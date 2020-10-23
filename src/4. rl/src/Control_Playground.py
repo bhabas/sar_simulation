@@ -24,7 +24,7 @@ username = getpass.getuser()
 
 
 ## Initialize the environment
-env = CrazyflieEnv(port_self=18050, port_remote=18060,username =username)
+env = CrazyflieEnv(port_RL=18050, port_Ctrl=18060,username =username)
 print("Environment done")
 
 
@@ -104,11 +104,11 @@ while True:
     yaw,roll,pitch = R.as_euler('zxy',degrees=True)
 
     
-    # y_vec1[-1] = pitch
-    # y_vec2[-1] = pos[2]
-    # line1,line2 = live_plotter(x_vec,y_vec1,line1,y_vec2,line2)
-    # y_vec1 = np.append(y_vec1[1:],0.0)
-    # y_vec2 = np.append(y_vec2[1:],0.0)
+    y_vec1[-1] = pitch
+    y_vec2[-1] = pos[2]
+    line1,line2 = live_plotter(x_vec,y_vec1,line1,y_vec2,line2)
+    y_vec1 = np.append(y_vec1[1:],0.0)
+    y_vec2 = np.append(y_vec2[1:],0.0)
 
 
 

@@ -20,7 +20,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 
 class CrazyflieEnv:
-    def __init__(self, port_self, port_remote,username):
+    def __init__(self, port_RL, port_Ctrl,username):
         print("Init CrazyflieEnv")
 
         self.user = username   
@@ -33,11 +33,11 @@ class CrazyflieEnv:
         self.launch_sim() 
     
 
-        self.port_self = port_self
-        self.port_remote = port_remote
+        self.port_RL = port_RL # Reinforcment Learning Port
+        self.port_Ctrl = port_Ctrl # Controller Port
 
-        # Python socket guide: https://realpython.com/python-sockets/
-        self.fd = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # fd = file descriptor
+        # fd is local server (Change name?)
+        self.fd = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # DGRAM socket doesn't care about lost data
         
         # set receive buffer size to be 112 bytes aka 14 doubles (1 double = 8 bytes)
         self.fd.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 112) # setsockopt = set socket options
@@ -47,26 +47,29 @@ class CrazyflieEnv:
         self.fd.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 40)  
 
 
-        self.fd.bind( ("", self.port_self) ) # bind() associates the socket with specific network interface and port number
-        self.addr_remote_send = ("", self.port_remote)
-        # buf = struct.pack('5d', 12, 0, 0, 0, 0) # Represent 5 vals given as doubles in byte format # Why is this being sent?
-        # self.fd.sendto(buf, self.addr_remote_send) # Send these bytes to this address
+        self.addr_Ctrl = ("", self.port_Ctrl) # Controller Address
+        self.addr_RL = ("", self.port_RL) # RL Address
+        self.fd.bind(self.addr_RL) # bind() associates the socket with specific network interface and port number
+        
 
         self.queue_command = Queue(3)
         self.path_all = np.zeros(shape=(14,8000,1))
         self.state_current = np.zeros(shape=(14))
 
         self.isRunning = True
-        self.receiverThread = Thread(target=self.recvThread, args=())
+        self.receiverThread = Thread(target=self.recvThread, args=()) # Thread for recvThread function
         self.receiverThread.daemon = True
-        self.receiverThread.start()
+        self.receiverThread.start() # Start recieverThread for recvThread function
+
         self.senderThread = Thread(target=self.sendThread, args=())
         self.senderThread.daemon = True
 
         
+
+        # =========== Laser & Camera =========== #
         self.laser_msg = LaserScan # Laser Scan Message Variable
         self.laser_dist = 0
-        # Start Laser Scanner data reciever thread
+        # Start Laser data reciever thread
         self.laserThread = Thread(target = self.lsrThread, args=())
         self.laserThread.daemon=True
         self.laserThread.start()
@@ -80,6 +83,12 @@ class CrazyflieEnv:
         self.cameraThread.start()'''
 
         #self.senderThread.start()
+
+
+
+    # ============================
+    ##      Laser & Camera 
+    # ============================
     
     def cam_callback(self,data): # callback function for camera subscriber
         self.camera_msg = data
@@ -105,6 +114,9 @@ class CrazyflieEnv:
         rospy.spin()
 
 
+
+
+
     def close_sim(self):
         os.killpg(self.controller_p.pid, signal.SIGTERM)
         time.sleep(4)
@@ -124,7 +136,7 @@ class CrazyflieEnv:
     def enableSticky(self, enable): # enable=0 disable sticky, enable=1 enable sticky
         header = 10
         buf = struct.pack('5d', header, enable, 0, 0, 0)
-        self.fd.sendto(buf, self.addr_remote_send)
+        self.fd.sendto(buf, self.addr_Ctrl)
         time.sleep(0.001) # the sleep time after enableSticky(0) must be small s.t. the gazebo simulation is satble. Because the simulation after joint removed becomes unstable quickly.
     
     def getTime(self):
@@ -179,7 +191,7 @@ class CrazyflieEnv:
         print("Start sendThread")
         while self.isRunning:
             buf = self.queue_command.get(block=True)
-            len = self.fd.sendto(buf, self.addr_remote_send)
+            len = self.fd.sendto(buf, self.addr_Ctrl)
 
 
     def step(self, action): # Controller works to attain these values
@@ -202,10 +214,10 @@ class CrazyflieEnv:
         additional = action['ctrl_flag']
 
         buf = struct.pack('5d', header, x, y, z, additional) # Send command
-        self.fd.sendto(buf, self.addr_remote_send)
+        self.fd.sendto(buf, self.addr_Ctrl)
         time.sleep(0.1)
         buf = struct.pack('5d', 0,0,0,0,1) # Send blank command so controller doesn't keep redefining values
-        self.fd.sendto(buf, self.addr_remote_send)
+        self.fd.sendto(buf, self.addr_Ctrl)
 
         #self.queue_command.put(buf, block=False)
 
