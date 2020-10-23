@@ -78,9 +78,9 @@ def cmd_send():
     while True:
         cmd_dict = {0:'home',1:'pos',2:'vel',3:'att',4:'omega',5:'stop'}
         val = float(input("\nCmd Type (0:home,1:pos,2:vel,3:att,4:omega,5:stop): "))
-        cmd_str = cmd_dict[val]
+        action = cmd_dict[val]
 
-        if cmd_str=='home' or cmd_str == 'stop':
+        if action=='home' or action == 'stop':
             ctrl_vals = [0,0,0]
             ctrl_flag = 0
         else:
@@ -92,9 +92,7 @@ def cmd_send():
             except:
                 print("Error: x,y,z")
             ctrl_flag = float(input("\nController On/Off (1,0): "))
-
-        action = {'type':cmd_str, 'x':ctrl_vals[0], 'y':ctrl_vals[1], 'z':ctrl_vals[2], 'ctrl_flag':ctrl_flag}
-        env.step(action)
+        env.step(action,ctrl_vals,ctrl_flag)
      
 
 

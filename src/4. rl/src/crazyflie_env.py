@@ -194,28 +194,22 @@ class CrazyflieEnv:
             len = self.fd.sendto(buf, self.addr_Ctrl)
 
 
-    def step(self, action): # Controller works to attain these values
-        if action['type'] == 'home': # default desired values/traj.
+    def step(self,action,ctrl_vals,ctrl_flag=1): # Controller works to attain these values
+        if action =='home': # default desired values/traj.
             header = 0
-        elif action['type'] == 'pos':  # position (x,y,z) 
+        elif action =='pos':  # position (x,y,z) 
             header = 1
-        elif action['type'] == 'vel':  # velocity (vx,vy,vz)
+        elif action =='vel':  # velocity (vx,vy,vz)
             header = 2
-        elif action['type'] == 'att':  # attitude: orientation (heading/yaw, pitch, roll/bank)
+        elif action =='att':  # attitude: orientation (heading/yaw, pitch, roll/bank)
             header = 3
-        elif action['type'] == 'omega': # rotation rate (w_x:roll,w_y:pitch,w_z:yaw)
+        elif action =='omega': # rotation rate (w_x:roll,w_y:pitch,w_z:yaw)
             header = 4
-        elif action['type'] == 'stop': # cut motors
+        elif action =='stop': # cut motors
             header = 5
         else:
             print("no such action")
-
-        x = action['x']
-        y = action['y']
-        z = action['z']
-        additional = action['ctrl_flag']
-
-        cmd = struct.pack('5d', header, x, y, z, additional) # Send command
+        cmd = struct.pack('5d', header, ctrl_vals[0], ctrl_vals[1], ctrl_vals[2], ctrl_flag) # Send command
         self.fd.sendto(cmd, self.addr_Ctrl)
         time.sleep(0.1)
         cmd = struct.pack('5d',99,0,0,0,1) # Send blank command so controller doesn't keep redefining values

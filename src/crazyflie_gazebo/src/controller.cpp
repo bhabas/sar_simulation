@@ -286,7 +286,7 @@ void Controller::controlThread()
     
 
     // Default desired States
-    Vector3d x_d_Def(0,0,0.5); // Pos-desired (Default) [m] 
+    Vector3d x_d_Def(0,0,0.1); // Pos-desired (Default) [m] 
     Vector3d v_d_Def(0,0,0); // Velocity-desired (Default) [m/s]
     Vector3d a_d_Def(0,0,0); // Acceleration-desired (Default) [m/s]
     Vector3d b1_d_Def(1,0,0); // Desired global pointing direction (Default)

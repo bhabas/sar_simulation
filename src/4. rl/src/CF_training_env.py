@@ -22,7 +22,7 @@ os.system("clear")
 
 ## Initialize the environment
 username = getpass.getuser()
-env = CrazyflieEnv(port_self=18050, port_remote=18060,username = username)
+env = CrazyflieEnv(port_RL=18050, port_Ctrl=18060,username = username)
 print("Environment done")
 
 ## Initialize the user and data recording
@@ -93,9 +93,6 @@ agent = rlEMsys_PEPGAgent(mu,sigma,n_rollout=2)
 #agent = CMA_sym(n=2,gamma=0.9)
 
 
-# extra_time = 0.0 # 0.2   # **** Moved this to be with the other sim params above
-
-
 
 
 
@@ -129,7 +126,7 @@ for k_ep in range(ep_start,1000):
 
     done = False
 
-    # os.system("python3 start_training_reactive_sysPEPG > output.txt")
+
 
     print("=============================================")
     print("STARTING Episode # %d" %k_ep)
@@ -144,7 +141,6 @@ for k_ep in range(ep_start,1000):
 
     
     reward = np.zeros(shape=(2*agent.n_rollout,1))
-    #reward = np.zeros(shape=(agent.n_rollout,1))
     reward[:] = np.nan  # initialize reward to be NaN array, size n_rollout x 1
     theta_rl,epsilon_rl = agent.get_theta()
 
@@ -171,16 +167,12 @@ for k_ep in range(ep_start,1000):
 
         vz_ini = np.random.uniform(low=2.5, high=2.6)
         vx_ini = np.random.uniform(low=2.0, high=4.0)
-        #vx_ini = 0.0#np.random.normal(0.0,1.0)
-        vy_ini = 0.0#np.random.uniform(low=-1.5, high=1.5)
-        v_ini = [vz_ini,vx_ini,vy_ini]
+        vx_ini = 0.0
+        vy_ini = 0.0
+        v_ini = [vz_ini,vx_ini,vy_ini] # [m/s]
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
-        #v_mag = np.random.uniform(low=0.0,high=2.0)
-        #angle = np.random.uniform(low=0.0,high=2.0*pi)
 
-        #vx_ini = v_mag*cos(angle)
-        #vy_ini = v_mag*sin(angle)
 
         print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
         print("RREV: %.3f \t gain1: %.3f \t gain2: %.3f \t gain3: %.3f" %(theta_rl[0,k_run], theta_rl[1,k_run],theta_rl[2,k_run],theta_rl[1,k_run]))
@@ -193,14 +185,14 @@ for k_ep in range(ep_start,1000):
 
 
 
-        ## If spawn position is off then reset position again
-        x_pos,y_pos = state[2],state[3]
-        print("Spawn Pos: x=%.3f \t y=%.3f" %(x_pos,y_pos))
-        if abs(x_pos) > 0.1 or abs(y_pos) > 0.1:
-            state = env.reset()
+        # ## If spawn position is off then reset position again
+        # x_pos,y_pos = state[2],state[3]
+        # print("Spawn Pos: x=%.3f \t y=%.3f" %(x_pos,y_pos))
+        # if abs(x_pos) > 0.1 or abs(y_pos) > 0.1:
+        #     state = env.reset()
 
 
-        action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
+        action = {'type':'pos', 'x':0.0, 'y':0.0, 'z':0.23, 'ctrl_flag':1} # Should be z=0.03 but needs integral controller for accuracy
         env.step(action)
 
         t_step = 0
@@ -221,10 +213,9 @@ for k_ep in range(ep_start,1000):
         # ============================
         ##          Rollout 
         # ============================
-        action = {'type':'vel', 'x':vx_ini, 'y':vy_ini, 'z':vz_ini, 'additional':0.0}
-        #action = {'type':'pos', 'x':0.0, 'y':0.0, 'z':1.0, 'additional':0.0}
-
-        env.step(action=action)
+        action = {'type':'vel', 'x':vx_ini, 'y':vy_ini, 'z':vz_ini, 'ctrl_flag':1}
+        env.step(action)
+        
         
         RREV_trigger = theta_rl[0, k_run]
 
