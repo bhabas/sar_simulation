@@ -57,11 +57,11 @@ class CrazyflieEnv:
         self.state_current = np.zeros(shape=(14))
 
         self.isRunning = True
-        self.receiverThread = Thread(target=self.recvThread, args=()) # Thread for recvThread function
+        self.receiverThread = Thread(target=self.recvThread_Gazebo, args=()) # Thread for recvThread function
         self.receiverThread.daemon = True
         self.receiverThread.start() # Start recieverThread for recvThread function
 
-        self.senderThread = Thread(target=self.sendThread, args=())
+        self.senderThread = Thread(target=self.sendThread_Ctrl, args=())
         self.senderThread.daemon = True
 
         
@@ -135,8 +135,8 @@ class CrazyflieEnv:
 
     def enableSticky(self, enable): # enable=0 disable sticky, enable=1 enable sticky
         header = 10
-        buf = struct.pack('5d', header, enable, 0, 0, 0)
-        self.fd.sendto(buf, self.addr_Ctrl)
+        msg = struct.pack('5d', header, enable, 0, 0, 0)
+        self.fd.sendto(msg, self.addr_Ctrl)
         time.sleep(0.001) # the sleep time after enableSticky(0) must be small s.t. the gazebo simulation is satble. Because the simulation after joint removed becomes unstable quickly.
     
     def getTime(self):
@@ -170,25 +170,23 @@ class CrazyflieEnv:
         os.system("rosservice call gazebo/reset_world")
         self.enableSticky(0)
         time.sleep(0.1)
-
         return self.state_current
     
-    def recvThread(self): # Recieve position data from Gazebo?
-        print("Start recvThread")
+    def recvThread_Gazebo(self): # Recieve position data from Gazebo?
+        print("Start recvThread from Gazebo")
         while self.isRunning:
- 
             try:
-                data, addr_remote = self.fd.recvfrom(112)     # 1 double = 8 bytes
-                px,py,pz,qw,qx,qy,qz,vx,vy,vz,p,q,r,sim_time = struct.unpack('14d',data)
-                self.state_current = np.array([sim_time, px,py,pz,qw,qx,qy,qz,vx,vy,vz,p,q,r])
+                data, addr_remote = self.fd.recvfrom(112) # 1 double = 8 bytes
+                x,y,z,qw,qx,qy,qz,vx,vy,vz,omega_x,omega_y,omega_z,sim_time = struct.unpack('14d',data) # unpack 112 byte msg into 14 doubles
+                self.state_current = np.array([sim_time, x,y,z,qw,qx,qy,qz,vx,vy,vz,omega_x,omega_y,omega_z])
                 self.timeout = False
             
             except timeout:
                 self.timeout = True
             
             
-    def sendThread(self):
-        print("Start sendThread")
+    def sendThread_Ctrl(self):
+        print("Start sendThread to Controller")
         while self.isRunning:
             buf = self.queue_command.get(block=True)
             len = self.fd.sendto(buf, self.addr_Ctrl)

@@ -12,40 +12,44 @@ using namespace std;
 void Controller::Load(int port_number_gazebo)
 {   cout << setprecision(4);
     cout << fixed;
+    isRunning = true;
 
-    // =========== Gazebo Server/Client? Connection =========== //
-    fd_gazebo_ = socket(AF_INET, SOCK_DGRAM, 0);
-    fd_gazebo_SNDBUF_ = 16;         // 16 bytes is 4 float
-    fd_gazebo_RCVBUF_ = 112;        // 112 bytes is 14 double
+    // =========== Gazebo Connection =========== //
+    socket_Gazebo = socket(AF_INET, SOCK_DGRAM, 0);
+    fd_gazebo_SNDBUF = 16;         // Motorspeeds to Gazebo 4 doubles (16 Bytes)
+    fd_gazebo_RCVBUF = 112;        // State info from Gazebo 14 doubles (112 Bytes)
 
-    if (setsockopt(fd_gazebo_, SOL_SOCKET, SO_SNDBUF, &fd_gazebo_SNDBUF_, sizeof(fd_gazebo_SNDBUF_))<0)
-        cout<<"fd_gazebo_ setting SNDBUF failed"<<endl;
+    if (setsockopt(socket_Gazebo, SOL_SOCKET, SO_SNDBUF, &fd_gazebo_SNDBUF, sizeof(fd_gazebo_SNDBUF))<0)
+        cout<<"socket_Gazebo setting SNDBUF failed"<<endl;
 
-    if (setsockopt(fd_gazebo_, SOL_SOCKET, SO_RCVBUF, &fd_gazebo_RCVBUF_, sizeof(fd_gazebo_RCVBUF_))<0)
-        cout<<"fd_gazebo_ setting RCVBUF failed"<<endl;
+    if (setsockopt(socket_Gazebo, SOL_SOCKET, SO_RCVBUF, &fd_gazebo_RCVBUF, sizeof(fd_gazebo_RCVBUF))<0)
+        cout<<"socket_Gazebo setting RCVBUF failed"<<endl;
 
     port_number_gazebo_ = port_number_gazebo;
 
-    memset(&sockaddr_local_gazebo_, 0, sizeof(sockaddr_local_gazebo_));
-    sockaddr_local_gazebo_.sin_family = AF_INET;
-    sockaddr_local_gazebo_.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("127.0.0.1");
-    sockaddr_local_gazebo_.sin_port = htons(18070);
-    
-    if (bind(fd_gazebo_, (struct sockaddr*)&sockaddr_local_gazebo_, sizeof(sockaddr_local_gazebo_))<0)
+    memset(&sockaddr_local_Gazebo, 0, sizeof(sockaddr_local_Gazebo));
+    sockaddr_local_Gazebo.sin_family = AF_INET;
+    sockaddr_local_Gazebo.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("127.0.0.1");
+    sockaddr_local_Gazebo.sin_port = htons(18070);
+
+    // Check for successful binding of socket to port
+    if ( bind(socket_Gazebo, (struct sockaddr*)&sockaddr_local_Gazebo, sizeof(sockaddr_local_Gazebo)) < 0)
         cout<<"Socket binding to Gazebo failed"<<endl;
     else
         cout<<"Socket binding to Gazebo succeeded"<<endl; 
 
-    memset(&sockaddr_remote_gazebo_, 0, sizeof(sockaddr_remote_gazebo_));
-    sockaddr_remote_gazebo_.sin_family = AF_INET;
-    sockaddr_remote_gazebo_.sin_addr.s_addr = htonl(INADDR_ANY);
-    sockaddr_remote_gazebo_.sin_port = htons(port_number_gazebo_);
-    sockaddr_remote_gazebo_len_ = sizeof(sockaddr_remote_gazebo_);
+    memset(&sockaddr_remote_Gazebo, 0, sizeof(sockaddr_remote_Gazebo));
+    sockaddr_remote_Gazebo.sin_family = AF_INET;
+    sockaddr_remote_Gazebo.sin_addr.s_addr = htonl(INADDR_ANY);
+    sockaddr_remote_Gazebo.sin_port = htons(port_number_gazebo_);
+    sockaddr_remote_gazebo_len = sizeof(sockaddr_remote_Gazebo);
     
-    float buf[4] = {100.0,100.0,100.0,100.0};
+    // Motorspeed send test
+    float msg[4] = {100.0,100.0,100.0,100.0};
     int len = 0;
     for(int k=0; k<2; k++)
-        len = sendto(fd_gazebo_, buf, sizeof(buf),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sizeof(sockaddr_remote_gazebo_));
+        // To Gazebo socket, send msg of len(msg)
+        len = sendto(socket_Gazebo, msg, sizeof(msg),0, (struct sockaddr*)&sockaddr_remote_Gazebo, sizeof(sockaddr_remote_Gazebo));
     if(len>0)
         cout<<"Send initial motor speed ["<<len<<" bytes] to Gazebo Succeeded! \nAvoiding threads mutual locking"<<endl;
     else
@@ -54,31 +58,35 @@ void Controller::Load(int port_number_gazebo)
 
 
 
-    // =========== Python RL Server/Client? Connection =========== //
-    fd_rl_ = socket(AF_INET, SOCK_DGRAM, 0);
-    fd_rl_SNDBUF_ = 112;        // 112 bytes is 14 double
-    fd_rl_RCVBUF_ = 40;         // 40 bytes is 5 double
-    if (setsockopt(fd_rl_, SOL_SOCKET, SO_SNDBUF, &fd_rl_SNDBUF_, sizeof(fd_rl_SNDBUF_))<0)
-        cout<<"fd_rl_ setting SNDBUF failed"<<endl;
-    if (setsockopt(fd_rl_, SOL_SOCKET, SO_RCVBUF, &fd_rl_RCVBUF_, sizeof(fd_rl_RCVBUF_))<0)
-        cout<<"fd_rl_ setting RCVBUF failed"<<endl;
-    memset(&sockaddr_local_rl_, 0, sizeof(sockaddr_local_rl_));
-    sockaddr_local_rl_.sin_family = AF_INET;
-    sockaddr_local_rl_.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("127.0.0.1");
-    sockaddr_local_rl_.sin_port = htons(18060);
-    if (bind(fd_rl_, (struct sockaddr*)&sockaddr_local_rl_, sizeof(sockaddr_local_rl_))<0)
+    // =========== Python RL Connection =========== //
+    fd_RL = socket(AF_INET, SOCK_DGRAM, 0);
+    fd_RL_SNDBUF = 112;        // 112 bytes is 14 double
+    fd_RL_RCVBUF = 40;         // 40 bytes is 5 double
+
+    if (setsockopt(fd_RL, SOL_SOCKET, SO_SNDBUF, &fd_RL_SNDBUF, sizeof(fd_RL_SNDBUF))<0)
+        cout<<"fd_RL setting SNDBUF failed"<<endl;
+    if (setsockopt(fd_RL, SOL_SOCKET, SO_RCVBUF, &fd_RL_RCVBUF, sizeof(fd_RL_RCVBUF))<0)
+        cout<<"fd_RL setting RCVBUF failed"<<endl;
+
+    memset(&sockaddr_local_RL, 0, sizeof(sockaddr_local_RL));
+    sockaddr_local_RL.sin_family = AF_INET; // IPv4 Format
+    sockaddr_local_RL.sin_port = htons(18060); // RL Port number
+    sockaddr_local_RL.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("127.0.0.1");
+    
+
+    if (bind(fd_RL, (struct sockaddr*)&sockaddr_local_RL, sizeof(sockaddr_local_RL))<0)
         cout<<"Socket binding to crazyflie_env.py failed"<<endl;
     else
         cout<<"Socket binding to crazyflie_env.py succeeded"<<endl;
     
-    isRunning_ = true;
-    receiverThread_gazebo_ = std::thread(&Controller::recvThread_gazebo, this);
-    //senderThread_gazebo_ = std::thread(&Controller::sendThread_gazebo, this);
-    receiverThread_rl_ = std::thread(&Controller::recvThread_rl, this);
-    controllerThread_ = std::thread(&Controller::controlThread, this);
+    
+    receiverThread_gazebo = std::thread(&Controller::recvThread_gazebo, this);
+    //senderThread_gazebo = std::thread(&Controller::sendThread_gazebo, this);
+    receiverThread_RL = std::thread(&Controller::recvThread_RL, this);
+    controllerThread = std::thread(&Controller::controlThread, this);
 
-    queue_states_ = moodycamel::BlockingReaderWriterQueue<StateFull>(5);
-    queue_motorspeed_ = moodycamel::BlockingReaderWriterQueue<MotorCommand>(5);
+    queue_states = moodycamel::BlockingReaderWriterQueue<StateFull>(5);
+    queue_motorspeed = moodycamel::BlockingReaderWriterQueue<MotorCommand>(5);
 }
 
 
@@ -101,10 +109,10 @@ void Controller::recvThread_gazebo()
     double state_full[14];
     StateFull state_full_structure;
 
-    while(isRunning_)
+    while(isRunning)
     {
         //cout<<"[recvThread_gazebo] Receiving crazyflie states from Gazebo"<<endl;
-        int len = recvfrom(fd_gazebo_, state_full, sizeof(state_full),0, (struct sockaddr*)&sockaddr_remote_gazebo_, &sockaddr_remote_gazebo_len_);
+        int len = recvfrom(socket_Gazebo, state_full, sizeof(state_full),0, (struct sockaddr*)&sockaddr_remote_Gazebo, &sockaddr_remote_gazebo_len);
 
         /*if(len>0)
         {
@@ -115,8 +123,8 @@ void Controller::recvThread_gazebo()
         }*/
 
         memcpy(state_full_structure.data, state_full, sizeof(state_full));
-        queue_states_.enqueue(state_full_structure);
-        sendto(fd_rl_, state_full, sizeof(state_full),0, (struct sockaddr*)&sockaddr_remote_rl_, sockaddr_remote_rl_len_);
+        queue_states.enqueue(state_full_structure);
+        sendto(fd_RL, state_full, sizeof(state_full),0, (struct sockaddr*)&sockaddr_remote_rl, sockaddr_remote_rl_len);
     }
 }
 
@@ -126,17 +134,17 @@ void Controller::sendThread_gazebo()
     float motorspeed[4];
     MotorCommand motorspeed_structure;
 
-    while(isRunning_)
+    while(isRunning)
     {
-        queue_motorspeed_.wait_dequeue(motorspeed_structure);
+        queue_motorspeed.wait_dequeue(motorspeed_structure);
         memcpy(motorspeed, motorspeed_structure.data, sizeof(motorspeed));
 
-        //cout<<"[recvThread_rl] sending motor speed to Gazebo"<<endl;
-        int len=sendto(fd_gazebo_, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
+        //cout<<"[recvThread_RL] sending motor speed to Gazebo"<<endl;
+        int len=sendto(socket_Gazebo, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_Gazebo, sockaddr_remote_gazebo_len);
         if(len>0)
-            cout<<"[recvThread_rl] sent motor speed ["<<motorspeed[0]<<", "<<motorspeed[1]<<", "<<motorspeed[2]<<", "<<motorspeed[3]<<"]"<<endl;
+            cout<<"[recvThread_RL] sent motor speed ["<<motorspeed[0]<<", "<<motorspeed[1]<<", "<<motorspeed[2]<<", "<<motorspeed[3]<<"]"<<endl;
         else
-            cout<<"[recvThread_rl] sending motor speed to Gazebo FAILED!"<<endl;
+            cout<<"[recvThread_RL] sending motor speed to Gazebo FAILED!"<<endl;
     }
     
 }
@@ -144,28 +152,14 @@ void Controller::sendThread_gazebo()
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void Controller::recvThread_rl()
+void Controller::recvThread_RL()
 {
     float motorspeed_fake[4] = {0,0,0,0};
 
-    while(isRunning_)
+    while(isRunning)
     {
-        //cout<<"[recvThread_rl] Receiving command from RL"<<endl;
-        int len = recvfrom(fd_rl_, control_cmd_recvd, sizeof(control_cmd_recvd),0, (struct sockaddr*)&sockaddr_remote_rl_, &sockaddr_remote_rl_len_);
+        //cout<<"[recvThread_RL] Receiving command from RL"<<endl;
+        int len = recvfrom(fd_RL, control_cmd_recvd, sizeof(control_cmd_recvd),0, (struct sockaddr*)&sockaddr_remote_rl, &sockaddr_remote_rl_len);
 
 
         if(control_cmd_recvd[0]>10) // If header is 11 then enable sticky
@@ -173,7 +167,7 @@ void Controller::recvThread_rl()
             motorspeed_fake[0] = -control_cmd_recvd[0];
             motorspeed_fake[1] = control_cmd_recvd[1];
             //cout<<"Send sticky command command: "<< motorspeed_fake[0]<<", "<<motorspeed_fake[1]<<endl;
-            sendto(fd_gazebo_, motorspeed_fake, sizeof(motorspeed_fake),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
+            sendto(socket_Gazebo, motorspeed_fake, sizeof(motorspeed_fake),0, (struct sockaddr*)&sockaddr_remote_Gazebo, sockaddr_remote_gazebo_len);
 
             /*if (control_cmd_recvd[1]<0.5)     // reset_world signal
             {
@@ -315,10 +309,6 @@ void Controller::controlThread()
 
     
 
-    Matrix3d J; // Rotational Inertia of CF
-    J<< 1.65717e-05, 0, 0,
-        0, 1.66556e-05, 0,
-        0, 0, 2.92617e-05;
 
     // Matrix3d J_temp;
     // J_temp << 16.5717,0.8308,0.7183,
@@ -327,8 +317,6 @@ void Controller::controlThread()
     // J = J_temp*1e-6;
 
 
-    Matrix4d Gamma; // Thrust-Moment control vector conversion matrix
-    Matrix4d Gamma_I;
 
 
     Vector3d e3(0,0,1); // Global z-axis
@@ -371,7 +359,9 @@ void Controller::controlThread()
     double kd_Rf = 1; // Rot. derivative Gain Flag
 
 
-
+    double yaw; // Z-axis [rad/s]
+    double roll; // X-axis [rad/s]
+    double pitch; // Y-axis [rad/s]
 
 
 
@@ -381,29 +371,31 @@ void Controller::controlThread()
     double t = 0; // Time from Gazebo [s]
     unsigned int t_step = 0; // t_step counter
 
-    double yaw; // Z-axis [rad/s]
-    double roll; // X-axis [rad/s]
-    double pitch; // Y-axis [rad/s]
-    
 
 
+    // System Constants
     double d = 0.040; // Distance from COM to prop [m]
     double d_p = d*sin(M_PI/4);
 
     double kf = 2.21e-8; // Thrust constant [N/(rad/s)^2]
     double c_Tf = 0.00612; // Moment Constant [Nm/N]
 
+    Matrix3d J; // Rotational Inertia of CF
+    J<< 1.65717e-05, 0, 0,
+        0, 1.66556e-05, 0,
+        0, 0, 2.92617e-05;
 
+    Matrix4d Gamma; // Thrust-Moment control vector conversion matrix
     Gamma << 1,     1,     1,     1, // Motor thrusts = Gamma*Force/Moment vec
              d_p,   d_p,  -d_p,  -d_p, 
             -d_p,   d_p,   d_p,  -d_p, 
-             c_Tf,  -c_Tf, c_Tf,  -c_Tf;
-    Gamma_I = Gamma.inverse(); // Calc here once to reduce calc load
- 
+            c_Tf,  -c_Tf, c_Tf,  -c_Tf;
+    Matrix4d Gamma_I = Gamma.inverse(); // Calc here once to reduce calc load
+
+
 
   
     
-
 
     double att_control_flag = 0; // Controls implementation
     double motorstop_flag = 1; // Controls stop implementation
@@ -420,7 +412,7 @@ void Controller::controlThread()
     a_d << a_d_Def;
     b1_d << b1_d_Def;
 
-    while(isRunning_)
+    while(isRunning)
     {
 
         
@@ -507,7 +499,7 @@ void Controller::controlThread()
         // =========== State Definitions =========== //
 
         // Define state_full from recieved Gazebo states and break into corresponding vectors
-        queue_states_.wait_dequeue(state_full_structure);
+        queue_states.wait_dequeue(state_full_structure);
         // memcpy(state_full, state_full_structure.data, sizeof(state_full));
 
         Map<Matrix<double,1,14>> state_full_Eig(state_full_structure.data); // Convert threaded array to Eigen vector     
@@ -619,8 +611,8 @@ void Controller::controlThread()
 
      
         Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Eig.cast <float> (); // Converts motorspeeds to C++ array for data transmission
-        sendto(fd_gazebo_, motorspeed, sizeof(motorspeed),0, // Send motorspeeds to Gazebo -> gazebo_motor_model?
-                (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_); 
+        sendto(socket_Gazebo, motorspeed, sizeof(motorspeed),0, // Send motorspeeds to Gazebo -> gazebo_motor_model?
+                (struct sockaddr*)&sockaddr_remote_Gazebo, sockaddr_remote_gazebo_len); 
 
         t_step++;
     }
