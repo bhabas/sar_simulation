@@ -23,43 +23,44 @@ class Controller
         //Controller();
         ~Controller()
         {
-            isRunning_ = false;
-            receiverThread_gazebo_.join();
-            senderThread_gazebo_.join();
-            receiverThread_rl_.join();
-            controllerThread_.join();
-            close(fd_gazebo_);
+            isRunning = false;
+            receiverThread_gazebo.join();
+            senderThread_gazebo.join();
+            receiverThread_RL.join();
+            controllerThread.join();
+            close(socket_Gazebo);
         }
 
         void Load(int gazebo_port_number);
         void recvThread_gazebo();
         void sendThread_gazebo();
-        void recvThread_rl();
+        void recvThread_RL();
         void controlThread();
 
     private:
-        int fd_gazebo_;
-        int fd_gazebo_SNDBUF_;
-        int fd_gazebo_RCVBUF_;
+        int socket_Gazebo;
+        int fd_gazebo_SNDBUF;
+        int fd_gazebo_RCVBUF;
         int port_number_gazebo_;
-        struct sockaddr_in sockaddr_local_gazebo_;
-        struct sockaddr_in sockaddr_remote_gazebo_;
-        socklen_t sockaddr_remote_gazebo_len_;
-        int fd_rl_;
-        int fd_rl_SNDBUF_;
-        int fd_rl_RCVBUF_;
-        struct sockaddr_in sockaddr_local_rl_;
-        struct sockaddr_in sockaddr_remote_rl_;
-        socklen_t sockaddr_remote_rl_len_;
+        struct sockaddr_in sockaddr_local_Gazebo;
+        struct sockaddr_in sockaddr_remote_Gazebo;
+        socklen_t sockaddr_remote_gazebo_len;
+        
+        int fd_RL;
+        int fd_RL_SNDBUF;
+        int fd_RL_RCVBUF;
+        struct sockaddr_in sockaddr_local_RL;
+        struct sockaddr_in sockaddr_remote_rl;
+        socklen_t sockaddr_remote_rl_len;
 
-        bool isRunning_;
-        std::thread receiverThread_gazebo_;
-        std::thread senderThread_gazebo_;
-        std::thread receiverThread_rl_;
-        std::thread controllerThread_;
+        bool isRunning;
+        std::thread receiverThread_gazebo;
+        std::thread senderThread_gazebo;
+        std::thread receiverThread_RL;
+        std::thread controllerThread;
 
-        moodycamel::BlockingReaderWriterQueue<StateFull> queue_states_;
-        moodycamel::BlockingReaderWriterQueue<MotorCommand> queue_motorspeed_;
+        moodycamel::BlockingReaderWriterQueue<StateFull> queue_states;
+        moodycamel::BlockingReaderWriterQueue<MotorCommand> queue_motorspeed;
         
         double control_cmd_recvd[5] = {555,0,0,0.0,0}; // Initial command, not sure but it's here
 };
