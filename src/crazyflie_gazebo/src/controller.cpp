@@ -269,8 +269,8 @@ void Controller::controlThread()
     double state_full[14];
     
 
-    int type = 5; // Command type {1:Pos, 2:Vel, 3:Att, 4:Omega, 5:Stop}
-    int ctrl_flag; // On/Off switch for controller
+    int type; // Command type {1:Pos, 2:Vel, 3:Att, 4:Omega, 5:Stop}
+    double ctrl_flag; // On/Off switch for controller
     double control_cmd[5];
     Vector3d control_vals;
     
@@ -286,7 +286,7 @@ void Controller::controlThread()
     
 
     // Default desired States
-    Vector3d x_d_Def(0,0,0.23); // Pos-desired (Default) [m] 
+    Vector3d x_d_Def(0,0,1.2); // Pos-desired (Default) [m] 
     Vector3d v_d_Def(0,0,0); // Velocity-desired (Default) [m/s]
     Vector3d a_d_Def(0,0,0); // Acceleration-desired (Default) [m/s]
     Vector3d b1_d_Def(1,0,0); // Desired global pointing direction (Default)
@@ -359,9 +359,10 @@ void Controller::controlThread()
 
     
     // Controller Values
+    Vector4d Ctrl_Gains; 
     double kp_x = 0.1;   // Pos. Gain
     double kd_x = 0.08;  // Pos. derivative Gain
-    double kp_R = 0.08;  // Rot. Gain
+    double kp_R = 0.05;  // Rot. Gain // Keep checking rotational speed
     double kd_R = 0.005; // Rot. derivative Gain
 
     // Controller Flags
@@ -369,6 +370,8 @@ void Controller::controlThread()
     double kd_xf = 1; // Pos. derivative Gain Flag
     double kp_Rf = 1; // Rot. Gain Flag
     double kd_Rf = 1; // Rot. derivative Gain Flag
+
+    
 
 
 
@@ -480,10 +483,6 @@ void Controller::controlThread()
                 eul_d << control_vals;
                 kp_Rf = ctrl_flag;
 
-                // R_d from eul_d
-                R_d_custom << 0.9961947,  0.0000000,  0.0871557,
-                        0.0000000,  1.0000000,  0.0000000,
-                        -0.0871557,  0.0000000,  0.9961947; // 5 deg pitch
                 att_control_flag = 1;
                 break;
 
@@ -494,6 +493,14 @@ void Controller::controlThread()
 
             case 5: // Stop Motors
                 motorstop_flag = ctrl_flag;
+                break;
+
+            case 6: // Reassign new control gains
+                Ctrl_Gains << control_vals,ctrl_flag;
+                kp_x = Ctrl_Gains(0);
+                kd_x = Ctrl_Gains(1);
+                kp_R = Ctrl_Gains(2);
+                kd_R = Ctrl_Gains(3);
                 break;
         }
 
@@ -533,7 +540,7 @@ void Controller::controlThread()
         yaw = atan2(R(1,0), R(0,0)); 
         roll = atan2(R(2,1), R(2,2)); 
         pitch = atan2(-R(2,0), sqrt(R(2,1)*R(2,1)+R(2,2)*R(2,2)));
-        
+    
         b3 = R*e3; // body vertical axis in terms of global axes
 
 

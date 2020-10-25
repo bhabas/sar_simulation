@@ -207,11 +207,13 @@ class CrazyflieEnv:
             header = 4
         elif action =='stop': # cut motors
             header = 5
+        elif action =='gains': # assign new control gains
+            header = 6
         else:
             print("no such action")
         cmd = struct.pack('5d', header, ctrl_vals[0], ctrl_vals[1], ctrl_vals[2], ctrl_flag) # Send command
         self.fd.sendto(cmd, self.addr_Ctrl)
-        time.sleep(0.1)
+        time.sleep(0.1) # continually sends message during this time to ensure connection
         cmd = struct.pack('5d',99,0,0,0,1) # Send blank command so controller doesn't keep redefining values
         self.fd.sendto(cmd, self.addr_Ctrl)
 

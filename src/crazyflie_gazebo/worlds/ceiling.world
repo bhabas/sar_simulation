@@ -10,9 +10,9 @@
       <uri>model://ground_plane</uri>
     </include>
     <!-- A ceiling plane -->
-    <include>
+    <!-- <include>
       <uri>model://ceiling_plane</uri>
-    </include>
+    </include> -->
 
     <!-- Default camera pose -->
     <gui>
@@ -58,7 +58,7 @@
       
       <max_step_size>0.001</max_step_size>
       <real_time_factor>0</real_time_factor>
-      <real_time_update_rate>500</real_time_update_rate>
+      <real_time_update_rate>0</real_time_update_rate>
 
       <magnetic_field>6.0e-6 2.3e-5 -4.2e-5</magnetic_field>
     </physics>

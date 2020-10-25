@@ -76,13 +76,23 @@ def live_plotter(x_vec,y1_data,line1,y2_data,line2):
 
 def cmd_send():
     while True:
-        cmd_dict = {0:'home',1:'pos',2:'vel',3:'att',4:'omega',5:'stop'}
-        val = float(input("\nCmd Type (0:home,1:pos,2:vel,3:att,4:omega,5:stop): "))
+        cmd_dict = {0:'home',1:'pos',2:'vel',3:'att',4:'omega',5:'stop',6:'gains'}
+        val = float(input("\nCmd Type (0:home,1:pos,2:vel,3:att,4:omega,5:stop,6:gains): "))
         action = cmd_dict[val]
 
         if action=='home' or action == 'stop':
             ctrl_vals = [0,0,0]
             ctrl_flag = 0
+
+        elif action=='gains':
+            try:
+                vals = input("\nControl Gains (kp_x,kd_x,kp_R,kd_R): ")
+                vals = [float(i) for i in vals.split(',')]
+                ctrl_vals = vals[0:3]
+                ctrl_flag = vals[3]
+            except:
+                print("Error: ")
+
         else:
             try:
                 ctrl_vals = input("\nControl Vals (x,y,z): ")
@@ -92,10 +102,13 @@ def cmd_send():
             except:
                 print("Error: x,y,z")
             ctrl_flag = float(input("\nController On/Off (1,0): "))
+
+        # print(ctrl_vals , " " , ctrl_flag)
         env.step(action,ctrl_vals,ctrl_flag)
      
 
-
+# rosservice call /gazebo/delete_model '{model_name: crazyflie_landing_gears}'
+# rosrun gazebo_ros spawn_model -file /home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo/models/crazyflie_landing_gears/crazyflie_landing_gears.sdf -sdf -model crazyflie_landing_gears
 
 input_thread = threading.Thread(target=cmd_send,args=())
 input_thread.start()
