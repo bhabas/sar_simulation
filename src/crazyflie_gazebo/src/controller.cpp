@@ -253,6 +253,10 @@ Matrix3d hat(Vector3d a) // Input a hat vector and output corresponding skew-sym
 
 void Controller::controlThread()
 {
+
+    // =========== Controller Explanation =========== //
+    // https://www.youtube.com/watch?v=A27knigjGS4&list=PL_onPhFCkVQhuPiUxUW2lFHB39QsavEEA&index=46
+    // Derived from DOI's: 10.1002/asjc.567 (T. Lee) & 10.13140/RG.2.2.12876.92803/1 (M. Fernando)
     typedef Matrix<double, 3, 3, RowMajor> RowMatrix3d; 
 
     
@@ -280,11 +284,11 @@ void Controller::controlThread()
     
 
     // Default desired States
-    Vector3d x_d_Def(0,0,1.2); // Pos-desired (Default) [m] 
+    Vector3d x_d_Def(0,0,1.0); // Pos-desired (Default) [m] 
     Vector3d v_d_Def(0,0,0); // Velocity-desired (Default) [m/s]
     Vector3d a_d_Def(0,0,0); // Acceleration-desired (Default) [m/s]
     Vector3d b1_d_Def(1,0,0); // Desired global pointing direction (Default)
-
+    Vector3d omega_d_Def(0,0,0);
     
 
     // State Error and Prescriptions
@@ -327,7 +331,9 @@ void Controller::controlThread()
 
 
     Vector3d F_thrust_ideal; // Ideal thrust vector to minimize error   
+    Vector3d Gyro_dyn; // Gyroscopic dynamics of system [Nm]
     Vector3d M; // Moment control vector [Nm]
+    
     
     Vector4d FM; // Thrust-Moment control vector (4x1)
     Vector4d f; // Propeller thrusts [N]
@@ -335,8 +341,8 @@ void Controller::controlThread()
 
     
 
-    Vector4d motorspeed_square; // Squared motorspeeds [rad/s]
-    Vector4d motorspeed_Eig; // Motorspeeds [rad/s]
+    Vector4d motorspeed_Vec_d; // Desired motorspeeds [rad/s]
+    Vector4d motorspeed_Vec; // Motorspeeds [rad/s]
 
 
     Vector3d b3; // Body-fixed vertical axis
@@ -352,6 +358,10 @@ void Controller::controlThread()
     double kd_x = 0.08;  // Pos. derivative Gain
     double kp_R = 0.05;  // Rot. Gain // Keep checking rotational speed
     double kd_R = 0.005; // Rot. derivative Gain
+
+    double kd_R_flip = 0.0005; // Flip 
+    // kd_R is great for stabilization but for flip manuevers it's too sensitive and 
+    // saturates the motors causing instability during the rotation
 
     // Controller Flags
     double kp_xf = 1; // Pos. Gain Flag
@@ -399,9 +409,11 @@ void Controller::controlThread()
 
   
     
-
-    double att_control_flag = 0; // Controls implementation
-    double motorstop_flag = 1; // Controls stop implementation
+    // 1 is on | 0 is off by default
+    // double att_control_flag = 0; // Controls implementation
+    double flip_flag = 1; // Controls thrust implementation
+    double motorstop_flag = 0; // Controls stop implementation
+    // double flip_flag = 1; // Controls gyroscopic dynamics in moment equation
 
 
 
@@ -451,14 +463,19 @@ void Controller::controlThread()
 
         switch(type){ // Define Desired Values
 
-            case 0: // Return to home
+            case 0: // Reset all changes and return to home
                 x_d << x_d_Def;
                 v_d << v_d_Def;
                 a_d << a_d_Def;
                 b1_d << b1_d_Def;
 
+                omega_d << omega_d_Def;
+                kd_R = 0.005; 
+
                 kp_xf=1,kd_xf=1,kp_Rf=1,kd_Rf=1; // Reset control flags
-                motorstop_flag=1;
+                motorstop_flag=0;
+                flip_flag=1;
+                // att_control_flag=0;
                 break;
 
             case 1: // Position
@@ -475,12 +492,23 @@ void Controller::controlThread()
                 eul_d << control_vals;
                 kp_Rf = ctrl_flag;
 
-                att_control_flag = 1;
+                // att_control_flag = ctrl_flag;
                 break;
 
-            case 4: // Ang. Velocity
+            case 4: // Exectute Flip
+                kd_R = kd_R_flip; // Change to flip gain
+
                 omega_d << control_vals;
-                kd_Rf = ctrl_flag;
+                kd_Rf = ctrl_flag; // Turn control on
+                kp_xf = 0; // Turn off other controllers
+                kd_xf = 0;
+                kp_Rf = 0;
+                
+                flip_flag = 0; 
+                // Turn gyroscopic dynamics off [maybe not needed?]
+                // Turn thrust control off
+                // Change e_omega calc
+
                 break;
 
             case 5: // Stop Motors
@@ -496,13 +524,6 @@ void Controller::controlThread()
                 break;
         }
 
-
-        
-        
-        
-
-
-
         // =========== State Definitions =========== //
 
         // Define state_full from recieved Gazebo states and break into corresponding vectors
@@ -517,9 +538,7 @@ void Controller::controlThread()
         t = state_full_Eig(13); 
         
 
-        // =========== Controller Explanation =========== //
-        // https://www.youtube.com/watch?v=A27knigjGS4&list=PL_onPhFCkVQhuPiUxUW2lFHB39QsavEEA&index=46
-        // Derived from DOI's: 10.1002/asjc.567 (T. Lee) & 10.13140/RG.2.2.12876.92803/1 (M. Fernando)
+
 
 
         // =========== Rotation Matrix =========== //
@@ -550,53 +569,66 @@ void Controller::controlThread()
         R_d << b2_d.cross(b3_d).normalized(),b2_d,b3_d; // Desired rotational axis
                                                         // b2_d x b3_d != b1_d (look at derivation)
 
-        if (att_control_flag == 1){ // [Attitude control will be implemented here]
-            R_d = R_d_custom;
-        }
-        e_R = 0.5*dehat(R_d.transpose()*R - R.transpose()*R_d); // Rotational error
-        e_omega = omega - R.transpose()*R_d*omega_d; // Ang vel error
+        // if (att_control_flag == 1){ // [Attitude control will be implemented here]
+        //     R_d = R_d_custom;
+        // }
 
+        e_R = 0.5*dehat(R_d.transpose()*R - R.transpose()*R_d); // Rotational error
+        e_omega = omega - R.transpose()*R_d*omega_d; // Ang vel error (Global Reference Frame->Body?)
+        // (This is omega - deltaR*omega_d | Not entirely sure how that correlates though)
+
+        if(flip_flag == 0){
+            e_omega = omega - omega_d;
+            e_omega(0) = 0;
+            e_omega(2) = 0;
+        }// Turn thrust control off
 
 
 
         // =========== Control Equations =========== // 
-        F_thrust = F_thrust_ideal.dot(b3); // Thrust control value
-        M = -kp_R*kp_Rf*e_R + -kd_R*kd_Rf*e_omega + omega.cross(J*omega) // Moment control vector
-                - J*(hat(omega)*R.transpose()*R_d*omega_d - R.transpose()*R_d*domega_d);
+        F_thrust = F_thrust_ideal.dot(b3)*(flip_flag); // Thrust control value
+        Gyro_dyn = omega.cross(J*omega) - J*(hat(omega)*R.transpose()*R_d*omega_d - R.transpose()*R_d*domega_d); // Gyroscopic dynamics
+        M = -kp_R*e_R*(kp_Rf) + -kd_R*e_omega*(kd_Rf) + Gyro_dyn*(flip_flag); // Moment control vector
         FM << F_thrust,M; // Thrust-Moment control vector
 
 
 
         // =========== Propellar Thrusts/Speeds =========== //
         f = Gamma_I*FM; // Propeller thrusts
-        motorspeed_square = (1/kf*f);
-        motorspeed_Eig = motorspeed_square.array().sqrt();
+        motorspeed_Vec_d = (1/kf*f).array().sqrt(); // Calculated motorspeeds
+        motorspeed_Vec = motorspeed_Vec_d; // Actual motorspeeds to be capped
 
 
         // Cap motor thrusts between 0 and 2500 rad/s
         for(int k_motor=0;k_motor<4;k_motor++) 
         {
-            if(motorspeed_Eig(k_motor)<0){
-                motorspeed_Eig(k_motor) = 0;
+            if(motorspeed_Vec(k_motor)<0){
+                motorspeed_Vec(k_motor) = 0;
             }
-            else if(isnan(motorspeed_Eig(k_motor))){
-                motorspeed_Eig(k_motor) = 0;
+            else if(isnan(motorspeed_Vec(k_motor))){
+                motorspeed_Vec(k_motor) = 0;
             }
-            else if(motorspeed_Eig(k_motor)>= 2500){ // Max rotation speed (rad/s)
+            else if(motorspeed_Vec(k_motor)>= 2500){ // Max rotation speed (rad/s)
                 // cout << "Motorspeed capped - Motor: " << k_motor << endl;
-                motorspeed_Eig(k_motor) = 2500;
+                motorspeed_Vec(k_motor) = 2500;
             }
         }
 
-        if(motorstop_flag == 0){ // Shutoff all motors
-            motorspeed_Eig << 0,0,0,0;
+        if(b3(2) <= 0){ // If e3 component of b3 is neg, turn motors off
+            motorspeed_Vec << 0,0,0,0;
+        }
+
+        if(motorstop_flag == 1){ // Shutoff all motors
+            motorspeed_Vec << 0,0,0,0;
         }
         
 
 
-        if (t_step%100 == 0){ // General Debugging output
+        if (t_step%50 == 0){ // General Debugging output
         cout << "t: " << t << "\tCmd: " << control_cmd_Eig.transpose() << endl <<
-        "kpx: " << kp_x << " \tkdx: " << kd_x << " \tkpR: " << kp_R << " \tkdR: " << kd_R << endl <<
+        "kp_x: " << kp_x << " \tkd_x: " << kd_x << " \tkp_R: " << kp_R << " \tkd_R: " << kd_R << endl <<
+        "kp_xf: " << kp_xf << " \tkd_xf: " << kd_xf << " \tkp_Rf: " << kp_Rf << " \tkd_Rf: " << kd_Rf << endl <<
+        endl <<
         "x_d: " << x_d.transpose() << endl <<
         "v_d: " << v_d.transpose() << endl <<
         "omega_d: " << omega_d.transpose() << endl <<
@@ -612,12 +644,15 @@ void Controller::controlThread()
         endl <<
         "FM: " << FM.transpose() << endl <<
         "f: " << f.transpose() << endl <<
-        "MS: " << motorspeed_Eig.transpose() << endl <<
+        endl <<
+        "MS_d: " << motorspeed_Vec_d.transpose() << endl <<
+        "MS: " << motorspeed_Vec.transpose() << endl <<
         "=============== " << endl; 
+        printf("\033c"); // clears console window
         }
 
      
-        Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Eig.cast <float> (); // Converts motorspeeds to C++ array for data transmission
+        Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Vec.cast <float> (); // Converts motorspeeds to C++ array for data transmission
         sendto(socket_Gazebo, motorspeed, sizeof(motorspeed),0, // Send motorspeeds to Gazebo -> gazebo_motor_model?
                 (struct sockaddr*)&sockaddr_remote_Gazebo, sockaddr_remote_gazebo_len); 
 

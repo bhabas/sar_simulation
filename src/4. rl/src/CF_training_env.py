@@ -168,8 +168,8 @@ for k_ep in range(ep_start,1000):
         vz_ini = np.random.uniform(low=2.5, high=2.6)
         vx_ini = np.random.uniform(low=2.0, high=4.0)
         vx_ini = 0.0
-        vy_ini = 0.5
-        vz_ini = 1.5
+        vy_ini = 0.0
+        vz_ini = 3.0
         v_ini = [vx_ini,vy_ini,vz_ini] # [m/s]
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
@@ -182,8 +182,8 @@ for k_ep in range(ep_start,1000):
 
 
         state = env.reset()
-        env.step('home',[0,0,0],ctrl_flag=1) # Should be z=0.03 but needs integral controller for error offset
-
+        env.step('home') # Should be z=0.03 but needs integral controller for error offset
+        # time.sleep(1.0)
         env.IC_csv(agent,state,'sim',k_run,v_ini = v_ini)
 
 
@@ -210,7 +210,7 @@ for k_ep in range(ep_start,1000):
         # ============================
         
         env.step('vel',v_ini,ctrl_flag=1)
-        env.step('pos',[0,0,0],ctrl_flag=0)
+        env.step('pos',ctrl_flag=0)
         RREV_trigger = theta_rl[0, k_run]
 
 
@@ -249,13 +249,13 @@ for k_ep in range(ep_start,1000):
             # ============================
             ##   Motor Shutdown Criteria 
             # ============================
-            if b3[2] < 0.0 and not flip_flag: # check if crazyflie flipped 
-                env.step('stop',[0,0,0],ctrl_flag=0) # shut off motors for the rest of the run
+            if b3[2] < 0.0 and not flip_flag: # If b3_z is negative than shutoff motors
+                env.step('stop') # shut off motors for the rest of the run
                 print("Flipped!! Shut motors")
                 flip_flag = True
             
             if ((d < 0.05) and (not crash_flag) and (not flip_flag)): # might need to adjust this 
-                env.step('stop',[0,0,0],ctrl_flag=0)
+                env.step('stop')
                 print("Crashed!! Shut motors")
                 crash_flag = True
 
@@ -289,7 +289,7 @@ for k_ep in range(ep_start,1000):
                 
 
                 ## Start rotation and mark rotation as triggered
-                env.step('vel',[0,0,0],ctrl_flag=0) # turn off vel control
+                env.step('vel',ctrl_flag=0) # turn off vel control
                 env.step('omega',[roll_rate,pitch_rate,0.0],ctrl_flag=1) # set ang rate control
                 pitch_triggered = True
 
@@ -309,13 +309,13 @@ for k_ep in range(ep_start,1000):
                 done_rollout = True
 
             ## If time since rollout start exceeds [1.5s]
-            if (env.getTime() - start_time_rollout) > (1.5 + extra_time):
-                error_1 = "Rollout Completed: Time Exceeded   "
-                error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
-                # print(error_1 + "\n" + error_2)
+            # if (env.getTime() - start_time_rollout) > (1.5 + extra_time):
+            #     error_1 = "Rollout Completed: Time Exceeded   "
+            #     error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
+            #     # print(error_1 + "\n" + error_2)
 
-                error_str = error_1 + error_2
-                done_rollout = True
+            #     error_str = error_1 + error_2
+            #     done_rollout = True
             
 
             # ============================

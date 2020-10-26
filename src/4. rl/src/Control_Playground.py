@@ -23,12 +23,8 @@ username = getpass.getuser()
 
 
 ## Initialize the environment
-env = CrazyflieEnv(port_RL=18050, port_Ctrl=18060,username =username)
+env = CrazyflieEnv(port_RL=18050, port_Ctrl=18060,username=username)
 print("Environment done")
-
-
-
-
 
 state = env.reset()
 t_step = 0
@@ -39,31 +35,7 @@ done = False
 
 
 
-def live_plotter(x_vec,y1_data,line1,y2_data,line2):
-    if line1==[]:
-        plt.ion()
-        fig, ax1 = plt.subplots()
-        
-        ax1.grid()
-        ax1.set_ylim([-45,90])   
-        ax1.set_ylabel("Pitch: [deg]") 
-        line1, = ax1.plot(x_vec,y1_data)
 
-        ax2 = ax1.twinx()
-        color = 'tab:red'
-        ax2.set_ylabel('Pos: Z [m]', color=color)
-        ax2.set_ylim([0,1.5]) 
-        ax2.tick_params(axis='y', labelcolor=color)
-        line2, = ax2.plot(x_vec,y2_data,color = color)
-
-        plt.show()
-
-    line1.set_ydata(y1_data)    
-    line2.set_ydata(y2_data)
-
-    plt.pause(0.000001)
-    
-    return line1,line2
 
 
 
@@ -76,37 +48,68 @@ def live_plotter(x_vec,y1_data,line1,y2_data,line2):
 
 def cmd_send():
     while True:
+        # Converts input number into action name
         cmd_dict = {0:'home',1:'pos',2:'vel',3:'att',4:'omega',5:'stop',6:'gains'}
         val = float(input("\nCmd Type (0:home,1:pos,2:vel,3:att,4:omega,5:stop,6:gains): "))
         action = cmd_dict[val]
 
-        if action=='home' or action == 'stop':
+        if action=='home' or action == 'stop': # Execute home or stop action
             ctrl_vals = [0,0,0]
-            ctrl_flag = 0
+            ctrl_flag = 1
+            env.step(action,ctrl_vals,ctrl_flag)
 
-        elif action=='gains':
-            try:
-                vals = input("\nControl Gains (kp_x,kd_x,kp_R,kd_R): ")
-                vals = [float(i) for i in vals.split(',')]
-                ctrl_vals = vals[0:3]
-                ctrl_flag = vals[3]
-            except:
-                print("Error: ")
+        elif action=='gains': # Execture Gain changer
+            
+            vals = input("\nControl Gains (kp_x,kd_x,kp_R,kd_R): ") # Take in comma-seperated values and convert into list
+            vals = [float(i) for i in vals.split(',')]
+            ctrl_vals = vals[0:3]
+            ctrl_flag = vals[3]
+
+            env.step(action,ctrl_vals,ctrl_flag)
+            
+        elif action == 'omega': # Execture Angular rate action
+
+            ctrl_vals = input("\nControl Vals (x,y,z): ")
+            ctrl_vals = [float(i) for i in ctrl_vals.split(',')]
+            ctrl_flag = 1.0
+
+            env.step('omega',ctrl_vals,ctrl_flag)
+
 
         else:
-            try:
-                ctrl_vals = input("\nControl Vals (x,y,z): ")
-                ctrl_vals = [float(i) for i in ctrl_vals.split(',')]
-                if len(ctrl_vals) != 3:
-                    raise Exception()
-            except:
-                print("Error: x,y,z")
+            ctrl_vals = input("\nControl Vals (x,y,z): ")
+            ctrl_vals = [float(i) for i in ctrl_vals.split(',')]
             ctrl_flag = float(input("\nController On/Off (1,0): "))
+            env.step(action,ctrl_vals,ctrl_flag)
 
-        # print(ctrl_vals , " " , ctrl_flag)
-        env.step(action,ctrl_vals,ctrl_flag)
+   
+def live_plotter(buffer,y1_data,line1,y2_data,line2):
+    if line1==[]:
+        plt.ion()
+        fig, (ax1,ax2,ax3,ax4) = plt.subplots(2,2)
+        
+        ax1.grid()
+        ax1.set_ylim([-45,90])   
+        ax1.set_ylabel("Pitch: [deg]") 
+        line1, = ax1.plot(buffer,y1_data)
+
+        # ax2 = ax1.twinx()
+        color = 'tab:red'
+        ax2.set_ylabel('Pos: Z [m]', color=color)
+        ax2.set_ylim([0,1.5]) 
+        ax2.tick_params(axis='y', labelcolor=color)
+        line2, = ax2.plot(buffer,y2_data,color = color)
+
+        plt.show()
+
+    line1.set_ydata(y1_data)    
+    line2.set_ydata(y2_data)
+
+    plt.pause(0.000001)
+    
+    return line1,line2        
      
-
+## Idea to delete and respawn model instead of restarting Gazebo after collison-crash
 # rosservice call /gazebo/delete_model '{model_name: crazyflie_landing_gears}'
 # rosrun gazebo_ros spawn_model -file /home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo/models/crazyflie_landing_gears/crazyflie_landing_gears.sdf -sdf -model crazyflie_landing_gears
 
@@ -117,28 +120,27 @@ input_thread.start()
 
 
 size = 200
-x_vec = np.arange(size)/100
-y_vec1 = np.zeros(len(x_vec))
-y_vec2 = np.zeros(len(x_vec))
+buffer = np.arange(size)/100
+y_vec1 = np.zeros(len(buffer))
+y_vec2 = np.zeros(len(buffer))
 line1 = []
 line2 = []
 
 while True:
 
-    
-        
             
     time.sleep(5e-4) # Time step size
 
     ## Define current state
     state = env.state_current
 
+    t = state[0]
     pos = state[1:4]
     orientation_q = state[4:8]
     vel = state[8:11]
     vx,vy,vz = vel
     omega = state[11:14]
-    t = state[0]
+    
 
 
     qw,qx,qy,qz = orientation_q
@@ -148,7 +150,7 @@ while True:
     
     # y_vec1[-1] = pitch
     # y_vec2[-1] = pos[2]
-    # line1,line2 = live_plotter(x_vec,y_vec1,line1,y_vec2,line2)
+    # line1,line2 = live_plotter(buffer,y_vec1,line1,y_vec2,line2)
     # y_vec1 = np.append(y_vec1[1:],0.0)
     # y_vec2 = np.append(y_vec2[1:],0.0)
 

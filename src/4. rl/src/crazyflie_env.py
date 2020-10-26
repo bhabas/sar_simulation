@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import pyautogui,getpass
 
 import socket, struct
 from threading import Thread
@@ -23,10 +24,7 @@ class CrazyflieEnv:
     def __init__(self, port_RL, port_Ctrl,username):
         print("Init CrazyflieEnv")
 
-        self.user = username   
-        if self.user == 'bhabas':
-            # import pyautogui    
-            pass
+        
         
         # Initializes the ROS node for the process. Can only have one nod in a rospy process
         rospy.init_node("crazyflie_env_node",anonymous=True) 
@@ -44,8 +42,9 @@ class CrazyflieEnv:
 
         # set send buffer size to be 40 bytes. Both 112 bytes and 40 bytes are lower than 
         # the minimum value, so buffer size will be set as minimum value. See "'man 7 socket"
-        self.fd.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 40)  
-
+        self.fd.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 40)
+        # self.fd.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEPORT,1)  
+        
 
         self.addr_Ctrl = ("", self.port_Ctrl) # Controller Address
         self.addr_RL = ("", self.port_RL) # RL Address
@@ -85,43 +84,11 @@ class CrazyflieEnv:
         #self.senderThread.start()
 
 
-
-    # ============================
-    ##      Laser & Camera 
-    # ============================
-    
-    def cam_callback(self,data): # callback function for camera subscriber
-        self.camera_msg = data
-        self.cv_image = self.bridge.imgmsg_to_cv2(self.camera_msg, desired_encoding='mono8')
-        #self.camera_pixels = self.camera_msg.data
-
-    def camThread(self): # Thread for recieving camera messages
-        print('Start Camera Thread')
-        self.camera_sub = rospy.Subscriber('/camera/image_raw',Image,self.cam_callback)
-        rospy.spin()
-    
-    def scan_callback(self,data): # callback function for laser subsriber
-        self.laser_msg = data
-        if  self.laser_msg.ranges[0] == float('Inf'):
-            # sets dist to 4 m if sensor reads Infinity (no walls)
-            self.laser_dist = 4 # max sesnsor dist
-        else:
-            self.laser_dist = self.laser_msg.ranges[0]
-
-    def lsrThread(self): # Thread for recieving laser scan messages
-        print('Start Laser Scanner Thread')
-        self.laser_sub = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
-        rospy.spin()
-
-
-
-
-
     def close_sim(self):
-        os.killpg(self.controller_p.pid, signal.SIGTERM)
-        time.sleep(4)
-        os.killpg(self.gazebo_p.pid, signal.SIGTERM)
-        time.sleep(4)  
+            os.killpg(self.controller_p.pid, signal.SIGTERM)
+            time.sleep(4)
+            os.killpg(self.gazebo_p.pid, signal.SIGTERM)
+            time.sleep(4)  
 
     def delay_env_time(self,t_start,t_delay):
         # delay time defined in ms
@@ -137,7 +104,8 @@ class CrazyflieEnv:
         header = 10
         msg = struct.pack('5d', header, enable, 0, 0, 0)
         self.fd.sendto(msg, self.addr_Ctrl)
-        time.sleep(0.001) # the sleep time after enableSticky(0) must be small s.t. the gazebo simulation is satble. Because the simulation after joint removed becomes unstable quickly.
+        time.sleep(0.001) # This ensures the message is sent enough times Gazebo catches it or something
+        # the sleep time after enableSticky(0) must be small s.t. the gazebo simulation is satble. Because the simulation after joint removed becomes unstable quickly.
     
     def getTime(self):
         return self.state_current[0]
@@ -146,13 +114,16 @@ class CrazyflieEnv:
         ## There's some issue with the external shells that cause it to hang up on missed landings as it just sits on the ground
 
 
+        if getpass.getuser() == 'bhabas':
+            pyautogui.click(x=2500,y=0) 
+
         self.gazebo_p = subprocess.Popen(
             "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/utility/launch_gazebo.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(5)
 
         self.controller_p = subprocess.Popen(
-            "gnome-terminal --disable-factory --geometry 80x29 -- ~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/utility/launch_controller.bash", 
+            "gnome-terminal --disable-factory --geometry 80x33 -- ~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/utility/launch_controller.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(1)
 
@@ -211,7 +182,7 @@ class CrazyflieEnv:
             print("no such action")
         cmd = struct.pack('5d', header, ctrl_vals[0], ctrl_vals[1], ctrl_vals[2], ctrl_flag) # Send command
         self.fd.sendto(cmd, self.addr_Ctrl)
-        time.sleep(0.1) # continually sends message during this time to ensure connection
+        time.sleep(0.01) # continually sends message during this time to ensure connection
         cmd = struct.pack('5d',99,0,0,0,1) # Send blank command so controller doesn't keep redefining values
         self.fd.sendto(cmd, self.addr_Ctrl)
 
@@ -223,6 +194,33 @@ class CrazyflieEnv:
         return self.state_current, reward, done, info
 
 
+
+    # ============================
+    ##      Laser & Camera 
+    # ============================
+    
+    def cam_callback(self,data): # callback function for camera subscriber
+        self.camera_msg = data
+        self.cv_image = self.bridge.imgmsg_to_cv2(self.camera_msg, desired_encoding='mono8')
+        #self.camera_pixels = self.camera_msg.data
+
+    def camThread(self): # Thread for recieving camera messages
+        print('Start Camera Thread')
+        self.camera_sub = rospy.Subscriber('/camera/image_raw',Image,self.cam_callback)
+        rospy.spin()
+    
+    def scan_callback(self,data): # callback function for laser subsriber
+        self.laser_msg = data
+        if  self.laser_msg.ranges[0] == float('Inf'):
+            # sets dist to 4 m if sensor reads Infinity (no walls)
+            self.laser_dist = 4 # max sesnsor dist
+        else:
+            self.laser_dist = self.laser_msg.ranges[0]
+
+    def lsrThread(self): # Thread for recieving laser scan messages
+        print('Start Laser Scanner Thread')
+        self.laser_sub = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
+        rospy.spin()
 
 
     # ============================
