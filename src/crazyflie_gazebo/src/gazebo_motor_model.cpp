@@ -193,13 +193,17 @@ void GazeboMotorModel::UpdateForcesAndMoments() {
   if (motor_rot_vel_ / (2 * M_PI) > 1 / (2 * sampling_time_)) {
     gzerr << "Aliasing on motor [" << motor_number_ << "] might occur. Consider making smaller simulation time steps or raising the rotor_velocity_slowdown_sim_ param.\n";
   }
+
   double real_motor_velocity = motor_rot_vel_ * rotor_velocity_slowdown_sim_; // Velocity is slowed down in Line 273 so it's speed it back up for calcs
   double force = real_motor_velocity * real_motor_velocity * motor_constant_; // Kf for Geometric Tracking Controller
-  // gzmsg<<"real_motor_velocity="<<real_motor_velocity<<"    force="<<force<<"\n";
+
+  if (force >0.144)
+    gzmsg<<"real_motor_velocity="<<real_motor_velocity<<"    force="<<force<<"\n";
+
 
   // scale down force linearly with forward speed
   // XXX this has to be modelled better
-  //
+  // 0.15 max?
 #if GAZEBO_MAJOR_VERSION >= 9
   ignition::math::Vector3d body_velocity = link_->WorldLinearVel();
 #else

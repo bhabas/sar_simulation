@@ -1,9 +1,19 @@
-#include "controller.h"
+        // FT << f_thrust, tau; // Controller prescribed thrust and moments
+        // f = Gamma_inv*FT; // Eq.5 - Convert prescribed thrust and moments to individual motor thrusts
+        // motorspeed_square = f/c_T; // 
+        
+        
+
+
+        // motorspeed_Eig = motorspeed_square.array().sqrt();
+        // Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Eig.cast <float> (); // Converts motorspeeds to C++ array for data transmission#include "controller.h"
 #include <iomanip>      // provides std::setprecision
 #include <math.h>
 #include <algorithm>
 #include <stdint.h>
 #include <Eigen/Dense>
+#include "controller.h"
+
 
 using namespace Eigen;
 using namespace std;
@@ -327,6 +337,7 @@ void Controller::controlThread()
     Vector4d FM; // Thrust-Moment control vector (4x1)
     Vector4d f; // Propeller thrusts [N]
     double F_thrust;
+
 
     
 

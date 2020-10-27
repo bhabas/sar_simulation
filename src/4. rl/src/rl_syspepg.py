@@ -157,8 +157,10 @@ class rlsysPEPGAgent_reactive(ES):
         for k_n in range(2*self.n_rollout):
             if theta[0,k_n] < 0: # 
                 theta[0,k_n] = 0.001
-            if theta[1,k_n] > 0:
+            '''if theta[1,k_n] > 0:
                 theta[1,k_n] = -0.001
+            if theta[2,k_n] < 0:
+                theta[2,k_n] = 0.001'''
 
 
         return theta, epsilon
@@ -169,7 +171,7 @@ class rlsysPEPGAgent_reactive(ES):
         epsilon = epsilon
         b = self.get_baseline(span=3)
 
-        m_reward = 26.0#400.0#3000#2300      # max reward
+        m_reward = 21.0#400.0#3000#2300      # max reward
         reward_avg = np.mean(reward)
        
         ## Decaying Learning Rate:
@@ -204,13 +206,19 @@ class rlsysPEPGAgent_reactive(ES):
 
 class rlsysPEPGAgent_adaptive(rlsysPEPGAgent_reactive):
     def train(self, theta, reward, epsilon):
+        reward_avg = np.mean(reward)
+        if len(self.reward_history == 1):
+            self.reward_history[0] = reward_avg
+        else:
+            self.reward_history = np.append(self.reward_history, reward_avg) 
+
         reward_plus = reward[0:self.n_rollout]
         reward_minus = reward[self.n_rollout:]
         epsilon = epsilon
         b = self.get_baseline(span=3)
 
-        m_reward = 26.0#400.0#3000#2300      # max reward
-        reward_avg = np.mean(reward)
+        m_reward = 21.0#400.0#3000#2300      # max reward
+        
        
         ## Decaying Learning Rate:
         #self.alpha_mu = self. * 0.9
@@ -222,9 +230,9 @@ class rlsysPEPGAgent_adaptive(rlsysPEPGAgent_reactive):
         r_S = ((reward_plus + reward_minus)/2 - b) / (m_reward - b)
 
          # Defeine learning rate scale depending on reward recieved
-        lr_scale = 1.0 - reward_avg/m_reward # try squaring?
-
-        explore_factor = 1.5 # determines how much faster sigma alpha decreases than mu alpha
+        #lr_scale = 1.0 - reward_avg/m_reward # try squaring?
+        lr_scale = 1.0 - b/m_reward
+        explore_factor = 1.0 # determines how much faster sigma alpha decreases than mu alpha
         b2 = self.get_baseline(5)
 
         print(len(self.reward_history))
@@ -241,8 +249,8 @@ class rlsysPEPGAgent_adaptive(rlsysPEPGAgent_reactive):
         lr_sigma = (lr_scale**explore_factor)/explore_factor # adjust sigma alpha
         # update new learning rates
         # These only depend on the current episode
-        self.alpha_mu = np.array([[lr_scale],[lr_scale] ])#,[lr_scale]])#0.95
-        self.alpha_sigma = np.array([[lr_sigma],[lr_sigma] ])#,[lr_sigma]])  #0.95
+        self.alpha_mu = np.array([[lr_scale],[lr_scale] ,[lr_scale]])#0.95
+        self.alpha_sigma = np.array([[lr_sigma],[lr_sigma] ,[lr_sigma]])  #0.95
         print(self.alpha_mu,self.alpha_sigma)
         print(np.dot(T,r_T),np.dot(S,r_S))
         self.mu = self.mu + self.alpha_mu*(np.dot(T,r_T))
