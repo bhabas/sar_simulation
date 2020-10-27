@@ -21,7 +21,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 
 class CrazyflieEnv:
-    def __init__(self, port_RL, port_Ctrl,username):
+    def __init__(self, port_Gazebo, port_Ctrl,username):
         print("Init CrazyflieEnv")
 
         
@@ -31,7 +31,7 @@ class CrazyflieEnv:
         self.launch_sim() 
     
 
-        self.port_RL = port_RL # Reinforcment Learning Port
+        self.port_Gazebo = port_Gazebo # Gazebo Data Port
         self.port_Ctrl = port_Ctrl # Controller Port
 
         # fd is local server (Change name?)
@@ -47,8 +47,8 @@ class CrazyflieEnv:
         
 
         self.addr_Ctrl = ("", self.port_Ctrl) # Controller Address
-        self.addr_RL = ("", self.port_RL) # RL Address
-        self.fd.bind(self.addr_RL) # bind() associates the socket with specific network interface and port number
+        self.addr_Gazebo = ("", self.port_Gazebo) # RL Address
+        self.fd.bind(self.addr_Gazebo) # bind() associates the socket with specific network interface and port number
         
 
         self.queue_command = Queue(3)
@@ -86,9 +86,9 @@ class CrazyflieEnv:
 
     def close_sim(self):
             os.killpg(self.controller_p.pid, signal.SIGTERM)
-            time.sleep(4)
+            # time.sleep(4)
             os.killpg(self.gazebo_p.pid, signal.SIGTERM)
-            time.sleep(4)  
+            # time.sleep(4)  
 
     def delay_env_time(self,t_start,t_delay):
         # delay time defined in ms

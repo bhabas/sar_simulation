@@ -23,7 +23,7 @@ username = getpass.getuser()
 
 
 ## Initialize the environment
-env = CrazyflieEnv(port_RL=18050, port_Ctrl=18060,username=username)
+env = CrazyflieEnv(port_Gazebo=18050, port_Ctrl=18060,username=username)
 print("Environment done")
 
 state = env.reset()

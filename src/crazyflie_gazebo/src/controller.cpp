@@ -63,12 +63,13 @@ void Controller::Load(int port_number_gazebo)
     fd_RL_SNDBUF = 112;        // 112 bytes is 14 double
     fd_RL_RCVBUF = 40;         // 40 bytes is 5 double
 
+    // Set expected buffer for incoming/outgoing messages to RL
     if (setsockopt(fd_RL, SOL_SOCKET, SO_SNDBUF, &fd_RL_SNDBUF, sizeof(fd_RL_SNDBUF))<0)
         cout<<"fd_RL setting SNDBUF failed"<<endl;
     if (setsockopt(fd_RL, SOL_SOCKET, SO_RCVBUF, &fd_RL_RCVBUF, sizeof(fd_RL_RCVBUF))<0)
         cout<<"fd_RL setting RCVBUF failed"<<endl;
 
-    memset(&sockaddr_local_RL, 0, sizeof(sockaddr_local_RL));
+    memset(&sockaddr_local_RL, 0, sizeof(sockaddr_local_RL)); // Not sure what this does
     sockaddr_local_RL.sin_family = AF_INET; // IPv4 Format
     sockaddr_local_RL.sin_port = htons(18060); // RL Port number
     sockaddr_local_RL.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("127.0.0.1");
@@ -88,18 +89,6 @@ void Controller::Load(int port_number_gazebo)
     queue_states = moodycamel::BlockingReaderWriterQueue<StateFull>(5);
     queue_motorspeed = moodycamel::BlockingReaderWriterQueue<MotorCommand>(5);
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -284,7 +273,7 @@ void Controller::controlThread()
     
 
     // Default desired States
-    Vector3d x_d_Def(0,0,1.0); // Pos-desired (Default) [m] 
+    Vector3d x_d_Def(0,0,0.23); // Pos-desired (Default) [m] 
     Vector3d v_d_Def(0,0,0); // Velocity-desired (Default) [m/s]
     Vector3d a_d_Def(0,0,0); // Acceleration-desired (Default) [m/s]
     Vector3d b1_d_Def(1,0,0); // Desired global pointing direction (Default)
@@ -359,7 +348,9 @@ void Controller::controlThread()
     double kp_R = 0.05;  // Rot. Gain // Keep checking rotational speed
     double kd_R = 0.005; // Rot. derivative Gain
 
-    double kd_R_flip = 0.0005; // Flip 
+    double kp_omega = 0.0005; 
+    // Omega proportional gain (similar to kd_R but that's for damping and this is to achieve omega_d)
+    // (0.0003 Fully saturates motors to get to omega_max (40 rad/s))
     // kd_R is great for stabilization but for flip manuevers it's too sensitive and 
     // saturates the motors causing instability during the rotation
 
@@ -496,7 +487,7 @@ void Controller::controlThread()
                 break;
 
             case 4: // Exectute Flip
-                kd_R = kd_R_flip; // Change to flip gain
+                kd_R = kp_omega; // Change to flip gain
 
                 omega_d << control_vals;
                 kd_Rf = ctrl_flag; // Turn control on
@@ -577,18 +568,16 @@ void Controller::controlThread()
         e_omega = omega - R.transpose()*R_d*omega_d; // Ang vel error (Global Reference Frame->Body?)
         // (This is omega - deltaR*omega_d | Not entirely sure how that correlates though)
 
-        if(flip_flag == 0){
-            e_omega = omega - omega_d;
-            e_omega(0) = 0;
-            e_omega(2) = 0;
-        }// Turn thrust control off
+        if(flip_flag == 0){ // I've just sold my soul by doing this
+            e_omega(2) = 0; // Remove yaw control when executing flip
+        }
 
 
 
         // =========== Control Equations =========== // 
         F_thrust = F_thrust_ideal.dot(b3)*(flip_flag); // Thrust control value
         Gyro_dyn = omega.cross(J*omega) - J*(hat(omega)*R.transpose()*R_d*omega_d - R.transpose()*R_d*domega_d); // Gyroscopic dynamics
-        M = -kp_R*e_R*(kp_Rf) + -kd_R*e_omega*(kd_Rf) + Gyro_dyn*(flip_flag); // Moment control vector
+        M = -kp_R*e_R*(kp_Rf) + -kd_R*e_omega*(kd_Rf) + Gyro_dyn; // Moment control vector
         FM << F_thrust,M; // Thrust-Moment control vector
 
 
@@ -614,9 +603,10 @@ void Controller::controlThread()
             }
         }
 
-        if(b3(2) <= 0){ // If e3 component of b3 is neg, turn motors off
+        if(b3(2) <= sqrt(2)/2){ // If e3 component of b3 is neg, turn motors off [arbitrary amount]
             motorspeed_Vec << 0,0,0,0;
         }
+
 
         if(motorstop_flag == 1){ // Shutoff all motors
             motorspeed_Vec << 0,0,0,0;
@@ -626,8 +616,8 @@ void Controller::controlThread()
 
         if (t_step%50 == 0){ // General Debugging output
         cout << "t: " << t << "\tCmd: " << control_cmd_Eig.transpose() << endl <<
-        "kp_x: " << kp_x << " \tkd_x: " << kd_x << " \tkp_R: " << kp_R << " \tkd_R: " << kd_R << endl <<
-        "kp_xf: " << kp_xf << " \tkd_xf: " << kd_xf << " \tkp_Rf: " << kp_Rf << " \tkd_Rf: " << kd_Rf << endl <<
+        "kp_x: " << kp_x << " \tkd_x: " << kd_x << " \tkp_R: " << kp_R << " \tkd_R: " << kd_R << "\tkd_R_fl: " << kp_omega << endl <<
+        "kp_xf: " << kp_xf << " \tkd_xf: " << kd_xf << " \tkp_Rf: " << kp_Rf << " \tkd_Rf: " << kd_Rf << " \tflip_flag: " << flip_flag << endl <<
         endl <<
         "x_d: " << x_d.transpose() << endl <<
         "v_d: " << v_d.transpose() << endl <<

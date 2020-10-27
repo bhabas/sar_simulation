@@ -22,7 +22,7 @@ os.system("clear")
 
 ## Initialize the environment
 username = getpass.getuser()
-env = CrazyflieEnv(port_RL=18050, port_Ctrl=18060,username = username)
+env = CrazyflieEnv(port_Gazebo=18050, port_Ctrl=18060,username = username)
 print("Environment done")
 
 ## Initialize the user and data recording
@@ -63,8 +63,8 @@ alpha_mu = np.array([[0.2],[0.2]])#[2.0]] )#,[0.1]])
 alpha_sigma = np.array([[0.1],[0.1]  ])#, [1.0]])#,[0.05]])
 
 ## Initial parameters for gaussian function
-mu = np.array([[5.0],[-10.0], [1.5] ])# ,[1.5]])#,[1.5]])   # Initial estimates of mu: 
-sigma = np.array([[0.25],[0.25] ,[0.25] ])# ,[0.75]])      # Initial estimates of sigma: 
+mu = np.array([[4.5],[-4.5], [1.5] ])# ,[1.5]])#,[1.5]])   # Initial estimates of mu: 
+sigma = np.array([[1.5],[1.5] ,[0.25] ])# ,[0.75]])      # Initial estimates of sigma: 
 
 # noise tests all started at:
 #mu = np.array([[5.0],[-5.0] ])
@@ -185,6 +185,7 @@ for k_ep in range(ep_start,1000):
         env.step('home') # Should be z=0.03 but needs integral controller for error offset
         # time.sleep(1.0)
         env.IC_csv(agent,state,'sim',k_run,v_ini = v_ini)
+        time.sleep(3)
 
 
 
@@ -220,7 +221,7 @@ for k_ep in range(ep_start,1000):
             t_step += 1
 
 
-            ## Define current state
+            ## Define current state [Can we thread this to get states even when above]
             state = env.state_current
             
             position = state[1:4]
@@ -299,7 +300,7 @@ for k_ep in range(ep_start,1000):
             # ============================
 
             ## If time since triggered pitch exceeds [0.7s]   
-            if pitch_triggered and ((env.getTime()-start_time_pitch) > (0.7 + extra_time)):
+            if pitch_triggered and ((env.getTime()-start_time_pitch) > (0.3)):
                 # I don't like this formatting, feel free to improve on
                 error_1 = "Rollout Completed: Pitch Triggered  "
                 error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch))
@@ -308,14 +309,14 @@ for k_ep in range(ep_start,1000):
                 error_str = error_1 + error_2
                 done_rollout = True
 
-            ## If time since rollout start exceeds [1.5s]
-            # if (env.getTime() - start_time_rollout) > (1.5 + extra_time):
-            #     error_1 = "Rollout Completed: Time Exceeded   "
-            #     error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
-            #     # print(error_1 + "\n" + error_2)
+            # If time since rollout start exceeds [1.5s]
+            if (env.getTime() - start_time_rollout) > (1.5 + extra_time):
+                error_1 = "Rollout Completed: Time Exceeded   "
+                error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
+                # print(error_1 + "\n" + error_2)
 
-            #     error_str = error_1 + error_2
-            #     done_rollout = True
+                error_str = error_1 + error_2
+                done_rollout = True
             
 
             # ============================
@@ -378,10 +379,8 @@ for k_ep in range(ep_start,1000):
         env.append_csv_blank()
         time.sleep(0.01)
         if repeat_run == True:
-            time.sleep(1)
             env.close_sim()
             time.sleep(1)
-            env.close_sim()
             env.launch_sim()
             # return to previous run to catch potential missed glitches in gazebo (they are usually caught in the next run)
             if k_run > 0:
