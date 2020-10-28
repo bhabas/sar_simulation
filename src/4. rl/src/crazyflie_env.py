@@ -100,7 +100,7 @@ class CrazyflieEnv:
 
 
     def enableSticky(self, enable): # enable=0 disable sticky, enable=1 enable sticky
-        header = 10
+        header = 11
         msg = struct.pack('5d', header, enable, 0, 0, 0)
         self.fd.sendto(msg, self.addr_Ctrl)
         time.sleep(0.001) # This ensures the message is sent enough times Gazebo catches it or something
@@ -180,7 +180,7 @@ class CrazyflieEnv:
         cmd = struct.pack('5d', header, ctrl_vals[0], ctrl_vals[1], ctrl_vals[2], ctrl_flag) # Send command
         self.fd.sendto(cmd, self.addr_Ctrl)
         time.sleep(0.01) # continually sends message during this time to ensure connection
-        cmd = struct.pack('5d',99,0,0,0,1) # Send blank command so controller doesn't keep redefining values
+        cmd = struct.pack('5d',8,0,0,0,1) # Send blank command so controller doesn't keep redefining values
         self.fd.sendto(cmd, self.addr_Ctrl)
 
         #self.queue_command.put(buf, block=False)

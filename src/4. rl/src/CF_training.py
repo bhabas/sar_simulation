@@ -194,7 +194,7 @@ for k_ep in range(ep_start,1000):
         # Should be z=0.03 but needs integral controller for error offset
         # time.sleep(1.0)
         env.IC_csv(agent,state,'sim',k_run,v_ini = v_ini)
-        time.sleep(3)
+        time.sleep(1.5)
 
 
 
@@ -213,6 +213,7 @@ for k_ep in range(ep_start,1000):
         state_history = None
         repeat_run= False
         error_str = ""
+        z_max = 0
 
 
         # ============================
@@ -247,6 +248,7 @@ for k_ep in range(ep_start,1000):
             qx = orientation_q[1]
             qy = orientation_q[2]
             qz = orientation_q[3]
+
 
 
 
@@ -308,25 +310,31 @@ for k_ep in range(ep_start,1000):
             ##    Termination Criteria 
             # ============================
 
-            ## If time since triggered pitch exceeds [0.7s]   
+            # If time since triggered pitch exceeds [0.7s]   
             if pitch_triggered and ((env.getTime()-start_time_pitch) > (0.3)):
                 # I don't like this formatting, feel free to improve on
                 error_1 = "Rollout Completed: Pitch Triggered  "
                 error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch))
-                # print(error_1 + "\n" + error_2)
+                print(error_1 + "\n" + error_2)
 
                 error_str = error_1 + error_2
                 done_rollout = True
 
             # If time since rollout start exceeds [1.5s]
-            if (env.getTime() - start_time_rollout) > (1.5):
+            if (env.getTime() - start_time_rollout) > (2.5):
                 error_1 = "Rollout Completed: Time Exceeded   "
                 error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
-                # print(error_1 + "\n" + error_2)
+                print(error_1 + "\n" + error_2)
+            
 
                 error_str = error_1 + error_2
                 done_rollout = True
             
+            z_max = max(position[2],z_max)
+            if position[2] <= 0.75*z_max:
+                done_rollout = True
+            
+
 
             # ============================
             ##          Errors  
@@ -360,7 +368,7 @@ for k_ep in range(ep_start,1000):
             if state_history is None:
                 state_history = state2 
             else:
-                if t_step%10==0: # Append state_history columns with current state2 vector 
+                if t_step%5==0: # Append state_history columns with current state2 vector 
                     state_history = np.append(state_history, state2, axis=1)
                     env.append_csv(agent,state,k_ep,k_run,sensor_data)
 
