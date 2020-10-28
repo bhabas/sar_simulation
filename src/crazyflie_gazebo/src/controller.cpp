@@ -307,6 +307,7 @@ void Controller::controlThread()
 
     Vector3d e_x; // Pos-Error [m]
     Vector3d e_v; // Vel-error  [m/s]
+    Vector3d e_intg; // Integrated Pos-Error [m*s]
     Vector3d e_R; // Rotation-error [rad]
     Vector3d e_omega; // Omega-error [rad/s]
 
@@ -356,6 +357,7 @@ void Controller::controlThread()
     Vector4d Ctrl_Gains; 
     double kp_x = 0.1;   // Pos. Gain
     double kd_x = 0.08;  // Pos. derivative Gain
+    double ki_x = 0.05*0; // Pos. integral Gain
     double kp_R = 0.05;  // Rot. Gain // Keep checking rotational speed
     double kd_R = 0.005; // Rot. derivative Gain
 
@@ -384,6 +386,8 @@ void Controller::controlThread()
     double m = 0.026 + 0.00075*4; // Mass [kg]
     double g = 9.8066; // Gravitational acceleration [m/s^2]
     double t = 0; // Time from Gazebo [s]
+    double t_prev = 0; // Prev time val [s]
+    double dt = 0;  // Time difference [s]
     unsigned int t_step = 0; // t_step counter
 
 
@@ -473,6 +477,14 @@ void Controller::controlThread()
 
                 kd_R = 0.005; 
 
+                kp_x = 0.1;   // Pos. Gain
+                kd_x = 0.1;  // Pos. derivative Gain
+                ki_x = 0.05; // Pos. integral Gain
+                kp_R = 0.05;  // Rot. Gain // Keep checking rotational speed
+                kd_R = 0.005; // Rot. derivative Gain
+
+                e_intg <<0,0,0; 
+
                 kp_xf=ctrl_flag; // Reset control flags
                 kd_xf=ctrl_flag;
                 kp_Rf=ctrl_flag;
@@ -520,6 +532,7 @@ void Controller::controlThread()
                 Ctrl_Gains << control_vals,ctrl_flag;
                 kp_x = Ctrl_Gains(0);
                 kd_x = Ctrl_Gains(1);
+                // ki_x = Ctrl_Gains(2);
                 kp_R = Ctrl_Gains(2);
                 kd_R = Ctrl_Gains(3);
                 break;
@@ -537,6 +550,9 @@ void Controller::controlThread()
         vel = state_full_Eig.segment(7,3);
         omega = state_full_Eig.segment(10,3);
         t = state_full_Eig(13); 
+        dt = t - t_prev;
+
+        
         
 
 
@@ -559,8 +575,10 @@ void Controller::controlThread()
         // =========== Translational Errors & Desired Body-Fixed Axes =========== //
         e_x = pos - x_d; 
         e_v = vel - v_d;
+        
+        e_intg += e_x*dt;
 
-        F_thrust_ideal = -kp_x*kp_xf*e_x + -kd_x*kd_xf*e_v + m*g*e3 + m*a_d; // ideal control thrust vector
+        F_thrust_ideal = -kp_x*kp_xf*e_x + -kd_x*kd_xf*e_v + -ki_x*e_intg + m*g*e3 + m*a_d; // ideal control thrust vector
         b3_d = F_thrust_ideal.normalized(); // desired body-fixed vertical axis
         b2_d = b3_d.cross(b1_d).normalized(); // body-fixed horizontal axis
 
@@ -575,8 +593,9 @@ void Controller::controlThread()
         // }
 
         e_R = 0.5*dehat(R_d.transpose()*R - R.transpose()*R_d); // Rotational error
-        e_omega = omega - R.transpose()*R_d*omega_d; // Ang vel error (Global Reference Frame->Body?)
-        // (This is omega - deltaR*omega_d | Not entirely sure how that correlates though)
+        e_omega = omega - R.transpose()*R_d*omega_d; // Ang vel error 
+        // (Omega vecs are on different "space manifolds" so they need to be compared this way) - This is beyond me lol
+        
 
         if(flip_flag == 0){ // I've just sold my soul by doing this
             e_omega(2) = 0; // Remove yaw control when executing flip
@@ -629,6 +648,7 @@ void Controller::controlThread()
         "t: " << t << "\tCmd: " << control_cmd_Eig.transpose() << endl <<
         "kp_x: " << kp_x << " \tkd_x: " << kd_x << " \tkp_R: " << kp_R << " \tkd_R: " << kd_R << "\tkd_R_fl: " << kp_omega << endl <<
         "kp_xf: " << kp_xf << " \tkd_xf: " << kd_xf << " \tkp_Rf: " << kp_Rf << " \tkd_Rf: " << kd_Rf << " \tflip_flag: " << flip_flag << endl <<
+        "ki_x: " << ki_x  << "\t e_x_I: " << e_intg.transpose() <<
         endl <<
         "x_d: " << x_d.transpose() << endl <<
         "v_d: " << v_d.transpose() << endl <<
@@ -658,6 +678,8 @@ void Controller::controlThread()
                 (struct sockaddr*)&sockaddr_remote_Gazebo, sockaddr_remote_gazebo_len); 
 
         t_step++;
+        t_prev = t;
+
     }
 }
 

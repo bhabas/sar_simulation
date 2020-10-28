@@ -144,7 +144,7 @@ for k_ep in range(ep_start,1000):
     while k_run < 2*agent.n_rollout:
 
         ## RESET TO INITIAL STATE
-        env.step('reset',ctrl_flag=1) # Reset control vals and functionality
+        env.step('home',ctrl_flag=1) # Reset control vals and functionality
         state = env.reset_pos() # Reset Gazebo pos
         time.sleep(3.0) # time for CF to settle
 

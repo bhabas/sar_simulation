@@ -23,10 +23,10 @@ username = getpass.getuser()
 
 
 ## Initialize the environment
-env = CrazyflieEnv(port_Gazebo=18050, port_Ctrl=18060,username=username)
+env = CrazyflieEnv()
 print("Environment done")
 
-state = env.reset()
+state = env.reset_pos()
 t_step = 0
 start_time_rolloout = env.getTime()
 done = False
@@ -144,8 +144,8 @@ while True:
 
 
     qw,qx,qy,qz = orientation_q
-    R = Rotation.from_quat([qx,qy,qz,qw])
-    yaw,roll,pitch = R.as_euler('zxy',degrees=True)
+    # R = Rotation.from_quat([qx,qy,qz,qw])
+    # yaw,roll,pitch = R.as_euler('zxy',degrees=True)
 
     
     # y_vec1[-1] = pitch

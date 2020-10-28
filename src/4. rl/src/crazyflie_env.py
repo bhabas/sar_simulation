@@ -122,7 +122,7 @@ class CrazyflieEnv:
         time.sleep(5)
 
         self.controller_p = subprocess.Popen(
-            "gnome-terminal --disable-factory --geometry 80x33 -- ~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/utility/launch_controller.bash", 
+            "gnome-terminal --disable-factory --geometry 81x33 -- ~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/utility/launch_controller.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(1)
 
@@ -161,7 +161,7 @@ class CrazyflieEnv:
 
 
     def step(self,action,ctrl_vals=[0,0,0],ctrl_flag=1): # Controller works to attain these values
-        if action =='reset': # default desired values/traj.
+        if action =='home': # default desired values/traj.
             header = 0
         elif action =='pos':  # position (x,y,z) 
             header = 1
