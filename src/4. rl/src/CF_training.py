@@ -23,13 +23,13 @@ os.system("clear")
 
 ## Initialize the environment
 username = getpass.getuser()
-env = CrazyflieEnv(port_Gazebo=18050, port_Ctrl=18060,username = username)
+env = CrazyflieEnv()
 print("Environment done")
 
 ## Initialize the user and data recording
 start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
-file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time + '.csv'
-env.create_csv(file_name,record = False)
+file_name = './src/4. rl/src/log/' + username + start_time + '.csv'
+env.create_csv(file_name,record = True)
 
 
 ## Initial figure setup
@@ -43,14 +43,12 @@ plt.ylabel("Reward")
 plt.title("Episode: %d Run: %d" %(0,0))
 plt.show() 
 
-# Variables for current and previous image from camera sensor
-image_prev = np.array(0)
-image_now = np.array(0)
+
 
 ## Sim Parameters
 ep_start = 0 # Default episode start position
 h_ceiling = 1.5 # meters
-extra_time = 0.0
+
 
 
 
@@ -102,23 +100,6 @@ agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_ro
 
 
 
-
-
-# ============================
-##        Data Loading 
-# ============================
-
-## Uncomment and input starting episode and data_path to recorded csv file to run
-# ep_start = 9
-# data_path = '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/bhabas_2020-09-21_16:35:43.csv'
-# alpha_mu, alpha_sigma, mu, sigma = env.load_csv(data_path,ep_start)
-
-
-
-
-
-
-
 # ============================
 ##          Episode 
 # ============================
@@ -127,15 +108,15 @@ for k_ep in range(ep_start,1000):
     np.set_printoptions(precision=2, suppress=True)
     done = False
 
-
     mu = agent.mu
     sigma = agent.sigma
 
+    reward = np.zeros(shape=(2*agent.n_rollout,1))
+    reward[:] = np.nan  # initialize reward to be NaN array, size n_rollout x 1
+    theta_rl,epsilon_rl = agent.get_theta()
+
     #mu = agent.xmean
     #sigma = np.array([agent.C[0,0],agent.C[1,1],agent.C[0,1]])
-
-    
-
 
 
     print("=============================================")
@@ -148,19 +129,11 @@ for k_ep in range(ep_start,1000):
     print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[0], sigma[0], sigma[0]))
     print('\n')
 
-
-    
-    reward = np.zeros(shape=(2*agent.n_rollout,1))
-    reward[:] = np.nan  # initialize reward to be NaN array, size n_rollout x 1
-    theta_rl,epsilon_rl = agent.get_theta()
-
     print("theta_rl = ")
-
-    
     print(theta_rl[0,:], "--> RREV")
-    #print(theta_rl[1,:], "--> Gain")
-    #print(theta_rl[2,:], "--> v_x Gain")
-    #print(theta_rl[3,:], "--> omega_y Gain")
+    print(theta_rl[1,:], "--> Gain")
+    # print(theta_rl[2,:], "--> v_x Gain")
+    # print(theta_rl[3,:], "--> omega_y Gain")
 
 
 
@@ -169,39 +142,28 @@ for k_ep in range(ep_start,1000):
     # ============================
     k_run = 0
     while k_run < 2*agent.n_rollout:
-        
-        # take initial camera measurements 
-        #image_now = env.cv_image.flatten()
-        #image_prev = env.cv_image.flatten()
-        
 
-        vz_ini = np.random.uniform(low=2.5, high=3.0)
-        vx_ini = np.random.uniform(low=-2.0, high=2.0)
-        vy_ini = 0
-        v_ini = [vx_ini,vy_ini,vz_ini] # [m/s]
+        ## RESET TO INITIAL STATE
+        env.step('reset',ctrl_flag=1) # Reset control vals and functionality
+        state = env.reset_pos() # Reset Gazebo pos
+        time.sleep(3.0) # time for CF to settle
+
+
+        ## INIT RUN PARAMETERS
+        RREV_trigger = theta_rl[0, k_run] # FOV expansion velocity [rad/s]
+        G1 = theta_rl[1, k_run]
+        G2 = theta_rl[2, k_run]
+     
+        vz_d = np.random.uniform(low=2.5, high=3.0)
+        vx_d = np.random.uniform(low=-2.0, high=2.0)
+        vy_d = 0 
+        v_d = [vx_d,vy_d,vz_d] # [m/s]
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
 
-
-        print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
-        print("RREV: %.3f \t gain1: %.3f \t gain2: %.3f \t gain3: %.3f" %(theta_rl[0,k_run], theta_rl[0,k_run],theta_rl[0,k_run],theta_rl[0,k_run]))
-        print("Vz_ini: %.3f \t Vx_ini: %.3f \t Vy_ini: %.3f" %(vz_ini, vx_ini, vy_ini))
-
-
-        env.step('reset',ctrl_flag=1) # Reset control vals and turns off
-        state = env.reset_pos() # Reset Gazebo pos
-        # env.step('reset',ctrl_flag=1) #
-        # Should be z=0.03 but needs integral controller for error offset
-        # time.sleep(1.0)
-        env.IC_csv(agent,state,'sim',k_run,v_ini = v_ini)
-        time.sleep(1.5)
-
-
-
-        
-        
-
+        ## INIT RUN FLAGS
         t_step = 0
+        z_max = 0 # [m]
         
         done_rollout = False
         start_time_rollout = env.getTime()
@@ -213,62 +175,59 @@ for k_ep in range(ep_start,1000):
         state_history = None
         repeat_run= False
         error_str = ""
-        z_max = 0
 
+
+        print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
+        print("RREV: %.3f \t Gain_1: %.3f \t Gain_2: %.3f \t Gain_3: %.3f" %(RREV_trigger, G1, G2, 0))
+        print("Vz_d: %.3f \t Vx_d: %.3f \t Vy_d: %.3f" %(vz_d, vx_d, vy_d))
 
         # ============================
         ##          Rollout 
         # ============================
         
-        env.step('vel',v_ini,ctrl_flag=1)
-        env.step('pos',ctrl_flag=0)
-        RREV_trigger = theta_rl[0, k_run]
-
-
+        env.step('vel',v_d,ctrl_flag=1) # Set desired vel
+        env.step('pos',ctrl_flag=0) # turn off pos control
+        
         while True:
                 
-            time.sleep(5e-4) # Time step size
+            time.sleep(5e-4) # Time step size [Not sure if this is needed]
             t_step += 1
 
 
-            ## Define current state [Can we thread this to get states even when above]
+            ## DEFINE CURRENT STATE [Can we thread this to get states even when above]
             state = env.state_current
             
-            position = state[1:4]
-            orientation_q = state[4:8]
+            position = state[1:4] # [x,y,z]
+            orientation_q = state[4:8] # Orientation in quat format
             vel = state[8:11]
-            vz, vx, vy= vel[2], vel[0], vel[1]
+            vx,vy,vz = vel
             omega = state[11:14]
-            d = h_ceiling - position[2]
+            d = h_ceiling - position[2] # distance of drone from ceiling
 
-
-            RREV, OF_y, OF_x = vz/d, vx/d, vy/d # OF_x,y are optical flows of the ceiling assuming no body rotation
-            sensor_data = [RREV, OF_y, OF_x] # simplifying for data recording
-            qw = orientation_q[0]
-            qx = orientation_q[1]
-            qy = orientation_q[2]
-            qz = orientation_q[3]
-
-
-
-
-
+            ## Orientation data from state
+            qw,qx,qy,qz = orientation_q
             R = Rotation.from_quat([qx,qy,qz,qw])
             R = R.as_matrix()
-            b3 = R[2,:] # Vertical body axis
+            b3 = R[2,:] # Vertical body axis in Global axes
+            b2 = R[1,:] # Horizontal body axis
+            b1 = R[0,:] # Forward body axis (related to yaw)
+
+
+
+            RREV, OF_y, OF_x = vz/d, vx/d, vy/d # OF_x,y are estimated optical flow vals assuming no body rotation
+            sensor_data = [RREV, OF_y, OF_x] # simplified for data recording
 
 
             # ============================
             ##   Motor Shutdown Criteria 
             # ============================
-            if b3[2] < 0.0 and not flip_flag: # If b3_z is negative than shutoff motors
-                env.step('stop') # shut off motors for the rest of the run
-                print("Flipped!! Shut motors")
+            if b3[2] < 0.0 and not flip_flag: # If b3_z is negative then CF flipped
+                print("Flipped!!")
                 flip_flag = True
             
             if ((d < 0.05) and (not crash_flag) and (not flip_flag)): # might need to adjust this 
                 env.step('stop')
-                print("Crashed!! Shut motors")
+                print("Crashed!!")
                 crash_flag = True
 
             
@@ -279,18 +238,15 @@ for k_ep in range(ep_start,1000):
                 start_time_pitch = env.getTime()
                 env.enableSticky(1)
 
-                qRREV = theta_rl[1,k_run]*RREV + theta_rl[2,k_run]*abs(OF_y)
+                omega_yd = (G1*RREV + G2*abs(OF_y))*np.sign(OF_y)# + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
+                omega_xd = 0.0 #theta_rl[3,k_run] * omega_y
+                omega_zd = 0.0
 
-                pitch_rate = qRREV*np.sign(OF_y)# + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
-
-
-
-                # torque on x axis to adjust for vy
-                roll_rate = 0.0 #theta_rl[3,k_run] * omega_y
+                omega_d = [omega_xd,omega_yd,omega_zd]
 
                 print('----- pitch starts -----')
                 print('vz=%.3f, vx=%.3f, vy=%.3f' %(vz,vx,vy))
-                print('RREV=%.3f, OF_y=%.3f, OF_x=%.3f, q_pitch=%.3f' %( RREV, OF_y, OF_x,pitch_rate) )   
+                print('RREV=%.3f, OF_y=%.3f, OF_x=%.3f, q_pitch=%.3f' %( RREV, OF_y, OF_x, omega_yd) )   
                 print("Pitch Time: %.3f" %start_time_pitch)
                 #print('d_est = %.3f, d_act = %.3f' %(d,d_acutal))
                 #print('wy = %.3f , qomega = %.3f , qRREV = %.3f' %(omega[1],qomega,qRREV))
@@ -301,8 +257,7 @@ for k_ep in range(ep_start,1000):
                 
 
                 ## Start rotation and mark rotation as triggered
-                env.step('vel',ctrl_flag=0) # turn off vel control
-                env.step('omega',[roll_rate,pitch_rate,0.0],ctrl_flag=1) # set ang rate control
+                env.step('omega',omega_d,ctrl_flag=1) # set ang rate control
                 pitch_triggered = True
 
 
@@ -377,14 +332,14 @@ for k_ep in range(ep_start,1000):
 
             if done_rollout:
 
-                env.step('stop',[0,0,0],ctrl_flag=0)
+                env.step('stop')
                 reward[k_run] = agent.calculate_reward(state_history,h_ceiling)
                 time.sleep(0.01)
                 print("Reward = %.3f" %(reward[k_run]))
                 print("!------------------------End Run------------------------! \n")
                 ## Episode Plotting
                 plt.plot(k_ep,reward[k_run],marker = "_", color = "black", alpha = 0.5) 
-                plt.title("Episode: %d Run: %d # Rollouts: %d" %(k_ep,k_run+1,agent.n_rollout))
+                plt.title("Episode: %d Run: %d Rollouts: %d" %(k_ep,k_run+1,agent.n_rollout))
                 # If figure gets locked on fullscreen, press ctrl+f untill it's fixed (there's lag due to process running)
                 plt.draw()
                 plt.pause(0.001)
@@ -394,6 +349,7 @@ for k_ep in range(ep_start,1000):
         
         env.append_csv(agent,state,k_ep,k_run,sensor_data,reward=reward[k_run,0],error=error_str)
         env.append_csv_blank()
+        env.IC_csv(agent,state,'sim',k_run,v_d = v_d)
         time.sleep(0.01)
         if repeat_run == True:
             env.close_sim()

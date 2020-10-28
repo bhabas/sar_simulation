@@ -20,7 +20,7 @@ using namespace std;
 
 
 void Controller::Load(int port_number_gazebo)
-{   cout << setprecision(4);
+{   cout << setprecision(3);
     cout << fixed;
     isRunning = true;
 
@@ -283,7 +283,7 @@ void Controller::controlThread()
     
 
     // Default desired States
-    Vector3d x_d_Def(0,0,0.23); // Pos-desired (Default) [m] 
+    Vector3d x_d_Def(0,0,0.5); // Pos-desired (Default) [m]  # Should be z=0.03 but needs integral controller for error offset
     Vector3d v_d_Def(0,0,0); // Velocity-desired (Default) [m/s]
     Vector3d a_d_Def(0,0,0); // Acceleration-desired (Default) [m/s]
     Vector3d b1_d_Def(1,0,0); // Desired global pointing direction (Default)
@@ -415,7 +415,6 @@ void Controller::controlThread()
     // double att_control_flag = 0; // Controls implementation
     double flip_flag = 1; // Controls thrust implementation
     double motorstop_flag = 0; // Controls stop implementation
-    // double flip_flag = 1; // Controls gyroscopic dynamics in moment equation
 
 
 
@@ -455,7 +454,7 @@ void Controller::controlThread()
 
         // =========== Control Definitions =========== //
         // Define control_cmd from recieved control_cmd
-        if (control_cmd_recvd[0]<10) // Change to != 10 to check if not a sticky foot command
+        if (control_cmd_recvd[0]!=11) // Change to != 10 to check if not a sticky foot command
             memcpy(control_cmd, control_cmd_recvd, sizeof(control_cmd)); // Compiler doesn't work without this line for some reason? 
             Map<Matrix<double,5,1>> control_cmd_Eig(control_cmd_recvd); 
 
@@ -465,19 +464,20 @@ void Controller::controlThread()
 
         switch(type){ // Define Desired Values
 
-            case 0: // Reset all changes and return to home
+            case 0: // Reset all changes to default vals and return to home pos
                 x_d << x_d_Def;
                 v_d << v_d_Def;
                 a_d << a_d_Def;
                 b1_d << b1_d_Def;
-
                 omega_d << omega_d_Def;
+
                 kd_R = 0.005; 
 
                 kp_xf=ctrl_flag; // Reset control flags
                 kd_xf=ctrl_flag;
                 kp_Rf=ctrl_flag;
                 kd_Rf=ctrl_flag; 
+
                 motorstop_flag=0;
                 flip_flag=1;
                 // att_control_flag=0;
@@ -504,16 +504,12 @@ void Controller::controlThread()
                 kd_R = kp_omega; // Change to flip gain
 
                 omega_d << control_vals;
-                kd_Rf = ctrl_flag; // Turn control on
                 kp_xf = 0; // Turn off other controllers
                 kd_xf = 0;
                 kp_Rf = 0;
+                kd_Rf = ctrl_flag; // Turn control on and change error calc
                 
-                flip_flag = 0; 
-                // Turn gyroscopic dynamics off [maybe not needed?]
-                // Turn thrust control off
-                // Change e_omega calc
-
+                flip_flag = 0; // Turn thrust control off
                 break;
 
             case 5: // Stop Motors
@@ -628,8 +624,9 @@ void Controller::controlThread()
         
 
 
-        if (t_step%50 == 0){ // General Debugging output
-        cout << "t: " << t << "\tCmd: " << control_cmd_Eig.transpose() << endl <<
+        if (t_step%75 == 0){ // General Debugging output
+        cout << setprecision(4) <<
+        "t: " << t << "\tCmd: " << control_cmd_Eig.transpose() << endl <<
         "kp_x: " << kp_x << " \tkd_x: " << kd_x << " \tkp_R: " << kp_R << " \tkd_R: " << kd_R << "\tkd_R_fl: " << kp_omega << endl <<
         "kp_xf: " << kp_xf << " \tkd_xf: " << kd_xf << " \tkp_Rf: " << kp_Rf << " \tkd_Rf: " << kd_Rf << " \tflip_flag: " << flip_flag << endl <<
         endl <<
@@ -648,7 +645,7 @@ void Controller::controlThread()
         endl <<
         "FM: " << FM.transpose() << endl <<
         "f: " << f.transpose() << endl <<
-        endl <<
+        endl << setprecision(0) <<
         "MS_d: " << motorspeed_Vec_d.transpose() << endl <<
         "MS: " << motorspeed_Vec.transpose() << endl <<
         "=============== " << endl; 
