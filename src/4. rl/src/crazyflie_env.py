@@ -52,7 +52,6 @@ class CrazyflieEnv:
         
 
         self.queue_command = Queue(3)
-        self.path_all = np.zeros(shape=(14,8000,1))
         self.state_current = np.zeros(shape=(14))
 
         self.isRunning = True
@@ -136,11 +135,9 @@ class CrazyflieEnv:
         return self.state_current
 
 
-    def reset(self): # Disable sticky then places spawn_model at origin
+    def reset_pos(self): # Disable sticky then places spawn_model at origin
         self.enableSticky(0)
         os.system("rosservice call gazebo/reset_world")
-        self.enableSticky(0)
-        time.sleep(0.1)
         return self.state_current
     
     def recvThread_Gazebo(self): # Recieve position data from Gazebo?
@@ -164,7 +161,7 @@ class CrazyflieEnv:
 
 
     def step(self,action,ctrl_vals=[0,0,0],ctrl_flag=1): # Controller works to attain these values
-        if action =='home': # default desired values/traj.
+        if action =='reset': # default desired values/traj.
             header = 0
         elif action =='pos':  # position (x,y,z) 
             header = 1

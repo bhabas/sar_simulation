@@ -474,7 +474,10 @@ void Controller::controlThread()
                 omega_d << omega_d_Def;
                 kd_R = 0.005; 
 
-                kp_xf=1,kd_xf=1,kp_Rf=1,kd_Rf=1; // Reset control flags
+                kp_xf=ctrl_flag; // Reset control flags
+                kd_xf=ctrl_flag;
+                kp_Rf=ctrl_flag;
+                kd_Rf=ctrl_flag; 
                 motorstop_flag=0;
                 flip_flag=1;
                 // att_control_flag=0;

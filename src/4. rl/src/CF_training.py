@@ -124,6 +124,9 @@ agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_ro
 # ============================
 for k_ep in range(ep_start,1000):
 
+    np.set_printoptions(precision=2, suppress=True)
+    done = False
+
 
     mu = agent.mu
     sigma = agent.sigma
@@ -131,7 +134,7 @@ for k_ep in range(ep_start,1000):
     #mu = agent.xmean
     #sigma = np.array([agent.C[0,0],agent.C[1,1],agent.C[0,1]])
 
-    done = False
+    
 
 
 
@@ -153,7 +156,7 @@ for k_ep in range(ep_start,1000):
 
     print("theta_rl = ")
 
-    np.set_printoptions(precision=2, suppress=True)
+    
     print(theta_rl[0,:], "--> RREV")
     #print(theta_rl[1,:], "--> Gain")
     #print(theta_rl[2,:], "--> v_x Gain")
@@ -172,11 +175,9 @@ for k_ep in range(ep_start,1000):
         #image_prev = env.cv_image.flatten()
         
 
-        vz_ini = np.random.uniform(low=2.5, high=2.6)
-        vx_ini = np.random.uniform(low=2.0, high=4.0)
-        vx_ini = 0.0
-        vy_ini = 0.0
-        vz_ini = 3.0
+        vz_ini = np.random.uniform(low=2.5, high=3.0)
+        vx_ini = np.random.uniform(low=-2.0, high=2.0)
+        vy_ini = 0
         v_ini = [vx_ini,vy_ini,vz_ini] # [m/s]
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
@@ -187,9 +188,10 @@ for k_ep in range(ep_start,1000):
         print("Vz_ini: %.3f \t Vx_ini: %.3f \t Vy_ini: %.3f" %(vz_ini, vx_ini, vy_ini))
 
 
-
-        state = env.reset()
-        env.step('home') # Should be z=0.03 but needs integral controller for error offset
+        env.step('reset',ctrl_flag=1) # Reset control vals and turns off
+        state = env.reset_pos() # Reset Gazebo pos
+        # env.step('reset',ctrl_flag=1) #
+        # Should be z=0.03 but needs integral controller for error offset
         # time.sleep(1.0)
         env.IC_csv(agent,state,'sim',k_run,v_ini = v_ini)
         time.sleep(3)
@@ -317,7 +319,7 @@ for k_ep in range(ep_start,1000):
                 done_rollout = True
 
             # If time since rollout start exceeds [1.5s]
-            if (env.getTime() - start_time_rollout) > (1.5 + extra_time):
+            if (env.getTime() - start_time_rollout) > (1.5):
                 error_1 = "Rollout Completed: Time Exceeded   "
                 error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
                 # print(error_1 + "\n" + error_2)
