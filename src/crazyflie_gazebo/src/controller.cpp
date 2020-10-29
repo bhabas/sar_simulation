@@ -18,79 +18,87 @@
 using namespace Eigen;
 using namespace std;
 
+
 void Controller::Load(int port_number_gazebo)
-{
-    fd_gazebo_ = socket(AF_INET, SOCK_DGRAM, 0);
-    fd_gazebo_SNDBUF_ = 16;         // 16 bytes is 4 float
-    fd_gazebo_RCVBUF_ = 112;        // 112 bytes is 14 double
-    if (setsockopt(fd_gazebo_, SOL_SOCKET, SO_SNDBUF, &fd_gazebo_SNDBUF_, sizeof(fd_gazebo_SNDBUF_))<0)
-        cout<<"fd_gazebo_ setting SNDBUF failed"<<endl;
-    if (setsockopt(fd_gazebo_, SOL_SOCKET, SO_RCVBUF, &fd_gazebo_RCVBUF_, sizeof(fd_gazebo_RCVBUF_))<0)
-        cout<<"fd_gazebo_ setting RCVBUF failed"<<endl;
+{   cout << setprecision(3);
+    cout << fixed;
+    isRunning = true;
+
+    // =========== Gazebo Connection =========== //
+    socket_Gazebo = socket(AF_INET, SOCK_DGRAM, 0);
+    fd_gazebo_SNDBUF = 16;         // Motorspeeds to Gazebo 4 doubles (16 Bytes)
+    fd_gazebo_RCVBUF = 112;        // State info from Gazebo 14 doubles (112 Bytes)
+
+    if (setsockopt(socket_Gazebo, SOL_SOCKET, SO_SNDBUF, &fd_gazebo_SNDBUF, sizeof(fd_gazebo_SNDBUF))<0)
+        cout<<"socket_Gazebo setting SNDBUF failed"<<endl;
+
+    if (setsockopt(socket_Gazebo, SOL_SOCKET, SO_RCVBUF, &fd_gazebo_RCVBUF, sizeof(fd_gazebo_RCVBUF))<0)
+        cout<<"socket_Gazebo setting RCVBUF failed"<<endl;
+
     port_number_gazebo_ = port_number_gazebo;
 
-    memset(&sockaddr_local_gazebo_, 0, sizeof(sockaddr_local_gazebo_));
-    sockaddr_local_gazebo_.sin_family = AF_INET;
-    sockaddr_local_gazebo_.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("127.0.0.1");
-    sockaddr_local_gazebo_.sin_port = htons(18070);
-    
-    if (bind(fd_gazebo_, (struct sockaddr*)&sockaddr_local_gazebo_, sizeof(sockaddr_local_gazebo_))<0)
+    memset(&sockaddr_local_Gazebo, 0, sizeof(sockaddr_local_Gazebo));
+    sockaddr_local_Gazebo.sin_family = AF_INET;
+    sockaddr_local_Gazebo.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("127.0.0.1");
+    sockaddr_local_Gazebo.sin_port = htons(18070);
+
+    // Check for successful binding of socket to port
+    if ( bind(socket_Gazebo, (struct sockaddr*)&sockaddr_local_Gazebo, sizeof(sockaddr_local_Gazebo)) < 0)
         cout<<"Socket binding to Gazebo failed"<<endl;
     else
         cout<<"Socket binding to Gazebo succeeded"<<endl; 
 
-    memset(&sockaddr_remote_gazebo_, 0, sizeof(sockaddr_remote_gazebo_));
-    sockaddr_remote_gazebo_.sin_family = AF_INET;
-    sockaddr_remote_gazebo_.sin_addr.s_addr = htonl(INADDR_ANY);
-    sockaddr_remote_gazebo_.sin_port = htons(port_number_gazebo_);
-    sockaddr_remote_gazebo_len_ = sizeof(sockaddr_remote_gazebo_);
+    memset(&sockaddr_remote_Gazebo, 0, sizeof(sockaddr_remote_Gazebo));
+    sockaddr_remote_Gazebo.sin_family = AF_INET;
+    sockaddr_remote_Gazebo.sin_addr.s_addr = htonl(INADDR_ANY);
+    sockaddr_remote_Gazebo.sin_port = htons(port_number_gazebo_);
+    sockaddr_remote_gazebo_len = sizeof(sockaddr_remote_Gazebo);
     
-    float buf[4] = {100.0,100.0,100.0,100.0};
+    // Motorspeed send test
+    float msg[4] = {100.0,100.0,100.0,100.0};
     int len = 0;
     for(int k=0; k<2; k++)
-        len = sendto(fd_gazebo_, buf, sizeof(buf),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sizeof(sockaddr_remote_gazebo_));
+        // To Gazebo socket, send msg of len(msg)
+        len = sendto(socket_Gazebo, msg, sizeof(msg),0, (struct sockaddr*)&sockaddr_remote_Gazebo, sizeof(sockaddr_remote_Gazebo));
     if(len>0)
         cout<<"Send initial motor speed ["<<len<<" bytes] to Gazebo Succeeded! \nAvoiding threads mutual locking"<<endl;
     else
         cout<<"Send initial motor speed to Gazebo FAILED! Threads will mutual lock"<<endl;
 
-    fd_rl_ = socket(AF_INET, SOCK_DGRAM, 0);
-    fd_rl_SNDBUF_ = 112;        // 112 bytes is 14 double
-    fd_rl_RCVBUF_ = 40;         // 40 bytes is 5 double
-    if (setsockopt(fd_rl_, SOL_SOCKET, SO_SNDBUF, &fd_rl_SNDBUF_, sizeof(fd_rl_SNDBUF_))<0)
-        cout<<"fd_rl_ setting SNDBUF failed"<<endl;
-    if (setsockopt(fd_rl_, SOL_SOCKET, SO_RCVBUF, &fd_rl_RCVBUF_, sizeof(fd_rl_RCVBUF_))<0)
-        cout<<"fd_rl_ setting RCVBUF failed"<<endl;
-    memset(&sockaddr_local_rl_, 0, sizeof(sockaddr_local_rl_));
-    sockaddr_local_rl_.sin_family = AF_INET;
-    sockaddr_local_rl_.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("127.0.0.1");
-    sockaddr_local_rl_.sin_port = htons(18060);
-    if (bind(fd_rl_, (struct sockaddr*)&sockaddr_local_rl_, sizeof(sockaddr_local_rl_))<0)
+
+
+
+    // =========== Python RL Connection =========== //
+    fd_RL = socket(AF_INET, SOCK_DGRAM, 0);
+    fd_RL_SNDBUF = 112;        // 112 bytes is 14 double
+    fd_RL_RCVBUF = 40;         // 40 bytes is 5 double
+
+    // Set expected buffer for incoming/outgoing messages to RL
+    if (setsockopt(fd_RL, SOL_SOCKET, SO_SNDBUF, &fd_RL_SNDBUF, sizeof(fd_RL_SNDBUF))<0)
+        cout<<"fd_RL setting SNDBUF failed"<<endl;
+    if (setsockopt(fd_RL, SOL_SOCKET, SO_RCVBUF, &fd_RL_RCVBUF, sizeof(fd_RL_RCVBUF))<0)
+        cout<<"fd_RL setting RCVBUF failed"<<endl;
+
+    memset(&sockaddr_local_RL, 0, sizeof(sockaddr_local_RL)); // Not sure what this does
+    sockaddr_local_RL.sin_family = AF_INET; // IPv4 Format
+    sockaddr_local_RL.sin_port = htons(18060); // RL Port number
+    sockaddr_local_RL.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("127.0.0.1");
+    
+
+    if (bind(fd_RL, (struct sockaddr*)&sockaddr_local_RL, sizeof(sockaddr_local_RL))<0)
         cout<<"Socket binding to crazyflie_env.py failed"<<endl;
     else
         cout<<"Socket binding to crazyflie_env.py succeeded"<<endl;
     
-    isRunning_ = true;
-    receiverThread_gazebo_ = std::thread(&Controller::recvThread_gazebo, this);
-    //senderThread_gazebo_ = std::thread(&Controller::sendThread_gazebo, this);
-    receiverThread_rl_ = std::thread(&Controller::recvThread_rl, this);
-    controllerThread_ = std::thread(&Controller::controlThread, this);
+    
+    receiverThread_gazebo = std::thread(&Controller::recvThread_gazebo, this);
+    //senderThread_gazebo = std::thread(&Controller::sendThread_gazebo, this);
+    receiverThread_RL = std::thread(&Controller::recvThread_RL, this);
+    controllerThread = std::thread(&Controller::controlThread, this);
 
-    queue_states_ = moodycamel::BlockingReaderWriterQueue<StateFull>(5);
-    queue_motorspeed_ = moodycamel::BlockingReaderWriterQueue<MotorCommand>(5);
+    queue_states = moodycamel::BlockingReaderWriterQueue<StateFull>(5);
+    queue_motorspeed = moodycamel::BlockingReaderWriterQueue<MotorCommand>(5);
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -100,10 +108,10 @@ void Controller::recvThread_gazebo()
     double state_full[14];
     StateFull state_full_structure;
 
-    while(isRunning_)
+    while(isRunning)
     {
         //cout<<"[recvThread_gazebo] Receiving crazyflie states from Gazebo"<<endl;
-        int len = recvfrom(fd_gazebo_, state_full, sizeof(state_full),0, (struct sockaddr*)&sockaddr_remote_gazebo_, &sockaddr_remote_gazebo_len_);
+        int len = recvfrom(socket_Gazebo, state_full, sizeof(state_full),0, (struct sockaddr*)&sockaddr_remote_Gazebo, &sockaddr_remote_gazebo_len);
 
         /*if(len>0)
         {
@@ -114,8 +122,8 @@ void Controller::recvThread_gazebo()
         }*/
 
         memcpy(state_full_structure.data, state_full, sizeof(state_full));
-        queue_states_.enqueue(state_full_structure);
-        sendto(fd_rl_, state_full, sizeof(state_full),0, (struct sockaddr*)&sockaddr_remote_rl_, sockaddr_remote_rl_len_);
+        queue_states.enqueue(state_full_structure);
+        sendto(fd_RL, state_full, sizeof(state_full),0, (struct sockaddr*)&sockaddr_remote_rl, sockaddr_remote_rl_len);
     }
 }
 
@@ -125,17 +133,17 @@ void Controller::sendThread_gazebo()
     float motorspeed[4];
     MotorCommand motorspeed_structure;
 
-    while(isRunning_)
+    while(isRunning)
     {
-        queue_motorspeed_.wait_dequeue(motorspeed_structure);
+        queue_motorspeed.wait_dequeue(motorspeed_structure);
         memcpy(motorspeed, motorspeed_structure.data, sizeof(motorspeed));
 
-        //cout<<"[recvThread_rl] sending motor speed to Gazebo"<<endl;
-        int len=sendto(fd_gazebo_, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
+        //cout<<"[recvThread_RL] sending motor speed to Gazebo"<<endl;
+        int len=sendto(socket_Gazebo, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_Gazebo, sockaddr_remote_gazebo_len);
         if(len>0)
-            cout<<"[recvThread_rl] sent motor speed ["<<motorspeed[0]<<", "<<motorspeed[1]<<", "<<motorspeed[2]<<", "<<motorspeed[3]<<"]"<<endl;
+            cout<<"[recvThread_RL] sent motor speed ["<<motorspeed[0]<<", "<<motorspeed[1]<<", "<<motorspeed[2]<<", "<<motorspeed[3]<<"]"<<endl;
         else
-            cout<<"[recvThread_rl] sending motor speed to Gazebo FAILED!"<<endl;
+            cout<<"[recvThread_RL] sending motor speed to Gazebo FAILED!"<<endl;
     }
     
 }
@@ -143,43 +151,22 @@ void Controller::sendThread_gazebo()
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void Controller::recvThread_rl()
+void Controller::recvThread_RL()
 {
     float motorspeed_fake[4] = {0,0,0,0};
 
-    while(isRunning_)
+    while(isRunning)
     {
-        //cout<<"[recvThread_rl] Receiving command from RL"<<endl;
-        int len = recvfrom(fd_rl_, control_cmd_recvd, sizeof(control_cmd_recvd),0, (struct sockaddr*)&sockaddr_remote_rl_, &sockaddr_remote_rl_len_);
+        //cout<<"[recvThread_RL] Receiving command from RL"<<endl;
+        int len = recvfrom(fd_RL, control_cmd_recvd, sizeof(control_cmd_recvd),0, (struct sockaddr*)&sockaddr_remote_rl, &sockaddr_remote_rl_len);
 
-        /*if(len>0)
+
+        if(control_cmd_recvd[0]>10) // If header is 11 then enable sticky
         {
-            cout<<"Enqueue control command: ";
-            for(int k=0;k<5;k++)
-                cout<<control_cmd_recvd[k]<<", ";
-            cout<<"\n";
-        }*/
-        if(control_cmd_recvd[0]>10)
-        {
-            
             motorspeed_fake[0] = -control_cmd_recvd[0];
             motorspeed_fake[1] = control_cmd_recvd[1];
             //cout<<"Send sticky command command: "<< motorspeed_fake[0]<<", "<<motorspeed_fake[1]<<endl;
-            sendto(fd_gazebo_, motorspeed_fake, sizeof(motorspeed_fake),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
+            sendto(socket_Gazebo, motorspeed_fake, sizeof(motorspeed_fake),0, (struct sockaddr*)&sockaddr_remote_Gazebo, sockaddr_remote_gazebo_len);
 
             /*if (control_cmd_recvd[1]<0.5)     // reset_world signal
             {
@@ -264,145 +251,297 @@ Matrix3d hat(Vector3d a) // Input a hat vector and output corresponding skew-sym
 
 
 void Controller::controlThread()
-{   
+{
+
+    // =========== Controller Explanation =========== //
+    // https://www.youtube.com/watch?v=A27knigjGS4&list=PL_onPhFCkVQhuPiUxUW2lFHB39QsavEEA&index=46
+    // Derived from DOI's: 10.1002/asjc.567 (T. Lee) & 10.13140/RG.2.2.12876.92803/1 (M. Fernando)
     typedef Matrix<double, 3, 3, RowMajor> RowMatrix3d; 
 
-    double state_full[14];
+    
     StateFull state_full_structure;
-    float motorspeed[4];
     MotorCommand motorspeed_structure;
 
-    int type = 5; // Command type {1:Pos, 2:Vel, 3:Att, 4:Omega, 5:Stop}
-    int ctrl_flag; // On/Off switch for controller
+    float motorspeed[4];
+    double state_full[14];
+    
+
+    int type; // Command type {1:Pos, 2:Vel, 3:Att, 4:Omega, 5:Stop}
+    double ctrl_flag; // On/Off switch for controller
     double control_cmd[5];
     Vector3d control_vals;
     
 
     // State Declarations
-    double orientation_q[4];
 
-    Vector3d pos; // current position [m]
-    Vector3d vel; // current velocity [m]
-    Vector4d quat_Eig; // current attitude [rad] (quat form)
-    Vector3d eul_d; // current attitude [rad] (roll, pitch, yaw angles)
-    Vector3d omega; // current angular velocity [rad/s]
-
-    
-    double R[3][3];
+    Vector3d pos; // Current position [m]
+    Vector3d vel; // Current velocity [m]
+    Vector4d quat_Eig; // Current attitude [rad] (quat form)
+    Vector3d eul; // Current attitude [rad] (roll, pitch, yaw angles)
+    Vector3d omega; // Current angular velocity [rad/s]
 
     
+
+    // Default desired States
+    Vector3d x_d_Def(0,0,0.23); // Pos-desired (Default) [m]  # Should be z=0.03 but needs integral controller for error offset
+    Vector3d v_d_Def(0,0,0); // Velocity-desired (Default) [m/s]
+    Vector3d a_d_Def(0,0,0); // Acceleration-desired (Default) [m/s]
+    Vector3d b1_d_Def(1,0,0); // Desired global pointing direction (Default)
+    Vector3d omega_d_Def(0,0,0);
+    
+
     // State Error and Prescriptions
-    Vector3d x_d; // Pose-desired [m] 
+    Vector3d x_d; // Pos-desired [m] 
     Vector3d v_d; // Velocity-desired [m/s]
-    Vector3d a_d(0,0,0); // Acceleration-desired [m/s]
+    Vector3d a_d; // Acceleration-desired [m/s]
 
+    Matrix3d R_d; // Rotation-desired 
+    Matrix3d R_d_custom; // Rotation-desired (ZXY Euler angles)
+    Vector3d eul_d; // Desired attitude (ZXY Euler angles) [rad] (roll, pitch, yaw angles)
+    Vector3d omega_d; // Omega-desired [rad/s]
+    Vector3d domega_d(0,0,0); // Omega-Accl. [rad/s^2]
 
-    Matrix3d R_d; // Rotation-desired (pitch, roll, yaw euler angles)
-    Vector3d omega_d; // Omega-desired
-    Vector3d domega_d(0,0,0);
+    Vector3d b1_d; // Desired yaw direction of body-fixed axis (COM to prop #1)
+    Vector3d b2_d; // Desired body-fixed axis normal to b1 and b3
+    Vector3d b3_d; // Desired body-fixed vertical axis
 
-    Vector3d e_x; // Pose-Error
-    Vector3d e_v; // Vel-error 
-    Vector3d e_R; // Rotation-error
-    Vector3d e_omega; // Omega-error
+    Vector3d e_x; // Pos-Error [m]
+    Vector3d e_v; // Vel-error  [m/s]
+    Vector3d e_intg; // Integrated Pos-Error [m*s]
+    Vector3d e_R; // Rotation-error [rad]
+    Vector3d e_omega; // Omega-error [rad/s]
 
     
+
+
+    // Matrix3d J_temp;
+    // J_temp << 16.5717,0.8308,0.7183,
+    //           0.8308,16.6556,1.8002,
+    //           0.7183,1.8002,29.2617; // Sourced from J. Forster
+    // J = J_temp*1e-6;
+
+
+
+
+    Vector3d e3(0,0,1); // Global z-axis
+
+    
+
+
+
+
+    Vector3d F_thrust_ideal; // Ideal thrust vector to minimize error   
+    Vector3d Gyro_dyn; // Gyroscopic dynamics of system [Nm]
+    Vector3d M; // Moment control vector [Nm]
+    
+    
+    Vector4d FM; // Thrust-Moment control vector (4x1)
+    Vector4d f; // Propeller thrusts [N]
+    double F_thrust;
+
+
+    
+
+    Vector4d motorspeed_Vec_d; // Desired motorspeeds [rad/s]
+    Vector4d motorspeed_Vec; // Motorspeeds [rad/s]
+
+
+    Vector3d b3; // Body-fixed vertical axis
+    Quaterniond q;
+    Matrix3d R; // Body-Global Rotation Matrix
+    
+
+
+    
+    // Controller Values
+    Vector4d Ctrl_Gains; 
+    double kp_x = 0.1;   // Pos. Gain
+    double kd_x = 0.08;  // Pos. derivative Gain
+    double ki_x = 0.05*0; // Pos. integral Gain
+    double kp_R = 0.05;  // Rot. Gain // Keep checking rotational speed
+    double kd_R = 0.006; // Rot. derivative Gain
+
+    double kp_omega = 0.0005; 
+    // Omega proportional gain (similar to kd_R but that's for damping and this is to achieve omega_d)
+    // (0.0003 Fully saturates motors to get to omega_max (40 rad/s))
+    // kd_R is great for stabilization but for flip manuevers it's too sensitive and 
+    // saturates the motors causing instability during the rotation
+
+    // Controller Flags
+    double kp_xf = 1; // Pos. Gain Flag
+    double kd_xf = 1; // Pos. derivative Gain Flag
+    double kp_Rf = 1; // Rot. Gain Flag
+    double kd_Rf = 1; // Rot. derivative Gain Flag
+
+    
+
+
+    double yaw; // Z-axis [rad/s]
+    double roll; // X-axis [rad/s]
+    double pitch; // Y-axis [rad/s]
+
+
+
+    // might need to adjust weight to real case (sdf file too)
+    double m = 0.026 + 0.00075*4; // Mass [kg]
+    double g = 9.8066; // Gravitational acceleration [m/s^2]
+    double t = 0; // Time from Gazebo [s]
+    double t_prev = 0; // Prev time val [s]
+    double dt = 0;  // Time difference [s]
+    unsigned int t_step = 0; // t_step counter
+
+
+
+    // System Constants
+    double d = 0.040; // Distance from COM to prop [m]
+    double d_p = d*sin(M_PI/4);
+
+    double kf = 2.21e-8; // Thrust constant [N/(rad/s)^2]
+    double c_Tf = 0.00612; // Moment Constant [Nm/N]
 
     Matrix3d J; // Rotational Inertia of CF
     J<< 1.65717e-05, 0, 0,
         0, 1.66556e-05, 0,
         0, 0, 2.92617e-05;
 
-    Matrix4d Gamma_inv; // Calculated by Matlab but not sure what it is
-    Gamma_inv << 0.25, -7.6859225, -7.6859225, -41.914296,
-                     0.25,  7.6859225,  7.6859225, -41.914296,
-                     0.25,  7.6859225, -7.6859225,  41.914296,
-                     0.25, -7.6859225,  7.6859225,  41.914296;
+    Matrix4d Gamma; // Thrust-Moment control vector conversion matrix
+    Gamma << 1,     1,     1,     1, // Motor thrusts = Gamma*Force/Moment vec
+             d_p,   d_p,  -d_p,  -d_p, 
+            -d_p,   d_p,   d_p,  -d_p, 
+            c_Tf,  -c_Tf, c_Tf,  -c_Tf;
+    Matrix4d Gamma_I = Gamma.inverse(); // Calc here once to reduce calc load
 
 
-    Matrix4d Gamma;
-
-
-    // gamma = np.mat( [[1,1,1,1], [-d,d,d,-d], [-d,d,-d,d], [-c_tau,-c_tau,c_tau,c_tau]] )
-
-    Vector3d e3(0,0,1); // Global z-axis
-
-    
-
-    Vector3d b1_d; // Desired yaw direction of body-fixed axis (COM to prop #1)
-    Vector3d b2_d; // Desired body-fixed axis normal to b1 and b3
-    Vector3d b3_d; // Desired body-fixed vertical axis
-
-
-    Vector3d f_thrust_ideal; // Ideal thrust vector to minimize error   
-    Vector3d tau; // Moment control vector
-    
-    Vector4d FT;
-    Vector4d f;
-
-
-    
-
-    Vector4d motorspeed_square;
-    Vector4d motorspeed_Eig; // motorspee
-
-    Vector3d b3; // body-fixed vertical axis
-    
-
-
-    
-
-
-    double t;
-
-
-    
-
-
-    // Controller Values
-    // only kp_v and kp_R12 matter for vel control
-    double kp_x = 0.15; // Positional Gain
-    double kp_v = 3.25; // Velocity Gain
-
-    double kp_R12 = 0.55;// Kp_R
-    double kd_R12 = 0.1; // Kd_R
-    double kp_R34 = 1e-5; // Are these for roll and pitch?
-    double kd_R34 = 5e-4;
-
-
-    double kp_R = 1e-5;
-    double kd_R = 5e-4;
-    double kd_R2 = 1e-6;
-    double c_T = 1.2819184e-8; // Motor constant
-
-
-    double f_thrust = 0;
-    // might need to adjust weight to real case (sdf file too)
-
-    double m = 0.026 + 0.00075*4; // Mass [kg]
-    double g = 9.8066; // Gravitational acceleration [m/s^2]
-    double f_hover = m*g; // Force to hover
-
-
-    double d; //= ___; // distance from COM to prop
-    double c_Tf;// = _____ // Ratio between km and kf (Not sure what these correspond to)
-    Gamma << 1,    1,     1,    1,
-                 0,   -d,     0,    d,
-                 d,    0,    -d,    0,
-                -c_Tf, c_Tf, -c_Tf, c_Tf;
- 
 
   
+    
+    // 1 is on | 0 is off by default
+    // double att_control_flag = 0; // Controls implementation
+    double flip_flag = 1; // Controls thrust implementation
+    double motorstop_flag = 0; // Controls stop implementation
 
 
-    unsigned int k_run = 0; // Run counter
 
-    while(isRunning_)
+   
+    double w; // Angular frequency for trajectories [rad/s]
+    double b; // Amplitude for trajectories [m]
+
+    // =========== Trajectory Definitions =========== //
+    x_d << x_d_Def;
+    v_d << v_d_Def;
+    a_d << a_d_Def;
+    b1_d << b1_d_Def;
+
+    while(isRunning)
     {
-        k_run++;
+
+        
+      
+        // if (t>=8.1){ // Vertical Petal Traj.
+        // w = 3.0; // rad/s
+        // x_d << (cos(M_PI/2 + t*w)*cos(t))/2, 0, (cos(M_PI/2 + t*w)*sin(t))/2 + 1;
+        // v_d << (sin(t*w)*sin(t))/2 - (w*cos(t*w)*cos(t))/2, 0, - (sin(t*w)*cos(t))/2 - (w*cos(t*w)*sin(t))/2;
+        // a_d  << (sin(t*w)*cos(t))/2 + w*cos(t*w)*sin(t) + (pow(w,2)*sin(t*w)*cos(t))/2, 0, (sin(t*w)*sin(t))/2 - w*cos(t*w)*cos(t) + (pow(w,2)*sin(t*w)*sin(t))/2;
+        // b1_d << 1,0,0;
+        // }
+
+        // if (t>=20){ // Horizontal Circle Traj.
+        // w = 2.0; // rad/s
+        // b = 0.5;
+        // x_d << b*cos(t*w), b*sin(t*w), 1.5;
+        // v_d << -b*w*sin(t*w), b*w*cos(t*w), 0;
+        // a_d << -b*pow(w,2)*cos(t*w), -b*pow(w,2)*sin(t*w), 0;
+        // b1_d << 1,0,0;
+        // }
+
+
+
+        // =========== Control Definitions =========== //
+        // Define control_cmd from recieved control_cmd
+        if (control_cmd_recvd[0]!=11) // Change to != 10 to check if not a sticky foot command
+            memcpy(control_cmd, control_cmd_recvd, sizeof(control_cmd)); // Compiler doesn't work without this line for some reason? 
+            Map<Matrix<double,5,1>> control_cmd_Eig(control_cmd_recvd); 
+
+        type = control_cmd_Eig(0); // Command type
+        control_vals = control_cmd_Eig.segment(1,3); // Command values
+        ctrl_flag = control_cmd_Eig(4); // Controller On/Off switch
+
+        switch(type){ // Define Desired Values
+
+            case 0: // Reset all changes to default vals and return to home pos
+                x_d << x_d_Def;
+                v_d << v_d_Def;
+                a_d << a_d_Def;
+                b1_d << b1_d_Def;
+                omega_d << omega_d_Def;
+
+                kd_R = 0.005; 
+
+                kp_x = 0.1;   // Pos. Gain
+                kd_x = 0.1;  // Pos. derivative Gain
+                ki_x = 0.05; // Pos. integral Gain
+                kp_R = 0.05;  // Rot. Gain // Keep checking rotational speed
+                kd_R = 0.005; // Rot. derivative Gain
+
+                e_intg <<0,0,0; 
+
+                kp_xf=ctrl_flag; // Reset control flags
+                kd_xf=ctrl_flag;
+                kp_Rf=ctrl_flag;
+                kd_Rf=ctrl_flag; 
+
+                motorstop_flag=0;
+                flip_flag=1;
+                // att_control_flag=0;
+                break;
+
+            case 1: // Position
+                x_d << control_vals;
+                kp_xf = ctrl_flag;
+                break;
+
+            case 2: // Velocity
+                v_d << control_vals;
+                kd_xf = ctrl_flag;
+                break;
+
+            case 3: // Attitude [Implementation needs to be finished]
+                eul_d << control_vals;
+                kp_Rf = ctrl_flag;
+
+                // att_control_flag = ctrl_flag;
+                break;
+
+            case 4: // Exectute Flip
+                kd_R = kp_omega; // Change to flip gain
+
+                omega_d << control_vals;
+                kp_xf = 0; // Turn off other controllers
+                kd_xf = 0;
+                kp_Rf = 0;
+                kd_Rf = ctrl_flag; // Turn control on and change error calc
+                
+                flip_flag = 0; // Turn thrust control off
+                break;
+
+            case 5: // Stop Motors
+                motorstop_flag = ctrl_flag;
+                break;
+
+            case 6: // Reassign new control gains
+                Ctrl_Gains << control_vals,ctrl_flag;
+                kp_x = Ctrl_Gains(0);
+                kd_x = Ctrl_Gains(1);
+                // ki_x = Ctrl_Gains(2);
+                kp_R = Ctrl_Gains(2);
+                kd_R = Ctrl_Gains(3);
+                break;
+        }
+
+        // =========== State Definitions =========== //
 
         // Define state_full from recieved Gazebo states and break into corresponding vectors
-        queue_states_.wait_dequeue(state_full_structure);
+        queue_states.wait_dequeue(state_full_structure);
         // memcpy(state_full, state_full_structure.data, sizeof(state_full));
 
         Map<Matrix<double,1,14>> state_full_Eig(state_full_structure.data); // Convert threaded array to Eigen vector     
@@ -410,187 +549,137 @@ void Controller::controlThread()
         quat_Eig = state_full_Eig.segment(3,4);
         vel = state_full_Eig.segment(7,3);
         omega = state_full_Eig.segment(10,3);
-        t = state_full_Eig(13);
+        t = state_full_Eig(13); 
+        dt = t - t_prev;
+
+        
         
 
-    
-
-        // Define control_cmd from recieved control_cmd
-        if (control_cmd_recvd[0]<10) // There is a case where control_cmd_recvd becomes 11 but I'm not sure why?
-            memcpy(control_cmd, control_cmd_recvd, sizeof(control_cmd)); // Compiler doesn't work without this line for some reason? 
-            Map<Matrix<double,5,1>> control_cmd_Eig(control_cmd_recvd); 
 
 
 
-        type = control_cmd_Eig(0); // Command type
-        control_vals = control_cmd_Eig.segment(1,3); // Command values
-        ctrl_flag = control_cmd_Eig(4); // Controller On/Off switch (To be implemented)
-
-
-
-        // Quaternion to Rotation Matrix Conversion
-        Quaterniond q;
+        // =========== Rotation Matrix =========== //
+        // R changes Body axes to be in terms of Global axes
+        // https://www.andre-gaschler.com/rotationconverter/
         q.w() = quat_Eig(0);
         q.vec() = quat_Eig.segment(1,3);
-        Matrix3d R_Eig = q.normalized().toRotationMatrix(); 
-        // I'm not sure if this from Body->World or World->Body
+        R = q.normalized().toRotationMatrix(); // Quaternion to Rotation Matrix Conversion
         
+        yaw = atan2(R(1,0), R(0,0)); 
+        roll = atan2(R(2,1), R(2,2)); 
+        pitch = atan2(-R(2,0), sqrt(R(2,1)*R(2,1)+R(2,2)*R(2,2)));
+    
+        b3 = R*e3; // body vertical axis in terms of global axes
 
 
-        if (type == 1 || type == 2)
-        {
-            if (type == 1) // position error calc 
-            {   
-                
-                x_d = control_vals; // Set desired position from thread
-                a_d << 0,0,0; // Set desired acceleration from thread (default to zero for our typical use)
-
-                // x_d = _______ // Set desired position from a path function e.g. [cos(pi*t),sin(pi*t),2]
-                // v_d = ______ // Set desired velocity from a path function e.g. [-pi*sin(pi*t),pi*cos(pi*t),0]
-                // a_d = ______ // Set desired acceleration from a path function e.g. [-pi^2*cos(pi*t),-pi^2*sin(pi*t),0]
-
-                e_x = pos - x_d; //  Position Error
-            }
-            else if (type == 2) // velocity error calc
-            {   
-                v_d = control_vals; // velocity desired
-                e_v = vel - v_d; // velocity error 
-            }
-
-            e_x << 0,0,0; // Errors will need to be set to zero when not being used ============
-
-
-
-            // =========== Calculate the prescribed thrust =========== //  
-            // 
-            // This is in terms of the global axes [x,y,z] => [e1,e2,e3] 
-            // 
-            // Calculates total error in 3D space and the required thrust vector to exponentially minimize it
-            // but because thrust is locked in b3 direction, while error vector can point anywhere,
-            // we project the vector onto b3 to get "close" and then use the moments to align it
-            //
-            // https://www.youtube.com/watch?v=A27knigjGS4&list=PL_onPhFCkVQhuPiUxUW2lFHB39QsavEEA&index=46
-
-            b3 = R_Eig.col(2); // current orientation of b3 vector
-            f_thrust_ideal = -kp_x*e_x + -kp_v*e_v + m*g*e3 - m*a_d; // thrust error vector
-            f_thrust = f_thrust_ideal.dot(b3); // ideal thrust projected onto b3
-
-            // If the prescribed thrust is globally z-negative then turn thrust 
-            // off so it doesn't dive bomb in a fiery explosion of death (or break)
-            if (f_thrust_ideal(2)<0)
-                f_thrust_ideal(2) = 0.01;
-
-            
-
-            // =========== Calculate desired body-fixed axes =========== //
-            // Defines the desired yaw angle of CF (Facing positive x-axis)
-
-            b1_d << 1,0,0;  // b1 is unit basis vector from COG to propeller (one?)
-            b3_d= f_thrust_ideal.normalized(); // body-fixed vertical axis
-
-            b2_d = b3_d.cross(b1_d); // body-fixed axis to prop (2?)
-            b2_d.normalize();
-            
-
-            // =========== Calculate Rotational Error Matrix =========== // 
-            R_d << b1_d, b2_d, b3_d; // concatinating column vectors of desired body axes
-            e_R = dehat(0.5*(R_d.transpose()*R_Eig - R_Eig.transpose()*R_d));
-
-
-
-            // Just fix code so omega_d = zero          
-            // This is a trick to have because omega_d set = 0 so e_omega = omega-omega_d ======================= 
-            e_omega = omega; // This is wrong way and purely temporary to keep consistent with the current controller =============
-
-
-            // =========== Calculate Moment Vector (tau or M) =========== //
-            tau = -kp_R12*e_R + -kd_R12*e_omega + omega.cross(J*omega) 
-                    + J*(hat(omega_d)*R_Eig.transpose()*R_d*omega_d - R_Eig.transpose()*R_d*domega_d); 
-
-
-        } 
-        else if (type == 3 || type==4)
-        {
-            if (type == 3) // attitude control
-            {
-                eul_d = control_vals;
-
-                R_d  <<  cos(eul_d(1)),  0,  sin(eul_d(1)), // This is locking us in only pitch ==========
-                             0,            1,  0,
-                            -sin(eul_d(1)),  0,  cos(eul_d(1));
-
-                e_R = dehat(0.5*(R_d.transpose()*R_Eig - R_Eig.transpose()*R_d));
-                e_omega = omega; // This is the wrong way and purely temporary to keep consistent with the current controller =============
-            }
-            else if (type == 4)// Angular velocity control
-            {
-                omega_d = control_vals;
-
-                omega_d(0) = omega(0) + omega_d(0); // I can't quite follow this ================
-                omega_d(2) = omega(2) + omega_d(2);
-                
-                e_R << 0,0,0;
-                e_omega = omega - omega_d;
-            }
-
-            if (R_Eig(2,2) > 0.7) // If pitch angle is > 45 deg then divide by cos of pitch angle? ===========
-                f_thrust = f_hover/R_Eig(2,2);
-            else 
-                f_thrust = f_hover/0.7; // Otherwise divide hover
-
-            tau = -kp_R34*e_R + -kd_R34*e_omega + omega.cross(J*omega); 
-        }
-        else if (type == 5)// If command[0] = 5 stop all thrust
-        {
-            f_thrust = 0;
-            tau << 0,0,0;
-            
-        }
+        // =========== Translational Errors & Desired Body-Fixed Axes =========== //
+        e_x = pos - x_d; 
+        e_v = vel - v_d;
         
+        e_intg += e_x*dt;
 
-        FT << f_thrust, tau; // Controller prescribed thrust and moments
-        f = Gamma_inv*FT; // Eq.5 - Convert prescribed thrust and moments to individual motor thrusts
-        motorspeed_square = f/c_T; // 
-        
-        
-
-        // If squared motorspeed^2 is negative cap at zero
-        // Why that'd be the case? I don't know
-        for(int k_motor=0;k_motor<4;k_motor++)
-        {
-            if(motorspeed_square(k_motor)<0){
-                motorspeed_square(k_motor) = 0;}
-            else if (isnan(motorspeed_square(k_motor))){
-               motorspeed_square(k_motor) = 0;}
-        }
-        
- 
-
-        if(R_Eig(2,2)<0) // If pitch angle goes less than 90 deg then shut off motors
-        {
-            motorspeed_square(0) = 0;
-            motorspeed_square(1) = 0;
-            motorspeed_square(2) = 0;
-            motorspeed_square(3) = 0;
-        }
-
-        motorspeed_Eig = motorspeed_square.array().sqrt();
-        Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Eig.cast <float> (); // Converts motorspeeds to C++ array for data transmission
+        F_thrust_ideal = -kp_x*kp_xf*e_x + -kd_x*kd_xf*e_v + -ki_x*e_intg + m*g*e3 + m*a_d; // ideal control thrust vector
+        b3_d = F_thrust_ideal.normalized(); // desired body-fixed vertical axis
+        b2_d = b3_d.cross(b1_d).normalized(); // body-fixed horizontal axis
 
 
-        // double ms_min = 0.0;
-        // double ms_max = 3420.0;
-        // for (int i =0; i<4;i++) { // clamp motor speed (based on max thrust (0.6) speed)
-        //     motorspeed[i] = math::clamp(motorspeed[i],ms_min,ms_max);
+
+        // =========== Rotational Errors =========== // 
+        R_d << b2_d.cross(b3_d).normalized(),b2_d,b3_d; // Desired rotational axis
+                                                        // b2_d x b3_d != b1_d (look at derivation)
+
+        // if (att_control_flag == 1){ // [Attitude control will be implemented here]
+        //     R_d = R_d_custom;
         // }
 
-        // cout causing wierd behavior?????
-        //if ( k_run%50 == 1 ) {
-        //        cout<<"motor speed ["<< motorspeed[0]<<", "<< motorspeed[1]<<", "<< motorspeed[2]<<", "<<motorspeed[3]<<"]"<<endl;
-        //}   
-        sendto(fd_gazebo_, motorspeed, sizeof(motorspeed),0, (struct sockaddr*)&sockaddr_remote_gazebo_, sockaddr_remote_gazebo_len_);
-    
-    
+        e_R = 0.5*dehat(R_d.transpose()*R - R.transpose()*R_d); // Rotational error
+        e_omega = omega - R.transpose()*R_d*omega_d; // Ang vel error 
+        // (Omega vecs are on different "space manifolds" so they need to be compared this way) - This is beyond me lol
+        
+
+        if(flip_flag == 0){ // I've just sold my soul by doing this
+            e_omega(2) = 0; // Remove yaw control when executing flip
+        }
+
+
+
+        // =========== Control Equations =========== // 
+        F_thrust = F_thrust_ideal.dot(b3)*(flip_flag); // Thrust control value
+        Gyro_dyn = omega.cross(J*omega) - J*(hat(omega)*R.transpose()*R_d*omega_d - R.transpose()*R_d*domega_d); // Gyroscopic dynamics
+        M = -kp_R*e_R*(kp_Rf) + -kd_R*e_omega*(kd_Rf) + Gyro_dyn; // Moment control vector
+        FM << F_thrust,M; // Thrust-Moment control vector
+
+
+
+        // =========== Propellar Thrusts/Speeds =========== //
+        f = Gamma_I*FM; // Propeller thrusts
+        motorspeed_Vec_d = (1/kf*f).array().sqrt(); // Calculated motorspeeds
+        motorspeed_Vec = motorspeed_Vec_d; // Actual motorspeeds to be capped
+
+
+        // Cap motor thrusts between 0 and 2500 rad/s
+        for(int k_motor=0;k_motor<4;k_motor++) 
+        {
+            if(motorspeed_Vec(k_motor)<0){
+                motorspeed_Vec(k_motor) = 0;
+            }
+            else if(isnan(motorspeed_Vec(k_motor))){
+                motorspeed_Vec(k_motor) = 0;
+            }
+            else if(motorspeed_Vec(k_motor)>= 2500){ // Max rotation speed (rad/s)
+                // cout << "Motorspeed capped - Motor: " << k_motor << endl;
+                motorspeed_Vec(k_motor) = 2500;
+            }
+        }
+
+        if(b3(2) <= 0){ // If e3 component of b3 is neg, turn motors off [arbitrary amount]
+            motorspeed_Vec << 0,0,0,0;
+        }
+
+
+        if(motorstop_flag == 1){ // Shutoff all motors
+            motorspeed_Vec << 0,0,0,0;
+        }
+        
+
+
+        if (t_step%75 == 0){ // General Debugging output
+        cout << setprecision(4) <<
+        "t: " << t << "\tCmd: " << control_cmd_Eig.transpose() << endl <<
+        "kp_x: " << kp_x << " \tkd_x: " << kd_x << " \tkp_R: " << kp_R << " \tkd_R: " << kd_R << "\tkd_R_fl: " << kp_omega << endl <<
+        "kp_xf: " << kp_xf << " \tkd_xf: " << kd_xf << " \tkp_Rf: " << kp_Rf << " \tkd_Rf: " << kd_Rf << " \tflip_flag: " << flip_flag << endl <<
+        "ki_x: " << ki_x  << "\t e_x_I: " << e_intg.transpose() <<
+        endl <<
+        "x_d: " << x_d.transpose() << endl <<
+        "v_d: " << v_d.transpose() << endl <<
+        "omega_d: " << omega_d.transpose() << endl <<
+        endl << 
+        "pos: " << pos.transpose() << "\tex: " << e_x.transpose() << endl <<
+        "vel: " << vel.transpose() << "\tev: " << e_v.transpose() << endl <<
+        "omega: " << omega.transpose() << "\te_w: " << e_omega.transpose() << endl <<
+        endl << 
+        "R:\n" << R << "\n\n" << 
+        "R_d:\n" << R_d << "\n\n" << 
+        "Yaw: " << yaw*180/M_PI << "\tRoll: " << roll*180/M_PI << "\tPitch: " << pitch*180/M_PI << endl <<
+        "e_R: " << e_R.transpose() << "\te_R (deg): " << e_R.transpose()*180/M_PI << endl <<
+        endl <<
+        "FM: " << FM.transpose() << endl <<
+        "f: " << f.transpose() << endl <<
+        endl << setprecision(0) <<
+        "MS_d: " << motorspeed_Vec_d.transpose() << endl <<
+        "MS: " << motorspeed_Vec.transpose() << endl <<
+        "=============== " << endl; 
+        printf("\033c"); // clears console window
+        }
+
+     
+        Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Vec.cast <float> (); // Converts motorspeeds to C++ array for data transmission
+        sendto(socket_Gazebo, motorspeed, sizeof(motorspeed),0, // Send motorspeeds to Gazebo -> gazebo_motor_model?
+                (struct sockaddr*)&sockaddr_remote_Gazebo, sockaddr_remote_gazebo_len); 
+
+        t_step++;
+        t_prev = t;
+
     }
 }
 
@@ -599,9 +688,7 @@ void Controller::controlThread()
 int main()
 {
     Controller controller;
-    
-    controller.Load(18080);
-
+    controller.Load(18080); // Run controller as a thread
 
     while(1)
     {

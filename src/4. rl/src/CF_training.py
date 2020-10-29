@@ -23,13 +23,13 @@ os.system("clear")
 
 ## Initialize the environment
 username = getpass.getuser()
-env = CrazyflieEnv(port_self=18050, port_remote=18060,username = username)
+env = CrazyflieEnv()
 print("Environment done")
 
 ## Initialize the user and data recording
 start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
-file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time + '.csv'
-env.create_csv(file_name,record = False)
+file_name = './src/4. rl/src/log/' + username + start_time + '.csv'
+env.create_csv(file_name,record = True)
 
 
 ## Initial figure setup
@@ -43,14 +43,12 @@ plt.ylabel("Reward")
 plt.title("Episode: %d Run: %d" %(0,0))
 plt.show() 
 
-# Variables for current and previous image from camera sensor
-image_prev = np.array(0)
-image_now = np.array(0)
+
 
 ## Sim Parameters
 ep_start = 0 # Default episode start position
 h_ceiling = 1.5 # meters
-extra_time = 0.0
+
 
 
 
@@ -64,9 +62,8 @@ alpha_mu = np.array([[0.2]])#[2.0]] )#,[0.1]])
 alpha_sigma = np.array([[0.1] ])#, [1.0]])#,[0.05]])
 
 ## Initial parameters for gaussian function
-
-mu = np.array([[4.0]])# ,[1.5]])#,[1.5]])   # Initial estimates of mu: 
-sigma = np.array([[1.0]])#,[0.0]])# ,[0.75]])      # Initial estimates of sigma: 
+mu = np.array([[4.5],[-4.5], [1.5] ])# ,[1.5]])#,[1.5]])   # Initial estimates of mu: 
+sigma = np.array([[1.5],[1.5] ,[0.25] ])# ,[0.75]])      # Initial estimates of sigma: 
 
 # noise tests all started at:
 #mu = np.array([[5.0],[-5.0] ])
@@ -101,26 +98,6 @@ agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_ro
 #agent = CMA_sym(n=2,gamma=0.9)
 
 
-# extra_time = 0.0 # 0.2   # **** Moved this to be with the other sim params above
-
-
-
-
-
-
-# ============================
-##        Data Loading 
-# ============================
-
-## Uncomment and input starting episode and data_path to recorded csv file to run
-# ep_start = 9
-# data_path = '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/bhabas_2020-09-21_16:35:43.csv'
-# alpha_mu, alpha_sigma, mu, sigma = env.load_csv(data_path,ep_start)
-
-
-
-
-
 
 
 # ============================
@@ -128,16 +105,19 @@ agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_ro
 # ============================
 for k_ep in range(ep_start,1000):
 
+    np.set_printoptions(precision=2, suppress=True)
+    done = False
 
     mu = agent.mu
     sigma = agent.sigma
 
+    reward = np.zeros(shape=(2*agent.n_rollout,1))
+    reward[:] = np.nan  # initialize reward to be NaN array, size n_rollout x 1
+    theta_rl,epsilon_rl = agent.get_theta()
+
     #mu = agent.xmean
     #sigma = np.array([agent.C[0,0],agent.C[1,1],agent.C[0,1]])
 
-    done = False
-
-    # os.system("python3 start_training_reactive_sysPEPG > output.txt")
 
     print("=============================================")
     print("STARTING Episode # %d" %k_ep)
@@ -149,20 +129,11 @@ for k_ep in range(ep_start,1000):
     print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[0], sigma[0], sigma[0]))
     print('\n')
 
-
-    
-    reward = np.zeros(shape=(2*agent.n_rollout,1))
-    #reward = np.zeros(shape=(agent.n_rollout,1))
-    reward[:] = np.nan  # initialize reward to be NaN array, size n_rollout x 1
-    theta_rl,epsilon_rl = agent.get_theta()
-
     print("theta_rl = ")
-
-    np.set_printoptions(precision=2, suppress=True)
     print(theta_rl[0,:], "--> RREV")
-    #print(theta_rl[1,:], "--> Gain")
-    #print(theta_rl[2,:], "--> v_x Gain")
-    #print(theta_rl[3,:], "--> omega_y Gain")
+    print(theta_rl[1,:], "--> Gain")
+    # print(theta_rl[2,:], "--> v_x Gain")
+    # print(theta_rl[3,:], "--> omega_y Gain")
 
 
 
@@ -171,49 +142,28 @@ for k_ep in range(ep_start,1000):
     # ============================
     k_run = 0
     while k_run < 2*agent.n_rollout:
-        
-        # take initial camera measurements 
-        #image_now = env.cv_image.flatten()
-        #image_prev = env.cv_image.flatten()
-        
+
+        ## RESET TO INITIAL STATE
+        env.step('home',ctrl_flag=1) # Reset control vals and functionality
+        state = env.reset_pos() # Reset Gazebo pos
+        time.sleep(3.0) # time for CF to settle
 
 
-        vz_ini = np.random.uniform(low=2.0, high=3.0)
-        #vx_ini = np.random.uniform(low=-2.5, high=2.5)
-        vx_ini = 0.0#np.random.normal(0.0,1.0)
-
-        vy_ini = 0.0#np.random.uniform(low=-1.5, high=1.5)
-        v_ini = [vz_ini,vx_ini,vy_ini]
+        ## INIT RUN PARAMETERS
+        RREV_trigger = theta_rl[0, k_run] # FOV expansion velocity [rad/s]
+        G1 = theta_rl[1, k_run]
+        G2 = theta_rl[2, k_run]
+     
+        vz_d = np.random.uniform(low=2.5, high=3.0)
+        vx_d = np.random.uniform(low=-2.0, high=2.0)
+        vy_d = 0 
+        v_d = [vx_d,vy_d,vz_d] # [m/s]
         # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
-        #v_mag = np.random.uniform(low=0.0,high=2.0)
-        #angle = np.random.uniform(low=0.0,high=2.0*pi)
 
-        #vx_ini = v_mag*cos(angle)
-        #vy_ini = v_mag*sin(angle)
-
-        print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
-        print("RREV: %.3f \t gain1: %.3f \t gain2: %.3f \t gain3: %.3f" %(theta_rl[0,k_run], theta_rl[0,k_run],theta_rl[0,k_run],theta_rl[0,k_run]))
-        print("Vz_ini: %.3f \t Vx_ini: %.3f \t Vy_ini: %.3f" %(vz_ini, vx_ini, vy_ini))
-
-
-
-        state = env.reset()
-        env.IC_csv(agent,state,'sim',k_run,v_ini = v_ini)
-
-
-
-        ## If spawn position is off then reset position again
-        x_pos,y_pos = state[2],state[3]
-        print("Spawn Pos: x=%.3f \t y=%.3f" %(x_pos,y_pos))
-        if abs(x_pos) > 0.1 or abs(y_pos) > 0.1:
-            state = env.reset()
-
-
-        action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
-        env.step(action)
-
+        ## INIT RUN FLAGS
         t_step = 0
+        z_max = 0 # [m]
         
         done_rollout = False
         start_time_rollout = env.getTime()
@@ -226,88 +176,61 @@ for k_ep in range(ep_start,1000):
         repeat_run= False
         error_str = ""
 
-        vx_avg = 0
+
+        print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
+        print("RREV: %.3f \t Gain_1: %.3f \t Gain_2: %.3f \t Gain_3: %.3f" %(RREV_trigger, G1, G2, 0))
+        print("Vz_d: %.3f \t Vx_d: %.3f \t Vy_d: %.3f" %(vz_d, vx_d, vy_d))
 
         # ============================
         ##          Rollout 
         # ============================
-        action = {'type':'vel', 'x':vx_ini, 'y':vy_ini, 'z':vz_ini, 'additional':0.0}
-        #action = {'type':'pos', 'x':0.0, 'y':0.0, 'z':1.0, 'additional':0.0}
-
-        env.step(action=action)
         
-        RREV_trigger = theta_rl[0, k_run]
-
-
+        env.step('vel',v_d,ctrl_flag=1) # Set desired vel
+        env.step('pos',ctrl_flag=0) # turn off pos control
+        
         while True:
                 
-            time.sleep(5e-4) # Time step size
-            t_step = t_step + 1 # Time step
-            ## Define current state
+            time.sleep(5e-4) # Time step size [Not sure if this is needed]
+            t_step += 1
+
+
+            ## DEFINE CURRENT STATE [Can we thread this to get states even when above]
             state = env.state_current
             
-            position = state[1:4]
-            orientation_q = state[4:8]
+            position = state[1:4] # [x,y,z]
+            orientation_q = state[4:8] # Orientation in quat format
             vel = state[8:11]
-            vz, vx, vy= vel[2], vel[0], vel[1]
+            vx,vy,vz = vel
             omega = state[11:14]
-            d = h_ceiling - position[2]
+            d = h_ceiling - position[2] # distance of drone from ceiling
 
-            # Use noisy distance measurement from sensor
-            #d = env.laser_dist # there is some systematic bias
-            #<mean>0.0</mean>
-            #<stddev>0.02</stddev>
-            #print(d)
-            RREV, OF_y, OF_x = vz/d, vx/d, vy/d # OF_x,y are optical flows of the ceiling assuming no body rotation
-            sensor_data = [RREV, OF_y, OF_x] # simplifying for data recording
-            qw = orientation_q[0]
-            qx = orientation_q[1]
-            qy = orientation_q[2]
-            qz = orientation_q[3]
-
-            #image_now=env.cv_image.flatten() # collect current image and flatten to 1d
-            #print(image_now)
-            # concatente previous image, current image, and visual cues for training data
-            #training_data = np.concatenate((image_prev,image_now,np.array([RREV*1000,omega_y*1000]))).astype(int)
-            #image_prev = image_now # update image
-
-            #print(data)
-            #if d < 0.3:
-            #    print(d)
+            ## Orientation data from state
+            qw,qx,qy,qz = orientation_q
             R = Rotation.from_quat([qx,qy,qz,qw])
             R = R.as_matrix()
-            angle = R[1,1]
-            b3 = R[2,:]
-            #print(angle, b3[0],b3[1],b3[2])
+            b3 = R[2,:] # Vertical body axis in Global axes
+            b2 = R[1,:] # Horizontal body axis
+            b1 = R[0,:] # Forward body axis (related to yaw)
+
+
+
+            RREV, OF_y, OF_x = vz/d, vx/d, vy/d # OF_x,y are estimated optical flow vals assuming no body rotation
+            sensor_data = [RREV, OF_y, OF_x] # simplified for data recording
+
 
             # ============================
-            ##    Motor Shutdown Criteria 
+            ##   Motor Shutdown Criteria 
             # ============================
-            if b3[2] < 0.0 and not flip_flag:
-                # check if crazyflie flipped 
-                action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
-                env.step(action)
-                # shut off motors for the rest of the run
-                print("Flipped!! Shut motors")
+            if b3[2] < 0.0 and not flip_flag: # If b3_z is negative then CF flipped
+                print("Flipped!!")
                 flip_flag = True
             
-            #print(d)
-            
             if ((d < 0.05) and (not crash_flag) and (not flip_flag)): # might need to adjust this 
-                action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
-                env.step(action)
-                print("Crashed!! Shut motors")
+                env.step('stop')
+                print("Crashed!!")
                 crash_flag = True
 
             
-            #b3 = r.as_matrix()[:,2] # body z-axis
-            #b3y =  np.dot(b3, np.array([0,0,1]))
-            b3y=0
-            r = [0,0,0]#r.as_euler('zyx', degrees=True)
-            eul1,eul2,eul3 = r[0],r[1],r[2]
-            #print(r)
-
-
             # ============================
             ##    Pitch Criteria 
             # ============================
@@ -315,56 +238,26 @@ for k_ep in range(ep_start,1000):
                 start_time_pitch = env.getTime()
                 env.enableSticky(1)
 
-                
-                ## bhabas work
-                # vx_avg = vx_avg + 0.5*(vx-vx_avg) # Exponentially weighted average of vx
-                # # future implementation on velocity estimate
+                omega_yd = (G1*RREV + G2*abs(OF_y))*np.sign(OF_y)# + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
+                omega_xd = 0.0 #theta_rl[3,k_run] * omega_y
+                omega_zd = 0.0
 
-                # q_RREV = theta_rl[1,k_run] * RREV 
-                # q_d = q_RREV *np.sign(vx_avg) #+ theta_rl[2,k_run]*vx_avg
-
-
-
-                ## bader work
-                # wn = sqrt(omega_x**2 + omega_y**2)
-
-                #angle_omega = pi + atan2(OF_x,OF_y)
-                #print(angle_omega)
-
-                # add term to adjust for tilt 
-                #qRREV = theta_rl[1,k_run]*RREV + theta_rl[2,k_run]*OF_y
-                #qomega = theta_rl[2,k_run]*
-                
-                #angle_omega = pi/2 #sqrt(2)/2.0
-                #q_roll = -qRREV*sin(angle_omega)
-                #q_pitch = qRREV*cos(angle_omega)
-                #q_pitch = qRREV*np.sign(OF_y)# + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
-
-                qRREV = -(RREV + 1/3)
-                q_pitch = RREV*qRREV*np.sign(OF_y)
-
-
-
-                # torque on x axis to adjust for vy
-                q_roll = 0.0 #theta_rl[3,k_run] * omega_y
+                omega_d = [omega_xd,omega_yd,omega_zd]
 
                 print('----- pitch starts -----')
                 print('vz=%.3f, vx=%.3f, vy=%.3f' %(vz,vx,vy))
-                print('r[0]=%.3f, r[1]=%.3f, r[2]=%.3f, b3y=%.3f' %(r[0],r[1],r[2],b3y))
-                print('RREV=%.3f, OF_y=%.3f, OF_x=%.3f, q_pitch=%.3f, q_RREV=%.3f' %( RREV, OF_y, OF_x,q_pitch,qRREV) )   
+                print('RREV=%.3f, OF_y=%.3f, OF_x=%.3f, q_pitch=%.3f' %( RREV, OF_y, OF_x, omega_yd) )   
                 print("Pitch Time: %.3f" %start_time_pitch)
                 #print('d_est = %.3f, d_act = %.3f' %(d,d_acutal))
                 #print('wy = %.3f , qomega = %.3f , qRREV = %.3f' %(omega[1],qomega,qRREV))
 
-                # randomly sample noise delay with mean = 30ms and sigma = 5
-                t_delay = 0 #np.random.normal(30.0,5.0)
-                print("t_delay = %.3f" %(t_delay))
+                #t_delay = np.random.normal(30.0,5.0)
+                #print("t_delay = %.3f" %(t_delay))
                 #env.delay_env_time(t_start=start_time_pitch,t_delay=t_delay) # Artificial delay to mimic communication lag [ms]
                 
 
                 ## Start rotation and mark rotation as triggered
-                action = {'type':'rate', 'x':q_roll, 'y':q_pitch, 'z':0.0, 'additional':0.0}    
-                env.step(action) 
+                env.step('omega',omega_d,ctrl_flag=1) # set ang rate control
                 pitch_triggered = True
 
 
@@ -372,25 +265,31 @@ for k_ep in range(ep_start,1000):
             ##    Termination Criteria 
             # ============================
 
-            ## If time since triggered pitch exceeds [0.7s]   
-            if pitch_triggered and ((env.getTime()-start_time_pitch) > (0.7 + extra_time)):
+            # If time since triggered pitch exceeds [0.7s]   
+            if pitch_triggered and ((env.getTime()-start_time_pitch) > (0.3)):
                 # I don't like this formatting, feel free to improve on
                 error_1 = "Rollout Completed: Pitch Triggered  "
                 error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch))
-                # print(error_1 + "\n" + error_2)
+                print(error_1 + "\n" + error_2)
 
                 error_str = error_1 + error_2
                 done_rollout = True
 
-            ## If time since rollout start exceeds [1.5s]
-            if (env.getTime() - start_time_rollout) > (1.5 + extra_time):
+            # If time since rollout start exceeds [1.5s]
+            if (env.getTime() - start_time_rollout) > (2.5):
                 error_1 = "Rollout Completed: Time Exceeded   "
                 error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
-                # print(error_1 + "\n" + error_2)
+                print(error_1 + "\n" + error_2)
+            
 
                 error_str = error_1 + error_2
                 done_rollout = True
             
+            z_max = max(position[2],z_max)
+            if position[2] <= 0.75*z_max:
+                done_rollout = True
+            
+
 
             # ============================
             ##          Errors  
@@ -424,7 +323,7 @@ for k_ep in range(ep_start,1000):
             if state_history is None:
                 state_history = state2 
             else:
-                if t_step%10==0: # Append state_history columns with current state2 vector 
+                if t_step%5==0: # Append state_history columns with current state2 vector 
                     state_history = np.append(state_history, state2, axis=1)
                     env.append_csv(agent,state,k_ep,k_run,sensor_data)
 
@@ -432,15 +331,15 @@ for k_ep in range(ep_start,1000):
 
 
             if done_rollout:
-                action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
-                env.step(action)
+
+                env.step('stop')
                 reward[k_run] = agent.calculate_reward(state_history,h_ceiling)
                 time.sleep(0.01)
                 print("Reward = %.3f" %(reward[k_run]))
                 print("!------------------------End Run------------------------! \n")
                 ## Episode Plotting
                 plt.plot(k_ep,reward[k_run],marker = "_", color = "black", alpha = 0.5) 
-                plt.title("Episode: %d Run: %d # Rollouts: %d" %(k_ep,k_run+1,agent.n_rollout))
+                plt.title("Episode: %d Run: %d Rollouts: %d" %(k_ep,k_run+1,agent.n_rollout))
                 # If figure gets locked on fullscreen, press ctrl+f untill it's fixed (there's lag due to process running)
                 plt.draw()
                 plt.pause(0.001)
@@ -450,12 +349,11 @@ for k_ep in range(ep_start,1000):
         
         env.append_csv(agent,state,k_ep,k_run,sensor_data,reward=reward[k_run,0],error=error_str)
         env.append_csv_blank()
+        env.IC_csv(agent,state,'sim',k_run,v_d = v_d)
         time.sleep(0.01)
         if repeat_run == True:
-            time.sleep(1)
             env.close_sim()
             time.sleep(1)
-            env.close_sim()
             env.launch_sim()
             # return to previous run to catch potential missed glitches in gazebo (they are usually caught in the next run)
             if k_run > 0:
