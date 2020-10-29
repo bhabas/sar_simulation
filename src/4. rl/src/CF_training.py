@@ -28,7 +28,7 @@ print("Environment done")
 
 ## Initialize the user and data recording
 start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
-file_name = './src/4. rl/src/log/' + username + start_time + '.csv'
+file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time + '.csv'
 env.create_csv(file_name,record = True)
 
 
@@ -153,6 +153,7 @@ for k_ep in range(ep_start,1000):
         RREV_trigger = theta_rl[0, k_run] # FOV expansion velocity [rad/s]
         G1 = theta_rl[1, k_run]
         G2 = theta_rl[2, k_run]
+        policy = theta_rl[:,k_run]
      
         vz_d = np.random.uniform(low=2.5, high=3.0)
         vx_d = np.random.uniform(low=-2.0, high=2.0)
@@ -325,7 +326,7 @@ for k_ep in range(ep_start,1000):
             else:
                 if t_step%5==0: # Append state_history columns with current state2 vector 
                     state_history = np.append(state_history, state2, axis=1)
-                    env.append_csv(agent,state,k_ep,k_run,sensor_data)
+                    env.append_csv(agent,state,k_ep,k_run,sensor_data,policy)
 
 
 
@@ -347,7 +348,7 @@ for k_ep in range(ep_start,1000):
                 break
         
         
-        env.append_csv(agent,state,k_ep,k_run,sensor_data,reward=reward[k_run,0],error=error_str)
+        env.append_csv(agent,state,k_ep,k_run,sensor_data,policy,reward=reward[k_run,0],error=error_str)
         env.append_csv_blank()
         env.IC_csv(agent,state,'sim',k_run,v_d = v_d)
         time.sleep(0.01)
