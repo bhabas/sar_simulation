@@ -283,7 +283,7 @@ void Controller::controlThread()
     
 
     // Default desired States
-    Vector3d x_d_Def(0,0,0.5); // Pos-desired (Default) [m]  # Should be z=0.03 but needs integral controller for error offset
+    Vector3d x_d_Def(0,0,0.23); // Pos-desired (Default) [m]  # Should be z=0.03 but needs integral controller for error offset
     Vector3d v_d_Def(0,0,0); // Velocity-desired (Default) [m/s]
     Vector3d a_d_Def(0,0,0); // Acceleration-desired (Default) [m/s]
     Vector3d b1_d_Def(1,0,0); // Desired global pointing direction (Default)
@@ -359,7 +359,7 @@ void Controller::controlThread()
     double kd_x = 0.08;  // Pos. derivative Gain
     double ki_x = 0.05*0; // Pos. integral Gain
     double kp_R = 0.05;  // Rot. Gain // Keep checking rotational speed
-    double kd_R = 0.005; // Rot. derivative Gain
+    double kd_R = 0.006; // Rot. derivative Gain
 
     double kp_omega = 0.0005; 
     // Omega proportional gain (similar to kd_R but that's for damping and this is to achieve omega_d)
@@ -632,7 +632,7 @@ void Controller::controlThread()
             }
         }
 
-        if(b3(2) <= sqrt(2)/2){ // If e3 component of b3 is neg, turn motors off [arbitrary amount]
+        if(b3(2) <= 0){ // If e3 component of b3 is neg, turn motors off [arbitrary amount]
             motorspeed_Vec << 0,0,0,0;
         }
 
