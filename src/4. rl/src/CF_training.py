@@ -59,7 +59,7 @@ h_ceiling = 1.5 # meters
 
 ## Learning rate
 alpha_mu = np.array([[0.2]])#[2.0]] )#,[0.1]])
-alpha_sigma = np.array([[0.1] ])#, [1.0]])#,[0.05]])
+alpha_sigma = np.array([[0.1]])#, [1.0]])#,[0.05]])
 
 ## Initial parameters for gaussian function
 mu = np.array([[4.5],[-4.5], [1.5] ])# ,[1.5]])#,[1.5]])   # Initial estimates of mu: 
@@ -69,7 +69,7 @@ sigma = np.array([[1.5],[1.5] ,[0.25] ])# ,[0.75]])      # Initial estimates of 
 #mu = np.array([[5.0],[-5.0] ])
 #sigma = np.array([[3.0],[3.0] ])
 #  
-agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=5)
+agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=2)
 #agent = rlsysPEPGAgent_cov(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=4)
 #agent = rlEM_PEPGAgent(mu,sigma,n_rollout=5)
 #agent = rlsysPEPGAgent_adaptive(alpha_mu,alpha_sigma,mu,sigma,n_rollout=10)
@@ -149,11 +149,14 @@ for k_ep in range(ep_start,1000):
         time.sleep(3.0) # time for CF to settle
 
 
-        ## INIT RUN PARAMETERS
+        ## INITIATE RUN PARAMETERS
         RREV_trigger = theta_rl[0, k_run] # FOV expansion velocity [rad/s]
         G1 = theta_rl[1, k_run]
         G2 = theta_rl[2, k_run]
         policy = theta_rl[:,k_run]
+        policy = policy[:,np.newaxis]
+        # policy = np.reshape(policy,(-1,1)) # reshaping for data logging
+
      
         vz_d = np.random.uniform(low=2.5, high=3.0)
         vx_d = np.random.uniform(low=-2.0, high=2.0)
@@ -181,6 +184,8 @@ for k_ep in range(ep_start,1000):
         print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
         print("RREV: %.3f \t Gain_1: %.3f \t Gain_2: %.3f \t Gain_3: %.3f" %(RREV_trigger, G1, G2, 0))
         print("Vz_d: %.3f \t Vx_d: %.3f \t Vy_d: %.3f" %(vz_d, vx_d, vy_d))
+
+
 
         # ============================
         ##          Rollout 
@@ -285,7 +290,8 @@ for k_ep in range(ep_start,1000):
 
                 error_str = error_1 + error_2
                 done_rollout = True
-            
+
+            # If position falls below max height (There is lag w/ this)
             z_max = max(position[2],z_max)
             if position[2] <= 0.75*z_max:
                 done_rollout = True
@@ -324,9 +330,9 @@ for k_ep in range(ep_start,1000):
             if state_history is None:
                 state_history = state2 
             else:
-                if t_step%5==0: # Append state_history columns with current state2 vector 
+                if t_step%10==0: # Append state_history columns with current state2 vector 
                     state_history = np.append(state_history, state2, axis=1)
-                    env.append_csv(agent,state,k_ep,k_run,sensor_data,policy)
+                    env.append_csv(agent,state,k_ep,k_run,sensor_data)
 
 
 
@@ -348,9 +354,9 @@ for k_ep in range(ep_start,1000):
                 break
         
         
-        env.append_csv(agent,state,k_ep,k_run,sensor_data,policy,reward=reward[k_run,0],error=error_str)
+        env.append_csv(agent,state,k_ep,k_run,sensor_data)
+        env.IC_csv(agent,state,k_ep,k_run,policy,v_d,omega_d,reward[k_run,0],error_str)
         env.append_csv_blank()
-        env.IC_csv(agent,state,'sim',k_run,v_d = v_d)
         time.sleep(0.01)
         if repeat_run == True:
             env.close_sim()
@@ -362,11 +368,20 @@ for k_ep in range(ep_start,1000):
         else:
             k_run += 1 # Move on to next run
 
+        ## =======  RUN COMPLETED  ======= ##    
+
+
+
     if not any( np.isnan(reward) ):
         print("Episode # %d training, average reward %.3f" %(k_ep, np.mean(reward)))
         agent.train(theta_rl,reward,epsilon_rl)
         plt.plot(k_ep,np.mean(reward),'ro')
         plt.draw()
         plt.pause(0.001)
+    
+    ## =======  EPISODE COMPLETED  ======= ##
 
+
+
+## =======  MAX TRIALS COMPLETED  ======= ##
 
