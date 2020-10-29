@@ -233,7 +233,7 @@ class CrazyflieEnv:
                 state_writer.writerow([
                 'k_ep','k_run',
                 'alpha_mu','alpha_sig',
-                'mu','sigma',
+                'mu','sigma', 'policy',
                 't','x','y','z',
                 'qx','qy','qz','qw',
                 'vx','vy','vz',
@@ -242,7 +242,7 @@ class CrazyflieEnv:
                 'RREV','OF_x','OF_y','RREV Trigger',"","","","", # Place holders
                 'error'])
 
-    def IC_csv(self,agent,state,k_ep,k_run,reward=0,error="",v_d=[0,0,0], omega_d=[0,0,0]):
+    def IC_csv(self,agent,state,k_ep,k_run,reward=0,error="",v_d=[0,0,0], omega_d=[0,0,0],policy=[0,0]):
         if self.record == True:
             with open(self.file_name, mode='a') as state_file:
                 state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -250,6 +250,7 @@ class CrazyflieEnv:
                     k_ep,k_run,
                     agent.alpha_mu.T,agent.alpha_sigma.T,
                     agent.mu.T,agent.sigma.T,
+                    policy,
                     state[0],state[1],state[2],state[3], # t,x,y,z
                     state[4], state[5], state[6], state[7], # qx,qy,qz,qw
                     v_d[1], v_d[2], v_d[0], # vx,vy,vz
@@ -259,7 +260,7 @@ class CrazyflieEnv:
                     error])
 
 
-    def append_csv(self,agent,state,k_ep,k_run,sensor,reward=0,error=""):
+    def append_csv(self,agent,state,k_ep,k_run,sensor,policy,reward=0,error=""):
         if self.record == True:
             state = np.around(state,3)
             sensor = np.around(sensor,3)
@@ -270,6 +271,7 @@ class CrazyflieEnv:
                     k_ep,k_run,
                     agent.alpha_mu.T,agent.alpha_sigma.T,
                     agent.mu.T,agent.sigma.T,
+                    policy,
                     state[0],state[1],state[2],state[3], # t,x,y,z
                     state[4], state[5], state[6], state[7], # qx,qy,qz,qw
                     state[8], state[9],state[10], # vx,vy,vz
