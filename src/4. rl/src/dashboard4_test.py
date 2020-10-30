@@ -31,7 +31,7 @@ def Main():
 
         ## DEFINE CURRENT STATE [Can we thread this to get states even when above]
         state = env.state_current
-        total.value = state[1]
+        total.value = state[0]
         # print(state[0])
 
 
