@@ -5,7 +5,7 @@ import time,os,getpass
 import matplotlib.pyplot as plt
 import os
 
-from multiprocessing import Process
+from multiprocessing import Process, Value
 
 
 from crazyflie_env import CrazyflieEnv
@@ -13,7 +13,7 @@ from crazyflie_env import CrazyflieEnv
 def print_val():
     while True:
         time.sleep(0.01)
-        # print(total.value)
+        print(total.value)
 
 
 def Main():
@@ -31,11 +31,13 @@ def Main():
 
         ## DEFINE CURRENT STATE [Can we thread this to get states even when above]
         state = env.state_current
-        print(state[0])
+        total.value = state[1]
+        # print(state[0])
+
 
 
 if __name__ == '__main__':
-
+    total = Value('d',0)
     p1 = Process(target=print_val)
     p1.start()
     Main()
