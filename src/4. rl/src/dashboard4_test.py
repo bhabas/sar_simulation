@@ -16,55 +16,89 @@ from crazyflie_env import CrazyflieEnv
 def runGraph():
     # Parameters
     print('show')
-    x_len = 200         # Number of points to display
+    buf_len = 200         # Number of points to display
     y_range = [0,4]  # Range of possible Y values to display
 
     # Create figure for plotting
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    xs = list(range(0, 200))
-    ys = [0] * x_len
-    ax.set_ylim(y_range)
+    fig_0 = plt.figure(num = 0, figsize = (12, 8))
+    ax1 = plt.subplot2grid((2,2),(0,0))
+    ax2 = plt.subplot2grid((2,2),(1,0))
+
+
+
+    buffer = list(range(0, 200))
+    pos_x = [0]*buf_len
+    pos_y = [0]*buf_len
+    pos_z = [0]*buf_len
+    
+
+    vel_x = [0] * buf_len
+    vel_y = [0] * buf_len
+    vel_z = [0] * buf_len
+
+
+    ax1.set_ylim(y_range)
+    ax2.set_ylim([-4,4])
 
     # Create a blank line. We will update the line in animate
-    line, = ax.plot(xs, ys)
+    line_px, = ax1.plot(buffer, pos_x)
+    line_py, = ax1.plot(buffer, pos_y)
+    line_pz, = ax1.plot(buffer, pos_z)
 
-    # Add labels
-    plt.xlabel('Samples')
-    plt.ylabel('Z-Position [m]')
+    line_vx, = ax2.plot(buffer, vel_x)
+    line_vy, = ax2.plot(buffer, vel_y)
+    line_vz, = ax2.plot(buffer, vel_z)
+
+
 
     # This function is called periodically from FuncAnimation
-    def animate(i, ys):
+    def animate(i,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z):
 
-        # Read temperature (Celsius) from TMP102
-        pos_z = state_mp[3]
+        # States from shared Multiprocessing array
 
-        # Add y to list
-        ys.append(pos_z)
+        x_x,x_y,x_z = state_mp[1:4]
+        qw,qx,qy,qz = state_mp[4:8]
+        vx,vy,vz = state_mp[8:11]
+        omega_x,omega_y,omega_z = state_mp[11:14]
 
-        # Limit y list to set number of items
-        ys = ys[-x_len:]
 
-        # Update line with new Y values
-        line.set_ydata(ys)
+        pos_x.append(x_x)  # Add y to list
+        pos_x = pos_x[-buf_len:] # Limit y list to set number of items
+        line_px.set_ydata(pos_x) # Update line with new Y values
 
-        return line,
+        pos_y.append(x_y)  
+        pos_y = pos_y[-buf_len:] 
+        line_py.set_ydata(pos_y) 
+
+        pos_z.append(x_z)  
+        pos_z = pos_z[-buf_len:] 
+        line_pz.set_ydata(pos_z)
+
+
+        vel_x.append(vx)  
+        vel_x = vel_x[-buf_len:] 
+        line_vx.set_ydata(vel_x) 
+
+        vel_y.append(vy)  
+        vel_y = vel_y[-buf_len:] 
+        line_vy.set_ydata(vel_y) 
+
+        vel_z.append(vz)  
+        vel_z = vel_z[-buf_len:] 
+        line_vz.set_ydata(vel_z) 
+
+        return line_px,line_py,line_pz,line_vx,line_vy,line_vz
 
 
     # Set up plot to call animate() function periodically
 
-    ani = animation.FuncAnimation(fig,
+    ani = animation.FuncAnimation(fig_0,
         animate,
-        fargs=(ys,),
+        fargs=(pos_x,pos_y,pos_z,vel_x,vel_y,vel_z),
         interval=50,
         blit=True)
     plt.show()
 
-
-def print_val():
-    while True:
-        time.sleep(0.01)
-        print(state_mp[1:4])
 
 
 def Main():

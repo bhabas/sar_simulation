@@ -479,7 +479,7 @@ void Controller::controlThread()
 
                 kp_x = 0.1;   // Pos. Gain
                 kd_x = 0.1;  // Pos. derivative Gain
-                ki_x = 0.05; // Pos. integral Gain
+                ki_x = 0.05*0; // Pos. integral Gain
                 kp_R = 0.05;  // Rot. Gain // Keep checking rotational speed
                 kd_R = 0.005; // Rot. derivative Gain
 
