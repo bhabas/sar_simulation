@@ -32,18 +32,32 @@ start_time_rolloout = env.getTime()
 done = False
 
 
+def live_plotter(buffer,y1_data,line1,y2_data,line2):
+    if line1==[]:
+        plt.ion()
+        fig, (ax1,ax2,ax3,ax4) = plt.subplots(2,2)
+        
+        ax1.grid()
+        ax1.set_ylim([-45,90])   
+        ax1.set_ylabel("Pitch: [deg]") 
+        line1, = ax1.plot(buffer,y1_data)
 
+        # ax2 = ax1.twinx()
+        color = 'tab:red'
+        ax2.set_ylabel('Pos: Z [m]', color=color)
+        ax2.set_ylim([0,1.5]) 
+        ax2.tick_params(axis='y', labelcolor=color)
+        line2, = ax2.plot(buffer,y2_data,color = color)
 
+        plt.show()
 
+    line1.set_ydata(y1_data)    
+    line2.set_ydata(y2_data)
 
+    plt.pause(0.000001)
+    
+    return line1,line2 
 
-
-
-
-# filename = "src/4. rl/src/log/Gazebo_acc_test.csv"
-# with open(filename,mode='w') as csvfile:
-#     writer = csv.writer(csvfile,delimiter = ',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-#     # writer.writerow(['Time [s]','Omega_x','Omega_y','Omega_z'])
 
 
 def cmd_send():
@@ -83,31 +97,7 @@ def cmd_send():
             env.step(action,ctrl_vals,ctrl_flag)
 
    
-def live_plotter(buffer,y1_data,line1,y2_data,line2):
-    if line1==[]:
-        plt.ion()
-        fig, (ax1,ax2,ax3,ax4) = plt.subplots(2,2)
-        
-        ax1.grid()
-        ax1.set_ylim([-45,90])   
-        ax1.set_ylabel("Pitch: [deg]") 
-        line1, = ax1.plot(buffer,y1_data)
-
-        # ax2 = ax1.twinx()
-        color = 'tab:red'
-        ax2.set_ylabel('Pos: Z [m]', color=color)
-        ax2.set_ylim([0,1.5]) 
-        ax2.tick_params(axis='y', labelcolor=color)
-        line2, = ax2.plot(buffer,y2_data,color = color)
-
-        plt.show()
-
-    line1.set_ydata(y1_data)    
-    line2.set_ydata(y2_data)
-
-    plt.pause(0.000001)
-    
-    return line1,line2        
+       
      
 ## Idea to delete and respawn model instead of restarting Gazebo after collison-crash
 # rosservice call /gazebo/delete_model '{model_name: crazyflie_landing_gears}'
@@ -154,14 +144,6 @@ while True:
     # y_vec1 = np.append(y_vec1[1:],0.0)
     # y_vec2 = np.append(y_vec2[1:],0.0)
 
-
-
-        
-
-    #     with open(filename,mode='a') as csvfile:
-    #         writer = csv.writer(csvfile,delimiter = ',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-    #         writer.writerow([t,pos[2],vz])
-        
 
 
 
