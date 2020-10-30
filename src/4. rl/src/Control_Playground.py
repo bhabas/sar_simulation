@@ -123,6 +123,7 @@ while True:
 
     ## Define current state
     state = env.state_current
+    print(state)
 
     t = state[0]
     pos = state[1:4]

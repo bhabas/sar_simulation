@@ -202,6 +202,7 @@ for k_ep in range(ep_start,1000):
 
             ## DEFINE CURRENT STATE [Can we thread this to get states even when above]
             state = env.state_current
+            print(state)
             
             position = state[1:4] # [x,y,z]
             orientation_q = state[4:8] # Orientation in quat format
