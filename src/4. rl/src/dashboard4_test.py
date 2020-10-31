@@ -16,15 +16,23 @@ from crazyflie_env import CrazyflieEnv
 
 def runGraph():
     # Parameters
-    buffer = list(range(0, 200)) # Number of points to display
-    buf_len = len(buffer)
+    buf_len = 400 # num datapoints in plot
+    interval = 50 # Interval between plot frames [ms]
+    sec_hist = buf_len*interval/1000 # Time shown on dashboard [s]
 
+
+    buffer = list(range(0,buf_len)) # Number of points to display
+    
     ## CREATE FIGURE FOR PLOTTING
-    fig_0 = plt.figure(num = 0, figsize = (12, 8))
-    ax_pos = plt.subplot2grid((2,2),(0,0))
-    ax_vel = plt.subplot2grid((2,2),(1,0))
-    ax_att = plt.subplot2grid((2,2),(0,1))
-    ax_omega = plt.subplot2grid((2,2),(1,1))
+    fig_0 = plt.figure(num = 0, figsize = (12,6))
+    
+    ax_pos = plt.subplot2grid((2,3),(0,0))
+    ax_vel = plt.subplot2grid((2,3),(0,1))
+    ax_omega = plt.subplot2grid((2,3),(0,2))
+    ax_att = plt.subplot2grid((2,3),(1,0))
+    ax_ms = plt.subplot2grid((2,3),(1,1),colspan=2,rowspan=1)
+
+    axes = [ax_pos,ax_vel,ax_att,ax_omega,ax_ms]
 
 
     ## SET PLOT TITLES
@@ -32,25 +40,30 @@ def runGraph():
     ax_vel.set_title('Velocity [m/s]')
     ax_att.set_title('Attitude [deg]')
     ax_omega.set_title('Ang. Rate [rad/s]')
+    ax_ms.set_title('Motor speeds [rad/s]')
 
     ## SET LABEL NAMES
     ax_pos.set_ylabel("Pos. x,y,z [m]")
     ax_vel.set_ylabel("Vel. x,y,z [m/s]")
     ax_att.set_ylabel("Att. x,y,z [deg]")
     ax_omega.set_ylabel("Ang. x,y,z [rad/s]")
+    ax_ms.set_ylabel("MS [rad/s]")
 
+    for ax in axes:
+        ax.set_xticks(np.linspace(0,buf_len,6))
+        ax.set_xticklabels(np.linspace(-sec_hist,0,6))
+        ax.set_xlabel("Seconds ago (Real Time)")
+        ax.grid(True)
 
-    ## TURN ON GRIDS
-    ax_pos.grid(True)
-    ax_vel.grid(True)
-    ax_att.grid(True)
-    ax_omega.grid(True)
 
     ## SET Y-LIMITS
     ax_pos.set_ylim([-2,2])
     ax_vel.set_ylim([-3,3])
     ax_att.set_ylim([-90,90])
     ax_omega.set_ylim([-20,20])
+    ax_ms.set_ylim([0,2750])
+
+    fig_0.tight_layout()
 
     
     pos_x = [0]*buf_len
@@ -69,6 +82,10 @@ def runGraph():
     omega_y = [0]*buf_len
     omega_z = [0]*buf_len
 
+    MS_1 = [0]*buf_len
+    MS_2 = [0]*buf_len
+    MS_3 = [0]*buf_len
+    MS_4 = [0]*buf_len
 
     
 
@@ -89,10 +106,16 @@ def runGraph():
     line_wy, = ax_omega.plot(buffer, omega_y,'g-',label="Omega Y")
     line_wz, = ax_omega.plot(buffer, omega_z,'r-',label="Omega Z")
 
+    line_ms1, = ax_ms.plot(buffer, MS_1,color = 'steelblue',label="MS: 1")
+    line_ms2, = ax_ms.plot(buffer, MS_2,'b-',label="MS: 2")
+    line_ms3, = ax_ms.plot(buffer, MS_3,'g-',label="MS: 3")
+    line_ms4, = ax_ms.plot(buffer, MS_4,'r-',label="MS: 4")
+
     ax_pos.legend([line_px,line_py,line_pz],[line_px.get_label(),line_py.get_label(),line_pz.get_label()])
     ax_vel.legend([line_vx,line_vy,line_vz],[line_vx.get_label(),line_vy.get_label(),line_vz.get_label()])
     ax_att.legend([line_ax,line_ay,line_az],[line_ax.get_label(),line_ay.get_label(),line_az.get_label()])
     ax_omega.legend([line_wx,line_wy,line_wz],[line_wx.get_label(),line_wy.get_label(),line_wz.get_label()])
+    ax_ms.legend([line_ms1,line_ms2,line_ms3,line_ms4],[line_ms1.get_label(),line_ms2.get_label(),line_ms3.get_label(),line_ms4.get_label()])
 
     flag = True
 
@@ -196,7 +219,7 @@ def runGraph():
         vel_x,vel_y,vel_z,
         att_x,att_y,att_z,
         omega_x,omega_y,omega_z),
-        interval=50,
+        interval=interval,
         blit=True)
     plt.show()
 

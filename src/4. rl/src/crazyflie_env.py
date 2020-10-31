@@ -49,7 +49,10 @@ class CrazyflieEnv:
         self.addr_Ctrl = ("", self.port_Ctrl) # Controller Address
         self.addr_Gazebo = ("", self.port_Gazebo) # RL Address
         self.fd.bind(self.addr_Gazebo) # bind() associates the socket with specific network interface and port number
-        
+        ## BINDING ERROR: sudo netstat -nlp | grep 18060
+        ## sudo kill -9 [Process ID]
+
+
 
         self.queue_command = Queue(3)
         self.state_current = np.zeros(shape=(14))
