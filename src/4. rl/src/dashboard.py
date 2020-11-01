@@ -12,7 +12,7 @@ from scipy.spatial.transform import Rotation
 
 def runGraph(state_mp):
     # Parameters
-    buf_len = 800 # num datapoints in plot
+    buf_len = 600 # num datapoints in plot
     interval = 50 # Interval between plot frames [ms]
     sec_hist = buf_len*interval/1000 # Time shown on dashboard [s]
 

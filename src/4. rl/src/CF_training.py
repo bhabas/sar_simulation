@@ -2,13 +2,10 @@
 
 import numpy as np
 import time,os,getpass
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 from multiprocessing import Process,Array
-from math import sin,cos,pi,sqrt,atan,atan2
-import os
 from scipy.spatial.transform import Rotation
-from numpy.core.fromnumeric import repeat
+import threading
+
 
 from crazyflie_env import CrazyflieEnv
 from rl_syspepg import rlsysPEPGAgent_reactive ,rlsysPEPGAgent_cov, rlsysPEPGAgent_adaptive
@@ -18,6 +15,11 @@ from rl_cma import CMA_basic,CMA,CMA_sym
 from dashboard import runGraph
 
 os.system("clear")
+
+def get_state(env):
+    while True:
+        state = env.state_current
+        state_mp[:] = state.tolist()
 
 def main():
 
@@ -31,10 +33,13 @@ def main():
     env = CrazyflieEnv()
     print("Environment done")
 
+    x = threading.Thread(target=get_state,args=(env,))
+    x.start()
+
     ## Initialize the user and data recording
     start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
     file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time + '.csv'
-    env.create_csv(file_name,record = True)
+    env.create_csv(file_name,record = False)
 
 
     # ## Initial figure setup
@@ -206,18 +211,20 @@ def main():
 
 
                 ## DEFINE CURRENT STATE [This will need to be threaded to always be recieving states]
-                state = env.state_current
-                state_mp[:] = state.tolist()
+                # state = env.state_current
+                # state_mp[:] = state.tolist()
 
-                position = state[1:4] # [x,y,z]
-                orientation_q = state[4:8] # Orientation in quat format
-                vel = state[8:11]
+                position = state_mp[1:4] # [x,y,z]
+                orientation_q = state_mp[4:8] # Orientation in quat format
+                vel = state_mp[8:11]
                 vx,vy,vz = vel
-                omega = state[11:14]
+                omega = state_mp[11:14]
                 d = h_ceiling - position[2] # distance of drone from ceiling
 
                 ## Orientation data from state
                 qw,qx,qy,qz = orientation_q
+                if qw == 0:
+                    qw = 1
                 R = Rotation.from_quat([qx,qy,qz,qw])
                 R = R.as_matrix()
                 b3 = R[2,:] # Vertical body axis in Global axes
