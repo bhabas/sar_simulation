@@ -123,22 +123,16 @@ def runGraph(state_G,reward_G,k_run_G,k_ep_G):
 
     fig_1 = plt.figure(1) # Initalize figure and axes
     ax2 = fig_1.add_subplot(111)
-    ax2.set_xlabel("Episode")
-    ax2.set_ylabel("Reward")
-    ax2.set_ylim([0,30])
-    ax2.set_xlim([-5,15])
-    ax2.grid(True)
-    # ax2.set_title(f"Episode: {k_ep_G} Run: {k_run_G}")
 
     k_ep = [] # Init empty arrays to be filled
     reward = []
-    line_r, = ax2.plot(k_ep,reward,marker = "_", color = "black", alpha = 0.5) # Init line to be plotted
+
+    line_r, = ax2.plot(k_ep,reward) # Init line to be plotted
 
 
     def animate_reward(i,k_ep,reward):
-        # Change to append only on new run
-        k_ep.append(k_ep_G.value)
-        reward.append(reward_G.value)
+        k_ep.append(k_ep_G)
+        reward.append(reward_G)
 
         line_r.set_data(k_ep,reward)
         return line_r,
@@ -247,11 +241,11 @@ def runGraph(state_G,reward_G,k_run_G,k_ep_G):
         interval=interval,
         blit=True)
 
-    anim2 = animation.FuncAnimation(fig_1, 
-        animate_reward, 
-        fargs = (k_ep,reward),
-        interval = interval,
-        blit=True)
+    # anim2 = animation.FuncAnimation(fig_1, 
+    #     animate_reward, 
+    #     fargs = (k_ep,reward),
+    #     interval = interval,
+    #     blit=True)
 
     plt.show()
     

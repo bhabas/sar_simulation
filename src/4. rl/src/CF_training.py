@@ -2,7 +2,7 @@
 
 import numpy as np
 import time,os,getpass
-from multiprocessing import Process,Array
+from multiprocessing import Process,Array,Value
 from scipy.spatial.transform import Rotation
 import threading
 
@@ -16,10 +16,6 @@ from dashboard import runGraph
 
 os.system("clear")
 
-def get_state(env):
-    while True:
-        state = env.state_current
-        state_mp[:] = state.tolist()
 
 def main():
 
@@ -33,8 +29,8 @@ def main():
     env = CrazyflieEnv()
     print("Environment done")
 
-    x = threading.Thread(target=get_state,args=(env,))
-    x.start()
+    state_thread = threading.Thread(target=get_state,args=(env,))
+    state_thread.start()
 
     ## Initialize the user and data recording
     start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
@@ -42,25 +38,9 @@ def main():
     env.create_csv(file_name,record = False)
 
 
-    # ## Initial figure setup
-    # fig = plt.figure()
-    # plt.ion()  # interactive on
-    # plt.grid()
-    # plt.xlim([-1,40])
-    # plt.ylim([-1,25])  # change limit depending on reward function defenition
-    # plt.xlabel("Episode")
-    # plt.ylabel("Reward")
-    # plt.title("Episode: %d Run: %d" %(0,0))
-    # plt.show() 
-
-
-
     ## Sim Parameters
     ep_start = 0 # Default episode start position
     h_ceiling = 1.5 # meters
-
-
-
 
 
     # ============================
@@ -72,8 +52,8 @@ def main():
     alpha_sigma = np.array([[0.1]])#, [1.0]])#,[0.05]])
 
     ## Initial parameters for gaussian function
-    mu = np.array([[4.5],[-4.5], [1.5] ])# ,[1.5]])#,[1.5]])   # Initial estimates of mu: 
-    sigma = np.array([[1.5],[1.5] ,[0.25] ])# ,[0.75]])      # Initial estimates of sigma: 
+    mu = np.array([[6.38],[4.58], [1.5] ])# ,[1.5]])#,[1.5]])   # Initial estimates of mu: 
+    sigma = np.array([[0.75],[0.75] ,[0.25] ])# ,[0.75]])      # Initial estimates of sigma: 
 
     # noise tests all started at:
     #mu = np.array([[5.0],[-5.0] ])
@@ -141,9 +121,8 @@ def main():
 
         print("theta_rl = ")
         print(theta_rl[0,:], "--> RREV")
-        print(theta_rl[1,:], "--> Gain")
-        # print(theta_rl[2,:], "--> v_x Gain")
-        # print(theta_rl[3,:], "--> omega_y Gain")
+        print(theta_rl[1,:], "--> Gain_RREV")
+
 
 
 
@@ -159,14 +138,12 @@ def main():
             time.sleep(3.0) # time for CF to settle
 
 
-            ## INITIATE RUN PARAMETERS
+            ## INITIALIZE RUN PARAMETERS
             RREV_trigger = theta_rl[0, k_run] # FOV expansion velocity [rad/s]
             G1 = theta_rl[1, k_run]
             G2 = theta_rl[2, k_run]
             policy = theta_rl[:,k_run]
-            policy = policy[:,np.newaxis]
-            # policy = np.reshape(policy,(-1,1)) # reshaping for data logging
-
+            policy = policy[:,np.newaxis] # reshaping for data logging (change [3,] -> [3,1])
         
             vz_d = np.random.uniform(low=2.5, high=3.0)
             vx_d = np.random.uniform(low=-2.0, high=2.0)
@@ -183,9 +160,6 @@ def main():
             start_time_rollout = env.getTime()
             start_time_pitch = None
             pitch_triggered = False
-            flip_flag = False
-            crash_flag = False
-
             state_history = None
             repeat_run= False
             error_str = ""
@@ -196,7 +170,6 @@ def main():
             print("Vz_d: %.3f \t Vx_d: %.3f \t Vy_d: %.3f" %(vz_d, vx_d, vy_d))
 
 
-
             # ============================
             ##          Rollout 
             # ============================
@@ -205,48 +178,24 @@ def main():
             env.step('pos',ctrl_flag=0) # turn off pos control
             
             while True:
-                    
-                time.sleep(5e-4) # Time step size [Not sure if this is needed]
-                t_step += 1
-
-
-                ## DEFINE CURRENT STATE [This will need to be threaded to always be recieving states]
-                # state = env.state_current
-                # state_mp[:] = state.tolist()
-
-                position = state_mp[1:4] # [x,y,z]
-                orientation_q = state_mp[4:8] # Orientation in quat format
-                vel = state_mp[8:11]
+                
+                ## DEFINE CURRENT STATE
+                position = state_G[1:4] # [x,y,z]
+                orientation_q = state_G[4:8] # Orientation in quat format
+                vel = state_G[8:11]
                 vx,vy,vz = vel
-                omega = state_mp[11:14]
+                omega = state_G[11:14]
                 d = h_ceiling - position[2] # distance of drone from ceiling
 
-                ## Orientation data from state
+                ## ORIENTATION DATA FROM STATE
                 qw,qx,qy,qz = orientation_q
-                if qw == 0:
+                if qw == 0: # Fix for zero-norm error during initialization
                     qw = 1
                 R = Rotation.from_quat([qx,qy,qz,qw])
-                R = R.as_matrix()
-                b3 = R[2,:] # Vertical body axis in Global axes
-                b2 = R[1,:] # Horizontal body axis
-                b1 = R[0,:] # Forward body axis (related to yaw)
+                R = R.as_matrix() # [b1,b2,b3] Body vectors
 
                 RREV, OF_y, OF_x = vz/d, vx/d, vy/d # OF_x,y are estimated optical flow vals assuming no body rotation
                 sensor_data = [RREV, OF_y, OF_x] # simplified for data recording
-
-
-                # ============================
-                ##   Motor Shutdown Criteria 
-                # ============================
-                if b3[2] < 0.0 and not flip_flag: # If b3_z is negative then CF flipped
-                    print("Flipped!!")
-                    flip_flag = True
-                
-                if ((d < 0.05) and (not crash_flag) and (not flip_flag)): # might need to adjust this 
-                    env.step('stop')
-                    print("Crashed!!")
-                    crash_flag = True
-
                 
                 # ============================
                 ##    Pitch Criteria 
@@ -265,13 +214,6 @@ def main():
                     print('vz=%.3f, vx=%.3f, vy=%.3f' %(vz,vx,vy))
                     print('RREV=%.3f, OF_y=%.3f, OF_x=%.3f, q_pitch=%.3f' %( RREV, OF_y, OF_x, omega_yd) )   
                     print("Pitch Time: %.3f" %start_time_pitch)
-                    #print('d_est = %.3f, d_act = %.3f' %(d,d_acutal))
-                    #print('wy = %.3f , qomega = %.3f , qRREV = %.3f' %(omega[1],qomega,qRREV))
-
-                    #t_delay = np.random.normal(30.0,5.0)
-                    #print("t_delay = %.3f" %(t_delay))
-                    #env.delay_env_time(t_start=start_time_pitch,t_delay=t_delay) # Artificial delay to mimic communication lag [ms]
-                    
 
                     ## Start rotation and mark rotation as triggered
                     env.step('omega',omega_d,ctrl_flag=1) # set ang rate control
@@ -297,12 +239,11 @@ def main():
                     error_1 = "Rollout Completed: Time Exceeded   "
                     error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
                     print(error_1 + "\n" + error_2)
-                
-
+    
                     error_str = error_1 + error_2
                     done_rollout = True
 
-                # If position falls below max height (There is lag w/ this)
+                # If position falls below max height (There is a lag w/ this)
                 z_max = max(position[2],z_max)
                 if position[2] <= 0.75*z_max:
                     done_rollout = True
@@ -312,6 +253,7 @@ def main():
                 # ============================
                 ##          Errors  
                 # ============================
+
                 ## If nan is found in state vector repeat sim run
                 if any(np.isnan(state)): # gazebo sim becomes unstable, relaunch simulation
                     print("NAN found in state vector")
@@ -322,13 +264,6 @@ def main():
                 elif env.timeout:
                     print("Controller reciever thread timed out")
                     error_str = "Error: Controller Timeout"
-                    repeat_run = True
-                    break
-                
-                elif (np.abs(position[0]) > 5.0) or (np.abs(position[1]) > 5.0):
-                    # might just need to increase bounds (not necessarily an error)
-                    print("Reset improperly / Out of bounds !!!!!")
-                    error_str = "Reset improperly/Position outside bounding box"
                     repeat_run = True
                     break
                 
@@ -345,30 +280,28 @@ def main():
                         state_history = np.append(state_history, state2, axis=1)
                         env.append_csv(agent,state,k_ep,k_run,sensor_data)
 
-
-
-
                 if done_rollout:
 
                     env.step('stop')
                     reward[k_run] = agent.calculate_reward(state_history,h_ceiling)
-                    time.sleep(0.01)
+                    
+                    
                     print("Reward = %.3f" %(reward[k_run]))
                     print("!------------------------End Run------------------------! \n")
-                    # ## Episode Plotting
-                    # plt.plot(k_ep,reward[k_run],marker = "_", color = "black", alpha = 0.5) 
-                    # plt.title("Episode: %d Run: %d Rollouts: %d" %(k_ep,k_run+1,agent.n_rollout))
-                    # # If figure gets locked on fullscreen, press ctrl+f untill it's fixed (there's lag due to process running)
-                    # plt.draw()
-                    # plt.pause(0.001)
-                    # fig.canvas.flush_events()                
                     break
+
+                t_step += 1
             
-            
+            ## =======  RUN COMPLETED  ======= ##
             env.append_csv(agent,state,k_ep,k_run,sensor_data)
             env.IC_csv(agent,state,k_ep,k_run,policy,v_d,omega_d,reward[k_run,0],error_str)
             env.append_csv_blank()
-            time.sleep(0.01)
+
+            reward_G.value = reward[k_run]
+            k_run_G.value = k_run
+            k_ep_G.value = k_ep
+
+            
             if repeat_run == True:
                 env.close_sim()
                 time.sleep(1)
@@ -379,26 +312,30 @@ def main():
             else:
                 k_run += 1 # Move on to next run
 
-            ## =======  RUN COMPLETED  ======= ##    
-
-
-
+            
+            
+        ## =======  EPISODE COMPLETED  ======= ##
         if not any( np.isnan(reward) ):
             print("Episode # %d training, average reward %.3f" %(k_ep, np.mean(reward)))
             agent.train(theta_rl,reward,epsilon_rl)
-            # plt.plot(k_ep,np.mean(reward),'ro')
-            # plt.draw()
-            # plt.pause(0.001)
         
-        ## =======  EPISODE COMPLETED  ======= ##
-
-
-
     ## =======  MAX TRIALS COMPLETED  ======= ##
 
+
+def get_state(env): # function for thread that will continually read current state
+    while True:
+        state = env.state_current
+        state_G[:] = state.tolist() # convert np array to list and save to MultiProcessing array 
+
 if __name__ == '__main__':
-    state_mp = Array('d',14)
-    p1 = Process(target=runGraph,args=(state_mp,))
+    state_G = Array('d',14) # Global state array
+    reward_G = Value('d',0) 
+    reward_avg_G = Value('d',0)
+    k_run_G = Value('i',0)
+    k_ep_G = Value('i',0)
+
+
+    p1 = Process(target=runGraph,args=(state_G,reward_G,k_run_G,k_ep_G,))
     p1.start()
     main()
 

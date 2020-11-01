@@ -52,6 +52,19 @@ if __name__ == '__main__':
     Main()
     
 
+# plt.plot(k_ep,np.mean(reward),'ro')
+# plt.draw()
+# plt.pause(0.001)
+
+# ## Episode Plotting
+# plt.plot(k_ep,reward[k_run],marker = "_", color = "black", alpha = 0.5) 
+# plt.title("Episode: %d Run: %d Rollouts: %d" %(k_ep,k_run+1,agent.n_rollout))
+# # If figure gets locked on fullscreen, press ctrl+f untill it's fixed (there's lag due to process running)
+# plt.draw()
+# plt.pause(0.001)
+# fig.canvas.flush_events()  
+
+
 
 
 
