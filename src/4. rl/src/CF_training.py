@@ -15,50 +15,9 @@ from rl_syspepg import rlsysPEPGAgent_reactive ,rlsysPEPGAgent_cov, rlsysPEPGAge
 from rl_EM import rlEM_PEPGAgent, rlEM_PEPG_CovAgent, rlEM_OutlierAgent , rlEMsys_PEPGAgent,rlEM_AdaptiveCovAgent, rlEM_AdaptiveCovAgent3D, rlEM_AdaptiveAgent
 from rl_cma import CMA_basic,CMA,CMA_sym
 
+from dashboard import runGraph
+
 os.system("clear")
-
-def runGraph():
-    # Parameters
-    print('show')
-    x_len = 200         # Number of points to display
-    y_range = [0,4]  # Range of possible Y values to display
-
-    # Create figure for plotting
-    fig2 = plt.figure(2)
-    ax = fig2.add_subplot(1, 1, 1)
-    xs = list(range(0, 200))
-    ys = [0] * x_len
-    ax.set_ylim(y_range)
-
-    # Create a blank line. We will update the line in animate
-    line, = ax.plot(xs, ys)
-
-    # Add labels
-    plt.xlabel('Samples')
-    plt.ylabel('Z-Position [m]')
-
-    # This function is called periodically from FuncAnimation
-    def animate(i, ys):
-
-        pos_z = state_mp[3]
-
-        ys.append(pos_z)  # Add y to list
-        ys = ys[-x_len:] # Limit y list to set number of items
-
-        line.set_ydata(ys) # Update line with new Y values
-
-        return line,
-
-
-    # Set up plot to call animate() function periodically
-
-    ani = animation.FuncAnimation(fig2,
-        animate,
-        fargs=(ys,),
-        interval=50,
-        blit=True)
-    plt.show()
-
 
 def main():
 
@@ -78,16 +37,16 @@ def main():
     env.create_csv(file_name,record = True)
 
 
-    ## Initial figure setup
-    fig = plt.figure()
-    plt.ion()  # interactive on
-    plt.grid()
-    plt.xlim([-1,40])
-    plt.ylim([-1,25])  # change limit depending on reward function defenition
-    plt.xlabel("Episode")
-    plt.ylabel("Reward")
-    plt.title("Episode: %d Run: %d" %(0,0))
-    plt.show() 
+    # ## Initial figure setup
+    # fig = plt.figure()
+    # plt.ion()  # interactive on
+    # plt.grid()
+    # plt.xlim([-1,40])
+    # plt.ylim([-1,25])  # change limit depending on reward function defenition
+    # plt.xlabel("Episode")
+    # plt.ylabel("Reward")
+    # plt.title("Episode: %d Run: %d" %(0,0))
+    # plt.show() 
 
 
 
@@ -246,10 +205,10 @@ def main():
                 t_step += 1
 
 
-                ## DEFINE CURRENT STATE [Can we thread this to get states even when above]
+                ## DEFINE CURRENT STATE [This will need to be threaded to always be recieving states]
                 state = env.state_current
-                print(state)
-                
+                state_mp[:] = state.tolist()
+
                 position = state[1:4] # [x,y,z]
                 orientation_q = state[4:8] # Orientation in quat format
                 vel = state[8:11]
@@ -264,8 +223,6 @@ def main():
                 b3 = R[2,:] # Vertical body axis in Global axes
                 b2 = R[1,:] # Horizontal body axis
                 b1 = R[0,:] # Forward body axis (related to yaw)
-
-
 
                 RREV, OF_y, OF_x = vz/d, vx/d, vy/d # OF_x,y are estimated optical flow vals assuming no body rotation
                 sensor_data = [RREV, OF_y, OF_x] # simplified for data recording
@@ -391,12 +348,12 @@ def main():
                     time.sleep(0.01)
                     print("Reward = %.3f" %(reward[k_run]))
                     print("!------------------------End Run------------------------! \n")
-                    ## Episode Plotting
-                    plt.plot(k_ep,reward[k_run],marker = "_", color = "black", alpha = 0.5) 
-                    plt.title("Episode: %d Run: %d Rollouts: %d" %(k_ep,k_run+1,agent.n_rollout))
-                    # If figure gets locked on fullscreen, press ctrl+f untill it's fixed (there's lag due to process running)
-                    plt.draw()
-                    plt.pause(0.001)
+                    # ## Episode Plotting
+                    # plt.plot(k_ep,reward[k_run],marker = "_", color = "black", alpha = 0.5) 
+                    # plt.title("Episode: %d Run: %d Rollouts: %d" %(k_ep,k_run+1,agent.n_rollout))
+                    # # If figure gets locked on fullscreen, press ctrl+f untill it's fixed (there's lag due to process running)
+                    # plt.draw()
+                    # plt.pause(0.001)
                     # fig.canvas.flush_events()                
                     break
             
@@ -422,9 +379,9 @@ def main():
         if not any( np.isnan(reward) ):
             print("Episode # %d training, average reward %.3f" %(k_ep, np.mean(reward)))
             agent.train(theta_rl,reward,epsilon_rl)
-            plt.plot(k_ep,np.mean(reward),'ro')
-            plt.draw()
-            plt.pause(0.001)
+            # plt.plot(k_ep,np.mean(reward),'ro')
+            # plt.draw()
+            # plt.pause(0.001)
         
         ## =======  EPISODE COMPLETED  ======= ##
 
@@ -434,7 +391,7 @@ def main():
 
 if __name__ == '__main__':
     state_mp = Array('d',14)
-    p1 = Process(target=runGraph)
+    p1 = Process(target=runGraph,args=(state_mp,))
     p1.start()
     main()
 
