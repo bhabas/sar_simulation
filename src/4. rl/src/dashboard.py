@@ -10,7 +10,7 @@ from scipy.spatial.transform import Rotation
 
 
 
-def runGraph(state_G,reward_G,k_run_G,k_ep_G):
+def runGraph(STATE,REWARD,K_RUN,K_EP):
     # Parameters
     buf_len = 600 # num datapoints in plot
     interval = 50 # Interval between plot frames [ms]
@@ -130,18 +130,28 @@ def runGraph(state_G,reward_G,k_run_G,k_ep_G):
     ax2.grid(True)
     # ax2.set_title(f"Episode: {k_ep_G} Run: {k_run_G}")
 
+
+
     k_ep = [] # Init empty arrays to be filled
     reward = []
-    line_r, = ax2.plot(k_ep,reward,marker = "_", color = "black", alpha = 0.5) # Init line to be plotted
+    scat = ax2.scatter(k_ep,reward,marker='_', color = "black", alpha = 0.5)
 
 
-    def animate_reward(i,k_ep,reward):
+    def animate_reward(i):
         # Change to append only on new run
-        k_ep.append(k_ep_G.value)
-        reward.append(reward_G.value)
+        # k_ep.append(k_ep_G.value)
+        # reward.append(reward_G.value)
+        # k_run.append(k_run_G.value)
 
-        line_r.set_data(k_ep,reward)
-        return line_r,
+        # scat.set_offsets(np.c_[k_ep_G,k_run_G])
+        k_ep.append(K_EP.value)
+        reward.append(REWARD.value)
+        scat.set_offsets(np.c_[k_ep,reward])
+        return scat,
+ 
+
+        # line_r.set_data(k_ep,reward)
+        # return line_r,
     
 
 
@@ -154,10 +164,10 @@ def runGraph(state_G,reward_G,k_run_G,k_ep_G):
         omega_x,omega_y,omega_z):
 
         # States from shared Multiprocessing array
-        x_x,x_y,x_z = state_G[1:4]
-        qw,qx,qy,qz = state_G[4:8]
-        vx,vy,vz = state_G[8:11]
-        wx,wy,wz = state_G[11:14]
+        x_x,x_y,x_z = STATE[1:4]
+        qw,qx,qy,qz = STATE[4:8]
+        vx,vy,vz = STATE[8:11]
+        wx,wy,wz = STATE[11:14]
 
         if qw == 0: # Fix for zero-norm in quat error during initialization
             qw = 1
@@ -249,7 +259,7 @@ def runGraph(state_G,reward_G,k_run_G,k_ep_G):
 
     anim2 = animation.FuncAnimation(fig_1, 
         animate_reward, 
-        fargs = (k_ep,reward),
+        fargs = (),
         interval = interval,
         blit=True)
 

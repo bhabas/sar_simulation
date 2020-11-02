@@ -180,11 +180,12 @@ def main():
             while True:
                 
                 ## DEFINE CURRENT STATE
-                position = state_G[1:4] # [x,y,z]
-                orientation_q = state_G[4:8] # Orientation in quat format
-                vel = state_G[8:11]
+                state = np.array(STATE[:])
+                position = STATE[1:4] # [x,y,z]
+                orientation_q = STATE[4:8] # Orientation in quat format
+                vel = STATE[8:11]
                 vx,vy,vz = vel
-                omega = state_G[11:14]
+                omega = STATE[11:14]
                 d = h_ceiling - position[2] # distance of drone from ceiling
 
                 ## ORIENTATION DATA FROM STATE
@@ -280,7 +281,7 @@ def main():
                         state_history = np.append(state_history, state2, axis=1)
                         env.append_csv(agent,state,k_ep,k_run,sensor_data)
 
-                if done_rollout:
+                if done_rollout==True:
 
                     env.step('stop')
                     reward[k_run] = agent.calculate_reward(state_history,h_ceiling)
@@ -297,9 +298,9 @@ def main():
             env.IC_csv(agent,state,k_ep,k_run,policy,v_d,omega_d,reward[k_run,0],error_str)
             env.append_csv_blank()
 
-            reward_G.value = reward[k_run]
-            k_run_G.value = k_run
-            k_ep_G.value = k_ep
+            REWARD.value = reward[k_run]
+            K_RUN.value = k_run
+            K_EP.value = k_ep
 
             
             if repeat_run == True:
@@ -325,17 +326,17 @@ def main():
 def get_state(env): # function for thread that will continually read current state
     while True:
         state = env.state_current
-        state_G[:] = state.tolist() # convert np array to list and save to MultiProcessing array 
+        STATE[:] = state.tolist() # convert np array to list and save to global array 
 
 if __name__ == '__main__':
-    state_G = Array('d',14) # Global state array
-    reward_G = Value('d',0) 
-    reward_avg_G = Value('d',0)
-    k_run_G = Value('i',0)
-    k_ep_G = Value('i',0)
+    STATE = Array('d',14) # Global state array for Multiprocessing
+    REWARD = Value('d',0) 
+    REWARD_AVG = Value('d',0)
+    K_RUN = Value('i',0)
+    K_EP = Value('i',0)
 
 
-    p1 = Process(target=runGraph,args=(state_G,reward_G,k_run_G,k_ep_G,))
+    p1 = Process(target=runGraph,args=(STATE,REWARD,K_RUN,K_EP,))
     p1.start()
     main()
 
