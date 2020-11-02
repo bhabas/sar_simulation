@@ -12,7 +12,7 @@ from rl_syspepg import rlsysPEPGAgent_reactive ,rlsysPEPGAgent_cov, rlsysPEPGAge
 from rl_EM import rlEM_PEPGAgent, rlEM_PEPG_CovAgent, rlEM_OutlierAgent , rlEMsys_PEPGAgent,rlEM_AdaptiveCovAgent, rlEM_AdaptiveCovAgent3D, rlEM_AdaptiveAgent
 from rl_cma import CMA_basic,CMA,CMA_sym
 
-from dashboard import runGraph
+from utility.dashboard import runGraph
 
 os.system("clear")
 
@@ -52,14 +52,14 @@ def main():
     alpha_sigma = np.array([[0.1]])#, [1.0]])#,[0.05]])
 
     ## Initial parameters for gaussian function
-    mu = np.array([[6.38],[4.58], [1.5] ])# ,[1.5]])#,[1.5]])   # Initial estimates of mu: 
-    sigma = np.array([[0.75],[0.75] ,[0.25] ])# ,[0.75]])      # Initial estimates of sigma: 
+    mu = np.array([[6.38],[-4.58], [1.5] ])# ,[1.5]])#,[1.5]])   # Initial estimates of mu: 
+    sigma = np.array([[1.5],[1.5] ,[0.25] ])# ,[0.75]])      # Initial estimates of sigma: 
 
     # noise tests all started at:
     #mu = np.array([[5.0],[-5.0] ])
     #sigma = np.array([[3.0],[3.0] ])
     #  
-    agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=2)
+    agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=1)
     #agent = rlsysPEPGAgent_cov(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=4)
     #agent = rlEM_PEPGAgent(mu,sigma,n_rollout=5)
     #agent = rlsysPEPGAgent_adaptive(alpha_mu,alpha_sigma,mu,sigma,n_rollout=10)
@@ -97,6 +97,7 @@ def main():
 
         np.set_printoptions(precision=2, suppress=True)
         done = False
+        N_ROLLOUTS.value = agent.n_rollout
 
         mu = agent.mu
         sigma = agent.sigma
@@ -298,10 +299,10 @@ def main():
             env.IC_csv(agent,state,k_ep,k_run,policy,v_d,omega_d,reward[k_run,0],error_str)
             env.append_csv_blank()
 
-            REWARD.value = reward[k_run]
-            K_RUN.value = k_run
             K_EP.value = k_ep
-
+            K_RUN.value = k_run
+            REWARD.value = reward[k_run]
+                       
             
             if repeat_run == True:
                 env.close_sim()
@@ -312,15 +313,16 @@ def main():
                     k_run -= 1 # Repeat previous (not current) run 
             else:
                 k_run += 1 # Move on to next run
-
-            
             
         ## =======  EPISODE COMPLETED  ======= ##
         if not any( np.isnan(reward) ):
             print("Episode # %d training, average reward %.3f" %(k_ep, np.mean(reward)))
+            REWARD_AVG.value = np.mean(reward)
             agent.train(theta_rl,reward,epsilon_rl)
+            
         
     ## =======  MAX TRIALS COMPLETED  ======= ##
+
 
 
 def get_state(env): # function for thread that will continually read current state
@@ -328,15 +330,19 @@ def get_state(env): # function for thread that will continually read current sta
         state = env.state_current
         STATE[:] = state.tolist() # convert np array to list and save to global array 
 
+
 if __name__ == '__main__':
     STATE = Array('d',14) # Global state array for Multiprocessing
     REWARD = Value('d',0) 
     REWARD_AVG = Value('d',0)
     K_RUN = Value('i',0)
     K_EP = Value('i',0)
+    N_ROLLOUTS = Value('i',0)
 
-
-    p1 = Process(target=runGraph,args=(STATE,REWARD,K_RUN,K_EP,))
+    ## START PLOTTING PROCESS
+    p1 = Process(target=runGraph,args=(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS))
     p1.start()
+
+    ## START MAIN SCRIPT
     main()
 

@@ -2,7 +2,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from utility import data_module as DM
+import data_module as DM
 
 
 

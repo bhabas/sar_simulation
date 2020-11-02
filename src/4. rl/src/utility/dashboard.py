@@ -3,23 +3,18 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-import os
-
-from multiprocessing import Process, Value, Array
 from scipy.spatial.transform import Rotation
 
 
+def runGraph(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS):
 
-def runGraph(STATE,REWARD,K_RUN,K_EP):
-    # Parameters
+    # PARAMETERS
     buf_len = 600 # num datapoints in plot
     interval = 50 # Interval between plot frames [ms]
     sec_hist = buf_len*interval/1000 # Time shown on dashboard [s]
-
-
     buffer = list(range(0,buf_len)) # Number of points to display
     
-    ## CREATE FIGURE FOR PLOTTING
+    ## CREATE FIGURE FOR PLOTTING DASHBOARD
     fig_0 = plt.figure(0, figsize = (12,6))
     
     ax1_pos = plt.subplot2grid((2,3),(0,0))
@@ -27,18 +22,17 @@ def runGraph(STATE,REWARD,K_RUN,K_EP):
     ax1_omega = plt.subplot2grid((2,3),(0,2))
     ax1_att = plt.subplot2grid((2,3),(1,0))
     ax1_ms = plt.subplot2grid((2,3),(1,1),colspan=2,rowspan=1)
-
     axes1 = [ax1_pos,ax1_vel,ax1_att,ax1_omega,ax1_ms]
 
 
-    ## SET PLOT TITLES
+    ## SET DASHBOARD TITLES
     ax1_pos.set_title('Position [m]')
     ax1_vel.set_title('Velocity [m/s]')
     ax1_att.set_title('Attitude [deg]')
     ax1_omega.set_title('Ang. Rate [rad/s]')
     ax1_ms.set_title('Motor speeds [rad/s]')
 
-    ## SET LABEL NAMES
+    ## SET DASHBOARD LABEL NAMES
     ax1_pos.set_ylabel("Pos. x,y,z [m]")
     ax1_vel.set_ylabel("Vel. x,y,z [m/s]")
     ax1_att.set_ylabel("Att. x,y,z [deg]")
@@ -46,7 +40,7 @@ def runGraph(STATE,REWARD,K_RUN,K_EP):
     ax1_ms.set_ylabel("MS [rad/s]")
 
 
-    ## SET Y-LIMITS
+    ## SET  DASBOARD Y-LIMITS
     ax1_pos.set_ylim([-2,2])
     ax1_vel.set_ylim([-3,3])
     ax1_att.set_ylim([-200,200])
@@ -55,7 +49,7 @@ def runGraph(STATE,REWARD,K_RUN,K_EP):
 
     
 
-    
+    ## INIT BUFFER ARRAYS
     pos_x = [0]*buf_len
     pos_y = [0]*buf_len
     pos_z = [0]*buf_len
@@ -72,10 +66,10 @@ def runGraph(STATE,REWARD,K_RUN,K_EP):
     omega_y = [0]*buf_len
     omega_z = [0]*buf_len
 
-    MS_1 = [0]*buf_len
-    MS_2 = [0]*buf_len
-    MS_3 = [0]*buf_len
-    MS_4 = [0]*buf_len
+    ms_1 = [0]*buf_len
+    ms_2 = [0]*buf_len
+    ms_3 = [0]*buf_len
+    ms_4 = [0]*buf_len
 
     
 
@@ -96,10 +90,10 @@ def runGraph(STATE,REWARD,K_RUN,K_EP):
     line_wy, = ax1_omega.plot(buffer, omega_y,'g-',label='$\omega_y$')
     line_wz, = ax1_omega.plot(buffer, omega_z,'r-',label='$\omega_z$')
 
-    line_ms1, = ax1_ms.plot(buffer, MS_1,color = 'steelblue',label="MS: 1")
-    line_ms2, = ax1_ms.plot(buffer, MS_2,'b-',label="MS: 2")
-    line_ms3, = ax1_ms.plot(buffer, MS_3,'g-',label="MS: 3")
-    line_ms4, = ax1_ms.plot(buffer, MS_4,'r-',label="MS: 4")
+    line_ms1, = ax1_ms.plot(buffer, ms_1,color = 'steelblue',label="MS: 1")
+    line_ms2, = ax1_ms.plot(buffer, ms_2,'b-',label="MS: 2")
+    line_ms3, = ax1_ms.plot(buffer, ms_3,'g-',label="MS: 3")
+    line_ms4, = ax1_ms.plot(buffer, ms_4,'r-',label="MS: 4")
 
 
     ## DEFINE AXES LEGENDS
@@ -110,49 +104,14 @@ def runGraph(STATE,REWARD,K_RUN,K_EP):
     ax1_ms.legend([line_ms1,line_ms2,line_ms3,line_ms4],[line_ms1.get_label(),line_ms2.get_label(),line_ms3.get_label(),line_ms4.get_label()])
 
     for ax in axes1:
-        ax.set_xticks(np.linspace(0,buf_len,6))
+        ax.set_xticks(np.linspace(0,buf_len,6)) # These mark the second ticks
         ax.set_xticklabels(np.linspace(-sec_hist,0,6))
         ax.set_xlabel("Seconds ago (Real Time)")
+
         ax.grid(True)
-        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.25), ncol=len(ax.lines))
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.25), ncol=len(ax.lines)) # Places legend below plots
 
-    fig_0.tight_layout()
-
-
-
-
-    fig_1 = plt.figure(1) # Initalize figure and axes
-    ax2 = fig_1.add_subplot(111)
-    ax2.set_xlabel("Episode")
-    ax2.set_ylabel("Reward")
-    ax2.set_ylim([0,30])
-    ax2.set_xlim([-5,15])
-    ax2.grid(True)
-    # ax2.set_title(f"Episode: {k_ep_G} Run: {k_run_G}")
-
-
-
-    k_ep = [] # Init empty arrays to be filled
-    reward = []
-    scat = ax2.scatter(k_ep,reward,marker='_', color = "black", alpha = 0.5)
-
-
-    def animate_reward(i):
-        # Change to append only on new run
-        # k_ep.append(k_ep_G.value)
-        # reward.append(reward_G.value)
-        # k_run.append(k_run_G.value)
-
-        # scat.set_offsets(np.c_[k_ep_G,k_run_G])
-        k_ep.append(K_EP.value)
-        reward.append(REWARD.value)
-        scat.set_offsets(np.c_[k_ep,reward])
-        return scat,
- 
-
-        # line_r.set_data(k_ep,reward)
-        # return line_r,
-    
+    fig_0.tight_layout() # Optimizes layout so no overlapping
 
 
     flag = True # To be use for future dynamic scaling toggle
@@ -171,7 +130,6 @@ def runGraph(STATE,REWARD,K_RUN,K_EP):
 
         if qw == 0: # Fix for zero-norm in quat error during initialization
             qw = 1
-
         R = Rotation.from_quat([qx,qy,qz,qw]) 
         yaw,pitch,roll = R.as_euler('zyx',degrees=True)
         
@@ -242,10 +200,55 @@ def runGraph(STATE,REWARD,K_RUN,K_EP):
         # print("Test: ===========",reward_G.value)
         return line_px,line_py,line_pz,line_vx,line_vy,line_vz,line_ax,line_ay,line_az,line_wx,line_wy,line_wz
 
+
+
+
+
+
+
+
+    ## CREATE FIGURE FOR REWARD PLOT
+    fig_1 = plt.figure(1) # Initalize figure and axes
+
+    ax2 = fig_1.add_subplot(111)
+    ax2.set_xlabel("Episode")
+    ax2.set_ylabel("Reward")
+    ax2.set_xlim([-2,40])
+    ax2.set_ylim([0,30])
+
+    ax2.grid(True)
+    ax2.set_title(f'Rollouts: {N_ROLLOUTS.value*2} | Episode: {K_EP.value} Run: {K_RUN.value} (Completed) ')
+
+
+    ## INIT ARRAYS TO BE FILLED
+    k_ep = [0] # Need zero value just to be able to call [-1]
+    k_run = [0] 
+    reward = [0]
+
+    k_ep_ravg = [0] # k_ep grows on each run iteration so a new array was created to match reward_avg size
+    reward_avg = [0]
+    
+    scat_r = ax2.scatter([],[],marker='_', color = "black", alpha = 0.5) # Reward scatter
+    scat_ra = ax2.scatter([],[],marker='o',color = 'red') # Reward_average scatter
+
+
+    def animate_reward(i,k_ep,k_run,k_ep_ravg):
+
+        if k_ep[-1] != K_EP.value: # if new episode append values and plot avg reward
+            reward_avg.append(REWARD_AVG.value)
+            k_ep_ravg.append(K_EP.value-1)
+            scat_ra.set_offsets(np.c_[k_ep_ravg[1:],reward_avg[1:]])
         
+        if k_run[-1] != K_RUN.value: # if new run append values and plot reward
+            k_ep.append(K_EP.value)
+            reward.append(REWARD.value)
+            k_run.append(K_RUN.value)
+            scat_r.set_offsets(np.c_[k_ep[1:],reward[1:]])
+            ax2.set_title(f'Rollouts: {N_ROLLOUTS.value*2} | Episode: {K_EP.value} Run: {K_RUN.value} (Completed) ')
 
 
-    # Set up plot to call animate() function periodically
+        return scat_r,scat_ra
+ 
 
     anim1 = animation.FuncAnimation(fig_0,
         animate_dashboard,
@@ -259,9 +262,23 @@ def runGraph(STATE,REWARD,K_RUN,K_EP):
 
     anim2 = animation.FuncAnimation(fig_1, 
         animate_reward, 
-        fargs = (),
+        fargs = (k_ep,k_run,k_ep_ravg),
         interval = interval,
-        blit=True)
+        blit=False)
 
     plt.show()
+
+    ## STRUCTURE: FuncAnimation
+    # Initialize figure and axes 
+    # Create an empty array and plot it
+    # Create a function that appends to arrays whenever it's called
+    #       and returns the line/scatter objects
+    #
+    # Use FuncAnimation to call that function with it's fargs inputs
+    # Note: If only one input include comma after it e.g. fargs=(temp1,)
+    #
+    # interval: time between frames
+    # blit: improves performance by only redrawing new objects (Causes issues with display though)
+    #       blit = False, will remove issues but lowers frame rate
+
     
