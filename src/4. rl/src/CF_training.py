@@ -24,6 +24,7 @@ def main():
     # ============================
 
 
+
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv()
     print("Environment done")
