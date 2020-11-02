@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import pyautogui,getpass
 
 import socket, struct
 from threading import Thread
+from multiprocessing import Process,Array,Value
 import struct
 from queue import Queue
 
@@ -111,6 +111,13 @@ class CrazyflieEnv:
     
     def getTime(self):
         return self.state_current[0]
+
+    def get_state(self,STATE): # function for thread that will continually read current state
+        while True:
+            state = self.state_current
+            if state[4]==0: # Fix for zero-norm error during initialization [qw]
+                state[4] = 1
+            STATE[:] = state.tolist() # convert np array to list and save to global array 
 
     def launch_sim(self):
         ## There's some issue with the external shells that cause it to hang up on missed landings as it just sits on the ground

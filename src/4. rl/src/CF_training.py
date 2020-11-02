@@ -24,23 +24,24 @@ def main():
     # ============================
 
 
-    ## Initialize the environment
-    username = getpass.getuser()
+    ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv()
     print("Environment done")
 
-    state_thread = threading.Thread(target=get_state,args=(env,))
-    state_thread.start()
+    ## INIT STATE RECIEVING THREAD
+    state_thread = threading.Thread(target=env.get_state,args=(STATE,))
+    state_thread.start() # Start thread that continually recieves state array from Gazebo
 
-    ## Initialize the user and data recording
+    ## INIT USER AND DATA RECORDING
+    username = getpass.getuser()
     start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
     file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time + '.csv'
     env.create_csv(file_name,record = False)
 
 
-    ## Sim Parameters
+    ## SIM PARAMETERS
     ep_start = 0 # Default episode start position
-    h_ceiling = 1.5 # meters
+    h_ceiling = 1.5 # [m]]
 
 
     # ============================
@@ -97,13 +98,14 @@ def main():
 
         np.set_printoptions(precision=2, suppress=True)
         done = False
-        N_ROLLOUTS.value = agent.n_rollout
+        N_ROLLOUTS.value = agent.n_rollout # Global n_rollout variable
 
-        mu = agent.mu
-        sigma = agent.sigma
+        mu = agent.mu # Mean for Gaussian distribution
+        sigma = agent.sigma # Standard Deviation for Gaussian distribution
+
 
         reward = np.zeros(shape=(2*agent.n_rollout,1))
-        reward[:] = np.nan  # initialize reward to be NaN array, size n_rollout x 1
+        reward[:] = np.nan  # Init reward to be NaN array, size n_rollout x 1 [Not sure why?]
         theta_rl,epsilon_rl = agent.get_theta()
 
         #mu = agent.xmean
@@ -130,27 +132,27 @@ def main():
         # ============================
         ##          Run 
         # ============================
-        k_run = 0
+        k_run = 0 # Reset run counter each episode
         while k_run < 2*agent.n_rollout:
 
             ## RESET TO INITIAL STATE
-            env.step('home',ctrl_flag=1) # Reset control vals and functionality
+            env.step('home',ctrl_flag=1) # Reset control vals and functionality to default vals
             state = env.reset_pos() # Reset Gazebo pos
-            time.sleep(3.0) # time for CF to settle
+            time.sleep(3.0) # Time for CF to settle
 
 
             ## INITIALIZE RUN PARAMETERS
-            RREV_trigger = theta_rl[0, k_run] # FOV expansion velocity [rad/s]
+            RREV_trigger = theta_rl[0, k_run] # FoV expansion velocity [rad/s]
             G1 = theta_rl[1, k_run]
             G2 = theta_rl[2, k_run]
             policy = theta_rl[:,k_run]
-            policy = policy[:,np.newaxis] # reshaping for data logging (change [3,] -> [3,1])
+            policy = policy[:,np.newaxis] # reshaping for data logging [ change [3,] -> [3,1] ]
         
             vz_d = np.random.uniform(low=2.5, high=3.0)
             vx_d = np.random.uniform(low=-2.0, high=2.0)
             vy_d = 0 
             v_d = [vx_d,vy_d,vz_d] # [m/s]
-            # try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
+            # Note: try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
 
             ## INIT RUN FLAGS
@@ -191,8 +193,6 @@ def main():
 
                 ## ORIENTATION DATA FROM STATE
                 qw,qx,qy,qz = orientation_q
-                if qw == 0: # Fix for zero-norm error during initialization
-                    qw = 1
                 R = Rotation.from_quat([qx,qy,qz,qw])
                 R = R.as_matrix() # [b1,b2,b3] Body vectors
 
@@ -214,11 +214,11 @@ def main():
 
                     print('----- pitch starts -----')
                     print('vz=%.3f, vx=%.3f, vy=%.3f' %(vz,vx,vy))
-                    print('RREV=%.3f, OF_y=%.3f, OF_x=%.3f, q_pitch=%.3f' %( RREV, OF_y, OF_x, omega_yd) )   
+                    print('RREV=%.3f, OF_y=%.3f, OF_x=%.3f, Omega_yd=%.3f' %(RREV, OF_y, OF_x, omega_yd) )   
                     print("Pitch Time: %.3f" %start_time_pitch)
 
                     ## Start rotation and mark rotation as triggered
-                    env.step('omega',omega_d,ctrl_flag=1) # set ang rate control
+                    env.step('omega',omega_d,ctrl_flag=1) # Set desired ang. vel 
                     pitch_triggered = True
 
 
@@ -227,18 +227,18 @@ def main():
                 # ============================
 
                 # If time since triggered pitch exceeds [0.7s]   
-                if pitch_triggered and ((env.getTime()-start_time_pitch) > (0.3)):
-                    # I don't like this formatting, feel free to improve on
-                    error_1 = "Rollout Completed: Pitch Triggered  "
+                if pitch_triggered and ((env.getTime()-start_time_pitch) > (0.7)):
+                    # I don't like this error formatting, feel free to improve on
+                    error_1 = "Rollout Completed: Pitch Timeout"
                     error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch))
                     print(error_1 + "\n" + error_2)
 
                     error_str = error_1 + error_2
                     done_rollout = True
 
-                # If time since rollout start exceeds [1.5s]
+                # If time since rollout start exceeds [2.5s]
                 if (env.getTime() - start_time_rollout) > (2.5):
-                    error_1 = "Rollout Completed: Time Exceeded   "
+                    error_1 = "Rollout Completed: Time Exceeded"
                     error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
                     print(error_1 + "\n" + error_2)
     
@@ -248,7 +248,14 @@ def main():
                 # If position falls below max height (There is a lag w/ this)
                 z_max = max(position[2],z_max)
                 if position[2] <= 0.75*z_max:
+                    error_1 = "Rollout Completed: Falling Drone"
+                    print(error_1)
+
+                    error_str  = error_1
                     done_rollout = True
+                    env.step('stop') # turn motors off before resetting position
+                    env.reset_pos()
+                    
                 
 
 
@@ -286,8 +293,6 @@ def main():
 
                     env.step('stop')
                     reward[k_run] = agent.calculate_reward(state_history,h_ceiling)
-                    
-                    
                     print("Reward = %.3f" %(reward[k_run]))
                     print("!------------------------End Run------------------------! \n")
                     break
@@ -295,10 +300,13 @@ def main():
                 t_step += 1
             
             ## =======  RUN COMPLETED  ======= ##
+
+            ## CAP CSV WITH FINAL VALUES
             env.append_csv(agent,state,k_ep,k_run,sensor_data)
             env.IC_csv(agent,state,k_ep,k_run,policy,v_d,omega_d,reward[k_run,0],error_str)
             env.append_csv_blank()
 
+            ## UPDATE GLOBAL VARIABLES
             K_EP.value = k_ep
             K_RUN.value = k_run
             REWARD.value = reward[k_run]
@@ -310,7 +318,7 @@ def main():
                 env.launch_sim()
                 # return to previous run to catch potential missed glitches in gazebo (they are usually caught in the next run)
                 if k_run > 0:
-                    k_run -= 1 # Repeat previous (not current) run 
+                    k_run -= 1 # Repeat previous run (not current)  
             else:
                 k_run += 1 # Move on to next run
             
@@ -325,10 +333,7 @@ def main():
 
 
 
-def get_state(env): # function for thread that will continually read current state
-    while True:
-        state = env.state_current
-        STATE[:] = state.tolist() # convert np array to list and save to global array 
+
 
 
 if __name__ == '__main__':
