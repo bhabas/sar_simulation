@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import pyautogui,getpass
 
 import socket, struct
 from threading import Thread
+from multiprocessing import Process,Array,Value
 import struct
 from queue import Queue
 
@@ -49,7 +49,10 @@ class CrazyflieEnv:
         self.addr_Ctrl = ("", self.port_Ctrl) # Controller Address
         self.addr_Gazebo = ("", self.port_Gazebo) # RL Address
         self.fd.bind(self.addr_Gazebo) # bind() associates the socket with specific network interface and port number
-        
+        ## BINDING ERROR: sudo netstat -nlp | grep 18060
+        ## sudo kill -9 [Process ID]
+
+
 
         self.queue_command = Queue(3)
         self.state_current = np.zeros(shape=(14))
@@ -108,6 +111,13 @@ class CrazyflieEnv:
     
     def getTime(self):
         return self.state_current[0]
+
+    def get_state(self,STATE): # function for thread that will continually read current state
+        while True:
+            state = self.state_current
+            if state[4]==0: # Fix for zero-norm error during initialization [qw]
+                state[4] = 1
+            STATE[:] = state.tolist() # convert np array to list and save to global array 
 
     def launch_sim(self):
         ## There's some issue with the external shells that cause it to hang up on missed landings as it just sits on the ground
@@ -239,28 +249,28 @@ class CrazyflieEnv:
                 'vx','vy','vz',
                 'wx','wy','wz',
                 'gamma','reward','reward_avg','n_rollouts',
-                'RREV','OF_x','OF_y','RREV Trigger',"","","","", # Place holders
+                'RREV','OF_x','OF_y',"","","","", # Place holders
                 'error'])
 
-    def IC_csv(self,agent,state,k_ep,k_run,reward=0,error="",v_d=[0,0,0], omega_d=[0,0,0],policy=[0,0]):
+    def IC_csv(self,agent,state,k_ep,k_run,policy,v_d,omega_d,reward,error_str):
         if self.record == True:
             with open(self.file_name, mode='a') as state_file:
                 state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 state_writer.writerow([
                     k_ep,k_run,
                     agent.alpha_mu.T,agent.alpha_sigma.T,
-                    agent.mu.T,agent.sigma.T,
-                    policy,
-                    state[0],state[1],state[2],state[3], # t,x,y,z
-                    state[4], state[5], state[6], state[7], # qx,qy,qz,qw
-                    v_d[1], v_d[2], v_d[0], # vx,vy,vz
+                    agent.mu.T,agent.sigma.T,policy.T,
+                    "","","","", # t,x,y,z
+                    "", "", "", "", # qx,qy,qz,qw
+                    v_d[0],v_d[1],v_d[2], # vx,vy,vz
                     omega_d[0],omega_d[1],omega_d[2], # wx,wy,wz
                     agent.gamma,np.around(reward,2),"",agent.n_rollout,
-                    "","","","","","","", # Place holders
-                    error])
+                    "","","", # Sensor readings
+                    "","","","", # Place holders
+                    error_str])
 
 
-    def append_csv(self,agent,state,k_ep,k_run,sensor,policy,reward=0,error=""):
+    def append_csv(self,agent,state,k_ep,k_run,sensor):
         if self.record == True:
             state = np.around(state,3)
             sensor = np.around(sensor,3)
@@ -269,16 +279,16 @@ class CrazyflieEnv:
                 state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 state_writer.writerow([
                     k_ep,k_run,
-                    agent.alpha_mu.T,agent.alpha_sigma.T,
-                    agent.mu.T,agent.sigma.T,
-                    policy,
+                    "","", # alpha_mu,alpha_sig
+                    "","","", # mu,sig,policy
                     state[0],state[1],state[2],state[3], # t,x,y,z
                     state[4], state[5], state[6], state[7], # qx,qy,qz,qw
                     state[8], state[9],state[10], # vx,vy,vz
                     state[11],state[12],state[13], # wx,wy,wz
-                    agent.gamma,np.around(reward,2),"",agent.n_rollout,
-                    sensor[0],sensor[1],sensor[2],"","","","", # Place holders
-                    error])
+                    "","","","", # gamma, reward, "", n_rollout
+                    sensor[0],sensor[1],sensor[2],
+                    "","","","", # Place holders
+                    ""]) # error
 
 
     def append_csv_blank(self): 

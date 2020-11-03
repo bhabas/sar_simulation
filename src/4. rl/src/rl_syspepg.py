@@ -27,7 +27,6 @@ class ES:
         # Rearrange quat as scalar-last format used in scipy Rotation
         # [qw,qx,qy,qz]' => quat = [qx,qy,qz,qw]'
         quat = np.append(quat, state[3,:][np.newaxis,:], axis=0)  # rearrange quat as scalar-last format used in scipy Rotation
-
         r1 = z / h_ceiling # reward from hieght scaled 0-1
 
         r2 = np.zeros_like(r1)

@@ -283,7 +283,7 @@ void Controller::controlThread()
     
 
     // Default desired States
-    Vector3d x_d_Def(0,0,0.23); // Pos-desired (Default) [m]  # Should be z=0.03 but needs integral controller for error offset
+    Vector3d x_d_Def(0,0,0.5); // Pos-desired (Default) [m]  # Should be z=0.03 but needs integral controller for error offset
     Vector3d v_d_Def(0,0,0); // Velocity-desired (Default) [m/s]
     Vector3d a_d_Def(0,0,0); // Acceleration-desired (Default) [m/s]
     Vector3d b1_d_Def(1,0,0); // Desired global pointing direction (Default)
@@ -479,7 +479,7 @@ void Controller::controlThread()
 
                 kp_x = 0.1;   // Pos. Gain
                 kd_x = 0.1;  // Pos. derivative Gain
-                ki_x = 0.05; // Pos. integral Gain
+                ki_x = 0.05*0; // Pos. integral Gain
                 kp_R = 0.05;  // Rot. Gain // Keep checking rotational speed
                 kd_R = 0.005; // Rot. derivative Gain
 
