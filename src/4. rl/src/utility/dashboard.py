@@ -10,7 +10,7 @@ from scipy.spatial.transform import Rotation
 def runGraph(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS):
 
     # PARAMETERS
-    buf_len = 600 # num datapoints in plot
+    buf_len = 300 # num datapoints in plot
     interval = 50 # Interval between plot frames [ms]
     sec_hist = buf_len*interval/1000 # Time shown on dashboard [s]
     buffer = list(range(0,buf_len)) # Number of points to display
@@ -209,13 +209,13 @@ def runGraph(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS):
 
 
     ## CREATE FIGURE FOR REWARD PLOT
-    fig_1 = plt.figure(1) # Initalize figure and axes
+    fig_1 = plt.figure(1,figsize=(6,3)) # Initalize figure and axes
 
     ax2 = fig_1.add_subplot(111)
     ax2.set_xlabel("Episode")
     ax2.set_ylabel("Reward")
     ax2.set_xlim([-2,40])
-    ax2.set_ylim([0,30])
+    ax2.set_ylim([0,22])
 
     ax2.grid(True)
     ax2.set_title(f'Rollouts: {N_ROLLOUTS.value*2} | Episode: {K_EP.value} Run: {K_RUN.value} (Completed) ')

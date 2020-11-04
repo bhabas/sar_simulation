@@ -54,14 +54,14 @@ def main():
     alpha_sigma = np.array([[0.1]])#, [1.0]])#,[0.05]])
 
     ## Initial parameters for gaussian function
-    mu = np.array([[6.38],[-4.58], [1.5] ])# ,[1.5]])#,[1.5]])   # Initial estimates of mu: 
-    sigma = np.array([[1.5],[1.5] ,[0.25] ])# ,[0.75]])      # Initial estimates of sigma: 
+    mu = np.array([[5.5],[8.9], [1.5] ])# ,[1.5]])#,[1.5]])   # Initial estimates of mu: 
+    sigma = np.array([[1.0],[1.0] ,[0.25] ])# ,[0.75]])      # Initial estimates of sigma: 
 
     # noise tests all started at:
     #mu = np.array([[5.0],[-5.0] ])
     #sigma = np.array([[3.0],[3.0] ])
     #  
-    agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=1)
+    agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=4)
     #agent = rlsysPEPGAgent_cov(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=4)
     #agent = rlEM_PEPGAgent(mu,sigma,n_rollout=5)
     #agent = rlsysPEPGAgent_adaptive(alpha_mu,alpha_sigma,mu,sigma,n_rollout=10)
@@ -73,7 +73,7 @@ def main():
     #agent = rlEM_AdaptiveCovAgent3D(mu,sigma,gamma=0.95,n_rollout=5)
 
 
-    #agent = rlEM_AdaptiveAgent(mu,sigma,n_rollout=5)
+    # agent = rlEM_AdaptiveAgent(mu,sigma,n_rollout=5)
     # ============================
     ##           CMA 
     # ============================
@@ -119,8 +119,8 @@ def main():
 
         print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
 
-        print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[0], mu[0], mu[0]))
-        print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[0], sigma[0], sigma[0]))
+        print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1], mu[0], mu[0]))
+        print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1], sigma[0], sigma[0]))
         print('\n')
 
         print("theta_rl = ")
@@ -152,6 +152,7 @@ def main():
             vz_d = np.random.uniform(low=2.5, high=3.0)
             vx_d = np.random.uniform(low=-2.0, high=2.0)
             vy_d = 0 
+            vx_d = 0
             v_d = [vx_d,vy_d,vz_d] # [m/s]
             # Note: try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
