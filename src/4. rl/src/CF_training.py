@@ -103,6 +103,7 @@ def main():
 
         mu = agent.mu # Mean for Gaussian distribution
         sigma = agent.sigma # Standard Deviation for Gaussian distribution
+        omega_d = [0,0,0]
 
 
         reward = np.zeros(shape=(2*agent.n_rollout,1))
@@ -186,6 +187,7 @@ def main():
                 
                 ## DEFINE CURRENT STATE
                 state = np.array(STATE[:])
+                
                 position = STATE[1:4] # [x,y,z]
                 orientation_q = STATE[4:8] # Orientation in quat format
                 vel = STATE[8:11]
@@ -284,6 +286,7 @@ def main():
                 # ============================
                 ## Keep record of state vector every 10 time steps
                 state2 = state[1:, np.newaxis]
+                
                 if state_history is None:
                     state_history = state2 
                 else:

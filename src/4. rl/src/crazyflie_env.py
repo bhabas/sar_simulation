@@ -23,6 +23,9 @@ from cv_bridge import CvBridge
 class CrazyflieEnv:
     def __init__(self, port_local=18050, port_Ctrl=18060):
         print("[STARTING] CrazyflieEnv is starting...")
+        self.timeout = False # Timeout flag for reciever thread
+        self.state_current = np.zeros(14)
+        self.isRunning = True
         
         ## INIT ROS NODE FOR THE PROCESS 
         # NOTE: Can only have one node in a rospy process
@@ -56,8 +59,7 @@ class CrazyflieEnv:
         ## sudo kill -9 [Process ID]
 
 
-        self.state_current = np.zeros(14)
-        self.isRunning = True
+        
 
         
        
@@ -112,7 +114,7 @@ class CrazyflieEnv:
             state = self.state_current
             qw = state[4]
             if qw==0: # Fix for zero-norm error during initialization where norm([qw,qx,qy,qz]=[0,0,0,0]) = undf
-                qw = 1
+                state[4] = 1
             STATE[:] = state.tolist() # Save to global array for access across multi-processes
 
     def launch_sim(self):
@@ -149,6 +151,8 @@ class CrazyflieEnv:
         # Threaded function to continually read data from Controller Server
         print("[STARTING] recvThread is starting...")
         while self.isRunning:
+            # Note: This doesn't want to receive data sometimes
+            
             try:
                 data, addr_remote = self.RL_socket.recvfrom(112) # 14d (1 double = 8 bytes)
                 x,y,z,qw,qx,qy,qz,vx,vy,vz,omega_x,omega_y,omega_z,sim_time = struct.unpack('14d',data) # unpack 112 byte msg into 14 doubles
