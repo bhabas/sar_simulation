@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>drone_training_rl</name>
+  <name>crazyflie_gazebo_sim</name>
   <version>0.0.1</version>
   <description>The drone_training package</description>
 

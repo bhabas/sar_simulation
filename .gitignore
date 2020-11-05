@@ -1,7 +1,7 @@
 *.pyc
 # Byte-compiled / optimized / DLL files
 __pycache__/
-src/4. rl/src/log/*.csv
+src/crazyflie_gazebo_sim/src/log/*.csv
 *.py[cod]
 *$py.class
 .vscode
