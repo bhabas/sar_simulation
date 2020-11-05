@@ -103,7 +103,7 @@ def main():
 
         mu = agent.mu # Mean for Gaussian distribution
         sigma = agent.sigma # Standard Deviation for Gaussian distribution
-        omega_d = [0,0,0]
+        omega_d = [0,0,0] # Junk declaration to cleanup warning or possible error
 
 
         reward = np.zeros(shape=(2*agent.n_rollout,1))

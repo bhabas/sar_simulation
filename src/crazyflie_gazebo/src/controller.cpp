@@ -28,6 +28,9 @@ void Controller::Load()
         cout<<"[FAILED] Ctrl_Mavlink_socket: Setting SNDBUF"<<endl;
     if (setsockopt(Ctrl_Mavlink_socket, SOL_SOCKET, SO_RCVBUF, &Ctrl_Mavlink_socket_RCVBUF, sizeof(Ctrl_Mavlink_socket_RCVBUF))<0)
         cout<<"[FAILED] Ctrl_Mavlink_socket: Setting RCVBUF"<<endl;
+    int enable = 1; // Fix for error if socket hasn't close correctly when restarting program
+    if (setsockopt(Ctrl_Mavlink_socket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+        cout <<"help me"<< endl;
 
     // SET SOCKET SETTINGS
     memset(&addr_Ctrl_Mavlink, 0, sizeof(addr_Ctrl_Mavlink));
@@ -42,6 +45,9 @@ void Controller::Load()
         cout<<"[SUCCESS] Ctrl_Mavlink_socket: Binding address to socket"<<endl; 
 
 
+
+
+
     // INIT SECOND CONTROLLER SOCKET (COMMUNICATES W/ RL PORT:18050)
     Ctrl_RL_socket = socket(AF_INET, SOCK_DGRAM, 0);
     Ctrl_RL_socket_SNDBUF = 112; // 14 doubles [112 bytes] for State array
@@ -53,6 +59,10 @@ void Controller::Load()
         cout<<"[FAILED] Ctrl_RL_socket: Setting SNDBUF"<<endl;
     if (setsockopt(Ctrl_RL_socket, SOL_SOCKET, SO_RCVBUF, &Ctrl_RL_socket_RCVBUF, sizeof(Ctrl_RL_socket_RCVBUF))<0)
         cout<<"[FAILED] Ctrl_RL_socket: Setting RCVBUF"<<endl;
+    // Fix for error if socket hasn't close correctly when restarting program
+    if (setsockopt(Ctrl_RL_socket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+        cout <<"help me"<< endl;
+    
 
     // SET SOCKET SETTINGS
     memset(&addr_Ctrl_RL, 0, sizeof(addr_Ctrl_RL)); // Not sure what this does
