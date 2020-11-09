@@ -72,7 +72,7 @@ class GazeboMavlink: public ModelPlugin
         std::thread senderThread;
 		void sendThread();
 
-        double state_full[14];
+        double state_full[18];
 };
 
 }

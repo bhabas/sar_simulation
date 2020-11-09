@@ -24,7 +24,7 @@ class CrazyflieEnv:
     def __init__(self, port_local=18050, port_Ctrl=18060):
         print("[STARTING] CrazyflieEnv is starting...")
         self.timeout = False # Timeout flag for reciever thread
-        self.state_current = np.zeros(14)
+        self.state_current = np.zeros(18)
         self.isRunning = True
         
         ## INIT ROS NODE FOR THE PROCESS 
@@ -40,7 +40,7 @@ class CrazyflieEnv:
         self.RL_socket.bind(self.addr_RL) # Bind socket to specified port
 
         # Specify send/receive buffer sizes    
-        self.RL_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 112) # State array from Ctrl [14 doubles]
+        self.RL_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 144) # State array from Ctrl [14 doubles]
         self.RL_socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 40) # Action commands to Ctrl [5 doubles]
         self.RL_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         
@@ -120,17 +120,16 @@ class CrazyflieEnv:
             STATE[:] = state.tolist() # Save to global array for access across multi-processes
 
     def launch_sim(self):
-        ## There's some issue with the external shells that cause it to hang up on missed landings as it just sits on the ground
-
+       
         if getpass.getuser() == 'bhabas':
             pyautogui.moveTo(x=2500,y=0) 
 
-        self.gazebo_p = subprocess.Popen(
+        self.gazebo_p = subprocess.Popen( # Gazebo Process
             "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/utility/launch_gazebo.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(5)
 
-        self.controller_p = subprocess.Popen(
+        self.controller_p = subprocess.Popen( # Controller Process
             "gnome-terminal --disable-factory --geometry 81x33 -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/utility/launch_controller.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(1)
@@ -156,9 +155,11 @@ class CrazyflieEnv:
             # Note: This doesn't want to receive data sometimes
             
             try:
-                data, addr_remote = self.RL_socket.recvfrom(112) # 14d (1 double = 8 bytes)
-                sim_time,x,y,z,qw,qx,qy,qz,vx,vy,vz,omega_x,omega_y,omega_z = struct.unpack('14d',data) # unpack 112 byte msg into 14 doubles
-                self.state_current = np.array([sim_time, x,y,z,qw,qx,qy,qz,vx,vy,vz,omega_x,omega_y,omega_z])
+                data, addr_remote = self.RL_socket.recvfrom(144) # 14d (1 double = 8 bytes)
+                sim_time,x,y,z,qw,qx,qy,qz,vx,vy,vz,omega_x,omega_y,omega_z,ms_1,ms_2,ms_3,m2_4 = struct.unpack('18d',data) # unpack 112 byte msg into 14 doubles
+                self.state_current = np.array([sim_time, x,y,z,qw,qx,qy,qz,vx,vy,vz,omega_x,omega_y,omega_z,ms_1,ms_2,ms_3,m2_4])
+                # np.set_printoptions(precision=2, suppress=True)
+                # print(self.state_current)
                 self.timeout = False
             
             except timeout:

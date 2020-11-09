@@ -11,7 +11,7 @@
 #include "readerwriterqueue.h"
 
 typedef struct _StateFull {
-    double data[14];
+    double data[18];
 } StateFull;
 
 typedef struct _MotorCommand {

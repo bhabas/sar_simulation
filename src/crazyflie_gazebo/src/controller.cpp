@@ -18,7 +18,7 @@ void Controller::Load()
     // INIT FIRST CONTROLLER SOCKET (COMMUNICATES W/ MAVLINK PORT:18080)
     Ctrl_Mavlink_socket = socket(AF_INET, SOCK_DGRAM, 0); // DGRAM is for UDP communication (Send data but don't care if it's recieved)
     Ctrl_Mavlink_socket_SNDBUF = 16;    // 4 floats [16 bytes] for Motorspeeds       
-    Ctrl_Mavlink_socket_RCVBUF = 112;   // 14 doubles [112 bytes] for State array
+    Ctrl_Mavlink_socket_RCVBUF = 144;   // 14 doubles [112 bytes] for State array
     Ctrl_Mavlink_socket_PORT = 18070;   // Port for this socket
 
     // SET EXPECTED BUFFER SIZES
@@ -48,7 +48,7 @@ void Controller::Load()
 
     // INIT SECOND CONTROLLER SOCKET (COMMUNICATES W/ RL PORT:18050)
     Ctrl_RL_socket = socket(AF_INET, SOCK_DGRAM, 0);
-    Ctrl_RL_socket_SNDBUF = 112; // 14 doubles [112 bytes] for State array
+    Ctrl_RL_socket_SNDBUF = 144; // 14 doubles [112 bytes] for State array
     Ctrl_RL_socket_RCVBUF = 40;  // 5 doubles [8 bytes] for Controller Commands
     Ctrl_RL_socket_Port = 18060; // Port for this socket
 
@@ -121,19 +121,22 @@ void Controller::Load()
 
 
 void Controller::recvThread_gazebo()
-{   // Receives state arrayf from Gazebo-Mavlink, then sends it to the RL Socket
-    double state_full[14];
+{   // Receives state array from Gazebo-Mavlink, then sends it to the RL Socket
+    double state_full[18];
     StateFull state_full_structure;
 
     while(isRunning)
     {
         //cout<<"[recvThread_gazebo] Receiving crazyflie states from Gazebo"<<endl;
+        // Receive states from Mavlink and store in state_full
         int len = recvfrom(Ctrl_Mavlink_socket, state_full, sizeof(state_full),0, (struct sockaddr*)&addr_Mavlink, &addr_Mavlink_len);
 
-        memcpy(state_full_structure.data, state_full, sizeof(state_full));
-        queue_states.enqueue(state_full_structure);
+        // Take data received and copy it to state_full_structure for access outside of this function
+        memcpy(state_full_structure.data, state_full, sizeof(state_full));        
+        queue_states.enqueue(state_full_structure); // Not sure why we do this
+
+        // Send to RL socket
         int status = sendto(Ctrl_RL_socket, state_full, sizeof(state_full),0, (struct sockaddr*)&addr_RL, addr_RL_len);      
-        
     }
 }
 
@@ -247,7 +250,7 @@ void Controller::controlThread()
     MotorCommand motorspeed_structure;
 
     float motorspeed[4];
-    double state_full[14];
+    double state_full[18];
     
 
     int type; // Command type {1:Pos, 2:Vel, 3:Att, 4:Omega, 5:Stop}
@@ -528,7 +531,7 @@ void Controller::controlThread()
         queue_states.wait_dequeue(state_full_structure);
         // memcpy(state_full, state_full_structure.data, sizeof(state_full));
 
-        Map<Matrix<double,1,14>> state_full_Eig(state_full_structure.data); // Convert threaded array to Eigen vector   
+        Map<Matrix<double,1,18>> state_full_Eig(state_full_structure.data); // Convert threaded array to Eigen vector   
         t = state_full_Eig(0);   
         pos = state_full_Eig.segment(1,3); // .segment(index,num of positions)
         quat_Eig = state_full_Eig.segment(4,4);

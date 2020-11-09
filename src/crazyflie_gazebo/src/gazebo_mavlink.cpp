@@ -42,7 +42,7 @@ void GazeboMavlink::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
         gzerr << "Mavlink_Ctrl_socket: Creating failed, aborting..." << std::endl;
         abort();
     }
-    Mavlink_Ctrl_socket_SNDBUF_ = 112;  // 14 doubles [112 bytes] for State array
+    Mavlink_Ctrl_socket_SNDBUF_ = 144;  // 14 doubles [112 bytes] for State array
     Mavlink_Ctrl_socket_RCVBUF = 16;    // 4 floats [16 bytes] for Motorspeeds
     Mavlink_Ctrl_PORT = _sdf->GetElement("mavlink_port")->Get<int>();
     
@@ -116,12 +116,14 @@ void GazeboMavlink::OnUpdate(const common::UpdateInfo& _info)
     double orientation_q[] = {pose.Rot().W(), pose.Rot().X(), pose.Rot().Y(), pose.Rot().Z()};
     double vel[] = {vel_linear.X(), vel_linear.Y(), vel_linear.Z()};
     double omega[] = {vel_angular.X(), vel_angular.Y(), vel_angular.Z()};
+    double motorspeeds[] = {1,2,3,4};
 
     state_full[0] = prev_sim_time_;
     std::memcpy(state_full+1, position, sizeof(position));
     std::memcpy(state_full+4, orientation_q, sizeof(orientation_q));
     std::memcpy(state_full+8, vel, sizeof(vel));
     std::memcpy(state_full+11, omega, sizeof(omega));
+    std::memcpy(state_full+14,motorspeeds,sizeof(motorspeeds));
 
 
     //std::cout<<"Altitude: "<<position[2]<<std::endl;
@@ -172,12 +174,16 @@ void GazeboMavlink::recvThread()
 
 void GazeboMavlink::sendThread()
 {
-    double states[14];
+    double states[18];
     std::cout<<std::setprecision(2);
 
 
     while(isPluginOn_)
     {
+        // for (int i = 0; i<18; i++) 
+        //     std::cout << states[i] << ", ";
+        // std::cout << std::endl;
+
         usleep(1000);       // micro second delay, prevent thread from running too fast
         std::memcpy(states, state_full, sizeof(states));
         int len=sendto(Mavlink_Ctrl_socket, states, sizeof(states),0, (struct sockaddr*)&addr_Ctrl_Mavlink, addr_Ctrl_Mavlink_len);

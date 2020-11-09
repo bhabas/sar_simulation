@@ -342,7 +342,7 @@ def main():
 
 
 if __name__ == '__main__':
-    STATE = Array('d',14) # Global state array for Multiprocessing
+    STATE = Array('d',18) # Global state array for Multiprocessing
     REWARD = Value('d',0) 
     REWARD_AVG = Value('d',0)
     K_RUN = Value('i',0)
