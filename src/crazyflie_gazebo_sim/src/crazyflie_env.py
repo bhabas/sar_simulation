@@ -42,6 +42,7 @@ class CrazyflieEnv:
         # Specify send/receive buffer sizes    
         self.RL_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 112) # State array from Ctrl [14 doubles]
         self.RL_socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 40) # Action commands to Ctrl [5 doubles]
+        self.RL_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         
     
         ## INIT CONTROLLER ADDRESS ##
@@ -57,6 +58,7 @@ class CrazyflieEnv:
         # self.fd.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEPORT,1)  
         ## BINDING ERROR: sudo netstat -nlp | grep 18060(Portnumber)
         ## sudo kill -9 [Process ID]
+        # kill -9 $(lsof -i:3000 -t)
 
 
         
@@ -155,7 +157,7 @@ class CrazyflieEnv:
             
             try:
                 data, addr_remote = self.RL_socket.recvfrom(112) # 14d (1 double = 8 bytes)
-                x,y,z,qw,qx,qy,qz,vx,vy,vz,omega_x,omega_y,omega_z,sim_time = struct.unpack('14d',data) # unpack 112 byte msg into 14 doubles
+                sim_time,x,y,z,qw,qx,qy,qz,vx,vy,vz,omega_x,omega_y,omega_z = struct.unpack('14d',data) # unpack 112 byte msg into 14 doubles
                 self.state_current = np.array([sim_time, x,y,z,qw,qx,qy,qz,vx,vy,vz,omega_x,omega_y,omega_z])
                 self.timeout = False
             

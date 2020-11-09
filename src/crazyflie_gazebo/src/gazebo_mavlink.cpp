@@ -1,6 +1,8 @@
 #include <iostream>
 #include <gazebo_mavlink.h>
 #include <ignition/math.hh>
+#include <stdint.h>
+#include <iomanip>
 
 namespace gazebo{
 
@@ -97,11 +99,12 @@ void GazeboMavlink::OnUpdate(const common::UpdateInfo& _info)
     double vel[] = {vel_linear.X(), vel_linear.Y(), vel_linear.Z()};
     double omega[] = {vel_angular.X(), vel_angular.Y(), vel_angular.Z()};
 
-    std::memcpy(state_full, position, sizeof(position));
-    std::memcpy(state_full+3, orientation_q, sizeof(orientation_q));
-    std::memcpy(state_full+7, vel, sizeof(vel));
-    std::memcpy(state_full+10, omega, sizeof(omega));
-    state_full[13] = prev_sim_time_;
+    state_full[0] = prev_sim_time_;
+    std::memcpy(state_full+1, position, sizeof(position));
+    std::memcpy(state_full+4, orientation_q, sizeof(orientation_q));
+    std::memcpy(state_full+8, vel, sizeof(vel));
+    std::memcpy(state_full+11, omega, sizeof(omega));
+    
 
     //std::cout<<"Altitude: "<<position[2]<<std::endl;
 
@@ -133,7 +136,7 @@ void GazeboMavlink::recvThread()
         if (len>0)
         {
             //std::cout<<"Received "<<len<<" byte motor speed [";
-            //std::cout<<motor_speed[0]<<", "<<motor_speed[1]<<", "<<motor_speed[2]<<", "<<motor_speed[3]<<"]"<<std::endl;
+            // std::cout<<motor_speed[0]<<", "<<motor_speed[1]<<", "<<motor_speed[2]<<", "<<motor_speed[3]<<"]"<<std::endl;
             
             turning_velocities_msg.clear_motor_speed();
             for(int k=0; k<4;k++)
@@ -152,12 +155,22 @@ void GazeboMavlink::recvThread()
 void GazeboMavlink::sendThread()
 {
     double states[14];
+    std::setprecision(3);
+    std::fixed;
     
     while(isPluginOn_)
     {
         usleep(1000);       // micro second delay, prevent thread from running too fast
         std::memcpy(states, state_full, sizeof(states));
         int len=sendto(fd_, states, sizeof(states),0, (struct sockaddr*)&sockaddr_remote_, sockaddr_remote_len_);
+
+        // for (int i = 0; i < 14; i++){
+        //     std::cout << states[i] << ", ";
+        // }
+        // std::cout << std::endl;
+
+        
+
         /*if (len>0)
             std::cout<<"sendto succeed"<<std::endl;
         else
