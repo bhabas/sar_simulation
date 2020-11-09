@@ -34,43 +34,61 @@ void GazeboMavlink::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
     if (link_ == NULL)
         gzerr<<"[gazebo_mavlink] Couldn't find specified link " << link_name_ << std::endl;
 
-    std::string mavlink_addr_str = _sdf->GetElement("mavlink_addr")->Get<std::string>();
-    mavlink_port_ = _sdf->GetElement("mavlink_port")->Get<int>();
-    if ((fd_ = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
-    {
-        gzerr << "Socket creating failed, aborting..." << std::endl;
+    
+    
+
+    // INIT MAVLINK SOCKET (COMMUNICATES W/ CONTROLLER PORT:18070)
+    if ((Mavlink_Ctrl_socket = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
+        gzerr << "Mavlink_Ctrl_socket: Creating failed, aborting..." << std::endl;
         abort();
     }
-    fd_SNDBUF_ = 112;        // 112 bytes is 14 double
-    fd_RCVBUF_ = 16;         // 16 bytes is 4 float
-    if (setsockopt(fd_, SOL_SOCKET, SO_SNDBUF, &fd_SNDBUF_, sizeof(fd_SNDBUF_))<0)
-        std::cout<<"fd_ setting SNDBUF failed"<<std::endl;
-    if (setsockopt(fd_, SOL_SOCKET, SO_RCVBUF, &fd_RCVBUF_, sizeof(fd_RCVBUF_))<0)
-        std::cout<<"fd_ setting RCVBUF failed"<<std::endl;
-    memset((char *)&sockaddr_local_, 0, sizeof(sockaddr_local_));
-    sockaddr_local_.sin_family = AF_INET;
+    Mavlink_Ctrl_socket_SNDBUF_ = 112;  // 14 doubles [112 bytes] for State array
+    Mavlink_Ctrl_socket_RCVBUF = 16;    // 4 floats [16 bytes] for Motorspeeds
+    Mavlink_Ctrl_PORT = _sdf->GetElement("mavlink_port")->Get<int>();
+    
+
+    // SET EXPECTED BUFFER SIZES
+    if (setsockopt(Mavlink_Ctrl_socket, SOL_SOCKET, SO_SNDBUF, &Mavlink_Ctrl_socket_SNDBUF_, sizeof(Mavlink_Ctrl_socket_SNDBUF_))<0)
+        std::cout<<"Mavlink_Ctrl_socket: Setting SNDBUF failed"<<std::endl;
+    if (setsockopt(Mavlink_Ctrl_socket, SOL_SOCKET, SO_RCVBUF, &Mavlink_Ctrl_socket_RCVBUF, sizeof(Mavlink_Ctrl_socket_RCVBUF))<0)
+        std::cout<<"Mavlink_Ctrl_socket: Setting RCVBUF failed"<<std::endl;
+
+
+    // SET SOCKET SETTINGS
+    memset((char *)&addr_Mavlink, 0, sizeof(addr_Mavlink));
+    addr_Mavlink.sin_family = AF_INET; // Use Ipv4
+    std::string mavlink_addr_str = _sdf->GetElement("mavlink_addr")->Get<std::string>(); // Get address from model sdf
     if (mavlink_addr_str == "INADDR_ANY")
-        sockaddr_local_.sin_addr.s_addr = htonl(INADDR_ANY);
+        addr_Mavlink.sin_addr.s_addr = htonl(INADDR_ANY);
     else if (inet_addr(mavlink_addr_str.c_str()) == INADDR_NONE)
     {
-        gzerr << "Invalid mavlinnk address, aborting..." << std::endl;
+        gzerr << "Invalid mavlink address, aborting..." << std::endl;
         abort();
     }
     else
-        sockaddr_local_.sin_addr.s_addr = inet_addr(mavlink_addr_str.c_str());
-    sockaddr_local_.sin_port = htons(mavlink_port_);
-    /*sockaddr_local_.sin_family = AF_INET;
-    sockaddr_local_.sin_addr.s_addr = htonl(INADDR_ANY);
-    sockaddr_local_.sin_port = htons(18080);*/
-    if (bind(fd_, (struct sockaddr *)&sockaddr_local_, sizeof(sockaddr_local_)) < 0)
+        addr_Mavlink.sin_addr.s_addr = inet_addr(mavlink_addr_str.c_str());
+    addr_Mavlink.sin_port = htons(Mavlink_Ctrl_PORT);
+
+
+    // BIND ADDRESS TO MAVLINK SOCKET (PORT:18080)
+    if (bind(Mavlink_Ctrl_socket, (struct sockaddr *)&addr_Mavlink, sizeof(addr_Mavlink)) < 0)
     {
         gzerr << "Socket binding failed, aborting..." << std::endl;
         abort();
     }
 
-    memset(&sockaddr_remote_, 0, sizeof(sockaddr_remote_));
+    // INIT ADDRESS FOR CTRL_MAVLINK SOCKET (PORT:18070)
+    Ctrl_Mavlink_PORT = 18070;
+    memset(&addr_Ctrl_Mavlink, 0, sizeof(addr_Ctrl_Mavlink));
+    addr_Ctrl_Mavlink.sin_family = AF_INET;
+    addr_Ctrl_Mavlink.sin_addr.s_addr = htonl(INADDR_ANY);
+    addr_Ctrl_Mavlink.sin_port = htons(Ctrl_Mavlink_PORT);
+    addr_Ctrl_Mavlink_len = sizeof(addr_Ctrl_Mavlink);
+
 
     isPluginOn_ = true;
+
+    // START COMMUNCATION THREADS
     receiverThread = std::thread(&GazeboMavlink::recvThread, this);
     senderThread = std::thread(&GazeboMavlink::sendThread , this);
 
@@ -131,8 +149,8 @@ void GazeboMavlink::recvThread()
 
     while(isPluginOn_)
     {
-        int len = recvfrom(fd_, motor_speed, sizeof(motor_speed),0,
-        (struct sockaddr*)&sockaddr_remote_, &sockaddr_remote_len_);
+        int len = recvfrom(Mavlink_Ctrl_socket, motor_speed, sizeof(motor_speed),0,
+        (struct sockaddr*)&addr_Ctrl_Mavlink, &addr_Ctrl_Mavlink_len);
         if (len>0)
         {
             //std::cout<<"Received "<<len<<" byte motor speed [";
@@ -162,16 +180,8 @@ void GazeboMavlink::sendThread()
     {
         usleep(1000);       // micro second delay, prevent thread from running too fast
         std::memcpy(states, state_full, sizeof(states));
-        int len=sendto(fd_, states, sizeof(states),0, (struct sockaddr*)&sockaddr_remote_, sockaddr_remote_len_);
+        int len=sendto(Mavlink_Ctrl_socket, states, sizeof(states),0, (struct sockaddr*)&addr_Ctrl_Mavlink, addr_Ctrl_Mavlink_len);
 
-        
-
-
-
-        /*if (len>0)
-            std::cout<<"sendto succeed"<<std::endl;
-        else
-            std::cout<<"sendto failed"<<std::endl;*/
     }
 }
 
