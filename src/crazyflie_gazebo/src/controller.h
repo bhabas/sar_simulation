@@ -34,7 +34,6 @@ class Controller
 
         void Load();
         void recvThread_gazebo();
-        void sendThread_gazebo();
         void recvThread_RL();
         void controlThread();
 
@@ -43,17 +42,20 @@ class Controller
         int Ctrl_Mavlink_socket_SNDBUF;
         int Ctrl_Mavlink_socket_RCVBUF;
         int Ctrl_Mavlink_socket_PORT;
+        struct sockaddr_in addr_Ctrl_Mavlink;
 
         int Mavlink_PORT;
-        struct sockaddr_in addr_Ctrl_Mavlink;
         struct sockaddr_in addr_Mavlink;
         socklen_t addr_Mavlink_len;
+        
         
         int Ctrl_RL_socket;
         int Ctrl_RL_socket_SNDBUF;
         int Ctrl_RL_socket_RCVBUF;
         int Ctrl_RL_socket_Port;
         struct sockaddr_in addr_Ctrl_RL;
+
+        int RL_PORT;
         struct sockaddr_in addr_RL;
         socklen_t addr_RL_len;
 

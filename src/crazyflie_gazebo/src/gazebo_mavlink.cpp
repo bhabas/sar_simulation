@@ -6,7 +6,7 @@
 
 namespace gazebo{
 
-void GazeboMavlink::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) 
+void GazeboMavlink::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
 {
     gzmsg<<"!!!!! Entering GazeboMavlink::Load !!!!!\n";
     model_ = _model;
@@ -69,7 +69,7 @@ void GazeboMavlink::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
     }
 
     memset(&sockaddr_remote_, 0, sizeof(sockaddr_remote_));
-    
+
     isPluginOn_ = true;
     receiverThread = std::thread(&GazeboMavlink::recvThread, this);
     senderThread = std::thread(&GazeboMavlink::sendThread , this);
@@ -77,7 +77,7 @@ void GazeboMavlink::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
 }
 
 // This gets called by the world update start event.
-void GazeboMavlink::OnUpdate(const common::UpdateInfo& _info) 
+void GazeboMavlink::OnUpdate(const common::UpdateInfo& _info)
 {
     sampling_time_ = _info.simTime.Double() - prev_sim_time_;
     prev_sim_time_ = _info.simTime.Double();
@@ -104,7 +104,7 @@ void GazeboMavlink::OnUpdate(const common::UpdateInfo& _info)
     std::memcpy(state_full+4, orientation_q, sizeof(orientation_q));
     std::memcpy(state_full+8, vel, sizeof(vel));
     std::memcpy(state_full+11, omega, sizeof(omega));
-    
+
 
     //std::cout<<"Altitude: "<<position[2]<<std::endl;
 
@@ -120,7 +120,7 @@ void GazeboMavlink::OnUpdate(const common::UpdateInfo& _info)
         gzmsg<<"orientation_q = ["<<orientation_q[0]<<", "<<orientation_q[1]<<", "<<orientation_q[2]<<", "<<orientation_q[3]<<"]\n";
         gzmsg<<"vel = ["<<vel[0]<<", "<<vel[1]<<", "<<vel[2]<<"]\n";
         gzmsg<<"omega = ["<<omega[0]<<", "<<omega[1]<<", "<<omega[2]<<"]\n";*/
-      
+
     }
 }
 
@@ -128,16 +128,16 @@ void GazeboMavlink::recvThread()
 {
     float motor_speed[4];
     mav_msgs::msgs::CommandMotorSpeed turning_velocities_msg;
-    
+
     while(isPluginOn_)
     {
-        int len = recvfrom(fd_, motor_speed, sizeof(motor_speed),0, 
+        int len = recvfrom(fd_, motor_speed, sizeof(motor_speed),0,
         (struct sockaddr*)&sockaddr_remote_, &sockaddr_remote_len_);
         if (len>0)
         {
             //std::cout<<"Received "<<len<<" byte motor speed [";
             // std::cout<<motor_speed[0]<<", "<<motor_speed[1]<<", "<<motor_speed[2]<<", "<<motor_speed[3]<<"]"<<std::endl;
-            
+
             turning_velocities_msg.clear_motor_speed();
             for(int k=0; k<4;k++)
             {
@@ -147,29 +147,26 @@ void GazeboMavlink::recvThread()
                 motor_velocity_reference_pub_->Publish(turning_velocities_msg);
             else
                 sticky_enable_pub_->Publish(turning_velocities_msg);
-        }      
+        }
     }
-    
+
 }
 
 void GazeboMavlink::sendThread()
 {
     double states[14];
-    std::setprecision(3);
-    std::fixed;
-    
+    std::cout<<std::setprecision(2);
+
+
     while(isPluginOn_)
     {
         usleep(1000);       // micro second delay, prevent thread from running too fast
         std::memcpy(states, state_full, sizeof(states));
         int len=sendto(fd_, states, sizeof(states),0, (struct sockaddr*)&sockaddr_remote_, sockaddr_remote_len_);
 
-        // for (int i = 0; i < 14; i++){
-        //     std::cout << states[i] << ", ";
-        // }
-        // std::cout << std::endl;
-
         
+
+
 
         /*if (len>0)
             std::cout<<"sendto succeed"<<std::endl;

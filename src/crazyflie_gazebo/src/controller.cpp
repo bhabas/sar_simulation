@@ -16,12 +16,10 @@ void Controller::Load()
     isRunning = true;
 
     // INIT FIRST CONTROLLER SOCKET (COMMUNICATES W/ MAVLINK PORT:18080)
-    Ctrl_Mavlink_socket = socket(AF_INET, SOCK_DGRAM, 0);
+    Ctrl_Mavlink_socket = socket(AF_INET, SOCK_DGRAM, 0); // DGRAM is for UDP communication (Send data but don't care if it's recieved)
     Ctrl_Mavlink_socket_SNDBUF = 16;    // 4 floats [16 bytes] for Motorspeeds       
     Ctrl_Mavlink_socket_RCVBUF = 112;   // 14 doubles [112 bytes] for State array
     Ctrl_Mavlink_socket_PORT = 18070;   // Port for this socket
-
-    cout << Ctrl_Mavlink_socket_PORT << " || " << &Ctrl_Mavlink_socket_PORT << endl;
 
     // SET EXPECTED BUFFER SIZES
     if (setsockopt(Ctrl_Mavlink_socket, SOL_SOCKET, SO_SNDBUF, &Ctrl_Mavlink_socket_SNDBUF, sizeof(Ctrl_Mavlink_socket_SNDBUF))<0)
@@ -35,11 +33,11 @@ void Controller::Load()
     // SET SOCKET SETTINGS
     memset(&addr_Ctrl_Mavlink, 0, sizeof(addr_Ctrl_Mavlink));
     addr_Ctrl_Mavlink.sin_family = AF_INET;
-    addr_Ctrl_Mavlink.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("127.0.0.1");
+    addr_Ctrl_Mavlink.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("0.0.0.0");
     addr_Ctrl_Mavlink.sin_port = htons(18070);
 
-    // BIND CONTROLLER SOCKET TO ADDRESS
-    if ( bind(Ctrl_Mavlink_socket, (struct sockaddr*)&addr_Ctrl_Mavlink, sizeof(addr_Ctrl_Mavlink)) < 0)
+    // BIND ADDRESS TO CONTROLLER SOCKET (PORT:18070)
+    if (bind(Ctrl_Mavlink_socket, (struct sockaddr*)&addr_Ctrl_Mavlink, sizeof(addr_Ctrl_Mavlink)) < 0)
         cout<<"[FAILED] Ctrl_Mavlink_socket: Binding address to socket"<<endl;
     else
         cout<<"[SUCCESS] Ctrl_Mavlink_socket: Binding address to socket"<<endl; 
@@ -70,7 +68,7 @@ void Controller::Load()
     addr_Ctrl_RL.sin_port = htons(18060); // RL Port number
     addr_Ctrl_RL.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("127.0.0.1");
     
-    // BIND CONTROLLER SOCKET TO ADDRESS
+    // BIND ADDRESS TO SECOND CONTROLLER SOCKET (PORT:18060)
     if (bind(Ctrl_RL_socket, (struct sockaddr*)&addr_Ctrl_RL, sizeof(addr_Ctrl_RL))<0)
         cout<<"[FAILED] Socket binding for Ctrl_RL failed!"<<endl;
     else
@@ -79,16 +77,25 @@ void Controller::Load()
 
 
 
-    // INIT ADDRESS FOR MAVLINK SOCKET
+    // INIT ADDRESS FOR MAVLINK SOCKET (PORT: 18080)
     Mavlink_PORT = 18080;
     memset(&addr_Mavlink, 0, sizeof(addr_Mavlink));
     addr_Mavlink.sin_family = AF_INET;
     addr_Mavlink.sin_addr.s_addr = htonl(INADDR_ANY);
     addr_Mavlink.sin_port = htons(Mavlink_PORT);
     addr_Mavlink_len = sizeof(addr_Mavlink);
+
+    // INIT ADDRESS FOR RL SOCKET (PORT:18050)
+    RL_PORT = 18050;
+    memset(&addr_RL, 0, sizeof(addr_RL));
+    addr_RL.sin_family = AF_INET;
+    addr_RL.sin_addr.s_addr = htonl(INADDR_ANY);
+    addr_RL.sin_port = htons(RL_PORT);
+    addr_RL_len = sizeof(addr_RL);
+
     
 
-    // MOTORSPEED -> MAVLINK TEST
+    // MOTORSPEED TO MAVLINK TEST (VISUALLY CONFIRMS THINGS ARE WORKING IN SIM)
     float msg[4] = {100.0,100.0,100.0,100.0};
     int msg_len = 0;
     for(int k=0; k<2; k++)
@@ -104,6 +111,8 @@ void Controller::Load()
     receiverThread_RL = std::thread(&Controller::recvThread_RL, this);
     controllerThread = std::thread(&Controller::controlThread, this);
 
+
+    // SOMETHING ABOUT QUEUEING STATES TO SEND
     queue_states = moodycamel::BlockingReaderWriterQueue<StateFull>(5);
     queue_motorspeed = moodycamel::BlockingReaderWriterQueue<MotorCommand>(5);
 }
@@ -121,17 +130,10 @@ void Controller::recvThread_gazebo()
         //cout<<"[recvThread_gazebo] Receiving crazyflie states from Gazebo"<<endl;
         int len = recvfrom(Ctrl_Mavlink_socket, state_full, sizeof(state_full),0, (struct sockaddr*)&addr_Mavlink, &addr_Mavlink_len);
 
-        /*if(len>0)
-        {
-            cout<<"Enqueue full State:";
-            for(int k=0;k<13;k++)
-                cout<<state_full[k]<<", ";
-            cout<<"\n";
-        }*/
-
         memcpy(state_full_structure.data, state_full, sizeof(state_full));
         queue_states.enqueue(state_full_structure);
-        sendto(Ctrl_RL_socket, state_full, sizeof(state_full),0, (struct sockaddr*)&addr_RL, addr_RL_len);
+        int status = sendto(Ctrl_RL_socket, state_full, sizeof(state_full),0, (struct sockaddr*)&addr_RL, addr_RL_len);      
+        
     }
 }
 
@@ -626,39 +628,40 @@ void Controller::controlThread()
         
 
 
-        if (t_step%75 == 0){ // General Debugging output
-        cout << setprecision(4) <<
-        "t: " << t << "\tCmd: " << control_cmd_Eig.transpose() << endl <<
-        "kp_x: " << kp_x << " \tkd_x: " << kd_x << " \tkp_R: " << kp_R << " \tkd_R: " << kd_R << "\tkd_R_fl: " << kp_omega << endl <<
-        "kp_xf: " << kp_xf << " \tkd_xf: " << kd_xf << " \tkp_Rf: " << kp_Rf << " \tkd_Rf: " << kd_Rf << " \tflip_flag: " << flip_flag << endl <<
-        "ki_x: " << ki_x  << "\t e_x_I: " << e_intg.transpose() <<
-        endl <<
-        "x_d: " << x_d.transpose() << endl <<
-        "v_d: " << v_d.transpose() << endl <<
-        "omega_d: " << omega_d.transpose() << endl <<
-        endl << 
-        "pos: " << pos.transpose() << "\tex: " << e_x.transpose() << endl <<
-        "vel: " << vel.transpose() << "\tev: " << e_v.transpose() << endl <<
-        "omega: " << omega.transpose() << "\te_w: " << e_omega.transpose() << endl <<
-        endl << 
-        "R:\n" << R << "\n\n" << 
-        "R_d:\n" << R_d << "\n\n" << 
-        "Yaw: " << yaw*180/M_PI << "\tRoll: " << roll*180/M_PI << "\tPitch: " << pitch*180/M_PI << endl <<
-        "e_R: " << e_R.transpose() << "\te_R (deg): " << e_R.transpose()*180/M_PI << endl <<
-        endl <<
-        "FM: " << FM.transpose() << endl <<
-        "f: " << f.transpose() << endl <<
-        endl << setprecision(0) <<
-        "MS_d: " << motorspeed_Vec_d.transpose() << endl <<
-        "MS: " << motorspeed_Vec.transpose() << endl <<
-        "=============== " << endl; 
-        printf("\033c"); // clears console window
-        }
+        // if (t_step%75 == 0){ // General Debugging output
+        // cout << setprecision(4) <<
+        // "t: " << t << "\tCmd: " << control_cmd_Eig.transpose() << endl <<
+        // "kp_x: " << kp_x << " \tkd_x: " << kd_x << " \tkp_R: " << kp_R << " \tkd_R: " << kd_R << "\tkd_R_fl: " << kp_omega << endl <<
+        // "kp_xf: " << kp_xf << " \tkd_xf: " << kd_xf << " \tkp_Rf: " << kp_Rf << " \tkd_Rf: " << kd_Rf << " \tflip_flag: " << flip_flag << endl <<
+        // "ki_x: " << ki_x  << "\t e_x_I: " << e_intg.transpose() <<
+        // endl <<
+        // "x_d: " << x_d.transpose() << endl <<
+        // "v_d: " << v_d.transpose() << endl <<
+        // "omega_d: " << omega_d.transpose() << endl <<
+        // endl << 
+        // "pos: " << pos.transpose() << "\tex: " << e_x.transpose() << endl <<
+        // "vel: " << vel.transpose() << "\tev: " << e_v.transpose() << endl <<
+        // "omega: " << omega.transpose() << "\te_w: " << e_omega.transpose() << endl <<
+        // endl << 
+        // "R:\n" << R << "\n\n" << 
+        // "R_d:\n" << R_d << "\n\n" << 
+        // "Yaw: " << yaw*180/M_PI << "\tRoll: " << roll*180/M_PI << "\tPitch: " << pitch*180/M_PI << endl <<
+        // "e_R: " << e_R.transpose() << "\te_R (deg): " << e_R.transpose()*180/M_PI << endl <<
+        // endl <<
+        // "FM: " << FM.transpose() << endl <<
+        // "f: " << f.transpose() << endl <<
+        // endl << setprecision(0) <<
+        // "MS_d: " << motorspeed_Vec_d.transpose() << endl <<
+        // "MS: " << motorspeed_Vec.transpose() << endl <<
+        // "=============== " << endl; 
+        // printf("\033c"); // clears console window
+        // }
 
      
         Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Vec.cast <float> (); // Converts motorspeeds to C++ array for data transmission
-        sendto(Ctrl_Mavlink_socket, motorspeed, sizeof(motorspeed),0, // Send motorspeeds to Gazebo -> gazebo_motor_model?
+        int len = sendto(Ctrl_Mavlink_socket, motorspeed, sizeof(motorspeed),0, // Send motorspeeds to Gazebo -> gazebo_motor_model?
                 (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len); 
+        
 
         t_step++;
         t_prev = t;
