@@ -15,8 +15,8 @@ import csv
 
 from socket import timeout
 
-from sensor_msgs.msg import LaserScan
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import LaserScan, Image, Imu
+
 
 from cv_bridge import CvBridge
 
@@ -35,12 +35,12 @@ class CrazyflieEnv:
 
         ## INIT RL SOCKET (AKA SERVER)
         self.RL_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # Create UDP(DGRAM) Socket
-        self.local_port = port_local
-        self.addr_RL = ("", self.local_port) # Local address open to all incoming streams ("" = 0.0.0.0)
-        self.RL_socket.bind(self.addr_RL) # Bind socket to specified port
+        self.RL_port = port_local
+        self.addr_RL = ("", self.RL_port) # Local address open to all incoming streams ("" = 0.0.0.0)
+        self.RL_socket.bind(self.addr_RL) # Bind socket to specified port (0.0.0.0:18050)
 
         # Specify send/receive buffer sizes    
-        self.RL_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 144) # State array from Ctrl [14 doubles]
+        self.RL_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 144) # State array from Ctrl [18 doubles]
         self.RL_socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 40) # Action commands to Ctrl [5 doubles]
         self.RL_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         
@@ -58,15 +58,18 @@ class CrazyflieEnv:
         # self.fd.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEPORT,1)  
         ## BINDING ERROR: sudo netstat -nlp | grep 18060(Portnumber)
         ## sudo kill -9 [Process ID]
-        # kill -9 $(lsof -i:3000 -t)
+        # kill -9 $(lsof -i:18050 -t)
 
 
         
-
+        self.imu_msg = Imu
+        self.imu_thread = Thread(target=self.imuthreadfunc,args=())
+        self.imu_thread.daemon = True
+        self.imu_thread.start()
         
-       
+        # if threads dont terminte when program is shut, you might need to use lsof to kill it
 
-        # =========== Laser & Camera =========== #
+        # =========== Sensors =========== #
         self.laser_msg = LaserScan # Laser Scan Message Variable
         self.laser_dist = 0
         # Start Laser data reciever thread
@@ -199,9 +202,18 @@ class CrazyflieEnv:
 
 
     # ============================
-    ##      Laser & Camera 
+    ##          Sensors
     # ============================
+    def imuthreadfunc(self):
+        self.imu_sub = rospy.Subscriber('/imu',Imu,self.imu_callback)
+        rospy.spin()
     
+    def imu_callback(self,data):
+        self.imu_msg = data
+
+    
+
+
     def cam_callback(self,data): # callback function for camera subscriber
         self.camera_msg = data
         self.cv_image = self.bridge.imgmsg_to_cv2(self.camera_msg, desired_encoding='mono8')

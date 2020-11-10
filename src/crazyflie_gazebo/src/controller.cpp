@@ -18,7 +18,7 @@ void Controller::Load()
     // INIT FIRST CONTROLLER SOCKET (COMMUNICATES W/ MAVLINK PORT:18080)
     Ctrl_Mavlink_socket = socket(AF_INET, SOCK_DGRAM, 0); // DGRAM is for UDP communication (Send data but don't care if it's recieved)
     Ctrl_Mavlink_socket_SNDBUF = 16;    // 4 floats [16 bytes] for Motorspeeds       
-    Ctrl_Mavlink_socket_RCVBUF = 144;   // 14 doubles [112 bytes] for State array
+    Ctrl_Mavlink_socket_RCVBUF = 144;   // 18 doubles [144 bytes] for State array
     Ctrl_Mavlink_socket_PORT = 18070;   // Port for this socket
 
     // SET EXPECTED BUFFER SIZES
@@ -34,7 +34,7 @@ void Controller::Load()
     memset(&addr_Ctrl_Mavlink, 0, sizeof(addr_Ctrl_Mavlink));
     addr_Ctrl_Mavlink.sin_family = AF_INET;
     addr_Ctrl_Mavlink.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("0.0.0.0");
-    addr_Ctrl_Mavlink.sin_port = htons(18070);
+    addr_Ctrl_Mavlink.sin_port = htons(Ctrl_Mavlink_socket_PORT);
 
     // BIND ADDRESS TO CONTROLLER SOCKET (PORT:18070)
     if (bind(Ctrl_Mavlink_socket, (struct sockaddr*)&addr_Ctrl_Mavlink, sizeof(addr_Ctrl_Mavlink)) < 0)
@@ -48,7 +48,7 @@ void Controller::Load()
 
     // INIT SECOND CONTROLLER SOCKET (COMMUNICATES W/ RL PORT:18050)
     Ctrl_RL_socket = socket(AF_INET, SOCK_DGRAM, 0);
-    Ctrl_RL_socket_SNDBUF = 144; // 14 doubles [112 bytes] for State array
+    Ctrl_RL_socket_SNDBUF = 144; // 18 doubles [144 bytes] for State array
     Ctrl_RL_socket_RCVBUF = 40;  // 5 doubles [8 bytes] for Controller Commands
     Ctrl_RL_socket_Port = 18060; // Port for this socket
 
@@ -65,8 +65,9 @@ void Controller::Load()
     // SET SOCKET SETTINGS
     memset(&addr_Ctrl_RL, 0, sizeof(addr_Ctrl_RL)); // Not sure what this does
     addr_Ctrl_RL.sin_family = AF_INET; // IPv4 Format
-    addr_Ctrl_RL.sin_port = htons(18060); // RL Port number
     addr_Ctrl_RL.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("127.0.0.1");
+    addr_Ctrl_RL.sin_port = htons(Ctrl_RL_socket_Port); // RL Port number
+    
     
     // BIND ADDRESS TO SECOND CONTROLLER SOCKET (PORT:18060)
     if (bind(Ctrl_RL_socket, (struct sockaddr*)&addr_Ctrl_RL, sizeof(addr_Ctrl_RL))<0)
@@ -131,12 +132,16 @@ void Controller::recvThread_gazebo()
         // Receive states from Mavlink and store in state_full
         int len = recvfrom(Ctrl_Mavlink_socket, state_full, sizeof(state_full),0, (struct sockaddr*)&addr_Mavlink, &addr_Mavlink_len);
 
+        // Send to RL socket
+        int status = sendto(Ctrl_RL_socket, state_full, sizeof(state_full),0, (struct sockaddr*)&addr_RL, addr_RL_len);
+
+
+
         // Take data received and copy it to state_full_structure for access outside of this function
         memcpy(state_full_structure.data, state_full, sizeof(state_full));        
         queue_states.enqueue(state_full_structure); // Not sure why we do this
 
-        // Send to RL socket
-        int status = sendto(Ctrl_RL_socket, state_full, sizeof(state_full),0, (struct sockaddr*)&addr_RL, addr_RL_len);      
+              
     }
 }
 

@@ -260,8 +260,9 @@ def main():
                     env.step('stop') # turn motors off before resetting position
                     env.reset_pos()
                     
+                # a = env.imu_msg.orientation.w
+                # print(a)
                 
-
 
                 # ============================
                 ##          Errors  
