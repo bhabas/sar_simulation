@@ -29,7 +29,7 @@ class GazeboMavlink: public ModelPlugin
             isPluginOn_ = false;
             senderThread.join();
 		    receiverThread.join();
-            close(fd_); 
+            close(Mavlink_Ctrl_socket); 
         }
 
     protected:
@@ -54,13 +54,17 @@ class GazeboMavlink: public ModelPlugin
         double prev_sim_time_;
         double sampling_time_;
         
-        int fd_;
-        int fd_SNDBUF_;
-        int fd_RCVBUF_;
-        int mavlink_port_;
-        struct sockaddr_in sockaddr_local_;
-        struct sockaddr_in sockaddr_remote_;
-        socklen_t sockaddr_remote_len_;
+        int Mavlink_Ctrl_socket;
+        int Mavlink_Ctrl_socket_SNDBUF_;
+        int Mavlink_Ctrl_socket_RCVBUF;
+        int Mavlink_Ctrl_PORT;
+        struct sockaddr_in addr_Mavlink;
+        
+
+        
+        int Ctrl_Mavlink_PORT;
+        struct sockaddr_in addr_Ctrl_Mavlink;
+        socklen_t addr_Ctrl_Mavlink_len;
 
         bool isPluginOn_;
         std::thread receiverThread;
@@ -68,7 +72,7 @@ class GazeboMavlink: public ModelPlugin
         std::thread senderThread;
 		void sendThread();
 
-        double state_full[14];
+        double state_full[18];
 };
 
 }

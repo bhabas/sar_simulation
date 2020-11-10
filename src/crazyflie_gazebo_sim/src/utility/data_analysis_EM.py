@@ -108,7 +108,7 @@ f_EM = 'PEPGadaptive55'
 
 
 
-path_EM = '/home/bader/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/%s.csv' %(f_EM)
+path_EM = '/home/bader/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/log/%s.csv' %(f_EM)
 
 #f_EMsym = 'EM_sys_929'
 f_EMsym = 'emsym_sameIC'
@@ -116,7 +116,7 @@ f_EMsym = 'emsym_55good'
 f_EMsym = 'EMsym_final'
 #f_EMsym = 'PEPGadaptive1baseline_exp'
 
-path_EMsym = '/home/bader/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/%s.csv' %(f_EMsym)
+path_EMsym = '/home/bader/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/log/%s.csv' %(f_EMsym)
 
 #f_EMcov = 'EM_cov_fixed929'
 f_EMcov = 'emcov_sameIC'
@@ -126,7 +126,7 @@ f_EMcov = 'EMadaptivecov55'
 #f_EMcov = 'EMcovadaptive_rightexp'
 
 
-path_EMcov = '/home/bader/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/%s.csv' %(f_EMcov)
+path_EMcov = '/home/bader/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/log/%s.csv' %(f_EMcov)
 
 df_EM = pd.read_csv(path_EM)
 df_EMsym = pd.read_csv(path_EMsym)

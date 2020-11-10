@@ -11,7 +11,7 @@ k_ep = 0
 k_run = 0
 
 ## GRAB RESPECTIVE DATAFRAMES ##
-filepath = "/home/bhabas/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/bhabas_2020-10-30_12:55:55.csv"
+filepath = "/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/log/bhabas_2020-10-30_12:55:55.csv"
 df = pd.read_csv(filepath) # create dataframe
 run_df,IC_df = DM.run_data(df,k_ep,k_run) # select episode and run
 IC_DF_full = DM.grab_all_IC(df)

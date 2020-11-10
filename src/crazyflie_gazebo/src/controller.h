@@ -11,7 +11,7 @@
 #include "readerwriterqueue.h"
 
 typedef struct _StateFull {
-    double data[14];
+    double data[18];
 } StateFull;
 
 typedef struct _MotorCommand {
@@ -29,30 +29,35 @@ class Controller
             senderThread_gazebo.join();
             receiverThread_RL.join();
             controllerThread.join();
-            close(socket_Gazebo);
+            close(Ctrl_Mavlink_socket);
         }
 
-        void Load(int gazebo_port_number);
+        void Load();
         void recvThread_gazebo();
-        void sendThread_gazebo();
         void recvThread_RL();
         void controlThread();
 
     private:
-        int socket_Gazebo;
-        int fd_gazebo_SNDBUF;
-        int fd_gazebo_RCVBUF;
-        int port_number_gazebo_;
-        struct sockaddr_in sockaddr_local_Gazebo;
-        struct sockaddr_in sockaddr_remote_Gazebo;
-        socklen_t sockaddr_remote_gazebo_len;
+        int Ctrl_Mavlink_socket;
+        int Ctrl_Mavlink_socket_SNDBUF;
+        int Ctrl_Mavlink_socket_RCVBUF;
+        int Ctrl_Mavlink_socket_PORT;
+        struct sockaddr_in addr_Ctrl_Mavlink;
+
+        int Mavlink_PORT;
+        struct sockaddr_in addr_Mavlink;
+        socklen_t addr_Mavlink_len;
         
-        int fd_RL;
-        int fd_RL_SNDBUF;
-        int fd_RL_RCVBUF;
-        struct sockaddr_in sockaddr_local_RL;
-        struct sockaddr_in sockaddr_remote_rl;
-        socklen_t sockaddr_remote_rl_len;
+        
+        int Ctrl_RL_socket;
+        int Ctrl_RL_socket_SNDBUF;
+        int Ctrl_RL_socket_RCVBUF;
+        int Ctrl_RL_socket_Port;
+        struct sockaddr_in addr_Ctrl_RL;
+
+        int RL_PORT;
+        struct sockaddr_in addr_RL;
+        socklen_t addr_RL_len;
 
         bool isRunning;
         std::thread receiverThread_gazebo;

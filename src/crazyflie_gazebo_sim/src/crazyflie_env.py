@@ -6,7 +6,7 @@ import socket, struct
 from threading import Thread
 from multiprocessing import Process,Array,Value
 import struct
-from queue import Queue
+
 
 import time
 import os, subprocess, signal
@@ -15,59 +15,61 @@ import csv
 
 from socket import timeout
 
-from sensor_msgs.msg import LaserScan
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import LaserScan, Image, Imu
+
 
 from cv_bridge import CvBridge
 
 class CrazyflieEnv:
-    def __init__(self, port_Gazebo=18050, port_Ctrl=18060):
-        print("Init CrazyflieEnv")
-
+    def __init__(self, port_local=18050, port_Ctrl=18060):
+        print("[STARTING] CrazyflieEnv is starting...")
+        self.timeout = False # Timeout flag for reciever thread
+        self.state_current = np.zeros(18)
+        self.isRunning = True
         
-        
-        # Initializes the ROS node for the process. Can only have one nod in a rospy process
+        ## INIT ROS NODE FOR THE PROCESS 
+        # NOTE: Can only have one node in a rospy process
         rospy.init_node("crazyflie_env_node",anonymous=True) 
         self.launch_sim() 
     
 
-        self.port_Gazebo = port_Gazebo # Gazebo Data Port
-        self.port_Ctrl = port_Ctrl # Controller Port
+        ## INIT RL SOCKET (AKA SERVER)
+        self.RL_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # Create UDP(DGRAM) Socket
+        self.RL_port = port_local
+        self.addr_RL = ("", self.RL_port) # Local address open to all incoming streams ("" = 0.0.0.0)
+        self.RL_socket.bind(self.addr_RL) # Bind socket to specified port (0.0.0.0:18050)
 
-        # fd is local server (Change name?)
-        self.fd = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # DGRAM socket doesn't care about lost data
+        # Specify send/receive buffer sizes    
+        self.RL_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 144) # State array from Ctrl [18 doubles]
+        self.RL_socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 40) # Action commands to Ctrl [5 doubles]
+        self.RL_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         
-        # set receive buffer size to be 112 bytes aka 14 doubles (1 double = 8 bytes)
-        self.fd.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 112) # setsockopt = set socket options
-
-        # set send buffer size to be 40 bytes. Both 112 bytes and 40 bytes are lower than 
-        # the minimum value, so buffer size will be set as minimum value. See "'man 7 socket"
-        self.fd.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 40)
-        # self.fd.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEPORT,1)  
-        
-
+    
+        ## INIT CONTROLLER ADDRESS ##
+        self.port_Ctrl = port_Ctrl # Controller Server Port
         self.addr_Ctrl = ("", self.port_Ctrl) # Controller Address
-        self.addr_Gazebo = ("", self.port_Gazebo) # RL Address
-        self.fd.bind(self.addr_Gazebo) # bind() associates the socket with specific network interface and port number
-        ## BINDING ERROR: sudo netstat -nlp | grep 18060
-        ## sudo kill -9 [Process ID]
 
-
-
-        self.queue_command = Queue(3)
-        self.state_current = np.zeros(shape=(14))
-
-        self.isRunning = True
-        self.receiverThread = Thread(target=self.recvThread_Gazebo, args=()) # Thread for recvThread function
-        self.receiverThread.daemon = True
+        ## START THREAD TO RECEIVE MESSAGES
+        self.receiverThread = Thread(target=self.recvThread, args=()) # Thread for recvThread function
+        self.receiverThread.daemon = True # Run thread as background process
         self.receiverThread.start() # Start recieverThread for recvThread function
-
-        self.senderThread = Thread(target=self.sendThread_Ctrl, args=())
-        self.senderThread.daemon = True
-
         
 
-        # =========== Laser & Camera =========== #
+        # self.fd.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEPORT,1)  
+        ## BINDING ERROR: sudo netstat -nlp | grep 18060(Portnumber)
+        ## sudo kill -9 [Process ID]
+        # kill -9 $(lsof -i:18050 -t)
+
+
+        
+        self.imu_msg = Imu
+        self.imu_thread = Thread(target=self.imuthreadfunc,args=())
+        self.imu_thread.daemon = True
+        self.imu_thread.start()
+        
+        # if threads dont terminte when program is shut, you might need to use lsof to kill it
+
+        # =========== Sensors =========== #
         self.laser_msg = LaserScan # Laser Scan Message Variable
         self.laser_dist = 0
         # Start Laser data reciever thread
@@ -84,13 +86,13 @@ class CrazyflieEnv:
         self.cameraThread.start()'''
 
         #self.senderThread.start()
+        print("[COMPLETED] Environment done")
 
 
     def close_sim(self):
             os.killpg(self.controller_p.pid, signal.SIGTERM)
-            # time.sleep(4)
             os.killpg(self.gazebo_p.pid, signal.SIGTERM)
-            # time.sleep(4)  
+
 
     def delay_env_time(self,t_start,t_delay):
         # delay time defined in ms
@@ -99,40 +101,39 @@ class CrazyflieEnv:
 
     def __del__(self):
         self.isRunning = False
-        self.fd.close()
+        self.RL_socket.close()
 
 
     def enableSticky(self, enable): # enable=0 disable sticky, enable=1 enable sticky
         header = 11
         msg = struct.pack('5d', header, enable, 0, 0, 0)
-        self.fd.sendto(msg, self.addr_Ctrl)
+        self.RL_socket.sendto(msg, self.addr_Ctrl)
         time.sleep(0.001) # This ensures the message is sent enough times Gazebo catches it or something
         # the sleep time after enableSticky(0) must be small s.t. the gazebo simulation is satble. Because the simulation after joint removed becomes unstable quickly.
-    
+
     def getTime(self):
         return self.state_current[0]
 
     def get_state(self,STATE): # function for thread that will continually read current state
         while True:
             state = self.state_current
-            if state[4]==0: # Fix for zero-norm error during initialization [qw]
+            qw = state[4]
+            if qw==0: # Fix for zero-norm error during initialization where norm([qw,qx,qy,qz]=[0,0,0,0]) = undf
                 state[4] = 1
-            STATE[:] = state.tolist() # convert np array to list and save to global array 
+            STATE[:] = state.tolist() # Save to global array for access across multi-processes
 
     def launch_sim(self):
-        ## There's some issue with the external shells that cause it to hang up on missed landings as it just sits on the ground
-
-
+       
         if getpass.getuser() == 'bhabas':
             pyautogui.moveTo(x=2500,y=0) 
 
-        self.gazebo_p = subprocess.Popen(
-            "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/utility/launch_gazebo.bash", 
+        self.gazebo_p = subprocess.Popen( # Gazebo Process
+            "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/utility/launch_gazebo.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(5)
 
-        self.controller_p = subprocess.Popen(
-            "gnome-terminal --disable-factory --geometry 81x33 -- ~/catkin_ws/src/crazyflie_simulation/src/4.\ rl/src/utility/launch_controller.bash", 
+        self.controller_p = subprocess.Popen( # Controller Process
+            "gnome-terminal --disable-factory --geometry 81x33 -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/utility/launch_controller.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(1)
 
@@ -150,26 +151,24 @@ class CrazyflieEnv:
         os.system("rosservice call gazebo/reset_world")
         return self.state_current
     
-    def recvThread_Gazebo(self): # Recieve position data from Gazebo?
-        print("Start recvThread from Gazebo")
+    def recvThread(self):
+        # Threaded function to continually read data from Controller Server
+        print("[STARTING] recvThread is starting...")
         while self.isRunning:
+            # Note: This doesn't want to receive data sometimes
+            
             try:
-                data, addr_remote = self.fd.recvfrom(112) # 1 double = 8 bytes
-                x,y,z,qw,qx,qy,qz,vx,vy,vz,omega_x,omega_y,omega_z,sim_time = struct.unpack('14d',data) # unpack 112 byte msg into 14 doubles
-                self.state_current = np.array([sim_time, x,y,z,qw,qx,qy,qz,vx,vy,vz,omega_x,omega_y,omega_z])
+                data, addr_remote = self.RL_socket.recvfrom(144) # 14d (1 double = 8 bytes)
+                sim_time,x,y,z,qw,qx,qy,qz,vx,vy,vz,omega_x,omega_y,omega_z,ms_1,ms_2,ms_3,m2_4 = struct.unpack('18d',data) # unpack 112 byte msg into 14 doubles
+                self.state_current = np.array([sim_time, x,y,z,qw,qx,qy,qz,vx,vy,vz,omega_x,omega_y,omega_z,ms_1,ms_2,ms_3,m2_4])
+                # np.set_printoptions(precision=2, suppress=True)
+                # print(self.state_current)
                 self.timeout = False
             
             except timeout:
                 self.timeout = True
             
             
-    def sendThread_Ctrl(self):
-        print("Start sendThread to Controller")
-        while self.isRunning:
-            buf = self.queue_command.get(block=True)
-            len = self.fd.sendto(buf, self.addr_Ctrl)
-
-
     def step(self,action,ctrl_vals=[0,0,0],ctrl_flag=1): # Controller works to attain these values
         if action =='home': # default desired values/traj.
             header = 0
@@ -188,10 +187,10 @@ class CrazyflieEnv:
         else:
             print("no such action")
         cmd = struct.pack('5d', header, ctrl_vals[0], ctrl_vals[1], ctrl_vals[2], ctrl_flag) # Send command
-        self.fd.sendto(cmd, self.addr_Ctrl)
+        self.RL_socket.sendto(cmd, self.addr_Ctrl)
         time.sleep(0.01) # continually sends message during this time to ensure connection
         cmd = struct.pack('5d',8,0,0,0,1) # Send blank command so controller doesn't keep redefining values
-        self.fd.sendto(cmd, self.addr_Ctrl)
+        self.RL_socket.sendto(cmd, self.addr_Ctrl)
 
         #self.queue_command.put(buf, block=False)
 
@@ -203,19 +202,33 @@ class CrazyflieEnv:
 
 
     # ============================
-    ##      Laser & Camera 
+    ##          Sensors
     # ============================
+    def imuthreadfunc(self):
+        self.imu_sub = rospy.Subscriber('/imu',Imu,self.imu_callback)
+        rospy.spin()
     
+    def imu_callback(self,data):
+        self.imu_msg = data
+
+    
+
+
     def cam_callback(self,data): # callback function for camera subscriber
         self.camera_msg = data
         self.cv_image = self.bridge.imgmsg_to_cv2(self.camera_msg, desired_encoding='mono8')
         #self.camera_pixels = self.camera_msg.data
 
     def camThread(self): # Thread for recieving camera messages
-        print('Start Camera Thread')
+        print('[STARTING] Camera thread is starting...')
         self.camera_sub = rospy.Subscriber('/camera/image_raw',Image,self.cam_callback)
         rospy.spin()
     
+    def lsrThread(self): # Thread for recieving laser scan messages
+        print('[STARTING] Laser distance thread is starting...')
+        self.laser_sub = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
+        rospy.spin()
+
     def scan_callback(self,data): # callback function for laser subsriber
         self.laser_msg = data
         if  self.laser_msg.ranges[0] == float('Inf'):
@@ -224,11 +237,7 @@ class CrazyflieEnv:
         else:
             self.laser_dist = self.laser_msg.ranges[0]
 
-    def lsrThread(self): # Thread for recieving laser scan messages
-        print('Start Laser Scanner Thread')
-        self.laser_sub = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
-        rospy.spin()
-
+    
 
     # ============================
     ##       Data Recording 

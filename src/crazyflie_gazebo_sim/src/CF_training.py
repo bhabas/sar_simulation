@@ -36,7 +36,7 @@ def main():
     ## INIT USER AND DATA RECORDING
     username = getpass.getuser()
     start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
-    file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/4. rl/src/log/' + username + start_time + '.csv'
+    file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/log/' + username + start_time + '.csv'
     env.create_csv(file_name,record = False)
 
 
@@ -103,6 +103,7 @@ def main():
 
         mu = agent.mu # Mean for Gaussian distribution
         sigma = agent.sigma # Standard Deviation for Gaussian distribution
+        omega_d = [0,0,0] # Junk declaration to cleanup warning or possible error
 
 
         reward = np.zeros(shape=(2*agent.n_rollout,1))
@@ -186,6 +187,7 @@ def main():
                 
                 ## DEFINE CURRENT STATE
                 state = np.array(STATE[:])
+                
                 position = STATE[1:4] # [x,y,z]
                 orientation_q = STATE[4:8] # Orientation in quat format
                 vel = STATE[8:11]
@@ -258,8 +260,9 @@ def main():
                     env.step('stop') # turn motors off before resetting position
                     env.reset_pos()
                     
+                # a = env.imu_msg.orientation.w
+                # print(a)
                 
-
 
                 # ============================
                 ##          Errors  
@@ -284,6 +287,7 @@ def main():
                 # ============================
                 ## Keep record of state vector every 10 time steps
                 state2 = state[1:, np.newaxis]
+                
                 if state_history is None:
                     state_history = state2 
                 else:
@@ -339,7 +343,7 @@ def main():
 
 
 if __name__ == '__main__':
-    STATE = Array('d',14) # Global state array for Multiprocessing
+    STATE = Array('d',18) # Global state array for Multiprocessing
     REWARD = Value('d',0) 
     REWARD_AVG = Value('d',0)
     K_RUN = Value('i',0)

@@ -46,55 +46,55 @@ def runGraph(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS):
     ax1_vel.set_ylim([-3,3])
     ax1_att.set_ylim([-200,200])
     ax1_omega.set_ylim([-30,30])
-    ax1_ms.set_ylim([0,2750])
+    ax1_ms.set_ylim([0,10])
 
     
 
     ## INIT BUFFER ARRAYS
-    pos_x = [0]*buf_len
-    pos_y = [0]*buf_len
-    pos_z = [0]*buf_len
+    px_arr = [0]*buf_len
+    py_arr = [0]*buf_len
+    pz_arr = [0]*buf_len
     
-    vel_x = [0]*buf_len
-    vel_y = [0]*buf_len
-    vel_z = [0]*buf_len
+    vx_arr = [0]*buf_len
+    vy_arr = [0]*buf_len
+    vz_arr = [0]*buf_len
 
-    att_x = [0]*buf_len
-    att_y = [0]*buf_len
-    att_z = [0]*buf_len
+    roll_arr = [0]*buf_len
+    pitch_arr = [0]*buf_len
+    yaw_arr = [0]*buf_len
 
-    omega_x = [0]*buf_len
-    omega_y = [0]*buf_len
-    omega_z = [0]*buf_len
+    wx_arr = [0]*buf_len
+    wy_arr = [0]*buf_len
+    wz_arr = [0]*buf_len
 
-    ms_1 = [0]*buf_len
-    ms_2 = [0]*buf_len
-    ms_3 = [0]*buf_len
-    ms_4 = [0]*buf_len
+    ms1_arr = [0]*buf_len
+    ms2_arr = [0]*buf_len
+    ms3_arr = [0]*buf_len
+    ms4_arr = [0]*buf_len
 
     
 
     # Create a blank line. We will update the line in animate
-    line_px, = ax1_pos.plot(buffer, pos_x,'b-',label="Pos. X")
-    line_py, = ax1_pos.plot(buffer, pos_y,'g-',label="Pos. Y")
-    line_pz, = ax1_pos.plot(buffer, pos_z,'r-',label="Pos. Z")
+    line_px, = ax1_pos.plot(buffer, px_arr,'b-',label="Pos. X")
+    line_py, = ax1_pos.plot(buffer, py_arr,'g-',label="Pos. Y")
+    line_pz, = ax1_pos.plot(buffer, pz_arr,'r-',label="Pos. Z")
 
-    line_vx, = ax1_vel.plot(buffer, vel_x,'b-',label="Vel. X")
-    line_vy, = ax1_vel.plot(buffer, vel_y,'g-',label="Vel. Y")
-    line_vz, = ax1_vel.plot(buffer, vel_z,'r-',label="Vel. Z")
+    line_vx, = ax1_vel.plot(buffer, vx_arr,'b-',label="Vel. X")
+    line_vy, = ax1_vel.plot(buffer, vy_arr,'g-',label="Vel. Y")
+    line_vz, = ax1_vel.plot(buffer, vz_arr,'r-',label="Vel. Z")
 
-    line_ax, = ax1_att.plot(buffer, att_x,'b-',label="Roll")
-    line_ay, = ax1_att.plot(buffer, att_y,'g-',label="Pitch")
-    line_az, = ax1_att.plot(buffer, att_z,'r-',label="Yaw")
+    line_ax, = ax1_att.plot(buffer, roll_arr,'b-',label="Roll")
+    line_ay, = ax1_att.plot(buffer, pitch_arr,'g-',label="Pitch")
+    line_az, = ax1_att.plot(buffer, yaw_arr,'r-',label="Yaw")
 
-    line_wx, = ax1_omega.plot(buffer, omega_x,'b-',label='$\omega_x$')
-    line_wy, = ax1_omega.plot(buffer, omega_y,'g-',label='$\omega_y$')
-    line_wz, = ax1_omega.plot(buffer, omega_z,'r-',label='$\omega_z$')
+    line_wx, = ax1_omega.plot(buffer, wx_arr,'b-',label='$\omega_x$')
+    line_wy, = ax1_omega.plot(buffer, wy_arr,'g-',label='$\omega_y$')
+    line_wz, = ax1_omega.plot(buffer, wz_arr,'r-',label='$\omega_z$')
 
-    line_ms1, = ax1_ms.plot(buffer, ms_1,color = 'steelblue',label="MS: 1")
-    line_ms2, = ax1_ms.plot(buffer, ms_2,'b-',label="MS: 2")
-    line_ms3, = ax1_ms.plot(buffer, ms_3,'g-',label="MS: 3")
-    line_ms4, = ax1_ms.plot(buffer, ms_4,'r-',label="MS: 4")
+    line_ms1, = ax1_ms.plot(buffer, ms1_arr,color = 'steelblue',label="MS: 1")
+    line_ms2, = ax1_ms.plot(buffer, ms2_arr,'b-',label="MS: 2")
+    line_ms3, = ax1_ms.plot(buffer, ms3_arr,'g-',label="MS: 3")
+    line_ms4, = ax1_ms.plot(buffer, ms4_arr,'r-',label="MS: 4")
 
 
     ## DEFINE AXES LEGENDS
@@ -118,16 +118,18 @@ def runGraph(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS):
     flag = True # To be use for future dynamic scaling toggle
 
     # This function is called periodically from FuncAnimation
-    def animate_dashboard(i,flag, pos_x,pos_y,pos_z,
-        vel_x,vel_y,vel_z,
-        att_x,att_y,att_z,
-        omega_x,omega_y,omega_z):
+    def animate_dashboard(i,flag, px_arr,py_arr,pz_arr,
+        vx_arr,vy_arr,vz_arr,
+        roll_arr,pitch_arr,yaw_arr,
+        wx_arr,wy_arr,wz_arr,
+        ms1_arr,ms2_arr,ms3_arr,ms4_arr):
 
         # States from shared Multiprocessing array
         x_x,x_y,x_z = STATE[1:4]
         qw,qx,qy,qz = STATE[4:8]
         vx,vy,vz = STATE[8:11]
         wx,wy,wz = STATE[11:14]
+        ms1,ms2,ms3,ms4 = STATE[14:18]
 
         if qw == 0: # Fix for zero-norm in quat error during initialization
             qw = 1
@@ -136,59 +138,76 @@ def runGraph(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS):
         
 
         ## POSITION LINES
-        pos_x.append(x_x)  # Add y to list
-        pos_x = pos_x[-buf_len:] # Limit y list to set number of items
-        line_px.set_ydata(pos_x) # Update line with new Y values
+        px_arr.append(x_x)  # Add y to list
+        px_arr = px_arr[-buf_len:] # Limit y list to set number of items
+        line_px.set_ydata(px_arr) # Update line with new Y values
 
-        pos_y.append(x_y)  
-        pos_y = pos_y[-buf_len:] 
-        line_py.set_ydata(pos_y) 
+        py_arr.append(x_y)  
+        py_arr = py_arr[-buf_len:] 
+        line_py.set_ydata(py_arr) 
 
-        pos_z.append(x_z)  
-        pos_z = pos_z[-buf_len:] 
-        line_pz.set_ydata(pos_z)
+        pz_arr.append(x_z)  
+        pz_arr = pz_arr[-buf_len:] 
+        line_pz.set_ydata(pz_arr)
 
 
         ## VELOCITY LINES
-        vel_x.append(vx)  
-        vel_x = vel_x[-buf_len:] 
-        line_vx.set_ydata(vel_x) 
+        vx_arr.append(vx)  
+        vx_arr = vx_arr[-buf_len:] 
+        line_vx.set_ydata(vx_arr) 
 
-        vel_y.append(vy)  
-        vel_y = vel_y[-buf_len:] 
-        line_vy.set_ydata(vel_y) 
+        vy_arr.append(vy)  
+        vy_arr = vy_arr[-buf_len:] 
+        line_vy.set_ydata(vy_arr) 
 
-        vel_z.append(vz)  
-        vel_z = vel_z[-buf_len:] 
-        line_vz.set_ydata(vel_z) 
+        vz_arr.append(vz)  
+        vz_arr = vz_arr[-buf_len:] 
+        line_vz.set_ydata(vz_arr) 
 
 
         ## ATTITUDE LINES
-        att_x.append(roll)  
-        att_x = att_x[-buf_len:] 
-        line_ax.set_ydata(att_x) 
+        roll_arr.append(roll)  
+        roll_arr = roll_arr[-buf_len:] 
+        line_ax.set_ydata(roll_arr) 
 
-        att_y.append(pitch)  
-        att_y = att_y[-buf_len:] 
-        line_ay.set_ydata(att_y) 
+        pitch_arr.append(pitch)  
+        pitch_arr = pitch_arr[-buf_len:] 
+        line_ay.set_ydata(pitch_arr) 
 
-        att_z.append(yaw)  
-        att_z = att_z[-buf_len:] 
-        line_az.set_ydata(att_z)
+        yaw_arr.append(yaw)  
+        yaw_arr = yaw_arr[-buf_len:] 
+        line_az.set_ydata(yaw_arr)
 
 
         ## ANG. RATE LINES
-        omega_x.append(wx)
-        omega_x = omega_x[-buf_len:]
-        line_wx.set_ydata(omega_x)
+        wx_arr.append(wx)
+        wx_arr = wx_arr[-buf_len:]
+        line_wx.set_ydata(wx_arr)
 
-        omega_y.append(wy)
-        omega_y = omega_y[-buf_len:]
-        line_wy.set_ydata(omega_y)
+        wy_arr.append(wy)
+        wy_arr = wy_arr[-buf_len:]
+        line_wy.set_ydata(wy_arr)
 
-        omega_z.append(wz)
-        omega_z = omega_z[-buf_len:]
-        line_wz.set_ydata(omega_z)
+        wz_arr.append(wz)
+        wz_arr = wz_arr[-buf_len:]
+        line_wz.set_ydata(wz_arr)
+
+        ## MOTOR SPEED LINES
+        ms1_arr.append(ms1)
+        ms1_arr = ms1_arr[-buf_len:]
+        line_ms1.set_ydata(ms1_arr)
+
+        ms2_arr.append(ms2)
+        ms2_arr = ms2_arr[-buf_len:]
+        line_ms2.set_ydata(ms2_arr)
+
+        ms3_arr.append(ms3)
+        ms3_arr = ms3_arr[-buf_len:]
+        line_ms3.set_ydata(ms3_arr)
+
+        ms4_arr.append(ms4)
+        ms4_arr = ms4_arr[-buf_len:]
+        line_ms4.set_ydata(ms4_arr)
 
         
         ## DYNAMIC SCALING FOR FUTURE IMPLEMENTATION
@@ -199,7 +218,11 @@ def runGraph(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS):
         #     fig_0.canvas.resize_event()
         #     flag = False
         # print("Test: ===========",reward_G.value)
-        return line_px,line_py,line_pz,line_vx,line_vy,line_vz,line_ax,line_ay,line_az,line_wx,line_wy,line_wz
+        return  line_px,line_py,line_pz, \
+                line_vx,line_vy,line_vz, \
+                line_ax,line_ay,line_az, \
+                line_wx,line_wy,line_wz, \
+                line_ms1,line_ms2,line_ms3,line_ms4
 
 
 
@@ -254,10 +277,11 @@ def runGraph(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS):
     anim1 = animation.FuncAnimation(fig_0,
         animate_dashboard,
         fargs=(flag,
-        pos_x,pos_y,pos_z,
-        vel_x,vel_y,vel_z,
-        att_x,att_y,att_z,
-        omega_x,omega_y,omega_z),
+        px_arr,py_arr,pz_arr,
+        vx_arr,vy_arr,vz_arr,
+        roll_arr,pitch_arr,yaw_arr,
+        wx_arr,wy_arr,wz_arr,
+        ms1_arr,ms2_arr,ms3_arr,ms4_arr),
         interval=interval,
         blit=True)
 
