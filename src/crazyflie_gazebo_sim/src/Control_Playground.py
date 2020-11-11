@@ -14,7 +14,7 @@ from utility.dashboard import runGraph
 
 
 os.system("clear")
-start = time.time()
+
 
 
        
@@ -27,7 +27,7 @@ start = time.time()
 
 
 def main():
-
+    
     # ============================
     ##     Sim Initialization 
     # ============================
@@ -47,14 +47,32 @@ def main():
     ## SIM PARAMETERS
     ep_start = 0 # Default episode start position
     h_ceiling = 1.5 # [m]]
+    time.sleep(2)
 
     
 
 
     while True:
+
+        ## ROSTOPIC DATA
+        
+        # for ii in range(3,7):
+        #     ms.append(env.linkstate_msg.twist[ii].angular.z)
+        # print(ms)
+        motorspeed = []
+        for motor in env.linkstate_msg.twist[3:7]:
+            motorspeed.append(abs(motor.angular.z)*10)
+        print(motorspeed)
+        STATE[14:18] = motorspeed
+
+        ## Get motorspeeds to be defined to statevector in a single thread
+
+
+
+
         
         ## DEFINE CURRENT STATE
-        
+
         state = np.array(STATE[:])
         position = STATE[1:4] # [x,y,z]
         orientation_q = STATE[4:8] # Orientation in quat format
@@ -76,6 +94,8 @@ def main():
         # print(a+b*1e-9)
 
         # a = env.Gaz_msg.pose
+
+        a = env.linkstate_msg
 
         # print(type(a))
 

@@ -16,7 +16,7 @@ import csv
 from socket import timeout
 
 from sensor_msgs.msg import LaserScan, Image, Imu
-from gazebo_msgs.msg import ModelStates
+from gazebo_msgs.msg import LinkStates,ModelStates
 
 
 from cv_bridge import CvBridge
@@ -67,13 +67,15 @@ class CrazyflieEnv:
         self.imu_thread = Thread(target=self.imuthreadfunc,args=())
         self.imu_thread.daemon = True
         self.imu_thread.start()
+
+        self.linkstate_msg = LinkStates
+        self.ms_thread = Thread(target=self.msThread,args=())
+        self.ms_thread.daemon = True
+        self.ms_thread.start()
         
 
 
-        self.Gaz_msg = ModelStates
-        self.Gaz_thread = Thread(target=self.Gazfunc,args=())
-        self.Gaz_thread.daemon = True
-        self.Gaz_thread.start()
+        
 
         # if threads dont terminte when program is shut, you might need to use lsof to kill it
 
@@ -96,6 +98,56 @@ class CrazyflieEnv:
         #self.senderThread.start()
         print("[COMPLETED] Environment done")
 
+    
+    # ============================
+    ##    Sensors/Gazebo Topics
+    # ============================
+
+    def msThread(self):
+        self.link_sub = rospy.Subscriber('/gazebo/link_states',LinkStates,self.ms_callback)
+        rospy.spin()
+    
+    def ms_callback(self,data):
+        self.linkstate_msg = data
+    
+
+
+
+
+    def imuthreadfunc(self):
+        self.imu_sub = rospy.Subscriber('/imu',Imu,self.imu_callback)
+        rospy.spin()
+    
+    def imu_callback(self,data):
+        self.imu_msg = data
+
+    def cam_callback(self,data): # callback function for camera subscriber
+        self.camera_msg = data
+        self.cv_image = self.bridge.imgmsg_to_cv2(self.camera_msg, desired_encoding='mono8')
+        #self.camera_pixels = self.camera_msg.data
+
+    def camThread(self): # Thread for recieving camera messages
+        print('[STARTING] Camera thread is starting...')
+        self.camera_sub = rospy.Subscriber('/camera/image_raw',Image,self.cam_callback)
+        rospy.spin()
+    
+    def lsrThread(self): # Thread for recieving laser scan messages
+        print('[STARTING] Laser distance thread is starting...')
+        self.laser_sub = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
+        rospy.spin()
+
+    def scan_callback(self,data): # callback function for laser subsriber
+        self.laser_msg = data
+        if  self.laser_msg.ranges[0] == float('Inf'):
+            # sets dist to 4 m if sensor reads Infinity (no walls)
+            self.laser_dist = 4 # max sesnsor dist
+        else:
+            self.laser_dist = self.laser_msg.ranges[0]
+
+
+    # ============================
+    ##       Sim Operation
+    # ============================
 
     def close_sim(self):
             os.killpg(self.controller_p.pid, signal.SIGTERM)
@@ -247,45 +299,7 @@ class CrazyflieEnv:
 
 
 
-    # ============================
-    ##          Sensors
-    # ============================
-    def imuthreadfunc(self):
-        self.imu_sub = rospy.Subscriber('/imu',Imu,self.imu_callback)
-        rospy.spin()
-    
-    def imu_callback(self,data):
-        self.imu_msg = data
-
-    def Gazfunc(self):
-        self.state_sub = rospy.Subscriber('/gazebo/model_states',ModelStates,self.Gaz_callback)
-        rospy.spin()
-
-    def Gaz_callback(self,data):
-        self.Gaz_msg = data
-
-    def cam_callback(self,data): # callback function for camera subscriber
-        self.camera_msg = data
-        self.cv_image = self.bridge.imgmsg_to_cv2(self.camera_msg, desired_encoding='mono8')
-        #self.camera_pixels = self.camera_msg.data
-
-    def camThread(self): # Thread for recieving camera messages
-        print('[STARTING] Camera thread is starting...')
-        self.camera_sub = rospy.Subscriber('/camera/image_raw',Image,self.cam_callback)
-        rospy.spin()
-    
-    def lsrThread(self): # Thread for recieving laser scan messages
-        print('[STARTING] Laser distance thread is starting...')
-        self.laser_sub = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
-        rospy.spin()
-
-    def scan_callback(self,data): # callback function for laser subsriber
-        self.laser_msg = data
-        if  self.laser_msg.ranges[0] == float('Inf'):
-            # sets dist to 4 m if sensor reads Infinity (no walls)
-            self.laser_dist = 4 # max sesnsor dist
-        else:
-            self.laser_dist = self.laser_msg.ranges[0]
+   
 
     
 
