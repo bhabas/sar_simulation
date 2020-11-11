@@ -625,7 +625,7 @@ void Controller::controlThread()
             }
         }
 
-        if(b3(2) <= 0){ // If e3 component of b3 is neg, turn motors off [arbitrary amount]
+        if(b3(2) <= 0 & flip_flag==0){ // If e3 component of b3 is neg, turn motors off [arbitrary amount]
             motorspeed_Vec << 0,0,0,0;
         }
 
