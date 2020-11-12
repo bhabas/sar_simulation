@@ -16,7 +16,9 @@ import csv
 from socket import timeout
 
 from sensor_msgs.msg import LaserScan, Image, Imu
-from gazebo_msgs.msg import LinkStates,ModelStates
+from rosgraph_msgs.msg import Clock
+from gazebo_msgs.msg import LinkStates
+import message_filters
 
 
 from cv_bridge import CvBridge
@@ -68,10 +70,8 @@ class CrazyflieEnv:
         self.imu_thread.daemon = True
         self.imu_thread.start()
 
-        self.linkstate_msg = LinkStates
-        self.ms_thread = Thread(target=self.msThread,args=())
-        self.ms_thread.daemon = True
-        self.ms_thread.start()
+
+        
         
 
 
@@ -80,12 +80,12 @@ class CrazyflieEnv:
         # if threads dont terminte when program is shut, you might need to use lsof to kill it
 
         # =========== Sensors =========== #
-        self.laser_msg = LaserScan # Laser Scan Message Variable
-        self.laser_dist = 0
-        # Start Laser data reciever thread
-        self.laserThread = Thread(target = self.lsrThread, args=())
-        self.laserThread.daemon=True
-        self.laserThread.start()
+        # self.laser_msg = LaserScan # Laser Scan Message Variable
+        # self.laser_dist = 0
+        # # Start Laser data reciever thread
+        # self.laserThread = Thread(target = self.lsrThread, args=())
+        # self.laserThread.daemon=True
+        # self.laserThread.start()
         '''
         self.bridge = CvBridge() # Object to transform ros msg to cv image (np array)
         self.camera_msg = Image # Image Message Variable
@@ -98,22 +98,54 @@ class CrazyflieEnv:
         #self.senderThread.start()
         print("[COMPLETED] Environment done")
 
+        self.gazeboState_msg = LinkStates
+        self.gazeboState_Thread = Thread(target=self.gazeboState_Func,args=()) # Thread for model state from Gazebo
+        self.gazeboState_Thread.daemon = True
+        self.gazeboState_Thread.start()
+
+        self.gazeboClock_msg = Clock
+        self.gazeboClock_Thread = Thread(target=self.gazeboClock_Func,args=())
+        self.gazeboClock_Thread.daemon = True
+        self.gazeboClock_Thread.start()
+
     
     # ============================
     ##    Sensors/Gazebo Topics
     # ============================
 
-    def msThread(self):
-        self.link_sub = rospy.Subscriber('/gazebo/link_states',LinkStates,self.ms_callback)
+    def gazeboState_Func(self):
+        self.gazeboState_Sub = rospy.Subscriber('/gazebo/link_states',LinkStates,self.gazeboState_Callback)
         rospy.spin()
+
+    def gazeboClock_Func(self):
+        self.gazeboClock_Sub = rospy.Subscriber('/clock',Clock,self.gazeboClock_Callback)
+
+    def gazeboClock_Callback(self,data):
+        self.gazeboClock_msg = data
+        print(data.clock.secs)
+
     
-    def ms_callback(self,data):
-        self.linkstate_msg = data
     
+    def gazeboState_Callback(self,data):
+        self.gazeboState_msg = data
+
+        Pos = data.pose[2].position
+        Quat = data.pose[2].orientation
+        Vel = data.twist[2].linear
+        Omega = data.twist[2].angular
+
+        self.g_pos = [Pos.x,Pos.y,Pos.z]
+        self.g_quat = [Quat.w,Quat.x,Quat.y,Quat.z]
+        self.g_vel = [Vel.x,Vel.y,Vel.z]
+        self.g_omega = [Omega.x,Omega.y,Omega.z]
+
+        state = self.g_pos + self.g_quat + self.g_vel + self.g_omega
+        # print(state)
 
 
 
 
+    
     def imuthreadfunc(self):
         self.imu_sub = rospy.Subscriber('/imu',Imu,self.imu_callback)
         rospy.spin()
@@ -121,28 +153,28 @@ class CrazyflieEnv:
     def imu_callback(self,data):
         self.imu_msg = data
 
-    def cam_callback(self,data): # callback function for camera subscriber
-        self.camera_msg = data
-        self.cv_image = self.bridge.imgmsg_to_cv2(self.camera_msg, desired_encoding='mono8')
-        #self.camera_pixels = self.camera_msg.data
+    # def cam_callback(self,data): # callback function for camera subscriber
+    #     self.camera_msg = data
+    #     self.cv_image = self.bridge.imgmsg_to_cv2(self.camera_msg, desired_encoding='mono8')
+    #     #self.camera_pixels = self.camera_msg.data
 
-    def camThread(self): # Thread for recieving camera messages
-        print('[STARTING] Camera thread is starting...')
-        self.camera_sub = rospy.Subscriber('/camera/image_raw',Image,self.cam_callback)
-        rospy.spin()
+    # def camThread(self): # Thread for recieving camera messages
+    #     print('[STARTING] Camera thread is starting...')
+    #     self.camera_sub = rospy.Subscriber('/camera/image_raw',Image,self.cam_callback)
+    #     rospy.spin()
     
-    def lsrThread(self): # Thread for recieving laser scan messages
-        print('[STARTING] Laser distance thread is starting...')
-        self.laser_sub = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
-        rospy.spin()
+    # def lsrThread(self): # Thread for recieving laser scan messages
+    #     print('[STARTING] Laser distance thread is starting...')
+    #     self.laser_sub = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
+    #     rospy.spin()
 
-    def scan_callback(self,data): # callback function for laser subsriber
-        self.laser_msg = data
-        if  self.laser_msg.ranges[0] == float('Inf'):
-            # sets dist to 4 m if sensor reads Infinity (no walls)
-            self.laser_dist = 4 # max sesnsor dist
-        else:
-            self.laser_dist = self.laser_msg.ranges[0]
+    # def scan_callback(self,data): # callback function for laser subsriber
+    #     self.laser_msg = data
+    #     if  self.laser_msg.ranges[0] == float('Inf'):
+    #         # sets dist to 4 m if sensor reads Infinity (no walls)
+    #         self.laser_dist = 4 # max sesnsor dist
+    #     else:
+    #         self.laser_dist = self.laser_msg.ranges[0]
 
 
     # ============================

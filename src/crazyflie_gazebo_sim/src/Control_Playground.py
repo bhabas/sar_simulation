@@ -55,24 +55,22 @@ def main():
     while True:
 
         ## ROSTOPIC DATA
-        
-        # for ii in range(3,7):
-        #     ms.append(env.linkstate_msg.twist[ii].angular.z)
-        # print(ms)
-        motorspeed = []
-        for motor in env.linkstate_msg.twist[3:7]:
-            motorspeed.append(abs(motor.angular.z)*10)
-        print(motorspeed)
-        STATE[14:18] = motorspeed
+        # motorspeed = []
+        # for motor in env.linkstate_msg.twist[3:7]:
+        #     motorspeed.append(abs(motor.angular.z)*10)
+        # print(motorspeed)
+        # STATE[14:18] = motorspeed
 
-        ## Get motorspeeds to be defined to statevector in a single thread
+        
+
+        
+
 
 
 
 
         
         ## DEFINE CURRENT STATE
-
         state = np.array(STATE[:])
         position = STATE[1:4] # [x,y,z]
         orientation_q = STATE[4:8] # Orientation in quat format
@@ -95,7 +93,7 @@ def main():
 
         # a = env.Gaz_msg.pose
 
-        a = env.linkstate_msg
+     
 
         # print(type(a))
 
