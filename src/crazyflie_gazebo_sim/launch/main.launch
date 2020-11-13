@@ -14,4 +14,5 @@
     
     <!-- Launch the training system -->
     <node pkg="crazyflie_gazebo_sim" name="gym_train" type="CF_training.py" output="screen"/> 
+    <node name="odom_pub" pkg="odom_publisher" type="odom.py" output="screen" />
 </launch>
