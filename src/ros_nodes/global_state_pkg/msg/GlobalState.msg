@@ -1,1 +1,0 @@
-string custom_msg
