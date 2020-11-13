@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>mypkg</name>
+  <name>global_state_pkg</name>
   <version>0.0.0</version>
   <description>The mypkg package</description>
 

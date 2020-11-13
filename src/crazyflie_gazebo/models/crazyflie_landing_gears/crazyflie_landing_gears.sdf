@@ -137,24 +137,6 @@
     </sensor>
 
 
-    
-    <sensor name="imu_sensor" type="imu">
-      <always_on>true</always_on>
-      <update_rate>100</update_rate>
-      <visualize>true</visualize>
-      <topic>__default_topic__</topic>
-      <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
-        <topicName>imu</topicName>
-        <bodyName>base_link</bodyName>
-        <updateRateHZ>100.0</updateRateHZ>
-        <gaussianNoise>0.0</gaussianNoise>
-        <xyzOffset>0 0 0</xyzOffset>
-        <rpyOffset>0 0 0</rpyOffset>
-        <frameName>imu_link</frameName>
-        <initialOrientationAsReference>false</initialOrientationAsReference>
-      </plugin>
-      <pose>0 0 0 0 0 0</pose>
-    </sensor>
     </link>
 
 
@@ -516,15 +498,6 @@
           <erp>0.2</erp>
         </ode>
       </physics>
-
-
-      <sensor name="your_cool_sensor_name" type="force_torque">
-        <force_torque>
-          <always_on>true</always_on>
-          <update_rate>1</update_rate>          
-          <!-- <visualize>true</visualize> work on making this more visual thing working -->
-        </force_torque>
-      </sensor>
     </joint>
 
     <!--landing gears 1-->
@@ -1075,7 +1048,6 @@
       <rollingMomentCoefficient>1e-07</rollingMomentCoefficient>
       <motorSpeedPubTopic>/motor_speed/0</motorSpeedPubTopic> <!-- Motor speed topic for motor #1 -->
       <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim> <!-- Visual slowdown factor -->
-      <topicName>MS1</topicName>
     </plugin>
 
     <plugin name='back_left_motor_model' filename='libgazebo_motor_model.so'>
@@ -1172,10 +1144,5 @@
       <stickyEnableSubTopic>/gazebo/command/sticky_enable</stickyEnableSubTopic>
       <maxUpVelocity>100</maxUpVelocity>
     </plugin>
-    <plugin name="ft_sensor" filename="libgazebo_ros_ft_sensor.so">
-          <updateRate>50.0</updateRate>
-          <topicName>ft_topic</topicName>
-          <jointName>landing_0_joint</jointName>
-      </plugin>
   </model>
 </sdf>

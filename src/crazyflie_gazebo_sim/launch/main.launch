@@ -8,11 +8,11 @@
 <launch>
     
     <!-- Load the parameters for the algorithm -->
-    <!-- <rosparam command="load" file="$(find crazyflie_gazebo_sim)/config/qlearn_params.yaml" /> -->
-
     <param name="/use_sim_time" value="true"/>
     
     <!-- Launch the training system -->
+    <include file="/home/bhabas/catkin_ws/src/crazyflie_simulation/src/ros_nodes/global_state_pkg/launch/start_globalstate_pub.launch" />
     <node pkg="crazyflie_gazebo_sim" name="gym_train" type="CF_training.py" output="screen"/> 
-    <node name="odom_pub" pkg="odom_publisher" type="odom.py" output="screen" />
+    
+    
 </launch>

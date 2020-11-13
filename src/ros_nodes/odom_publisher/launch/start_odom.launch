@@ -1,3 +1,3 @@
 <launch>
-    <node name="odom_pub" pkg="odom_publisher" type="odom.py" output="screen" />
+    <node name="global_state_pub" pkg="global_state_pkg" type="global_state_pub.py" output="screen" />
 </launch>
