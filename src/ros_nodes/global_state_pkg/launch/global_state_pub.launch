@@ -1,0 +1,8 @@
+<launch>
+    <node name="global_state_node" pkg="global_state_pkg" type="global_state_pub.py" output="screen" />
+    <!-- name = node name
+    pkg = package/project name
+    type = publisher file name
+    output = screen? 
+    Note: make sure publisher python file is an executable -->
+</launch>
