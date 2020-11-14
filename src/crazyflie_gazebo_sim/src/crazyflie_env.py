@@ -4,7 +4,6 @@ import pyautogui,getpass
 
 import socket, struct
 from threading import Thread
-from multiprocessing import Process,Array,Value
 import struct
 
 
@@ -16,20 +15,20 @@ import csv
 from socket import timeout
 
 from sensor_msgs.msg import LaserScan, Image, Imu
-
-
+from global_state_pkg.msg import GlobalState 
+import message_filters
 from cv_bridge import CvBridge
 
 class CrazyflieEnv:
-    def __init__(self, port_local=18050, port_Ctrl=18060):
+    def __init__(self,port_local=18050, port_Ctrl=18060):
         print("[STARTING] CrazyflieEnv is starting...")
         self.timeout = False # Timeout flag for reciever thread
         self.state_current = np.zeros(18)
         self.isRunning = True
         
-        ## INIT ROS NODE FOR THE PROCESS 
+        ## INIT ROS NODE FOR ENVIRONMENT 
         # NOTE: Can only have one node in a rospy process
-        rospy.init_node("crazyflie_env_node",anonymous=True) 
+        rospy.init_node("crazyflie_env_node") 
         self.launch_sim() 
     
 
@@ -49,26 +48,17 @@ class CrazyflieEnv:
         self.port_Ctrl = port_Ctrl # Controller Server Port
         self.addr_Ctrl = ("", self.port_Ctrl) # Controller Address
 
-        ## START THREAD TO RECEIVE MESSAGES
-        self.receiverThread = Thread(target=self.recvThread, args=()) # Thread for recvThread function
-        self.receiverThread.daemon = True # Run thread as background process
-        self.receiverThread.start() # Start recieverThread for recvThread function
-        
-
-        # self.fd.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEPORT,1)  
-        ## BINDING ERROR: sudo netstat -nlp | grep 18060(Portnumber)
-        ## sudo kill -9 [Process ID]
         # kill -9 $(lsof -i:18050 -t)
-
-
-        
-        self.imu_msg = Imu
-        self.imu_thread = Thread(target=self.imuthreadfunc,args=())
-        self.imu_thread.daemon = True
-        self.imu_thread.start()
-        
         # if threads dont terminte when program is shut, you might need to use lsof to kill it
 
+        self.global_state = GlobalState
+        self.global_stateThread = Thread(target=self.global_stateSub,args=())
+        self.global_stateThread.daemon=True
+        self.global_stateThread.start()
+
+
+
+   
         # =========== Sensors =========== #
         self.laser_msg = LaserScan # Laser Scan Message Variable
         self.laser_dist = 0
@@ -76,18 +66,70 @@ class CrazyflieEnv:
         self.laserThread = Thread(target = self.lsrThread, args=())
         self.laserThread.daemon=True
         self.laserThread.start()
-        '''
-        self.bridge = CvBridge() # Object to transform ros msg to cv image (np array)
-        self.camera_msg = Image # Image Message Variable
-        self.cv_image = np.array(0)
-        # Start Camera data reciever thread
-        self.cameraThread = Thread(target = self.camThread, args=())
-        self.cameraThread.daemon=True
-        self.cameraThread.start()'''
 
-        #self.senderThread.start()
         print("[COMPLETED] Environment done")
 
+
+
+    def global_stateSub(self): # Subscriber for receiving global state info
+        self.state_Sub = rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
+        rospy.spin()
+
+    def global_stateCallback(self,data):
+        gs_msg = data # gs_msg <= global_state_msg
+
+        ## SET TIME VALUE FROM TOPIC
+        t_temp = gs_msg.header.stamp.secs
+        ns_temp = gs_msg.header.stamp.nsecs
+        t = t_temp+ns_temp*1e-9 # (seconds + nanoseconds)
+        
+        ## SIMPLIFY STATE VALUES FROM TOPIC
+        global_pos = gs_msg.global_pose.position
+        global_quat = gs_msg.global_pose.orientation
+        global_vel = gs_msg.global_twist.linear
+        global_omega = gs_msg.global_twist.angular
+        
+        if global_quat.w == 0: # If zero at startup set quat.w to one to prevent errors
+            global_quat.w = 1
+
+        ## SET STATE VALUES FROM TOPIC
+        position = [global_pos.x,global_pos.y,global_pos.z]
+        orientation_q = [global_quat.w,global_quat.x,global_quat.y,global_quat.z]
+        velocity = [global_vel.x,global_vel.y,global_vel.z]
+        omega = [global_omega.x,global_omega.y,global_omega.z]
+        ms = [gs_msg.motorspeeds[0],gs_msg.motorspeeds[1],gs_msg.motorspeeds[2],gs_msg.motorspeeds[3]]
+
+        ## COMBINE INTO COMPREHENSIVE LIST
+        self.state_current = [t] + position + orientation_q +velocity + omega + ms ## t (float) -> [t] (list)
+
+        
+        
+        
+        
+
+    
+    # ============================
+    ##    Sensors/Gazebo Topics
+    # ============================
+
+
+    def lsrThread(self): # Thread for recieving laser scan messages
+        print('[STARTING] Laser distance thread is starting...')
+        self.laser_sub = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
+        rospy.spin()
+
+    def scan_callback(self,data): # callback function for laser subsriber
+        self.laser_msg = data
+        if  self.laser_msg.ranges[0] == float('Inf'):
+            # sets dist to 4 m if sensor reads Infinity (no walls)
+            self.laser_dist = 4 # max sesnsor dist
+        else:
+            self.laser_dist = self.laser_msg.ranges[0]
+
+
+    # ============================
+    ##       Sim Operation
+    # ============================
 
     def close_sim(self):
             os.killpg(self.controller_p.pid, signal.SIGTERM)
@@ -115,12 +157,13 @@ class CrazyflieEnv:
         return self.state_current[0]
 
     def get_state(self,STATE): # function for thread that will continually read current state
+        # Note: This can further be consolidated into global_stateCallback() **but I need a break and errors are hard
         while True:
             state = self.state_current
             qw = state[4]
             if qw==0: # Fix for zero-norm error during initialization where norm([qw,qx,qy,qz]=[0,0,0,0]) = undf
                 state[4] = 1
-            STATE[:] = state.tolist() # Save to global array for access across multi-processes
+            STATE[:] = state #.tolist() # Save to global array for access across multi-processes
 
     def launch_sim(self):
        
@@ -149,25 +192,7 @@ class CrazyflieEnv:
     def reset_pos(self): # Disable sticky then places spawn_model at origin
         self.enableSticky(0)
         os.system("rosservice call gazebo/reset_world")
-        return self.state_current
-    
-    def recvThread(self):
-        # Threaded function to continually read data from Controller Server
-        print("[STARTING] recvThread is starting...")
-        while self.isRunning:
-            # Note: This doesn't want to receive data sometimes
-            
-            try:
-                data, addr_remote = self.RL_socket.recvfrom(144) # 14d (1 double = 8 bytes)
-                sim_time,x,y,z,qw,qx,qy,qz,vx,vy,vz,omega_x,omega_y,omega_z,ms_1,ms_2,ms_3,m2_4 = struct.unpack('18d',data) # unpack 112 byte msg into 14 doubles
-                self.state_current = np.array([sim_time, x,y,z,qw,qx,qy,qz,vx,vy,vz,omega_x,omega_y,omega_z,ms_1,ms_2,ms_3,m2_4])
-                # np.set_printoptions(precision=2, suppress=True)
-                # print(self.state_current)
-                self.timeout = False
-            
-            except timeout:
-                self.timeout = True
-            
+        return self.state_current          
             
     def step(self,action,ctrl_vals=[0,0,0],ctrl_flag=1): # Controller works to attain these values
         if action =='home': # default desired values/traj.
@@ -199,43 +224,47 @@ class CrazyflieEnv:
         info = 0
         return self.state_current, reward, done, info
 
+    def cmd_send(self):
+        while True:
+            # Converts input number into action name
+            cmd_dict = {0:'home',1:'pos',2:'vel',3:'att',4:'omega',5:'stop',6:'gains'}
+            val = float(input("\nCmd Type (0:home,1:pos,2:vel,3:att,4:omega,5:stop,6:gains): "))
+            action = cmd_dict[val]
+
+            if action=='home' or action == 'stop': # Execute home or stop action
+                ctrl_vals = [0,0,0]
+                ctrl_flag = 1
+                self.step(action,ctrl_vals,ctrl_flag)
+
+            elif action=='gains': # Execture Gain changer
+                
+                vals = input("\nControl Gains (kp_x,kd_x,kp_R,kd_R): ") # Take in comma-seperated values and convert into list
+                vals = [float(i) for i in vals.split(',')]
+                ctrl_vals = vals[0:3]
+                ctrl_flag = vals[3]
+
+                self.step(action,ctrl_vals,ctrl_flag)
+                
+            elif action == 'omega': # Execture Angular rate action
+
+                ctrl_vals = input("\nControl Vals (x,y,z): ")
+                ctrl_vals = [float(i) for i in ctrl_vals.split(',')]
+                ctrl_flag = 1.0
+
+                self.step('omega',ctrl_vals,ctrl_flag)
 
 
-    # ============================
-    ##          Sensors
-    # ============================
-    def imuthreadfunc(self):
-        self.imu_sub = rospy.Subscriber('/imu',Imu,self.imu_callback)
-        rospy.spin()
-    
-    def imu_callback(self,data):
-        self.imu_msg = data
+            else:
+                ctrl_vals = input("\nControl Vals (x,y,z): ")
+                ctrl_vals = [float(i) for i in ctrl_vals.split(',')]
+                ctrl_flag = float(input("\nController On/Off (1,0): "))
+                self.step(action,ctrl_vals,ctrl_flag)
 
-    
+   
 
 
-    def cam_callback(self,data): # callback function for camera subscriber
-        self.camera_msg = data
-        self.cv_image = self.bridge.imgmsg_to_cv2(self.camera_msg, desired_encoding='mono8')
-        #self.camera_pixels = self.camera_msg.data
 
-    def camThread(self): # Thread for recieving camera messages
-        print('[STARTING] Camera thread is starting...')
-        self.camera_sub = rospy.Subscriber('/camera/image_raw',Image,self.cam_callback)
-        rospy.spin()
-    
-    def lsrThread(self): # Thread for recieving laser scan messages
-        print('[STARTING] Laser distance thread is starting...')
-        self.laser_sub = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
-        rospy.spin()
-
-    def scan_callback(self,data): # callback function for laser subsriber
-        self.laser_msg = data
-        if  self.laser_msg.ranges[0] == float('Inf'):
-            # sets dist to 4 m if sensor reads Infinity (no walls)
-            self.laser_dist = 4 # max sesnsor dist
-        else:
-            self.laser_dist = self.laser_msg.ranges[0]
+   
 
     
 

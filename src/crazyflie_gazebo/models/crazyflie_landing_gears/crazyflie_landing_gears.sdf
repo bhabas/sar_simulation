@@ -137,24 +137,6 @@
     </sensor>
 
 
-    
-    <sensor name="imu_sensor" type="imu">
-      <always_on>true</always_on>
-      <update_rate>100</update_rate>
-      <visualize>true</visualize>
-      <topic>__default_topic__</topic>
-      <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
-        <topicName>imu</topicName>
-        <bodyName>base_link</bodyName>
-        <updateRateHZ>100.0</updateRateHZ>
-        <gaussianNoise>0.0</gaussianNoise>
-        <xyzOffset>0 0 0</xyzOffset>
-        <rpyOffset>0 0 0</rpyOffset>
-        <frameName>imu_link</frameName>
-        <initialOrientationAsReference>false</initialOrientationAsReference>
-      </plugin>
-      <pose>0 0 0 0 0 0</pose>
-    </sensor>
     </link>
 
 
@@ -209,8 +191,8 @@
       <velocity_decay/>
     </link>
     <joint name='rotor_1_joint' type='revolute'>
-      <child>rotor_1</child>
       <parent>base_link</parent>
+      <child>rotor_1</child>
       <axis>
         <xyz>0 0 1</xyz>
         <limit>
@@ -275,8 +257,8 @@
       <velocity_decay/>
     </link>
     <joint name='rotor_2_joint' type='revolute'>
-      <child>rotor_2</child>
       <parent>base_link</parent>
+      <child>rotor_2</child>
       <axis>
         <xyz>0 0 1</xyz>
         <limit>
@@ -341,8 +323,8 @@
       <velocity_decay/>
     </link>
     <joint name='rotor_3_joint' type='revolute'>
-      <child>rotor_3</child>
       <parent>base_link</parent>
+      <child>rotor_3</child>
       <axis>
         <xyz>0 0 1</xyz>
         <limit>
@@ -407,8 +389,8 @@
       <velocity_decay/>
     </link>
     <joint name='rotor_4_joint' type='revolute'>
-      <child>rotor_4</child>
       <parent>base_link</parent>
+      <child>rotor_4</child>
       <axis>
         <xyz>0 0 1</xyz>
         <limit>
@@ -422,6 +404,7 @@
         <use_parent_model_frame>1</use_parent_model_frame>
       </axis>
     </joint>
+    
 
 
     <!-- ======================= landing gears ======================= -->
@@ -488,15 +471,17 @@
       <velocity_decay/>
       <self_collide>0</self_collide>
     </link>
+
     <joint name='landing_0_joint' type='revolute'>
       <pose frame=''>0.012 0 0.029 0 0 0</pose>
-      <child>landing_0</child>
       <parent>base_link</parent>
+      <child>landing_0</child>
       <axis>
         <xyz>0 1 0</xyz>
+        
         <limit>
-          <lower>-0.7</lower>
-          <upper>0.7</upper>
+          <lower>-0.7854</lower> <!-- Pi/4 -->
+          <upper>0.7854</upper>
           <effort>1e-5</effort>
           <velocity>0</velocity>
         </limit>
@@ -580,8 +565,8 @@
     </link>
     <joint name='landing_1_joint' type='revolute'>
       <pose frame=''>0 0.012 0.029 0 0 0</pose>
-      <child>landing_1</child>
       <parent>base_link</parent>
+      <child>landing_1</child>
       <axis>
         <xyz>1 0 0</xyz>
         <limit>
@@ -670,8 +655,8 @@
     </link>
     <joint name='landing_2_joint' type='revolute'>
       <pose frame=''>-0.012 0 0.029 0 0 0</pose>
-      <child>landing_2</child>
       <parent>base_link</parent>
+      <child>landing_2</child>
       <axis>
         <xyz>0 1 0</xyz>
         <limit>
@@ -760,8 +745,8 @@
     </link>
     <joint name='landing_3_joint' type='revolute'>
       <pose frame=''>0 -0.012 0.029 0 0 0</pose>
-      <child>landing_3</child>
       <parent>base_link</parent>
+      <child>landing_3</child>
       <axis>
         <xyz>1 0 0</xyz>
         <limit>
@@ -846,8 +831,8 @@
       <self_collide>0</self_collide>
     </link>
     <joint name='pad_0_joint' type='ball'>
-      <child>pad_0</child>
       <parent>landing_0</parent>
+      <child>pad_0</child>
     </joint>
 
     <!--pad 1 for landing gears 1-->
@@ -911,8 +896,8 @@
       <self_collide>0</self_collide>
     </link>
     <joint name='pad_1_joint' type='ball'>
-      <child>pad_1</child>
       <parent>landing_1</parent>
+      <child>pad_1</child>
     </joint>
 
     <!--pad 2 for landing gears 2-->
@@ -976,8 +961,8 @@
       <self_collide>0</self_collide>
     </link>
     <joint name='pad_2_joint' type='ball'>
-      <child>pad_2</child>
       <parent>landing_2</parent>
+      <child>pad_2</child>
     </joint>
 
     <!--pad 3 for landing gears 3-->
@@ -1041,8 +1026,8 @@
       <self_collide>0</self_collide>
     </link>
     <joint name='pad_3_joint' type='ball'>
-      <child>pad_3</child>
       <parent>landing_3</parent>
+      <child>pad_3</child>
     </joint>
 
 
@@ -1063,7 +1048,6 @@
       <rollingMomentCoefficient>1e-07</rollingMomentCoefficient>
       <motorSpeedPubTopic>/motor_speed/0</motorSpeedPubTopic> <!-- Motor speed topic for motor #1 -->
       <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim> <!-- Visual slowdown factor -->
-      <topicName>MS1</topicName>
     </plugin>
 
     <plugin name='back_left_motor_model' filename='libgazebo_motor_model.so'>
