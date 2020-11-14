@@ -46,7 +46,7 @@ def runGraph(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS):
     ax1_vel.set_ylim([-3,3])
     ax1_att.set_ylim([-200,200])
     ax1_omega.set_ylim([-30,30])
-    ax1_ms.set_ylim([0,10])
+    ax1_ms.set_ylim([0,2700])
 
     
 

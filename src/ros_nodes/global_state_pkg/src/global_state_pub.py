@@ -25,6 +25,7 @@ header.frame_id='Gazebo_Global_State'
 
 link = GetLinkStateRequest()
 
+rotors = ['rotor_1','rotor_2','rotor_3','rotor_4']
 
 
 while not rospy.is_shutdown():
@@ -35,6 +36,14 @@ while not rospy.is_shutdown():
     result = get_link_srv(link)
     state_msg.global_pose = result.link_state.pose
     state_msg.global_twist = result.link_state.twist
+
+    motorspeed = []
+    for rotor in rotors:
+        link.link_name = rotor
+        result = get_link_srv(link)
+        ms = result.link_state.twist.angular.z
+        motorspeed.append(abs(ms)*10)
+    state_msg.motorspeeds = motorspeed
     
 
     rospy.loginfo(state_msg)

@@ -28,7 +28,7 @@ class CrazyflieEnv:
         
         ## INIT ROS NODE FOR ENVIRONMENT 
         # NOTE: Can only have one node in a rospy process
-        rospy.init_node("crazyflie_env_node",anonymous=True) 
+        rospy.init_node("crazyflie_env_node") 
         self.launch_sim() 
     
 
@@ -87,6 +87,7 @@ class CrazyflieEnv:
         global_quat = data.global_pose.orientation
         global_vel = data.global_twist.linear
         global_omega = data.global_twist.angular
+        
 
         if global_quat.w == 0:
             global_quat.w = 1
@@ -95,10 +96,10 @@ class CrazyflieEnv:
         orientation_q = [global_quat.w,global_quat.x,global_quat.y,global_quat.z]
         velocity = [global_vel.x,global_vel.y,global_vel.z]
         omega = [global_omega.x,global_omega.y,global_omega.z]
-        ms = [5,6,7,8]
+        ms = [data.motorspeeds[0],data.motorspeeds[1],data.motorspeeds[2],data.motorspeeds[3]]
 
         self.state_current = [t] + position + orientation_q +velocity + omega + ms
-        # print(self.state_current)
+
         
         
         
