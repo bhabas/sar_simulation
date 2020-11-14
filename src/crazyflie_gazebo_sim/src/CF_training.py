@@ -260,9 +260,6 @@ def main():
                     env.step('stop') # turn motors off before resetting position
                     env.reset_pos()
                     
-                a = env.imu_msg.header.stamp.secs
-                b = env.imu_msg.header.stamp.nsecs
-                print(a+b*1e-9)
                 
 
                 # ============================

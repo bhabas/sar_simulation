@@ -1,3 +1,0 @@
-<launch>
-    <node name="global_state_pub" pkg="global_state_pkg" type="global_state_pub.py" output="screen" />
-</launch>

@@ -46,7 +46,7 @@ def runGraph(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS):
     ax1_vel.set_ylim([-3,3])
     ax1_att.set_ylim([-200,200])
     ax1_omega.set_ylim([-30,30])
-    ax1_ms.set_ylim([0,2700])
+    ax1_ms.set_ylim([1500,2700])
 
     
 
@@ -91,10 +91,10 @@ def runGraph(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS):
     line_wy, = ax1_omega.plot(buffer, wy_arr,'g-',label='$\omega_y$')
     line_wz, = ax1_omega.plot(buffer, wz_arr,'r-',label='$\omega_z$')
 
-    line_ms1, = ax1_ms.plot(buffer, ms1_arr,color = 'steelblue',label="MS: 1")
-    line_ms2, = ax1_ms.plot(buffer, ms2_arr,'b-',label="MS: 2")
-    line_ms3, = ax1_ms.plot(buffer, ms3_arr,'g-',label="MS: 3")
-    line_ms4, = ax1_ms.plot(buffer, ms4_arr,'r-',label="MS: 4")
+    line_ms1, = ax1_ms.plot(buffer, ms1_arr,color = 'steelblue',linewidth = 1,label="MS: 1")
+    line_ms2, = ax1_ms.plot(buffer, ms2_arr,'b-',linewidth = 1,label="MS: 2")
+    line_ms3, = ax1_ms.plot(buffer, ms3_arr,'g-',linewidth = 1,label="MS: 3")
+    line_ms4, = ax1_ms.plot(buffer, ms4_arr,'r-',linewidth = 1,label="MS: 4")
 
 
     ## DEFINE AXES LEGENDS

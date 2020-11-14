@@ -51,7 +51,11 @@ class CrazyflieEnv:
         # kill -9 $(lsof -i:18050 -t)
         # if threads dont terminte when program is shut, you might need to use lsof to kill it
 
-        print("[COMPLETED] Environment done")
+        self.global_state = GlobalState
+        self.global_stateThread = Thread(target=self.global_stateSub,args=())
+        self.global_stateThread.daemon=True
+        self.global_stateThread.start()
+
 
 
    
@@ -63,42 +67,40 @@ class CrazyflieEnv:
         self.laserThread.daemon=True
         self.laserThread.start()
 
-
-        self.global_state = GlobalState
-        self.global_stateThread = Thread(target=self.global_stateSub,args=())
-        self.global_stateThread.daemon=True
-        self.global_stateThread.start()
+        print("[COMPLETED] Environment done")
 
 
 
-
-
-    def global_stateSub(self): # Thread for receiving global state info
+    def global_stateSub(self): # Subscriber for receiving global state info
         self.state_Sub = rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
         rospy.spin()
 
     def global_stateCallback(self,data):
-        self.global_state = data
-        t_temp = self.global_state.header.stamp.secs
-        ns_temp = self.global_state.header.stamp.nsecs
-        t = t_temp+ns_temp*1e-9
-        
-        global_pose = data.global_pose.position
-        global_quat = data.global_pose.orientation
-        global_vel = data.global_twist.linear
-        global_omega = data.global_twist.angular
-        
+        gs_msg = data # gs_msg <= global_state_msg
 
-        if global_quat.w == 0:
+        ## SET TIME VALUE FROM TOPIC
+        t_temp = gs_msg.header.stamp.secs
+        ns_temp = gs_msg.header.stamp.nsecs
+        t = t_temp+ns_temp*1e-9 # (seconds + nanoseconds)
+        
+        ## SIMPLIFY STATE VALUES FROM TOPIC
+        global_pos = gs_msg.global_pose.position
+        global_quat = gs_msg.global_pose.orientation
+        global_vel = gs_msg.global_twist.linear
+        global_omega = gs_msg.global_twist.angular
+        
+        if global_quat.w == 0: # If zero at startup set quat.w to one to prevent errors
             global_quat.w = 1
 
-        position = [global_pose.x,global_pose.y,global_pose.z]
+        ## SET STATE VALUES FROM TOPIC
+        position = [global_pos.x,global_pos.y,global_pos.z]
         orientation_q = [global_quat.w,global_quat.x,global_quat.y,global_quat.z]
         velocity = [global_vel.x,global_vel.y,global_vel.z]
         omega = [global_omega.x,global_omega.y,global_omega.z]
-        ms = [data.motorspeeds[0],data.motorspeeds[1],data.motorspeeds[2],data.motorspeeds[3]]
+        ms = [gs_msg.motorspeeds[0],gs_msg.motorspeeds[1],gs_msg.motorspeeds[2],gs_msg.motorspeeds[3]]
 
-        self.state_current = [t] + position + orientation_q +velocity + omega + ms
+        ## COMBINE INTO COMPREHENSIVE LIST
+        self.state_current = [t] + position + orientation_q +velocity + omega + ms ## t (float) -> [t] (list)
 
         
         
@@ -155,6 +157,7 @@ class CrazyflieEnv:
         return self.state_current[0]
 
     def get_state(self,STATE): # function for thread that will continually read current state
+        # Note: This can further be consolidated into global_stateCallback() **but I need a break and errors are hard
         while True:
             state = self.state_current
             qw = state[4]
