@@ -16,12 +16,12 @@
     <arg name="world" default="$(find crazyflie_gazebo)/worlds/$(arg world_name).world"/>
     <arg name="sdf" default="$(find crazyflie_gazebo)/models/$(arg vehicle)/$(arg vehicle).sdf"/>
 
-    <!-- gazebo configs -->
+    <!-- Gazebo configs -->
     <arg name="gui" default="false"/>
     <arg name="debug" default="false"/>
     <arg name="verbose" default="true"/>
     <arg name="paused" default="false"/>
-    <arg name="respawn_gazebo" default="false"/>
+    <arg name="respawn_gazebo" default="false"/> <!-- If Gazebo closes then reopen it automatically -->
 
     <!-- Gazebo sim -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
@@ -32,6 +32,9 @@
         <arg name="paused" value="$(arg paused)"/>
         <arg name="respawn_gazebo" value="$(arg respawn_gazebo)"/>
     </include>
-    <!-- gazebo model -->
+
+
+    <!-- Gazebo model -->
     <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="screen" args="-sdf -file $(arg sdf) -model $(arg vehicle) -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
+    <node name="global_state_pub" pkg="global_state_pkg" type="global_state_pub.py" />
 </launch>

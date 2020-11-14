@@ -15,8 +15,6 @@ from utility.dashboard import runGraph
 
 os.system("clear")
 
-
-
        
      
 ## Idea to delete and respawn model instead of restarting Gazebo after collison-crash

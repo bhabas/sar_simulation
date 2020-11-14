@@ -4,7 +4,6 @@ import pyautogui,getpass
 
 import socket, struct
 from threading import Thread
-from multiprocessing import Process,Array,Value
 import struct
 
 
@@ -30,7 +29,7 @@ class CrazyflieEnv:
         self.state_current = np.zeros(18)
         self.isRunning = True
         
-        ## INIT ROS NODE FOR THE PROCESS 
+        ## INIT ROS NODE FOR ENVIRONMENT 
         # NOTE: Can only have one node in a rospy process
         rospy.init_node("crazyflie_env_node",anonymous=True) 
         self.launch_sim() 
@@ -52,9 +51,6 @@ class CrazyflieEnv:
         self.port_Ctrl = port_Ctrl # Controller Server Port
         self.addr_Ctrl = ("", self.port_Ctrl) # Controller Address
 
-        # self.fd.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEPORT,1)  
-        ## BINDING ERROR: sudo netstat -nlp | grep 18060(Portnumber)
-        ## sudo kill -9 [Process ID]
         # kill -9 $(lsof -i:18050 -t)
         # if threads dont terminte when program is shut, you might need to use lsof to kill it
 
