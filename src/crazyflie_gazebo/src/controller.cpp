@@ -132,11 +132,6 @@ void Controller::recvThread_gazebo()
         // Receive states from Mavlink and store in state_full
         int len = recvfrom(Ctrl_Mavlink_socket, state_full, sizeof(state_full),0, (struct sockaddr*)&addr_Mavlink, &addr_Mavlink_len);
 
-        // Send to RL socket
-        int status = sendto(Ctrl_RL_socket, state_full, sizeof(state_full),0, (struct sockaddr*)&addr_RL, addr_RL_len);
-
-
-
         // Take data received and copy it to state_full_structure for access outside of this function
         memcpy(state_full_structure.data, state_full, sizeof(state_full));        
         queue_states.enqueue(state_full_structure); // Not sure why we do this
