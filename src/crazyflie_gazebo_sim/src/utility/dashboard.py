@@ -107,7 +107,7 @@ def runGraph(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS):
     for ax in axes1:
         ax.set_xticks(np.linspace(0,buf_len,6)) # These mark the second ticks
         ax.set_xticklabels(np.linspace(-sec_hist,0,6))
-        ax.set_xlabel("Seconds ago (Real Time)")
+        ax.set_xlabel("Seconds ago (Sim Time)")
 
         ax.grid(True)
         ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.25), ncol=len(ax.lines)) # Places legend below plots

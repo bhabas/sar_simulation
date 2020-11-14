@@ -70,6 +70,8 @@ def main():
         
         ## DEFINE CURRENT STATE
         state = np.array(STATE[:])
+        
+
         position = STATE[1:4] # [x,y,z]
         orientation_q = STATE[4:8] # Orientation in quat format
         vel = STATE[8:11]
@@ -77,13 +79,13 @@ def main():
         omega = STATE[11:14]
         d = h_ceiling - position[2] # distance of drone from ceiling
 
-        ## ORIENTATION DATA FROM STATE
-        qw,qx,qy,qz = orientation_q
-        R = Rotation.from_quat([qx,qy,qz,qw])
-        R = R.as_matrix() # [b1,b2,b3] Body vectors
+        # ## ORIENTATION DATA FROM STATE
+        # qw,qx,qy,qz = orientation_q
+        # R = Rotation.from_quat([qx,qy,qz,qw])
+        # R = R.as_matrix() # [b1,b2,b3] Body vectors
 
-        RREV, OF_y, OF_x = vz/d, vx/d, vy/d # OF_x,y are estimated optical flow vals assuming no body rotation
-        sensor_data = [RREV, OF_y, OF_x] # simplified for data recording
+        # RREV, OF_y, OF_x = vz/d, vx/d, vy/d # OF_x,y are estimated optical flow vals assuming no body rotation
+        # sensor_data = [RREV, OF_y, OF_x] # simplified for data recording
 
         # a = env.imu_msg.header.stamp.secs
         # b = env.imu_msg.header.stamp.nsecs

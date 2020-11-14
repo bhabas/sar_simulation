@@ -20,7 +20,7 @@ import message_filters
 from cv_bridge import CvBridge
 
 class CrazyflieEnv:
-    def __init__(self, port_local=18050, port_Ctrl=18060):
+    def __init__(self,port_local=18050, port_Ctrl=18060):
         print("[STARTING] CrazyflieEnv is starting...")
         self.timeout = False # Timeout flag for reciever thread
         self.state_current = np.zeros(18)
@@ -54,11 +54,6 @@ class CrazyflieEnv:
         print("[COMPLETED] Environment done")
 
 
-
-        ## START THREAD TO RECEIVE MESSAGES
-        self.receiverThread = Thread(target=self.recvThread, args=()) # Thread for recvThread function
-        self.receiverThread.daemon = True # Run thread as background process
-        self.receiverThread.start() # Start recieverThread for recvThread function
    
         # =========== Sensors =========== #
         self.laser_msg = LaserScan # Laser Scan Message Variable
@@ -75,9 +70,11 @@ class CrazyflieEnv:
         self.global_stateThread.start()
 
 
+
+
+
     def global_stateSub(self): # Thread for receiving global state info
-        rospy.wait_for_message('/global_state',GlobalState)
-        rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
+        self.state_Sub = rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
         rospy.spin()
 
     def global_stateCallback(self,data):
@@ -91,16 +88,17 @@ class CrazyflieEnv:
         global_vel = data.global_twist.linear
         global_omega = data.global_twist.angular
 
+        if global_quat.w == 0:
+            global_quat.w = 1
+
         position = [global_pose.x,global_pose.y,global_pose.z]
         orientation_q = [global_quat.w,global_quat.x,global_quat.y,global_quat.z]
         velocity = [global_vel.x,global_vel.y,global_vel.z]
         omega = [global_omega.x,global_omega.y,global_omega.z]
         ms = [5,6,7,8]
 
-
-
-        self.state_current2 = position + orientation_q +velocity + omega + ms
-        print(self.state_current2)
+        self.state_current = [t] + position + orientation_q +velocity + omega + ms
+        # print(self.state_current)
         
         
         
@@ -190,25 +188,7 @@ class CrazyflieEnv:
     def reset_pos(self): # Disable sticky then places spawn_model at origin
         self.enableSticky(0)
         os.system("rosservice call gazebo/reset_world")
-        return self.state_current
-    
-    def recvThread(self):
-        # Threaded function to continually read data from Controller Server
-        print("[STARTING] recvThread is starting...")
-        while self.isRunning:
-            # Note: This doesn't want to receive data sometimes
-            
-            try:
-                data, addr_remote = self.RL_socket.recvfrom(144) # 14d (1 double = 8 bytes)
-                sim_time,x,y,z,qw,qx,qy,qz,vx,vy,vz,omega_x,omega_y,omega_z,ms_1,ms_2,ms_3,m2_4 = struct.unpack('18d',data) # unpack 112 byte msg into 14 doubles
-                self.state_current = np.array([sim_time, x,y,z,qw,qx,qy,qz,vx,vy,vz,omega_x,omega_y,omega_z,ms_1,ms_2,ms_3,m2_4])
-                # np.set_printoptions(precision=2, suppress=True)
-                # print(self.state_current)
-                self.timeout = False
-            
-            except timeout:
-                self.timeout = True
-            
+        return self.state_current          
             
     def step(self,action,ctrl_vals=[0,0,0],ctrl_flag=1): # Controller works to attain these values
         if action =='home': # default desired values/traj.
