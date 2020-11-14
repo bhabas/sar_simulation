@@ -45,7 +45,7 @@ def main():
     ## SIM PARAMETERS
     ep_start = 0 # Default episode start position
     h_ceiling = 1.5 # [m]]
-    time.sleep(2)
+    # time.sleep(2)
 
     
 

@@ -1,38 +1,43 @@
 #!/usr/bin/env python3
 import rospy
-from mypkg.msg import GlobalState
+
+
+from global_state_pkg.msg import GlobalState # Custom message format
 from std_msgs.msg import Header
-from gazebo_msgs.srv import GetModelStateRequest,GetModelState
 
+from gazebo_msgs.srv import GetLinkStateRequest,GetLinkState # Message formats for service request and return
 
+## INIT NODE AND PUBLISHER
 rospy.init_node('global_state_pub', anonymous=True)
 pub = rospy.Publisher('/global_state', GlobalState, queue_size=10)
-
-rospy.wait_for_service('/gazebo/get_model_state')
-get_model_srv = rospy.ServiceProxy('/gazebo/get_model_state',GetModelState)
-
 rate = rospy.Rate(100) # 100hz This runs at 100hz in simulation time
-msg = GlobalState()
+
+
+## WAIT AND INIT SERVICE REQUEST
+rospy.wait_for_service('/gazebo/get_link_state')
+get_link_srv = rospy.ServiceProxy('/gazebo/get_link_state',GetLinkState)
+
+## INIT 
+state_msg = GlobalState()
 
 header = Header()
 header.frame_id='Gazebo_Global_State'
 
-model = GetModelStateRequest()
-model.model_name = 'crazyflie_landing_gears'
+link = GetLinkStateRequest()
+
 
 
 while not rospy.is_shutdown():
-    result = get_model_srv(model)
-    
-
     header.stamp = rospy.Time.now()
-    msg.header = header
+    state_msg.header = header
 
-    msg.global_pose = result.pose
-    msg.global_twist = result.twist
+    link.link_name = 'base_link'
+    result = get_link_srv(link)
+    state_msg.global_pose = result.link_state.pose
+    state_msg.global_twist = result.link_state.twist
     
 
-    rospy.loginfo(msg)
-    pub.publish(msg)
+    rospy.loginfo(state_msg)
+    pub.publish(state_msg)
     rate.sleep()
 

@@ -15,11 +15,8 @@ import csv
 from socket import timeout
 
 from sensor_msgs.msg import LaserScan, Image, Imu
-from rosgraph_msgs.msg import Clock
-from gazebo_msgs.msg import LinkStates
+from global_state_pkg.msg import GlobalState 
 import message_filters
-
-
 from cv_bridge import CvBridge
 
 class CrazyflieEnv:
@@ -72,10 +69,42 @@ class CrazyflieEnv:
         self.laserThread.start()
 
 
+        self.global_state = GlobalState
+        self.global_stateThread = Thread(target=self.global_stateSub,args=())
+        self.global_stateThread.daemon=True
+        self.global_stateThread.start()
 
+
+    def global_stateSub(self): # Thread for receiving global state info
+        rospy.wait_for_message('/global_state',GlobalState)
+        rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
+        rospy.spin()
+
+    def global_stateCallback(self,data):
+        self.global_state = data
+        t_temp = self.global_state.header.stamp.secs
+        ns_temp = self.global_state.header.stamp.nsecs
+        t = t_temp+ns_temp*1e-9
+        
+        global_pose = data.global_pose.position
+        global_quat = data.global_pose.orientation
+        global_vel = data.global_twist.linear
+        global_omega = data.global_twist.angular
+
+        position = [global_pose.x,global_pose.y,global_pose.z]
+        orientation_q = [global_quat.w,global_quat.x,global_quat.y,global_quat.z]
+        velocity = [global_vel.x,global_vel.y,global_vel.z]
+        omega = [global_omega.x,global_omega.y,global_omega.z]
+        ms = [5,6,7,8]
+
+
+
+        self.state_current2 = position + orientation_q +velocity + omega + ms
+        print(self.state_current2)
         
         
-
+        
+        
 
     
     # ============================
@@ -132,7 +161,7 @@ class CrazyflieEnv:
             qw = state[4]
             if qw==0: # Fix for zero-norm error during initialization where norm([qw,qx,qy,qz]=[0,0,0,0]) = undf
                 state[4] = 1
-            STATE[:] = state.tolist() # Save to global array for access across multi-processes
+            STATE[:] = state #.tolist() # Save to global array for access across multi-processes
 
     def launch_sim(self):
        
