@@ -210,6 +210,7 @@ class CrazyflieEnv:
         elif action =='gains': # assign new control gains
             header = 6
         else:
+            header = 404
             print("no such action")
         cmd = struct.pack('5d', header, ctrl_vals[0], ctrl_vals[1], ctrl_vals[2], ctrl_flag) # Send command
         self.RL_socket.sendto(cmd, self.addr_Ctrl)
