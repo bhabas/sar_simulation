@@ -167,8 +167,8 @@ class CrazyflieEnv:
 
     def launch_sim(self):
        
-        if getpass.getuser() == 'bhabas':
-            pyautogui.moveTo(x=2500,y=0) 
+        # if getpass.getuser() == 'bhabas':
+        #     pyautogui.moveTo(x=2500,y=0) 
 
         self.gazebo_p = subprocess.Popen( # Gazebo Process
             "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/utility/launch_gazebo.bash", 
