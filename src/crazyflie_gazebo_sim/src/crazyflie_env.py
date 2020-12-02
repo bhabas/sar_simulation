@@ -15,7 +15,7 @@ import csv
 from socket import timeout
 
 from sensor_msgs.msg import LaserScan, Image, Imu
-from global_state_pkg.msg import GlobalState 
+from gazebo_communication_pkg.msg import GlobalState 
 import message_filters
 from cv_bridge import CvBridge
 
@@ -156,14 +156,14 @@ class CrazyflieEnv:
     def getTime(self):
         return self.state_current[0]
 
-    def get_state(self,STATE): # function for thread that will continually read current state
+    def get_state(self): # function for thread that will continually read current state
         # Note: This can further be consolidated into global_stateCallback() **but I need a break and errors are hard
         while True:
             state = self.state_current
             qw = state[4]
             if qw==0: # Fix for zero-norm error during initialization where norm([qw,qx,qy,qz]=[0,0,0,0]) = undf
                 state[4] = 1
-            STATE[:] = state #.tolist() # Save to global array for access across multi-processes
+            return np.array(state) #.tolist() # Save to global array for access across multi-processes
 
     def launch_sim(self):
        

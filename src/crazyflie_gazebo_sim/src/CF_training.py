@@ -30,7 +30,7 @@ def main():
     print("Environment done")
 
     ## INIT STATE RECIEVING THREAD
-    state_thread = threading.Thread(target=env.get_state,args=(STATE,))
+    state_thread = threading.Thread(target=env.get_state)
     state_thread.start() # Start thread that continually recieves state array from Gazebo
 
     ## INIT USER AND DATA RECORDING
@@ -99,7 +99,7 @@ def main():
 
         np.set_printoptions(precision=2, suppress=True)
         done = False
-        N_ROLLOUTS.value = agent.n_rollout # Global n_rollout variable
+        # N_ROLLOUTS.value = agent.n_rollout # Global n_rollout variable
 
         mu = agent.mu # Mean for Gaussian distribution
         sigma = agent.sigma # Standard Deviation for Gaussian distribution
@@ -186,13 +186,13 @@ def main():
             while True:
                 
                 ## DEFINE CURRENT STATE
-                state = np.array(STATE[:])
+                state = env.get_state()
                 
-                position = STATE[1:4] # [x,y,z]
-                orientation_q = STATE[4:8] # Orientation in quat format
-                vel = STATE[8:11]
+                position = state[1:4] # [x,y,z]
+                orientation_q = state[4:8] # Orientation in quat format
+                vel = state[8:11]
                 vx,vy,vz = vel
-                omega = STATE[11:14]
+                omega = state[11:14]
                 d = h_ceiling - position[2] # distance of drone from ceiling
 
                 ## ORIENTATION DATA FROM STATE
@@ -310,10 +310,10 @@ def main():
             env.IC_csv(agent,state,k_ep,k_run,policy,v_d,omega_d,reward[k_run,0],error_str)
             env.append_csv_blank()
 
-            ## UPDATE GLOBAL VARIABLES
-            K_EP.value = k_ep
-            K_RUN.value = k_run
-            REWARD.value = reward[k_run]
+            # ## UPDATE GLOBAL VARIABLES
+            # K_EP.value = k_ep
+            # K_RUN.value = k_run
+            # REWARD.value = reward[k_run]
                        
             
             if repeat_run == True:
@@ -329,7 +329,6 @@ def main():
         ## =======  EPISODE COMPLETED  ======= ##
         if not any( np.isnan(reward) ):
             print("Episode # %d training, average reward %.3f" %(k_ep, np.mean(reward)))
-            REWARD_AVG.value = np.mean(reward)
             agent.train(theta_rl,reward,epsilon_rl)
             
         
@@ -340,17 +339,18 @@ def main():
 
 
 
-if __name__ == '__main__':
-    STATE = Array('d',14) # Global state array for Multiprocessing
-    REWARD = Value('d',0) 
-    REWARD_AVG = Value('d',0)
-    K_RUN = Value('i',0)
-    K_EP = Value('i',0)
-    N_ROLLOUTS = Value('i',0)
 
-    # START PLOTTING PROCESS
-    p1 = Process(target=runGraph,args=(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS))
-    p1.start()
+if __name__ == '__main__':
+    # STATE = Array('d',14) # Global state array for Multiprocessing
+    # REWARD = Value('d',0) 
+    # REWARD_AVG = Value('d',0)
+    # K_RUN = Value('i',0)
+    # K_EP = Value('i',0)
+    # N_ROLLOUTS = Value('i',0)
+
+    # # START PLOTTING PROCESS
+    # p1 = Process(target=runGraph,args=(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS))
+    # p1.start()
 
     ## START MAIN SCRIPT
     main()

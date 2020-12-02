@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>global_state_pkg</name>
+  <name>gazebo_communication_pkg</name>
   <version>0.0.0</version>
   <description>The mypkg package</description>
 

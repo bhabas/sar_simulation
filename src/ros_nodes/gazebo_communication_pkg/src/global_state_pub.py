@@ -7,7 +7,7 @@ import rospy
 # https://www.youtube.com/watch?v=OFFzmVz800k
 
 
-from global_state_pkg.msg import GlobalState # Custom message format
+from gazebo_communication_pkg.msg import GlobalState # Custom message format
 from std_msgs.msg import Header # Standard format for header
 from gazebo_msgs.srv import GetLinkStateRequest,GetLinkState # Message formats for service request and return
 # Note: Find message formats with 'rqt -s rqt_msg'
