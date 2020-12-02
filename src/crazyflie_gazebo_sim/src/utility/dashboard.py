@@ -121,15 +121,14 @@ def runGraph(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS):
     def animate_dashboard(i,flag, px_arr,py_arr,pz_arr,
         vx_arr,vy_arr,vz_arr,
         roll_arr,pitch_arr,yaw_arr,
-        wx_arr,wy_arr,wz_arr,
-        ms1_arr,ms2_arr,ms3_arr,ms4_arr):
+        wx_arr,wy_arr,wz_arr):
 
         # States from shared Multiprocessing array
         x_x,x_y,x_z = STATE[1:4]
         qw,qx,qy,qz = STATE[4:8]
         vx,vy,vz = STATE[8:11]
         wx,wy,wz = STATE[11:14]
-        ms1,ms2,ms3,ms4 = STATE[14:18]
+        
 
         if qw == 0: # Fix for zero-norm in quat error during initialization
             qw = 1
@@ -192,22 +191,7 @@ def runGraph(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS):
         wz_arr = wz_arr[-buf_len:]
         line_wz.set_ydata(wz_arr)
 
-        ## MOTOR SPEED LINES
-        ms1_arr.append(ms1)
-        ms1_arr = ms1_arr[-buf_len:]
-        line_ms1.set_ydata(ms1_arr)
 
-        ms2_arr.append(ms2)
-        ms2_arr = ms2_arr[-buf_len:]
-        line_ms2.set_ydata(ms2_arr)
-
-        ms3_arr.append(ms3)
-        ms3_arr = ms3_arr[-buf_len:]
-        line_ms3.set_ydata(ms3_arr)
-
-        ms4_arr.append(ms4)
-        ms4_arr = ms4_arr[-buf_len:]
-        line_ms4.set_ydata(ms4_arr)
 
         
         ## DYNAMIC SCALING FOR FUTURE IMPLEMENTATION
@@ -221,8 +205,8 @@ def runGraph(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS):
         return  line_px,line_py,line_pz, \
                 line_vx,line_vy,line_vz, \
                 line_ax,line_ay,line_az, \
-                line_wx,line_wy,line_wz, \
-                line_ms1,line_ms2,line_ms3,line_ms4
+                line_wx,line_wy,line_wz, 
+                
 
 
 
@@ -280,8 +264,7 @@ def runGraph(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS):
         px_arr,py_arr,pz_arr,
         vx_arr,vy_arr,vz_arr,
         roll_arr,pitch_arr,yaw_arr,
-        wx_arr,wy_arr,wz_arr,
-        ms1_arr,ms2_arr,ms3_arr,ms4_arr),
+        wx_arr,wy_arr,wz_arr),
         interval=interval,
         blit=True)
 

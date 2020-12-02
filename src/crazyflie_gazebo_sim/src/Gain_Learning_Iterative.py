@@ -8,9 +8,7 @@ import threading
 
 
 from crazyflie_env import CrazyflieEnv
-from rl_syspepg import rlsysPEPGAgent_reactive ,rlsysPEPGAgent_cov, rlsysPEPGAgent_adaptive
-from rl_EM import rlEM_PEPGAgent, rlEM_PEPG_CovAgent, rlEM_OutlierAgent , rlEMsys_PEPGAgent,rlEM_AdaptiveCovAgent, rlEM_AdaptiveCovAgent3D, rlEM_AdaptiveAgent
-from rl_cma import CMA_basic,CMA,CMA_sym
+from rl_syspepg import rlsysPEPGAgent_reactive
 
 from utility.dashboard import runGraph
 
@@ -36,8 +34,7 @@ def main():
     ## INIT USER AND DATA RECORDING
     username = getpass.getuser()
     start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
-    file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/log/' + username + start_time + '.csv'
-    env.create_csv(file_name,record = False)
+    
     
 
     ## SIM PARAMETERS
@@ -46,48 +43,20 @@ def main():
 
 
     # ============================
-    ##           PEPG 
+    ##           SyS-PEPG 
     # ============================
 
     ## Learning rate
-    alpha_mu = np.array([[0.2]])#[2.0]] )#,[0.1]])
-    alpha_sigma = np.array([[0.1]])#, [1.0]])#,[0.05]])
+    alpha_mu = np.array([[0.2]])
+    alpha_sigma = np.array([[0.1]])
 
     ## Initial parameters for gaussian function
-    mu = np.array([[5.5],[8.9], [1.5] ])# ,[1.5]])#,[1.5]])   # Initial estimates of mu: 
-    sigma = np.array([[1.0],[1.0] ,[0.25] ])# ,[0.75]])      # Initial estimates of sigma: 
-
-    # noise tests all started at:
-    #mu = np.array([[5.0],[-5.0] ])
-    #sigma = np.array([[3.0],[3.0] ])
-    #  
-    agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=4)
-    #agent = rlsysPEPGAgent_cov(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=4)
-    #agent = rlEM_PEPGAgent(mu,sigma,n_rollout=5)
-    #agent = rlsysPEPGAgent_adaptive(alpha_mu,alpha_sigma,mu,sigma,n_rollout=10)
-    #agent = rlEM_OutlierAgent(mu,sigma,n_rollout=5) # diverges?
-    #agent = rlEM_PEPG_CovAgent(mu,sigma,n_rollout=5)
-
-    #agent = rlEMsys_PEPGAgent(mu,sigma,n_rollout=5)
-    #agent = rlEM_AdaptiveCovAgent(mu,sigma,gamma=0.95,n_rollout=5)
-    #agent = rlEM_AdaptiveCovAgent3D(mu,sigma,gamma=0.95,n_rollout=5)
+    mu = np.array([[5.5],[8.9], [1.5] ]) # Initial estimates of mu: 
+    sigma = np.array([[1.0],[1.0] ,[0.25] ]) # Initial estimates of sigma: 
 
 
-    # agent = rlEM_AdaptiveAgent(mu,sigma,n_rollout=5)
-    # ============================
-    ##           CMA 
-    # ============================
+    agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=2)
 
-    # seems to be unstable if mu is close to zero (coverges to deterimistic)
-    ## Initial parameters for gaussian function
-    #mu = np.array([[3.0],[-3.0] ])#,[1.5]])   # Initial estimates of mu: 
-    #sigma = np.array([[1.0],[1.0] , [0.5]])      # Initial estimates of sigma: 
-
-    # # For CMA_basic, make sure simga has 3 inputs / for pepg it must be 2
-    # agent = CMA_basic(mu,sigma,N_best=0.3,n_rollout=10)
-
-    #agent = CMA(n=2,gamma = 0.9) # number of problem dimensions
-    #agent = CMA_sym(n=2,gamma=0.9)
 
 
 
@@ -95,7 +64,10 @@ def main():
     # ============================
     ##          Episode 
     # ============================
-    for k_ep in range(ep_start,1000):
+    for k_ep in range(ep_start,2):
+
+        file_name = ('/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/log/Gain_Learning_Ep_%d.csv' %(k_ep))
+        env.create_csv(file_name,record = True)
 
         np.set_printoptions(precision=2, suppress=True)
         done = False
@@ -110,8 +82,6 @@ def main():
         reward[:] = np.nan  # Init reward to be NaN array, size n_rollout x 1 [Not sure why?]
         theta_rl,epsilon_rl = agent.get_theta()
 
-        #mu = agent.xmean
-        #sigma = np.array([agent.C[0,0],agent.C[1,1],agent.C[0,1]])
 
 
         print("=============================================")
@@ -341,14 +311,14 @@ def main():
 
 
 if __name__ == '__main__':
-    STATE = Array('d',14) # Global state array for Multiprocessing
+    STATE = Array('d',18) # Global state array for Multiprocessing
     REWARD = Value('d',0) 
     REWARD_AVG = Value('d',0)
     K_RUN = Value('i',0)
     K_EP = Value('i',0)
     N_ROLLOUTS = Value('i',0)
 
-    # START PLOTTING PROCESS
+    ## START PLOTTING PROCESS
     p1 = Process(target=runGraph,args=(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS))
     p1.start()
 

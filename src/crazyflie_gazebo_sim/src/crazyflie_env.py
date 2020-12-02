@@ -23,7 +23,7 @@ class CrazyflieEnv:
     def __init__(self,port_local=18050, port_Ctrl=18060):
         print("[STARTING] CrazyflieEnv is starting...")
         self.timeout = False # Timeout flag for reciever thread
-        self.state_current = np.zeros(18)
+        self.state_current = np.zeros(14)
         self.isRunning = True
         
         ## INIT ROS NODE FOR ENVIRONMENT 
@@ -97,10 +97,10 @@ class CrazyflieEnv:
         orientation_q = [global_quat.w,global_quat.x,global_quat.y,global_quat.z]
         velocity = [global_vel.x,global_vel.y,global_vel.z]
         omega = [global_omega.x,global_omega.y,global_omega.z]
-        ms = [gs_msg.motorspeeds[0],gs_msg.motorspeeds[1],gs_msg.motorspeeds[2],gs_msg.motorspeeds[3]]
+
 
         ## COMBINE INTO COMPREHENSIVE LIST
-        self.state_current = [t] + position + orientation_q +velocity + omega + ms ## t (float) -> [t] (list)
+        self.state_current = [t] + position + orientation_q +velocity + omega ## t (float) -> [t] (list)
 
         
         
@@ -167,8 +167,8 @@ class CrazyflieEnv:
 
     def launch_sim(self):
        
-        # if getpass.getuser() == 'bhabas':
-        #     pyautogui.moveTo(x=2500,y=0) 
+        if getpass.getuser() == 'bhabas':
+            pyautogui.moveTo(x=2500,y=0) 
 
         self.gazebo_p = subprocess.Popen( # Gazebo Process
             "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/utility/launch_gazebo.bash", 

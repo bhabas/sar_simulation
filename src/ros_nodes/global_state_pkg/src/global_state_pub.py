@@ -43,15 +43,6 @@ def global_state_publisher():
         state_msg.global_pose = result.link_state.pose
         state_msg.global_twist = result.link_state.twist
 
-        ## ADD MOTORSPEEDS TO STATE_MSG
-        motorspeed = []
-        for rotor in ['rotor_1','rotor_2','rotor_3','rotor_4']:
-            link_msg.link_name = rotor
-            result = get_link_srv(link_msg)
-            ms = result.link_state.twist.angular.z
-            motorspeed.append(abs(ms)*10) # Sim is slowed down by x10 to reduce graphics load
-        state_msg.motorspeeds = motorspeed
-        
 
         pub.publish(state_msg)
         rate.sleep() # Dynamic sleep to match Rate [100Hz]
