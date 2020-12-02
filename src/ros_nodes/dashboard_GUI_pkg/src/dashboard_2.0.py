@@ -5,12 +5,22 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from scipy.spatial.transform import Rotation
 
+import rospy
+from gazebo_communication_pkg.msg import GlobalState # Custom message format
 
-def global_stateSub(self): # Subscriber for receiving global state info
-        self.state_Sub = rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
-        rospy.spin()
 
-def global_stateCallback(self,data):
+
+
+
+
+
+
+def global_stateSub(): # Subscriber for receiving global state info
+    rospy.init_node('dashboard_node')
+    rospy.Subscriber('/global_state',GlobalState,global_stateCallback)
+    rospy.spin()
+
+def global_stateCallback(data):
     gs_msg = data # gs_msg <= global_state_msg
 
     ## SET TIME VALUE FROM TOPIC
@@ -35,5 +45,8 @@ def global_stateCallback(self,data):
 
 
     ## COMBINE INTO COMPREHENSIVE LIST
-    self.state_current = [t] + position + orientation_q +velocity + omega ## t (float) -> [t] (list)
+    state_current = [t] + position + orientation_q +velocity + omega ## t (float) -> [t] (list)
+    print(state_current)
 
+if __name__ == '__main__':
+    global_stateSub()

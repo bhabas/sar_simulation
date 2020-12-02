@@ -9,7 +9,7 @@ import threading
 
 
 from crazyflie_env import CrazyflieEnv
-from utility.dashboard import runGraph
+
 
 
 
@@ -35,7 +35,7 @@ def main():
     print("Environment done")
 
     ## INIT STATE RECIEVING THREAD
-    state_thread = threading.Thread(target=env.get_state,args=(STATE,))
+    state_thread = threading.Thread(target=env.get_state)
     state_thread.start() # Start thread that continually recieves state array from Gazebo
 
     cmd_thread = threading.Thread(target=env.cmd_send,args=())
@@ -69,14 +69,14 @@ def main():
 
         
         ## DEFINE CURRENT STATE
-        state = np.array(STATE[:])
+        state = env.get_state()
         
 
-        position = STATE[1:4] # [x,y,z]
-        orientation_q = STATE[4:8] # Orientation in quat format
-        vel = STATE[8:11]
+        position = state[1:4] # [x,y,z]
+        orientation_q = state[4:8] # Orientation in quat format
+        vel = state[8:11]
         vx,vy,vz = vel
-        omega = STATE[11:14]
+        omega = state[11:14]
         d = h_ceiling - position[2] # distance of drone from ceiling
 
         # ## ORIENTATION DATA FROM STATE
@@ -100,16 +100,7 @@ def main():
 
 
 if __name__ == '__main__':
-    STATE = Array('d',18) # Global state array for Multiprocessing
-    REWARD = Value('d',0) 
-    REWARD_AVG = Value('d',0)
-    K_RUN = Value('i',0)
-    K_EP = Value('i',0)
-    N_ROLLOUTS = Value('i',0)
-
-    ## START PLOTTING PROCESS
-    p1 = Process(target=runGraph,args=(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS))
-    p1.start()
+    
 
     ## START MAIN SCRIPT
     main()
