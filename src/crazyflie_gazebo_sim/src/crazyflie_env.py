@@ -63,24 +63,26 @@ class CrazyflieEnv:
 
 
 
-        self.global_state = GlobalState
+  
         self.global_stateThread = Thread(target=self.global_stateSub,args=())
         self.global_stateThread.daemon=True
         self.global_stateThread.start()
 
+        
+        self.rewardThread = Thread(target=self.rewardPub,args=())
+        self.rewardThread.daemon=True
+        self.rewardThread.start()
+        
 
-        self.laser_msg = LaserScan # Laser Scan Message Variable
-        self.laser_dist = 0
+
         # Start Laser data reciever thread
         self.laserThread = Thread(target=self.lsrThread, args=())
         self.laserThread.daemon=True
         self.laserThread.start()
 
-        self.reward_msg = Rewards
-        self.rewardThread = Thread(target=self.rewardPub,args=())
-        self.rewardThread.daemon=True
-        self.rewardThread.start()
 
+
+        
         print("[COMPLETED] Environment done")
 
     # ============================
@@ -97,10 +99,14 @@ class CrazyflieEnv:
         reward_msg.reward_avg = self.reward_avg
         reward_msg.n_rollouts = self.n_rollouts
 
-        
-        rospy.loginfo(reward_msg)
+        # rate = rospy.Rate(10) # 10 hz
+ 
+        # while not rospy.is_shutdown():
+        #     # if np.isnan(self.reward) == False or self.reward>0:
+        #     reward_Pub.publish(reward_msg)
+        #     rate.sleep()
+            
         reward_Pub.publish(reward_msg)
-
         
 
 

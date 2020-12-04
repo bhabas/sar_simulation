@@ -12,7 +12,7 @@ from rl_syspepg import rlsysPEPGAgent_reactive ,rlsysPEPGAgent_cov, rlsysPEPGAge
 from rl_EM import rlEM_PEPGAgent, rlEM_PEPG_CovAgent, rlEM_OutlierAgent , rlEMsys_PEPGAgent,rlEM_AdaptiveCovAgent, rlEM_AdaptiveCovAgent3D, rlEM_AdaptiveAgent
 from rl_cma import CMA_basic,CMA,CMA_sym
 
-from utility.dashboard import runGraph
+# from utility.dashboard import runGraph
 
 os.system("clear")
 
@@ -100,8 +100,8 @@ def main():
         np.set_printoptions(precision=2, suppress=True)
         done = False
 
-        env.n_rollouts = agent.n_rollout
-        env.k_ep = k_ep # Sync values with class for publishing
+        
+        
 
         # N_ROLLOUTS.value = agent.n_rollout # Global n_rollout variable
 
@@ -140,8 +140,7 @@ def main():
         # ============================
         k_run = 0 # Reset run counter each episode
         while k_run < 2*agent.n_rollout:
-            env.k_run = k_run
-            env.rewardPub()
+            
 
 
             ## RESET TO INITIAL STATE
@@ -317,10 +316,14 @@ def main():
             env.IC_csv(agent,state,k_ep,k_run,policy,v_d,omega_d,reward[k_run,0],error_str)
             env.append_csv_blank()
 
-            # ## UPDATE GLOBAL VARIABLES
-            # K_EP.value = k_ep
-            # K_RUN.value = k_run
-            # REWARD.value = reward[k_run]
+            ## UPDATE GLOBAL VARIABLES
+            env.n_rollouts = agent.n_rollout
+            env.k_ep = k_ep
+            env.k_run = k_run
+            env.reward = reward[k_run,0]
+            env.rewardPub()
+
+            
                        
             
             if repeat_run == True:
@@ -348,17 +351,6 @@ def main():
 
 
 if __name__ == '__main__':
-    # STATE = Array('d',14) # Global state array for Multiprocessing
-    # REWARD = Value('d',0) 
-    # REWARD_AVG = Value('d',0)
-    # K_RUN = Value('i',0)
-    # K_EP = Value('i',0)
-    # N_ROLLOUTS = Value('i',0)
-
-    # # START PLOTTING PROCESS
-    # p1 = Process(target=runGraph,args=(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS))
-    # p1.start()
-
     ## START MAIN SCRIPT
     main()
 
