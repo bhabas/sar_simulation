@@ -99,6 +99,10 @@ def main():
 
         np.set_printoptions(precision=2, suppress=True)
         done = False
+
+        env.n_rollouts = agent.n_rollout
+        env.k_ep = k_ep # Sync values with class for publishing
+
         # N_ROLLOUTS.value = agent.n_rollout # Global n_rollout variable
 
         mu = agent.mu # Mean for Gaussian distribution
@@ -136,6 +140,9 @@ def main():
         # ============================
         k_run = 0 # Reset run counter each episode
         while k_run < 2*agent.n_rollout:
+            env.k_run = k_run
+            env.rewardPub()
+
 
             ## RESET TO INITIAL STATE
             env.step('home',ctrl_flag=1) # Reset control vals and functionality to default vals

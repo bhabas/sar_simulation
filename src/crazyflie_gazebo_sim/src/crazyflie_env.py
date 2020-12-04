@@ -16,7 +16,9 @@ from socket import timeout
 
 from sensor_msgs.msg import LaserScan, Image, Imu
 from gazebo_communication_pkg.msg import GlobalState 
-import message_filters
+from crazyflie_gazebo_sim.msg import Rewards
+from std_msgs.msg import String
+
 from cv_bridge import CvBridge
 
 class CrazyflieEnv:
@@ -25,6 +27,7 @@ class CrazyflieEnv:
         self.timeout = False # Timeout flag for reciever thread
         self.state_current = np.zeros(14)
         self.isRunning = True
+
         
         ## INIT ROS NODE FOR ENVIRONMENT 
         # NOTE: Can only have one node in a rospy process
@@ -51,23 +54,54 @@ class CrazyflieEnv:
         # kill -9 $(lsof -i:18050 -t)
         # if threads dont terminte when program is shut, you might need to use lsof to kill it
 
+
+        self.k_run = 0
+        self.k_ep = 0
+        self.reward = 0
+        self.reward_avg = 0
+        self.n_rollouts = 0
+
+
+
         self.global_state = GlobalState
         self.global_stateThread = Thread(target=self.global_stateSub,args=())
         self.global_stateThread.daemon=True
         self.global_stateThread.start()
 
 
-
-   
-        # =========== Sensors =========== #
         self.laser_msg = LaserScan # Laser Scan Message Variable
         self.laser_dist = 0
         # Start Laser data reciever thread
-        self.laserThread = Thread(target = self.lsrThread, args=())
+        self.laserThread = Thread(target=self.lsrThread, args=())
         self.laserThread.daemon=True
         self.laserThread.start()
 
+        self.reward_msg = Rewards
+        self.rewardThread = Thread(target=self.rewardPub,args=())
+        self.rewardThread.daemon=True
+        self.rewardThread.start()
+
         print("[COMPLETED] Environment done")
+
+    # ============================
+    ##   Publishers/Subscribers 
+    # ============================
+
+    def rewardPub(self):
+        reward_Pub = rospy.Publisher('/rewards',Rewards,queue_size=10)
+        reward_msg = Rewards()
+        
+        reward_msg.k_ep = self.k_ep
+        reward_msg.k_run = self.k_run
+        reward_msg.reward = self.reward
+        reward_msg.reward_avg = self.reward_avg
+        reward_msg.n_rollouts = self.n_rollouts
+
+        
+        rospy.loginfo(reward_msg)
+        reward_Pub.publish(reward_msg)
+
+        
 
 
 
@@ -125,6 +159,8 @@ class CrazyflieEnv:
             self.laser_dist = 4 # max sesnsor dist
         else:
             self.laser_dist = self.laser_msg.ranges[0]
+
+
 
 
     # ============================
