@@ -111,7 +111,7 @@ def main():
 
 
         reward = np.zeros(shape=(2*agent.n_rollout,1))
-        reward[:] = np.nan  # Init reward to be NaN array, size n_rollout x 1 [Not sure why?]
+        # reward[:] = np.nan  # Init reward to be NaN array, size n_rollout x 1 [Not sure why?]
         theta_rl,epsilon_rl = agent.get_theta()
 
         #mu = agent.xmean
@@ -316,13 +316,7 @@ def main():
             env.IC_csv(agent,state,k_ep,k_run,policy,v_d,omega_d,reward[k_run,0],error_str)
             env.append_csv_blank()
 
-            ## UPDATE GLOBAL VARIABLES
-            env.n_rollouts = agent.n_rollout
-            env.k_ep = k_ep
-            env.k_run = k_run
-            env.reward = reward[k_run,0]
-            env.rewardPub()
-
+            
             
                        
             
@@ -330,16 +324,24 @@ def main():
                 env.close_sim()
                 time.sleep(1)
                 env.launch_sim()
-                # return to previous run to catch potential missed glitches in gazebo (they are usually caught in the next run)
-                if k_run > 0:
-                    k_run -= 1 # Repeat previous run (not current)  
+         
             else:
+                ## UPDATE PUBLISHED REWARD VARIABLES
+                env.n_rollouts = agent.n_rollout*2
+                env.k_ep = k_ep
+                env.k_run = k_run
+                env.reward = reward[k_run,0]
+                env.reward_avg = np.mean(reward[:k_run+1,0])
+                env.rewardPub()
+
                 k_run += 1 # Move on to next run
+
             
         ## =======  EPISODE COMPLETED  ======= ##
-        if not any( np.isnan(reward) ):
-            print("Episode # %d training, average reward %.3f" %(k_ep, np.mean(reward)))
-            agent.train(theta_rl,reward,epsilon_rl)
+        # if not any( np.isnan(reward) ):
+        print("Episode # %d training, average reward %.3f" %(k_ep, np.mean(reward)))
+        agent.train(theta_rl,reward,epsilon_rl)
+        
             
         
     ## =======  MAX TRIALS COMPLETED  ======= ##

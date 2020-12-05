@@ -34,7 +34,7 @@ class CrazyflieEnv:
         rospy.init_node("crazyflie_env_node") 
         self.launch_sim() 
     
-
+        os.system("kill -9 $(lsof -i:18050 -t)")
         ## INIT RL SOCKET (AKA SERVER)
         self.RL_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # Create UDP(DGRAM) Socket
         self.RL_port = port_local
@@ -99,7 +99,7 @@ class CrazyflieEnv:
         reward_msg.reward_avg = self.reward_avg
         reward_msg.n_rollouts = self.n_rollouts
 
-        # rate = rospy.Rate(10) # 10 hz
+        rate = rospy.Rate(10) # 10 hz
  
         # while not rospy.is_shutdown():
         #     # if np.isnan(self.reward) == False or self.reward>0:

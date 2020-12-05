@@ -9,25 +9,38 @@ class DashboardNode:
         print("[STARTING] Dashboard node is starting...")
         rospy.init_node("dashboard_gui_node")
 
-        self.global_state = GlobalState
+        ## INITIALIZE CLASS VARIABLES
+        # Publisher is very slow compared to Subscriber so this prevents calling uninitilized variables
+        # while waiting to recieve them from the Publisher
+        self.n_rollouts = 0
+        self.k_run = 0
+        self.k_ep = 0
+        self.reward = 0
+        self.reward_avg = 0
+
+        ## INITIALIZE GLOBAL STATE SUBSCRIBER THREAD
         self.global_stateThread = Thread(target=self.global_stateSub,args=())
         self.global_stateThread.daemon=True
         self.global_stateThread.start()
 
-        self.reward_msg = Rewards
+        ## INITIAILIZE REWARD SUBSCRIBER THREAD
         self.rewardThread = Thread(target=self.rewardSub,args=())
         self.rewardThread.daemon=True
         self.rewardThread.start()
 
         print("[COMPLETED] Dashboard node is running...")
 
+    # ============================
+    ##     Reward Subscriber
+    # ============================
     def rewardSub(self):
         rospy.Subscriber('/rewards',Rewards,self.rewardCallback)
-        
         rospy.spin()
 
     def rewardCallback(self,data):
         reward_msg = data
+
+        ## SET CLASS VARIABLES TO MESSAGE VALUES
         self.k_run = reward_msg.k_run
         self.k_ep = reward_msg.k_ep
         self.reward = reward_msg.reward
@@ -35,6 +48,9 @@ class DashboardNode:
         self.n_rollouts = reward_msg.n_rollouts
 
 
+    # ============================
+    ##   Global State Subscriber
+    # ============================
     def global_stateSub(self):
         rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
         rospy.spin()
@@ -64,5 +80,6 @@ class DashboardNode:
 
 
         ## COMBINE INTO COMPREHENSIVE LIST
-        self.state_current = [t] + position + orientation_q + velocity + omega ## t (float) -> [t] (list)
+        #  Change t (float) to [t] (list) to match other variables
+        self.state_current = [t] + position + orientation_q + velocity + omega 
         
