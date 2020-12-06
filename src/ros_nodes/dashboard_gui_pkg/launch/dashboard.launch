@@ -1,0 +1,3 @@
+<launch>
+    <node name = "dashboard_node" pkg = "dashboard_gui_pkg" type="dashboard_gui.py" output="screen"/>
+</launch>

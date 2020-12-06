@@ -1,19 +1,34 @@
-#!/usr/bin/env python3
+#! /usr/bin/env python3
+
+import os,time
 
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from scipy.spatial.transform import Rotation
 
+
+from dashboard_node import DashboardNode
+## EXAMPLE FOR MATPLOTLIB ANIMATIONS:
 # https://brushingupscience.com/2016/06/21/matplotlib-animations-the-easy-way/
 
-def runGraph(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS):
+# NOTE: This will likely be scrapped down the line for PyQtGraph which is faster
 
+os.system("clear")
+DashNode=DashboardNode()
+time.sleep(2) # Sleep time for sub threads to start receiving and processing data from pubs
+
+
+def runGraph():
+    
     # PARAMETERS
-    buf_len = 300 # num datapoints in plot
-    interval = 50 # Interval between plot frames [ms]
-    sec_hist = buf_len*interval/1000 # Time shown on dashboard [s]
+    sec_hist = 10 # Time shown on dashboard [s]
+    frame_interval = 50 # Interval between plot frames [ms]
+    buf_len = int(sec_hist/frame_interval * 1000) # num datapoints in plot
+
     buffer = list(range(0,buf_len)) # Number of points to display
+    
+
     
     ## CREATE FIGURE FOR PLOTTING DASHBOARD
     fig_0 = plt.figure(0, figsize = (12,6))
@@ -107,7 +122,7 @@ def runGraph(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS):
     for ax in axes1:
         ax.set_xticks(np.linspace(0,buf_len,6)) # These mark the second ticks
         ax.set_xticklabels(np.linspace(-sec_hist,0,6))
-        ax.set_xlabel("Seconds ago (Sim Time)")
+        ax.set_xlabel("Seconds ago (Real Time)")
 
         ax.grid(True)
         ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.25), ncol=len(ax.lines)) # Places legend below plots
@@ -115,21 +130,19 @@ def runGraph(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS):
     fig_0.tight_layout() # Optimizes layout so no overlapping
 
 
-    flag = True # To be use for future dynamic scaling toggle
 
     # This function is called periodically from FuncAnimation
-    def animate_dashboard(i,flag, px_arr,py_arr,pz_arr,
+    def animate_dashboard(i, px_arr,py_arr,pz_arr,
         vx_arr,vy_arr,vz_arr,
         roll_arr,pitch_arr,yaw_arr,
-        wx_arr,wy_arr,wz_arr,
-        ms1_arr,ms2_arr,ms3_arr,ms4_arr):
+        wx_arr,wy_arr,wz_arr):
 
         # States from shared Multiprocessing array
-        x_x,x_y,x_z = STATE[1:4]
-        qw,qx,qy,qz = STATE[4:8]
-        vx,vy,vz = STATE[8:11]
-        wx,wy,wz = STATE[11:14]
-        ms1,ms2,ms3,ms4 = STATE[14:18]
+        x_x,x_y,x_z = DashNode.state_current[1:4]
+        qw,qx,qy,qz = DashNode.state_current[4:8]
+        vx,vy,vz = DashNode.state_current[8:11]
+        wx,wy,wz = DashNode.state_current[11:14]
+        
 
         if qw == 0: # Fix for zero-norm in quat error during initialization
             qw = 1
@@ -192,42 +205,12 @@ def runGraph(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS):
         wz_arr = wz_arr[-buf_len:]
         line_wz.set_ydata(wz_arr)
 
-        ## MOTOR SPEED LINES
-        ms1_arr.append(ms1)
-        ms1_arr = ms1_arr[-buf_len:]
-        line_ms1.set_ydata(ms1_arr)
 
-        ms2_arr.append(ms2)
-        ms2_arr = ms2_arr[-buf_len:]
-        line_ms2.set_ydata(ms2_arr)
-
-        ms3_arr.append(ms3)
-        ms3_arr = ms3_arr[-buf_len:]
-        line_ms3.set_ydata(ms3_arr)
-
-        ms4_arr.append(ms4)
-        ms4_arr = ms4_arr[-buf_len:]
-        line_ms4.set_ydata(ms4_arr)
-
-        
-        ## DYNAMIC SCALING FOR FUTURE IMPLEMENTATION
-        # max_omega = max(max(omega_x,omega_y,omega_z)) # Find absolute max omega element
-        
-        # if max_omega > 5 and flag == True:
-        #     line_wy.axes.set_ylim([0,max_omega*1.5])
-        #     fig_0.canvas.resize_event()
-        #     flag = False
-        # print("Test: ===========",reward_G.value)
         return  line_px,line_py,line_pz, \
                 line_vx,line_vy,line_vz, \
                 line_ax,line_ay,line_az, \
-                line_wx,line_wy,line_wz, \
-                line_ms1,line_ms2,line_ms3,line_ms4
-
-
-
-
-
+                line_wx,line_wy,line_wz, 
+                
 
 
 
@@ -241,69 +224,68 @@ def runGraph(STATE,K_EP,K_RUN,REWARD,REWARD_AVG,N_ROLLOUTS):
     ax2.set_ylim([0,22])
 
     ax2.grid(True)
-    ax2.set_title(f'Rollouts: {N_ROLLOUTS.value*2} | Episode: {K_EP.value} Run: {K_RUN.value} (Completed) ')
-
-
-    ## INIT ARRAYS TO BE FILLED
-    k_ep = [0] # Need zero value just to be able to call [-1]
-    k_run = [0] 
-    reward = [0]
-
-    k_ep_ravg = [0] # k_ep grows on each run iteration so a new array was created to match reward_avg size
-    reward_avg = [0]
     
-    scat_r = ax2.scatter([],[],marker='_', color = "black", alpha = 0.5) # Reward scatter
-    scat_ra = ax2.scatter([],[],marker='o',color = 'red') # Reward_average scatter
+    
 
 
-    def animate_reward(i,k_ep,k_run,k_ep_ravg):
+    ## INIT EMPTY ARRAYS TO BE FILLED
+    k_ep_arr = [np.nan] # Need value just to be able to call [-1]
+    k_run_arr = [np.nan] 
+    reward_arr = [np.nan]
+    reward_avg_arr = [np.nan]
 
-        if k_ep[-1] != K_EP.value: # if new episode append values and plot avg reward
-            reward_avg.append(REWARD_AVG.value)
-            k_ep_ravg.append(K_EP.value-1)
-            scat_ra.set_offsets(np.c_[k_ep_ravg[1:],reward_avg[1:]])
+    
+    ax2.set_title(f'Rollouts: {DashNode.n_rollouts} | Episode: {DashNode.k_ep} Run: {DashNode.k_run} (Completed) ')
+    scat_reward = ax2.scatter([],[],marker='_', color = "black", alpha = 0.5) # Reward scatter
+    scat_reward_avg = ax2.scatter([],[],marker='o',color = "red")
+    fig_1.tight_layout()
+    
+    def animate_reward(i,k_ep_arr,k_run_arr,reward_arr): ## This runs in continuous loop
+    
+        if k_run_arr[-1] != DashNode.k_run: # If k_run changes
+
+            ## APPEND CLASS VARIABLES TO ARRAY
+            k_run_arr.append(DashNode.k_run)
+            k_ep_arr.append(DashNode.k_ep)
+            reward_arr.append(DashNode.reward)
+
+            ## APPEND R_AVG VALUES ONLY ON LAST RUN
+            if k_run_arr[-1] == (DashNode.n_rollouts-1): # If k_ep changes
+                reward_avg_arr.append(DashNode.reward_avg)
+            else: ## OTHERWISE APPEND NON-PLOTTABLE NAN
+                reward_avg_arr.append(np.nan)
+
+            ## PLOT APPENDED ARRAYS
+            scat_reward.set_offsets(np.c_[k_ep_arr[1:],reward_arr[1:]])
+            scat_reward_avg.set_offsets(np.c_[k_ep_arr[1:],reward_avg_arr[1:]])
+
+            ## UPDATE TITLE AND FIG FORMATTING
+            ax2.set_title(f'Rollouts: {DashNode.n_rollouts} | Episode: {DashNode.k_ep} Run: {DashNode.k_run} (Completed) ')
+            fig_1.tight_layout()
         
-        if k_run[-1] != K_RUN.value: # if new run append values and plot reward
-            k_ep.append(K_EP.value)
-            reward.append(REWARD.value)
-            k_run.append(K_RUN.value)
-            scat_r.set_offsets(np.c_[k_ep[1:],reward[1:]])
-            ax2.set_title(f'Rollouts: {N_ROLLOUTS.value*2} | Episode: {K_EP.value} Run: {K_RUN.value} (Completed) ')
+        return scat_reward,scat_reward_avg
 
-
-        return scat_r,scat_ra
  
 
     anim1 = animation.FuncAnimation(fig_0,
         animate_dashboard,
-        fargs=(flag,
+        fargs=(
         px_arr,py_arr,pz_arr,
         vx_arr,vy_arr,vz_arr,
         roll_arr,pitch_arr,yaw_arr,
-        wx_arr,wy_arr,wz_arr,
-        ms1_arr,ms2_arr,ms3_arr,ms4_arr),
-        interval=interval,
+        wx_arr,wy_arr,wz_arr),
+        interval=frame_interval,
         blit=True)
 
     anim2 = animation.FuncAnimation(fig_1, 
         animate_reward, 
-        fargs = (k_ep,k_run,k_ep_ravg),
-        interval = interval,
+        fargs=(k_ep_arr,k_run_arr,reward_arr),
+        interval = frame_interval,
         blit=False)
 
     plt.show()
 
-    ## STRUCTURE: FuncAnimation
-    # Initialize figure and axes 
-    # Create an empty array and plot it
-    # Create a function that appends to arrays whenever it's called
-    #       and returns the line/scatter objects
-    #
-    # Use FuncAnimation to call that function with it's fargs inputs
-    # Note: If only one input include comma after it e.g. fargs=(temp1,)
-    #
-    # interval: time between frames
-    # blit: improves performance by only redrawing new objects (Causes issues with display though)
-    #       blit = False, will remove issues but lowers frame rate
 
-    
+
+if __name__ == "__main__":
+    runGraph()

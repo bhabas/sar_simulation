@@ -15,23 +15,26 @@ import csv
 from socket import timeout
 
 from sensor_msgs.msg import LaserScan, Image, Imu
-from global_state_pkg.msg import GlobalState 
-import message_filters
+from gazebo_communication_pkg.msg import GlobalState 
+from crazyflie_gazebo_sim.msg import Rewards
+from std_msgs.msg import String
+
 from cv_bridge import CvBridge
 
 class CrazyflieEnv:
     def __init__(self,port_local=18050, port_Ctrl=18060):
         print("[STARTING] CrazyflieEnv is starting...")
         self.timeout = False # Timeout flag for reciever thread
-        self.state_current = np.zeros(18)
+        self.state_current = np.zeros(14)
         self.isRunning = True
+
         
         ## INIT ROS NODE FOR ENVIRONMENT 
         # NOTE: Can only have one node in a rospy process
         rospy.init_node("crazyflie_env_node") 
         self.launch_sim() 
     
-
+        os.system("kill -9 $(lsof -i:18050 -t)")
         ## INIT RL SOCKET (AKA SERVER)
         self.RL_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # Create UDP(DGRAM) Socket
         self.RL_port = port_local
@@ -51,23 +54,60 @@ class CrazyflieEnv:
         # kill -9 $(lsof -i:18050 -t)
         # if threads dont terminte when program is shut, you might need to use lsof to kill it
 
-        self.global_state = GlobalState
+
+        self.k_run = 0
+        self.k_ep = 0
+        self.reward = 0
+        self.reward_avg = 0
+        self.n_rollouts = 0
+
+
+
+  
         self.global_stateThread = Thread(target=self.global_stateSub,args=())
         self.global_stateThread.daemon=True
         self.global_stateThread.start()
 
+        
+        self.rewardThread = Thread(target=self.rewardPub,args=())
+        self.rewardThread.daemon=True
+        self.rewardThread.start()
+        
 
 
-   
-        # =========== Sensors =========== #
-        self.laser_msg = LaserScan # Laser Scan Message Variable
-        self.laser_dist = 0
         # Start Laser data reciever thread
-        self.laserThread = Thread(target = self.lsrThread, args=())
+        self.laserThread = Thread(target=self.lsrThread, args=())
         self.laserThread.daemon=True
         self.laserThread.start()
 
+
+
+        
         print("[COMPLETED] Environment done")
+
+    # ============================
+    ##   Publishers/Subscribers 
+    # ============================
+
+    def rewardPub(self):
+        reward_Pub = rospy.Publisher('/rewards',Rewards,queue_size=10)
+        reward_msg = Rewards()
+        
+        reward_msg.k_ep = self.k_ep
+        reward_msg.k_run = self.k_run
+        reward_msg.reward = self.reward
+        reward_msg.reward_avg = self.reward_avg
+        reward_msg.n_rollouts = self.n_rollouts
+
+        rate = rospy.Rate(10) # 10 hz
+ 
+        # while not rospy.is_shutdown():
+        #     # if np.isnan(self.reward) == False or self.reward>0:
+        #     reward_Pub.publish(reward_msg)
+        #     rate.sleep()
+            
+        reward_Pub.publish(reward_msg)
+        
 
 
 
@@ -97,10 +137,10 @@ class CrazyflieEnv:
         orientation_q = [global_quat.w,global_quat.x,global_quat.y,global_quat.z]
         velocity = [global_vel.x,global_vel.y,global_vel.z]
         omega = [global_omega.x,global_omega.y,global_omega.z]
-        ms = [gs_msg.motorspeeds[0],gs_msg.motorspeeds[1],gs_msg.motorspeeds[2],gs_msg.motorspeeds[3]]
+
 
         ## COMBINE INTO COMPREHENSIVE LIST
-        self.state_current = [t] + position + orientation_q +velocity + omega + ms ## t (float) -> [t] (list)
+        self.state_current = [t] + position + orientation_q +velocity + omega ## t (float) -> [t] (list)
 
         
         
@@ -125,6 +165,8 @@ class CrazyflieEnv:
             self.laser_dist = 4 # max sesnsor dist
         else:
             self.laser_dist = self.laser_msg.ranges[0]
+
+
 
 
     # ============================
@@ -156,19 +198,19 @@ class CrazyflieEnv:
     def getTime(self):
         return self.state_current[0]
 
-    def get_state(self,STATE): # function for thread that will continually read current state
+    def get_state(self): # function for thread that will continually read current state
         # Note: This can further be consolidated into global_stateCallback() **but I need a break and errors are hard
         while True:
             state = self.state_current
             qw = state[4]
             if qw==0: # Fix for zero-norm error during initialization where norm([qw,qx,qy,qz]=[0,0,0,0]) = undf
                 state[4] = 1
-            STATE[:] = state #.tolist() # Save to global array for access across multi-processes
+            return np.array(state) #.tolist() # Save to global array for access across multi-processes
 
     def launch_sim(self):
        
-        # if getpass.getuser() == 'bhabas':
-        #     pyautogui.moveTo(x=2500,y=0) 
+        if getpass.getuser() == 'bhabas':
+            pyautogui.moveTo(x=2500,y=0) 
 
         self.gazebo_p = subprocess.Popen( # Gazebo Process
             "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/utility/launch_gazebo.bash", 
