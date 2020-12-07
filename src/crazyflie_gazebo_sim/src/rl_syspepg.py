@@ -15,100 +15,134 @@ class ES:
         # ovveride this for necessary hyperparameters
         self.gamma, self.n_rollout = gamma, n_rollout
 
-
-    def calculate_reward(self, state, h_ceiling): # state is size 13 x timesteps
-        # should be the same for each algorithm
-        state = state
-        h_ceiling = h_ceiling
-        #h_delta = 0.02 # 0.044
+    def calculate_reward(self, _state, _h_ceiling):         # _state is size 13 x timesteps
+        state = _state
+        h_ceiling = _h_ceiling
+        h_delta = 0.02     # 0.044
 
         z = state[2,:]
         quat = state[4:7,:]
-        # Rearrange quat as scalar-last format used in scipy Rotation
-        # [qw,qx,qy,qz]' => quat = [qx,qy,qz,qw]'
-        quat = np.append(quat, state[3,:][np.newaxis,:], axis=0)  # rearrange quat as scalar-last format used in scipy Rotation
-        r1 = z / h_ceiling # reward from hieght scaled 0-1
+        quat = np.append(quat, state[3,:][np.newaxis,:], axis=0)          # rearrange quat as scalar-last format used in scipy Rotation
+
+        r1 = z / h_ceiling
 
         r2 = np.zeros_like(r1)
-        r2test = np.zeros_like(r1)
         for k_quat in range(quat.shape[-1]):
             R = Rotation.from_quat(quat[:,k_quat])
-            b3 = R.as_matrix()[:,2] # body z-axis
+            b3 = R.as_matrix()[:,2]                         # body z-axis
 
-            r2[k_quat] = 0.5*(np.dot(b3, np.array([0,0,-1]))) + 0.5 # reward from orientation scaled 0-1
-            r2test[k_quat] = asin(r2[k_quat])/pi + 0.5
-            #if (r2[k_quat]>0.8) and (z[k_quat] > 0.8*h_ceiling):  # further incentivize when b3 is very close to -z axis
-            #    r2[k_quat] = r2[k_quat]*5
-            #if z[k_quat] < 0.3*h_ceiling:
-            #    r2[k_quat] = 0
-        #r = r1 + r2
-        #print(r1,r2)
-
-        # multioply elements of r1 and r2 for total reward at each step
-        r = np.multiply(r1,r2)
-        rplus = r1 + r2
-        # testing different reward functions
-        rtest = np.multiply(r1,r2test)
-        #print(r)
+            r2[k_quat] = np.dot(b3, np.array([0,0,-1]))
+            if (r2[k_quat]>0.8) and (z[k_quat] > 0.8*h_ceiling):            # further incentivize when b3 is very close to -z axis
+                r2[k_quat] = r2[k_quat]*5
+            elif z[k_quat] < 0.5*h_ceiling:
+                r2[k_quat] = 0
+        
+        r = r1 + r2
         r_cum = np.zeros_like(r)
-        r_cum1 = np.zeros_like(r1)
-        r_cum2 = np.zeros_like(r2)
-        r_cum2test = np.zeros_like(r2)
-        r_cumtest = np.zeros_like(rtest)
-        temp = 0
-        temp1=0
-        temp2=0
-        temptest = 0
-        temp2test =0
-        tempplus = 0
-        r_cumplus = np.zeros_like(rplus)
-        for k_r in range(0,len(r)):
-            tempplus = rplus[k_r] + self.gamma*tempplus
-            r_cumplus = tempplus
 
-            temp = r[k_r] + self.gamma*temp   # sum of r
+        temp = 0
+        for k_r in range(0,len(r)):
+            temp = r[k_r] + self.gamma*temp
             r_cum[k_r] = temp
 
-            temp1 = r1[k_r] + self.gamma*temp1    # sum of just r1
-            r_cum1[k_r] = temp1
-
-            temp2 = r2[k_r] + self.gamma*temp2   # sum of just r2
-            r_cum2[k_r] = temp2
-
-            temptest = rtest[k_r] + self.gamma*temptest  # use different r2 (asin)
-            r_cumtest[k_r] = temptest
-
-            temp2test = r2test[k_r] + self.gamma*temp2test # use different r2 (asin)
-            r_cum2test[k_r] = temp2test
-
-        #print(r_cum1[-1],r_cum2[-1])
-        #r_cum2[-1] = r_cum2[-1]*float(z[-1] > 1.2)
         if r_cum.size > 0:
-
-            cum = r_cum1[-1]*(r_cum2[-1])
-            #print('r_cum1: %.3f \t r_cum2: %.3f' %(r1[-1],r2[-1]))
-            
-            #print("[dot]     r1r2  = %.3f \t r1asin(r2) = %.3f" %(r_cum[-1],r_cumtest[-1]))
-            #print("[end only]r1r2 cum = %.3f \t r1asin(r2) = %.3f" %(cum/20.0,r_cum1[-1]*r_cum2test[-1]/20.0))
-            #print(r_cumplus)
-            #print(r_cum[-1],cum,r_cum1[-1],r_cum2[-1])
-
-            # Give extra reward if landed
-            # these heights+oreintations tend to match up with 4,3,2,1 legs landing.
-            # not perfect but does a good job rewarding landing more than other run
-            '''if r1[-1] > 0.97 and r2[-1] > 0.98:
-                return r_cum[-1] + 5
-            elif r1[-1] > 0.95 and r2[-1] > 0.95:
-                return r_cum[-1] + 4
-            elif r1[-1] > 0.90 and r2[-1] > 0.8:
-                return r_cum[-1] + 3
-            elif r1[-1] > 0.9 and r2[-1] > 0.5:
-                return r_cum[-1] + 2
-            else:'''
-            return   np.around(r_cum[-1],2) # float(z[-1]>1.2)*cum
-            # max 1150 min -550 -> 0 - 1700
+            return r_cum[-1]
         else:
             return np.nan
+
+    # def calculate_reward(self, state, h_ceiling): # state is size 13 x timesteps
+    #     # should be the same for each algorithm
+    #     state = state
+    #     h_ceiling = h_ceiling
+    #     #h_delta = 0.02 # 0.044
+
+    #     z = state[2,:]
+    #     quat = state[4:7,:]
+    #     # Rearrange quat as scalar-last format used in scipy Rotation
+    #     # [qw,qx,qy,qz]' => quat = [qx,qy,qz,qw]'
+    #     quat = np.append(quat, state[3,:][np.newaxis,:], axis=0)  # rearrange quat as scalar-last format used in scipy Rotation
+    #     r1 = z / h_ceiling # reward from hieght scaled 0-1
+
+    #     r2 = np.zeros_like(r1)
+    #     r2test = np.zeros_like(r1)
+    #     for k_quat in range(quat.shape[-1]):
+    #         R = Rotation.from_quat(quat[:,k_quat])
+    #         b3 = R.as_matrix()[:,2] # body z-axis
+
+    #         r2[k_quat] = 0.5*(np.dot(b3, np.array([0,0,-1]))) + 0.5 # reward from orientation scaled 0-1
+    #         r2test[k_quat] = asin(r2[k_quat])/pi + 0.5
+    #         #if (r2[k_quat]>0.8) and (z[k_quat] > 0.8*h_ceiling):  # further incentivize when b3 is very close to -z axis
+    #         #    r2[k_quat] = r2[k_quat]*5
+    #         #if z[k_quat] < 0.3*h_ceiling:
+    #         #    r2[k_quat] = 0
+    #     #r = r1 + r2
+    #     #print(r1,r2)
+
+    #     # multioply elements of r1 and r2 for total reward at each step
+    #     r = np.multiply(r1,r2)
+    #     rplus = r1 + r2
+    #     # testing different reward functions
+    #     rtest = np.multiply(r1,r2test)
+    #     #print(r)
+    #     r_cum = np.zeros_like(r)
+    #     r_cum1 = np.zeros_like(r1)
+    #     r_cum2 = np.zeros_like(r2)
+    #     r_cum2test = np.zeros_like(r2)
+    #     r_cumtest = np.zeros_like(rtest)
+    #     temp = 0
+    #     temp1=0
+    #     temp2=0
+    #     temptest = 0
+    #     temp2test =0
+    #     tempplus = 0
+    #     r_cumplus = np.zeros_like(rplus)
+    #     for k_r in range(0,len(r)):
+    #         tempplus = rplus[k_r] + self.gamma*tempplus
+    #         r_cumplus = tempplus
+
+    #         temp = r[k_r] + self.gamma*temp   # sum of r
+    #         r_cum[k_r] = temp
+
+    #         temp1 = r1[k_r] + self.gamma*temp1    # sum of just r1
+    #         r_cum1[k_r] = temp1
+
+    #         temp2 = r2[k_r] + self.gamma*temp2   # sum of just r2
+    #         r_cum2[k_r] = temp2
+
+    #         temptest = rtest[k_r] + self.gamma*temptest  # use different r2 (asin)
+    #         r_cumtest[k_r] = temptest
+
+    #         temp2test = r2test[k_r] + self.gamma*temp2test # use different r2 (asin)
+    #         r_cum2test[k_r] = temp2test
+
+    #     #print(r_cum1[-1],r_cum2[-1])
+    #     #r_cum2[-1] = r_cum2[-1]*float(z[-1] > 1.2)
+    #     if r_cum.size > 0:
+
+    #         cum = r_cum1[-1]*(r_cum2[-1])
+    #         #print('r_cum1: %.3f \t r_cum2: %.3f' %(r1[-1],r2[-1]))
+            
+    #         #print("[dot]     r1r2  = %.3f \t r1asin(r2) = %.3f" %(r_cum[-1],r_cumtest[-1]))
+    #         #print("[end only]r1r2 cum = %.3f \t r1asin(r2) = %.3f" %(cum/20.0,r_cum1[-1]*r_cum2test[-1]/20.0))
+    #         #print(r_cumplus)
+    #         #print(r_cum[-1],cum,r_cum1[-1],r_cum2[-1])
+
+    #         # Give extra reward if landed
+    #         # these heights+oreintations tend to match up with 4,3,2,1 legs landing.
+    #         # not perfect but does a good job rewarding landing more than other run
+    #         '''if r1[-1] > 0.97 and r2[-1] > 0.98:
+    #             return r_cum[-1] + 5
+    #         elif r1[-1] > 0.95 and r2[-1] > 0.95:
+    #             return r_cum[-1] + 4
+    #         elif r1[-1] > 0.90 and r2[-1] > 0.8:
+    #             return r_cum[-1] + 3
+    #         elif r1[-1] > 0.9 and r2[-1] > 0.5:
+    #             return r_cum[-1] + 2
+    #         else:'''
+    #         return   np.around(r_cum[-1],2) # float(z[-1]>1.2)*cum
+    #         # max 1150 min -550 -> 0 - 1700
+    #     else:
+    #         return np.nan
 
     def get_baseline(self, span):
         # should be the same

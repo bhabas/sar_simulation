@@ -22,7 +22,7 @@ time.sleep(2) # Sleep time for sub threads to start receiving and processing dat
 def runGraph():
     
     # PARAMETERS
-    sec_hist = 10 # Time shown on dashboard [s]
+    sec_hist = 20 # Time shown on dashboard [s]
     frame_interval = 50 # Interval between plot frames [ms]
     buf_len = int(sec_hist/frame_interval * 1000) # num datapoints in plot
 
@@ -221,7 +221,7 @@ def runGraph():
     ax2.set_xlabel("Episode")
     ax2.set_ylabel("Reward")
     ax2.set_xlim([-2,40])
-    ax2.set_ylim([0,22])
+    ax2.set_ylim([-5,130])
 
     ax2.grid(True)
     

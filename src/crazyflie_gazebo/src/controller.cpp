@@ -620,8 +620,8 @@ void Controller::controlThread()
             }
         }
 
-        if(b3(2) <= 0 & flip_flag==0){ // If e3 component of b3 is neg, turn motors off [arbitrary amount]
-            motorspeed_Vec << 0,0,0,0;
+        if(b3(2) <= 0){ // If e3 component of b3 is neg, turn motors off [arbitrary amount]
+            motorstop_flag = 1;
         }
 
 
@@ -631,34 +631,34 @@ void Controller::controlThread()
         
 
 
-        // if (t_step%75 == 0){ // General Debugging output
-        // cout << setprecision(4) <<
-        // "t: " << t << "\tCmd: " << control_cmd_Eig.transpose() << endl <<
-        // "kp_x: " << kp_x << " \tkd_x: " << kd_x << " \tkp_R: " << kp_R << " \tkd_R: " << kd_R << "\tkd_R_fl: " << kp_omega << endl <<
-        // "kp_xf: " << kp_xf << " \tkd_xf: " << kd_xf << " \tkp_Rf: " << kp_Rf << " \tkd_Rf: " << kd_Rf << " \tflip_flag: " << flip_flag << endl <<
-        // "ki_x: " << ki_x  << "\t e_x_I: " << e_intg.transpose() <<
-        // endl <<
-        // "x_d: " << x_d.transpose() << endl <<
-        // "v_d: " << v_d.transpose() << endl <<
-        // "omega_d: " << omega_d.transpose() << endl <<
-        // endl << 
-        // "pos: " << pos.transpose() << "\tex: " << e_x.transpose() << endl <<
-        // "vel: " << vel.transpose() << "\tev: " << e_v.transpose() << endl <<
-        // "omega: " << omega.transpose() << "\te_w: " << e_omega.transpose() << endl <<
-        // endl << 
-        // "R:\n" << R << "\n\n" << 
-        // "R_d:\n" << R_d << "\n\n" << 
-        // "Yaw: " << yaw*180/M_PI << "\tRoll: " << roll*180/M_PI << "\tPitch: " << pitch*180/M_PI << endl <<
-        // "e_R: " << e_R.transpose() << "\te_R (deg): " << e_R.transpose()*180/M_PI << endl <<
-        // endl <<
-        // "FM: " << FM.transpose() << endl <<
-        // "f: " << f.transpose() << endl <<
-        // endl << setprecision(0) <<
-        // "MS_d: " << motorspeed_Vec_d.transpose() << endl <<
-        // "MS: " << motorspeed_Vec.transpose() << endl <<
-        // "=============== " << endl; 
-        // printf("\033c"); // clears console window
-        // }
+        if (t_step%75 == 0){ // General Debugging output
+        cout << setprecision(4) <<
+        "t: " << t << "\tCmd: " << control_cmd_Eig.transpose() << endl <<
+        "kp_x: " << kp_x << " \tkd_x: " << kd_x << " \tkp_R: " << kp_R << " \tkd_R: " << kd_R << "\tkd_R_fl: " << kp_omega << endl <<
+        "kp_xf: " << kp_xf << " \tkd_xf: " << kd_xf << " \tkp_Rf: " << kp_Rf << " \tkd_Rf: " << kd_Rf << " \tflip_flag: " << flip_flag << endl <<
+        "ki_x: " << ki_x  << "\t e_x_I: " << e_intg.transpose() << " \tmotorstop_flag: " << motorstop_flag << endl <<
+        endl <<
+        "x_d: " << x_d.transpose() << endl <<
+        "v_d: " << v_d.transpose() << endl <<
+        "omega_d: " << omega_d.transpose() << endl <<
+        endl << 
+        "pos: " << pos.transpose() << "\te_x: " << e_x.transpose() << endl <<
+        "vel: " << vel.transpose() << "\te_v: " << e_v.transpose() << endl <<
+        "omega: " << omega.transpose() << "\te_w: " << e_omega.transpose() << endl <<
+        endl << 
+        "R:\n" << R << "\n\n" << 
+        "R_d:\n" << R_d << "\n\n" << 
+        "Yaw: " << yaw*180/M_PI << "\tRoll: " << roll*180/M_PI << "\tPitch: " << pitch*180/M_PI << endl <<
+        "e_R: " << e_R.transpose() << "\te_R (deg): " << e_R.transpose()*180/M_PI << endl <<
+        endl <<
+        "FM: " << FM.transpose() << endl <<
+        "f: " << f.transpose() << endl <<
+        endl << setprecision(0) <<
+        "MS_d: " << motorspeed_Vec_d.transpose() << endl <<
+        "MS: " << motorspeed_Vec.transpose() << endl <<
+        "=============== " << endl; 
+        printf("\033c"); // clears console window
+        }
 
      
         Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Vec.cast <float> (); // Converts motorspeeds to C++ array for data transmission

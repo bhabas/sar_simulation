@@ -2,7 +2,6 @@
 
 import numpy as np
 import time,os,getpass
-from multiprocessing import Process,Array,Value
 from scipy.spatial.transform import Rotation
 import threading
 
@@ -50,12 +49,13 @@ def main():
     # ============================
 
     ## Learning rate
-    alpha_mu = np.array([[0.2]])#[2.0]] )#,[0.1]])
-    alpha_sigma = np.array([[0.1]])#, [1.0]])#,[0.05]])
+    alpha_mu = np.array([[0.1]])#[2.0]] )#,[0.1]])
+    alpha_sigma = np.array([[0.05]])#, [1.0]])#,[0.05]])
 
     ## Initial parameters for gaussian function
-    mu = np.array([[5.5],[8.9], [1.5] ])# ,[1.5]])#,[1.5]])   # Initial estimates of mu: 
-    sigma = np.array([[1.0],[1.0] ,[0.25] ])# ,[0.75]])      # Initial estimates of sigma: 
+    mu = np.array([[4],[8.2], [0] ])# ,[1.5]])#,[1.5]])   # Initial estimates of mu: 
+    sigma = np.array([[1.5],[1.5] ,[0.01] ])# ,[0.75]])      # Initial estimates of sigma: 
+
 
     # noise tests all started at:
     #mu = np.array([[5.0],[-5.0] ])
@@ -140,13 +140,16 @@ def main():
         # ============================
         k_run = 0 # Reset run counter each episode
         while k_run < 2*agent.n_rollout:
+
+            
             
 
 
             ## RESET TO INITIAL STATE
-            env.step('home',ctrl_flag=1) # Reset control vals and functionality to default vals
             state = env.reset_pos() # Reset Gazebo pos
+            env.step('home',ctrl_flag=1) # Reset control vals and functionality to default vals
             time.sleep(3.0) # Time for CF to settle
+            # input("Start next run")
 
 
             ## INITIALIZE RUN PARAMETERS
@@ -156,10 +159,11 @@ def main():
             policy = theta_rl[:,k_run]
             policy = policy[:,np.newaxis] # reshaping for data logging [ change [3,] -> [3,1] ]
         
-            vz_d = np.random.uniform(low=2.5, high=3.0)
-            vx_d = np.random.uniform(low=-2.0, high=2.0)
+            # vz_d = np.random.uniform(low=2.5, high=3.0)
+            # vx_d = np.random.uniform(low=-2.0, high=2.0)
             vy_d = 0 
             vx_d = 0
+            vz_d = 3.0
             v_d = [vx_d,vy_d,vz_d] # [m/s]
             # Note: try adding policy parameter for roll pitch rate for vy ( roll_rate = gain3*omega_x)
 
@@ -257,14 +261,13 @@ def main():
 
                 # If position falls below max height (There is a lag w/ this)
                 z_max = max(position[2],z_max)
-                if position[2] <= 0.75*z_max:
+                if position[2] <= 0.95*z_max:
                     error_1 = "Rollout Completed: Falling Drone"
                     print(error_1)
 
                     error_str  = error_1
                     done_rollout = True
-                    env.step('stop') # turn motors off before resetting position
-                    env.reset_pos()
+        
                     
                 
 
@@ -302,6 +305,7 @@ def main():
                 if done_rollout==True:
 
                     env.step('stop')
+                    env.reset_pos()
                     reward[k_run] = agent.calculate_reward(state_history,h_ceiling)
                     print("Reward = %.3f" %(reward[k_run]))
                     print("!------------------------End Run------------------------! \n")
