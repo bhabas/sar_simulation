@@ -12,7 +12,6 @@ import os, subprocess, signal
 import rospy
 import csv
 
-from socket import timeout
 
 from sensor_msgs.msg import LaserScan, Image, Imu
 from gazebo_communication_pkg.msg import GlobalState 
@@ -24,7 +23,6 @@ from cv_bridge import CvBridge
 class CrazyflieEnv:
     def __init__(self,port_local=18050, port_Ctrl=18060):
         print("[STARTING] CrazyflieEnv is starting...")
-        self.timeout = False # Timeout flag for reciever thread
         self.state_current = np.zeros(14)
         self.isRunning = True
 
@@ -54,10 +52,7 @@ class CrazyflieEnv:
         # kill -9 $(lsof -i:18050 -t)
         # if threads dont terminte when program is shut, you might need to use lsof to kill it
 
-        # print("[STARTING] Starting Dashboard...")
-        # self.dashboard_p = subprocess.Popen(
-        #     "gnome-terminal -- roslaunch dashboard_gui_pkg dashboard.launch",
-        #     close_fds=True, preexec_fn=os.setsid, shell=True)
+        
         
 
 
@@ -180,8 +175,11 @@ class CrazyflieEnv:
     # ============================
 
     def close_sim(self):
-            os.killpg(self.controller_p.pid, signal.SIGTERM)
-            os.killpg(self.gazebo_p.pid, signal.SIGTERM)
+        os.killpg(self.controller_p.pid, signal.SIGTERM)
+        os.killpg(self.gazebo_p.pid, signal.SIGTERM)
+
+    def close_dashboard(self):
+        os.killpg(self.dashboard_p.pid, signal.SIGTERM)
 
 
     def delay_env_time(self,t_start,t_delay):
@@ -204,15 +202,6 @@ class CrazyflieEnv:
     def getTime(self):
         return self.state_current[0]
 
-    def get_state(self): # function for thread that will continually read current state
-        # Note: This can further be consolidated into global_stateCallback() **but I need a break and errors are hard
-        while True:
-            state = self.state_current
-            qw = state[4]
-            if qw==0: # Fix for zero-norm error during initialization where norm([qw,qx,qy,qz]=[0,0,0,0]) = undf
-                state[4] = 1
-            return np.array(state) #.tolist() # Save to global array for access across multi-processes
-
     def launch_sim(self):
        
         if getpass.getuser() == 'bhabas':
@@ -230,13 +219,13 @@ class CrazyflieEnv:
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(1)
 
-    def pause(self): #Pause simulation
-        os.system("rosservice call gazebo/pause_physics")
-        return self.state_current
+    def launch_dashboard(self):
+        print("[STARTING] Starting Dashboard...")
+        self.dashboard_p = subprocess.Popen(
+            "gnome-terminal -- roslaunch dashboard_gui_pkg dashboard.launch",
+            close_fds=True, preexec_fn=os.setsid, shell=True)
 
-    def resume(self): #Resume simulation
-        os.system("rosservice call gazebo/unpause_physics")
-        return self.state_current
+
 
 
     def reset_pos(self): # Disable sticky then places spawn_model at origin

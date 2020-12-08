@@ -221,7 +221,7 @@ def runGraph():
     ax2.set_xlabel("Episode")
     ax2.set_ylabel("Reward")
     ax2.set_xlim([-2,40])
-    ax2.set_ylim([-5,25])
+    ax2.set_ylim([-2,25])
 
     ax2.grid(True)
     
