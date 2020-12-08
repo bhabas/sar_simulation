@@ -61,33 +61,14 @@ def main():
     #mu = np.array([[5.0],[-5.0] ])
     #sigma = np.array([[3.0],[3.0] ])
     #  
-    agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=4)
-    #agent = rlsysPEPGAgent_cov(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=4)
-    #agent = rlEM_PEPGAgent(mu,sigma,n_rollout=5)
+    # agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=4)
+    agent = rlEM_PEPGAgent(mu,sigma,n_rollout=5)
     #agent = rlsysPEPGAgent_adaptive(alpha_mu,alpha_sigma,mu,sigma,n_rollout=10)
-    #agent = rlEM_OutlierAgent(mu,sigma,n_rollout=5) # diverges?
-    #agent = rlEM_PEPG_CovAgent(mu,sigma,n_rollout=5)
 
-    #agent = rlEMsys_PEPGAgent(mu,sigma,n_rollout=5)
-    #agent = rlEM_AdaptiveCovAgent(mu,sigma,gamma=0.95,n_rollout=5)
-    #agent = rlEM_AdaptiveCovAgent3D(mu,sigma,gamma=0.95,n_rollout=5)
 
 
     # agent = rlEM_AdaptiveAgent(mu,sigma,n_rollout=5)
-    # ============================
-    ##           CMA 
-    # ============================
 
-    # seems to be unstable if mu is close to zero (coverges to deterimistic)
-    ## Initial parameters for gaussian function
-    #mu = np.array([[3.0],[-3.0] ])#,[1.5]])   # Initial estimates of mu: 
-    #sigma = np.array([[1.0],[1.0] , [0.5]])      # Initial estimates of sigma: 
-
-    # # For CMA_basic, make sure simga has 3 inputs / for pepg it must be 2
-    # agent = CMA_basic(mu,sigma,N_best=0.3,n_rollout=10)
-
-    #agent = CMA(n=2,gamma = 0.9) # number of problem dimensions
-    #agent = CMA_sym(n=2,gamma=0.9)
 
 
 
