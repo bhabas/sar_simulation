@@ -3,7 +3,7 @@ import pandas as pd
 import pyautogui,getpass
 
 import socket, struct
-from threading import Thread
+from threading import Thread, Timer
 import struct
 
 
@@ -16,7 +16,7 @@ import csv
 from sensor_msgs.msg import LaserScan, Image, Imu
 from gazebo_communication_pkg.msg import GlobalState 
 from crazyflie_gazebo_sim.msg import Rewards
-from std_msgs.msg import String
+from rosgraph_msgs.msg import Clock
 
 from cv_bridge import CvBridge
 
@@ -82,42 +82,29 @@ class CrazyflieEnv:
         self.laserThread.start()
 
 
+        self.timeoutThread = Thread(target=self.timeoutSub)
+        self.timeoutThread.daemon=True
+        self.timeoutThread.start()
+
+
 
         
         print("[COMPLETED] Environment done")
+
+
+
+    
 
     # ============================
     ##   Publishers/Subscribers 
     # ============================
 
-    def rewardPub(self):
-        reward_Pub = rospy.Publisher('/rewards',Rewards,queue_size=10)
-        reward_msg = Rewards()
-        
-        reward_msg.k_ep = self.k_ep
-        reward_msg.k_run = self.k_run
-        reward_msg.reward = self.reward
-        reward_msg.reward_avg = self.reward_avg
-        reward_msg.n_rollouts = self.n_rollouts
-
-        rate = rospy.Rate(10) # 10 hz
- 
-        # while not rospy.is_shutdown():
-        #     # if np.isnan(self.reward) == False or self.reward>0:
-        #     reward_Pub.publish(reward_msg)
-        #     rate.sleep()
-            
-        reward_Pub.publish(reward_msg)
-        
-
-
-
     def global_stateSub(self): # Subscriber for receiving global state info
         self.state_Sub = rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
         rospy.spin()
 
-    def global_stateCallback(self,data):
-        gs_msg = data # gs_msg <= global_state_msg
+    def global_stateCallback(self,msg):
+        gs_msg = msg # gs_msg <= global_state_msg
 
         ## SET TIME VALUE FROM TOPIC
         t_temp = gs_msg.header.stamp.secs
@@ -142,6 +129,26 @@ class CrazyflieEnv:
 
         ## COMBINE INTO COMPREHENSIVE LIST
         self.state_current = [t] + position + orientation_q +velocity + omega ## t (float) -> [t] (list)
+
+    def rewardPub(self):
+        reward_Pub = rospy.Publisher('/rewards',Rewards,queue_size=10)
+        reward_msg = Rewards()
+        
+        reward_msg.k_ep = self.k_ep
+        reward_msg.k_run = self.k_run
+        reward_msg.reward = self.reward
+        reward_msg.reward_avg = self.reward_avg
+        reward_msg.n_rollouts = self.n_rollouts
+
+        rate = rospy.Rate(10) # 10 hz
+ 
+        # while not rospy.is_shutdown():
+        #     # if np.isnan(self.reward) == False or self.reward>0:
+        #     reward_Pub.publish(reward_msg)
+        #     rate.sleep()
+            
+        reward_Pub.publish(reward_msg)
+        
 
         
         
@@ -207,17 +214,28 @@ class CrazyflieEnv:
         if getpass.getuser() == 'bhabas':
             pyautogui.moveTo(x=2500,y=0) 
 
-        print("[STARTING] Starting Gazebo Process...")
-        self.gazebo_p = subprocess.Popen( # Gazebo Process
-            "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/utility/launch_gazebo.bash", 
-            close_fds=True, preexec_fn=os.setsid, shell=True)
-        time.sleep(5)
+            print("[STARTING] Starting Gazebo Process...")
+            self.gazebo_p = subprocess.Popen( # Gazebo Process
+                "gnome-terminal --disable-factory  -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/utility/launch_gazebo.bash", 
+                close_fds=True, preexec_fn=os.setsid, shell=True)
+            time.sleep(5)
 
-        print("[STARTING] Starting Controller Process...")
-        self.controller_p = subprocess.Popen( # Controller Process
-            "gnome-terminal --disable-factory --geometry 81x33 -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/utility/launch_controller.bash", 
-            close_fds=True, preexec_fn=os.setsid, shell=True)
-        time.sleep(1)
+            print("[STARTING] Starting Controller Process...")
+            self.controller_p = subprocess.Popen( # Controller Process
+                "gnome-terminal --disable-factory --geometry 81x33+3375+1020 -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/utility/launch_controller.bash", 
+                close_fds=True, preexec_fn=os.setsid, shell=True)
+
+        else:
+            print("[STARTING] Starting Gazebo Process...")
+            self.gazebo_p = subprocess.Popen( # Gazebo Process
+                "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/utility/launch_gazebo.bash", 
+                close_fds=True, preexec_fn=os.setsid, shell=True)
+            time.sleep(5)
+
+            print("[STARTING] Starting Controller Process...")
+            self.controller_p = subprocess.Popen( # Controller Process
+                "gnome-terminal --disable-factory --geometry 81x33 -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/utility/launch_controller.bash", 
+                close_fds=True, preexec_fn=os.setsid, shell=True)
 
     def launch_dashboard(self):
         print("[STARTING] Starting Dashboard...")
@@ -391,3 +409,27 @@ class CrazyflieEnv:
         alpha_mu,alpha_sig, mu, sigma = vals
 
         return alpha_mu,alpha_sig,mu,sigma
+
+
+    # ============================
+    ##      Timeout Functions 
+    # ============================
+
+    
+    # Subscriber thread listens to /clock for any message
+    def timeoutSub(self):
+        rospy.Subscriber("/clock",Clock,self.timeoutCallback)
+        self.timer = Timer(5,self.timeout)
+
+    # If message is received reset the threading.Timer thread
+    def timeoutCallback(self,msg):
+        self.timer.cancel()
+        self.timer = Timer(5,self.timeout)
+        self.timer.start()
+    
+    # If no message in 5 seconds then close and relaunch sim
+    def timeout(self):
+        print("[RESTARTING] No Gazebo communication in 5 seconds")
+        self.close_sim()
+        time.sleep(1)
+        self.launch_sim()

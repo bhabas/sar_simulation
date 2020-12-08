@@ -23,11 +23,9 @@ os.system("clear")
 
 ## INIT GAZEBO ENVIRONMENT
 env = CrazyflieEnv()
+env.launch_dashboard()
 print("Environment done")
 
-## INIT STATE RECIEVING THREAD
-state_thread = threading.Thread(target=env.get_state)
-state_thread.start() # Start thread that continually recieves state array from Gazebo
 
 
 ## INIT USER AND DATA RECORDING
@@ -39,9 +37,9 @@ env.create_csv(file_name,record = False)
 
 ## SIM PARAMETERS
 ep_start = 0 # Default episode start position
-h_ceiling = 1.5 # [m]]
+h_ceiling = 1.5 # [m]
 
-ES = ES(gamma = 0.95, n_rollout = 3)
+ES = ES(gamma=0.95,n_rollout=3)
 agent = rlsysPEPGAgent_reactive(np.asarray(0),np.asarray(0),np.asarray(0),np.asarray(0))
 reset_vals = True
 
@@ -150,7 +148,7 @@ for k_ep in range(ep_start,1000):
         while True:
             
             ## DEFINE CURRENT STATE
-            state = env.get_state()
+            state = np.array(env.state_current)
             
             position = state[1:4] # [x,y,z]
             orientation_q = state[4:8] # Orientation in quat format
@@ -180,10 +178,10 @@ for k_ep in range(ep_start,1000):
 
                 omega_d = [omega_xd,omega_yd,omega_zd]
 
-                print('----- pitch starts -----')
-                print('vz=%.3f, vx=%.3f, vy=%.3f' %(vz,vx,vy))
-                print('RREV=%.3f, OF_y=%.3f, OF_x=%.3f, Omega_yd=%.3f' %(RREV, OF_y, OF_x, omega_yd) )   
-                print("Pitch Time: %.3f" %start_time_pitch)
+                print('======= Flip Starts =======')
+                print('vx=%.3f, vy=%.3f, vz=%.3f' %(vx,vy,vz))
+                print('RREV=%.3f, OF_y=%.3f, OF_x=%.3f' %(RREV, OF_y, OF_x))   
+                print('Pitch Time: %.3f, Omega_yd=%.3f' %(start_time_pitch,omega_yd))
 
                 ## Start rotation and mark rotation as triggered
                 env.step('omega',omega_d,ctrl_flag=1) # Set desired ang. vel 
@@ -229,12 +227,6 @@ for k_ep in range(ep_start,1000):
                 repeat_run = True
                 break
 
-            elif env.timeout:
-                print("Controller reciever thread timed out")
-                error_str = "Error: Controller Timeout"
-                repeat_run = True
-                break
-            
 
             # ============================
             ##      Record Keeping  
@@ -252,7 +244,12 @@ for k_ep in range(ep_start,1000):
             if done_rollout==True:
 
                 env.step('stop')
+
+                w_y_hist = state_history[11,:]
+                max_omega_y = min(np.max(abs(w_y_hist)),30)
                 reward[k_run] = agent.calculate_reward(state_history,h_ceiling)
+
+                print("Max Omega_y= %.3f" %(max_omega_y))
                 print("Reward = %.3f" %(reward[k_run]))
                 print("!------------------------End Run------------------------! \n")
                 break
