@@ -1,5 +1,9 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
+
+<!-- 
+  /home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo/models/crazyflie_model/
+  -->
   <model name='crazyflie_model'>
     <link name='crazyflie_body'>
       <inertial>
@@ -301,7 +305,7 @@
         </surface>
       </collision>
     </link>
-    <link name='link_4'>
+    <link name='link_3'>
       <inertial>
         <mass>0.0004</mass>
         <inertia>
@@ -314,7 +318,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>0.01 -0.01 0.1 0 -0.785 -0.785</pose>
+      <pose>-0.01 -0.01 0.1 0 -0.785 -2.355</pose>
       <gravity>1</gravity>
       <self_collide>1</self_collide>
       <kinematic>0</kinematic>
@@ -401,7 +405,7 @@
         </surface>
       </collision>
     </link>
-    <link name='link_3'>
+    <link name='link_4'>
       <inertial>
         <mass>0.0004</mass>
         <inertia>
@@ -414,7 +418,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>-0.01 -0.01 0.1 0 -0.785 -2.355</pose>
+      <pose>0.01 -0.01 0.1 0 -0.785 -0.785</pose>
       <gravity>1</gravity>
       <self_collide>1</self_collide>
       <kinematic>0</kinematic>
@@ -901,6 +905,134 @@
         </surface>
       </collision>
     </link>
+    <joint name='link_1_joint' type='revolute'>
+      <parent>crazyflie_body</parent>
+      <child>link_1</child>
+      <pose>0 0 0 0 -0 0</pose>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <lower>-1.79769e+308</lower>
+          <upper>1.79769e+308</upper>
+          <effort>-1</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+          <damping>0</damping>
+          <friction>0</friction>
+        </dynamics>
+      </axis>
+      <physics>
+        <ode>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+          <suspension>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </suspension>
+        </ode>
+      </physics>
+    </joint>
+    <joint name='link_2_joint' type='revolute'>
+      <parent>crazyflie_body</parent>
+      <child>link_2</child>
+      <pose>0 0 0 0 -0 0</pose>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <lower>-1.79769e+308</lower>
+          <upper>1.79769e+308</upper>
+          <effort>-1</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+          <damping>0</damping>
+          <friction>0</friction>
+        </dynamics>
+      </axis>
+      <physics>
+        <ode>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+          <suspension>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </suspension>
+        </ode>
+      </physics>
+    </joint>
+    <joint name='link_3_joint' type='revolute'>
+      <parent>crazyflie_body</parent>
+      <child>link_3</child>
+      <pose>0 0 0 0 -0 0</pose>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <lower>-1.79769e+308</lower>
+          <upper>1.79769e+308</upper>
+          <effort>-1</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+          <damping>0</damping>
+          <friction>0</friction>
+        </dynamics>
+      </axis>
+      <physics>
+        <ode>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+          <suspension>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </suspension>
+        </ode>
+      </physics>
+    </joint>
+    <joint name='link_4_joint' type='revolute'>
+      <parent>crazyflie_body</parent>
+      <child>link_4</child>
+      <pose>0 0 0 0 -0 0</pose>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <lower>-1.79769e+308</lower>
+          <upper>1.79769e+308</upper>
+          <effort>-1</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+          <damping>0</damping>
+          <friction>0</friction>
+        </dynamics>
+      </axis>
+      <physics>
+        <ode>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+          <suspension>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </suspension>
+        </ode>
+      </physics>
+    </joint>
     <joint name='rotor_1_joint' type='revolute'>
       <parent>crazyflie_body</parent>
       <child>rotor_1</child>
