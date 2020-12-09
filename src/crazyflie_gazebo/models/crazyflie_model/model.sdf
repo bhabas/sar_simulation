@@ -501,7 +501,10 @@
         </surface>
       </collision>
     </link>
-    <link name='pad_1'>
+
+
+
+    <!-- <link name='pad_1'>
       <inertial>
         <mass>1e-08</mass>
         <inertia>
@@ -901,6 +904,10 @@
         </surface>
       </collision>
     </link>
+ -->
+
+
+
     <link name='rotor_1'>
       <inertial>
         <mass>0.00075</mass>
@@ -1497,6 +1504,8 @@
         </ode>
       </physics>
     </joint>
+
+    
     <joint name='rotor_1_joint' type='revolute'>
       <parent>crazyflie_body</parent>
       <child>rotor_1</child>
@@ -1625,6 +1634,8 @@
         </ode>
       </physics>
     </joint>
+
+    
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
     <plugin name='back_left_motor_model' filename='libgazebo_motor_model.so'>
@@ -1703,5 +1714,36 @@
       <motorSpeedCommandPubTopic>/gazebo/command/motor_speed</motorSpeedCommandPubTopic>
       <stickyEnablePubTopic>/gazebo/command/sticky_enable</stickyEnablePubTopic>
     </plugin>
+
+
+    <!-- <plugin name='pad_0_sticky' filename='libgazebo_sticky_foot.so'>
+      <robotNamespace/>
+      <linkName>pad_1</linkName>
+      <padNumber>0</padNumber>
+      <stickyEnableSubTopic>/gazebo/command/sticky_enable</stickyEnableSubTopic>
+      <maxUpVelocity>100</maxUpVelocity>
+    </plugin>
+    <plugin name='pad_1_sticky' filename='libgazebo_sticky_foot.so'>
+      <robotNamespace/>
+      <linkName>pad_2</linkName>
+      <padNumber>1</padNumber>
+      <stickyEnableSubTopic>/gazebo/command/sticky_enable</stickyEnableSubTopic>
+      <maxUpVelocity>100</maxUpVelocity>
+    </plugin>
+    <plugin name='pad_2_sticky' filename='libgazebo_sticky_foot.so'>
+      <robotNamespace/>
+      <linkName>pad_3</linkName>
+      <padNumber>2</padNumber>
+      <stickyEnableSubTopic>/gazebo/command/sticky_enable</stickyEnableSubTopic>
+      <maxUpVelocity>100</maxUpVelocity>
+    </plugin>
+    <plugin name='pad_3_sticky' filename='libgazebo_sticky_foot.so'>
+      <robotNamespace/>
+      <linkName>pad_4</linkName>
+      <padNumber>3</padNumber>
+      <stickyEnableSubTopic>/gazebo/command/sticky_enable</stickyEnableSubTopic>
+      <maxUpVelocity>100</maxUpVelocity>
+    </plugin> -->
+
   </model>
 </sdf>
