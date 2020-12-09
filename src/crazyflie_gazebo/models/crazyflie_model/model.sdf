@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='crazyflie_landing_gears'>
+  <model name='crazyflie_model'>
     <link name='crazyflie_body'>
       <inertial>
         <mass>0.026</mass>
