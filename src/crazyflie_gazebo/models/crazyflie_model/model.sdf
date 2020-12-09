@@ -1,9 +1,5 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-
-<!-- 
-  /home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo/models/crazyflie_model/
-  -->
   <model name='crazyflie_model'>
     <link name='crazyflie_body'>
       <inertial>
@@ -27,7 +23,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>/home/bhabas/Documents/crazyflie.dae</uri>
+            <uri>model://crazyflie_model/meshes/crazyflie.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -527,7 +523,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>/home/bhabas/Documents/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_model/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -554,7 +550,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>/home/bhabas/Documents/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_model/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -627,7 +623,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>/home/bhabas/Documents/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_model/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -654,7 +650,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>/home/bhabas/Documents/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_model/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -727,7 +723,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>/home/bhabas/Documents/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_model/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -754,7 +750,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>/home/bhabas/Documents/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_model/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -827,7 +823,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>/home/bhabas/Documents/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_model/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -854,7 +850,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>/home/bhabas/Documents/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_model/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -905,25 +901,10 @@
         </surface>
       </collision>
     </link>
-    <joint name='link_1_joint' type='revolute'>
+    <joint name='link_1_joint' type='fixed'>
       <parent>crazyflie_body</parent>
       <child>link_1</child>
       <pose>0 0 0 0 -0 0</pose>
-      <axis>
-        <xyz>0 1 0</xyz>
-        <limit>
-          <lower>-1.79769e+308</lower>
-          <upper>1.79769e+308</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
-        </limit>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0</spring_stiffness>
-          <damping>0</damping>
-          <friction>0</friction>
-        </dynamics>
-      </axis>
       <physics>
         <ode>
           <limit>
@@ -937,25 +918,10 @@
         </ode>
       </physics>
     </joint>
-    <joint name='link_2_joint' type='revolute'>
+    <joint name='link_2_joint' type='fixed'>
       <parent>crazyflie_body</parent>
       <child>link_2</child>
       <pose>0 0 0 0 -0 0</pose>
-      <axis>
-        <xyz>0 1 0</xyz>
-        <limit>
-          <lower>-1.79769e+308</lower>
-          <upper>1.79769e+308</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
-        </limit>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0</spring_stiffness>
-          <damping>0</damping>
-          <friction>0</friction>
-        </dynamics>
-      </axis>
       <physics>
         <ode>
           <limit>
@@ -969,25 +935,10 @@
         </ode>
       </physics>
     </joint>
-    <joint name='link_3_joint' type='revolute'>
+    <joint name='link_3_joint' type='fixed'>
       <parent>crazyflie_body</parent>
       <child>link_3</child>
       <pose>0 0 0 0 -0 0</pose>
-      <axis>
-        <xyz>0 1 0</xyz>
-        <limit>
-          <lower>-1.79769e+308</lower>
-          <upper>1.79769e+308</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
-        </limit>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0</spring_stiffness>
-          <damping>0</damping>
-          <friction>0</friction>
-        </dynamics>
-      </axis>
       <physics>
         <ode>
           <limit>
@@ -1001,25 +952,10 @@
         </ode>
       </physics>
     </joint>
-    <joint name='link_4_joint' type='revolute'>
+    <joint name='link_4_joint' type='fixed'>
       <parent>crazyflie_body</parent>
       <child>link_4</child>
       <pose>0 0 0 0 -0 0</pose>
-      <axis>
-        <xyz>0 1 0</xyz>
-        <limit>
-          <lower>-1.79769e+308</lower>
-          <upper>1.79769e+308</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
-        </limit>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0</spring_stiffness>
-          <damping>0</damping>
-          <friction>0</friction>
-        </dynamics>
-      </axis>
       <physics>
         <ode>
           <limit>
