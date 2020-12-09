@@ -50,6 +50,49 @@ class ES:
     #     else:
     #         return np.nan
 
+    def calculate_reward2(self,state,h_ceiling):
+        h_delta = 0.02 
+        e3 = np.array([0,0,1])
+        
+        ## R1 Calc
+        z_hist = state[2,:]
+        r1 = np.max(z_hist/h_ceiling)*10
+
+        ## R2 Calc
+        qw,qx,qy,qz = state[3:7,:]
+        quat_hist = np.c_[qx,qy,qz,qw] # Create an array of quat objects in [qx,qy,qz,qw] format
+
+        r2_vec = np.zeros_like(qw)
+        for ii,quat in enumerate(quat_hist):
+            R = Rotation.from_quat(quat)
+            b3 = R.as_matrix()[:,2]                 # Body Z-axis in global frame
+            r2_vec[ii] = 0.5*np.dot(b3,-e3) + 0.5   # Scale orientation reward to be from [0-1]
+
+
+        ## R3 Calc
+        omega_x,omega_y,omega_z = state[10:13,:]
+        r3_vec = np.zeros_like(omega_y)
+        for ii,omega_y in enumerate(omega_y):
+            r3_vec[ii] = np.exp(-1/4*np.abs(omega_y))   # e^-1/4*|omega_y|
+
+
+        r23 = r2_vec*10 + r3_vec*5
+        r_prev = 0
+        r_cum = np.zeros_like(omega_x)
+        for ii,r in enumerate(r23):
+            r_cum[ii] = r + 0.01*(r-r_prev)
+            r_prev = r
+
+
+        
+        reward = r1 + r_cum[-1]
+
+
+  
+
+        return reward
+
+
     def calculate_reward(self, state, h_ceiling): # state is size 13 x timesteps
         # should be the same for each algorithm
         state = state

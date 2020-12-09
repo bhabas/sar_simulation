@@ -34,10 +34,6 @@ def main():
     env = CrazyflieEnv()
     print("Environment done")
 
-    ## INIT STATE RECIEVING THREAD
-    state_thread = threading.Thread(target=env.get_state)
-    state_thread.start() # Start thread that continually recieves state array from Gazebo
-
     cmd_thread = threading.Thread(target=env.cmd_send,args=())
     cmd_thread.start()
 
@@ -69,7 +65,7 @@ def main():
 
         
         ## DEFINE CURRENT STATE
-        state = env.get_state()
+        state = np.array(env.state_current)
         
 
         position = state[1:4] # [x,y,z]

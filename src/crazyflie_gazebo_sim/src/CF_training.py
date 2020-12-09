@@ -48,14 +48,11 @@ alpha_mu = np.array([[0.1]])
 alpha_sigma = np.array([[0.05]])
 
 ## Initial parameters for gaussian function
-mu = np.array([[4],[8.2], [0] ])# Initial estimates of mu: 
-sigma = np.array([[1.5],[1.5] ,[0.01] ]) # Initial estimates of sigma: 
+mu = np.array([[4.5],[6],[0] ])# Initial estimates of mu: 
+sigma = np.array([[1.5],[1.5],[0.01] ]) # Initial estimates of sigma: 
 
 
-# noise tests all started at:
-# mu = np.array([[5.0],[-5.0] ])
-# sigma = np.array([[3.0],[3.0] ])
-#  
+
 # agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=4)
 agent = rlEM_PEPGAgent(mu,sigma,n_rollout=5)
 # agent = rlsysPEPGAgent_adaptive(alpha_mu,alpha_sigma,mu,sigma,n_rollout=10)
@@ -126,7 +123,7 @@ for k_ep in range(ep_start,1000):
         # vx_d = np.random.uniform(low=-2.0, high=2.0)
         vy_d = 0 
         vx_d = 0
-        vz_d = 2.2
+        vz_d = 2.5
         v_d = [vx_d,vy_d,vz_d] # [m/s]
 
 
@@ -183,7 +180,7 @@ for k_ep in range(ep_start,1000):
                 start_time_pitch = env.getTime()
                 env.enableSticky(1)
 
-                omega_yd = (G1*RREV + G2*abs(OF_y))*np.sign(OF_y)
+                omega_yd = (G1*RREV + G2*abs(OF_y))#*np.sign(OF_y)
                 omega_xd = 0.0
                 omega_zd = 0.0
 
@@ -244,13 +241,6 @@ for k_ep in range(ep_start,1000):
                 error_str = "Error: NAN found in state vector"
                 repeat_run = True
                 break
-
-            # elif ####: # We need a timeout error to relaunch the sim
-            #     print("Controller reciever thread timed out")
-            #     error_str = "Error: Controller Timeout"
-            #     repeat_run = True
-            #     break
-            
 
             # ============================
             ##      Record Keeping  
