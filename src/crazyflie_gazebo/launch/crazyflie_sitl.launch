@@ -14,7 +14,7 @@
     <arg name="vehicle" default="crazyflie"/>
     <arg name="world_name" default="empty"/>
     <arg name="world" default="$(find crazyflie_gazebo)/worlds/$(arg world_name).world"/>
-    <arg name="sdf" default="$(find crazyflie_gazebo)/models/$(arg vehicle)/$(arg vehicle).sdf"/>
+    <arg name="sdf" default="$(find crazyflie_gazebo)/models/$(arg vehicle)/model.sdf"/>
 
     <!-- Gazebo configs -->
     <arg name="gui" default="false"/>

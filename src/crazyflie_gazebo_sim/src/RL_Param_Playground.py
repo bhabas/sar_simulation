@@ -86,11 +86,11 @@ for k_ep in range(ep_start,1000):
                     num = list(map(float, mu_str.split()))
                     mu = np.asarray(num)
 
-                    if len(mu) != 2:
+                    if len(mu) != 3:
                         raise Exception()
                     break
                 except:
-                    print("Error: Enter mu_1 and mu_2")
+                    print("Error: Enter mu_1, mu_2 and mu_3")
 
             while True:
                 try:
@@ -110,7 +110,7 @@ for k_ep in range(ep_start,1000):
         ## INITIALIZE RUN PARAMETERS
         RREV_trigger = mu[0] # FoV expansion velocity [rad/s]
         G1 = mu[1]
-        G2 = 0
+        G2 = mu[2]
 
         policy = np.array([RREV_trigger,G1,G2])
         policy = policy[:,np.newaxis] # reshaping for data logging [ change [3,] -> [3,1] ]
@@ -162,7 +162,7 @@ for k_ep in range(ep_start,1000):
             R = Rotation.from_quat([qx,qy,qz,qw])
             R = R.as_matrix() # [b1,b2,b3] Body vectors
 
-            RREV, OF_y, OF_x = vz/d, vx/d, vy/d # OF_x,y are estimated optical flow vals assuming no body rotation
+            RREV, OF_y, OF_x = vz/d, -vx/d, -vy/d # OF_x,y are estimated optical flow vals assuming no body rotation
             sensor_data = [RREV, OF_y, OF_x] # simplified for data recording
             
             # ============================
@@ -172,8 +172,8 @@ for k_ep in range(ep_start,1000):
                 start_time_pitch = env.getTime()
                 env.enableSticky(1)
 
-                omega_yd = (G1*RREV + G2*abs(OF_y))*np.sign(OF_y)# + qomega #omega_x#*(1-b3y)#sin(r[1]*3.14159/180)
-                omega_xd = 0.0 #theta_rl[3,k_run] * omega_y
+                omega_yd = (G1*RREV - G2*abs(OF_y))*np.sign(OF_y)
+                omega_xd = 0.0 
                 omega_zd = 0.0
 
                 omega_d = [omega_xd,omega_yd,omega_zd]
@@ -205,7 +205,7 @@ for k_ep in range(ep_start,1000):
 
             # If position falls below max height (There is a lag w/ this)
             z_max = max(position[2],z_max)
-            if position[2] <= 0.75*z_max:
+            if position[2] <= 0.95*z_max:
                 error_1 = "Rollout Completed: Falling Drone"
                 print(error_1)
 

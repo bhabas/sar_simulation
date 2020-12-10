@@ -32,7 +32,6 @@ class CrazyflieEnv:
         rospy.init_node("crazyflie_env_node") 
         self.launch_sim() 
     
-        os.system("kill -9 $(lsof -i:18050 -t)")
         ## INIT RL SOCKET (AKA SERVER)
         self.RL_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # Create UDP(DGRAM) Socket
         self.RL_port = port_local
@@ -82,9 +81,9 @@ class CrazyflieEnv:
         self.laserThread.start()
 
 
-        # self.timeoutThread = Thread(target=self.timeoutSub)
-        # self.timeoutThread.daemon=True
-        # self.timeoutThread.start()
+        self.timeoutThread = Thread(target=self.timeoutSub)
+        self.timeoutThread.daemon=True
+        self.timeoutThread.start()
 
 
 
@@ -222,7 +221,7 @@ class CrazyflieEnv:
 
             print("[STARTING] Starting Controller Process...")
             self.controller_p = subprocess.Popen( # Controller Process
-                "gnome-terminal --disable-factory --geometry 81x33+3375+1020 -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/utility/launch_controller.bash", 
+                "gnome-terminal --disable-factory --geometry 81x33 -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/utility/launch_controller.bash", 
                 close_fds=True, preexec_fn=os.setsid, shell=True)
 
         else:
