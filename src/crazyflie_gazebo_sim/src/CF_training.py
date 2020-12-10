@@ -23,7 +23,8 @@ os.system("clear")
 
 ## INIT GAZEBO ENVIRONMENT
 env = CrazyflieEnv()
-# env.launch_dashboard()
+env.reset_pos() # Reset Gazebo pos
+env.launch_dashboard()
 print("Environment done")
 
 
@@ -48,8 +49,8 @@ alpha_mu = np.array([[0.1]])
 alpha_sigma = np.array([[0.05]])
 
 ## Initial parameters for gaussian function
-mu = np.array([[4.5],[6],[0] ])# Initial estimates of mu: 
-sigma = np.array([[1.5],[1.5],[0.01] ]) # Initial estimates of sigma: 
+mu = np.array([[5.5],[5],[5] ])# Initial estimates of mu: 
+sigma = np.array([[2],[2],[2] ]) # Initial estimates of sigma: 
 
 
 
@@ -87,13 +88,14 @@ for k_ep in range(ep_start,1000):
 
     print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
 
-    print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1], 0, 0))
-    print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1], 0, 0))
+    print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1], mu[2], 0))
+    print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1], sigma[2], 0))
     print('\n')
 
     print("theta_rl = ")
     print(theta_rl[0,:], "--> RREV")
     print(theta_rl[1,:], "--> Gain_RREV")
+    print(theta_rl[1,:], "--> Gain_OF_y")
 
 
 
@@ -106,7 +108,7 @@ for k_ep in range(ep_start,1000):
 
 
         ## RESET TO INITIAL STATE
-        state = env.reset_pos() # Reset Gazebo pos
+        
         env.step('home',ctrl_flag=1) # Reset control vals and functionality to default vals
         time.sleep(3.0) # Time for CF to settle
         
@@ -122,7 +124,7 @@ for k_ep in range(ep_start,1000):
         # vz_d = np.random.uniform(low=2.5, high=3.0)
         # vx_d = np.random.uniform(low=-2.0, high=2.0)
         vy_d = 0 
-        vx_d = 0
+        vx_d = 1.5
         vz_d = 3.0
         v_d = [vx_d,vy_d,vz_d] # [m/s]
 
@@ -170,7 +172,7 @@ for k_ep in range(ep_start,1000):
             R = Rotation.from_quat([qx,qy,qz,qw])
             R = R.as_matrix() # [b1,b2,b3] Body vectors
 
-            RREV, OF_y, OF_x = vz/d, vx/d, vy/d # OF_x,y are estimated optical flow vals assuming no body rotation
+            RREV, OF_y, OF_x = vz/d, -vx/d, -vy/d # OF_x,y are estimated optical flow vals assuming no body rotation
             sensor_data = [RREV, OF_y, OF_x] # Consolidated for data recording
             
             # ============================
@@ -180,7 +182,7 @@ for k_ep in range(ep_start,1000):
                 start_time_pitch = env.getTime()
                 env.enableSticky(1)
 
-                omega_yd = (G1*RREV + G2*abs(OF_y))#*np.sign(OF_y)
+                omega_yd = (G1*RREV - G2*abs(OF_y))*np.sign(OF_y)
                 omega_xd = 0.0
                 omega_zd = 0.0
 

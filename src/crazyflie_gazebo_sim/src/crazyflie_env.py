@@ -32,7 +32,6 @@ class CrazyflieEnv:
         rospy.init_node("crazyflie_env_node") 
         self.launch_sim() 
     
-        os.system("kill -9 $(lsof -i:18050 -t)")
         ## INIT RL SOCKET (AKA SERVER)
         self.RL_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # Create UDP(DGRAM) Socket
         self.RL_port = port_local
