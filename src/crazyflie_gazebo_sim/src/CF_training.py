@@ -8,7 +8,7 @@ import threading
 
 from crazyflie_env import CrazyflieEnv
 from rl_syspepg import rlsysPEPGAgent_reactive ,rlsysPEPGAgent_cov, rlsysPEPGAgent_adaptive
-from rl_EM import rlEM_PEPGAgent, rlEM_PEPG_CovAgent, rlEM_OutlierAgent , rlEMsys_PEPGAgent,rlEM_AdaptiveCovAgent, rlEM_AdaptiveCovAgent3D, rlEM_AdaptiveAgent
+from rl_EM import rlEM_PEPGAgent, rlEM_PEPG_CovAgent, rlEM_OutlierAgent , rlEMsys_PEPGAgent,rlEM_AdaptiveCovAgent, rlEM_AdaptiveCovAgent3D, rlEM_AdaptiveAgent, EPHE_Agent
 from rl_cma import CMA_basic,CMA,CMA_sym
 
 os.system("clear")
@@ -55,10 +55,11 @@ sigma = np.array([[2],[2],[2] ]) # Initial estimates of sigma:
 
 
 # agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=4)
-agent = rlEM_PEPGAgent(mu,sigma,n_rollout=5)
+#agent = rlEM_PEPGAgent(mu,sigma,n_rollout=2)
 # agent = rlsysPEPGAgent_adaptive(alpha_mu,alpha_sigma,mu,sigma,n_rollout=10)
-# agent = rlEM_AdaptiveAgent(mu,sigma,n_rollout=5)
+#agent = rlEM_AdaptiveAgent(mu,sigma,n_rollout=1)
 
+agent = EPHE_Agent(mu,sigma)
 
 
 
