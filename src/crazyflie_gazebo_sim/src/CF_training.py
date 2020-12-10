@@ -24,7 +24,7 @@ os.system("clear")
 ## INIT GAZEBO ENVIRONMENT
 env = CrazyflieEnv()
 env.reset_pos() # Reset Gazebo pos
-env.launch_dashboard()
+# env.launch_dashboard()
 print("Environment done")
 
 
@@ -49,8 +49,8 @@ alpha_mu = np.array([[0.1]])
 alpha_sigma = np.array([[0.05]])
 
 ## Initial parameters for gaussian function
-mu = np.array([[5.75],[9.0],[5.0] ])# Initial estimates of mu: 
-sigma = np.array([[1],[1],[1] ]) # Initial estimates of sigma: 
+mu = np.array([[6.0],[6.0],[6.0] ])# Initial estimates of mu: 
+sigma = np.array([[1.5],[1.5],[1.5] ]) # Initial estimates of sigma: 
 
 
 
@@ -66,7 +66,7 @@ agent = rlEM_PEPGAgent(mu,sigma,n_rollout=5)
 # ============================
 ##          Episode 
 # ============================
-for k_ep in range(ep_start,1000):
+for k_ep in range(ep_start,15):
 
     np.set_printoptions(precision=2, suppress=True)
     done = False
