@@ -123,7 +123,7 @@ for k_ep in range(ep_start,1000):
         # vx_d = np.random.uniform(low=-2.0, high=2.0)
         vy_d = 0 
         vx_d = 0
-        vz_d = 2.5
+        vz_d = 3.0
         v_d = [vx_d,vy_d,vz_d] # [m/s]
 
 

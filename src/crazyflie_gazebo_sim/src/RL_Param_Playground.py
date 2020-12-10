@@ -23,7 +23,7 @@ os.system("clear")
 
 ## INIT GAZEBO ENVIRONMENT
 env = CrazyflieEnv()
-# env.launch_dashboard()
+env.launch_dashboard()
 print("Environment done")
 
 

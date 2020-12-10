@@ -29,17 +29,7 @@
         </geometry>
         <material>
           <lighting>1</lighting>
-          <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
-          </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-          <ambient>0.3 0.3 0.3 1</ambient>
-          <diffuse>0.7 0.7 0.7 1</diffuse>
-          <specular>0.01 0.01 0.01 1</specular>
-          <emissive>0 0 0 1</emissive>
+          <shader type='pixel'/>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -128,18 +118,11 @@
           </cylinder>
         </geometry>
         <material>
-          <lighting>1</lighting>
           <script>
+            <name>Gazebo/Red</name>
             <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
           </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-          <ambient>0.3 0.3 0.3 1</ambient>
-          <diffuse>0.7 0.7 0.7 1</diffuse>
-          <specular>0.01 0.01 0.01 1</specular>
-          <emissive>0 0 0 1</emissive>
+          <shader type='pixel'/>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -428,18 +411,11 @@
           </cylinder>
         </geometry>
         <material>
-          <lighting>1</lighting>
           <script>
+            <name>Gazebo/Red</name>
             <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
           </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-          <ambient>0.3 0.3 0.3 1</ambient>
-          <diffuse>0.7 0.7 0.7 1</diffuse>
-          <specular>0.01 0.01 0.01 1</specular>
-          <emissive>0 0 0 1</emissive>
+          <shader type='pixel'/>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -501,10 +477,7 @@
         </surface>
       </collision>
     </link>
-
-
-
-    <!-- <link name='pad_1'>
+    <link name='pad_1'>
       <inertial>
         <mass>1e-08</mass>
         <inertia>
@@ -531,18 +504,11 @@
           </cylinder>
         </geometry>
         <material>
-          <lighting>1</lighting>
           <script>
+            <name>Gazebo/Blue</name>
             <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
           </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-          <ambient>0.3 0.3 0.3 1</ambient>
-          <diffuse>0.7 0.7 0.7 1</diffuse>
-          <specular>0.01 0.01 0.01 1</specular>
-          <emissive>0 0 0 1</emissive>
+          <shader type='pixel'/>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -631,18 +597,11 @@
           </cylinder>
         </geometry>
         <material>
-          <lighting>1</lighting>
           <script>
+            <name>Gazebo/Blue</name>
             <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
           </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-          <ambient>0.3 0.3 0.3 1</ambient>
-          <diffuse>0.7 0.7 0.7 1</diffuse>
-          <specular>0.01 0.01 0.01 1</specular>
-          <emissive>0 0 0 1</emissive>
+          <shader type='pixel'/>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -731,18 +690,11 @@
           </cylinder>
         </geometry>
         <material>
-          <lighting>1</lighting>
           <script>
+            <name>Gazebo/Blue</name>
             <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
           </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-          <ambient>0.3 0.3 0.3 1</ambient>
-          <diffuse>0.7 0.7 0.7 1</diffuse>
-          <specular>0.01 0.01 0.01 1</specular>
-          <emissive>0 0 0 1</emissive>
+          <shader type='pixel'/>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -831,18 +783,11 @@
           </cylinder>
         </geometry>
         <material>
-          <lighting>1</lighting>
           <script>
+            <name>Gazebo/Blue</name>
             <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
           </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-          <ambient>0.3 0.3 0.3 1</ambient>
-          <diffuse>0.7 0.7 0.7 1</diffuse>
-          <specular>0.01 0.01 0.01 1</specular>
-          <emissive>0 0 0 1</emissive>
+          <shader type='pixel'/>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -904,10 +849,6 @@
         </surface>
       </collision>
     </link>
- -->
-
-
-
     <link name='rotor_1'>
       <inertial>
         <mass>0.00075</mass>
@@ -1308,7 +1249,7 @@
         </surface>
       </collision>
     </link>
-    <joint name='leg_1_JOINT_9' type='ball'>
+    <joint name='pad_1_joint' type='ball'>
       <parent>leg_1</parent>
       <child>pad_1</child>
       <pose>0 0 0 0 -0 0</pose>
@@ -1357,7 +1298,7 @@
         </ode>
       </physics>
     </joint>
-    <joint name='leg_2_JOINT_10' type='ball'>
+    <joint name='pad_2_joint' type='ball'>
       <parent>leg_2</parent>
       <child>pad_2</child>
       <pose>0 0 0 0 -0 0</pose>
@@ -1406,7 +1347,7 @@
         </ode>
       </physics>
     </joint>
-    <joint name='leg_3_JOINT_11' type='ball'>
+    <joint name='pad_3_joint' type='ball'>
       <parent>leg_3</parent>
       <child>pad_3</child>
       <pose>0 0 0 0 -0 0</pose>
@@ -1455,7 +1396,7 @@
         </ode>
       </physics>
     </joint>
-    <joint name='leg_4_JOINT_12' type='ball'>
+    <joint name='pad_4_joint' type='ball'>
       <parent>leg_4</parent>
       <child>pad_4</child>
       <pose>0 0 0 0 -0 0</pose>
@@ -1504,8 +1445,6 @@
         </ode>
       </physics>
     </joint>
-
-    
     <joint name='rotor_1_joint' type='revolute'>
       <parent>crazyflie_body</parent>
       <child>rotor_1</child>
@@ -1634,8 +1573,6 @@
         </ode>
       </physics>
     </joint>
-
-    
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
     <plugin name='back_left_motor_model' filename='libgazebo_motor_model.so'>
@@ -1714,9 +1651,7 @@
       <motorSpeedCommandPubTopic>/gazebo/command/motor_speed</motorSpeedCommandPubTopic>
       <stickyEnablePubTopic>/gazebo/command/sticky_enable</stickyEnablePubTopic>
     </plugin>
-
-
-    <!-- <plugin name='pad_0_sticky' filename='libgazebo_sticky_foot.so'>
+    <plugin name='pad_0_sticky' filename='libgazebo_sticky_foot.so'>
       <robotNamespace/>
       <linkName>pad_1</linkName>
       <padNumber>0</padNumber>
@@ -1743,7 +1678,6 @@
       <padNumber>3</padNumber>
       <stickyEnableSubTopic>/gazebo/command/sticky_enable</stickyEnableSubTopic>
       <maxUpVelocity>100</maxUpVelocity>
-    </plugin> -->
-
+    </plugin>
   </model>
 </sdf>
