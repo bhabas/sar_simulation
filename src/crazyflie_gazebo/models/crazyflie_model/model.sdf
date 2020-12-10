@@ -482,14 +482,14 @@
     </link>
     <link name='pad_1'>
       <inertial>
-        <mass>1e-08</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>0</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
           <iyy>0</iyy>
           <iyz>0</iyz>
-          <izz>0</izz>
+          <izz>1e-08</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
@@ -876,6 +876,7 @@
       </axis>
       <physics>
         <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
           <limit>
             <cfm>0</cfm>
             <erp>0.2</erp>
