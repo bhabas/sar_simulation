@@ -14,7 +14,7 @@
     <arg name="vehicle" default="crazyflie"/>
     <arg name="world_name" default="empty"/>
     <arg name="world" default="$(find crazyflie_gazebo)/worlds/$(arg world_name).world"/>
-    <arg name="sdf" default="$(find crazyflie_gazebo)/models/$(arg vehicle)/$(arg vehicle).sdf"/>
+    <arg name="sdf" default="$(find crazyflie_gazebo)/models/$(arg vehicle)/model.sdf"/>
 
     <!-- Gazebo configs -->
     <arg name="gui" default="false"/>
@@ -37,5 +37,5 @@
     <!-- Gazebo model -->
     <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="screen" args="-sdf -file $(arg sdf) -model $(arg vehicle) -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
     <node name="global_state_pub" pkg="gazebo_communication_pkg" type="global_state_pub.py" />
-    <node name="dashboard_node"   pkg ="dashboard_gui_pkg" type="dashboard_gui.py"/>
+    
 </launch>

@@ -139,7 +139,7 @@
 
     </link>
 
-
+<!-- /home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo/models/crazyflie_landing_gears -->
 
     <link name='rotor_1'>
       <pose frame=''>0.032527 0.032527 0.0425 0 -0 0</pose>
@@ -177,7 +177,7 @@
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>model://crazyflie_landing_gears/meshes/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_model/meshes/crazyflie_prop.dae</uri>
           </mesh>
         </geometry>
         <material>

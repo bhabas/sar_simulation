@@ -38,7 +38,7 @@ def global_state_publisher():
         state_msg.header = header
 
         ## DEFINE STATE_MSG POSE/TWIST FROM BASE_LINK USING SERVICE
-        link_msg.link_name = 'base_link'
+        link_msg.link_name = 'crazyflie_body'
         result = get_link_srv(link_msg) # Use service to get pose and twist from base_link
         state_msg.global_pose = result.link_state.pose
         state_msg.global_twist = result.link_state.twist
