@@ -49,8 +49,8 @@ alpha_mu = np.array([[0.1]])
 alpha_sigma = np.array([[0.05]])
 
 ## Initial parameters for gaussian function
-mu = np.array([[5.5],[5],[5] ])# Initial estimates of mu: 
-sigma = np.array([[2],[2],[2] ]) # Initial estimates of sigma: 
+mu = np.array([[5.75],[9.0],[5.0] ])# Initial estimates of mu: 
+sigma = np.array([[1],[1],[1] ]) # Initial estimates of sigma: 
 
 
 

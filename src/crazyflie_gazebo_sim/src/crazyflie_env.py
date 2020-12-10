@@ -81,9 +81,9 @@ class CrazyflieEnv:
         self.laserThread.start()
 
 
-        # self.timeoutThread = Thread(target=self.timeoutSub)
-        # self.timeoutThread.daemon=True
-        # self.timeoutThread.start()
+        self.timeoutThread = Thread(target=self.timeoutSub)
+        self.timeoutThread.daemon=True
+        self.timeoutThread.start()
 
 
 
