@@ -5,6 +5,8 @@ import time,os,getpass
 from scipy.spatial.transform import Rotation
 import threading
 
+import pandas as pd
+
 
 from crazyflie_env import CrazyflieEnv
 from rl_syspepg import rlsysPEPGAgent_reactive ,rlsysPEPGAgent_cov, rlsysPEPGAgent_adaptive
@@ -315,10 +317,16 @@ def run_trial(vz_d,vx_d,num_trials):
 
 if __name__ == "__main__":
 
-    for vz_d in np.arange(3.5,1.5,-0.25):
-        for vx_d in np.arange(1,3,0.5):
+
+
+
+    df = pd.read_csv("~/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/Test_list_home.csv")
+    arr = df.to_numpy()
+
+    for vz_d in arr[:,0]:
+        for vx_d in arr[:,1]:
             run_trial(vz_d,vx_d,3)
-    
+
     print("--- %s seconds ---" %(time.time() - time_start))
     
 
