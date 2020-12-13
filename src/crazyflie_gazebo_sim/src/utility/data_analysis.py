@@ -208,3 +208,50 @@ class DataFile:
 
         fig.tight_layout()
         plt.show()
+
+    def landing_rate(self): 
+        """Determines successful landing rate from final two episodes
+
+        Returns:
+            [float]: [Landing rate]
+        """    
+        ## GRAB REWARD DF AND INIT N_ROLLOUTS AND LANDING CUTTOFF CRITERIA
+        reward_df = self.trial_df.iloc[:][['k_ep','reward']].dropna()
+        num_rollouts = self.trial_df.iloc[-1]['n_rollouts']
+        landing_cutoff = 18.5
+
+        ## GRAB FINAL N_ROLLOUT REWARDS AND CALC SUCCESSFUL LANDINGS
+        temp = reward_df.iloc[-int(num_rollouts*4):]['reward']
+        landings= temp[temp>landing_cutoff].count()
+        attempts = num_rollouts*4
+        landingRate = landings/attempts
+
+        return landingRate
+
+    def grab_policy(self,k_ep,k_run):
+        run_df = self.select_run(k_ep,k_run)
+
+        ## SELECT POLICY
+        policy = run_df.iloc[-1]['policy']
+        policy = np.fromstring(policy[2:-2], dtype=float, sep=' ')  # Convert str to np array
+
+        return policy
+
+    def wy_prescribed(self,k_ep,k_run):
+        policy = self.grab_policy(k_ep,k_run)
+
+        RREV_trigger = policy[0]
+        G1 = policy[1]
+        G2 = policy[2]
+
+        wy_d = 0
+
+        return
+    
+
+
+
+
+
+
+
