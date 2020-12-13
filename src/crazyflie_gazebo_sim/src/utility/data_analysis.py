@@ -8,15 +8,25 @@ class DataFile:
     def __init__(self,filepath):
         self.trial_df = pd.read_csv(filepath)
 
-    def select_run(self,k_ep,k_run): ## Creat run dataframe from k_ep and k_run
+    def select_run(self,k_ep,k_run): ## Create run dataframe from k_ep and k_run
         run_df = self.trial_df[(self.trial_df['k_ep']==k_ep) & (self.trial_df['k_run']==k_run)]
         return run_df
 
+    def grab_IC(self):
 
+        """Return IC values
+
+        Returns:
+            float: Initial Velocity Conditions (vx,vy,vz)
+        """        
+        vx_IC = self.trial_df.iloc[-1]['vx']
+        vy_IC = self.trial_df.iloc[-1]['vy']
+        vz_IC = self.trial_df.iloc[-1]['vz']
+        
+        return vx_IC,vy_IC,vz_IC
 
     def grab_finalPolicy(self):
-        """
-        Returns the final policy for a trial
+        """Returns the final policy for a trial
 
         Returns:
            mu [np.array]: Final policy average
@@ -61,7 +71,6 @@ class DataFile:
 
         return state
     
-
     def plot_rewardFunc(self,figNum=0):
         """Plot rewards for trial
 
@@ -137,3 +146,65 @@ class DataFile:
 
         plt.show()
 
+    def plot_policy(self,trialNum=np.nan):
+        """Creates subplots to show convergence for policy gains
+
+        Args:
+            trialNum ([int], optional): Display trial number. Defaults to np.nan.
+        """        
+
+        ## CLEAN AND GRAB DATA FOR MU & SIGMA
+        policy_df = self.trial_df.iloc[:][['k_ep','mu','sigma']]
+        policy_df = policy_df.dropna().drop_duplicates()
+        k_ep_arr = policy_df.iloc[:]['k_ep'].to_numpy()
+
+        
+
+        ## CREATE NP ARRAYS FOR MU & SIGMA OVER TRIAL
+        mu_arr = []
+        for mu in policy_df.iloc[:]['mu']:
+            mu = np.fromstring(mu[2:-2], dtype=float, sep=' ')
+            mu_arr.append(mu)
+        mu_arr = np.array(mu_arr)
+
+        sigma_arr = []
+        for sigma in policy_df.iloc[:]['sigma']:
+            sigma = np.fromstring(sigma[2:-2], dtype=float, sep=' ')
+            sigma_arr.append(sigma)
+        sigma_arr = np.array(sigma_arr)
+
+        
+
+        num_col = mu_arr.shape[1] # Number of policy gains in mu [Currently 3]
+        G_Labels = ['RREV_trigger','G1','G2','G3','G4','G5'] # List of policy gain names
+        vx,vy,vz = self.grab_IC()
+
+
+        ## CREATE SUBPLOT FOR MU 
+        fig = plt.figure()
+        ax = fig.add_subplot(211)
+        for jj in range(num_col): # Iterate through gains and plot each
+            ax.plot(k_ep_arr,mu_arr[:,jj],label=G_Labels[jj])
+
+
+        ax.set_ylabel('Policy Values')
+        ax.set_xlabel('K_ep')
+        ax.set_ylim(0) # Set lower ylim
+        ax.set_title(f'Policy Value vs Episode (Trial:{trialNum}) | Vx = {vx} Vz = {vz}')
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.25),ncol=num_col)
+        ax.grid()
+
+
+        ## CREATE SUBPLOT FOR SIGMA
+        ax = fig.add_subplot(212)
+        for jj in range(num_col): # Iterate through gains and plot each
+            ax.plot(k_ep_arr,sigma_arr[:,jj],label=G_Labels[jj])
+
+        ax.set_ylabel('Standard Deviation')
+        ax.set_xlabel('K_ep')
+        ax.set_title(f'Policy S.D. vs Episode (Trial:{trialNum}) | Vx = {vx} Vz = {vz}')
+        ax.legend(ncol=3,loc='upper right')
+        ax.grid()
+
+        fig.tight_layout()
+        plt.show()
