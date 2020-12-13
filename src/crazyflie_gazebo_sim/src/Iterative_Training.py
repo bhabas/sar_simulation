@@ -44,7 +44,7 @@ def run_trial(vz_d,vx_d,num_trials):
 
         ## SIM PARAMETERS
         ep_start = 0 # Default episode start position
-        h_ceiling = 1.5 # [m]
+        h_ceiling = 2.0 # [m]
 
 
         # ============================
@@ -56,7 +56,7 @@ def run_trial(vz_d,vx_d,num_trials):
         alpha_sigma = np.array([[0.05]])
 
         ## Initial parameters for gaussian function
-        mu = np.array([[6.0],[6.0],[6.0] ])# Initial estimates of mu: 
+        mu = np.array([[4.5],[6.0],[4.0] ])# Initial estimates of mu: 
         sigma = np.array([[1.5],[1.5],[1.5] ]) # Initial estimates of sigma: 
 
 
