@@ -323,11 +323,11 @@ if __name__ == "__main__":
     df = pd.read_csv("~/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/Test_list_home.csv")
     arr = df.to_numpy()
 
-    for vz_d in arr[:,0]:
+    for vz_d,vx_d in arr:
         if np.isnan(vz_d):
+            print("Trials are over")
             break
-        for vx_d in arr[:,1]:
-            run_trial(vz_d,vx_d,3)
+        run_trial(vz_d,vx_d,3)
 
     print("--- %s seconds ---" %(time.time() - time_start))
     
