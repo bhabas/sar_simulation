@@ -343,7 +343,7 @@ class CrazyflieEnv:
                 'qx','qy','qz','qw',
                 'vx','vy','vz',
                 'wx','wy','wz',
-                'gamma','reward','reward_avg','n_rollouts',
+                'gamma','reward','flip_trigger','n_rollouts',
                 'RREV','OF_x','OF_y',"","","","", # Place holders
                 'error'])
 
@@ -365,7 +365,7 @@ class CrazyflieEnv:
                     error_str])
 
 
-    def append_csv(self,agent,state,k_ep,k_run,sensor):
+    def append_csv(self,agent,state,k_ep,k_run,sensor,flip_triggered):
         if self.record == True:
             state = np.around(state,3)
             sensor = np.around(sensor,3)
@@ -380,7 +380,7 @@ class CrazyflieEnv:
                     state[4], state[5], state[6], state[7], # qx,qy,qz,qw
                     state[8], state[9],state[10], # vx,vy,vz
                     state[11],state[12],state[13], # wx,wy,wz
-                    "","","","", # gamma, reward, "", n_rollout
+                    "","",flip_triggered,"", # gamma, reward, flip_triggered, n_rollout
                     sensor[0],sensor[1],sensor[2],
                     "","","","", # Place holders
                     ""]) # error
@@ -392,22 +392,6 @@ class CrazyflieEnv:
                 state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 state_writer.writerow([])
 
-    def load_csv(self,datapath,k_ep):
-        ## Load csv and seperate first run of the selected episode
-        df = pd.read_csv(datapath)
-        ep_data = df.loc[ (df['k_ep'] == k_ep) & (df['k_run'] == 0)]
-        
-        ## Create a list of the main values to be loaded
-        vals = []
-        for k in range(2,6):
-            val = ep_data.iloc[0,k]
-            val_edited = np.fromstring(val[2:-2], dtype=float, sep=' ')
-            val_array = val_edited.reshape(1,-1).T
-            vals.append(val_array)
-
-        alpha_mu,alpha_sig, mu, sigma = vals
-
-        return alpha_mu,alpha_sig,mu,sigma
 
 
     # ============================
