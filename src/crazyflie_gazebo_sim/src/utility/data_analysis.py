@@ -42,11 +42,11 @@ class DataFile:
         ## SELECT MU & SIGMA
         mu = run_df.iloc[-1]['mu']
         mu = np.fromstring(mu[2:-2], dtype=float, sep=' ')  # Convert str to np array
-        mu = np.expand_dims(mu, axis=0)                     # Expand array from (n,) to (n,1)
+        
 
         sigma = run_df.iloc[-1]['sigma']
         sigma = np.fromstring(sigma[2:-2], dtype=float, sep=' ')
-        sigma = np.expand_dims(sigma, axis=0)
+        
 
         return mu,sigma
 
