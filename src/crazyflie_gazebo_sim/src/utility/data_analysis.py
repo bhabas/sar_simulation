@@ -12,7 +12,7 @@ class DataFile:
         run_df = self.trial_df[(self.trial_df['k_ep']==k_ep) & (self.trial_df['k_run']==k_run)]
         return run_df
 
-    def grab_IC(self):
+    def grab_V_ini(self):
 
         """Return IC values
 
@@ -177,7 +177,7 @@ class DataFile:
 
         num_col = mu_arr.shape[1] # Number of policy gains in mu [Currently 3]
         G_Labels = ['RREV_trigger','G1','G2','G3','G4','G5'] # List of policy gain names
-        vx,vy,vz = self.grab_IC()
+        vx,vy,vz = self.grab_V_ini()
 
 
         ## CREATE SUBPLOT FOR MU 
@@ -221,7 +221,7 @@ class DataFile:
         landing_cutoff = 18.5
 
         ## GRAB FINAL N_ROLLOUT REWARDS AND CALC SUCCESSFUL LANDINGS
-        temp = reward_df.iloc[-int(num_rollouts*4):]['reward']
+        temp = reward_df.iloc[-int(num_rollouts*4):]['reward'] # Store last [20] rows
         landings= temp[temp>landing_cutoff].count()
         attempts = num_rollouts*4
         landingRate = landings/attempts
@@ -229,6 +229,15 @@ class DataFile:
         return landingRate
 
     def grab_policy(self,k_ep,k_run):
+        """Returns policy from specific run
+
+        Args:
+            k_ep (int): Episode number
+            k_run (int): Run number
+
+        Returns:
+            np.array: [RREV,G1,G2,...]
+        """        
         run_df = self.select_run(k_ep,k_run)
 
         ## SELECT POLICY
@@ -237,20 +246,47 @@ class DataFile:
 
         return policy
 
-    def wy_prescribed(self,k_ep,k_run):
-        policy = self.grab_policy(k_ep,k_run)
+    def grab_omega_d(self,k_ep,k_run):
+        """Returns desired omega_d as np.array
 
-        RREV_trigger = policy[0]
-        G1 = policy[1]
-        G2 = policy[2]
+        Args:
+            k_ep (int): Episode number
+            k_run (int): Run number
 
-        wy_d = 0
+        Returns:
+            np.array: [wx_d,wy_d,wz_d]
+        """        
+        run_df = self.select_run(k_ep,k_run)
 
-        return
+        wx_d = run_df.iloc[-1]['wx']
+        wy_d = run_df.iloc[-1]['wy']
+        wz_d = run_df.iloc[-1]['wz']
+
+        return [wx_d,wy_d,wz_d]
     
+    def grab_V_flip(self,k_ep,k_run):
+        run_df = self.select_run(k_ep,k_run)
+        flip_df = run_df.loc[run_df['flip_trigger']==True]
 
+        vx = flip_df.iloc[0]['vx']
+        vy = flip_df.iloc[0]['vy']
+        vz = flip_df.iloc[0]['vz']
 
+        return [vx,vy,vz]
 
+    def grab_omega_flip(self,k_ep,k_run):
+        run_df = self.select_run(k_ep,k_run)
+
+        wx_arr = run_df.iloc[:-1]['wx'].ewm(span=10).mean() ## Take moving average to smooth outliers from impact
+        wx_max = max(wx_arr,key=abs)
+
+        wy_arr = run_df.iloc[:-1]['wy'].ewm(span=10).mean()
+        wy_max = max(wy_arr,key=abs)
+
+        wz_arr = run_df.iloc[:-1]['wz'].ewm(span=10).mean()
+        wz_max = max(wz_arr,key=abs)
+
+        return [wx_max,wy_max,wz_max]
 
 
 
