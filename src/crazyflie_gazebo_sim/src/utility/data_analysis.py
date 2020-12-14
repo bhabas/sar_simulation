@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 class DataFile:
     def __init__(self,filepath):
         self.trial_df = pd.read_csv(filepath)
+        ## NOTE: Trial needs to be truncated to last complete episode
 
     def select_run(self,k_ep,k_run): ## Create run dataframe from k_ep and k_run
         run_df = self.trial_df[(self.trial_df['k_ep']==k_ep) & (self.trial_df['k_run']==k_run)]
@@ -215,7 +216,7 @@ class DataFile:
         Returns:
             [float]: [Landing rate]
         """    
-        ## GRAB REWARD DF AND INIT N_ROLLOUTS AND LANDING CUTTOFF CRITERIA
+        ## GRAB REWARD DF ALONG W/ INIT N_ROLLOUTS AND LANDING CUTTOFF CRITERIA
         reward_df = self.trial_df.iloc[:][['k_ep','reward']].dropna()
         num_rollouts = self.trial_df.iloc[-1]['n_rollouts']
         landing_cutoff = 18.5
@@ -247,14 +248,13 @@ class DataFile:
         return policy
 
     def grab_omega_d(self,k_ep,k_run):
-        """Returns desired omega_d as np.array
-
+        """Returns desired omega_d as list
         Args:
             k_ep (int): Episode number
             k_run (int): Run number
 
         Returns:
-            np.array: [wx_d,wy_d,wz_d]
+            [list]: [wx_d,wy_d,wz_d]
         """        
         run_df = self.select_run(k_ep,k_run)
 
@@ -274,11 +274,39 @@ class DataFile:
 
         return [vx,vy,vz]
 
+    def grab_omega_d_trial(self):
+        """Returns average omega_d over final two episodes
+
+        Returns:
+            [list]: [wx_d,wy_d,wz_d]
+        """        
+
+        num_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
+
+        omega_d_df = self.trial_df.iloc[:][['reward','wx','wy','wz']].dropna()
+        
+        wx_d = omega_d_df.iloc[-num_rollouts*4:].mean()['wx']
+        wy_d = omega_d_df.iloc[-num_rollouts*4:].mean()['wy']
+        wz_d = omega_d_df.iloc[-num_rollouts*4:].mean()['wz']
+
+
+        return [wx_d,wy_d,wz_d]
+
+
     def grab_omega_flip(self,k_ep,k_run):
+        """Returns omega at flip for specific ep/run
+
+        Args:
+            k_ep (int): Episode number
+            k_run (int): Run number
+
+        Returns:
+            List: [wx_max,wy_max,wz_max]
+        """       
         run_df = self.select_run(k_ep,k_run)
 
-        wx_arr = run_df.iloc[:-1]['wx'].ewm(span=10).mean() ## Take moving average to smooth outliers from impact
-        wx_max = max(wx_arr,key=abs)
+        wx_arr = run_df.iloc[:-1]['wx'].ewm(span=10).mean() # Take moving average to smooth outliers from impact
+        wx_max = max(wx_arr,key=abs)                        # Find max regardless of number sign
 
         wy_arr = run_df.iloc[:-1]['wy'].ewm(span=10).mean()
         wy_max = max(wy_arr,key=abs)
@@ -287,6 +315,72 @@ class DataFile:
         wz_max = max(wz_arr,key=abs)
 
         return [wx_max,wy_max,wz_max]
+
+    def grab_omega_flip_trial(self):
+        """Returns avg omega at flip for final two episodes
+
+        Returns:
+            [np.array]: [wx,wy,wz]
+        """      
+        num_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
+
+        ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
+        ep_arr = ep_df.iloc[-num_rollouts*4:].to_numpy() # Grab episode/run listing from past 2 rollouts
+
+        list = []
+        for k_ep,k_run in ep_arr:
+            list.append(self.grab_omega_flip(k_ep,k_run))
+
+        arr = np.asarray(list)
+        w_flip = np.mean(arr,axis=0)
+        
+        return w_flip
+
+
+    def grab_vel_flip(self,k_ep,k_run):
+        """Returns vel at flip for specific ep/run
+
+        Args:
+            k_ep (int): Episode number
+            k_run (int): Run number
+
+        Returns:
+            List: [vx_max,vy_max,vz_max]
+        """        
+        run_df = self.select_run(k_ep,k_run)
+
+        vx_arr = run_df.iloc[:-1]['vx'].ewm(span=10).mean() # Take moving average to smooth outliers from impact
+        vx_max = max(vx_arr,key=abs)                        # Find max regardless of number sign
+
+        vy_arr = run_df.iloc[:-1]['vy'].ewm(span=10).mean()
+        vy_max = max(vy_arr,key=abs)
+
+        vz_arr = run_df.iloc[:-1]['vz'].ewm(span=10).mean()
+        vz_max = max(vz_arr,key=abs)
+
+        return [vx_max,vy_max,vz_max]
+
+
+    def grab_vel_flip_trial(self):
+        """Returns avg vel at flip for final two episodes
+
+        Returns:
+            [np.array]: [vx,vy,vz]
+        """        
+        num_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
+
+        ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
+        ep_arr = ep_df.iloc[-num_rollouts*4:].to_numpy() # Grab episode/run listing from past 2 rollouts
+
+        list = []
+        for k_ep,k_run in ep_arr:
+            list.append(self.grab_vel_flip(k_ep,k_run))
+
+        arr = np.asarray(list)
+        v_flip = np.mean(arr,axis=0)
+        
+        return v_flip
+
 
 
 
