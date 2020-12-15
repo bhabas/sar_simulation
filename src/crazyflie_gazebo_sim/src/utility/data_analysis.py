@@ -6,7 +6,10 @@ import matplotlib.pyplot as plt
 
 class DataFile:
     def __init__(self,filepath):
-        self.trial_df = pd.read_csv(filepath)
+        trial_df = pd.read_csv(filepath)
+        trial_df = trial_df[ trial_df['error'] != 'Error: NAN found in state vector']
+        self.trial_df = trial_df[ trial_df['vz'].notna()]
+
         ## NOTE: Trial needs to be truncated to last complete episode
 
     def select_run(self,k_ep,k_run): ## Create run dataframe from k_ep and k_run
@@ -292,7 +295,6 @@ class DataFile:
 
         return [wx_d,wy_d,wz_d]
 
-
     def grab_omega_flip(self,k_ep,k_run):
         """Returns omega at flip for specific ep/run
 
@@ -336,7 +338,6 @@ class DataFile:
         
         return w_flip
 
-
     def grab_vel_flip(self,k_ep,k_run):
         """Returns vel at flip for specific ep/run
 
@@ -359,7 +360,6 @@ class DataFile:
         vz_max = max(vz_arr,key=abs)
 
         return [vx_max,vy_max,vz_max]
-
 
     def grab_vel_flip_trial(self):
         """Returns avg vel at flip for final two episodes

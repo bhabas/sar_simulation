@@ -7,12 +7,12 @@ import os
 from data_analysis import DataFile
 os.system("clear")
 
-vz = 3.0
-vx = 2.5
+vz = 2.5
+vx = 2.0
 trialNum = 2
 
 filepath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/local_files/data/Vz_{vz}--Vx_{vx}--trial_{trialNum}.csv"
-filepath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/log/Vz_{vz}--Vx_{vx}--trial_{trialNum}.csv"
+# filepath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/log/Vz_{vz}--Vx_{vx}--trial_{trialNum}.csv"
 
 
 
@@ -22,8 +22,10 @@ trial = DataFile(filepath)
 # print(mu)
 # print(sig)
 
-k_ep = 14
-k_run = 7
+k_ep = 13
+k_run = 6
+
+# trial.plot_policy(trialNum)
 
 # wy = trial.grab_stateData(k_ep,k_run,'wy')
 # print(np.max(abs(wy)))
