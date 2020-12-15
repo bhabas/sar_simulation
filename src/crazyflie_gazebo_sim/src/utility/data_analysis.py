@@ -197,6 +197,7 @@ class DataFile:
         ax.set_title(f'Policy Value vs Episode (Trial:{trialNum}) | Vx = {vx} Vz = {vz}')
         ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.25),ncol=num_col)
         ax.grid()
+        fig.tight_layout()
 
 
         ## CREATE SUBPLOT FOR SIGMA

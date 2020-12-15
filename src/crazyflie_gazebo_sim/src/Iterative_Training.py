@@ -189,7 +189,7 @@ def run_trial(vz_d,vx_d,num_trials):
                         start_time_pitch = env.getTime()
                         env.enableSticky(1)
 
-                        omega_yd = (G1*RREV - G2*abs(OF_y))*np.sign(OF_y)
+                        omega_yd = -(G1*RREV - G2*abs(OF_y))#*np.sign(OF_y)
                         omega_xd = 0.0
                         omega_zd = 0.0
 
@@ -320,14 +320,14 @@ if __name__ == "__main__":
 
 
 
-    df = pd.read_csv("~/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/Test_list_home.csv")
+    df = pd.read_csv("~/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/Complete_Test_List.csv")
     arr = df.to_numpy()
 
     for vz_d,vx_d in arr:
         if np.isnan(vz_d):
             print("Trials are over")
             break
-        run_trial(vz_d,vx_d,3)
+        run_trial(vz_d,vx_d,1)
 
     print("--- %s seconds ---" %(time.time() - time_start))
     

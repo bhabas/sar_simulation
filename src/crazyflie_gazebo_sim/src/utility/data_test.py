@@ -7,9 +7,9 @@ import os
 from data_analysis import DataFile
 os.system("clear")
 
-vz = 2.5
-vx = 2.0
-trialNum = 2
+vz = 3.5
+vx = 0.0
+trialNum = 0
 
 filepath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/local_files/data/Vz_{vz}--Vx_{vx}--trial_{trialNum}.csv"
 # filepath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/log/Vz_{vz}--Vx_{vx}--trial_{trialNum}.csv"
@@ -17,6 +17,9 @@ filepath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/local_files/data/Vz
 
 
 trial = DataFile(filepath)
+print(trial.grab_omega_d_trial())
+# trial.plot_rewardFunc()
+
 
 # mu,sig = trial.grab_finalPolicy()
 # print(mu)
@@ -37,10 +40,10 @@ k_run = 6
 
 # print(trial.grab_finalPolicy())
 # print(trial.landing_rate())
-print(trial.grab_vel_flip_trial())
-trial.plot_rewardFunc()
+# print(trial.grab_vel_flip_trial())
+
 
 # v = trial.grab_V_flip(k_ep,k_run)
-# w_max = trial.grab_omega_flip(k_ep,k_run)
+# print(trial.grab_omega_flip(k_ep,k_run))
 
 # print(v)
