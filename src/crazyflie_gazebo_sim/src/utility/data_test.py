@@ -44,6 +44,6 @@ k_run = 6
 
 
 # v = trial.grab_V_flip(k_ep,k_run)
-# print(trial.grab_omega_flip(k_ep,k_run))
+print(trial.grab_impact_omega_trial())
 
 # print(v)

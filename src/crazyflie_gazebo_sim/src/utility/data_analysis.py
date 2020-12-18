@@ -229,7 +229,9 @@ class DataFile:
         ## GRAB FINAL N_ROLLOUT REWARDS AND CALC SUCCESSFUL LANDINGS
         temp = reward_df.iloc[-int(num_rollouts*4):]['reward'] # Store last [20] rows
         landings= temp[temp>landing_cutoff].count()
-        attempts = num_rollouts*4
+        sim_bug = temp[temp<3.00].count()
+
+        attempts = num_rollouts*4-sim_bug
         landingRate = landings/attempts
 
         return landingRate
@@ -458,6 +460,37 @@ class DataFile:
         return vel_impact
 
 
+    def grab_impact_omega(self,k_ep,k_run):
+
+        run_df = self.select_run(k_ep,k_run)
+        t_impact,_ = self.grab_impact_time(k_ep,k_run)
+
+        wx_impact = run_df.query(f't=={t_impact}').iloc[0]['wx']
+        wy_impact = run_df.query(f't=={t_impact}').iloc[0]['wy']
+        wz_impact = run_df.query(f't=={t_impact}').iloc[0]['wz']
+
+        return [wx_impact,wy_impact,wz_impact]
+
+    def grab_impact_omega_trial(self):
+
+        """Returns avg omega at flip for final two episodes
+
+        Returns:
+            [np.array]: [wx,wy,wz]
+        """        
+        num_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
+
+        ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
+        ep_arr = ep_df.iloc[-num_rollouts*4:].to_numpy() # Grab episode/run listing from past 2 rollouts
+
+        list = []
+        for k_ep,k_run in ep_arr:
+            list.append(self.grab_impact_omega(k_ep,k_run))
+
+        arr = np.asarray(list)
+        w_impact = np.mean(arr,axis=0)
+        
+        return w_impact
 
 
 
