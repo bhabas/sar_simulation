@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from scipy.spatial.transform import Rotation
 
 
 
@@ -381,6 +382,80 @@ class DataFile:
         v_flip = np.mean(arr,axis=0)
         
         return v_flip
+
+
+## IMPACT FUNCTIONS
+    def grab_impact_time(self,k_ep,k_run):
+        _,t_impact,t_impact_norm = self.grab_impact_angle(k_ep,k_run)
+
+        return t_impact,t_impact_norm
+
+
+    def grab_impact_angle(self,k_ep,k_run):
+        ## NOTE: This is only verified for 2-D case with Pitch maneuver
+
+        run_df = self.select_run(k_ep,k_run)
+        quat_df = run_df.iloc[:-1][['t','qw','qx','qy','qz']]
+        
+
+        quat_arr = quat_df[['qx','qy','qz','qw']].to_numpy()
+        rot = Rotation.from_quat(quat_arr)
+        eul_arr = rot.as_euler('xyz', degrees=True)
+        eul_df = pd.DataFrame(eul_arr,columns=['eul_x','eul_y','eul_z'])
+
+        eul_df['eul_y'] = -eul_df['eul_y']
+
+
+        quat_df = pd.concat([quat_df.reset_index(),eul_df],axis=1)
+        eul_impact = max(eul_df[f"eul_y"],key=abs)
+        t_impact = quat_df.query(f'eul_y=={eul_impact}').iloc[0]['t']
+
+        t_initial = quat_df.iloc[0]['t']
+        t_impact_norm = t_impact - t_initial
+        return eul_impact,t_impact,t_impact_norm
+
+    def grab_impact_angle_trial(self):
+
+        num_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
+
+        ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
+        ep_arr = ep_df.iloc[-num_rollouts*4:].to_numpy() # Grab episode/run listing from past 2 rollouts
+
+        list = []
+        for k_ep,k_run in ep_arr:
+            list.append(self.grab_impact_angle(k_ep,k_run)[0])
+
+        arr = np.asarray(list)
+        eul_impact = np.mean(arr,axis=0)
+
+        return eul_impact
+
+
+    def grab_impact_vel(self,k_ep,k_run):
+        run_df = self.select_run(k_ep,k_run)
+        t_impact,_ = self.grab_impact_time(k_ep,k_run)
+
+        vx_impact = run_df.query(f't=={t_impact}').iloc[0]['vx']
+        vy_impact = run_df.query(f't=={t_impact}').iloc[0]['vy']
+        vz_impact = run_df.query(f't=={t_impact}').iloc[0]['vz']
+
+        return [vx_impact,vy_impact,vz_impact]
+
+    def grab_impact_vel_trial(self):
+    
+        num_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
+
+        ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
+        ep_arr = ep_df.iloc[-num_rollouts*4:].to_numpy() # Grab episode/run listing from past 2 rollouts
+
+        list = []
+        for k_ep,k_run in ep_arr:
+            list.append(self.grab_impact_vel(k_ep,k_run))
+
+        arr = np.asarray(list)
+        vel_impact = np.mean(arr,axis=0)
+
+        return vel_impact
 
 
 
