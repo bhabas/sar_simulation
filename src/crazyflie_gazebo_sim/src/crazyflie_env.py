@@ -17,6 +17,8 @@ from sensor_msgs.msg import LaserScan, Image, Imu
 from gazebo_communication_pkg.msg import GlobalState 
 from crazyflie_gazebo_sim.msg import Rewards
 from rosgraph_msgs.msg import Clock
+from gazebo_msgs.msg import ModelState
+from gazebo_msgs.srv import SetModelState
 
 from cv_bridge import CvBridge
 
@@ -140,11 +142,6 @@ class CrazyflieEnv:
         reward_msg.n_rollouts = self.n_rollouts
 
         rate = rospy.Rate(10) # 10 hz
- 
-        # while not rospy.is_shutdown():
-        #     # if np.isnan(self.reward) == False or self.reward>0:
-        #     reward_Pub.publish(reward_msg)
-        #     rate.sleep()
             
         reward_Pub.publish(reward_msg)
         
@@ -247,8 +244,26 @@ class CrazyflieEnv:
 
     def reset_pos(self): # Disable sticky then places spawn_model at origin
         self.enableSticky(0)
-        os.system("rosservice call gazebo/reset_world")
-        return self.state_current          
+
+        state_msg = ModelState()
+        state_msg.model_name = 'crazyflie_model'
+        state_msg.pose.position.x = 0
+        state_msg.pose.position.y = 0
+        state_msg.pose.position.z = 0.0
+
+        state_msg.pose.orientation.x = 0
+        state_msg.pose.orientation.y = 0
+        state_msg.pose.orientation.z = 0
+        state_msg.pose.orientation.w = 1
+
+        state_msg.twist.linear.x = 0
+        state_msg.twist.linear.y = 0
+        state_msg.twist.linear.z = 0
+
+        rospy.wait_for_service('/gazebo/set_model_state')
+        set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
+        set_state_srv(state_msg)
+
             
     def step(self,action,ctrl_vals=[0,0,0],ctrl_flag=1): # Controller works to attain these values
         if action =='home': # default desired values/traj.

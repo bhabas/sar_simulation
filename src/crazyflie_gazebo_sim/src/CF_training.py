@@ -223,7 +223,7 @@ for k_ep in range(ep_start,15):
 
             # If position falls below max height (There is a lag w/ this)
             z_max = max(position[2],z_max)
-            if position[2] <= 0.95*z_max:
+            if position[2] <= 0.85*z_max:
                 error_1 = "Rollout Completed: Falling Drone"
                 print(error_1)
 
