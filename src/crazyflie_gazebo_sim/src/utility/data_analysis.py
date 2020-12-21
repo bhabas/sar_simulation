@@ -389,7 +389,65 @@ class DataFile:
         return v_flip
 
 
+    def grab_eulerData(self,k_ep,k_run):
 
+        run_df = self.select_run(k_ep,k_run)
+        quat_df = run_df.iloc[:-1][['t','qw','qx','qy','qz']]
+        
+
+        quat_arr = quat_df[['qx','qy','qz','qw']].to_numpy()
+        rot = Rotation.from_quat(quat_arr)
+        eul_arr = rot.as_euler('xyz', degrees=True)
+        eul_df = pd.DataFrame(eul_arr,columns=['eul_x','eul_y','eul_z'])
+
+        # eul_df['eul_x'] = -eul_df['eul_x']
+        eul_df['eul_y'] = -eul_df['eul_y']
+        # eul_df['eul_z'] = -eul_df['eul_z']
+
+        eul_x = eul_df['eul_x']
+        eul_y = eul_df['eul_y']
+        eul_z = eul_df['eul_z']
+
+        return [eul_x,eul_y,eul_z]
+
+    def plot_eulerData(self,k_ep,k_run,eul_type):
+
+        ## GRAB RUN DF
+        run_df = self.select_run(k_ep,k_run)
+        run_df = run_df.iloc[:-1] # Drop last row of DF
+
+        eul = 0
+        if eul_type == 'eul_x':
+            eul = self.grab_eulerData(k_ep,k_run)[0]
+        elif eul_type == 'eul_y':
+            eul = self.grab_eulerData(k_ep,k_run)[1]
+        elif eul_type == 'eul_z':
+            eul = self.grab_eulerData(k_ep,k_run)[2]
+        else:
+            print('Error, please select: ("eul_x","eul_y", or "eul_z")')
+
+
+        time = run_df.iloc[:]['t']
+        time = time.to_numpy()
+        time = np.expand_dims(time, axis=0).T
+        time = time - np.min(time)
+
+        
+        ## PLOT STATE/TIME DATA
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.plot(time,eul,label=f"{eul_type}")
+
+
+        ax.set_ylabel(f"{eul_type} [deg]")
+        ax.set_xlabel("time [s]")
+        ax.legend()
+        ax.grid()
+
+        plt.show()
+
+
+    
 
 
 
