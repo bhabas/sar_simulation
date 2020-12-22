@@ -24,7 +24,7 @@ os.system("clear")
 ## INIT GAZEBO ENVIRONMENT
 env = CrazyflieEnv()
 env.reset_pos() # Reset Gazebo pos
-env.launch_dashboard()
+# env.launch_dashboard()
 print("Environment done")
 
 
@@ -32,7 +32,7 @@ print("Environment done")
 username = getpass.getuser()
 start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
 file_name = '/home/'+username+'/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/log/' + username + start_time + '.csv'
-env.create_csv(file_name,record = False)
+env.create_csv(file_name,record = True)
 
 
 ## SIM PARAMETERS
@@ -49,8 +49,8 @@ alpha_mu = np.array([[0.1]])
 alpha_sigma = np.array([[0.05]])
 
 ## Initial parameters for gaussian function
-mu = np.array([[5.75],[9.0],[5.0] ])# Initial estimates of mu: 
-sigma = np.array([[1],[1],[1] ]) # Initial estimates of sigma: 
+mu = np.array([[6.0],[6.0],[6.0] ])# Initial estimates of mu: 
+sigma = np.array([[1.5],[1.5],[1.5] ]) # Initial estimates of sigma: 
 
 
 
@@ -66,7 +66,7 @@ agent = rlEM_PEPGAgent(mu,sigma,n_rollout=5)
 # ============================
 ##          Episode 
 # ============================
-for k_ep in range(ep_start,1000):
+for k_ep in range(ep_start,15):
 
     np.set_printoptions(precision=2, suppress=True)
     done = False
@@ -136,7 +136,7 @@ for k_ep in range(ep_start,1000):
         done_rollout = False
         start_time_rollout = env.getTime()
         start_time_pitch = None
-        pitch_triggered = False
+        flip_triggered = False
         state_history = None
         repeat_run= False
         error_str = ""
@@ -172,13 +172,13 @@ for k_ep in range(ep_start,1000):
             R = Rotation.from_quat([qx,qy,qz,qw])
             R = R.as_matrix() # [b1,b2,b3] Body vectors
 
-            RREV, OF_y, OF_x = vz/d, -vx/d, -vy/d # OF_x,y are estimated optical flow vals assuming no body rotation
-            sensor_data = [RREV, OF_y, OF_x] # Consolidated for data recording
+            RREV,OF_x,OF_y = vz/d, -vy/d, -vx/d # OF_x,y are estimated optical flow vals assuming no body rotation
+            sensor_data = [RREV,OF_x,OF_y] # Consolidated for data recording
             
             # ============================
             ##    Pitch Criteria 
             # ============================
-            if (RREV > RREV_trigger) and (pitch_triggered == False):
+            if (RREV > RREV_trigger) and (flip_triggered == False):
                 start_time_pitch = env.getTime()
                 env.enableSticky(1)
 
@@ -195,7 +195,7 @@ for k_ep in range(ep_start,1000):
 
                 ## Start rotation and mark rotation as triggered
                 env.step('omega',omega_d,ctrl_flag=1) # Set desired ang. vel 
-                pitch_triggered = True
+                flip_triggered = True
 
 
             # ============================
@@ -203,7 +203,7 @@ for k_ep in range(ep_start,1000):
             # ============================
 
             # If time since triggered pitch exceeds [0.7s]   
-            if pitch_triggered and ((env.getTime()-start_time_pitch) > (0.7)):
+            if flip_triggered and ((env.getTime()-start_time_pitch) > (0.7)):
                 # I don't like this error formatting, feel free to improve on
                 error_1 = "Rollout Completed: Pitch Timeout"
                 error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch))
@@ -223,7 +223,7 @@ for k_ep in range(ep_start,1000):
 
             # If position falls below max height (There is a lag w/ this)
             z_max = max(position[2],z_max)
-            if position[2] <= 0.95*z_max:
+            if position[2] <= 0.85*z_max:
                 error_1 = "Rollout Completed: Falling Drone"
                 print(error_1)
 
@@ -255,7 +255,7 @@ for k_ep in range(ep_start,1000):
             else:
                 if t_step%10==0: # Append state_history columns with current state2 vector 
                     state_history = np.append(state_history, state2, axis=1)
-                    env.append_csv(agent,state,k_ep,k_run,sensor_data)
+                    env.append_csv(agent,state,k_ep,k_run,sensor_data,flip_triggered)
 
 
 
@@ -273,7 +273,7 @@ for k_ep in range(ep_start,1000):
         ## =======  RUN COMPLETED  ======= ##
 
         ## CAP CSV WITH FINAL VALUES
-        env.append_csv(agent,state,k_ep,k_run,sensor_data)
+        env.append_csv(agent,state,k_ep,k_run,sensor_data,flip_triggered)
         env.IC_csv(agent,state,k_ep,k_run,policy,v_d,omega_d,reward[k_run,0],error_str)
         env.append_csv_blank()
 

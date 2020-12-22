@@ -3,11 +3,11 @@
   <model name="ceiling_plane">
     <static>true</static>
     <link name="ceiling">
-      <pose frame=''>0 0 1.5 0 0 0</pose>
+      <pose frame=''>0 0 2.0 0 0 0</pose>
       <collision name="ceiling_collision">
         <geometry>
           <box>
-            <size>4 4 0.01</size>
+            <size>15 15 0.01</size>
           </box>
         </geometry>
         <surface>
@@ -32,7 +32,7 @@
         <transparency>0.7</transparency>
         <geometry>
           <box>
-            <size>2.0 2.0 0.01</size>
+            <size>15 15 0.01</size>
           </box>
         </geometry>
         <material>

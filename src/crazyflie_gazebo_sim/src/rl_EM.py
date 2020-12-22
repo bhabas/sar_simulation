@@ -34,8 +34,10 @@ class rlEM_PEPGAgent(ES):
         for k_n in range(self.n):
             if theta[0,k_n] < 0: # 
                 theta[0,k_n] = 0.001 
-            #if theta[1,k_n] > 0:
-            #    theta[1,k_n] = -0.001
+            if theta[1,k_n] < 0:
+               theta[1,k_n] = 0.001
+            if theta[2,k_n] < 0:
+                theta[2,k_n] = 0.001
 
         return theta , 0
 

@@ -17,6 +17,8 @@ from sensor_msgs.msg import LaserScan, Image, Imu
 from gazebo_communication_pkg.msg import GlobalState 
 from crazyflie_gazebo_sim.msg import Rewards
 from rosgraph_msgs.msg import Clock
+from gazebo_msgs.msg import ModelState
+from gazebo_msgs.srv import SetModelState
 
 from cv_bridge import CvBridge
 
@@ -140,11 +142,6 @@ class CrazyflieEnv:
         reward_msg.n_rollouts = self.n_rollouts
 
         rate = rospy.Rate(10) # 10 hz
- 
-        # while not rospy.is_shutdown():
-        #     # if np.isnan(self.reward) == False or self.reward>0:
-        #     reward_Pub.publish(reward_msg)
-        #     rate.sleep()
             
         reward_Pub.publish(reward_msg)
         
@@ -247,8 +244,26 @@ class CrazyflieEnv:
 
     def reset_pos(self): # Disable sticky then places spawn_model at origin
         self.enableSticky(0)
-        os.system("rosservice call gazebo/reset_world")
-        return self.state_current          
+
+        state_msg = ModelState()
+        state_msg.model_name = 'crazyflie_model'
+        state_msg.pose.position.x = 0
+        state_msg.pose.position.y = 0
+        state_msg.pose.position.z = 0.0
+
+        state_msg.pose.orientation.x = 0
+        state_msg.pose.orientation.y = 0
+        state_msg.pose.orientation.z = 0
+        state_msg.pose.orientation.w = 1
+
+        state_msg.twist.linear.x = 0
+        state_msg.twist.linear.y = 0
+        state_msg.twist.linear.z = 0
+
+        rospy.wait_for_service('/gazebo/set_model_state')
+        set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
+        set_state_srv(state_msg)
+
             
     def step(self,action,ctrl_vals=[0,0,0],ctrl_flag=1): # Controller works to attain these values
         if action =='home': # default desired values/traj.
@@ -343,7 +358,7 @@ class CrazyflieEnv:
                 'qx','qy','qz','qw',
                 'vx','vy','vz',
                 'wx','wy','wz',
-                'gamma','reward','reward_avg','n_rollouts',
+                'gamma','reward','flip_trigger','n_rollouts',
                 'RREV','OF_x','OF_y',"","","","", # Place holders
                 'error'])
 
@@ -365,7 +380,7 @@ class CrazyflieEnv:
                     error_str])
 
 
-    def append_csv(self,agent,state,k_ep,k_run,sensor):
+    def append_csv(self,agent,state,k_ep,k_run,sensor,flip_triggered):
         if self.record == True:
             state = np.around(state,3)
             sensor = np.around(sensor,3)
@@ -380,7 +395,7 @@ class CrazyflieEnv:
                     state[4], state[5], state[6], state[7], # qx,qy,qz,qw
                     state[8], state[9],state[10], # vx,vy,vz
                     state[11],state[12],state[13], # wx,wy,wz
-                    "","","","", # gamma, reward, "", n_rollout
+                    "","",flip_triggered,"", # gamma, reward, flip_triggered, n_rollout
                     sensor[0],sensor[1],sensor[2],
                     "","","","", # Place holders
                     ""]) # error
@@ -392,22 +407,6 @@ class CrazyflieEnv:
                 state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 state_writer.writerow([])
 
-    def load_csv(self,datapath,k_ep):
-        ## Load csv and seperate first run of the selected episode
-        df = pd.read_csv(datapath)
-        ep_data = df.loc[ (df['k_ep'] == k_ep) & (df['k_run'] == 0)]
-        
-        ## Create a list of the main values to be loaded
-        vals = []
-        for k in range(2,6):
-            val = ep_data.iloc[0,k]
-            val_edited = np.fromstring(val[2:-2], dtype=float, sep=' ')
-            val_array = val_edited.reshape(1,-1).T
-            vals.append(val_array)
-
-        alpha_mu,alpha_sig, mu, sigma = vals
-
-        return alpha_mu,alpha_sig,mu,sigma
 
 
     # ============================

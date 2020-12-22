@@ -9,6 +9,9 @@ src/crazyflie_gazebo_sim/src/log/*.csv
 # C extensions
 *.so
 
+# Custom gitignore
+local_files/
+
 # Distribution / packaging
 .Python
 build/
