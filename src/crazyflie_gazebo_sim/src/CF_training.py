@@ -66,7 +66,7 @@ agent = rlEM_PEPGAgent(mu,sigma,n_rollout=5)
 # ============================
 ##          Episode 
 # ============================
-for k_ep in range(ep_start,15):
+for k_ep in range(ep_start,500):
 
     np.set_printoptions(precision=2, suppress=True)
     done = False
@@ -110,7 +110,7 @@ for k_ep in range(ep_start,15):
         ## RESET TO INITIAL STATE
         
         env.step('home',ctrl_flag=1) # Reset control vals and functionality to default vals
-        time.sleep(3.0) # Time for CF to settle
+        time.sleep(1.0) # Time for CF to settle
         
 
 
