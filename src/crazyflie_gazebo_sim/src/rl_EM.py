@@ -7,14 +7,17 @@ from math import asin,pi,ceil,floor
 from rl_syspepg import ES
 
 class rlEM_PEPGAgent(ES):
-    def __init__(self,mu,sigma,gamma=0.95, n_rollout = 2):
-        self.gamma, self.n_rollout = gamma, n_rollout
+    def __init__(self,mu,sigma,gamma=0.95, n_rollouts = 6):
+        self.gamma = gamma
+        self.n_rollouts = n_rollouts
         self.mu = mu
         self.sigma = sigma
 
-        self.n = 2*n_rollout
+        self.n = n_rollouts
         self.d = len(self.mu)
         self.alpha_mu, self.alpha_sigma  = np.array([[0],[0]]),np.array([[0],[0]])
+
+
         self.mu_history = copy.copy(self.mu)  # Creates another array of self.mu and attaches it to self.mu_history
         self.sigma_history = copy.copy(self.sigma)
         self.reward_history = np.array([0])
@@ -28,16 +31,10 @@ class rlEM_PEPGAgent(ES):
         #y = np.random.normal(self.mu[1,0],self.sigma[1,0],[1,self.n])
         #print(x)
         #print(y)
-        print(theta)
+        # print(theta)
         #theta = np.append(x,y,axis = 0)
 
-        for k_n in range(self.n):
-            if theta[0,k_n] < 0: # 
-                theta[0,k_n] = 0.001 
-            if theta[1,k_n] < 0:
-               theta[1,k_n] = 0.001
-            if theta[2,k_n] < 0:
-                theta[2,k_n] = 0.001
+        theta[theta<=0] = 0.001
 
         return theta , 0
 
@@ -47,7 +44,7 @@ class rlEM_PEPGAgent(ES):
         summary = np.transpose(summary[summary[:,self.d].argsort()[::-1]])
         print(summary)
 
-        k = floor(self.n/2)
+        k = floor(self.n)
 
         S_theta = (summary[0:self.d,0:k].dot(summary[self.d,0:k].reshape(k,1)))
         S_reward = np.sum(summary[self.d,0:k])
@@ -55,7 +52,7 @@ class rlEM_PEPGAgent(ES):
         S_diff = np.square(summary[0:self.d,0:k] - self.mu).dot(summary[self.d,0:k].reshape(k,1))
 
         
-        self.mu = S_theta/(S_reward +0.001)
+        self.mu = S_theta/(S_reward + 0.001)
         self.sigma = np.sqrt(S_diff/(S_reward + 0.001))
 
         '''S_theta = np.dot(theta,reward)
@@ -63,6 +60,7 @@ class rlEM_PEPGAgent(ES):
         S_diff = np.square(theta - self.mu).dot(reward)'''
 
 class rlEM_AdaptiveAgent(rlEM_PEPGAgent):
+
     def train(self,theta,reward,epsilon):
         reward_mean = np.mean(reward) # try baseline
         print(len(self.reward_history))

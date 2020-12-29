@@ -34,7 +34,7 @@ print("Environment done")
 
 def runTrial(vx_d,vz_d):
     # ============================
-    ##          Episode         done = False
+    ##          Episode         
     # ============================
     for k_ep in range(0,500):
 
@@ -48,7 +48,7 @@ def runTrial(vx_d,vz_d):
         omega_d = [0,0,0] # Junk declaration to cleanup warning or possible error
 
 
-        reward = np.zeros(shape=(2*agent.n_rollout,1))
+        reward = np.zeros(shape=(agent.n_rollouts,1))
         theta_rl,epsilon_rl = agent.get_theta()
 
 
@@ -74,7 +74,7 @@ def runTrial(vx_d,vz_d):
         ##          Run 
         # ============================
         k_run = 0 # Reset run counter each episode
-        while k_run < 2*agent.n_rollout:
+        while k_run < agent.n_rollouts:
 
 
             ## RESET TO INITIAL STATE
@@ -251,7 +251,7 @@ def runTrial(vx_d,vz_d):
             
             else:
                 ## UPDATE PUBLISHED REWARD VARIABLES
-                env.n_rollouts = agent.n_rollout*2
+                env.n_rollouts = agent.n_rollouts*2
                 env.k_ep = k_ep
                 env.k_run = k_run
                 env.reward = reward[k_run,0]
@@ -293,11 +293,11 @@ if __name__ == '__main__':
     vx_d = 1.5
     vz_d = 3.5
 
-    # agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollout=4)
-    # agent = rlsysPEPGAgent_adaptive(alpha_mu,alpha_sigma,mu,sigma,n_rollout=10)
+    # agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollouts=6)
+    # agent = rlsysPEPGAgent_adaptive(alpha_mu,alpha_sigma,mu,sigma,n_rollouts=6)
 
-    agent = rlEM_PEPGAgent(mu,sigma,n_rollout=5)
-    # agent = rlEM_AdaptiveAgent(mu,sigma,n_rollout=5)
+    agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=6)
+    # agent = rlEM_AdaptiveAgent(mu,sigma,n_rollouts=6) # Not working
 
     runTrial(vx_d,vz_d)
 

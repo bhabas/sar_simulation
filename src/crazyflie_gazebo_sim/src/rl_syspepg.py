@@ -15,41 +15,7 @@ class ES:
         # ovveride this for necessary hyperparameters
         self.gamma, self.n_rollout = gamma, n_rollout
 
-    # def calculate_reward(self, _state, _h_ceiling):         # _state is size 13 x timesteps
-    #     state = _state
-    #     h_ceiling = _h_ceiling
-    #     h_delta = 0.02     # 0.044
-
-    #     z = state[2,:]
-    #     quat = state[4:7,:]
-    #     quat = np.append(quat, state[3,:][np.newaxis,:], axis=0)          # rearrange quat as scalar-last format used in scipy Rotation
-
-    #     r1 = z / h_ceiling
-
-    #     r2 = np.zeros_like(r1)
-    #     for k_quat in range(quat.shape[-1]):
-    #         R = Rotation.from_quat(quat[:,k_quat])
-    #         b3 = R.as_matrix()[:,2]                         # body z-axis
-
-    #         r2[k_quat] = np.dot(b3, np.array([0,0,-1]))
-    #         if (r2[k_quat]>0.8) and (z[k_quat] > 0.8*h_ceiling):            # further incentivize when b3 is very close to -z axis
-    #             r2[k_quat] = r2[k_quat]*5
-    #         elif z[k_quat] < 0.5*h_ceiling:
-    #             r2[k_quat] = 0
-        
-    #     r = r1 + r2
-    #     r_cum = np.zeros_like(r)
-
-    #     temp = 0
-    #     for k_r in range(0,len(r)):
-    #         temp = r[k_r] + self.gamma*temp
-    #         r_cum[k_r] = temp
-
-    #     if r_cum.size > 0:
-    #         return r_cum[-1]
-    #     else:
-    #         return np.nan
-
+    
     def calculate_reward2(self,state,h_ceiling):
         h_delta = 0.02 
         e3 = np.array([0,0,1])
@@ -83,25 +49,18 @@ class ES:
             r_cum[ii] = r + 0.01*(r-r_prev)
             r_prev = r
 
-
-        
         reward = r1 + r_cum[-1]
-
-
-  
-
         return reward
 
 
-    def calculate_reward(self, state, h_ceiling): # state is size 13 x timesteps
+    def calculate_reward(self, state_hist, h_ceiling): # state_hist is size 14 x timesteps
         # should be the same for each algorithm
-        state = state
-        h_ceiling = h_ceiling
-        #h_delta = 0.02 # 0.044
 
-        z = state[3,:]
-        quat_xyz = state[5:8,:]
-        quat_w = state[4,:][np.newaxis,:]
+
+
+        z = state_hist[3,:]
+        quat_xyz = state_hist[5:8,:]
+        quat_w = state_hist[4,:][np.newaxis,:]
         # Rearrange quat as scalar-last format used in scipy Rotation
         # [qw,qx,qy,qz]' => quat = [qx,qy,qz,qw]'
         quat = np.append(quat_xyz, quat_w, axis=0)  # rearrange quat as scalar-last format used in scipy Rotation
@@ -112,7 +71,6 @@ class ES:
         for k_quat in range(quat.shape[-1]):
             R = Rotation.from_quat(quat[:,k_quat])
             b3 = R.as_matrix()[:,2] # body z-axis
-
             r2[k_quat] = 0.5*(np.dot(b3, np.array([0,0,-1]))) + 0.5 # reward from orientation scaled 0-1
 
         # multiply elements of r1 and r2 for total reward at each step
@@ -156,7 +114,7 @@ class rlsysPEPGAgent_reactive(ES):
 
     def get_theta(self):
         zeros = np.zeros_like(self.mu)
-        epsilon = np.random.normal(zeros, abs(self.sigma), [zeros.size, self.n_rollout]) # theta is size of  mu.size x n_runPerEp
+        epsilon = np.random.normal(zeros, abs(self.sigma), [zeros.size, self.n_rollouts//2]) # theta is size of  mu.size x n_runPerEp
 
         theta_plus = self.mu + epsilon
         theta_minus = self.mu - epsilon
@@ -166,20 +124,14 @@ class rlsysPEPGAgent_reactive(ES):
 
         ## Caps values of RREV to be greater than zero and Gain to be neg so
         # the system doesnt fight itself learning which direction to rotate
-        for k_n in range(2*self.n_rollout):
-            if theta[0,k_n] < 0: # 
-                theta[0,k_n] = 0.001
-        '''if theta[1,k_n] > 0:
-            theta[1,k_n] = -0.001
-        if theta[2,k_n] < 0:
-            theta[2,k_n] = 0.001'''
+        theta[theta<=0] = 0.001
 
 
         return theta, epsilon
 
     def train(self, theta, reward, epsilon):
-        reward_plus = reward[0:self.n_rollout]
-        reward_minus = reward[self.n_rollout:]
+        reward_plus = reward[0:self.n_rollouts//2]
+        reward_minus = reward[self.n_rollouts//2:]
         epsilon = epsilon
         b = self.get_baseline(span=3)
 
@@ -199,13 +151,7 @@ class rlsysPEPGAgent_reactive(ES):
         self.mu = self.mu + self.alpha_mu*(np.dot(T,r_T))
         self.sigma = self.sigma + self.alpha_sigma*np.dot(S,r_S)
 
-        '''if self.mu[0,0] < 0:
-            self.mu[0,0] = 0.1
-        if self.mu[1,0] > 0:
-            self.mu[1,0] = -0.1'''
-        for k in range(self.sigma.size): #  If sigma oversteps negative then assume convergence
-            if self.sigma[k] <= 0:
-                self.sigma[k] = 0.05
+        self.sigma[self.sigma<=0] = 0.05 #  If sigma oversteps negative then assume convergence
         
         self.mu_history = np.append(self.mu_history, self.mu, axis=1)
         self.sigma_history = np.append(self.sigma_history, self.sigma, axis=1)
@@ -223,12 +169,12 @@ class rlsysPEPGAgent_adaptive(rlsysPEPGAgent_reactive):
         else:
             self.reward_history = np.append(self.reward_history, reward_avg) 
 
-        reward_plus = reward[0:self.n_rollout]
-        reward_minus = reward[self.n_rollout:]
+        reward_plus = reward[0:self.n_rollouts//2]
+        reward_minus = reward[self.n_rollouts//2:]
         epsilon = epsilon
         b = self.get_baseline(span=3)
 
-        m_reward = 21.0#400.0#3000#2300      # max reward
+        m_reward = 21.0 # max reward
         
        
         ## Decaying Learning Rate:
@@ -267,13 +213,7 @@ class rlsysPEPGAgent_adaptive(rlsysPEPGAgent_reactive):
         self.mu = self.mu + self.alpha_mu*(np.dot(T,r_T))
         self.sigma = self.sigma + self.alpha_sigma*np.dot(S,r_S)
 
-        '''if self.mu[0,0] < 0:
-            self.mu[0,0] = 0.1
-        if self.mu[1,0] > 0:
-            self.mu[1,0] = -0.1'''
-        for k in range(self.sigma.size): #  If sigma oversteps negative then assume convergence
-            if self.sigma[k] <= 0:
-                self.sigma[k] = 0.05
+        self.sigma[self.sigma<=0] = 0.05 #  If sigma oversteps negative then assume convergence
         
         self.mu_history = np.append(self.mu_history, self.mu, axis=1)
         self.sigma_history = np.append(self.sigma_history, self.sigma, axis=1)
