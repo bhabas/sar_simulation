@@ -15,7 +15,7 @@ import csv
 
 from sensor_msgs.msg import LaserScan, Image, Imu
 from gazebo_communication_pkg.msg import GlobalState 
-from crazyflie_gazebo_sim.msg import Rewards
+from crazyflie_rl.msg import Rewards
 from rosgraph_msgs.msg import Clock
 from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState
