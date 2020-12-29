@@ -26,7 +26,7 @@ def global_state_publisher():
     ## INIT MSG FORMATS
     state_msg = GlobalState() # state_msg is in format of GlobalState.msg
     header = Header() # header is in format of std_msgs/Header
-    header.frame_id='Gazebo_Globalexcept rospy.ROSInterruptException:_State'
+    header.frame_id='Gazebo_GlobalState'
 
     link_msg = GetLinkStateRequest() 
 
