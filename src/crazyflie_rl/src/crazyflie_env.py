@@ -199,6 +199,11 @@ class CrazyflieEnv:
     ##       Sim Operation
     # ============================
 
+    def relaunch_sim(self):
+        self.close_sim()
+        time.sleep(1)
+        self.launch_sim()
+
     def close_sim(self):
         os.killpg(self.controller_p.pid, signal.SIGTERM)
         os.killpg(self.gazebo_p.pid, signal.SIGTERM)
@@ -360,21 +365,35 @@ class CrazyflieEnv:
     ##      Timeout Functions 
     # ============================
 
-    
     # Subscriber thread listens to /clock for any message
     def timeoutSub(self):
+        ## START INITIAL TIMERS
+        self.timer_unpause = Timer(5,self.timeout_unpause)
+        self.timer_relaunch = Timer(10,self.timeout_relaunch)
+        ## START ROS CREATED THREAD FOR SUBSCRIBER
         rospy.Subscriber("/clock",Clock,self.timeoutCallback)
-        self.timer = Timer(5,self.timeout)
+        ## END FUNCTION, THIS MIGHT NOT NEED TO BE THREADED?
 
-    # If message is received reset the threading.Timer thread
-    def timeoutCallback(self,msg):
-        self.timer.cancel()
-        self.timer = Timer(5,self.timeout)
-        self.timer.start()
     
-    # If no message in 5 seconds then close and relaunch sim
-    def timeout(self):
-        print("[RESTARTING] No Gazebo communication in 5 seconds")
+    # If message is received reset the threading.Timer threads
+    def timeoutCallback(self,msg):
+        ## RESET TIMER THAT ATTEMPTS TO UNPAUSE SIM
+        self.timer_unpause.cancel()
+        self.timer_unpause = Timer(5,self.timeout_unpause)
+        self.timer_unpause.start()
+
+        ## RESET TIMER THAT RELAUNCHES SIM
+        self.timer_relaunch.cancel()
+        self.timer_relaunch = Timer(10,self.timeout_relaunch)
+        self.timer_relaunch.start()
+    
+
+    def timeout_unpause(self):
+        print("[UNPAUSING] No Gazebo communication in 5 seconds")
+        os.system("rosservice call gazebo/unpause_physics")
+
+    def timeout_relaunch(self):
+        print("[RELAUNCHING] No Gazebo communication in 10 seconds")
         self.close_sim()
         time.sleep(1)
         self.launch_sim()

@@ -34,6 +34,7 @@ print("Environment done")
 
 
 def runTrial(vx_d,vz_d):
+    env.relaunch_sim()
     # ============================
     ##          Episode         
     # ============================
@@ -253,9 +254,7 @@ def runTrial(vx_d,vz_d):
             ## =======  RUN COMPLETED  ======= ##
 
             if repeat_run == True:
-                env.close_sim()
-                time.sleep(1)
-                env.launch_sim()
+                env.relaunch_sim()
             
             else:
                 ## UPDATE PUBLISHED REWARD VARIABLES
@@ -310,7 +309,14 @@ if __name__ == '__main__':
     trial_num = 1
     env.trial_name = f"Vz_{vz_d}--Vx_{vx_d}--trial_{trial_num}.csv"
     env.agent = "EM_PEPG"
-    runTrial(vx_d,vz_d)
+
+    while True:
+        try:
+            runTrial(vx_d,vz_d)
+        except:
+            continue
+        break
+    
 
 
 
