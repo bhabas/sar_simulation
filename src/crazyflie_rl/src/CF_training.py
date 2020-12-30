@@ -280,7 +280,7 @@ if __name__ == '__main__':
 
 
     ## SIM PARAMETERS
-    h_ceiling = 1.5 # [m]
+    h_ceiling = 2.0 # [m]
 
 
     # ============================
