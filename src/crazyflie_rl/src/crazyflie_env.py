@@ -99,6 +99,7 @@ class CrazyflieEnv:
         header = Header()
 
         self.trial_name = ''
+        self.agent = ''
 
         self.k_run = 0
         self.k_ep = 0
@@ -120,6 +121,13 @@ class CrazyflieEnv:
             msg.header.stamp = rospy.Time.now()
             msg.k_ep = self.k_ep
             msg.k_run = self.k_run
+
+            msg.trial_name = self.trial_name
+            msg.agent = self.agent
+
+            msg.mu = self.mu
+            msg.sigma = self.sigma
+            msg.policy = self.policy
 
             pub.publish(msg)
             r.sleep()

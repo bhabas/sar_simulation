@@ -40,6 +40,8 @@ def runTrial(vx_d,vz_d):
         env.k_ep = k_ep
 
         np.set_printoptions(precision=2, suppress=True)
+        env.mu = agent.mu.flatten().tolist()
+        env.sigma = agent.sigma.flatten().tolist()
 
 
 
@@ -91,7 +93,7 @@ def runTrial(vx_d,vz_d):
             G1 = theta_rl[1, k_run]
             G2 = theta_rl[2, k_run]
             policy = theta_rl[:,k_run]
-            policy = policy[:,np.newaxis] # reshaping for data logging [ change [3,] -> [3,1] ]
+            env.policy = policy.flatten().tolist()
         
             # vz_d = np.random.uniform(low=2.5, high=3.0)
             # vx_d = np.random.uniform(low=-2.0, high=2.0)
@@ -287,8 +289,6 @@ if __name__ == '__main__':
     sigma = np.array([[1.5],[1.5],[1.5] ]) # Initial estimates of sigma: 
 
 
-    vx_d = 1.5
-    vz_d = 3.5
 
     # agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollouts=6)
     # agent = rlsysPEPGAgent_adaptive(alpha_mu,alpha_sigma,mu,sigma,n_rollouts=6)
@@ -296,6 +296,11 @@ if __name__ == '__main__':
     agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=6)
     # agent = rlEM_AdaptiveAgent(mu,sigma,n_rollouts=6) # Not working
 
+    vx_d = 1.0
+    vz_d = 3.0
+    trial_num = 1
+    env.trial_name = f"Vz_{vz_d}--Vx_{vx_d}--trial_{trial_num}.csv"
+    env.agent = "EM_PEPG"
     runTrial(vx_d,vz_d)
 
 
