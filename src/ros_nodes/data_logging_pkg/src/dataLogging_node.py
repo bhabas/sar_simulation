@@ -5,11 +5,11 @@ from threading import Thread
 import numpy as np
 
 from gazebo_communication_pkg.msg import GlobalState
+from crazyflie_rl.msg import RLData
 
 
 import csv
 
-# from ros_nodes.datalogging_pkg.src.dataLogger import DLNode
 
 class DataLoggingNode:
     def __init__(self):
@@ -17,20 +17,22 @@ class DataLoggingNode:
         rospy.init_node("dataLogging_node")
 
         self.t_step = 0
+        self.k_run_temp = 0
         self.create_flag = True
         self.logging_flag = True
 
         self.StateSub = message_filters.Subscriber("/global_state",GlobalState)
+        self.RLSub = message_filters.Subscriber("/rl_data",RLData)
         self.atsSub()
 
 
 
     def atsSub(self):
-        ats = message_filters.ApproximateTimeSynchronizer([self.StateSub],queue_size=5,slop=0.1)
+        ats = message_filters.ApproximateTimeSynchronizer([self.StateSub,self.RLSub],queue_size=5,slop=0.1)
         ats.registerCallback(self.csvWriter)
         rospy.spin()
 
-    def csvWriter(self,gs_msg):
+    def csvWriter(self,gs_msg,rl_msg):
 
         self.t_step += 1
         
@@ -57,6 +59,9 @@ class DataLoggingNode:
         self.velocity = np.round(self.velocity,3)
         self.omega = np.round(self.omega,3)
 
+        self.k_ep = rl_msg.k_ep
+        self.k_run = rl_msg.k_run
+
 
 
         if self.logging_flag == True:
@@ -66,8 +71,14 @@ class DataLoggingNode:
                 self.create_csv()
                 self.create_flag = False
 
-            if self.t_step%5 == 0: # Slow down recording by x5
+            if self.k_run_temp != rl_msg.k_run: # When k_run changes then add blank row
+                self.append_csv_blank()
+                self.k_run_temp = rl_msg.k_run
+
+            if self.t_step%1 == 0: # Slow down recording by [x5]
                 self.append_csv()
+
+            
 
 
 
@@ -100,7 +111,7 @@ class DataLoggingNode:
         with open(self.path, mode='a') as state_file:
             state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             state_writer.writerow([
-                "","",
+                self.k_ep,self.k_run,
                 "","", # alpha_mu,alpha_sig
                 "","","", # mu,sigma,policy
                 self.t,self.position[0],self.position[1],self.position[2], # t,x,y,z

@@ -68,35 +68,8 @@ class CrazyflieEnv:
 
   
         self.state_Sub = rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
-        self.laser_sub = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
-
-        
-        self.rewardThread = Thread(target=self.rewardPub,args=())
-        self.rewardThread.start()
-        
-
-        self.timeoutThread = Thread(target=self.timeoutSub)
-        self.timeoutThread.start()
-
-
-
-        
-        print("[COMPLETED] Environment done")
-
-
-
-    
-
-    # ============================
-    ##   Publishers/Subscribers 
-    # ============================
-
-
-    def rewardPub(self):
-        pub = rospy.Publisher('/rl_data',RLData,queue_size=10)
-        r = rospy.Rate(50,reset=True)
-        msg = RLData()
-        header = Header()
+        self.laser_Sub = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
+        self.RL_Pub = rospy.Publisher('/rl_data',RLData,queue_size=10)
 
         self.trial_name = ''
         self.agent = ''
@@ -116,33 +89,57 @@ class CrazyflieEnv:
 
         self.reward = 0
 
-        while not rospy.is_shutdown():
-            
-            msg.header.stamp = rospy.Time.now()
-            msg.trial_name = self.trial_name
-            msg.agent = self.agent
+        
+        
+        
 
-            msg.logging_flag = self.logging_flag
-            msg.n_rollouts = self.n_rollouts
-            msg.gamma = self.gamma
+        self.timeoutThread = Thread(target=self.timeoutSub)
+        self.timeoutThread.start()
 
 
-            msg.k_ep = self.k_ep
-            msg.k_run = self.k_run
 
-            msg.alpha_mu = self.alpha_mu
-            msg.alpha_sigma = self.alpha_sigma
+        
+        print("[COMPLETED] Environment done")
 
-            
 
-            msg.mu = self.mu
-            msg.sigma = self.sigma
-            msg.policy = self.policy
 
-            msg.reward = self.reward
+    
 
-            pub.publish(msg)
-            r.sleep()
+    # ============================
+    ##   Publishers/Subscribers 
+    # ============================
+
+
+    def RLPub(self):
+
+        msg = RLData()
+        header = Header()
+
+        msg.header.stamp = rospy.Time.now()
+        msg.trial_name = self.trial_name
+        msg.agent = self.agent
+
+        msg.logging_flag = self.logging_flag
+        msg.n_rollouts = self.n_rollouts
+        msg.gamma = self.gamma
+
+
+        msg.k_ep = self.k_ep
+        msg.k_run = self.k_run
+
+        msg.alpha_mu = self.alpha_mu
+        msg.alpha_sigma = self.alpha_sigma
+
+        
+
+        msg.mu = self.mu
+        msg.sigma = self.sigma
+        msg.policy = self.policy
+
+        msg.reward = self.reward
+
+        self.RL_Pub.publish(msg)
+     
 
 
         
