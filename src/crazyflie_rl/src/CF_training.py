@@ -34,7 +34,6 @@ print("Environment done")
 
 
 def runTrial(vx_d,vz_d):
-    env.relaunch_sim()
     # ============================
     ##          Episode         
     # ============================
@@ -313,6 +312,7 @@ if __name__ == '__main__':
     while True:
         try:
             runTrial(vx_d,vz_d)
+            env.relaunch_sim()
         except:
             continue
         break

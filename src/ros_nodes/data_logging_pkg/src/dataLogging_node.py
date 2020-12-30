@@ -59,8 +59,41 @@ class DataLoggingNode:
         self.velocity = np.round(self.velocity,3)
         self.omega = np.round(self.omega,3)
 
+
+
+        ## SET VALUES FROM RL_DATA TOPIC
+        self.trial_name = rl_msg.trial_name
+        self.agent = rl_msg.agent
+
+
+
+        self.logging_flag = rl_msg.logging_flag
+        self.flip_flag = rl_msg.flip_flag
+        self.runComplete_flag = rl_msg.runComplete_flag
+        
+        self.n_rollouts = rl_msg.n_rollouts
+        self.gamma = np.round(rl_msg.gamma,2)
+        
         self.k_ep = rl_msg.k_ep
         self.k_run = rl_msg.k_run
+
+        ## SET RL VALUES FROM TOPIC
+        self.alpha_mu = np.asarray(rl_msg.alpha_mu)
+        self.alpha_sigma = np.asarray(rl_msg.alpha_sigma)
+        self.mu = np.asarray(rl_msg.mu)
+        self.sigma = np.asarray(rl_msg.sigma)
+        self.policy = np.asarray(rl_msg.policy)
+
+        ## TRIM RL VALUES FOR CSV
+        self.alpha_mu = np.round(self.alpha_mu,2)
+        self.alpha_sigma = np.round(self.alpha_sigma,2)
+        self.mu = np.round(self.mu,2)
+        self.sigma = np.round(self.sigma,2)
+        self.policy = np.round(self.policy,2)
+
+
+        self.reward = np.round(rl_msg.reward,3)
+
 
 
 
@@ -78,12 +111,11 @@ class DataLoggingNode:
             if self.t_step%1 == 0: # Slow down recording by [x5]
                 self.append_csv()
 
+            if self.runComplete_flag == True:
+                self.append_IC()
+
             
 
-
-
-            # if rollout == complete:
-            #     self.append_IC()
 
 
 
@@ -118,28 +150,28 @@ class DataLoggingNode:
                 self.orientation_q[0],self.orientation_q[1],self.orientation_q[2],self.orientation_q[3], # qw,qx,qy,qz
                 self.velocity[0],self.velocity[1],self.velocity[2], # vx,vy,vz
                 self.omega[0],self.omega[1],self.omega[2], # wx,wy,wz
-                "","","flip_triggered","", # gamma, reward, flip_triggered, n_rollout
+                "","",self.flip_flag,"", # gamma, reward, flip_triggered, n_rollout
                 "RREV","OF_x","OF_y", # RREV, OF_x, OF_y
                 "","","","", # Place holders
                 ]) 
         
 
-    # def append_IC(self):
+    def append_IC(self):
 
-    #     with open(self.path, mode='a') as state_file:
-    #         state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-    #         state_writer.writerow([
-    #             self.k_ep,self.k_run,
-    #             self.alpha_mu,self.alpha_sigma, # alpha_mu,alpha_sig
-    #             self.mu,self.sigma,self.policy, # mu,sigma,policy
-    #             "","","","", # t,x,y,z
-    #             "", "", "", "", # qx,qy,qz,qw
-    #             "vdx","vdy","vdz", # vx,vy,vz
-    #             "wdx","wdy","wdz", # wx,wy,wz
-    #             self.gamma,self.reward,"",self.n_rollouts, # gamma, reward, flip_triggered, n_rollout
-    #             "","","", # RREV, OF_x, OF_y
-    #             "","","","", # Place holders
-    #             ])
+        with open(self.path, mode='a') as state_file:
+            state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            state_writer.writerow([
+                self.k_ep,self.k_run,
+                self.alpha_mu,self.alpha_sigma, # alpha_mu,alpha_sig
+                self.mu,self.sigma,self.policy, # mu,sigma,policy
+                "","","","", # t,x,y,z
+                "", "", "", "", # qx,qy,qz,qw
+                "vdx","vdy","vdz", # vx,vy,vz
+                "wdx","wdy","wdz", # wx,wy,wz
+                self.gamma,self.reward,"",self.n_rollouts, # gamma, reward, flip_triggered, n_rollout
+                "","","", # RREV, OF_x, OF_y
+                "","","","", # Place holders Include successful run flag
+                ])
         
     def append_csv_blank(self): 
         
