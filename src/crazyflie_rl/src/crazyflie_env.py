@@ -130,6 +130,9 @@ class CrazyflieEnv:
             msg.k_ep = self.k_ep
             msg.k_run = self.k_run
 
+            msg.alpha_mu = self.alpha_mu
+            msg.alpha_sigma = self.alpha_sigma
+
             
 
             msg.mu = self.mu

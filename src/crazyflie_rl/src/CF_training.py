@@ -43,6 +43,9 @@ def runTrial(vx_d,vz_d):
         env.mu = agent.mu.flatten().tolist()
         env.sigma = agent.sigma.flatten().tolist()
 
+        env.alpha_mu = agent.alpha_mu.flatten().tolist()
+        env.alpha_sigma = agent.alpha_sigma.flatten().tolist()
+
 
 
 
