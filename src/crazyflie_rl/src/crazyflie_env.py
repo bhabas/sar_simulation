@@ -55,31 +55,26 @@ class CrazyflieEnv:
         # if threads dont terminte when program is shut, you might need to use lsof to kill it
 
         
-        
-
-
-        self.k_run = 0
-        self.k_ep = 0
-        self.reward = 0
-        self.reward_avg = 0
-        self.n_rollouts = 0
-
-
 
   
-        self.state_Sub = rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
-        self.laser_Sub = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
-        self.RL_Pub = rospy.Publisher('/rl_data',RLData,queue_size=10)
+        self.state_Subscriber = rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
+        self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
+        self.RL_Publisher = rospy.Publisher('/rl_data',RLData,queue_size=10)
+
+
+
 
         self.trial_name = ''
         self.agent = ''
+        self.n_rollouts = 0
+        self.gamma = 0
+
+        self.flip_flag = False
+        self.runComplete_flag = False
+        self.logging_flag = False
 
         self.k_run = 0
         self.k_ep = 0
-
-        self.n_rollouts = 0
-        self.gamma = 0
-        self.logging_flag = False
 
         self.alpha_mu = []
         self.alpha_sigma = []
@@ -110,7 +105,7 @@ class CrazyflieEnv:
     # ============================
 
 
-    def RLPub(self):
+    def RL_Publish(self):
 
         msg = RLData()
         header = Header()
@@ -120,6 +115,8 @@ class CrazyflieEnv:
         msg.agent = self.agent
 
         msg.logging_flag = self.logging_flag
+        msg.flip_flag = self.flip_flag
+        msg.runComplete_flag = self.runComplete_flag
         msg.n_rollouts = self.n_rollouts
         msg.gamma = self.gamma
 
@@ -138,7 +135,7 @@ class CrazyflieEnv:
 
         msg.reward = self.reward
 
-        self.RL_Pub.publish(msg)
+        self.RL_Publisher.publish(msg)
      
 
 

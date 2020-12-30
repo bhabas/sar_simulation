@@ -1,7 +1,10 @@
 Header header
 string trial_name
 string agent
+
 bool logging_flag
+bool flip_flag
+bool runComplete_flag
 
 uint8 k_ep
 uint8 k_run

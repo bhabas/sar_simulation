@@ -12,6 +12,7 @@ from rl_EM import rlEM_PEPGAgent,rlEM_AdaptiveAgent
 from rl_cma import CMA_basic,CMA,CMA_sym
 
 os.system("clear")
+np.set_printoptions(precision=2, suppress=True)
 
 
 
@@ -39,10 +40,8 @@ def runTrial(vx_d,vz_d):
     for k_ep in range(0,500):
         env.k_ep = k_ep
 
-        np.set_printoptions(precision=2, suppress=True)
         env.mu = agent.mu.flatten().tolist()
         env.sigma = agent.sigma.flatten().tolist()
-
         env.alpha_mu = agent.alpha_mu.flatten().tolist()
         env.alpha_sigma = agent.alpha_sigma.flatten().tolist()
 
@@ -108,10 +107,11 @@ def runTrial(vx_d,vz_d):
             t_step = 0
             z_max = 0 # [m]
             
-            done_rollout = False
+            env.runComplete_flag = False
+            env.flip_flag = False
+
             start_time_rollout = env.getTime()
             start_time_pitch = None
-            flip_triggered = False
             state_history = None
             repeat_run= False
             error_str = ""
@@ -137,10 +137,10 @@ def runTrial(vx_d,vz_d):
                 
                 position = state[1:4] # [x,y,z]
                 orientation_q = state[4:8] # Orientation in quat format
-                vel = state[8:11]
+                vel = state[8:11] # [vx,vy,vz]
                 vx,vy,vz = vel
-                omega = state[11:14]
-                d = h_ceiling - position[2] # distance of drone from ceiling
+                omega = state[11:14] # [wx,wy,wz]
+                d = h_ceiling - position[2] # Vertical distance of drone from ceiling
 
                 ## ORIENTATION DATA FROM STATE
                 qw,qx,qy,qz = orientation_q
@@ -148,12 +148,12 @@ def runTrial(vx_d,vz_d):
                 R = R.as_matrix() # [b1,b2,b3] Body vectors
 
                 RREV,OF_x,OF_y = vz/d, -vy/d, -vx/d # OF_x,y are estimated optical flow vals assuming no body rotation
-                sensor_data = [RREV,OF_x,OF_y] # Consolidated for data recording
+
                 
                 # ============================
                 ##    Pitch Criteria 
                 # ============================
-                if (RREV > RREV_trigger) and (flip_triggered == False):
+                if (RREV > RREV_trigger) and (env.flip_flag == False):
                     start_time_pitch = env.getTime()
                     env.enableSticky(1)
 
@@ -170,7 +170,20 @@ def runTrial(vx_d,vz_d):
 
                     ## Start rotation and mark rotation as triggered
                     env.step('omega',omega_d,ctrl_flag=1) # Set desired ang. vel 
-                    flip_triggered = True
+                    env.flip_flag = True
+
+                # ============================
+                ##      Record Keeping  
+                # ============================
+                ## Keep record of state vector every 10 time steps
+                state = state[:, np.newaxis] # Convert [13,] array to [13,1] array
+                
+                if state_history is None:
+                    state_history = state 
+                else:
+                    if t_step%10==0: # Append state_history columns with current state2 vector 
+                        state_history = np.append(state_history, state, axis=1)
+                        env.RL_Publish()
 
 
                 # ============================
@@ -178,23 +191,23 @@ def runTrial(vx_d,vz_d):
                 # ============================
 
                 # If time since triggered pitch exceeds [0.7s]   
-                if flip_triggered and ((env.getTime()-start_time_pitch) > (0.7)):
+                if env.flip_flag and ((env.getTime()-start_time_pitch) > (0.7)):
                     # I don't like this error formatting, feel free to improve on
                     error_1 = "Rollout Completed: Pitch Timeout"
                     error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch))
                     print(error_1 + "\n" + error_2)
 
                     error_str = error_1 + error_2
-                    done_rollout = True
+                    env.runComplete_flag = True
 
-                # If time since rollout start exceeds [2.5s]
+                # If time since run start exceeds [2.5s]
                 if (env.getTime() - start_time_rollout) > (2.5):
                     error_1 = "Rollout Completed: Time Exceeded"
                     error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
                     print(error_1 + "\n" + error_2)
 
                     error_str = error_1 + error_2
-                    done_rollout = True
+                    env.runComplete_flag = True
 
                 # If position falls below max height (There is a lag w/ this)
                 z_max = max(position[2],z_max)
@@ -203,7 +216,7 @@ def runTrial(vx_d,vz_d):
                     print(error_1)
 
                     error_str  = error_1
-                    done_rollout = True
+                    env.runComplete_flag = True
         
                     
                 
@@ -219,39 +232,26 @@ def runTrial(vx_d,vz_d):
                     repeat_run = True
                     break
 
-                # ============================
-                ##      Record Keeping  
-                # ============================
-                ## Keep record of state vector every 10 time steps
-                state = state[:, np.newaxis] # Convert [13,] array to [13,1] array
-                
-                if state_history is None:
-                    state_history = state 
-                else:
-                    if t_step%10==0: # Append state_history columns with current state2 vector 
-                        state_history = np.append(state_history, state, axis=1)
-                        env.RLPub()
 
 
 
-                if done_rollout==True:
+
+                if env.runComplete_flag==True:
 
                     env.step('stop')
                     env.reset_pos()
                     reward[k_run] = agent.calculate_reward(state_history,h_ceiling)
+                    env.reward = reward[k_run]
                     print("Reward = %.3f" %(reward[k_run]))
                     print("!------------------------End Run------------------------! \n")
+
+                    
                     break
 
                 t_step += 1
             
             ## =======  RUN COMPLETED  ======= ##
 
-
-            
-            
-                        
-            
             if repeat_run == True:
                 env.close_sim()
                 time.sleep(1)
@@ -261,6 +261,7 @@ def runTrial(vx_d,vz_d):
                 ## UPDATE PUBLISHED REWARD VARIABLES
 
                 env.reward = reward[k_run,0]
+                env.RL_Publish()
                 k_run += 1 # Move on to next run
 
             
