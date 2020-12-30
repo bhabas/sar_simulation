@@ -119,15 +119,24 @@ class CrazyflieEnv:
         while not rospy.is_shutdown():
             
             msg.header.stamp = rospy.Time.now()
+            msg.trial_name = self.trial_name
+            msg.agent = self.agent
+
+            msg.logging_flag = self.logging_flag
+            msg.n_rollouts = self.n_rollouts
+            msg.gamma = self.gamma
+
+
             msg.k_ep = self.k_ep
             msg.k_run = self.k_run
 
-            msg.trial_name = self.trial_name
-            msg.agent = self.agent
+            
 
             msg.mu = self.mu
             msg.sigma = self.sigma
             msg.policy = self.policy
+
+            msg.reward = self.reward
 
             pub.publish(msg)
             r.sleep()

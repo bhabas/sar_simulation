@@ -256,7 +256,7 @@ def runTrial(vx_d,vz_d):
             else:
                 ## UPDATE PUBLISHED REWARD VARIABLES
 
-
+                env.reward = reward[k_run,0]
                 k_run += 1 # Move on to next run
 
             
@@ -270,6 +270,10 @@ def runTrial(vx_d,vz_d):
 
 
 if __name__ == '__main__':
+
+    env.n_rollouts = 10
+    env.gamma = 0.95
+    env.logging_flag = True
 
 
     ## SIM PARAMETERS
