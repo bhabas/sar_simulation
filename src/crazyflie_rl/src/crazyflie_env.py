@@ -15,7 +15,8 @@ import csv
 
 from sensor_msgs.msg import LaserScan, Image, Imu
 from gazebo_communication_pkg.msg import GlobalState 
-from crazyflie_rl.msg import Rewards
+from crazyflie_rl.msg import RLData
+from std_msgs.msg import Header 
 from rosgraph_msgs.msg import Clock
 from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState
@@ -66,25 +67,15 @@ class CrazyflieEnv:
 
 
   
-        self.global_stateThread = Thread(target=self.global_stateSub,args=())
-        self.global_stateThread.daemon=True
-        self.global_stateThread.start()
+        self.state_Sub = rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
+        self.laser_sub = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
 
         
         self.rewardThread = Thread(target=self.rewardPub,args=())
-        self.rewardThread.daemon=True
         self.rewardThread.start()
         
 
-
-        # Start Laser data reciever thread
-        self.laserThread = Thread(target=self.lsrThread, args=())
-        self.laserThread.daemon=True
-        self.laserThread.start()
-
-
         self.timeoutThread = Thread(target=self.timeoutSub)
-        self.timeoutThread.daemon=True
         self.timeoutThread.start()
 
 
@@ -100,9 +91,43 @@ class CrazyflieEnv:
     ##   Publishers/Subscribers 
     # ============================
 
-    def global_stateSub(self): # Subscriber for receiving global state info
-        self.state_Sub = rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
-        rospy.spin()
+
+    def rewardPub(self):
+        pub = rospy.Publisher('/rl_data',RLData,queue_size=10)
+        r = rospy.Rate(50,reset=True)
+        msg = RLData()
+        header = Header()
+
+        self.trial_name = ''
+
+        self.k_run = 0
+        self.k_ep = 0
+
+        self.n_rollouts = 0
+        self.gamma = 0
+        self.logging_flag = False
+
+        self.alpha_mu = []
+        self.alpha_sigma = []
+        self.mu = []
+        self.sigma = []
+        self.policy = []
+
+        self.reward = 0
+
+        while not rospy.is_shutdown():
+            
+            msg.header.stamp = rospy.Time.now()
+            msg.k_ep = self.k_ep
+            msg.k_run = self.k_run
+
+            pub.publish(msg)
+            r.sleep()
+
+
+        
+        
+      
 
     def global_stateCallback(self,msg):
         gs_msg = msg # gs_msg <= global_state_msg
@@ -131,20 +156,7 @@ class CrazyflieEnv:
         ## COMBINE INTO COMPREHENSIVE LIST
         self.state_current = [t] + position + orientation_q +velocity + omega ## t (float) -> [t] (list)
 
-    def rewardPub(self):
-        reward_Pub = rospy.Publisher('/rewards',Rewards,queue_size=10)
-        reward_msg = Rewards()
-        
-        reward_msg.k_ep = self.k_ep
-        reward_msg.k_run = self.k_run
-        reward_msg.reward = self.reward
-        reward_msg.reward_avg = self.reward_avg
-        reward_msg.n_rollouts = self.n_rollouts
-
-        rate = rospy.Rate(10) # 10 hz
-            
-        reward_Pub.publish(reward_msg)
-        
+    
 
         
         
@@ -157,10 +169,6 @@ class CrazyflieEnv:
     # ============================
 
 
-    def lsrThread(self): # Thread for recieving laser scan messages
-        print('[STARTING] Laser distance thread is starting...')
-        self.laser_sub = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
-        rospy.spin()
 
     def scan_callback(self,data): # callback function for laser subsriber
         self.laser_msg = data

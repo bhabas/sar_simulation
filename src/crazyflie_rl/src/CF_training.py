@@ -37,6 +37,7 @@ def runTrial(vx_d,vz_d):
     ##          Episode         
     # ============================
     for k_ep in range(0,500):
+        env.k_ep = k_ep
 
         np.set_printoptions(precision=2, suppress=True)
 
@@ -75,6 +76,7 @@ def runTrial(vx_d,vz_d):
         # ============================
         k_run = 0 # Reset run counter each episode
         while k_run < agent.n_rollouts:
+            env.k_run = k_run
 
 
             ## RESET TO INITIAL STATE
@@ -251,12 +253,7 @@ def runTrial(vx_d,vz_d):
             
             else:
                 ## UPDATE PUBLISHED REWARD VARIABLES
-                env.n_rollouts = agent.n_rollouts*2
-                env.k_ep = k_ep
-                env.k_run = k_run
-                env.reward = reward[k_run,0]
-                env.reward_avg = np.mean(reward[:k_run+1,0])
-                env.rewardPub()
+
 
                 k_run += 1 # Move on to next run
 

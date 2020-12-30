@@ -53,7 +53,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  Rewards.msg
+  RLData.msg
   # Message2.msg
 )
 
@@ -112,7 +112,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES mypkg
-#  CATKIN_DEPENDS gazebo_msgs geometry_msgs nav_msgs roscpp rospy std_msgs
+  CATKIN_DEPENDS gazebo_msgs geometry_msgs nav_msgs roscpp rospy std_msgs
 #  DEPENDS system_lib
 )
 
