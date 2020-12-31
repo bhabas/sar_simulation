@@ -66,8 +66,10 @@ class CrazyflieEnv:
 
         self.trial_name = ''
         self.agent = ''
+
         self.n_rollouts = 0
         self.gamma = 0
+        self.h_ceiling = 0
 
         self.flip_flag = False
         self.runComplete_flag = False
@@ -120,8 +122,10 @@ class CrazyflieEnv:
         msg.logging_flag = self.logging_flag
         msg.flip_flag = self.flip_flag
         msg.runComplete_flag = self.runComplete_flag
+
         msg.n_rollouts = self.n_rollouts
         msg.gamma = self.gamma
+        msg.h_ceiling = self.h_ceiling
 
 
         msg.k_ep = self.k_ep

@@ -139,7 +139,7 @@ def runTrial(vx_d,vz_d):
                 vel = state[8:11] # [vx,vy,vz]
                 vx,vy,vz = vel
                 omega = state[11:14] # [wx,wy,wz]
-                d = h_ceiling - position[2] # Vertical distance of drone from ceiling
+                d = env.h_ceiling - position[2] # Vertical distance of drone from ceiling
 
                 ## ORIENTATION DATA FROM STATE
                 qw,qx,qy,qz = orientation_q
@@ -180,7 +180,7 @@ def runTrial(vx_d,vz_d):
                 if state_history is None:
                     state_history = state 
                 else:
-                    if t_step%10==0: # Append state_history columns with current state vector 
+                    if t_step%1==0: # Append state_history columns with current state vector 
                         state_history = np.append(state_history, state, axis=1)
                         env.RL_Publish()
 
@@ -240,7 +240,7 @@ def runTrial(vx_d,vz_d):
                     env.step('stop')
                     env.reset_pos()
                     env.step('home',ctrl_flag=1)
-                    reward[k_run] = agent.calculate_reward(state_history,h_ceiling)
+                    reward[k_run] = agent.calculate_reward(state_history,env.h_ceiling)
                     env.reward = reward[k_run]
                     print("Reward = %.3f" %(reward[k_run]))
                     print("!------------------------End Run------------------------! \n")                    
@@ -272,13 +272,12 @@ def runTrial(vx_d,vz_d):
 
 if __name__ == '__main__':
 
+
+    ## SIM PARAMETERS
     env.n_rollouts = 10
     env.gamma = 0.95
     env.logging_flag = True
-
-
-    ## SIM PARAMETERS
-    h_ceiling = 2.0 # [m]
+    env.h_ceiling = 2.0 # [m]
 
 
     # ============================

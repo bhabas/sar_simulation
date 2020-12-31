@@ -59,6 +59,7 @@ class DataLoggingNode:
         self.orientation_q = np.round(self.orientation_q,3)
         self.velocity = np.round(self.velocity,3)
         self.omega = np.round(self.omega,3)
+        
 
 
 
@@ -72,6 +73,7 @@ class DataLoggingNode:
         
         self.n_rollouts = rl_msg.n_rollouts
         self.gamma = np.round(rl_msg.gamma,2)
+        self.h_ceiling = rl_msg.h_ceiling
         
         self.k_ep = rl_msg.k_ep
         self.k_run = rl_msg.k_run
@@ -95,6 +97,16 @@ class DataLoggingNode:
         self.omega_d = np.round(self.omega_d,2)
 
         self.reward = np.round(rl_msg.reward,3)
+
+
+        ## TEMP SENSOR VALUES
+        self.RREV = self.velocity[2]/(rl_msg.h_ceiling-self.position[2]) # Vz/(h_ceiling - z)
+        self.OF_x = self.velocity[1]/(rl_msg.h_ceiling-self.position[2]) # Vy/(h_ceiling - z)
+        self.OF_y = self.velocity[0]/(rl_msg.h_ceiling-self.position[2]) # Vx/(h_ceiling - z)
+
+        self.RREV = np.round(self.RREV,2)
+        self.OF_x = np.round(self.OF_x,2)
+        self.OF_y = np.round(self.OF_y,2)
 
 
 
@@ -132,7 +144,7 @@ class DataLoggingNode:
                 'alpha_mu','alpha_sig',
                 'mu','sigma', 'policy',
                 't','x','y','z',
-                'qx','qy','qz','qw',
+                'qw','qx','qy','qz',
                 'vx','vy','vz',
                 'wx','wy','wz',
                 'gamma','reward','flip_trigger','n_rollouts',
@@ -153,7 +165,7 @@ class DataLoggingNode:
                 self.velocity[0],self.velocity[1],self.velocity[2], # vx,vy,vz
                 self.omega[0],self.omega[1],self.omega[2], # wx,wy,wz
                 "","",self.flip_flag,"", # gamma, reward, flip_triggered, n_rollout
-                "RREV","OF_x","OF_y", # RREV, OF_x, OF_y
+                self.RREV,self.OF_x,self.OF_y, # RREV, OF_x, OF_y
                 "","","","", # Place holders
                 ]) 
         
