@@ -84,6 +84,9 @@ class CrazyflieEnv:
 
         self.reward = 0
 
+        self.omega_d = [0,0,0]
+        self.vel_d = [0,0,0]
+
         
         
         
@@ -134,6 +137,9 @@ class CrazyflieEnv:
         msg.policy = self.policy
 
         msg.reward = self.reward
+
+        msg.vel_d = self.vel_d
+        msg.omega_d = self.omega_d
 
         self.RL_Publisher.publish(msg)
      

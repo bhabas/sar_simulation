@@ -50,7 +50,6 @@ def runTrial(vx_d,vz_d):
 
         mu = agent.mu # Mean for Gaussian distribution
         sigma = agent.sigma # Standard Deviation for Gaussian distribution
-        omega_d = [0,0,0] # Junk declaration to cleanup warning or possible error
 
 
         reward = np.zeros(shape=(agent.n_rollouts,1))
@@ -100,7 +99,7 @@ def runTrial(vx_d,vz_d):
             # vz_d = np.random.uniform(low=2.5, high=3.0)
             # vx_d = np.random.uniform(low=-2.0, high=2.0)
             vy_d = 0 
-            v_d = [vx_d,vy_d,vz_d] # [m/s]
+            env.vel_d = [vx_d,vy_d,vz_d] # [m/s]
 
 
             ## INIT RUN FLAGS
@@ -127,7 +126,7 @@ def runTrial(vx_d,vz_d):
             # ============================
 
             env.step('pos',ctrl_flag=0) # Turn off pos control
-            env.step('vel',v_d,ctrl_flag=1) # Set desired vel
+            env.step('vel',env.vel_d,ctrl_flag=1) # Set desired vel
             
             
             while True:
@@ -161,7 +160,7 @@ def runTrial(vx_d,vz_d):
                     omega_xd = 0.0
                     omega_zd = 0.0
 
-                    omega_d = [omega_xd,omega_yd,omega_zd]
+                    env.omega_d = [omega_xd,omega_yd,omega_zd]
 
                     print('----- pitch starts -----')
                     print('vx=%.3f, vy=%.3f, vz=%.3f' %(vx,vy,vz))
@@ -169,7 +168,7 @@ def runTrial(vx_d,vz_d):
                     print("Pitch Time: %.3f" %start_time_pitch)
 
                     ## Start rotation and mark rotation as triggered
-                    env.step('omega',omega_d,ctrl_flag=1) # Set desired ang. vel 
+                    env.step('omega',env.omega_d,ctrl_flag=1) # Set desired ang. vel 
                     env.flip_flag = True
 
                 # ============================
@@ -240,12 +239,11 @@ def runTrial(vx_d,vz_d):
 
                     env.step('stop')
                     env.reset_pos()
+                    env.step('home',ctrl_flag=1)
                     reward[k_run] = agent.calculate_reward(state_history,h_ceiling)
                     env.reward = reward[k_run]
                     print("Reward = %.3f" %(reward[k_run]))
-                    print("!------------------------End Run------------------------! \n")
-
-                    
+                    print("!------------------------End Run------------------------! \n")                    
                     break
 
                 t_step += 1
@@ -292,16 +290,18 @@ if __name__ == '__main__':
     alpha_sigma = np.array([[0.05]])
 
     ## Initial parameters for gaussian function
-    mu = np.array([[6.0],[6.0],[6.0] ])# Initial estimates of mu: 
-    sigma = np.array([[1.5],[1.5],[1.5] ]) # Initial estimates of sigma: 
+    mu = np.array([[6.0],[6.0],[6.0]])# Initial estimates of mu: 
+    sigma = np.array([[1.5],[1.5],[1.5]]) # Initial estimates of sigma: 
 
 
 
     # agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollouts=6)
     # agent = rlsysPEPGAgent_adaptive(alpha_mu,alpha_sigma,mu,sigma,n_rollouts=6)
-
     agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=6)
     # agent = rlEM_AdaptiveAgent(mu,sigma,n_rollouts=6) # Not working
+
+
+    
 
     vx_d = 1.0
     vz_d = 3.0

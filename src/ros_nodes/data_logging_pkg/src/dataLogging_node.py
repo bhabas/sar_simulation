@@ -65,8 +65,6 @@ class DataLoggingNode:
         self.trial_name = rl_msg.trial_name
         self.agent = rl_msg.agent
 
-
-
         self.logging_flag = rl_msg.logging_flag
         self.flip_flag = rl_msg.flip_flag
         self.runComplete_flag = rl_msg.runComplete_flag
@@ -83,6 +81,8 @@ class DataLoggingNode:
         self.mu = np.asarray(rl_msg.mu)
         self.sigma = np.asarray(rl_msg.sigma)
         self.policy = np.asarray(rl_msg.policy)
+        self.vel_d = np.asarray(rl_msg.vel_d)
+        self.omega_d = np.asarray(rl_msg.omega_d)
 
         ## TRIM RL VALUES FOR CSV
         self.alpha_mu = np.round(self.alpha_mu,2)
@@ -90,7 +90,8 @@ class DataLoggingNode:
         self.mu = np.round(self.mu,2)
         self.sigma = np.round(self.sigma,2)
         self.policy = np.round(self.policy,2)
-
+        self.vel_d = np.round(self.vel_d,2)
+        self.omega_d = np.round(self.omega_d,2)
 
         self.reward = np.round(rl_msg.reward,3)
 
@@ -166,8 +167,8 @@ class DataLoggingNode:
                 self.mu,self.sigma,self.policy, # mu,sigma,policy
                 "","","","", # t,x,y,z
                 "", "", "", "", # qx,qy,qz,qw
-                "vdx","vdy","vdz", # vx,vy,vz
-                "wdx","wdy","wdz", # wx,wy,wz
+                self.vel_d[0],self.vel_d[1],self.vel_d[2], # vx,vy,vz
+                self.omega_d[0],self.omega_d[1],self.omega_d[2], # wx,wy,wz
                 self.gamma,self.reward,"",self.n_rollouts, # gamma, reward, flip_triggered, n_rollout
                 "","","", # RREV, OF_x, OF_y
                 "","","","", # Place holders Include successful run flag
