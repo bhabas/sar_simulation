@@ -40,6 +40,7 @@ class DataLoggingNode:
         t_temp = gs_msg.header.stamp.secs
         ns_temp = gs_msg.header.stamp.nsecs
         self.t = t_temp+ns_temp*1e-9 # (seconds + nanoseconds)
+        self.t = np.round(self.t,3)
         
         ## SIMPLIFY STATE VALUES FROM GLOBAL_STATE TOPIC
         global_pos = gs_msg.global_pose.position

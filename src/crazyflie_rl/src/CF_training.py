@@ -180,7 +180,7 @@ def runTrial(vx_d,vz_d):
                 if state_history is None:
                     state_history = state 
                 else:
-                    if t_step%10==0: # Append state_history columns with current state2 vector 
+                    if t_step%10==0: # Append state_history columns with current state vector 
                         state_history = np.append(state_history, state, axis=1)
                         env.RL_Publish()
 

@@ -16,7 +16,7 @@ def global_state_publisher():
     ## INIT NODE AND PUBLISHER
     rospy.init_node('global_state_pub', anonymous=True)
     pub = rospy.Publisher('/global_state', GlobalState, queue_size=10)
-    rate = rospy.Rate(100,reset=True) # This runs at 100hz in simulation time
+    rate = rospy.Rate(200,reset=True) # This runs at 100hz in simulation time
 
 
     ## WAIT AND INIT SERVICE REQUEST
