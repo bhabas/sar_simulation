@@ -34,10 +34,11 @@ print("Environment done")
 
 
 def runTrial(vx_d,vz_d):
+    
     # ============================
     ##          Episode         
     # ============================
-    for k_ep in range(0,500):
+    for k_ep in range(0,3):
         env.k_ep = k_ep
 
         env.mu = agent.mu.flatten().tolist()
@@ -183,6 +184,7 @@ def runTrial(vx_d,vz_d):
                     if t_step%1==0: # Append state_history columns with current state vector 
                         state_history = np.append(state_history, state, axis=1)
                         env.RL_Publish()
+                        env.createCSV_flag = False
 
 
                 # ============================
@@ -274,7 +276,7 @@ if __name__ == '__main__':
 
 
     ## SIM PARAMETERS
-    env.n_rollouts = 10
+    env.n_rollouts = 4
     env.gamma = 0.95
     env.logging_flag = True
     env.h_ceiling = 2.0 # [m]
@@ -296,7 +298,7 @@ if __name__ == '__main__':
 
     # agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollouts=6)
     # agent = rlsysPEPGAgent_adaptive(alpha_mu,alpha_sigma,mu,sigma,n_rollouts=6)
-    agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=6)
+    agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=env.n_rollouts)
     # agent = rlEM_AdaptiveAgent(mu,sigma,n_rollouts=6) # Not working
 
 
@@ -305,15 +307,26 @@ if __name__ == '__main__':
     vx_d = 1.0
     vz_d = 3.0
     trial_num = 1
-    env.trial_name = f"Vz_{vz_d}--Vx_{vx_d}--trial_{trial_num}.csv"
     env.agent = "EM_PEPG"
+    
+
 
     while True:
+        env.trial_name = f"Vz_{vz_d}--Vx_{vx_d}--trial_{trial_num}"
         try:
+            ## SEND MSG WHICH INCLUDES VARIABLE TO START NEW CSV
+            env.createCSV_flag = True
+            env.RL_Publish()
+
+            ## RUN TRIAL AND RESTART GAZEBO FOR NEXT TRIAL RUN (NOT NECESSARY BUT MIGHT BE A GOOD IDEA?)
             runTrial(vx_d,vz_d)
             env.relaunch_sim()
+            continue
+        ## IF SIM EXCEPTION RAISED THEN CONTINUE BACK TO TRY BLOCK UNTIL IT COMPLETES
         except:
             continue
+
+
         break
     
 

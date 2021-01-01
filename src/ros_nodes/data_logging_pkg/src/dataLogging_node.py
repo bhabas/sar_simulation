@@ -1,4 +1,5 @@
 import rospy
+import getpass
 import message_filters
 from threading import Thread
 
@@ -18,7 +19,7 @@ class DataLoggingNode:
 
         self.t_step = 0
         self.k_run_temp = 0
-        self.create_flag = True
+        self.createCSV_flag = True
         self.logging_flag = True
 
         self.StateSub = message_filters.Subscriber("/global_state",GlobalState)
@@ -26,13 +27,12 @@ class DataLoggingNode:
         self.atsSub()
 
 
-
     def atsSub(self):
-        ats = message_filters.ApproximateTimeSynchronizer([self.StateSub,self.RLSub],queue_size=5,slop=0.1)
+        ats = message_filters.ApproximateTimeSynchronizer([self.RLSub,self.StateSub],queue_size=5,slop=0.01)
         ats.registerCallback(self.csvWriter)
         rospy.spin()
 
-    def csvWriter(self,gs_msg,rl_msg):
+    def csvWriter(self,rl_msg,gs_msg):
 
         self.t_step += 1
         
@@ -68,6 +68,7 @@ class DataLoggingNode:
         self.agent = rl_msg.agent
 
         self.logging_flag = rl_msg.logging_flag
+        self.createCSV_flag = rl_msg.createCSV_flag
         self.flip_flag = rl_msg.flip_flag
         self.runComplete_flag = rl_msg.runComplete_flag
         
@@ -109,14 +110,16 @@ class DataLoggingNode:
         self.OF_y = np.round(self.OF_y,2)
 
 
+        
+        username = getpass.getuser()
+        self.path =  f"/home/{username}/catkin_ws/src/crazyflie_simulation/src/ros_nodes/data_logging_pkg/log/{self.trial_name}.csv"
+
 
 
         if self.logging_flag == True:
 
-            # if self.trial_name != rl_msg.trial_name:
-            if self.create_flag == True:
-                self.create_csv()
-                self.create_flag = False
+            if self.createCSV_flag == True:
+                self.create_csv()  
 
             if self.k_run_temp != rl_msg.k_run: # When k_run changes then add blank row
                 self.append_csv_blank()
@@ -135,7 +138,7 @@ class DataLoggingNode:
 
 
     def create_csv(self):
-        self.path =  "/home/bhabas/catkin_ws/src/crazyflie_simulation/src/ros_nodes/data_logging_pkg/log/test.csv"
+        
 
         with open(self.path,mode='w') as state_file:
             state_writer = csv.writer(state_file,delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)

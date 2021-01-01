@@ -74,6 +74,7 @@ class CrazyflieEnv:
         self.flip_flag = False
         self.runComplete_flag = False
         self.logging_flag = False
+        self.createCSV_flag = False
 
         self.k_run = 0
         self.k_ep = 0
@@ -120,6 +121,7 @@ class CrazyflieEnv:
         msg.agent = self.agent
 
         msg.logging_flag = self.logging_flag
+        msg.createCSV_flag = self.createCSV_flag
         msg.flip_flag = self.flip_flag
         msg.runComplete_flag = self.runComplete_flag
 
