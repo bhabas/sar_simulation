@@ -41,6 +41,7 @@ def runTrial(vx_d,vz_d):
     for k_ep in range(0,3):
         env.k_ep = k_ep
 
+        ## CONVERT AGENT ARRAYS TO LISTS FOR PUBLISHING
         env.mu = agent.mu.flatten().tolist()
         env.sigma = agent.sigma.flatten().tolist()
         env.alpha_mu = agent.alpha_mu.flatten().tolist()
@@ -52,7 +53,7 @@ def runTrial(vx_d,vz_d):
         mu = agent.mu # Mean for Gaussian distribution
         sigma = agent.sigma # Standard Deviation for Gaussian distribution
 
-
+        ## PREALLOCATE REWARD VEC AND OBTAIN THETA VALS
         reward = np.zeros(shape=(agent.n_rollouts,1))
         theta_rl,epsilon_rl = agent.get_theta()
 
@@ -84,7 +85,6 @@ def runTrial(vx_d,vz_d):
 
 
             ## RESET TO INITIAL STATE
-            
             env.step('home',ctrl_flag=1) # Reset control vals and functionality to default vals
             time.sleep(1.0) # Time for CF to settle
             
@@ -116,7 +116,7 @@ def runTrial(vx_d,vz_d):
             repeat_run= False
             error_str = ""
 
-
+            ## PRINT RUN CONDITIONS AND POLICY
             print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
             print("RREV: %.3f \t Gain_1: %.3f \t Gain_2: %.3f \t Gain_3: %.3f" %(RREV_trigger, G1, G2, 0))
             print("Vx_d: %.3f \t Vy_d: %.3f \t Vz_d: %.3f" %(vx_d, vy_d, vz_d))
@@ -125,7 +125,6 @@ def runTrial(vx_d,vz_d):
             # ============================
             ##          Rollout 
             # ============================
-
             env.step('pos',ctrl_flag=0) # Turn off pos control
             env.step('vel',env.vel_d,ctrl_flag=1) # Set desired vel
             
@@ -142,12 +141,11 @@ def runTrial(vx_d,vz_d):
                 omega = state[11:14] # [wx,wy,wz]
                 d = env.h_ceiling - position[2] # Vertical distance of drone from ceiling
 
-                ## ORIENTATION DATA FROM STATE
+                ## ORIENTATION DATA FROM STATE QUATERNION
                 qw,qx,qy,qz = orientation_q
                 R = Rotation.from_quat([qx,qy,qz,qw])
                 R = R.as_matrix() # [b1,b2,b3] Body vectors
-
-                RREV,OF_x,OF_y = vz/d, -vy/d, -vx/d # OF_x,y are estimated optical flow vals assuming no body rotation
+                RREV,OF_x,OF_y = vz/d, -vy/d, -vx/d # OF_x,y are mock optical flow vals assuming no body rotation
 
                 
                 # ============================
@@ -210,7 +208,7 @@ def runTrial(vx_d,vz_d):
                     error_str = error_1 + error_2
                     env.runComplete_flag = True
 
-                # If position falls below max height (There is a lag w/ this)
+                # If position falls below max achieved height 
                 z_max = max(position[2],z_max)
                 if position[2] <= 0.85*z_max:
                     error_1 = "Rollout Completed: Falling Drone"
@@ -236,7 +234,9 @@ def runTrial(vx_d,vz_d):
 
 
 
-
+                # ============================
+                ##       Run Completion  
+                # ============================
                 if env.runComplete_flag==True:
 
                     env.step('stop')
@@ -249,14 +249,14 @@ def runTrial(vx_d,vz_d):
                     break
 
                 t_step += 1
+
             
             ## =======  RUN COMPLETED  ======= ##
-
             if repeat_run == True:
                 env.relaunch_sim()
             
             else:
-                ## UPDATE PUBLISHED REWARD VARIABLES
+                ## PUBLISH UPDATED REWARD VARIABLES
 
                 env.reward = reward[k_run,0]
                 env.RL_Publish()
@@ -266,10 +266,8 @@ def runTrial(vx_d,vz_d):
         ## =======  EPISODE COMPLETED  ======= ##
         print("Episode # %d training, average reward %.3f" %(k_ep, np.mean(reward)))
         agent.train(theta_rl,reward,epsilon_rl)
-    
-        
-    
-## =======  MAX TRIALS COMPLETED  ======= ##
+       
+    ## =======  MAX TRIALS COMPLETED  ======= ##
 
 
 if __name__ == '__main__':
@@ -281,21 +279,16 @@ if __name__ == '__main__':
     env.logging_flag = True
     env.h_ceiling = 2.0 # [m]
 
-
-    # ============================
-    ##      Learning Agents
-    # ============================
-
-    ## Learning rate
+    ## LEARNING RATES
     alpha_mu = np.array([[0.1]])
     alpha_sigma = np.array([[0.05]])
 
-    ## Initial parameters for gaussian function
+    ## GAUSSIAN PARAMETERS
     mu = np.array([[6.0],[6.0],[6.0]])# Initial estimates of mu: 
     sigma = np.array([[1.5],[1.5],[1.5]]) # Initial estimates of sigma: 
 
 
-
+    ## LEARNING AGENTS
     # agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollouts=6)
     # agent = rlsysPEPGAgent_adaptive(alpha_mu,alpha_sigma,mu,sigma,n_rollouts=6)
     agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=env.n_rollouts)
@@ -303,15 +296,14 @@ if __name__ == '__main__':
 
 
     
-
+    ## INITIAL CONDITIONS
     vx_d = 1.0
     vz_d = 3.0
     trial_num = 1
     env.agent = "EM_PEPG"
     
-
-
     while True:
+
         env.trial_name = f"Vz_{vz_d}--Vx_{vx_d}--trial_{trial_num}"
         try:
             ## SEND MSG WHICH INCLUDES VARIABLE TO START NEW CSV
@@ -320,14 +312,12 @@ if __name__ == '__main__':
 
             ## RUN TRIAL AND RESTART GAZEBO FOR NEXT TRIAL RUN (NOT NECESSARY BUT MIGHT BE A GOOD IDEA?)
             runTrial(vx_d,vz_d)
-            env.relaunch_sim()
-            continue
-        ## IF SIM EXCEPTION RAISED THEN CONTINUE BACK TO TRY BLOCK UNTIL IT COMPLETES
-        except:
+        
+        except: ## IF SIM EXCEPTION RAISED THEN CONTINUE BACK TO TRY BLOCK UNTIL SUCCESSFUL COMPLETION
             continue
 
 
-        break
+        break ## BREAK FROM LOOP
     
 
 
