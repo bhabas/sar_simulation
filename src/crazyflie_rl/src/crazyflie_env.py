@@ -247,7 +247,7 @@ class CrazyflieEnv:
     def launch_sim(self):
        
         if getpass.getuser() == 'bhabas':
-            pyautogui.moveTo(x=2500,y=0) 
+            
 
             print("[STARTING] Starting Gazebo Process...")
             self.gazebo_p = subprocess.Popen( # Gazebo Process
