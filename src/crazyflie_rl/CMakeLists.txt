@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(gazebo_communication_pkg)
+project(crazyflie_rl)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -53,7 +53,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  GlobalState.msg
+  RLData.msg
   # Message2.msg
 )
 

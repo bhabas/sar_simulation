@@ -15,7 +15,8 @@ import csv
 
 from sensor_msgs.msg import LaserScan, Image, Imu
 from gazebo_communication_pkg.msg import GlobalState 
-from crazyflie_gazebo_sim.msg import Rewards
+from crazyflie_rl.msg import RLData
+from std_msgs.msg import Header 
 from rosgraph_msgs.msg import Clock
 from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState
@@ -54,37 +55,46 @@ class CrazyflieEnv:
         # if threads dont terminte when program is shut, you might need to use lsof to kill it
 
         
-        
 
+  
+        self.state_Subscriber = rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
+        self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
+        self.RL_Publisher = rospy.Publisher('/rl_data',RLData,queue_size=10)
+
+
+
+
+        self.trial_name = ''
+        self.agent = ''
+
+        self.n_rollouts = 0
+        self.gamma = 0
+        self.h_ceiling = 0
+
+        self.flip_flag = False
+        self.runComplete_flag = False
+        self.logging_flag = False
+        self.createCSV_flag = False
 
         self.k_run = 0
         self.k_ep = 0
+
+        self.alpha_mu = []
+        self.alpha_sigma = []
+        self.mu = []
+        self.sigma = []
+        self.policy = []
+
         self.reward = 0
-        self.reward_avg = 0
-        self.n_rollouts = 0
 
-
-
-  
-        self.global_stateThread = Thread(target=self.global_stateSub,args=())
-        self.global_stateThread.daemon=True
-        self.global_stateThread.start()
+        self.omega_d = [0,0,0]
+        self.vel_d = [0,0,0]
 
         
-        self.rewardThread = Thread(target=self.rewardPub,args=())
-        self.rewardThread.daemon=True
-        self.rewardThread.start()
         
-
-
-        # Start Laser data reciever thread
-        self.laserThread = Thread(target=self.lsrThread, args=())
-        self.laserThread.daemon=True
-        self.laserThread.start()
-
+        
 
         self.timeoutThread = Thread(target=self.timeoutSub)
-        self.timeoutThread.daemon=True
         self.timeoutThread.start()
 
 
@@ -100,9 +110,50 @@ class CrazyflieEnv:
     ##   Publishers/Subscribers 
     # ============================
 
-    def global_stateSub(self): # Subscriber for receiving global state info
-        self.state_Sub = rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
-        rospy.spin()
+
+    def RL_Publish(self):
+
+        msg = RLData()
+        header = Header()
+
+        msg.header.stamp = rospy.Time.now()
+        msg.trial_name = self.trial_name
+        msg.agent = self.agent
+
+        msg.logging_flag = self.logging_flag
+        msg.createCSV_flag = self.createCSV_flag
+        msg.flip_flag = self.flip_flag
+        msg.runComplete_flag = self.runComplete_flag
+
+        msg.n_rollouts = self.n_rollouts
+        msg.gamma = self.gamma
+        msg.h_ceiling = self.h_ceiling
+
+
+        msg.k_ep = self.k_ep
+        msg.k_run = self.k_run
+
+        msg.alpha_mu = self.alpha_mu
+        msg.alpha_sigma = self.alpha_sigma
+
+        
+
+        msg.mu = self.mu
+        msg.sigma = self.sigma
+        msg.policy = self.policy
+
+        msg.reward = self.reward
+
+        msg.vel_d = self.vel_d
+        msg.omega_d = self.omega_d
+
+        self.RL_Publisher.publish(msg)
+     
+
+
+        
+        
+      
 
     def global_stateCallback(self,msg):
         gs_msg = msg # gs_msg <= global_state_msg
@@ -131,20 +182,7 @@ class CrazyflieEnv:
         ## COMBINE INTO COMPREHENSIVE LIST
         self.state_current = [t] + position + orientation_q +velocity + omega ## t (float) -> [t] (list)
 
-    def rewardPub(self):
-        reward_Pub = rospy.Publisher('/rewards',Rewards,queue_size=10)
-        reward_msg = Rewards()
-        
-        reward_msg.k_ep = self.k_ep
-        reward_msg.k_run = self.k_run
-        reward_msg.reward = self.reward
-        reward_msg.reward_avg = self.reward_avg
-        reward_msg.n_rollouts = self.n_rollouts
-
-        rate = rospy.Rate(10) # 10 hz
-            
-        reward_Pub.publish(reward_msg)
-        
+    
 
         
         
@@ -157,10 +195,6 @@ class CrazyflieEnv:
     # ============================
 
 
-    def lsrThread(self): # Thread for recieving laser scan messages
-        print('[STARTING] Laser distance thread is starting...')
-        self.laser_sub = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
-        rospy.spin()
 
     def scan_callback(self,data): # callback function for laser subsriber
         self.laser_msg = data
@@ -176,6 +210,11 @@ class CrazyflieEnv:
     # ============================
     ##       Sim Operation
     # ============================
+
+    def relaunch_sim(self):
+        self.close_sim()
+        time.sleep(1)
+        self.launch_sim()
 
     def close_sim(self):
         os.killpg(self.controller_p.pid, signal.SIGTERM)
@@ -212,25 +251,25 @@ class CrazyflieEnv:
 
             print("[STARTING] Starting Gazebo Process...")
             self.gazebo_p = subprocess.Popen( # Gazebo Process
-                "gnome-terminal --disable-factory  -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/utility/launch_gazebo.bash", 
+                "gnome-terminal --disable-factory  -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_gazebo.bash", 
                 close_fds=True, preexec_fn=os.setsid, shell=True)
             time.sleep(5)
 
             print("[STARTING] Starting Controller Process...")
             self.controller_p = subprocess.Popen( # Controller Process
-                "gnome-terminal --disable-factory --geometry 81x33 -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/utility/launch_controller.bash", 
+                "gnome-terminal --disable-factory --geometry 81x33 -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_controller.bash", 
                 close_fds=True, preexec_fn=os.setsid, shell=True)
 
         else:
             print("[STARTING] Starting Gazebo Process...")
             self.gazebo_p = subprocess.Popen( # Gazebo Process
-                "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/utility/launch_gazebo.bash", 
+                "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_gazebo.bash", 
                 close_fds=True, preexec_fn=os.setsid, shell=True)
             time.sleep(5)
 
             print("[STARTING] Starting Controller Process...")
             self.controller_p = subprocess.Popen( # Controller Process
-                "gnome-terminal --disable-factory --geometry 81x33 -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/utility/launch_controller.bash", 
+                "gnome-terminal --disable-factory --geometry 81x33 -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_controller.bash", 
                 close_fds=True, preexec_fn=os.setsid, shell=True)
 
     def launch_dashboard(self):
@@ -334,100 +373,39 @@ class CrazyflieEnv:
 
    
 
-
-
-   
-
-    
-
-    # ============================
-    ##       Data Recording 
-    # ============================
-    def create_csv(self,file_name,record=False):
-        self.file_name = file_name
-        self.record = record
-
-        if self.record == True:
-            with open(self.file_name, mode='w') as state_file:
-                state_writer = csv.writer(state_file, delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                state_writer.writerow([
-                'k_ep','k_run',
-                'alpha_mu','alpha_sig',
-                'mu','sigma', 'policy',
-                't','x','y','z',
-                'qx','qy','qz','qw',
-                'vx','vy','vz',
-                'wx','wy','wz',
-                'gamma','reward','flip_trigger','n_rollouts',
-                'RREV','OF_x','OF_y',"","","","", # Place holders
-                'error'])
-
-    def IC_csv(self,agent,state,k_ep,k_run,policy,v_d,omega_d,reward,error_str):
-        if self.record == True:
-            with open(self.file_name, mode='a') as state_file:
-                state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                state_writer.writerow([
-                    k_ep,k_run,
-                    agent.alpha_mu.T,agent.alpha_sigma.T,
-                    agent.mu.T,agent.sigma.T,policy.T,
-                    "","","","", # t,x,y,z
-                    "", "", "", "", # qx,qy,qz,qw
-                    v_d[0],v_d[1],v_d[2], # vx,vy,vz
-                    omega_d[0],omega_d[1],omega_d[2], # wx,wy,wz
-                    agent.gamma,np.around(reward,2),"",agent.n_rollout,
-                    "","","", # Sensor readings
-                    "","","","", # Place holders
-                    error_str])
-
-
-    def append_csv(self,agent,state,k_ep,k_run,sensor,flip_triggered):
-        if self.record == True:
-            state = np.around(state,3)
-            sensor = np.around(sensor,3)
-
-            with open(self.file_name, mode='a') as state_file:
-                state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                state_writer.writerow([
-                    k_ep,k_run,
-                    "","", # alpha_mu,alpha_sig
-                    "","","", # mu,sig,policy
-                    state[0],state[1],state[2],state[3], # t,x,y,z
-                    state[4], state[5], state[6], state[7], # qx,qy,qz,qw
-                    state[8], state[9],state[10], # vx,vy,vz
-                    state[11],state[12],state[13], # wx,wy,wz
-                    "","",flip_triggered,"", # gamma, reward, flip_triggered, n_rollout
-                    sensor[0],sensor[1],sensor[2],
-                    "","","","", # Place holders
-                    ""]) # error
-
-
-    def append_csv_blank(self): 
-        if self.record == True:
-            with open(self.file_name, mode='a') as state_file:
-                state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                state_writer.writerow([])
-
-
-
     # ============================
     ##      Timeout Functions 
     # ============================
 
-    
     # Subscriber thread listens to /clock for any message
     def timeoutSub(self):
+        ## START INITIAL TIMERS
+        self.timer_unpause = Timer(5,self.timeout_unpause)
+        self.timer_relaunch = Timer(10,self.timeout_relaunch)
+        ## START ROS CREATED THREAD FOR SUBSCRIBER
         rospy.Subscriber("/clock",Clock,self.timeoutCallback)
-        self.timer = Timer(5,self.timeout)
+        ## END FUNCTION, THIS MIGHT NOT NEED TO BE THREADED?
 
-    # If message is received reset the threading.Timer thread
-    def timeoutCallback(self,msg):
-        self.timer.cancel()
-        self.timer = Timer(5,self.timeout)
-        self.timer.start()
     
-    # If no message in 5 seconds then close and relaunch sim
-    def timeout(self):
-        print("[RESTARTING] No Gazebo communication in 5 seconds")
+    # If message is received reset the threading.Timer threads
+    def timeoutCallback(self,msg):
+        ## RESET TIMER THAT ATTEMPTS TO UNPAUSE SIM
+        self.timer_unpause.cancel()
+        self.timer_unpause = Timer(5,self.timeout_unpause)
+        self.timer_unpause.start()
+
+        ## RESET TIMER THAT RELAUNCHES SIM
+        self.timer_relaunch.cancel()
+        self.timer_relaunch = Timer(10,self.timeout_relaunch)
+        self.timer_relaunch.start()
+    
+
+    def timeout_unpause(self):
+        print("[UNPAUSING] No Gazebo communication in 5 seconds")
+        os.system("rosservice call gazebo/unpause_physics")
+
+    def timeout_relaunch(self):
+        print("[RELAUNCHING] No Gazebo communication in 10 seconds")
         self.close_sim()
         time.sleep(1)
         self.launch_sim()

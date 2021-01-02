@@ -1595,6 +1595,15 @@
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
 
+    <!-- <plugin name="imu_plugin" filename="libgazebo_ros_imu.so">
+      <alwaysOn>true</alwaysOn>
+      <bodyName>crazyflie_body</bodyName>
+      <topicName>imu</topicName>
+      <serviceName>imu_service</serviceName>
+      <gaussianNoise>0.0</gaussianNoise>
+      <updateRate>20.0</updateRate>
+    </plugin> -->
+
     <plugin name='front_left_motor_model' filename='libgazebo_motor_model.so'>
       <robotNamespace/>
       <jointName>rotor_1_joint</jointName>

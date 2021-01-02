@@ -16,7 +16,7 @@ def global_state_publisher():
     ## INIT NODE AND PUBLISHER
     rospy.init_node('global_state_pub', anonymous=True)
     pub = rospy.Publisher('/global_state', GlobalState, queue_size=10)
-    rate = rospy.Rate(100) # This runs at 100hz in simulation time
+    rate = rospy.Rate(200,reset=True) # This runs at 100hz in simulation time
 
 
     ## WAIT AND INIT SERVICE REQUEST
@@ -26,7 +26,7 @@ def global_state_publisher():
     ## INIT MSG FORMATS
     state_msg = GlobalState() # state_msg is in format of GlobalState.msg
     header = Header() # header is in format of std_msgs/Header
-    header.frame_id='Gazebo_Globalexcept rospy.ROSInterruptException:_State'
+    header.frame_id='Gazebo_GlobalState'
 
     link_msg = GetLinkStateRequest() 
 

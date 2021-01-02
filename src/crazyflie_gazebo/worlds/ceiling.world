@@ -17,7 +17,7 @@
     <!-- Default camera pose -->
     <gui>
       <camera name="user_camera">
-          <pose frame=''>0.0 -3.0 1.2 0 0.12 1.57</pose>
+          <pose frame=''>0.0 -4.5 1.5 0 0.12 1.57</pose>
           <!-- <pose>my custom pose as a six-tuple(x,y,z,roll,pitch,yaw)</pose> -->
       </camera>
     </gui>
@@ -43,11 +43,13 @@
 
       <ode>
         <solver>
-          <type>quick</type>
-          <iters>750</iters>
-          <sor>1.3</sor>
-          <use_dynamic_moi_rescaling>0</use_dynamic_moi_rescaling>
+          <type>quick</type> <!-- http://gazebosim.org/tutorials?tut=physics_params&cat=physics -->
+          <iters>750</iters> <!-- Used only by quick solver type -->
+          <sor>1.3</sor> <!-- Used only by quick solver type -->
+          <use_dynamic_moi_rescaling>0</use_dynamic_moi_rescaling> <!-- Used only by quick solver type -->
         </solver>
+
+
         <constraints>
           <cfm>0.1</cfm>
           <erp>0.2</erp>
@@ -56,7 +58,7 @@
         </constraints>
       </ode>
       
-      <max_step_size>0.004</max_step_size>
+      <max_step_size>0.002</max_step_size>
       <real_time_factor>0</real_time_factor>
       <real_time_update_rate>0</real_time_update_rate>
 
