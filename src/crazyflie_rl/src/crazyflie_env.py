@@ -285,7 +285,7 @@ class CrazyflieEnv:
         self.enableSticky(0)
 
         state_msg = ModelState()
-        state_msg.model_name = 'crazyflie_model'
+        state_msg.model_name = 'crazyflie_model_X'
         state_msg.pose.position.x = 0
         state_msg.pose.position.y = 0
         state_msg.pose.position.z = 0.0
