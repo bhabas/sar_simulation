@@ -38,7 +38,7 @@ def runTrial(vx_d,vz_d):
     # ============================
     ##          Episode         
     # ============================
-    for k_ep in range(0,3):
+    for k_ep in range(0,500):
         env.k_ep = k_ep
 
         ## CONVERT AGENT ARRAYS TO LISTS FOR PUBLISHING
@@ -274,7 +274,7 @@ if __name__ == '__main__':
 
 
     ## SIM PARAMETERS
-    env.n_rollouts = 4
+    env.n_rollouts = 10
     env.gamma = 0.95
     env.logging_flag = True
     env.h_ceiling = 2.0 # [m]

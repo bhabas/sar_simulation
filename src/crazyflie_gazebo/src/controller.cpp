@@ -614,10 +614,10 @@ void Controller::controlThread()
             else if(isnan(motorspeed_Vec(k_motor))){
                 motorspeed_Vec(k_motor) = 0;
             }
-            else if(motorspeed_Vec(k_motor)>= 2500){ // Max rotation speed (rad/s)
-                // cout << "Motorspeed capped - Motor: " << k_motor << endl;
-                motorspeed_Vec(k_motor) = 2500;
-            }
+            // else if(motorspeed_Vec(k_motor)>= 2500){ // Max rotation speed (rad/s)
+            //     // cout << "Motorspeed capped - Motor: " << k_motor << endl;
+            //     motorspeed_Vec(k_motor) = 2500;
+            // }
         }
 
         if(b3(2) <= 0){ // If e3 component of b3 is neg, turn motors off [arbitrary amount]

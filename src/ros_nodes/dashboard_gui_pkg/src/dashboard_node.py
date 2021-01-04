@@ -2,7 +2,7 @@ import rospy
 from threading import Thread
 
 from gazebo_communication_pkg.msg import GlobalState
-from crazyflie_gazebo_sim.msg import Rewards
+from crazyflie_rl.msg import RLData
 
 class DashboardNode:
     def __init__(self):
@@ -16,7 +16,7 @@ class DashboardNode:
         self.k_run = 0
         self.k_ep = 0
         self.reward = 0
-        self.reward_avg = 0
+        
 
         ## INITIALIZE GLOBAL STATE SUBSCRIBER THREAD
         self.global_stateThread = Thread(target=self.global_stateSub,args=())
@@ -34,7 +34,7 @@ class DashboardNode:
     ##     Reward Subscriber
     # ============================
     def rewardSub(self):
-        rospy.Subscriber('/rewards',Rewards,self.rewardCallback)
+        rospy.Subscriber('/rl_data',RLData,self.rewardCallback)
         rospy.spin()
 
     def rewardCallback(self,data):
@@ -44,7 +44,6 @@ class DashboardNode:
         self.k_run = reward_msg.k_run
         self.k_ep = reward_msg.k_ep
         self.reward = reward_msg.reward
-        self.reward_avg = reward_msg.reward_avg
         self.n_rollouts = reward_msg.n_rollouts
 
 
