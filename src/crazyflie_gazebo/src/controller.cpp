@@ -342,13 +342,18 @@ void Controller::controlThread()
     
     // Controller Values
     Vector4d Ctrl_Gains; 
-    double kp_x = 0.1;   // Pos. Gain
-    double kd_x = 0.08;  // Pos. derivative Gain
-    double ki_x = 0.05*0; // Pos. integral Gain
-    double kp_R = 0.05;  // Rot. Gain // Keep checking rotational speed
-    double kd_R = 0.006; // Rot. derivative Gain
+    // double kp_x = 0.1;   // Pos. Gain
+    // double kd_x = 0.08;  // Pos. derivative Gain
+    // double kp_R = 0.05;  // Rot. Gain // Keep checking rotational speed
+    // double kd_R = 0.006; // Rot. derivative Gain
 
     double kp_omega = 0.0005; 
+
+    Vector3d kp_x(0.1,0.1,0.1);
+    Vector3d kd_x(0.08,0.08,0.08);
+    Vector3d kp_R(0.05,0.05,0.05);
+    Vector3d kd_R(0.006,0.006,0.006);
+
     // Omega proportional gain (similar to kd_R but that's for damping and this is to achieve omega_d)
     // (0.0003 Fully saturates motors to get to omega_max (40 rad/s))
     // kd_R is great for stabilization but for flip manuevers it's too sensitive and 
@@ -462,15 +467,12 @@ void Controller::controlThread()
                 b1_d << b1_d_Def;
                 omega_d << omega_d_Def;
 
-                kd_R = 0.005; 
+                // kd_R = 0.005; 
 
-                kp_x = 0.1;   // Pos. Gain
-                kd_x = 0.1;  // Pos. derivative Gain
-                ki_x = 0.05*0; // Pos. integral Gain
-                kp_R = 0.05;  // Rot. Gain // Keep checking rotational speed
-                kd_R = 0.005; // Rot. derivative Gain
-
-                e_intg <<0,0,0; 
+                // kp_x = 0.1;   // Pos. Gain
+                // kd_x = 0.1;  // Pos. derivative Gain
+                // kp_R = 0.05;  // Rot. Gain // Keep checking rotational speed
+                // kd_R = 0.005; // Rot. derivative Gain
 
                 kp_xf=ctrl_flag; // Reset control flags
                 kd_xf=ctrl_flag;
@@ -500,7 +502,7 @@ void Controller::controlThread()
                 break;
 
             case 4: // Exectute Flip
-                kd_R = kp_omega; // Change to flip gain
+                // kd_R = kp_omega; // Change to flip gain
 
                 omega_d << control_vals;
                 kp_xf = 0; // Turn off other controllers
@@ -517,11 +519,10 @@ void Controller::controlThread()
 
             case 6: // Reassign new control gains
                 Ctrl_Gains << control_vals,ctrl_flag;
-                kp_x = Ctrl_Gains(0);
-                kd_x = Ctrl_Gains(1);
-                // ki_x = Ctrl_Gains(2);
-                kp_R = Ctrl_Gains(2);
-                kd_R = Ctrl_Gains(3);
+                // kp_x = Ctrl_Gains(0);
+                // kd_x = Ctrl_Gains(1);
+                // kp_R = Ctrl_Gains(2);
+                // kd_R = Ctrl_Gains(3);
                 break;
         }
 
@@ -538,8 +539,6 @@ void Controller::controlThread()
         vel = state_full_Eig.segment(8,3);
         omega = state_full_Eig.segment(11,3);
         
-        dt = t - t_prev;
-
         
         
 
@@ -563,10 +562,9 @@ void Controller::controlThread()
         // =========== Translational Errors & Desired Body-Fixed Axes =========== //
         e_x = pos - x_d; 
         e_v = vel - v_d;
-        
-        e_intg += e_x*dt;
 
-        F_thrust_ideal = -kp_x*kp_xf*e_x + -kd_x*kd_xf*e_v + -ki_x*e_intg + m*g*e3 + m*a_d; // ideal control thrust vector
+
+        F_thrust_ideal = -(kp_x.array()*e_x.array()).matrix()*kp_xf + -(kd_x.array()*e_v.array()).matrix()*kd_xf + m*g*e3 + m*a_d; // ideal control thrust vector
         b3_d = F_thrust_ideal.normalized(); // desired body-fixed vertical axis
         b2_d = b3_d.cross(b1_d).normalized(); // body-fixed horizontal axis
 
@@ -594,7 +592,7 @@ void Controller::controlThread()
         // =========== Control Equations =========== // 
         F_thrust = F_thrust_ideal.dot(b3)*(flip_flag); // Thrust control value
         Gyro_dyn = omega.cross(J*omega) - J*(hat(omega)*R.transpose()*R_d*omega_d - R.transpose()*R_d*domega_d); // Gyroscopic dynamics
-        M = -kp_R*e_R*(kp_Rf) + -kd_R*e_omega*(kd_Rf) + Gyro_dyn; // Moment control vector
+        M = -(kp_R.array()*e_R.array()).matrix()*kp_Rf + -(kd_R.array()*e_omega.array()).matrix()*kd_Rf + Gyro_dyn; // Moment control vector
         FM << F_thrust,M; // Thrust-Moment control vector
 
 
@@ -634,9 +632,9 @@ void Controller::controlThread()
         if (t_step%75 == 0){ // General Debugging output
         cout << setprecision(4) <<
         "t: " << t << "\tCmd: " << control_cmd_Eig.transpose() << endl <<
-        "kp_x: " << kp_x << " \tkd_x: " << kd_x << " \tkp_R: " << kp_R << " \tkd_R: " << kd_R << "\tkd_R_fl: " << kp_omega << endl <<
+        // "kp_x: " << kp_x << " \tkd_x: " << kd_x << " \tkp_R: " << kp_R << " \tkd_R: " << kd_R << "\tkd_R_fl: " << kp_omega << endl <<
         "kp_xf: " << kp_xf << " \tkd_xf: " << kd_xf << " \tkp_Rf: " << kp_Rf << " \tkd_Rf: " << kd_Rf << " \tflip_flag: " << flip_flag << endl <<
-        "ki_x: " << ki_x  << "\t e_x_I: " << e_intg.transpose() << " \tmotorstop_flag: " << motorstop_flag << endl <<
+        " \tmotorstop_flag: " << motorstop_flag << endl <<
         endl <<
         "x_d: " << x_d.transpose() << endl <<
         "v_d: " << v_d.transpose() << endl <<
@@ -678,6 +676,13 @@ int main()
 {
     Controller controller;
     controller.Load(); // Run controller as a thread
+    Vector3d test1(1,1,1);
+    Vector3d test2(2,2,2);
+    Vector3d test3(3,3,3);
+    Vector3d result;
+
+    result = (test1.array() + test2.array()).matrix() + test3;
+
 
     while(1)
     {
