@@ -342,7 +342,7 @@ void Controller::controlThread()
     
     // Controller Values
     Vector4d Ctrl_Gains; 
-    Vector3d kp_x(0.1,0.1,0.1);         // Pos. Gain
+    Vector3d kp_x(0.1,0.1,0.11);         // Pos. Gain
     Vector3d kd_x(0.08,0.08,0.08);      // Pos. derivative Gain
     Vector3d kp_R(0.05,0.05,0.05);      // Rot. Gain
     Vector3d kd_R(0.005,0.005,0.005);   // Rot. derivative Gain
