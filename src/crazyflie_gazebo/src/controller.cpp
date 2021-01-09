@@ -5,6 +5,10 @@
 #include <Eigen/Dense>
 #include "controller.h"
 
+#include "ros/ros.h"
+// #include "crazyflie_gazebo/CtrlData.h"
+
+
 
 using namespace Eigen;
 using namespace std;
@@ -669,16 +673,17 @@ void Controller::controlThread()
 
 
 
-int main()
+int main(int argc, char **argv)
 {
+
+    //Intizialize and start ros node
+    ros::init(argc,argv,"Controller_node");
+    // ros::NodeHandle nh; 
+
+
     Controller controller;
     controller.Load(); // Run controller as a thread
-    Vector3d test1(1,1,1);
-    Vector3d test2(2,2,2);
-    Vector3d test3(3,3,3);
-    Vector3d result;
 
-    result = (test1.array() + test2.array()).matrix() + test3;
 
 
     while(1)
