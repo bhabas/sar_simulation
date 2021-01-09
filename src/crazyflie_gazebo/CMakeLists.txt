@@ -12,7 +12,9 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   roscpp
   std_msgs
+  message_generation
 )
+
 find_package(Boost 1.58 REQUIRED COMPONENTS system thread filesystem)
 find_package(gazebo REQUIRED)
 find_package(Eigen3 QUIET)
@@ -83,11 +85,10 @@ link_libraries(mav_msgs sensor_msgs)
 ##########################################
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+ add_message_files(
+   FILES
+   CtrlData.msg
+ )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -104,10 +105,10 @@ link_libraries(mav_msgs sensor_msgs)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+ generate_messages(
+   DEPENDENCIES
+   std_msgs  # Or other packages containing msgs
+ )
 
 ##################################################
 ## 6. Invoke message/service/action generations ##
