@@ -1,74 +1,79 @@
 #include <iostream>
-#include <cstring>
-#include <unistd.h>
+#include <thread>
+
+// ROS Includes
+#include <ros/ros.h>
+#include "crazyflie_gazebo/CtrlData.h"
+
+// Socket Includes
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <Eigen/Dense>
-//#include <boost/thread/thread.hpp>
-#include <thread>
 
 #include "readerwriterqueue.h"
-
-typedef struct _StateFull {
-    double data[18];
-} StateFull;
 
 typedef struct _MotorCommand {
     float data[4];
 } MotorCommand;
 
+
 class Controller
 {
     public:
-        //Controller();
-        ~Controller()
-        {
-            isRunning = false;
-            receiverThread_gazebo.join();
-            senderThread_gazebo.join();
-            receiverThread_RL.join();
-            controllerThread.join();
-            close(Ctrl_Mavlink_socket);
+        // CONSTRUCTOR TO START PUBLISHERS AND SUBSCRIBERS (Similar to Python's __init__() )
+        Controller(ros::NodeHandle *nh){
+            ctrl_Publisher = nh->advertise<crazyflie_gazebo::CtrlData>("/ctrlData",10);
         }
 
+        // DEFINE FUNCTION PROTOTYPES
         void Load();
-        void recvThread_gazebo();
         void recvThread_RL();
         void controlThread();
 
     private:
+        // DEFINE PUBLISHERS AND SUBSCRIBERS
+        ros::Publisher ctrl_Publisher;
+        ros::Subscriber globalState_Subscriber;
+        ros::Subscriber RL_Subscriber;
+
+        // DEFINE THREAD OBJECTS
+        std::thread controllerThread;
+        std::thread senderThread_gazebo;
+        std::thread receiverThread_RL;
+
+        // DEFINE CLASS VARIABLES (Similar to Python's class variables)
+        bool isRunning;
+
+
+
+        // DEFINE CTRL_MAVLINK SOCKET VARIABLES
         int Ctrl_Mavlink_socket;
         int Ctrl_Mavlink_socket_SNDBUF;
         int Ctrl_Mavlink_socket_RCVBUF;
         int Ctrl_Mavlink_socket_PORT;
         struct sockaddr_in addr_Ctrl_Mavlink;
 
-        int Mavlink_PORT;
-        struct sockaddr_in addr_Mavlink;
-        socklen_t addr_Mavlink_len;
-        
-        
+        // DEFINE CTRL_RL SOCKET VARIABLES
         int Ctrl_RL_socket;
         int Ctrl_RL_socket_SNDBUF;
         int Ctrl_RL_socket_RCVBUF;
         int Ctrl_RL_socket_Port;
         struct sockaddr_in addr_Ctrl_RL;
 
+        // DEFINE MAVLINK ADDRESS VARIABLES
+        int Mavlink_PORT;
+        struct sockaddr_in addr_Mavlink;
+        socklen_t addr_Mavlink_len;
+
+        // DEFINE RL ADDRESS VARIABLES
         int RL_PORT;
         struct sockaddr_in addr_RL;
         socklen_t addr_RL_len;
 
-        bool isRunning;
-        std::thread receiverThread_gazebo;
-        std::thread senderThread_gazebo;
-        std::thread receiverThread_RL;
-        std::thread controllerThread;
-
-        moodycamel::BlockingReaderWriterQueue<StateFull> queue_states;
+        // QUEUEING STUFF (I don't understand it yet)
         moodycamel::BlockingReaderWriterQueue<MotorCommand> queue_motorspeed;
-        
-        double control_cmd_recvd[5] = {555,0,0,0.0,0}; // Initial command, not sure but it's here
+
+
+
+
 };
-
-
