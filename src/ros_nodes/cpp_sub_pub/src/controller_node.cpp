@@ -17,6 +17,7 @@ class NumberCounter {
 
 
     public:
+    void callback_number(const gazebo_communication_pkg::GlobalState::ConstPtr &msg);
     NumberCounter(ros::NodeHandle *nh) {
         counter = 0;
         
@@ -26,18 +27,13 @@ class NumberCounter {
 
     }
 
-    void callback_number(const gazebo_communication_pkg::GlobalState& msg){
-        int a = 1;
-        std::cout << "test" << std::endl;
-        
-        // counter += msg.data;
-        // std_msgs::Int64 new_msg;
-        // new_msg.data = counter;
-        // pub.publish(new_msg);
-    }
-
 
 };
+
+void NumberCounter::callback_number(const gazebo_communication_pkg::GlobalState::ConstPtr &msg){
+
+    std::cout << "test" << std::endl;
+}
 
 
 
