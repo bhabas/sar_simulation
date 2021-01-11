@@ -1,3 +1,3 @@
-uint16 header
+uint16 ctrl_cmd
 geometry_msgs/Point ctrl_vals
 uint16 ctrl_flag

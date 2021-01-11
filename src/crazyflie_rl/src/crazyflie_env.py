@@ -319,7 +319,7 @@ class CrazyflieEnv:
                     'sticky':11}
         
 
-        cmd_msg.header = cmd_dict[action]
+        cmd_msg.ctrl_cmd = cmd_dict[action]
         cmd_msg.ctrl_vals.x = ctrl_vals[0]
         cmd_msg.ctrl_vals.y = ctrl_vals[1]
         cmd_msg.ctrl_vals.z = ctrl_vals[2]

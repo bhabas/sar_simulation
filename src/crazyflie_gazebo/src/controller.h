@@ -5,7 +5,9 @@
 // ROS Includes
 #include <ros/ros.h>
 #include "crazyflie_gazebo/CtrlData.h"
-#include <gazebo_communication_pkg/GlobalState.h>
+#include "gazebo_communication_pkg/GlobalState.h"
+#include "crazyflie_rl/RLCmd.h"
+
 
 // Socket Includes
 #include <arpa/inet.h>
@@ -25,8 +27,9 @@ class Controller
         // CONSTRUCTOR TO START PUBLISHERS AND SUBSCRIBERS (Similar to Python's __init__() )
         Controller(ros::NodeHandle *nh){
             ctrl_Publisher = nh->advertise<crazyflie_gazebo::CtrlData>("/ctrl_data",10);
-            globalState_Subscriber = nh->subscribe("/global_state",1000,
-            &Controller::callback_number,this);
+            globalState_Subscriber = nh->subscribe("/global_state",1000,&Controller::global_stateCallback,this);
+            RLCmd_Subscriber = nh->subscribe("/rl_cmd",10,&Controller::RLCmd_Callback,this);
+
 
 
             _pos << 0.0,0.0,0.0;
@@ -39,13 +42,14 @@ class Controller
         void Load();
         void recvThread_RL();
         void controlThread();
-        void callback_number(const gazebo_communication_pkg::GlobalState::ConstPtr &msg);
+        void global_stateCallback(const gazebo_communication_pkg::GlobalState::ConstPtr &msg);
+        void RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg);
 
     private:
         // DEFINE PUBLISHERS AND SUBSCRIBERS
         ros::Publisher ctrl_Publisher;
         ros::Subscriber globalState_Subscriber;
-        ros::Subscriber RL_Subscriber;
+        ros::Subscriber RLCmd_Subscriber;
 
         // DEFINE THREAD OBJECTS
         std::thread controllerThread;

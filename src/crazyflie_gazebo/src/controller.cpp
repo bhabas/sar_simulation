@@ -113,27 +113,17 @@ void Controller::Load()
 
 void Controller::recvThread_RL()
 {
-    float motorspeed_fake[4] = {0,0,0,0};
+    float sticky_cmd[4] = {0,0,0,0};
 
     while(_isRunning)
     {
         //cout<<"[recvThread_RL] Receiving command from RL"<<endl;
         int len = recvfrom(Ctrl_RL_socket, control_cmd_recvd, sizeof(control_cmd_recvd),0, (struct sockaddr*)&addr_RL, &addr_RL_len);
 
-
-        if(control_cmd_recvd[0]>10) // If header is 11 then enable sticky
-        {
-            motorspeed_fake[0] = -control_cmd_recvd[0];
-            motorspeed_fake[1] = control_cmd_recvd[1];
-            //cout<<"Send sticky command command: "<< motorspeed_fake[0]<<", "<<motorspeed_fake[1]<<endl;
-            sendto(Ctrl_Mavlink_socket, motorspeed_fake, sizeof(motorspeed_fake),0, (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len);
-
-            
-        }
     }
 }
 
-void Controller::callback_number(const gazebo_communication_pkg::GlobalState::ConstPtr &msg){
+void Controller::global_stateCallback(const gazebo_communication_pkg::GlobalState::ConstPtr &msg){
 
     // SIMPLIFY STATE VALUES FROM TOPIC
     float _t = msg->header.stamp.toSec();
@@ -154,7 +144,25 @@ void Controller::callback_number(const gazebo_communication_pkg::GlobalState::Co
 }
 
 
+void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
 
+    int ctrl_cmd = msg->ctrl_cmd;
+    const geometry_msgs::Point ctrl_vals = msg->ctrl_vals;
+    int ctrl_flag = msg->ctrl_flag;
+
+    if(ctrl_cmd==11){
+        // This stickyfoot socket communication piggy-backs off of the motorspeed  
+        // message & activates when first number is negative
+        float sticky_cmd[4] = {-ctrl_cmd,ctrl_flag,0,0};
+        sendto(Ctrl_Mavlink_socket, sticky_cmd, sizeof(sticky_cmd),0, (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len);
+    }
+
+    Vector3d vals(ctrl_vals.x,ctrl_vals.y,ctrl_vals.z);
+
+    
+
+    cout << "CMD received: " << ctrl_cmd << " " << vals.transpose() << " " << ctrl_flag << endl;
+}
 
 
 
@@ -495,42 +503,42 @@ void Controller::controlThread()
         
 
 
-        if (t_step%100 == 0){ // General Debugging output
-        cout << setprecision(4) <<
-        "t: " << t << "\tCmd: " << control_cmd_Eig.transpose() << endl << 
-        endl <<
-        "kp_x: " << kp_x.transpose() << "\tkd_x: " << kd_x.transpose() << endl <<
-        "kp_R: " << kp_R.transpose() << "\tkd_R: " << kd_R.transpose() << endl <<
-        "kp_omega (flip): " << kp_omega.transpose() << endl <<
-        setprecision(1) <<
-        "flip_flag: " << flip_flag << "\tmotorstop_flag: " << motorstop_flag << endl <<
-        "kp_xf: " << kp_xf << " \tkd_xf: " << kd_xf << "\tkp_Rf: " << kp_Rf << "\tkd_Rf: " << kd_Rf  << endl <<
-        endl << setprecision(4) <<
+        // if (t_step%100 == 0){ // General Debugging output
+        // cout << setprecision(4) <<
+        // "t: " << t << "\tCmd: " << control_cmd_Eig.transpose() << endl << 
+        // endl <<
+        // "kp_x: " << kp_x.transpose() << "\tkd_x: " << kd_x.transpose() << endl <<
+        // "kp_R: " << kp_R.transpose() << "\tkd_R: " << kd_R.transpose() << endl <<
+        // "kp_omega (flip): " << kp_omega.transpose() << endl <<
+        // setprecision(1) <<
+        // "flip_flag: " << flip_flag << "\tmotorstop_flag: " << motorstop_flag << endl <<
+        // "kp_xf: " << kp_xf << " \tkd_xf: " << kd_xf << "\tkp_Rf: " << kp_Rf << "\tkd_Rf: " << kd_Rf  << endl <<
+        // endl << setprecision(4) <<
 
-        "x_d: " << x_d.transpose() << endl <<
-        "v_d: " << v_d.transpose() << endl <<
-        "omega_d: " << omega_d.transpose() << endl <<
-        endl << 
+        // "x_d: " << x_d.transpose() << endl <<
+        // "v_d: " << v_d.transpose() << endl <<
+        // "omega_d: " << omega_d.transpose() << endl <<
+        // endl << 
 
-        "pos: " << pos.transpose() << "\te_x: " << e_x.transpose() << endl <<
-        "vel: " << vel.transpose() << "\te_v: " << e_v.transpose() << endl <<
-        "omega: " << omega.transpose() << "\te_w: " << e_omega.transpose() << endl <<
-        endl << 
+        // "pos: " << pos.transpose() << "\te_x: " << e_x.transpose() << endl <<
+        // "vel: " << vel.transpose() << "\te_v: " << e_v.transpose() << endl <<
+        // "omega: " << omega.transpose() << "\te_w: " << e_omega.transpose() << endl <<
+        // endl << 
 
-        "R:\n" << R << "\n\n" << 
-        "R_d:\n" << R_d << "\n\n" << 
-        "Yaw: " << yaw*180/M_PI << "\tRoll: " << roll*180/M_PI << "\tPitch: " << pitch*180/M_PI << endl <<
-        "e_R: " << e_R.transpose() << "\te_R (deg): " << e_R.transpose()*180/M_PI << endl <<
-        endl <<
+        // "R:\n" << R << "\n\n" << 
+        // "R_d:\n" << R_d << "\n\n" << 
+        // "Yaw: " << yaw*180/M_PI << "\tRoll: " << roll*180/M_PI << "\tPitch: " << pitch*180/M_PI << endl <<
+        // "e_R: " << e_R.transpose() << "\te_R (deg): " << e_R.transpose()*180/M_PI << endl <<
+        // endl <<
 
-        "FM: " << FM.transpose() << endl <<
-        "f: " << f.transpose() << endl <<
-        endl << setprecision(0) <<
-        "MS_d: " << motorspeed_Vec_d.transpose() << endl <<
-        "MS: " << motorspeed_Vec.transpose() << endl <<
-        "=============== " << endl; 
-        printf("\033c"); // clears console window
-        }
+        // "FM: " << FM.transpose() << endl <<
+        // "f: " << f.transpose() << endl <<
+        // endl << setprecision(0) <<
+        // "MS_d: " << motorspeed_Vec_d.transpose() << endl <<
+        // "MS: " << motorspeed_Vec.transpose() << endl <<
+        // "=============== " << endl; 
+        // printf("\033c"); // clears console window
+        // }
 
      
         Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Vec.cast <float> (); // Converts motorspeeds to C++ array for data transmission
