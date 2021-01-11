@@ -24,7 +24,7 @@ class Controller
     public:
         // CONSTRUCTOR TO START PUBLISHERS AND SUBSCRIBERS (Similar to Python's __init__() )
         Controller(ros::NodeHandle *nh){
-            ctrl_Publisher = nh->advertise<crazyflie_gazebo::CtrlData>("/ctrlData",10);
+            ctrl_Publisher = nh->advertise<crazyflie_gazebo::CtrlData>("/ctrl_data",10);
             globalState_Subscriber = nh->subscribe("/global_state",1000,
             &Controller::callback_number,this);
 

@@ -15,7 +15,7 @@ import csv
 
 from sensor_msgs.msg import LaserScan, Image, Imu
 from gazebo_communication_pkg.msg import GlobalState 
-from crazyflie_rl.msg import RLData
+from crazyflie_rl.msg import RLData,RLCmd
 from std_msgs.msg import Header 
 from rosgraph_msgs.msg import Clock
 from gazebo_msgs.msg import ModelState
@@ -60,6 +60,7 @@ class CrazyflieEnv:
         self.state_Subscriber = rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
         self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
         self.RL_Publisher = rospy.Publisher('/rl_data',RLData,queue_size=10)
+        self.Cmd_Publisher = rospy.Publisher('/rl_cmd',RLCmd,queue_size=10)
 
 
 
@@ -283,6 +284,7 @@ class CrazyflieEnv:
 
     def reset_pos(self): # Disable sticky then places spawn_model at origin
         self.enableSticky(0)
+        self.stepPub('sticky',ctrl_flag=0)
 
         state_msg = ModelState()
         state_msg.model_name = 'crazyflie_model_X'
@@ -302,6 +304,28 @@ class CrazyflieEnv:
         rospy.wait_for_service('/gazebo/set_model_state')
         set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         set_state_srv(state_msg)
+
+    def stepPub(self,action,ctrl_vals=[0,0,0],ctrl_flag=1):
+        cmd_msg = RLCmd()
+
+        cmd_dict = {'home':0,
+                    'pos':1,
+                    'vel':2,
+                    'att':3,
+                    'omega':4,
+                    'stop':5,
+                    'gains':6,
+                    'moments':7,
+                    'sticky':11}
+        
+
+        cmd_msg.header = cmd_dict[action]
+        cmd_msg.ctrl_vals.x = ctrl_vals[0]
+        cmd_msg.ctrl_vals.y = ctrl_vals[1]
+        cmd_msg.ctrl_vals.z = ctrl_vals[2]
+        cmd_msg.ctrl_flag = ctrl_flag
+        
+        self.Cmd_Publisher.publish(cmd_msg)
 
             
     def step(self,action,ctrl_vals=[0,0,0],ctrl_flag=1): # Controller works to attain these values

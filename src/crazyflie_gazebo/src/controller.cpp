@@ -167,9 +167,8 @@ void Controller::controlThread()
 
     
     MotorCommand motorspeed_structure;
-
     float motorspeed[4];
-    double state_full[18];
+    
     
 
     int type; // Command type {1:Pos, 2:Vel, 3:Att, 4:Omega, 5:Stop}
