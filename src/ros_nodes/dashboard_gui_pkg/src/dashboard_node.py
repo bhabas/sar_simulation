@@ -3,6 +3,7 @@ from threading import Thread
 
 from gazebo_communication_pkg.msg import GlobalState
 from crazyflie_rl.msg import RLData
+from crazyflie_gazebo.msg import CtrlData
 
 class DashboardNode:
     def __init__(self):
@@ -19,43 +20,36 @@ class DashboardNode:
         
 
         ## INITIALIZE GLOBAL STATE SUBSCRIBER THREAD
-        self.global_stateThread = Thread(target=self.global_stateSub,args=())
-        self.global_stateThread.daemon=True
-        self.global_stateThread.start()
+        rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
 
         ## INITIAILIZE REWARD SUBSCRIBER THREAD
-        self.rewardThread = Thread(target=self.rewardSub,args=())
-        self.rewardThread.daemon=True
-        self.rewardThread.start()
+        rospy.Subscriber('/rl_data',RLData,self.rewardCallback)
+
+        rospy.Subscriber('/ctrlData',CtrlData,self.ctrlCallback)
+   
 
         print("[COMPLETED] Dashboard node is running...")
 
     # ============================
     ##     Reward Subscriber
     # ============================
-    def rewardSub(self):
-        rospy.Subscriber('/rl_data',RLData,self.rewardCallback)
-        rospy.spin()
-
-    def rewardCallback(self,data):
-        reward_msg = data
-
+    def rewardCallback(self,reward_msg):
+        
         ## SET CLASS VARIABLES TO MESSAGE VALUES
         self.k_run = reward_msg.k_run
         self.k_ep = reward_msg.k_ep
         self.reward = reward_msg.reward
         self.n_rollouts = reward_msg.n_rollouts
 
+    def ctrlCallback(self,msg):
+        self.motorspeeds = msg.motorspeeds
+
+
 
     # ============================
     ##   Global State Subscriber
     # ============================
-    def global_stateSub(self):
-        rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
-        rospy.spin()
-    
-    def global_stateCallback(self,data):
-        gs_msg = data # gs_msg <= global_state_msg
+    def global_stateCallback(self,gs_msg):
 
         ## SET TIME VALUE FROM TOPIC
         t_temp = gs_msg.header.stamp.secs

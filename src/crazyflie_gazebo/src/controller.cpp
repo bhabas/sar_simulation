@@ -544,11 +544,6 @@ void Controller::controlThread()
         ctrl_msg.motorspeeds = {motorspeed[0],motorspeed[1],motorspeed[2],motorspeed[3]};
         ctrl_Publisher.publish(ctrl_msg);
         rate.sleep();
-
-
-
-        
-
     }
 
 }

@@ -22,7 +22,7 @@ time.sleep(2) # Sleep time for sub threads to start receiving and processing dat
 def runGraph():
     
     # PARAMETERS
-    sec_hist = 20 # Time shown on dashboard [s]
+    sec_hist = 5 # Time shown on dashboard [s]
     frame_interval = 50 # Interval between plot frames [ms]
     buf_len = int(sec_hist/frame_interval * 1000) # num datapoints in plot
 
@@ -122,7 +122,7 @@ def runGraph():
     for ax in axes1:
         ax.set_xticks(np.linspace(0,buf_len,6)) # These mark the second ticks
         ax.set_xticklabels(np.linspace(-sec_hist,0,6))
-        ax.set_xlabel("Seconds ago (Real Time)")
+        ax.set_xlabel("Seconds ago (Sim Time)")
 
         ax.grid(True)
         ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.25), ncol=len(ax.lines)) # Places legend below plots
@@ -135,13 +135,19 @@ def runGraph():
     def animate_dashboard(i, px_arr,py_arr,pz_arr,
         vx_arr,vy_arr,vz_arr,
         roll_arr,pitch_arr,yaw_arr,
-        wx_arr,wy_arr,wz_arr):
+        wx_arr,wy_arr,wz_arr,
+        ms1_arr,ms2_arr,ms3_arr,ms4_arr):
 
-        # States from shared Multiprocessing array
+        # States from class
         x_x,x_y,x_z = DashNode.state_current[1:4]
         qw,qx,qy,qz = DashNode.state_current[4:8]
         vx,vy,vz = DashNode.state_current[8:11]
         wx,wy,wz = DashNode.state_current[11:14]
+
+        ms1,ms2,ms3,ms4 = DashNode.motorspeeds
+
+
+
         
 
         if qw == 0: # Fix for zero-norm in quat error during initialization
@@ -205,11 +211,31 @@ def runGraph():
         wz_arr = wz_arr[-buf_len:]
         line_wz.set_ydata(wz_arr)
 
+        ## MOTORSPEED LINES
+        ms1_arr.append(ms1)
+        ms1_arr = ms1_arr[-buf_len:]
+        line_ms1.set_ydata(ms1_arr)
+
+        ms2_arr.append(ms2)
+        ms2_arr = ms2_arr[-buf_len:]
+        line_ms2.set_ydata(ms2_arr)
+
+        ms3_arr.append(ms3)
+        ms3_arr = ms3_arr[-buf_len:]
+        line_ms3.set_ydata(ms3_arr)
+
+        ms4_arr.append(ms4)
+        ms4_arr = ms4_arr[-buf_len:]
+        line_ms4.set_ydata(ms4_arr)
+
+
+
 
         return  line_px,line_py,line_pz, \
                 line_vx,line_vy,line_vz, \
                 line_ax,line_ay,line_az, \
-                line_wx,line_wy,line_wz, 
+                line_wx,line_wy,line_wz, \
+                line_ms1,line_ms2,line_ms3,line_ms4
                 
 
 
@@ -273,7 +299,8 @@ def runGraph():
         px_arr,py_arr,pz_arr,
         vx_arr,vy_arr,vz_arr,
         roll_arr,pitch_arr,yaw_arr,
-        wx_arr,wy_arr,wz_arr),
+        wx_arr,wy_arr,wz_arr,
+        ms1_arr,ms2_arr,ms3_arr,ms4_arr),
         interval=frame_interval,
         blit=True)
 
