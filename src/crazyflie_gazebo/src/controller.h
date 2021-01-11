@@ -51,7 +51,7 @@ class Controller
         // Leading '_' represents a class variable that works across functions
         bool _isRunning;
         double control_cmd_recvd[5];
-        float alpha;
+       
 
         float _t;
         Eigen::Vector3d _pos;
@@ -92,3 +92,60 @@ class Controller
 
 
 };
+
+
+Eigen::Matrix3d hat(Eigen::Vector3d a) // Input a hat vector and output corresponding skew-symmetric matrix
+{ 
+  // You hat a vector and get a skew-symmetric matrix
+  // You dehat/dehat a skew-symmetric matrix and get a vector
+
+    /* Convert a into skew symmetric matrix a_hat
+    a = [ a1 ] 
+        [ a2 ] 
+        [ a3 ]
+ 
+    a_hat = [  0   -a3   a2 ]
+            [  a3   0   -a1 ]
+            [ -a2   a1   0  ]
+    ]
+    */
+    Eigen::Matrix3d a_hat;
+    a_hat(2,1) =  a(0);
+    a_hat(1,2) = -a(0);
+
+    a_hat(0,2) =  a(1);
+    a_hat(2,0) = -a(1);
+
+    a_hat(1,0) =  a(2);
+    a_hat(0,1) = -a(2);
+
+    return a_hat;
+}
+
+Eigen::Vector3d dehat(Eigen::Matrix3d a_hat) // Input a skew-symmetric matrix and output corresponding vector
+{
+
+    /* Convert skew-symmetric matrix a_hat into vector a
+
+    a_hat = [  0   -a3   a2 ]
+            [  a3   0   -a1 ]
+            [ -a2   a1   0  ]
+
+
+    a = [ a1 ] 
+        [ a2 ] 
+        [ a3 ]
+
+    */
+
+    Eigen::Vector3d a;
+    Eigen::Matrix3d tmp;
+
+    tmp = (a_hat - a_hat.transpose())/2; // Not sure why this is done
+
+    a(0) = tmp(2,1);
+    a(1) = tmp(0,2);
+    a(2) = tmp(1,0);
+
+    return a;
+}
