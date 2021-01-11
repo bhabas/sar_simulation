@@ -30,12 +30,16 @@ class Controller
             globalState_Subscriber = nh->subscribe("/global_state",1000,&Controller::global_stateCallback,this);
             RLCmd_Subscriber = nh->subscribe("/rl_cmd",10,&Controller::RLCmd_Callback,this);
 
+            ctrl_cmd << 404,0,0,0,0;
 
 
-            _pos << 0.0,0.0,0.0;
-            _vel << 0.0,0.0,0.0;
-            _quat << 0.0,0.0,0.0,0.0;
-            _omega << 0.0,0.0,0.0;
+
+            _pos << 0,0,0;
+            _vel << 0,0,0;
+            _quat << 0,0,0,0;
+            _omega << 0,0,0;
+
+
         }
 
         // DEFINE FUNCTION PROTOTYPES
@@ -54,13 +58,14 @@ class Controller
         // DEFINE THREAD OBJECTS
         std::thread controllerThread;
         std::thread senderThread_gazebo;
-        std::thread receiverThread_RL;
+
         
 
         // DEFINE CLASS VARIABLES (Similar to Python's class variables)
         // Leading '_' represents a class variable that works across functions
         bool _isRunning;
         double control_cmd_recvd[5];
+        Eigen::Matrix<double,5,1> ctrl_cmd;
        
 
         float _t;

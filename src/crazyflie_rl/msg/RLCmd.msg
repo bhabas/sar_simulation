@@ -1,3 +1,3 @@
-uint16 ctrl_cmd
-geometry_msgs/Point ctrl_vals
-uint16 ctrl_flag
+uint16 cmd_type
+geometry_msgs/Point cmd_vals
+float32 cmd_flag

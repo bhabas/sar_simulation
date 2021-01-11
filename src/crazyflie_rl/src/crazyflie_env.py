@@ -24,7 +24,7 @@ from gazebo_msgs.srv import SetModelState
 from cv_bridge import CvBridge
 
 class CrazyflieEnv:
-    def __init__(self,port_local=18050, port_Ctrl=18060):
+    def __init__(self):
         print("[STARTING] CrazyflieEnv is starting...")
         self.state_current = np.zeros(14)
         self.isRunning = True
@@ -35,24 +35,6 @@ class CrazyflieEnv:
         rospy.init_node("crazyflie_env_node") 
         self.launch_sim() 
     
-        ## INIT RL SOCKET (AKA SERVER)
-        self.RL_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # Create UDP(DGRAM) Socket
-        self.RL_port = port_local
-        self.addr_RL = ("", self.RL_port) # Local address open to all incoming streams ("" = 0.0.0.0)
-        self.RL_socket.bind(self.addr_RL) # Bind socket to specified port (0.0.0.0:18050)
-
-        # Specify send/receive buffer sizes    
-        self.RL_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 144) # State array from Ctrl [18 doubles]
-        self.RL_socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 40) # Action commands to Ctrl [5 doubles]
-        self.RL_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        
-    
-        ## INIT CONTROLLER ADDRESS ##
-        self.port_Ctrl = port_Ctrl # Controller Server Port
-        self.addr_Ctrl = ("", self.port_Ctrl) # Controller Address
-
-        # kill -9 $(lsof -i:18050 -t)
-        # if threads dont terminte when program is shut, you might need to use lsof to kill it
 
         
 
@@ -319,45 +301,14 @@ class CrazyflieEnv:
                     'sticky':11}
         
 
-        cmd_msg.ctrl_cmd = cmd_dict[action]
-        cmd_msg.ctrl_vals.x = ctrl_vals[0]
-        cmd_msg.ctrl_vals.y = ctrl_vals[1]
-        cmd_msg.ctrl_vals.z = ctrl_vals[2]
-        cmd_msg.ctrl_flag = ctrl_flag
+        cmd_msg.cmd_type = cmd_dict[action]
+        cmd_msg.cmd_vals.x = ctrl_vals[0]
+        cmd_msg.cmd_vals.y = ctrl_vals[1]
+        cmd_msg.cmd_vals.z = ctrl_vals[2]
+        cmd_msg.cmd_flag = ctrl_flag
         
         self.Cmd_Publisher.publish(cmd_msg)
 
-            
-    def step(self,action,ctrl_vals=[0,0,0],ctrl_flag=1): # Controller works to attain these values
-        if action =='home': # default desired values/traj.
-            header = 0
-        elif action =='pos':  # position (x,y,z) 
-            header = 1
-        elif action =='vel':  # velocity (vx,vy,vz)
-            header = 2
-        elif action =='att':  # attitude: orientation (heading/yaw, pitch, roll/bank)
-            header = 3
-        elif action =='omega': # rotation rate (w_x:roll,w_y:pitch,w_z:yaw)
-            header = 4
-        elif action =='stop': # cut motors
-            header = 5
-        elif action =='gains': # assign new control gains
-            header = 6
-        else:
-            header = 404
-            print("no such action")
-        cmd = struct.pack('5d', header, ctrl_vals[0], ctrl_vals[1], ctrl_vals[2], ctrl_flag) # Send command
-        self.RL_socket.sendto(cmd, self.addr_Ctrl)
-        time.sleep(0.05) # continually sends message during this time to ensure connection
-        cmd = struct.pack('5d',8,0,0,0,1) # Send blank command so controller doesn't keep redefining values
-        self.RL_socket.sendto(cmd, self.addr_Ctrl)
-
-        #self.queue_command.put(buf, block=False)
-
-        reward = 0
-        done = 0
-        info = 0
-        return self.state_current, reward, done, info
 
     def cmd_send(self):
         while True:
@@ -369,7 +320,7 @@ class CrazyflieEnv:
             if action=='home' or action == 'stop': # Execute home or stop action
                 ctrl_vals = [0,0,0]
                 ctrl_flag = 1
-                self.step(action,ctrl_vals,ctrl_flag)
+                self.stepPub(action,ctrl_vals,ctrl_flag)
 
             elif action=='gains': # Execture Gain changer
                 
@@ -378,7 +329,7 @@ class CrazyflieEnv:
                 ctrl_vals = vals[0:3]
                 ctrl_flag = vals[3]
 
-                self.step(action,ctrl_vals,ctrl_flag)
+                self.stepPub(action,ctrl_vals,ctrl_flag)
                 
             elif action == 'omega': # Execture Angular rate action
 
@@ -386,14 +337,14 @@ class CrazyflieEnv:
                 ctrl_vals = [float(i) for i in ctrl_vals.split(',')]
                 ctrl_flag = 1.0
 
-                self.step('omega',ctrl_vals,ctrl_flag)
+                self.stepPub('omega',ctrl_vals,ctrl_flag)
 
 
             else:
                 ctrl_vals = input("\nControl Vals (x,y,z): ")
                 ctrl_vals = [float(i) for i in ctrl_vals.split(',')]
                 ctrl_flag = float(input("\nController On/Off (1,0): "))
-                self.step(action,ctrl_vals,ctrl_flag)
+                self.stepPub(action,ctrl_vals,ctrl_flag)
 
    
 

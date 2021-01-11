@@ -48,34 +48,6 @@ void Controller::Load()
     
 
 
-    // INIT SECOND CONTROLLER SOCKET (COMMUNICATES W/ RL PORT:18050)
-    Ctrl_RL_socket = socket(AF_INET, SOCK_DGRAM, 0);
-    Ctrl_RL_socket_SNDBUF = 144; // 18 doubles [144 bytes] for State array
-    Ctrl_RL_socket_RCVBUF = 40;  // 5 doubles [8 bytes] for Controller Commands
-    Ctrl_RL_socket_Port = 18060; // Port for this socket
-
-    // SET EXPECTED BUFFER SIZES
-    if (setsockopt(Ctrl_RL_socket, SOL_SOCKET, SO_SNDBUF, &Ctrl_RL_socket_SNDBUF, sizeof(Ctrl_RL_socket_SNDBUF))<0)
-        cout<<"[FAILED] Ctrl_RL_socket: Setting SNDBUF"<<endl;
-    if (setsockopt(Ctrl_RL_socket, SOL_SOCKET, SO_RCVBUF, &Ctrl_RL_socket_RCVBUF, sizeof(Ctrl_RL_socket_RCVBUF))<0)
-        cout<<"[FAILED] Ctrl_RL_socket: Setting RCVBUF"<<endl;
-    // Fix for error if socket hasn't close correctly when restarting program
-    if (setsockopt(Ctrl_RL_socket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
-        cout <<"help me"<< endl;
-    
-
-    // SET SOCKET SETTINGS
-    memset(&addr_Ctrl_RL, 0, sizeof(addr_Ctrl_RL)); // Not sure what this does
-    addr_Ctrl_RL.sin_family = AF_INET; // IPv4 Format
-    addr_Ctrl_RL.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("127.0.0.1");
-    addr_Ctrl_RL.sin_port = htons(Ctrl_RL_socket_Port); // RL Port number
-    
-    
-    // BIND ADDRESS TO SECOND CONTROLLER SOCKET (PORT:18060)
-    if (bind(Ctrl_RL_socket, (struct sockaddr*)&addr_Ctrl_RL, sizeof(addr_Ctrl_RL))<0)
-        cout<<"[FAILED] Ctrl_RL_socket: Binding address to socket"<<endl;
-    else
-        cout<<"[SUCCESS] Ctrl_RL_socket: Binding address to socket"<<endl; 
 
     // INIT ADDRESS FOR MAVLINK SOCKET (PORT: 18080)
     Mavlink_PORT = 18080;
@@ -85,13 +57,7 @@ void Controller::Load()
     addr_Mavlink.sin_port = htons(Mavlink_PORT);
     addr_Mavlink_len = sizeof(addr_Mavlink);
 
-    // INIT ADDRESS FOR RL SOCKET (PORT:18050)
-    RL_PORT = 18050;
-    memset(&addr_RL, 0, sizeof(addr_RL));
-    addr_RL.sin_family = AF_INET;
-    addr_RL.sin_addr.s_addr = htonl(INADDR_ANY);
-    addr_RL.sin_port = htons(RL_PORT);
-    addr_RL_len = sizeof(addr_RL);
+
 
     // MOTORSPEED TO MAVLINK TEST (VISUALLY CONFIRMS THINGS ARE WORKING IN SIM)
     float msg[4] = {1900,1900,1900,1900};
@@ -105,23 +71,12 @@ void Controller::Load()
         cout<<"[SUCCESS] Ctrl_Mavlink_socket: Sending test motor speeds to Mavlink. Avoiding mutual locking between threads!"<<endl;
 
     // START COMMUNICATION THREADS
-    receiverThread_RL = std::thread(&Controller::recvThread_RL, this);
     controllerThread = std::thread(&Controller::controlThread, this);
 
 
 }
 
-void Controller::recvThread_RL()
-{
-    float sticky_cmd[4] = {0,0,0,0};
 
-    while(_isRunning)
-    {
-        //cout<<"[recvThread_RL] Receiving command from RL"<<endl;
-        int len = recvfrom(Ctrl_RL_socket, control_cmd_recvd, sizeof(control_cmd_recvd),0, (struct sockaddr*)&addr_RL, &addr_RL_len);
-
-    }
-}
 
 void Controller::global_stateCallback(const gazebo_communication_pkg::GlobalState::ConstPtr &msg){
 
@@ -146,22 +101,21 @@ void Controller::global_stateCallback(const gazebo_communication_pkg::GlobalStat
 
 void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
 
-    int ctrl_cmd = msg->ctrl_cmd;
-    const geometry_msgs::Point ctrl_vals = msg->ctrl_vals;
-    int ctrl_flag = msg->ctrl_flag;
+    int cmd_type = msg->cmd_type;
+    const geometry_msgs::Point cmd_vals = msg->cmd_vals;
+    float cmd_flag = msg->cmd_flag;
 
-    if(ctrl_cmd==11){
+
+    if(cmd_type==11){
         // This stickyfoot socket communication piggy-backs off of the motorspeed  
         // message & activates when first number is negative
-        float sticky_cmd[4] = {-ctrl_cmd,ctrl_flag,0,0};
+        float sticky_cmd[4] = {-(float)cmd_type,cmd_flag,0,0};
         sendto(Ctrl_Mavlink_socket, sticky_cmd, sizeof(sticky_cmd),0, (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len);
     }
 
-    Vector3d vals(ctrl_vals.x,ctrl_vals.y,ctrl_vals.z);
-
     
-
-    cout << "CMD received: " << ctrl_cmd << " " << vals.transpose() << " " << ctrl_flag << endl;
+    ctrl_cmd << cmd_type,cmd_vals.x,cmd_vals.y,cmd_vals.z,cmd_flag;
+    cout << ctrl_cmd.transpose() << endl;
 }
 
 
@@ -195,7 +149,7 @@ void Controller::controlThread()
     
 
     // Default desired States
-    Vector3d x_d_Def(0,0,0.3); // Pos-desired (Default) [m]  # Should be z=0.03 but needs integral controller for error offset
+    Vector3d x_d_Def(0,0,0.5); // Pos-desired (Default) [m]  # Should be z=0.03 but needs integral controller for error offset
     Vector3d v_d_Def(0,0,0); // Velocity-desired (Default) [m/s]
     Vector3d a_d_Def(0,0,0); // Acceleration-desired (Default) [m/s]
     Vector3d b1_d_Def(1,0,0); // Desired global pointing direction (Default)
@@ -335,81 +289,7 @@ void Controller::controlThread()
 
         // =========== Control Definitions =========== //
         // Define control_cmd from recieved control_cmd
-        if (control_cmd_recvd[0]!=11) // Change to != 10 to check if not a sticky foot command
-            memcpy(control_cmd, control_cmd_recvd, sizeof(control_cmd)); // Compiler doesn't work without this line for some reason? 
-            Map<Matrix<double,5,1>> control_cmd_Eig(control_cmd_recvd); 
-
-        type = control_cmd_Eig(0); // Command type
-        control_vals = control_cmd_Eig.segment(1,3); // Command values
-        ctrl_flag = control_cmd_Eig(4); // Controller On/Off switch
-
-        switch(type){ // Define Desired Values
-
-            case 0: // Reset all changes to default vals and return to home pos
-                x_d << x_d_Def;
-                v_d << v_d_Def;
-                a_d << a_d_Def;
-                b1_d << b1_d_Def;
-                omega_d << omega_d_Def;
-
-          
-
-                // kp_x = 0.1;   // Pos. Gain
-                // kd_x = 0.1;  // Pos. derivative Gain
-                // kp_R = 0.05;  // Rot. Gain // Keep checking rotational speed
-                kd_R<< 0.005,0.005,0.005; // Rot. derivative Gain
-
-                kp_xf=ctrl_flag; // Reset control flags
-                kd_xf=ctrl_flag;
-                kp_Rf=ctrl_flag;
-                kd_Rf=ctrl_flag; 
-
-                motorstop_flag=0;
-                flip_flag=1;
-                // att_control_flag=0;
-                break;
-
-            case 1: // Position
-                x_d << control_vals;
-                kp_xf = ctrl_flag;
-                break;
-
-            case 2: // Velocity
-                v_d << control_vals;
-                kd_xf = ctrl_flag;
-                break;
-
-            case 3: // Attitude [Implementation needs to be finished]
-                eul_d << control_vals;
-                kp_Rf = ctrl_flag;
-
-                // att_control_flag = ctrl_flag;
-                break;
-
-            case 4: // Exectute Flip
-                kd_R = kp_omega; // Change to flip gain
-
-                omega_d << control_vals;
-                kp_xf = 0; // Turn off other controllers
-                kd_xf = 0;
-                kp_Rf = 0;
-                kd_Rf = ctrl_flag; // Turn control on and change error calc
-                
-                flip_flag = 0; // Turn thrust control off
-                break;
-
-            case 5: // Stop Motors
-                motorstop_flag = ctrl_flag;
-                break;
-
-            case 6: // Reassign new control gains
-                Ctrl_Gains << control_vals,ctrl_flag;
-                // kp_x = Ctrl_Gains(0);
-                // kd_x = Ctrl_Gains(1);
-                // kp_R = Ctrl_Gains(2);
-                // kd_R = Ctrl_Gains(3);
-                break;
-        }
+        
 
         // =========== State Definitions =========== //
 
@@ -503,42 +383,42 @@ void Controller::controlThread()
         
 
 
-        // if (t_step%100 == 0){ // General Debugging output
-        // cout << setprecision(4) <<
-        // "t: " << t << "\tCmd: " << control_cmd_Eig.transpose() << endl << 
-        // endl <<
-        // "kp_x: " << kp_x.transpose() << "\tkd_x: " << kd_x.transpose() << endl <<
-        // "kp_R: " << kp_R.transpose() << "\tkd_R: " << kd_R.transpose() << endl <<
-        // "kp_omega (flip): " << kp_omega.transpose() << endl <<
-        // setprecision(1) <<
-        // "flip_flag: " << flip_flag << "\tmotorstop_flag: " << motorstop_flag << endl <<
-        // "kp_xf: " << kp_xf << " \tkd_xf: " << kd_xf << "\tkp_Rf: " << kp_Rf << "\tkd_Rf: " << kd_Rf  << endl <<
-        // endl << setprecision(4) <<
+        if (t_step%100 == 0){ // General Debugging output
+        cout << setprecision(4) <<
+        "t: " << t << "\tCmd: " << ctrl_cmd.transpose() << endl << 
+        endl <<
+        "kp_x: " << kp_x.transpose() << "\tkd_x: " << kd_x.transpose() << endl <<
+        "kp_R: " << kp_R.transpose() << "\tkd_R: " << kd_R.transpose() << endl <<
+        "kp_omega (flip): " << kp_omega.transpose() << endl <<
+        setprecision(1) <<
+        "flip_flag: " << flip_flag << "\tmotorstop_flag: " << motorstop_flag << endl <<
+        "kp_xf: " << kp_xf << " \tkd_xf: " << kd_xf << "\tkp_Rf: " << kp_Rf << "\tkd_Rf: " << kd_Rf  << endl <<
+        endl << setprecision(4) <<
 
-        // "x_d: " << x_d.transpose() << endl <<
-        // "v_d: " << v_d.transpose() << endl <<
-        // "omega_d: " << omega_d.transpose() << endl <<
-        // endl << 
+        "x_d: " << x_d.transpose() << endl <<
+        "v_d: " << v_d.transpose() << endl <<
+        "omega_d: " << omega_d.transpose() << endl <<
+        endl << 
 
-        // "pos: " << pos.transpose() << "\te_x: " << e_x.transpose() << endl <<
-        // "vel: " << vel.transpose() << "\te_v: " << e_v.transpose() << endl <<
-        // "omega: " << omega.transpose() << "\te_w: " << e_omega.transpose() << endl <<
-        // endl << 
+        "pos: " << pos.transpose() << "\te_x: " << e_x.transpose() << endl <<
+        "vel: " << vel.transpose() << "\te_v: " << e_v.transpose() << endl <<
+        "omega: " << omega.transpose() << "\te_w: " << e_omega.transpose() << endl <<
+        endl << 
 
-        // "R:\n" << R << "\n\n" << 
-        // "R_d:\n" << R_d << "\n\n" << 
-        // "Yaw: " << yaw*180/M_PI << "\tRoll: " << roll*180/M_PI << "\tPitch: " << pitch*180/M_PI << endl <<
-        // "e_R: " << e_R.transpose() << "\te_R (deg): " << e_R.transpose()*180/M_PI << endl <<
-        // endl <<
+        "R:\n" << R << "\n\n" << 
+        "R_d:\n" << R_d << "\n\n" << 
+        "Yaw: " << yaw*180/M_PI << "\tRoll: " << roll*180/M_PI << "\tPitch: " << pitch*180/M_PI << endl <<
+        "e_R: " << e_R.transpose() << "\te_R (deg): " << e_R.transpose()*180/M_PI << endl <<
+        endl <<
 
-        // "FM: " << FM.transpose() << endl <<
-        // "f: " << f.transpose() << endl <<
-        // endl << setprecision(0) <<
-        // "MS_d: " << motorspeed_Vec_d.transpose() << endl <<
-        // "MS: " << motorspeed_Vec.transpose() << endl <<
-        // "=============== " << endl; 
-        // printf("\033c"); // clears console window
-        // }
+        "FM: " << FM.transpose() << endl <<
+        "f: " << f.transpose() << endl <<
+        endl << setprecision(0) <<
+        "MS_d: " << motorspeed_Vec_d.transpose() << endl <<
+        "MS: " << motorspeed_Vec.transpose() << endl <<
+        "=============== " << endl; 
+        printf("\033c"); // clears console window
+        }
 
      
         Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Vec.cast <float> (); // Converts motorspeeds to C++ array for data transmission
