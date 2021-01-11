@@ -3,6 +3,8 @@
 #include <Eigen/Dense>
 #include "controller.h"
 
+
+
 using namespace Eigen;
 using namespace std;
 
@@ -10,7 +12,7 @@ void Controller::Load()
 {
     cout << setprecision(3);
     cout << fixed;
-    isRunning = true;
+    _isRunning = true;
 
     // INIT FIRST CONTROLLER SOCKET (COMMUNICATES W/ MAVLINK PORT:18080)
     Ctrl_Mavlink_socket = socket(AF_INET, SOCK_DGRAM, 0); // DGRAM is for UDP communication (Send data but don't care if it's recieved)
@@ -99,9 +101,76 @@ void Controller::Load()
     else
         cout<<"[SUCCESS] Ctrl_Mavlink_socket: Sending test motor speeds to Mavlink. Avoiding mutual locking between threads!"<<endl;
 
+    // START COMMUNICATION THREADS
+    receiverThread_RL = std::thread(&Controller::recvThread_RL, this);
+    controllerThread = std::thread(&Controller::controlThread, this);
 
 
+}
 
+void Controller::recvThread_RL()
+{
+    float motorspeed_fake[4] = {0,0,0,0};
+
+    while(_isRunning)
+    {
+        //cout<<"[recvThread_RL] Receiving command from RL"<<endl;
+        int len = recvfrom(Ctrl_RL_socket, control_cmd_recvd, sizeof(control_cmd_recvd),0, (struct sockaddr*)&addr_RL, &addr_RL_len);
+
+
+        if(control_cmd_recvd[0]>10) // If header is 11 then enable sticky
+        {
+            motorspeed_fake[0] = -control_cmd_recvd[0];
+            motorspeed_fake[1] = control_cmd_recvd[1];
+            //cout<<"Send sticky command command: "<< motorspeed_fake[0]<<", "<<motorspeed_fake[1]<<endl;
+            sendto(Ctrl_Mavlink_socket, motorspeed_fake, sizeof(motorspeed_fake),0, (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len);
+
+            
+        }
+    }
+}
+
+void Controller::callback_number(const gazebo_communication_pkg::GlobalState::ConstPtr &msg){
+
+    // SIMPLIFY STATE VALUES FROM TOPIC
+    float _t = msg->header.stamp.toSec();
+    const geometry_msgs::Point position = msg->global_pose.position; // Follow names from message details - "rqt -s rqt_msg" 
+    const geometry_msgs::Quaternion quaternion = msg->global_pose.orientation;
+    const geometry_msgs::Vector3 velocity = msg->global_twist.linear;
+    const geometry_msgs::Vector3 omega = msg->global_twist.angular;
+
+    // SET STATE VALUES INTO CLASS STATE VARIABLES
+    _pos << position.x, position.y, position.z;
+    _vel << velocity.x, velocity.y, velocity.z;
+    _quat << quaternion.w, quaternion.x, quaternion.y, quaternion.z, 
+    _omega << omega.x, omega.y, omega.z;
+
+
+    // std::cout << _vel.transpose() << std::endl;
+
+}
+
+void Controller::controlThread()
+{
+    // =========== Controller Explanation =========== //
+    // https://www.youtube.com/watch?v=A27knigjGS4&list=PL_onPhFCkVQhuPiUxUW2lFHB39QsavEEA&index=46
+    // Derived from DOI's: 10.1002/asjc.567 (T. Lee) & 10.13140/RG.2.2.12876.92803/1 (M. Fernando)
+    typedef Matrix<double, 3, 3, RowMajor> RowMatrix3d; 
+
+
+    MotorCommand motorspeed_structure;
+
+    float motorspeed[4];
+    double state_full[18];
+    
+
+    int type; // Command type {1:Pos, 2:Vel, 3:Att, 4:Omega, 5:Stop}
+    double ctrl_flag; // On/Off switch for controller
+    double control_cmd[5];
+    Vector3d control_vals;
+
+    
+    
 
 }
 
