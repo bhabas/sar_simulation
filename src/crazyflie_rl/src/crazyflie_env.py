@@ -42,7 +42,7 @@ class CrazyflieEnv:
         self.state_Subscriber = rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
         self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
         self.RL_Publisher = rospy.Publisher('/rl_data',RLData,queue_size=10)
-        self.Cmd_Publisher = rospy.Publisher('/rl_cmd',RLCmd,queue_size=10)
+        self.Cmd_Publisher = rospy.Publisher('/rl_ctrl',RLCmd,queue_size=10)
 
 
 
@@ -238,10 +238,10 @@ class CrazyflieEnv:
                 close_fds=True, preexec_fn=os.setsid, shell=True)
             time.sleep(5)
 
-            print("[STARTING] Starting Controller Process...")
-            self.controller_p = subprocess.Popen( # Controller Process
-                "gnome-terminal --disable-factory --geometry 70x36 -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_controller.bash", 
-                close_fds=True, preexec_fn=os.setsid, shell=True)
+            # print("[STARTING] Starting Controller Process...")
+            # self.controller_p = subprocess.Popen( # Controller Process
+            #     "gnome-terminal --disable-factory --geometry 70x36 -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_controller.bash", 
+            #     close_fds=True, preexec_fn=os.setsid, shell=True)
 
         else:
             print("[STARTING] Starting Gazebo Process...")
@@ -254,6 +254,8 @@ class CrazyflieEnv:
             self.controller_p = subprocess.Popen( # Controller Process
                 "gnome-terminal --disable-factory --geometry 70x36 -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_controller.bash", 
                 close_fds=True, preexec_fn=os.setsid, shell=True)
+
+
 
     def launch_dashboard(self):
         print("[STARTING] Starting Dashboard...")

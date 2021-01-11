@@ -28,16 +28,18 @@ class Controller
         Controller(ros::NodeHandle *nh){
             ctrl_Publisher = nh->advertise<crazyflie_gazebo::CtrlData>("/ctrl_data",10);
             globalState_Subscriber = nh->subscribe("/global_state",1000,&Controller::global_stateCallback,this);
-            RLCmd_Subscriber = nh->subscribe("/rl_cmd",10,&Controller::RLCmd_Callback,this);
+            RLCmd_Subscriber = nh->subscribe("/rl_ctrl",10,&Controller::RLCmd_Callback,this);
 
             ctrl_cmd << 404,0,0,0,0;
 
-
+            _t = 0.0;
 
             _pos << 0,0,0;
             _vel << 0,0,0;
             _quat << 0,0,0,0;
             _omega << 0,0,0;
+
+            _x_d << 0,0,0.3;
 
 
         }
@@ -73,6 +75,15 @@ class Controller
         Eigen::Vector3d _vel;
         Eigen::Vector4d _quat;
         Eigen::Vector3d _omega;
+
+        Eigen::Vector3d _x_d;
+
+
+        // CONTROLLER FLAGS
+        double _kp_xf = 1; // Pos. Gain Flag
+        double _kd_xf = 1; // Pos. derivative Gain Flag
+        double _kp_Rf = 1; // Rot. Gain Flag
+        double _kd_Rf = 1; // Rot. derivative Gain Flag
 
 
 

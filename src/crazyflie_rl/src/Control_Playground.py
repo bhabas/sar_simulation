@@ -27,7 +27,6 @@ os.system("clear")
 def main():
     
     # ============================
-    
     ##     Sim Initialization 
     # ============================
 

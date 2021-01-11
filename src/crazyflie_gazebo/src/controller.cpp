@@ -102,8 +102,11 @@ void Controller::global_stateCallback(const gazebo_communication_pkg::GlobalStat
 void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
 
     int cmd_type = msg->cmd_type;
-    const geometry_msgs::Point cmd_vals = msg->cmd_vals;
+    const geometry_msgs::Point vals = msg->cmd_vals;
+    Vector3d cmd_vals(vals.x,vals.y,vals.z);
     float cmd_flag = msg->cmd_flag;
+
+    ctrl_cmd << cmd_type,cmd_vals,cmd_flag;
 
 
     if(cmd_type==11){
@@ -113,9 +116,20 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
         sendto(Ctrl_Mavlink_socket, sticky_cmd, sizeof(sticky_cmd),0, (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len);
     }
 
+    switch(cmd_type){
+
+        case 1: // Position
+            _x_d = cmd_vals;
+            _kp_xf = cmd_flag;
+            break;
+            
+
+
+    }
+
     
-    ctrl_cmd << cmd_type,cmd_vals.x,cmd_vals.y,cmd_vals.z,cmd_flag;
-    cout << ctrl_cmd.transpose() << endl;
+    
+    // cout << ctrl_cmd.transpose() << endl;
 }
 
 
@@ -216,12 +230,7 @@ void Controller::controlThread()
     // kd_R is great for stabilization but for flip manuevers it's too sensitive and 
     // saturates the motors causing instability during the rotation
 
-    // Controller Flags
-    double kp_xf = 1; // Pos. Gain Flag
-    double kd_xf = 1; // Pos. derivative Gain Flag
-    double kp_Rf = 1; // Rot. Gain Flag
-    double kd_Rf = 1; // Rot. derivative Gain Flag
-
+ 
     
 
 
@@ -289,6 +298,7 @@ void Controller::controlThread()
 
         // =========== Control Definitions =========== //
         // Define control_cmd from recieved control_cmd
+        x_d = _x_d;
         
 
         // =========== State Definitions =========== //
@@ -322,7 +332,7 @@ void Controller::controlThread()
         e_v = vel - v_d;
 
         
-        F_thrust_ideal = -kp_x.cwiseProduct(e_x)*kp_xf + -kd_x.cwiseProduct(e_v)*kd_xf + m*g*e3 + m*a_d; // ideal control thrust vector
+        F_thrust_ideal = -kp_x.cwiseProduct(e_x)*_kp_xf + -kd_x.cwiseProduct(e_v)*_kd_xf + m*g*e3 + m*a_d; // ideal control thrust vector
         b3_d = F_thrust_ideal.normalized(); // desired body-fixed vertical axis
         b2_d = b3_d.cross(b1_d).normalized(); // body-fixed horizontal axis
 
@@ -345,7 +355,7 @@ void Controller::controlThread()
         // =========== Control Equations =========== // 
         F_thrust = F_thrust_ideal.dot(b3)*(flip_flag); // Thrust control value
         Gyro_dyn = omega.cross(J*omega) - J*(hat(omega)*R.transpose()*R_d*omega_d - R.transpose()*R_d*domega_d); // Gyroscopic dynamics
-        M = -kp_R.cwiseProduct(e_R)*kp_Rf + -kd_R.cwiseProduct(e_omega)*kd_Rf + Gyro_dyn; // Moment control vector
+        M = -kp_R.cwiseProduct(e_R)*_kp_Rf + -kd_R.cwiseProduct(e_omega)*_kd_Rf + Gyro_dyn; // Moment control vector
         FM << F_thrust,M; // Thrust-Moment control vector
 
         
@@ -392,7 +402,7 @@ void Controller::controlThread()
         "kp_omega (flip): " << kp_omega.transpose() << endl <<
         setprecision(1) <<
         "flip_flag: " << flip_flag << "\tmotorstop_flag: " << motorstop_flag << endl <<
-        "kp_xf: " << kp_xf << " \tkd_xf: " << kd_xf << "\tkp_Rf: " << kp_Rf << "\tkd_Rf: " << kd_Rf  << endl <<
+        "kp_xf: " << _kp_xf << " \tkd_xf: " << _kd_xf << "\tkp_Rf: " << _kp_Rf << "\tkd_Rf: " << _kd_Rf  << endl <<
         endl << setprecision(4) <<
 
         "x_d: " << x_d.transpose() << endl <<
