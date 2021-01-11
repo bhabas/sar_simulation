@@ -1,7 +1,10 @@
 #include <iostream>
-#include <ros/ros.h>
+
 #include <Eigen/Dense>
 #include "controller.h"
+
+#include <ros/ros.h>
+
 
 
 
@@ -213,25 +216,10 @@ void Controller::controlThread()
     Vector3d e_R; // Rotation-error [rad]
     Vector3d e_omega; // Omega-error [rad/s]
 
-    
-
-
-    // Matrix3d J_temp;
-    // J_temp << 16.5717,0.8308,0.7183,
-    //           0.8308,16.6556,1.8002,
-    //           0.7183,1.8002,29.2617; // Sourced from J. Forster
-    // J = J_temp*1e-6;
-
-
-
 
     Vector3d e3(0,0,1); // Global z-axis
 
     
-
-
-
-
     Vector3d F_thrust_ideal; // Ideal thrust vector to minimize error   
     Vector3d Gyro_dyn; // Gyroscopic dynamics of system [Nm]
     Vector3d M; // Moment control vector [Nm]
@@ -331,6 +319,9 @@ void Controller::controlThread()
     v_d << v_d_Def;
     a_d << a_d_Def;
     b1_d << b1_d_Def;
+
+    crazyflie_gazebo::CtrlData ctrl_msg;
+    ros::Rate rate(1000);
 
     while(_isRunning)
     {
@@ -488,10 +479,10 @@ void Controller::controlThread()
             else if(isnan(motorspeed_Vec(k_motor))){
                 motorspeed_Vec(k_motor) = 0;
             }
-            // else if(motorspeed_Vec(k_motor)>= 2500){ // Max rotation speed (rad/s)
-            //     // cout << "Motorspeed capped - Motor: " << k_motor << endl;
-            //     motorspeed_Vec(k_motor) = 2500;
-            // }
+            else if(motorspeed_Vec(k_motor)>= 2500){ // Max rotation speed (rad/s)
+                // cout << "Motorspeed capped - Motor: " << k_motor << endl;
+                motorspeed_Vec(k_motor) = 2500;
+            }
         }
 
         if(b3(2) <= 0){ // If e3 component of b3 is neg, turn motors off [arbitrary amount]
@@ -505,7 +496,7 @@ void Controller::controlThread()
         
 
 
-        if (t_step%300 == 0){ // General Debugging output
+        if (t_step%100 == 0){ // General Debugging output
         cout << setprecision(4) <<
         "t: " << t << "\tCmd: " << control_cmd_Eig.transpose() << endl << 
         endl <<
@@ -547,9 +538,16 @@ void Controller::controlThread()
         int len = sendto(Ctrl_Mavlink_socket, motorspeed, sizeof(motorspeed),0, // Send motorspeeds to Gazebo -> gazebo_motor_model?
                 (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len); 
         
-
         t_step++;
         t_prev = t;
+        
+        ctrl_msg.motorspeeds = {motorspeed[0],motorspeed[1],motorspeed[2],motorspeed[3]};
+        ctrl_Publisher.publish(ctrl_msg);
+        rate.sleep();
+
+
+
+        
 
     }
 

@@ -27,6 +27,12 @@ class Controller
             ctrl_Publisher = nh->advertise<crazyflie_gazebo::CtrlData>("/ctrlData",10);
             globalState_Subscriber = nh->subscribe("/global_state",1000,
             &Controller::callback_number,this);
+
+
+            _pos << 0.0,0.0,0.0;
+            _vel << 0.0,0.0,0.0;
+            _quat << 0.0,0.0,0.0,0.0;
+            _omega << 0.0,0.0,0.0;
         }
 
         // DEFINE FUNCTION PROTOTYPES
@@ -93,7 +99,7 @@ class Controller
 
 };
 
-
+// CUSTOM EIGEN FUNCTIONS FOR HAD AND DEHAT OPERATORS
 Eigen::Matrix3d hat(Eigen::Vector3d a) // Input a hat vector and output corresponding skew-symmetric matrix
 { 
   // You hat a vector and get a skew-symmetric matrix

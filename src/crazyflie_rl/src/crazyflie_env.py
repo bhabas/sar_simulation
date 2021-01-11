@@ -324,7 +324,7 @@ class CrazyflieEnv:
             print("no such action")
         cmd = struct.pack('5d', header, ctrl_vals[0], ctrl_vals[1], ctrl_vals[2], ctrl_flag) # Send command
         self.RL_socket.sendto(cmd, self.addr_Ctrl)
-        time.sleep(0.01) # continually sends message during this time to ensure connection
+        time.sleep(0.05) # continually sends message during this time to ensure connection
         cmd = struct.pack('5d',8,0,0,0,1) # Send blank command so controller doesn't keep redefining values
         self.RL_socket.sendto(cmd, self.addr_Ctrl)
 
