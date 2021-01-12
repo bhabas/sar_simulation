@@ -7,6 +7,7 @@ import numpy as np
 
 from gazebo_communication_pkg.msg import GlobalState
 from crazyflie_rl.msg import RLData
+from crazyflie_gazebo.msg import CtrlData
 
 
 import csv
@@ -24,15 +25,16 @@ class DataLoggingNode:
 
         self.StateSub = message_filters.Subscriber("/global_state",GlobalState)
         self.RLSub = message_filters.Subscriber("/rl_data",RLData)
+        self.CtrlSub = message_filters.Subscriber("/ctrl_data",CtrlData)
         self.atsSub()
 
 
     def atsSub(self):
-        ats = message_filters.ApproximateTimeSynchronizer([self.RLSub,self.StateSub],queue_size=5,slop=0.01)
+        ats = message_filters.ApproximateTimeSynchronizer([self.RLSub,self.StateSub,self.CtrlSub],queue_size=5,slop=0.05,allow_headerless=True)
         ats.registerCallback(self.csvWriter)
         rospy.spin()
 
-    def csvWriter(self,rl_msg,gs_msg):
+    def csvWriter(self,rl_msg,gs_msg,ctrl_msg):
 
         self.t_step += 1
         
@@ -59,11 +61,10 @@ class DataLoggingNode:
         self.orientation_q = np.round(self.orientation_q,3)
         self.velocity = np.round(self.velocity,3)
         self.omega = np.round(self.omega,3)
-        
 
+               
 
-
-        ## SET VALUES FROM RL_DATA TOPIC
+        ## SET RL PARAMS FROM RL_DATA TOPIC
         self.trial_name = rl_msg.trial_name
         self.agent = rl_msg.agent
 
@@ -109,6 +110,10 @@ class DataLoggingNode:
         self.OF_x = np.round(self.OF_x,2)
         self.OF_y = np.round(self.OF_y,2)
 
+        ## SET & TRIM CTRL VALUES FROM CTRL_DATA TOPIC
+        self.MS = np.asarray(ctrl_msg.motorspeeds)
+        self.MS = np.round(self.MS,0)
+
 
         
         username = getpass.getuser()
@@ -138,7 +143,6 @@ class DataLoggingNode:
 
 
     def create_csv(self):
-        
 
         with open(self.path,mode='w') as state_file:
             state_writer = csv.writer(state_file,delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -152,7 +156,8 @@ class DataLoggingNode:
                 'wx','wy','wz',
                 'gamma','reward','flip_trigger','n_rollouts',
                 'RREV','OF_x','OF_y',
-                "","","","", ])
+                'MS1','MS2','MS3','MS4',
+                "","","","",  ])# Place holders
 
 
     def append_csv(self):
@@ -169,6 +174,7 @@ class DataLoggingNode:
                 self.omega[0],self.omega[1],self.omega[2], # wx,wy,wz
                 "","",self.flip_flag,"", # gamma, reward, flip_triggered, n_rollout
                 self.RREV,self.OF_x,self.OF_y, # RREV, OF_x, OF_y
+                self.MS[0],self.MS[1],self.MS[2],self.MS[3],
                 "","","","", # Place holders
                 ]) 
         
@@ -187,6 +193,7 @@ class DataLoggingNode:
                 self.omega_d[0],self.omega_d[1],self.omega_d[2], # wx,wy,wz
                 self.gamma,self.reward,"",self.n_rollouts, # gamma, reward, flip_triggered, n_rollout
                 "","","", # RREV, OF_x, OF_y
+                "","","","",
                 "","","","", # Place holders Include successful run flag
                 ])
         

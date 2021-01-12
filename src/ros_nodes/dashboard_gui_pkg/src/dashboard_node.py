@@ -25,7 +25,7 @@ class DashboardNode:
         ## INITIAILIZE REWARD SUBSCRIBER THREAD
         rospy.Subscriber('/rl_data',RLData,self.rewardCallback)
 
-        rospy.Subscriber('/ctrlData',CtrlData,self.ctrlCallback)
+        rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)
    
 
         print("[COMPLETED] Dashboard node is running...")

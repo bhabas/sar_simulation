@@ -57,11 +57,11 @@ def runGraph():
 
 
     ## SET  DASBOARD Y-LIMITS
-    ax1_pos.set_ylim([-2,2])
-    ax1_vel.set_ylim([-3,3])
+    ax1_pos.set_ylim([-4,4])
+    ax1_vel.set_ylim([-4,4])
     ax1_att.set_ylim([-200,200])
-    ax1_omega.set_ylim([-30,30])
-    ax1_ms.set_ylim([1500,2700])
+    ax1_omega.set_ylim([-50,50])
+    ax1_ms.set_ylim([0,2700])
 
     
 
