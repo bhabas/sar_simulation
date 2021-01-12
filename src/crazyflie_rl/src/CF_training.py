@@ -38,7 +38,7 @@ def runTrial(vx_d,vz_d):
     # ============================
     ##          Episode         
     # ============================
-    for k_ep in range(0,25):
+    for k_ep in range(0,500):
         env.k_ep = k_ep
 
         ## CONVERT AGENT ARRAYS TO LISTS FOR PUBLISHING
@@ -86,7 +86,6 @@ def runTrial(vx_d,vz_d):
 
             ## RESET TO INITIAL STATE
             env.step('home',ctrl_flag=1) # Reset control vals and functionality to default vals
-            env.stepPub('home')
             time.sleep(1.0) # Time for CF to settle
             
 
@@ -127,10 +126,8 @@ def runTrial(vx_d,vz_d):
             ##          Rollout 
             # ============================
             env.step('pos',ctrl_flag=0) # Turn off pos control
-            env.stepPub('pos',ctrl_flag=0)
             env.step('vel',env.vel_d,ctrl_flag=1) # Set desired vel
-            env.stepPub('vel',env.vel_d,ctrl_flag=1)
-
+ 
             
             
             
@@ -151,7 +148,7 @@ def runTrial(vx_d,vz_d):
                 R = Rotation.from_quat([qx,qy,qz,qw])
                 R = R.as_matrix() # [b1,b2,b3] Body vectors
                 RREV,OF_x,OF_y = vz/d, -vy/d, -vx/d # OF_x,y are mock optical flow vals assuming no body rotation
-                # env.stepPub()
+                
 
 
                 
@@ -160,8 +157,8 @@ def runTrial(vx_d,vz_d):
                 # ============================
                 if (RREV > RREV_trigger) and (env.flip_flag == False):
                     start_time_pitch = env.getTime()
-                    env.enableSticky(1)
-                    env.stepPub('sticky',ctrl_flag=1)
+            
+                    env.step('sticky',ctrl_flag=1)
 
                     omega_yd = (G1*RREV - G2*abs(OF_y))*np.sign(OF_y)
                     omega_xd = 0.0
@@ -176,7 +173,7 @@ def runTrial(vx_d,vz_d):
 
                     ## Start rotation and mark rotation as triggered
                     env.step('omega',env.omega_d,ctrl_flag=1) # Set desired ang. vel 
-                    env.stepPub('omega',env.omega_d,ctrl_flag=1)
+                   
                     env.flip_flag = True
 
                 # ============================
@@ -249,10 +246,10 @@ def runTrial(vx_d,vz_d):
                 if env.runComplete_flag==True:
 
                     env.step('stop')
-                    env.stepPub('stop')
+                  
                     env.reset_pos()
                     env.step('home')
-                    env.stepPub('home')
+                    
                     reward[k_run] = agent.calculate_reward(state_history,env.h_ceiling)
                     env.reward = reward[k_run]
                     print("Reward = %.3f" %(reward[k_run]))
@@ -288,21 +285,21 @@ if __name__ == '__main__':
     env.n_rollouts = 10
     env.gamma = 0.95
     env.logging_flag = True
-    env.h_ceiling = 2.0 # [m]
+    env.h_ceiling = 3.0 # [m]
 
     ## LEARNING RATES
     alpha_mu = np.array([[0.1]])
     alpha_sigma = np.array([[0.05]])
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[6.0],[6.0],[6.0]])# Initial estimates of mu: 
+    mu = np.array([[5.0],[6.0],[6.0]])# Initial estimates of mu: 
     sigma = np.array([[1.5],[1.5],[1.5]]) # Initial estimates of sigma: 
 
 
     ## LEARNING AGENTS
-    # agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollouts=6)
+    agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollouts=env.n_rollouts)
     # agent = rlsysPEPGAgent_adaptive(alpha_mu,alpha_sigma,mu,sigma,n_rollouts=6)
-    agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=env.n_rollouts)
+    # agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=env.n_rollouts)
     # agent = rlEM_AdaptiveAgent(mu,sigma,n_rollouts=6) # Not working
 
 

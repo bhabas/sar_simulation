@@ -238,10 +238,10 @@ class CrazyflieEnv:
                 close_fds=True, preexec_fn=os.setsid, shell=True)
             time.sleep(5)
 
-            # print("[STARTING] Starting Controller Process...")
-            # self.controller_p = subprocess.Popen( # Controller Process
-            #     "gnome-terminal --disable-factory --geometry 70x36 -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_controller.bash", 
-            #     close_fds=True, preexec_fn=os.setsid, shell=True)
+            print("[STARTING] Starting Controller Process...")
+            self.controller_p = subprocess.Popen( # Controller Process
+                "gnome-terminal --disable-factory --geometry 70x36 -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_controller.bash", 
+                close_fds=True, preexec_fn=os.setsid, shell=True)
 
         else:
             print("[STARTING] Starting Gazebo Process...")
@@ -267,8 +267,8 @@ class CrazyflieEnv:
 
 
     def reset_pos(self): # Disable sticky then places spawn_model at origin
-        self.enableSticky(0)
-        self.stepPub('sticky',ctrl_flag=0)
+        
+        self.step('sticky',ctrl_flag=0)
 
         state_msg = ModelState()
         state_msg.model_name = 'crazyflie_model_X'
@@ -289,7 +289,7 @@ class CrazyflieEnv:
         set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         set_state_srv(state_msg)
 
-    def stepPub(self,action,ctrl_vals=[0,0,0],ctrl_flag=1):
+    def step(self,action,ctrl_vals=[0,0,0],ctrl_flag=1):
         cmd_msg = RLCmd()
 
         cmd_dict = {'home':0,
