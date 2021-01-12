@@ -1,16 +1,15 @@
-import rospy
-import getpass
-import message_filters
-from threading import Thread
-
+#!/usr/bin/env python3
+import rospy,message_filters
+import csv,getpass
 import numpy as np
+
+
 
 from gazebo_communication_pkg.msg import GlobalState
 from crazyflie_rl.msg import RLData
 from crazyflie_gazebo.msg import CtrlData
 
 
-import csv
 
 
 class DataLoggingNode:
@@ -37,13 +36,13 @@ class DataLoggingNode:
     def csvWriter(self,rl_msg,gs_msg,ctrl_msg):
 
         self.t_step += 1
-        
+
         ## SET TIME VALUE FROM GLOBAL_STATE TOPIC
         t_temp = gs_msg.header.stamp.secs
         ns_temp = gs_msg.header.stamp.nsecs
         self.t = t_temp+ns_temp*1e-9 # (seconds + nanoseconds)
         self.t = np.round(self.t,3)
-        
+
         ## SIMPLIFY STATE VALUES FROM GLOBAL_STATE TOPIC
         global_pos = gs_msg.global_pose.position
         global_quat = gs_msg.global_pose.orientation
@@ -62,7 +61,7 @@ class DataLoggingNode:
         self.velocity = np.round(self.velocity,3)
         self.omega = np.round(self.omega,3)
 
-               
+
 
         ## SET RL PARAMS FROM RL_DATA TOPIC
         self.trial_name = rl_msg.trial_name
@@ -72,11 +71,11 @@ class DataLoggingNode:
         self.createCSV_flag = rl_msg.createCSV_flag
         self.flip_flag = rl_msg.flip_flag
         self.runComplete_flag = rl_msg.runComplete_flag
-        
+
         self.n_rollouts = rl_msg.n_rollouts
         self.gamma = np.round(rl_msg.gamma,2)
         self.h_ceiling = rl_msg.h_ceiling
-        
+
         self.k_ep = rl_msg.k_ep
         self.k_run = rl_msg.k_run
 
@@ -115,7 +114,7 @@ class DataLoggingNode:
         self.MS = np.round(self.MS,0)
 
 
-        
+
         username = getpass.getuser()
         self.path =  f"/home/{username}/catkin_ws/src/crazyflie_simulation/src/ros_nodes/data_logging_pkg/log/{self.trial_name}.csv"
 
@@ -124,7 +123,7 @@ class DataLoggingNode:
         if self.logging_flag == True:
 
             if self.createCSV_flag == True:
-                self.create_csv()  
+                self.create_csv()
 
             if self.k_run_temp != rl_msg.k_run: # When k_run changes then add blank row
                 self.append_csv_blank()
@@ -136,7 +135,7 @@ class DataLoggingNode:
             if self.runComplete_flag == True:
                 self.append_IC()
 
-            
+
 
 
 
@@ -176,8 +175,8 @@ class DataLoggingNode:
                 self.RREV,self.OF_x,self.OF_y, # RREV, OF_x, OF_y
                 self.MS[0],self.MS[1],self.MS[2],self.MS[3],
                 "","","","", # Place holders
-                ]) 
-        
+                ])
+
 
     def append_IC(self):
 
@@ -196,22 +195,21 @@ class DataLoggingNode:
                 "","","","",
                 "","","","", # Place holders Include successful run flag
                 ])
-        
-    def append_csv_blank(self): 
-        
+
+    def append_csv_blank(self):
+
          with open(self.path, mode='a') as state_file:
             state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             state_writer.writerow([])
-        
-
-        
 
 
 
-        
+
+
+
+
 if __name__ == "__main__":
     DLNode = DataLoggingNode()
-    # print("struf")
     while not rospy.is_shutdown():
         pass
 
