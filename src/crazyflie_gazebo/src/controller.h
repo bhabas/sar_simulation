@@ -27,7 +27,7 @@ class Controller
         // CONSTRUCTOR TO START PUBLISHERS AND SUBSCRIBERS (Similar to Python's __init__() )
         Controller(ros::NodeHandle *nh){
             ctrl_Publisher = nh->advertise<crazyflie_gazebo::CtrlData>("/ctrl_data",10);
-            
+
             globalState_Subscriber = nh->subscribe("/global_state",1000,&Controller::global_stateCallback,this);
             RLCmd_Subscriber = nh->subscribe("/rl_ctrl",10,&Controller::RLCmd_Callback,this);
 
@@ -48,6 +48,13 @@ class Controller
             _a_d << 0,0,0;
             _b1_d << 1,0,0;
             _omega_d << 0,0,0;
+
+            _kp_x << 0.1,0.1,0.11;
+            _kd_x << 0.08,0.08,0.08;
+            _kp_R << 0.05,0.05,0.05;
+            _kd_R << 0.005,0.005,0.005;
+
+            _kp_omega << 0.05,0.05,0.0;
 
 
 
@@ -90,6 +97,14 @@ class Controller
         Eigen::Vector3d _a_d;
         Eigen::Vector3d _b1_d;
         Eigen::Vector3d _omega_d;
+
+        Eigen::Vector3d _kp_x;
+        Eigen::Vector3d _kd_x;
+        Eigen::Vector3d _kp_R;
+        Eigen::Vector3d _kd_R;
+        
+        Eigen::Vector3d _kp_omega;
+        
 
         // CONTROLLER FLAGS
         double _kp_xf = 1; // Pos. Gain Flag

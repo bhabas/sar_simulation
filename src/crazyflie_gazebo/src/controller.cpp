@@ -131,6 +131,8 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             _kp_Rf = 1;
             _kd_Rf = 1;
 
+            _kd_R << 0.005,0.005,0.005;
+
 
 
             _motorstop_flag = 0;
@@ -151,7 +153,9 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
 
             break;
         
-        case 4: // Flip
+        case 4: // Execute Flip
+
+            _kd_R = _kp_omega;
 
             _omega_d = cmd_vals;
             _kp_xf = 0;
@@ -172,8 +176,7 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
     }
 
     
-    
-    // cout << ctrl_cmd.transpose() << endl;
+
 }
 
 
@@ -263,13 +266,13 @@ void Controller::controlThread()
 
     
     // Controller Values
-    Vector4d Ctrl_Gains; 
-    Vector3d kp_x(0.1,0.1,0.11);         // Pos. Gain
-    Vector3d kd_x(0.08,0.08,0.08);      // Pos. derivative Gain
-    Vector3d kp_R(0.05,0.05,0.05);      // Rot. Gain
-    Vector3d kd_R(0.005,0.005,0.005);   // Rot. derivative Gain
+    // Vector4d Ctrl_Gains; 
+    Vector3d kp_x;   // Pos. Gain
+    Vector3d kd_x;   // Pos. derivative Gain
+    Vector3d kp_R;   // Rot. Gain
+    Vector3d kd_R;   // Rot. derivative Gain
 
-    Vector3d kp_omega(0.005,0.005 ,0); // Flip proportional Gain
+    // Vector3d kp_omega(0.005,0.005 ,0); // Flip proportional Gain
     // Omega proportional gain (similar to kd_R but that's for damping and this is to achieve omega_d)
     // kd_R is great for stabilization but for flip manuevers it's too sensitive and 
     // saturates the motors causing instability during the rotation
@@ -288,8 +291,6 @@ void Controller::controlThread()
     double m = 0.026 + 0.00075*4; // Mass [kg]
     double g = 9.8066; // Gravitational acceleration [m/s^2]
     double t = 0; // Time from Gazebo [s]
-    double t_prev = 0; // Prev time val [s]
-    double dt = 0;  // Time difference [s]
     unsigned int t_step = 0; // t_step counter
 
 
@@ -356,6 +357,11 @@ void Controller::controlThread()
         quat_Eig = _quat;
         vel = _vel;
         omega = _omega;
+
+        kp_x = _kp_x;
+        kd_x = _kd_x;
+        kp_R = _kp_R;
+        kd_R = _kd_R;
 
 
         // =========== Rotation Matrix =========== //
@@ -442,9 +448,9 @@ void Controller::controlThread()
         cout << setprecision(4) <<
         "t: " << t << "\tCmd: " << ctrl_cmd.transpose() << endl << 
         endl <<
-        "kp_x: " << kp_x.transpose() << "\tkd_x: " << kd_x.transpose() << endl <<
-        "kp_R: " << kp_R.transpose() << "\tkd_R: " << kd_R.transpose() << endl <<
-        "kp_omega (flip): " << kp_omega.transpose() << endl <<
+        "kp_x: " << _kp_x.transpose() << "\tkd_x: " << _kd_x.transpose() << endl <<
+        "kp_R: " << _kp_R.transpose() << "\tkd_R: " << _kd_R.transpose() << endl <<
+        "kp_omega (flip): " << _kp_omega.transpose() << endl <<
         setprecision(1) <<
         "flip_flag: " << _flip_flag << "\tmotorstop_flag: " << _motorstop_flag << endl <<
         "kp_xf: " << _kp_xf << " \tkd_xf: " << _kd_xf << "\tkp_Rf: " << _kp_Rf << "\tkd_Rf: " << _kd_Rf  << endl <<
@@ -480,7 +486,6 @@ void Controller::controlThread()
                 (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len); 
         
         t_step++;
-        t_prev = t;
         
         ctrl_msg.motorspeeds = {motorspeed[0],motorspeed[1],motorspeed[2],motorspeed[3]};
         ctrl_Publisher.publish(ctrl_msg);
