@@ -117,10 +117,54 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
     }
 
     switch(cmd_type){
+        case 0: // Reset to home
+
+            _x_d << 0,0,0.3;
+            _v_d << 0,0,0;
+            _a_d << 0,0,0;
+            _b1_d << 1,0,0;
+
+            _omega_d << 0,0,0;
+
+            _kp_xf = 1;
+            _kd_xf = 1;
+            _kp_Rf = 1;
+            _kd_Rf = 1;
+
+
+
+            _motorstop_flag = 0;
+            _flip_flag = 1;
+            break;
 
         case 1: // Position
             _x_d = cmd_vals;
             _kp_xf = cmd_flag;
+            break;
+
+        case 2: // Velocity
+            _v_d = cmd_vals;
+            _kd_xf = cmd_flag;
+            break;
+
+        case 3: // Attitude [Future implentation needed]
+
+            break;
+        
+        case 4: // Flip
+
+            _omega_d = cmd_vals;
+            _kp_xf = 0;
+            _kd_xf = 0;
+            _kp_Rf = 0;
+            _kd_Rf = cmd_flag;
+
+            _flip_flag = 0;
+
+            break;
+
+        case 5: // Stop
+            _motorstop_flag = 1;
             break;
             
 
@@ -147,13 +191,13 @@ void Controller::controlThread()
     
     
 
-    int type; // Command type {1:Pos, 2:Vel, 3:Att, 4:Omega, 5:Stop}
-    double ctrl_flag; // On/Off switch for controller
-    double control_cmd[5];
-    Vector3d control_vals;
+    // int type; // Command type {1:Pos, 2:Vel, 3:Att, 4:Omega, 5:Stop}
+    // double ctrl_flag; // On/Off switch for controller
+    // double control_cmd[5];
+    // Vector3d control_vals;
     
 
-    // State Declarations
+    // Local State Declarations
     Vector3d pos; // Current position [m]
     Vector3d vel; // Current velocity [m]
     Vector4d quat_Eig; // Current attitude [rad] (quat form)
@@ -163,14 +207,14 @@ void Controller::controlThread()
     
 
     // Default desired States
-    Vector3d x_d_Def(0,0,0.5); // Pos-desired (Default) [m]  # Should be z=0.03 but needs integral controller for error offset
-    Vector3d v_d_Def(0,0,0); // Velocity-desired (Default) [m/s]
-    Vector3d a_d_Def(0,0,0); // Acceleration-desired (Default) [m/s]
-    Vector3d b1_d_Def(1,0,0); // Desired global pointing direction (Default)
-    Vector3d omega_d_Def(0,0,0);
+    // Vector3d x_d_Def(0,0,0.5); // Pos-desired (Default) [m]  # Should be z=0.03 but needs integral controller for error offset
+    // Vector3d v_d_Def(0,0,0); // Velocity-desired (Default) [m/s]
+    // Vector3d a_d_Def(0,0,0); // Acceleration-desired (Default) [m/s]
+    // Vector3d b1_d_Def(1,0,0); // Desired global pointing direction (Default)
+    // Vector3d omega_d_Def(0,0,0);
     
 
-    // State Error and Prescriptions
+    // Local State Error and Prescriptions
     Vector3d x_d; // Pos-desired [m] 
     Vector3d v_d; // Velocity-desired [m/s]
     Vector3d a_d; // Acceleration-desired [m/s]
@@ -275,8 +319,8 @@ void Controller::controlThread()
     
     // 1 is on | 0 is off by default
     // double att_control_flag = 0; // Controls implementation
-    double flip_flag = 1;       // Controls thrust implementation
-    double motorstop_flag = 0;  // Controls stop implementation
+    // double flip_flag = 1;       // Controls thrust implementation
+    // double motorstop_flag = 0;  // Controls stop implementation
 
 
 
@@ -285,10 +329,7 @@ void Controller::controlThread()
     double b; // Amplitude for trajectories [m]
 
     // =========== Trajectory Definitions =========== //
-    x_d << x_d_Def;
-    v_d << v_d_Def;
-    a_d << a_d_Def;
-    b1_d << b1_d_Def;
+
 
     crazyflie_gazebo::CtrlData ctrl_msg;
     ros::Rate rate(1000);
@@ -299,6 +340,10 @@ void Controller::controlThread()
         // =========== Control Definitions =========== //
         // Define control_cmd from recieved control_cmd
         x_d = _x_d;
+        v_d = _v_d;
+        a_d = _a_d;
+        b1_d = _b1_d;
+        omega_d = _omega_d;
         
 
         // =========== State Definitions =========== //
@@ -353,7 +398,7 @@ void Controller::controlThread()
 
 
         // =========== Control Equations =========== // 
-        F_thrust = F_thrust_ideal.dot(b3)*(flip_flag); // Thrust control value
+        F_thrust = F_thrust_ideal.dot(b3)*(_flip_flag); // Thrust control value
         Gyro_dyn = omega.cross(J*omega) - J*(hat(omega)*R.transpose()*R_d*omega_d - R.transpose()*R_d*domega_d); // Gyroscopic dynamics
         M = -kp_R.cwiseProduct(e_R)*_kp_Rf + -kd_R.cwiseProduct(e_omega)*_kd_Rf + Gyro_dyn; // Moment control vector
         FM << F_thrust,M; // Thrust-Moment control vector
@@ -383,11 +428,11 @@ void Controller::controlThread()
         }
 
         if(b3(2) <= 0){ // If e3 component of b3 is neg, turn motors off [arbitrary amount]
-            motorstop_flag = 1;
+            _motorstop_flag = 1;
         }
 
 
-        if(motorstop_flag == 1){ // Shutoff all motors
+        if(_motorstop_flag == 1){ // Shutoff all motors
             motorspeed_Vec << 0,0,0,0;
         }
         
@@ -401,7 +446,7 @@ void Controller::controlThread()
         "kp_R: " << kp_R.transpose() << "\tkd_R: " << kd_R.transpose() << endl <<
         "kp_omega (flip): " << kp_omega.transpose() << endl <<
         setprecision(1) <<
-        "flip_flag: " << flip_flag << "\tmotorstop_flag: " << motorstop_flag << endl <<
+        "flip_flag: " << _flip_flag << "\tmotorstop_flag: " << _motorstop_flag << endl <<
         "kp_xf: " << _kp_xf << " \tkd_xf: " << _kd_xf << "\tkp_Rf: " << _kp_Rf << "\tkd_Rf: " << _kd_Rf  << endl <<
         endl << setprecision(4) <<
 
@@ -430,7 +475,6 @@ void Controller::controlThread()
         printf("\033c"); // clears console window
         }
 
-     
         Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Vec.cast <float> (); // Converts motorspeeds to C++ array for data transmission
         int len = sendto(Ctrl_Mavlink_socket, motorspeed, sizeof(motorspeed),0, // Send motorspeeds to Gazebo -> gazebo_motor_model?
                 (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len); 
