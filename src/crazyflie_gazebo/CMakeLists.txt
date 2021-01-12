@@ -12,7 +12,9 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   roscpp
   std_msgs
+  message_generation
 )
+
 find_package(Boost 1.58 REQUIRED COMPONENTS system thread filesystem)
 find_package(gazebo REQUIRED)
 find_package(Eigen3 QUIET)
@@ -83,11 +85,10 @@ link_libraries(mav_msgs sensor_msgs)
 ##########################################
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+ add_message_files(
+   FILES
+   CtrlData.msg
+ )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -104,10 +105,10 @@ link_libraries(mav_msgs sensor_msgs)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+ generate_messages(
+   DEPENDENCIES
+   std_msgs  # Or other packages containing msgs
+ )
 
 ##################################################
 ## 6. Invoke message/service/action generations ##
@@ -168,15 +169,13 @@ add_library(gazebo_sticky_foot SHARED src/gazebo_sticky_foot.cpp)
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/drone_training_node.cpp)
-
 add_executable(controller src/controller.cpp)
-#add_dependencies(controller include/ ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -187,6 +186,7 @@ add_executable(controller src/controller.cpp)
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 # add_dependencies(gazebo_motor_model mav_msgs gazebo_mavlink)
+add_dependencies(controller include/${controller_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
@@ -195,7 +195,7 @@ add_executable(controller src/controller.cpp)
 target_link_libraries(gazebo_motor_model ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES})
 target_link_libraries(gazebo_mavlink ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES})
 target_link_libraries(gazebo_sticky_foot ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES})
-
+target_link_libraries(controller ${catkin_LIBRARIES})
 #######################
 ## 9. Tests to build ##
 #######################

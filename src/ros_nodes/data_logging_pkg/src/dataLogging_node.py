@@ -1,15 +1,15 @@
-import rospy
-import getpass
-import message_filters
-from threading import Thread
-
+#!/usr/bin/env python3
+import rospy,message_filters
+import csv,getpass
 import numpy as np
+
+
 
 from gazebo_communication_pkg.msg import GlobalState
 from crazyflie_rl.msg import RLData
+from crazyflie_gazebo.msg import CtrlData
 
 
-import csv
 
 
 class DataLoggingNode:
@@ -24,24 +24,25 @@ class DataLoggingNode:
 
         self.StateSub = message_filters.Subscriber("/global_state",GlobalState)
         self.RLSub = message_filters.Subscriber("/rl_data",RLData)
+        self.CtrlSub = message_filters.Subscriber("/ctrl_data",CtrlData)
         self.atsSub()
 
 
     def atsSub(self):
-        ats = message_filters.ApproximateTimeSynchronizer([self.RLSub,self.StateSub],queue_size=5,slop=0.01)
+        ats = message_filters.ApproximateTimeSynchronizer([self.RLSub,self.StateSub,self.CtrlSub],queue_size=5,slop=0.05,allow_headerless=True)
         ats.registerCallback(self.csvWriter)
         rospy.spin()
 
-    def csvWriter(self,rl_msg,gs_msg):
+    def csvWriter(self,rl_msg,gs_msg,ctrl_msg):
 
         self.t_step += 1
-        
+
         ## SET TIME VALUE FROM GLOBAL_STATE TOPIC
         t_temp = gs_msg.header.stamp.secs
         ns_temp = gs_msg.header.stamp.nsecs
         self.t = t_temp+ns_temp*1e-9 # (seconds + nanoseconds)
         self.t = np.round(self.t,3)
-        
+
         ## SIMPLIFY STATE VALUES FROM GLOBAL_STATE TOPIC
         global_pos = gs_msg.global_pose.position
         global_quat = gs_msg.global_pose.orientation
@@ -59,11 +60,10 @@ class DataLoggingNode:
         self.orientation_q = np.round(self.orientation_q,3)
         self.velocity = np.round(self.velocity,3)
         self.omega = np.round(self.omega,3)
-        
 
 
 
-        ## SET VALUES FROM RL_DATA TOPIC
+        ## SET RL PARAMS FROM RL_DATA TOPIC
         self.trial_name = rl_msg.trial_name
         self.agent = rl_msg.agent
 
@@ -71,11 +71,11 @@ class DataLoggingNode:
         self.createCSV_flag = rl_msg.createCSV_flag
         self.flip_flag = rl_msg.flip_flag
         self.runComplete_flag = rl_msg.runComplete_flag
-        
+
         self.n_rollouts = rl_msg.n_rollouts
         self.gamma = np.round(rl_msg.gamma,2)
         self.h_ceiling = rl_msg.h_ceiling
-        
+
         self.k_ep = rl_msg.k_ep
         self.k_run = rl_msg.k_run
 
@@ -109,8 +109,12 @@ class DataLoggingNode:
         self.OF_x = np.round(self.OF_x,2)
         self.OF_y = np.round(self.OF_y,2)
 
+        ## SET & TRIM CTRL VALUES FROM CTRL_DATA TOPIC
+        self.MS = np.asarray(ctrl_msg.motorspeeds)
+        self.MS = np.round(self.MS,0)
 
-        
+
+
         username = getpass.getuser()
         self.path =  f"/home/{username}/catkin_ws/src/crazyflie_simulation/src/ros_nodes/data_logging_pkg/log/{self.trial_name}.csv"
 
@@ -119,7 +123,7 @@ class DataLoggingNode:
         if self.logging_flag == True:
 
             if self.createCSV_flag == True:
-                self.create_csv()  
+                self.create_csv()
 
             if self.k_run_temp != rl_msg.k_run: # When k_run changes then add blank row
                 self.append_csv_blank()
@@ -131,14 +135,13 @@ class DataLoggingNode:
             if self.runComplete_flag == True:
                 self.append_IC()
 
-            
+
 
 
 
 
 
     def create_csv(self):
-        
 
         with open(self.path,mode='w') as state_file:
             state_writer = csv.writer(state_file,delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -152,7 +155,8 @@ class DataLoggingNode:
                 'wx','wy','wz',
                 'gamma','reward','flip_trigger','n_rollouts',
                 'RREV','OF_x','OF_y',
-                "","","","", ])
+                'MS1','MS2','MS3','MS4',
+                "","","","",  ])# Place holders
 
 
     def append_csv(self):
@@ -169,9 +173,10 @@ class DataLoggingNode:
                 self.omega[0],self.omega[1],self.omega[2], # wx,wy,wz
                 "","",self.flip_flag,"", # gamma, reward, flip_triggered, n_rollout
                 self.RREV,self.OF_x,self.OF_y, # RREV, OF_x, OF_y
+                self.MS[0],self.MS[1],self.MS[2],self.MS[3],
                 "","","","", # Place holders
-                ]) 
-        
+                ])
+
 
     def append_IC(self):
 
@@ -187,24 +192,24 @@ class DataLoggingNode:
                 self.omega_d[0],self.omega_d[1],self.omega_d[2], # wx,wy,wz
                 self.gamma,self.reward,"",self.n_rollouts, # gamma, reward, flip_triggered, n_rollout
                 "","","", # RREV, OF_x, OF_y
+                "","","","",
                 "","","","", # Place holders Include successful run flag
                 ])
-        
-    def append_csv_blank(self): 
-        
+
+    def append_csv_blank(self):
+
          with open(self.path, mode='a') as state_file:
             state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             state_writer.writerow([])
-        
-
-        
 
 
 
-        
+
+
+
+
 if __name__ == "__main__":
     DLNode = DataLoggingNode()
-    # print("struf")
     while not rospy.is_shutdown():
         pass
 

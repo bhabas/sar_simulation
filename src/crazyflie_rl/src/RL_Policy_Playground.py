@@ -33,7 +33,8 @@ print("Environment done")
 
 
 
-def runTrial(vx_d,vz_d):
+def runTrial():
+    reset_vals = True
     
     # ============================
     ##          Episode         
@@ -50,12 +51,8 @@ def runTrial(vx_d,vz_d):
 
 
 
-        mu = agent.mu # Mean for Gaussian distribution
-        sigma = agent.sigma # Standard Deviation for Gaussian distribution
-
         ## PREALLOCATE REWARD VEC AND OBTAIN THETA VALS
-        reward = np.zeros(shape=(agent.n_rollouts,1))
-        theta_rl,epsilon_rl = agent.get_theta()
+        reward = np.zeros(shape=(env.n_rollouts,1))
 
 
         print("=============================================")
@@ -64,15 +61,7 @@ def runTrial(vx_d,vz_d):
 
         print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
 
-        print("RREV=%.3f, \t theta1=%.3f, \t theta2=%.3f, \t theta3=%.3f" %(mu[0], mu[1], mu[2], 0))
-        print("sig1=%.3f, \t sig2=%.3f, \t sig12=%.3f, \t sig2=%.3f," %(sigma[0], sigma[1], sigma[2], 0))
-        print('\n')
-
-        print("theta_rl = ")
-        print(theta_rl[0,:], "--> RREV")
-        print(theta_rl[1,:], "--> Gain_RREV")
-        print(theta_rl[1,:], "--> Gain_OF_y")
-
+        
 
 
 
@@ -87,19 +76,50 @@ def runTrial(vx_d,vz_d):
             ## RESET TO INITIAL STATE
             env.step('home',ctrl_flag=1) # Reset control vals and functionality to default vals
             time.sleep(1.0) # Time for CF to settle
+
+            if reset_vals == True:
+        
+                while True:
+                    try:
+                        ## Mu input:
+                        mu_str = input("Input mu values: ")
+                        num = list(map(float, mu_str.split()))
+                        mu = np.asarray(num)
+
+                        if len(mu) != 3:
+                            raise Exception()
+                        break
+                    except:
+                        print("Error: Enter mu_1, mu_2 and mu_3")
+
+                while True:
+                    try:
+                        
+                        v_str = input("Input V_ini (vx, vy, vz): ")
+                        num = list(map(float, v_str.split()))
+                        v_d = np.asarray(num)
+                        vx_d,vy_d,vz_d = v_d
+                        if len(v_d) != 3:
+                            raise Exception()
+                        break
+                    except:
+                        print("Error: Enter vz,vx,vy")
+
+
+
+            
             
 
 
             ## INITIALIZE RUN PARAMETERS
-            RREV_trigger = theta_rl[0, k_run] # FoV expansion velocity [rad/s]
-            G1 = theta_rl[1, k_run]
-            G2 = theta_rl[2, k_run]
-            policy = theta_rl[:,k_run]
+            RREV_trigger = mu[0] # FoV expansion velocity [rad/s]
+            G1 = mu[1]
+            G2 = mu[2]
+            policy = np.array([RREV_trigger,G1,G2])
             env.policy = policy.flatten().tolist()
         
-            # vz_d = np.random.uniform(low=2.5, high=3.0)
-            # vx_d = np.random.uniform(low=-2.0, high=2.0)
-            vy_d = 0 
+            
+            
             env.vel_d = [vx_d,vy_d,vz_d] # [m/s]
 
 
@@ -173,7 +193,6 @@ def runTrial(vx_d,vz_d):
 
                     ## Start rotation and mark rotation as triggered
                     env.step('omega',env.omega_d,ctrl_flag=1) # Set desired ang. vel 
-                   
                     env.flip_flag = True
 
                 # ============================
@@ -200,15 +219,6 @@ def runTrial(vx_d,vz_d):
                     # I don't like this error formatting, feel free to improve on
                     error_1 = "Rollout Completed: Pitch Timeout"
                     error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch))
-                    print(error_1 + "\n" + error_2)
-
-                    error_str = error_1 + error_2
-                    env.runComplete_flag = True
-
-                # If time since run start exceeds [2.5s]
-                if (env.getTime() - start_time_rollout) > (2.5):
-                    error_1 = "Rollout Completed: Time Exceeded"
-                    error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
                     print(error_1 + "\n" + error_2)
 
                     error_str = error_1 + error_2
@@ -273,10 +283,21 @@ def runTrial(vx_d,vz_d):
                 env.RL_Publish()
                 k_run += 1 # Move on to next run
 
+                str = input("Input: \n(1): To play again \n(2): To repeat scenario \n(3): Game over :( \n")
+                if str == '1':
+                    k_run += 1
+                    reset_vals = True
+
+                elif str == '2':
+                    k_run += 1
+                    reset_vals = False
+                else: 
+                    break
+
             
         ## =======  EPISODE COMPLETED  ======= ##
         print("Episode # %d training, average reward %.3f" %(k_ep, np.mean(reward)))
-        agent.train(theta_rl,reward,epsilon_rl)
+        
        
     ## =======  MAX TRIALS COMPLETED  ======= ##
 
@@ -290,39 +311,28 @@ if __name__ == '__main__':
     env.logging_flag = True
     env.h_ceiling = 3.0 # [m]
 
-    ## LEARNING RATES
-    alpha_mu = np.array([[0.1]])
-    alpha_sigma = np.array([[0.05]])
 
-    ## GAUSSIAN PARAMETERS
-    mu = np.array([[5.0],[6.0],[6.0]])# Initial estimates of mu: 
-    sigma = np.array([[1.5],[1.5],[1.5]]) # Initial estimates of sigma: 
 
 
     ## LEARNING AGENTS
-    agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollouts=env.n_rollouts)
-    # agent = rlsysPEPGAgent_adaptive(alpha_mu,alpha_sigma,mu,sigma,n_rollouts=6)
-    # agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=env.n_rollouts)
-    # agent = rlEM_AdaptiveAgent(mu,sigma,n_rollouts=6) # Not working
+    agent = rlsysPEPGAgent_reactive(np.asarray(0),np.asarray(0),np.asarray(0),np.asarray(0))
+
 
 
     
     ## INITIAL CONDITIONS
-    vx_d = 1.0
-    vz_d = 3.0
-    trial_num = 1
     env.agent = "EM_PEPG"
     
     while True:
-
-        env.trial_name = f"Vz_{vz_d}--Vx_{vx_d}--trial_{trial_num}"
+        start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
+        env.trial_name = f"RL_Policy_Playground-{start_time}"
         # try:
             ## SEND MSG WHICH INCLUDES VARIABLE TO START NEW CSV
         env.createCSV_flag = True
         env.RL_Publish()
 
         ## RUN TRIAL AND RESTART GAZEBO FOR NEXT TRIAL RUN (NOT NECESSARY BUT MIGHT BE A GOOD IDEA?)
-        runTrial(vx_d,vz_d)
+        runTrial()
     
         # except: ## IF SIM EXCEPTION RAISED THEN CONTINUE BACK TO TRY BLOCK UNTIL SUCCESSFUL COMPLETION
         #     continue

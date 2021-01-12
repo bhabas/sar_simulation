@@ -15,7 +15,7 @@ import csv
 
 from sensor_msgs.msg import LaserScan, Image, Imu
 from gazebo_communication_pkg.msg import GlobalState 
-from crazyflie_rl.msg import RLData
+from crazyflie_rl.msg import RLData,RLCmd
 from std_msgs.msg import Header 
 from rosgraph_msgs.msg import Clock
 from gazebo_msgs.msg import ModelState
@@ -24,7 +24,7 @@ from gazebo_msgs.srv import SetModelState
 from cv_bridge import CvBridge
 
 class CrazyflieEnv:
-    def __init__(self,port_local=18050, port_Ctrl=18060):
+    def __init__(self):
         print("[STARTING] CrazyflieEnv is starting...")
         self.state_current = np.zeros(14)
         self.isRunning = True
@@ -35,24 +35,6 @@ class CrazyflieEnv:
         rospy.init_node("crazyflie_env_node") 
         self.launch_sim() 
     
-        ## INIT RL SOCKET (AKA SERVER)
-        self.RL_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # Create UDP(DGRAM) Socket
-        self.RL_port = port_local
-        self.addr_RL = ("", self.RL_port) # Local address open to all incoming streams ("" = 0.0.0.0)
-        self.RL_socket.bind(self.addr_RL) # Bind socket to specified port (0.0.0.0:18050)
-
-        # Specify send/receive buffer sizes    
-        self.RL_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 144) # State array from Ctrl [18 doubles]
-        self.RL_socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 40) # Action commands to Ctrl [5 doubles]
-        self.RL_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        
-    
-        ## INIT CONTROLLER ADDRESS ##
-        self.port_Ctrl = port_Ctrl # Controller Server Port
-        self.addr_Ctrl = ("", self.port_Ctrl) # Controller Address
-
-        # kill -9 $(lsof -i:18050 -t)
-        # if threads dont terminte when program is shut, you might need to use lsof to kill it
 
         
 
@@ -60,6 +42,7 @@ class CrazyflieEnv:
         self.state_Subscriber = rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
         self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
         self.RL_Publisher = rospy.Publisher('/rl_data',RLData,queue_size=10)
+        self.Cmd_Publisher = rospy.Publisher('/rl_ctrl',RLCmd,queue_size=10)
 
 
 
@@ -217,7 +200,6 @@ class CrazyflieEnv:
         self.launch_sim()
 
     def close_sim(self):
-        os.killpg(self.controller_p.pid, signal.SIGTERM)
         os.killpg(self.gazebo_p.pid, signal.SIGTERM)
 
     def close_dashboard(self):
@@ -231,7 +213,7 @@ class CrazyflieEnv:
 
     def __del__(self):
         self.isRunning = False
-        self.RL_socket.close()
+     
 
 
     def enableSticky(self, enable): # enable=0 disable sticky, enable=1 enable sticky
@@ -255,22 +237,17 @@ class CrazyflieEnv:
                 close_fds=True, preexec_fn=os.setsid, shell=True)
             time.sleep(5)
 
-            print("[STARTING] Starting Controller Process...")
-            self.controller_p = subprocess.Popen( # Controller Process
-                "gnome-terminal --disable-factory --geometry 70x36 -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_controller.bash", 
-                close_fds=True, preexec_fn=os.setsid, shell=True)
+   
 
-        else:
-            print("[STARTING] Starting Gazebo Process...")
-            self.gazebo_p = subprocess.Popen( # Gazebo Process
-                "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_gazebo.bash", 
-                close_fds=True, preexec_fn=os.setsid, shell=True)
-            time.sleep(5)
+        # else:
+            # print("[STARTING] Starting Gazebo Process...")
+            # self.gazebo_p = subprocess.Popen( # Gazebo Process
+            #     "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_gazebo.bash", 
+            #     close_fds=True, preexec_fn=os.setsid, shell=True)
+            # time.sleep(5)
 
-            print("[STARTING] Starting Controller Process...")
-            self.controller_p = subprocess.Popen( # Controller Process
-                "gnome-terminal --disable-factory --geometry 70x36 -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_controller.bash", 
-                close_fds=True, preexec_fn=os.setsid, shell=True)
+
+
 
     def launch_dashboard(self):
         print("[STARTING] Starting Dashboard...")
@@ -282,13 +259,14 @@ class CrazyflieEnv:
 
 
     def reset_pos(self): # Disable sticky then places spawn_model at origin
-        self.enableSticky(0)
+        
+        self.step('sticky',ctrl_flag=0)
 
         state_msg = ModelState()
         state_msg.model_name = 'crazyflie_model_X'
         state_msg.pose.position.x = 0
         state_msg.pose.position.y = 0
-        state_msg.pose.position.z = 0.0
+        state_msg.pose.position.z = 0.2
 
         state_msg.pose.orientation.x = 0
         state_msg.pose.orientation.y = 0
@@ -302,38 +280,35 @@ class CrazyflieEnv:
         rospy.wait_for_service('/gazebo/set_model_state')
         set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         set_state_srv(state_msg)
+        time.sleep(0.01) # Give it time for controller to receive new states
+        self.step('home')
 
-            
-    def step(self,action,ctrl_vals=[0,0,0],ctrl_flag=1): # Controller works to attain these values
-        if action =='home': # default desired values/traj.
-            header = 0
-        elif action =='pos':  # position (x,y,z) 
-            header = 1
-        elif action =='vel':  # velocity (vx,vy,vz)
-            header = 2
-        elif action =='att':  # attitude: orientation (heading/yaw, pitch, roll/bank)
-            header = 3
-        elif action =='omega': # rotation rate (w_x:roll,w_y:pitch,w_z:yaw)
-            header = 4
-        elif action =='stop': # cut motors
-            header = 5
-        elif action =='gains': # assign new control gains
-            header = 6
-        else:
-            header = 404
-            print("no such action")
-        cmd = struct.pack('5d', header, ctrl_vals[0], ctrl_vals[1], ctrl_vals[2], ctrl_flag) # Send command
-        self.RL_socket.sendto(cmd, self.addr_Ctrl)
-        time.sleep(0.01) # continually sends message during this time to ensure connection
-        cmd = struct.pack('5d',8,0,0,0,1) # Send blank command so controller doesn't keep redefining values
-        self.RL_socket.sendto(cmd, self.addr_Ctrl)
+    def step(self,action,ctrl_vals=[0,0,0],ctrl_flag=1):
+        cmd_msg = RLCmd()
 
-        #self.queue_command.put(buf, block=False)
+        cmd_dict = {'stuff':20,
+                    'home':0,
+                    'pos':1,
+                    'vel':2,
+                    'att':3,
+                    'omega':4,
+                    'stop':5,
+                    'gains':6,
+                    'moments':7,
+                    'sticky':11}
+        
 
-        reward = 0
-        done = 0
-        info = 0
-        return self.state_current, reward, done, info
+        cmd_msg.cmd_type = cmd_dict[action]
+        cmd_msg.cmd_vals.x = ctrl_vals[0]
+        cmd_msg.cmd_vals.y = ctrl_vals[1]
+        cmd_msg.cmd_vals.z = ctrl_vals[2]
+        cmd_msg.cmd_flag = ctrl_flag
+        
+        self.Cmd_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
+        self.Cmd_Publisher.publish(cmd_msg) # So I'm sending it twice 
+        time.sleep(0.01)
+        
+
 
     def cmd_send(self):
         while True:
@@ -345,7 +320,7 @@ class CrazyflieEnv:
             if action=='home' or action == 'stop': # Execute home or stop action
                 ctrl_vals = [0,0,0]
                 ctrl_flag = 1
-                self.step(action,ctrl_vals,ctrl_flag)
+                self.stepPub(action,ctrl_vals,ctrl_flag)
 
             elif action=='gains': # Execture Gain changer
                 
@@ -354,7 +329,7 @@ class CrazyflieEnv:
                 ctrl_vals = vals[0:3]
                 ctrl_flag = vals[3]
 
-                self.step(action,ctrl_vals,ctrl_flag)
+                self.stepPub(action,ctrl_vals,ctrl_flag)
                 
             elif action == 'omega': # Execture Angular rate action
 
@@ -362,14 +337,14 @@ class CrazyflieEnv:
                 ctrl_vals = [float(i) for i in ctrl_vals.split(',')]
                 ctrl_flag = 1.0
 
-                self.step('omega',ctrl_vals,ctrl_flag)
+                self.stepPub('omega',ctrl_vals,ctrl_flag)
 
 
             else:
                 ctrl_vals = input("\nControl Vals (x,y,z): ")
                 ctrl_vals = [float(i) for i in ctrl_vals.split(',')]
                 ctrl_flag = float(input("\nController On/Off (1,0): "))
-                self.step(action,ctrl_vals,ctrl_flag)
+                self.stepPub(action,ctrl_vals,ctrl_flag)
 
    
 

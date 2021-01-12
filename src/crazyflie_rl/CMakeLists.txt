@@ -54,7 +54,8 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   RLData.msg
-  # Message2.msg
+  CtrlData.msg
+  RLCmd.msg
 )
 
 ## Generate services in the 'srv' folder

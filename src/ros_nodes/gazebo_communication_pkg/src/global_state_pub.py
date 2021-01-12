@@ -14,9 +14,9 @@ from gazebo_msgs.srv import GetLinkStateRequest,GetLinkState # Message formats f
 
 def global_state_publisher():
     ## INIT NODE AND PUBLISHER
-    rospy.init_node('global_state_pub', anonymous=True)
+    rospy.init_node('global_state_pub', anonymous=False)
     pub = rospy.Publisher('/global_state', GlobalState, queue_size=10)
-    rate = rospy.Rate(200,reset=True) # This runs at 100hz in simulation time
+    rate = rospy.Rate(500,reset=True) # This runs at 100hz in simulation time
 
 
     ## WAIT AND INIT SERVICE REQUEST
