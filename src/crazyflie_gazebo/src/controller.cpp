@@ -132,8 +132,8 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
 
 
 
-            _motorstop_flag = 0;
-            _flip_flag = 1;
+            _motorstop_flag = false;
+            _flip_flag = false;
             break;
 
         case 1: // Position
@@ -160,12 +160,12 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             _kp_Rf = 0;
             _kd_Rf = cmd_flag;
 
-            _flip_flag = 0;
+            _flip_flag = true;
 
             break;
 
         case 5: // Stop
-            _motorstop_flag = 1;
+            _motorstop_flag = true;
             break;
 
         case 6: // Edit Gains [Needs reimplementation]
@@ -318,7 +318,7 @@ void Controller::controlThread()
 
 
     crazyflie_gazebo::CtrlData ctrl_msg;
-    ros::Rate rate(1000);
+    ros::Rate rate(250);
 
     while(_isRunning)
     {
@@ -387,7 +387,7 @@ void Controller::controlThread()
 
 
         // =========== Control Equations =========== // 
-        F_thrust = F_thrust_ideal.dot(b3)*(_flip_flag); // Thrust control value
+        F_thrust = F_thrust_ideal.dot(b3)*(double)(!_flip_flag); // Thrust control value
         Gyro_dyn = omega.cross(J*omega) - J*(hat(omega)*R.transpose()*R_d*omega_d - R.transpose()*R_d*domega_d); // Gyroscopic dynamics
         M = -kp_R.cwiseProduct(e_R)*_kp_Rf + -kd_R.cwiseProduct(e_omega)*_kd_Rf + Gyro_dyn; // Moment control vector
         FM << F_thrust,M; // Thrust-Moment control vector
@@ -417,11 +417,11 @@ void Controller::controlThread()
         }
 
         if(b3(2) <= 0){ // If e3 component of b3 is neg, turn motors off [arbitrary amount]
-            _motorstop_flag = 1;
+            _motorstop_flag = true;
         }
 
 
-        if(_motorstop_flag == 1){ // Shutoff all motors
+        if(_motorstop_flag == true){ // Shutoff all motors
             motorspeed_Vec << 0,0,0,0;
         }
         

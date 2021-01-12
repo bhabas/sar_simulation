@@ -118,8 +118,8 @@ class Controller
         double _kp_Rf = 1; // Rot. Gain Flag
         double _kd_Rf = 1; // Rot. derivative Gain Flag
 
-        double _motorstop_flag = 0;
-        double _flip_flag = 1;
+        bool _motorstop_flag = false;
+        bool _flip_flag = false;
 
 
 
@@ -141,11 +141,6 @@ class Controller
         int Mavlink_PORT;
         struct sockaddr_in addr_Mavlink;
         socklen_t addr_Mavlink_len;
-
-        // DEFINE RL ADDRESS VARIABLES
-        int RL_PORT;
-        struct sockaddr_in addr_RL;
-        socklen_t addr_RL_len;
 
         // QUEUEING STUFF (I don't understand it yet)
         moodycamel::BlockingReaderWriterQueue<MotorCommand> queue_motorspeed;

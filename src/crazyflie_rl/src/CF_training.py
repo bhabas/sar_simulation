@@ -246,9 +246,12 @@ def runTrial(vx_d,vz_d):
                 if env.runComplete_flag==True:
 
                     env.step('stop')
-                  
                     env.reset_pos()
-                    env.step('home')
+                    ## There is a weird delay where it sometime won't publish ctrl_cmds until the next command is executed
+                    ## I have no idea what's going on there but it may or may not have an effect?
+                    ## I've got no idea...
+                   
+                    
                     
                     reward[k_run] = agent.calculate_reward(state_history,env.h_ceiling)
                     env.reward = reward[k_run]
@@ -313,19 +316,19 @@ if __name__ == '__main__':
     while True:
 
         env.trial_name = f"Vz_{vz_d}--Vx_{vx_d}--trial_{trial_num}"
-        try:
+        # try:
             ## SEND MSG WHICH INCLUDES VARIABLE TO START NEW CSV
-            env.createCSV_flag = True
-            env.RL_Publish()
+        env.createCSV_flag = True
+        env.RL_Publish()
 
-            ## RUN TRIAL AND RESTART GAZEBO FOR NEXT TRIAL RUN (NOT NECESSARY BUT MIGHT BE A GOOD IDEA?)
-            runTrial(vx_d,vz_d)
-        
-        except: ## IF SIM EXCEPTION RAISED THEN CONTINUE BACK TO TRY BLOCK UNTIL SUCCESSFUL COMPLETION
-            continue
+        ## RUN TRIAL AND RESTART GAZEBO FOR NEXT TRIAL RUN (NOT NECESSARY BUT MIGHT BE A GOOD IDEA?)
+        runTrial(vx_d,vz_d)
+    
+        # except: ## IF SIM EXCEPTION RAISED THEN CONTINUE BACK TO TRY BLOCK UNTIL SUCCESSFUL COMPLETION
+        #     continue
 
 
-        break ## BREAK FROM LOOP
+        # break ## BREAK FROM LOOP
     
 
 

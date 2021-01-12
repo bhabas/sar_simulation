@@ -274,7 +274,7 @@ class CrazyflieEnv:
         state_msg.model_name = 'crazyflie_model_X'
         state_msg.pose.position.x = 0
         state_msg.pose.position.y = 0
-        state_msg.pose.position.z = 0.0
+        state_msg.pose.position.z = 0.2
 
         state_msg.pose.orientation.x = 0
         state_msg.pose.orientation.y = 0
@@ -288,11 +288,14 @@ class CrazyflieEnv:
         rospy.wait_for_service('/gazebo/set_model_state')
         set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         set_state_srv(state_msg)
+        time.sleep(0.01) # Give it time for controller to receive new states
+        self.step('home')
 
     def step(self,action,ctrl_vals=[0,0,0],ctrl_flag=1):
         cmd_msg = RLCmd()
 
-        cmd_dict = {'home':0,
+        cmd_dict = {'stuff':20,
+                    'home':0,
                     'pos':1,
                     'vel':2,
                     'att':3,
@@ -309,7 +312,10 @@ class CrazyflieEnv:
         cmd_msg.cmd_vals.z = ctrl_vals[2]
         cmd_msg.cmd_flag = ctrl_flag
         
-        self.Cmd_Publisher.publish(cmd_msg)
+        self.Cmd_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
+        self.Cmd_Publisher.publish(cmd_msg) # So I'm sending it twice 
+        time.sleep(0.01)
+        
 
 
     def cmd_send(self):
