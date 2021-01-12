@@ -81,8 +81,9 @@ void Controller::Load()
 void Controller::global_stateCallback(const gazebo_communication_pkg::GlobalState::ConstPtr &msg){
 
     // SIMPLIFY STATE VALUES FROM TOPIC
+    // Follow msg names from message details - "rqt -s rqt_msg" 
     float _t = msg->header.stamp.toSec();
-    const geometry_msgs::Point position = msg->global_pose.position; // Follow names from message details - "rqt -s rqt_msg" 
+    const geometry_msgs::Point position = msg->global_pose.position; 
     const geometry_msgs::Quaternion quaternion = msg->global_pose.orientation;
     const geometry_msgs::Vector3 velocity = msg->global_twist.linear;
     const geometry_msgs::Vector3 omega = msg->global_twist.angular;
@@ -101,20 +102,16 @@ void Controller::global_stateCallback(const gazebo_communication_pkg::GlobalStat
 
 void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
 
-    int cmd_type = msg->cmd_type;
-    const geometry_msgs::Point vals = msg->cmd_vals;
+    // CREATE CMD VECTOR AND VALS FROM SUBSCRIBED MESSAGE
+    int cmd_type = msg->cmd_type;                       // Read cmd type from incoming message
+    const geometry_msgs::Point vals = msg->cmd_vals;    // Construct vector from cmd values
     Vector3d cmd_vals(vals.x,vals.y,vals.z);
-    float cmd_flag = msg->cmd_flag;
+    float cmd_flag = msg->cmd_flag;                     // Construct flag from cmd flag value
 
-    ctrl_cmd << cmd_type,cmd_vals,cmd_flag;
+    ctrl_cmd << cmd_type,cmd_vals,cmd_flag; // Define cmd vector
 
 
-    if(cmd_type==11){
-        // This stickyfoot socket communication piggy-backs off of the motorspeed  
-        // message & activates when first number is negative
-        float sticky_cmd[4] = {-(float)cmd_type,cmd_flag,0,0};
-        sendto(Ctrl_Mavlink_socket, sticky_cmd, sizeof(sticky_cmd),0, (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len);
-    }
+    
 
     switch(cmd_type){
         case 0: // Reset to home
@@ -153,7 +150,7 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
 
             break;
         
-        case 4: // Execute Flip
+        case 4: // Execute Ang. Vel. Flip
 
             _kd_R = _kp_omega;
 
@@ -170,12 +167,21 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
         case 5: // Stop
             _motorstop_flag = 1;
             break;
-            
 
+        case 6: // Edit Gains [Needs reimplementation]
+            break;
 
+        case 7: // Execute Moment Based Flip
+
+            break;
+
+        case 11: // Enable/Disable Stickyfoot
+            float sticky_cmd[4] = {-(float)cmd_type,cmd_flag,0,0};
+            // This stickyfoot socket communication piggy-backs off of the motorspeed  
+            // message & activates plugin when first number is negative but defines value
+            // based off of the second number
+            sendto(Ctrl_Mavlink_socket, sticky_cmd, sizeof(sticky_cmd),0, (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len);
     }
-
-    
 
 }
 
@@ -192,32 +198,17 @@ void Controller::controlThread()
     MotorCommand motorspeed_structure;
     float motorspeed[4];
     
-    
 
-    // int type; // Command type {1:Pos, 2:Vel, 3:Att, 4:Omega, 5:Stop}
-    // double ctrl_flag; // On/Off switch for controller
-    // double control_cmd[5];
-    // Vector3d control_vals;
-    
 
-    // Local State Declarations
+    // LOCAL STATE DECLARATIONS //
     Vector3d pos; // Current position [m]
     Vector3d vel; // Current velocity [m]
-    Vector4d quat_Eig; // Current attitude [rad] (quat form)
+    Vector4d quat; // Current attitude [rad] (quat form)
     Vector3d eul; // Current attitude [rad] (roll, pitch, yaw angles)
     Vector3d omega; // Current angular velocity [rad/s]
-
     
 
-    // Default desired States
-    // Vector3d x_d_Def(0,0,0.5); // Pos-desired (Default) [m]  # Should be z=0.03 but needs integral controller for error offset
-    // Vector3d v_d_Def(0,0,0); // Velocity-desired (Default) [m/s]
-    // Vector3d a_d_Def(0,0,0); // Acceleration-desired (Default) [m/s]
-    // Vector3d b1_d_Def(1,0,0); // Desired global pointing direction (Default)
-    // Vector3d omega_d_Def(0,0,0);
-    
-
-    // Local State Error and Prescriptions
+    // LOCAL STATE PRESCRIPTIONS AND ERRORS //
     Vector3d x_d; // Pos-desired [m] 
     Vector3d v_d; // Velocity-desired [m/s]
     Vector3d a_d; // Acceleration-desired [m/s]
@@ -239,7 +230,7 @@ void Controller::controlThread()
     Vector3d e_omega; // Omega-error [rad/s]
 
 
-    Vector3d e3(0,0,1); // Global z-axis
+    
 
     
     Vector3d F_thrust_ideal; // Ideal thrust vector to minimize error   
@@ -261,24 +252,18 @@ void Controller::controlThread()
     Vector3d b3; // Body-fixed vertical axis
     Quaterniond q;
     Matrix3d R; // Body-Global Rotation Matrix
+    Vector3d e3(0,0,1); // Global z-axis
     
 
 
     
-    // Controller Values
-    // Vector4d Ctrl_Gains; 
+    // LOCAL CONTROLLER VARIABLES
     Vector3d kp_x;   // Pos. Gain
     Vector3d kd_x;   // Pos. derivative Gain
     Vector3d kp_R;   // Rot. Gain
     Vector3d kd_R;   // Rot. derivative Gain
 
-    // Vector3d kp_omega(0.005,0.005 ,0); // Flip proportional Gain
-    // Omega proportional gain (similar to kd_R but that's for damping and this is to achieve omega_d)
-    // kd_R is great for stabilization but for flip manuevers it's too sensitive and 
-    // saturates the motors causing instability during the rotation
-
- 
-    
+     
 
 
     double yaw; // Z-axis [rad/s]
@@ -295,7 +280,7 @@ void Controller::controlThread()
 
 
 
-    // System Constants
+    // SYSTEM CONSTANTS
     double d = 0.040; // Distance from COM to prop [m]
     double d_p = d*sin(M_PI/4);
 
@@ -348,13 +333,11 @@ void Controller::controlThread()
         
 
         // =========== State Definitions =========== //
-
-
         //  Define local state vectors from current class state vectors 
         //      Note: This is just to be explicit with the program flow
         t = _t;   
         pos = _pos; 
-        quat_Eig = _quat;
+        quat = _quat;
         vel = _vel;
         omega = _omega;
 
@@ -367,8 +350,8 @@ void Controller::controlThread()
         // =========== Rotation Matrix =========== //
         // R changes Body axes to be in terms of Global axes
         // https://www.andre-gaschler.com/rotationconverter/
-        q.w() = quat_Eig(0);
-        q.vec() = quat_Eig.segment(1,3);
+        q.w() = quat(0);
+        q.vec() = quat.segment(1,3);
         R = q.normalized().toRotationMatrix(); // Quaternion to Rotation Matrix Conversion
         
         yaw = atan2(R(1,0), R(0,0)); 

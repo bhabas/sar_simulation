@@ -34,7 +34,7 @@ class Controller
             ctrl_cmd << 404,0,0,0,0;
 
             
-            // ZERO OUT VARIABLES (PREVENTS RANDOM VALUES FROM MEMORY)
+            // INIT VARIABLES TO DEFAULT VALUES (PREVENTS RANDOM VALUES FROM MEMORY)
             _t = 0.0; 
             _pos << 0,0,0;
             _vel << 0,0,0;
@@ -87,23 +87,29 @@ class Controller
        
 
         float _t;
-        Eigen::Vector3d _pos;
-        Eigen::Vector3d _vel;
-        Eigen::Vector4d _quat;
-        Eigen::Vector3d _omega;
+        Eigen::Vector3d _pos;   // Current position [m]
+        Eigen::Vector3d _vel;   // Current velocity [m]
+        Eigen::Vector4d _quat;  // Current attitude [rad] (quat form)
+        Eigen::Vector3d _omega; // Current angular velocity [rad/s]
 
-        Eigen::Vector3d _x_d;
-        Eigen::Vector3d _v_d;
-        Eigen::Vector3d _a_d;
-        Eigen::Vector3d _b1_d;
-        Eigen::Vector3d _omega_d;
 
-        Eigen::Vector3d _kp_x;
-        Eigen::Vector3d _kd_x;
-        Eigen::Vector3d _kp_R;
-        Eigen::Vector3d _kd_R;
+        Eigen::Vector3d _x_d;       // Pos-desired [m]  
+        Eigen::Vector3d _v_d;       // Velocity-desired [m/s]
+        Eigen::Vector3d _a_d;       // Acceleration-desired [m/s]
+        Eigen::Vector3d _b1_d;      // Desired body-fixed x-axis in terms of global axes
+        Eigen::Vector3d _omega_d;   // Omega-desired [rad/s]
+
+        Eigen::Vector3d _kp_x; // Pos. Gain
+        Eigen::Vector3d _kd_x; // Pos. derivative Gain
+        Eigen::Vector3d _kp_R; // Rot. Gain
+        Eigen::Vector3d _kd_R; // Rot. derivative Gain
+
         
-        Eigen::Vector3d _kp_omega;
+        Eigen::Vector3d _kp_omega; // Flip proportional Gain
+        // Omega proportional gain (similar to kd_R but that's for damping and this is to achieve omega_d)
+        // kd_R is great for stabilization but for flip manuevers it's too sensitive and 
+        // saturates the motors causing instability during the rotation
+
         
 
         // CONTROLLER FLAGS
