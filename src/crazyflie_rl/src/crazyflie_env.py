@@ -200,7 +200,6 @@ class CrazyflieEnv:
         self.launch_sim()
 
     def close_sim(self):
-        os.killpg(self.controller_p.pid, signal.SIGTERM)
         os.killpg(self.gazebo_p.pid, signal.SIGTERM)
 
     def close_dashboard(self):
@@ -214,7 +213,7 @@ class CrazyflieEnv:
 
     def __del__(self):
         self.isRunning = False
-        self.RL_socket.close()
+     
 
 
     def enableSticky(self, enable): # enable=0 disable sticky, enable=1 enable sticky
@@ -238,22 +237,15 @@ class CrazyflieEnv:
                 close_fds=True, preexec_fn=os.setsid, shell=True)
             time.sleep(5)
 
-            print("[STARTING] Starting Controller Process...")
-            self.controller_p = subprocess.Popen( # Controller Process
-                "gnome-terminal --disable-factory --geometry 70x36 -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_controller.bash", 
-                close_fds=True, preexec_fn=os.setsid, shell=True)
+   
 
-        else:
-            print("[STARTING] Starting Gazebo Process...")
-            self.gazebo_p = subprocess.Popen( # Gazebo Process
-                "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_gazebo.bash", 
-                close_fds=True, preexec_fn=os.setsid, shell=True)
-            time.sleep(5)
+        # else:
+            # print("[STARTING] Starting Gazebo Process...")
+            # self.gazebo_p = subprocess.Popen( # Gazebo Process
+            #     "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_gazebo.bash", 
+            #     close_fds=True, preexec_fn=os.setsid, shell=True)
+            # time.sleep(5)
 
-            print("[STARTING] Starting Controller Process...")
-            self.controller_p = subprocess.Popen( # Controller Process
-                "gnome-terminal --disable-factory --geometry 70x36 -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_controller.bash", 
-                close_fds=True, preexec_fn=os.setsid, shell=True)
 
 
 
