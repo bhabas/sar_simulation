@@ -174,7 +174,7 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
 
         case 7: // Execute Moment Based Flip
 
-            _M_d = cmd_vals;
+            _M_d = cmd_vals*1e-3;
             _Moment_flag = true;
 
             break;
@@ -288,7 +288,7 @@ void Controller::controlThread()
     double d = 0.040; // Distance from COM to prop [m]
     double d_p = d*sin(M_PI/4);
 
-    double kf = 2.21e-8; // Thrust constant [N/(rad/s)^2]
+    double kf = 2.2e-8; // Thrust constant [N/(rad/s)^2]
     double c_Tf = 0.00612; // Moment Constant [Nm/N]
 
     Matrix3d J; // Rotational Inertia of CF
@@ -438,7 +438,7 @@ void Controller::controlThread()
         
 
 
-        if (t_step%1 == 0){ // General Debugging output
+        if (t_step%100 == 0){ // General Debugging output
         cout << setprecision(4) <<
         "t: " << t << "\tCmd: " << ctrl_cmd.transpose() << endl << 
         endl <<

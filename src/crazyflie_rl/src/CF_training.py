@@ -71,7 +71,7 @@ def runTrial(vx_d,vz_d):
         print("theta_rl = ")
         print(theta_rl[0,:], "--> RREV")
         print(theta_rl[1,:], "--> Gain_RREV")
-        print(theta_rl[1,:], "--> Gain_OF_y")
+        print(theta_rl[2,:], "--> Gain_OF_y")
 
 
 
@@ -85,7 +85,7 @@ def runTrial(vx_d,vz_d):
 
 
             ## RESET TO INITIAL STATE
-            env.step('home',ctrl_flag=1) # Reset control vals and functionality to default vals
+            env.step('home') # Reset control vals and functionality to default vals
             time.sleep(1.0) # Time for CF to settle
             
 
@@ -160,19 +160,19 @@ def runTrial(vx_d,vz_d):
             
                     env.step('sticky',ctrl_flag=1)
 
-                    omega_yd = (G1*RREV - G2*abs(OF_y))*np.sign(OF_y)
-                    omega_xd = 0.0
-                    omega_zd = 0.0
+                    Mx_d = 0.0
+                    My_d = (G1*(RREV*1e-1) - G2*abs(OF_y*1e-1))*np.sign(OF_y)
+                    Mz_d = 0.0
 
-                    env.omega_d = [omega_xd,omega_yd,omega_zd]
+                    env.M_d = [Mx_d,My_d,Mz_d] # [N*mm]
 
                     print('----- pitch starts -----')
                     print('vx=%.3f, vy=%.3f, vz=%.3f' %(vx,vy,vz))
-                    print('RREV=%.3f, OF_y=%.3f, OF_x=%.3f, Omega_yd=%.3f' %(RREV, OF_y, OF_x, omega_yd) )   
+                    print('RREV=%.3f, OF_y=%.3f, OF_x=%.3f, Omega_yd=%.3f' %(RREV, OF_y, OF_x, My_d) )   
                     print("Pitch Time: %.3f" %start_time_pitch)
 
                     ## Start rotation and mark rotation as triggered
-                    env.step('omega',env.omega_d,ctrl_flag=1) # Set desired ang. vel 
+                    env.step('moment',env.M_d,ctrl_flag=1) # Set desired ang. vel 
                    
                     env.flip_flag = True
 
@@ -295,7 +295,7 @@ if __name__ == '__main__':
     alpha_sigma = np.array([[0.05]])
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[5.0],[6.0],[6.0]])# Initial estimates of mu: 
+    mu = np.array([[5.0],[10],[6.0]])# Initial estimates of mu: 
     sigma = np.array([[1.5],[1.5],[1.5]]) # Initial estimates of sigma: 
 
 
@@ -308,8 +308,8 @@ if __name__ == '__main__':
 
     
     ## INITIAL CONDITIONS
-    vx_d = 1.0
-    vz_d = 3.0
+    vx_d = 1.5
+    vz_d = 3.5
     trial_num = 1
     env.agent = "EM_PEPG"
     
