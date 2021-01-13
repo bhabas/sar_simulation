@@ -227,24 +227,17 @@ class CrazyflieEnv:
         return self.state_current[0]
 
     def launch_sim(self):
-       
-        if getpass.getuser() == 'bhabas':
-            
+    
 
-            print("[STARTING] Starting Gazebo Process...")
-            self.gazebo_p = subprocess.Popen( # Gazebo Process
-                "gnome-terminal --disable-factory  -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_gazebo.bash", 
-                close_fds=True, preexec_fn=os.setsid, shell=True)
-            time.sleep(5)
+        print("[STARTING] Starting Gazebo Process...")
+        self.gazebo_p = subprocess.Popen( # Gazebo Process
+            "gnome-terminal --disable-factory  -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_gazebo.bash", 
+            close_fds=True, preexec_fn=os.setsid, shell=True)
+        time.sleep(5)
 
    
 
-        # else:
-            # print("[STARTING] Starting Gazebo Process...")
-            # self.gazebo_p = subprocess.Popen( # Gazebo Process
-            #     "gnome-terminal --disable-factory -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_gazebo.bash", 
-            #     close_fds=True, preexec_fn=os.setsid, shell=True)
-            # time.sleep(5)
+     
 
 
 
