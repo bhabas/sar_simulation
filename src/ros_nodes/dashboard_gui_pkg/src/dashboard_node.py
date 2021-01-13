@@ -41,6 +41,10 @@ class DashboardNode:
         self.reward = reward_msg.reward
         self.n_rollouts = reward_msg.n_rollouts
 
+    # ============================
+    ##   Controller Subscriber
+    # ============================
+
     def ctrlCallback(self,msg):
         self.motorspeeds = msg.motorspeeds
 

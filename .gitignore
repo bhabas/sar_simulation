@@ -1,7 +1,7 @@
 *.pyc
 # Byte-compiled / optimized / DLL files
 __pycache__/
-src/crazyflie_rl/src/log/*.csv
+src/ros_nodes/data_logging_pkg/log/*.csv
 *.py[cod]
 *$py.class
 .vscode

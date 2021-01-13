@@ -72,6 +72,7 @@ class CrazyflieEnv:
 
         self.omega_d = [0,0,0]
         self.vel_d = [0,0,0]
+        self.M_d = [0,0,0]
 
         
         
@@ -128,7 +129,7 @@ class CrazyflieEnv:
         msg.reward = self.reward
 
         msg.vel_d = self.vel_d
-        msg.omega_d = self.omega_d
+        msg.M_d = self.M_d
 
         self.RL_Publisher.publish(msg)
      
@@ -287,7 +288,7 @@ class CrazyflieEnv:
                     'omega':4,
                     'stop':5,
                     'gains':6,
-                    'moments':7,
+                    'moment':7,
                     'sticky':11}
         
 
@@ -299,7 +300,7 @@ class CrazyflieEnv:
         
         self.Cmd_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
         self.Cmd_Publisher.publish(cmd_msg) # So I'm sending it twice 
-        time.sleep(0.01)
+        time.sleep(0.01) # And a sleep for good measure, look back at removing this in the future 
         
 
 
@@ -313,7 +314,7 @@ class CrazyflieEnv:
             if action=='home' or action == 'stop': # Execute home or stop action
                 ctrl_vals = [0,0,0]
                 ctrl_flag = 1
-                self.stepPub(action,ctrl_vals,ctrl_flag)
+                self.step(action,ctrl_vals,ctrl_flag)
 
             elif action=='gains': # Execture Gain changer
                 
@@ -322,7 +323,7 @@ class CrazyflieEnv:
                 ctrl_vals = vals[0:3]
                 ctrl_flag = vals[3]
 
-                self.stepPub(action,ctrl_vals,ctrl_flag)
+                self.step(action,ctrl_vals,ctrl_flag)
                 
             elif action == 'omega': # Execture Angular rate action
 
@@ -330,14 +331,14 @@ class CrazyflieEnv:
                 ctrl_vals = [float(i) for i in ctrl_vals.split(',')]
                 ctrl_flag = 1.0
 
-                self.stepPub('omega',ctrl_vals,ctrl_flag)
+                self.step('omega',ctrl_vals,ctrl_flag)
 
 
             else:
                 ctrl_vals = input("\nControl Vals (x,y,z): ")
                 ctrl_vals = [float(i) for i in ctrl_vals.split(',')]
                 ctrl_flag = float(input("\nController On/Off (1,0): "))
-                self.stepPub(action,ctrl_vals,ctrl_flag)
+                self.step(action,ctrl_vals,ctrl_flag)
 
    
 

@@ -106,10 +106,10 @@ def runGraph():
     line_wy, = ax1_omega.plot(buffer, wy_arr,'g-',label='$\omega_y$')
     line_wz, = ax1_omega.plot(buffer, wz_arr,'r-',label='$\omega_z$')
 
-    line_ms1, = ax1_ms.plot(buffer, ms1_arr,color = 'steelblue',linewidth = 1,label="MS: 1")
-    line_ms2, = ax1_ms.plot(buffer, ms2_arr,'b-',linewidth = 1,label="MS: 2")
-    line_ms3, = ax1_ms.plot(buffer, ms3_arr,'g-',linewidth = 1,label="MS: 3")
-    line_ms4, = ax1_ms.plot(buffer, ms4_arr,'r-',linewidth = 1,label="MS: 4")
+    line_ms1, = ax1_ms.plot(buffer, ms1_arr,color = 'steelblue',linewidth = 1.5,label="MS: 1")
+    line_ms2, = ax1_ms.plot(buffer, ms2_arr,'b-',linewidth = 1.5,label="MS: 2")
+    line_ms3, = ax1_ms.plot(buffer, ms3_arr,'g-',linewidth = 1.5,label="MS: 3")
+    line_ms4, = ax1_ms.plot(buffer, ms4_arr,'r-',linewidth = 1.5,label="MS: 4")
 
 
     ## DEFINE AXES LEGENDS
@@ -212,19 +212,20 @@ def runGraph():
         line_wz.set_ydata(wz_arr)
 
         ## MOTORSPEED LINES
-        ms1_arr.append(ms1)
+        lineoffset = 25
+        ms1_arr.append(ms1+lineoffset) # Added offsets so indiv. motorspeeds are visible on plot
         ms1_arr = ms1_arr[-buf_len:]
         line_ms1.set_ydata(ms1_arr)
 
-        ms2_arr.append(ms2)
+        ms2_arr.append(ms2-lineoffset)
         ms2_arr = ms2_arr[-buf_len:]
         line_ms2.set_ydata(ms2_arr)
 
-        ms3_arr.append(ms3)
+        ms3_arr.append(ms3+lineoffset)
         ms3_arr = ms3_arr[-buf_len:]
         line_ms3.set_ydata(ms3_arr)
 
-        ms4_arr.append(ms4)
+        ms4_arr.append(ms4-lineoffset)
         ms4_arr = ms4_arr[-buf_len:]
         line_ms4.set_ydata(ms4_arr)
 

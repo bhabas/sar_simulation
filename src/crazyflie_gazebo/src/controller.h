@@ -98,6 +98,7 @@ class Controller
         Eigen::Vector3d _a_d;       // Acceleration-desired [m/s]
         Eigen::Vector3d _b1_d;      // Desired body-fixed x-axis in terms of global axes
         Eigen::Vector3d _omega_d;   // Omega-desired [rad/s]
+        Eigen::Vector3d _M_d;       // Moment-desired [N*m]
 
         Eigen::Vector3d _kp_x; // Pos. Gain
         Eigen::Vector3d _kd_x; // Pos. derivative Gain
@@ -120,6 +121,7 @@ class Controller
 
         bool _motorstop_flag = false;
         bool _flip_flag = false;
+        bool _Moment_flag = false;
 
 
 
