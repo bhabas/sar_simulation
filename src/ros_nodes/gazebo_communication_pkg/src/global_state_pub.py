@@ -29,6 +29,7 @@ def global_state_publisher():
     header.frame_id='Gazebo_GlobalState'
 
     link_msg = GetLinkStateRequest() 
+    h_ceiling = 3.0
 
 
 
@@ -42,6 +43,13 @@ def global_state_publisher():
         result = get_link_srv(link_msg) # Use service to get pose and twist from base_link
         state_msg.global_pose = result.link_state.pose
         state_msg.global_twist = result.link_state.twist
+
+        ## DEFINE STATE_MSG OF VALUES
+        d = h_ceiling - result.link_state.pose.position.z
+        
+        state_msg.OF_x = result.link_state.twist.linear.y/d
+        state_msg.OF_y = result.link_state.twist.linear.x/d
+        state_msg.RREV = result.link_state.twist.linear.z/d
 
 
         pub.publish(state_msg)

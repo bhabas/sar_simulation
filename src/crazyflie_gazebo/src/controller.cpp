@@ -95,7 +95,11 @@ void Controller::global_stateCallback(const gazebo_communication_pkg::GlobalStat
     _omega << omega.x, omega.y, omega.z;
 
 
-    // std::cout << _vel.transpose() << std::endl;
+    // SET SENSOR VALUES INTO CLASS VARIABLES
+    _RREV = msg->RREV;
+    _OF_x = msg->OF_x;
+    _OF_y = msg->OF_y;
+    
 
 }
 
@@ -108,7 +112,7 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
     Vector3d cmd_vals(vals.x,vals.y,vals.z);
     float cmd_flag = msg->cmd_flag;                     // Construct flag from cmd flag value
 
-    ctrl_cmd << cmd_type,cmd_vals,cmd_flag; // Define cmd vector
+    _ctrl_cmd << cmd_type,cmd_vals,cmd_flag; // Define cmd vector
 
 
     
@@ -128,12 +132,8 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             _kp_Rf = 1;
             _kd_Rf = 1;
 
-            _kd_R << 0.005,0.005,0.005;
-
-
-
+            
             _motorstop_flag = false;
-            _flip_flag = false;
             _Moment_flag = false;
             break;
 
@@ -151,32 +151,22 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
 
             break;
         
-        case 4: // Execute Ang. Vel. Flip
-
-            _kd_R = _kp_omega;
-
-            _omega_d = cmd_vals;
-            _kp_xf = 0;
-            _kd_xf = 0;
-            _kp_Rf = 0;
-            _kd_Rf = cmd_flag;
-
-            _flip_flag = true;
-
+        case 4: // Execute Ang. Velocity-Based Flip [DEPRECATED]
+                //      NOTE: This has been outperformed by moment based flips and removed
+                //      Look back at old commits for reference if needed
             break;
 
-        case 5: // Stop
+        case 5: // Hard Set All Motorspeeds to Zero
             _motorstop_flag = true;
             break;
 
-        case 6: // Edit Gains [Needs reimplementation]
+        case 6: // Edit Gains [Needs Reimplemented]
             break;
 
-        case 7: // Execute Moment Based Flip
+        case 7: // Execute Moment-Based Flip
 
-            _M_d = cmd_vals*1e-3;
+            _M_d = cmd_vals*1e-3; // Convert from N*mm to N*m for calcs
             _Moment_flag = true;
-
             break;
 
         case 11: // Enable/Disable Stickyfoot
@@ -196,10 +186,7 @@ void Controller::controlThread()
     // =========== Controller Explanation =========== //
     // https://www.youtube.com/watch?v=A27knigjGS4&list=PL_onPhFCkVQhuPiUxUW2lFHB39QsavEEA&index=46
     // Derived from DOI's: 10.1002/asjc.567 (T. Lee) & 10.13140/RG.2.2.12876.92803/1 (M. Fernando)
-    typedef Matrix<double, 3, 3, RowMajor> RowMatrix3d; 
-
-    
-    MotorCommand motorspeed_structure;
+   
     float motorspeed[4];
     
 
@@ -216,6 +203,7 @@ void Controller::controlThread()
     Vector3d x_d; // Pos-desired [m] 
     Vector3d v_d; // Velocity-desired [m/s]
     Vector3d a_d; // Acceleration-desired [m/s]
+    
 
     Matrix3d R_d; // Rotation-desired 
     Matrix3d R_d_custom; // Rotation-desired (ZXY Euler angles)
@@ -305,22 +293,7 @@ void Controller::controlThread()
 
 
 
-  
-    
-    // 1 is on | 0 is off by default
-    // double att_control_flag = 0; // Controls implementation
-    // double flip_flag = 1;       // Controls thrust implementation
-    // double motorstop_flag = 0;  // Controls stop implementation
-
-
-
-   
-    double w; // Angular frequency for trajectories [rad/s]
-    double b; // Amplitude for trajectories [m]
-
-    // =========== Trajectory Definitions =========== //
-
-
+    // =========== ROS Definitions =========== //
     crazyflie_gazebo::CtrlData ctrl_msg;
     ros::Rate rate(250);
 
@@ -362,7 +335,7 @@ void Controller::controlThread()
         roll = atan2(R(2,1), R(2,2)); 
         pitch = atan2(-R(2,0), sqrt(R(2,1)*R(2,1)+R(2,2)*R(2,2)));
     
-        b3 = R*e3; // body vertical axis in terms of global axes
+        b3 = R*e3; // Body vertical axis in terms of global axes
 
 
         // =========== Translational Errors & Desired Body-Fixed Axes =========== //
@@ -371,18 +344,14 @@ void Controller::controlThread()
 
         
         F_thrust_ideal = -kp_x.cwiseProduct(e_x)*_kp_xf + -kd_x.cwiseProduct(e_v)*_kd_xf + m*g*e3 + m*a_d; // ideal control thrust vector
-        b3_d = F_thrust_ideal.normalized(); // desired body-fixed vertical axis
-        b2_d = b3_d.cross(b1_d).normalized(); // body-fixed horizontal axis
+        b3_d = F_thrust_ideal.normalized();     // Desired body-fixed vertical axis
+        b2_d = b3_d.cross(b1_d).normalized();   // Body-fixed horizontal axis
 
 
 
         // =========== Rotational Errors =========== // 
         R_d << b2_d.cross(b3_d).normalized(),b2_d,b3_d; // Desired rotational axis
                                                         // b2_d x b3_d != b1_d (look at derivation)
-
-        // if (att_control_flag == 1){ // [Attitude control will be implemented here]
-        //     R_d = R_d_custom;
-        // }
 
         e_R = 0.5*dehat(R_d.transpose()*R - R.transpose()*R_d); // Rotational error
         e_omega = omega - R.transpose()*R_d*omega_d; // Ang vel error 
@@ -391,7 +360,7 @@ void Controller::controlThread()
 
 
         // =========== Control Equations =========== // 
-        F_thrust = F_thrust_ideal.dot(b3)*(double)(!_flip_flag); // Thrust control value
+        F_thrust = F_thrust_ideal.dot(b3); // Thrust control value
         Gyro_dyn = omega.cross(J*omega) - J*(hat(omega)*R.transpose()*R_d*omega_d - R.transpose()*R_d*domega_d); // Gyroscopic dynamics
         M = -kp_R.cwiseProduct(e_R)*_kp_Rf + -kd_R.cwiseProduct(e_omega)*_kd_Rf + Gyro_dyn; // Moment control vector
 
@@ -427,7 +396,7 @@ void Controller::controlThread()
             }
         }
 
-        if(b3(2) <= 0){ // If e3 component of b3 is neg, turn motors off [arbitrary amount]
+        if(b3(2) <= 0){ // If e3 component of b3 is neg, turn motors off 
             _motorstop_flag = true;
         }
 
@@ -438,15 +407,15 @@ void Controller::controlThread()
         
 
 
-        if (t_step%100 == 0){ // General Debugging output
+        if (t_step%25 == 0){ // General Debugging output
         cout << setprecision(4) <<
-        "t: " << t << "\tCmd: " << ctrl_cmd.transpose() << endl << 
+        "t: " << _t << "\tCmd: " << _ctrl_cmd.transpose() << endl << 
         endl <<
+        "RREV: " << _RREV << "\tOF_x: " << _OF_x << "\tOF_y: " << _OF_y << endl <<
         "kp_x: " << _kp_x.transpose() << "\tkd_x: " << _kd_x.transpose() << endl <<
         "kp_R: " << _kp_R.transpose() << "\tkd_R: " << _kd_R.transpose() << endl <<
-        "kp_omega (flip): " << _kp_omega.transpose() << endl <<
         setprecision(1) <<
-        "flip_flag: " << _flip_flag << "\tmotorstop_flag: " << _motorstop_flag << "\tMoment_flag: " << _Moment_flag << endl <<
+        "flip_flag: " << 0.0 << "\tmotorstop_flag: " << _motorstop_flag << "\tMoment_flag: " << _Moment_flag << endl <<
         "kp_xf: " << _kp_xf << " \tkd_xf: " << _kd_xf << "\tkp_Rf: " << _kp_Rf << "\tkd_Rf: " << _kd_Rf  << endl <<
         endl << setprecision(4) <<
 
