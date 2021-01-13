@@ -61,10 +61,11 @@ class Controller
             _kp_R << 0.05,0.05,0.05;
             _kd_R << 0.005,0.005,0.005;
 
-            
-
-
-
+            // SET DEFAULT POLICY VALUES
+            _RREV_thr = 0.0;
+            _G1 = 0.0;
+            _G2 = 0.0;
+            _policy_armed_flag = false;
         }
 
         // DEFINE FUNCTION PROTOTYPES
@@ -115,6 +116,11 @@ class Controller
         double _RREV;
         double _OF_x;
         double _OF_y; 
+
+        double _RREV_thr;
+        double _G1;
+        double _G2;
+        bool _policy_armed_flag;
 
         
 

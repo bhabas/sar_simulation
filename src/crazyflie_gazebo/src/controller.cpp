@@ -135,6 +135,7 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             
             _motorstop_flag = false;
             _Moment_flag = false;
+            _policy_armed_flag = false;
             break;
 
         case 1: // Position
@@ -157,7 +158,7 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             break;
 
         case 5: // Hard Set All Motorspeeds to Zero
-            _motorstop_flag = true;
+            _motorstop_flag = (bool)cmd_flag;
             break;
 
         case 6: // Edit Gains [Needs Reimplemented]
@@ -166,8 +167,17 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
         case 7: // Execute Moment-Based Flip
 
             _M_d = cmd_vals*1e-3; // Convert from N*mm to N*m for calcs
-            _Moment_flag = true;
+            _Moment_flag = (bool)cmd_flag;
             break;
+
+        case 8: // Perform Policy Maneuver
+
+            _RREV_thr = cmd_vals(0);
+            _G1 = cmd_vals(1);
+            _G2 = cmd_vals(2);
+
+            _policy_armed_flag = (bool)cmd_flag;
+
 
         case 11: // Enable/Disable Stickyfoot
             float sticky_cmd[4] = {-(float)cmd_type,cmd_flag,0,0};
@@ -177,6 +187,12 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             sendto(Ctrl_Mavlink_socket, sticky_cmd, sizeof(sticky_cmd),0, (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len);
     }
 
+}
+
+double sign(double x){
+    if (x>0) return 1;
+    if (x<0) return -1;
+    return 0;
 }
 
 
@@ -368,8 +384,20 @@ void Controller::controlThread()
             FM << F_thrust,_M_d;
         }
         else{
+
+            if(_policy_armed_flag == true){
+            
+                if(_RREV >= _RREV_thr){
+                    M(0) = 0.0;
+                    M(1) = ( _G1*_RREV*1e-1 - _G2*abs(_OF_y*1e-1))*sign(_OF_y)*1e-3;
+                    M(2) = 0.0;
+                }
+            }
+
             FM << F_thrust,M; // Thrust-Moment control vector
         }
+
+        
         
 
         
@@ -412,10 +440,13 @@ void Controller::controlThread()
         "t: " << _t << "\tCmd: " << _ctrl_cmd.transpose() << endl << 
         endl <<
         "RREV: " << _RREV << "\tOF_x: " << _OF_x << "\tOF_y: " << _OF_y << endl <<
+        "RREV_thr: " << _RREV_thr << "\tG1: " << _G1 << "\tG2: " << _G2 << endl << 
+        endl << 
         "kp_x: " << _kp_x.transpose() << "\tkd_x: " << _kd_x.transpose() << endl <<
         "kp_R: " << _kp_R.transpose() << "\tkd_R: " << _kd_R.transpose() << endl <<
+        endl << 
         setprecision(1) <<
-        "flip_flag: " << 0.0 << "\tmotorstop_flag: " << _motorstop_flag << "\tMoment_flag: " << _Moment_flag << endl <<
+        "Policy_armed: " << _policy_armed_flag << "\tmotorstop_flag: " << _motorstop_flag << "\tMoment_flag: " << _Moment_flag << endl <<
         "kp_xf: " << _kp_xf << " \tkd_xf: " << _kd_xf << "\tkp_Rf: " << _kp_Rf << "\tkd_Rf: " << _kd_Rf  << endl <<
         endl << setprecision(4) <<
 

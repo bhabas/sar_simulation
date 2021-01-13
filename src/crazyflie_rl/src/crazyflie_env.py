@@ -280,7 +280,7 @@ class CrazyflieEnv:
     def step(self,action,ctrl_vals=[0,0,0],ctrl_flag=1):
         cmd_msg = RLCmd()
 
-        cmd_dict = {'stuff':20,
+        cmd_dict = {
                     'home':0,
                     'pos':1,
                     'vel':2,
@@ -289,6 +289,7 @@ class CrazyflieEnv:
                     'stop':5,
                     'gains':6,
                     'moment':7,
+                    'policy':8,
                     'sticky':11}
         
 

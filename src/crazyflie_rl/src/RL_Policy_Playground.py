@@ -113,8 +113,9 @@ def runTrial():
             RREV_trigger = mu[0] # FoV expansion velocity [rad/s]
             G1 = mu[1]
             G2 = mu[2]
-            policy = np.array([RREV_trigger,G1,G2])
-            env.policy = policy.flatten().tolist()
+            env.policy = [RREV_trigger,G1,G2]
+            env.step('policy',env.policy,ctrl_flag=1)
+            
         
             
             
@@ -145,6 +146,7 @@ def runTrial():
             # ============================
             env.step('pos',ctrl_flag=0) # Turn off pos control
             env.step('vel',env.vel_d,ctrl_flag=1) # Set desired vel
+            env.step('sticky',ctrl_flag=1) # Enable sticky
  
             
             
@@ -176,7 +178,7 @@ def runTrial():
                 if (RREV > RREV_trigger) and (env.flip_flag == False):
                     start_time_pitch = env.getTime()
             
-                    env.step('sticky',ctrl_flag=1)
+                    
 
                     M_xd = 0.0
                     M_yd = (G1*RREV - G2*abs(OF_y))*np.sign(OF_y)
@@ -190,7 +192,7 @@ def runTrial():
                     print("Pitch Time: %.3f" %start_time_pitch)
 
                     ## Start rotation and mark rotation as triggered
-                    env.step('moment',env.M_d,ctrl_flag=1) # Set desired ang. vel 
+                    # env.step('moment',env.M_d,ctrl_flag=1) # Set desired ang. vel 
                     env.flip_flag = True
 
                 # ============================
