@@ -86,7 +86,7 @@ class DataLoggingNode:
         self.sigma = np.asarray(rl_msg.sigma)
         self.policy = np.asarray(rl_msg.policy)
         self.vel_d = np.asarray(rl_msg.vel_d)
-        self.omega_d = np.asarray(rl_msg.omega_d)
+        self.omega_d = np.asarray(rl_msg.M_d)
 
         ## TRIM RL VALUES FOR CSV
         self.alpha_mu = np.round(self.alpha_mu,2)

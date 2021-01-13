@@ -134,6 +134,7 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
 
             _motorstop_flag = false;
             _flip_flag = false;
+            _Moment_flag = false;
             break;
 
         case 1: // Position
@@ -172,6 +173,9 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             break;
 
         case 7: // Execute Moment Based Flip
+
+            _M_d = cmd_vals;
+            _Moment_flag = true;
 
             break;
 
@@ -390,7 +394,14 @@ void Controller::controlThread()
         F_thrust = F_thrust_ideal.dot(b3)*(double)(!_flip_flag); // Thrust control value
         Gyro_dyn = omega.cross(J*omega) - J*(hat(omega)*R.transpose()*R_d*omega_d - R.transpose()*R_d*domega_d); // Gyroscopic dynamics
         M = -kp_R.cwiseProduct(e_R)*_kp_Rf + -kd_R.cwiseProduct(e_omega)*_kd_Rf + Gyro_dyn; // Moment control vector
-        FM << F_thrust,M; // Thrust-Moment control vector
+
+        if(_Moment_flag == true){
+            FM << F_thrust,_M_d;
+        }
+        else{
+            FM << F_thrust,M; // Thrust-Moment control vector
+        }
+        
 
         
         
@@ -427,7 +438,7 @@ void Controller::controlThread()
         
 
 
-        if (t_step%100 == 0){ // General Debugging output
+        if (t_step%1 == 0){ // General Debugging output
         cout << setprecision(4) <<
         "t: " << t << "\tCmd: " << ctrl_cmd.transpose() << endl << 
         endl <<
@@ -435,7 +446,7 @@ void Controller::controlThread()
         "kp_R: " << _kp_R.transpose() << "\tkd_R: " << _kd_R.transpose() << endl <<
         "kp_omega (flip): " << _kp_omega.transpose() << endl <<
         setprecision(1) <<
-        "flip_flag: " << _flip_flag << "\tmotorstop_flag: " << _motorstop_flag << endl <<
+        "flip_flag: " << _flip_flag << "\tmotorstop_flag: " << _motorstop_flag << "\tMoment_flag: " << _Moment_flag << endl <<
         "kp_xf: " << _kp_xf << " \tkd_xf: " << _kd_xf << "\tkp_Rf: " << _kp_Rf << "\tkd_Rf: " << _kd_Rf  << endl <<
         endl << setprecision(4) <<
 

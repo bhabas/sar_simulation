@@ -24,4 +24,5 @@ float32[] policy
 float32 reward
 
 float32[] vel_d
-float32[] omega_d
+float32[] M_d
+

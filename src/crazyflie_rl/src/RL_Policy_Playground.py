@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import time,os,getpass
+import time,os
 from scipy.spatial.transform import Rotation
-import threading
+
 
 
 from crazyflie_env import CrazyflieEnv
-from rl_syspepg import rlsysPEPGAgent_reactive,rlsysPEPGAgent_adaptive
-from rl_EM import rlEM_PEPGAgent,rlEM_AdaptiveAgent
-from rl_cma import CMA_basic,CMA,CMA_sym
+from rl_syspepg import rlsysPEPGAgent_reactive
 
 os.system("clear")
 np.set_printoptions(precision=2, suppress=True)
@@ -180,19 +178,19 @@ def runTrial():
             
                     env.step('sticky',ctrl_flag=1)
 
-                    omega_yd = (G1*RREV - G2*abs(OF_y))*np.sign(OF_y)
-                    omega_xd = 0.0
-                    omega_zd = 0.0
+                    M_xd = 0.0
+                    M_yd = (G1*RREV - G2*abs(OF_y))*np.sign(OF_y)
+                    M_zd = 0.0
 
-                    env.omega_d = [omega_xd,omega_yd,omega_zd]
+                    env.M_d = [M_xd,M_yd,M_zd]
 
                     print('----- pitch starts -----')
                     print('vx=%.3f, vy=%.3f, vz=%.3f' %(vx,vy,vz))
-                    print('RREV=%.3f, OF_y=%.3f, OF_x=%.3f, Omega_yd=%.3f' %(RREV, OF_y, OF_x, omega_yd) )   
+                    print('RREV=%.3f, OF_y=%.3f, OF_x=%.3f, M_yd=%.3f' %(RREV, OF_y, OF_x, M_yd) )   
                     print("Pitch Time: %.3f" %start_time_pitch)
 
                     ## Start rotation and mark rotation as triggered
-                    env.step('omega',env.omega_d,ctrl_flag=1) # Set desired ang. vel 
+                    env.step('moment',env.M_d,ctrl_flag=1) # Set desired ang. vel 
                     env.flip_flag = True
 
                 # ============================
@@ -326,20 +324,14 @@ if __name__ == '__main__':
     while True:
         start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
         env.trial_name = f"RL_Policy_Playground-{start_time}"
-        # try:
-            ## SEND MSG WHICH INCLUDES VARIABLE TO START NEW CSV
+
+        ## SEND MSG WHICH INCLUDES VARIABLE TO START NEW CSV
         env.createCSV_flag = True
         env.RL_Publish()
 
         ## RUN TRIAL AND RESTART GAZEBO FOR NEXT TRIAL RUN (NOT NECESSARY BUT MIGHT BE A GOOD IDEA?)
         runTrial()
-    
-        # except: ## IF SIM EXCEPTION RAISED THEN CONTINUE BACK TO TRY BLOCK UNTIL SUCCESSFUL COMPLETION
-        #     continue
 
-
-        # break ## BREAK FROM LOOP
-    
 
 
 
