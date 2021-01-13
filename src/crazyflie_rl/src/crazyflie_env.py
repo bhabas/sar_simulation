@@ -254,8 +254,10 @@ class CrazyflieEnv:
 
     def reset_pos(self): # Disable sticky then places spawn_model at origin
         
-        self.step('sticky',ctrl_flag=0)
+        ## TURN OFF STICKY FEET
+        self.step('sticky',ctrl_flag=0) # Turn off sticky
 
+        ## RESET POSITION AND VELOCITY
         state_msg = ModelState()
         state_msg.model_name = 'crazyflie_model_X'
         state_msg.pose.position.x = 0
@@ -275,6 +277,8 @@ class CrazyflieEnv:
         set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         set_state_srv(state_msg)
         time.sleep(0.01) # Give it time for controller to receive new states
+
+        ## RESET TO HOME
         self.step('home')
 
     def step(self,action,ctrl_vals=[0,0,0],ctrl_flag=1):

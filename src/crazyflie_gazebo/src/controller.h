@@ -66,6 +66,7 @@ class Controller
             _G1 = 0.0;
             _G2 = 0.0;
             _policy_armed_flag = false;
+            _flip_flag = false;
         }
 
         // DEFINE FUNCTION PROTOTYPES
@@ -117,10 +118,12 @@ class Controller
         double _OF_x;
         double _OF_y; 
 
+        // POLICY FLAGS AND VALUES
         double _RREV_thr;
         double _G1;
         double _G2;
         bool _policy_armed_flag;
+        bool _flip_flag;
 
         
 

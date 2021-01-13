@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import time,os,getpass
+import time,os
 from scipy.spatial.transform import Rotation
-import threading
+
 
 
 from crazyflie_env import CrazyflieEnv
@@ -94,11 +94,10 @@ def runTrial(vx_d,vz_d):
             RREV_trigger = theta_rl[0, k_run] # FoV expansion velocity [rad/s]
             G1 = theta_rl[1, k_run]
             G2 = theta_rl[2, k_run]
-            policy = theta_rl[:,k_run]
-            env.policy = policy.flatten().tolist()
+            env.policy = [RREV_trigger,G1,G2]
+            env.step('policy',env.policy,ctrl_flag=1) # Arm controller policy
         
-            # vz_d = np.random.uniform(low=2.5, high=3.0)
-            # vx_d = np.random.uniform(low=-2.0, high=2.0)
+
             vy_d = 0 
             env.vel_d = [vx_d,vy_d,vz_d] # [m/s]
 
@@ -127,6 +126,7 @@ def runTrial(vx_d,vz_d):
             # ============================
             env.step('pos',ctrl_flag=0) # Turn off pos control
             env.step('vel',env.vel_d,ctrl_flag=1) # Set desired vel
+            env.step('sticky',ctrl_flag=1) # Enable sticky
  
             
             
@@ -152,29 +152,29 @@ def runTrial(vx_d,vz_d):
 
 
                 
-                # ============================
-                ##    Pitch Criteria 
-                # ============================
-                if (RREV > RREV_trigger) and (env.flip_flag == False):
-                    start_time_pitch = env.getTime()
+                # # ============================
+                # ##    Pitch Criteria 
+                # # ============================
+                # if (RREV > RREV_trigger) and (env.flip_flag == False):
+                #     start_time_pitch = env.getTime()
             
-                    env.step('sticky',ctrl_flag=1)
+                #     env.step('sticky',ctrl_flag=1)
 
-                    Mx_d = 0.0
-                    My_d = (G1*(RREV*1e-1) - G2*abs(OF_y*1e-1))*np.sign(OF_y)
-                    Mz_d = 0.0
+                #     Mx_d = 0.0
+                #     My_d = (G1*(RREV*1e-1) - G2*abs(OF_y*1e-1))*np.sign(OF_y)
+                #     Mz_d = 0.0
 
-                    env.M_d = [Mx_d,My_d,Mz_d] # [N*mm]
+                #     env.M_d = [Mx_d,My_d,Mz_d] # [N*mm]
 
-                    print('----- pitch starts -----')
-                    print('vx=%.3f, vy=%.3f, vz=%.3f' %(vx,vy,vz))
-                    print('RREV=%.3f, OF_y=%.3f, OF_x=%.3f, Omega_yd=%.3f' %(RREV, OF_y, OF_x, My_d) )   
-                    print("Pitch Time: %.3f" %start_time_pitch)
+                #     print('----- pitch starts -----')
+                #     print('vx=%.3f, vy=%.3f, vz=%.3f' %(vx,vy,vz))
+                #     print('RREV=%.3f, OF_y=%.3f, OF_x=%.3f, Omega_yd=%.3f' %(RREV, OF_y, OF_x, My_d) )   
+                #     print("Pitch Time: %.3f" %start_time_pitch)
 
-                    ## Start rotation and mark rotation as triggered
-                    env.step('moment',env.M_d,ctrl_flag=1) # Set desired ang. vel 
+                #     ## Start rotation and mark rotation as triggered
+                #     env.step('moment',env.M_d,ctrl_flag=1) # Set desired ang. vel 
                    
-                    env.flip_flag = True
+                #     env.flip_flag = True
 
                 # ============================
                 ##      Record Keeping  
@@ -195,15 +195,15 @@ def runTrial(vx_d,vz_d):
                 ##    Termination Criteria 
                 # ============================
 
-                # If time since triggered pitch exceeds [0.7s]   
-                if env.flip_flag and ((env.getTime()-start_time_pitch) > (0.7)):
-                    # I don't like this error formatting, feel free to improve on
-                    error_1 = "Rollout Completed: Pitch Timeout"
-                    error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch))
-                    print(error_1 + "\n" + error_2)
+                # # If time since triggered pitch exceeds [0.7s]   
+                # if env.flip_flag and ((env.getTime()-start_time_pitch) > (0.7)):
+                #     # I don't like this error formatting, feel free to improve on
+                #     error_1 = "Rollout Completed: Pitch Timeout"
+                #     error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch))
+                #     print(error_1 + "\n" + error_2)
 
-                    error_str = error_1 + error_2
-                    env.runComplete_flag = True
+                #     error_str = error_1 + error_2
+                #     env.runComplete_flag = True
 
                 # If time since run start exceeds [2.5s]
                 if (env.getTime() - start_time_rollout) > (2.5):

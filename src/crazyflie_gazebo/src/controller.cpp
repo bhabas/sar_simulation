@@ -123,8 +123,8 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             _x_d << 0,0,0.3;
             _v_d << 0,0,0;
             _a_d << 0,0,0;
-            _b1_d << 1,0,0;
 
+            _b1_d << 1,0,0;
             _omega_d << 0,0,0;
 
             _kp_xf = 1;
@@ -136,6 +136,7 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             _motorstop_flag = false;
             _Moment_flag = false;
             _policy_armed_flag = false;
+            _flip_flag = false;
             break;
 
         case 1: // Position
@@ -149,7 +150,6 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             break;
 
         case 3: // Attitude [Future implentation needed]
-
             break;
         
         case 4: // Execute Ang. Velocity-Based Flip [DEPRECATED]
@@ -389,8 +389,10 @@ void Controller::controlThread()
             
                 if(_RREV >= _RREV_thr){
                     M(0) = 0.0;
-                    M(1) = ( _G1*_RREV*1e-1 - _G2*abs(_OF_y*1e-1))*sign(_OF_y)*1e-3;
+                    M(1) = ( (_G1*1e-1)*_RREV - (_G2*1e-1)*abs(_OF_y))*sign(_OF_y)*1e-3;
                     M(2) = 0.0;
+
+                    _flip_flag = true;
                 }
             }
 
@@ -435,7 +437,7 @@ void Controller::controlThread()
         
 
 
-        if (t_step%25 == 0){ // General Debugging output
+        if (t_step%5 == 0){ // General Debugging output
         cout << setprecision(4) <<
         "t: " << _t << "\tCmd: " << _ctrl_cmd.transpose() << endl << 
         endl <<
@@ -446,7 +448,8 @@ void Controller::controlThread()
         "kp_R: " << _kp_R.transpose() << "\tkd_R: " << _kd_R.transpose() << endl <<
         endl << 
         setprecision(1) <<
-        "Policy_armed: " << _policy_armed_flag << "\tmotorstop_flag: " << _motorstop_flag << "\tMoment_flag: " << _Moment_flag << endl <<
+        "Policy_armed: " << _policy_armed_flag <<  "\tFlip_flag:" << _flip_flag << endl <<
+        "motorstop_flag: " << _motorstop_flag << "\tMoment_flag: " << _Moment_flag << endl <<
         "kp_xf: " << _kp_xf << " \tkd_xf: " << _kd_xf << "\tkp_Rf: " << _kp_Rf << "\tkd_Rf: " << _kd_Rf  << endl <<
         endl << setprecision(4) <<
 

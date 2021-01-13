@@ -47,9 +47,9 @@ def global_state_publisher():
         ## DEFINE STATE_MSG OF VALUES
         d = h_ceiling - result.link_state.pose.position.z
         
-        state_msg.OF_x = result.link_state.twist.linear.y/d
-        state_msg.OF_y = result.link_state.twist.linear.x/d
-        state_msg.RREV = result.link_state.twist.linear.z/d
+        state_msg.OF_x = -result.link_state.twist.linear.y/d # OF_x = -Vy/d
+        state_msg.OF_y = -result.link_state.twist.linear.x/d # OF_y = -Vx/d
+        state_msg.RREV = result.link_state.twist.linear.z/d  # RREV =  Vz/d
 
 
         pub.publish(state_msg)
