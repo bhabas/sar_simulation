@@ -16,6 +16,7 @@ import csv
 from sensor_msgs.msg import LaserScan, Image, Imu
 from gazebo_communication_pkg.msg import GlobalState 
 from crazyflie_rl.msg import RLData,RLCmd
+from crazyflie_gazebo.msg import CtrlData
 from std_msgs.msg import Header 
 from rosgraph_msgs.msg import Clock
 from gazebo_msgs.msg import ModelState
@@ -41,8 +42,10 @@ class CrazyflieEnv:
   
         self.state_Subscriber = rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
         self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
+        self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)
         self.RL_Publisher = rospy.Publisher('/rl_data',RLData,queue_size=10)
         self.Cmd_Publisher = rospy.Publisher('/rl_ctrl',RLCmd,queue_size=10)
+        
 
 
 
@@ -75,6 +78,11 @@ class CrazyflieEnv:
         self.vel_d = [0,0,0]
         self.M_d = [0,0,0]
 
+        self.MS = [0,0,0,0]
+        self.FM_d = [0,0,0,0]
+        self.flip_flag = False
+
+
         
         
         
@@ -98,51 +106,50 @@ class CrazyflieEnv:
 
     def RL_Publish(self):
 
-        msg = RLData()
+        rl_msg = RLData()
         header = Header()
 
-        msg.header.stamp = rospy.Time.now()
-        msg.trial_name = self.trial_name
-        msg.agent = self.agent
+        rl_msg.header.stamp = rospy.Time.now()
+        rl_msg.trial_name = self.trial_name
+        rl_msg.agent = self.agent
 
-        msg.logging_flag = self.logging_flag
-        msg.createCSV_flag = self.createCSV_flag
-        msg.runComplete_flag = self.runComplete_flag
+        rl_msg.logging_flag = self.logging_flag
+        rl_msg.createCSV_flag = self.createCSV_flag
+        rl_msg.runComplete_flag = self.runComplete_flag
 
-        msg.n_rollouts = self.n_rollouts
-        msg.gamma = self.gamma
-        msg.h_ceiling = self.h_ceiling
+        rl_msg.n_rollouts = self.n_rollouts
+        rl_msg.gamma = self.gamma
+        rl_msg.h_ceiling = self.h_ceiling
 
 
-        msg.k_ep = self.k_ep
-        msg.k_run = self.k_run
+        rl_msg.k_ep = self.k_ep
+        rl_msg.k_run = self.k_run
 
-        msg.alpha_mu = self.alpha_mu
-        msg.alpha_sigma = self.alpha_sigma
-
-        
-
-        msg.mu = self.mu
-        msg.sigma = self.sigma
-        msg.policy = self.policy
-
-        msg.reward = self.reward
-        msg.reward_avg = self.reward_avg
-
-        msg.vel_d = self.vel_d
-        msg.M_d = self.M_d
-
-        self.RL_Publisher.publish(msg)
-     
-
+        rl_msg.alpha_mu = self.alpha_mu
+        rl_msg.alpha_sigma = self.alpha_sigma
 
         
+
+        rl_msg.mu = self.mu
+        rl_msg.sigma = self.sigma
+        rl_msg.policy = self.policy
+
+        rl_msg.reward = self.reward
+        rl_msg.reward_avg = self.reward_avg
+
+        rl_msg.vel_d = self.vel_d
+        rl_msg.M_d = self.M_d
+
+        self.RL_Publisher.publish(rl_msg)
+
+    def ctrlCallback(self,ctrl_msg):
+
+        self.MS = ctrl_msg.motorspeeds  # [MS1,MS2,MS3,MS4]
+        self.FM_d = ctrl_msg.FM_d       # [F_thrust,Mx,My,Mz]
+        self.flip_flag = ctrl_msg.flip_flag
+
+    def global_stateCallback(self,gs_msg):
         
-      
-
-    def global_stateCallback(self,msg):
-        gs_msg = msg # gs_msg <= global_state_msg
-
         ## SET TIME VALUE FROM TOPIC
         t_temp = gs_msg.header.stamp.secs
         ns_temp = gs_msg.header.stamp.nsecs
@@ -166,6 +173,9 @@ class CrazyflieEnv:
 
         ## COMBINE INTO COMPREHENSIVE LIST
         self.state_current = [t] + position + orientation_q +velocity + omega ## t (float) -> [t] (list)
+        self.RREV = gs_msg.RREV
+        self.OF_x = gs_msg.OF_x
+        self.OF_y = gs_msg.OF_y
 
     
 
@@ -207,51 +217,24 @@ class CrazyflieEnv:
     def close_dashboard(self):
         os.killpg(self.dashboard_p.pid, signal.SIGTERM)
 
-
-    def delay_env_time(self,t_start,t_delay):
-        # delay time defined in ms
-        while (self.getTime() - t_start < t_delay/10000):
-                    pass
-
     def __del__(self):
         self.isRunning = False
      
-
-
-    def enableSticky(self, enable): # enable=0 disable sticky, enable=1 enable sticky
-        header = 11
-        msg = struct.pack('5d', header, enable, 0, 0, 0)
-        self.RL_socket.sendto(msg, self.addr_Ctrl)
-        time.sleep(0.001) # This ensures the message is sent enough times Gazebo catches it or something
-        # the sleep time after enableSticky(0) must be small s.t. the gazebo simulation is satble. Because the simulation after joint removed becomes unstable quickly.
-
     def getTime(self):
         return self.state_current[0]
 
     def launch_sim(self):
-    
-
         print("[STARTING] Starting Gazebo Process...")
         self.gazebo_p = subprocess.Popen( # Gazebo Process
             "gnome-terminal --disable-factory  -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_gazebo.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(5)
 
-   
-
-     
-
-
-
-
     def launch_dashboard(self):
         print("[STARTING] Starting Dashboard...")
         self.dashboard_p = subprocess.Popen(
             "gnome-terminal -- roslaunch dashboard_gui_pkg dashboard.launch",
             close_fds=True, preexec_fn=os.setsid, shell=True)
-
-
-
 
     def reset_pos(self): # Disable sticky then places spawn_model at origin
         
@@ -309,6 +292,9 @@ class CrazyflieEnv:
         time.sleep(0.01) # And a sleep for good measure, look back at removing this in the future 
         
 
+    # ============================
+    ##  Control Playground Func. 
+    # ============================
 
     def cmd_send(self):
         while True:

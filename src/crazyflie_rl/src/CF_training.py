@@ -111,13 +111,14 @@ def runTrial(vx_d,vz_d):
 
             start_time_rollout = env.getTime()
             start_time_pitch = None
+            local_flip_flag = False
             state_history = None
             repeat_run= False
             error_str = ""
 
             ## PRINT RUN CONDITIONS AND POLICY
             print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
-            print("RREV: %.3f \t Gain_1: %.3f \t Gain_2: %.3f \t Gain_3: %.3f" %(RREV_trigger, G1, G2, 0))
+            print("RREV_thr: %.3f \t Gain_1: %.3f \t Gain_2: %.3f \t Gain_3: %.3f" %(RREV_trigger, G1, G2, 0))
             print("Vx_d: %.3f \t Vy_d: %.3f \t Vz_d: %.3f" %(vx_d, vy_d, vz_d))
 
 
@@ -147,34 +148,30 @@ def runTrial(vx_d,vz_d):
                 qw,qx,qy,qz = orientation_q
                 R = Rotation.from_quat([qx,qy,qz,qw])
                 R = R.as_matrix() # [b1,b2,b3] Body vectors
-                RREV,OF_x,OF_y = vz/d, -vy/d, -vx/d # OF_x,y are mock optical flow vals assuming no body rotation
+                # RREV,OF_x,OF_y = vz/d, -vy/d, -vx/d # OF_x,y are mock optical flow vals assuming no body rotation
                 
 
 
                 
-                # # ============================
-                # ##    Pitch Criteria 
-                # # ============================
-                # if (RREV > RREV_trigger) and (env.flip_flag == False):
-                #     start_time_pitch = env.getTime()
-            
-                #     env.step('sticky',ctrl_flag=1)
+                # ============================
+                ##    Pitch Criteria 
+                # ============================
+                if (env.flip_flag == True and local_flip_flag == False):
+                    start_time_pitch = env.getTime()
 
-                #     Mx_d = 0.0
-                #     My_d = (G1*(RREV*1e-1) - G2*abs(OF_y*1e-1))*np.sign(OF_y)
-                #     Mz_d = 0.0
+                    Mx_d = env.FM_d[1]*1e3 # [N*mm]
+                    My_d = env.FM_d[2]*1e3
+                    Mz_d = env.FM_d[3]*1e3
 
-                #     env.M_d = [Mx_d,My_d,Mz_d] # [N*mm]
+                
+                    print('----- pitch starts -----')
+                    print('vx=%.3f, vy=%.3f, vz=%.3f' %(vx,vy,vz))
+                    print('RREV_tr=%.3f, OF_y=%.3f, OF_x=%.3f, My_d=%.3f N*mm' %(env.RREV, env.OF_y, env.OF_x, My_d) )   
+                    print("Pitch Time: %.3f" %start_time_pitch)
 
-                #     print('----- pitch starts -----')
-                #     print('vx=%.3f, vy=%.3f, vz=%.3f' %(vx,vy,vz))
-                #     print('RREV=%.3f, OF_y=%.3f, OF_x=%.3f, Omega_yd=%.3f' %(RREV, OF_y, OF_x, My_d) )   
-                #     print("Pitch Time: %.3f" %start_time_pitch)
-
-                #     ## Start rotation and mark rotation as triggered
-                #     env.step('moment',env.M_d,ctrl_flag=1) # Set desired ang. vel 
+                    local_flip_flag = True
                    
-                #     env.flip_flag = True
+                
 
                 # ============================
                 ##      Record Keeping  
@@ -195,18 +192,18 @@ def runTrial(vx_d,vz_d):
                 ##    Termination Criteria 
                 # ============================
 
-                # # If time since triggered pitch exceeds [0.7s]   
-                # if env.flip_flag and ((env.getTime()-start_time_pitch) > (0.7)):
-                #     # I don't like this error formatting, feel free to improve on
-                #     error_1 = "Rollout Completed: Pitch Timeout"
-                #     error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch))
-                #     print(error_1 + "\n" + error_2)
+                # If time since triggered pitch exceeds [0.7s]   
+                if ((env.getTime()-start_time_pitch) > (0.7)) and local_flip_flag:
+                    # I don't like this error formatting, feel free to improve on
+                    error_1 = "Rollout Completed: Pitch Timeout"
+                    error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch))
+                    print(error_1 + "\n" + error_2)
 
-                #     error_str = error_1 + error_2
-                #     env.runComplete_flag = True
+                    error_str = error_1 + error_2
+                    env.runComplete_flag = True
 
-                # If time since run start exceeds [2.5s]
-                if (env.getTime() - start_time_rollout) > (3.5):
+                # If time since run start exceeds [4.0s]
+                if (env.getTime() - start_time_rollout) > (4.0):
                     error_1 = "Rollout Completed: Time Exceeded"
                     error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
                     print(error_1 + "\n" + error_2)
