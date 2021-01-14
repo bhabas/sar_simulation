@@ -128,6 +128,7 @@ def runTrial(vx_d,vz_d):
             # ============================
             env.step('pos',ctrl_flag=0) # Turn off pos control
             env.step('vel',env.vel_d,ctrl_flag=1) # Set desired vel
+            # env.launch_IC(vx_d,vz_d)
             env.step('sticky',ctrl_flag=1) # Enable sticky
  
             
@@ -283,7 +284,7 @@ if __name__ == '__main__':
 
 
     ## SIM PARAMETERS
-    env.n_rollouts = 4
+    env.n_rollouts = 10
     env.gamma = 0.95
     env.logging_flag = True
     env.h_ceiling = 5.0 # [m]
@@ -307,7 +308,7 @@ if __name__ == '__main__':
     
     ## INITIAL CONDITIONS
     vz_d = 3.5
-    vx_d = 0.0
+    vx_d = 2.5
     
     trial_num = 1
     env.agent = agent.agent_type

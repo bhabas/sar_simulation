@@ -165,14 +165,14 @@ class CrazyflieEnv:
             global_quat.w = 1
 
         ## SET STATE VALUES FROM TOPIC
-        position = [global_pos.x,global_pos.y,global_pos.z]
-        orientation_q = [global_quat.w,global_quat.x,global_quat.y,global_quat.z]
-        velocity = [global_vel.x,global_vel.y,global_vel.z]
-        omega = [global_omega.x,global_omega.y,global_omega.z]
+        self.position = [global_pos.x,global_pos.y,global_pos.z]
+        self.orientation_q = [global_quat.w,global_quat.x,global_quat.y,global_quat.z]
+        self.velocity = [global_vel.x,global_vel.y,global_vel.z]
+        self.omega = [global_omega.x,global_omega.y,global_omega.z]
 
 
         ## COMBINE INTO COMPREHENSIVE LIST
-        self.state_current = [t] + position + orientation_q +velocity + omega ## t (float) -> [t] (list)
+        self.state_current = [t] + self.position + self.orientation_q +self.velocity + self.omega ## t (float) -> [t] (list)
         self.RREV = gs_msg.RREV
         self.OF_x = gs_msg.OF_x
         self.OF_y = gs_msg.OF_y
@@ -235,6 +235,29 @@ class CrazyflieEnv:
         self.dashboard_p = subprocess.Popen(
             "gnome-terminal -- roslaunch dashboard_gui_pkg dashboard.launch",
             close_fds=True, preexec_fn=os.setsid, shell=True)
+
+    def launch_IC(self,vx_d,vz_d):
+        
+        ## RESET POSITION AND VELOCITY
+        state_msg = ModelState()
+        state_msg.model_name = 'crazyflie_model_X'
+        state_msg.pose.position.x = self.position[0]
+        state_msg.pose.position.y = self.position[1]
+        state_msg.pose.position.z = self.position[2] - 0.1
+
+        state_msg.pose.orientation.x = 0
+        state_msg.pose.orientation.y = 0
+        state_msg.pose.orientation.z = 0
+        state_msg.pose.orientation.w = 1
+
+        state_msg.twist.linear.x = vx_d
+        state_msg.twist.linear.y = 0
+        state_msg.twist.linear.z = vz_d
+
+        rospy.wait_for_service('/gazebo/set_model_state')
+        set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
+        set_state_srv(state_msg)
+                
 
     def reset_pos(self): # Disable sticky then places spawn_model at origin
         
