@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from threading import Timer
 import numpy as np
 import time,os
 from scipy.spatial.transform import Rotation
@@ -159,9 +160,9 @@ def runTrial(vx_d,vz_d):
                 if (env.flip_flag == True and flag == False):
                     start_time_pitch = env.getTime()
 
-                    Mx_d = env.FM_d[1]*1e3 # [N*mm]
-                    My_d = env.FM_d[2]*1e3
-                    Mz_d = env.FM_d[3]*1e3
+                    Mx_d = env.FM_d[1] # [N*mm]
+                    My_d = env.FM_d[2]
+                    Mz_d = env.FM_d[3]
 
                 
                     print('----- pitch starts -----')
@@ -202,14 +203,14 @@ def runTrial(vx_d,vz_d):
                     error_str = error_1 + error_2
                     env.runComplete_flag = True
 
-                # # If time since run start exceeds [2.5s]
-                # if (env.getTime() - start_time_rollout) > (3.5):
-                #     error_1 = "Rollout Completed: Time Exceeded"
-                #     error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
-                #     print(error_1 + "\n" + error_2)
+                # If time since run start exceeds [2.5s]
+                if (env.getTime() - start_time_rollout) > (3.5):
+                    error_1 = "Rollout Completed: Time Exceeded"
+                    error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
+                    print(error_1 + "\n" + error_2)
 
-                #     error_str = error_1 + error_2
-                #     env.runComplete_flag = True
+                    error_str = error_1 + error_2
+                    env.runComplete_flag = True
 
                 # If position falls below max achieved height 
                 z_max = max(position[2],z_max)
@@ -233,7 +234,6 @@ def runTrial(vx_d,vz_d):
                     error_str = "Error: NAN found in state vector"
                     repeat_run = True
                     break
-
 
 
 

@@ -145,7 +145,7 @@ def runGraph():
         wx,wy,wz = DashNode.state_current[11:14]
 
         ms1,ms2,ms3,ms4 = DashNode.MS
-        My,My_d,F_d = DashNode.FM[2]*1e3,DashNode.FM_d[2]*1e3,DashNode.FM_d[0]*1e1
+        My,My_d,F_d = DashNode.FM[2],DashNode.FM_d[2],DashNode.FM_d[0]*1e1
         
 
         ## POSITION LINES

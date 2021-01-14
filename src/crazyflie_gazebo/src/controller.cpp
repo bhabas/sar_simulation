@@ -271,8 +271,8 @@ void Controller::controlThread()
     Vector3d kp_R;   // Rot. Gain
     Vector3d kd_R;   // Rot. derivative Gain
 
-    float OF_y = 0;
-    float RREV = 0;
+    float OF_y_tr = 0;
+    float RREV_tr = 0;
 
     double Mx = 0;
     double My = 0;
@@ -399,13 +399,13 @@ void Controller::controlThread()
             if(_policy_armed_flag == true){
             
                 if(_RREV >= _RREV_thr && _flip_flag == false){
-                    OF_y = _OF_y;
-                    RREV = _RREV;
+                    OF_y_tr = _OF_y;
+                    RREV_tr = _RREV;
                     _flip_flag = true;
                 }
                 if(_flip_flag == true){
                     M(0) = 0.0;
-                    M(1) = ( (_G1*1e-1)*RREV - (_G2*1e-1)*abs(OF_y))*sign(OF_y)*1e-3;
+                    M(1) = ( (_G1*1e-1)*RREV_tr - (_G2*1e-1)*abs(OF_y_tr))*sign(OF_y_tr)*1e-3;
                     M(2) = 0.0;
                 }
             }
@@ -453,7 +453,7 @@ void Controller::controlThread()
         "t: " << _t << "\tCmd: " << _ctrl_cmd.transpose() << endl << 
         endl <<
         "RREV: " << _RREV << "\tOF_x: " << _OF_x << "\tOF_y: " << _OF_y << endl <<
-        "RREV_tr: " << RREV << "\tOF_x: " << 0.0 << "\tOF_y_tr: " << OF_y << endl << 
+        "RREV_tr: " << RREV_tr << "\tOF_x: " << 0.0 << "\tOF_y_tr: " << OF_y_tr << endl << 
         "RREV_thr: " << _RREV_thr << "\tG1: " << _G1 << "\tG2: " << _G2 << endl << 
         endl << 
         "kp_x: " << _kp_x.transpose() << "\tkd_x: " << _kd_x.transpose() << endl <<
@@ -498,15 +498,20 @@ void Controller::controlThread()
         
         ctrl_msg.motorspeeds = {motorspeed[0],motorspeed[1],motorspeed[2],motorspeed[3]};
         ctrl_msg.flip_flag = _flip_flag;
-        ctrl_msg.FM_d = {FM[0],FM[1],FM[2],FM[3]};
+        ctrl_msg.RREV_tr = RREV_tr;
+        ctrl_msg.OF_y_tr = OF_y_tr;
+        ctrl_msg.FM_d = {FM[0],FM[1]*1e3,FM[2]*1e3,FM[3]*1e3};
 
-        Mx = kf*d_p*(pow(motorspeed[0],2) + pow(motorspeed[1],2)
-                    - pow(motorspeed[2],2) - pow(motorspeed[3],2));
-        My = kf*d_p*(pow(motorspeed[1],2) + pow(motorspeed[2],2)
-                    - pow(motorspeed[0],2) - pow(motorspeed[3],2));
-        Mz = 0.0;
+
         F = kf*(pow(motorspeed[1],2) + pow(motorspeed[2],2)
-                + pow(motorspeed[0],2) + pow(motorspeed[3],2));
+                + pow(motorspeed[0],2) + pow(motorspeed[3],2))*1e3;
+        Mx = kf*d_p*(pow(motorspeed[0],2) + pow(motorspeed[1],2)
+                    - pow(motorspeed[2],2) - pow(motorspeed[3],2))*1e3;
+        My = kf*d_p*(pow(motorspeed[1],2) + pow(motorspeed[2],2)
+                    - pow(motorspeed[0],2) - pow(motorspeed[3],2))*1e3;
+        Mz = c_Tf/kf*(pow(motorspeed[1],2) - pow(motorspeed[2],2)
+                    + pow(motorspeed[0],2) - pow(motorspeed[3],2))*1e3;
+        
 
         ctrl_msg.FM = {F,Mx,My,Mz};
         
