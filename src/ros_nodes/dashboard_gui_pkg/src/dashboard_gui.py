@@ -36,22 +36,22 @@ def runGraph():
     ax1_pos = plt.subplot2grid((2,3),(0,0))
     ax1_vel = plt.subplot2grid((2,3),(0,1))
     ax1_omega = plt.subplot2grid((2,3),(0,2))
-    ax1_att = plt.subplot2grid((2,3),(1,0))
+    ax1_FM = plt.subplot2grid((2,3),(1,0))
     ax1_ms = plt.subplot2grid((2,3),(1,1),colspan=2,rowspan=1)
-    axes1 = [ax1_pos,ax1_vel,ax1_att,ax1_omega,ax1_ms]
+    axes1 = [ax1_pos,ax1_vel,ax1_FM,ax1_omega,ax1_ms]
 
 
     ## SET DASHBOARD TITLES
     ax1_pos.set_title('Position [m]')
     ax1_vel.set_title('Velocity [m/s]')
-    ax1_att.set_title('Attitude [deg]')
+    ax1_FM.set_title('Flip Magnitude [N*mm]')
     ax1_omega.set_title('Ang. Rate [rad/s]')
     ax1_ms.set_title('Motor speeds [rad/s]')
 
     ## SET DASHBOARD LABEL NAMES
     ax1_pos.set_ylabel("Pos. x,y,z [m]")
     ax1_vel.set_ylabel("Vel. x,y,z [m/s]")
-    ax1_att.set_ylabel("Att. x,y,z [deg]")
+    ax1_FM.set_ylabel(" M [N*mm] | F [0.1*N]")
     ax1_omega.set_ylabel("Ang. x,y,z [rad/s]")
     ax1_ms.set_ylabel("MS [rad/s]")
 
@@ -59,7 +59,7 @@ def runGraph():
     ## SET  DASBOARD Y-LIMITS
     ax1_pos.set_ylim([-1,7])
     ax1_vel.set_ylim([-1,7])
-    ax1_att.set_ylim([0,10])
+    ax1_FM.set_ylim([0,10])
     ax1_omega.set_ylim([-30,30])
     ax1_ms.set_ylim([0,2700])
 
@@ -98,9 +98,9 @@ def runGraph():
     line_vy, = ax1_vel.plot(buffer, vy_arr,'g-',label="Vel. Y")
     line_vz, = ax1_vel.plot(buffer, vz_arr,'r-',label="Vel. Z")
 
-    line_F, = ax1_att.plot(buffer, F_d_arr,'b-',label="F_d")
-    line_My_d, = ax1_att.plot(buffer, My_d_arr,'g-',label="My_d [N*mm]")
-    line_My, = ax1_att.plot(buffer, My_arr,'r-',label="My [N*mm]")
+    line_F, = ax1_FM.plot(buffer, F_d_arr,'b-',label="F_thrust")
+    line_My_d, = ax1_FM.plot(buffer, My_d_arr,'g-',label="My_flip [N*mm]")
+    line_My, = ax1_FM.plot(buffer, My_arr,'r-',label="My [N*mm]")
 
     line_wx, = ax1_omega.plot(buffer, wx_arr,'b-',label='$\omega_x$')
     line_wy, = ax1_omega.plot(buffer, wy_arr,'g-',label='$\omega_y$')
@@ -115,7 +115,7 @@ def runGraph():
     ## DEFINE AXES LEGENDS
     ax1_pos.legend([line_px,line_py,line_pz],[line_px.get_label(),line_py.get_label(),line_pz.get_label()])
     ax1_vel.legend([line_vx,line_vy,line_vz],[line_vx.get_label(),line_vy.get_label(),line_vz.get_label()])
-    ax1_att.legend([line_F,line_My_d,line_My],[line_F.get_label(),line_My_d.get_label(),line_My.get_label()])
+    ax1_FM.legend([line_F,line_My_d,line_My],[line_F.get_label(),line_My_d.get_label(),line_My.get_label()])
     ax1_omega.legend([line_wx,line_wy,line_wz],[line_wx.get_label(),line_wy.get_label(),line_wz.get_label()])
     ax1_ms.legend([line_ms1,line_ms2,line_ms3,line_ms4],[line_ms1.get_label(),line_ms2.get_label(),line_ms3.get_label(),line_ms4.get_label()])
 
@@ -145,7 +145,7 @@ def runGraph():
         wx,wy,wz = DashNode.state_current[11:14]
 
         ms1,ms2,ms3,ms4 = DashNode.MS
-        My,My_flip,F_thrust = DashNode.FM[2],DashNode.FM_flip[2],DashNode.FM[0]*1e1
+        My,My_flip,F_thrust = np.abs(DashNode.FM[2]),np.abs(DashNode.FM_flip[2]),DashNode.FM[0]*1e1
         
 
         ## POSITION LINES
