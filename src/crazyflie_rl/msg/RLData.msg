@@ -21,6 +21,7 @@ float32[] sigma
 float32[] policy
 
 float32 reward
+float32 reward_avg
 
 float32[] vel_d
 float32[] M_d

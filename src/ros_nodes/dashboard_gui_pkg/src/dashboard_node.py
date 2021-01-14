@@ -39,6 +39,7 @@ class DashboardNode:
         self.k_run = reward_msg.k_run
         self.k_ep = reward_msg.k_ep
         self.reward = reward_msg.reward
+        self.reward_avg = reward_msg.reward_avg
         self.n_rollouts = reward_msg.n_rollouts
 
     # ============================

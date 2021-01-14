@@ -206,7 +206,7 @@ def runTrial(vx_d,vz_d):
                 #     env.runComplete_flag = True
 
                 # If time since run start exceeds [2.5s]
-                if (env.getTime() - start_time_rollout) > (2.5):
+                if (env.getTime() - start_time_rollout) > (3.5):
                     error_1 = "Rollout Completed: Time Exceeded"
                     error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
                     print(error_1 + "\n" + error_2)
@@ -270,12 +270,13 @@ def runTrial(vx_d,vz_d):
                 ## PUBLISH UPDATED REWARD VARIABLES
 
                 env.reward = reward[k_run,0]
+                env.reward_avg = reward[np.nonzero(reward)].mean()
                 env.RL_Publish()
                 k_run += 1 # Move on to next run
 
             
         ## =======  EPISODE COMPLETED  ======= ##
-        print("Episode # %d training, average reward %.3f" %(k_ep, np.mean(reward)))
+        print("Episode # %d training, average reward %.3f" %(k_ep, env.reward_avg))
         agent.train(theta_rl,reward,epsilon_rl)
        
     ## =======  MAX TRIALS COMPLETED  ======= ##
@@ -285,7 +286,7 @@ if __name__ == '__main__':
 
 
     ## SIM PARAMETERS
-    env.n_rollouts = 10
+    env.n_rollouts = 4
     env.gamma = 0.95
     env.logging_flag = True
     env.h_ceiling = 5.0 # [m]
@@ -308,8 +309,9 @@ if __name__ == '__main__':
 
     
     ## INITIAL CONDITIONS
-    vx_d = 1.5
     vz_d = 3.5
+    vx_d = 0.0
+    
     trial_num = 1
     env.agent = agent.agent_type
     

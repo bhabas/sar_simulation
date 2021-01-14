@@ -275,10 +275,11 @@ def runGraph():
             k_run_arr.append(DashNode.k_run)
             k_ep_arr.append(DashNode.k_ep)
             reward_arr.append(DashNode.reward)
+            
 
             ## APPEND R_AVG VALUES ONLY ON LAST RUN
             if k_run_arr[-1] == (DashNode.n_rollouts-1): # If k_ep changes
-                reward_avg_arr.append(np.nan)
+                reward_avg_arr.append(DashNode.reward_avg)
             else: ## OTHERWISE APPEND NON-PLOTTABLE NAN
                 reward_avg_arr.append(np.nan)
 
