@@ -61,6 +61,11 @@ class DataLoggingNode:
         self.velocity = np.round(self.velocity,3)
         self.omega = np.round(self.omega,3)
 
+         ## TEMP SENSOR VALUES
+        self.RREV = np.round(gs_msg.RREV,2)
+        self.OF_x = np.round(gs_msg.OF_x,2)
+        self.OF_y = np.round(gs_msg.OF_y,2)
+
 
 
         ## SET RL PARAMS FROM RL_DATA TOPIC
@@ -69,7 +74,6 @@ class DataLoggingNode:
 
         self.logging_flag = rl_msg.logging_flag
         self.createCSV_flag = rl_msg.createCSV_flag
-        self.flip_flag = rl_msg.flip_flag
         self.runComplete_flag = rl_msg.runComplete_flag
 
         self.n_rollouts = rl_msg.n_rollouts
@@ -100,18 +104,13 @@ class DataLoggingNode:
         self.reward = np.round(rl_msg.reward,3)
 
 
-        ## TEMP SENSOR VALUES
-        self.RREV = self.velocity[2]/(rl_msg.h_ceiling-self.position[2]) # Vz/(h_ceiling - z)
-        self.OF_x = self.velocity[1]/(rl_msg.h_ceiling-self.position[2]) # Vy/(h_ceiling - z)
-        self.OF_y = self.velocity[0]/(rl_msg.h_ceiling-self.position[2]) # Vx/(h_ceiling - z)
-
-        self.RREV = np.round(self.RREV,2)
-        self.OF_x = np.round(self.OF_x,2)
-        self.OF_y = np.round(self.OF_y,2)
-
+       
+        
         ## SET & TRIM CTRL VALUES FROM CTRL_DATA TOPIC
         self.MS = np.asarray(ctrl_msg.motorspeeds)
         self.MS = np.round(self.MS,0)
+        self.flip_flag = ctrl_msg.flip_flag
+
 
 
 

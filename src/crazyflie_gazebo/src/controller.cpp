@@ -311,7 +311,7 @@ void Controller::controlThread()
 
     // =========== ROS Definitions =========== //
     crazyflie_gazebo::CtrlData ctrl_msg;
-    ros::Rate rate(250);
+    ros::Rate rate(800);
 
     while(_isRunning)
     {
@@ -437,7 +437,7 @@ void Controller::controlThread()
         
 
 
-        if (t_step%5 == 0){ // General Debugging output
+        if (t_step%75 == 0){ // General Debugging output
         cout << setprecision(4) <<
         "t: " << _t << "\tCmd: " << _ctrl_cmd.transpose() << endl << 
         endl <<
@@ -485,6 +485,9 @@ void Controller::controlThread()
         t_step++;
         
         ctrl_msg.motorspeeds = {motorspeed[0],motorspeed[1],motorspeed[2],motorspeed[3]};
+        ctrl_msg.flip_flag = _flip_flag;
+        ctrl_msg.FM_d = {FM[0],FM[1],FM[2],FM[3]}
+        
         ctrl_Publisher.publish(ctrl_msg);
         rate.sleep();
     }

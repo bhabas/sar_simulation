@@ -4,7 +4,6 @@ string agent
 
 bool logging_flag
 bool createCSV_flag
-bool flip_flag
 bool runComplete_flag
 
 uint8 k_ep

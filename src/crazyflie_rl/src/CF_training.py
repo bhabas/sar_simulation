@@ -107,7 +107,7 @@ def runTrial(vx_d,vz_d):
             z_max = 0 # [m]
             
             env.runComplete_flag = False
-            env.flip_flag = False
+            
 
             start_time_rollout = env.getTime()
             start_time_pitch = None
@@ -295,14 +295,14 @@ if __name__ == '__main__':
     alpha_sigma = np.array([[0.05]])
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[5.0],[10],[6.0]])# Initial estimates of mu: 
+    mu = np.array([[3.5],[7.5],[9.2]])# Initial estimates of mu: 
     sigma = np.array([[1.5],[1.5],[1.5]]) # Initial estimates of sigma: 
 
 
     ## LEARNING AGENTS
-    agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollouts=env.n_rollouts)
+    # agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollouts=env.n_rollouts)
     # agent = rlsysPEPGAgent_adaptive(alpha_mu,alpha_sigma,mu,sigma,n_rollouts=6)
-    # agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=env.n_rollouts)
+    agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=env.n_rollouts)
     # agent = rlEM_AdaptiveAgent(mu,sigma,n_rollouts=6) # Not working
 
 
