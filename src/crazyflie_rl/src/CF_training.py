@@ -160,9 +160,9 @@ def runTrial(vx_d,vz_d):
                 if (env.flip_flag == True and flag == False):
                     start_time_pitch = env.getTime()
 
-                    Mx_d = env.FM_d[1] # [N*mm]
-                    My_d = env.FM_d[2]
-                    Mz_d = env.FM_d[3]
+                    Mx_d = env.FM_flip[1] # [N*mm]
+                    My_d = env.FM_flip[2]
+                    Mz_d = env.FM_flip[3]
 
                 
                     print('----- pitch starts -----')

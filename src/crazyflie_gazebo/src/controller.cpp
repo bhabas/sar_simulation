@@ -404,9 +404,11 @@ void Controller::controlThread()
                     _flip_flag = true;
                 }
                 if(_flip_flag == true){
-                    M(0) = 0.0;
-                    M(1) = ( (_G1*1e-1)*RREV_tr - (_G2*1e-1)*abs(OF_y_tr))*sign(OF_y_tr)*1e-3;
-                    M(2) = 0.0;
+                    _M_d(0) = 0.0;
+                    _M_d(1) = ( (_G1*1e-1)*RREV_tr - (_G2*1e-1)*abs(OF_y_tr))*sign(OF_y_tr)*1e-3;
+                    _M_d(2) = 0.0;
+
+                    M = _M_d;
                 }
             }
 
@@ -500,20 +502,23 @@ void Controller::controlThread()
         ctrl_msg.flip_flag = _flip_flag;
         ctrl_msg.RREV_tr = RREV_tr;
         ctrl_msg.OF_y_tr = OF_y_tr;
-        ctrl_msg.FM_d = {FM[0],FM[1]*1e3,FM[2]*1e3,FM[3]*1e3};
+        ctrl_msg.FM_flip = {FM[0],_M_d(0)*1e3,_M_d(1)*1e3,_M_d(2)*1e3};
 
 
         F = kf*(pow(motorspeed[1],2) + pow(motorspeed[2],2)
-                + pow(motorspeed[0],2) + pow(motorspeed[3],2))*1e3;
+                + pow(motorspeed[0],2) + pow(motorspeed[3],2));
         Mx = kf*d_p*(pow(motorspeed[0],2) + pow(motorspeed[1],2)
                     - pow(motorspeed[2],2) - pow(motorspeed[3],2))*1e3;
         My = kf*d_p*(pow(motorspeed[1],2) + pow(motorspeed[2],2)
                     - pow(motorspeed[0],2) - pow(motorspeed[3],2))*1e3;
-        Mz = c_Tf/kf*(pow(motorspeed[1],2) - pow(motorspeed[2],2)
+        Mz = kf*c_Tf*(pow(motorspeed[1],2) - pow(motorspeed[2],2)
                     + pow(motorspeed[0],2) - pow(motorspeed[3],2))*1e3;
+       
         
 
         ctrl_msg.FM = {F,Mx,My,Mz};
+
+        // cout << F << " | "  << Mx << " | "  << My << " | "  << Mz << endl;
         
 
         

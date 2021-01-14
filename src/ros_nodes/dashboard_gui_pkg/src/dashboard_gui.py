@@ -145,7 +145,7 @@ def runGraph():
         wx,wy,wz = DashNode.state_current[11:14]
 
         ms1,ms2,ms3,ms4 = DashNode.MS
-        My,My_d,F_d = DashNode.FM[2],DashNode.FM_d[2],DashNode.FM_d[0]*1e1
+        My,My_flip,F_thrust = DashNode.FM[2],DashNode.FM_flip[2],DashNode.FM[0]*1e1
         
 
         ## POSITION LINES
@@ -177,11 +177,11 @@ def runGraph():
 
 
         ## ATTITUDE LINES
-        F_d_arr.append(F_d)  
+        F_d_arr.append(F_thrust)  
         F_d_arr = F_d_arr[-buf_len:] 
         line_F.set_ydata(F_d_arr) 
 
-        My_d_arr.append(My_d)  
+        My_d_arr.append(My_flip)  
         My_d_arr = My_d_arr[-buf_len:] 
         line_My_d.set_ydata(My_d_arr) 
 

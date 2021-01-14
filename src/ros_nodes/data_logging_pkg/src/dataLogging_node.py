@@ -109,7 +109,19 @@ class DataLoggingNode:
         ## SET & TRIM CTRL VALUES FROM CTRL_DATA TOPIC
         self.MS = np.asarray(ctrl_msg.motorspeeds)
         self.MS = np.round(self.MS,0)
+
+        self.FM = np.asarray(ctrl_msg.FM)
+        self.FM = np.round(self.FM,2)
+
+        self.FM_flip = np.asarray(ctrl_msg.FM_flip)
+        self.FM_flip = np.round(self.FM_flip,2)
+
+        
+
+
         self.flip_flag = ctrl_msg.flip_flag
+        self.RREV_tr = np.round(ctrl_msg.RREV_tr,2)
+        self.OF_y_tr = np.round(ctrl_msg.OF_y_tr,2)
 
 
 
@@ -128,7 +140,7 @@ class DataLoggingNode:
                 self.append_csv_blank()
                 self.k_run_temp = rl_msg.k_run
 
-            if self.t_step%2.5 == 0: # Slow down recording by [x5]
+            if self.t_step%1 == 0: # Slow down recording by [x5]
                 self.append_csv()
 
             if self.runComplete_flag == True:
@@ -155,7 +167,7 @@ class DataLoggingNode:
                 'gamma','reward','flip_trigger','n_rollouts',
                 'RREV','OF_x','OF_y',
                 'MS1','MS2','MS3','MS4',
-                "","","","",  ])# Place holders
+                'F_thrust','Mx','My','Mz'])# Place holders
 
 
     def append_csv(self):
@@ -173,7 +185,7 @@ class DataLoggingNode:
                 "","",self.flip_flag,"", # gamma, reward, flip_triggered, n_rollout
                 self.RREV,self.OF_x,self.OF_y, # RREV, OF_x, OF_y
                 self.MS[0],self.MS[1],self.MS[2],self.MS[3],
-                "","","","", # Place holders
+                self.FM[0],self.FM[1],self.FM[2],self.FM[3] # Place holders
                 ])
 
 
@@ -190,9 +202,9 @@ class DataLoggingNode:
                 self.vel_d[0],self.vel_d[1],self.vel_d[2], # vx,vy,vz
                 self.omega_d[0],self.omega_d[1],self.omega_d[2], # wx,wy,wz
                 self.gamma,self.reward,"",self.n_rollouts, # gamma, reward, flip_triggered, n_rollout
-                "","","", # RREV, OF_x, OF_y
+                self.RREV_tr,"",self.OF_y_tr, # RREV, OF_x, OF_y
                 "","","","",
-                "","","","", # Place holders Include successful run flag
+                "",self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # Place holders Include successful run flag
                 ])
 
     def append_csv_blank(self):

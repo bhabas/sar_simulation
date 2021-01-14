@@ -48,7 +48,7 @@ class DashboardNode:
     def ctrlCallback(self,msg):
         self.MS = msg.motorspeeds
         self.FM = msg.FM
-        self.FM_d = msg.FM_d
+        self.FM_flip = msg.FM_flip
         
 
         
