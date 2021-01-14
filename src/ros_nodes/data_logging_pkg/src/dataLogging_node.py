@@ -128,7 +128,7 @@ class DataLoggingNode:
                 self.append_csv_blank()
                 self.k_run_temp = rl_msg.k_run
 
-            if self.t_step%1 == 0: # Slow down recording by [x5]
+            if self.t_step%2.5 == 0: # Slow down recording by [x5]
                 self.append_csv()
 
             if self.runComplete_flag == True:

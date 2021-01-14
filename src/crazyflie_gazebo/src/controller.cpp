@@ -271,6 +271,10 @@ void Controller::controlThread()
     Vector3d kp_R;   // Rot. Gain
     Vector3d kd_R;   // Rot. derivative Gain
 
+    float OF_y = 0;
+    float RREV = 0;
+
+
      
 
 
@@ -380,6 +384,7 @@ void Controller::controlThread()
         Gyro_dyn = omega.cross(J*omega) - J*(hat(omega)*R.transpose()*R_d*omega_d - R.transpose()*R_d*domega_d); // Gyroscopic dynamics
         M = -kp_R.cwiseProduct(e_R)*_kp_Rf + -kd_R.cwiseProduct(e_omega)*_kd_Rf + Gyro_dyn; // Moment control vector
 
+        
         if(_Moment_flag == true){
             FM << F_thrust,_M_d;
         }
@@ -387,22 +392,22 @@ void Controller::controlThread()
 
             if(_policy_armed_flag == true){
             
-                if(_RREV >= _RREV_thr){
-                    M(0) = 0.0;
-                    M(1) = ( (_G1*1e-1)*_RREV - (_G2*1e-1)*abs(_OF_y))*sign(_OF_y)*1e-3;
-                    M(2) = 0.0;
-
+                if(_RREV >= _RREV_thr && _flip_flag == false){
+                    OF_y = _OF_y;
+                    RREV = _RREV;
                     _flip_flag = true;
+                }
+                if(_flip_flag == true){
+                    M(0) = 0.0;
+                    M(1) = ( (_G1*1e-1)*RREV - (_G2*1e-1)*abs(OF_y))*sign(OF_y)*1e-3;
+                    M(2) = 0.0;
                 }
             }
 
             FM << F_thrust,M; // Thrust-Moment control vector
         }
 
-        
-        
 
-        
         
 
         // =========== Propellar Thrusts/Speeds =========== //
@@ -442,13 +447,14 @@ void Controller::controlThread()
         "t: " << _t << "\tCmd: " << _ctrl_cmd.transpose() << endl << 
         endl <<
         "RREV: " << _RREV << "\tOF_x: " << _OF_x << "\tOF_y: " << _OF_y << endl <<
+        "RREV_tr: " << RREV << "\tOF_x: " << 0.0 << "\tOF_y_tr: " << OF_y << endl << 
         "RREV_thr: " << _RREV_thr << "\tG1: " << _G1 << "\tG2: " << _G2 << endl << 
         endl << 
         "kp_x: " << _kp_x.transpose() << "\tkd_x: " << _kd_x.transpose() << endl <<
         "kp_R: " << _kp_R.transpose() << "\tkd_R: " << _kd_R.transpose() << endl <<
         endl << 
         setprecision(1) <<
-        "Policy_armed: " << _policy_armed_flag <<  "\tFlip_flag:" << _flip_flag << endl <<
+        "Policy_armed: " << _policy_armed_flag <<  "\t\tFlip_flag:" << _flip_flag << endl <<
         "motorstop_flag: " << _motorstop_flag << "\tMoment_flag: " << _Moment_flag << endl <<
         "kp_xf: " << _kp_xf << " \tkd_xf: " << _kd_xf << "\tkp_Rf: " << _kp_Rf << "\tkd_Rf: " << _kd_Rf  << endl <<
         endl << setprecision(4) <<
@@ -486,7 +492,7 @@ void Controller::controlThread()
         
         ctrl_msg.motorspeeds = {motorspeed[0],motorspeed[1],motorspeed[2],motorspeed[3]};
         ctrl_msg.flip_flag = _flip_flag;
-        ctrl_msg.FM_d = {FM[0],FM[1],FM[2],FM[3]}
+        ctrl_msg.FM_d = {FM[0],FM[1],FM[2],FM[3]};
         
         ctrl_Publisher.publish(ctrl_msg);
         rate.sleep();

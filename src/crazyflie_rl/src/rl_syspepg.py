@@ -101,6 +101,7 @@ class rlsysPEPGAgent_reactive(ES):
     def __init__(self, alpha_mu, alpha_sigma, mu,sigma,gamma=0.95, n_rollouts = 6):
         self.gamma = gamma
         self.n_rollouts = n_rollouts
+        self.agent_type = 'PEPG_reactive'
 
         self.alpha_mu =  alpha_mu
         self.alpha_sigma = alpha_sigma
@@ -162,6 +163,8 @@ class rlsysPEPGAgent_reactive(ES):
 
 
 class rlsysPEPGAgent_adaptive(rlsysPEPGAgent_reactive):
+    def __init__(self):
+        self.agent_type = 'PEPG_adaptive'
     def train(self, theta, reward, epsilon):
         reward_avg = np.mean(reward)
         if len(self.reward_history == 1):

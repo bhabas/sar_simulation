@@ -8,6 +8,7 @@ from rl_syspepg import ES
 
 class rlEM_PEPGAgent(ES):
     def __init__(self,mu,sigma,gamma=0.95, n_rollouts = 6):
+        self.agent_type = 'EM_PEPG'
         self.gamma = gamma
         self.n_rollouts = n_rollouts
         self.mu = mu
