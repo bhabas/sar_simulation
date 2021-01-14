@@ -16,14 +16,14 @@ from dashboard_node import DashboardNode
 
 os.system("clear")
 DashNode=DashboardNode()
-time.sleep(2) # Sleep time for sub threads to start receiving and processing data from pubs
+time.sleep(1) # Sleep time for sub threads to start receiving and processing data from pubs
 
 
 def runGraph():
     
     # PARAMETERS
-    sec_hist = 5 # Time shown on dashboard [s]
-    frame_interval = 50 # Interval between plot frames [ms]
+    sec_hist = 10 # Time shown on dashboard [s]
+    frame_interval = 100 # Interval between plot frames [ms]
     buf_len = int(sec_hist/frame_interval * 1000) # num datapoints in plot
 
     buffer = list(range(0,buf_len)) # Number of points to display
@@ -59,7 +59,7 @@ def runGraph():
     ## SET  DASBOARD Y-LIMITS
     ax1_pos.set_ylim([-1,7])
     ax1_vel.set_ylim([-1,7])
-    ax1_att.set_ylim([-200,200])
+    ax1_att.set_ylim([0,10])
     ax1_omega.set_ylim([-30,30])
     ax1_ms.set_ylim([0,2700])
 
@@ -74,9 +74,9 @@ def runGraph():
     vy_arr = [0]*buf_len
     vz_arr = [0]*buf_len
 
-    roll_arr = [0]*buf_len
-    pitch_arr = [0]*buf_len
-    yaw_arr = [0]*buf_len
+    F_d_arr = [0]*buf_len
+    My_d_arr = [0]*buf_len
+    My_arr = [0]*buf_len
 
     wx_arr = [0]*buf_len
     wy_arr = [0]*buf_len
@@ -98,9 +98,9 @@ def runGraph():
     line_vy, = ax1_vel.plot(buffer, vy_arr,'g-',label="Vel. Y")
     line_vz, = ax1_vel.plot(buffer, vz_arr,'r-',label="Vel. Z")
 
-    line_ax, = ax1_att.plot(buffer, roll_arr,'b-',label="Roll")
-    line_ay, = ax1_att.plot(buffer, pitch_arr,'g-',label="Pitch")
-    line_az, = ax1_att.plot(buffer, yaw_arr,'r-',label="Yaw")
+    line_F, = ax1_att.plot(buffer, F_d_arr,'b-',label="F_d")
+    line_My_d, = ax1_att.plot(buffer, My_d_arr,'g-',label="My_d [N*mm]")
+    line_My, = ax1_att.plot(buffer, My_arr,'r-',label="My [N*mm]")
 
     line_wx, = ax1_omega.plot(buffer, wx_arr,'b-',label='$\omega_x$')
     line_wy, = ax1_omega.plot(buffer, wy_arr,'g-',label='$\omega_y$')
@@ -115,7 +115,7 @@ def runGraph():
     ## DEFINE AXES LEGENDS
     ax1_pos.legend([line_px,line_py,line_pz],[line_px.get_label(),line_py.get_label(),line_pz.get_label()])
     ax1_vel.legend([line_vx,line_vy,line_vz],[line_vx.get_label(),line_vy.get_label(),line_vz.get_label()])
-    ax1_att.legend([line_ax,line_ay,line_az],[line_ax.get_label(),line_ay.get_label(),line_az.get_label()])
+    ax1_att.legend([line_F,line_My_d,line_My],[line_F.get_label(),line_My_d.get_label(),line_My.get_label()])
     ax1_omega.legend([line_wx,line_wy,line_wz],[line_wx.get_label(),line_wy.get_label(),line_wz.get_label()])
     ax1_ms.legend([line_ms1,line_ms2,line_ms3,line_ms4],[line_ms1.get_label(),line_ms2.get_label(),line_ms3.get_label(),line_ms4.get_label()])
 
@@ -134,7 +134,7 @@ def runGraph():
     # This function is called periodically from FuncAnimation
     def animate_dashboard(i, px_arr,py_arr,pz_arr,
         vx_arr,vy_arr,vz_arr,
-        roll_arr,pitch_arr,yaw_arr,
+        F_d_arr,My_d_arr,My_arr,
         wx_arr,wy_arr,wz_arr,
         ms1_arr,ms2_arr,ms3_arr,ms4_arr):
 
@@ -144,16 +144,8 @@ def runGraph():
         vx,vy,vz = DashNode.state_current[8:11]
         wx,wy,wz = DashNode.state_current[11:14]
 
-        ms1,ms2,ms3,ms4 = DashNode.motorspeeds
-
-
-
-        
-
-        if qw == 0: # Fix for zero-norm in quat error during initialization
-            qw = 1
-        R = Rotation.from_quat([qx,qy,qz,qw]) 
-        yaw,pitch,roll = R.as_euler('zyx',degrees=True)
+        ms1,ms2,ms3,ms4 = DashNode.MS
+        My,My_d,F_d = DashNode.FM[2]*1e3,DashNode.FM_d[2]*1e3,DashNode.FM_d[0]*1e1
         
 
         ## POSITION LINES
@@ -185,17 +177,17 @@ def runGraph():
 
 
         ## ATTITUDE LINES
-        roll_arr.append(roll)  
-        roll_arr = roll_arr[-buf_len:] 
-        line_ax.set_ydata(roll_arr) 
+        F_d_arr.append(F_d)  
+        F_d_arr = F_d_arr[-buf_len:] 
+        line_F.set_ydata(F_d_arr) 
 
-        pitch_arr.append(pitch)  
-        pitch_arr = pitch_arr[-buf_len:] 
-        line_ay.set_ydata(pitch_arr) 
+        My_d_arr.append(My_d)  
+        My_d_arr = My_d_arr[-buf_len:] 
+        line_My_d.set_ydata(My_d_arr) 
 
-        yaw_arr.append(yaw)  
-        yaw_arr = yaw_arr[-buf_len:] 
-        line_az.set_ydata(yaw_arr)
+        My_arr.append(My)  
+        My_arr = My_arr[-buf_len:] 
+        line_My.set_ydata(My_arr)
 
 
         ## ANG. RATE LINES
@@ -234,7 +226,7 @@ def runGraph():
 
         return  line_px,line_py,line_pz, \
                 line_vx,line_vy,line_vz, \
-                line_ax,line_ay,line_az, \
+                line_F,line_My_d,line_My, \
                 line_wx,line_wy,line_wz, \
                 line_ms1,line_ms2,line_ms3,line_ms4
                 
@@ -300,7 +292,7 @@ def runGraph():
         fargs=(
         px_arr,py_arr,pz_arr,
         vx_arr,vy_arr,vz_arr,
-        roll_arr,pitch_arr,yaw_arr,
+        F_d_arr,My_d_arr,My_arr,
         wx_arr,wy_arr,wz_arr,
         ms1_arr,ms2_arr,ms3_arr,ms4_arr),
         interval=frame_interval,

@@ -274,6 +274,12 @@ void Controller::controlThread()
     float OF_y = 0;
     float RREV = 0;
 
+    double Mx = 0;
+    double My = 0;
+    double Mz = 0;
+    double F = 0;
+
+
 
      
 
@@ -493,6 +499,19 @@ void Controller::controlThread()
         ctrl_msg.motorspeeds = {motorspeed[0],motorspeed[1],motorspeed[2],motorspeed[3]};
         ctrl_msg.flip_flag = _flip_flag;
         ctrl_msg.FM_d = {FM[0],FM[1],FM[2],FM[3]};
+
+        Mx = kf*d_p*(pow(motorspeed[0],2) + pow(motorspeed[1],2)
+                    - pow(motorspeed[2],2) - pow(motorspeed[3],2));
+        My = kf*d_p*(pow(motorspeed[1],2) + pow(motorspeed[2],2)
+                    - pow(motorspeed[0],2) - pow(motorspeed[3],2));
+        Mz = 0.0;
+        F = kf*(pow(motorspeed[1],2) + pow(motorspeed[2],2)
+                + pow(motorspeed[0],2) + pow(motorspeed[3],2));
+
+        ctrl_msg.FM = {F,Mx,My,Mz};
+        
+
+        
         
         ctrl_Publisher.publish(ctrl_msg);
         rate.sleep();

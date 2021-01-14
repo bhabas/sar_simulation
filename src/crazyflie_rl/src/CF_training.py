@@ -110,8 +110,8 @@ def runTrial(vx_d,vz_d):
             
 
             start_time_rollout = env.getTime()
-            start_time_pitch = None
-            local_flip_flag = False
+            start_time_pitch = np.nan
+            flag = False
             state_history = None
             repeat_run= False
             error_str = ""
@@ -156,7 +156,7 @@ def runTrial(vx_d,vz_d):
                 # ============================
                 ##    Pitch Criteria 
                 # ============================
-                if (env.flip_flag == True and local_flip_flag == False):
+                if (env.flip_flag == True and flag == False):
                     start_time_pitch = env.getTime()
 
                     Mx_d = env.FM_d[1]*1e3 # [N*mm]
@@ -169,7 +169,7 @@ def runTrial(vx_d,vz_d):
                     print('RREV_tr=%.3f, OF_y=%.3f, OF_x=%.3f, My_d=%.3f N*mm' %(env.RREV, env.OF_y, env.OF_x, My_d) )   
                     print("Pitch Time: %.3f" %start_time_pitch)
 
-                    local_flip_flag = True
+                    flag = True
                    
                 
 
@@ -193,7 +193,7 @@ def runTrial(vx_d,vz_d):
                 # ============================
 
                 # If time since triggered pitch exceeds [0.7s]   
-                if ((env.getTime()-start_time_pitch) > (0.7)) and local_flip_flag:
+                if env.flip_flag and ((env.getTime()-start_time_pitch) > (0.7)):
                     # I don't like this error formatting, feel free to improve on
                     error_1 = "Rollout Completed: Pitch Timeout"
                     error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch))
@@ -202,14 +202,14 @@ def runTrial(vx_d,vz_d):
                     error_str = error_1 + error_2
                     env.runComplete_flag = True
 
-                # If time since run start exceeds [4.0s]
-                if (env.getTime() - start_time_rollout) > (4.0):
-                    error_1 = "Rollout Completed: Time Exceeded"
-                    error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
-                    print(error_1 + "\n" + error_2)
+                # # If time since run start exceeds [2.5s]
+                # if (env.getTime() - start_time_rollout) > (3.5):
+                #     error_1 = "Rollout Completed: Time Exceeded"
+                #     error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
+                #     print(error_1 + "\n" + error_2)
 
-                    error_str = error_1 + error_2
-                    env.runComplete_flag = True
+                #     error_str = error_1 + error_2
+                #     env.runComplete_flag = True
 
                 # If position falls below max achieved height 
                 z_max = max(position[2],z_max)

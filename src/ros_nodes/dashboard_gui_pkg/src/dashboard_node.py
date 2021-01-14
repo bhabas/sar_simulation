@@ -1,5 +1,5 @@
 import rospy
-from threading import Thread
+import numpy as np
 
 from gazebo_communication_pkg.msg import GlobalState
 from crazyflie_rl.msg import RLData
@@ -19,12 +19,11 @@ class DashboardNode:
         self.reward = 0
         
 
-        ## INITIALIZE GLOBAL STATE SUBSCRIBER THREAD
+        ## INITIALIZE GLOBAL STATE SUBSCRIBER 
         rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
 
-        ## INITIAILIZE REWARD SUBSCRIBER THREAD
+        ## INITIAILIZE REWARD SUBSCRIBER 
         rospy.Subscriber('/rl_data',RLData,self.rewardCallback)
-
         rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)
    
 
@@ -47,7 +46,12 @@ class DashboardNode:
     # ============================
 
     def ctrlCallback(self,msg):
-        self.motorspeeds = msg.motorspeeds
+        self.MS = msg.motorspeeds
+        self.FM = msg.FM
+        self.FM_d = msg.FM_d
+        
+
+        
 
 
 
