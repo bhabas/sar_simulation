@@ -64,7 +64,7 @@ class ES:
         # Rearrange quat as scalar-last format used in scipy Rotation
         # [qw,qx,qy,qz]' => quat = [qx,qy,qz,qw]'
         quat = np.append(quat_xyz, quat_w, axis=0)  # rearrange quat as scalar-last format used in scipy Rotation
-        r1 = z / h_ceiling # reward from hieght scaled 0-1
+        r1 = z / h_ceiling # reward from height scaled 0-1
 
         r2 = np.zeros_like(r1)
 
@@ -77,10 +77,11 @@ class ES:
         r = np.multiply(r1,r2)
         r_cum = np.zeros_like(r)
 
-        temp = 0
+        prev_r = 0
         for k_r in range(0,len(r)):
-            temp = r[k_r] + self.gamma*temp   # sum of r
+            temp = r[k_r] + self.gamma*prev_r   # sum of r
             r_cum[k_r] = temp
+            prev_r = temp
 
         if r_cum.size > 0:
             return np.around(r_cum[-1],2) # float(z[-1]>1.2)*cum
@@ -101,7 +102,7 @@ class rlsysPEPGAgent_reactive(ES):
     def __init__(self, alpha_mu, alpha_sigma, mu,sigma,gamma=0.95, n_rollouts = 6):
         self.gamma = gamma
         self.n_rollouts = n_rollouts
-        self.agent_type = 'PEPG_reactive'
+        self.agent_type = 'SyS-PEPG_reactive'
 
         self.alpha_mu =  alpha_mu
         self.alpha_sigma = alpha_sigma
@@ -164,7 +165,7 @@ class rlsysPEPGAgent_reactive(ES):
 
 class rlsysPEPGAgent_adaptive(rlsysPEPGAgent_reactive):
     def __init__(self):
-        self.agent_type = 'PEPG_adaptive'
+        self.agent_type = 'SyS-PEPG_adaptive'
     def train(self, theta, reward, epsilon):
         reward_avg = np.mean(reward)
         if len(self.reward_history == 1):

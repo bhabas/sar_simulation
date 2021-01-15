@@ -24,7 +24,7 @@ np.set_printoptions(precision=2, suppress=True)
 ## INIT GAZEBO ENVIRONMENT
 env = CrazyflieEnv()
 env.reset_pos() # Reset Gazebo pos
-# env.launch_dashboard()
+env.launch_dashboard()
 print("Environment done")
 
 
@@ -95,7 +95,7 @@ def runTrial(vx_d,vz_d):
             RREV_trigger = theta_rl[0, k_run] # FoV expansion velocity [rad/s]
             G1 = theta_rl[1, k_run]
             G2 = theta_rl[2, k_run]
-            env.policy = [RREV_trigger,G1,G2]
+            env.policy = [RREV_trigger,np.abs(G1),np.abs(G2)]
             env.step('policy',env.policy,ctrl_flag=1) # Arm controller policy
         
 
@@ -128,7 +128,7 @@ def runTrial(vx_d,vz_d):
             # ============================
             env.step('pos',ctrl_flag=0) # Turn off pos control
             env.step('vel',env.vel_d,ctrl_flag=1) # Set desired vel
-            # env.launch_IC(vx_d,vz_d)
+            env.launch_IC(vx_d,vz_d)
             env.step('sticky',ctrl_flag=1) # Enable sticky
  
             
@@ -164,11 +164,12 @@ def runTrial(vx_d,vz_d):
                     Mx_d = env.FM_flip[1] # [N*mm]
                     My_d = env.FM_flip[2]
                     Mz_d = env.FM_flip[3]
+                    env.M_d = [Mx_d,My_d,Mz_d]
 
                 
                     print('----- pitch starts -----')
                     print('vx=%.3f, vy=%.3f, vz=%.3f' %(vx,vy,vz))
-                    print('RREV_tr=%.3f, OF_y=%.3f, OF_x=%.3f, My_d=%.3f N*mm' %(env.RREV, env.OF_y, env.OF_x, My_d) )   
+                    print('RREV_tr=%.3f, OF_y_tr=%.3f, OF_x=%.3f, My_d=%.3f N*mm' %(env.RREV, env.OF_y, env.OF_x, My_d) )   
                     print("Pitch Time: %.3f" %start_time_pitch)
 
                     flag = True
@@ -195,7 +196,7 @@ def runTrial(vx_d,vz_d):
                 # ============================
 
                 # If time since triggered pitch exceeds [0.7s]   
-                if env.flip_flag and ((env.getTime()-start_time_pitch) > (0.7)):
+                if env.flip_flag and ((env.getTime()-start_time_pitch) > (1.5)):
                     # I don't like this error formatting, feel free to improve on
                     error_1 = "Rollout Completed: Pitch Timeout"
                     error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch))
@@ -205,7 +206,7 @@ def runTrial(vx_d,vz_d):
                     env.runComplete_flag = True
 
                 # If time since run start exceeds [2.5s]
-                if (env.getTime() - start_time_rollout) > (3.5):
+                if (env.getTime() - start_time_rollout) > (5):
                     error_1 = "Rollout Completed: Time Exceeded"
                     error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
                     print(error_1 + "\n" + error_2)
@@ -284,39 +285,42 @@ if __name__ == '__main__':
 
 
     ## SIM PARAMETERS
-    env.n_rollouts = 10
+    env.n_rollouts = 6
     env.gamma = 0.95
     env.logging_flag = True
-    env.h_ceiling = 5.0 # [m]
+    env.h_ceiling = 2.5 # [m]
 
     ## LEARNING RATES
     alpha_mu = np.array([[0.1]])
-    alpha_sigma = np.array([[0.05]])
+    alpha_sigma = np.array([[0.09]])
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[6.5],[12.5],[3.2]])# Initial estimates of mu: 
+    mu = np.array([[3.4],[2.6],[4.3]])# Initial estimates of mu: 
     sigma = np.array([[1.5],[1.5],[1.5]]) # Initial estimates of sigma: 
 
 
     ## LEARNING AGENTS
-    agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollouts=env.n_rollouts)
+    # agent = rlsysPEPGAgent_reactive(alpha_mu, alpha_sigma, mu,sigma, gamma=0.95,n_rollouts=env.n_rollouts)
     # agent = rlsysPEPGAgent_adaptive(alpha_mu,alpha_sigma,mu,sigma,n_rollouts=6)
-    # agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=env.n_rollouts)
+    agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=env.n_rollouts)
     # agent = rlEM_AdaptiveAgent(mu,sigma,n_rollouts=6) # Not working
 
 
     
     ## INITIAL CONDITIONS
     vz_d = 3.5
-    vx_d = 2.5
+    vx_d = 1.5
     
     trial_num = 1
     env.agent = agent.agent_type
     
-    
+    ## Mu limits    RREV: (0.1 to 6.5?)
+    ##              G1: (? to ?) G1 larger than G2 is better
+    ##              G2: (? to ?)
+
     while True:
 
-        env.trial_name = f"Vz_{vz_d}--Vx_{vx_d}--trial_{trial_num}"
+        env.trial_name = f"{env.agent}--Vz_{vz_d}--Vx_{vx_d}--trial_{trial_num}"
         # try:
             ## SEND MSG WHICH INCLUDES VARIABLE TO START NEW CSV
         env.createCSV_flag = True

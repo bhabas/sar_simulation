@@ -35,7 +35,7 @@ class rlEM_PEPGAgent(ES):
         # print(theta)
         #theta = np.append(x,y,axis = 0)
 
-        theta[theta<=0] = 0.001
+        # theta[theta<=0] = 0.001
 
         return theta , 0
 

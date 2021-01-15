@@ -29,7 +29,7 @@ def global_state_publisher():
     header.frame_id='Gazebo_GlobalState'
 
     link_msg = GetLinkStateRequest() 
-    h_ceiling = 5.0
+    h_ceiling = 2.5
 
 
 
