@@ -87,7 +87,7 @@ def runTrial(vx_d,vz_d):
 
             ## RESET TO INITIAL STATE
             env.step('home') # Reset control vals and functionality to default vals
-            time.sleep(1.0) # Time for CF to settle
+            time.sleep(0.25) # Time for CF to settle
             
 
 
@@ -196,7 +196,7 @@ def runTrial(vx_d,vz_d):
                 # ============================
 
                 # If time since triggered pitch exceeds [0.7s]   
-                if env.flip_flag and ((env.getTime()-start_time_pitch) > (1.5)):
+                if env.flip_flag and ((env.getTime()-start_time_pitch) > (2.0)):
                     # I don't like this error formatting, feel free to improve on
                     error_1 = "Rollout Completed: Pitch Timeout"
                     error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch))
@@ -296,6 +296,7 @@ if __name__ == '__main__':
 
     ## GAUSSIAN PARAMETERS
     mu = np.array([[3.4],[2.6],[4.3]])# Initial estimates of mu: 
+    # mu = np.array([[0.0],[0.0],[0.0]])# Initial estimates of mu: 
     sigma = np.array([[1.5],[1.5],[1.5]]) # Initial estimates of sigma: 
 
 

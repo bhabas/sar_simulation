@@ -1,6 +1,6 @@
 import numpy as np
 import copy
-import scipy.io
+import scipy.stats 
 from scipy.spatial.transform import Rotation
 import matplotlib.pyplot as plt
 from math import asin,pi,ceil,floor
@@ -14,7 +14,7 @@ class rlEM_PEPGAgent(ES):
         self.mu = mu
         self.sigma = sigma
 
-        self.n = n_rollouts
+        self.n_rollouts = n_rollouts
         self.d = len(self.mu)
         self.alpha_mu, self.alpha_sigma  = np.array([[0],[0]]),np.array([[0],[0]])
 
@@ -24,20 +24,16 @@ class rlEM_PEPGAgent(ES):
         self.reward_history = np.array([0])
 
     def get_theta(self):
-        theta = np.zeros((self.d,self.n))
-        for dim in range(0,self.d):
-            theta[dim,:] = np.random.normal(self.mu[dim,0],self.sigma[dim,0],[1,self.n])
+        theta = np.zeros((len(self.mu),self.n_rollouts))
+        
+        lower,upper = 0.0,20.0 # Lower and Upper limits for truncated normal distribution
 
-        #x = np.random.normal(self.mu[0,0],self.sigma[0,0],[1,self.n])
-        #y = np.random.normal(self.mu[1,0],self.sigma[1,0],[1,self.n])
-        #print(x)
-        #print(y)
-        # print(theta)
-        #theta = np.append(x,y,axis = 0)
+        for ii,mu_ii in enumerate(self.mu):
+            theta[ii,:] = scipy.stats.truncnorm.rvs((lower-mu_ii)/self.sigma[ii],
+                (upper-mu_ii)/self.sigma[ii],loc=mu_ii,scale=self.sigma[ii],size=self.n_rollouts)      
 
-        # theta[theta<=0] = 0.001
 
-        return theta , 0
+        return theta,0
 
     def train(self,theta,reward,epsilon):
 
@@ -45,7 +41,7 @@ class rlEM_PEPGAgent(ES):
         summary = np.transpose(summary[summary[:,self.d].argsort()[::-1]])
         print(summary)
 
-        k = floor(self.n)
+        k = floor(self.n_rollouts)
 
         S_theta = (summary[0:self.d,0:k].dot(summary[self.d,0:k].reshape(k,1)))
         S_reward = np.sum(summary[self.d,0:k])
@@ -82,10 +78,10 @@ class rlEM_AdaptiveAgent(rlEM_PEPGAgent):
         print(summary)
 
 
-        S_theta = summary[0:self.d,:]@summary[self.d+1,:].reshape(self.n,1)
+        S_theta = summary[0:self.d,:]@summary[self.d+1,:].reshape(self.n_rollouts,1)
         print("S theta = ", S_theta)
         S_reward = np.sum(summary[self.d+1,:])
-        S_diff = np.square(summary[0:self.d,:] - self.mu)@(summary[self.d+1,:].reshape(self.n,1))
+        S_diff = np.square(summary[0:self.d,:] - self.mu)@(summary[self.d+1,:].reshape(self.n_rollouts,1))
         print("S_sigma = ",S_diff)
 
         sii = np.sqrt(S_diff/(S_reward + 0.001))

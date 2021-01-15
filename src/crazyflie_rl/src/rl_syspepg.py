@@ -74,7 +74,8 @@ class ES:
             r2[k_quat] = 0.5*(np.dot(b3, np.array([0,0,-1]))) + 0.5 # reward from orientation scaled 0-1
 
         # multiply elements of r1 and r2 for total reward at each step
-        r = np.multiply(r1,r2)
+        r = np.multiply(r1,r2) + 0.01
+        # r = r1 + r2 + 0.01
         r_cum = np.zeros_like(r)
 
         prev_r = 0
