@@ -244,6 +244,11 @@ def runTrial(vx_d,vz_d):
                 # ============================
                 if env.runComplete_flag==True:
 
+                    reward[k_run] = agent.calculate_reward(state_history,env.h_ceiling)
+                    env.reward = reward[k_run]
+                    print("Reward = %.3f" %(reward[k_run]))
+                    print("!------------------------End Run------------------------! \n")   
+
                     env.step('stop')
                     env.reset_pos()
                     ## There is a weird delay where it sometime won't publish ctrl_cmds until the next command is executed
@@ -252,10 +257,7 @@ def runTrial(vx_d,vz_d):
                    
                     
                     
-                    reward[k_run] = agent.calculate_reward(state_history,env.h_ceiling)
-                    env.reward = reward[k_run]
-                    print("Reward = %.3f" %(reward[k_run]))
-                    print("!------------------------End Run------------------------! \n")                    
+                                     
                     break
 
                 t_step += 1
@@ -296,7 +298,7 @@ if __name__ == '__main__':
 
     ## GAUSSIAN PARAMETERS
     mu = np.array([[3.4],[2.6],[4.3]])# Initial estimates of mu: 
-    # mu = np.array([[0.0],[0.0],[0.0]])# Initial estimates of mu: 
+    # mu = np.array([[3.95],[12.72],[4.42]])# Initial estimates of mu: 
     sigma = np.array([[1.5],[1.5],[1.5]]) # Initial estimates of sigma: 
 
 

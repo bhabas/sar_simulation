@@ -16,41 +16,50 @@ class ES:
         self.gamma, self.n_rollout = gamma, n_rollout
 
     
-    def calculate_reward2(self,state,h_ceiling):
-        h_delta = 0.02 
+    def calculate_reward2(self,state_hist,h_ceiling):
+        
         e3 = np.array([0,0,1])
         
         ## R1 Calc
-        z_hist = state[2,:]
-        r1 = np.max(z_hist/h_ceiling)*10
+        # Reward for max height achieved
+        z_hist = state_hist[3,:]
+        r1 = np.max(z_hist/h_ceiling)
 
         ## R2 Calc
-        qw,qx,qy,qz = state[3:7,:]
-        quat_hist = np.c_[qx,qy,qz,qw] # Create an array of quat objects in [qx,qy,qz,qw] format
+        # Calc max angle achieved and penalize if it's above or below a 180 deg landing
+        t_hist = state_hist[0,:]
+        wy_hist = state_hist[12,:]
 
-        r2_vec = np.zeros_like(qw)
-        for ii,quat in enumerate(quat_hist):
-            R = Rotation.from_quat(quat)
-            b3 = R.as_matrix()[:,2]                 # Body Z-axis in global frame
-            r2_vec[ii] = 0.5*np.dot(b3,-e3) + 0.5   # Scale orientation reward to be from [0-1]
+        pitch = np.zeros_like(t_hist)
+        pitch_sum = 0
+        prev = t_hist[0]
 
+        # Integrate omega_y over time to get full rotation estimate
+        # This accounts for multiple revolutions
+        for ii,wy in enumerate(wy_hist):
+            pitch_sum = pitch_sum + wy*(t_hist[ii]-prev)*180/np.pi
+            prev = t_hist[ii]
 
-        ## R3 Calc
-        omega_x,omega_y,omega_z = state[10:13,:]
-        r3_vec = np.zeros_like(omega_y)
-        for ii,omega_y in enumerate(omega_y):
-            r3_vec[ii] = np.exp(-1/4*np.abs(omega_y))   # e^-1/4*|omega_y|
+            pitch[ii] = pitch_sum
+            # print(pitch[ii])
 
-
-        r23 = r2_vec*10 + r3_vec*5
-        r_prev = 0
-        r_cum = np.zeros_like(omega_x)
-        for ii,r in enumerate(r23):
-            r_cum[ii] = r + 0.01*(r-r_prev)
-            r_prev = r
-
-        reward = r1 + r_cum[-1]
-        return reward
+        r2 = self.tri_func(np.min(pitch))
+        r = r1*r2*20
+    
+        return r
+    
+    def tri_func(self,x): # Triangle reward function for angle, punish max angles above or below -180 deg
+        low_lim = -250
+        if x >= 0:
+            y = 0.0
+        elif -180 <= x < 0:
+            y = -1/180*x
+        elif -250 <= x < -180:
+            y = 1/(70)*(x+250)
+        else:
+            y = 0
+        
+        return y;
 
 
     def calculate_reward(self, state_hist, h_ceiling): # state_hist is size 14 x timesteps
