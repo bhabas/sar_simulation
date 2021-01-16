@@ -310,4 +310,4 @@ def startDashboard(dashOn=True,rewardOn=True):
 
 
 if __name__ == "__main__":
-    startDashboard(dashOn=False)
+    startDashboard(dashOn=True)

@@ -45,6 +45,7 @@
       </visual>
       <sensor name='ceiling_contact_sensor' type='contact'>
         <always_on>1</always_on>
+        <visualize>true</visualize>
         <contact>
           <collision>ceiling_collision</collision>
           <topic>__default_topic__</topic>

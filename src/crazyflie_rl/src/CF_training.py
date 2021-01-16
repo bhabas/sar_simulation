@@ -298,8 +298,8 @@ if __name__ == '__main__':
 
     ## GAUSSIAN PARAMETERS
     mu = np.array([[3.4],[2.6],[4.3]])# Initial estimates of mu: 
-    mu = np.array([[3.95],[12.72],[4.42]])# Initial estimates of mu: 
-    sigma = np.array([[1.5],[1.5],[1.5]]) # Initial estimates of sigma: 
+    mu = np.array([[3.41],[6.56],[3.50]])# Initial estimates of mu: 
+    sigma = np.array([[0.9],[0.9],[0.9]]) # Initial estimates of sigma: 
 
 
     ## LEARNING AGENTS
