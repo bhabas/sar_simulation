@@ -24,7 +24,7 @@ np.set_printoptions(precision=2, suppress=True)
 ## INIT GAZEBO ENVIRONMENT
 env = CrazyflieEnv()
 env.reset_pos() # Reset Gazebo pos
-# env.launch_dashboard()
+env.launch_dashboard()
 print("Environment done")
 
 
@@ -314,7 +314,7 @@ if __name__ == '__main__':
 
     
     ## INITIAL CONDITIONS
-    vz_d = 3.5
+    vz_d = 2.5
     vx_d = 1.5
     
     trial_num = 1

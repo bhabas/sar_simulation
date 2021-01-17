@@ -252,7 +252,7 @@ class CrazyflieEnv:
         state_msg.model_name = 'crazyflie_model_X'
         state_msg.pose.position.x = self.position[0]
         state_msg.pose.position.y = self.position[1]
-        state_msg.pose.position.z = self.position[2] - 0.1
+        state_msg.pose.position.z = self.position[2] - 0.1 # Subtract model offset compared to main-body link (Gazebo)
 
         state_msg.pose.orientation.x = 0
         state_msg.pose.orientation.y = 0
