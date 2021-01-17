@@ -24,7 +24,7 @@ np.set_printoptions(precision=2, suppress=True)
 ## INIT GAZEBO ENVIRONMENT
 env = CrazyflieEnv()
 env.reset_pos() # Reset Gazebo pos
-env.launch_dashboard()
+# env.launch_dashboard()
 print("Environment done")
 
 
@@ -109,6 +109,7 @@ def runTrial(vx_d,vz_d):
             z_max = 0 # [m]
             
             env.runComplete_flag = False
+            env.impact_flag = False
             
 
             start_time_rollout = env.getTime()
@@ -174,6 +175,9 @@ def runTrial(vx_d,vz_d):
                     print("Pitch Time: %.3f" %start_time_pitch)
 
                     flag = True
+
+                if any(env.pad_contacts):
+                    env.impact_flag = True
                    
                 
 

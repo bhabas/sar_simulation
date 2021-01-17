@@ -4,6 +4,7 @@ string agent
 
 bool logging_flag
 bool createCSV_flag
+bool impact_flag
 bool runComplete_flag
 
 uint8 k_ep
@@ -26,4 +27,5 @@ float32 reward_avg
 float32[] vel_d
 float32[] M_d
 bool[] leg_contacts
+
 

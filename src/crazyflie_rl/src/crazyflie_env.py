@@ -76,6 +76,7 @@ class CrazyflieEnv:
         self.MS = [0,0,0,0]
         self.FM_flip = [0,0,0,0]
         self.flip_flag = False
+        self.impact_flag = False
 
 
         
@@ -135,6 +136,7 @@ class CrazyflieEnv:
         rl_msg.vel_d = self.vel_d
         rl_msg.M_d = self.M_d
         rl_msg.leg_contacts = self.pad_contacts
+        rl_msg.impact_flag = self.impact_flag
 
         self.RL_Publisher.publish(rl_msg)
 

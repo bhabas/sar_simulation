@@ -35,7 +35,7 @@ class DataLoggingNode:
 
     def csvWriter(self,rl_msg,gs_msg,ctrl_msg):
 
-        self.t_step += 1
+        
 
         ## SET TIME VALUE FROM GLOBAL_STATE TOPIC
         t_temp = gs_msg.header.stamp.secs
@@ -68,6 +68,10 @@ class DataLoggingNode:
 
 
 
+
+
+
+
         ## SET RL PARAMS FROM RL_DATA TOPIC
         self.trial_name = rl_msg.trial_name
         self.agent = rl_msg.agent
@@ -75,6 +79,7 @@ class DataLoggingNode:
         self.logging_flag = rl_msg.logging_flag
         self.createCSV_flag = rl_msg.createCSV_flag
         self.runComplete_flag = rl_msg.runComplete_flag
+        self.impact_flag = rl_msg.impact_flag
 
         self.n_rollouts = rl_msg.n_rollouts
         self.gamma = np.round(rl_msg.gamma,2)
@@ -90,7 +95,9 @@ class DataLoggingNode:
         self.sigma = np.asarray(rl_msg.sigma)
         self.policy = np.asarray(rl_msg.policy)
         self.vel_d = np.asarray(rl_msg.vel_d)
-        self.omega_d = np.asarray(rl_msg.M_d)
+        self.M_d = np.asarray(rl_msg.M_d)
+        self.n_legContacts = np.sum(rl_msg.leg_contacts)
+
 
         ## TRIM RL VALUES FOR CSV
         self.alpha_mu = np.round(self.alpha_mu,2)
@@ -99,9 +106,10 @@ class DataLoggingNode:
         self.sigma = np.round(self.sigma,2)
         self.policy = np.round(self.policy,2)
         self.vel_d = np.round(self.vel_d,2)
-        self.omega_d = np.round(self.omega_d,2)
+        self.M_d = np.round(self.M_d,2)
 
         self.reward = np.round(rl_msg.reward,3)
+        
 
 
        
@@ -113,12 +121,10 @@ class DataLoggingNode:
         self.FM = np.asarray(ctrl_msg.FM)
         self.FM = np.round(self.FM,2)
 
-        self.FM_flip = np.asarray(ctrl_msg.FM_flip)
-        self.FM_flip = np.round(self.FM_flip,2)
+        self.FM_d = np.asarray(ctrl_msg.FM_flip)
+        self.FM_d = np.round(self.FM_d,2)
 
         
-
-
         self.flip_flag = ctrl_msg.flip_flag
         self.RREV_tr = np.round(ctrl_msg.RREV_tr,2)
         self.OF_y_tr = np.round(ctrl_msg.OF_y_tr,2)
@@ -140,11 +146,14 @@ class DataLoggingNode:
                 self.append_csv_blank()
                 self.k_run_temp = rl_msg.k_run
 
-            if self.t_step%1 == 0: # Slow down recording by [x5]
+            if self.t_step%3 == 0: # Slow down recording by [x5]
                 self.append_csv()
 
             if self.runComplete_flag == True:
                 self.append_IC()
+
+
+        self.t_step += 1
 
 
 
@@ -164,7 +173,7 @@ class DataLoggingNode:
                 'qw','qx','qy','qz',
                 'vx','vy','vz',
                 'wx','wy','wz',
-                'gamma','reward','flip_trigger','n_rollouts',
+                'gamma','reward','flip_flag','impact_flag','n_rollouts',
                 'RREV','OF_x','OF_y',
                 'MS1','MS2','MS3','MS4',
                 'F_thrust','Mx','My','Mz'])# Place holders
@@ -182,10 +191,10 @@ class DataLoggingNode:
                 self.orientation_q[0],self.orientation_q[1],self.orientation_q[2],self.orientation_q[3], # qw,qx,qy,qz
                 self.velocity[0],self.velocity[1],self.velocity[2], # vx,vy,vz
                 self.omega[0],self.omega[1],self.omega[2], # wx,wy,wz
-                "","",self.flip_flag,"", # gamma, reward, flip_triggered, n_rollout
+                "","",self.flip_flag,self.impact_flag,"", # gamma, reward, flip_triggered, n_rollout
                 self.RREV,self.OF_x,self.OF_y, # RREV, OF_x, OF_y
                 self.MS[0],self.MS[1],self.MS[2],self.MS[3],
-                self.FM[0],self.FM[1],self.FM[2],self.FM[3] # Place holders
+                self.FM[0],self.FM[1],self.FM[2],self.FM[3] # F_thrust,Mx,My,Mz 
                 ])
 
 
@@ -200,11 +209,11 @@ class DataLoggingNode:
                 "","","","", # t,x,y,z
                 "", "", "", "", # qx,qy,qz,qw
                 self.vel_d[0],self.vel_d[1],self.vel_d[2], # vx,vy,vz
-                self.omega_d[0],self.omega_d[1],self.omega_d[2], # wx,wy,wz
-                self.gamma,self.reward,"",self.n_rollouts, # gamma, reward, flip_triggered, n_rollout
+                "","","", # wx,wy,wz
+                self.gamma,self.reward,"",self.n_legContacts,self.n_rollouts, # gamma, reward, flip_flag, num leg contacts, n_rollout
                 self.RREV_tr,"",self.OF_y_tr, # RREV, OF_x, OF_y
                 "","","","",
-                "",self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # Place holders Include successful run flag
+                "",self.FM_d[1],self.FM_d[2],self.FM_d[3], # F_thrust,Mx,My,Mz 
                 ])
 
     def append_csv_blank(self):
