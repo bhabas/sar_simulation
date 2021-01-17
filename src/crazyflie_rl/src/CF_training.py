@@ -24,7 +24,7 @@ np.set_printoptions(precision=2, suppress=True)
 ## INIT GAZEBO ENVIRONMENT
 env = CrazyflieEnv()
 env.reset_pos() # Reset Gazebo pos
-# env.launch_dashboard()
+env.launch_dashboard()
 print("Environment done")
 
 
@@ -83,6 +83,7 @@ def runTrial(vx_d,vz_d):
         k_run = 0 # Reset run counter each episode
         while k_run < env.n_rollouts:
             env.k_run = k_run
+            env.pad_contacts = [False,False,False,False]
 
 
             ## RESET TO INITIAL STATE
@@ -244,9 +245,11 @@ def runTrial(vx_d,vz_d):
                 # ============================
                 if env.runComplete_flag==True:
 
-                    reward[k_run] = agent.calculate_reward(state_history,env.h_ceiling)
+                    # reward[k_run] = agent.calculate_reward(state_history,env.h_ceiling)
+                    reward[k_run] = agent.calculate_reward2(state_history,env.h_ceiling,env.pad_contacts)
                     env.reward = reward[k_run]
                     print("Reward = %.3f" %(reward[k_run]))
+                    print("# of Leg contacts: %i" %(sum(env.pad_contacts)))
                     print("!------------------------End Run------------------------! \n")   
 
                     env.step('stop')
@@ -254,10 +257,6 @@ def runTrial(vx_d,vz_d):
                     ## There is a weird delay where it sometime won't publish ctrl_cmds until the next command is executed
                     ## I have no idea what's going on there but it may or may not have an effect?
                     ## I've got no idea...
-                   
-                    
-                    
-                                     
                     break
 
                 t_step += 1
@@ -297,9 +296,9 @@ if __name__ == '__main__':
     alpha_sigma = np.array([[0.09]])
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[3.4],[2.6],[4.3]])# Initial estimates of mu: 
-    mu = np.array([[3.41],[6.56],[3.50]])# Initial estimates of mu: 
-    sigma = np.array([[0.9],[0.9],[0.9]]) # Initial estimates of sigma: 
+    mu = np.array([[4.0],[4.3],[2.5]])# Initial estimates of mu: 
+    # mu = np.array([[3.41],[6.56],[3.50]])# Initial estimates of mu: 
+    sigma = np.array([[2.0],[2.0],[2.0]]) # Initial estimates of sigma: 
 
 
     ## LEARNING AGENTS

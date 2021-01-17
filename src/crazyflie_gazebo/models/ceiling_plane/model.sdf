@@ -29,7 +29,7 @@
       </collision>
       <visual name="ceiling_visual">
         <cast_shadows>false</cast_shadows>
-        <!-- <transparency>0.7</transparency> -->
+        <transparency>0.7</transparency>
         <geometry>
           <box>
             <size>15 15 0.01</size>

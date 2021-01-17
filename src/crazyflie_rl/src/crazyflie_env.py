@@ -1,16 +1,9 @@
 import numpy as np
-import pandas as pd
-import pyautogui,getpass
-
-import socket, struct
 from threading import Thread, Timer
-import struct
-
 
 import time
 import os, subprocess, signal
 import rospy
-import csv
 
 
 from sensor_msgs.msg import LaserScan, Image, Imu
@@ -19,10 +12,10 @@ from crazyflie_rl.msg import RLData,RLCmd
 from crazyflie_gazebo.msg import CtrlData
 from std_msgs.msg import Header 
 from rosgraph_msgs.msg import Clock
-from gazebo_msgs.msg import ModelState
+from gazebo_msgs.msg import ModelState,ContactsState
 from gazebo_msgs.srv import SetModelState
 
-from cv_bridge import CvBridge
+
 
 class CrazyflieEnv:
     def __init__(self):
@@ -43,12 +36,14 @@ class CrazyflieEnv:
         self.state_Subscriber = rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
         self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
         self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)
+        self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactCallback)
         self.RL_Publisher = rospy.Publisher('/rl_data',RLData,queue_size=10)
         self.Cmd_Publisher = rospy.Publisher('/rl_ctrl',RLCmd,queue_size=10)
         
 
 
-
+        self.modelName = 'crazyflie_model_X'
+        self.pad_contacts = [False,False,False,False]
 
         self.trial_name = ''
         self.agent = ''
@@ -107,7 +102,7 @@ class CrazyflieEnv:
     def RL_Publish(self):
 
         rl_msg = RLData()
-        header = Header()
+        
 
         rl_msg.header.stamp = rospy.Time.now()
         rl_msg.trial_name = self.trial_name
@@ -139,6 +134,7 @@ class CrazyflieEnv:
 
         rl_msg.vel_d = self.vel_d
         rl_msg.M_d = self.M_d
+        rl_msg.leg_contacts = self.pad_contacts
 
         self.RL_Publisher.publish(rl_msg)
 
@@ -177,8 +173,19 @@ class CrazyflieEnv:
         self.OF_x = gs_msg.OF_x
         self.OF_y = gs_msg.OF_y
 
-    
+    def contactCallback(self,msg_arr):
+        for msg in msg_arr.states:
+            if msg.collision1_name  ==  f"{self.modelName}::pad_1::collision" and self.pad_contacts[0] == False:
+                self.pad_contacts[0] = True
 
+            elif msg.collision1_name == f"{self.modelName}::pad_2::collision" and self.pad_contacts[1] == False:
+                self.pad_contacts[1] = True
+
+            elif msg.collision1_name == f"{self.modelName}::pad_3::collision" and self.pad_contacts[2] == False:
+                self.pad_contacts[2] = True
+
+            elif msg.collision1_name == f"{self.modelName}::pad_4::collision" and self.pad_contacts[3] == False:
+                self.pad_contacts[3] = True
         
         
         

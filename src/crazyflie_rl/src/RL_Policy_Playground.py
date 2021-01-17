@@ -144,6 +144,7 @@ def runTrial():
             env.step('pos',ctrl_flag=0) # Turn off pos control
             env.step('vel',env.vel_d,ctrl_flag=1) # Set desired vel
             env.step('sticky',ctrl_flag=1) # Enable sticky
+            env.launch_IC(vx_d,vz_d)
  
             
             

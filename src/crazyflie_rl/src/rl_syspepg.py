@@ -16,50 +16,27 @@ class ES:
         self.gamma, self.n_rollout = gamma, n_rollout
 
     
-    def calculate_reward2(self,state_hist,h_ceiling):
-        
-        e3 = np.array([0,0,1])
-        
+    def calculate_reward2(self,state_hist,h_ceiling,pad_contacts):
+                
         ## R1 Calc
         # Reward for max height achieved
         z_hist = state_hist[3,:]
-        r1 = np.max(z_hist/h_ceiling)
+        r1 = np.max(z_hist/h_ceiling)*10
 
         ## R2 Calc
-        # Calc max angle achieved and penalize if it's above or below a 180 deg landing
-        t_hist = state_hist[0,:]
-        wy_hist = state_hist[12,:]
+        num_contacts = np.sum(pad_contacts)
+        if num_contacts == 3 or num_contacts == 4:
+            r2 = 15
+        elif num_contacts == 2:
+            r2 = 5
+        elif num_contacts == 1:
+            r2 = 2
+        else:
+            r2 = 0
 
-        pitch = np.zeros_like(t_hist)
-        pitch_sum = 0
-        prev = t_hist[0]
-
-        # Integrate omega_y over time to get full rotation estimate
-        # This accounts for multiple revolutions
-        for ii,wy in enumerate(wy_hist):
-            pitch_sum = pitch_sum + wy*(t_hist[ii]-prev)*180/np.pi
-            prev = t_hist[ii]
-
-            pitch[ii] = pitch_sum
-            # print(pitch[ii])
-
-        r2 = self.tri_func(np.min(pitch))
-        r = r1*r2*20
-    
+        r = r1*r2 + 0.001
         return r
     
-    def tri_func(self,x): # Triangle reward function for angle, punish max angles above or below -180 deg
-        low_lim = -250
-        if x >= 0:
-            y = 0.0
-        elif -180 <= x < 0:
-            y = -1/180*x
-        elif -250 <= x < -180:
-            y = 1/(70)*(x+250)
-        else:
-            y = 0
-        
-        return y;
 
 
     def calculate_reward(self, state_hist, h_ceiling): # state_hist is size 14 x timesteps
