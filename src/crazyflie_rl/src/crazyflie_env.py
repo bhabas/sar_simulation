@@ -145,6 +145,7 @@ class CrazyflieEnv:
         self.MS = ctrl_msg.motorspeeds  # [MS1,MS2,MS3,MS4]
         self.FM_flip = ctrl_msg.FM_flip       # [F_thrust,Mx,My,Mz]
         self.flip_flag = ctrl_msg.flip_flag
+        self.FM = ctrl_msg.FM
 
     def global_stateCallback(self,gs_msg):
         

@@ -16,7 +16,7 @@ class ES:
         self.gamma, self.n_rollout = gamma, n_rollout
 
     
-    def calculate_reward2(self,state_hist,h_ceiling,pad_contacts):
+    def calculate_reward2(self,state_hist,FM_hist,h_ceiling,pad_contacts):
                 
         ## R1 Calc
         # Reward for max height achieved
@@ -34,7 +34,25 @@ class ES:
         else:
             r2 = 0
 
-        r = r1*r2 + 0.001
+        ## R3 Calc
+        t_hist = state_hist[0,:]
+        wy_hist = state_hist[12,:]
+        My_hist = FM_hist[2,:]
+
+        t_diff = np.diff(t_hist)
+        t_diff = np.insert(t_diff,0,0)
+
+        My_work = np.sum(My_hist*wy_hist*t_diff)
+        
+
+        
+
+
+
+
+
+
+        r = r1*r2 + 0.001# - My_work
         return r
     
 

@@ -116,6 +116,7 @@ def runTrial(vx_d,vz_d):
             start_time_pitch = np.nan
             flag = False
             state_history = None
+            FM_history = None
             repeat_run= False
             error_str = ""
 
@@ -140,6 +141,7 @@ def runTrial(vx_d,vz_d):
                 
                 ## DEFINE CURRENT STATE
                 state = np.array(env.state_current)
+                FM = np.array(env.FM) # Motor thrust and Moments
                 
                 position = state[1:4] # [x,y,z]
                 orientation_q = state[4:8] # Orientation in quat format
@@ -152,7 +154,9 @@ def runTrial(vx_d,vz_d):
                 qw,qx,qy,qz = orientation_q
                 R = Rotation.from_quat([qx,qy,qz,qw])
                 R = R.as_matrix() # [b1,b2,b3] Body vectors
-                # RREV,OF_x,OF_y = vz/d, -vy/d, -vx/d # OF_x,y are mock optical flow vals assuming no body rotation
+                
+
+                
                 
 
 
@@ -179,19 +183,24 @@ def runTrial(vx_d,vz_d):
                 if any(env.pad_contacts):
                     env.impact_flag = True
                    
-                
+
+
 
                 # ============================
                 ##      Record Keeping  
                 # ============================
                 ## Keep record of state vector every 10 time steps
-                state = state[:, np.newaxis] # Convert [13,] array to [13,1] array
+                state = state[:, np.newaxis] # Convert [14,] array to [14,1] array
+                FM = FM[:,np.newaxis]
+                
                 
                 if state_history is None:
                     state_history = state 
+                    FM_history = FM
                 else:
                     if t_step%1==0: # Append state_history columns with current state vector 
                         state_history = np.append(state_history, state, axis=1)
+                        FM_history = np.append(FM_history,FM,axis=1)
                         env.RL_Publish()
                         env.createCSV_flag = False
 
@@ -250,7 +259,7 @@ def runTrial(vx_d,vz_d):
                 if env.runComplete_flag==True:
 
                     # reward[k_run] = agent.calculate_reward(state_history,env.h_ceiling)
-                    reward[k_run] = agent.calculate_reward2(state_history,env.h_ceiling,env.pad_contacts)
+                    reward[k_run] = agent.calculate_reward2(state_history,FM_history,env.h_ceiling,env.pad_contacts)
                     env.reward = reward[k_run]
                     print("Reward = %.3f" %(reward[k_run]))
                     print("# of Leg contacts: %i" %(sum(env.pad_contacts)))
@@ -290,7 +299,7 @@ if __name__ == '__main__':
 
 
     ## SIM PARAMETERS
-    env.n_rollouts = 6
+    env.n_rollouts = 4
     env.gamma = 0.95
     env.logging_flag = True
     env.h_ceiling = 2.5 # [m]
@@ -301,7 +310,7 @@ if __name__ == '__main__':
 
     ## GAUSSIAN PARAMETERS
     mu = np.array([[4.0],[4.3],[2.5]])# Initial estimates of mu: 
-    # mu = np.array([[3.41],[6.56],[3.50]])# Initial estimates of mu: 
+    mu = np.array([[3.41],[6.56],[3.50]])# Initial estimates of mu: 
     sigma = np.array([[2.0],[2.0],[2.0]]) # Initial estimates of sigma: 
 
 
