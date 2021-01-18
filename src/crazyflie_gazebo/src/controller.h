@@ -56,7 +56,7 @@ class Controller
             _omega_d << 0,0,0;
 
             // SET DEFAULT CONTROLLER GAINS
-            _kp_x << 0.1,0.1,0.11;
+            _kp_x << 0.1,0.1,0.20;
             _kd_x << 0.08,0.08,0.08;
             _kp_R << 0.05,0.05,0.05;
             _kd_R << 0.005,0.005,0.005;
