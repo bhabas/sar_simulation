@@ -18,44 +18,52 @@ from gazebo_msgs.srv import SetModelState
 
 
 class CrazyflieEnv:
-    def __init__(self):
+    def __init__(self,gazeboTimeout=True):
         print("[STARTING] CrazyflieEnv is starting...")
         self.state_current = np.zeros(14)
         self.isRunning = True
 
         
         ## INIT ROS NODE FOR ENVIRONMENT 
-        # NOTE: Can only have one node in a rospy process
         rospy.init_node("crazyflie_env_node") 
         self.launch_sim() 
     
 
         
 
-  
+        ## INIT ROS SUBSCRIBERS 
         self.state_Subscriber = rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
-        self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
         self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)
         self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactCallback)
+        self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
+
+        ## INIT ROS PUBLISHERS
         self.RL_Publisher = rospy.Publisher('/rl_data',RLData,queue_size=10)
         self.Cmd_Publisher = rospy.Publisher('/rl_ctrl',RLCmd,queue_size=10)
+
+        ## INIT GAZEBO TIMEOUT THREAD
+        if gazeboTimeout==True:
+            self.timeoutThread = Thread(target=self.timeoutSub)
+            self.timeoutThread.start()
         
 
-
+        ## INIT NAME OF MODEL BEING USED
         self.modelName = 'crazyflie_model_X'
-        self.pad_contacts = [False,False,False,False]
 
+        ## INIT RL_DATA VARIABLES 
+        #region 
         self.trial_name = ''
         self.agent_name = ''
 
         self.n_rollouts = 0
         self.gamma = 0
         self.h_ceiling = 0
-
         
         self.runComplete_flag = False
         self.logging_flag = False
         self.createCSV_flag = False
+        self.flip_flag = False
+        self.impact_flag = False
 
         self.k_run = 0
         self.k_ep = 0
@@ -75,20 +83,11 @@ class CrazyflieEnv:
 
         self.MS = [0,0,0,0]
         self.FM_flip = [0,0,0,0]
-        self.flip_flag = False
-        self.impact_flag = False
-
-
         
-        
-        
+        self.pad_contacts = [False,False,False,False]
 
-        self.timeoutThread = Thread(target=self.timeoutSub)
-        # self.timeoutThread.start()
+        #endregion 
 
-
-
-        
         print("[COMPLETED] Environment done")
 
 
@@ -99,10 +98,10 @@ class CrazyflieEnv:
     ##   Publishers/Subscribers 
     # ============================
 
-
     def RL_Publish(self):
+        # Publishes all the RL data from the RL script
 
-        rl_msg = RLData()
+        rl_msg = RLData() ## Initialize RLData message
         
         rl_msg.header.stamp = rospy.Time.now()
         rl_msg.trial_name = self.trial_name
@@ -110,21 +109,18 @@ class CrazyflieEnv:
 
         rl_msg.logging_flag = self.logging_flag
         rl_msg.createCSV_flag = self.createCSV_flag
+        rl_msg.impact_flag = self.impact_flag
         rl_msg.runComplete_flag = self.runComplete_flag
 
         rl_msg.n_rollouts = self.n_rollouts
         rl_msg.gamma = self.gamma
         rl_msg.h_ceiling = self.h_ceiling
 
-
         rl_msg.k_ep = self.k_ep
         rl_msg.k_run = self.k_run
 
         rl_msg.alpha_mu = self.alpha_mu
         rl_msg.alpha_sigma = self.alpha_sigma
-
-        
-
         rl_msg.mu = self.mu
         rl_msg.sigma = self.sigma
         rl_msg.policy = self.policy
@@ -135,18 +131,18 @@ class CrazyflieEnv:
         rl_msg.vel_d = self.vel_d
         rl_msg.M_d = self.M_d
         rl_msg.leg_contacts = self.pad_contacts
-        rl_msg.impact_flag = self.impact_flag
+        
 
-        self.RL_Publisher.publish(rl_msg)
+        self.RL_Publisher.publish(rl_msg) ## Publish RLData message
 
-    def ctrlCallback(self,ctrl_msg):
+    def ctrlCallback(self,ctrl_msg): ## Callback to parse data received from controller
+        
+        self.MS = ctrl_msg.motorspeeds      # [MS1,MS2,MS3,MS4]
+        self.FM_flip = ctrl_msg.FM_flip     # [F_thrust_d,Mx_d,My_d,Mz_d]
+        self.FM = ctrl_msg.FM               # [F_thrust,Mx,My,Mz]
+        self.flip_flag = ctrl_msg.flip_flag # Indicates when flip has been executed
 
-        self.MS = ctrl_msg.motorspeeds  # [MS1,MS2,MS3,MS4]
-        self.FM_flip = ctrl_msg.FM_flip       # [F_thrust,Mx,My,Mz]
-        self.flip_flag = ctrl_msg.flip_flag
-        self.FM = ctrl_msg.FM
-
-    def global_stateCallback(self,gs_msg):
+    def global_stateCallback(self,gs_msg): ## Callback to parse state data received from gazebo_communication node
         
         ## SET TIME VALUE FROM TOPIC
         t_temp = gs_msg.header.stamp.secs
@@ -171,12 +167,16 @@ class CrazyflieEnv:
 
         ## COMBINE INTO COMPREHENSIVE LIST
         self.state_current = [t] + self.position + self.orientation_q +self.velocity + self.omega ## t (float) -> [t] (list)
+
+        ## SET VISUAL CUE SENSOR VALUES FROM TOPIC
         self.RREV = gs_msg.RREV
         self.OF_x = gs_msg.OF_x
         self.OF_y = gs_msg.OF_y
 
-    def contactCallback(self,msg_arr):
-        for msg in msg_arr.states:
+    def contactCallback(self,msg_arr): ## Callback to indicate which pads have collided with ceiling
+
+        for msg in msg_arr.states: ## ContactsState message includes an array of ContactState messages
+            # If pad collision detected then mark True
             if msg.collision1_name  ==  f"{self.modelName}::pad_1::collision" and self.pad_contacts[0] == False:
                 self.pad_contacts[0] = True
 
@@ -197,8 +197,6 @@ class CrazyflieEnv:
     # ============================
     ##    Sensors/Gazebo Topics
     # ============================
-
-
 
     def scan_callback(self,data): # callback function for laser subsriber
         self.laser_msg = data
@@ -245,11 +243,11 @@ class CrazyflieEnv:
             "gnome-terminal -- roslaunch dashboard_gui_pkg dashboard.launch",
             close_fds=True, preexec_fn=os.setsid, shell=True)
 
-    def launch_IC(self,vx_d,vz_d):
+    def launch_IC(self,vx_d,vz_d): # Imparts desired velocity to model (should retain current position)
         
-        ## RESET POSITION AND VELOCITY
+        ## SET POSE AND TWIST OF MODEL
         state_msg = ModelState()
-        state_msg.model_name = 'crazyflie_model_X'
+        state_msg.model_name = self.modelName
         state_msg.pose.position.x = self.position[0]
         state_msg.pose.position.y = self.position[1]
         state_msg.pose.position.z = self.position[2] - 0.1 # Subtract model offset compared to main-body link (Gazebo)
@@ -271,11 +269,11 @@ class CrazyflieEnv:
     def reset_pos(self): # Disable sticky then places spawn_model at origin
         
         ## TURN OFF STICKY FEET
-        self.step('sticky',ctrl_flag=0) # Turn off sticky
+        self.step('sticky',ctrl_flag=0)
 
         ## RESET POSITION AND VELOCITY
         state_msg = ModelState()
-        state_msg.model_name = 'crazyflie_model_X'
+        state_msg.model_name = self.modelName
         state_msg.pose.position.x = 0
         state_msg.pose.position.y = 0
         state_msg.pose.position.z = 0.2
@@ -300,8 +298,7 @@ class CrazyflieEnv:
     def step(self,action,ctrl_vals=[0,0,0],ctrl_flag=1):
         cmd_msg = RLCmd()
 
-        cmd_dict = {
-                    'home':0,
+        cmd_dict = {'home':0,
                     'pos':1,
                     'vel':2,
                     'att':3,
@@ -321,7 +318,7 @@ class CrazyflieEnv:
         
         self.Cmd_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
         self.Cmd_Publisher.publish(cmd_msg) # So I'm sending it twice 
-        time.sleep(0.01) # And a sleep for good measure, look back at removing this in the future 
+        
         
 
     # ============================
