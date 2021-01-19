@@ -5,6 +5,7 @@ from scipy.spatial.transform import Rotation
 import matplotlib.pyplot as plt
 from math import asin,pi,ceil,floor
 
+
 # Parent Evolutionary Strategy Class
 # pepg and cma inherit common methods 
 
@@ -17,32 +18,63 @@ class ES:
 
     
     def calculate_reward2(self,state_hist,FM_hist,h_ceiling,pad_contacts):
-                
-        ## R1 Calc
-        # Reward for max height achieved
-        z_hist = state_hist[3,:]
-        r1 = np.max(z_hist/h_ceiling)*10
 
-        ## R2 Calc
-        num_contacts = np.sum(pad_contacts)
-        if num_contacts == 3 or num_contacts == 4:
-            r2 = 15
-        elif num_contacts == 2:
-            r2 = 5
-        elif num_contacts == 1:
-            r2 = 2
-        else:
-            r2 = 0
-
-        ## R3 Calc
+        ## DEFINE STATES
         t_hist = state_hist[0,:]
         wy_hist = state_hist[12,:]
         My_hist = FM_hist[2,:]
+        z_hist = state_hist[3,:]
 
-        t_diff = np.diff(t_hist)
-        t_diff = np.insert(t_diff,0,0)
 
-        My_work = np.sum(My_hist*wy_hist*t_diff)
+        r_h = np.max(z_hist/h_ceiling)*10
+
+        
+
+        pitch_hist = np.zeros_like(t_hist)
+        pitch_sum = 0
+
+        W_hist = np.zeros_like(t_hist)
+        W_My = 0
+
+        prev = t_hist[0]
+
+        # Integrate omega_y over time to get full rotation estimate
+        # This accounts for multiple revolutions
+        for ii,wy in enumerate(wy_hist):
+            pitch_sum = pitch_sum + wy*(t_hist[ii]-prev)*180/np.pi
+            pitch_hist[ii] = pitch_sum
+
+            W_My = W_My + My_hist[ii]*wy*(t_hist[ii]-prev)
+            W_hist[ii] = W_My
+
+            prev = t_hist[ii]
+
+
+
+        ## R_contact Calc
+        num_contacts = np.sum(pad_contacts)
+        if num_contacts == 3 or num_contacts == 4:
+            r_contact = 5
+        elif num_contacts == 2:
+            r_contact = 2.5
+        elif num_contacts == 1:
+            r_contact = 1
+        else:
+            r_contact = 0
+
+       
+        
+        ## R_theta Calc
+        if -170 < np.min(pitch_hist) <= 0:
+            r_theta = 5*(-1/170*np.min(pitch_hist))      
+        elif -195 <= np.min(pitch_hist) <= -170:
+            r_theta = 5
+        else:
+            r_theta = 0
+        
+
+        ## R_W Calc
+        r_W = 10*np.exp(-W_My/5)
         
 
         
@@ -52,8 +84,9 @@ class ES:
 
 
 
-        r = r1*r2 + 0.001# - My_work
-        return r
+        R = r_W*(r_contact+r_theta)*r_h
+        print(R)
+        return R
     
 
 

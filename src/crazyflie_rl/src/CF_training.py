@@ -24,7 +24,7 @@ np.set_printoptions(precision=2, suppress=True)
 ## INIT GAZEBO ENVIRONMENT
 env = CrazyflieEnv()
 env.reset_pos() # Reset Gazebo pos
-env.launch_dashboard()
+# env.launch_dashboard()
 print("Environment done")
 
 
@@ -88,7 +88,7 @@ def runTrial(vx_d,vz_d):
 
             ## RESET TO INITIAL STATE
             env.step('home') # Reset control vals and functionality to default vals
-            time.sleep(0.25) # Time for CF to settle
+            time.sleep(2) # Time for CF to settle
             
 
 
@@ -299,7 +299,7 @@ if __name__ == '__main__':
 
 
     ## SIM PARAMETERS
-    env.n_rollouts = 4
+    env.n_rollouts = 15
     env.gamma = 0.95
     env.logging_flag = True
     env.h_ceiling = 2.5 # [m]
