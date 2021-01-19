@@ -243,7 +243,7 @@ def runTrial(vx_d,vz_d):
                     env.step('stop')
                     env.reset_pos()
                     env.step('home',ctrl_flag=1)
-                    reward[k_run] = agent.calculate_reward(state_history,env.h_ceiling)
+                    reward[k_run] = agent.calcReward_pureLanding(state_history,env.h_ceiling)
                     env.reward = reward[k_run]
                     print("Reward = %.3f" %(reward[k_run]))
                     print("!------------------------End Run------------------------! \n")                    
@@ -303,7 +303,7 @@ if __name__ == "__main__":
             
             ## LEARNING AGENTS
             agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=env.n_rollouts)
-            env.agent = "EM_PEPG"         
+            env.agent_name = "EM_PEPG"         
                       
 
             env.trial_name = f"Vz_{vz_d}--Vx_{vx_d}--trial_{trial_num}"

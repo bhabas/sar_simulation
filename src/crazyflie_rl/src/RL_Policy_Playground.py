@@ -246,7 +246,7 @@ def runTrial():
                    
                     
                     
-                    reward[k_run] = agent.calculate_reward(state_history,env.h_ceiling)
+                    reward[k_run] = agent.calcReward_pureLanding(state_history,env.h_ceiling)
                     env.reward = reward[k_run]
                     print("Reward = %.3f" %(reward[k_run]))
                     print("!------------------------End Run------------------------! \n")                    
@@ -304,7 +304,7 @@ if __name__ == '__main__':
 
     
     ## INITIAL CONDITIONS
-    env.agent = "EM_PEPG"
+    env.agent_name = "EM_PEPG"
     
     while True:
         start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))

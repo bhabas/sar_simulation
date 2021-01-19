@@ -278,7 +278,7 @@ while True:
         if done_rollout:
             action = {'type':'stop', 'x':0.0, 'y':0.0, 'z':0.0, 'additional':0.0}
             env.step(action)
-            reward = agent.calculate_reward(state_history,h_ceiling)
+            reward = agent.calcReward_pureLanding(state_history,h_ceiling)
             print(reward)
             
 

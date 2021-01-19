@@ -46,7 +46,7 @@ class CrazyflieEnv:
         self.pad_contacts = [False,False,False,False]
 
         self.trial_name = ''
-        self.agent = ''
+        self.agent_name = ''
 
         self.n_rollouts = 0
         self.gamma = 0
@@ -84,7 +84,7 @@ class CrazyflieEnv:
         
 
         self.timeoutThread = Thread(target=self.timeoutSub)
-        self.timeoutThread.start()
+        # self.timeoutThread.start()
 
 
 
@@ -104,10 +104,9 @@ class CrazyflieEnv:
 
         rl_msg = RLData()
         
-
         rl_msg.header.stamp = rospy.Time.now()
         rl_msg.trial_name = self.trial_name
-        rl_msg.agent = self.agent
+        rl_msg.agent = self.agent_name
 
         rl_msg.logging_flag = self.logging_flag
         rl_msg.createCSV_flag = self.createCSV_flag

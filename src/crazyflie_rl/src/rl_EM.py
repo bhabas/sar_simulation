@@ -41,7 +41,7 @@ class rlEM_PEPGAgent(ES):
         summary = np.transpose(summary[summary[:,self.d].argsort()[::-1]])
         print(summary)
 
-        k = floor(self.n_rollouts/7)
+        k = ceil(self.n_rollouts/2)
 
         S_theta = (summary[0:self.d,0:k].dot(summary[self.d,0:k].reshape(k,1)))
         S_reward = np.sum(summary[self.d,0:k])

@@ -17,7 +17,7 @@ class ES:
         self.gamma, self.n_rollout = gamma, n_rollout
 
     
-    def calculate_reward2(self,state_hist,FM_hist,h_ceiling,pad_contacts):
+    def calcReward_effortMinimization(self,state_hist,FM_hist,h_ceiling,pad_contacts):
 
         ## DEFINE STATES
         t_hist = state_hist[0,:]
@@ -26,32 +26,25 @@ class ES:
         z_hist = state_hist[3,:]
 
 
-        r_h = np.max(z_hist/h_ceiling)*10
-
-        
-
+        ## INIT INTEGRATION VARIABLES
         pitch_hist = np.zeros_like(t_hist)
         pitch_sum = 0
-
-        W_hist = np.zeros_like(t_hist)
-        W_My = 0
-
+        W_My = 0 
         prev = t_hist[0]
 
+        ## INTEGRATE FOR W_My AND FINAL PITCH ANGLE
         # Integrate omega_y over time to get full rotation estimate
-        # This accounts for multiple revolutions
+        # This accounts for multiple revolutions that euler angles can't
         for ii,wy in enumerate(wy_hist):
-            pitch_sum = pitch_sum + wy*(t_hist[ii]-prev)*180/np.pi
-            pitch_hist[ii] = pitch_sum
+            pitch_sum += wy*(180/np.pi)*(t_hist[ii]-prev) # [deg]
+            pitch_hist[ii] = pitch_sum # [deg]
 
-            W_My = W_My + My_hist[ii]*wy*(t_hist[ii]-prev)
-            W_hist[ii] = W_My
-
+            W_My += My_hist[ii]*wy*(t_hist[ii]-prev) # [N*mm]
             prev = t_hist[ii]
 
 
 
-        ## R_contact Calc
+        ## r_contact Calc
         num_contacts = np.sum(pad_contacts)
         if num_contacts == 3 or num_contacts == 4:
             r_contact = 7
@@ -64,7 +57,7 @@ class ES:
 
        
         
-        ## R_theta Calc
+        ## r_theta Calc
         if -170 < np.min(pitch_hist) <= 0:
             r_theta = 5*(-1/170*np.min(pitch_hist))      
         elif -195 <= np.min(pitch_hist) <= -170:
@@ -73,28 +66,21 @@ class ES:
             r_theta = 0
         
 
-        ## R_W Calc
+        ## r_W Calc
         r_W = 10*np.exp(-W_My/2.0)
+
+        ## r_height Calc
+        r_h = np.max(z_hist/h_ceiling)*10
         
 
         
-
-
-
-
-
-
-        R = r_W*(r_contact+r_theta)*r_h
-        print(R)
+        R = r_W*(r_contact+r_theta)*r_h + 0.001
         return R
     
 
 
-    def calculate_reward(self, state_hist, h_ceiling): # state_hist is size 14 x timesteps
+    def calcReward_pureLanding(self, state_hist, h_ceiling): # state_hist is size 14 x timesteps
         # should be the same for each algorithm
-
-
-
         z = state_hist[3,:]
         quat_xyz = state_hist[5:8,:]
         quat_w = state_hist[4,:][np.newaxis,:]
