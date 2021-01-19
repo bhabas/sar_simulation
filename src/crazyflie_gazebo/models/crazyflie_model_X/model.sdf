@@ -557,12 +557,12 @@
       <inertial>
         <mass>3.69e-06</mass>
         <inertia>
-          <ixx>0</ixx>
+          <ixx>4.3354e-10</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>0</iyy>
+          <iyy>4.3354e-10</iyy>
           <iyz>0</iyz>
-          <izz>0</izz>
+          <izz>4.3354e-10</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
@@ -575,8 +575,8 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.001</radius>
-            <length>0.001</length>
+            <radius>0.002</radius>
+            <length>0.002</length>
           </cylinder>
         </geometry>
         <material>
@@ -595,8 +595,8 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.001</radius>
-            <length>0.001</length>
+            <radius>0.002</radius>
+            <length>0.002</length>
           </cylinder>
         </geometry>
         <surface>
@@ -650,12 +650,12 @@
       <inertial>
         <mass>3.69e-06</mass>
         <inertia>
-          <ixx>0</ixx>
+          <ixx>4.3354e-10</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>0</iyy>
+          <iyy>4.3354e-10</iyy>
           <iyz>0</iyz>
-          <izz>0</izz>
+          <izz>4.3354e-10</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
@@ -668,8 +668,8 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.001</radius>
-            <length>0.001</length>
+            <radius>0.002</radius>
+            <length>0.002</length>
           </cylinder>
         </geometry>
         <material>
@@ -688,8 +688,8 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.001</radius>
-            <length>0.001</length>
+            <radius>0.002</radius>
+            <length>0.002</length>
           </cylinder>
         </geometry>
         <surface>
@@ -743,12 +743,12 @@
       <inertial>
         <mass>3.69e-06</mass>
         <inertia>
-          <ixx>0</ixx>
+          <ixx>4.3354e-10</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>0</iyy>
+          <iyy>4.3354e-10</iyy>
           <iyz>0</iyz>
-          <izz>0</izz>
+          <izz>4.3354e-10</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
@@ -761,8 +761,8 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.001</radius>
-            <length>0.001</length>
+            <radius>0.002</radius>
+            <length>0.002</length>
           </cylinder>
         </geometry>
         <material>
@@ -781,8 +781,8 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.001</radius>
-            <length>0.001</length>
+            <radius>0.002</radius>
+            <length>0.002</length>
           </cylinder>
         </geometry>
         <surface>
@@ -836,12 +836,12 @@
       <inertial>
         <mass>3.69e-06</mass>
         <inertia>
-          <ixx>0</ixx>
+          <ixx>4.3354e-10</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>0</iyy>
+          <iyy>4.3354e-10</iyy>
           <iyz>0</iyz>
-          <izz>0</izz>
+          <izz>4.3354e-10</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
@@ -854,8 +854,8 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.001</radius>
-            <length>0.001</length>
+            <radius>0.002</radius>
+            <length>0.002</length>
           </cylinder>
         </geometry>
         <material>
@@ -874,8 +874,8 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.001</radius>
-            <length>0.001</length>
+            <radius>0.002</radius>
+            <length>0.002</length>
           </cylinder>
         </geometry>
         <surface>

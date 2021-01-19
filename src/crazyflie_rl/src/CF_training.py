@@ -88,7 +88,7 @@ def runTrial(vx_d,vz_d):
 
             ## RESET TO INITIAL STATE
             env.step('home') # Reset control vals and functionality to default vals
-            time.sleep(2) # Time for CF to settle
+            time.sleep(0.5) # Time for CF to settle
             
 
 
@@ -309,8 +309,9 @@ if __name__ == '__main__':
     alpha_sigma = np.array([[0.09]])
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[4.0],[4.3],[2.5]])# Initial estimates of mu: 
-    mu = np.array([[3.41],[6.56],[3.50]])# Initial estimates of mu: 
+    mu = np.array([[4.0],[4.3],[2.5]])# Initial estimates of mu: Random initial
+    mu = np.array([[5.4],[6.7],[3.1]])# Initial estimates of mu: Random initial
+    mu = np.array([[3.41],[6.56],[3.50]])# Initial estimates of mu: Somewhat optimal
     sigma = np.array([[2.0],[2.0],[2.0]]) # Initial estimates of sigma: 
 
 

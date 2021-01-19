@@ -16,15 +16,16 @@ for ii,theta_ii in enumerate(theta):
         r_theta[ii] = 0
     
 
-# fig = plt.figure(0)
-# ax = fig.add_subplot(111)
-# ax.set_ylabel('r_theta')
-# ax.set_xlabel('theta [deg]')
-# ax.set_xlim([-200,10])
-# ax.set_xticks([-200,-180,-135,-90,-45,0,15])
-# ax.grid()
+fig = plt.figure(0)
+ax = fig.add_subplot(111)
+ax.set_ylabel('r_theta')
+ax.set_xlabel('theta [deg]')
+ax.set_title('r_theta vs theta')
+ax.set_xlim([-200,10])
+ax.set_xticks([-200,-180,-135,-90,-45,0,15])
+ax.grid()
 
-# plt.plot(theta,r_theta)
+plt.plot(theta,r_theta)
 
 
 lc = np.repeat([0,1,2,3,4],10)
@@ -42,16 +43,17 @@ plt.show()
 
 
 W_My = np.linspace(0,12.5,50)
-r_W = 10*np.exp(-W_My/5)
+r_W = 10*np.exp(-W_My/2)
 
-# fig = plt.figure(1)
-# ax = fig.add_subplot(111)
-# ax.set_xlabel('W_My [N*mm]')
-# ax.set_ylabel('r_W')
-# ax.grid()
+fig = plt.figure(2)
+ax = fig.add_subplot(111)
+ax.set_xlabel('W_My [N*mm]')
+ax.set_ylabel('r_W')
+ax.set_title('r_W vs W_My [N*mm]')
+ax.grid()
 
-# plt.plot(W_My,r_W)
-# plt.show()
+plt.plot(W_My,r_W)
+plt.show()
 
 
 r_l = r_lc + r_theta
@@ -59,7 +61,7 @@ R_W,R_L = np.meshgrid(r_W,r_l)
 R = R_W*R_L
 
 
-fig = plt.figure(2)
+fig = plt.figure(3)
 ax = fig.add_subplot(111, projection='3d')
 surf = ax.plot_surface(R_W,R_L,R,cmap=cm.jet)
 ax.set_xlabel('r_W')

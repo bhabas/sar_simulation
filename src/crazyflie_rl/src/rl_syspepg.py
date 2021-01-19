@@ -54,9 +54,9 @@ class ES:
         ## R_contact Calc
         num_contacts = np.sum(pad_contacts)
         if num_contacts == 3 or num_contacts == 4:
-            r_contact = 5
+            r_contact = 7
         elif num_contacts == 2:
-            r_contact = 2.5
+            r_contact = 2
         elif num_contacts == 1:
             r_contact = 1
         else:
@@ -74,7 +74,7 @@ class ES:
         
 
         ## R_W Calc
-        r_W = 10*np.exp(-W_My/5)
+        r_W = 10*np.exp(-W_My/2.0)
         
 
         

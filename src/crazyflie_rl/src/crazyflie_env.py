@@ -84,7 +84,7 @@ class CrazyflieEnv:
         
 
         self.timeoutThread = Thread(target=self.timeoutSub)
-        # self.timeoutThread.start()
+        self.timeoutThread.start()
 
 
 
