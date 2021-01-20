@@ -1,6 +1,7 @@
 Header header
 string trial_name
 string agent
+string error
 
 bool logging_flag
 bool createCSV_flag

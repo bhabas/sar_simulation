@@ -100,7 +100,7 @@ def runTrial(vx_d,vz_d):
 
             state_history = None
             FM_history = None
-            error_str = ""
+            env.error_str = ""
 
 
 
@@ -185,29 +185,24 @@ def runTrial(vx_d,vz_d):
                 # IF TIME SINCE TRIGGERED PITCH EXCEEDS [0.7s]  
                 if env.flip_flag and ((env.getTime()-start_time_pitch) > (2.0)):
                     # I don't like this error formatting, feel free to improve on
-                    error_1 = "Rollout Completed: Pitch Timeout"
-                    error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch))
-                    print(error_1 + "\n" + error_2)
+                    env.error_str = "Rollout Completed: Pitch Timeout"
+                    print(env.error_str)
 
-                    error_str = error_1 + error_2
                     env.runComplete_flag = True
 
                 # IF TIME SINCE RUN START EXCEEDS [2.5s]
                 if (env.getTime() - start_time_rollout) > (5.0):
-                    error_1 = "Rollout Completed: Time Exceeded"
-                    error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
-                    print(error_1 + "\n" + error_2)
+                    env.error_str = "Rollout Completed: Time Exceeded"
+                    print(env.error_str)
 
-                    error_str = error_1 + error_2
                     env.runComplete_flag = True
 
                 # IF POSITION FALLS BELOW ACHIEVED MAX HEIGHT
                 z_max = max(position[2],z_max)
                 if position[2] <= 0.90*z_max: # Note: there is a lag with this
-                    error_1 = "Rollout Completed: Falling Drone"
-                    print(error_1)
+                    env.error_str = "Rollout Completed: Falling Drone"
+                    print(env.error_str)
 
-                    error_str  = error_1
                     env.runComplete_flag = True
         
                     
@@ -219,8 +214,8 @@ def runTrial(vx_d,vz_d):
 
                 ## IF NAN IS FOUND IN STATE VECTOR REPEAT RUN (Model collision Error)
                 if any(np.isnan(state)): 
-                    print("NAN found in state vector")
-                    error_str = "Error: NAN found in state vector"
+                    env.error_str = "Error: NAN found in state vector"
+                    print(env.error_str)
                     repeat_run = True
                     break
 

@@ -54,6 +54,7 @@ class CrazyflieEnv:
         #region 
         self.trial_name = ''
         self.agent_name = ''
+        self.error_str = ''
 
         self.n_rollouts = 0
         self.gamma = 0
@@ -106,6 +107,7 @@ class CrazyflieEnv:
         rl_msg.header.stamp = rospy.Time.now()
         rl_msg.trial_name = self.trial_name
         rl_msg.agent = self.agent_name
+        rl_msg.error = self.error_str
 
         rl_msg.logging_flag = self.logging_flag
         rl_msg.createCSV_flag = self.createCSV_flag

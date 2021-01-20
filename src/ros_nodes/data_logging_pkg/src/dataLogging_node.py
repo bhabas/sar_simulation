@@ -75,6 +75,7 @@ class DataLoggingNode:
         ## SET RL PARAMS FROM RL_DATA TOPIC
         self.trial_name = rl_msg.trial_name
         self.agent = rl_msg.agent
+        self.error_str = rl_msg.error
 
         self.logging_flag = rl_msg.logging_flag
         self.createCSV_flag = rl_msg.createCSV_flag
@@ -176,7 +177,8 @@ class DataLoggingNode:
                 'gamma','reward','flip_flag','impact_flag','n_rollouts',
                 'RREV','OF_x','OF_y',
                 'MS1','MS2','MS3','MS4',
-                'F_thrust','Mx','My','Mz'])# Place holders
+                'F_thrust','Mx','My','Mz',
+                'Error'])# Place holders
 
 
     def append_csv(self):
@@ -194,8 +196,8 @@ class DataLoggingNode:
                 "","",self.flip_flag,self.impact_flag,"", # gamma, reward, flip_triggered, n_rollout
                 self.RREV,self.OF_x,self.OF_y, # RREV, OF_x, OF_y
                 self.MS[0],self.MS[1],self.MS[2],self.MS[3],
-                self.FM[0],self.FM[1],self.FM[2],self.FM[3] # F_thrust,Mx,My,Mz 
-                ])
+                self.FM[0],self.FM[1],self.FM[2],self.FM[3], # F_thrust,Mx,My,Mz 
+                ""]) # Error
 
 
     def append_IC(self):
@@ -214,7 +216,7 @@ class DataLoggingNode:
                 self.RREV_tr,"",self.OF_y_tr, # RREV, OF_x, OF_y
                 "","","","",
                 "",self.FM_d[1],self.FM_d[2],self.FM_d[3], # F_thrust,Mx,My,Mz 
-                ])
+                self.error_str]) # Error
 
     def append_csv_blank(self):
 
