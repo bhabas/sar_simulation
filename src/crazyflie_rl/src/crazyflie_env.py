@@ -222,6 +222,7 @@ class CrazyflieEnv:
 
     def close_sim(self):
         os.killpg(self.gazebo_p.pid, signal.SIGTERM)
+        os.killpg(self.controller_p.pid, signal.SIGTERM)
 
     def close_dashboard(self):
         os.killpg(self.dashboard_p.pid, signal.SIGTERM)
@@ -234,10 +235,17 @@ class CrazyflieEnv:
 
     def launch_sim(self):
         print("[STARTING] Starting Gazebo Process...")
+
+        print("[STARTING] Starting Controller Process...")
+        self.controller_p = subprocess.Popen( # Controller Process
+            "gnome-terminal --disable-factory --geometry 70x41 -- rosrun crazyflie_gazebo controller", 
+            close_fds=True, preexec_fn=os.setsid, shell=True)
+
         self.gazebo_p = subprocess.Popen( # Gazebo Process
             "gnome-terminal --disable-factory  -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_gazebo.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(5)
+
 
     def launch_dashboard(self):
         print("[STARTING] Starting Dashboard...")
