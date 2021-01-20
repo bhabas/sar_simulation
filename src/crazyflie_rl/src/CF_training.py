@@ -226,8 +226,8 @@ def runTrial(vx_d,vz_d):
                 # ============================
                 if env.runComplete_flag==True:
 
-                    # reward[k_run] = agent.calcReward_pureLanding(state_history,env.h_ceiling)
-                    reward[k_run] = agent.calcReward_effortMinimization(state_history,FM_history,env.h_ceiling,env.pad_contacts)
+                    reward[k_run] = agent.calcReward_pureLanding(state_history,env.h_ceiling,env.pad_contacts)
+                    # reward[k_run] = agent.calcReward_effortMinimization(state_history,FM_history,env.h_ceiling,env.pad_contacts)
                     env.reward = reward[k_run]
                     print("Reward = %.3f" %(reward[k_run]))
                     print("# of Leg contacts: %i" %(sum(env.pad_contacts)))
@@ -266,7 +266,7 @@ if __name__ == '__main__':
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv()
     env.reset_pos() # Reset Gazebo pos
-    # env.launch_dashboard()
+    env.launch_dashboard()
     print("Environment done")
 
 
@@ -278,11 +278,11 @@ if __name__ == '__main__':
 
     ## GAUSSIAN PARAMETERS
     mu = np.array([[5.4],[6.7],[3.1]])      # Random initial mu
-    mu = np.array([[3.41],[6.56],[3.50]])   # Somewhat optimal mu
+    # mu = np.array([[3.41],[6.56],[3.50]])   # Somewhat optimal mu
     sigma = np.array([[2.0],[2.0],[2.0]]) # Initial estimates of sigma: 
 
     ## SIM PARAMETERS
-    env.n_rollouts = 3
+    env.n_rollouts = 6
     env.gamma = 0.95
     env.logging_flag = True
     env.h_ceiling = 2.5 # [m]
