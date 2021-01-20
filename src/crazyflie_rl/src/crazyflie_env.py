@@ -89,6 +89,12 @@ class CrazyflieEnv:
 
         #endregion 
 
+
+        self.MS = [0,0,0,0]
+        self.FM_flip = [0,0,0,0]
+        self.FM = [0,0,0,0]
+
+
         print("[COMPLETED] Environment done")
 
 

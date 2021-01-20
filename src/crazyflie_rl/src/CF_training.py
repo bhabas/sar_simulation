@@ -84,6 +84,7 @@ def runTrial(vx_d,vz_d):
             env.pad_contacts = [False,False,False,False] # Reset pad contacts
 
             z_max = 0   # Initialize max height to be zero before run [m]
+            z_prev = 0;
             vy_d = 0    # [m/s]
             env.vel_d = [vx_d,vy_d,vz_d] # [m/s]
 
@@ -97,6 +98,7 @@ def runTrial(vx_d,vz_d):
 
             start_time_rollout = env.getTime()
             start_time_pitch = np.nan
+            start_time_height = env.getTime()
 
             state_history = None
             FM_history = None
@@ -182,17 +184,10 @@ def runTrial(vx_d,vz_d):
                 ##    Termination Criteria 
                 # ============================
 
-                # IF TIME SINCE TRIGGERED PITCH EXCEEDS [0.7s]  
+                # IF TIME SINCE TRIGGERED PITCH EXCEEDS [1.0s]  
                 if env.flip_flag and ((env.getTime()-start_time_pitch) > (2.0)):
                     # I don't like this error formatting, feel free to improve on
                     env.error_str = "Rollout Completed: Pitch Timeout"
-                    print(env.error_str)
-
-                    env.runComplete_flag = True
-
-                # IF TIME SINCE RUN START EXCEEDS [2.5s]
-                if (env.getTime() - start_time_rollout) > (5.0):
-                    env.error_str = "Rollout Completed: Time Exceeded"
                     print(env.error_str)
 
                     env.runComplete_flag = True
@@ -204,8 +199,26 @@ def runTrial(vx_d,vz_d):
                     print(env.error_str)
 
                     env.runComplete_flag = True
-        
-                    
+
+                # IF CF HASN'T CHANGED Z HEIGHT IN PAST [5.0s]
+                if np.abs(position[2]-z_prev) > 0.001:
+                    start_time_height = env.getTime()
+                z_prev = position[2] 
+
+                if (env.getTime() - start_time_height) > (5.0):
+                    env.error_str = "Rollout Completed: Pos Time Exceeded"
+                    print(env.error_str)
+                    env.runComplete_flag = True
+
+                # IF TIME SINCE RUN START EXCEEDS [2.5s]
+                if (env.getTime() - start_time_rollout) > (10.0):
+                    env.error_str = "Rollout Completed: Time Exceeded"
+                    print(env.error_str)
+
+                    env.runComplete_flag = True
+
+
+                
                 
 
                 # ============================
@@ -266,7 +279,8 @@ if __name__ == '__main__':
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv()
     env.reset_pos() # Reset Gazebo pos
-    env.launch_dashboard()
+    # env.launch_dashboard()
+
     print("Environment done")
 
 
