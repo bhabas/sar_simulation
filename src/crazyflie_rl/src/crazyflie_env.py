@@ -48,7 +48,7 @@ class CrazyflieEnv:
         
 
         ## INIT NAME OF MODEL BEING USED
-        self.modelName = 'crazyflie_model_X'
+        self.modelName = 'crazyflie_model_Wide-Short'
 
         ## INIT RL_DATA VARIABLES 
         #region 
