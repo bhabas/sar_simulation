@@ -311,7 +311,7 @@ if __name__ == '__main__':
     
     ## INITIAL CONDITIONS
     vz_d = 2.5
-    vx_d = 1.5
+    vx_d = 0
 
     
     

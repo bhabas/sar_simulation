@@ -1065,6 +1065,8 @@
       <physics>
         <ode>
           <limit>
+            <lower>0.05</lower>
+            <upper>0.05</upper>
             <cfm>0</cfm>
             <erp>0.2</erp>
           </limit>
@@ -1099,6 +1101,8 @@
       <physics>
         <ode>
           <limit>
+            <lower>0.05</lower>
+            <upper>0.05</upper>
             <cfm>0</cfm>
             <erp>0.2</erp>
           </limit>
@@ -1133,6 +1137,8 @@
       <physics>
         <ode>
           <limit>
+            <lower>0.05</lower>
+            <upper>0.05</upper>
             <cfm>0</cfm>
             <erp>0.2</erp>
           </limit>
@@ -1167,6 +1173,8 @@
       <physics>
         <ode>
           <limit>
+            <lower>0.05</lower>
+            <upper>0.05</upper>
             <cfm>0</cfm>
             <erp>0.2</erp>
           </limit>

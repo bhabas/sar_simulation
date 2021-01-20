@@ -19,6 +19,7 @@ class DataLoggingNode:
 
         self.t_step = 0
         self.k_run_temp = 0
+        self.trial_name_temp = ''
         self.createCSV_flag = True
         self.logging_flag = True
 
@@ -140,8 +141,12 @@ class DataLoggingNode:
 
         if self.logging_flag == True:
 
-            if self.createCSV_flag == True:
+            # if self.createCSV_flag == True:
+            #     self.create_csv()
+
+            if self.trial_name_temp != rl_msg.trial_name:
                 self.create_csv()
+                self.trial_name_temp = rl_msg.trial_name
 
             if self.k_run_temp != rl_msg.k_run: # When k_run changes then add blank row
                 self.append_csv_blank()
