@@ -294,9 +294,9 @@ if __name__ == '__main__':
 
     print("Environment done")
 
-    
-
-
+    # ============================
+    ##          AGENT  
+    # ============================
 
     ## LEARNING RATES
     alpha_mu = np.array([[0.1]])
@@ -320,6 +320,10 @@ if __name__ == '__main__':
     # agent = rlEM_AdaptiveAgent(mu,sigma,n_rollouts=6) # Not working
 
     
+    # ============================
+    ##     LEARNING CONDITIONS  
+    # ============================
+
     ## INITIAL CONDITIONS
     vz_d = 2.5
     vx_d = 0
@@ -331,6 +335,7 @@ if __name__ == '__main__':
     env.agent_name = agent.agent_type
     env.trial_name = f"{env.agent_name}--Vz_{vz_d}--Vx_{vx_d}--trial_{trial_num}"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
+    env.logging_flag = False
        
 
 

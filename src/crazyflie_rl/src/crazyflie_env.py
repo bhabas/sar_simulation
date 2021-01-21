@@ -25,6 +25,7 @@ class CrazyflieEnv:
         self.isRunning = True
         self.username = getpass.getuser()
         self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log"
+        self.logging_flag = False
         self.filepath = ""
         
         ## INIT ROS NODE FOR ENVIRONMENT 
@@ -351,105 +352,72 @@ class CrazyflieEnv:
         
 
     # ============================
-    ##  Control Playground Func. 
+    ##      Data Logging 
     # ============================
-
-    def cmd_send(self):
-        while True:
-            # Converts input number into action name
-            cmd_dict = {0:'home',1:'pos',2:'vel',3:'att',4:'omega',5:'stop',6:'gains'}
-            val = float(input("\nCmd Type (0:home,1:pos,2:vel,3:att,4:omega,5:stop,6:gains): "))
-            action = cmd_dict[val]
-
-            if action=='home' or action == 'stop': # Execute home or stop action
-                ctrl_vals = [0,0,0]
-                ctrl_flag = 1
-                self.step(action,ctrl_vals,ctrl_flag)
-
-            elif action=='gains': # Execture Gain changer
-                
-                vals = input("\nControl Gains (kp_x,kd_x,kp_R,kd_R): ") # Take in comma-seperated values and convert into list
-                vals = [float(i) for i in vals.split(',')]
-                ctrl_vals = vals[0:3]
-                ctrl_flag = vals[3]
-
-                self.step(action,ctrl_vals,ctrl_flag)
-                
-            elif action == 'omega': # Execture Angular rate action
-
-                ctrl_vals = input("\nControl Vals (x,y,z): ")
-                ctrl_vals = [float(i) for i in ctrl_vals.split(',')]
-                ctrl_flag = 1.0
-
-                self.step('omega',ctrl_vals,ctrl_flag)
-
-
-            else:
-                ctrl_vals = input("\nControl Vals (x,y,z): ")
-                ctrl_vals = [float(i) for i in ctrl_vals.split(',')]
-                ctrl_flag = float(input("\nController On/Off (1,0): "))
-                self.step(action,ctrl_vals,ctrl_flag)
-
     
     def create_csv(self,filepath):
+
+        if self.logging_flag:
         
-        with open(filepath,mode='w') as state_file:
-            state_writer = csv.writer(state_file,delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            state_writer.writerow([
-                'k_ep','k_run',
-                'alpha_mu','alpha_sig',
-                'mu','sigma', 'policy',
-                't','x','y','z',
-                'qw','qx','qy','qz',
-                'vx','vy','vz',
-                'wx','wy','wz',
-                'gamma','reward','flip_flag','impact_flag','n_rollouts',
-                'RREV','OF_x','OF_y',
-                'MS1','MS2','MS3','MS4',
-                'F_thrust','Mx','My','Mz',
-                'Error'])# Place holders
+            with open(filepath,mode='w') as state_file:
+                state_writer = csv.writer(state_file,delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                state_writer.writerow([
+                    'k_ep','k_run',
+                    'alpha_mu','alpha_sig',
+                    'mu','sigma', 'policy',
+                    't','x','y','z',
+                    'qw','qx','qy','qz',
+                    'vx','vy','vz',
+                    'wx','wy','wz',
+                    'gamma','reward','flip_flag','impact_flag','n_rollouts',
+                    'RREV','OF_x','OF_y',
+                    'MS1','MS2','MS3','MS4',
+                    'F_thrust','Mx','My','Mz',
+                    'Error'])# Place holders
 
     def append_csv(self,filepath):
-    
-        with open(filepath, mode='a') as state_file:
-            state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            state_writer.writerow([
-                self.k_ep,self.k_run,
-                "","", # alpha_mu,alpha_sig
-                "","","", # mu,sigma,policy
-                self.t,self.position[0],self.position[1],self.position[2], # t,x,y,z
-                self.orientation_q[0],self.orientation_q[1],self.orientation_q[2],self.orientation_q[3], # qw,qx,qy,qz
-                self.velocity[0],self.velocity[1],self.velocity[2], # vx,vy,vz
-                self.omega[0],self.omega[1],self.omega[2], # wx,wy,wz
-                "","",self.flip_flag,self.impact_flag,"", # gamma, reward, flip_triggered, n_rollout
-                self.RREV,self.OF_x,self.OF_y, # RREV, OF_x, OF_y
-                self.MS[0],self.MS[1],self.MS[2],self.MS[3],
-                self.FM[0],self.FM[1],self.FM[2],self.FM[3], # F_thrust,Mx,My,Mz 
-                ""]) # Error
+
+        if self.logging_flag:
+            with open(filepath, mode='a') as state_file:
+                state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                state_writer.writerow([
+                    self.k_ep,self.k_run,
+                    "","", # alpha_mu,alpha_sig
+                    "","","", # mu,sigma,policy
+                    self.t,self.position[0],self.position[1],self.position[2], # t,x,y,z
+                    self.orientation_q[0],self.orientation_q[1],self.orientation_q[2],self.orientation_q[3], # qw,qx,qy,qz
+                    self.velocity[0],self.velocity[1],self.velocity[2], # vx,vy,vz
+                    self.omega[0],self.omega[1],self.omega[2], # wx,wy,wz
+                    "","",self.flip_flag,self.impact_flag,"", # gamma, reward, flip_triggered, n_rollout
+                    self.RREV,self.OF_x,self.OF_y, # RREV, OF_x, OF_y
+                    self.MS[0],self.MS[1],self.MS[2],self.MS[3],
+                    self.FM[0],self.FM[1],self.FM[2],self.FM[3], # F_thrust,Mx,My,Mz 
+                    ""]) # Error
 
     def append_IC(self,filepath):
+        if self.logging_flag:
     
-        with open(filepath,mode='a') as state_file:
-            state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            state_writer.writerow([
-                self.k_ep,self.k_run,
-                np.round(self.alpha_mu,2),np.round(self.alpha_sigma,2), # alpha_mu,alpha_sig
-                np.round(self.mu,2),np.round(self.sigma,2),np.round(self.policy,2), # mu,sigma,policy
-                "","","","", # t,x,y,z
-                "", "", "", "", # qx,qy,qz,qw
-                np.round(self.vel_d[0],2),np.round(self.vel_d[1],2),np.round(self.vel_d[2],2), # vx,vy,vz
-                "","","", # wx,wy,wz
-                np.round(self.gamma,2),np.round(self.reward,2),"",sum(self.pad_contacts),self.n_rollouts, # gamma, reward, flip_flag, num leg contacts, n_rollout
-                self.RREV_tr,"",self.OF_y_tr, # RREV, OF_x, OF_y
-                "","","","",
-                "",self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # F_thrust,Mx,My,Mz 
-                self.error_str]) # Error
+            with open(filepath,mode='a') as state_file:
+                state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                state_writer.writerow([
+                    self.k_ep,self.k_run,
+                    np.round(self.alpha_mu,2),np.round(self.alpha_sigma,2), # alpha_mu,alpha_sig
+                    np.round(self.mu,2),np.round(self.sigma,2),np.round(self.policy,2), # mu,sigma,policy
+                    "","","","", # t,x,y,z
+                    "", "", "", "", # qx,qy,qz,qw
+                    np.round(self.vel_d[0],2),np.round(self.vel_d[1],2),np.round(self.vel_d[2],2), # vx,vy,vz
+                    "","","", # wx,wy,wz
+                    np.round(self.gamma,2),np.round(self.reward,2),"",sum(self.pad_contacts),self.n_rollouts, # gamma, reward, flip_flag, num leg contacts, n_rollout
+                    self.RREV_tr,"",self.OF_y_tr, # RREV, OF_x, OF_y
+                    "","","","",
+                    "",self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # F_thrust,Mx,My,Mz 
+                    self.error_str]) # Error
 
     def append_csv_blank(self,filepath):
-    
-         with open(filepath, mode='a') as state_file:
-            state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            state_writer.writerow([])
+        if self.logging_flag:
+            with open(filepath, mode='a') as state_file:
+                state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                state_writer.writerow([])
 
    
 
@@ -489,3 +457,43 @@ class CrazyflieEnv:
         self.close_sim()
         time.sleep(1)
         self.launch_sim()
+
+    # ============================
+    ##  Control Playground Func. 
+    # ============================
+
+    def cmd_send(self):
+        while True:
+            # Converts input number into action name
+            cmd_dict = {0:'home',1:'pos',2:'vel',3:'att',4:'omega',5:'stop',6:'gains'}
+            val = float(input("\nCmd Type (0:home,1:pos,2:vel,3:att,4:omega,5:stop,6:gains): "))
+            action = cmd_dict[val]
+
+            if action=='home' or action == 'stop': # Execute home or stop action
+                ctrl_vals = [0,0,0]
+                ctrl_flag = 1
+                self.step(action,ctrl_vals,ctrl_flag)
+
+            elif action=='gains': # Execture Gain changer
+                
+                vals = input("\nControl Gains (kp_x,kd_x,kp_R,kd_R): ") # Take in comma-seperated values and convert into list
+                vals = [float(i) for i in vals.split(',')]
+                ctrl_vals = vals[0:3]
+                ctrl_flag = vals[3]
+
+                self.step(action,ctrl_vals,ctrl_flag)
+                
+            elif action == 'omega': # Execture Angular rate action
+
+                ctrl_vals = input("\nControl Vals (x,y,z): ")
+                ctrl_vals = [float(i) for i in ctrl_vals.split(',')]
+                ctrl_flag = 1.0
+
+                self.step('omega',ctrl_vals,ctrl_flag)
+
+
+            else:
+                ctrl_vals = input("\nControl Vals (x,y,z): ")
+                ctrl_vals = [float(i) for i in ctrl_vals.split(',')]
+                ctrl_flag = float(input("\nController On/Off (1,0): "))
+                self.step(action,ctrl_vals,ctrl_flag)
