@@ -1,9 +1,10 @@
 import numpy as np
 from threading import Thread, Timer
 
-import time
+import time, csv
 import os, subprocess, signal
 import rospy
+import getpass
 
 
 from sensor_msgs.msg import LaserScan, Image, Imu
@@ -22,7 +23,8 @@ class CrazyflieEnv:
         print("[STARTING] CrazyflieEnv is starting...")
         self.state_current = np.zeros(14)
         self.isRunning = True
-
+        self.username = getpass.getuser()
+        self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/src/ros_nodes/data_logging_pkg/log"
         
         ## INIT ROS NODE FOR ENVIRONMENT 
         rospy.init_node("crazyflie_env_node") 
@@ -36,6 +38,8 @@ class CrazyflieEnv:
         self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)
         self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactCallback)
         self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
+
+        # rospy.wait_for_message('/global_state',GlobalState)
 
         ## INIT ROS PUBLISHERS
         self.RL_Publisher = rospy.Publisher('/rl_data',RLData,queue_size=10)
@@ -84,15 +88,16 @@ class CrazyflieEnv:
 
         self.MS = [0,0,0,0]
         self.FM_flip = [0,0,0,0]
+        self.FM = [0,0,0,0]
         
         self.pad_contacts = [False,False,False,False]
 
         #endregion 
 
 
-        self.MS = [0,0,0,0]
-        self.FM_flip = [0,0,0,0]
-        self.FM = [0,0,0,0]
+        
+        
+        
 
 
         print("[COMPLETED] Environment done")
@@ -145,17 +150,27 @@ class CrazyflieEnv:
 
     def ctrlCallback(self,ctrl_msg): ## Callback to parse data received from controller
         
-        self.MS = ctrl_msg.motorspeeds      # [MS1,MS2,MS3,MS4]
-        self.FM_flip = ctrl_msg.FM_flip     # [F_thrust_d,Mx_d,My_d,Mz_d]
-        self.FM = ctrl_msg.FM               # [F_thrust,Mx,My,Mz]
-        self.flip_flag = ctrl_msg.flip_flag # Indicates when flip has been executed
+        ## SET & TRIM CTRL VALUES FROM CTRL_DATA TOPIC
+        self.MS = np.asarray(ctrl_msg.motorspeeds)
+        self.MS = np.round(self.MS,0)
+
+        self.FM = np.asarray(ctrl_msg.FM)
+        self.FM = np.round(self.FM,2)
+
+        self.FM_flip = np.asarray(ctrl_msg.FM_flip)
+        self.FM_flip = np.round(self.FM_flip,2)
+
+        
+        self.flip_flag = ctrl_msg.flip_flag
+        self.RREV_tr = np.round(ctrl_msg.RREV_tr,2)
+        self.OF_y_tr = np.round(ctrl_msg.OF_y_tr,2)
 
     def global_stateCallback(self,gs_msg): ## Callback to parse state data received from gazebo_communication node
         
         ## SET TIME VALUE FROM TOPIC
         t_temp = gs_msg.header.stamp.secs
         ns_temp = gs_msg.header.stamp.nsecs
-        t = t_temp+ns_temp*1e-9 # (seconds + nanoseconds)
+        self.t = t_temp+ns_temp*1e-9 # (seconds + nanoseconds)
         
         ## SIMPLIFY STATE VALUES FROM TOPIC
         global_pos = gs_msg.global_pose.position
@@ -174,7 +189,7 @@ class CrazyflieEnv:
 
 
         ## COMBINE INTO COMPREHENSIVE LIST
-        self.state_current = [t] + self.position + self.orientation_q +self.velocity + self.omega ## t (float) -> [t] (list)
+        self.state_current = [self.t] + self.position + self.orientation_q +self.velocity + self.omega ## t (float) -> [t] (list)
 
         ## SET VISUAL CUE SENSOR VALUES FROM TOPIC
         self.RREV = gs_msg.RREV
@@ -376,6 +391,67 @@ class CrazyflieEnv:
                 ctrl_vals = [float(i) for i in ctrl_vals.split(',')]
                 ctrl_flag = float(input("\nController On/Off (1,0): "))
                 self.step(action,ctrl_vals,ctrl_flag)
+
+    
+    def create_csv(self,filepath):
+        
+        with open(filepath,mode='w') as state_file:
+            state_writer = csv.writer(state_file,delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            state_writer.writerow([
+                'k_ep','k_run',
+                'alpha_mu','alpha_sig',
+                'mu','sigma', 'policy',
+                't','x','y','z',
+                'qw','qx','qy','qz',
+                'vx','vy','vz',
+                'wx','wy','wz',
+                'gamma','reward','flip_flag','impact_flag','n_rollouts',
+                'RREV','OF_x','OF_y',
+                'MS1','MS2','MS3','MS4',
+                'F_thrust','Mx','My','Mz',
+                'Error'])# Place holders
+
+    def append_csv(self,filepath):
+    
+        with open(filepath, mode='a') as state_file:
+            state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            state_writer.writerow([
+                self.k_ep,self.k_run,
+                "","", # alpha_mu,alpha_sig
+                "","","", # mu,sigma,policy
+                self.t,self.position[0],self.position[1],self.position[2], # t,x,y,z
+                self.orientation_q[0],self.orientation_q[1],self.orientation_q[2],self.orientation_q[3], # qw,qx,qy,qz
+                self.velocity[0],self.velocity[1],self.velocity[2], # vx,vy,vz
+                self.omega[0],self.omega[1],self.omega[2], # wx,wy,wz
+                "","",self.flip_flag,self.impact_flag,"", # gamma, reward, flip_triggered, n_rollout
+                self.RREV,self.OF_x,self.OF_y, # RREV, OF_x, OF_y
+                self.MS[0],self.MS[1],self.MS[2],self.MS[3],
+                self.FM[0],self.FM[1],self.FM[2],self.FM[3], # F_thrust,Mx,My,Mz 
+                ""]) # Error
+
+    def append_IC(self,filepath):
+    
+        with open(filepath,mode='a') as state_file:
+            state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            state_writer.writerow([
+                self.k_ep,self.k_run,
+                self.alpha_mu,self.alpha_sigma, # alpha_mu,alpha_sig
+                self.mu,self.sigma,self.policy, # mu,sigma,policy
+                "","","","", # t,x,y,z
+                "", "", "", "", # qx,qy,qz,qw
+                self.vel_d[0],self.vel_d[1],self.vel_d[2], # vx,vy,vz
+                "","","", # wx,wy,wz
+                self.gamma,self.reward,"",sum(self.pad_contacts),self.n_rollouts, # gamma, reward, flip_flag, num leg contacts, n_rollout
+                self.RREV_tr,"",self.OF_y_tr, # RREV, OF_x, OF_y
+                "","","","",
+                "",self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # F_thrust,Mx,My,Mz 
+                self.error_str]) # Error
+
+    def append_csv_blank(self,filepath):
+    
+         with open(filepath, mode='a') as state_file:
+            state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            state_writer.writerow([])
 
    
 

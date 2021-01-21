@@ -16,7 +16,7 @@ os.system("clear")
 np.set_printoptions(precision=2, suppress=True)
 
 
-def runTrial(vx_d,vz_d):
+def runTraining(vx_d,vz_d):
     
     # ============================
     ##          Episode         
@@ -179,6 +179,10 @@ def runTrial(vx_d,vz_d):
                     env.RL_Publish()
                     env.createCSV_flag = False
 
+                    env.append_csv(filepath)
+
+                    
+
 
                 # ============================
                 ##    Termination Criteria 
@@ -246,6 +250,9 @@ def runTrial(vx_d,vz_d):
                     print("# of Leg contacts: %i" %(sum(env.pad_contacts)))
                     print("!------------------------End Run------------------------! \n")   
 
+                    env.append_IC(filepath)
+                    env.append_csv_blank(filepath)
+
                     env.step('stop')
                     env.reset_pos()
                     ## There is a weird delay where it sometime won't publish ctrl_cmds until the next command is executed
@@ -283,8 +290,9 @@ if __name__ == '__main__':
 
     print("Environment done")
 
-
     
+
+
 
     ## LEARNING RATES
     alpha_mu = np.array([[0.1]])
@@ -320,12 +328,16 @@ if __name__ == '__main__':
     env.agent_name = agent.agent_type
     env.trial_name = f"{env.agent_name}--Vz_{vz_d}--Vx_{vx_d}--trial_{trial_num}"
     env.createCSV_flag = True # True flag will start data logging
+
+
+    filepath = f"{env.loggingPath}/{env.trial_name}.csv"
+    env.create_csv(filepath)
     
 
 
     ## RUN TRIAL
     env.RL_Publish() # Publish data to rl_data topic
-    runTrial(vx_d,vz_d)
+    runTraining(vx_d,vz_d)
  
     
 
