@@ -179,7 +179,6 @@ def runTraining(vx_d,vz_d):
                         state_history = np.append(state_history, state, axis=1)
                         FM_history = np.append(FM_history,FM,axis=1)
                         env.RL_Publish()
-                        env.createCSV_flag = False
 
                         env.append_csv(filepath)
 
@@ -310,7 +309,6 @@ if __name__ == '__main__':
     ## SIM PARAMETERS
     env.n_rollouts = 6
     env.gamma = 0.95
-    env.logging_flag = True
     env.h_ceiling = 2.5 # [m]
 
 
@@ -331,7 +329,6 @@ if __name__ == '__main__':
     trial_num = 1
     env.agent_name = agent.agent_type
     env.trial_name = f"{env.agent_name}--Vz_{vz_d}--Vx_{vx_d}--trial_{trial_num}"
-    env.createCSV_flag = True # True flag will start data logging
 
 
     filepath = f"{env.loggingPath}/{env.trial_name}.csv"

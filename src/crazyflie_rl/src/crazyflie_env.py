@@ -65,8 +65,6 @@ class CrazyflieEnv:
         self.h_ceiling = 0
         
         self.runComplete_flag = False
-        self.logging_flag = False
-        self.createCSV_flag = False
         self.flip_flag = False
         self.impact_flag = False
 
@@ -119,11 +117,8 @@ class CrazyflieEnv:
         rl_msg.trial_name = self.trial_name
         rl_msg.agent = self.agent_name
         rl_msg.error = self.error_str
-
-        rl_msg.logging_flag = self.logging_flag
-        rl_msg.createCSV_flag = self.createCSV_flag
         rl_msg.impact_flag = self.impact_flag
-        rl_msg.runComplete_flag = self.runComplete_flag
+
 
         rl_msg.n_rollouts = self.n_rollouts
         rl_msg.gamma = self.gamma
