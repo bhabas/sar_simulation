@@ -16,12 +16,13 @@ os.system("clear")
 np.set_printoptions(precision=2, suppress=True)
 
 
-def runTrial(vx_d,vz_d):
+def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
+    env.create_csv(env.filepath)
     
     # ============================
     ##          Episode         
     # ============================
-    for k_ep in range(0,500):
+    for k_ep in range(0,k_epMax):
 
         ## UPDATE EPISODE NUMBER
         env.k_ep = k_ep
@@ -87,6 +88,7 @@ def runTrial(vx_d,vz_d):
             z_prev = 0;
             vy_d = 0    # [m/s]
             env.vel_d = [vx_d,vy_d,vz_d] # [m/s]
+            t_step = 0
 
 
             ## INIT RUN FLAGS
@@ -126,7 +128,7 @@ def runTrial(vx_d,vz_d):
             while True:
                 
                 ## DEFINE CURRENT STATE
-                state = np.array(env.state_current)
+                state = env.state_current
                 FM = np.array(env.FM) # Motor thrust and Moments
                 
                 position = state[1:4] # [x,y,z]
@@ -173,11 +175,15 @@ def runTrial(vx_d,vz_d):
                 if state_history is None:
                     state_history = state 
                     FM_history = FM
-                else: # Append state_history columns with current state vector 
-                    state_history = np.append(state_history, state, axis=1)
-                    FM_history = np.append(FM_history,FM,axis=1)
-                    env.RL_Publish()
-                    env.createCSV_flag = False
+                else: # Append state_history columns with current state vector
+                    if t_step%10==0: 
+                        state_history = np.append(state_history, state, axis=1)
+                        FM_history = np.append(FM_history,FM,axis=1)
+                        env.RL_Publish()
+
+                        env.append_csv(env.filepath)
+
+                    
 
 
                 # ============================
@@ -246,12 +252,17 @@ def runTrial(vx_d,vz_d):
                     print("# of Leg contacts: %i" %(sum(env.pad_contacts)))
                     print("!------------------------End Run------------------------! \n")   
 
+                    env.append_IC(env.filepath)
+                    env.append_csv_blank(env.filepath)
+
                     env.step('stop')
                     env.reset_pos()
                     ## There is a weird delay where it sometime won't publish ctrl_cmds until the next command is executed
                     ## I have no idea what's going on there but it may or may not have an effect?
                     ## I've got no idea...
                     break
+
+                t_step += 1
 
                 
             
@@ -283,22 +294,22 @@ if __name__ == '__main__':
 
     print("Environment done")
 
-
-    
+    # ============================
+    ##          AGENT  
+    # ============================
 
     ## LEARNING RATES
     alpha_mu = np.array([[0.1]])
     alpha_sigma = np.array([[0.05]])
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[5.4],[6.7],[3.1]])      # Random initial mu
-    # mu = np.array([[3.41],[6.56],[3.50]])   # Somewhat optimal mu
-    sigma = np.array([[2.0],[2.0],[2.0]]) # Initial estimates of sigma: 
+    mu = np.array([[5.4],[6.7],[3.1]])          # Random initial mu
+    # mu = np.array([[3.41],[6.56],[3.50]])     # Somewhat optimal mu
+    sigma = np.array([[2.0],[2.0],[2.0]])       # Initial estimates of sigma: 
 
     ## SIM PARAMETERS
     env.n_rollouts = 6
     env.gamma = 0.95
-    env.logging_flag = True
     env.h_ceiling = 2.5 # [m]
 
 
@@ -309,6 +320,10 @@ if __name__ == '__main__':
     # agent = rlEM_AdaptiveAgent(mu,sigma,n_rollouts=6) # Not working
 
     
+    # ============================
+    ##     LEARNING CONDITIONS  
+    # ============================
+
     ## INITIAL CONDITIONS
     vz_d = 2.5
     vx_d = 0
@@ -319,13 +334,14 @@ if __name__ == '__main__':
     trial_num = 1
     env.agent_name = agent.agent_type
     env.trial_name = f"{env.agent_name}--Vz_{vz_d}--Vx_{vx_d}--trial_{trial_num}"
-    env.createCSV_flag = True # True flag will start data logging
-    
+    env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
+    env.logging_flag = False
+       
 
 
     ## RUN TRIAL
     env.RL_Publish() # Publish data to rl_data topic
-    runTrial(vx_d,vz_d)
+    runTraining(env,agent,vx_d,vz_d)
  
     
 
