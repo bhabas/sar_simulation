@@ -1424,7 +1424,7 @@
       <alwaysOn>true</alwaysOn>
       <updateRate>1000</updateRate>
       <bodyName>crazyflie_body</bodyName>
-      <topicName>odom</topicName>
+      <topicName>global_state</topicName>
       <!-- <gaussianNoise>0.01</gaussianNoise> -->
       <frameName>world</frameName>
       <xyzOffsets>0 0 0</xyzOffsets>

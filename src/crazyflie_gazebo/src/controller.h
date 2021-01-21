@@ -29,7 +29,7 @@ class Controller
         Controller(ros::NodeHandle *nh){
             ctrl_Publisher = nh->advertise<crazyflie_gazebo::CtrlData>("/ctrl_data",10);
 
-            globalState_Subscriber = nh->subscribe("/odom",1000,&Controller::global_stateCallback,this);
+            globalState_Subscriber = nh->subscribe("/global_state",1000,&Controller::global_stateCallback,this);
             RLCmd_Subscriber = nh->subscribe("/rl_ctrl",10,&Controller::RLCmd_Callback,this);
 
             

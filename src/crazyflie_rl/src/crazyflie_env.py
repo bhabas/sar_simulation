@@ -37,7 +37,7 @@ class CrazyflieEnv:
         
 
         ## INIT ROS SUBSCRIBERS 
-        self.state_Subscriber = rospy.Subscriber('/odom',Odometry,self.global_stateCallback)
+        self.state_Subscriber = rospy.Subscriber('/global_state',Odometry,self.global_stateCallback)
         self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)
         self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactCallback)
         self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
