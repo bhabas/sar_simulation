@@ -263,6 +263,8 @@ def runTrial(vx_d,vz_d):
                 env.reward = reward[k_run,0]
                 env.reward_avg = reward[np.nonzero(reward)].mean()
                 env.RL_Publish()
+                env.runComplete_flag = False
+                env.RL_Publish()
                 k_run += 1 # Move on to next run
 
             
@@ -304,7 +306,7 @@ if __name__ == '__main__':
             
 
             ## SIM PARAMETERS
-            env.n_rollouts = 6
+            env.n_rollouts = 3
             env.gamma = 0.95
             env.logging_flag = True
             env.h_ceiling = 2.5 # [m]
@@ -324,8 +326,7 @@ if __name__ == '__main__':
                 ## RUN TRIAL
                 env.RL_Publish() # Publish data to rl_data topic
                 runTrial(vx_d,vz_d)
-                env.runComplete_flag = False
-                env.RL_Publish()
+
 
             except: ## IF SIM EXCEPTION RAISED THEN CONTINUE BACK TO TRY BLOCK UNTIL SUCCESSFUL COMPLETION
                 continue
