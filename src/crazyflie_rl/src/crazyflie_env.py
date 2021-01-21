@@ -155,22 +155,22 @@ class CrazyflieEnv:
         self.MS = np.round(self.MS,0)
 
         self.FM = np.asarray(ctrl_msg.FM)
-        self.FM = np.round(self.FM,2)
+        self.FM = np.round(self.FM,3)
 
         self.FM_flip = np.asarray(ctrl_msg.FM_flip)
-        self.FM_flip = np.round(self.FM_flip,2)
+        self.FM_flip = np.round(self.FM_flip,3)
 
         
         self.flip_flag = ctrl_msg.flip_flag
-        self.RREV_tr = np.round(ctrl_msg.RREV_tr,2)
-        self.OF_y_tr = np.round(ctrl_msg.OF_y_tr,2)
+        self.RREV_tr = np.round(ctrl_msg.RREV_tr,3)
+        self.OF_y_tr = np.round(ctrl_msg.OF_y_tr,3)
 
     def global_stateCallback(self,gs_msg): ## Callback to parse state data received from gazebo_communication node
         
         ## SET TIME VALUE FROM TOPIC
         t_temp = gs_msg.header.stamp.secs
         ns_temp = gs_msg.header.stamp.nsecs
-        self.t = t_temp+ns_temp*1e-9 # (seconds + nanoseconds)
+        self.t = np.round(t_temp+ns_temp*1e-9,3) # (seconds + nanoseconds)
         
         ## SIMPLIFY STATE VALUES FROM TOPIC
         global_pos = gs_msg.global_pose.position
@@ -182,19 +182,21 @@ class CrazyflieEnv:
             global_quat.w = 1
 
         ## SET STATE VALUES FROM TOPIC
-        self.position = [global_pos.x,global_pos.y,global_pos.z]
-        self.orientation_q = [global_quat.w,global_quat.x,global_quat.y,global_quat.z]
-        self.velocity = [global_vel.x,global_vel.y,global_vel.z]
-        self.omega = [global_omega.x,global_omega.y,global_omega.z]
+        
+        self.position = np.round([global_pos.x,global_pos.y,global_pos.z],3)
+        self.orientation_q = np.round([global_quat.w,global_quat.x,global_quat.y,global_quat.z],3)
+        self.velocity = np.round([global_vel.x,global_vel.y,global_vel.z],3)
+        self.omega = np.round([global_omega.x,global_omega.y,global_omega.z],3)
 
 
         ## COMBINE INTO COMPREHENSIVE LIST
-        self.state_current = [self.t] + self.position + self.orientation_q +self.velocity + self.omega ## t (float) -> [t] (list)
+        self.state_current = np.concatenate([np.atleast_1d(self.t),self.position,self.orientation_q,self.velocity,self.omega])
+        
 
         ## SET VISUAL CUE SENSOR VALUES FROM TOPIC
-        self.RREV = gs_msg.RREV
-        self.OF_x = gs_msg.OF_x
-        self.OF_y = gs_msg.OF_y
+        self.RREV = round(gs_msg.RREV,3)
+        self.OF_x = round(gs_msg.OF_x,3)
+        self.OF_y = round(gs_msg.OF_y,3)
 
     def contactCallback(self,msg_arr): ## Callback to indicate which pads have collided with ceiling
 
@@ -436,12 +438,12 @@ class CrazyflieEnv:
             state_writer.writerow([
                 self.k_ep,self.k_run,
                 self.alpha_mu,self.alpha_sigma, # alpha_mu,alpha_sig
-                self.mu,self.sigma,self.policy, # mu,sigma,policy
+                np.round(self.mu,2),np.round(self.sigma,2),np.round(self.policy,2), # mu,sigma,policy
                 "","","","", # t,x,y,z
                 "", "", "", "", # qx,qy,qz,qw
-                self.vel_d[0],self.vel_d[1],self.vel_d[2], # vx,vy,vz
+                np.round(self.vel_d[0],2),np.round(self.vel_d[1],2),np.round(self.vel_d[2],2), # vx,vy,vz
                 "","","", # wx,wy,wz
-                self.gamma,self.reward,"",sum(self.pad_contacts),self.n_rollouts, # gamma, reward, flip_flag, num leg contacts, n_rollout
+                np.round(self.gamma,2),np.round(self.reward,2),"",sum(self.pad_contacts),self.n_rollouts, # gamma, reward, flip_flag, num leg contacts, n_rollout
                 self.RREV_tr,"",self.OF_y_tr, # RREV, OF_x, OF_y
                 "","","","",
                 "",self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # F_thrust,Mx,My,Mz 

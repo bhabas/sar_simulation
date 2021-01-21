@@ -87,6 +87,7 @@ def runTraining(vx_d,vz_d):
             z_prev = 0;
             vy_d = 0    # [m/s]
             env.vel_d = [vx_d,vy_d,vz_d] # [m/s]
+            t_step = 0
 
 
             ## INIT RUN FLAGS
@@ -126,7 +127,7 @@ def runTraining(vx_d,vz_d):
             while True:
                 
                 ## DEFINE CURRENT STATE
-                state = np.array(env.state_current)
+                state = env.state_current
                 FM = np.array(env.FM) # Motor thrust and Moments
                 
                 position = state[1:4] # [x,y,z]
@@ -173,13 +174,14 @@ def runTraining(vx_d,vz_d):
                 if state_history is None:
                     state_history = state 
                     FM_history = FM
-                else: # Append state_history columns with current state vector 
-                    state_history = np.append(state_history, state, axis=1)
-                    FM_history = np.append(FM_history,FM,axis=1)
-                    env.RL_Publish()
-                    env.createCSV_flag = False
+                else: # Append state_history columns with current state vector
+                    if t_step%10==0: 
+                        state_history = np.append(state_history, state, axis=1)
+                        FM_history = np.append(FM_history,FM,axis=1)
+                        env.RL_Publish()
+                        env.createCSV_flag = False
 
-                    env.append_csv(filepath)
+                        env.append_csv(filepath)
 
                     
 
@@ -259,6 +261,8 @@ def runTraining(vx_d,vz_d):
                     ## I have no idea what's going on there but it may or may not have an effect?
                     ## I've got no idea...
                     break
+
+                t_step += 1
 
                 
             
