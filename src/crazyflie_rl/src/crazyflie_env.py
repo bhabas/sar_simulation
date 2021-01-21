@@ -24,7 +24,7 @@ class CrazyflieEnv:
         self.state_current = np.zeros(14)
         self.isRunning = True
         self.username = getpass.getuser()
-        self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/src/ros_nodes/data_logging_pkg/log"
+        self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log"
         
         ## INIT ROS NODE FOR ENVIRONMENT 
         rospy.init_node("crazyflie_env_node") 
@@ -432,7 +432,7 @@ class CrazyflieEnv:
             state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             state_writer.writerow([
                 self.k_ep,self.k_run,
-                self.alpha_mu,self.alpha_sigma, # alpha_mu,alpha_sig
+                np.round(self.alpha_mu,2),np.round(self.alpha_sigma,2), # alpha_mu,alpha_sig
                 np.round(self.mu,2),np.round(self.sigma,2),np.round(self.policy,2), # mu,sigma,policy
                 "","","","", # t,x,y,z
                 "", "", "", "", # qx,qy,qz,qw

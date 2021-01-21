@@ -20,7 +20,7 @@ def runTrial(vx_d,vz_d):
     # ============================
     ##          Episode         
     # ============================
-    for k_ep in range(0,6):
+    for k_ep in range(0,4):
 
         ## UPDATE EPISODE NUMBER
         env.k_ep = k_ep
@@ -173,12 +173,13 @@ def runTrial(vx_d,vz_d):
                 if state_history is None:
                     state_history = state 
                     FM_history = FM
-                else: # Append state_history columns with current state vector 
-                    if t_step%3 == 0:
+                else: # Append state_history columns with current state vector
+                    if t_step%10==0: 
                         state_history = np.append(state_history, state, axis=1)
                         FM_history = np.append(FM_history,FM,axis=1)
                         env.RL_Publish()
-                    env.createCSV_flag = False
+
+                        env.append_csv(filepath)
 
 
                 # ============================
@@ -247,6 +248,9 @@ def runTrial(vx_d,vz_d):
                     print("# of Leg contacts: %i" %(sum(env.pad_contacts)))
                     print("!------------------------End Run------------------------! \n")   
 
+                    env.append_IC(filepath)
+                    env.append_csv_blank(filepath)
+
                     env.step('stop')
                     env.reset_pos()
                     ## There is a weird delay where it sometime won't publish ctrl_cmds until the next command is executed
@@ -295,7 +299,7 @@ if __name__ == '__main__':
             print("Trials are over")
             break
 
-        for trial_num in range(6):
+        for trial_num in range(2):
     
 
             ## LEARNING RATES
@@ -322,8 +326,9 @@ if __name__ == '__main__':
             ## INITIAL LOGGING DATA
             env.agent_name = agent.agent_type
             env.trial_name = f"{env.agent_name}--Vz_{vz_d}--Vx_{vx_d}--trial_{trial_num}"
-            env.createCSV_flag = True # True flag will start data logging
             
+            filepath = f"{env.loggingPath}/{env.trial_name}.csv"
+            env.create_csv(filepath)
 
             try:
                 ## RUN TRIAL
