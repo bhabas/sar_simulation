@@ -25,6 +25,7 @@ class CrazyflieEnv:
         self.isRunning = True
         self.username = getpass.getuser()
         self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log"
+        self.filepath = ""
         
         ## INIT ROS NODE FOR ENVIRONMENT 
         rospy.init_node("crazyflie_env_node") 

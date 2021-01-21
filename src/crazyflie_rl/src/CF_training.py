@@ -16,12 +16,13 @@ os.system("clear")
 np.set_printoptions(precision=2, suppress=True)
 
 
-def runTraining(vx_d,vz_d):
+def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
+    env.create_csv(env.filepath)
     
     # ============================
     ##          Episode         
     # ============================
-    for k_ep in range(0,500):
+    for k_ep in range(0,k_epMax):
 
         ## UPDATE EPISODE NUMBER
         env.k_ep = k_ep
@@ -180,7 +181,7 @@ def runTraining(vx_d,vz_d):
                         FM_history = np.append(FM_history,FM,axis=1)
                         env.RL_Publish()
 
-                        env.append_csv(filepath)
+                        env.append_csv(env.filepath)
 
                     
 
@@ -251,8 +252,8 @@ def runTraining(vx_d,vz_d):
                     print("# of Leg contacts: %i" %(sum(env.pad_contacts)))
                     print("!------------------------End Run------------------------! \n")   
 
-                    env.append_IC(filepath)
-                    env.append_csv_blank(filepath)
+                    env.append_IC(env.filepath)
+                    env.append_csv_blank(env.filepath)
 
                     env.step('stop')
                     env.reset_pos()
@@ -329,16 +330,13 @@ if __name__ == '__main__':
     trial_num = 1
     env.agent_name = agent.agent_type
     env.trial_name = f"{env.agent_name}--Vz_{vz_d}--Vx_{vx_d}--trial_{trial_num}"
-
-
-    filepath = f"{env.loggingPath}/{env.trial_name}.csv"
-    env.create_csv(filepath)
-    
+    env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
+       
 
 
     ## RUN TRIAL
     env.RL_Publish() # Publish data to rl_data topic
-    runTraining(vx_d,vz_d)
+    runTraining(env,agent,vx_d,vz_d)
  
     
 
