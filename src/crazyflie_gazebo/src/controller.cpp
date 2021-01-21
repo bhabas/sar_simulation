@@ -78,15 +78,15 @@ void Controller::Load()
 
 
 
-void Controller::global_stateCallback(const gazebo_communication_pkg::GlobalState::ConstPtr &msg){
+void Controller::global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
 
     // SIMPLIFY STATE VALUES FROM TOPIC
     // Follow msg names from message details - "rqt -s rqt_msg" 
     float _t = msg->header.stamp.toSec();
-    const geometry_msgs::Point position = msg->global_pose.position; 
-    const geometry_msgs::Quaternion quaternion = msg->global_pose.orientation;
-    const geometry_msgs::Vector3 velocity = msg->global_twist.linear;
-    const geometry_msgs::Vector3 omega = msg->global_twist.angular;
+    const geometry_msgs::Point position = msg->pose.pose.position; 
+    const geometry_msgs::Quaternion quaternion = msg->pose.pose.orientation;
+    const geometry_msgs::Vector3 velocity = msg->twist.twist.linear;
+    const geometry_msgs::Vector3 omega = msg->twist.twist.angular;
 
     // SET STATE VALUES INTO CLASS STATE VARIABLES
     _pos << position.x, position.y, position.z;
@@ -96,9 +96,13 @@ void Controller::global_stateCallback(const gazebo_communication_pkg::GlobalStat
 
 
     // SET SENSOR VALUES INTO CLASS VARIABLES
-    _RREV = msg->RREV;
-    _OF_x = msg->OF_x;
-    _OF_y = msg->OF_y;
+    // _RREV = msg->RREV;
+    // _OF_x = msg->OF_x;
+    // _OF_y = msg->OF_y;
+
+    _RREV = velocity.z/2.5;
+    _OF_x = -velocity.y/2.5;
+    _OF_y = -velocity.x/2.5;
     
 
 }
@@ -321,7 +325,7 @@ void Controller::controlThread()
 
     // =========== ROS Definitions =========== //
     crazyflie_gazebo::CtrlData ctrl_msg;
-    ros::Rate rate(800);
+    ros::Rate rate(500);
 
     while(_isRunning)
     {

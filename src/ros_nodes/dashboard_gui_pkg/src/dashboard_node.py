@@ -4,6 +4,7 @@ import numpy as np
 from gazebo_communication_pkg.msg import GlobalState
 from crazyflie_rl.msg import RLData
 from crazyflie_gazebo.msg import CtrlData
+from nav_msgs.msg import Odometry
 
 class DashboardNode:
     def __init__(self):
@@ -20,7 +21,7 @@ class DashboardNode:
         
 
         ## INITIALIZE GLOBAL STATE SUBSCRIBER 
-        rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
+        rospy.Subscriber('/odom',Odometry,self.global_stateCallback)
 
         ## INITIAILIZE REWARD SUBSCRIBER 
         rospy.Subscriber('/rl_data',RLData,self.rewardCallback)
@@ -66,10 +67,10 @@ class DashboardNode:
         t = t_temp+ns_temp*1e-9 # (seconds + nanoseconds)
         
         ## SIMPLIFY STATE VALUES FROM TOPIC
-        global_pos = gs_msg.global_pose.position
-        global_quat = gs_msg.global_pose.orientation
-        global_vel = gs_msg.global_twist.linear
-        global_omega = gs_msg.global_twist.angular
+        global_pos = gs_msg.pose.pose.position
+        global_quat = gs_msg.pose.pose.orientation
+        global_vel = gs_msg.twist.twist.linear
+        global_omega = gs_msg.twist.twist.angular
         
         if global_quat.w == 0: # If zero at startup set quat.w to one to prevent errors
             global_quat.w = 1

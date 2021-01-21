@@ -7,6 +7,7 @@
 #include "crazyflie_gazebo/CtrlData.h"
 #include "gazebo_communication_pkg/GlobalState.h"
 #include "crazyflie_rl/RLCmd.h"
+#include "nav_msgs/Odometry.h"
 
 
 // Socket Includes
@@ -28,7 +29,7 @@ class Controller
         Controller(ros::NodeHandle *nh){
             ctrl_Publisher = nh->advertise<crazyflie_gazebo::CtrlData>("/ctrl_data",10);
 
-            globalState_Subscriber = nh->subscribe("/global_state",1000,&Controller::global_stateCallback,this);
+            globalState_Subscriber = nh->subscribe("/odom",1000,&Controller::global_stateCallback,this);
             RLCmd_Subscriber = nh->subscribe("/rl_ctrl",10,&Controller::RLCmd_Callback,this);
 
             
@@ -56,10 +57,10 @@ class Controller
             _omega_d << 0,0,0;
 
             // SET DEFAULT CONTROLLER GAINS
-            _kp_x << 0.1,0.1,0.20;
-            _kd_x << 0.08,0.08,0.08;
-            _kp_R << 0.05,0.05,0.05;
-            _kd_R << 0.005,0.005,0.005;
+            _kp_x << 0.7,0.7,0.7;
+            _kd_x << 0.25,0.25,0.25;
+            _kp_R << 0.004,0.004,0.004;
+            _kd_R << 0.0008,0.0008,0.0008;
 
             // SET DEFAULT POLICY VALUES
             _RREV_thr = 0.0;
@@ -73,7 +74,7 @@ class Controller
         void Load();
         void recvThread_RL();
         void controlThread();
-        void global_stateCallback(const gazebo_communication_pkg::GlobalState::ConstPtr &msg);
+        void global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg);
         void RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg);
 
     private:
