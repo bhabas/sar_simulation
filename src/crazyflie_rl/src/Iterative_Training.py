@@ -20,7 +20,7 @@ def runTrial(vx_d,vz_d):
     # ============================
     ##          Episode         
     # ============================
-    for k_ep in range(0,2):
+    for k_ep in range(0,6):
 
         ## UPDATE EPISODE NUMBER
         env.k_ep = k_ep
@@ -83,8 +83,9 @@ def runTrial(vx_d,vz_d):
             env.pad_contacts = [False,False,False,False] # Reset pad contacts
 
             z_max = 0   # Initialize max height to be zero before run [m]
-            z_prev = 0;
+            z_prev = 0
             vy_d = 0    # [m/s]
+            t_step = 0
             env.vel_d = [vx_d,vy_d,vz_d] # [m/s]
 
 
@@ -173,9 +174,10 @@ def runTrial(vx_d,vz_d):
                     state_history = state 
                     FM_history = FM
                 else: # Append state_history columns with current state vector 
-                    state_history = np.append(state_history, state, axis=1)
-                    FM_history = np.append(FM_history,FM,axis=1)
-                    env.RL_Publish()
+                    if t_step%3 == 0:
+                        state_history = np.append(state_history, state, axis=1)
+                        FM_history = np.append(FM_history,FM,axis=1)
+                        env.RL_Publish()
                     env.createCSV_flag = False
 
 
@@ -252,6 +254,8 @@ def runTrial(vx_d,vz_d):
                     ## I've got no idea...
                     break
 
+                t_step += 1
+
                 
             
             ## =======  RUN COMPLETED  ======= ##
@@ -263,8 +267,7 @@ def runTrial(vx_d,vz_d):
                 env.reward = reward[k_run,0]
                 env.reward_avg = reward[np.nonzero(reward)].mean()
                 env.RL_Publish()
-                env.runComplete_flag = False
-                env.RL_Publish()
+
                 k_run += 1 # Move on to next run
 
             
@@ -306,7 +309,7 @@ if __name__ == '__main__':
             
 
             ## SIM PARAMETERS
-            env.n_rollouts = 3
+            env.n_rollouts = 4
             env.gamma = 0.95
             env.logging_flag = True
             env.h_ceiling = 2.5 # [m]

@@ -14,6 +14,7 @@ class DataLoggingNode:
     def __init__(self):
         print("[STARTING] DataLogging node is starting...")
         rospy.init_node("dataLogging_node")
+        rospy.wait_for_message("/rl_data",RLData)
 
         self.t_step = 0
         self.trial_name = ''
@@ -32,6 +33,23 @@ class DataLoggingNode:
         
 
         self.username = getpass.getuser()
+
+
+
+
+        
+
+
+    
+    def dataLogger(self):
+        # rospy.wait_for_message("/rl_data",RLData)
+        time.sleep(1)
+        while not rospy.is_shutdown():
+            if self.t_step%2 == 0 and self.runComplete_flag==False: # Slow down recording by [x5]
+                self.append_csv()
+
+            
+
         
 
     def rl_dataCallback(self,rl_msg):
@@ -76,6 +94,18 @@ class DataLoggingNode:
         self.reward = np.round(rl_msg.reward,3)
 
         self.path =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/src/ros_nodes/data_logging_pkg/log/{self.trial_name}.csv"
+
+
+        if self.trial_name_temp != self.trial_name:
+            self.create_csv()
+            self.trial_name_temp = self.trial_name
+
+        if rl_msg.runComplete_flag:
+            self.append_IC()
+            self.append_csv_blank()
+
+        self.t_step += 1
+  
 
 
     def global_stateCallback(self,gs_msg):
@@ -190,28 +220,5 @@ class DataLoggingNode:
 
 if __name__ == "__main__":
     DL = DataLoggingNode()
-    # DL.runLogger()
-    
-    rospy.wait_for_message("/rl_data",RLData)
-    t_step = 0
+    DL.dataLogger()
 
-
-
-    while not rospy.is_shutdown():
-
-        # print(DL.StateSub.get_num_connections())
-
-        if DL.trial_name_temp != DL.trial_name:
-            DL.create_csv()
-            DL.trial_name_temp = DL.trial_name
-
-        if t_step%3 == 0: # Slow down recording by [x5]
-            DL.append_csv()
-
-        if DL.runComplete_flag == True:
-            DL.append_IC()
-            DL.append_csv_blank()
-        
-
-
-        t_step += 1
