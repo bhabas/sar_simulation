@@ -136,6 +136,11 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             _kp_Rf = 1;
             _kd_Rf = 1;
 
+            _kp_x << 0.7,0.7,0.7;
+            _kd_x << 0.25,0.25,0.25;
+            _kp_R << 0.004,0.004,0.004;
+            _kd_R << 0.0008,0.0008,0.0008;
+
             
             _motorstop_flag = false;
             _Moment_flag = false;
@@ -165,7 +170,12 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             _motorstop_flag = (bool)cmd_flag;
             break;
 
-        case 6: // Edit Gains [Needs Reimplemented]
+        case 6: // Edit Gains 
+
+            _kp_x.fill(cmd_vals(0)); 
+            _kd_x.fill(cmd_vals(1)); 
+            _kp_R.fill(cmd_vals(2)); 
+            _kd_R.fill(cmd_flag); 
             break;
 
         case 7: // Execute Moment-Based Flip
