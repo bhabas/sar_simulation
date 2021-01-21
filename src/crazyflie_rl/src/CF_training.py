@@ -66,7 +66,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
             
             ## RESET TO INITIAL STATE
             env.step('home') # Reset control vals and functionality to default vals
-            time.sleep(0.5) # Time for CF to settle
+            time.sleep(2) # Time for CF to settle
             
 
             ## INITIALIZE POLICY PARAMETERS: 
@@ -257,6 +257,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
 
                     env.step('stop')
                     env.reset_pos()
+                   
                     ## There is a weird delay where it sometime won't publish ctrl_cmds until the next command is executed
                     ## I have no idea what's going on there but it may or may not have an effect?
                     ## I've got no idea...

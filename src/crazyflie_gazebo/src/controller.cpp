@@ -100,9 +100,10 @@ void Controller::global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
     // _OF_x = msg->OF_x;
     // _OF_y = msg->OF_y;
 
-    _RREV = velocity.z/2.5;
-    _OF_x = -velocity.y/2.5;
-    _OF_y = -velocity.x/2.5;
+    double d = 2.5-position.z; // h_ceiling - height
+    _RREV = velocity.z/d;
+    _OF_x = -velocity.y/d;
+    _OF_y = -velocity.x/d;
     
 
 }
@@ -136,10 +137,10 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             _kp_Rf = 1;
             _kd_Rf = 1;
 
-            _kp_x << 0.7,0.7,0.7;
-            _kd_x << 0.25,0.25,0.25;
-            _kp_R << 0.004,0.004,0.004;
-            _kd_R << 0.0008,0.0008,0.0008;
+            _kp_x = _kp_x_D;
+            _kd_x = _kd_x_D;
+            _kp_R = _kp_R_D;
+            _kd_R = _kd_R_D;
 
             
             _motorstop_flag = false;

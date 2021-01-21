@@ -15,6 +15,7 @@ from std_msgs.msg import Header
 from rosgraph_msgs.msg import Clock
 from gazebo_msgs.msg import ModelState,ContactsState
 from gazebo_msgs.srv import SetModelState
+from nav_msgs.msg import Odometry
 
 
 
@@ -36,7 +37,7 @@ class CrazyflieEnv:
         
 
         ## INIT ROS SUBSCRIBERS 
-        self.state_Subscriber = rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
+        self.state_Subscriber = rospy.Subscriber('/odom',Odometry,self.global_stateCallback)
         self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)
         self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactCallback)
         self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
@@ -50,7 +51,7 @@ class CrazyflieEnv:
         ## INIT GAZEBO TIMEOUT THREAD
         if gazeboTimeout==True:
             self.timeoutThread = Thread(target=self.timeoutSub)
-            self.timeoutThread.start()
+            # self.timeoutThread.start()
         
 
         ## INIT NAME OF MODEL BEING USED
@@ -170,10 +171,10 @@ class CrazyflieEnv:
         self.t = np.round(t_temp+ns_temp*1e-9,3) # (seconds + nanoseconds)
         
         ## SIMPLIFY STATE VALUES FROM TOPIC
-        global_pos = gs_msg.global_pose.position
-        global_quat = gs_msg.global_pose.orientation
-        global_vel = gs_msg.global_twist.linear
-        global_omega = gs_msg.global_twist.angular
+        global_pos = gs_msg.pose.pose.position
+        global_quat = gs_msg.pose.pose.orientation
+        global_vel = gs_msg.twist.twist.linear
+        global_omega = gs_msg.twist.twist.angular
         
         if global_quat.w == 0: # If zero at startup set quat.w to one to prevent errors
             global_quat.w = 1
@@ -191,9 +192,10 @@ class CrazyflieEnv:
         
 
         ## SET VISUAL CUE SENSOR VALUES FROM TOPIC
-        self.RREV = round(gs_msg.RREV,3)
-        self.OF_x = round(gs_msg.OF_x,3)
-        self.OF_y = round(gs_msg.OF_y,3)
+        d = self.h_ceiling - self.position[2]
+        self.RREV = round(self.velocity[2]/d,3)
+        self.OF_x = round(-self.velocity[1]/d,3)
+        self.OF_y = round(-self.velocity[0]/d,3)
 
     def contactCallback(self,msg_arr): ## Callback to indicate which pads have collided with ceiling
 
@@ -257,14 +259,16 @@ class CrazyflieEnv:
         print("[STARTING] Starting Gazebo Process...")
 
         print("[STARTING] Starting Controller Process...")
-        self.controller_p = subprocess.Popen( # Controller Process
-            "gnome-terminal --disable-factory --geometry 70x41 -- rosrun crazyflie_gazebo controller", 
-            close_fds=True, preexec_fn=os.setsid, shell=True)
+        
 
         self.gazebo_p = subprocess.Popen( # Gazebo Process
             "gnome-terminal --disable-factory  -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_gazebo.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         time.sleep(5)
+
+        self.controller_p = subprocess.Popen( # Controller Process
+            "gnome-terminal --disable-factory --geometry 70x41 -- rosrun crazyflie_gazebo controller", 
+            close_fds=True, preexec_fn=os.setsid, shell=True)
 
 
     def launch_dashboard(self):
@@ -320,7 +324,8 @@ class CrazyflieEnv:
         rospy.wait_for_service('/gazebo/set_model_state')
         set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         set_state_srv(state_msg)
-        time.sleep(0.01) # Give it time for controller to receive new states
+        # time.sleep(0.1) # Give it time for controller to receive new states
+        rospy.wait_for_service('/gazebo/get_link_state')
 
         ## RESET TO HOME
         self.step('home')
@@ -466,7 +471,10 @@ class CrazyflieEnv:
         while True:
             # Converts input number into action name
             cmd_dict = {0:'home',1:'pos',2:'vel',3:'att',4:'omega',5:'stop',6:'gains'}
-            val = float(input("\nCmd Type (0:home,1:pos,2:vel,3:att,4:omega,5:stop,6:gains): "))
+            try:
+                val = float(input("\nCmd Type (0:home,1:pos,2:vel,3:att,4:omega,5:stop,6:gains): "))
+            except:
+                continue
             action = cmd_dict[val]
 
             if action=='home' or action == 'stop': # Execute home or stop action

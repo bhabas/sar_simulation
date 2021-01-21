@@ -57,10 +57,19 @@ class Controller
             _omega_d << 0,0,0;
 
             // SET DEFAULT CONTROLLER GAINS
-            _kp_x << 0.7,0.7,0.7;
-            _kd_x << 0.25,0.25,0.25;
-            _kp_R << 0.004,0.004,0.004;
-            _kd_R << 0.0008,0.0008,0.0008;
+
+
+            _kp_x_D.fill(0.5);
+            _kd_x_D.fill(0.15);
+            _kp_R_D.fill(0.015);
+            _kd_R_D.fill(0.0012);
+
+            _kp_x = _kp_x_D;
+            _kd_x = _kd_x_D;
+            _kp_R = _kp_R_D;
+            _kd_R = _kd_R_D;
+
+
 
             // SET DEFAULT POLICY VALUES
             _RREV_thr = 0.0;
@@ -113,6 +122,11 @@ class Controller
         Eigen::Vector3d _kd_x; // Pos. derivative Gain
         Eigen::Vector3d _kp_R; // Rot. Gain
         Eigen::Vector3d _kd_R; // Rot. derivative Gain
+
+        Eigen::Vector3d _kp_x_D; // Pos. Gain
+        Eigen::Vector3d _kd_x_D; // Pos. derivative Gain
+        Eigen::Vector3d _kp_R_D; // Rot. Gain
+        Eigen::Vector3d _kd_R_D; // Rot. derivative Gain
 
 
         double _RREV;
