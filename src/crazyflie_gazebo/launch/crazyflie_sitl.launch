@@ -37,7 +37,7 @@
     <!-- Gazebo model -->
     <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" args="-sdf -file $(arg sdf) -model $(arg vehicle) -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
     <node name="global_state_pub" pkg="gazebo_communication_pkg" type="global_state_pub.py" respawn="true" />
-    <node name="controller_node" pkg="crazyflie_gazebo" type="controller" respawn="true" launch-prefix="gnome-terminal --disable-factory --geometry 70x36 --"/>
-    <node name="dataLogging_node" pkg="data_logging_pkg" type="dataLogging_node.py" respawn="true" />
+    
+    <!-- <node name="dataLogging_node" pkg="data_logging_pkg" type="dataLogging_node.py" respawn="true" /> -->
     
 </launch>

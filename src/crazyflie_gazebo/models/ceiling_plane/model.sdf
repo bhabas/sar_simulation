@@ -3,7 +3,7 @@
   <model name="ceiling_plane">
     <static>true</static>
     <link name="ceiling">
-      <pose frame=''>0 0 3.0 0 0 0</pose>
+      <pose frame=''>0 0 2.5 0 0 0</pose>
       <collision name="ceiling_collision">
         <geometry>
           <box>
@@ -36,16 +36,26 @@
           </box>
         </geometry>
         <material>
+          <lighting>1</lighting>
           <script>
-            <!-- <name>Gazebo/White</name> -->
-            
-            <!-- <name>Gazebo/CeilingTiled</name> -->
-            <!-- <uri>model://materials/scripts/Stripe.material</uri> -->
-            <uri>model://ceiling_plane/materials/scripts/Stripe.material</uri>
-            <name>Gazebo/Stripe</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Grey</name>
           </script>
         </material>
       </visual>
+      <sensor name='ceiling_contact_sensor' type='contact'>
+        <always_on>1</always_on>
+        <visualize>true</visualize>
+        <contact>
+          <collision>ceiling_collision</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <plugin name='contact_plugin' filename='libgazebo_ros_bumper.so'>
+          <bumperTopicName>ceiling_contact</bumperTopicName>
+          <frameName>ceiling</frameName>
+        </plugin>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+      </sensor>
     </link>
   </model>
 </sdf>

@@ -29,6 +29,7 @@ def global_state_publisher():
     header.frame_id='Gazebo_GlobalState'
 
     link_msg = GetLinkStateRequest() 
+    h_ceiling = 2.5
 
 
 
@@ -43,13 +44,20 @@ def global_state_publisher():
         state_msg.global_pose = result.link_state.pose
         state_msg.global_twist = result.link_state.twist
 
+        ## DEFINE STATE_MSG OPTICAL FLOW VALUES
+        # Note: These are based off of global velocities and break as soon as we go 3-D and introduce yaw rotations
+        #       Direct sensors will need to be implemented at some point
+        d = h_ceiling - result.link_state.pose.position.z
+    
+        state_msg.OF_x = -result.link_state.twist.linear.y/d # OF_x = -Vy/d
+        state_msg.OF_y = -result.link_state.twist.linear.x/d # OF_y = -Vx/d
+        state_msg.RREV =  result.link_state.twist.linear.z/d # RREV =  Vz/d
+
 
         pub.publish(state_msg)
         rate.sleep() # Dynamic sleep to match Rate [100Hz]
 
 if __name__ == '__main__':
-    try:
-        global_state_publisher()
-    except rospy.ROSInterruptException:
-        pass
+    global_state_publisher()
+    
 

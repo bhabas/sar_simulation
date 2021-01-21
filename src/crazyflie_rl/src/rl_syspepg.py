@@ -5,6 +5,7 @@ from scipy.spatial.transform import Rotation
 import matplotlib.pyplot as plt
 from math import asin,pi,ceil,floor
 
+
 # Parent Evolutionary Strategy Class
 # pepg and cma inherit common methods 
 
@@ -16,77 +17,122 @@ class ES:
         self.gamma, self.n_rollout = gamma, n_rollout
 
     
-    def calculate_reward2(self,state,h_ceiling):
-        h_delta = 0.02 
-        e3 = np.array([0,0,1])
-        
-        ## R1 Calc
-        z_hist = state[2,:]
-        r1 = np.max(z_hist/h_ceiling)*10
+    def calcReward_effortMinimization(self,state_hist,FM_hist,h_ceiling,pad_contacts):
 
-        ## R2 Calc
-        qw,qx,qy,qz = state[3:7,:]
-        quat_hist = np.c_[qx,qy,qz,qw] # Create an array of quat objects in [qx,qy,qz,qw] format
-
-        r2_vec = np.zeros_like(qw)
-        for ii,quat in enumerate(quat_hist):
-            R = Rotation.from_quat(quat)
-            b3 = R.as_matrix()[:,2]                 # Body Z-axis in global frame
-            r2_vec[ii] = 0.5*np.dot(b3,-e3) + 0.5   # Scale orientation reward to be from [0-1]
+        ## DEFINE STATES
+        t_hist = state_hist[0,:]
+        wy_hist = state_hist[12,:]
+        My_hist = FM_hist[2,:]
+        z_hist = state_hist[3,:]
 
 
-        ## R3 Calc
-        omega_x,omega_y,omega_z = state[10:13,:]
-        r3_vec = np.zeros_like(omega_y)
-        for ii,omega_y in enumerate(omega_y):
-            r3_vec[ii] = np.exp(-1/4*np.abs(omega_y))   # e^-1/4*|omega_y|
+        ## INIT INTEGRATION VARIABLES
+        pitch_hist = np.zeros_like(t_hist)
+        pitch_sum = 0
+        W_My = 0 
+        prev = t_hist[0]
 
+        ## INTEGRATE FOR W_My AND FINAL PITCH ANGLE
+        # Integrate omega_y over time to get full rotation estimate
+        # This accounts for multiple revolutions that euler angles can't
+        for ii,wy in enumerate(wy_hist):
+            pitch_sum += wy*(180/np.pi)*(t_hist[ii]-prev) # [deg]
+            pitch_hist[ii] = pitch_sum # [deg]
 
-        r23 = r2_vec*10 + r3_vec*5
-        r_prev = 0
-        r_cum = np.zeros_like(omega_x)
-        for ii,r in enumerate(r23):
-            r_cum[ii] = r + 0.01*(r-r_prev)
-            r_prev = r
-
-        reward = r1 + r_cum[-1]
-        return reward
-
-
-    def calculate_reward(self, state_hist, h_ceiling): # state_hist is size 14 x timesteps
-        # should be the same for each algorithm
+            W_My += My_hist[ii]*wy*(t_hist[ii]-prev) # [N*mm]
+            prev = t_hist[ii]
 
 
 
-        z = state_hist[3,:]
-        quat_xyz = state_hist[5:8,:]
-        quat_w = state_hist[4,:][np.newaxis,:]
-        # Rearrange quat as scalar-last format used in scipy Rotation
-        # [qw,qx,qy,qz]' => quat = [qx,qy,qz,qw]'
-        quat = np.append(quat_xyz, quat_w, axis=0)  # rearrange quat as scalar-last format used in scipy Rotation
-        r1 = z / h_ceiling # reward from hieght scaled 0-1
-
-        r2 = np.zeros_like(r1)
-
-        for k_quat in range(quat.shape[-1]):
-            R = Rotation.from_quat(quat[:,k_quat])
-            b3 = R.as_matrix()[:,2] # body z-axis
-            r2[k_quat] = 0.5*(np.dot(b3, np.array([0,0,-1]))) + 0.5 # reward from orientation scaled 0-1
-
-        # multiply elements of r1 and r2 for total reward at each step
-        r = np.multiply(r1,r2)
-        r_cum = np.zeros_like(r)
-
-        temp = 0
-        for k_r in range(0,len(r)):
-            temp = r[k_r] + self.gamma*temp   # sum of r
-            r_cum[k_r] = temp
-
-        if r_cum.size > 0:
-            return np.around(r_cum[-1],2) # float(z[-1]>1.2)*cum
-
+        ## r_contact Calc
+        num_contacts = np.sum(pad_contacts)
+        if num_contacts == 3 or num_contacts == 4:
+            r_contact = 7
+        elif num_contacts == 2:
+            r_contact = 2
+        elif num_contacts == 1:
+            r_contact = 1
         else:
-            return np.nan
+            r_contact = 0
+
+       
+        
+        ## r_theta Calc
+        if -170 < np.min(pitch_hist) <= 0:
+            r_theta = 5*(-1/170*np.min(pitch_hist))      
+        elif -195 <= np.min(pitch_hist) <= -170:
+            r_theta = 5
+        else:
+            r_theta = 0
+        
+
+        ## r_W Calc
+        r_W = 10*np.exp(-W_My/2.0)
+
+        ## r_height Calc
+        r_h = np.max(z_hist/h_ceiling)*10
+        
+
+        
+        R = r_W*(r_contact+r_theta)*r_h + 0.001
+        return R
+    
+
+
+    def calcReward_pureLanding(self,state_hist,h_ceiling,pad_contacts): # state_hist is size 14 x timesteps
+        ## DEFINE STATES
+        t_hist = state_hist[0,:]
+        wy_hist = state_hist[12,:]
+        z_hist = state_hist[3,:]
+
+
+        ## INIT INTEGRATION VARIABLES
+        pitch_hist = np.zeros_like(t_hist)
+        pitch_sum = 0
+        prev = t_hist[0]
+
+        ## INTEGRATE FOR W_My AND FINAL PITCH ANGLE
+        # Integrate omega_y over time to get full rotation estimate
+        # This accounts for multiple revolutions that euler angles can't
+        for ii,wy in enumerate(wy_hist):
+            pitch_sum += wy*(180/np.pi)*(t_hist[ii]-prev) # [deg]
+            pitch_hist[ii] = pitch_sum # [deg]
+
+            prev = t_hist[ii]
+
+
+
+        ## r_contact Calc
+        num_contacts = np.sum(pad_contacts)
+        if num_contacts == 3 or num_contacts == 4:
+            r_contact = 7
+        elif num_contacts == 2:
+            r_contact = 2
+        elif num_contacts == 1:
+            r_contact = 1
+        else:
+            r_contact = 0
+
+       
+        
+        ## r_theta Calc
+        if -170 < np.min(pitch_hist) <= 0:
+            r_theta = 5*(-1/170*np.min(pitch_hist))      
+        elif -195 <= np.min(pitch_hist) <= -170:
+            r_theta = 5
+        else:
+            r_theta = 0
+        
+
+        
+
+        ## r_height Calc
+        r_h = np.max(z_hist/h_ceiling)*10
+        
+
+        
+        R = (r_contact+r_theta)*r_h + 0.001
+        return R
 
     def get_baseline(self, span):
         # should be the same
@@ -101,6 +147,7 @@ class rlsysPEPGAgent_reactive(ES):
     def __init__(self, alpha_mu, alpha_sigma, mu,sigma,gamma=0.95, n_rollouts = 6):
         self.gamma = gamma
         self.n_rollouts = n_rollouts
+        self.agent_type = 'SyS-PEPG_reactive'
 
         self.alpha_mu =  alpha_mu
         self.alpha_sigma = alpha_sigma
@@ -162,6 +209,8 @@ class rlsysPEPGAgent_reactive(ES):
 
 
 class rlsysPEPGAgent_adaptive(rlsysPEPGAgent_reactive):
+    def __init__(self):
+        self.agent_type = 'SyS-PEPG_adaptive'
     def train(self, theta, reward, epsilon):
         reward_avg = np.mean(reward)
         if len(self.reward_history == 1):

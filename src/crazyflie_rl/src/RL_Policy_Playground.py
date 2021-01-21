@@ -113,10 +113,8 @@ def runTrial():
             RREV_trigger = mu[0] # FoV expansion velocity [rad/s]
             G1 = mu[1]
             G2 = mu[2]
-            policy = np.array([RREV_trigger,G1,G2])
-            env.policy = policy.flatten().tolist()
-        
-            
+            env.policy = [RREV_trigger,G1,G2]
+            env.step('policy',env.policy,ctrl_flag=1) # Arm controller policy
             
             env.vel_d = [vx_d,vy_d,vz_d] # [m/s]
 
@@ -145,6 +143,8 @@ def runTrial():
             # ============================
             env.step('pos',ctrl_flag=0) # Turn off pos control
             env.step('vel',env.vel_d,ctrl_flag=1) # Set desired vel
+            env.step('sticky',ctrl_flag=1) # Enable sticky
+            env.launch_IC(vx_d,vz_d)
  
             
             
@@ -168,31 +168,6 @@ def runTrial():
                 RREV,OF_x,OF_y = vz/d, -vy/d, -vx/d # OF_x,y are mock optical flow vals assuming no body rotation
                 
 
-
-                
-                # ============================
-                ##    Pitch Criteria 
-                # ============================
-                if (RREV > RREV_trigger) and (env.flip_flag == False):
-                    start_time_pitch = env.getTime()
-            
-                    env.step('sticky',ctrl_flag=1)
-
-                    M_xd = 0.0
-                    M_yd = (G1*RREV - G2*abs(OF_y))*np.sign(OF_y)
-                    M_zd = 0.0
-
-                    env.M_d = [M_xd,M_yd,M_zd]
-
-                    print('----- pitch starts -----')
-                    print('vx=%.3f, vy=%.3f, vz=%.3f' %(vx,vy,vz))
-                    print('RREV=%.3f, OF_y=%.3f, OF_x=%.3f, M_yd=%.3f' %(RREV, OF_y, OF_x, M_yd) )   
-                    print("Pitch Time: %.3f" %start_time_pitch)
-
-                    ## Start rotation and mark rotation as triggered
-                    env.step('moment',env.M_d,ctrl_flag=1) # Set desired ang. vel 
-                    env.flip_flag = True
-
                 # ============================
                 ##      Record Keeping  
                 # ============================
@@ -212,15 +187,15 @@ def runTrial():
                 ##    Termination Criteria 
                 # ============================
 
-                # If time since triggered pitch exceeds [0.7s]   
-                if env.flip_flag and ((env.getTime()-start_time_pitch) > (0.7)):
-                    # I don't like this error formatting, feel free to improve on
-                    error_1 = "Rollout Completed: Pitch Timeout"
-                    error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch))
-                    print(error_1 + "\n" + error_2)
+                # # If time since triggered pitch exceeds [0.7s]   
+                # if env.flip_flag and ((env.getTime()-start_time_pitch) > (0.7)):
+                #     # I don't like this error formatting, feel free to improve on
+                #     error_1 = "Rollout Completed: Pitch Timeout"
+                #     error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch))
+                #     print(error_1 + "\n" + error_2)
 
-                    error_str = error_1 + error_2
-                    env.runComplete_flag = True
+                #     error_str = error_1 + error_2
+                #     env.runComplete_flag = True
 
                 # If position falls below max achieved height 
                 z_max = max(position[2],z_max)
@@ -230,6 +205,16 @@ def runTrial():
 
                     error_str  = error_1
                     env.runComplete_flag = True
+
+                # If time since run start exceeds [2.5s]
+                if (env.getTime() - start_time_rollout) > (3.0):
+                    error_1 = "Rollout Completed: Time Exceeded"
+                    error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
+                    print(error_1 + "\n" + error_2)
+
+                    error_str = error_1 + error_2
+                    env.runComplete_flag = True
+
         
                     
                 
@@ -261,7 +246,7 @@ def runTrial():
                    
                     
                     
-                    reward[k_run] = agent.calculate_reward(state_history,env.h_ceiling)
+                    reward[k_run] = agent.calcReward_pureLanding(state_history,env.h_ceiling)
                     env.reward = reward[k_run]
                     print("Reward = %.3f" %(reward[k_run]))
                     print("!------------------------End Run------------------------! \n")                    
@@ -319,7 +304,7 @@ if __name__ == '__main__':
 
     
     ## INITIAL CONDITIONS
-    env.agent = "EM_PEPG"
+    env.agent_name = "EM_PEPG"
     
     while True:
         start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))

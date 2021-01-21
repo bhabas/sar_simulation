@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='crazyflie_model_+'>
+  <model name='crazyflie_model_Wide-Short'>
     <link name='crazyflie_body'>
       <inertial>
         <mass>0.026</mass>
@@ -23,7 +23,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_model_+/meshes/crazyflie.dae</uri>
+            <uri>model://crazyflie_model_X/meshes/crazyflie.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -93,28 +93,28 @@
     </link>
     <link name='leg_1'>
       <inertial>
-        <mass>0.00017775</mass>
+        <mass>0.00086708</mass>
         <inertia>
-          <ixx>3.1388e-08</ixx>
+          <ixx>1.5311e-07</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>3.1388e-08</iyy>
+          <iyy>1.5311e-07</iyy>
           <iyz>0</iyz>
-          <izz>8.8876e-11</izz>
+          <izz>4.3354e-10</izz>
         </inertia>
-        <pose>0 0 -0.023 0 -0 0</pose>
+        <pose>0 0 -0.03465 0 -0 0</pose>
       </inertial>
-      <pose>0.0177 0 0.095 0 -0.786 0</pose>
+      <pose>0.0177 0.0177 0.095 0 -0.9553 0.786</pose>
       <gravity>1</gravity>
       <self_collide>1</self_collide>
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
       <visual name='visual'>
-        <pose>0 0 -0.023 0 -0 0</pose>
+        <pose>0 0 -0.03465 0 -0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.001</radius>
-            <length>0.046</length>
+            <length>0.0693</length>
           </cylinder>
         </geometry>
         <material>
@@ -192,28 +192,28 @@
     </link>
     <link name='leg_2'>
       <inertial>
-        <mass>0.00017775</mass>
+        <mass>0.00086708</mass>
         <inertia>
-          <ixx>3.1388e-08</ixx>
+          <ixx>1.5311e-07</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>3.1388e-08</iyy>
+          <iyy>1.5311e-07</iyy>
           <iyz>0</iyz>
-          <izz>8.8876e-11</izz>
+          <izz>4.3354e-10</izz>
         </inertia>
-        <pose>0 0 -0.023 0 -0 0</pose>
+        <pose>0 0 -0.03465 0 -0 0</pose>
       </inertial>
-      <pose>0 0.0177 0.095 0 -0.786 1.57</pose>
+      <pose>-0.0177 0.0177 0.095 0 -0.9553 2.36</pose>
       <gravity>1</gravity>
       <self_collide>1</self_collide>
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
       <visual name='visual'>
-        <pose>0 0 -0.023 0 -0 0</pose>
+        <pose>0 0 -0.03465 0 -0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.001</radius>
-            <length>0.046</length>
+            <length>0.0693</length>
           </cylinder>
         </geometry>
         <material>
@@ -236,11 +236,11 @@
       <collision name='collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose>0 0 -0.023 0 -0 0</pose>
+        <pose>0 0 -0.03465 0 -0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.001</radius>
-            <length>0.046</length>
+            <length>0.0693</length>
           </cylinder>
         </geometry>
         <surface>
@@ -292,28 +292,28 @@
     </link>
     <link name='leg_3'>
       <inertial>
-        <mass>0.00017775</mass>
+        <mass>0.00086708</mass>
         <inertia>
-          <ixx>3.1388e-08</ixx>
+          <ixx>1.5311e-07</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>3.1388e-08</iyy>
+          <iyy>1.5311e-07</iyy>
           <iyz>0</iyz>
-          <izz>8.8876e-11</izz>
+          <izz>4.3354e-10</izz>
         </inertia>
-        <pose>0 0 -0.023 0 -0 0</pose>
+        <pose>0 0 -0.03465 0 -0 0</pose>
       </inertial>
-      <pose>-0.0177 0 0.095 0 -0.786 3.14</pose>
+      <pose>-0.0177 -0.0177 0.095 0 -0.9553 -2.36</pose>
       <gravity>1</gravity>
       <self_collide>1</self_collide>
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
       <visual name='visual'>
-        <pose>0 0 -0.023 0 -0 0</pose>
+        <pose>0 0 -0.03465 0 -0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.001</radius>
-            <length>0.046</length>
+            <length>0.0693</length>
           </cylinder>
         </geometry>
         <material>
@@ -336,11 +336,11 @@
       <collision name='collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose>0 0 -0.023 0 -0 0</pose>
+        <pose>0 0 -0.03465 0 -0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.001</radius>
-            <length>0.046</length>
+            <length>0.0693</length>
           </cylinder>
         </geometry>
         <surface>
@@ -392,28 +392,28 @@
     </link>
     <link name='leg_4'>
       <inertial>
-        <mass>0.00017775</mass>
+        <mass>0.00086708</mass>
         <inertia>
-          <ixx>3.1388e-08</ixx>
+          <ixx>1.5311e-07</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>3.1388e-08</iyy>
+          <iyy>1.5311e-07</iyy>
           <iyz>0</iyz>
-          <izz>8.8876e-11</izz>
+          <izz>4.3354e-10</izz>
         </inertia>
-        <pose>0 0 -0.023 0 -0 0</pose>
+        <pose>0 0 -0.03465 0 -0 0</pose>
       </inertial>
-      <pose>0 -0.0177 0.095 0 -0.786 -1.57</pose>
+      <pose>0.0177 -0.0177 0.095 0 -0.9553 -0.786</pose>
       <gravity>1</gravity>
       <self_collide>1</self_collide>
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
       <visual name='visual'>
-        <pose>0 0 -0.023 0 -0 0</pose>
+        <pose>0 0 -0.03465 0 -0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.001</radius>
-            <length>0.046</length>
+            <length>0.0693</length>
           </cylinder>
         </geometry>
         <material>
@@ -435,11 +435,11 @@
       <collision name='collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose>0 0 -0.023 0 -0 0</pose>
+        <pose>0 0 -0.03465 0 -0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.001</radius>
-            <length>0.046</length>
+            <length>0.0693</length>
           </cylinder>
         </geometry>
         <surface>
@@ -493,16 +493,16 @@
       <inertial>
         <mass>3.69e-06</mass>
         <inertia>
-          <ixx>0</ixx>
+          <ixx>4.3354e-10</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>0</iyy>
+          <iyy>4.3354e-10</iyy>
           <iyz>0</iyz>
-          <izz>0</izz>
+          <izz>4.3354e-10</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>0.050246 0 0.062493 0 -0.786 0</pose>
+      <pose>0.057686 0.057734 0.054989 0 -0.9553 0.786</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -511,8 +511,8 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.001</radius>
-            <length>0.001</length>
+            <radius>0.002</radius>
+            <length>0.002</length>
           </cylinder>
         </geometry>
         <material>
@@ -521,6 +521,7 @@
             <uri>file://media/materials/scripts/gazebo.material</uri>
           </script>
           <shader type='pixel'/>
+          <emissive>0 0 0 1</emissive>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -531,8 +532,8 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.001</radius>
-            <length>0.001</length>
+            <radius>0.002</radius>
+            <length>0.002</length>
           </cylinder>
         </geometry>
         <surface>
@@ -586,16 +587,16 @@
       <inertial>
         <mass>3.69e-06</mass>
         <inertia>
-          <ixx>0</ixx>
+          <ixx>4.3354e-10</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>0</iyy>
+          <iyy>4.3354e-10</iyy>
           <iyz>0</iyz>
-          <izz>0</izz>
+          <izz>4.3354e-10</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>2.6e-05 0.050246 0.062493 0 -0.786 1.57</pose>
+      <pose>-0.057862 0.057557 0.054989 0 -0.9553 2.36</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -604,8 +605,8 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.001</radius>
-            <length>0.001</length>
+            <radius>0.002</radius>
+            <length>0.002</length>
           </cylinder>
         </geometry>
         <material>
@@ -614,6 +615,7 @@
             <uri>file://media/materials/scripts/gazebo.material</uri>
           </script>
           <shader type='pixel'/>
+          <emissive>0 0 0 1</emissive>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -624,8 +626,8 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.001</radius>
-            <length>0.001</length>
+            <radius>0.002</radius>
+            <length>0.002</length>
           </cylinder>
         </geometry>
         <surface>
@@ -679,16 +681,16 @@
       <inertial>
         <mass>3.69e-06</mass>
         <inertia>
-          <ixx>0</ixx>
+          <ixx>4.3354e-10</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>0</iyy>
+          <iyy>4.3354e-10</iyy>
           <iyz>0</iyz>
-          <izz>0</izz>
+          <izz>4.3354e-10</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>-0.050246 5.2e-05 0.062493 0 -0.786 3.14</pose>
+      <pose>-0.057862 -0.057557 0.054989 0 -0.9553 -2.36</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -697,8 +699,8 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.001</radius>
-            <length>0.001</length>
+            <radius>0.002</radius>
+            <length>0.002</length>
           </cylinder>
         </geometry>
         <material>
@@ -707,6 +709,7 @@
             <uri>file://media/materials/scripts/gazebo.material</uri>
           </script>
           <shader type='pixel'/>
+          <emissive>0 0 0 1</emissive>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -717,8 +720,8 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.001</radius>
-            <length>0.001</length>
+            <radius>0.002</radius>
+            <length>0.002</length>
           </cylinder>
         </geometry>
         <surface>
@@ -772,16 +775,16 @@
       <inertial>
         <mass>3.69e-06</mass>
         <inertia>
-          <ixx>0</ixx>
+          <ixx>4.3354e-10</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>0</iyy>
+          <iyy>4.3354e-10</iyy>
           <iyz>0</iyz>
-          <izz>0</izz>
+          <izz>4.3354e-10</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>2.6e-05 -0.050246 0.062493 0 -0.786 -1.57</pose>
+      <pose>0.057686 -0.057734 0.054989 0 -0.9553 -0.786</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -790,8 +793,8 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.001</radius>
-            <length>0.001</length>
+            <radius>0.002</radius>
+            <length>0.002</length>
           </cylinder>
         </geometry>
         <material>
@@ -800,6 +803,7 @@
             <uri>file://media/materials/scripts/gazebo.material</uri>
           </script>
           <shader type='pixel'/>
+          <emissive>0 0 0 1</emissive>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -810,8 +814,8 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.001</radius>
-            <length>0.001</length>
+            <radius>0.002</radius>
+            <length>0.002</length>
           </cylinder>
         </geometry>
         <surface>
@@ -883,7 +887,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_model_+/meshes/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_model_X/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -927,7 +931,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_model_+/meshes/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_model_X/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -971,7 +975,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_model_+/meshes/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_model_X/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -1015,7 +1019,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_model_+/meshes/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_model_X/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -1061,6 +1065,8 @@
       <physics>
         <ode>
           <limit>
+            <lower>0.05</lower>
+            <upper>0.05</upper>
             <cfm>0</cfm>
             <erp>0.2</erp>
           </limit>
@@ -1095,6 +1101,8 @@
       <physics>
         <ode>
           <limit>
+            <lower>0.05</lower>
+            <upper>0.05</upper>
             <cfm>0</cfm>
             <erp>0.2</erp>
           </limit>
@@ -1129,6 +1137,8 @@
       <physics>
         <ode>
           <limit>
+            <lower>0.05</lower>
+            <upper>0.05</upper>
             <cfm>0</cfm>
             <erp>0.2</erp>
           </limit>
@@ -1163,6 +1173,8 @@
       <physics>
         <ode>
           <limit>
+            <lower>0.05</lower>
+            <upper>0.05</upper>
             <cfm>0</cfm>
             <erp>0.2</erp>
           </limit>

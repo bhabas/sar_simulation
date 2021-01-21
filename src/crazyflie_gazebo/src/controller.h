@@ -31,33 +31,42 @@ class Controller
             globalState_Subscriber = nh->subscribe("/global_state",1000,&Controller::global_stateCallback,this);
             RLCmd_Subscriber = nh->subscribe("/rl_ctrl",10,&Controller::RLCmd_Callback,this);
 
-            ctrl_cmd << 404,0,0,0,0;
+            
 
             
             // INIT VARIABLES TO DEFAULT VALUES (PREVENTS RANDOM VALUES FROM MEMORY)
+            _ctrl_cmd << 404,0,0,0,0;
+
             _t = 0.0; 
             _pos << 0,0,0;
             _vel << 0,0,0;
             _quat << 1,0,0,0;
             _omega << 0,0,0;
 
+            _RREV = 0.0;
+            _OF_x = 0.0;
+            _OF_y = 0.0;
 
 
+            // SET DEFAULT HOME POSITION
             _x_d << 0,0,0.3;
             _v_d << 0,0,0;
             _a_d << 0,0,0;
             _b1_d << 1,0,0;
             _omega_d << 0,0,0;
 
-            _kp_x << 0.1,0.1,0.11;
+            // SET DEFAULT CONTROLLER GAINS
+            _kp_x << 0.1,0.1,0.20;
             _kd_x << 0.08,0.08,0.08;
             _kp_R << 0.05,0.05,0.05;
             _kd_R << 0.005,0.005,0.005;
 
-            _kp_omega << 0.05,0.05,0.0;
-
-
-
+            // SET DEFAULT POLICY VALUES
+            _RREV_thr = 0.0;
+            _G1 = 0.0;
+            _G2 = 0.0;
+            _policy_armed_flag = false;
+            _flip_flag = false;
         }
 
         // DEFINE FUNCTION PROTOTYPES
@@ -82,11 +91,10 @@ class Controller
         // DEFINE CLASS VARIABLES (Similar to Python's class variables)
         // Leading '_' represents a class variable that works across functions
         bool _isRunning;
-        double control_cmd_recvd[5];
-        Eigen::Matrix<double,5,1> ctrl_cmd;
+        Eigen::Matrix<double,5,1> _ctrl_cmd;
        
 
-        float _t;
+        double _t;
         Eigen::Vector3d _pos;   // Current position [m]
         Eigen::Vector3d _vel;   // Current velocity [m]
         Eigen::Vector4d _quat;  // Current attitude [rad] (quat form)
@@ -105,11 +113,17 @@ class Controller
         Eigen::Vector3d _kp_R; // Rot. Gain
         Eigen::Vector3d _kd_R; // Rot. derivative Gain
 
-        
-        Eigen::Vector3d _kp_omega; // Flip proportional Gain
-        // Omega proportional gain (similar to kd_R but that's for damping and this is to achieve omega_d)
-        // kd_R is great for stabilization but for flip manuevers it's too sensitive and 
-        // saturates the motors causing instability during the rotation
+
+        double _RREV;
+        double _OF_x;
+        double _OF_y; 
+
+        // POLICY FLAGS AND VALUES
+        double _RREV_thr;
+        double _G1;
+        double _G2;
+        bool _policy_armed_flag;
+        bool _flip_flag;
 
         
 
@@ -120,7 +134,6 @@ class Controller
         double _kd_Rf = 1; // Rot. derivative Gain Flag
 
         bool _motorstop_flag = false;
-        bool _flip_flag = false;
         bool _Moment_flag = false;
 
 
