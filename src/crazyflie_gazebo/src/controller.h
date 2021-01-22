@@ -150,6 +150,7 @@ class Controller
 
         bool _motorstop_flag = false;
         bool _Moment_flag = false;
+        bool _tumble_detection = true;
 
 
 

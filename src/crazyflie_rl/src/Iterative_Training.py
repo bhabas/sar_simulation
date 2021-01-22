@@ -35,7 +35,7 @@ if __name__ == '__main__':
             print("Trials are over")
             break
 
-        for trial_num in range(2):
+        for trial_num in range(6):
 
             # ============================
             ##          AGENT  
@@ -51,7 +51,7 @@ if __name__ == '__main__':
 
             
             ## SIM PARAMETERS
-            env.n_rollouts = 4
+            env.n_rollouts = 7
             env.gamma = 0.95
             env.h_ceiling = 2.5 # [m]
 
@@ -72,7 +72,7 @@ if __name__ == '__main__':
             try:
                 ## RUN TRIAL
                 env.RL_Publish() # Publish data to rl_data topic
-                runTraining(env,agent,vx_d,vz_d,k_epMax=4)
+                runTraining(env,agent,vx_d,vz_d,k_epMax=20)
 
             except: ## IF SIM EXCEPTION RAISED THEN CONTINUE BACK TO TRY BLOCK UNTIL SUCCESSFUL COMPLETION
                 continue

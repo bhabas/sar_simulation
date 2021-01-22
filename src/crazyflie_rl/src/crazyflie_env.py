@@ -51,7 +51,7 @@ class CrazyflieEnv:
         ## INIT GAZEBO TIMEOUT THREAD
         if gazeboTimeout==True:
             self.timeoutThread = Thread(target=self.timeoutSub)
-            # self.timeoutThread.start()
+            self.timeoutThread.start()
         
 
         ## INIT NAME OF MODEL BEING USED
@@ -304,6 +304,9 @@ class CrazyflieEnv:
         
         ## TURN OFF STICKY FEET
         self.step('sticky',ctrl_flag=0)
+        self.step('home')
+        self.step('tumble',ctrl_flag=0)
+        
 
         ## RESET POSITION AND VELOCITY
         state_msg = ModelState()
@@ -312,10 +315,11 @@ class CrazyflieEnv:
         state_msg.pose.position.y = 0
         state_msg.pose.position.z = 0.2
 
+        state_msg.pose.orientation.w = 1
         state_msg.pose.orientation.x = 0
         state_msg.pose.orientation.y = 0
         state_msg.pose.orientation.z = 0
-        state_msg.pose.orientation.w = 1
+        
 
         state_msg.twist.linear.x = 0
         state_msg.twist.linear.y = 0
@@ -325,10 +329,10 @@ class CrazyflieEnv:
         set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         set_state_srv(state_msg)
         # time.sleep(0.1) # Give it time for controller to receive new states
-        rospy.wait_for_service('/gazebo/get_link_state')
+        # rospy.wait_for_service('/gazebo/get_link_state')
 
         ## RESET TO HOME
-        self.step('home')
+        
 
     def step(self,action,ctrl_vals=[0,0,0],ctrl_flag=1):
         cmd_msg = RLCmd()
@@ -337,7 +341,7 @@ class CrazyflieEnv:
                     'pos':1,
                     'vel':2,
                     'att':3,
-                    'omega':4,
+                    'tumble':4,
                     'stop':5,
                     'gains':6,
                     'moment':7,

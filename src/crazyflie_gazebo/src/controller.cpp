@@ -162,9 +162,9 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
         case 3: // Attitude [Future implentation needed]
             break;
         
-        case 4: // Execute Ang. Velocity-Based Flip [DEPRECATED]
-                //      NOTE: This has been outperformed by moment based flips and removed
-                //      Look back at old commits for reference if needed
+        case 4: // Tumble-Detection
+            _tumble_detection = (bool)cmd_flag;
+                
             break;
 
         case 5: // Hard Set All Motorspeeds to Zero
@@ -336,7 +336,7 @@ void Controller::controlThread()
 
     // =========== ROS Definitions =========== //
     crazyflie_gazebo::CtrlData ctrl_msg;
-    ros::Rate rate(500);
+    ros::Rate rate(200);
 
     while(_isRunning)
     {
@@ -454,7 +454,8 @@ void Controller::controlThread()
             }
         }
 
-        if(b3(2) <= 0){ // If e3 component of b3 is neg, turn motors off 
+
+        if(b3(2) <= 0 && _tumble_detection){ // If e3 component of b3 is neg, turn motors off 
             _motorstop_flag = true;
         }
 

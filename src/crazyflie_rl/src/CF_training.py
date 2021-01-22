@@ -66,7 +66,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
             
             ## RESET TO INITIAL STATE
             env.step('home') # Reset control vals and functionality to default vals
-            time.sleep(2) # Time for CF to settle
+            time.sleep(0.5) # Time for CF to settle
             
 
             ## INITIALIZE POLICY PARAMETERS: 
@@ -255,7 +255,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     env.append_IC(env.filepath)
                     env.append_csv_blank(env.filepath)
 
-                    env.step('stop')
+                    # env.step('stop')
                     env.reset_pos()
                    
                     ## There is a weird delay where it sometime won't publish ctrl_cmds until the next command is executed
@@ -290,7 +290,6 @@ if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv()
-    env.reset_pos() # Reset Gazebo pos
     # env.launch_dashboard()
 
     print("Environment done")
@@ -326,8 +325,8 @@ if __name__ == '__main__':
     # ============================
 
     ## INITIAL CONDITIONS
-    vz_d = 2.5
-    vx_d = 0
+    vz_d = 3.5
+    vx_d = 1.5
 
     
     
