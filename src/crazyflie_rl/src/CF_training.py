@@ -303,9 +303,12 @@ if __name__ == '__main__':
     alpha_sigma = np.array([[0.05]])
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[5.4],[6.7],[3.1]])          # Random initial mu
+    # mu = np.array([[5.4],[6.7],[3.1]])          # Random initial mu
     # mu = np.array([[3.41],[6.56],[3.50]])     # Somewhat optimal mu
-    sigma = np.array([[2.0],[2.0],[2.0]])       # Initial estimates of sigma: 
+    # sigma = np.array([[2.0],[2.0],[2.0]])       # Initial estimates of sigma:
+
+    mu = np.array([[3.41],[6.56],[3.50]])     # Somewhat optimal mu 
+    sigma = np.array([[0.01],[0.01],[0.01]])       # Initial estimates of sigma:
 
     ## SIM PARAMETERS
     env.n_rollouts = 6

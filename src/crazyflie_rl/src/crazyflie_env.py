@@ -42,7 +42,7 @@ class CrazyflieEnv:
         self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactCallback)
         self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
 
-        # rospy.wait_for_message('/global_state',GlobalState)
+        rospy.wait_for_message('/ctrl_data',CtrlData)
 
         ## INIT ROS PUBLISHERS
         self.RL_Publisher = rospy.Publisher('/rl_data',RLData,queue_size=10)
@@ -51,11 +51,11 @@ class CrazyflieEnv:
         ## INIT GAZEBO TIMEOUT THREAD
         if gazeboTimeout==True:
             self.timeoutThread = Thread(target=self.timeoutSub)
-            self.timeoutThread.start()
+            # self.timeoutThread.start()
         
 
         ## INIT NAME OF MODEL BEING USED
-        self.modelName = 'Crazyflie_Rigid'
+        self.modelName = 'crazyflie_model_Wide-Short'
 
         ## INIT RL_DATA VARIABLES 
         #region 
@@ -264,7 +264,7 @@ class CrazyflieEnv:
         self.gazebo_p = subprocess.Popen( # Gazebo Process
             "gnome-terminal --disable-factory  -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_gazebo.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
-        time.sleep(5)
+        
 
         self.controller_p = subprocess.Popen( # Controller Process
             "gnome-terminal --disable-factory --geometry 70x41 -- rosrun crazyflie_gazebo controller", 
