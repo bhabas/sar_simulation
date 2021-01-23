@@ -28,6 +28,8 @@ class CrazyflieEnv:
         self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log"
         self.logging_flag = False
         self.filepath = ""
+
+        self.h_ceiling = 2.5
         
         ## INIT ROS NODE FOR ENVIRONMENT 
         rospy.init_node("crazyflie_env_node") 
@@ -65,7 +67,7 @@ class CrazyflieEnv:
 
         self.n_rollouts = 0
         self.gamma = 0
-        self.h_ceiling = 0
+        
         
         self.runComplete_flag = False
         self.flip_flag = False
