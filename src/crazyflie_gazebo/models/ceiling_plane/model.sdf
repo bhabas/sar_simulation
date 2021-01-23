@@ -7,7 +7,7 @@
       <collision name="ceiling_collision">
         <geometry>
           <box>
-            <size>15 15 0.01</size>
+            <size>15 15 0.05</size>
           </box>
         </geometry>
         <surface>
