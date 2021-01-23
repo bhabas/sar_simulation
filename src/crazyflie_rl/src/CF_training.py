@@ -191,7 +191,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                 # ============================
 
                 # IF TIME SINCE TRIGGERED PITCH EXCEEDS [1.0s]  
-                if env.flip_flag and ((env.getTime()-start_time_pitch) > (0.75)):
+                if env.flip_flag and ((env.getTime()-start_time_pitch) > (1.0)):
                     # I don't like this error formatting, feel free to improve on
                     env.error_str = "Rollout Completed: Pitch Timeout"
                     print(env.error_str)
@@ -199,12 +199,12 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     env.runComplete_flag = True
 
                 # IF POSITION FALLS BELOW ACHIEVED MAX HEIGHT
-                # z_max = max(position[2],z_max)
-                # if position[2] <= 0.95*z_max: # Note: there is a lag with this
-                #     env.error_str = "Rollout Completed: Falling Drone"
-                #     print(env.error_str)
+                z_max = max(position[2],z_max)
+                if position[2] <= 0.95*z_max: # Note: there is a lag with this
+                    env.error_str = "Rollout Completed: Falling Drone"
+                    print(env.error_str)
 
-                #     env.runComplete_flag = True
+                    env.runComplete_flag = True
 
                 # IF CF HASN'T CHANGED Z HEIGHT IN PAST [5.0s]
                 if np.abs(position[2]-z_prev) > 0.001:
