@@ -53,7 +53,7 @@ class CrazyflieEnv:
         ## INIT GAZEBO TIMEOUT THREAD
         if gazeboTimeout==True:
             self.timeoutThread = Thread(target=self.timeoutSub)
-            # self.timeoutThread.start()
+            self.timeoutThread.start()
         
 
         ## INIT NAME OF MODEL BEING USED

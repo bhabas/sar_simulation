@@ -191,7 +191,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                 # ============================
 
                 # IF TIME SINCE TRIGGERED PITCH EXCEEDS [1.0s]  
-                if env.flip_flag and ((env.getTime()-start_time_pitch) > (2.0)):
+                if env.flip_flag and ((env.getTime()-start_time_pitch) > (0.75)):
                     # I don't like this error formatting, feel free to improve on
                     env.error_str = "Rollout Completed: Pitch Timeout"
                     print(env.error_str)
@@ -199,12 +199,12 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     env.runComplete_flag = True
 
                 # IF POSITION FALLS BELOW ACHIEVED MAX HEIGHT
-                z_max = max(position[2],z_max)
-                if position[2] <= 0.90*z_max: # Note: there is a lag with this
-                    env.error_str = "Rollout Completed: Falling Drone"
-                    print(env.error_str)
+                # z_max = max(position[2],z_max)
+                # if position[2] <= 0.95*z_max: # Note: there is a lag with this
+                #     env.error_str = "Rollout Completed: Falling Drone"
+                #     print(env.error_str)
 
-                    env.runComplete_flag = True
+                #     env.runComplete_flag = True
 
                 # IF CF HASN'T CHANGED Z HEIGHT IN PAST [5.0s]
                 if np.abs(position[2]-z_prev) > 0.001:
@@ -217,7 +217,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     env.runComplete_flag = True
 
                 # IF TIME SINCE RUN START EXCEEDS [2.5s]
-                if (env.getTime() - start_time_rollout) > (10.0):
+                if (env.getTime() - start_time_rollout) > (6.0):
                     env.error_str = "Rollout Completed: Time Exceeded"
                     print(env.error_str)
 
@@ -290,7 +290,7 @@ if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv()
-    # env.launch_dashboard()
+    env.launch_dashboard()
 
     print("Environment done")
 
@@ -310,7 +310,7 @@ if __name__ == '__main__':
     # sigma = np.array([[0.01],[0.01],[0.01]])       # Initial estimates of sigma:
 
     ## SIM PARAMETERS
-    env.n_rollouts = 6
+    env.n_rollouts = 10
     env.gamma = 0.95
     env.h_ceiling = 2.5 # [m]
 
@@ -337,12 +337,13 @@ if __name__ == '__main__':
     env.agent_name = agent.agent_type
     env.trial_name = f"{env.agent_name}--Vz_{vz_d}--Vx_{vx_d}--trial_{trial_num}"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
-    env.logging_flag = False
+    env.logging_flag = True
        
 
 
     ## RUN TRIAL
     env.RL_Publish() # Publish data to rl_data topic
+    time.sleep(2)
     runTraining(env,agent,vx_d,vz_d)
  
     
