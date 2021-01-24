@@ -27,5 +27,6 @@ float32 reward_avg
 float32[] vel_d
 float32[] M_d
 bool[] leg_contacts
+bool body_contact
 
 

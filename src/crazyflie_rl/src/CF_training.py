@@ -83,6 +83,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
             ## INIT RUN CONDITIONS
             env.k_run = k_run   # Update class k_run variable
             env.pad_contacts = [False,False,False,False] # Reset pad contacts
+            env.body_contact = False
 
             z_max = 0   # Initialize max height to be zero before run [m]
             z_prev = 0;
@@ -290,7 +291,7 @@ if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv()
-    env.launch_dashboard()
+    # env.launch_dashboard()
 
     print("Environment done")
 

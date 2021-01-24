@@ -94,6 +94,7 @@ class CrazyflieEnv:
         self.FM = [0,0,0,0]
         
         self.pad_contacts = [False,False,False,False]
+        self.body_contact = False
 
         #endregion 
 
@@ -144,6 +145,7 @@ class CrazyflieEnv:
         rl_msg.vel_d = self.vel_d
         rl_msg.M_d = self.M_d
         rl_msg.leg_contacts = self.pad_contacts
+        rl_msg.body_contact = self.body_contact
         
 
         self.RL_Publisher.publish(rl_msg) ## Publish RLData message
@@ -202,7 +204,7 @@ class CrazyflieEnv:
     def contactCallback(self,msg_arr): ## Callback to indicate which pads have collided with ceiling
 
         for msg in msg_arr.states: ## ContactsState message includes an array of ContactState messages
-            # If pad collision detected then mark True
+            # If pad collision or body collision detected then mark True
             if msg.collision1_name  ==  f"{self.modelName}::pad_1::collision" and self.pad_contacts[0] == False:
                 self.pad_contacts[0] = True
 
@@ -214,6 +216,10 @@ class CrazyflieEnv:
 
             elif msg.collision1_name == f"{self.modelName}::pad_4::collision" and self.pad_contacts[3] == False:
                 self.pad_contacts[3] = True
+
+            elif msg.collision1_name == f"{self.modelName}::crazyflie_body::body_collision" and self.body_contact == False:
+                self.body_contact = True
+
         
         
         
@@ -401,7 +407,7 @@ class CrazyflieEnv:
                     self.omega[0],self.omega[1],self.omega[2], # wx,wy,wz
                     "","",self.flip_flag,self.impact_flag,"", # gamma, reward, flip_triggered, n_rollout
                     self.RREV,self.OF_x,self.OF_y, # RREV, OF_x, OF_y
-                    self.MS[0],self.MS[1],self.MS[2],self.MS[3],
+                    self.MS[0],self.MS[1],self.MS[2],self.MS[3], # MS1, MS2, MS3, MS4
                     self.FM[0],self.FM[1],self.FM[2],self.FM[3], # F_thrust,Mx,My,Mz 
                     ""]) # Error
 
@@ -418,9 +424,9 @@ class CrazyflieEnv:
                     "", "", "", "", # qx,qy,qz,qw
                     np.round(self.vel_d[0],2),np.round(self.vel_d[1],2),np.round(self.vel_d[2],2), # vx,vy,vz
                     "","","", # wx,wy,wz
-                    np.round(self.gamma,2),np.round(self.reward,2),"",sum(self.pad_contacts),self.n_rollouts, # gamma, reward, flip_flag, num leg contacts, n_rollout
+                    np.round(self.gamma,2),np.round(self.reward,2),self.body_contact,sum(self.pad_contacts),self.n_rollouts, # gamma, reward, body_impact, num leg contacts, n_rollout
                     self.RREV_tr,"",self.OF_y_tr, # RREV, OF_x, OF_y
-                    "","","","",
+                    "","","","", # MS1, MS2, MS3, MS4
                     "",self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # F_thrust,Mx,My,Mz 
                     self.error_str]) # Error
 
