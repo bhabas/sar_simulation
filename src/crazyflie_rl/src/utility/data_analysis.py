@@ -419,7 +419,6 @@ class DataFile:
 
         return t_impact,t_impact_norm,body_impact
 
-
     def grab_impact_state(self,k_ep,k_run,stateName):
         """Returns state at time of impact
 
@@ -437,7 +436,12 @@ class DataFile:
         
         return state_impact
 
+    def grab_impact_eul(seld,k_ep,k_run,eul_type):
 
+        return
+
+    def grab_impact_eul_trial():
+        return
 
 
 
