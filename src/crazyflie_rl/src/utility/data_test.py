@@ -23,6 +23,5 @@ k_ep = 19
 k_run = 9
 
 # print(trial.grab_eulerData(k_ep,k_run)[0])
-trial.plot_eulerData(k_ep,k_run,'eul_y')
-
-# print(v)
+print(trial.grab_impact_state(k_ep,k_run,'vx'))
+trial.plot_state(k_ep,k_run,'x')

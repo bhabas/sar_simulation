@@ -23,7 +23,7 @@ class DataFile:
 
         return run_df,IC_df
 
-    def plot_rewardFunc(self,figNum=0):
+    def plot_rewardData(self,figNum=0):
         """Plot rewards for overall trial
 
         Args:
@@ -225,14 +225,24 @@ class DataFile:
 
         ## GRAB STATE/TIME DATA
         state = self.grab_stateData(k_ep,k_run,stateName)
-        time = self.grab_stateData(k_ep,k_run,'t')
-        time = time - np.min(time) # Normalize time
+        t = self.grab_stateData(k_ep,k_run,'t')
+        t_norm = t - np.min(t) # Normalize time
+
+        
+        t_flip,t_flip_norm = self.grab_flip_time(k_ep,k_run)
+        state_flip = self.grab_flip_state(k_ep,k_run,stateName)
+
+        t_impact,t_impact_norm,_ = self.grab_impact_time(k_ep,k_run)
+        state_impact = self.grab_impact_state(k_ep,k_run,stateName)
+
 
         
         ## PLOT STATE/TIME DATA
         fig = plt.figure(figNum)
         ax = fig.add_subplot(111)
-        ax.plot(time,state,label=f"{stateName}")
+        ax.plot(t_norm,state,label=f"{stateName}")
+        ax.scatter(t_flip_norm,state_flip,label="Flip")
+        ax.scatter(t_impact_norm,state_impact,label="Impact")
 
 
         ax.set_ylabel(f"{stateName}")
@@ -356,11 +366,79 @@ class DataFile:
 
 
     def grab_flip_time(self,k_ep,k_run):
+        """Returns time of flip
+
+        Args:
+            k_ep (int): Episode number
+            k_run (int): Run number
+
+        Returns:
+            [float,float]: [t_flip,t_flip_norm]
+        """        
         run_df,IC_df = self.select_run(k_ep,k_run)
         t_flip = run_df.query(f"flip_flag=={True}").iloc[0]['t']
         t_flip_norm = t_flip - run_df.iloc[0]['t']
 
         return t_flip,t_flip_norm
+
+    def grab_flip_state(self,k_ep,k_run,stateName):
+        """Returns desired state at time of flip
+
+        Args:
+            k_ep (int): Episode number
+            k_run (int): Run number
+            stateName (str): State name
+
+        Returns:
+            float: state_flip
+        """        
+        run_df,IC_df = self.select_run(k_ep,k_run)
+        state_flip = run_df.query(f"flip_flag=={True}").iloc[0][stateName]
+
+        return state_flip
+
+
+
+
+
+    def grab_impact_time(self,k_ep,k_run):
+        """Returns time of impact of body/legs
+
+        Args:
+            k_ep (int): Episode number
+            k_run (int): Run number
+
+        Returns:
+            [float,float,bool]: [t_impact,t_impact_norm,body_impact]
+        """        
+        run_df,IC_df = self.select_run(k_ep,k_run)
+        t_impact = run_df.query(f"impact_flag=={True}").iloc[0]['t']    # Grab first t value in df filtered to where flag == True
+        t_impact_norm = t_impact - run_df.iloc[0]['t']                  # Normalize time to zero
+
+        body_impact = IC_df.iloc[0]['flip_flag'] # Reads value if body impacted the ceiling
+
+        return t_impact,t_impact_norm,body_impact
+
+
+    def grab_impact_state(self,k_ep,k_run,stateName):
+        """Returns state at time of impact
+
+        Args:
+            k_ep (int): Episode number
+            k_run (int): Run number
+            stateName (str): State name
+
+        Returns:
+            float: state_impact
+        """        
+
+        run_df,IC_df = self.select_run(k_ep,k_run)
+        state_impact = run_df.query(f"impact_flag=={True}").iloc[0][stateName]    # Grab first t value in df filtered to where flag == True
+        
+        return state_impact
+
+
+
 
 
 
