@@ -249,7 +249,9 @@ class CrazyflieEnv:
         self.close_sim()
         time.sleep(1)
         self.launch_sim()
+
         self.reset_pos()
+        rospy.wait_for_message('/ctrl_data',CtrlData) # Wait for controller message before resuming training
 
     def close_sim(self):
         os.killpg(self.gazebo_p.pid, signal.SIGTERM)
@@ -265,16 +267,13 @@ class CrazyflieEnv:
         return self.state_current[0]
 
     def launch_sim(self):
-        print("[STARTING] Starting Gazebo Process...")
-
-        print("[STARTING] Starting Controller Process...")
         
-
+        print("[STARTING] Starting Gazebo Process...")
         self.gazebo_p = subprocess.Popen( # Gazebo Process
             "gnome-terminal --disable-factory  -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_gazebo.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         
-
+        print("[STARTING] Starting Controller Process...")
         self.controller_p = subprocess.Popen( # Controller Process
             "gnome-terminal --disable-factory --geometry 70x41 -- rosrun crazyflie_gazebo controller", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
