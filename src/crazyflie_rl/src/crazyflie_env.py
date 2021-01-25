@@ -15,6 +15,7 @@ from std_msgs.msg import Header
 from rosgraph_msgs.msg import Clock
 from gazebo_msgs.msg import ModelState,ContactsState
 from gazebo_msgs.srv import SetModelState
+from nav_msgs.msg import Odometry
 
 
 
@@ -27,6 +28,8 @@ class CrazyflieEnv:
         self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log"
         self.logging_flag = False
         self.filepath = ""
+
+        self.h_ceiling = 2.5
         
         ## INIT ROS NODE FOR ENVIRONMENT 
         rospy.init_node("crazyflie_env_node") 
@@ -36,12 +39,12 @@ class CrazyflieEnv:
         
 
         ## INIT ROS SUBSCRIBERS 
-        self.state_Subscriber = rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
+        self.state_Subscriber = rospy.Subscriber('/global_state',Odometry,self.global_stateCallback)
         self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)
         self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactCallback)
         self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
 
-        # rospy.wait_for_message('/global_state',GlobalState)
+        rospy.wait_for_message('/ctrl_data',CtrlData)
 
         ## INIT ROS PUBLISHERS
         self.RL_Publisher = rospy.Publisher('/rl_data',RLData,queue_size=10)
@@ -64,7 +67,7 @@ class CrazyflieEnv:
 
         self.n_rollouts = 0
         self.gamma = 0
-        self.h_ceiling = 0
+        
         
         self.runComplete_flag = False
         self.flip_flag = False
@@ -91,6 +94,7 @@ class CrazyflieEnv:
         self.FM = [0,0,0,0]
         
         self.pad_contacts = [False,False,False,False]
+        self.body_contact = False
 
         #endregion 
 
@@ -112,10 +116,10 @@ class CrazyflieEnv:
 
     def RL_Publish(self):
         # Publishes all the RL data from the RL script
+        
 
         rl_msg = RLData() ## Initialize RLData message
         
-        rl_msg.header.stamp = rospy.Time.now()
         rl_msg.trial_name = self.trial_name
         rl_msg.agent = self.agent_name
         rl_msg.error = self.error_str
@@ -141,6 +145,7 @@ class CrazyflieEnv:
         rl_msg.vel_d = self.vel_d
         rl_msg.M_d = self.M_d
         rl_msg.leg_contacts = self.pad_contacts
+        rl_msg.body_contact = self.body_contact
         
 
         self.RL_Publisher.publish(rl_msg) ## Publish RLData message
@@ -170,10 +175,10 @@ class CrazyflieEnv:
         self.t = np.round(t_temp+ns_temp*1e-9,3) # (seconds + nanoseconds)
         
         ## SIMPLIFY STATE VALUES FROM TOPIC
-        global_pos = gs_msg.global_pose.position
-        global_quat = gs_msg.global_pose.orientation
-        global_vel = gs_msg.global_twist.linear
-        global_omega = gs_msg.global_twist.angular
+        global_pos = gs_msg.pose.pose.position
+        global_quat = gs_msg.pose.pose.orientation
+        global_vel = gs_msg.twist.twist.linear
+        global_omega = gs_msg.twist.twist.angular
         
         if global_quat.w == 0: # If zero at startup set quat.w to one to prevent errors
             global_quat.w = 1
@@ -191,14 +196,15 @@ class CrazyflieEnv:
         
 
         ## SET VISUAL CUE SENSOR VALUES FROM TOPIC
-        self.RREV = round(gs_msg.RREV,3)
-        self.OF_x = round(gs_msg.OF_x,3)
-        self.OF_y = round(gs_msg.OF_y,3)
+        d = self.h_ceiling - self.position[2]
+        self.RREV = round(self.velocity[2]/d,3)
+        self.OF_x = round(-self.velocity[1]/d,3)
+        self.OF_y = round(-self.velocity[0]/d,3)
 
     def contactCallback(self,msg_arr): ## Callback to indicate which pads have collided with ceiling
 
         for msg in msg_arr.states: ## ContactsState message includes an array of ContactState messages
-            # If pad collision detected then mark True
+            # If pad collision or body collision detected then mark True
             if msg.collision1_name  ==  f"{self.modelName}::pad_1::collision" and self.pad_contacts[0] == False:
                 self.pad_contacts[0] = True
 
@@ -210,6 +216,10 @@ class CrazyflieEnv:
 
             elif msg.collision1_name == f"{self.modelName}::pad_4::collision" and self.pad_contacts[3] == False:
                 self.pad_contacts[3] = True
+
+            elif msg.collision1_name == f"{self.modelName}::crazyflie_body::body_collision" and self.body_contact == False:
+                self.body_contact = True
+
         
         
         
@@ -257,14 +267,16 @@ class CrazyflieEnv:
         print("[STARTING] Starting Gazebo Process...")
 
         print("[STARTING] Starting Controller Process...")
-        self.controller_p = subprocess.Popen( # Controller Process
-            "gnome-terminal --disable-factory --geometry 70x41 -- rosrun crazyflie_gazebo controller", 
-            close_fds=True, preexec_fn=os.setsid, shell=True)
+        
 
         self.gazebo_p = subprocess.Popen( # Gazebo Process
             "gnome-terminal --disable-factory  -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_gazebo.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
-        time.sleep(5)
+        
+
+        self.controller_p = subprocess.Popen( # Controller Process
+            "gnome-terminal --disable-factory --geometry 70x41 -- rosrun crazyflie_gazebo controller", 
+            close_fds=True, preexec_fn=os.setsid, shell=True)
 
 
     def launch_dashboard(self):
@@ -299,7 +311,11 @@ class CrazyflieEnv:
     def reset_pos(self): # Disable sticky then places spawn_model at origin
         
         ## TURN OFF STICKY FEET
+        self.step('tumble',ctrl_flag=0)
         self.step('sticky',ctrl_flag=0)
+        self.step('home')
+        
+        
 
         ## RESET POSITION AND VELOCITY
         state_msg = ModelState()
@@ -308,10 +324,11 @@ class CrazyflieEnv:
         state_msg.pose.position.y = 0
         state_msg.pose.position.z = 0.2
 
+        state_msg.pose.orientation.w = 1
         state_msg.pose.orientation.x = 0
         state_msg.pose.orientation.y = 0
         state_msg.pose.orientation.z = 0
-        state_msg.pose.orientation.w = 1
+        
 
         state_msg.twist.linear.x = 0
         state_msg.twist.linear.y = 0
@@ -320,10 +337,17 @@ class CrazyflieEnv:
         rospy.wait_for_service('/gazebo/set_model_state')
         set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         set_state_srv(state_msg)
-        time.sleep(0.01) # Give it time for controller to receive new states
+
+        ## WAIT FOR CONTROLLER TO UPDATE STATE x2 BEFORE TURNING ON TUMBLE DETECTION
+        rospy.wait_for_message('/global_state',Odometry)
+        rospy.wait_for_message('/global_state',Odometry)
+        self.step('tumble',ctrl_flag=1)
+
+        # time.sleep(0.1) # Give it time for controller to receive new states
+        # rospy.wait_for_service('/gazebo/get_link_state')
 
         ## RESET TO HOME
-        self.step('home')
+        
 
     def step(self,action,ctrl_vals=[0,0,0],ctrl_flag=1):
         cmd_msg = RLCmd()
@@ -332,7 +356,7 @@ class CrazyflieEnv:
                     'pos':1,
                     'vel':2,
                     'att':3,
-                    'omega':4,
+                    'tumble':4,
                     'stop':5,
                     'gains':6,
                     'moment':7,
@@ -390,7 +414,7 @@ class CrazyflieEnv:
                     self.omega[0],self.omega[1],self.omega[2], # wx,wy,wz
                     "","",self.flip_flag,self.impact_flag,"", # gamma, reward, flip_triggered, n_rollout
                     self.RREV,self.OF_x,self.OF_y, # RREV, OF_x, OF_y
-                    self.MS[0],self.MS[1],self.MS[2],self.MS[3],
+                    self.MS[0],self.MS[1],self.MS[2],self.MS[3], # MS1, MS2, MS3, MS4
                     self.FM[0],self.FM[1],self.FM[2],self.FM[3], # F_thrust,Mx,My,Mz 
                     ""]) # Error
 
@@ -407,9 +431,9 @@ class CrazyflieEnv:
                     "", "", "", "", # qx,qy,qz,qw
                     np.round(self.vel_d[0],2),np.round(self.vel_d[1],2),np.round(self.vel_d[2],2), # vx,vy,vz
                     "","","", # wx,wy,wz
-                    np.round(self.gamma,2),np.round(self.reward,2),"",sum(self.pad_contacts),self.n_rollouts, # gamma, reward, flip_flag, num leg contacts, n_rollout
+                    np.round(self.gamma,2),np.round(self.reward,2),self.body_contact,sum(self.pad_contacts),self.n_rollouts, # gamma, reward, body_impact, num leg contacts, n_rollout
                     self.RREV_tr,"",self.OF_y_tr, # RREV, OF_x, OF_y
-                    "","","","",
+                    "","","","", # MS1, MS2, MS3, MS4
                     "",self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # F_thrust,Mx,My,Mz 
                     self.error_str]) # Error
 
@@ -465,8 +489,11 @@ class CrazyflieEnv:
     def cmd_send(self):
         while True:
             # Converts input number into action name
-            cmd_dict = {0:'home',1:'pos',2:'vel',3:'att',4:'omega',5:'stop',6:'gains'}
-            val = float(input("\nCmd Type (0:home,1:pos,2:vel,3:att,4:omega,5:stop,6:gains): "))
+            cmd_dict = {0:'home',1:'pos',2:'vel',3:'att',4:'tumble',5:'stop',6:'gains'}
+            try:
+                val = float(input("\nCmd Type (0:home,1:pos,2:vel,3:att,4:omega,5:stop,6:gains): "))
+            except:
+                continue
             action = cmd_dict[val]
 
             if action=='home' or action == 'stop': # Execute home or stop action
@@ -483,13 +510,13 @@ class CrazyflieEnv:
 
                 self.step(action,ctrl_vals,ctrl_flag)
                 
-            elif action == 'omega': # Execture Angular rate action
+            elif action == 'tumble': # Execture Angular rate action
 
                 ctrl_vals = input("\nControl Vals (x,y,z): ")
                 ctrl_vals = [float(i) for i in ctrl_vals.split(',')]
                 ctrl_flag = 1.0
 
-                self.step('omega',ctrl_vals,ctrl_flag)
+                self.step('tumble',ctrl_vals,ctrl_flag)
 
 
             else:

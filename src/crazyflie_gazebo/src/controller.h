@@ -7,6 +7,7 @@
 #include "crazyflie_gazebo/CtrlData.h"
 #include "gazebo_communication_pkg/GlobalState.h"
 #include "crazyflie_rl/RLCmd.h"
+#include "nav_msgs/Odometry.h"
 
 
 // Socket Includes
@@ -56,10 +57,19 @@ class Controller
             _omega_d << 0,0,0;
 
             // SET DEFAULT CONTROLLER GAINS
-            _kp_x << 0.1,0.1,0.20;
-            _kd_x << 0.08,0.08,0.08;
-            _kp_R << 0.05,0.05,0.05;
-            _kd_R << 0.005,0.005,0.005;
+
+
+            _kp_x_D.fill(0.5);
+            _kd_x_D.fill(0.15);
+            _kp_R_D.fill(0.015);
+            _kd_R_D.fill(0.0012);
+
+            _kp_x = _kp_x_D;
+            _kd_x = _kd_x_D;
+            _kp_R = _kp_R_D;
+            _kd_R = _kd_R_D;
+
+
 
             // SET DEFAULT POLICY VALUES
             _RREV_thr = 0.0;
@@ -73,7 +83,7 @@ class Controller
         void Load();
         void recvThread_RL();
         void controlThread();
-        void global_stateCallback(const gazebo_communication_pkg::GlobalState::ConstPtr &msg);
+        void global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg);
         void RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg);
 
     private:
@@ -113,6 +123,11 @@ class Controller
         Eigen::Vector3d _kp_R; // Rot. Gain
         Eigen::Vector3d _kd_R; // Rot. derivative Gain
 
+        Eigen::Vector3d _kp_x_D; // Pos. Gain
+        Eigen::Vector3d _kd_x_D; // Pos. derivative Gain
+        Eigen::Vector3d _kp_R_D; // Rot. Gain
+        Eigen::Vector3d _kd_R_D; // Rot. derivative Gain
+
 
         double _RREV;
         double _OF_x;
@@ -135,6 +150,8 @@ class Controller
 
         bool _motorstop_flag = false;
         bool _Moment_flag = false;
+        bool _tumbled = false;
+        bool _tumble_detection = true;
 
 
 

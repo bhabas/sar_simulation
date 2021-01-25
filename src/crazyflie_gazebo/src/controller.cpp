@@ -78,15 +78,15 @@ void Controller::Load()
 
 
 
-void Controller::global_stateCallback(const gazebo_communication_pkg::GlobalState::ConstPtr &msg){
+void Controller::global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
 
     // SIMPLIFY STATE VALUES FROM TOPIC
     // Follow msg names from message details - "rqt -s rqt_msg" 
     float _t = msg->header.stamp.toSec();
-    const geometry_msgs::Point position = msg->global_pose.position; 
-    const geometry_msgs::Quaternion quaternion = msg->global_pose.orientation;
-    const geometry_msgs::Vector3 velocity = msg->global_twist.linear;
-    const geometry_msgs::Vector3 omega = msg->global_twist.angular;
+    const geometry_msgs::Point position = msg->pose.pose.position; 
+    const geometry_msgs::Quaternion quaternion = msg->pose.pose.orientation;
+    const geometry_msgs::Vector3 velocity = msg->twist.twist.linear;
+    const geometry_msgs::Vector3 omega = msg->twist.twist.angular;
 
     // SET STATE VALUES INTO CLASS STATE VARIABLES
     _pos << position.x, position.y, position.z;
@@ -96,9 +96,14 @@ void Controller::global_stateCallback(const gazebo_communication_pkg::GlobalStat
 
 
     // SET SENSOR VALUES INTO CLASS VARIABLES
-    _RREV = msg->RREV;
-    _OF_x = msg->OF_x;
-    _OF_y = msg->OF_y;
+    // _RREV = msg->RREV;
+    // _OF_x = msg->OF_x;
+    // _OF_y = msg->OF_y;
+
+    double d = 2.5-position.z; // h_ceiling - height
+    _RREV = velocity.z/d;
+    _OF_x = -velocity.y/d;
+    _OF_y = -velocity.x/d;
     
 
 }
@@ -132,11 +137,20 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             _kp_Rf = 1;
             _kd_Rf = 1;
 
+            _kp_x = _kp_x_D;
+            _kd_x = _kd_x_D;
+            _kp_R = _kp_R_D;
+            _kd_R = _kd_R_D;
+
             
             _motorstop_flag = false;
             _Moment_flag = false;
             _policy_armed_flag = false;
             _flip_flag = false;
+
+            _tumbled = false;
+            // _tumble_detection = true;
+
             break;
 
         case 1: // Position
@@ -152,16 +166,20 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
         case 3: // Attitude [Future implentation needed]
             break;
         
-        case 4: // Execute Ang. Velocity-Based Flip [DEPRECATED]
-                //      NOTE: This has been outperformed by moment based flips and removed
-                //      Look back at old commits for reference if needed
+        case 4: // Tumble-Detection
+            _tumble_detection = (bool)cmd_flag;
             break;
 
         case 5: // Hard Set All Motorspeeds to Zero
             _motorstop_flag = (bool)cmd_flag;
             break;
 
-        case 6: // Edit Gains [Needs Reimplemented]
+        case 6: // Edit Gains 
+
+            _kp_x.fill(cmd_vals(0)); 
+            _kd_x.fill(cmd_vals(1)); 
+            _kp_R.fill(cmd_vals(2)); 
+            _kd_R.fill(cmd_flag); 
             break;
 
         case 7: // Execute Moment-Based Flip
@@ -321,7 +339,7 @@ void Controller::controlThread()
 
     // =========== ROS Definitions =========== //
     crazyflie_gazebo::CtrlData ctrl_msg;
-    ros::Rate rate(800);
+    ros::Rate rate(200);
 
     while(_isRunning)
     {
@@ -362,6 +380,10 @@ void Controller::controlThread()
         pitch = atan2(-R(2,0), sqrt(R(2,1)*R(2,1)+R(2,2)*R(2,2)));
     
         b3 = R*e3; // Body vertical axis in terms of global axes
+        
+        if(b3(2) <= 0 && _tumble_detection == true){ // If e3 component of b3 is neg, turn motors off 
+            _tumbled = true;
+        }
 
 
         // =========== Translational Errors & Desired Body-Fixed Axes =========== //
@@ -390,30 +412,42 @@ void Controller::controlThread()
         Gyro_dyn = omega.cross(J*omega) - J*(hat(omega)*R.transpose()*R_d*omega_d - R.transpose()*R_d*domega_d); // Gyroscopic dynamics
         M = -kp_R.cwiseProduct(e_R)*_kp_Rf + -kd_R.cwiseProduct(e_omega)*_kd_Rf + Gyro_dyn; // Moment control vector
 
-        
-        if(_Moment_flag == true){
-            FM << F_thrust,_M_d;
-        }
-        else{
 
-            if(_policy_armed_flag == true){
+        if (!_tumbled){ // If not tumbled and tumble detection turned on
             
+            if(_policy_armed_flag == true){
+        
                 if(_RREV >= _RREV_thr && _flip_flag == false){
                     OF_y_tr = _OF_y;
                     RREV_tr = _RREV;
                     _flip_flag = true;
                 }
+
                 if(_flip_flag == true){
+
                     _M_d(0) = 0.0;
                     _M_d(1) = ( (_G1*1e-1)*RREV_tr - (_G2*1e-1)*abs(OF_y_tr))*sign(OF_y_tr)*1e-3;
                     _M_d(2) = 0.0;
 
                     M = _M_d;
+                    // F_thrust = 0;
                 }
             }
+            else{
+                F_thrust = F_thrust;
+                M = M;
+            }
 
-            FM << F_thrust,M; // Thrust-Moment control vector
         }
+        else if(_tumbled == true && _tumble_detection == true){
+            F_thrust = 0;
+            M << 0.0,0.0,0.0;
+        }
+
+        FM << F_thrust,M; // Thrust-Moment control vector
+        
+
+
 
 
         
@@ -439,9 +473,8 @@ void Controller::controlThread()
             }
         }
 
-        if(b3(2) <= 0){ // If e3 component of b3 is neg, turn motors off 
-            _motorstop_flag = true;
-        }
+
+        
 
 
         if(_motorstop_flag == true){ // Shutoff all motors
@@ -462,8 +495,8 @@ void Controller::controlThread()
         "kp_R: " << _kp_R.transpose() << "\tkd_R: " << _kd_R.transpose() << endl <<
         endl << 
         setprecision(1) <<
-        "Policy_armed: " << _policy_armed_flag <<  "\t\tFlip_flag:" << _flip_flag << endl <<
-        "motorstop_flag: " << _motorstop_flag << "\tMoment_flag: " << _Moment_flag << endl <<
+        "Policy_armed: " << _policy_armed_flag <<  "\t\tFlip_flag: " << _flip_flag << endl <<
+        "Tumble Detection: " << _tumble_detection << "\t\tTumbled: " << _tumbled << endl <<
         "kp_xf: " << _kp_xf << " \tkd_xf: " << _kd_xf << "\tkp_Rf: " << _kp_Rf << "\tkd_Rf: " << _kd_Rf  << endl <<
         endl << setprecision(4) <<
 

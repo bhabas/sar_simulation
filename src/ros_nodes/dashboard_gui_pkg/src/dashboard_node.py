@@ -4,6 +4,7 @@ import numpy as np
 from gazebo_communication_pkg.msg import GlobalState
 from crazyflie_rl.msg import RLData
 from crazyflie_gazebo.msg import CtrlData
+from nav_msgs.msg import Odometry
 
 class DashboardNode:
     def __init__(self):
@@ -17,10 +18,11 @@ class DashboardNode:
         self.k_run = 0
         self.k_ep = 0
         self.reward = 0
+        self.state_current = np.zeros(14)
         
 
         ## INITIALIZE GLOBAL STATE SUBSCRIBER 
-        rospy.Subscriber('/global_state',GlobalState,self.global_stateCallback)
+        rospy.Subscriber('/global_state',Odometry,self.global_stateCallback)
 
         ## INITIAILIZE REWARD SUBSCRIBER 
         rospy.Subscriber('/rl_data',RLData,self.rewardCallback)
@@ -63,25 +65,25 @@ class DashboardNode:
         ## SET TIME VALUE FROM TOPIC
         t_temp = gs_msg.header.stamp.secs
         ns_temp = gs_msg.header.stamp.nsecs
-        t = t_temp+ns_temp*1e-9 # (seconds + nanoseconds)
+        self.t = np.round(t_temp+ns_temp*1e-9,3) # (seconds + nanoseconds)
         
         ## SIMPLIFY STATE VALUES FROM TOPIC
-        global_pos = gs_msg.global_pose.position
-        global_quat = gs_msg.global_pose.orientation
-        global_vel = gs_msg.global_twist.linear
-        global_omega = gs_msg.global_twist.angular
+        global_pos = gs_msg.pose.pose.position
+        global_quat = gs_msg.pose.pose.orientation
+        global_vel = gs_msg.twist.twist.linear
+        global_omega = gs_msg.twist.twist.angular
         
         if global_quat.w == 0: # If zero at startup set quat.w to one to prevent errors
             global_quat.w = 1
 
         ## SET STATE VALUES FROM TOPIC
-        position = [global_pos.x,global_pos.y,global_pos.z]
-        orientation_q = [global_quat.w,global_quat.x,global_quat.y,global_quat.z]
-        velocity = [global_vel.x,global_vel.y,global_vel.z]
-        omega = [global_omega.x,global_omega.y,global_omega.z]
+        
+        self.position = np.round([global_pos.x,global_pos.y,global_pos.z],3)
+        self.orientation_q = np.round([global_quat.w,global_quat.x,global_quat.y,global_quat.z],3)
+        self.velocity = np.round([global_vel.x,global_vel.y,global_vel.z],3)
+        self.omega = np.round([global_omega.x,global_omega.y,global_omega.z],3)
 
 
         ## COMBINE INTO COMPREHENSIVE LIST
-        #  Change t (float) to [t] (list) to match other variables
-        self.state_current = [t] + position + orientation_q + velocity + omega 
+        self.state_current = np.concatenate([np.atleast_1d(self.t),self.position,self.orientation_q,self.velocity,self.omega])
         
