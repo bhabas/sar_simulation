@@ -246,7 +246,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                 # ============================
                 if env.runComplete_flag==True:
 
-                    reward[k_run] = agent.calcReward_pureLanding(state_history,env.h_ceiling,env.pad_contacts)
+                    reward[k_run] = agent.calcReward_pureLanding(state_history,env.h_ceiling,env.pad_contacts,env.body_contact)
                     # reward[k_run] = agent.calcReward_effortMinimization(state_history,FM_history,env.h_ceiling,env.pad_contacts)
                     env.reward = reward[k_run]
                     print("Reward = %.3f" %(reward[k_run]))
@@ -291,7 +291,7 @@ if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv()
-    # env.launch_dashboard()
+    env.launch_dashboard()
 
     print("Environment done")
 
@@ -328,8 +328,8 @@ if __name__ == '__main__':
     # ============================
 
     ## INITIAL CONDITIONS
-    vz_d = 3.5
-    vx_d = 1.5
+    vz_d = 1.5
+    vx_d = 2.75
 
     
     

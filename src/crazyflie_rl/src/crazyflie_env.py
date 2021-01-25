@@ -116,10 +116,10 @@ class CrazyflieEnv:
 
     def RL_Publish(self):
         # Publishes all the RL data from the RL script
+        
 
         rl_msg = RLData() ## Initialize RLData message
         
-        rl_msg.header.stamp = rospy.Time.now()
         rl_msg.trial_name = self.trial_name
         rl_msg.agent = self.agent_name
         rl_msg.error = self.error_str

@@ -1,4 +1,3 @@
-Header header
 string trial_name
 string agent
 string error
