@@ -20,8 +20,9 @@ filepath = "/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src
 trial = DataFile(filepath)
 
 k_ep = 13
-k_run = 1
+k_run = 2
 
-trial.plot_rewardFunc()
+print(trial.grab_M_d_trial())
+
 
 # print(v)
