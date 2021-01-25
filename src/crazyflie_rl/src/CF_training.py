@@ -290,7 +290,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
 if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv()
+    env = CrazyflieEnv(gazeboTimeout=True)
     env.launch_dashboard()
 
     print("Environment done")
@@ -328,8 +328,8 @@ if __name__ == '__main__':
     # ============================
 
     ## INITIAL CONDITIONS
-    vz_d = 1.5
-    vx_d = 2.75
+    vz_d = 3.5
+    vx_d = 1.5
 
     
     

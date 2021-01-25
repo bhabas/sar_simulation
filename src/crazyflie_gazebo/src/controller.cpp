@@ -147,6 +147,10 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             _Moment_flag = false;
             _policy_armed_flag = false;
             _flip_flag = false;
+
+            _tumbled = false;
+            // _tumble_detection = true;
+
             break;
 
         case 1: // Position
@@ -164,7 +168,6 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
         
         case 4: // Tumble-Detection
             _tumble_detection = (bool)cmd_flag;
-                
             break;
 
         case 5: // Hard Set All Motorspeeds to Zero
@@ -377,6 +380,10 @@ void Controller::controlThread()
         pitch = atan2(-R(2,0), sqrt(R(2,1)*R(2,1)+R(2,2)*R(2,2)));
     
         b3 = R*e3; // Body vertical axis in terms of global axes
+        
+        if(b3(2) <= 0 && _tumble_detection == true){ // If e3 component of b3 is neg, turn motors off 
+            _tumbled = true;
+        }
 
 
         // =========== Translational Errors & Desired Body-Fixed Axes =========== //
@@ -405,19 +412,17 @@ void Controller::controlThread()
         Gyro_dyn = omega.cross(J*omega) - J*(hat(omega)*R.transpose()*R_d*omega_d - R.transpose()*R_d*domega_d); // Gyroscopic dynamics
         M = -kp_R.cwiseProduct(e_R)*_kp_Rf + -kd_R.cwiseProduct(e_omega)*_kd_Rf + Gyro_dyn; // Moment control vector
 
-        
-        if(_Moment_flag == true){
-            FM << F_thrust,_M_d;
-        }
-        else{
 
-            if(_policy_armed_flag == true){
+        if (!_tumbled){ // If not tumbled and tumble detection turned on
             
+            if(_policy_armed_flag == true){
+        
                 if(_RREV >= _RREV_thr && _flip_flag == false){
                     OF_y_tr = _OF_y;
                     RREV_tr = _RREV;
                     _flip_flag = true;
                 }
+
                 if(_flip_flag == true){
 
                     _M_d(0) = 0.0;
@@ -428,9 +433,21 @@ void Controller::controlThread()
                     // F_thrust = 0;
                 }
             }
+            else{
+                F_thrust = F_thrust;
+                M = M;
+            }
 
-            FM << F_thrust,M; // Thrust-Moment control vector
         }
+        else if(_tumbled == true && _tumble_detection == true){
+            F_thrust = 0;
+            M << 0.0,0.0,0.0;
+        }
+
+        FM << F_thrust,M; // Thrust-Moment control vector
+        
+
+
 
 
         
@@ -457,9 +474,7 @@ void Controller::controlThread()
         }
 
 
-        if(b3(2) <= 0 && _tumble_detection){ // If e3 component of b3 is neg, turn motors off 
-            _motorstop_flag = true;
-        }
+        
 
 
         if(_motorstop_flag == true){ // Shutoff all motors
@@ -480,8 +495,8 @@ void Controller::controlThread()
         "kp_R: " << _kp_R.transpose() << "\tkd_R: " << _kd_R.transpose() << endl <<
         endl << 
         setprecision(1) <<
-        "Policy_armed: " << _policy_armed_flag <<  "\t\tFlip_flag:" << _flip_flag << endl <<
-        "motorstop_flag: " << _motorstop_flag << "\tMoment_flag: " << _Moment_flag << endl <<
+        "Policy_armed: " << _policy_armed_flag <<  "\t\tFlip_flag: " << _flip_flag << endl <<
+        "Tumble Detection: " << _tumble_detection << "\t\tTumbled: " << _tumbled << endl <<
         "kp_xf: " << _kp_xf << " \tkd_xf: " << _kd_xf << "\tkp_Rf: " << _kp_Rf << "\tkd_Rf: " << _kd_Rf  << endl <<
         endl << setprecision(4) <<
 

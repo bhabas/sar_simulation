@@ -311,9 +311,10 @@ class CrazyflieEnv:
     def reset_pos(self): # Disable sticky then places spawn_model at origin
         
         ## TURN OFF STICKY FEET
+        self.step('tumble',ctrl_flag=0)
         self.step('sticky',ctrl_flag=0)
         self.step('home')
-        self.step('tumble',ctrl_flag=0)
+        
         
 
         ## RESET POSITION AND VELOCITY
@@ -336,6 +337,12 @@ class CrazyflieEnv:
         rospy.wait_for_service('/gazebo/set_model_state')
         set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         set_state_srv(state_msg)
+
+        ## WAIT FOR CONTROLLER TO UPDATE STATE x2 BEFORE TURNING ON TUMBLE DETECTION
+        rospy.wait_for_message('/global_state',Odometry)
+        rospy.wait_for_message('/global_state',Odometry)
+        self.step('tumble',ctrl_flag=1)
+
         # time.sleep(0.1) # Give it time for controller to receive new states
         # rospy.wait_for_service('/gazebo/get_link_state')
 
@@ -482,7 +489,7 @@ class CrazyflieEnv:
     def cmd_send(self):
         while True:
             # Converts input number into action name
-            cmd_dict = {0:'home',1:'pos',2:'vel',3:'att',4:'omega',5:'stop',6:'gains'}
+            cmd_dict = {0:'home',1:'pos',2:'vel',3:'att',4:'tumble',5:'stop',6:'gains'}
             try:
                 val = float(input("\nCmd Type (0:home,1:pos,2:vel,3:att,4:omega,5:stop,6:gains): "))
             except:
@@ -503,13 +510,13 @@ class CrazyflieEnv:
 
                 self.step(action,ctrl_vals,ctrl_flag)
                 
-            elif action == 'omega': # Execture Angular rate action
+            elif action == 'tumble': # Execture Angular rate action
 
                 ctrl_vals = input("\nControl Vals (x,y,z): ")
                 ctrl_vals = [float(i) for i in ctrl_vals.split(',')]
                 ctrl_flag = 1.0
 
-                self.step('omega',ctrl_vals,ctrl_flag)
+                self.step('tumble',ctrl_vals,ctrl_flag)
 
 
             else:
