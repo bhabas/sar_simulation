@@ -431,7 +431,7 @@ class CrazyflieEnv:
                     "", "", "", "", # qx,qy,qz,qw
                     np.round(self.vel_d[0],2),np.round(self.vel_d[1],2),np.round(self.vel_d[2],2), # vx,vy,vz
                     "","","", # wx,wy,wz
-                    np.round(self.gamma,2),np.round(self.reward,2),self.body_contact,sum(self.pad_contacts),self.n_rollouts, # gamma, reward, body_impact, num leg contacts, n_rollout
+                    np.round(self.gamma,2),round(self.reward,2),self.body_contact,sum(self.pad_contacts),self.n_rollouts, # gamma, reward, body_impact, num leg contacts, n_rollout
                     self.RREV_tr,"",self.OF_y_tr, # RREV, OF_x, OF_y
                     "","","","", # MS1, MS2, MS3, MS4
                     "",self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # F_thrust,Mx,My,Mz 

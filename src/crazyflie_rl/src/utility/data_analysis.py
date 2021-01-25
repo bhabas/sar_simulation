@@ -7,34 +7,36 @@ from scipy.spatial.transform import Rotation
 
 class DataFile:
     def __init__(self,filepath):
-        trial_df = pd.read_csv(filepath)
-        trial_df = trial_df[ trial_df['error'] != 'Error: NAN found in state vector']
-        self.trial_df = trial_df[ trial_df['vz'].notna()]
+        self.trial_df = pd.read_csv(filepath)
+        ## WHAT DO THESE DO AGAIN?
+        # trial_df = self.trial_df[ self.trial_df['Error'] != 'Error: NAN found in state vector'] 
+        # self.trial_df = trial_df[ trial_df['vz'].notna()] # Drops all rows that vz is blank
 
         ## NOTE: Trial needs to be truncated to last complete episode
+        
 
     def select_run(self,k_ep,k_run): ## Create run dataframe from k_ep and k_run
         run_df = self.trial_df[(self.trial_df['k_ep']==k_ep) & (self.trial_df['k_run']==k_run)]
         return run_df
 
     def plot_rewardFunc(self,figNum=0):
-        """Plot rewards for trial
+        """Plot rewards for overall trial
 
         Args:
             figNum (int, optional): Figure Number. Defaults to 0.
         """        
         num_rollouts = self.trial_df.iloc[-1]['n_rollouts']
 
-        ## CREATE ARRAYS FOR REWARD, K_EP
-        reward_df = self.trial_df.iloc[:][['k_ep','reward']].dropna()
+        ## CREATE ARRAYS FOR REWARD, K_EP 
+        reward_df = self.trial_df.iloc[:][['k_ep','reward']].dropna() # Create df from k_ep/rewards and drop blank reward rows
         rewards_arr = reward_df.to_numpy()
         rewards = rewards_arr[:,1]
         k_ep_r = rewards_arr[:,0]
 
         ## CREATE ARRAYS FOR REWARD_AVG, K_EP
-        rewardAvg_df = reward_df.groupby('k_ep').mean()
+        rewardAvg_df = reward_df.groupby('k_ep').mean() # Group rows by k_ep value and take their mean 
         rewards_avg = rewardAvg_df.to_numpy()
-        k_ep_ravg = reward_df.k_ep.unique()
+        k_ep_ravg = reward_df.k_ep.unique() # Drops duplicate values so it matches dimension of rewards_avg (1 avg per ep and n ep)
 
 
         fig = plt.figure(figNum)
@@ -46,8 +48,8 @@ class DataFile:
 
         ax.set_ylabel("Rewards")
         ax.set_xlabel("k_ep")
-        ax.set_xlim(-2,20)
-        ax.set_ylim(-2,25)
+        ax.set_xlim(-2,25)
+        ax.set_ylim(-2,150)
         ax.set_title(f"Reward vs Episode | Rollouts per Episode: {num_rollouts*2}")
         ax.legend()
         ax.grid()

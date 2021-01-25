@@ -256,7 +256,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
 
                     reward[k_run] = agent.calcReward_pureLanding(state_history,env.h_ceiling,env.pad_contacts,env.body_contact)
                     # reward[k_run] = agent.calcReward_effortMinimization(state_history,FM_history,env.h_ceiling,env.pad_contacts)
-                    env.reward = reward[k_run]
+                    env.reward = reward[k_run,0]
                     print("Reward = %.3f" %(reward[k_run]))
                     print("# of Leg contacts: %i" %(sum(env.pad_contacts)))
                     print("!------------------------End Run------------------------! \n")   
