@@ -177,7 +177,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     state_history = state 
                     FM_history = FM
                 else: # Append state_history columns with current state vector
-                    if t_step%125==0: 
+                    if t_step%1==0: 
                         state_history = np.append(state_history, state, axis=1)
                         FM_history = np.append(FM_history,FM,axis=1)
                         env.RL_Publish()
@@ -200,12 +200,12 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     env.runComplete_flag = True
 
                 # IF POSITION FALLS BELOW ACHIEVED MAX HEIGHT
-                z_max = max(position[2],z_max)
-                if position[2] <= 0.95*z_max: # Note: there is a lag with this
-                    env.error_str = "Rollout Completed: Falling Drone"
-                    print(env.error_str)
+                # z_max = max(position[2],z_max)
+                # if position[2] <= 0.95*z_max: # Note: there is a lag with this
+                #     env.error_str = "Rollout Completed: Falling Drone"
+                #     print(env.error_str)
 
-                    env.runComplete_flag = True
+                #     env.runComplete_flag = True
 
                 # IF CF HASN'T CHANGED Z HEIGHT IN PAST [5.0s]
                 if np.abs(position[2]-z_prev) > 0.001:
@@ -224,6 +224,8 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
 
                     env.runComplete_flag = True
 
+                
+
 
                 
                 
@@ -235,6 +237,12 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                 ## IF NAN IS FOUND IN STATE VECTOR REPEAT RUN (Model collision Error)
                 if any(np.isnan(state)): 
                     env.error_str = "Error: NAN found in state vector"
+                    print(env.error_str)
+                    repeat_run = True
+                    break
+
+                if np.abs(position[1]) >= 2.0:
+                    env.error_str = "Error: Y-Position Exceeded"
                     print(env.error_str)
                     repeat_run = True
                     break

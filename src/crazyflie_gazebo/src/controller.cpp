@@ -82,13 +82,14 @@ void Controller::global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
 
     // SIMPLIFY STATE VALUES FROM TOPIC
     // Follow msg names from message details - "rqt -s rqt_msg" 
-    float _t = msg->header.stamp.toSec();
+    
     const geometry_msgs::Point position = msg->pose.pose.position; 
     const geometry_msgs::Quaternion quaternion = msg->pose.pose.orientation;
     const geometry_msgs::Vector3 velocity = msg->twist.twist.linear;
     const geometry_msgs::Vector3 omega = msg->twist.twist.angular;
 
     // SET STATE VALUES INTO CLASS STATE VARIABLES
+    _t = msg->header.stamp.toSec();
     _pos << position.x, position.y, position.z;
     _vel << velocity.x, velocity.y, velocity.z;
     _quat << quaternion.w, quaternion.x, quaternion.y, quaternion.z, 
@@ -483,13 +484,13 @@ void Controller::controlThread()
         
 
 
-        if (t_step%75 == 0){ // General Debugging output
+        if (t_step%1 == 0){ // General Debugging output
         cout << setprecision(4) <<
         "t: " << _t << "\tCmd: " << _ctrl_cmd.transpose() << endl << 
         endl <<
-        "RREV: " << _RREV << "\tOF_x: " << _OF_x << "\tOF_y: " << _OF_y << endl <<
-        "RREV_tr: " << RREV_tr << "\tOF_x: " << 0.0 << "\tOF_y_tr: " << OF_y_tr << endl << 
         "RREV_thr: " << _RREV_thr << "\tG1: " << _G1 << "\tG2: " << _G2 << endl << 
+        "RREV: " << _RREV << "\tOF_x: " << _OF_x << "\tOF_y: " << _OF_y << endl <<
+        "RREV_tr: " << RREV_tr << "\tOF_x_tr: " << 0.0 << "\tOF_y_tr: " << OF_y_tr << endl << 
         endl << 
         "kp_x: " << _kp_x.transpose() << "\tkd_x: " << _kd_x.transpose() << endl <<
         "kp_R: " << _kp_R.transpose() << "\tkd_R: " << _kd_R.transpose() << endl <<

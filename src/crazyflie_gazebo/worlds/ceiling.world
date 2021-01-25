@@ -17,7 +17,7 @@
     <!-- Default camera pose -->
     <gui>
       <camera name="user_camera">
-          <pose frame=''>2.0 -6 1.5 0 0.12 1.57</pose>
+          <pose frame=''>1.5 -3.75 2.0 0 0.12 1.57</pose>
           <!-- <pose>my custom pose as a six-tuple(x,y,z,roll,pitch,yaw)</pose> -->
       </camera>
     </gui>
@@ -38,9 +38,9 @@
           <contact_surface_layer>0.001</contact_surface_layer>
         </constraints>
       </ode>
-      <max_step_size>0.002</max_step_size>
+      <max_step_size>0.0025</max_step_size>
       <real_time_factor>1</real_time_factor>
-      <real_time_update_rate>800</real_time_update_rate>
+      <real_time_update_rate>1200</real_time_update_rate>
       <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
     </physics>
     <wind>
