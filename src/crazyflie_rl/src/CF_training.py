@@ -160,7 +160,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
 
                     flag = True # Turns on to make sure this only runs once per rollout
 
-                if any(env.pad_contacts): # If any pad contacts are True then update impact flag
+                if any(env.pad_contacts) or env.body_contact: # If any pad contacts are True then update impact flag
                     env.impact_flag = True
                    
 
