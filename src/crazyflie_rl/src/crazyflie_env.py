@@ -249,6 +249,7 @@ class CrazyflieEnv:
         self.close_sim()
         time.sleep(1)
         self.launch_sim()
+        self.reset_pos()
 
     def close_sim(self):
         os.killpg(self.gazebo_p.pid, signal.SIGTERM)
