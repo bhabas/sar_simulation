@@ -160,7 +160,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
 
                     flag = True # Turns on to make sure this only runs once per rollout
 
-                if any(env.pad_contacts): # If any pad contacts are True then update impact flag
+                if any(env.pad_contacts) or env.body_contact: # If any pad contacts are True then update impact flag
                     env.impact_flag = True
                    
 
@@ -256,7 +256,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
 
                     reward[k_run] = agent.calcReward_pureLanding(state_history,env.h_ceiling,env.pad_contacts,env.body_contact)
                     # reward[k_run] = agent.calcReward_effortMinimization(state_history,FM_history,env.h_ceiling,env.pad_contacts)
-                    env.reward = reward[k_run]
+                    env.reward = reward[k_run,0]
                     print("Reward = %.3f" %(reward[k_run]))
                     print("# of Leg contacts: %i" %(sum(env.pad_contacts)))
                     print("!------------------------End Run------------------------! \n")   
