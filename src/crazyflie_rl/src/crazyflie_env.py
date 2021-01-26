@@ -463,12 +463,12 @@ class CrazyflieEnv:
     def timeoutCallback(self,msg):
         ## RESET TIMER THAT ATTEMPTS TO UNPAUSE SIM
         self.timer_unpause.cancel()
-        self.timer_unpause = Timer(5,self.timeout_unpause)
+        self.timer_unpause = Timer(2,self.timeout_unpause)
         self.timer_unpause.start()
 
         ## RESET TIMER THAT RELAUNCHES SIM
         self.timer_relaunch.cancel()
-        self.timer_relaunch = Timer(10,self.timeout_relaunch)
+        self.timer_relaunch = Timer(5,self.timeout_relaunch)
         self.timer_relaunch.start()
     
 

@@ -193,7 +193,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     state_history = state 
                     FM_history = FM
                 else: # Append state_history columns with current state vector
-                    if t_step%1==0: 
+                    if t_step%30==0: 
                         state_history = np.append(state_history, state, axis=1)
                         FM_history = np.append(FM_history,FM,axis=1)
                         env.RL_Publish()
