@@ -67,7 +67,6 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
             ## RESET TO INITIAL STATE
             env.step('home') # Reset control vals and functionality to default vals
             time.sleep(0.5) # Time for CF to settle
-            env.append_csv(env.filepath)
             
 
             ## INITIALIZE POLICY PARAMETERS: 
@@ -126,7 +125,6 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
             env.step('vel',env.vel_d,ctrl_flag=1)   # Set desired vel
             env.launch_IC(vx_d,vz_d)                # Use Gazebo to impart desired vel
             env.step('sticky',ctrl_flag=1)          # Enable sticky pads
-            env.append_csv(env.filepath)
 
 
             z_f = env.position[2]
