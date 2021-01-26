@@ -261,11 +261,11 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     repeat_run = True
                     break
 
-                if np.abs(vz_teleport) >= 1: # If teleportation vz is greater than [5] m/s; relaunch gazebo
-                    env.error_str = "Error: Model Teleported"
-                    print(env.error_str)
-                    repeat_run = True
-                    break
+                # if np.abs(vz_teleport) >= 1: # If teleportation vz is greater than [5] m/s; relaunch gazebo
+                #     env.error_str = "Error: Model Teleported"
+                #     print(env.error_str)
+                #     repeat_run = True
+                #     break
 
 
 
