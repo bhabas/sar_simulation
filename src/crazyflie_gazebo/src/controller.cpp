@@ -484,7 +484,7 @@ void Controller::controlThread()
         
 
 
-        if (t_step%15 == 0){ // General Debugging output
+        if (t_step%50 == 0){ // General Debugging output
         cout << setprecision(4) <<
         "t: " << _t << "\tCmd: " << _ctrl_cmd.transpose() << endl << 
         endl <<

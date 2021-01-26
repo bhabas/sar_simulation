@@ -463,21 +463,21 @@ class CrazyflieEnv:
     def timeoutCallback(self,msg):
         ## RESET TIMER THAT ATTEMPTS TO UNPAUSE SIM
         self.timer_unpause.cancel()
-        self.timer_unpause = Timer(2,self.timeout_unpause)
+        self.timer_unpause = Timer(4,self.timeout_unpause)
         self.timer_unpause.start()
 
         ## RESET TIMER THAT RELAUNCHES SIM
         self.timer_relaunch.cancel()
-        self.timer_relaunch = Timer(5,self.timeout_relaunch)
+        self.timer_relaunch = Timer(7,self.timeout_relaunch)
         self.timer_relaunch.start()
     
 
     def timeout_unpause(self):
-        print("[UNPAUSING] No Gazebo communication in 5 seconds")
+        print("[UNPAUSING] No Gazebo communication in 4 seconds")
         os.system("rosservice call gazebo/unpause_physics")
 
     def timeout_relaunch(self):
-        print("[RELAUNCHING] No Gazebo communication in 10 seconds")
+        print("[RELAUNCHING] No Gazebo communication in 7 seconds")
         self.close_sim()
         time.sleep(1)
         self.launch_sim()
