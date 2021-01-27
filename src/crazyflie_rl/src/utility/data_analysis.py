@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 from scipy.spatial.transform import Rotation
 
 
@@ -60,26 +61,45 @@ class DataFile:
 
         plt.show()
 
-    # def landing_rate(self): ## NEEDS UPDATED
-    #     """Determines successful landing rate from final two episodes
+    def landing_plot(self): ## FUNCTIONAL BUT NOT PRETTY OR USEFUL
+        impact_df = self.trial_df.iloc[:][['k_ep','reward','impact_flag']].dropna() # Use reward to select final impact row
+        impact_df['impact_flag'] = pd.to_numeric(impact_df['impact_flag'])          # Convert number of legs (str) to type (int)
+        impact_df = impact_df.replace(3,4) # 3 and 4 legs are equivalent so just replace them
 
-    #     Returns:
-    #         [float]: [Landing rate]
-    #     """    
-    #     ## GRAB REWARD DF ALONG W/ INIT N_ROLLOUTS AND LANDING CUTTOFF CRITERIA
-    #     reward_df = self.trial_df.iloc[:][['k_ep','reward']].dropna()
-    #     num_rollouts = self.trial_df.iloc[-1]['n_rollouts']
-    #     landing_cutoff = 18.5
+        ## CONVERT DF COLUMNS TO NUMPY ARRAYS
+        k_ep_arr = impact_df['k_ep'].to_numpy()
+        landing_arr = impact_df['impact_flag'].to_numpy()
 
-    #     ## GRAB FINAL N_ROLLOUT REWARDS AND CALC SUCCESSFUL LANDINGS
-    #     temp = reward_df.iloc[-int(num_rollouts*4):]['reward'] # Store last [20] rows
-    #     landings= temp[temp>landing_cutoff].count()
-    #     sim_bug = temp[temp<3.00].count()
 
-    #     attempts = num_rollouts*4-sim_bug
-    #     landingRate = landings/attempts
 
-    #     return landingRate
+        ## PLOT LANDING DATA
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        
+        ax.scatter(k_ep_arr,landing_arr,marker='_',color='black',alpha=0.5,label='Reward')
+
+        ax.set_ylabel("Landing Legs")
+        ax.set_xlabel("time [s]")
+        ax.legend()
+        ax.grid()
+
+        plt.show()
+
+
+    def landing_rate(self):
+        impact_df = self.trial_df.iloc[:][['k_ep','reward','impact_flag']].dropna() # use reward to select final impact row
+        impact_df['impact_flag'] = pd.to_numeric(impact_df['impact_flag'])          # Convert number of legs (str) to type (int)
+        num_rollouts = self.trial_df.iloc[-1]['n_rollouts']                         # get number of rollouts
+
+        temp = impact_df.iloc[-int(num_rollouts*3):]['impact_flag'] # Grab leg impact number for final 3 episodes
+
+        
+        landings = temp[temp>=3].count()
+        attempts = num_rollouts*3
+        landingRate = landings/attempts
+        
+
+        return landingRate
 
 
 ## POLICY FUNCTIONS
@@ -232,7 +252,7 @@ class DataFile:
         t_flip,t_flip_norm = self.grab_flip_time(k_ep,k_run)
         state_flip = self.grab_flip_state(k_ep,k_run,stateName)
 
-        t_impact,t_impact_norm,_ = self.grab_impact_time(k_ep,k_run)
+        t_impact,t_impact_norm,body_impact = self.grab_impact_time(k_ep,k_run)
         state_impact = self.grab_impact_state(k_ep,k_run,stateName)
 
 
@@ -240,9 +260,14 @@ class DataFile:
         ## PLOT STATE/TIME DATA
         fig = plt.figure(figNum)
         ax = fig.add_subplot(111)
-        ax.plot(t_norm,state,label=f"{stateName}")
-        ax.scatter(t_flip_norm,state_flip,label="Flip")
-        ax.scatter(t_impact_norm,state_impact,label="Impact")
+        
+        ax.plot(t_norm,state,label=f"{stateName}",zorder=1)
+        ax.scatter(t_flip_norm,state_flip,label="Flip",zorder=2)
+
+        if body_impact==True:
+            ax.scatter(t_impact_norm,state_impact,label="Body Impact",zorder=2)
+        else:
+            ax.scatter(t_impact_norm,state_impact,label="Leg Impact",zorder=2)
 
 
         ax.set_ylabel(f"{stateName}")
@@ -251,6 +276,78 @@ class DataFile:
         ax.grid()
 
         plt.show()
+
+    def plot_traj(self,k_ep,k_run):
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+        x = self.grab_stateData(k_ep,k_run,'x')
+        z = self.grab_stateData(k_ep,k_run,'z')
+        
+
+        ax.plot(x, z)
+        ax.legend()
+        ax.set_xlabel("x-pos [m]")
+        ax.set_ylabel("z-pos [m]")
+        
+
+        ax.set_xlim([-1,3])
+        ax.set_ylim([0,3])
+        ax.grid()
+        
+        
+
+        plt.show()
+
+
+    def plot_traj2(self,k_ep,k_run):
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+        x = self.grab_stateData(k_ep,k_run,'x')
+        z = self.grab_stateData(k_ep,k_run,'z')
+
+        eul_y = self.grab_eulerData(k_ep,k_run,'eul_y')[1]
+        
+
+        ax.quiver(x,z,0.5*np.sin(eul_y),0.5*np.cos(eul_y),scale=10)
+        ax.plot(x,z)
+        
+        # ax.legend()
+        ax.set_xlabel("x-pos [m]")
+        ax.set_ylabel("z-pos [m]")
+        
+
+        ax.set_xlim([-1,3])
+        ax.set_ylim([0,3])
+        ax.grid()
+        
+        
+
+        plt.show()
+    
+    
+    def plot_traj_3D(self,k_ep,k_run):
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')
+
+        x = self.grab_stateData(k_ep,k_run,'x').flatten()
+        y = self.grab_stateData(k_ep,k_run,'y').flatten()
+        z = self.grab_stateData(k_ep,k_run,'z').flatten()
+
+        ax.plot(x, y, z, label='parametric curve')
+        ax.legend()
+        ax.set_xlabel("x-pos [m]")
+        ax.set_ylabel("y-pos [m]")
+        ax.set_zlabel("z-pos [m]")
+
+        ax.set_xlim([-1,3])
+        ax.set_ylim([-1,1])
+        ax.set_zlim([0,3])
+        
+
+        plt.show()
+
 
 
 
