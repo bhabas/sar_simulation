@@ -24,7 +24,7 @@ class DataFile:
 
         return run_df,IC_df
 
-    def plot_rewardData(self,figNum=0):
+    def plot_rewardData(self,file_name):
         """Plot rewards for overall trial
 
         Args:
@@ -44,7 +44,7 @@ class DataFile:
         k_ep_ravg = reward_df.k_ep.unique() # Drops duplicate values so it matches dimension of rewards_avg (1 avg per ep and n ep)
 
 
-        fig = plt.figure(figNum)
+        fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.scatter(k_ep_r,rewards,marker='_',color='black',alpha=0.5,label='Reward')
         ax.scatter(k_ep_ravg,rewards_avg,marker='o',color='red',label='Reward_avg')
@@ -55,7 +55,7 @@ class DataFile:
         ax.set_xlabel("k_ep")
         ax.set_xlim(-2,25)
         ax.set_ylim(-2,150)
-        ax.set_title(f"Reward vs Episode | Rollouts per Episode: {num_rollouts*2}")
+        ax.set_title(f"Reward vs Episode | Rollouts per Episode: {num_rollouts*2} \n {file_name}")
         ax.legend()
         ax.grid()
 
