@@ -114,6 +114,9 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
             print("RREV_thr: %.3f \t Gain_1: %.3f \t Gain_2: %.3f" %(RREV_threshold, G1, G2))
             print("Vx_d: %.3f \t Vy_d: %.3f \t Vz_d: %.3f" %(vx_d, vy_d, vz_d))
 
+            z_ini = env.position[2]
+            t_ini = env.getTime()
+
 
             # ============================
             ##          Rollout 
@@ -122,11 +125,20 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
             env.step('vel',env.vel_d,ctrl_flag=1)   # Set desired vel
             env.launch_IC(vx_d,vz_d)                # Use Gazebo to impart desired vel
             env.step('sticky',ctrl_flag=1)          # Enable sticky pads
+
+
+            z_f = env.position[2]
+            t_f = env.getTime()
+
+            vz_teleport = (z_f-z_ini)/(t_f-t_ini)
+            print(f"Vz_test = {vz_teleport:.3f}")
  
             
             
             
             while True:
+                
+                
                 
                 ## DEFINE CURRENT STATE
                 state = env.state_current
@@ -137,6 +149,8 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                 vel = state[8:11] # [vx,vy,vz]
                 vx,vy,vz = vel
                 omega = state[11:14] # [wx,wy,wz]
+
+                
                 
 
 
@@ -160,7 +174,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
 
                     flag = True # Turns on to make sure this only runs once per rollout
 
-                if any(env.pad_contacts): # If any pad contacts are True then update impact flag
+                if any(env.pad_contacts) or env.body_contact: # If any pad contacts are True then update impact flag
                     env.impact_flag = True
                    
 
@@ -177,7 +191,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     state_history = state 
                     FM_history = FM
                 else: # Append state_history columns with current state vector
-                    if t_step%125==0: 
+                    if t_step%30==0: 
                         state_history = np.append(state_history, state, axis=1)
                         FM_history = np.append(FM_history,FM,axis=1)
                         env.RL_Publish()
@@ -200,12 +214,12 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     env.runComplete_flag = True
 
                 # IF POSITION FALLS BELOW ACHIEVED MAX HEIGHT
-                z_max = max(position[2],z_max)
-                if position[2] <= 0.95*z_max: # Note: there is a lag with this
-                    env.error_str = "Rollout Completed: Falling Drone"
-                    print(env.error_str)
+                # z_max = max(position[2],z_max)
+                # if position[2] <= 0.95*z_max: # Note: there is a lag with this
+                #     env.error_str = "Rollout Completed: Falling Drone"
+                #     print(env.error_str)
 
-                    env.runComplete_flag = True
+                #     env.runComplete_flag = True
 
                 # IF CF HASN'T CHANGED Z HEIGHT IN PAST [5.0s]
                 if np.abs(position[2]-z_prev) > 0.001:
@@ -224,6 +238,8 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
 
                     env.runComplete_flag = True
 
+                
+
 
                 
                 
@@ -239,6 +255,19 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     repeat_run = True
                     break
 
+                if np.abs(position[1]) >= 2.0: # If CF goes crazy it'll usually shoot out in y-direction
+                    env.error_str = "Error: Y-Position Exceeded"
+                    print(env.error_str)
+                    repeat_run = True
+                    break
+
+                # if np.abs(vz_teleport) >= 1: # If teleportation vz is greater than [5] m/s; relaunch gazebo
+                #     env.error_str = "Error: Model Teleported"
+                #     print(env.error_str)
+                #     repeat_run = True
+                #     break
+
+
 
 
                 # ============================
@@ -248,7 +277,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
 
                     reward[k_run] = agent.calcReward_pureLanding(state_history,env.h_ceiling,env.pad_contacts,env.body_contact)
                     # reward[k_run] = agent.calcReward_effortMinimization(state_history,FM_history,env.h_ceiling,env.pad_contacts)
-                    env.reward = reward[k_run]
+                    env.reward = reward[k_run,0]
                     print("Reward = %.3f" %(reward[k_run]))
                     print("# of Leg contacts: %i" %(sum(env.pad_contacts)))
                     print("!------------------------End Run------------------------! \n")   
@@ -291,7 +320,7 @@ if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv(gazeboTimeout=True)
-    env.launch_dashboard()
+    # env.launch_dashboard()
 
     print("Environment done")
 

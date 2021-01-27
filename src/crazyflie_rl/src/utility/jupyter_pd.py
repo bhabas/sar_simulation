@@ -7,12 +7,18 @@ import os
 from data_analysis import DataFile
 os.system("clear")
 
-filepath = "/home/bhabas/catkin_ws/src/crazyflie_simulation/local_files/data/Vz_3.5--Vx_2.5--trial_0.csv"
 
-trial_df = DataFile(filepath)
+vz = 4.00
+vx = 0.00
+trialNum = 2
+agent = "EM_PEPG"
+filepath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/{agent}--Vz_{vz:.2f}--Vx_{vx:.2f}--trial_{trialNum}.csv"
 
-k_ep = 13
-k_run = 6
+trial = DataFile(filepath)
+trial_df = trial.trial_df
+
+k_ep = 19
+k_run = 9
 
 
-run_df = trial_df.select_run(k_ep, k_run)
+run_df,IC_df = trial.select_run(k_ep, k_run)

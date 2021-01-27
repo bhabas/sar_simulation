@@ -7,21 +7,19 @@ import os
 from data_analysis import DataFile
 os.system("clear")
 
-vz = 3.5
-vx = 1.5
-trialNum = 0
+vz = 4.00
+vx = 2.75
+trialNum = 2
+agent = "EM_PEPG"
 
-filepath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/local_files/data/Vz_{vz}--Vx_{vx}--trial_{trialNum}.csv"
-# filepath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo_sim/src/log/Vz_{vz}--Vx_{vx}--trial_{trialNum}.csv"
+filepath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/{agent}--Vz_{vz:.2f}--Vx_{vx:.2f}--trial_{trialNum}.csv"
 
 
 
 trial = DataFile(filepath)
 
-k_ep = 13
-k_run = 1
+k_ep = 16
+k_run = 5
+# trial.plot_eulerData(k_ep,k_run,'eul_y')
+trial.plot_traj2(k_ep,k_run)
 
-print(trial.grab_impact_omega_trial())
-trial.plot_eulerData(k_ep,k_run,'eul_y')
-
-# print(v)

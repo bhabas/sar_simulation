@@ -1,40 +1,47 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 from scipy.spatial.transform import Rotation
 
 
 
 class DataFile:
     def __init__(self,filepath):
-        trial_df = pd.read_csv(filepath)
-        trial_df = trial_df[ trial_df['error'] != 'Error: NAN found in state vector']
-        self.trial_df = trial_df[ trial_df['vz'].notna()]
+        self.trial_df = pd.read_csv(filepath)
+        ## WHAT DO THESE DO AGAIN?
+        # trial_df = self.trial_df[ self.trial_df['Error'] != 'Error: NAN found in state vector'] 
+        # self.trial_df = trial_df[ trial_df['vz'].notna()] # Drops all rows that vz is blank
 
         ## NOTE: Trial needs to be truncated to last complete episode
+        
 
     def select_run(self,k_ep,k_run): ## Create run dataframe from k_ep and k_run
         run_df = self.trial_df[(self.trial_df['k_ep']==k_ep) & (self.trial_df['k_run']==k_run)]
-        return run_df
+        IC_df = run_df[-1:]                                     # Remove last row with Initial Conditions
+        run_df = run_df[:-1]                                    # Drop IC row from dataframe
+        run_df = run_df.replace({'False':False,'True':True})    # Change all string bools to normal bools
 
-    def plot_rewardFunc(self,figNum=0):
-        """Plot rewards for trial
+        return run_df,IC_df
+
+    def plot_rewardData(self,figNum=0):
+        """Plot rewards for overall trial
 
         Args:
             figNum (int, optional): Figure Number. Defaults to 0.
         """        
         num_rollouts = self.trial_df.iloc[-1]['n_rollouts']
 
-        ## CREATE ARRAYS FOR REWARD, K_EP
-        reward_df = self.trial_df.iloc[:][['k_ep','reward']].dropna()
+        ## CREATE ARRAYS FOR REWARD, K_EP 
+        reward_df = self.trial_df.iloc[:][['k_ep','reward']].dropna() # Create df from k_ep/rewards and drop blank reward rows
         rewards_arr = reward_df.to_numpy()
         rewards = rewards_arr[:,1]
         k_ep_r = rewards_arr[:,0]
 
         ## CREATE ARRAYS FOR REWARD_AVG, K_EP
-        rewardAvg_df = reward_df.groupby('k_ep').mean()
+        rewardAvg_df = reward_df.groupby('k_ep').mean() # Group rows by k_ep value and take their mean 
         rewards_avg = rewardAvg_df.to_numpy()
-        k_ep_ravg = reward_df.k_ep.unique()
+        k_ep_ravg = reward_df.k_ep.unique() # Drops duplicate values so it matches dimension of rewards_avg (1 avg per ep and n ep)
 
 
         fig = plt.figure(figNum)
@@ -46,32 +53,51 @@ class DataFile:
 
         ax.set_ylabel("Rewards")
         ax.set_xlabel("k_ep")
-        ax.set_xlim(-2,20)
-        ax.set_ylim(-2,25)
+        ax.set_xlim(-2,25)
+        ax.set_ylim(-2,150)
         ax.set_title(f"Reward vs Episode | Rollouts per Episode: {num_rollouts*2}")
         ax.legend()
         ax.grid()
 
         plt.show()
 
-    def landing_rate(self): 
-        """Determines successful landing rate from final two episodes
+    def landing_plot(self): ## FUNCTIONAL BUT NOT PRETTY OR USEFUL
+        impact_df = self.trial_df.iloc[:][['k_ep','reward','impact_flag']].dropna() # Use reward to select final impact row
+        impact_df['impact_flag'] = pd.to_numeric(impact_df['impact_flag'])          # Convert number of legs (str) to type (int)
+        impact_df = impact_df.replace(3,4) # 3 and 4 legs are equivalent so just replace them
 
-        Returns:
-            [float]: [Landing rate]
-        """    
-        ## GRAB REWARD DF ALONG W/ INIT N_ROLLOUTS AND LANDING CUTTOFF CRITERIA
-        reward_df = self.trial_df.iloc[:][['k_ep','reward']].dropna()
-        num_rollouts = self.trial_df.iloc[-1]['n_rollouts']
-        landing_cutoff = 18.5
+        ## CONVERT DF COLUMNS TO NUMPY ARRAYS
+        k_ep_arr = impact_df['k_ep'].to_numpy()
+        landing_arr = impact_df['impact_flag'].to_numpy()
 
-        ## GRAB FINAL N_ROLLOUT REWARDS AND CALC SUCCESSFUL LANDINGS
-        temp = reward_df.iloc[-int(num_rollouts*4):]['reward'] # Store last [20] rows
-        landings= temp[temp>landing_cutoff].count()
-        sim_bug = temp[temp<3.00].count()
 
-        attempts = num_rollouts*4-sim_bug
+
+        ## PLOT LANDING DATA
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        
+        ax.scatter(k_ep_arr,landing_arr,marker='_',color='black',alpha=0.5,label='Reward')
+
+        ax.set_ylabel("Landing Legs")
+        ax.set_xlabel("time [s]")
+        ax.legend()
+        ax.grid()
+
+        plt.show()
+
+
+    def landing_rate(self):
+        impact_df = self.trial_df.iloc[:][['k_ep','reward','impact_flag']].dropna() # use reward to select final impact row
+        impact_df['impact_flag'] = pd.to_numeric(impact_df['impact_flag'])          # Convert number of legs (str) to type (int)
+        num_rollouts = self.trial_df.iloc[-1]['n_rollouts']                         # get number of rollouts
+
+        temp = impact_df.iloc[-int(num_rollouts*3):]['impact_flag'] # Grab leg impact number for final 3 episodes
+
+        
+        landings = temp[temp>=3].count()
+        attempts = num_rollouts*3
         landingRate = landings/attempts
+        
 
         return landingRate
 
@@ -87,15 +113,15 @@ class DataFile:
         Returns:
             np.array: [RREV,G1,G2,...]
         """        
-        run_df = self.select_run(k_ep,k_run)
+        run_df,IC_df = self.select_run(k_ep,k_run)
 
         ## SELECT POLICY
-        policy = run_df.iloc[-1]['policy']
+        policy = IC_df.iloc[0]['policy']
         policy = np.fromstring(policy[2:-2], dtype=float, sep=' ')  # Convert str to np array
 
         return policy
 
-    def plot_policy(self,trialNum=np.nan):
+    def plot_policy_convg(self,trialNum=np.nan): ## NEEDS UPDATED
         """Creates subplots to show convergence for policy gains
 
         Args:
@@ -147,8 +173,8 @@ class DataFile:
 
         ## CREATE SUBPLOT FOR SIGMA
         ax = fig.add_subplot(212)
-        for jj in range(num_col): # Iterate through gains and plot each
-            ax.plot(k_ep_arr,sigma_arr[:,jj],label=G_Labels[jj])
+        # for jj in range(num_col): # Iterate through gains and plot each
+        #     ax.plot(k_ep_arr,sigma_arr[:,jj],label=G_Labels[jj])
 
         ax.set_ylabel('Standard Deviation')
         ax.set_xlabel('K_ep')
@@ -171,14 +197,14 @@ class DataFile:
         ## FIND FINAL RUN DF
         k_ep = self.trial_df.iloc[-1]['k_ep']
         k_run = self.trial_df.iloc[-1]['k_run']
-        run_df = self.select_run(k_ep,k_run)
+        run_df,IC_df = self.select_run(k_ep,k_run)
 
         ## SELECT MU & SIGMA
-        mu = run_df.iloc[-1]['mu']
+        mu = IC_df.iloc[0]['mu']
         mu = np.fromstring(mu[2:-2], dtype=float, sep=' ')  # Convert str to np array
         
 
-        sigma = run_df.iloc[-1]['sigma']
+        sigma = IC_df.iloc[0]['sigma']
         sigma = np.fromstring(sigma[2:-2], dtype=float, sep=' ')
         
 
@@ -186,7 +212,7 @@ class DataFile:
 
 
 
-## STATE FUNCTIONS
+## STATE FUNCTIONS (Working)
     def grab_stateData(self,k_ep,k_run,stateName):
         """Returns np.array of specified state
 
@@ -198,8 +224,7 @@ class DataFile:
         Returns:
             state [np.array]: Returned state values
         """        
-        run_df = self.select_run(k_ep,k_run)
-        run_df = run_df.iloc[:-1] # Drop last row of DF
+        run_df,IC_df = self.select_run(k_ep,k_run)
 
         ## GRAB STATE DATA AND CONVERT TO NUMPY ARRAY
         state = run_df.iloc[:][stateName]
@@ -218,25 +243,31 @@ class DataFile:
             figNum (int, optional): Figure Number. Defaults to 0.
         """        
 
-        ## GRAB RUN DF
-        run_df = self.select_run(k_ep,k_run)
-        run_df = run_df.iloc[:-1] # Drop last row of DF
+        ## GRAB STATE/TIME DATA
+        state = self.grab_stateData(k_ep,k_run,stateName)
+        t = self.grab_stateData(k_ep,k_run,'t')
+        t_norm = t - np.min(t) # Normalize time
 
-        ## GRAB STATE/TIME DATA AND CONVERT TO NUMPY ARRAY
-        state = run_df.iloc[:][stateName]
-        state = state.to_numpy()
-        state = np.expand_dims(state, axis=0).T
+        
+        t_flip,t_flip_norm = self.grab_flip_time(k_ep,k_run)
+        state_flip = self.grab_flip_state(k_ep,k_run,stateName)
 
-        time = run_df.iloc[:]['t']
-        time = time.to_numpy()
-        time = np.expand_dims(time, axis=0).T
-        time = time - np.min(time)
+        t_impact,t_impact_norm,body_impact = self.grab_impact_time(k_ep,k_run)
+        state_impact = self.grab_impact_state(k_ep,k_run,stateName)
+
 
         
         ## PLOT STATE/TIME DATA
         fig = plt.figure(figNum)
         ax = fig.add_subplot(111)
-        ax.plot(time,state,label=f"{stateName}")
+        
+        ax.plot(t_norm,state,label=f"{stateName}",zorder=1)
+        ax.scatter(t_flip_norm,state_flip,label="Flip",zorder=2)
+
+        if body_impact==True:
+            ax.scatter(t_impact_norm,state_impact,label="Body Impact",zorder=2)
+        else:
+            ax.scatter(t_impact_norm,state_impact,label="Leg Impact",zorder=2)
 
 
         ax.set_ylabel(f"{stateName}")
@@ -245,6 +276,78 @@ class DataFile:
         ax.grid()
 
         plt.show()
+
+    def plot_traj(self,k_ep,k_run):
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+        x = self.grab_stateData(k_ep,k_run,'x')
+        z = self.grab_stateData(k_ep,k_run,'z')
+        
+
+        ax.plot(x, z)
+        ax.legend()
+        ax.set_xlabel("x-pos [m]")
+        ax.set_ylabel("z-pos [m]")
+        
+
+        ax.set_xlim([-1,3])
+        ax.set_ylim([0,3])
+        ax.grid()
+        
+        
+
+        plt.show()
+
+
+    def plot_traj2(self,k_ep,k_run):
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+        x = self.grab_stateData(k_ep,k_run,'x')
+        z = self.grab_stateData(k_ep,k_run,'z')
+
+        eul_y = self.grab_eulerData(k_ep,k_run,'eul_y')[1]
+        
+
+        ax.quiver(x,z,0.5*np.sin(eul_y),0.5*np.cos(eul_y),scale=10)
+        ax.plot(x,z)
+        
+        # ax.legend()
+        ax.set_xlabel("x-pos [m]")
+        ax.set_ylabel("z-pos [m]")
+        
+
+        ax.set_xlim([-1,3])
+        ax.set_ylim([0,3])
+        ax.grid()
+        
+        
+
+        plt.show()
+    
+    
+    def plot_traj_3D(self,k_ep,k_run):
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')
+
+        x = self.grab_stateData(k_ep,k_run,'x').flatten()
+        y = self.grab_stateData(k_ep,k_run,'y').flatten()
+        z = self.grab_stateData(k_ep,k_run,'z').flatten()
+
+        ax.plot(x, y, z, label='parametric curve')
+        ax.legend()
+        ax.set_xlabel("x-pos [m]")
+        ax.set_ylabel("y-pos [m]")
+        ax.set_zlabel("z-pos [m]")
+
+        ax.set_xlim([-1,3])
+        ax.set_ylim([-1,1])
+        ax.set_zlim([0,3])
+        
+
+        plt.show()
+
 
 
 
@@ -262,24 +365,24 @@ class DataFile:
         
         return vx_IC,vy_IC,vz_IC
 
-    def grab_omega_d(self,k_ep,k_run):
-        """Returns desired omega_d as list
+    def grab_M_d(self,k_ep,k_run):
+        """Returns desired M_d as list
         Args:
             k_ep (int): Episode number
             k_run (int): Run number
 
         Returns:
-            [list]: [wx_d,wy_d,wz_d]
+            [list]: [Mx_d,My_d,Mz_d]
         """        
-        run_df = self.select_run(k_ep,k_run)
+        run_df,IC_df = self.select_run(k_ep,k_run)
 
-        wx_d = run_df.iloc[-1]['wx']
-        wy_d = run_df.iloc[-1]['wy']
-        wz_d = run_df.iloc[-1]['wz']
+        Mx_d = IC_df.iloc[0]['Mx']
+        My_d = IC_df.iloc[0]['My']
+        Mz_d = IC_df.iloc[0]['Mz']
 
-        return [wx_d,wy_d,wz_d]
+        return [Mx_d,My_d,Mz_d]
 
-    def grab_omega_d_trial(self):
+    def grab_M_d_trial(self):
         """Returns average omega_d over final two episodes
 
         Returns:
@@ -288,116 +391,31 @@ class DataFile:
 
         num_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
 
-        omega_d_df = self.trial_df.iloc[:][['reward','wx','wy','wz']].dropna()
+        # Use reward in df just to easily grab IC rows
+        M_d_df = self.trial_df.iloc[:][['reward','Mx','My','Mz']].dropna()
         
-        wx_d = omega_d_df.iloc[-num_rollouts*4:].mean()['wx']
-        wy_d = omega_d_df.iloc[-num_rollouts*4:].mean()['wy']
-        wz_d = omega_d_df.iloc[-num_rollouts*4:].mean()['wz']
+        Mx_d = M_d_df.iloc[-num_rollouts*4:].mean()['Mx']
+        My_d = M_d_df.iloc[-num_rollouts*4:].mean()['My']
+        Mz_d = M_d_df.iloc[-num_rollouts*4:].mean()['Mz']
 
 
-        return [wx_d,wy_d,wz_d]
+        return [Mx_d,My_d,Mz_d]
 
 
 
 
-## FLIP FUNCTIONS
-    def grab_omega_flip(self,k_ep,k_run):
-        """Returns omega at flip for specific ep/run
-
-        Args:
-            k_ep (int): Episode number
-            k_run (int): Run number
-
-        Returns:
-            List: [wx_max,wy_max,wz_max]
-        """       
-        run_df = self.select_run(k_ep,k_run)
-
-        wx_arr = run_df.iloc[:-1]['wx'].ewm(span=10).mean() # Take moving average to smooth outliers from impact
-        wx_max = max(wx_arr,key=abs)                        # Find max regardless of number sign
-
-        wy_arr = run_df.iloc[:-1]['wy'].ewm(span=10).mean()
-        wy_max = max(wy_arr,key=abs)
-
-        wz_arr = run_df.iloc[:-1]['wz'].ewm(span=10).mean()
-        wz_max = max(wz_arr,key=abs)
-
-        return [wx_max,wy_max,wz_max]
-
-    def grab_omega_flip_trial(self):
-        """Returns avg omega at flip for final two episodes
-
-        Returns:
-            [np.array]: [wx,wy,wz]
-        """      
-        num_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
-
-        ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
-        ep_arr = ep_df.iloc[-num_rollouts*4:].to_numpy() # Grab episode/run listing from past 2 rollouts
-
-        list = []
-        for k_ep,k_run in ep_arr:
-            list.append(self.grab_omega_flip(k_ep,k_run))
-
-        arr = np.asarray(list)
-        w_flip = np.mean(arr,axis=0)
-        
-        return w_flip
 
 
-    def grab_vel_flip(self,k_ep,k_run):
-        """Returns vel at flip for specific ep/run
 
-        Args:
-            k_ep (int): Episode number
-            k_run (int): Run number
+    def grab_eulerData(self,k_ep,k_run,degrees=True):
 
-        Returns:
-            List: [vx_max,vy_max,vz_max]
-        """        
-        run_df = self.select_run(k_ep,k_run)
-
-        vx_arr = run_df.iloc[:-1]['vx'].ewm(span=10).mean() # Take moving average to smooth outliers from impact
-        vx_max = max(vx_arr,key=abs)                        # Find max regardless of number sign
-
-        vy_arr = run_df.iloc[:-1]['vy'].ewm(span=10).mean()
-        vy_max = max(vy_arr,key=abs)
-
-        vz_arr = run_df.iloc[:-1]['vz'].ewm(span=10).mean()
-        vz_max = max(vz_arr,key=abs)
-
-        return [vx_max,vy_max,vz_max]
-
-    def grab_vel_flip_trial(self):
-        """Returns avg vel at flip for final two episodes
-
-        Returns:
-            [np.array]: [vx,vy,vz]
-        """        
-        num_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
-
-        ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
-        ep_arr = ep_df.iloc[-num_rollouts*4:].to_numpy() # Grab episode/run listing from past 2 rollouts
-
-        list = []
-        for k_ep,k_run in ep_arr:
-            list.append(self.grab_vel_flip(k_ep,k_run))
-
-        arr = np.asarray(list)
-        v_flip = np.mean(arr,axis=0)
-        
-        return v_flip
-
-
-    def grab_eulerData(self,k_ep,k_run):
-
-        run_df = self.select_run(k_ep,k_run)
-        quat_df = run_df.iloc[:-1][['t','qw','qx','qy','qz']]
+        run_df,IC_df = self.select_run(k_ep,k_run)
+        quat_df = run_df.iloc[:][['t','qw','qx','qy','qz']]
         
 
         quat_arr = quat_df[['qx','qy','qz','qw']].to_numpy()
         rot = Rotation.from_quat(quat_arr)
-        eul_arr = rot.as_euler('xyz', degrees=True)
+        eul_arr = rot.as_euler('xyz', degrees=degrees)
         eul_df = pd.DataFrame(eul_arr,columns=['eul_x','eul_y','eul_z'])
 
         # eul_df['eul_x'] = -eul_df['eul_x']
@@ -411,10 +429,7 @@ class DataFile:
         return [eul_x,eul_y,eul_z]
 
     def plot_eulerData(self,k_ep,k_run,eul_type):
-
-        ## GRAB RUN DF
-        run_df = self.select_run(k_ep,k_run)
-        run_df = run_df.iloc[:-1] # Drop last row of DF
+        
 
         eul = 0
         if eul_type == 'eul_x':
@@ -427,10 +442,8 @@ class DataFile:
             print('Error, please select: ("eul_x","eul_y", or "eul_z")')
 
 
-        time = run_df.iloc[:]['t']
-        time = time.to_numpy()
-        time = np.expand_dims(time, axis=0).T
-        time = time - np.min(time)
+        time = self.grab_stateData(k_ep,k_run,'t')
+        time = time - np.min(time) # Normalize time
 
         
         ## PLOT STATE/TIME DATA
@@ -447,152 +460,322 @@ class DataFile:
         plt.show()
 
 
-    
+
+
+    def grab_flip_time(self,k_ep,k_run):
+        """Returns time of flip
+
+        Args:
+            k_ep (int): Episode number
+            k_run (int): Run number
+
+        Returns:
+            [float,float]: [t_flip,t_flip_norm]
+        """        
+        run_df,IC_df = self.select_run(k_ep,k_run)
+        t_flip = run_df.query(f"flip_flag=={True}").iloc[0]['t']
+        t_flip_norm = t_flip - run_df.iloc[0]['t']
+
+        return t_flip,t_flip_norm
+
+    def grab_flip_state(self,k_ep,k_run,stateName):
+        """Returns desired state at time of flip
+
+        Args:
+            k_ep (int): Episode number
+            k_run (int): Run number
+            stateName (str): State name
+
+        Returns:
+            float: state_flip
+        """        
+        run_df,IC_df = self.select_run(k_ep,k_run)
+        state_flip = run_df.query(f"flip_flag=={True}").iloc[0][stateName]
+
+        return state_flip
 
 
 
-## IMPACT FUNCTIONS
+
+
     def grab_impact_time(self,k_ep,k_run):
-        _,t_impact,t_impact_norm = self.grab_impact_angle(k_ep,k_run)
-
-        return t_impact,t_impact_norm
-
-
-    def grab_impact_angle(self,k_ep,k_run):
-        """Returns pitch angle at time of impact
+        """Returns time of impact of body/legs
 
         Args:
             k_ep (int): Episode number
             k_run (int): Run number
 
         Returns:
-            List: eul_impact,t_impact,t_impact_normalized
+            [float,float,bool]: [t_impact,t_impact_norm,body_impact]
         """        
-        ## NOTE: This is only verified for 2-D case with Pitch maneuver
+        run_df,IC_df = self.select_run(k_ep,k_run)
+        t_impact = run_df.query(f"impact_flag=={True}").iloc[0]['t']    # Grab first t value in df filtered to where flag == True
+        t_impact_norm = t_impact - run_df.iloc[0]['t']                  # Normalize time to zero
 
-        run_df = self.select_run(k_ep,k_run)
-        quat_df = run_df.iloc[:-1][['t','qw','qx','qy','qz']]
+        body_impact = IC_df.iloc[0]['flip_flag'] # Reads value if body impacted the ceiling
+
+        return t_impact,t_impact_norm,body_impact
+
+    def grab_impact_state(self,k_ep,k_run,stateName):
+        """Returns state at time of impact
+
+        Args:
+            k_ep (int): Episode number
+            k_run (int): Run number
+            stateName (str): State name
+
+        Returns:
+            float: state_impact
+        """        
+
+        run_df,IC_df = self.select_run(k_ep,k_run)
+        state_impact = run_df.query(f"impact_flag=={True}").iloc[0][stateName]    # Grab first t value in df filtered to where flag == True
+        
+        return state_impact
+
+    def grab_impact_eul(seld,k_ep,k_run,eul_type):
+
+        return
+
+    def grab_impact_eul_trial():
+        return
+
+
+
+
+
+
+
+#Region
+## IMPACT FUNCTIONS (ALL NEED UPDATED)
+    # def grab_impact_time(self,k_ep,k_run):
+    #     _,t_impact,t_impact_norm = self.grab_impact_angle(k_ep,k_run)
+
+    #     return t_impact,t_impact_norm
+
+
+    # def grab_impact_angle(self,k_ep,k_run):
+    #     """Returns pitch angle at time of impact
+
+    #     Args:
+    #         k_ep (int): Episode number
+    #         k_run (int): Run number
+
+    #     Returns:
+    #         List: eul_impact,t_impact,t_impact_normalized
+    #     """        
+    #     ## NOTE: This is only verified for 2-D case with Pitch maneuver
+
+    #     run_df = self.select_run(k_ep,k_run)
+    #     quat_df = run_df.iloc[:-1][['t','qw','qx','qy','qz']]
         
 
-        quat_arr = quat_df[['qx','qy','qz','qw']].to_numpy()
-        rot = Rotation.from_quat(quat_arr)
-        eul_arr = rot.as_euler('xyz', degrees=True)
-        eul_df = pd.DataFrame(eul_arr,columns=['eul_x','eul_y','eul_z'])
+    #     quat_arr = quat_df[['qx','qy','qz','qw']].to_numpy()
+    #     rot = Rotation.from_quat(quat_arr)
+    #     eul_arr = rot.as_euler('xyz', degrees=True)
+    #     eul_df = pd.DataFrame(eul_arr,columns=['eul_x','eul_y','eul_z'])
 
-        eul_df['eul_y'] = -eul_df['eul_y']
-
-
-        quat_df = pd.concat([quat_df.reset_index(),eul_df],axis=1)
-        eul_impact = max(eul_df[f"eul_y"],key=abs)
-        t_impact = quat_df.query(f'eul_y=={eul_impact}').iloc[0]['t']
-
-        t_initial = quat_df.iloc[0]['t']
-        t_impact_norm = t_impact - t_initial
-        return eul_impact,t_impact,t_impact_norm
-
-    def grab_impact_angle_trial(self):
-        """Returns avg angle at impact for final two episodes
-
-        Returns:
-            Float: eul_impact
-        """
-
-        num_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
-
-        ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
-        ep_arr = ep_df.iloc[-num_rollouts*4:].to_numpy() # Grab episode/run listing from past 2 rollouts
-
-        list = []
-        for k_ep,k_run in ep_arr:
-            list.append(self.grab_impact_angle(k_ep,k_run)[0])
-
-        arr = np.asarray(list)
-        eul_impact = np.mean(arr,axis=0)
-
-        return eul_impact
+    #     eul_df['eul_y'] = -eul_df['eul_y']
 
 
-    def grab_impact_vel(self,k_ep,k_run):
-        """Returns vel at time of impact
+    #     quat_df = pd.concat([quat_df.reset_index(),eul_df],axis=1)
+    #     eul_impact = max(eul_df[f"eul_y"],key=abs)
+    #     t_impact = quat_df.query(f'eul_y=={eul_impact}').iloc[0]['t']
 
-        Args:
-            k_ep (int): Episode number
-            k_run (int): Run number
+    #     t_initial = quat_df.iloc[0]['t']
+    #     t_impact_norm = t_impact - t_initial
+    #     return eul_impact,t_impact,t_impact_norm
 
-        Returns:
-            list: [vx_impact,vy_impact,vz_impact]
-        """ 
+    # def grab_impact_angle_trial(self):
+    #     """Returns avg angle at impact for final two episodes
 
-        run_df = self.select_run(k_ep,k_run)
-        t_impact,_ = self.grab_impact_time(k_ep,k_run)
+    #     Returns:
+    #         Float: eul_impact
+    #     """
 
-        vx_impact = run_df.query(f't=={t_impact}').iloc[0]['vx']
-        vy_impact = run_df.query(f't=={t_impact}').iloc[0]['vy']
-        vz_impact = run_df.query(f't=={t_impact}').iloc[0]['vz']
+    #     num_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
 
-        return [vx_impact,vy_impact,vz_impact]
+    #     ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
+    #     ep_arr = ep_df.iloc[-num_rollouts*4:].to_numpy() # Grab episode/run listing from past 2 rollouts
 
-    def grab_impact_vel_trial(self):
-        """Returns avg vel at impact for final two episodes
+    #     list = []
+    #     for k_ep,k_run in ep_arr:
+    #         list.append(self.grab_impact_angle(k_ep,k_run)[0])
 
-        Returns:
-            [np.array]: [vx_impact,vy_impact,vz_impact]
-        """
+    #     arr = np.asarray(list)
+    #     eul_impact = np.mean(arr,axis=0)
+
+    #     return eul_impact
+
+
+    # def grab_impact_vel(self,k_ep,k_run):
+    #     """Returns vel at time of impact
+
+    #     Args:
+    #         k_ep (int): Episode number
+    #         k_run (int): Run number
+
+    #     Returns:
+    #         list: [vx_impact,vy_impact,vz_impact]
+    #     """ 
+
+    #     run_df = self.select_run(k_ep,k_run)
+    #     t_impact,_ = self.grab_impact_time(k_ep,k_run)
+
+    #     vx_impact = run_df.query(f't=={t_impact}').iloc[0]['vx']
+    #     vy_impact = run_df.query(f't=={t_impact}').iloc[0]['vy']
+    #     vz_impact = run_df.query(f't=={t_impact}').iloc[0]['vz']
+
+    #     return [vx_impact,vy_impact,vz_impact]
+
+    # def grab_impact_vel_trial(self):
+    #     """Returns avg vel at impact for final two episodes
+
+    #     Returns:
+    #         [np.array]: [vx_impact,vy_impact,vz_impact]
+    #     """
     
-        num_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
+    #     num_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
 
-        ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
-        ep_arr = ep_df.iloc[-num_rollouts*4:].to_numpy() # Grab episode/run listing from past 2 rollouts
+    #     ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
+    #     ep_arr = ep_df.iloc[-num_rollouts*4:].to_numpy() # Grab episode/run listing from past 2 rollouts
 
-        list = []
-        for k_ep,k_run in ep_arr:
-            list.append(self.grab_impact_vel(k_ep,k_run))
+    #     list = []
+    #     for k_ep,k_run in ep_arr:
+    #         list.append(self.grab_impact_vel(k_ep,k_run))
 
-        arr = np.asarray(list)
-        vel_impact = np.mean(arr,axis=0)
+    #     arr = np.asarray(list)
+    #     vel_impact = np.mean(arr,axis=0)
 
-        return vel_impact
+    #     return vel_impact
 
 
-    def grab_impact_omega(self,k_ep,k_run):
-        """Returns omega at time of impact
+    # def grab_impact_omega(self,k_ep,k_run):
+    #     """Returns omega at time of impact
 
-        Args:
-            k_ep (int): Episode number
-            k_run (int): Run number
+    #     Args:
+    #         k_ep (int): Episode number
+    #         k_run (int): Run number
 
-        Returns:
-            list: [wx_impact,wy_impact,wz_impact]
-        """        
-        run_df = self.select_run(k_ep,k_run)
-        t_impact,_ = self.grab_impact_time(k_ep,k_run)
+    #     Returns:
+    #         list: [wx_impact,wy_impact,wz_impact]
+    #     """        
+    #     run_df = self.select_run(k_ep,k_run)
+    #     t_impact,_ = self.grab_impact_time(k_ep,k_run)
 
-        wx_impact = run_df.query(f't=={t_impact}').iloc[0]['wx']
-        wy_impact = run_df.query(f't=={t_impact}').iloc[0]['wy']
-        wz_impact = run_df.query(f't=={t_impact}').iloc[0]['wz']
+    #     wx_impact = run_df.query(f't=={t_impact}').iloc[0]['wx']
+    #     wy_impact = run_df.query(f't=={t_impact}').iloc[0]['wy']
+    #     wz_impact = run_df.query(f't=={t_impact}').iloc[0]['wz']
 
-        return [wx_impact,wy_impact,wz_impact]
+    #     return [wx_impact,wy_impact,wz_impact]
 
-    def grab_impact_omega_trial(self):
+    # def grab_impact_omega_trial(self):
 
-        """Returns avg omega at impact for final two episodes
+    #     """Returns avg omega at impact for final two episodes
 
-        Returns:
-            [np.array]: [wx_impact,wy_impact,wz_impact]
-        """        
-        num_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
+    #     Returns:
+    #         [np.array]: [wx_impact,wy_impact,wz_impact]
+    #     """        
+    #     num_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
 
-        ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
-        ep_arr = ep_df.iloc[-num_rollouts*4:].to_numpy() # Grab episode/run listing from past 2 rollouts
+    #     ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
+    #     ep_arr = ep_df.iloc[-num_rollouts*4:].to_numpy() # Grab episode/run listing from past 2 rollouts
 
-        list = []
-        for k_ep,k_run in ep_arr:
-            list.append(self.grab_impact_omega(k_ep,k_run))
+    #     list = []
+    #     for k_ep,k_run in ep_arr:
+    #         list.append(self.grab_impact_omega(k_ep,k_run))
 
-        arr = np.asarray(list)
-        w_impact = np.mean(arr,axis=0)
+    #     arr = np.asarray(list)
+    #     w_impact = np.mean(arr,axis=0)
         
-        return w_impact
+    #     return w_impact
+
+    # ## FLIP FUNCTIONS (ALL NEED UPDATED)
+#     def grab_omega_flip(self,k_ep,k_run):
+#         """Returns omega at flip for specific ep/run
+
+#         Args:
+#             k_ep (int): Episode number
+#             k_run (int): Run number
+
+#         Returns:
+#             List: [wx_max,wy_max,wz_max]
+#         """       
+#         run_df = self.select_run(k_ep,k_run)
+
+#         wx_arr = run_df.iloc[:-1]['wx'].ewm(span=10).mean() # Take moving average to smooth outliers from impact
+#         wx_max = max(wx_arr,key=abs)                        # Find max regardless of number sign
+
+#         wy_arr = run_df.iloc[:-1]['wy'].ewm(span=10).mean()
+#         wy_max = max(wy_arr,key=abs)
+
+#         wz_arr = run_df.iloc[:-1]['wz'].ewm(span=10).mean()
+#         wz_max = max(wz_arr,key=abs)
+
+#         return [wx_max,wy_max,wz_max]
+
+#     def grab_omega_flip_trial(self):
+#         """Returns avg omega at flip for final two episodes
+
+#         Returns:
+#             [np.array]: [wx,wy,wz]
+#         """      
+#         num_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
+
+#         ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
+#         ep_arr = ep_df.iloc[-num_rollouts*4:].to_numpy() # Grab episode/run listing from past 2 rollouts
+
+#         list = []
+#         for k_ep,k_run in ep_arr:
+#             list.append(self.grab_omega_flip(k_ep,k_run))
+
+#         arr = np.asarray(list)
+#         w_flip = np.mean(arr,axis=0)
+        
+#         return w_flip
 
 
+#     def grab_vel_flip(self,k_ep,k_run):
+#         """Returns vel at flip for specific ep/run
+
+#         Args:
+#             k_ep (int): Episode number
+#             k_run (int): Run number
+
+#         Returns:
+#             List: [vx_max,vy_max,vz_max]
+#         """        
+#         run_df = self.select_run(k_ep,k_run)
+
+#         vx_arr = run_df.iloc[:-1]['vx'].ewm(span=10).mean() # Take moving average to smooth outliers from impact
+#         vx_max = max(vx_arr,key=abs)                        # Find max regardless of number sign
+
+#         vy_arr = run_df.iloc[:-1]['vy'].ewm(span=10).mean()
+#         vy_max = max(vy_arr,key=abs)
+
+#         vz_arr = run_df.iloc[:-1]['vz'].ewm(span=10).mean()
+#         vz_max = max(vz_arr,key=abs)
+
+#         return [vx_max,vy_max,vz_max]
+
+#     def grab_vel_flip_trial(self):
+#         """Returns avg vel at flip for final two episodes
+
+#         Returns:
+#             [np.array]: [vx,vy,vz]
+#         """        
+#         num_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
+
+#         ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
+#         ep_arr = ep_df.iloc[-num_rollouts*4:].to_numpy() # Grab episode/run listing from past 2 rollouts
+
+#         list = []
+#         for k_ep,k_run in ep_arr:
+#             list.append(self.grab_vel_flip(k_ep,k_run))
+
+#         arr = np.asarray(list)
+#         v_flip = np.mean(arr,axis=0)
+        
+#         return v_flip
+#Endregion
 

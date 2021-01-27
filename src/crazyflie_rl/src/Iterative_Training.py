@@ -62,10 +62,15 @@ if __name__ == '__main__':
         
         ## INITIAL LOGGING DATA
         env.agent_name = agent.agent_type
-        env.trial_name = f"{env.agent_name}--Vz_{vz_d}--Vx_{vx_d}--trial_{int(trial_num)}"
+        env.trial_name = f"{env.agent_name}--Vz_{vz_d:.2f}--Vx_{vx_d:.2f}--trial_{int(trial_num)}"
         
         env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
         env.logging_flag = True
+
+
+        ## BROKEN ROTOR FIX
+        if trial_num %2 == 0:    # There's an issue where rotors detach randomly and prevent model from flipping
+            env.relaunch_sim()   # this should help remedy that and make sure it doesn't go on forever
         
 
         try:

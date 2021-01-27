@@ -250,6 +250,9 @@ class CrazyflieEnv:
         time.sleep(1)
         self.launch_sim()
 
+        self.reset_pos()
+        rospy.wait_for_message('/ctrl_data',CtrlData) # Wait for controller message before resuming training
+
     def close_sim(self):
         os.killpg(self.gazebo_p.pid, signal.SIGTERM)
         os.killpg(self.controller_p.pid, signal.SIGTERM)
@@ -264,16 +267,13 @@ class CrazyflieEnv:
         return self.state_current[0]
 
     def launch_sim(self):
-        print("[STARTING] Starting Gazebo Process...")
-
-        print("[STARTING] Starting Controller Process...")
         
-
+        print("[STARTING] Starting Gazebo Process...")
         self.gazebo_p = subprocess.Popen( # Gazebo Process
             "gnome-terminal --disable-factory  -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_gazebo.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         
-
+        print("[STARTING] Starting Controller Process...")
         self.controller_p = subprocess.Popen( # Controller Process
             "gnome-terminal --disable-factory --geometry 70x41 -- rosrun crazyflie_gazebo controller", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
@@ -322,7 +322,7 @@ class CrazyflieEnv:
         state_msg.model_name = self.modelName
         state_msg.pose.position.x = 0
         state_msg.pose.position.y = 0
-        state_msg.pose.position.z = 0.2
+        state_msg.pose.position.z = 0.26
 
         state_msg.pose.orientation.w = 1
         state_msg.pose.orientation.x = 0
@@ -431,7 +431,7 @@ class CrazyflieEnv:
                     "", "", "", "", # qx,qy,qz,qw
                     np.round(self.vel_d[0],2),np.round(self.vel_d[1],2),np.round(self.vel_d[2],2), # vx,vy,vz
                     "","","", # wx,wy,wz
-                    np.round(self.gamma,2),np.round(self.reward,2),self.body_contact,sum(self.pad_contacts),self.n_rollouts, # gamma, reward, body_impact, num leg contacts, n_rollout
+                    np.round(self.gamma,2),round(self.reward,2),self.body_contact,sum(self.pad_contacts),self.n_rollouts, # gamma, reward, body_impact, num leg contacts, n_rollout
                     self.RREV_tr,"",self.OF_y_tr, # RREV, OF_x, OF_y
                     "","","","", # MS1, MS2, MS3, MS4
                     "",self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # F_thrust,Mx,My,Mz 
@@ -463,21 +463,21 @@ class CrazyflieEnv:
     def timeoutCallback(self,msg):
         ## RESET TIMER THAT ATTEMPTS TO UNPAUSE SIM
         self.timer_unpause.cancel()
-        self.timer_unpause = Timer(5,self.timeout_unpause)
+        self.timer_unpause = Timer(4,self.timeout_unpause)
         self.timer_unpause.start()
 
         ## RESET TIMER THAT RELAUNCHES SIM
         self.timer_relaunch.cancel()
-        self.timer_relaunch = Timer(10,self.timeout_relaunch)
+        self.timer_relaunch = Timer(7,self.timeout_relaunch)
         self.timer_relaunch.start()
     
 
     def timeout_unpause(self):
-        print("[UNPAUSING] No Gazebo communication in 5 seconds")
+        print("[UNPAUSING] No Gazebo communication in 4 seconds")
         os.system("rosservice call gazebo/unpause_physics")
 
     def timeout_relaunch(self):
-        print("[RELAUNCHING] No Gazebo communication in 10 seconds")
+        print("[RELAUNCHING] No Gazebo communication in 7 seconds")
         self.close_sim()
         time.sleep(1)
         self.launch_sim()
