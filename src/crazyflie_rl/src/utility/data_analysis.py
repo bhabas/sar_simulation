@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 from scipy.spatial.transform import Rotation
 
 
@@ -60,7 +61,7 @@ class DataFile:
 
         plt.show()
 
-    def landing_plot(self): ## FUNCTIONAL BUT NOT PRETTY OR SHOW MUCH
+    def landing_plot(self): ## FUNCTIONAL BUT NOT PRETTY OR USEFUL
         impact_df = self.trial_df.iloc[:][['k_ep','reward','impact_flag']].dropna() # Use reward to select final impact row
         impact_df['impact_flag'] = pd.to_numeric(impact_df['impact_flag'])          # Convert number of legs (str) to type (int)
         impact_df = impact_df.replace(3,4) # 3 and 4 legs are equivalent so just replace them
@@ -275,6 +276,78 @@ class DataFile:
         ax.grid()
 
         plt.show()
+
+    def plot_traj(self,k_ep,k_run):
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+        x = self.grab_stateData(k_ep,k_run,'x')
+        z = self.grab_stateData(k_ep,k_run,'z')
+        
+
+        ax.plot(x, z)
+        ax.legend()
+        ax.set_xlabel("x-pos [m]")
+        ax.set_ylabel("z-pos [m]")
+        
+
+        ax.set_xlim([-1,3])
+        ax.set_ylim([0,3])
+        ax.grid()
+        
+        
+
+        plt.show()
+
+
+    def plot_traj2(self,k_ep,k_run):
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+        x = self.grab_stateData(k_ep,k_run,'x')
+        z = self.grab_stateData(k_ep,k_run,'z')
+
+        eul_y = self.grab_eulerData(k_ep,k_run,'eul_y')[1]
+        
+
+        ax.quiver(x,z,0.5*np.sin(eul_y),0.5*np.cos(eul_y),scale=10)
+        ax.plot(x,z)
+        
+        # ax.legend()
+        ax.set_xlabel("x-pos [m]")
+        ax.set_ylabel("z-pos [m]")
+        
+
+        ax.set_xlim([-1,3])
+        ax.set_ylim([0,3])
+        ax.grid()
+        
+        
+
+        plt.show()
+    
+    
+    def plot_traj_3D(self,k_ep,k_run):
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')
+
+        x = self.grab_stateData(k_ep,k_run,'x').flatten()
+        y = self.grab_stateData(k_ep,k_run,'y').flatten()
+        z = self.grab_stateData(k_ep,k_run,'z').flatten()
+
+        ax.plot(x, y, z, label='parametric curve')
+        ax.legend()
+        ax.set_xlabel("x-pos [m]")
+        ax.set_ylabel("y-pos [m]")
+        ax.set_zlabel("z-pos [m]")
+
+        ax.set_xlim([-1,3])
+        ax.set_ylim([-1,1])
+        ax.set_zlim([0,3])
+        
+
+        plt.show()
+
 
 
 
