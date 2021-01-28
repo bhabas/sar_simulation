@@ -66,7 +66,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
             
             ## RESET TO INITIAL STATE
             env.step('home') # Reset control vals and functionality to default vals
-            time.sleep(0.5) # Time for CF to settle
+            time.sleep(0.65) # Time for CF to settle
             
 
             ## INITIALIZE POLICY PARAMETERS: 
@@ -123,7 +123,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
             # ============================
             env.step('pos',ctrl_flag=0)             # Turn off pos control
             env.step('vel',env.vel_d,ctrl_flag=1)   # Set desired vel
-            env.launch_IC(vx_d,vz_d)                # Use Gazebo to impart desired vel
+            env.launch_IC(vx_d+0.03,vz_d)           # Use Gazebo to impart desired vel with extra vx to ensure -OF_y when around zero
             env.step('sticky',ctrl_flag=1)          # Enable sticky pads
 
 
