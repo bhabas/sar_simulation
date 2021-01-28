@@ -7,8 +7,26 @@ from scipy.spatial.transform import Rotation
 
 
 class DataFile:
-    def __init__(self,filepath):
+    def __init__(self,dataPath,fileName):
+
+        self.fileName = fileName
+        self.dataPath = dataPath
+        filepath = self.dataPath+self.fileName
+
         self.trial_df = pd.read_csv(filepath)
+
+        ## GET TRIAL INFO (REGEX IS LIKELY BETTER WAY TO DO THIS)
+        idx = fileName.find('--Vz')
+        self.agent = fileName[:idx]
+        idx = fileName.find('trial_')
+        self.trialNum = int(fileName[idx+6:idx+7])
+        self.v_d = self.grab_vel_d()
+
+        _,mu_arr,sigma_arr = self.grab_convg_data()
+        self.mu_ini = mu_arr[0]
+        self.sigma_ini = sigma_arr[0]
+        
+
         ## WHAT DO THESE DO AGAIN?
         # trial_df = self.trial_df[ self.trial_df['Error'] != 'Error: NAN found in state vector'] 
         # self.trial_df = trial_df[ trial_df['vz'].notna()] # Drops all rows that vz is blank
@@ -24,14 +42,7 @@ class DataFile:
 
         return run_df,IC_df
 
-    def plot_rewardData(self,file_name):
-        """Plot rewards for overall trial
-
-        Args:
-            figNum (int, optional): Figure Number. Defaults to 0.
-        """        
-        num_rollouts = self.trial_df.iloc[-1]['n_rollouts']
-
+    def grab_rewardData(self):
         ## CREATE ARRAYS FOR REWARD, K_EP 
         reward_df = self.trial_df.iloc[:][['k_ep','reward']].dropna() # Create df from k_ep/rewards and drop blank reward rows
         rewards_arr = reward_df.to_numpy()
@@ -43,19 +54,30 @@ class DataFile:
         rewards_avg = rewardAvg_df.to_numpy()
         k_ep_ravg = reward_df.k_ep.unique() # Drops duplicate values so it matches dimension of rewards_avg (1 avg per ep and n ep)
 
+        return k_ep_r,rewards,k_ep_ravg,rewards_avg
+
+
+    def plot_rewardData(self):
+        """Plot rewards for overall trial
+
+        Args:
+            figNum (int, optional): Figure Number. Defaults to 0.
+        """        
+        k_ep_r,rewards,k_ep_ravg,rewards_avg = self.grab_rewardData()
+        num_rollouts = self.trial_df.iloc[-1]['n_rollouts']
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.scatter(k_ep_r,rewards,marker='_',color='black',alpha=0.5,label='Reward')
         ax.scatter(k_ep_ravg,rewards_avg,marker='o',color='red',label='Reward_avg')
         
-
+        
 
         ax.set_ylabel("Rewards")
         ax.set_xlabel("k_ep")
         ax.set_xlim(-2,25)
         ax.set_ylim(-2,150)
-        ax.set_title(f"Reward vs Episode | Rollouts per Episode: {num_rollouts*2} \n {file_name}")
+        ax.set_title(f"Reward vs Episode | Rollouts per Episode: {num_rollouts*2}")
         ax.legend()
         ax.grid()
 
@@ -87,20 +109,81 @@ class DataFile:
 
 
     def landing_rate(self):
-        impact_df = self.trial_df.iloc[:][['k_ep','reward','impact_flag']].dropna() # use reward to select final impact row
+        impact_df = self.trial_df.iloc[:][['k_ep','reward','flip_flag','impact_flag']].dropna() # Use reward to select final impact row
         impact_df['impact_flag'] = pd.to_numeric(impact_df['impact_flag'])          # Convert number of legs (str) to type (int)
         num_rollouts = self.trial_df.iloc[-1]['n_rollouts']                         # get number of rollouts
 
-        temp = impact_df.iloc[-int(num_rollouts*3):]['impact_flag'] # Grab leg impact number for final 3 episodes
+        temp = impact_df.iloc[-int(num_rollouts*3):][['flip_flag','impact_flag']] # Grab leg impact number and body impact flag for final 3 episodes
 
         
-        landings = temp[temp>=3].count()
+        # Trim rows to match conditions and find final number (flip_flag IC row shows body impact on True)
+        landings = temp[(temp.impact_flag >= 3) & (temp.flip_flag == False)].shape[0]
         attempts = num_rollouts*3
         landingRate = landings/attempts
         
 
         return landingRate
 
+    def plotSummary(self):
+        fig = plt.figure(figsize=(12,6))
+
+        ## REWARD DATA PLOT
+        #region
+        k_ep_r,rewards,k_ep_ravg,rewards_avg = self.grab_rewardData()
+        num_rollouts = self.trial_df.iloc[-1]['n_rollouts']
+
+        ax1 = fig.add_subplot(221)
+        ax1.scatter(k_ep_r,rewards,marker='_',color='black',alpha=0.5,label='Reward')
+        ax1.scatter(k_ep_ravg,rewards_avg,marker='o',color='red',label='Reward_avg')
+        
+        ax1.set_ylabel("Rewards")
+        ax1.set_xlabel("k_ep")
+        ax1.set_xlim(-2,25)
+        ax1.set_ylim(-2,150)
+        ax1.set_title(f"Reward vs Episode | Rollouts per Episode: {num_rollouts*2}")
+        ax1.legend()
+        ax1.grid()
+        #endregion
+
+        ## MU DATA PLOT
+        #region
+        k_ep_arr,mu_arr,sigma_arr = self.grab_convg_data()
+        ax2 = fig.add_subplot(222)
+
+        num_col = mu_arr.shape[1] # Number of policy gains in mu [Currently 3]
+        G_Labels = ['RREV_trigger','G1','G2','G3','G4','G5'] # List of policy gain names
+        for jj in range(num_col): # Iterate through gains and plot each
+            ax2.plot(k_ep_arr,mu_arr[:,jj],label=G_Labels[jj])
+
+        ax2.set_ylabel('Policy Values')
+        ax2.set_xlabel('K_ep')
+        ax2.set_ylim([0,15]) # Set lower ylim
+        ax2.set_title(self.fileName)
+        ax2.legend(loc='upper center',ncol=num_col)
+        ax2.grid()
+        #endregion
+
+        ## SIGMA DATA PLOT
+        #region
+        ax4 = fig.add_subplot(224)
+        for jj in range(num_col): # Iterate through gains and plot each
+            ax4.plot(k_ep_arr,sigma_arr[:,jj],label=G_Labels[jj])
+
+        ax4.set_ylabel('Standard Deviation')
+        ax4.set_xlabel('K_ep')
+        ax4.set_ylim([0,4])
+        ax4.legend(ncol=3,loc='upper right')
+        ax4.grid()
+        #endregion
+
+        ## GENERAL DATA
+        landingRate = self.landing_rate()
+        ax3 = fig.add_subplot(223)
+        ax3.text(0.2,0.5,f'Landing Rate: {landingRate:.2f} \n',size=12)
+
+        fig.tight_layout()
+        plt.show()
+        
     
 
 ## POLICY FUNCTIONS
@@ -122,13 +205,7 @@ class DataFile:
 
         return policy
 
-    def plot_policy_convg(self,trialNum=np.nan): ## NEEDS UPDATED
-        """Creates subplots to show convergence for policy gains
-
-        Args:
-            trialNum ([int], optional): Display trial number. Defaults to np.nan.
-        """        
-
+    def grab_convg_data(self):
         ## CLEAN AND GRAB DATA FOR MU & SIGMA
         policy_df = self.trial_df.iloc[:][['k_ep','mu','sigma']]
         policy_df = policy_df.dropna().drop_duplicates()
@@ -148,6 +225,18 @@ class DataFile:
             sigma = np.fromstring(sigma[1:-1], dtype=float, sep=' ')
             sigma_arr.append(sigma)
         sigma_arr = np.array(sigma_arr)
+
+        return k_ep_arr,mu_arr,sigma_arr
+
+    def plot_policy_convg(self,trialNum=np.nan): ## NEEDS UPDATED
+        """Creates subplots to show convergence for policy gains
+
+        Args:
+            trialNum ([int], optional): Display trial number. Defaults to np.nan.
+        """      
+
+        ## GRAB CONVERGENCE DATA
+        k_ep_arr,mu_arr,sigma_arr = self.grab_convg_data()
 
         
 
