@@ -44,8 +44,15 @@ if __name__ == '__main__':
         alpha_mu = np.array([[0.1]])
         alpha_sigma = np.array([[0.05]])
 
-        ## GAUSSIAN PARAMETERS
-        mu = np.random.uniform(1.0,7.0,size=(3,1))      # Random initial mu
+        ## GAUSSIAN PARAMETERS (CHECK THAT G1 > G2)
+        #  System has a hard time learning if G1 < G2
+        while True:
+            mu = np.random.uniform(1.0,7.0,size=(3,1))
+            print(mu)
+            if(mu[1]<mu[2]):
+                continue
+            else:
+                break
         sigma = np.array([[2.0],[2.0],[2.0]]) # Initial estimates of sigma: 
 
         
@@ -69,7 +76,7 @@ if __name__ == '__main__':
 
 
         ## BROKEN ROTOR FIX
-        if trial_num %2 == 0:    # There's an issue where rotors detach randomly and prevent model from flipping
+        if trial_num %1 == 0:    # There's an issue where rotors detach randomly and prevent model from flipping
             env.relaunch_sim()   # this should help remedy that and make sure it doesn't go on forever
         
 
