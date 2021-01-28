@@ -101,6 +101,7 @@ class DataFile:
 
         return landingRate
 
+    
 
 ## POLICY FUNCTIONS
     def grab_policy(self,k_ep,k_run):
@@ -144,7 +145,7 @@ class DataFile:
 
         sigma_arr = []
         for sigma in policy_df.iloc[:]['sigma']:
-            sigma = np.fromstring(sigma[2:-2], dtype=float, sep=' ')
+            sigma = np.fromstring(sigma[1:-1], dtype=float, sep=' ')
             sigma_arr.append(sigma)
         sigma_arr = np.array(sigma_arr)
 
@@ -173,8 +174,8 @@ class DataFile:
 
         ## CREATE SUBPLOT FOR SIGMA
         ax = fig.add_subplot(212)
-        # for jj in range(num_col): # Iterate through gains and plot each
-        #     ax.plot(k_ep_arr,sigma_arr[:,jj],label=G_Labels[jj])
+        for jj in range(num_col): # Iterate through gains and plot each
+            ax.plot(k_ep_arr,sigma_arr[:,jj],label=G_Labels[jj])
 
         ax.set_ylabel('Standard Deviation')
         ax.set_xlabel('K_ep')

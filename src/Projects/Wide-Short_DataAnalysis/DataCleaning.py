@@ -6,15 +6,14 @@ import sys
 sys.path.insert(0,'/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility')
 from data_analysis import DataFile
 
-
+import send2trash
 os.system("clear")
 
 
 
 dataPath = '/home/bhabas/catkin_ws/src/crazyflie_simulation/local_files/data/Wide-Short_Data_1-27-21/'
 
-
-list = []
+redoList = []
 for vz in np.arange(4.0,1.25,-0.25):
     for vx in np.arange(0.0,3.0,0.25):
         
@@ -32,7 +31,12 @@ for vz in np.arange(4.0,1.25,-0.25):
             filepath = dataPath + file_name
             trial = DataFile(filepath)
             print(file_name)
-            trial.plot_rewardData(file_name)
+            try:
+                trial.plot_rewardData(file_name)
+            except:
+                print(f"Delete File: {file_name}")
+                send2trash.send2trash(filepath)
+        
 
 
         str = input('Input files to be deleted: ')
@@ -40,9 +44,13 @@ for vz in np.arange(4.0,1.25,-0.25):
             delList = [int(i) for i in str.split(' ')]
             for trial in delList:
                 filepath = f"{dataPath}EM_PEPG--Vz_{vz:.2f}--Vx_{vx:.2f}--trial_{trial}.csv"
-            # os.remove(filepath)
+                redoList.append([vz,vx,trial])
+                send2trash.send2trash(filepath)
         except:
             pass
+
+print(np.asarray(redoList))
+np.savetxt("runAgain_List.csv", np.asarray(redoList), delimiter=",")
     
 
 
