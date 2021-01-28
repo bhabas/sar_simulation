@@ -22,10 +22,9 @@ class DataFile:
         self.trialNum = int(fileName[idx+6:idx+7])
         self.v_d = self.grab_vel_d()
 
-        _,mu_arr,sigma_arr = self.grab_convg_data()
-        self.mu_ini = mu_arr[0]
-        self.sigma_ini = sigma_arr[0]
-        
+
+        self.n_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
+       
 
         ## WHAT DO THESE DO AGAIN?
         # trial_df = self.trial_df[ self.trial_df['Error'] != 'Error: NAN found in state vector'] 
@@ -55,7 +54,6 @@ class DataFile:
         k_ep_ravg = reward_df.k_ep.unique() # Drops duplicate values so it matches dimension of rewards_avg (1 avg per ep and n ep)
 
         return k_ep_r,rewards,k_ep_ravg,rewards_avg
-
 
     def plot_rewardData(self):
         """Plot rewards for overall trial
@@ -106,7 +104,6 @@ class DataFile:
         ax.grid()
 
         plt.show()
-
 
     def landing_rate(self):
         impact_df = self.trial_df.iloc[:][['k_ep','reward','flip_flag','impact_flag']].dropna() # Use reward to select final impact row
@@ -184,7 +181,26 @@ class DataFile:
         fig.tight_layout()
         plt.show()
         
-    
+    def landing_bool(self,k_ep,k_run):
+
+        ## SELECT RUN DF
+        run_df,IC_df = self.select_run(k_ep,k_run)
+        n_legs = pd.to_numeric(IC_df.iloc[0]['impact_flag'])
+        body_contact = IC_df.iloc[0]['flip_flag']
+
+        ## CHECK FOR NO BODY CONTACT 
+        if body_contact == False:
+            
+            # CHECK FOR 3-4 LEGS CONTACTING
+            if n_legs >= 3:
+                landingBool = True
+            else:
+                landingBool = False
+
+        else:
+            landingBool = False
+
+        return landingBool
 
 ## POLICY FUNCTIONS
     def grab_policy(self,k_ep,k_run):
@@ -302,7 +318,7 @@ class DataFile:
 
 
 
-## STATE FUNCTIONS (Working)
+## STATE FUNCTIONS 
     def grab_stateData(self,k_ep,k_run,stateName):
         """Returns np.array of specified state
 
@@ -482,11 +498,11 @@ class DataFile:
         num_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
 
         # Use reward in df just to easily grab IC rows
-        M_d_df = self.trial_df.iloc[:][['reward','Mx','My','Mz']].dropna()
+        Md_df = self.trial_df.iloc[:][['reward','Mx','My','Mz']].dropna()
         
-        Mx_d = M_d_df.iloc[-num_rollouts*4:].mean()['Mx']
-        My_d = M_d_df.iloc[-num_rollouts*4:].mean()['My']
-        Mz_d = M_d_df.iloc[-num_rollouts*4:].mean()['Mz']
+        Mx_d = Md_df.iloc[-num_rollouts*4:].mean()['Mx']
+        My_d = Md_df.iloc[-num_rollouts*4:].mean()['My']
+        Mz_d = Md_df.iloc[-num_rollouts*4:].mean()['Mz']
 
 
         return [Mx_d,My_d,Mz_d]
@@ -498,19 +514,23 @@ class DataFile:
 
 
     def grab_eulerData(self,k_ep,k_run,degrees=True):
-
+        
+        ## CREATE QUAT DATAFRAME FROM RUN_DF
         run_df,IC_df = self.select_run(k_ep,k_run)
         quat_df = run_df.iloc[:][['t','qw','qx','qy','qz']]
         
 
+        ## CONVERT QUATS TO EULER ANGLES AND BACK TO DF
         quat_arr = quat_df[['qx','qy','qz','qw']].to_numpy()
-        rot = Rotation.from_quat(quat_arr)
-        eul_arr = rot.as_euler('xyz', degrees=degrees)
-        eul_df = pd.DataFrame(eul_arr,columns=['eul_x','eul_y','eul_z'])
+        R = Rotation.from_quat(quat_arr)
+        eul_arr = R.as_euler('YZX', degrees=degrees)
+        # Center axis [theta_2] is limited to +- 90deg while [theta_1 & theta_3] can rotate to 180deg 
+        # https://graphics.fandom.com/wiki/Conversion_between_quaternions_and_Euler_angles
+        # https://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/Quaternions.pdf
+        eul_df = pd.DataFrame(eul_arr,columns=['eul_y','eul_z','eul_x'])
 
-        # eul_df['eul_x'] = -eul_df['eul_x']
-        eul_df['eul_y'] = -eul_df['eul_y']
-        # eul_df['eul_z'] = -eul_df['eul_z']
+        ## IF EUL_Y JUMPS FROM PAST -180 T0 +180 THEN BRING IT BACK DOWN AGAIN
+        eul_df.loc[eul_df['eul_y'] > 170, 'eul_y'] = eul_df['eul_y']-360
 
         eul_x = eul_df['eul_x']
         eul_y = eul_df['eul_y']
@@ -520,8 +540,6 @@ class DataFile:
 
     def plot_eulerData(self,k_ep,k_run,eul_type):
         
-
-        eul = 0
         if eul_type == 'eul_x':
             eul = self.grab_eulerData(k_ep,k_run)[0]
         elif eul_type == 'eul_y':
@@ -530,16 +548,27 @@ class DataFile:
             eul = self.grab_eulerData(k_ep,k_run)[2]
         else:
             print('Error, please select: ("eul_x","eul_y", or "eul_z")')
+            eul = np.nan
 
 
-        time = self.grab_stateData(k_ep,k_run,'t')
-        time = time - np.min(time) # Normalize time
+        t = self.grab_stateData(k_ep,k_run,'t')
+        t_norm = t - np.min(t) # Normalize time
+
+        t_norm_impact = self.grab_impact_time(k_ep,k_run)[1]
+        eul_impact = self.grab_impact_eul(k_ep,k_run,eul_type)
+
+        t_norm_flip = self.grab_flip_time(k_ep, k_run)[1]
+        eul_flip = self.grab_flip_eul(k_ep,k_run,eul_type)
+        
 
         
         ## PLOT STATE/TIME DATA
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.plot(time,eul,label=f"{eul_type}")
+        ax.plot(t_norm,eul,label=f"{eul_type}")
+        ax.scatter(t_norm_flip,eul_flip,label="Flip")
+        ax.scatter(t_norm_impact,eul_impact,label="Impact")
+        
 
 
         ax.set_ylabel(f"{eul_type} [deg]")
@@ -584,6 +613,27 @@ class DataFile:
 
         return state_flip
 
+    def grab_flip_eul(self,k_ep,k_run,eul_type):
+        ## GRAB RUN DF AND RUN QUERY FOR QUAT AT FIRST IMPACT
+        run_df,IC_df = self.select_run(k_ep,k_run)
+        quat_flip = run_df.query(f"flip_flag=={True}").iloc[0][['qw','qx','qy','qz']]
+
+        ## CONVERT QUAT TO EULER ANGLE
+        quat_arr = quat_flip[['qx','qy','qz','qw']].to_numpy()
+        R = Rotation.from_quat(quat_arr)
+        eul_arr = R.as_euler('YZX', degrees=True)
+
+        ## RETURN EULER IMPACT ANGLE
+        if eul_type == 'eul_y':
+            return eul_arr[0]
+        elif eul_type == 'eul_z':
+            return eul_arr[1]
+        elif eul_type == 'eul_x':
+            return eul_arr[2]
+        else:
+            return np.nan
+
+    
 
 
 
@@ -623,12 +673,44 @@ class DataFile:
         
         return state_impact
 
-    def grab_impact_eul(seld,k_ep,k_run,eul_type):
+    def grab_impact_eul(self,k_ep,k_run,eul_type):
+        ## GRAB RUN DF AND RUN QUERY FOR QUAT AT FIRST IMPACT
+        run_df,IC_df = self.select_run(k_ep,k_run)
+        quat_impact = run_df.query(f"impact_flag=={True}").iloc[0][['qw','qx','qy','qz']]
 
-        return
+        ## CONVERT QUAT TO EULER ANGLE
+        quat_arr = quat_impact[['qx','qy','qz','qw']].to_numpy()
+        R = Rotation.from_quat(quat_arr)
+        eul_arr = R.as_euler('YZX', degrees=True)
 
-    def grab_impact_eul_trial():
-        return
+        ## RETURN EULER IMPACT ANGLE
+        if eul_type == 'eul_y':
+            return eul_arr[0]
+        elif eul_type == 'eul_z':
+            return eul_arr[1]
+        elif eul_type == 'eul_x':
+            return eul_arr[2]
+        else:
+            return np.nan
+
+    def grab_impact_eul_trial(self,eul_type):
+
+        ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
+        ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
+        ep_arr = ep_df.iloc[-self.n_rollouts*3:].to_numpy() # Grab episode/run listing from past 3 rollouts
+
+        ## ITERATE THROUGH ALL RUNS AND FINDING IMPACT ANGLE 
+        list = []
+        for k_ep,k_run in ep_arr:
+            if self.landing_bool(k_ep, k_run): # IGNORE FAILED LANDINGS
+                list.append(self.grab_impact_eul(k_ep,k_run,eul_type))
+
+        ## CONVERT LIST TO NP ARRAY AND CALC MEAN
+        arr = np.asarray(list)
+        eul_impact = np.mean(arr,axis=0)
+        
+        return eul_impact
+    
 
 
 

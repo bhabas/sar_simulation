@@ -8,11 +8,12 @@ from data_analysis import DataFile
 os.system("clear")
 
 vz = 4.00
-vx = 2.75
-trialNum = 0
+vx = 2.50
+trialNum = 3
 agent = "EM_PEPG"
 
 dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/local_files/data/Wide-Short_Data_1-27-21/"
+dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/"
 fileName = f"{agent}--Vz_{vz:.2f}--Vx_{vx:.2f}--trial_{trialNum}.csv"
 
 
@@ -25,8 +26,11 @@ fileName = f"{agent}--Vz_{vz:.2f}--Vx_{vx:.2f}--trial_{trialNum}.csv"
 
 trial = DataFile(dataPath,fileName)
 
-k_ep = 16
-k_run = 5
-# trial.plot_eulerData(k_ep,k_run,'eul_y')
-trial.plotSummary()
+k_ep = 5
+k_run = 1
+print(trial.grab_impact_eul(k_ep,k_run,'eul_y'))
+print(trial.grab_impact_eul_trial('eul_y'))
+
+trial.landing_bool(k_ep,k_run)
+trial.plot_eulerData(k_ep,k_run,'eul_y')
 # trial.plot_rewardData()
