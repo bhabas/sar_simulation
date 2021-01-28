@@ -199,6 +199,10 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                         env.append_csv(env.filepath)
 
                     
+                        
+
+
+                    
 
 
                 # ============================
@@ -261,11 +265,12 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     repeat_run = True
                     break
 
-                # if np.abs(vz_teleport) >= 1: # If teleportation vz is greater than [5] m/s; relaunch gazebo
-                #     env.error_str = "Error: Model Teleported"
-                #     print(env.error_str)
-                #     repeat_run = True
-                #     break
+
+                if t_step in (30,60,90) and position[2] >= 2.3:
+                    env.error_str = "Error: Pos Teleported"
+                    print(env.error_str)
+                    repeat_run = True
+                    break
 
 
 
@@ -320,7 +325,7 @@ if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv(gazeboTimeout=True)
-    # env.launch_dashboard()
+    env.launch_dashboard()
 
     print("Environment done")
 
@@ -357,8 +362,8 @@ if __name__ == '__main__':
     # ============================
 
     ## INITIAL CONDITIONS
-    vz_d = 3.5
-    vx_d = 1.5
+    vz_d = 3.56
+    vx_d = 0.256
 
     
     
