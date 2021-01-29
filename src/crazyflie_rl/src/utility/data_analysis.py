@@ -24,6 +24,7 @@ class DataFile:
 
 
         self.n_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
+        self.k_epMax = int(self.trial_df.iloc[-1]['k_ep'])
        
 
         ## WHAT DO THESE DO AGAIN?
@@ -72,7 +73,7 @@ class DataFile:
 
         ax.set_ylabel("Rewards")
         ax.set_xlabel("k_ep")
-        ax.set_xlim(-2,25)
+        ax.set_xlim(-2,self.k_epMax+5)
         ax.set_ylim(-2,150)
         ax.set_title(f"Reward vs Episode | Rollouts per Episode: {self.n_rollouts}")
         ax.legend()
@@ -133,7 +134,7 @@ class DataFile:
         
         ax1.set_ylabel("Rewards")
         ax1.set_xlabel("k_ep")
-        ax1.set_xlim(-2,25)
+        ax1.set_xlim(-2,self.k_epMax+5)
         ax1.set_ylim(-2,150)
         ax1.set_title(f"Reward vs Episode | Rollouts per Episode: {self.n_rollouts}")
         ax1.legend()
@@ -153,7 +154,7 @@ class DataFile:
         ax2.set_ylabel('Policy Values')
         ax2.set_xlabel('K_ep')
         ax2.set_ylim(0,15) # Set lower ylim
-        ax2.set_xlim(-1,20)
+        ax2.set_xlim(-1,self.k_epMax+1)
         ax2.set_title(self.fileName)
         ax2.legend(loc='upper center',ncol=num_col)
         ax2.grid()
@@ -168,7 +169,7 @@ class DataFile:
         ax4.set_ylabel('Standard Deviation')
         ax4.set_xlabel('K_ep')
         ax4.set_ylim(0,4)
-        ax4.set_xlim(-1,20)
+        ax4.set_xlim(-1,self.k_epMax+1)
         ax4.legend(ncol=3,loc='upper right')
         ax4.grid()
         #endregion
@@ -538,40 +539,82 @@ class DataFile:
         
         return vx_IC,vy_IC,vz_IC
 
-    def grab_M_d(self,k_ep,k_run):
+    def grab_My_d(self,k_ep,k_run):
         """Returns desired M_d as list
         Args:
             k_ep (int): Episode number
             k_run (int): Run number
 
         Returns:
-            [list]: [Mx_d,My_d,Mz_d]
+            Float: My_d
         """        
         run_df,IC_df = self.select_run(k_ep,k_run)
 
-        Mx_d = IC_df.iloc[0]['Mx']
+
         My_d = IC_df.iloc[0]['My']
-        Mz_d = IC_df.iloc[0]['Mz']
 
-        return [Mx_d,My_d,Mz_d]
 
-    def grab_M_d_trial(self):
-        """Returns average omega_d over final two episodes
+        return My_d
 
-        Returns:
-            [list]: [Mx_d,My_d,Mz_d]
-        """        
+    def grab_My_d_trial(self):           
 
-        # Use reward in df just to easily grab IC rows
-        Md_df = self.trial_df.iloc[:][['reward','Mx','My','Mz']].dropna()
+        ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
+        ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
+        ep_arr = ep_df.iloc[-self.n_rollouts*3:].to_numpy() # Grab episode/run listing from past 3 rollouts
+
+        ## ITERATE THROUGH ALL RUNS AND FIND My_d FOR SUCCESSFUL LANDINGS
+        My_dList = []
+        epList = []
+        for k_ep,k_run in ep_arr:
+            if self.landing_bool(k_ep, k_run): # IGNORE FAILED LANDINGS
+                My_dList.append(self.grab_My_d(k_ep,k_run))
+                epList.append(k_ep)
+                
+        ## CONVERT LIST TO NP ARRAY AND CALC MEAN
+        arr = np.asarray(My_dList)
+        avg_My_d = np.mean(arr,axis=0)
+
+        return avg_My_d
+
+    def plot_My_d_trial(self):
+        ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
+        ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
+        ep_arr = ep_df.iloc[:].to_numpy() # Grab episode/run listing from past 3 rollouts
+
+        ## ITERATE THROUGH ALL RUNS AND FIND My_d FOR SUCCESSFUL LANDINGS
+        My_dList = []
+        epList = []
+        for k_ep,k_run in ep_arr:
+            if self.landing_bool(k_ep, k_run): # IGNORE FAILED LANDINGS
+                My_dList.append(self.grab_My_d(k_ep,k_run))
+                epList.append(k_ep)
+                
+        ## CONVERT LIST TO NP ARRAY AND CALC MEAN
+        arr = np.asarray(My_dList)
+        avg_My_d = self.grab_My_d_trial()
         
-        Mx_d = Md_df.iloc[-self.n_rollouts*3:].mean()['Mx']
-        My_d = Md_df.iloc[-self.n_rollouts*3:].mean()['My']
-        Mz_d = Md_df.iloc[-self.n_rollouts*3:].mean()['Mz']
 
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.scatter(epList,My_dList,marker="_",color="black",label="4-Leg Landings")
+        ax.hlines(avg_My_d,0,self.k_epMax,label="Avg My_d Final Landings") # SHOW AVG IMPACT ANGLE ACROSS TRIAL
+        ax.hlines(-7.77,0,self.k_epMax,color="red",label="Max Moment Limit")
+        
 
-        return [Mx_d,My_d,Mz_d]
+        
+        ax.set_xlim(-1,20)
+        ax.set_ylim(-0,-10)
+        
+        ax.set_xticks(range(0,self.k_epMax+1,5))
 
+        ax.set_title("4 Leg Landings - My_d")
+        ax.set_xlabel("Episode Number")
+        ax.set_ylabel("My_d [N*mm]")
+
+        ax.grid()
+        ax.legend()
+
+        plt.show()
 
 
 
@@ -714,10 +757,49 @@ class DataFile:
 
         ## CONVERT LIST TO NP ARRAY AND CALC MEAN
         arr = np.asarray(list)
-        eul_impact = np.mean(arr,axis=0)
+        avg_impact = np.mean(arr,axis=0)
         
-        return eul_impact
+        return avg_impact
     
+    def plot_impact_eul_trial(self,eul_type):
+
+        ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
+        ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
+        ep_arr = ep_df.iloc[:].to_numpy() # Grab episode/run listing from past 3 rollouts
+
+        ## ITERATE THROUGH ALL RUNS AND FINDING IMPACT ANGLE 
+        impactList = []
+        epList = []
+        for k_ep,k_run in ep_arr:
+            if self.landing_bool(k_ep, k_run): # IGNORE FAILED LANDINGS
+                impactList.append(self.grab_impact_eul(k_ep,k_run,eul_type))
+                epList.append(k_ep)
+
+
+        ## CONVERT LIST TO NP ARRAY AND CALC MEAN
+        arr = np.asarray(impactList)
+        avg_impact = np.mean(arr,axis=0)
+        
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.scatter(epList,impactList,marker="_",color="black",label="4-Leg Landings")
+        ax.hlines(avg_impact,0,20,label='Avg Impact Angle Final Landings') # SHOW AVG IMPACT ANGLE ACROSS TRIAL
+        
+
+        
+        ax.set_xlim(-1,self.k_epMax)
+        ax.set_ylim(-220,0)
+        ax.set_xticks(range(0,self.k_epMax,5))
+
+        ax.set_title("4 Leg Landings - Impact Angles")
+        ax.set_xlabel("Episode Number")
+        ax.set_ylabel("Impact Angle [deg]")
+
+        ax.grid()
+        ax.legend()
+        plt.show()
+        
 
 
 
