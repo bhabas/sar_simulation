@@ -9,7 +9,7 @@ sys.path.insert(0,'/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie
 from data_analysis import DataFile
 
 
-dataPath = '/home/bhabas/catkin_ws/src/crazyflie_simulation/local_files/data/Wide-Short_Data_1-27-21/'
+dataPath = '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/Wide-Short_PureMoment_Data_1-29-21/'
 
 redoList = []
 ## ITERATE THROUGH ALL COMBINATIONS

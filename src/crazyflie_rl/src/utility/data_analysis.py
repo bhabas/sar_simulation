@@ -218,7 +218,7 @@ class DataFile:
 
         ## SELECT POLICY
         policy = IC_df.iloc[0]['policy']
-        policy = np.fromstring(policy[2:-2], dtype=float, sep=' ')  # Convert str to np array
+        policy = np.fromstring(policy[1:-1], dtype=float, sep=' ')  # Convert str to np array
 
         return policy
 
@@ -233,7 +233,7 @@ class DataFile:
         ## CREATE NP ARRAYS FOR MU & SIGMA OVER TRIAL
         mu_arr = []
         for mu in policy_df.iloc[:]['mu']:
-            mu = np.fromstring(mu[2:-2], dtype=float, sep=' ')
+            mu = np.fromstring(mu[1:-1], dtype=float, sep=' ')
             mu_arr.append(mu)
         mu_arr = np.array(mu_arr)
 
@@ -308,7 +308,7 @@ class DataFile:
 
         ## SELECT MU & SIGMA
         mu = IC_df.iloc[0]['mu']
-        mu = np.fromstring(mu[2:-2], dtype=float, sep=' ')  # Convert str to np array
+        mu = np.fromstring(mu[1:-1], dtype=float, sep=' ')  # Convert str to np array
         
 
         sigma = IC_df.iloc[0]['sigma']
