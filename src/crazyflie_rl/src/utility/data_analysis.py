@@ -152,7 +152,8 @@ class DataFile:
 
         ax2.set_ylabel('Policy Values')
         ax2.set_xlabel('K_ep')
-        ax2.set_ylim([0,15]) # Set lower ylim
+        ax2.set_ylim(0,15) # Set lower ylim
+        ax2.set_xlim(-1,20)
         ax2.set_title(self.fileName)
         ax2.legend(loc='upper center',ncol=num_col)
         ax2.grid()
@@ -166,7 +167,8 @@ class DataFile:
 
         ax4.set_ylabel('Standard Deviation')
         ax4.set_xlabel('K_ep')
-        ax4.set_ylim([0,4])
+        ax4.set_ylim(0,4)
+        ax4.set_xlim(-1,20)
         ax4.legend(ncol=3,loc='upper right')
         ax4.grid()
         #endregion
@@ -309,7 +311,7 @@ class DataFile:
         
 
         sigma = IC_df.iloc[0]['sigma']
-        sigma = np.fromstring(sigma[2:-2], dtype=float, sep=' ')
+        sigma = np.fromstring(sigma[1:-1], dtype=float, sep=' ')
         
 
         return mu,sigma

@@ -1,7 +1,7 @@
 *.pyc
 # Byte-compiled / optimized / DLL files
 __pycache__/
-src/crazyflie_rl/src/log/*.csv
+src/crazyflie_rl/src/log/*
 
 *.py[cod]
 *$py.class
