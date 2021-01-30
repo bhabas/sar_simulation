@@ -8,10 +8,8 @@ import getpass
 
 
 from sensor_msgs.msg import LaserScan, Image, Imu
-from gazebo_communication_pkg.msg import GlobalState 
 from crazyflie_rl.msg import RLData,RLCmd
 from crazyflie_gazebo.msg import CtrlData
-from std_msgs.msg import Header 
 from rosgraph_msgs.msg import Clock
 from gazebo_msgs.msg import ModelState,ContactsState
 from gazebo_msgs.srv import SetModelState
@@ -33,6 +31,10 @@ class CrazyflieEnv:
         
         ## INIT ROS NODE FOR ENVIRONMENT 
         rospy.init_node("crazyflie_env_node") 
+        print("[STARTING] Starting Controller Process...")
+        self.controller_p = subprocess.Popen( # Controller Process
+            "gnome-terminal --disable-factory --geometry 70x41 -- rosrun crazyflie_gazebo controller", 
+            close_fds=True, preexec_fn=os.setsid, shell=True)
         self.launch_sim() 
     
 
@@ -43,12 +45,15 @@ class CrazyflieEnv:
         self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)
         self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactCallback)
         self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
-
         rospy.wait_for_message('/ctrl_data',CtrlData)
+
+
 
         ## INIT ROS PUBLISHERS
         self.RL_Publisher = rospy.Publisher('/rl_data',RLData,queue_size=10)
         self.Cmd_Publisher = rospy.Publisher('/rl_ctrl',RLCmd,queue_size=10)
+
+
 
         ## INIT GAZEBO TIMEOUT THREAD
         if gazeboTimeout==True:
@@ -255,7 +260,7 @@ class CrazyflieEnv:
 
     def close_sim(self):
         os.killpg(self.gazebo_p.pid, signal.SIGTERM)
-        os.killpg(self.controller_p.pid, signal.SIGTERM)
+        
 
     def close_dashboard(self):
         os.killpg(self.dashboard_p.pid, signal.SIGTERM)
@@ -273,10 +278,7 @@ class CrazyflieEnv:
             "gnome-terminal --disable-factory  -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_gazebo.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         
-        print("[STARTING] Starting Controller Process...")
-        self.controller_p = subprocess.Popen( # Controller Process
-            "gnome-terminal --disable-factory --geometry 70x41 -- rosrun crazyflie_gazebo controller", 
-            close_fds=True, preexec_fn=os.setsid, shell=True)
+        
 
 
     def launch_dashboard(self):

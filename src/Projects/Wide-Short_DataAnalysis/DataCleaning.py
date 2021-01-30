@@ -9,7 +9,7 @@ sys.path.insert(0,'/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie
 from data_analysis import DataFile
 
 
-dataPath = '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/Wide-Short_PureMoment_Data_1-29-21/'
+dataPath = '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/'
 
 
 redoList = []
@@ -20,8 +20,8 @@ test_list = []
 vz_array = np.arange(1.5,2.25,0.25)
 vx_array = np.arange(1.25,3.0,0.25)
 
-# vz_array = np.array([3.0])
-# vx_array = np.array([0.0])
+vz_array = np.array([3.0])
+vx_array = np.array([0.0])
 
 ## GENERATE TEST ARRAY
 for vz_d in vz_array:       # Limits: [1.5,3.5]
@@ -55,17 +55,18 @@ for vz,vx in test_arr:
             # IF BROKEN RUN THEN JUST REMOVE
             if trial.landing_rate() == np.nan:
                 raise Exception
-            if trial.k_epMax <= 15:
-                raise  Exception
-            # if trial.landing_rate() <= 0.2:
-            #     raise Exception
+            
+            # if trial.k_epMax <= 15:
+                # raise  Exception
+            if trial.landing_rate() <= 0.1:
+                raise Exception
 
             
             
             # SHOW FILENAME AND SUMMARY
             print(f"Current File: {fileName}")
             print(trial.rewardAvg_trial())
-            trial.plotSummary()
+            # trial.plotSummary()
 
             
         except: ## IF ERROR DELETE FILE
