@@ -427,10 +427,14 @@ void Controller::controlThread()
                 if(_flip_flag == true){
 
                     _M_d(0) = 0.0;
-                    _M_d(1) = ( (_G1*1e-1)*RREV_tr - (_G2*1e-1)*abs(OF_y_tr))*sign(OF_y_tr)*1e-3;
+                    _M_d(1) = -_G1*1e-3;
                     _M_d(2) = 0.0;
 
-                    M = _M_d*2;
+                    // Moment with base thrust
+                    M = _M_d;
+
+                    // Pure Moment
+                    M = _M_d*2; // Need to double moment to ensure it survives the MS<0 cutoff
                     F_thrust = 0;
                 }
             }

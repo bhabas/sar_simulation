@@ -25,6 +25,8 @@ class DataFile:
 
         self.n_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
         self.k_epMax = int(self.trial_df.iloc[-1]['k_ep'])
+
+        
        
 
         ## WHAT DO THESE DO AGAIN?
@@ -55,6 +57,17 @@ class DataFile:
         k_ep_ravg = reward_df.k_ep.unique() # Drops duplicate values so it matches dimension of rewards_avg (1 avg per ep and n ep)
 
         return k_ep_r,rewards,k_ep_ravg,rewards_avg
+
+    def rewardAvg_trial(self):
+        
+        ## CREATE ARRAYS FOR REWARD, K_EP 
+        reward_df = self.trial_df.iloc[:][['reward']].dropna() # Create df from k_ep/rewards and drop blank reward rows
+        reward_df = reward_df.iloc[-3*self.n_rollouts:]['reward']
+        rewards_arr = reward_df.to_numpy()
+        avg_reward = np.mean(rewards_arr)
+        
+        return avg_reward
+        
 
     def plot_rewardData(self):
         """Plot rewards for overall trial
@@ -109,12 +122,13 @@ class DataFile:
         impact_df = self.trial_df.iloc[:][['k_ep','reward','flip_flag','impact_flag']].dropna() # Use reward to select final impact row
         impact_df['impact_flag'] = pd.to_numeric(impact_df['impact_flag'])          # Convert number of legs (str) to type (int)
 
-        temp = impact_df.iloc[-int(self.n_rollouts*3):][['flip_flag','impact_flag']] # Grab leg impact number and body impact flag for final 3 episodes
+        temp = impact_df.iloc[-int(self.n_rollouts*3):][['reward','flip_flag','impact_flag']] # Grab leg impact number and body impact flag for final 3 episodes
 
         
         # Trim rows to match conditions and find final number (flip_flag IC row shows body impact on True)
         landings = temp[(temp.impact_flag >= 3) & (temp.flip_flag == False)].shape[0]
-        attempts = self.n_rollouts*3
+        bugged_attempts = temp[temp.reward <= 16].shape[0]   # Count number of attempts that glitched out
+        attempts = self.n_rollouts*3 - bugged_attempts      # Valid attempts
         landingRate = landings/attempts
         
 
@@ -136,7 +150,7 @@ class DataFile:
         ax1.set_xlabel("k_ep")
         ax1.set_xlim(-2,self.k_epMax+5)
         ax1.set_ylim(-2,150)
-        ax1.set_title(f"Reward vs Episode | Rollouts per Episode: {self.n_rollouts}")
+        ax1.set_title(f"{self.fileName} \n Reward vs Episode | Landing Rate {self.landing_rate():.2f} ")
         ax1.legend()
         ax1.grid()
         #endregion
@@ -174,10 +188,7 @@ class DataFile:
         ax4.grid()
         #endregion
 
-        ## GENERAL DATA
-        landingRate = self.landing_rate()
-        ax3 = fig.add_subplot(223)
-        ax3.text(0.2,0.5,f'Landing Rate: {landingRate:.2f} \n',size=12)
+        
 
         fig.tight_layout()
         plt.show()
@@ -218,7 +229,7 @@ class DataFile:
 
         ## SELECT POLICY
         policy = IC_df.iloc[0]['policy']
-        policy = np.fromstring(policy[2:-2], dtype=float, sep=' ')  # Convert str to np array
+        policy = np.fromstring(policy[1:-1], dtype=float, sep=' ')  # Convert str to np array
 
         return policy
 
@@ -233,7 +244,7 @@ class DataFile:
         ## CREATE NP ARRAYS FOR MU & SIGMA OVER TRIAL
         mu_arr = []
         for mu in policy_df.iloc[:]['mu']:
-            mu = np.fromstring(mu[2:-2], dtype=float, sep=' ')
+            mu = np.fromstring(mu[1:-1], dtype=float, sep=' ')
             mu_arr.append(mu)
         mu_arr = np.array(mu_arr)
 
@@ -308,7 +319,7 @@ class DataFile:
 
         ## SELECT MU & SIGMA
         mu = IC_df.iloc[0]['mu']
-        mu = np.fromstring(mu[2:-2], dtype=float, sep=' ')  # Convert str to np array
+        mu = np.fromstring(mu[1:-1], dtype=float, sep=' ')  # Convert str to np array
         
 
         sigma = IC_df.iloc[0]['sigma']
@@ -316,6 +327,28 @@ class DataFile:
         
 
         return mu,sigma
+
+    def grab_RLPararms(self):
+        param_df = self.trial_df.iloc[:][['alpha_mu','alpha_sig','mu','sigma']].dropna() # Create df drop blank reward rows
+
+        alpha_mu = param_df.iloc[0]['alpha_mu']
+        alpha_mu = np.fromstring(alpha_mu[1:-1], dtype=float, sep=' ')  # Convert str to np array
+
+        alpha_sigma = param_df.iloc[0]['alpha_sig']
+        alpha_sigma = np.fromstring(alpha_sigma[1:-1], dtype=float, sep=' ')  # Convert str to np array
+
+        mu = param_df.iloc[0]['mu']
+        mu = np.fromstring(mu[1:-1], dtype=float, sep=' ')  # Convert str to np array
+
+        sigma = param_df.iloc[0]['sigma']
+        sigma = np.fromstring(sigma[1:-1], dtype=float, sep=' ')  # Convert str to np array
+
+
+        return alpha_mu,alpha_sigma,mu,sigma
+
+
+        
+    
 
 
 
