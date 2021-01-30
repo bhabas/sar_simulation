@@ -984,11 +984,11 @@
         <ode>
           <limit>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </limit>
           <suspension>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </suspension>
         </ode>
       </physics>
@@ -1001,11 +1001,11 @@
         <ode>
           <limit>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </limit>
           <suspension>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </suspension>
         </ode>
       </physics>
@@ -1018,11 +1018,11 @@
         <ode>
           <limit>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </limit>
           <suspension>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </suspension>
         </ode>
       </physics>
@@ -1035,11 +1035,11 @@
         <ode>
           <limit>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </limit>
           <suspension>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </suspension>
         </ode>
       </physics>
@@ -1067,11 +1067,11 @@
         <ode>
           <limit>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </limit>
           <suspension>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </suspension>
         </ode>
       </physics>
@@ -1099,11 +1099,11 @@
         <ode>
           <limit>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </limit>
           <suspension>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </suspension>
         </ode>
       </physics>
@@ -1131,11 +1131,11 @@
         <ode>
           <limit>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </limit>
           <suspension>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </suspension>
         </ode>
       </physics>
@@ -1163,11 +1163,11 @@
         <ode>
           <limit>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </limit>
           <suspension>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </suspension>
         </ode>
       </physics>
