@@ -25,6 +25,8 @@ class DataFile:
 
         self.n_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
         self.k_epMax = int(self.trial_df.iloc[-1]['k_ep'])
+
+        
        
 
         ## WHAT DO THESE DO AGAIN?
@@ -325,6 +327,28 @@ class DataFile:
         
 
         return mu,sigma
+
+    def grab_RLPararms(self):
+        param_df = self.trial_df.iloc[:][['alpha_mu','alpha_sig','mu','sigma']].dropna() # Create df drop blank reward rows
+
+        alpha_mu = param_df.iloc[0]['alpha_mu']
+        alpha_mu = np.fromstring(alpha_mu[1:-1], dtype=float, sep=' ')  # Convert str to np array
+
+        alpha_sigma = param_df.iloc[0]['alpha_sig']
+        alpha_sigma = np.fromstring(alpha_sigma[1:-1], dtype=float, sep=' ')  # Convert str to np array
+
+        mu = param_df.iloc[0]['mu']
+        mu = np.fromstring(mu[1:-1], dtype=float, sep=' ')  # Convert str to np array
+
+        sigma = param_df.iloc[0]['sigma']
+        sigma = np.fromstring(sigma[1:-1], dtype=float, sep=' ')  # Convert str to np array
+
+
+        return alpha_mu,alpha_sigma,mu,sigma
+
+
+        
+    
 
 
 

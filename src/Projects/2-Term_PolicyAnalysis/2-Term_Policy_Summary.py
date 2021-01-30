@@ -9,6 +9,8 @@ sys.path.insert(0,'/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie
 from data_analysis import DataFile
 
 
+
+
 dataPath = "/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/"
 
 ## GENERATE INITIAL LIST VARIABLES
@@ -46,10 +48,13 @@ for vz_d,vx_d in test_arr:
             trial_num = fileName[-5]
             landing_rate = trial.landing_rate()
 
+            alpha_mu,alpha_sigma,mu_ini,sigma_ini = trial.grab_RLPararms()
+            
+
 
             policy,sigma = trial.grab_finalPolicy()
-            RREV_trigger,G1,G2 = policy
-            RREV_sig,G1_sig,G2_sig = sigma
+            RREV_trigger,G1 = policy
+            RREV_sig,G1_sig = sigma
 
             My_d = trial.grab_My_d_trial()
             impact_eul = trial.grab_impact_eul_trial('eul_y')
@@ -57,17 +62,23 @@ for vz_d,vx_d in test_arr:
 
             df_list.append((
                 vz_d,vx_d,trial_num,landing_rate,
-                RREV_trigger,G1,G2,
-                RREV_sig,G1_sig,G2_sig,
-                My_d,impact_eul
+                RREV_trigger,G1,
+                RREV_sig,G1_sig,
+                My_d,impact_eul,
+                alpha_mu,alpha_sigma,
+                mu_ini,sigma_ini,
                 ))
 
 
             
 master_df = pd.DataFrame(df_list,columns=(
     'vz_d','vx_d','trial_num','landing_rate',
-    'RREV_trigger','G1','G2',
-    'RREV_sig','G1_sig','G2_sig',
-    'My_d','impact_eul'
+    'RREV_trigger','G1',
+    'RREV_sig','G1_sig',
+    'My_d','impact_eul',
+    'alpha_mu','alpha_sigma',
+    'mu_ini','sigma_ini',
 ))
 print(master_df)
+
+master_df.to_csv('2-Term_Policy_Summary.csv',index=False)

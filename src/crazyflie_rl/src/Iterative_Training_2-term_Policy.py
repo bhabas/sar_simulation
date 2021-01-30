@@ -7,10 +7,9 @@ import time,os
 
 
 from crazyflie_env import CrazyflieEnv
-from CF_training_2Policy import runTraining
-from rl_syspepg import rlsysPEPGAgent_reactive,rlsysPEPGAgent_adaptive
-from rl_EM import rlEM_PEPGAgent,rlEM_AdaptiveAgent
-from rl_cma import CMA_basic,CMA,CMA_sym
+from CF_training_2term_Policy import runTraining
+from rl_EM import rlEM_PEPGAgent
+
 
 os.system("clear")
 np.set_printoptions(precision=2, suppress=True)
@@ -78,7 +77,7 @@ if __name__ == '__main__':
         try:
             ## RUN TRIAL
             env.RL_Publish() # Publish data to rl_data topic
-            runTraining(env,agent,vx_d,vz_d,k_epMax=40)
+            runTraining(env,agent,vx_d,vz_d,k_epMax=30)
 
         except: ## IF SIM EXCEPTION RAISED THEN CONTINUE BACK TO TRY BLOCK UNTIL SUCCESSFUL COMPLETION
             continue
