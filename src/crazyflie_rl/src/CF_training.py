@@ -114,10 +114,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
             print("RREV_thr: %.3f \t Gain_1: %.3f \t Gain_2: %.3f" %(RREV_threshold, G1, G2))
             print("Vx_d: %.3f \t Vy_d: %.3f \t Vz_d: %.3f" %(vx_d, vy_d, vz_d))
 
-            z_ini = env.position[2]
-            t_ini = env.getTime()
-
-
+        
             # ============================
             ##          Rollout 
             # ============================
@@ -127,15 +124,8 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
             env.step('sticky',ctrl_flag=1)          # Enable sticky pads
 
 
-            z_f = env.position[2]
-            t_f = env.getTime()
-
-            vz_teleport = (z_f-z_ini)/(t_f-t_ini)
-            print(f"Vz_test = {vz_teleport:.3f}")
- 
             
-            
-            
+        
             while True:
                 
                 
@@ -218,12 +208,12 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     env.runComplete_flag = True
 
                 # IF POSITION FALLS BELOW ACHIEVED MAX HEIGHT
-                # z_max = max(position[2],z_max)
-                # if position[2] <= 0.95*z_max: # Note: there is a lag with this
-                #     env.error_str = "Rollout Completed: Falling Drone"
-                #     print(env.error_str)
+                z_max = max(position[2],z_max)
+                if position[2] <= 0.95*z_max: # Note: there is a lag with this
+                    env.error_str = "Rollout Completed: Falling Drone"
+                    print(env.error_str)
 
-                #     env.runComplete_flag = True
+                    env.runComplete_flag = True
 
                 # IF CF HASN'T CHANGED Z HEIGHT IN PAST [5.0s]
                 if np.abs(position[2]-z_prev) > 0.001:
@@ -259,7 +249,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     repeat_run = True
                     break
 
-                if np.abs(position[1]) >= 2.0: # If CF goes crazy it'll usually shoot out in y-direction
+                if np.abs(position[1]) >= 1.0: # If CF goes crazy it'll usually shoot out in y-direction
                     env.error_str = "Error: Y-Position Exceeded"
                     print(env.error_str)
                     repeat_run = True

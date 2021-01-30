@@ -74,7 +74,6 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
 
             ## INITIALIZE POLICY PARAMETERS: 
             #  POLICY IMPLEMENTED IN CONTROLLER NODE (CONTROLLER.CPP)
-            #  M_y = (0.1*RREV_trigger*G1 - 0.1*G2*|OF_y|)*sgn(OF_y)
             RREV_threshold = theta_rl[0, k_run] # FoV expansion velocity [rad/s]
             G1 = theta_rl[1, k_run]
             env.policy = [RREV_threshold,np.abs(G1),0]
@@ -116,10 +115,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
             print("RREV_thr: %.3f \t Gain_1: %.3f" %(RREV_threshold, G1))
             print("Vx_d: %.3f \t Vy_d: %.3f \t Vz_d: %.3f" %(vx_d, vy_d, vz_d))
 
-            z_ini = env.position[2]
-            t_ini = env.getTime()
-
-
+            
             # ============================
             ##          Rollout 
             # ============================
@@ -210,12 +206,12 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     env.runComplete_flag = True
 
                 # IF POSITION FALLS BELOW ACHIEVED MAX HEIGHT
-                # z_max = max(position[2],z_max)
-                # if position[2] <= 0.95*z_max: # Note: there is a lag with this
-                #     env.error_str = "Rollout Completed: Falling Drone"
-                #     print(env.error_str)
+                z_max = max(position[2],z_max)
+                if position[2] <= 0.90*z_max: # Note: there is a lag with this
+                    env.error_str = "Rollout Completed: Falling Drone"
+                    print(env.error_str)
 
-                #     env.runComplete_flag = True
+                    env.runComplete_flag = True
 
                 # IF CF HASN'T CHANGED Z HEIGHT IN PAST [5.0s]
                 if np.abs(position[2]-z_prev) > 0.001:
@@ -251,7 +247,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     repeat_run = True
                     break
 
-                if np.abs(position[1]) >= 2.0: # If CF goes crazy it'll usually shoot out in y-direction
+                if np.abs(position[1]) >= 1.0: # If CF goes crazy it'll usually shoot out in y-direction
                     env.error_str = "Error: Y-Position Exceeded"
                     print(env.error_str)
                     repeat_run = True
@@ -272,6 +268,8 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                 # ============================
                 if env.runComplete_flag==True:
 
+                    env.reset_pos()
+
                     reward[k_run] = agent.calcReward_pureLanding(state_history,env.h_ceiling,env.pad_contacts,env.body_contact)
                     # reward[k_run] = agent.calcReward_effortMinimization(state_history,FM_history,env.h_ceiling,env.pad_contacts)
                     env.reward = reward[k_run,0]
@@ -281,9 +279,6 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
 
                     env.append_IC(env.filepath)
                     env.append_csv_blank(env.filepath)
-
-                    # env.step('stop')
-                    env.reset_pos()
                    
                     ## There is a weird delay where it sometime won't publish ctrl_cmds until the next command is executed
                     ## I have no idea what's going on there but it may or may not have an effect?
