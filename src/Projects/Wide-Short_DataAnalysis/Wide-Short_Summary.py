@@ -9,7 +9,7 @@ sys.path.insert(0,'/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie
 from data_analysis import DataFile
 
 
-dataPath = "/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/"
+dataPath = "/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/Wide-Short_PureMoment_Data_1-29-21/"
 
 ## GENERATE INITIAL LIST VARIABLES
 test_list = []
@@ -17,8 +17,8 @@ df_list = []
 
 
 ## DEFINE DATA RANGE TO ITERATE OVER
-vz_array = np.arange(4.0,1.25,-0.25)    # Limits: [1.5,3.5]
-vx_array = np.arange(0,3.0,0.25)        # Limits: [0,3.0]
+vz_array = np.arange(1.50,4.25,0.25)    # Limits: [1.5,4.0]
+vx_array = np.arange(0,3.0,0.25)        # Limits: [0.0,3.0]
 
 ## GENERATE TEST ARRAY
 for vz_d in vz_array:      
@@ -46,6 +46,7 @@ for vz_d,vx_d in test_arr:
             trial_num = fileName[-5]
             landing_rate = trial.landing_rate()
 
+            alpha_mu,alpha_sigma,mu_ini,sigma_ini = trial.grab_RLPararms()
 
             policy,sigma = trial.grab_finalPolicy()
             RREV_trigger,G1,G2 = policy
@@ -59,7 +60,9 @@ for vz_d,vx_d in test_arr:
                 vz_d,vx_d,trial_num,landing_rate,
                 RREV_trigger,G1,G2,
                 RREV_sig,G1_sig,G2_sig,
-                My_d,impact_eul
+                My_d,impact_eul,
+                alpha_mu,alpha_sigma,
+                mu_ini,sigma_ini,
                 ))
 
 
@@ -68,6 +71,9 @@ master_df = pd.DataFrame(df_list,columns=(
     'vz_d','vx_d','trial_num','landing_rate',
     'RREV_trigger','G1','G2',
     'RREV_sig','G1_sig','G2_sig',
-    'My_d','impact_eul'
+    'My_d','impact_eul',
+    'alpha_mu','alpha_sigma',
+    'mu_ini','sigma_ini',
 ))
 print(master_df)
+master_df.to_csv('Wide-Short_Summary.csv',index=False)

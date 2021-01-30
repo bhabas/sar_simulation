@@ -9,8 +9,6 @@ sys.path.insert(0,'/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie
 from data_analysis import DataFile
 
 
-
-
 dataPath = "/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/"
 
 ## GENERATE INITIAL LIST VARIABLES
@@ -50,7 +48,6 @@ for vz_d,vx_d in test_arr:
 
             alpha_mu,alpha_sigma,mu_ini,sigma_ini = trial.grab_RLPararms()
             
-
 
             policy,sigma = trial.grab_finalPolicy()
             RREV_trigger,G1 = policy

@@ -128,8 +128,8 @@ class DataFile:
         # Trim rows to match conditions and find final number (flip_flag IC row shows body impact on True)
         landings = temp[(temp.impact_flag >= 3) & (temp.flip_flag == False)].shape[0]
         bugged_attempts = temp[temp.reward <= 16].shape[0]   # Count number of attempts that glitched out
-        attempts = self.n_rollouts*3 - bugged_attempts      # Valid attempts
-        landingRate = landings/attempts
+        attempts = self.n_rollouts*3 - bugged_attempts # Valid attempts
+        landingRate = np.float32(landings)/np.float32(attempts)
         
 
         return landingRate
