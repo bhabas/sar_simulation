@@ -112,7 +112,7 @@ class ES:
             elif num_contacts == 1:
                 r_contact = 1
             else:
-                r_contact = 0
+                r_contact = 1
         else:
             r_contact = 0
 

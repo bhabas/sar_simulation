@@ -333,7 +333,7 @@ if __name__ == '__main__':
     alpha_sigma = np.array([[0.05]])
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[5.4],[3.2]])          # Random initial mu
+    mu = np.array([[4.3],[2.4]])          # Random initial mu
     sigma = np.array([[1.5],[1.5]])       # Initial estimates of sigma:
 
 
@@ -352,13 +352,13 @@ if __name__ == '__main__':
     # ============================
 
     ## INITIAL CONDITIONS
-    vz_d = 3.56
-    vx_d = 0.256
+    vz_d = 3.0
+    vx_d = 0.0
 
     
     
     ## INITIAL LOGGING DATA
-    trial_num = 1
+    trial_num = 7
     env.agent_name = agent.agent_type
     env.trial_name = f"{env.agent_name}--Vz_{vz_d}--Vx_{vx_d}--trial_{trial_num}"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"

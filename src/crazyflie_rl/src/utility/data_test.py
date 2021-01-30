@@ -9,12 +9,14 @@ os.system("clear")
 
 vz = 4.00
 vx = 0.25
-trialNum = 1
+trialNum = 6
 agent = "EM_PEPG"
 
 dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/local_files/data/Wide-Short_Data_1-27-21/"
 dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/Wide-Short_PureMoment_Data_1-29-21/"
+dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/"
 fileName = f"{agent}--Vz_{vz:.2f}--Vx_{vx:.2f}--trial_{trialNum}.csv"
+fileName = "EM_PEPG--Vz_3.0--Vx_0.0--trial_1.csv"
 
 
 
@@ -38,4 +40,4 @@ trial.plotSummary()
 
 # trial.plot_eulerData(k_ep,k_run,'eul_y')
 
-# trial.plot_rewardData()
+print(trial.rewardAvg_trial())
