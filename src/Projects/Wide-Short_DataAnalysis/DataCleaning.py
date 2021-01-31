@@ -21,7 +21,7 @@ vz_array = np.arange(1.5,2.25,0.25)
 vx_array = np.arange(1.25,3.0,0.25)
 
 vz_array = np.array([3.0])
-vx_array = np.array([0.0])
+vx_array = np.array([1.5])
 
 ## GENERATE TEST ARRAY
 for vz_d in vz_array:       # Limits: [1.5,3.5]
@@ -66,7 +66,7 @@ for vz,vx in test_arr:
             # SHOW FILENAME AND SUMMARY
             print(f"Current File: {fileName}")
             print(trial.rewardAvg_trial())
-            # trial.plotSummary()
+            trial.plotSummary()
 
             
         except: ## IF ERROR DELETE FILE

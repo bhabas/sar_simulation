@@ -347,8 +347,58 @@ class DataFile:
         return alpha_mu,alpha_sigma,mu,sigma
 
 
-        
-    
+    def grab_OF_y(self,k_ep,k_run):
+        run_df,IC_df = self.select_run(k_ep,k_run)
+
+        OF_y = IC_df.iloc[0]['OF_y']
+
+        return OF_y
+
+    def grab_OF_y_trial(self):
+        ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
+        ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
+        ep_arr = ep_df.iloc[-self.n_rollouts*3:].to_numpy() # Grab episode/run listing from past 3 rollouts
+
+        ## ITERATE THROUGH ALL RUNS AND FIND My_d FOR SUCCESSFUL LANDINGS
+        OF_yList = []
+        epList = []
+        for k_ep,k_run in ep_arr:
+            if self.landing_bool(k_ep, k_run): # IGNORE FAILED LANDINGS
+                OF_yList.append(self.grab_OF_y(k_ep,k_run))
+                epList.append(k_ep)
+                
+        ## CONVERT LIST TO NP ARRAY AND CALC MEAN
+        arr = np.asarray(OF_yList)
+        avg_OF_y = np.mean(arr,axis=0)
+
+        return avg_OF_y
+
+    def grab_RREV_tr(self,k_ep,k_run):
+        run_df,IC_df = self.select_run(k_ep,k_run)
+
+        RREV_tr = IC_df.iloc[0]['RREV']
+
+        return RREV_tr
+
+    def grab_RREV_tr_trial(self):
+         ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
+        ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
+        ep_arr = ep_df.iloc[-self.n_rollouts*3:].to_numpy() # Grab episode/run listing from past 3 rollouts
+
+        ## ITERATE THROUGH ALL RUNS AND FIND My_d FOR SUCCESSFUL LANDINGS
+        RREV_trList = []
+        epList = []
+        for k_ep,k_run in ep_arr:
+            if self.landing_bool(k_ep, k_run): # IGNORE FAILED LANDINGS
+                RREV_trList.append(self.grab_RREV_tr(k_ep,k_run))
+                epList.append(k_ep)
+                
+        ## CONVERT LIST TO NP ARRAY AND CALC MEAN
+        arr = np.asarray(RREV_trList)
+        avg_RREV_tr = np.mean(arr,axis=0)
+
+        return avg_RREV_tr
+
 
 
 

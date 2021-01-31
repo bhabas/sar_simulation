@@ -29,10 +29,10 @@ fileName = f"{agent}--Vz_{vz:.2f}--Vx_{vx:.2f}--trial_{trialNum}.csv"
 
 trial = DataFile(dataPath,fileName)
 
-k_ep = 0
-k_run = 0
+k_ep = 19
+k_run = 9
 # print(trial.grab_impact_eul(k_ep,k_run,'eul_y'))
-print(trial.grab_policy(k_ep,k_run))
+print(trial.grab_RREV_tr(k_ep,k_run))
 # trial.plot_My_d_trial()
 # trial.plot_impact_eul_trial('eul_y')
 trial.plotSummary()
@@ -40,4 +40,4 @@ trial.plotSummary()
 
 # trial.plot_eulerData(k_ep,k_run,'eul_y')
 
-print(trial.rewardAvg_trial())
+print(trial.grab_RREV_tr_trial())

@@ -49,8 +49,11 @@ for vz_d,vx_d in test_arr:
             alpha_mu,alpha_sigma,mu_ini,sigma_ini = trial.grab_RLPararms()
 
             policy,sigma = trial.grab_finalPolicy()
-            RREV_trigger,G1,G2 = policy
+            RREV_threshold,G1,G2 = policy
             RREV_sig,G1_sig,G2_sig = sigma
+
+            RREV_trigger = trial.grab_RREV_tr_trial()
+            OF_y = trial.grab_OF_y_trial()
 
             My_d = trial.grab_My_d_trial()
             impact_eul = trial.grab_impact_eul_trial('eul_y')
@@ -58,8 +61,9 @@ for vz_d,vx_d in test_arr:
 
             df_list.append((
                 vz_d,vx_d,trial_num,landing_rate,
-                RREV_trigger,G1,G2,
+                RREV_threshold,G1,G2,
                 RREV_sig,G1_sig,G2_sig,
+                RREV_trigger,OF_y,
                 My_d,impact_eul,
                 alpha_mu,alpha_sigma,
                 mu_ini,sigma_ini,
@@ -69,8 +73,9 @@ for vz_d,vx_d in test_arr:
             
 master_df = pd.DataFrame(df_list,columns=(
     'vz_d','vx_d','trial_num','landing_rate',
-    'RREV_trigger','G1','G2',
+    'RREV_threshold','G1','G2',
     'RREV_sig','G1_sig','G2_sig',
+    'RREV_trigger','OF_y',
     'My_d','impact_eul',
     'alpha_mu','alpha_sigma',
     'mu_ini','sigma_ini',
