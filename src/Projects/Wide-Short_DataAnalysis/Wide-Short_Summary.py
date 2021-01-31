@@ -11,63 +11,42 @@ from data_analysis import DataFile
 
 dataPath = "/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/Wide-Short_PureMoment_Data_1-29-21/"
 
-## GENERATE INITIAL LIST VARIABLES
-test_list = []
 df_list = []
 
 
-## DEFINE DATA RANGE TO ITERATE OVER
-vz_array = np.arange(1.50,4.25,0.25)    # Limits: [1.5,4.0]
-vx_array = np.arange(0,3.0,0.25)        # Limits: [0.0,3.0]
+## ITER OVER ALL FILES IN DIR
+for fileName in os.listdir(dataPath): # Iter over all files in dir
+    
 
-## GENERATE TEST ARRAY
-for vz_d in vz_array:      
-    for vx_d in vx_array:   
-        test_list.append([vz_d,vx_d])
-test_arr = np.asarray(test_list)
+    trial = DataFile(dataPath,fileName)
+    print(fileName)
+    vx_d,_,vz_d = trial.v_d
+    trial_num = fileName[-5]
 
+    landing_rate = trial.landing_rate()
 
+    alpha_mu,alpha_sigma,mu_ini,sigma_ini = trial.grab_RLPararms()
 
+    policy,sigma = trial.grab_finalPolicy()
+    RREV_threshold,G1,G2 = policy
+    RREV_sig,G1_sig,G2_sig = sigma
 
+    RREV_trigger = trial.grab_RREV_tr_trial()
+    OF_y = trial.grab_OF_y_trial()
 
-## ITER OVER ALL TEST COMBINATIONS
-for vz_d,vx_d in test_arr: 
-
-    ## ITER OVER ALL FILES IN DIR
-    for fileName in os.listdir(dataPath): # Iter over all files in dir
-        
-        ## IF FILE MATCHES DESIRED IC
-        if fnmatch.fnmatch(fileName,f"*Vz_{vz_d:.2f}--Vx_{vx_d:.2f}*.csv"):
-            
-            
-            trial = DataFile(dataPath,fileName)
-            print(fileName)
-            
-            trial_num = fileName[-5]
-            landing_rate = trial.landing_rate()
-
-            alpha_mu,alpha_sigma,mu_ini,sigma_ini = trial.grab_RLPararms()
-
-            policy,sigma = trial.grab_finalPolicy()
-            RREV_threshold,G1,G2 = policy
-            RREV_sig,G1_sig,G2_sig = sigma
-
-            RREV_trigger = trial.grab_RREV_tr_trial()
-            OF_y = trial.grab_OF_y_trial()
-
-            My_d = trial.grab_My_d_trial()
-            impact_eul = trial.grab_impact_eul_trial('eul_y')
+    My_d = trial.grab_My_d_trial()
+    impact_eul = trial.grab_impact_eul_trial('eul_y')
 
 
-            df_list.append((
-                vz_d,vx_d,trial_num,landing_rate,
-                RREV_threshold,G1,G2,
-                RREV_sig,G1_sig,G2_sig,
-                RREV_trigger,OF_y,
-                My_d,impact_eul,
-                alpha_mu,alpha_sigma,
-                mu_ini,sigma_ini,
-                ))
+    df_list.append((
+        vz_d,vx_d,trial_num,landing_rate,
+        RREV_threshold,G1,G2,
+        RREV_sig,G1_sig,G2_sig,
+        RREV_trigger,OF_y,
+        My_d,impact_eul,
+        alpha_mu,alpha_sigma,
+        mu_ini,sigma_ini,
+        ))
 
 
             
@@ -81,4 +60,5 @@ master_df = pd.DataFrame(df_list,columns=(
     'mu_ini','sigma_ini',
 ))
 print(master_df)
+master_df.sort_values(['vz_d','vx_d','trial_num'],ascending=[1,1,1],inplace=True)
 master_df.to_csv('Wide-Short_Summary.csv',index=False)

@@ -12,7 +12,6 @@ from data_analysis import DataFile
 dataPath = "/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/Wide-Short_Vx-0.0_2Policy/"
 
 ## GENERATE INITIAL LIST VARIABLES
-test_list = []
 df_list = []
 
 
