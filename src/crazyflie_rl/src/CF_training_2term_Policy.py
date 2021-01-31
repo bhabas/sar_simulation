@@ -205,11 +205,11 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
 
                     env.runComplete_flag = True
 
-                # IF POSITION FALLS BELOW ACHIEVED MAX HEIGHT
-                z_max = max(position[2],z_max)
-                if position[2] <= 0.90*z_max: # Note: there is a lag with this
-                    env.error_str = "Rollout Completed: Falling Drone"
-                    print(env.error_str)
+                # # IF POSITION FALLS BELOW ACHIEVED MAX HEIGHT
+                # z_max = max(position[2],z_max)
+                # if position[2] <= 0.90*z_max: # Note: there is a lag with this
+                #     env.error_str = "Rollout Completed: Falling Drone"
+                #     print(env.error_str)
 
                     env.runComplete_flag = True
 

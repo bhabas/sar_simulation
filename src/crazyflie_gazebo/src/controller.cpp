@@ -310,7 +310,7 @@ void Controller::controlThread()
 
 
     // might need to adjust weight to real case (sdf file too)
-    double m = 0.026 + 0.0015*4; // Mass [kg]
+    double m = 0.026 + 0.0009*4; // Mass [kg]
     double g = 9.8066; // Gravitational acceleration [m/s^2]
     double t = 0; // Time from Gazebo [s]
     unsigned int t_step = 0; // t_step counter
