@@ -39,10 +39,9 @@
         <max_contacts>10</max_contacts>
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
-          <mesh>
-            <uri>/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_gazebo/models/crazyflie_model_X/meshes/crazyflie.dae</uri>
-            <scale>1 1 1</scale>
-          </mesh>
+          <box>
+            <size>0.075 0.075 0.015</size>
+          </box>
         </geometry>
         <surface>
           <friction>
@@ -64,7 +63,7 @@
             </torsional>
           </friction>
           <bounce>
-            <restitution_coefficient>0</restitution_coefficient>
+            <restitution_coefficient>0.1</restitution_coefficient>
             <threshold>1e+06</threshold>
           </bounce>
           <contact>
@@ -95,12 +94,12 @@
       <inertial>
         <mass>0.0009</mass>
         <inertia>
-          <ixx>1.5311e-07</ixx>
+          <ixx>3.6041e-07</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>1.5311e-07</iyy>
+          <iyy>3.6041e-07</iyy>
           <iyz>0</iyz>
-          <izz>4.3354e-10</izz>
+          <izz>4.5000e-10</izz>
         </inertia>
         <pose>0 0 -0.03475 0 -0 0</pose>
       </inertial>
@@ -195,12 +194,12 @@
       <inertial>
         <mass>0.0009</mass>
         <inertia>
-          <ixx>1.5311e-07</ixx>
+          <ixx>3.6041e-07</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>1.5311e-07</iyy>
+          <iyy>3.6041e-07</iyy>
           <iyz>0</iyz>
-          <izz>4.3354e-10</izz>
+          <izz>4.5000e-10</izz>
         </inertia>
         <pose>0 0 -0.03475 0 -0 0</pose>
       </inertial>
@@ -295,12 +294,12 @@
       <inertial>
         <mass>0.0009</mass>
         <inertia>
-          <ixx>1.5311e-07</ixx>
+          <ixx>3.6041e-07</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>1.5311e-07</iyy>
+          <iyy>3.6041e-07</iyy>
           <iyz>0</iyz>
-          <izz>4.3354e-10</izz>
+          <izz>4.5000e-10</izz>
         </inertia>
         <pose>0 0 -0.03475 0 -0 0</pose>
       </inertial>
@@ -395,13 +394,13 @@
       <inertial>
         <mass>0.0009</mass>
         <inertia>
-          <ixx>1.5311e-07</ixx>
+          <ixx>3.6041e-07</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>1.5311e-07</iyy>
+          <iyy>3.6041e-07</iyy>
           <iyz>0</iyz>
-          <izz>4.3354e-10</izz>
-        </inertia>-0.786
+          <izz>4.5000e-10</izz>
+        </inertia>
         <pose>0 0 -0.03475 0 -0 0</pose>
       </inertial>
       <pose>0.017 -0.017 0 0 -0.9553 -0.786</pose>
@@ -667,10 +666,25 @@
         <cast_shadows>1</cast_shadows>
       </visual>
     </link>
-    <joint name='leg_1_joint' type='fixed'>
+    <joint name='leg_1_joint' type='revolute'>
       <parent>crazyflie_body</parent>
       <child>leg_1</child>
       <pose>0 0 0 0 -0 0</pose>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+          <effort>-1</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0.1</spring_stiffness>
+          <damping>0</damping>
+          <friction>0</friction>
+        </dynamics>
+      </axis>
       <physics>
         <ode>
           <limit>
@@ -684,10 +698,25 @@
         </ode>
       </physics>
     </joint>
-    <joint name='leg_2_joint' type='fixed'>
+    <joint name='leg_2_joint' type='revolute'>
       <parent>crazyflie_body</parent>
       <child>leg_2</child>
       <pose>0 0 0 0 -0 0</pose>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+          <effort>-1</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0.1</spring_stiffness>
+          <damping>0</damping>
+          <friction>0</friction>
+        </dynamics>
+      </axis>
       <physics>
         <ode>
           <limit>
@@ -701,10 +730,25 @@
         </ode>
       </physics>
     </joint>
-    <joint name='leg_3_joint' type='fixed'>
+    <joint name='leg_3_joint' type='revolute'>
       <parent>crazyflie_body</parent>
       <child>leg_3</child>
       <pose>0 0 0 0 -0 0</pose>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+          <effort>-1</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0.1</spring_stiffness>
+          <damping>0</damping>
+          <friction>0</friction>
+        </dynamics>
+      </axis>
       <physics>
         <ode>
           <limit>
@@ -718,10 +762,25 @@
         </ode>
       </physics>
     </joint>
-    <joint name='leg_4_joint' type='fixed'>
+    <joint name='leg_4_joint' type='revolute'>
       <parent>crazyflie_body</parent>
       <child>leg_4</child>
       <pose>0 0 0 0 -0 0</pose>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+          <effort>-1</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0.1</spring_stiffness>
+          <damping>0</damping>
+          <friction>0</friction>
+        </dynamics>
+      </axis>
       <physics>
         <ode>
           <limit>
@@ -865,7 +924,7 @@
     </joint>
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
-    <plugin name='back_left_motor_model' filename='libgazebo_motor_model.so'>
+    <!-- <plugin name='back_left_motor_model' filename='libgazebo_motor_model.so'>
       <robotNamespace/>
       <jointName>rotor_2_joint</jointName>
       <linkName>rotor_2</linkName>
@@ -950,6 +1009,6 @@
       <mavlink_port>18080</mavlink_port>
       <motorSpeedCommandPubTopic>/gazebo/command/motor_speed</motorSpeedCommandPubTopic>
       <stickyEnablePubTopic>/gazebo/command/sticky_enable</stickyEnablePubTopic>
-    </plugin>
+    </plugin> -->
   </model>
 </sdf>
