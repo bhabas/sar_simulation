@@ -21,7 +21,7 @@ def main():
     # ============================
 
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv()
+    env = CrazyflieEnv(gazeboTimeout=False)
     cmd_thread = threading.Thread(target=env.cmd_send,args=())
     cmd_thread.start()   
 
