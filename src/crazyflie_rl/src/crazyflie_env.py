@@ -28,6 +28,9 @@ class CrazyflieEnv:
         self.filepath = ""
 
         self.h_ceiling = 2.5
+
+        ## INIT NAME OF MODEL BEING USED
+        self.modelName = 'crazyflie_model_Narrow-Short'
         
         ## INIT ROS NODE FOR ENVIRONMENT 
         rospy.init_node("crazyflie_env_node") 
@@ -61,8 +64,7 @@ class CrazyflieEnv:
             self.timeoutThread.start()
         
 
-        ## INIT NAME OF MODEL BEING USED
-        self.modelName = 'crazyflie_model_Wide-Short_Flex'
+        
         ## INIT RL_DATA VARIABLES 
         #region 
         self.trial_name = ''
