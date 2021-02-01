@@ -9,7 +9,7 @@ sys.path.insert(0,'/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie
 from data_analysis import DataFile
 
 
-dataPath = '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/'
+dataPath = '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/Wide-Short_PureMoment_Data_1-29-21/'
 
 
 redoList = []
@@ -17,11 +17,11 @@ redoList = []
 test_list = []
 
 ## DEFINE DATA RANGE TO ITERATE OVER
-vz_array = np.arange(1.5,2.25,0.25)
+vz_array = np.arange(1.5,3.0,0.25)
 vx_array = np.arange(1.25,3.0,0.25)
 
-vz_array = np.array([3.0])
-vx_array = np.array([1.5])
+# vz_array = np.array([3.0])
+# vx_array = np.array([1.5])
 
 ## GENERATE TEST ARRAY
 for vz_d in vz_array:       # Limits: [1.5,3.5]
@@ -56,17 +56,17 @@ for vz,vx in test_arr:
             if trial.landing_rate() == np.nan:
                 raise Exception
             
-            # if trial.k_epMax <= 15:
-                # raise  Exception
-            if trial.landing_rate() <= 0.1:
-                raise Exception
+            if trial.k_epMax <= 10:
+                raise  Exception
+            # if trial.landing_rate() <= 0.1:
+            #     raise Exception
 
             
             
             # SHOW FILENAME AND SUMMARY
             print(f"Current File: {fileName}")
             print(trial.rewardAvg_trial())
-            trial.plotSummary()
+            # trial.plotSummary()
 
             
         except: ## IF ERROR DELETE FILE
@@ -76,20 +76,20 @@ for vz,vx in test_arr:
             send2trash.send2trash(filepath)
 
 
-    ## INPUT TRIAL NUMBERS TO BE DISCARDED
-    str = input('Input spaced trial numbers to be deleted: ')
-    try:
-        trialList = [int(i) for i in str.split(' ')]
-        for trial in trialList:
-            ## APPEND TRIAL TO LIST TO BE REDONE AND SAVE CURRENT ARRRAY TO CSV
-            # np.savetxt("runAgain_List.csv", np.asarray(redoList), delimiter=",")
+    # ## INPUT TRIAL NUMBERS TO BE DISCARDED
+    # str = input('Input spaced trial numbers to be deleted: ')
+    # try:
+    #     trialList = [int(i) for i in str.split(' ')]
+    #     for trial in trialList:
+    #         ## APPEND TRIAL TO LIST TO BE REDONE AND SAVE CURRENT ARRRAY TO CSV
+    #         # np.savetxt("runAgain_List.csv", np.asarray(redoList), delimiter=",")
 
-            ## RECREATE FILE NAME AND DELETE FILE
-            fileName = f"EM_PEPG--Vz_{vz:.2f}--Vx_{vx:.2f}--trial_{trial}.csv"
-            filepath = dataPath + fileName
-            send2trash.send2trash(filepath)
-    except:
-        pass
+    #         ## RECREATE FILE NAME AND DELETE FILE
+    #         fileName = f"EM_PEPG--Vz_{vz:.2f}--Vx_{vx:.2f}--trial_{trial}.csv"
+    #         filepath = dataPath + fileName
+    #         send2trash.send2trash(filepath)
+    # except:
+    #     pass
 
 
 # ## PRINT REDO ARRAY AND SAVE TO CSV FILE

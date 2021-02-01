@@ -13,7 +13,9 @@ class DataFile:
         self.dataPath = dataPath
         filepath = self.dataPath+self.fileName
 
-        self.trial_df = pd.read_csv(filepath)
+
+
+        self.trial_df = pd.read_csv(filepath,low_memory=False)
 
         ## GET TRIAL INFO (REGEX IS LIKELY BETTER WAY TO DO THIS)
         idx = fileName.find('--Vz')

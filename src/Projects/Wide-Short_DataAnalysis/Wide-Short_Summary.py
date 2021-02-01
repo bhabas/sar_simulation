@@ -1,5 +1,4 @@
-import os,fnmatch
-import numpy as np
+import os,time,datetime
 import pandas as pd
 os.system("clear")
 
@@ -10,16 +9,35 @@ from data_analysis import DataFile
 
 
 dataPath = "/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/Wide-Short_PureMoment_Data_1-29-21/"
-
 df_list = []
+num_files = len(os.listdir(dataPath))
+
+run_avg = 0
+start_time = datetime.datetime.now()
+end_time = datetime.datetime.now()
 
 
 ## ITER OVER ALL FILES IN DIR
-for fileName in os.listdir(dataPath): # Iter over all files in dir
+for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
+
+
+    ## PROGRESS PRINTING (BASIC STUFF STARTING FOR TIME ESTIMATION)
+    
+
+    diff = end_time - start_time
+    run_avg = run_avg + (diff.seconds - run_avg)/float(ii+1)
+    start_time = datetime.datetime.now()
+
+    
+    
+
+    
+
+    print(f"Current File: {fileName} \t Index: {ii}/{num_files} \t Percentage: {100*ii/num_files:.2f}% \t Minutes to Completion: {run_avg*(num_files-ii)/60:.1f}")
     
 
     trial = DataFile(dataPath,fileName)
-    print(fileName)
+    
     vx_d,_,vz_d = trial.v_d
     trial_num = fileName[-5]
 
@@ -47,6 +65,10 @@ for fileName in os.listdir(dataPath): # Iter over all files in dir
         alpha_mu,alpha_sigma,
         mu_ini,sigma_ini,
         ))
+
+    end_time = datetime.datetime.now()
+
+    
 
 
             
