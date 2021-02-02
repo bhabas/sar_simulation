@@ -885,7 +885,27 @@ class DataFile:
         ax.legend()
         plt.show()
         
+    def trigger2impact(self,k_ep,k_run):
+        _,flip_time = self.grab_flip_time(k_ep,k_run)
+        _,impact_time,_ = self.grab_impact_time(k_ep,k_run)
 
+        t_delta = impact_time - flip_time
+        return t_delta
 
+    def trigger2impact_trial(self):
+        ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
+        ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
+        ep_arr = ep_df.iloc[-self.n_rollouts*3:].to_numpy() # Grab episode/run listing from past 3 rollouts
 
+        ## ITERATE THROUGH ALL RUNS AND FINDING IMPACT ANGLE 
+        list = []
+        for k_ep,k_run in ep_arr:
+            if self.landing_bool(k_ep, k_run): # IGNORE FAILED LANDINGS
+                list.append(self.trigger2impact(k_ep,k_run))
+
+        ## CONVERT LIST TO NP ARRAY AND CALC MEAN
+        arr = np.asarray(list)
+        delta_avg = np.mean(arr,axis=0)
+        
+        return delta_avg
 

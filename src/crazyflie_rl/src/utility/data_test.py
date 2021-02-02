@@ -7,9 +7,9 @@ import os
 from data_analysis import DataFile
 # os.system("clear")
 
-vz = 1.75
-vx = 2.00
-trialNum = 4
+vz = 3.5
+vx = 2.25
+trialNum = 3
 agent = "EM_PEPG"
 
 
@@ -26,7 +26,7 @@ trial = DataFile(dataPath,fileName)
 k_ep = 19
 k_run = 9
 
-print(trial.grab_RREV_tr(k_ep,k_run))
+print(trial.trigger2impact_trial())
 trial.plotSummary()
 
 print(trial.grab_RREV_tr_trial())

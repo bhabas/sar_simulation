@@ -54,6 +54,7 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
 
     My_d = trial.grab_My_d_trial()
     impact_eul = trial.grab_impact_eul_trial('eul_y')
+    impact_tdelta = trial.trigger2impact_trial()
 
 
     df_list.append((
@@ -61,7 +62,7 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
         RREV_threshold,G1,G2,
         RREV_sig,G1_sig,G2_sig,
         RREV_trigger,OF_y,
-        My_d,impact_eul,
+        My_d,impact_eul,impact_tdelta,
         alpha_mu,alpha_sigma,
         mu_ini,sigma_ini,
         ))
@@ -77,7 +78,7 @@ master_df = pd.DataFrame(df_list,columns=(
     'RREV_threshold','G1','G2',
     'RREV_sig','G1_sig','G2_sig',
     'RREV_trigger','OF_y',
-    'My_d','impact_eul',
+    'My_d','impact_eul','impact_tdelta',
     'alpha_mu','alpha_sigma',
     'mu_ini','sigma_ini',
 ))
