@@ -30,7 +30,7 @@ class CrazyflieEnv:
         self.h_ceiling = 2.5
 
         ## INIT NAME OF MODEL BEING USED
-        self.modelName = 'crazyflie_model_Wide-Long'
+        self.modelName = 'crazyflie_model_Narrow-Short'
         
         ## INIT ROS NODE FOR ENVIRONMENT 
         rospy.init_node("crazyflie_env_node") 
@@ -295,7 +295,7 @@ class CrazyflieEnv:
         state_msg.model_name = self.modelName
         state_msg.pose.position.x = self.position[0]
         state_msg.pose.position.y = self.position[1]
-        state_msg.pose.position.z = self.position[2] - 0.1 # Subtract model offset compared to main-body link (Gazebo)
+        state_msg.pose.position.z = self.position[2]
 
         state_msg.pose.orientation.x = 0
         state_msg.pose.orientation.y = 0
@@ -325,7 +325,7 @@ class CrazyflieEnv:
         state_msg.model_name = self.modelName
         state_msg.pose.position.x = 0
         state_msg.pose.position.y = 0
-        state_msg.pose.position.z = 0.313
+        state_msg.pose.position.z = 0.36
 
         state_msg.pose.orientation.w = 1
         state_msg.pose.orientation.x = 0

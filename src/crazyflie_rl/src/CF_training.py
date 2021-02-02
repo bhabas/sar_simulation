@@ -207,13 +207,13 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
 
                     env.runComplete_flag = True
 
-                # # IF POSITION FALLS BELOW ACHIEVED MAX HEIGHT
-                # z_max = max(position[2],z_max)
-                # if position[2] <= 0.95*z_max: # Note: there is a lag with this
-                #     env.error_str = "Rollout Completed: Falling Drone"
-                #     print(env.error_str)
+                # IF POSITION FALLS BELOW ACHIEVED MAX HEIGHT
+                z_max = max(position[2],z_max)
+                if position[2] <= 0.85*z_max: # Note: there is a lag with this
+                    env.error_str = "Rollout Completed: Falling Drone"
+                    print(env.error_str)
 
-                #     env.runComplete_flag = True
+                    env.runComplete_flag = True
 
                 # IF CF HASN'T CHANGED Z HEIGHT IN PAST [5.0s]
                 if np.abs(position[2]-z_prev) > 0.001:
@@ -315,7 +315,7 @@ if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv(gazeboTimeout=True)
-    env.launch_dashboard()
+    # env.launch_dashboard()
 
     print("Environment done")
 
@@ -335,7 +335,7 @@ if __name__ == '__main__':
     # sigma = np.array([[0.01],[0.01],[0.01]])       # Initial estimates of sigma:
 
     ## SIM PARAMETERS
-    env.n_rollouts = 10
+    env.n_rollouts = 8
     env.gamma = 0.95
     env.h_ceiling = 2.5 # [m]
 
