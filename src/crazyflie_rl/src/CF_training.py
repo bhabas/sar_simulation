@@ -118,9 +118,9 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
             # ============================
             ##          Rollout 
             # ============================
+            env.launch_IC(vx_d+0.03,vz_d)           # Use Gazebo to impart desired vel with extra vx to ensure -OF_y when around zero
             env.step('pos',ctrl_flag=0)             # Turn off pos control
             env.step('vel',env.vel_d,ctrl_flag=1)   # Set desired vel
-            env.launch_IC(vx_d+0.03,vz_d)           # Use Gazebo to impart desired vel with extra vx to ensure -OF_y when around zero
             env.step('sticky',ctrl_flag=1)          # Enable sticky pads
 
 
@@ -207,13 +207,13 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
 
                     env.runComplete_flag = True
 
-                # IF POSITION FALLS BELOW ACHIEVED MAX HEIGHT
-                z_max = max(position[2],z_max)
-                if position[2] <= 0.85*z_max: # Note: there is a lag with this
-                    env.error_str = "Rollout Completed: Falling Drone"
-                    print(env.error_str)
+                # # IF POSITION FALLS BELOW ACHIEVED MAX HEIGHT
+                # z_max = max(position[2],z_max)
+                # if position[2] <= 0.85*z_max: # Note: there is a lag with this
+                #     env.error_str = "Rollout Completed: Falling Drone"
+                #     print(env.error_str)
 
-                    env.runComplete_flag = True
+                #     env.runComplete_flag = True
 
                 # IF CF HASN'T CHANGED Z HEIGHT IN PAST [5.0s]
                 if np.abs(position[2]-z_prev) > 0.001:
