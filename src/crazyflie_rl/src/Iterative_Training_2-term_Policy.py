@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
     print("Environment done")
     ## Home Test List
-    df = pd.read_csv("~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/Two-Gain_Policy.csv")
+    df = pd.read_csv("~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/Home_Test_List.csv")
     ## Laptop Test List
     # df = pd.read_csv("~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/Laptop_Test_List.csv")
     arr = df.to_numpy()
@@ -63,7 +63,7 @@ if __name__ == '__main__':
         
         ## INITIAL LOGGING DATA
         env.agent_name = agent.agent_type
-        env.trial_name = f"{env.agent_name}--Vz_{vz_d:.2f}--Vx_{vx_d:.2f}--trial_{int(trial_num)}"
+        env.trial_name = f"{env.agent_name}--Vz_{vz_d:.2f}--Vx_{vx_d:.2f}--trial_{int(trial_num):02d}"
         
         env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
         env.logging_flag = True
@@ -77,7 +77,7 @@ if __name__ == '__main__':
         try:
             ## RUN TRIAL
             env.RL_Publish() # Publish data to rl_data topic
-            runTraining(env,agent,vx_d,vz_d,k_epMax=30)
+            runTraining(env,agent,vx_d,vz_d,k_epMax=25)
 
         except: ## IF SIM EXCEPTION RAISED THEN CONTINUE BACK TO TRY BLOCK UNTIL SUCCESSFUL COMPLETION
             continue

@@ -157,7 +157,7 @@ class DataFile:
         ax1.set_ylabel("Rewards")
         ax1.set_xlabel("k_ep")
         ax1.set_xlim(-2,self.k_epMax+5)
-        ax1.set_ylim(-2,150)
+        ax1.set_ylim(-2,1500)
         ax1.set_title(f"{self.fileName} \n Reward vs Episode | Landing Rate {self.landing_rate():.2f} ")
         ax1.legend()
         ax1.grid()

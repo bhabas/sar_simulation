@@ -33,10 +33,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
         env.alpha_mu = agent.alpha_mu.flatten().tolist()        # Learning rate for mu
         env.alpha_sigma = agent.alpha_sigma.flatten().tolist()  # Learning rate for sigma
 
-        ## CHECK FOR COMPLETE CONVERGENCE
-        if all(sig <= 0.01 for sig in env.sigma):
-            break
-
+        
         ## PREALLOCATE REWARD VEC AND OBTAIN THETA VALS
         reward = np.zeros(shape=(agent.n_rollouts,1))
         theta_rl,epsilon_rl = agent.get_theta()
@@ -179,7 +176,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     state_history = state 
                     FM_history = FM
                 else: # Append state_history columns with current state vector
-                    if t_step%30==0: 
+                    if t_step%50==0: 
                         state_history = np.append(state_history, state, axis=1)
                         FM_history = np.append(FM_history,FM,axis=1)
                         env.RL_Publish()
@@ -271,7 +268,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     env.reset_pos()
 
                     reward[k_run] = agent.calcReward_pureLanding(state_history,env.h_ceiling,env.pad_contacts,env.body_contact)
-                    # reward[k_run] = agent.calcReward_effortMinimization(state_history,FM_history,env.h_ceiling,env.pad_contacts)
+                    # reward[k_run] = agent.calcReward_effortMinimization(state_history,FM_history,env.h_ceiling,env.pad_contacts,env.body_contact)
                     env.reward = reward[k_run,0]
                     print("Reward = %.3f" %(reward[k_run]))
                     print("# of Leg contacts: %i" %(sum(env.pad_contacts)))
