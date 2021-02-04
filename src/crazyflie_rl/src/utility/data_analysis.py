@@ -13,9 +13,15 @@ class DataFile:
         self.dataPath = dataPath
         filepath = self.dataPath+self.fileName
 
-
-
         self.trial_df = pd.read_csv(filepath,low_memory=False)
+
+        ## DROP FINAL EPISODE IF IT NEVER REACHED COMPLETION
+        if isinstance(self.trial_df.iloc[-1]['Error'],str) == False: ## If final error value is not a string
+            k_epMax = self.trial_df.iloc[-1]['k_ep']
+            k_runMax = self.trial_df.iloc[-1]['k_run']
+            self.trial_df = self.trial_df[(self.trial_df.k_ep != k_epMax) & (self.trial_df.k_run != k_runMax)]
+        
+
 
         ## GET TRIAL INFO (REGEX IS LIKELY BETTER WAY TO DO THIS)
         idx = fileName.find('--Vz')
