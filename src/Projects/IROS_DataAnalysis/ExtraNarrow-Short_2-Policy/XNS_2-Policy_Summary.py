@@ -26,7 +26,7 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
         
 
         diff = end_time - start_time
-        alpha = 0.95
+        alpha = 0.85
         run_avg = alpha*run_avg + (1-alpha)*diff.seconds
         start_time = datetime.datetime.now()
 
