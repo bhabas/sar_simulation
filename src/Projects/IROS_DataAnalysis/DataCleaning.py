@@ -9,7 +9,7 @@ sys.path.insert(0,'/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie
 from data_analysis import DataFile
 
 
-dataPath = '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/Narrow-Short_2-Policy/'
+dataPath = '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/ExtraNarrow-Short_2-Policy/'
 
 
 redoList = []
@@ -17,7 +17,7 @@ redoList = []
 test_list = []
 
 ## DEFINE DATA RANGE TO ITERATE OVER
-vz_array = np.arange(1.5,4.25,0.25)
+vz_array = np.arange(1.5,3.0,0.25)
 vx_array = np.arange(1.25,3.0,0.25)
 
 
@@ -44,13 +44,11 @@ for vz,vx in test_arr:
     ## ITERATE THROUGH FILE LIST
     for fileName in fileList:
         filepath = dataPath+fileName
-
+        
+        ## CREATE TRIAL OBJECT FOR CURRENT FILE
+        trial = DataFile(dataPath,fileName)
+        
         try:
-        
-            ## CREATE TRIAL OBJECT FOR CURRENT FILE
-            trial = DataFile(dataPath,fileName)
-        
-        
             
             # IF BROKEN RUN THEN JUST REMOVE
             if trial.landing_rate() == np.nan:

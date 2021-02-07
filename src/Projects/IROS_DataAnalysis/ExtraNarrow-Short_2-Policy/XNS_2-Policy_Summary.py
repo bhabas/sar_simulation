@@ -9,7 +9,7 @@ sys.path.insert(0,'/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie
 from data_analysis import DataFile
 
 
-dataPath = "/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/Narrow-Short_2-Policy/"
+dataPath = "/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/ExtraNarrow-Short_2-Policy/"
 df_list = []
 num_files = len(os.listdir(dataPath))
 
@@ -26,8 +26,8 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
         
 
         diff = end_time - start_time
-        # run_avg = run_avg + (diff.seconds - run_avg)/float(ii+1)
-        run_avg = 0.9*run_avg + 0.1*diff.seconds
+        alpha = 0.95
+        run_avg = alpha*run_avg + (1-alpha)*diff.seconds
         start_time = datetime.datetime.now()
 
         
@@ -91,4 +91,4 @@ master_df = pd.DataFrame(df_list,columns=(
 ))
 print(master_df)
 master_df.sort_values(['vz_d','vx_d','trial_num'],ascending=[1,1,1],inplace=True)
-master_df.to_csv('Narrow-Short_Summary.csv',index=False)
+master_df.to_csv('ExtraNarrow-Short_Summary.csv',index=False)
