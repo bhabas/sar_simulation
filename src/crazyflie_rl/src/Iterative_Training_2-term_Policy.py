@@ -27,7 +27,7 @@ if __name__ == '__main__':
     ## Home Test List
     df = pd.read_csv("~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/Home_Test_List.csv")
     ## Laptop Test List
-    df = pd.read_csv("~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/Laptop_Test_List.csv")
+    # df = pd.read_csv("~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/Laptop_Test_List.csv")
     arr = df.to_numpy()
 
     for vz_d,vx_d,trial_num in arr:
