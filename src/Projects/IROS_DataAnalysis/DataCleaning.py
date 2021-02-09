@@ -1,7 +1,7 @@
 import os,fnmatch
 import send2trash
 import numpy as np
-# os.system("clear")
+
 
 ## CREATE LINK TO DATAPATH MODULE
 import sys
@@ -9,7 +9,7 @@ sys.path.insert(0,'/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie
 from data_analysis import DataFile
 
 
-dataPath = '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/ExtraNarrow-Short_2-Policy/'
+dataPath = '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/Wide-Long_2-Policy/'
 
 
 redoList = []
