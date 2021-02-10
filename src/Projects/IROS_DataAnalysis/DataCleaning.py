@@ -45,10 +45,12 @@ for vz,vx in test_arr:
     for fileName in fileList:
         filepath = dataPath+fileName
         
-        ## CREATE TRIAL OBJECT FOR CURRENT FILE
-        trial = DataFile(dataPath,fileName)
-        
+
         try:
+            ## CREATE TRIAL OBJECT FOR CURRENT FILE
+            trial = DataFile(dataPath,fileName)
+        
+        
             
             # IF BROKEN RUN THEN JUST REMOVE
             if trial.landing_rate() == np.nan:
