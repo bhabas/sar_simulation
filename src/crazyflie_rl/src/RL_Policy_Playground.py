@@ -246,7 +246,8 @@ def runTrial():
                    
                     
                     
-                    reward[k_run] = agent.calcReward_pureLanding(state_history,env.h_ceiling)
+                    # reward[k_run] = agent.calcReward_pureLanding(state_history,env.h_ceiling)
+                    reward[k_run] = 50
                     env.reward = reward[k_run]
                     print("Reward = %.3f" %(reward[k_run]))
                     print("!------------------------End Run------------------------! \n")                    

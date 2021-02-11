@@ -15,9 +15,9 @@ agent = "EM_PEPG"
 
 
 
-dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/"
-# fileName = f"{agent}--Vz_{vz:.2f}--Vx_{vx:.2f}--trial_{int(trialNum):02d}.csv"
-fileName = "EM_PEPG--Vz_3.50--Vx_0.75--trial_1.csv"
+dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/Narrow-Short_2-Policy/"
+fileName = f"{agent}--Vz_{vz:.2f}--Vx_{vx:.2f}--trial_{int(trialNum):02d}.csv"
+# fileName = "EM_PEPG--Vz_3.50--Vx_0.75--trial_1.csv"
 
 
 
