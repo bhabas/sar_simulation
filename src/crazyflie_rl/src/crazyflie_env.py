@@ -8,10 +8,8 @@ import getpass
 
 
 from sensor_msgs.msg import LaserScan, Image, Imu
-from gazebo_communication_pkg.msg import GlobalState 
 from crazyflie_rl.msg import RLData,RLCmd
 from crazyflie_gazebo.msg import CtrlData
-from std_msgs.msg import Header 
 from rosgraph_msgs.msg import Clock
 from gazebo_msgs.msg import ModelState,ContactsState
 from gazebo_msgs.srv import SetModelState
@@ -30,9 +28,16 @@ class CrazyflieEnv:
         self.filepath = ""
 
         self.h_ceiling = 2.5
+
+        ## INIT NAME OF MODEL BEING USED
+        self.modelName = 'crazyflie_model_ExtraNarrow-Long'
         
         ## INIT ROS NODE FOR ENVIRONMENT 
         rospy.init_node("crazyflie_env_node") 
+        print("[STARTING] Starting Controller Process...")
+        self.controller_p = subprocess.Popen( # Controller Process
+            "roslaunch crazyflie_gazebo controller.launch", 
+            close_fds=True, preexec_fn=os.setsid, shell=True)
         self.launch_sim() 
     
 
@@ -43,12 +48,15 @@ class CrazyflieEnv:
         self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)
         self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactCallback)
         self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
-
         rospy.wait_for_message('/ctrl_data',CtrlData)
+
+
 
         ## INIT ROS PUBLISHERS
         self.RL_Publisher = rospy.Publisher('/rl_data',RLData,queue_size=10)
         self.Cmd_Publisher = rospy.Publisher('/rl_ctrl',RLCmd,queue_size=10)
+
+
 
         ## INIT GAZEBO TIMEOUT THREAD
         if gazeboTimeout==True:
@@ -56,9 +64,7 @@ class CrazyflieEnv:
             self.timeoutThread.start()
         
 
-        ## INIT NAME OF MODEL BEING USED
-        self.modelName = 'crazyflie_model_Wide-Short'
-
+        
         ## INIT RL_DATA VARIABLES 
         #region 
         self.trial_name = ''
@@ -255,7 +261,7 @@ class CrazyflieEnv:
 
     def close_sim(self):
         os.killpg(self.gazebo_p.pid, signal.SIGTERM)
-        os.killpg(self.controller_p.pid, signal.SIGTERM)
+        
 
     def close_dashboard(self):
         os.killpg(self.dashboard_p.pid, signal.SIGTERM)
@@ -270,13 +276,10 @@ class CrazyflieEnv:
         
         print("[STARTING] Starting Gazebo Process...")
         self.gazebo_p = subprocess.Popen( # Gazebo Process
-            "gnome-terminal --disable-factory  -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_gazebo.bash", 
+            "gnome-terminal --disable-factory  --geometry 70x36+3154+154 -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_gazebo.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         
-        print("[STARTING] Starting Controller Process...")
-        self.controller_p = subprocess.Popen( # Controller Process
-            "gnome-terminal --disable-factory --geometry 70x41 -- rosrun crazyflie_gazebo controller", 
-            close_fds=True, preexec_fn=os.setsid, shell=True)
+        
 
 
     def launch_dashboard(self):
@@ -292,7 +295,7 @@ class CrazyflieEnv:
         state_msg.model_name = self.modelName
         state_msg.pose.position.x = self.position[0]
         state_msg.pose.position.y = self.position[1]
-        state_msg.pose.position.z = self.position[2] - 0.1 # Subtract model offset compared to main-body link (Gazebo)
+        state_msg.pose.position.z = self.position[2]
 
         state_msg.pose.orientation.x = 0
         state_msg.pose.orientation.y = 0
@@ -322,7 +325,7 @@ class CrazyflieEnv:
         state_msg.model_name = self.modelName
         state_msg.pose.position.x = 0
         state_msg.pose.position.y = 0
-        state_msg.pose.position.z = 0.26
+        state_msg.pose.position.z = 0.36
 
         state_msg.pose.orientation.w = 1
         state_msg.pose.orientation.x = 0

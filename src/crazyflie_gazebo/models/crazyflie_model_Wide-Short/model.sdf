@@ -3,7 +3,7 @@
   <model name='crazyflie_model_Wide-Short'>
     <link name='crazyflie_body'>
       <inertial>
-        <mass>0.026</mass>
+        <mass>0.023</mass>
         <inertia>
           <ixx>1.657e-05</ixx>
           <ixy>0</ixy>
@@ -402,7 +402,7 @@
     </link>
     <link name='pad_1'>
       <inertial>
-        <mass>3.69e-06</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>4.3354e-10</ixx>
           <ixy>0</ixy>
@@ -502,7 +502,7 @@
     </link>
     <link name='pad_2'>
       <inertial>
-        <mass>3.69e-06</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>4.3354e-10</ixx>
           <ixy>0</ixy>
@@ -602,7 +602,7 @@
     </link>
     <link name='pad_3'>
       <inertial>
-        <mass>3.69e-06</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>4.3354e-10</ixx>
           <ixy>0</ixy>
@@ -702,7 +702,7 @@
     </link>
     <link name='pad_4'>
       <inertial>
-        <mass>3.69e-06</mass>
+        <mass>0.0001</mass>
         <inertia>
           <ixx>4.3354e-10</ixx>
           <ixy>0</ixy>
@@ -984,11 +984,11 @@
         <ode>
           <limit>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </limit>
           <suspension>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </suspension>
         </ode>
       </physics>
@@ -1001,11 +1001,11 @@
         <ode>
           <limit>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </limit>
           <suspension>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </suspension>
         </ode>
       </physics>
@@ -1018,11 +1018,11 @@
         <ode>
           <limit>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </limit>
           <suspension>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </suspension>
         </ode>
       </physics>
@@ -1035,11 +1035,11 @@
         <ode>
           <limit>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </limit>
           <suspension>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </suspension>
         </ode>
       </physics>
@@ -1067,11 +1067,11 @@
         <ode>
           <limit>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </limit>
           <suspension>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </suspension>
         </ode>
       </physics>
@@ -1099,11 +1099,11 @@
         <ode>
           <limit>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </limit>
           <suspension>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </suspension>
         </ode>
       </physics>
@@ -1131,11 +1131,11 @@
         <ode>
           <limit>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </limit>
           <suspension>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </suspension>
         </ode>
       </physics>
@@ -1163,11 +1163,11 @@
         <ode>
           <limit>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </limit>
           <suspension>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </suspension>
         </ode>
       </physics>

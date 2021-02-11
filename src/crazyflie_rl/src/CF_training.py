@@ -66,7 +66,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
             
             ## RESET TO INITIAL STATE
             env.step('home') # Reset control vals and functionality to default vals
-            time.sleep(0.5) # Time for CF to settle
+            time.sleep(0.65) # Time for CF to settle
             
 
             ## INITIALIZE POLICY PARAMETERS: 
@@ -114,28 +114,18 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
             print("RREV_thr: %.3f \t Gain_1: %.3f \t Gain_2: %.3f" %(RREV_threshold, G1, G2))
             print("Vx_d: %.3f \t Vy_d: %.3f \t Vz_d: %.3f" %(vx_d, vy_d, vz_d))
 
-            z_ini = env.position[2]
-            t_ini = env.getTime()
-
-
+        
             # ============================
             ##          Rollout 
             # ============================
+            env.launch_IC(vx_d+0.03,vz_d)           # Use Gazebo to impart desired vel with extra vx to ensure -OF_y when around zero
             env.step('pos',ctrl_flag=0)             # Turn off pos control
             env.step('vel',env.vel_d,ctrl_flag=1)   # Set desired vel
-            env.launch_IC(vx_d,vz_d)                # Use Gazebo to impart desired vel
             env.step('sticky',ctrl_flag=1)          # Enable sticky pads
 
 
-            z_f = env.position[2]
-            t_f = env.getTime()
-
-            vz_teleport = (z_f-z_ini)/(t_f-t_ini)
-            print(f"Vz_test = {vz_teleport:.3f}")
- 
             
-            
-            
+        
             while True:
                 
                 
@@ -199,6 +189,10 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                         env.append_csv(env.filepath)
 
                     
+                        
+
+
+                    
 
 
                 # ============================
@@ -213,9 +207,9 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
 
                     env.runComplete_flag = True
 
-                # IF POSITION FALLS BELOW ACHIEVED MAX HEIGHT
+                # # IF POSITION FALLS BELOW ACHIEVED MAX HEIGHT
                 # z_max = max(position[2],z_max)
-                # if position[2] <= 0.95*z_max: # Note: there is a lag with this
+                # if position[2] <= 0.85*z_max: # Note: there is a lag with this
                 #     env.error_str = "Rollout Completed: Falling Drone"
                 #     print(env.error_str)
 
@@ -255,17 +249,18 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     repeat_run = True
                     break
 
-                if np.abs(position[1]) >= 2.0: # If CF goes crazy it'll usually shoot out in y-direction
+                if np.abs(position[1]) >= 1.0: # If CF goes crazy it'll usually shoot out in y-direction
                     env.error_str = "Error: Y-Position Exceeded"
                     print(env.error_str)
                     repeat_run = True
                     break
 
-                # if np.abs(vz_teleport) >= 1: # If teleportation vz is greater than [5] m/s; relaunch gazebo
-                #     env.error_str = "Error: Model Teleported"
-                #     print(env.error_str)
-                #     repeat_run = True
-                #     break
+
+                if t_step in (30,60,90) and position[2] >= 2.3:
+                    env.error_str = "Error: Pos Teleported"
+                    print(env.error_str)
+                    repeat_run = True
+                    break
 
 
 
@@ -340,7 +335,7 @@ if __name__ == '__main__':
     # sigma = np.array([[0.01],[0.01],[0.01]])       # Initial estimates of sigma:
 
     ## SIM PARAMETERS
-    env.n_rollouts = 10
+    env.n_rollouts = 8
     env.gamma = 0.95
     env.h_ceiling = 2.5 # [m]
 
@@ -357,8 +352,8 @@ if __name__ == '__main__':
     # ============================
 
     ## INITIAL CONDITIONS
-    vz_d = 3.5
-    vx_d = 1.5
+    vz_d = 3.56
+    vx_d = 0.256
 
     
     

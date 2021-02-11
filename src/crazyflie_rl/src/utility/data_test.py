@@ -5,21 +5,30 @@ import pandas as pd
 import os
 
 from data_analysis import DataFile
-os.system("clear")
+# os.system("clear")
 
-vz = 4.00
-vx = 2.75
-trialNum = 2
+vz = 3.5
+vx = 0.75
+trialNum = 1
 agent = "EM_PEPG"
 
-filepath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/{agent}--Vz_{vz:.2f}--Vx_{vx:.2f}--trial_{trialNum}.csv"
 
 
 
-trial = DataFile(filepath)
+dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/Narrow-Short_2-Policy/"
+fileName = f"{agent}--Vz_{vz:.2f}--Vx_{vx:.2f}--trial_{int(trialNum):02d}.csv"
+# fileName = "EM_PEPG--Vz_3.50--Vx_0.75--trial_1.csv"
 
-k_ep = 16
-k_run = 5
-# trial.plot_eulerData(k_ep,k_run,'eul_y')
-trial.plot_traj2(k_ep,k_run)
 
+
+
+
+trial = DataFile(dataPath,fileName)
+
+k_ep = 19
+k_run = 9
+
+print(trial.trigger2impact_trial())
+trial.plotSummary()
+
+print(trial.grab_RREV_tr_trial())

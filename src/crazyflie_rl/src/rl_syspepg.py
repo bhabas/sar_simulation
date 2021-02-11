@@ -17,7 +17,7 @@ class ES:
         self.gamma, self.n_rollout = gamma, n_rollout
 
     
-    def calcReward_effortMinimization(self,state_hist,FM_hist,h_ceiling,pad_contacts):
+    def calcReward_effortMinimization(self,state_hist,FM_hist,h_ceiling,pad_contacts,body_contact):
 
         ## DEFINE STATES
         t_hist = state_hist[0,:]
@@ -46,14 +46,18 @@ class ES:
 
         ## r_contact Calc
         num_contacts = np.sum(pad_contacts)
-        if num_contacts == 3 or num_contacts == 4:
-            r_contact = 7
-        elif num_contacts == 2:
-            r_contact = 2
-        elif num_contacts == 1:
-            r_contact = 1
+        if body_contact == False:
+            if num_contacts == 3 or num_contacts == 4:
+                r_contact = 7
+            elif num_contacts == 2:
+                r_contact = 2
+            elif num_contacts == 1:
+                r_contact = 1
+            else:
+                r_contact = 1
         else:
             r_contact = 0
+
 
        
         
@@ -112,7 +116,7 @@ class ES:
             elif num_contacts == 1:
                 r_contact = 1
             else:
-                r_contact = 0
+                r_contact = 1
         else:
             r_contact = 0
 

@@ -310,7 +310,7 @@ void Controller::controlThread()
 
 
     // might need to adjust weight to real case (sdf file too)
-    double m = 0.026 + 0.0015*4; // Mass [kg]
+    double m = 0.026 + 0.0009*4; // Mass [kg]
     double g = 9.8066; // Gravitational acceleration [m/s^2]
     double t = 0; // Time from Gazebo [s]
     unsigned int t_step = 0; // t_step counter
@@ -427,11 +427,15 @@ void Controller::controlThread()
                 if(_flip_flag == true){
 
                     _M_d(0) = 0.0;
-                    _M_d(1) = ( (_G1*1e-1)*RREV_tr - (_G2*1e-1)*abs(OF_y_tr))*sign(OF_y_tr)*1e-3;
+                    _M_d(1) = -_G1*1e-3;
                     _M_d(2) = 0.0;
 
+                    // Moment with base thrust
                     M = _M_d;
-                    // F_thrust = 0;
+
+                    // Pure Moment
+                    M = _M_d*2; // Need to double moment to ensure it survives the MS<0 cutoff
+                    F_thrust = 0;
                 }
             }
             else{
