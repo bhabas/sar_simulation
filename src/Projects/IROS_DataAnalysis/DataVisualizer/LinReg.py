@@ -7,10 +7,9 @@ import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 import matplotlib as mpl
 from matplotlib import cm
+
 from scipy.interpolate import griddata
-
-
-# TEMPLATE FOR LINEAR REGRESSION
+from scipy.odr import Model, Data, ODR
 from sklearn.linear_model import LinearRegression
 
 # FUNCTION FOR PLOTTING 3D DATA 
@@ -136,7 +135,7 @@ def reg_3d(ax,x1,x2,mv,x1name,x2name,yname):
     
     print("------3D Regression Results------ \n")
     print("r2 = ", round(mv[3],4))
-    print("Equation: " , yname , " = " , round(mv[1][0],6) , " + " , round(mv[2][0][0],6) , "*" , x1name, " + " , round(mv[2][0][1],6) , "*" , x2name)
+    print("Equation: " , yname , " = " , round(mv[1][0],3) , " + " , round(mv[2][0][0],3) , "*" , x1name, " + " , round(mv[2][0][1],3) , "*" , x2name)
     
     # add plane to prevoius 3d polot
     ax.plot_trisurf(x1.T,x2.T,mv[0].T)
@@ -160,7 +159,7 @@ def reg_2d(x1val,x2val,yval,x1_reg,x2_reg,x1name,x2name,yname):
     print("r2 = ", round(x1_reg[3],4))
 
     
-    print("Equation: " , yname , " = " , round(x1_reg[1][0],6) , " + " , round(x1_reg[2][0][0],6) , "*" , x1name)
+    print("Equation: " , yname , " = " , round(x1_reg[1][0],3) , " + " , round(x1_reg[2][0][0],3) , "*" , x1name)
     
     print("\n")
     
@@ -168,7 +167,7 @@ def reg_2d(x1val,x2val,yval,x1_reg,x2_reg,x1name,x2name,yname):
     print("r2 = ", round(x2_reg[3],4))
 
     
-    print("Equation: " , yname , " = " , round(x2_reg[1][0],6) , " + " , round(x2_reg[2][0][0],6) , "*" , x2name)
+    print("Equation: " , yname , " = " , round(x2_reg[1][0],3) , " + " , round(x2_reg[2][0][0],3) , "*" , x2name)
     
     # generate plots for 2d regression
     fig = plt.figure()
@@ -246,3 +245,33 @@ def color_plot(df,x1,x2,y,x1l,x2l,yl,title,clim,clabel,xlim=None,ylim=None,zlim=
     ax.set_title(title)
 
     plt.show()
+
+
+def f(B,x):
+    return B[0]*x[0,:] + B[1]*x[1,:] + B[2]
+
+def ODR_linear(xval,yval,zval):
+
+
+    length = len(xval)
+    xvalr,yvalr = xval.reshape(1,length),yval.reshape(1,length)
+    xy = np.concatenate((xvalr,yvalr),axis = 0)
+    linear = Model(f)
+    mydata = Data(xy,zval)
+    myodr = ODR(mydata,linear,beta0=[2,2,1])
+    myoutput = myodr.run()
+    #myoutput.pprint()
+
+    a = myoutput.beta[0]
+    b = myoutput.beta[1]
+    c = myoutput.beta[2]
+    zplot = a*xval + b*yval + c
+
+
+    ax.plot_trisurf(xval,yval,zplot)
+
+    r2 = 1- myoutput.res_var
+    print("My_d =  {c:.3f} + {a:.3f}*RREV + {b:.3f}*OF_y".format(a=a,b=b,c=c))
+    print("R2 = {r:.4f}".format(r=r2))
+
+    return a,b,c,r2
