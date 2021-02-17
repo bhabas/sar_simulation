@@ -22,6 +22,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
     # ============================
     ##          Episode         
     # ============================
+    
     for k_ep in range(0,k_epMax):
 
         ## UPDATE EPISODE NUMBER
