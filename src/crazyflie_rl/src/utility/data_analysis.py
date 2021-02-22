@@ -157,7 +157,7 @@ class DataFile:
         ax1.set_ylabel("Rewards")
         ax1.set_xlabel("k_ep")
         ax1.set_xlim(-2,self.k_epMax+5)
-        ax1.set_ylim(-2,1500)
+        ax1.set_ylim(-2,200)
         ax1.set_title(f"{self.fileName} \n Reward vs Episode | Landing Rate {self.landing_rate():.2f} ")
         ax1.legend()
         ax1.grid()
@@ -371,9 +371,8 @@ class DataFile:
         OF_yList = []
         epList = []
         for k_ep,k_run in ep_arr:
-            if self.landing_bool(k_ep, k_run): # IGNORE FAILED LANDINGS
-                OF_yList.append(self.grab_OF_y(k_ep,k_run))
-                epList.append(k_ep)
+            OF_yList.append(self.grab_OF_y(k_ep,k_run))
+            epList.append(k_ep)
                 
         ## CONVERT LIST TO NP ARRAY AND CALC MEAN
         arr = np.asarray(OF_yList)
@@ -397,9 +396,8 @@ class DataFile:
         RREV_trList = []
         epList = []
         for k_ep,k_run in ep_arr:
-            if self.landing_bool(k_ep, k_run): # IGNORE FAILED LANDINGS
-                RREV_trList.append(self.grab_RREV_tr(k_ep,k_run))
-                epList.append(k_ep)
+            RREV_trList.append(self.grab_RREV_tr(k_ep,k_run))
+            epList.append(k_ep)
                 
         ## CONVERT LIST TO NP ARRAY AND CALC MEAN
         arr = np.asarray(RREV_trList)
@@ -657,9 +655,8 @@ class DataFile:
         My_dList = []
         epList = []
         for k_ep,k_run in ep_arr:
-            if self.landing_bool(k_ep, k_run): # IGNORE FAILED LANDINGS
-                My_dList.append(self.grab_My_d(k_ep,k_run))
-                epList.append(k_ep)
+            My_dList.append(self.grab_My_d(k_ep,k_run))
+            epList.append(k_ep)
                 
         ## CONVERT LIST TO NP ARRAY AND CALC MEAN
         arr = np.asarray(My_dList)
@@ -676,9 +673,8 @@ class DataFile:
         My_dList = []
         epList = []
         for k_ep,k_run in ep_arr:
-            if self.landing_bool(k_ep, k_run): # IGNORE FAILED LANDINGS
-                My_dList.append(self.grab_My_d(k_ep,k_run))
-                epList.append(k_ep)
+            My_dList.append(self.grab_My_d(k_ep,k_run))
+            epList.append(k_ep)
                 
         ## CONVERT LIST TO NP ARRAY AND CALC MEAN
         arr = np.asarray(My_dList)
@@ -843,8 +839,7 @@ class DataFile:
         ## ITERATE THROUGH ALL RUNS AND FINDING IMPACT ANGLE 
         list = []
         for k_ep,k_run in ep_arr:
-            if self.landing_bool(k_ep, k_run): # IGNORE FAILED LANDINGS
-                list.append(self.grab_impact_eul(k_ep,k_run,eul_type))
+            list.append(self.grab_impact_eul(k_ep,k_run,eul_type))
 
         ## CONVERT LIST TO NP ARRAY AND CALC MEAN
         arr = np.asarray(list)
@@ -862,9 +857,8 @@ class DataFile:
         impactList = []
         epList = []
         for k_ep,k_run in ep_arr:
-            if self.landing_bool(k_ep, k_run): # IGNORE FAILED LANDINGS
-                impactList.append(self.grab_impact_eul(k_ep,k_run,eul_type))
-                epList.append(k_ep)
+            impactList.append(self.grab_impact_eul(k_ep,k_run,eul_type))
+            epList.append(k_ep)
 
 
         ## CONVERT LIST TO NP ARRAY AND CALC MEAN
@@ -906,8 +900,7 @@ class DataFile:
         ## ITERATE THROUGH ALL RUNS AND FINDING IMPACT ANGLE 
         list = []
         for k_ep,k_run in ep_arr:
-            if self.landing_bool(k_ep, k_run): # IGNORE FAILED LANDINGS
-                list.append(self.trigger2impact(k_ep,k_run))
+            list.append(self.trigger2impact(k_ep,k_run))
 
         ## CONVERT LIST TO NP ARRAY AND CALC MEAN
         arr = np.asarray(list)
