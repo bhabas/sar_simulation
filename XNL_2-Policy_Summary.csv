@@ -1,0 +1,2 @@
+vz_d,vx_d,trial_num,landing_rate,RREV_threshold,G1,RREV_sig,G1_sig,RREV_trigger,OF_y,My_d,impact_eul,impact_tdelta,alpha_mu,alpha_sigma,mu_ini,sigma_ini
+3.5,2.0,7,0.75,5.35,7.95,0.01,0.05,5.943083333333334,-3.1951666666666667,-7.938083333333334,-0.5730219477497557,0.12549999999999764,[0. 0.],[0. 0.],[4.45 6.5 ],[1.5 1.5]

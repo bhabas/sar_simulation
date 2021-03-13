@@ -29,16 +29,8 @@
         </geometry>
         <material>
           <lighting>1</lighting>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
+          <shader type='pixel'/>
           <emissive>0 0 0 1</emissive>
-          <script>
-            <name>ModelPreview_1::crazyflie_body::body_visual_MATERIAL_</name>
-          </script>
-          <ambient>0 0 0 1</ambient>
-          <diffuse>0 0 0 1</diffuse>
-          <specular>0 0 0 1</specular>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>

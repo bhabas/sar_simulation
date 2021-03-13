@@ -22,6 +22,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
     # ============================
     ##          Episode         
     # ============================
+    
     for k_ep in range(0,k_epMax):
 
         ## UPDATE EPISODE NUMBER
@@ -325,7 +326,7 @@ if __name__ == '__main__':
     alpha_sigma = np.array([[0.05]])
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[4.3],[2.4]])          # Random initial mu
+    mu = np.array([[4.45],[6.5]])          # Random initial mu
     sigma = np.array([[1.5],[1.5]])       # Initial estimates of sigma:
 
 
@@ -344,8 +345,8 @@ if __name__ == '__main__':
     # ============================
 
     ## INITIAL CONDITIONS
-    vz_d = 3.0
-    vx_d = 2.5
+    vz_d = 3.5
+    vx_d = 2.0
 
     
     

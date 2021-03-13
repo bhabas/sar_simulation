@@ -1,9 +1,9 @@
 import numpy as np
 
 list = []
-for vz_d in np.arange(3.0,1.25,-10):
-    for vx_d in np.arange(1.5,3.0,10):
-        for trial_num in np.arange(0,40,1):
+for vz_d in np.arange(1.5,4.25,0.25):
+    for vx_d in np.arange(0,2.0,0.25):
+        for trial_num in np.arange(7,10,1):
             list.append([vz_d,vx_d,trial_num])
 
 

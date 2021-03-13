@@ -9,7 +9,7 @@ sys.path.insert(0,'/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie
 from data_analysis import DataFile
 
 
-dataPath = '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/Narrow-Long_2-Policy/'
+dataPath = '/home/bhabas/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log/ExtraNarrow-Long_2-Policy/'
 
 
 redoList = []
@@ -17,8 +17,8 @@ redoList = []
 test_list = []
 
 ## DEFINE DATA RANGE TO ITERATE OVER
-vz_array = np.arange(1.5,3.0,0.25)
-vx_array = np.arange(1.25,3.0,0.25)
+vz_array = np.arange(1.5,5.0,0.25)
+vx_array = np.arange(0,5.0,0.25)
 
 
 ## GENERATE TEST ARRAY
