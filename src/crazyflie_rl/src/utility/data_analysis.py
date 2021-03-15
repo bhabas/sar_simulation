@@ -76,7 +76,6 @@ class DataFile:
         
         return avg_reward
         
-
     def plot_rewardData(self):
         """Plot rewards for overall trial
 
@@ -101,6 +100,7 @@ class DataFile:
         ax.grid()
 
         plt.show()
+
 
     def landing_plot(self): ## FUNCTIONAL BUT NOT PRETTY OR USEFUL
         impact_df = self.trial_df.iloc[:][['k_ep','reward','impact_flag']].dropna() # Use reward to select final impact row
@@ -221,6 +221,7 @@ class DataFile:
             landingBool = False
 
         return landingBool
+
 
 ## POLICY FUNCTIONS
     def grab_policy(self,k_ep,k_run):
@@ -406,6 +407,41 @@ class DataFile:
         return avg_RREV_tr
 
 
+    def plot_vc_traj(self,k_ep,k_run):
+        """Plot flight trajectory through VC-Space until flip execution
+
+        Args:
+            k_ep (int): Episode Number
+            k_run (int): Run Number
+        """        
+
+        run_df,IC_df = self.select_run(k_ep,k_run)
+
+
+        ## GRAB/MODIFY DATA AND CONVERT TO NUMPY ARRAY
+        RREV_traj = run_df.query("flip_flag==False & vz>=0.5").iloc[:]['RREV'].to_numpy()
+        OF_y_traj = run_df.query("flip_flag==False & vz>=0.5").iloc[:]['OF_y'].to_numpy()
+        OF_y_traj = np.abs(OF_y_traj) # Convert OF_y to pure magnitude
+
+
+        ## PLOT DATA
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        
+        ax.plot(OF_y_traj,RREV_traj,'k--')
+        ax.scatter(OF_y_traj[0],RREV_traj[0],marker='o',color='k',label='Velocity Imparted')
+        ax.scatter(OF_y_traj[-1],RREV_traj[-1],marker='x',color='k',label='Flip Executed')
+
+        ax.set_xlim(-1,10)
+        ax.set_ylim(-1,10)
+       
+        ax.set_ylabel("RREV [1/s]")
+        ax.set_xlabel("OF_y [rad/s]")
+        ax.set_title("Flight Trajectory - Visual Cue Space")
+        ax.legend()
+        ax.grid()
+
+        plt.show()
 
 
 ## STATE FUNCTIONS 
@@ -425,7 +461,7 @@ class DataFile:
         ## GRAB STATE DATA AND CONVERT TO NUMPY ARRAY
         state = run_df.iloc[:][stateName]
         state = state.to_numpy()
-        state = np.expand_dims(state, axis=0).T
+        # state = np.expand_dims(state, axis=0).T
 
         return state
 
@@ -475,6 +511,16 @@ class DataFile:
 
 
     def grab_eulerData(self,k_ep,k_run,degrees=True):
+        """Returns euler angle data from rollout using [YZX] configuration to allow pitch angles greater than 180 deg
+
+        Args:
+            k_ep (int): Episode number
+            k_run (int): Run/Rollout number
+            degrees (bool, optional): Choose between degrees or radians for output. Defaults to True.
+
+        Returns:
+            [np.array]: Returns np.array of euler values in form [eul_Y,eul_Z,eul_X]
+        """        
         
         ## CREATE QUAT DATAFRAME FROM RUN_DF
         run_df,IC_df = self.select_run(k_ep,k_run)
@@ -492,12 +538,9 @@ class DataFile:
 
         ## IF EUL_Y JUMPS FROM PAST -180 T0 +180 THEN BRING IT BACK DOWN AGAIN
         eul_df.loc[eul_df['eul_y'] > 170, 'eul_y'] = eul_df['eul_y']-360
+        eul_arr = eul_df.to_numpy()
 
-        eul_x = eul_df['eul_x']
-        eul_y = eul_df['eul_y']
-        eul_z = eul_df['eul_z']
-
-        return [eul_x,eul_y,eul_z]
+        return eul_arr
 
     def plot_eulerData(self,k_ep,k_run,eul_type):
         
@@ -541,53 +584,98 @@ class DataFile:
 
 
     def plot_traj(self,k_ep,k_run):
+
+        ## GRAB/MODIFY DATA
+        x = self.grab_stateData(k_ep,k_run,'x')
+        z = self.grab_stateData(k_ep,k_run,'z')
+
+        ceil_height = 2.5 # [m]
+
+        ## PLOT DATA
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        x = self.grab_stateData(k_ep,k_run,'x')
-        z = self.grab_stateData(k_ep,k_run,'z')
-        
+    
+        ax.plot(x,z)
 
-        ax.plot(x, z)
-        ax.legend()
         ax.set_xlabel("x-pos [m]")
         ax.set_ylabel("z-pos [m]")
+        ax.set_title(f"Rollout Trajectory | K_ep: {k_ep} & K_run: {k_run}")
         
 
-        ax.set_xlim([-1,3])
-        ax.set_ylim([0,3])
+        ax.set_xlim([-0.25,3])
+        ax.set_ylim([0,ceil_height+0.5])
+
+        ax.hlines(ceil_height,-0.25,3)
+        ax.text(0.02,ceil_height+0.02,"Ceiling Plane")
         ax.grid()
-        
-        
 
         plt.show()
 
 
     def plot_traj2(self,k_ep,k_run):
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
+
+        
+
+        ## GRAB/MODIFY DATA
+
+        ceil_height = 2.5 # [m]
 
         x = self.grab_stateData(k_ep,k_run,'x')
         z = self.grab_stateData(k_ep,k_run,'z')
+        eul_y = self.grab_eulerData(k_ep,k_run)[:,0]
 
-        eul_y = self.grab_eulerData(k_ep,k_run,'eul_y')[1]
+        x_flip = self.grab_flip_state(k_ep,k_run,'x')
+        z_flip = self.grab_flip_state(k_ep,k_run,'z')
+
+        x_impact = self.grab_impact_state(k_ep,k_run,'x')
+        z_impact = self.grab_impact_state(k_ep,k_run,'z')
+        eul_impact = self.grab_impact_eul(k_ep,k_run)[:,0]
+
+
+        ## APPEND IMPACT DATA TO MAIN ARRAYS
+        x = np.append(x,x_impact)
+        z = np.append(z,z_impact)
+        eul_y = np.append(eul_y,eul_impact)
+
+        ## CALC QUIVER VECTOR POSITIONS
+        u = np.sin(eul_y*np.pi/180)
+        v = np.cos(eul_y*np.pi/180)
+
         
 
-        ax.quiver(x,z,0.5*np.cos(eul_y),0.5*np.sin(eul_y))
+
+        ## PLOT DATA
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+    
         ax.plot(x,z)
+        ax.quiver(x[::4],z[::4],u[::4],v[::4],width = 0.005,color='gray')
+        ax.scatter(x_flip,z_flip,marker='x',color='purple',label='Flip Location',zorder=3)
+        ax.scatter(x_impact,z_impact,marker='x',color='k',label='Impact Location',zorder=3)
         
-        # ax.legend()
+
         ax.set_xlabel("x-pos [m]")
         ax.set_ylabel("z-pos [m]")
+        ax.set_title(f"Rollout Trajectory | K_ep: {k_ep} & K_run: {k_run}")
         
 
-        ax.set_xlim([-1,3])
-        ax.set_ylim([0,3])
+        ax.set_xlim([-0.25,3])
+        ax.set_ylim([0,ceil_height+0.5])
+
+        ax.hlines(ceil_height,-0.25,3)
+        ax.text(0.02,ceil_height+0.02,"Ceiling Plane")
+        ax.set_axisbelow(True)
         ax.grid()
-        
-        
+        ax.legend()
+
+
 
         plt.show()
+
+        print()
+        
     
     
     def plot_traj_3D(self,k_ep,k_run):
@@ -799,36 +887,43 @@ class DataFile:
         """        
 
         run_df,IC_df = self.select_run(k_ep,k_run)
-        state_impact = run_df.query(f"impact_flag=={True}").iloc[0][stateName]    # Grab first t value in df filtered to where flag == True
-        
-        return state_impact
 
-    def grab_impact_eul(self,k_ep,k_run,eul_type):
+        try:
+            state_impact = run_df.query(f"impact_flag=={True}").iloc[0][stateName]    # Grab first t value in df filtered to where flag == True
+            
+            return state_impact
+        except:
+            return np.nan
+
+    def grab_impact_eul(self,k_ep,k_run):
         ## GRAB RUN DF AND RUN QUERY FOR QUAT AT FIRST IMPACT
         run_df,IC_df = self.select_run(k_ep,k_run)
-        quat_impact = run_df.query(f"impact_flag=={True}").iloc[0][['qw','qx','qy','qz']]
 
-        ## CONVERT QUAT TO EULER ANGLE
-        quat_arr = quat_impact[['qx','qy','qz','qw']].to_numpy()
-        R = Rotation.from_quat(quat_arr)
-        eul_arr = R.as_euler('YZX', degrees=True)
+        try:
+            quat_impact = run_df.query(f"impact_flag=={True}").iloc[0][['qw','qx','qy','qz']]
+
+            ## CONVERT QUAT TO EULER ANGLE
+            quat_arr = quat_impact[['qx','qy','qz','qw']].to_numpy()
+            R = Rotation.from_quat(quat_arr)
+            eul_arr = R.as_euler('YZX', degrees=True)
+
+            
+
+            eul_df = pd.DataFrame([eul_arr],columns=['eul_y','eul_z','eul_x'])
+
+            ## IF EUL_Y JUMPS FROM PAST -180 T0 +180 THEN BRING IT BACK DOWN AGAIN
+            eul_df.loc[eul_df['eul_y'] > 170, 'eul_y'] = eul_df['eul_y']-360
+            eul_arr = eul_df.to_numpy()
+
+            return eul_arr
+
+        except:
+
+            return np.empty((1,3)) * np.nan
 
         
 
-        ## RETURN EULER IMPACT ANGLE
-        if eul_type == 'eul_y':
-            eul =  eul_arr[0]
-            if eul > 170:
-                eul = eul - 360
-                
-        elif eul_type == 'eul_z':
-            eul =  eul_arr[1]
-        elif eul_type == 'eul_x':
-            eul = eul_arr[2]
-        else:
-            eul = np.nan
-
-        return eul
+        
 
     def grab_impact_eul_trial(self,eul_type):
 
