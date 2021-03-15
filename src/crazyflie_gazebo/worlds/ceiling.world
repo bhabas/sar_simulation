@@ -34,15 +34,15 @@
           <use_dynamic_moi_rescaling>0</use_dynamic_moi_rescaling>
         </solver>
         <constraints>
-          <cfm>0.2</cfm>
+          <cfm>0.4</cfm>
           <erp>0.8</erp>
-          <contact_max_correcting_vel>100</contact_max_correcting_vel>
-          <contact_surface_layer>0.001</contact_surface_layer>
+          <contact_max_correcting_vel>10</contact_max_correcting_vel>
+          <contact_surface_layer>0.000</contact_surface_layer>
         </constraints>
       </ode>
       <max_step_size>4e-04</max_step_size>
       <real_time_factor>1</real_time_factor>
-      <real_time_update_rate>6250</real_time_update_rate>
+      <real_time_update_rate>6000</real_time_update_rate>
       <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
     </physics>
     <wind>

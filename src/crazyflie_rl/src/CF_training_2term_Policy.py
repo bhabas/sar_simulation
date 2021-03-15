@@ -119,7 +119,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
             # ============================
             env.step('pos',ctrl_flag=0)             # Turn off pos control
             env.step('vel',env.vel_d,ctrl_flag=1)   # Set desired vel
-            env.launch_IC(vx_d+0.03,vz_d)           # Use Gazebo to impart desired vel with extra vx to ensure -OF_y when around zero
+            # env.launch_IC(vx_d+0.03,vz_d)           # Use Gazebo to impart desired vel with extra vx to ensure -OF_y when around zero
             env.step('sticky',ctrl_flag=1)          # Enable sticky pads
              
             while True:
@@ -252,11 +252,11 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     break
 
 
-                if t_step in (30,60,90) and position[2] >= 2.3:
-                    env.error_str = "Error: Pos Teleported"
-                    print(env.error_str)
-                    repeat_run = True
-                    break
+                # if t_step in (30,60,90) and position[2] >= 2.3:
+                #     env.error_str = "Error: Pos Teleported"
+                #     print(env.error_str)
+                #     repeat_run = True
+                #     break
 
 
 
@@ -327,7 +327,7 @@ if __name__ == '__main__':
 
     ## GAUSSIAN PARAMETERS
     mu = np.array([[4.45],[6.5]])          # Random initial mu
-    sigma = np.array([[1.5],[1.5]])       # Initial estimates of sigma:
+    sigma = np.array([[1.25],[1.25]])       # Initial estimates of sigma:
 
 
     ## SIM PARAMETERS
