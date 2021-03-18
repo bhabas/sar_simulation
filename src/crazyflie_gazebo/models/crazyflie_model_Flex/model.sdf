@@ -104,7 +104,7 @@
         </inertia>
         <pose>0 0 -0.03 0 -0 0</pose>
       </inertial>
-      <pose>0.017 0.017 -0.002 0 -0.786 0.786</pose>
+      <pose>0.017 0.017 -0.005 0 -0.786 0.786</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -122,8 +122,13 @@
             <name>Gazebo/Red</name>
             <uri>file://media/materials/scripts/gazebo.material</uri>
           </script>
-          <shader type='pixel'/>
+          <shader type='pixel'>
+            <normal_map>__default__</normal_map>
+          </shader>
           <emissive>0 0 0 1</emissive>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 1</diffuse>
+          <specular>0.1 0.1 0.1 1</specular>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -198,7 +203,7 @@
         </inertia>
         <pose>0 0 -0.03 0 -0 0</pose>
       </inertial>
-      <pose>-0.017 0.017 -0.002 0 -0.786 2.356</pose>
+      <pose>-0.017 0.017 -0.005 0 -0.786 2.356</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -298,7 +303,7 @@
         </inertia>
         <pose>0 0 -0.03 0 -0 0</pose>
       </inertial>
-      <pose>-0.017 -0.017 -0.002 0 -0.786 -2.356</pose>
+      <pose>-0.017 -0.017 -0.005 0 -0.786 -2.356</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -398,7 +403,7 @@
         </inertia>
         <pose>0 0 -0.03 0 -0 0</pose>
       </inertial>
-      <pose>0.017 -0.017 -0.002 0 -0.786 -0.786</pose>
+      <pose>0.017 -0.017 -0.005 0 -0.786 -0.786</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -416,8 +421,13 @@
             <name>Gazebo/Red</name>
             <uri>file://media/materials/scripts/gazebo.material</uri>
           </script>
-          <shader type='pixel'/>
+          <shader type='pixel'>
+            <normal_map>__default__</normal_map>
+          </shader>
           <emissive>0 0 0 1</emissive>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 1</diffuse>
+          <specular>0.1 0.1 0.1 1</specular>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -492,7 +502,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>0.047 0.047036 -0.044401 0 -0 0.786</pose>
+      <pose>0.047 0.047036 -0.047401 0 -0 0.786</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -589,7 +599,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>-0.047012 0.047024 -0.044401 0 -0 2.356</pose>
+      <pose>-0.047012 0.047024 -0.047401 0 -0 2.356</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -686,7 +696,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>-0.047012 -0.047024 -0.044401 -0 -0 -2.356</pose>
+      <pose>-0.047012 -0.047024 -0.047401 -0 -0 -2.356</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -783,7 +793,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>0.047 -0.047036 -0.044401 0 0 -0.786</pose>
+      <pose>0.047 -0.047036 -0.047401 0 -0 -0.786</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -1043,12 +1053,14 @@
         <cast_shadows>1</cast_shadows>
       </visual>
     </link>
-    <joint name='leg1_JOINT_0' type='ball'>
+    <joint name='pad_1_joint' type='ball'>
       <parent>leg1</parent>
       <child>pad_1</child>
       <pose>0 0 0 0 -0 0</pose>
       <physics>
         <ode>
+          <cfm>0.4</cfm>
+          <erp>0.8</erp>
           <limit>
             <cfm>0</cfm>
             <erp>0.2</erp>
@@ -1060,12 +1072,14 @@
         </ode>
       </physics>
     </joint>
-    <joint name='leg2_JOINT_1' type='ball'>
+    <joint name='pad_2_joint' type='ball'>
       <parent>leg2</parent>
       <child>pad_2</child>
       <pose>0 0 0 0 -0 0</pose>
       <physics>
         <ode>
+          <cfm>0.4</cfm>
+          <erp>0.8</erp>
           <limit>
             <cfm>0</cfm>
             <erp>0.2</erp>
@@ -1077,12 +1091,14 @@
         </ode>
       </physics>
     </joint>
-    <joint name='leg3_JOINT_2' type='ball'>
+    <joint name='pad_3_joint' type='ball'>
       <parent>leg3</parent>
       <child>pad_3</child>
       <pose>0 0 0 0 -0 0</pose>
       <physics>
         <ode>
+          <cfm>0.4</cfm>
+          <erp>0.8</erp>
           <limit>
             <cfm>0</cfm>
             <erp>0.2</erp>
@@ -1094,12 +1110,14 @@
         </ode>
       </physics>
     </joint>
-    <joint name='leg4_JOINT_3' type='ball'>
+    <joint name='pad_4_joint' type='ball'>
       <parent>leg4</parent>
       <child>pad_4</child>
       <pose>0 0 0 0 -0 0</pose>
       <physics>
         <ode>
+          <cfm>0.4</cfm>
+          <erp>0.8</erp>
           <limit>
             <cfm>0</cfm>
             <erp>0.2</erp>
@@ -1118,8 +1136,8 @@
       <axis>
         <xyz>0 1 0</xyz>
         <limit>
-          <lower>-1.79769e+308</lower>
-          <upper>1.79769e+308</upper>
+          <lower>-0.1</lower>
+          <upper>0.1</upper>
           <effort>-1</effort>
           <velocity>-1</velocity>
         </limit>
@@ -1133,8 +1151,8 @@
       <axis2>
         <xyz>0 0 1</xyz>
         <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
+          <lower>-0.1</lower>
+          <upper>0.1</upper>
           <effort>-1</effort>
           <velocity>-1</velocity>
         </limit>
@@ -1147,13 +1165,15 @@
       </axis2>
       <physics>
         <ode>
+          <cfm>0.4</cfm>
+          <erp>0.8</erp>
           <limit>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </limit>
           <suspension>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </suspension>
         </ode>
       </physics>
@@ -1165,8 +1185,8 @@
       <axis>
         <xyz>0 1 0</xyz>
         <limit>
-          <lower>-1.79769e+308</lower>
-          <upper>1.79769e+308</upper>
+          <lower>-0.1</lower>
+          <upper>0.1</upper>
           <effort>-1</effort>
           <velocity>-1</velocity>
         </limit>
@@ -1180,8 +1200,8 @@
       <axis2>
         <xyz>0 0 1</xyz>
         <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
+          <lower>-0.1</lower>
+          <upper>0.1</upper>
           <effort>-1</effort>
           <velocity>-1</velocity>
         </limit>
@@ -1194,13 +1214,15 @@
       </axis2>
       <physics>
         <ode>
+          <cfm>0.4</cfm>
+          <erp>0.8</erp>
           <limit>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </limit>
           <suspension>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </suspension>
         </ode>
       </physics>
@@ -1212,8 +1234,8 @@
       <axis>
         <xyz>0 1 0</xyz>
         <limit>
-          <lower>-1.79769e+308</lower>
-          <upper>1.79769e+308</upper>
+          <lower>-0.1</lower>
+          <upper>0.1</upper>
           <effort>-1</effort>
           <velocity>-1</velocity>
         </limit>
@@ -1227,8 +1249,8 @@
       <axis2>
         <xyz>0 0 1</xyz>
         <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
+          <lower>-0.1</lower>
+          <upper>0.1</upper>
           <effort>-1</effort>
           <velocity>-1</velocity>
         </limit>
@@ -1241,13 +1263,15 @@
       </axis2>
       <physics>
         <ode>
+          <cfm>0.4</cfm>
+          <erp>0.8</erp>
           <limit>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </limit>
           <suspension>
             <cfm>0</cfm>
-            <erp>0.2</erp>
+            <erp>0.8</erp>
           </suspension>
         </ode>
       </physics>
@@ -1259,8 +1283,8 @@
       <axis>
         <xyz>0 1 0</xyz>
         <limit>
-          <lower>-1.79769e+308</lower>
-          <upper>1.79769e+308</upper>
+          <lower>-0.1</lower>
+          <upper>0.1</upper>
           <effort>-1</effort>
           <velocity>-1</velocity>
         </limit>
@@ -1274,8 +1298,8 @@
       <axis2>
         <xyz>0 0 1</xyz>
         <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
+          <lower>-0.1</lower>
+          <upper>0.1</upper>
           <effort>-1</effort>
           <velocity>-1</velocity>
         </limit>
@@ -1287,6 +1311,7 @@
         </dynamics>
       </axis2>
       <physics>
+        <provide_feedback>1</provide_feedback>
         <ode>
           <cfm>0.4</cfm>
           <erp>0.8</erp>
@@ -1431,5 +1456,119 @@
     </joint>
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
+    <plugin name='back_left_motor_model' filename='libgazebo_motor_model.so'>
+      <robotNamespace/>
+      <jointName>rotor_2_joint</jointName>
+      <linkName>rotor_2</linkName>
+      <turningDirection>ccw</turningDirection>
+      <timeConstantUp>0.0001</timeConstantUp>
+      <timeConstantDown>0.0001</timeConstantDown>
+      <maxRotVelocity>8000</maxRotVelocity>
+      <motorConstant>2.21e-8</motorConstant>
+      <momentConstant>0.00612</momentConstant>
+      <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
+      <motorNumber>1</motorNumber>
+      <rotorDragCoefficient>9.1785e-07</rotorDragCoefficient>
+      <rollingMomentCoefficient>1e-07</rollingMomentCoefficient>
+      <motorSpeedPubTopic>/motor_speed/1</motorSpeedPubTopic>
+      <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
+    </plugin>
+    <plugin name='back_right_motor_model' filename='libgazebo_motor_model.so'>
+      <robotNamespace/>
+      <jointName>rotor_3_joint</jointName>
+      <linkName>rotor_3</linkName>
+      <turningDirection>cw</turningDirection>
+      <timeConstantUp>0.0001</timeConstantUp>
+      <timeConstantDown>0.0001</timeConstantDown>
+      <maxRotVelocity>8000</maxRotVelocity>
+      <motorConstant>2.21e-8</motorConstant>
+      <momentConstant>0.00612</momentConstant>
+      <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
+      <motorNumber>2</motorNumber>
+      <rotorDragCoefficient>9.1785e-07</rotorDragCoefficient>
+      <rollingMomentCoefficient>1e-07</rollingMomentCoefficient>
+      <motorSpeedPubTopic>/motor_speed/2</motorSpeedPubTopic>
+      <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
+    </plugin>
+    <plugin name='crazyflie_odom' filename='libgazebo_ros_p3d.so'>
+      <alwaysOn>1</alwaysOn>
+      <updateRate>1000</updateRate>
+      <bodyName>crazyflie_body</bodyName>
+      <topicName>global_state</topicName>
+      <frameName>world</frameName>
+      <xyzOffsets>0 0 0</xyzOffsets>
+      <rpyOffsets>0 0 0</rpyOffsets>
+      <robotNamespace>/</robotNamespace>
+    </plugin>
+    <plugin name='front_left_motor_model' filename='libgazebo_motor_model.so'>
+      <robotNamespace/>
+      <jointName>rotor_1_joint</jointName>
+      <linkName>rotor_1</linkName>
+      <turningDirection>cw</turningDirection>
+      <timeConstantUp>0.0001</timeConstantUp>
+      <timeConstantDown>0.0001</timeConstantDown>
+      <maxRotVelocity>8000</maxRotVelocity>
+      <motorConstant>2.21e-8</motorConstant>
+      <momentConstant>0.00612</momentConstant>
+      <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
+      <motorNumber>0</motorNumber>
+      <rotorDragCoefficient>9.1785e-07</rotorDragCoefficient>
+      <rollingMomentCoefficient>1e-07</rollingMomentCoefficient>
+      <motorSpeedPubTopic>/motor_speed/0</motorSpeedPubTopic>
+      <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
+    </plugin>
+    <plugin name='front_right_motor_model' filename='libgazebo_motor_model.so'>
+      <robotNamespace/>
+      <jointName>rotor_4_joint</jointName>
+      <linkName>rotor_4</linkName>
+      <turningDirection>ccw</turningDirection>
+      <timeConstantUp>0.0001</timeConstantUp>
+      <timeConstantDown>0.0001</timeConstantDown>
+      <maxRotVelocity>8000</maxRotVelocity>
+      <motorConstant>2.21e-8</motorConstant>
+      <momentConstant>0.00612</momentConstant>
+      <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
+      <motorNumber>3</motorNumber>
+      <rotorDragCoefficient>9.1785e-07</rotorDragCoefficient>
+      <rollingMomentCoefficient>1e-07</rollingMomentCoefficient>
+      <motorSpeedPubTopic>/motor_speed/3</motorSpeedPubTopic>
+      <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
+    </plugin>
+    <plugin name='mavlink' filename='libgazebo_mavlink.so'>
+      <robotNamespace/>
+      <linkName>crazyflie_body</linkName>
+      <mavlink_addr>INADDR_ANY</mavlink_addr>
+      <mavlink_port>18080</mavlink_port>
+      <motorSpeedCommandPubTopic>/gazebo/command/motor_speed</motorSpeedCommandPubTopic>
+      <stickyEnablePubTopic>/gazebo/command/sticky_enable</stickyEnablePubTopic>
+    </plugin>
+    <plugin name='pad_0_sticky' filename='libgazebo_sticky_foot.so'>
+      <robotNamespace/>
+      <linkName>pad_1</linkName>
+      <padNumber>0</padNumber>
+      <stickyEnableSubTopic>/gazebo/command/sticky_enable</stickyEnableSubTopic>
+      <maxUpVelocity>100</maxUpVelocity>
+    </plugin>
+    <plugin name='pad_1_sticky' filename='libgazebo_sticky_foot.so'>
+      <robotNamespace/>
+      <linkName>pad_2</linkName>
+      <padNumber>1</padNumber>
+      <stickyEnableSubTopic>/gazebo/command/sticky_enable</stickyEnableSubTopic>
+      <maxUpVelocity>100</maxUpVelocity>
+    </plugin>
+    <plugin name='pad_2_sticky' filename='libgazebo_sticky_foot.so'>
+      <robotNamespace/>
+      <linkName>pad_3</linkName>
+      <padNumber>2</padNumber>
+      <stickyEnableSubTopic>/gazebo/command/sticky_enable</stickyEnableSubTopic>
+      <maxUpVelocity>100</maxUpVelocity>
+    </plugin>
+    <plugin name='pad_3_sticky' filename='libgazebo_sticky_foot.so'>
+      <robotNamespace/>
+      <linkName>pad_4</linkName>
+      <padNumber>3</padNumber>
+      <stickyEnableSubTopic>/gazebo/command/sticky_enable</stickyEnableSubTopic>
+      <maxUpVelocity>100</maxUpVelocity>
+    </plugin>
   </model>
 </sdf>
