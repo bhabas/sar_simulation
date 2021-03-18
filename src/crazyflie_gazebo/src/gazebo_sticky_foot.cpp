@@ -3,6 +3,8 @@
 
 namespace gazebo{
 
+
+// This gets called when model is loaded and pulls values from sdf file
 void GazeboStickyFoot::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) 
 {
     gzmsg<<"!!!!! Entering GazeboStickyFoot::Load !!!!!\n";
@@ -77,6 +79,8 @@ void GazeboStickyFoot::OnUpdate(const common::UpdateInfo& _info)
 {
 }*/
 
+// This gets called when motorspeed callback return negative number
+// This uses gz topics which use some protobuff thing different than ROS framework
 void GazeboStickyFoot::StickyEnableCallback(CommandMotorSpeedPtr &rot_velocities)
 {
     //model_ = world_->ModelByName(model_name_);
@@ -103,6 +107,7 @@ void GazeboStickyFoot::StickyEnableCallback(CommandMotorSpeedPtr &rot_velocities
     }
 }
 
+// This gets called when contact detected (Not sure where this is called)
 void GazeboStickyFoot::ContactCB(ConstContactsPtr &msg)
 {
     if(sticky_ && link2_==NULL)

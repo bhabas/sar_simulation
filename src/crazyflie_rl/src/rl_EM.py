@@ -173,15 +173,15 @@ class EPHE_Agent(ES):  # EM Policy Hyper Paramter Exploration
 
 
 
- if __name__ == "__main__":
-     np.set_printoptions(precision=2, suppress=True)
-     mu = np.array([[1.0],[-4.0]])
-     sigma = np.array([[0.1],[1.5]])
+#  if __name__ == "__main__":
+#      np.set_printoptions(precision=2, suppress=True)
+#      mu = np.array([[1.0],[-4.0]])
+#      sigma = np.array([[0.1],[1.5]])
 
-     agent = EPHE_Agent(mu,sigma)
+#      agent = EPHE_Agent(mu,sigma)
 
-     theta,epsilon = agent.get_theta()
-     reward = np.array([[1.0],[2.0],[0.3],[4.0],[2.5],[1.2] ])
+#      theta,epsilon = agent.get_theta()
+#      reward = np.array([[1.0],[2.0],[0.3],[4.0],[2.5],[1.2] ])
 
-     reward = np.array([[1.0],[2.0],[0.3],[4.0],[2.5],[1.2],[0.3],[4.0],[2.5],[1.2]  ])
-     agent.train(theta,reward,0)
+#      reward = np.array([[1.0],[2.0],[0.3],[4.0],[2.5],[1.2],[0.3],[4.0],[2.5],[1.2]  ])
+#      agent.train(theta,reward,0)
