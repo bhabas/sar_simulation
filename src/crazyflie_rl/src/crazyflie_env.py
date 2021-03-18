@@ -30,7 +30,7 @@ class CrazyflieEnv:
         self.h_ceiling = 2.5
 
         ## INIT NAME OF MODEL BEING USED
-        self.modelName = 'crazyflie_model_Flex'
+        self.modelName = 'crazyflie_model_Narrow-Long'
         
         ## INIT ROS NODE FOR ENVIRONMENT 
         rospy.init_node("crazyflie_env_node") 

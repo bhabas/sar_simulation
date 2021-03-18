@@ -312,8 +312,8 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
 if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=False)
-    # env.launch_dashboard()
+    env = CrazyflieEnv(gazeboTimeout=True)
+    env.launch_dashboard()
 
     print("Environment done")
 
@@ -326,7 +326,7 @@ if __name__ == '__main__':
     alpha_sigma = np.array([[0.05]])
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[4.45],[6.5]])          # Random initial mu
+    mu = np.array([[4.45],[4.5]])          # Random initial mu
     sigma = np.array([[1.25],[1.25]])       # Initial estimates of sigma:
 
 
