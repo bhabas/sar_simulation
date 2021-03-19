@@ -31,40 +31,7 @@ class CrazyflieEnv:
 
         ## INIT NAME OF MODEL BEING USED
         self.modelName = 'crazyflie_model_Narrow-Long'
-        
-        ## INIT ROS NODE FOR ENVIRONMENT 
-        rospy.init_node("crazyflie_env_node") 
-        print("[STARTING] Starting Controller Process...")
-        self.controller_p = subprocess.Popen( # Controller Process
-            "roslaunch crazyflie_gazebo controller.launch", 
-            close_fds=True, preexec_fn=os.setsid, shell=True)
-        self.launch_sim() 
-    
 
-        
-
-        ## INIT ROS SUBSCRIBERS 
-        self.state_Subscriber = rospy.Subscriber('/global_state',Odometry,self.global_stateCallback)
-        self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)
-        self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactCallback)
-        self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
-        rospy.wait_for_message('/ctrl_data',CtrlData)
-
-
-
-        ## INIT ROS PUBLISHERS
-        self.RL_Publisher = rospy.Publisher('/rl_data',RLData,queue_size=10)
-        self.Cmd_Publisher = rospy.Publisher('/rl_ctrl',RLCmd,queue_size=10)
-
-
-
-        ## INIT GAZEBO TIMEOUT THREAD
-        if gazeboTimeout==True:
-            self.timeoutThread = Thread(target=self.timeoutSub)
-            self.timeoutThread.start()
-        
-
-        
         ## INIT RL_DATA VARIABLES 
         #region 
         self.trial_name = ''
@@ -103,6 +70,45 @@ class CrazyflieEnv:
         self.body_contact = False
 
         #endregion 
+
+
+
+
+        
+        ## INIT ROS NODE FOR ENVIRONMENT 
+        rospy.init_node("crazyflie_env_node") 
+        print("[STARTING] Starting Controller Process...")
+        self.controller_p = subprocess.Popen( # Controller Process
+            "roslaunch crazyflie_gazebo controller.launch", 
+            close_fds=True, preexec_fn=os.setsid, shell=True)
+        self.launch_sim() 
+    
+
+        
+
+        ## INIT ROS SUBSCRIBERS 
+        self.state_Subscriber = rospy.Subscriber('/global_state',Odometry,self.global_stateCallback)
+        self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)
+        self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactCallback)
+        self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
+        rospy.wait_for_message('/ctrl_data',CtrlData)
+
+
+
+        ## INIT ROS PUBLISHERS
+        self.RL_Publisher = rospy.Publisher('/rl_data',RLData,queue_size=10)
+        self.Cmd_Publisher = rospy.Publisher('/rl_ctrl',RLCmd,queue_size=10)
+
+
+
+        ## INIT GAZEBO TIMEOUT THREAD
+        if gazeboTimeout==True:
+            self.timeoutThread = Thread(target=self.timeoutSub)
+            self.timeoutThread.start()
+        
+
+        
+        
 
 
         
@@ -226,10 +232,9 @@ class CrazyflieEnv:
             elif msg.collision1_name == f"{self.modelName}::crazyflie_body::body_collision" and self.body_contact == False:
                 self.body_contact = True
 
-        
-        
-        
-        
+        if any(self.pad_contacts) or self.body_contact: # If any pad contacts are True then update impact flag
+            self.impact_flag = True
+
 
     
     # ============================

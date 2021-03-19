@@ -28,7 +28,7 @@
       <gravity>0 0 -9.8066</gravity>
       <ode>
         <solver>
-          <type>world</type>
+          <type>quick</type>
           <iters>500</iters>
           <sor>1.3</sor>
           <use_dynamic_moi_rescaling>0</use_dynamic_moi_rescaling>
@@ -40,7 +40,7 @@
           <contact_surface_layer>0.0001</contact_surface_layer>
         </constraints>
       </ode>
-      <max_step_size>0.0002</max_step_size>
+      <max_step_size>0.002</max_step_size>
       <real_time_factor>1</real_time_factor>
       <real_time_update_rate>0</real_time_update_rate>
       <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>

@@ -160,8 +160,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
 
                     flag = True # Turns on to make sure this only runs once per rollout
 
-                if any(env.pad_contacts) or env.body_contact: # If any pad contacts are True then update impact flag
-                    env.impact_flag = True
+                
                    
 
 
@@ -177,7 +176,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     state_history = state 
                     FM_history = FM
                 else: # Append state_history columns with current state vector
-                    if t_step%50==0: 
+                    if t_step%10==0: 
                         state_history = np.append(state_history, state, axis=1)
                         FM_history = np.append(FM_history,FM,axis=1)
                         env.RL_Publish()
@@ -203,11 +202,11 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
 
                     env.runComplete_flag = True
 
-                # # IF POSITION FALLS BELOW ACHIEVED MAX HEIGHT
-                # z_max = max(position[2],z_max)
-                # if position[2] <= 0.90*z_max: # Note: there is a lag with this
-                #     env.error_str = "Rollout Completed: Falling Drone"
-                #     print(env.error_str)
+                # IF POSITION FALLS BELOW ACHIEVED MAX HEIGHT
+                z_max = max(position[2],z_max)
+                if position[2] <= 0.90*z_max: # Note: there is a lag with this
+                    env.error_str = "Rollout Completed: Falling Drone"
+                    print(env.error_str)
 
                     env.runComplete_flag = True
 
@@ -312,7 +311,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
 if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=True)
+    env = CrazyflieEnv(gazeboTimeout=False)
     env.launch_dashboard()
 
     print("Environment done")
