@@ -29,20 +29,25 @@
       <bullet>
         <solver>
           <type>sequential_impulse</type>
-          <iters>500</iters>
+          <iters>50</iters>
           <sor>1.3</sor>
-          <use_dynamic_moi_rescaling>0</use_dynamic_moi_rescaling>
         </solver>
         <constraints>
-          <!-- <cfm>0.2</cfm> -->
-          <!-- <erp>0.2</erp> -->
-          <contact_max_correcting_vel>10</contact_max_correcting_vel>
-          <contact_surface_layer>0.0001</contact_surface_layer>
+          <!-- <cfm>0.2</cfm>
+          <erp>0.2</erp> -->
+
+          <contact_surface_layer>0.001</contact_surface_layer>
         </constraints>
       </bullet>
+      <!-- <dart>
+        <solver>
+          <type>dantzig</type>
+        <collision_detector>fcl</collision_detector>
+        </solver>
+      </dart> -->
       <max_step_size>0.001</max_step_size>
       <real_time_factor>1</real_time_factor>
-      <real_time_update_rate>200</real_time_update_rate>
+      <real_time_update_rate>3000</real_time_update_rate>
       <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
     </physics>
     <wind>

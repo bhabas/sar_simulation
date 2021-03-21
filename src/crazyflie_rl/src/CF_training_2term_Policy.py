@@ -311,7 +311,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
 if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=False)
+    env = CrazyflieEnv(gazeboTimeout=True)
     # env.launch_dashboard()
 
     print("Environment done")
