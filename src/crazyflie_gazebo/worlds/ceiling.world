@@ -39,12 +39,6 @@
           <contact_surface_layer>0.001</contact_surface_layer>
         </constraints>
       </bullet>
-      <!-- <dart>
-        <solver>
-          <type>dantzig</type>
-        <collision_detector>fcl</collision_detector>
-        </solver>
-      </dart> -->
       <max_step_size>0.001</max_step_size>
       <real_time_factor>1</real_time_factor>
       <real_time_update_rate>3000</real_time_update_rate>
