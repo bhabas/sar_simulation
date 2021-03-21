@@ -1,3 +1,0 @@
-<launch>
-    <node name="global_state_pub" pkg="gazebo_communication_pkg" type="global_state_pub.py" />
-</launch>
