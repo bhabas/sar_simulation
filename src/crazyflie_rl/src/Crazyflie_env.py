@@ -14,6 +14,7 @@ from rosgraph_msgs.msg import Clock
 from gazebo_msgs.msg import ModelState,ContactsState
 from gazebo_msgs.srv import SetModelState
 from nav_msgs.msg import Odometry
+from geometry_msgs.msg import WrenchStamped
 
 
 
@@ -69,6 +70,8 @@ class CrazyflieEnv:
         self.pad_contacts = [False,False,False,False]
         self.body_contact = False
 
+        self.ceiling_ft_z = 0.0
+
         #endregion 
 
 
@@ -90,6 +93,8 @@ class CrazyflieEnv:
         self.state_Subscriber = rospy.Subscriber('/global_state',Odometry,self.global_stateCallback)
         self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)
         self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactCallback)
+        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftCallback)
+
         self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
         rospy.wait_for_message('/ctrl_data',CtrlData)
 
@@ -235,8 +240,10 @@ class CrazyflieEnv:
         if any(self.pad_contacts) or self.body_contact: # If any pad contacts are True then update impact flag
             self.impact_flag = True
 
-
-    
+    def ceiling_ftCallback(self,ft_msg):
+        self.ceiling_ft_z = ft_msg.wrench.force.z # Z-Impact force from ceiling Force-Torque sensor
+        self.ceiling_ft_z = np.round(self.ceiling_ft_z,3)
+        # print(self.ceiling_ft_z)
     # ============================
     ##    Sensors/Gazebo Topics
     # ============================
@@ -405,6 +412,7 @@ class CrazyflieEnv:
                     'RREV','OF_x','OF_y',
                     'MS1','MS2','MS3','MS4',
                     'F_thrust','Mx','My','Mz',
+                    'ceiling_ft_z',
                     'Error'])# Place holders
 
     def append_csv(self,filepath):
@@ -424,6 +432,7 @@ class CrazyflieEnv:
                     self.RREV,self.OF_x,self.OF_y, # RREV, OF_x, OF_y
                     self.MS[0],self.MS[1],self.MS[2],self.MS[3], # MS1, MS2, MS3, MS4
                     self.FM[0],self.FM[1],self.FM[2],self.FM[3], # F_thrust,Mx,My,Mz 
+                    self.ceiling_ft_z, # ceiling_ft_z
                     ""]) # Error
 
     def append_IC(self,filepath):
@@ -442,7 +451,8 @@ class CrazyflieEnv:
                     np.round(self.gamma,2),round(self.reward,2),self.body_contact,sum(self.pad_contacts),self.n_rollouts, # gamma, reward, body_impact, num leg contacts, n_rollout
                     self.RREV_tr,"",self.OF_y_tr, # RREV, OF_x, OF_y
                     "","","","", # MS1, MS2, MS3, MS4
-                    "",self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # F_thrust,Mx,My,Mz 
+                    "",self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # F_thrust,Mx,My,Mz
+                    "", 
                     self.error_str]) # Error
 
     def append_csv_blank(self,filepath):
