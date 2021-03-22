@@ -6,7 +6,7 @@ from scipy.spatial.transform import Rotation
 
 
 
-from crazyflie_env import CrazyflieEnv
+from Crazyflie_env import CrazyflieEnv
 from rl_syspepg import rlsysPEPGAgent_reactive
 
 os.system("clear")

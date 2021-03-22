@@ -82,21 +82,20 @@ class CrazyflieEnv:
         rospy.init_node("crazyflie_env_node") 
         print("[STARTING] Starting Controller Process...")
         self.controller_p = subprocess.Popen( # Controller Process
-            "roslaunch crazyflie_gazebo controller.launch", 
-            close_fds=True, preexec_fn=os.setsid, shell=True)
+            "roslaunch crazyflie_gazebo controller.launch", close_fds=True, preexec_fn=os.setsid, shell=True)
         self.launch_sim() 
     
 
         
 
         ## INIT ROS SUBSCRIBERS 
-        self.state_Subscriber = rospy.Subscriber('/global_state',Odometry,self.global_stateCallback)
-        self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)
-        self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactCallback)
-        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftCallback)
+        self.state_Subscriber = rospy.Subscriber('/global_state',Odometry,self.global_stateCallback)                    # 1000 Hz
+        self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)                                # 200 Hz
+        self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactCallback)               # 500 Hz
+        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftCallback)    # 1000 Hz
 
         self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
-        rospy.wait_for_message('/ctrl_data',CtrlData)
+        rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
 
 
 
@@ -110,16 +109,6 @@ class CrazyflieEnv:
         if gazeboTimeout==True:
             self.timeoutThread = Thread(target=self.timeoutSub)
             self.timeoutThread.start()
-        
-
-        
-        
-
-
-        
-        
-        
-
 
         print("[COMPLETED] Environment done")
 

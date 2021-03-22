@@ -7,7 +7,7 @@ from scipy.spatial.transform import Rotation
 
 
 
-from crazyflie_env import CrazyflieEnv
+from Crazyflie_env import CrazyflieEnv
 from rl_syspepg import rlsysPEPGAgent_reactive,rlsysPEPGAgent_adaptive
 from rl_EM import rlEM_PEPGAgent,rlEM_AdaptiveAgent
 from rl_cma import CMA_basic,CMA,CMA_sym
@@ -106,6 +106,8 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
             FM_history = None
             env.error_str = ""
 
+            test_arr_prev = np.zeros(10)
+
 
 
             ## PRINT RUN CONDITIONS AND POLICY
@@ -136,6 +138,8 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                 vx,vy,vz = vel
                 omega = state[11:14] # [wx,wy,wz]
 
+                test_arr = np.array([env.t,env.position[0],env.position[2],env.omega[1],env.flip_flag,env.impact_flag,env.RREV,env.MS[0],env.MS[2],env.ceiling_ft_z])
+                
                 
                 
 
@@ -176,7 +180,8 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     state_history = state 
                     FM_history = FM
                 else: # Append state_history columns with current state vector
-                    if t_step%10==0: 
+                    if t_step%1==0: 
+                    # if not np.array_equal(test_arr,test_arr_prev):
                         state_history = np.append(state_history, state, axis=1)
                         FM_history = np.append(FM_history,FM,axis=1)
                         env.RL_Publish()
@@ -281,8 +286,10 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     ## I have no idea what's going on there but it may or may not have an effect?
                     ## I've got no idea...
                     break
-
+                
+                test_arr_prev = test_arr
                 t_step += 1
+
 
                 
             

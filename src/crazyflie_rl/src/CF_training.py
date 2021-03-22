@@ -7,7 +7,7 @@ from scipy.spatial.transform import Rotation
 
 
 
-from crazyflie_env import CrazyflieEnv
+from Crazyflie_env import CrazyflieEnv
 from rl_syspepg import rlsysPEPGAgent_reactive,rlsysPEPGAgent_adaptive
 from rl_EM import rlEM_PEPGAgent,rlEM_AdaptiveAgent
 from rl_cma import CMA_basic,CMA,CMA_sym
