@@ -138,7 +138,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                 vx,vy,vz = vel
                 omega = state[11:14] # [wx,wy,wz]
 
-                test_arr = np.array([env.t,env.position[0],env.position[2],env.omega[1],env.flip_flag,env.impact_flag,env.RREV,env.MS[0],env.MS[2],env.ceiling_ft_z])
+                # test_arr = np.array([env.t,env.position[0],env.position[2],env.omega[1],env.flip_flag,env.impact_flag,env.RREV,env.MS[0],env.MS[2],env.ceiling_ft_z])
                 
                 
                 
@@ -287,7 +287,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     ## I've got no idea...
                     break
                 
-                test_arr_prev = test_arr
+                # test_arr_prev = test_arr
                 t_step += 1
 
 
