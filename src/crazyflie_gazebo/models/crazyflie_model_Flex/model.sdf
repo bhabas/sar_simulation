@@ -1,6 +1,7 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
   <model name='crazyflie_model_Flex'>
+    <pose>0 0 0.1 0 0 0</pose>
     <link name='crazyflie_body'>
       <inertial>
         <mass>0.023</mass>
@@ -1059,7 +1060,6 @@
       <pose>0 0 0 0 -0 0</pose>
       <physics>
         <ode>
-          <cfm>0.4</cfm>
           <erp>0.8</erp>
           <limit>
             <cfm>0</cfm>
@@ -1078,7 +1078,6 @@
       <pose>0 0 0 0 -0 0</pose>
       <physics>
         <ode>
-          <cfm>0.4</cfm>
           <erp>0.8</erp>
           <limit>
             <cfm>0</cfm>
@@ -1097,7 +1096,6 @@
       <pose>0 0 0 0 -0 0</pose>
       <physics>
         <ode>
-          <cfm>0.4</cfm>
           <erp>0.8</erp>
           <limit>
             <cfm>0</cfm>
@@ -1116,7 +1114,6 @@
       <pose>0 0 0 0 -0 0</pose>
       <physics>
         <ode>
-          <cfm>0.4</cfm>
           <erp>0.8</erp>
           <limit>
             <cfm>0</cfm>
@@ -1129,7 +1126,7 @@
         </ode>
       </physics>
     </joint>
-    <joint name='leg_joint_1' type='universal'>
+    <joint name='leg_joint_1' type='revolute'>
       <parent>crazyflie_body</parent>
       <child>leg1</child>
       <pose>0 0 0 0 0.786 0</pose>
@@ -1148,24 +1145,8 @@
           <friction>0</friction>
         </dynamics>
       </axis>
-      <axis2>
-        <xyz>0 0 1</xyz>
-        <limit>
-          <lower>-0.1</lower>
-          <upper>0.1</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
-        </limit>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0.03</spring_stiffness>
-          <damping>6.788e-05</damping>
-          <friction>0</friction>
-        </dynamics>
-      </axis2>
       <physics>
         <ode>
-          <cfm>0.4</cfm>
           <erp>0.8</erp>
           <limit>
             <cfm>0</cfm>
@@ -1177,8 +1158,13 @@
           </suspension>
         </ode>
       </physics>
+      <sensor name="force_torque" type="force_torque">
+        <always_on>true</always_on>
+        <update_rate>1000</update_rate>
+        <visualize>true</visualize>
+      </sensor>
     </joint>
-    <joint name='leg_joint_2' type='universal'>
+    <joint name='leg_joint_2' type='revolute'>
       <parent>crazyflie_body</parent>
       <child>leg2</child>
       <pose>0 0 0 0 0.786 0</pose>
@@ -1197,24 +1183,8 @@
           <friction>0</friction>
         </dynamics>
       </axis>
-      <axis2>
-        <xyz>0 0 1</xyz>
-        <limit>
-          <lower>-0.1</lower>
-          <upper>0.1</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
-        </limit>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0.03</spring_stiffness>
-          <damping>6.788e-05</damping>
-          <friction>0</friction>
-        </dynamics>
-      </axis2>
       <physics>
         <ode>
-          <cfm>0.4</cfm>
           <erp>0.8</erp>
           <limit>
             <cfm>0</cfm>
@@ -1227,7 +1197,7 @@
         </ode>
       </physics>
     </joint>
-    <joint name='leg_joint_3' type='universal'>
+    <joint name='leg_joint_3' type='revolute'>
       <parent>crazyflie_body</parent>
       <child>leg3</child>
       <pose>0 0 0 0 0.786 0</pose>
@@ -1246,24 +1216,8 @@
           <friction>0</friction>
         </dynamics>
       </axis>
-      <axis2>
-        <xyz>0 0 1</xyz>
-        <limit>
-          <lower>-0.1</lower>
-          <upper>0.1</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
-        </limit>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0.03</spring_stiffness>
-          <damping>6.788e-05</damping>
-          <friction>0</friction>
-        </dynamics>
-      </axis2>
       <physics>
         <ode>
-          <cfm>0.4</cfm>
           <erp>0.8</erp>
           <limit>
             <cfm>0</cfm>
@@ -1276,7 +1230,7 @@
         </ode>
       </physics>
     </joint>
-    <joint name='leg_joint_4' type='universal'>
+    <joint name='leg_joint_4' type='revolute'>
       <parent>crazyflie_body</parent>
       <child>leg4</child>
       <pose>0 0 0 0 0.786 0</pose>
@@ -1295,25 +1249,9 @@
           <friction>0</friction>
         </dynamics>
       </axis>
-      <axis2>
-        <xyz>0 0 1</xyz>
-        <limit>
-          <lower>-0.1</lower>
-          <upper>0.1</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
-        </limit>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0.03</spring_stiffness>
-          <damping>6.788e-05</damping>
-          <friction>0</friction>
-        </dynamics>
-      </axis2>
       <physics>
         <provide_feedback>1</provide_feedback>
         <ode>
-          <cfm>0.4</cfm>
           <erp>0.8</erp>
           <limit>
             <cfm>0</cfm>
@@ -1456,119 +1394,5 @@
     </joint>
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
-    <plugin name='back_left_motor_model' filename='libgazebo_motor_model.so'>
-      <robotNamespace/>
-      <jointName>rotor_2_joint</jointName>
-      <linkName>rotor_2</linkName>
-      <turningDirection>ccw</turningDirection>
-      <timeConstantUp>0.0001</timeConstantUp>
-      <timeConstantDown>0.0001</timeConstantDown>
-      <maxRotVelocity>8000</maxRotVelocity>
-      <motorConstant>2.21e-8</motorConstant>
-      <momentConstant>0.00612</momentConstant>
-      <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
-      <motorNumber>1</motorNumber>
-      <rotorDragCoefficient>9.1785e-07</rotorDragCoefficient>
-      <rollingMomentCoefficient>1e-07</rollingMomentCoefficient>
-      <motorSpeedPubTopic>/motor_speed/1</motorSpeedPubTopic>
-      <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
-    </plugin>
-    <plugin name='back_right_motor_model' filename='libgazebo_motor_model.so'>
-      <robotNamespace/>
-      <jointName>rotor_3_joint</jointName>
-      <linkName>rotor_3</linkName>
-      <turningDirection>cw</turningDirection>
-      <timeConstantUp>0.0001</timeConstantUp>
-      <timeConstantDown>0.0001</timeConstantDown>
-      <maxRotVelocity>8000</maxRotVelocity>
-      <motorConstant>2.21e-8</motorConstant>
-      <momentConstant>0.00612</momentConstant>
-      <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
-      <motorNumber>2</motorNumber>
-      <rotorDragCoefficient>9.1785e-07</rotorDragCoefficient>
-      <rollingMomentCoefficient>1e-07</rollingMomentCoefficient>
-      <motorSpeedPubTopic>/motor_speed/2</motorSpeedPubTopic>
-      <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
-    </plugin>
-    <plugin name='crazyflie_odom' filename='libgazebo_ros_p3d.so'>
-      <alwaysOn>1</alwaysOn>
-      <updateRate>1000</updateRate>
-      <bodyName>crazyflie_body</bodyName>
-      <topicName>global_state</topicName>
-      <frameName>world</frameName>
-      <xyzOffsets>0 0 0</xyzOffsets>
-      <rpyOffsets>0 0 0</rpyOffsets>
-      <robotNamespace>/</robotNamespace>
-    </plugin>
-    <plugin name='front_left_motor_model' filename='libgazebo_motor_model.so'>
-      <robotNamespace/>
-      <jointName>rotor_1_joint</jointName>
-      <linkName>rotor_1</linkName>
-      <turningDirection>cw</turningDirection>
-      <timeConstantUp>0.0001</timeConstantUp>
-      <timeConstantDown>0.0001</timeConstantDown>
-      <maxRotVelocity>8000</maxRotVelocity>
-      <motorConstant>2.21e-8</motorConstant>
-      <momentConstant>0.00612</momentConstant>
-      <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
-      <motorNumber>0</motorNumber>
-      <rotorDragCoefficient>9.1785e-07</rotorDragCoefficient>
-      <rollingMomentCoefficient>1e-07</rollingMomentCoefficient>
-      <motorSpeedPubTopic>/motor_speed/0</motorSpeedPubTopic>
-      <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
-    </plugin>
-    <plugin name='front_right_motor_model' filename='libgazebo_motor_model.so'>
-      <robotNamespace/>
-      <jointName>rotor_4_joint</jointName>
-      <linkName>rotor_4</linkName>
-      <turningDirection>ccw</turningDirection>
-      <timeConstantUp>0.0001</timeConstantUp>
-      <timeConstantDown>0.0001</timeConstantDown>
-      <maxRotVelocity>8000</maxRotVelocity>
-      <motorConstant>2.21e-8</motorConstant>
-      <momentConstant>0.00612</momentConstant>
-      <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
-      <motorNumber>3</motorNumber>
-      <rotorDragCoefficient>9.1785e-07</rotorDragCoefficient>
-      <rollingMomentCoefficient>1e-07</rollingMomentCoefficient>
-      <motorSpeedPubTopic>/motor_speed/3</motorSpeedPubTopic>
-      <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
-    </plugin>
-    <plugin name='mavlink' filename='libgazebo_mavlink.so'>
-      <robotNamespace/>
-      <linkName>crazyflie_body</linkName>
-      <mavlink_addr>INADDR_ANY</mavlink_addr>
-      <mavlink_port>18080</mavlink_port>
-      <motorSpeedCommandPubTopic>/gazebo/command/motor_speed</motorSpeedCommandPubTopic>
-      <stickyEnablePubTopic>/gazebo/command/sticky_enable</stickyEnablePubTopic>
-    </plugin>
-    <plugin name='pad_0_sticky' filename='libgazebo_sticky_foot.so'>
-      <robotNamespace/>
-      <linkName>pad_1</linkName>
-      <padNumber>0</padNumber>
-      <stickyEnableSubTopic>/gazebo/command/sticky_enable</stickyEnableSubTopic>
-      <maxUpVelocity>100</maxUpVelocity>
-    </plugin>
-    <plugin name='pad_1_sticky' filename='libgazebo_sticky_foot.so'>
-      <robotNamespace/>
-      <linkName>pad_2</linkName>
-      <padNumber>1</padNumber>
-      <stickyEnableSubTopic>/gazebo/command/sticky_enable</stickyEnableSubTopic>
-      <maxUpVelocity>100</maxUpVelocity>
-    </plugin>
-    <plugin name='pad_2_sticky' filename='libgazebo_sticky_foot.so'>
-      <robotNamespace/>
-      <linkName>pad_3</linkName>
-      <padNumber>2</padNumber>
-      <stickyEnableSubTopic>/gazebo/command/sticky_enable</stickyEnableSubTopic>
-      <maxUpVelocity>100</maxUpVelocity>
-    </plugin>
-    <plugin name='pad_3_sticky' filename='libgazebo_sticky_foot.so'>
-      <robotNamespace/>
-      <linkName>pad_4</linkName>
-      <padNumber>3</padNumber>
-      <stickyEnableSubTopic>/gazebo/command/sticky_enable</stickyEnableSubTopic>
-      <maxUpVelocity>100</maxUpVelocity>
-    </plugin>
   </model>
 </sdf>
