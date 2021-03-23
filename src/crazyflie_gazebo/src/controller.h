@@ -52,7 +52,7 @@ class Controller
 
 
             // SET DEFAULT HOME POSITION
-            _x_d << 0,0,0.4;
+            _x_d << 0,0,0.6;
             _v_d << 0,0,0;
             _a_d << 0,0,0;
             _b1_d << 1,0,0;

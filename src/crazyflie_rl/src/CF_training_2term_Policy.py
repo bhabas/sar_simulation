@@ -209,7 +209,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
 
                 # IF POSITION FALLS BELOW ACHIEVED MAX HEIGHT
                 z_max = max(position[2],z_max)
-                if position[2] <= 0.90*z_max: # Note: there is a lag with this
+                if position[2] <= 0.80*z_max: # Note: there is a lag with this
                     env.error_str = "Rollout Completed: Falling Drone"
                     print(env.error_str)
 

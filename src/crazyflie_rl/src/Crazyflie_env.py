@@ -28,7 +28,7 @@ class CrazyflieEnv:
         self.logging_flag = False
         self.filepath = ""
 
-        self.h_ceiling = 2.5
+        self.h_ceiling = 3.00
 
         ## INIT NAME OF MODEL BEING USED
         self.modelName = 'crazyflie_model_Flex'
@@ -308,7 +308,7 @@ class CrazyflieEnv:
         state_msg.model_name = self.modelName
         state_msg.pose.position.x = 0
         state_msg.pose.position.y = 0
-        state_msg.pose.position.z = 0.235
+        state_msg.pose.position.z = 0.6
 
         state_msg.pose.orientation.x = 0
         state_msg.pose.orientation.y = 0
@@ -338,7 +338,7 @@ class CrazyflieEnv:
         state_msg.model_name = self.modelName
         state_msg.pose.position.x = 0
         state_msg.pose.position.y = 0
-        state_msg.pose.position.z = 0.230
+        state_msg.pose.position.z = 0.55
 
         state_msg.pose.orientation.w = 1
         state_msg.pose.orientation.x = 0
