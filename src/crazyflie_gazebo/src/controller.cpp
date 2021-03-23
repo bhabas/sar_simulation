@@ -84,16 +84,14 @@ void Controller::global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
     // Follow msg names from message details - "rqt -s rqt_msg" 
     
     const geometry_msgs::Point position = msg->pose.pose.position; 
-    const geometry_msgs::Quaternion quaternion = msg->pose.pose.orientation;
     const geometry_msgs::Vector3 velocity = msg->twist.twist.linear;
-    const geometry_msgs::Vector3 omega = msg->twist.twist.angular;
+
 
     // SET STATE VALUES INTO CLASS STATE VARIABLES
     _t = msg->header.stamp.toSec();
     _pos << position.x, position.y, position.z;
     _vel << velocity.x, velocity.y, velocity.z;
-    _quat << quaternion.w, quaternion.x, quaternion.y, quaternion.z, 
-    _omega << omega.x, omega.y, omega.z;
+
 
 
     // SET SENSOR VALUES INTO CLASS VARIABLES
@@ -107,6 +105,15 @@ void Controller::global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
     _OF_y = -velocity.x/d;
     
 
+}
+
+void Controller::imuCallback(const sensor_msgs::Imu::ConstPtr &msg){
+
+    const geometry_msgs::Quaternion quaternion = msg->orientation;
+    const geometry_msgs::Vector3 omega = msg->angular_velocity;
+
+    _quat << quaternion.w, quaternion.x, quaternion.y, quaternion.z, 
+    _omega << omega.x, omega.y, omega.z;
 }
 
 

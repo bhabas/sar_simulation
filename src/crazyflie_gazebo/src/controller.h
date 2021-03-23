@@ -8,7 +8,7 @@
 #include "gazebo_communication_pkg/GlobalState.h"
 #include "crazyflie_rl/RLCmd.h"
 #include "nav_msgs/Odometry.h"
-
+#include "sensor_msgs/Imu.h"
 
 // Socket Includes
 #include <arpa/inet.h>
@@ -30,6 +30,7 @@ class Controller
             ctrl_Publisher = nh->advertise<crazyflie_gazebo::CtrlData>("/ctrl_data",10);
 
             globalState_Subscriber = nh->subscribe("/global_state",1000,&Controller::global_stateCallback,this);
+            imu_Subscriber = nh->subscribe("/imu",100,&Controller::imuCallback,this);
             RLCmd_Subscriber = nh->subscribe("/rl_ctrl",10,&Controller::RLCmd_Callback,this);
 
             
@@ -84,6 +85,7 @@ class Controller
         void recvThread_RL();
         void controlThread();
         void global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg);
+        void imuCallback(const sensor_msgs::Imu::ConstPtr &msg);
         void RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg);
 
     private:
@@ -91,6 +93,7 @@ class Controller
         ros::Publisher ctrl_Publisher;
         ros::Subscriber globalState_Subscriber;
         ros::Subscriber RLCmd_Subscriber;
+        ros::Subscriber imu_Subscriber;
 
         // DEFINE THREAD OBJECTS
         std::thread controllerThread;
