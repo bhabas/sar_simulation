@@ -228,6 +228,7 @@ class CrazyflieEnv:
 
         if any(self.pad_contacts) or self.body_contact: # If any pad contacts are True then update impact flag
             self.impact_flag = True
+            self.append_csv(self.filepath) # Append data at instant when ceiling impact detected
 
     def ceiling_ftCallback(self,ft_msg):
 
