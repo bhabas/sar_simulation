@@ -488,7 +488,7 @@
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
       <pose>0 0 0.015 0 -0 0</pose>
-      <gravity>1</gravity>
+      <gravity>0</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
@@ -511,6 +511,23 @@
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
       </visual>
+    <sensor name="imu_sensor" type="imu">
+      <always_on>true</always_on>
+      <update_rate>1000</update_rate>
+      <visualize>true</visualize>
+      <topic>__default_topic__</topic>
+      <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+        <topicName>imu</topicName>
+        <bodyName>imu_link</bodyName>
+        <updateRateHZ>500.0</updateRateHZ>
+        <gaussianNoise>0.0</gaussianNoise>
+        <xyzOffset>0 0 0</xyzOffset>
+        <rpyOffset>3.14159 0 0</rpyOffset>
+        <frameName>imu_link</frameName>
+        <initialOrientationAsReference>false</initialOrientationAsReference>
+      </plugin>
+      <pose>0 0 0 0 0 0</pose>
+    </sensor>
     </link>
     <link name='pad_1'>
       <inertial>
