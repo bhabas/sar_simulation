@@ -19,10 +19,10 @@ c_tf = 0.0061; % Thrust Moment coefficient
 
 Gamma = [1  1  1  1;
          dp  dp -dp -dp; 
-        -dp  dp  dp -dp;
-        c_tf -c_tf c_tf -c_tf];
+         dp  -dp  -dp dp;
+        -c_tf c_tf -c_tf c_tf];
     
-Gamma_I = inv(Gamma);    
+Gamma_I = inv(Gamma)
     
 J = [1.65717e-5,0,0;
     0,1.66556e-5,0;
@@ -31,25 +31,25 @@ J = [1.65717e-5,0,0;
 e3 = [0,0,1]';
 
 %% Control Params
-kp_x = 0.7;
-kd_x = 0.250;
-kp_R = 0.004;
-kd_R = 0.0008;
+kp_x = 0.5;
+kd_x = 0.150;
+kp_R = 0.015;
+kd_R = 0.0012;
 
 %% Current State
 pos = [0 0 0]';
 vel = [0 0 0]';
-omega = [0 0 1]';
+omega = [0 0 0]';
 
-% eul = [-0.5221,-0.1464,5.3115]*pi/180; 
-% R = eul2rotm(eul,'XYZ')
+eul = [0 0 0]*pi/180; 
+R = eul2rotm(eul,'XYZ')
 
-R = [0.99619,-0.08715,0;
-    0.08715,0.99619,0.0;
-    0,0,1]
+% R = [1 0 0;
+%     0 1 0;
+%     0 0 1]
 
 %% Desired Trajectories
-x_d = [0,0,1.0]';
+x_d = [0,0,0.3]';
 v_d = [0,0,0]';
 a_d = [0,0,0]';
 
@@ -119,16 +119,16 @@ f2(4,1) = f_thrust - f_roll - f_pitch - f_yaw;
 
 
 %% Firmware Thrust Calc
-f_thrust_pwm = (f_thrust/0.1375)*65535.0
-f_roll_pwm = (f_roll/0.1375)*65535.0
-f_pitch_pwm = (f_pitch/0.1375)*65535.0
-f_yaw_pwm = (f_yaw/0.1375)*65535.0
+f_thrust_pwm = (f_thrust/0.1375)*65535.0;
+f_roll_pwm = (f_roll/0.1375)*65535.0;
+f_pitch_pwm = (f_pitch/0.1375)*65535.0;
+f_yaw_pwm = (f_yaw/0.1375)*65535.0;
 
 
-f_pwm(1,1) = f_thrust_pwm + f_roll_pwm - f_pitch_pwm + f_yaw_pwm;
-f_pwm(2,1) = f_thrust_pwm + f_roll_pwm + f_pitch_pwm - f_yaw_pwm;
-f_pwm(3,1) = f_thrust_pwm - f_roll_pwm + f_pitch_pwm + f_yaw_pwm;
-f_pwm(4,1) = f_thrust_pwm - f_roll_pwm - f_pitch_pwm - f_yaw_pwm
+f_pwm(1,1) = f_thrust_pwm + f_roll_pwm + f_pitch_pwm - f_yaw_pwm;
+f_pwm(2,1) = f_thrust_pwm + f_roll_pwm - f_pitch_pwm + f_yaw_pwm;
+f_pwm(3,1) = f_thrust_pwm - f_roll_pwm - f_pitch_pwm - f_yaw_pwm;
+f_pwm(4,1) = f_thrust_pwm - f_roll_pwm + f_pitch_pwm + f_yaw_pwm
 
 MS = sqrt((f_pwm*(0.1375/65535))*1/kf)
 

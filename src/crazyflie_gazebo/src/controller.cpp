@@ -310,7 +310,7 @@ void Controller::controlThread()
 
 
     // might need to adjust weight to real case (sdf file too)
-    double m = 0.026 + 0.0009*4; // Mass [kg]
+    double m = 0.023 + 0.0003*4; // Mass [kg]
     double g = 9.8066; // Gravitational acceleration [m/s^2]
     double t = 0; // Time from Gazebo [s]
     unsigned int t_step = 0; // t_step counter
@@ -488,7 +488,7 @@ void Controller::controlThread()
         
 
 
-        if (t_step%50 == 0){ // General Debugging output
+        if (t_step%25 == 0){ // General Debugging output
         cout << setprecision(4) <<
         "t: " << _t << "\tCmd: " << _ctrl_cmd.transpose() << endl << 
         endl <<
@@ -517,7 +517,7 @@ void Controller::controlThread()
 
         "R:\n" << R << "\n\n" << 
         "R_d:\n" << R_d << "\n\n" << 
-        "Yaw: " << yaw*180/M_PI << "\tRoll: " << roll*180/M_PI << "\tPitch: " << pitch*180/M_PI << endl <<
+        // "Yaw: " << yaw*180/M_PI << "\tRoll: " << roll*180/M_PI << "\tPitch: " << pitch*180/M_PI << endl << // These values are wrong
         "e_R: " << e_R.transpose() << "\te_R (deg): " << e_R.transpose()*180/M_PI << endl <<
         endl <<
 

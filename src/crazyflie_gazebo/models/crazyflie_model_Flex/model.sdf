@@ -126,10 +126,6 @@
           <shader type='pixel'>
             <normal_map>__default__</normal_map>
           </shader>
-          <emissive>0 0 0 1</emissive>
-          <ambient>1 0 0 1</ambient>
-          <diffuse>1 0 0 1</diffuse>
-          <specular>0.1 0.1 0.1 1</specular>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -226,10 +222,6 @@
           <shader type='pixel'>
             <normal_map>__default__</normal_map>
           </shader>
-          <ambient>0.3 0.3 0.3 1</ambient>
-          <diffuse>0.7 0.7 0.7 1</diffuse>
-          <specular>0.01 0.01 0.01 1</specular>
-          <emissive>0 0 0 1</emissive>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -326,10 +318,6 @@
           <shader type='pixel'>
             <normal_map>__default__</normal_map>
           </shader>
-          <ambient>0.3 0.3 0.3 1</ambient>
-          <diffuse>0.7 0.7 0.7 1</diffuse>
-          <specular>0.01 0.01 0.01 1</specular>
-          <emissive>0 0 0 1</emissive>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -425,10 +413,6 @@
           <shader type='pixel'>
             <normal_map>__default__</normal_map>
           </shader>
-          <emissive>0 0 0 1</emissive>
-          <ambient>1 0 0 1</ambient>
-          <diffuse>1 0 0 1</diffuse>
-          <specular>0.1 0.1 0.1 1</specular>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -490,16 +474,54 @@
         </surface>
       </collision>
     </link>
+    <link name='body_sensors'>
+      <inertial>
+        <mass>0.0001</mass>
+        <inertia>
+          <ixx>4.3354e-8</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>4.3354e-8</iyy>
+          <iyz>0</iyz>
+          <izz>4.3354e-8</izz>
+        </inertia>
+        <pose>0 0 0 0 -0 0</pose>
+      </inertial>
+      <pose>0 0 0.015 0 -0 0</pose>
+      <gravity>1</gravity>
+      <self_collide>0</self_collide>
+      <kinematic>0</kinematic>
+      <enable_wind>0</enable_wind>
+      <visual name='visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.01 0.01 0.005</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Orange</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+          <shader type='pixel'>
+            <normal_map>__default__</normal_map>
+          </shader>
+        </material>
+        <transparency>0</transparency>
+        <cast_shadows>1</cast_shadows>
+      </visual>
+    </link>
     <link name='pad_1'>
       <inertial>
         <mass>0.0001</mass>
         <inertia>
-          <ixx>0</ixx>
+          <ixx>4.3354e-8</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>0</iyy>
+          <iyy>4.3354e-8</iyy>
           <iyz>0</iyz>
-          <izz>0</izz>
+          <izz>4.3354e-8</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
@@ -523,10 +545,6 @@
           <shader type='pixel'>
             <normal_map>__default__</normal_map>
           </shader>
-          <emissive>0 0 0 1</emissive>
-          <ambient>0 0 1 1</ambient>
-          <diffuse>0 0 1 1</diffuse>
-          <specular>0.1 0.1 0.1 1</specular>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -591,12 +609,12 @@
       <inertial>
         <mass>0.0001</mass>
         <inertia>
-          <ixx>0</ixx>
+          <ixx>4.3354e-8</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>0</iyy>
+          <iyy>4.3354e-8</iyy>
           <iyz>0</iyz>
-          <izz>0</izz>
+          <izz>4.3354e-8</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
@@ -620,10 +638,6 @@
           <shader type='pixel'>
             <normal_map>__default__</normal_map>
           </shader>
-          <emissive>0 0 0 1</emissive>
-          <ambient>0 0 1 1</ambient>
-          <diffuse>0 0 1 1</diffuse>
-          <specular>0.1 0.1 0.1 1</specular>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -688,16 +702,16 @@
       <inertial>
         <mass>0.0001</mass>
         <inertia>
-          <ixx>0</ixx>
+          <ixx>4.3354e-8</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>0</iyy>
+          <iyy>4.3354e-8</iyy>
           <iyz>0</iyz>
-          <izz>0</izz>
+          <izz>4.3354e-8</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>-0.047012 -0.047024 -0.047401 -0 -0 -2.356</pose>
+      <pose>-0.047012 -0.047024 -0.047401 0 0 -2.356</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -717,10 +731,6 @@
           <shader type='pixel'>
             <normal_map>__default__</normal_map>
           </shader>
-          <emissive>0 0 0 1</emissive>
-          <ambient>0 0 1 1</ambient>
-          <diffuse>0 0 1 1</diffuse>
-          <specular>0.1 0.1 0.1 1</specular>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -785,16 +795,16 @@
       <inertial>
         <mass>0.0001</mass>
         <inertia>
-          <ixx>0</ixx>
+          <ixx>4.3354e-8</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>0</iyy>
+          <iyy>4.3354e-8</iyy>
           <iyz>0</iyz>
-          <izz>0</izz>
+          <izz>4.3354e-8</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>0.047 -0.047036 -0.047401 0 -0 -0.786</pose>
+      <pose>0.047 -0.047036 -0.047401 0 0 -0.786</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -814,10 +824,6 @@
           <shader type='pixel'>
             <normal_map>__default__</normal_map>
           </shader>
-          <emissive>0 0 0 1</emissive>
-          <ambient>0 0 1 1</ambient>
-          <diffuse>0 0 1 1</diffuse>
-          <specular>0.1 0.1 0.1 1</specular>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -1133,6 +1139,8 @@
       <axis>
         <xyz>0 1 0</xyz>
         <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
           <effort>-1</effort>
           <velocity>-1</velocity>
         </limit>
@@ -1146,6 +1154,8 @@
       <axis2>
         <xyz>0 0 1</xyz>
         <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
           <effort>-1</effort>
           <velocity>-1</velocity>
         </limit>
@@ -1178,6 +1188,8 @@
       <axis>
         <xyz>0 1 0</xyz>
         <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
           <effort>-1</effort>
           <velocity>-1</velocity>
         </limit>
@@ -1191,6 +1203,8 @@
       <axis2>
         <xyz>0 0 1</xyz>
         <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
           <effort>-1</effort>
           <velocity>-1</velocity>
         </limit>
@@ -1223,6 +1237,8 @@
       <axis>
         <xyz>0 1 0</xyz>
         <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
           <effort>-1</effort>
           <velocity>-1</velocity>
         </limit>
@@ -1236,6 +1252,8 @@
       <axis2>
         <xyz>0 0 1</xyz>
         <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
           <effort>-1</effort>
           <velocity>-1</velocity>
         </limit>
@@ -1268,6 +1286,8 @@
       <axis>
         <xyz>0 1 0</xyz>
         <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
           <effort>-1</effort>
           <velocity>-1</velocity>
         </limit>
@@ -1281,6 +1301,8 @@
       <axis2>
         <xyz>0 0 1</xyz>
         <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
           <effort>-1</effort>
           <velocity>-1</velocity>
         </limit>
@@ -1292,7 +1314,6 @@
         </dynamics>
       </axis2>
       <physics>
-        <provide_feedback>1</provide_feedback>
         <ode>
           <cfm>0.0</cfm>
           <erp>0.8</erp>
@@ -1422,6 +1443,23 @@
           <friction>0</friction>
         </dynamics>
       </axis>
+      <physics>
+        <ode>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.8</erp>
+          </limit>
+          <suspension>
+            <cfm>0</cfm>
+            <erp>0.8</erp>
+          </suspension>
+        </ode>
+      </physics>
+    </joint>
+    <joint name='sensor_joint' type='fixed'>
+      <parent>crazyflie_body</parent>
+      <child>body_sensors</child>
+      <pose>0 0 0.15 0 -0 0</pose>
       <physics>
         <ode>
           <limit>
