@@ -528,6 +528,30 @@
       </plugin>
       <pose>0 0 0 0 0 0</pose>
     </sensor>
+    <sensor type="ray" name="head_hokuyo_sensor">
+      <pose>0 0 0 0 -1.5708 0</pose>
+      <visualize>true</visualize>
+      <update_rate>40</update_rate>
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>1</samples>
+            <resolution>1</resolution>
+            <min_angle>0</min_angle>
+            <max_angle>0.1</max_angle>
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.10</min>
+          <max>5.0</max>
+          <resolution>0.01</resolution>
+        </range>
+      </ray>
+      <plugin name="gazebo_ros_head_hokuyo_controller" filename="libgazebo_ros_laser.so">
+        <topicName>/laserscan</topicName>
+        <frameName>hokuyo_link</frameName>
+      </plugin>
+    </sensor>
     </link>
     <link name='pad_1'>
       <inertial>
@@ -1534,6 +1558,15 @@
       <frameName>world</frameName>
       <xyzOffsets>0 0 0</xyzOffsets>
       <rpyOffsets>0 0 0</rpyOffsets>
+      <robotNamespace>/</robotNamespace>
+    </plugin>
+    <plugin name='mock_visual_cues' filename='libgazebo_ros_p3d.so'>
+      <alwaysOn>1</alwaysOn>
+      <updateRate>100</updateRate>
+      <bodyName>crazyflie_body</bodyName>
+      <topicName>visual_cues</topicName>
+      <frameName>world</frameName>
+      <gaussianNoise>0.6</gaussianNoise>
       <robotNamespace>/</robotNamespace>
     </plugin>
     <plugin name='front_left_motor_model' filename='libgazebo_motor_model.so'>
