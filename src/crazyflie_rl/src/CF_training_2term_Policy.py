@@ -16,7 +16,7 @@ os.system("clear")
 np.set_printoptions(precision=2, suppress=True)
 
 
-def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
+def runTraining(env,agent,V_d,phi,k_epMax=500):
     env.create_csv(env.filepath)
     
     # ============================
@@ -87,7 +87,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
             z_max = 0   # Initialize max height to be zero before run [m]
             z_prev = 0;
             vy_d = 0    # [m/s]
-            env.vel_d = [vx_d,vy_d,vz_d] # [m/s]
+            env.vel_d = [V_d*np.cos(phi_rad), vy_d, V_d*np.sin(phi_rad)] # [m/s]
             env.ceiling_ft_z = 0.0
 
 
@@ -113,7 +113,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
             ## PRINT RUN CONDITIONS AND POLICY
             print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
             print("RREV_thr: %.3f \t Gain_1: %.3f" %(RREV_threshold, G1))
-            print("Vx_d: %.3f \t Vy_d: %.3f \t Vz_d: %.3f" %(vx_d, vy_d, vz_d))
+            # print("Vx_d: %.3f \t Vy_d: %.3f \t Vz_d: %.3f" %(vx_d, vy_d, vz_d))
 
             
             # ============================
@@ -138,7 +138,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                 vx,vy,vz = vel
                 omega = state[11:14] # [wx,wy,wz]
 
-                log_sample = np.array([env.t,env.position[0],env.position[2],env.omega[1],env.flip_flag,env.impact_flag,env.RREV,env.MS[0],env.MS[2],env.ceiling_ft_z])
+                log_sample = np.array([env.t,env.position[0],env.position[2],env.omega[1],env.flip_flag,env.impact_flag])
                 
                 
                 
@@ -347,15 +347,18 @@ if __name__ == '__main__':
     # ============================
 
     ## INITIAL CONDITIONS
-    vz_d = 3.5
-    vx_d = 2.0
+    V_d = 4.0     # [m/s]
+    phi = 90    # [deg]
+    phi_rad = phi*np.pi/180
+    # vz_d = 3.5
+    # vx_d = 2.0
 
     
     
     ## INITIAL LOGGING DATA
     trial_num = 7
     env.agent_name = agent.agent_type
-    env.trial_name = f"{env.agent_name}--Vz_{vz_d}--Vx_{vx_d}--trial_{trial_num}"
+    env.trial_name = f"{env.agent_name}--Vd_{V_d}--phi_{phi}--trial_{trial_num}"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
     env.logging_flag = True
        
@@ -364,7 +367,7 @@ if __name__ == '__main__':
     ## RUN TRIAL
     env.RL_Publish() # Publish data to rl_data topic
     time.sleep(3)
-    runTraining(env,agent,vx_d,vz_d)
+    runTraining(env,agent,V_d,phi)
  
     
 
