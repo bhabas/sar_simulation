@@ -88,7 +88,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
             z_prev = 0;
             vy_d = 0    # [m/s]
             env.vel_d = [vx_d,vy_d,vz_d] # [m/s]
-            t_step = 0
+            env.ceiling_ft_z = 0.0
 
 
             ## INIT RUN FLAGS
@@ -106,7 +106,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
             FM_history = None
             env.error_str = ""
 
-            test_arr_prev = np.zeros(10)
+            log_sample_prev = np.zeros(10)
 
 
 
@@ -138,7 +138,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                 vx,vy,vz = vel
                 omega = state[11:14] # [wx,wy,wz]
 
-                # test_arr = np.array([env.t,env.position[0],env.position[2],env.omega[1],env.flip_flag,env.impact_flag,env.RREV,env.MS[0],env.MS[2],env.ceiling_ft_z])
+                log_sample = np.array([env.t,env.position[0],env.position[2],env.omega[1],env.flip_flag,env.impact_flag,env.RREV,env.MS[0],env.MS[2],env.ceiling_ft_z])
                 
                 
                 
@@ -180,12 +180,12 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     state_history = state 
                     FM_history = FM
                 else: # Append state_history columns with current state vector
-                    if t_step%1==0: 
-                    # if not np.array_equal(test_arr,test_arr_prev):
+
+                    # Check if sample of recorded data changed, if so then append csv (Reduces repeated data rows)
+                    if not np.array_equal(log_sample,log_sample_prev): 
                         state_history = np.append(state_history, state, axis=1)
                         FM_history = np.append(FM_history,FM,axis=1)
                         env.RL_Publish()
-
                         env.append_csv(env.filepath)
 
                     
@@ -287,11 +287,7 @@ def runTraining(env,agent,vx_d,vz_d,k_epMax=500):
                     ## I've got no idea...
                     break
                 
-                # test_arr_prev = test_arr
-                t_step += 1
-
-
-                
+                log_sample_prev = log_sample                
             
             ## =======  RUN COMPLETED  ======= ##
             if repeat_run == True:

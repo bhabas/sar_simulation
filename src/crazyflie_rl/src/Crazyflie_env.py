@@ -92,7 +92,7 @@ class CrazyflieEnv:
         self.state_Subscriber = rospy.Subscriber('/global_state',Odometry,self.global_stateCallback)                    # 1000 Hz
         self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)                                # 200 Hz
         self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactCallback)               # 500 Hz
-        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftCallback)    # 1000 Hz
+        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftCallback)    # 750 Hz
 
         self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.scan_callback)
         rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
@@ -230,9 +230,15 @@ class CrazyflieEnv:
             self.impact_flag = True
 
     def ceiling_ftCallback(self,ft_msg):
-        self.ceiling_ft_z = ft_msg.wrench.force.z # Z-Impact force from ceiling Force-Torque sensor
-        self.ceiling_ft_z = np.round(self.ceiling_ft_z,3)
-        # print(self.ceiling_ft_z)
+
+        # Keeps track of max impact force for each run. 
+        # The value is reset in the training script at each run start
+
+        if np.abs(ft_msg.wrench.force.z) > np.abs(self.ceiling_ft_z):
+            self.ceiling_ft_z = ft_msg.wrench.force.z           # Z-Impact force from ceiling Force-Torque sensor
+            self.ceiling_ft_z = np.round(self.ceiling_ft_z,3)   # Rounded for data logging
+
+        
     # ============================
     ##    Sensors/Gazebo Topics
     # ============================
@@ -401,7 +407,6 @@ class CrazyflieEnv:
                     'RREV','OF_x','OF_y',
                     'MS1','MS2','MS3','MS4',
                     'F_thrust','Mx','My','Mz',
-                    'ceiling_ft_z',
                     'Error'])# Place holders
 
     def append_csv(self,filepath):
@@ -417,11 +422,10 @@ class CrazyflieEnv:
                     self.orientation_q[0],self.orientation_q[1],self.orientation_q[2],self.orientation_q[3], # qw,qx,qy,qz
                     self.velocity[0],self.velocity[1],self.velocity[2], # vx,vy,vz
                     self.omega[0],self.omega[1],self.omega[2], # wx,wy,wz
-                    "","",self.flip_flag,self.impact_flag,"", # gamma, reward, flip_triggered, n_rollout
+                    "","",self.flip_flag,self.impact_flag,self.n_rollouts, # gamma, reward, flip_triggered, impact_flag, n_rollout
                     self.RREV,self.OF_x,self.OF_y, # RREV, OF_x, OF_y
                     self.MS[0],self.MS[1],self.MS[2],self.MS[3], # MS1, MS2, MS3, MS4
                     self.FM[0],self.FM[1],self.FM[2],self.FM[3], # F_thrust,Mx,My,Mz 
-                    self.ceiling_ft_z, # ceiling_ft_z
                     ""]) # Error
 
     def append_IC(self,filepath):
@@ -435,13 +439,12 @@ class CrazyflieEnv:
                     np.round(self.mu,2),np.round(self.sigma,2),np.round(self.policy,2), # mu,sigma,policy
                     "","","","", # t,x,y,z
                     "", "", "", "", # qx,qy,qz,qw
-                    np.round(self.vel_d[0],2),np.round(self.vel_d[1],2),np.round(self.vel_d[2],2), # vx,vy,vz
+                    np.round(self.vel_d[0],2),np.round(self.vel_d[1],2),np.round(self.vel_d[2],2), # vx_d,vy_d,vz_d
                     "","","", # wx,wy,wz
-                    np.round(self.gamma,2),round(self.reward,2),self.body_contact,sum(self.pad_contacts),self.n_rollouts, # gamma, reward, body_impact, num leg contacts, n_rollout
+                    np.round(self.gamma,2),round(self.reward,2),self.body_contact,sum(self.pad_contacts),self.ceiling_ft_z, # gamma, reward, body_impact, num leg contacts, impact force
                     self.RREV_tr,"",self.OF_y_tr, # RREV, OF_x, OF_y
                     "","","","", # MS1, MS2, MS3, MS4
                     "",self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # F_thrust,Mx,My,Mz
-                    "", 
                     self.error_str]) # Error
 
     def append_csv_blank(self,filepath):
