@@ -270,7 +270,7 @@ class CrazyflieEnv:
         self.launch_sim()
 
         self.reset_pos()
-        rospy.wait_for_message('/ctrl_data',CtrlData) # Wait for controller message before resuming training
+        rospy.wait_for_message('/global_state',Odometry) # Wait for global state message before resuming training
 
     def close_sim(self):
         os.killpg(self.gazebo_p.pid, signal.SIGTERM)
@@ -306,9 +306,9 @@ class CrazyflieEnv:
         ## SET POSE AND TWIST OF MODEL
         state_msg = ModelState()
         state_msg.model_name = self.modelName
-        state_msg.pose.position.x = self.position[0]
-        state_msg.pose.position.y = self.position[1]
-        state_msg.pose.position.z = self.position[2]
+        state_msg.pose.position.x = 0
+        state_msg.pose.position.y = 0
+        state_msg.pose.position.z = 0.35
 
         state_msg.pose.orientation.x = 0
         state_msg.pose.orientation.y = 0

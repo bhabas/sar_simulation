@@ -119,10 +119,10 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
             # ============================
             ##          Rollout 
             # ============================
-            env.step('pos',ctrl_flag=0)             # Turn off pos control
-            env.step('vel',env.vel_d,ctrl_flag=1)   # Set desired vel
-            # env.launch_IC(vx_d+0.03,vz_d)           # Use Gazebo to impart desired vel with extra vx to ensure -OF_y when around zero
-            env.step('sticky',ctrl_flag=1)          # Enable sticky pads
+            env.step('pos',ctrl_flag=0)                     # Turn off pos control
+            env.step('vel',env.vel_d,ctrl_flag=1)           # Set desired vel
+            env.launch_IC(env.vel_d[0]+0.03,env.vel_d[2])   # Use Gazebo to impart desired vel with extra vx to ensure -OF_y when around zero
+            env.step('sticky',ctrl_flag=1)                  # Enable sticky pads
              
             while True:
                 
