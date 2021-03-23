@@ -348,7 +348,7 @@ if __name__ == '__main__':
 
     ## INITIAL CONDITIONS
     V_d = 4.0     # [m/s]
-    phi = 90    # [deg]
+    phi = 70    # [deg]
     phi_rad = phi*np.pi/180
     # vz_d = 3.5
     # vx_d = 2.0

@@ -29,8 +29,9 @@ class Controller
         Controller(ros::NodeHandle *nh){
             ctrl_Publisher = nh->advertise<crazyflie_gazebo::CtrlData>("/ctrl_data",10);
 
-            globalState_Subscriber = nh->subscribe("/global_state",1000,&Controller::global_stateCallback,this);
+            globalState_Subscriber = nh->subscribe("/global_state",100,&Controller::global_stateCallback,this);
             imu_Subscriber = nh->subscribe("/imu",100,&Controller::imuCallback,this);
+            OF_Subscriber = nh->subscribe("/OF_sensor",100,&Controller::OFCallback,this);
             RLCmd_Subscriber = nh->subscribe("/rl_ctrl",10,&Controller::RLCmd_Callback,this);
 
             
@@ -51,7 +52,7 @@ class Controller
 
 
             // SET DEFAULT HOME POSITION
-            _x_d << 0,0,0.3;
+            _x_d << 0,0,0.4;
             _v_d << 0,0,0;
             _a_d << 0,0,0;
             _b1_d << 1,0,0;
@@ -85,6 +86,7 @@ class Controller
         void recvThread_RL();
         void controlThread();
         void global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg);
+        void OFCallback(const nav_msgs::Odometry::ConstPtr &msg);
         void imuCallback(const sensor_msgs::Imu::ConstPtr &msg);
         void RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg);
 
@@ -92,6 +94,7 @@ class Controller
         // DEFINE PUBLISHERS AND SUBSCRIBERS
         ros::Publisher ctrl_Publisher;
         ros::Subscriber globalState_Subscriber;
+        ros::Subscriber OF_Subscriber;
         ros::Subscriber RLCmd_Subscriber;
         ros::Subscriber imu_Subscriber;
 

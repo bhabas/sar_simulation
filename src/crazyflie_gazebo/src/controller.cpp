@@ -77,7 +77,6 @@ void Controller::Load()
 }
 
 
-
 void Controller::global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
 
     // SIMPLIFY STATE VALUES FROM TOPIC
@@ -92,19 +91,24 @@ void Controller::global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
     _pos << position.x, position.y, position.z;
     _vel << velocity.x, velocity.y, velocity.z;
 
+}
 
+void Controller::OFCallback(const nav_msgs::Odometry::ConstPtr &msg){
+
+    const geometry_msgs::Point position = msg->pose.pose.position; 
+    const geometry_msgs::Vector3 velocity = msg->twist.twist.linear;
+
+    double h_ceiling = 2.50;
+    double d = h_ceiling-position.z; // h_ceiling - height
 
     // SET SENSOR VALUES INTO CLASS VARIABLES
     // _RREV = msg->RREV;
     // _OF_x = msg->OF_x;
     // _OF_y = msg->OF_y;
 
-    double d = 2.5-position.z; // h_ceiling - height
     _RREV = velocity.z/d;
     _OF_x = -velocity.y/d;
     _OF_y = -velocity.x/d;
-    
-
 }
 
 void Controller::imuCallback(const sensor_msgs::Imu::ConstPtr &msg){

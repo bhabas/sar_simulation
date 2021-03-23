@@ -308,7 +308,7 @@ class CrazyflieEnv:
         state_msg.model_name = self.modelName
         state_msg.pose.position.x = 0
         state_msg.pose.position.y = 0
-        state_msg.pose.position.z = 0.35
+        state_msg.pose.position.z = 0.235
 
         state_msg.pose.orientation.x = 0
         state_msg.pose.orientation.y = 0
@@ -338,7 +338,7 @@ class CrazyflieEnv:
         state_msg.model_name = self.modelName
         state_msg.pose.position.x = 0
         state_msg.pose.position.y = 0
-        state_msg.pose.position.z = 0.36
+        state_msg.pose.position.z = 0.230
 
         state_msg.pose.orientation.w = 1
         state_msg.pose.orientation.x = 0
