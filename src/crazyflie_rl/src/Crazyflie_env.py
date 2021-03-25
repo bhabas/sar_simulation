@@ -212,23 +212,30 @@ class CrazyflieEnv:
         for msg in msg_arr.states: ## ContactsState message includes an array of ContactState messages
             # If pad collision or body collision detected then mark True
             if msg.collision1_name  ==  f"{self.modelName}::pad_1::collision" and self.pad_contacts[0] == False:
-                self.append_csv(self.filepath) # Append data at instant when ceiling impact detected
+                
                 self.pad_contacts[0] = True
 
+                if self.logging_flag:
+                    self.append_csv(self.filepath) # Append data at instant when ceiling impact detected
+                
             elif msg.collision1_name == f"{self.modelName}::pad_2::collision" and self.pad_contacts[1] == False:
-                self.append_csv(self.filepath) 
                 self.pad_contacts[1] = True
 
+                if self.logging_flag:
+                    self.append_csv(self.filepath)
             elif msg.collision1_name == f"{self.modelName}::pad_3::collision" and self.pad_contacts[2] == False:
-                self.append_csv(self.filepath) 
                 self.pad_contacts[2] = True
 
+                if self.logging_flag:
+                    self.append_csv(self.filepath)
+
             elif msg.collision1_name == f"{self.modelName}::pad_4::collision" and self.pad_contacts[3] == False:
-                self.append_csv(self.filepath) 
                 self.pad_contacts[3] = True
 
+                if self.logging_flag:
+                    self.append_csv(self.filepath)
+
             elif msg.collision1_name == f"{self.modelName}::crazyflie_body::body_collision" and self.body_contact == False:
-                self.append_csv(self.filepath) 
                 self.body_contact = True
 
         if any(self.pad_contacts) or self.body_contact: # If any pad contacts are True then update impact flag
