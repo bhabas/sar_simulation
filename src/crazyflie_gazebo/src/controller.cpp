@@ -131,7 +131,10 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
 
     _ctrl_cmd << cmd_type,cmd_vals,cmd_flag; // Define cmd vector
 
-
+    
+    float eulx = 0.0;
+    float euly = 0.0;
+    float eulz = 0.0;
     
 
     switch(cmd_type){
@@ -159,6 +162,7 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             _Moment_flag = false;
             _policy_armed_flag = false;
             _flip_flag = false;
+            _eul_flag = false;
 
             _tumbled = false;
             // _tumble_detection = true;
@@ -175,7 +179,15 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             _kd_xf = cmd_flag;
             break;
 
-        case 3: // Attitude [Future implentation needed]
+        case 3: // Attitude 
+            
+            _eul_flag = cmd_flag;
+
+            eulx = cmd_vals(0)*M_PI/180.0;
+            euly = cmd_vals(1)*M_PI/180.0;
+            eulz = cmd_vals(2)*M_PI/180.0;
+
+            _R_d_custom = AngleAxisf(euly, Vector3f::UnitY()) * AngleAxisf(eulz, Vector3f::UnitZ()) * AngleAxisf(eulx, Vector3f::UnitX());
             break;
         
         case 4: // Tumble-Detection
@@ -252,8 +264,6 @@ void Controller::controlThread()
     
 
     Matrix3d R_d; // Rotation-desired 
-    Matrix3d R_d_custom; // Rotation-desired (ZXY Euler angles)
-    Vector3d eul_d; // Desired attitude (ZXY Euler angles) [rad] (roll, pitch, yaw angles)
     Vector3d omega_d; // Omega-desired [rad/s]
     Vector3d domega_d(0,0,0); // Omega-Accl. [rad/s^2]
 
@@ -412,6 +422,12 @@ void Controller::controlThread()
         // =========== Rotational Errors =========== // 
         R_d << b2_d.cross(b3_d).normalized(),b2_d,b3_d; // Desired rotational axis
                                                         // b2_d x b3_d != b1_d (look at derivation)
+        
+        if (_eul_flag == true){
+            
+            R_d = _R_d_custom.cast <double> ();
+        }
+            
 
         e_R = 0.5*dehat(R_d.transpose()*R - R.transpose()*R_d); // Rotational error
         e_omega = omega - R.transpose()*R_d*omega_d; // Ang vel error 
@@ -581,6 +597,19 @@ void Controller::controlThread()
 
 int main(int argc, char **argv)
 {
+
+
+    // Matrix3f m;
+
+    // double eul_x = 0;
+    // double eul_y = -15.0*M_PI/180.0;
+    // double eul_z = 0;
+
+    // m = AngleAxisf((float) eul_y, Vector3f::UnitY()) * AngleAxisf((float) eul_z, Vector3f::UnitZ()) * AngleAxisf((float) eul_x, Vector3f::UnitX());
+
+    
+    // cout << m << endl;
+
     ros::init(argc, argv,"controller_node");
     ros::NodeHandle nh;
     Controller controller = Controller(&nh);

@@ -124,6 +124,10 @@ class Controller
         Eigen::Vector3d _omega_d;   // Omega-desired [rad/s]
         Eigen::Vector3d _M_d;       // Moment-desired [N*m]
 
+        Eigen::Vector3d _eul_d;     // Euler-desired [rad?]
+        bool _eul_flag = false;
+        Eigen::Matrix3f _R_d_custom; // Rotation-desired (YZX Euler notation)
+
         Eigen::Vector3d _kp_x; // Pos. Gain
         Eigen::Vector3d _kd_x; // Pos. derivative Gain
         Eigen::Vector3d _kp_R; // Rot. Gain
