@@ -209,7 +209,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
 
                 # IF POSITION FALLS BELOW ACHIEVED MAX HEIGHT
                 z_max = max(position[2],z_max)
-                if position[2] <= 0.80*z_max: # Note: there is a lag with this
+                if position[2] <= 0.3: # Note: there is a lag with this
                     env.error_str = "Rollout Completed: Falling Drone"
                     print(env.error_str)
 
@@ -329,7 +329,7 @@ if __name__ == '__main__':
 
     ## GAUSSIAN PARAMETERS
     mu = np.array([[4.80],[5.536]])          # Random initial mu
-    sigma = np.array([[0.0001],[0.0001]])       # Initial estimates of sigma:
+    sigma = np.array([[0.000001],[0.000001]])       # Initial estimates of sigma:
 
 
     ## SIM PARAMETERS

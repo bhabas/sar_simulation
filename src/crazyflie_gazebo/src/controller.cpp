@@ -313,6 +313,9 @@ void Controller::controlThread()
 
     float OF_y_tr = 0;
     float RREV_tr = 0;
+    float Z_tr = 0;
+    float Vz_tr = 0;
+    float Vx_tr = 0;
 
     double Mx = 0;
     double My = 0;
@@ -361,7 +364,7 @@ void Controller::controlThread()
 
     // =========== ROS Definitions =========== //
     crazyflie_gazebo::CtrlData ctrl_msg;
-    ros::Rate rate(200);
+    ros::Rate rate(1000);
 
     while(_isRunning)
     {
@@ -448,6 +451,11 @@ void Controller::controlThread()
                 if(_RREV >= _RREV_thr && _flip_flag == false){
                     OF_y_tr = _OF_y;
                     RREV_tr = _RREV;
+
+                    Z_tr = _pos(2);
+                    Vz_tr = _vel(2);
+                    Vx_tr = _vel(0);
+
                     _flip_flag = true;
 
                     cout << "t: " << _t << endl;
@@ -573,6 +581,9 @@ void Controller::controlThread()
         ctrl_msg.flip_flag = _flip_flag;
         ctrl_msg.RREV_tr = RREV_tr;
         ctrl_msg.OF_y_tr = OF_y_tr;
+        ctrl_msg.Z_tr = Z_tr;
+        ctrl_msg.Vz_tr = Vz_tr;
+        ctrl_msg.Vx_tr = Vx_tr;
         ctrl_msg.FM_flip = {FM[0],_M_d(0)*1e3,_M_d(1)*1e3,_M_d(2)*1e3};
 
 
