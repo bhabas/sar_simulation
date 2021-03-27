@@ -589,7 +589,7 @@ class DataFile:
         x = self.grab_stateData(k_ep,k_run,'x')
         z = self.grab_stateData(k_ep,k_run,'z')
 
-        ceil_height = 2.5 # [m]
+        ceil_height = 3.0 # [m]
 
         ## PLOT DATA
         fig = plt.figure()
@@ -619,7 +619,7 @@ class DataFile:
 
         ## GRAB/MODIFY DATA
 
-        ceil_height = 2.5 # [m]
+        ceil_height = 3.0 # [m]
 
         x = self.grab_stateData(k_ep,k_run,'x')
         z = self.grab_stateData(k_ep,k_run,'z')

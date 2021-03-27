@@ -138,7 +138,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
                 vx,vy,vz = vel
                 omega = state[11:14] # [wx,wy,wz]
 
-                log_sample = np.array([env.t,env.position[0],env.position[2],env.omega[1],env.flip_flag,env.impact_flag])
+                log_sample = np.array([env.t,env.position[0],env.position[2],env.omega[1],env.impact_flag])
                 
                 
                 
@@ -314,7 +314,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
 if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=True)
+    env = CrazyflieEnv(gazeboTimeout=False)
     # env.launch_dashboard()
 
     print("Environment done")
@@ -328,14 +328,14 @@ if __name__ == '__main__':
     alpha_sigma = np.array([[0.05]])
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[4.45],[4.5]])          # Random initial mu
-    sigma = np.array([[1.25],[1.25]])       # Initial estimates of sigma:
+    mu = np.array([[4.80],[5.536]])          # Random initial mu
+    sigma = np.array([[0.0001],[0.0001]])       # Initial estimates of sigma:
 
 
     ## SIM PARAMETERS
     env.n_rollouts = 8
     env.gamma = 0.95
-    env.h_ceiling = 2.5 # [m]
+    env.h_ceiling = 3.0 # [m]
 
 
     ## LEARNING AGENTS
@@ -354,11 +354,10 @@ if __name__ == '__main__':
     # vx_d = 2.0
 
     
-    
     ## INITIAL LOGGING DATA
-    trial_num = 7
+    trial_num = 6
     env.agent_name = agent.agent_type
-    env.trial_name = f"{env.agent_name}--Vd_{V_d}--phi_{phi}--trial_{trial_num}"
+    env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
     env.logging_flag = True
        
