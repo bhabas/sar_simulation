@@ -31,7 +31,8 @@ class Controller
 
             globalState_Subscriber = nh->subscribe("/global_state",100,&Controller::global_stateCallback,this);
             imu_Subscriber = nh->subscribe("/imu",100,&Controller::imuCallback,this);
-            OF_Subscriber = nh->subscribe("/OF_sensor",100,&Controller::OFCallback,this);
+            OF_Subscriber = nh->subscribe("/OF_sensor",10,&Controller::OFCallback,this);
+            
             RLCmd_Subscriber = nh->subscribe("/rl_ctrl",10,&Controller::RLCmd_Callback,this);
 
             

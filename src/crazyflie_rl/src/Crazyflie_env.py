@@ -90,6 +90,7 @@ class CrazyflieEnv:
 
         ## INIT ROS SUBSCRIBERS 
         self.state_Subscriber = rospy.Subscriber('/global_state',Odometry,self.global_stateCallback)                    # 1000 Hz
+        self.OF_Subscriber = rospy.Subscriber('/OF_sensor',Odometry,self.OFCallback)
         self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)                                # 200 Hz
         self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactCallback)               # 500 Hz
         self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftCallback)    # 750 Hz
@@ -173,6 +174,14 @@ class CrazyflieEnv:
         self.RREV_tr = np.round(ctrl_msg.RREV_tr,3)
         self.OF_y_tr = np.round(ctrl_msg.OF_y_tr,3)
 
+    def OFCallback(self,OF_msg): ## Callback to parse state data received from gazebo_communication node
+
+        ## SET VISUAL CUE SENSOR VALUES FROM TOPIC
+        d = self.h_ceiling - OF_msg.pose.pose.position.z
+        self.RREV = round(OF_msg.twist.twist.linear.z/d,3)
+        self.OF_x = round(-OF_msg.twist.twist.linear.y/d,3)
+        self.OF_y = round(-OF_msg.twist.twist.linear.x/d,3)
+
     def global_stateCallback(self,gs_msg): ## Callback to parse state data received from gazebo_communication node
         
         ## SET TIME VALUE FROM TOPIC
@@ -201,11 +210,7 @@ class CrazyflieEnv:
         self.state_current = np.concatenate([np.atleast_1d(self.t),self.position,self.orientation_q,self.velocity,self.omega])
         
 
-        ## SET VISUAL CUE SENSOR VALUES FROM TOPIC
-        d = self.h_ceiling - self.position[2]
-        self.RREV = round(self.velocity[2]/d,3)
-        self.OF_x = round(-self.velocity[1]/d,3)
-        self.OF_y = round(-self.velocity[0]/d,3)
+        
 
     def contactCallback(self,msg_arr): ## Callback to indicate which pads have collided with ceiling
 
