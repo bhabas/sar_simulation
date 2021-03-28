@@ -31,7 +31,7 @@ class CrazyflieEnv:
         self.h_ceiling = 3.00
 
         ## INIT NAME OF MODEL BEING USED
-        self.modelName = 'crazyflie_model_Flex'
+        self.modelName = 'crazyflie_model_Wide-Long'
 
         ## INIT RL_DATA VARIABLES 
         #region 

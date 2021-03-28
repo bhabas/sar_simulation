@@ -10,7 +10,7 @@ source devel/setup.bash
 source src/crazyflie_simulation/src/crazyflie_gazebo/setup_gazebo.bash $(pwd) $(pwd)/devel/lib
 
 
-roslaunch crazyflie_gazebo crazyflie_sitl.launch world_name:="ceiling" vehicle:="crazyflie_model_Flex" gui:="true"
+roslaunch crazyflie_gazebo crazyflie_sitl.launch world_name:="ceiling" vehicle:="crazyflie_model_Wide-Long" gui:="true"
 # script does not move past this line
 
 # Command | ROS Package (not strictly folder name) | launch file | launch parameters
