@@ -22,6 +22,11 @@ class CrazyflieEnv:
     def __init__(self,gazeboTimeout=True):
         print("[STARTING] CrazyflieEnv is starting...")
         self.state_current = np.zeros(14)
+        self.state_flip = np.zeros(14)
+        
+        
+
+
         self.isRunning = True
         self.username = getpass.getuser()
         self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log"
@@ -73,13 +78,20 @@ class CrazyflieEnv:
         self.ceiling_ft_z = 0.0
 
 
-        ## Reward Vals
+        ## REWARD VALS
         self.z_max = 0.0
         self.pitch_sum = 0.0
         self.pitch_max = 0.0
 
         self.t_prev = 0.0
 
+        ## FLIP VALS
+        self.state_flip = np.zeros(14)
+        self.FM_flip = [0,0,0,0]
+
+        ## IMPACT VALS
+        self.state_impact = np.zeros(14)
+        self.FM_impact = [0,0,0,0]
         #endregion 
 
 
@@ -269,8 +281,12 @@ class CrazyflieEnv:
             elif msg.collision1_name == f"{self.modelName}::crazyflie_body::body_collision" and self.body_contact == False:
                 self.body_contact = True
 
-        if any(self.pad_contacts) or self.body_contact: # If any pad contacts are True then update impact flag
+        if (any(self.pad_contacts) or self.body_contact) and self.impact_flag == False: # If any pad contacts are True then update impact flag
             self.impact_flag = True
+            
+            if self.logging_flag:
+                self.state_impact = self.state_current
+                self.FM_impact = self.FM
             
 
     def ceiling_ftCallback(self,ft_msg):
@@ -321,7 +337,7 @@ class CrazyflieEnv:
         self.isRunning = False
      
     def getTime(self):
-        return self.state_current[0]
+        return self.t
 
     def launch_sim(self):
         
@@ -472,6 +488,46 @@ class CrazyflieEnv:
                     self.FM[0],self.FM[1],self.FM[2],self.FM[3], # F_thrust,Mx,My,Mz 
                     ""]) # Error
 
+    
+
+    # def append_flip(self,filepath):
+    #     if self.logging_flag:
+    
+    #         with open(filepath,mode='a') as state_file:
+    #             state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    #             state_writer.writerow([
+    #                 self.k_ep,self.k_run,
+    #                 "","", # alpha_mu,alpha_sig
+    #                 "","","", # mu,sigma,policy
+    #                 self.t_flip,self.x_flip,self.z_flip, # t,x,y,z
+    #                 self.qx_flip,self.qy_flip,self.qz_flip,self.qw_flip, # qx,qy,qz,qw
+    #                 self.vx_flip,self.vy_flip,self.vz_flip, # vx_d,vy_d,vz_d
+    #                 self.wx_flip,self.wy_flip,self.wz_flip, # wx,wy,wz
+    #                 "","","","","", # gamma, reward, body_impact, num leg contacts, impact force
+    #                 self.RREV_tr,self.OF_x_tr,self.OF_y_tr, # RREV, OF_x, OF_y
+    #                 "","","","", # MS1, MS2, MS3, MS4
+    #                 self.FM_flip[0],self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # F_thrust,Mx,My,Mz
+    #                 "Flip Data"]) # Error
+    
+    def append_impact(self,filepath):
+        if self.logging_flag:
+    
+            with open(filepath,mode='a') as state_file:
+                state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                state_writer.writerow([
+                    self.k_ep,self.k_run,
+                    "","", # alpha_mu,alpha_sig
+                    "","","", # mu,sigma,policy
+                    self.state_impact[0],self.state_impact[1],self.state_impact[2],self.state_impact[3],    # t,x,y,z
+                    self.state_impact[4],self.state_impact[5],self.state_impact[6],self.state_impact[7],    # qx,qy,qz,qw
+                    self.state_impact[8],self.state_impact[9],self.state_impact[10],    # vx_d,vy_d,vz_d
+                    self.state_impact[11],self.state_impact[12],self.state_impact[13],  # wx,wy,wz
+                    "","",self.body_contact,sum(self.pad_contacts),self.ceiling_ft_z,   # gamma, reward, body_impact, num leg contacts, max impact force
+                    "","","", # RREV, OF_x, OF_y
+                    "","","","", # MS1, MS2, MS3, MS4
+                    self.FM_impact[0],self.FM_impact[1],self.FM_impact[2],self.FM_impact[3], # F_thrust,Mx,My,Mz
+                    "Impact Data"]) # Error
+
     def append_IC(self,filepath):
         if self.logging_flag:
     
@@ -485,10 +541,10 @@ class CrazyflieEnv:
                     "", "", "", "", # qx,qy,qz,qw
                     np.round(self.vel_d[0],2),np.round(self.vel_d[1],2),np.round(self.vel_d[2],2), # vx_d,vy_d,vz_d
                     "","","", # wx,wy,wz
-                    np.round(self.gamma,2),round(self.reward,2),self.body_contact,sum(self.pad_contacts),self.ceiling_ft_z, # gamma, reward, body_impact, num leg contacts, impact force
+                    np.round(self.gamma,2),round(self.reward,2),"","","", # gamma, reward, 
                     self.RREV_tr,"",self.OF_y_tr, # RREV, OF_x, OF_y
                     "","","","", # MS1, MS2, MS3, MS4
-                    "",self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # F_thrust,Mx,My,Mz
+                    "","","","", # F_thrust,Mx,My,Mz
                     self.error_str]) # Error
 
     def append_csv_blank(self,filepath):

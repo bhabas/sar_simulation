@@ -3,7 +3,6 @@
 
 import numpy as np
 import time,os
-from scipy.spatial.transform import Rotation
 
 
 
@@ -195,10 +194,6 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
                             env.append_csv(env.filepath)
 
                         
-                            
-
-
-                        
 
 
                     # ============================
@@ -215,16 +210,12 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
 
                     # IF POSITION FALLS BELOW ACHIEVED MAX HEIGHT
 
-                    if position[2] <= 0.0: # Note: there is a lag with this
+                    if env.position[2] <= 0.0: # Note: there is a lag with this
                         env.error_str = "Rollout Completed: Falling Drone"
                         print(env.error_str)
 
                         env.runComplete_flag = True
 
-                    # IF CF HASN'T CHANGED Z HEIGHT IN PAST [5.0s]
-                    if np.abs(position[2]-z_prev) > 0.001:
-                        start_time_height = env.getTime()
-                    z_prev = position[2] 
 
                     if (env.getTime() - start_time_height) > (5.0):
                         env.error_str = "Rollout Completed: Pos Time Exceeded"
@@ -238,24 +229,19 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
 
                         env.runComplete_flag = True
 
-                    
-
-
-                    
-                    
 
                     # ============================
                     ##          Errors  
                     # ============================
 
                     ## IF NAN IS FOUND IN STATE VECTOR REPEAT RUN (Model collision Error)
-                    if any(np.isnan(state)): 
+                    if any(np.isnan(env.state_current)): 
                         env.error_str = "Error: NAN found in state vector"
                         print(env.error_str)
                         repeat_run = True
                         break
 
-                    if np.abs(position[1]) >= 1.0: # If CF goes crazy it'll usually shoot out in y-direction
+                    if np.abs(env.position[1]) >= 1.0: # If CF goes crazy it'll usually shoot out in y-direction
                         env.error_str = "Error: Y-Position Exceeded"
                         print(env.error_str)
                         repeat_run = True
@@ -279,7 +265,9 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
                         print(f"# of Leg contacts: {sum(env.pad_contacts)}")
                         print("!------------------------End Run------------------------! \n")   
 
+                        
                         env.append_IC(env.filepath)
+                        env.append_impact(env.filepath)
                         env.append_csv_blank(env.filepath)
 
                         env.reset_pos()
