@@ -83,32 +83,12 @@ class ES:
     
 
 
-    def calcReward_pureLanding(self,state_hist,h_ceiling,pad_contacts,body_contact): # state_hist is size 14 x timesteps
-        ## DEFINE STATES
-        t_hist = state_hist[0,:]
-        wy_hist = state_hist[12,:]
-        z_hist = state_hist[3,:]
-
-
-        ## INIT INTEGRATION VARIABLES
-        pitch_hist = np.zeros_like(t_hist)
-        pitch_sum = 0
-        prev = t_hist[0]
-
-        ## INTEGRATE FOR W_My AND FINAL PITCH ANGLE
-        # Integrate omega_y over time to get full rotation estimate
-        # This accounts for multiple revolutions that euler angles can't
-        for ii,wy in enumerate(wy_hist):
-            pitch_sum += wy*(180/np.pi)*(t_hist[ii]-prev) # [deg]
-            pitch_hist[ii] = pitch_sum # [deg]
-
-            prev = t_hist[ii]
-
+    def calcReward_pureLanding(self,env): # state_hist is size 14 x timesteps
 
 
         ## r_contact Calc
-        num_contacts = np.sum(pad_contacts)
-        if body_contact == False:
+        num_contacts = np.sum(env.pad_contacts)
+        if env.body_contact == False:
             if num_contacts == 3 or num_contacts == 4:
                 r_contact = 7
             elif num_contacts == 2:
@@ -120,27 +100,24 @@ class ES:
         else:
             r_contact = 0
 
-
-       
         
         ## r_theta Calc
-        if -170 < np.min(pitch_hist) <= 0:
-            r_theta = 5*(-1/170*np.min(pitch_hist))      
-        elif -250 <= np.min(pitch_hist) <= -170:
+        if -170 < np.min(env.pitch_max) <= 0:
+            r_theta = 5*(-1/170*np.min(env.pitch_max))      
+        elif -250 <= np.min(env.pitch_max) <= -170:
             r_theta = 5
         else:
             r_theta = 0
         
 
-        
 
         ## r_height Calc
-        r_h = np.max(z_hist/h_ceiling)*10
+        r_h = (env.z_max/env.h_ceiling)*10
         
 
         
         R = (r_contact+r_theta)*r_h + 0.001
-        print(f"Reward: r_c: {r_contact:.3f} | r_theta: {r_theta:.3f} | r_h: {r_h:.3f} | pitch sum: {np.min(pitch_hist):.2f}")
+        print(f"Reward: r_c: {r_contact:.3f} | r_theta: {r_theta:.3f} | r_h: {r_h:.3f} | Pitch Max: {env.pitch_max:.2f}")
         return R
 
     def get_baseline(self, span):

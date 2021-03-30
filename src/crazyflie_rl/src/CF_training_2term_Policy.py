@@ -18,6 +18,7 @@ np.set_printoptions(precision=2, suppress=True)
 
 def runTraining(env,agent,V_d,phi,k_epMax=500):
     env.create_csv(env.filepath)
+    phi_rad = phi*np.pi/180
     
     # ============================
     ##          Episode         
@@ -31,8 +32,9 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
         ## CONVERT AGENT ARRAYS TO LISTS FOR PUBLISHING
         env.mu = agent.mu.flatten().tolist()                    # Mean for Gaussian distribution
         env.sigma = agent.sigma.flatten().tolist()              # Standard Deviation for Gaussian distribution
-        env.alpha_mu = agent.alpha_mu.flatten().tolist()        # Learning rate for mu
-        env.alpha_sigma = agent.alpha_sigma.flatten().tolist()  # Learning rate for sigma
+
+        env.alpha_mu = agent.alpha_mu.flatten().tolist()        # Learning rate for mu (PEPG)
+        env.alpha_sigma = agent.alpha_sigma.flatten().tolist()  # Learning rate for sigma (PEPG)
 
         
         ## PREALLOCATE REWARD VEC AND OBTAIN THETA VALS
@@ -111,6 +113,11 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
                 log_sample_prev = np.zeros(10)
                 t_step = 0
 
+                ## INIT REWARD CALC VALUES
+                env.z_max = 0.0
+                env.pitch_sum = 0.0
+                env.pitch_max = 0.0
+
 
 
                 ## PRINT RUN CONDITIONS AND POLICY
@@ -127,20 +134,18 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
                 env.launch_IC(env.vel_d[0]+0.03,env.vel_d[2])   # Use Gazebo to impart desired vel with extra vx to ensure -OF_y when around zero
                 env.step('sticky',ctrl_flag=1)                  # Enable sticky pads
                 
-                while True:
+                while 1: # NOTE: [while 1:] is faster than [while True:]
                     
                     
                     
                     ## DEFINE CURRENT STATE
-                    state = env.state_current
-                    FM = np.array(env.FM) # Motor thrust and Moments
+                    state = env.state_current   # Collect state values here so they are thread-safe
+                    FM = np.array(env.FM)       # Motor thrust and Moments
                     
                     position = state[1:4] # [x,y,z]
                     vel = state[8:11] # [vx,vy,vz]
                     vx,vy,vz = vel
-                    # log_sample = np.array([env.t,env.position[0]])
-                    
-                    
+       
                     
 
 
@@ -262,21 +267,23 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
                     # ============================
                     if env.runComplete_flag==True:
 
-                        env.reset_pos()
+                        print(f"z_max: {env.z_max}")
+                        print(f"pitch_sum: {env.pitch_sum}")
+                        print(f"max pitch: {env.pitch_max}")
 
-                        reward[k_run] = agent.calcReward_pureLanding(state_history,env.h_ceiling,env.pad_contacts,env.body_contact)
-                        # reward[k_run] = agent.calcReward_effortMinimization(state_history,FM_history,env.h_ceiling,env.pad_contacts,env.body_contact)
+                        reward[k_run] = agent.calcReward_pureLanding(env)
                         env.reward = reward[k_run,0]
-                        print("Reward = %.3f" %(reward[k_run]))
-                        print("# of Leg contacts: %i" %(sum(env.pad_contacts)))
+                        
+                        
+                        print(f"Reward = {env.reward:.3f}")
+                        print(f"# of Leg contacts: {sum(env.pad_contacts)}")
                         print("!------------------------End Run------------------------! \n")   
 
                         env.append_IC(env.filepath)
                         env.append_csv_blank(env.filepath)
+
+                        env.reset_pos()
                     
-                        ## There is a weird delay where it sometime won't publish ctrl_cmds until the next command is executed
-                        ## I have no idea what's going on there but it may or may not have an effect?
-                        ## I've got no idea...
                         break
                     
                     # log_sample_prev = log_sample          
@@ -293,7 +300,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
                     env.RL_Publish()
                     k_run += 1 # Move on to next run
                     
-            except: ## IF SIM EXCEPTION RAISED THEN CONTINUE BACK TO TRY BLOCK UNTIL SUCCESSFUL COMPLETION
+            except FileNotFoundError: ## IF SIM EXCEPTION RAISED THEN CONTINUE BACK TO TRY BLOCK UNTIL SUCCESSFUL COMPLETION
                 continue
 
             
@@ -310,8 +317,8 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
 if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=True)
-    env.launch_dashboard()
+    env = CrazyflieEnv(gazeboTimeout=False)
+    # env.launch_dashboard()
 
     print("Environment done")
 
@@ -345,9 +352,7 @@ if __name__ == '__main__':
     ## INITIAL CONDITIONS
     V_d = 4.0     # [m/s]
     phi = 70    # [deg]
-    phi_rad = phi*np.pi/180
-    # vz_d = 3.5
-    # vx_d = 2.0
+
 
     
     ## INITIAL LOGGING DATA

@@ -72,6 +72,14 @@ class CrazyflieEnv:
 
         self.ceiling_ft_z = 0.0
 
+
+        ## Reward Vals
+        self.z_max = 0.0
+        self.pitch_sum = 0.0
+        self.pitch_max = 0.0
+
+        self.t_prev = 0.0
+
         #endregion 
 
 
@@ -210,6 +218,24 @@ class CrazyflieEnv:
         self.state_current = np.concatenate([np.atleast_1d(self.t),self.position,self.orientation_q,self.velocity,self.omega])
         
 
+
+
+        ## MAX Z CALC
+        if self.position[2] > self.z_max:
+            self.z_max = self.position[2]       # Max height achieved, used for reward calc
+            self.z_max = np.round(self.z_max,3) # Rounded for data logging
+
+        ## MAX PITCH CALC
+        # Integrate omega_y over time to get full rotation estimate
+        # This accounts for multiple revolutions that euler angles/quaternions can't
+        self.pitch_sum = self.pitch_sum + self.omega[1]*(180/np.pi)*(self.t - self.t_prev) # [deg]
+        
+        if self.pitch_sum < self.pitch_max:     # Recording the most negative value
+            self.pitch_max = self.pitch_sum
+            self.pitch_max = np.round(self.pitch_max,3)
+
+
+        self.t_prev = self.t # Save t value for next callback iteration
         
 
     def contactCallback(self,msg_arr): ## Callback to indicate which pads have collided with ceiling
