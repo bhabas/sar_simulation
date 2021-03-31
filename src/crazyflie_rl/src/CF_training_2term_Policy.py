@@ -15,9 +15,13 @@ os.system("clear")
 np.set_printoptions(precision=2, suppress=True)
 
 
-def runTraining(env,agent,V_d,phi,k_epMax=500):
+def runTraining(env,agent,V_d,phi,k_epMax=250):
     env.create_csv(env.filepath)
+
+    ## INIT LAUNCH/FLIGHT CONDITIONS
     phi_rad = phi*np.pi/180
+    vy_d = 0 # [m/s]
+    env.vel_d = [V_d*np.cos(phi_rad), vy_d, V_d*np.sin(phi_rad)] # [m/s]
     
     # ============================
     ##          Episode         
@@ -37,8 +41,8 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
 
         
         ## PREALLOCATE REWARD VEC AND OBTAIN THETA VALS
-        reward = np.zeros(shape=(agent.n_rollouts,1))
-        theta_rl,epsilon_rl = agent.get_theta()
+        reward_arr = np.zeros(shape=(agent.n_rollouts,1))   # Array of reward values
+        theta_rl,epsilon_rl = agent.get_theta()             # Generate sample policies from distribution
 
 
         ## PRINT EPISODE DATA
@@ -47,10 +51,10 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
         print("=============================================")
 
         print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
-
-        print("RREV=%.3f, \t theta1=%.3f" %(agent.mu[0], agent.mu[1]))
-        print("sig1=%.3f, \t sig2=%.3f" %(agent.sigma[0], agent.sigma[1]))
+        print(f"mu_0 = {agent.mu[0,0]:.3f}, \t sig_0 = {agent.sigma[0,0]:.3f}")
+        print(f"mu_1 = {agent.mu[1,0]:.3f}, \t sig_1 = {agent.sigma[1,0]:.3f}")
         print('\n')
+        
 
         print("theta_rl = ")
         print(theta_rl[0,:], "--> RREV")
@@ -63,53 +67,37 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
         # ============================
         ##          Run 
         # ============================
-        k_run = 0 # Reset run counter each episode
-        while k_run < env.n_rollouts:
+        for env.k_run in range(0,env.n_rollouts):
 
-            try:
+            ## UPDATE RUN NUMBER
+            k_run = env.k_run # Local variables are faster to access then class variables
+
+            try: # Use try block to catch raised exceptions and attempt rollout again
+               
             
                 ## RESET TO INITIAL STATE
                 env.step('home') # Reset control vals and functionality to default vals
-                time.sleep(0.65) # Time for CF to settle
+                time.sleep(0.65) # Time for CF to settle [Real-Time seconds]
                 
 
                 ## INITIALIZE POLICY PARAMETERS: 
-                #  POLICY IMPLEMENTED IN CONTROLLER NODE (CONTROLLER.CPP)
-                RREV_threshold = theta_rl[0, k_run] # FoV expansion velocity [rad/s]
+                #  Policy implemented in controller node (controller.cpp)
+                RREV_thr = theta_rl[0, k_run] # RREV threshold (FOV expansion velocity) [rad/s]
                 G1 = theta_rl[1, k_run]
-                env.policy = [RREV_threshold,np.abs(G1),0]
+                G2 = 0.0
+
+                env.policy = [RREV_thr,np.abs(G1),G2]
                 env.step('policy',env.policy,ctrl_flag=1) # Arm controller policy
-            
 
-                
+
                 ## RESET/UPDATE RUN CONDITIONS
-                env.k_run = k_run   # Update class k_run variable
-                env.pad_contacts = [False,False,False,False] # Reset pad contacts
-                env.body_contact = False
-                env.ceiling_ft_z = 0.0
-                env.ceiling_ft_x = 0.0
-
-
-
-
-                vy_d = 0    # [m/s]
-                env.vel_d = [V_d*np.cos(phi_rad), vy_d, V_d*np.sin(phi_rad)] # [m/s]
-                
-
-
-                ## INIT RUN FLAGS
                 env.runComplete_flag = False
                 repeat_run= False
 
-                env.impact_flag = False
-                env.flip_flag = False
-                flag = False # Ensures flip data printed only once (Needs a better name)
-                
-
                 start_time_rollout = env.getTime()
                 start_time_pitch = np.nan
-                start_time_height = env.getTime()
 
+                ## RESET LOGGING CONDITIONS 
                 state_history = None
                 FM_history = None
                 env.error_str = ""
@@ -117,7 +105,20 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
                 log_sample_prev = np.zeros(10)
                 t_step = 0
 
-                ## INIT REWARD CALC VALUES
+
+                ## RESET IMPACT CONDITIONS
+                env.impact_flag = False
+                env.pad_contacts = [False,False,False,False] # Reset impact condition variables
+                env.body_contact = False
+                env.ceiling_ft_z = 0.0
+                env.ceiling_ft_x = 0.0
+
+                ## RESET FLIP CONDITIONS
+                env.flip_flag = False
+                flag = False # Ensures flip data recorded only once (Needs a better name)
+
+                
+                ## RESET REWARD CALC VALUES
                 env.z_max = 0.0
                 env.pitch_sum = 0.0
                 env.pitch_max = 0.0
@@ -125,9 +126,10 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
 
 
                 ## PRINT RUN CONDITIONS AND POLICY
-                print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
-                print("RREV_thr: %.3f \t Gain_1: %.3f" %(RREV_threshold, G1))
-                # print("Vx_d: %.3f \t Vy_d: %.3f \t Vz_d: %.3f" %(vx_d, vy_d, vz_d))
+                print(f"\n!-------------------Episode # {k_ep:d} run # {k_run:d}-----------------!")
+                print(f"RREV_thr: {RREV_thr:.3f} \t Gain_1: {G1:.3f}")
+                print(f"Vx_d: {env.vel_d[0]:.3f} \t Vy_d: {env.vel_d[1]:.3f} \t Vz_d: {env.vel_d[2]:.3f}")
+                print("\n")
 
                 
                 # ============================
@@ -146,11 +148,8 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
                     state = env.state_current   # Collect state values here so they are thread-safe
                     FM = np.array(env.FM)       # Motor thrust and Moments
                     
-                    vel = state[8:11] # [vx,vy,vz]
-                    vx,vy,vz = vel
-       
-                    
-
+                    vx,vy,vz = state[8:11] # [vx,vy,vz]
+    
 
                     # ============================
                     ##      Pitch Recording 
@@ -165,11 +164,11 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
                         env.M_d = [Mx_d,My_d,Mz_d] # [N*mm]
 
                     
-                        print('----- pitch starts -----')
-                        print('vx=%.3f, vy=%.3f, vz=%.3f' %(vx,vy,vz))
-                        print('RREV_tr=%.3f, OF_y_tr=%.3f, OF_x=%.3f, My_d=%.3f [N*mm]' %(env.RREV, env.OF_y, env.OF_x, My_d) )   
-                        print("Pitch Time: %.3f" %start_time_pitch)
-
+                        print("----- pitch starts -----")
+                        print(f"vx={vx:.3f}, vy={vy:.3f}, vz={vz:.3f}")
+                        print(f"RREV_tr={env.RREV_tr:.3f}, OF_y_tr={env.OF_y_tr:.3f}, My_d={My_d:.3f} [N*mm]")  
+                        print(f"Pitch Time: {env.state_flip[0]:.3f} [s]")
+                        
                         flag = True # Turns on to make sure this only runs once per rollout
 
                     
@@ -179,23 +178,12 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
                     # ============================
                     ##      Record Keeping  
                     # ============================
-                    ## Keep record of state vector for reward calc
-                    state = state[:, np.newaxis] # Convert [14,] array to [14,1] array
-                    FM = FM[:,np.newaxis]
-                    
-                    
-                    if state_history is None:
-                        state_history = state 
-                        FM_history = FM
-                    else: # Append state_history columns with current state vector
 
-                        # Check if sample of recorded data changed, if so then append csv (Reduces repeated data rows)
-                        # if not np.array_equal(log_sample,log_sample_prev): 
-                        if t_step%50==0: 
-                            state_history = np.append(state_history, state, axis=1)
-                            FM_history = np.append(FM_history,FM,axis=1)
-                            env.RL_Publish()
-                            env.append_csv()
+                    # Check if sample of recorded data changed, if so then append csv (Reduces repeated data rows)
+                    # if not np.array_equal(log_sample,log_sample_prev): 
+                    if t_step%50==0: 
+                        env.RL_Publish()
+                        env.append_csv()
 
                         
 
@@ -204,29 +192,21 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
                     ##    Termination Criteria 
                     # ============================
 
-                    # IF TIME SINCE TRIGGERED PITCH EXCEEDS [1.0s]  
-                    if env.flip_flag and ((env.getTime()-start_time_pitch) > (1.0)):
-                        # I don't like this error formatting, feel free to improve on
+                    # IF TIME SINCE TRIGGERED PITCH EXCEEDS [1.5s]  
+                    if env.flip_flag and ((env.getTime()-start_time_pitch) > (1.5)):
                         env.error_str = "Rollout Completed: Pitch Timeout"
                         print(env.error_str)
 
                         env.runComplete_flag = True
 
-                    # IF POSITION FALLS BELOW ACHIEVED MAX HEIGHT
-
-                    if env.position[2] <= 0.0: # Note: there is a lag with this
+                    # IF POSITION FALLS BELOW FLOOR HEIGHT
+                    if env.position[2] <= 0.0: # Note: there is a lag with this at high RTF
                         env.error_str = "Rollout Completed: Falling Drone"
                         print(env.error_str)
 
                         env.runComplete_flag = True
 
-
-                    if (env.getTime() - start_time_height) > (5.0):
-                        env.error_str = "Rollout Completed: Pos Time Exceeded"
-                        print(env.error_str)
-                        env.runComplete_flag = True
-
-                    # IF TIME SINCE RUN START EXCEEDS [2.5s]
+                    # IF TIME SINCE RUN START EXCEEDS [6.0s]
                     if (env.getTime() - start_time_rollout) > (6.0):
                         env.error_str = "Rollout Completed: Time Exceeded"
                         print(env.error_str)
@@ -256,19 +236,22 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
                     ##       Run Completion  
                     # ============================
                     if env.runComplete_flag==True:
+                        
+                        print("\n")
+                        # print(f"z_max: {env.z_max}")
+                        # print(f"pitch_sum: {env.pitch_sum}")
+                        # print(f"max pitch: {env.pitch_max}")
 
-                        print(f"z_max: {env.z_max}")
-                        print(f"pitch_sum: {env.pitch_sum}")
-                        print(f"max pitch: {env.pitch_max}")
-
-                        reward[k_run] = agent.calcReward_pureLanding(env)
-                        env.reward = reward[k_run,0]
+                        reward_arr[k_run] = agent.calcReward_pureLanding(env)
+                        env.reward = reward_arr[k_run,0]
+                        env.reward_inputs = [env.z_max,env.pitch_sum,env.pitch_max]
                         
                         
                         print(f"Reward = {env.reward:.3f}")
                         print(f"# of Leg contacts: {sum(env.pad_contacts)}")
                         print("!------------------------End Run------------------------! \n")   
 
+                        ## RUN DATA LOGGING
                         env.append_csv_blank()
                         env.append_IC()
                         env.append_flip()
@@ -277,29 +260,29 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
 
                         env.reset_pos()
                     
-                        break
+                        break # Break from run loop
                     
                     # log_sample_prev = log_sample          
                     t_step += 1      
                 
                 ## =======  RUN COMPLETED  ======= ##
-                if repeat_run == True:
+                if repeat_run == True: # Runs when error detected
                     env.relaunch_sim()
                 
                 else:
                     ## PUBLISH UPDATED REWARD VARIABLES
-                    env.reward = reward[k_run,0]
-                    env.reward_avg = reward[np.nonzero(reward)].mean()
+                    env.reward = reward_arr[k_run,0]
+                    env.reward_avg = reward_arr[np.nonzero(reward_arr)].mean()
                     env.RL_Publish()
-                    k_run += 1 # Move on to next run
+                    k_run += 1 # When succesful move on to next run
                     
             except FileNotFoundError: ## IF SIM EXCEPTION RAISED THEN CONTINUE BACK TO TRY BLOCK UNTIL SUCCESSFUL COMPLETION
                 continue
 
             
         ## =======  EPISODE COMPLETED  ======= ##
-        print("Episode # %d training, average reward %.3f" %(k_ep, env.reward_avg))
-        agent.train(theta_rl,reward,epsilon_rl)
+        print(f"Episode # {k_ep:d} training, average reward {env.reward_avg:.3f}")
+        agent.train(theta_rl,reward_arr,epsilon_rl)
 
         
         
@@ -313,8 +296,6 @@ if __name__ == '__main__':
     env = CrazyflieEnv(gazeboTimeout=False)
     # env.launch_dashboard()
 
-    print("Environment done")
-
     # ============================
     ##          AGENT  
     # ============================
@@ -324,8 +305,8 @@ if __name__ == '__main__':
     alpha_sigma = np.array([[0.05]])
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[4.80],[5.536]])          # Random initial mu
-    sigma = np.array([[0.000001],[0.000001]])       # Initial estimates of sigma:
+    mu = np.array([[4.80],[5.536]])                 # Initial mu starting point
+    sigma = np.array([[0.000001],[0.000001]])       # Initial sigma starting point
 
 
     ## SIM PARAMETERS
@@ -342,8 +323,8 @@ if __name__ == '__main__':
     ##     LEARNING CONDITIONS  
     # ============================
 
-    ## INITIAL CONDITIONS
-    V_d = 4.0     # [m/s]
+    ## INITIAL LAUNCH CONDITIONS
+    V_d = 4.0   # [m/s]
     phi = 70    # [deg]
 
 

@@ -21,71 +21,74 @@ from geometry_msgs.msg import WrenchStamped
 class CrazyflieEnv:
     def __init__(self,gazeboTimeout=True):
         print("[STARTING] CrazyflieEnv is starting...")
-        self.state_current = np.zeros(14)
 
-
-        self.isRunning = True
         self.username = getpass.getuser()
         self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log"
         self.logging_flag = False
         self.filepath = ""
         self.runComplete_flag = False
+        self.isRunning = True
 
-        self.h_ceiling = 3.00
+        self.h_ceiling = 3.00 # [m]
+        self.state_current = np.zeros(14)
 
         ## INIT NAME OF MODEL BEING USED
         self.modelName = 'crazyflie_model_Flex'
 
         ## INIT RL_DATA VARIABLES 
+        # NOTE: All time units are in terms of Sim-Time unless specified
         #region 
-        self.trial_name = ''
-        self.agent_name = ''
-        self.error_str = ''
+        self.trial_name = '' 
+        self.agent_name = ''    # Learning agent used for training (PEPG,EM,etc...)
+        self.error_str = ''     # Label for why rollout was terminated/completed
 
-        self.n_rollouts = 0
-        self.gamma = 0
+        self.n_rollouts = 0     # Rollouts per episode
+        self.gamma = 0          # [Deprecated] This can be removed from everything 
         
-        self.k_run = 0
-        self.k_ep = 0
+        self.k_ep = 0           # Episode number
+        self.k_run = 0          # Run number
 
-        self.alpha_mu = []
-        self.alpha_sigma = []
-        self.mu = []
-        self.sigma = []
-        self.policy = []
+        self.alpha_mu = []      # PEPG learning rate for mu
+        self.alpha_sigma = []   # PEPG learning rate for sigma
 
-        self.reward = 0
-        self.reward_avg = 0
+        self.mu = []            # Gaussian mean policies are sampled from
+        self.sigma = []         # Gaussian standard deviation policies are sampled from
+        self.policy = []        # Policy sampled from Gaussian distribution
 
-        self.vel_d = [0,0,0]
-        self.M_d = [0,0,0]
+        self.reward = 0         # Calculated reward from run
+        self.reward_avg = 0     # Averaged rewards over episode
+        self.reward_inputs = [] # List of inputs to reward func
 
-        self.MS = [0,0,0,0]
-        self.FM = [0,0,0,0]
+        self.vel_d = [0,0,0]    # Desired/Imparted velocities for rollout [m/s]
+        self.M_d = [0,0,0]      # Imparted moments for flip manuever [N*mm]
+
+        ## INIT CTRL_DATA VARIABLES 
+        self.MS = [0,0,0,0]     # Controller Motor Speeds (MS1,MS2,MS3,MS4) [rad/s]
+        self.FM = [0,0,0,0]     # Controller Force/Moments (F_thrust,Mx,My,Mz) [N,N*mm]
         
 
         ## REWARD VALS
-        self.z_max = 0.0
-        self.pitch_sum = 0.0
-        self.pitch_max = 0.0
-
-        self.t_prev = 0.0
+        self.z_max = 0.0        # Max recorded height in run [m]
+        self.pitch_sum = 0.0    # Cumulative pitch angle in run [deg]
+        self.pitch_max = 0.0    # Max recorded pitch angle in run [deg]
+        self.t_prev = 0.0       # [s]
 
         ## FLIP VALS
         self.state_flip = np.zeros(14)
-        self.FM_flip = [0,0,0,0]
+        self.FM_flip = [0,0,0,0]    # [N,N*mm]
 
-        self.flip_flag = False
+        self.flip_flag = False      # Flag if model has started flip maneuver
 
         ## IMPACT VALS
         self.state_impact = np.zeros(14)
-        self.FM_impact = [0,0,0,0]
+        self.FM_impact = [0,0,0,0]  # [N,N*mm]
 
-        self.pad_contacts = [False,False,False,False]
-        self.body_contact = False
-        self.ceiling_ft_z = 0.0
-        self.ceiling_ft_x = 0.0
-        self.impact_flag = False
+        self.pad_contacts = [False,False,False,False] # Flag if pads impact ceiling plane
+        self.body_contact = False   # Flag if model body impacts ceiling plane
+        self.impact_flag = False    # Flag if any model part impact ceiling plane
+
+        self.ceiling_ft_z = 0.0     # Ceiling impact force, Z-dir [N]
+        self.ceiling_ft_x = 0.0     # Ceiling impact force, X-dir [N]
         #endregion 
 
 
@@ -102,14 +105,14 @@ class CrazyflieEnv:
 
         
 
-        ## INIT ROS SUBSCRIBERS 
-        self.state_Subscriber = rospy.Subscriber('/global_state',Odometry,self.global_stateCallback)                        # 100 Hz
-        self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)                                    # 500 Hz
+        ## INIT ROS SUBSCRIBERS [Pub/Sampling Frequencies]
+        self.state_Subscriber = rospy.Subscriber('/global_state',Odometry,self.global_stateCallback)                        # [100 Hz]
+        self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)                                    # [500 Hz]
 
-        self.OF_Subscriber = rospy.Subscriber('/OF_sensor',Odometry,self.OFsensor_Callback)                                 # 100 Hz
-        self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback)             # 750 Hz
-        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftsensorCallback)  # 750 Hz
-        self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.laser_sensorCallback)                      # 100 Hz
+        self.OF_Subscriber = rospy.Subscriber('/OF_sensor',Odometry,self.OFsensor_Callback)                                 # [100 Hz]
+        self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback)             # [750 Hz]
+        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftsensorCallback)  # [750 Hz]
+        self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.laser_sensorCallback)                      # [100 Hz]
         rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
 
 
@@ -176,8 +179,8 @@ class CrazyflieEnv:
         self.MS = np.asarray(ctrl_msg.motorspeeds) # Motorspeeds [rad/s]
         self.MS = np.round(self.MS,0)
 
-        self.FM = np.asarray(ctrl_msg.FM) # Force/Moments [N,N*mm]
-        self.FM = np.round(self.FM,3)
+        self.FM = np.asarray(ctrl_msg.FM)   # Force/Moments [N,N*mm]
+        self.FM = np.round(self.FM,3)       # Round data for logging
 
         
         if ctrl_msg.flip_flag == True and self.flip_flag == False: # Activtes only once per run when flip_flag is about to change
@@ -211,7 +214,7 @@ class CrazyflieEnv:
         ## SET TIME VALUE FROM TOPIC
         t_temp = gs_msg.header.stamp.secs
         ns_temp = gs_msg.header.stamp.nsecs
-        self.t = np.round(t_temp+ns_temp*1e-9,3) # (seconds + nanoseconds)
+        self.t = np.round(t_temp+ns_temp*1e-9,3) # [seconds + nanoseconds]
         
         ## SIMPLIFY STATE VALUES FROM TOPIC
         global_pos = gs_msg.pose.pose.position
@@ -224,10 +227,10 @@ class CrazyflieEnv:
 
         ## SET STATE VALUES FROM TOPIC
         
-        self.position = np.round([global_pos.x,global_pos.y,global_pos.z],3)
-        self.orientation_q = np.round([global_quat.w,global_quat.x,global_quat.y,global_quat.z],3)
-        self.velocity = np.round([global_vel.x,global_vel.y,global_vel.z],3)
-        self.omega = np.round([global_omega.x,global_omega.y,global_omega.z],3)
+        self.position = np.round([global_pos.x,global_pos.y,global_pos.z],3)    # [m]
+        self.orientation_q = np.round([global_quat.w,global_quat.x,global_quat.y,global_quat.z],3) # [quat]
+        self.velocity = np.round([global_vel.x,global_vel.y,global_vel.z],3)    # [m/s]
+        self.omega = np.round([global_omega.x,global_omega.y,global_omega.z],3) # [rad/s]
 
 
         ## COMBINE INTO COMPREHENSIVE LIST
@@ -269,6 +272,7 @@ class CrazyflieEnv:
 
                 if self.logging_flag:
                     self.append_csv()
+
             elif msg.collision1_name == f"{self.modelName}::pad_3::collision" and self.pad_contacts[2] == False:
                 self.pad_contacts[2] = True
 
@@ -309,7 +313,7 @@ class CrazyflieEnv:
     ##    Sensors/Gazebo Topics
     # ============================
 
-    def laser_sensorCallback(self,data): # callback function for laser subsriber
+    def laser_sensorCallback(self,data): # callback function for laser subsriber (Not fully implemented yet)
         self.laser_msg = data
         if  self.laser_msg.ranges[0] == float('Inf'):
             # sets dist to 4 m if sensor reads Infinity (no walls)
@@ -325,6 +329,9 @@ class CrazyflieEnv:
     # ============================
 
     def relaunch_sim(self):
+        """
+            Relaunches Gazebo and resets model position but doesn't touch controller node
+        """        
         self.close_sim()
         time.sleep(1)
         self.launch_sim()
@@ -366,17 +373,17 @@ class CrazyflieEnv:
         ## SET POSE AND TWIST OF MODEL
         state_msg = ModelState()
         state_msg.model_name = self.modelName
-        state_msg.pose.position.x = 0
-        state_msg.pose.position.y = 0
+        state_msg.pose.position.x = 0.0
+        state_msg.pose.position.y = 0.0
         state_msg.pose.position.z = 0.6
 
-        state_msg.pose.orientation.x = 0
-        state_msg.pose.orientation.y = 0
-        state_msg.pose.orientation.z = 0
-        state_msg.pose.orientation.w = 1
+        state_msg.pose.orientation.x = 0.0
+        state_msg.pose.orientation.y = 0.0
+        state_msg.pose.orientation.z = 0.0
+        state_msg.pose.orientation.w = 1.0
 
         state_msg.twist.linear.x = vx_d
-        state_msg.twist.linear.y = 0
+        state_msg.twist.linear.y = 0.0
         state_msg.twist.linear.z = vz_d
 
         rospy.wait_for_service('/gazebo/set_model_state')
@@ -396,19 +403,19 @@ class CrazyflieEnv:
         ## RESET POSITION AND VELOCITY
         state_msg = ModelState()
         state_msg.model_name = self.modelName
-        state_msg.pose.position.x = 0
-        state_msg.pose.position.y = 0
+        state_msg.pose.position.x = 0.0
+        state_msg.pose.position.y = 0.0
         state_msg.pose.position.z = 0.55
 
-        state_msg.pose.orientation.w = 1
-        state_msg.pose.orientation.x = 0
-        state_msg.pose.orientation.y = 0
-        state_msg.pose.orientation.z = 0
+        state_msg.pose.orientation.w = 1.0
+        state_msg.pose.orientation.x = 0.0
+        state_msg.pose.orientation.y = 0.0
+        state_msg.pose.orientation.z = 0.0
         
 
-        state_msg.twist.linear.x = 0
-        state_msg.twist.linear.y = 0
-        state_msg.twist.linear.z = 0
+        state_msg.twist.linear.x = 0.0
+        state_msg.twist.linear.y = 0.0
+        state_msg.twist.linear.z = 0.0
 
         rospy.wait_for_service('/gazebo/set_model_state')
         set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
@@ -547,7 +554,7 @@ class CrazyflieEnv:
                     "", "", "", "", # qx,qy,qz,qw
                     np.round(self.vel_d[0],2),np.round(self.vel_d[1],2),np.round(self.vel_d[2],2), # vx_d,vy_d,vz_d
                     "","","", # wx,wy,wz
-                    np.round(self.gamma,2),round(self.reward,2),"","","", # gamma, reward, 
+                    np.round(self.gamma,2),np.round(self.reward,2),np.round(self.reward_inputs,3),"","", # gamma, reward, 
                     "","","",           # RREV, OF_x, OF_y
                     "","","","",        # MS1, MS2, MS3, MS4
                     "","","","",        # F_thrust,Mx,My,Mz
@@ -579,12 +586,12 @@ class CrazyflieEnv:
     def timeoutCallback(self,msg):
         ## RESET TIMER THAT ATTEMPTS TO UNPAUSE SIM
         self.timer_unpause.cancel()
-        self.timer_unpause = Timer(4,self.timeout_unpause)
+        self.timer_unpause = Timer(4.0,self.timeout_unpause)
         self.timer_unpause.start()
 
         ## RESET TIMER THAT RELAUNCHES SIM
         self.timer_relaunch.cancel()
-        self.timer_relaunch = Timer(7,self.timeout_relaunch)
+        self.timer_relaunch = Timer(7.0,self.timeout_relaunch)
         self.timer_relaunch.start()
     
 
