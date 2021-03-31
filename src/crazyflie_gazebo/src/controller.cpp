@@ -364,7 +364,7 @@ void Controller::controlThread()
 
     // =========== ROS Definitions =========== //
     crazyflie_gazebo::CtrlData ctrl_msg;
-    ros::Rate rate(1000);
+    ros::Rate rate(500);
 
     while(_isRunning)
     {

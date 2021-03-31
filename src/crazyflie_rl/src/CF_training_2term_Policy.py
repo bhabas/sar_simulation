@@ -87,6 +87,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
                 env.pad_contacts = [False,False,False,False] # Reset pad contacts
                 env.body_contact = False
                 env.ceiling_ft_z = 0.0
+                env.ceiling_ft_x = 0.0
 
 
 

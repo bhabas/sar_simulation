@@ -5,7 +5,6 @@
 // ROS Includes
 #include <ros/ros.h>
 #include "crazyflie_gazebo/CtrlData.h"
-#include "gazebo_communication_pkg/GlobalState.h"
 #include "crazyflie_rl/RLCmd.h"
 #include "nav_msgs/Odometry.h"
 #include "sensor_msgs/Imu.h"

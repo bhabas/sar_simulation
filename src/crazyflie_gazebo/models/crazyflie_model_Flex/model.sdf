@@ -531,7 +531,7 @@
     <sensor type="ray" name="head_hokuyo_sensor">
       <pose>0 0 0 0 -1.5708 0</pose>
       <visualize>true</visualize>
-      <update_rate>40</update_rate>
+      <update_rate>100</update_rate>
       <ray>
         <scan>
           <horizontal>
@@ -1544,7 +1544,7 @@
     </plugin>
     <plugin name='crazyflie_odom' filename='libgazebo_ros_p3d.so'>
       <alwaysOn>1</alwaysOn>
-      <updateRate>1000</updateRate>
+      <updateRate>100</updateRate>
       <bodyName>crazyflie_body</bodyName>
       <topicName>global_state</topicName>
       <frameName>world</frameName>
@@ -1554,7 +1554,7 @@
     </plugin>
     <plugin name='OF_sensor' filename='libgazebo_ros_p3d.so'>
       <alwaysOn>1</alwaysOn>
-      <updateRate>1000</updateRate>
+      <updateRate>100</updateRate>
       <bodyName>crazyflie_body</bodyName>
       <topicName>OF_sensor</topicName>
       <frameName>world</frameName>
