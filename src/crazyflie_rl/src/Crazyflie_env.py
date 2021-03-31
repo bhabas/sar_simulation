@@ -69,7 +69,6 @@ class CrazyflieEnv:
         self.M_d = [0,0,0]
 
         self.MS = [0,0,0,0]
-        self.FM_flip = [0,0,0,0]
         self.FM = [0,0,0,0]
         
         self.pad_contacts = [False,False,False,False]
@@ -186,13 +185,23 @@ class CrazyflieEnv:
         self.FM = np.asarray(ctrl_msg.FM)
         self.FM = np.round(self.FM,3)
 
-        self.FM_flip = np.asarray(ctrl_msg.FM_flip)
-        self.FM_flip = np.round(self.FM_flip,3)
-
         
-        self.flip_flag = ctrl_msg.flip_flag
-        self.RREV_tr = np.round(ctrl_msg.RREV_tr,3)
-        self.OF_y_tr = np.round(ctrl_msg.OF_y_tr,3)
+        if ctrl_msg.flip_flag == True and self.flip_flag == False:
+
+            self.flip_flag = ctrl_msg.flip_flag
+
+            # Define state data once at flip
+            self.state_flip = self.state_current
+
+            self.FM_flip = np.asarray(ctrl_msg.FM_flip)
+            self.FM_flip = np.round(self.FM_flip,3)
+            
+            self.RREV_tr = np.round(ctrl_msg.RREV_tr,3)
+            self.OF_y_tr = np.round(ctrl_msg.OF_y_tr,3)
+
+
+
+       
 
     def OFCallback(self,OF_msg): ## Callback to parse state data received from gazebo_communication node
 
@@ -259,24 +268,24 @@ class CrazyflieEnv:
                 self.pad_contacts[0] = True
 
                 if self.logging_flag:
-                    self.append_csv(self.filepath) # Append data at instant when ceiling impact detected
+                    self.append_csv() # Append data at instant when ceiling impact detected
                 
             elif msg.collision1_name == f"{self.modelName}::pad_2::collision" and self.pad_contacts[1] == False:
                 self.pad_contacts[1] = True
 
                 if self.logging_flag:
-                    self.append_csv(self.filepath)
+                    self.append_csv()
             elif msg.collision1_name == f"{self.modelName}::pad_3::collision" and self.pad_contacts[2] == False:
                 self.pad_contacts[2] = True
 
                 if self.logging_flag:
-                    self.append_csv(self.filepath)
+                    self.append_csv()
 
             elif msg.collision1_name == f"{self.modelName}::pad_4::collision" and self.pad_contacts[3] == False:
                 self.pad_contacts[3] = True
 
                 if self.logging_flag:
-                    self.append_csv(self.filepath)
+                    self.append_csv()
 
             elif msg.collision1_name == f"{self.modelName}::crazyflie_body::body_collision" and self.body_contact == False:
                 self.body_contact = True
@@ -284,9 +293,9 @@ class CrazyflieEnv:
         if (any(self.pad_contacts) or self.body_contact) and self.impact_flag == False: # If any pad contacts are True then update impact flag
             self.impact_flag = True
             
-            if self.logging_flag:
-                self.state_impact = self.state_current
-                self.FM_impact = self.FM
+            # Define state data once at time of impact
+            self.state_impact = self.state_current
+            self.FM_impact = self.FM
             
 
     def ceiling_ftCallback(self,ft_msg):
@@ -469,10 +478,10 @@ class CrazyflieEnv:
                     'F_thrust','Mx','My','Mz',
                     'Error'])# Place holders
 
-    def append_csv(self,filepath):
+    def append_csv(self):
 
         if self.logging_flag:
-            with open(filepath, mode='a') as state_file:
+            with open(self.filepath, mode='a') as state_file:
                 state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 state_writer.writerow([
                     self.k_ep,self.k_run,
@@ -490,29 +499,29 @@ class CrazyflieEnv:
 
     
 
-    # def append_flip(self,filepath):
-    #     if self.logging_flag:
-    
-    #         with open(filepath,mode='a') as state_file:
-    #             state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-    #             state_writer.writerow([
-    #                 self.k_ep,self.k_run,
-    #                 "","", # alpha_mu,alpha_sig
-    #                 "","","", # mu,sigma,policy
-    #                 self.t_flip,self.x_flip,self.z_flip, # t,x,y,z
-    #                 self.qx_flip,self.qy_flip,self.qz_flip,self.qw_flip, # qx,qy,qz,qw
-    #                 self.vx_flip,self.vy_flip,self.vz_flip, # vx_d,vy_d,vz_d
-    #                 self.wx_flip,self.wy_flip,self.wz_flip, # wx,wy,wz
-    #                 "","","","","", # gamma, reward, body_impact, num leg contacts, impact force
-    #                 self.RREV_tr,self.OF_x_tr,self.OF_y_tr, # RREV, OF_x, OF_y
-    #                 "","","","", # MS1, MS2, MS3, MS4
-    #                 self.FM_flip[0],self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # F_thrust,Mx,My,Mz
-    #                 "Flip Data"]) # Error
-    
-    def append_impact(self,filepath):
+    def append_flip(self):
         if self.logging_flag:
     
-            with open(filepath,mode='a') as state_file:
+            with open(self.filepath,mode='a') as state_file:
+                state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                state_writer.writerow([
+                    self.k_ep,self.k_run,
+                    "","", # alpha_mu,alpha_sig
+                    "","","", # mu,sigma,policy
+                    self.state_flip[0],self.state_flip[1],self.state_flip[2],self.state_flip[3],    # t,x,y,z
+                    self.state_flip[4],self.state_flip[5],self.state_flip[6],self.state_flip[7],    # qx,qy,qz,qw
+                    self.state_flip[8],self.state_flip[9],self.state_flip[10],    # vx_d,vy_d,vz_d
+                    self.state_flip[11],self.state_flip[12],self.state_flip[13],  # wx,wy,wz
+                    "","","","","", # gamma, reward, body_impact, num leg contacts, impact force
+                    self.RREV_tr,0.00,self.OF_y_tr, # RREV, OF_x, OF_y
+                    "","","","", # MS1, MS2, MS3, MS4
+                    self.FM_flip[0],self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # F_thrust,Mx,My,Mz
+                    "Flip Data"]) # Error
+    
+    def append_impact(self):
+        if self.logging_flag:
+    
+            with open(self.filepath,mode='a') as state_file:
                 state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 state_writer.writerow([
                     self.k_ep,self.k_run,
@@ -528,10 +537,10 @@ class CrazyflieEnv:
                     self.FM_impact[0],self.FM_impact[1],self.FM_impact[2],self.FM_impact[3], # F_thrust,Mx,My,Mz
                     "Impact Data"]) # Error
 
-    def append_IC(self,filepath):
+    def append_IC(self):
         if self.logging_flag:
     
-            with open(filepath,mode='a') as state_file:
+            with open(self.filepath,mode='a') as state_file:
                 state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 state_writer.writerow([
                     self.k_ep,self.k_run,
@@ -542,14 +551,14 @@ class CrazyflieEnv:
                     np.round(self.vel_d[0],2),np.round(self.vel_d[1],2),np.round(self.vel_d[2],2), # vx_d,vy_d,vz_d
                     "","","", # wx,wy,wz
                     np.round(self.gamma,2),round(self.reward,2),"","","", # gamma, reward, 
-                    self.RREV_tr,"",self.OF_y_tr, # RREV, OF_x, OF_y
+                    "","","", # RREV, OF_x, OF_y
                     "","","","", # MS1, MS2, MS3, MS4
                     "","","","", # F_thrust,Mx,My,Mz
                     self.error_str]) # Error
 
-    def append_csv_blank(self,filepath):
+    def append_csv_blank(self):
         if self.logging_flag:
-            with open(filepath, mode='a') as state_file:
+            with open(self.filepath, mode='a') as state_file:
                 state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 state_writer.writerow([])
 

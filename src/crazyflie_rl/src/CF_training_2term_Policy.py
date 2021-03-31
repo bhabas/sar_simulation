@@ -82,22 +82,26 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
             
 
                 
-                ## INIT RUN CONDITIONS
+                ## RESET/UPDATE RUN CONDITIONS
                 env.k_run = k_run   # Update class k_run variable
                 env.pad_contacts = [False,False,False,False] # Reset pad contacts
                 env.body_contact = False
+                env.ceiling_ft_z = 0.0
 
-                z_max = 0   # Initialize max height to be zero before run [m]
-                z_prev = 0;
+
+
+
                 vy_d = 0    # [m/s]
                 env.vel_d = [V_d*np.cos(phi_rad), vy_d, V_d*np.sin(phi_rad)] # [m/s]
-                env.ceiling_ft_z = 0.0
+                
 
 
                 ## INIT RUN FLAGS
                 env.runComplete_flag = False
                 repeat_run= False
+
                 env.impact_flag = False
+                env.flip_flag = False
                 flag = False # Ensures flip data printed only once (Needs a better name)
                 
 
@@ -141,7 +145,6 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
                     state = env.state_current   # Collect state values here so they are thread-safe
                     FM = np.array(env.FM)       # Motor thrust and Moments
                     
-                    position = state[1:4] # [x,y,z]
                     vel = state[8:11] # [vx,vy,vz]
                     vx,vy,vz = vel
        
@@ -187,11 +190,11 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
 
                         # Check if sample of recorded data changed, if so then append csv (Reduces repeated data rows)
                         # if not np.array_equal(log_sample,log_sample_prev): 
-                        if t_step%1==0: 
+                        if t_step%50==0: 
                             state_history = np.append(state_history, state, axis=1)
                             FM_history = np.append(FM_history,FM,axis=1)
                             env.RL_Publish()
-                            env.append_csv(env.filepath)
+                            env.append_csv()
 
                         
 
@@ -265,10 +268,11 @@ def runTraining(env,agent,V_d,phi,k_epMax=500):
                         print(f"# of Leg contacts: {sum(env.pad_contacts)}")
                         print("!------------------------End Run------------------------! \n")   
 
-                        
-                        env.append_IC(env.filepath)
-                        env.append_impact(env.filepath)
-                        env.append_csv_blank(env.filepath)
+                        env.append_csv_blank()
+                        env.append_IC()
+                        env.append_flip()
+                        env.append_impact()
+                        env.append_csv_blank()
 
                         env.reset_pos()
                     
