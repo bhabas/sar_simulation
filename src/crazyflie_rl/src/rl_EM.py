@@ -7,9 +7,8 @@ from math import asin,pi,ceil,floor
 from rl_syspepg import ES
 
 class rlEM_PEPGAgent(ES):
-    def __init__(self,mu,sigma,gamma=0.95, n_rollouts = 6):
+    def __init__(self,mu,sigma, n_rollouts = 6):
         self.agent_type = 'EM_PEPG'
-        self.gamma = gamma
         self.n_rollouts = n_rollouts
         self.mu = mu
         self.sigma = sigma
@@ -98,8 +97,8 @@ class rlEM_AdaptiveAgent(rlEM_PEPGAgent):
 
 
 class EPHE_Agent(ES):  # EM Policy Hyper Paramter Exploration
-     def __init__(self, mu, sigma, gamma = 0.95, n_rollout = 5, adaptive = True, lamda = 1):
-         self.gamma, self.n_rollout = gamma, n_rollout
+     def __init__(self, mu, sigma, n_rollout = 5, adaptive = True, lamda = 1):
+         self.n_rollout = n_rollout
 
          self.mu = mu
          self.sigma = sigma

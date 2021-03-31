@@ -6,8 +6,7 @@ import time
 
 class CMA(ES):
     # adapted from https://arxiv.org/pdf/1604.00772.pdf
-    def __init__(self,n,gamma = 0.8):
-        self.gamma = gamma 
+    def __init__(self,n):
 
         self.alpha_mu = np.array([[0.0],[0.0] ])#[2.0]] )#,[0.1]])
         self.alpha_sigma = np.array([[0.0],[0.0] ])#, [1.0]])#,[0.05]])
@@ -188,11 +187,10 @@ if __name__ == "__main__":
 class CMA_basic(ES):
     # expand on update
     # https://arxiv.org/pdf/1604.00772.pdf
-    def __init__(self,mu ,sigma,N_best = 0.25,n_rollout = 10,gamma=0.95):
+    def __init__(self,mu ,sigma,N_best = 0.25,n_rollout = 10):
         # not needed alpha (but doenst work without)
         self.alpha_mu = np.array([[0.0],[0.0] ])#[2.0]] )#,[0.1]])
         self.alpha_sigma = np.array([[0.0],[0.0] ])#, [1.0]])#,[0.05]])
-        self.gamma = gamma
         self.mu = mu
         self.sigma = sigma
         self.N_best = N_best

@@ -43,7 +43,6 @@ class CrazyflieEnv:
         self.error_str = ''     # Label for why rollout was terminated/completed
 
         self.n_rollouts = 0     # Rollouts per episode
-        self.gamma = 0          # [Deprecated] This can be removed from everything 
         
         self.k_ep = 0           # Episode number
         self.k_run = 0          # Run number
@@ -150,7 +149,6 @@ class CrazyflieEnv:
 
 
         rl_msg.n_rollouts = self.n_rollouts
-        rl_msg.gamma = self.gamma
         rl_msg.h_ceiling = self.h_ceiling
 
         rl_msg.k_ep = self.k_ep
@@ -476,7 +474,7 @@ class CrazyflieEnv:
                     'qw','qx','qy','qz',
                     'vx','vy','vz',
                     'wx','wy','wz',
-                    'gamma','reward','flip_flag','impact_flag','n_rollouts',
+                    'reward','flip_flag','impact_flag','n_rollouts',
                     'RREV','OF_x','OF_y',
                     'MS1','MS2','MS3','MS4',
                     'F_thrust','Mx','My','Mz',
@@ -495,7 +493,7 @@ class CrazyflieEnv:
                     self.orientation_q[0],self.orientation_q[1],self.orientation_q[2],self.orientation_q[3], # qw,qx,qy,qz
                     self.velocity[0],self.velocity[1],self.velocity[2], # vx,vy,vz
                     self.omega[0],self.omega[1],self.omega[2], # wx,wy,wz
-                    "","",self.flip_flag,self.impact_flag,self.n_rollouts, # gamma, reward, flip_triggered, impact_flag, n_rollout
+                    "",self.flip_flag,self.impact_flag,self.n_rollouts, # reward, flip_triggered, impact_flag, n_rollout
                     self.RREV,self.OF_x,self.OF_y, # RREV, OF_x, OF_y
                     self.MS[0],self.MS[1],self.MS[2],self.MS[3], # MS1, MS2, MS3, MS4
                     self.FM[0],self.FM[1],self.FM[2],self.FM[3], # F_thrust,Mx,My,Mz 
@@ -516,7 +514,7 @@ class CrazyflieEnv:
                     self.state_flip[4],self.state_flip[5],self.state_flip[6],self.state_flip[7],    # qx,qy,qz,qw
                     self.state_flip[8],self.state_flip[9],self.state_flip[10],    # vx_d,vy_d,vz_d
                     self.state_flip[11],self.state_flip[12],self.state_flip[13],  # wx,wy,wz
-                    "","","","","", # gamma, reward, body_impact, num leg contacts, impact force
+                    "","","","", # reward, body_impact, num leg contacts, impact force
                     self.RREV_tr,"",self.OF_y_tr, # RREV, OF_x, OF_y
                     "","","","", # MS1, MS2, MS3, MS4
                     self.FM_flip[0],self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # F_thrust,Mx,My,Mz
@@ -535,7 +533,7 @@ class CrazyflieEnv:
                     self.state_impact[4],self.state_impact[5],self.state_impact[6],self.state_impact[7],    # qx,qy,qz,qw
                     self.state_impact[8],self.state_impact[9],self.state_impact[10],    # vx_d,vy_d,vz_d
                     self.state_impact[11],self.state_impact[12],self.state_impact[13],  # wx,wy,wz
-                    "","",self.body_contact,sum(self.pad_contacts),"",  # "", "", body_impact flag, num leg contacts, ""
+                    "",self.body_contact,sum(self.pad_contacts),"",  # "", "", body_impact flag, num leg contacts, ""
                     self.ceiling_ft_z,self.ceiling_ft_x,"",             # Max impact force [z], =Max impact force [x], ""
                     "","","","", # MS1, MS2, MS3, MS4
                     self.FM_impact[0],self.FM_impact[1],self.FM_impact[2],self.FM_impact[3], # F_thrust,Mx,My,Mz
@@ -554,7 +552,7 @@ class CrazyflieEnv:
                     "", "", "", "", # qx,qy,qz,qw
                     np.round(self.vel_d[0],2),np.round(self.vel_d[1],2),np.round(self.vel_d[2],2), # vx_d,vy_d,vz_d
                     "","","", # wx,wy,wz
-                    np.round(self.gamma,2),np.round(self.reward,2),np.round(self.reward_inputs,3),"","", # gamma, reward, 
+                    np.round(self.reward,2),np.round(self.reward_inputs,3),"","", # reward, 
                     "","","",           # RREV, OF_x, OF_y
                     "","","","",        # MS1, MS2, MS3, MS4
                     "","","","",        # F_thrust,Mx,My,Mz

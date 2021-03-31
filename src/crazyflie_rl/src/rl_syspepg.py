@@ -12,9 +12,9 @@ from math import asin,pi,ceil,floor
 # this needs to be reorganized much better, still lots of repetition
 # maybe just use one class for each algorithm with options?
 class ES:
-    def __init__(self,gamma=0.8, n_rollout = 6):
+    def __init__(self, n_rollout = 6):
         # ovveride this for necessary hyperparameters
-        self.gamma, self.n_rollout = gamma, n_rollout
+        self.n_rollout = n_rollout
 
     
     def calcReward_effortMinimization(self,state_hist,FM_hist,h_ceiling,pad_contacts,body_contact):
@@ -130,8 +130,7 @@ class ES:
         return b
 
 class rlsysPEPGAgent_reactive(ES):
-    def __init__(self, alpha_mu, alpha_sigma, mu,sigma,gamma=0.95, n_rollouts = 6):
-        self.gamma = gamma
+    def __init__(self, alpha_mu, alpha_sigma, mu,sigma, n_rollouts = 6):
         self.n_rollouts = n_rollouts
         self.agent_type = 'SyS-PEPG_reactive'
 

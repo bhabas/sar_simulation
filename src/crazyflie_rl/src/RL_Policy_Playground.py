@@ -291,7 +291,6 @@ if __name__ == '__main__':
 
     ## SIM PARAMETERS
     env.n_rollouts = 10
-    env.gamma = 0.95
     env.logging_flag = True
     env.h_ceiling = 3.0 # [m]
 
