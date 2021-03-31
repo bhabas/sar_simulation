@@ -1,7 +1,6 @@
 import rospy
 import numpy as np
 
-from gazebo_communication_pkg.msg import GlobalState
 from crazyflie_rl.msg import RLData
 from crazyflie_gazebo.msg import CtrlData
 from nav_msgs.msg import Odometry
@@ -27,8 +26,8 @@ class DashboardNode:
         ## INITIAILIZE REWARD SUBSCRIBER 
         rospy.Subscriber('/rl_data',RLData,self.rewardCallback)
         rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)
+        rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
    
-
         print("[COMPLETED] Dashboard node is running...")
 
     # ============================

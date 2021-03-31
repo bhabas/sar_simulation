@@ -98,12 +98,10 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                 start_time_pitch = np.nan
 
                 ## RESET LOGGING CONDITIONS 
-                state_history = None
-                FM_history = None
                 env.error_str = ""
-
-                log_sample_prev = np.zeros(10)
+                
                 t_step = 0
+                t_prev = 0.0
 
 
                 ## RESET IMPACT CONDITIONS
@@ -148,7 +146,8 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                     state = env.state_current   # Collect state values here so they are thread-safe
                     FM = np.array(env.FM)       # Motor thrust and Moments
                     
-                    vx,vy,vz = state[8:11] # [vx,vy,vz]
+                    vx,vy,vz = state[7:10] # [vx,vy,vz]
+                    # log_sample = np.array([state[0],state[3],env.flip_flag,env.impact_flag])
     
 
                     # ============================
@@ -180,8 +179,8 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                     # ============================
 
                     # Check if sample of recorded data changed, if so then append csv (Reduces repeated data rows)
-                    # if not np.array_equal(log_sample,log_sample_prev): 
-                    if t_step%50==0: 
+                    if env.t != t_prev:
+                    # if t_step%1==0: 
                         env.RL_Publish()
                         env.append_csv()
 
@@ -263,7 +262,8 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                         break # Break from run loop
                     
                     # log_sample_prev = log_sample          
-                    t_step += 1      
+                    t_step += 1  
+                    t_prev = env.t   
                 
                 ## =======  RUN COMPLETED  ======= ##
                 if repeat_run == True: # Runs when error detected

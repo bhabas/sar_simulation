@@ -30,7 +30,7 @@ class CrazyflieEnv:
         self.isRunning = True
 
         self.h_ceiling = 3.00 # [m]
-        self.state_current = np.zeros(14)
+        self.state_current = np.zeros(13)
 
         ## INIT NAME OF MODEL BEING USED
         self.modelName = 'crazyflie_model_Flex'
@@ -73,13 +73,15 @@ class CrazyflieEnv:
         self.t_prev = 0.0       # [s]
 
         ## FLIP VALS
-        self.state_flip = np.zeros(14)
+        self.t_flip = 0.0
+        self.state_flip = np.zeros(13)
         self.FM_flip = [0,0,0,0]    # [N,N*mm]
 
         self.flip_flag = False      # Flag if model has started flip maneuver
 
         ## IMPACT VALS
-        self.state_impact = np.zeros(14)
+        self.t_impact = 0.0
+        self.state_impact = np.zeros(13)
         self.FM_impact = [0,0,0,0]  # [N,N*mm]
 
         self.pad_contacts = [False,False,False,False] # Flag if pads impact ceiling plane
@@ -105,6 +107,7 @@ class CrazyflieEnv:
         
 
         ## INIT ROS SUBSCRIBERS [Pub/Sampling Frequencies]
+        self.clock_Subscriber = rospy.Subscriber("/clock",Clock,self.clockCallback)
         self.state_Subscriber = rospy.Subscriber('/global_state',Odometry,self.global_stateCallback)                        # [100 Hz]
         self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)                                    # [500 Hz]
 
@@ -136,6 +139,8 @@ class CrazyflieEnv:
     # ============================
     ##   Publishers/Subscribers 
     # ============================
+
+    
 
     def RL_Publish(self):
         # Publishes all the RL data from the RL script
@@ -186,6 +191,7 @@ class CrazyflieEnv:
             self.flip_flag = ctrl_msg.flip_flag # Update flip_flag
 
             # Save state data at time of flip activation
+            self.t_flip = self.t
             self.state_flip = self.state_current
 
             self.FM_flip = np.asarray(ctrl_msg.FM_flip) # Force/Moments [N,N*mm]
@@ -195,24 +201,31 @@ class CrazyflieEnv:
             self.OF_y_tr = np.round(ctrl_msg.OF_y_tr,3) # Recorded OF_y at trigger [rad/s]
 
 
+    
 
-       
 
-    def OFsensor_Callback(self,OF_msg): ## Callback to parse state data received from mock OF sensor
+    
 
-        ## SET VISUAL CUE SENSOR VALUES FROM TOPIC
-        d = self.h_ceiling - OF_msg.pose.pose.position.z    # Distance from CF to ceiling [m]
 
-        self.RREV = round( OF_msg.twist.twist.linear.z/d,3) # [rad/s]
-        self.OF_x = round(-OF_msg.twist.twist.linear.y/d,3) # [rad/s]
-        self.OF_y = round(-OF_msg.twist.twist.linear.x/d,3) # [rad/s]
+    
 
-    def global_stateCallback(self,gs_msg): ## Callback to parse state data received from gazebo_communication node
+    
+            
+
+    
+
         
-        ## SET TIME VALUE FROM TOPIC
-        t_temp = gs_msg.header.stamp.secs
-        ns_temp = gs_msg.header.stamp.nsecs
-        self.t = np.round(t_temp+ns_temp*1e-9,3) # [seconds + nanoseconds]
+    # ============================
+    ##    Sensors/Data Topics
+    # ============================
+
+    def clockCallback(self,clock_msg): ## Callback to grab time from Sim clock
+        t_temp = clock_msg.clock.secs
+        ns_temp = clock_msg.clock.nsecs
+
+        self.t = np.round(t_temp+ns_temp*1e-9,3)
+
+    def global_stateCallback(self,gs_msg): ## Callback to parse state data received from external pos. sensor      
         
         ## SIMPLIFY STATE VALUES FROM TOPIC
         global_pos = gs_msg.pose.pose.position
@@ -224,7 +237,6 @@ class CrazyflieEnv:
             global_quat.w = 1
 
         ## SET STATE VALUES FROM TOPIC
-        
         self.position = np.round([global_pos.x,global_pos.y,global_pos.z],3)    # [m]
         self.orientation_q = np.round([global_quat.w,global_quat.x,global_quat.y,global_quat.z],3) # [quat]
         self.velocity = np.round([global_vel.x,global_vel.y,global_vel.z],3)    # [m/s]
@@ -232,10 +244,10 @@ class CrazyflieEnv:
 
 
         ## COMBINE INTO COMPREHENSIVE LIST
-        self.state_current = np.concatenate([np.atleast_1d(self.t),self.position,self.orientation_q,self.velocity,self.omega])
+        self.state_current = np.concatenate([self.position,self.orientation_q,self.velocity,self.omega])
         
 
-
+        ## ======== REWARD INPUT CALCS ======== ##
 
         ## MAX Z CALC
         if self.position[2] > self.z_max:
@@ -253,6 +265,15 @@ class CrazyflieEnv:
 
 
         self.t_prev = self.t # Save t value for next callback iteration
+
+    def OFsensor_Callback(self,OF_msg): ## Callback to parse state data received from mock OF sensor
+
+        ## SET VISUAL CUE SENSOR VALUES FROM TOPIC
+        d = self.h_ceiling - OF_msg.pose.pose.position.z    # Distance from CF to ceiling [m]
+
+        self.RREV = round( OF_msg.twist.twist.linear.z/d,3) # [rad/s]
+        self.OF_x = round(-OF_msg.twist.twist.linear.y/d,3) # [rad/s]
+        self.OF_y = round(-OF_msg.twist.twist.linear.x/d,3) # [rad/s]
         
 
     def contactSensorCallback(self,msg_arr): ## Callback to indicate which pads have collided with ceiling
@@ -290,9 +311,9 @@ class CrazyflieEnv:
             self.impact_flag = True
             
             # Save state data at time of impact
+            self.t_impact = self.t
             self.state_impact = self.state_current
             self.FM_impact = self.FM
-            
 
     def ceiling_ftsensorCallback(self,ft_msg):
         # Keeps record of max impact force for each run
@@ -305,11 +326,6 @@ class CrazyflieEnv:
         if np.abs(ft_msg.wrench.force.x) > np.abs(self.ceiling_ft_x):
             self.ceiling_ft_x = ft_msg.wrench.force.x           # X-Impact force from ceiling Force-Torque sensor
             self.ceiling_ft_x = np.round(self.ceiling_ft_x,3)   # Rounded for data logging
-
-        
-    # ============================
-    ##    Sensors/Gazebo Topics
-    # ============================
 
     def laser_sensorCallback(self,data): # callback function for laser subsriber (Not fully implemented yet)
         self.laser_msg = data
@@ -510,10 +526,10 @@ class CrazyflieEnv:
                     self.k_ep,self.k_run,
                     "","", # alpha_mu,alpha_sig
                     "","","", # mu,sigma,policy
-                    self.state_flip[0],self.state_flip[1],self.state_flip[2],self.state_flip[3],    # t,x,y,z
-                    self.state_flip[4],self.state_flip[5],self.state_flip[6],self.state_flip[7],    # qx,qy,qz,qw
-                    self.state_flip[8],self.state_flip[9],self.state_flip[10],    # vx_d,vy_d,vz_d
-                    self.state_flip[11],self.state_flip[12],self.state_flip[13],  # wx,wy,wz
+                    self.t_flip,self.state_flip[0],self.state_flip[1],self.state_flip[2],    # t,x,y,z
+                    self.state_flip[3],self.state_flip[4],self.state_flip[5],self.state_flip[6],    # qx,qy,qz,qw
+                    self.state_flip[7],self.state_flip[8],self.state_flip[9],    # vx_d,vy_d,vz_d
+                    self.state_flip[10],self.state_flip[11],self.state_flip[12],  # wx,wy,wz
                     "","","","", # reward, body_impact, num leg contacts, impact force
                     self.RREV_tr,"",self.OF_y_tr, # RREV, OF_x, OF_y
                     "","","","", # MS1, MS2, MS3, MS4
@@ -529,10 +545,10 @@ class CrazyflieEnv:
                     self.k_ep,self.k_run,
                     "","", # alpha_mu,alpha_sig
                     "","","", # mu,sigma,policy
-                    self.state_impact[0],self.state_impact[1],self.state_impact[2],self.state_impact[3],    # t,x,y,z
-                    self.state_impact[4],self.state_impact[5],self.state_impact[6],self.state_impact[7],    # qx,qy,qz,qw
-                    self.state_impact[8],self.state_impact[9],self.state_impact[10],    # vx_d,vy_d,vz_d
-                    self.state_impact[11],self.state_impact[12],self.state_impact[13],  # wx,wy,wz
+                    self.t_impact,self.state_impact[0],self.state_impact[1],self.state_impact[2],    # t,x,y,z
+                    self.state_impact[3],self.state_impact[4],self.state_impact[5],self.state_impact[6],    # qx,qy,qz,qw
+                    self.state_impact[7],self.state_impact[8],self.state_impact[9],    # vx_d,vy_d,vz_d
+                    self.state_impact[10],self.state_impact[11],self.state_impact[12],  # wx,wy,wz
                     "",self.body_contact,sum(self.pad_contacts),"",  # "", "", body_impact flag, num leg contacts, ""
                     self.ceiling_ft_z,self.ceiling_ft_x,"",             # Max impact force [z], =Max impact force [x], ""
                     "","","","", # MS1, MS2, MS3, MS4
