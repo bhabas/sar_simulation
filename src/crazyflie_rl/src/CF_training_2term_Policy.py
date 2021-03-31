@@ -147,7 +147,6 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                     FM = np.array(env.FM)       # Motor thrust and Moments
                     
                     vx,vy,vz = state[7:10] # [vx,vy,vz]
-                    # log_sample = np.array([state[0],state[3],env.flip_flag,env.impact_flag])
     
 
                     # ============================
@@ -260,8 +259,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                         env.reset_pos()
                     
                         break # Break from run loop
-                    
-                    # log_sample_prev = log_sample          
+                       
                     t_step += 1  
                     t_prev = env.t   
                 
