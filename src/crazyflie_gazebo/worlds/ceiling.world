@@ -18,35 +18,35 @@
     <gui>
       <camera name="user_camera">
 
-          <pose frame=''>2.0 -6 1.5 0 0.12 1.57</pose>
+          <pose frame=''>1.5 -6.0 2.25 0 0.12 1.57</pose>
 
           <!-- <pose>my custom pose as a six-tuple(x,y,z,roll,pitch,yaw)</pose> -->
       </camera>
     </gui>
 
-    <physics name='default_physics' default='0' type='ode'>
+    <physics name='default_physics' default='0' type='bullet'>
       <gravity>0 0 -9.8066</gravity>
-      <ode>
+      <bullet>
         <solver>
-          <type>quick</type>
+          <type>sequential_impulse</type>
           <iters>500</iters>
           <sor>1.3</sor>
-          <use_dynamic_moi_rescaling>0</use_dynamic_moi_rescaling>
         </solver>
         <constraints>
-          <cfm>0</cfm>
-          <erp>0.8</erp>
-          <contact_max_correcting_vel>100</contact_max_correcting_vel>
-          <contact_surface_layer>0.001</contact_surface_layer>
+          <!-- <cfm>0.2</cfm>
+          <erp>0.2</erp> -->
+
+          <contact_surface_layer>0.0001</contact_surface_layer>
         </constraints>
-      </ode>
-      <max_step_size>0.002</max_step_size>
+      </bullet>
+      <max_step_size>0.0015</max_step_size>
       <real_time_factor>1</real_time_factor>
-      <real_time_update_rate>1250</real_time_update_rate>
+      <real_time_update_rate>667</real_time_update_rate>
       <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
     </physics>
     <wind>
       <linear_velocity>0 0 0</linear_velocity>
     </wind>
+    
   </world>
 </sdf>

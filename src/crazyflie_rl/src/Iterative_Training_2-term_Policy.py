@@ -6,7 +6,7 @@ import pandas as pd
 import time,os
 
 
-from crazyflie_env import CrazyflieEnv
+from Crazyflie_env import CrazyflieEnv
 from CF_training_2term_Policy import runTraining
 from rl_EM import rlEM_PEPGAgent
 
@@ -30,8 +30,8 @@ if __name__ == '__main__':
     # df = pd.read_csv("~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/Laptop_Test_List.csv")
     arr = df.to_numpy()
 
-    for vz_d,vx_d,trial_num in arr:
-        if np.isnan(vz_d):
+    for V_d,phi,trial_num in arr:
+        if np.isnan(V_d):
             print("Trials are over")
             break
 
@@ -46,14 +46,14 @@ if __name__ == '__main__':
         ## GAUSSIAN PARAMETERS (CHECK THAT G1 > G2)
         #  System has a hard time learning if G1 < G2
         
-        mu = np.random.uniform(1.0,7.0,size=(2,1))
-        sigma = np.array([[1.5],[1.5]]) # Initial estimates of sigma: 
+        mu = np.random.uniform(1.0,3.5,size=(2,1))
+        # mu = np.array([[1.5],[5.536]])                 # Initial mu starting point
+        sigma = np.array([[2.5],[2.5]]) # Initial estimates of sigma: 
 
         
         ## SIM PARAMETERS
         env.n_rollouts = 8
-        env.gamma = 0.95
-        env.h_ceiling = 2.5 # [m]
+        env.h_ceiling = 3.0 # [m]
 
         ## LEARNING AGENT
         agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=env.n_rollouts)
@@ -63,21 +63,21 @@ if __name__ == '__main__':
         
         ## INITIAL LOGGING DATA
         env.agent_name = agent.agent_type
-        env.trial_name = f"{env.agent_name}--Vz_{vz_d:.2f}--Vx_{vx_d:.2f}--trial_{int(trial_num):02d}"
-        
+        env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}"        
         env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
         env.logging_flag = True
 
 
-        ## BROKEN ROTOR FIX
-        if trial_num %1 == 0:    # There's an issue where rotors detach randomly and prevent model from flipping
-            env.relaunch_sim()   # this should help remedy that and make sure it doesn't go on forever
+
+        # ## BROKEN ROTOR FIX
+        # if trial_num %1 == 0:    # There's an issue where rotors detach randomly and prevent model from flipping
+        #     env.relaunch_sim()   # this should help remedy that and make sure it doesn't go on forever
         
 
         try:
             ## RUN TRIAL
             env.RL_Publish() # Publish data to rl_data topic
-            runTraining(env,agent,vx_d,vz_d,k_epMax=25)
+            runTraining(env,agent,V_d,phi,k_epMax=25)
 
         except: ## IF SIM EXCEPTION RAISED THEN CONTINUE BACK TO TRY BLOCK UNTIL SUCCESSFUL COMPLETION
             continue

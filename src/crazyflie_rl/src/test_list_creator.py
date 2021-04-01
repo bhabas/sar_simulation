@@ -1,10 +1,10 @@
 import numpy as np
 
 list = []
-for vz_d in np.arange(1.5,4.25,0.25):
-    for vx_d in np.arange(0,2.0,0.25):
-        for trial_num in np.arange(7,10,1):
-            list.append([vz_d,vx_d,trial_num])
+for V_d in np.arange(1.0,5.25,0.25):    # [m/s]
+    for phi in np.arange(30,90,10):      # [deg]
+        for trial_num in np.arange(0,4,1):
+            list.append([V_d,phi,trial_num])
 
 
 print(np.asarray(list))

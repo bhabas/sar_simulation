@@ -5,10 +5,9 @@
 // ROS Includes
 #include <ros/ros.h>
 #include "crazyflie_gazebo/CtrlData.h"
-#include "gazebo_communication_pkg/GlobalState.h"
 #include "crazyflie_rl/RLCmd.h"
 #include "nav_msgs/Odometry.h"
-
+#include "sensor_msgs/Imu.h"
 
 // Socket Includes
 #include <arpa/inet.h>
@@ -29,7 +28,10 @@ class Controller
         Controller(ros::NodeHandle *nh){
             ctrl_Publisher = nh->advertise<crazyflie_gazebo::CtrlData>("/ctrl_data",10);
 
-            globalState_Subscriber = nh->subscribe("/global_state",1000,&Controller::global_stateCallback,this);
+            globalState_Subscriber = nh->subscribe("/global_state",100,&Controller::global_stateCallback,this);
+            imu_Subscriber = nh->subscribe("/imu",100,&Controller::imuCallback,this);
+            OF_Subscriber = nh->subscribe("/OF_sensor",10,&Controller::OFCallback,this);
+            
             RLCmd_Subscriber = nh->subscribe("/rl_ctrl",10,&Controller::RLCmd_Callback,this);
 
             
@@ -50,7 +52,7 @@ class Controller
 
 
             // SET DEFAULT HOME POSITION
-            _x_d << 0,0,0.3;
+            _x_d << 0,0,0.6;
             _v_d << 0,0,0;
             _a_d << 0,0,0;
             _b1_d << 1,0,0;
@@ -84,13 +86,17 @@ class Controller
         void recvThread_RL();
         void controlThread();
         void global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg);
+        void OFCallback(const nav_msgs::Odometry::ConstPtr &msg);
+        void imuCallback(const sensor_msgs::Imu::ConstPtr &msg);
         void RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg);
 
     private:
         // DEFINE PUBLISHERS AND SUBSCRIBERS
         ros::Publisher ctrl_Publisher;
         ros::Subscriber globalState_Subscriber;
+        ros::Subscriber OF_Subscriber;
         ros::Subscriber RLCmd_Subscriber;
+        ros::Subscriber imu_Subscriber;
 
         // DEFINE THREAD OBJECTS
         std::thread controllerThread;
@@ -117,6 +123,10 @@ class Controller
         Eigen::Vector3d _b1_d;      // Desired body-fixed x-axis in terms of global axes
         Eigen::Vector3d _omega_d;   // Omega-desired [rad/s]
         Eigen::Vector3d _M_d;       // Moment-desired [N*m]
+
+        Eigen::Vector3d _eul_d;     // Euler-desired [rad?]
+        bool _eul_flag = false;
+        Eigen::Matrix3f _R_d_custom; // Rotation-desired (YZX Euler notation)
 
         Eigen::Vector3d _kp_x; // Pos. Gain
         Eigen::Vector3d _kd_x; // Pos. derivative Gain

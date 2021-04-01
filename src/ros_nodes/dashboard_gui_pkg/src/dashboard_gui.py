@@ -1,11 +1,12 @@
 #! /usr/bin/env python3
 
 import os,time
+import rospy
 
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from scipy.spatial.transform import Rotation
+
 
 
 from dashboard_node import DashboardNode
@@ -16,7 +17,7 @@ from dashboard_node import DashboardNode
 
 os.system("clear")
 DashNode=DashboardNode()
-time.sleep(1) # Sleep time for sub threads to start receiving and processing data from pubs
+
 
 
 def startDashboard(dashOn=True,rewardOn=True):

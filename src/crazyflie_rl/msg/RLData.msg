@@ -10,7 +10,6 @@ uint8 k_ep
 uint8 k_run
 
 uint8 n_rollouts
-float32 gamma
 float32 h_ceiling
 
 float32[] alpha_mu

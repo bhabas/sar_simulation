@@ -77,36 +77,47 @@ void Controller::Load()
 }
 
 
-
 void Controller::global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
 
     // SIMPLIFY STATE VALUES FROM TOPIC
     // Follow msg names from message details - "rqt -s rqt_msg" 
     
     const geometry_msgs::Point position = msg->pose.pose.position; 
-    const geometry_msgs::Quaternion quaternion = msg->pose.pose.orientation;
     const geometry_msgs::Vector3 velocity = msg->twist.twist.linear;
-    const geometry_msgs::Vector3 omega = msg->twist.twist.angular;
+
 
     // SET STATE VALUES INTO CLASS STATE VARIABLES
     _t = msg->header.stamp.toSec();
     _pos << position.x, position.y, position.z;
     _vel << velocity.x, velocity.y, velocity.z;
-    _quat << quaternion.w, quaternion.x, quaternion.y, quaternion.z, 
-    _omega << omega.x, omega.y, omega.z;
 
+}
+
+void Controller::OFCallback(const nav_msgs::Odometry::ConstPtr &msg){
+
+    const geometry_msgs::Point position = msg->pose.pose.position; 
+    const geometry_msgs::Vector3 velocity = msg->twist.twist.linear;
+
+    double h_ceiling = 3.00;
+    double d = h_ceiling-position.z; // h_ceiling - height
 
     // SET SENSOR VALUES INTO CLASS VARIABLES
     // _RREV = msg->RREV;
     // _OF_x = msg->OF_x;
     // _OF_y = msg->OF_y;
 
-    double d = 2.5-position.z; // h_ceiling - height
     _RREV = velocity.z/d;
     _OF_x = -velocity.y/d;
     _OF_y = -velocity.x/d;
-    
+}
 
+void Controller::imuCallback(const sensor_msgs::Imu::ConstPtr &msg){
+
+    const geometry_msgs::Quaternion quaternion = msg->orientation;
+    const geometry_msgs::Vector3 omega = msg->angular_velocity;
+
+    _quat << quaternion.w, quaternion.x, quaternion.y, quaternion.z, 
+    _omega << omega.x, omega.y, omega.z;
 }
 
 
@@ -120,13 +131,16 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
 
     _ctrl_cmd << cmd_type,cmd_vals,cmd_flag; // Define cmd vector
 
-
+    
+    float eulx = 0.0;
+    float euly = 0.0;
+    float eulz = 0.0;
     
 
     switch(cmd_type){
         case 0: // Reset to home
 
-            _x_d << 0,0,0.3;
+            _x_d << 0,0,0.6;
             _v_d << 0,0,0;
             _a_d << 0,0,0;
 
@@ -148,6 +162,7 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             _Moment_flag = false;
             _policy_armed_flag = false;
             _flip_flag = false;
+            _eul_flag = false;
 
             _tumbled = false;
             // _tumble_detection = true;
@@ -164,7 +179,15 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             _kd_xf = cmd_flag;
             break;
 
-        case 3: // Attitude [Future implentation needed]
+        case 3: // Attitude 
+            
+            _eul_flag = cmd_flag;
+
+            eulx = cmd_vals(0)*M_PI/180.0;
+            euly = cmd_vals(1)*M_PI/180.0;
+            eulz = cmd_vals(2)*M_PI/180.0;
+
+            _R_d_custom = AngleAxisf(euly, Vector3f::UnitY()) * AngleAxisf(eulz, Vector3f::UnitZ()) * AngleAxisf(eulx, Vector3f::UnitX());
             break;
         
         case 4: // Tumble-Detection
@@ -241,8 +264,6 @@ void Controller::controlThread()
     
 
     Matrix3d R_d; // Rotation-desired 
-    Matrix3d R_d_custom; // Rotation-desired (ZXY Euler angles)
-    Vector3d eul_d; // Desired attitude (ZXY Euler angles) [rad] (roll, pitch, yaw angles)
     Vector3d omega_d; // Omega-desired [rad/s]
     Vector3d domega_d(0,0,0); // Omega-Accl. [rad/s^2]
 
@@ -292,6 +313,9 @@ void Controller::controlThread()
 
     float OF_y_tr = 0;
     float RREV_tr = 0;
+    float Z_tr = 0;
+    float Vz_tr = 0;
+    float Vx_tr = 0;
 
     double Mx = 0;
     double My = 0;
@@ -310,7 +334,7 @@ void Controller::controlThread()
 
 
     // might need to adjust weight to real case (sdf file too)
-    double m = 0.026 + 0.0009*4; // Mass [kg]
+    double m = 0.023 + 0.0003*4; // Mass [kg]
     double g = 9.8066; // Gravitational acceleration [m/s^2]
     double t = 0; // Time from Gazebo [s]
     unsigned int t_step = 0; // t_step counter
@@ -340,7 +364,7 @@ void Controller::controlThread()
 
     // =========== ROS Definitions =========== //
     crazyflie_gazebo::CtrlData ctrl_msg;
-    ros::Rate rate(200);
+    ros::Rate rate(500);
 
     while(_isRunning)
     {
@@ -401,6 +425,12 @@ void Controller::controlThread()
         // =========== Rotational Errors =========== // 
         R_d << b2_d.cross(b3_d).normalized(),b2_d,b3_d; // Desired rotational axis
                                                         // b2_d x b3_d != b1_d (look at derivation)
+        
+        if (_eul_flag == true){
+            
+            R_d = _R_d_custom.cast <double> ();
+        }
+            
 
         e_R = 0.5*dehat(R_d.transpose()*R - R.transpose()*R_d); // Rotational error
         e_omega = omega - R.transpose()*R_d*omega_d; // Ang vel error 
@@ -421,7 +451,18 @@ void Controller::controlThread()
                 if(_RREV >= _RREV_thr && _flip_flag == false){
                     OF_y_tr = _OF_y;
                     RREV_tr = _RREV;
+
+                    Z_tr = _pos(2);
+                    Vz_tr = _vel(2);
+                    Vx_tr = _vel(0);
+
                     _flip_flag = true;
+
+                    // cout << "t: " << _t << endl;
+                    // cout << "pos: " << _pos.transpose() << endl;
+                    // cout << "vel: " << _vel.transpose() << endl;
+                    // cout << "RREV: " << _RREV << endl;
+                    // cout << endl;
                 }
 
                 if(_flip_flag == true){
@@ -488,7 +529,7 @@ void Controller::controlThread()
         
 
 
-        if (t_step%50 == 0){ // General Debugging output
+        if (t_step%25 == 0){ // General Debugging output
         cout << setprecision(4) <<
         "t: " << _t << "\tCmd: " << _ctrl_cmd.transpose() << endl << 
         endl <<
@@ -517,7 +558,7 @@ void Controller::controlThread()
 
         "R:\n" << R << "\n\n" << 
         "R_d:\n" << R_d << "\n\n" << 
-        "Yaw: " << yaw*180/M_PI << "\tRoll: " << roll*180/M_PI << "\tPitch: " << pitch*180/M_PI << endl <<
+        // "Yaw: " << yaw*180/M_PI << "\tRoll: " << roll*180/M_PI << "\tPitch: " << pitch*180/M_PI << endl << // These values are wrong
         "e_R: " << e_R.transpose() << "\te_R (deg): " << e_R.transpose()*180/M_PI << endl <<
         endl <<
 
@@ -540,6 +581,9 @@ void Controller::controlThread()
         ctrl_msg.flip_flag = _flip_flag;
         ctrl_msg.RREV_tr = RREV_tr;
         ctrl_msg.OF_y_tr = OF_y_tr;
+        ctrl_msg.Z_tr = Z_tr;
+        ctrl_msg.Vz_tr = Vz_tr;
+        ctrl_msg.Vx_tr = Vx_tr;
         ctrl_msg.FM_flip = {FM[0],_M_d(0)*1e3,_M_d(1)*1e3,_M_d(2)*1e3};
 
 
@@ -570,6 +614,19 @@ void Controller::controlThread()
 
 int main(int argc, char **argv)
 {
+
+
+    // Matrix3f m;
+
+    // double eul_x = 0;
+    // double eul_y = -15.0*M_PI/180.0;
+    // double eul_z = 0;
+
+    // m = AngleAxisf((float) eul_y, Vector3f::UnitY()) * AngleAxisf((float) eul_z, Vector3f::UnitZ()) * AngleAxisf((float) eul_x, Vector3f::UnitX());
+
+    
+    // cout << m << endl;
+
     ros::init(argc, argv,"controller_node");
     ros::NodeHandle nh;
     Controller controller = Controller(&nh);
