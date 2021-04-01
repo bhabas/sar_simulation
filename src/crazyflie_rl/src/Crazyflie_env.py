@@ -33,7 +33,7 @@ class CrazyflieEnv:
         self.state_current = np.zeros(13)
 
         ## INIT NAME OF MODEL BEING USED
-        self.modelName = 'crazyflie_model_Flex'
+        self.modelName = 'crazyflie_model_Narrow-Long'
 
         ## INIT RL_DATA VARIABLES 
         # NOTE: All time units are in terms of Sim-Time unless specified
@@ -225,7 +225,12 @@ class CrazyflieEnv:
 
         self.t = np.round(t_temp+ns_temp*1e-9,3)
 
-    def global_stateCallback(self,gs_msg): ## Callback to parse state data received from external pos. sensor      
+    def global_stateCallback(self,gs_msg): ## Callback to parse state data received from external pos. sensor
+
+        t_temp = gs_msg.header.stamp.secs
+        ns_temp = gs_msg.header.stamp.nsecs
+
+        t = np.round(t_temp+ns_temp*1e-9,3)      
         
         ## SIMPLIFY STATE VALUES FROM TOPIC
         global_pos = gs_msg.pose.pose.position
@@ -257,14 +262,14 @@ class CrazyflieEnv:
         ## MAX PITCH CALC
         # Integrate omega_y over time to get full rotation estimate
         # This accounts for multiple revolutions that euler angles/quaternions can't
-        self.pitch_sum = self.pitch_sum + self.omega[1]*(180/np.pi)*(self.t - self.t_prev) # [deg]
+        self.pitch_sum = self.pitch_sum + self.omega[1]*(180/np.pi)*(t - self.t_prev) # [deg]
         
         if self.pitch_sum < self.pitch_max:     # Recording the most negative value
             self.pitch_max = self.pitch_sum
             self.pitch_max = np.round(self.pitch_max,3)
 
 
-        self.t_prev = self.t # Save t value for next callback iteration
+        self.t_prev = t # Save t value for next callback iteration
 
     def OFsensor_Callback(self,OF_msg): ## Callback to parse state data received from mock OF sensor
 
@@ -419,7 +424,7 @@ class CrazyflieEnv:
         state_msg.model_name = self.modelName
         state_msg.pose.position.x = 0.0
         state_msg.pose.position.y = 0.0
-        state_msg.pose.position.z = 0.55
+        state_msg.pose.position.z = 0.544
 
         state_msg.pose.orientation.w = 1.0
         state_msg.pose.orientation.x = 0.0

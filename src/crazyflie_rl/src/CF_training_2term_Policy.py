@@ -205,7 +205,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                         env.runComplete_flag = True
 
                     # IF TIME SINCE RUN START EXCEEDS [6.0s]
-                    if (env.getTime() - start_time_rollout) > (6.0):
+                    if (env.getTime() - start_time_rollout) > (10.0):
                         env.error_str = "Rollout Completed: Time Exceeded"
                         print(env.error_str)
 
