@@ -274,7 +274,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                     env.RL_Publish()
                     k_run += 1 # When succesful move on to next run
                     
-            except FileNotFoundError: ## IF SIM EXCEPTION RAISED THEN CONTINUE BACK TO TRY BLOCK UNTIL SUCCESSFUL COMPLETION
+            except: ## IF SIM EXCEPTION RAISED THEN CONTINUE BACK TO TRY BLOCK UNTIL SUCCESSFUL COMPLETION
                 continue
 
             
