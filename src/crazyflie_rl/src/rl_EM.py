@@ -98,19 +98,20 @@ class rlEM_AdaptiveAgent(rlEM_PEPGAgent):
 
 
 class EPHE_Agent(ES):  # EM Policy Hyper Paramter Exploration
-     def __init__(self, mu, sigma, n_rollout = 5, adaptive = True, lamda = 1):
-         self.n_rollout = n_rollout
+     def __init__(self, mu, sigma, n_rollouts = 8, adaptive = True, lamda = 1):
+         self.n_rollouts = n_rollouts
+         self.agent_type = 'EPHE'
 
          self.mu = mu
          self.sigma = sigma
 
          self.adaptive = adaptive
-         self.n = 2*n_rollout  # total runs per episode
+         self.n_rollouts = n_rollouts  # total runs per episode
          self.d = len(self.mu) # problem dimension
          self.alpha_mu, self.alpha_sigma  = np.array([[0],[0]]),np.array([[0],[0]])  # placeholder for compatibility with pepg agent
 
 
-         if lamda < 1 or lamda > self.n:
+         if lamda < 1 or lamda > self.n_rollouts:
              raise ValueError("lamda must be between 1 and 2*n_rollout")
          else:
              self.lamda = lamda
@@ -120,17 +121,17 @@ class EPHE_Agent(ES):  # EM Policy Hyper Paramter Exploration
          self.reward_history = None
 
      def get_theta(self):
-         theta = np.zeros((self.d,self.n))
+         theta = np.zeros((self.d,self.n_rollouts))
 
          for dim in range(0,self.d):
-             theta[dim,:] = np.random.normal(self.mu[dim,0],self.sigma[dim,0],[1,self.n])
+             theta[dim,:] = np.random.normal(self.mu[dim,0],self.sigma[dim,0],[1,self.n_rollouts])
 
-         for k_n in range(self.n):
+         for k_n in range(self.n_rollouts):
              for dim in range(self.d):
                  if theta[dim,k_n] < 0: 
                      theta[dim,k_n] = 0.001 
 
-         return theta , 0
+         return theta, 0
 
 
      def train(self,theta,reward,epsilon):
@@ -153,14 +154,14 @@ class EPHE_Agent(ES):  # EM Policy Hyper Paramter Exploration
 
          if not self.adaptive:   # consider base reward for top lamda members if not adaptive
              summary[self.d+1,:self.lamda] = summary[self.d,:self.lamda]
-             summary[self.d+1,self.lamda:] = np.zeros((1,self.n-self.lamda))
+             summary[self.d+1,self.lamda:] = np.zeros((1,self.n_rollouts-self.lamda))
 
          print(summary)
 
 
-         S_theta = summary[0:self.d,:]@summary[self.d+1,:].reshape(self.n,1)   # sigma and mu update terms
+         S_theta = summary[0:self.d,:]@summary[self.d+1,:].reshape(self.n_rollouts,1)   # sigma and mu update terms
          S_reward = np.sum(summary[self.d+1,:])
-         S_diff = np.square(summary[0:self.d,:] - self.mu)@(summary[self.d+1,:].reshape(self.n,1))
+         S_diff = np.square(summary[0:self.d,:] - self.mu)@(summary[self.d+1,:].reshape(self.n_rollouts,1))
 
 
          self.mu =  S_theta/(S_reward +0.001)

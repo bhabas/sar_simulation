@@ -136,6 +136,8 @@ class CrazyflieEnv:
 
     
 
+    
+
     # ============================
     ##   Publishers/Subscribers 
     # ============================
@@ -367,6 +369,9 @@ class CrazyflieEnv:
 
     def __del__(self):
         self.isRunning = False
+        os.killpg(self.gazebo_p.pid, signal.SIGTERM)
+        os.killpg(self.dashboard_p.pid, signal.SIGTERM)
+        os.killpg(self.controller_p.pid, signal.SIGTERM)
      
     def getTime(self):
         return self.t
@@ -387,14 +392,14 @@ class CrazyflieEnv:
             "gnome-terminal -- roslaunch dashboard_gui_pkg dashboard.launch",
             close_fds=True, preexec_fn=os.setsid, shell=True)
 
-    def launch_IC(self,vx_d,vz_d): # Imparts desired velocity to model (should retain current position)
+    def launch_IC(self,pos_z,vx_d,vz_d): # Imparts desired velocity to model (should retain current position)
         
         ## SET POSE AND TWIST OF MODEL
         state_msg = ModelState()
         state_msg.model_name = self.modelName
         state_msg.pose.position.x = 0.0
         state_msg.pose.position.y = 0.0
-        state_msg.pose.position.z = 0.6
+        state_msg.pose.position.z = pos_z
 
         state_msg.pose.orientation.x = 0.0
         state_msg.pose.orientation.y = 0.0
@@ -431,7 +436,6 @@ class CrazyflieEnv:
         state_msg.pose.orientation.y = 0.0
         state_msg.pose.orientation.z = 0.0
         
-
         state_msg.twist.linear.x = 0.0
         state_msg.twist.linear.y = 0.0
         state_msg.twist.linear.z = 0.0
