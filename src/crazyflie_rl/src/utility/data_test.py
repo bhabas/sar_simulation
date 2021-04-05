@@ -27,6 +27,6 @@ trial = DataFile(dataPath,fileName)
 k_ep = 19
 k_run = 7
 
-print(trial.grab_policy(k_ep,k_run))
+print(trial.plot_vc_traj(k_ep,k_run))
 
 

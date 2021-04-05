@@ -166,6 +166,27 @@ class DataFile:
         landingRate_2leg = np.float32(landings_2leg)/np.float32(attempts) # Catch for if dividing by zero
         return landingRate_4leg,landingRate_2leg
         
+    def landing_bool(self,k_ep,k_run):
+
+        ## SELECT RUN DF
+        _,_,_,impact_df = self.select_run(k_ep,k_run)
+        n_legs = pd.to_numeric(impact_df.iloc[0]['impact_flag'])
+        body_contact = impact_df.iloc[0]['flip_flag']
+
+        ## CHECK FOR NO BODY CONTACT 
+        if body_contact == False:
+            
+            # CHECK FOR 3-4 LEGS CONTACTING
+            if n_legs >= 2:
+                landingBool = True
+            else:
+                landingBool = False
+
+        else:
+            landingBool = False
+
+        return landingBool
+
     def plotSummary(self):
         fig = plt.figure(figsize=(12,6))
 
@@ -224,28 +245,7 @@ class DataFile:
 
         fig.tight_layout()
         plt.show()
-        
-    def landing_bool(self,k_ep,k_run):
-
-        ## SELECT RUN DF
-        _,_,_,impact_df = self.select_run(k_ep,k_run)
-        n_legs = pd.to_numeric(impact_df.iloc[0]['impact_flag'])
-        body_contact = impact_df.iloc[0]['flip_flag']
-
-        ## CHECK FOR NO BODY CONTACT 
-        if body_contact == False:
-            
-            # CHECK FOR 3-4 LEGS CONTACTING
-            if n_legs >= 2:
-                landingBool = True
-            else:
-                landingBool = False
-
-        else:
-            landingBool = False
-
-        return landingBool
-
+       
 
 ## POLICY FUNCTIONS
     def grab_policy(self,k_ep,k_run):
@@ -348,7 +348,7 @@ class DataFile:
         ## FIND FINAL RUN DF
         k_ep = self.trial_df.iloc[-1]['k_ep']
         k_run = self.trial_df.iloc[-1]['k_run']
-        run_df,IC_df = self.select_run(k_ep,k_run)
+        run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
 
         ## SELECT MU & SIGMA
         mu = IC_df.iloc[0]['mu']
@@ -361,7 +361,12 @@ class DataFile:
 
         return mu,sigma
 
-    def grab_RLPararms(self):
+    def grab_RLParams(self):
+        """Returns the initial RL Parameters
+
+        Returns:
+            alpha_mu, alpha_simga, mu, sigma: Initial RL Parameters
+        """        
         param_df = self.trial_df.iloc[:][['alpha_mu','alpha_sig','mu','sigma']].dropna() # Create df drop blank reward rows
 
         alpha_mu = param_df.iloc[0]['alpha_mu']
@@ -380,92 +385,7 @@ class DataFile:
         return alpha_mu,alpha_sigma,mu,sigma
 
 
-    def grab_OF_y(self,k_ep,k_run):
-        run_df,IC_df = self.select_run(k_ep,k_run)
 
-        OF_y = IC_df.iloc[0]['OF_y']
-
-        return OF_y
-
-    def grab_OF_y_trial(self):
-        ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
-        ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
-        ep_arr = ep_df.iloc[-self.n_rollouts*3:].to_numpy() # Grab episode/run listing from past 3 rollouts
-
-        ## ITERATE THROUGH ALL RUNS AND FIND My_d FOR SUCCESSFUL LANDINGS
-        OF_yList = []
-        epList = []
-        for k_ep,k_run in ep_arr:
-            OF_yList.append(self.grab_OF_y(k_ep,k_run))
-            epList.append(k_ep)
-                
-        ## CONVERT LIST TO NP ARRAY AND CALC MEAN
-        arr = np.asarray(OF_yList)
-        avg_OF_y = np.mean(arr,axis=0)
-
-        return avg_OF_y
-
-    def grab_RREV_tr(self,k_ep,k_run):
-        run_df,IC_df = self.select_run(k_ep,k_run)
-
-        RREV_tr = IC_df.iloc[0]['RREV']
-
-        return RREV_tr
-
-    def grab_RREV_tr_trial(self):
-         ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
-        ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
-        ep_arr = ep_df.iloc[-self.n_rollouts*3:].to_numpy() # Grab episode/run listing from past 3 rollouts
-
-        ## ITERATE THROUGH ALL RUNS AND FIND My_d FOR SUCCESSFUL LANDINGS
-        RREV_trList = []
-        epList = []
-        for k_ep,k_run in ep_arr:
-            RREV_trList.append(self.grab_RREV_tr(k_ep,k_run))
-            epList.append(k_ep)
-                
-        ## CONVERT LIST TO NP ARRAY AND CALC MEAN
-        arr = np.asarray(RREV_trList)
-        avg_RREV_tr = np.mean(arr,axis=0)
-
-        return avg_RREV_tr
-
-
-    def plot_vc_traj(self,k_ep,k_run):
-        """Plot flight trajectory through VC-Space until flip execution
-
-        Args:
-            k_ep (int): Episode Number
-            k_run (int): Run Number
-        """        
-
-        run_df,IC_df = self.select_run(k_ep,k_run)
-
-
-        ## GRAB/MODIFY DATA AND CONVERT TO NUMPY ARRAY
-        RREV_traj = run_df.query("flip_flag==False & vz>=0.5").iloc[:]['RREV'].to_numpy()
-        OF_y_traj = run_df.query("flip_flag==False & vz>=0.5").iloc[:]['OF_y'].to_numpy()
-        OF_y_traj = np.abs(OF_y_traj) # Convert OF_y to pure magnitude
-
-
-        ## PLOT DATA
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        
-        ax.plot(OF_y_traj,RREV_traj,'k--')
-        ax.scatter(OF_y_traj[0],RREV_traj[0],marker='o',color='k',label='Velocity Imparted')
-        ax.scatter(OF_y_traj[-1],RREV_traj[-1],marker='x',color='k',label='Flip Executed')
-
-        ax.set_xlim(-1,10)
-        ax.set_ylim(-1,10)
-       
-        ax.set_ylabel("RREV [1/s]")
-        ax.set_xlabel("OF_y [rad/s]")
-        ax.set_title("Flight Trajectory - Visual Cue Space")
-        ax.legend()
-        ax.grid()
-
-        plt.show()
 
 
 ## STATE FUNCTIONS 
@@ -724,6 +644,87 @@ class DataFile:
         plt.show()
 
 
+## FLIP TRIGGERING FUNCTIONS
+    def grab_OFy_trg(self,k_ep,k_run):
+        """Returns OFy at time of flip triggering
+
+        Args:
+            k_ep ([type]): [description]
+            k_run ([type]): [description]
+
+        Returns:
+            [float]: OFy at time of flip triggering
+        """        
+        _,_,flip_df,_ = self.select_run(k_ep,k_run)
+
+        OFy_tr = flip_df.iloc[0]['OF_y']
+
+        return OFy_tr
+
+    def grab_OFy_trg_trial(self,n_ep=3):
+
+        ## CREATE DF OF TRIGGERED OFy AT FLIP
+        OFy_df = self.trial_df.query("Error=='Flip Data'").iloc[-int(n_ep*self.n_rollouts):]['OF_y']
+
+        avg_OFy_trg = OFy_df.mean()
+        std_OFy_trg = OFy_df.std()
+
+        return avg_OFy_trg,std_OFy_trg
+
+    def grab_RREV_trg(self,k_ep,k_run):
+
+        _,_,flip_df,_ = self.select_run(k_ep,k_run)
+
+        RREV_tr = flip_df.iloc[0]['RREV']
+
+        return RREV_tr
+
+    def grab_RREV_trg_trial(self,n_ep=3):
+
+        ## CREATE DF OF TRIGGERED RREV AT FLIP
+        RREV_df = self.trial_df.query("Error=='Flip Data'").iloc[-int(n_ep*self.n_rollouts):]['RREV']
+
+        avg_RREV_trg = RREV_df.mean()
+        std_RREV_trg = RREV_df.std()
+
+        return avg_RREV_trg,std_RREV_trg
+
+
+    def plot_vc_traj(self,k_ep,k_run):
+        """Plot flight trajectory through VC-Space until flip execution
+
+        Args:
+            k_ep (int): Episode Number
+            k_run (int): Run Number
+        """        
+
+        run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
+
+
+        ## GRAB/MODIFY DATA AND CONVERT TO NUMPY ARRAY
+        RREV_traj = run_df.query("flip_flag==False & vz>=0.2").iloc[:]['RREV'].to_numpy()
+        OF_y_traj = run_df.query("flip_flag==False & vz>=0.2").iloc[:]['OF_y'].to_numpy()
+        OF_y_traj = np.abs(OF_y_traj) # Convert OF_y to pure magnitude
+
+
+        ## PLOT DATA
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        
+        ax.plot(OF_y_traj,RREV_traj,'k--')
+        ax.scatter(OF_y_traj[0],RREV_traj[0],marker='o',color='k',label='Velocity Imparted')
+        ax.scatter(OF_y_traj[-1],RREV_traj[-1],marker='x',color='k',label='Flip Executed')
+
+        ax.set_xlim(-1,10)
+        ax.set_ylim(-1,10)
+       
+        ax.set_ylabel("RREV [1/s]")
+        ax.set_xlabel("OF_y [rad/s]")
+        ax.set_title("Flight Trajectory - Visual Cue Space")
+        ax.legend()
+        ax.grid()
+
+        plt.show()
 
 
 ## DESIRED IC FUNCTIONS
