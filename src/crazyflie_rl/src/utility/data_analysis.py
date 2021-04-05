@@ -526,7 +526,6 @@ class DataFile:
 
         plt.show()
 
-
     def plot_traj(self,k_ep,k_run):
 
         ## GRAB/MODIFY DATA
@@ -555,7 +554,6 @@ class DataFile:
         ax.grid()
 
         plt.show()
-
 
     def plot_traj2(self,k_ep,k_run):
 
@@ -620,8 +618,6 @@ class DataFile:
 
         print()
         
-    
-    
     def plot_traj_3D(self,k_ep,k_run):
         fig = plt.figure()
         ax = fig.gca(projection='3d')
@@ -645,50 +641,71 @@ class DataFile:
 
 
 ## FLIP TRIGGERING FUNCTIONS
-    def grab_OFy_trg(self,k_ep,k_run):
-        """Returns OFy at time of flip triggering
+
+    def grab_flip_time(self,k_ep,k_run):
+        """Returns time of flip
 
         Args:
-            k_ep ([type]): [description]
-            k_run ([type]): [description]
+            k_ep (int): Episode number
+            k_run (int): Run number
 
         Returns:
-            [float]: OFy at time of flip triggering
+            [float,float]: [t_flip,t_flip_norm]
+        """        
+        run_df,_,flip_df,_ = self.select_run(k_ep,k_run)
+        t_flip = flip_df.iloc[0]['t']
+        t_flip_norm = t_flip - run_df.iloc[0]['t']
+
+        return t_flip,t_flip_norm
+
+    def grab_flip_state(self,k_ep,k_run,stateName):
+        """Returns desired state at time of flip
+
+        Args:
+            k_ep (int): Episode number
+            k_run (int): Run number
+            stateName (str): State name
+
+        Returns:
+            float: state_flip
         """        
         _,_,flip_df,_ = self.select_run(k_ep,k_run)
+        state_flip = flip_df.iloc[0][stateName]
 
-        OFy_tr = flip_df.iloc[0]['OF_y']
+        return state_flip
 
-        return OFy_tr
-
-    def grab_OFy_trg_trial(self,n_ep=3):
-
-        ## CREATE DF OF TRIGGERED OFy AT FLIP
-        OFy_df = self.trial_df.query("Error=='Flip Data'").iloc[-int(n_ep*self.n_rollouts):]['OF_y']
-
-        avg_OFy_trg = OFy_df.mean()
-        std_OFy_trg = OFy_df.std()
-
-        return avg_OFy_trg,std_OFy_trg
-
-    def grab_RREV_trg(self,k_ep,k_run):
-
-        _,_,flip_df,_ = self.select_run(k_ep,k_run)
-
-        RREV_tr = flip_df.iloc[0]['RREV']
-
-        return RREV_tr
-
-    def grab_RREV_trg_trial(self,n_ep=3):
+    def grab_flip_state_trial(self,stateName,n_ep=3):
 
         ## CREATE DF OF TRIGGERED RREV AT FLIP
-        RREV_df = self.trial_df.query("Error=='Flip Data'").iloc[-int(n_ep*self.n_rollouts):]['RREV']
+        state_df = self.trial_df.query("Error=='Flip Data'").iloc[-int(n_ep*self.n_rollouts):][stateName]
 
-        avg_RREV_trg = RREV_df.mean()
-        std_RREV_trg = RREV_df.std()
+        avg_state_flip = state_df.mean()
+        std_state_flip = state_df.std()
 
-        return avg_RREV_trg,std_RREV_trg
+        return avg_state_flip,std_state_flip
+        
 
+        return 0
+
+    def grab_flip_eul(self,k_ep,k_run,eul_type):
+        ## GRAB RUN DF AND RUN QUERY FOR QUAT AT FIRST IMPACT
+        run_df,IC_df = self.select_run(k_ep,k_run)
+        quat_flip = run_df.query(f"flip_flag=={True}").iloc[0][['qw','qx','qy','qz']]
+
+        ## CONVERT QUAT TO EULER ANGLE
+        quat_arr = quat_flip[['qx','qy','qz','qw']].to_numpy()
+        R = Rotation.from_quat(quat_arr)
+        eul_arr = R.as_euler('YZX', degrees=True)
+
+        ## RETURN EULER IMPACT ANGLE
+        if eul_type == 'eul_y':
+            return eul_arr[0]
+        elif eul_type == 'eul_z':
+            return eul_arr[1]
+        elif eul_type == 'eul_x':
+            return eul_arr[2]
+        else:
+            return np.nan
 
     def plot_vc_traj(self,k_ep,k_run):
         """Plot flight trajectory through VC-Space until flip execution
@@ -824,59 +841,7 @@ class DataFile:
 
 
 
-    def grab_flip_time(self,k_ep,k_run):
-        """Returns time of flip
-
-        Args:
-            k_ep (int): Episode number
-            k_run (int): Run number
-
-        Returns:
-            [float,float]: [t_flip,t_flip_norm]
-        """        
-        run_df,IC_df = self.select_run(k_ep,k_run)
-        t_flip = run_df.query(f"flip_flag=={True}").iloc[0]['t']
-        t_flip_norm = t_flip - run_df.iloc[0]['t']
-
-        return t_flip,t_flip_norm
-
-    def grab_flip_state(self,k_ep,k_run,stateName):
-        """Returns desired state at time of flip
-
-        Args:
-            k_ep (int): Episode number
-            k_run (int): Run number
-            stateName (str): State name
-
-        Returns:
-            float: state_flip
-        """        
-        run_df,IC_df = self.select_run(k_ep,k_run)
-        state_flip = run_df.query(f"flip_flag=={True}").iloc[0][stateName]
-
-        return state_flip
-
-    def grab_flip_eul(self,k_ep,k_run,eul_type):
-        ## GRAB RUN DF AND RUN QUERY FOR QUAT AT FIRST IMPACT
-        run_df,IC_df = self.select_run(k_ep,k_run)
-        quat_flip = run_df.query(f"flip_flag=={True}").iloc[0][['qw','qx','qy','qz']]
-
-        ## CONVERT QUAT TO EULER ANGLE
-        quat_arr = quat_flip[['qx','qy','qz','qw']].to_numpy()
-        R = Rotation.from_quat(quat_arr)
-        eul_arr = R.as_euler('YZX', degrees=True)
-
-        ## RETURN EULER IMPACT ANGLE
-        if eul_type == 'eul_y':
-            return eul_arr[0]
-        elif eul_type == 'eul_z':
-            return eul_arr[1]
-        elif eul_type == 'eul_x':
-            return eul_arr[2]
-        else:
-            return np.nan
-
-    
+  
 
 
 
