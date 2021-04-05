@@ -27,30 +27,33 @@ class DataFile:
         idx = fileName.find('--Vz')
         self.agent = fileName[:idx]
         idx = fileName.find('trial_')
-        self.trialNum = int(fileName[idx+6:idx+7])
+        self.trialNum = int(fileName[idx+6:idx+8])
         self.v_d = self.grab_vel_d()
 
 
-        self.n_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
-        self.k_epMax = int(self.trial_df.iloc[-1]['k_ep'])
-
-        
-       
-
-        ## WHAT DO THESE DO AGAIN?
-        # trial_df = self.trial_df[ self.trial_df['Error'] != 'Error: NAN found in state vector'] 
-        # self.trial_df = trial_df[ trial_df['vz'].notna()] # Drops all rows that vz is blank
-
-        ## NOTE: Trial needs to be truncated to last complete episode
+        self.n_rollouts = int(self.trial_df.iloc[0]['n_rollouts']) # Find n_rollouts from first row
+        self.k_epMax = int(self.trial_df.iloc[-1]['k_ep']) # find k_ep max from last row 
         
 
     def select_run(self,k_ep,k_run): ## Create run dataframe from k_ep and k_run
-        run_df = self.trial_df[(self.trial_df['k_ep']==k_ep) & (self.trial_df['k_run']==k_run)]
-        IC_df = run_df[-1:]                                     # Remove last row with Initial Conditions
-        run_df = run_df[:-1]                                    # Drop IC row from dataframe
-        run_df = run_df.replace({'False':False,'True':True})    # Change all string bools to normal bools
+        """Returns important dataframes from a specified run
 
-        return run_df,IC_df
+        Args:
+            k_ep (int): Episode number
+            k_run (int): Run number
+
+        Returns:
+            [DataFrame]: run_df,IC_df,flip_df,impact_df
+        """        
+        run_df = self.trial_df[(self.trial_df['k_ep']==k_ep) & (self.trial_df['k_run']==k_run)]
+        run_df = run_df.replace({'False':False,'True':True})    # Convert all string bools to normal bools
+
+        IC_df = run_df.iloc[[-3]]       # Create DF of initial conditions
+        flip_df = run_df.iloc[[-2]]     # Create DF of flip conditions
+        impact_df = run_df.iloc[[-1]]   # Create DF of impact conditions
+        run_df = run_df[:-3]            # Drop special rows from dataframe
+
+        return run_df,IC_df,flip_df,impact_df
 
     def grab_rewardData(self):
         ## CREATE ARRAYS FOR REWARD, K_EP 
@@ -94,7 +97,7 @@ class DataFile:
         ax.set_ylabel("Rewards")
         ax.set_xlabel("k_ep")
         ax.set_xlim(-2,self.k_epMax+5)
-        ax.set_ylim(-2,150)
+        ax.set_ylim(-2,200)
         ax.set_title(f"Reward vs Episode | Rollouts per Episode: {self.n_rollouts}")
         ax.legend()
         ax.grid()
@@ -126,22 +129,43 @@ class DataFile:
 
         plt.show()
 
-    def landing_rate(self):
-        impact_df = self.trial_df.iloc[:][['k_ep','reward','flip_flag','impact_flag']].dropna() # Use reward to select final impact row
-        impact_df['impact_flag'] = pd.to_numeric(impact_df['impact_flag'])          # Convert number of legs (str) to type (int)
+    def landing_rate(self,n_ep=3):
+        """Returns succesful landing percentage for 2-leg and 4-leg landings and doesn't count bugged attempts
 
-        temp = impact_df.iloc[-int(self.n_rollouts*3):][['reward','flip_flag','impact_flag']] # Grab leg impact number and body impact flag for final 3 episodes
+        Args:
+            n_ep (int, optional): Number of final episodes to calculate over. Defaults to 3.
 
+        Returns:
+            landingRate_4leg,landingRate_2leg: Successful landing percentage
+        """        
+
+        ## COLLECT DF OF IMPACT DATA AND REWARD DATA
+        impact_df = self.trial_df.query(f"Error=='Impact Data'").iloc[-int(n_ep*self.n_rollouts):][['flip_flag','impact_flag']]
+        reward_df = self.trial_df.query("reward.notna()").iloc[-int(n_ep*self.n_rollouts):]['reward']
+
+
+        ## CONVERT STR VALS TO NUMBER AND BOOLS
+        impact_df['impact_flag'] = pd.to_numeric(impact_df['impact_flag']) # Convert number of legs (str) to type (int)
+        impact_df = impact_df.replace({'False':False,'True':True}) # Convert str bool ('False') to pure bool (False)
+
+
+        ## RESET INDEXES AND COMBINE TO ONE DF
+        impact_df.reset_index(drop=True,inplace=True)
+        reward_df.reset_index(drop=True,inplace=True)
+
+        impact_df = pd.concat([impact_df,reward_df],axis=1)
+
+
+        landings_4leg = impact_df.query('impact_flag >= 3 and flip_flag == False').shape[0] # Count number of successful landings
+        bugged_attempts = impact_df.query('reward <= 16.0 and flip_flag == False').shape[0] # Count number of attempts that glitched out
+        attempts = self.n_rollouts*n_ep - bugged_attempts # Valid attempts
+        landingRate_4leg = np.float32(landings_4leg)/np.float32(attempts) # Catch for if dividing by zero
+
+
+        landings_2leg = impact_df.query('impact_flag >= 2 and flip_flag == False').shape[0] # Count number of successful landings
+        landingRate_2leg = np.float32(landings_2leg)/np.float32(attempts) # Catch for if dividing by zero
+        return landingRate_4leg,landingRate_2leg
         
-        # Trim rows to match conditions and find final number (flip_flag IC row shows body impact on True)
-        landings = temp[(temp.impact_flag >= 3) & (temp.flip_flag == False)].shape[0]
-        bugged_attempts = temp[temp.reward <= 16].shape[0]   # Count number of attempts that glitched out
-        attempts = self.n_rollouts*3 - bugged_attempts # Valid attempts
-        landingRate = np.float32(landings)/np.float32(attempts)
-        
-
-        return landingRate
-
     def plotSummary(self):
         fig = plt.figure(figsize=(12,6))
 
@@ -204,15 +228,15 @@ class DataFile:
     def landing_bool(self,k_ep,k_run):
 
         ## SELECT RUN DF
-        run_df,IC_df = self.select_run(k_ep,k_run)
-        n_legs = pd.to_numeric(IC_df.iloc[0]['impact_flag'])
-        body_contact = IC_df.iloc[0]['flip_flag']
+        _,_,_,impact_df = self.select_run(k_ep,k_run)
+        n_legs = pd.to_numeric(impact_df.iloc[0]['impact_flag'])
+        body_contact = impact_df.iloc[0]['flip_flag']
 
         ## CHECK FOR NO BODY CONTACT 
         if body_contact == False:
             
             # CHECK FOR 3-4 LEGS CONTACTING
-            if n_legs >= 3:
+            if n_legs >= 2:
                 landingBool = True
             else:
                 landingBool = False
@@ -234,7 +258,7 @@ class DataFile:
         Returns:
             np.array: [RREV,G1,G2,...]
         """        
-        run_df,IC_df = self.select_run(k_ep,k_run)
+        run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
 
         ## SELECT POLICY
         policy = IC_df.iloc[0]['policy']
@@ -710,9 +734,9 @@ class DataFile:
         Returns:
             float: Initial Velocity Conditions (vx,vy,vz)
         """        
-        vx_IC = self.trial_df.iloc[-1]['vx']
-        vy_IC = self.trial_df.iloc[-1]['vy']
-        vz_IC = self.trial_df.iloc[-1]['vz']
+        vx_IC = self.trial_df.iloc[-3]['vx']
+        vy_IC = self.trial_df.iloc[-3]['vy']
+        vz_IC = self.trial_df.iloc[-3]['vz']
         
         return vx_IC,vy_IC,vz_IC
 
