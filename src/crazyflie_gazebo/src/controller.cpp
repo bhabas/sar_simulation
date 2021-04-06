@@ -323,9 +323,7 @@ void Controller::controlThread()
     float OF_y_tr = 0.0;
     float OF_x_tr = 0.0;
     float RREV_tr = 0.0;
-    float Z_tr = 0.0;
-    float Vz_tr = 0.0;
-    float Vx_tr = 0.0;
+    double t_tr = 0.0;
 
     double Mx = 0.0;
     double My = 0.0;
@@ -467,6 +465,7 @@ void Controller::controlThread()
                     OF_x_tr = OF_x;
                     RREV_tr = RREV;
 
+                    t_tr = t;
                     pos_tr = pos;
                     vel_tr = vel;
                     quat_tr = quat;
@@ -604,6 +603,8 @@ void Controller::controlThread()
 
 
         ctrl_msg.Pose_tr.header.stamp = ros::Time::now();
+        // ctrl_msg.Pose_tr.header.stamp = ros::TimeBase::fromSec(t_tr); 
+        // This is the better way to do it but I can't figure out how to get it to work
 
         ctrl_msg.Pose_tr.pose.position.x = pos_tr(0);
         ctrl_msg.Pose_tr.pose.position.y = pos_tr(1);

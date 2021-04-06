@@ -132,10 +132,6 @@ class CrazyflieEnv:
 
         print("[COMPLETED] Environment done")
 
-        self.k = 0
-
-
-
     
 
     
@@ -190,13 +186,35 @@ class CrazyflieEnv:
         self.FM = np.round(self.FM,3)       # Round data for logging
 
         
-        if ctrl_msg.flip_flag == True and self.flip_flag == False: # Activtes only once per run when flip_flag is about to change
+        if ctrl_msg.flip_flag == True and self.flip_flag == False: # Activates only once per run when flip_flag is about to change
+
+            start = time.time()
 
             self.flip_flag = ctrl_msg.flip_flag # Update flip_flag
 
             # Save state data at time of flip activation
-            self.t_flip = self.t
-            self.state_flip = self.state_current
+            ## SET STATE VALUES FROM TOPIC
+            # TIME_FLIP
+            t_temp = ctrl_msg.Pose_tr.header.stamp.secs
+            ns_temp = ctrl_msg.Pose_tr.header.stamp.nsecs
+            self.t_flip = np.round(t_temp+ns_temp*1e-9,3)  
+
+            # POSE_FLIP
+            self.pos_flip = np.round([ctrl_msg.Pose_tr.pose.position.x,
+                                        ctrl_msg.Pose_tr.pose.position.y,
+                                        ctrl_msg.Pose_tr.pose.position.z],3) # [m]
+            self.quat_flip = np.round([ctrl_msg.Pose_tr.pose.orientation.w,
+                                        ctrl_msg.Pose_tr.pose.orientation.x,
+                                        ctrl_msg.Pose_tr.pose.orientation.y,
+                                        ctrl_msg.Pose_tr.pose.orientation.z],3) # [quat]
+            # TWIST_FLIP
+            self.vel_flip = np.round([ctrl_msg.Twist_tr.linear.x,
+                                        ctrl_msg.Twist_tr.linear.y,
+                                        ctrl_msg.Twist_tr.linear.z],3) # [m/s]
+            self.omega_flip = np.round([ctrl_msg.Twist_tr.angular.x,
+                                        ctrl_msg.Twist_tr.angular.y,
+                                        ctrl_msg.Twist_tr.angular.z],3) # [rad/s]
+
 
             self.FM_flip = np.asarray(ctrl_msg.FM_flip) # Force/Moments [N,N*mm]
             self.FM_flip = np.round(self.FM_flip,3)
@@ -204,21 +222,10 @@ class CrazyflieEnv:
             self.RREV_tr = np.round(ctrl_msg.RREV_tr,3) # Recorded trigger RREV [rad/s]
             self.OF_y_tr = np.round(ctrl_msg.OF_y_tr,3) # Recorded OF_y at trigger [rad/s]
 
-
-    
-
-
-    
+            end = time.time()
+            print(f"Time Elapsed: {end-start}\n")
 
 
-    
-
-    
-            
-
-    
-
-        
     # ============================
     ##    Sensors/Data Topics
     # ============================
@@ -275,17 +282,6 @@ class CrazyflieEnv:
 
         self.t_prev = t # Save t value for next callback iteration
 
-        print(t)
-
-        # if self.k%1500 == 0:
-        #     self.t_1 = time.time()
-            
-        # self.k +=1 
-
-        # if self.k >= 1500:
-        #     self.t_2 = time.time()
-        #     print(self.t_2 - self.t_1)
-
 
     def OFsensor_Callback(self,OF_msg): ## Callback to parse state data received from mock OF sensor
 
@@ -335,7 +331,6 @@ class CrazyflieEnv:
             self.t_impact = self.t
             self.state_impact = self.state_current
             self.FM_impact = self.FM
-            print(self.state_impact)
 
     def ceiling_ftsensorCallback(self,ft_msg):
         # Keeps record of max impact force for each run
@@ -550,10 +545,10 @@ class CrazyflieEnv:
                     self.k_ep,self.k_run,
                     "","", # alpha_mu,alpha_sig
                     "","","", # mu,sigma,policy
-                    self.t_flip,self.state_flip[0],self.state_flip[1],self.state_flip[2],    # t,x,y,z
-                    self.state_flip[3],self.state_flip[4],self.state_flip[5],self.state_flip[6],    # qx,qy,qz,qw
-                    self.state_flip[7],self.state_flip[8],self.state_flip[9],    # vx_d,vy_d,vz_d
-                    self.state_flip[10],self.state_flip[11],self.state_flip[12],  # wx,wy,wz
+                    self.t_flip,self.pos_flip[0],self.pos_flip[1],self.pos_flip[2],    # t,x,y,z
+                    self.quat_flip[0],self.quat_flip[1],self.quat_flip[2],self.quat_flip[3],    # qw,qx,qy,qz
+                    self.vel_flip[0],self.vel_flip[1],self.vel_flip[2],    # vx_d,vy_d,vz_d
+                    self.omega_flip[0],self.omega_flip[1],self.omega_flip[2],  # wx,wy,wz
                     "","","","", # reward, body_impact, num leg contacts, impact force
                     self.RREV_tr,"",self.OF_y_tr, # RREV, OF_x, OF_y
                     "","","","", # MS1, MS2, MS3, MS4
