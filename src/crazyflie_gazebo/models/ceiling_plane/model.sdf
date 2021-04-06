@@ -125,7 +125,7 @@
       </physics>
       <sensor name="force_torque" type="force_torque">
         <always_on>true</always_on>
-        <update_rate>750</update_rate>
+        <update_rate>5</update_rate>
       </sensor>
     </joint>
     <static>0</static>

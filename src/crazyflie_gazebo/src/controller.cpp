@@ -250,11 +250,16 @@ void Controller::controlThread()
 
 
     // LOCAL STATE DECLARATIONS //
-    Vector3d pos; // Current position [m]
-    Vector3d vel; // Current velocity [m]
-    Vector4d quat; // Current attitude [rad] (quat form)
-    Vector3d eul; // Current attitude [rad] (roll, pitch, yaw angles)
+    Vector3d pos;   // Current position [m]
+    Vector3d vel;   // Current velocity [m]
+    Vector4d quat;  // Current attitude [rad] (quat form)
+    Vector3d eul;   // Current attitude [rad] (roll, pitch, yaw angles)
     Vector3d omega; // Current angular velocity [rad/s]
+
+    Vector3d pos_tr;    // Flip trigger position [m]
+    Vector3d vel_tr;    // Flip trigger velocity [m]
+    Vector4d quat_tr;   // Flip trigger attitude [rad] (quat form)
+    Vector3d omega_tr;  // Flip trigger angular velocity [rad/s]
     
 
     // LOCAL STATE PRESCRIPTIONS AND ERRORS //
@@ -311,16 +316,21 @@ void Controller::controlThread()
     Vector3d kp_R;   // Rot. Gain
     Vector3d kd_R;   // Rot. derivative Gain
 
-    float OF_y_tr = 0;
-    float RREV_tr = 0;
-    float Z_tr = 0;
-    float Vz_tr = 0;
-    float Vx_tr = 0;
+    float RREV = 0.0;
+    float OF_y = 0.0;
+    float OF_x = 0.0;
 
-    double Mx = 0;
-    double My = 0;
-    double Mz = 0;
-    double F = 0;
+    float OF_y_tr = 0.0;
+    float OF_x_tr = 0.0;
+    float RREV_tr = 0.0;
+    float Z_tr = 0.0;
+    float Vz_tr = 0.0;
+    float Vx_tr = 0.0;
+
+    double Mx = 0.0;
+    double My = 0.0;
+    double Mz = 0.0;
+    double F = 0.0;
 
 
 
@@ -392,6 +402,10 @@ void Controller::controlThread()
         kp_R = _kp_R;
         kd_R = _kd_R;
 
+        RREV = _RREV;
+        OF_y = _OF_y;
+        OF_x = _OF_x;
+
 
         // =========== Rotation Matrix =========== //
         // R changes Body axes to be in terms of Global axes
@@ -449,12 +463,15 @@ void Controller::controlThread()
             if(_policy_armed_flag == true){
         
                 if(_RREV >= _RREV_thr && _flip_flag == false){
-                    OF_y_tr = _OF_y;
-                    RREV_tr = _RREV;
+                    OF_y_tr = OF_y;
+                    OF_x_tr = OF_x;
+                    RREV_tr = RREV;
 
-                    Z_tr = _pos(2);
-                    Vz_tr = _vel(2);
-                    Vx_tr = _vel(0);
+                    pos_tr = pos;
+                    vel_tr = vel;
+                    quat_tr = quat;
+                    omega_tr = omega;
+
 
                     _flip_flag = true;
 
@@ -529,47 +546,47 @@ void Controller::controlThread()
         
 
 
-        if (t_step%25 == 0){ // General Debugging output
-        cout << setprecision(4) <<
-        "t: " << _t << "\tCmd: " << _ctrl_cmd.transpose() << endl << 
-        endl <<
-        "RREV_thr: " << _RREV_thr << "\tG1: " << _G1 << "\tG2: " << _G2 << endl << 
-        "RREV: " << _RREV << "\tOF_x: " << _OF_x << "\tOF_y: " << _OF_y << endl <<
-        "RREV_tr: " << RREV_tr << "\tOF_x_tr: " << 0.0 << "\tOF_y_tr: " << OF_y_tr << endl << 
-        endl << 
-        "kp_x: " << _kp_x.transpose() << "\tkd_x: " << _kd_x.transpose() << endl <<
-        "kp_R: " << _kp_R.transpose() << "\tkd_R: " << _kd_R.transpose() << endl <<
-        endl << 
-        setprecision(1) <<
-        "Policy_armed: " << _policy_armed_flag <<  "\t\tFlip_flag: " << _flip_flag << endl <<
-        "Tumble Detection: " << _tumble_detection << "\t\tTumbled: " << _tumbled << endl <<
-        "kp_xf: " << _kp_xf << " \tkd_xf: " << _kd_xf << "\tkp_Rf: " << _kp_Rf << "\tkd_Rf: " << _kd_Rf  << endl <<
-        endl << setprecision(4) <<
+        // if (t_step%25 == 0){ // General Debugging output
+        // cout << setprecision(4) <<
+        // "t: " << _t << "\tCmd: " << _ctrl_cmd.transpose() << endl << 
+        // endl <<
+        // "RREV_thr: " << _RREV_thr << "\tG1: " << _G1 << "\tG2: " << _G2 << endl << 
+        // "RREV: " << _RREV << "\tOF_x: " << _OF_x << "\tOF_y: " << _OF_y << endl <<
+        // "RREV_tr: " << RREV_tr << "\tOF_x_tr: " << 0.0 << "\tOF_y_tr: " << OF_y_tr << endl << 
+        // endl << 
+        // "kp_x: " << _kp_x.transpose() << "\tkd_x: " << _kd_x.transpose() << endl <<
+        // "kp_R: " << _kp_R.transpose() << "\tkd_R: " << _kd_R.transpose() << endl <<
+        // endl << 
+        // setprecision(1) <<
+        // "Policy_armed: " << _policy_armed_flag <<  "\t\tFlip_flag: " << _flip_flag << endl <<
+        // "Tumble Detection: " << _tumble_detection << "\t\tTumbled: " << _tumbled << endl <<
+        // "kp_xf: " << _kp_xf << " \tkd_xf: " << _kd_xf << "\tkp_Rf: " << _kp_Rf << "\tkd_Rf: " << _kd_Rf  << endl <<
+        // endl << setprecision(4) <<
 
-        "x_d: " << x_d.transpose() << endl <<
-        "v_d: " << v_d.transpose() << endl <<
-        "omega_d: " << omega_d.transpose() << endl <<
-        endl << 
+        // "x_d: " << x_d.transpose() << endl <<
+        // "v_d: " << v_d.transpose() << endl <<
+        // "omega_d: " << omega_d.transpose() << endl <<
+        // endl << 
 
-        "pos: " << pos.transpose() << "\te_x: " << e_x.transpose() << endl <<
-        "vel: " << vel.transpose() << "\te_v: " << e_v.transpose() << endl <<
-        "omega: " << omega.transpose() << "\te_w: " << e_omega.transpose() << endl <<
-        endl << 
+        // "pos: " << pos.transpose() << "\te_x: " << e_x.transpose() << endl <<
+        // "vel: " << vel.transpose() << "\te_v: " << e_v.transpose() << endl <<
+        // "omega: " << omega.transpose() << "\te_w: " << e_omega.transpose() << endl <<
+        // endl << 
 
-        "R:\n" << R << "\n\n" << 
-        "R_d:\n" << R_d << "\n\n" << 
-        // "Yaw: " << yaw*180/M_PI << "\tRoll: " << roll*180/M_PI << "\tPitch: " << pitch*180/M_PI << endl << // These values are wrong
-        "e_R: " << e_R.transpose() << "\te_R (deg): " << e_R.transpose()*180/M_PI << endl <<
-        endl <<
+        // "R:\n" << R << "\n\n" << 
+        // "R_d:\n" << R_d << "\n\n" << 
+        // // "Yaw: " << yaw*180/M_PI << "\tRoll: " << roll*180/M_PI << "\tPitch: " << pitch*180/M_PI << endl << // These values are wrong
+        // "e_R: " << e_R.transpose() << "\te_R (deg): " << e_R.transpose()*180/M_PI << endl <<
+        // endl <<
 
-        "FM: " << FM.transpose() << endl <<
-        "f: " << f.transpose() << endl <<
-        endl << setprecision(0) <<
-        "MS_d: " << motorspeed_Vec_d.transpose() << endl <<
-        "MS: " << motorspeed_Vec.transpose() << endl <<
-        "=============== " << endl; 
-        printf("\033c"); // clears console window
-        }
+        // "FM: " << FM.transpose() << endl <<
+        // "f: " << f.transpose() << endl <<
+        // endl << setprecision(0) <<
+        // "MS_d: " << motorspeed_Vec_d.transpose() << endl <<
+        // "MS: " << motorspeed_Vec.transpose() << endl <<
+        // "=============== " << endl; 
+        // printf("\033c"); // clears console window
+        // }
 
         Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Vec.cast <float> (); // Converts motorspeeds to C++ array for data transmission
         int len = sendto(Ctrl_Mavlink_socket, motorspeed, sizeof(motorspeed),0, // Send motorspeeds to Gazebo -> gazebo_motor_model?
@@ -581,10 +598,31 @@ void Controller::controlThread()
         ctrl_msg.flip_flag = _flip_flag;
         ctrl_msg.RREV_tr = RREV_tr;
         ctrl_msg.OF_y_tr = OF_y_tr;
-        ctrl_msg.Z_tr = Z_tr;
-        ctrl_msg.Vz_tr = Vz_tr;
-        ctrl_msg.Vx_tr = Vx_tr;
+        ctrl_msg.OF_x_tr = OF_x_tr;
         ctrl_msg.FM_flip = {FM[0],_M_d(0)*1e3,_M_d(1)*1e3,_M_d(2)*1e3};
+
+
+
+        ctrl_msg.Pose_tr.header.stamp = ros::Time::now();
+
+        ctrl_msg.Pose_tr.pose.position.x = pos_tr(0);
+        ctrl_msg.Pose_tr.pose.position.y = pos_tr(1);
+        ctrl_msg.Pose_tr.pose.position.z = pos_tr(2);
+
+        ctrl_msg.Pose_tr.pose.orientation.x = quat_tr(1);
+        ctrl_msg.Pose_tr.pose.orientation.y = quat_tr(2);
+        ctrl_msg.Pose_tr.pose.orientation.z = quat_tr(3);
+        ctrl_msg.Pose_tr.pose.orientation.w = quat_tr(0);
+
+        ctrl_msg.Twist_tr.linear.x = vel_tr(0);
+        ctrl_msg.Twist_tr.linear.y = vel_tr(1);
+        ctrl_msg.Twist_tr.linear.z = vel_tr(2);
+
+        ctrl_msg.Twist_tr.angular.x = omega_tr(0);
+        ctrl_msg.Twist_tr.angular.y = omega_tr(1);
+        ctrl_msg.Twist_tr.angular.z = omega_tr(2);
+
+
 
 
         F = kf*(pow(motorspeed[1],2) + pow(motorspeed[2],2)

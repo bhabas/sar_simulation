@@ -13,6 +13,8 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   message_generation
+  nav_msgs
+  geometry_msgs
 )
 
 find_package(Boost 1.58 REQUIRED COMPONENTS system thread filesystem)
@@ -107,7 +109,7 @@ link_libraries(mav_msgs sensor_msgs)
 ## Generate added messages and services with any dependencies listed here
  generate_messages(
    DEPENDENCIES
-   std_msgs  # Or other packages containing msgs
+   std_msgs nav_msgs geometry_msgs# Or other packages containing msgs
  )
 
 ##################################################
@@ -127,7 +129,7 @@ link_libraries(mav_msgs sensor_msgs)
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES drone_training
-  CATKIN_DEPENDS rospy roscpp std_msgs
+  CATKIN_DEPENDS rospy roscpp std_msgs nav_msgs geometry_msgs
 #  DEPENDS system_lib
 )
 

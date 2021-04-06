@@ -107,14 +107,14 @@ class CrazyflieEnv:
         
 
         ## INIT ROS SUBSCRIBERS [Pub/Sampling Frequencies]
-        self.clock_Subscriber = rospy.Subscriber("/clock",Clock,self.clockCallback)
-        self.state_Subscriber = rospy.Subscriber('/global_state',Odometry,self.global_stateCallback)                        # [100 Hz]
-        self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)                                    # [500 Hz]
+        self.clock_Subscriber = rospy.Subscriber("/clock",Clock,self.clockCallback,queue_size=1)
+        self.state_Subscriber = rospy.Subscriber('/global_state',Odometry,self.global_stateCallback,queue_size=1)      
+        self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback,queue_size=1)                                   
 
-        self.OF_Subscriber = rospy.Subscriber('/OF_sensor',Odometry,self.OFsensor_Callback)                                 # [100 Hz]
-        self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback)             # [750 Hz]
-        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftsensorCallback)  # [750 Hz]
-        self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.laser_sensorCallback)                      # [100 Hz]
+        self.OF_Subscriber = rospy.Subscriber('/OF_sensor',Odometry,self.OFsensor_Callback,queue_size=1)                                
+        self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback,queue_size=1)            
+        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftsensorCallback,queue_size=1)  
+        self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.laser_sensorCallback)                    
         rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
 
 
@@ -131,6 +131,8 @@ class CrazyflieEnv:
             self.timeoutThread.start()
 
         print("[COMPLETED] Environment done")
+
+        self.k = 0
 
 
 
@@ -273,6 +275,18 @@ class CrazyflieEnv:
 
         self.t_prev = t # Save t value for next callback iteration
 
+        print(t)
+
+        # if self.k%1500 == 0:
+        #     self.t_1 = time.time()
+            
+        # self.k +=1 
+
+        # if self.k >= 1500:
+        #     self.t_2 = time.time()
+        #     print(self.t_2 - self.t_1)
+
+
     def OFsensor_Callback(self,OF_msg): ## Callback to parse state data received from mock OF sensor
 
         ## SET VISUAL CUE SENSOR VALUES FROM TOPIC
@@ -321,6 +335,7 @@ class CrazyflieEnv:
             self.t_impact = self.t
             self.state_impact = self.state_current
             self.FM_impact = self.FM
+            print(self.state_impact)
 
     def ceiling_ftsensorCallback(self,ft_msg):
         # Keeps record of max impact force for each run
