@@ -107,13 +107,15 @@ class CrazyflieEnv:
         
 
         ## INIT ROS SUBSCRIBERS [Pub/Sampling Frequencies]
+        # NOTE: Queue sizes=1 so that we are always looking at the most current data and 
+        #       not data at back of a queue waiting to be processed by callbacks
         self.clock_Subscriber = rospy.Subscriber("/clock",Clock,self.clockCallback,queue_size=1)
         self.state_Subscriber = rospy.Subscriber('/global_state',Odometry,self.global_stateCallback,queue_size=1)      
         self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback,queue_size=1)                                   
 
         self.OF_Subscriber = rospy.Subscriber('/OF_sensor',Odometry,self.OFsensor_Callback,queue_size=1)                                
-        self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback,queue_size=1)            
-        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftsensorCallback,queue_size=1)  
+        self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback,queue_size=50)            
+        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftsensorCallback,queue_size=50)  
         self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.laser_sensorCallback)                    
         rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
 
@@ -188,8 +190,6 @@ class CrazyflieEnv:
         
         if ctrl_msg.flip_flag == True and self.flip_flag == False: # Activates only once per run when flip_flag is about to change
 
-            start = time.time()
-
             self.flip_flag = ctrl_msg.flip_flag # Update flip_flag
 
             # Save state data at time of flip activation
@@ -197,7 +197,7 @@ class CrazyflieEnv:
             # TIME_FLIP
             t_temp = ctrl_msg.Pose_tr.header.stamp.secs
             ns_temp = ctrl_msg.Pose_tr.header.stamp.nsecs
-            self.t_flip = np.round(t_temp+ns_temp*1e-9,3)  
+            self.t_flip = np.round(t_temp+ns_temp*1e-3,3)  # Treat nsecs here at micro-secs
 
             # POSE_FLIP
             self.pos_flip = np.round([ctrl_msg.Pose_tr.pose.position.x,
@@ -222,8 +222,6 @@ class CrazyflieEnv:
             self.RREV_tr = np.round(ctrl_msg.RREV_tr,3) # Recorded trigger RREV [rad/s]
             self.OF_y_tr = np.round(ctrl_msg.OF_y_tr,3) # Recorded OF_y at trigger [rad/s]
 
-            end = time.time()
-            print(f"Time Elapsed: {end-start}\n")
 
 
     # ============================
@@ -301,25 +299,29 @@ class CrazyflieEnv:
                 self.pad_contacts[0] = True
 
                 if self.logging_flag:
-                    self.append_csv() # Append data at instant when ceiling impact detected
+                    # self.append_csv(error_str="Leg_1 Contact") # Append data at instant when ceiling impact detected
+                    pass
                 
             elif msg.collision1_name == f"{self.modelName}::pad_2::collision" and self.pad_contacts[1] == False:
                 self.pad_contacts[1] = True
 
                 if self.logging_flag:
-                    self.append_csv()
+                    # self.append_csv(error_str="Leg_2 Contact")
+                    pass
 
             elif msg.collision1_name == f"{self.modelName}::pad_3::collision" and self.pad_contacts[2] == False:
                 self.pad_contacts[2] = True
 
                 if self.logging_flag:
-                    self.append_csv()
+                    # self.append_csv(error_str="Leg_3 Contact")
+                    pass
 
             elif msg.collision1_name == f"{self.modelName}::pad_4::collision" and self.pad_contacts[3] == False:
                 self.pad_contacts[3] = True
 
                 if self.logging_flag:
-                    self.append_csv()
+                    # self.append_csv(error_str="Leg_4 Contact")
+                    pass
 
             elif msg.collision1_name == f"{self.modelName}::crazyflie_body::body_collision" and self.body_contact == False:
                 self.body_contact = True
@@ -515,7 +517,7 @@ class CrazyflieEnv:
                     'F_thrust','Mx','My','Mz',
                     'Error'])# Place holders
 
-    def append_csv(self):
+    def append_csv(self,error_str= ""):
 
         if self.logging_flag:
             with open(self.filepath, mode='a') as state_file:
@@ -532,7 +534,7 @@ class CrazyflieEnv:
                     self.RREV,self.OF_x,self.OF_y, # RREV, OF_x, OF_y
                     self.MS[0],self.MS[1],self.MS[2],self.MS[3], # MS1, MS2, MS3, MS4
                     self.FM[0],self.FM[1],self.FM[2],self.FM[3], # F_thrust,Mx,My,Mz 
-                    ""]) # Error
+                    error_str]) # Error
 
     
 

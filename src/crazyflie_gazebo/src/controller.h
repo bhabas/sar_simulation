@@ -28,9 +28,9 @@ class Controller
         Controller(ros::NodeHandle *nh){
             ctrl_Publisher = nh->advertise<crazyflie_gazebo::CtrlData>("/ctrl_data",10);
 
-            globalState_Subscriber = nh->subscribe("/global_state",10,&Controller::global_stateCallback,this);
-            imu_Subscriber = nh->subscribe("/imu",10,&Controller::imuCallback,this);
-            OF_Subscriber = nh->subscribe("/OF_sensor",10,&Controller::OFCallback,this);
+            globalState_Subscriber = nh->subscribe("/global_state",1,&Controller::global_stateCallback,this);
+            imu_Subscriber = nh->subscribe("/imu",1,&Controller::imuCallback,this);
+            OF_Subscriber = nh->subscribe("/OF_sensor",1,&Controller::OFCallback,this);
             
             RLCmd_Subscriber = nh->subscribe("/rl_ctrl",50,&Controller::RLCmd_Callback,this);
 

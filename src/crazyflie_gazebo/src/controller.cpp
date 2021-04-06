@@ -4,7 +4,7 @@
 #include "controller.h"
 
 #include <ros/ros.h>
-
+#include <math.h>       /* modf */
 
 
 
@@ -545,47 +545,47 @@ void Controller::controlThread()
         
 
 
-        // if (t_step%25 == 0){ // General Debugging output
-        // cout << setprecision(4) <<
-        // "t: " << _t << "\tCmd: " << _ctrl_cmd.transpose() << endl << 
-        // endl <<
-        // "RREV_thr: " << _RREV_thr << "\tG1: " << _G1 << "\tG2: " << _G2 << endl << 
-        // "RREV: " << _RREV << "\tOF_x: " << _OF_x << "\tOF_y: " << _OF_y << endl <<
-        // "RREV_tr: " << RREV_tr << "\tOF_x_tr: " << 0.0 << "\tOF_y_tr: " << OF_y_tr << endl << 
-        // endl << 
-        // "kp_x: " << _kp_x.transpose() << "\tkd_x: " << _kd_x.transpose() << endl <<
-        // "kp_R: " << _kp_R.transpose() << "\tkd_R: " << _kd_R.transpose() << endl <<
-        // endl << 
-        // setprecision(1) <<
-        // "Policy_armed: " << _policy_armed_flag <<  "\t\tFlip_flag: " << _flip_flag << endl <<
-        // "Tumble Detection: " << _tumble_detection << "\t\tTumbled: " << _tumbled << endl <<
-        // "kp_xf: " << _kp_xf << " \tkd_xf: " << _kd_xf << "\tkp_Rf: " << _kp_Rf << "\tkd_Rf: " << _kd_Rf  << endl <<
-        // endl << setprecision(4) <<
+        if (t_step%25 == 0){ // General Debugging output
+        cout << setprecision(4) <<
+        "t: " << _t << "\tCmd: " << _ctrl_cmd.transpose() << endl << 
+        endl <<
+        "RREV_thr: " << _RREV_thr << "\tG1: " << _G1 << "\tG2: " << _G2 << endl << 
+        "RREV: " << _RREV << "\tOF_x: " << _OF_x << "\tOF_y: " << _OF_y << endl <<
+        "RREV_tr: " << RREV_tr << "\tOF_x_tr: " << 0.0 << "\tOF_y_tr: " << OF_y_tr << endl << 
+        endl << 
+        "kp_x: " << _kp_x.transpose() << "\tkd_x: " << _kd_x.transpose() << endl <<
+        "kp_R: " << _kp_R.transpose() << "\tkd_R: " << _kd_R.transpose() << endl <<
+        endl << 
+        setprecision(1) <<
+        "Policy_armed: " << _policy_armed_flag <<  "\t\tFlip_flag: " << _flip_flag << endl <<
+        "Tumble Detection: " << _tumble_detection << "\t\tTumbled: " << _tumbled << endl <<
+        "kp_xf: " << _kp_xf << " \tkd_xf: " << _kd_xf << "\tkp_Rf: " << _kp_Rf << "\tkd_Rf: " << _kd_Rf  << endl <<
+        endl << setprecision(4) <<
 
-        // "x_d: " << x_d.transpose() << endl <<
-        // "v_d: " << v_d.transpose() << endl <<
-        // "omega_d: " << omega_d.transpose() << endl <<
-        // endl << 
+        "x_d: " << x_d.transpose() << endl <<
+        "v_d: " << v_d.transpose() << endl <<
+        "omega_d: " << omega_d.transpose() << endl <<
+        endl << 
 
-        // "pos: " << pos.transpose() << "\te_x: " << e_x.transpose() << endl <<
-        // "vel: " << vel.transpose() << "\te_v: " << e_v.transpose() << endl <<
-        // "omega: " << omega.transpose() << "\te_w: " << e_omega.transpose() << endl <<
-        // endl << 
+        "pos: " << pos.transpose() << "\te_x: " << e_x.transpose() << endl <<
+        "vel: " << vel.transpose() << "\te_v: " << e_v.transpose() << endl <<
+        "omega: " << omega.transpose() << "\te_w: " << e_omega.transpose() << endl <<
+        endl << 
 
-        // "R:\n" << R << "\n\n" << 
-        // "R_d:\n" << R_d << "\n\n" << 
-        // // "Yaw: " << yaw*180/M_PI << "\tRoll: " << roll*180/M_PI << "\tPitch: " << pitch*180/M_PI << endl << // These values are wrong
-        // "e_R: " << e_R.transpose() << "\te_R (deg): " << e_R.transpose()*180/M_PI << endl <<
-        // endl <<
+        "R:\n" << R << "\n\n" << 
+        "R_d:\n" << R_d << "\n\n" << 
+        // "Yaw: " << yaw*180/M_PI << "\tRoll: " << roll*180/M_PI << "\tPitch: " << pitch*180/M_PI << endl << // These values are wrong
+        "e_R: " << e_R.transpose() << "\te_R (deg): " << e_R.transpose()*180/M_PI << endl <<
+        endl <<
 
-        // "FM: " << FM.transpose() << endl <<
-        // "f: " << f.transpose() << endl <<
-        // endl << setprecision(0) <<
-        // "MS_d: " << motorspeed_Vec_d.transpose() << endl <<
-        // "MS: " << motorspeed_Vec.transpose() << endl <<
-        // "=============== " << endl; 
-        // printf("\033c"); // clears console window
-        // }
+        "FM: " << FM.transpose() << endl <<
+        "f: " << f.transpose() << endl <<
+        endl << setprecision(0) <<
+        "MS_d: " << motorspeed_Vec_d.transpose() << endl <<
+        "MS: " << motorspeed_Vec.transpose() << endl <<
+        "=============== " << endl; 
+        printf("\033c"); // clears console window
+        }
 
         Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Vec.cast <float> (); // Converts motorspeeds to C++ array for data transmission
         int len = sendto(Ctrl_Mavlink_socket, motorspeed, sizeof(motorspeed),0, // Send motorspeeds to Gazebo -> gazebo_motor_model?
@@ -601,11 +601,13 @@ void Controller::controlThread()
         ctrl_msg.FM_flip = {FM[0],_M_d(0)*1e3,_M_d(1)*1e3,_M_d(2)*1e3};
 
 
-
-        ctrl_msg.Pose_tr.header.stamp = ros::Time::now();
-        // ctrl_msg.Pose_tr.header.stamp = ros::TimeBase::fromSec(t_tr); 
-        // This is the better way to do it but I can't figure out how to get it to work
-
+        
+        
+        // This techinially converts to integer and micro-secs instead of nano-secs but I 
+        // couldn't figure out the solution to do this the right way and keep it as nsecs
+        ctrl_msg.Pose_tr.header.stamp.sec = int(t_tr);              // Integer portion of flip time as integer
+        ctrl_msg.Pose_tr.header.stamp.nsec = int(t_tr*1000)%1000;   // Decimal portion of flip time as integer
+        
         ctrl_msg.Pose_tr.pose.position.x = pos_tr(0);
         ctrl_msg.Pose_tr.pose.position.y = pos_tr(1);
         ctrl_msg.Pose_tr.pose.position.z = pos_tr(2);
