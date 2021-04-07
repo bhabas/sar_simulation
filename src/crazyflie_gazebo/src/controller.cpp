@@ -460,7 +460,7 @@ void Controller::controlThread()
             
             if(_policy_armed_flag == true){
         
-                if(_RREV >= _RREV_thr && _flip_flag == false){
+                if(RREV >= _RREV_thr && _flip_flag == false){
                     OF_y_tr = OF_y;
                     OF_x_tr = OF_x;
                     RREV_tr = RREV;
@@ -545,16 +545,16 @@ void Controller::controlThread()
         
 
 
-        if (t_step%25 == 0){ // General Debugging output
+        if (t_step%1 == 0){ // General Debugging output
         cout << setprecision(4) <<
         "t: " << _t << "\tCmd: " << _ctrl_cmd.transpose() << endl << 
         endl <<
         "RREV_thr: " << _RREV_thr << "\tG1: " << _G1 << "\tG2: " << _G2 << endl << 
-        "RREV: " << _RREV << "\tOF_x: " << _OF_x << "\tOF_y: " << _OF_y << endl <<
+        "RREV: " << RREV << "\tOF_x: " << OF_x << "\tOF_y: " << OF_y << endl <<
         "RREV_tr: " << RREV_tr << "\tOF_x_tr: " << 0.0 << "\tOF_y_tr: " << OF_y_tr << endl << 
         endl << 
-        "kp_x: " << _kp_x.transpose() << "\tkd_x: " << _kd_x.transpose() << endl <<
-        "kp_R: " << _kp_R.transpose() << "\tkd_R: " << _kd_R.transpose() << endl <<
+        "kp_x: " << kp_x.transpose() << "\tkd_x: " << kd_x.transpose() << endl <<
+        "kp_R: " << kp_R.transpose() << "\tkd_R: " << kd_R.transpose() << endl <<
         endl << 
         setprecision(1) <<
         "Policy_armed: " << _policy_armed_flag <<  "\t\tFlip_flag: " << _flip_flag << endl <<
@@ -599,6 +599,9 @@ void Controller::controlThread()
         ctrl_msg.OF_y_tr = OF_y_tr;
         ctrl_msg.OF_x_tr = OF_x_tr;
         ctrl_msg.FM_flip = {FM[0],_M_d(0)*1e3,_M_d(1)*1e3,_M_d(2)*1e3};
+
+        ctrl_msg.RREV = RREV;
+        ctrl_msg.OF_y = OF_y;
 
 
         

@@ -1558,7 +1558,7 @@
     </plugin>
     <plugin name='OF_sensor' filename='libgazebo_ros_p3d.so'>
       <alwaysOn>1</alwaysOn>
-      <updateRate>100</updateRate>
+      <updateRate>250</updateRate>
       <bodyName>crazyflie_body</bodyName>
       <topicName>OF_sensor</topicName>
       <frameName>world</frameName>
