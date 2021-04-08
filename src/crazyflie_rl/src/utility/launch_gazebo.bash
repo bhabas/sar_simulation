@@ -7,7 +7,7 @@ source devel/setup.bash
 # GAZEBO_PLUGIN_PATH
 # GAZEBO_MODEL_PATH
 # LD_LIBRARY_PATH
-source src/crazyflie_simulation/src/crazyflie_gazebo/setup_gazebo.bash $(pwd) $(pwd)/devel/lib
+# source src/crazyflie_simulation/src/crazyflie_gazebo/setup_gazebo.bash $(pwd) $(pwd)/devel/lib
 
 
 roslaunch crazyflie_gazebo crazyflie_sitl.launch world_name:="ceiling" vehicle:="crazyflie_model_Narrow-Long" gui:="true"

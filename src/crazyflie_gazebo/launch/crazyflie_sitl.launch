@@ -23,7 +23,7 @@
     <arg name="paused" default="false"/>
     <arg name="respawn_gazebo" default="false"/> <!-- If Gazebo closes then reopen it automatically -->
 
-    <!-- Gazebo sim -->
+    <!-- Launches Gazebo sim -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
         <arg name="gui" value="$(arg gui)"/>
         <arg name="world_name" value="$(arg world)"/>
