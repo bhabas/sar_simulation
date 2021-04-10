@@ -239,10 +239,14 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                     if env.runComplete_flag==True:
 
                         # Pause sim while FT Callback finishes clearing through data queue
-                        env.pause_sim(True)
-                        while env.FT_time != env.t_raw:
-                            pass
-                        env.pause_sim(False)
+                        # env.pause_sim(True)
+                        # print("Callback Pause")
+                        # start = time.time()
+                        # while env.FT_time != env.t_raw:
+                        #     pass
+                        # env.pause_sim(False)
+                        # end = time.time()
+                        # print(f"Callback Resume: ({end-start})")
                         
                         print("\n")
                         # print(f"z_max: {env.z_max}")
@@ -300,7 +304,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=False)
+    env = CrazyflieEnv(gazeboTimeout=True)
     # env.launch_dashboard()
 
     # ============================
