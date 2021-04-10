@@ -6,9 +6,9 @@
       <uri>model://sun</uri>
     </include>
     <!-- A ground plane -->
-    <include>
+    <!-- <include>
       <uri>model://ground_plane</uri>
-    </include>
+    </include> -->
     <!-- A ceiling plane -->
     <include>
       <uri>model://ceiling_plane</uri>
@@ -23,24 +23,48 @@
           <!-- <pose>my custom pose as a six-tuple(x,y,z,roll,pitch,yaw)</pose> -->
       </camera>
     </gui>
-
     <physics name='default_physics' default='0' type='bullet'>
       <gravity>0 0 -9.8066</gravity>
       <bullet>
         <solver>
           <type>sequential_impulse</type>
-          <iters>10</iters>
+          <iters>500</iters>
           <sor>1.3</sor>
         </solver>
         <constraints>
+          <!-- <cfm>0.2</cfm>
+          <erp>0.2</erp> -->
+
           <contact_surface_layer>0.0001</contact_surface_layer>
         </constraints>
       </bullet>
       <max_step_size>0.001</max_step_size>
       <real_time_factor>1</real_time_factor>
-      <real_time_update_rate>2000</real_time_update_rate>
+      <real_time_update_rate>1000</real_time_update_rate>
       <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
     </physics>
+
+    <!-- <physics name='default_physics' default='0' type='ode'>
+      <gravity>0 0 -9.8066</gravity>
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1</real_time_factor>
+      <real_time_update_rate>1000</real_time_update_rate>
+      <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
+      <ode>
+        <solver>
+          <type>quick</type>
+          <min_step_size>0.0001</min_step_size>
+          <iters>50</iters>
+          <sor>1.3</sor>
+        </solver>
+        <contraints>
+          <cfm>0</cfm>
+          <erp>0.2</erp>
+          <contact_max_correcting_vel>10</contact_max_correcting_vel>
+          <contact_surface_layer>0.001</contact_surface_layer>
+        </contraints>
+      </ode>
+    </physics> -->
     <wind>
       <linear_velocity>0 0 0</linear_velocity>
     </wind>

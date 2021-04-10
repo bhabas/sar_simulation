@@ -1,29 +1,34 @@
 <?xml version="1.0"?>
 <launch>
     <!-- Crazyflie SITL environment launch script -->
-    <!-- launches Gazebo environment, spawns vehicle, and launch crazyflie firmware -->
-    <!-- vehicle pose -->
+    <!-- Sets default values for model pose -->
     <arg name="x" default="0"/>
     <arg name="y" default="0"/>
     <arg name="z" default="0.6"/>
     <arg name="R" default="0"/>
     <arg name="P" default="0"/>
     <arg name="Y" default="0"/>
+
     <!-- vehicle model and world -->
     <arg name="est" default="ekf2"/>
-    <arg name="vehicle" default="crazyflie"/>
+    <arg name="model_name" default="crazyflie"/>
+    <arg name="sdf" default="$(find crazyflie_gazebo)/models/$(arg model_name)/model.sdf"/>
     <arg name="world_name" default="empty"/>
-    <arg name="world" default="$(find crazyflie_gazebo)/worlds/$(arg world_name).world"/>
-    <arg name="sdf" default="$(find crazyflie_gazebo)/models/$(arg vehicle)/model.sdf"/>
-
-    <!-- Gazebo configs -->
+    <arg name="world" default="--lockstep $(find crazyflie_gazebo)/worlds/$(arg world_name).world"/>
+    <!-- lockstep command inserts like "rosrun gazebo_ros gazebo  "dash-dash"lockstep ceiling.world" -->
+    <!-- lockstep command ensures sim updates and sensor frequency updates are synced together -->
+    <!-- http://gazebosim.org/tutorials?tut=lockstep_physics_sensors&cat=sensors -->
+    <!-- http://gazebosim.org/tutorials?tut=performance_metrics&cat=tools_utilities -->
+    
+    
+    <!-- Set default args for Gazebo configuration settings -->
     <arg name="gui" default="true"/>
     <arg name="debug" default="false"/>
     <arg name="verbose" default="true"/>
     <arg name="paused" default="false"/>
     <arg name="respawn_gazebo" default="false"/> <!-- If Gazebo closes then reopen it automatically -->
 
-    <!-- Launches Gazebo sim -->
+    <!-- Launches Gazebo sim and insert args passed by launch_gazebo.bash-->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
         <arg name="gui" value="$(arg gui)"/>
         <arg name="world_name" value="$(arg world)"/>
@@ -34,8 +39,9 @@
     </include>
 
 
-    <!-- Gazebo model -->
-    <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" args="-sdf -file $(arg sdf) -model $(arg vehicle) -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
-    <node name="ceiling_FT_sensor" pkg="ceiling_ft_sensor" type="ceiling_ft_sensor" />
+    <!-- Launch single use node to spawn model -->
+    <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" args="-sdf -file $(arg sdf) -model $(arg model_name) -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
+    <!-- Launch node for ceiling force/torque sensor -->
+    <node name="ceiling_ft_sensor" pkg="ceiling_ft_sensor" type="ceiling_ft_sensor" />
     
 </launch>

@@ -132,7 +132,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 
                 RREV_start = 0.5
                 pos_z = env.h_ceiling - env.vel_d[2]/RREV_start
-                # pos_z = 0.6
+                pos_z = 0.6
                 # ============================
                 ##          Rollout 
                 # ============================
@@ -308,7 +308,6 @@ if __name__ == '__main__':
     ## GAUSSIAN PARAMETERS
     mu = np.array([[4.80],[5.536]])                 # Initial mu starting point
     sigma = np.array([[0.000001],[0.000001]])       # Initial sigma starting point
-
 
     ## SIM PARAMETERS
     env.n_rollouts = 8

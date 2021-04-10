@@ -91,6 +91,13 @@ void Controller::global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
     _pos << position.x, position.y, position.z;
     _vel << velocity.x, velocity.y, velocity.z;
 
+    // This stuff should come from IMU callback but lockstep broke that topic for some reason
+    const geometry_msgs::Quaternion quaternion = msg->pose.pose.orientation;
+    const geometry_msgs::Vector3 omega = msg->twist.twist.angular;
+
+    _quat << quaternion.w, quaternion.x, quaternion.y, quaternion.z, 
+    _omega << omega.x, omega.y, omega.z;
+
 }
 
 void Controller::OFCallback(const nav_msgs::Odometry::ConstPtr &msg){
@@ -113,11 +120,7 @@ void Controller::OFCallback(const nav_msgs::Odometry::ConstPtr &msg){
 
 void Controller::imuCallback(const sensor_msgs::Imu::ConstPtr &msg){
 
-    const geometry_msgs::Quaternion quaternion = msg->orientation;
-    const geometry_msgs::Vector3 omega = msg->angular_velocity;
-
-    _quat << quaternion.w, quaternion.x, quaternion.y, quaternion.z, 
-    _omega << omega.x, omega.y, omega.z;
+    int a = 0;
 }
 
 
@@ -372,7 +375,7 @@ void Controller::controlThread()
 
     // =========== ROS Definitions =========== //
     crazyflie_gazebo::CtrlData ctrl_msg;
-    ros::Rate rate(500);
+    ros::Rate rate(1000);
 
     while(_isRunning)
     {
@@ -545,7 +548,7 @@ void Controller::controlThread()
         
 
 
-        if (t_step%1 == 0){ // General Debugging output
+        if (t_step%25 == 0){ // General Debugging output
         cout << setprecision(4) <<
         "t: " << _t << "\tCmd: " << _ctrl_cmd.transpose() << endl << 
         endl <<
