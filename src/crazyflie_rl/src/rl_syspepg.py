@@ -116,7 +116,7 @@ class ES:
         
 
         
-        R = (r_contact+r_theta)*r_h + 0.001
+        R = (r_contact+5)*r_h + 0.001
         print(f"Reward: r_c: {r_contact:.3f} | r_theta: {r_theta:.3f} | r_h: {r_h:.3f} | Pitch Max: {env.pitch_max:.2f}")
         return R
 

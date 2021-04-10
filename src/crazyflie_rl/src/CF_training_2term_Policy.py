@@ -237,6 +237,12 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                     ##       Run Completion  
                     # ============================
                     if env.runComplete_flag==True:
+
+                        # Pause sim while FT Callback finishes clearing through data queue
+                        env.pause_sim(True)
+                        while env.FT_time != env.t_raw:
+                            pass
+                        env.pause_sim(False)
                         
                         print("\n")
                         # print(f"z_max: {env.z_max}")

@@ -6,6 +6,9 @@ import os, subprocess, signal
 import rospy
 import getpass
 
+from std_srvs.srv import Empty
+
+
 
 from sensor_msgs.msg import LaserScan, Image, Imu
 from crazyflie_rl.msg import RLData,RLCmd
@@ -115,7 +118,7 @@ class CrazyflieEnv:
 
         self.OF_Subscriber = rospy.Subscriber('/OF_sensor',Odometry,self.OFsensor_Callback,queue_size=1)                                
         self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback,queue_size=50)            
-        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftsensorCallback,queue_size=25)  
+        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftsensorCallback,queue_size=500)  
         self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.laser_sensorCallback)                    
         rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
 
@@ -228,11 +231,12 @@ class CrazyflieEnv:
     ##    Sensors/Data Topics
     # ============================
 
-    def clockCallback(self,clock_msg): ## Callback to grab time from Sim clock
+    def clockCallback(self,clock_msg): ## Callback to grab time from sim clock
         t_temp = clock_msg.clock.secs
         ns_temp = clock_msg.clock.nsecs
 
-        self.t = np.round(t_temp+ns_temp*1e-9,3)
+        self.t = np.round(t_temp+ns_temp*1e-9,3)    # Processed timestamp from /clock msg
+        self.t_raw = clock_msg.clock                # Unprocessed timestamp from /clock msg
 
     def global_stateCallback(self,gs_msg): ## Callback to parse state data received from external pos. sensor
 
@@ -346,6 +350,8 @@ class CrazyflieEnv:
             self.ceiling_ft_x = ft_msg.wrench.force.x           # X-Impact force from ceiling Force-Torque sensor
             self.ceiling_ft_x = np.round(self.ceiling_ft_x,3)   # Rounded for data logging
 
+        self.FT_time = ft_msg.header.stamp # Time stamp of msg callback is currently working on
+
     def laser_sensorCallback(self,data): # callback function for laser subsriber (Not fully implemented yet)
         self.laser_msg = data
         if  self.laser_msg.ranges[0] == float('Inf'):
@@ -396,7 +402,12 @@ class CrazyflieEnv:
             close_fds=True, preexec_fn=os.setsid, shell=True)
         
         
+    def pause_sim(self,pause_flag):
 
+        if pause_flag:
+            rospy.ServiceProxy('/gazebo/pause_physics', Empty)
+        else:
+            rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
 
     def launch_dashboard(self):
         print("[STARTING] Starting Dashboard...")
