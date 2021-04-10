@@ -4,6 +4,8 @@ float64[] FM_flip
 bool flip_flag
 float64 RREV_tr
 float64 OF_y_tr
-float64 Z_tr
-float64 Vz_tr
-float64 Vx_tr
+float64 OF_x_tr
+float64 RREV
+float64 OF_y
+geometry_msgs/PoseStamped Pose_tr
+geometry_msgs/Twist Twist_tr

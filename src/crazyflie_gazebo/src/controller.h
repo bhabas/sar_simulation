@@ -28,11 +28,14 @@ class Controller
         Controller(ros::NodeHandle *nh){
             ctrl_Publisher = nh->advertise<crazyflie_gazebo::CtrlData>("/ctrl_data",10);
 
-            globalState_Subscriber = nh->subscribe("/global_state",100,&Controller::global_stateCallback,this);
-            imu_Subscriber = nh->subscribe("/imu",100,&Controller::imuCallback,this);
-            OF_Subscriber = nh->subscribe("/OF_sensor",10,&Controller::OFCallback,this);
+            // NOTE: tcpNoDelay() removes delay where system is waiting for datapackets to be fully filled before sending;
+            // instead of sending data as soon as it is available to match publishing rate (This is an issue with large messages like Odom or Custom)
+            globalState_Subscriber = nh->subscribe("/global_state",1,&Controller::global_stateCallback,this,ros::TransportHints().tcpNoDelay());
+            OF_Subscriber = nh->subscribe("/OF_sensor",1,&Controller::OFCallback,this,ros::TransportHints().tcpNoDelay()); 
+            imu_Subscriber = nh->subscribe("/imu",1,&Controller::imuCallback,this);
+            // Queue lengths are set to '1' so only the newest data is used
             
-            RLCmd_Subscriber = nh->subscribe("/rl_ctrl",10,&Controller::RLCmd_Callback,this);
+            RLCmd_Subscriber = nh->subscribe("/rl_ctrl",50,&Controller::RLCmd_Callback,this);
 
             
 

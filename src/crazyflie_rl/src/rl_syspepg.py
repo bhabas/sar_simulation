@@ -98,7 +98,7 @@ class ES:
             else:
                 r_contact = 1
         else:
-            r_contact = 0
+            r_contact = 0.1
 
         
         ## r_theta Calc

@@ -3,6 +3,9 @@ cmake_policy(SET CMP0054 NEW)
 
 project(crazyflie_gazebo)
 
+## Add suport for C++11, supported in ROS Kinetic and newer
+add_definitions(-std=c++11)
+
 
 #######################################
 ## 3. Find packages needed for build ##
@@ -13,6 +16,9 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   message_generation
+  nav_msgs
+  geometry_msgs
+  gazebo_ros
 )
 
 find_package(Boost 1.58 REQUIRED COMPONENTS system thread filesystem)
@@ -107,7 +113,7 @@ link_libraries(mav_msgs sensor_msgs)
 ## Generate added messages and services with any dependencies listed here
  generate_messages(
    DEPENDENCIES
-   std_msgs  # Or other packages containing msgs
+   std_msgs nav_msgs geometry_msgs# Or other packages containing msgs
  )
 
 ##################################################
@@ -127,7 +133,7 @@ link_libraries(mav_msgs sensor_msgs)
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES drone_training
-  CATKIN_DEPENDS rospy roscpp std_msgs
+  CATKIN_DEPENDS rospy roscpp std_msgs nav_msgs geometry_msgs gazebo_ros
 #  DEPENDS system_lib
 )
 
@@ -141,6 +147,7 @@ catkin_package(
 # include_directories(include)
 message("!!!!!catkin_INCLUDE_DIRS = " ${catkin_INCLUDE_DIRS})
 message("!!!!!CMAKE_CURRENT_BINARY_DIR = " ${CMAKE_CURRENT_BINARY_DIR})
+link_directories(${GAZEBO_LIBRARY_DIRS})
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}

@@ -107,14 +107,16 @@ class CrazyflieEnv:
         
 
         ## INIT ROS SUBSCRIBERS [Pub/Sampling Frequencies]
-        self.clock_Subscriber = rospy.Subscriber("/clock",Clock,self.clockCallback)
-        self.state_Subscriber = rospy.Subscriber('/global_state',Odometry,self.global_stateCallback)                        # [100 Hz]
-        self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)                                    # [500 Hz]
+        # NOTE: Queue sizes=1 so that we are always looking at the most current data and 
+        #       not data at back of a queue waiting to be processed by callbacks
+        self.clock_Subscriber = rospy.Subscriber("/clock",Clock,self.clockCallback,queue_size=1)
+        self.state_Subscriber = rospy.Subscriber('/global_state',Odometry,self.global_stateCallback,queue_size=1)      
+        self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback,queue_size=1)                                   
 
-        self.OF_Subscriber = rospy.Subscriber('/OF_sensor',Odometry,self.OFsensor_Callback)                                 # [100 Hz]
-        self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback)             # [750 Hz]
-        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftsensorCallback)  # [750 Hz]
-        self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.laser_sensorCallback)                      # [100 Hz]
+        self.OF_Subscriber = rospy.Subscriber('/OF_sensor',Odometry,self.OFsensor_Callback,queue_size=1)                                
+        self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback,queue_size=50)            
+        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftsensorCallback,queue_size=25)  
+        self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.laser_sensorCallback)                    
         rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
 
 
@@ -132,7 +134,7 @@ class CrazyflieEnv:
 
         print("[COMPLETED] Environment done")
 
-
+    
 
     
 
@@ -186,13 +188,33 @@ class CrazyflieEnv:
         self.FM = np.round(self.FM,3)       # Round data for logging
 
         
-        if ctrl_msg.flip_flag == True and self.flip_flag == False: # Activtes only once per run when flip_flag is about to change
+        if ctrl_msg.flip_flag == True and self.flip_flag == False: # Activates only once per run when flip_flag is about to change
 
             self.flip_flag = ctrl_msg.flip_flag # Update flip_flag
 
             # Save state data at time of flip activation
-            self.t_flip = self.t
-            self.state_flip = self.state_current
+            ## SET STATE VALUES FROM TOPIC
+            # TIME_FLIP
+            t_temp = ctrl_msg.Pose_tr.header.stamp.secs
+            ns_temp = ctrl_msg.Pose_tr.header.stamp.nsecs
+            self.t_flip = np.round(t_temp+ns_temp*1e-3,3)  # Treat nsecs here at micro-secs
+
+            # POSE_FLIP
+            self.pos_flip = np.round([ctrl_msg.Pose_tr.pose.position.x,
+                                        ctrl_msg.Pose_tr.pose.position.y,
+                                        ctrl_msg.Pose_tr.pose.position.z],3) # [m]
+            self.quat_flip = np.round([ctrl_msg.Pose_tr.pose.orientation.w,
+                                        ctrl_msg.Pose_tr.pose.orientation.x,
+                                        ctrl_msg.Pose_tr.pose.orientation.y,
+                                        ctrl_msg.Pose_tr.pose.orientation.z],3) # [quat]
+            # TWIST_FLIP
+            self.vel_flip = np.round([ctrl_msg.Twist_tr.linear.x,
+                                        ctrl_msg.Twist_tr.linear.y,
+                                        ctrl_msg.Twist_tr.linear.z],3) # [m/s]
+            self.omega_flip = np.round([ctrl_msg.Twist_tr.angular.x,
+                                        ctrl_msg.Twist_tr.angular.y,
+                                        ctrl_msg.Twist_tr.angular.z],3) # [rad/s]
+
 
             self.FM_flip = np.asarray(ctrl_msg.FM_flip) # Force/Moments [N,N*mm]
             self.FM_flip = np.round(self.FM_flip,3)
@@ -201,20 +223,7 @@ class CrazyflieEnv:
             self.OF_y_tr = np.round(ctrl_msg.OF_y_tr,3) # Recorded OF_y at trigger [rad/s]
 
 
-    
 
-
-    
-
-
-    
-
-    
-            
-
-    
-
-        
     # ============================
     ##    Sensors/Data Topics
     # ============================
@@ -271,6 +280,7 @@ class CrazyflieEnv:
 
         self.t_prev = t # Save t value for next callback iteration
 
+
     def OFsensor_Callback(self,OF_msg): ## Callback to parse state data received from mock OF sensor
 
         ## SET VISUAL CUE SENSOR VALUES FROM TOPIC
@@ -289,25 +299,29 @@ class CrazyflieEnv:
                 self.pad_contacts[0] = True
 
                 if self.logging_flag:
-                    self.append_csv() # Append data at instant when ceiling impact detected
+                    # self.append_csv(error_str="Leg_1 Contact") # Append data at instant when ceiling impact detected
+                    pass
                 
             elif msg.collision1_name == f"{self.modelName}::pad_2::collision" and self.pad_contacts[1] == False:
                 self.pad_contacts[1] = True
 
                 if self.logging_flag:
-                    self.append_csv()
+                    # self.append_csv(error_str="Leg_2 Contact")
+                    pass
 
             elif msg.collision1_name == f"{self.modelName}::pad_3::collision" and self.pad_contacts[2] == False:
                 self.pad_contacts[2] = True
 
                 if self.logging_flag:
-                    self.append_csv()
+                    # self.append_csv(error_str="Leg_3 Contact")
+                    pass
 
             elif msg.collision1_name == f"{self.modelName}::pad_4::collision" and self.pad_contacts[3] == False:
                 self.pad_contacts[3] = True
 
                 if self.logging_flag:
-                    self.append_csv()
+                    # self.append_csv(error_str="Leg_4 Contact")
+                    pass
 
             elif msg.collision1_name == f"{self.modelName}::crazyflie_body::body_collision" and self.body_contact == False:
                 self.body_contact = True
@@ -367,6 +381,9 @@ class CrazyflieEnv:
 
     def __del__(self):
         self.isRunning = False
+        os.killpg(self.gazebo_p.pid, signal.SIGTERM)
+        os.killpg(self.dashboard_p.pid, signal.SIGTERM)
+        os.killpg(self.controller_p.pid, signal.SIGTERM)
      
     def getTime(self):
         return self.t
@@ -387,14 +404,14 @@ class CrazyflieEnv:
             "gnome-terminal -- roslaunch dashboard_gui_pkg dashboard.launch",
             close_fds=True, preexec_fn=os.setsid, shell=True)
 
-    def launch_IC(self,vx_d,vz_d): # Imparts desired velocity to model (should retain current position)
+    def launch_IC(self,pos_z,vx_d,vz_d): # Imparts desired velocity to model (should retain current position)
         
         ## SET POSE AND TWIST OF MODEL
         state_msg = ModelState()
         state_msg.model_name = self.modelName
         state_msg.pose.position.x = 0.0
         state_msg.pose.position.y = 0.0
-        state_msg.pose.position.z = 0.6
+        state_msg.pose.position.z = pos_z
 
         state_msg.pose.orientation.x = 0.0
         state_msg.pose.orientation.y = 0.0
@@ -431,7 +448,6 @@ class CrazyflieEnv:
         state_msg.pose.orientation.y = 0.0
         state_msg.pose.orientation.z = 0.0
         
-
         state_msg.twist.linear.x = 0.0
         state_msg.twist.linear.y = 0.0
         state_msg.twist.linear.z = 0.0
@@ -501,7 +517,7 @@ class CrazyflieEnv:
                     'F_thrust','Mx','My','Mz',
                     'Error'])# Place holders
 
-    def append_csv(self):
+    def append_csv(self,error_str= ""):
 
         if self.logging_flag:
             with open(self.filepath, mode='a') as state_file:
@@ -518,7 +534,7 @@ class CrazyflieEnv:
                     self.RREV,self.OF_x,self.OF_y, # RREV, OF_x, OF_y
                     self.MS[0],self.MS[1],self.MS[2],self.MS[3], # MS1, MS2, MS3, MS4
                     self.FM[0],self.FM[1],self.FM[2],self.FM[3], # F_thrust,Mx,My,Mz 
-                    ""]) # Error
+                    error_str]) # Error
 
     
 
@@ -531,10 +547,10 @@ class CrazyflieEnv:
                     self.k_ep,self.k_run,
                     "","", # alpha_mu,alpha_sig
                     "","","", # mu,sigma,policy
-                    self.t_flip,self.state_flip[0],self.state_flip[1],self.state_flip[2],    # t,x,y,z
-                    self.state_flip[3],self.state_flip[4],self.state_flip[5],self.state_flip[6],    # qx,qy,qz,qw
-                    self.state_flip[7],self.state_flip[8],self.state_flip[9],    # vx_d,vy_d,vz_d
-                    self.state_flip[10],self.state_flip[11],self.state_flip[12],  # wx,wy,wz
+                    self.t_flip,self.pos_flip[0],self.pos_flip[1],self.pos_flip[2],    # t,x,y,z
+                    self.quat_flip[0],self.quat_flip[1],self.quat_flip[2],self.quat_flip[3],    # qw,qx,qy,qz
+                    self.vel_flip[0],self.vel_flip[1],self.vel_flip[2],    # vx_d,vy_d,vz_d
+                    self.omega_flip[0],self.omega_flip[1],self.omega_flip[2],  # wx,wy,wz
                     "","","","", # reward, body_impact, num leg contacts, impact force
                     self.RREV_tr,"",self.OF_y_tr, # RREV, OF_x, OF_y
                     "","","","", # MS1, MS2, MS3, MS4

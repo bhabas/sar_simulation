@@ -4,7 +4,7 @@
 #include "controller.h"
 
 #include <ros/ros.h>
-
+#include <math.h>       /* modf */
 
 
 
@@ -91,6 +91,13 @@ void Controller::global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
     _pos << position.x, position.y, position.z;
     _vel << velocity.x, velocity.y, velocity.z;
 
+    // This stuff should come from IMU callback but lockstep broke that topic for some reason
+    const geometry_msgs::Quaternion quaternion = msg->pose.pose.orientation;
+    const geometry_msgs::Vector3 omega = msg->twist.twist.angular;
+
+    _quat << quaternion.w, quaternion.x, quaternion.y, quaternion.z, 
+    _omega << omega.x, omega.y, omega.z;
+
 }
 
 void Controller::OFCallback(const nav_msgs::Odometry::ConstPtr &msg){
@@ -113,11 +120,7 @@ void Controller::OFCallback(const nav_msgs::Odometry::ConstPtr &msg){
 
 void Controller::imuCallback(const sensor_msgs::Imu::ConstPtr &msg){
 
-    const geometry_msgs::Quaternion quaternion = msg->orientation;
-    const geometry_msgs::Vector3 omega = msg->angular_velocity;
-
-    _quat << quaternion.w, quaternion.x, quaternion.y, quaternion.z, 
-    _omega << omega.x, omega.y, omega.z;
+    int a = 0;
 }
 
 
@@ -250,11 +253,16 @@ void Controller::controlThread()
 
 
     // LOCAL STATE DECLARATIONS //
-    Vector3d pos; // Current position [m]
-    Vector3d vel; // Current velocity [m]
-    Vector4d quat; // Current attitude [rad] (quat form)
-    Vector3d eul; // Current attitude [rad] (roll, pitch, yaw angles)
+    Vector3d pos;   // Current position [m]
+    Vector3d vel;   // Current velocity [m]
+    Vector4d quat;  // Current attitude [rad] (quat form)
+    Vector3d eul;   // Current attitude [rad] (roll, pitch, yaw angles)
     Vector3d omega; // Current angular velocity [rad/s]
+
+    Vector3d pos_tr;    // Flip trigger position [m]
+    Vector3d vel_tr;    // Flip trigger velocity [m]
+    Vector4d quat_tr;   // Flip trigger attitude [rad] (quat form)
+    Vector3d omega_tr;  // Flip trigger angular velocity [rad/s]
     
 
     // LOCAL STATE PRESCRIPTIONS AND ERRORS //
@@ -311,16 +319,19 @@ void Controller::controlThread()
     Vector3d kp_R;   // Rot. Gain
     Vector3d kd_R;   // Rot. derivative Gain
 
-    float OF_y_tr = 0;
-    float RREV_tr = 0;
-    float Z_tr = 0;
-    float Vz_tr = 0;
-    float Vx_tr = 0;
+    float RREV = 0.0;
+    float OF_y = 0.0;
+    float OF_x = 0.0;
 
-    double Mx = 0;
-    double My = 0;
-    double Mz = 0;
-    double F = 0;
+    float OF_y_tr = 0.0;
+    float OF_x_tr = 0.0;
+    float RREV_tr = 0.0;
+    double t_tr = 0.0;
+
+    double Mx = 0.0;
+    double My = 0.0;
+    double Mz = 0.0;
+    double F = 0.0;
 
 
 
@@ -364,7 +375,7 @@ void Controller::controlThread()
 
     // =========== ROS Definitions =========== //
     crazyflie_gazebo::CtrlData ctrl_msg;
-    ros::Rate rate(500);
+    ros::Rate rate(1000);
 
     while(_isRunning)
     {
@@ -391,6 +402,10 @@ void Controller::controlThread()
         kd_x = _kd_x;
         kp_R = _kp_R;
         kd_R = _kd_R;
+
+        RREV = _RREV;
+        OF_y = _OF_y;
+        OF_x = _OF_x;
 
 
         // =========== Rotation Matrix =========== //
@@ -448,13 +463,17 @@ void Controller::controlThread()
             
             if(_policy_armed_flag == true){
         
-                if(_RREV >= _RREV_thr && _flip_flag == false){
-                    OF_y_tr = _OF_y;
-                    RREV_tr = _RREV;
+                if(RREV >= _RREV_thr && _flip_flag == false){
+                    OF_y_tr = OF_y;
+                    OF_x_tr = OF_x;
+                    RREV_tr = RREV;
 
-                    Z_tr = _pos(2);
-                    Vz_tr = _vel(2);
-                    Vx_tr = _vel(0);
+                    t_tr = t;
+                    pos_tr = pos;
+                    vel_tr = vel;
+                    quat_tr = quat;
+                    omega_tr = omega;
+
 
                     _flip_flag = true;
 
@@ -534,11 +553,11 @@ void Controller::controlThread()
         "t: " << _t << "\tCmd: " << _ctrl_cmd.transpose() << endl << 
         endl <<
         "RREV_thr: " << _RREV_thr << "\tG1: " << _G1 << "\tG2: " << _G2 << endl << 
-        "RREV: " << _RREV << "\tOF_x: " << _OF_x << "\tOF_y: " << _OF_y << endl <<
+        "RREV: " << RREV << "\tOF_x: " << OF_x << "\tOF_y: " << OF_y << endl <<
         "RREV_tr: " << RREV_tr << "\tOF_x_tr: " << 0.0 << "\tOF_y_tr: " << OF_y_tr << endl << 
         endl << 
-        "kp_x: " << _kp_x.transpose() << "\tkd_x: " << _kd_x.transpose() << endl <<
-        "kp_R: " << _kp_R.transpose() << "\tkd_R: " << _kd_R.transpose() << endl <<
+        "kp_x: " << kp_x.transpose() << "\tkd_x: " << kd_x.transpose() << endl <<
+        "kp_R: " << kp_R.transpose() << "\tkd_R: " << kd_R.transpose() << endl <<
         endl << 
         setprecision(1) <<
         "Policy_armed: " << _policy_armed_flag <<  "\t\tFlip_flag: " << _flip_flag << endl <<
@@ -581,10 +600,38 @@ void Controller::controlThread()
         ctrl_msg.flip_flag = _flip_flag;
         ctrl_msg.RREV_tr = RREV_tr;
         ctrl_msg.OF_y_tr = OF_y_tr;
-        ctrl_msg.Z_tr = Z_tr;
-        ctrl_msg.Vz_tr = Vz_tr;
-        ctrl_msg.Vx_tr = Vx_tr;
+        ctrl_msg.OF_x_tr = OF_x_tr;
         ctrl_msg.FM_flip = {FM[0],_M_d(0)*1e3,_M_d(1)*1e3,_M_d(2)*1e3};
+
+        ctrl_msg.RREV = RREV;
+        ctrl_msg.OF_y = OF_y;
+
+
+        
+        
+        // This techinially converts to integer and micro-secs instead of nano-secs but I 
+        // couldn't figure out the solution to do this the right way and keep it as nsecs
+        ctrl_msg.Pose_tr.header.stamp.sec = int(t_tr);              // Integer portion of flip time as integer
+        ctrl_msg.Pose_tr.header.stamp.nsec = int(t_tr*1000)%1000;   // Decimal portion of flip time as integer
+        
+        ctrl_msg.Pose_tr.pose.position.x = pos_tr(0);
+        ctrl_msg.Pose_tr.pose.position.y = pos_tr(1);
+        ctrl_msg.Pose_tr.pose.position.z = pos_tr(2);
+
+        ctrl_msg.Pose_tr.pose.orientation.x = quat_tr(1);
+        ctrl_msg.Pose_tr.pose.orientation.y = quat_tr(2);
+        ctrl_msg.Pose_tr.pose.orientation.z = quat_tr(3);
+        ctrl_msg.Pose_tr.pose.orientation.w = quat_tr(0);
+
+        ctrl_msg.Twist_tr.linear.x = vel_tr(0);
+        ctrl_msg.Twist_tr.linear.y = vel_tr(1);
+        ctrl_msg.Twist_tr.linear.z = vel_tr(2);
+
+        ctrl_msg.Twist_tr.angular.x = omega_tr(0);
+        ctrl_msg.Twist_tr.angular.y = omega_tr(1);
+        ctrl_msg.Twist_tr.angular.z = omega_tr(2);
+
+
 
 
         F = kf*(pow(motorspeed[1],2) + pow(motorspeed[2],2)
