@@ -122,7 +122,7 @@ class CrazyflieEnv:
         # This will miss a sizeable portion of the data becaue of queue drops so in-depth analysis will have to be redone with the specific policies 
         # True landing rate should also be verified with converged policies and a higher queue size to ensure highest quality data and that contacts weren't missed                         
         self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback,queue_size=10)            
-        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftsensorCallback,queue_size=10) 
+        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftsensorCallback,queue_size=1) 
                       
         rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
 
@@ -344,16 +344,10 @@ class CrazyflieEnv:
 
     def ceiling_ftsensorCallback(self,ft_msg):
         # Keeps record of max impact force for each run
-        # The value is reset in the training script at each run start
+        # The value is reset in the topic converter script at each 'home' command
 
-        if np.abs(ft_msg.wrench.force.z) > np.abs(self.ceiling_ft_z):
-            self.ceiling_ft_z = ft_msg.wrench.force.z           # Z-Impact force from ceiling Force-Torque sensor
-            self.ceiling_ft_z = np.round(self.ceiling_ft_z,3)   # Rounded for data logging
-
-        if np.abs(ft_msg.wrench.force.x) > np.abs(self.ceiling_ft_x):
-            self.ceiling_ft_x = ft_msg.wrench.force.x           # X-Impact force from ceiling Force-Torque sensor
-            self.ceiling_ft_x = np.round(self.ceiling_ft_x,3)   # Rounded for data logging
-
+        self.ceiling_ft_z = np.round(ft_msg.wrench.force.z,3)   # Z-Impact force from ceiling Force-Torque sensor
+        self.ceiling_ft_x = np.round(ft_msg.wrench.force.x,3)   # X-Impact force from ceiling Force-Torque sensor
         self.FT_time = ft_msg.header.stamp # Time stamp of msg callback is currently working on
 
     def laser_sensorCallback(self,data): # callback function for laser subsriber (Not fully implemented yet)
