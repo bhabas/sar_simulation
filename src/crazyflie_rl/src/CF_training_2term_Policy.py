@@ -130,9 +130,10 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                 print("\n")
 
 
+                ## CONVERT STARTING RREV VALUE -> Z_POS TO START ROLLOUT FROM
                 RREV_start = 0.5
                 pos_z = env.h_ceiling - env.vel_d[2]/RREV_start
-                pos_z = 0.6
+                # pos_z = 0.6
                 # ============================
                 ##          Rollout 
                 # ============================
@@ -305,7 +306,7 @@ if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv(gazeboTimeout=True)
-    # env.launch_dashboard()
+    env.launch_dashboard()
 
     # ============================
     ##          AGENT  

@@ -121,8 +121,8 @@ class CrazyflieEnv:
 
         # This will miss a sizeable portion of the data becaue of queue drops so in-depth analysis will have to be redone with the specific policies 
         # True landing rate should also be verified with converged policies and a higher queue size to ensure highest quality data and that contacts weren't missed                         
-        self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback,queue_size=50)            
-        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftsensorCallback,queue_size=50) 
+        self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback,queue_size=10)            
+        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftsensorCallback,queue_size=10) 
                       
         rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
 
