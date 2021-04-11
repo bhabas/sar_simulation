@@ -24,21 +24,15 @@
 ros::Publisher pub;
 ros::Subscriber RLCmd_Subscriber;
 
-double ros_rate=100;
-bool home = false;
-
-double ceiling_ft_z = 0.0;
-double ceiling_ft_x = 0.0;
+double ros_rate = 100; // Ros rate but not sure how it applies here
+double ceiling_ft_z = 0.0; // Max impact force in Z-direction [N]
+double ceiling_ft_x = 0.0; // Max impact force in X-direction [N]
 
 
 void torquesCb(const ConstWrenchStampedPtr &_msg)
 {
 
-  if (home){
-    ceiling_ft_z = 0.0;
-    ceiling_ft_x = 0.0;
-    home = false;
-  }
+  
   // Record max force experienced
   if (_msg->wrench().force().z() > ceiling_ft_z){
     ceiling_ft_z = _msg->wrench().force().z();
@@ -66,10 +60,11 @@ void torquesCb(const ConstWrenchStampedPtr &_msg)
 
 void RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg)
 {
-
+  // When model is reset back to home position then reset max impact values
   if(msg->cmd_type == 0)
   {
-    home = true;
+    ceiling_ft_z = 0.0;
+    ceiling_ft_x = 0.0;
   }
 
 }
