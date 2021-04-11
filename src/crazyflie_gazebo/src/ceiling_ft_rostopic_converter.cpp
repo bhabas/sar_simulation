@@ -17,6 +17,7 @@
 // ROS dependencies
 #include <ros/ros.h>
 #include <geometry_msgs/WrenchStamped.h>
+#include "crazyflie_rl/RLCmd.h"
 
 #include <iostream>
 

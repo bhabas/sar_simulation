@@ -42,6 +42,6 @@
     <!-- Launch single use node to spawn model -->
     <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" args="-sdf -file $(arg sdf) -model $(arg model_name) -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
     <!-- Launch node for ceiling force/torque sensor -->
-    <node name="ceiling_ft_sensor" pkg="ceiling_ft_sensor" type="ceiling_ft_sensor" />
+    <node name="ceiling_ft_sensor" pkg="crazyflie_gazebo" type="ceiling_ft_sensor" />
     
 </launch>
