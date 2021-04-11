@@ -122,7 +122,7 @@ class CrazyflieEnv:
         # This will miss a sizeable portion of the data becaue of queue drops so in-depth analysis will have to be redone with the specific policies 
         # True landing rate should also be verified with converged policies and a higher queue size to ensure highest quality data and that contacts weren't missed                         
         self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback,queue_size=10)            
-        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftsensorCallback,queue_size=10) 
+        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftsensorCallback,queue_size=1) 
                       
         rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
 
@@ -305,56 +305,40 @@ class CrazyflieEnv:
             # If pad collision or body collision detected then mark True
             if msg.collision1_name  ==  f"{self.modelName}::pad_1::collision" and self.pad_contacts[0] == False:
                 self.pad_contacts[0] = True
-
-                if self.logging_flag:
-                    # self.append_csv(error_str="Leg_1 Contact") # Append data at instant when ceiling impact detected
-                    pass
                 
             elif msg.collision1_name == f"{self.modelName}::pad_2::collision" and self.pad_contacts[1] == False:
                 self.pad_contacts[1] = True
 
-                if self.logging_flag:
-                    # self.append_csv(error_str="Leg_2 Contact")
-                    pass
-
             elif msg.collision1_name == f"{self.modelName}::pad_3::collision" and self.pad_contacts[2] == False:
                 self.pad_contacts[2] = True
-
-                if self.logging_flag:
-                    # self.append_csv(error_str="Leg_3 Contact")
-                    pass
 
             elif msg.collision1_name == f"{self.modelName}::pad_4::collision" and self.pad_contacts[3] == False:
                 self.pad_contacts[3] = True
 
-                if self.logging_flag:
-                    # self.append_csv(error_str="Leg_4 Contact")
-                    pass
-
             elif msg.collision1_name == f"{self.modelName}::crazyflie_body::body_collision" and self.body_contact == False:
                 self.body_contact = True
 
-        if (any(self.pad_contacts) or self.body_contact) and self.impact_flag == False: # If any pad contacts are True then update impact flag
-            self.impact_flag = True
+
             
+            
+
+    def ceiling_ftsensorCallback(self,ft_msg):
+        # Keeps record of max impact force for each run
+        # The value is reset in the topic converter script at each 'home' command
+
+        self.ceiling_ft_z = np.round(ft_msg.wrench.force.z,3)   # Z-Impact force from ceiling Force-Torque sensor
+        self.ceiling_ft_x = np.round(ft_msg.wrench.force.x,3)   # X-Impact force from ceiling Force-Torque sensor
+        self.FT_time = ft_msg.header.stamp # Time stamp of msg callback is currently working on
+
+        if (self.ceiling_ft_z >= 1.0 and self.impact_flag == False):
+
+            self.impact_flag = True
+
             # Save state data at time of impact
             self.t_impact = self.t
             self.state_impact = self.state_current
             self.FM_impact = self.FM
-
-    def ceiling_ftsensorCallback(self,ft_msg):
-        # Keeps record of max impact force for each run
-        # The value is reset in the training script at each run start
-
-        if np.abs(ft_msg.wrench.force.z) > np.abs(self.ceiling_ft_z):
-            self.ceiling_ft_z = ft_msg.wrench.force.z           # Z-Impact force from ceiling Force-Torque sensor
-            self.ceiling_ft_z = np.round(self.ceiling_ft_z,3)   # Rounded for data logging
-
-        if np.abs(ft_msg.wrench.force.x) > np.abs(self.ceiling_ft_x):
-            self.ceiling_ft_x = ft_msg.wrench.force.x           # X-Impact force from ceiling Force-Torque sensor
-            self.ceiling_ft_x = np.round(self.ceiling_ft_x,3)   # Rounded for data logging
-
-        self.FT_time = ft_msg.header.stamp # Time stamp of msg callback is currently working on
+            
 
     def laser_sensorCallback(self,data): # callback function for laser subsriber (Not fully implemented yet)
         self.laser_msg = data
