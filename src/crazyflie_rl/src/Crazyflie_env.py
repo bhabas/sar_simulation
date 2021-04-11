@@ -305,42 +305,22 @@ class CrazyflieEnv:
             # If pad collision or body collision detected then mark True
             if msg.collision1_name  ==  f"{self.modelName}::pad_1::collision" and self.pad_contacts[0] == False:
                 self.pad_contacts[0] = True
-
-                if self.logging_flag:
-                    # self.append_csv(error_str="Leg_1 Contact") # Append data at instant when ceiling impact detected
-                    pass
                 
             elif msg.collision1_name == f"{self.modelName}::pad_2::collision" and self.pad_contacts[1] == False:
                 self.pad_contacts[1] = True
 
-                if self.logging_flag:
-                    # self.append_csv(error_str="Leg_2 Contact")
-                    pass
-
             elif msg.collision1_name == f"{self.modelName}::pad_3::collision" and self.pad_contacts[2] == False:
                 self.pad_contacts[2] = True
-
-                if self.logging_flag:
-                    # self.append_csv(error_str="Leg_3 Contact")
-                    pass
 
             elif msg.collision1_name == f"{self.modelName}::pad_4::collision" and self.pad_contacts[3] == False:
                 self.pad_contacts[3] = True
 
-                if self.logging_flag:
-                    # self.append_csv(error_str="Leg_4 Contact")
-                    pass
-
             elif msg.collision1_name == f"{self.modelName}::crazyflie_body::body_collision" and self.body_contact == False:
                 self.body_contact = True
 
-        if (any(self.pad_contacts) or self.body_contact) and self.impact_flag == False: # If any pad contacts are True then update impact flag
-            self.impact_flag = True
+
             
-            # Save state data at time of impact
-            self.t_impact = self.t
-            self.state_impact = self.state_current
-            self.FM_impact = self.FM
+            
 
     def ceiling_ftsensorCallback(self,ft_msg):
         # Keeps record of max impact force for each run
@@ -349,6 +329,16 @@ class CrazyflieEnv:
         self.ceiling_ft_z = np.round(ft_msg.wrench.force.z,3)   # Z-Impact force from ceiling Force-Torque sensor
         self.ceiling_ft_x = np.round(ft_msg.wrench.force.x,3)   # X-Impact force from ceiling Force-Torque sensor
         self.FT_time = ft_msg.header.stamp # Time stamp of msg callback is currently working on
+
+        if (self.ceiling_ft_z >= 1.0 and self.impact_flag == False):
+
+            self.impact_flag = True
+
+            # Save state data at time of impact
+            self.t_impact = self.t
+            self.state_impact = self.state_current
+            self.FM_impact = self.FM
+            
 
     def laser_sensorCallback(self,data): # callback function for laser subsriber (Not fully implemented yet)
         self.laser_msg = data
