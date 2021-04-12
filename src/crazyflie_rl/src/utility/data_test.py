@@ -28,7 +28,7 @@ trial = DataFile(dataPath,fileName)
 k_ep = 19
 k_run = 6
 print(
-    trial.trigger2impact(k_ep,k_run)
+    trial.plot_eulerData(k_ep,k_run,'eul_y')
 )
 # trial.plot_flip_states('vz')
 

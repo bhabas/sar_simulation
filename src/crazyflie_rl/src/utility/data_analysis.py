@@ -424,8 +424,8 @@ class DataFile:
 
         return state
 
-    ## ---- ##
-    def plot_state(self,k_ep,k_run,stateName,figNum=0):
+    ##
+    def plot_stateData(self,k_ep,k_run,stateName):
         """Plot state data from run vs time
 
         Args:
@@ -450,7 +450,7 @@ class DataFile:
 
         
         ## PLOT STATE/TIME DATA
-        fig = plt.figure(figNum)
+        fig = plt.figure()
         ax = fig.add_subplot(111)
         
         ax.plot(t_norm,state,label=f"{stateName}",zorder=1)
@@ -469,7 +469,7 @@ class DataFile:
 
         plt.show()
 
-    ##
+    ## ---- ##
     def grab_eulerData(self,k_ep,k_run,degrees=True):
         """Returns euler angle data from rollout using [YZX] configuration to allow pitch angles greater than 180 deg
 
@@ -520,10 +520,10 @@ class DataFile:
         t_norm = t - np.min(t) # Normalize time
 
         t_norm_impact = self.grab_impact_time(k_ep,k_run)[1]
-        eul_impact = self.grab_impact_eul(k_ep,k_run,eul_type)
+        # eul_impact = self.grab_impact_eul(k_ep,k_run,eul_type)
 
         t_norm_flip = self.grab_flip_time(k_ep, k_run)[1]
-        eul_flip = self.grab_flip_eul(k_ep,k_run,eul_type)
+        # eul_flip = self.grab_flip_eul(k_ep,k_run,eul_type)
         
 
         
@@ -531,8 +531,8 @@ class DataFile:
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.plot(t_norm,eul,label=f"{eul_type}")
-        ax.scatter(t_norm_flip,eul_flip,label="Flip")
-        ax.scatter(t_norm_impact,eul_impact,label="Impact")
+        # ax.scatter(t_norm_flip,eul_flip,label="Flip")
+        # ax.scatter(t_norm_impact,eul_impact,label="Impact")
         
 
 
@@ -840,7 +840,12 @@ class DataFile:
         t_impact = impact_df.iloc[0]['t']
         t_impact_norm = t_impact - run_df.iloc[0]['t']
 
-        return t_impact,t_impact_norm
+        if impact_df.iloc[0]['flip_flag'] == True:
+            body_impact = True
+        else:
+            body_impact = False
+
+        return t_impact,t_impact_norm,body_impact
 
     ##
     def grab_impact_state(self,k_ep,k_run,stateName):
