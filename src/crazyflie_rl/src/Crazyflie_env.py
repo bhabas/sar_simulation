@@ -118,9 +118,7 @@ class CrazyflieEnv:
 
         self.OF_Subscriber = rospy.Subscriber('/OF_sensor',Odometry,self.OFsensor_Callback,queue_size=1)    
         self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.laser_sensorCallback)       
-
-        # This will miss a sizeable portion of the data becaue of queue drops so in-depth analysis will have to be redone with the specific policies 
-        # True landing rate should also be verified with converged policies and a higher queue size to ensure highest quality data and that contacts weren't missed                         
+                      
         self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback,queue_size=10)            
         self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftsensorCallback,queue_size=1) 
                       
