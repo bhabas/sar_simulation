@@ -8,9 +8,9 @@ from data_analysis import DataFile
 os.system("clear")
 
 
-vz = 2.5
-phi = 60
-trialNum = 1
+vz = 3.00
+phi = 80
+trialNum = 0
 agent = "EM_PEPG"
 
 
