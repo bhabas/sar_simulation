@@ -18,6 +18,7 @@
 #include <ros/ros.h>
 #include <geometry_msgs/WrenchStamped.h>
 #include "crazyflie_rl/RLCmd.h"
+#include "crazyflie_gazebo/ImpactData.h"
 #include "nav_msgs/Odometry.h"
 
 #include <iostream>
@@ -30,11 +31,12 @@ ros::Subscriber globalState_Subscriber;
 double ros_rate = 100; // Ros rate but not sure how it applies here
 double _ceiling_ft_z = 0.0; // Max impact force in Z-direction [N]
 double _ceiling_ft_x = 0.0; // Max impact force in X-direction [N]
+bool _impact_flag = false;
 
-Eigen::Vector3d _pos;   // Current position [m]
-Eigen::Vector3d _vel;   // Current velocity [m]
-Eigen::Vector4d _quat;  // Current attitude [rad] (quat form)
-Eigen::Vector3d _omega; // Current angular velocity [rad/s]
+geometry_msgs::Point _pos;        // Current position [m]
+geometry_msgs::Vector3 _vel;      // Current velocity [m]
+geometry_msgs::Quaternion _quat;  // Current attitude [rad] (quat form)
+geometry_msgs::Vector3 _omega;    // Current angular velocity [rad/s]
 
 
 void gazeboFT_Callback(const ConstWrenchStampedPtr &_msg)
@@ -51,18 +53,42 @@ void gazeboFT_Callback(const ConstWrenchStampedPtr &_msg)
   }
 
 
-  // std::cout << "Received msg: " << std::endl;
-  // std::cout << _msg->DebugString() << std::endl;
-  geometry_msgs::WrenchStamped msgWrenchedStamped;
-  // try WrenchStamped msgWrenchedStamped;
-  msgWrenchedStamped.header.stamp = ros::Time::now();
-  msgWrenchedStamped.wrench.force.x = _ceiling_ft_x;
-  msgWrenchedStamped.wrench.force.y = _msg->wrench().force().y();
-  msgWrenchedStamped.wrench.force.z = _ceiling_ft_z;
-  msgWrenchedStamped.wrench.torque.x = _msg->wrench().torque().x();
-  msgWrenchedStamped.wrench.torque.y = _msg->wrench().torque().y();
-  msgWrenchedStamped.wrench.torque.z = _msg->wrench().torque().z();
-  impactForce_Publisher.publish(msgWrenchedStamped);
+  if (_ceiling_ft_z >= 2.0 && _impact_flag == false){
+    _impact_flag == true;
+
+    crazyflie_gazebo::ImpactData impact_msg;
+  
+    impact_msg.impact_flag = _impact_flag;
+
+    impact_msg.Header.stamp = ros::Time::now();
+
+    // WRITE IMPACT FORCES TO MSG
+    impact_msg.Force_impact.x = _ceiling_ft_x;
+    impact_msg.Force_impact.y = _msg->wrench().force().y();
+    impact_msg.Force_impact.z = _ceiling_ft_z;
+
+    // WRITE IMPACT POSE TO MSG
+    impact_msg.Pose_impact.position.x = _pos.x;
+    impact_msg.Pose_impact.position.y = _pos.y;
+    impact_msg.Pose_impact.position.z = _pos.z;
+
+    impact_msg.Pose_impact.orientation.x = _quat.x;
+    impact_msg.Pose_impact.orientation.y = _quat.y;
+    impact_msg.Pose_impact.orientation.z = _quat.z;
+    impact_msg.Pose_impact.orientation.w = _quat.w;
+
+    // WRITE IMPACT TWIST TO MSG
+    impact_msg.Twist_impact.linear.x = _vel.x;
+    impact_msg.Twist_impact.linear.y = _vel.y;
+    impact_msg.Twist_impact.linear.z = _vel.z;
+    
+    impact_msg.Twist_impact.angular.x = _omega.x;
+    impact_msg.Twist_impact.angular.y = _omega.y;
+    impact_msg.Twist_impact.angular.z = _omega.z;
+
+
+    impactForce_Publisher.publish(impact_msg);
+  }
  
 }
 
@@ -71,8 +97,10 @@ void RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg)
   // When model is reset back to home position then reset max impact values
   if(msg->cmd_type == 0)
   {
+    _impact_flag = false;
     _ceiling_ft_z = 0.0;
     _ceiling_ft_x = 0.0;
+
   }
 
 }
@@ -81,18 +109,18 @@ void global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
 
     // SIMPLIFY STATE VALUES FROM TOPIC
     // Follow msg names from message details - "rqt -s rqt_msg" 
-    const geometry_msgs::Point position = msg->pose.pose.position; 
-    const geometry_msgs::Vector3 velocity = msg->twist.twist.linear;
-    const geometry_msgs::Quaternion quaternion = msg->pose.pose.orientation;
-    const geometry_msgs::Vector3 omega = msg->twist.twist.angular;
+    _pos = msg->pose.pose.position; 
+    _vel = msg->twist.twist.linear;
+    _quat = msg->pose.pose.orientation;
+    _omega = msg->twist.twist.angular;
 
 
     // SET STATE VALUES INTO GLOBAL STATE VARIABLES
     // _t = msg->header.stamp;
-    _pos << position.x, position.y, position.z;
-    _vel << velocity.x, velocity.y, velocity.z; 
-    _quat << quaternion.w, quaternion.x, quaternion.y, quaternion.z, 
-    _omega << omega.x, omega.y, omega.z;
+    // _pos << position.x, position.y, position.z;
+    // _vel << velocity.x, velocity.y, velocity.z; 
+    // _quat << quaternion.w, quaternion.x, quaternion.y, quaternion.z, 
+    // _omega << omega.x, omega.y, omega.z;
 
 }
 
@@ -116,7 +144,7 @@ int main(int argc, char **argv)
   std::string ros_topic_to_pub="/ceiling_force_sensor";
   
   // INIT ROS PUBLISHERS/SUBSCRIBERS
-  impactForce_Publisher = nh.advertise<geometry_msgs::WrenchStamped>(ros_topic_to_pub, 10);
+  impactForce_Publisher = nh.advertise<crazyflie_gazebo::ImpactData>(ros_topic_to_pub, 1);
   globalState_Subscriber = nh.subscribe("/global_state",1,global_stateCallback,ros::TransportHints().tcpNoDelay());
   RLCmd_Subscriber = nh.subscribe("/rl_ctrl",50,RLCmd_Callback);
   ROS_INFO("ROS Subscribers/Publishers Started");
