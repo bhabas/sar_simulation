@@ -12,7 +12,7 @@ from std_srvs.srv import Empty
 
 from sensor_msgs.msg import LaserScan, Image, Imu
 from crazyflie_rl.msg import RLData,RLCmd
-from crazyflie_gazebo.msg import CtrlData
+from crazyflie_gazebo.msg import CtrlData,ImpactData
 from rosgraph_msgs.msg import Clock
 from gazebo_msgs.msg import ModelState,ContactsState
 from gazebo_msgs.srv import SetModelState
@@ -120,7 +120,7 @@ class CrazyflieEnv:
         self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.laser_sensorCallback)       
                       
         self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback,queue_size=10)            
-        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftsensorCallback,queue_size=1) 
+        # self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftsensorCallback,queue_size=1) 
                       
         rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
 
@@ -158,6 +158,7 @@ class CrazyflieEnv:
         rl_msg.agent = self.agent_name
         rl_msg.error = self.error_str
         rl_msg.impact_flag = self.impact_flag
+        rl_msg.runComplete_flag = self.runComplete_flag
 
 
         rl_msg.n_rollouts = self.n_rollouts

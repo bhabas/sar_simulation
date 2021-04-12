@@ -3,6 +3,8 @@
 
 import numpy as np
 import time,os
+import rospy
+from crazyflie_gazebo.msg import ImpactData
 
 
 
@@ -92,6 +94,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 
                 ## RESET/UPDATE RUN CONDITIONS
                 env.runComplete_flag = False
+                env.runReset_flag = False
                 repeat_run= False
 
                 start_time_rollout = env.getTime()
@@ -184,7 +187,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                     # Check if sample of recorded data changed, if so then append csv (Reduces repeated data rows)
                     if env.t != t_prev:
                     # if t_step%1==0: 
-                        env.RL_Publish()
+                        # env.RL_Publish()
                         env.append_csv()
 
                         
@@ -240,6 +243,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                     if env.runComplete_flag==True:
 
                         
+                        
                         print("\n")
                         # print(f"z_max: {env.z_max}")
                         # print(f"pitch_sum: {env.pitch_sum}")
@@ -247,12 +251,15 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 
                         reward_arr[k_run] = agent.calcReward_pureLanding(env)
                         env.reward = reward_arr[k_run,0]
+                        env.reward_avg = reward_arr[np.nonzero(reward_arr)].mean()
                         env.reward_inputs = [env.z_max,env.pitch_sum,env.pitch_max]
                         
                         
                         print(f"Reward = {env.reward:.3f}")
                         print(f"# of Leg contacts: {sum(env.pad_contacts)}")
-                        print("!------------------------End Run------------------------! \n")   
+                        print("!------------------------End Run------------------------! \n")  
+
+                        env.RL_Publish() # Publish that rollout completed 
 
                         ## RUN DATA LOGGING
                         env.append_csv_blank()
@@ -262,6 +269,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                         env.append_csv_blank()
 
                         env.reset_pos()
+                        
                     
                         break # Break from run loop
                        
@@ -274,9 +282,9 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                 
                 else:
                     ## PUBLISH UPDATED REWARD VARIABLES
-                    env.reward = reward_arr[k_run,0]
-                    env.reward_avg = reward_arr[np.nonzero(reward_arr)].mean()
-                    env.RL_Publish()
+                    # env.reward = reward_arr[k_run,0]
+                    # env.reward_avg = reward_arr[np.nonzero(reward_arr)].mean()
+                    # env.RL_Publish()
                     k_run += 1 # When succesful move on to next run
                     
             except: ## IF SIM EXCEPTION RAISED THEN CONTINUE BACK TO TRY BLOCK UNTIL SUCCESSFUL COMPLETION
