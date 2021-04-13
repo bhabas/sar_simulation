@@ -36,15 +36,17 @@ bool _impact_flag = false;
 bool _Publish_Impact = false;
 unsigned int _t_step = 0;
 
+ros::Time _t;
 geometry_msgs::Point _pos;        // Current position [m]
 geometry_msgs::Vector3 _vel;      // Current velocity [m]
 geometry_msgs::Quaternion _quat;  // Current attitude [rad] (quat form)
 geometry_msgs::Vector3 _omega;    // Current angular velocity [rad/s]
 
-geometry_msgs::Point _pos_impact;        // Current position [m]
-geometry_msgs::Vector3 _vel_impact;      // Current velocity [m]
-geometry_msgs::Quaternion _quat_impact;  // Current attitude [rad] (quat form)
-geometry_msgs::Vector3 _omega_impact;    // Current angular velocity [rad/s]
+ros::Time _t_impact;
+geometry_msgs::Point _pos_impact;        // Impact position [m]
+geometry_msgs::Vector3 _vel_impact;      // Impact velocity [m]
+geometry_msgs::Quaternion _quat_impact;  // Impact attitude [rad] (quat form)
+geometry_msgs::Vector3 _omega_impact;    // Impact angular velocity [rad/s]
 
 
 void gazeboFT_Callback(const ConstWrenchStampedPtr &_msg)
@@ -63,6 +65,7 @@ void gazeboFT_Callback(const ConstWrenchStampedPtr &_msg)
     // Lock in state data when impact detected
     _impact_flag = true;
 
+    _t_impact = ros::Time::now();
     _pos_impact = _pos;
     _vel_impact = _vel;
     _quat_impact = _quat;
@@ -84,7 +87,7 @@ void RLdata_Callback(const crazyflie_rl::RLData::ConstPtr &msg)
     crazyflie_gazebo::ImpactData impact_msg;
   
     impact_msg.impact_flag = _impact_flag;
-    impact_msg.Header.stamp = ros::Time::now();
+    impact_msg.Header.stamp = _t_impact;
 
     // WRITE CURRENT MAX IMPACT FORCES TO MSG
     impact_msg.Force_impact.x = _ceiling_ft_x;
@@ -130,7 +133,6 @@ void global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
     if (_t_step%20 == 0){ // Update Odom data every [5] callbacks
       
       // SET STATE VALUES INTO GLOBAL STATE VARIABLES
-      // _t = msg->header.stamp;
       _pos = msg->pose.pose.position; 
       _vel = msg->twist.twist.linear;
       _quat = msg->pose.pose.orientation;

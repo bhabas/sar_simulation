@@ -237,7 +237,7 @@ class CrazyflieEnv:
         t_temp = clock_msg.clock.secs
         ns_temp = clock_msg.clock.nsecs
 
-        self.t = np.round(t_temp+ns_temp*1e-9,3)    # Processed timestamp from /clock msg
+        self.t = np.round(t_temp+ns_temp*1e-9,4)    # Processed timestamp from /clock msg
         self.t_raw = clock_msg.clock                # Unprocessed timestamp from /clock msg
 
     def global_stateCallback(self,gs_msg): ## Callback to parse state data received from external pos. sensor
@@ -245,7 +245,7 @@ class CrazyflieEnv:
         t_temp = gs_msg.header.stamp.secs
         ns_temp = gs_msg.header.stamp.nsecs
 
-        t = np.round(t_temp+ns_temp*1e-9,3)      
+        t = np.round(t_temp+ns_temp*1e-9,4)      
         
         ## SIMPLIFY STATE VALUES FROM TOPIC
         global_pos = gs_msg.pose.pose.position
@@ -326,6 +326,10 @@ class CrazyflieEnv:
 
         self.ceiling_ft_z = np.round(ft_msg.Force_impact.z,3)   # Z-Impact force from ceiling Force-Torque sensor
         self.ceiling_ft_x = np.round(ft_msg.Force_impact.x,3)   # X-Impact force from ceiling Force-Torque sensor
+
+        t_temp = ft_msg.Header.stamp.secs
+        ns_temp = ft_msg.Header.stamp.nsecs
+        self.t_impact = np.round(t_temp+ns_temp*1e-9,4)  
 
         self.pos_impact = np.round([ft_msg.Pose_impact.position.x,
                                     ft_msg.Pose_impact.position.y,
@@ -580,7 +584,7 @@ class CrazyflieEnv:
                     self.k_ep,self.k_run,
                     "","", # alpha_mu,alpha_sig
                     "","","", # mu,sigma,policy
-                    0.0,self.pos_impact[0],self.pos_impact[1],self.pos_impact[2],    # t,x,y,z
+                    self.t_impact,self.pos_impact[0],self.pos_impact[1],self.pos_impact[2],    # t,x,y,z
                     self.quat_impact[0],self.quat_impact[1],self.quat_impact[2],self.quat_impact[3],    # qw,qx,qy,qz
                     self.vel_impact[0],self.vel_impact[1],self.vel_impact[2],    # vx_d,vy_d,vz_d
                     self.omega_impact[0],self.omega_impact[1],self.omega_impact[2],  # wx,wy,wz
