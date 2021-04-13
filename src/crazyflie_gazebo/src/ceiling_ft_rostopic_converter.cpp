@@ -17,102 +17,156 @@
 // ROS dependencies
 #include <ros/ros.h>
 #include <geometry_msgs/WrenchStamped.h>
-#include "crazyflie_rl/RLCmd.h"
+#include "crazyflie_rl/RLData.h"
+#include "crazyflie_gazebo/ImpactData.h"
+#include "nav_msgs/Odometry.h"
+
 
 #include <iostream>
+#include <Eigen/Dense>
 
-ros::Publisher pub;
-ros::Subscriber RLCmd_Subscriber;
+
+ros::Publisher impactForce_Publisher;
+ros::Subscriber RLdata_Subscriber;
+ros::Subscriber globalState_Subscriber;
 
 double ros_rate = 100; // Ros rate but not sure how it applies here
-double ceiling_ft_z = 0.0; // Max impact force in Z-direction [N]
-double ceiling_ft_x = 0.0; // Max impact force in X-direction [N]
+double _ceiling_ft_z = 0.0; // Max impact force in Z-direction [N]
+double _ceiling_ft_x = 0.0; // Max impact force in X-direction [N]
+bool _impact_flag = false;
 
 
-void torquesCb(const ConstWrenchStampedPtr &_msg)
+
+geometry_msgs::Point _pos;        // Current position [m]
+geometry_msgs::Vector3 _vel;      // Current velocity [m]
+geometry_msgs::Quaternion _quat;  // Current attitude [rad] (quat form)
+geometry_msgs::Vector3 _omega;    // Current angular velocity [rad/s]
+
+
+geometry_msgs::Vector3 _vel_prev;      // Current velocity [m]
+
+ros::Time _t_impact;                      // Impact time [s]
+geometry_msgs::Point _pos_impact;         // Impact position [m]
+geometry_msgs::Vector3 _vel_impact;       // Impact velocity [m]
+geometry_msgs::Quaternion _quat_impact;   // Impact attitude [rad] (quat form)
+geometry_msgs::Vector3 _omega_impact;     // Impact angular velocity [rad/s]
+
+void gazeboFT_Callback(const ConstWrenchStampedPtr &_msg)
 {
+  // Record max force experienced
+  if (_msg->wrench().force().z() > _ceiling_ft_z){
+    _ceiling_ft_z = _msg->wrench().force().z();
+  }
+
+  if (_msg->wrench().force().x() > _ceiling_ft_x){
+    _ceiling_ft_x = _msg->wrench().force().x();
+  }
+
+
+  if (_ceiling_ft_z >= 2.0 && _impact_flag == false){ 
+    // Lock in state data when impact detected
+    _impact_flag = true;
+
+    _t_impact = ros::Time::now();
+    _pos_impact = _pos;
+    _vel_impact = _vel;
+    _quat_impact = _quat;
+    _omega_impact = _omega;
+  }
 
   
-  // Record max force experienced
-  if (_msg->wrench().force().z() > ceiling_ft_z){
-    ceiling_ft_z = _msg->wrench().force().z();
-  }
 
-  if (_msg->wrench().force().x() > ceiling_ft_x){
-    ceiling_ft_x = _msg->wrench().force().x();
-  }
-
-
-  // std::cout << "Received msg: " << std::endl;
-  // std::cout << _msg->DebugString() << std::endl;
-  geometry_msgs::WrenchStamped msgWrenchedStamped;
-  // try WrenchStamped msgWrenchedStamped;
-  msgWrenchedStamped.header.stamp = ros::Time::now();
-  msgWrenchedStamped.wrench.force.x = ceiling_ft_x;
-  msgWrenchedStamped.wrench.force.y = _msg->wrench().force().y();
-  msgWrenchedStamped.wrench.force.z = ceiling_ft_z;
-  msgWrenchedStamped.wrench.torque.x = _msg->wrench().torque().x();
-  msgWrenchedStamped.wrench.torque.y = _msg->wrench().torque().y();
-  msgWrenchedStamped.wrench.torque.z = _msg->wrench().torque().z();
-  pub.publish(msgWrenchedStamped);
+  
  
 }
 
-void RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg)
+void RLdata_Callback(const crazyflie_rl::RLData::ConstPtr &msg)
 {
-  // When model is reset back to home position then reset max impact values
-  if(msg->cmd_type == 0)
+
+  if(msg->runComplete_flag == true)
   {
-    ceiling_ft_z = 0.0;
-    ceiling_ft_x = 0.0;
+      
+    crazyflie_gazebo::ImpactData impact_msg;
+  
+    impact_msg.impact_flag = _impact_flag;
+    impact_msg.Header.stamp = _t_impact;
+
+    // WRITE CURRENT MAX IMPACT FORCES TO MSG
+    impact_msg.Force_impact.x = _ceiling_ft_x;
+    impact_msg.Force_impact.y = 0.0;
+    impact_msg.Force_impact.z = _ceiling_ft_z;
+
+    // WRITE LAGGING IMPACT POSE TO MSG
+    impact_msg.Pose_impact.position.x = _pos.x;
+    impact_msg.Pose_impact.position.y = _pos.y;
+    impact_msg.Pose_impact.position.z = _pos.z;
+
+    impact_msg.Pose_impact.orientation.x = _quat.x;
+    impact_msg.Pose_impact.orientation.y = _quat.y;
+    impact_msg.Pose_impact.orientation.z = _quat.z;
+    impact_msg.Pose_impact.orientation.w = _quat.w;
+
+    // WRITE LAGGING IMPACT TWIST TO MSG
+    impact_msg.Twist_impact.linear.x = _vel.x;
+    impact_msg.Twist_impact.linear.y = _vel.y;
+    impact_msg.Twist_impact.linear.z = _vel.z;
+    
+    impact_msg.Twist_impact.angular.x = _omega.x;
+    impact_msg.Twist_impact.angular.y = _omega.y;
+    impact_msg.Twist_impact.angular.z = _omega.z;
+
+    impactForce_Publisher.publish(impact_msg);
+
+    // RESET IMPACT FLAG AND VALUES
+    _impact_flag = false;
+    _ceiling_ft_z = 0.0;
+    _ceiling_ft_x = 0.0;
+
   }
+
+}
+
+void global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
+
+    // SET STATE VALUES INTO GLOBAL STATE VARIABLES
+    _pos = msg->pose.pose.position; 
+    _quat = msg->pose.pose.orientation;
+    _vel = msg->twist.twist.linear;
+    _omega = msg->twist.twist.angular;
 
 }
 
 int main(int argc, char **argv)
 {
-    
-  ROS_INFO("Starting gazebo_transport_to_ros_topic node");
-
-  // Load Gazebo
+  // LOAD GAZEBO, CREATE GAZEBO NODE AND INIT
+  ROS_INFO("Starting Gazebo node");
   gazebo::client::setup(argc, argv);
-  ROS_INFO("Starting gazebo");
-
-  // Load ROS
-  ros::init(argc, argv, "gazebo_transport_to_ros_topic");
-  
-  // Create Gazebo node and init
   gazebo::transport::NodePtr node(new gazebo::transport::Node());
   node->Init();
 
-  // Create ROS node and init
+  // LOAD ROS, CREATE ROS NODE AND INIT
+  ROS_INFO("Starting ROS node");
+  ros::init(argc, argv, "gazebo_transport_to_ros_topic");
   ros::NodeHandle nh;
 
-  // Get ROS params
+
+  // DEFINE ROS AND GAZEBO TOPICS
   std::string gazebo_transport_topic_to_sub= "/gazebo/default/ceiling_plane/joint_01/force_torque/wrench";
   std::string ros_topic_to_pub="/ceiling_force_sensor";
   
-  //double ros_rate;
-  //ros::param::get("~gazebo_transport_topic_to_sub", gazebo_transport_topic_to_sub);
-  //ros::param::get("~ros_rate", ros_rate);
-
-  pub = nh.advertise<geometry_msgs::WrenchStamped>(ros_topic_to_pub, 10);
-  RLCmd_Subscriber = nh.subscribe("/rl_ctrl",50,RLCmd_Callback);
-  
-  ROS_INFO("Starting Publisher");
+  // INIT ROS PUBLISHERS/SUBSCRIBERS
+  impactForce_Publisher = nh.advertise<crazyflie_gazebo::ImpactData>(ros_topic_to_pub, 1);
+  globalState_Subscriber = nh.subscribe("/global_state",1,global_stateCallback,ros::TransportHints().tcpNoDelay());
+  RLdata_Subscriber = nh.subscribe("/rl_data",5,RLdata_Callback);
+  ROS_INFO("ROS Subscribers/Publishers Started");
   
 
-  // Listen to Gazebo force_torque sensor topic
-  gazebo::transport::SubscriberPtr sub = node->Subscribe(gazebo_transport_topic_to_sub , torquesCb);
-  ros::Rate loop_rate(ros_rate); 
-  ROS_INFO("Starting Subscriber ");
+
+  // LISTEN TO GAZEBO FORCE_TORQUE SENSOR TOPIOC
+  gazebo::transport::SubscriberPtr sub = node->Subscribe(gazebo_transport_topic_to_sub, gazeboFT_Callback);
+  ROS_INFO("Gazebo Subscriber Started");
   
-  while(ros::ok())
-  {
-    ros::spinOnce();
-    loop_rate.sleep();
-    
-  }
+  ros::spin();
   gazebo::shutdown();
   return 0;
 }
