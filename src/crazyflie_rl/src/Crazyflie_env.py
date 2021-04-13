@@ -17,7 +17,6 @@ from rosgraph_msgs.msg import Clock
 from gazebo_msgs.msg import ModelState,ContactsState
 from gazebo_msgs.srv import SetModelState
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import WrenchStamped
 
 
 
@@ -120,7 +119,7 @@ class CrazyflieEnv:
         self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.laser_sensorCallback)       
                       
         self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback,queue_size=10)            
-        # self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftsensorCallback,queue_size=1) 
+        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',ImpactData,self.ceiling_ftsensorCallback,queue_size=10) 
                       
         rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
 
@@ -212,7 +211,7 @@ class CrazyflieEnv:
             self.quat_flip = np.round([ctrl_msg.Pose_tr.pose.orientation.w,
                                         ctrl_msg.Pose_tr.pose.orientation.x,
                                         ctrl_msg.Pose_tr.pose.orientation.y,
-                                        ctrl_msg.Pose_tr.pose.orientation.z],3) # [quat]
+                                        ctrl_msg.Pose_tr.pose.orientation.z],5) # [quat]
             # TWIST_FLIP
             self.vel_flip = np.round([ctrl_msg.Twist_tr.linear.x,
                                         ctrl_msg.Twist_tr.linear.y,
@@ -259,7 +258,7 @@ class CrazyflieEnv:
 
         ## SET STATE VALUES FROM TOPIC
         self.position = np.round([global_pos.x,global_pos.y,global_pos.z],3)    # [m]
-        self.orientation_q = np.round([global_quat.w,global_quat.x,global_quat.y,global_quat.z],3) # [quat]
+        self.orientation_q = np.round([global_quat.w,global_quat.x,global_quat.y,global_quat.z],5) # [quat]
         self.velocity = np.round([global_vel.x,global_vel.y,global_vel.z],3)    # [m/s]
         self.omega = np.round([global_omega.x,global_omega.y,global_omega.z],3) # [rad/s]
 
@@ -325,18 +324,35 @@ class CrazyflieEnv:
         # Keeps record of max impact force for each run
         # The value is reset in the topic converter script at each 'home' command
 
-        self.ceiling_ft_z = np.round(ft_msg.wrench.force.z,3)   # Z-Impact force from ceiling Force-Torque sensor
-        self.ceiling_ft_x = np.round(ft_msg.wrench.force.x,3)   # X-Impact force from ceiling Force-Torque sensor
-        self.FT_time = ft_msg.header.stamp # Time stamp of msg callback is currently working on
+        self.ceiling_ft_z = np.round(ft_msg.Force_impact.z,3)   # Z-Impact force from ceiling Force-Torque sensor
+        self.ceiling_ft_x = np.round(ft_msg.Force_impact.x,3)   # X-Impact force from ceiling Force-Torque sensor
 
-        if (self.ceiling_ft_z >= 1.0 and self.impact_flag == False):
+        self.pos_impact = np.round([ft_msg.Pose_impact.position.x,
+                                    ft_msg.Pose_impact.position.y,
+                                    ft_msg.Pose_impact.position.z],3)
 
-            self.impact_flag = True
+        self.quat_impact = np.round([ft_msg.Pose_impact.orientation.w,
+                                    ft_msg.Pose_impact.orientation.x,
+                                    ft_msg.Pose_impact.orientation.y,
+                                    ft_msg.Pose_impact.orientation.z],5)
 
-            # Save state data at time of impact
-            self.t_impact = self.t
-            self.state_impact = self.state_current
-            self.FM_impact = self.FM
+        self.vel_impact = np.round([ft_msg.Twist_impact.linear.x,
+                                    ft_msg.Twist_impact.linear.y,
+                                    ft_msg.Twist_impact.linear.z],3)
+
+        self.omega_impact = np.round([ft_msg.Twist_impact.angular.x,
+                                    ft_msg.Twist_impact.angular.y,
+                                    ft_msg.Twist_impact.angular.z],3)
+        # self.FT_time = ft_msg.header.stamp # Time stamp of msg callback is currently working on
+
+        # if (self.ceiling_ft_z >= 1.0 and self.impact_flag == False):
+
+        #     self.impact_flag = True
+
+        #     # Save state data at time of impact
+        #     self.t_impact = self.t
+        #     self.state_impact = self.state_current
+        #     self.FM_impact = self.FM
             
 
     def laser_sensorCallback(self,data): # callback function for laser subsriber (Not fully implemented yet)
@@ -564,14 +580,14 @@ class CrazyflieEnv:
                     self.k_ep,self.k_run,
                     "","", # alpha_mu,alpha_sig
                     "","","", # mu,sigma,policy
-                    self.t_impact,self.state_impact[0],self.state_impact[1],self.state_impact[2],    # t,x,y,z
-                    self.state_impact[3],self.state_impact[4],self.state_impact[5],self.state_impact[6],    # qx,qy,qz,qw
-                    self.state_impact[7],self.state_impact[8],self.state_impact[9],    # vx_d,vy_d,vz_d
-                    self.state_impact[10],self.state_impact[11],self.state_impact[12],  # wx,wy,wz
+                    0.0,self.pos_impact[0],self.pos_impact[1],self.pos_impact[2],    # t,x,y,z
+                    self.quat_impact[0],self.quat_impact[1],self.quat_impact[2],self.quat_impact[3],    # qw,qx,qy,qz
+                    self.vel_impact[0],self.vel_impact[1],self.vel_impact[2],    # vx_d,vy_d,vz_d
+                    self.omega_impact[0],self.omega_impact[1],self.omega_impact[2],  # wx,wy,wz
                     "",self.body_contact,sum(self.pad_contacts),"",  # "", "", body_impact flag, num leg contacts, ""
                     self.ceiling_ft_z,self.ceiling_ft_x,"",             # Max impact force [z], =Max impact force [x], ""
                     "","","","", # MS1, MS2, MS3, MS4
-                    self.FM_impact[0],self.FM_impact[1],self.FM_impact[2],self.FM_impact[3], # F_thrust,Mx,My,Mz
+                    "","","","", # F_thrust,Mx,My,Mz (Impact)
                     "Impact Data"]) # Error
 
     def append_IC(self):
