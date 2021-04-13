@@ -4,7 +4,7 @@
 import numpy as np
 import time,os
 import rospy
-from crazyflie_gazebo.msg import ImpactData
+from crazyflie_gazebo.msg import CtrlData
 
 
 
@@ -12,6 +12,7 @@ from Crazyflie_env import CrazyflieEnv
 from rl_syspepg import rlsysPEPGAgent_reactive,rlsysPEPGAgent_adaptive
 from rl_EM import rlEM_PEPGAgent,rlEM_AdaptiveAgent
 from rl_cma import CMA_basic,CMA,CMA_sym
+from rospy.exceptions import ROSException
 
 os.system("clear")
 np.set_printoptions(precision=2, suppress=True)
@@ -80,6 +81,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                 ## RESET TO INITIAL STATE
                 env.step('home') # Reset control vals and functionality to default vals
                 time.sleep(0.65) # Time for CF to settle [Real-Time seconds]
+
                 
 
                 ## INITIALIZE POLICY PARAMETERS: 
@@ -137,9 +139,18 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                 RREV_start = 0.5
                 pos_z = env.h_ceiling - env.vel_d[2]/RREV_start
                 # pos_z = 0.6
+
                 # ============================
                 ##          Rollout 
                 # ============================
+
+                try:
+                    rospy.wait_for_message('/ctrl_data',CtrlData,timeout=2.0) # Wait to receive ctrl pub to run before continuing
+                except ROSException:
+                    print("No ctrl message received")
+                    repeat_run = True
+                    
+
                 env.step('pos',ctrl_flag=0)                     # Turn off pos control
                 env.step('vel',env.vel_d,ctrl_flag=1)           # Set desired vel
                 env.launch_IC(pos_z,env.vel_d[0]+0.03,env.vel_d[2])   # Use Gazebo to impart desired vel with extra vx to ensure -OF_y when around zero
@@ -205,7 +216,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                         env.runComplete_flag = True
 
                     # IF POSITION FALLS BELOW FLOOR HEIGHT
-                    if env.position[2] <= -8: # Note: there is a lag with this at high RTF
+                    if env.position[2] <= -8.0: # Note: there is a lag with this at high RTF
                         env.error_str = "Rollout Completed: Falling Drone"
                         print(env.error_str)
 

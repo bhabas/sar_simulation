@@ -100,9 +100,7 @@ class CrazyflieEnv:
         
         ## INIT ROS NODE FOR ENVIRONMENT 
         rospy.init_node("crazyflie_env_node") 
-        print("[STARTING] Starting Controller Process...")
-        self.controller_p = subprocess.Popen( # Controller Process
-            "roslaunch crazyflie_gazebo controller.launch", close_fds=True, preexec_fn=os.setsid, shell=True)
+        self.launch_controller()
         self.launch_sim() 
     
 
@@ -371,7 +369,8 @@ class CrazyflieEnv:
             Relaunches Gazebo and resets model position but doesn't touch controller node
         """        
         self.close_sim()
-        time.sleep(1)
+        time.sleep(0.5)
+        self.launch_controller()
         self.launch_sim()
 
         self.reset_pos()
@@ -379,6 +378,7 @@ class CrazyflieEnv:
 
     def close_sim(self):
         os.killpg(self.gazebo_p.pid, signal.SIGTERM)
+        os.killpg(self.controller_p.pid, signal.SIGTERM)
         
 
     def close_dashboard(self):
@@ -413,6 +413,13 @@ class CrazyflieEnv:
         self.dashboard_p = subprocess.Popen(
             "gnome-terminal -- roslaunch dashboard_gui_pkg dashboard.launch",
             close_fds=True, preexec_fn=os.setsid, shell=True)
+
+    def launch_controller(self):
+        print("[STARTING] Starting Controller Process...")
+        self.controller_p = subprocess.Popen( # Controller Process
+            "roslaunch crazyflie_gazebo controller.launch",
+            close_fds=True, preexec_fn=os.setsid, shell=True)
+
 
     def launch_IC(self,pos_z,vx_d,vz_d): # Imparts desired velocity to model (should retain current position)
         
