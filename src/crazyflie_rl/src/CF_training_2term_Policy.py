@@ -144,11 +144,11 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                 ##          Rollout 
                 # ============================
 
-                try:
-                    rospy.wait_for_message('/ctrl_data',CtrlData,timeout=2.0) # Wait to receive ctrl pub to run before continuing
-                except ROSException:
-                    print("No ctrl message received")
-                    repeat_run = True
+                # try:
+                #     rospy.wait_for_message('/ctrl_data',CtrlData,timeout=2.0) # Wait to receive ctrl pub to run before continuing
+                # except ROSException:
+                #     print("No ctrl message received")
+                #     repeat_run = True
                     
 
                 env.step('pos',ctrl_flag=0)                     # Turn off pos control
@@ -327,9 +327,9 @@ if __name__ == '__main__':
     alpha_sigma = np.array([[0.05]])
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[4.80],[5.536]])                 # Initial mu starting point
-    sigma = np.array([[0.000001],[0.000001]])       # Initial sigma starting point
+    mu = np.array([[4.70],[5.536]])                 # Initial mu starting point
 
+    sigma = np.array([[0.000001],[0.000001]])       # Initial sigma starting point
     ## SIM PARAMETERS
     env.n_rollouts = 8
     env.h_ceiling = 3.0 # [m]

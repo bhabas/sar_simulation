@@ -72,6 +72,9 @@ void gazeboFT_Callback(const ConstWrenchStampedPtr &_msg)
     _vel_impact = _vel;
     _quat_impact = _quat;
     _omega_impact = _omega;
+    // std::cout << "Updating data " << std::endl;
+    // std::cout << "Pos: " << _pos.x << " " << _pos.y << " " << _pos.z << " " << std::endl;
+    // std::cout << "Quat: " << _quat.x << " " << _quat.y << " " << _quat.z << " " << _quat.w << std::endl;
   }
 
   
@@ -97,23 +100,23 @@ void RLdata_Callback(const crazyflie_rl::RLData::ConstPtr &msg)
     impact_msg.Force_impact.z = _ceiling_ft_z;
 
     // WRITE LAGGING IMPACT POSE TO MSG
-    impact_msg.Pose_impact.position.x = _pos.x;
-    impact_msg.Pose_impact.position.y = _pos.y;
-    impact_msg.Pose_impact.position.z = _pos.z;
+    impact_msg.Pose_impact.position.x = _pos_impact.x;
+    impact_msg.Pose_impact.position.y = _pos_impact.y;
+    impact_msg.Pose_impact.position.z = _pos_impact.z;
 
-    impact_msg.Pose_impact.orientation.x = _quat.x;
-    impact_msg.Pose_impact.orientation.y = _quat.y;
-    impact_msg.Pose_impact.orientation.z = _quat.z;
-    impact_msg.Pose_impact.orientation.w = _quat.w;
+    impact_msg.Pose_impact.orientation.x = _quat_impact.x;
+    impact_msg.Pose_impact.orientation.y = _quat_impact.y;
+    impact_msg.Pose_impact.orientation.z = _quat_impact.z;
+    impact_msg.Pose_impact.orientation.w = _quat_impact.w;
 
     // WRITE LAGGING IMPACT TWIST TO MSG
-    impact_msg.Twist_impact.linear.x = _vel.x;
-    impact_msg.Twist_impact.linear.y = _vel.y;
-    impact_msg.Twist_impact.linear.z = _vel.z;
+    impact_msg.Twist_impact.linear.x = _vel_impact.x;
+    impact_msg.Twist_impact.linear.y = _vel_impact.y;
+    impact_msg.Twist_impact.linear.z = _vel_impact.z;
     
-    impact_msg.Twist_impact.angular.x = _omega.x;
-    impact_msg.Twist_impact.angular.y = _omega.y;
-    impact_msg.Twist_impact.angular.z = _omega.z;
+    impact_msg.Twist_impact.angular.x = _omega_impact.x;
+    impact_msg.Twist_impact.angular.y = _omega_impact.y;
+    impact_msg.Twist_impact.angular.z = _omega_impact.z;
 
     impactForce_Publisher.publish(impact_msg);
 
