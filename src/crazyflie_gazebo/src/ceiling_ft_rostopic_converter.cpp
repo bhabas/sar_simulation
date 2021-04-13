@@ -25,6 +25,7 @@
 #include <iostream>
 #include <Eigen/Dense>
 
+
 ros::Publisher impactForce_Publisher;
 ros::Subscriber RLdata_Subscriber;
 ros::Subscriber globalState_Subscriber;
@@ -33,21 +34,22 @@ double ros_rate = 100; // Ros rate but not sure how it applies here
 double _ceiling_ft_z = 0.0; // Max impact force in Z-direction [N]
 double _ceiling_ft_x = 0.0; // Max impact force in X-direction [N]
 bool _impact_flag = false;
-bool _Publish_Impact = false;
-unsigned int _t_step = 0;
 
-ros::Time _t;
+
+
 geometry_msgs::Point _pos;        // Current position [m]
 geometry_msgs::Vector3 _vel;      // Current velocity [m]
 geometry_msgs::Quaternion _quat;  // Current attitude [rad] (quat form)
 geometry_msgs::Vector3 _omega;    // Current angular velocity [rad/s]
 
-ros::Time _t_impact;
-geometry_msgs::Point _pos_impact;        // Impact position [m]
-geometry_msgs::Vector3 _vel_impact;      // Impact velocity [m]
-geometry_msgs::Quaternion _quat_impact;  // Impact attitude [rad] (quat form)
-geometry_msgs::Vector3 _omega_impact;    // Impact angular velocity [rad/s]
 
+geometry_msgs::Vector3 _vel_prev;      // Current velocity [m]
+
+ros::Time _t_impact;                      // Impact time [s]
+geometry_msgs::Point _pos_impact;         // Impact position [m]
+geometry_msgs::Vector3 _vel_impact;       // Impact velocity [m]
+geometry_msgs::Quaternion _quat_impact;   // Impact attitude [rad] (quat form)
+geometry_msgs::Vector3 _omega_impact;     // Impact angular velocity [rad/s]
 
 void gazeboFT_Callback(const ConstWrenchStampedPtr &_msg)
 {
@@ -126,22 +128,11 @@ void RLdata_Callback(const crazyflie_rl::RLData::ConstPtr &msg)
 
 void global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
 
-    _t_step++;
-
-    // SIMPLIFY STATE VALUES FROM TOPIC
-    // Follow msg names from message details - "rqt -s rqt_msg" 
-    if (_t_step%20 == 0){ // Update Odom data every [5] callbacks
-      
-      // SET STATE VALUES INTO GLOBAL STATE VARIABLES
-      _pos = msg->pose.pose.position; 
-      _vel = msg->twist.twist.linear;
-      _quat = msg->pose.pose.orientation;
-      _omega = msg->twist.twist.angular;
-    }
-
-    
-
-  
+    // SET STATE VALUES INTO GLOBAL STATE VARIABLES
+    _pos = msg->pose.pose.position; 
+    _quat = msg->pose.pose.orientation;
+    _vel = msg->twist.twist.linear;
+    _omega = msg->twist.twist.angular;
 
 }
 
@@ -157,7 +148,6 @@ int main(int argc, char **argv)
   ROS_INFO("Starting ROS node");
   ros::init(argc, argv, "gazebo_transport_to_ros_topic");
   ros::NodeHandle nh;
-  ros::Rate loop_rate(ros_rate); 
 
 
   // DEFINE ROS AND GAZEBO TOPICS
@@ -176,12 +166,7 @@ int main(int argc, char **argv)
   gazebo::transport::SubscriberPtr sub = node->Subscribe(gazebo_transport_topic_to_sub, gazeboFT_Callback);
   ROS_INFO("Gazebo Subscriber Started");
   
-  while(ros::ok())
-  {
-    ros::spinOnce();
-    loop_rate.sleep(); // I don't think this is even doing anything since everything is inside the torqueCb
-    
-  }
+  ros::spin();
   gazebo::shutdown();
   return 0;
 }

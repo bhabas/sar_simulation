@@ -347,15 +347,7 @@ class CrazyflieEnv:
         self.omega_impact = np.round([ft_msg.Twist_impact.angular.x,
                                     ft_msg.Twist_impact.angular.y,
                                     ft_msg.Twist_impact.angular.z],3)
-        # self.FT_time = ft_msg.header.stamp # Time stamp of msg callback is currently working on
 
-        # if (self.ceiling_ft_z >= 1.0 and self.impact_flag == False):
-
-        #     self.impact_flag = True
-
-        #     # Save state data at time of impact
-        #     self.t_impact = self.t
-        #     self.state_impact = self.state_current
         #     self.FM_impact = self.FM
             
 
