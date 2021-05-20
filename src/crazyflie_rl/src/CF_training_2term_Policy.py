@@ -3,6 +3,8 @@
 
 import numpy as np
 import time,os
+import rospy
+from crazyflie_gazebo.msg import CtrlData
 
 
 
@@ -10,6 +12,7 @@ from Crazyflie_env import CrazyflieEnv
 from rl_syspepg import rlsysPEPGAgent_reactive,rlsysPEPGAgent_adaptive
 from rl_EM import rlEM_PEPGAgent,rlEM_AdaptiveAgent
 from rl_cma import CMA_basic,CMA,CMA_sym
+from rospy.exceptions import ROSException
 
 os.system("clear")
 np.set_printoptions(precision=2, suppress=True)
@@ -78,6 +81,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                 ## RESET TO INITIAL STATE
                 env.step('home') # Reset control vals and functionality to default vals
                 time.sleep(0.65) # Time for CF to settle [Real-Time seconds]
+
                 
 
                 ## INITIALIZE POLICY PARAMETERS: 
@@ -92,6 +96,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 
                 ## RESET/UPDATE RUN CONDITIONS
                 env.runComplete_flag = False
+                env.runReset_flag = False
                 repeat_run= False
 
                 start_time_rollout = env.getTime()
@@ -130,12 +135,22 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                 print("\n")
 
 
+                ## CONVERT STARTING RREV VALUE -> Z_POS TO START ROLLOUT FROM
                 RREV_start = 0.5
                 pos_z = env.h_ceiling - env.vel_d[2]/RREV_start
-                pos_z = 0.6
+                # pos_z = 0.6
+
                 # ============================
                 ##          Rollout 
                 # ============================
+
+                # try:
+                #     rospy.wait_for_message('/ctrl_data',CtrlData,timeout=2.0) # Wait to receive ctrl pub to run before continuing
+                # except ROSException:
+                #     print("No ctrl message received")
+                #     repeat_run = True
+                    
+
                 env.step('pos',ctrl_flag=0)                     # Turn off pos control
                 env.step('vel',env.vel_d,ctrl_flag=1)           # Set desired vel
                 env.launch_IC(pos_z,env.vel_d[0]+0.03,env.vel_d[2])   # Use Gazebo to impart desired vel with extra vx to ensure -OF_y when around zero
@@ -183,7 +198,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                     # Check if sample of recorded data changed, if so then append csv (Reduces repeated data rows)
                     if env.t != t_prev:
                     # if t_step%1==0: 
-                        env.RL_Publish()
+                        # env.RL_Publish()
                         env.append_csv()
 
                         
@@ -201,7 +216,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                         env.runComplete_flag = True
 
                     # IF POSITION FALLS BELOW FLOOR HEIGHT
-                    if env.position[2] <= -8: # Note: there is a lag with this at high RTF
+                    if env.position[2] <= -8.0: # Note: there is a lag with this at high RTF
                         env.error_str = "Rollout Completed: Falling Drone"
                         print(env.error_str)
 
@@ -237,6 +252,8 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                     ##       Run Completion  
                     # ============================
                     if env.runComplete_flag==True:
+
+                        
                         
                         print("\n")
                         # print(f"z_max: {env.z_max}")
@@ -245,12 +262,15 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 
                         reward_arr[k_run] = agent.calcReward_pureLanding(env)
                         env.reward = reward_arr[k_run,0]
+                        env.reward_avg = reward_arr[np.nonzero(reward_arr)].mean()
                         env.reward_inputs = [env.z_max,env.pitch_sum,env.pitch_max]
                         
                         
                         print(f"Reward = {env.reward:.3f}")
                         print(f"# of Leg contacts: {sum(env.pad_contacts)}")
-                        print("!------------------------End Run------------------------! \n")   
+                        print("!------------------------End Run------------------------! \n")  
+
+                        env.RL_Publish() # Publish that rollout completed 
 
                         ## RUN DATA LOGGING
                         env.append_csv_blank()
@@ -260,6 +280,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                         env.append_csv_blank()
 
                         env.reset_pos()
+                        
                     
                         break # Break from run loop
                        
@@ -272,9 +293,9 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                 
                 else:
                     ## PUBLISH UPDATED REWARD VARIABLES
-                    env.reward = reward_arr[k_run,0]
-                    env.reward_avg = reward_arr[np.nonzero(reward_arr)].mean()
-                    env.RL_Publish()
+                    # env.reward = reward_arr[k_run,0]
+                    # env.reward_avg = reward_arr[np.nonzero(reward_arr)].mean()
+                    # env.RL_Publish()
                     k_run += 1 # When succesful move on to next run
                     
             except: ## IF SIM EXCEPTION RAISED THEN CONTINUE BACK TO TRY BLOCK UNTIL SUCCESSFUL COMPLETION
@@ -306,9 +327,9 @@ if __name__ == '__main__':
     alpha_sigma = np.array([[0.05]])
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[4.80],[5.536]])                 # Initial mu starting point
-    sigma = np.array([[0.000001],[0.000001]])       # Initial sigma starting point
+    mu = np.array([[4.70],[5.536]])                 # Initial mu starting point
 
+    sigma = np.array([[0.000001],[0.000001]])       # Initial sigma starting point
     ## SIM PARAMETERS
     env.n_rollouts = 8
     env.h_ceiling = 3.0 # [m]

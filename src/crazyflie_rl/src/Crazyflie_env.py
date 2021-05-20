@@ -6,15 +6,17 @@ import os, subprocess, signal
 import rospy
 import getpass
 
+from std_srvs.srv import Empty
+
+
 
 from sensor_msgs.msg import LaserScan, Image, Imu
 from crazyflie_rl.msg import RLData,RLCmd
-from crazyflie_gazebo.msg import CtrlData
+from crazyflie_gazebo.msg import CtrlData,ImpactData
 from rosgraph_msgs.msg import Clock
 from gazebo_msgs.msg import ModelState,ContactsState
 from gazebo_msgs.srv import SetModelState
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import WrenchStamped
 
 
 
@@ -98,9 +100,7 @@ class CrazyflieEnv:
         
         ## INIT ROS NODE FOR ENVIRONMENT 
         rospy.init_node("crazyflie_env_node") 
-        print("[STARTING] Starting Controller Process...")
-        self.controller_p = subprocess.Popen( # Controller Process
-            "roslaunch crazyflie_gazebo controller.launch", close_fds=True, preexec_fn=os.setsid, shell=True)
+        self.launch_controller()
         self.launch_sim() 
     
 
@@ -113,10 +113,12 @@ class CrazyflieEnv:
         self.state_Subscriber = rospy.Subscriber('/global_state',Odometry,self.global_stateCallback,queue_size=1)      
         self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback,queue_size=1)                                   
 
-        self.OF_Subscriber = rospy.Subscriber('/OF_sensor',Odometry,self.OFsensor_Callback,queue_size=1)                                
-        self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback,queue_size=50)            
-        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',WrenchStamped,self.ceiling_ftsensorCallback,queue_size=25)  
-        self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.laser_sensorCallback)                    
+        self.OF_Subscriber = rospy.Subscriber('/OF_sensor',Odometry,self.OFsensor_Callback,queue_size=1)    
+        self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.laser_sensorCallback)       
+                      
+        self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback,queue_size=10)            
+        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',ImpactData,self.ceiling_ftsensorCallback,queue_size=10) 
+                      
         rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
 
 
@@ -153,6 +155,7 @@ class CrazyflieEnv:
         rl_msg.agent = self.agent_name
         rl_msg.error = self.error_str
         rl_msg.impact_flag = self.impact_flag
+        rl_msg.runComplete_flag = self.runComplete_flag
 
 
         rl_msg.n_rollouts = self.n_rollouts
@@ -206,7 +209,7 @@ class CrazyflieEnv:
             self.quat_flip = np.round([ctrl_msg.Pose_tr.pose.orientation.w,
                                         ctrl_msg.Pose_tr.pose.orientation.x,
                                         ctrl_msg.Pose_tr.pose.orientation.y,
-                                        ctrl_msg.Pose_tr.pose.orientation.z],3) # [quat]
+                                        ctrl_msg.Pose_tr.pose.orientation.z],5) # [quat]
             # TWIST_FLIP
             self.vel_flip = np.round([ctrl_msg.Twist_tr.linear.x,
                                         ctrl_msg.Twist_tr.linear.y,
@@ -228,18 +231,19 @@ class CrazyflieEnv:
     ##    Sensors/Data Topics
     # ============================
 
-    def clockCallback(self,clock_msg): ## Callback to grab time from Sim clock
+    def clockCallback(self,clock_msg): ## Callback to grab time from sim clock
         t_temp = clock_msg.clock.secs
         ns_temp = clock_msg.clock.nsecs
 
-        self.t = np.round(t_temp+ns_temp*1e-9,3)
+        self.t = np.round(t_temp+ns_temp*1e-9,4)    # Processed timestamp from /clock msg
+        self.t_raw = clock_msg.clock                # Unprocessed timestamp from /clock msg
 
     def global_stateCallback(self,gs_msg): ## Callback to parse state data received from external pos. sensor
 
         t_temp = gs_msg.header.stamp.secs
         ns_temp = gs_msg.header.stamp.nsecs
 
-        t = np.round(t_temp+ns_temp*1e-9,3)      
+        t = np.round(t_temp+ns_temp*1e-9,4)      
         
         ## SIMPLIFY STATE VALUES FROM TOPIC
         global_pos = gs_msg.pose.pose.position
@@ -252,7 +256,7 @@ class CrazyflieEnv:
 
         ## SET STATE VALUES FROM TOPIC
         self.position = np.round([global_pos.x,global_pos.y,global_pos.z],3)    # [m]
-        self.orientation_q = np.round([global_quat.w,global_quat.x,global_quat.y,global_quat.z],3) # [quat]
+        self.orientation_q = np.round([global_quat.w,global_quat.x,global_quat.y,global_quat.z],5) # [quat]
         self.velocity = np.round([global_vel.x,global_vel.y,global_vel.z],3)    # [m/s]
         self.omega = np.round([global_omega.x,global_omega.y,global_omega.z],3) # [rad/s]
 
@@ -297,54 +301,53 @@ class CrazyflieEnv:
             # If pad collision or body collision detected then mark True
             if msg.collision1_name  ==  f"{self.modelName}::pad_1::collision" and self.pad_contacts[0] == False:
                 self.pad_contacts[0] = True
-
-                if self.logging_flag:
-                    # self.append_csv(error_str="Leg_1 Contact") # Append data at instant when ceiling impact detected
-                    pass
                 
             elif msg.collision1_name == f"{self.modelName}::pad_2::collision" and self.pad_contacts[1] == False:
                 self.pad_contacts[1] = True
 
-                if self.logging_flag:
-                    # self.append_csv(error_str="Leg_2 Contact")
-                    pass
-
             elif msg.collision1_name == f"{self.modelName}::pad_3::collision" and self.pad_contacts[2] == False:
                 self.pad_contacts[2] = True
-
-                if self.logging_flag:
-                    # self.append_csv(error_str="Leg_3 Contact")
-                    pass
 
             elif msg.collision1_name == f"{self.modelName}::pad_4::collision" and self.pad_contacts[3] == False:
                 self.pad_contacts[3] = True
 
-                if self.logging_flag:
-                    # self.append_csv(error_str="Leg_4 Contact")
-                    pass
-
             elif msg.collision1_name == f"{self.modelName}::crazyflie_body::body_collision" and self.body_contact == False:
                 self.body_contact = True
 
-        if (any(self.pad_contacts) or self.body_contact) and self.impact_flag == False: # If any pad contacts are True then update impact flag
-            self.impact_flag = True
+
             
-            # Save state data at time of impact
-            self.t_impact = self.t
-            self.state_impact = self.state_current
-            self.FM_impact = self.FM
+            
 
     def ceiling_ftsensorCallback(self,ft_msg):
         # Keeps record of max impact force for each run
-        # The value is reset in the training script at each run start
+        # The value is reset in the topic converter script at each 'home' command
 
-        if np.abs(ft_msg.wrench.force.z) > np.abs(self.ceiling_ft_z):
-            self.ceiling_ft_z = ft_msg.wrench.force.z           # Z-Impact force from ceiling Force-Torque sensor
-            self.ceiling_ft_z = np.round(self.ceiling_ft_z,3)   # Rounded for data logging
+        self.ceiling_ft_z = np.round(ft_msg.Force_impact.z,3)   # Z-Impact force from ceiling Force-Torque sensor
+        self.ceiling_ft_x = np.round(ft_msg.Force_impact.x,3)   # X-Impact force from ceiling Force-Torque sensor
 
-        if np.abs(ft_msg.wrench.force.x) > np.abs(self.ceiling_ft_x):
-            self.ceiling_ft_x = ft_msg.wrench.force.x           # X-Impact force from ceiling Force-Torque sensor
-            self.ceiling_ft_x = np.round(self.ceiling_ft_x,3)   # Rounded for data logging
+        t_temp = ft_msg.Header.stamp.secs
+        ns_temp = ft_msg.Header.stamp.nsecs
+        self.t_impact = np.round(t_temp+ns_temp*1e-9,4)  
+
+        self.pos_impact = np.round([ft_msg.Pose_impact.position.x,
+                                    ft_msg.Pose_impact.position.y,
+                                    ft_msg.Pose_impact.position.z],3)
+
+        self.quat_impact = np.round([ft_msg.Pose_impact.orientation.w,
+                                    ft_msg.Pose_impact.orientation.x,
+                                    ft_msg.Pose_impact.orientation.y,
+                                    ft_msg.Pose_impact.orientation.z],5)
+
+        self.vel_impact = np.round([ft_msg.Twist_impact.linear.x,
+                                    ft_msg.Twist_impact.linear.y,
+                                    ft_msg.Twist_impact.linear.z],3)
+
+        self.omega_impact = np.round([ft_msg.Twist_impact.angular.x,
+                                    ft_msg.Twist_impact.angular.y,
+                                    ft_msg.Twist_impact.angular.z],3)
+
+        #     self.FM_impact = self.FM
+            
 
     def laser_sensorCallback(self,data): # callback function for laser subsriber (Not fully implemented yet)
         self.laser_msg = data
@@ -366,7 +369,8 @@ class CrazyflieEnv:
             Relaunches Gazebo and resets model position but doesn't touch controller node
         """        
         self.close_sim()
-        time.sleep(1)
+        time.sleep(0.5)
+        self.launch_controller()
         self.launch_sim()
 
         self.reset_pos()
@@ -374,6 +378,7 @@ class CrazyflieEnv:
 
     def close_sim(self):
         os.killpg(self.gazebo_p.pid, signal.SIGTERM)
+        os.killpg(self.controller_p.pid, signal.SIGTERM)
         
 
     def close_dashboard(self):
@@ -396,13 +401,25 @@ class CrazyflieEnv:
             close_fds=True, preexec_fn=os.setsid, shell=True)
         
         
+    def pause_sim(self,pause_flag):
 
+        if pause_flag:
+            rospy.ServiceProxy('/gazebo/pause_physics', Empty)
+        else:
+            rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
 
     def launch_dashboard(self):
         print("[STARTING] Starting Dashboard...")
         self.dashboard_p = subprocess.Popen(
             "gnome-terminal -- roslaunch dashboard_gui_pkg dashboard.launch",
             close_fds=True, preexec_fn=os.setsid, shell=True)
+
+    def launch_controller(self):
+        print("[STARTING] Starting Controller Process...")
+        self.controller_p = subprocess.Popen( # Controller Process
+            "roslaunch crazyflie_gazebo controller.launch",
+            close_fds=True, preexec_fn=os.setsid, shell=True)
+
 
     def launch_IC(self,pos_z,vx_d,vz_d): # Imparts desired velocity to model (should retain current position)
         
@@ -566,14 +583,14 @@ class CrazyflieEnv:
                     self.k_ep,self.k_run,
                     "","", # alpha_mu,alpha_sig
                     "","","", # mu,sigma,policy
-                    self.t_impact,self.state_impact[0],self.state_impact[1],self.state_impact[2],    # t,x,y,z
-                    self.state_impact[3],self.state_impact[4],self.state_impact[5],self.state_impact[6],    # qx,qy,qz,qw
-                    self.state_impact[7],self.state_impact[8],self.state_impact[9],    # vx_d,vy_d,vz_d
-                    self.state_impact[10],self.state_impact[11],self.state_impact[12],  # wx,wy,wz
+                    self.t_impact,self.pos_impact[0],self.pos_impact[1],self.pos_impact[2],    # t,x,y,z
+                    self.quat_impact[0],self.quat_impact[1],self.quat_impact[2],self.quat_impact[3],    # qw,qx,qy,qz
+                    self.vel_impact[0],self.vel_impact[1],self.vel_impact[2],    # vx_d,vy_d,vz_d
+                    self.omega_impact[0],self.omega_impact[1],self.omega_impact[2],  # wx,wy,wz
                     "",self.body_contact,sum(self.pad_contacts),"",  # "", "", body_impact flag, num leg contacts, ""
                     self.ceiling_ft_z,self.ceiling_ft_x,"",             # Max impact force [z], =Max impact force [x], ""
                     "","","","", # MS1, MS2, MS3, MS4
-                    self.FM_impact[0],self.FM_impact[1],self.FM_impact[2],self.FM_impact[3], # F_thrust,Mx,My,Mz
+                    "","","","", # F_thrust,Mx,My,Mz (Impact)
                     "Impact Data"]) # Error
 
     def append_IC(self):

@@ -345,7 +345,7 @@ void Controller::controlThread()
 
 
     // might need to adjust weight to real case (sdf file too)
-    double m = 0.023 + 0.0003*4; // Mass [kg]
+    double m = 0.023 + 0.0003*4 + 0.00075*4; // Mass [kg] (Body + Legs/Pads + Rotors)
     double g = 9.8066; // Gravitational acceleration [m/s^2]
     double t = 0; // Time from Gazebo [s]
     unsigned int t_step = 0; // t_step counter
@@ -661,18 +661,6 @@ void Controller::controlThread()
 
 int main(int argc, char **argv)
 {
-
-
-    // Matrix3f m;
-
-    // double eul_x = 0;
-    // double eul_y = -15.0*M_PI/180.0;
-    // double eul_z = 0;
-
-    // m = AngleAxisf((float) eul_y, Vector3f::UnitY()) * AngleAxisf((float) eul_z, Vector3f::UnitZ()) * AngleAxisf((float) eul_x, Vector3f::UnitX());
-
-    
-    // cout << m << endl;
 
     ros::init(argc, argv,"controller_node");
     ros::NodeHandle nh;

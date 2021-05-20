@@ -94,6 +94,7 @@ link_libraries(mav_msgs sensor_msgs)
  add_message_files(
    FILES
    CtrlData.msg
+   ImpactData.msg
  )
 
 ## Generate services in the 'srv' folder
@@ -181,6 +182,7 @@ add_library(gazebo_sticky_foot SHARED src/gazebo_sticky_foot.cpp)
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(controller src/controller.cpp)
+add_executable(ceiling_ft_sensor src/ceiling_ft_rostopic_converter.cpp)
 
 
 ## Rename C++ executable without prefix
@@ -203,6 +205,7 @@ target_link_libraries(gazebo_motor_model ${catkin_LIBRARIES} ${Boost_LIBRARIES} 
 target_link_libraries(gazebo_mavlink ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES})
 target_link_libraries(gazebo_sticky_foot ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES})
 target_link_libraries(controller ${catkin_LIBRARIES})
+target_link_libraries(ceiling_ft_sensor ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 #######################
 ## 9. Tests to build ##
 #######################

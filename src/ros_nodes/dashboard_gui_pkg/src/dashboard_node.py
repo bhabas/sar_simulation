@@ -19,6 +19,7 @@ class DashboardNode:
         self.reward = 0
         self.state_current = np.zeros(14)
         
+        
 
         ## INITIALIZE GLOBAL STATE SUBSCRIBER 
         rospy.Subscriber('/global_state',Odometry,self.global_stateCallback)

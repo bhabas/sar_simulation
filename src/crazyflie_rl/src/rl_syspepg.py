@@ -16,89 +16,31 @@ class ES:
         # ovveride this for necessary hyperparameters
         self.n_rollout = n_rollout
 
-    
-    def calcReward_effortMinimization(self,state_hist,FM_hist,h_ceiling,pad_contacts,body_contact):
-
-        ## DEFINE STATES
-        t_hist = state_hist[0,:]
-        wy_hist = state_hist[12,:]
-        My_hist = FM_hist[2,:]
-        z_hist = state_hist[3,:]
-
-
-        ## INIT INTEGRATION VARIABLES
-        pitch_hist = np.zeros_like(t_hist)
-        pitch_sum = 0
-        W_My = 0 
-        prev = t_hist[0]
-
-        ## INTEGRATE FOR W_My AND FINAL PITCH ANGLE
-        # Integrate omega_y over time to get full rotation estimate
-        # This accounts for multiple revolutions that euler angles can't
-        for ii,wy in enumerate(wy_hist):
-            pitch_sum += wy*(180/np.pi)*(t_hist[ii]-prev) # [deg]
-            pitch_hist[ii] = pitch_sum # [deg]
-
-            W_My += My_hist[ii]*wy*(t_hist[ii]-prev) # [N*mm]
-            prev = t_hist[ii]
-
-
-
-        ## r_contact Calc
-        num_contacts = np.sum(pad_contacts)
-        if body_contact == False:
-            if num_contacts == 3 or num_contacts == 4:
-                r_contact = 7
-            elif num_contacts == 2:
-                r_contact = 2
-            elif num_contacts == 1:
-                r_contact = 1
-            else:
-                r_contact = 1
-        else:
-            r_contact = 0
-
-
-       
-        
-        ## r_theta Calc
-        if -170 < np.min(pitch_hist) <= 0:
-            r_theta = 5*(-1/170*np.min(pitch_hist))      
-        elif -195 <= np.min(pitch_hist) <= -170:
-            r_theta = 5
-        else:
-            r_theta = 0
-        
-
-        ## r_W Calc
-        r_W = 10*np.exp(-W_My/2.0)
-
-        ## r_height Calc
-        r_h = np.max(z_hist/h_ceiling)*10
-        
-
-        
-        R = r_W*(r_contact+r_theta)*r_h + 0.001
-        return R
-    
-
 
     def calcReward_pureLanding(self,env): # state_hist is size 14 x timesteps
 
 
-        ## r_contact Calc
-        num_contacts = np.sum(env.pad_contacts)
+        ## r_attitude Calc
         if env.body_contact == False:
-            if num_contacts == 3 or num_contacts == 4:
-                r_contact = 7
-            elif num_contacts == 2:
-                r_contact = 2
-            elif num_contacts == 1:
-                r_contact = 1
+
+            if np.sum(env.pad_contacts)>=1:
+
+                R = Rotation.from_quat([env.orientation_q[1],env.orientation_q[2],env.orientation_q[3],env.orientation_q[0]])
+                b3 = R.as_matrix()[:,2]
+                r_att = (0.5*(np.dot(b3, np.array([0,0,-1]))) + 0.5)*10
+
             else:
-                r_contact = 1
+                r_att = 0.02
+
         else:
-            r_contact = 0.1
+
+            if np.sum(env.pad_contacts)>=1:
+    
+                R = Rotation.from_quat([env.orientation_q[1],env.orientation_q[2],env.orientation_q[3],env.orientation_q[0]])
+                b3 = R.as_matrix()[:,2]
+                r_att = (0.5*(np.dot(b3, np.array([0,0,-1]))) + 0.5)*3
+            else:
+                r_att = 0.02
 
         
         ## r_theta Calc
@@ -116,8 +58,8 @@ class ES:
         
 
         
-        R = (r_contact+r_theta)*r_h + 0.001
-        print(f"Reward: r_c: {r_contact:.3f} | r_theta: {r_theta:.3f} | r_h: {r_h:.3f} | Pitch Max: {env.pitch_max:.2f}")
+        R = (r_att*10)+r_h + 0.001
+        # print(f"Reward: r_c: {r_contact:.3f} | r_theta: {r_theta:.3f} | r_h: {r_h:.3f} | Pitch Max: {env.pitch_max:.2f}")
         return R
 
     def get_baseline(self, span):

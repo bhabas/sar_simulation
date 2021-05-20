@@ -47,8 +47,8 @@ if __name__ == '__main__':
         mu_1 = np.random.uniform(1.0,4.5) # RREV typically starts around in this range
         mu_2 = np.random.uniform(3.5,5.0) # My can typically start in this range and climb higher too
 
-        mu_1 = 3.0
-        mu_2 = 4.5
+        # mu_1 = 3.0
+        # mu_2 = 4.5
 
         mu = np.array([[mu_1],[mu_2]])  # Initial mu starting point     
         # sigma = np.array([[0.00001],[0.00001]]) # Initial estimates of sigma: 
@@ -56,7 +56,7 @@ if __name__ == '__main__':
 
         
         ## SIM PARAMETERS
-        env.n_rollouts = 10
+        env.n_rollouts = 8
         env.h_ceiling = 3.0 # [m]
 
         ## LEARNING AGENT

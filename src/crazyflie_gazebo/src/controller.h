@@ -26,7 +26,7 @@ class Controller
     public:
         // CONSTRUCTOR TO START PUBLISHERS AND SUBSCRIBERS (Similar to Python's __init__() )
         Controller(ros::NodeHandle *nh){
-            ctrl_Publisher = nh->advertise<crazyflie_gazebo::CtrlData>("/ctrl_data",10);
+            ctrl_Publisher = nh->advertise<crazyflie_gazebo::CtrlData>("/ctrl_data",1);
 
             // NOTE: tcpNoDelay() removes delay where system is waiting for datapackets to be fully filled before sending;
             // instead of sending data as soon as it is available to match publishing rate (This is an issue with large messages like Odom or Custom)
