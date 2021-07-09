@@ -3,7 +3,7 @@
   <model name='ceiling_plane'>
     <static>0</static>
     <link name='ceiling'>
-      <pose>0 0 3.0 0 -0 0</pose>
+      <pose>0 0 2.5 0 -0 0</pose>
       <inertial>
         <inertia>
           <ixx>506.983</ixx>

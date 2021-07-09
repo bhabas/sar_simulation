@@ -31,11 +31,11 @@ class CrazyflieEnv:
         self.runComplete_flag = False
         self.isRunning = True
 
-        self.h_ceiling = 3.00 # [m]
+        self.h_ceiling = 2.5 # [m]
         self.state_current = np.zeros(13)
 
         ## INIT NAME OF MODEL BEING USED
-        self.modelName = 'crazyflie_model_Narrow-Long'
+        self.modelName = 'crazyflie_model_Narrow-Short'
 
         ## INIT RL_DATA VARIABLES 
         # NOTE: All time units are in terms of Sim-Time unless specified

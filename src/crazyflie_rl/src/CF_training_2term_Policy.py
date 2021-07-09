@@ -223,7 +223,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                         env.runComplete_flag = True
 
                     # IF TIME SINCE RUN START EXCEEDS [6.0s]
-                    if (env.getTime() - start_time_rollout) > (10.0):
+                    if (env.getTime() - start_time_rollout) > (5.0):
                         env.error_str = "Rollout Completed: Time Exceeded"
                         print(env.error_str)
 
@@ -327,12 +327,12 @@ if __name__ == '__main__':
     alpha_sigma = np.array([[0.05]])
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[4.70],[5.536]])                 # Initial mu starting point
+    mu = np.array([[2.0],[6.7]])                 # Initial mu starting point
 
-    sigma = np.array([[0.000001],[0.000001]])       # Initial sigma starting point
+    sigma = np.array([[1],[1]])       # Initial sigma starting point
     ## SIM PARAMETERS
     env.n_rollouts = 8
-    env.h_ceiling = 3.0 # [m]
+    env.h_ceiling = 2.5 # [m]
 
 
     ## LEARNING AGENTS
@@ -344,8 +344,8 @@ if __name__ == '__main__':
     # ============================
 
     ## INITIAL LAUNCH CONDITIONS
-    V_d = 4.0   # [m/s]
-    phi = 70    # [deg]
+    V_d = 2.5   # [m/s]
+    phi = 90    # [deg]
 
 
     
