@@ -361,7 +361,7 @@ void Controller::controlThread()
 
 
     // might need to adjust weight to real case (sdf file too)
-    double m = 0.037;   // Mass [kg] 
+    double m = 0.0346;   // Mass [kg] 
     double g = 9.8066;  // Gravitational acceleration [m/s^2]
     double t = 0; // Time from Gazebo [s]
     unsigned int t_step = 0; // t_step counter
@@ -530,15 +530,15 @@ void Controller::controlThread()
         f_pitch_pwm = thrust2PWM(f_pitch);
         f_yaw_pwm = thrust2PWM(f_yaw);
 
-        f_thrust_pwm = clamp(f_thrust_pwm,0,(int)65535*0.85f);
+        f_thrust_pwm = clamp(f_thrust_pwm,0,(float)PWM_MAX*0.85f);
 
         f << f_thrust_pwm,f_roll_pwm,f_pitch_pwm,f_yaw_pwm;
-        f = f/65535.0;
+        f = f/(float)PWM_MAX;
 
-        M1_pwm = limitThrust(f_thrust_pwm + f_roll_pwm - f_pitch_pwm + f_yaw_pwm);
-        M2_pwm = limitThrust(f_thrust_pwm + f_roll_pwm + f_pitch_pwm - f_yaw_pwm);
-        M3_pwm = limitThrust(f_thrust_pwm - f_roll_pwm + f_pitch_pwm + f_yaw_pwm);
-        M4_pwm = limitThrust(f_thrust_pwm - f_roll_pwm - f_pitch_pwm - f_yaw_pwm);
+        M1_pwm = limitPWM(f_thrust_pwm + f_roll_pwm - f_pitch_pwm + f_yaw_pwm);
+        M2_pwm = limitPWM(f_thrust_pwm + f_roll_pwm + f_pitch_pwm - f_yaw_pwm);
+        M3_pwm = limitPWM(f_thrust_pwm - f_roll_pwm + f_pitch_pwm + f_yaw_pwm);
+        M4_pwm = limitPWM(f_thrust_pwm - f_roll_pwm - f_pitch_pwm - f_yaw_pwm);
 
         // CONVERT PWM VALUES TO MOTORSPEEDS 
         // The extra step here is just for data consistency between experiment and simulation
@@ -602,9 +602,9 @@ void Controller::controlThread()
         "FM_d: " << FM.transpose() << endl << 
         "f: " << f.transpose() << endl <<
         endl << setprecision(0) <<
-        "test: \t" << f_thrust_pwm + f_roll_pwm - f_pitch_pwm + f_yaw_pwm << endl <<
         "MS_d: " << motorspeed_Vec_d.transpose() << endl <<
         "MS: " << motorspeed_Vec.transpose() << endl <<
+        "MS_PWM: " << M_pwm.transpose() << endl <<
         "=============== " << endl; 
         printf("\033c"); // clears console window
         }
