@@ -4,7 +4,6 @@
 #include "controller.h"
 
 #include <ros/ros.h>
-#include <math.h>       /* modf */
 
 
 
@@ -295,12 +294,12 @@ void Controller::controlThread()
     
     
     Vector4d FM; // Thrust-Moment control vector (4x1)
-    Vector4d f; // Propeller thrusts [N]
+    Vector4d f; // Propeller thrusts [PWM]
     double F_thrust;
 
 
     
-
+    Vector4d M_pwm;
     Vector4d motorspeed_Vec_d; // Desired motorspeeds [rad/s]
     Vector4d motorspeed_Vec; // Motorspeeds [rad/s]
 
@@ -333,9 +332,26 @@ void Controller::controlThread()
     double Mz = 0.0;
     double F = 0.0;
 
+    float f_thrust = 0.0;
+    float f_roll = 0.0;
+    float f_pitch = 0.0;
+    float f_yaw = 0.0;
+
+    int32_t f_thrust_pwm = 0;
+    int32_t f_roll_pwm = 0;
+    int32_t f_pitch_pwm = 0;
+    int32_t f_yaw_pwm = 0;
 
 
-     
+    double M1_pwm = 0.0;
+    double M2_pwm = 0.0;
+    double M3_pwm = 0.0;
+    double M4_pwm = 0.0;
+
+    double MS1 = 0.0;
+    double MS2 = 0.0;
+    double MS3 = 0.0;
+    double MS4 = 0.0;
 
 
     double yaw; // Z-axis [rad/s]
@@ -345,8 +361,8 @@ void Controller::controlThread()
 
 
     // might need to adjust weight to real case (sdf file too)
-    double m = 0.023 + 0.0003*4 + 0.00075*4; // Mass [kg] (Body + Legs/Pads + Rotors)
-    double g = 9.8066; // Gravitational acceleration [m/s^2]
+    double m = 0.037;   // Mass [kg] 
+    double g = 9.8066;  // Gravitational acceleration [m/s^2]
     double t = 0; // Time from Gazebo [s]
     unsigned int t_step = 0; // t_step counter
 
@@ -354,28 +370,20 @@ void Controller::controlThread()
 
     // SYSTEM CONSTANTS
     double d = 0.040; // Distance from COM to prop [m]
-    double d_p = d*sin(M_PI/4);
+    double dp = d*sin(M_PI/4);
 
     double kf = 2.2e-8; // Thrust constant [N/(rad/s)^2]
-    double c_Tf = 0.00612; // Moment Constant [Nm/N]
+    double c_tf = 0.00612; // Moment Constant [Nm/N]
 
     Matrix3d J; // Rotational Inertia of CF
     J<< 1.65717e-05, 0, 0,
         0, 1.66556e-05, 0,
         0, 0, 2.92617e-05;
 
-    Matrix4d Gamma; // Thrust-Moment control vector conversion matrix
-    Gamma << 1,     1,     1,     1, // Motor thrusts = Gamma*Force/Moment vec
-             d_p,   d_p,  -d_p,  -d_p, 
-            -d_p,   d_p,   d_p,  -d_p, 
-            c_Tf,  -c_Tf, c_Tf,  -c_Tf;
-    Matrix4d Gamma_I = Gamma.inverse(); // Calc here once to reduce calc load
-
-
 
     // =========== ROS Definitions =========== //
     crazyflie_gazebo::CtrlData ctrl_msg;
-    ros::Rate rate(1000);
+    ros::Rate rate(500);
 
     while(_isRunning)
     {
@@ -510,37 +518,47 @@ void Controller::controlThread()
         }
 
         FM << F_thrust,M; // Thrust-Moment control vector
-        
-
-
-
-
-        
-
+    
         // =========== Propellar Thrusts/Speeds =========== //
-        f = Gamma_I*FM; // Propeller thrusts
-        motorspeed_Vec_d = (1/kf*f).array().sqrt(); // Calculated motorspeeds
-        motorspeed_Vec = motorspeed_Vec_d; // Actual motorspeeds to be capped
+        f_thrust = F_thrust/4.0f;
+        f_roll = M[0]/(4.0f*dp);
+        f_pitch = M[1]/(4.0f*dp);
+        f_yaw = M[2]/(4.0f*c_tf);
 
+        f_thrust_pwm = thrust2PWM(f_thrust);
+        f_roll_pwm = thrust2PWM(f_roll);
+        f_pitch_pwm = thrust2PWM(f_pitch);
+        f_yaw_pwm = thrust2PWM(f_yaw);
 
-        // Cap motor thrusts between 0 and 2500 rad/s
-        for(int k_motor=0;k_motor<4;k_motor++) 
-        {
-            if(motorspeed_Vec(k_motor)<0){
-                motorspeed_Vec(k_motor) = 0;
-            }
-            else if(isnan(motorspeed_Vec(k_motor))){
-                motorspeed_Vec(k_motor) = 0;
-            }
-            else if(motorspeed_Vec(k_motor)>= 2500){ // Max rotation speed (rad/s)
-                // cout << "Motorspeed capped - Motor: " << k_motor << endl;
-                motorspeed_Vec(k_motor) = 2500;
-            }
-        }
+        f_thrust_pwm = clamp(f_thrust_pwm,0,(int)65535*0.85f);
 
+        f << f_thrust_pwm,f_roll_pwm,f_pitch_pwm,f_yaw_pwm;
+        f = f/65535.0;
 
+        M1_pwm = limitThrust(f_thrust_pwm + f_roll_pwm - f_pitch_pwm + f_yaw_pwm);
+        M2_pwm = limitThrust(f_thrust_pwm + f_roll_pwm + f_pitch_pwm - f_yaw_pwm);
+        M3_pwm = limitThrust(f_thrust_pwm - f_roll_pwm + f_pitch_pwm + f_yaw_pwm);
+        M4_pwm = limitThrust(f_thrust_pwm - f_roll_pwm - f_pitch_pwm - f_yaw_pwm);
+
+        // CONVERT PWM VALUES TO MOTORSPEEDS 
+        // The extra step here is just for data consistency between experiment and simulation
         
+        // EXPERIMENT:
+        // Desired Motor Thrusts => PWM values => Resulting Motor Thrusts
 
+        // SIMULATION:
+        // Desired Motor Thrusts => Motorspeeds => Motor Model Plugin => Resulting Motor Thrusts
+
+        M_pwm << M1_pwm,M2_pwm,M3_pwm,M4_pwm;
+
+
+        MS1 = sqrt(PWM2thrust(M1_pwm)/kf);
+        MS2 = sqrt(PWM2thrust(M2_pwm)/kf);
+        MS3 = sqrt(PWM2thrust(M3_pwm)/kf);
+        MS4 = sqrt(PWM2thrust(M4_pwm)/kf);
+
+
+        motorspeed_Vec << MS1,MS2,MS3,MS4;
 
         if(_motorstop_flag == true){ // Shutoff all motors
             motorspeed_Vec << 0,0,0,0;
@@ -581,9 +599,10 @@ void Controller::controlThread()
         "e_R: " << e_R.transpose() << "\te_R (deg): " << e_R.transpose()*180/M_PI << endl <<
         endl <<
 
-        "FM: " << FM.transpose() << endl <<
+        "FM_d: " << FM.transpose() << endl << 
         "f: " << f.transpose() << endl <<
         endl << setprecision(0) <<
+        "test: \t" << f_thrust_pwm + f_roll_pwm - f_pitch_pwm + f_yaw_pwm << endl <<
         "MS_d: " << motorspeed_Vec_d.transpose() << endl <<
         "MS: " << motorspeed_Vec.transpose() << endl <<
         "=============== " << endl; 
@@ -636,11 +655,11 @@ void Controller::controlThread()
 
         F = kf*(pow(motorspeed[1],2) + pow(motorspeed[2],2)
                 + pow(motorspeed[0],2) + pow(motorspeed[3],2));
-        Mx = kf*d_p*(pow(motorspeed[0],2) + pow(motorspeed[1],2)
+        Mx = kf*dp*(pow(motorspeed[0],2) + pow(motorspeed[1],2)
                     - pow(motorspeed[2],2) - pow(motorspeed[3],2))*1e3;
-        My = kf*d_p*(pow(motorspeed[1],2) + pow(motorspeed[2],2)
+        My = kf*dp*(pow(motorspeed[1],2) + pow(motorspeed[2],2)
                     - pow(motorspeed[0],2) - pow(motorspeed[3],2))*1e3;
-        Mz = kf*c_Tf*(pow(motorspeed[1],2) - pow(motorspeed[2],2)
+        Mz = kf*c_tf*(pow(motorspeed[1],2) - pow(motorspeed[2],2)
                     + pow(motorspeed[0],2) - pow(motorspeed[3],2))*1e3;
        
         

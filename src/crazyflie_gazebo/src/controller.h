@@ -1,6 +1,9 @@
 #include <iostream>
 #include <thread>
 #include <Eigen/Dense>
+#include <cmath>        // std::abs
+#include <math.h>       
+
 
 // ROS Includes
 #include <ros/ros.h>
@@ -250,4 +253,55 @@ Eigen::Vector3d dehat(Eigen::Matrix3d a_hat) // Input a skew-symmetric matrix an
     a(2) = tmp(1,0);
 
     return a;
+}
+
+static inline float clamp(float value, float min, float max) {
+  if (value < min) return min;
+  if (value > max) return max;
+  return value;
+}
+
+static inline float limitThrust(float thrust)
+{
+    if(thrust < 0){
+        thrust = 0;
+    }
+    else if(thrust >= 65535){ // Max rotation speed (rad/s)
+        thrust = 65535;
+    }
+
+    return thrust;
+}
+
+static inline int32_t thrust2PWM(float f) // Converts thrust in Newtons to PWM
+{
+    
+    // Conversion values calculated from self motor analysis
+    float a = 7.77e-11;
+    float b = 2.64e-4;
+
+    float s = 1; // sign of value
+    int32_t f_pwm = 0;
+
+    s = f/fabsf(f);
+    f = fabsf(f)*1000.0f/9.81f; // Convert thrust to grams
+    
+    f_pwm = s*(sqrtf(4*a*f+b*b)/(2*a) - b/(2*a));
+
+    return f_pwm;
+}
+
+static inline float PWM2thrust(int32_t M_PWM) // Converts thrust in PWM to thrust in Newtons
+{
+    // Conversion values from new motors
+    float a = 7.77e-11; 
+    float b = 2.64e-4;
+
+    float kf = 2.2e-8; // Thrust constant [N/(rad/s)^2]
+
+    float f = (a*M_PWM*M_PWM + b*M_PWM); // Convert thrust to grams
+
+    f = f*9.81/1000; // Convert thrust from grams to Newtons
+
+    return f;
 }
