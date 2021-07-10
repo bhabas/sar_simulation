@@ -233,12 +233,6 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
 
 }
 
-double sign(double x){
-    if (x>0) return 1;
-    if (x<0) return -1;
-    return 0;
-}
-
 
 
 void Controller::controlThread()
@@ -252,11 +246,11 @@ void Controller::controlThread()
 
 
     // LOCAL STATE DECLARATIONS //
-    Vector3d pos;   // Current position [m]
-    Vector3d vel;   // Current velocity [m]
-    Vector4d quat;  // Current attitude [rad] (quat form)
+    Vector3d statePos;   // Current position [m]
+    Vector3d stateVel;   // Current velocity [m]
+    Vector4d stateQuat;  // Current attitude [rad] (quat form)
     Vector3d eul;   // Current attitude [rad] (roll, pitch, yaw angles)
-    Vector3d omega; // Current angular velocity [rad/s]
+    Vector3d stateOmega; // Current angular velocity [rad/s]
 
     Vector3d pos_tr;    // Flip trigger position [m]
     Vector3d vel_tr;    // Flip trigger velocity [m]
@@ -282,12 +276,13 @@ void Controller::controlThread()
     Vector3d e_v; // Vel-error  [m/s]
     Vector3d e_intg; // Integrated Pos-Error [m*s]
     Vector3d e_R; // Rotation-error [rad]
-    Vector3d e_omega; // Omega-error [rad/s]
+    Vector3d e_w; // Omega-error [rad/s]
 
 
     
 
-    
+    Vector3d P_effort;
+    Vector3d R_effort;
     Vector3d F_thrust_ideal; // Ideal thrust vector to minimize error   
     Vector3d Gyro_dyn; // Gyroscopic dynamics of system [Nm]
     Vector3d M; // Moment control vector [Nm]
@@ -308,15 +303,20 @@ void Controller::controlThread()
     Quaterniond q;
     Matrix3d R; // Body-Global Rotation Matrix
     Vector3d e3(0,0,1); // Global z-axis
+
+    
     
 
 
     
     // LOCAL CONTROLLER VARIABLES
-    Vector3d kp_x;   // Pos. Gain
-    Vector3d kd_x;   // Pos. derivative Gain
-    Vector3d kp_R;   // Rot. Gain
-    Vector3d kd_R;   // Rot. derivative Gain
+    Vector3d Kp_p;  // Pos. Gain
+    Vector3d Kd_p;  // Pos. Derivative Gain
+    Vector3d Ki_p;  // Pos. Integral Gain
+
+    Vector3d Kp_R;  // Rot. Gain
+    Vector3d Kd_R;  // Rot. Derivative Gain
+    Vector3d Ki_R;  // Rot. Integral Gain
 
     float RREV = 0.0;
     float OF_y = 0.0;
@@ -380,6 +380,30 @@ void Controller::controlThread()
         0, 1.66556e-05, 0,
         0, 0, 2.92617e-05;
 
+    // XY POSITION PID
+    float P_kp_xy = 0.4f;
+    float P_kd_xy = 0.245f;
+    float P_ki_xy = 0.3f;
+    float i_range_xy = 0.1f;
+
+    // Z POSITION PID
+    float P_kp_z = 1.2f;
+    float P_kd_z = 0.35f;
+    float P_ki_z = 0.3f;
+    float i_range_z = 0.25f;
+
+    // XY ATTITUDE PID
+    float R_kp_xy = 0.001f;
+    float R_kd_xy = 0.0005f;
+    float R_ki_xy = 0.0f;
+    float i_range_R_xy = 1.0f;
+
+    // Z ATTITUDE PID
+    float R_kp_z = 30e-5f;
+    float R_kd_z = 10e-5f;
+    float R_ki_z = -20e-5f;
+    float i_range_R_z = 0.5f;
+
 
     // =========== ROS Definitions =========== //
     crazyflie_gazebo::CtrlData ctrl_msg;
@@ -388,83 +412,103 @@ void Controller::controlThread()
     while(_isRunning)
     {
 
-        // =========== Control Definitions =========== //
-        // Define control_cmd from recieved control_cmd
-        x_d = _x_d;
-        v_d = _v_d;
-        a_d = _a_d;
-        b1_d = _b1_d;
-        omega_d = _omega_d;
-        
+        // CONTROL GAINS
+        Kp_p << P_kp_xy,P_kp_xy,P_kp_z;
+        Kd_p << P_kd_xy,P_kd_xy,P_kd_z;
+        Ki_p << P_ki_xy,P_ki_xy,P_ki_z;
 
-        // =========== State Definitions =========== //
+        Kp_R << R_kp_xy,R_kp_xy,R_kp_z;
+        Kd_R << R_kd_xy,R_kd_xy,R_kd_z;
+        Ki_R << R_ki_xy,R_ki_xy,R_ki_z;
+
+
+        // =========== STATE DEFINITIONS =========== //
         //  Define local state vectors from current class state vectors 
         //      Note: This is just to be explicit with the program flow
         t = _t;   
-        pos = _pos; 
-        quat = _quat;
-        vel = _vel;
-        omega = _omega;
-
-        kp_x = _kp_x;
-        kd_x = _kd_x;
-        kp_R = _kp_R;
-        kd_R = _kd_R;
+        statePos = _pos; 
+        stateVel = _vel;
+        stateOmega = _omega;
+        stateQuat = _quat;
 
         RREV = _RREV;
         OF_y = _OF_y;
         OF_x = _OF_x;
 
+        
 
-        // =========== Rotation Matrix =========== //
+        // =========== STATE SETPOINTS =========== //
+        // Define control_cmd from recieved control_cmd
+        x_d = _x_d;
+        v_d = _v_d;
+        a_d = _a_d;
+
+
+        omega_d = _omega_d; // Omega desired [rad/s]
+        domega_d << 0.0,0.0,0.0; // Omega-Accl. [rad/s^2]
+
+        b1_d = _b1_d; // Desired body x-axis
+        
+        
+
+        
+
+
+        // =========== ROTATION MATRIX =========== //
         // R changes Body axes to be in terms of Global axes
         // https://www.andre-gaschler.com/rotationconverter/
-        q.w() = quat(0);
-        q.vec() = quat.segment(1,3);
+        q.w() = stateQuat(0);
+        q.vec() = stateQuat.segment(1,3);
         R = q.normalized().toRotationMatrix(); // Quaternion to Rotation Matrix Conversion
-        
-        yaw = atan2(R(1,0), R(0,0)); 
-        roll = atan2(R(2,1), R(2,2)); 
-        pitch = atan2(-R(2,0), sqrt(R(2,1)*R(2,1)+R(2,2)*R(2,2)));
-    
         b3 = R*e3; // Body vertical axis in terms of global axes
         
+        // TUMBLE DETECTION
         if(b3(2) <= 0 && _tumble_detection == true){ // If e3 component of b3 is neg, turn motors off 
             _tumbled = true;
         }
 
 
-        // =========== Translational Errors & Desired Body-Fixed Axes =========== //
-        e_x = pos - x_d; 
-        e_v = vel - v_d;
+        // =========== TRANSLATIONAL EFFORT =========== //
+        e_x = statePos - x_d; 
+        e_v = stateVel - v_d;
 
-        
-        F_thrust_ideal = -kp_x.cwiseProduct(e_x)*_kp_xf + -kd_x.cwiseProduct(e_v)*_kd_xf + m*g*e3 + m*a_d; // ideal control thrust vector
+        // POS. INTEGRAL ERROR
+
+        P_effort = -Kp_p.cwiseProduct(e_x)*_kp_xf + -Kd_p.cwiseProduct(e_v)*_kd_xf; // Controller effor from errors and gains
+        F_thrust_ideal = P_effort + m*g*e3 + m*a_d; // Add feed-forward terms to get ideal control thrust vector
+
+
+
+        // =========== DESIRED BODY AXES =========== // 
         b3_d = F_thrust_ideal.normalized();     // Desired body-fixed vertical axis
         b2_d = b3_d.cross(b1_d).normalized();   // Body-fixed horizontal axis
 
-
-
-        // =========== Rotational Errors =========== // 
         R_d << b2_d.cross(b3_d).normalized(),b2_d,b3_d; // Desired rotational axis
                                                         // b2_d x b3_d != b1_d (look at derivation)
         
         if (_eul_flag == true){
-            
             R_d = _R_d_custom.cast <double> ();
         }
-            
 
+
+        // =========== ROTATIONAL ERRORS =========== // 
         e_R = 0.5*dehat(R_d.transpose()*R - R.transpose()*R_d); // Rotational error
-        e_omega = omega - R.transpose()*R_d*omega_d; // Ang vel error 
+
+        e_w = stateOmega - R.transpose()*R_d*omega_d; // Ang vel error 
         // (Omega vecs are on different "space manifolds" so they need to be compared this way) - This is beyond me lol
-        
 
 
-        // =========== Control Equations =========== // 
+        // ROT. INTEGRAL ERROR
+
+
+        // =========== CONTROL EQUATIONS =========== // 
         F_thrust = F_thrust_ideal.dot(b3); // Thrust control value
-        Gyro_dyn = omega.cross(J*omega) - J*(hat(omega)*R.transpose()*R_d*omega_d - R.transpose()*R_d*domega_d); // Gyroscopic dynamics
-        M = -kp_R.cwiseProduct(e_R)*_kp_Rf + -kd_R.cwiseProduct(e_omega)*_kd_Rf + Gyro_dyn; // Moment control vector
+
+        /* Gyro_dyn = [omega x (J*omega)] - [J*( hat(omega)*R'*R_d*omega_d - R'*R_d*domega_d )] */
+        /* [M = -kp_R*e_R - kd_R*e_w -ki_R*e_RI + Gyro_dyn] */
+        Gyro_dyn = stateOmega.cross(J*stateOmega) - J*(hat(stateOmega)*R.transpose()*R_d*omega_d - R.transpose()*R_d*domega_d); // Gyroscopic dynamics
+        R_effort = -Kp_R.cwiseProduct(e_R)*_kp_Rf + -Kd_R.cwiseProduct(e_w)*_kd_Rf;
+        M = R_effort + Gyro_dyn; // Moment control vector
 
 
         if (!_tumbled){ // If not tumbled and tumble detection turned on
@@ -477,17 +521,17 @@ void Controller::controlThread()
                     RREV_tr = RREV;
 
                     t_tr = t;
-                    pos_tr = pos;
-                    vel_tr = vel;
-                    quat_tr = quat;
-                    omega_tr = omega;
+                    pos_tr = statePos;
+                    vel_tr = stateVel;
+                    quat_tr = stateQuat;
+                    omega_tr = stateOmega;
 
 
                     _flip_flag = true;
 
                     // cout << "t: " << _t << endl;
-                    // cout << "pos: " << _pos.transpose() << endl;
-                    // cout << "vel: " << _vel.transpose() << endl;
+                    // cout << "statePos: " << _pos.transpose() << endl;
+                    // cout << "stateVel: " << _vel.transpose() << endl;
                     // cout << "RREV: " << _RREV << endl;
                     // cout << endl;
                 }
@@ -502,7 +546,7 @@ void Controller::controlThread()
                     M = _M_d;
 
                     // Pure Moment
-                    M = _M_d*2; // Need to double moment to ensure it survives the MS<0 cutoff
+                    M = _M_d*2; // Need to double moment to ensure it survives the PWM<0 cutoff
                     F_thrust = 0;
                 }
             }
@@ -519,7 +563,7 @@ void Controller::controlThread()
 
         FM << F_thrust,M; // Thrust-Moment control vector
     
-        // =========== Propellar Thrusts/Speeds =========== //
+        // =========== CONVERT THRUSTS AND MOMENTS TO MOTOR PWM VALUES =========== // 
         f_thrust = F_thrust/4.0f;
         f_roll = M[0]/(4.0f*dp);
         f_pitch = M[1]/(4.0f*dp);
@@ -530,15 +574,17 @@ void Controller::controlThread()
         f_pitch_pwm = thrust2PWM(f_pitch);
         f_yaw_pwm = thrust2PWM(f_yaw);
 
-        f_thrust_pwm = clamp(f_thrust_pwm,0,(float)PWM_MAX*0.85f);
-
-        f << f_thrust_pwm,f_roll_pwm,f_pitch_pwm,f_yaw_pwm;
-        f = f/(float)PWM_MAX;
+        f_thrust_pwm = clamp(f_thrust_pwm,0,(float)PWM_MAX*0.85f); // Clamp thrust to prevent saturation
 
         M1_pwm = limitPWM(f_thrust_pwm + f_roll_pwm - f_pitch_pwm + f_yaw_pwm);
         M2_pwm = limitPWM(f_thrust_pwm + f_roll_pwm + f_pitch_pwm - f_yaw_pwm);
         M3_pwm = limitPWM(f_thrust_pwm - f_roll_pwm + f_pitch_pwm + f_yaw_pwm);
         M4_pwm = limitPWM(f_thrust_pwm - f_roll_pwm - f_pitch_pwm - f_yaw_pwm);
+        M_pwm << M1_pwm,M2_pwm,M3_pwm,M4_pwm;
+        
+        // REPRESENT MOTOR THRUSTS AS PERCENTAGE OF PWM
+        f << f_thrust_pwm,f_roll_pwm,f_pitch_pwm,f_yaw_pwm;
+        f = f/(float)PWM_MAX;
 
         // CONVERT PWM VALUES TO MOTORSPEEDS 
         // The extra step here is just for data consistency between experiment and simulation
@@ -548,9 +594,6 @@ void Controller::controlThread()
 
         // SIMULATION:
         // Desired Motor Thrusts => Motorspeeds => Motor Model Plugin => Resulting Motor Thrusts
-
-        M_pwm << M1_pwm,M2_pwm,M3_pwm,M4_pwm;
-
 
         MS1 = sqrt(PWM2thrust(M1_pwm)/kf);
         MS2 = sqrt(PWM2thrust(M2_pwm)/kf);
@@ -574,8 +617,8 @@ void Controller::controlThread()
         "RREV: " << RREV << "\tOF_x: " << OF_x << "\tOF_y: " << OF_y << endl <<
         "RREV_tr: " << RREV_tr << "\tOF_x_tr: " << 0.0 << "\tOF_y_tr: " << OF_y_tr << endl << 
         endl << 
-        "kp_x: " << kp_x.transpose() << "\tkd_x: " << kd_x.transpose() << endl <<
-        "kp_R: " << kp_R.transpose() << "\tkd_R: " << kd_R.transpose() << endl <<
+        "Kp_p: " << Kp_p.transpose() << "\tkd_x: " << Kd_p.transpose() << endl <<
+        "Kp_R: " << Kp_R.transpose() << "\tkd_R: " << Kd_R.transpose() << endl <<
         endl << 
         setprecision(1) <<
         "Policy_armed: " << _policy_armed_flag <<  "\t\tFlip_flag: " << _flip_flag << endl <<
@@ -588,9 +631,9 @@ void Controller::controlThread()
         "omega_d: " << omega_d.transpose() << endl <<
         endl << 
 
-        "pos: " << pos.transpose() << "\te_x: " << e_x.transpose() << endl <<
-        "vel: " << vel.transpose() << "\te_v: " << e_v.transpose() << endl <<
-        "omega: " << omega.transpose() << "\te_w: " << e_omega.transpose() << endl <<
+        "statePos: " << statePos.transpose() << "\te_x: " << e_x.transpose() << endl <<
+        "stateVel: " << stateVel.transpose() << "\te_v: " << e_v.transpose() << endl <<
+        "omega: " << stateOmega.transpose() << "\te_w: " << e_w.transpose() << endl <<
         endl << 
 
         "R:\n" << R << "\n\n" << 
