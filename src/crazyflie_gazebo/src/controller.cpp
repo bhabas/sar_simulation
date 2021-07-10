@@ -274,9 +274,12 @@ void Controller::controlThread()
 
     Vector3d e_x; // Pos-Error [m]
     Vector3d e_v; // Vel-error  [m/s]
-    Vector3d e_intg; // Integrated Pos-Error [m*s]
+    Vector3d e_PI; // Pos. Integral-error [m*s]
+
+
     Vector3d e_R; // Rotation-error [rad]
     Vector3d e_w; // Omega-error [rad/s]
+    Vector3d e_RI; // Rot. Integral-error [rad*s]
 
 
     
@@ -304,15 +307,17 @@ void Controller::controlThread()
     Matrix3d R; // Body-Global Rotation Matrix
     Vector3d e3(0,0,1); // Global z-axis
 
+    static float dt = (1.0/500.0);
+
     
     
 
 
     
     // LOCAL CONTROLLER VARIABLES
-    Vector3d Kp_p;  // Pos. Gain
-    Vector3d Kd_p;  // Pos. Derivative Gain
-    Vector3d Ki_p;  // Pos. Integral Gain
+    Vector3d Kp_P;  // Pos. Gain
+    Vector3d Kd_P;  // Pos. Derivative Gain
+    Vector3d Ki_P;  // Pos. Integral Gain
 
     Vector3d Kp_R;  // Rot. Gain
     Vector3d Kd_R;  // Rot. Derivative Gain
@@ -413,9 +418,9 @@ void Controller::controlThread()
     {
 
         // CONTROL GAINS
-        Kp_p << P_kp_xy,P_kp_xy,P_kp_z;
-        Kd_p << P_kd_xy,P_kd_xy,P_kd_z;
-        Ki_p << P_ki_xy,P_ki_xy,P_ki_z;
+        Kp_P << P_kp_xy,P_kp_xy,P_kp_z;
+        Kd_P << P_kd_xy,P_kd_xy,P_kd_z;
+        Ki_P << P_ki_xy,P_ki_xy,P_ki_z;
 
         Kp_R << R_kp_xy,R_kp_xy,R_kp_z;
         Kd_R << R_kd_xy,R_kd_xy,R_kd_z;
@@ -473,8 +478,17 @@ void Controller::controlThread()
         e_v = stateVel - v_d;
 
         // POS. INTEGRAL ERROR
+        e_PI(0) += -e_x(0)*dt;
+        e_PI(0) = clamp(e_PI(0),-i_range_xy,i_range_xy);
 
-        P_effort = -Kp_p.cwiseProduct(e_x)*_kp_xf + -Kd_p.cwiseProduct(e_v)*_kd_xf; // Controller effor from errors and gains
+        e_PI(1) += -e_x(1)*dt;
+        e_PI(1) = clamp(e_PI(1),-i_range_xy,i_range_xy);
+
+        e_PI(2) += -e_x(2)*dt;
+        e_PI(2) = clamp(e_PI(2),-i_range_z,i_range_z);
+
+        // Controller effort from errors and gain values
+        P_effort = -Kp_P.cwiseProduct(e_x)*_kp_xf + -Kd_P.cwiseProduct(e_v)*_kd_xf + -Ki_P.cwiseProduct(e_PI)*_ki_xf; 
         F_thrust_ideal = P_effort + m*g*e3 + m*a_d; // Add feed-forward terms to get ideal control thrust vector
 
 
@@ -499,6 +513,15 @@ void Controller::controlThread()
 
 
         // ROT. INTEGRAL ERROR
+        e_RI(0) += -e_R(0)*dt;
+        e_RI(0) = clamp(e_RI(0),-i_range_R_xy,i_range_R_xy);
+
+        e_RI(1) += -e_R(1)*dt;
+        e_RI(1) = clamp(e_RI(1),-i_range_R_xy,i_range_R_xy);
+
+        e_RI(2) += -e_R(2)*dt;
+        e_RI(2) = clamp(e_RI(2),-i_range_R_z,i_range_R_z);
+
 
 
         // =========== CONTROL EQUATIONS =========== // 
@@ -507,7 +530,7 @@ void Controller::controlThread()
         /* Gyro_dyn = [omega x (J*omega)] - [J*( hat(omega)*R'*R_d*omega_d - R'*R_d*domega_d )] */
         /* [M = -kp_R*e_R - kd_R*e_w -ki_R*e_RI + Gyro_dyn] */
         Gyro_dyn = stateOmega.cross(J*stateOmega) - J*(hat(stateOmega)*R.transpose()*R_d*omega_d - R.transpose()*R_d*domega_d); // Gyroscopic dynamics
-        R_effort = -Kp_R.cwiseProduct(e_R)*_kp_Rf + -Kd_R.cwiseProduct(e_w)*_kd_Rf;
+        R_effort = -Kp_R.cwiseProduct(e_R)*_kp_Rf + -Kd_R.cwiseProduct(e_w)*_kd_Rf + -Ki_R.cwiseProduct(e_RI)*_ki_Rf;
         M = R_effort + Gyro_dyn; // Moment control vector
 
 
@@ -617,23 +640,28 @@ void Controller::controlThread()
         "RREV: " << RREV << "\tOF_x: " << OF_x << "\tOF_y: " << OF_y << endl <<
         "RREV_tr: " << RREV_tr << "\tOF_x_tr: " << 0.0 << "\tOF_y_tr: " << OF_y_tr << endl << 
         endl << 
-        "Kp_p: " << Kp_p.transpose() << "\tkd_x: " << Kd_p.transpose() << endl <<
-        "Kp_R: " << Kp_R.transpose() << "\tkd_R: " << Kd_R.transpose() << endl <<
+        "Kp_P: " << Kp_P.transpose() << "\tKp_R: " << Kp_R.transpose() << endl <<
+        "Kd_P: " << Kd_P.transpose() << "\tKd_R: " << Kd_R.transpose() << endl <<
+        "Ki_P: " << Ki_P.transpose() << "\tKi_R: " << Ki_R.transpose() << endl <<
         endl << 
-        setprecision(1) <<
-        "Policy_armed: " << _policy_armed_flag <<  "\t\tFlip_flag: " << _flip_flag << endl <<
+        "i_range_xy: " << i_range_xy << "\ti_range_R_xy: " << i_range_R_xy << endl <<
+        "i_range_z: " << i_range_z << "\ti_range_R_z: " << i_range_R_z << endl <<
+        endl << 
+        setprecision(0) <<
+        "Policy_armed: " << _policy_armed_flag <<  "\t\t\tFlip_flag: " << _flip_flag << endl <<
         "Tumble Detection: " << _tumble_detection << "\t\tTumbled: " << _tumbled << endl <<
         "kp_xf: " << _kp_xf << " \tkd_xf: " << _kd_xf << "\tkp_Rf: " << _kp_Rf << "\tkd_Rf: " << _kd_Rf  << endl <<
-        endl << setprecision(4) <<
+        endl << setprecision(3) <<
 
         "x_d: " << x_d.transpose() << endl <<
         "v_d: " << v_d.transpose() << endl <<
         "omega_d: " << omega_d.transpose() << endl <<
         endl << 
 
-        "statePos: " << statePos.transpose() << "\te_x: " << e_x.transpose() << endl <<
-        "stateVel: " << stateVel.transpose() << "\te_v: " << e_v.transpose() << endl <<
-        "omega: " << stateOmega.transpose() << "\te_w: " << e_w.transpose() << endl <<
+        "Pos: " << statePos.transpose() << "\te_x: " << e_x.transpose() << endl <<
+        "Vel: " << stateVel.transpose() << "\te_v: " << e_v.transpose() << endl <<
+        "Omega: " << stateOmega.transpose() << "\te_w: " << e_w.transpose() << endl <<
+        "e_PI: " << e_PI.transpose() << "\te_RI: " << e_RI.transpose() << endl <<
         endl << 
 
         "R:\n" << R << "\n\n" << 
@@ -645,8 +673,8 @@ void Controller::controlThread()
         "FM_d: " << FM.transpose() << endl << 
         "f: " << f.transpose() << endl <<
         endl << setprecision(0) <<
-        "MS_d: " << motorspeed_Vec_d.transpose() << endl <<
-        "MS: " << motorspeed_Vec.transpose() << endl <<
+        // "MS_d: " << motorspeed_Vec_d.transpose() << endl <<
+        // "MS: " << motorspeed_Vec.transpose() << endl <<
         "MS_PWM: " << M_pwm.transpose() << endl <<
         "=============== " << endl; 
         printf("\033c"); // clears console window

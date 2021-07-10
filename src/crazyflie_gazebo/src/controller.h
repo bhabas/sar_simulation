@@ -161,9 +161,11 @@ class Controller
 
         // CONTROLLER FLAGS
         double _kp_xf = 1; // Pos. Gain Flag
-        double _kd_xf = 1; // Pos. derivative Gain Flag
+        double _kd_xf = 1; // Pos. Derivative Gain Flag
+        double _ki_xf = 1; // Pos. Integral Flag
         double _kp_Rf = 1; // Rot. Gain Flag
-        double _kd_Rf = 1; // Rot. derivative Gain Flag
+        double _kd_Rf = 1; // Rot. Derivative Gain Flag
+        double _ki_Rf = 1; // Rot. Integral Flag
 
         bool _motorstop_flag = false;
         bool _Moment_flag = false;
