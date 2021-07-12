@@ -578,7 +578,7 @@ void Controller::controlThread()
             M << 0.0,0.0,0.0;
         }
 
-        FM << F_thrust,M; // Thrust-Moment control vector
+        FM << F_thrust,M*1e3; // Thrust-Moment control vector
     
         // =========== CONVERT THRUSTS AND MOMENTS TO MOTOR PWM VALUES =========== // 
         // float f_max = 16.5*1000/9.81;               // Max thrust per motor converted from [g] to [N]
@@ -666,7 +666,7 @@ void Controller::controlThread()
         "e_R: " << e_R.transpose() << "\te_R (deg): " << e_R.transpose()*180/M_PI << endl <<
         endl <<
 
-        "FM_d [N/Nm]: " << FM.transpose() << endl << 
+        "FM_d [N/N*mm]: " << FM.transpose() << endl << 
         "f [%]: " << f.transpose() << endl <<
         "f_total [%]: " << f_total << endl << 
         endl << setprecision(0) <<
