@@ -201,11 +201,34 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             break;
 
         case 6: // Edit Gains 
+            if (cmd_vals(0) == 1)
+            {
+                P_kp_z = cmd_vals(1);
+                P_kd_z = cmd_vals(2);
+                P_ki_z = cmd_flag;
+            }
 
-            _kp_x.fill(cmd_vals(0)); 
-            _kd_x.fill(cmd_vals(1)); 
-            _kp_R.fill(cmd_vals(2)); 
-            _kd_R.fill(cmd_flag); 
+            else if (cmd_vals(0) == 2)
+            {
+                P_kp_xy = cmd_vals(1);
+                P_kd_xy = cmd_vals(2);
+                P_ki_xy = cmd_flag;
+            }
+
+            else if (cmd_vals(0) == 3)
+            {
+                R_kp_xy = cmd_vals(1);
+                R_kd_xy = cmd_vals(2);
+                R_ki_xy = cmd_flag;
+            }
+
+            else if (cmd_vals(0) == 4)
+            {
+                R_kp_z = cmd_vals(1);
+                R_kd_z = cmd_vals(2);
+                R_ki_z = cmd_flag;
+            }
+
             break;
 
         case 7: // Execute Moment-Based Flip
@@ -314,14 +337,7 @@ void Controller::controlThread()
 
 
     
-    // LOCAL CONTROLLER VARIABLES
-    Vector3d Kp_P;  // Pos. Gain
-    Vector3d Kd_P;  // Pos. Derivative Gain
-    Vector3d Ki_P;  // Pos. Integral Gain
-
-    Vector3d Kp_R;  // Rot. Gain
-    Vector3d Kd_R;  // Rot. Derivative Gain
-    Vector3d Ki_R;  // Rot. Integral Gain
+    
 
     float RREV = 0.0;
     float OF_y = 0.0;
@@ -367,7 +383,7 @@ void Controller::controlThread()
 
     // might need to adjust weight to real case (sdf file too)
     double m = 0.0346;   // Mass [kg] 
-    double g = 9.8066;  // Gravitational acceleration [m/s^2]
+    double g = 9.81;  // Gravitational acceleration [m/s^2]
     double t = 0; // Time from Gazebo [s]
     unsigned int t_step = 0; // t_step counter
 
@@ -385,31 +401,9 @@ void Controller::controlThread()
         0, 1.66556e-05, 0,
         0, 0, 2.92617e-05;
 
-    // XY POSITION PID
-    float P_kp_xy = 0.4f;
-    float P_kd_xy = 0.245f;
-    float P_ki_xy = 0.3f;
-    float i_range_xy = 0.1f;
+    
 
-    // Z POSITION PID
-    float P_kp_z = 1.2f;
-    float P_kd_z = 0.35f;
-    float P_ki_z = 0.3f;
-    float i_range_z = 0.25f;
-
-    // XY ATTITUDE PID
-    float R_kp_xy = 0.001f;
-    float R_kd_xy = 0.0005f;
-    float R_ki_xy = 0.0f;
-    float i_range_R_xy = 1.0f;
-
-    // Z ATTITUDE PID
-    float R_kp_z = 30e-5f;
-    float R_kd_z = 10e-5f;
-    float R_ki_z = -20e-5f;
-    float i_range_R_z = 0.5f;
-
-
+    float f_total = 0.0;
     // =========== ROS Definitions =========== //
     crazyflie_gazebo::CtrlData ctrl_msg;
     ros::Rate rate(500);
@@ -478,13 +472,13 @@ void Controller::controlThread()
         e_v = stateVel - v_d;
 
         // POS. INTEGRAL ERROR
-        e_PI(0) += -e_x(0)*dt;
+        e_PI(0) += e_x(0)*dt;
         e_PI(0) = clamp(e_PI(0),-i_range_xy,i_range_xy);
 
-        e_PI(1) += -e_x(1)*dt;
+        e_PI(1) += e_x(1)*dt;
         e_PI(1) = clamp(e_PI(1),-i_range_xy,i_range_xy);
 
-        e_PI(2) += -e_x(2)*dt;
+        e_PI(2) += e_x(2)*dt;
         e_PI(2) = clamp(e_PI(2),-i_range_z,i_range_z);
 
         // Controller effort from errors and gain values
@@ -513,13 +507,13 @@ void Controller::controlThread()
 
 
         // ROT. INTEGRAL ERROR
-        e_RI(0) += -e_R(0)*dt;
+        e_RI(0) += e_R(0)*dt;
         e_RI(0) = clamp(e_RI(0),-i_range_R_xy,i_range_R_xy);
 
-        e_RI(1) += -e_R(1)*dt;
+        e_RI(1) += e_R(1)*dt;
         e_RI(1) = clamp(e_RI(1),-i_range_R_xy,i_range_R_xy);
 
-        e_RI(2) += -e_R(2)*dt;
+        e_RI(2) += e_R(2)*dt;
         e_RI(2) = clamp(e_RI(2),-i_range_R_z,i_range_R_z);
 
 
@@ -587,27 +581,27 @@ void Controller::controlThread()
         FM << F_thrust,M; // Thrust-Moment control vector
     
         // =========== CONVERT THRUSTS AND MOMENTS TO MOTOR PWM VALUES =========== // 
+        // float f_max = 16.5*1000/9.81;               // Max thrust per motor converted from [g] to [N]
+                
         f_thrust = F_thrust/4.0f;
         f_roll = M[0]/(4.0f*dp);
         f_pitch = M[1]/(4.0f*dp);
         f_yaw = M[2]/(4.0f*c_tf);
 
-        f_thrust_pwm = thrust2PWM(f_thrust);
-        f_roll_pwm = thrust2PWM(f_roll);
-        f_pitch_pwm = thrust2PWM(f_pitch);
-        f_yaw_pwm = thrust2PWM(f_yaw);
+        f_thrust = clamp(f_thrust,0.0,f_MAX*0.85);    // Clamp thrust to prevent control saturation
 
-        f_thrust_pwm = clamp(f_thrust_pwm,0,(float)PWM_MAX*0.85f); // Clamp thrust to prevent saturation
+        // REPRESENT THRUST TYPES AS PERCENTAGE OF MAX THRUST
+        f << f_thrust,f_roll,f_pitch,f_yaw;
+        f = f/f_MAX;
+        f_total = (abs(f_thrust)+abs(f_roll)+abs(f_pitch)+abs(f_yaw))/f_MAX;
 
-        M1_pwm = limitPWM(f_thrust_pwm + f_roll_pwm - f_pitch_pwm + f_yaw_pwm);
-        M2_pwm = limitPWM(f_thrust_pwm + f_roll_pwm + f_pitch_pwm - f_yaw_pwm);
-        M3_pwm = limitPWM(f_thrust_pwm - f_roll_pwm + f_pitch_pwm + f_yaw_pwm);
-        M4_pwm = limitPWM(f_thrust_pwm - f_roll_pwm - f_pitch_pwm - f_yaw_pwm);
+        // THRUST CONVERSION
+        M1_pwm = limitPWM(thrust2PWM(f_thrust + f_roll - f_pitch + f_yaw));
+        M2_pwm = limitPWM(thrust2PWM(f_thrust + f_roll + f_pitch - f_yaw));
+        M3_pwm = limitPWM(thrust2PWM(f_thrust - f_roll + f_pitch + f_yaw));
+        M4_pwm = limitPWM(thrust2PWM(f_thrust - f_roll - f_pitch - f_yaw));
         M_pwm << M1_pwm,M2_pwm,M3_pwm,M4_pwm;
         
-        // REPRESENT MOTOR THRUSTS AS PERCENTAGE OF PWM
-        f << f_thrust_pwm,f_roll_pwm,f_pitch_pwm,f_yaw_pwm;
-        f = f/(float)PWM_MAX;
 
         // CONVERT PWM VALUES TO MOTORSPEEDS 
         // The extra step here is just for data consistency between experiment and simulation
@@ -622,6 +616,8 @@ void Controller::controlThread()
         MS2 = sqrt(PWM2thrust(M2_pwm)/kf);
         MS3 = sqrt(PWM2thrust(M3_pwm)/kf);
         MS4 = sqrt(PWM2thrust(M4_pwm)/kf);
+
+        
 
 
         motorspeed_Vec << MS1,MS2,MS3,MS4;
@@ -658,9 +654,9 @@ void Controller::controlThread()
         "omega_d: " << omega_d.transpose() << endl <<
         endl << 
 
-        "Pos: " << statePos.transpose() << "\te_x: " << e_x.transpose() << endl <<
-        "Vel: " << stateVel.transpose() << "\te_v: " << e_v.transpose() << endl <<
-        "Omega: " << stateOmega.transpose() << "\te_w: " << e_w.transpose() << endl <<
+        "Pos [m]: " << statePos.transpose() << "\te_x: " << e_x.transpose() << endl <<
+        "Vel [m/s]: " << stateVel.transpose() << "\te_v: " << e_v.transpose() << endl <<
+        "Omega [rad/s]: " << stateOmega.transpose() << "\te_w: " << e_w.transpose() << endl <<
         "e_PI: " << e_PI.transpose() << "\te_RI: " << e_RI.transpose() << endl <<
         endl << 
 
@@ -670,8 +666,9 @@ void Controller::controlThread()
         "e_R: " << e_R.transpose() << "\te_R (deg): " << e_R.transpose()*180/M_PI << endl <<
         endl <<
 
-        "FM_d: " << FM.transpose() << endl << 
-        "f: " << f.transpose() << endl <<
+        "FM_d [N/Nm]: " << FM.transpose() << endl << 
+        "f [%]: " << f.transpose() << endl <<
+        "f_total [%]: " << f_total << endl << 
         endl << setprecision(0) <<
         // "MS_d: " << motorspeed_Vec_d.transpose() << endl <<
         // "MS: " << motorspeed_Vec.transpose() << endl <<

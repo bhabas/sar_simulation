@@ -664,7 +664,7 @@ class CrazyflieEnv:
     def cmd_send(self):
         while True:
             # Converts input number into action name
-            cmd_dict = {0:'home',1:'pos',2:'vel',3:'att',4:'tumble',5:'stop',6:'gains'}
+            cmd_dict = {0:'home',1:'pos',2:'vel',3:'att',4:'tumble',5:'stop',6:'gains',9:'reset'}
             try:
                 val = float(input("\nCmd Type (0:home,1:pos,2:vel,3:att,4:omega,5:stop,6:gains): "))
             except:
@@ -678,12 +678,17 @@ class CrazyflieEnv:
 
             elif action=='gains': # Execture Gain changer
                 
-                vals = input("\nControl Gains (kp_x,kd_x,kp_R,kd_R): ") # Take in comma-seperated values and convert into list
-                vals = [float(i) for i in vals.split(',')]
-                ctrl_vals = vals[0:3]
-                ctrl_flag = vals[3]
+                try:
+                    vals = input("\nControl Gains (kp_x,kd_x,kp_R,kd_R): ") # Take in comma-seperated values and convert into list
+                    vals = [float(i) for i in vals.split(',')]
+                    ctrl_vals = vals[0:3]
+                    ctrl_flag = vals[3]
+                    
+                    self.step(action,ctrl_vals,ctrl_flag)
+                except:
+                    continue
 
-                self.step(action,ctrl_vals,ctrl_flag)
+                
                 
             elif action == 'tumble': # Execture Angular rate action
 
@@ -692,6 +697,32 @@ class CrazyflieEnv:
                 ctrl_flag = 1.0
 
                 self.step('tumble',ctrl_vals,ctrl_flag)
+
+            elif action == 'reset':
+                ## RESET POSITION AND VELOCITY
+                state_msg = ModelState()
+                state_msg.model_name = self.modelName
+                state_msg.pose.position.x = 0.0
+                state_msg.pose.position.y = 0.0
+                state_msg.pose.position.z = 0.1
+
+                state_msg.pose.orientation.w = 1.0
+                state_msg.pose.orientation.x = 0.0
+                state_msg.pose.orientation.y = 0.0
+                state_msg.pose.orientation.z = 0.0
+                
+                state_msg.twist.linear.x = 0.0
+                state_msg.twist.linear.y = 0.0
+                state_msg.twist.linear.z = 0.0
+
+                state_msg.twist.angular.x = 0.0
+                state_msg.twist.angular.y = 0.0
+                state_msg.twist.angular.z = 0.0
+
+                rospy.wait_for_service('/gazebo/set_model_state')
+                set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
+                set_state_srv(state_msg)
+
 
 
             else:

@@ -20,6 +20,7 @@
 #include "readerwriterqueue.h"
 
 #define PWM_MAX 60000
+#define f_MAX (0.0165*9.81)
 typedef struct _MotorCommand {
     float data[4];
 } MotorCommand;
@@ -145,6 +146,15 @@ class Controller
         Eigen::Vector3d _kp_R_D; // Rot. Gain
         Eigen::Vector3d _kd_R_D; // Rot. derivative Gain
 
+        // LOCAL CONTROLLER VARIABLES
+        Eigen::Vector3d Kp_P;  // Pos. Gain
+        Eigen::Vector3d Kd_P;  // Pos. Derivative Gain
+        Eigen::Vector3d Ki_P;  // Pos. Integral Gain
+
+        Eigen::Vector3d Kp_R;  // Rot. Gain
+        Eigen::Vector3d Kd_R;  // Rot. Derivative Gain
+        Eigen::Vector3d Ki_R;  // Rot. Integral Gain
+
 
         double _RREV;
         double _OF_x;
@@ -171,6 +181,31 @@ class Controller
         bool _Moment_flag = false;
         bool _tumbled = false;
         bool _tumble_detection = true;
+
+
+        // XY POSITION PID
+        float P_kp_xy = 0.4f;
+        float P_kd_xy = 0.3f;
+        float P_ki_xy = 0.2f;
+        float i_range_xy = 10.0f;
+
+        // Z POSITION PID
+        float P_kp_z = 1.2f;
+        float P_kd_z = 0.35f;
+        float P_ki_z = 0.0f;
+        float i_range_z = 0.25f;
+
+        // XY ATTITUDE PID
+        float R_kp_xy = 0.016f;
+        float R_kd_xy = 0.002f;
+        float R_ki_xy = 0.0f;
+        float i_range_R_xy = 1.0f;
+
+        // Z ATTITUDE PID
+        float R_kp_z = 30e-5f;
+        float R_kd_z = 10e-5f;
+        float R_ki_z = 20e-5f;
+        float i_range_R_z = 0.5f;
 
 
 
@@ -264,14 +299,16 @@ static inline float clamp(float value, float min, float max) {
   return value;
 }
 
-static inline int32_t thrust2PWM(float f) // Converts thrust in Newtons to PWM
+// Converts thrust in Newtons to their respective PWM values
+static inline int32_t thrust2PWM(float f) 
 {
     
-    // Conversion values calculated from self motor analysis
+    // Conversion values calculated from PWM to Thrust Curve
+    // Linear Fit: Thrust [g] = a*PWM + b
     float a = 2.98e-4;
     float b = -9.84e-1;
 
-    float s = 1; // sign of value
+    float s = 1.0; // sign of value
     int32_t f_pwm = 0;
 
     s = f/fabsf(f);
@@ -282,20 +319,24 @@ static inline int32_t thrust2PWM(float f) // Converts thrust in Newtons to PWM
     return f_pwm;
 }
 
-static inline float PWM2thrust(int32_t M_PWM) // Converts thrust in PWM to thrust in Newtons
+// Converts thrust in PWM to their respective Newton values
+static inline float PWM2thrust(int32_t M_PWM) 
 {
-    // Conversion values from new motors
+    // Conversion values calculated from PWM to Thrust Curve
+    // Linear Fit: Thrust [g] = a*PWM + b
     float a = 2.98e-4;
     float b = -9.84e-1;
 
-    float f = (a*M_PWM + b); // Convert thrust to grams
+    float f = (a*M_PWM + b); // Convert PWM thrust to gram value
 
-    f = f*9.81/1000; // Convert thrust from grams to Newtons
+    f = f*9.81/1000; // Convert from grams to Newtons
 
     return f;
 }
 
-uint16_t limitPWM(int32_t value) // Limit PWM value to accurate motor curve limit (60,000)
+
+// Limit PWM value to accurate portion of motor curve (0 - 60,000)
+uint16_t limitPWM(int32_t value)
 {
   if(value > PWM_MAX)
   {
