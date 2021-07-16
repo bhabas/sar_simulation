@@ -3,7 +3,7 @@
   <model name='crazyflie_model_Narrow-Short'>
     <link name='crazyflie_body'>
       <inertial>
-        <mass>0.0325</mass>
+        <mass>0.0323</mass>
         <inertia>
           <ixx>1.657e-05</ixx>
           <ixy>0</ixy>
@@ -176,14 +176,14 @@
     </link>
     <link name='leg1'>
       <inertial>
-        <mass>0.00052</mass>
+        <mass>0.00044</mass>
         <inertia>
-          <ixx>2.6e-6</ixx>
+          <ixx>9.17e-8</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>2.6e-6</iyy>
+          <iyy>9.17e-8</iyy>
           <iyz>0</iyz>
-          <izz>67.7e-12</izz>
+          <izz>1.38e-9</izz>
         </inertia>
         <pose>0 0 -0.025 0 -0 0</pose>
       </inertial>
@@ -275,14 +275,14 @@
     </link>
     <link name='leg2'>
       <inertial>
-        <mass>0.00052</mass>
+        <mass>0.00044</mass>
         <inertia>
-          <ixx>2.6e-6</ixx>
+          <ixx>9.17e-8</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>2.6e-6</iyy>
+          <iyy>9.17e-8</iyy>
           <iyz>0</iyz>
-          <izz>67.7e-12</izz>
+          <izz>1.38e-9</izz>
         </inertia>
         <pose>0 0 -0.025 0 -0 0</pose>
       </inertial>
@@ -375,14 +375,14 @@
     </link>
     <link name='leg3'>
       <inertial>
-        <mass>0.00052</mass>
+        <mass>0.00044</mass>
         <inertia>
-          <ixx>2.6e-6</ixx>
+          <ixx>9.17e-8</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>2.6e-6</iyy>
+          <iyy>9.17e-8</iyy>
           <iyz>0</iyz>
-          <izz>67.7e-12</izz>
+          <izz>1.38e-9</izz>
         </inertia>
         <pose>0 0 -0.025 0 -0 0</pose>
       </inertial>
@@ -475,14 +475,14 @@
     </link>
     <link name='leg4'>
       <inertial>
-        <mass>0.00052</mass>
+        <mass>0.00044</mass>
         <inertia>
-          <ixx>2.6e-6</ixx>
+          <ixx>9.17e-8</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>2.6e-6</iyy>
+          <iyy>9.17e-8</iyy>
           <iyz>0</iyz>
-          <izz>67.7e-12</izz>
+          <izz>1.38e-9</izz>
         </inertia>
         <pose>0 0 -0.025 0 -0 0</pose>
       </inertial>
@@ -574,7 +574,7 @@
     </link>
     <link name='pad_1'>
       <inertial>
-        <mass>0.0001</mass>
+        <mass>0.00001</mass>
         <inertia>
           <ixx>4e-08</ixx>
           <ixy>0</ixy>
@@ -671,7 +671,7 @@
     </link>
     <link name='pad_2'>
       <inertial>
-        <mass>0.0001</mass>
+        <mass>0.00001</mass>
         <inertia>
           <ixx>4.3354e-08</ixx>
           <ixy>0</ixy>
@@ -765,7 +765,7 @@
     </link>
     <link name='pad_3'>
       <inertial>
-        <mass>0.0001</mass>
+        <mass>0.00001</mass>
         <inertia>
           <ixx>4.3354e-08</ixx>
           <ixy>0</ixy>
@@ -859,7 +859,7 @@
     </link>
     <link name='pad_4'>
       <inertial>
-        <mass>0.0001</mass>
+        <mass>0.00001</mass>
         <inertia>
           <ixx>4.3354e-08</ixx>
           <ixy>0</ixy>
@@ -955,12 +955,12 @@
       <inertial>
         <mass>0.00001</mass>
         <inertia>
-          <ixx>1.6e-07</ixx>
+          <ixx>1.6e-10</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>8.86e-06</iyy>
+          <iyy>8.86e-10</iyy>
           <iyz>0</iyz>
-          <izz>9.02e-06</izz>
+          <izz>9.02e-10</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
@@ -999,12 +999,12 @@
       <inertial>
         <mass>0.00001</mass>
         <inertia>
-          <ixx>1.6e-07</ixx>
+          <ixx>1.6e-10</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>8.86e-06</iyy>
+          <iyy>8.86e-10</iyy>
           <iyz>0</iyz>
-          <izz>9.02e-06</izz>
+          <izz>9.02e-10</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
@@ -1043,12 +1043,12 @@
       <inertial>
         <mass>0.00001</mass>
         <inertia>
-          <ixx>1.6e-07</ixx>
+          <ixx>1.6e-10</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>8.86e-06</iyy>
+          <iyy>8.86e-10</iyy>
           <iyz>0</iyz>
-          <izz>9.02e-06</izz>
+          <izz>9.02e-10</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
@@ -1087,12 +1087,12 @@
       <inertial>
         <mass>0.00001</mass>
         <inertia>
-          <ixx>1.6e-07</ixx>
+          <ixx>1.6e-10</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>8.86e-06</iyy>
+          <iyy>8.86e-10</iyy>
           <iyz>0</iyz>
-          <izz>9.02e-06</izz>
+          <izz>9.02e-10</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
