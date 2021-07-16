@@ -397,9 +397,11 @@ void Controller::controlThread()
     double c_tf = 0.00612; // Moment Constant [Nm/N]
 
     Matrix3d J; // Rotational Inertia of CF
-    J<< 1.65717e-05, 0, 0,
-        0, 1.66556e-05, 0,
-        0, 0, 2.92617e-05;
+    J<< 16.57,0.83,0.72,
+        0.83,16.66,1.8,
+        0.72,1.8,29.26;
+
+    J = J*1e-6;
 
     
 
