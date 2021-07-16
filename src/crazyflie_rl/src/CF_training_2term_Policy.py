@@ -138,7 +138,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                 ## CONVERT STARTING RREV VALUE -> Z_POS TO START ROLLOUT FROM
                 RREV_start = 0.5
                 pos_z = env.h_ceiling - env.vel_d[2]/RREV_start
-                pos_z = 0.6
+                pos_z = 0.4
 
                 # ============================
                 ##          Rollout 
@@ -327,12 +327,11 @@ if __name__ == '__main__':
     alpha_sigma = np.array([[0.05]])
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[2.0],[6.7]])                 # Initial mu starting point
-
-    sigma = np.array([[1],[1]])       # Initial sigma starting point
+    mu = np.array([[3.9],[6.0]])                 # Initial mu starting point
+    sigma = np.array([[0.0001],[0.0001]])       # Initial sigma starting point
     ## SIM PARAMETERS
     env.n_rollouts = 8
-    env.h_ceiling = 2.5 # [m]
+    env.h_ceiling = 2.1 # [m]
 
 
     ## LEARNING AGENTS

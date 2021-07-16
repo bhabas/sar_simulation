@@ -60,7 +60,7 @@ class Controller
 
 
             // SET DEFAULT HOME POSITION
-            _x_d << 0,0,0.6;
+            _x_d << 0,0,0.4;
             _v_d << 0,0,0;
             _a_d << 0,0,0;
             _b1_d << 1,0,0;
@@ -184,27 +184,27 @@ class Controller
 
 
         // XY POSITION PID
-        float P_kp_xy = 0.4f;
-        float P_kd_xy = 0.3f;
-        float P_ki_xy = 0.2f;
-        float i_range_xy = 10.0f;
+        float P_kp_xy = 0.5f;
+        float P_kd_xy = 0.4f;
+        float P_ki_xy = 0.1f;
+        float i_range_xy = 0.3f;
 
         // Z POSITION PID
         float P_kp_z = 1.2f;
         float P_kd_z = 0.35f;
-        float P_ki_z = 0.0f;
+        float P_ki_z = 0.1f;
         float i_range_z = 0.25f;
 
         // XY ATTITUDE PID
-        float R_kp_xy = 0.016f;
-        float R_kd_xy = 0.002f;
+        float R_kp_xy = 0.004f;
+        float R_kd_xy = 0.0017f;
         float R_ki_xy = 0.0f;
         float i_range_R_xy = 1.0f;
 
         // Z ATTITUDE PID
-        float R_kp_z = 30e-5f;
-        float R_kd_z = 10e-5f;
-        float R_ki_z = 20e-5f;
+        float R_kp_z = 0.003f;
+        float R_kd_z = 0.001f;
+        float R_ki_z = 0.002;
         float i_range_R_z = 0.5f;
 
 
@@ -330,6 +330,11 @@ static inline float PWM2thrust(int32_t M_PWM)
     float f = (a*M_PWM + b); // Convert PWM thrust to gram value
 
     f = f*9.81/1000; // Convert from grams to Newtons
+
+    if(f<0)
+    {
+      f = 0;
+    }
 
     return f;
 }

@@ -57,7 +57,7 @@ if __name__ == '__main__':
         
         ## SIM PARAMETERS
         env.n_rollouts = 8
-        env.h_ceiling = 2.5 # [m]
+        env.h_ceiling = 2.1 # [m]
 
         ## LEARNING AGENT
         # agent = EPHE_Agent(mu,sigma,n_rollouts=env.n_rollouts)

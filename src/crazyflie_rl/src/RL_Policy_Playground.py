@@ -292,7 +292,7 @@ if __name__ == '__main__':
     ## SIM PARAMETERS
     env.n_rollouts = 10
     env.logging_flag = True
-    env.h_ceiling = 2.5 # [m]
+    env.h_ceiling = 2.1 # [m]
 
 
 

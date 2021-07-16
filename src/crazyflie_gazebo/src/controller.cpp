@@ -104,7 +104,7 @@ void Controller::OFCallback(const nav_msgs::Odometry::ConstPtr &msg){
     const geometry_msgs::Point position = msg->pose.pose.position; 
     const geometry_msgs::Vector3 velocity = msg->twist.twist.linear;
 
-    double h_ceiling = 2.5;
+    double h_ceiling = 2.1;
     double d = h_ceiling-position.z; // h_ceiling - height
 
     // SET SENSOR VALUES INTO CLASS VARIABLES
@@ -142,7 +142,7 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
     switch(cmd_type){
         case 0: // Reset to home
 
-            _x_d << 0,0,0.6;
+            _x_d << 0,0,0.4;
             _v_d << 0,0,0;
             _a_d << 0,0,0;
 
@@ -621,6 +621,7 @@ void Controller::controlThread()
 
 
         motorspeed_Vec << MS1,MS2,MS3,MS4;
+        // motorspeed_Vec << 0,0,0,0;
 
         if(_motorstop_flag == true){ // Shutoff all motors
             motorspeed_Vec << 0,0,0,0;
