@@ -20,7 +20,10 @@
 #include "readerwriterqueue.h"
 
 #define PWM_MAX 60000
-#define f_MAX (0.0165*9.81)
+#define f_MAX (16.5)
+#define g2Newton (9.81f/1000.0f)
+#define Newton2g (1000.0f/9.81f)
+
 typedef struct _MotorCommand {
     float data[4];
 } MotorCommand;
@@ -186,13 +189,13 @@ class Controller
         // XY POSITION PID
         float P_kp_xy = 0.5f;
         float P_kd_xy = 0.4f;
-        float P_ki_xy = 0.1f;
+        float P_ki_xy = 0.1f*0;
         float i_range_xy = 0.3f;
 
         // Z POSITION PID
         float P_kp_z = 1.2f;
         float P_kd_z = 0.35f;
-        float P_ki_z = 0.1f;
+        float P_ki_z = 0.1f*0;
         float i_range_z = 0.25f;
 
         // XY ATTITUDE PID
@@ -302,22 +305,21 @@ static inline float clamp(float value, float min, float max) {
 // Converts thrust in Newtons to their respective PWM values
 static inline int32_t thrust2PWM(float f) 
 {
-    
-    // Conversion values calculated from PWM to Thrust Curve
-    // Linear Fit: Thrust [g] = a*PWM + b
+    // Conversion values calculated from self motor analysis
     float a = 2.98e-4;
     float b = -9.84e-1;
 
-    float s = 1.0; // sign of value
+    float s = 1.0f; // sign of value
     int32_t f_pwm = 0;
 
     s = f/fabsf(f);
-    f = fabsf(f)*1000.0f/9.81f; // Convert thrust to grams
+    f = fabsf(f);
     
     f_pwm = s*(f-b)/a;
 
     return f_pwm;
-}
+
+}      
 
 // Converts thrust in PWM to their respective Newton values
 static inline float PWM2thrust(int32_t M_PWM) 
@@ -327,9 +329,7 @@ static inline float PWM2thrust(int32_t M_PWM)
     float a = 2.98e-4;
     float b = -9.84e-1;
 
-    float f = (a*M_PWM + b); // Convert PWM thrust to gram value
-
-    f = f*9.81/1000; // Convert from grams to Newtons
+    float f = (a*M_PWM + b); // Convert thrust to grams
 
     if(f<0)
     {

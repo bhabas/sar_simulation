@@ -1546,8 +1546,8 @@
       <turningDirection>ccw</turningDirection>
       <timeConstantUp>0.0001</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
-      <maxRotVelocity>8000</maxRotVelocity>
-      <motorConstant>2.21e-8</motorConstant>
+      <maxRotVelocity>80000</maxRotVelocity>
+      <motorConstant>2.21e-7</motorConstant>
       <momentConstant>0.00612</momentConstant>
       <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
       <motorNumber>1</motorNumber>
@@ -1563,8 +1563,8 @@
       <turningDirection>cw</turningDirection>
       <timeConstantUp>0.0001</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
-      <maxRotVelocity>8000</maxRotVelocity>
-      <motorConstant>2.21e-8</motorConstant>
+      <maxRotVelocity>80000</maxRotVelocity>
+      <motorConstant>2.21e-7</motorConstant>
       <momentConstant>0.00612</momentConstant>
       <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
       <motorNumber>2</motorNumber>
@@ -1590,8 +1590,8 @@
       <turningDirection>cw</turningDirection>
       <timeConstantUp>0.0001</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
-      <maxRotVelocity>8000</maxRotVelocity>
-      <motorConstant>2.21e-8</motorConstant>
+      <maxRotVelocity>80000</maxRotVelocity>
+      <motorConstant>2.21e-7</motorConstant>
       <momentConstant>0.00612</momentConstant>
       <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
       <motorNumber>0</motorNumber>
@@ -1607,8 +1607,8 @@
       <turningDirection>ccw</turningDirection>
       <timeConstantUp>0.0001</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
-      <maxRotVelocity>8000</maxRotVelocity>
-      <motorConstant>2.21e-8</motorConstant>
+      <maxRotVelocity>80000</maxRotVelocity>
+      <motorConstant>2.21e-7</motorConstant>
       <momentConstant>0.00612</momentConstant>
       <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
       <motorNumber>3</motorNumber>

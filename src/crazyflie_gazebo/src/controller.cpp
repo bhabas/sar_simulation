@@ -353,10 +353,10 @@ void Controller::controlThread()
     double Mz = 0.0;
     double F = 0.0;
 
-    float f_thrust = 0.0;
-    float f_roll = 0.0;
-    float f_pitch = 0.0;
-    float f_yaw = 0.0;
+    float f_thrust_g = 0.0;
+    float f_roll_g = 0.0;
+    float f_pitch_g = 0.0;
+    float f_yaw_g = 0.0;
 
     int32_t f_thrust_pwm = 0;
     int32_t f_roll_pwm = 0;
@@ -393,7 +393,7 @@ void Controller::controlThread()
     double d = 0.040; // Distance from COM to prop [m]
     double dp = d*sin(M_PI/4);
 
-    double kf = 2.2e-8; // Thrust constant [N/(rad/s)^2]
+    double kf = 2.21e-8; // Thrust constant [N/(rad/s)^2]
     double c_tf = 0.00612; // Moment Constant [Nm/N]
 
     Matrix3d J; // Rotational Inertia of CF
@@ -582,26 +582,24 @@ void Controller::controlThread()
 
         FM << F_thrust,M*1e3; // Thrust-Moment control vector
     
-        // =========== CONVERT THRUSTS AND MOMENTS TO MOTOR PWM VALUES =========== // 
-        // float f_max = 16.5*1000/9.81;               // Max thrust per motor converted from [g] to [N]
-                
-        f_thrust = F_thrust/4.0f;
-        f_roll = M[0]/(4.0f*dp);
-        f_pitch = M[1]/(4.0f*dp);
-        f_yaw = M[2]/(4.0f*c_tf);
+        // =========== CONVERT THRUSTS AND MOMENTS TO MOTOR PWM VALUES =========== //                 
+        f_thrust_g = F_thrust/4.0f*Newton2g;
+        f_roll_g = M[0]/(4.0f*dp)*Newton2g;
+        f_pitch_g = M[1]/(4.0f*dp)*Newton2g;
+        f_yaw_g = M[2]/(4.0f*c_tf)*Newton2g;
 
-        f_thrust = clamp(f_thrust,0.0,f_MAX*0.85);    // Clamp thrust to prevent control saturation
+        f_thrust_g = clamp(f_thrust_g,0.0,f_MAX*0.85);    // Clamp thrust to prevent control saturation
 
         // REPRESENT THRUST TYPES AS PERCENTAGE OF MAX THRUST
-        f << f_thrust,f_roll,f_pitch,f_yaw;
-        f = f/f_MAX;
-        f_total = (abs(f_thrust)+abs(f_roll)+abs(f_pitch)+abs(f_yaw))/f_MAX;
+        f << f_thrust_g,f_roll_g,f_pitch_g,f_yaw_g;
+        // f = f/f_MAX;
+        f_total = (abs(f_thrust_g)+abs(f_roll_g)+abs(f_pitch_g)+abs(f_yaw_g))/f_MAX;
 
         // THRUST CONVERSION
-        M1_pwm = limitPWM(thrust2PWM(f_thrust + f_roll - f_pitch + f_yaw));
-        M2_pwm = limitPWM(thrust2PWM(f_thrust + f_roll + f_pitch - f_yaw));
-        M3_pwm = limitPWM(thrust2PWM(f_thrust - f_roll + f_pitch + f_yaw));
-        M4_pwm = limitPWM(thrust2PWM(f_thrust - f_roll - f_pitch - f_yaw));
+        M1_pwm = limitPWM(thrust2PWM(f_thrust_g + f_roll_g - f_pitch_g + f_yaw_g));
+        M2_pwm = limitPWM(thrust2PWM(f_thrust_g + f_roll_g + f_pitch_g - f_yaw_g));
+        M3_pwm = limitPWM(thrust2PWM(f_thrust_g - f_roll_g + f_pitch_g + f_yaw_g));
+        M4_pwm = limitPWM(thrust2PWM(f_thrust_g - f_roll_g - f_pitch_g - f_yaw_g));
         M_pwm << M1_pwm,M2_pwm,M3_pwm,M4_pwm;
         
 
@@ -614,10 +612,10 @@ void Controller::controlThread()
         // SIMULATION:
         // Desired Motor Thrusts => Motorspeeds => Motor Model Plugin => Resulting Motor Thrusts
 
-        MS1 = sqrt(PWM2thrust(M1_pwm)/kf);
-        MS2 = sqrt(PWM2thrust(M2_pwm)/kf);
-        MS3 = sqrt(PWM2thrust(M3_pwm)/kf);
-        MS4 = sqrt(PWM2thrust(M4_pwm)/kf);
+        MS1 = sqrt(PWM2thrust(M1_pwm)*g2Newton/kf);
+        MS2 = sqrt(PWM2thrust(M2_pwm)*g2Newton/kf);
+        MS3 = sqrt(PWM2thrust(M3_pwm)*g2Newton/kf);
+        MS4 = sqrt(PWM2thrust(M4_pwm)*g2Newton/kf);
 
         
 
@@ -674,7 +672,7 @@ void Controller::controlThread()
         "f_total [%]: " << f_total << endl << 
         endl << setprecision(0) <<
         // "MS_d: " << motorspeed_Vec_d.transpose() << endl <<
-        // "MS: " << motorspeed_Vec.transpose() << endl <<
+        "MS: " << motorspeed_Vec.transpose() << endl <<
         "MS_PWM: " << M_pwm.transpose() << endl <<
         "=============== " << endl; 
         printf("\033c"); // clears console window
