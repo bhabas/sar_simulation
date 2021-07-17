@@ -3,14 +3,14 @@
   <model name='crazyflie_model_Thrust_Test'>
     <link name='crazyflie_body'>
       <inertial>
-        <mass>1.01972</mass>
+        <mass>0.0323</mass>
         <inertia>
-          <ixx>0.00055429</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>0.00055429</iyy>
-          <iyz>0</iyz>
-          <izz>0.00095567</izz>
+          <ixx>16.57e-6</ixx>
+          <ixy>0.831e-6</ixy>
+          <ixz>0.72e-6</ixz>
+          <iyy>16.656e-6</iyy>
+          <iyz>1.8e-6</iyz>
+          <izz>29.26e-6</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
