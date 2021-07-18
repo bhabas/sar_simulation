@@ -327,7 +327,7 @@ if __name__ == '__main__':
     alpha_sigma = np.array([[0.05]])
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[2.0],[6.0]])                 # Initial mu starting point
+    mu = np.array([[3.95],[6.0]])                 # Initial mu starting point
     sigma = np.array([[0.0001],[0.0001]])       # Initial sigma starting point
     ## SIM PARAMETERS
     env.n_rollouts = 8

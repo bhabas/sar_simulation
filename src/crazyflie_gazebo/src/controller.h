@@ -306,8 +306,10 @@ static inline float clamp(float value, float min, float max) {
 static inline int32_t thrust2PWM(float f) 
 {
     // Conversion values calculated from self motor analysis
-    float a = 2.98e-4;
-    float b = -9.84e-1;
+    float a = 3.31e4;
+    float b = 1.12e1;
+    float c = 8.72;
+    float d = 3.26e4;
 
     float s = 1.0f; // sign of value
     int32_t f_pwm = 0;
@@ -315,9 +317,9 @@ static inline int32_t thrust2PWM(float f)
     s = f/fabsf(f);
     f = fabsf(f);
     
-    f_pwm = s*(f-b)/a;
+    f_pwm = a*tanf((f-c)/b)+d;
 
-    return f_pwm;
+    return s*f_pwm;
 
 }      
 
@@ -326,10 +328,13 @@ static inline float PWM2thrust(int32_t M_PWM)
 {
     // Conversion values calculated from PWM to Thrust Curve
     // Linear Fit: Thrust [g] = a*PWM + b
-    float a = 2.98e-4;
-    float b = -9.84e-1;
+    float a = 3.31e4;
+    float b = 1.12e1;
+    float c = 8.72;
+    float d = 3.26e4;
 
-    float f = (a*M_PWM + b); // Convert thrust to grams
+    float f = b*atan2f(M_PWM-d,a)+c;
+    // float f = (a*M_PWM + b); // Convert thrust to grams
 
     if(f<0)
     {
