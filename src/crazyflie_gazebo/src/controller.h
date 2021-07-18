@@ -189,13 +189,13 @@ class Controller
         // XY POSITION PID
         float P_kp_xy = 0.5f;
         float P_kd_xy = 0.4f;
-        float P_ki_xy = 0.1f;
+        float P_ki_xy = 0.1f*0;
         float i_range_xy = 0.3f;
 
         // Z POSITION PID
         float P_kp_z = 1.2f;
         float P_kd_z = 0.35f;
-        float P_ki_z = 0.1f;
+        float P_ki_z = 0.1f*0;
         float i_range_z = 0.25f;
 
         // XY ATTITUDE PID
@@ -207,7 +207,7 @@ class Controller
         // Z ATTITUDE PID
         float R_kp_z = 0.003f;
         float R_kd_z = 0.001f;
-        float R_ki_z = 0.002;
+        float R_ki_z = 0.002*0;
         float i_range_R_z = 0.5f;
 
 
