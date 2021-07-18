@@ -25,7 +25,8 @@ class rlEM_PEPGAgent(ES):
     def get_theta(self):
         theta = np.zeros((len(self.mu),self.n_rollouts))
         
-        lower,upper = 0.0,20.0 # Lower and Upper limits for truncated normal distribution
+        lower,upper = 0.0,9.1   # Lower and Upper limits for truncated normal distribution 
+                                # 9.10 N*mm is the upper limit for My_d
 
         for ii,mu_ii in enumerate(self.mu):
             theta[ii,:] = scipy.stats.truncnorm.rvs((lower-mu_ii)/self.sigma[ii],
