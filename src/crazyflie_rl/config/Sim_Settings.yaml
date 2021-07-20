@@ -1,4 +1,4 @@
-model_name: "crazyflie_model_Narrow-Short"
+Model_Name: "crazyflie_model_Narrow-Short"
 GUI: true
 controller: "GTC"
 ceiling_height: 3.0

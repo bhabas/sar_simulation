@@ -23,6 +23,11 @@ from nav_msgs.msg import Odometry
 class CrazyflieEnv:
     def __init__(self,gazeboTimeout=True):
         print("[STARTING] CrazyflieEnv is starting...")
+        ## INIT ROS NODE FOR ENVIRONMENT 
+        rospy.init_node("crazyflie_env_node") 
+        self.launch_controller()
+        self.launch_sim() 
+        time.sleep(2)
 
         self.username = getpass.getuser()
         self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log"
@@ -35,7 +40,7 @@ class CrazyflieEnv:
         self.state_current = np.zeros(13)
 
         ## INIT NAME OF MODEL BEING USED
-        self.modelName = 'crazyflie_model_Narrow-Short'
+        self.modelName = rospy.get_param('/Model_Name')
 
         ## INIT RL_DATA VARIABLES 
         # NOTE: All time units are in terms of Sim-Time unless specified
@@ -94,14 +99,6 @@ class CrazyflieEnv:
         self.ceiling_ft_x = 0.0     # Ceiling impact force, X-dir [N]
         #endregion 
 
-
-
-
-        
-        ## INIT ROS NODE FOR ENVIRONMENT 
-        rospy.init_node("crazyflie_env_node") 
-        self.launch_controller()
-        self.launch_sim() 
     
 
         
