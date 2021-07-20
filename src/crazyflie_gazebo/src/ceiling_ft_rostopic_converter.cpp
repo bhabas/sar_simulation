@@ -51,6 +51,14 @@ geometry_msgs::Vector3 _vel_impact;       // Impact velocity [m]
 geometry_msgs::Quaternion _quat_impact;   // Impact attitude [rad] (quat form)
 geometry_msgs::Vector3 _omega_impact;     // Impact angular velocity [rad/s]
 
+
+const int arr_len = 5;
+geometry_msgs::Point _pos_arr [arr_len];
+geometry_msgs::Vector3 _vel_arr [arr_len];
+geometry_msgs::Quaternion _quat_arr [arr_len];
+geometry_msgs::Vector3 _omega_arr [arr_len];
+
+
 void gazeboFT_Callback(const ConstWrenchStampedPtr &_msg)
 {
   // Record max force experienced
@@ -67,11 +75,13 @@ void gazeboFT_Callback(const ConstWrenchStampedPtr &_msg)
     // Lock in state data when impact detected
     _impact_flag = true;
 
+
+    // RECORD IMPACT STATE DATA FROM [2] DATAPOINTS BEHIND WHEN IMPACT FLAGGED
     _t_impact = ros::Time::now();
-    _pos_impact = _pos;
-    _vel_impact = _vel;
-    _quat_impact = _quat;
-    _omega_impact = _omega;
+    _pos_impact = _pos_arr[2];
+    _vel_impact = _vel_arr[2];
+    _quat_impact = _quat_arr[2];
+    _omega_impact = _omega_arr[2];
     // std::cout << "Updating data " << std::endl;
     // std::cout << "Pos: " << _pos.x << " " << _pos.y << " " << _pos.z << " " << std::endl;
     // std::cout << "Quat: " << _quat.x << " " << _quat.y << " " << _quat.z << " " << _quat.w << std::endl;
@@ -85,7 +95,7 @@ void gazeboFT_Callback(const ConstWrenchStampedPtr &_msg)
 
 void RLdata_Callback(const crazyflie_rl::RLData::ConstPtr &msg)
 {
-
+  // WHEN RUN COMPLETED PUBLISH IMPACT DATA
   if(msg->runComplete_flag == true)
   {
       
@@ -137,6 +147,34 @@ void global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
     _vel = msg->twist.twist.linear;
     _omega = msg->twist.twist.angular;
 
+
+    // SHIFT ALL ARRAY VALUES OVER BY ONE
+    // Totally not the 'correct' way but it works for what I need right now
+
+    _pos_arr[4] = _pos_arr[3];
+    _pos_arr[3] = _pos_arr[2];
+    _pos_arr[2] = _pos_arr[1];
+    _pos_arr[1] = _pos_arr[0];
+    _pos_arr[0] = msg->pose.pose.position;
+
+    _vel_arr[4] = _vel_arr[3];
+    _vel_arr[3] = _vel_arr[2];
+    _vel_arr[2] = _vel_arr[1];
+    _vel_arr[1] = _vel_arr[0];
+    _vel_arr[0] = msg->twist.twist.linear;
+
+    _omega_arr[4] = _omega_arr[3];
+    _omega_arr[3] = _omega_arr[2];
+    _omega_arr[2] = _omega_arr[1];
+    _omega_arr[1] = _omega_arr[0];
+    _omega_arr[0] = msg->twist.twist.angular;
+
+    _quat_arr[4] = _quat_arr[3];
+    _quat_arr[3] = _quat_arr[2];
+    _quat_arr[2] = _quat_arr[1];
+    _quat_arr[1] = _quat_arr[0];
+    _quat_arr[0] = msg->pose.pose.orientation;
+
 }
 
 int main(int argc, char **argv)
@@ -154,7 +192,7 @@ int main(int argc, char **argv)
 
 
   // DEFINE ROS AND GAZEBO TOPICS
-  std::string gazebo_transport_topic_to_sub= "/gazebo/default/ceiling_plane/joint_01/force_torque/wrench";
+  std::string gazebo_topic_to_sub= "/gazebo/default/ceiling_plane/joint_01/force_torque/wrench";
   std::string ros_topic_to_pub="/ceiling_force_sensor";
   
   // INIT ROS PUBLISHERS/SUBSCRIBERS
@@ -166,7 +204,7 @@ int main(int argc, char **argv)
 
 
   // LISTEN TO GAZEBO FORCE_TORQUE SENSOR TOPIOC
-  gazebo::transport::SubscriberPtr sub = node->Subscribe(gazebo_transport_topic_to_sub, gazeboFT_Callback);
+  gazebo::transport::SubscriberPtr sub = node->Subscribe(gazebo_topic_to_sub, gazeboFT_Callback);
   ROS_INFO("Gazebo Subscriber Started");
   
   ros::spin();
