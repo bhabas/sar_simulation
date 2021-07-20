@@ -11,6 +11,7 @@
 #include "crazyflie_rl/RLCmd.h"
 #include "nav_msgs/Odometry.h"
 #include "sensor_msgs/Imu.h"
+#include "gazebo_msgs/SetPhysicsProperties.h"
 
 // Socket Includes
 #include <arpa/inet.h>
@@ -45,7 +46,9 @@ class Controller
             
             RLCmd_Subscriber = nh->subscribe("/rl_ctrl",50,&Controller::RLCmd_Callback,this);
 
-            
+            client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
+
+
 
             
             // INIT VARIABLES TO DEFAULT VALUES (PREVENTS RANDOM VALUES FROM MEMORY)
@@ -69,27 +72,15 @@ class Controller
             _b1_d << 1,0,0;
             _omega_d << 0,0,0;
 
-            // SET DEFAULT CONTROLLER GAINS
-
-
-            _kp_x_D.fill(0.5);
-            _kd_x_D.fill(0.15);
-            _kp_R_D.fill(0.015);
-            _kd_R_D.fill(0.0012);
-
-            _kp_x = _kp_x_D;
-            _kd_x = _kd_x_D;
-            _kp_R = _kp_R_D;
-            _kd_R = _kd_R_D;
-
-
-
             // SET DEFAULT POLICY VALUES
             _RREV_thr = 0.0;
             _G1 = 0.0;
             _G2 = 0.0;
             _policy_armed_flag = false;
             _flip_flag = false;
+
+            ros::param::get("/CEILING_HEIGHT",h_ceiling);
+            ros::param::get("/LANDING_SLOWDOWN",landing_slowdown_flag);
         }
 
         // DEFINE FUNCTION PROTOTYPES
@@ -100,6 +91,7 @@ class Controller
         void OFCallback(const nav_msgs::Odometry::ConstPtr &msg);
         void imuCallback(const sensor_msgs::Imu::ConstPtr &msg);
         void RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg);
+        void adjustSimSpeed(float speed_mult);
 
     private:
         // DEFINE PUBLISHERS AND SUBSCRIBERS
@@ -108,6 +100,9 @@ class Controller
         ros::Subscriber OF_Subscriber;
         ros::Subscriber RLCmd_Subscriber;
         ros::Subscriber imu_Subscriber;
+        
+
+        ros::ServiceClient client;
 
         // DEFINE THREAD OBJECTS
         std::thread controllerThread;
@@ -138,16 +133,6 @@ class Controller
         Eigen::Vector3d _eul_d;     // Euler-desired [rad?]
         bool _eul_flag = false;
         Eigen::Matrix3f _R_d_custom; // Rotation-desired (YZX Euler notation)
-
-        Eigen::Vector3d _kp_x; // Pos. Gain
-        Eigen::Vector3d _kd_x; // Pos. derivative Gain
-        Eigen::Vector3d _kp_R; // Rot. Gain
-        Eigen::Vector3d _kd_R; // Rot. derivative Gain
-
-        Eigen::Vector3d _kp_x_D; // Pos. Gain
-        Eigen::Vector3d _kd_x_D; // Pos. derivative Gain
-        Eigen::Vector3d _kp_R_D; // Rot. Gain
-        Eigen::Vector3d _kd_R_D; // Rot. derivative Gain
 
         // LOCAL CONTROLLER VARIABLES
         Eigen::Vector3d Kp_P;  // Pos. Gain
@@ -209,6 +194,12 @@ class Controller
         float R_kd_z = 0.001f;
         float R_ki_z = 0.002*0;
         float i_range_R_z = 0.5f;
+
+
+        // MISC VARIABLES
+        double h_ceiling;
+        bool landing_slowdown_flag;
+        
 
 
 

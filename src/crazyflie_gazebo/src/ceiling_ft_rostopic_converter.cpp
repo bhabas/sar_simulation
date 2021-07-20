@@ -30,11 +30,9 @@ ros::Publisher impactForce_Publisher;
 ros::Subscriber RLdata_Subscriber;
 ros::Subscriber globalState_Subscriber;
 
-double ros_rate = 100; // Ros rate but not sure how it applies here
 double _ceiling_ft_z = 0.0; // Max impact force in Z-direction [N]
 double _ceiling_ft_x = 0.0; // Max impact force in X-direction [N]
 bool _impact_flag = false;
-
 
 
 geometry_msgs::Point _pos;        // Current position [m]
@@ -72,7 +70,7 @@ void gazeboFT_Callback(const ConstWrenchStampedPtr &_msg)
 
 
   if (_ceiling_ft_z >= 2.0 && _impact_flag == false){ 
-    // Lock in state data when impact detected
+    // LOCK IN STATE DATA WHEN IMPACT DETECTED
     _impact_flag = true;
 
 
@@ -82,9 +80,6 @@ void gazeboFT_Callback(const ConstWrenchStampedPtr &_msg)
     _vel_impact = _vel_arr[2];
     _quat_impact = _quat_arr[2];
     _omega_impact = _omega_arr[2];
-    // std::cout << "Updating data " << std::endl;
-    // std::cout << "Pos: " << _pos.x << " " << _pos.y << " " << _pos.z << " " << std::endl;
-    // std::cout << "Quat: " << _quat.x << " " << _quat.y << " " << _quat.z << " " << _quat.w << std::endl;
   }
 
   

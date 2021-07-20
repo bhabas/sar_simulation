@@ -1,9 +1,11 @@
 MODEL_NAME: "crazyflie_model_Narrow-Short"
 GUI_FLAG: true
-LANDING_SLOWDOWN: true
+
+LANDING_SLOWDOWN: false
+LANDING_SLOWDOWN_LIMIT: 3
 
 
-K_EP_MAX: 1
+K_EP_MAX: 20
 CEILING_HEIGHT: 2.1
 
 

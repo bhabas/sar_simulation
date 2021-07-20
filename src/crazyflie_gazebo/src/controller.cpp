@@ -104,8 +104,7 @@ void Controller::OFCallback(const nav_msgs::Odometry::ConstPtr &msg){
     const geometry_msgs::Point position = msg->pose.pose.position; 
     const geometry_msgs::Vector3 velocity = msg->twist.twist.linear;
 
-    double h_ceiling;
-    ros::param::get("/CEILING_HEIGHT",h_ceiling);
+    
     double d = h_ceiling-position.z; // h_ceiling - height
 
     // SET SENSOR VALUES INTO CLASS VARIABLES
@@ -142,7 +141,7 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
 
     switch(cmd_type){
         case 0: // Reset to home
-
+        {
             _x_d << 0,0,0.4;
             _v_d << 0,0,0;
             _a_d << 0,0,0;
@@ -155,11 +154,6 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             _kp_Rf = 1;
             _kd_Rf = 1;
 
-            _kp_x = _kp_x_D;
-            _kd_x = _kd_x_D;
-            _kp_R = _kp_R_D;
-            _kd_R = _kd_R_D;
-
             
             _motorstop_flag = false;
             _Moment_flag = false;
@@ -170,20 +164,27 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             _tumbled = false;
             // _tumble_detection = true;
 
+            Controller::adjustSimSpeed(2.0);
+
             break;
+        }
 
         case 1: // Position
+        {
             _x_d = cmd_vals;
             _kp_xf = cmd_flag;
             break;
+        }
 
         case 2: // Velocity
+        {
             _v_d = cmd_vals;
             _kd_xf = cmd_flag;
             break;
+        }
 
         case 3: // Attitude 
-            
+        {    
             _eul_flag = cmd_flag;
 
             eulx = cmd_vals(0)*M_PI/180.0;
@@ -192,16 +193,22 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
 
             _R_d_custom = AngleAxisf(euly, Vector3f::UnitY()) * AngleAxisf(eulz, Vector3f::UnitZ()) * AngleAxisf(eulx, Vector3f::UnitX());
             break;
-        
+        }
+
         case 4: // Tumble-Detection
+        {
             _tumble_detection = (bool)cmd_flag;
             break;
+        }
 
         case 5: // Hard Set All Motorspeeds to Zero
+        {
             _motorstop_flag = (bool)cmd_flag;
             break;
+        }
 
         case 6: // Edit Gains 
+        {
             if (cmd_vals(0) == 1)
             {
                 P_kp_z = cmd_vals(1);
@@ -231,33 +238,67 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             }
 
             break;
+        }
 
         case 7: // Execute Moment-Based Flip
-
+        {
             _M_d = cmd_vals*1e-3; // Convert from N*mm to N*m for calcs
             _Moment_flag = (bool)cmd_flag;
             break;
-
+        }
         case 8: // Perform Policy Maneuver
-
+        {
             _RREV_thr = cmd_vals(0);
             _G1 = cmd_vals(1);
             _G2 = cmd_vals(2);
 
             _policy_armed_flag = (bool)cmd_flag;
+            break;
 
 
+        }
         case 11: // Enable/Disable Stickyfoot
+        {
             float sticky_cmd[4] = {-(float)cmd_type,cmd_flag,0,0};
             // This stickyfoot socket communication piggy-backs off of the motorspeed  
             // message & activates plugin when first number is negative but defines value
             // based off of the second number
             sendto(Ctrl_Mavlink_socket, sticky_cmd, sizeof(sticky_cmd),0, (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len);
+            break;
+        }
     }
 
 }
 
+void Controller::adjustSimSpeed(float speed_mult)
+{
+    gazebo_msgs::SetPhysicsProperties srv;
+    srv.request.time_step = 0.001;
+    srv.request.max_update_rate = (int)(speed_mult/0.001);
 
+
+    geometry_msgs::Vector3 gravity_vec;
+    gravity_vec.x = 0.0;
+    gravity_vec.y = 0.0;
+    gravity_vec.z = -9.8066;
+    srv.request.gravity = gravity_vec;
+
+    gazebo_msgs::ODEPhysics ode_config;
+    ode_config.auto_disable_bodies = false;
+    ode_config.sor_pgs_precon_iters = 0;
+    ode_config.sor_pgs_iters = 50;
+    ode_config.sor_pgs_w = 1.3;
+    ode_config.sor_pgs_rms_error_tol = 0.0;
+    ode_config.contact_surface_layer = 0.001;
+    ode_config.contact_max_correcting_vel = 0.0;
+    ode_config.cfm = 0.0;
+    ode_config.erp = 0.2;
+    ode_config.max_contacts = 20;
+
+    srv.request.ode_config = ode_config;
+
+    client.call(srv);
+}
 
 void Controller::controlThread()
 {
@@ -549,11 +590,7 @@ void Controller::controlThread()
 
                     _flip_flag = true;
 
-                    // cout << "t: " << _t << endl;
-                    // cout << "statePos: " << _pos.transpose() << endl;
-                    // cout << "stateVel: " << _vel.transpose() << endl;
-                    // cout << "RREV: " << _RREV << endl;
-                    // cout << endl;
+                    
                 }
 
                 if(_flip_flag == true){
@@ -569,6 +606,16 @@ void Controller::controlThread()
                     M = _M_d*2; // Need to double moment to ensure it survives the PWM<0 cutoff
                     F_thrust = 0;
                 }
+                
+                if(landing_slowdown_flag==true){
+                    
+                    // WHEN CLOSE TO THE CEILING REDUCE SIM SPEED
+                    if(h_ceiling-statePos(2)<=0.3){
+                        float speed_mult = 0.1;
+                        Controller::adjustSimSpeed(speed_mult);
+                    }
+                }
+                
             }
             else{
                 F_thrust = F_thrust;
