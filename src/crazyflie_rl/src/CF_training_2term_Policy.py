@@ -322,19 +322,14 @@ if __name__ == '__main__':
     ##          AGENT  
     # ============================
 
-    ## LEARNING RATES
-    alpha_mu = np.array([[0.1]])
-    alpha_sigma = np.array([[0.05]])
-
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[3.95],[6.0]])                 # Initial mu starting point
-    sigma = np.array([[0.0001],[0.0001]])       # Initial sigma starting point
-    ## SIM PARAMETERS
-    env.n_rollouts = 8
-    env.h_ceiling = 2.1 # [m]
+    mu = np.array([[5.85],[3.87]])                 # Initial mu starting point
+    sigma = np.array([[0.00001],[0.00001]])       # Initial sigma starting point
 
 
-    ## LEARNING AGENTS
+    ## LEARNING AGENTS AND PARAMETERS
+    env.n_rollouts = 3
+    K_EP_MAX = rospy.get_param("K_EP_MAX")
     agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=env.n_rollouts)
 
     
@@ -342,13 +337,13 @@ if __name__ == '__main__':
     ##     LEARNING CONDITIONS  
     # ============================
 
-    ## INITIAL LAUNCH CONDITIONS
+    ## CONSTANT VELOCITY LAUNCH CONDITIONS
     V_d = 2.5   # [m/s]
     phi = 90    # [deg]
 
 
     
-    ## INITIAL LOGGING DATA
+    ## INITIALIALIZE LOGGING DATA
     trial_num = 3
     env.agent_name = agent.agent_type
     env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}"
@@ -360,7 +355,8 @@ if __name__ == '__main__':
     ## RUN TRIAL
     env.RL_Publish() # Publish data to rl_data topic
     time.sleep(3)
-    runTraining(env,agent,V_d,phi)
+    runTraining(env,agent,V_d,phi,k_epMax=K_EP_MAX)
+    print()
  
     
 

@@ -1,4 +1,11 @@
-Model_Name: "crazyflie_model_Narrow-Short"
-GUI: true
-controller: "GTC"
-ceiling_height: 3.0
+MODEL_NAME: "crazyflie_model_Narrow-Short"
+GUI_FLAG: true
+LANDING_SLOWDOWN: true
+
+
+K_EP_MAX: 1
+CEILING_HEIGHT: 2.1
+
+
+# controller: "GTC"
+# ceiling_height: 3.0

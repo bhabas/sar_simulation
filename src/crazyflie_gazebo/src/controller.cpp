@@ -104,7 +104,8 @@ void Controller::OFCallback(const nav_msgs::Odometry::ConstPtr &msg){
     const geometry_msgs::Point position = msg->pose.pose.position; 
     const geometry_msgs::Vector3 velocity = msg->twist.twist.linear;
 
-    double h_ceiling = 2.1;
+    double h_ceiling;
+    ros::param::get("/CEILING_HEIGHT",h_ceiling);
     double d = h_ceiling-position.z; // h_ceiling - height
 
     // SET SENSOR VALUES INTO CLASS VARIABLES

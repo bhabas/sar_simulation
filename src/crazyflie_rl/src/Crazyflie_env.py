@@ -23,28 +23,34 @@ from nav_msgs.msg import Odometry
 class CrazyflieEnv:
     def __init__(self,gazeboTimeout=True):
         print("[STARTING] CrazyflieEnv is starting...")
-        ## INIT ROS NODE FOR ENVIRONMENT 
+
+
+        ## INIT GAZEBO SIMULATION
         rospy.init_node("crazyflie_env_node") 
         self.launch_controller()
         self.launch_sim() 
-        time.sleep(2)
+        rospy.wait_for_message("/clock",Clock)
+        print("[INITIATING] Gazebo simulation started")
 
+
+        self.isRunning = True
         self.username = getpass.getuser()
         self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log"
         self.logging_flag = False
         self.filepath = ""
-        self.runComplete_flag = False
-        self.isRunning = True
-
-        self.h_ceiling = 2.1 # [m]
         self.state_current = np.zeros(13)
 
-        ## INIT NAME OF MODEL BEING USED
-        self.modelName = rospy.get_param('/Model_Name')
+
+        ## LOAD SIM_SETTINGS/ROS_PARAMETERS
+        self.modelName = rospy.get_param('/MODEL_NAME')
+        self.h_ceiling = rospy.get_param("/CEILING_HEIGHT") # [m]
+
+
+
 
         ## INIT RL_DATA VARIABLES 
         # NOTE: All time units are in terms of Sim-Time unless specified
-        #region 
+        self.runComplete_flag = False
         self.trial_name = '' 
         self.agent_name = ''    # Learning agent used for training (PEPG,EM,etc...)
         self.error_str = ''     # Label for why rollout was terminated/completed
@@ -97,7 +103,6 @@ class CrazyflieEnv:
 
         self.ceiling_ft_z = 0.0     # Ceiling impact force, Z-dir [N]
         self.ceiling_ft_x = 0.0     # Ceiling impact force, X-dir [N]
-        #endregion 
 
     
 
@@ -113,9 +118,11 @@ class CrazyflieEnv:
         self.OF_Subscriber = rospy.Subscriber('/OF_sensor',Odometry,self.OFsensor_Callback,queue_size=1)    
         self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.laser_sensorCallback)       
                       
+        # WE WANT TO BE SURE WE GET THESE MESSAGES WHEN THEY COME THROUGH              
         self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback,queue_size=10)            
         self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',ImpactData,self.ceiling_ftsensorCallback,queue_size=10) 
                       
+
         rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
 
 
@@ -384,7 +391,7 @@ class CrazyflieEnv:
     def __del__(self):
         self.isRunning = False
         os.killpg(self.gazebo_p.pid, signal.SIGTERM)
-        os.killpg(self.dashboard_p.pid, signal.SIGTERM)
+        # os.killpg(self.dashboard_p.pid, signal.SIGTERM)
         os.killpg(self.controller_p.pid, signal.SIGTERM)
      
     def getTime(self):
