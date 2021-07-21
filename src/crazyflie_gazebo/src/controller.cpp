@@ -105,7 +105,7 @@ void Controller::OFCallback(const nav_msgs::Odometry::ConstPtr &msg){
     const geometry_msgs::Vector3 velocity = msg->twist.twist.linear;
 
     
-    double d = _h_ceiling-position.z; // h_ceiling - height
+    double d = _H_CEILING-position.z; // h_ceiling - height
 
     // SET SENSOR VALUES INTO CLASS VARIABLES
     // _RREV = msg->RREV;
@@ -156,7 +156,6 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             _kp_Rf = 1;
             _kd_Rf = 1;
 
-            Controller::adjustSimSpeed(1.0);
 
             
             _motorstop_flag = false;
@@ -170,7 +169,8 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             _tumbled = false;
             // _tumble_detection = true;
 
-            // Controller::adjustSimSpeed(2.0);
+            Controller::adjustSimSpeed(_SIM_SPEED);
+
 
             break;
         }
@@ -637,24 +637,6 @@ void Controller::controlThread()
             M << 0.0,0.0,0.0;
         }
 
-        // if(_landing_slowdown_flag==true && _k_ep>=_k_ep_slowdown){
-
-        // WHEN CLOSE TO THE CEILING REDUCE SIM SPEED
-        if(_h_ceiling-statePos(2)<=0.2 && _flag1 == 0){
-            
-            Controller::adjustSimSpeed(0.1);
-            _flag1 = 1;
-
-        }
-
-        if(_impact_flag == true && _flag1 == 1)
-        {
-            
-            Controller::adjustSimSpeed(1.0);
-            _flag1 = 2;
-        }
-                // }
-
         FM << F_thrust,M*1e3; // Thrust-Moment control vector
     
         // =========== CONVERT THRUSTS AND MOMENTS TO MOTOR PWM VALUES =========== //                 
@@ -700,6 +682,26 @@ void Controller::controlThread()
 
         if(_motorstop_flag == true){ // Shutoff all motors
             motorspeed_Vec << 0,0,0,0;
+        }
+
+
+        // SIMULATION SLOWDOWN
+        if(_LANDING_SLOWDOWN_FLAG==true && _k_ep>=_K_EP_SLOWDOWN){
+
+            // WHEN CLOSE TO THE CEILING REDUCE SIM SPEED
+            if(_H_CEILING-statePos(2)<=0.2 && _flag1 == 0){
+                
+                Controller::adjustSimSpeed(_SIM_SLOWDOWN_SPEED);
+                _flag1 = 1;
+
+            }
+
+            if(_impact_flag == true && _flag1 == 1)
+            {
+                
+                Controller::adjustSimSpeed(_SIM_SPEED);
+                _flag1 = 2;
+            }
         }
         
 

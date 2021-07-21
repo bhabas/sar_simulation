@@ -223,7 +223,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                         env.runComplete_flag = True
 
                     # IF TIME SINCE RUN START EXCEEDS [6.0s]
-                    if (env.getTime() - start_time_rollout) > (5.0):
+                    if (env.getTime() - start_time_rollout) > (3.0):
                         env.error_str = "Rollout Completed: Time Exceeded"
                         print(env.error_str)
 
@@ -323,12 +323,12 @@ if __name__ == '__main__':
     # ============================
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[5.85],[3.87]])                 # Initial mu starting point
-    sigma = np.array([[0.00001],[0.00001]])       # Initial sigma starting point
+    mu = np.array([[5.7],[6.0]])                 # Initial mu starting point
+    sigma = np.array([[1.0],[1.0]])       # Initial sigma starting point
 
 
     ## LEARNING AGENTS AND PARAMETERS
-    env.n_rollouts = 3
+    env.n_rollouts = 8
     K_EP_MAX = rospy.get_param("K_EP_MAX")
     agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=env.n_rollouts)
 

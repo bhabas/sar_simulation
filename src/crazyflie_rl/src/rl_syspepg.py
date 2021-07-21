@@ -17,50 +17,37 @@ class ES:
         self.n_rollout = n_rollout
 
 
-    def calcReward_pureLanding(self,env): # state_hist is size 14 x timesteps
+    def calcReward_pureLanding(self,env):
 
 
-        ## r_attitude Calc
-        if env.body_contact == False:
+        ## CALC R_1 FROM FINAL ORIENTATION AT END OF ROLLOUT
+        Rot = Rotation.from_quat([env.orientation_q[1],env.orientation_q[2],env.orientation_q[3],env.orientation_q[0]])
+        b3 = Rot.as_matrix()[:,2]
+        R_1 = (0.5*(np.dot(b3, np.array([0,0,-1]))) + 0.5)*10
 
-            if np.sum(env.pad_contacts)>=1:
-
-                R = Rotation.from_quat([env.orientation_q[1],env.orientation_q[2],env.orientation_q[3],env.orientation_q[0]])
-                b3 = R.as_matrix()[:,2]
-                r_att = (0.5*(np.dot(b3, np.array([0,0,-1]))) + 0.5)*10
-
-            else:
-                r_att = 0.02
-
-        else:
-
-            if np.sum(env.pad_contacts)>=1:
-    
-                R = Rotation.from_quat([env.orientation_q[1],env.orientation_q[2],env.orientation_q[3],env.orientation_q[0]])
-                b3 = R.as_matrix()[:,2]
-                r_att = (0.5*(np.dot(b3, np.array([0,0,-1]))) + 0.5)*3
-            else:
-                r_att = 0.02
-
+        if env.body_contact == True:
+            R_1 = R_1 - 5.0
         
-        ## r_theta Calc
+            
+
+            
+        ## CALC R2 FROM THE MAXIMUM PITCH ANGLE (CONVERT TO IMPACT ANGLE)
         if -170 < np.min(env.pitch_max) <= 0:
-            r_theta = 5*(-1/170*np.min(env.pitch_max))      
+            R_2 = 5*(-1/170*np.min(env.pitch_max))      
         elif -250 <= np.min(env.pitch_max) <= -170:
-            r_theta = 5
+            R_2 = 5
         else:
-            r_theta = 0
-        
-
-
-        ## r_height Calc
-        r_h = (env.z_max/env.h_ceiling)*10
-        
+            R_2 = 0
 
         
-        R = (r_att*10)+r_h + 0.001
+        ## CALC R_3 FROM MAXIMUM HEIGHT ACHIEVED
+        R_3 = (env.z_max/env.h_ceiling)*10
+        
+
+        
+        R_total = (R_1*10)+R_3 + 0.001
         # print(f"Reward: r_c: {r_contact:.3f} | r_theta: {r_theta:.3f} | r_h: {r_h:.3f} | Pitch Max: {env.pitch_max:.2f}")
-        return R
+        return R_total
 
     def get_baseline(self, span):
         # should be the same

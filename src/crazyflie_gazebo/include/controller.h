@@ -87,9 +87,11 @@ class Controller
             _flip_flag = false;
             _impact_flag = false;
             _flag1 = 0;
-            ros::param::get("/CEILING_HEIGHT",_h_ceiling);
-            ros::param::get("/LANDING_SLOWDOWN",_landing_slowdown_flag);
-            ros::param::get("/K_EP_SLOWDOWN",_k_ep_slowdown);
+            ros::param::get("/CEILING_HEIGHT",_H_CEILING);
+            ros::param::get("/LANDING_SLOWDOWN",_LANDING_SLOWDOWN_FLAG);
+            ros::param::get("/K_EP_SLOWDOWN",_K_EP_SLOWDOWN);
+            ros::param::get("/SIM_SPEED",_SIM_SPEED);
+            ros::param::get("/SIM_SLOWDOWN_SPEED",_SIM_SLOWDOWN_SPEED);
         }
 
         // DEFINE FUNCTION PROTOTYPES
@@ -210,10 +212,12 @@ class Controller
 
 
         // MISC VARIABLES
-        double _h_ceiling;
-        bool _landing_slowdown_flag;
         int _k_ep;
-        int _k_ep_slowdown;
+        double _H_CEILING;
+        bool _LANDING_SLOWDOWN_FLAG;
+        int _K_EP_SLOWDOWN;
+        float _SIM_SPEED; 
+        float _SIM_SLOWDOWN_SPEED;
         
 
 
