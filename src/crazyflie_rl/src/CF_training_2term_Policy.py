@@ -355,6 +355,7 @@ if __name__ == '__main__':
     ## RUN TRIAL
     env.RL_Publish() # Publish data to rl_data topic
     time.sleep(3)
+
     runTraining(env,agent,V_d,phi,k_epMax=K_EP_MAX)
     print()
  

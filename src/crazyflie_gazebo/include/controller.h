@@ -8,7 +8,11 @@
 // ROS Includes
 #include <ros/ros.h>
 #include "crazyflie_gazebo/CtrlData.h"
+#include "crazyflie_gazebo/ImpactData.h"
 #include "crazyflie_rl/RLCmd.h"
+#include "crazyflie_rl/RLData.h"
+
+
 #include "nav_msgs/Odometry.h"
 #include "sensor_msgs/Imu.h"
 #include "gazebo_msgs/SetPhysicsProperties.h"
@@ -39,11 +43,14 @@ class Controller
 
             // NOTE: tcpNoDelay() removes delay where system is waiting for datapackets to be fully filled before sending;
             // instead of sending data as soon as it is available to match publishing rate (This is an issue with large messages like Odom or Custom)
+            // Queue lengths are set to '1' so only the newest data is used
             globalState_Subscriber = nh->subscribe("/global_state",1,&Controller::global_stateCallback,this,ros::TransportHints().tcpNoDelay());
             OF_Subscriber = nh->subscribe("/OF_sensor",1,&Controller::OFCallback,this,ros::TransportHints().tcpNoDelay()); 
             imu_Subscriber = nh->subscribe("/imu",1,&Controller::imuCallback,this);
-            // Queue lengths are set to '1' so only the newest data is used
-            
+
+            ceilingFT_Subcriber = nh->subscribe("/ceiling_force_sensor",5,&Controller::ceilingFTCallback,this,ros::TransportHints().tcpNoDelay());
+
+            RLData_Subscriber = nh->subscribe("/rl_data",5,&Controller::RLData_Callback,this);
             RLCmd_Subscriber = nh->subscribe("/rl_ctrl",50,&Controller::RLCmd_Callback,this);
 
             client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
@@ -78,9 +85,11 @@ class Controller
             _G2 = 0.0;
             _policy_armed_flag = false;
             _flip_flag = false;
-
-            ros::param::get("/CEILING_HEIGHT",h_ceiling);
-            ros::param::get("/LANDING_SLOWDOWN",landing_slowdown_flag);
+            _impact_flag = false;
+            _flag1 = 0;
+            ros::param::get("/CEILING_HEIGHT",_h_ceiling);
+            ros::param::get("/LANDING_SLOWDOWN",_landing_slowdown_flag);
+            ros::param::get("/K_EP_SLOWDOWN",_k_ep_slowdown);
         }
 
         // DEFINE FUNCTION PROTOTYPES
@@ -91,6 +100,8 @@ class Controller
         void OFCallback(const nav_msgs::Odometry::ConstPtr &msg);
         void imuCallback(const sensor_msgs::Imu::ConstPtr &msg);
         void RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg);
+        void RLData_Callback(const crazyflie_rl::RLData::ConstPtr &msg);
+        void ceilingFTCallback(const crazyflie_gazebo::ImpactData &msg);
         void adjustSimSpeed(float speed_mult);
 
     private:
@@ -100,7 +111,8 @@ class Controller
         ros::Subscriber OF_Subscriber;
         ros::Subscriber RLCmd_Subscriber;
         ros::Subscriber imu_Subscriber;
-        
+        ros::Subscriber ceilingFT_Subcriber;
+        ros::Subscriber RLData_Subscriber;
 
         ros::ServiceClient client;
 
@@ -154,7 +166,8 @@ class Controller
         double _G2;
         bool _policy_armed_flag;
         bool _flip_flag;
-
+        bool _impact_flag;
+        int _flag1;
         
 
         // CONTROLLER FLAGS
@@ -197,8 +210,10 @@ class Controller
 
 
         // MISC VARIABLES
-        double h_ceiling;
-        bool landing_slowdown_flag;
+        double _h_ceiling;
+        bool _landing_slowdown_flag;
+        int _k_ep;
+        int _k_ep_slowdown;
         
 
 

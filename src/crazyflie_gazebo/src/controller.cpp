@@ -105,7 +105,7 @@ void Controller::OFCallback(const nav_msgs::Odometry::ConstPtr &msg){
     const geometry_msgs::Vector3 velocity = msg->twist.twist.linear;
 
     
-    double d = h_ceiling-position.z; // h_ceiling - height
+    double d = _h_ceiling-position.z; // h_ceiling - height
 
     // SET SENSOR VALUES INTO CLASS VARIABLES
     // _RREV = msg->RREV;
@@ -122,7 +122,9 @@ void Controller::imuCallback(const sensor_msgs::Imu::ConstPtr &msg){
     int a = 0;
 }
 
-
+void Controller::RLData_Callback(const crazyflie_rl::RLData::ConstPtr &msg){
+    _k_ep = msg->k_ep;
+}
 void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
 
     // CREATE CMD VECTOR AND VALS FROM SUBSCRIBED MESSAGE
@@ -154,17 +156,21 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
             _kp_Rf = 1;
             _kd_Rf = 1;
 
+            Controller::adjustSimSpeed(1.0);
+
             
             _motorstop_flag = false;
             _Moment_flag = false;
             _policy_armed_flag = false;
             _flip_flag = false;
+            _impact_flag = false;
+            _flag1 = 0;
             _eul_flag = false;
 
             _tumbled = false;
             // _tumble_detection = true;
 
-            Controller::adjustSimSpeed(2.0);
+            // Controller::adjustSimSpeed(2.0);
 
             break;
         }
@@ -270,6 +276,12 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
 
 }
 
+void Controller::ceilingFTCallback(const crazyflie_gazebo::ImpactData &msg)
+{
+    // _impact_flag = msg->impact_flag;
+    _impact_flag = true;
+}
+
 void Controller::adjustSimSpeed(float speed_mult)
 {
     gazebo_msgs::SetPhysicsProperties srv;
@@ -311,11 +323,15 @@ void Controller::controlThread()
 
 
     // LOCAL STATE DECLARATIONS //
-    Vector3d statePos;   // Current position [m]
-    Vector3d stateVel;   // Current velocity [m]
-    Vector4d stateQuat;  // Current attitude [rad] (quat form)
-    Vector3d eul;   // Current attitude [rad] (roll, pitch, yaw angles)
-    Vector3d stateOmega; // Current angular velocity [rad/s]
+    Vector3d statePos;      // Current position [m]
+    Vector3d stateVel;      // Current velocity [m/s]
+
+    Vector4d stateQuat;     // Current attitude [rad] (quat form)
+    Vector3d stateEul;      // Current attitude [rad] (roll, pitch, yaw angles)
+    Vector3d stateOmega;    // Current angular velocity [rad/s]
+
+    Vector3d stateVel_prev(0,0,0);  // Previous velocity [m/s]
+    Vector3d stateAccel;    // Current acceleration [m/s^2]
 
     Vector3d pos_tr;    // Flip trigger position [m]
     Vector3d vel_tr;    // Flip trigger velocity [m]
@@ -607,14 +623,7 @@ void Controller::controlThread()
                     F_thrust = 0;
                 }
                 
-                if(landing_slowdown_flag==true){
-                    
-                    // WHEN CLOSE TO THE CEILING REDUCE SIM SPEED
-                    if(h_ceiling-statePos(2)<=0.3){
-                        float speed_mult = 0.1;
-                        Controller::adjustSimSpeed(speed_mult);
-                    }
-                }
+                
                 
             }
             else{
@@ -627,6 +636,24 @@ void Controller::controlThread()
             F_thrust = 0;
             M << 0.0,0.0,0.0;
         }
+
+        // if(_landing_slowdown_flag==true && _k_ep>=_k_ep_slowdown){
+
+        // WHEN CLOSE TO THE CEILING REDUCE SIM SPEED
+        if(_h_ceiling-statePos(2)<=0.2 && _flag1 == 0){
+            
+            Controller::adjustSimSpeed(0.1);
+            _flag1 = 1;
+
+        }
+
+        if(_impact_flag == true && _flag1 == 1)
+        {
+            
+            Controller::adjustSimSpeed(1.0);
+            _flag1 = 2;
+        }
+                // }
 
         FM << F_thrust,M*1e3; // Thrust-Moment control vector
     
@@ -676,8 +703,9 @@ void Controller::controlThread()
         }
         
 
-
-        if (t_step%25 == 0){ // General Debugging output
+    
+        // DATA HANDLING
+        if (t_step%50 == 0){ // General Debugging output
         cout << setprecision(4) <<
         "t: " << _t << "\tCmd: " << _ctrl_cmd.transpose() << endl << 
         endl <<
@@ -693,7 +721,8 @@ void Controller::controlThread()
         "i_range_z: " << i_range_z << "\ti_range_R_z: " << i_range_R_z << endl <<
         endl << 
         setprecision(0) <<
-        "Policy_armed: " << _policy_armed_flag <<  "\t\t\tFlip_flag: " << _flip_flag << endl <<
+        "Policy_armed: " << _policy_armed_flag <<  "\tFlip_flag: " << _flip_flag << "\tImpact_flag: " << _impact_flag << endl <<
+        "Flag1: " << _flag1 << endl <<
         "Tumble Detection: " << _tumble_detection << "\t\tTumbled: " << _tumbled << endl <<
         "kp_xf: " << _kp_xf << " \tkd_xf: " << _kd_xf << "\tkp_Rf: " << _kp_Rf << "\tkd_Rf: " << _kd_Rf  << endl <<
         endl << setprecision(3) <<

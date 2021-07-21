@@ -69,7 +69,7 @@ void gazeboFT_Callback(const ConstWrenchStampedPtr &_msg)
   }
 
 
-  if (_ceiling_ft_z >= 2.0 && _impact_flag == false){ 
+  if (_ceiling_ft_z >= 0.25 && _impact_flag == false){ 
     // LOCK IN STATE DATA WHEN IMPACT DETECTED
     _impact_flag = true;
 
@@ -80,6 +80,13 @@ void gazeboFT_Callback(const ConstWrenchStampedPtr &_msg)
     _vel_impact = _vel_arr[2];
     _quat_impact = _quat_arr[2];
     _omega_impact = _omega_arr[2];
+
+
+    //PUBLISH THAT IMPACT OCCURED
+    crazyflie_gazebo::ImpactData impact_msg;
+    impact_msg.impact_flag = _impact_flag;
+    impactForce_Publisher.publish(impact_msg);
+  
   }
 
   
