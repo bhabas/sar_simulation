@@ -465,7 +465,7 @@ void Controller::controlThread()
 
     float f_total = 0.0;
     // =========== ROS Definitions =========== //
-    crazyflie_gazebo::CtrlData ctrl_msg;
+    crazyflie_msgs::CtrlData ctrl_msg;
     ros::Rate rate(500);
 
     while(_isRunning)
