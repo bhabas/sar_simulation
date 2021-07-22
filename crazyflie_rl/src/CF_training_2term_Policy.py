@@ -323,8 +323,8 @@ if __name__ == '__main__':
     # ============================
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[5.7],[6.0]])                 # Initial mu starting point
-    sigma = np.array([[1.0],[1.0]])       # Initial sigma starting point
+    mu = np.array([[3.95],[6.0]])                 # Initial mu starting point
+    sigma = np.array([[0.001],[0.001]])       # Initial sigma starting point
 
 
     ## LEARNING AGENTS AND PARAMETERS
@@ -338,7 +338,7 @@ if __name__ == '__main__':
     # ============================
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
-    V_d = 2.5   # [m/s]
+    V_d = 2.653   # [m/s]
     phi = 90    # [deg]
 
 
@@ -346,7 +346,7 @@ if __name__ == '__main__':
     ## INITIALIALIZE LOGGING DATA
     trial_num = 3
     env.agent_name = agent.agent_type
-    env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}"
+    env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--SIM"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
     env.logging_flag = True
        
