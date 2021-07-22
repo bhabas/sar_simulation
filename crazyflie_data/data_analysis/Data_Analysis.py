@@ -22,6 +22,7 @@ class DataFile:
         final_valid_index = self.trial_df[self.trial_df['Error']=='Impact Data'].index.values[-1]
         self.trial_df = self.trial_df.iloc[:final_valid_index+1]
         self.trial_df = self.trial_df.round(3) # Round values to prevent floating point precision issues
+        self.trial_df = self.trial_df.replace({'False':False,'True':True})
 
         ## CREATE BASIC DF OF K_EP,K_RUN, & REWARD
         self.k_df = self.trial_df.iloc[:][['k_ep','k_run','reward']].dropna()
@@ -111,6 +112,7 @@ class DataFile:
         """        
         ## CREATE ARRAYS FOR REWARD, K_EP 
         reward_df = self.trial_df.iloc[:][['k_ep','reward']].dropna() # Create df from k_ep/rewards and drop blank reward rows
+        reward_df = reward_df.query(f"reward != {False}").astype('float')
         rewards_arr = reward_df.to_numpy()
         rewards = rewards_arr[:,1]
         k_ep_r = rewards_arr[:,0]

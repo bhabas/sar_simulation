@@ -1,0 +1,3 @@
+<launch>
+    <node name = "dashboard_node" pkg = "crazyflie_sim_dashboard" type="dashboard_RL.py" output="log"/>
+</launch>

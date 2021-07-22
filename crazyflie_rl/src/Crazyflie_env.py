@@ -375,7 +375,7 @@ class CrazyflieEnv:
         """        
         self.close_sim()
         time.sleep(0.5)
-        self.launch_controller()
+        # self.launch_controller()
         self.launch_sim()
 
         self.reset_pos()

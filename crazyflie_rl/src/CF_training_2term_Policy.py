@@ -317,7 +317,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=False)
+    env = CrazyflieEnv(gazeboTimeout=True)
     # env.launch_dashboard()
 
     # ============================
@@ -325,8 +325,8 @@ if __name__ == '__main__':
     # ============================
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[3.95],[6.0]])                 # Initial mu starting point
-    sigma = np.array([[0.001],[0.001]])       # Initial sigma starting point
+    mu = np.array([[6.0],[5.0]])                 # Initial mu starting point
+    sigma = np.array([[1.0],[1.0]])       # Initial sigma starting point
 
 
     ## LEARNING AGENTS AND PARAMETERS
@@ -346,7 +346,7 @@ if __name__ == '__main__':
 
     
     ## INITIALIALIZE LOGGING DATA
-    trial_num = 3
+    trial_num = 2
     env.agent_name = agent.agent_type
     env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--SIM"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
