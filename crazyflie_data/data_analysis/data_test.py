@@ -31,6 +31,6 @@ k_run = 1
 np.set_printoptions(suppress=True)
 
 
-trial.grab_FullState(k_ep, k_run, 7.743)
+trial.grab_impact_time(k_ep,k_run)
 
 

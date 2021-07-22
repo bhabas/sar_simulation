@@ -663,9 +663,9 @@ class DataFile:
         Returns:
             float: Initial Velocity Conditions (vx,vy,vz)
         """        
-        vx_IC = self.trial_df.iloc[-1]['vx']
-        vy_IC = self.trial_df.iloc[-1]['vy']
-        vz_IC = self.trial_df.iloc[-1]['vz']
+        vx_IC = self.trial_df.iloc[-3]['vx']
+        vy_IC = self.trial_df.iloc[-3]['vy']
+        vz_IC = self.trial_df.iloc[-3]['vz']
         
         return vx_IC,vy_IC,vz_IC
 
@@ -747,15 +747,9 @@ class DataFile:
         Returns:
             float: state_flip
         """        
-        if self.dataType == 'EXP':
 
-            run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
-            state_flip = run_df.query(f"flip_flag=={True}").iloc[0][stateName]
-
-        elif self.dataType == 'SIM':
-
-            _,_,flip_df,_ = self.select_run(k_ep,k_run)
-            state_flip = flip_df.iloc[0][stateName]
+        _,_,flip_df,_ = self.select_run(k_ep,k_run)
+        state_flip = flip_df.iloc[0][stateName]
 
     
         return state_flip
@@ -776,19 +770,14 @@ class DataFile:
         """     
         
         ## CREATE QUAT DATAFRAME FROM RUN_DF
-        run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
         
         if External_data==False:
             quat_list = ['qw','qx','qy','qz']
         else:
             quat_list = ['qw_Ext','qx_Ext','qy_Ext','qz_Ext']
 
-
-        if self.dataType == 'EXP':
-
-            run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
-            quat_df = run_df.query(f"flip_flag=={True}").iloc[0][quat_list]
-
+        run_df,IC_df,flip_df,_ = self.select_run(k_ep,k_run)
+        quat_df = flip_df.iloc[0][quat_list]
 
         ## CONVERT QUATS TO EULER ANGLES AND BACK TO DF
         quat_arr = quat_df.to_numpy()
@@ -823,9 +812,9 @@ class DataFile:
             t_impact_norm [float]: Normalized impact time 
         """        
 
-        run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
 
         if self.dataType == 'EXP':
+            run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
             t_traj = run_df.query(f"`v_d.z` > {0.0}").iloc[0]['t']
             _,accel_df = self.grab_accel_data(k_ep,k_run)
 
@@ -835,8 +824,12 @@ class DataFile:
         elif self.dataType == 'SIM':
 
             run_df,_,_,impact_df = self.select_run(k_ep,k_run)
-            t_impact = impact_df.iloc[0]['t']
-            t_impact_norm = t_impact - run_df.iloc[0]['t'] # Normalize flip time
+            if impact_df.iloc[0]['reward'] == True: # If Impact Detected
+                t_impact = impact_df.iloc[0]['t']
+                t_impact_norm = t_impact - run_df.iloc[0]['t'] # Normalize flip time
+            else:
+                t_impact = np.nan
+                t_impact_norm = np.nan
 
         return t_impact,t_impact_norm
 
@@ -854,17 +847,20 @@ class DataFile:
             state_impact [float]: State at impact
         """        
 
-        run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
 
         if self.dataType == 'EXP':
 
+            run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
             t_impact,t_impact_norm = self.grab_impact_time(k_ep,k_run)
             state_impact = run_df.query(f"t == {t_impact}").iloc[0][stateName]
 
         elif self.dataType == 'SIM':
+            _,_,impact_df,_ = self.select_run(k_ep,k_run)
+            if impact_df.iloc[0]['reward'] == True: # If Impact Detected
 
-            _,_,_,impact_df = self.select_run(k_ep,k_run)
-            state_impact = impact_df.iloc[0][stateName]
+                state_impact = impact_df.iloc[0][stateName]
+            else:
+                state_impact = np.nan
 
 
         return state_impact
@@ -885,7 +881,6 @@ class DataFile:
         """        
 
         ## CREATE QUAT DATAFRAME FROM RUN_DF
-        run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
         
         if External_data==False:
             quat_list = ['qw','qx','qy','qz']
@@ -900,6 +895,18 @@ class DataFile:
             ## GRAB QUAT AT T_IMPACT
             t_impact,_ = self.grab_impact_time(k_ep,k_run)
             quat_df = run_df.query(f"t=={t_impact}").iloc[0][quat_list]
+            
+        elif self.dataType == 'SIM':
+
+            
+            _,_,_,impact_df = self.select_run(k_ep,k_run)
+
+            if impact_df.iloc[0]['reward'] == True: # If Impact Detected
+
+                quat_df = impact_df.iloc[0][quat_list]
+            else:
+                return np.array([np.nan,np.nan,np.nan])
+        
 
 
         ## CONVERT QUATS TO EULER ANGLES AND BACK TO DF

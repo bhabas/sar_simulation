@@ -513,7 +513,32 @@ class CrazyflieEnv:
         self.Cmd_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
         self.Cmd_Publisher.publish(cmd_msg) # So I'm sending it twice 
         
-        
+    def clear_IF_Data(self):
+
+                
+        self.t_flip = np.nan
+
+        self.pos_flip = np.full_like(self.pos_flip,np.nan)
+        self.quat_flip = np.full_like(self.quat_flip,np.nan)
+        self.vel_flip = np.full_like(self.vel_flip,np.nan)
+        self.omega_flip = np.full_like(self.omega_flip,np.nan)
+
+        self.FM_flip = np.full_like(self.FM_flip,np.nan)
+        self.RREV_tr = np.full_like(self.RREV_tr,np.nan)
+        self.OF_y_tr = np.full_like(self.OF_y_tr,np.nan)
+
+
+
+        self.t_impact = np.nan
+
+        self.pos_impact = np.full_like(self.pos_impact,np.nan)
+        self.quat_impact = np.full_like(self.quat_impact,np.nan)
+        self.vel_impact = np.full_like(self.vel_impact,np.nan)
+        self.omega_impact = np.full_like(self.omega_impact,np.nan)
+
+        self.ceiling_ft_z = np.nan
+        self.ceiling_ft_x = np.nan
+
 
     # ============================
     ##      Data Logging 

@@ -280,6 +280,8 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                         env.append_csv_blank()
 
                         env.reset_pos()
+
+                        env.clear_IF_Data()
                         
                     
                         break # Break from run loop
