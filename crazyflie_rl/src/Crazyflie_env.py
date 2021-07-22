@@ -592,7 +592,7 @@ class CrazyflieEnv:
                     self.quat_impact[0],self.quat_impact[1],self.quat_impact[2],self.quat_impact[3],    # qw,qx,qy,qz
                     self.vel_impact[0],self.vel_impact[1],self.vel_impact[2],    # vx_d,vy_d,vz_d
                     self.omega_impact[0],self.omega_impact[1],self.omega_impact[2],  # wx,wy,wz
-                    "",self.body_contact,sum(self.pad_contacts),"",  # "", "", body_impact flag, num leg contacts, ""
+                    self.impact_flag,self.body_contact,sum(self.pad_contacts),"",  # "", "", body_impact flag, num leg contacts, ""
                     self.ceiling_ft_z,self.ceiling_ft_x,"",             # Max impact force [z], =Max impact force [x], ""
                     "","","","", # MS1, MS2, MS3, MS4
                     "","","","", # F_thrust,Mx,My,Mz (Impact)

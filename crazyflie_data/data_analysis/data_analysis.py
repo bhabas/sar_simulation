@@ -1,9 +1,9 @@
 import numpy as np
-from numpy.core import arrayprint
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation
 import os
+import re
 
 os.system("clear")
 
@@ -15,8 +15,9 @@ class DataFile:
         self.dataPath = dataPath
         filepath = self.dataPath + self.fileName
 
-        self.dataType = fileName[39:42]
+        self.dataType = re.findall('SIM|EXP',fileName)[0] # FIND 'SIM' OR 'EXP'
         self.trial_df = pd.read_csv(filepath,low_memory=False)
+        self.trial_df = self.trial_df.round(3) # Round values to prevent floating point precision issues
 
         ## COLLECT BASIC TRIAL INFO
         # self.n_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
@@ -124,7 +125,7 @@ class DataFile:
                
         ## CREATE ARRAYS FOR REWARD, K_EP 
         reward_df = self.trial_df.iloc[:][['reward']].dropna() # Create df from k_ep/rewards and drop blank reward rows
-        reward_df = reward_df.iloc[-int(N)*self.n_rollouts:]['reward']
+        reward_df = reward_df.iloc[-int(N)*self.n_rollouts:]['reward'] # Trim to last N episodes
         rewards_arr = reward_df.to_numpy()
         avg_reward = np.mean(rewards_arr)
         
@@ -193,7 +194,7 @@ class DataFile:
 
         
 
-        ## CREATE NP ARRAYS FOR MU & SIGMA OVER TRIAL
+        ## CREATE ARRAYS FOR MU & SIGMA OVER TRIAL
         mu_arr = []
         for mu in policy_df.iloc[:]['mu']:
             mu = np.fromstring(mu[1:-1], dtype=float, sep=' ')
@@ -363,13 +364,6 @@ class DataFile:
             state_vals = self.grab_stateData(k_ep,k_run,state)
             ax.plot(t_norm,state_vals,label=f"{state}",zorder=1,color=color)
 
-            ## MARK STATE DATA AT TRAJ START
-            t_traj,t_traj_norm = self.grab_traj_start(k_ep,k_run)
-            state_traj = self.grab_traj_state(k_ep,k_run,state)
-            ax.scatter(t_traj_norm,state_traj,label=f"{state}-Traj",zorder=2,
-                        marker='o',
-                        color=color,
-                        s=25)
 
 
             ## MARK STATE DATA AT FLIP TIME
@@ -380,14 +374,22 @@ class DataFile:
                         color=color,
                         s=100)
 
-            ## MARK STATE DATA AT IMPACT TIME
-            t_impact,t_impact_norm = self.grab_impact_time(k_ep,k_run)
-            state_flip = self.grab_impact_state(k_ep,k_run,state)
-            ax.scatter(t_impact_norm,state_flip,label=f"{state}-Impact",zorder=2,
-                        marker='s',
-                        color=color,
-                        s=50)
+            # # ## MARK STATE DATA AT IMPACT TIME
+            # t_impact,t_impact_norm = self.grab_impact_time(k_ep,k_run)
+            # state_flip = self.grab_impact_state(k_ep,k_run,state)
+            # ax.scatter(t_impact_norm,state_flip,label=f"{state}-Impact",zorder=2,
+            #             marker='s',
+            #             color=color,
+            #             s=50)
 
+            ## MARK STATE DATA AT TRAJ START
+            if self.dataType == 'EXP':
+                t_traj,t_traj_norm = self.grab_traj_start(k_ep,k_run)
+                state_traj = self.grab_traj_state(k_ep,k_run,state)
+                ax.scatter(t_traj_norm,state_traj,label=f"{state}-Traj",zorder=2,
+                            marker='o',
+                            color=color,
+                            s=25)
 
 
         ax.set_xlabel("time [s]")
@@ -413,20 +415,23 @@ class DataFile:
                 'quat': Quat    # Orientation [qx,qy,qz,qw]
             }
 
+        if self.dataType == 'EXP':
         ## CREATE DICT OF DESIRED STATE FROM SELECTED DATA ROW
-        df_DC = run_df.query(f"t=={t}").iloc[[0]][['x_d.x','x_d.y','x_d.z','v_d.x','v_d.y','v_d.z','a_d.x','a_d.y','a_d.z']]
+            df_DC = run_df.query(f"t=={t}").iloc[[0]][['x_d.x','x_d.y','x_d.z','v_d.x','v_d.y','v_d.z','a_d.x','a_d.y','a_d.z']]
 
-        x_d = df_DC[['x_d.x','x_d.y','x_d.z']].to_numpy().T
-        v_d = df_DC[['v_d.x','v_d.y','v_d.z']].to_numpy().T
-        a_d = df_DC[['a_d.x','a_d.y','a_d.z']].to_numpy().T
+            x_d = df_DC[['x_d.x','x_d.y','x_d.z']].to_numpy().T
+            v_d = df_DC[['v_d.x','v_d.y','v_d.z']].to_numpy().T
+            a_d = df_DC[['a_d.x','a_d.y','a_d.z']].to_numpy().T
 
-        DesiredState = {
-            'x_d':x_d,
-            'v_d':v_d,
-            'a_d':a_d
-        }
+            DesiredState = {
+                'x_d':x_d,
+                'v_d':v_d,
+                'a_d':a_d
+            }
 
-        return FullState,DesiredState
+            return FullState,DesiredState
+        
+        return FullState,_
 
 
 
@@ -827,6 +832,11 @@ class DataFile:
             t_impact = accel_df.query(f"t >= {t_traj} & a_z <= {accel_threshold}").iloc[0]['t']
             t_impact_norm = t_impact - run_df.iloc[0]['t'] # Normalize impact time
 
+        elif self.dataType == 'SIM':
+
+            run_df,_,_,impact_df = self.select_run(k_ep,k_run)
+            t_impact = impact_df.iloc[0]['t']
+            t_impact_norm = t_impact - run_df.iloc[0]['t'] # Normalize flip time
 
         return t_impact,t_impact_norm
 
@@ -852,7 +862,9 @@ class DataFile:
             state_impact = run_df.query(f"t == {t_impact}").iloc[0][stateName]
 
         elif self.dataType == 'SIM':
-            pass
+
+            _,_,_,impact_df = self.select_run(k_ep,k_run)
+            state_impact = impact_df.iloc[0][stateName]
 
 
         return state_impact
@@ -1172,7 +1184,7 @@ if __name__ == "__main__":
     # from data_analysis import DataFile
 
     dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/logs/"
-    fileName = "EM_PEPG--Vd_2.65--phi_90.00--trial_03--Exp.csv"
+    fileName = "EM_PEPG--Vd_2.65--phi_90.00--trial_03--EXP.csv"
     # fileName = "EM_PEPG--Vd_2.50--phi_90.00--trial_00--EXP.csv"
 
     trial = DataFile(dataPath,fileName)

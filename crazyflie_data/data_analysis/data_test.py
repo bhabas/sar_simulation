@@ -30,6 +30,7 @@ k_run = 1
 
 np.set_printoptions(suppress=True)
 
-trial.plot_rewardData()
+
+trial.grab_FullState(k_ep, k_run, 7.743)
 
 
