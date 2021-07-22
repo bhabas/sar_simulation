@@ -16,7 +16,8 @@ trial = DataFile(dataPath,fileName)
 k_ep = 19
 k_run = 5
 
-trial.plot_rewardData()
+# trial.plot_rewardData()
+trial.plot_state_spread_flip('RREV')
 # trial.grab_impact_time(k_ep,k_run)
 
 

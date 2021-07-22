@@ -328,6 +328,29 @@ class DataFile:
         return alpha_mu,alpha_sigma,mu,sigma
 
 
+    def plot_state_spread_flip(self,stateName,N:int=3): # Plot bar chart showing spread of state values over last N episodes
+        
+        ## CREATE ARRAYS FOR REWARD, K_EP 
+        a = self.trial_df.query(f"Error == 'Flip Data'").iloc[:][['qy']].to_numpy()
+        y,x = np.histogram(a,bins=[0,2,4,6,8,10])
+
+        fig = plt.figure(0)
+        ax = fig.add_subplot(111)
+
+        ax.hist(a,bins='auto')
+
+        plt.show()
+
+        # bins = np.array([0.0,4.0,5.0,6.0,7.0,8.0,10.0])
+        # b = np.digitize(a,bins)
+        # np.bincount(b.flatten())
+        # reward_df = self.trial_df.iloc[:][[stateName]].dropna() # Create df from k_ep/rewards and drop blank reward rows
+        # reward_df = reward_df.iloc[-int(N)*self.n_rollouts:]['reward'] # Trim to last N episodes
+        # rewards_arr = reward_df.to_numpy()
+        # avg_reward = np.mean(rewards_arr)
+
+        pass
+
 ## STATE FUNCTIONS 
     def grab_stateData(self,k_ep,k_run,stateName: list):
         """Returns np.array of specified state
