@@ -26,7 +26,7 @@ class DataFile:
         ## CREATE BASIC DF OF K_EP,K_RUN, & REWARD
         self.k_df = self.trial_df.iloc[:][['k_ep','k_run','reward']].dropna()
         self.k_df.reset_index(inplace=True)
-        
+
         if self.dataType=='EXP':
             self.remove_FailedRuns()
 
@@ -732,8 +732,22 @@ class DataFile:
 
         if self.dataType == 'EXP':
 
-            run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
-            t_flip = run_df.query(f"flip_flag=={True}").iloc[0]['t']
+            run_df,IC_df,flip_df,_ = self.select_run(k_ep,k_run)
+
+            ## FIND INDEX OF BEFORE AND AFTER THE FLIP
+            flip_index = run_df[run_df['flip_flag']==True].index.values[0]
+            flip_index_prev = flip_index - 1
+
+            ## FIND INTERPOLATION FACTOR OF TIME BETWEEN INDEXES
+            z_i = run_df.iloc[flip_index_prev]['z']         # z-height before flip
+            z_f = run_df.iloc[flip_index]['z']              # z-height after flip
+            z_flip = self.grab_flip_state(k_ep,k_run,'z')   # z-height flip
+            alpha = (z_flip - z_i)/(z_f - z_i)              # Interpolation factor
+
+            ## FIND THE INTERPOLATED TIME
+            t_i = run_df.iloc[flip_index_prev]['t']
+            t_f = run_df.iloc[flip_index]['t']
+            t_flip = t_i + alpha*(t_f-t_i)
             t_flip_norm = t_flip - run_df.iloc[0]['t'] # Normalize flip time
 
         elif self.dataType == 'SIM':

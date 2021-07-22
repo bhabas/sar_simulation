@@ -16,10 +16,11 @@ trial_sim = DataFile(dataPath,fileName_SIM)
 trial_exp = DataFile(dataPath,fileName_EXP)
 
 k_ep = 0
-k_run = 1
+k_run = 0
 
 np.set_printoptions(suppress=True)
 
+trial_exp.grab_flip_time(k_ep,k_run)
 
 # trial.grab_impact_time(k_ep,k_run)
 
