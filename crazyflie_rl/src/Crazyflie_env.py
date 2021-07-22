@@ -11,8 +11,9 @@ from std_srvs.srv import Empty
 
 
 from sensor_msgs.msg import LaserScan, Image, Imu
-from crazyflie_rl.msg import RLData,RLCmd
-from crazyflie_gazebo.msg import CtrlData,ImpactData
+from crazyflie_msgs.msg import RLData,RLCmd
+from crazyflie_msgs.msg import ImpactData
+from crazyflie_msgs.msg import CtrlData
 from rosgraph_msgs.msg import Clock
 from gazebo_msgs.msg import ModelState,ContactsState
 from gazebo_msgs.srv import SetModelState
@@ -35,7 +36,7 @@ class CrazyflieEnv:
 
         self.isRunning = True
         self.username = getpass.getuser()
-        self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/log"
+        self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/crazyflie_data/logs"
         self.logging_flag = False
         self.filepath = ""
         self.state_current = np.zeros(13)
@@ -401,7 +402,7 @@ class CrazyflieEnv:
         
         print("[STARTING] Starting Gazebo Process...")
         self.gazebo_p = subprocess.Popen( # Gazebo Process
-            "gnome-terminal --disable-factory  --geometry 70x42+3154+154 -- ~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/utility/launch_gazebo.bash", 
+            "gnome-terminal --disable-factory  --geometry 70x42+3154+154 -- rosrun crazyflie_launch launch_gazebo.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         
         
@@ -415,13 +416,13 @@ class CrazyflieEnv:
     def launch_dashboard(self):
         print("[STARTING] Starting Dashboard...")
         self.dashboard_p = subprocess.Popen(
-            "gnome-terminal -- roslaunch dashboard_gui_pkg dashboard.launch",
+            "gnome-terminal -- roslaunch crazyflie_launch dashboard.launch",
             close_fds=True, preexec_fn=os.setsid, shell=True)
 
     def launch_controller(self):
         print("[STARTING] Starting Controller Process...")
         self.controller_p = subprocess.Popen( # Controller Process
-            "roslaunch crazyflie_gazebo controller.launch",
+            "roslaunch crazyflie_launch controller.launch",
             close_fds=True, preexec_fn=os.setsid, shell=True)
 
 

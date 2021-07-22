@@ -122,10 +122,10 @@ void Controller::imuCallback(const sensor_msgs::Imu::ConstPtr &msg){
     int a = 0;
 }
 
-void Controller::RLData_Callback(const crazyflie_rl::RLData::ConstPtr &msg){
+void Controller::RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){
     _k_ep = msg->k_ep;
 }
-void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
+void Controller::RLCmd_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg){
 
     // CREATE CMD VECTOR AND VALS FROM SUBSCRIBED MESSAGE
     int cmd_type = msg->cmd_type;                       // Read cmd type from incoming message
@@ -276,7 +276,7 @@ void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
 
 }
 
-void Controller::ceilingFTCallback(const crazyflie_gazebo::ImpactData &msg)
+void Controller::ceilingFTCallback(const crazyflie_msgs::ImpactData &msg)
 {
     // _impact_flag = msg->impact_flag;
     _impact_flag = true;
@@ -465,7 +465,7 @@ void Controller::controlThread()
 
     float f_total = 0.0;
     // =========== ROS Definitions =========== //
-    crazyflie_gazebo::CtrlData ctrl_msg;
+    crazyflie_msgs::CtrlData ctrl_msg;
     ros::Rate rate(500);
 
     while(_isRunning)
@@ -696,12 +696,18 @@ void Controller::controlThread()
 
             }
 
+            // IF IMPACTED OR MISSED CEILING, INCREASE SIM SPEED TO DEFAULT
             if(_impact_flag == true && _flag1 == 1)
             {
                 
                 Controller::adjustSimSpeed(_SIM_SPEED);
                 _flag1 = 2;
             }
+            else if(stateVel(2) <= -0.5 && _flag1 == 1){
+                Controller::adjustSimSpeed(_SIM_SPEED);
+                _flag1 = 2;
+            }
+
         }
         
 

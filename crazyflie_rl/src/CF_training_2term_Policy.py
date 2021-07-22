@@ -4,7 +4,7 @@
 import numpy as np
 import time,os
 import rospy
-from crazyflie_gazebo.msg import CtrlData
+from crazyflie_msgs.msg import CtrlData
 
 
 

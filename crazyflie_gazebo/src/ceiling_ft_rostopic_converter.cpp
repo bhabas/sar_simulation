@@ -17,8 +17,8 @@
 // ROS dependencies
 #include <ros/ros.h>
 #include <geometry_msgs/WrenchStamped.h>
-#include "crazyflie_rl/RLData.h"
-#include "crazyflie_gazebo/ImpactData.h"
+#include "crazyflie_msgs/RLData.h"
+#include "crazyflie_msgs/ImpactData.h"
 #include "nav_msgs/Odometry.h"
 
 
@@ -83,7 +83,7 @@ void gazeboFT_Callback(const ConstWrenchStampedPtr &_msg)
 
 
     //PUBLISH THAT IMPACT OCCURED
-    crazyflie_gazebo::ImpactData impact_msg;
+    crazyflie_msgs::ImpactData impact_msg;
     impact_msg.impact_flag = _impact_flag;
     impactForce_Publisher.publish(impact_msg);
   
@@ -95,13 +95,13 @@ void gazeboFT_Callback(const ConstWrenchStampedPtr &_msg)
  
 }
 
-void RLdata_Callback(const crazyflie_rl::RLData::ConstPtr &msg)
+void RLdata_Callback(const crazyflie_msgs::RLData::ConstPtr &msg)
 {
   // WHEN RUN COMPLETED PUBLISH IMPACT DATA
   if(msg->runComplete_flag == true)
   {
       
-    crazyflie_gazebo::ImpactData impact_msg;
+    crazyflie_msgs::ImpactData impact_msg;
   
     impact_msg.impact_flag = _impact_flag;
     impact_msg.Header.stamp = _t_impact;
@@ -198,7 +198,7 @@ int main(int argc, char **argv)
   std::string ros_topic_to_pub="/ceiling_force_sensor";
   
   // INIT ROS PUBLISHERS/SUBSCRIBERS
-  impactForce_Publisher = nh.advertise<crazyflie_gazebo::ImpactData>(ros_topic_to_pub, 1);
+  impactForce_Publisher = nh.advertise<crazyflie_msgs::ImpactData>(ros_topic_to_pub, 1);
   globalState_Subscriber = nh.subscribe("/global_state",1,global_stateCallback,ros::TransportHints().tcpNoDelay());
   RLdata_Subscriber = nh.subscribe("/rl_data",5,RLdata_Callback);
   ROS_INFO("ROS Subscribers/Publishers Started");

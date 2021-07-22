@@ -7,10 +7,10 @@
 
 // ROS Includes
 #include <ros/ros.h>
-#include "crazyflie_gazebo/CtrlData.h"
-#include "crazyflie_gazebo/ImpactData.h"
-#include "crazyflie_rl/RLCmd.h"
-#include "crazyflie_rl/RLData.h"
+#include "crazyflie_msgs/CtrlData.h"
+#include "crazyflie_msgs/ImpactData.h"
+#include "crazyflie_msgs/RLCmd.h"
+#include "crazyflie_msgs/RLData.h"
 
 
 #include "nav_msgs/Odometry.h"
@@ -39,7 +39,7 @@ class Controller
     public:
         // CONSTRUCTOR TO START PUBLISHERS AND SUBSCRIBERS (Similar to Python's __init__() )
         Controller(ros::NodeHandle *nh){
-            ctrl_Publisher = nh->advertise<crazyflie_gazebo::CtrlData>("/ctrl_data",1);
+            ctrl_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/ctrl_data",1);
 
             // NOTE: tcpNoDelay() removes delay where system is waiting for datapackets to be fully filled before sending;
             // instead of sending data as soon as it is available to match publishing rate (This is an issue with large messages like Odom or Custom)
@@ -101,9 +101,9 @@ class Controller
         void global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg);
         void OFCallback(const nav_msgs::Odometry::ConstPtr &msg);
         void imuCallback(const sensor_msgs::Imu::ConstPtr &msg);
-        void RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg);
-        void RLData_Callback(const crazyflie_rl::RLData::ConstPtr &msg);
-        void ceilingFTCallback(const crazyflie_gazebo::ImpactData &msg);
+        void RLCmd_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
+        void RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg);
+        void ceilingFTCallback(const crazyflie_msgs::ImpactData &msg);
         void adjustSimSpeed(float speed_mult);
 
     private:

@@ -53,8 +53,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  RLData.msg
-  RLCmd.msg
+  # RLData.msg
+  # RLCmd.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -86,7 +86,7 @@ generate_messages(
 
 ## To declare and build dynamic reconfigure parameters within this
 ## package, follow these steps:
-## * In the file package.xml:
+## * In the file package.xml:R_tot
 ##   * add a build_depend and a exec_depend tag for "dynamic_reconfigure"
 ## * In this file (CMakeLists.txt):
 ##   * add "dynamic_reconfigure" to
