@@ -276,7 +276,7 @@ void Controller::RLCmd_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg){
 
 }
 
-void Controller::ceilingFTCallback(const crazyflie_gazebo::ImpactData &msg)
+void Controller::ceilingFTCallback(const crazyflie_msgs::ImpactData &msg)
 {
     // _impact_flag = msg->impact_flag;
     _impact_flag = true;

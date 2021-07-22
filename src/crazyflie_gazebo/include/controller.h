@@ -8,7 +8,7 @@
 // ROS Includes
 #include <ros/ros.h>
 #include "crazyflie_msgs/CtrlData.h"
-#include "crazyflie_gazebo/ImpactData.h"
+#include "crazyflie_msgs/ImpactData.h"
 #include "crazyflie_msgs/RLCmd.h"
 #include "crazyflie_msgs/RLData.h"
 
@@ -103,7 +103,7 @@ class Controller
         void imuCallback(const sensor_msgs::Imu::ConstPtr &msg);
         void RLCmd_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
         void RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg);
-        void ceilingFTCallback(const crazyflie_gazebo::ImpactData &msg);
+        void ceilingFTCallback(const crazyflie_msgs::ImpactData &msg);
         void adjustSimSpeed(float speed_mult);
 
     private:
