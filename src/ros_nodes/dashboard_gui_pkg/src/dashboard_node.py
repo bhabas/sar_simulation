@@ -1,7 +1,7 @@
 import rospy
 import numpy as np
 
-from crazyflie_rl.msg import RLData
+from crazyflie_msgs.msg import RLData
 from crazyflie_gazebo.msg import CtrlData
 from nav_msgs.msg import Odometry
 

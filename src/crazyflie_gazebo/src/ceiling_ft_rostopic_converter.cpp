@@ -17,7 +17,7 @@
 // ROS dependencies
 #include <ros/ros.h>
 #include <geometry_msgs/WrenchStamped.h>
-#include "crazyflie_rl/RLData.h"
+#include "crazyflie_msgs/RLData.h"
 #include "crazyflie_gazebo/ImpactData.h"
 #include "nav_msgs/Odometry.h"
 
@@ -95,7 +95,7 @@ void gazeboFT_Callback(const ConstWrenchStampedPtr &_msg)
  
 }
 
-void RLdata_Callback(const crazyflie_rl::RLData::ConstPtr &msg)
+void RLdata_Callback(const crazyflie_msgs::RLData::ConstPtr &msg)
 {
   // WHEN RUN COMPLETED PUBLISH IMPACT DATA
   if(msg->runComplete_flag == true)
