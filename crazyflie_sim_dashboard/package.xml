@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>dashboard_gui_pkg</name>
+  <name>crazyflie_sim_dashboard</name>
   <version>0.0.0</version>
-  <description>The dashboard_gui_pkg package</description>
+  <description>The crazyflie_sim_dashboard package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
