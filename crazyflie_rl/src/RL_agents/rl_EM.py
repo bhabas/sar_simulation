@@ -4,7 +4,7 @@ import scipy.stats
 from scipy.spatial.transform import Rotation
 import matplotlib.pyplot as plt
 from math import asin,pi,ceil,floor
-from rl_syspepg import ES
+from RL_agents.rl_syspepg import ES
 
 class rlEM_PEPGAgent(ES):
     def __init__(self,mu,sigma, n_rollouts = 6):

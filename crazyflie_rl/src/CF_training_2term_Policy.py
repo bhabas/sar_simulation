@@ -9,9 +9,9 @@ from crazyflie_msgs.msg import CtrlData
 
 
 from Crazyflie_env import CrazyflieEnv
-from rl_syspepg import rlsysPEPGAgent_reactive,rlsysPEPGAgent_adaptive
-from rl_EM import rlEM_PEPGAgent,rlEM_AdaptiveAgent
-from rl_cma import CMA_basic,CMA,CMA_sym
+# from rl_syspepg import rlsysPEPGAgent_reactive,rlsysPEPGAgent_adaptive
+from RL_agents.rl_EM import rlEM_PEPGAgent
+# from rl_cma import CMA_basic,CMA,CMA_sym
 from rospy.exceptions import ROSException
 
 os.system("clear")
