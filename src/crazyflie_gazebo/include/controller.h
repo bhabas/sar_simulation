@@ -9,8 +9,8 @@
 #include <ros/ros.h>
 #include "crazyflie_gazebo/CtrlData.h"
 #include "crazyflie_gazebo/ImpactData.h"
-#include "crazyflie_rl/RLCmd.h"
-#include "crazyflie_rl/RLData.h"
+#include "crazyflie_msgs/RLCmd.h"
+#include "crazyflie_msgs/RLData.h"
 
 
 #include "nav_msgs/Odometry.h"
@@ -101,8 +101,8 @@ class Controller
         void global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg);
         void OFCallback(const nav_msgs::Odometry::ConstPtr &msg);
         void imuCallback(const sensor_msgs::Imu::ConstPtr &msg);
-        void RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg);
-        void RLData_Callback(const crazyflie_rl::RLData::ConstPtr &msg);
+        void RLCmd_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
+        void RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg);
         void ceilingFTCallback(const crazyflie_gazebo::ImpactData &msg);
         void adjustSimSpeed(float speed_mult);
 

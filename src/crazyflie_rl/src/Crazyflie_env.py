@@ -11,7 +11,7 @@ from std_srvs.srv import Empty
 
 
 from sensor_msgs.msg import LaserScan, Image, Imu
-from crazyflie_rl.msg import RLData,RLCmd
+from crazyflie_msgs.msg import RLData,RLCmd
 from crazyflie_gazebo.msg import CtrlData,ImpactData
 from rosgraph_msgs.msg import Clock
 from gazebo_msgs.msg import ModelState,ContactsState

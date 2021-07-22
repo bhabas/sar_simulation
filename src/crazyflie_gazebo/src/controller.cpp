@@ -122,10 +122,10 @@ void Controller::imuCallback(const sensor_msgs::Imu::ConstPtr &msg){
     int a = 0;
 }
 
-void Controller::RLData_Callback(const crazyflie_rl::RLData::ConstPtr &msg){
+void Controller::RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){
     _k_ep = msg->k_ep;
 }
-void Controller::RLCmd_Callback(const crazyflie_rl::RLCmd::ConstPtr &msg){
+void Controller::RLCmd_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg){
 
     // CREATE CMD VECTOR AND VALS FROM SUBSCRIBED MESSAGE
     int cmd_type = msg->cmd_type;                       // Read cmd type from incoming message
