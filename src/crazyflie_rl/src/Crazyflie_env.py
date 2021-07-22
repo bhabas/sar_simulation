@@ -416,13 +416,13 @@ class CrazyflieEnv:
     def launch_dashboard(self):
         print("[STARTING] Starting Dashboard...")
         self.dashboard_p = subprocess.Popen(
-            "gnome-terminal -- roslaunch dashboard_gui_pkg dashboard.launch",
+            "gnome-terminal -- roslaunch crazyflie_launch dashboard.launch",
             close_fds=True, preexec_fn=os.setsid, shell=True)
 
     def launch_controller(self):
         print("[STARTING] Starting Controller Process...")
         self.controller_p = subprocess.Popen( # Controller Process
-            "roslaunch crazyflie_gazebo controller.launch",
+            "roslaunch crazyflie_launch controller.launch",
             close_fds=True, preexec_fn=os.setsid, shell=True)
 
 
