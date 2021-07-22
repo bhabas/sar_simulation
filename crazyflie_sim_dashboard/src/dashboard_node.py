@@ -8,7 +8,7 @@ from nav_msgs.msg import Odometry
 class DashboardNode:
     def __init__(self):
         print("[STARTING] Dashboard node is starting...")
-        rospy.init_node("dashboard_gui_node")
+        rospy.init_node("dashboard_gui_node",anonymous=True)
 
         ## INITIALIZE CLASS VARIABLES
         # Publisher is very slow compared to Subscriber so this prevents calling uninitilized variables
