@@ -8,14 +8,14 @@ import os
 os.system("clear")
 
 class DataFile:
-    def __init__(self,dataPath,fileName,dataType='sim'):
+    def __init__(self,dataPath,fileName):
 
         ## ORGANIZE FILEPATH AND CREATE TRIAL DATAFRAME
         self.fileName = fileName
         self.dataPath = dataPath
         filepath = self.dataPath + self.fileName
 
-        self.dataType = dataType
+        self.dataType = fileName[39:42]
         self.trial_df = pd.read_csv(filepath,low_memory=False)
 
         ## COLLECT BASIC TRIAL INFO
@@ -27,7 +27,7 @@ class DataFile:
         self.k_df = self.trial_df.iloc[:][['k_ep','k_run','reward']].dropna()
         self.k_df.reset_index(inplace=True)
 
-        if dataType=='exp':
+        if self.dataType=='EXP':
             self.remove_FailedRuns()
 
 
@@ -714,13 +714,13 @@ class DataFile:
             float: t_flip,t_flip_norm
         """        
 
-        if self.dataType == 'exp':
+        if self.dataType == 'EXP':
 
             run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
             t_flip = run_df.query(f"flip_flag=={True}").iloc[0]['t']
             t_flip_norm = t_flip - run_df.iloc[0]['t'] # Normalize flip time
 
-        elif self.dataType == 'sim':
+        elif self.dataType == 'SIM':
 
             run_df,_,flip_df,_ = self.select_run(k_ep,k_run)
             t_flip = flip_df.iloc[0]['t']
@@ -742,12 +742,12 @@ class DataFile:
         Returns:
             float: state_flip
         """        
-        if self.dataType == 'exp':
+        if self.dataType == 'EXP':
 
             run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
             state_flip = run_df.query(f"flip_flag=={True}").iloc[0][stateName]
 
-        elif self.dataType == 'sim':
+        elif self.dataType == 'SIM':
 
             _,_,flip_df,_ = self.select_run(k_ep,k_run)
             state_flip = flip_df.iloc[0][stateName]
@@ -779,7 +779,7 @@ class DataFile:
             quat_list = ['qw_Ext','qx_Ext','qy_Ext','qz_Ext']
 
 
-        if self.dataType == 'exp':
+        if self.dataType == 'EXP':
 
             run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
             quat_df = run_df.query(f"flip_flag=={True}").iloc[0][quat_list]
@@ -820,7 +820,7 @@ class DataFile:
 
         run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
 
-        if self.dataType == 'exp':
+        if self.dataType == 'EXP':
             t_traj = run_df.query(f"`v_d.z` > {0.0}").iloc[0]['t']
             _,accel_df = self.grab_accel_data(k_ep,k_run)
 
@@ -846,12 +846,12 @@ class DataFile:
 
         run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
 
-        if self.dataType == 'exp':
+        if self.dataType == 'EXP':
 
             t_impact,t_impact_norm = self.grab_impact_time(k_ep,k_run)
             state_impact = run_df.query(f"t == {t_impact}").iloc[0][stateName]
 
-        elif self.dataType == 'sim':
+        elif self.dataType == 'SIM':
             pass
 
 
@@ -881,7 +881,7 @@ class DataFile:
             quat_list = ['qw_Ext','qx_Ext','qy_Ext','qz_Ext']
 
 
-        if self.dataType == 'exp':
+        if self.dataType == 'EXP':
 
             run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
 
@@ -913,7 +913,7 @@ class DataFile:
 ## TRAJECTORY FUNCTIONS
     def grab_traj_start(self,k_ep,k_run):
 
-        if self.dataType == 'exp':
+        if self.dataType == 'EXP':
             run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
 
             # ASSUME TRAJ STARTS WHEN PRESCRIBED VERTICAL VEL
@@ -924,7 +924,7 @@ class DataFile:
 
     def grab_traj_state(self,k_ep,k_run,stateName):
 
-        if self.dataType == 'exp':
+        if self.dataType == 'EXP':
             run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
 
             # ASSUME TRAJ STARTS WHEN PRESCRIBED VERTICAL VEL
@@ -1173,9 +1173,9 @@ if __name__ == "__main__":
 
     dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/logs/"
     fileName = "EM_PEPG--Vd_2.65--phi_90.00--trial_03--Exp.csv"
-    fileName = "EM_PEPG--Vd_2.50--phi_90.00--trial_00--EXP.csv"
+    # fileName = "EM_PEPG--Vd_2.50--phi_90.00--trial_00--EXP.csv"
 
-    trial = DataFile(dataPath,fileName,dataType='exp')
+    trial = DataFile(dataPath,fileName)
 
     k_ep = 0
     k_run = 1
