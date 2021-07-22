@@ -696,12 +696,18 @@ void Controller::controlThread()
 
             }
 
+            // IF IMPACTED OR MISSED CEILING, INCREASE SIM SPEED TO DEFAULT
             if(_impact_flag == true && _flag1 == 1)
             {
                 
                 Controller::adjustSimSpeed(_SIM_SPEED);
                 _flag1 = 2;
             }
+            else if(stateVel(2) <= -0.5 && _flag1 == 1){
+                Controller::adjustSimSpeed(_SIM_SPEED);
+                _flag1 = 2;
+            }
+
         }
         
 
