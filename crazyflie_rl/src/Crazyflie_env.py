@@ -402,7 +402,7 @@ class CrazyflieEnv:
         
         print("[STARTING] Starting Gazebo Process...")
         self.gazebo_p = subprocess.Popen( # Gazebo Process
-            "gnome-terminal --disable-factory  --geometry 70x42+3154+154 -- ~/catkin_ws/src/crazyflie_simulation/crazyflie_launch/launch/launch_gazebo.bash", 
+            "gnome-terminal --disable-factory  --geometry 70x42+3154+154 -- rosrun crazyflie_launch launch_gazebo.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         
         
