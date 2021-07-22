@@ -17,19 +17,30 @@ class DataFile:
 
         self.dataType = re.findall('SIM|EXP',fileName)[0] # FIND 'SIM' OR 'EXP'
         self.trial_df = pd.read_csv(filepath,low_memory=False)
+
+        ## CLEAN UP TRIAL DATAFRAME
+        final_valid_index = self.trial_df[self.trial_df['Error']=='Impact Data'].index.values[-1]
+        self.trial_df = self.trial_df.iloc[:final_valid_index+1]
         self.trial_df = self.trial_df.round(3) # Round values to prevent floating point precision issues
+
+        ## CREATE BASIC DF OF K_EP,K_RUN, & REWARD
+        self.k_df = self.trial_df.iloc[:][['k_ep','k_run','reward']].dropna()
+        self.k_df.reset_index(inplace=True)
+        
+        if self.dataType=='EXP':
+            self.remove_FailedRuns()
 
         ## COLLECT BASIC TRIAL INFO
         # self.n_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
         self.n_rollouts = 8
         self.k_epMax = int(self.trial_df.iloc[-1]['k_ep'])
 
-        ## CREATE BASIC DF OF K_EP,K_RUN, & REWARD
-        self.k_df = self.trial_df.iloc[:][['k_ep','k_run','reward']].dropna()
-        self.k_df.reset_index(inplace=True)
 
-        if self.dataType=='EXP':
-            self.remove_FailedRuns()
+
+
+       
+
+
 
 
         ## INITIATE CLASS FOR GTC MODEL (UNFINISHED)
