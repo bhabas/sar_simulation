@@ -111,7 +111,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 
                 ## RESET IMPACT CONDITIONS
                 env.impact_flag = False
-                env.pad_contacts = [False,False,False,False] # Reset impact condition variables
+                env.pad_contacts = [] # Reset impact condition variables
                 env.body_contact = False
                 env.ceiling_ft_z = 0.0
                 env.ceiling_ft_x = 0.0
@@ -267,7 +267,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                         
                         
                         print(f"Reward = {env.reward:.3f}")
-                        print(f"# of Leg contacts: {sum(env.pad_contacts)}")
+                        # print(f"# of Leg contacts: {sum(env.pad_contacts)}")
                         print("!------------------------End Run------------------------! \n")  
 
                         env.RL_Publish() # Publish that rollout completed 
@@ -341,7 +341,7 @@ if __name__ == '__main__':
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
     V_d = 2.653   # [m/s]
-    phi = 90    # [deg]
+    phi = 45    # [deg]
 
 
     

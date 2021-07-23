@@ -12,8 +12,8 @@ from std_srvs.srv import Empty
 
 from sensor_msgs.msg import LaserScan, Image, Imu
 from crazyflie_msgs.msg import RLData,RLCmd
-from crazyflie_msgs.msg import ImpactData
-from crazyflie_msgs.msg import CtrlData
+from crazyflie_msgs.msg import ImpactData,CtrlData,PadConnect
+
 from rosgraph_msgs.msg import Clock
 from gazebo_msgs.msg import ModelState,ContactsState
 from gazebo_msgs.srv import SetModelState
@@ -98,7 +98,7 @@ class CrazyflieEnv:
         self.state_impact = np.zeros(13)
         self.FM_impact = [0,0,0,0]  # [N,N*mm]
 
-        self.pad_contacts = [False,False,False,False] # Flag if pads impact ceiling plane
+        self.pad_contacts = [] # Flag if pads impact ceiling plane
         self.body_contact = False   # Flag if model body impacts ceiling plane
         self.impact_flag = False    # Flag if any model part impact ceiling plane
 
@@ -120,7 +120,8 @@ class CrazyflieEnv:
         self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.laser_sensorCallback)       
                       
         # WE WANT TO BE SURE WE GET THESE MESSAGES WHEN THEY COME THROUGH              
-        self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback,queue_size=10)            
+        self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback,queue_size=10)     
+        self.padcontact_Subcriber = rospy.Subscriber('/pad_connections',PadConnect,self.padConnect_Callback,queue_size=10)       
         self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',ImpactData,self.ceiling_ftsensorCallback,queue_size=10) 
                       
 
@@ -180,7 +181,7 @@ class CrazyflieEnv:
 
         rl_msg.vel_d = self.vel_d
         rl_msg.M_d = self.M_d
-        rl_msg.leg_contacts = self.pad_contacts
+        # rl_msg.leg_contacts = self.pad_contacts
         rl_msg.body_contact = self.body_contact
         
 
@@ -304,23 +305,26 @@ class CrazyflieEnv:
 
         for msg in msg_arr.states: ## ContactsState message includes an array of ContactState messages
             # If pad collision or body collision detected then mark True
-            if msg.collision1_name  ==  f"{self.modelName}::pad_1::collision" and self.pad_contacts[0] == False:
-                self.pad_contacts[0] = True
+            # if msg.collision1_name  ==  f"{self.modelName}::pad_1::collision" and self.pad_contacts[0] == False:
+            #     self.pad_contacts[0] = True
                 
-            elif msg.collision1_name == f"{self.modelName}::pad_2::collision" and self.pad_contacts[1] == False:
-                self.pad_contacts[1] = True
+            # elif msg.collision1_name == f"{self.modelName}::pad_2::collision" and self.pad_contacts[1] == False:
+            #     self.pad_contacts[1] = True
 
-            elif msg.collision1_name == f"{self.modelName}::pad_3::collision" and self.pad_contacts[2] == False:
-                self.pad_contacts[2] = True
+            # elif msg.collision1_name == f"{self.modelName}::pad_3::collision" and self.pad_contacts[2] == False:
+            #     self.pad_contacts[2] = True
 
-            elif msg.collision1_name == f"{self.modelName}::pad_4::collision" and self.pad_contacts[3] == False:
-                self.pad_contacts[3] = True
+            # elif msg.collision1_name == f"{self.modelName}::pad_4::collision" and self.pad_contacts[3] == False:
+            #     self.pad_contacts[3] = True
 
-            elif msg.collision1_name == f"{self.modelName}::crazyflie_body::body_collision" and self.body_contact == False:
+            if msg.collision1_name == f"{self.modelName}::crazyflie_body::body_collision" and self.body_contact == False:
                 self.body_contact = True
 
 
-            
+    def padConnect_Callback(self,msg):
+
+        self.pad_contacts.append(msg.Pad_Num)
+
             
 
     def ceiling_ftsensorCallback(self,ft_msg):
@@ -617,7 +621,7 @@ class CrazyflieEnv:
                     self.quat_impact[0],self.quat_impact[1],self.quat_impact[2],self.quat_impact[3],    # qw,qx,qy,qz
                     self.vel_impact[0],self.vel_impact[1],self.vel_impact[2],    # vx_d,vy_d,vz_d
                     self.omega_impact[0],self.omega_impact[1],self.omega_impact[2],  # wx,wy,wz
-                    self.impact_flag,self.body_contact,sum(self.pad_contacts),"",  # "", "", body_impact flag, num leg contacts, ""
+                    self.impact_flag,self.body_contact,np.array(self.pad_contacts),"",  # "", "", body_impact flag, num leg contacts, ""
                     self.ceiling_ft_z,self.ceiling_ft_x,"",             # Max impact force [z], =Max impact force [x], ""
                     "","","","", # MS1, MS2, MS3, MS4
                     "","","","", # F_thrust,Mx,My,Mz (Impact)
