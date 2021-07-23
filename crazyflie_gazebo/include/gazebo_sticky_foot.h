@@ -8,8 +8,10 @@
 #include "common.h"     // provides getSdfParam, FirstOrderFilter ...
 
 #include "CommandMotorSpeed.pb.h"
+
+
 #include <ros/ros.h>
-#include "std_msgs/String.h"
+#include "crazyflie_msgs/PadConnect.h"
 //#include "gazebo_motor_model.h"     // provides CommandMotorSpeedPtr
 
 typedef const boost::shared_ptr<const mav_msgs::msgs::CommandMotorSpeed> CommandMotorSpeedPtr;
@@ -49,8 +51,7 @@ class GazeboStickyFoot: public ModelPlugin
         event::ConnectionPtr updateConnection_;
 
         ros::NodeHandle n;
-        // ros::Publisher PadConnect_Publisher;
-        ros::Publisher chatter_pub = n.advertise<std_msgs::String>("chatter", 1000);
+        ros::Publisher PadConnect_Publisher = n.advertise<crazyflie_msgs::PadConnect>("/Pad_Connections", 1000);
 
         
         bool sticky_;

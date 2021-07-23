@@ -112,11 +112,7 @@ void GazeboStickyFoot::StickyEnableCallback(CommandMotorSpeedPtr &rot_velocities
         std::cout<<link_->GetName().c_str()<< " NOW STICKY "<< std::endl;
         sticky_ = true;
 
-        std_msgs::String msg;
-
         
-        msg.data = "test";
-        chatter_pub.publish(msg);
 
         
     }
@@ -149,6 +145,13 @@ void GazeboStickyFoot::ContactCB(ConstContactsPtr &msg)
                     if (joint_==NULL)
                         joint_ = model_->CreateJoint(joint_name_, "fixed", link_, link2_);
                         std::cout<<"Joint (" <<joint_->GetName().c_str() << ")"<<std::endl;
+
+                        // PUBLISH EACH TIME PAD IS CONNECTED TO THE CEILING
+                        crazyflie_msgs::PadConnect msg;
+                        std::string str = joint_->GetName().c_str();    // Get joint name as string
+                        str = str.substr(4,1);                          // Trim to pad index
+                        msg.Pad_Num = atoi(str.c_str())+1;              // Convert to pad number
+                        PadConnect_Publisher.publish(msg);
 
                     //Attach the joint
                     joint_->Load(link_, link2_, ignition::math::Pose3d());
