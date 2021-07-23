@@ -426,6 +426,11 @@ void Controller::controlThread()
     float f_pitch_g = 0.0;
     float f_yaw_g = 0.0;
 
+    float f_thrust_g_flip = 0.0;
+    float f_roll_g_flip = 0.0;
+    float f_pitch_g_flip = 0.0;
+    float f_yaw_g_flip = 0.0;
+
     int32_t f_thrust_pwm = 0;
     int32_t f_roll_pwm = 0;
     int32_t f_pitch_pwm = 0;
@@ -626,11 +631,17 @@ void Controller::controlThread()
                     _M_d(2) = 0.0;
 
                     // Moment with base thrust
-                    M = _M_d;
+                    // M = _M_d;
 
                     // Pure Moment
                     M = _M_d*2; // Need to double moment to ensure it survives the PWM<0 cutoff
                     F_thrust = 0;
+
+                    // RECORD MOTOR THRUST TYPES AT FLIP
+                    f_thrust_g_flip = F_thrust/4.0f*Newton2g;
+                    f_roll_g_flip = M[0]/(4.0f*dp)*Newton2g;
+                    f_pitch_g_flip = M[1]/(4.0f*dp)*Newton2g;
+                    f_yaw_g_flip = M[2]/(4.0f*c_tf)*Newton2g;
                 }
                 
                 
@@ -688,7 +699,6 @@ void Controller::controlThread()
 
 
         motorspeed_Vec << MS1,MS2,MS3,MS4;
-        // motorspeed_Vec << 0,0,0,0;
 
         if(_motorstop_flag == true){ // Shutoff all motors
             motorspeed_Vec << 0,0,0,0;
@@ -777,9 +787,7 @@ void Controller::controlThread()
                 (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len); 
         
         t_step++;
-        
-        ctrl_msg.motorspeeds = {motorspeed[0],motorspeed[1],motorspeed[2],motorspeed[3]};
-        
+               
 
         ctrl_msg.RREV = RREV;
         ctrl_msg.OF_y = OF_y;
@@ -792,7 +800,7 @@ void Controller::controlThread()
         ctrl_msg.RREV_tr = RREV_tr;
         ctrl_msg.OF_y_tr = OF_y_tr;
         ctrl_msg.OF_x_tr = OF_x_tr;
-        ctrl_msg.FM_flip = {FM[0],_M_d(0)*1e3,_M_d(1)*1e3,_M_d(2)*1e3};
+        ctrl_msg.FM_flip = {f_thrust_g_flip,f_roll_g_flip,f_pitch_g_flip,f_yaw_g_flip};
 
         // This techinially converts to integer and micro-secs instead of nano-secs but I 
         // couldn't figure out the solution to do this the right way and keep it as nsecs

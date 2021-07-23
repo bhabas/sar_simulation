@@ -190,8 +190,6 @@ class CrazyflieEnv:
     def ctrlCallback(self,ctrl_msg): ## Callback to parse data received from controller
         
         ## SET & TRIM CTRL VALUES FROM CTRL_DATA TOPIC
-        # self.MS = np.asarray(ctrl_msg.motorspeeds) # Motorspeeds [rad/s]
-        # self.MS = np.round(self.MS,0)
 
         self.FM = np.asarray(ctrl_msg.FM)   # Force/Moments [N,N*mm]
         self.FM = np.round(self.FM,3)       # Round data for logging
@@ -230,6 +228,7 @@ class CrazyflieEnv:
             
             self.RREV_tr = np.round(ctrl_msg.RREV_tr,3) # Recorded trigger RREV [rad/s]
             self.OF_y_tr = np.round(ctrl_msg.OF_y_tr,3) # Recorded OF_y at trigger [rad/s]
+            self.OF_x_tr = np.round(ctrl_msg.OF_y_tr,3) # Recorded OF_x at trigger [rad/s]
 
 
 
@@ -565,7 +564,6 @@ class CrazyflieEnv:
                     'wx','wy','wz',
                     'reward','flip_flag','impact_flag','n_rollouts',
                     'RREV','OF_x','OF_y',
-                    'MS1','MS2','MS3','MS4',
                     'F_thrust','Mx','My','Mz',
                     'Error'])# Place holders
 
@@ -584,7 +582,6 @@ class CrazyflieEnv:
                     self.omega[0],self.omega[1],self.omega[2], # wx,wy,wz
                     "",self.flip_flag,self.impact_flag,self.n_rollouts, # reward, flip_triggered, impact_flag, n_rollout
                     self.RREV,self.OF_x,self.OF_y, # RREV, OF_x, OF_y
-                    self.MS[0],self.MS[1],self.MS[2],self.MS[3], # MS1, MS2, MS3, MS4
                     self.FM[0],self.FM[1],self.FM[2],self.FM[3], # F_thrust,Mx,My,Mz 
                     error_str]) # Error
 
@@ -604,8 +601,7 @@ class CrazyflieEnv:
                     self.vel_flip[0],self.vel_flip[1],self.vel_flip[2],    # vx_d,vy_d,vz_d
                     self.omega_flip[0],self.omega_flip[1],self.omega_flip[2],  # wx,wy,wz
                     "","","","", # reward, body_impact, num leg contacts, impact force
-                    self.RREV_tr,"",self.OF_y_tr, # RREV, OF_x, OF_y
-                    "","","","", # MS1, MS2, MS3, MS4
+                    self.RREV_tr,self.OF_x_tr,self.OF_y_tr, # RREV, OF_x, OF_y
                     self.FM_flip[0],self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # F_thrust,Mx,My,Mz
                     "Flip Data"]) # Error
     
@@ -624,7 +620,6 @@ class CrazyflieEnv:
                     self.omega_impact[0],self.omega_impact[1],self.omega_impact[2],  # wx,wy,wz
                     self.impact_flag,self.body_contact,np.array(self.pad_contacts),"",  # "", "", body_impact flag, num leg contacts, ""
                     self.ceiling_ft_z,self.ceiling_ft_x,"",             # Max impact force [z], =Max impact force [x], ""
-                    "","","","", # MS1, MS2, MS3, MS4
                     "","","","", # F_thrust,Mx,My,Mz (Impact)
                     "Impact Data"]) # Error
 
@@ -643,7 +638,6 @@ class CrazyflieEnv:
                     "","","", # wx,wy,wz
                     np.round(self.reward,2),np.round(self.reward_inputs,3),"","", # reward, 
                     "","","",           # RREV, OF_x, OF_y
-                    "","","","",        # MS1, MS2, MS3, MS4
                     "","","","",        # F_thrust,Mx,My,Mz
                     self.error_str])    # Error
 
