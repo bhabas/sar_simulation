@@ -318,14 +318,14 @@ if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv(gazeboTimeout=True)
-    # env.launch_dashboard()
+    env.launch_dashboard()
 
     # ============================
     ##          AGENT  
     # ============================
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[6.0],[5.0]])                 # Initial mu starting point
+    mu = np.array([[4.5],[4.5]])                 # Initial mu starting point
     sigma = np.array([[1.0],[1.0]])       # Initial sigma starting point
 
 

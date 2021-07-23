@@ -23,7 +23,7 @@ class ES:
         ## CALC R_1 FROM FINAL ORIENTATION AT END OF ROLLOUT
         Rot = Rotation.from_quat([env.orientation_q[1],env.orientation_q[2],env.orientation_q[3],env.orientation_q[0]])
         b3 = Rot.as_matrix()[:,2]
-        R_1 = (0.5*(np.dot(b3, np.array([0,0,-1]))) + 0.5)*10
+        R_1 = np.exp(np.dot(b3, np.array([0,0,-1]))-1)*10 # (0.135 < e^(x-1) <= 1.0) | (-1 < x <= 1)
 
         if env.body_contact == True:
             R_1 = R_1 - 5.0
@@ -31,10 +31,10 @@ class ES:
             
 
             
-        ## CALC R2 FROM THE MAXIMUM PITCH ANGLE (CONVERT TO IMPACT ANGLE)
+        ## CALC R2 FROM THE MAXIMUM PITCH ANGLE (CONVERT TO IMPACT ANGLE?)
         if -170 < np.min(env.pitch_max) <= 0:
             R_2 = 5*(-1/170*np.min(env.pitch_max))      
-        elif -250 <= np.min(env.pitch_max) <= -170:
+        elif -330 <= np.min(env.pitch_max) <= -170:
             R_2 = 5
         else:
             R_2 = 0
@@ -45,7 +45,7 @@ class ES:
         
 
         
-        R_total = (R_1*10)+R_3 + 0.001
+        R_total = (R_1*R_2)+R_3 + 0.001
         # print(f"Reward: r_c: {r_contact:.3f} | r_theta: {r_theta:.3f} | r_h: {r_h:.3f} | Pitch Max: {env.pitch_max:.2f}")
         return R_total
 

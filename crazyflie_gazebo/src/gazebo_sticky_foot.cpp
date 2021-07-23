@@ -85,22 +85,29 @@ void GazeboStickyFoot::StickyEnableCallback(CommandMotorSpeedPtr &rot_velocities
 {
     //model_ = world_->ModelByName(model_name_);
     
+
+    // IF MS COMMAND = [-X,0,0,0] TURN OFF STICKY
     if(rot_velocities->motor_speed(1) < 0.5)
     {
+        // "link_"  WILL HAVE NAMES pad_[X]
         std::cout<<link_->GetName().c_str()<< " NOW NOT STICKY "<< std::endl;
         sticky_ = false;
         //joint_->Detach();     // Detach() doesn't work, don't know why
         if (joint_ != NULL)
         {
             if (model_->RemoveJoint(joint_name_))
-                std::cout<<"Joint removed successufully"<<std::endl;
+                std::cout<<"Joint (" <<joint_->GetName().c_str() << ") removed successufully"<<std::endl;
+                // "joint_" WILL HAVE NAME "pad_[X]_sticky_joint"
+                
+
             else
                 std::cout<<"Joint removed failed"<<std::endl;
         }
         joint_ = NULL;
         link2_ = NULL;
+        
     }
-    else
+    else // IF MS COMMAND = [-X,1,0,0] TURN ON STICKY
     {
         std::cout<<link_->GetName().c_str()<< " NOW STICKY "<< std::endl;
         sticky_ = true;
@@ -133,6 +140,7 @@ void GazeboStickyFoot::ContactCB(ConstContactsPtr &msg)
                     
                     if (joint_==NULL)
                         joint_ = model_->CreateJoint(joint_name_, "fixed", link_, link2_);
+                        std::cout<<"Joint (" <<joint_->GetName().c_str() << ")"<<std::endl;
 
                     //Attach the joint
                     joint_->Load(link_, link2_, ignition::math::Pose3d());

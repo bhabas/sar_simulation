@@ -375,7 +375,7 @@ class CrazyflieEnv:
         """        
         self.close_sim()
         time.sleep(0.5)
-        # self.launch_controller()
+        self.launch_controller()
         self.launch_sim()
 
         self.reset_pos()
@@ -416,7 +416,7 @@ class CrazyflieEnv:
     def launch_dashboard(self):
         print("[STARTING] Starting Dashboard...")
         self.dashboard_p = subprocess.Popen(
-            "gnome-terminal -- roslaunch crazyflie_launch dashboard.launch",
+            "gnome-terminal -- roslaunch crazyflie_launch dashboard_rl.launch",
             close_fds=True, preexec_fn=os.setsid, shell=True)
 
     def launch_controller(self):

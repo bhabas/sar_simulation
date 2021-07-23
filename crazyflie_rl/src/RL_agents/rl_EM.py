@@ -42,7 +42,7 @@ class rlEM_PEPGAgent(ES):
         print(summary)
 
         k = ceil(self.n_rollouts/3)
-        k = 3 # Select the top 3 rollouts for training
+        k = 2 # Select the top 3 rollouts for training
 
         S_theta = (summary[0:self.d,0:k].dot(summary[self.d,0:k].reshape(k,1)))
         S_reward = np.sum(summary[self.d,0:k])
