@@ -8,6 +8,8 @@
 #include "common.h"     // provides getSdfParam, FirstOrderFilter ...
 
 #include "CommandMotorSpeed.pb.h"
+#include <ros/ros.h>
+#include "std_msgs/String.h"
 //#include "gazebo_motor_model.h"     // provides CommandMotorSpeedPtr
 
 typedef const boost::shared_ptr<const mav_msgs::msgs::CommandMotorSpeed> CommandMotorSpeedPtr;
@@ -45,6 +47,11 @@ class GazeboStickyFoot: public ModelPlugin
         std::string joint_name_;
 
         event::ConnectionPtr updateConnection_;
+
+        ros::NodeHandle n;
+        // ros::Publisher PadConnect_Publisher;
+        ros::Publisher chatter_pub = n.advertise<std_msgs::String>("chatter", 1000);
+
         
         bool sticky_;
         double vz_max_;

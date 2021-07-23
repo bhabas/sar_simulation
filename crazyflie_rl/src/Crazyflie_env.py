@@ -36,7 +36,7 @@ class CrazyflieEnv:
 
         self.isRunning = True
         self.username = getpass.getuser()
-        self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/crazyflie_data/logs"
+        self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs"
         self.logging_flag = False
         self.filepath = ""
         self.state_current = np.zeros(13)

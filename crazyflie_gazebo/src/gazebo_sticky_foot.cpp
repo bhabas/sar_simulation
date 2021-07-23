@@ -111,6 +111,14 @@ void GazeboStickyFoot::StickyEnableCallback(CommandMotorSpeedPtr &rot_velocities
     {
         std::cout<<link_->GetName().c_str()<< " NOW STICKY "<< std::endl;
         sticky_ = true;
+
+        std_msgs::String msg;
+
+        
+        msg.data = "test";
+        chatter_pub.publish(msg);
+
+        
     }
 }
 
