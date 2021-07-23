@@ -740,7 +740,6 @@ void Controller::controlThread()
         endl << 
         setprecision(0) <<
         "Policy_armed: " << _policy_armed_flag <<  "\tFlip_flag: " << _flip_flag << "\tImpact_flag: " << _impact_flag << endl <<
-        "Flag1: " << _flag1 << endl <<
         "Tumble Detection: " << _tumble_detection << "\t\tTumbled: " << _tumbled << endl <<
         "kp_xf: " << _kp_xf << " \tkd_xf: " << _kd_xf << "\tkp_Rf: " << _kp_Rf << "\tkd_Rf: " << _kd_Rf  << endl <<
         endl << setprecision(3) <<
@@ -774,24 +773,27 @@ void Controller::controlThread()
         }
 
         Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Vec.cast <float> (); // Converts motorspeeds to C++ array for data transmission
-        int len = sendto(Ctrl_Mavlink_socket, motorspeed, sizeof(motorspeed),0, // Send motorspeeds to Gazebo -> gazebo_motor_model?
+        int len = sendto(Ctrl_Mavlink_socket, motorspeed, sizeof(motorspeed),0, // Send motorspeeds to Gazebo -> gazebo_motor_model
                 (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len); 
         
         t_step++;
         
         ctrl_msg.motorspeeds = {motorspeed[0],motorspeed[1],motorspeed[2],motorspeed[3]};
+        
+
+        ctrl_msg.RREV = RREV;
+        ctrl_msg.OF_y = OF_y;
+        ctrl_msg.OF_x = OF_x;
+
+
+        
+        // FLIP INFO
         ctrl_msg.flip_flag = _flip_flag;
         ctrl_msg.RREV_tr = RREV_tr;
         ctrl_msg.OF_y_tr = OF_y_tr;
         ctrl_msg.OF_x_tr = OF_x_tr;
         ctrl_msg.FM_flip = {FM[0],_M_d(0)*1e3,_M_d(1)*1e3,_M_d(2)*1e3};
 
-        ctrl_msg.RREV = RREV;
-        ctrl_msg.OF_y = OF_y;
-
-
-        
-        
         // This techinially converts to integer and micro-secs instead of nano-secs but I 
         // couldn't figure out the solution to do this the right way and keep it as nsecs
         ctrl_msg.Pose_tr.header.stamp.sec = int(t_tr);              // Integer portion of flip time as integer
@@ -814,24 +816,8 @@ void Controller::controlThread()
         ctrl_msg.Twist_tr.angular.y = omega_tr(1);
         ctrl_msg.Twist_tr.angular.z = omega_tr(2);
 
+        ctrl_msg.FM = {f_thrust_g,f_roll_g,f_pitch_g,f_yaw_g};
 
-
-
-        F = kf*(pow(motorspeed[1],2) + pow(motorspeed[2],2)
-                + pow(motorspeed[0],2) + pow(motorspeed[3],2));
-        Mx = kf*dp*(pow(motorspeed[0],2) + pow(motorspeed[1],2)
-                    - pow(motorspeed[2],2) - pow(motorspeed[3],2))*1e3;
-        My = kf*dp*(pow(motorspeed[1],2) + pow(motorspeed[2],2)
-                    - pow(motorspeed[0],2) - pow(motorspeed[3],2))*1e3;
-        Mz = kf*c_tf*(pow(motorspeed[1],2) - pow(motorspeed[2],2)
-                    + pow(motorspeed[0],2) - pow(motorspeed[3],2))*1e3;
-       
-        
-
-        ctrl_msg.FM = {F,Mx,My,Mz};
-
-        // cout << F << " | "  << Mx << " | "  << My << " | "  << Mz << endl;
-        
 
         
         

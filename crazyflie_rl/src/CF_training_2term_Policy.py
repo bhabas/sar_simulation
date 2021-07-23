@@ -341,7 +341,7 @@ if __name__ == '__main__':
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
     V_d = 2.653   # [m/s]
-    phi = 45    # [deg]
+    phi = 90    # [deg]
 
 
     

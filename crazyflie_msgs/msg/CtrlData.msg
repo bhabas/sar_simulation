@@ -7,5 +7,6 @@ float64 OF_y_tr
 float64 OF_x_tr
 float64 RREV
 float64 OF_y
+float64 OF_x
 geometry_msgs/PoseStamped Pose_tr
 geometry_msgs/Twist Twist_tr

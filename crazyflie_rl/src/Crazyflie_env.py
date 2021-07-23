@@ -181,7 +181,7 @@ class CrazyflieEnv:
 
         rl_msg.vel_d = self.vel_d
         rl_msg.M_d = self.M_d
-        # rl_msg.leg_contacts = self.pad_contacts
+        rl_msg.leg_contacts = self.pad_contacts
         rl_msg.body_contact = self.body_contact
         
 
@@ -190,8 +190,8 @@ class CrazyflieEnv:
     def ctrlCallback(self,ctrl_msg): ## Callback to parse data received from controller
         
         ## SET & TRIM CTRL VALUES FROM CTRL_DATA TOPIC
-        self.MS = np.asarray(ctrl_msg.motorspeeds) # Motorspeeds [rad/s]
-        self.MS = np.round(self.MS,0)
+        # self.MS = np.asarray(ctrl_msg.motorspeeds) # Motorspeeds [rad/s]
+        # self.MS = np.round(self.MS,0)
 
         self.FM = np.asarray(ctrl_msg.FM)   # Force/Moments [N,N*mm]
         self.FM = np.round(self.FM,3)       # Round data for logging
@@ -324,6 +324,7 @@ class CrazyflieEnv:
     def padConnect_Callback(self,msg):
 
         self.pad_contacts.append(msg.Pad_Num)
+        self.impact_flag = True
 
             
 
