@@ -325,8 +325,8 @@ if __name__ == '__main__':
     # ============================
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[4.5],[4.5]])                 # Initial mu starting point
-    sigma = np.array([[1.0],[1.0]])       # Initial sigma starting point
+    mu = np.array([[3.95],[6.0]])                 # Initial mu starting point
+    sigma = np.array([[0.001],[0.001]])       # Initial sigma starting point
 
 
     ## LEARNING AGENTS AND PARAMETERS

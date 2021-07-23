@@ -9,7 +9,7 @@ os.system("clear")
 
 dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/logs/"
 
-fileName_SIM = "EM_PEPG--Vd_2.65--phi_90.00--trial_03--SIM.csv"
+fileName_SIM = "EM_PEPG--Vd_2.65--phi_90.00--trial_02--SIM.csv"
 fileName_EXP = "EM_PEPG--Vd_2.50--phi_90.00--trial_00--EXP.csv"
 
 trial_sim = DataFile(dataPath,fileName_SIM)
@@ -19,7 +19,7 @@ k_ep_exp = 0
 k_run_exp = 0
 
 k_ep_sim = 0
-k_run_sim = 1
+k_run_sim = 0
 
 # np.set_printoptions(suppress=True)
 
@@ -29,11 +29,11 @@ trial_sim.grab_flip_time(k_ep_sim,k_run_sim)
 # trial_exp.plot_state(k_ep_exp,k_run_exp,['z'])
 
 t_exp = trial_exp.grab_stateData(k_ep_exp,k_run_exp,['t'])
-z_exp = trial_exp.grab_stateData(k_ep_exp,k_run_exp,['z'])
+z_exp = trial_exp.grab_stateData(k_ep_exp,k_run_exp,['wy'])
 
 
 t_sim = trial_sim.grab_stateData(k_ep_sim,k_run_sim,['t'])
-z_sim = trial_sim.grab_stateData(k_ep_sim,k_run_sim,['z'])
+z_sim = trial_sim.grab_stateData(k_ep_sim,k_run_sim,['wy'])
 
 fig = plt.figure()
 ax = fig.add_subplot(111)

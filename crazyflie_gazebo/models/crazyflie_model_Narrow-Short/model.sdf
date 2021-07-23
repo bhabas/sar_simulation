@@ -1544,7 +1544,7 @@
       <jointName>rotor_2_joint</jointName>
       <linkName>rotor_2</linkName>
       <turningDirection>ccw</turningDirection>
-      <timeConstantUp>0.0001</timeConstantUp>
+      <timeConstantUp>0.01</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
       <maxRotVelocity>80000</maxRotVelocity>
       <motorConstant>2.21e-8</motorConstant>
@@ -1561,7 +1561,7 @@
       <jointName>rotor_3_joint</jointName>
       <linkName>rotor_3</linkName>
       <turningDirection>cw</turningDirection>
-      <timeConstantUp>0.0001</timeConstantUp>
+      <timeConstantUp>0.01</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
       <maxRotVelocity>80000</maxRotVelocity>
       <motorConstant>2.21e-8</motorConstant>
@@ -1588,7 +1588,7 @@
       <jointName>rotor_1_joint</jointName>
       <linkName>rotor_1</linkName>
       <turningDirection>cw</turningDirection>
-      <timeConstantUp>0.0001</timeConstantUp>
+      <timeConstantUp>0.01</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
       <maxRotVelocity>80000</maxRotVelocity>
       <motorConstant>2.21e-8</motorConstant>
@@ -1605,7 +1605,7 @@
       <jointName>rotor_4_joint</jointName>
       <linkName>rotor_4</linkName>
       <turningDirection>ccw</turningDirection>
-      <timeConstantUp>0.0001</timeConstantUp>
+      <timeConstantUp>0.01</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
       <maxRotVelocity>80000</maxRotVelocity>
       <motorConstant>2.21e-8</motorConstant>
