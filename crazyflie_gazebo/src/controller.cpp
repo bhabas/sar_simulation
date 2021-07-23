@@ -117,14 +117,15 @@ void Controller::OFCallback(const nav_msgs::Odometry::ConstPtr &msg){
     _OF_y = -velocity.x/d;
 }
 
-void Controller::imuCallback(const sensor_msgs::Imu::ConstPtr &msg){
-
-    int a = 0;
-}
 
 void Controller::RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){
     _k_ep = msg->k_ep;
 }
+// TRIGGER IMPACT FLAG WHENEVER PAD CONNECTION MSG RECEIVED
+void Controller::pad_connectCallback(const crazyflie_msgs::PadConnect::ConstPtr &msg){
+    _impact_flag = true;
+}
+
 void Controller::RLCmd_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg){
 
     // CREATE CMD VECTOR AND VALS FROM SUBSCRIBED MESSAGE
@@ -276,11 +277,20 @@ void Controller::RLCmd_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg){
 
 }
 
+
+// UNUSED CALLBACK
+void Controller::imuCallback(const sensor_msgs::Imu::ConstPtr &msg){
+    int a = 0;
+}
+
+// UNSUSED CALLBACK
 void Controller::ceilingFTCallback(const crazyflie_msgs::ImpactData &msg)
 {
-    // _impact_flag = msg->impact_flag;
-    _impact_flag = true;
+     int a = 0;
 }
+
+
+
 
 void Controller::adjustSimSpeed(float speed_mult)
 {
@@ -309,7 +319,7 @@ void Controller::adjustSimSpeed(float speed_mult)
 
     srv.request.ode_config = ode_config;
 
-    client.call(srv);
+    SimSpeed_Client.call(srv);
 }
 
 void Controller::controlThread()

@@ -11,6 +11,7 @@
 #include "crazyflie_msgs/ImpactData.h"
 #include "crazyflie_msgs/RLCmd.h"
 #include "crazyflie_msgs/RLData.h"
+#include "crazyflie_msgs/PadConnect.h"
 
 
 #include "nav_msgs/Odometry.h"
@@ -44,16 +45,19 @@ class Controller
             // NOTE: tcpNoDelay() removes delay where system is waiting for datapackets to be fully filled before sending;
             // instead of sending data as soon as it is available to match publishing rate (This is an issue with large messages like Odom or Custom)
             // Queue lengths are set to '1' so only the newest data is used
+
+            // SENSORS
             globalState_Subscriber = nh->subscribe("/global_state",1,&Controller::global_stateCallback,this,ros::TransportHints().tcpNoDelay());
             OF_Subscriber = nh->subscribe("/OF_sensor",1,&Controller::OFCallback,this,ros::TransportHints().tcpNoDelay()); 
             imu_Subscriber = nh->subscribe("/imu",1,&Controller::imuCallback,this);
-
             ceilingFT_Subcriber = nh->subscribe("/ceiling_force_sensor",5,&Controller::ceilingFTCallback,this,ros::TransportHints().tcpNoDelay());
+            padContact_Subcriber = nh->subscribe("/pad_connections",5,&Controller::pad_connectCallback,this,ros::TransportHints().tcpNoDelay());
 
+            // COMMANDS AND INFO
             RLData_Subscriber = nh->subscribe("/rl_data",5,&Controller::RLData_Callback,this);
             RLCmd_Subscriber = nh->subscribe("/rl_ctrl",50,&Controller::RLCmd_Callback,this);
 
-            client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
+            SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
 
 
 
@@ -101,6 +105,7 @@ class Controller
         void global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg);
         void OFCallback(const nav_msgs::Odometry::ConstPtr &msg);
         void imuCallback(const sensor_msgs::Imu::ConstPtr &msg);
+        void pad_connectCallback(const crazyflie_msgs::PadConnect::ConstPtr &msg);
         void RLCmd_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
         void RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg);
         void ceilingFTCallback(const crazyflie_msgs::ImpactData &msg);
@@ -109,14 +114,19 @@ class Controller
     private:
         // DEFINE PUBLISHERS AND SUBSCRIBERS
         ros::Publisher ctrl_Publisher;
+
+        // SENSORS
         ros::Subscriber globalState_Subscriber;
         ros::Subscriber OF_Subscriber;
-        ros::Subscriber RLCmd_Subscriber;
         ros::Subscriber imu_Subscriber;
         ros::Subscriber ceilingFT_Subcriber;
+        ros::Subscriber padContact_Subcriber;
+
+        // COMMANDS AND INFO
+        ros::Subscriber RLCmd_Subscriber;
         ros::Subscriber RLData_Subscriber;
 
-        ros::ServiceClient client;
+        ros::ServiceClient SimSpeed_Client;
 
         // DEFINE THREAD OBJECTS
         std::thread controllerThread;

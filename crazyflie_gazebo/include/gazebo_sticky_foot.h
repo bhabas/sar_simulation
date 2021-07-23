@@ -51,7 +51,7 @@ class GazeboStickyFoot: public ModelPlugin
         event::ConnectionPtr updateConnection_;
 
         ros::NodeHandle n;
-        ros::Publisher PadConnect_Publisher = n.advertise<crazyflie_msgs::PadConnect>("/Pad_Connections", 1000);
+        ros::Publisher PadConnect_Publisher = n.advertise<crazyflie_msgs::PadConnect>("/pad_connections", 1000);
 
         
         bool sticky_;
