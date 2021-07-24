@@ -95,37 +95,25 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 
 
             ## RESET/UPDATE RUN CONDITIONS
-            env.runComplete_flag = False
-            env.reset_flag = False
             repeat_run= False
 
             start_time_rollout = env.getTime()
             start_time_pitch = np.nan
 
             ## RESET LOGGING CONDITIONS 
-            env.error_str = ""
+            
             
             t_step = 0
             t_prev = 0.0
 
 
-            ## RESET IMPACT CONDITIONS
-            env.impact_flag = False
-            env.pad_contacts = [] # Reset impact condition variables
-            env.body_contact = False
-            env.ceiling_ft_x = 0.0
-            env.ceiling_ft_y = 0.0
-            env.ceiling_ft_z = 0.0
+            
 
-            ## RESET FLIP CONDITIONS
-            env.flip_flag = False
+            
             flag = False # Ensures flip data recorded only once (Needs a better name)
 
             
-            ## RESET REWARD CALC VALUES
-            env.z_max = 0.0
-            env.pitch_sum = 0.0
-            env.pitch_max = 0.0
+            
 
 
 
@@ -284,12 +272,12 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 
 
                     ## PUBLISH RL DATA AND RESET LOGS/POSITIONS FOR NEXT ROLLOUT
-                    env.reset_pos()
-                    # env.clear_IF_Data()
 
                     env.reset_flag = True
                     env.RL_Publish() # Publish that rollout completed 
                     
+                    env.reset_pos()
+                    env.clear_IF_Data()
                 
                     break # Break from run loop
                     

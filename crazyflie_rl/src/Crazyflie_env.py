@@ -529,29 +529,52 @@ class CrazyflieEnv:
         
     def clear_IF_Data(self):
 
+        ## RESET/UPDATE RUN CONDITIONS
+        self.runComplete_flag = False
+        self.reset_flag = False
+
+        self.error_str = ""
+
+        ## RESET IMPACT CONDITIONS
+        self.impact_flag = False
+        self.pad_contacts = [] # Reset impact condition variables
+        self.body_contact = False
+        self.ceiling_ft_x = 0.0
+        self.ceiling_ft_y = 0.0
+        self.ceiling_ft_z = 0.0
+
+        ## RESET FLIP CONDITIONS
+        self.flip_flag = False
+
+
+        ## RESET REWARD CALC VALUES
+        self.z_max = 0.0
+        self.pitch_sum = 0.0
+        self.pitch_max = 0.0
+
                 
-        self.t_flip = np.nan
+        # self.t_flip = np.nan
 
-        self.pos_flip = np.full_like(self.pos_flip,np.nan)
-        self.quat_flip = np.full_like(self.quat_flip,np.nan)
-        self.vel_flip = np.full_like(self.vel_flip,np.nan)
-        self.omega_flip = np.full_like(self.omega_flip,np.nan)
+        # self.pos_flip = np.full_like(self.pos_flip,np.nan)
+        # self.quat_flip = np.full_like(self.quat_flip,np.nan)
+        # self.vel_flip = np.full_like(self.vel_flip,np.nan)
+        # self.omega_flip = np.full_like(self.omega_flip,np.nan)
 
-        self.FM_flip = np.full_like(self.FM_flip,np.nan)
-        self.RREV_tr = np.full_like(self.RREV_tr,np.nan)
-        self.OF_y_tr = np.full_like(self.OF_y_tr,np.nan)
+        # self.FM_flip = np.full_like(self.FM_flip,np.nan)
+        # self.RREV_tr = np.full_like(self.RREV_tr,np.nan)
+        # self.OF_y_tr = np.full_like(self.OF_y_tr,np.nan)
 
 
 
-        self.t_impact = np.nan
+        # self.t_impact = np.nan
 
-        self.pos_impact = np.full_like(self.pos_impact,np.nan)
-        self.quat_impact = np.full_like(self.quat_impact,np.nan)
-        self.vel_impact = np.full_like(self.vel_impact,np.nan)
-        self.omega_impact = np.full_like(self.omega_impact,np.nan)
+        # self.pos_impact = np.full_like(self.pos_impact,np.nan)
+        # self.quat_impact = np.full_like(self.quat_impact,np.nan)
+        # self.vel_impact = np.full_like(self.vel_impact,np.nan)
+        # self.omega_impact = np.full_like(self.omega_impact,np.nan)
 
-        self.ceiling_ft_z = np.nan
-        self.ceiling_ft_x = np.nan
+        # self.ceiling_ft_z = np.nan
+        # self.ceiling_ft_x = np.nan
 
 
     # ============================
