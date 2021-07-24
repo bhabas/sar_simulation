@@ -124,7 +124,7 @@ void gazeboFT_Callback(const ConstWrenchStampedPtr &_msg)
 void RLdata_Callback(const crazyflie_msgs::RLData::ConstPtr &msg)
 {
   // WHEN RUN COMPLETED PUBLISH IMPACT DATA
-  if(msg->runComplete_flag == true)
+  if(msg->reset_flag == true)
   {
 
     // RESET IMPACT FLAG AND VALUES

@@ -52,6 +52,7 @@ class CrazyflieEnv:
         ## INIT RL_DATA VARIABLES 
         # NOTE: All time units are in terms of Sim-Time unless specified
         self.runComplete_flag = False
+        self.reset_flag = False
         self.trial_name = '' 
         self.agent_name = ''    # Learning agent used for training (PEPG,EM,etc...)
         self.error_str = ''     # Label for why rollout was terminated/completed
@@ -102,8 +103,10 @@ class CrazyflieEnv:
         self.body_contact = False   # Flag if model body impacts ceiling plane
         self.impact_flag = False    # Flag if any model part impact ceiling plane
 
-        self.ceiling_ft_z = 0.0     # Ceiling impact force, Z-dir [N]
         self.ceiling_ft_x = 0.0     # Ceiling impact force, X-dir [N]
+        self.ceiling_ft_y = 0.0     # Ceiling impact force, Y-dir [N]
+        self.ceiling_ft_z = 0.0     # Ceiling impact force, Z-dir [N]
+
 
     
 
@@ -162,6 +165,7 @@ class CrazyflieEnv:
         rl_msg.error = self.error_str
         rl_msg.impact_flag = self.impact_flag
         rl_msg.runComplete_flag = self.runComplete_flag
+        rl_msg.reset_flag = self.reset_flag
 
 
         rl_msg.n_rollouts = self.n_rollouts
@@ -331,8 +335,9 @@ class CrazyflieEnv:
         # Keeps record of max impact force for each run
         # The value is reset in the topic converter script at each 'home' command
 
-        self.ceiling_ft_z = np.round(ft_msg.Force_impact.z,3)   # Z-Impact force from ceiling Force-Torque sensor
         self.ceiling_ft_x = np.round(ft_msg.Force_impact.x,3)   # X-Impact force from ceiling Force-Torque sensor
+        self.ceiling_ft_y = np.round(ft_msg.Force_impact.y,3)
+        self.ceiling_ft_z = np.round(ft_msg.Force_impact.z,3)   # Z-Impact force from ceiling Force-Torque sensor
 
         t_temp = ft_msg.Header.stamp.secs
         ns_temp = ft_msg.Header.stamp.nsecs
@@ -624,7 +629,7 @@ class CrazyflieEnv:
                     self.vel_impact[0],self.vel_impact[1],self.vel_impact[2],    # vx_d,vy_d,vz_d
                     self.omega_impact[0],self.omega_impact[1],self.omega_impact[2],  # wx,wy,wz
                     self.impact_flag,self.body_contact,np.array(self.pad_contacts),"",  # "", "", body_impact flag, num leg contacts, ""
-                    self.ceiling_ft_z,self.ceiling_ft_x,"",             # Max impact force [z], =Max impact force [x], ""
+                    self.ceiling_ft_z,self.ceiling_ft_x,self.ceiling_ft_y,             # Max impact force [z], =Max impact force [x], ""
                     "","","","", # F_thrust,Mx,My,Mz (Impact)
                     "Impact Data"]) # Error
 

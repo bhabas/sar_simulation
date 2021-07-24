@@ -96,7 +96,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 
             ## RESET/UPDATE RUN CONDITIONS
             env.runComplete_flag = False
-            env.runReset_flag = False
+            env.reset_flag = False
             repeat_run= False
 
             start_time_rollout = env.getTime()
@@ -113,8 +113,9 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
             env.impact_flag = False
             env.pad_contacts = [] # Reset impact condition variables
             env.body_contact = False
-            env.ceiling_ft_z = 0.0
             env.ceiling_ft_x = 0.0
+            env.ceiling_ft_y = 0.0
+            env.ceiling_ft_z = 0.0
 
             ## RESET FLIP CONDITIONS
             env.flip_flag = False
@@ -256,7 +257,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                     
                     
                     print("\n")
-                    env.RL_Publish() # Publish that rollout completed 
+                    # env.RL_Publish() # Publish that rollout completed 
                     # rospy.wait_for_message('/ceiling_force_sensor',ImpactData)
 
                     reward_arr[k_run] = agent.calcReward_pureLanding(env)
@@ -270,7 +271,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                     # print(f"# of Leg contacts: {sum(env.pad_contacts)}")
                     print("!------------------------End Run------------------------! \n")  
 
-                    env.RL_Publish() # Publish that rollout completed 
+                    
 
                     ## RUN DATA LOGGING
                     env.append_csv_blank()
@@ -279,9 +280,15 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                     env.append_impact()
                     env.append_csv_blank()
 
-                    env.reset_pos()
+                    
 
-                    env.clear_IF_Data()
+
+                    ## PUBLISH RL DATA AND RESET LOGS/POSITIONS FOR NEXT ROLLOUT
+                    env.reset_pos()
+                    # env.clear_IF_Data()
+
+                    env.reset_flag = True
+                    env.RL_Publish() # Publish that rollout completed 
                     
                 
                     break # Break from run loop
@@ -317,7 +324,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=True)
+    env = CrazyflieEnv(gazeboTimeout=False)
     # env.launch_dashboard()
 
     # ============================
