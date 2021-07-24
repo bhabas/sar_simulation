@@ -4,7 +4,7 @@
 import numpy as np
 import time,os
 import rospy
-from crazyflie_msgs.msg import CtrlData
+from crazyflie_msgs.msg import ImpactData
 
 
 
@@ -256,11 +256,13 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                         
                         
                         print("\n")
+                        env.RL_Publish() # Publish that rollout completed 
+                        rospy.wait_for_message('/ceiling_force_sensor',ImpactData)
                         # print(f"z_max: {env.z_max}")
                         # print(f"pitch_sum: {env.pitch_sum}")
                         # print(f"max pitch: {env.pitch_max}")
-
-                        reward_arr[k_run] = agent.calcReward_pureLanding(env)
+                        # reward_arr[k_run] = agent.calcReward_pureLanding(env)
+                        reward_arr[k_run] = agent.calcReward_Impact(env)
                         env.reward = reward_arr[k_run,0]
                         env.reward_avg = reward_arr[np.nonzero(reward_arr)].mean()
                         env.reward_inputs = [env.z_max,env.pitch_sum,env.pitch_max]
@@ -317,7 +319,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=False)
+    env = CrazyflieEnv(gazeboTimeout=True)
     env.launch_dashboard()
 
     # ============================
@@ -325,8 +327,8 @@ if __name__ == '__main__':
     # ============================
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[3.0],[2.5]])                 # Initial mu starting point
-    sigma = np.array([[1.5],[2.0]])       # Initial sigma starting point
+    mu = np.array([[5.2],[6.0]])                 # Initial mu starting point
+    sigma = np.array([[1.0],[1.5]])       # Initial sigma starting point
 
 
     ## LEARNING AGENTS AND PARAMETERS

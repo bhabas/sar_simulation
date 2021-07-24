@@ -210,10 +210,10 @@ class CrazyflieEnv:
             self.pos_flip = np.round([ctrl_msg.Pose_tr.pose.position.x,
                                         ctrl_msg.Pose_tr.pose.position.y,
                                         ctrl_msg.Pose_tr.pose.position.z],3) # [m]
-            self.quat_flip = np.round([ctrl_msg.Pose_tr.pose.orientation.w,
-                                        ctrl_msg.Pose_tr.pose.orientation.x,
+            self.quat_flip = np.round([ctrl_msg.Pose_tr.pose.orientation.x,
                                         ctrl_msg.Pose_tr.pose.orientation.y,
-                                        ctrl_msg.Pose_tr.pose.orientation.z],5) # [quat]
+                                        ctrl_msg.Pose_tr.pose.orientation.z,
+                                        ctrl_msg.Pose_tr.pose.orientation.w],5) # [quat]
             # TWIST_FLIP
             self.vel_flip = np.round([ctrl_msg.Twist_tr.linear.x,
                                         ctrl_msg.Twist_tr.linear.y,
@@ -261,7 +261,7 @@ class CrazyflieEnv:
 
         ## SET STATE VALUES FROM TOPIC
         self.position = np.round([global_pos.x,global_pos.y,global_pos.z],3)    # [m]
-        self.orientation_q = np.round([global_quat.w,global_quat.x,global_quat.y,global_quat.z],5) # [quat]
+        self.orientation_q = np.round([global_quat.x,global_quat.y,global_quat.z,global_quat.w],5) # [quat]
         self.velocity = np.round([global_vel.x,global_vel.y,global_vel.z],3)    # [m/s]
         self.omega = np.round([global_omega.x,global_omega.y,global_omega.z],3) # [rad/s]
 
@@ -342,10 +342,11 @@ class CrazyflieEnv:
                                     ft_msg.Pose_impact.position.y,
                                     ft_msg.Pose_impact.position.z],3)
 
-        self.quat_impact = np.round([ft_msg.Pose_impact.orientation.w,
+        self.quat_impact = np.round([
                                     ft_msg.Pose_impact.orientation.x,
                                     ft_msg.Pose_impact.orientation.y,
-                                    ft_msg.Pose_impact.orientation.z],5)
+                                    ft_msg.Pose_impact.orientation.z,
+                                    ft_msg.Pose_impact.orientation.w,],5)
 
         self.vel_impact = np.round([ft_msg.Twist_impact.linear.x,
                                     ft_msg.Twist_impact.linear.y,
@@ -581,7 +582,7 @@ class CrazyflieEnv:
                     "","", # alpha_mu,alpha_sig
                     "","","", # mu,sigma,policy
                     self.t,self.position[0],self.position[1],self.position[2], # t,x,y,z
-                    self.orientation_q[0],self.orientation_q[1],self.orientation_q[2],self.orientation_q[3], # qw,qx,qy,qz
+                    self.orientation_q[3],self.orientation_q[0],self.orientation_q[1],self.orientation_q[2], # qw,qx,qy,qz
                     self.velocity[0],self.velocity[1],self.velocity[2], # vx,vy,vz
                     self.omega[0],self.omega[1],self.omega[2], # wx,wy,wz
                     "",self.flip_flag,self.impact_flag,self.n_rollouts, # reward, flip_triggered, impact_flag, n_rollout
@@ -601,7 +602,7 @@ class CrazyflieEnv:
                     "","", # alpha_mu,alpha_sig
                     "","","", # mu,sigma,policy
                     self.t_flip,self.pos_flip[0],self.pos_flip[1],self.pos_flip[2],    # t,x,y,z
-                    self.quat_flip[0],self.quat_flip[1],self.quat_flip[2],self.quat_flip[3],    # qw,qx,qy,qz
+                    self.quat_flip[3],self.quat_flip[0],self.quat_flip[1],self.quat_flip[2],    # qw,qx,qy,qz
                     self.vel_flip[0],self.vel_flip[1],self.vel_flip[2],    # vx_d,vy_d,vz_d
                     self.omega_flip[0],self.omega_flip[1],self.omega_flip[2],  # wx,wy,wz
                     "","","","", # reward, body_impact, num leg contacts, impact force
@@ -619,7 +620,7 @@ class CrazyflieEnv:
                     "","", # alpha_mu,alpha_sig
                     "","","", # mu,sigma,policy
                     self.t_impact,self.pos_impact[0],self.pos_impact[1],self.pos_impact[2],    # t,x,y,z
-                    self.quat_impact[0],self.quat_impact[1],self.quat_impact[2],self.quat_impact[3],    # qw,qx,qy,qz
+                    self.quat_impact[3],self.quat_impact[0],self.quat_impact[1],self.quat_impact[2],    # qw,qx,qy,qz
                     self.vel_impact[0],self.vel_impact[1],self.vel_impact[2],    # vx_d,vy_d,vz_d
                     self.omega_impact[0],self.omega_impact[1],self.omega_impact[2],  # wx,wy,wz
                     self.impact_flag,self.body_contact,np.array(self.pad_contacts),"",  # "", "", body_impact flag, num leg contacts, ""

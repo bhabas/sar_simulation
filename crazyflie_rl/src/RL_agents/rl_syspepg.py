@@ -58,6 +58,62 @@ class ES:
         # print(f"Reward: r_c: {r_contact:.3f} | r_theta: {r_theta:.3f} | r_h: {r_h:.3f} | Pitch Max: {env.pitch_max:.2f}")
         return R_total
 
+
+
+    def calcReward_Impact(self,env):
+
+        ## CALC R_3 FROM MAXIMUM HEIGHT ACHIEVED
+        R_1 = (env.z_max/env.h_ceiling)*10
+
+        ## CALC R2 FROM THE IMPACT ANGLE
+
+        R = Rotation.from_quat(env.quat_impact)
+        eul_impact_arr = R.as_euler('YZX', degrees=True)
+        eul_y_impact = eul_impact_arr[0]
+        # Center axis [theta_2] is limited to +- 90deg while [theta_1 & theta_3] can rotate to 180deg 
+        # https://graphics.fandom.com/wiki/Conversion_between_quaternions_and_Euler_angles
+        # https://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/Quaternions.pdf
+        
+
+        if -180 <= eul_y_impact <= -90:
+            R_2 = 1.0
+        elif -90 < eul_y_impact <= 0:
+            R_2 = -1/90*eul_y_impact
+        elif 0 < eul_y_impact <= 90:
+            R_2 = 1/90*eul_y_impact
+        elif 90 < eul_y_impact <= 180:
+            R_2 = 1.0
+        else:
+            R_2 = 0
+
+
+
+        ## CALC R_3 FROM FINAL ORIENTATION AT END OF ROLLOUT
+        Rot = Rotation.from_quat([env.orientation_q[1],env.orientation_q[2],env.orientation_q[3],env.orientation_q[0]])
+        b3 = Rot.as_matrix()[:,2]
+        R_3 = np.exp(np.dot(b3, np.array([0,0,-1]))-1)*10 # (0.135 < e^(x-1) <= 1.0) | (-1 < x <= 1)
+
+
+        if len(env.pad_contacts) >= 3 and env.body_contact == False:
+            R_4 = 100
+            
+        elif len(env.pad_contacts) >= 3 and env.body_contact == True:
+            R_4 = 50
+
+        elif len(env.pad_contacts) == 2:
+            R_4 = 25
+        
+        elif len(env.pad_contacts) == 1:
+            R_4 = 10
+        
+        else:
+            R_4 = 0.0
+
+
+        R_total = R_1 + R_2*10 + R_4 + 0.001
+        # print(f"Reward: r_c: {r_contact:.3f} | r_theta: {r_theta:.3f} | r_h: {r_h:.3f} | Pitch Max: {env.pitch_max:.2f}")
+        return R_total
+
     def get_baseline(self, span):
         # should be the same
         if self.reward_history.size < span:
