@@ -478,6 +478,10 @@ class CrazyflieEnv:
         state_msg.twist.linear.y = 0.0
         state_msg.twist.linear.z = 0.0
 
+        state_msg.twist.angular.x = 0.0
+        state_msg.twist.angular.y = 0.0
+        state_msg.twist.angular.z = 0.0
+
         rospy.wait_for_service('/gazebo/set_model_state')
         set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         set_state_srv(state_msg)
@@ -684,6 +688,7 @@ class CrazyflieEnv:
         print("[RELAUNCHING] No Gazebo communication in 7 seconds")
         self.close_sim()
         time.sleep(1)
+        self.launch_controller()
         self.launch_sim()
 
     # ============================

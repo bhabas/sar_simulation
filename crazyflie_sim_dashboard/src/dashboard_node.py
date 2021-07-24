@@ -18,6 +18,7 @@ class DashboardNode:
         self.k_ep = 0
         self.reward = 0
         self.state_current = np.zeros(14)
+        self.MS = [0,0,0,0]
         
         
 
@@ -48,7 +49,6 @@ class DashboardNode:
     # ============================
 
     def ctrlCallback(self,msg):
-        self.MS = msg.motorspeeds
         self.FM = msg.FM
         self.FM_flip = msg.FM_flip
         

@@ -301,7 +301,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                     k_run += 1 # When succesful move on to next run
                     
             except: ## IF SIM EXCEPTION RAISED THEN CONTINUE BACK TO TRY BLOCK UNTIL SUCCESSFUL COMPLETION
-                continue
+                pass
 
             
         ## =======  EPISODE COMPLETED  ======= ##
@@ -317,16 +317,16 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=True)
-    # env.launch_dashboard()
+    env = CrazyflieEnv(gazeboTimeout=False)
+    env.launch_dashboard()
 
     # ============================
     ##          AGENT  
     # ============================
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[3.95],[6.0]])                 # Initial mu starting point
-    sigma = np.array([[0.001],[0.001]])       # Initial sigma starting point
+    mu = np.array([[3.0],[2.5]])                 # Initial mu starting point
+    sigma = np.array([[1.5],[2.0]])       # Initial sigma starting point
 
 
     ## LEARNING AGENTS AND PARAMETERS

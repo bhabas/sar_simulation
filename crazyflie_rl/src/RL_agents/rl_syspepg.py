@@ -19,33 +19,42 @@ class ES:
 
     def calcReward_pureLanding(self,env):
 
+        ## CALC R_3 FROM MAXIMUM HEIGHT ACHIEVED
+        R_1 = (env.z_max/env.h_ceiling)*10
 
-        ## CALC R_1 FROM FINAL ORIENTATION AT END OF ROLLOUT
-        Rot = Rotation.from_quat([env.orientation_q[1],env.orientation_q[2],env.orientation_q[3],env.orientation_q[0]])
-        b3 = Rot.as_matrix()[:,2]
-        R_1 = np.exp(np.dot(b3, np.array([0,0,-1]))-1)*10 # (0.135 < e^(x-1) <= 1.0) | (-1 < x <= 1)
-
-        if env.body_contact == True:
-            R_1 = R_1 - 5.0
-        
-            
-
-            
         ## CALC R2 FROM THE MAXIMUM PITCH ANGLE (CONVERT TO IMPACT ANGLE?)
         if -170 < np.min(env.pitch_max) <= 0:
-            R_2 = 5*(-1/170*np.min(env.pitch_max))      
+            R_2 = 10*(-1/160*np.min(env.pitch_max))      
         elif -330 <= np.min(env.pitch_max) <= -170:
-            R_2 = 5
+            R_2 = 10
         else:
             R_2 = 0
 
-        
-        ## CALC R_3 FROM MAXIMUM HEIGHT ACHIEVED
-        R_3 = (env.z_max/env.h_ceiling)*10
-        
 
+
+        ## CALC R_3 FROM FINAL ORIENTATION AT END OF ROLLOUT
+        Rot = Rotation.from_quat([env.orientation_q[1],env.orientation_q[2],env.orientation_q[3],env.orientation_q[0]])
+        b3 = Rot.as_matrix()[:,2]
+        R_3 = np.exp(np.dot(b3, np.array([0,0,-1]))-1)*10 # (0.135 < e^(x-1) <= 1.0) | (-1 < x <= 1)
+
+
+        if len(env.pad_contacts) >= 3 and env.body_contact == False:
+            R_4 = 100
+            
+        elif len(env.pad_contacts) >= 3 and env.body_contact == True:
+            R_4 = 10
+
+        elif len(env.pad_contacts) == 2:
+            R_4 = 5
         
-        R_total = (R_1*R_2)+R_3 + 0.001
+        elif len(env.pad_contacts) == 1:
+            R_4 = 2.5
+        
+        else:
+            R_4 = 0.0
+
+
+        R_total = R_1 + R_2 + R_4 + 0.001
         # print(f"Reward: r_c: {r_contact:.3f} | r_theta: {r_theta:.3f} | r_h: {r_h:.3f} | Pitch Max: {env.pitch_max:.2f}")
         return R_total
 
