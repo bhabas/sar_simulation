@@ -99,7 +99,7 @@ class Controller
             ros::param::get("/K_EP_SLOWDOWN",_K_EP_SLOWDOWN);
             ros::param::get("/SIM_SPEED",_SIM_SPEED);
             ros::param::get("/SIM_SLOWDOWN_SPEED",_SIM_SLOWDOWN_SPEED);
-            ros::param::get("/_CF_MASS",_CF_MASS);
+            ros::param::get("/CF_MASS",_CF_MASS);
         }
 
         // DEFINE FUNCTION PROTOTYPES

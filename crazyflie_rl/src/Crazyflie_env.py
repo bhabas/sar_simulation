@@ -28,6 +28,7 @@ class CrazyflieEnv:
 
         ## INIT GAZEBO SIMULATION
         rospy.init_node("crazyflie_env_node") 
+        os.system("roslaunch crazyflie_launch params.launch")
         self.launch_controller()
         self.launch_sim() 
         rospy.wait_for_message("/clock",Clock)
