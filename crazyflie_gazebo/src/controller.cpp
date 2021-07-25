@@ -594,6 +594,7 @@ void Controller::controlThread()
         "Policy_armed: " << _policy_armed_flag <<  "\tFlip_flag: " << _flip_flag << "\tImpact_flag: " << _impact_flag << endl <<
         "Tumble Detection: " << _tumble_detection << "\t\tTumbled: " << _tumbled << endl <<
         "kp_xf: " << _kp_xf << " \tkd_xf: " << _kd_xf << "\tkp_Rf: " << _kp_Rf << "\tkd_Rf: " << _kd_Rf  << endl <<
+        "Slowdown_type: " << _slowdown_type << endl << 
         endl << setprecision(3) <<
 
         "x_d: " << x_d.transpose() << endl <<

@@ -112,7 +112,7 @@ class Controller
         void pad_connectCallback(const crazyflie_msgs::PadConnect::ConstPtr &msg);
         void RLCmd_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
         void RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg);
-        void ceilingFTCallback(const crazyflie_msgs::ImpactData &msg);
+        void ceilingFTCallback(const crazyflie_msgs::ImpactData::ConstPtr &msg);
         void adjustSimSpeed(float speed_mult);
 
     private:
@@ -514,9 +514,9 @@ void Controller::imuCallback(const sensor_msgs::Imu::ConstPtr &msg){
 }
 
 // UNSUSED CALLBACK
-void Controller::ceilingFTCallback(const crazyflie_msgs::ImpactData &msg)
+void Controller::ceilingFTCallback(const crazyflie_msgs::ImpactData::ConstPtr &msg)
 {
-     int a = 0;
+    _impact_flag = msg->impact_flag;
 }
 
 // TRIGGER IMPACT FLAG WHENEVER PAD CONNECTION MSG RECEIVED
