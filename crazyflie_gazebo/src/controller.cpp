@@ -7,115 +7,12 @@
 
 
 
-using namespace Eigen;
-using namespace std;
-
-void Controller::Load()
-{
-    cout << setprecision(3);
-    cout << fixed;
-    _isRunning = true;
-
-    // INIT FIRST CONTROLLER SOCKET (COMMUNICATES W/ MAVLINK PORT:18080)
-    Ctrl_Mavlink_socket = socket(AF_INET, SOCK_DGRAM, 0); // DGRAM is for UDP communication (Send data but don't care if it's recieved)
-    Ctrl_Mavlink_socket_SNDBUF = 16;    // 4 floats [16 bytes] for Motorspeeds       
-    Ctrl_Mavlink_socket_RCVBUF = 144;   // 18 doubles [144 bytes] for State array
-    Ctrl_Mavlink_socket_PORT = 18070;   // Port for this socket
-
-    // SET EXPECTED BUFFER SIZES
-    if (setsockopt(Ctrl_Mavlink_socket, SOL_SOCKET, SO_SNDBUF, &Ctrl_Mavlink_socket_SNDBUF, sizeof(Ctrl_Mavlink_socket_SNDBUF))<0)
-        cout<<"[FAILED] Ctrl_Mavlink_socket: Setting SNDBUF"<<endl;
-    if (setsockopt(Ctrl_Mavlink_socket, SOL_SOCKET, SO_RCVBUF, &Ctrl_Mavlink_socket_RCVBUF, sizeof(Ctrl_Mavlink_socket_RCVBUF))<0)
-        cout<<"[FAILED] Ctrl_Mavlink_socket: Setting RCVBUF"<<endl;
-    int enable = 1; // Fix for error if socket hasn't close correctly when restarting program
-    if (setsockopt(Ctrl_Mavlink_socket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
-        cout <<"help me"<< endl;
-
-    // SET SOCKET SETTINGS
-    memset(&addr_Ctrl_Mavlink, 0, sizeof(addr_Ctrl_Mavlink));
-    addr_Ctrl_Mavlink.sin_family = AF_INET;
-    addr_Ctrl_Mavlink.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("0.0.0.0");
-    addr_Ctrl_Mavlink.sin_port = htons(Ctrl_Mavlink_socket_PORT);
-
-    // BIND ADDRESS TO CONTROLLER SOCKET (PORT:18070)
-    if (bind(Ctrl_Mavlink_socket, (struct sockaddr*)&addr_Ctrl_Mavlink, sizeof(addr_Ctrl_Mavlink)) < 0)
-        cout<<"[FAILED] Ctrl_Mavlink_socket: Binding address to socket"<<endl;
-    else
-        cout<<"[SUCCESS] Ctrl_Mavlink_socket: Binding address to socket"<<endl; 
-
-
-    
 
 
 
-    // INIT ADDRESS FOR MAVLINK SOCKET (PORT: 18080)
-    Mavlink_PORT = 18080;
-    memset(&addr_Mavlink, 0, sizeof(addr_Mavlink));
-    addr_Mavlink.sin_family = AF_INET;
-    addr_Mavlink.sin_addr.s_addr = htonl(INADDR_ANY);
-    addr_Mavlink.sin_port = htons(Mavlink_PORT);
-    addr_Mavlink_len = sizeof(addr_Mavlink);
 
 
 
-    // MOTORSPEED TO MAVLINK TEST (VISUALLY CONFIRMS THINGS ARE WORKING IN SIM)
-    float msg[4] = {1900,1900,1900,1900};
-    int msg_len = 0;
-    for(int k=0; k<2; k++)
-        // To Gazebo socket, send msg of len(msg)
-        msg_len = sendto(Ctrl_Mavlink_socket, msg, sizeof(msg),0, (struct sockaddr*)&addr_Mavlink, sizeof(addr_Mavlink));
-    if(msg_len<0)
-        cout<<"[FAILED] Ctrl_Mavlink_socket: Sending test motor speeds to Mavlink. Threads will mutual lock!"<<endl; // Not sure what mutual lock means
-    else
-        cout<<"[SUCCESS] Ctrl_Mavlink_socket: Sending test motor speeds to Mavlink. Avoiding mutual locking between threads!"<<endl;
-
-    // START COMMUNICATION THREADS
-    controllerThread = std::thread(&Controller::controlThread, this);
-
-
-}
-
-
-void Controller::global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
-
-    // SIMPLIFY STATE VALUES FROM TOPIC
-    // Follow msg names from message details - "rqt -s rqt_msg" 
-    
-    const geometry_msgs::Point position = msg->pose.pose.position; 
-    const geometry_msgs::Vector3 velocity = msg->twist.twist.linear;
-
-
-    // SET STATE VALUES INTO CLASS STATE VARIABLES
-    _t = msg->header.stamp.toSec();
-    _pos << position.x, position.y, position.z;
-    _vel << velocity.x, velocity.y, velocity.z;
-
-    // This stuff should come from IMU callback but lockstep broke that topic for some reason
-    const geometry_msgs::Quaternion quaternion = msg->pose.pose.orientation;
-    const geometry_msgs::Vector3 omega = msg->twist.twist.angular;
-
-    _quat << quaternion.w, quaternion.x, quaternion.y, quaternion.z, 
-    _omega << omega.x, omega.y, omega.z;
-
-}
-
-void Controller::OFCallback(const nav_msgs::Odometry::ConstPtr &msg){
-
-    const geometry_msgs::Point position = msg->pose.pose.position; 
-    const geometry_msgs::Vector3 velocity = msg->twist.twist.linear;
-
-    
-    double d = _H_CEILING-position.z; // h_ceiling - height
-
-    // SET SENSOR VALUES INTO CLASS VARIABLES
-    // _RREV = msg->RREV;
-    // _OF_x = msg->OF_x;
-    // _OF_y = msg->OF_y;
-
-    _RREV = velocity.z/d;
-    _OF_x = -velocity.y/d;
-    _OF_y = -velocity.x/d;
-}
 
 
 void Controller::RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){
@@ -138,10 +35,7 @@ void Controller::RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){
 
     }
 }
-// TRIGGER IMPACT FLAG WHENEVER PAD CONNECTION MSG RECEIVED
-void Controller::pad_connectCallback(const crazyflie_msgs::PadConnect::ConstPtr &msg){
-    _impact_flag = true;
-}
+
 
 void Controller::RLCmd_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg){
 
@@ -181,12 +75,12 @@ void Controller::RLCmd_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg){
             _policy_armed_flag = false;
             _flip_flag = false;
             _impact_flag = false;
-            _flag1 = 0;
             _eul_flag = false;
 
             _tumbled = false;
             // _tumble_detection = true;
 
+            _slowdown_type = 0;
             Controller::adjustSimSpeed(_SIM_SPEED);
 
 
@@ -383,10 +277,7 @@ void Controller::controlThread()
     float f_pitch_g = 0.0;
     float f_yaw_g = 0.0;
 
-    float f_thrust_g_flip = 0.0;
-    float f_roll_g_flip = 0.0;
-    float f_pitch_g_flip = 0.0;
-    float f_yaw_g_flip = 0.0;
+    
 
     double M1_pwm = 0.0;
     double M2_pwm = 0.0;
@@ -589,10 +480,10 @@ void Controller::controlThread()
                     F_thrust = 0;
 
                     // RECORD MOTOR THRUST TYPES AT FLIP
-                    f_thrust_g_flip = F_thrust/4.0f*Newton2g;
-                    f_roll_g_flip = M[0]/(4.0f*dp)*Newton2g;
-                    f_pitch_g_flip = M[1]/(4.0f*dp)*Newton2g;
-                    f_yaw_g_flip = M[2]/(4.0f*c_tf)*Newton2g;
+                    _f_thrust_g_flip = F_thrust/4.0f*Newton2g;
+                    _f_roll_g_flip = M[0]/(4.0f*dp)*Newton2g;
+                    _f_pitch_g_flip = M[1]/(4.0f*dp)*Newton2g;
+                    _f_yaw_g_flip = M[2]/(4.0f*c_tf)*Newton2g;
                 }
                 
                 
@@ -660,23 +551,23 @@ void Controller::controlThread()
         if(_LANDING_SLOWDOWN_FLAG==true && _k_ep>=_K_EP_SLOWDOWN){
 
             // WHEN CLOSE TO THE CEILING REDUCE SIM SPEED
-            if(_H_CEILING-statePos(2)<=0.2 && _flag1 == 0){
+            if(_H_CEILING-statePos(2)<=0.2 && _slowdown_type == 0){
                 
                 Controller::adjustSimSpeed(_SIM_SLOWDOWN_SPEED);
-                _flag1 = 1;
+                _slowdown_type = 1;
 
             }
 
             // IF IMPACTED OR MISSED CEILING, INCREASE SIM SPEED TO DEFAULT
-            if(_impact_flag == true && _flag1 == 1)
+            if(_impact_flag == true && _slowdown_type == 1)
             {
                 
                 Controller::adjustSimSpeed(_SIM_SPEED);
-                _flag1 = 2;
+                _slowdown_type = 2;
             }
-            else if(stateVel(2) <= -0.5 && _flag1 == 1){
+            else if(stateVel(2) <= -0.5 && _slowdown_type == 1){
                 Controller::adjustSimSpeed(_SIM_SPEED);
-                _flag1 = 2;
+                _slowdown_type = 2;
             }
 
         }
@@ -751,12 +642,10 @@ void Controller::controlThread()
         ctrl_msg.RREV_tr = _RREV_flip;
         ctrl_msg.OF_x_tr = _OF_x_flip;
         ctrl_msg.OF_y_tr = _OF_y_flip;
-        ctrl_msg.FM_flip = {f_thrust_g_flip,f_roll_g_flip,f_pitch_g_flip,f_yaw_g_flip};
+        ctrl_msg.FM_flip = {_f_thrust_g_flip,_f_roll_g_flip,_f_pitch_g_flip,_f_yaw_g_flip};
 
-        // This techinially converts to integer and micro-secs instead of nano-secs but I 
-        // couldn't figure out the solution to do this the right way and keep it as nsecs
+
         ctrl_msg.Pose_tr.header.stamp = t_flip;             
-
 
         ctrl_msg.Pose_tr.pose.position.x = _pos_flip(0);
         ctrl_msg.Pose_tr.pose.position.y = _pos_flip(1);
