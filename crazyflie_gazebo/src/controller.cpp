@@ -375,7 +375,7 @@ void Controller::controlThread()
     // float RREV_flip = 0.0;
     // float OF_x_flip = 0.0;
     // float OF_y_flip = 0.0;
-    double t_flip = 0.0;
+    ros::Time t_flip;
 
 
     float f_thrust_g = 0.0;
@@ -563,7 +563,7 @@ void Controller::controlThread()
                     _OF_x_flip = OF_x;
                     _OF_y_flip = OF_y;
 
-                    t_flip = t;
+                    t_flip = ros::Time::now();;
                     _pos_flip = statePos;
                     _vel_flip = stateVel;
                     _quat_flip = stateQuat;
@@ -755,9 +755,9 @@ void Controller::controlThread()
 
         // This techinially converts to integer and micro-secs instead of nano-secs but I 
         // couldn't figure out the solution to do this the right way and keep it as nsecs
-        ctrl_msg.Pose_tr.header.stamp.sec = int(t_flip);              // Integer portion of flip time as integer
-        ctrl_msg.Pose_tr.header.stamp.nsec = int(t_flip*1000)%1000;   // Decimal portion of flip time as integer
-        
+        ctrl_msg.Pose_tr.header.stamp = t_flip;             
+
+
         ctrl_msg.Pose_tr.pose.position.x = _pos_flip(0);
         ctrl_msg.Pose_tr.pose.position.y = _pos_flip(1);
         ctrl_msg.Pose_tr.pose.position.z = _pos_flip(2);

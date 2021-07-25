@@ -206,9 +206,13 @@ class CrazyflieEnv:
             # Save state data at time of flip activation
             ## SET STATE VALUES FROM TOPIC
             # TIME_FLIP
+            # t_temp = ft_msg.Header.stamp.secs
+            # ns_temp = ft_msg.Header.stamp.nsecs
+            # self.t_impact = np.round(t_temp+ns_temp*1e-9,4)  
+
             t_temp = ctrl_msg.Pose_tr.header.stamp.secs
             ns_temp = ctrl_msg.Pose_tr.header.stamp.nsecs
-            self.t_flip = np.round(t_temp+ns_temp*1e-3,3)  # Treat nsecs here at micro-secs
+            self.t_flip = np.round(t_temp+ns_temp*1e-9,4)  # Treat nsecs here at micro-secs
 
             # POSE_FLIP
             self.pos_flip = np.round([ctrl_msg.Pose_tr.pose.position.x,
