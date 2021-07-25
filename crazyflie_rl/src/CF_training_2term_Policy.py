@@ -99,6 +99,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 
             start_time_rollout = env.getTime()
             start_time_pitch = np.nan
+            start_time_impact = np.nan
 
             ## RESET LOGGING CONDITIONS 
             
@@ -111,6 +112,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 
             
             flag = False # Ensures flip data recorded only once (Needs a better name)
+            flag2 = False # Ensures impact data recorded only once (Needs a better name)
 
             
             
@@ -177,7 +179,8 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                     flag = True # Turns on to make sure this only runs once per rollout
 
                 
-                
+                if (env.impact_flag == True and flag2 == False):
+                    start_time_impact = env.getTime()
 
 
                 # ============================
@@ -196,23 +199,28 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                 # ============================
                 ##    Termination Criteria 
                 # ============================
+                if env.impact_flag == True and ((env.getTime()-start_time_impact) > 0.3):
+                    env.error_str = "Rollout Completed: Impact Timeout"
+                    print(env.error_str)
+
+                    env.runComplete_flag = True
 
                 # IF TIME SINCE TRIGGERED PITCH EXCEEDS [1.5s]  
-                if env.flip_flag and ((env.getTime()-start_time_pitch) > (1.5)):
+                elif env.flip_flag and ((env.getTime()-start_time_pitch) > (1.5)):
                     env.error_str = "Rollout Completed: Pitch Timeout"
                     print(env.error_str)
 
                     env.runComplete_flag = True
 
                 # IF POSITION FALLS BELOW FLOOR HEIGHT
-                if env.position[2] <= -8.0: # Note: there is a lag with this at high RTF
+                elif env.position[2] <= -8.0: # Note: there is a lag with this at high RTF
                     env.error_str = "Rollout Completed: Falling Drone"
                     print(env.error_str)
 
                     env.runComplete_flag = True
 
                 # IF TIME SINCE RUN START EXCEEDS [6.0s]
-                if (env.getTime() - start_time_rollout) > (3.0):
+                elif (env.getTime() - start_time_rollout) > (3.0):
                     env.error_str = "Rollout Completed: Time Exceeded"
                     print(env.error_str)
 
