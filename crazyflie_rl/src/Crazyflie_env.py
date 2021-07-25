@@ -28,6 +28,7 @@ class CrazyflieEnv:
 
         ## INIT GAZEBO SIMULATION
         rospy.init_node("crazyflie_env_node") 
+        os.system("roslaunch crazyflie_launch params.launch")
         self.launch_controller()
         self.launch_sim() 
         rospy.wait_for_message("/clock",Clock)
@@ -52,6 +53,7 @@ class CrazyflieEnv:
         ## INIT RL_DATA VARIABLES 
         # NOTE: All time units are in terms of Sim-Time unless specified
         self.runComplete_flag = False
+        self.reset_flag = False
         self.trial_name = '' 
         self.agent_name = ''    # Learning agent used for training (PEPG,EM,etc...)
         self.error_str = ''     # Label for why rollout was terminated/completed
@@ -102,8 +104,10 @@ class CrazyflieEnv:
         self.body_contact = False   # Flag if model body impacts ceiling plane
         self.impact_flag = False    # Flag if any model part impact ceiling plane
 
-        self.ceiling_ft_z = 0.0     # Ceiling impact force, Z-dir [N]
         self.ceiling_ft_x = 0.0     # Ceiling impact force, X-dir [N]
+        self.ceiling_ft_y = 0.0     # Ceiling impact force, Y-dir [N]
+        self.ceiling_ft_z = 0.0     # Ceiling impact force, Z-dir [N]
+
 
     
 
@@ -162,6 +166,7 @@ class CrazyflieEnv:
         rl_msg.error = self.error_str
         rl_msg.impact_flag = self.impact_flag
         rl_msg.runComplete_flag = self.runComplete_flag
+        rl_msg.reset_flag = self.reset_flag
 
 
         rl_msg.n_rollouts = self.n_rollouts
@@ -202,18 +207,22 @@ class CrazyflieEnv:
             # Save state data at time of flip activation
             ## SET STATE VALUES FROM TOPIC
             # TIME_FLIP
+            # t_temp = ft_msg.Header.stamp.secs
+            # ns_temp = ft_msg.Header.stamp.nsecs
+            # self.t_impact = np.round(t_temp+ns_temp*1e-9,4)  
+
             t_temp = ctrl_msg.Pose_tr.header.stamp.secs
             ns_temp = ctrl_msg.Pose_tr.header.stamp.nsecs
-            self.t_flip = np.round(t_temp+ns_temp*1e-3,3)  # Treat nsecs here at micro-secs
+            self.t_flip = np.round(t_temp+ns_temp*1e-9,4)  # Treat nsecs here at micro-secs
 
             # POSE_FLIP
             self.pos_flip = np.round([ctrl_msg.Pose_tr.pose.position.x,
                                         ctrl_msg.Pose_tr.pose.position.y,
                                         ctrl_msg.Pose_tr.pose.position.z],3) # [m]
-            self.quat_flip = np.round([ctrl_msg.Pose_tr.pose.orientation.w,
-                                        ctrl_msg.Pose_tr.pose.orientation.x,
+            self.quat_flip = np.round([ctrl_msg.Pose_tr.pose.orientation.x,
                                         ctrl_msg.Pose_tr.pose.orientation.y,
-                                        ctrl_msg.Pose_tr.pose.orientation.z],5) # [quat]
+                                        ctrl_msg.Pose_tr.pose.orientation.z,
+                                        ctrl_msg.Pose_tr.pose.orientation.w],5) # [quat]
             # TWIST_FLIP
             self.vel_flip = np.round([ctrl_msg.Twist_tr.linear.x,
                                         ctrl_msg.Twist_tr.linear.y,
@@ -261,7 +270,7 @@ class CrazyflieEnv:
 
         ## SET STATE VALUES FROM TOPIC
         self.position = np.round([global_pos.x,global_pos.y,global_pos.z],3)    # [m]
-        self.orientation_q = np.round([global_quat.w,global_quat.x,global_quat.y,global_quat.z],5) # [quat]
+        self.orientation_q = np.round([global_quat.x,global_quat.y,global_quat.z,global_quat.w],5) # [quat]
         self.velocity = np.round([global_vel.x,global_vel.y,global_vel.z],3)    # [m/s]
         self.omega = np.round([global_omega.x,global_omega.y,global_omega.z],3) # [rad/s]
 
@@ -331,8 +340,9 @@ class CrazyflieEnv:
         # Keeps record of max impact force for each run
         # The value is reset in the topic converter script at each 'home' command
 
-        self.ceiling_ft_z = np.round(ft_msg.Force_impact.z,3)   # Z-Impact force from ceiling Force-Torque sensor
         self.ceiling_ft_x = np.round(ft_msg.Force_impact.x,3)   # X-Impact force from ceiling Force-Torque sensor
+        self.ceiling_ft_y = np.round(ft_msg.Force_impact.y,3)
+        self.ceiling_ft_z = np.round(ft_msg.Force_impact.z,3)   # Z-Impact force from ceiling Force-Torque sensor
 
         t_temp = ft_msg.Header.stamp.secs
         ns_temp = ft_msg.Header.stamp.nsecs
@@ -342,10 +352,11 @@ class CrazyflieEnv:
                                     ft_msg.Pose_impact.position.y,
                                     ft_msg.Pose_impact.position.z],3)
 
-        self.quat_impact = np.round([ft_msg.Pose_impact.orientation.w,
+        self.quat_impact = np.round([
                                     ft_msg.Pose_impact.orientation.x,
                                     ft_msg.Pose_impact.orientation.y,
-                                    ft_msg.Pose_impact.orientation.z],5)
+                                    ft_msg.Pose_impact.orientation.z,
+                                    ft_msg.Pose_impact.orientation.w,],5)
 
         self.vel_impact = np.round([ft_msg.Twist_impact.linear.x,
                                     ft_msg.Twist_impact.linear.y,
@@ -523,29 +534,52 @@ class CrazyflieEnv:
         
     def clear_IF_Data(self):
 
+        ## RESET/UPDATE RUN CONDITIONS
+        self.runComplete_flag = False
+        self.reset_flag = False
+
+        self.error_str = ""
+
+        ## RESET IMPACT CONDITIONS
+        self.impact_flag = False
+        self.pad_contacts = [] # Reset impact condition variables
+        self.body_contact = False
+        self.ceiling_ft_x = 0.0
+        self.ceiling_ft_y = 0.0
+        self.ceiling_ft_z = 0.0
+
+        ## RESET FLIP CONDITIONS
+        self.flip_flag = False
+
+
+        ## RESET REWARD CALC VALUES
+        self.z_max = 0.0
+        self.pitch_sum = 0.0
+        self.pitch_max = 0.0
+
                 
-        self.t_flip = np.nan
+        # self.t_flip = np.nan
 
-        self.pos_flip = np.full_like(self.pos_flip,np.nan)
-        self.quat_flip = np.full_like(self.quat_flip,np.nan)
-        self.vel_flip = np.full_like(self.vel_flip,np.nan)
-        self.omega_flip = np.full_like(self.omega_flip,np.nan)
+        # self.pos_flip = np.full_like(self.pos_flip,np.nan)
+        # self.quat_flip = np.full_like(self.quat_flip,np.nan)
+        # self.vel_flip = np.full_like(self.vel_flip,np.nan)
+        # self.omega_flip = np.full_like(self.omega_flip,np.nan)
 
-        self.FM_flip = np.full_like(self.FM_flip,np.nan)
-        self.RREV_tr = np.full_like(self.RREV_tr,np.nan)
-        self.OF_y_tr = np.full_like(self.OF_y_tr,np.nan)
+        # self.FM_flip = np.full_like(self.FM_flip,np.nan)
+        # self.RREV_tr = np.full_like(self.RREV_tr,np.nan)
+        # self.OF_y_tr = np.full_like(self.OF_y_tr,np.nan)
 
 
 
-        self.t_impact = np.nan
+        # self.t_impact = np.nan
 
-        self.pos_impact = np.full_like(self.pos_impact,np.nan)
-        self.quat_impact = np.full_like(self.quat_impact,np.nan)
-        self.vel_impact = np.full_like(self.vel_impact,np.nan)
-        self.omega_impact = np.full_like(self.omega_impact,np.nan)
+        # self.pos_impact = np.full_like(self.pos_impact,np.nan)
+        # self.quat_impact = np.full_like(self.quat_impact,np.nan)
+        # self.vel_impact = np.full_like(self.vel_impact,np.nan)
+        # self.omega_impact = np.full_like(self.omega_impact,np.nan)
 
-        self.ceiling_ft_z = np.nan
-        self.ceiling_ft_x = np.nan
+        # self.ceiling_ft_z = np.nan
+        # self.ceiling_ft_x = np.nan
 
 
     # ============================
@@ -581,7 +615,7 @@ class CrazyflieEnv:
                     "","", # alpha_mu,alpha_sig
                     "","","", # mu,sigma,policy
                     self.t,self.position[0],self.position[1],self.position[2], # t,x,y,z
-                    self.orientation_q[0],self.orientation_q[1],self.orientation_q[2],self.orientation_q[3], # qw,qx,qy,qz
+                    self.orientation_q[3],self.orientation_q[0],self.orientation_q[1],self.orientation_q[2], # qw,qx,qy,qz
                     self.velocity[0],self.velocity[1],self.velocity[2], # vx,vy,vz
                     self.omega[0],self.omega[1],self.omega[2], # wx,wy,wz
                     "",self.flip_flag,self.impact_flag,self.n_rollouts, # reward, flip_triggered, impact_flag, n_rollout
@@ -601,7 +635,7 @@ class CrazyflieEnv:
                     "","", # alpha_mu,alpha_sig
                     "","","", # mu,sigma,policy
                     self.t_flip,self.pos_flip[0],self.pos_flip[1],self.pos_flip[2],    # t,x,y,z
-                    self.quat_flip[0],self.quat_flip[1],self.quat_flip[2],self.quat_flip[3],    # qw,qx,qy,qz
+                    self.quat_flip[3],self.quat_flip[0],self.quat_flip[1],self.quat_flip[2],    # qw,qx,qy,qz
                     self.vel_flip[0],self.vel_flip[1],self.vel_flip[2],    # vx_d,vy_d,vz_d
                     self.omega_flip[0],self.omega_flip[1],self.omega_flip[2],  # wx,wy,wz
                     "","","","", # reward, body_impact, num leg contacts, impact force
@@ -619,11 +653,11 @@ class CrazyflieEnv:
                     "","", # alpha_mu,alpha_sig
                     "","","", # mu,sigma,policy
                     self.t_impact,self.pos_impact[0],self.pos_impact[1],self.pos_impact[2],    # t,x,y,z
-                    self.quat_impact[0],self.quat_impact[1],self.quat_impact[2],self.quat_impact[3],    # qw,qx,qy,qz
+                    self.quat_impact[3],self.quat_impact[0],self.quat_impact[1],self.quat_impact[2],    # qw,qx,qy,qz
                     self.vel_impact[0],self.vel_impact[1],self.vel_impact[2],    # vx_d,vy_d,vz_d
                     self.omega_impact[0],self.omega_impact[1],self.omega_impact[2],  # wx,wy,wz
                     self.impact_flag,self.body_contact,np.array(self.pad_contacts),"",  # "", "", body_impact flag, num leg contacts, ""
-                    self.ceiling_ft_z,self.ceiling_ft_x,"",             # Max impact force [z], =Max impact force [x], ""
+                    self.ceiling_ft_z,self.ceiling_ft_x,self.ceiling_ft_y,             # Max impact force [z], =Max impact force [x], ""
                     "","","","", # F_thrust,Mx,My,Mz (Impact)
                     "Impact Data"]) # Error
 

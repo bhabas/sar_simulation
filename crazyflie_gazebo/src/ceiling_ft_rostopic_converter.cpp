@@ -30,8 +30,9 @@ ros::Publisher impactForce_Publisher;
 ros::Subscriber RLdata_Subscriber;
 ros::Subscriber globalState_Subscriber;
 
-double _ceiling_ft_z = 0.0; // Max impact force in Z-direction [N]
 double _ceiling_ft_x = 0.0; // Max impact force in X-direction [N]
+double _ceiling_ft_y = 0.0; // Max impact force in Y-direction [N]
+double _ceiling_ft_z = 0.0; // Max impact force in Z-direction [N]
 bool _impact_flag = false;
 
 
@@ -60,13 +61,16 @@ geometry_msgs::Vector3 _omega_arr [arr_len];
 void gazeboFT_Callback(const ConstWrenchStampedPtr &_msg)
 {
   // Record max force experienced
+  if (_msg->wrench().force().x() > _ceiling_ft_x){
+    _ceiling_ft_x = _msg->wrench().force().x();
+  }
+  if (_msg->wrench().force().y() > _ceiling_ft_y){
+    _ceiling_ft_y = _msg->wrench().force().y();
+  }
   if (_msg->wrench().force().z() > _ceiling_ft_z){
     _ceiling_ft_z = _msg->wrench().force().z();
   }
 
-  if (_msg->wrench().force().x() > _ceiling_ft_x){
-    _ceiling_ft_x = _msg->wrench().force().x();
-  }
 
 
   if (_ceiling_ft_z >= 0.25 && _impact_flag == false){ 
@@ -81,61 +85,54 @@ void gazeboFT_Callback(const ConstWrenchStampedPtr &_msg)
     _quat_impact = _quat_arr[2];
     _omega_impact = _omega_arr[2];
 
-
-    //PUBLISH THAT IMPACT OCCURED
-    crazyflie_msgs::ImpactData impact_msg;
-    impact_msg.impact_flag = _impact_flag;
-    impactForce_Publisher.publish(impact_msg);
-  
   }
 
-  
+  //PUBLISH THAT IMPACT OCCURED
+  crazyflie_msgs::ImpactData impact_msg;
 
+  impact_msg.impact_flag = _impact_flag;
+  impact_msg.Header.stamp = _t_impact;
+
+  // WRITE CURRENT MAX IMPACT FORCES TO MSG
+  impact_msg.Force_impact.x = _ceiling_ft_x;
+  impact_msg.Force_impact.y = _ceiling_ft_y;
+  impact_msg.Force_impact.z = _ceiling_ft_z;
+
+  // WRITE LAGGING IMPACT POSE TO MSG
+  impact_msg.Pose_impact.position.x = _pos_impact.x;
+  impact_msg.Pose_impact.position.y = _pos_impact.y;
+  impact_msg.Pose_impact.position.z = _pos_impact.z;
+
+  impact_msg.Pose_impact.orientation.x = _quat_impact.x;
+  impact_msg.Pose_impact.orientation.y = _quat_impact.y;
+  impact_msg.Pose_impact.orientation.z = _quat_impact.z;
+  impact_msg.Pose_impact.orientation.w = _quat_impact.w;
+
+  // WRITE LAGGING IMPACT TWIST TO MSG
+  impact_msg.Twist_impact.linear.x = _vel_impact.x;
+  impact_msg.Twist_impact.linear.y = _vel_impact.y;
+  impact_msg.Twist_impact.linear.z = _vel_impact.z;
   
- 
+  impact_msg.Twist_impact.angular.x = _omega_impact.x;
+  impact_msg.Twist_impact.angular.y = _omega_impact.y;
+  impact_msg.Twist_impact.angular.z = _omega_impact.z;
+
+  impactForce_Publisher.publish(impact_msg);
+  
 }
 
 void RLdata_Callback(const crazyflie_msgs::RLData::ConstPtr &msg)
 {
   // WHEN RUN COMPLETED PUBLISH IMPACT DATA
-  if(msg->runComplete_flag == true)
+  if(msg->reset_flag == true)
   {
-      
-    crazyflie_msgs::ImpactData impact_msg;
-  
-    impact_msg.impact_flag = _impact_flag;
-    impact_msg.Header.stamp = _t_impact;
-
-    // WRITE CURRENT MAX IMPACT FORCES TO MSG
-    impact_msg.Force_impact.x = _ceiling_ft_x;
-    impact_msg.Force_impact.y = 0.0;
-    impact_msg.Force_impact.z = _ceiling_ft_z;
-
-    // WRITE LAGGING IMPACT POSE TO MSG
-    impact_msg.Pose_impact.position.x = _pos_impact.x;
-    impact_msg.Pose_impact.position.y = _pos_impact.y;
-    impact_msg.Pose_impact.position.z = _pos_impact.z;
-
-    impact_msg.Pose_impact.orientation.x = _quat_impact.x;
-    impact_msg.Pose_impact.orientation.y = _quat_impact.y;
-    impact_msg.Pose_impact.orientation.z = _quat_impact.z;
-    impact_msg.Pose_impact.orientation.w = _quat_impact.w;
-
-    // WRITE LAGGING IMPACT TWIST TO MSG
-    impact_msg.Twist_impact.linear.x = _vel_impact.x;
-    impact_msg.Twist_impact.linear.y = _vel_impact.y;
-    impact_msg.Twist_impact.linear.z = _vel_impact.z;
-    
-    impact_msg.Twist_impact.angular.x = _omega_impact.x;
-    impact_msg.Twist_impact.angular.y = _omega_impact.y;
-    impact_msg.Twist_impact.angular.z = _omega_impact.z;
-
-    impactForce_Publisher.publish(impact_msg);
 
     // RESET IMPACT FLAG AND VALUES
     _impact_flag = false;
-    _ceiling_ft_z = 0.0;
     _ceiling_ft_x = 0.0;
+    _ceiling_ft_y = 0.0;
+    _ceiling_ft_z = 0.0;
+
 
   }
 

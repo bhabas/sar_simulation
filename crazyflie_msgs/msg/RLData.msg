@@ -5,6 +5,7 @@ string error
 
 bool impact_flag
 bool runComplete_flag
+bool reset_flag
 
 uint8 k_ep
 uint8 k_run
