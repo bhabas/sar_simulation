@@ -210,7 +210,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                     # ============================
                     ##    Termination Criteria 
                     # ============================
-                    if env.impact_flag == True and ((env.getTime()-start_time_impact) > 0.3):
+                    if env.impact_flag == True and ((env.getTime()-start_time_impact) > 0.15):
                         env.error_str = "Rollout Completed: Impact Timeout"
                         print(env.error_str)
 
@@ -339,7 +339,7 @@ if __name__ == '__main__':
     # ============================
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[6.0],[6.0]])                 # Initial mu starting point
+    mu = np.array([[6],[4.39]])                 # Initial mu starting point
     sigma = np.array([[0.001],[0.001]])       # Initial sigma starting point
 
 

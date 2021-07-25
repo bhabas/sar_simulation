@@ -332,7 +332,7 @@ class CrazyflieEnv:
     def padConnect_Callback(self,msg):
 
         self.pad_contacts.append(msg.Pad_Num)
-        self.impact_flag = True
+        
 
             
 
@@ -343,6 +343,8 @@ class CrazyflieEnv:
         self.ceiling_ft_x = np.round(ft_msg.Force_impact.x,3)   # X-Impact force from ceiling Force-Torque sensor
         self.ceiling_ft_y = np.round(ft_msg.Force_impact.y,3)
         self.ceiling_ft_z = np.round(ft_msg.Force_impact.z,3)   # Z-Impact force from ceiling Force-Torque sensor
+
+        self.impact_flag = ft_msg.impact_flag
 
         t_temp = ft_msg.Header.stamp.secs
         ns_temp = ft_msg.Header.stamp.nsecs
