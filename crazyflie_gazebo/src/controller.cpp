@@ -120,6 +120,17 @@ void Controller::OFCallback(const nav_msgs::Odometry::ConstPtr &msg){
 
 void Controller::RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){
     _k_ep = msg->k_ep;
+    if (msg->reset_flag == true){
+        _pos_flip << 0.0,0.0,0.0;
+        _vel_flip << 0.0,0.0,0.0;
+        _quat_flip << 1.0,0.0,0.0,0.0; // [qw,qx,qy,qz]
+        _omega_flip << 0.0,0.0,0.0;
+
+        _flip_flag = false;
+        _impact_flag = false;
+        _policy_armed_flag = false;
+
+    }
 }
 // TRIGGER IMPACT FLAG WHENEVER PAD CONNECTION MSG RECEIVED
 void Controller::pad_connectCallback(const crazyflie_msgs::PadConnect::ConstPtr &msg){
@@ -278,50 +289,6 @@ void Controller::RLCmd_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg){
 }
 
 
-// UNUSED CALLBACK
-void Controller::imuCallback(const sensor_msgs::Imu::ConstPtr &msg){
-    int a = 0;
-}
-
-// UNSUSED CALLBACK
-void Controller::ceilingFTCallback(const crazyflie_msgs::ImpactData &msg)
-{
-     int a = 0;
-}
-
-
-
-
-void Controller::adjustSimSpeed(float speed_mult)
-{
-    gazebo_msgs::SetPhysicsProperties srv;
-    srv.request.time_step = 0.001;
-    srv.request.max_update_rate = (int)(speed_mult/0.001);
-
-
-    geometry_msgs::Vector3 gravity_vec;
-    gravity_vec.x = 0.0;
-    gravity_vec.y = 0.0;
-    gravity_vec.z = -9.8066;
-    srv.request.gravity = gravity_vec;
-
-    gazebo_msgs::ODEPhysics ode_config;
-    ode_config.auto_disable_bodies = false;
-    ode_config.sor_pgs_precon_iters = 0;
-    ode_config.sor_pgs_iters = 50;
-    ode_config.sor_pgs_w = 1.3;
-    ode_config.sor_pgs_rms_error_tol = 0.0;
-    ode_config.contact_surface_layer = 0.001;
-    ode_config.contact_max_correcting_vel = 0.0;
-    ode_config.cfm = 0.0;
-    ode_config.erp = 0.2;
-    ode_config.max_contacts = 20;
-
-    srv.request.ode_config = ode_config;
-
-    SimSpeed_Client.call(srv);
-}
-
 void Controller::controlThread()
 {
     // =========== Controller Explanation =========== //
@@ -335,19 +302,14 @@ void Controller::controlThread()
     // LOCAL STATE DECLARATIONS //
     Vector3d statePos;      // Current position [m]
     Vector3d stateVel;      // Current velocity [m/s]
-
     Vector4d stateQuat;     // Current attitude [rad] (quat form)
-    Vector3d stateEul;      // Current attitude [rad] (roll, pitch, yaw angles)
     Vector3d stateOmega;    // Current angular velocity [rad/s]
 
-    Vector3d stateVel_prev(0,0,0);  // Previous velocity [m/s]
-    Vector3d stateAccel;    // Current acceleration [m/s^2]
+    Vector3d stateEul;      // Current attitude [rad] (roll, pitch, yaw angles)
 
-    Vector3d pos_tr;    // Flip trigger position [m]
-    Vector3d vel_tr;    // Flip trigger velocity [m]
-    Vector4d quat_tr;   // Flip trigger attitude [rad] (quat form)
-    Vector3d omega_tr;  // Flip trigger angular velocity [rad/s]
-    
+    // UNUSED
+    Vector3d stateVel_prev(0,0,0);  // Previous velocity [m/s]
+    Vector3d stateAccel;            // Current acceleration [m/s^2]
 
     // LOCAL STATE PRESCRIPTIONS AND ERRORS //
     Vector3d x_d; // Pos-desired [m] 
@@ -355,42 +317,42 @@ void Controller::controlThread()
     Vector3d a_d; // Acceleration-desired [m/s]
     
 
-    Matrix3d R_d; // Rotation-desired 
-    Vector3d omega_d; // Omega-desired [rad/s]
-    Vector3d domega_d(0,0,0); // Omega-Accl. [rad/s^2]
+    Matrix3d R_d;               // Rotation-desired 
+    Vector3d omega_d;           // Omega-desired [rad/s]
+    Vector3d domega_d(0,0,0);   // Omega-Accl. [rad/s^2]
 
-    Vector3d b1_d; // Desired yaw direction of body-fixed axis (COM to prop #1)
-    Vector3d b2_d; // Desired body-fixed axis normal to b1 and b3
-    Vector3d b3_d; // Desired body-fixed vertical axis
+    Vector3d b1_d;  // Desired yaw direction of body-fixed axis (COM to prop #1)
+    Vector3d b2_d;  // Desired body-fixed axis normal to b1 and b3
+    Vector3d b3_d;  // Desired body-fixed vertical axis
 
-    Vector3d e_x; // Pos-Error [m]
-    Vector3d e_v; // Vel-error  [m/s]
-    Vector3d e_PI; // Pos. Integral-error [m*s]
+    Vector3d e_x;   // Pos-Error [m]
+    Vector3d e_v;   // Vel-error [m/s]
+    Vector3d e_PI;  // Pos. Integral-error [m*s]
 
 
-    Vector3d e_R; // Rotation-error [rad]
-    Vector3d e_w; // Omega-error [rad/s]
-    Vector3d e_RI; // Rot. Integral-error [rad*s]
+    Vector3d e_R;   // Rotation-error [rad]
+    Vector3d e_w;   // Omega-error [rad/s]
+    Vector3d e_RI;  // Rot. Integral-error [rad*s]
 
 
     
 
-    Vector3d P_effort;
-    Vector3d R_effort;
-    Vector3d F_thrust_ideal; // Ideal thrust vector to minimize error   
-    Vector3d Gyro_dyn; // Gyroscopic dynamics of system [Nm]
-    Vector3d M; // Moment control vector [Nm]
-    
-    
-    Vector4d FM; // Thrust-Moment control vector (4x1)
-    Vector4d f; // Propeller thrusts [PWM]
+    Vector3d P_effort;          // Controller effort from positional gains
+    Vector3d R_effort;          // Controller effort from rotational gains
+    Vector3d F_thrust_ideal;    // Ideal thrust vector to minimize error   
     double F_thrust;
+    Vector3d Gyro_dyn;          // Gyroscopic dynamics of system [Nm]
+    Vector3d M;                 // Moment control vector [Nm]
+
+
+    Vector4d FM;        // Thrust-Moment control vector (4x1) [N/N*mm]
+    Vector4d f;         // Propeller thrust vector [g]
 
 
     
     Vector4d M_pwm;
-    Vector4d motorspeed_Vec_d; // Desired motorspeeds [rad/s]
-    Vector4d motorspeed_Vec; // Motorspeeds [rad/s]
+    Vector4d motorspeed_Vec_d;  // Desired motorspeeds [rad/s]
+    Vector4d motorspeed_Vec;    // Motorspeeds [rad/s]
 
 
     Vector3d b3; // Body-fixed vertical axis
@@ -402,11 +364,6 @@ void Controller::controlThread()
 
     
     
-
-
-    
-    
-
     float RREV = 0.0;
     float OF_y = 0.0;
     float OF_x = 0.0;
@@ -613,10 +570,10 @@ void Controller::controlThread()
                     RREV_tr = RREV;
 
                     t_tr = t;
-                    pos_tr = statePos;
-                    vel_tr = stateVel;
-                    quat_tr = stateQuat;
-                    omega_tr = stateOmega;
+                    _pos_flip = statePos;
+                    _vel_flip = stateVel;
+                    _quat_flip = stateQuat;
+                    _omega_flip = stateOmega;
 
 
                     _flip_flag = true;
@@ -807,22 +764,22 @@ void Controller::controlThread()
         ctrl_msg.Pose_tr.header.stamp.sec = int(t_tr);              // Integer portion of flip time as integer
         ctrl_msg.Pose_tr.header.stamp.nsec = int(t_tr*1000)%1000;   // Decimal portion of flip time as integer
         
-        ctrl_msg.Pose_tr.pose.position.x = pos_tr(0);
-        ctrl_msg.Pose_tr.pose.position.y = pos_tr(1);
-        ctrl_msg.Pose_tr.pose.position.z = pos_tr(2);
+        ctrl_msg.Pose_tr.pose.position.x = _pos_flip(0);
+        ctrl_msg.Pose_tr.pose.position.y = _pos_flip(1);
+        ctrl_msg.Pose_tr.pose.position.z = _pos_flip(2);
 
-        ctrl_msg.Pose_tr.pose.orientation.x = quat_tr(1);
-        ctrl_msg.Pose_tr.pose.orientation.y = quat_tr(2);
-        ctrl_msg.Pose_tr.pose.orientation.z = quat_tr(3);
-        ctrl_msg.Pose_tr.pose.orientation.w = quat_tr(0);
+        ctrl_msg.Pose_tr.pose.orientation.x = _quat_flip(1);
+        ctrl_msg.Pose_tr.pose.orientation.y = _quat_flip(2);
+        ctrl_msg.Pose_tr.pose.orientation.z = _quat_flip(3);
+        ctrl_msg.Pose_tr.pose.orientation.w = _quat_flip(0);
 
-        ctrl_msg.Twist_tr.linear.x = vel_tr(0);
-        ctrl_msg.Twist_tr.linear.y = vel_tr(1);
-        ctrl_msg.Twist_tr.linear.z = vel_tr(2);
+        ctrl_msg.Twist_tr.linear.x = _vel_flip(0);
+        ctrl_msg.Twist_tr.linear.y = _vel_flip(1);
+        ctrl_msg.Twist_tr.linear.z = _vel_flip(2);
 
-        ctrl_msg.Twist_tr.angular.x = omega_tr(0);
-        ctrl_msg.Twist_tr.angular.y = omega_tr(1);
-        ctrl_msg.Twist_tr.angular.z = omega_tr(2);
+        ctrl_msg.Twist_tr.angular.x = _omega_flip(0);
+        ctrl_msg.Twist_tr.angular.y = _omega_flip(1);
+        ctrl_msg.Twist_tr.angular.z = _omega_flip(2);
 
         ctrl_msg.FM = {f_thrust_g,f_roll_g,f_pitch_g,f_yaw_g};
 
