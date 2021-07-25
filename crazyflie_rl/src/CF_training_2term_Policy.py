@@ -4,7 +4,7 @@
 import numpy as np
 import time,os
 import rospy
-from crazyflie_msgs.msg import ImpactData
+from crazyflie_msgs.msg import ImpactData,CtrlData
 
 
 
@@ -81,7 +81,11 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
             ## RESET TO INITIAL STATE
             env.step('home') # Reset control vals and functionality to default vals
             time.sleep(0.65) # Time for CF to settle [Real-Time seconds]
-
+            try:
+                rospy.wait_for_message("/ctrl_data",CtrlData,timeout=1.0)
+            except rospy.exceptions.ROSException:
+                env.launch_controller()
+                time.sleep(0.5)
             
 
             ## INITIALIZE POLICY PARAMETERS: 
