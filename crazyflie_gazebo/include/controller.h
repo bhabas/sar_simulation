@@ -96,6 +96,7 @@ class Controller
             ros::param::get("/K_EP_SLOWDOWN",_K_EP_SLOWDOWN);
             ros::param::get("/SIM_SPEED",_SIM_SPEED);
             ros::param::get("/SIM_SLOWDOWN_SPEED",_SIM_SLOWDOWN_SPEED);
+            ros::param::get("/_CF_MASS",_CF_MASS);
         }
 
         // DEFINE FUNCTION PROTOTYPES
@@ -150,6 +151,10 @@ class Controller
         Eigen::Vector3d _vel_flip;    // Flip trigger velocity [m]
         Eigen::Vector4d _quat_flip;   // Flip trigger attitude // [qw,qx,qy,qz]
         Eigen::Vector3d _omega_flip;  // Flip trigger angular velocity [rad/s]
+
+        float _OF_y_flip = 0.0;
+        float _OF_x_flip = 0.0;
+        float _RREV_flip = 0.0;
 
 
         Eigen::Vector3d _x_d;       // Pos-desired [m]  
@@ -233,6 +238,7 @@ class Controller
         int _K_EP_SLOWDOWN;
         float _SIM_SPEED; 
         float _SIM_SLOWDOWN_SPEED;
+        float _CF_MASS;
         
 
 

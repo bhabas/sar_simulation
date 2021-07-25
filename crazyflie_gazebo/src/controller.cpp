@@ -121,10 +121,16 @@ void Controller::OFCallback(const nav_msgs::Odometry::ConstPtr &msg){
 void Controller::RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){
     _k_ep = msg->k_ep;
     if (msg->reset_flag == true){
+
+        // RESET LOGGED FLIP VALUES
         _pos_flip << 0.0,0.0,0.0;
         _vel_flip << 0.0,0.0,0.0;
         _quat_flip << 1.0,0.0,0.0,0.0; // [qw,qx,qy,qz]
         _omega_flip << 0.0,0.0,0.0;
+
+        _OF_y_flip = 0.0;
+        _OF_x_flip = 0.0;
+        _RREV_flip = 0.0;
 
         _flip_flag = false;
         _impact_flag = false;
@@ -345,8 +351,8 @@ void Controller::controlThread()
     Vector3d M;                 // Moment control vector [Nm]
 
 
-    Vector4d FM;        // Thrust-Moment control vector (4x1) [N/N*mm]
-    Vector4d f;         // Propeller thrust vector [g]
+    Vector4d FM;    // Thrust-Moment control vector (4x1) [N/N*mm]
+    Vector4d f;     // Propeller thrust vector [g]
 
 
     
@@ -360,23 +366,17 @@ void Controller::controlThread()
     Matrix3d R; // Body-Global Rotation Matrix
     Vector3d e3(0,0,1); // Global z-axis
 
-    static float dt = (1.0/500.0);
-
     
-    
-    float RREV = 0.0;
-    float OF_y = 0.0;
-    float OF_x = 0.0;
 
-    float OF_y_tr = 0.0;
-    float OF_x_tr = 0.0;
-    float RREV_tr = 0.0;
-    double t_tr = 0.0;
+    float RREV = 0.0; // Relative Retinal Expansion Velocity [rad/s]
+    float OF_x = 0.0; // Optical Flow about x-axis [rad/s]
+    float OF_y = 0.0; // Optical Flow about y-axis [rad/s]
 
-    double Mx = 0.0;
-    double My = 0.0;
-    double Mz = 0.0;
-    double F = 0.0;
+    // float RREV_flip = 0.0;
+    // float OF_x_flip = 0.0;
+    // float OF_y_flip = 0.0;
+    double t_flip = 0.0;
+
 
     float f_thrust_g = 0.0;
     float f_roll_g = 0.0;
@@ -387,12 +387,6 @@ void Controller::controlThread()
     float f_roll_g_flip = 0.0;
     float f_pitch_g_flip = 0.0;
     float f_yaw_g_flip = 0.0;
-
-    int32_t f_thrust_pwm = 0;
-    int32_t f_roll_pwm = 0;
-    int32_t f_pitch_pwm = 0;
-    int32_t f_yaw_pwm = 0;
-
 
     double M1_pwm = 0.0;
     double M2_pwm = 0.0;
@@ -409,17 +403,17 @@ void Controller::controlThread()
     double roll; // X-axis [rad/s]
     double pitch; // Y-axis [rad/s]
 
-
-
-    // might need to adjust weight to real case (sdf file too)
-    double m = 0.0346;   // Mass [kg] 
-    double g = 9.81;  // Gravitational acceleration [m/s^2]
+    
     double t = 0; // Time from Gazebo [s]
     unsigned int t_step = 0; // t_step counter
 
 
 
     // SYSTEM CONSTANTS
+    float dt = (1.0/500.0);
+    double m = _CF_MASS;   // Mass [kg] 
+    double g = 9.81;  // Gravitational acceleration [m/s^2]
+
     double d = 0.040; // Distance from COM to prop [m]
     double dp = d*sin(M_PI/4);
 
@@ -455,7 +449,6 @@ void Controller::controlThread()
 
         // =========== STATE DEFINITIONS =========== //
         //  Define local state vectors from current class state vectors 
-        //      Note: This is just to be explicit with the program flow
         t = _t;   
         statePos = _pos; 
         stateVel = _vel;
@@ -475,10 +468,10 @@ void Controller::controlThread()
         a_d = _a_d;
 
 
-        omega_d = _omega_d; // Omega desired [rad/s]
-        domega_d << 0.0,0.0,0.0; // Omega-Accl. [rad/s^2]
+        omega_d = _omega_d;         // Omega desired [rad/s]
+        domega_d << 0.0,0.0,0.0;    // Omega-Accl. [rad/s^2]
 
-        b1_d = _b1_d; // Desired body x-axis
+        b1_d = _b1_d; // Desired body x-axis relative to global coords
         
         
 
@@ -565,11 +558,12 @@ void Controller::controlThread()
             if(_policy_armed_flag == true){
         
                 if(RREV >= _RREV_thr && _flip_flag == false){
-                    OF_y_tr = OF_y;
-                    OF_x_tr = OF_x;
-                    RREV_tr = RREV;
 
-                    t_tr = t;
+                    _RREV_flip = RREV;
+                    _OF_x_flip = OF_x;
+                    _OF_y_flip = OF_y;
+
+                    t_flip = t;
                     _pos_flip = statePos;
                     _vel_flip = stateVel;
                     _quat_flip = stateQuat;
@@ -696,7 +690,7 @@ void Controller::controlThread()
         endl <<
         "RREV_thr: " << _RREV_thr << "\tG1: " << _G1 << "\tG2: " << _G2 << endl << 
         "RREV: " << RREV << "\tOF_x: " << OF_x << "\tOF_y: " << OF_y << endl <<
-        "RREV_tr: " << RREV_tr << "\tOF_x_tr: " << 0.0 << "\tOF_y_tr: " << OF_y_tr << endl << 
+        "RREV_flip: " << _RREV_flip << "\tOF_x_tr: " << _OF_x_flip << "\tOF_y_tr: " << _OF_y_flip << endl << 
         endl << 
         "Kp_P: " << Kp_P.transpose() << "\tKp_R: " << Kp_R.transpose() << endl <<
         "Kd_P: " << Kd_P.transpose() << "\tKd_R: " << Kd_R.transpose() << endl <<
@@ -754,15 +748,15 @@ void Controller::controlThread()
         
         // FLIP INFO
         ctrl_msg.flip_flag = _flip_flag;
-        ctrl_msg.RREV_tr = RREV_tr;
-        ctrl_msg.OF_y_tr = OF_y_tr;
-        ctrl_msg.OF_x_tr = OF_x_tr;
+        ctrl_msg.RREV_tr = _RREV_flip;
+        ctrl_msg.OF_x_tr = _OF_x_flip;
+        ctrl_msg.OF_y_tr = _OF_y_flip;
         ctrl_msg.FM_flip = {f_thrust_g_flip,f_roll_g_flip,f_pitch_g_flip,f_yaw_g_flip};
 
         // This techinially converts to integer and micro-secs instead of nano-secs but I 
         // couldn't figure out the solution to do this the right way and keep it as nsecs
-        ctrl_msg.Pose_tr.header.stamp.sec = int(t_tr);              // Integer portion of flip time as integer
-        ctrl_msg.Pose_tr.header.stamp.nsec = int(t_tr*1000)%1000;   // Decimal portion of flip time as integer
+        ctrl_msg.Pose_tr.header.stamp.sec = int(t_flip);              // Integer portion of flip time as integer
+        ctrl_msg.Pose_tr.header.stamp.nsec = int(t_flip*1000)%1000;   // Decimal portion of flip time as integer
         
         ctrl_msg.Pose_tr.pose.position.x = _pos_flip(0);
         ctrl_msg.Pose_tr.pose.position.y = _pos_flip(1);
