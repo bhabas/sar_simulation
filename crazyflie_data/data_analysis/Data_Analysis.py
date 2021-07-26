@@ -37,13 +37,6 @@ class DataFile:
         self.k_epMax = int(self.trial_df.iloc[-1]['k_ep'])
 
 
-
-
-       
-
-
-
-
         ## INITIATE CLASS FOR GTC MODEL (UNFINISHED)
         # self.GTC = GTC_Model()
         
@@ -341,12 +334,63 @@ class DataFile:
         ax.grid()
         plt.show()
 
-    
+    def grab_leg_contacts(self):
+
+        ## COLLECT CONTACT LIST
+        leg_contacts_df = self.trial_df.query("Error=='Impact Data'").iloc[:][['impact_flag']]
+
+        a = leg_contacts_df.to_numpy().flatten()
+        b = np.zeros_like(a)
+
+        ## CONVERT STRING ARRAY TO NP ARRAY AND COUNT NUMBER OF LEG CONTACTS
+        for idx, i in enumerate(a): 
+            a[idx] = np.fromstring(i[1:-1], dtype=float, sep=' ')
+            b[idx] = np.size(a[idx])
+
+
+        leg_contacts_df = pd.DataFrame({"Contact_Order":a,"Leg_Contacts":b})
+        return leg_contacts_df
+
+
     def plot_state_correlation(self,stateList:list,N:int=3,type='flip'):
 
-        pass
+        state_df = self.trial_df.query("Error=='Flip Data'").iloc[-int(N*self.n_rollouts):][stateList].reset_index()
+        df = self.grab_leg_contacts()
+        state_df = state_df.join(df)
+        groups = state_df.groupby("Leg_Contacts")
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
 
-## STATE FUNCTIONS 
+        for name,group in groups:
+            ax.scatter(group[stateList[0]],group[stateList[1]],label=name)
+        # ax.scatter(state_df.iloc[:,0],state_df.iloc[:,1],c=df['Leg_Contacts'],marker="o", cmap="bwr_r")
+        ax.set_xlabel(stateList[0])
+        ax.set_ylabel(stateList[1])
+        ax.grid()
+        ax.legend()
+
+        plt.show()
+
+    def grab_impact_state_trial(self,stateName,n_ep=3):
+            """Returns average and standard deviation of impact state over the last n_ep episodes
+
+            Args:
+                stateName (str): State name
+                n_ep (int, optional): Number of final episodes to average over. Defaults to 3.
+
+            Returns:
+                avg_state_impact,std_state_impact: Returns average and standard deviation of impact state
+            """        
+
+            ## CREATE DF OF IMPACT DATA FOR FINAL N_EP EPISODES
+            state_df = self.trial_df.query("Error=='Impact Data'").iloc[-int(n_ep*self.n_rollouts):][stateName]
+
+            avg_state_impact = state_df.mean()
+            std_state_impact = state_df.std()
+
+            return avg_state_impact,std_state_impact
+
+    ## STATE FUNCTIONS 
     def grab_stateData(self,k_ep,k_run,stateName: list):
         """Returns np.array of specified state
 
@@ -686,7 +730,7 @@ class DataFile:
 
 
 
-## DESIRED IC FUNCTIONS
+    ## DESIRED IC FUNCTIONS
     def grab_vel_d(self):
     
         """Return IC values
@@ -736,7 +780,7 @@ class DataFile:
 
         return avg_My_d
 
-## FLIP FUNCTIONS
+    ## FLIP FUNCTIONS
     def grab_flip_time(self,k_ep,k_run):
         """Returns time of flip
 
@@ -843,7 +887,7 @@ class DataFile:
 
         return eul_arr
 
-## IMPACT FUNCTIONS
+    ## IMPACT FUNCTIONS
     def grab_impact_time(self,k_ep,k_run,accel_threshold=-4.0):
         """Return time at impact
 
