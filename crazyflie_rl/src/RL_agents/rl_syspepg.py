@@ -62,8 +62,8 @@ class ES:
 
     def calcReward_Impact(self,env):
 
-        ## CALC R_3 FROM MAXIMUM HEIGHT ACHIEVED
-        R_1 = (env.z_max/env.h_ceiling)*10
+        ## CALC R_1 FROM MAXIMUM HEIGHT ACHIEVED
+        R_1 = (env.z_max/env.h_ceiling)
 
         ## CALC R2 FROM THE IMPACT ANGLE
 
@@ -110,7 +110,7 @@ class ES:
             R_4 = 0.0
 
 
-        R_total = R_1 + R_2*10 + R_4 + 0.001
+        R_total = R_1*10 + R_2*10 + R_4 + 0.001
         # print(f"Reward: r_c: {r_contact:.3f} | r_theta: {r_theta:.3f} | r_h: {r_h:.3f} | Pitch Max: {env.pitch_max:.2f}")
         return R_total
 

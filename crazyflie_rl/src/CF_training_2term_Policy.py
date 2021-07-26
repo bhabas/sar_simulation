@@ -267,8 +267,8 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                         # env.RL_Publish() # Publish that rollout completed 
                         # rospy.wait_for_message('/ceiling_force_sensor',ImpactData)
 
-                        reward_arr[k_run] = agent.calcReward_pureLanding(env)
-                        # reward_arr[k_run] = agent.calcReward_Impact(env)
+                        # reward_arr[k_run] = agent.calcReward_pureLanding(env)
+                        reward_arr[k_run] = agent.calcReward_Impact(env)
                         env.reward = reward_arr[k_run,0]
                         env.reward_avg = reward_arr[np.nonzero(reward_arr)].mean()
                         env.reward_inputs = [env.z_max,env.pitch_sum,env.pitch_max]
@@ -314,7 +314,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                     # env.RL_Publish()
                     k_run += 1 # When succesful move on to next run
                 
-            except rospy.exceptions.ROSException: ## IF SIM EXCEPTION RAISED THEN CONTINUE BACK TO TRY BLOCK UNTIL SUCCESSFUL COMPLETION
+            except rospy.service.ServiceException: ## IF SIM EXCEPTION RAISED THEN CONTINUE BACK TO TRY BLOCK UNTIL SUCCESSFUL COMPLETION
                 continue
 
             
@@ -332,14 +332,17 @@ if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv(gazeboTimeout=False)
-    # env.launch_dashboard()
+    env.launch_dashboard()
 
     # ============================
     ##          AGENT  
     # ============================
 
     ## GAUSSIAN PARAMETERS
-    mu = np.array([[6],[4.39]])                 # Initial mu starting point
+    mu = np.array([[4.0],[4.0]])                 # Initial mu starting point
+    sigma = np.array([[1.5],[1.5]])       # Initial sigma starting point
+
+    mu = np.array([[5.34],[3.03]])                 # Initial mu starting point
     sigma = np.array([[0.001],[0.001]])       # Initial sigma starting point
 
 

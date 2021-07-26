@@ -109,6 +109,8 @@ class CrazyflieEnv:
         self.ceiling_ft_z = 0.0     # Ceiling impact force, Z-dir [N]
 
 
+        self.quat_impact = [0,0,0,1]
+
     
 
         
@@ -576,7 +578,7 @@ class CrazyflieEnv:
         # self.t_impact = np.nan
 
         # self.pos_impact = np.full_like(self.pos_impact,np.nan)
-        # self.quat_impact = np.full_like(self.quat_impact,np.nan)
+        self.quat_impact = [0,0,0,1]
         # self.vel_impact = np.full_like(self.vel_impact,np.nan)
         # self.omega_impact = np.full_like(self.omega_impact,np.nan)
 
