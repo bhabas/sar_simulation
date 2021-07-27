@@ -15,13 +15,22 @@ class DataFile:
         self.dataPath = dataPath
         filepath = self.dataPath + self.fileName
 
-        self.dataType = re.findall('SIM|EXP',fileName)[0] # FIND 'SIM' OR 'EXP'
+        # self.dataType = re.findall('SIM|EXP',fileName)[0] # FIND 'SIM' OR 'EXP'
         self.trial_df = pd.read_csv(filepath,low_memory=False)
 
         ## CLEAN UP TRIAL DATAFRAME
+        # Drop row with "Note: ____________"
+        self.dataType = self.trial_df.iloc[0,0]
+        self.trial_df.drop(0,inplace=True)
+
+        # Remove rows past final complete rollout
         final_valid_index = self.trial_df[self.trial_df['Error']=='Impact Data'].index.values[-1]
         self.trial_df = self.trial_df.iloc[:final_valid_index+1]
-        self.trial_df = self.trial_df.round(3) # Round values to prevent floating point precision issues
+
+        # Round values to prevent floating point precision issues
+        self.trial_df = self.trial_df.round(3) 
+
+        # Convert string bools to actual bools
         self.trial_df = self.trial_df.replace({'False':False,'True':True})
 
         ## CREATE BASIC DF OF K_EP,K_RUN, & REWARD
@@ -32,8 +41,8 @@ class DataFile:
             self.remove_FailedRuns()
 
         ## COLLECT BASIC TRIAL INFO
-        # self.n_rollouts = int(self.trial_df.iloc[-1]['n_rollouts'])
-        self.n_rollouts = 8
+        self.n_rollouts = int(self.trial_df.iloc[0]['n_rollouts'])
+        # self.n_rollouts = 8
         self.k_epMax = int(self.trial_df.iloc[-1]['k_ep'])
 
 
@@ -225,7 +234,7 @@ class DataFile:
         
 
         num_col = mu_arr.shape[1] # Number of policy gains in mu [Currently 3]
-        G_Labels = ['RREV_trigger','G1','G2','G3','G4','G5'] # List of policy gain names
+        G_Labels = ['RREV_trigger','My','G2','G3','G4','G5'] # List of policy gain names
         vx,vy,vz = self.grab_vel_d()
 
         Vel = np.sqrt(vx**2 + vz**2)
@@ -255,7 +264,7 @@ class DataFile:
 
         ax.set_ylabel('Standard Deviation')
         ax.set_xlabel('K_ep')
-        ax.set_title(f'Policy S.D. vs Episode ($Vel_d$ = {Vel:.2f} | $\phi_d$ = {np.rad2deg(phi):.2f}$^{{\circ}}$)')
+        ax.set_title(f'Policy Std. Dev. vs Episode ($Vel_d$ = {Vel:.2f} | $\phi_d$ = {np.rad2deg(phi):.2f}$^{{\circ}}$)')
         ax.legend(ncol=3,loc='upper right')
         ax.grid()
 
@@ -441,13 +450,13 @@ class DataFile:
 
 
 
-            ## MARK STATE DATA AT FLIP TIME
-            t_flip,t_flip_norm = self.grab_flip_time(k_ep,k_run)
-            state_flip = self.grab_flip_state(k_ep,k_run,state)
-            ax.scatter(t_flip_norm,state_flip,label=f"{state}-Flip",zorder=2,
-                        marker='x',
-                        color=color,
-                        s=100)
+            # ## MARK STATE DATA AT FLIP TIME
+            # t_flip,t_flip_norm = self.grab_flip_time(k_ep,k_run)
+            # state_flip = self.grab_flip_state(k_ep,k_run,state)
+            # ax.scatter(t_flip_norm,state_flip,label=f"{state}-Flip",zorder=2,
+            #             marker='x',
+            #             color=color,
+            #             s=100)
 
             # # ## MARK STATE DATA AT IMPACT TIME
             # t_impact,t_impact_norm = self.grab_impact_time(k_ep,k_run)

@@ -41,6 +41,7 @@ class CrazyflieEnv:
         self.logging_flag = False
         self.filepath = ""
         self.state_current = np.zeros(13)
+        self.dataType = "SIM"
 
 
         ## LOAD SIM_SETTINGS/ROS_PARAMETERS
@@ -608,6 +609,21 @@ class CrazyflieEnv:
                     'RREV','OF_x','OF_y',
                     'F_thrust','Mx','My','Mz',
                     'Error'])# Place holders
+
+            with open(self.filepath, mode='a') as state_file:
+                state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                state_writer.writerow([
+                    self.dataType,"Note:",
+                    "","", 
+                    "","","", 
+                    "","","","", # t,x,y,z
+                    "","","","", # qw,qx,qy,qz
+                    "","","", # vx,vy,vz
+                    "","","", # wx,wy,wz
+                    "","","","", # reward, flip_triggered, impact_flag, n_rollout
+                    "","","", # RREV, OF_x, OF_y
+                    "","","", # F_thrust,Mx,My,Mz 
+                    ""]) # Error
 
     def append_csv(self,error_str= ""):
 
