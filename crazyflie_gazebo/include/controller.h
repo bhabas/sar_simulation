@@ -261,7 +261,7 @@ class Controller
         float _SIM_SLOWDOWN_SPEED;
         float _CF_MASS;
         
-
+        bool _TEST_FLAG = false;
 
 
         // DEFINE CTRL_MAVLINK SOCKET VARIABLES

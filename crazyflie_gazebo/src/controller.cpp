@@ -184,6 +184,11 @@ void Controller::RLCmd_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg){
             sendto(Ctrl_Mavlink_socket, sticky_cmd, sizeof(sticky_cmd),0, (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len);
             break;
         }
+
+        case 12:
+        {
+            _TEST_FLAG = true;
+        }
     }
 
 }
@@ -536,11 +541,12 @@ void Controller::controlThread()
         MS2 = sqrt(PWM2thrust(M2_pwm)*g2Newton/kf);
         MS3 = sqrt(PWM2thrust(M3_pwm)*g2Newton/kf);
         MS4 = sqrt(PWM2thrust(M4_pwm)*g2Newton/kf);
+        motorspeed_Vec << MS1,MS2,MS3,MS4;
+        motorspeed_Vec << 2127.178,2127.178,2127.178,2127.178;
 
         
 
 
-        motorspeed_Vec << MS1,MS2,MS3,MS4;
 
         if(_motorstop_flag == true){ // Shutoff all motors
             motorspeed_Vec << 0,0,0,0;
@@ -626,9 +632,11 @@ void Controller::controlThread()
         }
 
         Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Vec.cast <float> (); // Converts motorspeeds to C++ array for data transmission
+        if(_TEST_FLAG == false)
+        {
         int len = sendto(Ctrl_Mavlink_socket, motorspeed, sizeof(motorspeed),0, // Send motorspeeds to Gazebo -> gazebo_motor_model
                 (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len); 
-        
+        }
         t_step++;
                
 
