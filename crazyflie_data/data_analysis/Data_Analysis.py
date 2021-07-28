@@ -8,7 +8,7 @@ import re
 os.system("clear")
 
 class DataFile:
-    def __init__(self,dataPath,fileName):
+    def __init__(self,dataPath,fileName,dataType='EXP'):
 
         ## ORGANIZE FILEPATH AND CREATE TRIAL DATAFRAME
         self.fileName = fileName
@@ -20,12 +20,12 @@ class DataFile:
 
         ## CLEAN UP TRIAL DATAFRAME
         # Drop row with "Note: ____________"
-        self.dataType = self.trial_df.iloc[0,0]
-        self.trial_df.drop(0,inplace=True)
+        self.dataType = dataType
+        # self.trial_df.drop(0,inplace=True)
 
         # Remove rows past final complete rollout
-        final_valid_index = self.trial_df[self.trial_df['Error']=='Impact Data'].index.values[-1]
-        self.trial_df = self.trial_df.iloc[:final_valid_index+1]
+        # final_valid_index = self.trial_df[self.trial_df['Error']=='Impact Data'].index.values[-1]
+        # self.trial_df = self.trial_df.iloc[:final_valid_index+1]
 
         # Round values to prevent floating point precision issues
         self.trial_df = self.trial_df.round(3) 
@@ -467,13 +467,13 @@ class DataFile:
             #             s=50)
 
             ## MARK STATE DATA AT TRAJ START
-            if self.dataType == 'EXP':
-                t_traj,t_traj_norm = self.grab_traj_start(k_ep,k_run)
-                state_traj = self.grab_traj_state(k_ep,k_run,state)
-                ax.scatter(t_traj_norm,state_traj,label=f"{state}-Traj",zorder=2,
-                            marker='o',
-                            color=color,
-                            s=25)
+            # if self.dataType == 'EXP':
+            #     t_traj,t_traj_norm = self.grab_traj_start(k_ep,k_run)
+            #     state_traj = self.grab_traj_state(k_ep,k_run,state)
+            #     ax.scatter(t_traj_norm,state_traj,label=f"{state}-Traj",zorder=2,
+            #                 marker='o',
+            #                 color=color,
+            #                 s=25)
 
 
         ax.set_xlabel("time [s]")
