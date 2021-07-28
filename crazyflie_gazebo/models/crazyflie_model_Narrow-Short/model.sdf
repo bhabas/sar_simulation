@@ -105,7 +105,7 @@
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
       <pose>0 0 0.015 0 -0 0</pose>
-      <gravity>0</gravity>
+      <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
