@@ -541,8 +541,8 @@ void Controller::controlThread()
         MS2 = sqrt(PWM2thrust(M2_pwm)*g2Newton/kf);
         MS3 = sqrt(PWM2thrust(M3_pwm)*g2Newton/kf);
         MS4 = sqrt(PWM2thrust(M4_pwm)*g2Newton/kf);
+        // motorspeed_Vec << 2127.178,2127.178,2127.178,2127.178;
         motorspeed_Vec << MS1,MS2,MS3,MS4;
-        motorspeed_Vec << 2127.178,2127.178,2127.178,2127.178;
 
         
 

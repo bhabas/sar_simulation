@@ -3,7 +3,7 @@
   <model name='crazyflie_block'>
     <link name='crazyflie_body'>
       <inertial>
-        <mass>0.10197</mass>
+        <mass>0.0376</mass>
         <inertia>
           <ixx>1.667e-05</ixx>
           <ixy>0</ixy>
