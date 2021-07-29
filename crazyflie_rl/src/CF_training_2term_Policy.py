@@ -145,6 +145,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                 RREV_start = 1.0
                 pos_z = env.h_ceiling - env.vel_d[2]/RREV_start
                 # pos_z = 0.4
+
                 
 
                 # ============================
@@ -362,7 +363,7 @@ if __name__ == '__main__':
     # ============================
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
-    V_d = 1.0   # [m/s]
+    V_d = 3.0   # [m/s]
     phi = 90    # [deg]
 
 
