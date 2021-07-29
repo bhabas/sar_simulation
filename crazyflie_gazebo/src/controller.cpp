@@ -310,7 +310,7 @@ void Controller::controlThread()
     double m = _CF_MASS;   // Mass [kg] 
     double g = 9.81;  // Gravitational acceleration [m/s^2]
 
-    double d = 0.040; // Distance from COM to prop [m]
+    double d = 0.047; // Distance from COM to prop [m]
     double dp = d*sin(M_PI/4);
 
     double kf = 2.21e-8; // Thrust constant [N/(rad/s)^2]
@@ -483,10 +483,6 @@ void Controller::controlThread()
                     _M_d(1) = -_G1*1e-3;
                     _M_d(2) = 0.0;
 
-                    // Moment with base thrust
-                    // M = _M_d;
-
-                    // Pure Moment
                     M = _M_d*2; // Need to double moment to ensure it survives the PWM<0 cutoff
                     F_thrust = 0;
 
@@ -496,11 +492,11 @@ void Controller::controlThread()
                     _f_pitch_g_flip = M[1]/(4.0f*dp)*Newton2g;
                     _f_yaw_g_flip = M[2]/(4.0f*c_tf)*Newton2g;
                 }
-                
-                
-                
             }
-            
+            else if(_Moment_flag == true){
+                F_thrust = 0;
+                M = _M_d;
+            }
             else{
                 F_thrust = F_thrust;
                 M = M;
@@ -521,20 +517,7 @@ void Controller::controlThread()
         f_yaw_g = M[2]/(4.0f*c_tf)*Newton2g;
 
 
-        if(_Moment_flag == true){
-    
-            f_thrust_g = 0.0;
-            f_roll_g = _M_d(0);
-            f_pitch_g = _M_d(1);
-            f_yaw_g = _M_d(2);
-
-            if(_tumbled == true){
-                f_thrust_g = 0.0;
-                f_roll_g = 0.0;
-                f_pitch_g = 0.0;
-                f_yaw_g = 0.0;
-            }
-        }
+        
 
         f_thrust_g = clamp(f_thrust_g,0.0,f_MAX*0.85);    // Clamp thrust to prevent control saturation
 
