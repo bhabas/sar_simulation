@@ -67,6 +67,9 @@ class ES:
 
         ## CALC R2 FROM THE IMPACT ANGLE
 
+        if env.quat_impact.all() == 0.0: # Check if valid quat
+            env.quat_impact = [0,0,0,1]
+            
         R = Rotation.from_quat(env.quat_impact)
         eul_impact_arr = R.as_euler('YZX', degrees=True)
         eul_y_impact = eul_impact_arr[0]

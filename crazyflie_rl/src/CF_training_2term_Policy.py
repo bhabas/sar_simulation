@@ -25,6 +25,10 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
     phi_rad = phi*np.pi/180
     vy_d = 0 # [m/s]
     env.vel_d = [V_d*np.cos(phi_rad), vy_d, V_d*np.sin(phi_rad)] # [m/s]
+
+    ## SEND MESSAGE FOR ALL NODES TO RESET TO DEFAULT VALUES
+    env.reset_flag = True
+    env.RL_Publish() # Publish that rollout completed 
     
     # ============================
     ##          Episode         
@@ -332,7 +336,7 @@ if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv(gazeboTimeout=False)
-    env.launch_dashboard()
+    # env.launch_dashboard()
 
     # ============================
     ##          AGENT  
@@ -342,8 +346,8 @@ if __name__ == '__main__':
     # mu = np.array([[4.0],[4.0]])                 # Initial mu starting point
     # sigma = np.array([[1.5],[1.5]])       # Initial sigma starting point
 
-    mu = np.array([[3.95],[3.0]])                 # Initial mu starting point
-    sigma = np.array([[0.001],[0.0001]])       # Initial sigma starting point
+    mu = np.array([[4.6],[6.0]])                 # Initial mu starting point
+    sigma = np.array([[0.0001],[0.0001]])       # Initial sigma starting point
 
 
     ## LEARNING AGENTS AND PARAMETERS

@@ -51,6 +51,7 @@ geometry_msgs::Quaternion _quat_impact;   // Impact attitude [rad] (quat form)
 geometry_msgs::Vector3 _omega_impact;     // Impact angular velocity [rad/s]
 
 
+
 const int arr_len = 5;
 geometry_msgs::Point _pos_arr [arr_len];
 geometry_msgs::Vector3 _vel_arr [arr_len];
@@ -132,6 +133,12 @@ void RLdata_Callback(const crazyflie_msgs::RLData::ConstPtr &msg)
     _ceiling_ft_x = 0.0;
     _ceiling_ft_y = 0.0;
     _ceiling_ft_z = 0.0;
+
+    // RESET IMPACT VALUES WHENEVER RESET IS CALLED
+    std::tie(_pos_impact.x,_pos_impact.y,_pos_impact.z) = std::make_tuple(0.0,0.0,0.0);
+    std::tie(_vel_impact.x,_vel_impact.y,_vel_impact.z) = std::make_tuple(0.0,0.0,0.0);
+    std::tie(_omega_impact.x,_omega_impact.y,_omega_impact.z) = std::make_tuple(0.0,0.0,0.0);
+    std::tie(_quat_impact.x,_quat_impact.y,_quat_impact.z,_quat_impact.w) = std::make_tuple(0.0,0.0,0.0,1.0);
 
 
   }
