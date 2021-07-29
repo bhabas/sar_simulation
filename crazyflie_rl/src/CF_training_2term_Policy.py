@@ -338,7 +338,7 @@ if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv(gazeboTimeout=False)
-    env.launch_dashboard()
+    # env.launch_dashboard()
 
     # ============================
     ##          AGENT  

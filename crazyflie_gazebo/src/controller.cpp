@@ -634,7 +634,7 @@ void Controller::controlThread()
         "MS: " << motorspeed_Vec.transpose() << endl <<
         "MS_PWM: " << M_pwm.transpose() << endl <<
         "=============== " << endl; 
-        printf("\033c"); // clears console window
+        // printf("\033c"); // clears console window
         }
 
         Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Vec.cast <float> (); // Converts motorspeeds to C++ array for data transmission

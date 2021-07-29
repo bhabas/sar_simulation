@@ -25,8 +25,8 @@ class GazeboStickyFoot: public ModelPlugin
     protected:
         void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
         //void OnUpdate(const common::UpdateInfo&  /*_info*/);
+        void ContactCallback(ConstContactsPtr &msg);
         void StickyEnableCallback(CommandMotorSpeedPtr &rot_velocities);
-        void ContactCB(ConstContactsPtr &msg);
 
     private:
         physics::ModelPtr model_;
@@ -45,13 +45,13 @@ class GazeboStickyFoot: public ModelPlugin
         std::string namespace_;
         std::string link_name_;
         std::string sticky_enable_sub_topic_;
-        std::string contact_sub_topic_;
+        std::string contact_pub_topic;
         std::string joint_name_;
 
         event::ConnectionPtr updateConnection_;
 
         ros::NodeHandle n;
-        ros::Publisher PadConnect_Publisher = n.advertise<crazyflie_msgs::PadConnect>("/pad_connections", 1000);
+        ros::Publisher PadConnect_Publisher = n.advertise<crazyflie_msgs::PadConnect>("/pad_connections", 5);
 
         
         bool sticky_;
