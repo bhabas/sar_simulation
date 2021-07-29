@@ -336,7 +336,7 @@ if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv(gazeboTimeout=False)
-    # env.launch_dashboard()
+    env.launch_dashboard()
 
     # ============================
     ##          AGENT  
@@ -346,7 +346,7 @@ if __name__ == '__main__':
     # mu = np.array([[4.0],[4.0]])                 # Initial mu starting point
     # sigma = np.array([[1.5],[1.5]])       # Initial sigma starting point
 
-    mu = np.array([[4.6],[6.0]])                 # Initial mu starting point
+    mu = np.array([[4.868],[8.544]])                 # Initial mu starting point
     sigma = np.array([[0.0001],[0.0001]])       # Initial sigma starting point
 
 
