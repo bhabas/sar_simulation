@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='crazyflie_block'>
+  <model name='crazyflie_Narrow-Short'>
     <link name='crazyflie_body'>
       <inertial>
         <mass>0.03584</mass>
