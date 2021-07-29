@@ -40,18 +40,18 @@ if __name__ == '__main__':
         # ============================
        
         ## GAUSSIAN DISTRIBUTION PARAMETERS 
-        mu_1 = np.random.uniform(2.5,7.0) # RREV typically starts around in this range
-        mu_2 = np.random.uniform(3.0,9.0) # My can typically start in this range and climb higher too
+        mu_1 = np.random.uniform(2.5,6.5) # RREV typically starts around in this range
+        mu_2 = np.random.uniform(3.0,8.0) # My can typically start in this range and climb higher too
 
 
         mu = np.array([[mu_1],[mu_2]])  # Initial mu starting point     
         # sigma = np.array([[0.00001],[0.00001]]) # Initial estimates of sigma: 
         # mu = np.array([[6],[2.0]])   
-        sigma = np.array([[1.5],[1.5]]) # Initial estimates of sigma: 
+        sigma = np.array([[2.0],[2.0]]) # Initial estimates of sigma: 
         
 
         ## LEARNING AGENT AND PARAMETERS
-        env.n_rollouts = 8
+        env.n_rollouts = 10
         K_EP_MAX = rospy.get_param("K_EP_MAX")
         # agent = EPHE_Agent(mu,sigma,n_rollouts=env.n_rollouts)
         agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=env.n_rollouts)
@@ -67,8 +67,9 @@ if __name__ == '__main__':
 
         ## RUN TRIAL
         env.RL_Publish() # Publish data to rl_data topic
-        env.launch_dashboard()
+        # env.launch_dashboard()
         runTraining(env,agent,V_d,phi,k_epMax=K_EP_MAX)
+        print()
 
 
  
