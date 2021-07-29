@@ -1,25 +1,24 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='crazyflie_model_Narrow-Long'>
-    <pose>0 0 0.1 0 0 0</pose>
+  <model name='crazyflie_block'>
     <link name='crazyflie_body'>
       <inertial>
-        <mass>0.023</mass>
+        <mass>0.03584</mass>
         <inertia>
-          <ixx>1.657e-05</ixx>
+          <ixx>49.35e-6</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>1.657e-05</iyy>
+          <iyy>49.35e-6</iyy>
           <iyz>0</iyz>
-          <izz>2.926e-05</izz>
+          <izz>29.26e-6</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
       <pose>0 0 0 0 -0 0</pose>
-      <self_collide>0</self_collide>
-      <enable_wind>0</enable_wind>
-      <kinematic>0</kinematic>
       <gravity>1</gravity>
+      <self_collide>0</self_collide>
+      <kinematic>0</kinematic>
+      <enable_wind>0</enable_wind>
       <visual name='body_visual'>
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
@@ -96,20 +95,65 @@
       <inertial>
         <mass>0.0001</mass>
         <inertia>
-          <ixx>4.3354e-8</ixx>
+          <ixx>4.3354e-08</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>4.3354e-8</iyy>
+          <iyy>4.3354e-08</iyy>
           <iyz>0</iyz>
-          <izz>4.3354e-8</izz>
+          <izz>4.3354e-08</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
       <pose>0 0 0.015 0 -0 0</pose>
-      <gravity>0</gravity>
+      <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
+      <sensor name='imu_sensor' type='imu'>
+        <always_on>1</always_on>
+        <topic>__default_topic__</topic>
+        <plugin name='imu_plugin' filename='libgazebo_ros_imu_sensor.so'>
+          <topicName>imu</topicName>
+          <bodyName>body_sensors</bodyName>
+          <updateRateHZ>500</updateRateHZ>
+          <gaussianNoise>0.0</gaussianNoise>
+          <xyzOffset>0 0 0</xyzOffset>
+          <rpyOffset>0 0 0</rpyOffset>
+          <frameName>imu_link</frameName>
+          <initialOrientationAsReference>0</initialOrientationAsReference>
+        </plugin>
+        <pose>0 0 0 0 -0 0</pose>
+        <imu/>
+      </sensor>
+      <sensor name='head_hokuyo_sensor' type='ray'>
+        <pose>0 0 0 3.14159 -1.57079 3.14159</pose>
+        <visualize>1</visualize>
+        <update_rate>40</update_rate>
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0.1</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>1</samples>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>0.1</min>
+            <max>5</max>
+            <resolution>0.01</resolution>
+          </range>
+        </ray>
+        <plugin name='gazebo_ros_head_hokuyo_controller' filename='libgazebo_ros_laser.so'>
+          <topicName>/laserscan</topicName>
+          <frameName>hokuyo_link</frameName>
+        </plugin>
+      </sensor>
       <visual name='visual'>
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
@@ -129,70 +173,208 @@
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
       </visual>
-      <sensor name="imu_sensor" type="imu">
-        <always_on>true</always_on>
-        <topic>__default_topic__</topic>
-        <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
-          <topicName>imu</topicName>
-          <bodyName>body_sensors</bodyName>
-          <updateRateHZ>500</updateRateHZ>
-          <gaussianNoise>0.0</gaussianNoise>
-          <xyzOffset>0 0 0</xyzOffset>
-          <rpyOffset>0 0 0</rpyOffset>
-          <frameName>imu_link</frameName>
-          <initialOrientationAsReference>false</initialOrientationAsReference>
-        </plugin>
-        <pose>0 0 0 0 0 0</pose>
-      </sensor>
-      <sensor type="ray" name="head_hokuyo_sensor">
-        <pose>0 0 0 0 -1.5708 0</pose>
-        <visualize>true</visualize>
-        <update_rate>40</update_rate>
-        <ray>
-          <scan>
-            <horizontal>
-              <samples>1</samples>
-              <resolution>1</resolution>
-              <min_angle>0</min_angle>
-              <max_angle>0.1</max_angle>
-            </horizontal>
-          </scan>
-          <range>
-            <min>0.10</min>
-            <max>5.0</max>
-            <resolution>0.01</resolution>
-          </range>
-        </ray>
-        <plugin name="gazebo_ros_head_hokuyo_controller" filename="libgazebo_ros_laser.so">
-          <topicName>/laserscan</topicName>
-          <frameName>hokuyo_link</frameName>
-        </plugin>
-      </sensor>
     </link>
-    <link name='leg1'>
+    <link name='rotor_1'>
       <inertial>
-        <mass>0.0002</mass>
+        <mass>0.00001</mass>
         <inertia>
-          <ixx>6e-08</ixx>
+          <ixx>1.6e-10</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>6e-08</iyy>
+          <iyy>8.86e-10</iyy>
           <iyz>0</iyz>
-          <izz>1e-10</izz>
+          <izz>9.02e-10</izz>
         </inertia>
-        <pose> 0 0 -0.032 0 0 0 </pose> 
+        <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose> 0.017 0.017 -0.005 0.000 -0.534 0.785 </pose> 
+      <pose>0.033 0.033 0.014 0 -0 0</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
       <visual name='visual'>
-        <pose> 0 0 -0.032 0 0 0 </pose> 
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://crazyflie_meshes/meshes/crazyflie_prop.dae</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <lighting>1</lighting>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Grey</name>
+          </script>
+          <shader type='pixel'>
+            <normal_map>__default__</normal_map>
+          </shader>
+          <ambient>0.3 0.3 0.3 1</ambient>
+          <diffuse>0.7 0.7 0.7 1</diffuse>
+          <specular>0.01 0.01 0.01 1</specular>
+          <emissive>0 0 0 1</emissive>
+        </material>
+        <transparency>0</transparency>
+        <cast_shadows>1</cast_shadows>
+      </visual>
+    </link>
+    <link name='rotor_2'>
+      <inertial>
+        <mass>0.00001</mass>
+        <inertia>
+          <ixx>1.6e-10</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>8.86e-10</iyy>
+          <iyz>0</iyz>
+          <izz>9.02e-10</izz>
+        </inertia>
+        <pose>0 0 0 0 -0 0</pose>
+      </inertial>
+      <pose>-0.033 0.033 0.014 0 -0 0</pose>
+      <gravity>1</gravity>
+      <self_collide>0</self_collide>
+      <kinematic>0</kinematic>
+      <enable_wind>0</enable_wind>
+      <visual name='visual_0'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://crazyflie_meshes/meshes/crazyflie_prop.dae</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <lighting>1</lighting>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Grey</name>
+          </script>
+          <shader type='pixel'>
+            <normal_map>__default__</normal_map>
+          </shader>
+          <ambient>0.3 0.3 0.3 1</ambient>
+          <diffuse>0.7 0.7 0.7 1</diffuse>
+          <specular>0.01 0.01 0.01 1</specular>
+          <emissive>0 0 0 1</emissive>
+        </material>
+        <transparency>0</transparency>
+        <cast_shadows>1</cast_shadows>
+      </visual>
+    </link>
+    <link name='rotor_3'>
+      <inertial>
+        <mass>0.00001</mass>
+        <inertia>
+          <ixx>1.6e-10</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>8.86e-10</iyy>
+          <iyz>0</iyz>
+          <izz>9.02e-10</izz>
+        </inertia>
+        <pose>0 0 0 0 -0 0</pose>
+      </inertial>
+      <pose>-0.033 -0.033 0.014 0 -0 0</pose>
+      <gravity>1</gravity>
+      <self_collide>0</self_collide>
+      <kinematic>0</kinematic>
+      <enable_wind>0</enable_wind>
+      <visual name='visual_0'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://crazyflie_meshes/meshes/crazyflie_prop.dae</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <lighting>1</lighting>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Grey</name>
+          </script>
+          <shader type='pixel'>
+            <normal_map>__default__</normal_map>
+          </shader>
+          <ambient>0.3 0.3 0.3 1</ambient>
+          <diffuse>0.7 0.7 0.7 1</diffuse>
+          <specular>0.01 0.01 0.01 1</specular>
+          <emissive>0 0 0 1</emissive>
+        </material>
+        <transparency>0</transparency>
+        <cast_shadows>1</cast_shadows>
+      </visual>
+    </link>
+    <link name='rotor_4'>
+      <inertial>
+        <mass>0.00001</mass>
+        <inertia>
+          <ixx>1.6e-10</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>8.86e-10</iyy>
+          <iyz>0</iyz>
+          <izz>9.02e-10</izz>
+        </inertia>
+        <pose>0 0 0 0 -0 0</pose>
+      </inertial>
+      <pose>0.033 -0.033 0.014 0 -0 0</pose>
+      <gravity>1</gravity>
+      <self_collide>0</self_collide>
+      <kinematic>0</kinematic>
+      <enable_wind>0</enable_wind>
+      <visual name='visual_0'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://crazyflie_meshes/meshes/crazyflie_prop.dae</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <lighting>1</lighting>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Grey</name>
+          </script>
+          <shader type='pixel'>
+            <normal_map>__default__</normal_map>
+          </shader>
+          <ambient>0.3 0.3 0.3 1</ambient>
+          <diffuse>0.7 0.7 0.7 1</diffuse>
+          <specular>0.01 0.01 0.01 1</specular>
+          <emissive>0 0 0 1</emissive>
+        </material>
+        <transparency>0</transparency>
+        <cast_shadows>1</cast_shadows>
+      </visual>
+    </link>
+
+    <link name='leg1'>
+      <inertial>
+        <mass>0.00044</mass>
+        <inertia>
+          <ixx>9.17e-8</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>9.17e-8</iyy>
+          <iyz>0</iyz>
+          <izz>1.38e-9</izz>
+        </inertia>
+        <pose>0 0 -0.025 0 -0 0</pose>
+      </inertial>
+      <pose>0.017 0.017 -0.005 0 -0.873 0.785</pose>
+      <gravity>1</gravity>
+      <self_collide>0</self_collide>
+      <kinematic>0</kinematic>
+      <enable_wind>0</enable_wind>
+      <visual name='visual'>
+        <pose>0 0 -0.025 0 -0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.001</radius>
-            <length>0.0639</length>
+            <length>0.05</length>
           </cylinder>
         </geometry>
         <material>
@@ -214,11 +396,11 @@
       <collision name='collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose> 0 0 -0.032 0 0 0 </pose> 
+        <pose>0 0 -0.025 0 -0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.001</radius>
-            <length>0.0639</length>
+            <length>0.05</length>
           </cylinder>
         </geometry>
         <surface>
@@ -270,28 +452,28 @@
     </link>
     <link name='leg2'>
       <inertial>
-        <mass>0.0002</mass>
+        <mass>0.00044</mass>
         <inertia>
-          <ixx>6e-08</ixx>
+          <ixx>9.17e-8</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>6e-08</iyy>
+          <iyy>9.17e-8</iyy>
           <iyz>0</iyz>
-          <izz>1e-10</izz>
+          <izz>1.38e-9</izz>
         </inertia>
-        <pose> 0 0 -0.032 0 0 0 </pose> 
+        <pose>0 0 -0.025 0 -0 0</pose>
       </inertial>
-      <pose> -0.017 0.017 -0.005 0.000 -0.534 2.356 </pose> 
+      <pose>-0.017 0.017 -0.005 0 -0.873 2.356</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
       <visual name='visual'>
-        <pose> 0 0 -0.032 0 0 0 </pose> 
+        <pose>0 0 -0.025 0 -0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.001</radius>
-            <length>0.0639</length>
+            <length>0.05</length>
           </cylinder>
         </geometry>
         <material>
@@ -303,6 +485,10 @@
           <shader type='pixel'>
             <normal_map>__default__</normal_map>
           </shader>
+          <ambient>0.3 0.3 0.3 1</ambient>
+          <diffuse>0.7 0.7 0.7 1</diffuse>
+          <specular>0.01 0.01 0.01 1</specular>
+          <emissive>0 0 0 1</emissive>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -310,11 +496,11 @@
       <collision name='collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose> 0 0 -0.032 0 0 0 </pose> 
+        <pose>0 0 -0.025 0 -0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.001</radius>
-            <length>0.0639</length>
+            <length>0.05</length>
           </cylinder>
         </geometry>
         <surface>
@@ -366,28 +552,28 @@
     </link>
     <link name='leg3'>
       <inertial>
-        <mass>0.0002</mass>
+        <mass>0.00044</mass>
         <inertia>
-          <ixx>6e-08</ixx>
+          <ixx>9.17e-8</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>6e-08</iyy>
+          <iyy>9.17e-8</iyy>
           <iyz>0</iyz>
-          <izz>1e-10</izz>
+          <izz>1.38e-9</izz>
         </inertia>
-        <pose> 0 0 -0.032 0 0 0 </pose> 
+        <pose>0 0 -0.025 0 -0 0</pose>
       </inertial>
-      <pose> -0.017 -0.017 -0.005 0.000 -0.534 -2.356 </pose> 
+      <pose>-0.017 -0.017 -0.005 0 -0.873 -2.356</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
       <visual name='visual'>
-        <pose> 0 0 -0.032 0 0 0 </pose> 
+        <pose>0 0 -0.025 0 -0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.001</radius>
-            <length>0.0639</length>
+            <length>0.05</length>
           </cylinder>
         </geometry>
         <material>
@@ -399,6 +585,10 @@
           <shader type='pixel'>
             <normal_map>__default__</normal_map>
           </shader>
+          <ambient>0.3 0.3 0.3 1</ambient>
+          <diffuse>0.7 0.7 0.7 1</diffuse>
+          <specular>0.01 0.01 0.01 1</specular>
+          <emissive>0 0 0 1</emissive>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -406,11 +596,11 @@
       <collision name='collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose> 0 0 -0.032 0 0 0 </pose> 
+        <pose>0 0 -0.025 0 -0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.001</radius>
-            <length>0.0639</length>
+            <length>0.05</length>
           </cylinder>
         </geometry>
         <surface>
@@ -462,28 +652,28 @@
     </link>
     <link name='leg4'>
       <inertial>
-        <mass>0.0002</mass>
+        <mass>0.00044</mass>
         <inertia>
-          <ixx>6e-08</ixx>
+          <ixx>9.17e-8</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>6e-08</iyy>
+          <iyy>9.17e-8</iyy>
           <iyz>0</iyz>
-          <izz>1e-10</izz>
+          <izz>1.38e-9</izz>
         </inertia>
-        <pose> 0 0 -0.032 0 0 0 </pose> 
+        <pose>0 0 -0.025 0 -0 0</pose>
       </inertial>
-      <pose> 0.017 -0.017 -0.005 0.000 -0.534 -0.785 </pose> 
+      <pose>0.017 -0.017 -0.005 0 -0.873 -0.785</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
       <visual name='visual'>
-        <pose> 0 0 -0.032 0 0 0 </pose> 
+        <pose>0 0 -0.025 0 -0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.001</radius>
-            <length>0.0639</length>
+            <length>0.05</length>
           </cylinder>
         </geometry>
         <material>
@@ -494,6 +684,10 @@
           <shader type='pixel'>
             <normal_map>__default__</normal_map>
           </shader>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 1</diffuse>
+          <specular>0.1 0.1 0.1 1</specular>
+          <emissive>0 0 0 1</emissive>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -501,11 +695,11 @@
       <collision name='collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose> 0 0 -0.032 0 0 0 </pose> 
+        <pose>0 0 -0.025 0 -0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.001</radius>
-            <length>0.0639</length>
+            <length>0.05</length>
           </cylinder>
         </geometry>
         <surface>
@@ -557,7 +751,7 @@
     </link>
     <link name='pad_1'>
       <inertial>
-        <mass>0.0001</mass>
+        <mass>0.00001</mass>
         <inertia>
           <ixx>4e-08</ixx>
           <ixy>0</ixy>
@@ -568,7 +762,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose> 0.040 0.040 -0.060 0.000 0.000 0.785 </pose> 
+      <pose>0.044644 0.044622 -0.037769 0 -0 0.785</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -654,7 +848,7 @@
     </link>
     <link name='pad_2'>
       <inertial>
-        <mass>0.0001</mass>
+        <mass>0.00001</mass>
         <inertia>
           <ixx>4.3354e-08</ixx>
           <ixy>0</ixy>
@@ -665,7 +859,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose> -0.040 0.040 -0.060 0.000 0.000 2.356 </pose> 
+      <pose>-0.044628 0.044639 -0.037769 0 -0 2.356</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -685,6 +879,7 @@
           <shader type='pixel'>
             <normal_map>__default__</normal_map>
           </shader>
+          <emissive>0 0 0 1</emissive>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -747,7 +942,7 @@
     </link>
     <link name='pad_3'>
       <inertial>
-        <mass>0.0001</mass>
+        <mass>0.00001</mass>
         <inertia>
           <ixx>4.3354e-08</ixx>
           <ixy>0</ixy>
@@ -758,7 +953,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose> -0.040 -0.040 -0.060 0.000 0.000 -2.356 </pose> 
+      <pose>-0.044628 -0.044639 -0.037769 0 0 -2.356</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -778,6 +973,7 @@
           <shader type='pixel'>
             <normal_map>__default__</normal_map>
           </shader>
+          <emissive>0 0 0 1</emissive>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -840,7 +1036,7 @@
     </link>
     <link name='pad_4'>
       <inertial>
-        <mass>0.0001</mass>
+        <mass>0.00001</mass>
         <inertia>
           <ixx>4.3354e-08</ixx>
           <ixy>0</ixy>
@@ -851,7 +1047,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose> 0.040 -0.040 -0.060 0.000 0.000 -0.785 </pose> 
+      <pose>0.044644 -0.044622 -0.037769 0 -0 -0.785</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -871,6 +1067,7 @@
           <shader type='pixel'>
             <normal_map>__default__</normal_map>
           </shader>
+          <emissive>0 0 0 1</emissive>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -931,438 +1128,6 @@
         </surface>
       </collision>
     </link>
-    <link name='rotor_1'>
-      <inertial>
-        <mass>0.00075</mass>
-        <inertia>
-          <ixx>1.6e-07</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>8.86e-06</iyy>
-          <iyz>0</iyz>
-          <izz>9.02e-06</izz>
-        </inertia>
-        <pose>0 0 0 0 -0 0</pose>
-      </inertial>
-      <pose>0.0325 0.0325 0.014 0 -0 0</pose>
-      <gravity>1</gravity>
-      <self_collide>0</self_collide>
-      <kinematic>0</kinematic>
-      <enable_wind>0</enable_wind>
-      <visual name='visual'>
-        <pose>0 0 0 0 -0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://crazyflie_meshes/meshes/crazyflie_prop.dae</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <lighting>1</lighting>
-          <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
-          </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-          <ambient>0.3 0.3 0.3 1</ambient>
-          <diffuse>0.7 0.7 0.7 1</diffuse>
-          <specular>0.01 0.01 0.01 1</specular>
-          <emissive>0 0 0 1</emissive>
-        </material>
-        <transparency>0</transparency>
-        <cast_shadows>1</cast_shadows>
-      </visual>
-    </link>
-    <link name='rotor_2'>
-      <inertial>
-        <mass>0.00075</mass>
-        <inertia>
-          <ixx>1.6e-07</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>8.86e-06</iyy>
-          <iyz>0</iyz>
-          <izz>9.02e-06</izz>
-        </inertia>
-        <pose>0 0 0 0 -0 0</pose>
-      </inertial>
-      <pose>-0.0325 0.0325 0.014 0 -0 0</pose>
-      <gravity>1</gravity>
-      <self_collide>0</self_collide>
-      <kinematic>0</kinematic>
-      <enable_wind>0</enable_wind>
-      <visual name='visual_0'>
-        <pose>0 0 0 0 -0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://crazyflie_meshes/meshes/crazyflie_prop.dae</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <lighting>1</lighting>
-          <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
-          </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-          <ambient>0.3 0.3 0.3 1</ambient>
-          <diffuse>0.7 0.7 0.7 1</diffuse>
-          <specular>0.01 0.01 0.01 1</specular>
-          <emissive>0 0 0 1</emissive>
-        </material>
-        <transparency>0</transparency>
-        <cast_shadows>1</cast_shadows>
-      </visual>
-    </link>
-    <link name='rotor_3'>
-      <inertial>
-        <mass>0.00075</mass>
-        <inertia>
-          <ixx>1.6e-07</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>8.86e-06</iyy>
-          <iyz>0</iyz>
-          <izz>9.02e-06</izz>
-        </inertia>
-        <pose>0 0 0 0 -0 0</pose>
-      </inertial>
-      <pose>-0.0325 -0.0325 0.014 0 -0 0</pose>
-      <gravity>1</gravity>
-      <self_collide>0</self_collide>
-      <kinematic>0</kinematic>
-      <enable_wind>0</enable_wind>
-      <visual name='visual_0'>
-        <pose>0 0 0 0 -0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://crazyflie_meshes/meshes/crazyflie_prop.dae</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <lighting>1</lighting>
-          <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
-          </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-          <ambient>0.3 0.3 0.3 1</ambient>
-          <diffuse>0.7 0.7 0.7 1</diffuse>
-          <specular>0.01 0.01 0.01 1</specular>
-          <emissive>0 0 0 1</emissive>
-        </material>
-        <transparency>0</transparency>
-        <cast_shadows>1</cast_shadows>
-      </visual>
-    </link>
-    <link name='rotor_4'>
-      <inertial>
-        <mass>0.00075</mass>
-        <inertia>
-          <ixx>1.6e-07</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>8.86e-06</iyy>
-          <iyz>0</iyz>
-          <izz>9.02e-06</izz>
-        </inertia>
-        <pose>0 0 0 0 -0 0</pose>
-      </inertial>
-      <pose>0.0325 -0.0325 0.014 0 -0 0</pose>
-      <gravity>1</gravity>
-      <self_collide>0</self_collide>
-      <kinematic>0</kinematic>
-      <enable_wind>0</enable_wind>
-      <visual name='visual_0'>
-        <pose>0 0 0 0 -0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://crazyflie_meshes/meshes/crazyflie_prop.dae</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <lighting>1</lighting>
-          <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
-          </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-          <ambient>0.3 0.3 0.3 1</ambient>
-          <diffuse>0.7 0.7 0.7 1</diffuse>
-          <specular>0.01 0.01 0.01 1</specular>
-          <emissive>0 0 0 1</emissive>
-        </material>
-        <transparency>0</transparency>
-        <cast_shadows>1</cast_shadows>
-      </visual>
-    </link>
-    <joint name='leg_joint_1' type='universal'>
-      <parent>crazyflie_body</parent>
-      <child>leg1</child>
-      <pose>0 0 0 0 0.786 0</pose>
-      <axis>
-        <xyz>0 1 0</xyz>
-        <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
-        </limit>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0.06</spring_stiffness>
-          <damping>6.788e-05</damping>
-          <friction>0</friction>
-        </dynamics>
-      </axis>
-      <axis2>
-        <xyz>0 0 1</xyz>
-        <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
-        </limit>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0.06</spring_stiffness>
-          <damping>6.788e-05</damping>
-          <friction>0</friction>
-        </dynamics>
-      </axis2>
-      <physics>
-        <ode>
-          <limit>
-            <cfm>0</cfm>
-            <erp>0.8</erp>
-          </limit>
-          <suspension>
-            <cfm>0</cfm>
-            <erp>0.8</erp>
-          </suspension>
-        </ode>
-      </physics>
-    </joint>
-    <joint name='leg_joint_2' type='universal'>
-      <parent>crazyflie_body</parent>
-      <child>leg2</child>
-      <pose>0 0 0 0 0.786 0</pose>
-      <axis>
-        <xyz>0 1 0</xyz>
-        <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
-        </limit>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0.06</spring_stiffness>
-          <damping>6.788e-05</damping>
-          <friction>0</friction>
-        </dynamics>
-      </axis>
-      <axis2>
-        <xyz>0 0 1</xyz>
-        <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
-        </limit>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0.06</spring_stiffness>
-          <damping>6.788e-05</damping>
-          <friction>0</friction>
-        </dynamics>
-      </axis2>
-      <physics>
-        <ode>
-          <limit>
-            <cfm>0</cfm>
-            <erp>0.8</erp>
-          </limit>
-          <suspension>
-            <cfm>0</cfm>
-            <erp>0.8</erp>
-          </suspension>
-        </ode>
-      </physics>
-    </joint>
-    <joint name='leg_joint_3' type='universal'>
-      <parent>crazyflie_body</parent>
-      <child>leg3</child>
-      <pose>0 0 0 0 0.786 0</pose>
-      <axis>
-        <xyz>0 1 0</xyz>
-        <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
-        </limit>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0.06</spring_stiffness>
-          <damping>6.788e-05</damping>
-          <friction>0</friction>
-        </dynamics>
-      </axis>
-      <axis2>
-        <xyz>0 0 1</xyz>
-        <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
-        </limit>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0.06</spring_stiffness>
-          <damping>6.788e-05</damping>
-          <friction>0</friction>
-        </dynamics>
-      </axis2>
-      <physics>
-        <ode>
-          <limit>
-            <cfm>0</cfm>
-            <erp>0.8</erp>
-          </limit>
-          <suspension>
-            <cfm>0</cfm>
-            <erp>0.8</erp>
-          </suspension>
-        </ode>
-      </physics>
-    </joint>
-    <joint name='leg_joint_4' type='universal'>
-      <parent>crazyflie_body</parent>
-      <child>leg4</child>
-      <pose>0 0 0 0 0.786 0</pose>
-      <axis>
-        <xyz>0 1 0</xyz>
-        <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
-        </limit>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0.06</spring_stiffness>
-          <damping>6.788e-05</damping>
-          <friction>0</friction>
-        </dynamics>
-      </axis>
-      <axis2>
-        <xyz>0 0 1</xyz>
-        <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
-        </limit>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0.06</spring_stiffness>
-          <damping>6.788e-05</damping>
-          <friction>0</friction>
-        </dynamics>
-      </axis2>
-      <physics>
-        <ode>
-          <limit>
-            <cfm>0</cfm>
-            <erp>0.8</erp>
-          </limit>
-          <suspension>
-            <cfm>0</cfm>
-            <erp>0.8</erp>
-          </suspension>
-        </ode>
-      </physics>
-    </joint>
-    <joint name='pad_1_joint' type='ball'>
-      <parent>leg1</parent>
-      <child>pad_1</child>
-      <pose>0 0 0 0 -0 0</pose>
-      <physics>
-        <ode>
-          <limit>
-            <cfm>0</cfm>
-            <erp>0.2</erp>
-          </limit>
-          <suspension>
-            <cfm>0</cfm>
-            <erp>0.2</erp>
-          </suspension>
-        </ode>
-      </physics>
-    </joint>
-    <joint name='pad_2_joint' type='ball'>
-      <parent>leg2</parent>
-      <child>pad_2</child>
-      <pose>0 0 0 0 -0 0</pose>
-      <physics>
-        <ode>
-          <limit>
-            <cfm>0</cfm>
-            <erp>0.2</erp>
-          </limit>
-          <suspension>
-            <cfm>0</cfm>
-            <erp>0.2</erp>
-          </suspension>
-        </ode>
-      </physics>
-    </joint>
-    <joint name='pad_3_joint' type='ball'>
-      <parent>leg3</parent>
-      <child>pad_3</child>
-      <pose>0 0 0 0 -0 0</pose>
-      <physics>
-        <ode>
-          <limit>
-            <cfm>0</cfm>
-            <erp>0.2</erp>
-          </limit>
-          <suspension>
-            <cfm>0</cfm>
-            <erp>0.2</erp>
-          </suspension>
-        </ode>
-      </physics>
-    </joint>
-    <joint name='pad_4_joint' type='ball'>
-      <parent>leg4</parent>
-      <child>pad_4</child>
-      <pose>0 0 0 0 -0 0</pose>
-      <physics>
-        <ode>
-          <limit>
-            <cfm>0</cfm>
-            <erp>0.2</erp>
-          </limit>
-          <suspension>
-            <cfm>0</cfm>
-            <erp>0.2</erp>
-          </suspension>
-        </ode>
-      </physics>
-    </joint>
     <joint name='rotor_1_joint' type='revolute'>
       <parent>crazyflie_body</parent>
       <child>rotor_1</child>
@@ -1508,16 +1273,304 @@
         </ode>
       </physics>
     </joint>
-    <static>0</static>
-    <allow_auto_disable>1</allow_auto_disable>
+    <joint name='leg_joint_1' type='universal'>
+      <parent>crazyflie_body</parent>
+      <child>leg1</child>
+      <pose>0 0 0 0 0.786 0</pose>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+          <effort>-1</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0.08</spring_stiffness>
+          <damping>6.788e-05</damping>
+          <friction>0</friction>
+        </dynamics>
+      </axis>
+      <axis2>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+          <effort>-1</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0.08</spring_stiffness>
+          <damping>6.788e-05</damping>
+          <friction>0</friction>
+        </dynamics>
+      </axis2>
+      <physics>
+        <ode>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.8</erp>
+          </limit>
+          <suspension>
+            <cfm>0</cfm>
+            <erp>0.8</erp>
+          </suspension>
+        </ode>
+      </physics>
+    </joint>
+    <joint name='leg_joint_2' type='universal'>
+      <parent>crazyflie_body</parent>
+      <child>leg2</child>
+      <pose>0 0 0 0 0.786 0</pose>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+          <effort>-1</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0.08</spring_stiffness>
+          <damping>6.788e-05</damping>
+          <friction>0</friction>
+        </dynamics>
+      </axis>
+      <axis2>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+          <effort>-1</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0.08</spring_stiffness>
+          <damping>6.788e-05</damping>
+          <friction>0</friction>
+        </dynamics>
+      </axis2>
+      <physics>
+        <ode>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.8</erp>
+          </limit>
+          <suspension>
+            <cfm>0</cfm>
+            <erp>0.8</erp>
+          </suspension>
+        </ode>
+      </physics>
+    </joint>
+    <joint name='leg_joint_3' type='universal'>
+      <parent>crazyflie_body</parent>
+      <child>leg3</child>
+      <pose>0 0 0 0 0.786 0</pose>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+          <effort>-1</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0.08</spring_stiffness>
+          <damping>6.788e-05</damping>
+          <friction>0</friction>
+        </dynamics>
+      </axis>
+      <axis2>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+          <effort>-1</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0.08</spring_stiffness>
+          <damping>6.788e-05</damping>
+          <friction>0</friction>
+        </dynamics>
+      </axis2>
+      <physics>
+        <ode>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.8</erp>
+          </limit>
+          <suspension>
+            <cfm>0</cfm>
+            <erp>0.8</erp>
+          </suspension>
+        </ode>
+      </physics>
+    </joint>
+    <joint name='leg_joint_4' type='universal'>
+      <parent>crazyflie_body</parent>
+      <child>leg4</child>
+      <pose>0 0 0 0 0.786 0</pose>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+          <effort>-1</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0.08</spring_stiffness>
+          <damping>6.788e-05</damping>
+          <friction>0</friction>
+        </dynamics>
+      </axis>
+      <axis2>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+          <effort>-1</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0.08</spring_stiffness>
+          <damping>6.788e-05</damping>
+          <friction>0</friction>
+        </dynamics>
+      </axis2>
+      <physics>
+        <ode>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.8</erp>
+          </limit>
+          <suspension>
+            <cfm>0</cfm>
+            <erp>0.8</erp>
+          </suspension>
+        </ode>
+      </physics>
+    </joint>
+    <joint name='pad_joint_1' type='ball'>
+      <parent>leg1</parent>
+      <child>pad_1</child>
+      <pose>0 0 0 0 -0 0</pose>
+      <physics>
+        <ode>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+          <suspension>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </suspension>
+        </ode>
+      </physics>
+    </joint>
+    <joint name='pad_joint_2' type='ball'>
+      <parent>leg2</parent>
+      <child>pad_2</child>
+      <pose>0 0 0 0 -0 0</pose>
+      <physics>
+        <ode>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+          <suspension>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </suspension>
+        </ode>
+      </physics>
+    </joint>
+    <joint name='pad_joint_3' type='ball'>
+      <parent>leg3</parent>
+      <child>pad_3</child>
+      <pose>0 0 0 0 -0 0</pose>
+      <physics>
+        <ode>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+          <suspension>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </suspension>
+        </ode>
+      </physics>
+    </joint>
+    <joint name='pad_joint_4' type='ball'>
+      <parent>leg4</parent>
+      <child>pad_4</child>
+      <pose>0 0 0 0 -0 0</pose>
+      <physics>
+        <ode>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+          <suspension>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </suspension>
+        </ode>
+      </physics>
+    </joint>
+
+    <!-- <joint name="joint_01" type="revolute">
+      <parent>world</parent>
+      <child>crazyflie_body</child>
+      <pose>0.0 0 0.0 0 0 0</pose>    
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <lower>-1.79769e+308</lower>
+          <upper>1.79769e+308</upper>
+          <effort>-1</effort>
+          <velocity>-1</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+          <damping>0</damping>
+          <friction>0</friction>
+        </dynamics>
+      </axis>
+      <physics>
+        <ode>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.8</erp>
+          </limit>
+          <suspension>
+            <cfm>0</cfm>
+            <erp>0.8</erp>
+          </suspension>
+        </ode>
+      </physics>
+    </joint> -->
+    
     <plugin name='back_left_motor_model' filename='libgazebo_motor_model.so'>
       <robotNamespace/>
       <jointName>rotor_2_joint</jointName>
       <linkName>rotor_2</linkName>
       <turningDirection>ccw</turningDirection>
-      <timeConstantUp>0.0001</timeConstantUp>
+      <timeConstantUp>0.01</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
-      <maxRotVelocity>8000</maxRotVelocity>
+      <maxRotVelocity>80000</maxRotVelocity>
       <motorConstant>2.21e-8</motorConstant>
       <momentConstant>0.00612</momentConstant>
       <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
@@ -1532,9 +1585,9 @@
       <jointName>rotor_3_joint</jointName>
       <linkName>rotor_3</linkName>
       <turningDirection>cw</turningDirection>
-      <timeConstantUp>0.0001</timeConstantUp>
+      <timeConstantUp>0.01</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
-      <maxRotVelocity>8000</maxRotVelocity>
+      <maxRotVelocity>80000</maxRotVelocity>
       <motorConstant>2.21e-8</motorConstant>
       <momentConstant>0.00612</momentConstant>
       <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
@@ -1544,33 +1597,14 @@
       <motorSpeedPubTopic>/motor_speed/2</motorSpeedPubTopic>
       <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
     </plugin>
-    <plugin name='crazyflie_odom' filename='libgazebo_ros_p3d.so'>
-      <alwaysOn>1</alwaysOn>
-      <updateRate>100</updateRate>
-      <bodyName>crazyflie_body</bodyName>
-      <topicName>global_state</topicName>
-      <frameName>world</frameName>
-      <xyzOffsets>0 0 0</xyzOffsets>
-      <rpyOffsets>0 0 0</rpyOffsets>
-      <robotNamespace>/</robotNamespace>
-    </plugin>
-    <plugin name='OF_sensor' filename='libgazebo_ros_p3d.so'>
-      <alwaysOn>1</alwaysOn>
-      <updateRate>100</updateRate>
-      <bodyName>crazyflie_body</bodyName>
-      <topicName>OF_sensor</topicName>
-      <frameName>world</frameName>
-      <gaussianNoise>0.0</gaussianNoise>
-      <robotNamespace>/</robotNamespace>
-    </plugin>
     <plugin name='front_left_motor_model' filename='libgazebo_motor_model.so'>
       <robotNamespace/>
       <jointName>rotor_1_joint</jointName>
       <linkName>rotor_1</linkName>
       <turningDirection>cw</turningDirection>
-      <timeConstantUp>0.0001</timeConstantUp>
+      <timeConstantUp>0.01</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
-      <maxRotVelocity>8000</maxRotVelocity>
+      <maxRotVelocity>80000</maxRotVelocity>
       <motorConstant>2.21e-8</motorConstant>
       <momentConstant>0.00612</momentConstant>
       <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
@@ -1585,9 +1619,9 @@
       <jointName>rotor_4_joint</jointName>
       <linkName>rotor_4</linkName>
       <turningDirection>ccw</turningDirection>
-      <timeConstantUp>0.0001</timeConstantUp>
+      <timeConstantUp>0.01</timeConstantUp>
       <timeConstantDown>0.0001</timeConstantDown>
-      <maxRotVelocity>8000</maxRotVelocity>
+      <maxRotVelocity>80000</maxRotVelocity>
       <motorConstant>2.21e-8</motorConstant>
       <momentConstant>0.00612</momentConstant>
       <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
@@ -1597,6 +1631,26 @@
       <motorSpeedPubTopic>/motor_speed/3</motorSpeedPubTopic>
       <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
     </plugin>
+    <plugin name='OF_sensor' filename='libgazebo_ros_p3d.so'>
+      <alwaysOn>1</alwaysOn>
+      <updateRate>100</updateRate>
+      <bodyName>crazyflie_body</bodyName>
+      <topicName>OF_sensor</topicName>
+      <frameName>world</frameName>
+      <gaussianNoise>0.0</gaussianNoise>
+      <robotNamespace>/</robotNamespace>
+    </plugin>
+    <plugin name='crazyflie_odom' filename='libgazebo_ros_p3d.so'>
+      <alwaysOn>1</alwaysOn>
+      <updateRate>100</updateRate>
+      <bodyName>crazyflie_body</bodyName>
+      <topicName>global_state</topicName>
+      <frameName>world</frameName>
+      <xyzOffsets>0 0 0</xyzOffsets>
+      <rpyOffsets>0 0 0</rpyOffsets>
+      <robotNamespace>/</robotNamespace>
+    </plugin>
+    
     <plugin name='mavlink' filename='libgazebo_mavlink.so'>
       <robotNamespace/>
       <linkName>crazyflie_body</linkName>
@@ -1633,5 +1687,7 @@
       <stickyEnableSubTopic>/gazebo/command/sticky_enable</stickyEnableSubTopic>
       <maxUpVelocity>100</maxUpVelocity>
     </plugin>
+    <static>0</static>
+    <allow_auto_disable>1</allow_auto_disable>
   </model>
 </sdf>

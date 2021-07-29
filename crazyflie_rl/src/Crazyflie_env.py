@@ -128,7 +128,7 @@ class CrazyflieEnv:
                       
         # WE WANT TO BE SURE WE GET THESE MESSAGES WHEN THEY COME THROUGH              
         self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback,queue_size=10)     
-        self.padcontact_Subcriber = rospy.Subscriber('/pad_connections',PadConnect,self.padConnect_Callback,queue_size=10)       
+        self.padcontact_Subcriber = rospy.Subscriber('/pad_connections',PadConnect,self.padConnect_Callback,queue_size=5)       
         self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',ImpactData,self.ceiling_ftsensorCallback,queue_size=10) 
                       
 
@@ -538,6 +538,8 @@ class CrazyflieEnv:
         self.Cmd_Publisher.publish(cmd_msg) # So I'm sending it twice 
         
     def clear_IF_Data(self):
+        """Clears all logged impact and flip data & resets default values before next rollout
+        """        
 
         ## RESET/UPDATE RUN CONDITIONS
         self.runComplete_flag = False
@@ -610,20 +612,6 @@ class CrazyflieEnv:
                     'F_thrust','Mx','My','Mz',
                     'Error'])# Place holders
 
-            with open(self.filepath, mode='a') as state_file:
-                state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                state_writer.writerow([
-                    self.dataType,"Note:",
-                    "","", 
-                    "","","", 
-                    "","","","", # t,x,y,z
-                    "","","","", # qw,qx,qy,qz
-                    "","","", # vx,vy,vz
-                    "","","", # wx,wy,wz
-                    "","","","", # reward, flip_triggered, impact_flag, n_rollout
-                    "","","", # RREV, OF_x, OF_y
-                    "","","", # F_thrust,Mx,My,Mz 
-                    ""]) # Error
 
     def append_csv(self,error_str= ""):
 
@@ -752,7 +740,7 @@ class CrazyflieEnv:
     def cmd_send(self):
         while True:
             # Converts input number into action name
-            cmd_dict = {0:'home',1:'pos',2:'vel',3:'att',4:'tumble',5:'stop',6:'gains',9:'reset'}
+            cmd_dict = {0:'home',1:'pos',2:'vel',3:'att',4:'tumble',5:'stop',6:'gains',7:'moment',9:'reset'}
             try:
                 val = float(input("\nCmd Type (0:home,1:pos,2:vel,3:att,4:omega,5:stop,6:gains): "))
             except:

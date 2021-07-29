@@ -67,6 +67,9 @@ class ES:
 
         ## CALC R2 FROM THE IMPACT ANGLE
 
+        if env.quat_impact.all() == 0.0: # Check if valid quat
+            env.quat_impact = [0,0,0,1]
+
         R = Rotation.from_quat(env.quat_impact)
         eul_impact_arr = R.as_euler('YZX', degrees=True)
         eul_y_impact = eul_impact_arr[0]
@@ -94,15 +97,18 @@ class ES:
         R_3 = np.exp(np.dot(b3, np.array([0,0,-1]))-1)*10 # (0.135 < e^(x-1) <= 1.0) | (-1 < x <= 1)
 
 
-        if len(env.pad_contacts) >= 3 and env.body_contact == False:
-            R_4 = 100
+        if len(env.pad_contacts) >= 3: 
+            if env.body_contact == False:
+                R_4 = 150
+            else:
+                R_4 = 100
             
-        elif len(env.pad_contacts) >= 3 and env.body_contact == True:
-            R_4 = 50
-
-        elif len(env.pad_contacts) == 2:
-            R_4 = 25
-        
+        elif len(env.pad_contacts) == 2: 
+            if env.body_contact == False:
+                R_4 = 50
+            else:
+                R_4 = 25
+                
         elif len(env.pad_contacts) == 1:
             R_4 = 10
         

@@ -160,7 +160,7 @@ void Controller::RLCmd_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg){
 
         case 7: // Execute Moment-Based Flip
         {
-            _M_d = cmd_vals*1e-3; // Convert from N*mm to N*m for calcs
+            _M_d = cmd_vals; // Convert from N*mm to N*m for calcs
             _Moment_flag = (bool)cmd_flag;
             break;
         }
@@ -183,6 +183,11 @@ void Controller::RLCmd_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg){
             // based off of the second number
             sendto(Ctrl_Mavlink_socket, sticky_cmd, sizeof(sticky_cmd),0, (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len);
             break;
+        }
+
+        case 12:
+        {
+            _TEST_FLAG = true;
         }
     }
 
@@ -305,16 +310,22 @@ void Controller::controlThread()
     double m = _CF_MASS;   // Mass [kg] 
     double g = 9.81;  // Gravitational acceleration [m/s^2]
 
-    double d = 0.040; // Distance from COM to prop [m]
+    double d = 0.047; // Distance from COM to prop [m]
     double dp = d*sin(M_PI/4);
 
     double kf = 2.21e-8; // Thrust constant [N/(rad/s)^2]
     double c_tf = 0.00612; // Moment Constant [Nm/N]
 
     Matrix3d J; // Rotational Inertia of CF
-    J<< 16.57,0.83,0.72,
-        0.83,16.66,1.8,
-        0.72,1.8,29.26;
+    // J<< 16.57,0.83,0.72,
+    //     0.83,16.66,1.8,
+    //     0.72,1.8,29.26;
+
+    // J = J*1e-6;
+
+    J<< 16.57,0.0,0.0,
+        0.0,16.57,0.0,
+        0.0,0.0,29.26;
 
     J = J*1e-6;
 
@@ -472,10 +483,6 @@ void Controller::controlThread()
                     _M_d(1) = -_G1*1e-3;
                     _M_d(2) = 0.0;
 
-                    // Moment with base thrust
-                    // M = _M_d;
-
-                    // Pure Moment
                     M = _M_d*2; // Need to double moment to ensure it survives the PWM<0 cutoff
                     F_thrust = 0;
 
@@ -485,9 +492,10 @@ void Controller::controlThread()
                     _f_pitch_g_flip = M[1]/(4.0f*dp)*Newton2g;
                     _f_yaw_g_flip = M[2]/(4.0f*c_tf)*Newton2g;
                 }
-                
-                
-                
+            }
+            else if(_Moment_flag == true){
+                F_thrust = 0;
+                M = _M_d;
             }
             else{
                 F_thrust = F_thrust;
@@ -507,6 +515,9 @@ void Controller::controlThread()
         f_roll_g = M[0]/(4.0f*dp)*Newton2g;
         f_pitch_g = M[1]/(4.0f*dp)*Newton2g;
         f_yaw_g = M[2]/(4.0f*c_tf)*Newton2g;
+
+
+        
 
         f_thrust_g = clamp(f_thrust_g,0.0,f_MAX*0.85);    // Clamp thrust to prevent control saturation
 
@@ -536,11 +547,12 @@ void Controller::controlThread()
         MS2 = sqrt(PWM2thrust(M2_pwm)*g2Newton/kf);
         MS3 = sqrt(PWM2thrust(M3_pwm)*g2Newton/kf);
         MS4 = sqrt(PWM2thrust(M4_pwm)*g2Newton/kf);
+        // motorspeed_Vec << 2127.178,2127.178,2127.178,2127.178;
+        motorspeed_Vec << MS1,MS2,MS3,MS4;
 
         
 
 
-        motorspeed_Vec << MS1,MS2,MS3,MS4;
 
         if(_motorstop_flag == true){ // Shutoff all motors
             motorspeed_Vec << 0,0,0,0;
@@ -626,9 +638,11 @@ void Controller::controlThread()
         }
 
         Map<RowVector4f>(&motorspeed[0],1,4) = motorspeed_Vec.cast <float> (); // Converts motorspeeds to C++ array for data transmission
+        if(_TEST_FLAG == false)
+        {
         int len = sendto(Ctrl_Mavlink_socket, motorspeed, sizeof(motorspeed),0, // Send motorspeeds to Gazebo -> gazebo_motor_model
                 (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len); 
-        
+        }
         t_step++;
                
 
