@@ -160,7 +160,7 @@ void Controller::RLCmd_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg){
 
         case 7: // Execute Moment-Based Flip
         {
-            _M_d = cmd_vals*1e-3; // Convert from N*mm to N*m for calcs
+            _M_d = cmd_vals; // Convert from N*mm to N*m for calcs
             _Moment_flag = (bool)cmd_flag;
             break;
         }
@@ -317,9 +317,15 @@ void Controller::controlThread()
     double c_tf = 0.00612; // Moment Constant [Nm/N]
 
     Matrix3d J; // Rotational Inertia of CF
-    J<< 16.57,0.83,0.72,
-        0.83,16.66,1.8,
-        0.72,1.8,29.26;
+    // J<< 16.57,0.83,0.72,
+    //     0.83,16.66,1.8,
+    //     0.72,1.8,29.26;
+
+    // J = J*1e-6;
+
+    J<< 16.57,0.0,0.0,
+        0.0,16.57,0.0,
+        0.0,0.0,29.26;
 
     J = J*1e-6;
 
@@ -494,6 +500,7 @@ void Controller::controlThread()
                 
                 
             }
+            
             else{
                 F_thrust = F_thrust;
                 M = M;
@@ -512,6 +519,22 @@ void Controller::controlThread()
         f_roll_g = M[0]/(4.0f*dp)*Newton2g;
         f_pitch_g = M[1]/(4.0f*dp)*Newton2g;
         f_yaw_g = M[2]/(4.0f*c_tf)*Newton2g;
+
+
+        if(_Moment_flag == true){
+    
+            f_thrust_g = 0.0;
+            f_roll_g = _M_d(0);
+            f_pitch_g = _M_d(1);
+            f_yaw_g = _M_d(2);
+
+            if(_tumbled == true){
+                f_thrust_g = 0.0;
+                f_roll_g = 0.0;
+                f_pitch_g = 0.0;
+                f_yaw_g = 0.0;
+            }
+        }
 
         f_thrust_g = clamp(f_thrust_g,0.0,f_MAX*0.85);    // Clamp thrust to prevent control saturation
 

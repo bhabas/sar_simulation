@@ -9,7 +9,7 @@ K_EP_SLOWDOWN: 0
 
 K_EP_MAX: 20
 CEILING_HEIGHT: 2.1
-CF_MASS: 0.03774
+CF_MASS: 0.0376
 
 
 # controller: "GTC"

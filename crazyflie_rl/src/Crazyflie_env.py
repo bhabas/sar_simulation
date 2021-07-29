@@ -752,7 +752,7 @@ class CrazyflieEnv:
     def cmd_send(self):
         while True:
             # Converts input number into action name
-            cmd_dict = {0:'home',1:'pos',2:'vel',3:'att',4:'tumble',5:'stop',6:'gains',9:'reset'}
+            cmd_dict = {0:'home',1:'pos',2:'vel',3:'att',4:'tumble',5:'stop',6:'gains',7:'moment',9:'reset'}
             try:
                 val = float(input("\nCmd Type (0:home,1:pos,2:vel,3:att,4:omega,5:stop,6:gains): "))
             except:

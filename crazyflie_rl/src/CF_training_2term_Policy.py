@@ -342,8 +342,8 @@ if __name__ == '__main__':
     # mu = np.array([[4.0],[4.0]])                 # Initial mu starting point
     # sigma = np.array([[1.5],[1.5]])       # Initial sigma starting point
 
-    mu = np.array([[5.34],[3.03]])                 # Initial mu starting point
-    sigma = np.array([[0.001],[0.001]])       # Initial sigma starting point
+    mu = np.array([[3.95],[3.0]])                 # Initial mu starting point
+    sigma = np.array([[0.001],[0.0001]])       # Initial sigma starting point
 
 
     ## LEARNING AGENTS AND PARAMETERS
