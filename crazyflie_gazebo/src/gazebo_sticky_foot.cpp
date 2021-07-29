@@ -157,6 +157,7 @@ void GazeboStickyFoot::ContactCallback(ConstContactsPtr &msg)
 // This gets called when motorspeed callback return negative number
 // This uses gz topics which use some protobuff thing different than ROS framework
 // LISTEN TO MOTORSPEED GZ PUB AND ACTIVATE STICKYFOOT
+// TBD: (UPDATE THIS TO WORK OFF OF /rl_ctrl commands) (7/29/21)
 void GazeboStickyFoot::StickyEnableCallback(CommandMotorSpeedPtr &rot_velocities)
 {
     //model_ = world_->ModelByName(model_name_);
