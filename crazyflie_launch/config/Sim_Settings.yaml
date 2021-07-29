@@ -1,0 +1,15 @@
+MODEL_NAME: "crazyflie_Narrow-Short"
+GUI_FLAG: true
+
+SIM_SPEED: 1.5
+SIM_SLOWDOWN_SPEED: 0.2
+LANDING_SLOWDOWN: true
+K_EP_SLOWDOWN: 0
+
+
+K_EP_MAX: 20
+CEILING_HEIGHT: 2.1
+CF_MASS: 0.0376
+
+
+# controller: "GTC"

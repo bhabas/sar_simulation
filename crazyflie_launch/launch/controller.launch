@@ -1,0 +1,3 @@
+<launch>
+    <node name="controller_node" pkg="crazyflie_gazebo" type="controller" launch-prefix="gnome-terminal --disable-factory --geometry 70x42+3154+154 --"/>
+</launch>
