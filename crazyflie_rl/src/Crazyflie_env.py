@@ -54,6 +54,7 @@ class CrazyflieEnv:
         ## INIT RL_DATA VARIABLES 
         # NOTE: All time units are in terms of Sim-Time unless specified
         self.runComplete_flag = False
+        self.trialComplete_flag = False
         self.reset_flag = False
         self.trial_name = '' 
         self.agent_name = ''    # Learning agent used for training (PEPG,EM,etc...)
@@ -169,6 +170,7 @@ class CrazyflieEnv:
         rl_msg.error = self.error_str
         rl_msg.impact_flag = self.impact_flag
         rl_msg.runComplete_flag = self.runComplete_flag
+        rl_msg.trialComplete_flag = self.trialComplete_flag
         rl_msg.reset_flag = self.reset_flag
 
 

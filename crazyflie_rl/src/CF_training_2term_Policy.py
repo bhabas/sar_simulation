@@ -28,6 +28,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 
     ## SEND MESSAGE FOR ALL NODES TO RESET TO DEFAULT VALUES
     env.reset_flag = True
+    env.trialComplete_flag = False
     env.RL_Publish() # Publish that rollout completed 
     
     # ============================
@@ -332,6 +333,9 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
         
        
     ## =======  MAX TRIALS COMPLETED  ======= ##
+    env.trialComplete_flag = True
+    env.RL_Publish()
+    print()
 
 
 if __name__ == '__main__':
