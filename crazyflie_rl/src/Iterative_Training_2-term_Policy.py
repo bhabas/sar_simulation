@@ -20,7 +20,7 @@ np.set_printoptions(precision=2, suppress=True)
 if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=False)
+    env = CrazyflieEnv(gazeboTimeout=True)
     # env.launch_dashboard()
 
     print("Environment done")
@@ -41,12 +41,12 @@ if __name__ == '__main__':
        
         ## GAUSSIAN DISTRIBUTION PARAMETERS 
         mu_1 = np.random.uniform(2.5,7.0) # RREV typically starts around in this range
-        mu_2 = np.random.uniform(4.0,7.0) # My can typically start in this range and climb higher too
+        mu_2 = np.random.uniform(3.0,9.0) # My can typically start in this range and climb higher too
 
 
         mu = np.array([[mu_1],[mu_2]])  # Initial mu starting point     
         # sigma = np.array([[0.00001],[0.00001]]) # Initial estimates of sigma: 
-        mu = np.array([[6],[2.0]])   
+        # mu = np.array([[6],[2.0]])   
         sigma = np.array([[1.5],[1.5]]) # Initial estimates of sigma: 
         
 
@@ -67,7 +67,7 @@ if __name__ == '__main__':
 
         ## RUN TRIAL
         env.RL_Publish() # Publish data to rl_data topic
-        # env.launch_dashboard()
+        env.launch_dashboard()
         runTraining(env,agent,V_d,phi,k_epMax=K_EP_MAX)
 
 

@@ -90,33 +90,39 @@ class ES:
             R_2 = 0
 
 
+        if env.impact_flag == True and env.body_contact == False:
+            ## CALC R_3 FROM FINAL ORIENTATION AT END OF ROLLOUT
+            Rot = Rotation.from_quat([env.orientation_q[1],env.orientation_q[2],env.orientation_q[3],env.orientation_q[0]])
+            b3 = Rot.as_matrix()[:,2]
+            R_3 = np.exp(np.dot(b3, np.array([0,0,-1]))-1)*150 # (0.135 < e^(x-1) <= 1.0) | (-1 < x <= 1)
 
-        ## CALC R_3 FROM FINAL ORIENTATION AT END OF ROLLOUT
-        Rot = Rotation.from_quat([env.orientation_q[1],env.orientation_q[2],env.orientation_q[3],env.orientation_q[0]])
-        b3 = Rot.as_matrix()[:,2]
-        R_3 = np.exp(np.dot(b3, np.array([0,0,-1]))-1)*10 # (0.135 < e^(x-1) <= 1.0) | (-1 < x <= 1)
-
-
-        if len(env.pad_contacts) >= 3: 
-            if env.body_contact == False:
-                R_4 = 150
-            else:
-                R_4 = 100
-            
-        elif len(env.pad_contacts) == 2: 
-            if env.body_contact == False:
-                R_4 = 50
-            else:
-                R_4 = 25
-                
-        elif len(env.pad_contacts) == 1:
-            R_4 = 10
-        
         else:
-            R_4 = 0.0
+            R_3 = 0
+        # ## CALC R_4 FROM NUMBER OF LEGS CONNECT
+        # if env.impact_flag == True: # The pad connection callback is weird w/o impact so only check in this case
+
+        #     if len(env.pad_contacts) >= 3: 
+        #         if env.body_contact == False:
+        #             R_4 = 150
+        #         else:
+        #             R_4 = 100
+                
+        #     elif len(env.pad_contacts) == 2: 
+        #         if env.body_contact == False:
+        #             R_4 = 50
+        #         else:
+        #             R_4 = 25
+                    
+        #     elif len(env.pad_contacts) == 1:
+        #         R_4 = 10
+            
+        #     else:
+        #         R_4 = 0.0
+        # else:
+        #     R_4 = 0.0
 
 
-        R_total = R_1*10 + R_2*10 + R_4 + 0.001
+        R_total = R_1*10 + R_2*10 + R_3 + 0.001
         # print(f"Reward: r_c: {r_contact:.3f} | r_theta: {r_theta:.3f} | r_h: {r_h:.3f} | Pitch Max: {env.pitch_max:.2f}")
         return R_total
 
