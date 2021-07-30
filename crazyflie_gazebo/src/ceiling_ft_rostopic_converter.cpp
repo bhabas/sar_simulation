@@ -74,7 +74,7 @@ void gazeboFT_Callback(const ConstWrenchStampedPtr &_msg)
 
 
 
-  if (_ceiling_ft_z >= 0.25 && _impact_flag == false){ 
+  if (_ceiling_ft_z >= 0.1 && _impact_flag == false){ 
     // LOCK IN STATE DATA WHEN IMPACT DETECTED
     _impact_flag = true;
 

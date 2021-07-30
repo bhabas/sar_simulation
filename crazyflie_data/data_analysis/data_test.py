@@ -11,7 +11,7 @@ dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/logs
 dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs/"
 
 
-fileName = "EM_PEPG--Vd_2.65--phi_90.00--trial_02--SIM.csv"
+fileName = "EM_PEPG--Vd_1.00--phi_60.00--trial_01.csv"
 # fileName = "My_6.00_Calibration_Test-3.csv"
 
 trial = DataFile(dataPath,fileName,dataType='SIM')
@@ -19,22 +19,22 @@ trial = DataFile(dataPath,fileName,dataType='SIM')
 k_ep = 0
 k_run = 0
 
-wy = trial.grab_stateData(k_ep,k_run,['wy'])
-f_pitch = trial.grab_stateData(k_ep,k_run,['My'])
-t = np.arange(0,len(wy)*0.01,0.01)
-eul = trial.grab_eulerData(k_ep, k_run, degrees=bool)[:,1]
+# wy = trial.grab_stateData(k_ep,k_run,['wy'])
+# f_pitch = trial.grab_stateData(k_ep,k_run,['My'])
+# t = np.arange(0,len(wy)*0.01,0.01)
+# eul = trial.grab_eulerData(k_ep, k_run, degrees=bool)[:,1]
 
 
-fig = plt.figure()
-ax = fig.add_subplot(111)
-ax.plot(t,wy)
-ax.plot(t,f_pitch)
-ax.plot(t,eul)
-ax.grid()
+# fig = plt.figure()
+# ax = fig.add_subplot(111)
+# ax.plot(t,wy)
+# ax.plot(t,f_pitch)
+# ax.plot(t,eul)
+# ax.grid()
 
-plt.show()
+# plt.show()
 
-# trial.plot_rewardData()
+trial.plot_rewardData()
 # trial.plot_policy_convg()
 # trial.plot_state(k_ep,k_run,['vz'])
 # trial.plot_state_spread_flip('RREV',N=1)

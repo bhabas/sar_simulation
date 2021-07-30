@@ -51,7 +51,7 @@ if __name__ == '__main__':
         
 
         ## LEARNING AGENT AND PARAMETERS
-        env.n_rollouts = 2
+        env.n_rollouts = 16
         K_EP_MAX = rospy.get_param("K_EP_MAX")
         # agent = EPHE_Agent(mu,sigma,n_rollouts=env.n_rollouts)
         agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=env.n_rollouts)
