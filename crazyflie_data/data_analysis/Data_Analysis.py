@@ -113,8 +113,9 @@ class DataFile:
             rewards_avg: array of averaged rewards per episode (np.array)
         """        
         ## CREATE ARRAYS FOR REWARD, K_EP 
-        reward_df = self.trial_df.iloc[:][['k_ep','reward']].dropna() # Create df from k_ep/rewards and drop blank reward rows
-        reward_df = reward_df.query(f"reward != {False}").astype('float')
+        reward_df = self.trial_df.iloc[:][['k_ep','mu','reward']].dropna() # Create df from k_ep/rewards and drop blank reward rows
+        reward_df = reward_df.iloc[:][["k_ep","reward"]].astype('float')
+        reward_df = reward_df.query("reward >= 3.00")
         rewards_arr = reward_df.to_numpy()
         rewards = rewards_arr[:,1]
         k_ep_r = rewards_arr[:,0]
@@ -146,7 +147,7 @@ class DataFile:
         
         return avg_reward
 
-    def plot_rewardData(self,ymax=150):
+    def plot_rewardData(self,ymax=200):
         """Plot rewards for entire trial
         Data Type: Sim/Exp
         """        

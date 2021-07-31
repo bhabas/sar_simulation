@@ -5,13 +5,14 @@ import numpy as np
 import time,os
 import rospy
 from crazyflie_msgs.msg import ImpactData,CtrlData
+import math
 
 
 
 from Crazyflie_env import CrazyflieEnv
 # from rl_syspepg import rlsysPEPGAgent_reactive,rlsysPEPGAgent_adaptive
 from RL_agents.rl_EM import rlEM_PEPGAgent
-# from rl_cma import CMA_basic,CMA,CMA_sym
+# from RL_agents.rl_cma import CMA_basic,CMA,CMA_sym
 from rospy.exceptions import ROSException
 
 os.system("clear")
@@ -87,7 +88,9 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                     rospy.wait_for_message("/ctrl_data",CtrlData,timeout=1.0)
                 except rospy.exceptions.ROSException:
                     env.launch_controller()
-                    time.sleep(0.5)
+                    rospy.wait_for_message("/ctrl_data",CtrlData,timeout=1.0)
+                    env.reset_pos()
+                    
 
                
             

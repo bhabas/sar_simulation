@@ -6,6 +6,7 @@ import os, subprocess, signal
 import rospy
 import getpass
 
+
 from std_srvs.srv import Empty
 
 
@@ -396,7 +397,8 @@ class CrazyflieEnv:
             Relaunches Gazebo and resets model position but doesn't touch controller node
         """        
         self.close_sim()
-        time.sleep(0.5)
+        self.close_controller()
+        time.sleep(5.0)
         self.launch_controller()
         self.launch_sim()
 
@@ -405,8 +407,11 @@ class CrazyflieEnv:
 
     def close_sim(self):
         os.killpg(self.gazebo_p.pid, signal.SIGTERM)
-        os.killpg(self.controller_p.pid, signal.SIGTERM)
         
+    def close_controller(self):
+        os.killpg(self.controller_p.pid, signal.SIGTERM)
+
+
 
     def close_dashboard(self):
         os.killpg(self.dashboard_p.pid, signal.SIGTERM)
@@ -415,7 +420,7 @@ class CrazyflieEnv:
         self.isRunning = False
         os.killpg(self.gazebo_p.pid, signal.SIGTERM)
         # os.killpg(self.dashboard_p.pid, signal.SIGTERM)
-        os.killpg(self.controller_p.pid, signal.SIGTERM)
+        # os.killpg(self.controller_p.pid, signal.SIGTERM)
      
     def getTime(self):
         return self.t

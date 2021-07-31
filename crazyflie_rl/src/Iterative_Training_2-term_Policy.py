@@ -69,7 +69,7 @@ if __name__ == '__main__':
         # env.RL_Publish() # Publish data to rl_data topic
         # env.launch_dashboard()
         runTraining(env,agent,V_d,phi,k_epMax=K_EP_MAX)
-        print()
+        env.relaunch_sim()
 
 
  
