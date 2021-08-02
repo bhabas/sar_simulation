@@ -1028,7 +1028,7 @@ class DataFile:
 
         return eul_arr
 
-    def grab_impact_eul_trial(self,N:int=3,eul_type:str='eul_y'):
+    def grab_impact_eul_trial(self,N:int=3,eul_type:str='eul_y',reward_cutoff:float=3.00):
         """Returns the summarized impact angle information from a given trial by finding the
         mean and standard deviation of the final 'N' episodes
 
@@ -1044,7 +1044,7 @@ class DataFile:
 
         ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
         # Use reward to extract only the valid attempts and not simulation mishaps
-        ep_df = self.trial_df.iloc[:][['k_ep','k_run','reward']].astype('float').query('reward >= 3.00')
+        ep_df = self.trial_df.iloc[:][['k_ep','k_run','reward']].astype('float').query(f'reward >= {reward_cutoff}')
         ep_arr = ep_df.iloc[-self.n_rollouts*N:].to_numpy() # Grab episode/run listing from past N rollouts
 
         ## ITERATE THROUGH ALL RUNS AND FINDING IMPACT ANGLE 
@@ -1075,6 +1075,18 @@ class DataFile:
         return eul_impact_mean,eul_impact_std,eul_impact_arr
 
     def landing_conditions(self,k_ep,k_run):
+        """Returns landing data for number of leg contacts, the impact leg, contact list, and if body impacted
+
+        Args:
+            k_ep (int): Episode number
+            k_run (int): Run number
+
+        Returns:
+            leg_contacts (int): Number legs that joined to the ceiling
+            impact_leg (int): First leg to impact the ceiling
+            contact_list (list): List of the order legs impacted the ceiling
+            body_impact (bool): True if body impacted the ceiling
+        """        
         _,_,_,impact_df = self.select_run(k_ep,k_run)
         impact_flag = impact_df.iloc[0]['reward']
         body_impact = impact_df.iloc[0]['flip_flag']
@@ -1082,9 +1094,63 @@ class DataFile:
         contact_list = np.fromstring(contact_list[1:-1], dtype=float, sep=' ')
 
         leg_contacts = len(contact_list)
-        impact_leg = contact_list[0].astype('int')
+        if impact_flag == True:
+            impact_leg = contact_list[0].astype('int')
+        else:
+            impact_leg = 0
 
         return leg_contacts,impact_leg,contact_list,body_impact
+
+    def landing_rate(self,N:int=3,reward_cutoff:float=3.00):
+        """Returns the landing rate for the final [N] episodes
+
+        Args:
+            N (int, optional): Final [N] episodes to analyze. Defaults to 3.
+            reward_cutoff (float, optional): Reward values below this cutoff come from sim errors and not performance. Defaults to 3.00.
+
+        Returns:
+            landing_rate_4_leg (float): Four leg landing success percentage
+            landing_rate_2_leg (float): Two leg landing success percentage
+            contact_rate (float): Combined landing success percentage for either two leg or four leg landing
+        """        
+
+        ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
+        # Use reward to extract only the valid attempts and not simulation mishaps
+        ep_df = self.trial_df.iloc[:][['k_ep','k_run','reward']].astype('float').query(f'reward >= {reward_cutoff}')
+        ep_arr = ep_df.iloc[-self.n_rollouts*N:].to_numpy() # Grab episode/run listing from past N rollouts
+
+        ## ITERATE THROUGH ALL RUNS AND RECORD VALID LANDINGS
+        four_leg_landing = 0
+        two_leg_landing = 0
+        one_leg_landing = 0
+        missed_landing = 0
+        
+        for k_ep,k_run in ep_arr[:,:2]:
+            
+            ## RECORD LANDING CONDITIONS
+            leg_contacts,_,_,_ = self.landing_conditions(k_ep, k_run)
+
+            if leg_contacts >= 3: 
+                four_leg_landing += 1
+
+            elif leg_contacts == 2:
+                two_leg_landing += 1
+
+            elif leg_contacts == 1:
+                one_leg_landing += 1
+
+            else:
+                missed_landing += 1
+
+        ## CALC LANDING PERCENTAGE
+        landing_rate_4leg = four_leg_landing/(N*self.n_rollouts)
+        landing_rate_2leg = two_leg_landing/(N*self.n_rollouts)
+        contact_rate = (four_leg_landing + two_leg_landing)/(N*self.n_rollouts)
+
+        return landing_rate_4leg,landing_rate_2leg,contact_rate
+
+                
+
 
 
 

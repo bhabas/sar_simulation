@@ -11,7 +11,7 @@ dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/logs
 dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs/"
 
 
-fileName = "EM_PEPG--Vd_3.80--phi_90.00--trial_00.csv"
+fileName = "EM_PEPG--Vd_2.00--phi_67.50--trial_04.csv"
 # fileName = "My_6.00_Calibration_Test-3.csv"
 
 trial = DataFile(dataPath,fileName,dataType='SIM')
@@ -35,11 +35,11 @@ k_run = 0
 # plt.show()
 
 # trial.plot_rewardData()
+# trial.plot_policy_convg()
 
 # print(trial.grab_impact_eul(k_ep,k_run))
-print(trial.grab_impact_eul_trial())
+print(trial.landing_rate())
 
-# trial.plot_policy_convg()
 # trial.plot_state(k_ep,k_run,['vz'])
 # trial.plot_state_spread_flip('RREV',N=1)
 # trial.grab_policy(k_ep,k_run)
