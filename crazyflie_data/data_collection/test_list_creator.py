@@ -1,9 +1,9 @@
 import numpy as np
 
 List = []
-for V_d in np.arange(1.0,4.25,0.25):    # [m/s]
+for V_d in np.arange(1.0,4.25,0.5):    # [m/s]
     for phi in np.arange(90,15,-7.5):      # [deg]
-        for trial_num in np.arange(0,5,1):
+        for trial_num in np.arange(3,8,1):
             List.append([V_d,phi,trial_num])
 
 

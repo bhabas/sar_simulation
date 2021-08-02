@@ -954,7 +954,7 @@ class DataFile:
             state_impact = run_df.query(f"t == {t_impact}").iloc[0][stateName]
 
         elif self.dataType == 'SIM':
-            _,_,impact_df,_ = self.select_run(k_ep,k_run)
+            _,_,_,impact_df = self.select_run(k_ep,k_run)
             if impact_df.iloc[0]['reward'] == True: # If Impact Detected
 
                 state_impact = impact_df.iloc[0][stateName]
@@ -1026,7 +1026,42 @@ class DataFile:
         eul_arr = eul_df.to_numpy()
 
         return eul_arr
-      
+
+    def grab_impact_eul_trial(self,N:int=3):
+
+        ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
+        ep_df = self.trial_df.iloc[:][['k_ep','k_run','reward']].astype('float').query('reward >= 3.00')
+        ep_arr = ep_df.iloc[-self.n_rollouts*N:].to_numpy() # Grab episode/run listing from past 3 rollouts
+
+        ## ITERATE THROUGH ALL RUNS AND FINDING IMPACT ANGLE 
+        var_list = []
+        for k_ep,k_run in ep_arr[:,:2]:
+
+            leg_contacts,_,_,_ = self.landing_conditions(k_ep, k_run)
+            if leg_contacts >= 3: # IGNORE FAILED LANDINGS
+                var_list.append(self.grab_impact_eul(k_ep,k_run))
+
+        ## CONVERT LIST TO NP ARRAY AND CALC MEAN
+        arr = np.asarray(var_list)
+        eul_impact = np.mean(arr,axis=0)
+        
+        return eul_impact
+    def landing_conditions(self,k_ep,k_run):
+        _,_,_,impact_df = self.select_run(k_ep,k_run)
+        impact_flag = impact_df.iloc[0]['reward']
+        body_impact = impact_df.iloc[0]['flip_flag']
+        contact_list = impact_df.iloc[0]['impact_flag']
+        contact_list = np.fromstring(contact_list[1:-1], dtype=float, sep=' ')
+
+        leg_contacts = len(contact_list)
+        impact_leg = contact_list[0].astype('int')
+
+        return leg_contacts,impact_leg,contact_list,body_impact
+
+
+
+        
+
 
 ## TRAJECTORY FUNCTIONS
     def grab_traj_start(self,k_ep,k_run):

@@ -16,7 +16,7 @@ fileName = "EM_PEPG--Vd_3.80--phi_90.00--trial_00.csv"
 
 trial = DataFile(dataPath,fileName,dataType='SIM')
 
-k_ep = 0
+k_ep = 15
 k_run = 0
 
 # wy = trial.grab_stateData(k_ep,k_run,['wy'])
@@ -35,7 +35,10 @@ k_run = 0
 # plt.show()
 
 # trial.plot_rewardData()
-trial.plot_policy_convg()
+
+# print(trial.grab_impact_eul(k_ep,k_run))
+trial.grab_impact_eul_trial()
+# trial.plot_policy_convg()
 # trial.plot_state(k_ep,k_run,['vz'])
 # trial.plot_state_spread_flip('RREV',N=1)
 # trial.grab_policy(k_ep,k_run)

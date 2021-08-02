@@ -85,11 +85,12 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 
                 ## IF CONTROLLER FAILS, RELAUNCH IT
                 try:
-                    rospy.wait_for_message("/ctrl_data",CtrlData,timeout=1.0)
+                    rospy.wait_for_message("/ctrl_data",CtrlData,timeout=5.0)
                 except rospy.exceptions.ROSException:
                     env.launch_controller()
-                    rospy.wait_for_message("/ctrl_data",CtrlData,timeout=1.0)
+                    time.sleep(2)
                     env.reset_pos()
+                    continue
                     
 
                
@@ -345,7 +346,7 @@ if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv(gazeboTimeout=False)
-    # env.launch_dashboard()
+    env.launch_dashboard()
 
     # ============================
     ##          AGENT  
