@@ -6,6 +6,7 @@ import os
 import re
 
 os.system("clear")
+np.set_printoptions(suppress=True)
 
 class DataFile:
     def __init__(self,dataPath,fileName,dataType='EXP'):
@@ -1027,11 +1028,24 @@ class DataFile:
 
         return eul_arr
 
-    def grab_impact_eul_trial(self,N:int=3):
+    def grab_impact_eul_trial(self,N:int=3,eul_type:str='eul_y'):
+        """Returns the summarized impact angle information from a given trial by finding the
+        mean and standard deviation of the final 'N' episodes
+
+        Args:
+            N (int, optional): Final [N] episodes to analyze. Defaults to 3.
+            eul_type (str, optional): Euler angle to analyze. Defaults to 'eul_y'.
+
+        Returns:
+            eul_impact_mean (float): Average impact angle
+            eul_impact_std (float): Standard Deviation of the impact angle data
+            eul_impact_arr (np.array): Array of the impact angles
+        """        
 
         ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
+        # Use reward to extract only the valid attempts and not simulation mishaps
         ep_df = self.trial_df.iloc[:][['k_ep','k_run','reward']].astype('float').query('reward >= 3.00')
-        ep_arr = ep_df.iloc[-self.n_rollouts*N:].to_numpy() # Grab episode/run listing from past 3 rollouts
+        ep_arr = ep_df.iloc[-self.n_rollouts*N:].to_numpy() # Grab episode/run listing from past N rollouts
 
         ## ITERATE THROUGH ALL RUNS AND FINDING IMPACT ANGLE 
         var_list = []
@@ -1041,11 +1055,25 @@ class DataFile:
             if leg_contacts >= 3: # IGNORE FAILED LANDINGS
                 var_list.append(self.grab_impact_eul(k_ep,k_run))
 
-        ## CONVERT LIST TO NP ARRAY AND CALC MEAN
-        arr = np.asarray(var_list)
-        eul_impact = np.mean(arr,axis=0)
+        ## EXTRACT LIST OF DESIRED IMPACT VALUES
+        if eul_type == 'eul_x':
+            var_list = np.asarray(var_list)[:,0,0]
         
-        return eul_impact
+        elif eul_type == 'eul_y':
+            var_list = np.asarray(var_list)[:,0,1]
+
+        elif eul_type == 'eul_z':
+            var_list = np.asarray(var_list)[:,0,2]
+
+        ## COVERT NEGATIVE ANGLES INTO POSITIVE WRAP AROUND ONES (-10 deg = 350 deg)
+        eul_impact_arr =np.array([360+i if i <=0 else i for i in var_list])
+            
+        ## RETURN MEAN AND STD AND ARRAY
+        eul_impact_mean = np.mean(eul_impact_arr,axis=0)
+        eul_impact_std = np.std(eul_impact_arr,axis=0)
+        
+        return eul_impact_mean,eul_impact_std,eul_impact_arr
+
     def landing_conditions(self,k_ep,k_run):
         _,_,_,impact_df = self.select_run(k_ep,k_run)
         impact_flag = impact_df.iloc[0]['reward']

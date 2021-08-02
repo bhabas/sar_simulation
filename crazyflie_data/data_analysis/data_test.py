@@ -37,7 +37,8 @@ k_run = 0
 # trial.plot_rewardData()
 
 # print(trial.grab_impact_eul(k_ep,k_run))
-trial.grab_impact_eul_trial()
+print(trial.grab_impact_eul_trial())
+
 # trial.plot_policy_convg()
 # trial.plot_state(k_ep,k_run,['vz'])
 # trial.plot_state_spread_flip('RREV',N=1)
