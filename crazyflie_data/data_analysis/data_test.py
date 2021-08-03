@@ -5,13 +5,18 @@ import pandas as pd
 import os
 
 from Data_Analysis import DataFile
-os.system("clear")
+# os.system("clear")
 
 dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/logs/EXP_Logs/"
 dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs/"
 
+Vel = 3.5
+phi = 60
+trial = 3
 
-fileName = "EM_PEPG--Vd_2.00--phi_67.50--trial_04.csv"
+
+fileName = "EM_PEPG--Vd_3.50--phi_60.00--trial_03.csv"
+fileName = f"EM_PEPG--Vd_{Vel:.2f}--phi_{phi:.2f}--trial_{int(trial):02d}.csv"
 # fileName = "My_6.00_Calibration_Test-3.csv"
 
 trial = DataFile(dataPath,fileName,dataType='SIM')
@@ -38,7 +43,7 @@ k_run = 0
 # trial.plot_policy_convg()
 
 # print(trial.grab_impact_eul(k_ep,k_run))
-print(trial.landing_rate())
+print(trial.grab_impact_force('z'))
 
 # trial.plot_state(k_ep,k_run,['vz'])
 # trial.plot_state_spread_flip('RREV',N=1)

@@ -5,7 +5,7 @@ from scipy.spatial.transform import Rotation
 import os
 import re
 
-os.system("clear")
+# os.system("clear")
 np.set_printoptions(suppress=True)
 
 class DataFile:
@@ -1073,6 +1073,67 @@ class DataFile:
         eul_impact_std = np.std(eul_impact_arr,axis=0)
         
         return eul_impact_mean,eul_impact_std,eul_impact_arr
+
+    def grab_impact_state_trial(self,stateName,N:int=3,reward_cutoff:float=3.00):
+        """Returns the summarized impact state information from a given trial by finding the
+        mean and standard deviation of the final 'N' episodes
+
+        Args:
+            stateName (str): State label in the data file
+            N (int, optional): Final [N] episodes to analyze. Defaults to 3.
+            reward_cutoff (float, optional): The reward cutoff set to ignore failures caused directly by the simulation
+            
+
+        Returns:
+            state_impact_mean (float): Average state at impact
+            state_impact_std (float): Standard Deviation of the impact state data
+
+        """  
+        ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
+        # Use reward to extract only the valid attempts and not simulation mishaps
+        ep_df = self.trial_df.iloc[:][['k_ep','k_run','reward']].astype('float').query(f'reward >= {reward_cutoff}')
+        ep_arr = ep_df.iloc[-self.n_rollouts*N:].to_numpy() # Grab episode/run listing from past N rollouts
+
+        ## ITERATE THROUGH ALL RUNS AND FINDING IMPACT ANGLE 
+        var_list = []
+        for k_ep,k_run in ep_arr[:,:2]:
+
+            leg_contacts,_,_,_ = self.landing_conditions(k_ep, k_run)
+            if leg_contacts >= 3: # IGNORE FAILED LANDINGS
+                var_list.append(self.grab_impact_state(k_ep,k_run,stateName))
+
+        ## RETURN MEAN AND STD OF STATE
+        state_impact_mean = np.mean(var_list)
+        state_impact_std = np.std(var_list)
+
+        return state_impact_mean,state_impact_std
+
+    def grab_impact_force(self,forceDirection:str,N:int=3,reward_cutoff:float=3.00):
+        """Returns the summarized impact force information from a given trial by finding the
+        mean and standard deviation of the final 'N' episodes
+
+        Args:
+            forceDirection (str): Force direction label
+            N (int, optional): Final [N] episodes to analyze. Defaults to 3.
+            reward_cutoff (float, optional): The reward cutoff set to ignore failures caused directly by the simulation
+            
+
+        Returns:
+            force_impact_mean (float): Average state at impact
+            force_impact_std (float): Standard Deviation of the impact state data
+
+        """  
+        ## CONVERT DIRECTION TO DATA LABEL
+        if forceDirection == 'x':
+            stateName = 'OF_x'
+        elif forceDirection == 'y':
+            stateName = 'OF_y'
+        elif forceDirection == 'z':
+            stateName = 'RREV'
+
+        ## FIND IMPACT FORCES
+        force_impact_mean,force_impact_std = self.grab_impact_state_trial(stateName,N,reward_cutoff)
+        return force_impact_mean, force_impact_std
 
     def landing_conditions(self,k_ep,k_run):
         """Returns landing data for number of leg contacts, the impact leg, contact list, and if body impacted
