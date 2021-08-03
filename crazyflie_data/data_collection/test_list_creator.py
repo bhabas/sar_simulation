@@ -3,11 +3,11 @@ import numpy as np
 test_list = []
 for V_d in np.arange(1.0,4.25,0.5):    # [m/s]
     for phi in np.arange(90,15,-7.5):      # [deg]
-        for trial_num in np.arange(3,8,1):
+        for trial_num in np.arange(0,5,1):
             test_list.append([V_d,phi,trial_num])
 
 test_list = np.array(test_list)
-test_list = np.flip(test_list,axis=0)
+# test_list = np.flip(test_list,axis=0)
 
 
 np.set_printoptions(suppress=True)
