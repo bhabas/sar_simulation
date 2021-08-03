@@ -221,14 +221,14 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                     # ============================
                     ##    Termination Criteria 
                     # ============================
-                    if env.impact_flag == True and ((env.getTime()-start_time_impact) > 0.15):
+                    if env.impact_flag == True and ((env.getTime()-start_time_impact) > 0.3):
                         env.error_str = "Rollout Completed: Impact Timeout"
                         print(env.error_str)
 
                         env.runComplete_flag = True
 
                     # IF TIME SINCE TRIGGERED PITCH EXCEEDS [1.5s]  
-                    elif env.flip_flag and ((env.getTime()-start_time_pitch) > (1.5)):
+                    elif env.flip_flag and ((env.getTime()-start_time_pitch) > (2.25)):
                         env.error_str = "Rollout Completed: Pitch Timeout"
                         print(env.error_str)
 
@@ -242,7 +242,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                         env.runComplete_flag = True
 
                     # IF TIME SINCE RUN START EXCEEDS [6.0s]
-                    elif (env.getTime() - start_time_rollout) > (3.0):
+                    elif (env.getTime() - start_time_rollout) > (5.0):
                         env.error_str = "Rollout Completed: Time Exceeded"
                         print(env.error_str)
 
