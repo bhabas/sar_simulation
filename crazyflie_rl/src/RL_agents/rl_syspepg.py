@@ -67,7 +67,7 @@ class ES:
 
         ## CALC R2 FROM THE IMPACT ANGLE
 
-        if env.quat_impact.all() == 0.0: # Check if valid quat
+        if env.quat_impact[3] == 0.0: # Check if valid quat
             env.quat_impact = [0,0,0,1]
 
         R = Rotation.from_quat(env.quat_impact)
