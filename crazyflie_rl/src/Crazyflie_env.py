@@ -112,7 +112,7 @@ class CrazyflieEnv:
         self.ceiling_ft_z = 0.0     # Ceiling impact force, Z-dir [N]
 
 
-        self.quat_impact = [0,0,0,1]
+        self.quat_impact = np.array([0,0,0,1])
 
     
 
