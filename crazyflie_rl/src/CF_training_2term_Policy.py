@@ -5,13 +5,14 @@ import numpy as np
 import time,os
 import rospy
 from crazyflie_msgs.msg import ImpactData,CtrlData
+import math
 
 
 
 from Crazyflie_env import CrazyflieEnv
 # from rl_syspepg import rlsysPEPGAgent_reactive,rlsysPEPGAgent_adaptive
 from RL_agents.rl_EM import rlEM_PEPGAgent
-# from rl_cma import CMA_basic,CMA,CMA_sym
+# from RL_agents.rl_cma import CMA_basic,CMA,CMA_sym
 from rospy.exceptions import ROSException
 
 os.system("clear")
@@ -28,6 +29,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 
     ## SEND MESSAGE FOR ALL NODES TO RESET TO DEFAULT VALUES
     env.reset_flag = True
+    env.trialComplete_flag = False
     env.RL_Publish() # Publish that rollout completed 
     
     # ============================
@@ -83,10 +85,13 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 
                 ## IF CONTROLLER FAILS, RELAUNCH IT
                 try:
-                    rospy.wait_for_message("/ctrl_data",CtrlData,timeout=1.0)
+                    rospy.wait_for_message("/ctrl_data",CtrlData,timeout=5.0)
                 except rospy.exceptions.ROSException:
                     env.launch_controller()
-                    time.sleep(0.5)
+                    time.sleep(2)
+                    env.reset_pos()
+                    continue
+                    
 
                
             
@@ -142,9 +147,11 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 
 
                 ## CONVERT STARTING RREV VALUE -> Z_POS TO START ROLLOUT FROM
-                RREV_start = 0.5
+                RREV_start = 1.0
                 pos_z = env.h_ceiling - env.vel_d[2]/RREV_start
-                pos_z = 0.4
+                # pos_z = 0.4
+
+                
 
                 # ============================
                 ##          Rollout 
@@ -214,14 +221,14 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                     # ============================
                     ##    Termination Criteria 
                     # ============================
-                    if env.impact_flag == True and ((env.getTime()-start_time_impact) > 0.15):
+                    if env.impact_flag == True and ((env.getTime()-start_time_impact) > 0.3):
                         env.error_str = "Rollout Completed: Impact Timeout"
                         print(env.error_str)
 
                         env.runComplete_flag = True
 
                     # IF TIME SINCE TRIGGERED PITCH EXCEEDS [1.5s]  
-                    elif env.flip_flag and ((env.getTime()-start_time_pitch) > (1.5)):
+                    elif env.flip_flag and ((env.getTime()-start_time_pitch) > (2.25)):
                         env.error_str = "Rollout Completed: Pitch Timeout"
                         print(env.error_str)
 
@@ -235,7 +242,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                         env.runComplete_flag = True
 
                     # IF TIME SINCE RUN START EXCEEDS [6.0s]
-                    elif (env.getTime() - start_time_rollout) > (3.0):
+                    elif (env.getTime() - start_time_rollout) > (5.0):
                         env.error_str = "Rollout Completed: Time Exceeded"
                         print(env.error_str)
 
@@ -330,6 +337,9 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
         
        
     ## =======  MAX TRIALS COMPLETED  ======= ##
+    env.trialComplete_flag = True
+    env.RL_Publish()
+    print()
 
 
 if __name__ == '__main__':
@@ -346,8 +356,8 @@ if __name__ == '__main__':
     # mu = np.array([[4.0],[4.0]])                 # Initial mu starting point
     # sigma = np.array([[1.5],[1.5]])       # Initial sigma starting point
 
-    mu = np.array([[4.868],[8.544]])                 # Initial mu starting point
-    sigma = np.array([[0.0001],[0.0001]])       # Initial sigma starting point
+    mu = np.array([[4.5], [6.7]])                 # Initial mu starting point
+    sigma = np.array([[1.0],[1.0]])       # Initial sigma starting point
 
 
     ## LEARNING AGENTS AND PARAMETERS
@@ -361,7 +371,7 @@ if __name__ == '__main__':
     # ============================
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
-    V_d = 2.653   # [m/s]
+    V_d = 2.5   # [m/s]
     phi = 90    # [deg]
 
 

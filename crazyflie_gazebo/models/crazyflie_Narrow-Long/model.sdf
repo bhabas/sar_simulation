@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='crazyflie_Narrow-Short'>
+  <model name='crazyflie_Narrow-Long'>
     <link name='crazyflie_body'>
       <inertial>
         <mass>0.03584</mass>
@@ -224,6 +224,7 @@
           <shader type='pixel'>
             <normal_map>__default__</normal_map>
           </shader>
+          <emissive>0 0 0 1</emissive>
         </material>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
@@ -231,16 +232,16 @@
     </link>
     <link name='leg1'>
       <inertial>
-        <mass>0.00044</mass>
+        <mass>0.00066</mass>
         <inertia>
-          <ixx>9.17e-8</ixx>
+          <ixx>3.09e-7</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>9.17e-8</iyy>
+          <iyy>3.09e-7</iyy>
           <iyz>0</iyz>
-          <izz>1.38e-9</izz>
+          <izz>2.06e-9</izz>
         </inertia>
-        <pose>0 0 -0.025 0 -0 0</pose>
+        <pose>0 0 -0.0375 0 -0 0</pose>
       </inertial>
       <pose>0.017 0.017 -0.005 -0 -0.524 0.785</pose>
       <gravity>1</gravity>
@@ -248,11 +249,11 @@
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
       <visual name='visual'>
-        <pose>0 0 -0.025 0 -0 0</pose>
+        <pose>0 0 -0.0375 0 -0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.001</radius>
-            <length>0.05</length>
+            <length>0.075</length>
           </cylinder>
         </geometry>
         <material>
@@ -274,11 +275,11 @@
       <collision name='collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose>0 0 -0.025 0 -0 0</pose>
+        <pose>0 0 -0.0375 0 -0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.001</radius>
-            <length>0.05</length>
+            <length>0.075</length>
           </cylinder>
         </geometry>
         <surface>
@@ -330,16 +331,16 @@
     </link>
     <link name='leg2'>
       <inertial>
-        <mass>0.00044</mass>
+        <mass>0.00066</mass>
         <inertia>
-          <ixx>9.17e-8</ixx>
+          <ixx>3.09e-7</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>9.17e-8</iyy>
+          <iyy>3.09e-7</iyy>
           <iyz>0</iyz>
-          <izz>1.38e-9</izz>
+          <izz>2.06e-9</izz>
         </inertia>
-        <pose>0 0 -0.025 0 -0 0</pose>
+        <pose>0 0 -0.0375 0 -0 0</pose>
       </inertial>
       <pose>-0.017 0.017 -0.005 0 -0.524 2.356</pose>
       <gravity>1</gravity>
@@ -347,11 +348,11 @@
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
       <visual name='visual'>
-        <pose>0 0 -0.025 0 -0 0</pose>
+        <pose>0 0 -0.0375 0 -0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.001</radius>
-            <length>0.05</length>
+            <length>0.075</length>
           </cylinder>
         </geometry>
         <material>
@@ -374,11 +375,11 @@
       <collision name='collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose>0 0 -0.025 0 -0 0</pose>
+        <pose>0 0 -0.0375 0 -0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.001</radius>
-            <length>0.05</length>
+            <length>0.075</length>
           </cylinder>
         </geometry>
         <surface>
@@ -430,16 +431,16 @@
     </link>
     <link name='leg3'>
       <inertial>
-        <mass>0.00044</mass>
+        <mass>0.00066</mass>
         <inertia>
-          <ixx>9.17e-8</ixx>
+          <ixx>3.09e-7</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>9.17e-8</iyy>
+          <iyy>3.09e-7</iyy>
           <iyz>0</iyz>
-          <izz>1.38e-9</izz>
+          <izz>2.06e-9</izz>
         </inertia>
-        <pose>0 0 -0.025 0 -0 0</pose>
+        <pose>0 0 -0.0375 0 -0 0</pose>
       </inertial>
       <pose>-0.017 -0.017 -0.005 0 -0.524 -2.356</pose>
       <gravity>1</gravity>
@@ -447,11 +448,11 @@
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
       <visual name='visual'>
-        <pose>0 0 -0.025 0 -0 0</pose>
+        <pose>0 0 -0.0375 0 -0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.001</radius>
-            <length>0.05</length>
+            <length>0.075</length>
           </cylinder>
         </geometry>
         <material>
@@ -474,11 +475,11 @@
       <collision name='collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose>0 0 -0.025 0 -0 0</pose>
+        <pose>0 0 -0.0375 0 -0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.001</radius>
-            <length>0.05</length>
+            <length>0.075</length>
           </cylinder>
         </geometry>
         <surface>
@@ -530,16 +531,16 @@
     </link>
     <link name='leg4'>
       <inertial>
-        <mass>0.00044</mass>
+        <mass>0.00066</mass>
         <inertia>
-          <ixx>9.17e-8</ixx>
+          <ixx>3.09e-7</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>9.17e-8</iyy>
+          <iyy>3.09e-7</iyy>
           <iyz>0</iyz>
-          <izz>1.38e-9</izz>
+          <izz>2.06e-9</izz>
         </inertia>
-        <pose>0 0 -0.025 0 -0 0</pose>
+        <pose>0 0 -0.0375 0 -0 0</pose>
       </inertial>
       <pose>0.017 -0.017 -0.005 0 -0.524 -0.785</pose>
       <gravity>1</gravity>
@@ -547,11 +548,11 @@
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
       <visual name='visual'>
-        <pose>0 0 -0.025 0 -0 0</pose>
+        <pose>0 0 -0.0375 0 -0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.001</radius>
-            <length>0.05</length>
+            <length>0.075</length>
           </cylinder>
         </geometry>
         <material>
@@ -573,11 +574,11 @@
       <collision name='collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose>0 0 -0.025 0 -0 0</pose>
+        <pose>0 0 -0.0375 0 -0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.001</radius>
-            <length>0.05</length>
+            <length>0.075</length>
           </cylinder>
         </geometry>
         <surface>
@@ -640,7 +641,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>0.034697 0.034683 -0.048291 0 -0 0.785</pose>
+      <pose>0.043545 0.043524 -0.069937 0 -0 0.785</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -737,7 +738,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>-0.034687 0.034693 -0.048291 0 -0 2.356</pose>
+      <pose>-0.04353 0.04354 -0.069937 0 -0 2.356</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -831,7 +832,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>-0.034687 -0.034693 -0.048291 -0 -0 -2.356</pose>
+      <pose>-0.04353 -0.04354 -0.069937 -0 -0 -2.356</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -925,7 +926,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>0.034697 -0.034683 -0.048291 0 0 -0.785</pose>
+      <pose>0.043545 -0.043524 -0.069937 0 0 -0.785</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -1583,7 +1584,6 @@
         </ode>
       </physics>
     </joint>
-
     <plugin name='back_left_motor_model' filename='libgazebo_motor_model.so'>
       <robotNamespace/>
       <jointName>rotor_2_joint</jointName>

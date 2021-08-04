@@ -6,6 +6,7 @@ import os, subprocess, signal
 import rospy
 import getpass
 
+
 from std_srvs.srv import Empty
 
 
@@ -54,6 +55,7 @@ class CrazyflieEnv:
         ## INIT RL_DATA VARIABLES 
         # NOTE: All time units are in terms of Sim-Time unless specified
         self.runComplete_flag = False
+        self.trialComplete_flag = False
         self.reset_flag = False
         self.trial_name = '' 
         self.agent_name = ''    # Learning agent used for training (PEPG,EM,etc...)
@@ -110,7 +112,7 @@ class CrazyflieEnv:
         self.ceiling_ft_z = 0.0     # Ceiling impact force, Z-dir [N]
 
 
-        self.quat_impact = [0,0,0,1]
+        self.quat_impact = np.array([0,0,0,1])
 
     
 
@@ -128,7 +130,7 @@ class CrazyflieEnv:
                       
         # WE WANT TO BE SURE WE GET THESE MESSAGES WHEN THEY COME THROUGH              
         self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback,queue_size=10)     
-        self.padcontact_Subcriber = rospy.Subscriber('/pad_connections',PadConnect,self.padConnect_Callback,queue_size=5)       
+        self.padcontact_Subcriber = rospy.Subscriber('/pad_connections',PadConnect,self.padConnect_Callback,queue_size=10)       
         self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',ImpactData,self.ceiling_ftsensorCallback,queue_size=10) 
                       
 
@@ -169,6 +171,7 @@ class CrazyflieEnv:
         rl_msg.error = self.error_str
         rl_msg.impact_flag = self.impact_flag
         rl_msg.runComplete_flag = self.runComplete_flag
+        rl_msg.trialComplete_flag = self.trialComplete_flag
         rl_msg.reset_flag = self.reset_flag
 
 
@@ -394,7 +397,8 @@ class CrazyflieEnv:
             Relaunches Gazebo and resets model position but doesn't touch controller node
         """        
         self.close_sim()
-        time.sleep(0.5)
+        self.close_controller()
+        time.sleep(5.0)
         self.launch_controller()
         self.launch_sim()
 
@@ -403,8 +407,11 @@ class CrazyflieEnv:
 
     def close_sim(self):
         os.killpg(self.gazebo_p.pid, signal.SIGTERM)
-        os.killpg(self.controller_p.pid, signal.SIGTERM)
         
+    def close_controller(self):
+        os.killpg(self.controller_p.pid, signal.SIGTERM)
+
+
 
     def close_dashboard(self):
         os.killpg(self.dashboard_p.pid, signal.SIGTERM)
@@ -413,7 +420,7 @@ class CrazyflieEnv:
         self.isRunning = False
         os.killpg(self.gazebo_p.pid, signal.SIGTERM)
         # os.killpg(self.dashboard_p.pid, signal.SIGTERM)
-        os.killpg(self.controller_p.pid, signal.SIGTERM)
+        # os.killpg(self.controller_p.pid, signal.SIGTERM)
      
     def getTime(self):
         return self.t
@@ -422,7 +429,7 @@ class CrazyflieEnv:
         
         print("[STARTING] Starting Gazebo Process...")
         self.gazebo_p = subprocess.Popen( # Gazebo Process
-            "gnome-terminal --disable-factory  --geometry 70x42+3154+154 -- rosrun crazyflie_launch launch_gazebo.bash", 
+            "gnome-terminal --disable-factory  --geometry 70x42+1000+154 -- rosrun crazyflie_launch launch_gazebo.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
         
         

@@ -1,15 +1,17 @@
 import numpy as np
 
-list = []
-for V_d in np.arange(1.0,4.0,0.25):    # [m/s]
-    for phi in np.arange(90,30,-15):      # [deg]
-        for trial_num in np.arange(0,3,1):
-            list.append([V_d,phi,trial_num])
+test_list = []
+for V_d in np.arange(1.0,4.25,0.5):    # [m/s]
+    for phi in np.arange(90,15,-7.5):      # [deg]
+        for trial_num in np.arange(0,5,1):
+            test_list.append([V_d,phi,trial_num])
+
+test_list = np.array(test_list)
+# test_list = np.flip(test_list,axis=0)
 
 
-print(np.asarray(list))
 np.set_printoptions(suppress=True)
-np.savetxt("crazyflie_data/data_collection/MasterTestList.csv", np.asarray(list), delimiter=",",fmt="%.1f",header='vz_d,vx_d,trial_num')
+np.savetxt("crazyflie_data/data_collection/MasterTestList.csv", np.asarray(test_list), delimiter=",",fmt="%.1f",header='vz_d,vx_d,trial_num')
         
 
 
