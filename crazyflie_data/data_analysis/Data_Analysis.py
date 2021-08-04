@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation
 import os
+import warnings
 import re
 
 # os.system("clear")
@@ -145,7 +146,7 @@ class DataFile:
         reward_df = self.trial_df.iloc[:][['reward']].dropna() # Create df from k_ep/rewards and drop blank reward rows
         reward_df = reward_df.iloc[-int(N)*self.n_rollouts:]['reward'] # Trim to last N episodes
         rewards_arr = reward_df.to_numpy()
-        avg_reward = np.mean(rewards_arr)
+        avg_reward = np.nanmean(rewards_arr)
         
         return avg_reward
 
@@ -780,8 +781,8 @@ class DataFile:
                 var_list.append(self.grab_My_d(k_ep,k_run))
 
         ## RETURN MEAN AND STD OF STATE
-        My_d_mean = np.mean(var_list)
-        My_d_std = np.std(var_list)
+        My_d_mean = np.nanmean(var_list)
+        My_d_std = np.nanstd(var_list)
         My_d_arr = var_list
 
         return My_d_mean,My_d_std,My_d_arr
@@ -800,7 +801,7 @@ class DataFile:
                 
         ## CONVERT LIST TO NP ARRAY AND CALC MEAN
         arr = np.asarray(My_dList)
-        avg_My_d = np.mean(arr,axis=0)
+        avg_My_d = np.nanmean(arr,axis=0)
 
         return avg_My_d
 
@@ -952,8 +953,8 @@ class DataFile:
         eul_flip_arr = var_list #np.array([360+i if i <=0 else i for i in var_list])
             
         ## RETURN MEAN AND STD AND ARRAY
-        eul_flip_mean = np.mean(eul_flip_arr,axis=0)
-        eul_flip_mean = np.std(eul_flip_arr,axis=0)
+        eul_flip_mean = np.nanmean(eul_flip_arr,axis=0)
+        eul_flip_mean = np.nanstd(eul_flip_arr,axis=0)
         
         return eul_flip_mean,eul_flip_mean,eul_flip_arr
 
@@ -986,8 +987,8 @@ class DataFile:
                 var_list.append(self.grab_flip_state(k_ep,k_run,stateName))
 
         ## RETURN MEAN AND STD OF STATE
-        state_flip_mean = np.mean(var_list)
-        state_flip_std = np.std(var_list)
+        state_flip_mean = np.nanmean(var_list)
+        state_flip_std = np.nanstd(var_list)
         state_flip_arr = var_list
 
         return state_flip_mean,state_flip_std,state_flip_arr
@@ -1100,7 +1101,7 @@ class DataFile:
 
                 quat_df = impact_df.iloc[0][quat_list]
             else:
-                return np.array([np.nan,np.nan,np.nan])
+                return np.array([[np.nan,np.nan,np.nan]])
         
 
 
@@ -1149,23 +1150,26 @@ class DataFile:
             leg_contacts,_,_,_ = self.landing_conditions(k_ep, k_run)
             if leg_contacts >= 3: # IGNORE FAILED LANDINGS
                 var_list.append(self.grab_impact_eul(k_ep,k_run))
+                print(self.grab_impact_eul(k_ep,k_run))
 
-        ## EXTRACT LIST OF DESIRED IMPACT VALUES
-        if eul_type == 'eul_x':
-            var_list = np.asarray(var_list)[:,0,0]
-        
-        elif eul_type == 'eul_y':
-            var_list = np.asarray(var_list)[:,0,1]
+        if len(var_list) != 0:
+            
+            ## EXTRACT LIST OF DESIRED IMPACT VALUES
+            if eul_type == 'eul_x':
+                var_list = np.asarray(var_list)[:,0,0]
+            
+            elif eul_type == 'eul_y':
+                var_list = np.asarray(var_list)[:,0,1]
 
-        elif eul_type == 'eul_z':
-            var_list = np.asarray(var_list)[:,0,2]
+            elif eul_type == 'eul_z':
+                var_list = np.asarray(var_list)[:,0,2]
 
         ## COVERT NEGATIVE ANGLES INTO POSITIVE WRAP AROUND ONES (-10 deg = 350 deg)
         eul_impact_arr =np.array([360+i if i <=0 else i for i in var_list])
             
         ## RETURN MEAN AND STD AND ARRAY
-        eul_impact_mean = np.mean(eul_impact_arr,axis=0)
-        eul_impact_std = np.std(eul_impact_arr,axis=0)
+        eul_impact_mean = np.nanmean(eul_impact_arr,axis=0)
+        eul_impact_std = np.nanstd(eul_impact_arr,axis=0)
         
         return eul_impact_mean,eul_impact_std,eul_impact_arr
 
@@ -1198,8 +1202,8 @@ class DataFile:
                 var_list.append(self.grab_impact_state(k_ep,k_run,stateName))
 
         ## RETURN MEAN AND STD OF STATE
-        state_impact_mean = np.mean(var_list)
-        state_impact_std = np.std(var_list)
+        state_impact_mean = np.nanmean(var_list)
+        state_impact_std = np.nanstd(var_list)
         state_impact_arr = var_list
 
         return state_impact_mean,state_impact_std,state_impact_arr
@@ -1254,8 +1258,8 @@ class DataFile:
                 var_list.append(self.trigger2impact(k_ep,k_run,))
 
         ## RETURN MEAN AND STD OF STATE
-        t_delta_mean = np.mean(var_list)
-        t_delta_std = np.std(var_list)
+        t_delta_mean = np.nanmean(var_list)
+        t_delta_std = np.nanstd(var_list)
         t_delta_arr = var_list
 
         return t_delta_mean,t_delta_std,t_delta_arr
@@ -1280,7 +1284,7 @@ class DataFile:
         contact_list = np.fromstring(contact_list[1:-1], dtype=float, sep=' ')
 
         leg_contacts = len(contact_list)
-        if impact_flag == True:
+        if impact_flag == True and len(contact_list) > 0:
             impact_leg = contact_list[0].astype('int')
         else:
             impact_leg = 0
@@ -1351,8 +1355,8 @@ class DataFile:
     #             var_list.append(func(*args))
 
     #     ## RETURN MEAN AND STD OF STATE
-    #     t_delta_mean = np.mean(var_list)
-    #     t_delta_std = np.std(var_list)
+    #     t_delta_mean = np.nanmean(var_list)
+    #     t_delta_std = np.nanstd(var_list)
     #     t_delta_arr = var_list
 
     #     return t_delta_mean,t_delta_std,t_delta_arr

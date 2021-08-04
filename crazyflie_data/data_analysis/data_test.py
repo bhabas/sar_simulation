@@ -11,8 +11,8 @@ dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/logs
 dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs/"
 
 Vel = 3.5
-phi = 60
-trial = 3
+phi = 60.0
+trial = 6
 
 
 fileName = "EM_PEPG--Vd_3.50--phi_60.00--trial_03.csv"
@@ -22,8 +22,10 @@ fileName = f"EM_PEPG--Vd_{Vel:.2f}--phi_{phi:.2f}--trial_{int(trial):02d}.csv"
 trial = DataFile(dataPath,fileName,dataType='SIM')
 
 k_ep = 15
-k_run = 0
+k_run = 12
 
+# print(trial.grab_impact_eul(k_ep, k_run))
+print(trial.grab_impact_eul_trial(N=1))
 # wy = trial.grab_stateData(k_ep,k_run,['wy'])
 # f_pitch = trial.grab_stateData(k_ep,k_run,['My'])
 # t = np.arange(0,len(wy)*0.01,0.01)
@@ -44,7 +46,7 @@ k_run = 0
 
 # print(trial.grab_impact_eul(k_ep,k_run))
 # print(trial.grab_flip_state_trial('t'))
-trial.plot_state_correlation(stateList=['RREV','vz'],typeList=['flip','impact'])
+# trial.plot_state_correlation(stateList=['RREV','vz'],typeList=['flip','impact'])
 
 # trial.plot_state(k_ep,k_run,['vz'])
 # trial.plot_state_spread_flip('RREV',N=1)
