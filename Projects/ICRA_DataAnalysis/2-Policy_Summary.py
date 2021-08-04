@@ -43,29 +43,46 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
 
     trial = DataFile(dataPath,fileName,dataType='SIM')
     
+    ## TRIAL CONDITIONS
     vel_IC,phi_IC = trial.grab_vel_IC_2D_angle()
     trial_num = trial.trialNum
 
+    ## RL PARAMETERS
+    alpha_mu,alpha_sigma,mu_0,sigma_0 = trial.grab_RLParams()
+    policy,sigma = trial.grab_finalPolicy()
+    RREV_threshold,My_d = policy
+    RREV_sig,My_d_sig = sigma
+
+    ## LANDING RATES
     landing_rate_4_leg,landing_rate_2_leg,_ = trial.landing_rate()
 
-    alpha_mu,alpha_sigma,mu_0,sigma_0 = trial.grab_RLParams()
 
-#         policy,sigma = trial.grab_finalPolicy()
-#         RREV_threshold,G1 = policy
-#         RREV_sig,G1_sig = sigma
+    ## FLIP DATA
+    RREV_trigger_mean,RREV_trigger_std,_ = trial.grab_flip_state_trial('RREV')
+    OF_y_trigger_mean,OF_y_trigger_std,_ = trial.grab_flip_state_trial('OF_y')
 
-#         RREV_trigger = trial.grab_RREV_tr_trial()
-#         OF_y = trial.grab_OF_y_trial()
-
-#         My_d = trial.grab_My_d_trial()
-#         impact_eul = trial.grab_impact_eul_trial('eul_y')
-#         impact_tdelta = trial.trigger2impact_trial()
+    ## IMPACT DATA
+    impact_force_x_mean,impact_force_x_std,_ = trial.grab_impact_force_trial('x')
+    impact_force_z_mean,impact_force_z_std,_ = trial.grab_impact_force_trial('z')
+    impact_eul_mean,impact_eul_std,_ = trial.grab_impact_eul_trial(eul_type='eul_y')
+    t_delta_mean,t_delta_std,_ = trial.trigger2impact_trial()
 
 
-    df_list.append((vel_IC, phi_IC, trial_num,
-                    landing_rate_4_leg,landing_rate_2_leg,
-                    alpha_mu,alpha_sigma,
-                    mu_0,sigma_0))
+    df_list.append((
+        vel_IC, phi_IC, trial_num,
+        alpha_mu,alpha_sigma,
+        mu_0,sigma_0,
+        RREV_threshold,RREV_sig,
+        My_d,My_d_sig,
+        landing_rate_4_leg,landing_rate_2_leg,
+        RREV_trigger_mean,RREV_trigger_std,
+        OF_y_trigger_mean,OF_y_trigger_std,
+
+        impact_force_x_mean,impact_force_x_std,
+        impact_force_z_mean,impact_force_z_std,
+        impact_eul_mean,impact_eul_std,
+        t_delta_mean,t_delta_std,
+    ))
 
 #         df_list.append((
 #             vz_d,vx_d,trial_num,landing_rate,
@@ -87,22 +104,22 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
 
 
 print()
-# master_df = pd.DataFrame(df_list,columns=(
-#     'vz_d','vx_d','trial_num','landing_rate',
-#     'RREV_threshold','G1',
-#     'RREV_sig','G1_sig',
-#     'RREV_trigger','OF_y',
-#     'My_d','impact_eul','impact_tdelta',
-#     'alpha_mu','alpha_sigma',
-#     'mu_ini','sigma_ini',
-# ))
 
 master_df = pd.DataFrame(df_list,columns=(
-    'V_d','phi_d','trial_num',
-    'landing_rate_4_leg','landing_rate_2_leg',
-    'alpha_mu','alpha_simga',
+    'vel_IC','phi_IC','trial_num',
+    'alpha_mu','alpha_sigma',
     'mu_0','sigma_0',
+    'RREV_threshold','RREV_sig',
+    'My_d','My_d_sig',
+    'landing_rate_4_leg','landing_rate_2_leg',
+    'RREV_trigger_mean','RREV_trigger_std',
+    'OF_y_trigger_mean','OF_y_trigger_std',
+
+    'impact_force_x_mean','impact_force_x_std',
+    'impact_force_z_mean','impact_force_z_std',
+    'impact_eul_mean','impact_eul_std',
+    't_delta_mean','t_delta_std',
 ))
 print(master_df)
-master_df.sort_values(['V_d','phi_d','trial_num'],ascending=[1,1,1],inplace=True)
+master_df.sort_values(['vel_IC','phi_IC','trial_num'],ascending=[1,1,1],inplace=True)
 # master_df.to_csv('XNL_2-Policy_Summary.csv',index=False)
