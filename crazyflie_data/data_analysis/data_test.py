@@ -43,7 +43,8 @@ k_run = 0
 # trial.plot_policy_convg()
 
 # print(trial.grab_impact_eul(k_ep,k_run))
-print(trial.grab_flip_state_trial('t'))
+# print(trial.grab_flip_state_trial('t'))
+trial.plot_state_correlation(stateList=['RREV','vz'],typeList=['flip','impact'])
 
 # trial.plot_state(k_ep,k_run,['vz'])
 # trial.plot_state_spread_flip('RREV',N=1)

@@ -9,7 +9,7 @@ import re
 np.set_printoptions(suppress=True)
 
 class DataFile:
-    def __init__(self,dataPath,fileName,dataType='EXP'):
+    def __init__(self,dataPath,fileName,dataType='SIM'):
 
         ## ORGANIZE FILEPATH AND CREATE TRIAL DATAFRAME
         self.fileName = fileName
@@ -17,6 +17,7 @@ class DataFile:
         filepath = self.dataPath + self.fileName
 
         # self.dataType = re.findall('SIM|EXP',fileName)[0] # FIND 'SIM' OR 'EXP'
+        self.trialNum = int(re.findall('trial_(\d+)',fileName)[0])
         self.trial_df = pd.read_csv(filepath,low_memory=False)
 
         ## CLEAN UP TRIAL DATAFRAME
@@ -25,8 +26,8 @@ class DataFile:
         # self.trial_df.drop(0,inplace=True)
 
         # Remove rows past final complete rollout
-        # final_valid_index = self.trial_df[self.trial_df['Error']=='Impact Data'].index.values[-1]
-        # self.trial_df = self.trial_df.iloc[:final_valid_index+1]
+        final_valid_index = self.trial_df[self.trial_df['Error']=='Impact Data'].index.values[-1]
+        self.trial_df = self.trial_df.iloc[:final_valid_index+1]
 
         # Round values to prevent floating point precision issues
         self.trial_df = self.trial_df.round(3) 
@@ -332,7 +333,7 @@ class DataFile:
         return alpha_mu,alpha_sigma,mu,sigma
 
 
-    def plot_state_spread_flip(self,stateName,N:int=3): # Plot bar chart showing spread of state values over last N episodes
+    def plot_state_spread_flip(self,stateName,N:int=3): # Plot histogram showing spread of state values over last N episodes
         
         ## CREATE ARRAYS FOR REWARD, K_EP 
         a = self.trial_df.query(f"Error == 'Flip Data'").iloc[-int(N)*self.n_rollouts:][['RREV']].to_numpy()
@@ -363,43 +364,8 @@ class DataFile:
         return leg_contacts_df
 
 
-    def plot_state_correlation(self,stateList:list,N:int=3,type='flip'):
+    
 
-        state_df = self.trial_df.query("Error=='Flip Data'").iloc[-int(N*self.n_rollouts):][stateList].reset_index()
-        df = self.grab_leg_contacts()
-        state_df = state_df.join(df)
-        groups = state_df.groupby("Leg_Contacts")
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-
-        for name,group in groups:
-            ax.scatter(group[stateList[0]],group[stateList[1]],label=name)
-        # ax.scatter(state_df.iloc[:,0],state_df.iloc[:,1],c=df['Leg_Contacts'],marker="o", cmap="bwr_r")
-        ax.set_xlabel(stateList[0])
-        ax.set_ylabel(stateList[1])
-        ax.grid()
-        ax.legend()
-
-        plt.show()
-
-    def grab_impact_state_trial(self,stateName,n_ep=3):
-            """Returns average and standard deviation of impact state over the last n_ep episodes
-
-            Args:
-                stateName (str): State name
-                n_ep (int, optional): Number of final episodes to average over. Defaults to 3.
-
-            Returns:
-                avg_state_impact,std_state_impact: Returns average and standard deviation of impact state
-            """        
-
-            ## CREATE DF OF IMPACT DATA FOR FINAL N_EP EPISODES
-            state_df = self.trial_df.query("Error=='Impact Data'").iloc[-int(n_ep*self.n_rollouts):][stateName]
-
-            avg_state_impact = state_df.mean()
-            std_state_impact = state_df.std()
-
-            return avg_state_impact,std_state_impact
 
     ## STATE FUNCTIONS 
     def grab_stateData(self,k_ep,k_run,stateName: list):
@@ -742,18 +708,42 @@ class DataFile:
 
 
     ## DESIRED IC FUNCTIONS
-    def grab_vel_d(self):
+    def grab_vel_IC(self):
     
-        """Return IC values
+        """Return IC velocities
 
         Returns:
-            float: Initial Velocity Conditions (vx,vy,vz)
+            vx_IC (float): Desired flip x-velocity
+            vy_IC (float): Desired flip y-velocity
+            vz_IC (float): Desired flip z-velocity
         """        
-        vx_IC = self.trial_df.iloc[-3]['vx']
-        vy_IC = self.trial_df.iloc[-3]['vy']
-        vz_IC = self.trial_df.iloc[-3]['vz']
+        vel_df = self.trial_df[['mu','vx','vy','vz']].dropna()
+        vx_IC,vy_IC,vz_IC = vel_df.iloc[0][['vx','vy','vz']]
         
         return vx_IC,vy_IC,vz_IC
+
+    def grab_vel_IC_2D_angle(self):
+        """Return IC velocities
+
+        Returns:
+            vx_IC (float): Desired flip x-velocity
+            vy_IC (float): Desired flip y-velocity
+            vz_IC (float): Desired flip z-velocity
+        """        
+        ## SELECT X,Y,Z LAUNCH VELOCITIES
+        vel_df = self.trial_df[['mu','vx','vy','vz']].dropna()
+        vx_IC,vy_IC,vz_IC = vel_df.iloc[0][['vx','vy','vz']]
+
+        ## CONVERT CARTESIAN VELOCITIES TO POLAR
+        Vel_IC = np.sqrt(vx_IC**2 + vz_IC**2)
+        phi_IC = np.rad2deg(np.arctan2(vz_IC,vx_IC))
+
+        
+
+        phi_IC = np.round(phi_IC,1)
+        Vel_IC = np.round(Vel_IC,1)
+        
+        return Vel_IC,phi_IC
 
     def grab_My_d(self,k_ep,k_run):
         """Returns desired M_d as list
@@ -975,8 +965,9 @@ class DataFile:
         ## RETURN MEAN AND STD OF STATE
         state_flip_mean = np.mean(var_list)
         state_flip_std = np.std(var_list)
+        state_flip_arr = var_list
 
-        return state_flip_mean,state_flip_std
+        return state_flip_mean,state_flip_std,state_flip_arr
     
 
     ## IMPACT FUNCTIONS
@@ -1186,6 +1177,7 @@ class DataFile:
         ## RETURN MEAN AND STD OF STATE
         state_impact_mean = np.mean(var_list)
         state_impact_std = np.std(var_list)
+        state_impact_arr = var_list
 
         return state_impact_mean,state_impact_std
 
@@ -1295,8 +1287,25 @@ class DataFile:
         return landing_rate_4leg,landing_rate_2leg,contact_rate
 
                 
+    def plot_state_correlation(self,stateList:list,typeList=['flip','impact'],N:int=3):
 
+        # state_df = self.trial_df.query("Error=='Flip Data'").iloc[-int(N*self.n_rollouts):][stateList].reset_index()
+        # df = self.grab_leg_contacts()
+        # state_df = state_df.join(df)
+        # groups = state_df.groupby("Leg_Contacts")
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111)
 
+        # for name,group in groups:
+        #     ax.scatter(group[stateList[0]],group[stateList[1]],label=name)
+        # # ax.scatter(state_df.iloc[:,0],state_df.iloc[:,1],c=df['Leg_Contacts'],marker="o", cmap="bwr_r")
+        # ax.set_xlabel(stateList[0])
+        # ax.set_ylabel(stateList[1])
+        # ax.grid()
+        # ax.legend()
+
+        # plt.show()
+        pass
 
 
         
