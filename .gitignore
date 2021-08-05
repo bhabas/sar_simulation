@@ -1,7 +1,6 @@
 *.pyc
 # Byte-compiled / optimized / DLL files
 __pycache__/
-crazyflie_data/local_logs/*
 
 *.py[cod]
 *$py.class
@@ -11,8 +10,9 @@ crazyflie_data/local_logs/*
 *.so
 
 # Custom gitignore
+crazyflie_data/local_logs/*
 local_files/
-
+*.zip
 
 
 # Installer logs

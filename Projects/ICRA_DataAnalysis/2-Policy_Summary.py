@@ -47,6 +47,7 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
             
             ## TRIAL CONDITIONS
             vel_IC,phi_IC = trial.grab_vel_IC_2D_angle()
+            vx,_,vz = trial.grab_vel_IC()
             trial_num = trial.trialNum
 
             ## RL PARAMETERS
@@ -76,7 +77,7 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
 
         df_list.append((
             vel_IC, phi_IC, trial_num,
-            alpha_mu,alpha_sigma,
+            vx,vz,
             mu_0,sigma_0,
             RREV_threshold,RREV_sig,
             My_d,My_d_sig,
@@ -110,7 +111,7 @@ print()
 
 master_df = pd.DataFrame(df_list,columns=(
     'vel_IC','phi_IC','trial_num',
-    'alpha_mu','alpha_sigma',
+    'vx','vz',
     'mu_0','sigma_0',
     'RREV_threshold','RREV_sig',
     'My_d','My_d_sig',
