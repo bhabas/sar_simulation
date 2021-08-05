@@ -1150,7 +1150,6 @@ class DataFile:
             leg_contacts,_,_,_ = self.landing_conditions(k_ep, k_run)
             if leg_contacts >= 3: # IGNORE FAILED LANDINGS
                 var_list.append(self.grab_impact_eul(k_ep,k_run))
-                print(self.grab_impact_eul(k_ep,k_run))
 
         if len(var_list) != 0:
             
