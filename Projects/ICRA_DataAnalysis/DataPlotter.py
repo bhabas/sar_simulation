@@ -32,11 +32,11 @@ df_max = df_raw[idx].reset_index()
 def plot_raw(dataName:str,color_data:str='landing_rate_4_leg',color_str=None,color_norm=None,polar=True):
 
     
-
+    ## INITIALIZE FIGURE
     fig = plt.figure()
     ax = fig.add_subplot(111,projection="3d")
 
-    # DEFINE VARIABLES
+    ## DEFINE PLOT VARIABLES
     if polar==True:
         X = df_raw['vx']
         Y = df_raw['vz']
@@ -55,7 +55,7 @@ def plot_raw(dataName:str,color_data:str='landing_rate_4_leg',color_str=None,col
     Z = df_raw[dataName]
     C = df_raw[color_data]
 
-
+    ## ADJUST COLOR SCALING AND LABELS
     if color_str == None:
         color_str = color_data
 
@@ -66,107 +66,164 @@ def plot_raw(dataName:str,color_data:str='landing_rate_4_leg',color_str=None,col
         vmin = color_norm[0]
         vmax = color_norm[1]
 
-    # CREATE PLOTS AND COLOR BAR
     cmap = mpl.cm.jet
     norm = mpl.colors.Normalize(vmin=vmin,vmax=vmax)
+    
+    # CREATE PLOTS AND COLOR BAR
     ax.scatter(X,Y,Z,c=C,cmap=cmap,norm=norm)
     fig.colorbar(mpl.cm.ScalarMappable(cmap=cmap,norm=norm),label=color_str)
 
 
     # PLOT LIMITS AND INFO
-    
     ax.set_zlabel(dataName)
-    
-
+    ax.set_title("Raw Data")
     fig.tight_layout()
 
 
-# ======================================
-##   LANDING RATE DATA (BEST POLICY)
-# ======================================
-def plot_best_RREV(color_data:str='landing_rate_4_leg',color_str=None,polar=True):
+def plot_best(dataName:str,color_data:str='landing_rate_4_leg',color_str=None,color_norm=None,polar=True):
 
-    if color_str == None:
-        color_str = color_data
-
+    
+    ## INITIALIZE FIGURE
     fig = plt.figure()
     ax = fig.add_subplot(111,projection="3d")
 
-    # DEFINE VARIABLES
+    ## DEFINE PLOT VARIABLES
     if polar==True:
         X = df_max['vx']
         Y = df_max['vz']
 
+        ax.set_xlabel('Vel_x (m/s)')
+        ax.set_ylabel('Vel_z (m/s)')
+
     else:
-        X = df_max['vel_IC']
-        Y = df_max['phi_IC']
+        X = df_max['phi_IC']
+        Y = df_max['vel_IC']
+
+        ax.set_xlabel('phi (deg)')
+        ax.set_ylabel('Vel (m/s)')
+
         
-    Z = df_max['RREV_threshold']
+    Z = df_max[dataName]
     C = df_max[color_data]
 
-    # CREATE PLOTS AND COLOR BAR
+    ## ADJUST COLOR SCALING AND LABELS
+    if color_str == None:
+        color_str = color_data
+
+    if color_norm == None:
+        vmin = np.min(C)
+        vmax = np.max(C)
+    else:
+        vmin = color_norm[0]
+        vmax = color_norm[1]
+
     cmap = mpl.cm.jet
-    ax.scatter(X,Y,Z,c=C,cmap=cmap)
-    fig.colorbar(mpl.cm.ScalarMappable(cmap=cmap),label=color_str)
+    norm = mpl.colors.Normalize(vmin=vmin,vmax=vmax)
+    
+    # CREATE PLOTS AND COLOR BAR
+    ax.scatter(X,Y,Z,c=C,cmap=cmap,norm=norm)
+    fig.colorbar(mpl.cm.ScalarMappable(cmap=cmap,norm=norm),label=color_str)
 
 
     # PLOT LIMITS AND INFO
-    ax.set_xlabel('Vel_x (m/s)')
-    ax.set_ylabel('Vel_z (m/s)')
-    ax.set_zlabel('RREV_threshold')
-    ax.set_title('Policy RREV (Best Data)')
-
+    ax.set_zlabel(dataName)
+    ax.set_title("Best Data")
     fig.tight_layout()
+
+
 
 
 
 # ======================================
 ##   LANDING RATE SURFACE (BEST POLICY)
 # ======================================
-def plot_max_LR_surface():
+def plot_best_surface(dataName:str,color_data:str='landing_rate_4_leg',color_str=None,color_norm=None,polar=True):
+    
+    ## INITIALIZE FIGURE
     fig = plt.figure()
     ax = fig.add_subplot(111,projection="3d")
 
-    # DEFINE VARIABLES
-    X = df_max['vx']
-    Y = df_max['vz']
-    Z = df_max['landing_rate_4_leg']
-
-    # DEFINE COLOR FORMATS AND LIMITS
-    cmap = mpl.cm.jet
-    norm = mpl.colors.Normalize(vmin=0,vmax=1)
-
-    # CREATE PLOTS AND COLOR BAR
-    ax.plot_trisurf(X,Y,Z,cmap = cmap,norm=norm,edgecolors='grey',linewidth=0.25)
-    fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap),label="Landing Rate (%)")
-
-
-    # PLOT LIMITS AND INFO
-    ax.set_zlim(0,1)
-
-    ax.set_xlabel('X-Velocity (m/s)')
-    ax.set_ylabel('Z-Velocity (m/s)')
-    ax.set_zlabel('Landing Rate (%)')
-    ax.set_title('Landing Rate (Best Policy)')
-
-
-# ======================================
-##   LANDING RATE SMOOTHED SURFACE (BEST POLICY)
-# ======================================
-def plot_best_RREV_smoothed_surface(polar=True):
-    fig = plt.figure()
-    ax = fig.add_subplot(111,projection="3d")
-
-    # DEFINE VARIABLES
+    ## DEFINE PLOT VARIABLES
     if polar==True:
         X = df_max['vx']
         Y = df_max['vz']
 
-    else:
-        X = df_max['vel_IC']
-        Y = df_max['phi_IC']
+        ax.set_xlabel('Vel_x (m/s)')
+        ax.set_ylabel('Vel_z (m/s)')
 
-    Z = df_max['RREV_threshold']
+    else:
+        X = df_max['phi_IC']
+        Y = df_max['vel_IC']
+
+        ax.set_xlabel('phi (deg)')
+        ax.set_ylabel('Vel (m/s)')
+
+        
+    Z = df_max[dataName]
+    C = df_max[color_data]
+
+    ## ADJUST COLOR SCALING AND LABELS
+    if color_str == None:
+        color_str = color_data
+
+    if color_norm == None:
+        vmin = np.min(C)
+        vmax = np.max(C)
+    else:
+        vmin = color_norm[0]
+        vmax = color_norm[1]
+
+    cmap = mpl.cm.jet
+    norm = mpl.colors.Normalize(vmin=vmin,vmax=vmax)
+
+
+    # CREATE PLOTS AND COLOR BAR
+    ax.plot_trisurf(X,Y,Z,cmap=cmap,norm=norm,edgecolors='grey',linewidth=0.25)
+    fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap),label=color_str)
+
+
+    # PLOT LIMITS AND INFO
+    ax.set_xlabel('X-Velocity (m/s)')
+    ax.set_ylabel('Z-Velocity (m/s)')
+    ax.set_zlabel(dataName)
+    ax.set_title('Surface Best Data')
+
+
+
+def plot_best_surface_smoothed(dataName:str,color_data:str='landing_rate_4_leg',color_str=None,color_norm=None,polar=True):
+    ## INITIALIZE FIGURE
+    fig = plt.figure()
+    ax = fig.add_subplot(111,projection="3d")
+
+    ## DEFINE PLOT VARIABLES
+    if polar==True:
+        X = df_max['vx']
+        Y = df_max['vz']
+
+        ax.set_xlabel('Vel_x (m/s)')
+        ax.set_ylabel('Vel_z (m/s)')
+
+    else:
+        X = df_max['phi_IC']
+        Y = df_max['vel_IC']
+
+        ax.set_xlabel('phi (deg)')
+        ax.set_ylabel('Vel (m/s)')
+
+        
+    Z = df_max[dataName]
+    C = df_max[color_data]
+
+    ## ADJUST COLOR SCALING AND LABELS
+    if color_str == None:
+        color_str = color_data
+
+    if color_norm == None:
+        vmin = np.min(C)
+        vmax = np.max(C)
+    else:
+        vmin = color_norm[0]
+        vmax = color_norm[1]
 
     # SOMETHING ABOUT DEFINING A GRID
     xi = np.linspace(X.min(),X.max(),(len(Z)//7))
@@ -176,26 +233,27 @@ def plot_best_RREV_smoothed_surface(polar=True):
 
     # DEFINE COLOR FORMAT AND LIMITS
     cmap = mpl.cm.jet
-    norm = mpl.colors.Normalize(vmin=0,vmax=1)
+    norm = mpl.colors.Normalize(vmin=vmin,vmax=vmax)
 
     # CREATE PLOTS AND COLOR BAR
     surf = ax.plot_surface(xig, yig, zi,cmap=cmap,norm=norm,edgecolors='grey',linewidth=0.25)
     # surf = ax.plot_surface(xig, yig, zi,cmap=cmap,norm=norm)
     # surf = ax.contour(xig, yig, zi,cmap=cmap,norm=norm)
 
-    fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap),label="Landing Rate (%)")
+    fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap),label=color_str)
 
     # PLOT LIMITS AND INFO
-    ax.set_xlabel('X-Velocity (m/s)')
-    ax.set_ylabel('Z-Velocity (m/s)')
-    ax.set_zlabel('Landing Rate (%)')
-    ax.set_title('Smoothed Landing Rate (Best Policy)')
+    ax.set_zlabel(dataName)
+    ax.set_title('Smoothed Best Data Surface')
 
 
 # plt.show()
 
 if __name__ == '__main__':
-    plot_raw(dataName='RREV_flip_mean',color_data='flip_height_mean',polar=True)
-    # plot_best_RREV(color_data='landing_rate_4_leg',color_str='Landing Rate (%)',polar=False)
-    # plot_best_RREV_smoothed_surface()
+    # plot_raw(dataName='landing_rate_4_leg',color_data='landing_rate_4_leg',polar=True)
+    # plot_best(dataName='landing_rate_4_leg',color_data='landing_rate_4_leg',polar=True)
+    plot_best_surface(dataName='landing_rate_4_leg',color_data='landing_rate_4_leg',polar=True)
+    plot_best_surface_smoothed(dataName='RREV_threshold',color_data='RREV_threshold',polar=False)
+
+
     plt.show()
