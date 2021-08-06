@@ -4,6 +4,7 @@ import numpy as np
 from sklearn import linear_model
 from scipy.interpolate import griddata
 import scipy.odr
+import os
 
 ## IMPORT PLOTTING MODULES
 import matplotlib.pyplot as plt
@@ -11,9 +12,12 @@ from mpl_toolkits import mplot3d
 import matplotlib as mpl
 from matplotlib import cm
 
+os.system("clear")
 
 ## FULL DATAFRAME
-df_raw = pd.read_csv("Projects/ICRA_DataAnalysis/Wide-Long_2-Policy/Wide-Long_2-Policy_Summary.csv")
+model_config = "Wide-Long"
+df_raw = pd.read_csv(f"Projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
+df_raw = df_raw.query(f"landing_rate_4_leg >= {0.8}")
 
 
 ## MAX LANDING RATE DATAFRAME
@@ -29,7 +33,7 @@ df_max = df_raw[idx].reset_index()
 ##        LANDING RATE DATA (RAW)
 # ======================================
 
-def plot_raw(dataName:str,color_data:str='landing_rate_4_leg',color_str=None,color_norm=None,polar=True):
+def plot_raw(Z_data:str,color_data:str='landing_rate_4_leg',color_str=None,color_norm=None,polar=True,XY_data=None,XY_str=None):
 
     
     ## INITIALIZE FIGURE
@@ -37,22 +41,29 @@ def plot_raw(dataName:str,color_data:str='landing_rate_4_leg',color_str=None,col
     ax = fig.add_subplot(111,projection="3d")
 
     ## DEFINE PLOT VARIABLES
-    if polar==True:
-        X = df_raw['vx']
-        Y = df_raw['vz']
+    if XY_data==None:
+        if polar==True:
+            X = df_raw['vx']
+            Y = df_raw['vz']
 
-        ax.set_xlabel('Vel_x (m/s)')
-        ax.set_ylabel('Vel_z (m/s)')
+            ax.set_xlabel('Vel_x (m/s)')
+            ax.set_ylabel('Vel_z (m/s)')
 
+        else:
+            X = df_raw['phi_IC']
+            Y = df_raw['vel_IC']
+
+            ax.set_xlabel('phi (deg)')
+            ax.set_ylabel('Vel (m/s)')
     else:
-        X = df_raw['phi_IC']
-        Y = df_raw['vel_IC']
+        X = df_raw[XY_data[0]]
+        Y = df_raw[XY_data[1]]
 
-        ax.set_xlabel('phi (deg)')
-        ax.set_ylabel('Vel (m/s)')
+        ax.set_xlabel(XY_str[0])
+        ax.set_ylabel(XY_str[1])
 
         
-    Z = df_raw[dataName]
+    Z = df_raw[Z_data]
     C = df_raw[color_data]
 
     ## ADJUST COLOR SCALING AND LABELS
@@ -75,12 +86,13 @@ def plot_raw(dataName:str,color_data:str='landing_rate_4_leg',color_str=None,col
 
 
     # PLOT LIMITS AND INFO
-    ax.set_zlabel(dataName)
+    ax.set_zlabel(Z_data)
+    # ax.set_ylim(0,8)
     ax.set_title("Raw Data")
     fig.tight_layout()
 
 
-def plot_best(dataName:str,color_data:str='landing_rate_4_leg',color_str=None,color_norm=None,polar=True):
+def plot_best(Z_data:str,color_data:str='landing_rate_4_leg',color_str=None,color_norm=None,polar=True,XY_data=None,XY_str=None):
 
     
     ## INITIALIZE FIGURE
@@ -88,22 +100,30 @@ def plot_best(dataName:str,color_data:str='landing_rate_4_leg',color_str=None,co
     ax = fig.add_subplot(111,projection="3d")
 
     ## DEFINE PLOT VARIABLES
-    if polar==True:
-        X = df_max['vx']
-        Y = df_max['vz']
+    if XY_data==None:
 
-        ax.set_xlabel('Vel_x (m/s)')
-        ax.set_ylabel('Vel_z (m/s)')
+        if polar==True:
+            X = df_max['vx']
+            Y = df_max['vz']
 
+            ax.set_xlabel('Vel_x (m/s)')
+            ax.set_ylabel('Vel_z (m/s)')
+
+        else:
+            X = df_max['phi_IC']
+            Y = df_max['vel_IC']
+
+            ax.set_xlabel('phi (deg)')
+            ax.set_ylabel('Vel (m/s)')
     else:
-        X = df_max['phi_IC']
-        Y = df_max['vel_IC']
+        X = df_max[XY_data[0]]
+        Y = df_max[XY_data[1]]
 
-        ax.set_xlabel('phi (deg)')
-        ax.set_ylabel('Vel (m/s)')
+        ax.set_xlabel(XY_str[0])
+        ax.set_ylabel(XY_str[1])
 
         
-    Z = df_max[dataName]
+    Z = df_max[Z_data]
     C = df_max[color_data]
 
     ## ADJUST COLOR SCALING AND LABELS
@@ -126,17 +146,11 @@ def plot_best(dataName:str,color_data:str='landing_rate_4_leg',color_str=None,co
 
 
     # PLOT LIMITS AND INFO
-    ax.set_zlabel(dataName)
+    ax.set_zlabel(Z_data)
     ax.set_title("Best Data")
     fig.tight_layout()
 
 
-
-
-
-# ======================================
-##   LANDING RATE SURFACE (BEST POLICY)
-# ======================================
 def plot_best_surface(dataName:str,color_data:str='landing_rate_4_leg',color_str=None,color_norm=None,polar=True):
     
     ## INITIALIZE FIGURE
@@ -250,10 +264,11 @@ def plot_best_surface_smoothed(dataName:str,color_data:str='landing_rate_4_leg',
 # plt.show()
 
 if __name__ == '__main__':
-    # plot_raw(dataName='landing_rate_4_leg',color_data='landing_rate_4_leg',polar=True)
-    # plot_best(dataName='landing_rate_4_leg',color_data='landing_rate_4_leg',polar=True)
-    plot_best_surface(dataName='landing_rate_4_leg',color_data='landing_rate_4_leg',polar=True)
-    plot_best_surface_smoothed(dataName='RREV_threshold',color_data='RREV_threshold',polar=False)
+    # plot_raw(Z_data='My_d',XY_data=("OF_y_flip_mean","RREV_flip_mean"),XY_str=("OF_y","RREV"),color_data='landing_rate_4_leg',polar=True)
+    plot_raw(Z_data='impact_eul_mean',XY_data=("impact_vx_mean","impact_vz_mean"),XY_str=("impact_vx_mean","impact_vz_mean"),color_data='impact_eul_std',polar=True)
+    # plot_best(dataName='impact_eul_mean',color_data='landing_rate_4_leg',polar=True)
+    # plot_best_surface(dataName='landing_rate_4_leg',color_data='landing_rate_4_leg',polar=True)
+    # plot_best_surface_smoothed(dataName='RREV_threshold',color_data='RREV_threshold',polar=False)
 
 
     plt.show()

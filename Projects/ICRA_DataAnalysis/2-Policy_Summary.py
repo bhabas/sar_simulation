@@ -12,7 +12,7 @@ from data_analysis.Data_Analysis import DataFile
 
 
 
-dataPath = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs/Wide-Long_2-Policy/"
+dataPath = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs/Wide-Short_2-Policy/"
 df_list = []
 num_files = len(os.listdir(dataPath))
 
