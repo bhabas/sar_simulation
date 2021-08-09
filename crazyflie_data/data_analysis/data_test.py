@@ -25,7 +25,7 @@ k_ep = 15
 k_run = 12
 
 # print(trial.grab_impact_eul(k_ep, k_run))
-print(trial.grab_trial_data(trial.grab_impact_state,stateName='vz'))
+print(trial.grab_trial_data(trial.trigger2impact))
 
 # wy = trial.grab_stateData(k_ep,k_run,['wy'])
 # f_pitch = trial.grab_stateData(k_ep,k_run,['My'])

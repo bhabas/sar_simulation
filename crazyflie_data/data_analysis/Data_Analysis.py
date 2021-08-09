@@ -788,23 +788,6 @@ class DataFile:
         return My_d_mean,My_d_std,My_d_arr
         
 
-        ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
-        ep_df = self.trial_df.iloc[:][['k_ep','k_run']].drop_duplicates()
-        ep_arr = ep_df.iloc[-self.n_rollouts*3:].to_numpy() # Grab episode/run listing from past 3 rollouts
-
-        ## ITERATE THROUGH ALL RUNS AND FIND My_d FOR SUCCESSFUL LANDINGS
-        My_dList = []
-        epList = []
-        for k_ep,k_run in ep_arr:
-            My_dList.append(self.grab_My_d(k_ep,k_run))
-            epList.append(k_ep)
-                
-        ## CONVERT LIST TO NP ARRAY AND CALC MEAN
-        arr = np.asarray(My_dList)
-        avg_My_d = np.nanmean(arr,axis=0)
-
-        return avg_My_d
-
     ## FLIP FUNCTIONS
     def grab_flip_time(self,k_ep,k_run):
         """Returns time of flip
@@ -957,41 +940,6 @@ class DataFile:
         eul_flip_mean = np.nanstd(eul_flip_arr,axis=0)
         
         return eul_flip_mean,eul_flip_mean,eul_flip_arr
-
-    def grab_flip_state_trial(self,stateName,N:int=3,reward_cutoff:float=3.00):
-        """Returns the summarized flip state information from a given trial by finding the
-        mean and standard deviation of the final 'N' episodes
-
-        Args:
-            stateName (str): State label in the data file
-            N (int, optional): Final [N] episodes to analyze. Defaults to 3.
-            reward_cutoff (float, optional): The reward cutoff set to ignore failures caused directly by the simulation
-            
-
-        Returns:
-            state_flip_mean (float): Average state at flip
-            state_flip_std (float): Standard Deviation of the flip state data
-
-        """  
-        ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
-        # Use reward to extract only the valid attempts and not simulation mishaps
-        ep_df = self.trial_df.iloc[:][['k_ep','k_run','reward']].astype('float').query(f'reward >= {reward_cutoff}')
-        ep_arr = ep_df.iloc[-self.n_rollouts*N:].to_numpy() # Grab episode/run listing from past N rollouts
-
-        ## ITERATE THROUGH ALL RUNS AND FINDING FLIP ANGLE 
-        var_list = []
-        for k_ep,k_run in ep_arr[:,:2]:
-
-            leg_contacts,_,_,_ = self.landing_conditions(k_ep, k_run)
-            if leg_contacts >= 3: # IGNORE FAILED LANDINGS
-                var_list.append(self.grab_flip_state(k_ep,k_run,stateName))
-
-        ## RETURN MEAN AND STD OF STATE
-        state_flip_mean = np.nanmean(var_list)
-        state_flip_std = np.nanstd(var_list)
-        state_flip_arr = var_list
-
-        return state_flip_mean,state_flip_std,state_flip_arr
     
     def grab_flip_dRREV(self,k_ep,k_run,h_ceiling=2.1):
         _,_,flip_df,_ = self.select_run(k_ep,k_run)
@@ -1181,42 +1129,7 @@ class DataFile:
         
         return eul_impact_mean,eul_impact_std,eul_impact_arr
 
-    def grab_impact_state_trial(self,stateName,N:int=3,reward_cutoff:float=3.00):
-        """Returns the summarized impact state information from a given trial by finding the
-        mean and standard deviation of the final 'N' episodes
-
-        Args:
-            stateName (str): State label in the data file
-            N (int, optional): Final [N] episodes to analyze. Defaults to 3.
-            reward_cutoff (float, optional): The reward cutoff set to ignore failures caused directly by the simulation
-            
-
-        Returns:
-            state_impact_mean (float): Average state at impact
-            state_impact_std (float): Standard Deviation of the impact state data
-
-        """  
-        ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
-        # Use reward to extract only the valid attempts and not simulation mishaps
-        ep_df = self.trial_df.iloc[:][['k_ep','k_run','reward']].astype('float').query(f'reward >= {reward_cutoff}')
-        ep_arr = ep_df.iloc[-self.n_rollouts*N:].to_numpy() # Grab episode/run listing from past N rollouts
-
-        ## ITERATE THROUGH ALL RUNS AND FINDING IMPACT ANGLE 
-        var_list = []
-        for k_ep,k_run in ep_arr[:,:2]:
-
-            leg_contacts,_,_,_ = self.landing_conditions(k_ep, k_run)
-            if leg_contacts >= 3: # IGNORE FAILED LANDINGS
-                var_list.append(self.grab_impact_state(k_ep,k_run,stateName))
-
-        ## RETURN MEAN AND STD OF STATE
-        state_impact_mean = np.nanmean(var_list)
-        state_impact_std = np.nanstd(var_list)
-        state_impact_arr = var_list
-
-        return state_impact_mean,state_impact_std,state_impact_arr
-
-    def grab_impact_force_trial(self,forceDirection:str,N:int=3,reward_cutoff:float=3.00):
+    def grab_impact_force(self,k_ep,k_run,forceDirection='x'):
         """Returns the summarized impact force information from a given trial by finding the
         mean and standard deviation of the final 'N' episodes
 
@@ -1227,8 +1140,7 @@ class DataFile:
             
 
         Returns:
-            force_impact_mean (float): Average state at impact
-            force_impact_std (float): Standard Deviation of the impact state data
+            force_impact_mean (float): Max force experienced at impact
 
         """  
         ## CONVERT DIRECTION TO DATA LABEL
@@ -1240,8 +1152,8 @@ class DataFile:
             stateName = 'RREV'
 
         ## FIND IMPACT FORCES
-        force_impact_mean,force_impact_std,force_impact_arr = self.grab_impact_state_trial(stateName,N,reward_cutoff)
-        return force_impact_mean,force_impact_std,force_impact_arr
+        force_impact = self.grab_impact_state(k_ep,k_run,stateName)
+        return force_impact
 
 
     def trigger2impact(self,k_ep,k_run):
@@ -1251,26 +1163,6 @@ class DataFile:
         t_delta = t_impact-t_flip
         return t_delta
 
-    def trigger2impact_trial(self,N:int=3,reward_cutoff:float=3.00):
-        ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
-        # Use reward to extract only the valid attempts and not simulation mishaps
-        ep_df = self.trial_df.iloc[:][['k_ep','k_run','reward']].astype('float').query(f'reward >= {reward_cutoff}')
-        ep_arr = ep_df.iloc[-self.n_rollouts*N:].to_numpy() # Grab episode/run listing from past N rollouts
-
-        ## ITERATE THROUGH ALL RUNS AND FINDING IMPACT ANGLE 
-        var_list = []
-        for k_ep,k_run in ep_arr[:,:2]:
-
-            leg_contacts,_,_,_ = self.landing_conditions(k_ep, k_run)
-            if leg_contacts >= 3: # IGNORE FAILED LANDINGS
-                var_list.append(self.trigger2impact(k_ep,k_run,))
-
-        ## RETURN MEAN AND STD OF STATE
-        t_delta_mean = np.nanmean(var_list)
-        t_delta_std = np.nanstd(var_list)
-        t_delta_arr = var_list
-
-        return t_delta_mean,t_delta_std,t_delta_arr
 
     def landing_conditions(self,k_ep,k_run):
         """Returns landing data for number of leg contacts, the impact leg, contact list, and if body impacted

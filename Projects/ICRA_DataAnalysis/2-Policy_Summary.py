@@ -61,18 +61,19 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
 
 
             ## FLIP DATA
-            RREV_flip_mean,RREV_flip_std,_ = trial.grab_flip_state_trial('RREV')
-            OF_y_flip_mean,OF_y_flip_std,_ = trial.grab_flip_state_trial('OF_y')
-            flip_height_mean,flip_height_std,_ = trial.grab_flip_state_trial('z')
-            flip_vz_mean,flip_vz_std,_ = trial.grab_flip_state_trial('vz')
+            RREV_flip_mean,RREV_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,stateName='RREV')
+            OF_y_flip_mean,OF_y_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,stateName='OF_y')
+            flip_height_mean,flip_height_std,_ = trial.grab_trial_data(trial.grab_flip_state,stateName='z')
+            flip_vz_mean,flip_vz_std,_ = trial.grab_trial_data(trial.grab_flip_state,stateName='vz')
 
             ## IMPACT DATA
-            impact_force_x_mean,impact_force_x_std,_ = trial.grab_impact_force_trial('x')
-            impact_force_z_mean,impact_force_z_std,_ = trial.grab_impact_force_trial('z')
-            impact_vx_mean,impact_vx_std,_ = trial.grab_impact_state_trial('vx')
-            impact_vz_mean,impact_vz_std,_ = trial.grab_impact_state_trial('vz')
+            impact_force_x_mean,impact_force_x_std,_ = trial.grab_trial_data(trial.grab_impact_force,'x')
+            impact_force_z_mean,impact_force_z_std,_ = trial.grab_trial_data(trial.grab_impact_force,'z')
+            impact_vx_mean,impact_vx_std,_ = trial.grab_trial_data(trial.grab_impact_state,stateName='vx')
+            impact_vz_mean,impact_vz_std,_ = trial.grab_trial_data(trial.grab_impact_state,stateName='vz')
+            t_delta_mean,t_delta_std,_ = trial.grab_trial_data(trial.trigger2impact)
+            
             impact_eul_mean,impact_eul_std,_ = trial.grab_impact_eul_trial(eul_type='eul_y')
-            t_delta_mean,t_delta_std,_ = trial.trigger2impact_trial()
 
 
         df_list.append((
@@ -132,4 +133,4 @@ master_df = pd.DataFrame(df_list,columns=(
 print(master_df)
 master_df = master_df.round(4)
 master_df.sort_values(['vel_IC','phi_IC','trial_num'],ascending=[1,1,1],inplace=True)
-master_df.to_csv('Narrow-Short_2-Policy_Summary.csv',index=False)
+master_df.to_csv('Narrow-Short_22-Policy_Summary.csv',index=False)
