@@ -1081,7 +1081,7 @@ class DataFile:
 
         return eul_arr
 
-    def grab_impact_eul_trial(self,N:int=3,eul_type:str='eul_y',reward_cutoff:float=3.00):
+    def grab_impact_eul_trial(self,N:int=3,eul_type:str='eul_y',reward_cutoff:float=3.00,landing_cutoff:int=3):
         """Returns the summarized impact angle information from a given trial by finding the
         mean and standard deviation of the final 'N' episodes
 
@@ -1105,7 +1105,7 @@ class DataFile:
         for k_ep,k_run in ep_arr[:,:2]:
 
             leg_contacts,_,_,_ = self.landing_conditions(k_ep, k_run)
-            if leg_contacts >= 3: # IGNORE FAILED LANDINGS
+            if leg_contacts >= landing_cutoff: # IGNORE FAILED LANDINGS
                 var_list.append(self.grab_impact_eul(k_ep,k_run))
 
         if len(var_list) != 0:
@@ -1126,6 +1126,7 @@ class DataFile:
         ## RETURN MEAN AND STD AND ARRAY
         eul_impact_mean = np.nanmean(eul_impact_arr,axis=0)
         eul_impact_std = np.nanstd(eul_impact_arr,axis=0)
+        eul_impact_list = eul_impact_arr.tolist()
         
         return eul_impact_mean,eul_impact_std,eul_impact_arr
 
@@ -1202,6 +1203,7 @@ class DataFile:
             landing_rate_4_leg (float): Four leg landing success percentage
             landing_rate_2_leg (float): Two leg landing success percentage
             contact_rate (float): Combined landing success percentage for either two leg or four leg landing
+            contact_list (list,int): List of each conctact case for each run recorded
         """        
 
         ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
@@ -1214,6 +1216,7 @@ class DataFile:
         two_leg_landing = 0
         one_leg_landing = 0
         missed_landing = 0
+        contact_list = []
         
         for k_ep,k_run in ep_arr[:,:2]:
             
@@ -1231,13 +1234,16 @@ class DataFile:
 
             else:
                 missed_landing += 1
+            
+            contact_list.append(leg_contacts)
 
         ## CALC LANDING PERCENTAGE
         landing_rate_4leg = four_leg_landing/(N*self.n_rollouts)
         landing_rate_2leg = two_leg_landing/(N*self.n_rollouts)
         contact_rate = (four_leg_landing + two_leg_landing)/(N*self.n_rollouts)
+        
 
-        return landing_rate_4leg,landing_rate_2leg,contact_rate
+        return landing_rate_4leg,landing_rate_2leg,contact_rate,np.array(contact_list)
 
     def grab_trial_data(self,func,*args,N:int=3,reward_cutoff:float=3.00,landing_cutoff:int=3,**kwargs):
 
@@ -1260,6 +1266,7 @@ class DataFile:
         trial_arr = var_list
 
         return trial_mean,trial_std,trial_arr
+    
     def plot_state_correlation(self,stateList:list,typeList=['flip','impact'],N:int=3):
 
         # state_df = self.trial_df.query("Error=='Flip Data'").iloc[-int(N*self.n_rollouts):][stateList].reset_index()

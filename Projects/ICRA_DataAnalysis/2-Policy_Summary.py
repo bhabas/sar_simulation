@@ -2,6 +2,8 @@ import os,time,datetime
 import pandas as pd
 import warnings
 import send2trash
+import numpy as np
+import csv
 
 
 ## CREATE LINK TO DATAPATH MODULE
@@ -26,7 +28,7 @@ alpha = 0.15
 for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
 
     try:
-#         ## PROGRESS PRINTING (BASIC STUFF STARTING FOR TIME ESTIMATION)
+        ## PROGRESS PRINTING (BASIC STUFF STARTING FOR TIME ESTIMATION)
         
 
         diff = end_time - start_time
@@ -57,7 +59,7 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
             RREV_sig,My_d_sig = sigma
 
             ## LANDING RATES
-            landing_rate_4_leg,landing_rate_2_leg,_ = trial.landing_rate()
+            landing_rate_4_leg,landing_rate_2_leg,_,contact_arr = trial.landing_rate(N=2)
 
 
             ## FLIP DATA
@@ -74,6 +76,12 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
             t_delta_mean,t_delta_std,_ = trial.grab_trial_data(trial.trigger2impact)
             
             impact_eul_mean,impact_eul_std,_ = trial.grab_impact_eul_trial(eul_type='eul_y')
+
+            ## GRAB FULL IMPACT/SUCCESS PICTURE
+            # _,_,impact_eul_arr = trial.grab_impact_eul_trial(eul_type='eul_y',landing_cutoff=0)
+            # _,_,impact_vx_arr = trial.grab_trial_data(trial.grab_impact_state,stateName='vx',landing_cutoff=0)
+            # _,_,impact_vz_arr = trial.grab_trial_data(trial.grab_impact_state,stateName='vz',landing_cutoff=0)
+
 
 
         df_list.append((
@@ -95,12 +103,17 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
             impact_vz_mean,impact_vz_std,
             impact_eul_mean,impact_eul_std,
             t_delta_mean,t_delta_std,
+
+            contact_arr
         ))
 
         end_time = time.time()
+        # break
+        if ii == 3:
+            break
 
     except:
-        send2trash.send2trash(dataPath+fileName)
+        # send2trash.send2trash(dataPath+fileName)
         end_time = time.time()
         print(f"Trashing file {fileName}")
         # pass
@@ -129,8 +142,11 @@ master_df = pd.DataFrame(df_list,columns=(
     'impact_vz_mean','impact_vz_std',
     'impact_eul_mean','impact_eul_std',
     't_delta_mean','t_delta_std',
+
+    'contact_arr'
 ))
 print(master_df)
-master_df = master_df.round(4)
-master_df.sort_values(['vel_IC','phi_IC','trial_num'],ascending=[1,1,1],inplace=True)
-master_df.to_csv('Narrow-Short_22-Policy_Summary.csv',index=False)
+# master_df = master_df.round(4)
+# master_df.sort_values(['vel_IC','phi_IC','trial_num'],ascending=[1,1,1],inplace=True)
+
+master_df.to_csv('Narrow-Short_22-Policy_Summary.csv',index=False,quoting=csv.QUOTE_MINIMAL)

@@ -11,7 +11,7 @@ dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/logs
 dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs/"
 
 Vel = 2.0
-phi = 90.0
+phi = 90
 trial = 4
 
 
@@ -25,8 +25,12 @@ k_ep = 15
 k_run = 12
 
 # print(trial.grab_impact_eul(k_ep, k_run))
-print(trial.grab_trial_data(trial.trigger2impact))
+_,_,arr = trial.grab_impact_eul_trial(landing_cutoff=0)
+_,_,_,contact_list = trial.landing_rate()
+# print(trial.grab_trial_data(trial.trigger2impact))
 
+
+print()
 # wy = trial.grab_stateData(k_ep,k_run,['wy'])
 # f_pitch = trial.grab_stateData(k_ep,k_run,['My'])
 # t = np.arange(0,len(wy)*0.01,0.01)
