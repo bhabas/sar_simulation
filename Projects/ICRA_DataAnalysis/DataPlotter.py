@@ -17,7 +17,7 @@ os.system("clear")
 ## FULL DATAFRAME
 model_config = "Wide-Long"
 df_raw = pd.read_csv(f"Projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
-df_raw = df_raw.query(f"landing_rate_4_leg >= {0.8}")
+df_raw = df_raw.query(f"landing_rate_4_leg >= {0.0}")
 
 
 ## MAX LANDING RATE DATAFRAME
@@ -57,6 +57,9 @@ def plot_raw(Z_data:str,color_data:str='landing_rate_4_leg',color_str=None,color
             ax.set_ylabel('Vel (m/s)')
     else:
         X = df_raw[XY_data[0]]
+        # vz = df_raw['flip_vz_mean']
+        # d = 2.1 - df_raw['flip_height_mean']
+        # X = vz**2/d**2
         Y = df_raw[XY_data[1]]
 
         ax.set_xlabel(XY_str[0])
@@ -264,8 +267,9 @@ def plot_best_surface_smoothed(dataName:str,color_data:str='landing_rate_4_leg',
 # plt.show()
 
 if __name__ == '__main__':
-    # plot_raw(Z_data='My_d',XY_data=("OF_y_flip_mean","RREV_flip_mean"),XY_str=("OF_y","RREV"),color_data='landing_rate_4_leg',polar=True)
-    plot_raw(Z_data='impact_eul_mean',XY_data=("impact_vx_mean","impact_vz_mean"),XY_str=("impact_vx_mean","impact_vz_mean"),color_data='impact_eul_std',polar=True)
+    # plot_best_surface_smoothed('landing_rate_4_leg',color_data='landing_rate_4_leg',polar=True)
+    plot_raw(Z_data='My_d',XY_data=("flip_height_mean","impact_eul_mean"),XY_str=("h","eul impact"),color_data='landing_rate_4_leg',polar=True)
+    # plot_raw(Z_data='impact_eul_mean',XY_data=("impact_vx_mean","impact_vz_mean"),XY_str=("impact_vx_mean","impact_vz_mean"),color_data='impact_eul_std',polar=True)
     # plot_best(dataName='impact_eul_mean',color_data='landing_rate_4_leg',polar=True)
     # plot_best_surface(dataName='landing_rate_4_leg',color_data='landing_rate_4_leg',polar=True)
     # plot_best_surface_smoothed(dataName='RREV_threshold',color_data='RREV_threshold',polar=False)

@@ -10,12 +10,12 @@ from Data_Analysis import DataFile
 dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/logs/EXP_Logs/"
 dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs/"
 
-Vel = 3.5
-phi = 60.0
-trial = 6
+Vel = 2.0
+phi = 90.0
+trial = 4
 
 
-fileName = "EM_PEPG--Vd_3.50--phi_60.00--trial_03.csv"
+# fileName = "EM_PEPG--Vd_3.50--phi_60.00--trial_03.csv"
 fileName = f"EM_PEPG--Vd_{Vel:.2f}--phi_{phi:.2f}--trial_{int(trial):02d}.csv"
 # fileName = "My_6.00_Calibration_Test-3.csv"
 
@@ -25,7 +25,8 @@ k_ep = 15
 k_run = 12
 
 # print(trial.grab_impact_eul(k_ep, k_run))
-print(trial.grab_impact_eul_trial(N=1))
+print(trial.grab_trial_data(trial.grab_impact_state,stateName='vz'))
+
 # wy = trial.grab_stateData(k_ep,k_run,['wy'])
 # f_pitch = trial.grab_stateData(k_ep,k_run,['My'])
 # t = np.arange(0,len(wy)*0.01,0.01)

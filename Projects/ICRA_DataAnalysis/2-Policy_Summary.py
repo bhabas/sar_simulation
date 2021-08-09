@@ -12,7 +12,7 @@ from data_analysis.Data_Analysis import DataFile
 
 
 
-dataPath = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs/Wide-Short_2-Policy/"
+dataPath = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs/Narrow-Short_2-Policy/"
 df_list = []
 num_files = len(os.listdir(dataPath))
 
@@ -132,4 +132,4 @@ master_df = pd.DataFrame(df_list,columns=(
 print(master_df)
 master_df = master_df.round(4)
 master_df.sort_values(['vel_IC','phi_IC','trial_num'],ascending=[1,1,1],inplace=True)
-master_df.to_csv('Wide-Long_2-Policy_Summary.csv',index=False)
+master_df.to_csv('Narrow-Short_2-Policy_Summary.csv',index=False)

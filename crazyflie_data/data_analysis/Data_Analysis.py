@@ -993,6 +993,15 @@ class DataFile:
 
         return state_flip_mean,state_flip_std,state_flip_arr
     
+    def grab_flip_dRREV(self,k_ep,k_run,h_ceiling=2.1):
+        _,_,flip_df,_ = self.select_run(k_ep,k_run)
+        vz_flip = flip_df.iloc[0]['vz']
+        d_flip = h_ceiling - flip_df.iloc[0]['z']
+
+        dRREV = vz_flip**2/d_flip**2
+
+        return dRREV
+        
 
     ## IMPACT FUNCTIONS
     def grab_impact_time(self,k_ep,k_run,accel_threshold=-4.0):
@@ -1338,27 +1347,27 @@ class DataFile:
 
         return landing_rate_4leg,landing_rate_2leg,contact_rate
 
-    # def grab_trial_data(self,func,args,N:int=3,reward_cutoff:float=3.00,**kwargs):
+    def grab_trial_data(self,func,*args,N:int=3,reward_cutoff:float=3.00,landing_cutoff:int=3,**kwargs):
 
-    #     ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
-    #     # Use reward to extract only the valid attempts and not simulation mishaps
-    #     ep_df = self.trial_df.iloc[:][['k_ep','k_run','reward']].astype('float').query(f'reward >= {reward_cutoff}')
-    #     ep_arr = ep_df.iloc[-self.n_rollouts*N:].to_numpy() # Grab episode/run listing from past N rollouts
+        ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
+        # Use reward to extract only the valid attempts and not simulation mishaps
+        ep_df = self.trial_df.iloc[:][['k_ep','k_run','reward']].astype('float').query(f'reward >= {reward_cutoff}')
+        ep_arr = ep_df.iloc[-self.n_rollouts*N:].to_numpy() # Grab episode/run listing from past N rollouts
 
-    #     ## ITERATE THROUGH ALL RUNS AND FINDING IMPACT ANGLE 
-    #     var_list = []
-    #     for k_ep,k_run in ep_arr[:,:2]:
+        ## ITERATE THROUGH ALL RUNS AND FINDING IMPACT ANGLE 
+        var_list = []
+        for k_ep,k_run in ep_arr[:,:2]:
 
-    #         leg_contacts,_,_,_ = self.landing_conditions(k_ep, k_run)
-    #         if leg_contacts >= 3: # IGNORE FAILED LANDINGS
-    #             var_list.append(func(*args))
+            leg_contacts,_,_,_ = self.landing_conditions(k_ep, k_run)
+            if leg_contacts >= landing_cutoff: # IGNORE FAILED LANDINGS
+                var_list.append(func(k_ep,k_run,*args,**kwargs))
 
-    #     ## RETURN MEAN AND STD OF STATE
-    #     t_delta_mean = np.nanmean(var_list)
-    #     t_delta_std = np.nanstd(var_list)
-    #     t_delta_arr = var_list
+        ## RETURN MEAN AND STD OF STATE
+        trial_mean = np.nanmean(var_list)
+        trial_std = np.nanstd(var_list)
+        trial_arr = var_list
 
-    #     return t_delta_mean,t_delta_std,t_delta_arr
+        return trial_mean,trial_std,trial_arr
     def plot_state_correlation(self,stateList:list,typeList=['flip','impact'],N:int=3):
 
         # state_df = self.trial_df.query("Error=='Flip Data'").iloc[-int(N*self.n_rollouts):][stateList].reset_index()
