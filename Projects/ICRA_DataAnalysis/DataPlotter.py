@@ -15,7 +15,7 @@ from matplotlib import cm
 os.system("clear")
 
 ## FULL DATAFRAME
-model_config = "Wide-Long"
+model_config = "Narrow-Long"
 df_raw = pd.read_csv(f"Projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
 df_raw = df_raw.query(f"landing_rate_4_leg >= {0.0}")
 
@@ -264,15 +264,57 @@ def plot_best_surface_smoothed(dataName:str,color_data:str='landing_rate_4_leg',
     ax.set_title('Smoothed Best Data Surface')
 
 
-# plt.show()
+def plot_all_eul():
+
+    ## INITIALIZE FIGURE
+    fig = plt.figure()
+    ax = fig.add_subplot(111,projection="3d")
+
+    X = df_raw['impact_vx_arr']
+    for idx, i in enumerate(X): 
+            X[idx] = np.fromstring(i[1:-1], dtype=float, sep=' ')
+    X = np.concatenate(X,axis=0)
+
+    Y = df_raw['impact_vz_arr']
+    for idx, i in enumerate(Y): 
+            Y[idx] = np.fromstring(i[1:-1], dtype=float, sep=' ')
+    Y = np.concatenate(Y,axis=0)
+
+    Z = df_raw['impact_eul_arr']
+    for idx, i in enumerate(Z): 
+            Z[idx] = np.fromstring(i[1:-1], dtype=float, sep=' ')
+    Z = np.concatenate(Z,axis=0)
+
+    C = df_raw['contact_arr']
+    for idx, i in enumerate(C): 
+            C[idx] = np.fromstring(i[1:-1], dtype=float, sep=' ')
+    C = np.concatenate(C,axis=0)
+   
+   
+    cmap = mpl.cm.jet
+    norm = mpl.colors.Normalize(vmin=0,vmax=4)
+    
+    # CREATE PLOTS AND COLOR BAR
+    ax.scatter(X[::5],Y[::5],Z[::5],c=C[::5],cmap=cmap,norm=norm)
+    fig.colorbar(mpl.cm.ScalarMappable(cmap=cmap,norm=norm),label='leg contacts')
+
+
+    # PLOT LIMITS AND INFO
+    # ax.set_zlabel(Z_data)
+    # ax.set_ylim(0,8)
+    ax.set_title("Raw Data")
+    fig.tight_layout()
 
 if __name__ == '__main__':
     # plot_best_surface_smoothed('landing_rate_4_leg',color_data='landing_rate_4_leg',polar=True)
-    plot_raw(Z_data='My_d',XY_data=("flip_height_mean","impact_eul_mean"),XY_str=("h","eul impact"),color_data='landing_rate_4_leg',polar=True)
+    # plot_raw(Z_data='My_d',XY_data=("flip_height_mean","impact_eul_mean"),XY_str=("h","eul impact"),color_data='landing_rate_4_leg',polar=True)
     # plot_raw(Z_data='impact_eul_mean',XY_data=("impact_vx_mean","impact_vz_mean"),XY_str=("impact_vx_mean","impact_vz_mean"),color_data='impact_eul_std',polar=True)
     # plot_best(dataName='impact_eul_mean',color_data='landing_rate_4_leg',polar=True)
     # plot_best_surface(dataName='landing_rate_4_leg',color_data='landing_rate_4_leg',polar=True)
     # plot_best_surface_smoothed(dataName='RREV_threshold',color_data='RREV_threshold',polar=False)
 
-
+    ## RREV VS OF_d VS My_d
+    # plot_raw(Z_data='My_d',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg')
+    
+    plot_all_eul()
     plt.show()

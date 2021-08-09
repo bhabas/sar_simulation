@@ -14,7 +14,7 @@ from data_analysis.Data_Analysis import DataFile
 
 
 
-dataPath = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs/Narrow-Short_2-Policy/"
+dataPath = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs/"
 df_list = []
 num_files = len(os.listdir(dataPath))
 
@@ -59,7 +59,7 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
             RREV_sig,My_d_sig = sigma
 
             ## LANDING RATES
-            landing_rate_4_leg,landing_rate_2_leg,_,contact_arr = trial.landing_rate(N=2)
+            landing_rate_4_leg,landing_rate_2_leg,_,contact_arr = trial.landing_rate(N=1)
 
 
             ## FLIP DATA
@@ -78,9 +78,9 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
             impact_eul_mean,impact_eul_std,_ = trial.grab_impact_eul_trial(eul_type='eul_y')
 
             ## GRAB FULL IMPACT/SUCCESS PICTURE
-            # _,_,impact_eul_arr = trial.grab_impact_eul_trial(eul_type='eul_y',landing_cutoff=0)
-            # _,_,impact_vx_arr = trial.grab_trial_data(trial.grab_impact_state,stateName='vx',landing_cutoff=0)
-            # _,_,impact_vz_arr = trial.grab_trial_data(trial.grab_impact_state,stateName='vz',landing_cutoff=0)
+            _,_,impact_eul_arr = trial.grab_impact_eul_trial(eul_type='eul_y',landing_cutoff=0,N=1)
+            _,_,impact_vx_arr = trial.grab_trial_data(trial.grab_impact_state,stateName='vx',landing_cutoff=0,N=1)
+            _,_,impact_vz_arr = trial.grab_trial_data(trial.grab_impact_state,stateName='vz',landing_cutoff=0,N=1)
 
 
 
@@ -104,13 +104,13 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
             impact_eul_mean,impact_eul_std,
             t_delta_mean,t_delta_std,
 
-            contact_arr
+            contact_arr,np.round(impact_eul_arr,0),
+            np.round(impact_vx_arr,3),np.round(impact_vz_arr,3)
         ))
 
         end_time = time.time()
-        # break
-        if ii == 3:
-            break
+        # if ii == 1:
+        #     break
 
     except:
         # send2trash.send2trash(dataPath+fileName)
@@ -143,10 +143,11 @@ master_df = pd.DataFrame(df_list,columns=(
     'impact_eul_mean','impact_eul_std',
     't_delta_mean','t_delta_std',
 
-    'contact_arr'
+    'contact_arr','impact_eul_arr',
+    'impact_vx_arr','impact_vz_arr'
 ))
 print(master_df)
-# master_df = master_df.round(4)
-# master_df.sort_values(['vel_IC','phi_IC','trial_num'],ascending=[1,1,1],inplace=True)
+master_df = master_df.round(4)
+master_df.sort_values(['vel_IC','phi_IC','trial_num'],ascending=[1,1,1],inplace=True)
 
-master_df.to_csv('Narrow-Short_22-Policy_Summary.csv',index=False,quoting=csv.QUOTE_MINIMAL)
+master_df.to_csv('Narrow-Long_2-Policy_Summary.csv',index=False,quoting=csv.QUOTE_MINIMAL)
