@@ -357,19 +357,42 @@ def plot_all_eul():
     ax.set_title("Raw Data")
     fig.tight_layout()
 
-def plot_polar(Z_data:str):
-    azimuths = np.radians(np.linspace(0, 90, 20))
-    zeniths = np.arange(0, 70, 10)
+def plot_polar_smoothed(Z_data:str):
+    R = df_max.iloc[:]['vel_IC']
+    Theta = df_max.iloc[:]['phi_IC']
+    Z = df_max.iloc[:]['landing_rate_4_leg']
 
-    r, theta = np.meshgrid(zeniths, azimuths)
-    values = np.random.random((azimuths.size, zeniths.size))
+    # SOMETHING ABOUT DEFINING A GRID
+    ri = np.linspace(R.min(),R.max(),(len(Z)//10))
+    thetai = np.linspace(Theta.min(),Theta.max(),(len(Z)//10))
+    zi = griddata((R, Theta), Z, (ri[None,:], thetai[:,None]), method='linear')
+    xig, yig = np.meshgrid(ri, thetai)
+    
+
+    # r, theta = np.meshgrid(zeniths, azimuths)
+    # values = np.random.random((azimuths.size, zeniths.size))
 
     #-- Plot... ------------------------------------------------
-    fig, ax = plt.subplots(subplot_kw=dict(projection='polar'))
-    ax.contourf(theta, r, values)
-
-    ax.set_thetamin(0)
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='polar')
+    # ax.contourf(theta, r, values)
+    cmap = mpl.cm.rainbow
+    norm = mpl.colors.Normalize(vmin=0,vmax=1)
+    # ax.scatter(np.radians(Theta),R,c=colors,cmap=cmap,norm=norm)
+    ax.contourf(np.radians(yig),xig,zi,cmap=cmap,norm=norm,levels=20)
+    ax.set_thetamin(25)
     ax.set_thetamax(90)
+    ax.set_rmin(0)
+    ax.set_rmax(4)
+    
+
+
+    
+    ax.text(np.radians(10),2,'Flight Velocity (m/s)',
+        rotation=25,ha='center',va='center')
+
+    ax.text(np.radians(60),4.5,'Flight Angle (deg)',
+        rotation=0,ha='left',va='center')
 
     plt.show()
 
@@ -411,25 +434,6 @@ if __name__ == '__main__':
     ## 
     # plot_raw(Z_data='impact_eul_mean',XY_data=("impact_vx_mean","impact_vz_mean"),XY_str=("impact_vx_mean","impact_vz_mean"),color_data='landing_rate_4_leg',polar=True)
 
-    # plot_polar('test')
+    plot_polar_smoothed('test')
 
-    r = df_max.iloc[:]['vel_IC']
-    theta = df_max.iloc[:]['phi_IC']
-    colors = df_max.iloc[:]['landing_rate_4_leg']
     
-
-    # r, theta = np.meshgrid(zeniths, azimuths)
-    # values = np.random.random((azimuths.size, zeniths.size))
-
-    #-- Plot... ------------------------------------------------
-    fig, ax = plt.subplots(subplot_kw=dict(projection='polar'))
-    # ax.contourf(theta, r, values)
-    cmap = mpl.cm.rainbow
-    norm = mpl.colors.Normalize(vmin=0,vmax=1)
-    ax.scatter(np.radians(theta),r,c=colors,cmap=cmap,norm=norm)
-
-    ax.set_thetamin(0)
-    ax.set_thetamax(90)
-    ax.set_rmin(0)
-    ax.set_rmax(5)
-    plt.show()
