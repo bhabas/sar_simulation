@@ -14,7 +14,7 @@ from data_analysis.Data_Analysis import DataFile
 
 
 
-dataPath = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs/"
+dataPath = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs/Narrow-Long_2-Policy/"
 df_list = []
 num_files = len(os.listdir(dataPath))
 
@@ -59,13 +59,15 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
             RREV_sig,My_d_sig = sigma
 
             ## LANDING RATES
-            landing_rate_4_leg,landing_rate_2_leg,_,contact_arr = trial.landing_rate(N=1)
+            landing_rate_4_leg,landing_rate_2_leg,_,_ = trial.landing_rate(N=3)
 
 
             ## FLIP DATA
             RREV_flip_mean,RREV_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,stateName='RREV')
+            dRREV_flip_mean,dRREV_flip_std,_ = trial.grab_trial_data(trial.grab_flip_dRREV)
             OF_y_flip_mean,OF_y_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,stateName='OF_y')
             flip_height_mean,flip_height_std,_ = trial.grab_trial_data(trial.grab_flip_state,stateName='z')
+            flip_d_mean = 2.1 - flip_height_mean
             flip_vz_mean,flip_vz_std,_ = trial.grab_trial_data(trial.grab_flip_state,stateName='vz')
 
             ## IMPACT DATA
@@ -78,9 +80,9 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
             impact_eul_mean,impact_eul_std,_ = trial.grab_impact_eul_trial(eul_type='eul_y')
 
             ## GRAB FULL IMPACT/SUCCESS PICTURE
-            _,_,impact_eul_arr = trial.grab_impact_eul_trial(eul_type='eul_y',landing_cutoff=0,N=1)
-            _,_,impact_vx_arr = trial.grab_trial_data(trial.grab_impact_state,stateName='vx',landing_cutoff=0,N=1)
-            _,_,impact_vz_arr = trial.grab_trial_data(trial.grab_impact_state,stateName='vz',landing_cutoff=0,N=1)
+            # _,_,impact_eul_arr = trial.grab_impact_eul_trial(eul_type='eul_y',landing_cutoff=0,N=1)
+            # _,_,impact_vx_arr = trial.grab_trial_data(trial.grab_impact_state,stateName='vx',landing_cutoff=0,N=1)
+            # _,_,impact_vz_arr = trial.grab_trial_data(trial.grab_impact_state,stateName='vz',landing_cutoff=0,N=1)
 
 
 
@@ -93,8 +95,10 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
             landing_rate_4_leg,landing_rate_2_leg,
 
             RREV_flip_mean,RREV_flip_std,
+            dRREV_flip_mean,dRREV_flip_std,
             OF_y_flip_mean,OF_y_flip_std,
             flip_height_mean,flip_height_std,
+            flip_d_mean,
             flip_vz_mean,flip_vz_std,
 
             impact_force_x_mean,impact_force_x_std,
@@ -103,9 +107,6 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
             impact_vz_mean,impact_vz_std,
             impact_eul_mean,impact_eul_std,
             t_delta_mean,t_delta_std,
-
-            contact_arr,np.round(impact_eul_arr,0),
-            np.round(impact_vx_arr,3),np.round(impact_vz_arr,3)
         ))
 
         end_time = time.time()
@@ -132,8 +133,10 @@ master_df = pd.DataFrame(df_list,columns=(
     'landing_rate_4_leg','landing_rate_2_leg',
 
     'RREV_flip_mean','RREV_flip_std',
+    'dRREV_flip_mean','dRREV_flip_std',
     'OF_y_flip_mean','OF_y_flip_std',
     'flip_height_mean','flip_height_std',
+    'flip_d_mean',
     'flip_vz_mean','flip_vz_std',
 
     'impact_force_x_mean','impact_force_x_std',
@@ -142,9 +145,6 @@ master_df = pd.DataFrame(df_list,columns=(
     'impact_vz_mean','impact_vz_std',
     'impact_eul_mean','impact_eul_std',
     't_delta_mean','t_delta_std',
-
-    'contact_arr','impact_eul_arr',
-    'impact_vx_arr','impact_vz_arr'
 ))
 print(master_df)
 master_df = master_df.round(4)

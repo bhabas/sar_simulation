@@ -4,6 +4,7 @@ import numpy as np
 from sklearn import linear_model
 from scipy.interpolate import griddata
 import scipy.odr
+import plotly.graph_objects as go
 import os
 
 ## IMPORT PLOTTING MODULES
@@ -14,15 +15,7 @@ from matplotlib import cm
 
 os.system("clear")
 
-## FULL DATAFRAME
-model_config = "Narrow-Long"
-df_raw = pd.read_csv(f"Projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
-df_raw = df_raw.query(f"landing_rate_4_leg >= {0.0}")
 
-
-## MAX LANDING RATE DATAFRAME
-idx = df_raw.groupby(['vel_IC','phi_IC'])['landing_rate_4_leg'].transform(max) == df_raw['landing_rate_4_leg']
-df_max = df_raw[idx].reset_index()
 
 
 
@@ -84,15 +77,74 @@ def plot_raw(Z_data:str,color_data:str='landing_rate_4_leg',color_str=None,color
     norm = mpl.colors.Normalize(vmin=vmin,vmax=vmax)
     
     # CREATE PLOTS AND COLOR BAR
-    ax.scatter(X,Y,Z,c=C,cmap=cmap,norm=norm)
+    ax.scatter(X,Y,Z,c=C,cmap=cmap,norm=norm,alpha=0.5,depthshade=False)
     fig.colorbar(mpl.cm.ScalarMappable(cmap=cmap,norm=norm),label=color_str)
 
 
     # PLOT LIMITS AND INFO
     ax.set_zlabel(Z_data)
-    # ax.set_ylim(0,8)
+    ax.set_ylim(2,7)
     ax.set_title("Raw Data")
     fig.tight_layout()
+
+def plot_raw_plotly(Z_data:str,color_data:str='landing_rate_4_leg',color_str=None,color_norm=None,polar=True,XY_data=None,XY_str=None):
+
+    
+    ## INITIALIZE FIGURE
+    fig = plt.figure()
+    ax = fig.add_subplot(111,projection="3d")
+
+    ## DEFINE PLOT VARIABLES
+    if XY_data==None:
+        if polar==True:
+            X = df_raw['vx']
+            Y = df_raw['vz']
+
+            ax.set_xlabel('Vel_x (m/s)')
+            ax.set_ylabel('Vel_z (m/s)')
+
+        else:
+            X = df_raw['phi_IC']
+            Y = df_raw['vel_IC']
+
+            ax.set_xlabel('phi (deg)')
+            ax.set_ylabel('Vel (m/s)')
+    else:
+        X = df_raw[XY_data[0]]
+        # vz = df_raw['flip_vz_mean']
+        # d = 2.1 - df_raw['flip_height_mean']
+        # X = vz**2/d**2
+        Y = df_raw[XY_data[1]]
+
+        ax.set_xlabel(XY_str[0])
+        ax.set_ylabel(XY_str[1])
+
+        
+    Z = df_raw[Z_data]
+    C = df_raw[color_data]
+   
+
+    fig = go.Figure(data=[go.Scatter3d(x=X, y=Y, z=Z,
+                                   mode='markers',marker=dict(
+        size=2,
+        color=C,                # set color to an array/list of desired values
+        colorscale='Jet',   # choose a colorscale
+        opacity=1.0
+    ))])
+    
+    # CREATE PLOTS AND COLOR BAR
+    fig.update_layout(
+    scene = dict(
+        xaxis_title = "OF_y",
+        yaxis_title = "RREV",
+        zaxis_title = f"Raw Data",
+        # xaxis = dict(nticks=4, range=[0,5]),
+        yaxis = dict(range=[0,8]),
+        # zaxis = dict(nticks=4, range=[0,360])
+        ))
+
+    fig.show()
+
 
 
 def plot_best(Z_data:str,color_data:str='landing_rate_4_leg',color_str=None,color_norm=None,polar=True,XY_data=None,XY_str=None):
@@ -154,7 +206,7 @@ def plot_best(Z_data:str,color_data:str='landing_rate_4_leg',color_str=None,colo
     fig.tight_layout()
 
 
-def plot_best_surface(dataName:str,color_data:str='landing_rate_4_leg',color_str=None,color_norm=None,polar=True):
+def plot_best_surface(Z_data:str,color_data:str='landing_rate_4_leg',color_str=None,color_norm=None,polar=True):
     
     ## INITIALIZE FIGURE
     fig = plt.figure()
@@ -176,7 +228,7 @@ def plot_best_surface(dataName:str,color_data:str='landing_rate_4_leg',color_str
         ax.set_ylabel('Vel (m/s)')
 
         
-    Z = df_max[dataName]
+    Z = df_max[Z_data]
     C = df_max[color_data]
 
     ## ADJUST COLOR SCALING AND LABELS
@@ -202,12 +254,12 @@ def plot_best_surface(dataName:str,color_data:str='landing_rate_4_leg',color_str
     # PLOT LIMITS AND INFO
     ax.set_xlabel('X-Velocity (m/s)')
     ax.set_ylabel('Z-Velocity (m/s)')
-    ax.set_zlabel(dataName)
+    ax.set_zlabel(Z_data)
     ax.set_title('Surface Best Data')
 
 
 
-def plot_best_surface_smoothed(dataName:str,color_data:str='landing_rate_4_leg',color_str=None,color_norm=None,polar=True):
+def plot_best_surface_smoothed(Z_data:str,color_data:str='landing_rate_4_leg',color_str=None,color_norm=None,polar=True):
     ## INITIALIZE FIGURE
     fig = plt.figure()
     ax = fig.add_subplot(111,projection="3d")
@@ -228,7 +280,7 @@ def plot_best_surface_smoothed(dataName:str,color_data:str='landing_rate_4_leg',
         ax.set_ylabel('Vel (m/s)')
 
         
-    Z = df_max[dataName]
+    Z = df_max[Z_data]
     C = df_max[color_data]
 
     ## ADJUST COLOR SCALING AND LABELS
@@ -260,7 +312,7 @@ def plot_best_surface_smoothed(dataName:str,color_data:str='landing_rate_4_leg',
     fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap),label=color_str)
 
     # PLOT LIMITS AND INFO
-    ax.set_zlabel(dataName)
+    ax.set_zlabel(Z_data)
     ax.set_title('Smoothed Best Data Surface')
 
 
@@ -306,6 +358,19 @@ def plot_all_eul():
     fig.tight_layout()
 
 if __name__ == '__main__':
+
+    ## FULL DATAFRAME
+    model_config = "Narrow-Long"
+    df_raw = pd.read_csv(f"Projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
+    df_raw = df_raw.query(f"landing_rate_4_leg >= {0.0}")
+
+
+    ## MAX LANDING RATE DATAFRAME
+    idx = df_raw.groupby(['vel_IC','phi_IC'])['landing_rate_4_leg'].transform(max) == df_raw['landing_rate_4_leg']
+    df_max = df_raw[idx].reset_index()
+
+
+
     # plot_best_surface_smoothed('landing_rate_4_leg',color_data='landing_rate_4_leg',polar=True)
     # plot_raw(Z_data='My_d',XY_data=("flip_height_mean","impact_eul_mean"),XY_str=("h","eul impact"),color_data='landing_rate_4_leg',polar=True)
     # plot_raw(Z_data='impact_eul_mean',XY_data=("impact_vx_mean","impact_vz_mean"),XY_str=("impact_vx_mean","impact_vz_mean"),color_data='impact_eul_std',polar=True)
@@ -313,8 +378,21 @@ if __name__ == '__main__':
     # plot_best_surface(dataName='landing_rate_4_leg',color_data='landing_rate_4_leg',polar=True)
     # plot_best_surface_smoothed(dataName='RREV_threshold',color_data='RREV_threshold',polar=False)
 
+
+    ## NON-SMOOTH LANDING RATE SURFACE
+    # plot_best_surface(Z_data='landing_rate_4_leg',color_data='landing_rate_4_leg',polar=True)
+
+    ## SMOOTH LANDING RATE SURFACE
+    # plot_best_surface_smoothed(Z_data='landing_rate_4_leg',color_data='landing_rate_4_leg',polar=True)
+
     ## RREV VS OF_d VS My_d
     # plot_raw(Z_data='My_d',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg')
     
-    plot_all_eul()
+    plot_raw_plotly(Z_data='My_d',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg')
+
+
+    ## 
+    # plot_raw(Z_data='impact_eul_mean',XY_data=("impact_vx_mean","impact_vz_mean"),XY_str=("impact_vx_mean","impact_vz_mean"),color_data='landing_rate_4_leg',polar=True)
+
+    # plot_all_eul()
     plt.show()
