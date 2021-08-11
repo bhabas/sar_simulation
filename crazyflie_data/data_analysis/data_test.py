@@ -8,11 +8,11 @@ from Data_Analysis import DataFile
 # os.system("clear")
 
 dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/logs/EXP_Logs/"
-dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs/"
+dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs/ExtraNarrow-Long_2-Policy/"
 
-Vel = 2.0
-phi = 90
-trial = 4
+Vel = 1.0
+phi = 17.5
+trial = 0
 
 
 # fileName = "EM_PEPG--Vd_3.50--phi_60.00--trial_03.csv"

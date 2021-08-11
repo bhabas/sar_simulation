@@ -357,10 +357,27 @@ def plot_all_eul():
     ax.set_title("Raw Data")
     fig.tight_layout()
 
+def plot_polar(Z_data:str):
+    azimuths = np.radians(np.linspace(0, 90, 20))
+    zeniths = np.arange(0, 70, 10)
+
+    r, theta = np.meshgrid(zeniths, azimuths)
+    values = np.random.random((azimuths.size, zeniths.size))
+
+    #-- Plot... ------------------------------------------------
+    fig, ax = plt.subplots(subplot_kw=dict(projection='polar'))
+    ax.contourf(theta, r, values)
+
+    ax.set_thetamin(0)
+    ax.set_thetamax(90)
+
+    plt.show()
+
+
 if __name__ == '__main__':
 
     ## FULL DATAFRAME
-    model_config = "Narrow-Long"
+    model_config = "ExtraNarrow-Long"
     df_raw = pd.read_csv(f"Projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
     df_raw = df_raw.query(f"landing_rate_4_leg >= {0.0}")
 
@@ -388,11 +405,31 @@ if __name__ == '__main__':
     ## RREV VS OF_d VS My_d
     # plot_raw(Z_data='My_d',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg')
     
-    plot_raw_plotly(Z_data='My_d',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg')
+    # plot_raw_plotly(Z_data='My_d',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg')
 
 
     ## 
     # plot_raw(Z_data='impact_eul_mean',XY_data=("impact_vx_mean","impact_vz_mean"),XY_str=("impact_vx_mean","impact_vz_mean"),color_data='landing_rate_4_leg',polar=True)
 
-    # plot_all_eul()
+    # plot_polar('test')
+
+    r = df_max.iloc[:]['vel_IC']
+    theta = df_max.iloc[:]['phi_IC']
+    colors = df_max.iloc[:]['landing_rate_4_leg']
+    
+
+    # r, theta = np.meshgrid(zeniths, azimuths)
+    # values = np.random.random((azimuths.size, zeniths.size))
+
+    #-- Plot... ------------------------------------------------
+    fig, ax = plt.subplots(subplot_kw=dict(projection='polar'))
+    # ax.contourf(theta, r, values)
+    cmap = mpl.cm.rainbow
+    norm = mpl.colors.Normalize(vmin=0,vmax=1)
+    ax.scatter(np.radians(theta),r,c=colors,cmap=cmap,norm=norm)
+
+    ax.set_thetamin(0)
+    ax.set_thetamax(90)
+    ax.set_rmin(0)
+    ax.set_rmax(5)
     plt.show()
