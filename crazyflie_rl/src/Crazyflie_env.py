@@ -94,6 +94,11 @@ class CrazyflieEnv:
         ## FLIP VALS
         self.t_flip = 0.0
         self.state_flip = np.zeros(13)
+        self.pos_flip = [0,0,0]
+        self.quat_flip = [0,0,0,1]
+        self.vel_flip = [0,0,0]
+        self.omega_flip = [0,0,0]
+        self.RREV_tr,self.OF_x_tr,self.OF_y_tr = [0,0,0]
         self.FM_flip = [0,0,0,0]    # [N,N*mm]
 
         self.flip_flag = False      # Flag if model has started flip maneuver

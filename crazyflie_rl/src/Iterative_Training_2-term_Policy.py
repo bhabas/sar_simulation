@@ -40,7 +40,7 @@ if __name__ == '__main__':
         # ============================
        
         ## GAUSSIAN DISTRIBUTION PARAMETERS 
-        mu_1 = np.random.uniform(2.5,6.5) # RREV typically starts around in this range
+        mu_1 = np.random.uniform(2.5,7.5) # RREV typically starts around in this range
         mu_2 = np.random.uniform(3.0,8.0) # My can typically start in this range and climb higher too
 
 
@@ -51,7 +51,7 @@ if __name__ == '__main__':
         
 
         ## LEARNING AGENT AND PARAMETERS
-        env.n_rollouts = 16
+        env.n_rollouts = 10
         K_EP_MAX = rospy.get_param("K_EP_MAX")
         # agent = EPHE_Agent(mu,sigma,n_rollouts=env.n_rollouts)
         agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=env.n_rollouts)
@@ -60,7 +60,7 @@ if __name__ == '__main__':
 
         ## INITIALIZE LOGGING DATA
         env.agent_name = agent.agent_type
-        env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}"        
+        env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--NS"        
         env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
         env.logging_flag = True
 
