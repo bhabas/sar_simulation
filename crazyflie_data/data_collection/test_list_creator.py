@@ -1,7 +1,7 @@
 import numpy as np
 
 test_list = []
-for V_d in np.arange(2.5,4.25,0.5):    # [m/s]
+for V_d in np.arange(1.0,4.25,0.5):    # [m/s]
     for phi in np.concatenate((np.arange(90,40,-10),np.arange(45,15,-2.5))):      # [deg]
         for trial_num in np.arange(0,5,1):
             test_list.append([V_d,phi,trial_num])
