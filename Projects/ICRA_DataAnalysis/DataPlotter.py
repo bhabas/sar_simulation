@@ -83,7 +83,7 @@ def plot_raw(Z_data:str,color_data:str='landing_rate_4_leg',color_str=None,color
 
     # PLOT LIMITS AND INFO
     ax.set_zlabel(Z_data)
-    # ax.set_ylim(2,7)
+    ax.set_ylim(2,7)
     ax.set_title("Raw Data")
     fig.tight_layout()
 
@@ -120,7 +120,7 @@ def plot_raw_plotly(Z_data:str,color_data:str='landing_rate_4_leg',color_str=Non
         ax.set_ylabel(XY_str[1])
 
         
-    Z = 2.1 - df_raw[Z_data]
+    Z = df_raw[Z_data]
     C = df_raw[color_data]
    
 
@@ -439,7 +439,7 @@ def plot_policy(df):
 if __name__ == '__main__':
 
     ## FULL DATAFRAME
-    model_config = "Narrow-Long"
+    model_config = "ExtraNarrow-Short"
     df_raw = pd.read_csv(f"Projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
     df_raw = df_raw.query(f"landing_rate_4_leg >= {0.0}")
 
@@ -459,7 +459,8 @@ if __name__ == '__main__':
 
     ## IMPROVED POLICY IDEA
     # plot_raw(Z_data='flip_vz_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg')
-    plot_raw_plotly(Z_data='flip_height_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='My_d')
+    plot_raw_plotly(Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg')
+    plot_raw_plotly(Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='My_d')
 
 
 
