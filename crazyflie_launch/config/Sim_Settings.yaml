@@ -1,5 +1,5 @@
-MODEL_NAME: "crazyflie_Wide-Long"
-GUI_FLAG: false
+MODEL_NAME: "crazyflie_Narrow-Long"
+GUI_FLAG: true
 
 SIM_SPEED: 2.5
 SIM_SLOWDOWN_SPEED: 0.4

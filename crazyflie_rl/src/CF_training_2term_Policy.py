@@ -345,7 +345,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=False)
+    env = CrazyflieEnv(gazeboTimeout=True)
     env.launch_dashboard()
 
     # ============================
@@ -356,12 +356,12 @@ if __name__ == '__main__':
     # mu = np.array([[4.0],[4.0]])                 # Initial mu starting point
     # sigma = np.array([[1.5],[1.5]])       # Initial sigma starting point
 
-    mu = np.array([[4.5], [6.7]])                 # Initial mu starting point
-    sigma = np.array([[1.0],[1.0]])       # Initial sigma starting point
+    mu = np.array([[4.4], [6.0]])                 # Initial mu starting point
+    sigma = np.array([[1.5],[1.5]])       # Initial sigma starting point
 
 
     ## LEARNING AGENTS AND PARAMETERS
-    env.n_rollouts = 8
+    env.n_rollouts = 10
     K_EP_MAX = rospy.get_param("K_EP_MAX")
     agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=env.n_rollouts)
 
@@ -371,15 +371,15 @@ if __name__ == '__main__':
     # ============================
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
-    V_d = 2.5   # [m/s]
-    phi = 90    # [deg]
+    V_d = 1.2   # [m/s]
+    phi = 32.5    # [deg]
 
 
     
     ## INITIALIALIZE LOGGING DATA
-    trial_num = 2
+    trial_num = 12
     env.agent_name = agent.agent_type
-    env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--SIM"
+    env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--NL"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
     env.logging_flag = True
        
