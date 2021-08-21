@@ -159,11 +159,11 @@ class DataFile:
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.scatter(k_ep_r,rewards,marker='_',color='black',alpha=0.5,label='Reward')
-        ax.scatter(k_ep_ravg,rewards_avg,marker='o',color='red',label='Reward_avg')
+        ax.scatter(k_ep_ravg,rewards_avg,marker='o',color='red',label='Average Reward')
         
         
 
-        ax.set_ylabel("Rewards")
+        ax.set_ylabel("Reward")
         ax.set_xlabel("k_ep")
         ax.set_xlim(-2,self.k_epMax+5)
         ax.set_ylim(-2,ymax)
@@ -171,6 +171,7 @@ class DataFile:
         ax.legend()
         ax.grid()
 
+        fig.tight_layout()
         plt.show()
 
     ## POLICY FUNCTIONS

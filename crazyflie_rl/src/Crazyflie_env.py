@@ -448,11 +448,19 @@ class CrazyflieEnv:
         else:
             rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
 
-    def launch_dashboard(self):
-        print("[STARTING] Starting Dashboard...")
+    def launch_RLdashboard(self):
+        print("[STARTING] Starting RL Dashboard...")
         self.dashboard_p = subprocess.Popen(
             "gnome-terminal -- roslaunch crazyflie_launch dashboard_rl.launch",
             close_fds=True, preexec_fn=os.setsid, shell=True)
+
+    def launch_statedashboard(self):
+        print("[STARTING] Starting State Dashboard...")
+        self.dashboard_p = subprocess.Popen(
+            "gnome-terminal -- roslaunch crazyflie_launch dashboard_states.launch",
+            close_fds=True, preexec_fn=os.setsid, shell=True)
+    
+    
 
     def launch_controller(self):
         print("[STARTING] Starting Controller Process...")

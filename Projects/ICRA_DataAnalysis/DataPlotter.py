@@ -26,7 +26,7 @@ os.system("clear")
 ##        LANDING RATE DATA (RAW)
 # ======================================
 
-def plot_raw(Z_data:str,color_data:str='landing_rate_4_leg',color_str=None,color_norm=None,polar=True,XY_data=None,XY_str=None):
+def plot_raw(df,Z_data:str,color_data:str='landing_rate_4_leg',color_str=None,color_norm=None,polar=True,XY_data=None,XY_str=None):
 
     
     ## INITIALIZE FIGURE
@@ -36,31 +36,28 @@ def plot_raw(Z_data:str,color_data:str='landing_rate_4_leg',color_str=None,color
     ## DEFINE PLOT VARIABLES
     if XY_data==None:
         if polar==True:
-            X = df_raw['vx']
-            Y = df_raw['vz']
+            X = df['vx']
+            Y = df['vz']
 
             ax.set_xlabel('Vel_x (m/s)')
             ax.set_ylabel('Vel_z (m/s)')
 
         else:
-            X = df_raw['phi_IC']
-            Y = df_raw['vel_IC']
+            X = df['phi_IC']
+            Y = df['vel_IC']
 
             ax.set_xlabel('phi (deg)')
             ax.set_ylabel('Vel (m/s)')
     else:
-        X = df_raw[XY_data[0]]
-        # vz = df_raw['flip_vz_mean']
-        # d = 2.1 - df_raw['flip_height_mean']
-        # X = vz**2/d**2
-        Y = df_raw[XY_data[1]]
+        X = df[XY_data[0]]
+        Y = df[XY_data[1]]
 
         ax.set_xlabel(XY_str[0])
         ax.set_ylabel(XY_str[1])
 
         
-    Z = df_raw[Z_data]
-    C = df_raw[color_data]
+    Z = df[Z_data]
+    C = df[color_data]
 
     ## ADJUST COLOR SCALING AND LABELS
     if color_str == None:
@@ -83,11 +80,11 @@ def plot_raw(Z_data:str,color_data:str='landing_rate_4_leg',color_str=None,color
 
     # PLOT LIMITS AND INFO
     ax.set_zlabel(Z_data)
-    ax.set_ylim(2,7)
+    # ax.set_ylim(2,7)
     ax.set_title("Raw Data")
     fig.tight_layout()
 
-def plot_raw_plotly(Z_data:str,color_data:str='landing_rate_4_leg',color_str=None,color_norm=None,polar=True,XY_data=None,XY_str=None):
+def plot_plotly(df,Z_data:str,color_data:str='landing_rate_4_leg',color_str=None,color_norm=None,polar=True,XY_data=None,XY_str=None):
 
     
     ## INITIALIZE FIGURE
@@ -97,31 +94,28 @@ def plot_raw_plotly(Z_data:str,color_data:str='landing_rate_4_leg',color_str=Non
     ## DEFINE PLOT VARIABLES
     if XY_data==None:
         if polar==True:
-            X = df_raw['vx']
-            Y = df_raw['vz']
+            X = df['vx']
+            Y = df['vz']
 
             ax.set_xlabel('Vel_x (m/s)')
             ax.set_ylabel('Vel_z (m/s)')
 
         else:
-            X = df_raw['phi_IC']
-            Y = df_raw['vel_IC']
+            X = df['phi_IC']
+            Y = df['vel_IC']
 
             ax.set_xlabel('phi (deg)')
             ax.set_ylabel('Vel (m/s)')
     else:
-        X = df_raw[XY_data[0]]
-        # vz = df_raw['flip_vz_mean']
-        # d = 2.1 - df_raw['flip_height_mean']
-        # X = vz**2/d**2
-        Y = df_raw[XY_data[1]]
+        X = df[XY_data[0]]
+        Y = df[XY_data[1]]
 
         ax.set_xlabel(XY_str[0])
         ax.set_ylabel(XY_str[1])
 
         
-    Z = df_raw[Z_data]
-    C = df_raw[color_data]
+    Z = df[Z_data]
+    C = df[color_data]
    
 
     fig = go.Figure(data=[go.Scatter3d(x=X, y=Y, z=Z,
@@ -135,11 +129,11 @@ def plot_raw_plotly(Z_data:str,color_data:str='landing_rate_4_leg',color_str=Non
     # CREATE PLOTS AND COLOR BAR
     fig.update_layout(
     scene = dict(
-        xaxis_title = "OF_y",
-        yaxis_title = "RREV",
-        zaxis_title = f"Raw Data",
-        # xaxis = dict(nticks=4, range=[0,5]),
-        yaxis = dict(range=[0,8]),
+        xaxis_title = XY_str[0],
+        yaxis_title = XY_str[1],
+        zaxis_title = Z_data,
+        # xaxis = dict(range=[0,5]),
+        # yaxis = dict(range=[0,8]),
         # zaxis = dict(nticks=4, range=[0,360])
         ))
 
@@ -322,22 +316,22 @@ def plot_all_eul():
     fig = plt.figure()
     ax = fig.add_subplot(111,projection="3d")
 
-    X = df_raw['impact_vx_arr']
+    X = df['impact_vx_arr']
     for idx, i in enumerate(X): 
             X[idx] = np.fromstring(i[1:-1], dtype=float, sep=' ')
     X = np.concatenate(X,axis=0)
 
-    Y = df_raw['impact_vz_arr']
+    Y = df['impact_vz_arr']
     for idx, i in enumerate(Y): 
             Y[idx] = np.fromstring(i[1:-1], dtype=float, sep=' ')
     Y = np.concatenate(Y,axis=0)
 
-    Z = df_raw['impact_eul_arr']
+    Z = df['impact_eul_arr']
     for idx, i in enumerate(Z): 
             Z[idx] = np.fromstring(i[1:-1], dtype=float, sep=' ')
     Z = np.concatenate(Z,axis=0)
 
-    C = df_raw['contact_arr']
+    C = df['contact_arr']
     for idx, i in enumerate(C): 
             C[idx] = np.fromstring(i[1:-1], dtype=float, sep=' ')
     C = np.concatenate(C,axis=0)
@@ -362,11 +356,11 @@ def plot_polar_smoothed():
     # COLLECT DATA
     R = df_max.iloc[:]['vel_IC']
     Theta = df_max.iloc[:]['phi_IC']
-    Z = df_max.iloc[:]['landing_rate_4_leg']
+    Z = df_max.iloc[:]['My_d']
 
     # SOMETHING ABOUT DEFINING A GRID
-    ri = np.linspace(R.min(),R.max(),(len(Z)//10))
-    thetai = np.linspace(Theta.min(),Theta.max(),(len(Z)//10))
+    ri = np.linspace(R.min(),R.max(),(len(Z)//15))
+    thetai = np.linspace(Theta.min(),Theta.max(),(len(Z)//15))
     zi = griddata((R, Theta), Z, (ri[None,:], thetai[:,None]), method='linear')
     r_ig, theta_ig = np.meshgrid(ri, thetai)
     
@@ -377,7 +371,7 @@ def plot_polar_smoothed():
     
 
     cmap = mpl.cm.jet
-    norm = mpl.colors.Normalize(vmin=0,vmax=1)
+    norm = mpl.colors.Normalize(vmin=0,vmax=10)
     
     ax.contourf(np.radians(theta_ig),r_ig,zi,cmap=cmap,norm=norm,levels=20)
     ax.set_thetamin(25)
@@ -439,7 +433,7 @@ def plot_policy(df):
 if __name__ == '__main__':
 
     ## FULL DATAFRAME
-    model_config = "ExtraNarrow-Short"
+    model_config = "Wide-Long"
     df_raw = pd.read_csv(f"Projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
     df_raw = df_raw.query(f"landing_rate_4_leg >= {0.0}")
 
@@ -450,22 +444,25 @@ if __name__ == '__main__':
     idx = df_raw.groupby(['vel_IC','phi_IC'])['landing_rate_4_leg'].transform(max) == df_raw['landing_rate_4_leg']
     df_max = df_raw[idx].reset_index()
 
+    # plot_raw(df_max,Z_data='landing_rate_4_leg',color_data='landing_rate_4_leg',polar=True)
+
+
 
     ## RREV VS OF_d VS My_d
     # plot_raw(Z_data='My_d',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg')
-    
-
-    # plot_raw_plotly(Z_data='My_d',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg')
+    # plot_plotly(df_raw,Z_data='My_d',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg')
 
     ## IMPROVED POLICY IDEA
     # plot_raw(Z_data='flip_vz_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg')
-    plot_raw_plotly(Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg')
-    plot_raw_plotly(Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='My_d')
+    # plot_plotly(df_raw,Z_data='vel_IC',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='My_d')
+    # plot_plotly(df_raw,Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='My_d')
 
 
 
     ## IMPACT ANGLE SUCCESS RATE PLOT
     # plot_raw(Z_data='impact_eul_mean',XY_data=("impact_vx_mean","impact_vz_mean"),XY_str=("impact_vx_mean","impact_vz_mean"),color_data='landing_rate_4_leg',polar=True)
+    plot_plotly(df_raw,Z_data='impact_eul_mean',XY_data=("impact_vx_mean","impact_vz_mean"),XY_str=("impact_vx_mean","impact_vz_mean"),color_data='landing_rate_4_leg',polar=True)
+
 
     ## LANDING RATE POLAR PLOT
     # plot_polar_smoothed()
