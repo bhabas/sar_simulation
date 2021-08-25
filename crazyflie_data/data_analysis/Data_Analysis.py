@@ -351,7 +351,7 @@ class DataFile:
         
 
         ax1.set_ylabel("Reward")
-        ax1.set_xlabel("K_ep")
+        ax1.set_xlabel("Episode Number")
         ax1.set_xlim(-1,self.k_epMax+1)
         ax1.set_ylim(-1,ymax)
         ax1.set_xticks(np.arange(0,self.k_epMax+3,5))
@@ -369,23 +369,26 @@ class DataFile:
         Vel,phi = self.grab_vel_IC_2D_angle()
 
         ## CREATE SUBPLOT FOR MU 
-        ax2.plot(k_ep_arr,mu_arr[:,0],linestyle='-.',label=G_Labels[0],color='tab:blue')
-        ax2.errorbar(k_ep_arr,mu_arr[:,0],yerr=2*sigma_arr[:,0],linestyle='None',capsize=3,color='black')
-        ax3.plot(k_ep_arr,mu_arr[:,1],label=G_Labels[1],color='tab:orange')
-        ax2.plot([], [],label=G_Labels[1],color='tab:orange')
+        ax2.plot(k_ep_arr,mu_arr[:,0],linestyle='-',marker='o',markersize=0,label=G_Labels[0],color='tab:blue')
+        ax2.fill_between(k_ep_arr,mu_arr[:,0]+2*sigma_arr[:,0],mu_arr[:,0]-2*sigma_arr[:,0],alpha=0.5,color='tab:blue')
+        # ax2.errorbar(k_ep_arr,mu_arr[:,0],yerr=2*sigma_arr[:,0],linestyle='None',capsize=3,color='black')
+
+
+        ax2.plot(k_ep_arr,mu_arr[:,1],linestyle='-',label=G_Labels[1],color='tab:orange')
+        ax2.fill_between(k_ep_arr,mu_arr[:,1]+2*sigma_arr[:,1],mu_arr[:,1]-2*sigma_arr[:,1],alpha=0.5,color='tab:orange')
 
 
 
         ax2.set_ylabel('RREV [rad/s]',fontsize=15)
-        ax2.set_xlabel('K_ep')
+        ax2.set_xlabel('Episode Number')
         ax2.set_xticks(np.arange(0,self.k_epMax+3,5))
-        ax2.set_ylim(0,10) # Set lower ylim
+        ax2.set_ylim(0,12) 
         ax2.set_title(f'Policy Value vs Episode | $Vel_d$ = {Vel:.2f}, $\phi$ = {phi:.2f}$^{{\circ}}$)')
         ax2.legend(loc='lower right',fontsize=15,ncol=2)
         ax2.grid()
 
         ax3.set_ylabel(r'$M_{yd}$ [N*mm]',fontsize=15)
-        ax3.set_ylim(0,10)
+        ax3.set_ylim(0,12)
         
 
 
