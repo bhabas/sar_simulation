@@ -357,8 +357,8 @@ if __name__ == '__main__':
     # mu = np.array([[4.0],[4.0]])                 # Initial mu starting point
     # sigma = np.array([[1.5],[1.5]])       # Initial sigma starting point
 
-    mu = np.array([[4.4], [6.0]])                 # Initial mu starting point
-    sigma = np.array([[1.5],[1.5]])       # Initial sigma starting point
+    mu = np.array([[4.75], [8.21]])                 # Initial mu starting point
+    sigma = np.array([[0.0001],[0.0001]])       # Initial sigma starting point
 
 
     ## LEARNING AGENTS AND PARAMETERS
@@ -372,8 +372,8 @@ if __name__ == '__main__':
     # ============================
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
-    V_d = 1.2   # [m/s]
-    phi = 32.5    # [deg]
+    V_d = 3.5   # [m/s]
+    phi = 35    # [deg]
 
 
     

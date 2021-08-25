@@ -334,6 +334,77 @@ class DataFile:
 
         return alpha_mu,alpha_sigma,mu,sigma
 
+    def plot_convg_summary(self,ymax=200):
+
+        fig = plt.figure(figsize=(8,6))
+        ax1 = fig.add_subplot(211)
+        ax2 = fig.add_subplot(212)
+        ax3 = ax2.twinx()
+
+        
+        ## PLOT REWARD DATA
+        k_ep_r,rewards,k_ep_ravg,rewards_avg = self.grab_rewardData()
+
+        ax1.scatter(k_ep_r,rewards,marker='_',color='black',alpha=0.5,label='Reward')
+        ax1.scatter(k_ep_ravg,rewards_avg,marker='o',color='red',label='Average Reward')
+        
+        
+
+        ax1.set_ylabel("Reward")
+        ax1.set_xlabel("K_ep")
+        ax1.set_xlim(-1,self.k_epMax+1)
+        ax1.set_ylim(-1,ymax)
+        ax1.set_xticks(np.arange(0,self.k_epMax+3,5))
+        ax1.set_title(f"Reward vs Episode | Rollouts per Episode: {self.n_rollouts}")
+        ax1.legend(loc='lower right',ncol=2)
+        ax1.grid()
+
+
+        ## PLOT CONVERGENCE DATA
+
+        k_ep_arr,mu_arr,sigma_arr = self.grab_convg_data()
+
+        num_col = mu_arr.shape[1] # Number of policy gains in mu [Currently 3]
+        G_Labels = [r'$\mu_{RREV_{threshold}}$ ',r'$\mu_{M_{y}}$ '] # List of policy gain names
+        Vel,phi = self.grab_vel_IC_2D_angle()
+
+        ## CREATE SUBPLOT FOR MU 
+        ax2.plot(k_ep_arr,mu_arr[:,0],linestyle='-.',label=G_Labels[0],color='tab:blue')
+        ax2.errorbar(k_ep_arr,mu_arr[:,0],yerr=2*sigma_arr[:,0],linestyle='None',capsize=3,color='black')
+        ax3.plot(k_ep_arr,mu_arr[:,1],label=G_Labels[1],color='tab:orange')
+        ax2.plot([], [],label=G_Labels[1],color='tab:orange')
+
+
+
+        ax2.set_ylabel('RREV [rad/s]',fontsize=15)
+        ax2.set_xlabel('K_ep')
+        ax2.set_xticks(np.arange(0,self.k_epMax+3,5))
+        ax2.set_ylim(0,10) # Set lower ylim
+        ax2.set_title(f'Policy Value vs Episode | $Vel_d$ = {Vel:.2f}, $\phi$ = {phi:.2f}$^{{\circ}}$)')
+        ax2.legend(loc='lower right',fontsize=15,ncol=2)
+        ax2.grid()
+
+        ax3.set_ylabel(r'$M_{yd}$ [N*mm]',fontsize=15)
+        ax3.set_ylim(0,10)
+        
+
+
+        # ## CREATE SUBPLOT FOR SIGMA
+        # ax = fig.add_subplot(212)
+        # for jj in range(num_col): # Iterate through gains and plot each
+        #     ax.plot(k_ep_arr,sigma_arr[:,jj],label=G_Labels[jj])
+
+        # ax.set_ylabel('Standard Deviation')
+        # ax.set_xlabel('K_ep')
+        # ax.set_title(f'Policy Std. Dev. vs Episode ($Vel_d$ = {Vel:.2f} | $\phi_d$ = {np.rad2deg(phi):.2f}$^{{\circ}}$)')
+        # ax.legend(ncol=3,loc='upper right')
+        # ax.grid()
+        # ax2.yaxis.label.set_fontsize(20)
+
+
+        fig.tight_layout()
+        plt.show()
+
 
     def plot_state_spread_flip(self,stateName,N:int=3): # Plot histogram showing spread of state values over last N episodes
         
@@ -728,9 +799,8 @@ class DataFile:
         """Return IC velocities
 
         Returns:
-            vx_IC (float): Desired flip x-velocity
-            vy_IC (float): Desired flip y-velocity
-            vz_IC (float): Desired flip z-velocity
+            Vel_IC (float): Desired flight velocity
+            phi_IC (float): Desired flight angle
         """        
         ## SELECT X,Y,Z LAUNCH VELOCITIES
         vel_df = self.trial_df[['mu','vx','vy','vz']].dropna()
@@ -742,8 +812,8 @@ class DataFile:
 
         
 
-        phi_IC = np.round(phi_IC,1)
-        Vel_IC = np.round(Vel_IC,1)
+        phi_IC = np.round(phi_IC,2)
+        Vel_IC = np.round(Vel_IC,2)
         
         return Vel_IC,phi_IC
 
@@ -1548,35 +1618,21 @@ class GTC_Model():
         
 
 if __name__ == "__main__":
-    import os,sys
+    dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/logs/EXP_Logs/"
+    # dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs/"
 
-    # sys.path.insert(1, os.path.join(sys.path[0], '/home/bhabas/catkin_ws/src/crazyflie_experiment/rl_experiment/utility'))
-    # from data_analysis import DataFile
+    Vel = 2.5
+    phi = 90
+    trial = 2
 
-    dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/logs/"
-    fileName = "EM_PEPG--Vd_2.65--phi_90.00--trial_03--EXP.csv"
-    # fileName = "EM_PEPG--Vd_2.50--phi_90.00--trial_00--EXP.csv"
 
-    trial = DataFile(dataPath,fileName)
+    # fileName = "EM_PEPG--Vd_3.50--phi_60.00--trial_03.csv"
+    # fileName = f"EM_PEPG--Vd_{Vel:.2f}--phi_{phi:.2f}--trial_{int(trial):02d}.csv"
+    # fileName = "My_6.00_Calibration_Test-3.csv"
+    fileName = "EM_PEPG--Vd_2.50--phi_90.00--trial_01--EXP.csv"
+    trial = DataFile(dataPath,fileName,dataType='EXP')
 
     k_ep = 0
-    k_run = 1
+    k_run = 0
 
-    np.set_printoptions(suppress=True)
-
-    trial.plot_rewardData()
-
-    # trial.predictAction(0,0,13.5)
-
-    # accel,_ = trial.grab_accel_data(k_ep,k_run)
-    # t,t_normalized = trial.grab_time(k_ep,k_run)
-
-    # a_mag = np.sqrt(accel[:,0]**2 + accel[:,1]**2 + accel[:,2]**2)
-
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111)
-
-    # ax.plot(t_normalized,a_mag)
-    # ax.grid()
-
-    # plt.show()
+    trial.plot_convg_summary()
