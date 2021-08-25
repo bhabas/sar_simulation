@@ -334,12 +334,14 @@ class DataFile:
 
         return alpha_mu,alpha_sigma,mu,sigma
 
-    def plot_convg_summary(self,ymax=200):
+    def plot_convg_summary(self,ymax=200,saveFig=False):
 
-        fig = plt.figure(figsize=(8,6))
+        fig = plt.figure(figsize=(6,5.5))
         ax1 = fig.add_subplot(211)
         ax2 = fig.add_subplot(212)
         ax3 = ax2.twinx()
+
+        MEDIUM_FONT = 12
 
         
         ## PLOT REWARD DATA
@@ -350,10 +352,10 @@ class DataFile:
         
         
 
-        ax1.set_ylabel("Reward")
-        ax1.set_xlabel("Episode Number")
+        ax1.set_ylabel("Reward",fontsize=MEDIUM_FONT)
+        # ax1.set_xlabel("Episode Number",fontsize=MEDIUM_FONT)
         ax1.set_xlim(-1,self.k_epMax+1)
-        ax1.set_ylim(-1,ymax)
+        ax1.set_ylim(0,ymax)
         ax1.set_xticks(np.arange(0,self.k_epMax+3,5))
         ax1.set_title(f"Reward vs Episode | Rollouts per Episode: {self.n_rollouts}")
         ax1.legend(loc='lower right',ncol=2)
@@ -371,41 +373,35 @@ class DataFile:
         ## CREATE SUBPLOT FOR MU 
         ax2.plot(k_ep_arr,mu_arr[:,0],linestyle='-',marker='o',markersize=0,label=G_Labels[0],color='tab:blue')
         ax2.fill_between(k_ep_arr,mu_arr[:,0]+2*sigma_arr[:,0],mu_arr[:,0]-2*sigma_arr[:,0],alpha=0.5,color='tab:blue')
-        # ax2.errorbar(k_ep_arr,mu_arr[:,0],yerr=2*sigma_arr[:,0],linestyle='None',capsize=3,color='black')
-
 
         ax2.plot(k_ep_arr,mu_arr[:,1],linestyle='-',label=G_Labels[1],color='tab:orange')
         ax2.fill_between(k_ep_arr,mu_arr[:,1]+2*sigma_arr[:,1],mu_arr[:,1]-2*sigma_arr[:,1],alpha=0.5,color='tab:orange')
 
 
 
-        ax2.set_ylabel('RREV [rad/s]',fontsize=15)
-        ax2.set_xlabel('Episode Number')
+        ax2.set_ylabel('RREV [rad/s]',fontsize=MEDIUM_FONT)
+        ax2.set_xlabel('Episode Number',fontsize=MEDIUM_FONT)
         ax2.set_xticks(np.arange(0,self.k_epMax+3,5))
-        ax2.set_ylim(0,12) 
-        ax2.set_title(f'Policy Value vs Episode | $Vel_d$ = {Vel:.2f}, $\phi$ = {phi:.2f}$^{{\circ}}$)')
-        ax2.legend(loc='lower right',fontsize=15,ncol=2)
+        ax2.set_ylim(0,12.5)
+        ax2.set_yticks(np.arange(0,15,2.5))
+        ax2.set_title(f'Policy Value vs Episode | $Vel$ = {Vel:.2f} [m/s], $\phi$ = {phi:.2f}$^{{\circ}}$)')
+        ax2.legend(loc='lower right',fontsize=MEDIUM_FONT,ncol=2)
         ax2.grid()
 
-        ax3.set_ylabel(r'$M_{yd}$ [N*mm]',fontsize=15)
-        ax3.set_ylim(0,12)
+        ax3.set_ylabel(r'$M_{y}$ [N*mm]',fontsize=MEDIUM_FONT)
+        ax3.set_yticks(ax2.get_yticks()) 
+        ax3.set_ylim(ax2.get_ylim())
         
+        ## JOIN X AXIS OF BOTH PLOTS
+        # ax1.get_shared_x_axes().join(ax1, ax2)
+        # ax1.set_xticklabels([])
 
 
-        # ## CREATE SUBPLOT FOR SIGMA
-        # ax = fig.add_subplot(212)
-        # for jj in range(num_col): # Iterate through gains and plot each
-        #     ax.plot(k_ep_arr,sigma_arr[:,jj],label=G_Labels[jj])
-
-        # ax.set_ylabel('Standard Deviation')
-        # ax.set_xlabel('K_ep')
-        # ax.set_title(f'Policy Std. Dev. vs Episode ($Vel_d$ = {Vel:.2f} | $\phi_d$ = {np.rad2deg(phi):.2f}$^{{\circ}}$)')
-        # ax.legend(ncol=3,loc='upper right')
-        # ax.grid()
-        # ax2.yaxis.label.set_fontsize(20)
 
 
         fig.tight_layout()
+        if saveFig==True:
+            plt.savefig('Convergence_Summary.pdf',format='pdf',dpi=300)
         plt.show()
 
 
@@ -1638,4 +1634,4 @@ if __name__ == "__main__":
     k_ep = 0
     k_run = 0
 
-    trial.plot_convg_summary()
+    trial.plot_convg_summary(saveFig=True)
