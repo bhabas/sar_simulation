@@ -478,7 +478,7 @@ if __name__ == '__main__':
     ############################
 
     # FIGURE 1: 3D POLAR (VEL, PHI, D_CEILING, LANDING_RATE)
-    # plot_mpl_3d(df_max,Z_data='flip_d_mean',color_data='landing_rate_4_leg',polar=True)
+    plot_mpl_3d(df_max,Z_data='flip_d_mean',color_data='landing_rate_4_leg',polar=True)
 
     # FIGURE 2: 2D CARTESIAN (OF_y, RREV, LANDING_RATE)
     # plot_scatter_2d(df_raw,color_data='landing_rate_4_leg',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'))
@@ -488,8 +488,8 @@ if __name__ == '__main__':
     # plot_mpl_3d(df_raw,Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg')
 
     # FIGURE 4: 3D CARTESIAN (OF_y, RREV, D_CEILING, My VALUE)
-    plot_mpl_3d(df_raw,Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='My_d')
-    plot_plotly_3d(df_raw.query(f"landing_rate_4_leg >= {0.6}"),Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='My_d')
+    # plot_mpl_3d(df_raw,Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='My_d')
+    # plot_plotly_3d(df_raw.query(f"landing_rate_4_leg >= {0.6}"),Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='My_d')
 
     ## PLOT POLICY REGION W/ TRAJECTORY DATA
     # fig,ax = plot_raw(df_raw,Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg',color_norm=(0,1))

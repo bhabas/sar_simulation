@@ -1,9 +1,9 @@
 import numpy as np
 
 test_list = []
-for V_d in np.arange(0.25,2.0,0.25):    # [m/s]
-    for phi in np.concatenate((np.arange(90,40,-10),np.arange(45,15,-2.5))):      # [deg]
-        for trial_num in np.arange(10,12,1):
+for V_d in np.concatenate((np.arange(0.25,2.0,0.25),np.arange(2.0,4.0,0.5))):    # [m/s]
+    for phi in np.arange(90,15,-5):      # [deg]
+        for trial_num in np.arange(20,24,1):
             test_list.append([V_d,phi,trial_num])
 
 test_list = np.array(test_list)
