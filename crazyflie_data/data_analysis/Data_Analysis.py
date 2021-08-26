@@ -353,7 +353,7 @@ class DataFile:
         
 
         ax1.set_ylabel("Reward",fontsize=MEDIUM_FONT)
-        # ax1.set_xlabel("Episode Number",fontsize=MEDIUM_FONT)
+        ax1.set_xlabel("Episode Number",fontsize=MEDIUM_FONT)
         ax1.set_xlim(-1,self.k_epMax+1)
         ax1.set_ylim(0,ymax)
         ax1.set_xticks(np.arange(0,self.k_epMax+3,5))

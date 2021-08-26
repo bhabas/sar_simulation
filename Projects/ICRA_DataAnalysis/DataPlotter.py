@@ -19,7 +19,7 @@ from data_analysis.Data_Analysis import DataFile
 os.system("clear")
 
 ## RAW DATA FUNCTIONS
-def plot_raw(df,Z_data:str,color_data:str='landing_rate_4_leg',color_str=None,color_norm=None,polar=True,XY_data=None,XY_str=None):
+def plot_mpl_3d(df,Z_data:str,color_data:str='landing_rate_4_leg',color_str=None,color_norm=None,polar=True,XY_data=None,XY_str=None):
 
     
     ## INITIALIZE FIGURE
@@ -67,7 +67,7 @@ def plot_raw(df,Z_data:str,color_data:str='landing_rate_4_leg',color_str=None,co
     norm = mpl.colors.Normalize(vmin=vmin,vmax=vmax)
     
     # CREATE PLOTS AND COLOR BAR
-    ax.scatter(X,Y,Z,c=C,cmap=cmap,norm=norm,alpha=0.5,depthshade=False)
+    ax.scatter(X,Y,Z,c=C,cmap=cmap,norm=norm,alpha=1.0,depthshade=True)
     fig.colorbar(mpl.cm.ScalarMappable(cmap=cmap,norm=norm),label=color_str)
 
 
@@ -78,7 +78,7 @@ def plot_raw(df,Z_data:str,color_data:str='landing_rate_4_leg',color_str=None,co
 
     return fig,ax
 
-def plot_plotly(df,Z_data:str,color_data:str='landing_rate_4_leg',color_str=None,color_norm=None,polar=True,XY_data=None,XY_str=None):
+def plot_plotly_3d(df,Z_data:str,color_data:str='landing_rate_4_leg',color_str=None,color_norm=None,polar=True,XY_data=None,XY_str=None):
 
     
     ## INITIALIZE FIGURE
@@ -132,6 +132,63 @@ def plot_plotly(df,Z_data:str,color_data:str='landing_rate_4_leg',color_str=None
         ))
 
     fig.show()
+
+def plot_scatter_2d(df,color_data:str='landing_rate_4_leg',color_str=None,color_norm=None,polar=True,XY_data=None,XY_str=None):
+
+    
+    ## INITIALIZE FIGURE
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    ## DEFINE PLOT VARIABLES
+    if XY_data==None:
+        if polar==True:
+            X = df['vx']
+            Y = df['vz']
+
+            ax.set_xlabel('Vel_x (m/s)')
+            ax.set_ylabel('Vel_z (m/s)')
+
+        else:
+            X = df['phi_IC']
+            Y = df['vel_IC']
+
+            ax.set_xlabel('phi (deg)')
+            ax.set_ylabel('Vel (m/s)')
+    else:
+        X = df[XY_data[0]]
+        Y = df[XY_data[1]]
+
+        ax.set_xlabel(XY_str[0])
+        ax.set_ylabel(XY_str[1])
+
+    C = df[color_data]
+
+    ## ADJUST COLOR SCALING AND LABELS
+    if color_str == None:
+        color_str = color_data
+
+    if color_norm == None:
+        vmin = np.min(C)
+        vmax = np.max(C)
+    else:
+        vmin = color_norm[0]
+        vmax = color_norm[1]
+
+    cmap = mpl.cm.jet
+    norm = mpl.colors.Normalize(vmin=vmin,vmax=vmax)
+    
+    # CREATE PLOTS AND COLOR BAR
+    ax.scatter(X,Y,c=C,cmap=cmap,norm=norm,alpha=1.0)
+    fig.colorbar(mpl.cm.ScalarMappable(cmap=cmap,norm=norm),label=color_str)
+
+
+    # PLOT LIMITS AND INFO
+    ax.grid()
+    ax.set_axisbelow(True)
+    fig.tight_layout()
+
+    return fig,ax
 
 
 ## OPTIMAL DATA FUNCTIONS
@@ -416,7 +473,23 @@ if __name__ == '__main__':
 
 
 
+    ############################
+    #     Official Plots
+    ############################
 
+    # FIGURE 1: 3D POLAR (VEL, PHI, D_CEILING, LANDING_RATE)
+    # plot_mpl_3d(df_max,Z_data='flip_d_mean',color_data='landing_rate_4_leg',polar=True)
+
+    # FIGURE 2: 2D CARTESIAN (OF_y, RREV, LANDING_RATE)
+    # plot_scatter_2d(df_raw,color_data='landing_rate_4_leg',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'))
+
+    # FIGURE 3: 3D CARTESIAN (OF_y, RREV, D_CEILING, LANDING RATE)
+    # POSSIBLY SPLIT INTO TWO 2-D SIDE VIEW PLOTS
+    # plot_mpl_3d(df_raw,Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg')
+
+    # FIGURE 4: 3D CARTESIAN (OF_y, RREV, D_CEILING, My VALUE)
+    plot_mpl_3d(df_raw,Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='My_d')
+    plot_plotly_3d(df_raw.query(f"landing_rate_4_leg >= {0.6}"),Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='My_d')
 
     ## PLOT POLICY REGION W/ TRAJECTORY DATA
     # fig,ax = plot_raw(df_raw,Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg',color_norm=(0,1))
