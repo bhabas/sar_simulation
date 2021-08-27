@@ -203,6 +203,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                     
                     if (env.impact_flag == True and flag2 == False):
                         start_time_impact = env.getTime()
+                        flag2 = True
 
 
                     # ============================
@@ -345,9 +346,9 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=True)
+    env = CrazyflieEnv(gazeboTimeout=False)
     # env.launch_RLdashboard()
-    env.launch_statedashboard()
+    # env.launch_statedashboard()
 
     # ============================
     ##          AGENT  
@@ -372,8 +373,8 @@ if __name__ == '__main__':
     # ============================
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
-    V_d = 3.5   # [m/s]
-    phi = 35    # [deg]
+    V_d = 0.25   # [m/s]
+    phi = 50    # [deg]
 
 
     
