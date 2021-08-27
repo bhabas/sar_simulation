@@ -1,10 +1,12 @@
 import numpy as np
 
 test_list = []
+RREV_list = [1.0,2.0,3.0,4.0,5.0]
+
 for V_d in np.concatenate((np.arange(0.25,2.0,0.25),np.arange(2.0,4.0,0.5))):    # [m/s]
     for phi in np.arange(90,15,-5):      # [deg]
-        for trial_num in np.arange(20,24,1):
-            test_list.append([V_d,phi,trial_num])
+        for ii,trial_num in enumerate(np.arange(20,25,1)):
+            test_list.append([V_d,phi,trial_num,RREV_list[ii]])
 
 test_list = np.array(test_list)
 # test_list = np.flip(test_list,axis=0)
