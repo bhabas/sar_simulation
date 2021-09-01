@@ -19,6 +19,10 @@ class DataFile:
 
         # self.dataType = re.findall('SIM|EXP',fileName)[0] # FIND 'SIM' OR 'EXP'
         self.trialNum = int(re.findall('trial_(\d+)',fileName)[0])
+        self.vel_IC = float(re.findall('Vd_(\d+\.?\d*)',fileName)[0])
+        self.phi_IC = float(re.findall('phi_(\d+\.?\d*)',fileName)[0])
+
+
         self.trial_df = pd.read_csv(filepath,low_memory=False)
 
         ## CLEAN UP TRIAL DATAFRAME
@@ -809,10 +813,13 @@ class DataFile:
         Vel_IC = np.sqrt(vx_IC**2 + vz_IC**2)
         phi_IC = np.rad2deg(np.arctan2(vz_IC,vx_IC))
 
+        Vel_IC = self.vel_IC
+        phi_IC = self.phi_IC
+
         
 
-        phi_IC = np.round(phi_IC,2)
-        Vel_IC = np.round(Vel_IC,2)
+        # Vel_IC = np.round(Vel_IC,2)
+        # phi_IC = np.round(phi_IC,0)
         
         return Vel_IC,phi_IC
 

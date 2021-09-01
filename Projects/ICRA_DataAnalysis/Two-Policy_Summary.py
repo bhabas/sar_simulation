@@ -1,7 +1,6 @@
 import os,time,datetime
 import pandas as pd
 import warnings
-import send2trash
 import numpy as np
 import csv
 
@@ -12,9 +11,9 @@ os.system("clear")
 sys.path.insert(0,'/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/')
 from data_analysis.Data_Analysis import DataFile
 
-
-
-dataPath = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs/Wide-Short_2-Policy/"
+print("Testing")
+model_name = input("Model_Name: ")
+dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs/{model_name}/"
 df_list = []
 num_files = len(os.listdir(dataPath))
 
@@ -61,21 +60,21 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
             ## LANDING RATES
             landing_rate_4_leg,landing_rate_2_leg,_,_ = trial.landing_rate(N=3)
 
-
+            landing_cutoff = 0
             ## FLIP DATA
-            RREV_flip_mean,RREV_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,stateName='RREV')
-            dRREV_flip_mean,dRREV_flip_std,_ = trial.grab_trial_data(trial.grab_flip_dRREV)
-            OF_y_flip_mean,OF_y_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,stateName='OF_y')
-            flip_height_mean,flip_height_std,_ = trial.grab_trial_data(trial.grab_flip_state,stateName='z')
+            RREV_flip_mean,RREV_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,stateName='RREV',landing_cutoff=landing_cutoff)
+            dRREV_flip_mean,dRREV_flip_std,_ = trial.grab_trial_data(trial.grab_flip_dRREV,landing_cutoff=landing_cutoff)
+            OF_y_flip_mean,OF_y_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,stateName='OF_y',landing_cutoff=landing_cutoff)
+            flip_height_mean,flip_height_std,_ = trial.grab_trial_data(trial.grab_flip_state,stateName='z',landing_cutoff=landing_cutoff)
             flip_d_mean = 2.1 - flip_height_mean
-            flip_vz_mean,flip_vz_std,_ = trial.grab_trial_data(trial.grab_flip_state,stateName='vz')
+            flip_vz_mean,flip_vz_std,_ = trial.grab_trial_data(trial.grab_flip_state,stateName='vz',landing_cutoff=landing_cutoff)
 
             ## IMPACT DATA
-            impact_force_x_mean,impact_force_x_std,_ = trial.grab_trial_data(trial.grab_impact_force,'x')
-            impact_force_z_mean,impact_force_z_std,_ = trial.grab_trial_data(trial.grab_impact_force,'z')
-            impact_vx_mean,impact_vx_std,_ = trial.grab_trial_data(trial.grab_impact_state,stateName='vx')
-            impact_vz_mean,impact_vz_std,_ = trial.grab_trial_data(trial.grab_impact_state,stateName='vz')
-            t_delta_mean,t_delta_std,_ = trial.grab_trial_data(trial.trigger2impact)
+            impact_force_x_mean,impact_force_x_std,_ = trial.grab_trial_data(trial.grab_impact_force,'x',landing_cutoff=landing_cutoff)
+            impact_force_z_mean,impact_force_z_std,_ = trial.grab_trial_data(trial.grab_impact_force,'z',landing_cutoff=landing_cutoff)
+            impact_vx_mean,impact_vx_std,_ = trial.grab_trial_data(trial.grab_impact_state,stateName='vx',landing_cutoff=landing_cutoff)
+            impact_vz_mean,impact_vz_std,_ = trial.grab_trial_data(trial.grab_impact_state,stateName='vz',landing_cutoff=landing_cutoff)
+            t_delta_mean,t_delta_std,_ = trial.grab_trial_data(trial.trigger2impact,landing_cutoff=landing_cutoff)
             
             impact_eul_mean,impact_eul_std,_ = trial.grab_impact_eul_trial(eul_type='eul_y')
 
@@ -150,4 +149,4 @@ print(master_df)
 master_df = master_df.round(4)
 master_df.sort_values(['vel_IC','phi_IC','trial_num'],ascending=[1,1,1],inplace=True)
 
-master_df.to_csv('Wide-Short_2-Policy_Summary.csv',index=False,quoting=csv.QUOTE_MINIMAL)
+master_df.to_csv(f'{model_name}_2-Policy_Summary.csv',index=False,quoting=csv.QUOTE_MINIMAL)

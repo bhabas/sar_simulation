@@ -203,28 +203,28 @@ def plot_best(Z_data:str,color_data:str='landing_rate_4_leg',color_str=None,colo
     if XY_data==None:
 
         if polar==True:
-            X = df_max['vx']
-            Y = df_max['vz']
+            X = df['vx']
+            Y = df['vz']
 
             ax.set_xlabel('Vel_x (m/s)')
             ax.set_ylabel('Vel_z (m/s)')
 
         else:
-            X = df_max['phi_IC']
-            Y = df_max['vel_IC']
+            X = df['phi_IC']
+            Y = df['vel_IC']
 
             ax.set_xlabel('phi (deg)')
             ax.set_ylabel('Vel (m/s)')
     else:
-        X = df_max[XY_data[0]]
-        Y = df_max[XY_data[1]]
+        X = df[XY_data[0]]
+        Y = df[XY_data[1]]
 
         ax.set_xlabel(XY_str[0])
         ax.set_ylabel(XY_str[1])
 
         
-    Z = df_max[Z_data]
-    C = df_max[color_data]
+    Z = df[Z_data]
+    C = df[color_data]
 
     ## ADJUST COLOR SCALING AND LABELS
     if color_str == None:
@@ -258,22 +258,22 @@ def plot_best_surface(Z_data:str,color_data:str='landing_rate_4_leg',color_str=N
 
     ## DEFINE PLOT VARIABLES
     if polar==True:
-        X = df_max['vx']
-        Y = df_max['vz']
+        X = df['vx']
+        Y = df['vz']
 
         ax.set_xlabel('Vel_x (m/s)')
         ax.set_ylabel('Vel_z (m/s)')
 
     else:
-        X = df_max['phi_IC']
-        Y = df_max['vel_IC']
+        X = df['phi_IC']
+        Y = df['vel_IC']
 
         ax.set_xlabel('phi (deg)')
         ax.set_ylabel('Vel (m/s)')
 
         
-    Z = df_max[Z_data]
-    C = df_max[color_data]
+    Z = df[Z_data]
+    C = df[color_data]
 
     ## ADJUST COLOR SCALING AND LABELS
     if color_str == None:
@@ -308,22 +308,22 @@ def plot_best_surface_smoothed(Z_data:str,color_data:str='landing_rate_4_leg',co
 
     ## DEFINE PLOT VARIABLES
     if polar==True:
-        X = df_max['vx']
-        Y = df_max['vz']
+        X = df['vx']
+        Y = df['vz']
 
         ax.set_xlabel('Vel_x (m/s)')
         ax.set_ylabel('Vel_z (m/s)')
 
     else:
-        X = df_max['phi_IC']
-        Y = df_max['vel_IC']
+        X = df['phi_IC']
+        Y = df['vel_IC']
 
         ax.set_xlabel('phi (deg)')
         ax.set_ylabel('Vel (m/s)')
 
         
-    Z = df_max[Z_data]
-    C = df_max[color_data]
+    Z = df[Z_data]
+    C = df[color_data]
 
     ## ADJUST COLOR SCALING AND LABELS
     if color_str == None:
@@ -357,17 +357,17 @@ def plot_best_surface_smoothed(Z_data:str,color_data:str='landing_rate_4_leg',co
     ax.set_zlabel(Z_data)
     ax.set_title('Smoothed Best Data Surface')
 
-def plot_polar_smoothed():
+def plot_polar_smoothed(df,saveFig=False):
 
     # COLLECT DATA
-    R = df_max.iloc[:]['vel_IC']
-    Theta = df_max.iloc[:]['phi_IC']
-    Z = df_max.iloc[:]['My_d']
+    R = df.iloc[:]['vel_IC']
+    Theta = df.iloc[:]['phi_IC']
+    C = df.iloc[:]['landing_rate_4_leg']
 
     # SOMETHING ABOUT DEFINING A GRID
-    ri = np.linspace(R.min(),R.max(),(len(Z)//15))
-    thetai = np.linspace(Theta.min(),Theta.max(),(len(Z)//15))
-    zi = griddata((R, Theta), Z, (ri[None,:], thetai[:,None]), method='linear')
+    ri = np.linspace(R.min(),R.max(),(len(C)//1))
+    thetai = np.linspace(Theta.min(),Theta.max(),(len(C)//1))
+    zi = griddata((R, Theta), C, (ri[None,:], thetai[:,None]), method='linear')
     r_ig, theta_ig = np.meshgrid(ri, thetai)
     
 
@@ -377,7 +377,7 @@ def plot_polar_smoothed():
     
 
     cmap = mpl.cm.jet
-    norm = mpl.colors.Normalize(vmin=0,vmax=10)
+    norm = mpl.colors.Normalize(vmin=0,vmax=1)
     
     ax.contourf(np.radians(theta_ig),r_ig,zi,cmap=cmap,norm=norm,levels=20)
     ax.set_thetamin(25)
@@ -393,6 +393,9 @@ def plot_polar_smoothed():
 
     ax.text(np.radians(60),4.5,'Flight Angle (deg)',
         rotation=0,ha='left',va='center')
+
+    if saveFig==True:
+        plt.savefig(f'{model_config}_Polar_LR.png',dpi=300)
 
     plt.show()
 
@@ -442,7 +445,7 @@ def plot_all_eul():
 if __name__ == '__main__':
 
     ## FULL DATAFRAME
-    model_config = "Narrow-Long"
+    model_config = "Wide-Short"
     df_raw = pd.read_csv(f"Projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
     df_raw = df_raw.query(f"landing_rate_4_leg >= {0.0}")
 
@@ -477,8 +480,16 @@ if __name__ == '__main__':
     #     Official Plots
     ############################
 
+
+    ## LANDING RATE POLAR PLOT
+    # plot_polar_smoothed(df_max,saveFig=False)
+    # plot_mpl_3d(df_max,Z_data='landing_rate_4_leg',color_data='landing_rate_4_leg',polar=True)
+
+
     # FIGURE 1: 3D POLAR (VEL, PHI, D_CEILING, LANDING_RATE)
     # plot_mpl_3d(df_max,Z_data='flip_d_mean',color_data='landing_rate_4_leg',polar=True)
+    # plot_mpl_3d(df_max,Z_data='flip_d_mean',color_data='My_d',polar=True)
+
 
     # FIGURE 2: 2D CARTESIAN (OF_y, RREV, LANDING_RATE)
     # plot_scatter_2d(df_raw,color_data='landing_rate_4_leg',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'))
@@ -488,7 +499,7 @@ if __name__ == '__main__':
     # plot_mpl_3d(df_raw,Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg')
 
     # FIGURE 4: 3D CARTESIAN (OF_y, RREV, D_CEILING, My VALUE)
-    plot_mpl_3d(df_raw,Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='My_d')
+    # plot_mpl_3d(df_raw,Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='My_d')
     # plot_plotly_3d(df_raw.query(f"landing_rate_4_leg >= {0.6}"),Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='My_d')
 
     ## PLOT POLICY REGION W/ TRAJECTORY DATA
@@ -525,8 +536,6 @@ if __name__ == '__main__':
     # plot_plotly(df_raw,Z_data='impact_eul_mean',XY_data=("impact_vx_mean","impact_vz_mean"),XY_str=("impact_vx_mean","impact_vz_mean"),color_data='landing_rate_4_leg',polar=True)
 
 
-    ## LANDING RATE POLAR PLOT
-    # plot_polar_smoothed()
     plt.show()
 
     
