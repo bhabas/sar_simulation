@@ -59,7 +59,7 @@ if __name__ == '__main__':
 
         ## INITIALIZE LOGGING DATA
         env.agent_name = agent.agent_type
-        env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--WS"        
+        env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--NL"        
         env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
         env.logging_flag = True
 
