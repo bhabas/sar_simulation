@@ -9,7 +9,7 @@ for V_d in np.concatenate((np.arange(0.25,2.0,0.25),np.arange(2.0,4.25,0.25))): 
             test_list.append([V_d,phi,trial_num,RREV_list[ii]])
 
 test_list = np.array(test_list)
-# test_list = np.flip(test_list,axis=0)
+test_list = np.flip(test_list,axis=0)
 
 
 np.set_printoptions(suppress=True)

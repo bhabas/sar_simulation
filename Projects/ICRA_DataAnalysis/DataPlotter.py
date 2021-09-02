@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from sklearn import linear_model
 from scipy.interpolate import griddata
-import scipy.odr
+import scipy
 import plotly.graph_objects as go
 import os,sys
 
@@ -179,8 +179,8 @@ def plot_scatter_2d(df,color_data:str='landing_rate_4_leg',color_str=None,color_
     norm = mpl.colors.Normalize(vmin=vmin,vmax=vmax)
     
     # CREATE PLOTS AND COLOR BAR
-    ax.scatter(X,Y,c=C,cmap=cmap,norm=norm,alpha=1.0)
-    fig.colorbar(mpl.cm.ScalarMappable(cmap=cmap,norm=norm),label=color_str)
+    ax.scatter(X,Y,c=C,cmap=cmap,norm=norm,alpha=0.6)
+    # fig.colorbar(mpl.cm.ScalarMappable(cmap=cmap,norm=norm),label=color_str)
 
 
     # PLOT LIMITS AND INFO
@@ -359,16 +359,18 @@ def plot_best_surface_smoothed(Z_data:str,color_data:str='landing_rate_4_leg',co
 
 def plot_polar_smoothed(df,saveFig=False):
 
-    # COLLECT DATA
+    # # COLLECT DATA
     R = df.iloc[:]['vel_IC']
     Theta = df.iloc[:]['phi_IC']
     C = df.iloc[:]['landing_rate_4_leg']
 
     # SOMETHING ABOUT DEFINING A GRID
-    ri = np.linspace(R.min(),R.max(),(len(C)//1))
-    thetai = np.linspace(Theta.min(),Theta.max(),(len(C)//1))
-    zi = griddata((R, Theta), C, (ri[None,:], thetai[:,None]), method='linear')
+    interp_factor = 20
+    ri = np.linspace(R.min(),R.max(),(len(C)//interp_factor))
+    thetai = np.linspace(Theta.min(),Theta.max(),(len(C)//interp_factor))
     r_ig, theta_ig = np.meshgrid(ri, thetai)
+    zi = griddata((R, Theta), C, (ri[None,:], thetai[:,None]), method='linear')
+    zi = zi + 0.0001
     
 
     ## INIT PLOT INFO
@@ -377,10 +379,10 @@ def plot_polar_smoothed(df,saveFig=False):
     
 
     cmap = mpl.cm.jet
-    norm = mpl.colors.Normalize(vmin=0,vmax=1)
+    norm = mpl.colors.Normalize(vmin=-0.1,vmax=1)
     
     ax.contourf(np.radians(theta_ig),r_ig,zi,cmap=cmap,norm=norm,levels=20)
-    ax.set_thetamin(25)
+    ax.set_thetamin(20)
     ax.set_thetamax(90)
     ax.set_rmin(0)
     ax.set_rmax(4)
@@ -388,14 +390,14 @@ def plot_polar_smoothed(df,saveFig=False):
 
 
     ## AXIS LABELS    
-    ax.text(np.radians(10),2,'Flight Velocity (m/s)',
-        rotation=25,ha='center',va='center')
+    ax.text(np.radians(7.5),2,'Flight Velocity (m/s)',
+        rotation=18,ha='center',va='center')
 
     ax.text(np.radians(60),4.5,'Flight Angle (deg)',
         rotation=0,ha='left',va='center')
 
     if saveFig==True:
-        plt.savefig(f'{model_config}_Polar_LR.png',dpi=300)
+        plt.savefig(f'{model_config}_Polar_LR.pdf',dpi=300)
 
     plt.show()
 
@@ -457,6 +459,8 @@ if __name__ == '__main__':
     df_max = df_raw[idx].reset_index()
 
 
+
+
     ## PLOT POLAR DATAPOINTS
     # plot_raw(df_max,Z_data='landing_rate_4_leg',color_data='landing_rate_4_leg',polar=True)
 
@@ -477,12 +481,30 @@ if __name__ == '__main__':
 
 
     ############################
+    #        COLOR BAR
+    ############################
+    
+    ## INITIALIZE FIGURE
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111)
+    
+    # cmap = mpl.cm.jet
+    # norm = mpl.colors.Normalize(vmin=0,vmax=1)
+    
+    # fig.colorbar(mpl.cm.ScalarMappable(cmap=cmap,norm=norm),label='Temp Label')
+    # ax.remove()
+
+    # fig.tight_layout()
+
+    # plt.savefig(f'Color_Bar_Landing_Rate.pdf',dpi=300,bbox_inches='tight')
+
+    ############################
     #     Official Plots
     ############################
 
 
     ## LANDING RATE POLAR PLOT
-    # plot_polar_smoothed(df_max,saveFig=False)
+    # plot_polar_smoothed(df_max,saveFig=True)
     # plot_mpl_3d(df_max,Z_data='landing_rate_4_leg',color_data='landing_rate_4_leg',polar=True)
 
 
@@ -491,12 +513,176 @@ if __name__ == '__main__':
     # plot_mpl_3d(df_max,Z_data='flip_d_mean',color_data='My_d',polar=True)
 
 
-    # FIGURE 2: 2D CARTESIAN (OF_y, RREV, LANDING_RATE)
-    # plot_scatter_2d(df_raw,color_data='landing_rate_4_leg',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'))
 
-    # FIGURE 3: 3D CARTESIAN (OF_y, RREV, D_CEILING, LANDING RATE)
-    # POSSIBLY SPLIT INTO TWO 2-D SIDE VIEW PLOTS
-    # plot_mpl_3d(df_raw,Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg')
+    ############################
+    #        FIGURE 2
+    ############################
+    # 2D CARTESIAN (OF_y, RREV, LANDING_RATE)
+    # fig,ax = plot_scatter_2d(df_max,color_data='landing_rate_4_leg',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'))
+    
+    
+    # ## INITIALIZE FIGURE
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111)
+    # df = df_max
+
+    # ## DEFINE PLOT VARIABLES
+    
+    # ax.set_xlabel('OF_y')
+    # ax.set_ylabel('RREV')
+
+    # X_1 = df.query('landing_rate_4_leg >= 0.1')['OF_y_flip_mean']
+    # Y_1 = df.query('landing_rate_4_leg >= 0.1')['RREV_flip_mean']
+    # C_1 = df.query('landing_rate_4_leg >= 0.1')['landing_rate_4_leg']
+
+    # X_2 = df.query('landing_rate_4_leg <= 0.1')['OF_y_flip_mean']-0.15
+    # Y_2 = df.query('landing_rate_4_leg <= 0.1')['RREV_flip_mean']
+    # C_2 = df.query('landing_rate_4_leg <= 0.1')['landing_rate_4_leg']
+
+    
+    # cmap = mpl.cm.jet
+    # norm = mpl.colors.Normalize(vmin=0,vmax=1)
+    
+    # # CREATE PLOTS AND COLOR BAR
+    # ax.scatter(X_2,Y_2,c=C_2,cmap=cmap,norm=norm,alpha=0.25)
+    # ax.scatter(X_1,Y_1,c=C_1,cmap=cmap,norm=norm,alpha=0.6)
+
+    # # fig.colorbar(mpl.cm.ScalarMappable(cmap=cmap,norm=norm),label=color_str)
+
+
+    # # PLOT LIMITS AND INFO
+    # ax.grid()
+    # ax.set_axisbelow(True)
+
+    # ax.set_xticks([0,-5,-10,-15,-20])
+    # ax.set_yticks(np.arange(0,9,1))
+
+    # fig.tight_layout()
+
+    # plt.savefig(f'{model_config}_OF_Space.pdf',dpi=300)
+
+
+    #region: FIGURE 3
+    ############################
+    #        FIGURE 3
+    ############################
+    ## 3D CARTESIAN (OF_y, RREV, D_CEILING, LANDING RATE)
+    # plot_mpl_3d(df_max,Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg')
+
+    
+    ## INITIALIZE FIGURE
+    fig = plt.figure()
+    ax = fig.add_subplot(111,projection="3d")
+
+    df = df_max
+
+    X_1 = df.query('landing_rate_4_leg >= 0.1')['OF_y_flip_mean']
+    Y_1 = df.query('landing_rate_4_leg >= 0.1')['RREV_flip_mean']
+    Z_1 = df.query('landing_rate_4_leg >= 0.1')['flip_d_mean']
+    C_1 = df.query('landing_rate_4_leg >= 0.1')['landing_rate_4_leg']
+
+    X_2 = df.query('landing_rate_4_leg <= 0.1')['OF_y_flip_mean']
+    Y_2 = df.query('landing_rate_4_leg <= 0.1')['RREV_flip_mean']
+    Z_2 = df.query('landing_rate_4_leg <= 0.1')['flip_d_mean']
+    C_2 = df.query('landing_rate_4_leg <= 0.1')['landing_rate_4_leg']
+
+
+
+
+
+    cmap = mpl.cm.jet
+    norm = mpl.colors.Normalize(vmin=0,vmax=1.0)
+    
+    # CREATE PLOTS AND COLOR BAR
+    ax.scatter(X_1,Y_1,Z_1,c=C_1,cmap=cmap,norm=norm,alpha=0.8,depthshade=False)
+    ax.scatter(X_2,Y_2,Z_2,c=C_2,cmap=cmap,norm=norm,alpha=0.15,depthshade=False)
+    # fig.colorbar(mpl.cm.ScalarMappable(cmap=cmap,norm=norm),label=color_str)
+
+
+    # PLOT LIMITS AND INFO
+    ax.set_xlabel('OF_y')
+    ax.set_ylabel('RREV')
+    ax.set_zlabel('d_ceiling')
+
+
+    ax.set_xlim(-20,0)
+    ax.set_xticks([-20,-15,-10,-5,0])
+    
+    ax.set_ylim(0,8)
+    ax.set_yticks([0,2,4,6,8])
+
+    ax.set_zlim(0,1.0)
+    ax.set_zticks([0,0.2,0.4,0.6,0.8,1.0])
+
+    ax.view_init(elev=10, azim=-40)
+    fig.tight_layout()
+
+    plt.savefig(f'{model_config}_Policy_Volume_LR.pdf',dpi=300)
+
+    #endregion
+    
+    
+    
+    #region: FIGURE 4
+    ############################
+    #        FIGURE 4
+    ############################
+    ## 3D CARTESIAN (OF_y, RREV, D_CEILING, LANDING RATE)
+    # plot_mpl_3d(df_max,Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg')
+
+    ## INITIALIZE FIGURE
+    fig = plt.figure()
+    ax = fig.add_subplot(111,projection="3d")
+
+    df = df_max
+
+    X_1 = df.query('landing_rate_4_leg >= 0.6')['OF_y_flip_mean']
+    Y_1 = df.query('landing_rate_4_leg >= 0.6')['RREV_flip_mean']
+    Z_1 = df.query('landing_rate_4_leg >= 0.6')['flip_d_mean']
+    C_1 = df.query('landing_rate_4_leg >= 0.6')['My_d']
+
+    X_2 = df.query('landing_rate_4_leg <= 0.1')['OF_y_flip_mean']
+    Y_2 = df.query('landing_rate_4_leg <= 0.1')['RREV_flip_mean']
+    Z_2 = df.query('landing_rate_4_leg <= 0.1')['flip_d_mean']
+    C_2 = df.query('landing_rate_4_leg <= 0.1')['My_d']
+
+
+
+
+
+    cmap = mpl.cm.jet
+    norm = mpl.colors.Normalize(vmin=0,vmax=10.0)
+    
+    # CREATE PLOTS AND COLOR BAR
+    ax.scatter(X_1,Y_1,Z_1,c=C_1,cmap=cmap,norm=norm,alpha=0.8,depthshade=True)
+    # ax.scatter(X_2,Y_2,Z_2,c=C_2,cmap=cmap,norm=norm,alpha=0.15,depthshade=False)
+    # fig.colorbar(mpl.cm.ScalarMappable(cmap=cmap,norm=norm),label=color_str)
+
+
+    # PLOT LIMITS AND INFO
+    ax.set_xlabel('OF_y')
+    ax.set_ylabel('RREV')
+    ax.set_zlabel('d_ceiling')
+
+
+    ax.set_xlim(-20,0)
+    ax.set_xticks([-20,-15,-10,-5,0])
+    
+    ax.set_ylim(0,8)
+    ax.set_yticks([0,2,4,6,8])
+
+    ax.set_zlim(0,1.0)
+    ax.set_zticks([0,0.2,0.4,0.6,0.8,1.0])
+
+    ax.view_init(elev=10, azim=-40)
+    fig.tight_layout()
+
+    plt.savefig(f'{model_config}_Policy_Volume_My_d.pdf',dpi=300)
+
+
+
+
+
 
     # FIGURE 4: 3D CARTESIAN (OF_y, RREV, D_CEILING, My VALUE)
     # plot_mpl_3d(df_raw,Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='My_d')
