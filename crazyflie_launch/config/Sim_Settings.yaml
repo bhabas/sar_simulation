@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 MODEL_NAME: "crazyflie_Wide-Long"
+=======
+MODEL_NAME: "crazyflie_Narrow-Long"
+>>>>>>> c2af9fe2ae28717325b5cae7986274101337dc56
 GUI_FLAG: false
 
 SIM_SPEED: 2.5
