@@ -408,6 +408,56 @@ class DataFile:
             plt.savefig('Convergence_Summary.pdf',format='pdf',dpi=300)
         plt.show()
 
+    def plot_convg(self,ymax=200,saveFig=False):
+
+        fig = plt.figure(figsize=(6,3))
+        ax2 = fig.add_subplot(111)
+        ax3 = ax2.twinx()
+
+        MEDIUM_FONT = 12
+
+        ## PLOT CONVERGENCE DATA
+
+        k_ep_arr,mu_arr,sigma_arr = self.grab_convg_data()
+
+        num_col = mu_arr.shape[1] # Number of policy gains in mu [Currently 3]
+        G_Labels = [r'$\mu_{RREV_{threshold}}$ ',r'$\mu_{M_{y}}$ '] # List of policy gain names
+        Vel,phi = self.grab_vel_IC_2D_angle()
+
+        ## CREATE SUBPLOT FOR MU 
+        ax2.plot(k_ep_arr,mu_arr[:,0],linestyle='-',marker='o',markersize=0,label=G_Labels[0],color='tab:blue')
+        ax2.fill_between(k_ep_arr,mu_arr[:,0]+2*sigma_arr[:,0],mu_arr[:,0]-2*sigma_arr[:,0],alpha=0.5,color='tab:blue')
+
+        ax2.plot(k_ep_arr,mu_arr[:,1],linestyle='-',label=G_Labels[1],color='tab:orange')
+        ax2.fill_between(k_ep_arr,mu_arr[:,1]+2*sigma_arr[:,1],mu_arr[:,1]-2*sigma_arr[:,1],alpha=0.5,color='tab:orange')
+
+
+
+        ax2.set_ylabel('RREV [rad/s]',fontsize=MEDIUM_FONT)
+        ax2.set_xlabel('Episode Number',fontsize=MEDIUM_FONT)
+        ax2.set_xticks(np.arange(0,self.k_epMax+3,5))
+        ax2.set_ylim(0,12.5)
+        ax2.set_yticks(np.arange(0,15,2.5))
+        ax2.set_title(f'Policy Value vs Episode | $Vel$ = {Vel:.2f} [m/s], $\phi$ = {phi:.2f}$^{{\circ}}$)')
+        ax2.legend(loc='lower right',fontsize=MEDIUM_FONT,ncol=2)
+        ax2.grid()
+
+        ax3.set_ylabel(r'$M_{y}$ [N*mm]',fontsize=MEDIUM_FONT)
+        ax3.set_yticks(ax2.get_yticks()) 
+        ax3.set_ylim(ax2.get_ylim())
+        
+        ## JOIN X AXIS OF BOTH PLOTS
+        # ax1.get_shared_x_axes().join(ax1, ax2)
+        # ax1.set_xticklabels([])
+
+
+
+
+        fig.tight_layout()
+        if saveFig==True:
+            plt.savefig('Convergence_Summary.pdf',format='pdf',dpi=300,bbox_inches='tight')
+        plt.show()
+
 
     def plot_state_spread_flip(self,stateName,N:int=3): # Plot histogram showing spread of state values over last N episodes
         

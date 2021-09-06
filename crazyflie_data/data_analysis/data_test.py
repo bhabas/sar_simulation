@@ -24,5 +24,5 @@ trial = DataFile(dataPath,fileName,dataType='EXP')
 k_ep = 0
 k_run = 0
 
-trial.plot_convg_summary()
+trial.plot_convg(saveFig=True)
 

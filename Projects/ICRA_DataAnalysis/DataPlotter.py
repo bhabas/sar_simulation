@@ -377,6 +377,7 @@ def plot_polar_smoothed(df,plotFig=True,saveFig=False):
     zi = griddata((R, Theta), C, (ri[None,:], thetai[:,None]), method='linear')
     zi = zi + 0.0001
     
+    FONT_SIZE = 16
 
     ## INIT PLOT INFO
     fig = plt.figure()
@@ -392,24 +393,25 @@ def plot_polar_smoothed(df,plotFig=True,saveFig=False):
     ax.set_thetamax(90)
 
     ax.set_yticks([0.0,1.0,2.0,3.0,4.0])
-    ax.tick_params(axis='x',labelsize=12)
+    ax.set_xticks(np.radians([20,40,60,80,90]))
+    ax.tick_params(axis='x',labelsize=FONT_SIZE)
     ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
 
 
     ax.set_rmin(0)
     ax.set_rmax(4)
-    ax.tick_params(axis='y',labelsize=12)
+    ax.tick_params(axis='y',labelsize=FONT_SIZE)
 
     
     
 
 
     ## AXIS LABELS    
-    ax.text(np.radians(7.5),2,'Flight Velocity (m/s)',
-        rotation=18,ha='center',va='center',fontsize=12)
+    ax.text(np.radians(3),2.5,'Flight Velocity (m/s)',
+        rotation=18,ha='center',va='center',fontsize=FONT_SIZE)
 
-    ax.text(np.radians(60),4.5,'Flight Angle (deg)',
-        rotation=0,ha='left',va='center',fontsize=12)
+    ax.text(np.radians(70),4.4,'Flight Angle (deg)',
+        rotation=0,ha='left',va='center',fontsize=FONT_SIZE)
 
     if saveFig==True:
         plt.savefig(f'{model_config}_Polar_LR.pdf',dpi=300,bbox_inches='tight')
@@ -464,7 +466,7 @@ if __name__ == '__main__':
 
     ## FULL DATAFRAME
 
-    model_config = "Wide-Short"
+    model_config = "Narrow-Short"
     df_raw = pd.read_csv(f"Projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
     df_raw = df_raw.query(f"landing_rate_4_leg >= {0.0}")
 
@@ -475,7 +477,7 @@ if __name__ == '__main__':
     idx = df_raw.groupby(['vel_IC','phi_IC'])['landing_rate_4_leg'].transform(max) == df_raw['landing_rate_4_leg']
     df_max = df_raw[idx].reset_index()
 
-    # model_list = ['ExtraNarrow-Short','Narrow-Short','Wide-Short','ExtraNarrow-Long','Narrow-Long','Wide-Long']
+    model_list = ['ExtraNarrow-Short','Narrow-Short','Wide-Short','ExtraNarrow-Long','Narrow-Long','Wide-Long']
     
     # for model_config in model_list:
     #     df_raw = pd.read_csv(f"Projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
@@ -523,7 +525,7 @@ if __name__ == '__main__':
 
 
     ## LANDING RATE POLAR PLOT
-    # plot_polar_smoothed(df_max,saveFig=True)
+    plot_polar_smoothed(df_max,saveFig=True)
     # plot_mpl_3d(df_max,Z_data='landing_rate_4_leg',color_data='landing_rate_4_leg',polar=True)
 
 
@@ -585,7 +587,8 @@ if __name__ == '__main__':
         plt.savefig(f'{model_config}_StateSpace.pdf',dpi=300)
         plt.show()
 
-    # plot_fig1()
+    plot_fig1()
+
 
     # plot_mpl_3d(df_max,Z_data='flip_d_mean',color_data='My_d',polar=True)
 
@@ -716,7 +719,7 @@ if __name__ == '__main__':
         plt.savefig(f'{model_config}_Policy_Volume_LR.pdf',dpi=300)
         plt.show()
 
-    # plot_fig3()
+    plot_fig3()
     
 
     ############################
@@ -781,7 +784,7 @@ if __name__ == '__main__':
         plt.savefig(f'{model_config}_Policy_Volume_My_d.pdf',dpi=300)
         plt.show()
 
-    # plot_fig4()        
+    plot_fig4()        
 
 
 
