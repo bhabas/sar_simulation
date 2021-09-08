@@ -1,4 +1,4 @@
-MODEL_NAME: "crazyflie_Narrow-Short"
+MODEL_NAME: "crazyflie_ExtraNarrow-Long"
 GUI_FLAG: false
 
 SIM_SPEED: 2.5

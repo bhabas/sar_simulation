@@ -1,7 +1,7 @@
 import numpy as np
 
 test_list = []
-RREV_list = [1.0,3.0,5.0]
+RREV_list = [1.0,2.5,4.0]
 
 for V_d in np.concatenate((np.arange(0.25,2.0,0.25),np.arange(2.0,4.25,0.25))):    # [m/s]
     for phi in np.arange(90,15,-5):      # [deg]

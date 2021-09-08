@@ -377,7 +377,7 @@ def plot_polar_smoothed(df,plotFig=True,saveFig=False):
     zi = griddata((R, Theta), C, (ri[None,:], thetai[:,None]), method='linear')
     zi = zi + 0.0001
     
-    FONT_SIZE = 16
+    FONT_SIZE = 20
 
     ## INIT PLOT INFO
     fig = plt.figure()
@@ -402,6 +402,10 @@ def plot_polar_smoothed(df,plotFig=True,saveFig=False):
     ax.set_rmax(4)
     ax.tick_params(axis='y',labelsize=FONT_SIZE)
 
+    ax.xaxis.set_tick_params(pad=10)
+
+
+
     
     
 
@@ -410,7 +414,7 @@ def plot_polar_smoothed(df,plotFig=True,saveFig=False):
     ax.text(np.radians(3),2.5,'Flight Velocity (m/s)',
         rotation=18,ha='center',va='center',fontsize=FONT_SIZE)
 
-    ax.text(np.radians(70),4.4,'Flight Angle (deg)',
+    ax.text(np.radians(50),4.4,'Flight Angle (deg)',
         rotation=0,ha='left',va='center',fontsize=FONT_SIZE)
 
     if saveFig==True:
@@ -466,7 +470,7 @@ if __name__ == '__main__':
 
     ## FULL DATAFRAME
 
-    model_config = "Narrow-Short"
+    model_config = "ExtraNarrow-Short"
     df_raw = pd.read_csv(f"Projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
     df_raw = df_raw.query(f"landing_rate_4_leg >= {0.0}")
 
@@ -479,18 +483,18 @@ if __name__ == '__main__':
 
     model_list = ['ExtraNarrow-Short','Narrow-Short','Wide-Short','ExtraNarrow-Long','Narrow-Long','Wide-Long']
     
-    # for model_config in model_list:
-    #     df_raw = pd.read_csv(f"Projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
-    #     df_raw = df_raw.query(f"landing_rate_4_leg >= {0.0}")
+    for model_config in model_list:
+        df_raw = pd.read_csv(f"Projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
+        df_raw = df_raw.query(f"landing_rate_4_leg >= {0.0}")
 
         
 
 
-    #     ## MAX LANDING RATE DATAFRAME
-    #     idx = df_raw.groupby(['vel_IC','phi_IC'])['landing_rate_4_leg'].transform(max) == df_raw['landing_rate_4_leg']
-    #     df_max = df_raw[idx].reset_index()
+        # MAX LANDING RATE DATAFRAME
+        idx = df_raw.groupby(['vel_IC','phi_IC'])['landing_rate_4_leg'].transform(max) == df_raw['landing_rate_4_leg']
+        df_max = df_raw[idx].reset_index()
 
-    #     plot_polar_smoothed(df_max,plotFig=False,saveFig=True)
+        plot_polar_smoothed(df_max,plotFig=False,saveFig=True)
 
 
     
@@ -525,7 +529,7 @@ if __name__ == '__main__':
 
 
     ## LANDING RATE POLAR PLOT
-    plot_polar_smoothed(df_max,saveFig=True)
+    # plot_polar_smoothed(df_max,saveFig=True)
     # plot_mpl_3d(df_max,Z_data='landing_rate_4_leg',color_data='landing_rate_4_leg',polar=True)
 
 
@@ -587,7 +591,6 @@ if __name__ == '__main__':
         plt.savefig(f'{model_config}_StateSpace.pdf',dpi=300)
         plt.show()
 
-    plot_fig1()
 
 
     # plot_mpl_3d(df_max,Z_data='flip_d_mean',color_data='My_d',polar=True)
@@ -625,8 +628,8 @@ if __name__ == '__main__':
         norm = mpl.colors.Normalize(vmin=0,vmax=1)
         
         # CREATE PLOTS AND COLOR BAR
-        ax.scatter(X_1,Y_1,c=C_1,cmap=cmap,norm=norm,alpha=0.6)
-        ax.scatter(X_2,Y_2,c=C_2,cmap=cmap,norm=norm,alpha=0.1)
+        ax.scatter(X_1,Y_1,c=C_1,cmap=cmap,norm=norm,alpha=0.6,zorder=5)
+        ax.scatter(X_2,Y_2,c=C_2,cmap=cmap,norm=norm,alpha=0.2,zorder=6)
 
         cbar = fig.colorbar(mpl.cm.ScalarMappable(cmap=cmap,norm=norm))
         cbar.ax.tick_params(labelsize=10)
@@ -652,10 +655,9 @@ if __name__ == '__main__':
 
         fig.tight_layout()
 
-        # plt.savefig(f'{model_config}_OF_Space.pdf',dpi=300,bbox_inches='tight')
+        plt.savefig(f'{model_config}_OF_Space.pdf',dpi=300,bbox_inches='tight')
         plt.show()
 
-    plot_fig2()
 
     ############################
     #        FIGURE 3
@@ -719,7 +721,6 @@ if __name__ == '__main__':
         plt.savefig(f'{model_config}_Policy_Volume_LR.pdf',dpi=300)
         plt.show()
 
-    plot_fig3()
     
 
     ############################
@@ -784,75 +785,9 @@ if __name__ == '__main__':
         plt.savefig(f'{model_config}_Policy_Volume_My_d.pdf',dpi=300)
         plt.show()
 
-    plot_fig4()        
-
-
-
-
-
-
-    # FIGURE 4: 3D CARTESIAN (OF_y, RREV, D_CEILING, My VALUE)
-    # plot_mpl_3d(df_raw,Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='My_d')
-    # plot_plotly_3d(df_raw.query(f"landing_rate_4_leg >= {0.6}"),Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='My_d')
-
-
-
-
-
-    ## PLOT POLAR DATAPOINTS
-    # plot_raw(df_max,Z_data='landing_rate_4_leg',color_data='landing_rate_4_leg',polar=True)
-
-
-
-    ## RREV VS OF_d VS My_d
-    # fig,ax = plot_raw(df_raw,Z_data='My_d',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg')
-    # plot_plotly(df_raw,Z_data='My_d',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg')
-
-
-
-
-    ## IMPROVED POLICY IDEA
-    # fig,ax = plot_raw(df_raw,Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg',color_norm=(0,1))
-    # plot_plotly(df_raw,Z_data='vel_IC',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='My_d')
-    # plot_plotly(df_raw,Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='My_d')
-
-
-
-
-    ## PLOT POLICY REGION W/ TRAJECTORY DATA
-    # fig,ax = plot_raw(df_raw,Z_data='flip_d_mean',XY_data=('OF_y_flip_mean','RREV_flip_mean'),XY_str=('OF_y','RREV'),color_data='landing_rate_4_leg',color_norm=(0,1))
-    
-    # dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/logs/"
-    # fileName = 'EM_PEPG--Vd_3.50--phi_35.00--trial_12--NL.csv'
-    # trial = DataFile(dataPath,fileName,dataType='SIM')
-
-    # k_ep = 0
-    # k_run = 0
-    # t = trial.grab_stateData(k_ep,k_run,['t'])
-    # RREV = trial.grab_stateData(k_ep,k_run,['RREV'])
-    # OF_y = trial.grab_stateData(k_ep,k_run,['OF_y'])
-    # d_ceiling = 2.1-trial.grab_stateData(k_ep,k_run,['z'])
-    # ax.plot(OF_y.flatten(),RREV.flatten(),d_ceiling.flatten(),'k--',)
-
-    # ax.set_xlabel('OF_y [rad/s]')
-    # ax.set_ylabel('RREV [rad/s]')
-    # ax.set_zlabel('d_ceiling [m]')
-
-    # ax.set_xticks([0,-5,-10,-15,-20])
-    # ax.set_yticks([0,2,4,6,8,10])
-    # ax.set_zticks([0,0.5,1.0,1.25])
-    
-    # ax.set_zlim(0,1.25)
-    # ax.view_init(elev=22,azim=-170)
-    # print()
-
-
-
-    ## IMPACT ANGLE SUCCESS RATE PLOT
-    # plot_raw(Z_data='impact_eul_mean',XY_data=("impact_vx_mean","impact_vz_mean"),XY_str=("impact_vx_mean","impact_vz_mean"),color_data='landing_rate_4_leg',polar=True)
-    # plot_plotly(df_raw,Z_data='impact_eul_mean',XY_data=("impact_vx_mean","impact_vz_mean"),XY_str=("impact_vx_mean","impact_vz_mean"),color_data='landing_rate_4_leg',polar=True)
-
-
-    # plt.show()
-
+    plot_polar_smoothed(df_max,saveFig=True)
+    # plot_fig1()
+    # plot_fig2()
+    # plot_fig3()
+    # plot_fig4()        
     
