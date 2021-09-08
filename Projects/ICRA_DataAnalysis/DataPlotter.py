@@ -483,18 +483,18 @@ if __name__ == '__main__':
 
     model_list = ['ExtraNarrow-Short','Narrow-Short','Wide-Short','ExtraNarrow-Long','Narrow-Long','Wide-Long']
     
-    for model_config in model_list:
-        df_raw = pd.read_csv(f"Projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
-        df_raw = df_raw.query(f"landing_rate_4_leg >= {0.0}")
+    # for model_config in model_list:
+    #     df_raw = pd.read_csv(f"Projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
+    #     df_raw = df_raw.query(f"landing_rate_4_leg >= {0.0}")
 
         
 
 
-        # MAX LANDING RATE DATAFRAME
-        idx = df_raw.groupby(['vel_IC','phi_IC'])['landing_rate_4_leg'].transform(max) == df_raw['landing_rate_4_leg']
-        df_max = df_raw[idx].reset_index()
+    #     # MAX LANDING RATE DATAFRAME
+    #     idx = df_raw.groupby(['vel_IC','phi_IC'])['landing_rate_4_leg'].transform(max) == df_raw['landing_rate_4_leg']
+    #     df_max = df_raw[idx].reset_index()
 
-        plot_polar_smoothed(df_max,plotFig=False,saveFig=True)
+    #     plot_polar_smoothed(df_max,plotFig=False,saveFig=True)
 
 
     
@@ -785,8 +785,8 @@ if __name__ == '__main__':
         plt.savefig(f'{model_config}_Policy_Volume_My_d.pdf',dpi=300)
         plt.show()
 
+    plot_fig1()
     plot_polar_smoothed(df_max,saveFig=True)
-    # plot_fig1()
     # plot_fig2()
     # plot_fig3()
     # plot_fig4()        
