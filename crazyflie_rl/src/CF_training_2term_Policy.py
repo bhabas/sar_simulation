@@ -201,8 +201,9 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                         flag = True # Turns on to make sure this only runs once per rollout
 
                     
-                    if (env.impact_flag == True and flag2 == False):
+                    if ((env.impact_flag or env.body_contact) and flag2 == False):
                         start_time_impact = env.getTime()
+                        flag2 = True
 
 
                     # ============================
@@ -221,7 +222,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                     # ============================
                     ##    Termination Criteria 
                     # ============================
-                    if env.impact_flag == True and ((env.getTime()-start_time_impact) > 0.3):
+                    if (env.impact_flag or env.body_contact) and ((env.getTime()-start_time_impact) > 1.0):
                         env.error_str = "Rollout Completed: Impact Timeout"
                         print(env.error_str)
 
@@ -346,8 +347,8 @@ if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv(gazeboTimeout=True)
-    # env.launch_RLdashboard()
-    env.launch_statedashboard()
+    env.launch_RLdashboard()
+    # env.launch_statedashboard()
 
     # ============================
     ##          AGENT  
@@ -357,7 +358,7 @@ if __name__ == '__main__':
     # mu = np.array([[4.0],[4.0]])                 # Initial mu starting point
     # sigma = np.array([[1.5],[1.5]])       # Initial sigma starting point
 
-    mu = np.array([[4.4], [6.0]])                 # Initial mu starting point
+    mu = np.array([[4.0], [8.0]])                 # Initial mu starting point
     sigma = np.array([[1.5],[1.5]])       # Initial sigma starting point
 
 
@@ -372,13 +373,13 @@ if __name__ == '__main__':
     # ============================
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
-    V_d = 1.2   # [m/s]
-    phi = 32.5    # [deg]
+    V_d = 2.25  # [m/s]
+    phi = 50    # [deg]
 
 
     
     ## INITIALIALIZE LOGGING DATA
-    trial_num = 12
+    trial_num = 24
     env.agent_name = agent.agent_type
     env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--NL"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"

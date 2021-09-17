@@ -26,11 +26,10 @@ if __name__ == '__main__':
     print("Environment done")
     ## Home Test List
     df = pd.read_csv("~/catkin_ws/src/crazyflie_simulation/crazyflie_data/data_collection/MasterTestList.csv")
-    ## Laptop Test List
-    # df = pd.read_csv("~/catkin_ws/src/crazyflie_simulation/src/crazyflie_rl/src/Laptop_Test_List.csv")
     arr = df.to_numpy()
 
-    for V_d,phi,trial_num in arr:
+
+    for V_d,phi,trial_num,mu_RREV in arr:
         if np.isnan(V_d):
             print("Trials are over")
             break
@@ -40,11 +39,11 @@ if __name__ == '__main__':
         # ============================
        
         ## GAUSSIAN DISTRIBUTION PARAMETERS 
-        mu_1 = np.random.uniform(2.5,7.5) # RREV typically starts around in this range
-        mu_2 = np.random.uniform(3.0,8.0) # My can typically start in this range and climb higher too
+        # mu_1 = np.random.uniform(2.5,7.5) # RREV typically starts around in this range
+        mu_My = np.random.uniform(3.0,8.0) # My can typically start in this range and climb higher too
 
 
-        mu = np.array([[mu_1],[mu_2]])  # Initial mu starting point     
+        mu = np.array([[mu_RREV],[mu_My]])  # Initial mu starting point     
         # sigma = np.array([[0.00001],[0.00001]]) # Initial estimates of sigma: 
         # mu = np.array([[6],[2.0]])   
         sigma = np.array([[2.0],[2.0]]) # Initial estimates of sigma: 
@@ -60,7 +59,7 @@ if __name__ == '__main__':
 
         ## INITIALIZE LOGGING DATA
         env.agent_name = agent.agent_type
-        env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--WL"        
+        env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--XNL"        
         env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
         env.logging_flag = True
 

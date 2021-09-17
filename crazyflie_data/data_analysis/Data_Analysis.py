@@ -5,9 +5,12 @@ from scipy.spatial.transform import Rotation
 import os
 import warnings
 import re
+import matplotlib as mpl
 
 # os.system("clear")
 np.set_printoptions(suppress=True)
+mpl.rcParams['pdf.fonttype'] = 42
+mpl.rcParams['ps.fonttype'] = 42
 
 class DataFile:
     def __init__(self,dataPath,fileName,dataType='SIM'):
@@ -19,6 +22,10 @@ class DataFile:
 
         # self.dataType = re.findall('SIM|EXP',fileName)[0] # FIND 'SIM' OR 'EXP'
         self.trialNum = int(re.findall('trial_(\d+)',fileName)[0])
+        self.vel_IC = float(re.findall('Vd_(\d+\.?\d*)',fileName)[0])
+        self.phi_IC = float(re.findall('phi_(\d+\.?\d*)',fileName)[0])
+
+
         self.trial_df = pd.read_csv(filepath,low_memory=False)
 
         ## CLEAN UP TRIAL DATAFRAME
@@ -333,6 +340,126 @@ class DataFile:
 
 
         return alpha_mu,alpha_sigma,mu,sigma
+
+    def plot_convg_summary(self,ymax=200,saveFig=False):
+
+        fig = plt.figure(figsize=(6,5.5))
+        ax1 = fig.add_subplot(211)
+        ax2 = fig.add_subplot(212)
+        ax3 = ax2.twinx()
+
+        MEDIUM_FONT = 12
+
+        
+        ## PLOT REWARD DATA
+        k_ep_r,rewards,k_ep_ravg,rewards_avg = self.grab_rewardData()
+
+        ax1.scatter(k_ep_r,rewards,marker='_',color='black',alpha=0.5,label='Reward')
+        ax1.scatter(k_ep_ravg,rewards_avg,marker='o',color='red',label='Average Reward')
+        
+        
+
+        ax1.set_ylabel("Reward",fontsize=MEDIUM_FONT)
+        ax1.set_xlabel("Episode Number",fontsize=MEDIUM_FONT)
+        ax1.set_xlim(-1,self.k_epMax+1)
+        ax1.set_ylim(0,ymax)
+        ax1.set_xticks(np.arange(0,self.k_epMax+3,5))
+        ax1.set_title(f"Reward vs Episode | Rollouts per Episode: {self.n_rollouts}")
+        ax1.legend(loc='lower right',ncol=2)
+        ax1.grid()
+
+
+        ## PLOT CONVERGENCE DATA
+
+        k_ep_arr,mu_arr,sigma_arr = self.grab_convg_data()
+
+        num_col = mu_arr.shape[1] # Number of policy gains in mu [Currently 3]
+        G_Labels = [r'$\mu_{RREV_{threshold}}$ ',r'$\mu_{M_{y}}$ '] # List of policy gain names
+        Vel,phi = self.grab_vel_IC_2D_angle()
+
+        ## CREATE SUBPLOT FOR MU 
+        ax2.plot(k_ep_arr,mu_arr[:,0],linestyle='-',marker='o',markersize=0,label=G_Labels[0],color='tab:blue')
+        ax2.fill_between(k_ep_arr,mu_arr[:,0]+2*sigma_arr[:,0],mu_arr[:,0]-2*sigma_arr[:,0],alpha=0.5,color='tab:blue')
+
+        ax2.plot(k_ep_arr,mu_arr[:,1],linestyle='-',label=G_Labels[1],color='tab:orange')
+        ax2.fill_between(k_ep_arr,mu_arr[:,1]+2*sigma_arr[:,1],mu_arr[:,1]-2*sigma_arr[:,1],alpha=0.5,color='tab:orange')
+
+
+
+        ax2.set_ylabel('RREV [rad/s]',fontsize=MEDIUM_FONT)
+        ax2.set_xlabel('Episode Number',fontsize=MEDIUM_FONT)
+        ax2.set_xticks(np.arange(0,self.k_epMax+3,5))
+        ax2.set_ylim(0,12.5)
+        ax2.set_yticks(np.arange(0,15,2.5))
+        ax2.set_title(f'Policy Value vs Episode | $Vel$ = {Vel:.2f} [m/s], $\phi$ = {phi:.2f}$^{{\circ}}$)')
+        ax2.legend(loc='lower right',fontsize=MEDIUM_FONT,ncol=2)
+        ax2.grid()
+
+        ax3.set_ylabel(r'$M_{y}$ [N*mm]',fontsize=MEDIUM_FONT)
+        ax3.set_yticks(ax2.get_yticks()) 
+        ax3.set_ylim(ax2.get_ylim())
+        
+        ## JOIN X AXIS OF BOTH PLOTS
+        # ax1.get_shared_x_axes().join(ax1, ax2)
+        # ax1.set_xticklabels([])
+
+
+
+
+        fig.tight_layout()
+        if saveFig==True:
+            plt.savefig('Convergence_Summary.pdf',format='pdf',dpi=300)
+        plt.show()
+
+    def plot_convg(self,ymax=200,saveFig=False):
+
+        fig = plt.figure(figsize=(6,3))
+        ax2 = fig.add_subplot(111)
+        ax3 = ax2.twinx()
+
+        MEDIUM_FONT = 12
+
+        ## PLOT CONVERGENCE DATA
+
+        k_ep_arr,mu_arr,sigma_arr = self.grab_convg_data()
+
+        num_col = mu_arr.shape[1] # Number of policy gains in mu [Currently 3]
+        G_Labels = [r'$\mu_{RREV_{c}}$ ',r'$\mu_{M_{y}}$ '] # List of policy gain names
+        Vel,phi = self.grab_vel_IC_2D_angle()
+
+        ## CREATE SUBPLOT FOR MU 
+        ax2.plot(k_ep_arr,mu_arr[:,0],linestyle='-',marker='o',markersize=0,label=G_Labels[0],color='tab:blue')
+        ax2.fill_between(k_ep_arr,mu_arr[:,0]+2*sigma_arr[:,0],mu_arr[:,0]-2*sigma_arr[:,0],alpha=0.5,color='tab:blue')
+
+        ax2.plot(k_ep_arr,mu_arr[:,1],linestyle='-',label=G_Labels[1],color='tab:orange')
+        ax2.fill_between(k_ep_arr,mu_arr[:,1]+2*sigma_arr[:,1],mu_arr[:,1]-2*sigma_arr[:,1],alpha=0.5,color='tab:orange')
+
+
+
+        ax2.set_ylabel('RREV (rad/s)',fontsize=MEDIUM_FONT)
+        ax2.set_xlabel('Episode Number',fontsize=MEDIUM_FONT)
+        ax2.set_xticks(np.arange(0,self.k_epMax+3,5))
+        ax2.set_ylim(0,12.5)
+        ax2.set_yticks(np.arange(0,15,2.5))
+        ax2.set_title(f'Policy Value vs Episode | $Vel$ = {Vel:.2f} (m/s), $\phi$ = {phi:.2f}$^{{\circ}}$)')
+        ax2.legend(loc='lower right',fontsize=MEDIUM_FONT+2,ncol=2)
+        ax2.grid()
+
+        ax3.set_ylabel(r'$M_{y}$ (N*mm)',fontsize=MEDIUM_FONT)
+        ax3.set_yticks(ax2.get_yticks()) 
+        ax3.set_ylim(ax2.get_ylim())
+        
+        ## JOIN X AXIS OF BOTH PLOTS
+        # ax1.get_shared_x_axes().join(ax1, ax2)
+        # ax1.set_xticklabels([])
+
+
+
+
+        fig.tight_layout()
+        if saveFig==True:
+            plt.savefig('Convergence_Summary.pdf',format='pdf',dpi=300,bbox_inches='tight')
+        plt.show()
 
 
     def plot_state_spread_flip(self,stateName,N:int=3): # Plot histogram showing spread of state values over last N episodes
@@ -728,9 +855,8 @@ class DataFile:
         """Return IC velocities
 
         Returns:
-            vx_IC (float): Desired flip x-velocity
-            vy_IC (float): Desired flip y-velocity
-            vz_IC (float): Desired flip z-velocity
+            Vel_IC (float): Desired flight velocity
+            phi_IC (float): Desired flight angle
         """        
         ## SELECT X,Y,Z LAUNCH VELOCITIES
         vel_df = self.trial_df[['mu','vx','vy','vz']].dropna()
@@ -740,10 +866,13 @@ class DataFile:
         Vel_IC = np.sqrt(vx_IC**2 + vz_IC**2)
         phi_IC = np.rad2deg(np.arctan2(vz_IC,vx_IC))
 
+        Vel_IC = self.vel_IC
+        phi_IC = self.phi_IC
+
         
 
-        phi_IC = np.round(phi_IC,1)
-        Vel_IC = np.round(Vel_IC,1)
+        # Vel_IC = np.round(Vel_IC,2)
+        # phi_IC = np.round(phi_IC,0)
         
         return Vel_IC,phi_IC
 
@@ -1548,35 +1677,21 @@ class GTC_Model():
         
 
 if __name__ == "__main__":
-    import os,sys
+    dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/logs/EXP_Logs/"
+    # dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs/"
 
-    # sys.path.insert(1, os.path.join(sys.path[0], '/home/bhabas/catkin_ws/src/crazyflie_experiment/rl_experiment/utility'))
-    # from data_analysis import DataFile
+    Vel = 2.5
+    phi = 90
+    trial = 2
 
-    dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/logs/"
-    fileName = "EM_PEPG--Vd_2.65--phi_90.00--trial_03--EXP.csv"
-    # fileName = "EM_PEPG--Vd_2.50--phi_90.00--trial_00--EXP.csv"
 
-    trial = DataFile(dataPath,fileName)
+    # fileName = "EM_PEPG--Vd_3.50--phi_60.00--trial_03.csv"
+    # fileName = f"EM_PEPG--Vd_{Vel:.2f}--phi_{phi:.2f}--trial_{int(trial):02d}.csv"
+    # fileName = "My_6.00_Calibration_Test-3.csv"
+    fileName = "EM_PEPG--Vd_2.50--phi_90.00--trial_01--EXP.csv"
+    trial = DataFile(dataPath,fileName,dataType='EXP')
 
     k_ep = 0
-    k_run = 1
+    k_run = 0
 
-    np.set_printoptions(suppress=True)
-
-    trial.plot_rewardData()
-
-    # trial.predictAction(0,0,13.5)
-
-    # accel,_ = trial.grab_accel_data(k_ep,k_run)
-    # t,t_normalized = trial.grab_time(k_ep,k_run)
-
-    # a_mag = np.sqrt(accel[:,0]**2 + accel[:,1]**2 + accel[:,2]**2)
-
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111)
-
-    # ax.plot(t_normalized,a_mag)
-    # ax.grid()
-
-    # plt.show()
+    trial.plot_convg_summary(saveFig=True)

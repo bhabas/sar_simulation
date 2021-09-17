@@ -99,28 +99,28 @@ class ES:
         # else:
             R_3 = 0
         ## CALC R_4 FROM NUMBER OF LEGS CONNECT
-        if env.impact_flag == True: # The pad connection callback is weird w/o impact so only check in this case
+        # if env.impact_flag == True: # The pad connection callback is weird w/o impact so only check in this case
 
-            if len(env.pad_contacts) >= 3: 
-                if env.body_contact == False:
-                    R_4 = 150
-                else:
-                    R_4 = 100
-                
-            elif len(env.pad_contacts) == 2: 
-                if env.body_contact == False:
-                    R_4 = 50
-                else:
-                    R_4 = 25
-                    
-            elif len(env.pad_contacts) == 1:
-                R_4 = 10
-            
+        if len(env.pad_contacts) >= 3: 
+            if env.body_contact == False:
+                R_4 = 150
             else:
-                R_4 = 0.0
+                R_4 = 100
+            
+        elif len(env.pad_contacts) == 2: 
+            if env.body_contact == False:
+                R_4 = 50
+            else:
+                R_4 = 25
                 
+        elif len(env.pad_contacts) == 1:
+            R_4 = 10
+        
         else:
             R_4 = 0.0
+                
+        # else:
+        #     R_4 = 0.0
 
 
         R_total = R_1*10 + R_2*10 + R_4 + 0.001
