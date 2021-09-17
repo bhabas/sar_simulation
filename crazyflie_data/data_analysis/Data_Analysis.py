@@ -5,9 +5,12 @@ from scipy.spatial.transform import Rotation
 import os
 import warnings
 import re
+import matplotlib as mpl
 
 # os.system("clear")
 np.set_printoptions(suppress=True)
+mpl.rcParams['pdf.fonttype'] = 42
+mpl.rcParams['ps.fonttype'] = 42
 
 class DataFile:
     def __init__(self,dataPath,fileName,dataType='SIM'):
@@ -421,7 +424,7 @@ class DataFile:
         k_ep_arr,mu_arr,sigma_arr = self.grab_convg_data()
 
         num_col = mu_arr.shape[1] # Number of policy gains in mu [Currently 3]
-        G_Labels = [r'$\mu_{RREV_{threshold}}$ ',r'$\mu_{M_{y}}$ '] # List of policy gain names
+        G_Labels = [r'$\mu_{RREV_{c}}$ ',r'$\mu_{M_{y}}$ '] # List of policy gain names
         Vel,phi = self.grab_vel_IC_2D_angle()
 
         ## CREATE SUBPLOT FOR MU 
@@ -433,16 +436,16 @@ class DataFile:
 
 
 
-        ax2.set_ylabel('RREV [rad/s]',fontsize=MEDIUM_FONT)
+        ax2.set_ylabel('RREV (rad/s)',fontsize=MEDIUM_FONT)
         ax2.set_xlabel('Episode Number',fontsize=MEDIUM_FONT)
         ax2.set_xticks(np.arange(0,self.k_epMax+3,5))
         ax2.set_ylim(0,12.5)
         ax2.set_yticks(np.arange(0,15,2.5))
-        ax2.set_title(f'Policy Value vs Episode | $Vel$ = {Vel:.2f} [m/s], $\phi$ = {phi:.2f}$^{{\circ}}$)')
-        ax2.legend(loc='lower right',fontsize=MEDIUM_FONT,ncol=2)
+        ax2.set_title(f'Policy Value vs Episode | $Vel$ = {Vel:.2f} (m/s), $\phi$ = {phi:.2f}$^{{\circ}}$)')
+        ax2.legend(loc='lower right',fontsize=MEDIUM_FONT+2,ncol=2)
         ax2.grid()
 
-        ax3.set_ylabel(r'$M_{y}$ [N*mm]',fontsize=MEDIUM_FONT)
+        ax3.set_ylabel(r'$M_{y}$ (N*mm)',fontsize=MEDIUM_FONT)
         ax3.set_yticks(ax2.get_yticks()) 
         ax3.set_ylim(ax2.get_ylim())
         

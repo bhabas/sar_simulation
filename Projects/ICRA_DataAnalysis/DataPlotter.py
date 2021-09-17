@@ -470,7 +470,7 @@ if __name__ == '__main__':
 
     ## FULL DATAFRAME
 
-    model_config = "ExtraNarrow-Short"
+    model_config = "Wide-Short"
     df_raw = pd.read_csv(f"Projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
     df_raw = df_raw.query(f"landing_rate_4_leg >= {0.0}")
 
@@ -570,7 +570,7 @@ if __name__ == '__main__':
         # PLOT LIMITS AND INFO
         ax.set_xlabel('X-Velocity (m/s)',size=12)
         ax.set_ylabel('Z-Velocity (m/s)',size=12)
-        ax.set_zlabel('d_ceiling (m)',size=12)
+        ax.set_zlabel(r'$d_{ceiling} \ \mathrm{(m)}$',size=13)
 
 
         ax.set_xlim(0,4)
@@ -588,7 +588,7 @@ if __name__ == '__main__':
         fig.tight_layout()
 
 
-        plt.savefig(f'{model_config}_StateSpace.pdf',dpi=300)
+        plt.savefig(f'{model_config}_StateSpace.png',dpi=300)
         plt.show()
 
 
@@ -649,8 +649,8 @@ if __name__ == '__main__':
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
         ax.tick_params(axis='y',labelsize=12)
 
-        ax.set_xlabel('OF_y (rad/s)',Fontsize=12)
-        ax.set_ylabel('RREV (rad/s)',Fontsize=12)
+        ax.set_xlabel(r'$OF_y \ \mathrm{(rad/s)}$',Fontsize=13)
+        ax.set_ylabel(r'$RREV \ \mathrm{(rad/s)}$',Fontsize=13)
 
 
         fig.tight_layout()
@@ -698,9 +698,10 @@ if __name__ == '__main__':
 
 
         # PLOT LIMITS AND INFO
-        ax.set_xlabel('OF_y (rad/s)',size=12)
-        ax.set_ylabel('RREV (rad/s)',size=12)
-        ax.set_zlabel('d_ceiling (m)',size=12)
+        ax.set_xlabel(r'$OF_y \ \mathrm{(rad/s)}$',Fontsize=13)
+        ax.set_ylabel(r'$RREV \ \mathrm{(rad/s)}$',Fontsize=13)
+        ax.set_zlabel(r'$d_{ceiling} \ \mathrm{(m)}$',Fontsize=13)
+
 
 
         ax.set_xlim(-20,0)
@@ -763,9 +764,9 @@ if __name__ == '__main__':
 
 
         # PLOT LIMITS AND INFO
-        ax.set_xlabel('OF_y (rad/s)',size=12)
-        ax.set_ylabel('RREV (rad/s)',size=12)
-        ax.set_zlabel('d_ceiling (m)',size=12)
+        ax.set_xlabel(r'$OF_y \ \mathrm{(rad/s)}$',Fontsize=13)
+        ax.set_ylabel(r'$RREV \ \mathrm{(rad/s)}$',Fontsize=13)
+        ax.set_zlabel(r'$d_{ceiling} \ \mathrm{(m)}$',Fontsize=13)
 
 
         ax.set_xlim(-20,0)
@@ -786,8 +787,8 @@ if __name__ == '__main__':
         plt.show()
 
     plot_fig1()
-    plot_polar_smoothed(df_max,saveFig=True)
-    # plot_fig2()
-    # plot_fig3()
-    # plot_fig4()        
+    # plot_polar_smoothed(df_max,saveFig=True)
+    plot_fig2()
+    plot_fig3()
+    plot_fig4()        
     
