@@ -5,10 +5,10 @@
     <include>
       <uri>model://sun</uri>
     </include>
-    <!-- A ground plane
+    <!-- A ground plane -->
     <include>
       <uri>model://ground_plane</uri>
-    </include> -->
+    </include>
     <!-- A ceiling plane -->
     <include>
       <uri>model://ceiling_plane</uri>
@@ -63,9 +63,39 @@
         </contraints>
       </ode>
     </physics> -->
-    <wind>
-      <linear_velocity>0 0 0</linear_velocity>
-    </wind>
+
+    <!-- Camera for recording video inside of Gazebo environment -->
+    <!-- <model name='Video Recording Camera'>
+      <static>true</static>
+      <pose>-0.75 -0.5 1.96 0 0.14 0.57</pose>
+      <link name='link'>
+        <visual name='visual'>
+          <geometry>
+            <box>
+              <size>0.1 0.1 0.1</size>
+            </box>
+          </geometry>
+        </visual>
+        <sensor name='my_camera' type='camera'>
+          <camera>
+            <save enabled="false">
+              <path>/tmp/camera_save_tutorial</path>
+            </save>
+            <horizontal_fov>1.047</horizontal_fov>
+            <image>
+              <width>1920</width>
+              <height>1080</height>
+            </image>
+            <clip>
+              <near>0.1</near>
+              <far>100</far>
+            </clip>
+          </camera>
+          <always_on>1</always_on>
+          <update_rate>715</update_rate>
+        </sensor>
+      </link>
+    </model> -->
     
   </world>
 </sdf>
