@@ -495,7 +495,7 @@ class CrazyflieEnv:
     def reset_pos(self): # Disable sticky then places spawn_model at origin
         
         ## TURN OFF STICKY FEET
-        self.step('tumble',ctrl_flag=0)
+        self.step('tumble',ctrl_flag=0) # Tumble Detection off
         self.step('sticky',ctrl_flag=0)
         self.step('home')
         
@@ -528,13 +528,14 @@ class CrazyflieEnv:
         ## WAIT FOR CONTROLLER TO UPDATE STATE x2 BEFORE TURNING ON TUMBLE DETECTION
         rospy.wait_for_message('/global_state',Odometry)
         rospy.wait_for_message('/global_state',Odometry)
-        self.step('tumble',ctrl_flag=1)
+        self.step('tumble',ctrl_flag=1) # Tumble Detection on
 
         # time.sleep(0.1) # Give it time for controller to receive new states
         # rospy.wait_for_service('/gazebo/get_link_state')
 
         ## RESET TO HOME
         
+
 
     def step(self,action,ctrl_vals=[0,0,0],ctrl_flag=1):
         cmd_msg = RLCmd()

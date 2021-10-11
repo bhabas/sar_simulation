@@ -347,7 +347,7 @@ if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv(gazeboTimeout=True)
-    env.launch_RLdashboard()
+    # env.launch_RLdashboard()
     # env.launch_statedashboard()
 
     # ============================
