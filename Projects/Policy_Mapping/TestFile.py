@@ -9,7 +9,8 @@ import pandas as pd
 import sys
 cwd = os.getcwd()
 sys.path.insert(0, f'{cwd}/')
-print(sys.path)
+
+
 # from crazyflie_rl.src.Crazyflie_env import CrazyflieEnv
 from crazyflie_rl.src.Crazyflie_env import CrazyflieEnv
 from rospy.exceptions import ROSException

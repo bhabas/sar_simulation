@@ -304,11 +304,15 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 
                         ## PUBLISH RL DATA AND RESET LOGS/POSITIONS FOR NEXT ROLLOUT
 
-                        env.reset_flag = True
                         env.RL_Publish() # Publish that rollout completed 
                         
                         env.reset_pos()
-                        env.clear_IF_Data()
+
+                        ## RESET/UPDATE RUN CONDITIONS
+                        env.runComplete_flag = False
+                        env.reset_flag = False
+                        env.error_str = ""
+                        env.clear_rollout_Data()
                     
                         break # Break from run loop
                         

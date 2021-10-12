@@ -561,15 +561,9 @@ class CrazyflieEnv:
         self.Cmd_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
         self.Cmd_Publisher.publish(cmd_msg) # So I'm sending it twice 
         
-    def clear_IF_Data(self):
+    def clear_rollout_Data(self):
         """Clears all logged impact and flip data & resets default values before next rollout
-        """        
-
-        ## RESET/UPDATE RUN CONDITIONS
-        self.runComplete_flag = False
-        self.reset_flag = False
-
-        self.error_str = ""
+        """               
 
         ## RESET IMPACT CONDITIONS
         self.impact_flag = False

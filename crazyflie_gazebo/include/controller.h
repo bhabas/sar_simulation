@@ -100,6 +100,7 @@ class Controller
             ros::param::get("/SIM_SPEED",_SIM_SPEED);
             ros::param::get("/SIM_SLOWDOWN_SPEED",_SIM_SLOWDOWN_SPEED);
             ros::param::get("/CF_MASS",_CF_MASS);
+            ros::param::get("/CTRL_OUTPUT_SLOWDOWN", _CTRL_OUTPUT_SLOWDOWN);
         }
 
         // DEFINE FUNCTION PROTOTYPES
@@ -260,6 +261,7 @@ class Controller
         float _SIM_SPEED; 
         float _SIM_SLOWDOWN_SPEED;
         float _CF_MASS;
+        int _CTRL_OUTPUT_SLOWDOWN;
         
         bool _TEST_FLAG = false;
 
