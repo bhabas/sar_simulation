@@ -22,25 +22,23 @@
       <gravity>0</gravity>
       <visual name='ceiling_visual'>
         <cast_shadows>0</cast_shadows>
-        <transparency>0.7</transparency>
         <geometry>
           <box>
             <size>30 10 0.01</size>
           </box>
         </geometry>
         <material>
-          <lighting>1</lighting>
           <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
+            <!-- <name>Gazebo/Orange</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri> -->
+            <uri>model://ceiling_plane/materials/scripts</uri>
+            <uri>model://ceiling_plane/materials/textures</uri>
+            <name>ceilingMat/Checkerboard</name>
+
           </script>
           <shader type='pixel'>
             <normal_map>__default__</normal_map>
           </shader>
-          <ambient>0.3 0.3 0.3 1</ambient>
-          <diffuse>0.7 0.7 0.7 1</diffuse>
-          <specular>0.01 0.01 0.01 1</specular>
-          <emissive>0 0 0 1</emissive>
         </material>
         <pose>0 0 0 0 -0 0</pose>
       </visual>
