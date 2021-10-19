@@ -159,7 +159,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>0 0 0.015 0 -0 0</pose>
+      <pose>0 0 0.015 0 -1.57 0</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -181,7 +181,7 @@
         <imu/>
       </sensor>
       <sensor name='head_hokuyo_sensor' type='ray'>
-        <pose>0 0 0 3.14159 -1.57079 3.14159</pose>
+        <pose>0 0 0 0 0 0</pose>
         <visualize>1</visualize>
         <update_rate>40</update_rate>
         <ray>
@@ -210,13 +210,13 @@
         </plugin>
       </sensor>
       <sensor type="camera" name="camera1">
-        <update_rate>30.0</update_rate>
+        <update_rate>120.0</update_rate>
         <camera name="head">
           <horizontal_fov>1.3962634</horizontal_fov>
           <image>
-            <width>800</width>
-            <height>800</height>
-            <format>R8G8B8</format>
+            <width>160</width>
+            <height>120</height>
+            <format>L8</format>
           </image>
           <clip>
             <near>0.02</near>
@@ -234,7 +234,7 @@
         <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
           <alwaysOn>true</alwaysOn>
           <updateRate>0.0</updateRate>
-          <cameraName>rrbot/camera1</cameraName>
+          <cameraName>cf/camera</cameraName>
           <imageTopicName>image_raw</imageTopicName>
           <cameraInfoTopicName>camera_info</cameraInfoTopicName>
           <frameName>body_sensors</frameName>

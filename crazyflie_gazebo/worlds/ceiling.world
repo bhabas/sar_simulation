@@ -7,7 +7,7 @@
     </include>
     <!-- A ground plane -->
     <include>
-      <uri>model://ground_plane</uri>
+      <uri>model://ground_plane2</uri>
     </include>
     <!-- A ceiling plane -->
     <include>
