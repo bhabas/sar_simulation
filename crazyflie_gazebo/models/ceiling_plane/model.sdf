@@ -24,7 +24,7 @@
         <cast_shadows>0</cast_shadows>
         <geometry>
           <box>
-            <size>30 10 0.01</size>
+            <size>10 10 0.01</size>
           </box>
         </geometry>
         <material>
