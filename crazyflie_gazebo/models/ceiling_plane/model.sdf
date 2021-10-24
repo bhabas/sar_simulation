@@ -3,7 +3,7 @@
   <model name='ceiling_plane'>
     <static>0</static>
     <link name='ceiling'>
-      <pose>0 3.5 2.08 0 -0 0</pose>
+      <pose>0 0 2.08 0 -0 0</pose>
       <inertial>
         <inertia>
           <ixx>506.983</ixx>
@@ -24,7 +24,7 @@
         <cast_shadows>0</cast_shadows>
         <geometry>
           <box>
-            <size>10 10 0.01</size>
+            <size>15 15 0.01</size>
           </box>
         </geometry>
         <material>

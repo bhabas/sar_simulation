@@ -150,7 +150,7 @@ def runTrial(env,agent):
             ## CONVERT STARTING RREV VALUE -> Z_POS TO START ROLLOUT FROM
             RREV_start = 1.0
             pos_z = env.h_ceiling - env.vel_d[2]/RREV_start
-            pos_z = 0.4
+            pos_z = 0.3986
 
             
  
@@ -218,7 +218,7 @@ def runTrial(env,agent):
                 # ============================
                 ##    Termination Criteria 
                 # ============================
-                if (env.impact_flag or env.body_contact) and ((env.getTime()-start_time_impact) > 1.0):
+                if (env.impact_flag or env.body_contact) and ((env.getTime()-start_time_impact) > 10.0):
                     env.error_str = "Rollout Completed: Impact Timeout"
                     print(env.error_str)
 
@@ -239,7 +239,7 @@ def runTrial(env,agent):
                     env.runComplete_flag = True
 
                 # IF TIME SINCE RUN START EXCEEDS [6.0s]
-                elif (env.getTime() - start_time_rollout) > (5.0):
+                elif (env.getTime() - start_time_rollout) > (10.0):
                     env.error_str = "Rollout Completed: Time Exceeded"
                     print(env.error_str)
 
