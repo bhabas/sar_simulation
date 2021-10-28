@@ -212,14 +212,14 @@
       <sensor type="camera" name="camera1">
         <update_rate>120.0</update_rate>
         <camera name="head">
-          <save enabled="true">
+          <save enabled="false">
             <path>/home/bhabas/Downloads/Video_images</path>
             <!--Convert Command: ffmpeg -framerate 60 -pattern_type glob -i '*.jpg' -c:v libx264 -pix_fmt yuv420p out.mp4 -->
           </save>
           <horizontal_fov>1.3962634</horizontal_fov>
           <image>
-            <width>50</width>
-            <height>50</height>
+            <width>160</width>
+            <height>120</height>
             <format>L8</format>
           </image>
           <clip>
@@ -232,7 +232,7 @@
                  That pixel's noise value is added to each of its color
                  channels, which at that point lie in the range [0,1]. -->
             <mean>0.0</mean>
-            <stddev>0.000</stddev>
+            <stddev>0.007</stddev>
           </noise>
         </camera>
         <plugin name="camera_controller" filename="libgazebo_ros_camera.so">

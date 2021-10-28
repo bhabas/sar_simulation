@@ -7,7 +7,7 @@
     </include>
     <!-- A ground plane -->
     <include>
-      <uri>model://ground_plane</uri>
+      <uri>model://ground_plane2</uri>
     </include>
     <!-- A ceiling plane -->
     <include>
@@ -65,7 +65,7 @@
     </physics> -->
 
     <!-- Camera for recording video inside of Gazebo environment -->
-  <model name='camera'>
+  <!-- <model name='camera'>
       <static>true</static>
       <pose>0.56 -2.5 1.88 0 0.22 1.57</pose>
       <link name='link'>
@@ -95,7 +95,7 @@
           <update_rate>60</update_rate>
         </sensor>
       </link>
-    </model>
+    </model> -->
     
   </world>
 </sdf>
