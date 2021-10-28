@@ -1,39 +1,35 @@
 #!/usr/bin/env python3
 
+
 import numpy as np
 import time,os
-from scipy.spatial.transform import Rotation
+import rospy
+from crazyflie_msgs.msg import ImpactData,CtrlData
+import math
 
 
 
 from Crazyflie_env import CrazyflieEnv
-from rl_syspepg import rlsysPEPGAgent_reactive
+# from rl_syspepg import rlsysPEPGAgent_reactive,rlsysPEPGAgent_adaptive
+from RL_agents.rl_EM import rlEM_PEPGAgent
+# from RL_agents.rl_cma import CMA_basic,CMA,CMA_sym
+from rospy.exceptions import ROSException
 
 os.system("clear")
 np.set_printoptions(precision=2, suppress=True)
 
 
-
-# ============================
-##     Sim Initialization 
-# ============================
-
-## INIT GAZEBO ENVIRONMENT
-env = CrazyflieEnv()
-env.reset_pos() # Reset Gazebo pos
-# env.launch_dashboard()
-print("Environment done")
-
-
-
-
-
-
-
-
-def runTrial():
+def runTrial(env,agent):
+    env.create_csv(env.filepath)
     reset_vals = True
-    
+
+
+    ## SEND MESSAGE FOR ALL NODES TO RESET TO DEFAULT VALUES
+    env.reset_flag = True
+    env.trialComplete_flag = False
+    env.RL_Publish() # Publish that rollout completed 
+
+   
     # ============================
     ##          Episode         
     # ============================
@@ -49,10 +45,11 @@ def runTrial():
 
 
 
-        ## PREALLOCATE REWARD VEC AND OBTAIN THETA VALS
-        reward = np.zeros(shape=(env.n_rollouts,1))
+        ## PRE-ALLOCATE REWARD VEC AND OBTAIN THETA VALS
+        reward_arr = np.zeros(shape=(agent.n_rollouts,1))   # Array of reward values
+        
 
-
+        ## PRINT EPISODE DATA
         print("=============================================")
         print("STARTING Episode # %d" %k_ep)
         print("=============================================")
@@ -66,15 +63,28 @@ def runTrial():
         # ============================
         ##          Run 
         # ============================
-        k_run = 0 # Reset run counter each episode
-        while k_run < env.n_rollouts:
-            env.k_run = k_run
+        for env.k_run in range(0,env.n_rollouts):
 
+            ## UPDATE RUN NUMBER
+            k_run = env.k_run # Local variables are faster to access then class variables
+
+         
+            ## IF CONTROLLER FAILS, RELAUNCH IT
+            try:
+                rospy.wait_for_message("/ctrl_data",CtrlData,timeout=5.0)
+            except rospy.exceptions.ROSException:
+                env.launch_controller()
+                time.sleep(2)
+                env.reset_pos()
+                continue
 
             ## RESET TO INITIAL STATE
-            env.step('home',ctrl_flag=1) # Reset control vals and functionality to default vals
-            time.sleep(1.0) # Time for CF to settle
+            env.step('home') # Reset control vals and functionality to default vals
+            time.sleep(0.65) # Time for CF to settle [Real-Time seconds]
 
+
+
+            ## INITIALIZE RUN PARAMETERS
             if reset_vals == True:
         
                 while True:
@@ -93,144 +103,165 @@ def runTrial():
                 while True:
                     try:
                         
-                        v_str = input("Input V_ini (vx, vy, vz): ")
-                        num = list(map(float, v_str.split()))
-                        v_d = np.asarray(num)
-                        vx_d,vy_d,vz_d = v_d
-                        if len(v_d) != 3:
+                        V_str = input("Input V_ini (Vel,Phi): ")
+                        V_d,phi_d = list(map(float, V_str.split()))
+                        phi_rad = np.radians(phi_d)
+                        env.vel_d = [V_d*np.cos(phi_rad), 0.0, V_d*np.sin(phi_rad)] # [m/s]
+                        
+                        if len(list(map(float, V_str.split()))) != 2:
                             raise Exception()
                         break
                     except:
-                        print("Error: Enter vz,vx,vy")
-
-
-
-            
-            
+                        print("Error: Enter Vel,Phi")
 
 
             ## INITIALIZE RUN PARAMETERS
-            RREV_trigger = mu[0] # FoV expansion velocity [rad/s]
+            RREV_thr = mu[0]    # RREV threshold (FOV expansion velocity) [rad/s]
             G1 = mu[1]
             G2 = mu[2]
-            env.policy = [RREV_trigger,G1,G2]
+            env.policy = [RREV_thr,np.abs(G1),G2]
             env.step('policy',env.policy,ctrl_flag=1) # Arm controller policy
             
-            env.vel_d = [vx_d,vy_d,vz_d] # [m/s]
 
-
-            ## INIT RUN FLAGS
-            t_step = 0
-            z_max = 0 # [m]
-            
-            env.runComplete_flag = False
-            env.flip_flag = False
+            ## RESET/UPDATE RUN CONDITIONS
+            repeat_run= False
 
             start_time_rollout = env.getTime()
-            start_time_pitch = None
-            state_history = None
-            repeat_run= False
-            error_str = ""
+            start_time_pitch = np.nan
+            start_time_impact = np.nan
+
+
+            ## RESET LOGGING CONDITIONS 
+            t_step = 0
+            t_prev = 0.0
+
+            
+            flag = False # Ensures flip data recorded only once (Needs a better name)
+            flag2 = False # Ensures impact data recorded only once (Needs a better name)
+
 
             ## PRINT RUN CONDITIONS AND POLICY
-            print("\n!-------------------Episode # %d run # %d-----------------!" %(k_ep,k_run))
-            print("RREV: %.3f \t Gain_1: %.3f \t Gain_2: %.3f \t Gain_3: %.3f" %(RREV_trigger, G1, G2, 0))
-            print("Vx_d: %.3f \t Vy_d: %.3f \t Vz_d: %.3f" %(vx_d, vy_d, vz_d))
+            print(f"\n!-------------------Episode # {k_ep:d} run # {k_run:d}-----------------!")
+            print(f"RREV_thr: {RREV_thr:.3f} \t Gain_1: {G1:.3f}")
+            print(f"Vx_d: {env.vel_d[0]:.3f} \t Vy_d: {env.vel_d[1]:.3f} \t Vz_d: {env.vel_d[2]:.3f}")
+            print("\n")
 
 
+            ## CONVERT STARTING RREV VALUE -> Z_POS TO START ROLLOUT FROM
+            RREV_start = 1.0
+            pos_z = env.h_ceiling - env.vel_d[2]/RREV_start
+            pos_z = 0.3986
+
+            
+ 
             # ============================
             ##          Rollout 
             # ============================
-            env.step('pos',ctrl_flag=0) # Turn off pos control
-            env.step('vel',env.vel_d,ctrl_flag=1) # Set desired vel
-            env.step('sticky',ctrl_flag=1) # Enable sticky
-            env.launch_IC(vx_d,vz_d)
- 
-            
-            
-            
-            while True:
-                
-                ## DEFINE CURRENT STATE
-                state = np.array(env.state_current)
-                
-                position = state[1:4] # [x,y,z]
-                orientation_q = state[4:8] # Orientation in quat format
-                vel = state[8:11] # [vx,vy,vz]
-                vx,vy,vz = vel
-                omega = state[11:14] # [wx,wy,wz]
-                d = env.h_ceiling - position[2] # Vertical distance of drone from ceiling
+            env.step('pos',ctrl_flag=0)                     # Turn off pos control
+            env.step('vel',env.vel_d,ctrl_flag=1)           # Set desired vel
+            env.launch_IC(pos_z,env.vel_d[0]+0.03,env.vel_d[2])   # Use Gazebo to impart desired vel with extra vx to ensure -OF_y when around zero
+            env.step('sticky',ctrl_flag=1)                  # Enable sticky pads
 
-                ## ORIENTATION DATA FROM STATE QUATERNION
-                qw,qx,qy,qz = orientation_q
-                R = Rotation.from_quat([qx,qy,qz,qw])
-                R = R.as_matrix() # [b1,b2,b3] Body vectors
-                RREV,OF_x,OF_y = vz/d, -vy/d, -vx/d # OF_x,y are mock optical flow vals assuming no body rotation
+        
+            
+            
+            while 1: # NOTE: [while 1:] is faster than [while True:]
+                    
+                    
+                    
+                ## DEFINE CURRENT STATE
+                state = env.state_current   # Collect state values here so they are thread-safe
+                FM = np.array(env.FM)       # Motor thrust and Moments
                 
+                vx,vy,vz = state[7:10] # [vx,vy,vz]
+
+
+                # ============================
+                ##      Pitch Recording 
+                # ============================
+                if (env.flip_flag == True and flag == False):
+                    start_time_pitch = env.getTime() # Starts countdown for when to reset run
+
+                    # Recieve flip moments from controller and then update class var to be sent out of /rl_data topic
+                    Mx_d = env.FM_flip[1] 
+                    My_d = env.FM_flip[2]
+                    Mz_d = env.FM_flip[3]
+                    env.M_d = [Mx_d,My_d,Mz_d] # [N*mm]
+
+                
+                    print("----- pitch starts -----")
+                    print(f"vx={vx:.3f}, vy={vy:.3f}, vz={vz:.3f}")
+                    print(f"RREV_tr={env.RREV_tr:.3f}, OF_y_tr={env.OF_y_tr:.3f}, My_d={My_d:.3f} [N*mm]")  
+                    print(f"Pitch Time: {env.state_flip[0]:.3f} [s]")
+                    
+                    flag = True # Turns on to make sure this only runs once per rollout
+
+                
+                if ((env.impact_flag or env.body_contact) and flag2 == False):
+                    start_time_impact = env.getTime()
+                    flag2 = True
+
 
                 # ============================
                 ##      Record Keeping  
                 # ============================
-                ## Keep record of state vector every 10 time steps
-                state = state[:, np.newaxis] # Convert [13,] array to [13,1] array
-                
-                if state_history is None:
-                    state_history = state 
-                else:
-                    if t_step%1==0: # Append state_history columns with current state vector 
-                        state_history = np.append(state_history, state, axis=1)
-                        env.RL_Publish()
-                        env.createCSV_flag = False
+
+                # Check if sample of recorded data changed, if so then append csv (Reduces repeated data rows)
+                if env.t != t_prev:
+                # if t_step%1==0: 
+                    # env.RL_Publish()
+                    env.append_csv()
+
+                    
 
 
                 # ============================
                 ##    Termination Criteria 
                 # ============================
+                if (env.impact_flag or env.body_contact) and ((env.getTime()-start_time_impact) > 10.0):
+                    env.error_str = "Rollout Completed: Impact Timeout"
+                    print(env.error_str)
 
-                # # If time since triggered pitch exceeds [0.7s]   
-                # if env.flip_flag and ((env.getTime()-start_time_pitch) > (0.7)):
-                #     # I don't like this error formatting, feel free to improve on
-                #     error_1 = "Rollout Completed: Pitch Timeout"
-                #     error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_pitch,(env.getTime()-start_time_pitch))
-                #     print(error_1 + "\n" + error_2)
-
-                #     error_str = error_1 + error_2
-                #     env.runComplete_flag = True
-
-                # If position falls below max achieved height 
-                z_max = max(position[2],z_max)
-                if position[2] <= 0.85*z_max:
-                    error_1 = "Rollout Completed: Falling Drone"
-                    print(error_1)
-
-                    error_str  = error_1
                     env.runComplete_flag = True
 
-                # If time since run start exceeds [2.5s]
-                if (env.getTime() - start_time_rollout) > (3.0):
-                    error_1 = "Rollout Completed: Time Exceeded"
-                    error_2 = "Time: %.3f Start Time: %.3f Diff: %.3f" %(env.getTime(), start_time_rollout,(env.getTime()-start_time_rollout))
-                    print(error_1 + "\n" + error_2)
+                # IF TIME SINCE TRIGGERED PITCH EXCEEDS [1.5s]  
+                elif env.flip_flag and ((env.getTime()-start_time_pitch) > (2.25)):
+                    env.error_str = "Rollout Completed: Pitch Timeout"
+                    print(env.error_str)
 
-                    error_str = error_1 + error_2
                     env.runComplete_flag = True
 
-        
-                    
-                
+                # IF POSITION FALLS BELOW FLOOR HEIGHT
+                elif env.position[2] <= -8.0: # Note: there is a lag with this at high RTF
+                    env.error_str = "Rollout Completed: Falling Drone"
+                    print(env.error_str)
+
+                    env.runComplete_flag = True
+
+                # IF TIME SINCE RUN START EXCEEDS [6.0s]
+                elif (env.getTime() - start_time_rollout) > (10.0):
+                    env.error_str = "Rollout Completed: Time Exceeded"
+                    print(env.error_str)
+
+                    env.runComplete_flag = True
+
 
                 # ============================
                 ##          Errors  
                 # ============================
 
-                ## If nan is found in state vector repeat sim run
-                if any(np.isnan(state)): # gazebo sim becomes unstable, relaunch simulation
-                    print("NAN found in state vector")
-                    error_str = "Error: NAN found in state vector"
+                ## IF NAN IS FOUND IN STATE VECTOR REPEAT RUN (Model collision Error)
+                if any(np.isnan(env.state_current)): 
+                    env.error_str = "Error: NAN found in state vector"
+                    print(env.error_str)
                     repeat_run = True
                     break
 
-
+                if np.abs(env.position[1]) >= 1.0: # If CF goes crazy it'll usually shoot out in y-direction
+                    env.error_str = "Error: Y-Position Exceeded"
+                    print(env.error_str)
+                    repeat_run = True
+                    break
 
 
                 # ============================
@@ -238,34 +269,61 @@ def runTrial():
                 # ============================
                 if env.runComplete_flag==True:
 
-                    env.step('stop')
-                    env.reset_pos()
-                    ## There is a weird delay where it sometime won't publish ctrl_cmds until the next command is executed
-                    ## I have no idea what's going on there but it may or may not have an effect?
-                    ## I've got no idea...
-                   
                     
                     
-                    # reward[k_run] = agent.calcReward_pureLanding(state_history,env.h_ceiling)
-                    reward[k_run] = 50
-                    env.reward = reward[k_run]
-                    print("Reward = %.3f" %(reward[k_run]))
-                    print("!------------------------End Run------------------------! \n")                    
-                    break
+                    print("\n")
+                    # env.RL_Publish() # Publish that rollout completed 
+                    # rospy.wait_for_message('/ceiling_force_sensor',ImpactData)
 
-                t_step += 1
+                    # reward_arr[k_run] = agent.calcReward_pureLanding(env)
+                    reward_arr[k_run] = agent.calcReward_Impact(env)
+                    env.reward = reward_arr[k_run,0]
+                    env.reward_avg = reward_arr[np.nonzero(reward_arr)].mean()
+                    env.reward_inputs = [env.z_max,env.pitch_sum,env.pitch_max]
+                    
+                    
+                    print(f"Reward = {env.reward:.3f}")
+                    # print(f"# of Leg contacts: {sum(env.pad_contacts)}")
+                    print("!------------------------End Run------------------------! \n")  
+
+                    
+
+                    ## RUN DATA LOGGING
+                    env.append_csv_blank()
+                    env.append_IC()
+                    env.append_flip()
+                    env.append_impact()
+                    env.append_csv_blank()
+
+                    
+
+
+                    ## PUBLISH RL DATA AND RESET LOGS/POSITIONS FOR NEXT ROLLOUT
+
+                    env.reset_flag = True
+                    env.RL_Publish() # Publish that rollout completed 
+                    
+                    env.reset_pos()
+                    env.clear_IF_Data()
+                
+                    break # Break from run loop
+                    
+                t_step += 1  
+                t_prev = env.t   
 
             
             ## =======  RUN COMPLETED  ======= ##
-            if repeat_run == True:
+            if repeat_run == True: # Runs when error detected
                 env.relaunch_sim()
             
             else:
                 ## PUBLISH UPDATED REWARD VARIABLES
-
-                env.reward = reward[k_run,0]
+                env.reward = reward_arr[k_run,0]
+                env.reward_avg = reward_arr[np.nonzero(reward_arr)].mean()
                 env.RL_Publish()
-                k_run += 1 # Move on to next run
+                k_run += 1 # When succesful move on to next run
+
+                ## PUBLISH UPDATED REWARD VARIABLES
 
                 str = input("Input: \n(1): To play again \n(2): To repeat scenario \n(3): Game over :( \n")
                 if str == '1':
@@ -277,10 +335,12 @@ def runTrial():
                     reset_vals = False
                 else: 
                     break
+            
+
 
             
         ## =======  EPISODE COMPLETED  ======= ##
-        print("Episode # %d training, average reward %.3f" %(k_ep, np.mean(reward)))
+        print(f"Episode # {k_ep:d} training, average reward {env.reward_avg:.3f}")
         
        
     ## =======  MAX TRIALS COMPLETED  ======= ##
@@ -288,34 +348,50 @@ def runTrial():
 
 if __name__ == '__main__':
 
+    ## INIT GAZEBO ENVIRONMENT
+    env = CrazyflieEnv(gazeboTimeout=False)
+    # env.launch_RLdashboard()
+    # env.launch_statedashboard()
 
-    ## SIM PARAMETERS
+
+
+    # ============================
+    ##          AGENT  
+    # ============================
+
+    # ## GAUSSIAN PARAMETERS
+    # mu = np.array([[4.0],[4.0]])                 # Initial mu starting point
+    # sigma = np.array([[1.5],[1.5]])       # Initial sigma starting point
+
+    mu = np.array([[4.0], [8.0]])                 # Initial mu starting point
+    sigma = np.array([[1.5],[1.5]])       # Initial sigma starting point
+
+
+    ## LEARNING AGENTS AND PARAMETERS
     env.n_rollouts = 10
+    K_EP_MAX = rospy.get_param("K_EP_MAX")
+    agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=env.n_rollouts)
+
+    
+    # ============================
+    ##     LEARNING CONDITIONS  
+    # ============================
+
+    ## INITIALIALIZE LOGGING DATA
+    trial_num = 24
+    env.agent_name = agent.agent_type
+    env.trial_name = f"Policy_Playground--trial_{int(trial_num):02d}"
+    env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
     env.logging_flag = True
-    env.h_ceiling = 2.1 # [m]
 
+    ## RUN TRIAL
+    env.RL_Publish() # Publish data to rl_data topic
+    time.sleep(3)
 
+    runTrial(env,agent)
+    print()
+ 
 
-
-    ## LEARNING AGENTS
-    agent = rlsysPEPGAgent_reactive(np.asarray(0),np.asarray(0),np.asarray(0),np.asarray(0))
-
-
-
-    
-    ## INITIAL CONDITIONS
-    env.agent_name = "EM_PEPG"
-    
-    while True:
-        start_time = time.strftime('_%Y-%m-%d_%H:%M:%S', time.localtime(time.time()))
-        env.trial_name = f"RL_Policy_Playground-{start_time}"
-
-        ## SEND MSG WHICH INCLUDES VARIABLE TO START NEW CSV
-        env.createCSV_flag = True
-        env.RL_Publish()
-
-        ## RUN TRIAL AND RESTART GAZEBO FOR NEXT TRIAL RUN (NOT NECESSARY BUT MIGHT BE A GOOD IDEA?)
-        runTrial()
 
 
 

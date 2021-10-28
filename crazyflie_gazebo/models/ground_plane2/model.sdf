@@ -1,9 +1,9 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='ceiling_plane'>
-    <static>0</static>
-    <link name='ceiling'>
-      <pose>0 0 2.08 0 -0 0</pose>
+  <model name='ground_plane2'>
+    <static>1</static>
+    <link name='ground'>
+      <pose>0 3.5 0 0 -0 0</pose>
       <inertial>
         <inertia>
           <ixx>506.983</ixx>
@@ -20,21 +20,18 @@
       <enable_wind>0</enable_wind>
       <kinematic>0</kinematic>
       <gravity>0</gravity>
-      <visual name='ceiling_visual'>
+      <visual name='ground_visual'>
         <cast_shadows>0</cast_shadows>
         <geometry>
           <box>
-            <size>5 5 0.01</size>
+            <size>10 10 0.01</size>
           </box>
         </geometry>
         <material>
           <script>
-            <!-- <name>Gazebo/Orange</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri> -->
-            <uri>model://ceiling_plane/materials/scripts</uri>
-            <uri>model://ceiling_plane/materials/textures</uri>
-            <name>ceilingMat/Checkerboard</name>
-
+            <uri>model://ground_plane2/materials/scripts</uri>
+            <uri>model://ground_plane2/materials/textures</uri>
+            <name>groundMat/Dirt</name>
           </script>
           <shader type='pixel'>
             <normal_map>__default__</normal_map>
@@ -42,13 +39,13 @@
         </material>
         <pose>0 0 0 0 -0 0</pose>
       </visual>
-      <collision name='ceiling_collision'>
+      <collision name='ground_collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <box>
-            <size>30 10 0.05</size>
+            <size>30 30 0.05</size>
           </box>
         </geometry>
         <surface>
@@ -97,35 +94,7 @@
           </contact>
         </surface>
       </collision>
-      <sensor name='ceiling_contact_sensor' type='contact'>
-        <always_on>1</always_on>
-        <visualize>1</visualize>
-        <contact>
-          <collision>ceiling_collision</collision>
-          <topic>__default_topic__</topic>
-        </contact>
-        <plugin name='contact_plugin' filename='libgazebo_ros_bumper.so'>
-          <bumperTopicName>ceiling_contact</bumperTopicName>
-          <frameName>ceiling</frameName>
-          <alwaysOn>true</alwaysOn>
-          <updateRate>500</updateRate>
-        </plugin>
-        <pose>0 0 0 0 -0 0</pose>
-      </sensor>
     </link>
-    <joint name="joint_01" type="fixed">
-      <parent>world</parent>
-      <child>ceiling</child>
-      <pose>0 0 0 0 0 0</pose>    
-      <physics>
-        <ode>
-        </ode>
-      </physics>
-      <sensor name="force_torque" type="force_torque">
-        <always_on>true</always_on>
-        <update_rate>1000</update_rate>
-      </sensor>
-    </joint>
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
   </model>
