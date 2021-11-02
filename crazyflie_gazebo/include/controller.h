@@ -3,6 +3,7 @@
 #include <Eigen/Dense>
 #include <cmath>        // std::abs
 #include <math.h>       
+#include "math3d.h"
 
 
 // ROS Includes
@@ -517,11 +518,6 @@ Eigen::Vector3d dehat(Eigen::Matrix3d a_hat) // Input a skew-symmetric matrix an
     return a;
 }
 
-static inline float clamp(float value, float min, float max) {
-  if (value < min) return min;
-  if (value > max) return max;
-  return value;
-}
 
 
 
