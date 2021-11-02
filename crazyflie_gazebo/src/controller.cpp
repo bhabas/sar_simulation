@@ -61,7 +61,6 @@ void Controller::controlThread()
         stateVel = mkvec(_velocity.x,_velocity.y,_velocity.z);                      // [m]
         stateOmega = mkvec(_omega.x,_omega.y,_omega.z);   // [rad/s]
         stateQuat = mkquat(_quaternion.x,_quaternion.y,_quaternion.z,_quaternion.w);
-
         RREV = stateVel.z/(h_ceiling - statePos.z);
         OF_x = stateVel.y/(h_ceiling - statePos.z);
         OF_y = stateVel.x/(h_ceiling - statePos.z);
@@ -71,6 +70,8 @@ void Controller::controlThread()
         stateEul.x = degrees(stateEul.x);
         stateEul.y = degrees(stateEul.y);
         stateEul.z = degrees(stateEul.z);
+
+        printf("%.4f\n",statePos.z);
 
 
         // =========== STATE SETPOINTS =========== //
@@ -173,6 +174,7 @@ void Controller::controlThread()
         Gyro_dyn = vsub(temp1_v,temp4_v);
 
         F_thrust = vdot(F_thrust_ideal, b3);    // Project ideal thrust onto b3 vector [N]
+        cout << F_thrust << endl;
         M = vadd(R_effort,Gyro_dyn);            // Control moments [Nm]
 
         // =========== THRUST AND MOMENTS [FORCE NOTATION] =========== // 
@@ -191,12 +193,16 @@ void Controller::controlThread()
         }
 
         // =========== CONVERT THRUSTS AND MOMENTS TO PWM =========== // 
-        f_thrust = F_thrust/4.0f*Newton2g;
-        f_roll = M.x/(4.0f*dp)*Newton2g;
-        f_pitch = M.y/(4.0f*dp)*Newton2g;
-        f_yaw = M.z/(4.0*c_tf)*Newton2g;
+        f_thrust_g = F_thrust/4.0f*Newton2g;
+        f_roll_g = M.x/(4.0f*dp)*Newton2g;
+        f_pitch_g = M.y/(4.0f*dp)*Newton2g;
+        f_yaw_g = M.z/(4.0*c_tf)*Newton2g;
+
+        
 
         f_thrust_g = clamp(f_thrust_g,0.0,f_MAX*0.8);    // Clamp thrust to prevent control saturation
+
+        cout << f_thrust_g << endl;
 
         M1_pwm = limitPWM(thrust2PWM(f_thrust_g + f_roll_g - f_pitch_g + f_yaw_g)); // Add respective thrust components and limit to (0 <= PWM <= 60,000)
         M2_pwm = limitPWM(thrust2PWM(f_thrust_g + f_roll_g + f_pitch_g - f_yaw_g));

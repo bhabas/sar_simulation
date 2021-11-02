@@ -375,3 +375,19 @@ uint16_t limitPWM(int32_t value)
 
   return (uint16_t)value;
 }
+
+static inline void printvec(struct vec v){
+
+    std::cout << v.x << "\t" << v.y << "\t" << v.z << std::endl;
+    
+}
+
+// static inline void printvec(struct vec v){
+// 	DEBUG_PRINT("%.4f, %.4f, %.4f\n", (double)v.x, (double)v.y, (double)v.z);
+// 	return;
+// }
+
+// static inline void printquat(struct quat q){
+// 	DEBUG_PRINT("%.4f, %.4f, %.4f %.4f\n", (double)q.x, (double)q.y, (double)q.z, (double)q.w);
+// 	return;
+// }
