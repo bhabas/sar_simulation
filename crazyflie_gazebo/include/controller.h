@@ -50,7 +50,7 @@ class Controller
             // Queue lengths are set to '1' so only the newest data is used
 
             // SENSORS
-            globalState_Subscriber = nh->subscribe("/global_state",1,&Controller::global_stateCallback,this,ros::TransportHints().tcpNoDelay());
+            globalState_Subscriber = nh->subscribe("/vicon_state",1,&Controller::global_stateCallback,this,ros::TransportHints().tcpNoDelay());
             OF_Subscriber = nh->subscribe("/OF_sensor",1,&Controller::OFCallback,this,ros::TransportHints().tcpNoDelay()); 
             imu_Subscriber = nh->subscribe("/imu",1,&Controller::imuCallback,this);
             ceilingFT_Subcriber = nh->subscribe("/ceiling_force_sensor",5,&Controller::ceilingFTCallback,this,ros::TransportHints().tcpNoDelay());
@@ -293,128 +293,6 @@ class Controller
 
 };
 
-// CUSTOM EIGEN FUNCTIONS FOR HAT AND DEHAT OPERATORS
-Eigen::Matrix3d hat(Eigen::Vector3d a) // Input a hat vector and output corresponding skew-symmetric matrix
-{ 
-  // You hat a vector and get a skew-symmetric matrix
-  // You dehat/dehat a skew-symmetric matrix and get a vector
-
-    /* Convert a into skew symmetric matrix a_hat
-    a = [ a1 ] 
-        [ a2 ] 
-        [ a3 ]
- 
-    a_hat = [  0   -a3   a2 ]
-            [  a3   0   -a1 ]
-            [ -a2   a1   0  ]
-    ]
-    */
-    Eigen::Matrix3d a_hat;
-    a_hat(2,1) =  a(0);
-    a_hat(1,2) = -a(0);
-
-    a_hat(0,2) =  a(1);
-    a_hat(2,0) = -a(1);
-
-    a_hat(1,0) =  a(2);
-    a_hat(0,1) = -a(2);
-
-    return a_hat;
-}
-
-Eigen::Vector3d dehat(Eigen::Matrix3d a_hat) // Input a skew-symmetric matrix and output corresponding vector
-{
-
-    /* Convert skew-symmetric matrix a_hat into vector a
-
-    a_hat = [  0   -a3   a2 ]
-            [  a3   0   -a1 ]
-            [ -a2   a1   0  ]
-
-
-    a = [ a1 ] 
-        [ a2 ] 
-        [ a3 ]
-
-    */
-
-    Eigen::Vector3d a;
-    Eigen::Matrix3d tmp;
-
-    tmp = (a_hat - a_hat.transpose())/2; // Not sure why this is done
-
-    a(0) = tmp(2,1);
-    a(1) = tmp(0,2);
-    a(2) = tmp(1,0);
-
-    return a;
-}
-
-static inline float clamp(float value, float min, float max) {
-  if (value < min) return min;
-  if (value > max) return max;
-  return value;
-}
-
-// Converts thrust in Newtons to their respective PWM values
-static inline int32_t thrust2PWM(float f) 
-{
-    // Conversion values calculated from self motor analysis
-    float a = 3.31e4;
-    float b = 1.12e1;
-    float c = 8.72;
-    float d = 3.26e4;
-
-    float s = 1.0f; // sign of value
-    int32_t f_pwm = 0;
-
-    s = f/fabsf(f);
-    f = fabsf(f);
-    
-    f_pwm = a*tanf((f-c)/b)+d;
-
-    return s*f_pwm;
-
-}      
-
-// Converts thrust in PWM to their respective Newton values
-static inline float PWM2thrust(int32_t M_PWM) 
-{
-    // Conversion values calculated from PWM to Thrust Curve
-    // Linear Fit: Thrust [g] = a*PWM + b
-    float a = 3.31e4;
-    float b = 1.12e1;
-    float c = 8.72;
-    float d = 3.26e4;
-
-    float f = b*atan2f(M_PWM-d,a)+c;
-    // float f = (a*M_PWM + b); // Convert thrust to grams
-
-    if(f<0)
-    {
-      f = 0;
-    }
-
-    return f;
-}
-
-
-// Limit PWM value to accurate portion of motor curve (0 - 60,000)
-uint16_t limitPWM(int32_t value)
-{
-  if(value > PWM_MAX)
-  {
-    value = PWM_MAX;
-  }
-  else if(value < 0)
-  {
-    value = 0;
-  }
-
-  return (uint16_t)value;
-}
-
-
 void Controller::Load()
 {
     cout << setprecision(3);
@@ -509,6 +387,147 @@ void Controller::adjustSimSpeed(float speed_mult)
 
     SimSpeed_Client.call(srv);
 }
+
+
+
+
+
+// =====================
+// CONTROLLER FUNCTIONS
+// =====================
+
+// Converts thrust in Newtons to their respective PWM values
+static inline int32_t thrust2PWM(float f) 
+{
+    // Conversion values calculated from self motor analysis
+    float a = 3.31e4;
+    float b = 1.12e1;
+    float c = 8.72;
+    float d = 3.26e4;
+
+    float s = 1.0f; // sign of value
+    int32_t f_pwm = 0;
+
+    s = f/fabsf(f);
+    f = fabsf(f);
+    
+    f_pwm = a*tanf((f-c)/b)+d;
+
+    return s*f_pwm;
+
+}      
+
+// Converts thrust in PWM to their respective Newton values
+static inline float PWM2thrust(int32_t M_PWM) 
+{
+    // Conversion values calculated from PWM to Thrust Curve
+    // Linear Fit: Thrust [g] = a*PWM + b
+    float a = 3.31e4;
+    float b = 1.12e1;
+    float c = 8.72;
+    float d = 3.26e4;
+
+    float f = b*atan2f(M_PWM-d,a)+c;
+    // float f = (a*M_PWM + b); // Convert thrust to grams
+
+    if(f<0)
+    {
+      f = 0;
+    }
+
+    return f;
+}
+
+// Limit PWM value to accurate portion of motor curve (0 - 60,000)
+uint16_t limitPWM(int32_t value)
+{
+  if(value > PWM_MAX)
+  {
+    value = PWM_MAX;
+  }
+  else if(value < 0)
+  {
+    value = 0;
+  }
+
+  return (uint16_t)value;
+}
+
+
+
+
+// =====================
+//    MATH OPERATIONS
+// =====================
+
+// CUSTOM EIGEN FUNCTIONS FOR HAT AND DEHAT OPERATORS
+Eigen::Matrix3d hat(Eigen::Vector3d a) // Input a hat vector and output corresponding skew-symmetric matrix
+{ 
+  // You hat a vector and get a skew-symmetric matrix
+  // You dehat/dehat a skew-symmetric matrix and get a vector
+
+    /* Convert a into skew symmetric matrix a_hat
+    a = [ a1 ] 
+        [ a2 ] 
+        [ a3 ]
+ 
+    a_hat = [  0   -a3   a2 ]
+            [  a3   0   -a1 ]
+            [ -a2   a1   0  ]
+    ]
+    */
+    Eigen::Matrix3d a_hat;
+    a_hat(2,1) =  a(0);
+    a_hat(1,2) = -a(0);
+
+    a_hat(0,2) =  a(1);
+    a_hat(2,0) = -a(1);
+
+    a_hat(1,0) =  a(2);
+    a_hat(0,1) = -a(2);
+
+    return a_hat;
+}
+
+Eigen::Vector3d dehat(Eigen::Matrix3d a_hat) // Input a skew-symmetric matrix and output corresponding vector
+{
+
+    /* Convert skew-symmetric matrix a_hat into vector a
+
+    a_hat = [  0   -a3   a2 ]
+            [  a3   0   -a1 ]
+            [ -a2   a1   0  ]
+
+
+    a = [ a1 ] 
+        [ a2 ] 
+        [ a3 ]
+
+    */
+
+    Eigen::Vector3d a;
+    Eigen::Matrix3d tmp;
+
+    tmp = (a_hat - a_hat.transpose())/2; // Not sure why this is done
+
+    a(0) = tmp(2,1);
+    a(1) = tmp(0,2);
+    a(2) = tmp(1,0);
+
+    return a;
+}
+
+static inline float clamp(float value, float min, float max) {
+  if (value < min) return min;
+  if (value > max) return max;
+  return value;
+}
+
+
+
+// =====================
+//    ROS CALLBACKS
+// =====================
 
 // UNUSED CALLBACK
 void Controller::imuCallback(const sensor_msgs::Imu::ConstPtr &msg){

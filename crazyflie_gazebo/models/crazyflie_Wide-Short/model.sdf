@@ -1735,11 +1735,23 @@
       <gaussianNoise>0.0</gaussianNoise>
       <robotNamespace>/</robotNamespace>
     </plugin>
+    
     <plugin name='crazyflie_odom' filename='libgazebo_ros_p3d.so'>
+      <alwaysOn>1</alwaysOn>
+      <updateRate>1000</updateRate>
+      <bodyName>crazyflie_body</bodyName>
+      <topicName>global_state</topicName>
+      <frameName>world</frameName>
+      <xyzOffsets>0 0 0</xyzOffsets>
+      <rpyOffsets>0 0 0</rpyOffsets>
+      <robotNamespace>/</robotNamespace>
+    </plugin>
+
+    <plugin name='crazyflie_Vicon' filename='libgazebo_ros_p3d.so'>
       <alwaysOn>1</alwaysOn>
       <updateRate>100</updateRate>
       <bodyName>crazyflie_body</bodyName>
-      <topicName>global_state</topicName>
+      <topicName>vicon_state</topicName>
       <frameName>world</frameName>
       <xyzOffsets>0 0 0</xyzOffsets>
       <rpyOffsets>0 0 0</rpyOffsets>
