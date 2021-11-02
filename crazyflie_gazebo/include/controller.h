@@ -65,6 +65,14 @@ class Controller
         // SENSORS
         ros::Subscriber globalState_Subscriber;
 
+
+        geometry_msgs::Point _position; 
+        geometry_msgs::Vector3 _velocity;
+
+        geometry_msgs::Quaternion _quaternion;
+        geometry_msgs::Vector3 _omega;
+
+
         // DEFINE THREAD OBJECTS
         std::thread controllerThread;
         std::thread senderThread_gazebo;
@@ -83,7 +91,54 @@ class Controller
 
         float const kf = 2.2e-8f;    // Thrust Coeff [N/(rad/s)^2]
         float const c_tf = 0.00618f;  // Moment Coeff [Nm/N]
-        
+
+        float dt = (1.0f/500.0f);
+
+        // CONTROLLER PARAMETERS
+        bool attCtrlEnable = false;
+        bool tumbled = false;
+        bool motorstop_flag = false;
+        bool errorReset = false;
+
+        // TEMPORARY CALC VECS/MATRICES
+        struct vec temp1_v; 
+        struct vec temp2_v;
+        struct vec temp3_v;
+        struct vec temp4_v;
+        struct mat33 temp1_m;  
+
+        struct vec P_effort;
+        struct vec R_effort;
+
+        struct mat33 RdT_R; // Rd' * R
+        struct mat33 RT_Rd; // R' * Rd
+        struct vec Gyro_dyn;
+
+        // MOTOR THRUSTS
+        float f_thrust; // Motor thrust - Thrust [N]
+        float f_roll;   // Motor thrust - Roll   [N]
+        float f_pitch;  // Motor thrust - Pitch  [N]
+        float f_yaw;    // Motor thrust - Yaw    [N]
+
+
+        float f_thrust_g = 0.0;
+        float f_roll_g = 0.0;
+        float f_pitch_g = 0.0;
+        float f_yaw_g = 0.0;
+
+        float MS1 = 0.0;
+        float MS2 = 0.0;
+        float MS3 = 0.0;
+        float MS4 = 0.0;
+
+        float motorspeed[4];
+
+        // MOTOR VARIABLES
+        uint32_t M1_pwm = 0; 
+        uint32_t M2_pwm = 0; 
+        uint32_t M3_pwm = 0; 
+        uint32_t M4_pwm = 0; 
+                
 
         // INIT CTRL GAIN VECTORS
         struct vec Kp_p; // Pos. Proportional Gains
@@ -93,6 +148,15 @@ class Controller
         struct vec Kd_R; // Rot. Derivative Gains
         struct vec Ki_R; // Rot. Integral Gains
 
+        // STATE ERRORS
+        struct vec e_x;  // Pos-error [m]
+        struct vec e_v;  // Vel-error [m/s]
+        struct vec e_PI;  // Pos. Integral-error [m*s]
+
+        struct vec e_R;  // Rotation-error [rad]
+        struct vec e_w;  // Omega-error [rad/s]
+        struct vec e_RI; // Rot. Integral-error [rad*s]
+
         // STATE VALUES
         struct vec statePos = {0.0f,0.0f,0.0f};         // Pos [m]
         struct vec stateVel = {0.0f,0.0f,0.0f};         // Vel [m/s]
@@ -101,6 +165,34 @@ class Controller
 
         struct mat33 R; // Orientation as rotation matrix
         struct vec stateEul = {0.0f,0.0f,0.0f}; // Pose in Euler Angles [YZX Notation]
+
+
+        // DESIRED STATES
+        struct vec x_d = {0.0f,0.0f,0.0f}; // Pos-desired [m]
+        struct vec v_d = {0.0f,0.0f,0.0f}; // Vel-desired [m/s]
+        struct vec a_d = {0.0f,0.0f,0.0f}; // Acc-desired [m/s^2]
+
+        struct quat quat_d = {0.0f,0.0f,0.0f,1.0f}; // Orientation-desired [qx,qy,qz,qw]
+        struct vec eul_d = {0.0f,0.0f,0.0f};        // Euler Angle-desired [rad? deg? TBD]
+        struct vec omega_d = {0.0f,0.0f,0.0f};      // Omega-desired [rad/s]
+        struct vec domega_d = {0.0f,0.0f,0.0f};     // Ang. Acc-desired [rad/s^2]
+
+        struct vec b1_d = {1.0f,0.0f,0.0f};    // Desired body x-axis in global coord. [x,y,z]
+        struct vec b2_d;    // Desired body y-axis in global coord.
+        struct vec b3_d;    // Desired body z-axis in global coord.
+        struct vec b3;      // Current body z-axis in global coord.
+
+        struct mat33 R_d;   // Desired rotational matrix from b_d vectors
+
+
+        struct vec e_3 = {0.0f, 0.0f, 1.0f}; // Global z-axis
+
+        struct vec F_thrust_ideal;           // Ideal thrust vector
+        float F_thrust = 0.0f;               // Desired body thrust [N]
+        float F_thrust_max = 0.64f;          // Max possible body thrust [N}]
+        struct vec M;                        // Desired body moments [Nm]
+        struct vec M_d = {0.0f,0.0f,0.0f};   // Desired moment [N*mm]
+        float Moment_flag = false;
 
 
         // OPTICAL FLOW STATES
@@ -205,6 +297,81 @@ void Controller::Load()
 
 void Controller::global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
 
+    // SIMPLIFY STATE VALUES FROM TOPIC
+    // Follow msg names from message details - "rqt -s rqt_msg" 
+    
+    _position = msg->pose.pose.position; 
+    _velocity = msg->twist.twist.linear;
 
 
+    // SET STATE VALUES INTO CLASS STATE VARIABLES
+    // _t = msg->header.stamp.toSec();
+    // _pos << position.x, position.y, position.z;
+    // _vel << velocity.x, velocity.y, velocity.z;
+
+    // This stuff should come from IMU callback but lockstep broke that topic for some reason
+    _quaternion = msg->pose.pose.orientation;
+    _omega = msg->twist.twist.angular;
+
+    // _quat << quaternion.w, quaternion.x, quaternion.y, quaternion.z, 
+    // _omega << omega.x, omega.y, omega.z;
+
+}
+
+// Converts thrust in Newtons to their respective PWM values
+static inline int32_t thrust2PWM(float f) 
+{
+    // Conversion values calculated from self motor analysis
+    float a = 3.31e4;
+    float b = 1.12e1;
+    float c = 8.72;
+    float d = 3.26e4;
+
+    float s = 1.0f; // sign of value
+    int32_t f_pwm = 0;
+
+    s = f/fabsf(f);
+    f = fabsf(f);
+    
+    f_pwm = a*tanf((f-c)/b)+d;
+
+    return s*f_pwm;
+
+}      
+
+// Converts thrust in PWM to their respective Newton values
+static inline float PWM2thrust(int32_t M_PWM) 
+{
+    // Conversion values calculated from PWM to Thrust Curve
+    // Linear Fit: Thrust [g] = a*PWM + b
+    float a = 3.31e4;
+    float b = 1.12e1;
+    float c = 8.72;
+    float d = 3.26e4;
+
+    float f = b*atan2f(M_PWM-d,a)+c;
+    // float f = (a*M_PWM + b); // Convert thrust to grams
+
+    if(f<0)
+    {
+      f = 0;
+    }
+
+    return f;
+}
+
+
+// Limit PWM value to accurate portion of motor curve (0 - 60,000)
+uint16_t limitPWM(int32_t value)
+{
+  if(value > PWM_MAX)
+  {
+    value = PWM_MAX;
+  }
+  else if(value < 0)
+  {
+    value = 0;
+  }
+
+  return (uint16_t)value;
 }
