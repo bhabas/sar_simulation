@@ -1,12 +1,10 @@
-
-/*
-*  Name: gazebo_transport_to_ros_topic.cpp
-*  Author: Joseph Coombe
-*  Date: 11/22/2017
-*  Edited: 11/27/2017
-*  Description:
-*   Subscribe to a Gazebo transport topic and publish to a ROS topic
+/* 
+This code is responsible for recording the max impact forces along the x,y,z
+axes. As well, it constantly saves a buffer of the last [5] global 
+positioning states and when it detects an impact it will send out the
+datapoint from position [2] in the buffer (state right before impact). 
 */
+
 
 // Gazebo dependencies
 #include <gazebo/transport/transport.hh>

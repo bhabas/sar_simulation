@@ -6,13 +6,11 @@
 #include <ros/ros.h>
 
 
-
-
-
-
-
-
-
+/* 
+    This script is the primary controller script that handles all of the incoming sensory data
+    and converts it to motor values. It also records the state at when the flip is triggered
+    and outputs that data.
+*/
 
 
 void Controller::RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){

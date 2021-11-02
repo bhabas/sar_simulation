@@ -3,6 +3,10 @@ import os
 
 os.system("clear")
 
+""" 
+This script is used here for calculating the system's mass/inertia/max acceleration
+"""
+
 
 ## SYSTEM CONSTANTS
 g = 9.81 # [m/s^2]

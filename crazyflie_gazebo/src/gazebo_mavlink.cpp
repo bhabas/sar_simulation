@@ -4,6 +4,13 @@
 #include <stdint.h>
 #include <iomanip>
 
+/* 
+(LEGACY CODE) 
+This sets up a UDP connect that recieves states of the model as well as handles the motorspeed/sticky
+foot messages. This should be updated to ROS setup just to be consistent however it works for now.
+*/
+
+
 namespace gazebo{
 
 void GazeboMavlink::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)

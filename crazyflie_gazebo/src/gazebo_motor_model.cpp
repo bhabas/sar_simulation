@@ -19,6 +19,15 @@
  */
 
 
+/* 
+This plugin handles the motorspeeds and thrust physics. Motor characteristics 
+come into effect here and are read from the SDF file. It receives motor commands
+via the mavlink UDP connection stuff but should eventually be ported over to ROS
+communication to keep things consistent and easy to update.
+*/
+
+
+
 #include "gazebo_motor_model.h"
 #include <ignition/math.hh>
 

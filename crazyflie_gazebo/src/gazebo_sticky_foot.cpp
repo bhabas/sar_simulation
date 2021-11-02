@@ -1,6 +1,13 @@
 #include <iostream>
 #include <gazebo_sticky_foot.h>
 
+/*
+    (LEGACY CODE)
+    This plugin is responsible for joining foot pads to whatever entity they collide with (e.g. ground or ceiling).
+    It turns on/off through the motorspeed commands where a negative first value sends the command here and the 
+    next value is a bool turning sticky on/off. 
+*/
+
 namespace gazebo{
 
 
@@ -21,7 +28,6 @@ void GazeboStickyFoot::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
     node_handle_ = transport::NodePtr(new transport::Node());
     node_handle_->Init(namespace_);
 
-    //updateConnection_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&GazeboStickyFoot::OnUpdate, this, _1));
 
     // INITIALIZE SOME SORT OF GAZEBO SUBSCRIBER
     getSdfParam<std::string>(_sdf, "stickyEnableSubTopic", sticky_enable_sub_topic_, sticky_enable_sub_topic_);
@@ -58,21 +64,10 @@ void GazeboStickyFoot::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
         physics::CollisionPtr collision_entity = link_->GetCollision(i);
         std::cout << "[gazebo_sticky_foot] Collision Entity: " << collision_entity->GetScopedName().c_str() << std::endl;
 
-        // I'm not sure what was referenced here? 
-        /*
-        //What even is the point of this check? It SEEMS to look for the same collision appearing twice, but how would that even happen?
-        std::map<std::string, physics::CollisionPtr>::iterator collIter = this->dataPtr->collisions.find(collision->GetScopedName());
-        if (collIter != this->dataPtr->collisions.end()) continue;
-        */
-
-
         collisions[collision_entity->GetScopedName()] = collision_entity;
     }
     
-    /* FAILED CODE?
-    contact_node_ = transport::NodePtr(new transport::Node());
-    contact_node_->Init(world_->GetName());
-    */
+
 
     // SUBSCRIBE TO COLLSIONS FROM GAZEBO
     physics_engine_ = world_->Physics();
@@ -87,21 +82,10 @@ void GazeboStickyFoot::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
         std::cout<<"[gazebo_sticky_foot]: Contact_Sub subscribed to: "<<contact_pub_topic.c_str()<<std::endl;
     }
 
-    /* FAILED CODE?
-    joint_ = physics_engine_->CreateJoint("fixed", model_);
-    //joint_->SetName(model_->GetName() + "__sticking_joint__");
-    joint_->SetName("__sticking_joint__");
-    */
-
 
 }
 
-/*
-// This gets called by the world update start event.
-void GazeboStickyFoot::OnUpdate(const common::UpdateInfo& _info)
-{
-}
-*/
+
 
 
 // CALLBACK ACTIVATED WHENEVER CONTACT DETECTED (MSG RECEIVED FROM GZ-PUB)

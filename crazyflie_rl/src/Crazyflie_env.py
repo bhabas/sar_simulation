@@ -323,27 +323,15 @@ class CrazyflieEnv:
         self.OF_y = round(-OF_msg.twist.twist.linear.x/d,3) # [rad/s]
         
 
-    def contactSensorCallback(self,msg_arr): ## Callback to indicate which pads have collided with ceiling
+    def contactSensorCallback(self,msg_arr): ## Callback to indicate if quadrotor body contacts ceiling
 
         for msg in msg_arr.states: ## ContactsState message includes an array of ContactState messages
-            # If pad collision or body collision detected then mark True
-            # if msg.collision1_name  ==  f"{self.modelName}::pad_1::collision" and self.pad_contacts[0] == False:
-            #     self.pad_contacts[0] = True
-                
-            # elif msg.collision1_name == f"{self.modelName}::pad_2::collision" and self.pad_contacts[1] == False:
-            #     self.pad_contacts[1] = True
-
-            # elif msg.collision1_name == f"{self.modelName}::pad_3::collision" and self.pad_contacts[2] == False:
-            #     self.pad_contacts[2] = True
-
-            # elif msg.collision1_name == f"{self.modelName}::pad_4::collision" and self.pad_contacts[3] == False:
-            #     self.pad_contacts[3] = True
 
             if msg.collision1_name == f"{self.modelName}::crazyflie_body::body_collision" and self.body_contact == False:
                 self.body_contact = True
 
 
-    def padConnect_Callback(self,msg):
+    def padConnect_Callback(self,msg): ## Callback that records number of pads that stick to ceiling (from gazebo_sticky_foot.cpp)
 
         self.pad_contacts.append(msg.Pad_Num)
         
