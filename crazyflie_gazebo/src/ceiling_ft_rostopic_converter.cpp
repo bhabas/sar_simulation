@@ -143,7 +143,7 @@ void RLdata_Callback(const crazyflie_msgs::RLData::ConstPtr &msg)
 
 }
 
-void global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
+void vicon_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
 
     // SET STATE VALUES INTO GLOBAL STATE VARIABLES
     _pos = msg->pose.pose.position; 
@@ -201,7 +201,7 @@ int main(int argc, char **argv)
   
   // INIT ROS PUBLISHERS/SUBSCRIBERS
   impactForce_Publisher = nh.advertise<crazyflie_msgs::ImpactData>(ros_topic_to_pub, 1);
-  globalState_Subscriber = nh.subscribe("/global_state",1,global_stateCallback,ros::TransportHints().tcpNoDelay());
+  globalState_Subscriber = nh.subscribe("/global_state",1,vicon_stateCallback,ros::TransportHints().tcpNoDelay());
   RLdata_Subscriber = nh.subscribe("/rl_data",5,RLdata_Callback);
   ROS_INFO("ROS Subscribers/Publishers Started");
   

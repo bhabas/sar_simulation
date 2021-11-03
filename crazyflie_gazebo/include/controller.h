@@ -51,8 +51,9 @@ class Controller
 
 
             // BODY SENSORS
-            globalState_Subscriber = nh->subscribe("/vicon_state",1,&Controller::global_stateCallback,this,ros::TransportHints().tcpNoDelay());
+            globalState_Subscriber = nh->subscribe("/vicon_state",1,&Controller::vicon_stateCallback,this,ros::TransportHints().tcpNoDelay());
             OF_Subscriber = nh->subscribe("/OF_sensor",1,&Controller::OFCallback,this,ros::TransportHints().tcpNoDelay()); 
+            imu_Subscriber = nh->subscribe("/cf/imu",1,&Controller::imuCallback,this);
                 
             // ENVIRONMENT SENSORS
             ceilingFT_Subcriber = nh->subscribe("/ceiling_force_sensor",5,&Controller::ceilingFTCallback,this,ros::TransportHints().tcpNoDelay());
@@ -92,8 +93,10 @@ class Controller
         void controllerGTCReset();
         void controllerGTCTraj();
         void GTC_Command(const crazyflie_msgs::RLCmd::ConstPtr &msg);
-        void global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg);
+
+        void vicon_stateCallback(const nav_msgs::Odometry::ConstPtr &msg);
         void OFCallback(const nav_msgs::Odometry::ConstPtr &msg);           
+        void imuCallback(const sensor_msgs::Imu::ConstPtr &msg);
 
         void RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg);
 
@@ -114,6 +117,8 @@ class Controller
         // SENSORS
         ros::Subscriber globalState_Subscriber;
         ros::Subscriber OF_Subscriber;
+        ros::Subscriber imu_Subscriber;
+
 
         ros::Subscriber ceilingFT_Subcriber;
 
@@ -132,6 +137,8 @@ class Controller
         geometry_msgs::Vector3 _velocity;
         geometry_msgs::Quaternion _quaternion;
         geometry_msgs::Vector3 _omega;
+        geometry_msgs::Vector3 _accel;
+
 
 
         // DEFINE THREAD OBJECTS
@@ -439,21 +446,16 @@ void Controller::Load()
 }
 
 
-void Controller::global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
+void Controller::vicon_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
 
 
     // Follow msg names from message details - "rqt -s rqt_msg" 
     
-    
     // SET STATE VALUES INTO CLASS STATE VARIABLES
     _t = msg->header.stamp.toSec();
-    
     _position = msg->pose.pose.position; 
     _velocity = msg->twist.twist.linear;
-    _quaternion = msg->pose.pose.orientation;
-    _omega = msg->twist.twist.angular;
-
-    
+        
 }
 
 
@@ -473,6 +475,12 @@ void Controller::OFCallback(const nav_msgs::Odometry::ConstPtr &msg){
     _RREV = velocity.z/d;
     _OF_x = -velocity.y/d;
     _OF_y = -velocity.x/d;
+}
+
+void Controller::imuCallback(const sensor_msgs::Imu::ConstPtr &msg){
+    _quaternion = msg->orientation;
+    _omega = msg->angular_velocity;
+    _accel = msg->linear_acceleration;
 }
 
 void Controller::RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){

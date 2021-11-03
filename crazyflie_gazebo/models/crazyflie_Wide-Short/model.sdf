@@ -164,22 +164,8 @@
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
-      <sensor name='imu_sensor' type='imu'>
-        <always_on>1</always_on>
-        <topic>__default_topic__</topic>
-        <plugin name='imu_plugin' filename='libgazebo_ros_imu_sensor.so'>
-          <topicName>imu</topicName>
-          <bodyName>body_sensors</bodyName>
-          <updateRateHZ>500</updateRateHZ>
-          <gaussianNoise>0.0</gaussianNoise>
-          <xyzOffset>0 0 0</xyzOffset>
-          <rpyOffset>0 0 0</rpyOffset>
-          <frameName>imu_link</frameName>
-          <initialOrientationAsReference>0</initialOrientationAsReference>
-        </plugin>
-        <pose>0 0 0 0 -0 0</pose>
-        <imu/>
-      </sensor>
+      
+     
       <sensor name='head_hokuyo_sensor' type='ray'>
         <pose>0 0 0 0 0 0</pose>
         <visualize>1</visualize>
@@ -1734,6 +1720,15 @@
       <frameName>world</frameName>
       <gaussianNoise>0.0</gaussianNoise>
       <robotNamespace>/</robotNamespace>
+    </plugin>
+
+    <plugin name="imu_plugin" filename="libgazebo_ros_imu.so">
+      <alwaysOn>true</alwaysOn>
+      <bodyName>crazyflie_body</bodyName>
+      <topicName>cf/imu</topicName>
+      <serviceName>imu_service</serviceName>
+      <gaussianNoise>0.0</gaussianNoise>
+      <updateRate>100.0</updateRate>
     </plugin>
     
     <plugin name='crazyflie_odom' filename='libgazebo_ros_p3d.so'>
