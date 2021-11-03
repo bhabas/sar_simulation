@@ -58,6 +58,8 @@ class Controller
 
             // COMMANDS AND INFO
             RLCmd_Subscriber = nh->subscribe("/rl_ctrl",50,&Controller::GTC_Command,this,ros::TransportHints().tcpNoDelay());
+            RLData_Subscriber = nh->subscribe("/rl_data",5,&Controller::RLData_Callback,this,ros::TransportHints().tcpNoDelay());
+
 
 
             // INIT VARIABLES TO DEFAULT VALUES (PREVENTS RANDOM VALUES FROM MEMORY)
@@ -86,7 +88,10 @@ class Controller
         void controllerGTCReset();
         void GTC_Command(const crazyflie_msgs::RLCmd::ConstPtr &msg);
         void global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg);
-        void OFCallback(const nav_msgs::Odometry::ConstPtr &msg);
+        void OFCallback(const nav_msgs::Odometry::ConstPtr &msg);           
+
+        void RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg);
+
 
 
 
@@ -122,8 +127,9 @@ class Controller
 
 
 
-        // MISC VARIABLES AND CONSTANTS
-        int _k_ep;
+        // ROS SPECIFIC VALUES
+        int k_ep;
+        int impact_flag;
         float _H_CEILING;
         bool _LANDING_SLOWDOWN_FLAG;
         int _K_EP_SLOWDOWN;
@@ -134,10 +140,28 @@ class Controller
         
         bool _TEST_FLAG = false;
 
+        ros::Time t_flip;
+
 
         double _RREV = 0.0;  // [rad/s]
         double _OF_x = 0.0;  // [rad/s]
         double _OF_y = 0.0;  // [rad/s]
+
+        // STATE VALUES AT FLIP TRIGGER
+        float RREV_tr = 0.0f;
+        float OF_x_tr = 0.0f;
+        float OF_y_tr = 0.0f;
+
+        struct vec statePos_tr = {0.0f,0.0f,0.0f};         // Pos [m]
+        struct vec stateVel_tr = {0.0f,0.0f,0.0f};         // Vel [m/s]
+        struct quat stateQuat_tr = {0.0f,0.0f,0.0f,1.0f};  // Orientation
+        struct vec stateOmega_tr = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
+
+
+        float f_thrust_g_tr = 0.0f;
+        float f_roll_g_tr = 0.0f;
+        float f_pitch_g_tr = 0.0f;
+        float f_yaw_g_tr = 0.0f;
 
 
         // POLICY VARIABLES
@@ -424,6 +448,15 @@ void Controller::OFCallback(const nav_msgs::Odometry::ConstPtr &msg){
     _RREV = velocity.z/d;
     _OF_x = -velocity.y/d;
     _OF_y = -velocity.x/d;
+}
+
+void Controller::RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){
+    k_ep = msg->k_ep;
+    if (msg->reset_flag == true){
+
+        controllerGTCReset();
+
+    }
 }
 
 // Converts thrust in Newtons to their respective PWM values

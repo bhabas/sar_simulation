@@ -15,14 +15,29 @@ void Controller::controllerGTCReset(void)
     x_d = mkvec(0.0f,0.0f,0.4f);
     v_d = mkvec(0.0f,0.0f,0.0f);
     a_d = mkvec(0.0f,0.0f,0.0f);
-    
 
+    
     tumbled = false;
     motorstop_flag = false;
 
     Moment_flag = false;
     policy_armed_flag = false;
     flip_flag = false;
+
+    // ROS SPECIFIC VALUES
+    impact_flag = false;
+
+
+    // RESET LOGGED FLIP VALUES
+    statePos_tr = vzero();
+    stateVel_tr = vzero();
+    stateQuat_tr = mkquat(0.0f,0.0f,0.0f,1.0f);
+    stateOmega_tr = vzero();
+
+    RREV_tr = 0.0;
+    OF_x_tr = 0.0;
+    OF_y_tr = 0.0;
+
 
     // t = 0;
     // execute_traj = false;
@@ -303,6 +318,15 @@ void Controller::controllerGTC()
                     flip_flag = true;
 
                     // UPDATE AND RECORD FLIP VALUES
+                    t_flip = ros::Time::now();
+                    statePos_tr = statePos;
+                    stateVel_tr = stateVel;
+                    stateQuat_tr = stateQuat;
+                    stateOmega_tr = stateOmega;
+
+                    OF_y_tr = OF_y;
+                    OF_x_tr = OF_x;
+                    RREV_tr = RREV;
 
                 }
 
@@ -313,6 +337,12 @@ void Controller::controllerGTC()
 
                     M = vscl(2.0f,M_d); // Need to double moment to ensure it survives the PWM<0 cutoff
                     F_thrust = 0.0f;
+
+                    // RECORD MOTOR THRUST TYPES AT FLIP
+                    f_thrust_g_tr = F_thrust/4.0f*Newton2g;
+                    f_roll_g_tr = M.x/(4.0f*dp)*Newton2g;
+                    f_pitch_g_tr = M.y/(4.0f*dp)*Newton2g;
+                    f_yaw_g_tr = M.z/(4.0f*c_tf)*Newton2g;
 
                 }
 
@@ -393,7 +423,36 @@ void Controller::controllerGTC()
         ctrl_msg.OF_y = OF_y;
         ctrl_msg.OF_x = OF_x;
 
+        // FLIP INFO
+        ctrl_msg.flip_flag = flip_flag;
+        ctrl_msg.RREV_tr = RREV_tr;
+        ctrl_msg.OF_x_tr = OF_x_tr;
+        ctrl_msg.OF_y_tr = OF_y_tr;
+        ctrl_msg.FM_flip = {f_thrust_g_tr,f_roll_g_tr,f_pitch_g_tr,f_yaw_g_tr};
+
+
+        ctrl_msg.Pose_tr.header.stamp = t_flip;             
+
+        ctrl_msg.Pose_tr.pose.position.x = statePos_tr.x;
+        ctrl_msg.Pose_tr.pose.position.y = statePos_tr.y;
+        ctrl_msg.Pose_tr.pose.position.z = statePos_tr.z;
+
+        ctrl_msg.Pose_tr.pose.orientation.x = stateQuat_tr.x;
+        ctrl_msg.Pose_tr.pose.orientation.y = stateQuat_tr.y;
+        ctrl_msg.Pose_tr.pose.orientation.z = stateQuat_tr.z;
+        ctrl_msg.Pose_tr.pose.orientation.w = stateQuat_tr.w;
+
+        ctrl_msg.Twist_tr.linear.x = stateVel_tr.x;
+        ctrl_msg.Twist_tr.linear.y = stateVel_tr.y;
+        ctrl_msg.Twist_tr.linear.z = stateVel_tr.z;
+
+        ctrl_msg.Twist_tr.angular.x = stateOmega_tr.x;
+        ctrl_msg.Twist_tr.angular.y = stateOmega_tr.y;
+        ctrl_msg.Twist_tr.angular.z = stateOmega_tr.z;
+
         ctrl_msg.FM = {f_thrust_g,f_roll_g,f_pitch_g,f_yaw_g};
+
+
 
         ctrl_Publisher.publish(ctrl_msg);
         rate.sleep();
