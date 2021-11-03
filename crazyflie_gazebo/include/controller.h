@@ -1,6 +1,5 @@
 #include <iostream>
 #include <thread>
-#include <Eigen/Dense>
 #include <cmath>        // std::abs
 #include <math.h>       
 #include "math3d.h"
@@ -91,6 +90,7 @@ class Controller
         void Load();
         void controllerGTC();
         void controllerGTCReset();
+        void controllerGTCTraj();
         void GTC_Command(const crazyflie_msgs::RLCmd::ConstPtr &msg);
         void global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg);
         void OFCallback(const nav_msgs::Odometry::ConstPtr &msg);           
@@ -209,6 +209,15 @@ class Controller
         bool motorstop_flag = false;
         bool errorReset = false;
         bool flip_flag = false;
+
+        // TRAJECTORY VARIABLES
+        float s_0 = 0.0f;
+        float v = 0.0f;
+        float a = 0.0f;
+        float t = 0.0f;
+        float T = 0.0f;
+        uint8_t traj_type = 0;
+        bool execute_traj = false;
 
 
         // INIT CTRL GAIN VECTORS

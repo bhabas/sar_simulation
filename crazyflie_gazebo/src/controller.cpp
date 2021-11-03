@@ -1,6 +1,5 @@
 #include <iostream>
 
-#include <Eigen/Dense>
 #include "controller.h"
 
 #include <ros/ros.h>
@@ -23,6 +22,7 @@ void Controller::controllerGTCReset(void)
     Moment_flag = false;
     policy_armed_flag = false;
     flip_flag = false;
+    execute_traj = false;
 
     // ROS SPECIFIC VALUES
     impact_flag = false;
@@ -41,13 +41,15 @@ void Controller::controllerGTCReset(void)
     OF_y_tr = 0.0;
 
 
-    // t = 0;
+    t = 0;
     // execute_traj = false;
 
 
 
 
 }
+
+
 
 void Controller::GTC_Command(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 {   
@@ -121,6 +123,25 @@ void Controller::GTC_Command(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 
             break;
 
+        case 9: // Trajectory Values
+
+            s_0 = cmd_vals.x;
+            v = cmd_vals.y;
+            a = cmd_vals.z;
+            traj_type = cmd_flag;
+
+            t = 0.0f; // Reset t
+            T = (a+fsqr(v))/(a*v); // Find trajectory manuever length [s]
+
+            if(traj_type >= 0){
+                execute_traj = true;
+            }
+            else{
+                execute_traj = false;
+            }
+
+            break;
+
         case 11: // Enable/Disable Stickyfoot
         {
             float sticky_cmd[4] = {-(float)cmd_type,cmd_flag,0,0};
@@ -133,6 +154,45 @@ void Controller::GTC_Command(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 
     }
 
+}
+
+void Controller::controllerGTCTraj()
+{
+    if(t<=v/a)
+    {
+        x_d.z = 0.5f*a*t*t + s_0;
+        v_d.z = a*t;
+        a_d.z = a;
+
+    }
+
+    // CONSTANT VELOCITY TRAJECTORY
+    if(v/a < t)
+    {
+        x_d.z = v*t - fsqr(v)/(2.0f*a) + s_0;
+        v_d.z = v;
+        a_d.z = 0.0f;
+    }
+
+    // COMPLETE POSITION TRAJECTORY
+    // if(v/a <= t && t < (T-v/a))
+    // {
+    //     x_d.z = v*t - fsqr(v)/(2.0f*a) + s_0;
+    //     v_d.z = v;
+    //     a_d.z = 0.0f;
+    // }
+
+    // if((T-v/a) < t && t <= T)
+    // {
+    //     x_d.z = (2.0f*a*v*T-2.0f*fsqr(v)-fsqr(a)*fsqr(t-T))/(2.0f*a) + s_0;
+    //     v_d.z = a*(T-t);
+    //     a_d.z = -a;
+    // }
+
+    t = t + dt;
+    
+
+    
 }
 
 void Controller::controllerGTC()
@@ -172,6 +232,24 @@ void Controller::controllerGTC()
        
     while(_isRunning)
     {
+        
+        /* REPLACED BY ROS TOPIC CALLBACKS (EXPERIMENT FUNCS.)
+        if (setpoint->GTC_cmd_rec == true){
+                
+                GTC_Command(setpoint);
+                setpoint->GTC_cmd_rec = false;
+        }
+
+        if (errorReset){
+            controllerGTCReset();
+            errorReset = false;
+        } 
+        */
+
+        if(execute_traj){
+            controllerGTCTraj();
+        }
+
         // SYSTEM PARAMETERS 
         J = mdiag(1.65717e-5f, 1.66556e-5f, 2.92617e-5f); // Rotational Inertia of CF [kg m^2]
 

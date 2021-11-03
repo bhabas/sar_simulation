@@ -531,12 +531,13 @@ class CrazyflieEnv:
         cmd_dict = {'home':0,
                     'pos':1,
                     'vel':2,
-                    'att':3,
+                    'acc':3,
                     'tumble':4,
                     'stop':5,
                     'gains':6,
                     'moment':7,
                     'policy':8,
+                    'traj':9,
                     'sticky':11}
         
 
@@ -746,9 +747,9 @@ class CrazyflieEnv:
     def cmd_send(self):
         while True:
             # Converts input number into action name
-            cmd_dict = {0:'home',1:'pos',2:'vel',3:'att',4:'tumble',5:'stop',6:'gains',7:'moment',9:'reset'}
+            cmd_dict = {0:'home',1:'pos',2:'vel',3:'acc',4:'tumble',5:'stop',6:'gains',7:'moment',8:'policy',9:'traj',11:'sticky',101:'reset'}
             try:
-                val = float(input("\nCmd Type (0:home,1:pos,2:vel,3:att,4:omega,5:stop,6:gains): "))
+                val = float(input("\nCmd Type (0:home,1:pos,2:vel,3:acc,4:omega,5:stop,101:reset): "))
             except:
                 continue
             action = cmd_dict[val]
