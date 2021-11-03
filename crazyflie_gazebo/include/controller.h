@@ -51,12 +51,12 @@ class Controller
 
 
             // BODY SENSORS
-            globalState_Subscriber = nh->subscribe("/vicon_state",1,&Controller::vicon_stateCallback,this,ros::TransportHints().tcpNoDelay());
-            OF_Subscriber = nh->subscribe("/OF_sensor",1,&Controller::OFCallback,this,ros::TransportHints().tcpNoDelay()); 
-            imu_Subscriber = nh->subscribe("/cf/imu",1,&Controller::imuCallback,this);
+            OF_Subscriber = nh->subscribe("/cf1/OF_sensor",1,&Controller::OFCallback,this,ros::TransportHints().tcpNoDelay()); 
+            imu_Subscriber = nh->subscribe("/cf1/imu",1,&Controller::imuCallback,this);
                 
             // ENVIRONMENT SENSORS
-            ceilingFT_Subcriber = nh->subscribe("/ceiling_force_sensor",5,&Controller::ceilingFTCallback,this,ros::TransportHints().tcpNoDelay());
+            globalState_Subscriber = nh->subscribe("/env/vicon_state",1,&Controller::vicon_stateCallback,this,ros::TransportHints().tcpNoDelay());
+            ceilingFT_Subcriber = nh->subscribe("/env/ceiling_force_sensor",5,&Controller::ceilingFTCallback,this,ros::TransportHints().tcpNoDelay());
 
 
             // COMMANDS AND INFO

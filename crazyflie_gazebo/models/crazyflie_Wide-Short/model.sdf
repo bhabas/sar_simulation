@@ -185,14 +185,19 @@
             </vertical>
           </scan>
           <range>
-            <min>0.1</min>
-            <max>5</max>
+            <min>0.01</min>
+            <max>4</max>
             <resolution>0.01</resolution>
           </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.0035</stddev>
+          </noise>
         </ray>
         <plugin name='gazebo_ros_head_hokuyo_controller' filename='libgazebo_ros_laser.so'>
-          <topicName>/laserscan</topicName>
-          <frameName>hokuyo_link</frameName>
+          <topicName>/cf1/laser</topicName>
+          <frameName>crazyflie_body</frameName>
         </plugin>
       </sensor>
       <sensor type="camera" name="camera1">
@@ -1716,7 +1721,7 @@
       <alwaysOn>1</alwaysOn>
       <updateRate>100</updateRate>
       <bodyName>crazyflie_body</bodyName>
-      <topicName>OF_sensor</topicName>
+      <topicName>cf1/OF_sensor</topicName>
       <frameName>world</frameName>
       <gaussianNoise>0.0</gaussianNoise>
       <robotNamespace>/</robotNamespace>
@@ -1725,7 +1730,7 @@
     <plugin name="imu_plugin" filename="libgazebo_ros_imu.so">
       <alwaysOn>true</alwaysOn>
       <bodyName>crazyflie_body</bodyName>
-      <topicName>cf/imu</topicName>
+      <topicName>cf1/imu</topicName>
       <serviceName>imu_service</serviceName>
       <gaussianNoise>0.0</gaussianNoise>
       <updateRate>100.0</updateRate>
@@ -1735,7 +1740,7 @@
       <alwaysOn>1</alwaysOn>
       <updateRate>1000</updateRate>
       <bodyName>crazyflie_body</bodyName>
-      <topicName>global_state</topicName>
+      <topicName>env/global_state_data</topicName>
       <frameName>world</frameName>
       <xyzOffsets>0 0 0</xyzOffsets>
       <rpyOffsets>0 0 0</rpyOffsets>
@@ -1746,7 +1751,7 @@
       <alwaysOn>1</alwaysOn>
       <updateRate>100</updateRate>
       <bodyName>crazyflie_body</bodyName>
-      <topicName>vicon_state</topicName>
+      <topicName>env/vicon_state</topicName>
       <frameName>world</frameName>
       <xyzOffsets>0 0 0</xyzOffsets>
       <rpyOffsets>0 0 0</rpyOffsets>

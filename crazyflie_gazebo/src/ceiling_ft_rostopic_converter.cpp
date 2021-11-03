@@ -197,11 +197,11 @@ int main(int argc, char **argv)
 
   // DEFINE ROS AND GAZEBO TOPICS
   std::string gazebo_topic_to_sub= "/gazebo/default/ceiling_plane/joint_01/force_torque/wrench";
-  std::string ros_topic_to_pub="/ceiling_force_sensor";
+  std::string ros_topic_to_pub="/env/ceiling_force_sensor";
   
   // INIT ROS PUBLISHERS/SUBSCRIBERS
   impactForce_Publisher = nh.advertise<crazyflie_msgs::ImpactData>(ros_topic_to_pub, 1);
-  globalState_Subscriber = nh.subscribe("/global_state",1,vicon_stateCallback,ros::TransportHints().tcpNoDelay());
+  globalState_Subscriber = nh.subscribe("/env/global_state_data",1,vicon_stateCallback,ros::TransportHints().tcpNoDelay());
   RLdata_Subscriber = nh.subscribe("/rl_data",5,RLdata_Callback);
   ROS_INFO("ROS Subscribers/Publishers Started");
   

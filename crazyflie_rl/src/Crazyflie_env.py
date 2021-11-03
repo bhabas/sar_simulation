@@ -83,6 +83,10 @@ class CrazyflieEnv:
         ## INIT CTRL_DATA VARIABLES 
         self.MS = [0,0,0,0]     # Controller Motor Speeds (MS1,MS2,MS3,MS4) [rad/s]
         self.FM = [0,0,0,0]     # Controller Force/Moments (F_thrust,Mx,My,Mz) [N,N*mm]
+
+        self.RREV = 0.00
+        self.OF_x = 0.00
+        self.OF_y = 0.00
         
 
         ## REWARD VALS
@@ -130,16 +134,16 @@ class CrazyflieEnv:
         # NOTE: Queue sizes=1 so that we are always looking at the most current data and 
         #       not data at back of a queue waiting to be processed by callbacks
         self.clock_Subscriber = rospy.Subscriber("/clock",Clock,self.clockCallback,queue_size=1)
-        self.state_Subscriber = rospy.Subscriber('/global_state',Odometry,self.global_stateCallback,queue_size=1)      
+        self.state_Subscriber = rospy.Subscriber('/env/global_state_data',Odometry,self.global_stateCallback,queue_size=1)      
         self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback,queue_size=1)                                   
 
-        self.OF_Subscriber = rospy.Subscriber('/OF_sensor',Odometry,self.OFsensor_Callback,queue_size=1)    
-        self.laser_Subscriber = rospy.Subscriber('/zranger2/scan',LaserScan,self.laser_sensorCallback)       
+        self.OF_Subscriber = rospy.Subscriber('/cf1/OF_sensor',Odometry,self.OFsensor_Callback,queue_size=1)    
+        self.laser_Subscriber = rospy.Subscriber('/cf1/laser',LaserScan,self.laser_sensorCallback)       
                       
         # WE WANT TO BE SURE WE GET THESE MESSAGES WHEN THEY COME THROUGH              
         self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback,queue_size=10)     
         self.padcontact_Subcriber = rospy.Subscriber('/pad_connections',PadConnect,self.padConnect_Callback,queue_size=10)       
-        self.ceiling_ft_Subscriber = rospy.Subscriber('/ceiling_force_sensor',ImpactData,self.ceiling_ftsensorCallback,queue_size=10) 
+        self.ceiling_ft_Subscriber = rospy.Subscriber('/env/ceiling_force_sensor',ImpactData,self.ceiling_ftsensorCallback,queue_size=10) 
                       
 
         rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
@@ -399,7 +403,7 @@ class CrazyflieEnv:
         self.launch_sim()
 
         self.reset_pos()
-        rospy.wait_for_message('/global_state',Odometry) # Wait for global state message before resuming training
+        rospy.wait_for_message('/env/global_state_data',Odometry) # Wait for global state message before resuming training
 
     def close_sim(self):
         os.killpg(self.gazebo_p.pid, signal.SIGTERM)
@@ -514,8 +518,8 @@ class CrazyflieEnv:
         set_state_srv(state_msg)
 
         ## WAIT FOR CONTROLLER TO UPDATE STATE x2 BEFORE TURNING ON TUMBLE DETECTION
-        rospy.wait_for_message('/global_state',Odometry)
-        rospy.wait_for_message('/global_state',Odometry)
+        rospy.wait_for_message('/env/global_state_data',Odometry)
+        rospy.wait_for_message('/env/global_state_data',Odometry)
         self.step('tumble',ctrl_flag=1) # Tumble Detection on
 
         # time.sleep(0.1) # Give it time for controller to receive new states
