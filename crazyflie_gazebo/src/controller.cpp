@@ -12,7 +12,7 @@ void Controller::controllerGTCReset(void)
     e_PI = vzero();
     e_RI = vzero();
 
-    x_d = mkvec(0.0f,0.0f,0.0f);
+    x_d = mkvec(0.0f,0.0f,0.4f);
     v_d = mkvec(0.0f,0.0f,0.0f);
     a_d = mkvec(0.0f,0.0f,0.0f);
     
@@ -29,6 +29,60 @@ void Controller::controllerGTCReset(void)
 
 
 
+
+}
+
+void Controller::GTC_Command(const crazyflie_msgs::RLCmd::ConstPtr &msg)
+{   
+    // CREATE CMD VECTOR AND VALS FROM SUBSCRIBED MESSAGE
+    int cmd_type = msg->cmd_type;                       // Read cmd type from incoming message
+    const geometry_msgs::Point cmd_vals = msg->cmd_vals;    // Construct vector from cmd values
+    float cmd_flag = msg->cmd_flag;                     // Construct flag from cmd flag value
+
+    
+    float eulx = 0.0;
+    float euly = 0.0;
+    float eulz = 0.0;
+
+    switch(cmd_type){
+
+        case 0: // Reset
+        {
+            controllerGTCReset();
+            break;
+        }
+
+        case 1: // Position
+        {
+            x_d.x = cmd_vals.x;
+            x_d.y = cmd_vals.y;
+            x_d.z = cmd_vals.z;
+            // _kp_xf = cmd_flag;
+            break;
+        }
+        case 2: // Velocity
+        {
+            v_d.x = cmd_vals.x;
+            v_d.y = cmd_vals.y;
+            v_d.z = cmd_vals.z;
+            // _kp_xf = cmd_flag;
+            break;
+        }
+        case 3: // Acceleration
+        {
+            a_d.x = cmd_vals.x;
+            a_d.y = cmd_vals.y;
+            a_d.z = cmd_vals.z;
+            // _kp_xf = cmd_flag;
+            break;
+        }
+        case 4: // Tumble-Detection
+        {
+            tumble_detection = (bool)cmd_flag;
+            break;
+        }
+
+    }
 
 }
 
@@ -100,10 +154,7 @@ void Controller::controllerGTC()
 
 
         // =========== STATE SETPOINTS =========== //
-        x_d = mkvec(0.0f,0.0f,0.4f);    // Pos-desired [m]
-        v_d = mkvec(0.0f,0.0f,0.0f);    // Vel-desired [m/s]
-        a_d = mkvec(0.0f,0.0f,0.0f);    // Acc-desired [m/s^2]
-
+    
         omega_d = mkvec(0.0f,0.0f,0.0f);    // Omega-desired [rad/s]
         domega_d = mkvec(0.0f,0.0f,0.0f);   // Omega-Accl. [rad/s^2]
 
@@ -117,7 +168,7 @@ void Controller::controllerGTC()
         b3 = mvmul(R, e_3);         // Current body vertical axis in terms of global axes | [b3 = R*e_3] 
         
         // TUMBLE DETECTION
-        if (b3.z <= 0){
+        if (b3.z <= 0 && tumble_detection == true){
             tumbled = true;
         }
 
@@ -205,12 +256,19 @@ void Controller::controllerGTC()
 
         // =========== THRUST AND MOMENTS [FORCE NOTATION] =========== // 
         if(!tumbled){
+            if(policy_armed_flag == true){
 
-            F_thrust = F_thrust;
-            M = M;
+            }
+            else if (Moment_flag == true){
+
+            }
+            else{
+                F_thrust = F_thrust;
+                M = M;
+            }
 
         }
-        else if(tumbled){
+        else if(tumbled && tumble_detection == true){
             // consolePrintf("System Tumbled: \n");
             F_thrust = 0.0f;
             M.x = 0.0f;

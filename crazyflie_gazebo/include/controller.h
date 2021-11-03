@@ -57,6 +57,8 @@ class Controller
                 
 
             // COMMANDS AND INFO
+            RLCmd_Subscriber = nh->subscribe("/rl_ctrl",50,&Controller::GTC_Command,this,ros::TransportHints().tcpNoDelay());
+
 
             // INIT VARIABLES TO DEFAULT VALUES (PREVENTS RANDOM VALUES FROM MEMORY)
 
@@ -82,8 +84,11 @@ class Controller
         void Load();
         void controllerGTC();
         void controllerGTCReset();
+        void GTC_Command(const crazyflie_msgs::RLCmd::ConstPtr &msg);
         void global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg);
         void OFCallback(const nav_msgs::Odometry::ConstPtr &msg);
+
+
 
 
 
@@ -91,6 +96,12 @@ class Controller
         // DEFINE PUBLISHERS AND SUBSCRIBERS
         ros::Publisher ctrl_Publisher;
         ros::Subscriber OF_Subscriber;
+
+
+        // COMMANDS AND INFO
+        ros::Subscriber RLCmd_Subscriber;
+        ros::Subscriber RLData_Subscriber;
+        ros::ServiceClient SimSpeed_Client;
 
 
         // SENSORS
@@ -128,6 +139,14 @@ class Controller
         double _OF_x = 0.0;  // [rad/s]
         double _OF_y = 0.0;  // [rad/s]
 
+
+        // POLICY VARIABLES
+        float RREV_thr = 0.0f;
+        float G1 = 0.0f;
+        float G2 = 0.0f;
+
+        bool policy_armed_flag = false;
+
         // SYSTEM PARAMETERS
         float m = 0.037f; // [g]
         float g = 9.81f;
@@ -146,6 +165,7 @@ class Controller
         // CONTROLLER PARAMETERS
         bool attCtrlEnable = false;
         bool tumbled = false;
+        bool tumble_detection = true;
         bool motorstop_flag = false;
         bool errorReset = false;
         bool flip_flag = false;
