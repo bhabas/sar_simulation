@@ -57,7 +57,7 @@ void Controller::GTC_Command(const crazyflie_msgs::RLCmd::ConstPtr &msg)
             x_d.x = cmd_vals.x;
             x_d.y = cmd_vals.y;
             x_d.z = cmd_vals.z;
-            // _kp_xf = cmd_flag;
+            kp_xf = cmd_flag;
             break;
         }
         case 2: // Velocity
@@ -65,7 +65,7 @@ void Controller::GTC_Command(const crazyflie_msgs::RLCmd::ConstPtr &msg)
             v_d.x = cmd_vals.x;
             v_d.y = cmd_vals.y;
             v_d.z = cmd_vals.z;
-            // _kp_xf = cmd_flag;
+            kd_xf = cmd_flag;
             break;
         }
         case 3: // Acceleration
@@ -93,6 +93,26 @@ void Controller::GTC_Command(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 
             Moment_flag = (bool)cmd_flag;
             break;
+
+        case 8: // Arm Policy Maneuver
+
+            RREV_thr = cmd_vals.x;
+            G1 = cmd_vals.y;
+            G2 = cmd_vals.z;
+
+            policy_armed_flag = (bool)cmd_flag;
+
+            break;
+
+        case 11: // Enable/Disable Stickyfoot
+        {
+            float sticky_cmd[4] = {-(float)cmd_type,cmd_flag,0,0};
+            // This stickyfoot socket communication piggy-backs off of the motorspeed  
+            // message & activates plugin when first number is negative but defines value
+            // based off of the second number
+            sendto(Ctrl_Mavlink_socket, sticky_cmd, sizeof(sticky_cmd),0, (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len);
+            break;
+        }
 
     }
 
@@ -201,7 +221,9 @@ void Controller::controllerGTC()
 
         /* [F_thrust_ideal = -kp_x*e_x*(kp_x_flag) + -kd_x*e_v + -kI_x*e_PI*(kp_x_flag) + m*g*e_3 + m*a_d] */
         temp1_v = veltmul(vneg(Kp_p), e_x);
+        temp1_v = vscl(kp_xf,temp1_v);
         temp2_v = veltmul(vneg(Kd_p), e_v);
+        temp1_v = vscl(kd_xf,temp1_v);
         temp3_v = veltmul(vneg(Ki_p), e_PI);
         P_effort = vadd3(temp1_v,temp2_v,temp3_v);
 
@@ -277,9 +299,26 @@ void Controller::controllerGTC()
         if(!tumbled){
             if(policy_armed_flag == true){
 
+                if(RREV >= RREV_thr && flip_flag == false){
+                    flip_flag = true;
+
+                    // UPDATE AND RECORD FLIP VALUES
+
+                }
+
+                if(flip_flag == true){
+                    M_d.x = 0.0f;
+                    M_d.y = -G1*1e-3;
+                    M_d.z = 0.0f;
+
+                    M = vscl(2.0f,M_d); // Need to double moment to ensure it survives the PWM<0 cutoff
+                    F_thrust = 0.0f;
+
+                }
+
             }
             else if (Moment_flag == true){
-                
+
                 M.x = M_d.x;
                 M.y = M_d.y;
                 M.z = M_d.z;

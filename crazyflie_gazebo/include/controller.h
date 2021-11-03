@@ -141,7 +141,7 @@ class Controller
 
 
         // POLICY VARIABLES
-        float RREV_thr = 0.0f;
+        float RREV_thr = 100.0f;
         float G1 = 0.0f;
         float G2 = 0.0f;
 
@@ -178,6 +178,15 @@ class Controller
         struct vec Kp_R;    // Rot. Proportional Gains
         struct vec Kd_R;    // Rot. Derivative Gains
         struct vec Ki_R;    // Rot. Integral Gains
+
+
+        // CONTROLLER GAIN FLAGS
+        float kp_xf = 1; // Pos. Gain Flag
+        float kd_xf = 1; // Pos. Derivative Gain Flag
+        // float ki_xf = 1; // Pos. Integral Flag
+        // float kp_Rf = 1; // Rot. Gain Flag
+        // float kd_Rf = 1; // Rot. Derivative Gain Flag
+        // float ki_Rf = 1; // Rot. Integral Flag
 
         // STATE VALUES
         double _t;
