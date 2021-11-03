@@ -1,0 +1,15 @@
+{
+    "files.associations": {
+        "iostream": "cpp",
+        "unordered_map": "c",
+        "unordered_set": "c",
+        "regex": "c",
+        "array": "c",
+        "tuple": "c",
+        "utility": "c",
+        "variant": "c",
+        "thread": "c",
+        "ostream": "cpp",
+        "iomanip": "cpp"
+    }
+}

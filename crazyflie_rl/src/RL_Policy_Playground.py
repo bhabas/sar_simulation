@@ -304,7 +304,7 @@ def runTrial(env,agent):
                     env.RL_Publish() # Publish that rollout completed 
                     
                     env.reset_pos()
-                    env.clear_IF_Data()
+                    env.clear_rollout_Data()
                 
                     break # Break from run loop
                     
