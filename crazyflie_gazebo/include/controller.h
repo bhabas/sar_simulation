@@ -79,6 +79,8 @@ class Controller
             ros::param::get("/SIM_SPEED",_SIM_SPEED);
             ros::param::get("/SIM_SLOWDOWN_SPEED",_SIM_SLOWDOWN_SPEED);
             ros::param::get("/CF_MASS",_CF_MASS);
+            ros::param::get("/CTRL_DEBUG_SLOWDOWN", _CTRL_DEBUG_SLOWDOWN);
+
 
 
             m = _CF_MASS;
@@ -148,6 +150,9 @@ class Controller
         float _SIM_SPEED; 
         float _SIM_SLOWDOWN_SPEED;
         float _CF_MASS;
+        int _CTRL_DEBUG_SLOWDOWN;
+
+        
         
         bool _TEST_FLAG = false;
 
@@ -224,7 +229,7 @@ class Controller
         // float ki_Rf = 1; // Rot. Integral Flag
 
         // STATE VALUES
-        double _t;
+        double _t = 0.0;
         struct vec statePos = {0.0f,0.0f,0.0f};         // Pos [m]
         struct vec stateVel = {0.0f,0.0f,0.0f};         // Vel [m/s]
         struct quat stateQuat = {0.0f,0.0f,0.0f,1.0f};  // Orientation
@@ -567,7 +572,7 @@ uint16_t limitPWM(int32_t value)
 
 static inline void printvec(struct vec v){
 
-    std::cout << v.x << "\t" << v.y << "\t" << v.z << std::endl;
+    std::cout << v.x << "\t" << v.y << "\t" << v.z;
     
 }
 

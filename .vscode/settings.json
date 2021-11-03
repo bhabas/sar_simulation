@@ -8,6 +8,8 @@
         "tuple": "c",
         "utility": "c",
         "variant": "c",
-        "thread": "c"
+        "thread": "c",
+        "ostream": "cpp",
+        "iomanip": "cpp"
     }
 }

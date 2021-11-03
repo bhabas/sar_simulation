@@ -568,7 +568,7 @@ void Controller::controlThread()
 
             }
 
-            // IF IMPACTED OR MISSED CEILING, INCREASE SIM SPEED TO DEFAULT
+            // IF IMPACTED OR MIS SED CEILING, INCREASE SIM SPEED TO DEFAULT
             if(_impact_flag == true && _slowdown_type == 1)
             {
                 
