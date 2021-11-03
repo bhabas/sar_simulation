@@ -571,9 +571,9 @@ void Controller::controllerGTC()
         R_d.m[1][0] << "  " << R_d.m[1][1] << "  " << R_d.m[1][2] << "\n" <<
         R_d.m[2][0] << "  " << R_d.m[2][1] << "  " << R_d.m[2][2] << "\n" <<
         endl <<
-
+        
         "e_R : " << e_R.x << "  " << e_R.y << "  " << e_R.z << "\t" <<
-        "e_R (deg): " << e_RI.x*180.0f/M_PI << "  " << e_RI.y*180.0f/M_PI << "  " << e_RI.z*180.0f/M_PI << endl <<
+        "e_R (deg): " << e_R.x*180.0f/M_PI << "  " << e_R.y*180.0f/M_PI << "  " << e_R.z*180.0f/M_PI << endl <<
         endl <<
 
         "FM [N/N*mm]: " << F_thrust << "  " << M.x*1.0e3 << "  " << M.y*1.0e3 << "  " << M.z*1.0e3 << endl <<
@@ -627,6 +627,7 @@ void Controller::controllerGTC()
         ctrl_msg.Twist_tr.angular.z = stateOmega_tr.z;
 
         ctrl_msg.FM = {f_thrust_g,f_roll_g,f_pitch_g,f_yaw_g};
+        ctrl_msg.MS_PWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
 
 
 
