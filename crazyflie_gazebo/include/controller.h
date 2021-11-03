@@ -44,31 +44,61 @@ class Controller
     public:
         // CONSTRUCTOR TO START PUBLISHERS AND SUBSCRIBERS (Similar to Python's __init__() )
         Controller(ros::NodeHandle *nh){
+            ctrl_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/ctrl_data",1);
 
             // NOTE: tcpNoDelay() removes delay where system is waiting for datapackets to be fully filled before sending;
             // instead of sending data as soon as it is available to match publishing rate (This is an issue with large messages like Odom or Custom)
             // Queue lengths are set to '1' so only the newest data is used
+
+
             // SENSORS
             globalState_Subscriber = nh->subscribe("/vicon_state",1,&Controller::global_stateCallback,this,ros::TransportHints().tcpNoDelay());
+            OF_Subscriber = nh->subscribe("/OF_sensor",1,&Controller::OFCallback,this,ros::TransportHints().tcpNoDelay()); 
                 
 
+            // COMMANDS AND INFO
+
+            // INIT VARIABLES TO DEFAULT VALUES (PREVENTS RANDOM VALUES FROM MEMORY)
+
+            _RREV = 0.0;
+            _OF_x = 0.0;
+            _OF_y = 0.0;
+
+
+            ros::param::get("/CEILING_HEIGHT",_H_CEILING);
+            ros::param::get("/LANDING_SLOWDOWN",_LANDING_SLOWDOWN_FLAG);
+            ros::param::get("/K_EP_SLOWDOWN",_K_EP_SLOWDOWN);
+            ros::param::get("/SIM_SPEED",_SIM_SPEED);
+            ros::param::get("/SIM_SLOWDOWN_SPEED",_SIM_SLOWDOWN_SPEED);
+            ros::param::get("/CF_MASS",_CF_MASS);
+            ros::param::get("/CTRL_OUTPUT_SLOWDOWN", _CTRL_OUTPUT_SLOWDOWN);
+
+
+            m = _CF_MASS;
+            h_ceiling = _H_CEILING;
         }
 
         // DEFINE FUNCTION PROTOTYPES
         void Load();
-        void controlThread();
+        void controllerGTC();
+        void controllerGTCReset();
         void global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg);
+        void OFCallback(const nav_msgs::Odometry::ConstPtr &msg);
+
 
 
     private:
+        // DEFINE PUBLISHERS AND SUBSCRIBERS
+        ros::Publisher ctrl_Publisher;
+        ros::Subscriber OF_Subscriber;
+
 
         // SENSORS
         ros::Subscriber globalState_Subscriber;
 
-
+        // INITIALIZE ROS MSG VARIABLES
         geometry_msgs::Point _position; 
         geometry_msgs::Vector3 _velocity;
-
         geometry_msgs::Quaternion _quaternion;
         geometry_msgs::Vector3 _omega;
 
@@ -78,6 +108,25 @@ class Controller
         std::thread senderThread_gazebo;
 
         bool _isRunning;
+
+
+
+        // MISC VARIABLES AND CONSTANTS
+        int _k_ep;
+        float _H_CEILING;
+        bool _LANDING_SLOWDOWN_FLAG;
+        int _K_EP_SLOWDOWN;
+        float _SIM_SPEED; 
+        float _SIM_SLOWDOWN_SPEED;
+        float _CF_MASS;
+        int _CTRL_OUTPUT_SLOWDOWN;
+        
+        bool _TEST_FLAG = false;
+
+
+        double _RREV = 0.0;  // [rad/s]
+        double _OF_x = 0.0;  // [rad/s]
+        double _OF_y = 0.0;  // [rad/s]
 
         // SYSTEM PARAMETERS
         float m = 0.037f; // [g]
@@ -99,6 +148,97 @@ class Controller
         bool tumbled = false;
         bool motorstop_flag = false;
         bool errorReset = false;
+        bool flip_flag = false;
+
+
+        // INIT CTRL GAIN VECTORS
+        struct vec Kp_p;    // Pos. Proportional Gains
+        struct vec Kd_p;    // Pos. Derivative Gains
+        struct vec Ki_p;    // Pos. Integral Gains  
+        struct vec Kp_R;    // Rot. Proportional Gains
+        struct vec Kd_R;    // Rot. Derivative Gains
+        struct vec Ki_R;    // Rot. Integral Gains
+
+        // STATE VALUES
+        double _t;
+        struct vec statePos = {0.0f,0.0f,0.0f};         // Pos [m]
+        struct vec stateVel = {0.0f,0.0f,0.0f};         // Vel [m/s]
+        struct quat stateQuat = {0.0f,0.0f,0.0f,1.0f};  // Orientation
+        struct vec stateOmega = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
+
+        struct mat33 R; // Orientation as rotation matrix
+        struct vec stateEul = {0.0f,0.0f,0.0f}; // Pose in Euler Angles [YZX Notation]
+
+        // OPTICAL FLOW STATES
+        float RREV = 0.0f;  // [rad/s]
+        float OF_x = 0.0f;  // [rad/s]
+        float OF_y = 0.0f;  // [rad/s] 
+
+        
+
+
+        // DESIRED STATES
+        struct vec x_d = {0.0f,0.0f,0.0f};  // Pos-desired [m]
+        struct vec v_d = {0.0f,0.0f,0.0f};  // Vel-desired [m/s]
+        struct vec a_d = {0.0f,0.0f,0.0f};  // Acc-desired [m/s^2]
+
+        struct quat quat_d = {0.0f,0.0f,0.0f,1.0f}; // Orientation-desired [qx,qy,qz,qw]
+        struct vec eul_d = {0.0f,0.0f,0.0f};        // Euler Angle-desired [rad? deg? TBD]
+        struct vec omega_d = {0.0f,0.0f,0.0f};      // Omega-desired [rad/s]
+        struct vec domega_d = {0.0f,0.0f,0.0f};     // Ang. Acc-desired [rad/s^2]
+
+        struct vec b1_d = {1.0f,0.0f,0.0f};    // Desired body x-axis in global coord. [x,y,z]
+        struct vec b2_d;    // Desired body y-axis in global coord.
+        struct vec b3_d;    // Desired body z-axis in global coord.
+        struct vec b3;      // Current body z-axis in global coord.
+
+        struct mat33 R_d;   // Desired rotational matrix from b_d vectors
+        struct vec e_3 = {0.0f, 0.0f, 1.0f}; // Global z-axis
+
+        // STATE ERRORS
+        struct vec e_x;     // Pos-error [m]
+        struct vec e_v;     // Vel-error [m/s]
+        struct vec e_PI;    // Pos. Integral-error [m*s]
+
+        struct vec e_R;     // Rotation-error [rad]
+        struct vec e_w;     // Omega-error [rad/s]
+        struct vec e_RI;    // Rot. Integral-error [rad*s]
+
+        struct vec F_thrust_ideal;           // Ideal thrust vector
+        float F_thrust = 0.0f;               // Desired body thrust [N]
+        float F_thrust_max = 0.64f;          // Max possible body thrust [N}]
+        struct vec M;                        // Desired body moments [Nm]
+        struct vec M_d = {0.0f,0.0f,0.0f};   // Desired moment [N*mm]
+        float Moment_flag = false;
+
+
+        // MOTOR THRUSTS
+        float f_thrust; // Motor thrust - Thrust [N]
+        float f_roll;   // Motor thrust - Roll   [N]
+        float f_pitch;  // Motor thrust - Pitch  [N]
+        float f_yaw;    // Motor thrust - Yaw    [N]
+
+
+        float f_thrust_g = 0.0; // Motor thrust - Thrust [g]
+        float f_roll_g = 0.0;   // Motor thrust - Roll   [g]
+        float f_pitch_g = 0.0;  // Motor thrust - Pitch  [g]
+        float f_yaw_g = 0.0;    // Motor thrust - Yaw    [g]
+
+
+
+        // MOTOR VARIABLES
+        uint32_t M1_pwm = 0; 
+        uint32_t M2_pwm = 0; 
+        uint32_t M3_pwm = 0; 
+        uint32_t M4_pwm = 0; 
+
+        // MOTOR SPEEDS
+        float MS1 = 0.0;
+        float MS2 = 0.0;
+        float MS3 = 0.0;
+        float MS4 = 0.0;
+
+        float motorspeed[4]; // Motorspeed sent to plugin
 
         // TEMPORARY CALC VECS/MATRICES
         struct vec temp1_v; 
@@ -113,93 +253,19 @@ class Controller
         struct mat33 RdT_R; // Rd' * R
         struct mat33 RT_Rd; // R' * Rd
         struct vec Gyro_dyn;
-
-        // MOTOR THRUSTS
-        float f_thrust; // Motor thrust - Thrust [N]
-        float f_roll;   // Motor thrust - Roll   [N]
-        float f_pitch;  // Motor thrust - Pitch  [N]
-        float f_yaw;    // Motor thrust - Yaw    [N]
-
-
-        float f_thrust_g = 0.0;
-        float f_roll_g = 0.0;
-        float f_pitch_g = 0.0;
-        float f_yaw_g = 0.0;
-
-        float MS1 = 0.0;
-        float MS2 = 0.0;
-        float MS3 = 0.0;
-        float MS4 = 0.0;
-
-        float motorspeed[4];
-
-        // MOTOR VARIABLES
-        uint32_t M1_pwm = 0; 
-        uint32_t M2_pwm = 0; 
-        uint32_t M3_pwm = 0; 
-        uint32_t M4_pwm = 0; 
+        
                 
 
-        // INIT CTRL GAIN VECTORS
-        struct vec Kp_p; // Pos. Proportional Gains
-        struct vec Kd_p; // Pos. Derivative Gains
-        struct vec Ki_p; // Pos. Integral Gains  
-        struct vec Kp_R; // Rot. Proportional Gains
-        struct vec Kd_R; // Rot. Derivative Gains
-        struct vec Ki_R; // Rot. Integral Gains
+        
 
-        // STATE ERRORS
-        struct vec e_x;  // Pos-error [m]
-        struct vec e_v;  // Vel-error [m/s]
-        struct vec e_PI;  // Pos. Integral-error [m*s]
+        
 
-        struct vec e_R;  // Rotation-error [rad]
-        struct vec e_w;  // Omega-error [rad/s]
-        struct vec e_RI; // Rot. Integral-error [rad*s]
+        
 
-        // STATE VALUES
-        struct vec statePos = {0.0f,0.0f,0.0f};         // Pos [m]
-        struct vec stateVel = {0.0f,0.0f,0.0f};         // Vel [m/s]
-        struct quat stateQuat = {0.0f,0.0f,0.0f,1.0f};  // Orientation
-        struct vec stateOmega = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
-
-        struct mat33 R; // Orientation as rotation matrix
-        struct vec stateEul = {0.0f,0.0f,0.0f}; // Pose in Euler Angles [YZX Notation]
+        
 
 
-        // DESIRED STATES
-        struct vec x_d = {0.0f,0.0f,0.0f}; // Pos-desired [m]
-        struct vec v_d = {0.0f,0.0f,0.0f}; // Vel-desired [m/s]
-        struct vec a_d = {0.0f,0.0f,0.0f}; // Acc-desired [m/s^2]
-
-        struct quat quat_d = {0.0f,0.0f,0.0f,1.0f}; // Orientation-desired [qx,qy,qz,qw]
-        struct vec eul_d = {0.0f,0.0f,0.0f};        // Euler Angle-desired [rad? deg? TBD]
-        struct vec omega_d = {0.0f,0.0f,0.0f};      // Omega-desired [rad/s]
-        struct vec domega_d = {0.0f,0.0f,0.0f};     // Ang. Acc-desired [rad/s^2]
-
-        struct vec b1_d = {1.0f,0.0f,0.0f};    // Desired body x-axis in global coord. [x,y,z]
-        struct vec b2_d;    // Desired body y-axis in global coord.
-        struct vec b3_d;    // Desired body z-axis in global coord.
-        struct vec b3;      // Current body z-axis in global coord.
-
-        struct mat33 R_d;   // Desired rotational matrix from b_d vectors
-
-
-        struct vec e_3 = {0.0f, 0.0f, 1.0f}; // Global z-axis
-
-        struct vec F_thrust_ideal;           // Ideal thrust vector
-        float F_thrust = 0.0f;               // Desired body thrust [N]
-        float F_thrust_max = 0.64f;          // Max possible body thrust [N}]
-        struct vec M;                        // Desired body moments [Nm]
-        struct vec M_d = {0.0f,0.0f,0.0f};   // Desired moment [N*mm]
-        float Moment_flag = false;
-
-
-        // OPTICAL FLOW STATES
-        float RREV = 0.0f; // [rad/s]
-        float OF_x = 0.0f; // [rad/s]
-        float OF_y = 0.0f; // [rad/s] 
-        bool flip_flag = false;
+        
 
 
         // DEFINE CTRL_MAVLINK SOCKET VARIABLES
@@ -289,7 +355,7 @@ void Controller::Load()
         cout<<"[SUCCESS] Ctrl_Mavlink_socket: Sending test motor speeds to Mavlink. Avoiding mutual locking between threads!"<<endl;
 
     // START COMMUNICATION THREADS
-    controllerThread = std::thread(&Controller::controlThread, this);
+    controllerThread = std::thread(&Controller::controllerGTC, this);
 
 
 }
@@ -297,25 +363,38 @@ void Controller::Load()
 
 void Controller::global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
 
-    // SIMPLIFY STATE VALUES FROM TOPIC
+
     // Follow msg names from message details - "rqt -s rqt_msg" 
+    
+    
+    // SET STATE VALUES INTO CLASS STATE VARIABLES
+    _t = msg->header.stamp.toSec();
     
     _position = msg->pose.pose.position; 
     _velocity = msg->twist.twist.linear;
-
-
-    // SET STATE VALUES INTO CLASS STATE VARIABLES
-    // _t = msg->header.stamp.toSec();
-    // _pos << position.x, position.y, position.z;
-    // _vel << velocity.x, velocity.y, velocity.z;
-
-    // This stuff should come from IMU callback but lockstep broke that topic for some reason
     _quaternion = msg->pose.pose.orientation;
     _omega = msg->twist.twist.angular;
 
-    // _quat << quaternion.w, quaternion.x, quaternion.y, quaternion.z, 
-    // _omega << omega.x, omega.y, omega.z;
+    
+}
 
+
+void Controller::OFCallback(const nav_msgs::Odometry::ConstPtr &msg){
+
+    const geometry_msgs::Point position = msg->pose.pose.position; 
+    const geometry_msgs::Vector3 velocity = msg->twist.twist.linear;
+
+    
+    double d = _H_CEILING-position.z; // h_ceiling - height
+
+    // SET SENSOR VALUES INTO CLASS VARIABLES
+    // _RREV = msg->RREV;
+    // _OF_x = msg->OF_x;
+    // _OF_y = msg->OF_y;
+
+    _RREV = velocity.z/d;
+    _OF_x = -velocity.y/d;
+    _OF_y = -velocity.x/d;
 }
 
 // Converts thrust in Newtons to their respective PWM values
@@ -382,12 +461,3 @@ static inline void printvec(struct vec v){
     
 }
 
-// static inline void printvec(struct vec v){
-// 	DEBUG_PRINT("%.4f, %.4f, %.4f\n", (double)v.x, (double)v.y, (double)v.z);
-// 	return;
-// }
-
-// static inline void printquat(struct quat q){
-// 	DEBUG_PRINT("%.4f, %.4f, %.4f %.4f\n", (double)q.x, (double)q.y, (double)q.z, (double)q.w);
-// 	return;
-// }

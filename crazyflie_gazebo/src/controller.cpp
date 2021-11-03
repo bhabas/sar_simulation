@@ -5,12 +5,35 @@
 
 #include <ros/ros.h>
 
-
-
-void Controller::controlThread()
+void Controller::controllerGTCReset(void)
 {
+    // consolePrintf("GTC Reset\n");
+    // Reset errors to zero
+    e_PI = vzero();
+    e_RI = vzero();
 
+    x_d = mkvec(0.0f,0.0f,0.0f);
+    v_d = mkvec(0.0f,0.0f,0.0f);
+    a_d = mkvec(0.0f,0.0f,0.0f);
     
+
+    tumbled = false;
+    motorstop_flag = false;
+
+    Moment_flag = false;
+    // policy_armed_flag = false;
+    flip_flag = false;
+
+    // t = 0;
+    // execute_traj = false;
+
+
+
+
+}
+
+void Controller::controllerGTC()
+{
 
     
 
@@ -38,9 +61,11 @@ void Controller::controlThread()
     float R_kd_z = 0.001f;
     float R_ki_z = 0.002*0;
     float i_range_R_z = 0.5f;
-       
 
-    int a = 1;
+    // =========== ROS Definitions =========== //
+    crazyflie_msgs::CtrlData ctrl_msg;
+    ros::Rate rate(500);
+       
     while(_isRunning)
     {
         // SYSTEM PARAMETERS 
@@ -61,9 +86,11 @@ void Controller::controlThread()
         stateVel = mkvec(_velocity.x,_velocity.y,_velocity.z);                      // [m]
         stateOmega = mkvec(_omega.x,_omega.y,_omega.z);   // [rad/s]
         stateQuat = mkquat(_quaternion.x,_quaternion.y,_quaternion.z,_quaternion.w);
-        RREV = stateVel.z/(h_ceiling - statePos.z);
-        OF_x = stateVel.y/(h_ceiling - statePos.z);
-        OF_y = stateVel.x/(h_ceiling - statePos.z);
+
+        // =========== SENSOR DATA =========== // 
+        RREV = _RREV;
+        OF_x = _OF_x;
+        OF_y = _OF_y;
 
         // EULER ANGLES EXPRESSED IN YZX NOTATION
         stateEul = quat2eul(stateQuat);
@@ -71,19 +98,17 @@ void Controller::controlThread()
         stateEul.y = degrees(stateEul.y);
         stateEul.z = degrees(stateEul.z);
 
-        printf("%.4f\n",statePos.z);
-
 
         // =========== STATE SETPOINTS =========== //
         x_d = mkvec(0.0f,0.0f,0.4f);    // Pos-desired [m]
         v_d = mkvec(0.0f,0.0f,0.0f);    // Vel-desired [m/s]
         a_d = mkvec(0.0f,0.0f,0.0f);    // Acc-desired [m/s^2]
 
-        omega_d = mkvec(0.0f,0.0f,0.0f);         // Omega-desired [rad/s]
-        domega_d = mkvec(radians(0.0f), radians(0.0f), radians(0.0f));  // Omega-Accl. [rad/s^2]
+        omega_d = mkvec(0.0f,0.0f,0.0f);    // Omega-desired [rad/s]
+        domega_d = mkvec(0.0f,0.0f,0.0f);   // Omega-Accl. [rad/s^2]
 
         eul_d = mkvec(0.0f,0.0f,0.0f);
-        quat_d = rpy2quat(eul_d); // Desired orientation from eul angles [ZYX NOTATION]
+        quat_d = rpy2quat(eul_d);           // Desired orientation from eul angles [ZYX NOTATION]
 
         // =========== ROTATION MATRIX =========== //
         // R changes Body axes to be in terms of Global axes
@@ -99,6 +124,7 @@ void Controller::controlThread()
         // =========== TRANSLATIONAL EFFORT =========== //
         e_x = vsub(statePos, x_d); // [e_x = pos-x_d]
         e_v = vsub(stateVel, v_d); // [e_v = vel-v_d]
+
 
         // POS. INTEGRAL ERROR
         e_PI.x += (e_x.x)*dt;
@@ -174,7 +200,7 @@ void Controller::controlThread()
         Gyro_dyn = vsub(temp1_v,temp4_v);
 
         F_thrust = vdot(F_thrust_ideal, b3);    // Project ideal thrust onto b3 vector [N]
-        cout << F_thrust << endl;
+        // cout << F_thrust << endl;
         M = vadd(R_effort,Gyro_dyn);            // Control moments [Nm]
 
         // =========== THRUST AND MOMENTS [FORCE NOTATION] =========== // 
@@ -198,12 +224,9 @@ void Controller::controlThread()
         f_pitch_g = M.y/(4.0f*dp)*Newton2g;
         f_yaw_g = M.z/(4.0*c_tf)*Newton2g;
 
-        
-
         f_thrust_g = clamp(f_thrust_g,0.0,f_MAX*0.8);    // Clamp thrust to prevent control saturation
 
-        cout << f_thrust_g << endl;
-
+        
         M1_pwm = limitPWM(thrust2PWM(f_thrust_g + f_roll_g - f_pitch_g + f_yaw_g)); // Add respective thrust components and limit to (0 <= PWM <= 60,000)
         M2_pwm = limitPWM(thrust2PWM(f_thrust_g + f_roll_g + f_pitch_g - f_yaw_g));
         M3_pwm = limitPWM(thrust2PWM(f_thrust_g - f_roll_g + f_pitch_g + f_yaw_g));
@@ -223,6 +246,14 @@ void Controller::controlThread()
                 (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len); 
         
 
+        ctrl_msg.RREV = RREV;
+        ctrl_msg.OF_y = OF_y;
+        ctrl_msg.OF_x = OF_x;
+
+        ctrl_msg.FM = {f_thrust_g,f_roll_g,f_pitch_g,f_yaw_g};
+
+        ctrl_Publisher.publish(ctrl_msg);
+        rate.sleep();
     }
 }
 
@@ -233,6 +264,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv,"controller_node");
     ros::NodeHandle nh;
     Controller controller = Controller(&nh);
+    controller.controllerGTCReset();
     controller.Load();
     ros::spin();
 }
