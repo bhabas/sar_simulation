@@ -21,7 +21,7 @@ void Controller::controllerGTCReset(void)
     motorstop_flag = false;
 
     Moment_flag = false;
-    // policy_armed_flag = false;
+    policy_armed_flag = false;
     flip_flag = false;
 
     // t = 0;
@@ -81,6 +81,18 @@ void Controller::GTC_Command(const crazyflie_msgs::RLCmd::ConstPtr &msg)
             tumble_detection = (bool)cmd_flag;
             break;
         }
+        case 5: // Hard Set All Motorspeeds to Zero
+            motorstop_flag = true;
+            break;
+
+        case 7: // Execute Moment-Based Flip
+
+            M_d.x = cmd_vals.x*1e-3;    // [N*m]
+            M_d.y = cmd_vals.y*1e-3;    // [N*m]
+            M_d.z = cmd_vals.z*1e-3;    // [N*m]
+
+            Moment_flag = (bool)cmd_flag;
+            break;
 
     }
 
@@ -254,12 +266,26 @@ void Controller::controllerGTC()
         // cout << F_thrust << endl;
         M = vadd(R_effort,Gyro_dyn);            // Control moments [Nm]
 
+
+
+
+
+
+
+
         // =========== THRUST AND MOMENTS [FORCE NOTATION] =========== // 
         if(!tumbled){
             if(policy_armed_flag == true){
 
             }
             else if (Moment_flag == true){
+                
+                M.x = M_d.x;
+                M.y = M_d.y;
+                M.z = M_d.z;
+
+                M = vscl(2.0f,M_d); // Need to double moment to ensure it survives the PWM<0 cutoff
+                F_thrust = 0.0f;
 
             }
             else{
@@ -276,6 +302,18 @@ void Controller::controllerGTC()
             M.z = 0.0f;
         }
 
+
+
+
+
+
+
+
+
+
+
+
+
         // =========== CONVERT THRUSTS AND MOMENTS TO PWM =========== // 
         f_thrust_g = F_thrust/4.0f*Newton2g;
         f_roll_g = M.x/(4.0f*dp)*Newton2g;
@@ -283,6 +321,14 @@ void Controller::controllerGTC()
         f_yaw_g = M.z/(4.0*c_tf)*Newton2g;
 
         f_thrust_g = clamp(f_thrust_g,0.0,f_MAX*0.8);    // Clamp thrust to prevent control saturation
+
+
+        if(motorstop_flag){ // Cutoff all motor values
+            f_thrust_g = 0.0f;
+            f_roll_g = 0.0f;
+            f_pitch_g = 0.0f;
+            f_yaw_g = 0.0f;
+        }
 
         
         M1_pwm = limitPWM(thrust2PWM(f_thrust_g + f_roll_g - f_pitch_g + f_yaw_g)); // Add respective thrust components and limit to (0 <= PWM <= 60,000)
