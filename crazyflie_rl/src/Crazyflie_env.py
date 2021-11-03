@@ -763,14 +763,12 @@ class CrazyflieEnv:
                 ctrl_flag = 1
                 self.step(action,ctrl_vals,ctrl_flag)
 
-            elif action=='gains': # Execture Gain changer
+            elif action=='gains': # Updates gain values from config file
                 
                 try:
-                    vals = input("\nControl Gains (kp_x,kd_x,kp_R,kd_R): ") # Take in comma-seperated values and convert into list
-                    vals = [float(i) for i in vals.split(',')]
-                    ctrl_vals = vals[0:3]
-                    ctrl_flag = vals[3]
-                    
+                    ctrl_vals = [0,0,0]
+                    ctrl_flag = 1
+                    os.system("roslaunch crazyflie_launch params.launch")
                     self.step(action,ctrl_vals,ctrl_flag)
                 except:
                     continue

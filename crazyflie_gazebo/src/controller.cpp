@@ -49,8 +49,6 @@ void Controller::controllerGTCReset(void)
 
 }
 
-
-
 void Controller::GTC_Command(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 {   
     // CREATE CMD VECTOR AND VALS FROM SUBSCRIBED MESSAGE
@@ -102,6 +100,28 @@ void Controller::GTC_Command(const crazyflie_msgs::RLCmd::ConstPtr &msg)
         }
         case 5: // Hard Set All Motorspeeds to Zero
             motorstop_flag = true;
+            break;
+        case 6: // Update Controller Gains
+            
+            ros::param::get("P_kp_xy",P_kp_xy);
+            ros::param::get("P_kd_xy",P_kd_xy);
+            ros::param::get("P_ki_xy",P_ki_xy);
+            ros::param::get("i_range_xy",i_range_xy);
+
+            ros::param::get("P_kp_z",P_kp_z);
+            ros::param::get("P_kd_z",P_kd_z);
+            ros::param::get("P_ki_z",P_ki_z);
+            ros::param::get("i_range_z",i_range_z);
+
+            ros::param::get("R_kp_xy",R_kp_xy);
+            ros::param::get("R_kd_xy",R_kd_xy);
+            ros::param::get("R_ki_xy",R_ki_xy);
+            ros::param::get("i_range_R_xy",i_range_R_xy);
+            
+            ros::param::get("R_kp_z",R_kp_z);
+            ros::param::get("R_kd_z",R_kd_z);
+            ros::param::get("R_ki_z",R_ki_z);
+            ros::param::get("i_range_R_z",i_range_R_z);
             break;
 
         case 7: // Execute Moment-Based Flip
@@ -199,32 +219,6 @@ void Controller::controllerGTC()
 {
 
     
-
-    // CONTROLLER GAIN VALUES
-    // XY POSITION PID
-    float P_kp_xy = 0.5f;
-    float P_kd_xy = 0.4f;
-    float P_ki_xy = 0.1f*0;
-    float i_range_xy = 0.3f;
-
-    // Z POSITION PID
-    float P_kp_z = 1.2f;
-    float P_kd_z = 0.35f;
-    float P_ki_z = 0.1f*0;
-    float i_range_z = 0.25f;
-
-    // XY ATTITUDE PID
-    float R_kp_xy = 0.004f;
-    float R_kd_xy = 0.0017f;
-    float R_ki_xy = 0.0f;
-    float i_range_R_xy = 1.0f;
-
-    // Z ATTITUDE PID
-    float R_kp_z = 0.003f;
-    float R_kd_z = 0.001f;
-    float R_ki_z = 0.002*0;
-    float i_range_R_z = 0.5f;
-
     // =========== ROS Definitions =========== //
     crazyflie_msgs::CtrlData ctrl_msg;
     ros::Rate rate(500);

@@ -1,3 +1,5 @@
 <launch>
     <rosparam file="$(find crazyflie_launch)/config/Sim_Settings.yaml" />
+    <rosparam file="$(find crazyflie_launch)/config/Ctrl_Gains.yaml" />
+
 </launch>

@@ -81,6 +81,27 @@ class Controller
             ros::param::get("/CF_MASS",_CF_MASS);
             ros::param::get("/CTRL_DEBUG_SLOWDOWN", _CTRL_DEBUG_SLOWDOWN);
 
+            // COLLECT CTRL GAINS FROM CONFIG FILE
+            ros::param::get("P_kp_xy",P_kp_xy);
+            ros::param::get("P_kd_xy",P_kd_xy);
+            ros::param::get("P_ki_xy",P_ki_xy);
+            ros::param::get("i_range_xy",i_range_xy);
+
+            ros::param::get("P_kp_z",P_kp_z);
+            ros::param::get("P_kd_z",P_kd_z);
+            ros::param::get("P_ki_z",P_ki_z);
+            ros::param::get("i_range_z",i_range_z);
+
+            ros::param::get("R_kp_xy",R_kp_xy);
+            ros::param::get("R_kd_xy",R_kd_xy);
+            ros::param::get("R_ki_xy",R_ki_xy);
+            ros::param::get("i_range_R_xy",i_range_R_xy);
+            
+            ros::param::get("R_kp_z",R_kp_z);
+            ros::param::get("R_kd_z",R_kd_z);
+            ros::param::get("R_ki_z",R_ki_z);
+            ros::param::get("i_range_R_z",i_range_R_z);
+
 
 
             m = _CF_MASS;
@@ -158,6 +179,32 @@ class Controller
         float _SIM_SLOWDOWN_SPEED;
         float _CF_MASS;
         int _CTRL_DEBUG_SLOWDOWN;
+
+
+        // CONTROLLER GAIN VALUES
+        // XY POSITION PID
+        float P_kp_xy = 0.5f;
+        float P_kd_xy = 0.4f;
+        float P_ki_xy = 0.1f*0;
+        float i_range_xy = 0.3f;
+
+        // Z POSITION PID
+        float P_kp_z = 1.2f;
+        float P_kd_z = 0.35f;
+        float P_ki_z = 0.1f*0;
+        float i_range_z = 0.25f;
+
+        // XY ATTITUDE PID
+        float R_kp_xy = 0.004f;
+        float R_kd_xy = 0.0017f;
+        float R_ki_xy = 0.0f;
+        float i_range_R_xy = 1.0f;
+
+        // Z ATTITUDE PID
+        float R_kp_z = 0.003f;
+        float R_kd_z = 0.001f;
+        float R_ki_z = 0.002*0;
+        float i_range_R_z = 0.5f;
 
         
         
