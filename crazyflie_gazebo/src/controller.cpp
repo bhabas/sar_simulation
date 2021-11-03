@@ -26,6 +26,8 @@ void Controller::controllerGTCReset(void)
 
     // ROS SPECIFIC VALUES
     impact_flag = false;
+    slowdown_type = 0;
+    Controller::adjustSimSpeed(_SIM_SPEED);
 
 
     // RESET LOGGED FLIP VALUES
@@ -414,6 +416,34 @@ void Controller::controllerGTC()
         motorspeed[1] = MS2;
         motorspeed[2] = MS3;
         motorspeed[3] = MS4;
+
+
+        // SIMULATION SLOWDOWN
+        if(_LANDING_SLOWDOWN_FLAG==true){
+
+            // WHEN CLOSE TO THE CEILING REDUCE SIM SPEED
+            if(_H_CEILING-statePos.z<=0.5 && slowdown_type == 0){
+                
+                Controller::adjustSimSpeed(_SIM_SLOWDOWN_SPEED);
+                slowdown_type = 1;
+
+            }
+
+            // IF IMPACTED OR MISSED CEILING, INCREASE SIM SPEED TO DEFAULT
+            if(impact_flag == true && slowdown_type == 1)
+            {
+                Controller::adjustSimSpeed(_SIM_SPEED);
+                slowdown_type = 2;
+            }
+            else if(stateVel.z <= -0.5 && slowdown_type == 1){
+                Controller::adjustSimSpeed(_SIM_SPEED);
+                slowdown_type = 2;
+            }
+
+        }
+
+
+
         
         int len = sendto(Ctrl_Mavlink_socket, motorspeed, sizeof(motorspeed),0, // Send motorspeeds to Gazebo -> gazebo_motor_model
                 (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len); 

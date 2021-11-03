@@ -51,14 +51,19 @@ class Controller
             // Queue lengths are set to '1' so only the newest data is used
 
 
-            // SENSORS
+            // BODY SENSORS
             globalState_Subscriber = nh->subscribe("/vicon_state",1,&Controller::global_stateCallback,this,ros::TransportHints().tcpNoDelay());
             OF_Subscriber = nh->subscribe("/OF_sensor",1,&Controller::OFCallback,this,ros::TransportHints().tcpNoDelay()); 
                 
+            // ENVIRONMENT SENSORS
+            ceilingFT_Subcriber = nh->subscribe("/ceiling_force_sensor",5,&Controller::ceilingFTCallback,this,ros::TransportHints().tcpNoDelay());
+
 
             // COMMANDS AND INFO
             RLCmd_Subscriber = nh->subscribe("/rl_ctrl",50,&Controller::GTC_Command,this,ros::TransportHints().tcpNoDelay());
             RLData_Subscriber = nh->subscribe("/rl_data",5,&Controller::RLData_Callback,this,ros::TransportHints().tcpNoDelay());
+            SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
+
 
 
 
@@ -71,11 +76,9 @@ class Controller
 
             ros::param::get("/CEILING_HEIGHT",_H_CEILING);
             ros::param::get("/LANDING_SLOWDOWN",_LANDING_SLOWDOWN_FLAG);
-            ros::param::get("/K_EP_SLOWDOWN",_K_EP_SLOWDOWN);
             ros::param::get("/SIM_SPEED",_SIM_SPEED);
             ros::param::get("/SIM_SLOWDOWN_SPEED",_SIM_SLOWDOWN_SPEED);
             ros::param::get("/CF_MASS",_CF_MASS);
-            ros::param::get("/CTRL_OUTPUT_SLOWDOWN", _CTRL_OUTPUT_SLOWDOWN);
 
 
             m = _CF_MASS;
@@ -92,6 +95,11 @@ class Controller
 
         void RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg);
 
+        void ceilingFTCallback(const crazyflie_msgs::ImpactData::ConstPtr &msg);
+        void adjustSimSpeed(float speed_mult);
+
+
+
 
 
 
@@ -100,7 +108,12 @@ class Controller
     private:
         // DEFINE PUBLISHERS AND SUBSCRIBERS
         ros::Publisher ctrl_Publisher;
+
+        // SENSORS
+        ros::Subscriber globalState_Subscriber;
         ros::Subscriber OF_Subscriber;
+
+        ros::Subscriber ceilingFT_Subcriber;
 
 
         // COMMANDS AND INFO
@@ -109,8 +122,8 @@ class Controller
         ros::ServiceClient SimSpeed_Client;
 
 
-        // SENSORS
-        ros::Subscriber globalState_Subscriber;
+        
+
 
         // INITIALIZE ROS MSG VARIABLES
         geometry_msgs::Point _position; 
@@ -128,15 +141,13 @@ class Controller
 
 
         // ROS SPECIFIC VALUES
-        int k_ep;
         int impact_flag;
+        int slowdown_type = 0;
         float _H_CEILING;
         bool _LANDING_SLOWDOWN_FLAG;
-        int _K_EP_SLOWDOWN;
         float _SIM_SPEED; 
         float _SIM_SLOWDOWN_SPEED;
         float _CF_MASS;
-        int _CTRL_OUTPUT_SLOWDOWN;
         
         bool _TEST_FLAG = false;
 
@@ -451,13 +462,50 @@ void Controller::OFCallback(const nav_msgs::Odometry::ConstPtr &msg){
 }
 
 void Controller::RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){
-    k_ep = msg->k_ep;
+
     if (msg->reset_flag == true){
 
         controllerGTCReset();
 
     }
 }
+
+void Controller::ceilingFTCallback(const crazyflie_msgs::ImpactData::ConstPtr &msg)
+{
+    impact_flag = msg->impact_flag;
+}
+
+
+void Controller::adjustSimSpeed(float speed_mult)
+{
+    gazebo_msgs::SetPhysicsProperties srv;
+    srv.request.time_step = 0.001;
+    srv.request.max_update_rate = (int)(speed_mult/0.001);
+
+
+    geometry_msgs::Vector3 gravity_vec;
+    gravity_vec.x = 0.0;
+    gravity_vec.y = 0.0;
+    gravity_vec.z = -9.8066;
+    srv.request.gravity = gravity_vec;
+
+    gazebo_msgs::ODEPhysics ode_config;
+    ode_config.auto_disable_bodies = false;
+    ode_config.sor_pgs_precon_iters = 0;
+    ode_config.sor_pgs_iters = 50;
+    ode_config.sor_pgs_w = 1.3;
+    ode_config.sor_pgs_rms_error_tol = 0.0;
+    ode_config.contact_surface_layer = 0.001;
+    ode_config.contact_max_correcting_vel = 0.0;
+    ode_config.cfm = 0.0;
+    ode_config.erp = 0.2;
+    ode_config.max_contacts = 20;
+
+    srv.request.ode_config = ode_config;
+
+    SimSpeed_Client.call(srv);
+}
+
 
 // Converts thrust in Newtons to their respective PWM values
 static inline int32_t thrust2PWM(float f) 
