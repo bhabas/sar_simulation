@@ -1,6 +1,6 @@
 ## POSITION XY
-P_kp_xy: 0.0
-P_kd_xy: 0.0
+P_kp_xy: 0.5
+P_kd_xy: 0.4
 P_ki_xy: 0.0
 i_range_xy: 0.3 
 
