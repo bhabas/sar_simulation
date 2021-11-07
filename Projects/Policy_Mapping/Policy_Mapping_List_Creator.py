@@ -29,7 +29,7 @@ test_list = np.array(test_list)
 
 np.set_printoptions(suppress=True)
 np.savetxt(
-    "crazyflie_data/data_collection/PolicyMappingList.csv", 
+    "Projects/Policy_Mapping/PolicyMappingList.csv", 
     np.asarray(test_list), 
     delimiter=",",
     fmt="%.2f",
