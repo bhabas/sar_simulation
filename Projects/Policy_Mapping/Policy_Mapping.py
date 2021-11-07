@@ -22,8 +22,11 @@ os.system("clear")
 np.set_printoptions(precision=2, suppress=True)
 
 def runfunction(env,arr):
+    env.create_csv(env.filepath)
 
     for vel,phi,d_ceiling,My in arr:
+
+        env.policy = [vel,phi,d_ceiling,My]
             
         ## INIT LAUNCH/FLIGHT CONDITIONS
         phi_rad = np.radians(phi)
@@ -133,7 +136,7 @@ def runfunction(env,arr):
                 env.runComplete_flag = True
 
             # IF POSITION FALLS BELOW FLOOR HEIGHT
-            elif env.position[2] <= 0.5: # Note: there is a lag with this at high RTF
+            elif env.position[2] <= 0.0: # Note: there is a lag with this at high RTF
                 env.error_str = "Rollout Completed: Falling Drone"
                 print(env.error_str)
 
@@ -169,6 +172,15 @@ def runfunction(env,arr):
             ##       Run Completion  
             # ============================
             if env.runComplete_flag==True:
+
+                ## RUN DATA LOGGING
+                env.append_csv_blank()
+                env.append_IC()
+                env.append_flip()
+                env.append_impact()
+                env.append_csv_blank()
+
+
                 ## RESET/UPDATE RUN CONDITIONS
                 env.runComplete_flag = False
                 env.reset_flag = False
@@ -176,12 +188,13 @@ def runfunction(env,arr):
 
                 env.clear_rollout_Data()
 
-                ## LOGGING
                 break
+                
+            t_prev = env.t   
 
-            # ## =======  RUN COMPLETED  ======= ##
-            # if repeat_run == True: # Runs when error detected
-            #     env.relaunch_sim()
+            ## =======  RUN COMPLETED  ======= ##
+            if repeat_run == True: # Runs when error detected
+                env.relaunch_sim()
 
         
 
@@ -199,6 +212,17 @@ if __name__ == '__main__':
     ## Home Test List
     df = pd.read_csv("Projects/Policy_Mapping/PolicyMappingList.csv")
     arr = df.to_numpy()
+
+
+    ## INITIALIALIZE LOGGING DATA
+    trial_num = 1
+    env.trial_name = f"Policy_Mapping--trial_{int(trial_num):02d}--WS"
+    env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
+    env.logging_flag = True
+
+    ## RUN TRIAL
+    env.RL_Publish() # Publish data to rl_data topic
+    time.sleep(3)
 
 
     runfunction(env,arr)
