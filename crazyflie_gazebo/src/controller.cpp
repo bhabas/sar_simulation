@@ -517,7 +517,7 @@ void Controller::controllerGTC()
 
 
         // DATA HANDLING
-        if (t_step%_CTRL_DEBUG_SLOWDOWN == 0){ // General Debugging output
+        if (t_step%2 == 0){ // General Debugging output
         cout << setprecision(4) << endl <<
         "t: " << _t << "\tCmd: "  << endl << 
         endl <<
