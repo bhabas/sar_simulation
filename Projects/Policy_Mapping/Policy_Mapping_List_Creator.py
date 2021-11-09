@@ -1,10 +1,10 @@
 import numpy as np
 
 test_list = []
-vel_range = np.arange(1.0,3.25,1)
+vel_range = np.arange(3.0,0.75,-0.25)
 phi_range = np.arange(90,20,-10)
-d_ceiling_range = np.arange(0.55,0.05,-0.25)
-My_range = np.arange(-3,-10,-1)
+d_ceiling_range = np.arange(0.55,0.05,-0.05)
+My_range = np.arange(-3,-10,-0.25)
 
 
 

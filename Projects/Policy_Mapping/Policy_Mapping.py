@@ -47,6 +47,8 @@ def runfunction(env,arr):
         ##          Run 
         # ============================
 
+        
+
         ## IF CONTROLLER FAILS, RELAUNCH IT
         try:
             rospy.wait_for_message("/ctrl_data",CtrlData,timeout=5.0)
@@ -188,6 +190,8 @@ def runfunction(env,arr):
 
                 env.clear_rollout_Data()
 
+                env.k_run += 1
+
                 break
                 
             t_prev = env.t   
@@ -216,7 +220,7 @@ if __name__ == '__main__':
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 1
-    env.trial_name = f"Policy_Mapping--trial_{int(trial_num):02d}--WS"
+    env.trial_name = f"Policy_Mapping--trial_{int(trial_num):02d}--WL"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
     env.logging_flag = True
 
