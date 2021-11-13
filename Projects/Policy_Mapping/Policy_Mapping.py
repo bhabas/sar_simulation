@@ -22,9 +22,20 @@ os.system("clear")
 np.set_printoptions(precision=2, suppress=True)
 
 def runfunction(env,arr):
-    env.create_csv(env.filepath)
+    ## INITIALIALIZE LOGGING DATA
+    trial_prev = None
+    
 
-    for vel,phi,d_ceiling,My in arr:
+    for vel,phi,d_ceiling,My,trial_num in arr:
+
+        if trial_num != trial_prev:
+            env.trial_name = f"Policy_Mapping--vel_{vel:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--WL"
+            env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
+            env.logging_flag = True
+            env.create_csv(env.filepath)
+
+            env.k_run = 0
+            trial_prev = trial_num
 
         env.policy = [vel,phi,d_ceiling,My]
             
@@ -218,11 +229,7 @@ if __name__ == '__main__':
     arr = df.to_numpy()
 
 
-    ## INITIALIALIZE LOGGING DATA
-    trial_num = 1
-    env.trial_name = f"Policy_Mapping--trial_{int(trial_num):02d}--WL"
-    env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
-    env.logging_flag = True
+    
 
     ## RUN TRIAL
     env.RL_Publish() # Publish data to rl_data topic
