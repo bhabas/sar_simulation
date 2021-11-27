@@ -11,5 +11,8 @@
         "thread": "c",
         "ostream": "cpp",
         "iomanip": "cpp"
-    }
+    },
+    "python.analysis.extraPaths": [
+        "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_rl/src/"
+    ]
 }

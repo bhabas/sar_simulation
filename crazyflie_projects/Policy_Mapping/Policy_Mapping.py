@@ -7,12 +7,17 @@ import rospy
 from crazyflie_msgs.msg import ImpactData,CtrlData
 import math
 import pandas as pd
-
-
+import rospkg
 
 import sys
-cwd = os.getcwd()
-sys.path.insert(0, f'{cwd}/')
+
+
+## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
+BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_data'))
+sys.path.insert(0,BASE_PATH)
+# print(sys.path)
+
+
 
 
 from crazyflie_rl.src.Crazyflie_env import CrazyflieEnv
@@ -225,7 +230,7 @@ if __name__ == '__main__':
 
     print("Environment done")
     ## Home Test List
-    df = pd.read_csv("Projects/Policy_Mapping/PolicyMappingList.csv")
+    df = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/Policy_Mapping/PolicyMappingList.csv")
     arr = df.to_numpy()
 
 
