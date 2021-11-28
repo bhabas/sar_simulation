@@ -10,7 +10,7 @@ __pycache__/
 
 # Custom gitignore
 crazyflie_data/local_logs/*
-crazyflie_projects/Policy_Mapping/Data/*
+crazyflie_projects/Policy_Mapping/Data_Analysis/Data/*
 !.gitkeep
 local_files/
 *.zip

@@ -19,7 +19,7 @@ sys.path.insert(0,BASE_PATH)
 from crazyflie_data.data_analysis.Data_Analysis import DataFile
 
 
-dataPath = f"crazyflie_projects/Policy_Mapping/Data/Policy_Mapping--Sample/"
+dataPath = f"crazyflie_projects/Policy_Mapping/Data_Analysis/Policy_Mapping--Sample/"
 df_list = []
 num_files = len(os.listdir(dataPath))
 
@@ -96,6 +96,6 @@ print(master_df)
 master_df = master_df.round(4)
 master_df.sort_values(['vel_IC','phi_IC'],ascending=[1,1],inplace=True)
 
-master_df.to_csv(f'Policy_Mapping_Compiled.csv',index=False,quoting=csv.QUOTE_MINIMAL)
+master_df.to_csv(f'crazyflie_projects/Policy_Mapping/Data_Analysis/Policy_Mapping_Compiled.csv',index=False,quoting=csv.QUOTE_MINIMAL)
         
 
