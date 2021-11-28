@@ -22,7 +22,7 @@ class DataFile:
 
         # self.dataType = re.findall('SIM|EXP',fileName)[0] # FIND 'SIM' OR 'EXP'
         self.trialNum = int(re.findall('trial_(\d+)',fileName)[0])
-        self.vel_IC = float(re.findall('Vd_(\d+\.?\d*)',fileName)[0])
+        self.vel_IC = float(re.findall('vel_(\d+\.?\d*)',fileName)[0])
         self.phi_IC = float(re.findall('phi_(\d+\.?\d*)',fileName)[0])
 
 
@@ -51,8 +51,8 @@ class DataFile:
             self.remove_FailedRuns()
 
         ## COLLECT BASIC TRIAL INFO
-        self.n_rollouts = int(self.trial_df.iloc[0]['n_rollouts'])
-        # self.n_rollouts = 8
+        # self.n_rollouts = int(self.trial_df.iloc[0]['n_rollouts'])
+        self.n_rollouts = 0
         self.k_epMax = int(self.trial_df.iloc[-1]['k_ep'])
 
 

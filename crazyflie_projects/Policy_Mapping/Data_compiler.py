@@ -1,8 +1,7 @@
 import os,time,datetime
 import pandas as pd
-import warnings
 import numpy as np
-import csv
+import csv,warnings
 import rospkg
 
 
@@ -15,14 +14,12 @@ import sys
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_data'))
 sys.path.insert(0,BASE_PATH)
-# print(sys.path)
 
 
 from crazyflie_data.data_analysis.Data_Analysis import DataFile
 
-print("Testing")
-model_name = input("Model_Name: ")
-dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs/{model_name}/"
+
+dataPath = f"crazyflie_projects/Policy_Mapping/Data/Policy_Mapping--Sample/"
 df_list = []
 num_files = len(os.listdir(dataPath))
 
@@ -36,16 +33,51 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
 
     try:
         ## PROGRESS PRINTING (BASIC STUFF STARTING FOR TIME ESTIMATION)
-        
-
         diff = end_time - start_time
 
         run_avg = alpha*diff + (1-alpha)*(run_avg)
         start_time = time.time()
+        print(f"Current File: {fileName} \t Index: {ii}/{num_files-1} \t Percentage: {100*ii/num_files:.2f}% \t Minutes to Completion: {run_avg/60*(num_files-ii):.1f}")
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+
+            trial = DataFile(dataPath,fileName,dataType='SIM')
+            
+            ## TRIAL CONDITIONS
+            vel_IC,phi_IC = trial.grab_vel_IC_2D_angle()
+            vx,_,vz = trial.grab_vel_IC()
+            trial_num = trial.trialNum
+
+            
+
+
+        df_list.append((
+            vel_IC, phi_IC, trial_num,
+            vx,vz,
+        ))
+
+        end_time = time.time()
+        # if ii == 1:
+        #     break
 
     except:
         # send2trash.send2trash(dataPath+fileName)
         end_time = time.time()
         print(f"Trashing file {fileName}")
         # pass
+
+
+print()
+
+master_df = pd.DataFrame(df_list,columns=(
+    'vel_IC','phi_IC','trial_num',
+    'vx','vz',
+))
+print(master_df)
+master_df = master_df.round(4)
+master_df.sort_values(['vel_IC','phi_IC','trial_num'],ascending=[1,1,1],inplace=True)
+
+master_df.to_csv(f'Policy_Mapping_Compiled.csv',index=False,quoting=csv.QUOTE_MINIMAL)
+        
 

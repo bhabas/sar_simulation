@@ -637,7 +637,7 @@ class CrazyflieEnv:
                     self.orientation_q[3],self.orientation_q[0],self.orientation_q[1],self.orientation_q[2], # qw,qx,qy,qz
                     self.velocity[0],self.velocity[1],self.velocity[2], # vx,vy,vz
                     self.omega[0],self.omega[1],self.omega[2], # wx,wy,wz
-                    "",self.flip_flag,self.impact_flag,self.n_rollouts, # reward, flip_triggered, impact_flag, n_rollout
+                    "",self.flip_flag,self.impact_flag,"", # reward, flip_triggered, impact_flag, n_rollout
                     self.RREV,self.OF_x,self.OF_y, # RREV, OF_x, OF_y
                     self.FM[0],self.FM[1],self.FM[2],self.FM[3], # F_thrust,Mx,My,Mz 
                     error_str]) # Error
@@ -693,7 +693,7 @@ class CrazyflieEnv:
                     "", "", "", "", # qx,qy,qz,qw
                     np.round(self.vel_d[0],2),np.round(self.vel_d[1],2),np.round(self.vel_d[2],2), # vx_d,vy_d,vz_d
                     "","","", # wx,wy,wz
-                    np.round(self.reward,2),np.round(self.reward_inputs,3),"","", # reward, 
+                    np.round(self.reward,2),np.round(self.reward_inputs,3),"",self.n_rollouts, # reward, 
                     "","","",           # RREV, OF_x, OF_y
                     "","","","",        # F_thrust,Mx,My,Mz
                     self.error_str])    # Error
