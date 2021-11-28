@@ -54,6 +54,7 @@ class DataFile:
         # self.n_rollouts = int(self.trial_df.iloc[0]['n_rollouts'])
         self.n_rollouts = 0
         self.k_epMax = int(self.trial_df.iloc[-1]['k_ep'])
+        self.k_runMax = int(self.trial_df.iloc[-1]['k_run'])
 
 
         ## INITIATE CLASS FOR GTC MODEL (UNFINISHED)
