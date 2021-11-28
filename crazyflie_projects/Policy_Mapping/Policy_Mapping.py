@@ -212,9 +212,9 @@ def runfunction(env,arr):
                 
             t_prev = env.t   
 
-            ## =======  RUN COMPLETED  ======= ##
-            if repeat_run == True: # Runs when error detected
-                env.relaunch_sim()
+        ## =======  RUN COMPLETED  ======= ##
+        if repeat_run == True: # Runs when error detected
+            env.relaunch_sim()
 
         
 
@@ -225,7 +225,7 @@ def runfunction(env,arr):
 if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=False)
+    env = CrazyflieEnv(gazeboTimeout=True)
     # env.launch_dashboard()
 
     print("Environment done")

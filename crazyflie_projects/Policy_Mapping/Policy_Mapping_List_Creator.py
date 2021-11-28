@@ -4,7 +4,7 @@ test_list = []
 vel_range = np.arange(3.0,0.75,-0.25)
 phi_range = np.arange(90,20,-10)
 d_ceiling_range = np.arange(0.55,0.05,-0.05)
-My_range = np.arange(-3,-10,-1)
+My_range = np.arange(-3,-10,-0.1)
 trial_num = 0
 
 
@@ -25,7 +25,7 @@ test_list = np.array(test_list)
 
 np.set_printoptions(suppress=True)
 np.savetxt(
-    "Projects/Policy_Mapping/PolicyMappingList.csv", 
+    "crazyflie_projects/Policy_Mapping/PolicyMappingList.csv", 
     np.asarray(test_list), 
     delimiter=",",
     fmt="%.2f",
