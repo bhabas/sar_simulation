@@ -19,7 +19,7 @@ sys.path.insert(0,BASE_PATH)
 from crazyflie_data.data_analysis.Data_Analysis import DataFile
 
 
-dataPath = f"crazyflie_projects/Policy_Mapping/Data_Analysis/Policy_Mapping--Sample/"
+dataPath = f"crazyflie_projects/Policy_Mapping/Data_Analysis/Data/Policy_Mapping--Sample/"
 df_list = []
 num_files = len(os.listdir(dataPath))
 
@@ -52,7 +52,7 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
     for k_run in range(trial.k_runMax+1):
         _,_,d_ceiling,My = trial.grab_policy(k_ep=0,k_run=k_run)
         RREV_trig = vz/d_ceiling
-        OFy_trig = vx/d_ceiling
+        OFy_trig = -vx/d_ceiling
 
 
         impact_eul = trial.grab_impact_eul(k_ep=0,k_run=k_run)[0][1]
