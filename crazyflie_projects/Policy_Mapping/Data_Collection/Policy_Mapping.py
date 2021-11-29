@@ -47,7 +47,7 @@ def runfunction(env,arr):
         ## INIT LAUNCH/FLIGHT CONDITIONS
         phi_rad = np.radians(phi)
         vy_d = 0 # [m/s]
-        env.vel_d = [vel*np.cos(phi_rad), vy_d, vel*np.sin(phi_rad)] # [m/s]
+        env.vel_trial = [vel*np.cos(phi_rad), vy_d, vel*np.sin(phi_rad)] # [m/s]
 
         ## SEND MESSAGE FOR ALL NODES TO RESET TO DEFAULT VALUES
         env.reset_flag = True
@@ -109,8 +109,8 @@ def runfunction(env,arr):
 
         env.step('sticky',ctrl_flag=1)                  # Enable sticky pads
         env.step('pos',ctrl_flag=0)                     # Turn off pos control
-        env.step('vel',env.vel_d,ctrl_flag=1)           # Set desired vel
-        env.launch_IC(pos_z,env.vel_d[0],env.vel_d[2])  # Use Gazebo to impart desired vel 
+        env.step('vel',env.vel_trial,ctrl_flag=1)           # Set desired vel
+        env.launch_IC(pos_z,env.vel_trial[0],env.vel_trial[2])  # Use Gazebo to impart desired vel 
         env.step('moment',[0,My,0],ctrl_flag=1)
 
         while True:

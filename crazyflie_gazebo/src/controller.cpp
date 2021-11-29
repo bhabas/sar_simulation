@@ -422,6 +422,11 @@ void Controller::controllerGTC()
                     f_pitch_g_tr = M.y/(4.0f*dp)*Newton2g;
                     f_yaw_g_tr = M.z/(4.0f*c_tf)*Newton2g;
 
+                    F_thrust_flip = F_thrust;
+                    M_x_flip = M.x/2.0f;
+                    M_y_flip = M.y/2.0f;
+                    M_z_flip = M.z/2.0f;
+
                 }
 
             }
@@ -607,7 +612,7 @@ void Controller::controllerGTC()
         ctrl_msg.RREV_tr = RREV_tr;
         ctrl_msg.OF_x_tr = OF_x_tr;
         ctrl_msg.OF_y_tr = OF_y_tr;
-        ctrl_msg.FM_flip = {f_thrust_g_tr,f_roll_g_tr,f_pitch_g_tr,f_yaw_g_tr};
+        ctrl_msg.FM_flip = {F_thrust_flip,M_x_flip*1.0e3,M_y_flip*1.0e3,M_z_flip*1.0e3};
 
 
         ctrl_msg.Pose_tr.header.stamp = t_flip;             
@@ -629,7 +634,7 @@ void Controller::controllerGTC()
         ctrl_msg.Twist_tr.angular.y = stateOmega_tr.y;
         ctrl_msg.Twist_tr.angular.z = stateOmega_tr.z;
 
-        ctrl_msg.FM = {f_thrust_g,f_roll_g,f_pitch_g,f_yaw_g};
+        ctrl_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
         ctrl_msg.MS_PWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
 
 

@@ -66,7 +66,7 @@ class CrazyflieEnv:
         self.v_d = [0,0,0]
         self.a_d = [0,0,0]
 
-        self.M_pwm = [0,0,0,0]     # Controller Motor Speeds (MS1,MS2,MS3,MS4) [PWM]
+        self.MS_pwm = [0,0,0,0]     # Controller Motor Speeds (MS1,MS2,MS3,MS4) [PWM]
         self.FM = [0,0,0,0]     # Controller Force/Moments (F_thrust,Mx,My,Mz) [N,N*mm]
 
         self.V_Battery = 0.0
@@ -240,6 +240,9 @@ class CrazyflieEnv:
 
         self.FM = np.asarray(ctrl_msg.FM)   # Force/Moments [N,N*mm]
         self.FM = np.round(self.FM,3)       # Round data for logging
+        self.MS_pwm = np.asarray(ctrl_msg.MS_PWM)
+        self.MS_pwm = np.round(self.MS_pwm,0)
+
 
         
         if ctrl_msg.flip_flag == True and self.flip_flag == False: # Activates only once per run when flip_flag is about to change
@@ -280,6 +283,9 @@ class CrazyflieEnv:
             self.RREV_tr = np.round(ctrl_msg.RREV_tr,3) # Recorded trigger RREV [rad/s]
             self.OF_y_tr = np.round(ctrl_msg.OF_y_tr,3) # Recorded OF_y at trigger [rad/s]
             self.OF_x_tr = np.round(ctrl_msg.OF_y_tr,3) # Recorded OF_x at trigger [rad/s]
+
+
+
 
 
 
@@ -689,7 +695,7 @@ class CrazyflieEnv:
                     # Misc Internal State Estimates
                     self.RREV,self.OF_x,self.OF_y,self.d, # RREV, OF_x, OF_y, d
                     self.FM[0],self.FM[1],self.FM[2],self.FM[3], # F_thrust[N],Mx[Nmm],My[Nmm],Mz[Nmm]
-                    self.M_pwm[0],self.M_pwm[1],self.M_pwm[2],self.M_pwm[3],
+                    self.MS_pwm[0],self.MS_pwm[1],self.MS_pwm[2],self.MS_pwm[3],
 
                     # Setpoint Values
                     self.x_d[0],self.x_d[1],self.x_d[2],                                # Position Setpoints

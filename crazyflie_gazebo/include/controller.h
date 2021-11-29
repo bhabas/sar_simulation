@@ -233,6 +233,11 @@ class Controller
         float f_pitch_g_tr = 0.0f;
         float f_yaw_g_tr = 0.0f;
 
+        float F_thrust_flip = 0.0f;
+        float M_x_flip = 0.0f;
+        float M_y_flip = 0.0f;
+        float M_z_flip = 0.0f;
+
 
         // POLICY VARIABLES
         float RREV_thr = 100.0f;

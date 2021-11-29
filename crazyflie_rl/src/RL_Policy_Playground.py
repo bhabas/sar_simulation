@@ -93,7 +93,7 @@ def runTrial(env,agent):
                         V_str = input("Input V_ini (Vel,Phi): ")
                         V_d,phi_d = list(map(float, V_str.split()))
                         phi_rad = np.radians(phi_d)
-                        env.vel_d = [V_d*np.cos(phi_rad), 0.0, V_d*np.sin(phi_rad)] # [m/s]
+                        env.vel_trial = [V_d*np.cos(phi_rad), 0.0, V_d*np.sin(phi_rad)] # [m/s]
                         
                         if len(list(map(float, V_str.split()))) != 2:
                             raise Exception()
@@ -145,13 +145,13 @@ def runTrial(env,agent):
             ## PRINT RUN CONDITIONS AND POLICY
             print(f"\n!-------------------Episode # {k_ep:d} run # {k_run:d}-----------------!")
             print(f"RREV_thr: {RREV_thr:.3f} \t Gain_1: {G1:.3f}")
-            print(f"Vx_d: {env.vel_d[0]:.3f} \t Vy_d: {env.vel_d[1]:.3f} \t Vz_d: {env.vel_d[2]:.3f}")
+            print(f"Vx_d: {env.vel_trial[0]:.3f} \t Vy_d: {env.vel_trial[1]:.3f} \t Vz_d: {env.vel_trial[2]:.3f}")
             print("\n")
 
 
             ## CONVERT STARTING RREV VALUE -> Z_POS TO START ROLLOUT FROM
             RREV_start = 1.0
-            pos_z = env.h_ceiling - env.vel_d[2]/RREV_start
+            pos_z = env.h_ceiling - env.vel_trial[2]/RREV_start
             pos_z = 0.3986
 
             
@@ -160,8 +160,8 @@ def runTrial(env,agent):
             ##          Rollout 
             # ============================
             env.step('pos',ctrl_flag=0)                     # Turn off pos control
-            env.step('vel',env.vel_d,ctrl_flag=1)           # Set desired vel
-            env.launch_IC(pos_z,env.vel_d[0]+0.03,env.vel_d[2])   # Use Gazebo to impart desired vel with extra vx to ensure -OF_y when around zero
+            env.step('vel',env.vel_trial,ctrl_flag=1)           # Set desired vel
+            env.launch_IC(pos_z,env.vel_trial[0]+0.03,env.vel_trial[2])   # Use Gazebo to impart desired vel with extra vx to ensure -OF_y when around zero
             env.step('sticky',ctrl_flag=1)                  # Enable sticky pads
 
         
@@ -194,7 +194,7 @@ def runTrial(env,agent):
                     print("----- pitch starts -----")
                     print(f"vx={vx:.3f}, vy={vy:.3f}, vz={vz:.3f}")
                     print(f"RREV_tr={env.RREV_tr:.3f}, OF_y_tr={env.OF_y_tr:.3f}, My_d={My_d:.3f} [N*mm]")  
-                    print(f"Pitch Time: {env.state_flip[0]:.3f} [s]")
+                    print(f"Pitch Time: {env.t_flip:.3f} [s]")
                     
                     flag = True # Turns on to make sure this only runs once per rollout
 
