@@ -230,7 +230,7 @@ if __name__ == '__main__':
 
     print("Environment done")
     ## Home Test List
-    df = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/Policy_Mapping/PolicyMappingList.csv")
+    df = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/Policy_Mapping/Data_Collection/PolicyMappingList.csv")
     arr = df.to_numpy()
 
 

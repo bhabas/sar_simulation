@@ -19,7 +19,7 @@ sys.path.insert(0,BASE_PATH)
 from crazyflie_data.data_analysis.Data_Analysis import DataFile
 
 
-dataPath = f"crazyflie_projects/Policy_Mapping/Data_Analysis/Data/Policy_Mapping--Sample/"
+dataPath = f"crazyflie_projects/Policy_Mapping/Data_Analysis/Data/Policy_Mapping--WL/"
 df_list = []
 num_files = len(os.listdir(dataPath))
 
@@ -58,13 +58,21 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
         impact_eul = trial.grab_impact_eul(k_ep=0,k_run=k_run)[0][1]
         leg_contacts,impact_leg,contact_list,body_impact = trial.landing_conditions(k_ep=0,k_run=k_run)
 
+        if leg_contacts >= 3 and body_impact == False:
+            LS = 1
+        elif leg_contacts == 2 and body_impact == False:
+            LS = 0.5
+        else: 
+            LS = 0
+
         df_list.append((
         vel_IC, phi_IC, d_ceiling,My,
         k_run,
         vx,vz,
         RREV_trig,OFy_trig,
         impact_eul,
-        leg_contacts,impact_leg,contact_list,body_impact
+        leg_contacts,impact_leg,contact_list,body_impact,
+        LS
         ))
     
 
@@ -90,7 +98,8 @@ master_df = pd.DataFrame(df_list,columns=(
     'vx','vz',
     'RREV_trig','OFy_trig',
     'impact_eul',
-    'leg_contacts','impact_leg','contact_list','body_impact'
+    'leg_contacts','impact_leg','contact_list','body_impact',
+    'landing_success'
 ))
 print(master_df)
 master_df = master_df.round(4)

@@ -11,6 +11,9 @@ void Controller::controllerGTCReset(void)
     e_PI = vzero();
     e_RI = vzero();
 
+    kp_xf = 1.0;
+    kd_xf = 1.0;
+
     x_d = mkvec(0.0f,0.0f,0.4f);
     v_d = mkvec(0.0f,0.0f,0.0f);
     a_d = mkvec(0.0f,0.0f,0.0f);
@@ -517,7 +520,7 @@ void Controller::controllerGTC()
 
 
         // DATA HANDLING
-        if (t_step%2 == 0){ // General Debugging output
+        if (t_step%50 == 0){ // General Debugging output
         cout << setprecision(4) << endl <<
         "t: " << _t << "\tCmd: "  << endl << 
         endl <<

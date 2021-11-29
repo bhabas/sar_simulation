@@ -86,19 +86,6 @@ def runTrial(env,agent):
 
             ## INITIALIZE RUN PARAMETERS
             if reset_vals == True:
-        
-                while True:
-                    try:
-                        ## Mu input:
-                        mu_str = input("Input mu values: ")
-                        num = list(map(float, mu_str.split()))
-                        mu = np.asarray(num)
-
-                        if len(mu) != 3:
-                            raise Exception()
-                        break
-                    except:
-                        print("Error: Enter mu_1, mu_2 and mu_3")
 
                 while True:
                     try:
@@ -113,6 +100,21 @@ def runTrial(env,agent):
                         break
                     except:
                         print("Error: Enter Vel,Phi")
+        
+                while True:
+                    try:
+                        ## Mu input:
+                        mu_str = input("Input mu values: ")
+                        num = list(map(float, mu_str.split()))
+                        mu = np.asarray(num)
+
+                        if len(mu) != 3:
+                            raise Exception()
+                        break
+                    except:
+                        print("Error: Enter mu_1, mu_2 and mu_3")
+
+                
 
 
             ## INITIALIZE RUN PARAMETERS
@@ -301,6 +303,7 @@ def runTrial(env,agent):
                     ## PUBLISH RL DATA AND RESET LOGS/POSITIONS FOR NEXT ROLLOUT
 
                     env.reset_flag = True
+                    env.runComplete_flag = False
                     env.RL_Publish() # Publish that rollout completed 
                     
                     env.reset_pos()
