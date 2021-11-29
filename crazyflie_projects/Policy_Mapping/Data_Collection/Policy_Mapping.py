@@ -31,7 +31,7 @@ def runfunction(env,arr):
     trial_prev = None
     
 
-    for vel,phi,d_ceiling,My,trial_num in arr:
+    for vel,phi,d_ceiling,My,trial_num,attempt in arr:
 
         if trial_num != trial_prev:
             env.trial_name = f"Policy_Mapping--vel_{vel:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--WL"
@@ -40,9 +40,14 @@ def runfunction(env,arr):
             env.create_csv(env.filepath)
 
             env.k_run = 0
+            env.k_ep = 0
             trial_prev = trial_num
 
         env.policy = [vel,phi,d_ceiling,My]
+        env.k_run = int(attempt)
+
+        if attempt == 0:
+            env.k_ep += 1
             
         ## INIT LAUNCH/FLIGHT CONDITIONS
         phi_rad = np.radians(phi)
@@ -206,7 +211,7 @@ def runfunction(env,arr):
 
                 env.clear_rollout_Data()
 
-                env.k_run += 1
+                
 
                 break
                 
