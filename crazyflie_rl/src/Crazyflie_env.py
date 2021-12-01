@@ -36,80 +36,108 @@ class CrazyflieEnv:
         print("[INITIATING] Gazebo simulation started")
 
 
-        self.isRunning = True
         self.username = getpass.getuser()
         self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs"
-        self.logging_flag = False
         self.filepath = ""
-        self.state_current = np.zeros(13)
+        self.trial_name = '' 
+        self.error_str = ''     # Label for why rollout was terminated/completed
+        self.agent_name = ''    # Learning agent used for training (PEPG,EM,etc...)
+        self.logging_flag = True
+        self.runComplete_flag = False
+
+
+        self.isRunning = True
         self.dataType = "SIM"
 
 
         ## LOAD SIM_SETTINGS/ROS_PARAMETERS
         self.modelName = rospy.get_param('/MODEL_NAME')
+        
+
+        ## INIT CRAZYFLIE ESTIMATED
+        self.posEst = [0,0,0]
+        self.velEst = [0,0,0]
+
+        self.quatEst = [0,0,0,1]
+        self.eulEst = [0,0,0]
+        self.omegaEst = [0,0,0]
+
+        self.x_d = [0,0,0]
+        self.v_d = [0,0,0]
+        self.a_d = [0,0,0]
+
+        self.MS_pwm = [0,0,0,0]     # Controller Motor Speeds (MS1,MS2,MS3,MS4) [PWM]
+        self.FM = [0,0,0,0]     # Controller Force/Moments (F_thrust,Mx,My,Mz) [N,N*mm]
+
+        self.V_Battery = 0.0
+        self.flip_flag = False      # Flag if model has started flip maneuver
+
+        self.RREV = 0.0
+        self.OF_x = 0.0
+        self.OF_y = 0.0
+        self.d = 0.0 
+
+        ## INIT RL PARAMETERS
+        self.n_rollouts = 0     # Rollouts per episode
         self.h_ceiling = rospy.get_param("/CEILING_HEIGHT") # [m]
 
-
-
-
-        ## INIT RL_DATA VARIABLES 
-        # NOTE: All time units are in terms of Sim-Time unless specified
-        self.runComplete_flag = False
-        self.trialComplete_flag = False
-        self.reset_flag = False
-        self.trial_name = '' 
-        self.agent_name = ''    # Learning agent used for training (PEPG,EM,etc...)
-        self.error_str = ''     # Label for why rollout was terminated/completed
-
-        self.n_rollouts = 0     # Rollouts per episode
-        
         self.k_ep = 0           # Episode number
         self.k_run = 0          # Run number
 
         self.alpha_mu = []      # PEPG learning rate for mu
         self.alpha_sigma = []   # PEPG learning rate for sigma
 
-        self.mu = []            # Gaussian mean policies are sampled from
+        self.mu = []            # Gaussian mean that policies are sampled from
         self.sigma = []         # Gaussian standard deviation policies are sampled from
         self.policy = []        # Policy sampled from Gaussian distribution
 
-        self.reward = 0         # Calculated reward from run
-        self.reward_avg = 0     # Averaged rewards over episode
+        self.reward = 0.0       # Calculated reward from run
+        self.reward_avg = 0.0   # Averaged rewards over episode
         self.reward_inputs = [] # List of inputs to reward func
 
-        self.vel_d = [0,0,0]    # Desired/Imparted velocities for rollout [m/s]
-        self.M_d = [0,0,0]      # Imparted moments for flip manuever [N*mm]
+        self.z_max = 0.0
+        self.pitch_sum = 0.0
+        self.pitch_max = 0.0
 
-        ## INIT CTRL_DATA VARIABLES 
-        self.MS = [0,0,0,0]     # Controller Motor Speeds (MS1,MS2,MS3,MS4) [rad/s]
-        self.FM = [0,0,0,0]     # Controller Force/Moments (F_thrust,Mx,My,Mz) [N,N*mm]
+        self.vel_trial = [0.0,0.0,0.0] # Desired velocity for trial
 
-        self.RREV = 0.00
-        self.OF_x = 0.00
-        self.OF_y = 0.00
+        ## INIT RL_DATA VARIABLES 
+        # NOTE: All time units are in terms of Sim-Time unless specified
+        self.trialComplete_flag = False
+        self.reset_flag = False
         
 
-        ## REWARD VALS
-        self.z_max = 0.0        # Max recorded height in run [m]
-        self.pitch_sum = 0.0    # Cumulative pitch angle in run [deg]
-        self.pitch_max = 0.0    # Max recorded pitch angle in run [deg]
+        ## TRAJECTORY VALUES
+        self.z_0 = 0.4      # Default hover height [m]
+        self.az_max = 4.3   # Max vertical acceleration [m/s^2]
+      
+
+
         self.t_prev = 0.0       # [s]
 
         ## FLIP VALS
         self.t_flip = 0.0
-        self.state_flip = np.zeros(13)
         self.pos_flip = [0,0,0]
-        self.quat_flip = [0,0,0,1]
         self.vel_flip = [0,0,0]
+        self.quat_flip = [0,0,0,1]
         self.omega_flip = [0,0,0]
-        self.RREV_tr,self.OF_x_tr,self.OF_y_tr = [0,0,0]
+
+        self.RREV_tr = 0.0
+        self.OF_x_tr = 0.0
+        self.OF_y_tr = 0.0
+        self.d_tr = 0.0
+
         self.FM_flip = [0,0,0,0]    # [N,N*mm]
 
-        self.flip_flag = False      # Flag if model has started flip maneuver
+        
 
         ## IMPACT VALS
         self.t_impact = 0.0
-        self.state_impact = np.zeros(13)
+        self.pos_impact = [0,0,0]
+        self.vel_impact = [0,0,0]
+        self.quat_impact = np.array([0,0,0,1])
+        self.omega_impact = [0,0,0]
+
         self.FM_impact = [0,0,0,0]  # [N,N*mm]
 
         self.pad_contacts = [] # Flag if pads impact ceiling plane
@@ -121,11 +149,7 @@ class CrazyflieEnv:
         self.ceiling_ft_z = 0.0     # Ceiling impact force, Z-dir [N]
 
 
-        self.pos_impact = [0,0,0]
-        self.quat_impact = np.array([0,0,0,1])
-        self.vel_impact = [0,0,0]
-        self.omega_impact = [0,0,0]
-
+        
     
 
         
@@ -202,8 +226,8 @@ class CrazyflieEnv:
         rl_msg.reward = self.reward
         rl_msg.reward_avg = self.reward_avg
 
-        rl_msg.vel_d = self.vel_d
-        rl_msg.M_d = self.M_d
+        rl_msg.vel_d = self.vel_trial
+        # rl_msg.M_d = self.M_d
         rl_msg.leg_contacts = self.pad_contacts
         rl_msg.body_contact = self.body_contact
         
@@ -216,6 +240,9 @@ class CrazyflieEnv:
 
         self.FM = np.asarray(ctrl_msg.FM)   # Force/Moments [N,N*mm]
         self.FM = np.round(self.FM,3)       # Round data for logging
+        self.MS_pwm = np.asarray(ctrl_msg.MS_PWM)
+        self.MS_pwm = np.round(self.MS_pwm,0)
+
 
         
         if ctrl_msg.flip_flag == True and self.flip_flag == False: # Activates only once per run when flip_flag is about to change
@@ -256,6 +283,9 @@ class CrazyflieEnv:
             self.RREV_tr = np.round(ctrl_msg.RREV_tr,3) # Recorded trigger RREV [rad/s]
             self.OF_y_tr = np.round(ctrl_msg.OF_y_tr,3) # Recorded OF_y at trigger [rad/s]
             self.OF_x_tr = np.round(ctrl_msg.OF_y_tr,3) # Recorded OF_x at trigger [rad/s]
+
+
+
 
 
 
@@ -611,16 +641,33 @@ class CrazyflieEnv:
             with open(filepath,mode='w') as state_file:
                 state_writer = csv.writer(state_file,delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 state_writer.writerow([
-                    'k_ep','k_run',
+                    # RL Labels
+                    'k_ep','k_run',             
                     'alpha_mu','alpha_sig',
                     'mu','sigma', 'policy',
-                    't','x','y','z',
-                    'qw','qx','qy','qz',
+
+                    # Internal State Estimates (EKF)
+                    't',
+                    'x','y','z',            
                     'vx','vy','vz',
+                    'qw','qx','qy','qz',
                     'wx','wy','wz',
-                    'reward','flip_flag','impact_flag','n_rollouts',
-                    'RREV','OF_x','OF_y',
-                    'F_thrust','Mx','My','Mz',
+
+                    # Misc RL labels
+                    'reward','flip_flag','impact_flag','n_rollouts', 
+
+                    # Misc Internal State Estimates
+                    'RREV','OF_x','OF_y','d',       
+                    'F_thrust[N]','Mx[Nmm]','My[Nmm]','Mz[Nmm]',
+                    'M1_pwm','M2_pwm','M3_pwm','M4_pwm',
+
+                    # Setpoint Values
+                    'x_d.x','x_d.y','x_d.z',    
+                    'v_d.x','v_d.y','v_d.z',
+                    'a_d.x','a_d.y','a_d.z',
+
+                    # Misc Values
+                    'Volts',
                     'Error'])# Place holders
 
 
@@ -630,16 +677,33 @@ class CrazyflieEnv:
             with open(self.filepath, mode='a') as state_file:
                 state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 state_writer.writerow([
+                    # RL Labels
                     self.k_ep,self.k_run,
                     "","", # alpha_mu,alpha_sig
                     "","","", # mu,sigma,policy
-                    self.t,self.position[0],self.position[1],self.position[2], # t,x,y,z
-                    self.orientation_q[3],self.orientation_q[0],self.orientation_q[1],self.orientation_q[2], # qw,qx,qy,qz
+
+                    # Internal State Estimates (EKF)
+                    self.t,
+                    self.position[0],self.position[1],self.position[2], # t,x,y,z
                     self.velocity[0],self.velocity[1],self.velocity[2], # vx,vy,vz
+                    self.orientation_q[3],self.orientation_q[0],self.orientation_q[1],self.orientation_q[2], # qw,qx,qy,qz
                     self.omega[0],self.omega[1],self.omega[2], # wx,wy,wz
+
+                    # Misc RL labels
                     "",self.flip_flag,self.impact_flag,"", # reward, flip_triggered, impact_flag, n_rollout
-                    self.RREV,self.OF_x,self.OF_y, # RREV, OF_x, OF_y
-                    self.FM[0],self.FM[1],self.FM[2],self.FM[3], # F_thrust,Mx,My,Mz 
+
+                    # Misc Internal State Estimates
+                    self.RREV,self.OF_x,self.OF_y,self.d, # RREV, OF_x, OF_y, d
+                    self.FM[0],self.FM[1],self.FM[2],self.FM[3], # F_thrust[N],Mx[Nmm],My[Nmm],Mz[Nmm]
+                    self.MS_pwm[0],self.MS_pwm[1],self.MS_pwm[2],self.MS_pwm[3],
+
+                    # Setpoint Values
+                    self.x_d[0],self.x_d[1],self.x_d[2],                                # Position Setpoints
+                    self.v_d[0],self.v_d[1],self.v_d[2],                                # Velocity Setpoints
+                    self.a_d[0],self.a_d[1],self.a_d[2],                                # Acceleration Setpoints
+                    
+                    # Misc Values
+                    "",
                     error_str]) # Error
 
     
@@ -650,16 +714,35 @@ class CrazyflieEnv:
             with open(self.filepath,mode='a') as state_file:
                 state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 state_writer.writerow([
+                    # RL Labels
                     self.k_ep,self.k_run,
                     "","", # alpha_mu,alpha_sig
                     "","","", # mu,sigma,policy
-                    self.t_flip,self.pos_flip[0],self.pos_flip[1],self.pos_flip[2],    # t,x,y,z
-                    self.quat_flip[3],self.quat_flip[0],self.quat_flip[1],self.quat_flip[2],    # qw,qx,qy,qz
+                    
+                    
+                    # Internal State Estimates (EKF)
+                    self.t_flip,
+                    self.pos_flip[0],self.pos_flip[1],self.pos_flip[2],    # t,x,y,z
                     self.vel_flip[0],self.vel_flip[1],self.vel_flip[2],    # vx_d,vy_d,vz_d
+                    self.quat_flip[3],self.quat_flip[0],self.quat_flip[1],self.quat_flip[2],    # qw,qx,qy,qz
                     self.omega_flip[0],self.omega_flip[1],self.omega_flip[2],  # wx,wy,wz
+                    
+
+                    # Misc RL labels
                     "","","","", # reward, body_impact, num leg contacts, impact force
-                    self.RREV_tr,self.OF_x_tr,self.OF_y_tr, # RREV, OF_x, OF_y
+
+                    # Misc Internal State Estimates
+                    self.RREV_tr,self.OF_x_tr,self.OF_y_tr,self.d_tr, # RREV, OF_x, OF_y, d
                     self.FM_flip[0],self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # F_thrust,Mx,My,Mz
+                    "","","","",
+
+                    # Setpoint Values
+                    "","","",
+                    "","","",
+                    "","","",
+
+                    # Misc Values
+                    "",
                     "Flip Data"]) # Error
     
     def append_impact(self):
@@ -668,16 +751,33 @@ class CrazyflieEnv:
             with open(self.filepath,mode='a') as state_file:
                 state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 state_writer.writerow([
+                    # RL Labels
                     self.k_ep,self.k_run,
                     "","", # alpha_mu,alpha_sig
                     "","","", # mu,sigma,policy
-                    self.t_impact,self.pos_impact[0],self.pos_impact[1],self.pos_impact[2],    # t,x,y,z
-                    self.quat_impact[3],self.quat_impact[0],self.quat_impact[1],self.quat_impact[2],    # qw,qx,qy,qz
+
+                    # Internal State Estimates (EKF)
+                    self.t_impact,
+                    self.pos_impact[0],self.pos_impact[1],self.pos_impact[2],    # t,x,y,z
                     self.vel_impact[0],self.vel_impact[1],self.vel_impact[2],    # vx_d,vy_d,vz_d
+                    self.quat_impact[3],self.quat_impact[0],self.quat_impact[1],self.quat_impact[2],    # qw,qx,qy,qz
                     self.omega_impact[0],self.omega_impact[1],self.omega_impact[2],  # wx,wy,wz
+                    
+                    # Misc RL labels
                     self.impact_flag,self.body_contact,np.array(self.pad_contacts),"",  # "", "", body_impact flag, num leg contacts, ""
-                    self.ceiling_ft_z,self.ceiling_ft_x,self.ceiling_ft_y,             # Max impact force [z], =Max impact force [x], ""
+                    
+                    # Misc Internal State Estimates
+                    self.ceiling_ft_z,self.ceiling_ft_x,self.ceiling_ft_y,"",             # Max impact force [z], =Max impact force [x], ""
                     "","","","", # F_thrust,Mx,My,Mz (Impact)
+                    "","","","", # M_pwm
+                    
+                    # Setpoint Values
+                    "","","",
+                    "","","",
+                    "","","",
+
+                    # Misc Values
+                    "",
                     "Impact Data"]) # Error
 
     def append_IC(self):
@@ -686,16 +786,34 @@ class CrazyflieEnv:
             with open(self.filepath,mode='a') as state_file:
                 state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 state_writer.writerow([
+
+                    # RL Labels
                     self.k_ep,self.k_run,
                     np.round(self.alpha_mu,2),np.round(self.alpha_sigma,2), # alpha_mu,alpha_sig
                     np.round(self.mu,2),np.round(self.sigma,2),np.round(self.policy,2), # mu,sigma,policy
-                    "","","","",    # t,x,y,z
-                    "", "", "", "", # qx,qy,qz,qw
-                    np.round(self.vel_d[0],2),np.round(self.vel_d[1],2),np.round(self.vel_d[2],2), # vx_d,vy_d,vz_d
-                    "","","", # wx,wy,wz
+
+                    # Internal State Estimates (EKF)
+                    "",             # t
+                    "","","",       # x,y,z
+                    np.round(self.vel_trial[0],2),np.round(self.vel_trial[1],2),np.round(self.vel_trial[2],2), # vx_d,vy_d,vz_d
+                    "","","","",    # qx,qy,qz,qw
+                    "","","",       # wx,wy,wz
+
+                    # Misc RL labels
                     np.round(self.reward,2),np.round(self.reward_inputs,3),"",self.n_rollouts, # reward, 
-                    "","","",           # RREV, OF_x, OF_y
-                    "","","","",        # F_thrust,Mx,My,Mz
+
+                    # Misc Internal State Estimates
+                    "","","","",    # RREV, OF_x, OF_y,d,d
+                    "","","","",    # F_thrust,Mx,My,Mz 
+                    "","","","",    # M_pwm
+
+                    # Setpoint Values
+                    "","","",
+                    "","","",
+                    "","","",
+
+                    # Misc Values
+                    "",
                     self.error_str])    # Error
 
     def append_csv_blank(self):

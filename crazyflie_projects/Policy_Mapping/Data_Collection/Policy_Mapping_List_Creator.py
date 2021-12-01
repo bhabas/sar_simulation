@@ -4,7 +4,8 @@ test_list = []
 vel_range = np.arange(3.0,0.75,-0.25)
 phi_range = np.arange(90,20,-10)
 d_ceiling_range = np.arange(0.55,0.05,-0.05)
-My_range = np.arange(-3,-10,-0.1)
+My_range = np.arange(-3,-10,-0.25)
+attempts = np.arange(0,3,1)
 trial_num = 0
 
 
@@ -15,8 +16,8 @@ for vel in vel_range:    # [m/s]
         trial_num += 1
         for d_ceiling in d_ceiling_range: # [m]
             for My in My_range:
-
-                test_list.append([vel,phi,d_ceiling,My,trial_num])
+                for attempt in attempts:
+                    test_list.append([vel,phi,d_ceiling,My,trial_num,attempt])
 
 
 test_list = np.array(test_list)
@@ -25,11 +26,11 @@ test_list = np.array(test_list)
 
 np.set_printoptions(suppress=True)
 np.savetxt(
-    "crazyflie_projects/Policy_Mapping/PolicyMappingList.csv", 
+    "crazyflie_projects/Policy_Mapping/Data_Collection/PolicyMappingList.csv", 
     np.asarray(test_list), 
     delimiter=",",
     fmt="%.2f",
-    header='vel,phi,d_ceiling,My,trial_num')
+    header='vel,phi,d_ceiling,My,trial_num,attempt')
         
 
 

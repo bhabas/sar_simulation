@@ -31,7 +31,7 @@ def runfunction(env,arr):
     trial_prev = None
     
 
-    for vel,phi,d_ceiling,My,trial_num in arr:
+    for vel,phi,d_ceiling,My,trial_num,attempt in arr:
 
         if trial_num != trial_prev:
             env.trial_name = f"Policy_Mapping--vel_{vel:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--WL"
@@ -40,14 +40,19 @@ def runfunction(env,arr):
             env.create_csv(env.filepath)
 
             env.k_run = 0
+            env.k_ep = 0
             trial_prev = trial_num
 
         env.policy = [vel,phi,d_ceiling,My]
+        env.k_run = int(attempt)
+
+        if attempt == 0:
+            env.k_ep += 1
             
         ## INIT LAUNCH/FLIGHT CONDITIONS
         phi_rad = np.radians(phi)
         vy_d = 0 # [m/s]
-        env.vel_d = [vel*np.cos(phi_rad), vy_d, vel*np.sin(phi_rad)] # [m/s]
+        env.vel_trial = [vel*np.cos(phi_rad), vy_d, vel*np.sin(phi_rad)] # [m/s]
 
         ## SEND MESSAGE FOR ALL NODES TO RESET TO DEFAULT VALUES
         env.reset_flag = True
@@ -109,8 +114,8 @@ def runfunction(env,arr):
 
         env.step('sticky',ctrl_flag=1)                  # Enable sticky pads
         env.step('pos',ctrl_flag=0)                     # Turn off pos control
-        env.step('vel',env.vel_d,ctrl_flag=1)           # Set desired vel
-        env.launch_IC(pos_z,env.vel_d[0],env.vel_d[2])  # Use Gazebo to impart desired vel 
+        env.step('vel',env.vel_trial,ctrl_flag=1)           # Set desired vel
+        env.launch_IC(pos_z,env.vel_trial[0],env.vel_trial[2])  # Use Gazebo to impart desired vel 
         env.step('moment',[0,My,0],ctrl_flag=1)
 
         while True:
@@ -206,7 +211,7 @@ def runfunction(env,arr):
 
                 env.clear_rollout_Data()
 
-                env.k_run += 1
+                
 
                 break
                 
