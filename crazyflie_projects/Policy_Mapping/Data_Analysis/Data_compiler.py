@@ -49,45 +49,65 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
     vx,_,vz = trial.grab_vel_IC()
     trial_num = trial.trialNum
 
-    for k_run in range(trial.k_runMax+1):
-        _,_,d_ceiling,My = trial.grab_policy(k_ep=0,k_run=k_run)
-        RREV_trig = vz/d_ceiling
-        OFy_trig = -vx/d_ceiling
+    for k_ep in range(1,trial.k_epMax+1):
+
+        
+        impact_eul_list = []
+        LS_list = [] # Landing success list
+        for k_run in range(trial.k_runMax+1):
+
+            try:
+                _,_,d_ceiling,My = trial.grab_policy(k_ep=k_ep,k_run=0)
+                RREV_trig = vz/d_ceiling
+                OFy_trig = -vx/d_ceiling
+
+            except:
+                pass
 
 
-        impact_eul = trial.grab_impact_eul(k_ep=0,k_run=k_run)[0][1]
-        leg_contacts,impact_leg,contact_list,body_impact = trial.landing_conditions(k_ep=0,k_run=k_run)
+            try:
+                impact_eul = trial.grab_impact_eul(k_ep=k_ep,k_run=k_run)[0][1]
+                if impact_eul >= 0:
+                    impact_eul = 180+impact_eul
+                impact_eul_list.append(impact_eul)
+            except:
+                pass
 
-        if leg_contacts >= 3 and body_impact == False:
-            LS = 1
-        elif leg_contacts == 2 and body_impact == False:
-            LS = 0.5
-        else: 
-            LS = 0
 
-        df_list.append((
-        vel_IC, phi_IC, d_ceiling,My,
-        k_run,
-        vx,vz,
-        RREV_trig,OFy_trig,
-        impact_eul,
-        leg_contacts,impact_leg,contact_list,body_impact,
-        LS
-        ))
+            try:
+                leg_contacts,impact_leg,contact_list,body_impact = trial.landing_conditions(k_ep,k_run)
+
+                if leg_contacts >= 3 and body_impact == False:
+                    LS = 1
+                elif leg_contacts == 2 and body_impact == False:
+                    LS = 0.5
+                else: 
+                    LS = 0
+
+                LS_list.append(LS)
+            except:
+                pass
+
+
+        impact_eul = np.mean(impact_eul_list)
+        LS = np.max(LS_list)
+
+        df_list.append(
+            (vel_IC, phi_IC, d_ceiling,My,
+            k_run,
+            vx,vz,
+            RREV_trig,OFy_trig,
+            impact_eul,
+            LS
+            )
+            )
     
 
 
     
 
     end_time = time.time()
-    # if ii == 1:
-    #     break
-
-    # except:
-    #     # send2trash.send2trash(dataPath+fileName)
-    #     end_time = time.time()
-    #     print(f"Trashing file {fileName}")
-    #     # pass
+  
 
 
 print()
@@ -98,7 +118,6 @@ master_df = pd.DataFrame(df_list,columns=(
     'vx','vz',
     'RREV_trig','OFy_trig',
     'impact_eul',
-    'leg_contacts','impact_leg','contact_list','body_impact',
     'landing_success'
 ))
 print(master_df)
