@@ -11,13 +11,13 @@ from sklearn.model_selection import train_test_split
 
 def myfun(x):
     y1 = np.sin(x)
-    y2 = np.cos(x)
+    y2 = np.exp(-x)
 
     return y1,y2
 
 ## DEFINE NN MODEL
 class Model(nn.Module):
-    def __init__(self,in_features=1,h1=16,h2=16,out_features=1):
+    def __init__(self,in_features=1,h1=16,h2=16,out_features=2):
         super().__init__()
 
         # Input Layer (4 features) --> h1 (N) --> h2 (N) --> output (3 classes)
@@ -30,17 +30,20 @@ class Model(nn.Module):
         # PASS DATA THROUGH NETWORK
         x = F.tanh(self.fc1(x))
         x = F.tanh(self.fc2(x))
-        x1 = self.out(x)
+        x = self.out(x)
 
-        return x1
 
-def train_model(epochs,X_train,y1_train,y2_train):
+        return x
+
+def train_model(epochs,X_train,y_train):
 
     ## INITIALIZE NEURAL NETWORK MODEL
     torch.manual_seed(22)
     model = Model()
 
-    criterion1 = nn.MSELoss(reduction='mean')
+    criterion = nn.MSELoss(reduction='mean')
+    # criterion2 = nn.MSELoss(reduction='mean')
+
 
     optimizer = torch.optim.Adam(model.parameters(),lr=0.01) #  Model parameters are the layers of model
     losses = []
@@ -48,10 +51,12 @@ def train_model(epochs,X_train,y1_train,y2_train):
     for ii in range(epochs):
 
         ## MODEL PREDICTION
-        y1_pred = model.forward(X_train)
+        y_pred = model.forward(X_train)
+
 
         ## CALCULATE LOSS/ERROR
-        loss1 = criterion1(y1_pred,y1_train)
+        loss1 = criterion(y_pred,y_train)
+
 
         loss = loss1
 
@@ -73,7 +78,7 @@ if __name__ == '__main__':
 
     ## GENERATE TRAINING DATA
     batch_size = 50
-    epochs = 5000
+    epochs = 10_000
 
     range_train = [-1,7]
     X = np.linspace(range_train[0],range_train[1],batch_size).reshape(-1,1)
@@ -89,14 +94,11 @@ if __name__ == '__main__':
     X_train = torch.FloatTensor(train['X'].to_numpy()).reshape((-1,1))
     X_test = torch.FloatTensor(test['X'].to_numpy()).reshape((-1,1))
 
-    y1_train = torch.FloatTensor(train['y1'].to_numpy()).reshape((-1,1))
-    y1_test = torch.FloatTensor(test['y1'].to_numpy()).reshape((-1,1))
-
-    y2_train = torch.FloatTensor(train['y2'].to_numpy()).reshape((-1,1))
-    y2_test = torch.FloatTensor(test['y2'].to_numpy()).reshape((-1,1))
+    y_train = torch.FloatTensor(train[['y1','y2']].to_numpy())
+    y_test = torch.FloatTensor(test[['y1','y2']].to_numpy())
 
 
-    # train_model(epochs,X_train,y1_train,y2_train)
+    # train_model(epochs,X_train,y_train)
     model = torch.load('Func_approx_1D_2D.pt')
 
     ## DEFINE EVALUATION RANGE 
@@ -104,32 +106,61 @@ if __name__ == '__main__':
     X_eval = torch.FloatTensor(X_eval)
 
     with torch.no_grad():
-        y1_eval = model.forward(X_eval)
+        y_eval = model.forward(X_eval)
 
 
     ## PLOT NETWORK OUTPUTS
     fig = plt.figure(1,figsize=(12,6))
 
     ax1 = fig.add_subplot(2,2,1)
-    ax1.plot(X_eval,y1_eval,color='blue',label='NN Output')
+    ax1.plot(X_eval,y_eval[:,0],'g',alpha=0.5,label='NN Output')
+    ax1.plot(X_eval,myfun(X_eval)[0].flatten(),'g--',alpha=0.5,label='f(x) Output')
     ax1.plot(X_train,myfun(X_train)[0],'.',label='Training Data')
     ax1.axvspan(range_train[0],range_train[1], alpha=0.15, color='limegreen',label='Training Range')
 
     ax1.grid()
     ax1.set_xlabel('x')
     ax1.set_ylabel('f(x)')
+    ax1.set_title('NN Output vs Function Output\n f(x) = sin(x)')
+    ax1.set_xlim(-5,10)
     ax1.legend()
 
     ax2 = fig.add_subplot(2,2,2)
-    ax2.plot(X_eval,np.abs(y1_eval - myfun(X_eval)[0]),label=('Error |f(x) - f\'(x)|'))
+    ax2.plot(X_eval,np.abs(y_eval[:,0] - myfun(X_eval)[0].flatten()),color='red',label=('Error |f(x) - f_NN(x)|'))
     ax2.axvspan(range_train[0],range_train[1], alpha=0.15, color='limegreen',label='Training Range')
 
 
     ax2.grid()
     ax2.set_xlabel('x')
+    ax2.set_xlim(-5,10)
     ax2.set_ylabel('Error')
-    ax2.set_title('Absolute difference between prediction and actual function')
+    ax2.set_title('Error Between Prediction and Actual Function')
     ax2.legend()
+
+    ax3 = fig.add_subplot(2,2,3)
+    ax3.plot(X_eval,y_eval[:,1],'b',alpha=0.5,label='NN Output')
+    ax3.plot(X_eval,myfun(X_eval)[1].flatten(),'b--',alpha=0.5,label='f(x) Output')
+    ax3.plot(X_train,myfun(X_train)[1],'.',label='Training Data')
+    ax3.axvspan(range_train[0],range_train[1], alpha=0.15, color='limegreen',label='Training Range')
+
+    ax3.grid()
+    ax3.set_xlabel('x')
+    ax3.set_ylabel('g(x)')
+    ax3.set_xlim(-5,10)
+    ax3.set_title('\n f(x) = exp(-x)')
+    ax3.legend()
+
+    ax4 = fig.add_subplot(2,2,4)
+    ax4.plot(X_eval,np.abs(y_eval[:,1] - myfun(X_eval)[1].flatten()),color='red',label=('Error |g(x) - g_NN(x)|'))
+    ax4.axvspan(range_train[0],range_train[1], alpha=0.15, color='limegreen',label='Training Range')
+
+
+    ax4.grid()
+    ax4.set_xlabel('x')
+    ax4.set_xlim(-5,10)
+    ax4.set_ylabel('Error')
+    ax4.legend()
+
 
 
     fig.tight_layout()
