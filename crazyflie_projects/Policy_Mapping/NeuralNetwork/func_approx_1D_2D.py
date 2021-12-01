@@ -11,13 +11,14 @@ from sklearn.model_selection import train_test_split
 
 def myfun(x):
     y1 = np.sin(x)
-    y2 = np.exp(-x)
+    y2 = [1 if 2 < i < 5 else 0 for i in x]
+    y2 = np.reshape(y2,(-1,1))
 
     return y1,y2
 
 ## DEFINE NN MODEL
 class Model(nn.Module):
-    def __init__(self,in_features=1,h1=16,h2=16,out_features=2):
+    def __init__(self,in_features=1,h1=5,h2=5,out_features=2):
         super().__init__()
 
         # Input Layer (4 features) --> h1 (N) --> h2 (N) --> output (3 classes)
@@ -28,9 +29,10 @@ class Model(nn.Module):
     def forward(self,x):
 
         # PASS DATA THROUGH NETWORK
-        x = F.tanh(self.fc1(x))
-        x = F.tanh(self.fc2(x))
+        x = F.sigmoid(self.fc1(x))
+        x = F.sigmoid(self.fc2(x))
         x = self.out(x)
+        x[:,1] = F.sigmoid(x[:,1])
 
 
         return x
@@ -42,8 +44,6 @@ def train_model(epochs,X_train,y_train):
     model = Model()
 
     criterion = nn.MSELoss(reduction='mean')
-    # criterion2 = nn.MSELoss(reduction='mean')
-
 
     optimizer = torch.optim.Adam(model.parameters(),lr=0.01) #  Model parameters are the layers of model
     losses = []
@@ -55,11 +55,7 @@ def train_model(epochs,X_train,y_train):
 
 
         ## CALCULATE LOSS/ERROR
-        loss1 = criterion(y_pred,y_train)
-
-
-        loss = loss1
-
+        loss = criterion(y_pred,y_train)
         losses.append(loss)
 
         if ii%10 == 1:
@@ -98,7 +94,7 @@ if __name__ == '__main__':
     y_test = torch.FloatTensor(test[['y1','y2']].to_numpy())
 
 
-    # train_model(epochs,X_train,y_train)
+    train_model(epochs,X_train,y_train)
     model = torch.load('Func_approx_1D_2D.pt')
 
     ## DEFINE EVALUATION RANGE 
@@ -121,7 +117,7 @@ if __name__ == '__main__':
     ax1.grid()
     ax1.set_xlabel('x')
     ax1.set_ylabel('f(x)')
-    ax1.set_title('NN Output vs Function Output\n f(x) = sin(x)')
+    ax1.set_title('NN Output vs Function Output')
     ax1.set_xlim(-5,10)
     ax1.legend()
 
@@ -147,7 +143,6 @@ if __name__ == '__main__':
     ax3.set_xlabel('x')
     ax3.set_ylabel('g(x)')
     ax3.set_xlim(-5,10)
-    ax3.set_title('\n f(x) = exp(-x)')
     ax3.legend()
 
     ax4 = fig.add_subplot(2,2,4)
