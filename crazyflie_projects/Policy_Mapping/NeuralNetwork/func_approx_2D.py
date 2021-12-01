@@ -7,7 +7,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split\
+
+BASEPATH = "crazyflie_projects/Policy_Mapping/NeuralNetwork"
+
 
 
 def myfun(x1,x2):
@@ -103,7 +106,7 @@ if __name__ == '__main__':
 
 
     train_model(epochs,X_train,y_train)
-    model = torch.load('Func_approx_2D.pt')
+    model = torch.load(f'{BASEPATH}/Func_approx_2D.pt')
 
     ## DEFINE EVALUATION RANGE 
     x1_eval = np.linspace(-3,3,10).reshape(-1,1)

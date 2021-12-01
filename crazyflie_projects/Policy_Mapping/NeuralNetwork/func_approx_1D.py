@@ -8,6 +8,8 @@ import torch.nn.functional as F
 
 from sklearn.model_selection import train_test_split
 
+BASEPATH = "crazyflie_projects/Policy_Mapping/NeuralNetwork"
+
 
 def myfun(x):
     y1 = np.sin(x)
@@ -66,7 +68,7 @@ def train_model(epochs,X_train,y_train):
         loss.backward()
         optimizer.step()
 
-    torch.save(model,'Func_approx_1D_2D.pt')
+    torch.save(model,f'{BASEPATH}/Func_approx_1D.pt')
     return model
 
 
@@ -94,8 +96,8 @@ if __name__ == '__main__':
     y_test = torch.FloatTensor(test[['y1','y2']].to_numpy())
 
 
-    train_model(epochs,X_train,y_train)
-    model = torch.load('Func_approx_1D_2D.pt')
+    # train_model(epochs,X_train,y_train)
+    model = torch.load(f'{BASEPATH}/Func_approx_1D.pt')
 
     ## DEFINE EVALUATION RANGE 
     X_eval = np.linspace(-3,10,50).reshape(-1,1)
