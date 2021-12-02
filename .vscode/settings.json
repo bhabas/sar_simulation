@@ -1,0 +1,18 @@
+{
+    "files.associations": {
+        "iostream": "cpp",
+        "unordered_map": "c",
+        "unordered_set": "c",
+        "regex": "c",
+        "array": "c",
+        "tuple": "c",
+        "utility": "c",
+        "variant": "c",
+        "thread": "c",
+        "ostream": "cpp",
+        "iomanip": "cpp"
+    },
+    "python.analysis.extraPaths": [
+        "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_rl/src/"
+    ]
+}

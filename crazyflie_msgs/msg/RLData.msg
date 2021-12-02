@@ -8,8 +8,8 @@ bool runComplete_flag
 bool trialComplete_flag
 bool reset_flag
 
-uint8 k_ep
-uint8 k_run
+uint16 k_ep
+uint16 k_run
 
 uint8 n_rollouts
 float32 h_ceiling

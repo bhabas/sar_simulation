@@ -108,7 +108,7 @@
           <bumperTopicName>ceiling_contact</bumperTopicName>
           <frameName>ceiling</frameName>
           <alwaysOn>true</alwaysOn>
-          <updateRate>500</updateRate>
+          <updateRate>1000</updateRate>
         </plugin>
         <pose>0 0 0 0 -0 0</pose>
       </sensor>

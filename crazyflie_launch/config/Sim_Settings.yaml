@@ -1,15 +1,14 @@
-MODEL_NAME: "crazyflie_Wide-Short"
+MODEL_NAME: "crazyflie_Wide-Long"
 GUI_FLAG: true
 
 SIM_SPEED: 0.5
 SIM_SLOWDOWN_SPEED: 0.4
 LANDING_SLOWDOWN: true
-K_EP_SLOWDOWN: 0
 
 
 K_EP_MAX: 16
+CTRL_DEBUG_SLOWDOWN: 2
 CEILING_HEIGHT: 2.1
 CF_MASS: 0.0376
 
 
-# controller: "GTC"

@@ -1,12 +1,10 @@
-
-/*
-*  Name: gazebo_transport_to_ros_topic.cpp
-*  Author: Joseph Coombe
-*  Date: 11/22/2017
-*  Edited: 11/27/2017
-*  Description:
-*   Subscribe to a Gazebo transport topic and publish to a ROS topic
+/* 
+This code is responsible for recording the max impact forces along the x,y,z
+axes. As well, it constantly saves a buffer of the last [5] global 
+positioning states and when it detects an impact it will send out the
+datapoint from position [2] in the buffer (state right before impact). 
 */
+
 
 // Gazebo dependencies
 #include <gazebo/transport/transport.hh>
@@ -145,7 +143,7 @@ void RLdata_Callback(const crazyflie_msgs::RLData::ConstPtr &msg)
 
 }
 
-void global_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
+void vicon_stateCallback(const nav_msgs::Odometry::ConstPtr &msg){
 
     // SET STATE VALUES INTO GLOBAL STATE VARIABLES
     _pos = msg->pose.pose.position; 
@@ -199,11 +197,11 @@ int main(int argc, char **argv)
 
   // DEFINE ROS AND GAZEBO TOPICS
   std::string gazebo_topic_to_sub= "/gazebo/default/ceiling_plane/joint_01/force_torque/wrench";
-  std::string ros_topic_to_pub="/ceiling_force_sensor";
+  std::string ros_topic_to_pub="/env/ceiling_force_sensor";
   
   // INIT ROS PUBLISHERS/SUBSCRIBERS
   impactForce_Publisher = nh.advertise<crazyflie_msgs::ImpactData>(ros_topic_to_pub, 1);
-  globalState_Subscriber = nh.subscribe("/global_state",1,global_stateCallback,ros::TransportHints().tcpNoDelay());
+  globalState_Subscriber = nh.subscribe("/env/global_state_data",1,vicon_stateCallback,ros::TransportHints().tcpNoDelay());
   RLdata_Subscriber = nh.subscribe("/rl_data",5,RLdata_Callback);
   ROS_INFO("ROS Subscribers/Publishers Started");
   

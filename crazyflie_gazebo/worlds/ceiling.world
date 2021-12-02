@@ -42,6 +42,14 @@
       <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
     </physics>
 
+    <scene>
+      <sky>
+        <clouds>
+          <speed>0</speed>
+        </clouds>
+      </sky>
+    </scene>
+
     <!-- <physics name='default_physics' default='0' type='ode'>
       <gravity>0 0 -9.8066</gravity>
       <max_step_size>0.001</max_step_size>

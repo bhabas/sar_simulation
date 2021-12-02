@@ -1,5 +1,6 @@
 float64[] FM
 float64[] FM_flip
+uint32[] MS_PWM
 bool flip_flag
 float64 RREV_tr
 float64 OF_y_tr

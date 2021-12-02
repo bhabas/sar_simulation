@@ -25,7 +25,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
     ## INIT LAUNCH/FLIGHT CONDITIONS
     phi_rad = phi*np.pi/180
     vy_d = 0 # [m/s]
-    env.vel_d = [V_d*np.cos(phi_rad), vy_d, V_d*np.sin(phi_rad)] # [m/s]
+    env.vel_trial = [V_d*np.cos(phi_rad), vy_d, V_d*np.sin(phi_rad)] # [m/s]
 
     ## SEND MESSAGE FOR ALL NODES TO RESET TO DEFAULT VALUES
     env.reset_flag = True
@@ -142,13 +142,13 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                 ## PRINT RUN CONDITIONS AND POLICY
                 print(f"\n!-------------------Episode # {k_ep:d} run # {k_run:d}-----------------!")
                 print(f"RREV_thr: {RREV_thr:.3f} \t Gain_1: {G1:.3f}")
-                print(f"Vx_d: {env.vel_d[0]:.3f} \t Vy_d: {env.vel_d[1]:.3f} \t Vz_d: {env.vel_d[2]:.3f}")
+                print(f"Vx_d: {env.vel_trial[0]:.3f} \t Vy_d: {env.vel_trial[1]:.3f} \t Vz_d: {env.vel_trial[2]:.3f}")
                 print("\n")
 
 
                 ## CONVERT STARTING RREV VALUE -> Z_POS TO START ROLLOUT FROM
                 RREV_start = 1.0
-                pos_z = env.h_ceiling - env.vel_d[2]/RREV_start
+                pos_z = env.h_ceiling - env.vel_trial[2]/RREV_start
                 pos_z = 0.4
 
                 
@@ -165,8 +165,8 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                     
 
                 env.step('pos',ctrl_flag=0)                     # Turn off pos control
-                env.step('vel',env.vel_d,ctrl_flag=1)           # Set desired vel
-                env.launch_IC(pos_z,env.vel_d[0]+0.03,env.vel_d[2])   # Use Gazebo to impart desired vel with extra vx to ensure -OF_y when around zero
+                env.step('vel',env.vel_trial,ctrl_flag=1)           # Set desired vel
+                env.launch_IC(pos_z,env.vel_trial[0]+0.03,env.vel_trial[2])   # Use Gazebo to impart desired vel with extra vx to ensure -OF_y when around zero
                 env.step('sticky',ctrl_flag=1)                  # Enable sticky pads
                 
                 while 1: # NOTE: [while 1:] is faster than [while True:]
@@ -196,7 +196,7 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                         print("----- pitch starts -----")
                         print(f"vx={vx:.3f}, vy={vy:.3f}, vz={vz:.3f}")
                         print(f"RREV_tr={env.RREV_tr:.3f}, OF_y_tr={env.OF_y_tr:.3f}, My_d={My_d:.3f} [N*mm]")  
-                        print(f"Pitch Time: {env.state_flip[0]:.3f} [s]")
+                        print(f"Pitch Time: {env.t_flip:.3f} [s]")
                         
                         flag = True # Turns on to make sure this only runs once per rollout
 
@@ -303,12 +303,16 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
 
 
                         ## PUBLISH RL DATA AND RESET LOGS/POSITIONS FOR NEXT ROLLOUT
-
                         env.reset_flag = True
                         env.RL_Publish() # Publish that rollout completed 
                         
                         env.reset_pos()
-                        env.clear_IF_Data()
+
+                        ## RESET/UPDATE RUN CONDITIONS
+                        env.runComplete_flag = False
+                        env.reset_flag = False
+                        env.error_str = ""
+                        env.clear_rollout_Data()
                     
                         break # Break from run loop
                         
@@ -347,7 +351,7 @@ if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv(gazeboTimeout=True)
-    env.launch_RLdashboard()
+    # env.launch_RLdashboard()
     # env.launch_statedashboard()
 
     # ============================
