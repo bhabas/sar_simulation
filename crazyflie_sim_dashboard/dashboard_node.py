@@ -23,7 +23,7 @@ class DashboardNode:
         
 
         ## INITIALIZE GLOBAL STATE SUBSCRIBER 
-        rospy.Subscriber('/env/global_state_data',Odometry,self.global_stateCallback)
+        rospy.Subscriber('/env/vicon_state',Odometry,self.global_stateCallback)
 
         ## INITIAILIZE REWARD SUBSCRIBER 
         rospy.Subscriber('/rl_data',RLData,self.rewardCallback)

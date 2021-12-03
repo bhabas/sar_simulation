@@ -7,22 +7,30 @@ from PyQt5.QtWidgets import QDialog, QApplication, QMainWindow, QStackedLayout, 
 import pyqtgraph as pg
 from pyqtgraph import PlotWidget, plot
 
+from dashboard_node import DashboardNode
+
 class Dashboard(QMainWindow):
 
     def __init__(self, *args, **kwargs):
         super(Dashboard, self).__init__(*args, **kwargs)
 
-        #Load the UI Page
+        #LOAD UI
         loadUi('crazyflie_sim_dashboard/mainwindow.ui', self)
 
 
 def main():
+
+    ## INITIALIZE APPLICATION
     app = QApplication(sys.argv)
+
+    ## INITIALIZE DASHBOARD WINDOW
     dashboard = Dashboard()
     dashboard.show()
 
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 if __name__ == '__main__':
+
+    # DashNode=DashboardNode()
     main()
     
