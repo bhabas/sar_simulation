@@ -83,7 +83,3 @@ class DashboardNode:
         self.velocity = np.round([global_vel.x,global_vel.y,global_vel.z],3)
         self.omega = np.round([global_omega.x,global_omega.y,global_omega.z],3)
 
-
-        ## COMBINE INTO COMPREHENSIVE LIST
-        self.state_current = np.concatenate([np.atleast_1d(self.t),self.position,self.orientation_q,self.velocity,self.omega])
-        

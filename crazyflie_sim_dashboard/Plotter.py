@@ -8,38 +8,6 @@ DashNode=DashboardNode()
 
 FPS = 60
 
-class  CustomWidget(pg.GraphicsWindow):
-    pg.setConfigOption('background', 'w')
-    pg.setConfigOption('foreground', 'k')
-    ptr1 = 0
-    def __init__(self, parent=None, **kargs):
-        pg.GraphicsWindow.__init__(self, **kargs)
-        self.setParent(parent)
-        self.setWindowTitle('pyqtgraph example: Scrolling Plots')
-        p1 = self.addPlot(labels =  {'left':'Voltage', 'bottom':'Time'})
-        self.data1 = np.random.normal(size=10)
-        self.curve1 = p1.plot(self.data1, pen=(3,3))
-
-        self.data2 = np.random.normal(size=10)
-        self.curve2 = p1.plot(self.data2, pen=(2,3))
-
-        timer = pg.QtCore.QTimer(self)
-        timer.timeout.connect(self.update)
-        timer.start(17) # number of seconds (every 1000) for next update
-
-    def update(self):
-        self.ptr1 += 1
-                           
-        self.data1[:-1] = self.data1[1:]  # shift data in the array one sample left  # (see also: np.roll)
-        self.data1[-1] = np.random.normal()
-        self.curve1.setData(self.data1)
-        self.curve1.setPos(self.ptr1, 0)
-
-        self.data2[:-1] = self.data2[1:]    # shift data in the array one sample left
-        self.data2[-1] = np.random.normal()
-        self.curve2.setData(self.data2)
-        self.curve2.setPos(self.ptr1,0)
-
 class  PosWidget(pg.GraphicsLayoutWidget):
 
     ## SET STYLE
@@ -62,7 +30,7 @@ class  PosWidget(pg.GraphicsLayoutWidget):
 
         ## INIT DATA CURVE 1
         self.pos_x_arr = np.zeros(100)
-        self.curve_pos_x = p1.plot(self.pos_x_arr, pen=pg.mkPen('r', width=1),name="Pos. X")
+        self.curve_pos_x = p1.plot(self.pos_x_arr, pen=pg.mkPen('r', width=1))
 
         self.pos_y_arr = np.zeros(100)
         self.curve_pos_y = p1.plot(self.pos_y_arr, pen=pg.mkPen('g', width=1))
@@ -79,12 +47,12 @@ class  PosWidget(pg.GraphicsLayoutWidget):
         self.ptr1 += 1
                            
         self.pos_x_arr[:-1] = self.pos_x_arr[1:]  # shift data in the array one sample left  # (see also: np.roll)
-        self.pos_x_arr[-1] = np.sin(np.deg2rad(self.ptr1))
+        self.pos_x_arr[-1] = DashNode.position[0]
         self.curve_pos_x.setData(self.pos_x_arr)
         self.curve_pos_x.setPos(self.ptr1, 0)
 
         self.pos_y_arr[:-1] = self.pos_y_arr[1:]    # shift data in the array one sample left
-        self.pos_y_arr[-1] = np.cos(np.deg2rad(self.ptr1))
+        self.pos_y_arr[-1] = DashNode.position[1]
         self.curve_pos_y.setData(self.pos_y_arr)
         self.curve_pos_y.setPos(self.ptr1,0)
 
@@ -93,7 +61,7 @@ class  PosWidget(pg.GraphicsLayoutWidget):
         self.curve_pos_z.setData(self.pos_z_arr)
         self.curve_pos_z.setPos(self.ptr1,0)
 
-class  VelWidget(pg.GraphicsWindow):
+class  VelWidget(pg.GraphicsLayoutWidget):
 
     ## SET STYLE
     pg.setConfigOption('background', 'w')
@@ -108,7 +76,7 @@ class  VelWidget(pg.GraphicsWindow):
         ## INIT PLOT WINDOW
         p1 = self.addPlot(labels =  {'left':'Velocity [m/s]', 'bottom':'Time [s]'})
         # p1.setRange(yRange=[-2,2])
-        p1.setYRange(-2,2)
+        p1.setYRange(-2,4)
 
         ## INIT DATA CURVE 1
         self.vel_x_arr = np.zeros(100)
@@ -129,21 +97,21 @@ class  VelWidget(pg.GraphicsWindow):
         self.ptr1 += 1
                            
         self.vel_x_arr[:-1] = self.vel_x_arr[1:]  # shift data in the array one sample left  # (see also: np.roll)
-        self.vel_x_arr[-1] = np.sin(np.deg2rad(self.ptr1))
+        self.vel_x_arr[-1] = DashNode.velocity[0]
         self.curve_vel_x.setData(self.vel_x_arr)
         self.curve_vel_x.setPos(self.ptr1, 0)
 
         self.vel_y_arr[:-1] = self.vel_y_arr[1:]    # shift data in the array one sample left
-        self.vel_y_arr[-1] = np.cos(np.deg2rad(self.ptr1))
+        self.vel_y_arr[-1] = DashNode.velocity[1]
         self.curve_vel_y.setData(self.vel_y_arr)
         self.curve_vel_y.setPos(self.ptr1,0)
 
         self.vel_z_arr[:-1] = self.vel_z_arr[1:]    # shift data in the array one sample left
-        self.vel_z_arr[-1] = np.tan(np.deg2rad(self.ptr1))
+        self.vel_z_arr[-1] = DashNode.velocity[2]
         self.curve_vel_z.setData(self.vel_z_arr)
         self.curve_vel_z.setPos(self.ptr1,0)
 
-class  OmegaWidget(pg.GraphicsWindow):
+class  OmegaWidget(pg.GraphicsLayoutWidget):
 
     ## SET STYLE
     pg.setConfigOption('background', 'w')
@@ -178,21 +146,21 @@ class  OmegaWidget(pg.GraphicsWindow):
         self.ptr1 += 1
                            
         self.omega_x_arr[:-1] = self.omega_x_arr[1:]  # shift data in the array one sample left  # (see also: np.roll)
-        self.omega_x_arr[-1] = np.sin(np.deg2rad(self.ptr1))
+        self.omega_x_arr[-1] = DashNode.omega[0]
         self.curve_omega_x.setData(self.omega_x_arr)
         self.curve_omega_x.setPos(self.ptr1, 0)
 
         self.omega_y_arr[:-1] = self.omega_y_arr[1:]    # shift data in the array one sample left
-        self.omega_y_arr[-1] = np.cos(np.deg2rad(self.ptr1))
+        self.omega_y_arr[-1] = DashNode.omega[1]
         self.curve_omega_y.setData(self.omega_y_arr)
         self.curve_omega_y.setPos(self.ptr1,0)
 
         self.omega_z_arr[:-1] = self.omega_z_arr[1:]    # shift data in the array one sample left
-        self.omega_z_arr[-1] = np.tan(np.deg2rad(self.ptr1))
+        self.omega_z_arr[-1] = DashNode.omega[2]
         self.curve_omega_z.setData(self.omega_z_arr)
         self.curve_omega_z.setPos(self.ptr1,0)
 
-class  OF_Widget(pg.GraphicsWindow):
+class  OF_Widget(pg.GraphicsLayoutWidget):
 
     ## SET STYLE
     pg.setConfigOption('background', 'w')

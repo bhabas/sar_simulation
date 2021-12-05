@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QDialog, QApplication, QMainWindow, QStackedLayout, 
 import pyqtgraph as pg
 from pyqtgraph import PlotWidget, plot
 
-from dashboard_node import DashboardNode
+# from dashboard_node import DashboardNode
 
 class Dashboard(QMainWindow):
 
