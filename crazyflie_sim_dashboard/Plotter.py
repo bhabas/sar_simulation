@@ -6,6 +6,74 @@ from dashboard_node import DashboardNode
 
 DashNode=DashboardNode()
 
+class  CustomWidget(pg.GraphicsWindow):
+    pg.setConfigOption('background', 'w')
+    pg.setConfigOption('foreground', 'k')
+    ptr1 = 0
+    def __init__(self, parent=None, **kargs):
+        pg.GraphicsWindow.__init__(self, **kargs)
+        self.setParent(parent)
+        self.setWindowTitle('pyqtgraph example: Scrolling Plots')
+        p1 = self.addPlot(labels =  {'left':'Voltage', 'bottom':'Time'})
+        self.data1 = np.random.normal(size=10)
+        self.curve1 = p1.plot(self.data1, pen=(3,3))
+
+        self.data2 = np.random.normal(size=10)
+        self.curve2 = p1.plot(self.data2, pen=(2,3))
+
+        timer = pg.QtCore.QTimer(self)
+        timer.timeout.connect(self.update)
+        timer.start(17) # number of seconds (every 1000) for next update
+
+    def update(self):
+        self.ptr1 += 1
+                           
+        self.data1[:-1] = self.data1[1:]  # shift data in the array one sample left  # (see also: np.roll)
+        self.data1[-1] = np.random.normal()
+        self.curve1.setData(self.data1)
+        self.curve1.setPos(self.ptr1, 0)
+
+        self.data2[:-1] = self.data2[1:]    # shift data in the array one sample left
+        self.data2[-1] = np.random.normal()
+        self.curve2.setData(self.data2)
+        self.curve2.setPos(self.ptr1,0)
+
+
+class RLWidget(pg.GraphicsLayoutWidget):
+
+    ## SET STYLE
+    pg.setConfigOption('background', 'w')
+    pg.setConfigOption('foreground', 'k')
+
+    def __init__(self,parent=None, **kargs):
+        pg.GraphicsLayoutWidget.__init__(self, **kargs)
+
+        self.setParent(parent)
+        p1 = self.addPlot(labels =  {'left':'Reward', 'bottom':'Episode [K_ep]'})
+        p1.setYRange(0,200)
+        p1.setXRange(0,25)
+
+        ## INIT DATA CURVE 1
+        self.pos_x_arr2 = []
+        self.curve_reward = p1.plot([],[], pen=None,symbol='arrow_right',symbolBrush='k',symbolSize=22)
+
+        self.pos_x_arr = []
+        self.curve_reward_avg = p1.plot([],[], pen=None,symbol='o',symbolBrush='r')
+
+
+        ## INIT UPDATE TIMER
+        timer = pg.QtCore.QTimer(self)
+        timer.timeout.connect(self.update)
+        timer.start(1000) # number of seconds (every 1000) for next update
+
+    def update(self):
+        self.curve_reward.setData(DashNode.k_ep_list1,DashNode.r_list)
+        self.curve_reward_avg.setData(DashNode.k_ep_list2,DashNode.r_avg_list)
+
+
+        
+
+
 FPS = 60
 
 class  PosWidget(pg.GraphicsLayoutWidget):
@@ -268,6 +336,6 @@ class  PWM_Widget(pg.GraphicsLayoutWidget):
 
 if __name__ == '__main__':
 
-    w = PWM_Widget()
+    w = RLWidget()
     w.show()
     QtGui.QApplication.instance().exec_()
