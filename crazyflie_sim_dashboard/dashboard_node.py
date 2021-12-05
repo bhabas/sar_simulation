@@ -50,7 +50,12 @@ class DashboardNode:
 
     def ctrlCallback(self,msg):
         self.FM = msg.FM
-        self.FM_flip = msg.FM_flip
+        self.MS_PWM = msg.MS_PWM
+
+        self.RREV = np.nan
+        self.tau = 1/msg.RREV
+        self.OF_y = msg.OF_y
+        self.OF_x = msg.OF_x    
         
 
         
