@@ -3,6 +3,7 @@ import numpy as np
 
 from crazyflie_msgs.msg import RLData
 from crazyflie_msgs.msg import CtrlData
+from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Odometry
 
 class DashboardNode:
@@ -41,6 +42,7 @@ class DashboardNode:
         ## INITIAILIZE REWARD SUBSCRIBER 
         rospy.Subscriber('/rl_data',RLData,self.rewardCallback)
         rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)
+        rospy.Subscriber('/cf1/laser',LaserScan,self.laserCallback)
         rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
    
         print("[COMPLETED] Dashboard node is running...")
@@ -81,8 +83,10 @@ class DashboardNode:
 
 
 
-            
-
+    
+    def laserCallback(self,msg):
+        self.d_ceiling = msg.ranges[0]
+        
 
      
 
@@ -102,9 +106,7 @@ class DashboardNode:
         self.OF_x = msg.OF_x    
         
 
-        
-
-
+    
 
     # ============================
     ##   Global State Subscriber
@@ -126,11 +128,41 @@ class DashboardNode:
             global_quat.w = 1
 
         ## SET STATE VALUES FROM TOPIC
-        
         self.position = np.round([global_pos.x,global_pos.y,global_pos.z],3)
-        self.orientation_q = np.round([global_quat.w,global_quat.x,global_quat.y,global_quat.z],3)
         self.velocity = np.round([global_vel.x,global_vel.y,global_vel.z],3)
+        self.quat = np.round([global_quat.x,global_quat.y,global_quat.z,global_quat.w],3)
+        self.eul = np.round(self.quat2euler(self.quat,degrees=True),3)
         self.omega = np.round([global_omega.x,global_omega.y,global_omega.z],3)
+        
+    def quat2euler(self,quat,degrees=True):
+        """Converts quaternion into euler angles in [YZX] notation
+
+        Args:
+            quat (np.array): Quaternion in [x,y,z,w] format
+
+        Returns:
+            phi,theta,psi: Euler angles
+        """        
+
+        ## CALC NEEDED ROTATION MATRIX COMPONENTS FROM QUATERNION
+        R11 = 1.0 - 2.0*( pow(quat[1],2) + pow(quat[2],2) )
+        R21 = 2.0*(quat[0]*quat[1] + quat[2]*quat[3])
+        R31 = 2.0*(quat[0]*quat[2] - quat[1]*quat[3])
+
+        R22 = 1.0 - 2.0*( pow(quat[0],2) + pow(quat[2],2) )
+        R23 = 2.0*(quat[1]*quat[2] - quat[0]*quat[3])
+
+        ## CONVERT ROTATION MATRIX COMPONENTS TO EULER ANGLES (YZX NOTATION)
+        phi = np.arctan2(-R23, R22) # X-axis
+        theta = np.arctan2(-R31, R11) # Y-axis
+        psi = np.arcsin(R21) # Z-axis
+
+        if degrees == True:
+            return np.degrees(phi),np.degrees(theta),np.degrees(psi)
+        else:
+            return phi,theta,psi
+
+
 
 if __name__ == "__main__":
     dash = DashboardNode()

@@ -534,7 +534,7 @@
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_3">
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_5">
+             <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="50,50">
               <item>
                <widget class="QFrame" name="frame">
                 <property name="frameShape">
@@ -560,7 +560,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QWidget" name="widget_6" native="true">
+                    <widget class="dist_Widget" name="widget_6" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
@@ -692,7 +692,7 @@ color: rgb(214, 39, 40);</string>
                     </widget>
                    </item>
                    <item>
-                    <widget class="QWidget" name="widget_7" native="true">
+                    <widget class="Eul_Widget" name="widget_7" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
@@ -1405,6 +1405,18 @@ color: rgb(214, 39, 40);</string>
   </customwidget>
   <customwidget>
    <class>OF_Widget</class>
+   <extends>QWidget</extends>
+   <header>Plotter</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Eul_Widget</class>
+   <extends>QWidget</extends>
+   <header>Plotter</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>dist_Widget</class>
    <extends>QWidget</extends>
    <header>Plotter</header>
    <container>1</container>

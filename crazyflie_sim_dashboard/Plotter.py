@@ -16,6 +16,8 @@ colors = {
     "orange_alpha": (255,127,14,150),
 }
 l_width = 2
+FPS = 60
+
 
 class  CustomWidget(pg.GraphicsWindow):
     pg.setConfigOption('background', 'w')
@@ -67,6 +69,8 @@ class RL_Widget(pg.GraphicsLayoutWidget):
         p1 = self.addPlot(labels =  {'left':'Reward', 'bottom':'Episode [K_ep]'})
         p1.setYRange(0,200)
         p1.setXRange(0,25)
+        p1.showGrid(x=True, y=True, alpha=0.2)
+
 
         ## INIT DATA CURVE 1
         self.curve_reward = p1.plot([],[], pen=None,symbol='arrow_right',symbolBrush='k',symbolSize=22)
@@ -96,6 +100,8 @@ class Mu_Widget(pg.GraphicsLayoutWidget):
         p1 = self.addPlot(labels =  {'left':'Mu', 'bottom':'Episode [K_ep]'})
         p1.setYRange(0,10)
         p1.setXRange(0,20)
+        p1.showGrid(x=True, y=True, alpha=0.2)
+
 
         ## INIT DATA CURVE 
         self.curve_1_mu = p1.plot([],[],  pen=pg.mkPen(color=colors["blue"], width=l_width))
@@ -144,6 +150,8 @@ class Sig_Widget(pg.GraphicsLayoutWidget):
         p1 = self.addPlot(labels =  {'left':'Sigma', 'bottom':'Episode [K_ep]'})
         p1.setYRange(0,3)
         p1.setXRange(0,25)
+        p1.showGrid(x=True, y=True, alpha=0.2)
+
 
         ## INIT DATA CURVE 
         self.curve_sig1 = p1.plot([],[], pen=pg.mkPen(color=colors["blue"], width=l_width))
@@ -162,7 +170,6 @@ class Sig_Widget(pg.GraphicsLayoutWidget):
         
 
 
-FPS = 60
 
 class  Pos_Widget(pg.GraphicsLayoutWidget):
 
@@ -185,6 +192,7 @@ class  Pos_Widget(pg.GraphicsLayoutWidget):
         p1 = self.addPlot(labels =  {'left':'Position [m]', 'bottom':'Time [s]'})
         p1.setYRange(-1,4)
         p1.addLegend()
+        # p1.showGrid(x=True, y=True, alpha=0.2)
 
         ## INIT DATA CURVE 1
         self.pos_x_arr = np.zeros(100)
@@ -322,6 +330,62 @@ class  Omega_Widget(pg.GraphicsLayoutWidget):
         self.curve_omega_z.setData(self.omega_z_arr)
         self.curve_omega_z.setPos(self.ptr1,0)
 
+class  Eul_Widget(pg.GraphicsLayoutWidget):
+
+    ## SET STYLE
+    pg.setConfigOption('background', 'w')
+    pg.setConfigOption('foreground', 'k')
+    pg.setConfigOptions(antialias=True)
+
+    
+    def __init__(self, parent=None, **kargs):
+        pg.GraphicsLayoutWidget.__init__(self, **kargs)
+        self.ptr1 = 0
+        self.setParent(parent)
+        self.setWindowTitle('pyqtgraph example: Scrolling Plots')
+
+        ## INIT PLOT WINDOW
+        p1 = self.addPlot(labels =  {'left':'Euler Angle [deg]', 'bottom':'Time [s]'})
+        p1.setYRange(-90,90)
+
+        # # Fix Axes ticks and grid
+        # for key in p1.axes:
+        #     ax = p1.getAxis(key)
+
+        ## INIT DATA CURVE 1
+        self.eul_x_arr = np.zeros(100)
+        self.curve_eul_x = p1.plot(self.eul_x_arr, pen=pg.mkPen(color=colors["red"], width=l_width))
+
+        self.eul_y_arr = np.zeros(100)
+        self.curve_eul_y = p1.plot(self.eul_y_arr, pen=pg.mkPen(color=colors["green"], width=l_width))
+
+        self.eul_z_arr = np.zeros(100)
+        self.curve_eul_z = p1.plot(self.eul_z_arr, pen=pg.mkPen(color=colors["blue"], width=l_width))
+
+        ## INIT UPDATE TIMER
+        timer = pg.QtCore.QTimer(self)
+        timer.timeout.connect(self.update)
+        timer.start(int(1000/FPS)) # number of seconds (every 1000) for next update
+
+    def update(self):
+        self.ptr1 += 1
+                           
+        self.eul_x_arr[:-1] = self.eul_x_arr[1:]  # shift data in the array one sample left  # (see also: np.roll)
+        self.eul_x_arr[-1] = DashNode.eul[0]
+        self.curve_eul_x.setData(self.eul_x_arr)
+        self.curve_eul_x.setPos(self.ptr1, 0)
+
+        self.eul_y_arr[:-1] = self.eul_y_arr[1:]    # shift data in the array one sample left
+        self.eul_y_arr[-1] = DashNode.eul[1]
+        self.curve_eul_y.setData(self.eul_y_arr)
+        self.curve_eul_y.setPos(self.ptr1,0)
+
+        self.eul_z_arr[:-1] = self.eul_z_arr[1:]    # shift data in the array one sample left
+        self.eul_z_arr[-1] = DashNode.eul[2]
+        self.curve_eul_z.setData(self.eul_z_arr)
+        self.curve_eul_z.setPos(self.ptr1,0)
+
+
 class  OF_Widget(pg.GraphicsLayoutWidget):
 
     ## SET STYLE
@@ -374,6 +438,48 @@ class  OF_Widget(pg.GraphicsLayoutWidget):
         self.curve_tau.setData(self.tau_arr)
         self.curve_tau.setPos(self.ptr1,0)
 
+class  dist_Widget(pg.GraphicsLayoutWidget):
+
+    ## SET STYLE
+    pg.setConfigOption('background', 'w')
+    pg.setConfigOption('foreground', 'k')
+    pg.setConfigOptions(antialias=True)
+
+    
+        
+    
+    def __init__(self,parent=None, **kargs):
+        pg.GraphicsLayoutWidget.__init__(self, **kargs)
+
+        self.ptr1 = 0
+        self.setParent(parent)
+        self.setWindowTitle('pyqtgraph example: Scrolling Plots')
+
+        ## INIT PLOT WINDOW
+        p1 = self.addPlot(labels =  {'left':'d_ceiling [m]', 'bottom':'Time [s]'})
+        p1.setYRange(0,5)
+        p1.addLegend()
+        # p1.showGrid(x=True, y=True, alpha=0.2)
+
+        ## INIT DATA CURVE 1
+        self.d_ceiling_arr = np.zeros(100)
+        self.curve_d_ceil = p1.plot(self.d_ceiling_arr, pen=pg.mkPen(color=colors["red"], width=l_width))
+
+
+        ## INIT UPDATE TIMER
+        timer = pg.QtCore.QTimer(self)
+        timer.timeout.connect(self.update)
+        timer.start(int(1000/FPS)) # number of seconds (every 1000) for next update
+
+    def update(self):
+        self.ptr1 += 1
+                           
+        self.d_ceiling_arr[:-1] = self.d_ceiling_arr[1:]  # shift data in the array one sample left  # (see also: np.roll)
+        self.d_ceiling_arr[-1] = DashNode.d_ceiling
+        self.curve_d_ceil.setData(self.d_ceiling_arr)
+        self.curve_d_ceil.setPos(self.ptr1, 0)
+
+
 class  PWM_Widget(pg.GraphicsLayoutWidget):
 
     ## SET STYLE
@@ -409,7 +515,7 @@ class  PWM_Widget(pg.GraphicsLayoutWidget):
         timer = pg.QtCore.QTimer(self)
         timer.timeout.connect(self.update)
         timer.start(int(1000/FPS)) # number of seconds (every 1000) for next update
-        
+
     def update(self):
         self.ptr1 += 1
                            
@@ -435,6 +541,6 @@ class  PWM_Widget(pg.GraphicsLayoutWidget):
 
 if __name__ == '__main__':
 
-    w = Mu_Widget()
+    w = Eul_Widget()
     w.show()
     QtGui.QApplication.instance().exec_()
