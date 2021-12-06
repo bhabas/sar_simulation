@@ -167,8 +167,6 @@ class Sig_Widget(pg.GraphicsLayoutWidget):
         self.curve_sig1.setData(DashNode.k_ep_list3[:],DashNode.sig_list[:,0])
         self.curve_sig2.setData(DashNode.k_ep_list3[:],DashNode.sig_list[:,1])
 
-        
-
 
 
 class  Pos_Widget(pg.GraphicsLayoutWidget):

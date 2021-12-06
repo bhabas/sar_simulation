@@ -37,7 +37,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QLCDNumber" name="lcdNumber"/>
+         <widget class="QLCDNumber" name="K_ep_num"/>
         </item>
         <item>
          <spacer name="horizontalSpacer_6">
@@ -60,7 +60,14 @@
          </widget>
         </item>
         <item>
-         <widget class="QLCDNumber" name="lcdNumber_2"/>
+         <widget class="QLCDNumber" name="K_run_num">
+          <property name="digitCount">
+           <number>5</number>
+          </property>
+          <property name="value" stdset="0">
+           <double>0.000000000000000</double>
+          </property>
+         </widget>
         </item>
         <item>
          <spacer name="horizontalSpacer">
@@ -90,7 +97,7 @@
          <string notr="true"/>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="Tab_State">
          <attribute name="title">

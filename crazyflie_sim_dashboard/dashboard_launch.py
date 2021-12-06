@@ -7,7 +7,6 @@ from PyQt5.QtWidgets import QDialog, QApplication, QMainWindow, QStackedLayout, 
 import pyqtgraph as pg
 from pyqtgraph import PlotWidget, plot
 
-# from dashboard_node import DashboardNode
 
 class Dashboard(QMainWindow):
 
@@ -16,6 +15,12 @@ class Dashboard(QMainWindow):
 
         #LOAD UI
         loadUi('crazyflie_sim_dashboard/mainwindow.ui', self)
+
+        self.K_ep_num.display(50)
+        self.K_run_num.display(88)
+
+        self.Battery_Voltage.setValue(50)
+
 
 
 def main():
