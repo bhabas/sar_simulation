@@ -39,7 +39,7 @@ class  CustomWidget(pg.GraphicsWindow):
         self.curve2.setPos(self.ptr1,0)
 
 
-class RLWidget(pg.GraphicsLayoutWidget):
+class RL_Widget(pg.GraphicsLayoutWidget):
 
     ## SET STYLE
     pg.setConfigOption('background', 'w')
@@ -54,10 +54,7 @@ class RLWidget(pg.GraphicsLayoutWidget):
         p1.setXRange(0,25)
 
         ## INIT DATA CURVE 1
-        self.pos_x_arr2 = []
         self.curve_reward = p1.plot([],[], pen=None,symbol='arrow_right',symbolBrush='k',symbolSize=22)
-
-        self.pos_x_arr = []
         self.curve_reward_avg = p1.plot([],[], pen=None,symbol='o',symbolBrush='r')
 
 
@@ -70,13 +67,76 @@ class RLWidget(pg.GraphicsLayoutWidget):
         self.curve_reward.setData(DashNode.k_ep_list1,DashNode.r_list)
         self.curve_reward_avg.setData(DashNode.k_ep_list2,DashNode.r_avg_list)
 
+class Mu_Widget(pg.GraphicsLayoutWidget):
+
+    ## SET STYLE
+    pg.setConfigOption('background', 'w')
+    pg.setConfigOption('foreground', 'k')
+
+    def __init__(self,parent=None, **kargs):
+        pg.GraphicsLayoutWidget.__init__(self, **kargs)
+
+        self.setParent(parent)
+        p1 = self.addPlot(labels =  {'left':'Mu', 'bottom':'Episode [K_ep]'})
+        p1.setYRange(0,3)
+        p1.setXRange(0,25)
+
+        ## INIT DATA CURVE 
+        self.curve_mu1 = p1.plot([],[], pen='r')
+        self.curve_mu2 = p1.plot([],[], pen='b')
+
+        self.curve_sig1 = p1.plot([],[], pen='r')
+        self.curve_sig2 = p1.plot([],[], pen='b')
+
+        p1.addItem(pg.FillBetweenItem(self.curve_sig1,self.curve_mu1,(100, 100, 255)))
+        p1.addItem(pg.FillBetweenItem(self.curve_sig2,self.curve_mu1,(100, 100, 255)))
+
+        ## INIT UPDATE TIMER
+        timer = pg.QtCore.QTimer(self)
+        timer.timeout.connect(self.update)
+        timer.start(1000) # number of seconds (every 1000) for next update
+
+    def update(self):
+        self.curve_mu1.setData(DashNode.k_ep_list3[:],DashNode.mu_list[:,0])
+        self.curve_mu2.setData(DashNode.k_ep_list3[:],DashNode.mu_list[:,1])
+
+        self.curve_sig1.setData(DashNode.k_ep_list3[:],DashNode.mu_list[:,0] + 2*DashNode.sig_list[:,0])
+        self.curve_sig2.setData(DashNode.k_ep_list3[:],DashNode.mu_list[:,0] - 2*DashNode.sig_list[:,0])
+
+class Sig_Widget(pg.GraphicsLayoutWidget):
+
+    ## SET STYLE
+    pg.setConfigOption('background', 'w')
+    pg.setConfigOption('foreground', 'k')
+
+    def __init__(self,parent=None, **kargs):
+        pg.GraphicsLayoutWidget.__init__(self, **kargs)
+
+        self.setParent(parent)
+        p1 = self.addPlot(labels =  {'left':'Sigma', 'bottom':'Episode [K_ep]'})
+        p1.setYRange(0,3)
+        p1.setXRange(0,25)
+
+        ## INIT DATA CURVE 
+        self.curve_sig1 = p1.plot([],[], pen='r')
+        self.curve_sig2 = p1.plot([],[], pen='b')
+
+
+        ## INIT UPDATE TIMER
+        timer = pg.QtCore.QTimer(self)
+        timer.timeout.connect(self.update)
+        timer.start(1000) # number of seconds (every 1000) for next update
+
+    def update(self):
+        self.curve_sig1.setData(DashNode.k_ep_list3[:],DashNode.sig_list[:,0])
+        self.curve_sig2.setData(DashNode.k_ep_list3[:],DashNode.sig_list[:,1])
 
         
 
 
 FPS = 60
 
-class  PosWidget(pg.GraphicsLayoutWidget):
+class  Pos_Widget(pg.GraphicsLayoutWidget):
 
     ## SET STYLE
     pg.setConfigOption('background', 'w')
@@ -129,7 +189,7 @@ class  PosWidget(pg.GraphicsLayoutWidget):
         self.curve_pos_z.setData(self.pos_z_arr)
         self.curve_pos_z.setPos(self.ptr1,0)
 
-class  VelWidget(pg.GraphicsLayoutWidget):
+class  Vel_Widget(pg.GraphicsLayoutWidget):
 
     ## SET STYLE
     pg.setConfigOption('background', 'w')
@@ -179,7 +239,7 @@ class  VelWidget(pg.GraphicsLayoutWidget):
         self.curve_vel_z.setData(self.vel_z_arr)
         self.curve_vel_z.setPos(self.ptr1,0)
 
-class  OmegaWidget(pg.GraphicsLayoutWidget):
+class  Omega_Widget(pg.GraphicsLayoutWidget):
 
     ## SET STYLE
     pg.setConfigOption('background', 'w')
@@ -336,6 +396,6 @@ class  PWM_Widget(pg.GraphicsLayoutWidget):
 
 if __name__ == '__main__':
 
-    w = RLWidget()
+    w = Mu_Widget()
     w.show()
     QtGui.QApplication.instance().exec_()

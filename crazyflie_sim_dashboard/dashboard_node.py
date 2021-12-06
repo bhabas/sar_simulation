@@ -20,13 +20,19 @@ class DashboardNode:
 
         self.k_ep_list1 = [0]
         self.k_ep_list2 = [0]
+        self.k_ep_list3 = [0]
 
-        self.r_list = [0.0]
-        self.r_avg_list = [0.0]
-        self.r_avg_prev = 0.0
+
+        self.r_list = [np.nan]
+        self.r_avg_list = [np.nan]
+
+        self.mu_list = np.array([[np.nan,np.nan]])
+        self.sig_list = np.array([[np.nan,np.nan]])
+
+
 
         self.MS = [0,0,0,0]
-        
+        # a = np.append(a,[[5,6]],axis=0)
         
 
         ## INITIALIZE GLOBAL STATE SUBSCRIBER 
@@ -45,21 +51,35 @@ class DashboardNode:
     def rewardCallback(self,reward_msg):
 
         self.n_rollouts = reward_msg.n_rollouts
+
+        ## ON FIRST ROLLOUTS
+        if self.k_run != reward_msg.k_run and reward_msg.k_run == 0:
+
+        # a = np.append(a,[[5,6]],axis=0)
+            self.mu_list = np.append(self.mu_list,[[reward_msg.mu[0],reward_msg.mu[1]]],axis=0)
+            self.sig_list = np.append(self.sig_list,[[reward_msg.sigma[0],reward_msg.sigma[1]]],axis=0)
+
+
+            self.k_ep_list3.append(reward_msg.k_ep)
+
         
-        ## SET CLASS VARIABLES TO MESSAGE VALUES
+        ## UPDATE EPISODE AND RUN NUMBER
         if self.k_run != reward_msg.k_run:
+
             self.k_run = reward_msg.k_run
             self.k_ep = reward_msg.k_ep
             
-
+        ## IF REWARD CHANGES THEN APPEND NEW REWARD TO LIST
         if self.r_list[-1] != reward_msg.reward:
             self.k_ep_list1.append(reward_msg.k_ep)
             self.r_list.append(reward_msg.reward)
 
-
+        ## IF FINAL RUN, THEN APPEND REWARD AVG TO LIST
         if self.k_run == self.n_rollouts-1:
             self.r_avg_list.append(reward_msg.reward_avg)
             self.k_ep_list2.append(self.k_ep)
+
+
 
             
 

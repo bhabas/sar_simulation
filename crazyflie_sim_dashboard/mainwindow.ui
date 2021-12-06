@@ -90,7 +90,7 @@
          <string notr="true"/>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>3</number>
         </property>
         <widget class="QWidget" name="Tab_State">
          <attribute name="title">
@@ -114,7 +114,7 @@
                  </widget>
                 </item>
                 <item>
-                 <widget class="QWidget" name="widget" native="true">
+                 <widget class="Pos_Widget" name="widget" native="true">
                   <property name="styleSheet">
                    <string notr="true">background-color: rgb(136, 138, 133);</string>
                   </property>
@@ -243,7 +243,7 @@
                  </widget>
                 </item>
                 <item>
-                 <widget class="QWidget" name="widget_2" native="true">
+                 <widget class="Vel_Widget" name="widget_2" native="true">
                   <property name="styleSheet">
                    <string notr="true">background-color: rgb(136, 138, 133);</string>
                   </property>
@@ -384,7 +384,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QWidget" name="widget_3" native="true">
+               <widget class="PWM_Widget" name="widget_3" native="true">
                 <property name="styleSheet">
                  <string notr="true">background-color: rgb(136, 138, 133);</string>
                 </property>
@@ -817,7 +817,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QWidget" name="widget_8" native="true">
+                    <widget class="OF_Widget" name="widget_8" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
@@ -948,7 +948,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QWidget" name="widget_9" native="true">
+                    <widget class="Omega_Widget" name="widget_9" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
@@ -1069,22 +1069,258 @@
          <attribute name="title">
           <string>RL Data</string>
          </attribute>
-         <layout class="QHBoxLayout" name="horizontalLayout_6">
+         <layout class="QHBoxLayout" name="horizontalLayout_24">
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_6">
             <item>
-             <widget class="RLWidget" name="widget_4" native="true">
-              <property name="styleSheet">
-               <string notr="true">background-color: rgb(136, 138, 133);</string>
+             <widget class="QFrame" name="frame_5">
+              <property name="frameShape">
+               <enum>QFrame::Box</enum>
               </property>
+              <property name="frameShadow">
+               <enum>QFrame::Plain</enum>
+              </property>
+              <property name="lineWidth">
+               <number>1</number>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_13">
+               <item>
+                <layout class="QVBoxLayout" name="verticalLayout_13" stretch="0,10">
+                 <item>
+                  <widget class="QLabel" name="label_38">
+                   <property name="text">
+                    <string>Reward Plot</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="RL_Widget" name="widget_10" native="true">
+                   <property name="styleSheet">
+                    <string notr="true">background-color: rgb(136, 138, 133);</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+              </layout>
              </widget>
             </item>
             <item>
-             <widget class="VelWidget" name="widget_5" native="true">
-              <property name="styleSheet">
-               <string notr="true">background-color: rgb(136, 138, 133);</string>
-              </property>
-             </widget>
+             <layout class="QHBoxLayout" name="horizontalLayout_6">
+              <item>
+               <widget class="QFrame" name="frame_6">
+                <property name="frameShape">
+                 <enum>QFrame::Box</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Plain</enum>
+                </property>
+                <property name="lineWidth">
+                 <number>1</number>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_20">
+                 <item>
+                  <layout class="QVBoxLayout" name="verticalLayout_14" stretch="0,10,1">
+                   <item>
+                    <widget class="QLabel" name="label_46">
+                     <property name="text">
+                      <string>Mu</string>
+                     </property>
+                     <property name="alignment">
+                      <set>Qt::AlignCenter</set>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="Mu_Widget" name="widget_12" native="true">
+                     <property name="styleSheet">
+                      <string notr="true">background-color: rgb(136, 138, 133);</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout_21" stretch="10,5,10,5,2">
+                     <item>
+                      <widget class="QLabel" name="label_47">
+                       <property name="text">
+                        <string>Mu_1</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="Line" name="line_35">
+                       <property name="styleSheet">
+                        <string notr="true">color: rgb(204, 0, 0);</string>
+                       </property>
+                       <property name="frameShadow">
+                        <enum>QFrame::Plain</enum>
+                       </property>
+                       <property name="lineWidth">
+                        <number>2</number>
+                       </property>
+                       <property name="orientation">
+                        <enum>Qt::Horizontal</enum>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="label_49">
+                       <property name="text">
+                        <string>Mu_2</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="Line" name="line_37">
+                       <property name="styleSheet">
+                        <string notr="true">color: rgb(66, 122, 209);</string>
+                       </property>
+                       <property name="frameShadow">
+                        <enum>QFrame::Plain</enum>
+                       </property>
+                       <property name="lineWidth">
+                        <number>2</number>
+                       </property>
+                       <property name="orientation">
+                        <enum>Qt::Horizontal</enum>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <spacer name="horizontalSpacer_14">
+                       <property name="orientation">
+                        <enum>Qt::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>40</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                    </layout>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QFrame" name="frame_7">
+                <property name="frameShape">
+                 <enum>QFrame::Box</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Plain</enum>
+                </property>
+                <property name="lineWidth">
+                 <number>1</number>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_22">
+                 <item>
+                  <layout class="QVBoxLayout" name="verticalLayout_15" stretch="0,10,1">
+                   <item>
+                    <widget class="QLabel" name="label_50">
+                     <property name="text">
+                      <string>Sigma</string>
+                     </property>
+                     <property name="alignment">
+                      <set>Qt::AlignCenter</set>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="Sig_Widget" name="widget_13" native="true">
+                     <property name="styleSheet">
+                      <string notr="true">background-color: rgb(136, 138, 133);</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout_23" stretch="10,5,10,5,2">
+                     <item>
+                      <widget class="QLabel" name="label_51">
+                       <property name="text">
+                        <string>Sig_1</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="Line" name="line_38">
+                       <property name="styleSheet">
+                        <string notr="true">color: rgb(204, 0, 0);</string>
+                       </property>
+                       <property name="frameShadow">
+                        <enum>QFrame::Plain</enum>
+                       </property>
+                       <property name="lineWidth">
+                        <number>2</number>
+                       </property>
+                       <property name="orientation">
+                        <enum>Qt::Horizontal</enum>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="label_53">
+                       <property name="text">
+                        <string>Sig_2</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="Line" name="line_40">
+                       <property name="styleSheet">
+                        <string notr="true">color: rgb(66, 122, 209);</string>
+                       </property>
+                       <property name="frameShadow">
+                        <enum>QFrame::Plain</enum>
+                       </property>
+                       <property name="lineWidth">
+                        <number>2</number>
+                       </property>
+                       <property name="orientation">
+                        <enum>Qt::Horizontal</enum>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <spacer name="horizontalSpacer_15">
+                       <property name="orientation">
+                        <enum>Qt::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>40</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                    </layout>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
             </item>
            </layout>
           </item>
@@ -1116,13 +1352,49 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>VelWidget</class>
+   <class>Mu_Widget</class>
    <extends>QWidget</extends>
    <header>Plotter</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>RLWidget</class>
+   <class>Sig_Widget</class>
+   <extends>QWidget</extends>
+   <header>Plotter</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>RL_Widget</class>
+   <extends>QWidget</extends>
+   <header>Plotter</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Pos_Widget</class>
+   <extends>QWidget</extends>
+   <header>Plotter</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Vel_Widget</class>
+   <extends>QWidget</extends>
+   <header>Plotter</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Omega_Widget</class>
+   <extends>QWidget</extends>
+   <header>Plotter</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PWM_Widget</class>
+   <extends>QWidget</extends>
+   <header>Plotter</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>OF_Widget</class>
    <extends>QWidget</extends>
    <header>Plotter</header>
    <container>1</container>
