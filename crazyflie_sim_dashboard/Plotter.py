@@ -3,6 +3,8 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
 import numpy as np
 from dashboard_node import DashboardNode
+import rospy
+from crazyflie_msgs.msg import RLData
 
 DashNode=DashboardNode()
 
@@ -121,19 +123,22 @@ class Mu_Widget(pg.GraphicsLayoutWidget):
         self.p1.addItem(pg.FillBetweenItem(self.curve_2_SD1,self.curve_2_mu,colors["orange_alpha"]))
         self.p1.addItem(pg.FillBetweenItem(self.curve_2_SD2,self.curve_2_mu,colors["orange_alpha"]))
 
+        # rospy.wait_for_message('/rl_data',RLData)
+
         ## INIT UPDATE TIMER
         timer = pg.QtCore.QTimer(self)
         timer.timeout.connect(self.update)
         timer.start(1000) # number of seconds (every 1000) for next update
 
     def update(self):
-        self.curve_1_mu.setData(DashNode.k_ep_list3[:],DashNode.mu_list[:,0])
-        self.curve_1_SD1.setData(DashNode.k_ep_list3[:],DashNode.mu_list[:,0] + 2*DashNode.sig_list[:,0])
-        self.curve_1_SD2.setData(DashNode.k_ep_list3[:],DashNode.mu_list[:,0] - 2*DashNode.sig_list[:,0])
 
-        self.curve_2_mu.setData(DashNode.k_ep_list3[:],DashNode.mu_list[:,1])
-        self.curve_2_SD1.setData(DashNode.k_ep_list3[:],DashNode.mu_list[:,1] + 2*DashNode.sig_list[:,1])
-        self.curve_2_SD2.setData(DashNode.k_ep_list3[:],DashNode.mu_list[:,1] - 2*DashNode.sig_list[:,1])
+        self.curve_1_mu.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_1_list)
+        self.curve_1_SD1.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_1_list + 2*DashNode.sigma_1_list)
+        self.curve_1_SD2.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_1_list + -2*DashNode.sigma_1_list)
+
+        self.curve_2_mu.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_2_list)
+        self.curve_2_SD1.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_2_list + 2*DashNode.sigma_2_list)
+        self.curve_2_SD2.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_2_list + -2*DashNode.sigma_2_list)
     
     def reset_axes(self):
         self.p1.setXRange(0,20)
@@ -168,8 +173,8 @@ class Sig_Widget(pg.GraphicsLayoutWidget):
         timer.start(1000) # number of seconds (every 1000) for next update
 
     def update(self):
-        self.curve_sig1.setData(DashNode.k_ep_list3[:],DashNode.sig_list[:,0])
-        self.curve_sig2.setData(DashNode.k_ep_list3[:],DashNode.sig_list[:,1])
+        self.curve_sig1.setData(np.arange(0,DashNode.k_ep+1),DashNode.sigma_1_list)
+        self.curve_sig2.setData(np.arange(0,DashNode.k_ep+1),DashNode.sigma_2_list)
 
     def reset_axes(self):
         self.p1.setXRange(0,20)
@@ -579,16 +584,16 @@ class  PWM_Widget(pg.GraphicsLayoutWidget):
         self.p1.setYRange(0,65_000)
 
         ## INIT DATA CURVE 1
-        self.M1_arr = np.zeros(100)
+        self.M1_arr = np.zeros(200)
         self.curve_M1 = self.p1.plot(self.M1_arr, pen=pg.mkPen(color=colors["red"], width=l_width))
 
-        self.M2_arr = np.zeros(100)
+        self.M2_arr = np.zeros(200)
         self.curve_M2 = self.p1.plot(self.M2_arr, pen=pg.mkPen(color=colors["green"], width=l_width))
 
-        self.M3_arr = np.zeros(100)
+        self.M3_arr = np.zeros(200)
         self.curve_M3 = self.p1.plot(self.M3_arr, pen=pg.mkPen(color=colors["blue"], width=l_width))
 
-        self.M4_arr = np.zeros(100)
+        self.M4_arr = np.zeros(200)
         self.curve_M4 = self.p1.plot(self.M4_arr, pen=pg.mkPen(color=colors["orange"], width=l_width))
 
         ## INIT UPDATE TIMER
@@ -631,6 +636,6 @@ class  PWM_Widget(pg.GraphicsLayoutWidget):
 
 if __name__ == '__main__':
 
-    w = Pos_Widget()
+    w = Mu_Widget()
     w.show()
     QtGui.QApplication.instance().exec_()

@@ -91,6 +91,13 @@ class CrazyflieEnv:
         self.sigma = []         # Gaussian standard deviation policies are sampled from
         self.policy = []        # Policy sampled from Gaussian distribution
 
+        self.mu_1_list = []
+        self.mu_2_list = []
+
+        self.sigma_1_list = []
+        self.sigma_2_list = []
+
+
         self.reward = 0.0       # Calculated reward from run
         self.reward_avg = 0.0   # Averaged rewards over episode
         self.reward_inputs = [] # List of inputs to reward func
@@ -147,6 +154,9 @@ class CrazyflieEnv:
         self.ceiling_ft_x = 0.0     # Ceiling impact force, X-dir [N]
         self.ceiling_ft_y = 0.0     # Ceiling impact force, Y-dir [N]
         self.ceiling_ft_z = 0.0     # Ceiling impact force, Z-dir [N]
+
+
+        
 
 
         
@@ -222,6 +232,12 @@ class CrazyflieEnv:
         rl_msg.mu = self.mu
         rl_msg.sigma = self.sigma
         rl_msg.policy = self.policy
+
+        rl_msg.mu_1_list = self.mu_1_list
+        rl_msg.mu_2_list = self.mu_2_list
+        rl_msg.sigma_1_list = self.sigma_1_list
+        rl_msg.sigma_2_list = self.sigma_2_list
+
 
         rl_msg.reward = self.reward
         rl_msg.reward_avg = self.reward_avg

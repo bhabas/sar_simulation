@@ -111,7 +111,7 @@
          <string notr="true"/>
         </property>
         <property name="currentIndex">
-         <number>3</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="Tab_State">
          <attribute name="title">
@@ -289,7 +289,7 @@
                      <item>
                       <widget class="QLabel" name="label_44">
                        <property name="text">
-                        <string>X</string>
+                        <string>Vx</string>
                        </property>
                        <property name="alignment">
                         <set>Qt::AlignCenter</set>
@@ -315,7 +315,7 @@
                      <item>
                       <widget class="QLabel" name="label_45">
                        <property name="text">
-                        <string>Y</string>
+                        <string>Vy</string>
                        </property>
                        <property name="alignment">
                         <set>Qt::AlignCenter</set>
@@ -341,7 +341,7 @@
                      <item>
                       <widget class="QLabel" name="label_48">
                        <property name="text">
-                        <string>Z</string>
+                        <string>Vz</string>
                        </property>
                        <property name="alignment">
                         <set>Qt::AlignCenter</set>
@@ -1187,7 +1187,7 @@ color: rgb(214, 39, 40);</string>
                      <item>
                       <widget class="Line" name="line_35">
                        <property name="styleSheet">
-                        <string notr="true">color: rgb(255,127,14);</string>
+                        <string notr="true">color: rgb(31, 119, 180);</string>
                        </property>
                        <property name="frameShadow">
                         <enum>QFrame::Plain</enum>
@@ -1213,7 +1213,7 @@ color: rgb(214, 39, 40);</string>
                      <item>
                       <widget class="Line" name="line_37">
                        <property name="styleSheet">
-                        <string notr="true">color: rgb(31, 119, 180);</string>
+                        <string notr="true">color: rgb(255, 127, 14);</string>
                        </property>
                        <property name="frameShadow">
                         <enum>QFrame::Plain</enum>
@@ -1292,7 +1292,7 @@ color: rgb(214, 39, 40);</string>
                      <item>
                       <widget class="Line" name="line_38">
                        <property name="styleSheet">
-                        <string notr="true">color: rgb(255,127,14);</string>
+                        <string notr="true">color: rgb(31, 119, 180);</string>
                        </property>
                        <property name="frameShadow">
                         <enum>QFrame::Plain</enum>
@@ -1318,7 +1318,7 @@ color: rgb(214, 39, 40);</string>
                      <item>
                       <widget class="Line" name="line_40">
                        <property name="styleSheet">
-                        <string notr="true">color: rgb(31,119,180);</string>
+                        <string notr="true">color: rgb(255, 127, 14);</string>
                        </property>
                        <property name="frameShadow">
                         <enum>QFrame::Plain</enum>

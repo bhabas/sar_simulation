@@ -45,6 +45,12 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
         env.mu = agent.mu.flatten().tolist()                    # Mean for Gaussian distribution
         env.sigma = agent.sigma.flatten().tolist()              # Standard Deviation for Gaussian distribution
 
+        env.mu_1_list.append(env.mu[0])
+        env.mu_2_list.append(env.mu[1])
+
+        env.sigma_1_list.append(env.sigma[0])
+        env.sigma_2_list.append(env.sigma[1])
+
         env.alpha_mu = agent.alpha_mu.flatten().tolist()        # Learning rate for mu (PEPG)
         env.alpha_sigma = agent.alpha_sigma.flatten().tolist()  # Learning rate for sigma (PEPG)
 
@@ -367,7 +373,7 @@ if __name__ == '__main__':
 
 
     ## LEARNING AGENTS AND PARAMETERS
-    env.n_rollouts = 8
+    env.n_rollouts = 2
     K_EP_MAX = rospy.get_param("K_EP_MAX")
     agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=env.n_rollouts)
 
