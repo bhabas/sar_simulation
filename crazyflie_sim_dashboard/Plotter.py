@@ -97,29 +97,29 @@ class Mu_Widget(pg.GraphicsLayoutWidget):
         pg.GraphicsLayoutWidget.__init__(self, **kargs)
 
         self.setParent(parent)
-        p1 = self.addPlot(labels =  {'left':'Mu', 'bottom':'Episode [K_ep]'})
-        p1.setYRange(0,10)
-        p1.setXRange(0,20)
-        p1.showGrid(x=True, y=True, alpha=0.2)
+        self.p1 = self.addPlot(labels =  {'left':'Mu', 'bottom':'Episode [K_ep]'})
+        self.p1.setYRange(0,10)
+        self.p1.setXRange(0,20)
+        self.p1.showGrid(x=True, y=True, alpha=0.2)
 
 
         ## INIT DATA CURVE 
-        self.curve_1_mu = p1.plot([],[],  pen=pg.mkPen(color=colors["blue"], width=l_width))
-        self.curve_1_SD1 = p1.plot([],[], pen=pg.mkPen(color=colors["blue_alpha"]))
-        self.curve_1_SD2 = p1.plot([],[], pen=pg.mkPen(color=colors["blue_alpha"]))
+        self.curve_1_mu = self.p1.plot([],[],  pen=pg.mkPen(color=colors["blue"], width=l_width))
+        self.curve_1_SD1 = self.p1.plot([],[], pen=pg.mkPen(color=colors["blue_alpha"]))
+        self.curve_1_SD2 = self.p1.plot([],[], pen=pg.mkPen(color=colors["blue_alpha"]))
 
 
-        self.curve_2_mu = p1.plot([],[],  pen=pg.mkPen(color=colors["orange"], width=l_width))
-        self.curve_2_SD1 = p1.plot([],[], pen=pg.mkPen(color=colors["orange_alpha"]))
-        self.curve_2_SD2 = p1.plot([],[], pen=pg.mkPen(color=colors["orange_alpha"]))
+        self.curve_2_mu = self.p1.plot([],[],  pen=pg.mkPen(color=colors["orange"], width=l_width))
+        self.curve_2_SD1 = self.p1.plot([],[], pen=pg.mkPen(color=colors["orange_alpha"]))
+        self.curve_2_SD2 = self.p1.plot([],[], pen=pg.mkPen(color=colors["orange_alpha"]))
 
         
 
-        p1.addItem(pg.FillBetweenItem(self.curve_1_SD1,self.curve_1_mu,colors["blue_alpha"]))
-        p1.addItem(pg.FillBetweenItem(self.curve_1_SD2,self.curve_1_mu,colors["blue_alpha"]))
+        self.p1.addItem(pg.FillBetweenItem(self.curve_1_SD1,self.curve_1_mu,colors["blue_alpha"]))
+        self.p1.addItem(pg.FillBetweenItem(self.curve_1_SD2,self.curve_1_mu,colors["blue_alpha"]))
 
-        p1.addItem(pg.FillBetweenItem(self.curve_2_SD1,self.curve_2_mu,colors["orange_alpha"]))
-        p1.addItem(pg.FillBetweenItem(self.curve_2_SD2,self.curve_2_mu,colors["orange_alpha"]))
+        self.p1.addItem(pg.FillBetweenItem(self.curve_2_SD1,self.curve_2_mu,colors["orange_alpha"]))
+        self.p1.addItem(pg.FillBetweenItem(self.curve_2_SD2,self.curve_2_mu,colors["orange_alpha"]))
 
         ## INIT UPDATE TIMER
         timer = pg.QtCore.QTimer(self)
@@ -134,6 +134,10 @@ class Mu_Widget(pg.GraphicsLayoutWidget):
         self.curve_2_mu.setData(DashNode.k_ep_list3[:],DashNode.mu_list[:,1])
         self.curve_2_SD1.setData(DashNode.k_ep_list3[:],DashNode.mu_list[:,1] + 2*DashNode.sig_list[:,1])
         self.curve_2_SD2.setData(DashNode.k_ep_list3[:],DashNode.mu_list[:,1] - 2*DashNode.sig_list[:,1])
+    
+    def reset_axes(self):
+        self.p1.setXRange(0,20)
+        self.p1.setYRange(0,10)
 
 class Sig_Widget(pg.GraphicsLayoutWidget):
 
@@ -147,15 +151,15 @@ class Sig_Widget(pg.GraphicsLayoutWidget):
         pg.GraphicsLayoutWidget.__init__(self, **kargs)
 
         self.setParent(parent)
-        p1 = self.addPlot(labels =  {'left':'Sigma', 'bottom':'Episode [K_ep]'})
-        p1.setYRange(0,3)
-        p1.setXRange(0,25)
-        p1.showGrid(x=True, y=True, alpha=0.2)
+        self.p1 = self.addPlot(labels =  {'left':'Sigma', 'bottom':'Episode [K_ep]'})
+        self.p1.setYRange(0,3)
+        self.p1.setXRange(0,20)
+        self.p1.showGrid(x=True, y=True, alpha=0.2)
 
 
         ## INIT DATA CURVE 
-        self.curve_sig1 = p1.plot([],[], pen=pg.mkPen(color=colors["blue"], width=l_width))
-        self.curve_sig2 = p1.plot([],[], pen=pg.mkPen(color=colors["orange"], width=l_width))
+        self.curve_sig1 = self.p1.plot([],[], pen=pg.mkPen(color=colors["blue"], width=l_width))
+        self.curve_sig2 = self.p1.plot([],[], pen=pg.mkPen(color=colors["orange"], width=l_width))
 
 
         ## INIT UPDATE TIMER
@@ -166,6 +170,10 @@ class Sig_Widget(pg.GraphicsLayoutWidget):
     def update(self):
         self.curve_sig1.setData(DashNode.k_ep_list3[:],DashNode.sig_list[:,0])
         self.curve_sig2.setData(DashNode.k_ep_list3[:],DashNode.sig_list[:,1])
+
+    def reset_axes(self):
+        self.p1.setXRange(0,20)
+        self.p1.setYRange(0,3)
 
 
 

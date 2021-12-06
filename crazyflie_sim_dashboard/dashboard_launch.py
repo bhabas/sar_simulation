@@ -54,6 +54,9 @@ class Dashboard(QMainWindow):
         for plot in self.plot_list:
                 plot.reset_axes()
 
+        self.Mu_Graph.reset_axes()
+        self.Sigma_Graph.reset_axes()
+
 
 if __name__ == '__main__':
 

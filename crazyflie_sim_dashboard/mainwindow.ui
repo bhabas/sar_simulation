@@ -111,7 +111,7 @@
          <string notr="true"/>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>3</number>
         </property>
         <widget class="QWidget" name="Tab_State">
          <attribute name="title">
@@ -1166,7 +1166,7 @@ color: rgb(214, 39, 40);</string>
                     </widget>
                    </item>
                    <item>
-                    <widget class="Mu_Widget" name="widget_12" native="true">
+                    <widget class="Mu_Widget" name="Mu_Graph" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
@@ -1271,7 +1271,7 @@ color: rgb(214, 39, 40);</string>
                     </widget>
                    </item>
                    <item>
-                    <widget class="Sig_Widget" name="widget_13" native="true">
+                    <widget class="Sig_Widget" name="Sigma_Graph" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
