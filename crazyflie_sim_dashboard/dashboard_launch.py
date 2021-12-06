@@ -21,12 +21,39 @@ class Dashboard(QMainWindow):
 
         self.Battery_Voltage.setValue(50)
 
-        # self.Pos_Graph.reset_axes()
-        self.pushButton.clicked.connect(self.Pos_Graph.reset_axes)
+        # self.pushButton.clicked.connect(self.Pos_Graph.pause)
+        self.pauseButton.clicked.connect(self.pause_plots)
+        self.rescaleButton.clicked.connect(self.rescale_plots)
 
-    def printButtonPressed(self):
-        # This is executed when the button is pressed
-        print('printButtonPressed')
+        self.paused = False
+
+        self.plot_list = [
+            self.Pos_Graph,
+            self.Vel_Graph,
+            self.PWM_Graph,
+            self.Dist_Graph,
+            self.Eul_Graph,
+            self.OF_Graph,
+            self.Omega_Graph,]
+
+
+    def pause_plots(self):
+        if self.paused == False:
+            self.paused = True
+            for plot in self.plot_list:
+                plot.pause(self.paused)
+     
+        else:
+            self.paused = False
+            for plot in self.plot_list:
+                plot.pause(self.paused)
+
+
+
+    def rescale_plots(self):
+        for plot in self.plot_list:
+                plot.reset_axes()
+
 
 if __name__ == '__main__':
 

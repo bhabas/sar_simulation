@@ -41,7 +41,7 @@ class CustomWidget(pg.GraphicsWindow):
         timer.start(17) # number of seconds (every 1000) for next update
 
     def update(self):
-        self.ptr1 += 1
+        self.ptr1 += 0
                            
         self.data1[:-1] = self.data1[1:]  # shift data in the array one sample left  # (see also: np.roll)
         self.data1[-1] = np.random.normal()
@@ -183,13 +183,15 @@ class  Pos_Widget(pg.GraphicsLayoutWidget):
         pg.GraphicsLayoutWidget.__init__(self, **kargs)
 
         self.ptr1 = 0
+        self.pause_flag = False
         self.setParent(parent)
         self.setWindowTitle('pyqtgraph example: Scrolling Plots')
 
         ## INIT PLOT WINDOW
         self.p1 = self.addPlot(labels =  {'left':'Position [m]', 'bottom':'Time [s]'})
         self.p1.setYRange(-1,4)
-        self.p1.addLegend()
+        self.p1.showGrid(x=True, y=True, alpha=0.2)
+
         # p1.setAutoPan(x=True,y=True)
         # p1.showGrid(x=True, y=True, alpha=0.2)
 
@@ -204,15 +206,23 @@ class  Pos_Widget(pg.GraphicsLayoutWidget):
         self.curve_pos_z = self.p1.plot(self.pos_z_arr, pen=pg.mkPen(color=colors["blue"], width=l_width))
 
         ## INIT UPDATE TIMER
-        timer = pg.QtCore.QTimer(self)
-        timer.timeout.connect(self.update)
-        timer.start(int(1000/FPS)) # number of seconds (every 1000) for next update
+        self.timer = pg.QtCore.QTimer(self)
+        self.timer.timeout.connect(self.update)
+        self.timer.start(50) # number of seconds (every 1000) for next update
 
     def reset_axes(self):
-        self.p1.setYRange(-1,10)
+        self.p1.enableAutoRange(enable=True)
+        self.p1.setYRange(-1,4)
+
+    def pause(self,pause_flag):
+        if pause_flag == True:
+            self.timer.stop()
+        else: 
+            self.timer.start()
+
 
     def update(self):
-        self.ptr1 += 1
+        self.ptr1 += 0
                            
         self.pos_x_arr[:-1] = self.pos_x_arr[1:]  # shift data in the array one sample left  # (see also: np.roll)
         self.pos_x_arr[-1] = DashNode.position[0]
@@ -244,27 +254,28 @@ class  Vel_Widget(pg.GraphicsLayoutWidget):
         self.setWindowTitle('pyqtgraph example: Scrolling Plots')
 
         ## INIT PLOT WINDOW
-        p1 = self.addPlot(labels =  {'left':'Velocity [m/s]', 'bottom':'Time [s]'})
-        # p1.setRange(yRange=[-2,2])
-        p1.setYRange(-1,4)
+        self.p1 = self.addPlot(labels =  {'left':'Velocity [m/s]', 'bottom':'Time [s]'})
+        self.p1.setYRange(-1,4)
+        self.p1.showGrid(x=True, y=True, alpha=0.2)
+
 
         ## INIT DATA CURVE 1
         self.vel_x_arr = np.zeros(100)
-        self.curve_vel_x = p1.plot(self.vel_x_arr, pen=pg.mkPen(color=colors["red"], width=l_width))
+        self.curve_vel_x = self.p1.plot(self.vel_x_arr, pen=pg.mkPen(color=colors["red"], width=l_width))
 
         self.vel_y_arr = np.zeros(100)
-        self.curve_vel_y = p1.plot(self.vel_y_arr, pen=pg.mkPen(color=colors["green"], width=l_width))
+        self.curve_vel_y = self.p1.plot(self.vel_y_arr, pen=pg.mkPen(color=colors["green"], width=l_width))
 
         self.vel_z_arr = np.zeros(100)
-        self.curve_vel_z = p1.plot(self.vel_z_arr, pen=pg.mkPen(color=colors["blue"], width=l_width))
+        self.curve_vel_z = self.p1.plot(self.vel_z_arr, pen=pg.mkPen(color=colors["blue"], width=l_width))
 
         ## INIT UPDATE TIMER
-        timer = pg.QtCore.QTimer(self)
-        timer.timeout.connect(self.update)
-        timer.start(int(1000/FPS)) # number of seconds (every 1000) for next update
+        self.timer = pg.QtCore.QTimer(self)
+        self.timer.timeout.connect(self.update)
+        self.timer.start(int(1000/FPS)) # number of seconds (every 1000) for next update
 
     def update(self):
-        self.ptr1 += 1
+        self.ptr1 += 0
                            
         self.vel_x_arr[:-1] = self.vel_x_arr[1:]  # shift data in the array one sample left  # (see also: np.roll)
         self.vel_x_arr[-1] = DashNode.velocity[0]
@@ -281,6 +292,16 @@ class  Vel_Widget(pg.GraphicsLayoutWidget):
         self.curve_vel_z.setData(self.vel_z_arr)
         self.curve_vel_z.setPos(self.ptr1,0)
 
+    def pause(self,pause_flag):
+        if pause_flag == True:
+            self.timer.stop()
+        else: 
+            self.timer.start()
+
+    def reset_axes(self):
+        self.p1.enableAutoRange(enable=True)
+        self.p1.setYRange(-1,4)
+
 class  Omega_Widget(pg.GraphicsLayoutWidget):
 
     ## SET STYLE
@@ -296,26 +317,28 @@ class  Omega_Widget(pg.GraphicsLayoutWidget):
         self.setWindowTitle('pyqtgraph example: Scrolling Plots')
 
         ## INIT PLOT WINDOW
-        p1 = self.addPlot(labels =  {'left':'Ang Velocity [rad/s]', 'bottom':'Time [s]'})
-        p1.setYRange(-40,40)
+        self.p1 = self.addPlot(labels =  {'left':'Ang Velocity [rad/s]', 'bottom':'Time [s]'})
+        self.p1.setYRange(-40,40)
+        self.p1.showGrid(x=True, y=True, alpha=0.2)
+
 
         ## INIT DATA CURVE 1
         self.omega_x_arr = np.zeros(100)
-        self.curve_omega_x = p1.plot(self.omega_x_arr, pen=pg.mkPen(color=colors["red"], width=l_width))
+        self.curve_omega_x = self.p1.plot(self.omega_x_arr, pen=pg.mkPen(color=colors["red"], width=l_width))
 
         self.omega_y_arr = np.zeros(100)
-        self.curve_omega_y = p1.plot(self.omega_y_arr, pen=pg.mkPen(color=colors["green"], width=l_width))
+        self.curve_omega_y = self.p1.plot(self.omega_y_arr, pen=pg.mkPen(color=colors["green"], width=l_width))
 
         self.omega_z_arr = np.zeros(100)
-        self.curve_omega_z = p1.plot(self.omega_z_arr, pen=pg.mkPen(color=colors["blue"], width=l_width))
+        self.curve_omega_z = self.p1.plot(self.omega_z_arr, pen=pg.mkPen(color=colors["blue"], width=l_width))
 
         ## INIT UPDATE TIMER
-        timer = pg.QtCore.QTimer(self)
-        timer.timeout.connect(self.update)
-        timer.start(int(1000/FPS)) # number of seconds (every 1000) for next update
+        self.timer = pg.QtCore.QTimer(self)
+        self.timer.timeout.connect(self.update)
+        self.timer.start(int(1000/FPS)) # number of seconds (every 1000) for next update
 
     def update(self):
-        self.ptr1 += 1
+        self.ptr1 += 0
                            
         self.omega_x_arr[:-1] = self.omega_x_arr[1:]  # shift data in the array one sample left  # (see also: np.roll)
         self.omega_x_arr[-1] = DashNode.omega[0]
@@ -332,6 +355,16 @@ class  Omega_Widget(pg.GraphicsLayoutWidget):
         self.curve_omega_z.setData(self.omega_z_arr)
         self.curve_omega_z.setPos(self.ptr1,0)
 
+    def pause(self,pause_flag):
+        if pause_flag == True:
+            self.timer.stop()
+        else: 
+            self.timer.start()
+
+    def reset_axes(self):
+        self.p1.enableAutoRange(enable=True)
+        self.p1.setYRange(-40,40)
+
 class  Eul_Widget(pg.GraphicsLayoutWidget):
 
     ## SET STYLE
@@ -347,8 +380,10 @@ class  Eul_Widget(pg.GraphicsLayoutWidget):
         self.setWindowTitle('pyqtgraph example: Scrolling Plots')
 
         ## INIT PLOT WINDOW
-        p1 = self.addPlot(labels =  {'left':'Euler Angle [deg]', 'bottom':'Time [s]'})
-        p1.setYRange(-90,90)
+        self.p1 = self.addPlot(labels =  {'left':'Euler Angle [deg]', 'bottom':'Time [s]'})
+        self.p1.setYRange(-90,90)
+        self.p1.showGrid(x=True, y=True, alpha=0.2)
+
 
         # # Fix Axes ticks and grid
         # for key in p1.axes:
@@ -356,21 +391,25 @@ class  Eul_Widget(pg.GraphicsLayoutWidget):
 
         ## INIT DATA CURVE 1
         self.eul_x_arr = np.zeros(100)
-        self.curve_eul_x = p1.plot(self.eul_x_arr, pen=pg.mkPen(color=colors["red"], width=l_width))
+        self.curve_eul_x = self.p1.plot(self.eul_x_arr, pen=pg.mkPen(color=colors["red"], width=l_width))
 
         self.eul_y_arr = np.zeros(100)
-        self.curve_eul_y = p1.plot(self.eul_y_arr, pen=pg.mkPen(color=colors["green"], width=l_width))
+        self.curve_eul_y = self.p1.plot(self.eul_y_arr, pen=pg.mkPen(color=colors["green"], width=l_width))
 
         self.eul_z_arr = np.zeros(100)
-        self.curve_eul_z = p1.plot(self.eul_z_arr, pen=pg.mkPen(color=colors["blue"], width=l_width))
+        self.curve_eul_z = self.p1.plot(self.eul_z_arr, pen=pg.mkPen(color=colors["blue"], width=l_width))
 
         ## INIT UPDATE TIMER
-        timer = pg.QtCore.QTimer(self)
-        timer.timeout.connect(self.update)
-        timer.start(int(1000/FPS)) # number of seconds (every 1000) for next update
+        self.timer = pg.QtCore.QTimer(self)
+        self.timer.timeout.connect(self.update)
+        self.timer.start(int(1000/FPS)) # number of seconds (every 1000) for next update
+
+    def reset_axes(self):
+        self.p1.enableAutoRange(enable=True)
+        self.p1.setYRange(-90,90)
 
     def update(self):
-        self.ptr1 += 1
+        self.ptr1 += 0
                            
         self.eul_x_arr[:-1] = self.eul_x_arr[1:]  # shift data in the array one sample left  # (see also: np.roll)
         self.eul_x_arr[-1] = DashNode.eul[0]
@@ -386,6 +425,12 @@ class  Eul_Widget(pg.GraphicsLayoutWidget):
         self.eul_z_arr[-1] = DashNode.eul[2]
         self.curve_eul_z.setData(self.eul_z_arr)
         self.curve_eul_z.setPos(self.ptr1,0)
+
+    def pause(self,pause_flag):
+        if pause_flag == True:
+            self.timer.stop()
+        else: 
+            self.timer.start()
 
 
 class  OF_Widget(pg.GraphicsLayoutWidget):
@@ -403,27 +448,30 @@ class  OF_Widget(pg.GraphicsLayoutWidget):
         self.setWindowTitle('pyqtgraph example: Scrolling Plots')
 
         ## INIT PLOT WINDOW
-        p1 = self.addPlot(labels =  {'left':'Ang Velocity [rad/s]', 'bottom':'Time [s]'})
-        p1.setYRange(-10,10)
+        self.p1 = self.addPlot(labels =  {'left':'Ang Velocity [rad/s]', 'bottom':'Time [s]'})
+        self.p1.setYRange(-10,10)
+        self.p1.showGrid(x=True, y=True, alpha=0.2)
+
 
         ## INIT DATA CURVE 1
         self.tau_arr = np.zeros(100)
-        self.curve_tau = p1.plot(self.tau_arr, pen=pg.mkPen(color=colors["red"], width=l_width))
+        self.curve_tau = self.p1.plot(self.tau_arr, pen=pg.mkPen(color=colors["red"], width=l_width))
 
         self.OF_x_arr = np.zeros(100)
-        self.curve_OF_x = p1.plot(self.OF_x_arr, pen=pg.mkPen(color=colors["green"], width=l_width))
+        self.curve_OF_x = self.p1.plot(self.OF_x_arr, pen=pg.mkPen(color=colors["green"], width=l_width))
 
         self.OF_y_arr = np.zeros(100)
-        self.curve_OF_y = p1.plot(self.OF_y_arr, pen=pg.mkPen(color=colors["blue"], width=l_width))
+        self.curve_OF_y = self.p1.plot(self.OF_y_arr, pen=pg.mkPen(color=colors["blue"], width=l_width))
 
         
 
         ## INIT UPDATE TIMER
-        timer = pg.QtCore.QTimer(self)
-        timer.timeout.connect(self.update)
-        timer.start(int(1000/FPS)) # number of seconds (every 1000) for next update
+        self.timer = pg.QtCore.QTimer(self)
+        self.timer.timeout.connect(self.update)
+        self.timer.start(int(1000/FPS)) # number of seconds (every 1000) for next update
+
     def update(self):
-        self.ptr1 += 1
+        self.ptr1 += 0
                            
         self.OF_x_arr[:-1] = self.OF_x_arr[1:]  # shift data in the array one sample left  # (see also: np.roll)
         self.OF_x_arr[-1] = DashNode.OF_x
@@ -439,6 +487,16 @@ class  OF_Widget(pg.GraphicsLayoutWidget):
         self.tau_arr[-1] = DashNode.RREV
         self.curve_tau.setData(self.tau_arr)
         self.curve_tau.setPos(self.ptr1,0)
+
+    def pause(self,pause_flag):
+        if pause_flag == True:
+            self.timer.stop()
+        else: 
+            self.timer.start()
+
+    def reset_axes(self):
+        self.p1.enableAutoRange(enable=True)
+        self.p1.setYRange(-10,10)
 
 class  dist_Widget(pg.GraphicsLayoutWidget):
 
@@ -458,28 +516,39 @@ class  dist_Widget(pg.GraphicsLayoutWidget):
         self.setWindowTitle('pyqtgraph example: Scrolling Plots')
 
         ## INIT PLOT WINDOW
-        p1 = self.addPlot(labels =  {'left':'d_ceiling [m]', 'bottom':'Time [s]'})
-        p1.setYRange(0,5)
-        p1.addLegend()
-        # p1.showGrid(x=True, y=True, alpha=0.2)
+        self.p1 = self.addPlot(labels =  {'left':'d_ceiling [m]', 'bottom':'Time [s]'})
+        self.p1.setYRange(0,5)
+        self.p1.showGrid(x=True, y=True, alpha=0.2)
 
         ## INIT DATA CURVE 1
         self.d_ceiling_arr = np.zeros(100)
-        self.curve_d_ceil = p1.plot(self.d_ceiling_arr, pen=pg.mkPen(color=colors["red"], width=l_width))
+        self.curve_d_ceil = self.p1.plot(self.d_ceiling_arr, pen=pg.mkPen(color=colors["red"], width=l_width))
 
 
         ## INIT UPDATE TIMER
-        timer = pg.QtCore.QTimer(self)
-        timer.timeout.connect(self.update)
-        timer.start(int(1000/FPS)) # number of seconds (every 1000) for next update
+        self.timer = pg.QtCore.QTimer(self)
+        self.timer.timeout.connect(self.update)
+        self.timer.start(int(1000/FPS)) # number of seconds (every 1000) for next update
 
     def update(self):
-        self.ptr1 += 1
+        self.ptr1 += 0
                            
         self.d_ceiling_arr[:-1] = self.d_ceiling_arr[1:]  # shift data in the array one sample left  # (see also: np.roll)
         self.d_ceiling_arr[-1] = DashNode.d_ceiling
         self.curve_d_ceil.setData(self.d_ceiling_arr)
         self.curve_d_ceil.setPos(self.ptr1, 0)
+
+    def pause(self,pause_flag):
+        if pause_flag == True:
+            self.timer.stop()
+        else: 
+            self.timer.start()
+
+    def reset_axes(self):
+        self.p1.enableAutoRange(enable=True)
+        self.p1.setYRange(0,5)
+
+    
 
 
 class  PWM_Widget(pg.GraphicsLayoutWidget):
@@ -497,29 +566,30 @@ class  PWM_Widget(pg.GraphicsLayoutWidget):
         self.setWindowTitle('pyqtgraph example: Scrolling Plots')
 
         ## INIT PLOT WINDOW
-        p1 = self.addPlot(labels =  {'left':'MS [PWM]', 'bottom':'Time [s]'})
-        p1.setYRange(0,65_000)
+        self.p1 = self.addPlot(labels =  {'left':'MS [PWM]', 'bottom':'Time [s]'})
+        self.p1.showGrid(x=True, y=True, alpha=0.2)
+        self.p1.setYRange(0,65_000)
 
         ## INIT DATA CURVE 1
         self.M1_arr = np.zeros(100)
-        self.curve_M1 = p1.plot(self.M1_arr, pen=pg.mkPen(color=colors["red"], width=l_width))
+        self.curve_M1 = self.p1.plot(self.M1_arr, pen=pg.mkPen(color=colors["red"], width=l_width))
 
         self.M2_arr = np.zeros(100)
-        self.curve_M2 = p1.plot(self.M2_arr, pen=pg.mkPen(color=colors["green"], width=l_width))
+        self.curve_M2 = self.p1.plot(self.M2_arr, pen=pg.mkPen(color=colors["green"], width=l_width))
 
         self.M3_arr = np.zeros(100)
-        self.curve_M3 = p1.plot(self.M3_arr, pen=pg.mkPen(color=colors["blue"], width=l_width))
+        self.curve_M3 = self.p1.plot(self.M3_arr, pen=pg.mkPen(color=colors["blue"], width=l_width))
 
         self.M4_arr = np.zeros(100)
-        self.curve_M4 = p1.plot(self.M4_arr, pen=pg.mkPen(color=colors["orange"], width=l_width))
+        self.curve_M4 = self.p1.plot(self.M4_arr, pen=pg.mkPen(color=colors["orange"], width=l_width))
 
         ## INIT UPDATE TIMER
-        timer = pg.QtCore.QTimer(self)
-        timer.timeout.connect(self.update)
-        timer.start(int(1000/FPS)) # number of seconds (every 1000) for next update
+        self.timer = pg.QtCore.QTimer(self)
+        self.timer.timeout.connect(self.update)
+        self.timer.start(int(1000/FPS)) # number of seconds (every 1000) for next update
 
     def update(self):
-        self.ptr1 += 1
+        self.ptr1 += 0
                            
         self.M1_arr[:-1] = self.M1_arr[1:]  # shift data in the array one sample left  # (see also: np.roll)
         self.M1_arr[-1] = DashNode.MS_PWM[0]
@@ -540,6 +610,16 @@ class  PWM_Widget(pg.GraphicsLayoutWidget):
         self.M4_arr[-1] = DashNode.MS_PWM[3]
         self.curve_M4.setData(self.M4_arr)
         self.curve_M4.setPos(self.ptr1,0)
+
+    def pause(self,pause_flag):
+        if pause_flag == True:
+            self.timer.stop()
+        else: 
+            self.timer.start()
+
+    def reset_axes(self):
+        self.p1.enableAutoRange(enable=True)
+        self.p1.setYRange(0,65_000)
 
 if __name__ == '__main__':
 

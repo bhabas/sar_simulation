@@ -18,7 +18,7 @@
     <item>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0,80,20">
+       <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0,80,0,0,20">
         <item>
          <widget class="QProgressBar" name="Connect_Indicator">
           <property name="value">
@@ -83,6 +83,20 @@
          </spacer>
         </item>
         <item>
+         <widget class="QPushButton" name="pauseButton">
+          <property name="text">
+           <string>Pause</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="rescaleButton">
+          <property name="text">
+           <string>Rescale</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QProgressBar" name="Battery_Voltage">
           <property name="value">
            <number>0</number>
@@ -97,7 +111,7 @@
          <string notr="true"/>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="Tab_State">
          <attribute name="title">
@@ -121,7 +135,7 @@
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_14">
                  <item>
-                  <layout class="QVBoxLayout" name="verticalLayout_12" stretch="1,0,10,1">
+                  <layout class="QVBoxLayout" name="verticalLayout_12" stretch="1,10,1">
                    <item>
                     <widget class="QLabel" name="label_34">
                      <property name="text">
@@ -129,13 +143,6 @@
                      </property>
                      <property name="alignment">
                       <set>Qt::AlignCenter</set>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QPushButton" name="pushButton">
-                     <property name="text">
-                      <string>PushButton</string>
                      </property>
                     </widget>
                    </item>
@@ -271,7 +278,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="Vel_Widget" name="widget_14" native="true">
+                    <widget class="Vel_Widget" name="Vel_Graph" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
@@ -404,7 +411,7 @@
                   </widget>
                  </item>
                  <item>
-                  <widget class="PWM_Widget" name="widget_15" native="true">
+                  <widget class="PWM_Widget" name="PWM_Graph" native="true">
                    <property name="styleSheet">
                     <string notr="true">background-color: rgb(136, 138, 133);</string>
                    </property>
@@ -574,7 +581,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="dist_Widget" name="widget_6" native="true">
+                    <widget class="dist_Widget" name="Dist_Graph" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
@@ -706,7 +713,7 @@ color: rgb(214, 39, 40);</string>
                     </widget>
                    </item>
                    <item>
-                    <widget class="Eul_Widget" name="widget_7" native="true">
+                    <widget class="Eul_Widget" name="Eul_Graph" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
@@ -841,7 +848,7 @@ color: rgb(214, 39, 40);</string>
                     </widget>
                    </item>
                    <item>
-                    <widget class="OF_Widget" name="widget_8" native="true">
+                    <widget class="OF_Widget" name="OF_Graph" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
@@ -972,7 +979,7 @@ color: rgb(214, 39, 40);</string>
                     </widget>
                    </item>
                    <item>
-                    <widget class="Omega_Widget" name="widget_9" native="true">
+                    <widget class="Omega_Widget" name="Omega_Graph" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
