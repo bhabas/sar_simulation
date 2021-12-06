@@ -72,24 +72,33 @@ class Mu_Widget(pg.GraphicsLayoutWidget):
     ## SET STYLE
     pg.setConfigOption('background', 'w')
     pg.setConfigOption('foreground', 'k')
+    pg.setConfigOptions(antialias=True)
 
     def __init__(self,parent=None, **kargs):
         pg.GraphicsLayoutWidget.__init__(self, **kargs)
 
         self.setParent(parent)
         p1 = self.addPlot(labels =  {'left':'Mu', 'bottom':'Episode [K_ep]'})
-        p1.setYRange(0,3)
-        p1.setXRange(0,25)
+        p1.setYRange(0,10)
+        p1.setXRange(0,20)
 
         ## INIT DATA CURVE 
-        self.curve_mu1 = p1.plot([],[], pen='r')
-        self.curve_mu2 = p1.plot([],[], pen='b')
+        self.curve_1_mu = p1.plot([],[], pen=pg.mkPen(color=(255,127,14)))
+        self.curve_1_SD1 = p1.plot([],[], pen=pg.mkPen(color=(255,127,14,150),))
+        self.curve_1_SD2 = p1.plot([],[], pen=pg.mkPen(color=(255,127,14,150),))
 
-        self.curve_sig1 = p1.plot([],[], pen='r')
-        self.curve_sig2 = p1.plot([],[], pen='b')
 
-        p1.addItem(pg.FillBetweenItem(self.curve_sig1,self.curve_mu1,(100, 100, 255)))
-        p1.addItem(pg.FillBetweenItem(self.curve_sig2,self.curve_mu1,(100, 100, 255)))
+        self.curve_2_mu = p1.plot([],[], pen=pg.mkPen(color=(31,119,180)))
+        self.curve_2_SD1 = p1.plot([],[], pen=pg.mkPen(color=(31,119,180,150),))
+        self.curve_2_SD2 = p1.plot([],[], pen=pg.mkPen(color=(31,119,180,150),))
+
+        
+
+        p1.addItem(pg.FillBetweenItem(self.curve_1_SD1,self.curve_1_mu,(255,127,14,150)))
+        p1.addItem(pg.FillBetweenItem(self.curve_1_SD2,self.curve_1_mu,(255,127,14,150)))
+
+        p1.addItem(pg.FillBetweenItem(self.curve_2_SD1,self.curve_2_mu,(31,119,180,150)))
+        p1.addItem(pg.FillBetweenItem(self.curve_2_SD2,self.curve_2_mu,(31,119,180,150)))
 
         ## INIT UPDATE TIMER
         timer = pg.QtCore.QTimer(self)
@@ -97,11 +106,13 @@ class Mu_Widget(pg.GraphicsLayoutWidget):
         timer.start(1000) # number of seconds (every 1000) for next update
 
     def update(self):
-        self.curve_mu1.setData(DashNode.k_ep_list3[:],DashNode.mu_list[:,0])
-        self.curve_mu2.setData(DashNode.k_ep_list3[:],DashNode.mu_list[:,1])
+        self.curve_1_mu.setData(DashNode.k_ep_list3[:],DashNode.mu_list[:,0])
+        self.curve_1_SD1.setData(DashNode.k_ep_list3[:],DashNode.mu_list[:,0] + 2*DashNode.sig_list[:,0])
+        self.curve_1_SD2.setData(DashNode.k_ep_list3[:],DashNode.mu_list[:,0] - 2*DashNode.sig_list[:,0])
 
-        self.curve_sig1.setData(DashNode.k_ep_list3[:],DashNode.mu_list[:,0] + 2*DashNode.sig_list[:,0])
-        self.curve_sig2.setData(DashNode.k_ep_list3[:],DashNode.mu_list[:,0] - 2*DashNode.sig_list[:,0])
+        self.curve_2_mu.setData(DashNode.k_ep_list3[:],DashNode.mu_list[:,1])
+        self.curve_2_SD1.setData(DashNode.k_ep_list3[:],DashNode.mu_list[:,1] + 2*DashNode.sig_list[:,1])
+        self.curve_2_SD2.setData(DashNode.k_ep_list3[:],DashNode.mu_list[:,1] - 2*DashNode.sig_list[:,1])
 
 class Sig_Widget(pg.GraphicsLayoutWidget):
 
@@ -153,7 +164,7 @@ class  Pos_Widget(pg.GraphicsLayoutWidget):
 
         ## INIT PLOT WINDOW
         p1 = self.addPlot(labels =  {'left':'Position [m]', 'bottom':'Time [s]'})
-        p1.setYRange(-2,2)
+        p1.setYRange(-1,2)
         p1.addLegend()
 
         ## INIT DATA CURVE 1
@@ -253,7 +264,7 @@ class  Omega_Widget(pg.GraphicsLayoutWidget):
 
         ## INIT PLOT WINDOW
         p1 = self.addPlot(labels =  {'left':'Ang Velocity [rad/s]', 'bottom':'Time [s]'})
-        p1.setYRange(-2,2)
+        p1.setYRange(-40,40)
 
         ## INIT DATA CURVE 1
         self.omega_x_arr = np.zeros(100)
