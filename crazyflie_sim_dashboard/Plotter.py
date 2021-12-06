@@ -19,7 +19,7 @@ l_width = 2
 FPS = 60
 
 
-class  CustomWidget(pg.GraphicsWindow):
+class CustomWidget(pg.GraphicsWindow):
     pg.setConfigOption('background', 'w')
     pg.setConfigOption('foreground', 'k')
     pg.setConfigOptions(antialias=True)
@@ -187,25 +187,29 @@ class  Pos_Widget(pg.GraphicsLayoutWidget):
         self.setWindowTitle('pyqtgraph example: Scrolling Plots')
 
         ## INIT PLOT WINDOW
-        p1 = self.addPlot(labels =  {'left':'Position [m]', 'bottom':'Time [s]'})
-        p1.setYRange(-1,4)
-        p1.addLegend()
+        self.p1 = self.addPlot(labels =  {'left':'Position [m]', 'bottom':'Time [s]'})
+        self.p1.setYRange(-1,4)
+        self.p1.addLegend()
+        # p1.setAutoPan(x=True,y=True)
         # p1.showGrid(x=True, y=True, alpha=0.2)
 
         ## INIT DATA CURVE 1
         self.pos_x_arr = np.zeros(100)
-        self.curve_pos_x = p1.plot(self.pos_x_arr, pen=pg.mkPen(color=colors["red"], width=l_width))
+        self.curve_pos_x = self.p1.plot(self.pos_x_arr, pen=pg.mkPen(color=colors["red"], width=l_width))
 
         self.pos_y_arr = np.zeros(100)
-        self.curve_pos_y = p1.plot(self.pos_y_arr, pen=pg.mkPen(color=colors["green"], width=l_width))
+        self.curve_pos_y = self.p1.plot(self.pos_y_arr, pen=pg.mkPen(color=colors["green"], width=l_width))
 
         self.pos_z_arr = np.zeros(100)
-        self.curve_pos_z = p1.plot(self.pos_z_arr, pen=pg.mkPen(color=colors["blue"], width=l_width))
+        self.curve_pos_z = self.p1.plot(self.pos_z_arr, pen=pg.mkPen(color=colors["blue"], width=l_width))
 
         ## INIT UPDATE TIMER
         timer = pg.QtCore.QTimer(self)
         timer.timeout.connect(self.update)
         timer.start(int(1000/FPS)) # number of seconds (every 1000) for next update
+
+    def reset_axes(self):
+        self.p1.setYRange(-1,10)
 
     def update(self):
         self.ptr1 += 1
@@ -539,6 +543,6 @@ class  PWM_Widget(pg.GraphicsLayoutWidget):
 
 if __name__ == '__main__':
 
-    w = Eul_Widget()
+    w = Pos_Widget()
     w.show()
     QtGui.QApplication.instance().exec_()

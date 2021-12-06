@@ -121,7 +121,7 @@
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_14">
                  <item>
-                  <layout class="QVBoxLayout" name="verticalLayout_12" stretch="1,10,1">
+                  <layout class="QVBoxLayout" name="verticalLayout_12" stretch="1,0,10,1">
                    <item>
                     <widget class="QLabel" name="label_34">
                      <property name="text">
@@ -133,7 +133,14 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="Pos_Widget" name="widget_11" native="true">
+                    <widget class="QPushButton" name="pushButton">
+                     <property name="text">
+                      <string>PushButton</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="Pos_Widget" name="Pos_Graph" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>

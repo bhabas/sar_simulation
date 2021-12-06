@@ -21,10 +21,16 @@ class Dashboard(QMainWindow):
 
         self.Battery_Voltage.setValue(50)
 
+        # self.Pos_Graph.reset_axes()
+        self.pushButton.clicked.connect(self.Pos_Graph.reset_axes)
 
+    def printButtonPressed(self):
+        # This is executed when the button is pressed
+        print('printButtonPressed')
 
-def main():
+if __name__ == '__main__':
 
+    # DashNode=DashboardNode()
     ## INITIALIZE APPLICATION
     app = QApplication(sys.argv)
 
@@ -33,9 +39,3 @@ def main():
     dashboard.show()
 
     sys.exit(app.exec())
-
-if __name__ == '__main__':
-
-    # DashNode=DashboardNode()
-    main()
-    
