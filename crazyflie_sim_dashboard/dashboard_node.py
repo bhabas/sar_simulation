@@ -41,10 +41,10 @@ class DashboardNode:
         rospy.Subscriber('/env/vicon_state',Odometry,self.global_stateCallback)
 
         ## INITIAILIZE REWARD SUBSCRIBER 
-        rospy.Subscriber('/rl_data',RLData,self.rewardCallback)
-        rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)
-        rospy.Subscriber('/cf1/laser',LaserScan,self.laserCallback)
-        rospy.Subscriber('/rl_convg',RLConvg,self.rlConvgCallback)
+        rospy.Subscriber('/rl_data',RLData,self.rewardCallback,queue_size=10)
+        rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback,queue_size=1)
+        rospy.Subscriber('/cf1/laser',LaserScan,self.laserCallback,queue_size=1)
+        rospy.Subscriber('/rl_convg',RLConvg,self.rlConvgCallback,queue_size=10)
         rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
    
         print("[COMPLETED] Dashboard node is running...")
