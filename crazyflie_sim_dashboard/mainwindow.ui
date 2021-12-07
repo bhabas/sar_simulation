@@ -18,29 +18,9 @@
     <item>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0,80,0,0,20">
+       <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0,0,80,0,0,0,0,20">
         <item>
-         <widget class="QProgressBar" name="Connect_Indicator">
-          <property name="value">
-           <number>0</number>
-          </property>
-          <property name="invertedAppearance">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_13">
-          <property name="text">
-           <string>Episode:</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLCDNumber" name="K_ep_num"/>
-        </item>
-        <item>
-         <spacer name="horizontalSpacer_6">
+         <spacer name="horizontalSpacer_2">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -53,6 +33,16 @@
          </spacer>
         </item>
         <item>
+         <widget class="QLabel" name="label_13">
+          <property name="text">
+           <string>Episode:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLCDNumber" name="K_ep_LCD"/>
+        </item>
+        <item>
          <widget class="QLabel" name="label_14">
           <property name="text">
            <string>Run:</string>
@@ -60,12 +50,29 @@
          </widget>
         </item>
         <item>
-         <widget class="QLCDNumber" name="K_run_num">
+         <widget class="QLCDNumber" name="K_run_LCD">
           <property name="digitCount">
            <number>5</number>
           </property>
           <property name="value" stdset="0">
            <double>0.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>Node Connection:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_2">
+          <property name="frameShape">
+           <enum>QFrame::Box</enum>
+          </property>
+          <property name="text">
+           <string>                </string>
           </property>
          </widget>
         </item>
@@ -97,9 +104,44 @@
          </widget>
         </item>
         <item>
+         <spacer name="horizontalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_3">
+          <property name="text">
+           <string>Voltage:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QProgressBar" name="Battery_Voltage">
+          <property name="maximum">
+           <number>100</number>
+          </property>
           <property name="value">
-           <number>0</number>
+           <number>55</number>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+          </property>
+          <property name="invertedAppearance">
+           <bool>false</bool>
+          </property>
+          <property name="textDirection">
+           <enum>QProgressBar::TopToBottom</enum>
+          </property>
+          <property name="format">
+           <string>%p%</string>
           </property>
          </widget>
         </item>
@@ -569,11 +611,11 @@
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_9">
                  <item>
-                  <layout class="QVBoxLayout" name="verticalLayout_8" stretch="1,10,1">
+                  <layout class="QVBoxLayout" name="verticalLayout_8" stretch="1,10,0">
                    <item>
                     <widget class="QLabel" name="label_22">
                      <property name="text">
-                      <string>Distance Estimate</string>
+                      <string>Distance Estimate - [m]</string>
                      </property>
                      <property name="alignment">
                       <set>Qt::AlignCenter</set>
@@ -588,11 +630,11 @@
                     </widget>
                    </item>
                    <item>
-                    <layout class="QHBoxLayout" name="horizontalLayout_8" stretch="10,5,10,5,10,5,2">
+                    <layout class="QHBoxLayout" name="horizontalLayout_8" stretch="10,5,0,0,2">
                      <item>
                       <widget class="QLabel" name="label_23">
                        <property name="text">
-                        <string>X</string>
+                        <string>D_ceiling</string>
                        </property>
                        <property name="alignment">
                         <set>Qt::AlignCenter</set>
@@ -617,16 +659,6 @@ color: rgb(214, 39, 40);</string>
                       </widget>
                      </item>
                      <item>
-                      <widget class="QLabel" name="label_24">
-                       <property name="text">
-                        <string>Y</string>
-                       </property>
-                       <property name="alignment">
-                        <set>Qt::AlignCenter</set>
-                       </property>
-                      </widget>
-                     </item>
-                     <item>
                       <widget class="Line" name="line_18">
                        <property name="styleSheet">
                         <string notr="true">color: rgb(44, 160, 44);</string>
@@ -639,16 +671,6 @@ color: rgb(214, 39, 40);</string>
                        </property>
                        <property name="orientation">
                         <enum>Qt::Horizontal</enum>
-                       </property>
-                      </widget>
-                     </item>
-                     <item>
-                      <widget class="QLabel" name="label_25">
-                       <property name="text">
-                        <string>Z</string>
-                       </property>
-                       <property name="alignment">
-                        <set>Qt::AlignCenter</set>
                        </property>
                       </widget>
                      </item>
@@ -1177,7 +1199,7 @@ color: rgb(214, 39, 40);</string>
                      <item>
                       <widget class="QLabel" name="label_47">
                        <property name="text">
-                        <string>Mu_1</string>
+                        <string>RREV</string>
                        </property>
                        <property name="alignment">
                         <set>Qt::AlignCenter</set>
@@ -1203,7 +1225,7 @@ color: rgb(214, 39, 40);</string>
                      <item>
                       <widget class="QLabel" name="label_49">
                        <property name="text">
-                        <string>Mu_2</string>
+                        <string>My</string>
                        </property>
                        <property name="alignment">
                         <set>Qt::AlignCenter</set>
