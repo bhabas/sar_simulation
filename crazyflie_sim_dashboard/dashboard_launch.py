@@ -4,6 +4,10 @@ from PyQt5.uic import loadUi
 from PyQt5.QtWidgets import QApplication, QMainWindow
 import pyqtgraph as pg
 from dashboard_node import DashboardNode
+from nav_msgs.msg import Odometry
+
+
+import rospy
 
 DashNode=DashboardNode()
 
@@ -31,12 +35,12 @@ class Dashboard(QMainWindow):
 
         self.Battery_Voltage.setValue(50)
 
-        # self.pushButton.clicked.connect(self.Pos_Graph.pause)
         self.pauseButton.clicked.connect(self.pause_plots)
         self.rescaleButton.clicked.connect(self.rescale_plots)
 
         self.timer = pg.QtCore.QTimer(self)
         self.timer.timeout.connect(self.update_LCD)
+        self.timer.timeout.connect(self.check_Vicon_Comm)
         self.timer.start(500) # number of seconds (every 1000) for next update
         self.ptr = 0
 
@@ -44,6 +48,14 @@ class Dashboard(QMainWindow):
         self.ptr += 1
         self.K_ep_LCD.display(DashNode.k_ep)
         self.K_run_LCD.display(DashNode.k_run)
+
+    def check_Vicon_Comm(self): ## CHECK IF RECEIVING VALID VICON DATA
+        try:
+            rospy.wait_for_message('/env/vicon_state',Odometry,timeout=0.1)
+            self.Vicon_Connection.setStyleSheet("background-color: rgb(44, 160, 44);")
+        except:
+            self.Vicon_Connection.setStyleSheet("background-color: rgb(214,39,40);")
+
 
 
     def pause_plots(self):
