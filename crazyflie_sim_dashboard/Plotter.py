@@ -2,6 +2,7 @@ import sys
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
 import numpy as np
+from pyqtgraph.graphicsItems.GraphicsWidget import GraphicsWidget
 from dashboard_node import DashboardNode
 import rospy
 from crazyflie_msgs.msg import RLData
@@ -17,10 +18,10 @@ colors = {
     "blue_alpha": (31,119,180,150),
     "orange_alpha": (255,127,14,150),
 }
-l_width = 2
-FPS = 60
+width = 2
 
 
+FPS = 30
 class CustomWidget(pg.GraphicsWindow):
     pg.setConfigOption('background', 'w')
     pg.setConfigOption('foreground', 'k')
@@ -106,12 +107,12 @@ class Mu_Widget(pg.GraphicsLayoutWidget):
 
 
         ## INIT DATA CURVE 
-        self.curve_1_mu = self.p1.plot([],[],  pen=pg.mkPen(color=colors["blue"], width=l_width))
+        self.curve_1_mu = self.p1.plot([],[],  pen=pg.mkPen(color=colors["blue"], width=width))
         self.curve_1_SD1 = self.p1.plot([],[], pen=pg.mkPen(color=colors["blue_alpha"]))
         self.curve_1_SD2 = self.p1.plot([],[], pen=pg.mkPen(color=colors["blue_alpha"]))
 
 
-        self.curve_2_mu = self.p1.plot([],[],  pen=pg.mkPen(color=colors["orange"], width=l_width))
+        self.curve_2_mu = self.p1.plot([],[],  pen=pg.mkPen(color=colors["orange"], width=width))
         self.curve_2_SD1 = self.p1.plot([],[], pen=pg.mkPen(color=colors["orange_alpha"]))
         self.curve_2_SD2 = self.p1.plot([],[], pen=pg.mkPen(color=colors["orange_alpha"]))
 
@@ -163,8 +164,8 @@ class Sig_Widget(pg.GraphicsLayoutWidget):
 
 
         ## INIT DATA CURVE 
-        self.curve_sig1 = self.p1.plot([],[], pen=pg.mkPen(color=colors["blue"], width=l_width))
-        self.curve_sig2 = self.p1.plot([],[], pen=pg.mkPen(color=colors["orange"], width=l_width))
+        self.curve_sig1 = self.p1.plot([],[], pen=pg.mkPen(color=colors["blue"], width=width))
+        self.curve_sig2 = self.p1.plot([],[], pen=pg.mkPen(color=colors["orange"], width=width))
 
 
         ## INIT UPDATE TIMER
@@ -190,38 +191,49 @@ class  Pos_Widget(pg.GraphicsLayoutWidget):
     pg.setConfigOptions(antialias=True)
 
     
-        
-    
     def __init__(self,parent=None, **kargs):
         pg.GraphicsLayoutWidget.__init__(self, **kargs)
-
-        self.ptr1 = 0
-        self.pause_flag = False
         self.setParent(parent)
         self.setWindowTitle('pyqtgraph example: Scrolling Plots')
 
+        
+        ## DEFINE HOW LONG TO PRESERVE DATA
+        buffer_time = 20_000                            # Amount of data to save [ms]
+        update_interval = 1_000//FPS                    # [ms]
+        buffer_length = buffer_time//update_interval    # Number of datapoints in plot
+
+        ## UPDATE X-AXIS TICKS
+        num_ticks = 9
+        buff_ticks = np.linspace(0,buffer_length,num_ticks)         # Tick locations
+        time_ticks = np.linspace(-buffer_time//1000,0,num_ticks)    # Tick values
+        tick_labels = dict(zip(buff_ticks,['{:.1f}'.format(tick) for tick in time_ticks]))
+
+
+        ax = pg.AxisItem(orientation='bottom')
+        ax.setTicks([tick_labels.items()])
+
         ## INIT PLOT WINDOW
-        self.p1 = self.addPlot(labels =  {'left':'Position [m]', 'bottom':'Time [s]'})
+        self.p1 = self.addPlot(labels =  {'left':'Position [m]', 'bottom':'Time [s]'},axisItems={'bottom': ax})
         self.p1.setYRange(-1,4)
+        self.p1.setXRange(-1,buffer_length)
         self.p1.showGrid(x=True, y=True, alpha=0.2)
 
-        # p1.setAutoPan(x=True,y=True)
-        # p1.showGrid(x=True, y=True, alpha=0.2)
+        
 
-        ## INIT DATA CURVE 1
-        self.pos_x_arr = np.zeros(100)
-        self.curve_pos_x = self.p1.plot(self.pos_x_arr, pen=pg.mkPen(color=colors["red"], width=l_width))
+        # ## INIT DATA CURVES
+        self.pos_x_arr = np.zeros(buffer_length)
+        self.curve_pos_x = self.p1.plot(self.pos_x_arr, pen=pg.mkPen(color=colors["red"], width=width))
 
-        self.pos_y_arr = np.zeros(100)
-        self.curve_pos_y = self.p1.plot(self.pos_y_arr, pen=pg.mkPen(color=colors["green"], width=l_width))
+        self.pos_y_arr = np.zeros(buffer_length)
+        self.curve_pos_y = self.p1.plot(self.pos_y_arr, pen=pg.mkPen(color=colors["green"], width=width))
 
-        self.pos_z_arr = np.zeros(100)
-        self.curve_pos_z = self.p1.plot(self.pos_z_arr, pen=pg.mkPen(color=colors["blue"], width=l_width))
+        self.pos_z_arr = np.zeros(buffer_length)
+        self.curve_pos_z = self.p1.plot(self.pos_z_arr, pen=pg.mkPen(color=colors["blue"], width=width))
 
         ## INIT UPDATE TIMER
         self.timer = pg.QtCore.QTimer(self)
         self.timer.timeout.connect(self.update)
-        self.timer.start(50) # number of seconds (every 1000) for next update
+        self.timer.start(update_interval) # number of milliseconds for next update
 
     def reset_axes(self):
         self.p1.enableAutoRange(enable=True)
@@ -235,22 +247,19 @@ class  Pos_Widget(pg.GraphicsLayoutWidget):
 
 
     def update(self):
-        self.ptr1 += 0
                            
         self.pos_x_arr[:-1] = self.pos_x_arr[1:]  # shift data in the array one sample left  # (see also: np.roll)
         self.pos_x_arr[-1] = DashNode.position[0]
         self.curve_pos_x.setData(self.pos_x_arr)
-        self.curve_pos_x.setPos(self.ptr1, 0)
 
         self.pos_y_arr[:-1] = self.pos_y_arr[1:]    # shift data in the array one sample left
         self.pos_y_arr[-1] = DashNode.position[1]
         self.curve_pos_y.setData(self.pos_y_arr)
-        self.curve_pos_y.setPos(self.ptr1,0)
 
         self.pos_z_arr[:-1] = self.pos_z_arr[1:]    # shift data in the array one sample left
         self.pos_z_arr[-1] = DashNode.position[2]
         self.curve_pos_z.setData(self.pos_z_arr)
-        self.curve_pos_z.setPos(self.ptr1,0)
+        # self.curve_pos_z.setPos(50,0)
 
 class  Vel_Widget(pg.GraphicsLayoutWidget):
 
@@ -274,13 +283,13 @@ class  Vel_Widget(pg.GraphicsLayoutWidget):
 
         ## INIT DATA CURVE 1
         self.vel_x_arr = np.zeros(100)
-        self.curve_vel_x = self.p1.plot(self.vel_x_arr, pen=pg.mkPen(color=colors["red"], width=l_width))
+        self.curve_vel_x = self.p1.plot(self.vel_x_arr, pen=pg.mkPen(color=colors["red"], width=width))
 
         self.vel_y_arr = np.zeros(100)
-        self.curve_vel_y = self.p1.plot(self.vel_y_arr, pen=pg.mkPen(color=colors["green"], width=l_width))
+        self.curve_vel_y = self.p1.plot(self.vel_y_arr, pen=pg.mkPen(color=colors["green"], width=width))
 
         self.vel_z_arr = np.zeros(100)
-        self.curve_vel_z = self.p1.plot(self.vel_z_arr, pen=pg.mkPen(color=colors["blue"], width=l_width))
+        self.curve_vel_z = self.p1.plot(self.vel_z_arr, pen=pg.mkPen(color=colors["blue"], width=width))
 
         ## INIT UPDATE TIMER
         self.timer = pg.QtCore.QTimer(self)
@@ -337,13 +346,13 @@ class  Omega_Widget(pg.GraphicsLayoutWidget):
 
         ## INIT DATA CURVE 1
         self.omega_x_arr = np.zeros(100)
-        self.curve_omega_x = self.p1.plot(self.omega_x_arr, pen=pg.mkPen(color=colors["red"], width=l_width))
+        self.curve_omega_x = self.p1.plot(self.omega_x_arr, pen=pg.mkPen(color=colors["red"], width=width))
 
         self.omega_y_arr = np.zeros(100)
-        self.curve_omega_y = self.p1.plot(self.omega_y_arr, pen=pg.mkPen(color=colors["green"], width=l_width))
+        self.curve_omega_y = self.p1.plot(self.omega_y_arr, pen=pg.mkPen(color=colors["green"], width=width))
 
         self.omega_z_arr = np.zeros(100)
-        self.curve_omega_z = self.p1.plot(self.omega_z_arr, pen=pg.mkPen(color=colors["blue"], width=l_width))
+        self.curve_omega_z = self.p1.plot(self.omega_z_arr, pen=pg.mkPen(color=colors["blue"], width=width))
 
         ## INIT UPDATE TIMER
         self.timer = pg.QtCore.QTimer(self)
@@ -404,13 +413,13 @@ class  Eul_Widget(pg.GraphicsLayoutWidget):
 
         ## INIT DATA CURVE 1
         self.eul_x_arr = np.zeros(100)
-        self.curve_eul_x = self.p1.plot(self.eul_x_arr, pen=pg.mkPen(color=colors["red"], width=l_width))
+        self.curve_eul_x = self.p1.plot(self.eul_x_arr, pen=pg.mkPen(color=colors["red"], width=width))
 
         self.eul_y_arr = np.zeros(100)
-        self.curve_eul_y = self.p1.plot(self.eul_y_arr, pen=pg.mkPen(color=colors["green"], width=l_width))
+        self.curve_eul_y = self.p1.plot(self.eul_y_arr, pen=pg.mkPen(color=colors["green"], width=width))
 
         self.eul_z_arr = np.zeros(100)
-        self.curve_eul_z = self.p1.plot(self.eul_z_arr, pen=pg.mkPen(color=colors["blue"], width=l_width))
+        self.curve_eul_z = self.p1.plot(self.eul_z_arr, pen=pg.mkPen(color=colors["blue"], width=width))
 
         ## INIT UPDATE TIMER
         self.timer = pg.QtCore.QTimer(self)
@@ -468,13 +477,13 @@ class  OF_Widget(pg.GraphicsLayoutWidget):
 
         ## INIT DATA CURVE 1
         self.tau_arr = np.zeros(100)
-        self.curve_tau = self.p1.plot(self.tau_arr, pen=pg.mkPen(color=colors["red"], width=l_width))
+        self.curve_tau = self.p1.plot(self.tau_arr, pen=pg.mkPen(color=colors["red"], width=width))
 
         self.OF_x_arr = np.zeros(100)
-        self.curve_OF_x = self.p1.plot(self.OF_x_arr, pen=pg.mkPen(color=colors["green"], width=l_width))
+        self.curve_OF_x = self.p1.plot(self.OF_x_arr, pen=pg.mkPen(color=colors["green"], width=width))
 
         self.OF_y_arr = np.zeros(100)
-        self.curve_OF_y = self.p1.plot(self.OF_y_arr, pen=pg.mkPen(color=colors["blue"], width=l_width))
+        self.curve_OF_y = self.p1.plot(self.OF_y_arr, pen=pg.mkPen(color=colors["blue"], width=width))
 
         
 
@@ -535,7 +544,7 @@ class  dist_Widget(pg.GraphicsLayoutWidget):
 
         ## INIT DATA CURVE 1
         self.d_ceiling_arr = np.zeros(100)
-        self.curve_d_ceil = self.p1.plot(self.d_ceiling_arr, pen=pg.mkPen(color=colors["red"], width=l_width))
+        self.curve_d_ceil = self.p1.plot(self.d_ceiling_arr, pen=pg.mkPen(color=colors["red"], width=width))
 
 
         ## INIT UPDATE TIMER
@@ -585,16 +594,16 @@ class  PWM_Widget(pg.GraphicsLayoutWidget):
 
         ## INIT DATA CURVE 1
         self.M1_arr = np.zeros(200)
-        self.curve_M1 = self.p1.plot(self.M1_arr, pen=pg.mkPen(color=colors["red"], width=l_width))
+        self.curve_M1 = self.p1.plot(self.M1_arr, pen=pg.mkPen(color=colors["red"], width=width))
 
         self.M2_arr = np.zeros(200)
-        self.curve_M2 = self.p1.plot(self.M2_arr, pen=pg.mkPen(color=colors["green"], width=l_width))
+        self.curve_M2 = self.p1.plot(self.M2_arr, pen=pg.mkPen(color=colors["green"], width=width))
 
         self.M3_arr = np.zeros(200)
-        self.curve_M3 = self.p1.plot(self.M3_arr, pen=pg.mkPen(color=colors["blue"], width=l_width))
+        self.curve_M3 = self.p1.plot(self.M3_arr, pen=pg.mkPen(color=colors["blue"], width=width))
 
         self.M4_arr = np.zeros(200)
-        self.curve_M4 = self.p1.plot(self.M4_arr, pen=pg.mkPen(color=colors["orange"], width=l_width))
+        self.curve_M4 = self.p1.plot(self.M4_arr, pen=pg.mkPen(color=colors["orange"], width=width))
 
         ## INIT UPDATE TIMER
         self.timer = pg.QtCore.QTimer(self)
@@ -636,6 +645,6 @@ class  PWM_Widget(pg.GraphicsLayoutWidget):
 
 if __name__ == '__main__':
 
-    w = Mu_Widget()
+    w = Pos_Widget()
     w.show()
     QtGui.QApplication.instance().exec_()
