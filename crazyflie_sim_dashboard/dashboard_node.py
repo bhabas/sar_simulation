@@ -1,7 +1,7 @@
 import rospy
 import numpy as np
 
-from crazyflie_msgs.msg import RLData
+from crazyflie_msgs.msg import RLData,RLConvg
 from crazyflie_msgs.msg import CtrlData
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Odometry
@@ -44,6 +44,7 @@ class DashboardNode:
         rospy.Subscriber('/rl_data',RLData,self.rewardCallback)
         rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback)
         rospy.Subscriber('/cf1/laser',LaserScan,self.laserCallback)
+        rospy.Subscriber('/rl_convg',RLConvg,self.rlConvgCallback)
         rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
    
         print("[COMPLETED] Dashboard node is running...")
@@ -53,14 +54,7 @@ class DashboardNode:
     # ============================
     def rewardCallback(self,reward_msg):
 
-        self.n_rollouts = reward_msg.n_rollouts
-
-
-        self.mu_1_list = np.array(reward_msg.mu_1_list)
-        self.mu_2_list = np.array(reward_msg.mu_2_list)
-        self.sigma_1_list = np.array(reward_msg.sigma_1_list)
-        self.sigma_2_list = np.array(reward_msg.sigma_2_list)
-        
+        self.n_rollouts = reward_msg.n_rollouts        
         self.k_run = reward_msg.k_run
         self.k_ep = reward_msg.k_ep
             
@@ -74,6 +68,12 @@ class DashboardNode:
             self.r_avg_list.append(reward_msg.reward_avg)
             self.k_ep_list2.append(self.k_ep)
 
+
+    def rlConvgCallback(self,msg):
+        self.mu_1_list = np.array(msg.mu_1_list)
+        self.mu_2_list = np.array(msg.mu_2_list)
+        self.sigma_1_list = np.array(msg.sigma_1_list)
+        self.sigma_2_list = np.array(msg.sigma_2_list)
 
 
     

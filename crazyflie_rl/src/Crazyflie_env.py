@@ -12,7 +12,7 @@ from std_srvs.srv import Empty
 
 
 from sensor_msgs.msg import LaserScan, Image, Imu
-from crazyflie_msgs.msg import RLData,RLCmd
+from crazyflie_msgs.msg import RLData,RLCmd,RLConvg
 from crazyflie_msgs.msg import ImpactData,CtrlData,PadConnect
 
 from rosgraph_msgs.msg import Clock
@@ -187,6 +187,9 @@ class CrazyflieEnv:
         ## INIT ROS PUBLISHERS
         self.RL_Publisher = rospy.Publisher('/rl_data',RLData,queue_size=10)
         self.Cmd_Publisher = rospy.Publisher('/rl_ctrl',RLCmd,queue_size=10)
+        self.RL_Convg_Publisher = rospy.Publisher('/rl_convg',RLConvg,queue_size=10)
+
+        
 
 
 
@@ -233,12 +236,6 @@ class CrazyflieEnv:
         rl_msg.sigma = self.sigma
         rl_msg.policy = self.policy
 
-        rl_msg.mu_1_list = self.mu_1_list
-        rl_msg.mu_2_list = self.mu_2_list
-        rl_msg.sigma_1_list = self.sigma_1_list
-        rl_msg.sigma_2_list = self.sigma_2_list
-
-
         rl_msg.reward = self.reward
         rl_msg.reward_avg = self.reward_avg
 
@@ -246,9 +243,18 @@ class CrazyflieEnv:
         # rl_msg.M_d = self.M_d
         rl_msg.leg_contacts = self.pad_contacts
         rl_msg.body_contact = self.body_contact
+        self.RL_Publisher.publish(rl_msg) ## Publish RLData message
+
+        rl_convg_msg = RLConvg()
+        rl_convg_msg.mu_1_list = self.mu_1_list
+        rl_convg_msg.mu_2_list = self.mu_2_list
+        rl_convg_msg.sigma_1_list = self.sigma_1_list
+        rl_convg_msg.sigma_2_list = self.sigma_2_list
+        self.RL_Convg_Publisher.publish(rl_convg_msg) ## Publish RLData message
+
+
         
 
-        self.RL_Publisher.publish(rl_msg) ## Publish RLData message
 
     def ctrlCallback(self,ctrl_msg): ## Callback to parse data received from controller
         

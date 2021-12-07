@@ -27,10 +27,3 @@ float32[] vel_d
 float32[] M_d
 uint8[] leg_contacts
 bool body_contact
-
-float32[] mu_1_list
-float32[] mu_2_list
-
-float32[] sigma_1_list
-float32[] sigma_2_list
-
