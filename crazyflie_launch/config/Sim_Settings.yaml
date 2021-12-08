@@ -1,5 +1,5 @@
 MODEL_NAME: "crazyflie_Wide-Long"
-GUI_FLAG: false
+GUI_FLAG: True
 
 SIM_SPEED: 2.0
 SIM_SLOWDOWN_SPEED: 0.4
