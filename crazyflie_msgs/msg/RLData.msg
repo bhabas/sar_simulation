@@ -18,7 +18,6 @@ float32[] alpha_mu
 float32[] alpha_sigma
 float32[] mu
 float32[] sigma
-
 float32[] policy
 
 float32 reward
@@ -28,5 +27,3 @@ float32[] vel_d
 float32[] M_d
 uint8[] leg_contacts
 bool body_contact
-
-
