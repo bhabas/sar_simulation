@@ -18,7 +18,7 @@
     <item>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,80,0,0,0,0,0">
+       <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,80,0,0,0,0,0,0">
         <item>
          <widget class="QLabel" name="label_13">
           <property name="text">
@@ -96,6 +96,13 @@
          <widget class="QPushButton" name="rescaleButton">
           <property name="text">
            <string>Rescale</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="clearButton">
+          <property name="text">
+           <string>Clear</string>
           </property>
          </widget>
         </item>

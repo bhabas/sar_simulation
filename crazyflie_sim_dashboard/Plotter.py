@@ -223,13 +223,13 @@ class  Pos_Widget(pg.GraphicsLayoutWidget):
         
 
         # ## INIT DATA CURVES
-        self.x_arr = np.zeros(buffer_length)
+        self.x_arr = np.random.randn(buffer_length)
         self.curve_x = self.p1.plot(self.x_arr, pen=pg.mkPen(color=colors["red"], width=width))
 
-        self.y_arr = np.zeros(buffer_length)
+        self.y_arr = np.random.randn(buffer_length)
         self.curve_y = self.p1.plot(self.y_arr, pen=pg.mkPen(color=colors["green"], width=width))
 
-        self.z_arr = np.zeros(buffer_length)
+        self.z_arr = np.random.randn(buffer_length)
         self.curve_z = self.p1.plot(self.z_arr, pen=pg.mkPen(color=colors["blue"], width=width))
 
         ## INIT UPDATE TIMER
@@ -247,20 +247,25 @@ class  Pos_Widget(pg.GraphicsLayoutWidget):
             self.timer.stop()
         else: 
             self.timer.start()
+    
+    def clear_data(self):
+        self.x_arr = np.zeros(buffer_length)
+        self.y_arr = np.zeros(buffer_length)
+        self.z_arr = np.zeros(buffer_length)
 
 
     def update(self):
                            
-        self.x_arr[:-1] = self.x_arr[1:]  # shift data in the array one sample left  # (see also: np.roll)
-        self.x_arr[-1] = DashNode.position[0]
+        self.x_arr = np.roll(self.x_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
+        self.x_arr[-1] = np.random.randn()
         self.curve_x.setData(self.x_arr)
 
-        self.y_arr[:-1] = self.y_arr[1:]    # shift data in the array one sample left
-        self.y_arr[-1] = DashNode.position[1]
+        self.y_arr = np.roll(self.y_arr,-1)
+        self.y_arr[-1] = np.random.randn()
         self.curve_y.setData(self.y_arr)
 
-        self.z_arr[:-1] = self.z_arr[1:]    # shift data in the array one sample left
-        self.z_arr[-1] = DashNode.position[2]
+        self.z_arr = np.roll(self.z_arr,-1)
+        self.z_arr[-1] = np.random.randn()
         self.curve_z.setData(self.z_arr)
 
 
@@ -314,19 +319,24 @@ class  Vel_Widget(pg.GraphicsLayoutWidget):
         else: 
             self.timer.start()
 
+    def clear_data(self):
+        self.x_arr = np.zeros(buffer_length)
+        self.y_arr = np.zeros(buffer_length)
+        self.z_arr = np.zeros(buffer_length)
+
 
     def update(self):
                            
-        self.x_arr[:-1] = self.x_arr[1:]  # shift data in the array one sample left  # (see also: np.roll)
-        self.x_arr[-1] = DashNode.velocity[0]
+        self.x_arr = np.roll(self.x_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
+        self.x_arr[-1] = np.random.randn()
         self.curve_x.setData(self.x_arr)
 
-        self.y_arr[:-1] = self.y_arr[1:]    # shift data in the array one sample left
-        self.y_arr[-1] = DashNode.velocity[1]
+        self.y_arr = np.roll(self.y_arr,-1)
+        self.y_arr[-1] = np.random.randn()
         self.curve_y.setData(self.y_arr)
 
-        self.z_arr[:-1] = self.z_arr[1:]    # shift data in the array one sample left
-        self.z_arr[-1] = DashNode.velocity[2]
+        self.z_arr = np.roll(self.z_arr,-1)
+        self.z_arr[-1] = np.random.randn()
         self.curve_z.setData(self.z_arr)
 
 
@@ -381,19 +391,23 @@ class  Omega_Widget(pg.GraphicsLayoutWidget):
         else: 
             self.timer.start()
 
+    def clear_data(self):
+        self.x_arr = np.zeros(buffer_length)
+        self.y_arr = np.zeros(buffer_length)
+        self.z_arr = np.zeros(buffer_length)
 
     def update(self):
                            
-        self.x_arr[:-1] = self.x_arr[1:]  # shift data in the array one sample left  # (see also: np.roll)
-        self.x_arr[-1] = DashNode.omega[0]
+        self.x_arr = np.roll(self.x_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
+        self.x_arr[-1] = np.random.randn()
         self.curve_x.setData(self.x_arr)
 
-        self.y_arr[:-1] = self.y_arr[1:]    # shift data in the array one sample left
-        self.y_arr[-1] = DashNode.omega[1]
+        self.y_arr = np.roll(self.y_arr,-1)
+        self.y_arr[-1] = np.random.randn()
         self.curve_y.setData(self.y_arr)
 
-        self.z_arr[:-1] = self.z_arr[1:]    # shift data in the array one sample left
-        self.z_arr[-1] = DashNode.omega[2]
+        self.z_arr = np.roll(self.z_arr,-1)
+        self.z_arr[-1] = np.random.randn()
         self.curve_z.setData(self.z_arr)
 
 class  Eul_Widget(pg.GraphicsLayoutWidget):
@@ -453,19 +467,23 @@ class  Eul_Widget(pg.GraphicsLayoutWidget):
         else: 
             self.timer.start()
 
+    def clear_data(self):
+        self.x_arr = np.zeros(buffer_length)
+        self.y_arr = np.zeros(buffer_length)
+        self.z_arr = np.zeros(buffer_length)
 
     def update(self):
                            
-        self.x_arr[:-1] = self.x_arr[1:]  # shift data in the array one sample left  # (see also: np.roll)
-        self.x_arr[-1] = DashNode.eul[0]
+        self.x_arr = np.roll(self.x_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
+        self.x_arr[-1] = np.random.randn()
         self.curve_x.setData(self.x_arr)
 
-        self.y_arr[:-1] = self.y_arr[1:]    # shift data in the array one sample left
-        self.y_arr[-1] = DashNode.eul[1]
+        self.y_arr = np.roll(self.y_arr,-1)
+        self.y_arr[-1] = np.random.randn()
         self.curve_y.setData(self.y_arr)
 
-        self.z_arr[:-1] = self.z_arr[1:]    # shift data in the array one sample left
-        self.z_arr[-1] = DashNode.eul[2]
+        self.z_arr = np.roll(self.z_arr,-1)
+        self.z_arr[-1] = np.random.randn()
         self.curve_z.setData(self.z_arr)
 
 class  OF_Widget(pg.GraphicsLayoutWidget):
@@ -519,19 +537,23 @@ class  OF_Widget(pg.GraphicsLayoutWidget):
         else: 
             self.timer.start()
 
+    def clear_data(self):
+        self.x_arr = np.zeros(buffer_length)
+        self.y_arr = np.zeros(buffer_length)
+        self.z_arr = np.zeros(buffer_length)
 
     def update(self):
                            
         self.x_arr[:-1] = self.x_arr[1:]  # shift data in the array one sample left  # (see also: np.roll)
-        self.x_arr[-1] = DashNode.OF_x
+        self.x_arr[-1] = np.random.randn()
         self.curve_x.setData(self.x_arr)
 
         self.y_arr[:-1] = self.y_arr[1:]    # shift data in the array one sample left
-        self.y_arr[-1] = DashNode.OF_y
+        self.y_arr[-1] = np.random.randn()
         self.curve_y.setData(self.y_arr)
 
         self.z_arr[:-1] = self.z_arr[1:]    # shift data in the array one sample left
-        self.z_arr[-1] = DashNode.RREV
+        self.z_arr[-1] = np.random.randn()
         self.curve_z.setData(self.z_arr)
 
 
@@ -580,12 +602,16 @@ class  dist_Widget(pg.GraphicsLayoutWidget):
         else: 
             self.timer.start()
 
+    def clear_data(self):
+        self.x_arr = np.zeros(buffer_length)
+
 
     def update(self):
                            
-        self.x_arr[:-1] = self.x_arr[1:]  # shift data in the array one sample left  # (see also: np.roll)
-        self.x_arr[-1] = DashNode.d_ceiling
+        self.x_arr = np.roll(self.x_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
+        self.x_arr[-1] = np.random.randn()
         self.curve_x.setData(self.x_arr)
+
 
 class  PWM_Widget(pg.GraphicsLayoutWidget):
 
@@ -653,28 +679,35 @@ class  PWM_Widget(pg.GraphicsLayoutWidget):
         else: 
             self.timer.start()
 
+    def clear_data(self):
+        self.M1_arr = np.zeros(buffer_length)
+        self.M2_arr = np.zeros(buffer_length)
+        self.M3_arr = np.zeros(buffer_length)
+        self.M4_arr = np.zeros(buffer_length)
 
     def update(self):
                            
-        self.M1_arr[:-1] = self.M1_arr[1:]  # shift data in the array one sample left  # (see also: np.roll)
-        self.M1_arr[-1] = DashNode.MS_PWM[0]
+        self.M1_arr = np.roll(self.M1_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
+        self.M1_arr[-1] = np.random.randn()
         self.curve_M1.setData(self.M1_arr)
 
-        self.M2_arr[:-1] = self.M2_arr[1:]    # shift data in the array one sample left
-        self.M2_arr[-1] = DashNode.MS_PWM[1]
+        self.M2_arr = np.roll(self.M2_arr,-1)
+        self.M2_arr[-1] = np.random.randn()
         self.curve_M2.setData(self.M2_arr)
 
-        self.M3_arr[:-1] = self.M3_arr[1:]    # shift data in the array one sample left
-        self.M3_arr[-1] = DashNode.MS_PWM[3]
+        self.M3_arr = np.roll(self.M3_arr,-1)
+        self.M3_arr[-1] = np.random.randn()
         self.curve_M3.setData(self.M3_arr)
 
-        self.M4_arr[:-1] = self.M4_arr[1:]    # shift data in the array one sample left
-        self.M4_arr[-1] = DashNode.MS_PWM[3]
+        self.M4_arr = np.roll(self.M4_arr,-1)
+        self.M4_arr[-1] = np.random.randn()
         self.curve_M4.setData(self.M4_arr)
+
+        
 
 
 if __name__ == '__main__':
 
-    w = Vel_Widget()
+    w = Pos_Widget()
     w.show()
     QtGui.QApplication.instance().exec_()

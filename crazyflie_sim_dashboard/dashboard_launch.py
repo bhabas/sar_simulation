@@ -37,6 +37,7 @@ class Dashboard(QMainWindow):
 
         self.pauseButton.clicked.connect(self.pause_plots)
         self.rescaleButton.clicked.connect(self.rescale_plots)
+        self.clearButton.clicked.connect(self.clear_plots)
 
         self.timer = pg.QtCore.QTimer(self)
         self.timer.timeout.connect(self.update_LCD)
@@ -73,10 +74,14 @@ class Dashboard(QMainWindow):
 
     def rescale_plots(self):
         for plot in self.plot_list:
-                plot.reset_axes()
+            plot.reset_axes()
 
         self.Mu_Graph.reset_axes()
         self.Sigma_Graph.reset_axes()
+
+    def clear_plots(self):
+        for plot in self.plot_list:
+            plot.clear_data()
 
 
 if __name__ == '__main__':
