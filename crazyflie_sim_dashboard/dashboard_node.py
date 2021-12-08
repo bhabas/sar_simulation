@@ -21,7 +21,6 @@ class DashboardNode:
 
         self.k_ep_list1 = [0]
         self.k_ep_list2 = [0]
-        self.k_ep_list3 = [0]
 
 
         self.r_list = [np.nan]
@@ -33,8 +32,12 @@ class DashboardNode:
         self.sigma_1_list = []
         self.sigma_2_list = []
 
-
-        self.MS = [0,0,0,0]
+        self.pos = np.array([0,0,0])
+        self.vel = np.array([0,0,0])
+        self.quat = np.array([0,0,0,1])
+        self.eul = np.array([0,0,0])
+        self.omega = np.array([0,0,0])
+        self.MS = np.array([0,0,0,0])
         
 
         ## INITIALIZE GLOBAL STATE SUBSCRIBER 

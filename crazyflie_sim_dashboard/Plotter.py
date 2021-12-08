@@ -22,15 +22,15 @@ width = 2
 
 
 ## DEFINE HOW LONG TO PRESERVE DATA   
-refresh_rate = 30                                       # Refresh rate
+refresh_rate = 15                              # Refresh rate [Hz]
 buffer_time = 10_000                           # Amount of data to save [ms]
-update_interval = 1_000//refresh_rate                   # [ms]
+update_interval = 1_000//refresh_rate          # Convert refresh_rate to ms [ms]
 buffer_length = buffer_time//update_interval   # Number of datapoints in plot
 
 
 ## UPDATE X-AXIS TICKS
 num_ticks = 6
-buff_ticks = np.linspace(0,buffer_length,num_ticks)    # Tick locations
+buff_ticks = np.linspace(0,buffer_length,num_ticks)         # Tick locations
 time_ticks = np.linspace(-buffer_time//1000,0,num_ticks)    # Tick values
 tick_labels = dict(zip(buff_ticks,['{:.1f}'.format(tick) for tick in time_ticks]))
 
@@ -115,7 +115,7 @@ class Mu_Widget(pg.GraphicsLayoutWidget):
 
         self.setParent(parent)
         self.p1 = self.addPlot(labels =  {'left':'Mu', 'bottom':'Episode [K_ep]'})
-        self.p1.setYRange(0,10)
+        self.p1.setYRange(0,16)
         self.p1.setXRange(0,20)
         self.p1.showGrid(x=True, y=True, alpha=0.2)
 
@@ -156,8 +156,8 @@ class Mu_Widget(pg.GraphicsLayoutWidget):
         self.curve_2_SD2.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_2_list + -2*DashNode.sigma_2_list)
     
     def reset_axes(self):
+        self.p1.setYRange(0,16)
         self.p1.setXRange(0,20)
-        self.p1.setYRange(0,15)
 
 class Sig_Widget(pg.GraphicsLayoutWidget):
 
@@ -710,4 +710,4 @@ if __name__ == '__main__':
 
     w = PWM_Widget()
     w.show()
-    QtGui.QApplication.instance().exec_()
+    QtGui.QApplication.instance().exec()
