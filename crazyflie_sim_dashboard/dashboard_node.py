@@ -121,8 +121,8 @@ class DashboardNode:
             global_quat.w = 1
 
         ## SET STATE VALUES FROM TOPIC
-        self.position = np.round([global_pos.x,global_pos.y,global_pos.z],3)
-        self.velocity = np.round([global_vel.x,global_vel.y,global_vel.z],3)
+        self.pos = np.round([global_pos.x,global_pos.y,global_pos.z],3)
+        self.vel = np.round([global_vel.x,global_vel.y,global_vel.z],3)
         self.quat = np.round([global_quat.x,global_quat.y,global_quat.z,global_quat.w],3)
         self.eul = np.round(self.quat2euler(self.quat,degrees=True),3)
         self.omega = np.round([global_omega.x,global_omega.y,global_omega.z],3)
