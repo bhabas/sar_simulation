@@ -8,7 +8,7 @@ class Window(QDialog):
     def __init__(self):
         super().__init__()
 
-        ## WINODW REQUIREMENTS LIKE GEOMETRY,ICON AND TITLE
+        ## WINDOW REQUIREMENTS LIKE GEOMETRY,ICON AND TITLE
         self.setGeometry(200,200,400,200)
         self.setWindowTitle("PyQt5 QLCDNumber")
         self.setWindowIcon(QIcon("python.png"))
