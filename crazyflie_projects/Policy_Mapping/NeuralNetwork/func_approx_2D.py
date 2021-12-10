@@ -67,7 +67,7 @@ def train_model(epochs,X_train,y_train):
         loss.backward()
         optimizer.step()
 
-    torch.save(model,'Func_approx_2D.pt')
+    torch.save(model,f'{BASEPATH}/Pickle_Files/Func_approx_2D.pt')
     return model
 
 
@@ -106,7 +106,7 @@ if __name__ == '__main__':
 
 
     train_model(epochs,X_train,y_train)
-    model = torch.load(f'{BASEPATH}/Func_approx_2D.pt')
+    model = torch.load(f'{BASEPATH}/Pickle_Files/Func_approx_2D.pt')
 
     ## DEFINE EVALUATION RANGE 
     x1_eval = np.linspace(-3,3,10).reshape(-1,1)

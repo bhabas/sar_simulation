@@ -66,7 +66,7 @@ def train_model(epochs,X_train,y_train):
         loss.backward()
         optimizer.step()
 
-    torch.save(model,f'{BASEPATH}/Func_approx_LR.pt')
+    torch.save(model,f'{BASEPATH}/Pickle_Files/Func_approx_LR.pt')
 
     plt.plot(range(epochs),losses)
     plt.xlabel('Epoch')
@@ -105,7 +105,7 @@ if __name__ == '__main__':
 
 
     # train_model(epochs,X_train,y_train)
-    model = torch.load(f'{BASEPATH}/Func_approx_LR.pt')
+    model = torch.load(f'{BASEPATH}/Pickle_Files/Func_approx_LR.pt')
 
     ## MODEL EVALUATION
 
