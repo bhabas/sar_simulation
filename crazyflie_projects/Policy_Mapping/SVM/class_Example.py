@@ -55,21 +55,35 @@ clf.fit(X_train,y_train)
 
 
 ## EVALUATE MODEL
-y_eval = clf.predict(X_test)
+y_pred = clf.predict(X_test)
 # r_test = np.sqrt(X_test[:,0]**2 + X_test[:,1]**2 + X_test[:,2]**2)
 
-count = 0
-for ii in range(len(y_eval)):
+from sklearn.metrics import accuracy_score, balanced_accuracy_score,confusion_matrix,classification_report,roc_curve,roc_auc_score
 
-    if y_test[ii,0] == y_eval[ii]:
+
+count = 0
+for ii in range(len(y_pred)):
+
+    if y_test[ii,0] == y_pred[ii]:
         count += 1
         correct = True
     else:
         correct = False
 
-    print(f"y_test: {y_test[ii,0]:.1f} \t y_pred: {y_eval[ii]:.1f} \t radius: {y_test[ii,1]:.2f} \t Correct: {str(correct)}")
+    print(f"y_test: {y_test[ii,0]:.1f} \t y_pred: {y_pred[ii]:.1f} \t radius: {y_test[ii,1]:.2f} \t Correct: {str(correct)}")
 
-print(f"Correct: {count/len(y_eval):.2f}")
+print(f"Correct: {count/len(y_pred):.2f}")
+print(accuracy_score(y_test[:,0],y_pred))
+print(balanced_accuracy_score(y_test[:,0],y_pred))
+print(confusion_matrix(y_test[:,0],y_pred,normalize='all'))
+print(classification_report(y_test[:,0],y_pred))
+
+# fpr, tpr, thresholds = roc_curve(y_test[:,0],y_pred, pos_label=1)
+# plt.plot(tpr,fpr)
+# plt.show()
+
+print(roc_auc_score(y_test[:,0],y_pred))
+
 
 
 fig = plt.figure(1,figsize=(8,8))
