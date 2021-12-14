@@ -34,7 +34,7 @@ r = np.sqrt(X1**2 + X2**2 + X3**2)
 y = [1 if ii < 2.5 else 0 for ii in r]
 
 
-data_array = np.stack((X1.flatten(),X2.flatten(),X1.flatten(),y,r)).T
+data_array = np.stack((X1.flatten(),X2.flatten(),X3.flatten(),y,r)).T
 df = pd.DataFrame(data_array,columns=['X1','X2','X3','y','r'])
 
 ## SPLIT DATA FEATURES INTO TRAINING AND TESTING DATA
