@@ -20,7 +20,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 ## LOCAL IMPORTS
-from NN_Training import *
+# from NN_Training import *
 
 
 os.system("clear")

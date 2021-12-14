@@ -1,24 +1,22 @@
-
+## STANDARD IMPORTS
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
+## PYTORCH IMPROTS
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+## SKLEARN IMPORTS
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_blobs
 from sklearn.metrics import *
+from sklearn import preprocessing
+
 
 BASEPATH = "crazyflie_projects/Policy_Mapping/NeuralNetwork"
 
-
-def myfun(x):
-    y = [1 if 2 < i < 5 else 0 for i in x]
-    y = np.reshape(y,(-1,1))
-
-    return y
 
 ## DEFINE NN MODEL
 class Model(nn.Module):
@@ -76,16 +74,8 @@ def train_model(epochs,X_train,y_train):
 
 if __name__ == '__main__':
 
-    ## GENERATE TRAINING DATA
-    batch_size = 50
-    epochs = 10_000
-
-    range_train = [-1,7]
-    X = np.linspace(range_train[0],range_train[1],batch_size).reshape(-1,1)
-    y = myfun(X)
-
     ## GENERATE DATA
-    n_samples_1 = 100
+    n_samples_1 = 500
     centers = [[0.0]]
     clusters_std = [3.0]
     X, y = make_blobs(
@@ -100,61 +90,59 @@ if __name__ == '__main__':
     y = [1 if ii < 2.5 else 0 for ii in r]
     y = np.array(y)
 
+    scaler = preprocessing.StandardScaler().fit(X)
+    X_scaled = scaler.transform(X)
+    X = X_scaled
 
-    data_array = np.stack((X.flatten(),y.flatten())).T
-    df = pd.DataFrame(data_array,columns=['X','y'])
+
+    ## CONVERT DATA TO DATAFRAME
+    data_array = np.stack((X.flatten(),y),axis=1)
+    df = pd.DataFrame(data_array,columns=['X1','y'])
 
     ## SPLIT DATA FEATURES INTO TRAINING AND TESTING DATA
-    train, test = train_test_split(df,test_size=0.2,random_state=33)
+    train_df, test_df = train_test_split(df,test_size=0.2,random_state=33)
 
     ## CONVERT DATA INTO TENSORS
-    X_train = torch.FloatTensor(train['X'].to_numpy()).reshape((-1,1))
-    X_test = torch.FloatTensor(test['X'].to_numpy()).reshape((-1,1))
+    X_train = torch.FloatTensor(train_df['X1'].to_numpy()).reshape((-1,1))
+    X_test = torch.FloatTensor(test_df['X1'].to_numpy()).reshape((-1,1))
 
-    y_train = torch.FloatTensor(train[['y']].to_numpy())
-    y_test = torch.FloatTensor(test[['y']].to_numpy())
+    y_train = torch.FloatTensor(train_df[['y']].to_numpy())
+    y_test = torch.FloatTensor(test_df[['y']].to_numpy())
 
+    ## TRAIN NN MODEL
+    epochs = 10_000
+    # train_model(epochs,X_train,y_train)
 
-    train_model(epochs,X_train,y_train)
+    ## EVALUATE NN MODEL
     model = torch.load(f'{BASEPATH}/Pickle_Files/Classifier_1D.pt')
 
-    ## DEFINE EVALUATION RANGE 
-    X_eval = np.linspace(-3,10,50).reshape(-1,1)
-    X_eval = torch.FloatTensor(X_eval)
-
     with torch.no_grad():
-        y_eval = model.forward(X_eval)
+        y_pred = model.forward(X_test)
+        y_pred = np.round(y_pred,0)
+    print(balanced_accuracy_score(y_test[:,0],y_pred))
+    print(confusion_matrix(y_test[:,0],y_pred,normalize=None))
+    print(classification_report(y_test[:,0],y_pred))
+
 
 
     ## PLOT NETWORK OUTPUTS
     fig = plt.figure(1,figsize=(12,6))
 
     ax1 = fig.add_subplot(1,2,1)
-    ax1.plot(X_eval,y_eval[:,0],'g',alpha=0.5,label='NN Output')
-    ax1.plot(X_eval,myfun(X_eval).flatten(),'g--',alpha=0.5,label='f(x) Output')
-    ax1.plot(X_train,myfun(X_train),'.',label='Training Data')
-    ax1.axvspan(range_train[0],range_train[1], alpha=0.15, color='limegreen',label='Training Range')
+
+    ax1.scatter(
+        test_df['X1'],
+        test_df['y'],
+        c = test_df['y'],
+        cmap='jet',linewidth=0.2,antialiased=True)
 
     ax1.grid()
     ax1.set_xlabel('x')
     ax1.set_ylabel('f(x)')
     ax1.set_title('NN Output vs Function Output')
-    ax1.set_xlim(-5,10)
+    ax1.set_xlim(-10,10)
     ax1.legend()
-
-    ax2 = fig.add_subplot(1,2,2)
-    # ax2.plot(X_eval,np.abs(y_eval[:,0] - myfun(X_eval)[0].flatten()),color='red',label=('Error |f(x) - f_NN(x)|'))
-    ax2.axvspan(range_train[0],range_train[1], alpha=0.15, color='limegreen',label='Training Range')
-
-
-    ax2.grid()
-    ax2.set_xlabel('x')
-    ax2.set_xlim(-5,10)
-    ax2.set_ylabel('Error')
-    ax2.set_title('Error Between Prediction and Actual Function')
-    ax2.legend()
-
-   
+  
 
     fig.tight_layout()
     plt.show()
