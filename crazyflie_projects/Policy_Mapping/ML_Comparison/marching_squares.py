@@ -6,11 +6,12 @@ from skimage import measure
 
 
 # Construct some test data
-x, y = np.ogrid[-np.pi:np.pi:100j, -np.pi:np.pi:100j]
-r = np.sin(np.exp((np.sin(x)**3 + np.cos(y)**2)))
+x = np.linspace(-np.pi,np.pi,100).reshape(-1,1)
+y = np.linspace(-np.pi,np.pi,100).reshape(1,-1)
+r = np.sqrt(x**2 + y**2)
 
 # Find contours at a constant value of 0.8
-contours = measure.find_contours(r, 0.8)
+contours = measure.find_contours(r, 0.1)
 
 # Display the image and plot all contours found
 fig, ax = plt.subplots()
