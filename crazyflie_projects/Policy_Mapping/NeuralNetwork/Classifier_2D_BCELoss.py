@@ -22,7 +22,7 @@ BASEPATH = "crazyflie_projects/Policy_Mapping/NeuralNetwork"
 class Model(nn.Module):
     def __init__(self,in_features=2,h1=5,h2=5,out_features=1):
         super().__init__()
-        h = 50
+        h = 20
         # Input Layer (4 features) --> h1 (N) --> h2 (N) --> output (3 classes)
         self.fc1 = nn.Linear(2,h) # Fully connected layer
         self.out = nn.Linear(h,1)
@@ -37,7 +37,11 @@ class Model(nn.Module):
 
 def train_model(epochs,X_train,y_train):
     model = Model()
-    criterion = nn.BCELoss()
+    weight = torch.tensor([0.1, 0.9])
+    weight_ = weight[y_train.data.view(-1).long()].view_as(y_train)
+    criterion = nn.BCELoss(reduction='none')
+
+
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
     losses = []
     accuracy_list = []
@@ -49,7 +53,9 @@ def train_model(epochs,X_train,y_train):
 
         ## CALCULATE LOSS/ERROR
         loss = criterion(y_pred,y_train)
-        losses.append(loss)
+        loss_class_weighted = loss * weight_
+        loss_class_weighted = loss_class_weighted.mean()
+        losses.append(loss_class_weighted)
         y_pred_class = np.where(y_pred.detach().numpy()<0.5, 0, 1)
         accuracy = balanced_accuracy_score(y_train[:,0],y_pred_class)
         accuracy_list.append(accuracy)
@@ -59,7 +65,7 @@ def train_model(epochs,X_train,y_train):
 
         ## BACKPROPAGATION
         optimizer.zero_grad()
-        loss.backward()
+        loss_class_weighted.backward()
         optimizer.step()
 
     torch.save(model,f'{BASEPATH}/Pickle_Files/Classifier_2D_BCE.pt')
@@ -74,7 +80,7 @@ def train_model(epochs,X_train,y_train):
     ax[1].set_title('Training Accuracy')
 
     plt.tight_layout()
-    plt.show()
+    # plt.show()
 
     return model
 
@@ -86,6 +92,25 @@ if __name__ == "__main__":
     np.random.seed(0)
 
     X,y = make_moons(500,noise=0.2)
+
+    ## GENERATE DATA
+    n_samples_1 = 500
+    centers = [[0.0, 0.0]]
+    clusters_std = [3.0]
+    X, y = make_blobs(
+        n_features=1,
+        n_samples=[n_samples_1],
+        centers=centers,
+        cluster_std=clusters_std,
+        random_state=0,
+        shuffle=False,
+    )
+    X1 = X[:,0]
+    X2 = X[:,1]
+
+    r = np.sqrt(X1**2 + X2**2)
+    y = [1 if ii < 1.0 else 0 for ii in r]
+    y = np.array(y)
 
 
     ## CONVERT DATA TO DATAFRAME
@@ -165,9 +190,9 @@ if __name__ == "__main__":
 
     Z = clf.reshape(XX.shape)
 
-    plt.figure(figsize=(12,8))
+    plt.figure(2,figsize=(12,8))
     plt.contourf(XX, YY, Z, cmap=plt.cm.Accent, alpha=0.5)
-    plt.scatter(X_test[:,0], X_test[:,1], c=y_test[:,0], 
+    plt.scatter(X_train[:,0], X_train[:,1], c=y_train[:,0], 
                 cmap=plt.cm.Accent)
     plt.show()
 
