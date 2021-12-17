@@ -22,7 +22,7 @@ BASEPATH = "crazyflie_projects/Policy_Mapping/NeuralNetwork"
 class Model(nn.Module):
     def __init__(self,in_features=2,h1=5,h2=5,out_features=1):
         super().__init__()
-        h = 20
+        h = 10
         # Input Layer (4 features) --> h1 (N) --> h2 (N) --> output (3 classes)
         self.fc1 = nn.Linear(2,h) # Fully connected layer
         self.out = nn.Linear(h,1)
@@ -37,9 +37,9 @@ class Model(nn.Module):
 
 def train_model(epochs,X_train,y_train):
     model = Model()
-    weight = torch.tensor([0.1, 0.9])
-    weight_ = weight[y_train.data.view(-1).long()].view_as(y_train)
-    criterion = nn.BCELoss(reduction='none')
+    weight = torch.tensor([1.0, 1.0])                               # Weights as binary classes
+    weight_ = weight[y_train.data.view(-1).long()].view_as(y_train) # Convert class weights to element weights
+    criterion = nn.BCELoss(reduction='none')                        # Don't average batch loss yet
 
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
@@ -52,10 +52,8 @@ def train_model(epochs,X_train,y_train):
 
 
         ## CALCULATE LOSS/ERROR
-        loss = criterion(y_pred,y_train)
-        loss_class_weighted = loss * weight_
-        loss_class_weighted = loss_class_weighted.mean()
-        losses.append(loss_class_weighted)
+        loss = (criterion(y_pred,y_train)*weight_).mean()
+        losses.append(loss)
         y_pred_class = np.where(y_pred.detach().numpy()<0.5, 0, 1)
         accuracy = balanced_accuracy_score(y_train[:,0],y_pred_class)
         accuracy_list.append(accuracy)
@@ -65,7 +63,7 @@ def train_model(epochs,X_train,y_train):
 
         ## BACKPROPAGATION
         optimizer.zero_grad()
-        loss_class_weighted.backward()
+        loss.backward()
         optimizer.step()
 
     torch.save(model,f'{BASEPATH}/Pickle_Files/Classifier_2D_BCE.pt')
@@ -135,7 +133,7 @@ if __name__ == "__main__":
     y_test = torch.FloatTensor(test_df[['y']].to_numpy()).reshape(-1, 1)
 
     ## TRAIN NN MODEL
-    epochs = 1000
+    epochs = 2000
     torch.manual_seed(0)
     train_model(epochs,X_train,y_train[:,0].reshape(-1,1))
 
