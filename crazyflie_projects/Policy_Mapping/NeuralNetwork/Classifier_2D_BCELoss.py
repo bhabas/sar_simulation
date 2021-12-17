@@ -37,9 +37,10 @@ class Model(nn.Module):
 
 def train_model(epochs,X_train,y_train):
     model = Model()
-    weight = torch.tensor([1.0, 1.0])                               # Weights as binary classes
-    weight_ = weight[y_train.data.view(-1).long()].view_as(y_train) # Convert class weights to element weights
-    criterion = nn.BCELoss(reduction='none')                        # Don't average batch loss yet
+
+    class_weight = [0.1, 0.9]                                       # Weights as binary classes
+    weights = np.where(y_train==1,class_weight[1],class_weight[0])  # Convert class weights to element weights
+    criterion = nn.BCELoss(weight=torch.FloatTensor(weights))       # Don't average batch loss yet
 
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
@@ -52,7 +53,7 @@ def train_model(epochs,X_train,y_train):
 
 
         ## CALCULATE LOSS/ERROR
-        loss = (criterion(y_pred,y_train)*weight_).mean()
+        loss = criterion(y_pred,y_train)
         losses.append(loss)
         y_pred_class = np.where(y_pred.detach().numpy()<0.5, 0, 1)
         accuracy = balanced_accuracy_score(y_train[:,0],y_pred_class)
