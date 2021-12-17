@@ -11,72 +11,122 @@ import torch.nn.functional as F
 
 ## SKLEARN IMPORTS
 from sklearn.model_selection import train_test_split
-from sklearn.datasets import make_blobs
+from sklearn.datasets import make_blobs,make_moons
 from sklearn.metrics import *
 from sklearn import preprocessing
+
 
 np.set_printoptions(suppress=True)
 BASEPATH = "crazyflie_projects/Policy_Mapping/NeuralNetwork"
 
-
 ## DEFINE NN MODEL
 class Model(nn.Module):
-    def __init__(self,in_features=3,h1=5,h2=5,out_features=1):
+    def __init__(self,in_features=2,h1=5,h2=5,out_features=1):
         super().__init__()
-
+        h = 20
         # Input Layer (4 features) --> h1 (N) --> h2 (N) --> output (3 classes)
-        self.fc1 = nn.Linear(in_features,h1) # Fully connected layer
-        self.fc2 = nn.Linear(h1,h2)
-        self.out = nn.Linear(h2,out_features)
+        self.fc1 = nn.Linear(3,h) # Fully connected layer
+        self.out = nn.Linear(h,1)
 
     def forward(self,x):
 
         # PASS DATA THROUGH NETWORK
-        x = torch.sigmoid(self.fc1(x))
-        x = torch.sigmoid(self.fc2(x))
-        x = self.out(x)
+        x = F.elu(self.fc1(x))
+        x = torch.sigmoid(self.out(x))
 
         return x
 
-def train_model(epochs,X_train,y_train):
-
-    ## INITIALIZE NEURAL NETWORK MODEL
-    torch.manual_seed(22)
+def train_model(epochs,X_train,y_train,X_test,y_test):
     model = Model()
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
-    # criterion = nn.MSELoss(reduction='mean')
-    criterion = nn.CrossEntropyLoss()
+    class_weight = [0.1, 0.1]                                       # Weights as binary classes [0,1]
+    
+    ## DEFINE TRAINING LOSS
+    weights = np.where(y_train==1,class_weight[1],class_weight[0])  # Convert class weights to element weights
+    criterion = nn.BCELoss(weight=torch.FloatTensor(weights))       
+    losses_train = []
+    accuracies_train = []
 
+    ## DEFINE VALIDATION LOSS
+    weights_val = np.where(y_test==1,class_weight[1],class_weight[0])   # Convert class weights to element weights
+    criterion_val = nn.BCELoss(weight=torch.FloatTensor(weights_val))   
+    losses_test = []
+    accuracies_test = []
 
-    optimizer = torch.optim.Adam(model.parameters(),lr=0.01) #  Model parameters are the layers of model
-    losses = []
 
     for ii in range(epochs):
 
         ## MODEL PREDICTION
-        y_pred = model.forward(X_train)        
+        y_pred_train = model.forward(X_train)
 
+        ## CALC TRAINING LOSS
+        loss_train = criterion(y_pred_train,y_train)
+        losses_train.append(loss_train.item())
 
-        ## CALCULATE LOSS/ERROR
-        loss = criterion(y_pred,y_train)
-        losses.append(loss)
+        ## CALC TRAINING ACCURACY
+        pred_cutoff = 0.5 
+        y_pred_train_class = np.where(y_pred_train.detach().numpy() < pred_cutoff,0,1)
+        accuracy_train = balanced_accuracy_score(y_train[:,0],y_pred_train_class)
+        accuracies_train.append(accuracy_train)
+
+        
+        ## CALC VALIDATION LOSS
+        with torch.no_grad():
+            y_pred_test = model.forward(X_test)
+
+        loss_test = criterion_val(y_pred_test,y_test)
+        losses_test.append(loss_test.item())
+
+        ## CALC TESTING ACCURACY
+        y_pred_test_class = np.where(y_pred_test.detach().numpy() < pred_cutoff,0,1)
+        accuracy = balanced_accuracy_score(y_test[:,0],y_pred_test_class)
+        accuracies_test.append(accuracy)
 
         if ii%10 == 1:
-            print(f"epoch {ii} and loss is: {loss}")
+            print(f"epoch {ii} and loss is: {loss_train}")
 
         ## BACKPROPAGATION
         optimizer.zero_grad()
-        loss.backward()
+        loss_train.backward()
         optimizer.step()
 
     torch.save(model,f'{BASEPATH}/Pickle_Files/Classifier_3D.pt')
+
+    ## PLOT LOSSES AND ACCURACIES
+    fig = plt.figure(1,figsize=(12,8))
+    ax1 = fig.add_subplot(2,1,1)
+    ax1.plot(losses_train,label="Training Loss")
+    ax1.plot(losses_test,label="Validation Loss")
+    ax1.set_ylabel("Loss")
+    ax1.set_title("Losses")
+    ax1.set_ylim(0)
+    ax1.legend()
+    ax1.grid()
+
+    ax2 = fig.add_subplot(2,1,2)
+    ax2.plot(accuracies_train,label="Training Accuracry")
+    ax2.plot(accuracies_test,label="Validation Accuracy")
+    ax2.set_ylim(0,1.1)
+    ax2.set_ylabel("Classification Accuracy")
+    ax2.set_title("Balanced Accuracy")
+    ax2.grid()
+    ax2.legend(loc="lower right")
+
+
+    plt.tight_layout()
+    plt.show()
+
     return model
 
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
 
     ## GENERATE DATA
-    n_samples_1 = 500
+    np.random.seed(0)
+
+    n_samples_1 = 1000
     centers = [[0.0, 0.0, 0.0]]
     clusters_std = [3.0]
     X, y = make_blobs(
@@ -97,21 +147,41 @@ if __name__ == '__main__':
     y = [1 if ii < 2.5 else 0 for ii in r]
     y = np.array(y)
 
-    ## RESCALE DATA
-    scaler = preprocessing.StandardScaler().fit(X)
-    X_scaled = scaler.transform(X)
-    X = X_scaled
-
 
     ## CONVERT DATA TO DATAFRAME
     data_array = np.stack((X1,X2,X3,y,r),axis=1)
     df = pd.DataFrame(data_array,columns=['X1','X2','X3','y','r'])
     df = df.sort_values(by='X1')
 
-
     ## SPLIT DATA FEATURES INTO TRAINING AND TESTING DATA
-    train_df, test_df = train_test_split(df,test_size=0.2,random_state=33)
+    train_df, test_df = train_test_split(df,test_size=0.25,random_state=73)
     test_df = test_df.sort_values(by='r')
+
+
+
+    # ## PLOT DATA
+    # fig = plt.figure(1,figsize=(8,8))
+
+    # ## PLOT MODEL
+    # ax1 = fig.add_subplot(111,projection='3d')
+    # ax1.scatter(
+    #     test_df['X1'],
+    #     test_df['X2'],
+    #     test_df['X3'],
+    #     c = test_df['y'],
+    #     cmap='jet',linewidth=0.2,antialiased=True)
+    # ax1.set_xlabel('X1')
+    # ax1.set_ylabel('X2')
+    # ax1.set_ylabel('X3')
+    # ax1.set_title('Function')
+    # ax1.set_xlim(-10,10)
+    # ax1.set_ylim(-10,10)
+    # ax1.set_zlim(-10,10)
+
+  
+
+    # fig.tight_layout()
+    # plt.show()
 
 
     ## CONVERT DATA INTO TENSORS
@@ -121,61 +191,55 @@ if __name__ == '__main__':
     y_train = torch.FloatTensor(train_df[['y','r']].to_numpy())
     y_test = torch.FloatTensor(test_df[['y','r']].to_numpy())
 
-    ## TRAIN NN MODEL
-    epochs = 10_000
-    train_model(epochs,X_train,y_train[:,0].reshape(-1,1))
 
-    # EVALUATE NN MODEL
+    ## TRAIN NN MODEL
+    epochs = 1000
+    torch.manual_seed(0)
+    # train_model(epochs,X_train,y_train[:,0].reshape(-1,1),X_test,y_test[:,0].reshape(-1,1))
+
+    ## EVALUATE NN MODEL
     model = torch.load(f'{BASEPATH}/Pickle_Files/Classifier_3D.pt')
 
     with torch.no_grad():
         y_pred = model.forward(X_test)
-        y_pred = np.clip(y_pred,0,1)
         y_pred = np.round(y_pred,0)
-
     print(balanced_accuracy_score(y_test[:,0],y_pred))
     print(confusion_matrix(y_test[:,0],y_pred,normalize=None))
     print(classification_report(y_test[:,0],y_pred))
 
 
-    # with torch.no_grad():
-    #     x1 = np.linspace(-10,10,100)
-    #     x2 = np.linspace(-10,10,100)
-
-    #     X1_test,X2_test = np.meshgrid(x1,x2)
-    #     X_contour = np.stack((X1_test.flatten(),X2_test.flatten()),axis=1)
-    #     X_contour = torch.FloatTensor(X_contour)
 
 
-    #     y_contour = model.forward(X_contour).reshape(100,100)
-    #     contours = measure.find_contours(y_contour.numpy(), 0.75)
+    # # ## PLOT DECISION BOUNDARY
+    # # # DETERMINE GRID RANGE IN X AND Y DIRECTIONS
+    # # x_min, x_max = X[:, 0].min()-0.1, X[:, 0].max()+0.1
+    # # y_min, y_max = X[:, 1].min()-0.1, X[:, 1].max()+0.1
 
-        
+    # # ## SET GRID SPACING PARAMETER
+    # # spacing = min(x_max - x_min, y_max - y_min) / 100
+
+    # # ## CREATE GRID
+    # # XX, YY = np.meshgrid(np.arange(x_min, x_max, spacing),
+    # #             np.arange(y_min, y_max, spacing))
+
+    # # ## CONCATENATE DATA TO MATCH INPUT
+    # # grid_data = np.hstack((XX.ravel().reshape(-1,1), 
+    # #                 YY.ravel().reshape(-1,1)))
+
+    # # ## PASS DATA TO PREDICT METHOD
+    # # with torch.no_grad():
+    # #     grid_data = torch.FloatTensor(grid_data)
+    # #     y_pred_grid = model.forward(grid_data)
+
+    # # clf = np.where(y_pred_grid<0.5,0,1)
+    # # Z = clf.reshape(XX.shape)
+
+    # # ## PLOT DATA
+    # # plt.figure(2,figsize=(12,8))
+    # # plt.contourf(XX, YY, Z, cmap=plt.cm.jet, alpha=0.5)
+    # # plt.scatter(X_train[:,0], X_train[:,1], c=y_train[:,0], 
+    # #             cmap=plt.cm.jet)
+    # # plt.show()
 
 
 
-
-
-    ## PLOT NETWORK OUTPUTS
-    fig = plt.figure(1,figsize=(8,8))
-
-    ## PLOT MODEL
-    ax1 = fig.add_subplot(111,projection='3d')
-    ax1.scatter(
-        test_df['X1'],
-        test_df['X2'],
-        test_df['X3'],
-        c = test_df['y'],
-        cmap='jet',linewidth=0.2,antialiased=True)
-    ax1.set_xlabel('X1')
-    ax1.set_ylabel('X2')
-    ax1.set_ylabel('X3')
-    ax1.set_title('Function')
-    ax1.set_xlim(-10,10)
-    ax1.set_ylim(-10,10)
-    ax1.set_zlim(-10,10)
-
-  
-
-    fig.tight_layout()
-    plt.show()
