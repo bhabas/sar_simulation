@@ -22,7 +22,7 @@ BASEPATH = "crazyflie_projects/Policy_Mapping/NeuralNetwork"
 class Model(nn.Module):
     def __init__(self,in_features=2,h1=5,h2=5,out_features=1):
         super().__init__()
-        h = 3
+        h = 20
         # Input Layer (4 features) --> h1 (N) --> h2 (N) --> output (3 classes)
         self.fc1 = nn.Linear(2,h) # Fully connected layer
         self.out = nn.Linear(h,1)
@@ -39,7 +39,7 @@ def train_model(epochs,X_train,y_train,X_test,y_test):
     model = Model()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
-    class_weight = [0.1, 0.9]                                       # Weights as binary classes [0,1]
+    class_weight = [0.1, 0.1]                                       # Weights as binary classes [0,1]
     
     ## DEFINE TRAINING LOSS
     weights = np.where(y_train==1,class_weight[1],class_weight[0])  # Convert class weights to element weights
@@ -127,24 +127,24 @@ if __name__ == "__main__":
 
     X,y = make_moons(500,noise=0.2)
 
-    ## GENERATE DATA
-    n_samples_1 = 500
-    centers = [[0.0, 0.0]]
-    clusters_std = [3.0]
-    X, y = make_blobs(
-        n_features=1,
-        n_samples=[n_samples_1],
-        centers=centers,
-        cluster_std=clusters_std,
-        random_state=0,
-        shuffle=False,
-    )
-    X1 = X[:,0]
-    X2 = X[:,1]
+    # ## GENERATE DATA
+    # n_samples_1 = 500
+    # centers = [[0.0, 0.0]]
+    # clusters_std = [3.0]
+    # X, y = make_blobs(
+    #     n_features=1,
+    #     n_samples=[n_samples_1],
+    #     centers=centers,
+    #     cluster_std=clusters_std,
+    #     random_state=0,
+    #     shuffle=False,
+    # )
+    # X1 = X[:,0]
+    # X2 = X[:,1]
 
-    r = np.sqrt(X1**2 + X2**2)
-    y = [1 if ii < 1.0 else 0 for ii in r]
-    y = np.array(y)
+    # r = np.sqrt(X1**2 + X2**2)
+    # y = [1 if ii < 1.0 else 0 for ii in r]
+    # y = np.array(y)
 
 
     ## CONVERT DATA TO DATAFRAME
@@ -170,7 +170,7 @@ if __name__ == "__main__":
     y_test = torch.FloatTensor(test_df[['y']].to_numpy()).reshape(-1, 1)
 
     ## TRAIN NN MODEL
-    epochs = 300
+    epochs = 1000
     torch.manual_seed(0)
     train_model(epochs,X_train,y_train[:,0].reshape(-1,1),X_test,y_test[:,0].reshape(-1,1))
 
@@ -185,51 +185,38 @@ if __name__ == "__main__":
     print(classification_report(y_test[:,0],y_pred))
 
 
-    
 
 
-    
+    ## PLOT DECISION BOUNDARY
+    # DETERMINE GRID RANGE IN X AND Y DIRECTIONS
+    x_min, x_max = X[:, 0].min()-0.1, X[:, 0].max()+0.1
+    y_min, y_max = X[:, 1].min()-0.1, X[:, 1].max()+0.1
 
+    ## SET GRID SPACING PARAMETER
+    spacing = min(x_max - x_min, y_max - y_min) / 100
 
+    ## CREATE GRID
+    XX, YY = np.meshgrid(np.arange(x_min, x_max, spacing),
+                np.arange(y_min, y_max, spacing))
 
+    ## CONCATENATE DATA TO MATCH INPUT
+    grid_data = np.hstack((XX.ravel().reshape(-1,1), 
+                    YY.ravel().reshape(-1,1)))
 
-    # ## PLOT DECISION BOUNDARY
-    # # Determine grid range in x and y directions
-    # x_min, x_max = X[:, 0].min()-0.1, X[:, 0].max()+0.1
-    # y_min, y_max = X[:, 1].min()-0.1, X[:, 1].max()+0.1
+    ## PASS DATA TO PREDICT METHOD
+    with torch.no_grad():
+        grid_data = torch.FloatTensor(grid_data)
+        y_pred_grid = model.forward(grid_data)
 
-    # # Set grid spacing parameter
-    # spacing = min(x_max - x_min, y_max - y_min) / 100
+    clf = np.where(y_pred_grid<0.5,0,1)
+    Z = clf.reshape(XX.shape)
 
-    # # Create grid
-    # XX, YY = np.meshgrid(np.arange(x_min, x_max, spacing),
-    #             np.arange(y_min, y_max, spacing))
-
-    # # Concatenate data to match input
-    # data = np.hstack((XX.ravel().reshape(-1,1), 
-    #                 YY.ravel().reshape(-1,1)))
-
-    # # Pass data to predict method
-    # with torch.no_grad():
-
-    #     data_t = torch.FloatTensor(data)
-    #     y_pred = model.forward(data_t)
-    #     y_pred_class = np.where(y_pred.detach().numpy()<0.5, 0, 1)
-
-
-    # # print(balanced_accuracy_score(y_test[:,0],y_pred))
-    # # print(confusion_matrix(y_test[:,0],y_pred,normalize=None))
-    # # print(classification_report(y_test[:,0],y_pred))
-
-    # clf = np.where(y_pred<0.5,0,1)
-
-    # Z = clf.reshape(XX.shape)
-
-    # plt.figure(2,figsize=(12,8))
-    # plt.contourf(XX, YY, Z, cmap=plt.cm.Accent, alpha=0.5)
-    # plt.scatter(X_train[:,0], X_train[:,1], c=y_train[:,0], 
-    #             cmap=plt.cm.Accent)
-    # plt.show()
+    ## PLOT DATA
+    plt.figure(2,figsize=(12,8))
+    plt.contourf(XX, YY, Z, cmap=plt.cm.jet, alpha=0.5)
+    plt.scatter(X_train[:,0], X_train[:,1], c=y_train[:,0], 
+                cmap=plt.cm.jet)
+    plt.show()
 
 
 
