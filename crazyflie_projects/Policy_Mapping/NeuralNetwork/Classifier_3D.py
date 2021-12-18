@@ -15,6 +15,8 @@ from sklearn.datasets import make_blobs,make_moons
 from sklearn.metrics import *
 from sklearn import preprocessing
 
+import plotly.graph_objects as go
+
 
 np.set_printoptions(suppress=True)
 BASEPATH = "crazyflie_projects/Policy_Mapping/NeuralNetwork"
@@ -210,36 +212,66 @@ if __name__ == "__main__":
 
 
 
-    # # ## PLOT DECISION BOUNDARY
-    # # # DETERMINE GRID RANGE IN X AND Y DIRECTIONS
-    # # x_min, x_max = X[:, 0].min()-0.1, X[:, 0].max()+0.1
-    # # y_min, y_max = X[:, 1].min()-0.1, X[:, 1].max()+0.1
+    ## PLOT DECISION BOUNDARY
+    # DETERMINE GRID RANGE IN X AND Y DIRECTIONS
+    x_min, x_max = X[:, 0].min()-0.1, X[:, 0].max()+0.1
+    y_min, y_max = X[:, 1].min()-0.1, X[:, 1].max()+0.1
+    z_min, z_max = X[:, 2].min()-0.1, X[:, 2].max()+0.1
 
-    # # ## SET GRID SPACING PARAMETER
-    # # spacing = min(x_max - x_min, y_max - y_min) / 100
+    ## SET GRID SPACING PARAMETER
+    spacing = min(x_max-x_min, y_max-y_min, z_max-z_min) / 25
 
-    # # ## CREATE GRID
-    # # XX, YY = np.meshgrid(np.arange(x_min, x_max, spacing),
-    # #             np.arange(y_min, y_max, spacing))
+    ## CREATE GRID
+    XX, YY, ZZ = np.meshgrid(
+            np.linspace(x_min, x_max, 30),
+            np.linspace(y_min, y_max, 30),
+            np.linspace(z_min, z_max, 30))
 
-    # # ## CONCATENATE DATA TO MATCH INPUT
-    # # grid_data = np.hstack((XX.ravel().reshape(-1,1), 
-    # #                 YY.ravel().reshape(-1,1)))
+    ## CONCATENATE DATA TO MATCH INPUT
+    grid_data = np.hstack((
+        XX.ravel().reshape(-1,1), 
+        YY.ravel().reshape(-1,1),
+        ZZ.ravel().reshape(-1,1)))
 
-    # # ## PASS DATA TO PREDICT METHOD
-    # # with torch.no_grad():
-    # #     grid_data = torch.FloatTensor(grid_data)
-    # #     y_pred_grid = model.forward(grid_data)
+    
+    ## PASS DATA TO PREDICT METHOD
+    with torch.no_grad():
+        grid_data = torch.FloatTensor(grid_data)
+        y_pred_grid = model.forward(grid_data)
 
-    # # clf = np.where(y_pred_grid<0.5,0,1)
-    # # Z = clf.reshape(XX.shape)
 
-    # # ## PLOT DATA
-    # # plt.figure(2,figsize=(12,8))
-    # # plt.contourf(XX, YY, Z, cmap=plt.cm.jet, alpha=0.5)
-    # # plt.scatter(X_train[:,0], X_train[:,1], c=y_train[:,0], 
-    # #             cmap=plt.cm.jet)
-    # # plt.show()
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Isosurface(
+            x=XX.flatten(),
+            y=YY.flatten(),
+            z=ZZ.flatten(),
+            value=y_pred_grid.flatten(),
+            surface_count=1,
+            opacity=0.6,
+            isomin=0.5,
+            isomax=0.6,
+            caps=dict(x_show=False, y_show=False)
+        ))
+
+    # Helix equation
+    t = np.linspace(0, 20, 100)
+    x, y, z = np.cos(t), np.sin(t), t
+
+    fig.add_trace(
+        go.Scatter3d(
+            x=test_df['X1'],
+            y=test_df['X2'],
+            z=test_df['X3'],
+            mode='markers',
+            marker=dict(
+                size=3,
+                color=test_df['y'],                # set color to an array/list of desired values
+                colorscale='Viridis',   # choose a colorscale
+                opacity=0.4)
+        ))
+    fig.show()
 
 
 

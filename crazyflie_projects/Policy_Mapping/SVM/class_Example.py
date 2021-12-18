@@ -13,8 +13,9 @@ import os
 os.system("clear")
 
 
+np.random.seed(0)
 
-n_samples_1 = 3000
+n_samples_1 = 1000
 centers = [[0.0,0.0,0.0]]
 clusters_std = [3.0]
 X, y = make_blobs(
