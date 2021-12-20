@@ -249,15 +249,11 @@ if __name__ == "__main__":
             z=ZZ.flatten(),
             value=y_pred_grid.flatten(),
             surface_count=1,
-            opacity=0.6,
+            opacity=0.2,
             isomin=0.5,
             isomax=0.6,
             caps=dict(x_show=False, y_show=False)
         ))
-
-    # Helix equation
-    t = np.linspace(0, 20, 100)
-    x, y, z = np.cos(t), np.sin(t), t
 
     fig.add_trace(
         go.Scatter3d(
