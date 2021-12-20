@@ -1,6 +1,7 @@
 ## STANDARD IMPORTS
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import pandas as pd
 
 ## PYTORCH IMPROTS
@@ -14,9 +15,11 @@ from sklearn.datasets import make_blobs,make_moons
 from sklearn.metrics import *
 from sklearn import preprocessing
 
+import plotly.graph_objects as go
+
 
 np.set_printoptions(suppress=True)
-BASEPATH = "crazyflie_projects/Policy_Mapping/NeuralNetwork"
+BASEPATH = "crazyflie_projects/Policy_Mapping/Data_Analysis"
 
 ## DEFINE NN MODEL
 class Model(nn.Module):
@@ -24,7 +27,7 @@ class Model(nn.Module):
         super().__init__()
         h = 20
         # Input Layer (4 features) --> h1 (N) --> h2 (N) --> output (3 classes)
-        self.fc1 = nn.Linear(2,h) # Fully connected layer
+        self.fc1 = nn.Linear(3,h) # Fully connected layer
         self.out = nn.Linear(h,1)
 
     def forward(self,x):
@@ -39,7 +42,7 @@ def train_model(epochs,X_train,y_train,X_test,y_test):
     model = Model()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
-    class_weight = [0.1, 0.1]                                       # Weights as binary classes [0,1]
+    class_weight = [0.1, 0.3]                                       # Weights as binary classes [0,1]
     
     ## DEFINE TRAINING LOSS
     weights = np.where(y_train==1,class_weight[1],class_weight[0])  # Convert class weights to element weights
@@ -90,7 +93,7 @@ def train_model(epochs,X_train,y_train,X_test,y_test):
         loss_train.backward()
         optimizer.step()
 
-    torch.save(model,f'{BASEPATH}/Pickle_Files/Classifier_2D.pt')
+    torch.save(model,f'{BASEPATH}/Pickle_Files/Classifier_3D.pt')
 
     ## PLOT LOSSES AND ACCURACIES
     fig = plt.figure(1,figsize=(12,8))
@@ -123,59 +126,75 @@ def train_model(epochs,X_train,y_train,X_test,y_test):
 if __name__ == "__main__":
 
     ## GENERATE DATA
-    np.random.seed(0)
-
-    X,y = make_moons(500,noise=0.2)
-
-    # ## GENERATE DATA
-    # n_samples_1 = 500
-    # centers = [[0.0, 0.0]]
-    # clusters_std = [3.0]
-    # X, y = make_blobs(
-    #     n_features=1,
-    #     n_samples=[n_samples_1],
-    #     centers=centers,
-    #     cluster_std=clusters_std,
-    #     random_state=0,
-    #     shuffle=False,
-    # )
-    # X1 = X[:,0]
-    # X2 = X[:,1]
-
-    # r = np.sqrt(X1**2 + X2**2)
-    # y = [1 if ii < 1.0 else 0 for ii in r]
-    # y = np.array(y)
+    
+    model_config = "Wide-Long"
+    df_raw = pd.read_csv(f"crazyflie_projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
 
 
-    ## CONVERT DATA TO DATAFRAME
-    data_array = np.stack((X[:,0],X[:,1],y),axis=1)
-    df = pd.DataFrame(data_array,columns=['X1','X2','y'])
+    X1 = df_raw["OF_y_flip_mean"]
+    X2 = df_raw["RREV_flip_mean"]
+    X3 = df_raw["flip_d_mean"]
+    y = df_raw["landing_rate_4_leg"].to_numpy().reshape(-1,1)
+    y = np.where(y < 0.8,0,1)
+
+    ## REGULARIZE DATA
+    X = np.stack((X1,X2,X3),axis=1)
+    scaler = preprocessing.StandardScaler().fit(X)
+    X_scaled = scaler.transform(X)
+    X = X_scaled
+
+
+    data_array = np.hstack((X,y))
+    df = pd.DataFrame(data_array,columns=['X1','X2','X3','y'])
+    df = df.sort_values(by='y')
+
+    
 
     ## SPLIT DATA FEATURES INTO TRAINING AND TESTING DATA
     train_df, test_df = train_test_split(df,test_size=0.25,random_state=73)
+    test_df = test_df.sort_values(by='y')
 
 
-    ## PLOT DATA
-    # plt.figure(figsize=(12,8))
-    # plt.scatter(train_df['X1'],train_df['X2'],c=train_df['y'])
-    # plt.title('Moon Data')
+
+    # ## PLOT DATA
+    # fig = plt.figure(1,figsize=(8,8))
+
+    # ## PLOT MODEL
+    # ax1 = fig.add_subplot(111,projection='3d')
+    # ax1.scatter(
+    #     df['X1'],
+    #     df['X2'],
+    #     df['X3'],
+    #     c = df['y'],
+    #     cmap='jet',linewidth=0.2,antialiased=True)
+    # ax1.set_xlabel('X1')
+    # ax1.set_ylabel('X2')
+    # ax1.set_ylabel('X3')
+    # ax1.set_title('Function')
+    # # ax1.set_xlim(-10,10)
+    # # ax1.set_ylim(-10,10)
+    # # ax1.set_zlim(-10,10)
+
+    # fig.tight_layout()
     # plt.show()
 
 
     ## CONVERT DATA INTO TENSORS
-    X_train = torch.FloatTensor(train_df[['X1','X2']].to_numpy())
-    X_test = torch.FloatTensor(test_df[['X1','X2']].to_numpy())
+    X_train = torch.FloatTensor(train_df[['X1','X2','X3']].to_numpy())
+    X_test = torch.FloatTensor(test_df[['X1','X2','X3']].to_numpy())
 
-    y_train = torch.FloatTensor(train_df[['y']].to_numpy()).reshape(-1, 1)
-    y_test = torch.FloatTensor(test_df[['y']].to_numpy()).reshape(-1, 1)
+    y_train = torch.FloatTensor(train_df[['y']].to_numpy())
+    y_test = torch.FloatTensor(test_df[['y']].to_numpy())
+
 
     ## TRAIN NN MODEL
     epochs = 1000
+
     torch.manual_seed(0)
-    train_model(epochs,X_train,y_train[:,0].reshape(-1,1),X_test,y_test[:,0].reshape(-1,1))
+    # train_model(epochs,X_train,y_train[:,0].reshape(-1,1),X_test,y_test[:,0].reshape(-1,1))
 
     ## EVALUATE NN MODEL
-    model = torch.load(f'{BASEPATH}/Pickle_Files/Classifier_2D.pt')
+    model = torch.load(f'{BASEPATH}/Pickle_Files/Classifier_3D.pt')
 
     with torch.no_grad():
         y_pred = model.forward(X_test)
@@ -191,32 +210,68 @@ if __name__ == "__main__":
     # DETERMINE GRID RANGE IN X AND Y DIRECTIONS
     x_min, x_max = X[:, 0].min()-0.1, X[:, 0].max()+0.1
     y_min, y_max = X[:, 1].min()-0.1, X[:, 1].max()+0.1
+    z_min, z_max = X[:, 2].min()-0.1, X[:, 2].max()+0.1
 
     ## SET GRID SPACING PARAMETER
-    spacing = min(x_max - x_min, y_max - y_min) / 100
+    spacing = min(x_max-x_min, y_max-y_min, z_max-z_min) / 25
 
     ## CREATE GRID
-    XX, YY = np.meshgrid(np.arange(x_min, x_max, spacing),
-                np.arange(y_min, y_max, spacing))
+    XX, YY, ZZ = np.meshgrid(
+            np.linspace(x_min, x_max, 30),
+            np.linspace(y_min, y_max, 30),
+            np.linspace(z_min, z_max, 30))
 
     ## CONCATENATE DATA TO MATCH INPUT
-    grid_data = np.hstack((XX.ravel().reshape(-1,1), 
-                    YY.ravel().reshape(-1,1)))
+    grid_data = np.hstack((
+        XX.ravel().reshape(-1,1), 
+        YY.ravel().reshape(-1,1),
+        ZZ.ravel().reshape(-1,1)))
 
+    
     ## PASS DATA TO PREDICT METHOD
     with torch.no_grad():
         grid_data = torch.FloatTensor(grid_data)
         y_pred_grid = model.forward(grid_data)
 
-    clf = np.where(y_pred_grid<0.5,0,1)
-    Z = clf.reshape(XX.shape)
 
-    ## PLOT DATA
-    plt.figure(2,figsize=(12,8))
-    plt.contourf(XX, YY, Z, cmap=plt.cm.jet, alpha=0.5)
-    plt.scatter(X_train[:,0], X_train[:,1], c=y_train[:,0], 
-                cmap=plt.cm.jet)
-    plt.show()
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Isosurface(
+            x=XX.flatten(),
+            y=YY.flatten(),
+            z=ZZ.flatten(),
+            value=y_pred_grid.flatten(),
+            surface_count=1,
+            opacity=0.4,
+            isomin=0.9,
+            isomax=0.9,            
+            caps=dict(x_show=False, y_show=False)
+        ))
+
+
+
+    fig.add_trace(
+        go.Scatter3d(
+            x=df['X1'],
+            y=df['X2'],
+            z=df['X3'],
+            mode='markers',
+            marker=dict(
+                size=3,
+                color=df['y'],                # set color to an array/list of desired values
+                colorscale='Viridis',   # choose a colorscale
+                opacity=0.4)
+        ))
+
+    fig.update_layout(scene = dict(
+                    xaxis_title='OF_x',
+                    yaxis_title='RREV',
+                    zaxis_title='D_ceiling'),
+                    )
+
+
+    fig.show()
 
 
 
