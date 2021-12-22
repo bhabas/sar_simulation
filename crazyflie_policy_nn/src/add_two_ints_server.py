@@ -29,7 +29,7 @@ class Model(nn.Module):
 
         return x
 
-model = torch.load(f'crazyflie_policy_nn/src/Classifier_3D.pt')
+model = torch.load(f'{BASEPATH}/Pickle_Files/Classifier_3D.pt')
 
 
 def handle_add_two_ints(req):
@@ -38,13 +38,14 @@ def handle_add_two_ints(req):
     # ## EVALUATE NN MODEL
     
     X = torch.FloatTensor([-3.3781,  1.1145, -0.9872])
+    X = torch.FloatTensor([req.a, req.b, req.c])
     with torch.no_grad():
         y_pred = model.forward(X)
         y_pred_class = np.where(y_pred.detach().numpy() < 0.5,0,1)
 
     print(y_pred)
 
-    return Policy_ValuesResponse(req.a + req.b)
+    return Policy_ValuesResponse(y_pred.item())
 
 def add_two_ints_server():
     rospy.init_node('add_two_ints_server')
