@@ -197,11 +197,12 @@ if __name__ == "__main__":
     model = torch.load(f'{BASEPATH}/Pickle_Files/Classifier_3D.pt')
 
     with torch.no_grad():
-        y_pred = model.forward(X_test)
-        y_pred = np.round(y_pred,0)
-    print(balanced_accuracy_score(y_test[:,0],y_pred))
-    print(confusion_matrix(y_test[:,0],y_pred,normalize=None))
-    print(classification_report(y_test[:,0],y_pred))
+        y_pred_test = model.forward(X_test)
+        y_pred_test_class = np.where(y_pred_test.detach().numpy() < 0.5,0,1)
+        y_pred_test = np.round(y_pred_test,0)
+    print(balanced_accuracy_score(y_test[:,0],y_pred_test))
+    print(confusion_matrix(y_test[:,0],y_pred_test,normalize=None))
+    print(classification_report(y_test[:,0],y_pred_test))
 
 
 

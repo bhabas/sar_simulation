@@ -144,7 +144,7 @@ if __name__ == '__main__':
 
     ## TRAIN NN MODEL
     epochs = 3_000
-    train_model(epochs,X_train,y_train,X_test,y_test)
+    # train_model(epochs,X_train,y_train,X_test,y_test)
 
     ## EVALUATE NN MODEL
     model = torch.load(f'{BASEPATH}/Pickle_Files/Func_approx_3D.pt')
@@ -165,21 +165,22 @@ if __name__ == '__main__':
 
     with torch.no_grad():
         y_pred_plot = model.forward(X_plot)
+        X_plot = scaler.inverse_transform(X_plot)
 
     fig = go.Figure()
 
-    fig.add_trace(
-        go.Isosurface(
-            x=X_plot[:,0].flatten(),
-            y=X_plot[:,1].flatten(),
-            z=X_plot[:,2].flatten(),
-            value=y_pred_plot,
-            surface_count=3,
-            opacity=0.2,
-            isomin=0.7,
-            isomax=0.9,
-            caps=dict(x_show=False, y_show=False)
-        ))
+    # fig.add_trace(
+    #     go.Isosurface(
+    #         x=X_plot[:,0].flatten(),
+    #         y=X_plot[:,1].flatten(),
+    #         z=X_plot[:,2].flatten(),
+    #         value=y_pred_plot,
+    #         surface_count=3,
+    #         opacity=0.2,
+    #         isomin=0.7,
+    #         isomax=0.9,
+    #         caps=dict(x_show=False, y_show=False)
+    #     ))
 
     fig.add_trace(
         go.Scatter3d(
@@ -189,16 +190,26 @@ if __name__ == '__main__':
             mode='markers',
             marker=dict(
                 size=2,
-                color=y_pred_plot.flatten(),                # set color to an array/list of desired values
-                colorscale='Viridis',   # choose a colorscale
+                color=df['y'].to_numpy().flatten(),                # set color to an array/list of desired values
+                colorbar=dict(
+                title="Colorbar"
+                ),
+                colorscale='jet',   # choose a colorscale
                 opacity=0.4)
         ))
 
-    fig.update_layout(scene = dict(
-                    xaxis_title='OF_x',
-                    yaxis_title='RREV',
-                    zaxis_title='D_ceiling'),
-                    )
+    fig.update_layout(
+        scene = dict(
+            xaxis_title='OF_x',
+            yaxis_title='RREV',
+            zaxis_title='d_ceiling',
+            xaxis = dict(nticks=4, range=[-20,0],),
+            yaxis = dict(nticks=4, range=[0,8],),
+            zaxis = dict(nticks=4, range=[0,1],),
+            ),
+        scene_aspectmode='cube'
+    
+    )
 
     fig.show()
 

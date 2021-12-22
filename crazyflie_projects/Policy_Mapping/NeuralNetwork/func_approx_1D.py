@@ -12,13 +12,13 @@ BASEPATH = "crazyflie_projects/Policy_Mapping/NeuralNetwork"
 
 
 def myfun(x):
-    y1 = np.sin(x) + np.cos(x)**2
+    y1 = np.sin(x)
 
     return y1
 
 ## DEFINE NN MODEL
 class Model(nn.Module):
-    def __init__(self,in_features=1,h=6,out_features=1):
+    def __init__(self,in_features=1,h=2,out_features=1):
         super().__init__()
 
         # Input Layer (4 features) --> h1 (N) --> h2 (N) --> output (3 classes)
@@ -30,7 +30,7 @@ class Model(nn.Module):
 
         # PASS DATA THROUGH NETWORK
         x = F.sigmoid(self.fc1(x))
-        x = F.sigmoid(self.fc2(x))
+        # x = F.sigmoid(self.fc2(x))
         x = self.out(x)
 
 
@@ -123,15 +123,15 @@ if __name__ == '__main__':
 
     ## TRAIN NN MODEL
     epochs = 5_000
-    # train_model(epochs,X_train,y_train,X_test,y_test)
+    train_model(epochs,X_train,y_train,X_test,y_test)
 
     ## EVALUATE NN MODEL
     model = torch.load(f'{BASEPATH}/Pickle_Files/Func_approx_1D.pt')
-    
+
     with torch.no_grad():
         y_pred_test = model.forward(X_test)
 
-    ## DEFINE PLOTTING RANGE 
+    ## DEFINE PLOTTING RANGE
     X_plot = np.linspace(-3,10,100).reshape(-1,1)
     X_plot = torch.FloatTensor(X_plot)
 
