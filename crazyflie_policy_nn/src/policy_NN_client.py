@@ -7,11 +7,11 @@ import rospy
 from crazyflie_msgs.srv import Policy_Values,AddTwoIntsResponse
 
 def add_two_ints_client(x,y,z):
-    rospy.wait_for_service('add_two_ints')
+    rospy.wait_for_service('policy_NN')
     try:
-        add_two_ints = rospy.ServiceProxy('add_two_ints', Policy_Values)
+        add_two_ints = rospy.ServiceProxy('policy_NN', Policy_Values)
         resp1 = add_two_ints(x, y,z)
-        return resp1.sum
+        return resp1.flip_flag,resp1.My
     except rospy.ServiceException as e:
         print("Service call failed: %s"%e)
 

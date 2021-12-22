@@ -22,7 +22,7 @@ np.set_printoptions(suppress=True)
 BASEPATH = "crazyflie_projects/Policy_Mapping/Data_Analysis"
 
 ## DEFINE NN MODEL
-class Model(nn.Module):
+class NN_Flip_Classifier(nn.Module):
     def __init__(self,in_features=2,h1=5,h2=5,out_features=1):
         super().__init__()
         h = 20
@@ -39,7 +39,7 @@ class Model(nn.Module):
         return x
 
 def train_model(epochs,X_train,y_train,X_test,y_test):
-    model = Model()
+    model = NN_Flip_Classifier()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
     class_weight = [0.1, 0.3]                                       # Weights as binary classes [0,1]
@@ -93,7 +93,7 @@ def train_model(epochs,X_train,y_train,X_test,y_test):
         loss_train.backward()
         optimizer.step()
 
-    torch.save(model,f'{BASEPATH}/Pickle_Files/Classifier_3D.pt')
+    torch.save(model,f'{BASEPATH}/Pickle_Files/Flip_Network.pt')
 
     ## PLOT LOSSES AND ACCURACIES
     fig = plt.figure(1,figsize=(12,8))
@@ -191,10 +191,10 @@ if __name__ == "__main__":
     epochs = 1000
 
     torch.manual_seed(0)
-    # train_model(epochs,X_train,y_train[:,0].reshape(-1,1),X_test,y_test[:,0].reshape(-1,1))
+    train_model(epochs,X_train,y_train[:,0].reshape(-1,1),X_test,y_test[:,0].reshape(-1,1))
 
     ## EVALUATE NN MODEL
-    model = torch.load(f'{BASEPATH}/Pickle_Files/Classifier_3D.pt')
+    model = torch.load(f'{BASEPATH}/Pickle_Files/Flip_Network.pt')
 
     with torch.no_grad():
         y_pred_test = model.forward(X_test)

@@ -1,5 +1,6 @@
-float64 a
-float64 b
-float64 c
+float64 RREV
+float64 OF_y
+float64 d_ceil
 ---
-float64 sum
+bool flip_flag
+float64 My

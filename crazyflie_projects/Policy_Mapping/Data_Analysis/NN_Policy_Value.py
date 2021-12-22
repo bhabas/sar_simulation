@@ -22,13 +22,8 @@ BASEPATH = "crazyflie_projects/Policy_Mapping/Data_Analysis"
 
 
 
-def myfun(x1,x2,x3):
-    y = np.sqrt(x1**2 + x2**2 + x3**2)
-    
-    return y
-
 ## DEFINE NN MODEL
-class Model(nn.Module):
+class NN_Policy_Value(nn.Module):
     def __init__(self,in_features=3,h=10,out_features=1):
         super().__init__()
 
@@ -49,7 +44,7 @@ class Model(nn.Module):
 def train_model(epochs,X_train,y_train,X_test,y_test):
 
     ## INITIALIZE NEURAL NETWORK MODEL
-    model = Model()
+    model = NN_Policy_Value()
     optimizer = torch.optim.Adam(model.parameters(),lr=0.01) #  Model parameters are the layers of model
 
     ## DEFINE TRAINING LOSS
@@ -86,7 +81,7 @@ def train_model(epochs,X_train,y_train,X_test,y_test):
         loss_train.backward()
         optimizer.step()
 
-    torch.save(model,f'{BASEPATH}/Pickle_Files/Func_approx_3D.pt')
+    torch.save(model,f'{BASEPATH}/Pickle_Files/Policy_Network.pt')
     
     ## PLOT LOSSES AND ACCURACIES
     fig = plt.figure(1,figsize=(12,8))
@@ -144,10 +139,10 @@ if __name__ == '__main__':
 
     ## TRAIN NN MODEL
     epochs = 3_000
-    # train_model(epochs,X_train,y_train,X_test,y_test)
+    train_model(epochs,X_train,y_train,X_test,y_test)
 
     ## EVALUATE NN MODEL
-    model = torch.load(f'{BASEPATH}/Pickle_Files/Func_approx_3D.pt')
+    model = torch.load(f'{BASEPATH}/Pickle_Files/Policy_Network.pt')
     with torch.no_grad():
         y_pred_test = model.forward(X_test)
 
