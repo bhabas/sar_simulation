@@ -191,7 +191,7 @@ if __name__ == "__main__":
     epochs = 1000
 
     torch.manual_seed(0)
-    train_model(epochs,X_train,y_train[:,0].reshape(-1,1),X_test,y_test[:,0].reshape(-1,1))
+    # train_model(epochs,X_train,y_train[:,0].reshape(-1,1),X_test,y_test[:,0].reshape(-1,1))
 
     ## EVALUATE NN MODEL
     model = torch.load(f'{BASEPATH}/Pickle_Files/Flip_Network.pt')
@@ -199,10 +199,20 @@ if __name__ == "__main__":
     with torch.no_grad():
         y_pred_test = model.forward(X_test)
         y_pred_test_class = np.where(y_pred_test.detach().numpy() < 0.5,0,1)
-        y_pred_test = np.round(y_pred_test,0)
-    print(balanced_accuracy_score(y_test[:,0],y_pred_test))
-    print(confusion_matrix(y_test[:,0],y_pred_test,normalize=None))
-    print(classification_report(y_test[:,0],y_pred_test))
+
+        y_error = np.round(y_pred_test - y_test,2).numpy()
+
+    print(balanced_accuracy_score(y_test[:,0],y_pred_test_class))
+    print(confusion_matrix(y_test[:,0],y_pred_test_class,normalize=None))
+    print(classification_report(y_test[:,0],y_pred_test_class))
+
+    ## SAVE ERROR VALUES TO CSV
+    y_pred_df = pd.DataFrame(np.hstack((y_test,y_pred_test_class,y_error)),columns=['y_test','y_pred_test','y_error'])
+    y_pred_df.to_csv(f'{BASEPATH}/Info/NN_Flip_Classifier_Errors.csv',index=False)
+
+    # ## PLOT ERROR VARIANCE
+    # plt.hist(y_error, bins=30,histtype='stepfilled', color='steelblue')
+    # plt.show()
 
 
 

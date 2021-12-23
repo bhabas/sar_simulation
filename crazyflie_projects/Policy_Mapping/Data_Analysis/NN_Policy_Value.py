@@ -139,12 +139,29 @@ if __name__ == '__main__':
 
     ## TRAIN NN MODEL
     epochs = 3_000
-    train_model(epochs,X_train,y_train,X_test,y_test)
+    # train_model(epochs,X_train,y_train,X_test,y_test)
 
     ## EVALUATE NN MODEL
     model = torch.load(f'{BASEPATH}/Pickle_Files/Policy_Network.pt')
     with torch.no_grad():
         y_pred_test = model.forward(X_test)
+
+        ## Round values for easy reading
+        y_pred_test = np.round(y_pred_test,2)
+        y_error = np.round(y_pred_test-y_test,2).numpy()
+
+        rms = mean_squared_error(y_test, y_pred_test, squared=False)
+        print(f"RMSE: {rms:.5f} Standard Deviation: {y_error.std():.2f}")
+
+    ## SAVE ERROR VALUES TO CSV
+    y_pred_df = pd.DataFrame(np.hstack((y_test,y_pred_test,y_error)),columns=['y_test','y_pred_test','y_error'])
+    y_pred_df.to_csv(f'{BASEPATH}/Info/NN_Policy_Value_Errors.csv',index=False)
+
+    ## PLOT ERROR VARIANCE
+    plt.hist(y_error, bins=30,histtype='stepfilled', color='steelblue')
+    plt.show()
+    
+
 
     ## DEFINE PLOTTING RANGE
     # x1_plot = np.linspace(-3,3,20).reshape(-1,1)
