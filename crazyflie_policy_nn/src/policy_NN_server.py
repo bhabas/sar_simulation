@@ -8,6 +8,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import pandas as pd
 
 from sklearn import preprocessing
 
@@ -50,26 +51,33 @@ class NN_Policy_Value(nn.Module):
         return x
 NN_Policy = torch.load(f'{BASEPATH}/Pickle_Files/Policy_Network.pt')
 
-
-
+df_scaler_flip = pd.read_csv(f"{BASEPATH}/Info/Scaler_Classifier.csv")
+df_scaler_policy = pd.read_csv(f"{BASEPATH}/Info/Scaler_Policy_Value.csv")
 
 def handle_policy(req):
-    # print("Returning [%s + %s = %s]"%(req.OF_y, req.RREV, (req.a + req.b)))
-
-    # ## EVALUATE NN MODEL
+    ## Flip Classifier Scaler
+    means_flip = df_scaler_flip['mean'].to_numpy()
+    scales_flip = df_scaler_flip['scale'].to_numpy()
+    X_flip = (torch.FloatTensor([req.OF_y, req.RREV, req.d_ceil]- means_flip)/scales_flip)
     
-    X = torch.FloatTensor([-3.3781,  1.1145, -0.9872])
-    X = torch.FloatTensor([req.RREV, req.OF_y, req.d_ceil])
+
+
+    ## Policy Value Scaler
+    means_policy = df_scaler_policy['mean'].to_numpy()
+    scales_policy = df_scaler_policy['scale'].to_numpy()
+    X_policy = (torch.FloatTensor([req.OF_y, req.RREV, req.d_ceil] - means_policy)/scales_policy)
+    
+    ## EVALUATE NN MODEL
     with torch.no_grad():
-        y_pred = NN_Classifier.forward(X)
-        y_pred_class = np.where(y_pred.detach().numpy() < 0.5,0,1)
-        y_pred_class = bool(y_pred_class)
+        y_pred = NN_Classifier.forward(X_flip.float())
+        flip_flag = np.where(y_pred.detach().numpy() < 0.5,0,1)
+        flip_flag = bool(flip_flag)
 
-        y_pred2 = NN_Policy.forward(X)
+        My = NN_Policy.forward(X_policy.float())
 
-    print(y_pred,y_pred2)
+    print(y_pred,My)
 
-    return Policy_ValuesResponse(y_pred_class,y_pred2)
+    return Policy_ValuesResponse(flip_flag,My)
 
 def policy_server():
     rospy.init_node('policy_NN_server')

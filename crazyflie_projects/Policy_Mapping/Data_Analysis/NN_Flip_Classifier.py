@@ -199,7 +199,7 @@ if __name__ == "__main__":
     epochs = 1000
 
     torch.manual_seed(0)
-    # train_model(epochs,X_train,y_train[:,0].reshape(-1,1),X_test,y_test[:,0].reshape(-1,1))
+    train_model(epochs,X_train,y_train[:,0].reshape(-1,1),X_test,y_test[:,0].reshape(-1,1))
 
 
 

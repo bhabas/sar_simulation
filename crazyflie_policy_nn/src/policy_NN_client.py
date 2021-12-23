@@ -10,7 +10,7 @@ def add_two_ints_client(x,y,z):
     rospy.wait_for_service('policy_NN')
     try:
         add_two_ints = rospy.ServiceProxy('policy_NN', Policy_Values)
-        resp1 = add_two_ints(x, y,z)
+        resp1 = add_two_ints(x,y,z)
         return resp1.flip_flag,resp1.My
     except rospy.ServiceException as e:
         print("Service call failed: %s"%e)
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     #     sys.exit(1)
 
 
-    x,y,z = -3.3781,  1.1145, -0.9872
+    x,y,z =-6.8452,  3.0345,  0.1297
 
     print("Requesting %s+%s"%(x, y))
     print(add_two_ints_client(x,y,z))

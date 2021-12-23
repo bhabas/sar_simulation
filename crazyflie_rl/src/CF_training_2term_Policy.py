@@ -383,14 +383,14 @@ if __name__ == '__main__':
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
     V_d = 2.25  # [m/s]
-    phi = 50    # [deg]
+    phi = 30    # [deg]
 
 
     
     ## INITIALIALIZE LOGGING DATA
     trial_num = 24
     env.agent_name = agent.agent_type
-    env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--NL"
+    env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--WL"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
     env.logging_flag = True
        
