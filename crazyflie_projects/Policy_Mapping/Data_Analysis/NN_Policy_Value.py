@@ -117,18 +117,34 @@ if __name__ == '__main__':
     X3 = df_raw["flip_d_mean"]
     y = df_raw["My_d"].to_numpy().reshape(-1,1)
 
+
+
     ## REGULARIZE DATA
     X = np.stack((X1,X2,X3),axis=1)
     scaler = preprocessing.StandardScaler().fit(X)
     X_scaled = scaler.transform(X)
     X = X_scaled
 
+
+
+    ## SAVE SCALING DATA
+    df_scale = pd.DataFrame(
+        np.vstack((scaler.mean_,scaler.scale_,scaler.var_)).T,
+        columns=['mean','scale','var'])
+    df_scale.to_csv(f"{BASEPATH}/Info/Scaler_Policy_Value.csv",index=False,float_format="%.2f")
+
+
+
     ## CONVERT DATA INTO DATAFRAME
     data_array = np.hstack((X,y))
     df = pd.DataFrame(data_array,columns=['X1','X2','X3','y'])
 
+
+
     ## SPLIT DATA FEATURES INTO TRAINING AND TESTING DATA
     train_df, test_df = train_test_split(df,test_size=0.2,random_state=33)
+
+
 
     ## CONVERT DATA INTO TENSORS
     X_train = torch.FloatTensor(train_df[['X1','X2','X3']].to_numpy())
@@ -137,25 +153,27 @@ if __name__ == '__main__':
     y_train = torch.FloatTensor(train_df[['y']].to_numpy()).reshape((-1,1))
     y_test = torch.FloatTensor(test_df[['y']].to_numpy()).reshape((-1,1))
 
+
+
     ## TRAIN NN MODEL
     epochs = 3_000
     # train_model(epochs,X_train,y_train,X_test,y_test)
+
+
 
     ## EVALUATE NN MODEL
     model = torch.load(f'{BASEPATH}/Pickle_Files/Policy_Network.pt')
     with torch.no_grad():
         y_pred_test = model.forward(X_test)
-
-        ## Round values for easy reading
-        y_pred_test = np.round(y_pred_test,2)
-        y_error = np.round(y_pred_test-y_test,2).numpy()
+        y_error = (y_pred_test-y_test).numpy()
 
         rms = mean_squared_error(y_test, y_pred_test, squared=False)
         print(f"RMSE: {rms:.5f} Standard Deviation: {y_error.std():.2f}")
 
     ## SAVE ERROR VALUES TO CSV
     y_pred_df = pd.DataFrame(np.hstack((y_test,y_pred_test,y_error)),columns=['y_test','y_pred_test','y_error'])
-    y_pred_df.to_csv(f'{BASEPATH}/Info/NN_Policy_Value_Errors.csv',index=False)
+    y_pred_df.to_csv(f'{BASEPATH}/Info/NN_Policy_Value_Errors.csv',index=False,float_format="%.2f")
+
 
     ## PLOT ERROR VARIANCE
     plt.hist(y_error, bins=30,histtype='stepfilled', color='steelblue')
@@ -164,11 +182,6 @@ if __name__ == '__main__':
 
 
     ## DEFINE PLOTTING RANGE
-    # x1_plot = np.linspace(-3,3,20).reshape(-1,1)
-    # x2_plot = np.linspace(-3,3,20).reshape(-1,1)
-    # x3_plot = np.linspace(-3,3,20).reshape(-1,1)
-    # X1_plot,X2_plot,X3_plot = np.meshgrid(x1_plot,x2_plot,x3_plot)
-    # X_plot = np.stack((X1_plot.flatten(),X2_plot.flatten(),X3_plot.flatten()),axis=1)
     X_plot = np.stack((
         df['X1'].to_numpy(),
         df['X2'].to_numpy(),
@@ -181,18 +194,6 @@ if __name__ == '__main__':
 
     fig = go.Figure()
 
-    # fig.add_trace(
-    #     go.Isosurface(
-    #         x=X_plot[:,0].flatten(),
-    #         y=X_plot[:,1].flatten(),
-    #         z=X_plot[:,2].flatten(),
-    #         value=y_pred_plot,
-    #         surface_count=3,
-    #         opacity=0.2,
-    #         isomin=0.7,
-    #         isomax=0.9,
-    #         caps=dict(x_show=False, y_show=False)
-    #     ))
 
     fig.add_trace(
         go.Scatter3d(
@@ -202,11 +203,9 @@ if __name__ == '__main__':
             mode='markers',
             marker=dict(
                 size=2,
-                color=df['y'].to_numpy().flatten(),                # set color to an array/list of desired values
-                colorbar=dict(
-                title="Colorbar"
-                ),
-                colorscale='jet',   # choose a colorscale
+                color=df['y'].to_numpy().flatten(),
+                colorbar=dict(title="Colorbar"),
+                colorscale='jet',
                 opacity=0.4)
         ))
 

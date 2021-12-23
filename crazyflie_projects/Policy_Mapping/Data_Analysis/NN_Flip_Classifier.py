@@ -144,6 +144,13 @@ if __name__ == "__main__":
     X = X_scaled
 
 
+
+    ## SAVE SCALING DATA
+    df_scale = pd.DataFrame(
+        np.vstack((scaler.mean_,scaler.scale_,scaler.var_)).T,
+        columns=['mean','scale','var'])
+    df_scale.to_csv(f"{BASEPATH}/Info/Scaler_Classifier.csv",index=False,float_format="%.2f")
+
     data_array = np.hstack((X,y))
     df = pd.DataFrame(data_array,columns=['X1','X2','X3','y'])
     df = df.sort_values(by='y')
@@ -187,11 +194,14 @@ if __name__ == "__main__":
     y_test = torch.FloatTensor(test_df[['y']].to_numpy())
 
 
+
     ## TRAIN NN MODEL
     epochs = 1000
 
     torch.manual_seed(0)
     # train_model(epochs,X_train,y_train[:,0].reshape(-1,1),X_test,y_test[:,0].reshape(-1,1))
+
+
 
     ## EVALUATE NN MODEL
     model = torch.load(f'{BASEPATH}/Pickle_Files/Flip_Network.pt')
@@ -200,15 +210,17 @@ if __name__ == "__main__":
         y_pred_test = model.forward(X_test)
         y_pred_test_class = np.where(y_pred_test.detach().numpy() < 0.5,0,1)
 
-        y_error = np.round(y_pred_test - y_test,2).numpy()
+        y_error = (y_pred_test - y_test).numpy()
 
     print(balanced_accuracy_score(y_test[:,0],y_pred_test_class))
     print(confusion_matrix(y_test[:,0],y_pred_test_class,normalize=None))
     print(classification_report(y_test[:,0],y_pred_test_class))
 
+
+
     ## SAVE ERROR VALUES TO CSV
     y_pred_df = pd.DataFrame(np.hstack((y_test,y_pred_test_class,y_error)),columns=['y_test','y_pred_test','y_error'])
-    y_pred_df.to_csv(f'{BASEPATH}/Info/NN_Flip_Classifier_Errors.csv',index=False)
+    y_pred_df.to_csv(f'{BASEPATH}/Info/NN_Flip_Classifier_Errors.csv',index=False,float_format="%.2f")
 
     # ## PLOT ERROR VARIANCE
     # plt.hist(y_error, bins=30,histtype='stepfilled', color='steelblue')
@@ -222,6 +234,7 @@ if __name__ == "__main__":
     x_min, x_max = X[:, 0].min()-0.1, X[:, 0].max()+0.1
     y_min, y_max = X[:, 1].min()-0.1, X[:, 1].max()+0.1
     z_min, z_max = X[:, 2].min()-0.1, X[:, 2].max()+0.1
+
 
     ## SET GRID SPACING PARAMETER
     spacing = min(x_max-x_min, y_max-y_min, z_max-z_min) / 25
