@@ -157,7 +157,7 @@ if __name__ == '__main__':
 
     ## TRAIN NN MODEL
     epochs = 3_000
-    train_model(epochs,X_train,y_train,X_test,y_test)
+    # train_model(epochs,X_train,y_train,X_test,y_test)
 
 
 

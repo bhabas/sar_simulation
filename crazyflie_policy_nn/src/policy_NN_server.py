@@ -75,7 +75,8 @@ def handle_policy(req):
 
         My = NN_Policy.forward(X_policy.float())
 
-    print(y_pred,My)
+    if flip_flag == True:
+        print(y_pred,My)
 
     return Policy_ValuesResponse(flip_flag,My)
 

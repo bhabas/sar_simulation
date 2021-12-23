@@ -12,6 +12,7 @@
 #include "crazyflie_msgs/RLCmd.h"
 #include "crazyflie_msgs/RLData.h"
 #include "crazyflie_msgs/PadConnect.h"
+#include "crazyflie_msgs/Policy_Values.h"
 
 
 #include "nav_msgs/Odometry.h"
@@ -63,6 +64,9 @@ class Controller
             RLCmd_Subscriber = nh->subscribe("/rl_ctrl",50,&Controller::GTC_Command,this,ros::TransportHints().tcpNoDelay());
             RLData_Subscriber = nh->subscribe("/rl_data",5,&Controller::RLData_Callback,this,ros::TransportHints().tcpNoDelay());
             SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
+            NN_Client = nh->serviceClient<crazyflie_msgs::Policy_Values>("policy_NN");
+
+
 
 
 
@@ -123,6 +127,7 @@ class Controller
 
         void ceilingFTCallback(const crazyflie_msgs::ImpactData::ConstPtr &msg);
         void adjustSimSpeed(float speed_mult);
+        float NN_values(float RREV, float OF_y, float d_ceil);
 
 
 
@@ -148,6 +153,7 @@ class Controller
         ros::Subscriber RLCmd_Subscriber;
         ros::Subscriber RLData_Subscriber;
         ros::ServiceClient SimSpeed_Client;
+        ros::ServiceClient NN_Client;
 
 
         
@@ -549,6 +555,22 @@ void Controller::ceilingFTCallback(const crazyflie_msgs::ImpactData::ConstPtr &m
     impact_flag = msg->impact_flag;
 }
 
+float Controller::NN_values(float RREV,float OF_y, float d_ceil)
+{
+    crazyflie_msgs::Policy_Values srv;
+
+    srv.request.OF_y = OF_y;
+    srv.request.RREV = RREV;
+    srv.request.d_ceil = d_ceil;
+
+    NN_Client.call(srv);
+
+    std::cout << srv.response.My << "\t" << srv.response.flip_flag << std::endl;
+
+    return srv.response.My;
+    
+
+}
 
 void Controller::adjustSimSpeed(float speed_mult)
 {
