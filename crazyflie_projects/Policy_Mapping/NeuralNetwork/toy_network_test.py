@@ -13,5 +13,7 @@ X = np.array([1,2,3]).reshape(-1,1)
 
 
 a = np.dot(W,X)+b
+
+a = sigmoid(a)
 print(a)
 
