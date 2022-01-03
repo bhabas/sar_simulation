@@ -19,7 +19,7 @@ int main()
     nml_mat *m3 = nml_mat_dot(W, X);
     m3 = nml_mat_add(m3,b);
 
-    nml_mat *q = nml_mat_funcElement(W);
+    nml_mat *q = nml_mat_funcElement(m3);
     nml_mat_print(q);
 
 

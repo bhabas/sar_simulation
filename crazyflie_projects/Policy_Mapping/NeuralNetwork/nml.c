@@ -447,7 +447,7 @@ int nml_mat_funcElement_r(nml_mat *m) {
   int i, j;
   for(i = 0; i < m->num_rows; i++) {
     for(j = 0; j < m->num_cols; j++) {
-      m->data[i][j] = (m->data[i][j])*(m->data[i][j]);
+      m->data[i][j] = 1/(1+exp(-1*m->data[i][j]));
     }
   }
   return 1;
