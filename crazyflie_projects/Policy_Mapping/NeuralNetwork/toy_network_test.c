@@ -13,30 +13,41 @@ float Sigmoid(float x)
 int main()
 {
     // DEFINE MATRICES FROM FILE
-    const char *f_W = "data/W.data";
-    nml_mat *W = nml_mat_fromfile(f_W);
+    const char *f_W1 = "data/W_1.data";
+    nml_mat *W1 = nml_mat_fromfile(f_W1);
 
-    const char *f_X = "data/X.data";
-    nml_mat *X = nml_mat_fromfile(f_X);
-
-    const char *f_b = "data/b.data";
-    nml_mat *b = nml_mat_fromfile(f_b);
+    const char *f_b1 = "data/b_1.data";
+    nml_mat *b1 = nml_mat_fromfile(f_b1);
 
 
-    // W*X + b
-    nml_mat *m3 = nml_mat_dot(W, X);
-    m3 = nml_mat_add(m3,b);
-    nml_mat_print(m3);
+    const char *f_W2 = "data/W_2.data";
+    nml_mat *W2 = nml_mat_fromfile(f_W2);
+
+    const char *f_b2 = "data/b_2.data";
+    nml_mat *b2 = nml_mat_fromfile(f_b2);
 
 
-    nml_mat *q = nml_mat_funcElement(m3,Sigmoid);
-    nml_mat_print(q);
+
+    double X_array[3] = {1.0, 2.0, 3.0};
+    nml_mat *X = nml_mat_from(3, 1, 3, X_array);
 
 
-    nml_mat_free(W);
+    // a = sig(W*X + b)
+    nml_mat *a1 = nml_mat_dot(W1, X);
+    nml_mat_print(b1);
+    // printf("%d",b1->num_rows);
+    // nml_mat *a2 = nml_mat_add(a1,b1);
+    // nml_mat *a3 = nml_mat_funcElement(a2,Sigmoid);
+
+    // nml_mat_print(a1);
+
     nml_mat_free(X);
-    nml_mat_free(b);
-    // nml_mat_free(m3);
+
+    nml_mat_free(W1);
+    nml_mat_free(b1);
+    nml_mat_free(W2);
+    nml_mat_free(b2);
+    nml_mat_free(a1);
 
 
 
