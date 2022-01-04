@@ -437,21 +437,19 @@ int nml_mat_smult_r(nml_mat *m, double num) {
 }
 
 
-nml_mat *nml_mat_funcElement(nml_mat *m) {
+nml_mat *nml_mat_funcElement(nml_mat *m,float (*Function)(float x)) {
   nml_mat *r = nml_mat_cp(m);
-  nml_mat_funcElement_r(r);
+
+  int i, j;
+  for(i = 0; i < r->num_rows; i++) {
+    for(j = 0; j < r->num_cols; j++) {
+      r->data[i][j] = Function(r->data[i][j]);
+    }
+  }
+
   return r;
 }
 
-int nml_mat_funcElement_r(nml_mat *m) {
-  int i, j;
-  for(i = 0; i < m->num_rows; i++) {
-    for(j = 0; j < m->num_cols; j++) {
-      m->data[i][j] = 1/(1+exp(-1*m->data[i][j]));
-    }
-  }
-  return 1;
-}
 
 // *****************************************************************************
 //

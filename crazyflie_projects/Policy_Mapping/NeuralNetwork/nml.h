@@ -100,8 +100,7 @@ nml_mat *nml_mat_row_addrow(nml_mat *m, unsigned int where, unsigned int row, do
 int nml_mat_row_addrow_r(nml_mat *m, unsigned int where, unsigned int row, double multiplier);
 nml_mat *nml_mat_smult(nml_mat *m, double num);
 int nml_mat_smult_r(nml_mat *m, double num);
-nml_mat *nml_mat_funcElement(nml_mat *m);
-int nml_mat_funcElement_r(nml_mat *m);
+nml_mat *nml_mat_funcElement(nml_mat *m, float (*Function)(float x));
 // *****************************************************************************
 //
 // Modifying the matrix structure

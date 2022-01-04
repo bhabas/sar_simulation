@@ -13,7 +13,7 @@ BASEPATH = "crazyflie_projects/Policy_Mapping/NeuralNetwork"
 
 ## DEFINE NN MODEL
 class Model(nn.Module):
-    def __init__(self,in_features=3,h=4,out_features=1):
+    def __init__(self,in_features=3,h=4,out_features=5):
         super().__init__()
 
         # Input Layer (4 features) --> h1 (N) --> h2 (N) --> output (3 classes)
