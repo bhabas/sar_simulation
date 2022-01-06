@@ -50,19 +50,22 @@ if __name__ == '__main__':
     with torch.no_grad():
         y = model.forward(X)
         ii = 0
+        f = open('NN_Layers.data','ab')
+        f.truncate(0) ## Clears contents of file
+
         for name, layer in model.named_modules():
             if ii > 0:
-                # print(layer.weight.numpy())
+                # print(layer.weight.numpy())]
 
                 W = layer.weight.numpy()
-                np.savetxt(f"W_{ii}.data",W,
+                np.savetxt(f,W,
                     fmt='%.6f',
                     delimiter='\t',
                     comments='',
                     header=f"{W.shape[0]} {W.shape[1]}")
 
                 b = layer.bias.numpy().reshape(-1,1)
-                np.savetxt(f"b_{ii}.data",b,
+                np.savetxt(f,b,
                     fmt='%.6f',
                     delimiter='\t',
                     comments='',
@@ -70,9 +73,7 @@ if __name__ == '__main__':
 
             ii+=1
 
+        f.close()
 
-
-        # print(model.fc1.weight)
-        # print(model.fc1.bias)
         print(y)
 

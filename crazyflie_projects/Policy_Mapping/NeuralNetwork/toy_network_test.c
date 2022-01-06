@@ -13,43 +13,51 @@ float Sigmoid(float x)
 
 int main()
 {
-    double X1_array[3] = {1.0, 2.0, 3.0}; // 4x1
+    double X1_array[3] = {-1.6974,  0.4014, -1.1264}; // 4x1
     nml_mat *X1 = nml_mat_from(3, 1, 3, X1_array);
+
+    FILE *input = fopen("data/NN_Layers.data", "r");
+
    
     // LAYER 1
-    const char *f_W1 = "data/W_1.data";
-    nml_mat *W1 = nml_mat_fromfile(f_W1);
+    nml_mat *W1 = nml_mat_fromfilef(input);
+    nml_mat *b1 = nml_mat_fromfilef(input);
 
-    const char *f_b1 = "data/b_1.data";
-    nml_mat *b1 = nml_mat_fromfile(f_b1);
 
     // LAYER 2
-    const char *f_W2 = "data/W_2.data";
-    nml_mat *W2 = nml_mat_fromfile(f_W2);
+    nml_mat *W2 = nml_mat_fromfilef(input);
+    nml_mat *b2 = nml_mat_fromfilef(input);
 
-    const char *f_b2 = "data/b_2.data";
-    nml_mat *b2 = nml_mat_fromfile(f_b2);
+    // LAYER 3
+    nml_mat *W3 = nml_mat_fromfilef(input);
+    nml_mat *b3 = nml_mat_fromfilef(input);
 
 
 
+    fclose(input);
 
+
+    // LAYER 1
     nml_mat *WX = nml_mat_dot(W1,X1); // 4x3 * 3x1 = 4x1
     nml_mat_add_r(WX,b1);
     nml_mat *a1 = nml_mat_funcElement(WX,Sigmoid);
 
-    nml_mat_print(WX);
-    nml_mat_print(b1);
-    nml_mat_add_r(WX,b1);
-    nml_mat_print(a1);
-
-
+    // LAYER 2
     nml_mat *WX2 = nml_mat_dot(W2,a1); 
     nml_mat_add_r(WX2,b2);
     nml_mat *a2 = nml_mat_funcElement(WX2,Sigmoid);
 
+    // LAYER 3
+    nml_mat *WX3 = nml_mat_dot(W3,a2); 
+    nml_mat_add_r(WX3,b3);
+    nml_mat *y = WX3;
 
+
+    // nml_mat_print(WX);
+    // nml_mat_print(b1);
+    // nml_mat_print(a1);
     
-    nml_mat_print(a2);
+    nml_mat_print(y);
 
 
     // nml_mat_free(W1);
