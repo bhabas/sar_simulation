@@ -240,14 +240,17 @@ if __name__ == '__main__':
                     fmt='%.6f',
                     delimiter='\t',
                     comments='',
-                    header=f"{W.shape[0]} {W.shape[1]}")
+                    header=f"{W.shape[0]} {W.shape[1]}",
+                    footer="\n")
+
 
                 b = layer.bias.numpy().reshape(-1,1)
                 np.savetxt(f,b,
                     fmt='%.6f',
                     delimiter='\t',
                     comments='',
-                    header=f"{b.shape[0]} {b.shape[1]}")
+                    header=f"{b.shape[0]} {b.shape[1]}",
+                    footer="\n")
 
             ii+=1
 
