@@ -9,141 +9,119 @@
 typedef struct nml_mat_s{
     int num_rows;
     int num_cols;
-    int **data;
+    double **data;
     int is_square;
 } nml_mat;
 
 nml_mat* nml_mat_new(int num_rows, int num_cols);
+void nml_mat_free(nml_mat* m);
 
-void printMat(nml_mat* m);
+void nml_mat_print(nml_mat* m);
 void addMat(nml_mat* m1, nml_mat* m2);
+nml_mat* nml_mat_dot(nml_mat *m1, nml_mat *m2);
+void nml_mat_funcElement(nml_mat *m, float (*Function)(float x));
+
+float Sigmoid(float x)
+{
+    // return 1/(1+exp(-x));
+    return 2*x;
+}
 
 
 int main(){
 
     
 
-    nml_mat* X = nml_mat_new(3,1);
+    nml_mat* X = nml_mat_new(4,1);
 
     X->data[0][0] = 0;
     X->data[1][0] = 1;
     X->data[2][0] = 2;
+    X->data[3][0] = 3;
+
 
 
    
 
-    nml_mat* b = nml_mat_new(4,1);
+    nml_mat* b = nml_mat_new(5,1);
 
     b->data[0][0] = 4;
     b->data[1][0] = 5;
     b->data[2][0] = 6;
     b->data[3][0] = 7;
+    b->data[4][0] = 8;
+
 
 
    
 
-    nml_mat* W = nml_mat_new(4,3);
+    nml_mat* W = nml_mat_new(5,4);
 
 
     W->data[0][0] = 1;
     W->data[0][1] = 1;
     W->data[0][2] = 1;
+    W->data[0][3] = 1;
 
     W->data[1][0] = 1;
     W->data[1][1] = 1;
     W->data[1][2] = 1;
+    W->data[1][3] = 1;
 
     W->data[2][0] = 1;
     W->data[2][1] = 1;
     W->data[2][2] = 1;
+    W->data[2][3] = 1;
 
     W->data[3][0] = 1;
     W->data[3][1] = 1;
     W->data[3][2] = 1;
+    W->data[3][3] = 1;
 
-    
-
-    nml_mat* val = nml_mat_new(4,1);
-
-
-    val->data[0][0] = 8;
-    val->data[1][0] = 9;
-    val->data[2][0] = 10;
-    val->data[3][0] = 11;
+    W->data[4][0] = 1;
+    W->data[4][1] = 1;
+    W->data[4][2] = 1;
+    W->data[4][3] = 1;
 
     
 
     
 
-    printMat(X);
-    printMat(b);
-    printMat(W);
-    printMat(val);
     
-    // // PRINT MATRIX3
-    // for (int i = 0; i < 4; i++)
-    // {
-    //     for (int j = 0; j < 4; j++)
-    //     {
-    //         printf("%d\t\t",W->data[i][j]);
-    //     }
-    //     printf("\n");   
-    // }
-    // printf("\n");
 
-    for(int i = 0; i < val->num_rows; i++) {
-        for(int j = 0; j < val->num_cols; j++) {
-            for(int k = 0; k < W->num_cols; k++) {
-                val->data[i][j] += W->data[i][k] * X->data[k][j];
-            }
-        }
-    }
+    
+
+    nml_mat_print(X);
+    nml_mat_print(W);
+    nml_mat_print(b);
+
+
+    nml_mat* r = nml_mat_dot(W,X);
 
    
 
-    printMat(val);
-    addMat(val,b);
-    printMat(val);
+    nml_mat_print(r);
+    nml_mat_print(b);
+
+    addMat(r,b);
+    nml_mat_print(r);
+
+    nml_mat_funcElement(r,Sigmoid);
+    nml_mat_print(r);
 
 
 
 
 
 
-    // addMat(X,b);
+
+    nml_mat_free(X);
+    nml_mat_free(b);
+    nml_mat_free(W);
+    nml_mat_free(r);
+
     
-    
-    // printMat(X);
 
-
-
-    for (int i = 0; i < 3; i++)
-    {
-        free(X->data[i]);
-    }
-    free(X->data);
-    free(X);
-    
-    for (int i = 0; i < 4; i++)
-    {
-        free(b->data[i]);
-    }
-    free(b->data);
-    free(b);
-    
-    for (int i = 0; i < 4; i++)
-    {
-        free(W->data[i]);
-    }
-    free(W->data);
-    free(W);
-
-    for (int i = 0; i < 4; i++)
-    {
-        free(val->data[i]);
-    }
-    free(val->data);
-    free(val);
     
    
 
@@ -157,11 +135,22 @@ int main(){
     return 0;
 }
 
+void nml_mat_free(nml_mat* m)
+{
+    for (int i = 0; i < m->num_rows; i++)
+    {
+        free(m->data[i]);
+    }
+    free(m->data);
+    free(m);
+
+}
+
 void addMat(nml_mat* m1, nml_mat* m2)
 {
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < m1->num_rows; i++)
     {
-        for (int j = 0; j < 1; j++)
+        for (int j = 0; j < m1->num_cols; j++)
         {
             m1->data[i][j] += m2->data[i][j];
         }
@@ -169,14 +158,43 @@ void addMat(nml_mat* m1, nml_mat* m2)
     }
 }
 
-void printMat(nml_mat* m)
+nml_mat* nml_mat_dot(nml_mat *m1, nml_mat *m2)
+{
+    nml_mat* r = nml_mat_new(m1->num_rows, m2->num_cols);
+
+
+
+    for(int i = 0; i < r->num_rows; i++) {
+        for(int j = 0; j < r->num_cols; j++) {
+            for(int k = 0; k < m1->num_cols; k++) {
+                r->data[i][j] += m1->data[i][k] * m2->data[k][j];
+            }
+        }
+    }
+
+    return r;
+}
+
+void nml_mat_funcElement(nml_mat *m,float (*Function)(float x)) {
+
+  int i, j;
+  for(i = 0; i < m->num_rows; i++) {
+    for(j = 0; j < m->num_cols; j++) {
+      m->data[i][j] = Function(m->data[i][j]);
+    }
+  }
+
+}
+
+
+void nml_mat_print(nml_mat* m)
 {
     // PRINT MATRIX
     for (int i = 0; i < m->num_rows; i++)
     {
         for (int j = 0; j < m->num_cols; j++)
         {
-            printf("%d\t",m->data[i][j]);
+            printf("%.3f\t",m->data[i][j]);
         }
         printf("\n");   
     }
@@ -192,10 +210,10 @@ nml_mat* nml_mat_new(int num_rows, int num_cols)
     X->num_rows = num_rows;
     X->num_cols = num_cols;
     X->is_square = 0;
-    X->data = malloc(num_rows*sizeof(int*));
+    X->data = malloc(num_rows*sizeof(double*));
     for(int i=0; i<num_rows;i++)
     {
-        X->data[i] = malloc(num_cols*sizeof(int));
+        X->data[i] = malloc(num_cols*sizeof(double));
     }
 
     return X;
