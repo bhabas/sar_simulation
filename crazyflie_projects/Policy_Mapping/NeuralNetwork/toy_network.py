@@ -26,7 +26,7 @@ class Model(nn.Module):
         # PASS DATA THROUGH NETWORK
         x = F.sigmoid(self.fc1(x))
         # x = F.sigmoid(self.fc2(x))
-        x = self.out(x)
+        x = F.sigmoid(self.out(x))
 
 
         return x
@@ -52,7 +52,7 @@ if __name__ == '__main__':
         ii = 0
         for name, layer in model.named_modules():
             if ii > 0:
-                print(layer.weight.numpy())
+                # print(layer.weight.numpy())
 
                 W = layer.weight.numpy()
                 np.savetxt(f"W_{ii}.data",W,
