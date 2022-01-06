@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <math.h>
+#include <unistd.h>
 
 #include "nml.h"
 float Sigmoid(float x)
@@ -13,10 +14,12 @@ double NN_Output(nml_mat* X, nml_mat* W[], nml_mat* b[]);
 
 int main()
 {
+
+    
     double X1_array[3] = {-1.6974,  0.4014, -1.1264}; // 4x1
     nml_mat *X = nml_mat_from(3, 1, 3, X1_array);
 
-    FILE *input = fopen("/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/data/NN_Layers.data", "r");
+    FILE *input = fopen("src/crazyflie_simulation/crazyflie_gazebo/src/data/NN_Layers.data", "r");
 
    
     // LAYER 1
