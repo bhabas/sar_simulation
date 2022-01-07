@@ -19,21 +19,21 @@ import plotly.graph_objects as go
 
 
 np.set_printoptions(suppress=True)
-BASEPATH = "crazyflie_projects/Policy_Mapping/Data_Analysis"
+BASEPATH = "crazyflie_projects/Policy_Mapping/NeuralNetwork"
 
 ## DEFINE NN MODEL
 class NN_Flip_Classifier(nn.Module):
-    def __init__(self,in_features=2,h1=5,h2=5,out_features=1):
+    def __init__(self,in_features=3,h=10,out_features=1):
         super().__init__()
-        h = 20
-        # Input Layer (4 features) --> h1 (N) --> h2 (N) --> output (3 classes)
-        self.fc1 = nn.Linear(3,h) # Fully connected layer
-        self.out = nn.Linear(h,1)
+        self.fc1 = nn.Linear(in_features,h) # Fully connected layer
+        self.fc2 = nn.Linear(h,h)
+        self.out = nn.Linear(h,out_features)
 
     def forward(self,x):
 
         # PASS DATA THROUGH NETWORK
-        x = F.elu(self.fc1(x))
+        x = torch.sigmoid(self.fc1(x))
+        x = torch.sigmoid(self.fc2(x))
         x = torch.sigmoid(self.out(x))
 
         return x
@@ -42,7 +42,7 @@ def train_model(epochs,X_train,y_train,X_test,y_test):
     model = NN_Flip_Classifier()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
-    class_weight = [0.1, 0.3]                                       # Weights as binary classes [0,1]
+    class_weight = [0.1, 0.9]                                       # Weights as binary classes [0,1]
     
     ## DEFINE TRAINING LOSS
     weights = np.where(y_train==1,class_weight[1],class_weight[0])  # Convert class weights to element weights
@@ -135,7 +135,7 @@ if __name__ == "__main__":
     X2 = df_raw["RREV_flip_mean"]
     X3 = df_raw["flip_d_mean"]
     y = df_raw["landing_rate_4_leg"].to_numpy().reshape(-1,1)
-    y = np.where(y < 0.8,0,1)
+    y = np.where(y < 0.9,0,1)
 
     ## REGULARIZE DATA
     X = np.stack((X1,X2,X3),axis=1)
@@ -163,29 +163,6 @@ if __name__ == "__main__":
 
 
 
-    # ## PLOT DATA
-    # fig = plt.figure(1,figsize=(8,8))
-
-    # ## PLOT MODEL
-    # ax1 = fig.add_subplot(111,projection='3d')
-    # ax1.scatter(
-    #     df['X1'],
-    #     df['X2'],
-    #     df['X3'],
-    #     c = df['y'],
-    #     cmap='jet',linewidth=0.2,antialiased=True)
-    # ax1.set_xlabel('X1')
-    # ax1.set_ylabel('X2')
-    # ax1.set_ylabel('X3')
-    # ax1.set_title('Function')
-    # # ax1.set_xlim(-10,10)
-    # # ax1.set_ylim(-10,10)
-    # # ax1.set_zlim(-10,10)
-
-    # fig.tight_layout()
-    # plt.show()
-
-
     ## CONVERT DATA INTO TENSORS
     X_train = torch.FloatTensor(train_df[['X1','X2','X3']].to_numpy())
     X_test = torch.FloatTensor(test_df[['X1','X2','X3']].to_numpy())
@@ -196,7 +173,7 @@ if __name__ == "__main__":
 
 
     ## TRAIN NN MODEL
-    epochs = 1000
+    epochs = 2000
 
     torch.manual_seed(0)
     train_model(epochs,X_train,y_train[:,0].reshape(-1,1),X_test,y_test[:,0].reshape(-1,1))
