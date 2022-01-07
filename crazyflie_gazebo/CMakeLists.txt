@@ -182,7 +182,6 @@ add_library(gazebo_sticky_foot SHARED src/gazebo_sticky_foot.cpp)
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(controller src/controller.cpp src/nml.c src/nml_util.c)
 add_executable(ceiling_ft_sensor src/ceiling_ft_rostopic_converter.cpp)
-add_executable(NN_test src/toy_network_test.c src/nml.c src/nml_util.c)
 
 
 ## Rename C++ executable without prefix
@@ -196,7 +195,6 @@ add_executable(NN_test src/toy_network_test.c src/nml.c src/nml_util.c)
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 # add_dependencies(gazebo_motor_model mav_msgs gazebo_mavlink)
 add_dependencies(controller include/ ${controller_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(NN_test include/ )
 
 
 ## Specify libraries to link a library or executable target against
