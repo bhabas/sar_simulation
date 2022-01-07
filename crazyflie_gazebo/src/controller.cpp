@@ -219,6 +219,11 @@ void Controller::controllerGTCTraj()
     
 }
 
+double X1_array[3] = {-1.6974,  0.4014, -1.1264}; // 4x1
+nml_mat *X = nml_mat_from(3, 1, 3, X1_array);
+
+
+
 void Controller::controllerGTC()
 {
 
@@ -244,6 +249,7 @@ void Controller::controllerGTC()
         } 
         */
 
+        
         if(execute_traj){
             controllerGTCTraj();
         }
@@ -271,6 +277,14 @@ void Controller::controllerGTC()
         RREV = _RREV;
         OF_x = _OF_x;
         OF_y = _OF_y;
+
+        X->data[0][0] = RREV;
+        X->data[1][0] = OF_y;
+        X->data[2][0] = 2.1-statePos.z;
+
+        float y = Controller::NN_Policy(X,W,b);
+        cout << y << endl;
+
 
         // EULER ANGLES EXPRESSED IN YZX NOTATION
         stateEul = quat2eul(stateQuat);
@@ -650,6 +664,8 @@ void Controller::controllerGTC()
 
 int main(int argc, char **argv)
 {
+
+    
 
     ros::init(argc, argv,"controller_node");
     ros::NodeHandle nh;
