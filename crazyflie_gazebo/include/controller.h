@@ -3,6 +3,13 @@
 #include <cmath>        // std::abs
 #include <math.h>       
 #include "math3d.h"
+#include "nml.h"
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+#include <math.h>
+#include <unistd.h>
 
 
 // ROS Includes
@@ -66,7 +73,19 @@ class Controller
             SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
             NN_Client = nh->serviceClient<crazyflie_msgs::Policy_Values>("policy_NN");
 
+            FILE* input = fopen("/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/data/NN_Layers.data", "r");
+            // LAYER 1
+            nml_mat *W1 = nml_mat_fromfilef(input);
+            nml_mat *b_1 = nml_mat_fromfilef(input);
 
+            // LAYER 2
+            nml_mat *W2 = nml_mat_fromfilef(input);
+            nml_mat *b_2 = nml_mat_fromfilef(input);
+
+            // LAYER 3
+            nml_mat *W3 = nml_mat_fromfilef(input);
+            nml_mat *b_3 = nml_mat_fromfilef(input);
+            fclose(input);
 
 
 
@@ -76,6 +95,8 @@ class Controller
             _RREV = 0.0;
             _OF_x = 0.0;
             _OF_y = 0.0;
+
+            
 
 
             ros::param::get("/CEILING_HEIGHT",_H_CEILING);
@@ -110,6 +131,21 @@ class Controller
 
             m = _CF_MASS;
             h_ceiling = _H_CEILING;
+
+            
+
+            
+            
+
+            
+
+            W[0] = W1;
+            W[1] = W2;
+            W[2] = W3;
+
+            b[0] = b_1;
+            b[1] = b_2;
+            b[2] = b_3;
         }
 
         // DEFINE FUNCTION PROTOTYPES
@@ -127,7 +163,7 @@ class Controller
 
         void ceilingFTCallback(const crazyflie_msgs::ImpactData::ConstPtr &msg);
         void adjustSimSpeed(float speed_mult);
-        float NN_values(float RREV, float OF_y, float d_ceil);
+        float NN_Policy(nml_mat* X, nml_mat* W[], nml_mat* b[]);
 
 
 
@@ -174,7 +210,16 @@ class Controller
 
         bool _isRunning;
 
+        
 
+        
+
+        
+
+        nml_mat* W[3];
+        nml_mat* b[3];
+
+        
 
         // ROS SPECIFIC VALUES
         int impact_flag;
@@ -555,20 +600,44 @@ void Controller::ceilingFTCallback(const crazyflie_msgs::ImpactData::ConstPtr &m
     impact_flag = msg->impact_flag;
 }
 
-float Controller::NN_values(float RREV,float OF_y, float d_ceil)
+float Sigmoid(float x)
 {
-    crazyflie_msgs::Policy_Values srv;
+    return 1/(1+exp(-x));
+}
 
-    srv.request.OF_y = OF_y;
-    srv.request.RREV = RREV;
-    srv.request.d_ceil = d_ceil;
-
-    NN_Client.call(srv);
-
-    std::cout << srv.response.My << "\t" << srv.response.flip_flag << std::endl;
-
-    return srv.response.My;
+float Controller::NN_Policy(nml_mat* X, nml_mat* W[], nml_mat* b[])
+{
     
+    //LAYER 1
+    //Sigmoid(W*X+b)
+    nml_mat *WX = nml_mat_dot(W[0],X); 
+    nml_mat_add_r(WX,b[0]);
+    nml_mat *a1 = nml_mat_funcElement(WX,Sigmoid);
+
+    // LAYER 2
+    // Sigmoid(W*X+b)
+    nml_mat *WX2 = nml_mat_dot(W[1],a1); 
+    nml_mat_add_r(WX2,b[1]);
+    nml_mat *a2 = nml_mat_funcElement(WX2,Sigmoid);
+
+    // LAYER 3
+    // (W*X+b)
+    nml_mat *WX3 = nml_mat_dot(W[2],a2); 
+    nml_mat_add_r(WX3,b[2]);
+    nml_mat *a3 = nml_mat_cp(WX3);
+
+    float y_output = (float)a3->data[0][0];
+
+    nml_mat_free(WX);
+    nml_mat_free(a1);
+    nml_mat_free(WX2);
+    nml_mat_free(a2);
+    nml_mat_free(WX3);
+    nml_mat_free(a3);
+
+
+
+    return y_output;
 
 }
 

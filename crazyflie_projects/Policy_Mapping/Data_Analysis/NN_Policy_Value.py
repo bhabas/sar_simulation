@@ -170,57 +170,90 @@ if __name__ == '__main__':
         rms = mean_squared_error(y_test, y_pred_test, squared=False)
         print(f"RMSE: {rms:.5f} Standard Deviation: {y_error.std():.2f}")
 
-    ## SAVE ERROR VALUES TO CSV
-    y_pred_df = pd.DataFrame(np.hstack((y_test,y_pred_test,y_error)),columns=['y_test','y_pred_test','y_error'])
-    y_pred_df.to_csv(f'{BASEPATH}/Info/NN_Policy_Value_Errors.csv',index=False,float_format="%.2f")
+    # ## SAVE ERROR VALUES TO CSV
+    # y_pred_df = pd.DataFrame(np.hstack((y_test,y_pred_test,y_error)),columns=['y_test','y_pred_test','y_error'])
+    # y_pred_df.to_csv(f'{BASEPATH}/Info/NN_Policy_Value_Errors.csv',index=False,float_format="%.2f")
 
 
-    ## PLOT ERROR VARIANCE
-    plt.hist(y_error, bins=30,histtype='stepfilled', color='steelblue')
-    plt.show()
+    # ## PLOT ERROR VARIANCE
+    # plt.hist(y_error, bins=30,histtype='stepfilled', color='steelblue')
+    # plt.show()
     
 
 
-    ## DEFINE PLOTTING RANGE
-    X_plot = np.stack((
-        df['X1'].to_numpy(),
-        df['X2'].to_numpy(),
-        df['X3'].to_numpy()),axis=1)
-    X_plot = torch.FloatTensor(X_plot)
+    # ## DEFINE PLOTTING RANGE
+    # X_plot = np.stack((
+    #     df['X1'].to_numpy(),
+    #     df['X2'].to_numpy(),
+    #     df['X3'].to_numpy()),axis=1)
+    # X_plot = torch.FloatTensor(X_plot)
+
+    # with torch.no_grad():
+    #     y_pred_plot = model.forward(X_plot)
+    #     X_plot = scaler.inverse_transform(X_plot)
+
+    # fig = go.Figure()
+
+
+    # fig.add_trace(
+    #     go.Scatter3d(
+    #         x=X_plot[:,0].flatten(),
+    #         y=X_plot[:,1].flatten(),
+    #         z=X_plot[:,2].flatten(),
+    #         mode='markers',
+    #         marker=dict(
+    #             size=2,
+    #             color=df['y'].to_numpy().flatten(),
+    #             colorbar=dict(title="Colorbar"),
+    #             colorscale='jet',
+    #             opacity=0.4)
+    #     ))
+
+    # fig.update_layout(
+    #     scene = dict(
+    #         xaxis_title='OF_x',
+    #         yaxis_title='RREV',
+    #         zaxis_title='d_ceiling',
+    #         xaxis = dict(nticks=4, range=[-20,0],),
+    #         yaxis = dict(nticks=4, range=[0,8],),
+    #         zaxis = dict(nticks=4, range=[0,1],),
+    #         ),
+    #     scene_aspectmode='cube'
+    
+    # )
+
+    # fig.show()
 
     with torch.no_grad():
-        y_pred_plot = model.forward(X_plot)
-        X_plot = scaler.inverse_transform(X_plot)
+        X = torch.FloatTensor([-1.6974,  0.4014, -1.1264])
+        y = model.forward(X)
+        ii = 0
+        f = open('NN_Layers.data','ab')
+        f.truncate(0) ## Clears contents of file
 
-    fig = go.Figure()
+        for name, layer in model.named_modules():
+            if ii > 0:
+                # print(layer.weight.numpy())]
+
+                W = layer.weight.numpy()
+                np.savetxt(f,W,
+                    fmt='%.6f',
+                    delimiter='\t',
+                    comments='',
+                    header=f"{W.shape[0]} {W.shape[1]}",
+                    footer="\n")
 
 
-    fig.add_trace(
-        go.Scatter3d(
-            x=X_plot[:,0].flatten(),
-            y=X_plot[:,1].flatten(),
-            z=X_plot[:,2].flatten(),
-            mode='markers',
-            marker=dict(
-                size=2,
-                color=df['y'].to_numpy().flatten(),
-                colorbar=dict(title="Colorbar"),
-                colorscale='jet',
-                opacity=0.4)
-        ))
+                b = layer.bias.numpy().reshape(-1,1)
+                np.savetxt(f,b,
+                    fmt='%.6f',
+                    delimiter='\t',
+                    comments='',
+                    header=f"{b.shape[0]} {b.shape[1]}",
+                    footer="\n")
 
-    fig.update_layout(
-        scene = dict(
-            xaxis_title='OF_x',
-            yaxis_title='RREV',
-            zaxis_title='d_ceiling',
-            xaxis = dict(nticks=4, range=[-20,0],),
-            yaxis = dict(nticks=4, range=[0,8],),
-            zaxis = dict(nticks=4, range=[0,1],),
-            ),
-        scene_aspectmode='cube'
-    
-    )
+            ii+=1
 
-    fig.show()
+        f.close()
 
+        print(y)
