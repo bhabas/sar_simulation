@@ -112,38 +112,28 @@ if __name__ == '__main__':
     df_raw = df_raw.query("landing_rate_4_leg >= 0.8")
 
 
-    X1 = df_raw["OF_y_flip_mean"]
-    X2 = df_raw["RREV_flip_mean"]
-    X3 = df_raw["flip_d_mean"]
+    RREV = df_raw["OF_y_flip_mean"]
+    OF_y = df_raw["RREV_flip_mean"]
+    d_ceil = df_raw["flip_d_mean"]
     y = df_raw["My_d"].to_numpy().reshape(-1,1)
 
-
-
     ## REGULARIZE DATA
-    X = np.stack((X1,X2,X3),axis=1)
+    X = np.stack((RREV,OF_y,d_ceil),axis=1)
     scaler = preprocessing.StandardScaler().fit(X)
     X_scaled = scaler.transform(X)
-    # X = X_scaled
-
-    df_scale = pd.read_csv(f"{BASEPATH}/Info/Scaler_Classifier.csv")
-    means_flip = df_scale['mean'].to_numpy()
-    scales_flip =df_scale['scale'].to_numpy()
-    X_flip = (torch.FloatTensor([req.OF_y, req.RREV, req.d_ceil]- means_flip)/scales_flip)
-    # X_scaled = 
-
-
-
-    # ## SAVE SCALING DATA
-    # df_scale = pd.DataFrame(
-    #     np.vstack((scaler.mean_,scaler.scale_,scaler.var_)).T,
-    #     columns=['mean','scale','var'])
-    # df_scale.to_csv(f"{BASEPATH}/Info/Scaler_Policy_Value.csv",index=False,float_format="%.2f")
-
-
 
     ## CONVERT DATA INTO DATAFRAME
-    data_array = np.hstack((X,y))
-    df = pd.DataFrame(data_array,columns=['X1','X2','X3','y'])
+    data_array = np.hstack((X_scaled,y))
+    df = pd.DataFrame(data_array,columns=['RREV','OF_y','d_ceil','y'])
+
+
+    ## SAVE SCALING TERMS
+    df_scale = pd.DataFrame(
+        np.vstack((scaler.mean_,scaler.scale_)).T,
+        columns=['mean','std'])
+    df_scale.to_csv(f"{BASEPATH}/Info/Scaler_Policy_Value.csv",index=False,float_format="%.3f")
+
+
 
 
 
@@ -153,8 +143,8 @@ if __name__ == '__main__':
 
 
     ## CONVERT DATA INTO TENSORS
-    X_train = torch.FloatTensor(train_df[['X1','X2','X3']].to_numpy())
-    X_test = torch.FloatTensor(test_df[['X1','X2','X3']].to_numpy())
+    X_train = torch.FloatTensor(train_df[['RREV','OF_y','d_ceil']].to_numpy())
+    X_test = torch.FloatTensor(test_df[['RREV','OF_y','d_ceil']].to_numpy())
 
     y_train = torch.FloatTensor(train_df[['y']].to_numpy()).reshape((-1,1))
     y_test = torch.FloatTensor(test_df[['y']].to_numpy()).reshape((-1,1))
@@ -163,14 +153,15 @@ if __name__ == '__main__':
 
     ## TRAIN NN MODEL
     epochs = 3_000
-    # train_model(epochs,X_train,y_train,X_test,y_test)
+    train_model(epochs,X_train,y_train,X_test,y_test)
 
 
 
     ## EVALUATE NN MODEL
     model = torch.load(f'{BASEPATH}/Pickle_Files/Policy_Network.pt')
+
     with torch.no_grad():
-        y_pred_test = model.forward(X_test)
+        y_pred_test = model.forward(X_test.float())
         y_error = (y_pred_test-y_test).numpy()
 
         rms = mean_squared_error(y_test, y_pred_test, squared=False)
@@ -178,63 +169,66 @@ if __name__ == '__main__':
 
     # ## SAVE ERROR VALUES TO CSV
     # y_pred_df = pd.DataFrame(np.hstack((y_test,y_pred_test,y_error)),columns=['y_test','y_pred_test','y_error'])
-    # y_pred_df.to_csv(f'{BASEPATH}/Info/NN_Policy_Value_Errors.csv',index=False,float_format="%.2f")
+    # y_pred_df.to_csv(f'{BASEPATH}/NN_Policy_Value_Errors.csv',index=False,float_format="%.2f")
 
 
     # ## PLOT ERROR VARIANCE
     # plt.hist(y_error, bins=30,histtype='stepfilled', color='steelblue')
     # plt.show()
     
-
-
-    # ## DEFINE PLOTTING RANGE
-    # X_plot = np.stack((
-    #     df['X1'].to_numpy(),
-    #     df['X2'].to_numpy(),
-    #     df['X3'].to_numpy()),axis=1)
-    # X_plot = torch.FloatTensor(X_plot)
-
-    # with torch.no_grad():
-    #     y_pred_plot = model.forward(X_plot)
-    #     X_plot = scaler.inverse_transform(X_plot)
-
-    # fig = go.Figure()
-
-
-    # fig.add_trace(
-    #     go.Scatter3d(
-    #         x=X_plot[:,0].flatten(),
-    #         y=X_plot[:,1].flatten(),
-    #         z=X_plot[:,2].flatten(),
-    #         mode='markers',
-    #         marker=dict(
-    #             size=2,
-    #             color=df['y'].to_numpy().flatten(),
-    #             colorbar=dict(title="Colorbar"),
-    #             colorscale='jet',
-    #             opacity=0.4)
-    #     ))
-
-    # fig.update_layout(
-    #     scene = dict(
-    #         xaxis_title='OF_x',
-    #         yaxis_title='RREV',
-    #         zaxis_title='d_ceiling',
-    #         xaxis = dict(nticks=4, range=[-20,0],),
-    #         yaxis = dict(nticks=4, range=[0,8],),
-    #         zaxis = dict(nticks=4, range=[0,1],),
-    #         ),
-    #     scene_aspectmode='cube'
     
-    # )
 
-    # fig.show()
+
+    ## DEFINE PLOTTING RANGE
+    X_plot = np.stack((
+        RREV,
+        OF_y,
+        d_ceil),axis=1)
+
+    with torch.no_grad():
+        X_plot = scaler.transform(X_plot)
+        X_plot = torch.FloatTensor(X_plot)
+        y_pred_plot = model.forward(X_plot.float())
+
+    X_plot = scaler.inverse_transform(X_plot)
+
+    fig = go.Figure()
+
+
+    fig.add_trace(
+        go.Scatter3d(
+            x=X_plot[:,0].flatten(),
+            y=X_plot[:,1].flatten(),
+            z=X_plot[:,2].flatten(),
+            mode='markers',
+            marker=dict(
+                size=2,
+                color=y_pred_plot.flatten(),
+                colorbar=dict(title="Colorbar"),
+                colorscale='jet',
+                opacity=0.4)
+        ))
+
+    fig.update_layout(
+        scene = dict(
+            xaxis_title='OF_x',
+            yaxis_title='RREV',
+            zaxis_title='d_ceiling',
+            xaxis = dict(nticks=4, range=[-20,0],),
+            yaxis = dict(nticks=4, range=[0,8],),
+            zaxis = dict(nticks=4, range=[0,1],),
+            ),
+        scene_aspectmode='cube'
+    
+    )
+
+    fig.show()
 
     with torch.no_grad():
         X = torch.FloatTensor([-1.6974,  0.4014, -1.1264])
         y = model.forward(X)
         ii = 0
-        f = open('NN_Layers.data','ab')
+        f = open(f'{BASEPATH}/Info/NN_Layers_Policy.data','ab')
         f.truncate(0) ## Clears contents of file
 
         for name, layer in model.named_modules():

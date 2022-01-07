@@ -122,8 +122,11 @@ def train_model(epochs,X_train,y_train,X_test,y_test):
 
 
 if __name__ == "__main__":
-
+   
     ## GENERATE DATA
+    torch.manual_seed(0)
+    np.random.seed(0)
+
     model_config = "Wide-Long"
     df_raw = pd.read_csv(f"crazyflie_projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
 
@@ -146,9 +149,9 @@ if __name__ == "__main__":
 
     ## SAVE SCALING TERMS
     df_scale = pd.DataFrame(
-        np.vstack((scaler.mean_,scaler.scale_,scaler.var_)).T,
-        columns=['mean','scale','var'])
-    df_scale.to_csv(f"{BASEPATH}/Info/Scaler_Classifier.csv",index=False,float_format="%.2f")
+        np.vstack((scaler.mean_,scaler.scale_)).T,
+        columns=['mean','std'])
+    df_scale.to_csv(f"{BASEPATH}/Info/Scaler_Flip_Classifier.csv",index=False,float_format="%.3f")
 
 
 
@@ -168,9 +171,7 @@ if __name__ == "__main__":
 
 
     ## TRAIN NN MODEL
-    epochs = 1000
-
-    torch.manual_seed(0)
+    epochs = 1_000
     # train_model(epochs,X_train,y_train[:,0].reshape(-1,1),X_test,y_test[:,0].reshape(-1,1))
 
 
@@ -192,7 +193,7 @@ if __name__ == "__main__":
 
     ## SAVE ERROR VALUES TO CSV
     y_pred_df = pd.DataFrame(np.hstack((y_test,y_pred_test_class,y_error)),columns=['y_test','y_pred_test','y_error'])
-    y_pred_df.to_csv(f'{BASEPATH}/Info/NN_Flip_Classifier_Errors.csv',index=False,float_format="%.2f")
+    y_pred_df.to_csv(f'{BASEPATH}/NN_Flip_Classifier_Errors.csv',index=False,float_format="%.2f")
 
     # ## PLOT ERROR VARIANCE
     # plt.hist(y_error, bins=30,histtype='stepfilled', color='steelblue')
@@ -202,27 +203,24 @@ if __name__ == "__main__":
 
 
     ## PLOT DECISION BOUNDARY
-    # DETERMINE GRID RANGE IN X AND Y DIRECTIONS
-    x_min, x_max = X_scaled[:, 0].min(), X_scaled[:, 0].max()
-    y_min, y_max = X_scaled[:, 1].min(), X_scaled[:, 1].max()
-    z_min, z_max = X_scaled[:, 2].min(), X_scaled[:, 2].max()
 
 
     ## CREATE GRID
-    XX, YY, ZZ = np.meshgrid(
-        np.linspace(x_min, x_max, 30),
-        np.linspace(y_min, y_max, 30),
-        np.linspace(z_min, z_max, 30))
+    RREV_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
+        np.linspace(RREV.min(), RREV.max(), 30),
+        np.linspace(OF_y.min(), OF_y.max(), 30),
+        np.linspace(d_ceil.min(), d_ceil.max(), 30)
+    )
 
     ## CONCATENATE DATA TO MATCH INPUT
     grid_data = np.hstack((
-        XX.ravel().reshape(-1,1), 
-        YY.ravel().reshape(-1,1),
-        ZZ.ravel().reshape(-1,1)))
+        RREV_grid.ravel().reshape(-1,1), 
+        OF_y_grid.ravel().reshape(-1,1),
+        d_ceil_grid.ravel().reshape(-1,1)))
 
-    
     ## PASS DATA TO PREDICT METHOD
     with torch.no_grad():
+        grid_data = scaler.transform(grid_data)
         grid_data = torch.FloatTensor(grid_data)
         y_pred_grid = model.forward(grid_data)
 
@@ -267,6 +265,40 @@ if __name__ == "__main__":
 
 
     fig.show()
+
+    with torch.no_grad():
+        X = torch.FloatTensor([-1.6974,  0.4014, -1.1264])
+        y = model.forward(X)
+        ii = 0
+        f = open(f'{BASEPATH}/Info/NN_Layers_Flip.data','ab')
+        f.truncate(0) ## Clears contents of file
+
+        for name, layer in model.named_modules():
+            if ii > 0:
+                # print(layer.weight.numpy())]
+
+                W = layer.weight.numpy()
+                np.savetxt(f,W,
+                    fmt='%.6f',
+                    delimiter='\t',
+                    comments='',
+                    header=f"{W.shape[0]} {W.shape[1]}",
+                    footer="\n")
+
+
+                b = layer.bias.numpy().reshape(-1,1)
+                np.savetxt(f,b,
+                    fmt='%.6f',
+                    delimiter='\t',
+                    comments='',
+                    header=f"{b.shape[0]} {b.shape[1]}",
+                    footer="\n")
+
+            ii+=1
+
+        f.close()
+
+        print(y)
 
 
 
