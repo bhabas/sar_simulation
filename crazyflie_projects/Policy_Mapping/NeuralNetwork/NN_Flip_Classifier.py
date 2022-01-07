@@ -23,17 +23,15 @@ BASEPATH = "crazyflie_projects/Policy_Mapping/NeuralNetwork"
 
 ## DEFINE NN MODEL
 class NN_Flip_Classifier(nn.Module):
-    def __init__(self,in_features=3,h=10,out_features=1):
+    def __init__(self,in_features=3,h=20,out_features=1):
         super().__init__()
         self.fc1 = nn.Linear(in_features,h) # Fully connected layer
-        self.fc2 = nn.Linear(h,h)
         self.out = nn.Linear(h,out_features)
 
     def forward(self,x):
 
         # PASS DATA THROUGH NETWORK
-        x = torch.sigmoid(self.fc1(x))
-        x = torch.sigmoid(self.fc2(x))
+        x = F.elu(self.fc1(x))
         x = torch.sigmoid(self.out(x))
 
         return x
@@ -42,10 +40,10 @@ def train_model(epochs,X_train,y_train,X_test,y_test):
     model = NN_Flip_Classifier()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
-    class_weight = [0.1, 0.9]                                       # Weights as binary classes [0,1]
+    class_weight = [0.1, 0.3] # Weights as binary classes [0,1]
     
     ## DEFINE TRAINING LOSS
-    weights = np.where(y_train==1,class_weight[1],class_weight[0])  # Convert class weights to element weights
+    weights = np.where(y_train==1,class_weight[1],class_weight[0])      # Convert class weights to element weights
     criterion = nn.BCELoss(weight=torch.FloatTensor(weights))       
     losses_train = []
     accuracies_train = []
@@ -126,36 +124,33 @@ def train_model(epochs,X_train,y_train,X_test,y_test):
 if __name__ == "__main__":
 
     ## GENERATE DATA
-    
     model_config = "Wide-Long"
     df_raw = pd.read_csv(f"crazyflie_projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
 
 
-    X1 = df_raw["OF_y_flip_mean"]
-    X2 = df_raw["RREV_flip_mean"]
-    X3 = df_raw["flip_d_mean"]
+    RREV = df_raw["RREV_flip_mean"]
+    OF_y = df_raw["OF_y_flip_mean"]
+    d_ceil = df_raw["flip_d_mean"]
     y = df_raw["landing_rate_4_leg"].to_numpy().reshape(-1,1)
-    y = np.where(y < 0.9,0,1)
+    y = np.where(y < 0.8,0,1)
 
     ## REGULARIZE DATA
-    X = np.stack((X1,X2,X3),axis=1)
+    X = np.stack((RREV,OF_y,d_ceil),axis=1)
     scaler = preprocessing.StandardScaler().fit(X)
     X_scaled = scaler.transform(X)
-    X = X_scaled
+
+    data_array = np.hstack((X_scaled,y))
+    df = pd.DataFrame(data_array,columns=['RREV','OF_y','d_ceil','y'])
+    df = df.sort_values(by='y')
 
 
-
-    ## SAVE SCALING DATA
+    ## SAVE SCALING TERMS
     df_scale = pd.DataFrame(
         np.vstack((scaler.mean_,scaler.scale_,scaler.var_)).T,
         columns=['mean','scale','var'])
     df_scale.to_csv(f"{BASEPATH}/Info/Scaler_Classifier.csv",index=False,float_format="%.2f")
 
-    data_array = np.hstack((X,y))
-    df = pd.DataFrame(data_array,columns=['X1','X2','X3','y'])
-    df = df.sort_values(by='y')
 
-    
 
     ## SPLIT DATA FEATURES INTO TRAINING AND TESTING DATA
     train_df, test_df = train_test_split(df,test_size=0.25,random_state=73)
@@ -164,8 +159,8 @@ if __name__ == "__main__":
 
 
     ## CONVERT DATA INTO TENSORS
-    X_train = torch.FloatTensor(train_df[['X1','X2','X3']].to_numpy())
-    X_test = torch.FloatTensor(test_df[['X1','X2','X3']].to_numpy())
+    X_train = torch.FloatTensor(train_df[['RREV','OF_y','d_ceil']].to_numpy())
+    X_test = torch.FloatTensor(test_df[['RREV','OF_y','d_ceil']].to_numpy())
 
     y_train = torch.FloatTensor(train_df[['y']].to_numpy())
     y_test = torch.FloatTensor(test_df[['y']].to_numpy())
@@ -173,10 +168,10 @@ if __name__ == "__main__":
 
 
     ## TRAIN NN MODEL
-    epochs = 2000
+    epochs = 1000
 
     torch.manual_seed(0)
-    train_model(epochs,X_train,y_train[:,0].reshape(-1,1),X_test,y_test[:,0].reshape(-1,1))
+    # train_model(epochs,X_train,y_train[:,0].reshape(-1,1),X_test,y_test[:,0].reshape(-1,1))
 
 
 
@@ -208,19 +203,16 @@ if __name__ == "__main__":
 
     ## PLOT DECISION BOUNDARY
     # DETERMINE GRID RANGE IN X AND Y DIRECTIONS
-    x_min, x_max = X[:, 0].min()-0.1, X[:, 0].max()+0.1
-    y_min, y_max = X[:, 1].min()-0.1, X[:, 1].max()+0.1
-    z_min, z_max = X[:, 2].min()-0.1, X[:, 2].max()+0.1
+    x_min, x_max = X_scaled[:, 0].min(), X_scaled[:, 0].max()
+    y_min, y_max = X_scaled[:, 1].min(), X_scaled[:, 1].max()
+    z_min, z_max = X_scaled[:, 2].min(), X_scaled[:, 2].max()
 
-
-    ## SET GRID SPACING PARAMETER
-    spacing = min(x_max-x_min, y_max-y_min, z_max-z_min) / 25
 
     ## CREATE GRID
     XX, YY, ZZ = np.meshgrid(
-            np.linspace(x_min, x_max, 30),
-            np.linspace(y_min, y_max, 30),
-            np.linspace(z_min, z_max, 30))
+        np.linspace(x_min, x_max, 30),
+        np.linspace(y_min, y_max, 30),
+        np.linspace(z_min, z_max, 30))
 
     ## CONCATENATE DATA TO MATCH INPUT
     grid_data = np.hstack((
@@ -234,17 +226,19 @@ if __name__ == "__main__":
         grid_data = torch.FloatTensor(grid_data)
         y_pred_grid = model.forward(grid_data)
 
+    grid_data = scaler.inverse_transform(grid_data)
+
 
     fig = go.Figure()
 
     fig.add_trace(
         go.Isosurface(
-            x=XX.flatten(),
-            y=YY.flatten(),
-            z=ZZ.flatten(),
+            x=grid_data[:,1].flatten(),
+            y=grid_data[:,0].flatten(),
+            z=grid_data[:,2].flatten(),
             value=y_pred_grid.flatten(),
             surface_count=1,
-            opacity=0.4,
+            opacity=0.7,
             isomin=0.9,
             isomax=0.9,            
             caps=dict(x_show=False, y_show=False)
@@ -254,19 +248,19 @@ if __name__ == "__main__":
 
     fig.add_trace(
         go.Scatter3d(
-            x=df['X1'],
-            y=df['X2'],
-            z=df['X3'],
+            x=OF_y,
+            y=RREV,
+            z=d_ceil,
             mode='markers',
             marker=dict(
                 size=3,
-                color=df['y'],                # set color to an array/list of desired values
+                color=y.flatten(),                # set color to an array/list of desired values
                 colorscale='Viridis',   # choose a colorscale
                 opacity=0.4)
         ))
 
     fig.update_layout(scene = dict(
-                    xaxis_title='OF_x',
+                    xaxis_title='OF_y',
                     yaxis_title='RREV',
                     zaxis_title='D_ceiling'),
                     )

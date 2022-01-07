@@ -18,7 +18,7 @@ from sklearn import preprocessing
 import plotly.graph_objects as go
 
 np.set_printoptions(suppress=True)
-BASEPATH = "crazyflie_projects/Policy_Mapping/Data_Analysis"
+BASEPATH = "crazyflie_projects/Policy_Mapping/NeuralNetwork"
 
 
 
@@ -123,15 +123,21 @@ if __name__ == '__main__':
     X = np.stack((X1,X2,X3),axis=1)
     scaler = preprocessing.StandardScaler().fit(X)
     X_scaled = scaler.transform(X)
-    X = X_scaled
+    # X = X_scaled
+
+    df_scale = pd.read_csv(f"{BASEPATH}/Info/Scaler_Classifier.csv")
+    means_flip = df_scale['mean'].to_numpy()
+    scales_flip =df_scale['scale'].to_numpy()
+    X_flip = (torch.FloatTensor([req.OF_y, req.RREV, req.d_ceil]- means_flip)/scales_flip)
+    # X_scaled = 
 
 
 
-    ## SAVE SCALING DATA
-    df_scale = pd.DataFrame(
-        np.vstack((scaler.mean_,scaler.scale_,scaler.var_)).T,
-        columns=['mean','scale','var'])
-    df_scale.to_csv(f"{BASEPATH}/Info/Scaler_Policy_Value.csv",index=False,float_format="%.2f")
+    # ## SAVE SCALING DATA
+    # df_scale = pd.DataFrame(
+    #     np.vstack((scaler.mean_,scaler.scale_,scaler.var_)).T,
+    #     columns=['mean','scale','var'])
+    # df_scale.to_csv(f"{BASEPATH}/Info/Scaler_Policy_Value.csv",index=False,float_format="%.2f")
 
 
 
