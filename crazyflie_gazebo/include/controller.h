@@ -131,6 +131,7 @@ class Controller
 
             m = _CF_MASS;
             h_ceiling = _H_CEILING;
+            
 
             
 
@@ -208,16 +209,37 @@ class Controller
         std::thread controllerThread;
         std::thread senderThread_gazebo;
 
-        bool _isRunning;
 
         
 
+        // =============================
+        //  INITIALIZE CLASS VARIABLES
+        // =============================
+
+
+        // SYSTEM PARAMETERS
+        float m = 0.037f;       // Crazyflie Mass [g]
+        float g = 9.81f;        // Gravity [m/s^2]
+        struct mat33 J;         // Rotational Inertia Matrix [kg*m^2]
+
+        float d = 0.040f;       // COM to Prop [m]
+        float dp = 0.028284;    // COM to Prop along x-axis [m]
+                                // [dp = d*sin(45 deg)]
+
+        float const kf = 2.2e-8f;       // Thrust Coeff [N/(rad/s)^2]
+        float const c_tf = 0.00618f;    // Moment Coeff [Nm/N]
+
+
+        float h_ceiling = 2.10f;    // [m]
+        float dt = (1.0f/500.0f);
+        bool _isRunning; // Keeps controller running in while loop
         
 
         
 
         nml_mat* W[3];
         nml_mat* b[3];
+
 
         
 
@@ -232,17 +254,17 @@ class Controller
         int _CTRL_DEBUG_SLOWDOWN;
 
 
-        // CONTROLLER GAIN VALUES
+        // INITIAL CONTROLLER GAIN VALUES (OVERWRITTEN BY CONFIG FILE)
         // XY POSITION PID
         float P_kp_xy = 0.5f;
         float P_kd_xy = 0.4f;
-        float P_ki_xy = 0.1f*0;
+        float P_ki_xy = 0.0f;
         float i_range_xy = 0.3f;
 
         // Z POSITION PID
         float P_kp_z = 1.2f;
         float P_kd_z = 0.35f;
-        float P_ki_z = 0.1f*0;
+        float P_ki_z = 0.0f;
         float i_range_z = 0.25f;
 
         // XY ATTITUDE PID
@@ -254,7 +276,7 @@ class Controller
         // Z ATTITUDE PID
         float R_kp_z = 0.003f;
         float R_kd_z = 0.001f;
-        float R_ki_z = 0.002*0;
+        float R_ki_z = 0.0f;
         float i_range_R_z = 0.5f;
 
         
@@ -296,21 +318,13 @@ class Controller
         float G2 = 0.0f;
 
         bool policy_armed_flag = false;
+        typedef enum 
+        {
+            RL = 0,
+            NN = 1
+        } Policy_Type;
 
-        // SYSTEM PARAMETERS
-        float m = 0.037f; // [g]
-        float g = 9.81f;
-        struct mat33 J; // Rotational Inertia Matrix [kg*m^2]
-        float h_ceiling = 2.10f; // [m]
-
-        float d = 0.040f;    // COM to Prop [m]
-        float dp = 0.028284; // COM to Prop along x-axis [m]
-                                    // [dp = d*sin(45 deg)]
-
-        float const kf = 2.2e-8f;    // Thrust Coeff [N/(rad/s)^2]
-        float const c_tf = 0.00618f;  // Moment Coeff [Nm/N]
-
-        float dt = (1.0f/500.0f);
+        
 
         // CONTROLLER PARAMETERS
         bool attCtrlEnable = false;
@@ -319,6 +333,7 @@ class Controller
         bool motorstop_flag = false;
         bool errorReset = false;
         bool flip_flag = false;
+        bool onceFlag = false;
 
         // TRAJECTORY VARIABLES
         float s_0 = 0.0f;

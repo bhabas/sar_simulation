@@ -25,6 +25,7 @@ void Controller::controllerGTCReset(void)
     Moment_flag = false;
     policy_armed_flag = false;
     flip_flag = false;
+    onceFlag = false;
     execute_traj = false;
 
     // ROS SPECIFIC VALUES
@@ -278,14 +279,6 @@ void Controller::controllerGTC()
         OF_x = _OF_x;
         OF_y = _OF_y;
 
-        X->data[0][0] = RREV;
-        X->data[1][0] = OF_y;
-        X->data[2][0] = 2.1-statePos.z;
-
-        float y = Controller::NN_Policy(X,W,b);
-        cout << y << endl;
-
-
         // EULER ANGLES EXPRESSED IN YZX NOTATION
         stateEul = quat2eul(stateQuat);
         stateEul.x = degrees(stateEul.x);
@@ -393,56 +386,93 @@ void Controller::controllerGTC()
         Gyro_dyn = vsub(temp1_v,temp4_v);
 
         F_thrust = vdot(F_thrust_ideal, b3);    // Project ideal thrust onto b3 vector [N]
-        // cout << F_thrust << endl;
         M = vadd(R_effort,Gyro_dyn);            // Control moments [Nm]
 
 
 
 
+        // float y = Controller::NN_Policy(X,W,b);
+        // cout << y << endl;
 
 
-
-
+        Policy_Type policy_type = RL;
         // =========== THRUST AND MOMENTS [FORCE NOTATION] =========== // 
         if(!tumbled){
             if(policy_armed_flag == true){
+                
+                switch(policy_type)
+                {
+                    case RL:
+                    {
+                        if(RREV >= RREV_thr && onceFlag == false){
+                            onceFlag = true;
+                            flip_flag = true;  
 
-                if(RREV >= RREV_thr && flip_flag == false){
-                    flip_flag = true;
+                            // UPDATE AND RECORD FLIP VALUES
+                            t_flip = ros::Time::now();
+                            statePos_tr = statePos;
+                            stateVel_tr = stateVel;
+                            stateQuat_tr = stateQuat;
+                            stateOmega_tr = stateOmega;
 
-                    // UPDATE AND RECORD FLIP VALUES
-                    t_flip = ros::Time::now();
-                    statePos_tr = statePos;
-                    stateVel_tr = stateVel;
-                    stateQuat_tr = stateQuat;
-                    stateOmega_tr = stateOmega;
+                            OF_y_tr = OF_y;
+                            OF_x_tr = OF_x;
+                            RREV_tr = RREV;
+                        
+                            M_d.x = 0.0f;
+                            M_d.y = -G1*1e-3;
+                            M_d.z = 0.0f;
+                        }
+                        break;
+                    }
 
-                    OF_y_tr = OF_y;
-                    OF_x_tr = OF_x;
-                    RREV_tr = RREV;
+                    case NN:
+                    {
+                        
+                        // if((bool)NN_Flip(X) == true && onceFlag = false)
+                        // {   
+                        //     onceFlag = true;
+                        //     flip_flag = true;
+
+                        //     // UPDATE AND RECORD FLIP VALUES
+                        //     t_flip = ros::Time::now();
+                        //     statePos_tr = statePos;
+                        //     stateVel_tr = stateVel;
+                        //     stateQuat_tr = stateQuat;
+                        //     stateOmega_tr = stateOmega;
+
+                        //     OF_y_tr = OF_y;
+                        //     OF_x_tr = OF_x;
+                        //     RREV_tr = RREV;
+
+
+                        //     M_d.x = 0.0f;
+                        //     M_d.y = -NN_Policy(X)*1e-3;
+                        //     M_d.z = 0.0f;
+                        // }
+
+                        break;
+                    }
 
                 }
 
-                if(flip_flag == true){
-                    M_d.x = 0.0f;
-                    M_d.y = -G1*1e-3;
-                    M_d.z = 0.0f;
-
-                    M = vscl(2.0f,M_d); // Need to double moment to ensure it survives the PWM<0 cutoff
+                
+                if(flip_flag == true)
+                {
+                
+                    // My->Front rotors(+) & Rear rotors(-) = My->Double Front rotors(+) effort
+                    M = vscl(2.0f,M_d); 
                     F_thrust = 0.0f;
 
                     // RECORD MOTOR THRUST TYPES AT FLIP
-                    f_thrust_g_tr = F_thrust/4.0f*Newton2g;
-                    f_roll_g_tr = M.x/(4.0f*dp)*Newton2g;
-                    f_pitch_g_tr = M.y/(4.0f*dp)*Newton2g;
-                    f_yaw_g_tr = M.z/(4.0f*c_tf)*Newton2g;
 
                     F_thrust_flip = F_thrust;
                     M_x_flip = M.x/2.0f;
                     M_y_flip = M.y/2.0f;
                     M_z_flip = M.z/2.0f;
-
                 }
+
+                
 
             }
             else if (Moment_flag == true){
@@ -514,6 +544,16 @@ void Controller::controllerGTC()
         motorspeed[1] = MS2;
         motorspeed[2] = MS3;
         motorspeed[3] = MS4;
+        
+
+        int len = sendto(Ctrl_Mavlink_socket, motorspeed, sizeof(motorspeed),0, // Send motorspeeds to Gazebo -> gazebo_motor_model
+                (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len); 
+
+
+        // =============================
+        //     END OF CONTROLLER MATH
+        // =============================
+
 
 
         // SIMULATION SLOWDOWN
@@ -616,8 +656,7 @@ void Controller::controllerGTC()
 
 
         
-        int len = sendto(Ctrl_Mavlink_socket, motorspeed, sizeof(motorspeed),0, // Send motorspeeds to Gazebo -> gazebo_motor_model
-                (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len); 
+        
         
 
         ctrl_msg.RREV = RREV;
@@ -664,9 +703,6 @@ void Controller::controllerGTC()
 
 int main(int argc, char **argv)
 {
-
-    
-
     ros::init(argc, argv,"controller_node");
     ros::NodeHandle nh;
     Controller controller = Controller(&nh);
