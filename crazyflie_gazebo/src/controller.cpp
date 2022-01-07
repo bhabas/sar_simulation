@@ -395,12 +395,12 @@ void Controller::controllerGTC()
         // cout << y << endl;
 
 
-        Policy_Type policy_type = RL;
+        
         // =========== THRUST AND MOMENTS [FORCE NOTATION] =========== // 
         if(!tumbled){
             if(policy_armed_flag == true){
                 
-                switch(policy_type)
+                switch(_POLICY_TYPE)
                 {
                     case RL:
                     {

@@ -71,22 +71,9 @@ class Controller
             RLCmd_Subscriber = nh->subscribe("/rl_ctrl",50,&Controller::GTC_Command,this,ros::TransportHints().tcpNoDelay());
             RLData_Subscriber = nh->subscribe("/rl_data",5,&Controller::RLData_Callback,this,ros::TransportHints().tcpNoDelay());
             SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
-            NN_Client = nh->serviceClient<crazyflie_msgs::Policy_Values>("policy_NN");
+        
 
-            FILE* input = fopen("/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/data/NN_Layers.data", "r");
-            // LAYER 1
-            nml_mat *W1 = nml_mat_fromfilef(input);
-            nml_mat *b_1 = nml_mat_fromfilef(input);
-
-            // LAYER 2
-            nml_mat *W2 = nml_mat_fromfilef(input);
-            nml_mat *b_2 = nml_mat_fromfilef(input);
-
-            // LAYER 3
-            nml_mat *W3 = nml_mat_fromfilef(input);
-            nml_mat *b_3 = nml_mat_fromfilef(input);
-            fclose(input);
-
+            
 
 
 
@@ -98,13 +85,14 @@ class Controller
 
             
 
-
             ros::param::get("/CEILING_HEIGHT",_H_CEILING);
             ros::param::get("/LANDING_SLOWDOWN",_LANDING_SLOWDOWN_FLAG);
             ros::param::get("/SIM_SPEED",_SIM_SPEED);
             ros::param::get("/SIM_SLOWDOWN_SPEED",_SIM_SLOWDOWN_SPEED);
             ros::param::get("/CF_MASS",_CF_MASS);
             ros::param::get("/CTRL_DEBUG_SLOWDOWN", _CTRL_DEBUG_SLOWDOWN);
+            ros::param::get("/POLICY_TYPE",_POLICY_TYPE);
+            Policy_Type _POLICY_TYPE = (Policy_Type)_POLICY_TYPE; // Cast ROS param (int) to enum (Policy_Type)
 
             // COLLECT CTRL GAINS FROM CONFIG FILE
             ros::param::get("P_kp_xy",P_kp_xy);
@@ -133,7 +121,20 @@ class Controller
             h_ceiling = _H_CEILING;
             
 
-            
+            FILE* input = fopen("/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/data/NN_Layers.data", "r");
+            // LAYER 1
+            nml_mat *W1 = nml_mat_fromfilef(input);
+            nml_mat *b_1 = nml_mat_fromfilef(input);
+
+            // LAYER 2
+            nml_mat *W2 = nml_mat_fromfilef(input);
+            nml_mat *b_2 = nml_mat_fromfilef(input);
+
+            // LAYER 3
+            nml_mat *W3 = nml_mat_fromfilef(input);
+            nml_mat *b_3 = nml_mat_fromfilef(input);
+            fclose(input);
+
 
             
             
@@ -165,6 +166,7 @@ class Controller
         void ceilingFTCallback(const crazyflie_msgs::ImpactData::ConstPtr &msg);
         void adjustSimSpeed(float speed_mult);
         float NN_Policy(nml_mat* X, nml_mat* W[], nml_mat* b[]);
+        // bool NN_flip(nml_mat*)
 
 
 
@@ -190,7 +192,6 @@ class Controller
         ros::Subscriber RLCmd_Subscriber;
         ros::Subscriber RLData_Subscriber;
         ros::ServiceClient SimSpeed_Client;
-        ros::ServiceClient NN_Client;
 
 
         
@@ -323,8 +324,7 @@ class Controller
             RL = 0,
             NN = 1
         } Policy_Type;
-
-        
+        int _POLICY_TYPE;
 
         // CONTROLLER PARAMETERS
         bool attCtrlEnable = false;
