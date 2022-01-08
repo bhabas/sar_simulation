@@ -68,7 +68,7 @@ class Controller
 
 
             // COMMANDS AND INFO
-            RLCmd_Subscriber = nh->subscribe("/rl_ctrl",50,&Controller::GTC_Command,this,ros::TransportHints().tcpNoDelay());
+            RLCmd_Subscriber = nh->subscribe("/rl_ctrl",50,&Controller::GTC_Command,this);
             RLData_Subscriber = nh->subscribe("/rl_data",5,&Controller::RLData_Callback,this,ros::TransportHints().tcpNoDelay());
             SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
         

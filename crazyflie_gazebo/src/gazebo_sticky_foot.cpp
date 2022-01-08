@@ -31,7 +31,6 @@ void GazeboStickyFoot::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
 
     // INITIALIZE SOME SORT OF GAZEBO SUBSCRIBER
     getSdfParam<std::string>(_sdf, "stickyEnableSubTopic", sticky_enable_sub_topic_, sticky_enable_sub_topic_);
-    sticky_enable_sub_ = node_handle_->Subscribe<mav_msgs::msgs::CommandMotorSpeed>("~/" + model_->GetName() + sticky_enable_sub_topic_, &GazeboStickyFoot::StickyEnableCallback, this);
 
     // GRAB SELECTED LINK FROM SDF
     link_name_ = _sdf->GetElement("linkName")->Get<std::string>(); // Pad_1
@@ -138,40 +137,40 @@ void GazeboStickyFoot::ContactCallback(ConstContactsPtr &msg)
     }
 }
 
-// This gets called when motorspeed callback return negative number
-// This uses gz topics which use some protobuff thing different than ROS framework
-// LISTEN TO MOTORSPEED GZ PUB AND ACTIVATE STICKYFOOT
-// TBD: (UPDATE THIS TO WORK OFF OF /rl_ctrl commands) (7/29/21)
-void GazeboStickyFoot::StickyEnableCallback(CommandMotorSpeedPtr &rot_velocities)
+void GazeboStickyFoot::RLCmdCallback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 {
-    //model_ = world_->ModelByName(model_name_);
-    
 
-    // IF MS COMMAND = [-X,0,0,0] TURN OFF STICKY
-    if(rot_velocities->motor_speed(1) < 0.5)
+    // CREATE CMD VECTOR AND VALS FROM SUBSCRIBED MESSAGE
+    int cmd_type = msg->cmd_type;                       // Read cmd type from incoming message
+    const geometry_msgs::Point cmd_vals = msg->cmd_vals;    // Construct vector from cmd values
+    float cmd_flag = msg->cmd_flag;                     // Construct flag from cmd flag value
+
+    if(cmd_type == 11)
     {
-        // "link_"  WILL HAVE NAMES pad_[X]
-        std::cout<<link_->GetName().c_str()<< " NOW NOT STICKY "<< std::endl;
-        sticky_ = false;
-        //joint_->Detach();     // Detach() doesn't work, don't know why
-        if (joint_ != NULL)
+        if(cmd_flag == 0)
         {
-            if (model_->RemoveJoint(joint_name_))
-                std::cout<<"Joint (" <<joint_->GetName().c_str() << ") removed successufully"<<std::endl;
-                // "joint_" WILL HAVE NAME "pad_[X]_sticky_joint"
-                
+            // "link_"  WILL HAVE NAMES pad_[X]
+            std::cout<<link_->GetName().c_str()<< " NOW NOT STICKY "<< std::endl;
+            sticky_ = false;
+            //joint_->Detach();     // Detach() doesn't work, don't know why
+            if (joint_ != NULL)
+            {
+                if (model_->RemoveJoint(joint_name_))
+                    std::cout<<"Joint (" <<joint_->GetName().c_str() << ") removed successufully"<<std::endl;
+                    // "joint_" WILL HAVE NAME "pad_[X]_sticky_joint"
+                    
 
-            else
-                std::cout<<"Joint (" <<joint_->GetName().c_str() << ") removal failed"<<std::endl;
+                else
+                    std::cout<<"Joint (" <<joint_->GetName().c_str() << ") removal failed"<<std::endl;
+            }
+            joint_ = NULL;
+            link2_ = NULL;
         }
-        joint_ = NULL;
-        link2_ = NULL;
-        
-    }
-    else // IF MS COMMAND = [-X,1,0,0] TURN ON STICKY
-    {
-        std::cout<<link_->GetName().c_str()<< " NOW STICKY "<< std::endl;
-        sticky_ = true;
+        else
+        {
+            std::cout<<link_->GetName().c_str()<< " NOW STICKY "<< std::endl;
+            sticky_ = true;
+        }
     }
 }
 

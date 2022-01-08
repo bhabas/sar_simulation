@@ -12,9 +12,9 @@
 
 #include <ros/ros.h>
 #include "crazyflie_msgs/PadConnect.h"
-//#include "gazebo_motor_model.h"     // provides CommandMotorSpeedPtr
+#include "crazyflie_msgs/RLCmd.h"
 
-typedef const boost::shared_ptr<const mav_msgs::msgs::CommandMotorSpeed> CommandMotorSpeedPtr;
+//#include "gazebo_motor_model.h"     // provides CommandMotorSpeedPtr
 
 namespace gazebo {
 
@@ -26,7 +26,8 @@ class GazeboStickyFoot: public ModelPlugin
         void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
         //void OnUpdate(const common::UpdateInfo&  /*_info*/);
         void ContactCallback(ConstContactsPtr &msg);
-        void StickyEnableCallback(CommandMotorSpeedPtr &rot_velocities);
+        void RLCmdCallback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
+        
 
     private:
         physics::ModelPtr model_;
@@ -52,7 +53,8 @@ class GazeboStickyFoot: public ModelPlugin
 
         ros::NodeHandle n;
         ros::Publisher PadConnect_Publisher = n.advertise<crazyflie_msgs::PadConnect>("/pad_connections", 5);
-
+        ros::Subscriber RLCmd_Subscriber = n.subscribe<crazyflie_msgs::RLCmd>("/rl_ctrl",5,&GazeboStickyFoot::RLCmdCallback,this);
+        
         
         bool sticky_;
         double vz_max_;

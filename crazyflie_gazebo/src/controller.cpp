@@ -167,16 +167,6 @@ void Controller::GTC_Command(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 
             break;
 
-        case 11: // Enable/Disable Stickyfoot
-        {
-            float sticky_cmd[4] = {-(float)cmd_type,cmd_flag,0,0};
-            // This stickyfoot socket communication piggy-backs off of the motorspeed  
-            // message & activates plugin when first number is negative but defines value
-            // based off of the second number
-            sendto(Ctrl_Mavlink_socket, sticky_cmd, sizeof(sticky_cmd),0, (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len);
-            break;
-        }
-
     }
 
 }
