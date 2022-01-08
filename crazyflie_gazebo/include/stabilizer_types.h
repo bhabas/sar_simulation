@@ -43,3 +43,12 @@ typedef struct vec3_s velocity_t;
 typedef struct vec3_s acc_t;
 
 
+typedef struct state_s {
+  attitude_t attitude;      // deg (legacy CF2 body coordinate system, where pitch is inverted)
+  quaternion_t attitudeQuaternion;
+  point_t position;         // m
+  velocity_t velocity;      // m/s
+  acc_t acc;                // Gs (but acc.z without considering gravity)
+} state_t;
+
+

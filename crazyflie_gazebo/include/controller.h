@@ -30,7 +30,7 @@
 #include "stabilizer_types.h"
 #include "nml.h"
 
-void stateEstimator();
+void stateEstimator(state_t *state);
 void commanderGetSetpoint();
 
 using namespace std;
@@ -46,17 +46,10 @@ void controllerGTCInit(void);
 bool controllerGTCTest(void);
 void controllerGTCReset(void);
 void controllerGTCTraj(void);
-void controllerGTC(const uint32_t tick);
+void controllerGTC(state_t *state, const uint32_t tick);
 void GTC_Command();
 
 
-typedef struct state_s {
-  attitude_t attitude;      // deg (legacy CF2 body coordinate system, where pitch is inverted)
-  quaternion_t attitudeQuaternion;
-  point_t position;         // m
-  velocity_t velocity;      // m/s
-  acc_t acc;                // Gs (but acc.z without considering gravity)
-} state_t;
 
 
 
@@ -66,9 +59,10 @@ class Controller
         // CONSTRUCTOR TO START PUBLISHERS AND SUBSCRIBERS (Similar to Python's __init__() )
         Controller(ros::NodeHandle *nh){
 
-            controllerThread = std::thread(&Controller::startController, this);
             globalState_Subscriber = nh->subscribe("/env/vicon_state",1,&Controller::vicon_stateCallback,this,ros::TransportHints().tcpNoDelay());
 
+            // state.position.x = 1.0;
+            controllerThread = std::thread(&Controller::startController, this);
             
 
         }
@@ -80,9 +74,6 @@ class Controller
         
 
     private:
-        // DEFINE PUBLISHERS AND SUBSCRIBERS
-        ros::Publisher ctrl_Publisher;
-        ros::Publisher MS_Publisher;
 
         // SENSORS
         ros::Subscriber globalState_Subscriber;
@@ -104,7 +95,7 @@ class Controller
         // DEFINE THREAD OBJECTS
         std::thread controllerThread;
 
-
+        state_t state;
         
         uint32_t tick = 0;
 
@@ -126,18 +117,29 @@ void Controller::vicon_stateCallback(const nav_msgs::Odometry::ConstPtr &msg)
     _position = msg->pose.pose.position; 
     _velocity = msg->twist.twist.linear;
 
+    // cout << state.position.x << endl;
+    state.position.x = _position.x;
+    state.position.y = _position.y;
+    state.position.z = _position.z;
+
+    state.velocity.x = _velocity.x;
+    state.velocity.y = _velocity.y;
+    state.velocity.z = _velocity.z;
+    // cout << "HELJ" << endl;
+
 }
 
-// state_t state;
+
+
 void Controller::startController()
 {
     ros::Rate rate(500);
     
     while(ros::ok)
     {
-        stateEstimator();
+        stateEstimator(&state);
         commanderGetSetpoint();
-        controllerGTC(tick);
+        controllerGTC(&state, tick);
 
 
         tick++;
@@ -146,9 +148,8 @@ void Controller::startController()
 }
 
 
-void stateEstimator()
+void stateEstimator(state_t *state)
 {
-
 }
 void commanderGetSetpoint()
 {

@@ -6,11 +6,12 @@
 
 
 
-void controllerGTC(const uint32_t tick)
+void controllerGTC(state_t *state, const uint32_t tick)
 {
     // printf("HELLO\n");
     
-    cout << tick << endl;
+    printf("%.5f\n",state->velocity.x);
+
 
     
 }
@@ -21,6 +22,6 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
     Controller controller = Controller(&nh);
     // controller.controllerGTCReset();
-    controller.startController();
+    // controller.startController();
     ros::spin();
 }
