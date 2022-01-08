@@ -53,7 +53,6 @@ static const std::string kDefaultCommandSubTopic = "/gazebo/command/motor_speed"
 static const std::string kDefaultMotorFailureNumSubTopic = "/gazebo/motor_failure_num";
 static const std::string kDefaultMotorVelocityPubTopic = "/motor_speed";
 
-typedef const boost::shared_ptr<const mav_msgs::msgs::CommandMotorSpeed> CommandMotorSpeedPtr;
 
 
 // Set the max_force_ to the max double value. The limitations get handled by the FirstOrderFilter.
@@ -96,7 +95,6 @@ class GazeboMotorModel : public MotorModel, public ModelPlugin {
 
   virtual void InitializeParams();
   virtual void Publish();
-  //void testProto(MotorSpeedPtr &msg);
  protected:
   virtual void UpdateForcesAndMoments();
   /// \brief A function to check the motor_Failure_Number_ and stimulate motor fail
@@ -155,7 +153,6 @@ class GazeboMotorModel : public MotorModel, public ModelPlugin {
   boost::thread callback_queue_thread_;
   void QueueThread();
   std_msgs::msgs::Float turning_velocity_msg_;
-  void VelocityCallback(CommandMotorSpeedPtr &rot_velocities);
   void MotorFailureCallback(const boost::shared_ptr<const msgs::Int> &fail_msg);  /*!< Callback for the motor_failure_sub_ subscriber */
   // void WindVelocityCallback(const boost::shared_ptr<const physics_msgs::msgs::Wind> &msg);
   

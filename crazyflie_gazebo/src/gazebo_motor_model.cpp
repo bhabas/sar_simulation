@@ -144,12 +144,7 @@ void GazeboMotorModel::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   // simulation iteration.
   updateConnection_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&GazeboMotorModel::OnUpdate, this, _1));
 
-  command_sub_ = node_handle_->Subscribe<mav_msgs::msgs::CommandMotorSpeed>("~/" + model_->GetName() + command_sub_topic_, &GazeboMotorModel::VelocityCallback, this);
-  //std::cout << "[gazebo_motor_model]: Subscribe to gz topic: "<< motor_failure_sub_topic_ << std::endl;
   motor_failure_sub_ = node_handle_->Subscribe<msgs::Int>(motor_failure_sub_topic_, &GazeboMotorModel::MotorFailureCallback, this);
-  // FIXME: Commented out to prevent warnings about queue limit reached.
-  //motor_velocity_pub_ = node_handle_->Advertise<std_msgs::msgs::Float>("~/" + model_->GetName() + motor_speed_pub_topic_, 1);
-  // wind_sub_ = node_handle_->Subscribe("~/" + wind_sub_topic_, &GazeboMotorModel::WindVelocityCallback, this);
 
   // Create the first order filter.
   rotor_velocity_filter_.reset(new FirstOrderFilter<double>(time_constant_up_, time_constant_down_, ref_motor_rot_vel_));
@@ -165,14 +160,7 @@ void GazeboMotorModel::OnUpdate(const common::UpdateInfo& _info) {
   Publish();
 }
 
-void GazeboMotorModel::VelocityCallback(CommandMotorSpeedPtr &rot_velocities) {
-  // if(rot_velocities->motor_speed_size() < motor_number_) {
-  //   std::cout  << "You tried to access index " << motor_number_
-  //     << " of the MotorSpeed message array which is of size " << rot_velocities->motor_speed_size() << "." << std::endl;
-  // } else ref_motor_rot_vel_ = std::min(
-  //     static_cast<double>(rot_velocities->motor_speed(motor_number_)), 
-  //     static_cast<double>(max_rot_velocity_));
-}
+
 
 void GazeboMotorModel::MotorSpeedCallback(const crazyflie_msgs::MS::ConstPtr &msg)
 {
@@ -210,11 +198,7 @@ void GazeboMotorModel::UpdateForcesAndMoments() {
   ignition::math::Vector3d joint_axis = ignitionFromGazeboMath(joint_->GetGlobalAxis(0));
 #endif
 
-  // ignition::math::Vector3d relative_wind_velocity = body_velocity - wind_vel_;
-  // ignition::math::Vector3d velocity_parallel_to_rotor_axis = (relative_wind_velocity.Dot(joint_axis)) * joint_axis;
-  // double vel = velocity_parallel_to_rotor_axis.Length();
-  // double scalar = 1 - vel / 25.0; // at 25 m/s the rotor will not produce any force anymore
-  // scalar = ignition::math::clamp(scalar, 0.0, 1.0);
+
   double scalar = 1;
   // Apply a force to the link.
   link_->AddRelativeForce(ignition::math::Vector3d(0, 0, force * scalar));
@@ -242,9 +226,7 @@ void GazeboMotorModel::UpdateForcesAndMoments() {
   parent_links.at(0)->AddRelativeTorque(drag_torque_parent_frame);
 
   ignition::math::Vector3d rolling_moment;
-  // - \omega * \mu_1 * V_A^{\perp}
-  // rolling_moment = -std::abs(real_motor_velocity) * turning_direction_ * rolling_moment_coefficient_ * velocity_perpendicular_to_rotor_axis;
-  // parent_links.at(0)->AddTorque(rolling_moment);
+
   // Apply the filter on the motor's velocity.
   double ref_motor_rot_vel;
   ref_motor_rot_vel = rotor_velocity_filter_->updateFilter(ref_motor_rot_vel_, sampling_time_);
@@ -277,7 +259,6 @@ void GazeboMotorModel::UpdateForcesAndMoments() {
 
 void GazeboMotorModel::UpdateMotorFail() {
   if (motor_number_ == motor_Failure_Number_ - 1){
-    // motor_constant_ = 0.0;
     joint_->SetVelocity(0,0);
     if (screen_msg_flag){
       std::cout << "Motor number [" << motor_Failure_Number_ <<"] failed!  [Motor thrust = 0]" << std::endl;
@@ -294,13 +275,6 @@ void GazeboMotorModel::UpdateMotorFail() {
   }
 }
 
-
-
-// void GazeboMotorModel::WindVelocityCallback(WindPtr& msg) {
-//   wind_vel_ = ignition::math::Vector3d(msg->velocity().x(),
-//             msg->velocity().y(),
-//             msg->velocity().z());
-// }
 
 GZ_REGISTER_MODEL_PLUGIN(GazeboMotorModel);
 }

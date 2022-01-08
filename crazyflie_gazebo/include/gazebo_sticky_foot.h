@@ -7,14 +7,12 @@
 
 #include "common.h"     // provides getSdfParam, FirstOrderFilter ...
 
-#include "CommandMotorSpeed.pb.h"
 
 
 #include <ros/ros.h>
 #include "crazyflie_msgs/PadConnect.h"
 #include "crazyflie_msgs/RLCmd.h"
 
-//#include "gazebo_motor_model.h"     // provides CommandMotorSpeedPtr
 
 namespace gazebo {
 
