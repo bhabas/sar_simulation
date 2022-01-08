@@ -540,12 +540,6 @@ void Controller::controllerGTC()
         MS_Publisher.publish(MS_msg);
 
 
-        
-
-        // int len = sendto(Ctrl_Mavlink_socket, motorspeed, sizeof(motorspeed),0, // Send motorspeeds to Gazebo -> gazebo_motor_model
-        //         (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len); 
-
-
         // =============================
         //     END OF CONTROLLER MATH
         // =============================

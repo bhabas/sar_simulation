@@ -27,12 +27,6 @@
 #include "sensor_msgs/Imu.h"
 #include "gazebo_msgs/SetPhysicsProperties.h"
 
-// Socket Includes
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-
-#include "readerwriterqueue.h"
 
 
 using namespace std;
@@ -42,9 +36,7 @@ using namespace std;
 #define g2Newton (9.81f/1000.0f)
 #define Newton2g (1000.0f/9.81f)
 
-typedef struct _MotorCommand {
-    float data[4];
-} MotorCommand;
+
 
 
 class Controller
@@ -211,7 +203,6 @@ class Controller
 
         // DEFINE THREAD OBJECTS
         std::thread controllerThread;
-        std::thread senderThread_gazebo;
 
 
         
@@ -474,27 +465,7 @@ class Controller
         
 
 
-        // DEFINE CTRL_MAVLINK SOCKET VARIABLES
-        int Ctrl_Mavlink_socket;
-        int Ctrl_Mavlink_socket_SNDBUF;
-        int Ctrl_Mavlink_socket_RCVBUF;
-        int Ctrl_Mavlink_socket_PORT;
-        struct sockaddr_in addr_Ctrl_Mavlink;
 
-        // DEFINE CTRL_RL SOCKET VARIABLES
-        int Ctrl_RL_socket;
-        int Ctrl_RL_socket_SNDBUF;
-        int Ctrl_RL_socket_RCVBUF;
-        int Ctrl_RL_socket_Port;
-        struct sockaddr_in addr_Ctrl_RL;
-
-        // DEFINE MAVLINK ADDRESS VARIABLES
-        int Mavlink_PORT;
-        struct sockaddr_in addr_Mavlink;
-        socklen_t addr_Mavlink_len;
-
-        // QUEUEING STUFF (I don't understand it yet)
-        moodycamel::BlockingReaderWriterQueue<MotorCommand> queue_motorspeed;
 
 
 
@@ -507,58 +478,12 @@ void Controller::Load()
     cout << fixed;
     _isRunning = true;
 
-    // INIT FIRST CONTROLLER SOCKET (COMMUNICATES W/ MAVLINK PORT:18080)
-    Ctrl_Mavlink_socket = socket(AF_INET, SOCK_DGRAM, 0); // DGRAM is for UDP communication (Send data but don't care if it's recieved)
-    Ctrl_Mavlink_socket_SNDBUF = 16;    // 4 floats [16 bytes] for Motorspeeds       
-    Ctrl_Mavlink_socket_RCVBUF = 144;   // 18 doubles [144 bytes] for State array
-    Ctrl_Mavlink_socket_PORT = 18070;   // Port for this socket
 
-    // SET EXPECTED BUFFER SIZES
-    if (setsockopt(Ctrl_Mavlink_socket, SOL_SOCKET, SO_SNDBUF, &Ctrl_Mavlink_socket_SNDBUF, sizeof(Ctrl_Mavlink_socket_SNDBUF))<0)
-        cout<<"[FAILED] Ctrl_Mavlink_socket: Setting SNDBUF"<<endl;
-    if (setsockopt(Ctrl_Mavlink_socket, SOL_SOCKET, SO_RCVBUF, &Ctrl_Mavlink_socket_RCVBUF, sizeof(Ctrl_Mavlink_socket_RCVBUF))<0)
-        cout<<"[FAILED] Ctrl_Mavlink_socket: Setting RCVBUF"<<endl;
-    int enable = 1; // Fix for error if socket hasn't close correctly when restarting program
-    if (setsockopt(Ctrl_Mavlink_socket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
-        cout <<"help me"<< endl;
 
-    // SET SOCKET SETTINGS
-    memset(&addr_Ctrl_Mavlink, 0, sizeof(addr_Ctrl_Mavlink));
-    addr_Ctrl_Mavlink.sin_family = AF_INET;
-    addr_Ctrl_Mavlink.sin_addr.s_addr = htonl(INADDR_ANY);//inet_addr("0.0.0.0");
-    addr_Ctrl_Mavlink.sin_port = htons(Ctrl_Mavlink_socket_PORT);
-
-    // BIND ADDRESS TO CONTROLLER SOCKET (PORT:18070)
-    if (bind(Ctrl_Mavlink_socket, (struct sockaddr*)&addr_Ctrl_Mavlink, sizeof(addr_Ctrl_Mavlink)) < 0)
-        cout<<"[FAILED] Ctrl_Mavlink_socket: Binding address to socket"<<endl;
-    else
-        cout<<"[SUCCESS] Ctrl_Mavlink_socket: Binding address to socket"<<endl; 
 
 
     
 
-
-
-    // INIT ADDRESS FOR MAVLINK SOCKET (PORT: 18080)
-    Mavlink_PORT = 18080;
-    memset(&addr_Mavlink, 0, sizeof(addr_Mavlink));
-    addr_Mavlink.sin_family = AF_INET;
-    addr_Mavlink.sin_addr.s_addr = htonl(INADDR_ANY);
-    addr_Mavlink.sin_port = htons(Mavlink_PORT);
-    addr_Mavlink_len = sizeof(addr_Mavlink);
-
-
-
-    // MOTORSPEED TO MAVLINK TEST (VISUALLY CONFIRMS THINGS ARE WORKING IN SIM)
-    float msg[4] = {1900,1900,1900,1900};
-    int msg_len = 0;
-    for(int k=0; k<2; k++)
-        // To Gazebo socket, send msg of len(msg)
-        msg_len = sendto(Ctrl_Mavlink_socket, msg, sizeof(msg),0, (struct sockaddr*)&addr_Mavlink, sizeof(addr_Mavlink));
-    if(msg_len<0)
-        cout<<"[FAILED] Ctrl_Mavlink_socket: Sending test motor speeds to Mavlink. Threads will mutual lock!"<<endl; // Not sure what mutual lock means
-    else
-        cout<<"[SUCCESS] Ctrl_Mavlink_socket: Sending test motor speeds to Mavlink. Avoiding mutual locking between threads!"<<endl;
 
     // START COMMUNICATION THREADS
     controllerThread = std::thread(&Controller::controllerGTC, this);
