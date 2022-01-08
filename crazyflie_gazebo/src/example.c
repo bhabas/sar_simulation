@@ -5,14 +5,13 @@
 #include <stdarg.h>
 #include <string.h>
 
-int main()
-{   
-    typedef struct{
-        float mean[3];
-        float std[3];
-    }Scaler;
+typedef struct{
+    float mean[3];
+    float std[3];
+}Scaler;
 
-    Scaler Policy_Scaler;
+int readCSV(Scaler* scaler)
+{
 
     char line[50];
     char *sp;
@@ -28,16 +27,31 @@ int main()
     int i = 0;
     while(fgets(line,100,fp)!=NULL)
     {
-        sp = strtok(line,"\t");
-        Policy_Scaler.mean[i] = atof(sp);
+        sp = strtok(line,",");
+        scaler->mean[i] = atof(sp);
 
-        sp = strtok(NULL,"\t");
-        Policy_Scaler.std[i] = atof(sp);
+        sp = strtok(NULL,",");
+        scaler->std[i] = atof(sp);
     
     }
 
-    printf("%.3f\n",Policy_Scaler.mean[i]);
+    printf("%.3f\n",scaler->mean[i]);
     fclose(fp);
+    
+    return 0;
+}
+
+int main()
+{   
+    
+
+    Scaler Policy_Scaler;
+
+    readCSV(&Policy_Scaler);
+
+    
 
     return 0;
 }
+
+
