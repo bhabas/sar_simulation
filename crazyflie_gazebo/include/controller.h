@@ -59,7 +59,9 @@ class Controller
         // CONSTRUCTOR TO START PUBLISHERS AND SUBSCRIBERS (Similar to Python's __init__() )
         Controller(ros::NodeHandle *nh){
 
-            globalState_Subscriber = nh->subscribe("/env/vicon_state",1,&Controller::vicon_stateCallback,this,ros::TransportHints().tcpNoDelay());
+            viconState_Subscriber = nh->subscribe("/env/vicon_state",1,&Controller::vicon_Callback,this,ros::TransportHints().tcpNoDelay());
+            imu_Subscriber = nh->subscribe("/cf1/imu",1,&Controller::imu_Callback,this,ros::TransportHints().tcpNoDelay());
+            OF_Subscriber = nh->subscribe("/cf1/OF_sensor",1,&Controller::OF_Callback,this,ros::TransportHints().tcpNoDelay()); 
 
             // state.position.x = 1.0;
             controllerThread = std::thread(&Controller::startController, this);
@@ -69,14 +71,21 @@ class Controller
 
         // DEFINE FUNCTION PROTOTYPES
         void startController();
-        void vicon_stateCallback(const nav_msgs::Odometry::ConstPtr &msg);
+        void vicon_Callback(const nav_msgs::Odometry::ConstPtr &msg);
+        void imu_Callback(const sensor_msgs::Imu::ConstPtr &msg);
+        void OF_Callback(const nav_msgs::Odometry::ConstPtr &msg);           
+
+
+
 
         
 
     private:
 
         // SENSORS
-        ros::Subscriber globalState_Subscriber;
+        ros::Subscriber viconState_Subscriber;
+        ros::Subscriber imu_Subscriber;
+        ros::Subscriber OF_Subscriber;
 
 
         
@@ -90,12 +99,20 @@ class Controller
         geometry_msgs::Vector3 _accel;
         float _t;
 
+        float _H_CEILING = 2.10f;
+
+
+        float _RREV;
+        float _OF_x;
+        float _OF_y;
+
 
 
         // DEFINE THREAD OBJECTS
         std::thread controllerThread;
 
         state_t state;
+        sensorData_t sensors;
         
         uint32_t tick = 0;
 
@@ -108,7 +125,7 @@ class Controller
 
 };
 
-void Controller::vicon_stateCallback(const nav_msgs::Odometry::ConstPtr &msg)
+void Controller::vicon_Callback(const nav_msgs::Odometry::ConstPtr &msg)
 {
     // Follow msg names from message details - "rqt -s rqt_msg" 
     
@@ -117,7 +134,6 @@ void Controller::vicon_stateCallback(const nav_msgs::Odometry::ConstPtr &msg)
     _position = msg->pose.pose.position; 
     _velocity = msg->twist.twist.linear;
 
-    // cout << state.position.x << endl;
     state.position.x = _position.x;
     state.position.y = _position.y;
     state.position.z = _position.z;
@@ -125,10 +141,47 @@ void Controller::vicon_stateCallback(const nav_msgs::Odometry::ConstPtr &msg)
     state.velocity.x = _velocity.x;
     state.velocity.y = _velocity.y;
     state.velocity.z = _velocity.z;
-    // cout << "HELJ" << endl;
 
 }
 
+void Controller::imu_Callback(const sensor_msgs::Imu::ConstPtr &msg){
+    _quaternion = msg->orientation;
+    _omega = msg->angular_velocity;
+    _accel = msg->linear_acceleration;
+
+    state.attitudeQuaternion.x = _quaternion.x;
+    state.attitudeQuaternion.y = _quaternion.y;
+    state.attitudeQuaternion.z = _quaternion.z;
+    state.attitudeQuaternion.w = _quaternion.w;
+
+    sensors.gyro.x = _omega.x;
+    sensors.gyro.y = _omega.y;
+    sensors.gyro.z = _omega.z;
+
+    sensors.acc.x = _accel.x;
+    sensors.acc.y = _accel.y;
+    sensors.acc.z = _accel.z;
+    
+
+}
+
+void Controller::OF_Callback(const nav_msgs::Odometry::ConstPtr &msg){
+
+    const geometry_msgs::Point position = msg->pose.pose.position; 
+    const geometry_msgs::Vector3 velocity = msg->twist.twist.linear;
+
+    
+    double d = _H_CEILING-position.z; // h_ceiling - height
+
+    // SET SENSOR VALUES INTO CLASS VARIABLES
+    // _RREV = msg->RREV;
+    // _OF_x = msg->OF_x;
+    // _OF_y = msg->OF_y;
+
+    _RREV = velocity.z/d;
+    _OF_x = -velocity.y/d;
+    _OF_y = -velocity.x/d;
+}
 
 
 void Controller::startController()
