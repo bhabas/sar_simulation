@@ -35,8 +35,10 @@
 #include "MotorSpeed.pb.h"
 #include "Float.pb.h"
 
-
 #include "common.h"
+
+#include <ros/ros.h>
+#include "crazyflie_msgs/MS.h"
 
 
 namespace turning_direction {
@@ -109,6 +111,8 @@ class GazeboMotorModel : public MotorModel, public ModelPlugin {
   virtual void UpdateMotorFail();
   virtual void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
   virtual void OnUpdate(const common::UpdateInfo & /*_info*/);
+  void MotorSpeedCallback(const crazyflie_msgs::MS::ConstPtr &msg);
+
 
  private:
   std::string command_sub_topic_;
@@ -161,12 +165,11 @@ class GazeboMotorModel : public MotorModel, public ModelPlugin {
   void VelocityCallback(CommandMotorSpeedPtr &rot_velocities);
   void MotorFailureCallback(const boost::shared_ptr<const msgs::Int> &fail_msg);  /*!< Callback for the motor_failure_sub_ subscriber */
   // void WindVelocityCallback(const boost::shared_ptr<const physics_msgs::msgs::Wind> &msg);
-
+  
   std::unique_ptr<FirstOrderFilter<double>>  rotor_velocity_filter_;
-/*
-  // Protobuf test
-  std::string motor_test_sub_topic_;
-  transport::SubscriberPtr motor_sub_;
-*/
+  
+  ros::NodeHandle n;
+  ros::Subscriber MS_Subscriber = n.subscribe<crazyflie_msgs::MS>("/MS",1,&GazeboMotorModel::MotorSpeedCallback,this,ros::TransportHints().tcpNoDelay());
+
 };
 }

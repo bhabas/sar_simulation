@@ -147,7 +147,12 @@ void GazeboStickyFoot::RLCmdCallback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 
     if(cmd_type == 11)
     {
-        if(cmd_flag == 0)
+        if(cmd_flag == 1) // TURN ON STICKY FOOT
+        {
+            std::cout<<link_->GetName().c_str()<< " NOW STICKY "<< std::endl;
+            sticky_ = true;
+        }
+        else // TURN OFF STICKY FOOT
         {
             // "link_"  WILL HAVE NAMES pad_[X]
             std::cout<<link_->GetName().c_str()<< " NOW NOT STICKY "<< std::endl;
@@ -165,11 +170,6 @@ void GazeboStickyFoot::RLCmdCallback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
             }
             joint_ = NULL;
             link2_ = NULL;
-        }
-        else
-        {
-            std::cout<<link_->GetName().c_str()<< " NOW STICKY "<< std::endl;
-            sticky_ = true;
         }
     }
 }

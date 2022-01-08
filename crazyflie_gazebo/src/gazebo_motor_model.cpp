@@ -122,8 +122,7 @@ void GazeboMotorModel::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   }
 
   getSdfParam<std::string>(_sdf, "commandSubTopic", command_sub_topic_, command_sub_topic_);
-  getSdfParam<std::string>(_sdf, "motorSpeedPubTopic", motor_speed_pub_topic_,
-                           motor_speed_pub_topic_);
+  getSdfParam<std::string>(_sdf, "motorSpeedPubTopic", motor_speed_pub_topic_, motor_speed_pub_topic_);
 
   getSdfParam<double>(_sdf, "rotorDragCoefficient", rotor_drag_coefficient_, rotor_drag_coefficient_);
   getSdfParam<double>(_sdf, "rollingMomentCoefficient", rolling_moment_coefficient_,
@@ -136,10 +135,6 @@ void GazeboMotorModel::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   getSdfParam<double>(_sdf, "timeConstantDown", time_constant_down_, time_constant_down_);
   getSdfParam<double>(_sdf, "rotorVelocitySlowdownSim", rotor_velocity_slowdown_sim_, 10);
 
-  /*
-  std::cout << "Subscribing to: " << motor_test_sub_topic_ << std::endl;
-  motor_sub_ = node_handle_->Subscribe<mav_msgs::msgs::MotorSpeed>("~/" + model_->GetName() + motor_test_sub_topic_, &GazeboMotorModel::testProto, this);
-  */
 
   // Set the maximumForce on the joint. This is deprecated from V5 on, and the joint won't move.
 #if GAZEBO_MAJOR_VERSION < 5
@@ -160,17 +155,6 @@ void GazeboMotorModel::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   rotor_velocity_filter_.reset(new FirstOrderFilter<double>(time_constant_up_, time_constant_down_, ref_motor_rot_vel_));
 }
 
-// Protobuf test
-/*
-void GazeboMotorModel::testProto(MotorSpeedPtr &msg) {
-  std::cout << "Received message" << std::endl;
-  std::cout << msg->motor_speed_size()<< std::endl;
-  for(int i; i < msg->motor_speed_size(); i++){
-    std::cout << msg->motor_speed(i) <<" ";
-  }
-  std::cout << std::endl;
-}
-*/
 
 // This gets called by the world update start event.
 void GazeboMotorModel::OnUpdate(const common::UpdateInfo& _info) {
@@ -182,10 +166,21 @@ void GazeboMotorModel::OnUpdate(const common::UpdateInfo& _info) {
 }
 
 void GazeboMotorModel::VelocityCallback(CommandMotorSpeedPtr &rot_velocities) {
-  if(rot_velocities->motor_speed_size() < motor_number_) {
-    std::cout  << "You tried to access index " << motor_number_
-      << " of the MotorSpeed message array which is of size " << rot_velocities->motor_speed_size() << "." << std::endl;
-  } else ref_motor_rot_vel_ = std::min(static_cast<double>(rot_velocities->motor_speed(motor_number_)), static_cast<double>(max_rot_velocity_));
+  // if(rot_velocities->motor_speed_size() < motor_number_) {
+  //   std::cout  << "You tried to access index " << motor_number_
+  //     << " of the MotorSpeed message array which is of size " << rot_velocities->motor_speed_size() << "." << std::endl;
+  // } else ref_motor_rot_vel_ = std::min(
+  //     static_cast<double>(rot_velocities->motor_speed(motor_number_)), 
+  //     static_cast<double>(max_rot_velocity_));
+}
+
+void GazeboMotorModel::MotorSpeedCallback(const crazyflie_msgs::MS::ConstPtr &msg)
+{
+  ref_motor_rot_vel_ = static_cast<double>(msg->MotorSpeeds[motor_number_]);
+  ref_motor_rot_vel_ = std::min(
+    static_cast<double>(msg->MotorSpeeds[motor_number_]), 
+    static_cast<double>(max_rot_velocity_)
+    );
 }
 
 void GazeboMotorModel::MotorFailureCallback(const boost::shared_ptr<const msgs::Int> &fail_msg) {
@@ -298,6 +293,8 @@ void GazeboMotorModel::UpdateMotorFail() {
      }
   }
 }
+
+
 
 // void GazeboMotorModel::WindVelocityCallback(WindPtr& msg) {
 //   wind_vel_ = ignition::math::Vector3d(msg->velocity().x(),

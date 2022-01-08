@@ -20,6 +20,7 @@
 #include "crazyflie_msgs/RLData.h"
 #include "crazyflie_msgs/PadConnect.h"
 #include "crazyflie_msgs/Policy_Values.h"
+#include "crazyflie_msgs/MS.h"
 
 
 #include "nav_msgs/Odometry.h"
@@ -52,6 +53,7 @@ class Controller
         // CONSTRUCTOR TO START PUBLISHERS AND SUBSCRIBERS (Similar to Python's __init__() )
         Controller(ros::NodeHandle *nh){
             ctrl_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/ctrl_data",1);
+            MS_Publisher = nh->advertise<crazyflie_msgs::MS>("/MS",1);
 
             // NOTE: tcpNoDelay() removes delay where system is waiting for datapackets to be fully filled before sending;
             // instead of sending data as soon as it is available to match publishing rate (This is an issue with large messages like Odom or Custom)
@@ -178,6 +180,7 @@ class Controller
     private:
         // DEFINE PUBLISHERS AND SUBSCRIBERS
         ros::Publisher ctrl_Publisher;
+        ros::Publisher MS_Publisher;
 
         // SENSORS
         ros::Subscriber globalState_Subscriber;

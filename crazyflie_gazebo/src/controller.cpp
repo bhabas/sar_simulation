@@ -221,6 +221,7 @@ void Controller::controllerGTC()
     
     // =========== ROS Definitions =========== //
     crazyflie_msgs::CtrlData ctrl_msg;
+    crazyflie_msgs::MS MS_msg;
     ros::Rate rate(500);
     unsigned int t_step = 0; // t_step counter
        
@@ -534,10 +535,15 @@ void Controller::controllerGTC()
         motorspeed[1] = MS2;
         motorspeed[2] = MS3;
         motorspeed[3] = MS4;
+
+        MS_msg.MotorSpeeds = {(uint16_t)MS1,(uint16_t)MS2,(uint16_t)MS3,(uint16_t)MS4};
+        MS_Publisher.publish(MS_msg);
+
+
         
 
-        int len = sendto(Ctrl_Mavlink_socket, motorspeed, sizeof(motorspeed),0, // Send motorspeeds to Gazebo -> gazebo_motor_model
-                (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len); 
+        // int len = sendto(Ctrl_Mavlink_socket, motorspeed, sizeof(motorspeed),0, // Send motorspeeds to Gazebo -> gazebo_motor_model
+        //         (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len); 
 
 
         // =============================
@@ -643,7 +649,6 @@ void Controller::controllerGTC()
         // "=============== " << endl; 
         // }
         t_step++;
-
 
         
         
