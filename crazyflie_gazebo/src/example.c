@@ -8,40 +8,35 @@
 int main()
 {   
     typedef struct{
-        double mean[3];
-        double std[3];
+        float mean[3];
+        float std[3];
     }Scaler;
 
-    Scaler* Policy_Scaler;
+    Scaler Policy_Scaler;
 
-    Policy_Scaler->mean[0] = 3.123;
-
-    printf("Hello World %.3f\n",Policy_Scaler->mean[0]);
-    
     char line[50];
     char *sp;
-    float mean;
-    float std;
-    int studentId;
 
 
-    FILE* fp = fopen("/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/Info/Data_Test.csv", "r");
+    FILE* fp = fopen("/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/Info/Scaler_Policy_Value.csv", "r");
     if (fp == NULL) {
         perror("Error reading file\n");
         return 1;
     }
-
-    // fgets(line,100,fp); // Skip line
+    
+    fgets(line,100,fp); // Skip buffer
+    int i = 0;
     while(fgets(line,100,fp)!=NULL)
     {
-        printf("%s\n",line);
-        sp = strtok(line,",");
-        studentId = atoi(sp);
-        // mean = atof(sp);
+        sp = strtok(line,"\t");
+        Policy_Scaler.mean[i] = atof(sp);
 
-        // printf("%f ",mean);
+        sp = strtok(NULL,"\t");
+        Policy_Scaler.std[i] = atof(sp);
+    
     }
-   
+
+    printf("%.3f\n",Policy_Scaler.mean[i]);
     fclose(fp);
 
     return 0;
