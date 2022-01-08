@@ -121,33 +121,33 @@ class Controller
             h_ceiling = _H_CEILING;
             
 
-            FILE* input = fopen("/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/data/NN_Layers.data", "r");
-            // LAYER 1
-            nml_mat *W1 = nml_mat_fromfilef(input);
-            nml_mat *b_1 = nml_mat_fromfilef(input);
+            // FILE* input = fopen("/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/data/NN_Layers.data", "r");
+            // // LAYER 1
+            // nml_mat *W1 = nml_mat_fromfilef(input);
+            // nml_mat *b_1 = nml_mat_fromfilef(input);
 
-            // LAYER 2
-            nml_mat *W2 = nml_mat_fromfilef(input);
-            nml_mat *b_2 = nml_mat_fromfilef(input);
+            // // LAYER 2
+            // nml_mat *W2 = nml_mat_fromfilef(input);
+            // nml_mat *b_2 = nml_mat_fromfilef(input);
 
-            // LAYER 3
-            nml_mat *W3 = nml_mat_fromfilef(input);
-            nml_mat *b_3 = nml_mat_fromfilef(input);
-            fclose(input);
+            // // LAYER 3
+            // nml_mat *W3 = nml_mat_fromfilef(input);
+            // nml_mat *b_3 = nml_mat_fromfilef(input);
+            // fclose(input);
 
-
-            
-            
 
             
+            
 
-            W[0] = W1;
-            W[1] = W2;
-            W[2] = W3;
+            
 
-            b[0] = b_1;
-            b[1] = b_2;
-            b[2] = b_3;
+            // W[0] = W1;
+            // W[1] = W2;
+            // W[2] = W3;
+
+            // b[0] = b_1;
+            // b[1] = b_2;
+            // b[2] = b_3;
         }
 
         // DEFINE FUNCTION PROTOTYPES

@@ -131,14 +131,14 @@ if __name__ == '__main__':
     df_scale = pd.DataFrame(
         np.vstack((scaler.mean_,scaler.scale_)).T,
         columns=['mean','std'])
-    df_scale.to_csv(f"{BASEPATH}/Info/Scaler_Policy_Value.csv",index=False,float_format="%.3f")
+    df_scale.to_csv(f"{BASEPATH}/Info/Scaler_Policy_Value.csv",index=False,float_format="%.3f",sep='\t')
 
 
 
 
 
     ## SPLIT DATA FEATURES INTO TRAINING AND TESTING DATA
-    train_df, test_df = train_test_split(df,test_size=0.2,random_state=33)
+    # train_df, test_df = train_test_split(df,test_size=0.2,random_state=33)
 
 
 

@@ -151,7 +151,7 @@ if __name__ == "__main__":
     df_scale = pd.DataFrame(
         np.vstack((scaler.mean_,scaler.scale_)).T,
         columns=['mean','std'])
-    df_scale.to_csv(f"{BASEPATH}/Info/Scaler_Flip_Classifier.csv",index=False,float_format="%.3f")
+    df_scale.to_csv(f"{BASEPATH}/Info/Scaler_Flip_Classifier.csv",index=False,float_format="%.3f",sep='\t')
 
 
 

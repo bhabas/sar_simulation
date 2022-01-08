@@ -702,7 +702,7 @@ void Controller::controllerGTC()
 
 
 int main(int argc, char **argv)
-{
+{   
     ros::init(argc, argv,"controller_node");
     ros::NodeHandle nh;
     Controller controller = Controller(&nh);

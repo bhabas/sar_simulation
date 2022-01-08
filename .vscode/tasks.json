@@ -15,7 +15,7 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
-                "*.c",
+                "example.c",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "-lm"
