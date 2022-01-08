@@ -6,20 +6,14 @@
 
 
 
-void Controller::controllerGTC()
+void controllerGTC(const uint32_t tick)
 {
+    // printf("HELLO\n");
+    
+    cout << tick << endl;
 
-    ros::Rate rate(500);
-    unsigned int t_step = 0; // t_step counter
-       
-    while(ros::ok)
-    {
-        
-        cout << "Hello" << endl;
-        rate.sleep();
-    }
+    
 }
-
 
 int main(int argc, char **argv)
 {   
@@ -27,6 +21,6 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
     Controller controller = Controller(&nh);
     // controller.controllerGTCReset();
-    controller.Load();
+    controller.startController();
     ros::spin();
 }
