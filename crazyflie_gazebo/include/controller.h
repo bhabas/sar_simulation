@@ -44,13 +44,20 @@ class Controller
         // CONSTRUCTOR TO START PUBLISHERS AND SUBSCRIBERS (Similar to Python's __init__() )
         Controller(ros::NodeHandle *nh){
             
+            
+
+            // ENVIRONMENT SENSORS
+            viconState_Subscriber = nh->subscribe("/env/vicon_state",1,&Controller::vicon_Callback,this,ros::TransportHints().tcpNoDelay());
+            
+            // BODY SENSORS
+            imu_Subscriber = nh->subscribe("/cf1/imu",1,&Controller::imu_Callback,this,ros::TransportHints().tcpNoDelay());
+            OF_Subscriber = nh->subscribe("/cf1/OF_sensor",1,&Controller::OF_Callback,this,ros::TransportHints().tcpNoDelay()); 
+
+            // COMMANDS AND INFO
+            CMD_Subscriber = nh->subscribe("/rl_ctrl",50,&Controller::CMD_Callback,this);
             ctrl_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/ctrl_data",1);
             MS_Publisher = nh->advertise<crazyflie_msgs::MS>("/MS",1);
 
-
-            viconState_Subscriber = nh->subscribe("/env/vicon_state",1,&Controller::vicon_Callback,this,ros::TransportHints().tcpNoDelay());
-            imu_Subscriber = nh->subscribe("/cf1/imu",1,&Controller::imu_Callback,this,ros::TransportHints().tcpNoDelay());
-            OF_Subscriber = nh->subscribe("/cf1/OF_sensor",1,&Controller::OF_Callback,this,ros::TransportHints().tcpNoDelay()); 
 
 
 
@@ -89,9 +96,11 @@ class Controller
             setpoint.acceleration.y = 0.0f;
             setpoint.acceleration.z = 0.0f;
 
-            
-
-
+            setpoint.cmd_type = 101;
+            setpoint.cmd_val1 = 0.0f;
+            setpoint.cmd_val2 = 0.0f;
+            setpoint.cmd_val3 = 0.0f;
+            setpoint.cmd_flag = 0.0f;
 
 
             // START CONTROLLER
@@ -103,6 +112,8 @@ class Controller
         void vicon_Callback(const nav_msgs::Odometry::ConstPtr &msg);
         void imu_Callback(const sensor_msgs::Imu::ConstPtr &msg);
         void OF_Callback(const nav_msgs::Odometry::ConstPtr &msg);   
+        void CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
+
 
         crazyflie_msgs::MS MS_msg;
         crazyflie_msgs::CtrlData ctrl_msg;
@@ -121,6 +132,7 @@ class Controller
         ros::Subscriber viconState_Subscriber;
         ros::Subscriber imu_Subscriber;
         ros::Subscriber OF_Subscriber;
+        ros::Subscriber CMD_Subscriber;
 
         // INITIALIZE ROS MSG VARIABLES
         geometry_msgs::Point _position; 
@@ -281,6 +293,7 @@ static bool attCtrlEnable = false;
 static bool tumbled = false;
 static bool motorstop_flag = false;
 static bool errorReset = false;
+static bool tumble_detection = true;
 
 // OPTICAL FLOW STATES
 static float RREV = 0.0f; // [rad/s]
@@ -333,6 +346,16 @@ static uint8_t traj_type = 0;
 static bool execute_traj = false;
 
 
+void Controller::CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
+{
+    setpoint.cmd_type = msg->cmd_type;
+    setpoint.cmd_val1 = msg->cmd_vals.x;
+    setpoint.cmd_val2 = msg->cmd_vals.y;
+    setpoint.cmd_val3 = msg->cmd_vals.z;
+    setpoint.cmd_flag = msg->cmd_flag;
+
+    setpoint.GTC_cmd_rec = true;
+}
 
 
 

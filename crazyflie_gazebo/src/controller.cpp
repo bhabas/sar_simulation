@@ -65,7 +65,77 @@ bool controllerGTCTest(void)
 
 void GTC_Command(setpoint_t *setpoint)
 {   
+    switch(setpoint->cmd_type){
+        case 0: // Reset
+            controllerGTCReset();
+            break;
 
+
+        case 1: // Position
+            x_d.x = setpoint->cmd_val1;
+            x_d.y = setpoint->cmd_val2;
+            x_d.z = setpoint->cmd_val3;
+            break;
+
+
+        case 2: // Velocity
+            v_d.x = setpoint->cmd_val1;
+            v_d.y = setpoint->cmd_val2;
+            v_d.z = setpoint->cmd_val3;
+            break;
+
+
+        case 3: // Acceleration
+            a_d.x = setpoint->cmd_val1;
+            a_d.y = setpoint->cmd_val2;
+            a_d.z = setpoint->cmd_val3;
+            break;
+
+        case 4: // Tumble-Detection
+            tumble_detection = setpoint->cmd_flag;
+            break;
+
+        case 5: // Hard Set All Motorspeeds to Zero
+            motorstop_flag = true;
+            break;
+
+        case 7: // Execute Moment-Based Flip
+
+            M_d.x = setpoint->cmd_val1*1e-3;
+            M_d.y = setpoint->cmd_val2*1e-3;
+            M_d.z = setpoint->cmd_val3*1e-3;
+
+            Moment_flag = setpoint->cmd_flag;
+            break;
+
+        case 8: // Arm Policy Maneuver
+            RREV_thr = setpoint->cmd_val1;
+            G1 = setpoint->cmd_val2;
+            G2 = setpoint->cmd_val3;
+
+            policy_armed_flag = setpoint->cmd_flag;
+
+            break;
+            
+        case 9: // Trajectory Values
+
+            s_0 = setpoint->cmd_val1;
+            v = setpoint->cmd_val2;
+            a = setpoint->cmd_val3;
+            traj_type = setpoint->cmd_flag;
+
+            t = 0.0f; // Reset t
+            T = (a+fsqr(v))/(a*v); // Find trajectory manuever length [s]
+
+            if(traj_type >= 0){
+                execute_traj = true;
+            }
+            else{
+                execute_traj = false;
+            }
+
+            break;
+    }
 }
 
 void controllerGTCTraj()
@@ -83,12 +153,12 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 {
     if (RATE_DO_EXECUTE(RATE_500_HZ, tick)) {
 
-        // if (setpoint->GTC_cmd_rec == true)
-        //     {
+        if (setpoint->GTC_cmd_rec == true)
+            {
                 
-        //         GTC_Command(setpoint);
-        //         setpoint->GTC_cmd_rec = false;
-        //     }
+                GTC_Command(setpoint);
+                setpoint->GTC_cmd_rec = false;
+            }
 
         // if (errorReset){
         //     controllerGTCReset();
@@ -145,7 +215,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         b3 = mvmul(R, e_3);         // Current body vertical axis in terms of global axes | [b3 = R*e_3] 
         
         // TUMBLE DETECTION
-        if (b3.z <= 0){
+        if (b3.z <= 0 && tumble_detection == true){
             tumbled = true;
         }
 
@@ -288,7 +358,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
         setprecision(0) <<
         "Policy_armed: " << policy_armed_flag <<  "\tFlip_flag: " << flip_flag << "\tImpact_flag: " << "impact_flag" << endl <<
-        "Tumble Detection: " << "tumble_detection" << "\t\tTumbled: " << tumbled << endl <<
+        "Tumble Detection: " << tumble_detection << "\t\tTumbled: " << tumbled << endl <<
         "kp_xf: " << "kp_xf" << " \tkd_xf: " << "kd_xf" << endl <<
         "Slowdown_type: " << "slowdown_type" << endl << 
         endl <<
