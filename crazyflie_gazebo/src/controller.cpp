@@ -2,8 +2,8 @@
 #include "controller.h"
 
 // XY POSITION PID
-float P_kp_xy = 0.5f;
-float P_kd_xy = 0.4f;
+float P_kp_xy = 0.05f*0.0f;
+float P_kd_xy = 0.01f*0.0f;
 float P_ki_xy = 0.0f;
 float i_range_xy = 0.3f;
 
@@ -14,15 +14,15 @@ float P_ki_z = 0.0f;
 float i_range_z = 0.25f;
 
 // XY ATTITUDE PID
-float R_kp_xy = 0.002f;
-float R_kd_xy = 0.0025f;
+float R_kp_xy = 0.0015f;
+float R_kd_xy = 0.0008f;
 float R_ki_xy = 0.0f;
 float i_range_R_xy = 1.0f;
 
 // Z ATTITUDE PID
-float R_kp_z = 0.005f;
+float R_kp_z = 0.003f;
 float R_kd_z = 0.002f;
-float R_ki_z = 0.000;
+float R_ki_z = 0.000f;
 float i_range_R_z = 0.5f;
 void controllerGTCInit(void)
 {
@@ -130,22 +130,20 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         v_d = mkvec(setpoint->velocity.x, setpoint->velocity.y, setpoint->velocity.z);             // Vel-desired [m/s]
         a_d = mkvec(setpoint->acceleration.x, setpoint->acceleration.y, setpoint->acceleration.z); // Acc-desired [m/s^2]
 
-        omega_d = mkvec(radians(setpoint->attitudeRate.roll),
-                        radians(setpoint->attitudeRate.pitch),
-                        radians(setpoint->attitudeRate.yaw));         // Omega-desired [rad/s]
-        domega_d = mkvec(radians(0.0f), radians(0.0f), radians(0.0f));  // Omega-Accl. [rad/s^2]
+        // =========== STATE SETPOINTS =========== //
+    
+        omega_d = mkvec(0.0f,0.0f,0.0f);    // Omega-desired [rad/s]
+        domega_d = mkvec(0.0f,0.0f,0.0f);   // Omega-Accl. [rad/s^2]
 
-        eul_d = mkvec(radians(setpoint->attitude.roll),
-                        -radians(setpoint->attitude.pitch), 
-                        radians(setpoint->attitude.yaw));
-        quat_d = rpy2quat(eul_d); // Desired orientation from eul angles [ZYX NOTATION]
+        eul_d = mkvec(0.0f,0.0f,0.0f);
+        quat_d = rpy2quat(eul_d);           // Desired orientation from eul angles [ZYX NOTATION]
 
         // =========== ROTATION MATRIX =========== //
         // R changes Body axes to be in terms of Global axes
         // https://www.andre-gaschler.com/rotationconverter/
         R = quat2rotmat(stateQuat); // Quaternion to Rotation Matrix Conversion
         b3 = mvmul(R, e_3);         // Current body vertical axis in terms of global axes | [b3 = R*e_3] 
-
+        
         // TUMBLE DETECTION
         if (b3.z <= 0){
             tumbled = true;
@@ -154,6 +152,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         // =========== TRANSLATIONAL EFFORT =========== //
         e_x = vsub(statePos, x_d); // [e_x = pos-x_d]
         e_v = vsub(stateVel, v_d); // [e_v = vel-v_d]
+
 
         // POS. INTEGRAL ERROR
         e_PI.x += (e_x.x)*dt;
@@ -164,7 +163,6 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
         e_PI.z += (e_x.z)*dt;
         e_PI.z = clamp(e_PI.z, -i_range_z, i_range_z);
-
 
         /* [F_thrust_ideal = -kp_x*e_x*(kp_x_flag) + -kd_x*e_v + -kI_x*e_PI*(kp_x_flag) + m*g*e_3 + m*a_d] */
         temp1_v = veltmul(vneg(Kp_p), e_x);
@@ -218,8 +216,6 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         temp3_v = veltmul(vneg(Ki_R), e_RI);    // [-ki_R*e_RI]
         R_effort = vadd3(temp1_v,temp2_v,temp3_v);
 
-        
-
         /* Gyro_dyn = [omega x (J*omega)] - [J*( hat(omega)*R'*R_d*omega_d - R'*R_d*domega_d )] */
         temp1_v = vcross(stateOmega, mvmul(J, stateOmega)); // [omega x J*omega]
 
@@ -262,11 +258,86 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         MS3 = sqrt(PWM2thrust(M3_pwm)*g2Newton/kf);
         MS4 = sqrt(PWM2thrust(M4_pwm)*g2Newton/kf);
 
-        _CTRL->MS_msg.MotorSpeeds = {(uint16_t)MS1,(uint16_t)MS2,(uint16_t)MS3,(uint16_t)MS4};
-        printf("MS1: %.1f \t MS2: %.1f \t MS3: %.1f \t MS4: %.1f \n",MS1,MS2,MS3,MS4);
+        
 
+        
+
+        _CTRL->MS_msg.MotorSpeeds = {(uint16_t)MS1,(uint16_t)MS2,(uint16_t)MS3,(uint16_t)MS4};
         _CTRL->MS_Publisher.publish(_CTRL->MS_msg);
         _CTRL->ctrl_Publisher.publish(_CTRL->ctrl_msg);
+
+        // DATA HANDLING
+        if (tick%5 == 0){ // General Debugging output
+        cout << fixed;
+        cout << setprecision(4) << endl <<
+        "t: " << _CTRL->_t << "\tCmd: "  << endl << 
+        endl <<
+
+        "RREV_thr: " << RREV_thr << "\tG1: " << G1 << "\tG2: " << G2 << endl << 
+        "RREV: " << RREV << "\tOF_x: " << OF_x << "\tOF_y: " << OF_y << endl <<
+        "RREV_flip: " << RREV_tr << "\tOF_x_tr: " << OF_x_tr << "\tOF_y_tr: " << OF_y_tr << endl << 
+        endl << 
+
+        "Kp_P: " << Kp_p.x << "  " << Kp_p.y << "  " << Kp_p.z << "\t" <<
+        "Kp_R: " << Kp_R.x << "  " << Kp_R.y << "  " << Kp_R.z << endl <<
+        "Kd_P: " << Kd_p.x << "  " << Kd_p.y << "  " << Kd_p.z << "\t" <<
+        "Kd_R: " << Kd_R.x << "  " << Kd_R.y << "  " << Kd_R.z << endl <<
+        "Ki_P: " << Ki_p.x << "  " << Ki_p.y << "  " << Ki_p.z << "\t" <<
+        "Ki_R: " << Ki_R.x << "  " << Ki_R.y << "  " << Ki_R.z << endl <<
+        endl <<
+
+        setprecision(0) <<
+        "Policy_armed: " << policy_armed_flag <<  "\tFlip_flag: " << flip_flag << "\tImpact_flag: " << "impact_flag" << endl <<
+        "Tumble Detection: " << "tumble_detection" << "\t\tTumbled: " << tumbled << endl <<
+        "kp_xf: " << "kp_xf" << " \tkd_xf: " << "kd_xf" << endl <<
+        "Slowdown_type: " << "slowdown_type" << endl << 
+        endl <<
+        
+        setprecision(3) <<
+        "x_d: " << x_d.x << "  " << x_d.y << "  " << x_d.z << endl <<
+        "v_d: " << v_d.x << "  " << v_d.y << "  " << v_d.z << endl <<
+        "a_d: " << a_d.x << "  " << a_d.y << "  " << a_d.z << endl <<
+        endl << 
+
+        setprecision(3) <<
+        "Pos [m]: " << statePos.x << "  " << statePos.y << "  " << statePos.z << "\t" <<
+        "e_x: " << e_x.x << "  " << e_x.y << "  " << e_x.z << endl <<
+        "Vel [m/s]: " << stateVel.x << "  " << stateVel.y << "  " << stateVel.z << "\t" <<
+        "e_v: " << e_v.x << "  " << e_v.y << "  " << e_v.z << endl <<
+        "Omega [rad/s]: " << stateOmega.x << "  " << stateOmega.y << "  " << stateOmega.z << "\t" <<
+        "e_w: " << e_w.x << "  " << e_w.y << "  " << e_w.z << endl <<
+
+        "e_PI : " << e_PI.x << "  " << e_PI.y << "  " << e_PI.z << "\t" <<
+        "e_RI: " << e_RI.x << "  " << e_RI.y << "  " << e_RI.z << endl <<
+        endl << 
+
+        "R:\n" << 
+        R.m[0][0] << "  " << R.m[0][1] << "  " << R.m[0][2] << "\n" <<
+        R.m[1][0] << "  " << R.m[1][1] << "  " << R.m[1][2] << "\n" <<
+        R.m[2][0] << "  " << R.m[2][1] << "  " << R.m[2][2] << "\n" <<
+        endl <<
+
+        "R_d:\n" << 
+        R_d.m[0][0] << "  " << R_d.m[0][1] << "  " << R_d.m[0][2] << "\n" <<
+        R_d.m[1][0] << "  " << R_d.m[1][1] << "  " << R_d.m[1][2] << "\n" <<
+        R_d.m[2][0] << "  " << R_d.m[2][1] << "  " << R_d.m[2][2] << "\n" <<
+        endl <<
+        
+        "e_R : " << e_R.x << "  " << e_R.y << "  " << e_R.z << "\t" <<
+        "e_R (deg): " << e_R.x*180.0f/M_PI << "  " << e_R.y*180.0f/M_PI << "  " << e_R.z*180.0f/M_PI << endl <<
+        endl <<
+
+        "FM [N/N*mm]: " << F_thrust << "  " << M.x*1.0e3 << "  " << M.y*1.0e3 << "  " << M.z*1.0e3 << endl <<
+        "f [g]: " << f_thrust_g << "  " << f_roll_g << "  " << f_pitch_g << "  " << f_yaw_g << "  " << "\t" << endl << 
+        endl <<
+        
+        setprecision(0) <<
+        "MS_PWM: " << M1_pwm << "  " << M2_pwm << "  " << M3_pwm << "  " << M4_pwm << endl <<
+        "MS: " << MS1 << "  " << MS2 << "  " << MS3 << "  " << MS4 << endl <<
+        endl << 
+
+        "=============== " << endl; 
+        }
 
     }
     

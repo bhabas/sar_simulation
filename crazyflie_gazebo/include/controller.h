@@ -54,7 +54,26 @@ class Controller
 
 
 
+            state.position.x = 0.0f;
+            state.position.y = 0.0f;
+            state.position.z = 0.0f;
 
+            state.velocity.x = 0.0f;
+            state.velocity.y = 0.0f;
+            state.velocity.z = 0.0f;
+
+            state.attitudeQuaternion.x = 0.0f;
+            state.attitudeQuaternion.y = 0.0f;
+            state.attitudeQuaternion.z = 0.0f;
+            state.attitudeQuaternion.w = 1.0f;
+
+            state.acc.x = 0.0f;
+            state.acc.y = 0.0f;
+            state.acc.z = 0.0f;
+
+            sensorData.gyro.x = 0.0f;
+            sensorData.gyro.y = 0.0f;
+            sensorData.gyro.z = 0.0f;
 
 
 
@@ -91,6 +110,9 @@ class Controller
         ros::Publisher MS_Publisher;
         ros::Publisher ctrl_Publisher;
 
+        float _t;
+
+
 
 
     private:
@@ -106,7 +128,6 @@ class Controller
         geometry_msgs::Quaternion _quaternion;
         geometry_msgs::Vector3 _omega;
         geometry_msgs::Vector3 _accel;
-        float _t;
 
         float _H_CEILING = 2.10f;
 
@@ -148,7 +169,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 void GTC_Command(setpoint_t *setpoint);
 
 // SYSTEM PARAMETERS
-static float m = 0.037; // [g]
+static float m = 0.0376; // [g]
 static float g = 9.81f;
 struct mat33 J; // Rotational Inertia Matrix [kg*m^2]
 static float h_ceiling = 2.10f; // [m]
