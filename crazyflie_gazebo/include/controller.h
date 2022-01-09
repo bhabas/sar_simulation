@@ -30,8 +30,7 @@
 #include "stabilizer_types.h"
 #include "nml.h"
 
-void stateEstimator(state_t *state, sensorData_t *sensors, control_t *control, const uint32_t tick);
-void commanderGetSetpoint(setpoint_t *setpoint, const state_t *state);
+
 
 
 using namespace std;
@@ -43,6 +42,8 @@ using namespace std;
 #define Newton2g (1000.0f/9.81f)
 
 // FUNCTION PRIMITIVES
+void stateEstimator(state_t *state, sensorData_t *sensors, control_t *control, const uint32_t tick);
+void commanderGetSetpoint(setpoint_t *setpoint, const state_t *state);
 void controllerGTCInit(void);
 bool controllerGTCTest(void);
 void controllerGTCReset(void);
@@ -50,7 +51,9 @@ void controllerGTCTraj(void);
 void controllerGTC(control_t *control, setpoint_t *setpoint,
                                          const sensorData_t *sensors,
                                          const state_t *state,
-                                         const uint32_t tick);
+                                         const uint32_t tick,
+                                         ros::Publisher MS_Publisher,
+                                         ros::Publisher ctrl_Publisher);
 void GTC_Command(setpoint_t *setpoint);
 
 // SYSTEM PARAMETERS
@@ -224,8 +227,9 @@ class Controller
     public:
         // CONSTRUCTOR TO START PUBLISHERS AND SUBSCRIBERS (Similar to Python's __init__() )
         Controller(ros::NodeHandle *nh){
-
-            // MS_Publisher = nh->advertise<crazyflie_msgs::MS>("/MS",1);
+            
+            ctrl_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/ctrl_data",1);
+            MS_Publisher = nh->advertise<crazyflie_msgs::MS>("/MS",1);
 
 
             viconState_Subscriber = nh->subscribe("/env/vicon_state",1,&Controller::vicon_Callback,this,ros::TransportHints().tcpNoDelay());
@@ -240,7 +244,7 @@ class Controller
 
             setpoint.position.x = 0.0f;
             setpoint.position.y = 0.0f;
-            setpoint.position.z = 0.0f;
+            setpoint.position.z = 0.4f;
 
             setpoint.velocity.x = 0.0f;
             setpoint.velocity.y = 0.0f;
@@ -265,7 +269,8 @@ class Controller
         void imu_Callback(const sensor_msgs::Imu::ConstPtr &msg);
         void OF_Callback(const nav_msgs::Odometry::ConstPtr &msg);   
 
-        // ros::Publisher MS_Publisher;
+        
+
 
 
 
@@ -274,6 +279,9 @@ class Controller
         
 
     private:
+
+        ros::Publisher MS_Publisher;
+        ros::Publisher ctrl_Publisher;
 
         // SENSORS
         ros::Subscriber viconState_Subscriber;
@@ -388,7 +396,7 @@ void Controller::startController()
     {
         stateEstimator(&state, &sensorData, &control, tick);
         commanderGetSetpoint(&setpoint, &state);
-        controllerGTC(&control, &setpoint, &sensorData, &state, tick);
+        controllerGTC(&control, &setpoint, &sensorData, &state, tick, MS_Publisher, ctrl_Publisher);
 
 
         tick++;

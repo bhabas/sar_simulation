@@ -165,10 +165,11 @@ void GazeboMotorModel::OnUpdate(const common::UpdateInfo& _info) {
 void GazeboMotorModel::MotorSpeedCallback(const crazyflie_msgs::MS::ConstPtr &msg)
 {
   ref_motor_rot_vel_ = static_cast<double>(msg->MotorSpeeds[motor_number_]);
-  ref_motor_rot_vel_ = std::min(
-    static_cast<double>(msg->MotorSpeeds[motor_number_]), 
-    static_cast<double>(max_rot_velocity_)
-    );
+  // std::cout << msg->MotorSpeeds[motor_number_] << std::endl;
+  // ref_motor_rot_vel_ = std::min(
+  //   static_cast<double>(msg->MotorSpeeds[motor_number_]), 
+  //   static_cast<double>(max_rot_velocity_)
+  //   );
 }
 
 void GazeboMotorModel::MotorFailureCallback(const boost::shared_ptr<const msgs::Int> &fail_msg) {
