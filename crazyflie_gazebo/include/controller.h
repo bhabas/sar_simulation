@@ -30,9 +30,6 @@
 #include "stabilizer_types.h"
 #include "nml.h"
 
-
-
-
 using namespace std;
 
 
@@ -40,6 +37,101 @@ using namespace std;
 #define f_MAX (16.5)
 #define g2Newton (9.81f/1000.0f)
 #define Newton2g (1000.0f/9.81f)
+
+class Controller
+{
+    public:
+        // CONSTRUCTOR TO START PUBLISHERS AND SUBSCRIBERS (Similar to Python's __init__() )
+        Controller(ros::NodeHandle *nh){
+            
+            ctrl_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/ctrl_data",1);
+            MS_Publisher = nh->advertise<crazyflie_msgs::MS>("/MS",1);
+
+
+            viconState_Subscriber = nh->subscribe("/env/vicon_state",1,&Controller::vicon_Callback,this,ros::TransportHints().tcpNoDelay());
+            imu_Subscriber = nh->subscribe("/cf1/imu",1,&Controller::imu_Callback,this,ros::TransportHints().tcpNoDelay());
+            OF_Subscriber = nh->subscribe("/cf1/OF_sensor",1,&Controller::OF_Callback,this,ros::TransportHints().tcpNoDelay()); 
+
+
+
+
+
+
+
+            setpoint.position.x = 0.0f;
+            setpoint.position.y = 0.0f;
+            setpoint.position.z = 0.4f;
+
+            setpoint.velocity.x = 0.0f;
+            setpoint.velocity.y = 0.0f;
+            setpoint.velocity.z = 0.0f;
+
+            setpoint.acceleration.x = 0.0f;
+            setpoint.acceleration.y = 0.0f;
+            setpoint.acceleration.z = 0.0f;
+
+            
+
+
+
+
+            // START CONTROLLER
+            controllerThread = std::thread(&Controller::startController, this);           
+        }
+
+        // DEFINE FUNCTION PROTOTYPES
+        void startController();
+        void vicon_Callback(const nav_msgs::Odometry::ConstPtr &msg);
+        void imu_Callback(const sensor_msgs::Imu::ConstPtr &msg);
+        void OF_Callback(const nav_msgs::Odometry::ConstPtr &msg);   
+
+        crazyflie_msgs::MS MS_msg;
+        crazyflie_msgs::CtrlData ctrl_msg;
+
+        ros::Publisher MS_Publisher;
+        ros::Publisher ctrl_Publisher;
+
+
+
+    private:
+
+        // SENSORS
+        ros::Subscriber viconState_Subscriber;
+        ros::Subscriber imu_Subscriber;
+        ros::Subscriber OF_Subscriber;
+
+        // INITIALIZE ROS MSG VARIABLES
+        geometry_msgs::Point _position; 
+        geometry_msgs::Vector3 _velocity;
+        geometry_msgs::Quaternion _quaternion;
+        geometry_msgs::Vector3 _omega;
+        geometry_msgs::Vector3 _accel;
+        float _t;
+
+        float _H_CEILING = 2.10f;
+
+
+        float _RREV;
+        float _OF_x;
+        float _OF_y;
+
+
+
+        // DEFINE THREAD OBJECTS
+        std::thread controllerThread;
+
+        control_t control;
+        setpoint_t setpoint;
+        sensorData_t sensorData;
+        state_t state;
+        uint32_t tick = 0;
+        
+
+
+};
+
+
+
 
 // FUNCTION PRIMITIVES
 void stateEstimator(state_t *state, sensorData_t *sensors, control_t *control, const uint32_t tick);
@@ -52,8 +144,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                                          const sensorData_t *sensors,
                                          const state_t *state,
                                          const uint32_t tick,
-                                         ros::Publisher MS_Publisher,
-                                         ros::Publisher ctrl_Publisher);
+                                         Controller* ctrl);
 void GTC_Command(setpoint_t *setpoint);
 
 // SYSTEM PARAMETERS
@@ -222,112 +313,7 @@ static bool execute_traj = false;
 
 
 
-class Controller
-{
-    public:
-        // CONSTRUCTOR TO START PUBLISHERS AND SUBSCRIBERS (Similar to Python's __init__() )
-        Controller(ros::NodeHandle *nh){
-            
-            ctrl_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/ctrl_data",1);
-            MS_Publisher = nh->advertise<crazyflie_msgs::MS>("/MS",1);
 
-
-            viconState_Subscriber = nh->subscribe("/env/vicon_state",1,&Controller::vicon_Callback,this,ros::TransportHints().tcpNoDelay());
-            imu_Subscriber = nh->subscribe("/cf1/imu",1,&Controller::imu_Callback,this,ros::TransportHints().tcpNoDelay());
-            OF_Subscriber = nh->subscribe("/cf1/OF_sensor",1,&Controller::OF_Callback,this,ros::TransportHints().tcpNoDelay()); 
-
-
-
-
-
-
-
-            setpoint.position.x = 0.0f;
-            setpoint.position.y = 0.0f;
-            setpoint.position.z = 0.4f;
-
-            setpoint.velocity.x = 0.0f;
-            setpoint.velocity.y = 0.0f;
-            setpoint.velocity.z = 0.0f;
-
-            setpoint.acceleration.x = 0.0f;
-            setpoint.acceleration.y = 0.0f;
-            setpoint.acceleration.z = 0.0f;
-
-            
-
-
-
-
-            // START CONTROLLER
-            controllerThread = std::thread(&Controller::startController, this);           
-        }
-
-        // DEFINE FUNCTION PROTOTYPES
-        void startController();
-        void vicon_Callback(const nav_msgs::Odometry::ConstPtr &msg);
-        void imu_Callback(const sensor_msgs::Imu::ConstPtr &msg);
-        void OF_Callback(const nav_msgs::Odometry::ConstPtr &msg);   
-
-        
-
-
-
-
-
-
-        
-
-    private:
-
-        ros::Publisher MS_Publisher;
-        ros::Publisher ctrl_Publisher;
-
-        // SENSORS
-        ros::Subscriber viconState_Subscriber;
-        ros::Subscriber imu_Subscriber;
-        ros::Subscriber OF_Subscriber;
-
-
-
-        
-
-
-        // INITIALIZE ROS MSG VARIABLES
-        geometry_msgs::Point _position; 
-        geometry_msgs::Vector3 _velocity;
-        geometry_msgs::Quaternion _quaternion;
-        geometry_msgs::Vector3 _omega;
-        geometry_msgs::Vector3 _accel;
-        float _t;
-
-        float _H_CEILING = 2.10f;
-
-
-        float _RREV;
-        float _OF_x;
-        float _OF_y;
-
-
-
-        // DEFINE THREAD OBJECTS
-        std::thread controllerThread;
-
-        control_t control;
-        setpoint_t setpoint;
-        sensorData_t sensorData;
-        state_t state;
-        uint32_t tick = 0;
-        
-
-        
-
-
-
-
-
-
-};
 
 void Controller::vicon_Callback(const nav_msgs::Odometry::ConstPtr &msg)
 {
@@ -390,13 +376,13 @@ void Controller::OF_Callback(const nav_msgs::Odometry::ConstPtr &msg){
 
 void Controller::startController()
 {
-    ros::Rate rate(500);
+    ros::Rate rate(1000);
     
     while(ros::ok)
     {
         stateEstimator(&state, &sensorData, &control, tick);
         commanderGetSetpoint(&setpoint, &state);
-        controllerGTC(&control, &setpoint, &sensorData, &state, tick, MS_Publisher, ctrl_Publisher);
+        controllerGTC(&control, &setpoint, &sensorData, &state, tick, this);
 
 
         tick++;

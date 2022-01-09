@@ -73,15 +73,13 @@ void controllerGTCTraj()
 
 }
 
-crazyflie_msgs::MS MS_msg;
-crazyflie_msgs::CtrlData ctrl_msg;
+
 
 void controllerGTC(control_t *control, setpoint_t *setpoint,
                                          const sensorData_t *sensors,
                                          const state_t *state,
                                          const uint32_t tick,
-                                         ros::Publisher MS_Publisher,
-                                         ros::Publisher ctrl_Publisher) 
+                                         Controller* _CTRL) 
 {
     if (RATE_DO_EXECUTE(RATE_500_HZ, tick)) {
 
@@ -264,13 +262,11 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         MS3 = sqrt(PWM2thrust(M3_pwm)*g2Newton/kf);
         MS4 = sqrt(PWM2thrust(M4_pwm)*g2Newton/kf);
 
-        MS_msg.MotorSpeeds = {(uint16_t)MS1,(uint16_t)MS2,(uint16_t)MS3,(uint16_t)MS4};
+        _CTRL->MS_msg.MotorSpeeds = {(uint16_t)MS1,(uint16_t)MS2,(uint16_t)MS3,(uint16_t)MS4};
         printf("MS1: %.1f \t MS2: %.1f \t MS3: %.1f \t MS4: %.1f \n",MS1,MS2,MS3,MS4);
 
-
-        MS_Publisher.publish(MS_msg);
-        ctrl_Publisher.publish(ctrl_msg);
-
+        _CTRL->MS_Publisher.publish(_CTRL->MS_msg);
+        _CTRL->ctrl_Publisher.publish(_CTRL->ctrl_msg);
 
     }
     
