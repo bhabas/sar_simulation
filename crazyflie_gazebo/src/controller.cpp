@@ -17,6 +17,10 @@ void controllerGTCReset(void)
     e_PI = vzero();
     e_RI = vzero();
 
+    kp_xf = 1.0;
+    kd_xf = 1.0;
+
+
     x_d = mkvec(0.0f,0.0f,0.4f);
     v_d = mkvec(0.0f,0.0f,0.0f);
     a_d = mkvec(0.0f,0.0f,0.0f);
@@ -54,6 +58,7 @@ void GTC_Command(setpoint_t *setpoint)
             x_d.x = setpoint->cmd_val1;
             x_d.y = setpoint->cmd_val2;
             x_d.z = setpoint->cmd_val3;
+            kp_xf = setpoint->cmd_flag;
             break;
 
 
@@ -61,6 +66,7 @@ void GTC_Command(setpoint_t *setpoint)
             v_d.x = setpoint->cmd_val1;
             v_d.y = setpoint->cmd_val2;
             v_d.z = setpoint->cmd_val3;
+            kd_xf = setpoint->cmd_flag;
             break;
 
 
@@ -150,7 +156,7 @@ void controllerGTCTraj()
 
     }
 
-    CONSTANT VELOCITY TRAJECTORY
+    // CONSTANT VELOCITY TRAJECTORY
     if(v/a < t)
     {
         x_d.z = v*t - fsqr(v)/(2.0f*a) + s_0;
@@ -196,10 +202,10 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                 setpoint->GTC_cmd_rec = false;
             }
 
-        // if (errorReset){
-        //     controllerGTCReset();
-        //     errorReset = false;
-        //     }
+        if (errorReset){
+            controllerGTCReset();
+            errorReset = false;
+            }
 
         if(execute_traj){
             controllerGTCTraj();
@@ -272,10 +278,11 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
         /* [F_thrust_ideal = -kp_x*e_x*(kp_x_flag) + -kd_x*e_v + -kI_x*e_PI*(kp_x_flag) + m*g*e_3 + m*a_d] */
         temp1_v = veltmul(vneg(Kp_p), e_x);
+        temp1_v = vscl(kp_xf,temp1_v);
         temp2_v = veltmul(vneg(Kd_p), e_v);
+        temp1_v = vscl(kd_xf,temp1_v);
         temp3_v = veltmul(vneg(Ki_p), e_PI);
         P_effort = vadd3(temp1_v,temp2_v,temp3_v);
-
         temp1_v = vscl(m*g, e_3); // Feed-forward term
         temp2_v = vscl(m, a_d);
 
@@ -336,7 +343,64 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         F_thrust = vdot(F_thrust_ideal, b3);    // Project ideal thrust onto b3 vector [N]
         M = vadd(R_effort,Gyro_dyn);            // Control moments [Nm]
 
-        // printvec(M);
+        // =========== THRUST AND MOMENTS [FORCE NOTATION] =========== // 
+        if(!tumbled){
+            
+            if(policy_armed_flag == true){
+                
+                if(RREV >= RREV_thr && flip_flag == false){
+
+                    flip_flag = true;
+
+                    // UPDATE, RECORD, AND COMPRESS STATE VALUES AT FLIP TRIGGER
+                    t_flip = ros::Time::now();
+                    statePos_tr = statePos;
+                    stateVel_tr = stateVel;
+                    stateQuat_tr = stateQuat;
+                    stateOmega_tr = stateOmega;
+
+                    OF_y_tr = OF_y;
+                    OF_x_tr = OF_x;
+                    RREV_tr = RREV;
+
+                }
+
+                if(flip_flag == true){
+                    M_d.x = 0.0f;
+                    M_d.y = -G1*1e-3;
+                    M_d.z = 0.0f;
+
+                    M = vscl(2.0f,M_d); // Need to double moment to ensure it survives the PWM<0 cutoff
+                    F_thrust = 0.0f;
+
+                    F_thrust_flip = F_thrust;
+                    M_x_flip = M.x/2.0f;
+                    M_y_flip = M.y/2.0f;
+                    M_z_flip = M.z/2.0f;
+
+                }
+            }
+            else if(Moment_flag == true){
+                M.x = M_d.x;
+                M.y = M_d.y;
+                M.z = M_d.z;
+
+                M = vscl(2.0f,M_d); // Need to double moment to ensure it survives the PWM<0 cutoff
+                F_thrust = 0.0f;
+
+            }
+            else{
+                F_thrust = F_thrust;
+                M = M;
+            }
+        }
+        else if(tumbled){
+            // consolePrintf("System Tumbled: \n");
+            F_thrust = 0.0f;
+            M.x = 0.0f;
+            M.y = 0.0f;
+            M.z = 0.0f;
+        }
 
         // =========== CONVERT THRUSTS AND MOMENTS TO PWM =========== // 
         f_thrust_g = F_thrust/4.0f*Newton2g;
@@ -369,12 +433,44 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         // ============================
         //          C++ CODE
         // ============================
-
-        _CTRL->ctrl_msg.MS_PWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
-        
+       
 
         _CTRL->MS_msg.MotorSpeeds = {(uint16_t)MS1,(uint16_t)MS2,(uint16_t)MS3,(uint16_t)MS4};
         _CTRL->MS_Publisher.publish(_CTRL->MS_msg);
+
+        _CTRL->ctrl_msg.RREV = RREV;
+        _CTRL->ctrl_msg.OF_y = OF_y;
+        _CTRL->ctrl_msg.OF_x = OF_x;
+
+        // FLIP INFO
+        _CTRL->ctrl_msg.flip_flag = flip_flag;
+        _CTRL->ctrl_msg.RREV_tr = RREV_tr;
+        _CTRL->ctrl_msg.OF_x_tr = OF_x_tr;
+        _CTRL->ctrl_msg.OF_y_tr = OF_y_tr;
+        _CTRL->ctrl_msg.FM_flip = {F_thrust_flip,M_x_flip*1.0e3,M_y_flip*1.0e3,M_z_flip*1.0e3};
+
+
+        _CTRL->ctrl_msg.Pose_tr.header.stamp = t_flip;             
+
+        _CTRL->ctrl_msg.Pose_tr.pose.position.x = statePos_tr.x;
+        _CTRL->ctrl_msg.Pose_tr.pose.position.y = statePos_tr.y;
+        _CTRL->ctrl_msg.Pose_tr.pose.position.z = statePos_tr.z;
+
+        _CTRL->ctrl_msg.Pose_tr.pose.orientation.x = stateQuat_tr.x;
+        _CTRL->ctrl_msg.Pose_tr.pose.orientation.y = stateQuat_tr.y;
+        _CTRL->ctrl_msg.Pose_tr.pose.orientation.z = stateQuat_tr.z;
+        _CTRL->ctrl_msg.Pose_tr.pose.orientation.w = stateQuat_tr.w;
+
+        _CTRL->ctrl_msg.Twist_tr.linear.x = stateVel_tr.x;
+        _CTRL->ctrl_msg.Twist_tr.linear.y = stateVel_tr.y;
+        _CTRL->ctrl_msg.Twist_tr.linear.z = stateVel_tr.z;
+
+        _CTRL->ctrl_msg.Twist_tr.angular.x = stateOmega_tr.x;
+        _CTRL->ctrl_msg.Twist_tr.angular.y = stateOmega_tr.y;
+        _CTRL->ctrl_msg.Twist_tr.angular.z = stateOmega_tr.z;
+
+        _CTRL->ctrl_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
+        _CTRL->ctrl_msg.MS_PWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
         _CTRL->ctrl_Publisher.publish(_CTRL->ctrl_msg);
 
         // DATA HANDLING
@@ -400,7 +496,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         setprecision(0) <<
         "Policy_armed: " << policy_armed_flag <<  "\tFlip_flag: " << flip_flag << "\tImpact_flag: " << "impact_flag" << endl <<
         "Tumble Detection: " << tumble_detection << "\t\tTumbled: " << tumbled << endl <<
-        "kp_xf: " << "kp_xf" << " \tkd_xf: " << "kd_xf" << endl <<
+        "kp_xf: " << kp_xf << " \tkd_xf: " << kp_xf << endl <<
         "Slowdown_type: " << "slowdown_type" << endl << 
         endl <<
         

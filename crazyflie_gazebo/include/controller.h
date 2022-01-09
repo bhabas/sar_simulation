@@ -355,6 +355,14 @@ static struct vec Kp_R; // Rot. Proportional Gains
 static struct vec Kd_R; // Rot. Derivative Gains
 static struct vec Ki_R; // Rot. Integral Gains
 
+// CONTROLLER GAIN FLAGS
+float kp_xf = 1; // Pos. Gain Flag
+float kd_xf = 1; // Pos. Derivative Gain Flag
+// float ki_xf = 1; // Pos. Integral Flag
+// float kp_Rf = 1; // Rot. Gain Flag
+// float kd_Rf = 1; // Rot. Derivative Gain Flag
+// float ki_Rf = 1; // Rot. Integral Flag
+
 static float dt = (float)(1.0f/RATE_500_HZ);
 
 // CONTROLLER PARAMETERS
@@ -384,6 +392,11 @@ static struct vec stateVel_tr = {0.0f,0.0f,0.0f};         // Vel [m/s]
 static struct quat stateQuat_tr = {0.0f,0.0f,0.0f,1.0f};  // Orientation
 static struct vec stateOmega_tr = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
 
+float F_thrust_flip = 0.0f;
+float M_x_flip = 0.0f;
+float M_y_flip = 0.0f;
+float M_z_flip = 0.0f;
+ros::Time t_flip;
 
 
 // POLICY VARIABLES
