@@ -11,14 +11,14 @@ P_ki_z: 0.0
 i_range_z: 0.25
 
 ## ORIENTATION XY
-R_kp_xy: 0.008
-R_kd_xy: 0.012
+R_kp_xy: 0.02
+R_kd_xy: 0.08
 R_ki_xy: 0.0
 i_range_R_xy: 1.0
 
 ## ORIENTATION Z
-R_kp_z: 0.00
-R_kd_z: 0.00
+R_kp_z: 0.003
+R_kd_z: 0.025
 R_ki_z: 0.0
 i_range_R_z: 0.5
 
