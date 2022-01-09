@@ -38,6 +38,31 @@ using namespace std;
 #define g2Newton (9.81f/1000.0f)
 #define Newton2g (1000.0f/9.81f)
 
+// XY POSITION PID
+float P_kp_xy = 0.05f*0.0f;
+float P_kd_xy = 0.01f*0.0f;
+float P_ki_xy = 0.0f;
+float i_range_xy = 0.3f;
+
+// Z POSITION PID
+float P_kp_z = 1.2f;
+float P_kd_z = 0.35f;
+float P_ki_z = 0.0f;
+float i_range_z = 0.25f;
+
+// XY ATTITUDE PID
+float R_kp_xy = 0.0015f;
+float R_kd_xy = 0.0008f;
+float R_ki_xy = 0.0f;
+float i_range_R_xy = 1.0f;
+
+// Z ATTITUDE PID
+float R_kp_z = 0.003f;
+float R_kd_z = 0.002f;
+float R_ki_z = 0.000f;
+float i_range_R_z = 0.5f;
+
+
 class Controller
 {
     public:
@@ -58,7 +83,26 @@ class Controller
             ctrl_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/ctrl_data",1);
             MS_Publisher = nh->advertise<crazyflie_msgs::MS>("/MS",1);
 
+            // COLLECT CTRL GAINS FROM CONFIG FILE
+            ros::param::get("P_kp_xy",P_kp_xy);
+            ros::param::get("P_kd_xy",P_kd_xy);
+            ros::param::get("P_ki_xy",P_ki_xy);
+            ros::param::get("i_range_xy",i_range_xy);
 
+            ros::param::get("P_kp_z",P_kp_z);
+            ros::param::get("P_kd_z",P_kd_z);
+            ros::param::get("P_ki_z",P_ki_z);
+            ros::param::get("i_range_z",i_range_z);
+
+            ros::param::get("R_kp_xy",R_kp_xy);
+            ros::param::get("R_kd_xy",R_kd_xy);
+            ros::param::get("R_ki_xy",R_ki_xy);
+            ros::param::get("i_range_R_xy",i_range_R_xy);
+            
+            ros::param::get("R_kp_z",R_kp_z);
+            ros::param::get("R_kd_z",R_kd_z);
+            ros::param::get("R_ki_z",R_ki_z);
+            ros::param::get("i_range_R_z",i_range_R_z);
 
 
             state.position.x = 0.0f;
