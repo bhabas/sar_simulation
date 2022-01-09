@@ -17,7 +17,7 @@ void controllerGTCReset(void)
     e_PI = vzero();
     e_RI = vzero();
 
-    x_d = mkvec(0.0f,0.0f,0.0f);
+    x_d = mkvec(0.0f,0.0f,0.4f);
     v_d = mkvec(0.0f,0.0f,0.0f);
     a_d = mkvec(0.0f,0.0f,0.0f);
     
@@ -142,7 +142,41 @@ void GTC_Command(setpoint_t *setpoint)
 
 void controllerGTCTraj()
 {
+    if(t<=v/a)
+    {
+        x_d.z = 0.5f*a*t*t + s_0;
+        v_d.z = a*t;
+        a_d.z = a;
 
+    }
+
+    CONSTANT VELOCITY TRAJECTORY
+    if(v/a < t)
+    {
+        x_d.z = v*t - fsqr(v)/(2.0f*a) + s_0;
+        v_d.z = v;
+        a_d.z = 0.0f;
+    }
+
+    // // COMPLETE POSITION TRAJECTORY
+    // if(v/a <= t && t < (T-v/a))
+    // {
+    //     x_d.z = v*t - fsqr(v)/(2.0f*a) + s_0;
+    //     v_d.z = v;
+    //     a_d.z = 0.0f;
+    // }
+
+    // if((T-v/a) < t && t <= T)
+    // {
+    //     x_d.z = (2.0f*a*v*T-2.0f*fsqr(v)-fsqr(a)*fsqr(t-T))/(2.0f*a) + s_0;
+    //     v_d.z = a*(T-t);
+    //     a_d.z = -a;
+    // }
+
+    t = t + dt;
+    
+
+    
 }
 
 
@@ -167,9 +201,9 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         //     errorReset = false;
         //     }
 
-        // if(execute_traj){
-        //     controllerGTCTraj();
-        // }
+        if(execute_traj){
+            controllerGTCTraj();
+        }
 
         // SYSTEM PARAMETERS 
         J = mdiag(1.65717e-5f, 1.66556e-5f, 2.92617e-5f); // Rotational Inertia of CF [kg m^2]
@@ -198,9 +232,9 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         OF_y = stateVel.x/(h_ceiling - statePos.z);
 
         // =========== STATE SETPOINTS =========== //
-        x_d = mkvec(setpoint->position.x,setpoint->position.y,setpoint->position.z);             // Pos-desired [m]
-        v_d = mkvec(setpoint->velocity.x, setpoint->velocity.y, setpoint->velocity.z);             // Vel-desired [m/s]
-        a_d = mkvec(setpoint->acceleration.x, setpoint->acceleration.y, setpoint->acceleration.z); // Acc-desired [m/s^2]
+        // x_d = mkvec(setpoint->position.x,setpoint->position.y,setpoint->position.z);             // Pos-desired [m]
+        // v_d = mkvec(setpoint->velocity.x, setpoint->velocity.y, setpoint->velocity.z);             // Vel-desired [m/s]
+        // a_d = mkvec(setpoint->acceleration.x, setpoint->acceleration.y, setpoint->acceleration.z); // Acc-desired [m/s^2]
 
         // =========== STATE SETPOINTS =========== //
     

@@ -83,6 +83,16 @@ class Controller
             ctrl_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/ctrl_data",1);
             MS_Publisher = nh->advertise<crazyflie_msgs::MS>("/MS",1);
 
+            // SIMULATION SETTINGS FROM CONFIG FILE
+            ros::param::get("/CEILING_HEIGHT",_H_CEILING);
+            ros::param::get("/LANDING_SLOWDOWN",_LANDING_SLOWDOWN_FLAG);
+            ros::param::get("/SIM_SPEED",_SIM_SPEED);
+            ros::param::get("/SIM_SLOWDOWN_SPEED",_SIM_SLOWDOWN_SPEED);
+            ros::param::get("/CF_MASS",_CF_MASS);
+            ros::param::get("/CTRL_DEBUG_SLOWDOWN", _CTRL_DEBUG_SLOWDOWN);
+            ros::param::get("/POLICY_TYPE",_POLICY_TYPE);
+            Policy_Type _POLICY_TYPE = (Policy_Type)_POLICY_TYPE; // Cast ROS param (int) to enum (Policy_Type)
+
             // COLLECT CTRL GAINS FROM CONFIG FILE
             ros::param::get("P_kp_xy",P_kp_xy);
             ros::param::get("P_kd_xy",P_kd_xy);
@@ -104,7 +114,7 @@ class Controller
             ros::param::get("R_ki_z",R_ki_z);
             ros::param::get("i_range_R_z",i_range_R_z);
 
-
+            // INITIALIZE STATE AND SENSOR VALUES
             state.position.x = 0.0f;
             state.position.y = 0.0f;
             state.position.z = 0.0f;
@@ -127,7 +137,7 @@ class Controller
             sensorData.gyro.z = 0.0f;
 
 
-
+            // INITIALIZE SETPOINT VALUES
             setpoint.position.x = 0.0f;
             setpoint.position.y = 0.0f;
             setpoint.position.z = 0.4f;
@@ -140,6 +150,7 @@ class Controller
             setpoint.acceleration.y = 0.0f;
             setpoint.acceleration.z = 0.0f;
 
+            // INITIALIZE COMMAND VALUES
             setpoint.cmd_type = 101;
             setpoint.cmd_val1 = 0.0f;
             setpoint.cmd_val2 = 0.0f;
@@ -165,13 +176,6 @@ class Controller
         ros::Publisher MS_Publisher;
         ros::Publisher ctrl_Publisher;
 
-        float _t;
-
-
-
-
-    private:
-
         // SENSORS
         ros::Subscriber viconState_Subscriber;
         ros::Subscriber imu_Subscriber;
@@ -185,8 +189,29 @@ class Controller
         geometry_msgs::Vector3 _omega;
         geometry_msgs::Vector3 _accel;
 
-        float _H_CEILING = 2.10f;
+        float _t;
 
+        // ROS SPECIFIC VALUES
+        int impact_flag;
+        int slowdown_type = 0;
+        float _H_CEILING = 2.10;
+        bool _LANDING_SLOWDOWN_FLAG;
+        float _SIM_SPEED; 
+        float _SIM_SLOWDOWN_SPEED;
+        float _CF_MASS;
+        int _CTRL_DEBUG_SLOWDOWN;
+        int _POLICY_TYPE;
+
+        typedef enum 
+        {
+            RL = 0,
+            NN = 1
+        } Policy_Type;
+
+
+
+
+    private:
 
         float _RREV;
         float _OF_x;
@@ -263,7 +288,7 @@ static struct mat33 R; // Orientation as rotation matrix
 static struct vec stateEul = {0.0f,0.0f,0.0f}; // Pose in Euler Angles [YZX Notation]
 
 // DESIRED STATES
-static struct vec x_d = {0.0f,0.0f,0.0f}; // Pos-desired [m]
+static struct vec x_d = {0.0f,0.0f,0.4f}; // Pos-desired [m]
 static struct vec v_d = {0.0f,0.0f,0.0f}; // Vel-desired [m/s]
 static struct vec a_d = {0.0f,0.0f,0.0f}; // Acc-desired [m/s^2]
 
