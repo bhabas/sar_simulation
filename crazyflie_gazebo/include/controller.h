@@ -66,7 +66,8 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                                          const uint32_t tick,
                                          Controller* ctrl);
 void GTC_Command(setpoint_t *setpoint, Controller* _CTRL);
-int initScaler(Scaler* scaler,char* str);
+void initScaler(Scaler* scaler,char str[]);
+void NN_Scale(nml_mat* X, Scaler* scaler);
 
 
 
@@ -275,20 +276,21 @@ static uint8_t traj_type = 0;
 Scaler Scaler_Flip;
 Scaler Scaler_Policy;
 
-nml_mat* X = nml_mat_new(3,1);
 nml_mat* X_flip = nml_mat_new(3,1);
 nml_mat* X_policy = nml_mat_new(3,1);
 
 // char* str = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/Scaler_Flip_Classifier.csv";
-char* homedir = getenv("HOME");
-char* str1 = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/Scaler_Flip_Classifier.csv";
-char* str2 = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/Scaler_Policy_Value.csv";
-
 // strcat(homedir,str);
+char* homedir = getenv("HOME");
+char str1[] = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/Scaler_Flip_Classifier.csv";
+char str2[] = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/Scaler_Policy_Value.csv";
 
-int q1 = initScaler(&Scaler_Flip,str1);
-int q2 = initScaler(&Scaler_Policy,str2);
 
+nml_mat* W_policy[3];
+nml_mat* b_policy[3];
+
+nml_mat* W_flip[3];
+nml_mat* b_flip[3];
 
 
 
@@ -303,20 +305,39 @@ void commanderGetSetpoint(setpoint_t *setpoint, const state_t *state)
 }
 
 // EXPLICIT FUNTIONS
-
-nml_mat* NN_Scale(nml_mat* X, Scaler* Scaler)
+void NN_Scale(nml_mat* X, Scaler* scaler)
+{   
+    for(int i=0;i<3;i++)
+    {
+        X->data[i][0] = (X->data[i][0] - scaler->mean[i])/scaler->std[i];
+        
+    }
+    
+}
+void initNN_Layers(nml_mat* W[], nml_mat* b[], char path[],int numLayers)
 {
-    return X;
+    FILE* input = fopen(path, "r");
+    for(int i=0;i<numLayers;i++)
+    {
+        // LAYER 1
+        W[i] = nml_mat_fromfilef(input);
+        b[i] = nml_mat_fromfilef(input);
+    }
+    fclose(input);
+
+
 }
 
 
-int initScaler(Scaler* scaler, char* str)
+
+
+void initScaler(Scaler* scaler, char str[])
 {
     char line[50];
     char* sp;
 
     
-    printf("%s\n",str);
+    // printf("%s\n",str);
 
 
     FILE* file_ptr = fopen(str, "r");
@@ -333,7 +354,7 @@ int initScaler(Scaler* scaler, char* str)
 
         sp = strtok(NULL,",");
         scaler->std[i] = atof(sp);
-    
+        i++;
     }
 
     printf("%.3f\n",scaler->mean[i]);
@@ -707,6 +728,7 @@ void Controller::RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){
 void Controller::startController() // MAIN CONTROLLER LOOP
 {
     ros::Rate rate(500);
+    controllerGTCInit();
    
     while(ros::ok)
     {

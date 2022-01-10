@@ -6,6 +6,12 @@
 void controllerGTCInit(void)
 {
     controllerGTCTest();
+    initScaler(&Scaler_Flip,str1);
+    initScaler(&Scaler_Policy,str2);
+    char path_policy[] = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/NN_Layers_Policy.data";
+    char path_flip[] = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/NN_Layers_Flip.data";
+    initNN_Layers(W_policy,b_policy,path_policy,3);
+    initNN_Layers(W_flip,b_flip,path_flip,2);
     // controllerGTCReset(_CTRL);
     printf("GTC Initiated\n");
 }
@@ -254,10 +260,13 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         OF_x = stateVel.y/(h_ceiling - statePos.z);
         OF_y = stateVel.x/(h_ceiling - statePos.z);
 
-        X->data[0][0] = RREV;
-        X->data[1][0] = OF_y;
-        X->data[2][0] = (h_ceiling - statePos.z); // d_ceiling [m]
-        // nml_mat_print(X);
+        X_flip->data[0][0] = RREV;
+        X_flip->data[1][0] = OF_y;
+        X_flip->data[2][0] = (h_ceiling - statePos.z); // d_ceiling [m]
+
+        X_policy->data[0][0] = RREV;
+        X_policy->data[1][0] = OF_y;
+        X_policy->data[2][0] = (h_ceiling - statePos.z); // d_ceiling [m]
 
 
         // =========== STATE SETPOINTS =========== //
@@ -398,9 +407,11 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
                     case NN:
                     {   
-                        // X_flip = NN_Scale(X,Scaler_flip);
-                        // nml_mat X_policy = Scale(X,Scaler_policy);
+                        // SCALE NN INPUTS
+                        NN_Scale(X_flip, &Scaler_Flip);
+                        NN_Scale(X_policy, &Scaler_Policy);
 
+                        
                         // if((bool)NN_Flip(X) == true && onceFlag = false)
                         // {   
                         //     onceFlag = true;
