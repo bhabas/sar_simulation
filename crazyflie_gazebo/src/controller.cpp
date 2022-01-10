@@ -6,11 +6,11 @@
 void controllerGTCInit(void)
 {
     controllerGTCTest();
-    controllerGTCReset();
+    // controllerGTCReset(_CTRL);
     printf("GTC Initiated\n");
 }
 
-void controllerGTCReset(void)
+void controllerGTCReset(Controller* _CTRL)
 {
     printf("GTC Reset\n");
     // Reset errors to zero
@@ -36,6 +36,11 @@ void controllerGTCReset(void)
     t = 0;
     execute_traj = false;
 
+    // ROS SPECIFIC VALUES
+    _CTRL->impact_flag = false;
+    _CTRL->slowdown_type = 0;
+    _CTRL->adjustSimSpeed(_CTRL->_SIM_SPEED);
+
 
 
 
@@ -46,11 +51,11 @@ bool controllerGTCTest(void)
     return true;
 }
 
-void GTC_Command(setpoint_t *setpoint)
+void GTC_Command(setpoint_t *setpoint, Controller* _CTRL)
 {   
     switch(setpoint->cmd_type){
         case 0: // Reset
-            controllerGTCReset();
+            controllerGTCReset(_CTRL);
             break;
 
 
@@ -198,12 +203,12 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         if (setpoint->GTC_cmd_rec == true)
             {
                 
-                GTC_Command(setpoint);
+                GTC_Command(setpoint, _CTRL);
                 setpoint->GTC_cmd_rec = false;
             }
 
         if (errorReset){
-            controllerGTCReset();
+            controllerGTCReset(_CTRL);
             errorReset = false;
             }
 
@@ -439,6 +444,29 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         _CTRL->MS_Publisher.publish(_CTRL->MS_msg);
 
         
+        // SIMULATION SLOWDOWN
+        if(_CTRL->_LANDING_SLOWDOWN_FLAG==true){
+
+            // WHEN CLOSE TO THE CEILING REDUCE SIM SPEED
+            if(_CTRL->_H_CEILING-statePos.z<=0.5 && _CTRL->slowdown_type == 0){
+                
+                _CTRL->adjustSimSpeed(_CTRL->_SIM_SLOWDOWN_SPEED);
+                _CTRL->slowdown_type = 1;
+
+            }
+
+            // IF IMPACTED OR MISSED CEILING, INCREASE SIM SPEED TO DEFAULT
+            if(_CTRL->impact_flag == true && _CTRL->slowdown_type == 1)
+            {
+                _CTRL->adjustSimSpeed(_CTRL->_SIM_SPEED);
+                _CTRL->slowdown_type = 2;
+            }
+            else if(stateVel.z <= -0.5 && _CTRL->slowdown_type == 1){
+                _CTRL->adjustSimSpeed(_CTRL->_SIM_SPEED);
+                _CTRL->slowdown_type = 2;
+            }
+
+        }
 
 
 

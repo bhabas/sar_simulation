@@ -77,7 +77,7 @@ class Controller
             CMD_Subscriber = nh->subscribe("/rl_ctrl",50,&Controller::CMD_Callback,this,ros::TransportHints().tcpNoDelay());
             ctrl_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/ctrl_data",1);
             MS_Publisher = nh->advertise<crazyflie_msgs::MS>("/MS",1);
-            // SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
+            SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
 
             // ENVIRONMENT SENSORS
             viconState_Subscriber = nh->subscribe("/env/vicon_state",1,&Controller::vicon_Callback,this,ros::TransportHints().tcpNoDelay());
@@ -251,14 +251,14 @@ void stateEstimator(state_t *state, sensorData_t *sensors, control_t *control, c
 void commanderGetSetpoint(setpoint_t *setpoint, const state_t *state);
 void controllerGTCInit(void);
 bool controllerGTCTest(void);
-void controllerGTCReset(void);
+void controllerGTCReset(Controller* _CTRL);
 void controllerGTCTraj(void);
 void controllerGTC(control_t *control, setpoint_t *setpoint,
                                          const sensorData_t *sensors,
                                          const state_t *state,
                                          const uint32_t tick,
                                          Controller* ctrl);
-void GTC_Command(setpoint_t *setpoint);
+void GTC_Command(setpoint_t *setpoint, Controller* _CTRL);
 
 // SYSTEM PARAMETERS
 static float m = 0.0376; // [g]
