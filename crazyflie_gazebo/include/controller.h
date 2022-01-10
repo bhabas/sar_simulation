@@ -30,43 +30,19 @@
 #include "stabilizer_types.h"
 #include "nml.h"
 
+// =======================
+//       C++ CODE
+// =======================
 using namespace std;
 class Controller;
+// =======================
 
 
 
-#define PWM_MAX 60000
-#define f_MAX (16.5)
+#define PWM_MAX 60000 // Limit PWM to give buffer for battery drop
+#define f_MAX (16.5) // Max motor thrust [g]
 #define g2Newton (9.81f/1000.0f)
 #define Newton2g (1000.0f/9.81f)
-
-// XY POSITION PID
-float P_kp_xy = 0.05f*0.0f;
-float P_kd_xy = 0.01f*0.0f;
-float P_ki_xy = 0.0f;
-float i_range_xy = 0.3f;
-
-// Z POSITION PID
-float P_kp_z = 1.2f;
-float P_kd_z = 0.35f;
-float P_ki_z = 0.0f;
-float i_range_z = 0.25f;
-
-// XY ATTITUDE PID
-float R_kp_xy = 0.0015f;
-float R_kd_xy = 0.0008f;
-float R_ki_xy = 0.0f;
-float i_range_R_xy = 1.0f;
-
-// Z ATTITUDE PID
-float R_kp_z = 0.003f;
-float R_kd_z = 0.002f;
-float R_ki_z = 0.000f;
-float i_range_R_z = 0.5f;
-
-
-
-
 
 // FUNCTION PRIMITIVES
 void stateEstimator(state_t *state, sensorData_t *sensors, control_t *control, const uint32_t tick);
@@ -82,6 +58,34 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                                          Controller* ctrl);
 void GTC_Command(setpoint_t *setpoint, Controller* _CTRL);
 
+
+// INIT PID VALUES BEFORE OVERWRITTEN BY CONFIG FILE
+// XY POSITION PID
+float P_kp_xy = 0.3f;
+float P_kd_xy = 0.01f;
+float P_ki_xy = 0.0f;
+float i_range_xy = 0.3f;
+
+// Z POSITION PID
+float P_kp_z = 1.20f;
+float P_kd_z = 0.35f;
+float P_ki_z = 0.0f;
+float i_range_z = 0.25f;
+
+// XY ATTITUDE PID
+float R_kp_xy = 0.02f;
+float R_kd_xy = 0.08f;
+float R_ki_xy = 0.0f;
+float i_range_R_xy = 1.0f;
+
+// Z ATTITUDE PID
+float R_kp_z = 0.003f;
+float R_kd_z = 0.025f;
+float R_ki_z = 0.000f;
+float i_range_R_z = 0.5f;
+
+
+
 // SYSTEM PARAMETERS
 static float m = 0.0376; // [g]
 static float g = 9.81f;
@@ -93,25 +97,9 @@ static float dp = 0.028284; // COM to Prop along x-axis [m]
                             // [dp = d*sin(45 deg)]
 
 static float const kf = 2.2e-8f;    // Thrust Coeff [N/(rad/s)^2]
-static float const c_tf = 0.00618f;  // Moment Coeff [Nm/N]
+static float const c_tf = 0.00618f; // Moment Coeff [Nm/N]
 
-
-// LOGGING VARIABLES
-static float cmd_thrust;
-static float cmd_roll;
-static float cmd_pitch;
-static float cmd_yaw;
-
-// STATE ERRORS
-static struct vec e_x;  // Pos-error [m]
-static struct vec e_v;  // Vel-error [m/s]
-static struct vec e_PI;  // Pos. Integral-error [m*s]
-
-static struct vec e_R;  // Rotation-error [rad]
-static struct vec e_w;  // Omega-error [rad/s]
-static struct vec e_RI; // Rot. Integral-error [rad*s]
-
-// STATE VALUES
+// INIT STATE VALUES
 static struct vec statePos = {0.0f,0.0f,0.0f};         // Pos [m]
 static struct vec stateVel = {0.0f,0.0f,0.0f};         // Vel [m/s]
 static struct quat stateQuat = {0.0f,0.0f,0.0f,1.0f};  // Orientation
@@ -120,7 +108,13 @@ static struct vec stateOmega = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
 static struct mat33 R; // Orientation as rotation matrix
 static struct vec stateEul = {0.0f,0.0f,0.0f}; // Pose in Euler Angles [YZX Notation]
 
-// DESIRED STATES
+// OPTICAL FLOW STATES
+static float RREV = 0.0f; // [rad/s]
+static float OF_x = 0.0f; // [rad/s]
+static float OF_y = 0.0f; // [rad/s] 
+
+
+// INIT DESIRED STATES
 static struct vec x_d = {0.0f,0.0f,0.4f}; // Pos-desired [m]
 static struct vec v_d = {0.0f,0.0f,0.0f}; // Vel-desired [m/s]
 static struct vec a_d = {0.0f,0.0f,0.0f}; // Acc-desired [m/s^2]
@@ -136,19 +130,16 @@ static struct vec b3_d;    // Desired body z-axis in global coord.
 static struct vec b3;      // Current body z-axis in global coord.
 
 static struct mat33 R_d;   // Desired rotational matrix from b_d vectors
-
-
-
-
-
 static struct vec e_3 = {0.0f, 0.0f, 1.0f}; // Global z-axis
 
-static struct vec F_thrust_ideal;           // Ideal thrust vector
-static float F_thrust = 0.0f;               // Desired body thrust [N]
-static float F_thrust_max = 0.64f;          // Max possible body thrust [N}]
-static struct vec M;                        // Desired body moments [Nm]
-static struct vec M_d = {0.0f,0.0f,0.0f};   // Desired moment [N*mm]
-static float Moment_flag = false;
+// STATE ERRORS
+static struct vec e_x;  // Pos-error [m]
+static struct vec e_v;  // Vel-error [m/s]
+static struct vec e_PI; // Pos. Integral-error [m*s]
+
+static struct vec e_R;  // Rotation-error [rad]
+static struct vec e_w;  // Omega-error [rad/s]
+static struct vec e_RI; // Rot. Integral-error [rad*s]
 
 
 // TEMPORARY CALC VECS/MATRICES
@@ -158,29 +149,43 @@ static struct vec temp3_v;
 static struct vec temp4_v;
 static struct mat33 temp1_m;  
 
-static struct vec P_effort;
-static struct vec R_effort;
+static struct vec P_effort; // Effort by positional PID
+static struct vec R_effort; // Effor by rotational PID
 
 static struct mat33 RdT_R; // Rd' * R
 static struct mat33 RT_Rd; // R' * Rd
 static struct vec Gyro_dyn;
 
+// CONTROLLER ACTUATIONS
+static struct vec F_thrust_ideal;           // Ideal thrust vector [N]
+static struct vec M_d = {0.0f,0.0f,0.0f};   // Desired moment [N*m]
+
+static float F_thrust = 0.0f;               // Implemented body thrust [N]
+static struct vec M = {0.0f,0.0f,0.0f};     // Implemented body moments [N*m]
 
 
 // MOTOR THRUSTS
-static float f_thrust_g; // Motor thrust - Thrust [N]
-static float f_roll_g;   // Motor thrust - Roll   [N]
-static float f_pitch_g;  // Motor thrust - Pitch  [N]
-static float f_yaw_g;    // Motor thrust - Yaw    [N]
-
-static int32_t f_thrust_pwm; 
-static int32_t f_roll_pwm;   
-static int32_t f_pitch_pwm; 
-static int32_t f_yaw_pwm;  
+static float f_thrust_g; // Motor thrust - Thrust [g]
+static float f_roll_g;   // Motor thrust - Roll   [g]
+static float f_pitch_g;  // Motor thrust - Pitch  [g]
+static float f_yaw_g;    // Motor thrust - Yaw    [g]
 
 
-// INIT CTRL GAIN VECTORS
-static struct vec Kp_p; // Pos. Proportional Gains
+// MOTOR VARIABLES
+static uint32_t M1_pwm = 0; 
+static uint32_t M2_pwm = 0; 
+static uint32_t M3_pwm = 0; 
+static uint32_t M4_pwm = 0; 
+
+static uint16_t MS1 = 0;
+static uint16_t MS2 = 0;
+static uint16_t MS3 = 0;
+static uint16_t MS4 = 0;
+
+
+
+// INIT CTRL GAIN VECTORS 
+static struct vec Kp_p; // Pos. Proportional Gains 
 static struct vec Kd_p; // Pos. Derivative Gains
 static struct vec Ki_p; // Pos. Integral Gains  
 
@@ -198,46 +203,20 @@ float kd_xf = 1; // Pos. Derivative Gain Flag
 
 static float dt = (float)(1.0f/RATE_500_HZ);
 
-// CONTROLLER PARAMETERS
-static bool attCtrlEnable = false;
+// CONTROLLER FLAGS
 static bool tumbled = false;
-static bool motorstop_flag = false;
-static bool errorReset = false;
 static bool tumble_detection = true;
+static bool motorstop_flag = false;
+static bool errorReset = false; // Resets error vectors (removed integral windup)
 
-// OPTICAL FLOW STATES
-static float RREV = 0.0f; // [rad/s]
-static float OF_x = 0.0f; // [rad/s]
-static float OF_y = 0.0f; // [rad/s] 
+static bool execute_traj = false;
+static bool policy_armed_flag = false;
+
 static bool flip_flag = false;
 static bool onceFlag = false;
 
-
-typedef enum 
-{
-    RL = 0,
-    NN = 1
-} Policy_Type;
-
-Policy_Type POLICY_TYPE = RL;
-
-
-
-
-// STATE VALUES AT FLIP TRIGGER
-static float RREV_tr = 0.0f;
-static float OF_x_tr = 0.0f;
-static float OF_y_tr = 0.0f;
-
-static struct vec statePos_tr = {0.0f,0.0f,0.0f};         // Pos [m]
-static struct vec stateVel_tr = {0.0f,0.0f,0.0f};         // Vel [m/s]
-static struct quat stateQuat_tr = {0.0f,0.0f,0.0f,1.0f};  // Orientation
-static struct vec stateOmega_tr = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
-
-float F_thrust_flip = 0.0f;
-float M_x_flip = 0.0f;
-float M_y_flip = 0.0f;
-float M_z_flip = 0.0f;
+static bool Moment_flag = false;
+static bool attCtrlEnable = false;
 
 
 // POLICY VARIABLES
@@ -245,29 +224,118 @@ static float RREV_thr = 0.0f;
 static float G1 = 0.0f;
 static float G2 = 0.0f;
 
-static bool policy_armed_flag = false;
+// DEFINE POLICY TYPE ACTIVATED
+typedef enum {
+    RL = 0, // Reinforcement Learning
+    NN = 1  // Neural Network
+} Policy_Type;
+Policy_Type POLICY_TYPE = RL; // Default to RL
 
 
-// MOTOR VARIABLES
-static uint32_t M1_pwm = 0; 
-static uint32_t M2_pwm = 0; 
-static uint32_t M3_pwm = 0; 
-static uint32_t M4_pwm = 0; 
 
-static float MS1 = 0;
-static float MS2 = 0;
-static float MS3 = 0;
-static float MS4 = 0;
+// STATE VALUES AT FLIP TRIGGER
+static struct vec statePos_tr = {0.0f,0.0f,0.0f};         // Pos [m]
+static struct vec stateVel_tr = {0.0f,0.0f,0.0f};         // Vel [m/s]
+static struct quat stateQuat_tr = {0.0f,0.0f,0.0f,1.0f};  // Orientation
+static struct vec stateOmega_tr = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
 
-// TRAJECTORY VARIABLES
+static float RREV_tr = 0.0f; // [rad/s]
+static float OF_x_tr = 0.0f; // [rad/s]
+static float OF_y_tr = 0.0f; // [rad/s]
+
+
+float F_thrus_t_flip = 0.0f; // [g]
+float M_x_flip = 0.0f;      // [N*m]
+float M_y_flip = 0.0f;      // [N*m]
+float M_z_flip = 0.0f;      // [N*m]
+
+
+
+// TRAJECTORY VARIABLES (1-D | Z-Axis)
 static float s_0 = 0.0f;
 static float v = 0.0f;
 static float a = 0.0f;
 static float t = 0.0f;
 static float T = 0.0f;
 static uint8_t traj_type = 0;
-static bool execute_traj = false;
 
+
+
+void stateEstimator(state_t *state, sensorData_t *sensors, control_t *control, const uint32_t tick)
+{
+
+}
+
+void commanderGetSetpoint(setpoint_t *setpoint, const state_t *state)
+{
+
+}
+
+// EXPLICIT FUNTIONS
+
+// Converts thrust in grams to their respective PWM values
+static inline int32_t thrust2PWM(float f) 
+{
+    // Conversion values calculated from self motor analysis
+    float a = 3.31e4;
+    float b = 1.12e1;
+    float c = 8.72;
+    float d = 3.26e4;
+
+    float s = 1.0f; // sign of value
+    int32_t f_pwm = 0;
+
+    s = f/fabsf(f);
+    f = fabsf(f);
+    
+    f_pwm = a*tanf((f-c)/b)+d;
+
+    return s*f_pwm;
+
+}      
+
+// Converts thrust in PWM to their respective values in grams
+static inline float PWM2thrust(int32_t M_PWM) 
+{
+    // Conversion values calculated from PWM to Thrust Curve
+    float a = 3.31e4;
+    float b = 1.12e1;
+    float c = 8.72;
+    float d = 3.26e4;
+
+    float f = b*atan2f(M_PWM-d,a)+c;
+
+    if(f<0)
+    {
+      f = 0;
+    }
+
+    return f;
+}
+
+
+// Limit PWM value to accurate motor curve limit (60,000)
+uint16_t limitPWM(int32_t value) 
+{
+  if(value > PWM_MAX)
+  {
+    value = PWM_MAX;
+  }
+  else if(value < 0)
+  {
+    value = 0;
+  }
+
+  return (uint16_t)value;
+}
+
+// ======================================================== 
+//            ___  _     _      ___ ___   __| | ___ 
+//           / __|| |_ _| |_   / __/ _ \ / _` |/ _ \
+//          | (_|_   _|_   _| | (_| (_) | (_| |  __/
+//           \___||_|   |_|    \___\___/ \__,_|\___|
+//                                                 
+// ========================================================
 
 class Controller
 {
@@ -276,19 +344,19 @@ class Controller
         Controller(ros::NodeHandle *nh){
             
             // BODY SENSORS
-            imu_Subscriber = nh->subscribe("/cf1/imu",1,&Controller::imu_Callback,this,ros::TransportHints().tcpNoDelay());
-            OF_Subscriber = nh->subscribe("/cf1/OF_sensor",1,&Controller::OF_Callback,this,ros::TransportHints().tcpNoDelay()); 
+            _IMU_Subscriber = nh->subscribe("/cf1/imu",1,&Controller::imu_Callback,this,ros::TransportHints().tcpNoDelay());
+            _OF_Subscriber = nh->subscribe("/cf1/OF_sensor",1,&Controller::OF_Callback,this,ros::TransportHints().tcpNoDelay()); 
 
             // COMMANDS AND INFO
-            CMD_Subscriber = nh->subscribe("/rl_ctrl",50,&Controller::CMD_Callback,this,ros::TransportHints().tcpNoDelay());
-            ctrl_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/ctrl_data",1);
-            MS_Publisher = nh->advertise<crazyflie_msgs::MS>("/MS",1);
-            SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
+            _CMD_Subscriber = nh->subscribe("/rl_ctrl",50,&Controller::CMD_Callback,this,ros::TransportHints().tcpNoDelay());
+            _CTRL_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/ctrl_data",1);
+            _MS_Publisher = nh->advertise<crazyflie_msgs::MS>("/MS",1);
+            _SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
 
             // ENVIRONMENT SENSORS
-            viconState_Subscriber = nh->subscribe("/env/vicon_state",1,&Controller::vicon_Callback,this,ros::TransportHints().tcpNoDelay());
-            ceilingFT_Subcriber = nh->subscribe("/env/ceiling_force_sensor",5,&Controller::ceilingFT_Callback,this,ros::TransportHints().tcpNoDelay());
-            RLData_Subscriber = nh->subscribe("/rl_data",5,&Controller::RLData_Callback,this,ros::TransportHints().tcpNoDelay());
+            _viconState_Subscriber = nh->subscribe("/env/vicon_state",1,&Controller::vicon_Callback,this,ros::TransportHints().tcpNoDelay());
+            _CeilingFT_Subcriber = nh->subscribe("/env/ceiling_force_sensor",5,&Controller::ceilingFT_Callback,this,ros::TransportHints().tcpNoDelay());
+            _RLData_Subscriber = nh->subscribe("/rl_data",5,&Controller::RLData_Callback,this,ros::TransportHints().tcpNoDelay());
 
 
             // SIMULATION SETTINGS FROM CONFIG FILE
@@ -384,24 +452,24 @@ class Controller
 
 
 
-        crazyflie_msgs::MS MS_msg;
-        crazyflie_msgs::CtrlData ctrl_msg;
+        crazyflie_msgs::MS _MS_msg;
+        crazyflie_msgs::CtrlData _ctrl_msg;
 
-        ros::Publisher MS_Publisher;
-        ros::Publisher ctrl_Publisher;
+        ros::Publisher _MS_Publisher;
+        ros::Publisher _CTRL_Publisher;
 
-        ros::ServiceClient SimSpeed_Client;
-        ros::Subscriber ceilingFT_Subcriber;
-        ros::Subscriber RLData_Subscriber;
+        ros::ServiceClient _SimSpeed_Client;
+        ros::Subscriber _CeilingFT_Subcriber;
+        ros::Subscriber _RLData_Subscriber;
 
 
 
 
         // SENSORS
-        ros::Subscriber viconState_Subscriber;
-        ros::Subscriber imu_Subscriber;
-        ros::Subscriber OF_Subscriber;
-        ros::Subscriber CMD_Subscriber;
+        ros::Subscriber _viconState_Subscriber;
+        ros::Subscriber _IMU_Subscriber;
+        ros::Subscriber _OF_Subscriber;
+        ros::Subscriber _CMD_Subscriber;
 
         // INITIALIZE ROS MSG VARIABLES
         geometry_msgs::Point _position; 
@@ -411,12 +479,12 @@ class Controller
         geometry_msgs::Vector3 _accel;
 
         float _t;
-        ros::Time t_flip;
+        ros::Time _t_flip;
 
 
         // ROS SPECIFIC VALUES
-        int impact_flag;
-        int slowdown_type = 0;
+        int _impact_flag;
+        int _slowdown_type = 0;
         float _H_CEILING = 2.10;
         bool _LANDING_SLOWDOWN_FLAG;
         float _SIM_SPEED; 
@@ -440,6 +508,8 @@ class Controller
         // DEFINE THREAD OBJECTS
         std::thread controllerThread;
 
+
+        // DATA STRUCTS EQUIVALENT TO THOSE IN CF FIRMWARE
         control_t control;
         setpoint_t setpoint;
         sensorData_t sensorData;
@@ -549,12 +619,12 @@ void Controller::adjustSimSpeed(float speed_mult)
 
     srv.request.ode_config = ode_config;
 
-    SimSpeed_Client.call(srv);
+    _SimSpeed_Client.call(srv);
 }
 
 void Controller::ceilingFT_Callback(const crazyflie_msgs::ImpactData::ConstPtr &msg)
 {
-    impact_flag = msg->impact_flag;
+    _impact_flag = msg->impact_flag;
 }
 
 void Controller::RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){
@@ -566,9 +636,9 @@ void Controller::RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){
     }
 }
 
-void Controller::startController()
+void Controller::startController() // MAIN CONTROLLER LOOP
 {
-    ros::Rate rate(1000);
+    ros::Rate rate(500);
     
     while(ros::ok)
     {
@@ -576,81 +646,8 @@ void Controller::startController()
         commanderGetSetpoint(&setpoint, &state);
         controllerGTC(&control, &setpoint, &sensorData, &state, tick, this);
 
-
         tick++;
         rate.sleep();
     }
 }
-
-
-void stateEstimator(state_t *state, sensorData_t *sensors, control_t *control, const uint32_t tick)
-{
-
-}
-
-void commanderGetSetpoint(setpoint_t *setpoint, const state_t *state)
-{
-
-}
-
-// EXPLICIT FUNTIONS
-
-// Converts thrust in Newtons to their respective PWM values
-static inline int32_t thrust2PWM(float f) 
-{
-    // Conversion values calculated from self motor analysis
-    float a = 3.31e4;
-    float b = 1.12e1;
-    float c = 8.72;
-    float d = 3.26e4;
-
-    float s = 1.0f; // sign of value
-    int32_t f_pwm = 0;
-
-    s = f/fabsf(f);
-    f = fabsf(f);
-    
-    f_pwm = a*tanf((f-c)/b)+d;
-
-    return s*f_pwm;
-
-}      
-
-// Converts thrust in PWM to their respective Newton values
-static inline float PWM2thrust(int32_t M_PWM) 
-{
-    // Conversion values calculated from PWM to Thrust Curve
-    // Linear Fit: Thrust [g] = a*PWM + b
-    float a = 3.31e4;
-    float b = 1.12e1;
-    float c = 8.72;
-    float d = 3.26e4;
-
-    float f = b*atan2f(M_PWM-d,a)+c;
-    // float f = (a*M_PWM + b); // Convert thrust to grams
-
-    if(f<0)
-    {
-      f = 0;
-    }
-
-    return f;
-}
-
-
-// Limit PWM value to accurate motor curve limit (60,000)
-uint16_t limitPWM(int32_t value) 
-{
-  if(value > 60000)
-  {
-    value = 60000;
-  }
-  else if(value < 0)
-  {
-    value = 0;
-  }
-
-  return (uint16_t)value;
-}
-
 

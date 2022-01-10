@@ -49,8 +49,8 @@ void controllerGTCReset(Controller* _CTRL)
     OF_y_tr = 0.0;
 
     // ROS SPECIFIC VALUES
-    _CTRL->impact_flag = false;
-    _CTRL->slowdown_type = 0;
+    _CTRL->_impact_flag = false;
+    _CTRL->_slowdown_type = 0;
     _CTRL->adjustSimSpeed(_CTRL->_SIM_SPEED);
 
 
@@ -130,7 +130,7 @@ void GTC_Command(setpoint_t *setpoint, Controller* _CTRL)
             M_d.y = setpoint->cmd_val2*1e-3;
             M_d.z = setpoint->cmd_val3*1e-3;
 
-            Moment_flag = setpoint->cmd_flag;
+            Moment_flag = (bool)setpoint->cmd_flag;
             break;
 
         case 8: // Arm Policy Maneuver
@@ -373,7 +373,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                             flip_flag = true;  
 
                             // UPDATE AND RECORD FLIP VALUES
-                            _CTRL->t_flip = ros::Time::now();
+                            _CTRL->_t_flip = ros::Time::now();
                             statePos_tr = statePos;
                             stateVel_tr = stateVel;
                             stateQuat_tr = stateQuat;
@@ -399,7 +399,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                         //     flip_flag = true;
 
                         //     // UPDATE AND RECORD FLIP VALUES
-                        //     t_flip = ros::Time::now();
+                        //     _t_flip = ros::Time::now();
                         //     statePos_tr = statePos;
                         //     stateVel_tr = stateVel;
                         //     stateQuat_tr = stateQuat;
@@ -430,7 +430,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
                     // RECORD MOTOR THRUST TYPES AT FLIP
 
-                    F_thrust_flip = F_thrust;
+                    F_thrus_t_flip = F_thrust;
                     M_x_flip = M.x/2.0f;
                     M_y_flip = M.y/2.0f;
                     M_z_flip = M.z/2.0f;
@@ -484,10 +484,10 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         M3_pwm = limitPWM(thrust2PWM(f_thrust_g - f_roll_g + f_pitch_g + f_yaw_g));
         M4_pwm = limitPWM(thrust2PWM(f_thrust_g - f_roll_g - f_pitch_g - f_yaw_g));
 
-        MS1 = sqrt(PWM2thrust(M1_pwm)*g2Newton/kf);
-        MS2 = sqrt(PWM2thrust(M2_pwm)*g2Newton/kf);
-        MS3 = sqrt(PWM2thrust(M3_pwm)*g2Newton/kf);
-        MS4 = sqrt(PWM2thrust(M4_pwm)*g2Newton/kf);
+        MS1 = (uint16_t)sqrt(PWM2thrust(M1_pwm)*g2Newton/kf);
+        MS2 = (uint16_t)sqrt(PWM2thrust(M2_pwm)*g2Newton/kf);
+        MS3 = (uint16_t)sqrt(PWM2thrust(M3_pwm)*g2Newton/kf);
+        MS4 = (uint16_t)sqrt(PWM2thrust(M4_pwm)*g2Newton/kf);
 
 
         
@@ -496,70 +496,70 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         // ============================
        
 
-        _CTRL->MS_msg.MotorSpeeds = {(uint16_t)MS1,(uint16_t)MS2,(uint16_t)MS3,(uint16_t)MS4};
-        _CTRL->MS_Publisher.publish(_CTRL->MS_msg);
+        _CTRL->_MS_msg.MotorSpeeds = {MS1,MS2,MS3,MS4};
+        _CTRL->_MS_Publisher.publish(_CTRL->_MS_msg);
 
         
         // SIMULATION SLOWDOWN
         if(_CTRL->_LANDING_SLOWDOWN_FLAG==true){
 
             // WHEN CLOSE TO THE CEILING REDUCE SIM SPEED
-            if(_CTRL->_H_CEILING-statePos.z<=0.5 && _CTRL->slowdown_type == 0){
+            if(_CTRL->_H_CEILING-statePos.z<=0.5 && _CTRL->_slowdown_type == 0){
                 
                 _CTRL->adjustSimSpeed(_CTRL->_SIM_SLOWDOWN_SPEED);
-                _CTRL->slowdown_type = 1;
+                _CTRL->_slowdown_type = 1;
 
             }
 
             // IF IMPACTED OR MISSED CEILING, INCREASE SIM SPEED TO DEFAULT
-            if(_CTRL->impact_flag == true && _CTRL->slowdown_type == 1)
+            if(_CTRL->_impact_flag == true && _CTRL->_slowdown_type == 1)
             {
                 _CTRL->adjustSimSpeed(_CTRL->_SIM_SPEED);
-                _CTRL->slowdown_type = 2;
+                _CTRL->_slowdown_type = 2;
             }
-            else if(stateVel.z <= -0.5 && _CTRL->slowdown_type == 1){
+            else if(stateVel.z <= -0.5 && _CTRL->_slowdown_type == 1){
                 _CTRL->adjustSimSpeed(_CTRL->_SIM_SPEED);
-                _CTRL->slowdown_type = 2;
+                _CTRL->_slowdown_type = 2;
             }
 
         }
 
 
 
-        _CTRL->ctrl_msg.RREV = RREV;
-        _CTRL->ctrl_msg.OF_y = OF_y;
-        _CTRL->ctrl_msg.OF_x = OF_x;
+        _CTRL->_ctrl_msg.RREV = RREV;
+        _CTRL->_ctrl_msg.OF_y = OF_y;
+        _CTRL->_ctrl_msg.OF_x = OF_x;
 
         // FLIP INFO
-        _CTRL->ctrl_msg.flip_flag = flip_flag;
-        _CTRL->ctrl_msg.RREV_tr = RREV_tr;
-        _CTRL->ctrl_msg.OF_x_tr = OF_x_tr;
-        _CTRL->ctrl_msg.OF_y_tr = OF_y_tr;
-        _CTRL->ctrl_msg.FM_flip = {F_thrust_flip,M_x_flip*1.0e3,M_y_flip*1.0e3,M_z_flip*1.0e3};
+        _CTRL->_ctrl_msg.flip_flag = flip_flag;
+        _CTRL->_ctrl_msg.RREV_tr = RREV_tr;
+        _CTRL->_ctrl_msg.OF_x_tr = OF_x_tr;
+        _CTRL->_ctrl_msg.OF_y_tr = OF_y_tr;
+        _CTRL->_ctrl_msg.FM_flip = {F_thrus_t_flip,M_x_flip*1.0e3,M_y_flip*1.0e3,M_z_flip*1.0e3};
 
 
-        _CTRL->ctrl_msg.Pose_tr.header.stamp = _CTRL->t_flip;             
+        _CTRL->_ctrl_msg.Pose_tr.header.stamp = _CTRL->_t_flip;             
 
-        _CTRL->ctrl_msg.Pose_tr.pose.position.x = statePos_tr.x;
-        _CTRL->ctrl_msg.Pose_tr.pose.position.y = statePos_tr.y;
-        _CTRL->ctrl_msg.Pose_tr.pose.position.z = statePos_tr.z;
+        _CTRL->_ctrl_msg.Pose_tr.pose.position.x = statePos_tr.x;
+        _CTRL->_ctrl_msg.Pose_tr.pose.position.y = statePos_tr.y;
+        _CTRL->_ctrl_msg.Pose_tr.pose.position.z = statePos_tr.z;
 
-        _CTRL->ctrl_msg.Pose_tr.pose.orientation.x = stateQuat_tr.x;
-        _CTRL->ctrl_msg.Pose_tr.pose.orientation.y = stateQuat_tr.y;
-        _CTRL->ctrl_msg.Pose_tr.pose.orientation.z = stateQuat_tr.z;
-        _CTRL->ctrl_msg.Pose_tr.pose.orientation.w = stateQuat_tr.w;
+        _CTRL->_ctrl_msg.Pose_tr.pose.orientation.x = stateQuat_tr.x;
+        _CTRL->_ctrl_msg.Pose_tr.pose.orientation.y = stateQuat_tr.y;
+        _CTRL->_ctrl_msg.Pose_tr.pose.orientation.z = stateQuat_tr.z;
+        _CTRL->_ctrl_msg.Pose_tr.pose.orientation.w = stateQuat_tr.w;
 
-        _CTRL->ctrl_msg.Twist_tr.linear.x = stateVel_tr.x;
-        _CTRL->ctrl_msg.Twist_tr.linear.y = stateVel_tr.y;
-        _CTRL->ctrl_msg.Twist_tr.linear.z = stateVel_tr.z;
+        _CTRL->_ctrl_msg.Twist_tr.linear.x = stateVel_tr.x;
+        _CTRL->_ctrl_msg.Twist_tr.linear.y = stateVel_tr.y;
+        _CTRL->_ctrl_msg.Twist_tr.linear.z = stateVel_tr.z;
 
-        _CTRL->ctrl_msg.Twist_tr.angular.x = stateOmega_tr.x;
-        _CTRL->ctrl_msg.Twist_tr.angular.y = stateOmega_tr.y;
-        _CTRL->ctrl_msg.Twist_tr.angular.z = stateOmega_tr.z;
+        _CTRL->_ctrl_msg.Twist_tr.angular.x = stateOmega_tr.x;
+        _CTRL->_ctrl_msg.Twist_tr.angular.y = stateOmega_tr.y;
+        _CTRL->_ctrl_msg.Twist_tr.angular.z = stateOmega_tr.z;
 
-        _CTRL->ctrl_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
-        _CTRL->ctrl_msg.MS_PWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
-        _CTRL->ctrl_Publisher.publish(_CTRL->ctrl_msg);
+        _CTRL->_ctrl_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
+        _CTRL->_ctrl_msg.MS_PWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
+        _CTRL->_CTRL_Publisher.publish(_CTRL->_ctrl_msg);
 
         // DATA HANDLING
         if (tick%5 == 0){ // General Debugging output
@@ -582,10 +582,10 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         endl <<
 
         setprecision(0) <<
-        "Policy_armed: " << policy_armed_flag <<  "\tFlip_flag: " << flip_flag << "\tImpact_flag: " << _CTRL->impact_flag << endl <<
+        "Policy_armed: " << policy_armed_flag <<  "\tFlip_flag: " << flip_flag << "\t_impact_flag: " << _CTRL->_impact_flag << endl <<
         "Tumble Detection: " << tumble_detection << "\t\tTumbled: " << tumbled << endl <<
         "kp_xf: " << kp_xf << " \tkd_xf: " << kp_xf << endl <<
-        "Slowdown_type: " << _CTRL->slowdown_type << endl << 
+        "_slowdown_type: " << _CTRL->_slowdown_type << endl << 
         endl <<
         
         setprecision(3) <<
