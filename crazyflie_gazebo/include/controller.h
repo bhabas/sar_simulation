@@ -24,6 +24,11 @@
 #include <math.h>       
 #include <stdio.h>
 #include <stdint.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/types.h>
+#include <pwd.h>
+
 
 // CF LIBRARIES
 #include "math3d.h"
@@ -61,7 +66,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                                          const uint32_t tick,
                                          Controller* ctrl);
 void GTC_Command(setpoint_t *setpoint, Controller* _CTRL);
-int readCSV(Scaler* scaler);
+int initScaler(Scaler* scaler,char* str);
 
 
 
@@ -270,6 +275,21 @@ static uint8_t traj_type = 0;
 Scaler Scaler_Flip;
 Scaler Scaler_Policy;
 
+nml_mat* X = nml_mat_new(3,1);
+nml_mat* X_flip = nml_mat_new(3,1);
+nml_mat* X_policy = nml_mat_new(3,1);
+
+// char* str = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/Scaler_Flip_Classifier.csv";
+char* homedir = getenv("HOME");
+char* str1 = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/Scaler_Flip_Classifier.csv";
+char* str2 = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/Scaler_Policy_Value.csv";
+
+// strcat(homedir,str);
+
+int q1 = initScaler(&Scaler_Flip,str1);
+int q2 = initScaler(&Scaler_Policy,str2);
+
+
 
 
 void stateEstimator(state_t *state, sensorData_t *sensors, control_t *control, const uint32_t tick)
@@ -284,24 +304,29 @@ void commanderGetSetpoint(setpoint_t *setpoint, const state_t *state)
 
 // EXPLICIT FUNTIONS
 
-
-
-int readCSV(Scaler* scaler)
+nml_mat* NN_Scale(nml_mat* X, Scaler* Scaler)
 {
+    return X;
+}
 
+
+int initScaler(Scaler* scaler, char* str)
+{
     char line[50];
-    char *sp;
+    char* sp;
+
+    
+    printf("%s\n",str);
 
 
-    FILE* fp = fopen("/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/Info/Scaler_Policy_Value.csv", "r");
-    if (fp == NULL) {
-        perror("Error reading file\n");
-        return 1;
+    FILE* file_ptr = fopen(str, "r");
+    if (file_ptr == NULL) {
+        perror("Error reading scaler file: Check for correct file name/path\n");
     }
     
-    fgets(line,100,fp); // Skip buffer
+    fgets(line,100,file_ptr); // Skip buffer
     int i = 0;
-    while(fgets(line,100,fp)!=NULL)
+    while(fgets(line,100,file_ptr)!=NULL)
     {
         sp = strtok(line,",");
         scaler->mean[i] = atof(sp);
@@ -312,9 +337,8 @@ int readCSV(Scaler* scaler)
     }
 
     printf("%.3f\n",scaler->mean[i]);
-    fclose(fp);
-    
-    return 0;
+    fclose(file_ptr);
+
 }
 
 // Converts thrust in grams to their respective PWM values
@@ -683,7 +707,7 @@ void Controller::RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){
 void Controller::startController() // MAIN CONTROLLER LOOP
 {
     ros::Rate rate(500);
-    
+   
     while(ros::ok)
     {
         stateEstimator(&state, &sensorData, &control, tick);

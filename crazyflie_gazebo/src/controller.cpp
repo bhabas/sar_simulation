@@ -1,6 +1,6 @@
 
 #include "controller.h"
-
+#include <unistd.h>
 
 
 void controllerGTCInit(void)
@@ -254,6 +254,12 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         OF_x = stateVel.y/(h_ceiling - statePos.z);
         OF_y = stateVel.x/(h_ceiling - statePos.z);
 
+        X->data[0][0] = RREV;
+        X->data[1][0] = OF_y;
+        X->data[2][0] = (h_ceiling - statePos.z); // d_ceiling [m]
+        // nml_mat_print(X);
+
+
         // =========== STATE SETPOINTS =========== //
         // x_d = mkvec(setpoint->position.x,setpoint->position.y,setpoint->position.z);             // Pos-desired [m]
         // v_d = mkvec(setpoint->velocity.x, setpoint->velocity.y, setpoint->velocity.z);             // Vel-desired [m/s]
@@ -391,10 +397,10 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                     }
 
                     case NN:
-                    {   // X = nml_mat(RREV,OF_y,d_ceil);
-                        // nml_mat X_flip = Scale(X,Scaler_flip);
+                    {   
+                        // X_flip = NN_Scale(X,Scaler_flip);
                         // nml_mat X_policy = Scale(X,Scaler_policy);
-                        
+
                         // if((bool)NN_Flip(X) == true && onceFlag = false)
                         // {   
                         //     onceFlag = true;
@@ -564,88 +570,90 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         _CTRL->_CTRL_Publisher.publish(_CTRL->_ctrl_msg);
 
         // DATA HANDLING
-        if (tick%5 == 0){ // General Debugging output
-        cout << fixed;
-        cout << setprecision(4) << endl <<
-        "t: " << _CTRL->_t << "\tCmd: "  << endl << 
-        endl <<
+        // if (tick%5 == 0){ // General Debugging output
+        // cout << fixed;
+        // cout << setprecision(4) << endl <<
+        // "t: " << _CTRL->_t << "\tCmd: "  << endl << 
+        // endl <<
 
-        "RREV_thr: " << RREV_thr << "\tG1: " << G1 << "\tG2: " << G2 << endl << 
-        "RREV: " << RREV << "\tOF_x: " << OF_x << "\tOF_y: " << OF_y << endl <<
-        "RREV_flip: " << RREV_tr << "\tOF_x_tr: " << OF_x_tr << "\tOF_y_tr: " << OF_y_tr << endl << 
-        endl << 
+        // "RREV_thr: " << RREV_thr << "\tG1: " << G1 << "\tG2: " << G2 << endl << 
+        // "RREV: " << RREV << "\tOF_x: " << OF_x << "\tOF_y: " << OF_y << endl <<
+        // "RREV_flip: " << RREV_tr << "\tOF_x_tr: " << OF_x_tr << "\tOF_y_tr: " << OF_y_tr << endl << 
+        // endl << 
 
-        "Kp_P: " << Kp_p.x << "  " << Kp_p.y << "  " << Kp_p.z << "\t" <<
-        "Kp_R: " << Kp_R.x << "  " << Kp_R.y << "  " << Kp_R.z << endl <<
-        "Kd_P: " << Kd_p.x << "  " << Kd_p.y << "  " << Kd_p.z << "\t" <<
-        "Kd_R: " << Kd_R.x << "  " << Kd_R.y << "  " << Kd_R.z << endl <<
-        "Ki_P: " << Ki_p.x << "  " << Ki_p.y << "  " << Ki_p.z << "\t" <<
-        "Ki_R: " << Ki_R.x << "  " << Ki_R.y << "  " << Ki_R.z << endl <<
-        endl <<
+        // "Kp_P: " << Kp_p.x << "  " << Kp_p.y << "  " << Kp_p.z << "\t" <<
+        // "Kp_R: " << Kp_R.x << "  " << Kp_R.y << "  " << Kp_R.z << endl <<
+        // "Kd_P: " << Kd_p.x << "  " << Kd_p.y << "  " << Kd_p.z << "\t" <<
+        // "Kd_R: " << Kd_R.x << "  " << Kd_R.y << "  " << Kd_R.z << endl <<
+        // "Ki_P: " << Ki_p.x << "  " << Ki_p.y << "  " << Ki_p.z << "\t" <<
+        // "Ki_R: " << Ki_R.x << "  " << Ki_R.y << "  " << Ki_R.z << endl <<
+        // endl <<
 
-        setprecision(0) <<
-        "Policy_armed: " << policy_armed_flag <<  "\tFlip_flag: " << flip_flag << "\t_impact_flag: " << _CTRL->_impact_flag << endl <<
-        "Tumble Detection: " << tumble_detection << "\t\tTumbled: " << tumbled << endl <<
-        "kp_xf: " << kp_xf << " \tkd_xf: " << kp_xf << endl <<
-        "_slowdown_type: " << _CTRL->_slowdown_type << endl << 
-        endl <<
+        // setprecision(0) <<
+        // "Policy_armed: " << policy_armed_flag <<  "\tFlip_flag: " << flip_flag << "\t_impact_flag: " << _CTRL->_impact_flag << endl <<
+        // "Tumble Detection: " << tumble_detection << "\t\tTumbled: " << tumbled << endl <<
+        // "kp_xf: " << kp_xf << " \tkd_xf: " << kp_xf << endl <<
+        // "_slowdown_type: " << _CTRL->_slowdown_type << endl << 
+        // endl <<
         
-        setprecision(3) <<
-        "x_d: " << x_d.x << "  " << x_d.y << "  " << x_d.z << endl <<
-        "v_d: " << v_d.x << "  " << v_d.y << "  " << v_d.z << endl <<
-        "a_d: " << a_d.x << "  " << a_d.y << "  " << a_d.z << endl <<
-        endl << 
+        // setprecision(3) <<
+        // "x_d: " << x_d.x << "  " << x_d.y << "  " << x_d.z << endl <<
+        // "v_d: " << v_d.x << "  " << v_d.y << "  " << v_d.z << endl <<
+        // "a_d: " << a_d.x << "  " << a_d.y << "  " << a_d.z << endl <<
+        // endl << 
 
-        setprecision(3) <<
-        "Pos [m]: " << statePos.x << "  " << statePos.y << "  " << statePos.z << "\t" <<
-        "e_x: " << e_x.x << "  " << e_x.y << "  " << e_x.z << endl <<
-        "Vel [m/s]: " << stateVel.x << "  " << stateVel.y << "  " << stateVel.z << "\t" <<
-        "e_v: " << e_v.x << "  " << e_v.y << "  " << e_v.z << endl <<
-        "Omega [rad/s]: " << stateOmega.x << "  " << stateOmega.y << "  " << stateOmega.z << "\t" <<
-        "e_w: " << e_w.x << "  " << e_w.y << "  " << e_w.z << endl <<
+        // setprecision(3) <<
+        // "Pos [m]: " << statePos.x << "  " << statePos.y << "  " << statePos.z << "\t" <<
+        // "e_x: " << e_x.x << "  " << e_x.y << "  " << e_x.z << endl <<
+        // "Vel [m/s]: " << stateVel.x << "  " << stateVel.y << "  " << stateVel.z << "\t" <<
+        // "e_v: " << e_v.x << "  " << e_v.y << "  " << e_v.z << endl <<
+        // "Omega [rad/s]: " << stateOmega.x << "  " << stateOmega.y << "  " << stateOmega.z << "\t" <<
+        // "e_w: " << e_w.x << "  " << e_w.y << "  " << e_w.z << endl <<
 
-        "e_PI : " << e_PI.x << "  " << e_PI.y << "  " << e_PI.z << "\t" <<
-        "e_RI: " << e_RI.x << "  " << e_RI.y << "  " << e_RI.z << endl <<
-        endl << 
+        // "e_PI : " << e_PI.x << "  " << e_PI.y << "  " << e_PI.z << "\t" <<
+        // "e_RI: " << e_RI.x << "  " << e_RI.y << "  " << e_RI.z << endl <<
+        // endl << 
 
-        "R:\n" << 
-        R.m[0][0] << "  " << R.m[0][1] << "  " << R.m[0][2] << "\n" <<
-        R.m[1][0] << "  " << R.m[1][1] << "  " << R.m[1][2] << "\n" <<
-        R.m[2][0] << "  " << R.m[2][1] << "  " << R.m[2][2] << "\n" <<
-        endl <<
+        // "R:\n" << 
+        // R.m[0][0] << "  " << R.m[0][1] << "  " << R.m[0][2] << "\n" <<
+        // R.m[1][0] << "  " << R.m[1][1] << "  " << R.m[1][2] << "\n" <<
+        // R.m[2][0] << "  " << R.m[2][1] << "  " << R.m[2][2] << "\n" <<
+        // endl <<
 
-        "R_d:\n" << 
-        R_d.m[0][0] << "  " << R_d.m[0][1] << "  " << R_d.m[0][2] << "\n" <<
-        R_d.m[1][0] << "  " << R_d.m[1][1] << "  " << R_d.m[1][2] << "\n" <<
-        R_d.m[2][0] << "  " << R_d.m[2][1] << "  " << R_d.m[2][2] << "\n" <<
-        endl <<
+        // "R_d:\n" << 
+        // R_d.m[0][0] << "  " << R_d.m[0][1] << "  " << R_d.m[0][2] << "\n" <<
+        // R_d.m[1][0] << "  " << R_d.m[1][1] << "  " << R_d.m[1][2] << "\n" <<
+        // R_d.m[2][0] << "  " << R_d.m[2][1] << "  " << R_d.m[2][2] << "\n" <<
+        // endl <<
         
-        "e_R : " << e_R.x << "  " << e_R.y << "  " << e_R.z << "\t" <<
-        "e_R (deg): " << e_R.x*180.0f/M_PI << "  " << e_R.y*180.0f/M_PI << "  " << e_R.z*180.0f/M_PI << endl <<
-        endl <<
+        // "e_R : " << e_R.x << "  " << e_R.y << "  " << e_R.z << "\t" <<
+        // "e_R (deg): " << e_R.x*180.0f/M_PI << "  " << e_R.y*180.0f/M_PI << "  " << e_R.z*180.0f/M_PI << endl <<
+        // endl <<
 
-        "FM [N/N*mm]: " << F_thrust << "  " << M.x*1.0e3 << "  " << M.y*1.0e3 << "  " << M.z*1.0e3 << endl <<
-        "f [g]: " << f_thrust_g << "  " << f_roll_g << "  " << f_pitch_g << "  " << f_yaw_g << "  " << "\t" << endl << 
-        endl <<
+        // "FM [N/N*mm]: " << F_thrust << "  " << M.x*1.0e3 << "  " << M.y*1.0e3 << "  " << M.z*1.0e3 << endl <<
+        // "f [g]: " << f_thrust_g << "  " << f_roll_g << "  " << f_pitch_g << "  " << f_yaw_g << "  " << "\t" << endl << 
+        // endl <<
         
-        setprecision(0) <<
-        "MS_PWM: " << M1_pwm << "  " << M2_pwm << "  " << M3_pwm << "  " << M4_pwm << endl <<
-        "MS: " << MS1 << "  " << MS2 << "  " << MS3 << "  " << MS4 << endl <<
-        endl << 
+        // setprecision(0) <<
+        // "MS_PWM: " << M1_pwm << "  " << M2_pwm << "  " << M3_pwm << "  " << M4_pwm << endl <<
+        // "MS: " << MS1 << "  " << MS2 << "  " << MS3 << "  " << MS4 << endl <<
+        // endl << 
 
-        "=============== " << endl; 
-        }
+        // "=============== " << endl; 
+        // }
 
     }
     
 }
 
+
+
 int main(int argc, char **argv)
 {   
+    
     ros::init(argc, argv,"controller_node");
     ros::NodeHandle nh;
     Controller controller = Controller(&nh);
-    // controller.controllerGTCReset();
 
     ros::spin();
 }
