@@ -37,6 +37,10 @@ using namespace std;
 class Controller;
 // =======================
 
+typedef struct{
+    float mean[3];
+    float std[3];
+}Scaler;
 
 
 #define PWM_MAX 60000 // Limit PWM to give buffer for battery drop
@@ -57,6 +61,8 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                                          const uint32_t tick,
                                          Controller* ctrl);
 void GTC_Command(setpoint_t *setpoint, Controller* _CTRL);
+int readCSV(Scaler* scaler);
+
 
 
 // INIT PID VALUES BEFORE OVERWRITTEN BY CONFIG FILE
@@ -259,6 +265,11 @@ static float t = 0.0f;
 static float T = 0.0f;
 static uint8_t traj_type = 0;
 
+// NEURAL NETWORK INITIALIZATION
+
+Scaler Scaler_Flip;
+Scaler Scaler_Policy;
+
 
 
 void stateEstimator(state_t *state, sensorData_t *sensors, control_t *control, const uint32_t tick)
@@ -272,6 +283,39 @@ void commanderGetSetpoint(setpoint_t *setpoint, const state_t *state)
 }
 
 // EXPLICIT FUNTIONS
+
+
+
+int readCSV(Scaler* scaler)
+{
+
+    char line[50];
+    char *sp;
+
+
+    FILE* fp = fopen("/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/Info/Scaler_Policy_Value.csv", "r");
+    if (fp == NULL) {
+        perror("Error reading file\n");
+        return 1;
+    }
+    
+    fgets(line,100,fp); // Skip buffer
+    int i = 0;
+    while(fgets(line,100,fp)!=NULL)
+    {
+        sp = strtok(line,",");
+        scaler->mean[i] = atof(sp);
+
+        sp = strtok(NULL,",");
+        scaler->std[i] = atof(sp);
+    
+    }
+
+    printf("%.3f\n",scaler->mean[i]);
+    fclose(fp);
+    
+    return 0;
+}
 
 // Converts thrust in grams to their respective PWM values
 static inline int32_t thrust2PWM(float f) 

@@ -391,7 +391,9 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                     }
 
                     case NN:
-                    {
+                    {   // X = nml_mat(RREV,OF_y,d_ceil);
+                        // nml_mat X_flip = Scale(X,Scaler_flip);
+                        // nml_mat X_policy = Scale(X,Scaler_policy);
                         
                         // if((bool)NN_Flip(X) == true && onceFlag = false)
                         // {   
