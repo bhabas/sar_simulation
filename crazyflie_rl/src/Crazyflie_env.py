@@ -32,7 +32,7 @@ class CrazyflieEnv:
         os.system("roslaunch crazyflie_launch params.launch")
         self.launch_controller()
         self.launch_sim() 
-        # rospy.wait_for_message("/clock",Clock)
+        rospy.wait_for_message("/clock",Clock)
         print("[INITIATING] Gazebo simulation started")
 
 
@@ -180,7 +180,7 @@ class CrazyflieEnv:
         self.ceiling_ft_Subscriber = rospy.Subscriber('/env/ceiling_force_sensor',ImpactData,self.ceiling_ftsensorCallback,queue_size=10) 
                       
 
-        # rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
+        rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
 
 
 

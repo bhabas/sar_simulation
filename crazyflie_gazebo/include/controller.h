@@ -69,19 +69,21 @@ class Controller
         // CONSTRUCTOR TO START PUBLISHERS AND SUBSCRIBERS (Similar to Python's __init__() )
         Controller(ros::NodeHandle *nh){
             
-            
-
-            // ENVIRONMENT SENSORS
-            viconState_Subscriber = nh->subscribe("/env/vicon_state",1,&Controller::vicon_Callback,this,ros::TransportHints().tcpNoDelay());
-            
             // BODY SENSORS
             imu_Subscriber = nh->subscribe("/cf1/imu",1,&Controller::imu_Callback,this,ros::TransportHints().tcpNoDelay());
             OF_Subscriber = nh->subscribe("/cf1/OF_sensor",1,&Controller::OF_Callback,this,ros::TransportHints().tcpNoDelay()); 
 
             // COMMANDS AND INFO
-            CMD_Subscriber = nh->subscribe("/rl_ctrl",50,&Controller::CMD_Callback,this);
+            CMD_Subscriber = nh->subscribe("/rl_ctrl",50,&Controller::CMD_Callback,this,ros::TransportHints().tcpNoDelay());
             ctrl_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/ctrl_data",1);
             MS_Publisher = nh->advertise<crazyflie_msgs::MS>("/MS",1);
+            // SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
+
+            // ENVIRONMENT SENSORS
+            viconState_Subscriber = nh->subscribe("/env/vicon_state",1,&Controller::vicon_Callback,this,ros::TransportHints().tcpNoDelay());
+            ceilingFT_Subcriber = nh->subscribe("/env/ceiling_force_sensor",5,&Controller::ceilingFT_Callback,this,ros::TransportHints().tcpNoDelay());
+            // RLData_Subscriber = nh->subscribe("/rl_data",5,&Controller::RLData_Callback,this,ros::TransportHints().tcpNoDelay());
+
 
             // SIMULATION SETTINGS FROM CONFIG FILE
             ros::param::get("/CEILING_HEIGHT",_H_CEILING);
@@ -168,6 +170,10 @@ class Controller
         void imu_Callback(const sensor_msgs::Imu::ConstPtr &msg);
         void OF_Callback(const nav_msgs::Odometry::ConstPtr &msg);   
         void CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
+        void ceilingFT_Callback(const crazyflie_msgs::ImpactData::ConstPtr &msg);
+        void adjustSimSpeed(float speed_mult);
+
+
 
 
         crazyflie_msgs::MS MS_msg;
@@ -175,6 +181,11 @@ class Controller
 
         ros::Publisher MS_Publisher;
         ros::Publisher ctrl_Publisher;
+
+        ros::ServiceClient SimSpeed_Client;
+        ros::Subscriber ceilingFT_Subcriber;
+
+
 
         // SENSORS
         ros::Subscriber viconState_Subscriber;
@@ -499,6 +510,40 @@ void Controller::OF_Callback(const nav_msgs::Odometry::ConstPtr &msg){
     _OF_y = -velocity.x/d;
 }
 
+void Controller::adjustSimSpeed(float speed_mult)
+{
+    gazebo_msgs::SetPhysicsProperties srv;
+    srv.request.time_step = 0.001;
+    srv.request.max_update_rate = (int)(speed_mult/0.001);
+
+
+    geometry_msgs::Vector3 gravity_vec;
+    gravity_vec.x = 0.0;
+    gravity_vec.y = 0.0;
+    gravity_vec.z = -9.8066;
+    srv.request.gravity = gravity_vec;
+
+    gazebo_msgs::ODEPhysics ode_config;
+    ode_config.auto_disable_bodies = false;
+    ode_config.sor_pgs_precon_iters = 0;
+    ode_config.sor_pgs_iters = 50;
+    ode_config.sor_pgs_w = 1.3;
+    ode_config.sor_pgs_rms_error_tol = 0.0;
+    ode_config.contact_surface_layer = 0.001;
+    ode_config.contact_max_correcting_vel = 0.0;
+    ode_config.cfm = 0.0;
+    ode_config.erp = 0.2;
+    ode_config.max_contacts = 20;
+
+    srv.request.ode_config = ode_config;
+
+    SimSpeed_Client.call(srv);
+}
+
+void Controller::ceilingFT_Callback(const crazyflie_msgs::ImpactData::ConstPtr &msg)
+{
+    impact_flag = msg->impact_flag;
+}
 
 void Controller::startController()
 {

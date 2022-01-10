@@ -438,6 +438,10 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         _CTRL->MS_msg.MotorSpeeds = {(uint16_t)MS1,(uint16_t)MS2,(uint16_t)MS3,(uint16_t)MS4};
         _CTRL->MS_Publisher.publish(_CTRL->MS_msg);
 
+        
+
+
+
         _CTRL->ctrl_msg.RREV = RREV;
         _CTRL->ctrl_msg.OF_y = OF_y;
         _CTRL->ctrl_msg.OF_x = OF_x;
@@ -494,7 +498,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         endl <<
 
         setprecision(0) <<
-        "Policy_armed: " << policy_armed_flag <<  "\tFlip_flag: " << flip_flag << "\tImpact_flag: " << "impact_flag" << endl <<
+        "Policy_armed: " << policy_armed_flag <<  "\tFlip_flag: " << flip_flag << "\tImpact_flag: " << _CTRL->impact_flag << endl <<
         "Tumble Detection: " << tumble_detection << "\t\tTumbled: " << tumbled << endl <<
         "kp_xf: " << kp_xf << " \tkd_xf: " << kp_xf << endl <<
         "Slowdown_type: " << "slowdown_type" << endl << 
