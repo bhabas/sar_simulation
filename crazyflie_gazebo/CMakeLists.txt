@@ -170,7 +170,6 @@ link_libraries(
 #   src/${PROJECT_NAME}/drone_training.cpp
 # )
 add_library(gazebo_motor_model SHARED src/gazebo_motor_model.cpp)
-add_library(gazebo_mavlink SHARED src/gazebo_mavlink.cpp)
 add_library(gazebo_sticky_foot SHARED src/gazebo_sticky_foot.cpp)
 
 ## Add cmake target dependencies of the library
@@ -180,7 +179,7 @@ add_library(gazebo_sticky_foot SHARED src/gazebo_sticky_foot.cpp)
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(controller src/controller.cpp)
+add_executable(controller src/controller.cpp src/nml.c src/nml_util.c)
 add_executable(ceiling_ft_sensor src/ceiling_ft_rostopic_converter.cpp)
 
 
@@ -193,15 +192,14 @@ add_executable(ceiling_ft_sensor src/ceiling_ft_rostopic_converter.cpp)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-# add_dependencies(gazebo_motor_model mav_msgs gazebo_mavlink)
-add_dependencies(controller include/${controller_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(controller include/ ${controller_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
 target_link_libraries(gazebo_motor_model ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES})
-target_link_libraries(gazebo_mavlink ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES})
 target_link_libraries(gazebo_sticky_foot ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES})
 target_link_libraries(controller ${catkin_LIBRARIES})
 target_link_libraries(ceiling_ft_sensor ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})

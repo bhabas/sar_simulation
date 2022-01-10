@@ -163,11 +163,11 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                 ##          Rollout 
                 # ============================
 
-                # try:
-                #     rospy.wait_for_message('/ctrl_data',CtrlData,timeout=2.0) # Wait to receive ctrl pub to run before continuing
-                # except ROSException:
-                #     print("No ctrl message received")
-                #     repeat_run = True
+                try:
+                    rospy.wait_for_message('/ctrl_data',CtrlData,timeout=2.0) # Wait to receive ctrl pub to run before continuing
+                except ROSException:
+                    print("No ctrl message received")
+                    repeat_run = True
                     
 
                 env.step('pos',ctrl_flag=0)                     # Turn off pos control
@@ -357,7 +357,7 @@ if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv(gazeboTimeout=True)
-    env.launch_dashboard()
+    # env.launch_dashboard()
 
     # ============================
     ##          AGENT  
@@ -372,7 +372,7 @@ if __name__ == '__main__':
 
 
     ## LEARNING AGENTS AND PARAMETERS
-    env.n_rollouts = 2
+    env.n_rollouts = 6
     K_EP_MAX = rospy.get_param("K_EP_MAX")
     agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=env.n_rollouts)
 
@@ -383,14 +383,14 @@ if __name__ == '__main__':
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
     V_d = 2.25  # [m/s]
-    phi = 50    # [deg]
+    phi = 70    # [deg]
 
 
     
     ## INITIALIALIZE LOGGING DATA
     trial_num = 24
     env.agent_name = agent.agent_type
-    env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--NL"
+    env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--WL"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
     env.logging_flag = True
        
