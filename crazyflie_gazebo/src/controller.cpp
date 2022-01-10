@@ -260,13 +260,11 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         OF_x = stateVel.y/(h_ceiling - statePos.z);
         OF_y = stateVel.x/(h_ceiling - statePos.z);
 
-        X_flip->data[0][0] = RREV;
-        X_flip->data[1][0] = OF_y;
-        X_flip->data[2][0] = (h_ceiling - statePos.z); // d_ceiling [m]
+        X->data[0][0] = RREV;
+        X->data[1][0] = OF_y;
+        X->data[2][0] = (h_ceiling - statePos.z); // d_ceiling [m]
 
-        X_policy->data[0][0] = RREV;
-        X_policy->data[1][0] = OF_y;
-        X_policy->data[2][0] = (h_ceiling - statePos.z); // d_ceiling [m]
+        
 
 
         // =========== STATE SETPOINTS =========== //
@@ -407,32 +405,30 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
                     case NN:
                     {   
-                        // SCALE NN INPUTS
-                        NN_Scale(X_flip, &Scaler_Flip);
-                        NN_Scale(X_policy, &Scaler_Policy);
+                        float flip = NN_Flip(X,&Scaler_Flip,W_flip,b_flip);
+                        printf("Flip: %.5f\n",flip);
 
-                        
-                        // if((bool)NN_Flip(X) == true && onceFlag = false)
-                        // {   
-                        //     onceFlag = true;
-                        //     flip_flag = true;
+                        if(flip >= 0.5 && onceFlag == false)
+                        {   
+                            onceFlag = true;
+                            flip_flag = true;
 
-                        //     // UPDATE AND RECORD FLIP VALUES
-                        //     _t_flip = ros::Time::now();
-                        //     statePos_tr = statePos;
-                        //     stateVel_tr = stateVel;
-                        //     stateQuat_tr = stateQuat;
-                        //     stateOmega_tr = stateOmega;
+                            // UPDATE AND RECORD FLIP VALUES
+                            _CTRL->_t_flip = ros::Time::now();
+                            statePos_tr = statePos;
+                            stateVel_tr = stateVel;
+                            stateQuat_tr = stateQuat;
+                            stateOmega_tr = stateOmega;
 
-                        //     OF_y_tr = OF_y;
-                        //     OF_x_tr = OF_x;
-                        //     RREV_tr = RREV;
+                            OF_y_tr = OF_y;
+                            OF_x_tr = OF_x;
+                            RREV_tr = RREV;
 
 
-                        //     M_d.x = 0.0f;
-                        //     M_d.y = -NN_Policy(X)*1e-3;
-                        //     M_d.z = 0.0f;
-                        // }
+                            M_d.x = 0.0f;
+                            M_d.y = -NN_Policy(X,&Scaler_Policy,W_policy,b_policy)*1e-3;
+                            M_d.z = 0.0f;
+                        }
 
                         break;
                     }

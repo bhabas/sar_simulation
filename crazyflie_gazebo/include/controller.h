@@ -68,6 +68,11 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 void GTC_Command(setpoint_t *setpoint, Controller* _CTRL);
 void initScaler(Scaler* scaler,char str[]);
 void NN_Scale(nml_mat* X, Scaler* scaler);
+void initNN_Layers(nml_mat* W[], nml_mat* b[], char path[],int numLayers);
+float Sigmoid(float x);
+float Elu(float x);
+float NN_Policy(nml_mat* X, nml_mat* W[], nml_mat* b[]);
+float NN_Flip(nml_mat* X, nml_mat* W[], nml_mat* b[]);
 
 
 
@@ -276,8 +281,7 @@ static uint8_t traj_type = 0;
 Scaler Scaler_Flip;
 Scaler Scaler_Policy;
 
-nml_mat* X_flip = nml_mat_new(3,1);
-nml_mat* X_policy = nml_mat_new(3,1);
+nml_mat* X = nml_mat_new(3,1);
 
 // char* str = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/Scaler_Flip_Classifier.csv";
 // strcat(homedir,str);
@@ -305,32 +309,6 @@ void commanderGetSetpoint(setpoint_t *setpoint, const state_t *state)
 }
 
 // EXPLICIT FUNTIONS
-void NN_Scale(nml_mat* X, Scaler* scaler)
-{   
-    for(int i=0;i<3;i++)
-    {
-        X->data[i][0] = (X->data[i][0] - scaler->mean[i])/scaler->std[i];
-        
-    }
-    
-}
-void initNN_Layers(nml_mat* W[], nml_mat* b[], char path[],int numLayers)
-{
-    FILE* input = fopen(path, "r");
-    for(int i=0;i<numLayers;i++)
-    {
-        // LAYER 1
-        W[i] = nml_mat_fromfilef(input);
-        b[i] = nml_mat_fromfilef(input);
-    }
-    fclose(input);
-
-
-}
-
-
-
-
 void initScaler(Scaler* scaler, char str[])
 {
     char line[50];
@@ -360,6 +338,108 @@ void initScaler(Scaler* scaler, char str[])
     printf("%.3f\n",scaler->mean[i]);
     fclose(file_ptr);
 
+}
+
+void initNN_Layers(nml_mat* W[], nml_mat* b[], char path[],int numLayers)
+{
+    FILE* input = fopen(path, "r");
+    for(int i=0;i<numLayers;i++)
+    {
+        // LAYER 1
+        W[i] = nml_mat_fromfilef(input);
+        b[i] = nml_mat_fromfilef(input);
+    }
+    fclose(input);
+
+
+}
+
+float NN_Policy(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[])
+{   
+    nml_mat* X_input = nml_mat_cp(X);
+    for(int i=0;i<3;i++)
+    {
+        X->data[i][0] = (X->data[i][0] - scaler->mean[i])/scaler->std[i];
+        
+    }
+
+    //LAYER 1
+    //Sigmoid(W*X+b)
+    nml_mat *WX = nml_mat_dot(W[0],X_input); 
+    nml_mat_add_r(WX,b[0]);
+    nml_mat *a1 = nml_mat_funcElement(WX,Sigmoid);
+
+    // LAYER 2
+    // Sigmoid(W*X+b)
+    nml_mat *WX2 = nml_mat_dot(W[1],a1); 
+    nml_mat_add_r(WX2,b[1]);
+    nml_mat *a2 = nml_mat_funcElement(WX2,Sigmoid);
+
+    // LAYER 3
+    // (W*X+b)
+    nml_mat *WX3 = nml_mat_dot(W[2],a2); 
+    nml_mat_add_r(WX3,b[2]);
+    nml_mat *a3 = nml_mat_cp(WX3);
+
+    float y_output = (float)a3->data[0][0];
+
+    nml_mat_free(X_input);
+    nml_mat_free(WX);
+    nml_mat_free(a1);
+    nml_mat_free(WX2);
+    nml_mat_free(a2);
+    nml_mat_free(WX3);
+    nml_mat_free(a3);
+
+
+    return y_output;
+}
+
+float NN_Flip(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[])
+{
+    nml_mat* X_input = nml_mat_cp(X);
+    for(int i=0;i<3;i++)
+    {
+        X->data[i][0] = (X->data[i][0] - scaler->mean[i])/scaler->std[i];
+        
+    }
+
+    //LAYER 1
+    //Sigmoid(W*X+b)
+    nml_mat *WX = nml_mat_dot(W[0],X_input); 
+    nml_mat_add_r(WX,b[0]);
+    nml_mat *a1 = nml_mat_funcElement(WX,Elu);
+
+    // LAYER 2
+    // Sigmoid(W*X+b)
+    nml_mat *WX2 = nml_mat_dot(W[1],a1); 
+    nml_mat_add_r(WX2,b[1]);
+    nml_mat *a2 = nml_mat_funcElement(WX2,Sigmoid);
+
+    float y_output = a2->data[0][0];
+
+    nml_mat_free(X_input);
+    nml_mat_free(WX);
+    nml_mat_free(a1);
+    nml_mat_free(WX2);
+    nml_mat_free(a2);
+
+    return y_output;
+    
+
+}
+
+float Sigmoid(float x)
+{
+    return 1/(1+exp(-x));
+}
+
+float Elu(float x)
+{
+    if(x>0) return x;
+
+    else return exp(x)-1.0f;
+ 
 }
 
 // Converts thrust in grams to their respective PWM values
@@ -727,7 +807,7 @@ void Controller::RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){
 
 void Controller::startController() // MAIN CONTROLLER LOOP
 {
-    ros::Rate rate(500);
+    ros::Rate rate(1000);
     controllerGTCInit();
    
     while(ros::ok)
