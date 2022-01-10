@@ -1,12 +1,24 @@
-#include <iostream>
 
 #include "controller.h"
+#include <unistd.h>
 
-#include <ros/ros.h>
 
-void Controller::controllerGTCReset(void)
+void controllerGTCInit(void)
 {
-    // consolePrintf("GTC Reset\n");
+    controllerGTCTest();
+    initScaler(&Scaler_Flip,str1);
+    initScaler(&Scaler_Policy,str2);
+    char path_policy[] = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/NN_Layers_Policy.data";
+    char path_flip[] = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/NN_Layers_Flip.data";
+    initNN_Layers(W_policy,b_policy,path_policy,3);
+    initNN_Layers(W_flip,b_flip,path_flip,2);
+    // controllerGTCReset(_CTRL);
+    printf("GTC Initiated\n");
+}
+
+void controllerGTCReset(Controller* _CTRL)
+{
+    printf("GTC Reset\n");
     // Reset errors to zero
     e_PI = vzero();
     e_RI = vzero();
@@ -14,11 +26,12 @@ void Controller::controllerGTCReset(void)
     kp_xf = 1.0;
     kd_xf = 1.0;
 
+
     x_d = mkvec(0.0f,0.0f,0.4f);
     v_d = mkvec(0.0f,0.0f,0.0f);
     a_d = mkvec(0.0f,0.0f,0.0f);
-
     
+
     tumbled = false;
     motorstop_flag = false;
 
@@ -26,13 +39,10 @@ void Controller::controllerGTCReset(void)
     policy_armed_flag = false;
     flip_flag = false;
     onceFlag = false;
+
+
+    t = 0;
     execute_traj = false;
-
-    // ROS SPECIFIC VALUES
-    impact_flag = false;
-    slowdown_type = 0;
-    Controller::adjustSimSpeed(_SIM_SPEED);
-
 
     // RESET LOGGED FLIP VALUES
     statePos_tr = vzero();
@@ -44,68 +54,59 @@ void Controller::controllerGTCReset(void)
     OF_x_tr = 0.0;
     OF_y_tr = 0.0;
 
-
-    t = 0;
-    // execute_traj = false;
-
+    // ROS SPECIFIC VALUES
+    _CTRL->_impact_flag = false;
+    _CTRL->_slowdown_type = 0;
+    _CTRL->adjustSimSpeed(_CTRL->_SIM_SPEED);
 
 
 
 
 }
 
-void Controller::GTC_Command(const crazyflie_msgs::RLCmd::ConstPtr &msg)
+bool controllerGTCTest(void)
+{
+    return true;
+}
+
+void GTC_Command(setpoint_t *setpoint, Controller* _CTRL)
 {   
-    // CREATE CMD VECTOR AND VALS FROM SUBSCRIBED MESSAGE
-    int cmd_type = msg->cmd_type;                       // Read cmd type from incoming message
-    const geometry_msgs::Point cmd_vals = msg->cmd_vals;    // Construct vector from cmd values
-    float cmd_flag = msg->cmd_flag;                     // Construct flag from cmd flag value
-
-    
-    float eulx = 0.0;
-    float euly = 0.0;
-    float eulz = 0.0;
-
-    switch(cmd_type){
-
+    switch(setpoint->cmd_type){
         case 0: // Reset
-        {
-            controllerGTCReset();
+            controllerGTCReset(_CTRL);
             break;
-        }
+
 
         case 1: // Position
-        {
-            x_d.x = cmd_vals.x;
-            x_d.y = cmd_vals.y;
-            x_d.z = cmd_vals.z;
-            kp_xf = cmd_flag;
+            x_d.x = setpoint->cmd_val1;
+            x_d.y = setpoint->cmd_val2;
+            x_d.z = setpoint->cmd_val3;
+            kp_xf = setpoint->cmd_flag;
             break;
-        }
+
+
         case 2: // Velocity
-        {
-            v_d.x = cmd_vals.x;
-            v_d.y = cmd_vals.y;
-            v_d.z = cmd_vals.z;
-            kd_xf = cmd_flag;
+            v_d.x = setpoint->cmd_val1;
+            v_d.y = setpoint->cmd_val2;
+            v_d.z = setpoint->cmd_val3;
+            kd_xf = setpoint->cmd_flag;
             break;
-        }
+
+
         case 3: // Acceleration
-        {
-            a_d.x = cmd_vals.x;
-            a_d.y = cmd_vals.y;
-            a_d.z = cmd_vals.z;
-            // _kp_xf = cmd_flag;
+            a_d.x = setpoint->cmd_val1;
+            a_d.y = setpoint->cmd_val2;
+            a_d.z = setpoint->cmd_val3;
             break;
-        }
+
         case 4: // Tumble-Detection
-        {
-            tumble_detection = (bool)cmd_flag;
+            tumble_detection = setpoint->cmd_flag;
             break;
-        }
+
         case 5: // Hard Set All Motorspeeds to Zero
             motorstop_flag = true;
             break;
+        
         case 6: // Update Controller Gains
             
             ros::param::get("P_kp_xy",P_kp_xy);
@@ -131,29 +132,28 @@ void Controller::GTC_Command(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 
         case 7: // Execute Moment-Based Flip
 
-            M_d.x = cmd_vals.x*1e-3;    // [N*m]
-            M_d.y = cmd_vals.y*1e-3;    // [N*m]
-            M_d.z = cmd_vals.z*1e-3;    // [N*m]
+            M_d.x = setpoint->cmd_val1*1e-3;
+            M_d.y = setpoint->cmd_val2*1e-3;
+            M_d.z = setpoint->cmd_val3*1e-3;
 
-            Moment_flag = (bool)cmd_flag;
+            Moment_flag = (bool)setpoint->cmd_flag;
             break;
 
         case 8: // Arm Policy Maneuver
+            RREV_thr = setpoint->cmd_val1;
+            G1 = setpoint->cmd_val2;
+            G2 = setpoint->cmd_val3;
 
-            RREV_thr = cmd_vals.x;
-            G1 = cmd_vals.y;
-            G2 = cmd_vals.z;
-
-            policy_armed_flag = (bool)cmd_flag;
+            policy_armed_flag = setpoint->cmd_flag;
 
             break;
-
+            
         case 9: // Trajectory Values
 
-            s_0 = cmd_vals.x;
-            v = cmd_vals.y;
-            a = cmd_vals.z;
-            traj_type = cmd_flag;
+            s_0 = setpoint->cmd_val1;
+            v = setpoint->cmd_val2;
+            a = setpoint->cmd_val3;
+            traj_type = setpoint->cmd_flag;
 
             t = 0.0f; // Reset t
             T = (a+fsqr(v))/(a*v); // Find trajectory manuever length [s]
@@ -166,22 +166,10 @@ void Controller::GTC_Command(const crazyflie_msgs::RLCmd::ConstPtr &msg)
             }
 
             break;
-
-        case 11: // Enable/Disable Stickyfoot
-        {
-            float sticky_cmd[4] = {-(float)cmd_type,cmd_flag,0,0};
-            // This stickyfoot socket communication piggy-backs off of the motorspeed  
-            // message & activates plugin when first number is negative but defines value
-            // based off of the second number
-            sendto(Ctrl_Mavlink_socket, sticky_cmd, sizeof(sticky_cmd),0, (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len);
-            break;
-        }
-
     }
-
 }
 
-void Controller::controllerGTCTraj()
+void controllerGTCTraj()
 {
     if(t<=v/a)
     {
@@ -199,7 +187,7 @@ void Controller::controllerGTCTraj()
         a_d.z = 0.0f;
     }
 
-    // COMPLETE POSITION TRAJECTORY
+    // // COMPLETE POSITION TRAJECTORY
     // if(v/a <= t && t < (T-v/a))
     // {
     //     x_d.z = v*t - fsqr(v)/(2.0f*a) + s_0;
@@ -220,37 +208,28 @@ void Controller::controllerGTCTraj()
     
 }
 
-double X1_array[3] = {-1.6974,  0.4014, -1.1264}; // 4x1
-nml_mat *X = nml_mat_from(3, 1, 3, X1_array);
 
 
-
-void Controller::controllerGTC()
+void controllerGTC(control_t *control, setpoint_t *setpoint,
+                                         const sensorData_t *sensors,
+                                         const state_t *state,
+                                         const uint32_t tick,
+                                         Controller* _CTRL) 
 {
+    if (RATE_DO_EXECUTE(RATE_500_HZ, tick)) {
 
-    
-    // =========== ROS Definitions =========== //
-    crazyflie_msgs::CtrlData ctrl_msg;
-    ros::Rate rate(500);
-    unsigned int t_step = 0; // t_step counter
-       
-    while(_isRunning)
-    {
-        
-        /* REPLACED BY ROS TOPIC CALLBACKS (EXPERIMENT FUNCS.)
-        if (setpoint->GTC_cmd_rec == true){
+        if (setpoint->GTC_cmd_rec == true)
+            {
                 
-                GTC_Command(setpoint);
+                GTC_Command(setpoint, _CTRL);
                 setpoint->GTC_cmd_rec = false;
-        }
+            }
 
         if (errorReset){
-            controllerGTCReset();
+            controllerGTCReset(_CTRL);
             errorReset = false;
-        } 
-        */
+            }
 
-        
         if(execute_traj){
             controllerGTCTraj();
         }
@@ -267,24 +246,31 @@ void Controller::controllerGTC()
         Kd_R = mkvec(R_kd_xy,R_kd_xy,R_kd_z);
         Ki_R = mkvec(R_ki_xy,R_ki_xy,R_ki_z);
 
-
         // =========== STATE DEFINITIONS =========== //
-        statePos = mkvec(_position.x,_position.y,_position.z);                      // [m]
-        stateVel = mkvec(_velocity.x,_velocity.y,_velocity.z);                      // [m]
-        stateOmega = mkvec(_omega.x,_omega.y,_omega.z);   // [rad/s]
-        stateQuat = mkquat(_quaternion.x,_quaternion.y,_quaternion.z,_quaternion.w);
+        statePos = mkvec(state->position.x, state->position.y, state->position.z);                      // [m]
+        stateVel = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);                      // [m]
+        stateOmega = mkvec(radians(sensors->gyro.x), radians(sensors->gyro.y), radians(sensors->gyro.z));   // [rad/s]
+        stateQuat = mkquat(state->attitudeQuaternion.x,
+                        state->attitudeQuaternion.y,
+                        state->attitudeQuaternion.z,
+                        state->attitudeQuaternion.w);
 
-        // =========== SENSOR DATA =========== // 
-        RREV = _RREV;
-        OF_x = _OF_x;
-        OF_y = _OF_y;
 
-        // EULER ANGLES EXPRESSED IN YZX NOTATION
-        stateEul = quat2eul(stateQuat);
-        stateEul.x = degrees(stateEul.x);
-        stateEul.y = degrees(stateEul.y);
-        stateEul.z = degrees(stateEul.z);
+        RREV = stateVel.z/(h_ceiling - statePos.z);
+        OF_x = stateVel.y/(h_ceiling - statePos.z);
+        OF_y = stateVel.x/(h_ceiling - statePos.z);
 
+        X->data[0][0] = RREV;
+        X->data[1][0] = OF_y;
+        X->data[2][0] = (h_ceiling - statePos.z); // d_ceiling [m]
+
+        
+
+
+        // =========== STATE SETPOINTS =========== //
+        // x_d = mkvec(setpoint->position.x,setpoint->position.y,setpoint->position.z);             // Pos-desired [m]
+        // v_d = mkvec(setpoint->velocity.x, setpoint->velocity.y, setpoint->velocity.z);             // Vel-desired [m/s]
+        // a_d = mkvec(setpoint->acceleration.x, setpoint->acceleration.y, setpoint->acceleration.z); // Acc-desired [m/s^2]
 
         // =========== STATE SETPOINTS =========== //
     
@@ -327,7 +313,6 @@ void Controller::controllerGTC()
         temp1_v = vscl(kd_xf,temp1_v);
         temp3_v = veltmul(vneg(Ki_p), e_PI);
         P_effort = vadd3(temp1_v,temp2_v,temp3_v);
-
         temp1_v = vscl(m*g, e_3); // Feed-forward term
         temp2_v = vscl(m, a_d);
 
@@ -388,19 +373,11 @@ void Controller::controllerGTC()
         F_thrust = vdot(F_thrust_ideal, b3);    // Project ideal thrust onto b3 vector [N]
         M = vadd(R_effort,Gyro_dyn);            // Control moments [Nm]
 
-
-
-
-        // float y = Controller::NN_Policy(X,W,b);
-        // cout << y << endl;
-
-
-        
         // =========== THRUST AND MOMENTS [FORCE NOTATION] =========== // 
         if(!tumbled){
             if(policy_armed_flag == true){
                 
-                switch(_POLICY_TYPE)
+                switch(POLICY_TYPE)
                 {
                     case RL:
                     {
@@ -409,7 +386,7 @@ void Controller::controllerGTC()
                             flip_flag = true;  
 
                             // UPDATE AND RECORD FLIP VALUES
-                            t_flip = ros::Time::now();
+                            _CTRL->_t_flip = ros::Time::now();
                             statePos_tr = statePos;
                             stateVel_tr = stateVel;
                             stateQuat_tr = stateQuat;
@@ -427,29 +404,31 @@ void Controller::controllerGTC()
                     }
 
                     case NN:
-                    {
-                        
-                        // if((bool)NN_Flip(X) == true && onceFlag = false)
-                        // {   
-                        //     onceFlag = true;
-                        //     flip_flag = true;
+                    {   
+                        float flip = NN_Flip(X,&Scaler_Flip,W_flip,b_flip);
+                        printf("Flip: %.5f\n",flip);
 
-                        //     // UPDATE AND RECORD FLIP VALUES
-                        //     t_flip = ros::Time::now();
-                        //     statePos_tr = statePos;
-                        //     stateVel_tr = stateVel;
-                        //     stateQuat_tr = stateQuat;
-                        //     stateOmega_tr = stateOmega;
+                        if(flip >= 0.5 && onceFlag == false)
+                        {   
+                            onceFlag = true;
+                            flip_flag = true;
 
-                        //     OF_y_tr = OF_y;
-                        //     OF_x_tr = OF_x;
-                        //     RREV_tr = RREV;
+                            // UPDATE AND RECORD FLIP VALUES
+                            _CTRL->_t_flip = ros::Time::now();
+                            statePos_tr = statePos;
+                            stateVel_tr = stateVel;
+                            stateQuat_tr = stateQuat;
+                            stateOmega_tr = stateOmega;
+
+                            OF_y_tr = OF_y;
+                            OF_x_tr = OF_x;
+                            RREV_tr = RREV;
 
 
-                        //     M_d.x = 0.0f;
-                        //     M_d.y = -NN_Policy(X)*1e-3;
-                        //     M_d.z = 0.0f;
-                        // }
+                            M_d.x = 0.0f;
+                            M_d.y = -NN_Policy(X,&Scaler_Policy,W_policy,b_policy)*1e-3;
+                            M_d.z = 0.0f;
+                        }
 
                         break;
                     }
@@ -466,7 +445,7 @@ void Controller::controllerGTC()
 
                     // RECORD MOTOR THRUST TYPES AT FLIP
 
-                    F_thrust_flip = F_thrust;
+                    F_thrus_t_flip = F_thrust;
                     M_x_flip = M.x/2.0f;
                     M_y_flip = M.y/2.0f;
                     M_z_flip = M.z/2.0f;
@@ -499,20 +478,6 @@ void Controller::controllerGTC()
             M.z = 0.0f;
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         // =========== CONVERT THRUSTS AND MOMENTS TO PWM =========== // 
         f_thrust_g = F_thrust/4.0f*Newton2g;
         f_roll_g = M.x/(4.0f*dp)*Newton2g;
@@ -520,7 +485,6 @@ void Controller::controllerGTC()
         f_yaw_g = M.z/(4.0*c_tf)*Newton2g;
 
         f_thrust_g = clamp(f_thrust_g,0.0,f_MAX*0.8);    // Clamp thrust to prevent control saturation
-
 
         if(motorstop_flag){ // Cutoff all motor values
             f_thrust_g = 0.0f;
@@ -535,56 +499,88 @@ void Controller::controllerGTC()
         M3_pwm = limitPWM(thrust2PWM(f_thrust_g - f_roll_g + f_pitch_g + f_yaw_g));
         M4_pwm = limitPWM(thrust2PWM(f_thrust_g - f_roll_g - f_pitch_g - f_yaw_g));
 
-        MS1 = sqrt(PWM2thrust(M1_pwm)*g2Newton/kf);
-        MS2 = sqrt(PWM2thrust(M2_pwm)*g2Newton/kf);
-        MS3 = sqrt(PWM2thrust(M3_pwm)*g2Newton/kf);
-        MS4 = sqrt(PWM2thrust(M4_pwm)*g2Newton/kf);
+        MS1 = (uint16_t)sqrt(PWM2thrust(M1_pwm)*g2Newton/kf);
+        MS2 = (uint16_t)sqrt(PWM2thrust(M2_pwm)*g2Newton/kf);
+        MS3 = (uint16_t)sqrt(PWM2thrust(M3_pwm)*g2Newton/kf);
+        MS4 = (uint16_t)sqrt(PWM2thrust(M4_pwm)*g2Newton/kf);
 
-        motorspeed[0] = MS1;
-        motorspeed[1] = MS2;
-        motorspeed[2] = MS3;
-        motorspeed[3] = MS4;
+
         
+        // ============================
+        //          C++ CODE
+        // ============================
+       
 
-        int len = sendto(Ctrl_Mavlink_socket, motorspeed, sizeof(motorspeed),0, // Send motorspeeds to Gazebo -> gazebo_motor_model
-                (struct sockaddr*)&addr_Mavlink, addr_Mavlink_len); 
+        _CTRL->_MS_msg.MotorSpeeds = {MS1,MS2,MS3,MS4};
+        _CTRL->_MS_Publisher.publish(_CTRL->_MS_msg);
 
-
-        // =============================
-        //     END OF CONTROLLER MATH
-        // =============================
-
-
-
+        
         // SIMULATION SLOWDOWN
-        if(_LANDING_SLOWDOWN_FLAG==true){
+        if(_CTRL->_LANDING_SLOWDOWN_FLAG==true){
 
             // WHEN CLOSE TO THE CEILING REDUCE SIM SPEED
-            if(_H_CEILING-statePos.z<=0.5 && slowdown_type == 0){
+            if(_CTRL->_H_CEILING-statePos.z<=0.5 && _CTRL->_slowdown_type == 0){
                 
-                Controller::adjustSimSpeed(_SIM_SLOWDOWN_SPEED);
-                slowdown_type = 1;
+                _CTRL->adjustSimSpeed(_CTRL->_SIM_SLOWDOWN_SPEED);
+                _CTRL->_slowdown_type = 1;
 
             }
 
             // IF IMPACTED OR MISSED CEILING, INCREASE SIM SPEED TO DEFAULT
-            if(impact_flag == true && slowdown_type == 1)
+            if(_CTRL->_impact_flag == true && _CTRL->_slowdown_type == 1)
             {
-                Controller::adjustSimSpeed(_SIM_SPEED);
-                slowdown_type = 2;
+                _CTRL->adjustSimSpeed(_CTRL->_SIM_SPEED);
+                _CTRL->_slowdown_type = 2;
             }
-            else if(stateVel.z <= -0.5 && slowdown_type == 1){
-                Controller::adjustSimSpeed(_SIM_SPEED);
-                slowdown_type = 2;
+            else if(stateVel.z <= -0.5 && _CTRL->_slowdown_type == 1){
+                _CTRL->adjustSimSpeed(_CTRL->_SIM_SPEED);
+                _CTRL->_slowdown_type = 2;
             }
 
         }
 
 
+
+        _CTRL->_ctrl_msg.RREV = RREV;
+        _CTRL->_ctrl_msg.OF_y = OF_y;
+        _CTRL->_ctrl_msg.OF_x = OF_x;
+
+        // FLIP INFO
+        _CTRL->_ctrl_msg.flip_flag = flip_flag;
+        _CTRL->_ctrl_msg.RREV_tr = RREV_tr;
+        _CTRL->_ctrl_msg.OF_x_tr = OF_x_tr;
+        _CTRL->_ctrl_msg.OF_y_tr = OF_y_tr;
+        _CTRL->_ctrl_msg.FM_flip = {F_thrus_t_flip,M_x_flip*1.0e3,M_y_flip*1.0e3,M_z_flip*1.0e3};
+
+
+        _CTRL->_ctrl_msg.Pose_tr.header.stamp = _CTRL->_t_flip;             
+
+        _CTRL->_ctrl_msg.Pose_tr.pose.position.x = statePos_tr.x;
+        _CTRL->_ctrl_msg.Pose_tr.pose.position.y = statePos_tr.y;
+        _CTRL->_ctrl_msg.Pose_tr.pose.position.z = statePos_tr.z;
+
+        _CTRL->_ctrl_msg.Pose_tr.pose.orientation.x = stateQuat_tr.x;
+        _CTRL->_ctrl_msg.Pose_tr.pose.orientation.y = stateQuat_tr.y;
+        _CTRL->_ctrl_msg.Pose_tr.pose.orientation.z = stateQuat_tr.z;
+        _CTRL->_ctrl_msg.Pose_tr.pose.orientation.w = stateQuat_tr.w;
+
+        _CTRL->_ctrl_msg.Twist_tr.linear.x = stateVel_tr.x;
+        _CTRL->_ctrl_msg.Twist_tr.linear.y = stateVel_tr.y;
+        _CTRL->_ctrl_msg.Twist_tr.linear.z = stateVel_tr.z;
+
+        _CTRL->_ctrl_msg.Twist_tr.angular.x = stateOmega_tr.x;
+        _CTRL->_ctrl_msg.Twist_tr.angular.y = stateOmega_tr.y;
+        _CTRL->_ctrl_msg.Twist_tr.angular.z = stateOmega_tr.z;
+
+        _CTRL->_ctrl_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
+        _CTRL->_ctrl_msg.MS_PWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
+        _CTRL->_CTRL_Publisher.publish(_CTRL->_ctrl_msg);
+
         // DATA HANDLING
-        // if (t_step%50 == 0){ // General Debugging output
+        // if (tick%5 == 0){ // General Debugging output
+        // cout << fixed;
         // cout << setprecision(4) << endl <<
-        // "t: " << _t << "\tCmd: "  << endl << 
+        // "t: " << _CTRL->_t << "\tCmd: "  << endl << 
         // endl <<
 
         // "RREV_thr: " << RREV_thr << "\tG1: " << G1 << "\tG2: " << G2 << endl << 
@@ -601,10 +597,10 @@ void Controller::controllerGTC()
         // endl <<
 
         // setprecision(0) <<
-        // "Policy_armed: " << policy_armed_flag <<  "\tFlip_flag: " << flip_flag << "\tImpact_flag: " << impact_flag << endl <<
+        // "Policy_armed: " << policy_armed_flag <<  "\tFlip_flag: " << flip_flag << "\t_impact_flag: " << _CTRL->_impact_flag << endl <<
         // "Tumble Detection: " << tumble_detection << "\t\tTumbled: " << tumbled << endl <<
-        // "kp_xf: " << kp_xf << " \tkd_xf: " << kd_xf << endl <<
-        // "Slowdown_type: " << slowdown_type << endl << 
+        // "kp_xf: " << kp_xf << " \tkd_xf: " << kp_xf << endl <<
+        // "_slowdown_type: " << _CTRL->_slowdown_type << endl << 
         // endl <<
         
         // setprecision(3) <<
@@ -652,61 +648,19 @@ void Controller::controllerGTC()
 
         // "=============== " << endl; 
         // }
-        t_step++;
 
-
-        
-        
-        
-
-        ctrl_msg.RREV = RREV;
-        ctrl_msg.OF_y = OF_y;
-        ctrl_msg.OF_x = OF_x;
-
-        // FLIP INFO
-        ctrl_msg.flip_flag = flip_flag;
-        ctrl_msg.RREV_tr = RREV_tr;
-        ctrl_msg.OF_x_tr = OF_x_tr;
-        ctrl_msg.OF_y_tr = OF_y_tr;
-        ctrl_msg.FM_flip = {F_thrust_flip,M_x_flip*1.0e3,M_y_flip*1.0e3,M_z_flip*1.0e3};
-
-
-        ctrl_msg.Pose_tr.header.stamp = t_flip;             
-
-        ctrl_msg.Pose_tr.pose.position.x = statePos_tr.x;
-        ctrl_msg.Pose_tr.pose.position.y = statePos_tr.y;
-        ctrl_msg.Pose_tr.pose.position.z = statePos_tr.z;
-
-        ctrl_msg.Pose_tr.pose.orientation.x = stateQuat_tr.x;
-        ctrl_msg.Pose_tr.pose.orientation.y = stateQuat_tr.y;
-        ctrl_msg.Pose_tr.pose.orientation.z = stateQuat_tr.z;
-        ctrl_msg.Pose_tr.pose.orientation.w = stateQuat_tr.w;
-
-        ctrl_msg.Twist_tr.linear.x = stateVel_tr.x;
-        ctrl_msg.Twist_tr.linear.y = stateVel_tr.y;
-        ctrl_msg.Twist_tr.linear.z = stateVel_tr.z;
-
-        ctrl_msg.Twist_tr.angular.x = stateOmega_tr.x;
-        ctrl_msg.Twist_tr.angular.y = stateOmega_tr.y;
-        ctrl_msg.Twist_tr.angular.z = stateOmega_tr.z;
-
-        ctrl_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
-        ctrl_msg.MS_PWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
-
-
-
-        ctrl_Publisher.publish(ctrl_msg);
-        rate.sleep();
     }
+    
 }
+
 
 
 int main(int argc, char **argv)
 {   
+    
     ros::init(argc, argv,"controller_node");
     ros::NodeHandle nh;
     Controller controller = Controller(&nh);
-    controller.controllerGTCReset();
-    controller.Load();
+
     ros::spin();
 }

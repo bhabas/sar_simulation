@@ -1017,7 +1017,28 @@ static inline struct vec quat2eul(struct quat q) {
 	return eul;
 }
 
+static inline void printvec(struct vec v){
+	printf("%.4f, %.4f, %.4f\n", (double)v.x, (double)v.y, (double)v.z);
+	return;
+}
 
+static inline void printquat(struct quat q){
+	printf("%.4f, %.4f, %.4f %.4f\n", (double)q.x, (double)q.y, (double)q.z, (double)q.w);
+	return;
+}
+
+static inline void printmat(struct mat33 m){
+    struct vec vrow_0 = mrow(m,0);
+    struct vec vrow_1 = mrow(m,1);
+    struct vec vrow_2 = mrow(m,2);
+
+    printvec(vrow_0);
+    printvec(vrow_1);
+    printvec(vrow_2);
+	printf("\n");
+
+	return;
+}
 
 
 // Overall TODO: lines? segments? planes? axis-aligned boxes? spheres?

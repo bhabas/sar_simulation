@@ -70,7 +70,9 @@
         "typeinfo": "c",
         "bit": "c",
         "nml_util.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "nml.h": "c",
+        "*.ipp": "cpp"
     },
     "python.analysis.extraPaths": [
         "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_rl/src/"

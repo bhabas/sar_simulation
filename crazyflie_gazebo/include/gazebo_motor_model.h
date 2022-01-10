@@ -35,8 +35,10 @@
 #include "MotorSpeed.pb.h"
 #include "Float.pb.h"
 
-
 #include "common.h"
+
+#include <ros/ros.h>
+#include "crazyflie_msgs/MS.h"
 
 
 namespace turning_direction {
@@ -50,16 +52,8 @@ static const std::string kDefaultNamespace = "";
 static const std::string kDefaultCommandSubTopic = "/gazebo/command/motor_speed";
 static const std::string kDefaultMotorFailureNumSubTopic = "/gazebo/motor_failure_num";
 static const std::string kDefaultMotorVelocityPubTopic = "/motor_speed";
-// std::string wind_sub_topic_ = "/world_wind";
 
-typedef const boost::shared_ptr<const mav_msgs::msgs::CommandMotorSpeed> CommandMotorSpeedPtr;
-// typedef const boost::shared_ptr<const physics_msgs::msgs::Wind> WindPtr;
 
-/*
-// Protobuf test
-typedef const boost::shared_ptr<const mav_msgs::msgs::MotorSpeed> MotorSpeedPtr;
-static const std::string kDefaultMotorTestSubTopic = "motors";
-*/
 
 // Set the max_force_ to the max double value. The limitations get handled by the FirstOrderFilter.
 static constexpr double kDefaultMaxForce = std::numeric_limits<double>::max();
@@ -101,7 +95,6 @@ class GazeboMotorModel : public MotorModel, public ModelPlugin {
 
   virtual void InitializeParams();
   virtual void Publish();
-  //void testProto(MotorSpeedPtr &msg);
  protected:
   virtual void UpdateForcesAndMoments();
   /// \brief A function to check the motor_Failure_Number_ and stimulate motor fail
@@ -109,6 +102,8 @@ class GazeboMotorModel : public MotorModel, public ModelPlugin {
   virtual void UpdateMotorFail();
   virtual void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
   virtual void OnUpdate(const common::UpdateInfo & /*_info*/);
+  void MotorSpeedCallback(const crazyflie_msgs::MS::ConstPtr &msg);
+
 
  private:
   std::string command_sub_topic_;
@@ -158,15 +153,13 @@ class GazeboMotorModel : public MotorModel, public ModelPlugin {
   boost::thread callback_queue_thread_;
   void QueueThread();
   std_msgs::msgs::Float turning_velocity_msg_;
-  void VelocityCallback(CommandMotorSpeedPtr &rot_velocities);
   void MotorFailureCallback(const boost::shared_ptr<const msgs::Int> &fail_msg);  /*!< Callback for the motor_failure_sub_ subscriber */
   // void WindVelocityCallback(const boost::shared_ptr<const physics_msgs::msgs::Wind> &msg);
-
+  
   std::unique_ptr<FirstOrderFilter<double>>  rotor_velocity_filter_;
-/*
-  // Protobuf test
-  std::string motor_test_sub_topic_;
-  transport::SubscriberPtr motor_sub_;
-*/
+  
+  ros::NodeHandle n;
+  ros::Subscriber MS_Subscriber = n.subscribe<crazyflie_msgs::MS>("/MS",1,&GazeboMotorModel::MotorSpeedCallback,this,ros::TransportHints().tcpNoDelay());
+
 };
 }

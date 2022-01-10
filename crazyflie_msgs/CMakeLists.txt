@@ -59,6 +59,7 @@ add_message_files(
   ImpactData.msg
   PadConnect.msg
   RLConvg.msg
+  MS.msg
 )
 
 ## Generate services in the 'srv' folder

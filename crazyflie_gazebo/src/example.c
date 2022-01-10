@@ -45,9 +45,15 @@ int main()
 {   
     
 
-    Scaler Policy_Scaler;
+    // Scaler Policy_Scaler;
 
-    readCSV(&Policy_Scaler);
+    // readCSV(&Policy_Scaler);
+
+    char* homedir = getenv("HOME");
+    // char* str = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/Scaler_Flip_Classifier.csv";
+    // strcat(homedir,str);
+
+    printf("Path: %s",homedir);
 
     
 
