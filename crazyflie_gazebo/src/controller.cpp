@@ -36,6 +36,16 @@ void controllerGTCReset(Controller* _CTRL)
     t = 0;
     execute_traj = false;
 
+    // RESET LOGGED FLIP VALUES
+    statePos_tr = vzero();
+    stateVel_tr = vzero();
+    stateQuat_tr = mkquat(0.0f,0.0f,0.0f,1.0f);
+    stateOmega_tr = vzero();
+
+    RREV_tr = 0.0;
+    OF_x_tr = 0.0;
+    OF_y_tr = 0.0;
+
     // ROS SPECIFIC VALUES
     _CTRL->impact_flag = false;
     _CTRL->slowdown_type = 0;

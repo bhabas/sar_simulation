@@ -82,7 +82,7 @@ class Controller
             // ENVIRONMENT SENSORS
             viconState_Subscriber = nh->subscribe("/env/vicon_state",1,&Controller::vicon_Callback,this,ros::TransportHints().tcpNoDelay());
             ceilingFT_Subcriber = nh->subscribe("/env/ceiling_force_sensor",5,&Controller::ceilingFT_Callback,this,ros::TransportHints().tcpNoDelay());
-            // RLData_Subscriber = nh->subscribe("/rl_data",5,&Controller::RLData_Callback,this,ros::TransportHints().tcpNoDelay());
+            RLData_Subscriber = nh->subscribe("/rl_data",5,&Controller::RLData_Callback,this,ros::TransportHints().tcpNoDelay());
 
 
             // SIMULATION SETTINGS FROM CONFIG FILE
@@ -172,6 +172,8 @@ class Controller
         void CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
         void ceilingFT_Callback(const crazyflie_msgs::ImpactData::ConstPtr &msg);
         void adjustSimSpeed(float speed_mult);
+        void RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg);
+        
 
 
 
@@ -184,6 +186,8 @@ class Controller
 
         ros::ServiceClient SimSpeed_Client;
         ros::Subscriber ceilingFT_Subcriber;
+        ros::Subscriber RLData_Subscriber;
+
 
 
 
@@ -543,6 +547,15 @@ void Controller::adjustSimSpeed(float speed_mult)
 void Controller::ceilingFT_Callback(const crazyflie_msgs::ImpactData::ConstPtr &msg)
 {
     impact_flag = msg->impact_flag;
+}
+
+void Controller::RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){
+
+    if (msg->reset_flag == true){
+
+        controllerGTCReset(this);
+
+    }
 }
 
 void Controller::startController()
