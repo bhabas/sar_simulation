@@ -163,11 +163,11 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                 ##          Rollout 
                 # ============================
 
-                # try:
-                #     rospy.wait_for_message('/ctrl_data',CtrlData,timeout=2.0) # Wait to receive ctrl pub to run before continuing
-                # except ROSException:
-                #     print("No ctrl message received")
-                #     repeat_run = True
+                try:
+                    rospy.wait_for_message('/ctrl_data',CtrlData,timeout=2.0) # Wait to receive ctrl pub to run before continuing
+                except ROSException:
+                    print("No ctrl message received")
+                    repeat_run = True
                     
 
                 env.step('pos',ctrl_flag=0)                     # Turn off pos control

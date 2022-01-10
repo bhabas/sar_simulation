@@ -32,6 +32,8 @@ void controllerGTCReset(Controller* _CTRL)
     Moment_flag = false;
     policy_armed_flag = false;
     flip_flag = false;
+    onceFlag = false;
+
 
     t = 0;
     execute_traj = false;
@@ -360,42 +362,85 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
         // =========== THRUST AND MOMENTS [FORCE NOTATION] =========== // 
         if(!tumbled){
-            
             if(policy_armed_flag == true){
                 
-                if(RREV >= RREV_thr && flip_flag == false){
+                switch(POLICY_TYPE)
+                {
+                    case RL:
+                    {
+                        if(RREV >= RREV_thr && onceFlag == false){
+                            onceFlag = true;
+                            flip_flag = true;  
 
-                    flip_flag = true;
+                            // UPDATE AND RECORD FLIP VALUES
+                            _CTRL->t_flip = ros::Time::now();
+                            statePos_tr = statePos;
+                            stateVel_tr = stateVel;
+                            stateQuat_tr = stateQuat;
+                            stateOmega_tr = stateOmega;
 
-                    // UPDATE, RECORD, AND COMPRESS STATE VALUES AT FLIP TRIGGER
-                    t_flip = ros::Time::now();
-                    statePos_tr = statePos;
-                    stateVel_tr = stateVel;
-                    stateQuat_tr = stateQuat;
-                    stateOmega_tr = stateOmega;
+                            OF_y_tr = OF_y;
+                            OF_x_tr = OF_x;
+                            RREV_tr = RREV;
+                        
+                            M_d.x = 0.0f;
+                            M_d.y = -G1*1e-3;
+                            M_d.z = 0.0f;
+                        }
+                        break;
+                    }
 
-                    OF_y_tr = OF_y;
-                    OF_x_tr = OF_x;
-                    RREV_tr = RREV;
+                    case NN:
+                    {
+                        
+                        // if((bool)NN_Flip(X) == true && onceFlag = false)
+                        // {   
+                        //     onceFlag = true;
+                        //     flip_flag = true;
+
+                        //     // UPDATE AND RECORD FLIP VALUES
+                        //     t_flip = ros::Time::now();
+                        //     statePos_tr = statePos;
+                        //     stateVel_tr = stateVel;
+                        //     stateQuat_tr = stateQuat;
+                        //     stateOmega_tr = stateOmega;
+
+                        //     OF_y_tr = OF_y;
+                        //     OF_x_tr = OF_x;
+                        //     RREV_tr = RREV;
+
+
+                        //     M_d.x = 0.0f;
+                        //     M_d.y = -NN_Policy(X)*1e-3;
+                        //     M_d.z = 0.0f;
+                        // }
+
+                        break;
+                    }
 
                 }
 
-                if(flip_flag == true){
-                    M_d.x = 0.0f;
-                    M_d.y = -G1*1e-3;
-                    M_d.z = 0.0f;
-
-                    M = vscl(2.0f,M_d); // Need to double moment to ensure it survives the PWM<0 cutoff
+                
+                if(flip_flag == true)
+                {
+                
+                    // My->Front rotors(+) & Rear rotors(-) = My->Double Front rotors(+) effort
+                    M = vscl(2.0f,M_d); 
                     F_thrust = 0.0f;
+
+                    // RECORD MOTOR THRUST TYPES AT FLIP
 
                     F_thrust_flip = F_thrust;
                     M_x_flip = M.x/2.0f;
                     M_y_flip = M.y/2.0f;
                     M_z_flip = M.z/2.0f;
-
                 }
+
+                
+
             }
-            else if(Moment_flag == true){
+            else if (Moment_flag == true){
+
                 M.x = M_d.x;
                 M.y = M_d.y;
                 M.z = M_d.z;
@@ -408,8 +453,9 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                 F_thrust = F_thrust;
                 M = M;
             }
+
         }
-        else if(tumbled){
+        else if(tumbled && tumble_detection == true){
             // consolePrintf("System Tumbled: \n");
             F_thrust = 0.0f;
             M.x = 0.0f;
@@ -492,7 +538,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         _CTRL->ctrl_msg.FM_flip = {F_thrust_flip,M_x_flip*1.0e3,M_y_flip*1.0e3,M_z_flip*1.0e3};
 
 
-        _CTRL->ctrl_msg.Pose_tr.header.stamp = t_flip;             
+        _CTRL->ctrl_msg.Pose_tr.header.stamp = _CTRL->t_flip;             
 
         _CTRL->ctrl_msg.Pose_tr.pose.position.x = statePos_tr.x;
         _CTRL->ctrl_msg.Pose_tr.pose.position.y = statePos_tr.y;
@@ -539,7 +585,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         "Policy_armed: " << policy_armed_flag <<  "\tFlip_flag: " << flip_flag << "\tImpact_flag: " << _CTRL->impact_flag << endl <<
         "Tumble Detection: " << tumble_detection << "\t\tTumbled: " << tumbled << endl <<
         "kp_xf: " << kp_xf << " \tkd_xf: " << kp_xf << endl <<
-        "Slowdown_type: " << "slowdown_type" << endl << 
+        "Slowdown_type: " << _CTRL->slowdown_type << endl << 
         endl <<
         
         setprecision(3) <<

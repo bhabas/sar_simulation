@@ -31,6 +31,8 @@
 #include "nml.h"
 
 using namespace std;
+class Controller;
+
 
 
 #define PWM_MAX 60000
@@ -62,190 +64,6 @@ float R_kd_z = 0.002f;
 float R_ki_z = 0.000f;
 float i_range_R_z = 0.5f;
 
-
-class Controller
-{
-    public:
-        // CONSTRUCTOR TO START PUBLISHERS AND SUBSCRIBERS (Similar to Python's __init__() )
-        Controller(ros::NodeHandle *nh){
-            
-            // BODY SENSORS
-            imu_Subscriber = nh->subscribe("/cf1/imu",1,&Controller::imu_Callback,this,ros::TransportHints().tcpNoDelay());
-            OF_Subscriber = nh->subscribe("/cf1/OF_sensor",1,&Controller::OF_Callback,this,ros::TransportHints().tcpNoDelay()); 
-
-            // COMMANDS AND INFO
-            CMD_Subscriber = nh->subscribe("/rl_ctrl",50,&Controller::CMD_Callback,this,ros::TransportHints().tcpNoDelay());
-            ctrl_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/ctrl_data",1);
-            MS_Publisher = nh->advertise<crazyflie_msgs::MS>("/MS",1);
-            SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
-
-            // ENVIRONMENT SENSORS
-            viconState_Subscriber = nh->subscribe("/env/vicon_state",1,&Controller::vicon_Callback,this,ros::TransportHints().tcpNoDelay());
-            ceilingFT_Subcriber = nh->subscribe("/env/ceiling_force_sensor",5,&Controller::ceilingFT_Callback,this,ros::TransportHints().tcpNoDelay());
-            RLData_Subscriber = nh->subscribe("/rl_data",5,&Controller::RLData_Callback,this,ros::TransportHints().tcpNoDelay());
-
-
-            // SIMULATION SETTINGS FROM CONFIG FILE
-            ros::param::get("/CEILING_HEIGHT",_H_CEILING);
-            ros::param::get("/LANDING_SLOWDOWN",_LANDING_SLOWDOWN_FLAG);
-            ros::param::get("/SIM_SPEED",_SIM_SPEED);
-            ros::param::get("/SIM_SLOWDOWN_SPEED",_SIM_SLOWDOWN_SPEED);
-            ros::param::get("/CF_MASS",_CF_MASS);
-            ros::param::get("/CTRL_DEBUG_SLOWDOWN", _CTRL_DEBUG_SLOWDOWN);
-            ros::param::get("/POLICY_TYPE",_POLICY_TYPE);
-            Policy_Type _POLICY_TYPE = (Policy_Type)_POLICY_TYPE; // Cast ROS param (int) to enum (Policy_Type)
-
-            // COLLECT CTRL GAINS FROM CONFIG FILE
-            ros::param::get("P_kp_xy",P_kp_xy);
-            ros::param::get("P_kd_xy",P_kd_xy);
-            ros::param::get("P_ki_xy",P_ki_xy);
-            ros::param::get("i_range_xy",i_range_xy);
-
-            ros::param::get("P_kp_z",P_kp_z);
-            ros::param::get("P_kd_z",P_kd_z);
-            ros::param::get("P_ki_z",P_ki_z);
-            ros::param::get("i_range_z",i_range_z);
-
-            ros::param::get("R_kp_xy",R_kp_xy);
-            ros::param::get("R_kd_xy",R_kd_xy);
-            ros::param::get("R_ki_xy",R_ki_xy);
-            ros::param::get("i_range_R_xy",i_range_R_xy);
-            
-            ros::param::get("R_kp_z",R_kp_z);
-            ros::param::get("R_kd_z",R_kd_z);
-            ros::param::get("R_ki_z",R_ki_z);
-            ros::param::get("i_range_R_z",i_range_R_z);
-
-            // INITIALIZE STATE AND SENSOR VALUES
-            state.position.x = 0.0f;
-            state.position.y = 0.0f;
-            state.position.z = 0.0f;
-
-            state.velocity.x = 0.0f;
-            state.velocity.y = 0.0f;
-            state.velocity.z = 0.0f;
-
-            state.attitudeQuaternion.x = 0.0f;
-            state.attitudeQuaternion.y = 0.0f;
-            state.attitudeQuaternion.z = 0.0f;
-            state.attitudeQuaternion.w = 1.0f;
-
-            state.acc.x = 0.0f;
-            state.acc.y = 0.0f;
-            state.acc.z = 0.0f;
-
-            sensorData.gyro.x = 0.0f;
-            sensorData.gyro.y = 0.0f;
-            sensorData.gyro.z = 0.0f;
-
-
-            // INITIALIZE SETPOINT VALUES
-            setpoint.position.x = 0.0f;
-            setpoint.position.y = 0.0f;
-            setpoint.position.z = 0.4f;
-
-            setpoint.velocity.x = 0.0f;
-            setpoint.velocity.y = 0.0f;
-            setpoint.velocity.z = 0.0f;
-
-            setpoint.acceleration.x = 0.0f;
-            setpoint.acceleration.y = 0.0f;
-            setpoint.acceleration.z = 0.0f;
-
-            // INITIALIZE COMMAND VALUES
-            setpoint.cmd_type = 101;
-            setpoint.cmd_val1 = 0.0f;
-            setpoint.cmd_val2 = 0.0f;
-            setpoint.cmd_val3 = 0.0f;
-            setpoint.cmd_flag = 0.0f;
-
-
-            // START CONTROLLER
-            controllerThread = std::thread(&Controller::startController, this);           
-        }
-
-        // DEFINE FUNCTION PROTOTYPES
-        void startController();
-        void vicon_Callback(const nav_msgs::Odometry::ConstPtr &msg);
-        void imu_Callback(const sensor_msgs::Imu::ConstPtr &msg);
-        void OF_Callback(const nav_msgs::Odometry::ConstPtr &msg);   
-        void CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
-        void ceilingFT_Callback(const crazyflie_msgs::ImpactData::ConstPtr &msg);
-        void adjustSimSpeed(float speed_mult);
-        void RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg);
-        
-
-
-
-
-        crazyflie_msgs::MS MS_msg;
-        crazyflie_msgs::CtrlData ctrl_msg;
-
-        ros::Publisher MS_Publisher;
-        ros::Publisher ctrl_Publisher;
-
-        ros::ServiceClient SimSpeed_Client;
-        ros::Subscriber ceilingFT_Subcriber;
-        ros::Subscriber RLData_Subscriber;
-
-
-
-
-        // SENSORS
-        ros::Subscriber viconState_Subscriber;
-        ros::Subscriber imu_Subscriber;
-        ros::Subscriber OF_Subscriber;
-        ros::Subscriber CMD_Subscriber;
-
-        // INITIALIZE ROS MSG VARIABLES
-        geometry_msgs::Point _position; 
-        geometry_msgs::Vector3 _velocity;
-        geometry_msgs::Quaternion _quaternion;
-        geometry_msgs::Vector3 _omega;
-        geometry_msgs::Vector3 _accel;
-
-        float _t;
-
-        // ROS SPECIFIC VALUES
-        int impact_flag;
-        int slowdown_type = 0;
-        float _H_CEILING = 2.10;
-        bool _LANDING_SLOWDOWN_FLAG;
-        float _SIM_SPEED; 
-        float _SIM_SLOWDOWN_SPEED;
-        float _CF_MASS;
-        int _CTRL_DEBUG_SLOWDOWN;
-        int _POLICY_TYPE;
-
-        typedef enum 
-        {
-            RL = 0,
-            NN = 1
-        } Policy_Type;
-
-
-
-
-    private:
-
-        float _RREV;
-        float _OF_x;
-        float _OF_y;
-
-
-
-        // DEFINE THREAD OBJECTS
-        std::thread controllerThread;
-
-        control_t control;
-        setpoint_t setpoint;
-        sensorData_t sensorData;
-        state_t state;
-        uint32_t tick = 0;
-        
-
-
-};
 
 
 
@@ -392,7 +210,16 @@ static float RREV = 0.0f; // [rad/s]
 static float OF_x = 0.0f; // [rad/s]
 static float OF_y = 0.0f; // [rad/s] 
 static bool flip_flag = false;
+static bool onceFlag = false;
 
+
+typedef enum 
+{
+    RL = 0,
+    NN = 1
+} Policy_Type;
+
+Policy_Type POLICY_TYPE = RL;
 
 
 
@@ -411,7 +238,6 @@ float F_thrust_flip = 0.0f;
 float M_x_flip = 0.0f;
 float M_y_flip = 0.0f;
 float M_z_flip = 0.0f;
-ros::Time t_flip;
 
 
 // POLICY VARIABLES
@@ -441,6 +267,188 @@ static float t = 0.0f;
 static float T = 0.0f;
 static uint8_t traj_type = 0;
 static bool execute_traj = false;
+
+
+class Controller
+{
+    public:
+        // CONSTRUCTOR TO START PUBLISHERS AND SUBSCRIBERS (Similar to Python's __init__() )
+        Controller(ros::NodeHandle *nh){
+            
+            // BODY SENSORS
+            imu_Subscriber = nh->subscribe("/cf1/imu",1,&Controller::imu_Callback,this,ros::TransportHints().tcpNoDelay());
+            OF_Subscriber = nh->subscribe("/cf1/OF_sensor",1,&Controller::OF_Callback,this,ros::TransportHints().tcpNoDelay()); 
+
+            // COMMANDS AND INFO
+            CMD_Subscriber = nh->subscribe("/rl_ctrl",50,&Controller::CMD_Callback,this,ros::TransportHints().tcpNoDelay());
+            ctrl_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/ctrl_data",1);
+            MS_Publisher = nh->advertise<crazyflie_msgs::MS>("/MS",1);
+            SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
+
+            // ENVIRONMENT SENSORS
+            viconState_Subscriber = nh->subscribe("/env/vicon_state",1,&Controller::vicon_Callback,this,ros::TransportHints().tcpNoDelay());
+            ceilingFT_Subcriber = nh->subscribe("/env/ceiling_force_sensor",5,&Controller::ceilingFT_Callback,this,ros::TransportHints().tcpNoDelay());
+            RLData_Subscriber = nh->subscribe("/rl_data",5,&Controller::RLData_Callback,this,ros::TransportHints().tcpNoDelay());
+
+
+            // SIMULATION SETTINGS FROM CONFIG FILE
+            ros::param::get("/CEILING_HEIGHT",_H_CEILING);
+            ros::param::get("/LANDING_SLOWDOWN",_LANDING_SLOWDOWN_FLAG);
+            ros::param::get("/SIM_SPEED",_SIM_SPEED);
+            ros::param::get("/SIM_SLOWDOWN_SPEED",_SIM_SLOWDOWN_SPEED);
+            ros::param::get("/CF_MASS",_CF_MASS);
+            ros::param::get("/CTRL_DEBUG_SLOWDOWN", _CTRL_DEBUG_SLOWDOWN);
+            ros::param::get("/POLICY_TYPE",_POLICY_TYPE);
+            POLICY_TYPE = (Policy_Type)_POLICY_TYPE; // Cast ROS param (int) to enum (Policy_Type)
+
+            // COLLECT CTRL GAINS FROM CONFIG FILE
+            ros::param::get("P_kp_xy",P_kp_xy);
+            ros::param::get("P_kd_xy",P_kd_xy);
+            ros::param::get("P_ki_xy",P_ki_xy);
+            ros::param::get("i_range_xy",i_range_xy);
+
+            ros::param::get("P_kp_z",P_kp_z);
+            ros::param::get("P_kd_z",P_kd_z);
+            ros::param::get("P_ki_z",P_ki_z);
+            ros::param::get("i_range_z",i_range_z);
+
+            ros::param::get("R_kp_xy",R_kp_xy);
+            ros::param::get("R_kd_xy",R_kd_xy);
+            ros::param::get("R_ki_xy",R_ki_xy);
+            ros::param::get("i_range_R_xy",i_range_R_xy);
+            
+            ros::param::get("R_kp_z",R_kp_z);
+            ros::param::get("R_kd_z",R_kd_z);
+            ros::param::get("R_ki_z",R_ki_z);
+            ros::param::get("i_range_R_z",i_range_R_z);
+
+            // INITIALIZE STATE AND SENSOR VALUES
+            state.position.x = 0.0f;
+            state.position.y = 0.0f;
+            state.position.z = 0.0f;
+
+            state.velocity.x = 0.0f;
+            state.velocity.y = 0.0f;
+            state.velocity.z = 0.0f;
+
+            state.attitudeQuaternion.x = 0.0f;
+            state.attitudeQuaternion.y = 0.0f;
+            state.attitudeQuaternion.z = 0.0f;
+            state.attitudeQuaternion.w = 1.0f;
+
+            state.acc.x = 0.0f;
+            state.acc.y = 0.0f;
+            state.acc.z = 0.0f;
+
+            sensorData.gyro.x = 0.0f;
+            sensorData.gyro.y = 0.0f;
+            sensorData.gyro.z = 0.0f;
+
+
+            // INITIALIZE SETPOINT VALUES
+            setpoint.position.x = 0.0f;
+            setpoint.position.y = 0.0f;
+            setpoint.position.z = 0.4f;
+
+            setpoint.velocity.x = 0.0f;
+            setpoint.velocity.y = 0.0f;
+            setpoint.velocity.z = 0.0f;
+
+            setpoint.acceleration.x = 0.0f;
+            setpoint.acceleration.y = 0.0f;
+            setpoint.acceleration.z = 0.0f;
+
+            // INITIALIZE COMMAND VALUES
+            setpoint.cmd_type = 101;
+            setpoint.cmd_val1 = 0.0f;
+            setpoint.cmd_val2 = 0.0f;
+            setpoint.cmd_val3 = 0.0f;
+            setpoint.cmd_flag = 0.0f;
+
+
+            // START CONTROLLER
+            controllerThread = std::thread(&Controller::startController, this);           
+        }
+
+        // DEFINE FUNCTION PROTOTYPES
+        void startController();
+        void vicon_Callback(const nav_msgs::Odometry::ConstPtr &msg);
+        void imu_Callback(const sensor_msgs::Imu::ConstPtr &msg);
+        void OF_Callback(const nav_msgs::Odometry::ConstPtr &msg);   
+        void CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
+        void ceilingFT_Callback(const crazyflie_msgs::ImpactData::ConstPtr &msg);
+        void adjustSimSpeed(float speed_mult);
+        void RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg);
+        
+
+
+
+
+        crazyflie_msgs::MS MS_msg;
+        crazyflie_msgs::CtrlData ctrl_msg;
+
+        ros::Publisher MS_Publisher;
+        ros::Publisher ctrl_Publisher;
+
+        ros::ServiceClient SimSpeed_Client;
+        ros::Subscriber ceilingFT_Subcriber;
+        ros::Subscriber RLData_Subscriber;
+
+
+
+
+        // SENSORS
+        ros::Subscriber viconState_Subscriber;
+        ros::Subscriber imu_Subscriber;
+        ros::Subscriber OF_Subscriber;
+        ros::Subscriber CMD_Subscriber;
+
+        // INITIALIZE ROS MSG VARIABLES
+        geometry_msgs::Point _position; 
+        geometry_msgs::Vector3 _velocity;
+        geometry_msgs::Quaternion _quaternion;
+        geometry_msgs::Vector3 _omega;
+        geometry_msgs::Vector3 _accel;
+
+        float _t;
+        ros::Time t_flip;
+
+
+        // ROS SPECIFIC VALUES
+        int impact_flag;
+        int slowdown_type = 0;
+        float _H_CEILING = 2.10;
+        bool _LANDING_SLOWDOWN_FLAG;
+        float _SIM_SPEED; 
+        float _SIM_SLOWDOWN_SPEED;
+        float _CF_MASS;
+        int _CTRL_DEBUG_SLOWDOWN;
+        int _POLICY_TYPE;
+        
+
+
+
+
+    private:
+
+        float _RREV;
+        float _OF_x;
+        float _OF_y;
+
+
+
+        // DEFINE THREAD OBJECTS
+        std::thread controllerThread;
+
+        control_t control;
+        setpoint_t setpoint;
+        sensorData_t sensorData;
+        state_t state;
+        uint32_t tick = 0;
+        
+
+
+};
 
 
 void Controller::CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
