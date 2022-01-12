@@ -41,8 +41,12 @@ void controllerGTCReset(Controller* _CTRL)
     onceFlag = false;
 
 
-    t_traj = 0;
     execute_traj = false;
+    s_0_t = vzero();
+    v_t = vzero();
+    a_t = vzero();
+    T = vzero();
+    t_traj = vzero();
 
     // RESET LOGGED FLIP VALUES
     statePos_tr = vzero();
@@ -154,6 +158,14 @@ void GTC_Command(setpoint_t *setpoint, Controller* _CTRL)
             switch(traj_type){
 
                 case x:
+                    s_0_t.x = setpoint->cmd_val1;
+                    v_t.x = setpoint->cmd_val2;
+                    a_t.x = setpoint->cmd_val3;
+                    T.x = (a_t.x+fsqr(v_t.x))/(a_t.x*v_t.x); // Find trajectory manuever length [s]
+                    t_traj.x = 0.0f;
+
+
+                    execute_traj = true;
                     break;
 
                 case y:
@@ -163,6 +175,10 @@ void GTC_Command(setpoint_t *setpoint, Controller* _CTRL)
                     s_0_t.z = setpoint->cmd_val1;
                     v_t.z = setpoint->cmd_val2;
                     a_t.z = setpoint->cmd_val3;
+                    T.z = (a_t.z+fsqr(v_t.z))/(a_t.z*v_t.z); // Find trajectory manuever length [s]
+                    t_traj.z = 0.0f;
+
+
 
                     execute_traj = true;
 
@@ -171,8 +187,6 @@ void GTC_Command(setpoint_t *setpoint, Controller* _CTRL)
 
             }
 
-            t_traj = 0.0f; // Reset t_traj
-            T.z = (a_t.z+fsqr(v_t.z))/(a_t.z*v_t.z); // Find trajectory manuever length [s]
 
 
             break;
@@ -181,38 +195,44 @@ void GTC_Command(setpoint_t *setpoint, Controller* _CTRL)
 
 void controllerGTCTraj()
 {
-    if(t_traj<=v_t.z/a_t.z)
-    {
-        x_d.z = 0.5f*a_t.z*t_traj*t_traj + s_0_t.z;
-        v_d.z = a_t.z*t_traj;
-        a_d.z = a_t.z;
 
+    for (int i = 0; i < 3; i++)
+    {
+    
+        if(t_traj.idx[i]<=v_t.idx[i]/a_t.idx[i])
+        {
+            x_d.idx[i] = 0.5f*a_t.idx[i]*t_traj.idx[i]*t_traj.idx[i] + s_0_t.idx[i];
+            v_d.idx[i] = a_t.idx[i]*t_traj.idx[i];
+            a_d.idx[i] = a_t.idx[i];
+
+        }
+
+        // CONSTANT VELOCITY TRAJECTORY
+        if(v_t.idx[i]/a_t.idx[i] < t_traj.idx[i])
+        {
+            x_d.idx[i] = v_t.idx[i]*t_traj.idx[i] - fsqr(v_t.idx[i])/(2.0f*a_t.idx[i]) + s_0_t.idx[i];
+            v_d.idx[i] = v_t.idx[i];
+            a_d.idx[i] = 0.0f;
+        }
+
+        // // COMPLETE POSITION TRAJECTORY
+        // if(v_t.idx[i]/a_t.idx[i] <= t_traj.idx[i] && t_traj.idx[i] < (T.idx[i]-v_t.idx[i]/a_t.idx[i]))
+        // {
+        //     x_d.idx[i] = v_t.idx[i]*t_traj.idx[i] - fsqr(v_t.idx[i])/(2.0f*a_t.idx[i]) + s_0_t.idx[i];
+        //     v_d.idx[i] = v_t.idx[i];
+        //     a_d.idx[i] = 0.0f;
+        // }
+
+        // if((T.idx[i]-v_t.idx[i]/a_t.idx[i]) < t_traj.idx[i] && t_traj.idx[i] <= T.idx[i])
+        // {
+        //     x_d.idx[i] = (2.0f*a_t.idx[i]*v_t.idx[i]*T.idx[i]-2.0f*fsqr(v_t.idx[i])-fsqr(a_t.idx[i])*fsqr(t_traj.idx[i]-T.idx[i]))/(2.0f*a_t.idx[i]) + s_0_t.idx[i];
+        //     v_d.idx[i] = a_t.idx[i]*(T.idx[i]-t_traj.idx[i]);
+        //     a_d.idx[i] = -a_t.idx[i];
+        // }
+        t_traj.idx[i] += dt;
     }
 
-    // // CONSTANT VELOCITY TRAJECTORY
-    // if(v_t.z/a_t.z < t_traj)
-    // {
-    //     x_d.z = v_t.z*t_traj - fsqr(v_t.z)/(2.0f*a_t.z) + s_0_t.z;
-    //     v_d.z = v_t.z;
-    //     a_d.z = 0.0f;
-    // }
-
-    // COMPLETE POSITION TRAJECTORY
-    if(v_t.z/a_t.z <= t_traj && t_traj < (T.z-v_t.z/a_t.z))
-    {
-        x_d.z = v_t.z*t_traj - fsqr(v_t.z)/(2.0f*a_t.z) + s_0_t.z;
-        v_d.z = v_t.z;
-        a_d.z = 0.0f;
-    }
-
-    if((T.z-v_t.z/a_t.z) < t_traj && t_traj <= T.z)
-    {
-        x_d.z = (2.0f*a_t.z*v_t.z*T.z-2.0f*fsqr(v_t.z)-fsqr(a_t.z)*fsqr(t_traj-T.z))/(2.0f*a_t.z) + s_0_t.z;
-        v_d.z = a_t.z*(T.z-t_traj);
-        a_d.z = -a_t.z;
-    }
-
-    t_traj += dt;
+    
     
 
     

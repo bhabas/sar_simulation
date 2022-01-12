@@ -272,7 +272,7 @@ float M_z_flip = 0.0f;      // [N*m]
 static float s_0 = 0.0f;
 static float v = 0.0f;
 static float a = 0.0f;
-static float t_traj = 0.0f;
+// static float t_traj = 0.0f;
 // static float T = 0.0f;
 // static uint8_t traj_type = 0;
 
@@ -288,6 +288,7 @@ struct vec s_0_t = {0.0f, 0.0f, 0.0f};
 struct vec v_t = {0.0f, 0.0f, 0.0f};
 struct vec a_t = {0.0f, 0.0f, 0.0f};
 struct vec T = {0.0f, 0.0f, 0.0f};
+struct vec t_traj = {0.0f, 0.0f, 0.0f};
 
 // NEURAL NETWORK INITIALIZATION
 
