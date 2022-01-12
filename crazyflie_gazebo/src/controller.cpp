@@ -172,7 +172,7 @@ void GTC_Command(setpoint_t *setpoint, Controller* _CTRL)
             }
 
             t_traj = 0.0f; // Reset t_traj
-            T = (a_t.z+fsqr(v_t.z))/(a_t.z*v_t.z); // Find trajectory manuever length [s]
+            T.z = (a_t.z+fsqr(v_t.z))/(a_t.z*v_t.z); // Find trajectory manuever length [s]
 
 
             break;
@@ -198,17 +198,17 @@ void controllerGTCTraj()
     // }
 
     // COMPLETE POSITION TRAJECTORY
-    if(v_t.z/a_t.z <= t_traj && t_traj < (T-v_t.z/a_t.z))
+    if(v_t.z/a_t.z <= t_traj && t_traj < (T.z-v_t.z/a_t.z))
     {
         x_d.z = v_t.z*t_traj - fsqr(v_t.z)/(2.0f*a_t.z) + s_0_t.z;
         v_d.z = v_t.z;
         a_d.z = 0.0f;
     }
 
-    if((T-v_t.z/a_t.z) < t_traj && t_traj <= T)
+    if((T.z-v_t.z/a_t.z) < t_traj && t_traj <= T.z)
     {
-        x_d.z = (2.0f*a_t.z*v_t.z*T-2.0f*fsqr(v_t.z)-fsqr(a_t.z)*fsqr(t_traj-T))/(2.0f*a_t.z) + s_0_t.z;
-        v_d.z = a_t.z*(T-t_traj);
+        x_d.z = (2.0f*a_t.z*v_t.z*T.z-2.0f*fsqr(v_t.z)-fsqr(a_t.z)*fsqr(t_traj-T.z))/(2.0f*a_t.z) + s_0_t.z;
+        v_d.z = a_t.z*(T.z-t_traj);
         a_d.z = -a_t.z;
     }
 
