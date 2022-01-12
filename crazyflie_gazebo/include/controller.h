@@ -272,9 +272,21 @@ float M_z_flip = 0.0f;      // [N*m]
 static float s_0 = 0.0f;
 static float v = 0.0f;
 static float a = 0.0f;
-static float t = 0.0f;
+static float t_traj = 0.0f;
 static float T = 0.0f;
-static uint8_t traj_type = 0;
+// static uint8_t traj_type = 0;
+
+typedef enum {
+    x = 0, 
+    y = 1,
+    z = 2
+} axis_direction;
+
+axis_direction traj_type;
+
+struct vec s_0_t = {0.0f, 0.0f, 0.0f};
+struct vec v_t = {0.0f, 0.0f, 0.0f};
+struct vec a_t = {0.0f, 0.0f, 0.0f};
 
 // NEURAL NETWORK INITIALIZATION
 
@@ -343,6 +355,10 @@ void initScaler(Scaler* scaler, char str[])
 void initNN_Layers(nml_mat* W[], nml_mat* b[], char path[],int numLayers)
 {
     FILE* input = fopen(path, "r");
+    if (input == NULL) {
+        perror("Error reading NN_layer file: Check for correct file name/path\n");
+    }
+    
     for(int i=0;i<numLayers;i++)
     {
         // LAYER 1
@@ -807,7 +823,7 @@ void Controller::RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){
 
 void Controller::startController() // MAIN CONTROLLER LOOP
 {
-    ros::Rate rate(1000);
+    ros::Rate rate(RATE_MAIN_LOOP);
     controllerGTCInit();
    
     while(ros::ok)
