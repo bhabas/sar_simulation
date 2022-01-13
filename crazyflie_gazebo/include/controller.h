@@ -66,7 +66,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                                          const uint32_t tick,
                                          Controller* ctrl);
 void GTC_Command(setpoint_t *setpoint, Controller* _CTRL);
-void initScaler(Scaler* scaler,char str[]);
+void initScaler(Scaler* scaler,char path[]);
 void NN_Scale(nml_mat* X, Scaler* scaler);
 void initNN_Layers(nml_mat* W[], nml_mat* b[], char path[],int numLayers);
 float Sigmoid(float x);
@@ -300,6 +300,9 @@ nml_mat* X = nml_mat_new(3,1);
 char str1[] = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/Scaler_Flip_Classifier.csv";
 char str2[] = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/Scaler_Policy_Value.csv";
 
+char path_policy[] = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/NN_Layers_Policy.data";
+char path_flip[] = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/NN_Layers_Flip.data";
+
 nml_mat* W_policy[3];
 nml_mat* b_policy[3];
 
@@ -319,57 +322,60 @@ void commanderGetSetpoint(setpoint_t *setpoint, const state_t *state)
 }
 
 // EXPLICIT FUNTIONS
-void initScaler(Scaler* scaler, char str[])
+void initScaler(Scaler* scaler, char path[])
 {
-    char f_path[256];
-    strcpy(f_path,getenv("HOME"));
-    strcat(f_path,str);
-
-
-    printf("%s\n",f_path);
+    // INITIALIZE FILE PATH
+    char f_path[256];               // Allocate space for string
+    strcpy(f_path,getenv("HOME"));  // Copy home path 
+    strcat(f_path,path);            // Append file path
 
     char line[50];
-    char* sp;
+    char* str_ptr;
 
-
+    // CREATE POINTER TO FILE
     FILE* file_ptr = fopen(f_path, "r");
     if (file_ptr == NULL) {
-        perror("Error reading scaler file: Check for correct file name/path\n");
+        perror("Error reading scaler file: Check for correct file name and path\n");
     }
     
+    // SKIP FIRST LINE OF FILE
     fgets(line,100,file_ptr); // Skip buffer
+
+    // READ EACH LINE OF FILE AND ADD VALUES TO SCALER
     int i = 0;
     while(fgets(line,100,file_ptr)!=NULL)
     {
-        sp = strtok(line,",");
-        scaler->mean[i] = atof(sp);
+        str_ptr = strtok(line,",");
+        scaler->mean[i] = atof(str_ptr);
 
-        sp = strtok(NULL,",");
-        scaler->std[i] = atof(sp);
+        str_ptr = strtok(NULL,",");
+        scaler->std[i] = atof(str_ptr);
         i++;
     }
-
-    printf("%.3f\n",scaler->mean[i]);
     fclose(file_ptr);
 
 }
 
 void initNN_Layers(nml_mat* W[], nml_mat* b[], char path[],int numLayers)
 {
-    FILE* input = fopen(path, "r");
+    // INITIALIZE FILE PATH
+    char f_path[256];               // Allocate space for string
+    strcpy(f_path,getenv("HOME"));  // Copy home path 
+    strcat(f_path,path);            // Append file path
+
+    // CREATE POINTER TO FILE
+    FILE* input = fopen(f_path, "r");
     if (input == NULL) {
-        perror("Error reading NN_layer file: Check for correct file name/path\n");
+        perror("Error reading NN_layer file: Check for correct file name and path\n");
     }
     
+    // ADD MATRIX TO ARRAY OF MATRICES FOR NEURAL NETWORK
     for(int i=0;i<numLayers;i++)
     {
-        // LAYER 1
         W[i] = nml_mat_fromfilef(input);
         b[i] = nml_mat_fromfilef(input);
     }
     fclose(input);
-
-
 }
 
 float NN_Policy(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[])

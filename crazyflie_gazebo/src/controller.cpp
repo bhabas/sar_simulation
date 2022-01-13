@@ -8,8 +8,6 @@ void controllerGTCInit(void)
     controllerGTCTest();
     initScaler(&Scaler_Flip,str1);
     initScaler(&Scaler_Policy,str2);
-    char path_policy[] = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/NN_Layers_Policy.data";
-    char path_flip[] = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/NN_Layers_Flip.data";
     initNN_Layers(W_policy,b_policy,path_policy,3);
     initNN_Layers(W_flip,b_flip,path_flip,2);
     // controllerGTCReset(_CTRL);
