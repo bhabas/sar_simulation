@@ -69,8 +69,15 @@ static inline bool fcloseulps(float a, float b, int ulps) {
 
 // ---------------------------- 3d vectors ------------------------------
 
-struct vec {
-	float x; float y; float z;
+struct vec{
+  union {
+    struct {
+      float x;
+      float y;
+      float z;
+    };
+    float idx[3];
+  };
 };
 
 //

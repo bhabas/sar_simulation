@@ -66,7 +66,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                                          const uint32_t tick,
                                          Controller* ctrl);
 void GTC_Command(setpoint_t *setpoint, Controller* _CTRL);
-void initScaler(Scaler* scaler,char str[]);
+void initScaler(Scaler* scaler,char path[]);
 void NN_Scale(nml_mat* X, Scaler* scaler);
 void initNN_Layers(nml_mat* W[], nml_mat* b[], char path[],int numLayers);
 float Sigmoid(float x);
@@ -272,9 +272,23 @@ float M_z_flip = 0.0f;      // [N*m]
 static float s_0 = 0.0f;
 static float v = 0.0f;
 static float a = 0.0f;
-static float t = 0.0f;
-static float T = 0.0f;
-static uint8_t traj_type = 0;
+// static float t_traj = 0.0f;
+// static float T = 0.0f;
+// static uint8_t traj_type = 0;
+
+typedef enum {
+    x = 0, 
+    y = 1,
+    z = 2
+} axis_direction;
+
+axis_direction traj_type;
+
+struct vec s_0_t = {0.0f, 0.0f, 0.0f};
+struct vec v_t = {0.0f, 0.0f, 0.0f};
+struct vec a_t = {0.0f, 0.0f, 0.0f};
+struct vec T = {0.0f, 0.0f, 0.0f};
+struct vec t_traj = {0.0f, 0.0f, 0.0f};
 
 // NEURAL NETWORK INITIALIZATION
 
@@ -283,12 +297,11 @@ Scaler Scaler_Policy;
 
 nml_mat* X = nml_mat_new(3,1);
 
-// char* str = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/Scaler_Flip_Classifier.csv";
-// strcat(homedir,str);
-char* homedir = getenv("HOME");
-char str1[] = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/Scaler_Flip_Classifier.csv";
-char str2[] = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/Scaler_Policy_Value.csv";
+char str1[] = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/Scaler_Flip_Classifier.csv";
+char str2[] = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/Scaler_Policy_Value.csv";
 
+char path_policy[] = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/NN_Layers_Policy.data";
+char path_flip[] = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/NN_Layers_Flip.data";
 
 nml_mat* W_policy[3];
 nml_mat* b_policy[3];
@@ -309,49 +322,60 @@ void commanderGetSetpoint(setpoint_t *setpoint, const state_t *state)
 }
 
 // EXPLICIT FUNTIONS
-void initScaler(Scaler* scaler, char str[])
+void initScaler(Scaler* scaler, char path[])
 {
+    // INITIALIZE FILE PATH
+    char f_path[256];               // Allocate space for string
+    strcpy(f_path,getenv("HOME"));  // Copy home path 
+    strcat(f_path,path);            // Append file path
+
     char line[50];
-    char* sp;
+    char* str_ptr;
 
-    
-    // printf("%s\n",str);
-
-
-    FILE* file_ptr = fopen(str, "r");
+    // CREATE POINTER TO FILE
+    FILE* file_ptr = fopen(f_path, "r");
     if (file_ptr == NULL) {
-        perror("Error reading scaler file: Check for correct file name/path\n");
+        perror("Error reading scaler file: Check for correct file name and path\n");
     }
     
+    // SKIP FIRST LINE OF FILE
     fgets(line,100,file_ptr); // Skip buffer
+
+    // READ EACH LINE OF FILE AND ADD VALUES TO SCALER
     int i = 0;
     while(fgets(line,100,file_ptr)!=NULL)
     {
-        sp = strtok(line,",");
-        scaler->mean[i] = atof(sp);
+        str_ptr = strtok(line,",");
+        scaler->mean[i] = atof(str_ptr);
 
-        sp = strtok(NULL,",");
-        scaler->std[i] = atof(sp);
+        str_ptr = strtok(NULL,",");
+        scaler->std[i] = atof(str_ptr);
         i++;
     }
-
-    printf("%.3f\n",scaler->mean[i]);
     fclose(file_ptr);
 
 }
 
 void initNN_Layers(nml_mat* W[], nml_mat* b[], char path[],int numLayers)
 {
-    FILE* input = fopen(path, "r");
+    // INITIALIZE FILE PATH
+    char f_path[256];               // Allocate space for string
+    strcpy(f_path,getenv("HOME"));  // Copy home path 
+    strcat(f_path,path);            // Append file path
+
+    // CREATE POINTER TO FILE
+    FILE* input = fopen(f_path, "r");
+    if (input == NULL) {
+        perror("Error reading NN_layer file: Check for correct file name and path\n");
+    }
+    
+    // ADD MATRIX TO ARRAY OF MATRICES FOR NEURAL NETWORK
     for(int i=0;i<numLayers;i++)
     {
-        // LAYER 1
         W[i] = nml_mat_fromfilef(input);
         b[i] = nml_mat_fromfilef(input);
     }
     fclose(input);
-
-
 }
 
 float NN_Policy(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[])
@@ -662,6 +686,8 @@ class Controller
         int _CTRL_DEBUG_SLOWDOWN;
         int _POLICY_TYPE;
         
+        float _flip_NN = 0.0;
+        float _policy_NN = 0.0;
 
 
 
@@ -807,7 +833,7 @@ void Controller::RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){
 
 void Controller::startController() // MAIN CONTROLLER LOOP
 {
-    ros::Rate rate(1000);
+    ros::Rate rate(RATE_MAIN_LOOP);
     controllerGTCInit();
    
     while(ros::ok)
