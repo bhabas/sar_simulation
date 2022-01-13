@@ -297,12 +297,8 @@ Scaler Scaler_Policy;
 
 nml_mat* X = nml_mat_new(3,1);
 
-// char* str = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/Scaler_Flip_Classifier.csv";
-// strcat(homedir,str);
-char* homedir = getenv("HOME");
-char str1[] = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/Scaler_Flip_Classifier.csv";
-char str2[] = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/Scaler_Policy_Value.csv";
-
+char str1[] = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/Scaler_Flip_Classifier.csv";
+char str2[] = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/Scaler_Policy_Value.csv";
 
 nml_mat* W_policy[3];
 nml_mat* b_policy[3];
@@ -325,14 +321,18 @@ void commanderGetSetpoint(setpoint_t *setpoint, const state_t *state)
 // EXPLICIT FUNTIONS
 void initScaler(Scaler* scaler, char str[])
 {
+    char f_path[256];
+    strcpy(f_path,getenv("HOME"));
+    strcat(f_path,str);
+
+
+    printf("%s\n",f_path);
+
     char line[50];
     char* sp;
 
-    
-    // printf("%s\n",str);
 
-
-    FILE* file_ptr = fopen(str, "r");
+    FILE* file_ptr = fopen(f_path, "r");
     if (file_ptr == NULL) {
         perror("Error reading scaler file: Check for correct file name/path\n");
     }
