@@ -686,6 +686,8 @@ class Controller
         int _CTRL_DEBUG_SLOWDOWN;
         int _POLICY_TYPE;
         
+        float _flip_NN = 0.0;
+        float _policy_NN = 0.0;
 
 
 
