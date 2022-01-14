@@ -23,15 +23,19 @@ BASEPATH = "crazyflie_projects/Policy_Mapping/NeuralNetwork"
 
 ## DEFINE NN MODEL
 class NN_Flip_Classifier(nn.Module):
-    def __init__(self,in_features=3,h=20,out_features=1):
+    def __init__(self,in_features=3,h=10,out_features=1):
         super().__init__()
         self.fc1 = nn.Linear(in_features,h) # Fully connected layer
+        self.fc2 = nn.Linear(h,h) # Fully connected layer
+
         self.out = nn.Linear(h,out_features)
 
     def forward(self,x):
 
         # PASS DATA THROUGH NETWORK
         x = F.elu(self.fc1(x))
+        x = F.elu(self.fc2(x))
+
         x = torch.sigmoid(self.out(x))
 
         return x
@@ -40,7 +44,7 @@ def train_model(epochs,X_train,y_train,X_test,y_test):
     model = NN_Flip_Classifier()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
-    class_weight = [0.1, 0.3] # Weights as binary classes [0,1]
+    class_weight = [0.1, 0.5] # Weights as binary classes [0,1]
     
     ## DEFINE TRAINING LOSS
     weights = np.where(y_train==1,class_weight[1],class_weight[0])      # Convert class weights to element weights
@@ -171,7 +175,7 @@ if __name__ == "__main__":
 
 
     ## TRAIN NN MODEL
-    epochs = 1_000
+    epochs = 500
     # train_model(epochs,X_train,y_train[:,0].reshape(-1,1),X_test,y_test[:,0].reshape(-1,1))
 
 
@@ -229,18 +233,18 @@ if __name__ == "__main__":
 
     fig = go.Figure()
 
-    fig.add_trace(
-        go.Isosurface(
-            x=grid_data[:,1].flatten(),
-            y=grid_data[:,0].flatten(),
-            z=grid_data[:,2].flatten(),
-            value=y_pred_grid.flatten(),
-            surface_count=1,
-            opacity=0.7,
-            isomin=0.9,
-            isomax=0.9,            
-            caps=dict(x_show=False, y_show=False)
-        ))
+    # fig.add_trace(
+    #     go.Isosurface(
+    #         x=grid_data[:,1].flatten(),
+    #         y=grid_data[:,0].flatten(),
+    #         z=grid_data[:,2].flatten(),
+    #         value=y_pred_grid.flatten(),
+    #         surface_count=1,
+    #         opacity=1.0,
+    #         isomin=0.9,
+    #         isomax=0.9,            
+    #         caps=dict(x_show=False, y_show=False)
+    #     ))
 
 
 
@@ -254,7 +258,7 @@ if __name__ == "__main__":
                 size=3,
                 color=y.flatten(),                # set color to an array/list of desired values
                 colorscale='Viridis',   # choose a colorscale
-                opacity=0.4)
+                opacity=1.0)
         ))
 
     fig.update_layout(scene = dict(
