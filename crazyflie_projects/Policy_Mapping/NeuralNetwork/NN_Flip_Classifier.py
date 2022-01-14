@@ -233,18 +233,18 @@ if __name__ == "__main__":
 
     fig = go.Figure()
 
-    # fig.add_trace(
-    #     go.Isosurface(
-    #         x=grid_data[:,1].flatten(),
-    #         y=grid_data[:,0].flatten(),
-    #         z=grid_data[:,2].flatten(),
-    #         value=y_pred_grid.flatten(),
-    #         surface_count=1,
-    #         opacity=1.0,
-    #         isomin=0.9,
-    #         isomax=0.9,            
-    #         caps=dict(x_show=False, y_show=False)
-    #     ))
+    fig.add_trace(
+        go.Isosurface(
+            x=grid_data[:,1].flatten(),
+            y=grid_data[:,0].flatten(),
+            z=grid_data[:,2].flatten(),
+            value=y_pred_grid.flatten(),
+            surface_count=1,
+            opacity=1.0,
+            isomin=0.9,
+            isomax=0.9,            
+            caps=dict(x_show=False, y_show=False)
+        ))
 
 
 
@@ -260,12 +260,63 @@ if __name__ == "__main__":
                 colorscale='Viridis',   # choose a colorscale
                 opacity=1.0)
         ))
+    h_c = 2.1   
+    z_0 = 0.4
 
-    fig.update_layout(scene = dict(
-                    xaxis_title='OF_y',
-                    yaxis_title='RREV',
-                    zaxis_title='D_ceiling'),
-                    )
+    V = 2.0
+    theta = np.array([90,70,50,40]).reshape(1,-1)
+    vz = V*np.sin(np.radians(theta))
+    vx = V*np.cos(np.radians(theta))
+
+    t_max = (h_c-z_0)/vz
+    t = np.linspace(0.0,2,50).reshape(-1,1)
+    d_t = h_c - (z_0 + vz*t)
+    OFy_t = -vx/(d_t)
+    RREV_t = vz/(d_t)
+
+
+    fig.add_trace(
+        go.Scatter3d(
+            x=OFy_t[:,0], 
+            y=RREV_t[:,0], 
+            z=d_t[:,0],
+            mode='lines'),
+        )
+    fig.add_trace(
+        go.Scatter3d(
+            x=OFy_t[:,1], 
+            y=RREV_t[:,1], 
+            z=d_t[:,1],
+            mode='lines'),
+        )
+
+    fig.add_trace(
+        go.Scatter3d(
+            x=OFy_t[:,2], 
+            y=RREV_t[:,2], 
+            z=d_t[:,2],
+            mode='lines'),
+        )
+
+
+    fig.add_trace(
+        go.Scatter3d(
+            x=OFy_t[:,3], 
+            y=RREV_t[:,3], 
+            z=d_t[:,3],
+            mode='lines'),
+        )
+
+
+    fig.update_layout(
+    scene = dict(
+        xaxis_title = 'OF_y',
+        yaxis_title = 'RREV',
+        zaxis_title = 'D_ceiling',
+        xaxis = dict(range=[-15,0]),
+        yaxis = dict(range=[0,8]),
+        zaxis = dict(range=[0,2])
+        ))
 
 
     fig.show()
