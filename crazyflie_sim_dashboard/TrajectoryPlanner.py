@@ -8,11 +8,14 @@ import pyqtgraph as pg
 import os,rospkg
 import pyqtgraph.opengl as gl
 import numpy as np
+import pandas as pd
 
 
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
-BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_data'))
+BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_projects'))
 sys.path.insert(0,BASE_PATH)
+
+
 
 class Slider(QWidget):
     def __init__(self,min,max,label='Text'):
@@ -65,7 +68,7 @@ class Traj_Planner(QWidget):
         ## INITIAL DATA
         self.h_ceil = 2.1
         self.z_0 = 0.4
-        self.RREV_max = 7
+        self.RREV_max = 5
 
         
         self.vel = 2.0
@@ -93,6 +96,15 @@ class Traj_Planner(QWidget):
 
         self.traj = gl.GLLinePlotItem(pos=data,width=2)
         glvw.addItem(self.traj)
+
+        DATA_PATH = f"{BASE_PATH}/crazyflie_projects/ICRA_DataAnalysis/ExtraNarrow-Long_2-Policy/ExtraNarrow-Long_2-Policy_Summary.csv"
+        df = pd.read_csv(DATA_PATH)
+        arr= df.iloc[:][["OF_y_flip_mean","RREV_threshold","flip_d_mean"]]
+        arr["flip_d_mean"] *=5
+        res = [(255,0,0,255) if ele > 0.9 else (0,0,0,255) for ele in df.iloc[:]["landing_rate_4_leg"]]
+
+        self.scat = gl.GLScatterPlotItem(pos=arr.to_numpy(),color=np.array(res),size=5)
+        glvw.addItem(self.scat)
 
 
         ## INIT AXES 
@@ -158,7 +170,7 @@ class Traj_Planner(QWidget):
         d = self.h_ceil - (self.z_0 + self.vel_z*self.t)
         RREV = self.vel_z/d
         OFy = -self.vel_x/d
-        data = np.hstack((OFy,RREV,d))
+        data = np.hstack((OFy,RREV,d*5))
 
 
         
