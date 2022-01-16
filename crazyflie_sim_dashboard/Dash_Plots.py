@@ -531,15 +531,155 @@ class PWM_Widget2(QWidget):
         self.M3_arr = np.zeros(buffer_length)
         self.M4_arr = np.zeros(buffer_length)
 
+class RL_Widget2(QWidget):
+    def __init__(self,parent=None):
+        super().__init__()
 
+        ## INIT LAYOUT
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+
+        self.PW = pg.PlotWidget(labels =  {'left':'Reward', 'bottom':'Episode [K_ep]'}) # Plot window 1
+        self.layout.addWidget(self.PW)
         
+
+        ## UPDATE PLOT 1
+        self.PW.setBackground('w')
+        self.PW.setXRange(0,25)
+        self.PW.setYRange(0,200)
+        self.PW.showGrid(x=True, y=True, alpha=0.2)
+
+
+        # ## INIT DATA CURVES
+        self.curve_reward = self.PW.plot([],[], pen=None,symbol='arrow_right',symbolBrush='k',symbolSize=22)
+        self.curve_reward_avg = self.PW.plot([],[], pen=None,symbol='o',symbolBrush='r')
+
+
+
+        ## INIT UPDATE TIMER
+        self.timer = pg.QtCore.QTimer(self)
+        self.timer.timeout.connect(self.update)
+        self.timer.start(500) # number of milliseconds for next update
+
+    def update(self):
+                        
+        self.curve_reward.setData(DashNode.k_ep_list1,DashNode.r_list)
+        self.curve_reward_avg.setData(DashNode.k_ep_list2,DashNode.r_avg_list)
+
+
+
+    def reset_axes(self):
+        self.PW.setYRange(0,200)
+        self.PW.setXRange(0,25)
+
+
+class Mu_Widget2(QWidget):
+    def __init__(self,parent=None):
+        super().__init__()
+
+        ## INIT LAYOUT
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+
+        self.PW = pg.PlotWidget(name='Plot1',labels =  {'left':'Mu', 'bottom':'Time [s]'}) # Plot window 1
+        self.layout.addWidget(self.PW)
+        
+
+        ## UPDATE PLOT 1
+        self.PW.setBackground('w')
+        self.PW.setXRange(0,20)
+        self.PW.setYRange(0,16)
+        self.PW.showGrid(x=True, y=True, alpha=0.2)
+
+
+        ## INIT DATA CURVE 
+        self.curve_1_mu = self.PW.plot([],[],  pen=pg.mkPen(color=colors["blue"], width=width))
+        self.curve_1_SD1 = self.PW.plot([],[], pen=pg.mkPen(color=colors["blue_alpha"]))
+        self.curve_1_SD2 = self.PW.plot([],[], pen=pg.mkPen(color=colors["blue_alpha"]))
+
+
+        self.curve_2_mu = self.PW.plot([],[],  pen=pg.mkPen(color=colors["orange"], width=width))
+        self.curve_2_SD1 = self.PW.plot([],[], pen=pg.mkPen(color=colors["orange_alpha"]))
+        self.curve_2_SD2 = self.PW.plot([],[], pen=pg.mkPen(color=colors["orange_alpha"]))
+
+
+        self.PW.addItem(pg.FillBetweenItem(self.curve_1_SD1,self.curve_1_mu,colors["blue_alpha"]))
+        self.PW.addItem(pg.FillBetweenItem(self.curve_1_SD2,self.curve_1_mu,colors["blue_alpha"]))
+
+        self.PW.addItem(pg.FillBetweenItem(self.curve_2_SD1,self.curve_2_mu,colors["orange_alpha"]))
+        self.PW.addItem(pg.FillBetweenItem(self.curve_2_SD2,self.curve_2_mu,colors["orange_alpha"]))
+
+
+        ## INIT UPDATE TIMER
+        self.timer = pg.QtCore.QTimer(self)
+        self.timer.timeout.connect(self.update)
+        self.timer.start(500) # number of milliseconds for next update
+
+    def update(self):
+                        
+        self.curve_1_mu.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_1_list)
+        self.curve_1_SD1.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_1_list + 2*DashNode.sigma_1_list)
+        self.curve_1_SD2.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_1_list + -2*DashNode.sigma_1_list)
+
+        self.curve_2_mu.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_2_list)
+        self.curve_2_SD1.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_2_list + 2*DashNode.sigma_2_list)
+        self.curve_2_SD2.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_2_list + -2*DashNode.sigma_2_list)
+
+    def reset_axes(self):
+        # self.p1.enableAutoRange(enable=True)
+        self.PW.setXRange(0,20)
+        self.PW.setYRange(0,16)
+
+class Sigma_Widget2(QWidget):
+    def __init__(self,parent=None):
+        super().__init__()
+
+        ## INIT LAYOUT
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+
+        self.PW = pg.PlotWidget(name='Plot1',labels =  {'left':'Mu', 'bottom':'Time [s]'}) # Plot window 1
+        self.layout.addWidget(self.PW)
+        
+
+        ## UPDATE PLOT 1
+        self.PW.setBackground('w')
+        self.PW.setXRange(0,20)
+        self.PW.setYRange(0,3)
+        self.PW.showGrid(x=True, y=True, alpha=0.2)
+
+
+        ## INIT DATA CURVE 
+        self.curve_sig1 = self.PW.plot([],[], pen=pg.mkPen(color=colors["blue"], width=width))
+        self.curve_sig2 = self.PW.plot([],[], pen=pg.mkPen(color=colors["orange"], width=width))
+
+
+
+        ## INIT UPDATE TIMER
+        self.timer = pg.QtCore.QTimer(self)
+        self.timer.timeout.connect(self.update)
+        self.timer.start(500) # number of milliseconds for next update
+
+    def update(self):
+                        
+        self.curve_sig1.setData(np.arange(0,DashNode.k_ep+1),DashNode.sigma_1_list)
+        self.curve_sig2.setData(np.arange(0,DashNode.k_ep+1),DashNode.sigma_2_list)
+
+    def reset_axes(self):
+        self.PW.setXRange(0,20)
+        self.PW.setYRange(0,3)
+
+
 if __name__ == '__main__':
 
     ## INITIALIZE APPLICATION   
     app = QApplication(sys.argv)
 
     ## INITIALIZE DASHBOARD WINDOW
-    myApp = PWM_Widget2()
+    myApp = Sigma_Widget2()
     myApp.show()
 
     sys.exit(app.exec_())
