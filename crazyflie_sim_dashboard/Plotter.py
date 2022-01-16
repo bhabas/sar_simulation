@@ -780,9 +780,64 @@ class PlotDemo(QWidget):
     def updateData(self):
         yd, xd = self.rand(10000)
         self.p1.setData(y=yd, x=xd)
+import pyqtgraph.opengl as gl
+
+class Plot3DDemo(QWidget):
+    def __init__(self,parent=None, **kargs):
+        super().__init__()
+
+        glvw = gl.GLViewWidget()
+
+        ## create three grids, add each to the view
+        xgrid = gl.GLGridItem()
+        ygrid = gl.GLGridItem()
+        zgrid = gl.GLGridItem()
+        glvw.addItem(xgrid)
+        glvw.addItem(ygrid)
+        glvw.addItem(zgrid)
+
+        ## rotate x and y grids to face the correct direction
+        xgrid.rotate(90, 0, 1, 0)
+        ygrid.rotate(90, 1, 0, 0)
+
+        ## scale each grid differently
+        xgrid.scale(0.2, 0.1, 0.1)
+        ygrid.scale(0.2, 0.1, 0.1)
+
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+        layout.addWidget(glvw)
+
+        glvw.sizeHint = lambda: pg.QtCore.QSize(100, 100)
+
+
+class MenuBarDemo(QWidget):
+    def __init__(self,parent=None, **kargs):
+       super().__init__()
+
+       ## INIT WINDOW
+       self.setWindowTitle("Menubar Demo")
+       self.resize(600,500)
+
+       p1 = pg.PlotWidget()
+
+       glvw = gl.GLViewWidget()
+       z = pg.gaussianFilter(np.random.normal(size=(50,50)), (1,1))
+       p13d = gl.GLSurfacePlotItem(z=z, shader='shaded', color=(0.5, 0.5, 1, 1))
+       glvw.addItem(p13d)
+
+       layout = QVBoxLayout()
+       self.setLayout(layout)
+
+       layout.addWidget(glvw)
+
+       glvw.sizeHint = lambda: pg.QtCore.QSize(100, 100)
+       
+
 
 if __name__ == '__main__':
+    app = QApplication(sys.argv)
 
-    w = PWM_Widget()
+    w = Plot3DDemo()
     w.show()
     QtGui.QApplication.instance().exec()

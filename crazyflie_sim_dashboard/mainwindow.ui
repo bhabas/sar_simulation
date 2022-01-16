@@ -1133,7 +1133,7 @@ color: rgb(214, 39, 40);</string>
                 </widget>
                </item>
                <item>
-                <widget class="PlotDemo" name="PWM_Graph_2" native="true">
+                <widget class="MenuBarDemo" name="PWM_Graph_2" native="true">
                  <property name="styleSheet">
                   <string notr="true">background-color: rgb(136, 138, 133);</string>
                  </property>
@@ -1614,7 +1614,7 @@ color: rgb(214, 39, 40);</string>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>PlotDemo</class>
+   <class>MenuBarDemo</class>
    <extends>QWidget</extends>
    <header>Plotter</header>
    <container>1</container>
