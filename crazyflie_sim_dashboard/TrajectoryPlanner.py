@@ -6,6 +6,9 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
 import pyqtgraph as pg
 import os,rospkg
+import pyqtgraph.opengl as gl
+import numpy as np
+
 
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_data'))
@@ -33,12 +36,24 @@ class Slider(QWidget):
 class Traj_Planner(QWidget):
     def __init__(self):
         super().__init__()
+        self.resize(500,500)
 
-        self.pw1 = pg.PlotWidget(name='Plot1') # Plot window 1
+        glvw = gl.GLViewWidget()
+
+        x = np.array([0,1]).reshape(-1,1)
+        y = np.array([0,0]).reshape(-1,1)
+        z = np.array([0,1]).reshape(-1,1)
+        pos = np.hstack((x,y,z))
+
+        self.sp1 = gl.GLLinePlotItem(pos=pos,width=5)
+        xgrid = gl.GLGridItem()
+        glvw.addItem(self.sp1)
+        glvw.addItem(xgrid)
 
 
         self.layout = QVBoxLayout()
-        self.layout.addWidget(self.pw1)
+        self.layout.addWidget(glvw)
+        # glvw.sizeHint = lambda: pg.QtCore.QSize(100, 100)
 
         self.w1 = Slider()
         self.w1.var.setText("hello")
@@ -46,17 +61,21 @@ class Traj_Planner(QWidget):
 
         self.setLayout(self.layout)
 
-        self.pw1 = pg.PlotWidget(name='Plot1') # Plot window 1
 
 
-        self.p1 = self.pw1.plot() # Plot Window 1 -> plot
-
+        self.w1.slider.valueChanged.connect(self.updateText)
 
 
     def updateText(self):
-        self.Label1.setText(f"{self.Slider1.value()}")
-        self.Label2.setText(f"{self.Slider2.value()}")
-        self.Label3.setText(f"{self.Slider3.value()}")
+        self.w1.var.setText(f"{self.w1.slider.value()}")
+
+        x = np.array([0,1,2,3]).reshape(-1,1)
+        y = np.array([0,0,0,0]).reshape(-1,1)
+        z = np.array([0,1,4,9]).reshape(-1,1)
+        pos2 = np.hstack((x,y,z))
+
+        self.sp1.setData(pos=pos2)
+
 
 
 
