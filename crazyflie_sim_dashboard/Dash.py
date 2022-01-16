@@ -21,7 +21,6 @@ class Dashboard(QMainWindow,DashboardNode):
         super().__init__()
         super(DashboardNode).__init__()
 
-        self.resize(800,800)
 
         #LOAD UI
         loadUi(f'{BASE_PATH}/crazyflie_sim_dashboard/DashboardWindow.ui', self)

@@ -38,7 +38,7 @@ pg.setConfigOptions(antialias=True)
 DashNode=DashboardNode()
 
 
-class Pos_Widget2(QWidget):
+class Pos_Widget(QWidget):
     def __init__(self,parent=None):
         super().__init__()
 
@@ -108,7 +108,7 @@ class Pos_Widget2(QWidget):
         self.z_arr = np.zeros(buffer_length)
 
 
-class Vel_Widget2(QWidget):
+class Vel_Widget(QWidget):
     def __init__(self,parent=None):
         super().__init__()
 
@@ -177,7 +177,7 @@ class Vel_Widget2(QWidget):
         self.y_arr = np.zeros(buffer_length)
         self.z_arr = np.zeros(buffer_length)
 
-class Omega_Widget2(QWidget):
+class Omega_Widget(QWidget):
     def __init__(self,parent=None):
         super().__init__()
 
@@ -190,7 +190,7 @@ class Omega_Widget2(QWidget):
         ax.setTicks([tick_labels.items()])
 
 
-        self.PW = pg.PlotWidget(name='Plot1',labels =  {'left':'Velocity [m/s]', 'bottom':'Time [s]'},axisItems={'bottom': ax}) # Plot window 1
+        self.PW = pg.PlotWidget(name='Plot1',labels =  {'left':'Ang. Vel. [rad/s]', 'bottom':'Time [s]'},axisItems={'bottom': ax}) # Plot window 1
         self.layout.addWidget(self.PW)
         
 
@@ -247,7 +247,7 @@ class Omega_Widget2(QWidget):
         self.z_arr = np.zeros(buffer_length)
 
 
-class Eul_Widget2(QWidget):
+class Eul_Widget(QWidget):
     def __init__(self,parent=None):
         super().__init__()
 
@@ -260,7 +260,7 @@ class Eul_Widget2(QWidget):
         ax.setTicks([tick_labels.items()])
 
 
-        self.PW = pg.PlotWidget(name='Plot1',labels =  {'left':'Velocity [m/s]', 'bottom':'Time [s]'},axisItems={'bottom': ax}) # Plot window 1
+        self.PW = pg.PlotWidget(name='Plot1',labels =  {'left':'Angle [deg]', 'bottom':'Time [s]'},axisItems={'bottom': ax}) # Plot window 1
         self.layout.addWidget(self.PW)
         
 
@@ -317,7 +317,7 @@ class Eul_Widget2(QWidget):
         self.z_arr = np.zeros(buffer_length)
 
 
-class OF_Widget2(QWidget):
+class OF_Widget(QWidget):
     def __init__(self,parent=None):
         super().__init__()
 
@@ -386,7 +386,7 @@ class OF_Widget2(QWidget):
         self.y_arr = np.zeros(buffer_length)
         self.z_arr = np.zeros(buffer_length)
 
-class Dist_Widget2(QWidget):
+class Dist_Widget(QWidget):
     def __init__(self,parent=None):
         super().__init__()
 
@@ -441,7 +441,7 @@ class Dist_Widget2(QWidget):
         self.x_arr = np.zeros(buffer_length)
 
 
-class PWM_Widget2(QWidget):
+class PWM_Widget(QWidget):
     def __init__(self,parent=None):
         super().__init__()
 
@@ -531,7 +531,7 @@ class PWM_Widget2(QWidget):
         self.M3_arr = np.zeros(buffer_length)
         self.M4_arr = np.zeros(buffer_length)
 
-class RL_Widget2(QWidget):
+class RL_Widget(QWidget):
     def __init__(self,parent=None):
         super().__init__()
 
@@ -574,7 +574,7 @@ class RL_Widget2(QWidget):
         self.PW.setXRange(0,25)
 
 
-class Mu_Widget2(QWidget):
+class Mu_Widget(QWidget):
     def __init__(self,parent=None):
         super().__init__()
 
@@ -632,7 +632,7 @@ class Mu_Widget2(QWidget):
         self.PW.setXRange(0,20)
         self.PW.setYRange(0,16)
 
-class Sigma_Widget2(QWidget):
+class Sigma_Widget(QWidget):
     def __init__(self,parent=None):
         super().__init__()
 
@@ -679,7 +679,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     ## INITIALIZE DASHBOARD WINDOW
-    myApp = Sigma_Widget2()
+    myApp = Sigma_Widget()
     myApp.show()
 
     sys.exit(app.exec_())

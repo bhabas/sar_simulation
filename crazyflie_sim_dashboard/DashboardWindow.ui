@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>831</width>
-    <height>600</height>
+    <width>895</width>
+    <height>721</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -146,7 +146,7 @@
       <item>
        <widget class="QTabWidget" name="tabWidget">
         <property name="currentIndex">
-         <number>3</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="Tab_State">
          <attribute name="title">
@@ -182,7 +182,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="Pos_Widget2" name="Pos_Graph" native="true">
+                    <widget class="Pos_Widget" name="Pos_Graph" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
@@ -313,7 +313,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="Vel_Widget2" name="Vel_Graph" native="true">
+                    <widget class="Vel_Widget" name="Vel_Graph" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
@@ -446,7 +446,7 @@
                   </widget>
                  </item>
                  <item>
-                  <widget class="PWM_Widget2" name="PWM_Graph" native="true">
+                  <widget class="PWM_Widget" name="PWM_Graph" native="true">
                    <property name="styleSheet">
                     <string notr="true">background-color: rgb(136, 138, 133);</string>
                    </property>
@@ -616,7 +616,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="Dist_Widget2" name="Dist_Graph" native="true">
+                    <widget class="Dist_Widget" name="Dist_Graph" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
@@ -728,7 +728,7 @@ color: rgb(214, 39, 40);</string>
                     </widget>
                    </item>
                    <item>
-                    <widget class="Eul_Widget2" name="Eul_Graph" native="true">
+                    <widget class="Eul_Widget" name="Eul_Graph" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
@@ -863,7 +863,7 @@ color: rgb(214, 39, 40);</string>
                     </widget>
                    </item>
                    <item>
-                    <widget class="OF_Widget2" name="OF_Graph" native="true">
+                    <widget class="OF_Widget" name="OF_Graph" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
@@ -994,7 +994,7 @@ color: rgb(214, 39, 40);</string>
                     </widget>
                    </item>
                    <item>
-                    <widget class="Omega_Widget2" name="Omega_Graph" native="true">
+                    <widget class="Omega_Widget" name="Omega_Graph" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
@@ -1148,7 +1148,7 @@ color: rgb(214, 39, 40);</string>
                   </widget>
                  </item>
                  <item>
-                  <widget class="RL_Widget2" name="widget_11" native="true">
+                  <widget class="RL_Widget" name="widget_11" native="true">
                    <property name="styleSheet">
                     <string notr="true">background-color: rgb(136, 138, 133);</string>
                    </property>
@@ -1186,7 +1186,7 @@ color: rgb(214, 39, 40);</string>
                     </widget>
                    </item>
                    <item>
-                    <widget class="Mu_Widget2" name="Mu_Graph" native="true">
+                    <widget class="Mu_Widget" name="Mu_Graph" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
@@ -1291,7 +1291,7 @@ color: rgb(214, 39, 40);</string>
                     </widget>
                    </item>
                    <item>
-                    <widget class="Sigma_Widget2" name="Sigma_Graph" native="true">
+                    <widget class="Sigma_Widget" name="Sigma_Graph" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
@@ -1388,7 +1388,7 @@ color: rgb(214, 39, 40);</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>831</width>
+     <width>895</width>
      <height>22</height>
     </rect>
    </property>
@@ -1409,61 +1409,61 @@ color: rgb(214, 39, 40);</string>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>Pos_Widget2</class>
+   <class>Pos_Widget</class>
    <extends>QWidget</extends>
    <header>Dash_Plots</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>Vel_Widget2</class>
+   <class>Vel_Widget</class>
    <extends>QWidget</extends>
    <header>Dash_Plots</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>Omega_Widget2</class>
+   <class>Omega_Widget</class>
    <extends>QWidget</extends>
    <header>Dash_Plots</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>Eul_Widget2</class>
+   <class>Eul_Widget</class>
    <extends>QWidget</extends>
    <header>Dash_Plots</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>OF_Widget2</class>
+   <class>OF_Widget</class>
    <extends>QWidget</extends>
    <header>Dash_Plots</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>Dist_Widget2</class>
+   <class>Dist_Widget</class>
    <extends>QWidget</extends>
    <header>Dash_Plots</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>PWM_Widget2</class>
+   <class>PWM_Widget</class>
    <extends>QWidget</extends>
    <header>Dash_Plots</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>RL_Widget2</class>
+   <class>RL_Widget</class>
    <extends>QWidget</extends>
    <header>Dash_Plots</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>Mu_Widget2</class>
+   <class>Mu_Widget</class>
    <extends>QWidget</extends>
    <header>Dash_Plots</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>Sigma_Widget2</class>
+   <class>Sigma_Widget</class>
    <extends>QWidget</extends>
    <header>Dash_Plots</header>
    <container>1</container>
