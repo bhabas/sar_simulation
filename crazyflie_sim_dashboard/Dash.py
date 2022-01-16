@@ -3,11 +3,13 @@ from PyQt5.QtWidgets import *
 from PyQt5.uic import loadUi
 import pyqtgraph as pg
 
-import os,rospkg
+import os,rospkg,rospy
 import numpy as np
 import pandas as pd
 import sys  # We need sys so that we can pass argv to QApplication
 from dashboard_node import DashboardNode
+from nav_msgs.msg import Odometry
+
 
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_projects'))
@@ -43,8 +45,25 @@ class Dashboard(QMainWindow,DashboardNode):
         self.clearButton.clicked.connect(self.clear_plots)
         self.paused = False
 
+        ## ON TIMER TIMEOUTS EXECUTE FUNCTIONS
+        self.timer = pg.QtCore.QTimer(self)
+        self.timer.timeout.connect(self.update_LCD)
+        self.timer.timeout.connect(self.check_Vicon_Comm)
+        self.timer.start(500) # number of milliseconds (every 1000) for next update
+
         
         self.printSumthin()
+
+    def update_LCD(self):
+        self.K_ep_LCD.display(self.k_ep)
+        self.K_run_LCD.display(self.k_run)
+
+    def check_Vicon_Comm(self): ## CHECK IF RECEIVING VALID VICON DATA
+        try:
+            rospy.wait_for_message('/env/vicon_state',Odometry,timeout=0.1)
+            self.Vicon_Connection.setStyleSheet("background-color: rgb(44, 160, 44);")
+        except:
+            self.Vicon_Connection.setStyleSheet("background-color: rgb(214,39,40);")
 
 
     def pause_plots(self):
