@@ -60,7 +60,8 @@ class Slider(QWidget):
 
 
 class Traj_Planner(QWidget):
-    def __init__(self):
+
+    def __init__(self,parent=None):
         super().__init__()
         self.resize(800,800)
 
@@ -178,7 +179,14 @@ class Traj_Planner(QWidget):
         self.traj.setData(pos=data)
 
 
+class WindowTraj(QMainWindow):
 
+    def __init__(self):
+        super().__init__()
+
+        #LOAD UI
+        loadUi(f'{BASE_PATH}/crazyflie_sim_dashboard/Trajectory.ui', self)
+        
 
 
 if __name__ == '__main__':
@@ -187,7 +195,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     ## INITIALIZE DASHBOARD WINDOW
-    myApp = Traj_Planner()
+    myApp = WindowTraj()
     myApp.show()
 
     sys.exit(app.exec())
