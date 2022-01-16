@@ -177,6 +177,268 @@ class Vel_Widget2(QWidget):
         self.y_arr = np.zeros(buffer_length)
         self.z_arr = np.zeros(buffer_length)
 
+class Omega_Widget2(QWidget):
+    def __init__(self,parent=None):
+        super().__init__()
+
+        ## INIT LAYOUT
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+        ## CREATE AXIS ITEM TO CREATE CUSTOM TICK LABELS
+        ax = pg.AxisItem(orientation='bottom')
+        ax.setTicks([tick_labels.items()])
+
+
+        self.PW = pg.PlotWidget(name='Plot1',labels =  {'left':'Velocity [m/s]', 'bottom':'Time [s]'},axisItems={'bottom': ax}) # Plot window 1
+        self.layout.addWidget(self.PW)
+        
+
+        ## UPDATE PLOT 1
+        self.PW.setBackground('w')
+        self.PW.setXRange(buffer_length*0.0,buffer_length)
+        self.PW.setYRange(-40,40)
+        self.PW.showGrid(x=True, y=True, alpha=0.2)
+
+
+        # ## INIT DATA CURVES
+        self.x_arr = np.zeros(buffer_length)
+        self.curve_x = self.PW.plot(self.x_arr, pen=pg.mkPen(color=colors["red"], width=width))
+
+        self.y_arr = np.zeros(buffer_length)
+        self.curve_y = self.PW.plot(self.y_arr, pen=pg.mkPen(color=colors["green"], width=width))
+
+        self.z_arr = np.zeros(buffer_length)
+        self.curve_z = self.PW.plot(self.z_arr, pen=pg.mkPen(color=colors["blue"], width=width))
+
+        ## INIT UPDATE TIMER
+        self.timer = pg.QtCore.QTimer(self)
+        self.timer.timeout.connect(self.update)
+        self.timer.start(update_interval) # number of milliseconds for next update
+
+    def update(self):
+                        
+        self.x_arr = np.roll(self.x_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
+        self.x_arr[-1] = DashNode.omega[0]
+        self.curve_x.setData(self.x_arr)
+
+        self.y_arr = np.roll(self.y_arr,-1)
+        self.y_arr[-1] = DashNode.omega[1]
+        self.curve_y.setData(self.y_arr)
+
+        self.z_arr = np.roll(self.z_arr,-1)
+        self.z_arr[-1] = DashNode.omega[2]
+        self.curve_z.setData(self.z_arr)
+
+    def reset_axes(self):
+        # self.p1.enableAutoRange(enable=True)
+        self.PW.setYRange(-40,40)
+        self.PW.setXRange(buffer_length*0.0,buffer_length)
+
+    def pause(self,pause_flag):
+        if pause_flag == True:
+            self.timer.stop()
+        else: 
+            self.timer.start()
+    
+    def clear_data(self):
+        self.x_arr = np.zeros(buffer_length)
+        self.y_arr = np.zeros(buffer_length)
+        self.z_arr = np.zeros(buffer_length)
+
+
+class Eul_Widget2(QWidget):
+    def __init__(self,parent=None):
+        super().__init__()
+
+        ## INIT LAYOUT
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+        ## CREATE AXIS ITEM TO CREATE CUSTOM TICK LABELS
+        ax = pg.AxisItem(orientation='bottom')
+        ax.setTicks([tick_labels.items()])
+
+
+        self.PW = pg.PlotWidget(name='Plot1',labels =  {'left':'Velocity [m/s]', 'bottom':'Time [s]'},axisItems={'bottom': ax}) # Plot window 1
+        self.layout.addWidget(self.PW)
+        
+
+        ## UPDATE PLOT 1
+        self.PW.setBackground('w')
+        self.PW.setXRange(buffer_length*0.0,buffer_length)
+        self.PW.setYRange(-90,90)
+        self.PW.showGrid(x=True, y=True, alpha=0.2)
+
+
+        # ## INIT DATA CURVES
+        self.x_arr = np.zeros(buffer_length)
+        self.curve_x = self.PW.plot(self.x_arr, pen=pg.mkPen(color=colors["red"], width=width))
+
+        self.y_arr = np.zeros(buffer_length)
+        self.curve_y = self.PW.plot(self.y_arr, pen=pg.mkPen(color=colors["green"], width=width))
+
+        self.z_arr = np.zeros(buffer_length)
+        self.curve_z = self.PW.plot(self.z_arr, pen=pg.mkPen(color=colors["blue"], width=width))
+
+        ## INIT UPDATE TIMER
+        self.timer = pg.QtCore.QTimer(self)
+        self.timer.timeout.connect(self.update)
+        self.timer.start(update_interval) # number of milliseconds for next update
+
+    def update(self):
+                        
+        self.x_arr = np.roll(self.x_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
+        self.x_arr[-1] = DashNode.eul[0]
+        self.curve_x.setData(self.x_arr)
+
+        self.y_arr = np.roll(self.y_arr,-1)
+        self.y_arr[-1] = DashNode.eul[1]
+        self.curve_y.setData(self.y_arr)
+
+        self.z_arr = np.roll(self.z_arr,-1)
+        self.z_arr[-1] = DashNode.eul[2]
+        self.curve_z.setData(self.z_arr)
+
+    def reset_axes(self):
+        # self.p1.enableAutoRange(enable=True)
+        self.PW.setYRange(-90,90)
+        self.PW.setXRange(buffer_length*0.0,buffer_length)
+
+    def pause(self,pause_flag):
+        if pause_flag == True:
+            self.timer.stop()
+        else: 
+            self.timer.start()
+    
+    def clear_data(self):
+        self.x_arr = np.zeros(buffer_length)
+        self.y_arr = np.zeros(buffer_length)
+        self.z_arr = np.zeros(buffer_length)
+
+
+class OF_Widget2(QWidget):
+    def __init__(self,parent=None):
+        super().__init__()
+
+        ## INIT LAYOUT
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+        ## CREATE AXIS ITEM TO CREATE CUSTOM TICK LABELS
+        ax = pg.AxisItem(orientation='bottom')
+        ax.setTicks([tick_labels.items()])
+
+
+        self.PW = pg.PlotWidget(name='Plot1',labels =  {'left':'OF [rad/s]', 'bottom':'Time [s]'},axisItems={'bottom': ax}) # Plot window 1
+        self.layout.addWidget(self.PW)
+        
+
+        ## UPDATE PLOT 1
+        self.PW.setBackground('w')
+        self.PW.setXRange(buffer_length*0.0,buffer_length)
+        self.PW.setYRange(-10,10)
+        self.PW.showGrid(x=True, y=True, alpha=0.2)
+
+
+        # ## INIT DATA CURVES
+        self.x_arr = np.zeros(buffer_length)
+        self.curve_x = self.PW.plot(self.x_arr, pen=pg.mkPen(color=colors["red"], width=width))
+
+        self.y_arr = np.zeros(buffer_length)
+        self.curve_y = self.PW.plot(self.y_arr, pen=pg.mkPen(color=colors["green"], width=width))
+
+        self.z_arr = np.zeros(buffer_length)
+        self.curve_z = self.PW.plot(self.z_arr, pen=pg.mkPen(color=colors["blue"], width=width))
+
+        ## INIT UPDATE TIMER
+        self.timer = pg.QtCore.QTimer(self)
+        self.timer.timeout.connect(self.update)
+        self.timer.start(update_interval) # number of milliseconds for next update
+
+    def update(self):
+                        
+        self.x_arr = np.roll(self.x_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
+        self.x_arr[-1] = DashNode.RREV
+
+        self.y_arr = np.roll(self.y_arr,-1)
+        self.y_arr[-1] = DashNode.OF_x
+        self.curve_y.setData(self.y_arr)
+
+        self.z_arr = np.roll(self.z_arr,-1)
+        self.z_arr[-1] = DashNode.OF_y
+        self.curve_z.setData(self.z_arr)
+
+    def reset_axes(self):
+        # self.p1.enableAutoRange(enable=True)
+        self.PW.setYRange(-10,10)
+        self.PW.setXRange(buffer_length*0.0,buffer_length)
+
+    def pause(self,pause_flag):
+        if pause_flag == True:
+            self.timer.stop()
+        else: 
+            self.timer.start()
+    
+    def clear_data(self):
+        self.x_arr = np.zeros(buffer_length)
+        self.y_arr = np.zeros(buffer_length)
+        self.z_arr = np.zeros(buffer_length)
+
+class Dist_Widget2(QWidget):
+    def __init__(self,parent=None):
+        super().__init__()
+
+        ## INIT LAYOUT
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+        ## CREATE AXIS ITEM TO CREATE CUSTOM TICK LABELS
+        ax = pg.AxisItem(orientation='bottom')
+        ax.setTicks([tick_labels.items()])
+
+
+        self.PW = pg.PlotWidget(name='Plot1',labels =  {'left':'Distance [m]', 'bottom':'Time [s]'},axisItems={'bottom': ax}) # Plot window 1
+        self.layout.addWidget(self.PW)
+        
+
+        ## UPDATE PLOT 1
+        self.PW.setBackground('w')
+        self.PW.setXRange(buffer_length*0.0,buffer_length)
+        self.PW.setYRange(0,5)
+        self.PW.showGrid(x=True, y=True, alpha=0.2)
+
+
+        # ## INIT DATA CURVES
+        self.x_arr = np.zeros(buffer_length)
+        self.curve_x = self.PW.plot(self.x_arr, pen=pg.mkPen(color=colors["red"], width=width))
+
+        ## INIT UPDATE TIMER
+        self.timer = pg.QtCore.QTimer(self)
+        self.timer.timeout.connect(self.update)
+        self.timer.start(update_interval) # number of milliseconds for next update
+
+    def update(self):
+                        
+        self.x_arr = np.roll(self.x_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
+        self.x_arr[-1] = DashNode.d_ceiling
+
+
+    def reset_axes(self):
+        # self.p1.enableAutoRange(enable=True)
+        self.PW.setYRange(0,5)
+        self.PW.setXRange(buffer_length*0.0,buffer_length)
+
+    def pause(self,pause_flag):
+        if pause_flag == True:
+            self.timer.stop()
+        else: 
+            self.timer.start()
+    
+    def clear_data(self):
+        self.x_arr = np.zeros(buffer_length)
+
+        
 if __name__ == '__main__':
 
     ## INITIALIZE APPLICATION   

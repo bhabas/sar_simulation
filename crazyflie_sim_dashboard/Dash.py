@@ -28,10 +28,10 @@ class Dashboard(QMainWindow,DashboardNode):
             self.Pos_Graph,
             self.Vel_Graph,
             self.PWM_Graph,
-            # self.Dist_Graph,
-            # self.Eul_Graph,
-            # self.OF_Graph,
-            # self.Omega_Graph,
+            self.Dist_Graph,
+            self.Eul_Graph,
+            self.OF_Graph,
+            self.Omega_Graph,
             ]
 
 
