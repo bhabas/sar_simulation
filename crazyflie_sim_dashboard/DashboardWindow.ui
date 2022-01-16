@@ -140,7 +140,7 @@
       <item>
        <widget class="QTabWidget" name="tabWidget">
         <property name="currentIndex">
-         <number>1</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="Tab_State">
          <attribute name="title">
@@ -440,7 +440,7 @@
                   </widget>
                  </item>
                  <item>
-                  <widget class="Pos_Widget2" name="PWM_Graph" native="true">
+                  <widget class="PWM_Widget2" name="PWM_Graph" native="true">
                    <property name="styleSheet">
                     <string notr="true">background-color: rgb(136, 138, 133);</string>
                    </property>
@@ -1178,6 +1178,12 @@ color: rgb(214, 39, 40);</string>
   </customwidget>
   <customwidget>
    <class>Dist_Widget2</class>
+   <extends>QWidget</extends>
+   <header>Dash_Plots</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PWM_Widget2</class>
    <extends>QWidget</extends>
    <header>Dash_Plots</header>
    <container>1</container>

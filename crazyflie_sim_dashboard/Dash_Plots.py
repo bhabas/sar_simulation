@@ -360,6 +360,7 @@ class OF_Widget2(QWidget):
                         
         self.x_arr = np.roll(self.x_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
         self.x_arr[-1] = DashNode.RREV
+        self.curve_x.setData(self.x_arr)
 
         self.y_arr = np.roll(self.y_arr,-1)
         self.y_arr[-1] = DashNode.OF_x
@@ -422,6 +423,7 @@ class Dist_Widget2(QWidget):
                         
         self.x_arr = np.roll(self.x_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
         self.x_arr[-1] = DashNode.d_ceiling
+        self.curve_x.setData(self.x_arr)
 
 
     def reset_axes(self):
@@ -438,6 +440,98 @@ class Dist_Widget2(QWidget):
     def clear_data(self):
         self.x_arr = np.zeros(buffer_length)
 
+
+class PWM_Widget2(QWidget):
+    def __init__(self,parent=None):
+        super().__init__()
+
+        ## INIT LAYOUT
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+        ## DEFINE HOW LONG TO PRESERVE DATA
+        self.buffer_time = 20_000                               # Amount of data to save [ms]
+        update_interval = 1_000//refresh_rate                        # [ms]
+        self.buffer_length = self.buffer_time//update_interval   # Number of datapoints in plot
+
+        ## UPDATE X-AXIS TICKS
+        num_ticks = 11
+        buff_ticks = np.linspace(0,self.buffer_length,num_ticks)         # Tick locations
+        time_ticks = np.linspace(-self.buffer_time//1000,0,num_ticks)    # Tick values
+        tick_labels = dict(zip(buff_ticks,['{:.1f}'.format(tick) for tick in time_ticks]))
+
+        
+        ## CREATE AXIS ITEM TO CREATE CUSTOM TICK LABELS
+        ax = pg.AxisItem(orientation='bottom')
+        ax.setTicks([tick_labels.items()])
+
+
+        self.PW = pg.PlotWidget(name='Plot1',labels =  {'left':'Motor Command [PWM]', 'bottom':'Time [s]'},axisItems={'bottom': ax}) # Plot window 1
+        self.layout.addWidget(self.PW)
+        
+
+        ## UPDATE PLOT 1
+        self.PW.setBackground('w')
+        self.PW.setXRange(buffer_length*0.0,buffer_length)
+        self.PW.setYRange(0,65_000)
+        self.PW.showGrid(x=True, y=True, alpha=0.2)
+
+
+        # ## INIT DATA CURVES
+        self.M1_arr = np.zeros(buffer_length)
+        self.curve_M1 = self.PW.plot(self.M1_arr, pen=pg.mkPen(color=colors["red"], width=width))
+
+        self.M2_arr = np.zeros(buffer_length)
+        self.curve_M2 = self.PW.plot(self.M2_arr, pen=pg.mkPen(color=colors["green"], width=width))
+
+        self.M3_arr = np.zeros(buffer_length)
+        self.curve_M3 = self.PW.plot(self.M3_arr, pen=pg.mkPen(color=colors["blue"], width=width))
+
+        self.M4_arr = np.zeros(buffer_length)
+        self.curve_M4 = self.PW.plot(self.M4_arr, pen=pg.mkPen(color=colors["orange"], width=width))
+
+        ## INIT UPDATE TIMER
+        self.timer = pg.QtCore.QTimer(self)
+        self.timer.timeout.connect(self.update)
+        self.timer.start(update_interval) # number of milliseconds for next update
+
+    def update(self):
+                        
+        self.M1_arr = np.roll(self.M1_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
+        self.M1_arr[-1] = DashNode.MS_PWM[0]+5
+        self.curve_M1.setData(self.M1_arr)
+
+        self.M2_arr = np.roll(self.M2_arr,-1)
+        self.M2_arr[-1] = DashNode.MS_PWM[1]+4
+        self.curve_M2.setData(self.M2_arr)
+
+        self.M3_arr = np.roll(self.M3_arr,-1)
+        self.M3_arr[-1] = DashNode.MS_PWM[2]-5
+        self.curve_M3.setData(self.M3_arr)
+
+        self.M4_arr = np.roll(self.M4_arr,-1)
+        self.M4_arr[-1] = DashNode.MS_PWM[3]-4
+        self.curve_M4.setData(self.M4_arr)
+
+
+    def reset_axes(self):
+        # self.p1.enableAutoRange(enable=True)
+        self.PW.setYRange(0,65_000)
+        self.PW.setXRange(buffer_length*0.0,buffer_length)
+
+    def pause(self,pause_flag):
+        if pause_flag == True:
+            self.timer.stop()
+        else: 
+            self.timer.start()
+    
+    def clear_data(self):
+        self.M1_arr = np.zeros(buffer_length)
+        self.M2_arr = np.zeros(buffer_length)
+        self.M3_arr = np.zeros(buffer_length)
+        self.M4_arr = np.zeros(buffer_length)
+
+
         
 if __name__ == '__main__':
 
@@ -445,7 +539,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     ## INITIALIZE DASHBOARD WINDOW
-    myApp = Pos_Widget2()
+    myApp = PWM_Widget2()
     myApp.show()
 
     sys.exit(app.exec_())
