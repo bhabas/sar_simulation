@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
+    <width>831</width>
     <height>600</height>
    </rect>
   </property>
@@ -176,7 +176,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QWidget" name="Pos_Graph" native="true">
+                    <widget class="Pos_Widget2" name="Pos_Graph" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
@@ -307,7 +307,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QWidget" name="Vel_Graph" native="true">
+                    <widget class="Vel_Widget2" name="Vel_Graph" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
@@ -440,7 +440,7 @@
                   </widget>
                  </item>
                  <item>
-                  <widget class="QWidget" name="PWM_Graph" native="true">
+                  <widget class="Pos_Widget2" name="PWM_Graph" native="true">
                    <property name="styleSheet">
                     <string notr="true">background-color: rgb(136, 138, 133);</string>
                    </property>
@@ -607,7 +607,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>831</width>
      <height>22</height>
     </rect>
    </property>
@@ -625,6 +625,18 @@
    <class>Traj_Planner</class>
    <extends>QWidget</extends>
    <header>TrajectoryPlanner</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Pos_Widget2</class>
+   <extends>QWidget</extends>
+   <header>Dash_Plots</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Vel_Widget2</class>
+   <extends>QWidget</extends>
+   <header>Dash_Plots</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

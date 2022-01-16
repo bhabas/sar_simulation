@@ -19,10 +19,59 @@ class Dashboard(QMainWindow,DashboardNode):
         super().__init__()
         super(DashboardNode).__init__()
 
+        self.resize(800,800)
+
         #LOAD UI
         loadUi(f'{BASE_PATH}/crazyflie_sim_dashboard/DashboardWindow.ui', self)
+
+        self.plot_list = [
+            self.Pos_Graph,
+            self.Vel_Graph,
+            self.PWM_Graph,
+            # self.Dist_Graph,
+            # self.Eul_Graph,
+            # self.OF_Graph,
+            # self.Omega_Graph,
+            ]
+
+
+        self.Battery_Voltage.setValue(50)
+
+        ## ON BUTTON PRESS EXECUTE FUNCTIONS
+        self.pauseButton.clicked.connect(self.pause_plots)
+        self.rescaleButton.clicked.connect(self.rescale_plots)
+        self.clearButton.clicked.connect(self.clear_plots)
+        self.paused = False
+
         
         self.printSumthin()
+
+
+    def pause_plots(self):
+        if self.paused == False:
+
+            self.paused = True
+            for plot in self.plot_list:
+                plot.pause(self.paused)
+     
+        else:
+            
+            self.paused = False
+            for plot in self.plot_list:
+                plot.pause(self.paused)
+
+
+
+    def rescale_plots(self):
+        for plot in self.plot_list:
+            plot.reset_axes()
+
+        # self.Mu_Graph.reset_axes()
+        # self.Sigma_Graph.reset_axes()
+
+    def clear_plots(self):
+        for plot in self.plot_list:
+            plot.clear_data()
 
 
 if __name__ == "__main__":
