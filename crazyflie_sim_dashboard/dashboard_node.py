@@ -52,6 +52,9 @@ class DashboardNode:
    
         print("[COMPLETED] Dashboard node is running...")
 
+    def printSumthin(self):
+        print("Hello")
+
     # ============================
     ##     Reward Subscriber
     # ============================

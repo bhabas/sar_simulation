@@ -785,27 +785,24 @@ import pyqtgraph.opengl as gl
 class Plot3DDemo(QWidget):
     def __init__(self,parent=None, **kargs):
         super().__init__()
+        pg.setConfigOption('background', 'k')
+        pg.setConfigOption('foreground', 'k')
 
         glvw = gl.GLViewWidget()
-
-        ## create three grids, add each to the view
+        z = pg.gaussianFilter(np.random.normal(size=(50,50)), (1,1))
+        p13d = gl.GLSurfacePlotItem(z=z, shader='shaded', color=(0.5, 0.5, 1, 1))
         xgrid = gl.GLGridItem()
-        ygrid = gl.GLGridItem()
-        zgrid = gl.GLGridItem()
+
+        glvw.addItem(p13d)
         glvw.addItem(xgrid)
-        glvw.addItem(ygrid)
-        glvw.addItem(zgrid)
+
+        layout = QVBoxLayout()
 
         ## rotate x and y grids to face the correct direction
         xgrid.rotate(90, 0, 1, 0)
-        ygrid.rotate(90, 1, 0, 0)
-
-        ## scale each grid differently
-        xgrid.scale(0.2, 0.1, 0.1)
-        ygrid.scale(0.2, 0.1, 0.1)
-
-        layout = QVBoxLayout()
+        
         self.setLayout(layout)
+
         layout.addWidget(glvw)
 
         glvw.sizeHint = lambda: pg.QtCore.QSize(100, 100)
