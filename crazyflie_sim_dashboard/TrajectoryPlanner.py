@@ -15,20 +15,34 @@ BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_data'))
 sys.path.insert(0,BASE_PATH)
 
 class Slider(QWidget):
-    def __init__(self):
+    def __init__(self,label='Text',min=0,max=100):
         super().__init__()
-
+        self.max = max
+        self.min = min
         self.layout = QHBoxLayout()
         self.var = QLabel()
         self.val = QLabel()
         self.slider = QSlider()
         self.slider.setOrientation(Qt.Horizontal)
         self.setLayout(self.layout)
+        
+        self.var.setText(label)
+        self.val.setText(f"{min:.3f}")
 
 
         self.layout.addWidget(self.var)
         self.layout.addWidget(self.val)
         self.layout.addWidget(self.slider)
+
+
+        self.slider.valueChanged.connect(self.updateText)
+
+
+    def updateText(self):
+
+        self.val.setText(f"{self.slider.value()/(self.max-self.min):.3f}")
+
+
         
 
 
@@ -36,45 +50,82 @@ class Slider(QWidget):
 class Traj_Planner(QWidget):
     def __init__(self):
         super().__init__()
-        self.resize(500,500)
+        self.resize(800,800)
 
+
+        ## INITIAL DATA
+        self.t = np.linspace(0,0.5,50).reshape(-1,1)
+        self.vel = 2
+        self.theta = 90
+        self.h_ceil = 2.1
+        self.z_0 = 0.4
+        vel_z = self.vel*np.sin(np.radians(self.theta))
+        vel_x = self.vel*np.cos(np.radians(self.theta))
+
+        d = self.h_ceil - (self.z_0 + vel_z*self.t)
+        RREV = vel_z/d
+        OFy = -vel_x/d
+
+        data = np.hstack((OFy,RREV,d))
+
+
+        ## INITIALIZE 3D PLOT
         glvw = gl.GLViewWidget()
+        glvw.orbit(-135,45)
 
-        x = np.array([0,1]).reshape(-1,1)
-        y = np.array([0,0]).reshape(-1,1)
-        z = np.array([0,1]).reshape(-1,1)
-        pos = np.hstack((x,y,z))
-
-        self.sp1 = gl.GLLinePlotItem(pos=pos,width=5)
+        self.traj = gl.GLLinePlotItem(pos=data,width=3)
         xgrid = gl.GLGridItem()
-        glvw.addItem(self.sp1)
+        xgrid.setSize(x=10,y=20)
+        xgrid.setSpacing(x=1,y=1)
+        glvw.addItem(self.traj)
         glvw.addItem(xgrid)
 
 
         self.layout = QVBoxLayout()
         self.layout.addWidget(glvw)
-        # glvw.sizeHint = lambda: pg.QtCore.QSize(100, 100)
 
-        self.w1 = Slider()
-        self.w1.var.setText("hello")
+        ## INIT SLIDERS
+        self.w1 = Slider(label="Vel:",min=1.0,max=4.0)
+        self.w2 = Slider(label="Theta:",min=0,max=90)
+
+
         self.layout.addWidget(self.w1)
+        self.layout.addWidget(self.w2)
+
+
+
+        ## DIVIDE WIDGET
+        self.layout.setStretch(0, 50)
+        self.layout.setStretch(1, 5)
+        self.layout.setStretch(2, 5)
+
 
         self.setLayout(self.layout)
 
 
 
+
         self.w1.slider.valueChanged.connect(self.updateText)
+        self.w2.slider.valueChanged.connect(self.updateText)
+
 
 
     def updateText(self):
-        self.w1.var.setText(f"{self.w1.slider.value()}")
+        
+        theta = self.w1.slider.value()
+        vel = self.w2.slider.value()
 
-        x = np.array([0,1,2,3]).reshape(-1,1)
-        y = np.array([0,0,0,0]).reshape(-1,1)
-        z = np.array([0,1,4,9]).reshape(-1,1)
-        pos2 = np.hstack((x,y,z))
+        vel_z = vel*np.sin(np.radians(theta))
+        vel_x = vel*np.cos(np.radians(theta))
 
-        self.sp1.setData(pos=pos2)
+
+        d = self.h_ceil - (self.z_0 + vel_z*self.t)
+        RREV = vel_z/d
+        OFy = -vel_x/d
+
+        data = np.hstack((OFy,RREV,d))
+
+        self.traj.setData(pos=data)
 
 
 
