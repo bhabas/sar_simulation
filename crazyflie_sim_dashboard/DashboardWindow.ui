@@ -6,15 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>900</width>
-    <height>800</height>
+    <width>895</width>
+    <height>721</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout_5">
+   <layout class="QVBoxLayout" name="verticalLayout_2">
     <item>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
@@ -63,6 +63,12 @@
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>75</width>
+            <height>0</height>
+           </size>
           </property>
           <property name="frameShape">
            <enum>QFrame::Box</enum>
@@ -139,9 +145,6 @@
       </item>
       <item>
        <widget class="QTabWidget" name="tabWidget">
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
         <property name="currentIndex">
          <number>0</number>
         </property>
@@ -149,9 +152,9 @@
          <attribute name="title">
           <string>State Data</string>
          </attribute>
-         <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <layout class="QVBoxLayout" name="verticalLayout_4">
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_2">
+           <layout class="QVBoxLayout" name="verticalLayout_3">
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_2">
               <item>
@@ -583,9 +586,9 @@
          <attribute name="title">
           <string>Misc Data</string>
          </attribute>
-         <layout class="QVBoxLayout" name="verticalLayout_4">
+         <layout class="QVBoxLayout" name="verticalLayout_7">
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_3">
+           <layout class="QVBoxLayout" name="verticalLayout_6">
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="50,50">
               <item>
@@ -613,7 +616,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="dist_Widget" name="Dist_Graph" native="true">
+                    <widget class="Dist_Widget" name="Dist_Graph" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
@@ -1107,14 +1110,19 @@ color: rgb(214, 39, 40);</string>
          <attribute name="title">
           <string>Sensory Data</string>
          </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_5">
+          <item>
+           <widget class="Traj_Planner" name="widget" native="true"/>
+          </item>
+         </layout>
         </widget>
         <widget class="QWidget" name="Tab_RL">
          <attribute name="title">
           <string>RL Data</string>
          </attribute>
-         <layout class="QHBoxLayout" name="horizontalLayout_24">
+         <layout class="QVBoxLayout" name="verticalLayout_20">
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_6">
+           <layout class="QVBoxLayout" name="verticalLayout_14">
             <item>
              <widget class="QFrame" name="frame_5">
               <property name="frameShape">
@@ -1126,11 +1134,11 @@ color: rgb(214, 39, 40);</string>
               <property name="lineWidth">
                <number>1</number>
               </property>
-              <layout class="QHBoxLayout" name="horizontalLayout_13">
+              <layout class="QHBoxLayout" name="horizontalLayout_20">
                <item>
-                <layout class="QVBoxLayout" name="verticalLayout_13" stretch="0,10">
+                <layout class="QVBoxLayout" name="verticalLayout_15" stretch="0,10">
                  <item>
-                  <widget class="QLabel" name="label_38">
+                  <widget class="QLabel" name="label_46">
                    <property name="text">
                     <string>Reward Plot</string>
                    </property>
@@ -1140,7 +1148,7 @@ color: rgb(214, 39, 40);</string>
                   </widget>
                  </item>
                  <item>
-                  <widget class="RL_Widget" name="widget_10" native="true">
+                  <widget class="RL_Widget" name="widget_11" native="true">
                    <property name="styleSheet">
                     <string notr="true">background-color: rgb(136, 138, 133);</string>
                    </property>
@@ -1164,11 +1172,11 @@ color: rgb(214, 39, 40);</string>
                 <property name="lineWidth">
                  <number>1</number>
                 </property>
-                <layout class="QHBoxLayout" name="horizontalLayout_20">
+                <layout class="QHBoxLayout" name="horizontalLayout_21">
                  <item>
-                  <layout class="QVBoxLayout" name="verticalLayout_14" stretch="0,10,1">
+                  <layout class="QVBoxLayout" name="verticalLayout_18" stretch="0,10,1">
                    <item>
-                    <widget class="QLabel" name="label_46">
+                    <widget class="QLabel" name="label_47">
                      <property name="text">
                       <string>Mu</string>
                      </property>
@@ -1185,9 +1193,9 @@ color: rgb(214, 39, 40);</string>
                     </widget>
                    </item>
                    <item>
-                    <layout class="QHBoxLayout" name="horizontalLayout_21" stretch="10,5,10,5,2">
+                    <layout class="QHBoxLayout" name="horizontalLayout_22" stretch="10,5,10,5,2">
                      <item>
-                      <widget class="QLabel" name="label_47">
+                      <widget class="QLabel" name="label_49">
                        <property name="text">
                         <string>RREV</string>
                        </property>
@@ -1213,7 +1221,7 @@ color: rgb(214, 39, 40);</string>
                       </widget>
                      </item>
                      <item>
-                      <widget class="QLabel" name="label_49">
+                      <widget class="QLabel" name="label_50">
                        <property name="text">
                         <string>My</string>
                        </property>
@@ -1269,11 +1277,11 @@ color: rgb(214, 39, 40);</string>
                 <property name="lineWidth">
                  <number>1</number>
                 </property>
-                <layout class="QHBoxLayout" name="horizontalLayout_22">
+                <layout class="QHBoxLayout" name="horizontalLayout_23">
                  <item>
-                  <layout class="QVBoxLayout" name="verticalLayout_15" stretch="0,10,1">
+                  <layout class="QVBoxLayout" name="verticalLayout_19" stretch="0,10,1">
                    <item>
-                    <widget class="QLabel" name="label_50">
+                    <widget class="QLabel" name="label_51">
                      <property name="text">
                       <string>Sigma</string>
                      </property>
@@ -1283,16 +1291,16 @@ color: rgb(214, 39, 40);</string>
                     </widget>
                    </item>
                    <item>
-                    <widget class="Sig_Widget" name="Sigma_Graph" native="true">
+                    <widget class="Sigma_Widget" name="Sigma_Graph" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
                     </widget>
                    </item>
                    <item>
-                    <layout class="QHBoxLayout" name="horizontalLayout_23" stretch="10,5,10,5,2">
+                    <layout class="QHBoxLayout" name="horizontalLayout_24" stretch="10,5,10,5,2">
                      <item>
-                      <widget class="QLabel" name="label_51">
+                      <widget class="QLabel" name="label_53">
                        <property name="text">
                         <string>Sig_1</string>
                        </property>
@@ -1318,7 +1326,7 @@ color: rgb(214, 39, 40);</string>
                       </widget>
                      </item>
                      <item>
-                      <widget class="QLabel" name="label_53">
+                      <widget class="QLabel" name="label_57">
                        <property name="text">
                         <string>Sig_2</string>
                        </property>
@@ -1380,7 +1388,7 @@ color: rgb(214, 39, 40);</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>900</width>
+     <width>895</width>
      <height>22</height>
     </rect>
    </property>
@@ -1395,63 +1403,69 @@ color: rgb(214, 39, 40);</string>
  </widget>
  <customwidgets>
   <customwidget>
-   <class>Mu_Widget</class>
+   <class>Traj_Planner</class>
    <extends>QWidget</extends>
-   <header>Plotter</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>Sig_Widget</class>
-   <extends>QWidget</extends>
-   <header>Plotter</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>RL_Widget</class>
-   <extends>QWidget</extends>
-   <header>Plotter</header>
+   <header>TrajectoryPlanner</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>Pos_Widget</class>
    <extends>QWidget</extends>
-   <header>Plotter</header>
+   <header>Dash_Plots</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>Vel_Widget</class>
    <extends>QWidget</extends>
-   <header>Plotter</header>
+   <header>Dash_Plots</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>Omega_Widget</class>
    <extends>QWidget</extends>
-   <header>Plotter</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>PWM_Widget</class>
-   <extends>QWidget</extends>
-   <header>Plotter</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>OF_Widget</class>
-   <extends>QWidget</extends>
-   <header>Plotter</header>
+   <header>Dash_Plots</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>Eul_Widget</class>
    <extends>QWidget</extends>
-   <header>Plotter</header>
+   <header>Dash_Plots</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>dist_Widget</class>
+   <class>OF_Widget</class>
    <extends>QWidget</extends>
-   <header>Plotter</header>
+   <header>Dash_Plots</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Dist_Widget</class>
+   <extends>QWidget</extends>
+   <header>Dash_Plots</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PWM_Widget</class>
+   <extends>QWidget</extends>
+   <header>Dash_Plots</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>RL_Widget</class>
+   <extends>QWidget</extends>
+   <header>Dash_Plots</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Mu_Widget</class>
+   <extends>QWidget</extends>
+   <header>Dash_Plots</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Sigma_Widget</class>
+   <extends>QWidget</extends>
+   <header>Dash_Plots</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
