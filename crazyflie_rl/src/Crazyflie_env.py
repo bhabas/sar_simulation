@@ -598,8 +598,10 @@ class CrazyflieEnv:
         cmd_msg.cmd_vals.z = ctrl_vals[2]
         cmd_msg.cmd_flag = ctrl_flag
         
-        self.Cmd_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
-        self.Cmd_Publisher.publish(cmd_msg) # So I'm sending it twice 
+        for ii in range(5):
+            self.Cmd_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
+        
+        time.sleep(0.1) # Ensure controller has time to process command
         
     def clear_rollout_Data(self):
         """Clears all logged impact and flip data & resets default values before next rollout

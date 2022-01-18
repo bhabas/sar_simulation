@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 
+from curses.ascii import ctrl
 import numpy as np
 import time,os
 import rospy
@@ -169,10 +170,18 @@ def runTraining(env,agent,V_d,phi,k_epMax=250):
                     print("No ctrl message received")
                     repeat_run = True
                     
-
+                ## VELOCITY IMPARTED FLIGHT
                 env.step('pos',ctrl_flag=0)                     # Turn off pos control
                 env.step('vel',env.vel_trial,ctrl_flag=1)           # Set desired vel
                 env.launch_IC(pos_z,env.vel_trial[0]+0.03,env.vel_trial[2])   # Use Gazebo to impart desired vel with extra vx to ensure -OF_y when around zero
+                
+                # ## TRAJECTORY BASED FLIGHT
+                # az_max = 3.0 # Max vertical accel
+                # ax_max = 1.0 # Max horizontal accel (Made up)
+                # env.step('traj',ctrl_vals=[0.4,env.vel_trial[2],az_max],ctrl_flag=2)
+                # env.step('traj',ctrl_vals=[0.0,env.vel_trial[0],ax_max],ctrl_flag=0)
+
+                
                 env.step('sticky',ctrl_flag=1)                  # Enable sticky pads
                 
                 while 1: # NOTE: [while 1:] is faster than [while True:]

@@ -77,6 +77,13 @@ bool controllerGTCTest(void)
 
 void GTC_Command(setpoint_t *setpoint, Controller* _CTRL)
 {   
+    // printf("cmd_type: %d\n cmd_1: %.3f\t cmd_2: %.3f\t cmd_3: %.3f\n cmd_flag: %.3f\n",
+    //     setpoint->cmd_type,
+    //     setpoint->cmd_val1,
+    //     setpoint->cmd_val2,
+    //     setpoint->cmd_val3,
+    //     setpoint->cmd_flag);
+
     switch(setpoint->cmd_type){
         case 0: // Reset
             controllerGTCReset(_CTRL);
@@ -249,7 +256,6 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
         if (setpoint->GTC_cmd_rec == true)
             {
-                
                 GTC_Command(setpoint, _CTRL);
                 setpoint->GTC_cmd_rec = false;
             }
@@ -631,7 +637,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         "Policy_armed: " << policy_armed_flag <<  "\tFlip_flag: " << flip_flag << "\t_impact_flag: " << _CTRL->_impact_flag << endl <<
         "Tumble Detection: " << tumble_detection << "\t\tTumbled: " << tumbled << endl <<
         "kp_xf: " << kp_xf << " \tkd_xf: " << kp_xf << endl <<
-        "_slowdown_type: " << _CTRL->_slowdown_type << endl << 
+        "slowdown_type: " << _CTRL->_slowdown_type << endl << 
         endl <<
         
         setprecision(3) <<
