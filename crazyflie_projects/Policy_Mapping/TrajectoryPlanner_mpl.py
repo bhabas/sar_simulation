@@ -13,7 +13,7 @@ sys.path.insert(0,BASE_PATH)
 
 DATA_PATH = f"{BASE_PATH}/crazyflie_projects/ICRA_DataAnalysis/Wide-Long_2-Policy/Wide-Long_2-Policy_Summary.csv"
 df = pd.read_csv(DATA_PATH)
-df = df.query('landing_rate_4_leg >= 0.7')
+# df = df.query('landing_rate_4_leg >= 0.7')
 
 ## SYSTEM CONSTANTS
 h_ceil = 2.1
@@ -41,6 +41,21 @@ d = h_ceil - (z_0 + vel_z*t)
 RREV = vel_z/d
 OFy = -vel_x/d
 
+vel_range = np.linspace(0.5,4.0,11)
+theta_range = np.linspace(90,20,10)
+d_ceil_range = np.linspace(0.25,1.0,10)
+
+XX,YY,ZZ = np.meshgrid(vel_range,theta_range,d_ceil_range)
+data = np.vstack((XX.flatten(),YY.flatten(),ZZ.flatten())).T
+
+vel_x_range = data[:,0]*np.cos(np.radians(data[:,1]))
+vel_z_range = data[:,0]*np.sin(np.radians(data[:,1]))
+
+d_range = data[:,2]
+RREV_range = vel_z_range/d_range
+OFy_range = -vel_x_range/d_range
+
+
 
 ## DEFINE FIGURE
 fig = plt.figure(figsize=(14,7))
@@ -53,6 +68,8 @@ ax = fig.add_subplot(121, projection='3d')
 ax.scatter(df["vx"],df["vz"],df["flip_d_mean"],c=df["landing_rate_4_leg"],cmap=cmap,norm=norm)
 POI, = ax.plot([vel_x[0]],[vel_z[0]],[d_ceil],'ko')
 graph, = ax.plot(vel_x,vel_z,d)
+
+# ax.scatter(vel_x_range,vel_z_range,d_range)
 
 
 ax.set_xlim(0,4)
@@ -68,7 +85,7 @@ ax.set_zlabel("d_ceil")
 ax2 = fig.add_subplot(122, projection='3d')
 ax2.scatter(df["OF_y_flip_mean"],df["RREV_threshold"],df["flip_d_mean"],c=df["landing_rate_4_leg"],cmap=cmap,norm=norm)
 POI2, = ax2.plot([OFy[0]],[RREV[0]],[d_ceil],'ko')
-
+# ax2.scatter(OFy_range,RREV_range,d_range)
 graph2, = ax2.plot(OFy,RREV,d)
 
 ax2.set_xlim(-15,0)
