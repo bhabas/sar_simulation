@@ -204,7 +204,12 @@ if __name__ == "__main__":
     # plt.show()
 
 
-
+    ## PASS DATA TO PREDICT METHOD
+    with torch.no_grad():
+        test_data = np.array([1.322,-0.497,0.0]).reshape(1,-1)
+        grid_data = scaler.transform(test_data)
+        test_data = torch.FloatTensor(test_data)
+        print(model.forward(test_data))
 
     ## PLOT DECISION BOUNDARY
 

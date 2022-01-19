@@ -65,6 +65,9 @@ void controllerGTCReset(Controller* _CTRL)
     _CTRL->_slowdown_type = 0;
     _CTRL->adjustSimSpeed(_CTRL->_SIM_SPEED);
 
+    _CTRL->_NN_flip = 0.0;
+    _CTRL->_NN_policy = 0.0;
+
 
 
 
@@ -295,9 +298,9 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         OF_x = stateVel.y/(h_ceiling - statePos.z);
         OF_y = stateVel.x/(h_ceiling - statePos.z);
 
-        X->data[0][0] = RREV;
-        X->data[1][0] = OF_y;
-        X->data[2][0] = (h_ceiling - statePos.z); // d_ceiling [m]
+        X->data[0][0] = _CTRL->_RREV;
+        X->data[1][0] = _CTRL->_OF_y;
+        X->data[2][0] = _CTRL->_d_ceil; // d_ceiling [m]
 
         
 
@@ -440,12 +443,13 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
                     case NN:
                     {   
-                        _CTRL->_flip_NN = NN_Flip(X,&Scaler_Flip,W_flip,b_flip);
+                        _CTRL->_NN_flip = NN_Flip(X,&Scaler_Flip,W_flip,b_flip);
+                        _CTRL->_NN_policy = -NN_Policy(X,&Scaler_Policy,W_policy,b_policy);
 
-                        if(_CTRL->_flip_NN >= 0.5 && onceFlag == false)
+                        if(_CTRL->_NN_flip >= 0.9 && onceFlag == false)
                         {   
                             onceFlag = true;
-                            flip_flag = true;
+                            // flip_flag = true;
 
                             // UPDATE AND RECORD FLIP VALUES
                             _CTRL->_t_flip = ros::Time::now();
@@ -458,10 +462,10 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                             OF_x_tr = OF_x;
                             RREV_tr = RREV;
 
-                            _CTRL->_policy_NN = -NN_Policy(X,&Scaler_Policy,W_policy,b_policy);
-                            M_d.x = 0.0f;
-                            M_d.y = _CTRL->_policy_NN;
-                            M_d.z = 0.0f;
+                            // _CTRL->_NN_policy = -NN_Policy(X,&Scaler_Policy,W_policy,b_policy);
+                            // M_d.x = 0.0f;
+                            // M_d.y = _CTRL->_NN_policy;
+                            // M_d.z = 0.0f;
                         }
 
                         break;
@@ -573,11 +577,17 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
         }
 
+        // MISC INFO
+        _CTRL->_ctrl_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
+        _CTRL->_ctrl_msg.MS_PWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
 
+        // NEURAL NETWORK INFO
+        _CTRL->_ctrl_msg.NN_policy = _CTRL->_NN_policy;
+        _CTRL->_ctrl_msg.NN_flip = _CTRL->_NN_flip;
 
-        _CTRL->_ctrl_msg.RREV = RREV;
-        _CTRL->_ctrl_msg.OF_y = OF_y;
-        _CTRL->_ctrl_msg.OF_x = OF_x;
+        _CTRL->_ctrl_msg.RREV = _CTRL->_RREV;
+        _CTRL->_ctrl_msg.OF_y = _CTRL->_OF_y;
+        _CTRL->_ctrl_msg.D_ceil = _CTRL->_d_ceil;
 
         // FLIP INFO
         _CTRL->_ctrl_msg.flip_flag = flip_flag;
@@ -585,9 +595,6 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         _CTRL->_ctrl_msg.OF_x_tr = OF_x_tr;
         _CTRL->_ctrl_msg.OF_y_tr = OF_y_tr;
         _CTRL->_ctrl_msg.FM_flip = {F_thrus_t_flip,M_x_flip*1.0e3,M_y_flip*1.0e3,M_z_flip*1.0e3};
-
-        _CTRL->_ctrl_msg.policy_NN = _CTRL->_policy_NN;
-        _CTRL->_ctrl_msg.flip_NN = _CTRL->_flip_NN;
 
 
         _CTRL->_ctrl_msg.Pose_tr.header.stamp = _CTRL->_t_flip;             
@@ -609,8 +616,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         _CTRL->_ctrl_msg.Twist_tr.angular.y = stateOmega_tr.y;
         _CTRL->_ctrl_msg.Twist_tr.angular.z = stateOmega_tr.z;
 
-        _CTRL->_ctrl_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
-        _CTRL->_ctrl_msg.MS_PWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
+        
         _CTRL->_CTRL_Publisher.publish(_CTRL->_ctrl_msg);
 
         // DATA HANDLING

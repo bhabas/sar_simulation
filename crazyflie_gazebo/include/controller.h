@@ -686,19 +686,18 @@ class Controller
         int _CTRL_DEBUG_SLOWDOWN;
         int _POLICY_TYPE;
         
-        float _flip_NN = 0.0;
-        float _policy_NN = 0.0;
+        float _NN_flip = 0.0;
+        float _NN_policy = 0.0;
+
+        float _RREV;
+        float _OF_x;
+        float _OF_y;
+        float _d_ceil;
 
 
 
 
     private:
-
-        float _RREV;
-        float _OF_x;
-        float _OF_y;
-
-
 
         // DEFINE THREAD OBJECTS
         std::thread controllerThread;
@@ -775,16 +774,16 @@ void Controller::OF_Callback(const nav_msgs::Odometry::ConstPtr &msg){
     const geometry_msgs::Vector3 velocity = msg->twist.twist.linear;
 
     
-    double d = _H_CEILING-position.z; // h_ceiling - height
+    _d_ceil = _H_CEILING-position.z; // h_ceiling - height
 
     // SET SENSOR VALUES INTO CLASS VARIABLES
     // _RREV = msg->RREV;
     // _OF_x = msg->OF_x;
     // _OF_y = msg->OF_y;
 
-    _RREV = velocity.z/d;
-    _OF_x = -velocity.y/d;
-    _OF_y = -velocity.x/d;
+    _RREV = velocity.z/_d_ceil;
+    _OF_x = -velocity.y/_d_ceil;
+    _OF_y = -velocity.x/_d_ceil;
 }
 
 void Controller::adjustSimSpeed(float speed_mult)

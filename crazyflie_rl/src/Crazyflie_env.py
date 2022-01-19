@@ -75,7 +75,10 @@ class CrazyflieEnv:
         self.RREV = 0.0
         self.OF_x = 0.0
         self.OF_y = 0.0
-        self.d = 0.0 
+        self.d_ceil = 0.0 
+
+        self.NN_flip = 0.0
+        self.NN_policy = 0.0
 
         ## INIT RL PARAMETERS
         self.n_rollouts = 0     # Rollouts per episode
@@ -132,7 +135,7 @@ class CrazyflieEnv:
         self.RREV_tr = 0.0
         self.OF_x_tr = 0.0
         self.OF_y_tr = 0.0
-        self.d_tr = 0.0
+        self.d_ceil_tr = 0.0
 
         self.FM_flip = [0,0,0,0]    # [N,N*mm]
 
@@ -264,6 +267,9 @@ class CrazyflieEnv:
         self.FM = np.round(self.FM,3)       # Round data for logging
         self.MS_pwm = np.asarray(ctrl_msg.MS_PWM)
         self.MS_pwm = np.round(self.MS_pwm,0)
+
+        self.NN_flip = np.round(ctrl_msg.NN_flip,3)
+        self.NN_policy = np.round(ctrl_msg.NN_policy,3)
 
 
         
@@ -662,7 +668,7 @@ class CrazyflieEnv:
                 state_writer.writerow([
                     # RL Labels
                     'k_ep','k_run',             
-                    'alpha_mu','alpha_sig',
+                    'NN_flip','NN_policy',
                     'mu','sigma', 'policy',
 
                     # Internal State Estimates (EKF)
@@ -698,7 +704,7 @@ class CrazyflieEnv:
                 state_writer.writerow([
                     # RL Labels
                     self.k_ep,self.k_run,
-                    "","", # alpha_mu,alpha_sig
+                    self.NN_flip,self.NN_policy, # alpha_mu,alpha_sig
                     "","","", # mu,sigma,policy
 
                     # Internal State Estimates (EKF)
@@ -712,7 +718,7 @@ class CrazyflieEnv:
                     "",self.flip_flag,self.impact_flag,"", # reward, flip_triggered, impact_flag, n_rollout
 
                     # Misc Internal State Estimates
-                    self.RREV,self.OF_x,self.OF_y,self.d, # RREV, OF_x, OF_y, d
+                    self.RREV,self.OF_x,self.OF_y,self.d_ceil, # RREV, OF_x, OF_y, d
                     self.FM[0],self.FM[1],self.FM[2],self.FM[3], # F_thrust[N],Mx[Nmm],My[Nmm],Mz[Nmm]
                     self.MS_pwm[0],self.MS_pwm[1],self.MS_pwm[2],self.MS_pwm[3],
 
@@ -751,7 +757,7 @@ class CrazyflieEnv:
                     "","","","", # reward, body_impact, num leg contacts, impact force
 
                     # Misc Internal State Estimates
-                    self.RREV_tr,self.OF_x_tr,self.OF_y_tr,self.d_tr, # RREV, OF_x, OF_y, d
+                    self.RREV_tr,self.OF_x_tr,self.OF_y_tr,self.d_ceil_tr, # RREV, OF_x, OF_y, d
                     self.FM_flip[0],self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # F_thrust,Mx,My,Mz
                     "","","","",
 
