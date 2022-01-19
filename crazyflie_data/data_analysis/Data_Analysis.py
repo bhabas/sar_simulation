@@ -1,11 +1,13 @@
+## STANDARD IMPORTS
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.spatial.transform import Rotation
-import os
-import warnings
-import re
 import matplotlib as mpl
+from mpl_toolkits.mplot3d import Axes3D
+
+## MISC IMPORTS
+from scipy.spatial.transform import Rotation
+import re
 
 # os.system("clear")
 np.set_printoptions(suppress=True)
@@ -22,7 +24,7 @@ class DataFile:
 
         # self.dataType = re.findall('SIM|EXP',fileName)[0] # FIND 'SIM' OR 'EXP'
         self.trialNum = int(re.findall('trial_(\d+)',fileName)[0])
-        self.vel_IC = float(re.findall('vel_(\d+\.?\d*)',fileName)[0])
+        self.vel_IC = float(re.findall('Vd_(\d+\.?\d*)',fileName)[0])
         self.phi_IC = float(re.findall('phi_(\d+\.?\d*)',fileName)[0])
 
 
@@ -797,8 +799,8 @@ class DataFile:
 
         plt.show()
 
-    def plot_VC_traj_2D(self,k_ep,k_run):
-        """Plot flight trajectory through Visual_Cue-Space until flip execution
+    def plot_traj_3D_SensorySpace(self,k_ep,k_run):
+        """Plot flight trajectory through Sensory-Space until flip execution
 
         Args:
             k_ep (int): Episode Number
@@ -808,28 +810,27 @@ class DataFile:
         run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
 
         ## GRAB/MODIFY DATA AND CONVERT TO NUMPY ARRAY
-        RREV_traj = run_df.query(f"flip_flag==False & `v_d.z`> {0.0}").iloc[:]['RREV'].to_numpy()
-        OF_y_traj = run_df.query(f"flip_flag==False & `v_d.z`> {0.0}").iloc[:]['OF_y'].to_numpy()
-        OF_y_traj = np.abs(OF_y_traj) # Convert OF_y to pure magnitude
-
-        OF_x_traj = run_df.query(f"flip_flag==False & `v_d.z`> {0.0}").iloc[:]['OF_x'].to_numpy()
-        OF_x_traj = np.abs(OF_x_traj) # Convert OF_y to pure magnitude
+        RREV_traj = run_df.query(f"flip_flag==False and RREV <= 8").iloc[:]['RREV'].to_numpy()
+        OF_y_traj = run_df.query(f"flip_flag==False and RREV <= 8").iloc[:]['OF_y'].to_numpy()
+        d_ceil_traj = run_df.query(f"flip_flag==False and RREV <= 8").iloc[:]['d_ceil'].to_numpy()
 
 
         ## PLOT DATA
         fig = plt.figure()
-        ax = fig.add_subplot(111)
+        ax = fig.add_subplot(111,projection="3d")
         
-        ax.plot(OF_y_traj,RREV_traj,'k--')
-        ax.scatter(OF_y_traj[0],RREV_traj[0],marker='o',color='k',label='Velocity Imparted')
-        ax.scatter(OF_y_traj[-1],RREV_traj[-1],marker='x',color='k',label='Flip Executed')
+        ax.plot(OF_y_traj,RREV_traj,d_ceil_traj,'k--')
+        ax.scatter(OF_y_traj[0],RREV_traj[0],d_ceil_traj[0],marker='o',color='k',label='Velocity Imparted')
+        # ax.scatter(OF_y_traj[-1],RREV_traj[-1],marker='x',color='k',label='Flip Executed')
 
-        ax.set_xlim(-1,10)
-        ax.set_ylim(-1,10)
+        ax.set_xlim(-20,0)
+        ax.set_ylim(0,8)
+        ax.set_zlim(0,2)
        
-        ax.set_ylabel("RREV [1/s]")
-        ax.set_xlabel("|OF_y| [rad/s]")
-        ax.set_title("Flight Trajectory - Visual Cue Space")
+        ax.set_xlabel("OF_y [rad/s]")
+        ax.set_ylabel("RREV [rad/s]")
+        ax.set_zlabel("D_ceil [m]")
+        ax.set_title("Flight Trajectory - Sensory Space")
         ax.legend()
         ax.grid()
 
@@ -1678,21 +1679,11 @@ class GTC_Model():
         
 
 if __name__ == "__main__":
-    dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/logs/EXP_Logs/"
-    # dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs/"
-
-    Vel = 2.5
-    phi = 90
-    trial = 2
-
-
-    # fileName = "EM_PEPG--Vd_3.50--phi_60.00--trial_03.csv"
-    # fileName = f"EM_PEPG--Vd_{Vel:.2f}--phi_{phi:.2f}--trial_{int(trial):02d}.csv"
-    # fileName = "My_6.00_Calibration_Test-3.csv"
-    fileName = "EM_PEPG--Vd_2.50--phi_90.00--trial_01--EXP.csv"
-    trial = DataFile(dataPath,fileName,dataType='EXP')
+    dataPath = f"crazyflie_data/local_logs/"
+    fileName = "EM_PEPG--Vd_2.25--phi_70.00--trial_24--WL.csv"
+    trial = DataFile(dataPath,fileName,dataType='SIM')
 
     k_ep = 0
     k_run = 0
 
-    trial.plot_convg_summary(saveFig=True)
+    trial.plot_traj_3D_SensorySpace(k_ep,k_run)

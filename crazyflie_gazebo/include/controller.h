@@ -64,6 +64,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                                          const sensorData_t *sensors,
                                          const state_t *state,
                                          const uint32_t tick,
+                                         const flowDeck_t *flowDeck,
                                          Controller* ctrl);
 void GTC_Command(setpoint_t *setpoint, Controller* _CTRL);
 void initScaler(Scaler* scaler,char path[]);
@@ -129,6 +130,7 @@ static struct vec stateEul = {0.0f,0.0f,0.0f}; // Pose in Euler Angles [YZX Nota
 static float RREV = 0.0f; // [rad/s]
 static float OF_x = 0.0f; // [rad/s]
 static float OF_y = 0.0f; // [rad/s] 
+static float d_ceil = 0.0f;
 
 
 // INIT DESIRED STATES
@@ -259,6 +261,7 @@ static struct vec stateOmega_tr = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s
 static float RREV_tr = 0.0f; // [rad/s]
 static float OF_x_tr = 0.0f; // [rad/s]
 static float OF_y_tr = 0.0f; // [rad/s]
+static float d_ceil_tr = 0.0f; // [m/s]
 
 
 float F_thrus_t_flip = 0.0f; // [g]
@@ -308,6 +311,12 @@ nml_mat* b_policy[3];
 
 nml_mat* W_flip[3];
 nml_mat* b_flip[3];
+
+float NN_flip = 0.0f;
+float NN_policy = 0.0f;
+
+float NN_tr_flip = 0.0f;
+float NN_tr_policy = 0.0f;
 
 
 
@@ -383,15 +392,15 @@ float NN_Policy(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[])
     nml_mat* X_input = nml_mat_cp(X);
     for(int i=0;i<3;i++)
     {
-        X->data[i][0] = (X->data[i][0] - scaler->mean[i])/scaler->std[i];
+        X_input->data[i][0] = (X->data[i][0] - scaler->mean[i])/scaler->std[i];
         
     }
 
     //LAYER 1
     //Sigmoid(W*X+b)
-    nml_mat *WX = nml_mat_dot(W[0],X_input); 
-    nml_mat_add_r(WX,b[0]);
-    nml_mat *a1 = nml_mat_funcElement(WX,Sigmoid);
+    nml_mat *WX1 = nml_mat_dot(W[0],X_input); 
+    nml_mat_add_r(WX1,b[0]);
+    nml_mat *a1 = nml_mat_funcElement(WX1,Sigmoid);
 
     // LAYER 2
     // Sigmoid(W*X+b)
@@ -405,14 +414,18 @@ float NN_Policy(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[])
     nml_mat_add_r(WX3,b[2]);
     nml_mat *a3 = nml_mat_cp(WX3);
 
+
+    // SAVE OUTPUT VALUE
     float y_output = (float)a3->data[0][0];
 
+    // FREE MATRICES FROM STACK
     nml_mat_free(X_input);
-    nml_mat_free(WX);
-    nml_mat_free(a1);
+    nml_mat_free(WX1);
     nml_mat_free(WX2);
-    nml_mat_free(a2);
     nml_mat_free(WX3);
+
+    nml_mat_free(a1);
+    nml_mat_free(a2);
     nml_mat_free(a3);
 
 
@@ -424,33 +437,46 @@ float NN_Flip(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[])
     nml_mat* X_input = nml_mat_cp(X);
     for(int i=0;i<3;i++)
     {
-        X->data[i][0] = (X->data[i][0] - scaler->mean[i])/scaler->std[i];
-        
+        X_input->data[i][0] = (X->data[i][0] - scaler->mean[i])/scaler->std[i];
     }
 
-    //LAYER 1
-    //Sigmoid(W*X+b)
-    nml_mat *WX = nml_mat_dot(W[0],X_input); 
-    nml_mat_add_r(WX,b[0]);
-    nml_mat *a1 = nml_mat_funcElement(WX,Elu);
+    // LAYER 1
+    // Elu(W*X+b)
+    nml_mat *WX1 = nml_mat_dot(W[0],X_input); 
+    nml_mat_add_r(WX1,b[0]);
+    nml_mat *a1 = nml_mat_funcElement(WX1,Elu);
+
 
     // LAYER 2
-    // Sigmoid(W*X+b)
+    // Elu(W*X+b)
     nml_mat *WX2 = nml_mat_dot(W[1],a1); 
     nml_mat_add_r(WX2,b[1]);
-    nml_mat *a2 = nml_mat_funcElement(WX2,Sigmoid);
+    nml_mat *a2 = nml_mat_funcElement(WX2,Elu);
 
-    float y_output = a2->data[0][0];
 
+    // LAYER 3
+    // Sigmoid(W*X+b)
+    nml_mat *WX3 = nml_mat_dot(W[2],a2); 
+    nml_mat_add_r(WX3,b[2]);
+    nml_mat *a3 = nml_mat_funcElement(WX3,Sigmoid);
+
+
+    // SAVE OUTPUT VALUE
+    float y_output = a3->data[0][0];
+
+
+    // FREE MATRICES FROM STACK
     nml_mat_free(X_input);
-    nml_mat_free(WX);
-    nml_mat_free(a1);
+    nml_mat_free(WX1);
     nml_mat_free(WX2);
+    nml_mat_free(WX3);
+
+    nml_mat_free(a1);
     nml_mat_free(a2);
+    nml_mat_free(a3);
+
 
     return y_output;
-    
-
 }
 
 float Sigmoid(float x)
@@ -686,19 +712,17 @@ class Controller
         int _CTRL_DEBUG_SLOWDOWN;
         int _POLICY_TYPE;
         
-        float _flip_NN = 0.0;
-        float _policy_NN = 0.0;
+        
+
+        float _RREV;
+        float _OF_x;
+        float _OF_y;
+        float _d_ceil;
 
 
 
 
     private:
-
-        float _RREV;
-        float _OF_x;
-        float _OF_y;
-
-
 
         // DEFINE THREAD OBJECTS
         std::thread controllerThread;
@@ -710,6 +734,7 @@ class Controller
         sensorData_t sensorData;
         state_t state;
         uint32_t tick = 0;
+        flowDeck_t flowDeck;
         
 
 
@@ -773,18 +798,18 @@ void Controller::OF_Callback(const nav_msgs::Odometry::ConstPtr &msg){
 
     const geometry_msgs::Point position = msg->pose.pose.position; 
     const geometry_msgs::Vector3 velocity = msg->twist.twist.linear;
-
-    
-    double d = _H_CEILING-position.z; // h_ceiling - height
+    float d_ceil = _H_CEILING-position.z; // h_ceiling - height    
 
     // SET SENSOR VALUES INTO CLASS VARIABLES
     // _RREV = msg->RREV;
     // _OF_x = msg->OF_x;
     // _OF_y = msg->OF_y;
 
-    _RREV = velocity.z/d;
-    _OF_x = -velocity.y/d;
-    _OF_y = -velocity.x/d;
+
+    flowDeck.dist = d_ceil;
+    flowDeck.RREV = velocity.z/d_ceil;
+    flowDeck.OF_y = -velocity.x/d_ceil;
+    flowDeck.OF_x = -velocity.y/d_ceil;
 }
 
 void Controller::adjustSimSpeed(float speed_mult)
@@ -840,7 +865,7 @@ void Controller::startController() // MAIN CONTROLLER LOOP
     {
         stateEstimator(&state, &sensorData, &control, tick);
         commanderGetSetpoint(&setpoint, &state);
-        controllerGTC(&control, &setpoint, &sensorData, &state, tick, this);
+        controllerGTC(&control, &setpoint, &sensorData, &state, tick, &flowDeck, this);
 
         tick++;
         rate.sleep();

@@ -9,7 +9,7 @@ void controllerGTCInit(void)
     initScaler(&Scaler_Flip,str1);
     initScaler(&Scaler_Policy,str2);
     initNN_Layers(W_policy,b_policy,path_policy,3);
-    initNN_Layers(W_flip,b_flip,path_flip,2);
+    initNN_Layers(W_flip,b_flip,path_flip,3);
     // controllerGTCReset(_CTRL);
     printf("GTC Initiated\n");
 }
@@ -60,10 +60,13 @@ void controllerGTCReset(Controller* _CTRL)
 
 
     // ROS SPECIFIC VALUES
-    // ==========================
+    // ================
     _CTRL->_impact_flag = false;
     _CTRL->_slowdown_type = 0;
     _CTRL->adjustSimSpeed(_CTRL->_SIM_SPEED);
+
+    NN_flip = 0.0;
+    NN_policy = 0.0;
 
 
 
@@ -250,6 +253,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                                          const sensorData_t *sensors,
                                          const state_t *state,
                                          const uint32_t tick,
+                                         const flowDeck_t *flowDeck,
                                          Controller* _CTRL) 
 {
     if (RATE_DO_EXECUTE(RATE_500_HZ, tick)) {
@@ -291,13 +295,14 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                         state->attitudeQuaternion.w);
 
 
-        RREV = stateVel.z/(h_ceiling - statePos.z);
-        OF_x = stateVel.y/(h_ceiling - statePos.z);
-        OF_y = stateVel.x/(h_ceiling - statePos.z);
+        RREV = flowDeck->RREV;
+        OF_y = flowDeck->OF_y;
+        OF_x = flowDeck->OF_x;
+        d_ceil = flowDeck->dist;
 
         X->data[0][0] = RREV;
         X->data[1][0] = OF_y;
-        X->data[2][0] = (h_ceiling - statePos.z); // d_ceiling [m]
+        X->data[2][0] = d_ceil; // d_ceiling [m]
 
         
 
@@ -440,9 +445,10 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
                     case NN:
                     {   
-                        _CTRL->_flip_NN = NN_Flip(X,&Scaler_Flip,W_flip,b_flip);
+                        NN_flip = NN_Flip(X,&Scaler_Flip,W_flip,b_flip);
+                        NN_policy = -NN_Policy(X,&Scaler_Policy,W_policy,b_policy);
 
-                        if(_CTRL->_flip_NN >= 0.5 && onceFlag == false)
+                        if(NN_flip >= 0.9 && onceFlag == false)
                         {   
                             onceFlag = true;
                             flip_flag = true;
@@ -457,10 +463,14 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                             OF_y_tr = OF_y;
                             OF_x_tr = OF_x;
                             RREV_tr = RREV;
+                            d_ceil_tr = d_ceil;
 
-                            _CTRL->_policy_NN = -NN_Policy(X,&Scaler_Policy,W_policy,b_policy);
+                            NN_tr_flip = NN_Flip(X,&Scaler_Flip,W_flip,b_flip);
+                            NN_tr_policy = NN_Policy(X,&Scaler_Policy,W_policy,b_policy);
+
+
                             M_d.x = 0.0f;
-                            M_d.y = _CTRL->_policy_NN;
+                            M_d.y = -NN_tr_policy*1e-3;
                             M_d.z = 0.0f;
                         }
 
@@ -540,9 +550,9 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
 
         
-        // ============================
+        // ========
         //          C++ CODE
-        // ============================
+        // ========
        
 
         _CTRL->_MS_msg.MotorSpeeds = {MS1,MS2,MS3,MS4};
@@ -573,11 +583,18 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
         }
 
+        // MISC INFO
+        _CTRL->_ctrl_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
+        _CTRL->_ctrl_msg.MS_PWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
 
+        // NEURAL NETWORK INFO
+        _CTRL->_ctrl_msg.NN_policy = NN_policy;
+        _CTRL->_ctrl_msg.NN_flip = NN_flip;
 
         _CTRL->_ctrl_msg.RREV = RREV;
         _CTRL->_ctrl_msg.OF_y = OF_y;
         _CTRL->_ctrl_msg.OF_x = OF_x;
+        _CTRL->_ctrl_msg.D_ceil = d_ceil;
 
         // FLIP INFO
         _CTRL->_ctrl_msg.flip_flag = flip_flag;
@@ -586,9 +603,8 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         _CTRL->_ctrl_msg.OF_y_tr = OF_y_tr;
         _CTRL->_ctrl_msg.FM_flip = {F_thrus_t_flip,M_x_flip*1.0e3,M_y_flip*1.0e3,M_z_flip*1.0e3};
 
-        _CTRL->_ctrl_msg.policy_NN = _CTRL->_policy_NN;
-        _CTRL->_ctrl_msg.flip_NN = _CTRL->_flip_NN;
-
+        _CTRL->_ctrl_msg.NN_tr_flip = NN_tr_flip;
+        _CTRL->_ctrl_msg.NN_tr_policy = NN_tr_policy;
 
         _CTRL->_ctrl_msg.Pose_tr.header.stamp = _CTRL->_t_flip;             
 
@@ -609,8 +625,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         _CTRL->_ctrl_msg.Twist_tr.angular.y = stateOmega_tr.y;
         _CTRL->_ctrl_msg.Twist_tr.angular.z = stateOmega_tr.z;
 
-        _CTRL->_ctrl_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
-        _CTRL->_ctrl_msg.MS_PWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
+        
         _CTRL->_CTRL_Publisher.publish(_CTRL->_ctrl_msg);
 
         // DATA HANDLING
@@ -620,60 +635,55 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         "t: " << _CTRL->_t << "\tCmd: "  << endl << 
         endl <<
 
-        "RREV_thr: " << RREV_thr << "\tG1: " << G1 << "\tG2: " << G2 << endl << 
-        "RREV: " << RREV << "\tOF_x: " << OF_x << "\tOF_y: " << OF_y << endl <<
-        "RREV_flip: " << RREV_tr << "\tOF_x_tr: " << OF_x_tr << "\tOF_y_tr: " << OF_y_tr << endl << 
-        endl << 
-
-        "Kp_P: " << Kp_p.x << "  " << Kp_p.y << "  " << Kp_p.z << "\t" <<
-        "Kp_R: " << Kp_R.x << "  " << Kp_R.y << "  " << Kp_R.z << endl <<
-        "Kd_P: " << Kd_p.x << "  " << Kd_p.y << "  " << Kd_p.z << "\t" <<
-        "Kd_R: " << Kd_R.x << "  " << Kd_R.y << "  " << Kd_R.z << endl <<
-        "Ki_P: " << Ki_p.x << "  " << Ki_p.y << "  " << Ki_p.z << "\t" <<
-        "Ki_R: " << Ki_R.x << "  " << Ki_R.y << "  " << Ki_R.z << endl <<
-        endl <<
-
+        "==== Flags ====" << endl <<
         setprecision(0) <<
-        "Policy_armed: " << policy_armed_flag <<  "\tFlip_flag: " << flip_flag << "\t_impact_flag: " << _CTRL->_impact_flag << endl <<
-        "Tumble Detection: " << tumble_detection << "\t\tTumbled: " << tumbled << endl <<
-        "kp_xf: " << kp_xf << " \tkd_xf: " << kp_xf << endl <<
-        "slowdown_type: " << _CTRL->_slowdown_type << endl << 
-        endl <<
+        "Policy_armed:\t" << policy_armed_flag <<  "\tSlowdown_type:\t" << _CTRL->_slowdown_type << endl << 
+        "Flip_flag:\t" << flip_flag << "\tImpact_flag:\t" << _CTRL->_impact_flag << endl <<
+        "Tumbled:\t" << tumbled << "\tTumble Detect:\t" << tumble_detection << endl <<
+        "Traj Active:\t" << execute_traj << endl <<
+        "kp_xf:\t" << kp_xf << " \tkd_xf:\t" << kp_xf << endl <<
         
+        endl <<
+
+        "==== Setpoints ====" << endl <<
         setprecision(3) <<
         "x_d: " << x_d.x << "  " << x_d.y << "  " << x_d.z << endl <<
         "v_d: " << v_d.x << "  " << v_d.y << "  " << v_d.z << endl <<
         "a_d: " << a_d.x << "  " << a_d.y << "  " << a_d.z << endl <<
         endl << 
 
+        "==== System States ====" << endl <<
         setprecision(3) <<
-        "Pos [m]: " << statePos.x << "  " << statePos.y << "  " << statePos.z << "\t" <<
-        "e_x: " << e_x.x << "  " << e_x.y << "  " << e_x.z << endl <<
-        "Vel [m/s]: " << stateVel.x << "  " << stateVel.y << "  " << stateVel.z << "\t" <<
-        "e_v: " << e_v.x << "  " << e_v.y << "  " << e_v.z << endl <<
-        "Omega [rad/s]: " << stateOmega.x << "  " << stateOmega.y << "  " << stateOmega.z << "\t" <<
-        "e_w: " << e_w.x << "  " << e_w.y << "  " << e_w.z << endl <<
+        "Pos [m]:\t" << statePos.x << "  " << statePos.y << "  " << statePos.z << endl <<
+        "Vel [m/s]:\t" << stateVel.x << "  " << stateVel.y << "  " << stateVel.z << endl <<
+        "Omega [rad/s]:\t" << stateOmega.x << "  " << stateOmega.y << "  " << stateOmega.z << endl <<
 
-        "e_PI : " << e_PI.x << "  " << e_PI.y << "  " << e_PI.z << "\t" <<
-        "e_RI: " << e_RI.x << "  " << e_RI.y << "  " << e_RI.z << endl <<
+        endl << 
+        "RREV: " << RREV << "\tOF_y: " << OF_y << "\tOF_x: " << OF_x << endl <<
+        "D_ceil: " << d_ceil << endl <<
+        endl <<
+
+        "==== Policy Values ====" << endl <<
+        setprecision(3) <<
+        "RL: " << endl <<
+        "RREV_thr: " << RREV_thr << "\t\tG1: " << G1 << "\tG2: " << G2 << endl << 
+        endl << 
+        
+        "NN Outputs: " << endl << 
+        "NN_Flip: " << NN_flip << "\tNN_Policy: " << NN_policy << endl << 
         endl << 
 
-        "R:\n" << 
-        R.m[0][0] << "  " << R.m[0][1] << "  " << R.m[0][2] << "\n" <<
-        R.m[1][0] << "  " << R.m[1][1] << "  " << R.m[1][2] << "\n" <<
-        R.m[2][0] << "  " << R.m[2][1] << "  " << R.m[2][2] << "\n" <<
-        endl <<
-
-        "R_d:\n" << 
-        R_d.m[0][0] << "  " << R_d.m[0][1] << "  " << R_d.m[0][2] << "\n" <<
-        R_d.m[1][0] << "  " << R_d.m[1][1] << "  " << R_d.m[1][2] << "\n" <<
-        R_d.m[2][0] << "  " << R_d.m[2][1] << "  " << R_d.m[2][2] << "\n" <<
-        endl <<
         
-        "e_R : " << e_R.x << "  " << e_R.y << "  " << e_R.z << "\t" <<
-        "e_R (deg): " << e_R.x*180.0f/M_PI << "  " << e_R.y*180.0f/M_PI << "  " << e_R.z*180.0f/M_PI << endl <<
-        endl <<
 
+        "==== Flip Trigger Values ====" << endl <<
+        "RREV_tr:\t" << RREV_tr << "\tNN_tr_Flip:\t" << NN_tr_flip << endl <<
+        "OF_y_tr:\t" << OF_y_tr << "\tNN_tr_Policy:\t" << NN_tr_policy << endl <<
+        "D_ceil_tr:\t" << d_ceil_tr << endl << 
+        endl << 
+
+
+        "==== Controller Actions ====" << endl <<
+        setprecision(3) <<
         "FM [N/N*mm]: " << F_thrust << "  " << M.x*1.0e3 << "  " << M.y*1.0e3 << "  " << M.z*1.0e3 << endl <<
         "f [g]: " << f_thrust_g << "  " << f_roll_g << "  " << f_pitch_g << "  " << f_yaw_g << "  " << "\t" << endl << 
         endl <<
@@ -683,7 +693,16 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         "MS: " << MS1 << "  " << MS2 << "  " << MS3 << "  " << MS4 << endl <<
         endl << 
 
-        "=============== " << endl; 
+        "==== Parameters ====" << endl <<
+        setprecision(3) <<
+        "Kp_P: " << Kp_p.x << "  " << Kp_p.y << "  " << Kp_p.z << "\t" <<
+        "Kp_R: " << Kp_R.x << "  " << Kp_R.y << "  " << Kp_R.z << endl <<
+        "Kd_P: " << Kd_p.x << "  " << Kd_p.y << "  " << Kd_p.z << "\t" <<
+        "Kd_R: " << Kd_R.x << "  " << Kd_R.y << "  " << Kd_R.z << endl <<
+        "Ki_P: " << Ki_p.x << "  " << Ki_p.y << "  " << Ki_p.z << "\t" <<
+        "Ki_R: " << Ki_R.x << "  " << Ki_R.y << "  " << Ki_R.z << endl <<
+        endl <<
+        "===== " << endl; 
         }
 
     }

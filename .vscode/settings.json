@@ -76,5 +76,61 @@
     },
     "python.analysis.extraPaths": [
         "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_rl/src/"
-    ]
+    ],
+    "favorites.resources": [
+        {
+            "filePath": "crazyflie_gazebo/src/controller.cpp",
+            "group": "Default"
+        },
+        {
+            "filePath": "crazyflie_rl/src/CF_training_2term_Policy.py",
+            "group": "Default"
+        },
+        {
+            "filePath": "crazyflie_gazebo/include/controller.h",
+            "group": "Default"
+        },
+        {
+            "filePath": "crazyflie_projects/Policy_Mapping/NeuralNetwork/NN_Flip_Classifier.py",
+            "group": "Default"
+        },
+        {
+            "filePath": "crazyflie_projects/Policy_Mapping/NeuralNetwork/NN_Policy_Value.py",
+            "group": "Default"
+        },
+        {
+            "filePath": "crazyflie_rl/src/Control_Playground.py",
+            "group": "Default"
+        },
+        {
+            "filePath": "crazyflie_launch/config/Sim_Settings.yaml",
+            "group": "Default"
+        },
+        {
+            "filePath": "crazyflie_data/local_logs",
+            "group": "Default"
+        },
+        {
+            "filePath": "crazyflie_projects/ICRA_DataAnalysis/Wide-Long_2-Policy",
+            "group": "Default"
+        },
+        {
+            "filePath": "crazyflie_data/ICRA_2022_Data/Wide-Long_2-Policy/Wide-Long_2-Policy_Summary.csv",
+            "group": "Default"
+        },
+        {
+            "filePath": "crazyflie_projects/Policy_Mapping",
+            "group": "Default"
+        },
+        {
+            "filePath": "crazyflie_rl/src/Crazyflie_env.py",
+            "group": "Default"
+        }
+    ],
+    "favorites.sortOrder": "DESC",
+    "favorites.groups": [
+        "Default",
+        "Priot"
+    ],
+    "favorites.currentGroup": "Default"
 }

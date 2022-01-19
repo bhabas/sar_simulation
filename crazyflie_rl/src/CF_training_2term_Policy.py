@@ -373,9 +373,6 @@ if __name__ == '__main__':
     # ============================
 
     # ## GAUSSIAN PARAMETERS
-    # mu = np.array([[4.0],[4.0]])                 # Initial mu starting point
-    # sigma = np.array([[1.5],[1.5]])       # Initial sigma starting point
-
     mu = np.array([[4.0], [8.0]])                 # Initial mu starting point
     sigma = np.array([[1.5],[1.5]])       # Initial sigma starting point
 
@@ -387,12 +384,12 @@ if __name__ == '__main__':
 
     
     # ============================
-    ##     LEARNING CONDITIONS  
+    ##     FLIGHT CONDITIONS  
     # ============================
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
-    V_d = 2.25  # [m/s]
-    phi = 70    # [deg]
+    V_d = 3.0  # [m/s]
+    phi = 25.8    # [deg]
 
 
     

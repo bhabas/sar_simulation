@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import *
 import pyqtgraph as pg
 
 import os,rospkg
-from dashboard_node import DashboardNode
+from crazyflie_sim_dashboard.Dashboard_Node import DashboardNode
 import numpy as np
 
 

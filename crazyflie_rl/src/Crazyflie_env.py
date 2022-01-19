@@ -75,7 +75,10 @@ class CrazyflieEnv:
         self.RREV = 0.0
         self.OF_x = 0.0
         self.OF_y = 0.0
-        self.d = 0.0 
+        self.d_ceil = 0.0 
+
+        self.NN_flip = 0.0
+        self.NN_policy = 0.0
 
         ## INIT RL PARAMETERS
         self.n_rollouts = 0     # Rollouts per episode
@@ -132,9 +135,12 @@ class CrazyflieEnv:
         self.RREV_tr = 0.0
         self.OF_x_tr = 0.0
         self.OF_y_tr = 0.0
-        self.d_tr = 0.0
+        self.d_ceil_tr = 0.0
 
         self.FM_flip = [0,0,0,0]    # [N,N*mm]
+
+        self.NN_tr_flip = 0.0
+        self.NN_tr_policy = 0.0
 
         
 
@@ -265,6 +271,9 @@ class CrazyflieEnv:
         self.MS_pwm = np.asarray(ctrl_msg.MS_PWM)
         self.MS_pwm = np.round(self.MS_pwm,0)
 
+        self.NN_flip = np.round(ctrl_msg.NN_flip,3)
+        self.NN_policy = np.round(ctrl_msg.NN_policy,3)
+
 
         
         if ctrl_msg.flip_flag == True and self.flip_flag == False: # Activates only once per run when flip_flag is about to change
@@ -305,6 +314,9 @@ class CrazyflieEnv:
             self.RREV_tr = np.round(ctrl_msg.RREV_tr,3) # Recorded trigger RREV [rad/s]
             self.OF_y_tr = np.round(ctrl_msg.OF_y_tr,3) # Recorded OF_y at trigger [rad/s]
             self.OF_x_tr = np.round(ctrl_msg.OF_y_tr,3) # Recorded OF_x at trigger [rad/s]
+
+            self.NN_tr_flip = np.round(ctrl_msg.NN_tr_flip,3)
+            self.NN_tr_policy = np.round(ctrl_msg.NN_tr_policy,3)
 
 
 
@@ -372,11 +384,13 @@ class CrazyflieEnv:
     def OFsensor_Callback(self,OF_msg): ## Callback to parse state data received from mock OF sensor
 
         ## SET VISUAL CUE SENSOR VALUES FROM TOPIC
-        d = self.h_ceiling - OF_msg.pose.pose.position.z    # Distance from CF to ceiling [m]
+        self.d_ceil = self.h_ceiling - OF_msg.pose.pose.position.z    # Distance from CF to ceiling [m]
 
-        self.RREV = round( OF_msg.twist.twist.linear.z/d,3) # [rad/s]
-        self.OF_x = round(-OF_msg.twist.twist.linear.y/d,3) # [rad/s]
-        self.OF_y = round(-OF_msg.twist.twist.linear.x/d,3) # [rad/s]
+        self.RREV = round( OF_msg.twist.twist.linear.z/self.d_ceil,3) # [rad/s]
+        self.OF_x = round(-OF_msg.twist.twist.linear.y/self.d_ceil,3) # [rad/s]
+        self.OF_y = round(-OF_msg.twist.twist.linear.x/self.d_ceil,3) # [rad/s]
+        self.d_ceil = round(self.d_ceil,3)
+
         
 
     def contactSensorCallback(self,msg_arr): ## Callback to indicate if quadrotor body contacts ceiling
@@ -662,7 +676,7 @@ class CrazyflieEnv:
                 state_writer.writerow([
                     # RL Labels
                     'k_ep','k_run',             
-                    'alpha_mu','alpha_sig',
+                    'NN_flip','NN_policy',
                     'mu','sigma', 'policy',
 
                     # Internal State Estimates (EKF)
@@ -676,7 +690,7 @@ class CrazyflieEnv:
                     'reward','flip_flag','impact_flag','n_rollouts', 
 
                     # Misc Internal State Estimates
-                    'RREV','OF_x','OF_y','d',       
+                    'RREV','OF_x','OF_y','d_ceil',       
                     'F_thrust[N]','Mx[Nmm]','My[Nmm]','Mz[Nmm]',
                     'M1_pwm','M2_pwm','M3_pwm','M4_pwm',
 
@@ -698,7 +712,7 @@ class CrazyflieEnv:
                 state_writer.writerow([
                     # RL Labels
                     self.k_ep,self.k_run,
-                    "","", # alpha_mu,alpha_sig
+                    self.NN_flip,self.NN_policy, # alpha_mu,alpha_sig
                     "","","", # mu,sigma,policy
 
                     # Internal State Estimates (EKF)
@@ -712,7 +726,7 @@ class CrazyflieEnv:
                     "",self.flip_flag,self.impact_flag,"", # reward, flip_triggered, impact_flag, n_rollout
 
                     # Misc Internal State Estimates
-                    self.RREV,self.OF_x,self.OF_y,self.d, # RREV, OF_x, OF_y, d
+                    self.RREV,self.OF_x,self.OF_y,self.d_ceil, # RREV, OF_x, OF_y, d
                     self.FM[0],self.FM[1],self.FM[2],self.FM[3], # F_thrust[N],Mx[Nmm],My[Nmm],Mz[Nmm]
                     self.MS_pwm[0],self.MS_pwm[1],self.MS_pwm[2],self.MS_pwm[3],
 
@@ -735,7 +749,7 @@ class CrazyflieEnv:
                 state_writer.writerow([
                     # RL Labels
                     self.k_ep,self.k_run,
-                    "","", # alpha_mu,alpha_sig
+                    self.NN_tr_flip,self.NN_tr_policy, # NN_flip, NN_policy
                     "","","", # mu,sigma,policy
                     
                     
@@ -751,7 +765,7 @@ class CrazyflieEnv:
                     "","","","", # reward, body_impact, num leg contacts, impact force
 
                     # Misc Internal State Estimates
-                    self.RREV_tr,self.OF_x_tr,self.OF_y_tr,self.d_tr, # RREV, OF_x, OF_y, d
+                    self.RREV_tr,self.OF_x_tr,self.OF_y_tr,self.d_ceil_tr, # RREV, OF_x, OF_y, d
                     self.FM_flip[0],self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # F_thrust,Mx,My,Mz
                     "","","","",
 
@@ -808,7 +822,7 @@ class CrazyflieEnv:
 
                     # RL Labels
                     self.k_ep,self.k_run,
-                    np.round(self.alpha_mu,2),np.round(self.alpha_sigma,2), # alpha_mu,alpha_sig
+                    "","", 
                     np.round(self.mu,2),np.round(self.sigma,2),np.round(self.policy,2), # mu,sigma,policy
 
                     # Internal State Estimates (EKF)

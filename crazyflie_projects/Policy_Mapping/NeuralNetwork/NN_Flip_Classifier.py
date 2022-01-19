@@ -25,17 +25,15 @@ BASEPATH = "crazyflie_projects/Policy_Mapping/NeuralNetwork"
 class NN_Flip_Classifier(nn.Module):
     def __init__(self,in_features=3,h=10,out_features=1):
         super().__init__()
-        self.fc1 = nn.Linear(in_features,h) # Fully connected layer
-        self.fc2 = nn.Linear(h,h) # Fully connected layer
-
-        self.out = nn.Linear(h,out_features)
+        self.fc1 = nn.Linear(in_features,h)     # Layer 1 
+        self.fc2 = nn.Linear(h,h)               # Layer 2
+        self.out = nn.Linear(h,out_features)    # Layer 3
 
     def forward(self,x):
 
         # PASS DATA THROUGH NETWORK
         x = F.elu(self.fc1(x))
         x = F.elu(self.fc2(x))
-
         x = torch.sigmoid(self.out(x))
 
         return x
@@ -196,15 +194,20 @@ if __name__ == "__main__":
 
 
     ## SAVE ERROR VALUES TO CSV
-    y_pred_df = pd.DataFrame(np.hstack((y_test,y_pred_test_class,y_error)),columns=['y_test','y_pred_test','y_error'])
-    y_pred_df.to_csv(f'{BASEPATH}/NN_Flip_Classifier_Errors.csv',index=False,float_format="%.2f")
+    # y_pred_df = pd.DataFrame(np.hstack((y_test,y_pred_test_class,y_error)),columns=['y_test','y_pred_test','y_error'])
+    # y_pred_df.to_csv(f'{BASEPATH}/NN_Flip_Classifier_Errors.csv',index=False,float_format="%.2f")
 
     # ## PLOT ERROR VARIANCE
     # plt.hist(y_error, bins=30,histtype='stepfilled', color='steelblue')
     # plt.show()
 
 
-
+    ## PASS DATA TO PREDICT METHOD
+    with torch.no_grad():
+        test_data = np.array([1.322,-0.497,0.0]).reshape(1,-1)
+        grid_data = scaler.transform(test_data)
+        test_data = torch.FloatTensor(test_data)
+        print(model.forward(test_data))
 
     ## PLOT DECISION BOUNDARY
 

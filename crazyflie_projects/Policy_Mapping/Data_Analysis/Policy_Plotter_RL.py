@@ -7,6 +7,8 @@ import pandas as pd
 BASEPATH = "crazyflie_projects/ICRA_DataAnalysis/Wide-Long_2-Policy"
 
 df = pd.read_csv(f"{BASEPATH}/Wide-Long_2-Policy_Summary.csv")
+# df = df.query('My_d >= 3.0 and My_d < 5.0')
+
 
 
 
