@@ -253,6 +253,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                                          const sensorData_t *sensors,
                                          const state_t *state,
                                          const uint32_t tick,
+                                         const flowDeck_t *flowDeck,
                                          Controller* _CTRL) 
 {
     if (RATE_DO_EXECUTE(RATE_500_HZ, tick)) {
@@ -294,13 +295,14 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                         state->attitudeQuaternion.w);
 
 
-        RREV = stateVel.z/(h_ceiling - statePos.z);
-        OF_x = stateVel.y/(h_ceiling - statePos.z);
-        OF_y = stateVel.x/(h_ceiling - statePos.z);
+        RREV = flowDeck->RREV;
+        OF_y = flowDeck->OF_y;
+        OF_x = flowDeck->OF_x;
+        d_ceil = flowDeck->dist;
 
-        X->data[0][0] = _CTRL->_RREV;
-        X->data[1][0] = _CTRL->_OF_y;
-        X->data[2][0] = _CTRL->_d_ceil; // d_ceiling [m]
+        X->data[0][0] = RREV;
+        X->data[1][0] = OF_y;
+        X->data[2][0] = d_ceil; // d_ceiling [m]
 
         
 
@@ -461,7 +463,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                             OF_y_tr = OF_y;
                             OF_x_tr = OF_x;
                             RREV_tr = RREV;
-                            d_ceil_tr = _CTRL->_d_ceil;
+                            d_ceil_tr = d_ceil;
 
                             NN_tr_flip = NN_Flip(X,&Scaler_Flip,W_flip,b_flip);
                             NN_tr_policy = NN_Policy(X,&Scaler_Policy,W_policy,b_policy);
@@ -657,7 +659,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
         endl << 
         "RREV: " << RREV << "\tOF_y: " << OF_y << "\tOF_x: " << OF_x << endl <<
-        "D_ceil: " << "d_ceil" << endl <<
+        "D_ceil: " << d_ceil << endl <<
         endl <<
 
         "==== Policy Values ====" << endl <<
@@ -675,7 +677,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         "==== Flip Trigger Values ====" << endl <<
         "RREV_tr:\t" << RREV_tr << "\tNN_tr_Flip:\t" << NN_tr_flip << endl <<
         "OF_y_tr:\t" << OF_y_tr << "\tNN_tr_Policy:\t" << NN_tr_policy << endl <<
-        "D_ceil_tr:\t" << "0.000" << endl << 
+        "D_ceil_tr:\t" << d_ceil_tr << endl << 
         endl << 
 
 

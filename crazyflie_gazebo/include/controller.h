@@ -64,6 +64,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                                          const sensorData_t *sensors,
                                          const state_t *state,
                                          const uint32_t tick,
+                                         const flowDeck_t *flowDeck,
                                          Controller* ctrl);
 void GTC_Command(setpoint_t *setpoint, Controller* _CTRL);
 void initScaler(Scaler* scaler,char path[]);
@@ -129,6 +130,7 @@ static struct vec stateEul = {0.0f,0.0f,0.0f}; // Pose in Euler Angles [YZX Nota
 static float RREV = 0.0f; // [rad/s]
 static float OF_x = 0.0f; // [rad/s]
 static float OF_y = 0.0f; // [rad/s] 
+static float d_ceil = 0.0f;
 
 
 // INIT DESIRED STATES
@@ -732,6 +734,7 @@ class Controller
         sensorData_t sensorData;
         state_t state;
         uint32_t tick = 0;
+        flowDeck_t flowDeck;
         
 
 
@@ -795,19 +798,18 @@ void Controller::OF_Callback(const nav_msgs::Odometry::ConstPtr &msg){
 
     const geometry_msgs::Point position = msg->pose.pose.position; 
     const geometry_msgs::Vector3 velocity = msg->twist.twist.linear;
-
-    
+    float d_ceil = _H_CEILING-position.z; // h_ceiling - height    
 
     // SET SENSOR VALUES INTO CLASS VARIABLES
     // _RREV = msg->RREV;
     // _OF_x = msg->OF_x;
     // _OF_y = msg->OF_y;
 
-    _d_ceil = _H_CEILING-position.z; // h_ceiling - height
-    _RREV = velocity.z/_d_ceil;
-    _OF_x = -velocity.y/_d_ceil;
-    _OF_y = -velocity.x/_d_ceil;
 
+    flowDeck.dist = d_ceil;
+    flowDeck.RREV = velocity.z/d_ceil;
+    flowDeck.OF_y = -velocity.x/d_ceil;
+    flowDeck.OF_x = -velocity.y/d_ceil;
 }
 
 void Controller::adjustSimSpeed(float speed_mult)
@@ -863,7 +865,7 @@ void Controller::startController() // MAIN CONTROLLER LOOP
     {
         stateEstimator(&state, &sensorData, &control, tick);
         commanderGetSetpoint(&setpoint, &state);
-        controllerGTC(&control, &setpoint, &sensorData, &state, tick, this);
+        controllerGTC(&control, &setpoint, &sensorData, &state, tick, &flowDeck, this);
 
         tick++;
         rate.sleep();
