@@ -13,6 +13,9 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="tabShape">
+   <enum>QTabWidget::Rounded</enum>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_2">
     <item>
@@ -1110,11 +1113,7 @@ color: rgb(214, 39, 40);</string>
          <attribute name="title">
           <string>Sensory Data</string>
          </attribute>
-         <layout class="QVBoxLayout" name="verticalLayout_5">
-          <item>
-           <widget class="Traj_Planner" name="widget" native="true"/>
-          </item>
-         </layout>
+         <layout class="QVBoxLayout" name="verticalLayout_5"/>
         </widget>
         <widget class="QWidget" name="Tab_RL">
          <attribute name="title">
@@ -1402,12 +1401,6 @@ color: rgb(214, 39, 40);</string>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <customwidgets>
-  <customwidget>
-   <class>Traj_Planner</class>
-   <extends>QWidget</extends>
-   <header>TrajectoryPlanner</header>
-   <container>1</container>
-  </customwidget>
   <customwidget>
    <class>Pos_Widget</class>
    <extends>QWidget</extends>

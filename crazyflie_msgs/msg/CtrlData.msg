@@ -13,6 +13,7 @@ float64 NN_tr_policy
 bool[] NN_spacer
 float64 RREV
 float64 OF_y
+float64 OF_x
 float64 D_ceil
 float64 NN_flip
 float64 NN_policy

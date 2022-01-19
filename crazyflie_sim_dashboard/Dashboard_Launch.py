@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 from PyQt5.QtWidgets import *
 from PyQt5.uic import loadUi
+from PyQt5.QtCore import Qt
+from PyQt5 import QtGui
 import pyqtgraph as pg
 
 import os,rospkg,rospy
 import numpy as np
 import pandas as pd
 import sys  # We need sys so that we can pass argv to QApplication
-from dashboard_node import DashboardNode
+from Dashboard_Node import DashboardNode
 from nav_msgs.msg import Odometry
 
 
@@ -20,6 +22,8 @@ class Dashboard(QMainWindow,DashboardNode):
     def __init__(self):
         super().__init__()
         super(DashboardNode).__init__()
+        self.setWindowIcon(QtGui.QIcon(f"{BASE_PATH}/crazyflie_sim_dashboard/Misc/icon.png"))
+
 
 
         #LOAD UI
@@ -96,7 +100,8 @@ if __name__ == "__main__":
 
     ## INITIALIZE APPLICATION   
     app = QApplication(sys.argv)
-
+    app.setWindowIcon(QtGui.QIcon('chip_icon_normal.png'))
+  
     ## INITIALIZE DASHBOARD WINDOW
     myApp = Dashboard()
     myApp.show()

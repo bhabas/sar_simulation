@@ -591,9 +591,10 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         _CTRL->_ctrl_msg.NN_policy = NN_policy;
         _CTRL->_ctrl_msg.NN_flip = NN_flip;
 
-        _CTRL->_ctrl_msg.RREV = _CTRL->_RREV;
-        _CTRL->_ctrl_msg.OF_y = _CTRL->_OF_y;
-        _CTRL->_ctrl_msg.D_ceil = _CTRL->_d_ceil;
+        _CTRL->_ctrl_msg.RREV = RREV;
+        _CTRL->_ctrl_msg.OF_y = OF_y;
+        _CTRL->_ctrl_msg.OF_x = OF_x;
+        _CTRL->_ctrl_msg.D_ceil = d_ceil;
 
         // FLIP INFO
         _CTRL->_ctrl_msg.flip_flag = flip_flag;
