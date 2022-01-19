@@ -462,7 +462,8 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                             OF_x_tr = OF_x;
                             RREV_tr = RREV;
 
-                            // _CTRL->_NN_policy = -NN_Policy(X,&Scaler_Policy,W_policy,b_policy);
+                            _CTRL->_NN_policy = -NN_Policy(X,&Scaler_Policy,W_policy,b_policy);
+                            _CTRL->_NN_flip = NN_Flip(X,&Scaler_Flip,W_flip,b_flip);
                             // M_d.x = 0.0f;
                             // M_d.y = _CTRL->_NN_policy;
                             // M_d.z = 0.0f;

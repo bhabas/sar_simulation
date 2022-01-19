@@ -802,10 +802,6 @@ void Controller::OF_Callback(const nav_msgs::Odometry::ConstPtr &msg){
     _OF_x = -velocity.y/_d_ceil;
     _OF_y = -velocity.x/_d_ceil;
 
-    _d_ceil = 0.24; // h_ceiling - height
-    _RREV = 4.8653;
-    _OF_y = -10.632;
-    _OF_x = 0;
 }
 
 void Controller::adjustSimSpeed(float speed_mult)

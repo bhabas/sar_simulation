@@ -76,5 +76,39 @@
     },
     "python.analysis.extraPaths": [
         "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_rl/src/"
+    ],
+    "favorites.resources": [
+        {
+            "filePath": "crazyflie_gazebo/src/controller.cpp",
+            "group": "Default"
+        },
+        {
+            "filePath": "crazyflie_rl/src/CF_training_2term_Policy.py",
+            "group": "Default"
+        },
+        {
+            "filePath": "crazyflie_gazebo/include/controller.h",
+            "group": "Default"
+        },
+        {
+            "filePath": "crazyflie_projects/Policy_Mapping/NeuralNetwork/NN_Flip_Classifier.py",
+            "group": "Default"
+        },
+        {
+            "filePath": "crazyflie_projects/Policy_Mapping/NeuralNetwork/NN_Policy_Value.py",
+            "group": "Default"
+        },
+        {
+            "filePath": "crazyflie_rl/src/Control_Playground.py",
+            "group": "Default"
+        },
+        {
+            "filePath": "crazyflie_launch/config/Sim_Settings.yaml",
+            "group": "Default"
+        },
+        {
+            "filePath": "crazyflie_data/local_logs",
+            "group": "Default"
+        }
     ]
 }

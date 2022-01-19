@@ -814,7 +814,7 @@ class CrazyflieEnv:
 
                     # RL Labels
                     self.k_ep,self.k_run,
-                    np.round(self.alpha_mu,2),np.round(self.alpha_sigma,2), # alpha_mu,alpha_sig
+                    "","", 
                     np.round(self.mu,2),np.round(self.sigma,2),np.round(self.policy,2), # mu,sigma,policy
 
                     # Internal State Estimates (EKF)
