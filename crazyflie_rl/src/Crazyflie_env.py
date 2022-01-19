@@ -139,6 +139,9 @@ class CrazyflieEnv:
 
         self.FM_flip = [0,0,0,0]    # [N,N*mm]
 
+        self.NN_tr_flip = 0.0
+        self.NN_tr_policy = 0.0
+
         
 
         ## IMPACT VALS
@@ -311,6 +314,9 @@ class CrazyflieEnv:
             self.RREV_tr = np.round(ctrl_msg.RREV_tr,3) # Recorded trigger RREV [rad/s]
             self.OF_y_tr = np.round(ctrl_msg.OF_y_tr,3) # Recorded OF_y at trigger [rad/s]
             self.OF_x_tr = np.round(ctrl_msg.OF_y_tr,3) # Recorded OF_x at trigger [rad/s]
+
+            self.NN_tr_flip = np.round(ctrl_msg.NN_tr_flip,3)
+            self.NN_tr_policy = np.round(ctrl_msg.NN_tr_policy,3)
 
 
 
@@ -743,7 +749,7 @@ class CrazyflieEnv:
                 state_writer.writerow([
                     # RL Labels
                     self.k_ep,self.k_run,
-                    "","", # alpha_mu,alpha_sig
+                    self.NN_tr_flip,self.NN_tr_policy, # NN_flip, NN_policy
                     "","","", # mu,sigma,policy
                     
                     

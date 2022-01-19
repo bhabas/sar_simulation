@@ -259,6 +259,7 @@ static struct vec stateOmega_tr = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s
 static float RREV_tr = 0.0f; // [rad/s]
 static float OF_x_tr = 0.0f; // [rad/s]
 static float OF_y_tr = 0.0f; // [rad/s]
+static float d_ceil_tr = 0.0f; // [m/s]
 
 
 float F_thrus_t_flip = 0.0f; // [g]
@@ -705,6 +706,9 @@ class Controller
         
         float _NN_flip = 0.0;
         float _NN_policy = 0.0;
+
+        float _NN_tr_flip = 0.0f;
+        float _NN_tr_policy = 0.0f;
 
         float _RREV;
         float _OF_x;

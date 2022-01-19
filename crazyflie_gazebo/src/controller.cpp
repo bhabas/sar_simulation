@@ -461,11 +461,14 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                             OF_y_tr = OF_y;
                             OF_x_tr = OF_x;
                             RREV_tr = RREV;
+                            d_ceil_tr = _CTRL->_d_ceil;
 
-                            _CTRL->_NN_policy = -NN_Policy(X,&Scaler_Policy,W_policy,b_policy);
-                            _CTRL->_NN_flip = NN_Flip(X,&Scaler_Flip,W_flip,b_flip);
+                            _CTRL->_NN_tr_flip = NN_Flip(X,&Scaler_Flip,W_flip,b_flip);
+                            _CTRL->_NN_tr_policy = NN_Policy(X,&Scaler_Policy,W_policy,b_policy);
+
+
                             M_d.x = 0.0f;
-                            M_d.y = _CTRL->_NN_policy;
+                            M_d.y = -_CTRL->_NN_tr_policy*1e-3;
                             M_d.z = 0.0f;
                         }
 
@@ -597,6 +600,8 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         _CTRL->_ctrl_msg.OF_y_tr = OF_y_tr;
         _CTRL->_ctrl_msg.FM_flip = {F_thrus_t_flip,M_x_flip*1.0e3,M_y_flip*1.0e3,M_z_flip*1.0e3};
 
+        _CTRL->_ctrl_msg.NN_tr_flip = _CTRL->_NN_tr_flip;
+        _CTRL->_ctrl_msg.NN_tr_policy = _CTRL->_NN_tr_policy;
 
         _CTRL->_ctrl_msg.Pose_tr.header.stamp = _CTRL->_t_flip;             
 

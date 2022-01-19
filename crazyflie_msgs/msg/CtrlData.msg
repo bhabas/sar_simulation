@@ -8,6 +8,8 @@ float64 OF_y_tr
 float64 OF_x_tr
 geometry_msgs/PoseStamped Pose_tr
 geometry_msgs/Twist Twist_tr
+float64 NN_tr_flip
+float64 NN_tr_policy
 bool[] NN_spacer
 float64 RREV
 float64 OF_y
