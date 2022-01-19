@@ -449,7 +449,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                         if(_CTRL->_NN_flip >= 0.9 && onceFlag == false)
                         {   
                             onceFlag = true;
-                            // flip_flag = true;
+                            flip_flag = true;
 
                             // UPDATE AND RECORD FLIP VALUES
                             _CTRL->_t_flip = ros::Time::now();
@@ -464,9 +464,9 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
                             _CTRL->_NN_policy = -NN_Policy(X,&Scaler_Policy,W_policy,b_policy);
                             _CTRL->_NN_flip = NN_Flip(X,&Scaler_Flip,W_flip,b_flip);
-                            // M_d.x = 0.0f;
-                            // M_d.y = _CTRL->_NN_policy;
-                            // M_d.z = 0.0f;
+                            M_d.x = 0.0f;
+                            M_d.y = _CTRL->_NN_policy;
+                            M_d.z = 0.0f;
                         }
 
                         break;

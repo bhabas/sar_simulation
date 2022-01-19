@@ -117,6 +117,20 @@
         {
             "filePath": "crazyflie_data/ICRA_2022_Data/Wide-Long_2-Policy/Wide-Long_2-Policy_Summary.csv",
             "group": "Default"
+        },
+        {
+            "filePath": "crazyflie_projects/Policy_Mapping",
+            "group": "Default"
+        },
+        {
+            "filePath": "crazyflie_rl/src/Crazyflie_env.py",
+            "group": "Default"
         }
-    ]
+    ],
+    "favorites.sortOrder": "DESC",
+    "favorites.groups": [
+        "Default",
+        "Priot"
+    ],
+    "favorites.currentGroup": "Default"
 }

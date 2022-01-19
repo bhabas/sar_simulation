@@ -378,11 +378,13 @@ class CrazyflieEnv:
     def OFsensor_Callback(self,OF_msg): ## Callback to parse state data received from mock OF sensor
 
         ## SET VISUAL CUE SENSOR VALUES FROM TOPIC
-        d = self.h_ceiling - OF_msg.pose.pose.position.z    # Distance from CF to ceiling [m]
+        self.d_ceil = self.h_ceiling - OF_msg.pose.pose.position.z    # Distance from CF to ceiling [m]
 
-        self.RREV = round( OF_msg.twist.twist.linear.z/d,3) # [rad/s]
-        self.OF_x = round(-OF_msg.twist.twist.linear.y/d,3) # [rad/s]
-        self.OF_y = round(-OF_msg.twist.twist.linear.x/d,3) # [rad/s]
+        self.RREV = round( OF_msg.twist.twist.linear.z/self.d_ceil,3) # [rad/s]
+        self.OF_x = round(-OF_msg.twist.twist.linear.y/self.d_ceil,3) # [rad/s]
+        self.OF_y = round(-OF_msg.twist.twist.linear.x/self.d_ceil,3) # [rad/s]
+        self.d_ceil = round(self.d_ceil,3)
+
         
 
     def contactSensorCallback(self,msg_arr): ## Callback to indicate if quadrotor body contacts ceiling
@@ -682,7 +684,7 @@ class CrazyflieEnv:
                     'reward','flip_flag','impact_flag','n_rollouts', 
 
                     # Misc Internal State Estimates
-                    'RREV','OF_x','OF_y','d',       
+                    'RREV','OF_x','OF_y','d_ceil',       
                     'F_thrust[N]','Mx[Nmm]','My[Nmm]','Mz[Nmm]',
                     'M1_pwm','M2_pwm','M3_pwm','M4_pwm',
 
