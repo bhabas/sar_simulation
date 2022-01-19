@@ -65,8 +65,8 @@ void controllerGTCReset(Controller* _CTRL)
     _CTRL->_slowdown_type = 0;
     _CTRL->adjustSimSpeed(_CTRL->_SIM_SPEED);
 
-    _CTRL->_NN_flip = 0.0;
-    _CTRL->_NN_policy = 0.0;
+    NN_flip = 0.0;
+    NN_policy = 0.0;
 
 
 
@@ -443,10 +443,10 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
                     case NN:
                     {   
-                        _CTRL->_NN_flip = NN_Flip(X,&Scaler_Flip,W_flip,b_flip);
-                        _CTRL->_NN_policy = -NN_Policy(X,&Scaler_Policy,W_policy,b_policy);
+                        NN_flip = NN_Flip(X,&Scaler_Flip,W_flip,b_flip);
+                        NN_policy = -NN_Policy(X,&Scaler_Policy,W_policy,b_policy);
 
-                        if(_CTRL->_NN_flip >= 0.9 && onceFlag == false)
+                        if(NN_flip >= 0.9 && onceFlag == false)
                         {   
                             onceFlag = true;
                             flip_flag = true;
@@ -463,12 +463,12 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                             RREV_tr = RREV;
                             d_ceil_tr = _CTRL->_d_ceil;
 
-                            _CTRL->_NN_tr_flip = NN_Flip(X,&Scaler_Flip,W_flip,b_flip);
-                            _CTRL->_NN_tr_policy = NN_Policy(X,&Scaler_Policy,W_policy,b_policy);
+                            NN_tr_flip = NN_Flip(X,&Scaler_Flip,W_flip,b_flip);
+                            NN_tr_policy = NN_Policy(X,&Scaler_Policy,W_policy,b_policy);
 
 
                             M_d.x = 0.0f;
-                            M_d.y = -_CTRL->_NN_tr_policy*1e-3;
+                            M_d.y = -NN_tr_policy*1e-3;
                             M_d.z = 0.0f;
                         }
 
@@ -586,8 +586,8 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         _CTRL->_ctrl_msg.MS_PWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
 
         // NEURAL NETWORK INFO
-        _CTRL->_ctrl_msg.NN_policy = _CTRL->_NN_policy;
-        _CTRL->_ctrl_msg.NN_flip = _CTRL->_NN_flip;
+        _CTRL->_ctrl_msg.NN_policy = NN_policy;
+        _CTRL->_ctrl_msg.NN_flip = NN_flip;
 
         _CTRL->_ctrl_msg.RREV = _CTRL->_RREV;
         _CTRL->_ctrl_msg.OF_y = _CTRL->_OF_y;
@@ -600,8 +600,8 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         _CTRL->_ctrl_msg.OF_y_tr = OF_y_tr;
         _CTRL->_ctrl_msg.FM_flip = {F_thrus_t_flip,M_x_flip*1.0e3,M_y_flip*1.0e3,M_z_flip*1.0e3};
 
-        _CTRL->_ctrl_msg.NN_tr_flip = _CTRL->_NN_tr_flip;
-        _CTRL->_ctrl_msg.NN_tr_policy = _CTRL->_NN_tr_policy;
+        _CTRL->_ctrl_msg.NN_tr_flip = NN_tr_flip;
+        _CTRL->_ctrl_msg.NN_tr_policy = NN_tr_policy;
 
         _CTRL->_ctrl_msg.Pose_tr.header.stamp = _CTRL->_t_flip;             
 

@@ -310,6 +310,12 @@ nml_mat* b_policy[3];
 nml_mat* W_flip[3];
 nml_mat* b_flip[3];
 
+float NN_flip = 0.0f;
+float NN_policy = 0.0f;
+
+float NN_tr_flip = 0.0f;
+float NN_tr_policy = 0.0f;
+
 
 
 void stateEstimator(state_t *state, sensorData_t *sensors, control_t *control, const uint32_t tick)
@@ -704,11 +710,7 @@ class Controller
         int _CTRL_DEBUG_SLOWDOWN;
         int _POLICY_TYPE;
         
-        float _NN_flip = 0.0;
-        float _NN_policy = 0.0;
-
-        float _NN_tr_flip = 0.0f;
-        float _NN_tr_policy = 0.0f;
+        
 
         float _RREV;
         float _OF_x;
