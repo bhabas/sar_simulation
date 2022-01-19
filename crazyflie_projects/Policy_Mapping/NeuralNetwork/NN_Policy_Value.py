@@ -27,10 +27,9 @@ class NN_Policy_Value(nn.Module):
     def __init__(self,in_features=3,h=10,out_features=1):
         super().__init__()
 
-        # Input Layer (4 features) --> h1 (N) --> h2 (N) --> output (3 classes)
-        self.fc1 = nn.Linear(in_features,h) # Fully connected layer
-        self.fc2 = nn.Linear(h,h)
-        self.out = nn.Linear(h,out_features)
+        self.fc1 = nn.Linear(in_features,h)     # Layer 1
+        self.fc2 = nn.Linear(h,h)               # Layer 2
+        self.out = nn.Linear(h,out_features)    # Layer 3
 
     def forward(self,x):
 
@@ -112,8 +111,8 @@ if __name__ == '__main__':
     df_raw = df_raw.query("landing_rate_4_leg >= 0.8")
 
 
-    RREV = df_raw["OF_y_flip_mean"]
-    OF_y = df_raw["RREV_flip_mean"]
+    RREV = df_raw["RREV_flip_mean"]
+    OF_y = df_raw["OF_y_flip_mean"]
     d_ceil = df_raw["flip_d_mean"]
     y = df_raw["My_d"].to_numpy().reshape(-1,1)
 
@@ -152,7 +151,7 @@ if __name__ == '__main__':
 
 
     ## TRAIN NN MODEL
-    epochs = 3_000
+    epochs = 2_600
     # train_model(epochs,X_train,y_train,X_test,y_test)
 
 

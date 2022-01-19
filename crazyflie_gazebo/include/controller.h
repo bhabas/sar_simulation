@@ -383,15 +383,15 @@ float NN_Policy(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[])
     nml_mat* X_input = nml_mat_cp(X);
     for(int i=0;i<3;i++)
     {
-        X->data[i][0] = (X->data[i][0] - scaler->mean[i])/scaler->std[i];
+        X_input->data[i][0] = (X->data[i][0] - scaler->mean[i])/scaler->std[i];
         
     }
 
     //LAYER 1
     //Sigmoid(W*X+b)
-    nml_mat *WX = nml_mat_dot(W[0],X_input); 
-    nml_mat_add_r(WX,b[0]);
-    nml_mat *a1 = nml_mat_funcElement(WX,Sigmoid);
+    nml_mat *WX1 = nml_mat_dot(W[0],X_input); 
+    nml_mat_add_r(WX1,b[0]);
+    nml_mat *a1 = nml_mat_funcElement(WX1,Sigmoid);
 
     // LAYER 2
     // Sigmoid(W*X+b)
@@ -405,14 +405,18 @@ float NN_Policy(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[])
     nml_mat_add_r(WX3,b[2]);
     nml_mat *a3 = nml_mat_cp(WX3);
 
+
+    // SAVE OUTPUT VALUE
     float y_output = (float)a3->data[0][0];
 
+    // FREE MATRICES FROM STACK
     nml_mat_free(X_input);
-    nml_mat_free(WX);
-    nml_mat_free(a1);
+    nml_mat_free(WX1);
     nml_mat_free(WX2);
-    nml_mat_free(a2);
     nml_mat_free(WX3);
+
+    nml_mat_free(a1);
+    nml_mat_free(a2);
     nml_mat_free(a3);
 
 
@@ -424,33 +428,46 @@ float NN_Flip(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[])
     nml_mat* X_input = nml_mat_cp(X);
     for(int i=0;i<3;i++)
     {
-        X->data[i][0] = (X->data[i][0] - scaler->mean[i])/scaler->std[i];
-        
+        X_input->data[i][0] = (X->data[i][0] - scaler->mean[i])/scaler->std[i];
     }
 
-    //LAYER 1
-    //Sigmoid(W*X+b)
-    nml_mat *WX = nml_mat_dot(W[0],X_input); 
-    nml_mat_add_r(WX,b[0]);
-    nml_mat *a1 = nml_mat_funcElement(WX,Elu);
+    // LAYER 1
+    // Elu(W*X+b)
+    nml_mat *WX1 = nml_mat_dot(W[0],X_input); 
+    nml_mat_add_r(WX1,b[0]);
+    nml_mat *a1 = nml_mat_funcElement(WX1,Elu);
+
 
     // LAYER 2
-    // Sigmoid(W*X+b)
+    // Elu(W*X+b)
     nml_mat *WX2 = nml_mat_dot(W[1],a1); 
     nml_mat_add_r(WX2,b[1]);
-    nml_mat *a2 = nml_mat_funcElement(WX2,Sigmoid);
+    nml_mat *a2 = nml_mat_funcElement(WX2,Elu);
 
-    float y_output = a2->data[0][0];
 
+    // LAYER 3
+    // Sigmoid(W*X+b)
+    nml_mat *WX3 = nml_mat_dot(W[2],a2); 
+    nml_mat_add_r(WX3,b[2]);
+    nml_mat *a3 = nml_mat_funcElement(WX3,Sigmoid);
+
+
+    // SAVE OUTPUT VALUE
+    float y_output = a3->data[0][0];
+
+
+    // FREE MATRICES FROM STACK
     nml_mat_free(X_input);
-    nml_mat_free(WX);
-    nml_mat_free(a1);
+    nml_mat_free(WX1);
     nml_mat_free(WX2);
+    nml_mat_free(WX3);
+
+    nml_mat_free(a1);
     nml_mat_free(a2);
+    nml_mat_free(a3);
+
 
     return y_output;
-    
-
 }
 
 float Sigmoid(float x)
@@ -774,16 +791,21 @@ void Controller::OF_Callback(const nav_msgs::Odometry::ConstPtr &msg){
     const geometry_msgs::Vector3 velocity = msg->twist.twist.linear;
 
     
-    _d_ceil = _H_CEILING-position.z; // h_ceiling - height
 
     // SET SENSOR VALUES INTO CLASS VARIABLES
     // _RREV = msg->RREV;
     // _OF_x = msg->OF_x;
     // _OF_y = msg->OF_y;
 
+    _d_ceil = _H_CEILING-position.z; // h_ceiling - height
     _RREV = velocity.z/_d_ceil;
     _OF_x = -velocity.y/_d_ceil;
     _OF_y = -velocity.x/_d_ceil;
+
+    _d_ceil = 0.24; // h_ceiling - height
+    _RREV = 4.8653;
+    _OF_y = -10.632;
+    _OF_x = 0;
 }
 
 void Controller::adjustSimSpeed(float speed_mult)

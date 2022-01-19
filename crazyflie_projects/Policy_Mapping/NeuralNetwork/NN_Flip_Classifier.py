@@ -25,17 +25,15 @@ BASEPATH = "crazyflie_projects/Policy_Mapping/NeuralNetwork"
 class NN_Flip_Classifier(nn.Module):
     def __init__(self,in_features=3,h=10,out_features=1):
         super().__init__()
-        self.fc1 = nn.Linear(in_features,h) # Fully connected layer
-        self.fc2 = nn.Linear(h,h) # Fully connected layer
-
-        self.out = nn.Linear(h,out_features)
+        self.fc1 = nn.Linear(in_features,h)     # Layer 1 
+        self.fc2 = nn.Linear(h,h)               # Layer 2
+        self.out = nn.Linear(h,out_features)    # Layer 3
 
     def forward(self,x):
 
         # PASS DATA THROUGH NETWORK
         x = F.elu(self.fc1(x))
         x = F.elu(self.fc2(x))
-
         x = torch.sigmoid(self.out(x))
 
         return x
