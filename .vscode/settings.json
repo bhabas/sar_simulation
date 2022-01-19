@@ -109,6 +109,14 @@
         {
             "filePath": "crazyflie_data/local_logs",
             "group": "Default"
+        },
+        {
+            "filePath": "crazyflie_projects/ICRA_DataAnalysis/Wide-Long_2-Policy",
+            "group": "Default"
+        },
+        {
+            "filePath": "crazyflie_data/ICRA_2022_Data/Wide-Long_2-Policy/Wide-Long_2-Policy_Summary.csv",
+            "group": "Default"
         }
     ]
 }

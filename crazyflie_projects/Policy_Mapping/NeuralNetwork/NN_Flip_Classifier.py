@@ -194,8 +194,8 @@ if __name__ == "__main__":
 
 
     ## SAVE ERROR VALUES TO CSV
-    y_pred_df = pd.DataFrame(np.hstack((y_test,y_pred_test_class,y_error)),columns=['y_test','y_pred_test','y_error'])
-    y_pred_df.to_csv(f'{BASEPATH}/NN_Flip_Classifier_Errors.csv',index=False,float_format="%.2f")
+    # y_pred_df = pd.DataFrame(np.hstack((y_test,y_pred_test_class,y_error)),columns=['y_test','y_pred_test','y_error'])
+    # y_pred_df.to_csv(f'{BASEPATH}/NN_Flip_Classifier_Errors.csv',index=False,float_format="%.2f")
 
     # ## PLOT ERROR VARIANCE
     # plt.hist(y_error, bins=30,histtype='stepfilled', color='steelblue')
