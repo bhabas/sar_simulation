@@ -25,13 +25,13 @@ df = pd.read_csv(DATA_PATH)
 df = df.query('landing_rate_4_leg >= 0.7')
 
 class Slider(QWidget):
-    def __init__(self,min=0,max=100,label='Text'):
+    def __init__(self,min=3,max=10,label='Text'):
         super().__init__()
         
         ## DEFINE VARIABLES
         self.min = min
         self.max = max
-        self.x = np.nan # Slider value
+        self.val = np.nan 
 
         ## DEFINE LAYOUT
         self.layout = QHBoxLayout()
@@ -42,44 +42,45 @@ class Slider(QWidget):
         self.val = QLabel()
         self.slider = QSlider()
         self.slider.setOrientation(Qt.Horizontal)
-        self.spin = QSpinBox()
+        
+        self.numBox = QDoubleSpinBox()
+        self.numBox.setMinimum(self.min)
+        self.numBox.setMaximum(self.max)
 
         ## ADD OBJECTS TO LAYOUT
         self.layout.addWidget(self.var)
-        self.layout.addWidget(self.spin)
+        self.layout.addWidget(self.numBox)
         self.layout.addWidget(self.slider)
 
         
         ## SET DEFAULT TEXT
         self.var.setText(f"{label}: \t")
-        self.val.setText(f"{min:.3f}")
-        self.slider.valueChanged.connect(self.syncVal1)
-        self.spin.valueChanged.connect(self.syncVal2)
+        self.numBox.valueChanged.connect(self.updateSlider)
+        self.slider.valueChanged.connect(self.updateNumbox)
 
-    def syncVal1(self,value):
+    def updateNumbox(self,sliderVal):
 
-        if value != self.spin.value():
-            self.spin.setValue(value)
-            print(value)
 
-    def syncVal2(self,value):
+        # # x = self.min + sliderVal/(self.slider.maximum() - self.slider.minimum())*(self.max - self.min)
+        # self.val = self.min + (sliderVal - 0)*(self.max-self.min)/100
+        # # print(x)
+        # # print(sliderVal)
+        # print(self.val)
 
-        if value != self.slider.value():
-            self.slider.setValue(value)
-            print(value)
+        pass
 
-    # def updateSlider(self,value):
+        
 
-    #     # x = self.slider.maximum() + (self.slider.maximum() - self.slider.minimum())*(value/(self.max - self.min))
-    #     x = value
-    #     self.slider.setValue(int(x))
+    def updateSlider(self,boxVal):
 
-    # def setLabelValue(self,value):
+        if int(boxVal) != self.slider.value():
 
-    #     self.x = self.min + (self.max - self.min)*(float(value)/(self.slider.maximum() - self.slider.minimum()))
-    #     self.val.setText(f"{self.x:.3f}")
-    #     self.spin.setValue(self.x)
-    #     # print("Helloooo")
+            x = self.slider.minimum() + (boxVal - self.min)*(self.slider.maximum()-self.slider.minimum())/(self.max-self.min)
+            self.slider.setValue(int(x))
+
+        self.val = boxVal
+
+
 
 class Demo(QWidget):
 
@@ -89,10 +90,6 @@ class Demo(QWidget):
         self.fig = plt.figure()
         self.canvas = FigureCanvas(self.fig)
         self.toolbar = NavigationToolbar(self.canvas,self)
-
-        self.button = QPushButton('Plot')
-
-        # self.button.clicked.connect(self.plot)
 
         # random data
         cmap = mpl.cm.jet
