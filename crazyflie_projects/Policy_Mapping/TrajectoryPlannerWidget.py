@@ -31,7 +31,7 @@ class Slider(QWidget):
         ## DEFINE VARIABLES
         self.min = min
         self.max = max
-        self.val = np.nan 
+        self.value = np.nan 
 
         ## DEFINE LAYOUT
         self.layout = QHBoxLayout()
@@ -39,7 +39,6 @@ class Slider(QWidget):
 
         ## DEFINE OBJECTS
         self.var = QLabel()
-        self.val = QLabel()
         self.slider = QSlider()
         self.slider.setOrientation(Qt.Horizontal)
         
@@ -55,30 +54,19 @@ class Slider(QWidget):
         
         ## SET DEFAULT TEXT
         self.var.setText(f"{label}: \t")
-        self.numBox.valueChanged.connect(self.updateSlider)
-        self.slider.valueChanged.connect(self.updateNumbox)
+        self.numBox.valueChanged.connect(self.numboxUpdate)
+        self.slider.valueChanged.connect(self.sliderUpdate)
 
-    def updateNumbox(self,sliderVal):
+    def sliderUpdate(self,sliderVal):
 
+        self.value = self.min + (sliderVal - 0)/100 * (self.max-self.min)
 
-        # # x = self.min + sliderVal/(self.slider.maximum() - self.slider.minimum())*(self.max - self.min)
-        # self.val = self.min + (sliderVal - 0)*(self.max-self.min)/100
-        # # print(x)
-        # # print(sliderVal)
-        # print(self.val)
+    def numboxUpdate(self,boxVal):
 
-        pass
+        slider_val = self.slider.minimum() + (boxVal - self.min)/(self.max-self.min) * (self.slider.maximum()-self.slider.minimum())
+        self.slider.setValue(int(np.round(slider_val,0)))
 
-        
-
-    def updateSlider(self,boxVal):
-
-        if int(boxVal) != self.slider.value():
-
-            x = self.slider.minimum() + (boxVal - self.min)*(self.slider.maximum()-self.slider.minimum())/(self.max-self.min)
-            self.slider.setValue(int(x))
-
-        self.val = boxVal
+        self.value = boxVal
 
 
 
@@ -87,9 +75,41 @@ class Demo(QWidget):
     def __init__(self):
         super().__init__()
 
+        
+        ## INITIATE SLIDER
+        self.w1 = Slider(min=1.0,max=4.0,label="Vel")
+        self.w2 = Slider(min=20,max=90,label="Theta")
+
+        
+        
+
+        self.w1.slider.valueChanged.connect(self.updateValues)
+        self.w1.numBox.valueChanged.connect(self.updateValues)
+
+        self.w2.slider.valueChanged.connect(self.updateValues)
+        self.w2.numBox.valueChanged.connect(self.updateValues)
+
+        self.vel = self.w1.value
+        self.theta = self.w2.value
+
+        self.vel = 1.0
+        self.theta = 90
+
+        self.vx = self.vel*np.cos(np.radians(self.theta))
+        self.vz = self.vel*np.sin(np.radians(self.theta))
+
+
+        ## INITIATE PLOT
         self.fig = plt.figure()
         self.canvas = FigureCanvas(self.fig)
         self.toolbar = NavigationToolbar(self.canvas,self)
+
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+        layout.addWidget(self.toolbar)
+        layout.addWidget(self.canvas)
+        layout.addWidget(self.w1)
+        layout.addWidget(self.w2)
 
         # random data
         cmap = mpl.cm.jet
@@ -97,6 +117,7 @@ class Demo(QWidget):
         
         self.ax = self.fig.add_subplot(111,projection='3d')
         self.ax.scatter(df["vx"],df["vz"],df["flip_d_mean"],c=df["landing_rate_4_leg"],cmap=cmap,norm=norm)
+        self.POI, = self.ax.plot([self.vx],[self.vz],[0.4],'ko')
 
         self.ax.set_xlim(0,4)
         self.ax.set_ylim(0,4)
@@ -106,25 +127,23 @@ class Demo(QWidget):
         self.ax.set_ylabel("Vel_z")
         self.ax.set_zlabel("d_ceil")
 
-        self.w1 = Slider(min=1.0,max=4.0,label="Vel")
-        self.w2 = Slider(min=20,max=90,label="Theta")
+        
 
 
-        layout = QVBoxLayout()
-        self.setLayout(layout)
-        layout.addWidget(self.toolbar)
-        layout.addWidget(self.canvas)
-        # layout.addWidget(self.button)
-        layout.addWidget(self.w1)
-        layout.addWidget(self.w2)
+    def updateValues(self):
+        
+        self.vel = self.w1.value
+        self.theta = self.w2.value
 
-    # def plot(self):
-    #     # random data
-    #     data = [random.random() for i in range(10)]
-    #     self.fig.clear()
-    #     ax = self.fig.add_subplot(111)
-    #     ax.plot(data, '*-')
-    #     self.canvas.draw()
+        self.vx = self.vel*np.cos(np.radians(self.theta))
+        self.vz = self.vel*np.sin(np.radians(self.theta))
+
+        ## SET POINT OF INTEREST COORDINATES FROM SLIDER
+        self.POI.set_data([self.vx],[self.vz])
+        self.POI.set_3d_properties([0.4])
+
+
+
 
 
 if __name__ == "__main__":
