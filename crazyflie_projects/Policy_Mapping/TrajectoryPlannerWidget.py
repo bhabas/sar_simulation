@@ -42,33 +42,44 @@ class Slider(QWidget):
         self.val = QLabel()
         self.slider = QSlider()
         self.slider.setOrientation(Qt.Horizontal)
-        self.spin = QDoubleSpinBox()
+        self.spin = QSpinBox()
 
         ## ADD OBJECTS TO LAYOUT
         self.layout.addWidget(self.var)
-        self.layout.addWidget(self.val)
-        self.layout.addWidget(self.slider)
         self.layout.addWidget(self.spin)
+        self.layout.addWidget(self.slider)
 
         
         ## SET DEFAULT TEXT
-        self.var.setText(label)
+        self.var.setText(f"{label}: \t")
         self.val.setText(f"{min:.3f}")
-        self.slider.valueChanged.connect(self.setLabelValue)
-        self.spin.valueChanged.connect(self.updateSlider)
+        self.slider.valueChanged.connect(self.syncVal1)
+        self.spin.valueChanged.connect(self.syncVal2)
 
-    def updateSlider(self,value):
+    def syncVal1(self,value):
 
-        # x = self.slider.maximum() + (self.slider.maximum() - self.slider.minimum())*(value/(self.max - self.min))
-        x = value
-        self.slider.setValue(int(x))
+        if value != self.spin.value():
+            self.spin.setValue(value)
+            print(value)
 
-    def setLabelValue(self,value):
+    def syncVal2(self,value):
 
-        self.x = self.min + (self.max - self.min)*(float(value)/(self.slider.maximum() - self.slider.minimum()))
-        self.val.setText(f"{self.x:.3f}")
-        self.spin.setValue(self.x)
-        # print("Helloooo")
+        if value != self.slider.value():
+            self.slider.setValue(value)
+            print(value)
+
+    # def updateSlider(self,value):
+
+    #     # x = self.slider.maximum() + (self.slider.maximum() - self.slider.minimum())*(value/(self.max - self.min))
+    #     x = value
+    #     self.slider.setValue(int(x))
+
+    # def setLabelValue(self,value):
+
+    #     self.x = self.min + (self.max - self.min)*(float(value)/(self.slider.maximum() - self.slider.minimum()))
+    #     self.val.setText(f"{self.x:.3f}")
+    #     self.spin.setValue(self.x)
+    #     # print("Helloooo")
 
 class Demo(QWidget):
 
@@ -98,8 +109,8 @@ class Demo(QWidget):
         self.ax.set_ylabel("Vel_z")
         self.ax.set_zlabel("d_ceil")
 
-        self.w1 = Slider(min=1.0,max=4.0,label="Vel:")
-        self.w2 = Slider(min=20,max=90,label="Theta:")
+        self.w1 = Slider(min=1.0,max=4.0,label="Vel")
+        self.w2 = Slider(min=20,max=90,label="Theta")
 
 
         layout = QVBoxLayout()
@@ -125,7 +136,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
   
     ## INITIALIZE DASHBOARD WINDOW
-    myApp = Slider()
+    myApp = Demo()
     myApp.show()
 
     sys.exit(app.exec_())
