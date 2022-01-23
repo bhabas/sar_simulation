@@ -25,7 +25,7 @@ df = pd.read_csv(DATA_PATH)
 df = df.query('landing_rate_4_leg >= 0.7')
 
 class Slider(QWidget):
-    def __init__(self,min=3,max=10,label='Text'):
+    def __init__(self,min=3,max=10.5,label='Text'):
         super().__init__()
         
         ## DEFINE VARIABLES
@@ -54,19 +54,24 @@ class Slider(QWidget):
         
         ## SET DEFAULT TEXT
         self.var.setText(f"{label}: \t")
-        self.numBox.valueChanged.connect(self.numboxUpdate)
-        self.slider.valueChanged.connect(self.sliderUpdate)
+        self.slider.sliderMoved.connect(self.sliderUpdate)
+        self.numBox.editingFinished.connect(self.numboxUpdate)
 
     def sliderUpdate(self,sliderVal):
 
-        self.value = self.min + (sliderVal - 0)/100 * (self.max-self.min)
+        self.value = self.min + (sliderVal - 0)/(100 - 0) * (self.max-self.min)
+        self.numBox.setValue(self.value)
+        print(f"slider: {self.value:.3f}")
 
-    def numboxUpdate(self,boxVal):
+    def numboxUpdate(self):
 
-        slider_val = self.slider.minimum() + (boxVal - self.min)/(self.max-self.min) * (self.slider.maximum()-self.slider.minimum())
+        self.value = self.numBox.value()
+
+        slider_val = self.slider.minimum() + (self.value - self.min)/(self.max-self.min) * (self.slider.maximum()-self.slider.minimum())
         self.slider.setValue(int(np.round(slider_val,0)))
+        print(f"spin: {self.value:.3f}")
 
-        self.value = boxVal
+
 
 
 
@@ -77,20 +82,20 @@ class Demo(QWidget):
 
         
         ## INITIATE SLIDER
-        self.w1 = Slider(min=1.0,max=4.0,label="Vel")
-        self.w2 = Slider(min=20,max=90,label="Theta")
+        self.velSlider = Slider(min=1.0,max=4.0,label="Vel")
+        self.thetaSlider = Slider(min=20,max=90,label="Theta")
 
         
         
 
-        self.w1.slider.valueChanged.connect(self.updateValues)
-        self.w1.numBox.valueChanged.connect(self.updateValues)
+        self.velSlider.slider.valueChanged.connect(self.updateValues)
+        self.velSlider.numBox.valueChanged.connect(self.updateValues)
 
-        self.w2.slider.valueChanged.connect(self.updateValues)
-        self.w2.numBox.valueChanged.connect(self.updateValues)
+        self.thetaSlider.slider.valueChanged.connect(self.updateValues)
+        self.thetaSlider.numBox.valueChanged.connect(self.updateValues)
 
-        self.vel = self.w1.value
-        self.theta = self.w2.value
+        self.vel = self.velSlider.value
+        self.theta = self.thetaSlider.value
 
         self.vel = 1.0
         self.theta = 90
@@ -108,8 +113,8 @@ class Demo(QWidget):
         self.setLayout(layout)
         layout.addWidget(self.toolbar)
         layout.addWidget(self.canvas)
-        layout.addWidget(self.w1)
-        layout.addWidget(self.w2)
+        layout.addWidget(self.velSlider)
+        layout.addWidget(self.thetaSlider)
 
         # random data
         cmap = mpl.cm.jet
@@ -132,8 +137,8 @@ class Demo(QWidget):
 
     def updateValues(self):
         
-        self.vel = self.w1.value
-        self.theta = self.w2.value
+        self.vel = self.velSlider.value
+        self.theta = self.thetaSlider.value
 
         self.vx = self.vel*np.cos(np.radians(self.theta))
         self.vz = self.vel*np.sin(np.radians(self.theta))
