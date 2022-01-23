@@ -22,6 +22,7 @@ sys.path.insert(0,BASE_PATH)
 
 DATA_PATH = f"{BASE_PATH}/crazyflie_projects/ICRA_DataAnalysis/Wide-Long_2-Policy/Wide-Long_2-Policy_Summary.csv"
 df = pd.read_csv(DATA_PATH)
+df = df.query('landing_rate_4_leg >= 0.7 and 6.0 < My_d < 7.0')
 df = df.query('landing_rate_4_leg >= 0.7')
 
 class Slider(QWidget):
@@ -94,7 +95,7 @@ class Demo(QWidget):
 
 
         ## INITIATE SLIDERS
-        self.velSlider = Slider(min=1.0,max=4.0,label="Vel")
+        self.velSlider = Slider(min=0.5,max=4.0,label="Vel")
         self.thetaSlider = Slider(min=20,max=90,label="Theta")
         self.d_ceilSlider = Slider(min=0.05,max=1.8,label="d_Ceil")
 
@@ -124,15 +125,28 @@ class Demo(QWidget):
         layout.addWidget(self.thetaSlider)
         layout.addWidget(self.d_ceilSlider)
 
+        vz_range = np.linspace(0.5,4.0,11)
+        vx_range = np.linspace(0.5,4.0,11)
+        XX,YY = np.meshgrid(vx_range,vz_range)
+        data = np.vstack((XX.flatten(),YY.flatten())).T
+
+        vx_range = data[:,0]
+        vz_range = data[:,1]
+        d_range = 0.2114*vz_range
+        RREV_range = vz_range/d_range
+        OFy_range = -vx_range/d_range
+
+
 
         ## PLOT SETUP
         cmap = mpl.cm.jet
-        norm = mpl.colors.Normalize(vmin=0,vmax=1.0)
+        norm = mpl.colors.Normalize(vmin=0,vmax=10)
         
         self.ax1 = self.fig.add_subplot(121,projection='3d')
-        self.ax1.scatter(df["vx"],df["vz"],df["flip_d_mean"],c=df["landing_rate_4_leg"],cmap=cmap,norm=norm)
+        self.ax1.scatter(df["vx"],df["vz"],df["flip_d_mean"],c=df["My_d"],cmap=cmap,norm=norm)
         self.POI_1, = self.ax1.plot([],[],[],'ko')
         self.traj_1, = self.ax1.plot([],[],[])
+        self.ax1.scatter(vx_range,vz_range,d_range)
 
         self.ax1.set_xlim(0,4)
         self.ax1.set_ylim(0,4)
@@ -143,9 +157,11 @@ class Demo(QWidget):
         self.ax1.set_zlabel("d_ceil [m]")
 
         self.ax2 = self.fig.add_subplot(122,projection='3d')
-        self.ax2.scatter(df["OF_y_flip_mean"],df["RREV_flip_mean"],df["flip_d_mean"],c=df["landing_rate_4_leg"],cmap=cmap,norm=norm)
+        self.ax2.scatter(df["OF_y_flip_mean"],df["RREV_flip_mean"],df["flip_d_mean"],c=df["My_d"],cmap=cmap,norm=norm)
         self.POI_2, = self.ax2.plot([],[],[],'ko')
         self.traj_2, = self.ax2.plot([],[],[])
+        self.ax2.scatter(OFy_range,RREV_range,d_range)
+
 
         self.ax2.set_xlim(-15,0)
         self.ax2.set_ylim(0,8)
@@ -168,6 +184,7 @@ class Demo(QWidget):
 
         self.d_ceilSlider.slider.valueChanged.connect(self.updatePlots)
         self.d_ceilSlider.numBox.valueChanged.connect(self.updatePlots)
+        
 
         
 
