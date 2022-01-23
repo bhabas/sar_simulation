@@ -84,6 +84,7 @@ class Demo(QWidget):
         ## INITIATE SLIDER
         self.velSlider = Slider(min=1.0,max=4.0,label="Vel")
         self.thetaSlider = Slider(min=20,max=90,label="Theta")
+        self.d_ceilSlider = Slider(min=0.05,max=1.5,label="d_Ceil")
 
         
         
@@ -94,8 +95,12 @@ class Demo(QWidget):
         self.thetaSlider.slider.valueChanged.connect(self.updateValues)
         self.thetaSlider.numBox.valueChanged.connect(self.updateValues)
 
+        self.d_ceilSlider.slider.valueChanged.connect(self.updateValues)
+        self.d_ceilSlider.numBox.valueChanged.connect(self.updateValues)
+
         self.vel = self.velSlider.value
         self.theta = self.thetaSlider.value
+        self.d_ceil = self.d_ceilSlider.value
 
         self.vel = 1.0
         self.theta = 90
@@ -115,6 +120,7 @@ class Demo(QWidget):
         layout.addWidget(self.canvas)
         layout.addWidget(self.velSlider)
         layout.addWidget(self.thetaSlider)
+        layout.addWidget(self.d_ceilSlider)
 
         # random data
         cmap = mpl.cm.jet
@@ -122,7 +128,7 @@ class Demo(QWidget):
         
         self.ax = self.fig.add_subplot(111,projection='3d')
         self.ax.scatter(df["vx"],df["vz"],df["flip_d_mean"],c=df["landing_rate_4_leg"],cmap=cmap,norm=norm)
-        self.POI, = self.ax.plot([self.vx],[self.vz],[0.4],'ko')
+        self.POI, = self.ax.plot([self.vx],[self.vz],[self.d_ceil],'ko')
 
         self.ax.set_xlim(0,4)
         self.ax.set_ylim(0,4)
@@ -139,13 +145,15 @@ class Demo(QWidget):
         
         self.vel = self.velSlider.value
         self.theta = self.thetaSlider.value
+        self.d_ceil = self.d_ceilSlider.value
 
         self.vx = self.vel*np.cos(np.radians(self.theta))
         self.vz = self.vel*np.sin(np.radians(self.theta))
 
         ## SET POINT OF INTEREST COORDINATES FROM SLIDER
         self.POI.set_data([self.vx],[self.vz])
-        self.POI.set_3d_properties([0.4])
+        self.POI.set_3d_properties([self.d_ceil])
+        self.canvas.draw()
 
 
 

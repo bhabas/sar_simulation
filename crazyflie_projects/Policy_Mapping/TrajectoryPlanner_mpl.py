@@ -11,9 +11,11 @@ import pandas as pd
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_projects'))
 sys.path.insert(0,BASE_PATH)
 
-DATA_PATH = f"{BASE_PATH}/crazyflie_projects/ICRA_DataAnalysis/Wide-Long_2-Policy/Wide-Long_2-Policy_Summary.csv"
+DATA_PATH = f"{BASE_PATH}/crazyflie_data/ICRA_2022_Data/Wide-Long_2-Policy/Wide-Long_2-Policy_Summary.csv"
 df = pd.read_csv(DATA_PATH)
+# df = df.query('landing_rate_4_leg >= 0.7 and 6.0 < My_d <= 7.0')
 df = df.query('landing_rate_4_leg >= 0.7')
+
 
 ## SYSTEM CONSTANTS
 h_ceil = 2.1
@@ -61,11 +63,11 @@ OFy_range = -vel_x_range/d_range
 fig = plt.figure(figsize=(14,7))
 
 cmap = mpl.cm.jet
-norm = mpl.colors.Normalize(vmin=0,vmax=1.0)
+norm = mpl.colors.Normalize(vmin=0,vmax=10)
 
 ## VELOCITY-SPACE PLOT
 ax = fig.add_subplot(121, projection='3d')
-ax.scatter(df["vx"],df["vz"],df["flip_d_mean"],c=df["landing_rate_4_leg"],cmap=cmap,norm=norm)
+ax.scatter(df["vx"],df["vz"],df["flip_d_mean"],c=df["My_d"],cmap=cmap,norm=norm)
 POI, = ax.plot([vel_x[0]],[vel_z[0]],[d_ceil],'ko')
 graph, = ax.plot(vel_x,vel_z,d)
 
@@ -83,7 +85,7 @@ ax.set_zlabel("d_ceil")
 
 ## SENSORY-SPACE PLOT
 ax2 = fig.add_subplot(122, projection='3d')
-ax2.scatter(df["OF_y_flip_mean"],df["RREV_threshold"],df["flip_d_mean"],c=df["landing_rate_4_leg"],cmap=cmap,norm=norm)
+ax2.scatter(df["OF_y_flip_mean"],df["RREV_threshold"],df["flip_d_mean"],c=df["My_d"],cmap=cmap,norm=norm)
 POI2, = ax2.plot([OFy[0]],[RREV[0]],[d_ceil],'ko')
 # ax2.scatter(OFy_range,RREV_range,d_range)
 graph2, = ax2.plot(OFy,RREV,d)
