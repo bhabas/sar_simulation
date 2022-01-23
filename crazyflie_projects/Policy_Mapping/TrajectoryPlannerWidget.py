@@ -90,12 +90,13 @@ class Demo(QWidget):
 
     def __init__(self):
         super().__init__()
+        self.resize(1000,600)
 
 
         ## INITIATE SLIDERS
         self.velSlider = Slider(min=1.0,max=4.0,label="Vel")
         self.thetaSlider = Slider(min=20,max=90,label="Theta")
-        self.d_ceilSlider = Slider(min=0.05,max=1.5,label="d_Ceil")
+        self.d_ceilSlider = Slider(min=0.05,max=1.8,label="d_Ceil")
 
 
         ## INITIATE PLOT
@@ -128,18 +129,31 @@ class Demo(QWidget):
         cmap = mpl.cm.jet
         norm = mpl.colors.Normalize(vmin=0,vmax=1.0)
         
-        self.ax1 = self.fig.add_subplot(111,projection='3d')
+        self.ax1 = self.fig.add_subplot(121,projection='3d')
         self.ax1.scatter(df["vx"],df["vz"],df["flip_d_mean"],c=df["landing_rate_4_leg"],cmap=cmap,norm=norm)
-        self.POI, = self.ax1.plot([],[],[],'ko')
-        self.graph, = self.ax1.plot([],[],[])
+        self.POI_1, = self.ax1.plot([],[],[],'ko')
+        self.traj_1, = self.ax1.plot([],[],[])
 
         self.ax1.set_xlim(0,4)
         self.ax1.set_ylim(0,4)
-        self.ax1.set_zlim(0,2)
+        self.ax1.set_zlim(0,1.8) 
 
-        self.ax1.set_xlabel("Vel_x")
-        self.ax1.set_ylabel("Vel_z")
-        self.ax1.set_zlabel("d_ceil")
+        self.ax1.set_xlabel("Vel_x [m/s]")
+        self.ax1.set_ylabel("Vel_z [m/s]")
+        self.ax1.set_zlabel("d_ceil [m]")
+
+        self.ax2 = self.fig.add_subplot(122,projection='3d')
+        self.ax2.scatter(df["OF_y_flip_mean"],df["RREV_flip_mean"],df["flip_d_mean"],c=df["landing_rate_4_leg"],cmap=cmap,norm=norm)
+        self.POI_2, = self.ax2.plot([],[],[],'ko')
+        self.traj_2, = self.ax2.plot([],[],[])
+
+        self.ax2.set_xlim(-15,0)
+        self.ax2.set_ylim(0,8)
+        self.ax2.set_zlim(0,1.8) 
+
+        self.ax2.set_xlabel("OFy [rad/s]")
+        self.ax2.set_ylabel("RREV [rad/s]")
+        self.ax2.set_zlabel("d_ceil [m")
 
         self.updatePlots()
 
@@ -185,10 +199,15 @@ class Demo(QWidget):
         self.OFy_traj = -self.vx_traj/self.d_traj
 
         ## SET POINT OF INTEREST COORDINATES FROM SLIDER
-        self.POI.set_data([self.vx_pt],[self.vz_pt])
-        self.POI.set_3d_properties([self.d_pt])
-        self.graph.set_data(self.vx_traj,self.vz_traj)
-        self.graph.set_3d_properties(self.d_traj)
+        self.POI_1.set_data([self.vx_pt],[self.vz_pt])
+        self.POI_1.set_3d_properties([self.d_pt])
+        self.traj_1.set_data(self.vx_traj,self.vz_traj)
+        self.traj_1.set_3d_properties(self.d_traj)
+
+        self.POI_2.set_data([self.OFy_pt],[self.RREV_pt])
+        self.POI_2.set_3d_properties([self.d_pt])
+        self.traj_2.set_data(self.OFy_traj,self.RREV_traj)
+        self.traj_2.set_3d_properties(self.d_traj)
         self.canvas.draw()
 
         self.RREV_label.setText(f"RREV: {self.RREV_pt:.2f}\t")
