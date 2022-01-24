@@ -276,47 +276,47 @@ class CrazyflieEnv:
 
 
         
-        if ctrl_msg.flip_flag == True and self.flip_flag == False: # Activates only once per run when flip_flag is about to change
+        # if ctrl_msg.flip_flag == True and self.flip_flag == False: # Activates only once per run when flip_flag is about to change
 
-            self.flip_flag = ctrl_msg.flip_flag # Update flip_flag
+        self.flip_flag = ctrl_msg.flip_flag # Update flip_flag
 
-            # Save state data at time of flip activation
-            ## SET STATE VALUES FROM TOPIC
-            # TIME_FLIP
-            # t_temp = ft_msg.Header.stamp.secs
-            # ns_temp = ft_msg.Header.stamp.nsecs
-            # self.t_impact = np.round(t_temp+ns_temp*1e-9,4)  
+        # Save state data at time of flip activation
+        ## SET STATE VALUES FROM TOPIC
+        # TIME_FLIP
+        # t_temp = ft_msg.Header.stamp.secs
+        # ns_temp = ft_msg.Header.stamp.nsecs
+        # self.t_impact = np.round(t_temp+ns_temp*1e-9,4)  
 
-            t_temp = ctrl_msg.Pose_tr.header.stamp.secs
-            ns_temp = ctrl_msg.Pose_tr.header.stamp.nsecs
-            self.t_flip = np.round(t_temp+ns_temp*1e-9,4)  # Treat nsecs here at micro-secs
+        t_temp = ctrl_msg.Pose_tr.header.stamp.secs
+        ns_temp = ctrl_msg.Pose_tr.header.stamp.nsecs
+        self.t_flip = np.round(t_temp+ns_temp*1e-9,4)  # Treat nsecs here at micro-secs
 
-            # POSE_FLIP
-            self.pos_flip = np.round([ctrl_msg.Pose_tr.pose.position.x,
-                                        ctrl_msg.Pose_tr.pose.position.y,
-                                        ctrl_msg.Pose_tr.pose.position.z],3) # [m]
-            self.quat_flip = np.round([ctrl_msg.Pose_tr.pose.orientation.x,
-                                        ctrl_msg.Pose_tr.pose.orientation.y,
-                                        ctrl_msg.Pose_tr.pose.orientation.z,
-                                        ctrl_msg.Pose_tr.pose.orientation.w],5) # [quat]
-            # TWIST_FLIP
-            self.vel_flip = np.round([ctrl_msg.Twist_tr.linear.x,
-                                        ctrl_msg.Twist_tr.linear.y,
-                                        ctrl_msg.Twist_tr.linear.z],3) # [m/s]
-            self.omega_flip = np.round([ctrl_msg.Twist_tr.angular.x,
-                                        ctrl_msg.Twist_tr.angular.y,
-                                        ctrl_msg.Twist_tr.angular.z],3) # [rad/s]
+        # POSE_FLIP
+        self.pos_flip = np.round([ctrl_msg.Pose_tr.pose.position.x,
+                                    ctrl_msg.Pose_tr.pose.position.y,
+                                    ctrl_msg.Pose_tr.pose.position.z],3) # [m]
+        self.quat_flip = np.round([ctrl_msg.Pose_tr.pose.orientation.x,
+                                    ctrl_msg.Pose_tr.pose.orientation.y,
+                                    ctrl_msg.Pose_tr.pose.orientation.z,
+                                    ctrl_msg.Pose_tr.pose.orientation.w],5) # [quat]
+        # TWIST_FLIP
+        self.vel_flip = np.round([ctrl_msg.Twist_tr.linear.x,
+                                    ctrl_msg.Twist_tr.linear.y,
+                                    ctrl_msg.Twist_tr.linear.z],3) # [m/s]
+        self.omega_flip = np.round([ctrl_msg.Twist_tr.angular.x,
+                                    ctrl_msg.Twist_tr.angular.y,
+                                    ctrl_msg.Twist_tr.angular.z],3) # [rad/s]
 
 
-            self.FM_flip = np.asarray(ctrl_msg.FM_flip) # Force/Moments [N,N*mm]
-            self.FM_flip = np.round(self.FM_flip,3)
-            
-            self.RREV_tr = np.round(ctrl_msg.RREV_tr,3) # Recorded trigger RREV [rad/s]
-            self.OF_y_tr = np.round(ctrl_msg.OF_y_tr,3) # Recorded OF_y at trigger [rad/s]
-            self.OF_x_tr = np.round(ctrl_msg.OF_y_tr,3) # Recorded OF_x at trigger [rad/s]
+        self.FM_flip = np.asarray(ctrl_msg.FM_flip) # Force/Moments [N,N*mm]
+        self.FM_flip = np.round(self.FM_flip,3)
+        
+        self.RREV_tr = np.round(ctrl_msg.RREV_tr,3) # Recorded trigger RREV [rad/s]
+        self.OF_y_tr = np.round(ctrl_msg.OF_y_tr,3) # Recorded OF_y at trigger [rad/s]
+        self.OF_x_tr = np.round(ctrl_msg.OF_y_tr,3) # Recorded OF_x at trigger [rad/s]
 
-            self.NN_tr_flip = np.round(ctrl_msg.NN_tr_flip,3)
-            self.NN_tr_policy = np.round(ctrl_msg.NN_tr_policy,3)
+        self.NN_tr_flip = np.round(ctrl_msg.NN_tr_flip,3)
+        self.NN_tr_policy = np.round(ctrl_msg.NN_tr_policy,3)
 
 
 
@@ -674,13 +674,13 @@ class CrazyflieEnv:
             with open(filepath,mode='w') as state_file:
                 state_writer = csv.writer(state_file,delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 state_writer.writerow([
-                    # RL Labels
-                    'k_ep','k_run',             
+                    # Generic Labels
+                    'k_ep','k_run',    
+                    't',         
                     'NN_flip','NN_policy',
                     'mu','sigma', 'policy',
 
                     # Internal State Estimates (EKF)
-                    't',
                     'x','y','z',            
                     'vx','vy','vz',
                     'qw','qx','qy','qz',
@@ -710,13 +710,13 @@ class CrazyflieEnv:
             with open(self.filepath, mode='a') as state_file:
                 state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 state_writer.writerow([
-                    # RL Labels
+                    # Generic Labels
                     self.k_ep,self.k_run,
+                    self.t,
                     self.NN_flip,self.NN_policy, # alpha_mu,alpha_sig
                     "","","", # mu,sigma,policy
 
                     # Internal State Estimates (EKF)
-                    self.t,
                     self.position[0],self.position[1],self.position[2], # t,x,y,z
                     self.velocity[0],self.velocity[1],self.velocity[2], # vx,vy,vz
                     self.orientation_q[3],self.orientation_q[0],self.orientation_q[1],self.orientation_q[2], # qw,qx,qy,qz
@@ -747,14 +747,14 @@ class CrazyflieEnv:
             with open(self.filepath,mode='a') as state_file:
                 state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 state_writer.writerow([
-                    # RL Labels
+                    # Generic Labels
                     self.k_ep,self.k_run,
+                    self.t_flip,
                     self.NN_tr_flip,self.NN_tr_policy, # NN_flip, NN_policy
                     "","","", # mu,sigma,policy
                     
                     
                     # Internal State Estimates (EKF)
-                    self.t_flip,
                     self.pos_flip[0],self.pos_flip[1],self.pos_flip[2],    # t,x,y,z
                     self.vel_flip[0],self.vel_flip[1],self.vel_flip[2],    # vx_d,vy_d,vz_d
                     self.quat_flip[3],self.quat_flip[0],self.quat_flip[1],self.quat_flip[2],    # qw,qx,qy,qz
@@ -784,13 +784,13 @@ class CrazyflieEnv:
             with open(self.filepath,mode='a') as state_file:
                 state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 state_writer.writerow([
-                    # RL Labels
+                    # Generic Labels
                     self.k_ep,self.k_run,
+                    self.t_impact,
                     "","", # alpha_mu,alpha_sig
                     "","","", # mu,sigma,policy
 
                     # Internal State Estimates (EKF)
-                    self.t_impact,
                     self.pos_impact[0],self.pos_impact[1],self.pos_impact[2],    # t,x,y,z
                     self.vel_impact[0],self.vel_impact[1],self.vel_impact[2],    # vx_d,vy_d,vz_d
                     self.quat_impact[3],self.quat_impact[0],self.quat_impact[1],self.quat_impact[2],    # qw,qx,qy,qz
@@ -820,13 +820,13 @@ class CrazyflieEnv:
                 state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 state_writer.writerow([
 
-                    # RL Labels
+                    # Generic Labels
                     self.k_ep,self.k_run,
+                    "",             # t
                     "","", 
                     np.round(self.mu,2),np.round(self.sigma,2),np.round(self.policy,2), # mu,sigma,policy
 
                     # Internal State Estimates (EKF)
-                    "",             # t
                     "","","",       # x,y,z
                     np.round(self.vel_trial[0],2),np.round(self.vel_trial[1],2),np.round(self.vel_trial[2],2), # vx_d,vy_d,vz_d
                     "","","","",    # qx,qy,qz,qw

@@ -54,6 +54,9 @@ void controllerGTCReset(Controller* _CTRL)
     OF_x_tr = 0.0;
     OF_y_tr = 0.0;
 
+    NN_tr_flip = 0.0;
+    NN_tr_policy = 0.0;
+
 
 
 
@@ -63,8 +66,7 @@ void controllerGTCReset(Controller* _CTRL)
     _CTRL->_slowdown_type = 0;
     _CTRL->adjustSimSpeed(_CTRL->_SIM_SPEED);
 
-    NN_flip = 0.0;
-    NN_policy = 0.0;
+    
 
 
 

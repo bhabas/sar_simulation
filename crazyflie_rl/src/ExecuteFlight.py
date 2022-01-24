@@ -6,7 +6,7 @@ from crazyflie_msgs.msg import ImpactData,CtrlData
 import math
 
 
-
+from nav_msgs.msg import Odometry
 from Crazyflie_env import CrazyflieEnv
 from RL_agents.rl_EM import rlEM_PEPGAgent
 from rospy.exceptions import ROSException
@@ -24,6 +24,7 @@ def executeFlight(env,agent):
     ## MAKE SURE CONTROLLER IS WORKING
     while True:
         try:
+            rospy.wait_for_message('/env/global_state_data',Odometry) # Wait for global state message before resuming training
             rospy.wait_for_message("/ctrl_data",CtrlData,timeout=5.0)
             break
 
@@ -51,8 +52,8 @@ def executeFlight(env,agent):
     t_step = 0
     t_prev = 0.0
 
-    flag = False # Ensures flip data recorded only once
-    flag2 = False # Ensures impact data recorded only once 
+    onceFlag = False # Ensures flip data recorded only once
+    onceFlag2 = False # Ensures impact data recorded only once 
 
     ## PRINT RUN CONDITIONS AND POLICY
     print(f"Vx_d: {env.vel_trial[0]:.3f} \t Vy_d: {env.vel_trial[1]:.3f} \t Vz_d: {env.vel_trial[2]:.3f}")
@@ -82,7 +83,7 @@ def executeFlight(env,agent):
         ##      Pitch Recording 
         # ============================
 
-        if (env.flip_flag == True and flag == False):
+        if (env.flip_flag == True and onceFlag == False):
             start_time_pitch = env.getTime() # Starts countdown for when to reset run
 
             # Recieve flip moments from controller and then update class var to be sent out of /rl_data topic
@@ -97,12 +98,12 @@ def executeFlight(env,agent):
             print(f"RREV_tr={env.RREV_tr:.3f}, OF_y_tr={env.OF_y_tr:.3f}, My_d={My_d:.3f} [N*mm]")  
             print(f"Pitch Time: {env.t_flip:.3f} [s]")
             
-            flag = True # Turns on to make sure this only runs once per rollout
+            onceFlag = True # Turns on to make sure this only runs once per rollout
 
         
-        if ((env.impact_flag or env.body_contact) and flag2 == False):
+        if ((env.impact_flag or env.body_contact) and onceFlag2 == False):
             start_time_impact = env.getTime()
-            flag2 = True
+            onceFlag2 = True
 
         # ============================
         ##      Record Keeping  
@@ -115,7 +116,7 @@ def executeFlight(env,agent):
         # ============================
         ##    Termination Criteria 
         # ============================
-        if (env.impact_flag or env.body_contact) and ((env.getTime()-start_time_impact) > 10.0):
+        if (env.impact_flag or env.body_contact) and ((env.getTime()-start_time_impact) > 1.0):
             env.error_str = "Rollout Completed: Impact Timeout"
             print(env.error_str)
 
@@ -136,7 +137,7 @@ def executeFlight(env,agent):
             env.runComplete_flag = True
 
         # IF TIME SINCE RUN START EXCEEDS [6.0s]
-        elif (env.getTime() - start_time_rollout) > (10.0):
+        elif (env.getTime() - start_time_rollout) > (5.0):
             env.error_str = "Rollout Completed: Time Exceeded"
             print(env.error_str)
 
