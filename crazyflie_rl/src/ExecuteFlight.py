@@ -14,7 +14,7 @@ from rospy.exceptions import ROSException
 os.system("clear")
 np.set_printoptions(precision=2, suppress=True)
 
-def executeFlight(env):
+def executeFlight(env,agent):
 
     ## SEND MESSAGE FOR ALL NODES TO RESET TO DEFAULT VALUES
     env.reset_flag = True
@@ -167,14 +167,12 @@ def executeFlight(env):
             
             
             print("\n")
-            # reward_arr[k_run] = agent.calcReward_Impact(env)
-            # env.reward = reward_arr[k_run,0]
-            # env.reward_avg = reward_arr[np.nonzero(reward_arr)].mean()
+            env.reward = agent.calcReward_Impact(env)
             env.reward_inputs = [env.z_max,env.pitch_sum,env.pitch_max]
             
             
             print(f"Reward = {env.reward:.3f}")
-            # print(f"# of Leg contacts: {sum(env.pad_contacts)}")
+            print(f"# of Leg contacts: {sum(env.pad_contacts)}")
             print("!------------------------End Run------------------------! \n")  
 
             
@@ -208,18 +206,16 @@ def executeFlight(env):
     
     else:
         ## PUBLISH UPDATED REWARD VARIABLES
-        # env.reward = reward_arr[k_run,0]
-        # env.reward_avg = reward_arr[np.nonzero(reward_arr)].mean()
         env.RL_Publish()
 
-        ## PUBLISH UPDATED REWARD VARIABLES
-
+    print("AAADDDD Done")
 
 
 if __name__ == '__main__':
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=False)
-    
+    env = CrazyflieEnv(gazeboTimeout=True)
+    agent = rlEM_PEPGAgent(n_rollouts=env.n_rollouts)
+
 
     # ============================
     ##     LEARNING CONDITIONS  
@@ -227,7 +223,7 @@ if __name__ == '__main__':
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 24
-    # env.agent_name = agent.agent_type
+    env.agent_name = agent.agent_type
     env.trial_name = f"Policy_Playground--trial_{int(trial_num):02d}"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
     env.logging_flag = True
@@ -244,4 +240,4 @@ if __name__ == '__main__':
     env.RL_Publish() # Publish data to rl_data topic
     time.sleep(3)
 
-    executeFlight(env)
+    executeFlight(env,agent)
