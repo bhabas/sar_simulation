@@ -6,10 +6,10 @@
 void controllerGTCInit(void)
 {
     controllerGTCTest();
-    initScaler(&Scaler_Flip,str1);
-    initScaler(&Scaler_Policy,str2);
-    initNN_Layers(W_policy,b_policy,path_policy,3);
-    initNN_Layers(W_flip,b_flip,path_flip,3);
+    // initScaler(&Scaler_Flip,str1);
+    // initScaler(&Scaler_Policy,str2);
+    initNN_Layers(&Scaler_Flip,W_flip,b_flip,path_flip,3);
+    initNN_Layers(&Scaler_Policy,W_policy,b_policy,path_policy,3);
     // controllerGTCReset(_CTRL);
     printf("GTC Initiated\n");
 }
