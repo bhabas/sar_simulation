@@ -294,14 +294,10 @@ struct vec T = {0.0f, 0.0f, 0.0f};
 struct vec t_traj = {0.0f, 0.0f, 0.0f};
 
 // NEURAL NETWORK INITIALIZATION
-
 Scaler Scaler_Flip;
 Scaler Scaler_Policy;
 
-nml_mat* X = nml_mat_new(3,1);
-
-char str1[] = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/Scaler_Flip_Classifier.csv";
-char str2[] = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/Scaler_Policy_Value.csv";
+nml_mat* X = nml_mat_new(3,1); // STATE MATRIX TO BE INPUT INTO NN
 
 char path_policy[] = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/NN_Layers_Policy_Wide-Long.data";
 char path_flip[] = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/NN_Layers_Flip_Wide-Long.data";
@@ -312,11 +308,11 @@ nml_mat* b_policy[3];
 nml_mat* W_flip[3];
 nml_mat* b_flip[3];
 
-float NN_flip = 0.0f;
-float NN_policy = 0.0f;
+float NN_flip = 0.0f;       // NN output value for flip classification
+float NN_policy = 0.0f;     // NN output value for policy My
 
-float NN_tr_flip = 0.0f;
-float NN_tr_policy = 0.0f;
+float NN_tr_flip = 0.0f;    // NN value at flip trigger
+float NN_tr_policy = 0.0f;  // NN policy value at flip trigger
 
 
 
@@ -329,41 +325,6 @@ void commanderGetSetpoint(setpoint_t *setpoint, const state_t *state)
 {
 
 }
-
-// EXPLICIT FUNTIONS
-// void initScaler(Scaler* scaler, char path[])
-// {
-//     // INITIALIZE FILE PATH
-//     char f_path[256];               // Allocate space for string
-//     strcpy(f_path,getenv("HOME"));  // Copy home path 
-//     strcat(f_path,path);            // Append file path
-
-//     char line[50];
-//     char* str_ptr;
-
-//     // CREATE POINTER TO FILE
-//     FILE* file_ptr = fopen(f_path, "r");
-//     if (file_ptr == NULL) {
-//         perror("Error reading scaler file: Check for correct file name and path\n");
-//     }
-    
-//     // SKIP FIRST LINE OF FILE
-//     fgets(line,100,file_ptr); // Skip buffer
-
-//     // READ EACH LINE OF FILE AND ADD VALUES TO SCALER
-//     int i = 0;
-//     while(fgets(line,100,file_ptr)!=NULL)
-//     {
-//         str_ptr = strtok(line,",");
-//         scaler->mean[i] = atof(str_ptr);
-
-//         str_ptr = strtok(NULL,",");
-//         scaler->std[i] = atof(str_ptr);
-//         i++;
-//     }
-//     fclose(file_ptr);
-
-// }
 
 void initNN_Layers(Scaler* scaler,nml_mat* W[], nml_mat* b[], char path[],int numLayers)
 {
@@ -395,11 +356,12 @@ void initNN_Layers(Scaler* scaler,nml_mat* W[], nml_mat* b[], char path[],int nu
 float NN_Policy(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[])
 {   
     nml_mat* X_input = nml_mat_cp(X);
-    // for(int i=0;i<3;i++)
-    // {
-    //     X_input->data[i][0] = (X->data[i][0] - scaler->mean[i])/scaler->std[i];
-        
-    // }
+
+    // X_input = nml_mat_divEl(nml_mat_subEl(X-scaler->mean),scaler->std);
+    for(int i=0;i<3;i++)
+    {
+        X_input->data[i][0] = (X->data[i][0] - scaler->mean->data[i][0])/scaler->std->data[i][0];
+    }
 
     //LAYER 1
     //Sigmoid(W*X+b)
@@ -440,10 +402,10 @@ float NN_Policy(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[])
 float NN_Flip(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[])
 {
     nml_mat* X_input = nml_mat_cp(X);
-    // for(int i=0;i<3;i++)
-    // {
-    //     X_input->data[i][0] = (X->data[i][0] - scaler->mean[i])/scaler->std[i];
-    // }
+    for(int i=0;i<3;i++)
+    {
+        X_input->data[i][0] = (X->data[i][0] - scaler->mean->data[i][0])/scaler->std->data[i][0];
+    }
 
     // LAYER 1
     // Elu(W*X+b)
@@ -584,14 +546,17 @@ class Controller
 
 
             // SIMULATION SETTINGS FROM CONFIG FILE
+            ros::param::get("/MODEL_NAME",_MODEL_NAME);
             ros::param::get("/CEILING_HEIGHT",_H_CEILING);
-            ros::param::get("/LANDING_SLOWDOWN",_LANDING_SLOWDOWN_FLAG);
-            ros::param::get("/SIM_SPEED",_SIM_SPEED);
-            ros::param::get("/SIM_SLOWDOWN_SPEED",_SIM_SLOWDOWN_SPEED);
             ros::param::get("/CF_MASS",_CF_MASS);
-            ros::param::get("/CTRL_DEBUG_SLOWDOWN", _CTRL_DEBUG_SLOWDOWN);
             ros::param::get("/POLICY_TYPE",_POLICY_TYPE);
             POLICY_TYPE = (Policy_Type)_POLICY_TYPE; // Cast ROS param (int) to enum (Policy_Type)
+
+            // DEBUG SETTINGS
+            ros::param::get("/SIM_SPEED",_SIM_SPEED);
+            ros::param::get("/CTRL_DEBUG_SLOWDOWN", _CTRL_DEBUG_SLOWDOWN);
+            ros::param::get("/LANDING_SLOWDOWN",_LANDING_SLOWDOWN_FLAG);
+            ros::param::get("/SIM_SLOWDOWN_SPEED",_SIM_SLOWDOWN_SPEED);
 
             // COLLECT CTRL GAINS FROM CONFIG FILE
             ros::param::get("P_kp_xy",P_kp_xy);
@@ -716,6 +681,7 @@ class Controller
         float _CF_MASS;
         int _CTRL_DEBUG_SLOWDOWN;
         int _POLICY_TYPE;
+        string _MODEL_NAME;
         
         
 
@@ -866,14 +832,14 @@ void Controller::startController() // MAIN CONTROLLER LOOP
     ros::Rate rate(RATE_MAIN_LOOP);
     controllerGTCInit();
    
-    // while(ros::ok)
-    // {
-    //     stateEstimator(&state, &sensorData, &control, tick);
-    //     commanderGetSetpoint(&setpoint, &state);
-    //     controllerGTC(&control, &setpoint, &sensorData, &state, tick, &flowDeck, this);
+    while(ros::ok)
+    {
+        stateEstimator(&state, &sensorData, &control, tick);
+        commanderGetSetpoint(&setpoint, &state);
+        controllerGTC(&control, &setpoint, &sensorData, &state, tick, &flowDeck, this);
 
-    //     tick++;
-    //     rate.sleep();
-    // }
+        tick++;
+        rate.sleep();
+    }
 }
 
