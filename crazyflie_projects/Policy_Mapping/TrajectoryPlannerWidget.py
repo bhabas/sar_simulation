@@ -22,7 +22,7 @@ sys.path.insert(0,BASE_PATH)
 
 DATA_PATH = f"{BASE_PATH}/crazyflie_projects/ICRA_DataAnalysis/Wide-Long_2-Policy/Wide-Long_2-Policy_Summary.csv"
 df = pd.read_csv(DATA_PATH)
-df = df.query('landing_rate_4_leg >= 0.7 and 6.0 < My_d < 7.0')
+# df = df.query('landing_rate_4_leg >= 0.7 and 6.0 < My_d < 7.0')
 df = df.query('landing_rate_4_leg >= 0.7')
 
 class Slider(QWidget):
