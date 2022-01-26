@@ -28,22 +28,22 @@ class GazeboStickyFoot: public ModelPlugin
         
 
     private:
+        physics::WorldPtr world_;
         physics::ModelPtr model_;
         physics::LinkPtr padLink_ptr;
         physics::LinkPtr contactLink_ptr;
-        physics::WorldPtr world_;
+        physics::JointPtr joint_ptr;
         physics::PhysicsEnginePtr physics_engine_;
         physics::ContactManager *contact_manager_;
-        physics::JointPtr joint_;
 
         transport::NodePtr node_handle_;
         //transport::NodePtr contact_node_;
         transport::SubscriberPtr contact_sub_;
 
         std::string namespace_;
-        std::string link_name_;
+        std::string padName;
+        std::string jointName;
         std::string contact_pub_topic;
-        std::string joint_name_;
 
         event::ConnectionPtr updateConnection_;
 

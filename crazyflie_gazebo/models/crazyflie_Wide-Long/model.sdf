@@ -1769,31 +1769,25 @@
       <motorSpeedCommandPubTopic>/gazebo/command/motor_speed</motorSpeedCommandPubTopic>
       <stickyEnablePubTopic>/gazebo/command/sticky_enable</stickyEnablePubTopic>
     </plugin> -->
-    <plugin name='pad_0_sticky' filename='libgazebo_sticky_foot.so'>
+    <plugin name='pad_1_sticky' filename='libgazebo_sticky_foot.so'>
       <robotNamespace/>
       <linkName>pad_1</linkName>
-      <padNumber>0</padNumber>
+      <padNumber>1</padNumber>
     </plugin>
-    <!-- <plugin name='pad_1_sticky' filename='libgazebo_sticky_foot.so'>
+    <!-- <plugin name='pad_2_sticky' filename='libgazebo_sticky_foot.so'>
       <robotNamespace/>
       <linkName>pad_2</linkName>
-      <padNumber>1</padNumber>
-      <stickyEnableSubTopic>/gazebo/command/sticky_enable</stickyEnableSubTopic>
-      <maxUpVelocity>100</maxUpVelocity>
-    </plugin>
-    <plugin name='pad_2_sticky' filename='libgazebo_sticky_foot.so'>
+      <padNumber>2</padNumber>
+    </plugin> -->
+    <!-- <plugin name='pad_2_sticky' filename='libgazebo_sticky_foot.so'>
       <robotNamespace/>
       <linkName>pad_3</linkName>
       <padNumber>2</padNumber>
-      <stickyEnableSubTopic>/gazebo/command/sticky_enable</stickyEnableSubTopic>
-      <maxUpVelocity>100</maxUpVelocity>
     </plugin>
     <plugin name='pad_3_sticky' filename='libgazebo_sticky_foot.so'>
       <robotNamespace/>
       <linkName>pad_4</linkName>
       <padNumber>3</padNumber>
-      <stickyEnableSubTopic>/gazebo/command/sticky_enable</stickyEnableSubTopic>
-      <maxUpVelocity>100</maxUpVelocity>
     </plugin> -->
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>

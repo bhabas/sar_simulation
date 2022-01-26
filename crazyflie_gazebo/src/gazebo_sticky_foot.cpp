@@ -2,10 +2,7 @@
 #include <gazebo_sticky_foot.h>
 
 /*
-    (LEGACY CODE)
     This plugin is responsible for joining foot pads to whatever entity they collide with (e.g. ground or ceiling).
-    It turns on/off through the motorspeed commands where a negative first value sends the command here and the 
-    next value is a bool turning sticky on/off. 
 */
 
 namespace gazebo{
@@ -14,23 +11,30 @@ namespace gazebo{
 // This gets called when model is loaded and pulls values from sdf file
 void GazeboStickyFoot::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) 
 {
+    // SET INITIAL VALUES FOR PARAMETERS
+    sticky_ = false;        
+    contactLink_ptr = NULL; // Link that pad will join to at contact
+    joint_ptr = NULL;       // The future joint between contacting links
+
+
     gzmsg << "Loading GazeboStickyFoot Plugin\n";
     model_ = _model;
     world_ = model_->GetWorld();
     //model_name_ = model_->GetName();
 
+
     // GRAB SELECTED LINK FROM SDF
-    link_name_ = _sdf->GetElement("linkName")->Get<std::string>(); // Pad_1
-    gzmsg<<"\t link_name_ = "<<link_name_<<std::endl;
-    padLink_ptr = model_->GetLink(link_name_); // Returns a ptr to link
+    padName = _sdf->GetElement("linkName")->Get<std::string>(); // Pad_1
+    gzmsg<<"\t Pad Name:\t"<<padName<<std::endl;
+    padLink_ptr = model_->GetLink(padName); // Returns a ptr to link
     if (padLink_ptr == NULL)
-        gzerr<<"[gazebo_sticky_foot] Couldn't find specified link " << link_name_ << std::endl;
+        gzerr<<"[gazebo_sticky_foot] Couldn't find specified link " << padName << std::endl;
 
 
     // CREATE JOINT NAME
     pad_number_ = _sdf->GetElement("padNumber")->Get<int>(); // Convert SDF element to int
-    joint_name_ = "pad_" + std::to_string(pad_number_) + "_sticky_joint";
-    gzmsg<<"\t joint_name_= "<<joint_name_<<std::endl;
+    jointName = "pad_" + std::to_string(pad_number_) + "_sticky_joint";
+    gzmsg<<"\t Joint Name:\t"<<jointName<<std::endl;
 
 
     // SOMETHING ABOUT CREATING A NAMESPACE ("/"" PREFIX FOR GZTOPICS)
@@ -45,15 +49,7 @@ void GazeboStickyFoot::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
     node_handle_->Init(namespace_);
 
 
-
-    // SET INITIAL VALUES FOR PARAMETERS
-    sticky_ = false;    // Have the sticky feature turned off by default
-    contactLink_ptr = NULL;      // Link that pad will joint to at contact
-    joint_ = NULL;      // The future joint between the links
-
-
-
-    // NUMBER OF COLLISION OBJECTS IN THE LINK
+    // NUMBER OF COLLISION OBJECTS IN THE LINK (Typically one per object)
     unsigned int collsion_count = padLink_ptr->GetChildCount();
 
     // CREATE A MAP OF COLLISION NAMES (KEY) TO COLLISION ENTITIES (VALUES)
@@ -75,7 +71,7 @@ void GazeboStickyFoot::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
     if (!collisions.empty()) // If collsion entities exist in the link
     {
         // CREATE A GZ-PUBLISHER THAT PUBLISHES CONTACTS ASSOCIATED TO THE INPUTED COLLISION ENTITIES
-        contact_pub_topic = contact_manager_->CreateFilter(link_name_, collisions); // Returns string of publisher topic
+        contact_pub_topic = contact_manager_->CreateFilter(padName, collisions); // Returns string of publisher topic
         
         // CREATE A GZ-SUBSCRIBER THAT LISTENS TO THE ABOVE PUBLISHER AND ACTIVATES A CALLBACK
         contact_sub_ = node_handle_->Subscribe(contact_pub_topic, &GazeboStickyFoot::ContactCallback, this);
@@ -96,8 +92,6 @@ void GazeboStickyFoot::ContactCallback(ConstContactsPtr &msg)
         for(int i = 0; i < msg->contact_size(); i++)
         {
             
-
-            physics::LinkPtr candidate = NULL;
             
             // GET LINK NAME FOR COLLISION 1 ENTITY (Pad_x)
             // candidate = boost::dynamic_pointer_cast<physics::Collision>( world_->EntityByName(msg->contact(i).collision1().c_str()) )->GetLink();
@@ -106,23 +100,16 @@ void GazeboStickyFoot::ContactCallback(ConstContactsPtr &msg)
             // I am assuming collision2 will always be the other object and not the pad
             contactLink_ptr = boost::dynamic_pointer_cast<physics::Collision>( world_->EntityByName(msg->contact(i).collision2().c_str()) )->GetLink();
 
-            std::cout<<"[gazebo_sticky_foot:] Link: "<<padLink_ptr->GetName().c_str()<<" grabbing Link: "<<contactLink_ptr->GetName().c_str()<<std::endl;
-
             // IF JOINT DOESN'T ALREADY EXIST CREATE IT
-            if (joint_== NULL)
-                joint_ = model_->CreateJoint(joint_name_, "fixed", padLink_ptr, contactLink_ptr);
-                std::cout << "[gazebo_sticky_foot:] Joint Created: (" <<joint_->GetName().c_str() << ")"<<std::endl;
+            if (joint_ptr == NULL)
+                joint_ptr = model_->CreateJoint(jointName, "fixed", padLink_ptr, contactLink_ptr);
+                printf("[Pad_%d]: Joint Created\t(%s->%s)\n",pad_number_,padLink_ptr->GetName().c_str(),contactLink_ptr->GetName().c_str());               
 
-                // PUBLISH EACH TIME PAD IS CONNECTED TO THE CEILING
+
+                // PUBLISH EACH TIME A PAD IS CONNECTS TO THE CEILING
                 crazyflie_msgs::PadConnect msg;
-                std::string str = joint_->GetName().c_str();    // Get joint name as string
-                str = str.substr(4,1);                          // Trim to pad index
-                msg.Pad_Num = atoi(str.c_str())+1;              // Convert to pad number
+                msg.Pad_Num = pad_number_;                // Convert to pad number
                 PadConnect_Publisher.publish(msg);
-
-            // ATTACH THE JOINT
-            joint_->Load(padLink_ptr, contactLink_ptr, ignition::math::Pose3d());
-            joint_->Attach(padLink_ptr, contactLink_ptr);
 
             break;
 
@@ -135,35 +122,32 @@ void GazeboStickyFoot::RLCmdCallback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 {
 
     // CREATE CMD VECTOR AND VALS FROM SUBSCRIBED MESSAGE
-    int cmd_type = msg->cmd_type;                       // Read cmd type from incoming message
-    const geometry_msgs::Point cmd_vals = msg->cmd_vals;    // Construct vector from cmd values
-    float cmd_flag = msg->cmd_flag;                     // Construct flag from cmd flag value
+    int cmd_type = msg->cmd_type;       // Read cmd type from incoming message
+    int cmd_flag = (int)msg->cmd_flag;  // Construct flag from cmd flag value
 
     if(cmd_type == 11)
     {
-        if(cmd_flag == 1) // TURN ON STICKY FOOT
+        
+        if(cmd_flag == 0 && sticky_) // TURN OFF STICKY FOOT
         {
-            std::cout<<padLink_ptr->GetName().c_str()<< " NOW STICKY "<< std::endl;
-            sticky_ = true;
-        }
-        if(cmd_flag == 0) // TURN OFF STICKY FOOT
-        {
-            // "padLink_ptr"  WILL HAVE NAMES pad_[X]
-            std::cout<<padLink_ptr->GetName().c_str()<< " NOW NOT STICKY "<< std::endl;
             sticky_ = false;
-            //joint_->Detach();     // Detach() doesn't work, don't know why
-            if (joint_ != NULL)
-            {
-                if (model_->RemoveJoint(joint_name_))
-                    std::cout<<"Joint (" <<joint_->GetName().c_str() << ") removed successufully"<<std::endl;
-                    // "joint_" WILL HAVE NAME "pad_[X]_sticky_joint"
-                    
+            printf("[Pad_%d]: Sticky_Disabled\n",pad_number_);
 
-                else
-                    std::cout<<"Joint (" <<joint_->GetName().c_str() << ") removal failed"<<std::endl;
+
+            if (joint_ptr != NULL)
+            {
+                model_->RemoveJoint(jointName);
+                printf("[Pad_%d]: Joint Removed\t(%s->%s)\n",pad_number_,padLink_ptr->GetName().c_str(),contactLink_ptr->GetName().c_str());
             }
-            joint_ = NULL;
+
+            // RESET JOINT AND CONTACT LINK POINTERS
+            joint_ptr = NULL;
             contactLink_ptr = NULL;
+        }
+        if(cmd_flag == 1 && !sticky_) // TURN ON STICKY FOOT
+        {
+            sticky_ = true;
+            printf("[Pad_%d]: Sticky_Enabled\n",pad_number_);
         }
     }
 }
