@@ -151,14 +151,6 @@ if __name__ == "__main__":
     df = df.sort_values(by='y')
 
 
-    ## SAVE SCALING TERMS
-    df_scale = pd.DataFrame(
-        np.vstack((scaler.mean_,scaler.scale_)).T,
-        columns=['mean','std'])
-    df_scale.to_csv(f"{BASEPATH}/Info/Scaler_Flip_Classifier.csv",index=False,float_format="%.3f",sep=',')
-
-
-
     ## SPLIT DATA FEATURES INTO TRAINING AND TESTING DATA
     train_df, test_df = train_test_split(df,test_size=0.25,random_state=73)
     test_df = test_df.sort_values(by='y')
