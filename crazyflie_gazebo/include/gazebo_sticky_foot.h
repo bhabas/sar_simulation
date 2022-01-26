@@ -51,7 +51,7 @@ class GazeboStickyFoot: public ModelPlugin
 
         ros::NodeHandle n;
         ros::Publisher PadConnect_Publisher = n.advertise<crazyflie_msgs::PadConnect>("/pad_connections", 5);
-        ros::Subscriber RLCmd_Subscriber = n.subscribe<crazyflie_msgs::RLCmd>("/rl_ctrl",5,&GazeboStickyFoot::RLCmdCallback,this);
+        ros::Subscriber RLCmd_Subscriber = n.subscribe<crazyflie_msgs::RLCmd>("/rl_ctrl",10,&GazeboStickyFoot::RLCmdCallback,this);
         
         
         bool sticky_;

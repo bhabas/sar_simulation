@@ -214,7 +214,7 @@ def executeFlight(env,agent):
 
 if __name__ == '__main__':
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=True)
+    env = CrazyflieEnv(gazeboTimeout=False)
     agent = rlEM_PEPGAgent(n_rollouts=env.n_rollouts)
 
 
@@ -241,4 +241,5 @@ if __name__ == '__main__':
     env.RL_Publish() # Publish data to rl_data topic
     time.sleep(3)
 
-    executeFlight(env,agent)
+    while True:
+        executeFlight(env,agent)

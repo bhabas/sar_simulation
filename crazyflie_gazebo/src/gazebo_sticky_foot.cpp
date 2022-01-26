@@ -30,7 +30,7 @@ void GazeboStickyFoot::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
 
 
     // INITIALIZE SOME SORT OF GAZEBO SUBSCRIBER
-    getSdfParam<std::string>(_sdf, "stickyEnableSubTopic", sticky_enable_sub_topic_, sticky_enable_sub_topic_);
+    // getSdfParam<std::string>(_sdf, "stickyEnableSubTopic", sticky_enable_sub_topic_, sticky_enable_sub_topic_);
 
     // GRAB SELECTED LINK FROM SDF
     link_name_ = _sdf->GetElement("linkName")->Get<std::string>(); // Pad_1
@@ -152,7 +152,7 @@ void GazeboStickyFoot::RLCmdCallback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
             std::cout<<link_->GetName().c_str()<< " NOW STICKY "<< std::endl;
             sticky_ = true;
         }
-        else // TURN OFF STICKY FOOT
+        if(cmd_flag == 0) // TURN OFF STICKY FOOT
         {
             // "link_"  WILL HAVE NAMES pad_[X]
             std::cout<<link_->GetName().c_str()<< " NOW NOT STICKY "<< std::endl;

@@ -1770,10 +1770,9 @@
       <robotNamespace/>
       <linkName>pad_1</linkName>
       <padNumber>0</padNumber>
-      <stickyEnableSubTopic>/gazebo/command/sticky_enable</stickyEnableSubTopic>
       <maxUpVelocity>100</maxUpVelocity>
     </plugin>
-    <plugin name='pad_1_sticky' filename='libgazebo_sticky_foot.so'>
+    <!-- <plugin name='pad_1_sticky' filename='libgazebo_sticky_foot.so'>
       <robotNamespace/>
       <linkName>pad_2</linkName>
       <padNumber>1</padNumber>
@@ -1793,7 +1792,7 @@
       <padNumber>3</padNumber>
       <stickyEnableSubTopic>/gazebo/command/sticky_enable</stickyEnableSubTopic>
       <maxUpVelocity>100</maxUpVelocity>
-    </plugin>
+    </plugin> -->
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
   </model>
