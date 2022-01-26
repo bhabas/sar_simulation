@@ -14,41 +14,42 @@ namespace gazebo{
 // This gets called when model is loaded and pulls values from sdf file
 void GazeboStickyFoot::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) 
 {
-    gzmsg<<"!!!!! Entering GazeboStickyFoot::Load !!!!!\n";
+    gzmsg << "Loading GazeboStickyFoot Plugin\n";
     model_ = _model;
     world_ = model_->GetWorld();
     //model_name_ = model_->GetName();
 
+    // GRAB SELECTED LINK FROM SDF
+    link_name_ = _sdf->GetElement("linkName")->Get<std::string>(); // Pad_1
+    gzmsg<<"\t link_name_ = "<<link_name_<<std::endl;
+    link_ = model_->GetLink(link_name_); // Returns a ptr to link
+    if (link_ == NULL)
+        gzerr<<"[gazebo_sticky_foot] Couldn't find specified link " << link_name_ << std::endl;
+
+
+    // CREATE JOINT NAME
+    pad_number_ = _sdf->GetElement("padNumber")->Get<int>(); // Convert SDF element to int
+    joint_name_ = "pad_" + std::to_string(pad_number_) + "_sticky_joint";
+    gzmsg<<"\t joint_name_= "<<joint_name_<<std::endl;
+
+
+    // SOMETHING ABOUT CREATING A NAMESPACE ("/"" PREFIX FOR GZTOPICS)
     if (_sdf->HasElement("robotNamespace"))
     {
         namespace_ = _sdf->GetElement("robotNamespace")->Get<std::string>();
     }
     else
-        gzerr << "[gazebo_motor_model] Please specify a robotNamespace.\n";
+        gzerr << "[gazebo_sticky_foot] Please specify a robotNamespace.\n";
+
     node_handle_ = transport::NodePtr(new transport::Node());
     node_handle_->Init(namespace_);
 
 
-    // INITIALIZE SOME SORT OF GAZEBO SUBSCRIBER
-    // getSdfParam<std::string>(_sdf, "stickyEnableSubTopic", sticky_enable_sub_topic_, sticky_enable_sub_topic_);
-
-    // GRAB SELECTED LINK FROM SDF
-    link_name_ = _sdf->GetElement("linkName")->Get<std::string>(); // Pad_1
-    gzmsg<<"!!!!! link_name_ = "<<link_name_<<"\n";
-    link_ = model_->GetLink(link_name_);
-    if (link_ == NULL)
-        gzerr<<"[gazebo_sticky_foot] Couldn't find specified link " << link_name_ << std::endl;
 
     // SET INITIAL VALUES FOR PARAMETERS
     sticky_ = false;    // Have the sticky feature turned off by default
     link2_ = NULL;      // Link that pad will joint to at contact
     joint_ = NULL;      // The future joint between the links
-
-    // EXTRACT OTHER VALUES
-    vz_max_ = _sdf->GetElement("maxUpVelocity")->Get<double>(); // I'm not sure on this part
-    pad_number_ = _sdf->GetElement("padNumber")->Get<int>();
-    joint_name_ = "pad_" + std::to_string(pad_number_) + "_sticky_joint";
-    std::cout<<"Joint name of pad_"<<pad_number_<<" is "<<joint_name_<<std::endl;
 
 
 

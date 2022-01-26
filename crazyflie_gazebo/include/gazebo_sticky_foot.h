@@ -38,12 +38,10 @@ class GazeboStickyFoot: public ModelPlugin
 
         transport::NodePtr node_handle_;
         //transport::NodePtr contact_node_;
-        transport::SubscriberPtr sticky_enable_sub_;
         transport::SubscriberPtr contact_sub_;
 
         std::string namespace_;
         std::string link_name_;
-        std::string sticky_enable_sub_topic_;
         std::string contact_pub_topic;
         std::string joint_name_;
 

@@ -1758,19 +1758,18 @@
       <robotNamespace>/</robotNamespace>
     </plugin>
     
-    <plugin name='mavlink' filename='libgazebo_mavlink.so'>
+    <!-- <plugin name='mavlink' filename='libgazebo_mavlink.so'>
       <robotNamespace/>
       <linkName>crazyflie_body</linkName>
       <mavlink_addr>INADDR_ANY</mavlink_addr>
       <mavlink_port>18080</mavlink_port>
       <motorSpeedCommandPubTopic>/gazebo/command/motor_speed</motorSpeedCommandPubTopic>
       <stickyEnablePubTopic>/gazebo/command/sticky_enable</stickyEnablePubTopic>
-    </plugin>
+    </plugin> -->
     <plugin name='pad_0_sticky' filename='libgazebo_sticky_foot.so'>
       <robotNamespace/>
       <linkName>pad_1</linkName>
       <padNumber>0</padNumber>
-      <maxUpVelocity>100</maxUpVelocity>
     </plugin>
     <!-- <plugin name='pad_1_sticky' filename='libgazebo_sticky_foot.so'>
       <robotNamespace/>
