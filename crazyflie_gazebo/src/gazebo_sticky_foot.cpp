@@ -72,7 +72,7 @@ void GazeboStickyFoot::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
     // SUBSCRIBE TO COLLSIONS FROM GAZEBO
     physics_engine_ = world_->Physics();
     contact_manager_ = physics_engine_->GetContactManager();
-    if (!collisions.empty()) // If collsions entities exist in the link
+    if (!collisions.empty()) // If collsion entities exist in the link
     {
         // CREATE A GZ-PUBLISHER THAT PUBLISHES CONTACTS ASSOCIATED TO THE INPUTED COLLISION ENTITIES
         contact_pub_topic = contact_manager_->CreateFilter(link_name_, collisions); // Returns string of publisher topic
@@ -91,49 +91,41 @@ void GazeboStickyFoot::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
 // CALLBACK ACTIVATED WHENEVER CONTACT DETECTED (MSG RECEIVED FROM GZ-PUB)
 void GazeboStickyFoot::ContactCallback(ConstContactsPtr &msg)
 {
-    if(sticky_ && link2_==NULL) // If sticky activated and link2 not created yet
+    if(sticky_==true && link2_==NULL) // If sticky activated and link2 not created yet
     {
         for(int i = 0; i < msg->contact_size(); i++)
         {
+            
+
             physics::LinkPtr candidate = NULL;
-            // IF DETECTED COLLISION NAME MATCHES LINK_1'S COLLISION NAME
-            if(strcmp(msg->contact(i).collision1().c_str(), link_name_.c_str()))  
-            {
-                // LINK CANDIDATE WILL BE THE OTHER LINK?
-                // It works but this doesn't read right?
-                candidate = boost::dynamic_pointer_cast<physics::Collision>( world_->EntityByName(msg->contact(i).collision1().c_str()) )->GetLink();
-            }
-            if(strcmp(msg->contact(i).collision2().c_str(), link_name_.c_str()))
-            {
-                candidate = boost::dynamic_pointer_cast<physics::Collision>( world_->EntityByName(msg->contact(i).collision2().c_str()) )->GetLink();
-            }
+            
+            // GET LINK NAME FOR COLLISION 1 ENTITY (Pad_x)
+            // candidate = boost::dynamic_pointer_cast<physics::Collision>( world_->EntityByName(msg->contact(i).collision1().c_str()) )->GetLink();
+            
+            // GET LINK NAME FOR COLLISION 2 ENTITY (ceiling)
+            link2_ = boost::dynamic_pointer_cast<physics::Collision>( world_->EntityByName(msg->contact(i).collision2().c_str()) )->GetLink();
 
-            // IF LINK CANDIDATE DETECTED
-            if(candidate != NULL)
-            {
+            std::cout<<"[gazebo_sticky_foot:] Link: "<<link_->GetName().c_str()<<" grabbing Link: "<<link2_->GetName().c_str()<<std::endl;
 
-                link2_ = candidate;
-                std::cout<<"[gazebo_sticky_foot:] Link: "<<link_->GetName().c_str()<<" grabbing Link: "<<link2_->GetName().c_str()<<std::endl;
+            // IF JOINT DOESN'T ALREADY EXIST CREATE IT
+            if (joint_== NULL)
+                joint_ = model_->CreateJoint(joint_name_, "fixed", link_, link2_);
+                std::cout << "[gazebo_sticky_foot:] Joint Created: (" <<joint_->GetName().c_str() << ")"<<std::endl;
 
-                // IF JOINT DOESN'T ALREADY EXIST CREATE IT
-                if (joint_== NULL)
-                    joint_ = model_->CreateJoint(joint_name_, "fixed", link_, link2_);
-                    std::cout << "[gazebo_sticky_foot:] Joint Created: (" <<joint_->GetName().c_str() << ")"<<std::endl;
+                // PUBLISH EACH TIME PAD IS CONNECTED TO THE CEILING
+                crazyflie_msgs::PadConnect msg;
+                std::string str = joint_->GetName().c_str();    // Get joint name as string
+                str = str.substr(4,1);                          // Trim to pad index
+                msg.Pad_Num = atoi(str.c_str())+1;              // Convert to pad number
+                PadConnect_Publisher.publish(msg);
 
-                    // PUBLISH EACH TIME PAD IS CONNECTED TO THE CEILING
-                    crazyflie_msgs::PadConnect msg;
-                    std::string str = joint_->GetName().c_str();    // Get joint name as string
-                    str = str.substr(4,1);                          // Trim to pad index
-                    msg.Pad_Num = atoi(str.c_str())+1;              // Convert to pad number
-                    PadConnect_Publisher.publish(msg);
+            // ATTACH THE JOINT
+            joint_->Load(link_, link2_, ignition::math::Pose3d());
+            joint_->Attach(link_, link2_);
 
-                // ATTACH THE JOINT
-                joint_->Load(link_, link2_, ignition::math::Pose3d());
-                joint_->Attach(link_, link2_);
+            break;
 
-                break;
 
-            }
         }
     }
 }
