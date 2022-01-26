@@ -29,8 +29,8 @@ class GazeboStickyFoot: public ModelPlugin
 
     private:
         physics::ModelPtr model_;
-        physics::LinkPtr link_;
-        physics::LinkPtr link2_;
+        physics::LinkPtr padLink_ptr;
+        physics::LinkPtr contactLink_ptr;
         physics::WorldPtr world_;
         physics::PhysicsEnginePtr physics_engine_;
         physics::ContactManager *contact_manager_;
