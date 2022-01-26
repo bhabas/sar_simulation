@@ -53,18 +53,18 @@ void GazeboStickyFoot::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
 
 
 
-    // EXTRACT NAMES OF ALL COLLISION OBJECTS IN THE LINK
-    unsigned int collsion_count = link_->GetChildCount(); // ccount = child count
+    // NUMBER OF COLLISION OBJECTS IN THE LINK
+    unsigned int collsion_count = link_->GetChildCount();
 
     // CREATE A MAP OF COLLISION NAMES (KEY) TO COLLISION ENTITIES (VALUES)
     // This is similar to a python dictionary {Key:Value}
     std::map<std::string, physics::CollisionPtr> collisions;
     for(unsigned int i = 0; i < collsion_count; i++)
     {
-        physics::CollisionPtr collision_entity = link_->GetCollision(i);
-        std::cout << "[gazebo_sticky_foot] Collision Entity: " << collision_entity->GetScopedName().c_str() << std::endl;
+        physics::CollisionPtr collision_entity = link_->GetCollision(i); // Create ptr to collision entity in SDF
+        gzmsg << "\t Collision Entity: " << collision_entity->GetScopedName().c_str() << std::endl;
 
-        collisions[collision_entity->GetScopedName()] = collision_entity;
+        collisions[collision_entity->GetScopedName()] = collision_entity; // Add ptr to mapped collision name
     }
     
 
@@ -79,9 +79,9 @@ void GazeboStickyFoot::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
         
         // CREATE A GZ-SUBSCRIBER THAT LISTENS TO THE ABOVE PUBLISHER AND ACTIVATES A CALLBACK
         contact_sub_ = node_handle_->Subscribe(contact_pub_topic, &GazeboStickyFoot::ContactCallback, this);
-        std::cout<<"[gazebo_sticky_foot]: Contact_Sub subscribed to: "<<contact_pub_topic.c_str()<<std::endl;
+        gzmsg<<"\t Contact_Sub subscribed to: "<<contact_pub_topic.c_str()<<std::endl;
     }
-
+    std::cout << "\n\n";
 
 }
 
