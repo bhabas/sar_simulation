@@ -53,6 +53,8 @@ class CrazyflieEnv:
 
         ## LOAD SIM_SETTINGS/ROS_PARAMETERS
         self.modelName = rospy.get_param('/MODEL_NAME')
+        self.modelInitials = self.modelInitial()
+        
         
 
         ## INIT CRAZYFLIE ESTIMATED
@@ -209,7 +211,13 @@ class CrazyflieEnv:
 
     
 
-    
+    def modelInitial(self): # RETURNS INITIALS FOR MODEL
+        str = self.modelName
+        charA = str[self.modelName.find("_")+1] # [W]ide
+        charB = str[self.modelName.find("-")+1] # [L]ong
+
+        return charA+charB  # [WL]
+
 
     # ============================
     ##   Publishers/Subscribers 
@@ -580,8 +588,7 @@ class CrazyflieEnv:
         set_state_srv(state_msg)
 
         ## WAIT FOR CONTROLLER TO UPDATE STATE x2 BEFORE TURNING ON TUMBLE DETECTION
-        rospy.wait_for_message('/env/global_state_data',Odometry)
-        rospy.wait_for_message('/env/global_state_data',Odometry)
+        time.sleep(0.1)
         self.step('tumble',ctrl_flag=1) # Tumble Detection on
 
         # time.sleep(0.1) # Give it time for controller to receive new states

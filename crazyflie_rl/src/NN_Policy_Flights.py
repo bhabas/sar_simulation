@@ -40,7 +40,7 @@ if __name__ == '__main__':
 
     ## INIT LOGGING DATA
     trial_num = 24
-    env.trial_name = f"NN_Policy--trial_{int(trial_num):02d}--Model_{env.modelName[10:]}"
+    env.trial_name = f"NN_Policy--trial_{int(trial_num):02d}--{env.modelInitials}"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
     env.logging_flag = True
     env.create_csv(env.filepath)
