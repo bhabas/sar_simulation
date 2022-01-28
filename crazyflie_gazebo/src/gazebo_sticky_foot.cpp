@@ -137,6 +137,12 @@ bool GazeboStickyFoot::activateSticky(crazyflie_msgs::activateSticky::Request &r
         {
             model_->RemoveJoint(jointName);
             printf("[Pad_%d]: Joint Removed\t(%s->%s)\n",pad_number_,padLink_ptr->GetName().c_str(),contactLink_ptr->GetName().c_str());
+            
+        }
+
+        if (pad_number_ == 4)
+        {
+            printf("\n"); // Add extra space to break up console output
         }
 
         // RESET JOINT AND CONTACT LINK POINTERS
@@ -147,6 +153,10 @@ bool GazeboStickyFoot::activateSticky(crazyflie_msgs::activateSticky::Request &r
     {
         sticky_ = true;
         printf("[Pad_%d]: Sticky_Enabled\n",pad_number_);
+        if (pad_number_ == 4)
+        {
+            printf("\n"); // Add extra space to break up console output
+        }
     }
     
     res.cmd_Success = true; // TODO: This would be a good feature to check that everything worked alright

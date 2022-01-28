@@ -1784,11 +1784,11 @@
       <linkName>pad_3</linkName>
       <padNumber>3</padNumber>
     </plugin>
-    <!-- <plugin name='pad_4_sticky' filename='libgazebo_sticky_foot.so'>
+    <plugin name='pad_4_sticky' filename='libgazebo_sticky_foot.so'>
       <robotNamespace/>
       <linkName>pad_4</linkName>
       <padNumber>4</padNumber>
-    </plugin> -->
+    </plugin>
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
   </model>

@@ -63,13 +63,13 @@ def executeFlight(env,agent):
     ##          Rollout 
     # ============================
     z_0 = 0.3986
+    env.step('sticky',ctrl_flag=1)              # Enable sticky pads
     env.step('pos',ctrl_flag=0)                 # Turn off pos control
     env.step('vel',env.vel_trial,ctrl_flag=1)   # Set desired vel
     env.launch_IC(                              # Use Gazebo to impart desired vel with extra vx to ensure -OF_y when around zero
         z_0,
         env.vel_trial[0]+0.03,
         env.vel_trial[2])   
-    env.step('sticky',ctrl_flag=1)              # Enable sticky pads
 
 
     while 1: 
