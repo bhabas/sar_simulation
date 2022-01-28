@@ -131,6 +131,8 @@ if __name__ == "__main__":
 
     model_config = "Wide-Long"
     df_raw = pd.read_csv(f"crazyflie_projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
+    df_bounds = pd.read_csv(f"crazyflie_projects/Policy_Mapping/NeuralNetwork/dataBounds.csv")
+    df_raw = pd.concat([df_raw,df_bounds])
 
 
     RREV = df_raw["RREV_flip_mean"]
@@ -147,14 +149,6 @@ if __name__ == "__main__":
     data_array = np.hstack((X_scaled,y))
     df = pd.DataFrame(data_array,columns=['RREV','OF_y','d_ceil','y'])
     df = df.sort_values(by='y')
-
-
-    ## SAVE SCALING TERMS
-    df_scale = pd.DataFrame(
-        np.vstack((scaler.mean_,scaler.scale_)).T,
-        columns=['mean','std'])
-    df_scale.to_csv(f"{BASEPATH}/Info/Scaler_Flip_Classifier.csv",index=False,float_format="%.3f",sep=',')
-
 
 
     ## SPLIT DATA FEATURES INTO TRAINING AND TESTING DATA
@@ -237,15 +231,19 @@ if __name__ == "__main__":
     fig = go.Figure()
 
     fig.add_trace(
-        go.Isosurface(
+        go.Volume(
+        # go.Isosurface(
             x=grid_data[:,1].flatten(),
             y=grid_data[:,0].flatten(),
             z=grid_data[:,2].flatten(),
             value=y_pred_grid.flatten(),
-            surface_count=1,
-            opacity=1.0,
-            isomin=0.9,
-            isomax=0.9,            
+            surface_count=10,
+            opacity=0.1,
+            isomin=0.85,
+            isomax=0.90,
+            colorscale='Viridis',  
+            cmin=0,
+            cmax=1,     
             caps=dict(x_show=False, y_show=False)
         ))
 
@@ -253,13 +251,13 @@ if __name__ == "__main__":
 
     fig.add_trace(
         go.Scatter3d(
-            x=OF_y,
-            y=RREV,
-            z=d_ceil,
+            x=df_raw["OF_y_flip_mean"],
+            y=df_raw["RREV_flip_mean"],
+            z=df_raw["flip_d_mean"],
             mode='markers',
             marker=dict(
                 size=3,
-                color=y.flatten(),                # set color to an array/list of desired values
+                color=df_raw["landing_rate_4_leg"],                # set color to an array/list of desired values
                 colorscale='Viridis',   # choose a colorscale
                 opacity=1.0)
         ))
@@ -277,38 +275,6 @@ if __name__ == "__main__":
     OFy_t = -vx/(d_t)
     RREV_t = vz/(d_t)
 
-
-    fig.add_trace(
-        go.Scatter3d(
-            x=OFy_t[:,0], 
-            y=RREV_t[:,0], 
-            z=d_t[:,0],
-            mode='lines'),
-        )
-    fig.add_trace(
-        go.Scatter3d(
-            x=OFy_t[:,1], 
-            y=RREV_t[:,1], 
-            z=d_t[:,1],
-            mode='lines'),
-        )
-
-    fig.add_trace(
-        go.Scatter3d(
-            x=OFy_t[:,2], 
-            y=RREV_t[:,2], 
-            z=d_t[:,2],
-            mode='lines'),
-        )
-
-
-    fig.add_trace(
-        go.Scatter3d(
-            x=OFy_t[:,3], 
-            y=RREV_t[:,3], 
-            z=d_t[:,3],
-            mode='lines'),
-        )
 
 
     fig.update_layout(
