@@ -12,7 +12,7 @@
 #include <ros/ros.h>
 #include "crazyflie_msgs/PadConnect.h"
 #include "crazyflie_msgs/RLCmd.h"
-#include "crazyflie_msgs/AddTwoInts.h"
+#include "crazyflie_msgs/RLCmdService.h"
 #include <std_msgs/Int64.h>
 #include <std_srvs/SetBool.h>
 
@@ -28,7 +28,7 @@ class GazeboStickyFoot: public ModelPlugin
         //void OnUpdate(const common::UpdateInfo&  /*_info*/);
         void ContactCallback(ConstContactsPtr &msg);
         void RLCmdCallback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
-        bool callback_reset_counter(crazyflie_msgs::AddTwoInts::Request &req, crazyflie_msgs::AddTwoInts::Response &res);
+        bool activateSticky(crazyflie_msgs::RLCmdService::Request &req, crazyflie_msgs::RLCmdService::Response &res);
         
         
 
@@ -49,13 +49,14 @@ class GazeboStickyFoot: public ModelPlugin
         std::string padName;
         std::string jointName;
         std::string contact_pub_topic;
+        std::string serviceName;
 
         event::ConnectionPtr updateConnection_;
 
         ros::NodeHandle n;
         ros::Publisher PadConnect_Publisher = n.advertise<crazyflie_msgs::PadConnect>("/pad_connections", 5);
+        ros::ServiceServer RLCmdService;
         ros::Subscriber RLCmd_Subscriber = n.subscribe<crazyflie_msgs::RLCmd>("/rl_ctrl",10,&GazeboStickyFoot::RLCmdCallback,this);
-        ros::ServiceServer reset_service = n.advertiseService("/reset_counter", &GazeboStickyFoot::callback_reset_counter, this);
         
         
         

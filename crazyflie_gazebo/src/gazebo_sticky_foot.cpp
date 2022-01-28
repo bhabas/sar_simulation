@@ -15,6 +15,7 @@ void GazeboStickyFoot::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
     sticky_ = false;        
     contactLink_ptr = NULL; // Link that pad will join to at contact
     joint_ptr = NULL;       // The future joint between contacting links
+    
 
 
     gzmsg << "Loading GazeboStickyFoot Plugin\n";
@@ -35,6 +36,10 @@ void GazeboStickyFoot::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
     pad_number_ = _sdf->GetElement("padNumber")->Get<int>(); // Convert SDF element to int
     jointName = "pad_" + std::to_string(pad_number_) + "_sticky_joint";
     gzmsg<<"\t Joint Name:\t"<<jointName<<std::endl;
+
+
+    serviceName = "/activate_Sticky_Pad_" + std::to_string(pad_number_);
+    RLCmdService = n.advertiseService(serviceName, &GazeboStickyFoot::activateSticky, this);
 
 
     // SOMETHING ABOUT CREATING A NAMESPACE ("/"" PREFIX FOR GZTOPICS)
@@ -118,7 +123,7 @@ void GazeboStickyFoot::ContactCallback(ConstContactsPtr &msg)
     }
 }
 
-bool GazeboStickyFoot::callback_reset_counter(crazyflie_msgs::AddTwoInts::Request &req, crazyflie_msgs::AddTwoInts::Response &res)
+bool GazeboStickyFoot::activateSticky(crazyflie_msgs::RLCmdService::Request &req, crazyflie_msgs::RLCmdService::Response &res)
 {
     std::cout << pad_number_ << std::endl;
     return true;
