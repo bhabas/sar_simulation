@@ -634,15 +634,12 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         cout << setprecision(4) << endl <<
         "t: " << _CTRL->_t << "\tCmd: "  << endl << 
         "Model: " << _CTRL->_MODEL_NAME << endl <<
-        endl <<
 
         "==== Flags ====" << endl <<
         setprecision(0) <<
-        "Policy_armed:\t" << policy_armed_flag <<  "\tSlowdown_type:\t" << _CTRL->_slowdown_type << endl << 
-        "Flip_flag:\t" << flip_flag << "\tImpact_flag:\t" << _CTRL->_impact_flag << endl <<
-        "Tumbled:\t" << tumbled << "\tTumble Detect:\t" << tumble_detection << endl <<
-        "Traj Active:\t" << execute_traj << endl <<
-        "kp_xf:\t" << kp_xf << " \tkd_xf:\t" << kp_xf << endl <<
+        "Policy_armed:\t" << policy_armed_flag <<  "\tSlowdown_type:\t" << _CTRL->_slowdown_type << "\tkp_xf:\t" << kp_xf << endl << 
+        "Flip_flag:\t" << flip_flag << "\tImpact_flag:\t" << _CTRL->_impact_flag << " \tkd_xf:\t" << kp_xf << endl <<
+        "Tumbled:\t" << tumbled << "\tTumble Detect:\t" << tumble_detection << "\tTraj Active:\t" << execute_traj << endl <<
         
         endl <<
 

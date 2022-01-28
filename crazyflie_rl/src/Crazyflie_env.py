@@ -14,6 +14,7 @@ from std_srvs.srv import Empty
 from sensor_msgs.msg import LaserScan, Image, Imu
 from crazyflie_msgs.msg import RLData,RLCmd,RLConvg
 from crazyflie_msgs.msg import ImpactData,CtrlData,PadConnect
+from crazyflie_msgs.srv import activateSticky
 
 from rosgraph_msgs.msg import Clock
 from gazebo_msgs.msg import ModelState,ContactsState
@@ -591,6 +592,23 @@ class CrazyflieEnv:
 
 
     def step(self,action,ctrl_vals=[0,0,0],ctrl_flag=1):
+
+        if action == "sticky":
+
+            rospy.wait_for_service("/activate_Sticky_Pad_1")
+            if ctrl_flag == 1: 
+                for ii in range(4):
+                    sticky_srv = rospy.ServiceProxy(f"/activate_Sticky_Pad_{ii+1}", activateSticky)
+                    sticky_srv(True)
+                    
+            elif ctrl_flag == 0:
+                for ii in range(4):
+                    sticky_srv = rospy.ServiceProxy(f"/activate_Sticky_Pad_{ii+1}", activateSticky)
+                    sticky_srv(False)
+                    
+            rospy.wait_for_message("/ctrl_data",CtrlData,timeout=0.5) # Ensure controller has time to process command
+            return
+
         cmd_msg = RLCmd()
 
         cmd_dict = {'home':0,
@@ -602,8 +620,7 @@ class CrazyflieEnv:
                     'gains':6,
                     'moment':7,
                     'policy':8,
-                    'traj':9,
-                    'sticky':11}
+                    'traj':9}
         
 
         cmd_msg.cmd_type = cmd_dict[action]
@@ -612,10 +629,10 @@ class CrazyflieEnv:
         cmd_msg.cmd_vals.z = ctrl_vals[2]
         cmd_msg.cmd_flag = ctrl_flag
         
-        for ii in range(5):
+        for ii in range(1):
             self.Cmd_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
         
-        time.sleep(0.01) # Ensure controller has time to process command
+        rospy.wait_for_message("/ctrl_data",CtrlData,timeout=0.5) # Ensure controller has time to process command
         
     def clear_rollout_Data(self):
         """Clears all logged impact and flip data & resets default values before next rollout

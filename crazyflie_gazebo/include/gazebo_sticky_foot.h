@@ -12,6 +12,7 @@
 #include <ros/ros.h>
 #include "crazyflie_msgs/PadConnect.h"
 #include "crazyflie_msgs/RLCmd.h"
+#include "crazyflie_msgs/activateSticky.h"
 
 
 namespace gazebo {
@@ -24,34 +25,34 @@ class GazeboStickyFoot: public ModelPlugin
         void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
         //void OnUpdate(const common::UpdateInfo&  /*_info*/);
         void ContactCallback(ConstContactsPtr &msg);
-        void RLCmdCallback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
+        bool activateSticky(crazyflie_msgs::activateSticky::Request &req, crazyflie_msgs::activateSticky::Response &res);
+        
         
 
     private:
-        physics::ModelPtr model_;
-        physics::LinkPtr link_;
-        physics::LinkPtr link2_;
         physics::WorldPtr world_;
+        physics::ModelPtr model_;
+        physics::LinkPtr padLink_ptr;
+        physics::LinkPtr contactLink_ptr;
+        physics::JointPtr joint_ptr;
         physics::PhysicsEnginePtr physics_engine_;
         physics::ContactManager *contact_manager_;
-        physics::JointPtr joint_;
 
         transport::NodePtr node_handle_;
-        //transport::NodePtr contact_node_;
-        transport::SubscriberPtr sticky_enable_sub_;
         transport::SubscriberPtr contact_sub_;
 
         std::string namespace_;
-        std::string link_name_;
-        std::string sticky_enable_sub_topic_;
+        std::string padName;
+        std::string jointName;
         std::string contact_pub_topic;
-        std::string joint_name_;
+        std::string serviceName;
 
         event::ConnectionPtr updateConnection_;
 
         ros::NodeHandle n;
         ros::Publisher PadConnect_Publisher = n.advertise<crazyflie_msgs::PadConnect>("/pad_connections", 5);
-        ros::Subscriber RLCmd_Subscriber = n.subscribe<crazyflie_msgs::RLCmd>("/rl_ctrl",5,&GazeboStickyFoot::RLCmdCallback,this);
+        ros::ServiceServer stickyService;
+        
         
         
         bool sticky_;

@@ -127,9 +127,9 @@ static struct mat33 R; // Orientation as rotation matrix
 static struct vec stateEul = {0.0f,0.0f,0.0f}; // Pose in Euler Angles [YZX Notation]
 
 // OPTICAL FLOW STATES
-static float RREV = 0.0f; // [rad/s]
-static float OF_x = 0.0f; // [rad/s]
-static float OF_y = 0.0f; // [rad/s] 
+static float RREV = 0.0f;   // [rad/s]
+static float OF_x = 0.0f;   // [rad/s]
+static float OF_y = 0.0f;   // [rad/s] 
 static float d_ceil = 0.0f;
 
 
@@ -672,7 +672,7 @@ class Controller
 
 
         // ROS SPECIFIC VALUES
-        int _impact_flag;
+        int _impact_flag = 0;
         int _slowdown_type = 0;
         float _H_CEILING = 2.10;
         bool _LANDING_SLOWDOWN_FLAG;
@@ -685,10 +685,10 @@ class Controller
         
         
 
-        float _RREV;
-        float _OF_x;
-        float _OF_y;
-        float _d_ceil;
+        float _RREV = 0.0f;
+        float _OF_x = 0.0f;
+        float _OF_y = 0.0f;
+        float _d_ceil = 0.0f;
 
 
 

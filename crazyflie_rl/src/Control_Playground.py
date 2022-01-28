@@ -18,7 +18,18 @@ os.system("clear")
 def cmd_send(env):
     while True:
         # Converts input number into action name
-        cmd_dict = {0:'home',1:'pos',2:'vel',3:'acc',4:'tumble',5:'stop',6:'gains',7:'moment',8:'policy',9:'traj',11:'sticky',101:'reset'}
+        cmd_dict = {0:'home',
+            1:'pos',
+            2:'vel',
+            3:'acc',
+            4:'tumble',
+            5:'stop',
+            6:'gains',
+            7:'moment',
+            8:'policy',
+            9:'traj',
+            11:'sticky',
+            101:'reset'}
         try:
             val = float(input("\nCmd Type (0:home,1:pos,2:vel,3:acc,4:omega,5:stop,101:reset): "))
         except:
@@ -28,6 +39,7 @@ def cmd_send(env):
         if action=='home' or action == 'stop': # Execute home or stop action
             ctrl_vals = [0,0,0]
             ctrl_flag = 1
+            env.step('sticky',ctrl_vals,0)
             env.step(action,ctrl_vals,ctrl_flag)
 
         elif action=='gains': # Updates gain values from config file
