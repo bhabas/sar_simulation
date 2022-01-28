@@ -1774,20 +1774,20 @@
       <linkName>pad_1</linkName>
       <padNumber>1</padNumber>
     </plugin>
-    <!-- <plugin name='pad_2_sticky' filename='libgazebo_sticky_foot.so'>
+    <plugin name='pad_2_sticky' filename='libgazebo_sticky_foot.so'>
       <robotNamespace/>
       <linkName>pad_2</linkName>
-      <padNumber>2</padNumber>
-    </plugin> -->
-    <!-- <plugin name='pad_2_sticky' filename='libgazebo_sticky_foot.so'>
-      <robotNamespace/>
-      <linkName>pad_3</linkName>
       <padNumber>2</padNumber>
     </plugin>
     <plugin name='pad_3_sticky' filename='libgazebo_sticky_foot.so'>
       <robotNamespace/>
-      <linkName>pad_4</linkName>
+      <linkName>pad_3</linkName>
       <padNumber>3</padNumber>
+    </plugin>
+    <!-- <plugin name='pad_4_sticky' filename='libgazebo_sticky_foot.so'>
+      <robotNamespace/>
+      <linkName>pad_4</linkName>
+      <padNumber>4</padNumber>
     </plugin> -->
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>

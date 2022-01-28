@@ -118,6 +118,12 @@ void GazeboStickyFoot::ContactCallback(ConstContactsPtr &msg)
     }
 }
 
+bool GazeboStickyFoot::callback_reset_counter(crazyflie_msgs::AddTwoInts::Request &req, crazyflie_msgs::AddTwoInts::Response &res)
+{
+    std::cout << pad_number_ << std::endl;
+    return true;
+}
+
 void GazeboStickyFoot::RLCmdCallback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 {
 
