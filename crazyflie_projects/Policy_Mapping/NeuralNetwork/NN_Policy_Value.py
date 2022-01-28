@@ -227,12 +227,32 @@ if __name__ == '__main__':
         X = torch.FloatTensor([-1.6974,  0.4014, -1.1264])
         y = model.forward(X)
         ii = 0
-        f = open(f'{BASEPATH}/Info/NN_Layers_Policy.data','ab')
+        f = open(f'{BASEPATH}/Info/NN_Layers_Policy_{model_config}.data','ab')
+
         f.truncate(0) ## Clears contents of file
 
+        ## EXTEND SCALER ARRAY DIMENSIONS
+        scaler_means = scaler.mean_.reshape(-1,1)
+        scaler_stds = scaler.scale_.reshape(-1,1)
+        
+        ## SAVE SCALER ARRAY VALUES
+        np.savetxt(f,scaler_means,
+                    fmt='%.6f',
+                    delimiter='\t',
+                    comments='',
+                    header=f"{scaler_means.shape[0]} {scaler_means.shape[1]}",
+                    footer="\n")
+
+        np.savetxt(f,scaler_stds,
+                    fmt='%.6f',
+                    delimiter='\t',
+                    comments='',
+                    header=f"{scaler_means.shape[0]} {scaler_means.shape[1]}",
+                    footer="\n")
+
+        ## SAVE NN LAYER VALUES
         for name, layer in model.named_modules():
-            if ii > 0:
-                # print(layer.weight.numpy())]
+            if ii > 0: # Skip initialization layer
 
                 W = layer.weight.numpy()
                 np.savetxt(f,W,

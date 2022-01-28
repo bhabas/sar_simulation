@@ -7,7 +7,7 @@ import time,os
 import rospy
 
 from Crazyflie_env import CrazyflieEnv
-from CF_training_2term_Policy import runTraining
+from RL_Training_2_term_Policy import runTraining
 from RL_agents.rl_EM import rlEM_PEPGAgent
 
 

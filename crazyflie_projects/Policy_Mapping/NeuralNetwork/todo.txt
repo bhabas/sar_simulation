@@ -1,0 +1,7 @@
+Class for model
+Function for collecting data
+Function for scaling data
+Function for descaling data
+Function for loading scaling data
+Function for testing data and outputting performance
+Function for outputting NN parameters

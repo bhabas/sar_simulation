@@ -1,4 +1,6 @@
-Create script for randomized flight conditions
-Update trajectory UI to Qt and have sliders, labels, and output RREV, OFy, and d_ceil for scatter point
-Remove controller dependencies on C++ ********
-Put d_ceil in terms of C inside of controller ********
+Sync rostopic outputs between simulation and experiment
+******** Create script for randomized flight conditions
+******** Specify NN parameters used for each leg design so they don't overwrite each other
+******** Update trajectory UI to Qt and have sliders, labels, and output RREV, OFy, and d_ceil for scatter point 
+******** Remove controller dependencies on C++ 
+******** Put d_ceil in terms of C inside of controller 

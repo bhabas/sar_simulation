@@ -75,7 +75,8 @@
         "*.ipp": "cpp"
     },
     "python.analysis.extraPaths": [
-        "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_rl/src/"
+        "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_rl/src/",
+        "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_rl/src/Crazyflie_env.py"
     ],
     "favorites.resources": [
         {

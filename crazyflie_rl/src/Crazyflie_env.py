@@ -14,6 +14,7 @@ from std_srvs.srv import Empty
 from sensor_msgs.msg import LaserScan, Image, Imu
 from crazyflie_msgs.msg import RLData,RLCmd,RLConvg
 from crazyflie_msgs.msg import ImpactData,CtrlData,PadConnect
+from crazyflie_msgs.srv import activateSticky
 
 from rosgraph_msgs.msg import Clock
 from gazebo_msgs.msg import ModelState,ContactsState
@@ -52,6 +53,8 @@ class CrazyflieEnv:
 
         ## LOAD SIM_SETTINGS/ROS_PARAMETERS
         self.modelName = rospy.get_param('/MODEL_NAME')
+        self.modelInitials = self.modelInitial()
+        
         
 
         ## INIT CRAZYFLIE ESTIMATED
@@ -208,7 +211,13 @@ class CrazyflieEnv:
 
     
 
-    
+    def modelInitial(self): # RETURNS INITIALS FOR MODEL
+        str = self.modelName
+        charA = str[self.modelName.find("_")+1] # [W]ide
+        charB = str[self.modelName.find("-")+1] # [L]ong
+
+        return charA+charB  # [WL]
+
 
     # ============================
     ##   Publishers/Subscribers 
@@ -276,47 +285,47 @@ class CrazyflieEnv:
 
 
         
-        if ctrl_msg.flip_flag == True and self.flip_flag == False: # Activates only once per run when flip_flag is about to change
+        # if ctrl_msg.flip_flag == True and self.flip_flag == False: # Activates only once per run when flip_flag is about to change
 
-            self.flip_flag = ctrl_msg.flip_flag # Update flip_flag
+        self.flip_flag = ctrl_msg.flip_flag # Update flip_flag
 
-            # Save state data at time of flip activation
-            ## SET STATE VALUES FROM TOPIC
-            # TIME_FLIP
-            # t_temp = ft_msg.Header.stamp.secs
-            # ns_temp = ft_msg.Header.stamp.nsecs
-            # self.t_impact = np.round(t_temp+ns_temp*1e-9,4)  
+        # Save state data at time of flip activation
+        ## SET STATE VALUES FROM TOPIC
+        # TIME_FLIP
+        # t_temp = ft_msg.Header.stamp.secs
+        # ns_temp = ft_msg.Header.stamp.nsecs
+        # self.t_impact = np.round(t_temp+ns_temp*1e-9,4)  
 
-            t_temp = ctrl_msg.Pose_tr.header.stamp.secs
-            ns_temp = ctrl_msg.Pose_tr.header.stamp.nsecs
-            self.t_flip = np.round(t_temp+ns_temp*1e-9,4)  # Treat nsecs here at micro-secs
+        t_temp = ctrl_msg.Pose_tr.header.stamp.secs
+        ns_temp = ctrl_msg.Pose_tr.header.stamp.nsecs
+        self.t_flip = np.round(t_temp+ns_temp*1e-9,4)  # Treat nsecs here at micro-secs
 
-            # POSE_FLIP
-            self.pos_flip = np.round([ctrl_msg.Pose_tr.pose.position.x,
-                                        ctrl_msg.Pose_tr.pose.position.y,
-                                        ctrl_msg.Pose_tr.pose.position.z],3) # [m]
-            self.quat_flip = np.round([ctrl_msg.Pose_tr.pose.orientation.x,
-                                        ctrl_msg.Pose_tr.pose.orientation.y,
-                                        ctrl_msg.Pose_tr.pose.orientation.z,
-                                        ctrl_msg.Pose_tr.pose.orientation.w],5) # [quat]
-            # TWIST_FLIP
-            self.vel_flip = np.round([ctrl_msg.Twist_tr.linear.x,
-                                        ctrl_msg.Twist_tr.linear.y,
-                                        ctrl_msg.Twist_tr.linear.z],3) # [m/s]
-            self.omega_flip = np.round([ctrl_msg.Twist_tr.angular.x,
-                                        ctrl_msg.Twist_tr.angular.y,
-                                        ctrl_msg.Twist_tr.angular.z],3) # [rad/s]
+        # POSE_FLIP
+        self.pos_flip = np.round([ctrl_msg.Pose_tr.pose.position.x,
+                                    ctrl_msg.Pose_tr.pose.position.y,
+                                    ctrl_msg.Pose_tr.pose.position.z],3) # [m]
+        self.quat_flip = np.round([ctrl_msg.Pose_tr.pose.orientation.x,
+                                    ctrl_msg.Pose_tr.pose.orientation.y,
+                                    ctrl_msg.Pose_tr.pose.orientation.z,
+                                    ctrl_msg.Pose_tr.pose.orientation.w],5) # [quat]
+        # TWIST_FLIP
+        self.vel_flip = np.round([ctrl_msg.Twist_tr.linear.x,
+                                    ctrl_msg.Twist_tr.linear.y,
+                                    ctrl_msg.Twist_tr.linear.z],3) # [m/s]
+        self.omega_flip = np.round([ctrl_msg.Twist_tr.angular.x,
+                                    ctrl_msg.Twist_tr.angular.y,
+                                    ctrl_msg.Twist_tr.angular.z],3) # [rad/s]
 
 
-            self.FM_flip = np.asarray(ctrl_msg.FM_flip) # Force/Moments [N,N*mm]
-            self.FM_flip = np.round(self.FM_flip,3)
-            
-            self.RREV_tr = np.round(ctrl_msg.RREV_tr,3) # Recorded trigger RREV [rad/s]
-            self.OF_y_tr = np.round(ctrl_msg.OF_y_tr,3) # Recorded OF_y at trigger [rad/s]
-            self.OF_x_tr = np.round(ctrl_msg.OF_y_tr,3) # Recorded OF_x at trigger [rad/s]
+        self.FM_flip = np.asarray(ctrl_msg.FM_flip) # Force/Moments [N,N*mm]
+        self.FM_flip = np.round(self.FM_flip,3)
+        
+        self.RREV_tr = np.round(ctrl_msg.RREV_tr,3) # Recorded trigger RREV [rad/s]
+        self.OF_y_tr = np.round(ctrl_msg.OF_y_tr,3) # Recorded OF_y at trigger [rad/s]
+        self.OF_x_tr = np.round(ctrl_msg.OF_y_tr,3) # Recorded OF_x at trigger [rad/s]
 
-            self.NN_tr_flip = np.round(ctrl_msg.NN_tr_flip,3)
-            self.NN_tr_policy = np.round(ctrl_msg.NN_tr_policy,3)
+        self.NN_tr_flip = np.round(ctrl_msg.NN_tr_flip,3)
+        self.NN_tr_policy = np.round(ctrl_msg.NN_tr_policy,3)
 
 
 
@@ -579,8 +588,7 @@ class CrazyflieEnv:
         set_state_srv(state_msg)
 
         ## WAIT FOR CONTROLLER TO UPDATE STATE x2 BEFORE TURNING ON TUMBLE DETECTION
-        rospy.wait_for_message('/env/global_state_data',Odometry)
-        rospy.wait_for_message('/env/global_state_data',Odometry)
+        time.sleep(0.1)
         self.step('tumble',ctrl_flag=1) # Tumble Detection on
 
         # time.sleep(0.1) # Give it time for controller to receive new states
@@ -591,6 +599,23 @@ class CrazyflieEnv:
 
 
     def step(self,action,ctrl_vals=[0,0,0],ctrl_flag=1):
+
+        if action == "sticky":
+
+            rospy.wait_for_service("/activate_Sticky_Pad_1")
+            if ctrl_flag == 1: 
+                for ii in range(4):
+                    sticky_srv = rospy.ServiceProxy(f"/activate_Sticky_Pad_{ii+1}", activateSticky)
+                    sticky_srv(True)
+                    
+            elif ctrl_flag == 0:
+                for ii in range(4):
+                    sticky_srv = rospy.ServiceProxy(f"/activate_Sticky_Pad_{ii+1}", activateSticky)
+                    sticky_srv(False)
+                    
+            rospy.wait_for_message("/ctrl_data",CtrlData,timeout=0.5) # Ensure controller has time to process command
+            return
+
         cmd_msg = RLCmd()
 
         cmd_dict = {'home':0,
@@ -602,8 +627,7 @@ class CrazyflieEnv:
                     'gains':6,
                     'moment':7,
                     'policy':8,
-                    'traj':9,
-                    'sticky':11}
+                    'traj':9}
         
 
         cmd_msg.cmd_type = cmd_dict[action]
@@ -612,10 +636,10 @@ class CrazyflieEnv:
         cmd_msg.cmd_vals.z = ctrl_vals[2]
         cmd_msg.cmd_flag = ctrl_flag
         
-        for ii in range(5):
+        for ii in range(1):
             self.Cmd_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
         
-        time.sleep(0.1) # Ensure controller has time to process command
+        rospy.wait_for_message("/ctrl_data",CtrlData,timeout=0.5) # Ensure controller has time to process command
         
     def clear_rollout_Data(self):
         """Clears all logged impact and flip data & resets default values before next rollout
@@ -674,13 +698,13 @@ class CrazyflieEnv:
             with open(filepath,mode='w') as state_file:
                 state_writer = csv.writer(state_file,delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 state_writer.writerow([
-                    # RL Labels
-                    'k_ep','k_run',             
+                    # Generic Labels
+                    'k_ep','k_run',    
+                    't',         
                     'NN_flip','NN_policy',
                     'mu','sigma', 'policy',
 
                     # Internal State Estimates (EKF)
-                    't',
                     'x','y','z',            
                     'vx','vy','vz',
                     'qw','qx','qy','qz',
@@ -710,13 +734,13 @@ class CrazyflieEnv:
             with open(self.filepath, mode='a') as state_file:
                 state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 state_writer.writerow([
-                    # RL Labels
+                    # Generic Labels
                     self.k_ep,self.k_run,
+                    self.t,
                     self.NN_flip,self.NN_policy, # alpha_mu,alpha_sig
                     "","","", # mu,sigma,policy
 
                     # Internal State Estimates (EKF)
-                    self.t,
                     self.position[0],self.position[1],self.position[2], # t,x,y,z
                     self.velocity[0],self.velocity[1],self.velocity[2], # vx,vy,vz
                     self.orientation_q[3],self.orientation_q[0],self.orientation_q[1],self.orientation_q[2], # qw,qx,qy,qz
@@ -747,14 +771,14 @@ class CrazyflieEnv:
             with open(self.filepath,mode='a') as state_file:
                 state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 state_writer.writerow([
-                    # RL Labels
+                    # Generic Labels
                     self.k_ep,self.k_run,
+                    self.t_flip,
                     self.NN_tr_flip,self.NN_tr_policy, # NN_flip, NN_policy
                     "","","", # mu,sigma,policy
                     
                     
                     # Internal State Estimates (EKF)
-                    self.t_flip,
                     self.pos_flip[0],self.pos_flip[1],self.pos_flip[2],    # t,x,y,z
                     self.vel_flip[0],self.vel_flip[1],self.vel_flip[2],    # vx_d,vy_d,vz_d
                     self.quat_flip[3],self.quat_flip[0],self.quat_flip[1],self.quat_flip[2],    # qw,qx,qy,qz
@@ -784,13 +808,13 @@ class CrazyflieEnv:
             with open(self.filepath,mode='a') as state_file:
                 state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 state_writer.writerow([
-                    # RL Labels
+                    # Generic Labels
                     self.k_ep,self.k_run,
+                    self.t_impact,
                     "","", # alpha_mu,alpha_sig
                     "","","", # mu,sigma,policy
 
                     # Internal State Estimates (EKF)
-                    self.t_impact,
                     self.pos_impact[0],self.pos_impact[1],self.pos_impact[2],    # t,x,y,z
                     self.vel_impact[0],self.vel_impact[1],self.vel_impact[2],    # vx_d,vy_d,vz_d
                     self.quat_impact[3],self.quat_impact[0],self.quat_impact[1],self.quat_impact[2],    # qw,qx,qy,qz
@@ -820,13 +844,13 @@ class CrazyflieEnv:
                 state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 state_writer.writerow([
 
-                    # RL Labels
+                    # Generic Labels
                     self.k_ep,self.k_run,
+                    "",             # t
                     "","", 
                     np.round(self.mu,2),np.round(self.sigma,2),np.round(self.policy,2), # mu,sigma,policy
 
                     # Internal State Estimates (EKF)
-                    "",             # t
                     "","","",       # x,y,z
                     np.round(self.vel_trial[0],2),np.round(self.vel_trial[1],2),np.round(self.vel_trial[2],2), # vx_d,vy_d,vz_d
                     "","","","",    # qx,qy,qz,qw
@@ -899,70 +923,4 @@ class CrazyflieEnv:
     ##  Control Playground Func. 
     # ============================
 
-    def cmd_send(self):
-        while True:
-            # Converts input number into action name
-            cmd_dict = {0:'home',1:'pos',2:'vel',3:'acc',4:'tumble',5:'stop',6:'gains',7:'moment',8:'policy',9:'traj',11:'sticky',101:'reset'}
-            try:
-                val = float(input("\nCmd Type (0:home,1:pos,2:vel,3:acc,4:omega,5:stop,101:reset): "))
-            except:
-                continue
-            action = cmd_dict[val]
-
-            if action=='home' or action == 'stop': # Execute home or stop action
-                ctrl_vals = [0,0,0]
-                ctrl_flag = 1
-                self.step(action,ctrl_vals,ctrl_flag)
-
-            elif action=='gains': # Updates gain values from config file
-                
-                try:
-                    ctrl_vals = [0,0,0]
-                    ctrl_flag = 1
-                    os.system("roslaunch crazyflie_launch params.launch")
-                    self.step(action,ctrl_vals,ctrl_flag)
-                except:
-                    continue
-
-                
-                
-            elif action == 'tumble': # Execture Angular rate action
-
-                ctrl_vals = input("\nControl Vals (x,y,z): ")
-                ctrl_vals = [float(i) for i in ctrl_vals.split(',')]
-                ctrl_flag = 1.0
-
-                self.step('tumble',ctrl_vals,ctrl_flag)
-
-            elif action == 'reset':
-                ## RESET POSITION AND VELOCITY
-                state_msg = ModelState()
-                state_msg.model_name = self.modelName
-                state_msg.pose.position.x = 0.0
-                state_msg.pose.position.y = 0.0
-                state_msg.pose.position.z = 0.1
-
-                state_msg.pose.orientation.w = 1.0
-                state_msg.pose.orientation.x = 0.0
-                state_msg.pose.orientation.y = 0.0
-                state_msg.pose.orientation.z = 0.0
-                
-                state_msg.twist.linear.x = 0.0
-                state_msg.twist.linear.y = 0.0
-                state_msg.twist.linear.z = 0.0
-
-                state_msg.twist.angular.x = 0.0
-                state_msg.twist.angular.y = 0.0
-                state_msg.twist.angular.z = 0.0
-
-                rospy.wait_for_service('/gazebo/set_model_state')
-                set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
-                set_state_srv(state_msg)
-
-
-
-            else:
-                ctrl_vals = input("\nControl Vals (x,y,z): ")
-                ctrl_vals = [float(i) for i in ctrl_vals.split(',')]
-                ctrl_flag = float(input("\nController On/Off (1,0): "))
-                self.step(action,ctrl_vals,ctrl_flag)
+    

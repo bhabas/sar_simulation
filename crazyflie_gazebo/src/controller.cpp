@@ -6,10 +6,8 @@
 void controllerGTCInit(void)
 {
     controllerGTCTest();
-    initScaler(&Scaler_Flip,str1);
-    initScaler(&Scaler_Policy,str2);
-    initNN_Layers(W_policy,b_policy,path_policy,3);
-    initNN_Layers(W_flip,b_flip,path_flip,3);
+    initNN_Layers(&Scaler_Flip,W_flip,b_flip,path_flip,3);
+    initNN_Layers(&Scaler_Policy,W_policy,b_policy,path_policy,3);
     // controllerGTCReset(_CTRL);
     printf("GTC Initiated\n");
 }
@@ -56,6 +54,9 @@ void controllerGTCReset(Controller* _CTRL)
     OF_x_tr = 0.0;
     OF_y_tr = 0.0;
 
+    NN_tr_flip = 0.0;
+    NN_tr_policy = 0.0;
+
 
 
 
@@ -65,8 +66,7 @@ void controllerGTCReset(Controller* _CTRL)
     _CTRL->_slowdown_type = 0;
     _CTRL->adjustSimSpeed(_CTRL->_SIM_SPEED);
 
-    NN_flip = 0.0;
-    NN_policy = 0.0;
+    
 
 
 
@@ -633,15 +633,13 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         cout << fixed;
         cout << setprecision(4) << endl <<
         "t: " << _CTRL->_t << "\tCmd: "  << endl << 
-        endl <<
+        "Model: " << _CTRL->_MODEL_NAME << endl <<
 
         "==== Flags ====" << endl <<
         setprecision(0) <<
-        "Policy_armed:\t" << policy_armed_flag <<  "\tSlowdown_type:\t" << _CTRL->_slowdown_type << endl << 
-        "Flip_flag:\t" << flip_flag << "\tImpact_flag:\t" << _CTRL->_impact_flag << endl <<
-        "Tumbled:\t" << tumbled << "\tTumble Detect:\t" << tumble_detection << endl <<
-        "Traj Active:\t" << execute_traj << endl <<
-        "kp_xf:\t" << kp_xf << " \tkd_xf:\t" << kp_xf << endl <<
+        "Policy_armed:\t" << policy_armed_flag <<  "\tSlowdown_type:\t" << _CTRL->_slowdown_type << "\tkp_xf:\t" << kp_xf << endl << 
+        "Flip_flag:\t" << flip_flag << "\tImpact_flag:\t" << _CTRL->_impact_flag << " \tkd_xf:\t" << kp_xf << endl <<
+        "Tumbled:\t" << tumbled << "\tTumble Detect:\t" << tumble_detection << "\tTraj Active:\t" << execute_traj << endl <<
         
         endl <<
 
