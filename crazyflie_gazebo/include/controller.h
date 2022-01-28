@@ -127,9 +127,9 @@ static struct mat33 R; // Orientation as rotation matrix
 static struct vec stateEul = {0.0f,0.0f,0.0f}; // Pose in Euler Angles [YZX Notation]
 
 // OPTICAL FLOW STATES
-static float RREV = 0.0f; // [rad/s]
-static float OF_x = 0.0f; // [rad/s]
-static float OF_y = 0.0f; // [rad/s] 
+static float RREV = 0.0f;   // [rad/s]
+static float OF_x = 0.0f;   // [rad/s]
+static float OF_y = 0.0f;   // [rad/s] 
 static float d_ceil = 0.0f;
 
 

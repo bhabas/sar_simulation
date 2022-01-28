@@ -113,7 +113,7 @@ void GazeboStickyFoot::ContactCallback(ConstContactsPtr &msg)
 
                 // PUBLISH EACH TIME A PAD IS CONNECTS TO THE CEILING
                 crazyflie_msgs::PadConnect msg;
-                msg.Pad_Num = pad_number_;                // Convert to pad number
+                msg.Pad_Num = pad_number_;
                 PadConnect_Publisher.publish(msg);
 
             break;
