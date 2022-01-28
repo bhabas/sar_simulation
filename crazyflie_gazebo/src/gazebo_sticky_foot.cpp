@@ -39,7 +39,7 @@ void GazeboStickyFoot::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
 
 
     serviceName = "/activate_Sticky_Pad_" + std::to_string(pad_number_);
-    RLCmdService = n.advertiseService(serviceName, &GazeboStickyFoot::activateSticky, this);
+    stickyService = n.advertiseService(serviceName, &GazeboStickyFoot::activateSticky, this);
 
 
     // SOMETHING ABOUT CREATING A NAMESPACE ("/"" PREFIX FOR GZTOPICS)
@@ -123,44 +123,34 @@ void GazeboStickyFoot::ContactCallback(ConstContactsPtr &msg)
     }
 }
 
-bool GazeboStickyFoot::activateSticky(crazyflie_msgs::RLCmdService::Request &req, crazyflie_msgs::RLCmdService::Response &res)
-{
-    std::cout << pad_number_ << std::endl;
-    return true;
-}
-
-void GazeboStickyFoot::RLCmdCallback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
+bool GazeboStickyFoot::activateSticky(crazyflie_msgs::activateSticky::Request &req, crazyflie_msgs::activateSticky::Response &res)
 {
 
-    // CREATE CMD VECTOR AND VALS FROM SUBSCRIBED MESSAGE
-    int cmd_type = msg->cmd_type;       // Read cmd type from incoming message
-    int cmd_flag = (int)msg->cmd_flag;  // Construct flag from cmd flag value
-
-    if(cmd_type == 11)
-    {
         
-        if(cmd_flag == 0 && sticky_) // TURN OFF STICKY FOOT
+    if(req.stickyFlag == false && sticky_) // TURN OFF STICKY FOOT
+    {
+        sticky_ = false;
+        printf("[Pad_%d]: Sticky_Disabled\n",pad_number_);
+
+
+        if (joint_ptr != NULL)
         {
-            sticky_ = false;
-            printf("[Pad_%d]: Sticky_Disabled\n",pad_number_);
-
-
-            if (joint_ptr != NULL)
-            {
-                model_->RemoveJoint(jointName);
-                printf("[Pad_%d]: Joint Removed\t(%s->%s)\n",pad_number_,padLink_ptr->GetName().c_str(),contactLink_ptr->GetName().c_str());
-            }
-
-            // RESET JOINT AND CONTACT LINK POINTERS
-            joint_ptr = NULL;
-            contactLink_ptr = NULL;
+            model_->RemoveJoint(jointName);
+            printf("[Pad_%d]: Joint Removed\t(%s->%s)\n",pad_number_,padLink_ptr->GetName().c_str(),contactLink_ptr->GetName().c_str());
         }
-        if(cmd_flag == 1 && !sticky_) // TURN ON STICKY FOOT
-        {
-            sticky_ = true;
-            printf("[Pad_%d]: Sticky_Enabled\n",pad_number_);
-        }
+
+        // RESET JOINT AND CONTACT LINK POINTERS
+        joint_ptr = NULL;
+        contactLink_ptr = NULL;
     }
+    if(req.stickyFlag == true && !sticky_) // TURN ON STICKY FOOT
+    {
+        sticky_ = true;
+        printf("[Pad_%d]: Sticky_Enabled\n",pad_number_);
+    }
+    
+    res.cmd_Success = true; // TODO: This would be a good feature to check that everything worked alright
+    return true;            // I'm not sure where this goes
 }
 
 GZ_REGISTER_MODEL_PLUGIN(GazeboStickyFoot);

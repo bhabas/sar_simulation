@@ -12,9 +12,7 @@
 #include <ros/ros.h>
 #include "crazyflie_msgs/PadConnect.h"
 #include "crazyflie_msgs/RLCmd.h"
-#include "crazyflie_msgs/RLCmdService.h"
-#include <std_msgs/Int64.h>
-#include <std_srvs/SetBool.h>
+#include "crazyflie_msgs/activateSticky.h"
 
 
 namespace gazebo {
@@ -27,8 +25,7 @@ class GazeboStickyFoot: public ModelPlugin
         void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
         //void OnUpdate(const common::UpdateInfo&  /*_info*/);
         void ContactCallback(ConstContactsPtr &msg);
-        void RLCmdCallback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
-        bool activateSticky(crazyflie_msgs::RLCmdService::Request &req, crazyflie_msgs::RLCmdService::Response &res);
+        bool activateSticky(crazyflie_msgs::activateSticky::Request &req, crazyflie_msgs::activateSticky::Response &res);
         
         
 
@@ -42,7 +39,6 @@ class GazeboStickyFoot: public ModelPlugin
         physics::ContactManager *contact_manager_;
 
         transport::NodePtr node_handle_;
-        //transport::NodePtr contact_node_;
         transport::SubscriberPtr contact_sub_;
 
         std::string namespace_;
@@ -55,8 +51,7 @@ class GazeboStickyFoot: public ModelPlugin
 
         ros::NodeHandle n;
         ros::Publisher PadConnect_Publisher = n.advertise<crazyflie_msgs::PadConnect>("/pad_connections", 5);
-        ros::ServiceServer RLCmdService;
-        ros::Subscriber RLCmd_Subscriber = n.subscribe<crazyflie_msgs::RLCmd>("/rl_ctrl",10,&GazeboStickyFoot::RLCmdCallback,this);
+        ros::ServiceServer stickyService;
         
         
         

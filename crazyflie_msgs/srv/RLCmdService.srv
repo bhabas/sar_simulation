@@ -1,7 +1,0 @@
-uint16 cmd_type
-float32 cmd_val1
-float32 cmd_val2
-float32 cmd_val3
-float32 cmd_flag
----
-bool cmd_Success
