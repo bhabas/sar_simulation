@@ -49,11 +49,10 @@ def executeFlight(env,agent):
     start_time_impact = np.nan
 
     ## RESET LOGGING CONDITIONS 
-    t_step = 0
     t_prev = 0.0
 
-    onceFlag = False # Ensures flip data recorded only once
-    onceFlag2 = False # Ensures impact data recorded only once 
+    onceFlag = False    # Ensures flip data recorded only once
+    onceFlag2 = False   # Ensures impact data recorded only once 
 
     ## PRINT RUN CONDITIONS AND POLICY
     print(f"Vx_d: {env.vel_trial[0]:.3f} \t Vy_d: {env.vel_trial[1]:.3f} \t Vz_d: {env.vel_trial[2]:.3f}")
@@ -198,7 +197,6 @@ def executeFlight(env,agent):
         
             break # Break from run loop
             
-        t_step += 1  
         t_prev = env.t   
 
     ## =======  RUN COMPLETED  ======= ##
@@ -229,10 +227,10 @@ if __name__ == '__main__':
     env.create_csv(env.filepath)
 
     V_d = 3.5
-    phi = 90
+    phi = 50
     phi_rad = np.radians(phi)
     env.vel_trial = [V_d*np.cos(phi_rad), 0.0, V_d*np.sin(phi_rad)] # [m/s]
-    env.policy = [0,0,0] # NN policy
+    env.policy = [4.5,7.0,0] # NN policy
 
 
     ## RUN TRIAL

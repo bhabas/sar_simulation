@@ -90,7 +90,7 @@ def logFlight(env):
 if __name__ == '__main__':
     
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=True)
+    env = CrazyflieEnv(gazeboTimeout=False)
     agent = rlEM_PEPGAgent(n_rollouts=env.n_rollouts)
 
     ## INITIALIALIZE LOGGING DATA
