@@ -227,10 +227,10 @@ if __name__ == '__main__':
     env.create_csv(env.filepath)
 
     V_d = 3.5
-    phi = 90
+    phi = 50
     phi_rad = np.radians(phi)
     env.vel_trial = [V_d*np.cos(phi_rad), 0.0, V_d*np.sin(phi_rad)] # [m/s]
-    env.policy = [0,0,0] # NN policy
+    env.policy = [4.5,7.0,0] # NN policy
 
 
     ## RUN TRIAL
