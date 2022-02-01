@@ -639,7 +639,7 @@ class CrazyflieEnv:
         for ii in range(1):
             self.Cmd_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
         
-        rospy.wait_for_message("/ctrl_data",CtrlData,timeout=0.5) # Ensure controller has time to process command
+        time.sleep(0.05)
         
     def clear_rollout_Data(self):
         """Clears all logged impact and flip data & resets default values before next rollout
