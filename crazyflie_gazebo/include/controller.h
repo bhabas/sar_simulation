@@ -1,4 +1,3 @@
-
 // C++ LIBRARIES
 #include <iostream>
 #include <thread>
@@ -11,7 +10,6 @@
 #include "crazyflie_msgs/RLCmd.h"
 #include "crazyflie_msgs/RLData.h"
 #include "crazyflie_msgs/PadConnect.h"
-// #include "crazyflie_msgs/Policy_Values.h"
 #include "crazyflie_msgs/MS.h"
 
 
@@ -34,6 +32,9 @@
 #include "math3d.h"
 #include "stabilizer_types.h"
 #include "nml.h"
+
+#include "NN_Layers_Policy_Wide-Long.h"
+#include "NN_Layers_Flip_Wide-Long.h"
 
 #define PWM_MAX 60000 // Limit PWM to give buffer for battery drop
 #define f_MAX (16.5) // Max motor thrust [g]
@@ -300,8 +301,6 @@ static Scaler Scaler_Policy;
 
 static nml_mat* X; // STATE MATRIX TO BE INPUT INTO NN
 
-static char path_policy[] = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/NN_Layers_Policy_Wide-Long.data";
-static char path_flip[] = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/NN_Layers_Flip_Wide-Long.data";
 
 static nml_mat* W_policy[3];
 static nml_mat* b_policy[3];
@@ -329,29 +328,33 @@ void commanderGetSetpoint(setpoint_t *setpoint, const state_t *state)
 
 void initNN_Layers(Scaler* scaler,nml_mat* W[], nml_mat* b[], char str[],int numLayers)
 {
-    // INITIALIZE FILE PATH
-    char f_path[256];               // Allocate space for string
-    strcpy(f_path,getenv("HOME"));  // Copy home path 
-    strcat(f_path,path);            // Append file path
+    char array_list[2048];
+    char* array_token;
+    char* save_ptr;
 
-    // CREATE POINTER TO FILE
-    FILE* input = fopen(f_path, "r");
-    if (input == NULL) {
-        perror("Error reading NN_layer file: Check for correct file name and path\n");
-    }
+    strcpy(array_list,str);
 
-    // INITIALIZE SCALER MATRICES
-    scaler->mean = nml_mat_fromfilef(input);
-    scaler->std = nml_mat_fromfilef(input);
 
-    
-    // ADD MATRIX TO ARRAY OF MATRICES FOR NEURAL NETWORK
-    for(int i=0;i<numLayers;i++)
+    array_token = strtok_r(array_list,"*",&save_ptr);
+    // printf("%s\n",array_token);
+    scaler->mean = nml_mat_fromstr(array_token);
+    array_token = strtok_r(NULL,"*",&save_ptr);
+
+    scaler->std = nml_mat_fromstr(array_token);
+    array_token = strtok_r(NULL,"*",&save_ptr);
+
+
+    nml_mat_print(scaler->mean);
+    nml_mat_print(scaler->std);
+
+    for (int i = 0; i < numLayers; i++)
     {
-        W[i] = nml_mat_fromfilef(input);
-        b[i] = nml_mat_fromfilef(input);
+        W[i] = nml_mat_fromstr(array_token);
+        array_token = strtok_r(NULL,"*",&save_ptr);
+        b[i] = nml_mat_fromstr(array_token);
+        array_token = strtok_r(NULL,"*",&save_ptr);
     }
-    fclose(input);
+
 }
 
 float NN_Policy(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[])
