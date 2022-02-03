@@ -35,6 +35,11 @@
 #include "stabilizer_types.h"
 #include "nml.h"
 
+#define PWM_MAX 60000 // Limit PWM to give buffer for battery drop
+#define f_MAX (16.5) // Max motor thrust [g]
+#define g2Newton (9.81f/1000.0f)
+#define Newton2g (1000.0f/9.81f)
+
 // =======================
 //       C++ CODE
 // =======================
@@ -47,15 +52,12 @@ typedef struct{
     nml_mat* std;
 }Scaler;
 
-
-#define PWM_MAX 60000 // Limit PWM to give buffer for battery drop
-#define f_MAX (16.5) // Max motor thrust [g]
-#define g2Newton (9.81f/1000.0f)
-#define Newton2g (1000.0f/9.81f)
-
-// FUNCTION PRIMITIVES
+// FIRMWARE PRIMITIVES
 void stateEstimator(state_t *state, sensorData_t *sensors, control_t *control, const uint32_t tick);
 void commanderGetSetpoint(setpoint_t *setpoint, const state_t *state);
+
+
+// GTC PRIMITIVES
 void controllerGTCInit(void);
 bool controllerGTCTest(void);
 void controllerGTCReset(Controller* _CTRL);
@@ -65,8 +67,10 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                                          const state_t *state,
                                          const uint32_t tick,
                                          const flowDeck_t *flowDeck,
-                                         Controller* ctrl);
+                                         Controller* _CTRL);
 void GTC_Command(setpoint_t *setpoint, Controller* _CTRL);
+
+// NEURAL NETWORK PRIMITIVES
 void initScaler(Scaler* scaler,char path[]);
 void NN_Scale(nml_mat* X, Scaler* scaler);
 void initNN_Layers(Scaler* scaler,nml_mat* W[], nml_mat* b[], char path[],int numLayers);
@@ -213,8 +217,8 @@ static struct vec Kd_R; // Rot. Derivative Gains
 static struct vec Ki_R; // Rot. Integral Gains
 
 // CONTROLLER GAIN FLAGS
-float kp_xf = 1; // Pos. Gain Flag
-float kd_xf = 1; // Pos. Derivative Gain Flag
+static float kp_xf = 1; // Pos. Gain Flag
+static float kd_xf = 1; // Pos. Derivative Gain Flag
 // float ki_xf = 1; // Pos. Integral Flag
 // float kp_Rf = 1; // Rot. Gain Flag
 // float kd_Rf = 1; // Rot. Derivative Gain Flag
@@ -248,7 +252,7 @@ typedef enum {
     RL = 0, // Reinforcement Learning
     NN = 1  // Neural Network
 } Policy_Type;
-Policy_Type POLICY_TYPE = RL; // Default to RL
+static Policy_Type POLICY_TYPE = RL; // Default to RL
 
 
 
@@ -264,7 +268,7 @@ static float OF_y_tr = 0.0f; // [rad/s]
 static float d_ceil_tr = 0.0f; // [m/s]
 
 
-float F_thrus_t_flip = 0.0f; // [g]
+float F_thrust_flip = 0.0f; // [g]
 float M_x_flip = 0.0f;      // [N*m]
 float M_y_flip = 0.0f;      // [N*m]
 float M_z_flip = 0.0f;      // [N*m]
@@ -275,9 +279,6 @@ float M_z_flip = 0.0f;      // [N*m]
 static float s_0 = 0.0f;
 static float v = 0.0f;
 static float a = 0.0f;
-// static float t_traj = 0.0f;
-// static float T = 0.0f;
-// static uint8_t traj_type = 0;
 
 typedef enum {
     x = 0, 
@@ -285,34 +286,34 @@ typedef enum {
     z = 2
 } axis_direction;
 
-axis_direction traj_type;
+static axis_direction traj_type;
 
-struct vec s_0_t = {0.0f, 0.0f, 0.0f};
-struct vec v_t = {0.0f, 0.0f, 0.0f};
-struct vec a_t = {0.0f, 0.0f, 0.0f};
-struct vec T = {0.0f, 0.0f, 0.0f};
-struct vec t_traj = {0.0f, 0.0f, 0.0f};
+static struct vec s_0_t = {0.0f, 0.0f, 0.0f};
+static struct vec v_t = {0.0f, 0.0f, 0.0f};
+static struct vec a_t = {0.0f, 0.0f, 0.0f};
+static struct vec T = {0.0f, 0.0f, 0.0f};
+static struct vec t_traj = {0.0f, 0.0f, 0.0f};
 
 // NEURAL NETWORK INITIALIZATION
-Scaler Scaler_Flip;
-Scaler Scaler_Policy;
+static Scaler Scaler_Flip;
+static Scaler Scaler_Policy;
 
-nml_mat* X = nml_mat_new(3,1); // STATE MATRIX TO BE INPUT INTO NN
+static nml_mat* X; // STATE MATRIX TO BE INPUT INTO NN
 
-char path_policy[] = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/NN_Layers_Policy_Wide-Long.data";
-char path_flip[] = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/NN_Layers_Flip_Wide-Long.data";
+static char path_policy[] = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/NN_Layers_Policy_Wide-Long.data";
+static char path_flip[] = "/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/src/NN_Params/NN_Layers_Flip_Wide-Long.data";
 
-nml_mat* W_policy[3];
-nml_mat* b_policy[3];
+static nml_mat* W_policy[3];
+static nml_mat* b_policy[3];
 
-nml_mat* W_flip[3];
-nml_mat* b_flip[3];
+static nml_mat* W_flip[3];
+static nml_mat* b_flip[3];
 
-float NN_flip = 0.0f;       // NN output value for flip classification
-float NN_policy = 0.0f;     // NN output value for policy My
+static float NN_flip = 0.0f;       // NN output value for flip classification
+static float NN_policy = 0.0f;     // NN output value for policy My
 
-float NN_tr_flip = 0.0f;    // NN value at flip trigger
-float NN_tr_policy = 0.0f;  // NN policy value at flip trigger
+static float NN_tr_flip = 0.0f;    // NN value at flip trigger
+static float NN_tr_policy = 0.0f;  // NN policy value at flip trigger
 
 
 

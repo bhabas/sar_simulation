@@ -1,11 +1,12 @@
 
 #include "controller.h"
-#include <unistd.h>
+
 
 
 void controllerGTCInit(void)
 {
     controllerGTCTest();
+    X = nml_mat_new(3,1);
     initNN_Layers(&Scaler_Flip,W_flip,b_flip,path_flip,3);
     initNN_Layers(&Scaler_Policy,W_policy,b_policy,path_policy,3);
     // controllerGTCReset(_CTRL);
@@ -294,6 +295,11 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                         state->attitudeQuaternion.z,
                         state->attitudeQuaternion.w);
 
+        // EULER ANGLES EXPRESSED IN YZX NOTATION
+        stateEul = quat2eul(stateQuat);
+        stateEul.x = degrees(stateEul.x);
+        stateEul.y = degrees(stateEul.y);
+        stateEul.z = degrees(stateEul.z);
 
         RREV = flowDeck->RREV;
         OF_y = flowDeck->OF_y;
@@ -489,7 +495,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
                     // RECORD MOTOR THRUST TYPES AT FLIP
 
-                    F_thrus_t_flip = F_thrust;
+                    F_thrust_flip = F_thrust;
                     M_x_flip = M.x/2.0f;
                     M_y_flip = M.y/2.0f;
                     M_z_flip = M.z/2.0f;
@@ -601,7 +607,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         _CTRL->_ctrl_msg.RREV_tr = RREV_tr;
         _CTRL->_ctrl_msg.OF_x_tr = OF_x_tr;
         _CTRL->_ctrl_msg.OF_y_tr = OF_y_tr;
-        _CTRL->_ctrl_msg.FM_flip = {F_thrus_t_flip,M_x_flip*1.0e3,M_y_flip*1.0e3,M_z_flip*1.0e3};
+        _CTRL->_ctrl_msg.FM_flip = {F_thrust_flip,M_x_flip*1.0e3,M_y_flip*1.0e3,M_z_flip*1.0e3};
 
         _CTRL->_ctrl_msg.NN_tr_flip = NN_tr_flip;
         _CTRL->_ctrl_msg.NN_tr_policy = NN_tr_policy;
