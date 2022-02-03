@@ -288,14 +288,15 @@ if __name__ == "__main__":
         ))
 
 
-    fig.show()
+    # fig.show()
 
     with torch.no_grad():
         X = torch.FloatTensor([-1.6974,  0.4014, -1.1264])
         y = model.forward(X)
         ii = 0
-        f = open(f'{BASEPATH}/Info/NN_Layers_Flip_{model_config}.data','ab')
+        f = open(f'{BASEPATH}/Info/NN_Layers_Flip_{model_config}.h','a')
         f.truncate(0) ## Clears contents of file
+        f.write("static char str[] = {\n")
 
         ## EXTEND SCALER ARRAY DIMENSIONS
         scaler_means = scaler.mean_.reshape(-1,1)
@@ -303,18 +304,18 @@ if __name__ == "__main__":
         
         ## SAVE SCALER ARRAY VALUES
         np.savetxt(f,scaler_means,
-                    fmt='%.6f',
+                    fmt='"%.4f,"',
                     delimiter='\t',
                     comments='',
-                    header=f"{scaler_means.shape[0]} {scaler_means.shape[1]}",
-                    footer="\n")
+                    header=f'"{scaler_means.shape[0]},"\t"{scaler_means.shape[1]}"',
+                    footer='"*"\n')
 
         np.savetxt(f,scaler_stds,
-                    fmt='%.6f',
+                    fmt='"%.4f,"',
                     delimiter='\t',
                     comments='',
-                    header=f"{scaler_means.shape[0]} {scaler_means.shape[1]}",
-                    footer="\n")
+                    header=f'"{scaler_stds.shape[0]},"\t"{scaler_stds.shape[1]}"',
+                    footer='"*"\n')
 
         ## SAVE NN LAYER VALUES
         for name, layer in model.named_modules():
@@ -322,23 +323,24 @@ if __name__ == "__main__":
 
                 W = layer.weight.numpy()
                 np.savetxt(f,W,
-                    fmt='%.6f',
+                    fmt='"%.4f,"',
                     delimiter='\t',
                     comments='',
-                    header=f"{W.shape[0]} {W.shape[1]}",
-                    footer="\n")
+                    header=f'"{W.shape[0]},"\t"{W.shape[1]}"',
+                    footer='"*"\n')
 
 
                 b = layer.bias.numpy().reshape(-1,1)
                 np.savetxt(f,b,
-                    fmt='%.6f',
+                    fmt='"%.4f,"',
                     delimiter='\t',
                     comments='',
-                    header=f"{b.shape[0]} {b.shape[1]}",
-                    footer="\n")
+                    header=f'"{b.shape[0]},"\t"{b.shape[1]}"',
+                    footer='"*"\n')
 
             ii+=1
 
+        f.write("};")
         f.close()
 
         print(y)
