@@ -296,7 +296,7 @@ if __name__ == "__main__":
         ii = 0
         f = open(f'{BASEPATH}/Info/NN_Layers_Flip_{model_config}.h','a')
         f.truncate(0) ## Clears contents of file
-        f.write("static char str[] = {\n")
+        f.write("static char NN_Params_Flip[] = {\n")
 
         ## EXTEND SCALER ARRAY DIMENSIONS
         scaler_means = scaler.mean_.reshape(-1,1)

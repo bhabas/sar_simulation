@@ -73,7 +73,7 @@ void GTC_Command(setpoint_t *setpoint, Controller* _CTRL);
 // NEURAL NETWORK PRIMITIVES
 void initScaler(Scaler* scaler,char path[]);
 void NN_Scale(nml_mat* X, Scaler* scaler);
-void initNN_Layers(Scaler* scaler,nml_mat* W[], nml_mat* b[], char path[],int numLayers);
+void initNN_Layers(Scaler* scaler,nml_mat* W[], nml_mat* b[], char str[],int numLayers);
 float Sigmoid(float x);
 float Elu(float x);
 float NN_Policy(nml_mat* X, nml_mat* W[], nml_mat* b[]);
@@ -327,7 +327,7 @@ void commanderGetSetpoint(setpoint_t *setpoint, const state_t *state)
 
 }
 
-void initNN_Layers(Scaler* scaler,nml_mat* W[], nml_mat* b[], char path[],int numLayers)
+void initNN_Layers(Scaler* scaler,nml_mat* W[], nml_mat* b[], char str[],int numLayers)
 {
     // INITIALIZE FILE PATH
     char f_path[256];               // Allocate space for string

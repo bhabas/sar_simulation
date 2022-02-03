@@ -1,4 +1,4 @@
-static char str[] = {
+static char NN_Params_Policy[] = {
 "3,"	"1,"
 "4.7248,"
 "-4.8107,"

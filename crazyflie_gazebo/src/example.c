@@ -1,6 +1,5 @@
 #include <example.h>
-#include "NN_Params.h"
-#include "NN_Layers_Flip_Wide-Long.h"
+#include "NN_Layers_Policy_Wide-Long.h"
 // Compile Statement
 // gcc example.c nml.c nml_util.c -I /home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/include  -Wall -o example -lm -Wall && ./example 
 
@@ -47,7 +46,7 @@ int main()
     static nml_mat* W[3];
     static nml_mat* b[3];
 
-    initNN_Layers(&scaler,W,b,str2,3);
+    initNN_Layers(&scaler,W,b,NN_Params_Policy,3);
 
     // nml_mat_print(W[2]);
 

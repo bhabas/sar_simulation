@@ -1,4 +1,4 @@
-static char str2[] = {
+static char NN_Params_Flip[] = {
 "3,"	"1,"
 "4.7644,"
 "-4.7362,"
