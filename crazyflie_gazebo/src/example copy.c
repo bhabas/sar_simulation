@@ -98,51 +98,6 @@ int main()
     }
 
     
-
-
-    // // get the initial tokens
-    // token1 = strtok_r(buf_1, " ", &save_ptr1);
-    // token2 = strtok_r(buf_2, " ", &save_ptr2);
-    // token3 = strtok_r(buf_3, " ", &save_ptr3);
-
-    // while(token1 && token2 && token3) {
-    //     // do stuff with tokens
-
-    //     // get next tokens
-    //     token1 = strtok_r(NULL, " ", &save_ptr1);
-    //     token2 = strtok_r(NULL, " ", &save_ptr2);
-    //     token3 = strtok_r(NULL, " ", &save_ptr3);
-    // }
-
-
-    // // EXTRACT ARRAYS
-    // char* array_token = strtok(str, "*");
-    // while(array_token!= NULL){
-
-    //     char* array_str;
-    //     strcpy(array_str,array_token);
-    //     // char* line_token = strtok(array_token,",");
-    //     printf("%s\n",array_str);
-
-
-
-    //     // printf("m: %d \t n: %d\n",m,n);
-
-
-
-
-
-    
-    //     array_token = strtok(NULL, "*");
-    // }
-
-
-    // char* token = strtok(token_Line, " ");
-
-
-
-
-
     
 
     return 0;

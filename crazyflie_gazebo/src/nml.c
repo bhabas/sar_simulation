@@ -234,6 +234,45 @@ nml_mat *nml_mat_fromfilef(FILE *f) {
   return r;
 }
 
+nml_mat* nml_mat_fromstr(char* str)
+{
+    // CREATE COPY OF STRING TO WORK WITH
+    char array_str[1024];
+    strcpy(array_str,str);
+
+    // INIT STR TOKENS AND SAVE POINTERS
+    unsigned int num_rows = 0, num_cols = 0;
+    char *line_token, *value_token;
+    char *save_ptrLine, *save_ptrVal;
+
+
+    // INIT MATRIX
+    line_token = strtok_r(array_str,",",&save_ptrLine);     // Collect first line
+    value_token = strtok_r(line_token," ",&save_ptrVal);    // Collect num_rows from first line
+    num_rows = atoi(value_token);
+
+    value_token = strtok_r(NULL," ",&save_ptrVal);          // Collect num_cols val from first line
+    num_cols = atoi(value_token);
+    nml_mat* r = nml_mat_new(num_rows,num_cols);
+
+    // ITERATE THROUGH REMAINING LINES AND VALUES
+    line_token = strtok_r(NULL,",",&save_ptrLine);  
+    for (int i = 0; i < num_rows; i++)
+    {
+        value_token = strtok_r(line_token," ",&save_ptrVal);    
+        for (int j = 0; j < num_cols; j++)
+        {
+            r->data[i][j] = atof(value_token);  // Fill matrix with values
+            value_token = strtok_r(NULL," ",&save_ptrVal);
+        }
+        
+        line_token = strtok_r(NULL,",",&save_ptrLine);
+    }
+    
+    return r;
+
+}
+
 // Frees a matrix structure
 void nml_mat_free(nml_mat *matrix) {
   int i;

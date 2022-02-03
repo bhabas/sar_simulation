@@ -63,6 +63,7 @@ nml_mat *nml_mat_cp(nml_mat *m);
 nml_mat *nml_mat_from(int num_rows, int num_cols, int n_vals, double *vals);
 nml_mat *nml_mat_fromfile(const char *file);
 nml_mat *nml_mat_fromfilef(FILE *f);
+nml_mat* nml_mat_fromstr(char* str);
 void nml_mat_free(nml_mat *matrix);
 
 // *****************************************************************************
