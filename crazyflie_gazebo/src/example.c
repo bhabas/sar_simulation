@@ -1,10 +1,12 @@
 #include <example.h>
 #include "NN_Params.h"
+#include "NN_Layers_Flip_Wide-Long.h"
 // Compile Statement
 // gcc example.c nml.c nml_util.c -I /home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_gazebo/include  -Wall -o example -lm -Wall && ./example 
 
 
-void initNN_Layers(Scaler* scaler,nml_mat* W[], nml_mat* b[], char path[],int numLayers)
+
+void initNN_Layers(Scaler* scaler,nml_mat* W[], nml_mat* b[], char str[],int numLayers)
 {
     char array_list[2048];
     char* array_token;
@@ -14,6 +16,7 @@ void initNN_Layers(Scaler* scaler,nml_mat* W[], nml_mat* b[], char path[],int nu
 
 
     array_token = strtok_r(array_list,"*",&save_ptr);
+    // printf("%s\n",array_token);
     scaler->mean = nml_mat_fromstr(array_token);
     array_token = strtok_r(NULL,"*",&save_ptr);
 
@@ -44,9 +47,9 @@ int main()
     static nml_mat* W[3];
     static nml_mat* b[3];
 
-    initNN_Layers(&scaler,W,b,str,3);
+    initNN_Layers(&scaler,W,b,str2,3);
 
-    nml_mat_print(W[2]);
+    // nml_mat_print(W[2]);
 
     return 0;
 }

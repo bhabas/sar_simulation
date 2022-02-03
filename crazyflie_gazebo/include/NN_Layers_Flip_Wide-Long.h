@@ -1,4 +1,4 @@
-static char str[] = {
+static char str2[] = {
 "3,"	"1,"
 "4.7644,"
 "-4.7362,"

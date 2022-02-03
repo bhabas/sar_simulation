@@ -307,14 +307,14 @@ if __name__ == "__main__":
                     fmt='"%.4f,"',
                     delimiter='\t',
                     comments='',
-                    header=f'"{scaler_means.shape[0]},"\t"{scaler_means.shape[1]}"',
+                    header=f'"{scaler_means.shape[0]},"\t"{scaler_means.shape[1]},"',
                     footer='"*"\n')
 
         np.savetxt(f,scaler_stds,
                     fmt='"%.4f,"',
                     delimiter='\t',
                     comments='',
-                    header=f'"{scaler_stds.shape[0]},"\t"{scaler_stds.shape[1]}"',
+                    header=f'"{scaler_stds.shape[0]},"\t"{scaler_stds.shape[1]},"',
                     footer='"*"\n')
 
         ## SAVE NN LAYER VALUES
@@ -326,7 +326,7 @@ if __name__ == "__main__":
                     fmt='"%.4f,"',
                     delimiter='\t',
                     comments='',
-                    header=f'"{W.shape[0]},"\t"{W.shape[1]}"',
+                    header=f'"{W.shape[0]},"\t"{W.shape[1]},"',
                     footer='"*"\n')
 
 
@@ -335,7 +335,7 @@ if __name__ == "__main__":
                     fmt='"%.4f,"',
                     delimiter='\t',
                     comments='',
-                    header=f'"{b.shape[0]},"\t"{b.shape[1]}"',
+                    header=f'"{b.shape[0]},"\t"{b.shape[1]},"',
                     footer='"*"\n')
 
             ii+=1

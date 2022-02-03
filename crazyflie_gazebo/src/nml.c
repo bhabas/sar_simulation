@@ -240,37 +240,33 @@ nml_mat* nml_mat_fromstr(char* str)
     char array_str[1024];
     strcpy(array_str,str);
 
-    // INIT STR TOKENS AND SAVE POINTERS
+    // INIT STRING TOKENS AND SAVE POINTER LOCATIONs
     unsigned int num_rows = 0, num_cols = 0;
-    char *line_token, *value_token;
-    char *save_ptrLine, *save_ptrVal;
+    char* value_token;
+    char* save_ptrLoc;  
 
 
     // INIT MATRIX
-    line_token = strtok_r(array_str,",",&save_ptrLine);     // Collect first line
-    value_token = strtok_r(line_token," ",&save_ptrVal);    // Collect num_rows from first line
+    value_token = strtok_r(array_str,",",&save_ptrLoc); 
     num_rows = atoi(value_token);
 
-    value_token = strtok_r(NULL," ",&save_ptrVal);          // Collect num_cols val from first line
+    value_token = strtok_r(NULL,",",&save_ptrLoc);      // Pickup at last ptr location
     num_cols = atoi(value_token);
+    
     nml_mat* r = nml_mat_new(num_rows,num_cols);
 
     // ITERATE THROUGH REMAINING LINES AND VALUES
-    line_token = strtok_r(NULL,",",&save_ptrLine);  
     for (int i = 0; i < num_rows; i++)
     {
-        value_token = strtok_r(line_token," ",&save_ptrVal);    
-        for (int j = 0; j < num_cols; j++)
+       for (int j = 0; j < num_cols; j++)
         {
-            r->data[i][j] = atof(value_token);  // Fill matrix with values
-            value_token = strtok_r(NULL," ",&save_ptrVal);
+            value_token = strtok_r(NULL,",",&save_ptrLoc);
+            // printf("%s\n",value_token);
+            r->data[i][j] = atof(value_token);
         }
-        
-        line_token = strtok_r(NULL,",",&save_ptrLine);
     }
-    
+  
     return r;
-
 }
 
 // Frees a matrix structure
