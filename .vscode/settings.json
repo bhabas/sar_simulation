@@ -72,7 +72,8 @@
         "nml_util.h": "c",
         "string.h": "c",
         "nml.h": "c",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "values.h": "c"
     },
     "python.analysis.extraPaths": [
         "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_rl/src/",
