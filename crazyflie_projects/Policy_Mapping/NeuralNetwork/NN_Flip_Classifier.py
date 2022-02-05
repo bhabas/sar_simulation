@@ -259,7 +259,7 @@ class NN_Flip_Classifier():
         fig.show()
 
     def saveParams(self):
-        f = open(f'{BASEPATH}/Info/NN_Layers_Flip_{model_config}.h','a')
+        f = open(f'{BASEPATH}/Info/NN_Layers_Flip_{self.model_initials}.h','a')
         f.truncate(0) ## Clears contents of file
         f.write("static char NN_Params_Flip[] = {\n")
         
@@ -311,8 +311,51 @@ class NN_Flip_Classifier():
         f.write("};")
         f.close()
 
-    def loadNN_fromParams(self):
-        pass
+    def loadModelFromParams(self):
+        path = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Policy_Mapping/NeuralNetwork/Info/NN_Layers_Flip_WL.h"
+
+        f = open(path,"r")
+        f.readline()
+        file_string = f.read()
+        char_remove = ['"','\n','\t']
+        for char in char_remove:
+            file_string = file_string.replace(char,'')
+
+        matrix_list = file_string.split("*")
+
+        named_layers = dict(self.model.named_modules())
+        layer_list = list(dict(self.model.named_modules()).values())[1:]
+        arr_list = []
+
+        for ii,matrix_str in enumerate(matrix_list[:-1]):
+            val_list = matrix_str[:-1].split(",")
+            num_rows = int(val_list[0])
+            num_cols = int(val_list[1])
+            arr = np.array(val_list[2:]).astype(np.float64).reshape(num_rows,num_cols)
+
+            if ii == 0:
+                self.scaler.mean_ = arr[:,0]
+
+            elif ii == 1:
+                self.scaler.scale_ = arr[:,0]
+
+            else:
+                arr_list.append(arr)
+                # with torch.no_grad():
+                #     list(named_layers.values())[ii-1].weight.data = torch.FloatTensor(arr)
+
+        for ii in range(len(arr_list)):
+            if ii%2 == 0:
+                layer_list[ii//2].weight.data = torch.FloatTensor(arr_list[ii])
+            else:
+                layer_list[ii//2].bias.data = torch.FloatTensor(arr_list[ii].flatten())
+            
+
+
+        #     self.scaler.mean_ = arr[:,0]
+        # self.scaler.scale_ = arr[:,1]
+            
+
 
 if __name__ == "__main__":
 
@@ -354,10 +397,14 @@ if __name__ == "__main__":
 
     FC.createScaler(X)
     FC.trainModel(X_train,y_train,X_test,y_test,epochs=400)
-    FC.modelForward(X)
+    FC.saveParams()
+    FC.evalModel(X,y)
+
+
+    FC.loadModelFromParams()
     FC.evalModel(X,y)
     FC.plotModel(df_raw)
-    FC.saveParams()
-    FC.loadNN_fromParams()
+
+    pass
 
 
