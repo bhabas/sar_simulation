@@ -38,3 +38,8 @@ class NN_Flip_Classifier(model_config):
 
     def saveParams(self,NN_model):
         Save NN params to *.h file for C use
+
+    def loadNN_fromParams(self):
+        load scaler
+        initialize model
+        initialize W and b for layers

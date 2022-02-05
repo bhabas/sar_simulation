@@ -207,8 +207,112 @@ class NN_Flip_Classifier():
         print(f"Classification Report: {classification_report(y,y_pred)}")
 
 
+    def plotModel(self,df_custom):
+
+        ## CREATE GRID
+        RREV_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
+            np.linspace(0, 8, 30),
+            np.linspace(-15, 0, 30),
+            np.linspace(0, 1.5, 30)
+        )
+
+        ## CONCATENATE DATA TO MATCH INPUT
+        X_grid = np.stack((
+            RREV_grid.flatten(),
+            OF_y_grid.flatten(),
+            d_ceil_grid.flatten()),axis=1)
+
+        y_pred_grid = self.modelForward(X_grid)
+
+        fig = go.Figure()
+
+        fig.add_trace(
+            go.Volume(
+            # go.Isosurface(
+                x=X_grid[:,1].flatten(),
+                y=X_grid[:,0].flatten(),
+                z=X_grid[:,2].flatten(),
+                value=y_pred_grid.flatten(),
+                surface_count=10,
+                opacity=0.1,
+                isomin=0.85,
+                isomax=0.90,
+                colorscale='Viridis',  
+                cmin=0,
+                cmax=1,     
+                caps=dict(x_show=False, y_show=False)
+            ))
+
+        fig.add_trace(
+        go.Scatter3d(
+            x=df_custom["OF_y_flip_mean"],
+            y=df_custom["RREV_flip_mean"],
+            z=df_custom["flip_d_mean"],
+            mode='markers',
+            marker=dict(
+                size=3,
+                color=df_custom["landing_rate_4_leg"],                # set color to an array/list of desired values
+                colorscale='Viridis',   # choose a colorscale
+                opacity=1.0)
+        ))
+
+        fig.show()
+
+    def saveParams(self):
+        f = open(f'{BASEPATH}/Info/NN_Layers_Flip_{model_config}.h','a')
+        f.truncate(0) ## Clears contents of file
+        f.write("static char NN_Params_Flip[] = {\n")
+        
+
+        ## EXTEND SCALER ARRAY DIMENSIONS
+        scaler_means = self.scaler.mean_.reshape(-1,1)
+        scaler_stds = self.scaler.scale_.reshape(-1,1)
+        
+        ## SAVE SCALER ARRAY VALUES
+        np.savetxt(f,scaler_means,
+                    fmt='"%.6f,"',
+                    delimiter='\t',
+                    comments='',
+                    header=f'"{scaler_means.shape[0]},"\t"{scaler_means.shape[1]},"',
+                    footer='"*"\n')
+
+        np.savetxt(f,scaler_stds,
+                    fmt='"%.6f,"',
+                    delimiter='\t',
+                    comments='',
+                    header=f'"{scaler_stds.shape[0]},"\t"{scaler_stds.shape[1]},"',
+                    footer='"*"\n')
+
+        ## SAVE NN LAYER VALUES
+        with torch.no_grad():
+            ii = 0
+            for name, layer in self.model.named_modules():
+                if ii > 0: # Skip initialization layer
+
+                    W = layer.weight.numpy()
+                    np.savetxt(f,W,
+                        fmt='"%.6f,"',
+                        delimiter='\t',
+                        comments='',
+                        header=f'"{W.shape[0]},"\t"{W.shape[1]},"',
+                        footer='"*"\n')
 
 
+                    b = layer.bias.numpy().reshape(-1,1)
+                    np.savetxt(f,b,
+                        fmt='"%.6f,"',
+                        delimiter='\t',
+                        comments='',
+                        header=f'"{b.shape[0]},"\t"{b.shape[1]},"',
+                        footer='"*"\n')
+
+                ii+=1
+
+        f.write("};")
+        f.close()
+
+    def loadNN_fromParams(self):
+        pass
 
 if __name__ == "__main__":
 
@@ -249,8 +353,11 @@ if __name__ == "__main__":
 
 
     FC.createScaler(X)
-    # FC.trainModel(X_train,y_train,X_test,y_test,epochs=500)
+    FC.trainModel(X_train,y_train,X_test,y_test,epochs=400)
     FC.modelForward(X)
     FC.evalModel(X,y)
+    FC.plotModel(df_raw)
+    FC.saveParams()
+    FC.loadNN_fromParams()
 
 
