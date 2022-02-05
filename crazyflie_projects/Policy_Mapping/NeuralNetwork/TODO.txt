@@ -1,0 +1,40 @@
+class NN_Model():
+    def __init__:
+
+    def forward(self,x)
+
+class NN_Flip_Classifier(model_config):
+    def loadData(df):
+        self.df = df
+
+    def createScalers(self,data_df):
+        Create scaler object
+        Save scaler parameters to csv file
+    
+    def train_model(self,data_df,epochs,save_model):
+        Pass in split data
+        scale data with scaler
+        initialize model
+    
+    def loadModel(self,modelPath):
+        Load model
+    
+    def evalModel(self,data_df):
+        Pass in data
+        Scale data
+        Pass data through network
+        Calc data scores
+        return output_data
+
+    def modelForward(self,data_df):
+        Pass in data
+        Scale data
+        Pass data through network
+
+        return output_data
+
+    def plotData(self,data_df):
+        Plot data
+
+    def saveParams(self,NN_model):
+        Save NN params to *.h file for C use
