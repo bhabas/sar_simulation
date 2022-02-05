@@ -39,11 +39,14 @@ class NN_Model(nn.Module):
 
         return x
 
+
+
+
 class NN_Flip_Classifier():
     def __init__(self,model_config):
         self.model_config = model_config
         self.modelInitials()
-        # self.loadModel()
+        self.loadModel()
 
         self.scaler = None
         self.loadScaler()
@@ -55,8 +58,8 @@ class NN_Flip_Classifier():
 
         self.model_initials = charA+charB
 
-    # def loadModel(self):
-    #     self.model = torch.load(f'{BASEPATH}/Pickle_Files/NN_Flip_Classifier_{self.model_initials}.pt')
+    def loadModel(self):
+        self.model = torch.load(f'{BASEPATH}/Pickle_Files/NN_Flip_Classifier_{self.model_initials}.pt')
 
     def createScaler(self,X):
 
@@ -93,19 +96,11 @@ class NN_Flip_Classifier():
 
         return self.scaler.inverse_transform(X_scaled)
 
-    def modelForward(self,X):
-        X_scaled = self.scaleData(X)
-
-        with torch.no_grad():
-            y_pred = self.model.forward(X_scaled)
-
-        return y_pred
-
-    def trainModel(self,X_train,y_train,X_test,y_test,epochs=500):
+    def trainModel(self,X_train,y_train,X_test,y_test,epochs=500,saveModel=True):
 
         ## CONVERT DATA ARRAYS TO TENSORS
-        X_train = torch.FloatTensor(X_train)
-        X_test = torch.FloatTensor(X_test)
+        X_train = torch.FloatTensor(self.scaleData(X_train))
+        X_test = torch.FloatTensor(self.scaleData(X_test))
 
         y_train = torch.FloatTensor(y_train)
         y_test = torch.FloatTensor(y_test)
@@ -114,6 +109,7 @@ class NN_Flip_Classifier():
         self.model = NN_Model()
         optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01)
         class_weight = [0.1, 0.5] # Weights as binary classes [0,1]
+        pred_cutoff = 0.5 
     
         ## DEFINE TRAINING LOSS
         weights = np.where(y_train==1,class_weight[1],class_weight[0])      # Convert class weights to element weights
@@ -129,15 +125,13 @@ class NN_Flip_Classifier():
 
         for ii in range(epochs):
 
-            ## MODEL PREDICTION
-            y_pred_train = self.model.forward(X_train)
 
             ## CALC TRAINING LOSS
+            y_pred_train = self.model.forward(X_train)
             loss_train = criterion(y_pred_train,y_train)
             losses_train.append(loss_train.item())
 
             ## CALC TRAINING ACCURACY
-            pred_cutoff = 0.5 
             y_pred_train_class = np.where(y_pred_train.detach().numpy() < pred_cutoff,0,1)
             accuracy_train = balanced_accuracy_score(y_train[:,0],y_pred_train_class)
             accuracies_train.append(accuracy_train)
@@ -152,8 +146,8 @@ class NN_Flip_Classifier():
 
             ## CALC TESTING ACCURACY
             y_pred_test_class = np.where(y_pred_test.detach().numpy() < pred_cutoff,0,1)
-            accuracy = balanced_accuracy_score(y_test[:,0],y_pred_test_class)
-            accuracies_test.append(accuracy)
+            accuracy_test = balanced_accuracy_score(y_test[:,0],y_pred_test_class)
+            accuracies_test.append(accuracy_test)
 
             if ii%10 == 1:
                 print(f"epoch {ii} and loss is: {loss_train}")
@@ -163,8 +157,8 @@ class NN_Flip_Classifier():
             loss_train.backward()
             optimizer.step()
 
-
-        torch.save(self.model,f'{BASEPATH}/Pickle_Files/NN_Flip_Classifier_{self.model_initials}.pt')
+        if saveModel:
+            torch.save(self.model,f'{BASEPATH}/Pickle_Files/NN_Flip_Classifier_{self.model_initials}.pt')
 
         ## PLOT LOSSES AND ACCURACIES
         fig = plt.figure(1,figsize=(12,8))
@@ -189,6 +183,30 @@ class NN_Flip_Classifier():
 
         plt.tight_layout()
         plt.show()
+
+    def modelForward(self,X):
+        X_scaled = torch.FloatTensor(self.scaleData(X))
+
+        with torch.no_grad():
+            y_pred = self.model.forward(X_scaled)
+
+        return y_pred
+
+    def evalModel(self,X,y):
+
+        with torch.no_grad():
+            y_pred = self.modelForward(X)
+            y_pred = np.where(y_pred.detach().numpy() < 0.5,0,1)
+
+        cfnMatrix = confusion_matrix(y,y_pred,normalize=None)
+        print("\n=========== Model Evaluation ===========")
+        print(f"Balanced Accuracy: {balanced_accuracy_score(y,y_pred):.3f}")
+        print(f"Confusion Matrix: \n{cfnMatrix}")
+        print(f"False Negatives: {cfnMatrix[0,1]}")
+        print(f"False Positives: {cfnMatrix[1,0]}")
+        print(f"Classification Report: {classification_report(y,y_pred)}")
+
+
 
 
 
@@ -231,7 +249,8 @@ if __name__ == "__main__":
 
 
     FC.createScaler(X)
-    FC.trainModel(X_train,y_train,X_test,y_test,epochs=500)
-    # FC.modelForward(X)
+    # FC.trainModel(X_train,y_train,X_test,y_test,epochs=500)
+    FC.modelForward(X)
+    FC.evalModel(X,y)
 
 
