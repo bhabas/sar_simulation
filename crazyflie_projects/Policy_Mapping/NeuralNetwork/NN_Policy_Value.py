@@ -227,14 +227,14 @@ if __name__ == '__main__':
         
         ## SAVE SCALER ARRAY VALUES
         np.savetxt(f,scaler_means,
-                    fmt='"%.4f,"',
+                    fmt='"%.6f,"',
                     delimiter='\t',
                     comments='',
                     header=f'"{scaler_means.shape[0]},"\t"{scaler_means.shape[1]},"',
                     footer='"*"\n')
 
         np.savetxt(f,scaler_stds,
-                    fmt='"%.4f,"',
+                    fmt='"%.6f,"',
                     delimiter='\t',
                     comments='',
                     header=f'"{scaler_stds.shape[0]},"\t"{scaler_stds.shape[1]},"',
@@ -246,7 +246,7 @@ if __name__ == '__main__':
 
                 W = layer.weight.numpy()
                 np.savetxt(f,W,
-                    fmt='"%.4f,"',
+                    fmt='"%.6f,"',
                     delimiter='\t',
                     comments='',
                     header=f'"{W.shape[0]},"\t"{W.shape[1]},"',
@@ -255,7 +255,7 @@ if __name__ == '__main__':
 
                 b = layer.bias.numpy().reshape(-1,1)
                 np.savetxt(f,b,
-                    fmt='"%.4f,"',
+                    fmt='"%.6f,"',
                     delimiter='\t',
                     comments='',
                     header=f'"{b.shape[0]},"\t"{b.shape[1]},"',
