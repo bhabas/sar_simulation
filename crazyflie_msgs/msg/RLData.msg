@@ -14,8 +14,6 @@ uint16 k_run
 uint8 n_rollouts
 float32 h_ceiling
 
-float32[] alpha_mu
-float32[] alpha_sigma
 float32[] mu
 float32[] sigma
 float32[] policy

@@ -245,8 +245,6 @@ class CrazyflieEnv:
         rl_msg.k_ep = self.k_ep
         rl_msg.k_run = self.k_run
 
-        rl_msg.alpha_mu = self.alpha_mu
-        rl_msg.alpha_sigma = self.alpha_sigma
         rl_msg.mu = self.mu
         rl_msg.sigma = self.sigma
         rl_msg.policy = self.policy
