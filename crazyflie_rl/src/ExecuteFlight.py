@@ -68,7 +68,7 @@ def executeFlight(env,agent):
     env.launch_IC(                              # Use Gazebo to impart desired vel with extra vx to ensure -OF_y when around zero
         z_0,
         env.vel_trial[0]+0.03,
-        env.vel_trial[2])   
+        env.vel_trial[4])   #was 2
 
 
     while 1: 
