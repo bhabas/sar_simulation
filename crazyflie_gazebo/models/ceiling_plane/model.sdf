@@ -29,8 +29,6 @@
         </geometry>
         <material>
           <script>
-            <!-- <name>Gazebo/Orange</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri> -->
             <uri>model://ceiling_plane/materials/scripts</uri>
             <uri>model://ceiling_plane/materials/textures</uri>
             <name>ceilingMat/Checkerboard</name>

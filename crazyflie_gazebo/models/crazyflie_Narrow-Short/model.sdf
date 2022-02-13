@@ -241,25 +241,7 @@
           <distortionT2>0.0</distortionT2>
         </plugin>
       </sensor>
-      <visual name='visual'>
-        <pose>0 0 0 0 -0 0</pose>
-        <geometry>
-          <box>
-            <size>0.01 0.01 0.005</size>
-          </box>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/Orange</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-        </material>
-        <transparency>0</transparency>
-        <cast_shadows>1</cast_shadows>
-      </visual>
+
     </link>
     <link name='rotor_1'>
       <inertial>
