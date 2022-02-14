@@ -7,7 +7,7 @@
 
     <!-- LAUNCH GAZEBO WITH SPECIFIED WORLD FILE -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
-        <arg name="world_name" value="$(find crazyflie_gazebo2)/worlds/CeilingSurface_Large.world"/>
+        <arg name="world_name" value="$(find crazyflie_gazebo2)/worlds/FlightCage.world"/>
     
         <arg name="gui" value="$(arg gui_flag)"/>
         <arg name="paused" default="true"/>
