@@ -196,7 +196,7 @@ int main(int argc, char **argv)
 
 
   // DEFINE ROS AND GAZEBO TOPICS
-  std::string gazebo_topic_to_sub= "/gazebo/default/ceiling_plane/joint_01/force_torque/wrench";
+  std::string gazebo_topic_to_sub = "/gazebo/default/ceiling_plane/ceiling_joint/force_torque/wrench";
   std::string ros_topic_to_pub="/env/ceiling_force_sensor";
   
   // INIT ROS PUBLISHERS/SUBSCRIBERS

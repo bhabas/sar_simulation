@@ -111,7 +111,7 @@
         <pose>0 0 0 0 -0 0</pose>
       </sensor>
     </link>
-    <joint name="joint_01" type="fixed">
+    <joint name="ceiling_joint" type="fixed">
       <parent>world</parent>
       <child>ceiling</child>
       <pose>0 0 0 0 0 0</pose>    
