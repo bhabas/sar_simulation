@@ -1,0 +1,24 @@
+<launch>
+  
+    <!-- LAUNCH GAZEBO WITH SPECIFIED WORLD FILE -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(find ros_robotics)/worlds/rrbot.world"/>
+    
+        <arg name="paused" default="false"/>
+        <arg name="use_sim_time" default="true"/>
+        <arg name="gui" default="true"/>
+        <arg name="headless" default="false"/>
+        <arg name="debug" default="false"/>
+
+    </include>
+
+    <!-- Load the URDF into the ROS Parameter Server -->
+    <param name="robot_description"
+        command="$(find xacro)/xacro --inorder '$(find crazyflie_gazebo2)/urdf/crazyflie.xacro'" />
+
+
+    <!-- Spawn rrbot into Gazebo -->
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+        args="-param robot_description -urdf -model crazyflie" />
+
+</launch>
