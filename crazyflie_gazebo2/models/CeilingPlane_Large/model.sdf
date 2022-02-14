@@ -29,8 +29,8 @@
         </geometry>
         <material>
           <script>
-            <uri>model://ceiling_plane/materials/scripts</uri>
-            <uri>model://ceiling_plane/materials/textures</uri>
+            <uri>model://CeilingPlane_Large/materials/scripts</uri>
+            <uri>model://CeilingPlane_Large/materials/textures</uri>
             <name>ceilingMat/Checkerboard</name>
 
           </script>
