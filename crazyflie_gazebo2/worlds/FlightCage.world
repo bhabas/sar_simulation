@@ -11,7 +11,7 @@
     </include>
     <!-- A ceiling plane -->
     <include>
-      <uri>model://ceiling_plane</uri>
+      <uri>model://FlightCage</uri>
     </include>
 
     <!-- Default camera pose -->
