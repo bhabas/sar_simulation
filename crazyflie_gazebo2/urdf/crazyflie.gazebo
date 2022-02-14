@@ -1,9 +1,0 @@
-<?xml version="1.0"?>
-<robot>
-    <!-- Base Link -->
-    <gazebo reference="base_link">
-        <material>Gazebo/Red</material>
-    </gazebo>
-
-
-</robot>
