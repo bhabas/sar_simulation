@@ -18,10 +18,7 @@ catkin_package(
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
-add_executable(pub_example1 src/pub_example1.cpp)
-add_dependencies(pub_example1 ${catkin_EXPORTED_TARGETS})
-target_link_libraries(pub_example1 ${catkin_LIBRARIES})
 
-add_executable(controller1 src/controller.cpp src/nml.c src/nml_util.c)
-add_dependencies(controller1 ${catkin_EXPORTED_TARGETS})
-target_link_libraries(controller1 ${catkin_LIBRARIES})
+add_executable(controller src/controller_gtc.cpp src/nml.c src/nml_util.c)
+add_dependencies(controller ${catkin_EXPORTED_TARGETS})
+target_link_libraries(controller ${catkin_LIBRARIES})
