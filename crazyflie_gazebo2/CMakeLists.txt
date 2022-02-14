@@ -11,7 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES crazyflie_gazebo2
-#  CATKIN_DEPENDS gazebo_ros
+ CATKIN_DEPENDS gazebo_ros
 #  DEPENDS system_lib
 )
 
