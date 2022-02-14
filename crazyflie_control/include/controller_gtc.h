@@ -33,8 +33,8 @@
 #include "stabilizer_types.h"
 #include "nml.h"
 
-#include "NN_Layers_Policy_Wide-Long.h"
-#include "NN_Layers_Flip_Wide-Long.h"
+#include "NN_Params/NN_Layers_Policy_Wide-Long.h"
+#include "NN_Params/NN_Layers_Flip_Wide-Long.h"
 
 #define PWM_MAX 60000 // Limit PWM to give buffer for battery drop
 #define f_MAX (16.5) // Max motor thrust [g]
