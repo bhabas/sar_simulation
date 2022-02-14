@@ -1,4 +1,5 @@
 MODEL_NAME: "crazyflie_Narrow-Long"
+WORLD_NAME: "FlightCage"
 GUI_FLAG: True
 
 SIM_SPEED: 0.3
