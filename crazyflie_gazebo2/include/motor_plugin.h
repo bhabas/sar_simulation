@@ -21,18 +21,24 @@ namespace gazebo {
         protected:
             void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
             void OnUpdate();
+            void updateThrust();
             void MotorSpeedCallback(const crazyflie_msgs::MS::ConstPtr &msg);
 
 
         private:
-            physics::WorldPtr _world;
-            physics::ModelPtr _model;
+            physics::WorldPtr world_;
+            physics::ModelPtr model_;
+            physics::JointPtr joint_ptr;
+            physics::LinkPtr link_ptr;
 
             int motor_number;
             int turning_direction;
-            int tick = 0;
+
+            std::string jointName;
+            std::string linkName;
 
             double rotor_velocity_slowdown_sim;
+            double rotor_velocity = 20;
 
             double thrust_coeff;
             double torque_coeff;

@@ -5,6 +5,7 @@
     <arg name="gui_flag" default="true"/>
     <arg name="sdf_path" default="$(find crazyflie_gazebo2)/models/$(arg model_name)/model.sdf"/>
     <arg name="verbose" default="true"/>
+    <arg name="paused" default="true"/>
 
     <!-- LAUNCH GAZEBO WITH SPECIFIED WORLD FILE -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
@@ -14,7 +15,7 @@
         <!-- http://gazebosim.org/tutorials?tut=performance_metrics&cat=tools_utilities -->
     
         <arg name="gui" value="$(arg gui_flag)"/>
-        <arg name="paused" default="false"/>
+        <arg name="paused" value="$(arg paused)"/>
         <arg name="verbose" value="true"/>
         <arg name="debug" value="false"/>
         <arg name="use_sim_time" default="true"/>
