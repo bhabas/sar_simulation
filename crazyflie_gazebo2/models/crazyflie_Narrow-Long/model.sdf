@@ -1730,7 +1730,7 @@
       </physics>
     </joint> -->
     
-    <plugin name='back_left_motor_model' filename='libgazebo_motor_model.so'>
+    <!-- <plugin name='back_left_motor_model' filename='libgazebo_motor_model.so'>
       <robotNamespace/>
       <jointName>rotor_2_joint</jointName>
       <linkName>rotor_2</linkName>
@@ -1797,7 +1797,18 @@
       <rollingMomentCoefficient>1e-07</rollingMomentCoefficient>
       <motorSpeedPubTopic>/motor_speed/3</motorSpeedPubTopic>
       <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
+    </plugin> -->
+
+    <plugin name='front_left_motor_model' filename='libmotor_plugin.so'>
+      <motorNumber>1</motorNumber>
+      <jointName>rotor_1_joint</jointName>
+      <linkName>rotor_1</linkName>
+      <turningDirection>ccw</turningDirection>
+      <rotorThrustCoeff>2.21e-8</rotorThrustCoeff>
+      <rotorTorqueCoeff>0.00612</rotorTorqueCoeff>
+      <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
     </plugin>
+
     <plugin name='OF_sensor' filename='libgazebo_ros_p3d.so'>
       <alwaysOn>1</alwaysOn>
       <updateRate>100</updateRate>

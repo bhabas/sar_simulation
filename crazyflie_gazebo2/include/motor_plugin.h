@@ -20,13 +20,24 @@ namespace gazebo {
             
         protected:
             void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
-            void OnUpdate(const common::UpdateInfo&  /*_info*/);
+            void OnUpdate();
             void MotorSpeedCallback(const crazyflie_msgs::MS::ConstPtr &msg);
 
 
         private:
-            physics::WorldPtr world_;
-            physics::ModelPtr model_;
+            physics::WorldPtr _world;
+            physics::ModelPtr _model;
+
+            int motor_number;
+            int turning_direction;
+            int tick = 0;
+
+            double rotor_velocity_slowdown_sim;
+
+            double thrust_coeff;
+            double torque_coeff;
+
+            event::ConnectionPtr updateConnection;
 
             ros::NodeHandle nh;
             ros::Subscriber MS_Subscriber = nh.subscribe<crazyflie_msgs::MS>("/MS", 1, &GazeboMotorPlugin::MotorSpeedCallback, this, ros::TransportHints().tcpNoDelay());
