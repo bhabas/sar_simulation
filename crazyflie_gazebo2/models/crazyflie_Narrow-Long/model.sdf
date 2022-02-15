@@ -963,7 +963,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <sphere>
-            <radius>0.002</radius>
+            <radius>0.004</radius>
           </sphere>
         </geometry>
         <surface>
@@ -1840,7 +1840,7 @@
     </plugin>
     
     <plugin name='pad_1_sticky' filename='libgazebo_sticky_foot.so'>
-      <robotNamespace>/</robotNamespace>
+      <robotNamespace/>
       <linkName>pad_1</linkName>
       <padNumber>1</padNumber>
     </plugin>

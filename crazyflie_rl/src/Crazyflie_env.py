@@ -611,7 +611,7 @@ class CrazyflieEnv:
                     sticky_srv = rospy.ServiceProxy(f"/activate_Sticky_Pad_{ii+1}", activateSticky)
                     sticky_srv(False)
                     
-            rospy.wait_for_message("/ctrl_data",CtrlData,timeout=0.5) # Ensure controller has time to process command
+            # rospy.wait_for_message("/ctrl_data",CtrlData,timeout=0.5) # Ensure controller has time to process command
             return
 
         cmd_msg = RLCmd()

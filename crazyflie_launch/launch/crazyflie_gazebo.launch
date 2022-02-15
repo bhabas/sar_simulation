@@ -24,7 +24,7 @@
 
     <!-- SPAWN SDF FILE INTO GAZEBO -->
     <node name="spawn_sdf" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
-        args="-file $(arg sdf_path) -sdf -model crazyflie -z 0.4" />
+        args="-file $(arg sdf_path) -sdf -model $(arg model_name) -z 0.4" />
 
     <!-- <node name="ceiling_ft_sensor" pkg="crazyflie_gazebo" type="ceiling_ft_sensor" /> -->
 

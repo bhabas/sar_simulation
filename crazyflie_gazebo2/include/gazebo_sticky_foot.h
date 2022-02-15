@@ -23,7 +23,7 @@ namespace gazebo {
         protected:
             void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
             // void OnUpdate(const common::UpdateInfo&  /*_info*/);
-            // void ContactCallback(ConstContactsPtr &msg);
+            void ContactCallback(ConstContactsPtr &msg);
             bool activateSticky(crazyflie_msgs::activateSticky::Request &req, crazyflie_msgs::activateSticky::Response &res);
 
         private:
@@ -47,7 +47,7 @@ namespace gazebo {
             event::ConnectionPtr updateConnection_;
 
             ros::NodeHandle nh;
-            // ros::Publisher PadConnect_Publisher = n.advertise<crazyflie_msgs::PadConnect>("/pad_connections", 5);
+            ros::Publisher PadConnect_Publisher = nh.advertise<crazyflie_msgs::PadConnect>("/pad_connections", 5);
             ros::ServiceServer stickyService;
 
             bool sticky_;
