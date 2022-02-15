@@ -27,3 +27,6 @@ target_link_libraries(model_push ${GAZEBO_LIBRARIES})
 
 add_library(gazebo_sticky_foot SHARED src/gazebo_sticky_foot.cpp)
 target_link_libraries(gazebo_sticky_foot ${GAZEBO_LIBRARIES})
+
+add_library(motor_plugin SHARED src/motor_plugin.cpp)
+target_link_libraries(motor_plugin ${GAZEBO_LIBRARIES})
