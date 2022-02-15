@@ -561,8 +561,8 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         // ========
        
 
-        // _CTRL->_MS_msg.MotorSpeeds = {MS1,MS2,MS3,MS4};
-        // _CTRL->_MS_Publisher.publish(_CTRL->_MS_msg);
+        _CTRL->_MS_msg.MotorPWM = {MS1,MS2,MS3,MS4};
+        _CTRL->_MS_Publisher.publish(_CTRL->_MS_msg);
 
         
         // SIMULATION SLOWDOWN

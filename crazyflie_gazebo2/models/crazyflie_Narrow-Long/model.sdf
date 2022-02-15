@@ -1736,36 +1736,36 @@
       <jointName>rotor_1_joint</jointName>
       <linkName>rotor_1</linkName>
       <turningDirection>cw</turningDirection>
-      <rotorThrustCoeff>2.21e-8</rotorThrustCoeff>
-      <rotorTorqueCoeff>0.00612</rotorTorqueCoeff>
-      <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
+      <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
+      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
+      <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
     </plugin>
     <plugin name='back_left_motor_model' filename='libmotor_plugin.so'>
       <motorNumber>2</motorNumber>
       <jointName>rotor_2_joint</jointName>
       <linkName>rotor_2</linkName>
       <turningDirection>ccw</turningDirection>
-      <rotorThrustCoeff>2.21e-8</rotorThrustCoeff>
-      <rotorTorqueCoeff>0.00612</rotorTorqueCoeff>
-      <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
+      <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
+      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
+      <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
     </plugin>
     <plugin name='back_right_motor_model' filename='libmotor_plugin.so'>
       <motorNumber>3</motorNumber>
       <jointName>rotor_3_joint</jointName>
       <linkName>rotor_3</linkName>
       <turningDirection>cw</turningDirection>
-      <rotorThrustCoeff>2.21e-8</rotorThrustCoeff>
-      <rotorTorqueCoeff>0.00612</rotorTorqueCoeff>
-      <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
+      <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
+      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
+      <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
     </plugin>
     <plugin name='front_right_motor_model' filename='libmotor_plugin.so'>
       <motorNumber>4</motorNumber>
       <jointName>rotor_4_joint</jointName>
       <linkName>rotor_4</linkName>
       <turningDirection>ccw</turningDirection>
-      <rotorThrustCoeff>2.21e-8</rotorThrustCoeff>
-      <rotorTorqueCoeff>0.00612</rotorTorqueCoeff>
-      <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
+      <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
+      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
+      <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
     </plugin>
 
     <plugin name='OF_sensor' filename='libgazebo_ros_p3d.so'>

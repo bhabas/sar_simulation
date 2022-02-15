@@ -38,7 +38,7 @@ namespace gazebo {
             std::string linkName;
 
             double rot_vel_visual_slowdown;
-            double rot_vel = 20;
+            double rot_vel = 0;
 
             double thrust_coeff;
             double torque_coeff;
