@@ -67,12 +67,12 @@ namespace gazebo
         link_ptr->AddRelativeForce(ignition::math::Vector3d(0, 0, thrust));
 
         // APPLY ROTOR MOMENT TO MAIN BODY
-        physics::Link_V parent_links = link_ptr->GetParentJointsLinks(); // GET BODY LINK NAME
-        ignition::math::Pose3d pose_difference = link_ptr->WorldCoGPose() - parent_links.at(0)->WorldCoGPose();
-
         ignition::math::Vector3d torque(0, 0, -turning_direction * (torque_coeff*thrust));
-        ignition::math::Vector3d torque_parent_frame = pose_difference.Rot().RotateVector(torque);
-        parent_links.at(0)->AddRelativeTorque(torque_parent_frame);
+
+        physics::Link_V parent_links = link_ptr->GetParentJointsLinks(); // Get <vector> of parent links
+        ignition::math::Pose3d pose_difference = link_ptr->WorldCoGPose() - parent_links.at(0)->WorldCoGPose(); // Find rotor pos relative to body
+        ignition::math::Vector3d torque_parent_frame = pose_difference.Rot().RotateVector(torque); // Rotate torque vector to match body orientation
+        parent_links.at(0)->AddRelativeTorque(torque_parent_frame); // Apply torque vector to body
 
     }
 
