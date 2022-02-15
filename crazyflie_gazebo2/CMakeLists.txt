@@ -3,20 +3,22 @@ project(crazyflie_gazebo2)
 
 
 find_package(catkin REQUIRED COMPONENTS
+  roscpp
   gazebo_ros
 )
 
+find_package(gazebo REQUIRED)
 
+link_directories(${GAZEBO_LIBRARY_DIRS})
 
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES crazyflie_gazebo2
- CATKIN_DEPENDS gazebo_ros
-#  DEPENDS system_lib
+  CATKIN_DEPENDS 
+    roscpp 
+    gazebo_ros 
 )
 
-include_directories(
-# include
-  ${catkin_INCLUDE_DIRS}
-)
+include_directories(${catkin_INCLUDE_DIRS} ${GAZEBO_INCLUDE_DIRS})
 
+
+add_library(model_push SHARED src/model_push.cpp)
+target_link_libraries(model_push ${GAZEBO_LIBRARIES})
