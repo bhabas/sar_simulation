@@ -8,14 +8,17 @@
 
     <!-- LAUNCH GAZEBO WITH SPECIFIED WORLD FILE -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
-        <arg name="world_name" value="$(find crazyflie_gazebo2)/worlds/$(arg world_name).world"/>
+        <arg name="world_name" value="--lockstep $(find crazyflie_gazebo2)/worlds/$(arg world_name).world"/>
+        <!-- lockstep command ensures sim updates and sensor frequency updates are synced together -->
+        <!-- http://gazebosim.org/tutorials?tut=lockstep_physics_sensors&cat=sensors -->
+        <!-- http://gazebosim.org/tutorials?tut=performance_metrics&cat=tools_utilities -->
     
         <arg name="gui" value="$(arg gui_flag)"/>
         <arg name="paused" default="false"/>
         <arg name="verbose" value="true"/>
+        <arg name="debug" value="false"/>
         <arg name="use_sim_time" default="true"/>
         <arg name="headless" default="false"/>
-        <arg name="debug" default="false"/>
 
     </include>
 
@@ -23,6 +26,6 @@
     <node name="spawn_sdf" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
         args="-file $(arg sdf_path) -sdf -model crazyflie -z 0.4" />
 
-    <node name="ceiling_ft_sensor" pkg="crazyflie_gazebo" type="ceiling_ft_sensor" />
+    <!-- <node name="ceiling_ft_sensor" pkg="crazyflie_gazebo" type="ceiling_ft_sensor" /> -->
 
 </launch>

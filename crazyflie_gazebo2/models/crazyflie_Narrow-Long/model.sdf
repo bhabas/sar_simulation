@@ -1840,7 +1840,7 @@
     </plugin>
     
     <plugin name='pad_1_sticky' filename='libgazebo_sticky_foot.so'>
-      <robotNamespace/>
+      <robotNamespace>/</robotNamespace>
       <linkName>pad_1</linkName>
       <padNumber>1</padNumber>
     </plugin>
