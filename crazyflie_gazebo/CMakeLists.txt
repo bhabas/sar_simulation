@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(crazyflie_gazebo2)
+project(crazyflie_gazebo)
 
 
 find_package(catkin REQUIRED COMPONENTS

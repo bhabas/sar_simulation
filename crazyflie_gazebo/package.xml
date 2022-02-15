@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>crazyflie_gazebo2</name>
+  <name>crazyflie_gazebo</name>
   <version>0.0.0</version>
-  <description>The crazyflie_gazebo2 package</description>
+  <description>The crazyflie_gazebo package</description>
   <maintainer email="bhabas@todo.todo">bhabas</maintainer>
   <license>TODO</license>
 
