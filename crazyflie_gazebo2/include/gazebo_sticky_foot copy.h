@@ -5,7 +5,6 @@
 #include <gazebo/transport/transport.hh>
 #include <gazebo/common/common.hh>
 
-#include "common.h"     // provides getSdfParam, FirstOrderFilter ...
 
 
 

@@ -4,6 +4,7 @@
     <arg name="world_name" default="CeilingSurface_Large"/>
     <arg name="gui_flag" default="true"/>
     <arg name="sdf_path" default="$(find crazyflie_gazebo2)/models/$(arg model_name)/model.sdf"/>
+    <arg name="verbose" default="true"/>
 
     <!-- LAUNCH GAZEBO WITH SPECIFIED WORLD FILE -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
@@ -11,6 +12,7 @@
     
         <arg name="gui" value="$(arg gui_flag)"/>
         <arg name="paused" default="false"/>
+        <arg name="verbose" value="true"/>
         <arg name="use_sim_time" default="true"/>
         <arg name="headless" default="false"/>
         <arg name="debug" default="false"/>

@@ -1859,7 +1859,7 @@
       <linkName>pad_4</linkName>
       <padNumber>4</padNumber>
     </plugin>
-    <plugin name="model_push_plugin" filename="libmodel_push.so"/>
+    <!-- <plugin name="model_push_plugin" filename="libmodel_push.so"/> -->
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
   </model>

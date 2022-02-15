@@ -170,7 +170,7 @@ link_libraries(
 #   src/${PROJECT_NAME}/drone_training.cpp
 # )
 add_library(gazebo_motor_model SHARED src/gazebo_motor_model.cpp)
-add_library(gazebo_sticky_foot SHARED src/gazebo_sticky_foot.cpp)
+# add_library(gazebo_sticky_foot SHARED src/gazebo_sticky_foot.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -198,7 +198,7 @@ add_executable(ceiling_ft_sensor src/ceiling_ft_rostopic_converter.cpp)
 #   ${catkin_LIBRARIES}
 # )
 target_link_libraries(gazebo_motor_model ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES})
-target_link_libraries(gazebo_sticky_foot ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES})
+# target_link_libraries(gazebo_sticky_foot ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES})
 target_link_libraries(ceiling_ft_sensor ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 #######################
 ## 9. Tests to build ##
