@@ -37,8 +37,8 @@ namespace gazebo {
             std::string jointName;
             std::string linkName;
 
-            double rotor_velocity_slowdown_sim;
-            double rotor_velocity = 20;
+            double rot_vel_visual_slowdown;
+            double rot_vel = 20;
 
             double thrust_coeff;
             double torque_coeff;

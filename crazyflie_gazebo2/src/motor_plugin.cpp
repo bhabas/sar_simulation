@@ -32,7 +32,7 @@ namespace gazebo
         motor_number = _sdf->GetElement("motorNumber")->Get<int>();
         thrust_coeff = _sdf->GetElement("rotorThrustCoeff")->Get<double>();
         thrust_coeff = _sdf->GetElement("rotorTorqueCoeff")->Get<double>();
-        rotor_velocity_slowdown_sim = _sdf->GetElement("rotorVelocitySlowdownSim")->Get<double>();
+        rot_vel_visual_slowdown = _sdf->GetElement("rotorVelocitySlowdownSim")->Get<double>();
 
         if (_sdf->GetElement("turningDirection")->Get<std::string>() == "ccw")
         {
@@ -57,7 +57,7 @@ namespace gazebo
     {
         updateThrust();
         
-        joint_ptr->SetVelocity(0,turning_direction * rotor_velocity / rotor_velocity_slowdown_sim);
+        joint_ptr->SetVelocity(0,turning_direction * rot_vel / rot_vel_visual_slowdown);
     }
 
     void GazeboMotorPlugin::updateThrust()
@@ -68,7 +68,7 @@ namespace gazebo
 
     void GazeboMotorPlugin::MotorSpeedCallback(const crazyflie_msgs::MS::ConstPtr &msg)
     {
-
+        rot_vel = msg->MotorPWM[motor_number-1];
     }
 
     GZ_REGISTER_MODEL_PLUGIN(GazeboMotorPlugin);
