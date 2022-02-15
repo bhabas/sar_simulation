@@ -22,6 +22,7 @@ namespace gazebo {
             void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
             void OnUpdate();
             void updateThrust();
+            void updateTorque();
             void MotorSpeedCallback(const crazyflie_msgs::MS::ConstPtr &msg);
 
 
@@ -42,6 +43,9 @@ namespace gazebo {
 
             double thrust_coeff;
             double torque_coeff;
+
+            double thrust;
+            double torque;
 
             event::ConnectionPtr updateConnection;
 

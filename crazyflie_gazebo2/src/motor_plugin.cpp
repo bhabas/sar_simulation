@@ -1,9 +1,6 @@
 #include <iostream>
 #include <motor_plugin.h>
 
-/*
-    This plugin is responsible for joining foot pads to whatever entity they collide with (e.g. ground or ceiling).
-*/
 
 namespace gazebo
 {
@@ -47,7 +44,7 @@ namespace gazebo
             gzerr << "[gazebo_motor_model] Please only use 'cw' or 'ccw' as turningDirection" << std::endl;
         }
 
- 
+        // RUN FUNCTION EACH TIME SIMULATION UPDATES
         updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&GazeboMotorPlugin::OnUpdate, this));
 
         std::cout << "\n\n";
@@ -56,24 +53,30 @@ namespace gazebo
     void GazeboMotorPlugin::OnUpdate()
     {
         updateThrust();
+        updateTorque();
         
+        // SET VISUAL VELOCTIY OF ROTOR
         joint_ptr->SetVelocity(0,turning_direction * rot_vel / rot_vel_visual_slowdown);
     }
 
     void GazeboMotorPlugin::updateThrust()
     {
-        // APPLY ROTOR THRUST
-        double thrust = (thrust_coeff*rot_vel*rot_vel);
+        // APPLY ROTOR THRUST TO LINK
+        thrust = (thrust_coeff*rot_vel*rot_vel);
         link_ptr->AddRelativeForce(ignition::math::Vector3d(0, 0, thrust));
 
-        // APPLY ROTOR MOMENT TO MAIN BODY
-        ignition::math::Vector3d torque(0, 0, -turning_direction * (torque_coeff*thrust));
+    }
+
+    void GazeboMotorPlugin::updateTorque()
+    {
+        // APPLY ROTOR TORQUE TO MAIN BODY
+        torque = torque_coeff*thrust;
+        ignition::math::Vector3d torque_vec(0, 0, -turning_direction * torque); // Torque is opposite direction of rotation
 
         physics::Link_V parent_links = link_ptr->GetParentJointsLinks(); // Get <vector> of parent links
         ignition::math::Pose3d pose_difference = link_ptr->WorldCoGPose() - parent_links.at(0)->WorldCoGPose(); // Find rotor pos relative to body
-        ignition::math::Vector3d torque_parent_frame = pose_difference.Rot().RotateVector(torque); // Rotate torque vector to match body orientation
+        ignition::math::Vector3d torque_parent_frame = pose_difference.Rot().RotateVector(torque_vec); // Rotate torque vector to match body orientation
         parent_links.at(0)->AddRelativeTorque(torque_parent_frame); // Apply torque vector to body
-
     }
 
     void GazeboMotorPlugin::MotorSpeedCallback(const crazyflie_msgs::MS::ConstPtr &msg)
