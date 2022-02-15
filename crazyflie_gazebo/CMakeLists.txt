@@ -30,3 +30,7 @@ target_link_libraries(gazebo_sticky_foot ${GAZEBO_LIBRARIES})
 
 add_library(motor_plugin SHARED src/motor_plugin.cpp)
 target_link_libraries(motor_plugin ${GAZEBO_LIBRARIES})
+
+# add_executable(ceiling_ft_sensor src/ceiling_ft_rostopic_converter.cpp)
+# add_dependencies(ceiling_ft_sensor ${catkin_EXPORTED_TARGETS})
+# target_link_libraries(ceiling_ft_sensor ${catkin_LIBRARIES})
