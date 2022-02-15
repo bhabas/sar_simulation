@@ -62,11 +62,18 @@ namespace gazebo
 
     void GazeboMotorPlugin::updateThrust()
     {
+        // APPLY ROTOR THRUST
         double thrust = (thrust_coeff*rot_vel*rot_vel);
-        double torque = -turning_direction * (torque_coeff*thrust);
-
         link_ptr->AddRelativeForce(ignition::math::Vector3d(0, 0, thrust));
-        link_ptr->AddRelativeTorque(ignition::math::Vector3d(0, 0, torque));
+
+        // APPLY ROTOR MOMENT TO MAIN BODY
+        physics::Link_V parent_links = link_ptr->GetParentJointsLinks(); // GET BODY LINK NAME
+        ignition::math::Pose3d pose_difference = link_ptr->WorldCoGPose() - parent_links.at(0)->WorldCoGPose();
+
+        ignition::math::Vector3d torque(0, 0, -turning_direction * (torque_coeff*thrust));
+        ignition::math::Vector3d torque_parent_frame = pose_difference.Rot().RotateVector(torque);
+        parent_links.at(0)->AddRelativeTorque(torque_parent_frame);
+
     }
 
     void GazeboMotorPlugin::MotorSpeedCallback(const crazyflie_msgs::MS::ConstPtr &msg)

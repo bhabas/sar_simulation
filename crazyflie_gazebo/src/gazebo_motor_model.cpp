@@ -132,7 +132,7 @@ void GazeboMotorModel::OnUpdate(const common::UpdateInfo& _info) {
 
 void GazeboMotorModel::MotorSpeedCallback(const crazyflie_msgs::MS::ConstPtr &msg)
 {
-  // ref_motor_rot_vel_ = static_cast<double>(msg->MotorSpeeds[motor_number_]);
+  ref_motor_rot_vel_ = static_cast<double>(msg->MotorPWM[motor_number_]);
   // std::cout << msg->MotorSpeeds[motor_number_] << std::endl;
   // ref_motor_rot_vel_ = std::min(
   //   static_cast<double>(msg->MotorSpeeds[motor_number_]), 
@@ -182,10 +182,20 @@ void GazeboMotorModel::UpdateForcesAndMoments() {
   // link_->AddForce(air_drag);
   // Moments
   // Getting the parent link, such that the resulting torques can be applied to it.
-  physics::Link_V parent_links = link_->GetParentJointsLinks();
+  physics::Link_V parent_links = link_->GetParentJointsLinks(); // GET BODY LINK NAME
+  
+
+  if(motor_number_ == 0)
+  {
+    // std::cout << parent_links.at(0)->GetName().c_str() << std::endl;
+    std::cout << link_->WorldCoGPose().Pos().X() << std::endl; // Rotor pose relative to center of world
+    std::cout << parent_links.at(0)->WorldCoGPose().Pos().X() << std::endl; // Main link pose relative to center of world
+
+  }
+  
   // The tansformation from the parent_link to the link_.
   #if GAZEBO_MAJOR_VERSION >= 9
-    ignition::math::Pose3d pose_difference = link_->WorldCoGPose() - parent_links.at(0)->WorldCoGPose();
+    ignition::math::Pose3d pose_difference = link_->WorldCoGPose() - parent_links.at(0)->WorldCoGPose(); // FIND DIFFERENCE BETWEEN ROTOR COG AND BODY COG
   #else
     ignition::math::Pose3d pose_difference = ignitionFromGazeboMath(link_->GetWorldCoGPose() - parent_links.at(0)->GetWorldCoGPose());
   #endif

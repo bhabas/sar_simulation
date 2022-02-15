@@ -1729,7 +1729,74 @@
         </ode>
       </physics>
     </joint> -->
-    
+    <!-- <plugin name='back_left_motor_model' filename='libgazebo_motor_model.so'>
+      <robotNamespace/>
+      <jointName>rotor_2_joint</jointName>
+      <linkName>rotor_2</linkName>
+      <turningDirection>ccw</turningDirection>
+      <timeConstantUp>0.01</timeConstantUp>
+      <timeConstantDown>0.0001</timeConstantDown>
+      <maxRotVelocity>80000</maxRotVelocity>
+      <motorConstant>2.21e-8</motorConstant>
+      <momentConstant>0.00612</momentConstant>
+      <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
+      <motorNumber>1</motorNumber>
+      <rotorDragCoefficient>9.1785e-07</rotorDragCoefficient>
+      <rollingMomentCoefficient>1e-07</rollingMomentCoefficient>
+      <motorSpeedPubTopic>/motor_speed/1</motorSpeedPubTopic>
+      <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
+    </plugin>
+    <plugin name='back_right_motor_model' filename='libgazebo_motor_model.so'>
+      <robotNamespace/>
+      <jointName>rotor_3_joint</jointName>
+      <linkName>rotor_3</linkName>
+      <turningDirection>cw</turningDirection>
+      <timeConstantUp>0.01</timeConstantUp>
+      <timeConstantDown>0.0001</timeConstantDown>
+      <maxRotVelocity>80000</maxRotVelocity>
+      <motorConstant>2.21e-8</motorConstant>
+      <momentConstant>0.00612</momentConstant>
+      <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
+      <motorNumber>2</motorNumber>
+      <rotorDragCoefficient>9.1785e-07</rotorDragCoefficient>
+      <rollingMomentCoefficient>1e-07</rollingMomentCoefficient>
+      <motorSpeedPubTopic>/motor_speed/2</motorSpeedPubTopic>
+      <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
+    </plugin>
+    <plugin name='front_left_motor_model' filename='libgazebo_motor_model.so'>
+      <robotNamespace/>
+      <jointName>rotor_1_joint</jointName>
+      <linkName>rotor_1</linkName>
+      <turningDirection>cw</turningDirection>
+      <timeConstantUp>0.01</timeConstantUp>
+      <timeConstantDown>0.0001</timeConstantDown>
+      <maxRotVelocity>80000</maxRotVelocity>
+      <motorConstant>2.21e-8</motorConstant>
+      <momentConstant>0.00612</momentConstant>
+      <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
+      <motorNumber>0</motorNumber>
+      <rotorDragCoefficient>9.1785e-07</rotorDragCoefficient>
+      <rollingMomentCoefficient>1e-07</rollingMomentCoefficient>
+      <motorSpeedPubTopic>/motor_speed/0</motorSpeedPubTopic>
+      <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
+    </plugin>
+    <plugin name='front_right_motor_model' filename='libgazebo_motor_model.so'>
+      <robotNamespace/>
+      <jointName>rotor_4_joint</jointName>
+      <linkName>rotor_4</linkName>
+      <turningDirection>ccw</turningDirection>
+      <timeConstantUp>0.01</timeConstantUp>
+      <timeConstantDown>0.0001</timeConstantDown>
+      <maxRotVelocity>80000</maxRotVelocity>
+      <motorConstant>2.21e-8</motorConstant>
+      <momentConstant>0.00612</momentConstant>
+      <commandSubTopic>/gazebo/command/motor_speed</commandSubTopic>
+      <motorNumber>3</motorNumber>
+      <rotorDragCoefficient>9.1785e-07</rotorDragCoefficient>
+      <rollingMomentCoefficient>1e-07</rollingMomentCoefficient>
+      <motorSpeedPubTopic>/motor_speed/3</motorSpeedPubTopic>
+      <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
+    </plugin> -->
 
     <plugin name='front_left_motor_model' filename='libmotor_plugin.so'>
       <motorNumber>1</motorNumber>
