@@ -179,7 +179,7 @@ add_library(gazebo_motor_model SHARED src/gazebo_motor_model.cpp)
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(ceiling_ft_sensor src/ceiling_ft_rostopic_converter.cpp)
+# add_executable(ceiling_ft_sensor src/ceiling_ft_rostopic_converter.cpp)
 
 
 ## Rename C++ executable without prefix
@@ -199,7 +199,7 @@ add_executable(ceiling_ft_sensor src/ceiling_ft_rostopic_converter.cpp)
 # )
 target_link_libraries(gazebo_motor_model ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES})
 # target_link_libraries(gazebo_sticky_foot ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${GAZEBO_LIBRARIES})
-target_link_libraries(ceiling_ft_sensor ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
+# target_link_libraries(ceiling_ft_sensor ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 #######################
 ## 9. Tests to build ##
 #######################
