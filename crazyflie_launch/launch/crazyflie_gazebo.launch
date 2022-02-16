@@ -5,7 +5,7 @@
     <arg name="gui_flag" default="true"/>
     <arg name="sdf_path" default="$(find crazyflie_gazebo)/models/$(arg model_name)/model.sdf"/>
     <arg name="verbose" default="true"/>
-    <arg name="paused" default="true"/>
+    <arg name="paused" default="false"/>
 
     <!-- LAUNCH GAZEBO WITH SPECIFIED WORLD FILE -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">

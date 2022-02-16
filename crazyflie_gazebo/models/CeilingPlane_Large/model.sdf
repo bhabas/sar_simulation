@@ -118,13 +118,16 @@
       <physics>
         <ode>
         </ode>
+        <provide_feedback>true</provide_feedback>
       </physics>
-      <!-- <sensor name="force_torque" type="force_torque">
-        <always_on>true</always_on>
-        <update_rate>1000</update_rate>
-      </sensor> -->
     </joint>
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
+
+    <plugin name="ft_sensor" filename="libgazebo_ros_ft_sensor.so">
+      <jointName>ceiling_joint</jointName>
+      <topicName>/Gazebo/Ceiling_FT</topicName>
+      <updateRate>500</updateRate>
+  </plugin>
   </model>
 </sdf>
