@@ -115,7 +115,7 @@ def executeFlight(env,agent):
         # ============================
         ##    Termination Criteria 
         # ============================
-        if (env.impact_flag or env.body_contact) and ((env.getTime()-start_time_impact) > 1.0):
+        if (env.impact_flag or env.body_contact) and ((env.getTime()-start_time_impact) > 0.5):
             env.error_str = "Rollout Completed: Impact Timeout"
             print(env.error_str)
 
@@ -172,7 +172,7 @@ def executeFlight(env,agent):
             
             
             print(f"Reward = {env.reward:.3f}")
-            print(f"# of Leg contacts: {sum(env.pad_contacts)}")
+            print(f"# of Leg contacts: {len(env.pad_contacts)}")
             print("!------------------------End Run------------------------! \n")  
 
             
