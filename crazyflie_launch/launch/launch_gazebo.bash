@@ -7,6 +7,7 @@ roslaunch crazyflie_launch params.launch
 MODEL_NAME=$(rosparam get /MODEL_NAME)
 WORLD_NAME=$(rosparam get /WORLD_NAME)
 GUI_FLAG=$(rosparam get /GUI_FLAG)
+PAUSE_FLAG=$(rosparam get /PAUSE_FLAG)
 
 ## START GAZEBO 
-roslaunch crazyflie_launch crazyflie_gazebo.launch world_name:=$WORLD_NAME model_name:=$MODEL_NAME gui:=$GUI_FLAG
+roslaunch crazyflie_launch crazyflie_gazebo.launch world_name:=$WORLD_NAME model_name:=$MODEL_NAME gui:=$GUI_FLAG paused:=$PAUSED_FLAG

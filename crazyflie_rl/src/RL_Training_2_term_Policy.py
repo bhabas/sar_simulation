@@ -16,7 +16,7 @@ np.set_printoptions(precision=2, suppress=True)
 
 if __name__ == '__main__':
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=False)
+    env = CrazyflieEnv(gazeboTimeout=True)
     
 
     ## INIT LEARNING AGENT

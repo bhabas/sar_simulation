@@ -1,9 +1,10 @@
 MODEL_NAME: "crazyflie_Wide-Short"
 WORLD_NAME: "CeilingSurface_Large"
 GUI_FLAG: True
+PAUSE_FLAG: True
 
 SIM_SPEED: 1.0
-SIM_SLOWDOWN_SPEED: 1.0
+SIM_SLOWDOWN_SPEED: 0.3
 LANDING_SLOWDOWN: True
 
 
