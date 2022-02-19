@@ -12,9 +12,9 @@ void StateCollector::stabilizerLoop() // MAIN CONTROLLER LOOP
         stateEstimator(&state, &sensorData, &control, tick); // Run state/sensor values through "Kalman filter"
         // controllerGTC(&control, &setpoint, &sensorData, &state, tick);
 
-        // tick++;
 
         
+        tick++;
         rate.sleep();
     }
 }

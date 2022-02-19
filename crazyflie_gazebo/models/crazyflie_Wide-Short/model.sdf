@@ -1779,28 +1779,17 @@
     <plugin name="imu_plugin" filename="libgazebo_ros_imu.so">
       <alwaysOn>true</alwaysOn>
       <bodyName>crazyflie_body</bodyName>
-      <topicName>cf1/imu</topicName>
+      <topicName>CF_Internal/IMU</topicName>
       <serviceName>imu_service</serviceName>
       <gaussianNoise>0.0</gaussianNoise>
       <updateRate>100.0</updateRate>
     </plugin>
     
-    <plugin name='crazyflie_odom' filename='libgazebo_ros_p3d.so'>
-      <alwaysOn>1</alwaysOn>
-      <updateRate>1000</updateRate>
-      <bodyName>crazyflie_body</bodyName>
-      <topicName>env/global_state_data</topicName>
-      <frameName>world</frameName>
-      <xyzOffsets>0 0 0</xyzOffsets>
-      <rpyOffsets>0 0 0</rpyOffsets>
-      <robotNamespace>/</robotNamespace>
-    </plugin>
-
     <plugin name='crazyflie_Vicon' filename='libgazebo_ros_p3d.so'>
       <alwaysOn>1</alwaysOn>
       <updateRate>100</updateRate>
       <bodyName>crazyflie_body</bodyName>
-      <topicName>env/vicon_state</topicName>
+      <topicName>UKF/viconState_Filtered</topicName>
       <frameName>world</frameName>
       <xyzOffsets>0 0 0</xyzOffsets>
       <rpyOffsets>0 0 0</rpyOffsets>
