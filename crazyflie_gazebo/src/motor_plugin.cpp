@@ -56,13 +56,14 @@ namespace gazebo
         updateTorque();
         
         // SET VISUAL VELOCTIY OF ROTOR
+        rot_vel = sqrt(thrust/thrust_coeff);
         joint_ptr->SetVelocity(0,turning_direction * rot_vel / rot_vel_visual_slowdown);
     }
 
     void GazeboMotorPlugin::updateThrust()
     {
         // APPLY ROTOR THRUST TO LINK
-        thrust = (thrust_coeff*rot_vel*rot_vel);
+        thrust = PWM2thrust(rotorPWM)*g2Newton;
         link_ptr->AddRelativeForce(ignition::math::Vector3d(0, 0, thrust));
 
     }
@@ -81,7 +82,7 @@ namespace gazebo
 
     void GazeboMotorPlugin::MotorSpeedCallback(const crazyflie_msgs::MS::ConstPtr &msg)
     {
-        rot_vel = msg->MotorPWM[motor_number-1];
+        rotorPWM = msg->MotorPWM[motor_number-1];
     }
 
     GZ_REGISTER_MODEL_PLUGIN(GazeboMotorPlugin);

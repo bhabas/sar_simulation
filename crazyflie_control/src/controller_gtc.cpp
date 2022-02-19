@@ -561,7 +561,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         // ========
        
 
-        _CTRL->_MS_msg.MotorPWM = {MS1,MS2,MS3,MS4};
+        _CTRL->_MS_msg.MotorPWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
         _CTRL->_MS_Publisher.publish(_CTRL->_MS_msg);
 
         

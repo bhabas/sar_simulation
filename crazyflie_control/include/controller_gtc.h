@@ -196,10 +196,10 @@ static float f_yaw_g;    // Motor thrust - Yaw    [g]
 
 
 // MOTOR VARIABLES
-static uint32_t M1_pwm = 0; 
-static uint32_t M2_pwm = 0; 
-static uint32_t M3_pwm = 0; 
-static uint32_t M4_pwm = 0; 
+static uint16_t M1_pwm = 0; 
+static uint16_t M2_pwm = 0; 
+static uint16_t M3_pwm = 0; 
+static uint16_t M4_pwm = 0; 
 
 static uint16_t MS1 = 0;
 static uint16_t MS2 = 0;
