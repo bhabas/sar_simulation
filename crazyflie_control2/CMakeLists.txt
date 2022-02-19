@@ -11,7 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 catkin_package(
  INCLUDE_DIRS include
-#  LIBRARIES 
+#  LIBRARIES
  CATKIN_DEPENDS roscpp 
 #  DEPENDS 
 )
@@ -19,11 +19,8 @@ catkin_package(
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 
-# add_executable(controller src/controller_gtc.cpp src/nml.c src/nml_util.c)
-# add_dependencies(controller ${catkin_EXPORTED_TARGETS})
-# target_link_libraries(controller ${catkin_LIBRARIES})
-
-
-add_executable(stabilizer src/stabilizer.cpp)
+add_executable(stabilizer src/stabilizer.cpp src/controller_gtc.c src/nml.c src/nml_util.c)
 add_dependencies(stabilizer ${catkin_EXPORTED_TARGETS})
 target_link_libraries(stabilizer ${catkin_LIBRARIES})
+
+
