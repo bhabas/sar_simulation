@@ -23,7 +23,3 @@ add_executable(controller src/controller_gtc.cpp src/nml.c src/nml_util.c)
 add_dependencies(controller ${catkin_EXPORTED_TARGETS})
 target_link_libraries(controller ${catkin_LIBRARIES})
 
-
-add_executable(stabilizer src/stabilizer.cpp src/nml.c src/nml_util.c )
-add_dependencies(stabilizer ${catkin_EXPORTED_TARGETS})
-target_link_libraries(stabilizer ${catkin_LIBRARIES})
