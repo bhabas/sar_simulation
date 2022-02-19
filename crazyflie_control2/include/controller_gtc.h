@@ -4,9 +4,12 @@ extern "C" {
 
 
 #include <stdio.h>
-void printHello();
+#include "stabilizer_types.h"
 
-
+void controllerGTC(control_t *control, setpoint_t *setpoint,
+                                         const sensorData_t *sensors,
+                                         const state_t *state,
+                                         const uint32_t tick);
 
 
 
