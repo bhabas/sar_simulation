@@ -1766,26 +1766,8 @@
       <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
       <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
     </plugin>
-    <plugin name='OF_sensor' filename='libgazebo_ros_p3d.so'>
-      <alwaysOn>1</alwaysOn>
-      <updateRate>100</updateRate>
-      <bodyName>crazyflie_body</bodyName>
-      <topicName>cf1/OF_sensor</topicName>
-      <frameName>world</frameName>
-      <gaussianNoise>0.0</gaussianNoise>
-      <robotNamespace>/</robotNamespace>
-    </plugin>
-
-    <plugin name="imu_plugin" filename="libgazebo_ros_imu.so">
-      <alwaysOn>true</alwaysOn>
-      <bodyName>crazyflie_body</bodyName>
-      <topicName>CF_Internal/IMU</topicName>
-      <serviceName>imu_service</serviceName>
-      <gaussianNoise>0.0</gaussianNoise>
-      <updateRate>100.0</updateRate>
-    </plugin>
-    
-    <plugin name='crazyflie_Vicon' filename='libgazebo_ros_p3d.so'>
+        
+    <plugin name='Vicon_plugin' filename='libgazebo_ros_p3d.so'>
       <alwaysOn>1</alwaysOn>
       <updateRate>100</updateRate>
       <bodyName>crazyflie_body</bodyName>
@@ -1793,6 +1775,25 @@
       <frameName>world</frameName>
       <xyzOffsets>0 0 0</xyzOffsets>
       <rpyOffsets>0 0 0</rpyOffsets>
+      <robotNamespace>/</robotNamespace>
+    </plugin>
+
+    <plugin name="IMU_plugin" filename="libgazebo_ros_imu.so">
+      <alwaysOn>true</alwaysOn>
+      <bodyName>crazyflie_body</bodyName>
+      <topicName>CF_Internal/IMU</topicName>
+      <serviceName>imu_service</serviceName>
+      <gaussianNoise>0.0</gaussianNoise>
+      <updateRate>100.0</updateRate>
+    </plugin>
+
+    <plugin name='OF_sensor' filename='libgazebo_ros_p3d.so'>
+      <alwaysOn>1</alwaysOn>
+      <updateRate>100</updateRate>
+      <bodyName>crazyflie_body</bodyName>
+      <topicName>CF_Internal/IMU</topicName>
+      <frameName>world</frameName>
+      <gaussianNoise>0.0</gaussianNoise>
       <robotNamespace>/</robotNamespace>
     </plugin>
     
