@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
 
     tick = 1;
-    ros::Rate rate(RATE_MAIN_LOOP);
+    ros::Rate rate(5);
 
     while(ros::ok)
     {

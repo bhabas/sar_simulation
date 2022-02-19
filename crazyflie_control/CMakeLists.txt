@@ -19,7 +19,7 @@ catkin_package(
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 
-add_executable(controller src/controller_gtc.cpp src/nml.c src/nml_util.c)
-add_dependencies(controller ${catkin_EXPORTED_TARGETS})
-target_link_libraries(controller ${catkin_LIBRARIES})
+# add_executable(controller src/controller_gtc.cpp src/nml.c src/nml_util.c)
+# add_dependencies(controller ${catkin_EXPORTED_TARGETS})
+# target_link_libraries(controller ${catkin_LIBRARIES})
 

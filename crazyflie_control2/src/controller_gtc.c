@@ -7,5 +7,5 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                                          const uint32_t tick)
 {
 
-    printf("Hello me\n");
+    printf("Hello me %.3f\n",state->position.x);
 }
