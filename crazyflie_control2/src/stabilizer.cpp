@@ -1,20 +1,23 @@
 #include "stabilizer.h"
-#include "stabilizer_types.h"
-#include "nml.h"
 
 
-#include "controller_gtc.h"
-#include "estimator.h"
-#include <ros/ros.h>
+void StateCollector::stabilizerLoop() // MAIN CONTROLLER LOOP
+{
+    ros::Rate rate(5);
+    tick = 1;
+   
+    while(ros::ok)
+    {
 
+        stateEstimator(&state, &sensorData, &control, tick); // Run state/sensor values through "Kalman filter"
+        // controllerGTC(&control, &setpoint, &sensorData, &state, tick);
 
-uint32_t tick;
+        // tick++;
 
-// State variables for the stabilizer
-static setpoint_t setpoint;
-static sensorData_t sensorData;
-static state_t state;
-static control_t control;
+        
+        rate.sleep();
+    }
+}
 
 int main(int argc, char **argv)
 {
@@ -22,16 +25,10 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "Stabilizer_Node");
     ros::NodeHandle nh;
 
-    tick = 1;
-    ros::Rate rate(5);
+    StateCollector SC = StateCollector(&nh);
+    ros::spin();
 
-    while(ros::ok)
-    {
-        stateEstimator(&state, &sensorData, &control, tick);
-        controllerGTC(&control, &setpoint, &sensorData, &state, tick);
-
-        tick++;
-        rate.sleep();
-    }
+    
     return 0;
 }
+
