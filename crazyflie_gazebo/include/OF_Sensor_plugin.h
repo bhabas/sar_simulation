@@ -5,7 +5,7 @@
 #include <gazebo/physics/physics.hh>
 #include <gazebo/transport/transport.hh>
 #include <gazebo/common/common.hh>
-
+#include <random>
 
 
 
@@ -23,6 +23,7 @@ namespace gazebo {
             void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
             void OnUpdate();
             void Publish_OF_Data();
+            float GaussianKernel(double mu, double sigma);
 
 
         private:
@@ -35,8 +36,11 @@ namespace gazebo {
             std::thread publisherThread;
 
             std::string linkName;
+            std::string topicName;
 
-            float h_ceiling = 2.10;
+            int updateRate;
+
+            float _H_CEILING;
 
             float Vx_rel = 0.0; // [m/s]
             float Vy_rel = 0.0; // [m/s]
@@ -48,8 +52,10 @@ namespace gazebo {
             float OFx = 0.0;   // [rad/s]
             float OFy = 0.0;   // [rad/s]
 
-
-            
+            float Tau_gaussianNoise;
+            float OFx_gaussianNoise;
+            float OFy_gaussianNoise;
+            float RREV_gaussianNoise;
 
             ros::NodeHandle nh;
             ros::Publisher OF_Publisher;

@@ -1790,9 +1790,11 @@
     <plugin name='OF_sensor' filename='libOF_Sensor_plugin.so'>
       <updateRate>100</updateRate>
       <bodyName>crazyflie_body</bodyName>
-      <topicName>CF_Internal/OF_Sensor</topicName>
-      <gaussianNoise>0.0</gaussianNoise>
-      <robotNamespace>/</robotNamespace>
+      <topicName>/CF_Internal/OF_Sensor</topicName>
+      <Tau_gaussianNoise>0.0</Tau_gaussianNoise>
+      <RREV_gaussianNoise>0.0.0</RREV_gaussianNoise>
+      <OFx_gaussianNoise>0.0</OFx_gaussianNoise>
+      <OFy_gaussianNoise>0.0</OFy_gaussianNoise>
     </plugin>
     
     <plugin name='pad_1_sticky' filename='libgazebo_sticky_foot.so'>
