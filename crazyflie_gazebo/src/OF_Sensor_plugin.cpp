@@ -15,7 +15,12 @@ namespace gazebo
         gzmsg << "\t Link Name:\t" << linkName << std::endl;
         link_ptr = model_->GetLink(linkName);
 
+        OF_Publisher = nh.advertise<crazyflie_msgs::OF_SensorData>("CF_Internal/OF_Sensor",1);
 
+
+        publisherThread = std::thread(&OF_SensorPlugin::Publish_OF_Data, this);
+
+        
         // RUN FUNCTION EACH TIME SIMULATION UPDATES
         updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&OF_SensorPlugin::OnUpdate, this));
 
@@ -23,23 +28,44 @@ namespace gazebo
 
         std::cout << "\n\n";
     }
+    void OF_SensorPlugin::Publish_OF_Data()
+    {
+        
+        ros::Rate rate(100);
+        while(ros::ok)
+        {
+            // PUBLISH OPTICAL FLOW VALUES
+            OF_Data_msg.Tau = Tau;
+            OF_Data_msg.RREV = RREV;
+            OF_Data_msg.OFx = OFx;
+            OF_Data_msg.OFy = OFy;
+            OF_Data_msg.d_ceil = d_ceil;
+
+            OF_Publisher.publish(OF_Data_msg);
+            rate.sleep();
+        }
+    }
 
     void OF_SensorPlugin::OnUpdate()
     {
-        // DEFINE
+
+        model_->SetLinearVel(ignition::math::Vector3d(0.5, 0.5, 2.5));
+        d_ceil = h_ceiling - link_ptr->WorldPose().Z();
+        
+        
+        // DEFINE VELOCITIES RELATIVE TO BODY ORIENTATION
         Vx_rel = link_ptr->RelativeLinearVel().X();
         Vy_rel = link_ptr->RelativeLinearVel().Y();
         Vz_rel = link_ptr->RelativeLinearVel().Z();
-        d_ceil = h_ceiling - link_ptr->WorldPose().Z();
 
+        // CALCULATE OPTICAL FLOW VALUES
         Tau = d_ceil/Vz_rel;
         RREV = Vz_rel/d_ceil;
         OFx = -Vy_rel/d_ceil;
         OFy = -Vx_rel/d_ceil;
 
-        printf("Tau: %.3f \t RREV: %.3f \t OFx: %.3f \t OFy: %.3f \t d_ceil: %.3f\n",Tau,RREV,OFx,OFy,d_ceil);
 
-        model_->SetLinearVel(ignition::math::Vector3d(0.5, 0.5, 2.5));
+        // Publish_OF_Data();
 
     }
 

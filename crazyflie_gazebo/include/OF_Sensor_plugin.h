@@ -1,4 +1,5 @@
 #include <iostream>
+#include <thread>
 
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/physics.hh>
@@ -9,7 +10,7 @@
 
 
 #include <ros/ros.h>
-
+#include "crazyflie_msgs/OF_SensorData.h"
 
 
 namespace gazebo {
@@ -21,35 +22,38 @@ namespace gazebo {
         protected:
             void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
             void OnUpdate();
+            void Publish_OF_Data();
 
 
         private:
-            physics::WorldPtr world_;
             physics::ModelPtr model_;
-            // physics::JointPtr joint_ptr;
             physics::LinkPtr link_ptr;
 
 
             event::ConnectionPtr updateConnection;
+            // DEFINE THREAD OBJECTS
+            std::thread publisherThread;
 
             std::string linkName;
 
-            double h_ceiling = 2.10;
+            float h_ceiling = 2.10;
 
-            double Vx_rel = 0.0; // [m/s]
-            double Vy_rel = 0.0; // [m/s]
-            double Vz_rel = 0.0; // [m/s]
-            double d_ceil = 0.0; // [m]
+            float Vx_rel = 0.0; // [m/s]
+            float Vy_rel = 0.0; // [m/s]
+            float Vz_rel = 0.0; // [m/s]
+            float d_ceil = 0.0; // [m]
 
-            double Tau = 0.0;   // [s]
-            double RREV = 0.0;  // [rad/s]
-            double OFx = 0.0;   // [rad/s]
-            double OFy = 0.0;   // [rad/s]
+            float Tau = 0.0;   // [s]
+            float RREV = 0.0;  // [rad/s]
+            float OFx = 0.0;   // [rad/s]
+            float OFy = 0.0;   // [rad/s]
 
 
             
 
-            // ros::NodeHandle nh;
+            ros::NodeHandle nh;
+            ros::Publisher OF_Publisher;
+            crazyflie_msgs::OF_SensorData OF_Data_msg;
             // ros::Subscriber MS_Subscriber = nh.subscribe<crazyflie_msgs::MS>("/MS", 1, &OF_SensorPlugin::MotorSpeedCallback, this, ros::TransportHints().tcpNoDelay());
     };
 
