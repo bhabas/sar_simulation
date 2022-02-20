@@ -142,8 +142,15 @@ typedef struct zDistance_s {
 typedef struct sensorData_s {
   Axis3f acc;               // Gs
   Axis3f gyro;              // deg/s
-  Axis3f mag;               // gauss
+  Axis3f mag;               // gauss  
   baro_t baro;
+
+  // CUSTOM SENSOR VALUES
+  float Tau;  // [s]
+  float OFx;  // [rad/s]
+  float OFy;  // [rad/s]
+  float RREV; // [rad/s]
+
 #ifdef LOG_SEC_IMU
   Axis3f accSec;            // Gs
   Axis3f gyroSec;           // deg/s

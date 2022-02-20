@@ -11,10 +11,9 @@
 #include <ros/ros.h>
 
 #include <stdio.h>
-#include <ros/ros.h>
-#include "example_msgs/CustomMessage.h"
 #include "nav_msgs/Odometry.h"
 #include "sensor_msgs/Imu.h"
+#include "crazyflie_msgs/OF_SensorData.h"
 
 
 
@@ -34,16 +33,19 @@ class StateCollector
         {
             Vicon_Subscriber = nh->subscribe("/UKF/viconState_Filtered",1,&StateCollector::viconState_Callback,this,ros::TransportHints().tcpNoDelay());
             IMU_Subscriber = nh->subscribe("/CF_Internal/IMU",1,&StateCollector::imuState_Callback,this,ros::TransportHints().tcpNoDelay());
+            OF_Subscriber = nh->subscribe("/CF_Internal/OF_Sensor",1,&StateCollector::OFState_Callback,this,ros::TransportHints().tcpNoDelay());
 
             controllerThread = std::thread(&StateCollector::stabilizerLoop, this);
         }
 
         void viconState_Callback(const nav_msgs::Odometry::ConstPtr &msg);
         void imuState_Callback(const sensor_msgs::Imu::ConstPtr &msg);
+        void OFState_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg);
         void stabilizerLoop();
 
         ros::Subscriber Vicon_Subscriber;
         ros::Subscriber IMU_Subscriber;
+        ros::Subscriber OF_Subscriber;
 
         // DEFINE THREAD OBJECTS
         std::thread controllerThread;
@@ -52,6 +54,15 @@ class StateCollector
 
 
 };
+
+void StateCollector::OFState_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg)
+{
+    sensorData.Tau = msg->Tau;
+    sensorData.OFx = msg->OFx;
+    sensorData.OFy = msg->OFy;
+    sensorData.RREV = msg->RREV;
+
+}
 
 void StateCollector::imuState_Callback(const sensor_msgs::Imu::ConstPtr &msg)
 {
