@@ -1787,12 +1787,10 @@
       <updateRate>100.0</updateRate>
     </plugin>
 
-    <plugin name='OF_sensor' filename='libgazebo_ros_p3d.so'>
-      <alwaysOn>1</alwaysOn>
+    <plugin name='OF_sensor' filename='libOF_Sensor_plugin.so'>
       <updateRate>100</updateRate>
       <bodyName>crazyflie_body</bodyName>
-      <topicName>CF_Internal/IMU</topicName>
-      <frameName>world</frameName>
+      <topicName>CF_Internal/OF_Sensor</topicName>
       <gaussianNoise>0.0</gaussianNoise>
       <robotNamespace>/</robotNamespace>
     </plugin>
