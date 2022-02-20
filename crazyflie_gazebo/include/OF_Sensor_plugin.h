@@ -1,14 +1,15 @@
+// STANDARD IMPORTS
 #include <iostream>
 #include <thread>
+#include <random>
 
+// GAZEBO IMPORTS
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/physics.hh>
 #include <gazebo/transport/transport.hh>
 #include <gazebo/common/common.hh>
-#include <random>
 
-
-
+// ROS IMPORTS
 #include <ros/ros.h>
 #include "crazyflie_msgs/OF_SensorData.h"
 
@@ -21,27 +22,26 @@ namespace gazebo {
             
         protected:
             void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
-            void OnUpdate();
             void Publish_OF_Data();
             float GaussianKernel(double mu, double sigma);
 
 
         private:
-            physics::ModelPtr model_;
+            physics::ModelPtr model_ptr;
             physics::LinkPtr link_ptr;
 
 
-            event::ConnectionPtr updateConnection;
             // DEFINE THREAD OBJECTS
             std::thread publisherThread;
 
+            // CONSTANTS
             std::string linkName;
             std::string topicName;
+            int updateRate;     // [hz]
+            float _H_CEILING;   // [m]
 
-            int updateRate;
 
-            float _H_CEILING;
-
+            // INITIALIZE VARIABLES
             float Vx_rel = 0.0; // [m/s]
             float Vy_rel = 0.0; // [m/s]
             float Vz_rel = 0.0; // [m/s]
@@ -57,10 +57,10 @@ namespace gazebo {
             float OFy_gaussianNoise;
             float RREV_gaussianNoise;
 
+            // INIT ROS OBJECTS
             ros::NodeHandle nh;
             ros::Publisher OF_Publisher;
             crazyflie_msgs::OF_SensorData OF_Data_msg;
-            // ros::Subscriber MS_Subscriber = nh.subscribe<crazyflie_msgs::MS>("/MS", 1, &OF_SensorPlugin::MotorSpeedCallback, this, ros::TransportHints().tcpNoDelay());
     };
 
 }

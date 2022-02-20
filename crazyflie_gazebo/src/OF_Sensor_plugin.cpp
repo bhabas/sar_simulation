@@ -9,11 +9,12 @@ namespace gazebo
     void OF_SensorPlugin::Load(physics::ModelPtr parent, sdf::ElementPtr _sdf)
     {
         gzmsg << "Loading OF_SensorPlugin\n";
-        model_ = parent;
+        model_ptr = parent;
 
+        // COLLECT PARAMS FROM SDF
         linkName = _sdf->GetElement("bodyName")->Get<std::string>();
         gzmsg << "\t Link Name:\t" << linkName << std::endl;
-        link_ptr = model_->GetLink(linkName);
+        link_ptr = model_ptr->GetLink(linkName);
 
         topicName = _sdf->GetElement("topicName")->Get<std::string>();
         updateRate = _sdf->GetElement("updateRate")->Get<int>();
@@ -23,26 +24,39 @@ namespace gazebo
         OFy_gaussianNoise = _sdf->GetElement("OFy_gaussianNoise")->Get<double>();
         RREV_gaussianNoise = _sdf->GetElement("RREV_gaussianNoise")->Get<double>();
 
-
+        // GET CEILING HEIGHT FROM ROS PARAM
         ros::param::get("/CEILING_HEIGHT",_H_CEILING);
 
-
+        // INIT PUBLISHER AND PUBLISHING THREAD
         OF_Publisher = nh.advertise<crazyflie_msgs::OF_SensorData>(topicName,1);
         publisherThread = std::thread(&OF_SensorPlugin::Publish_OF_Data, this);
 
         
-        // RUN FUNCTION EACH TIME SIMULATION UPDATES
-        updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&OF_SensorPlugin::OnUpdate, this));
-
         gzmsg << "\t Loading Completed" << std::endl;
         std::cout << "\n\n";
     }
+
+
+
     void OF_SensorPlugin::Publish_OF_Data()
     {
-        
         ros::Rate rate(updateRate);
         while(ros::ok)
         {
+        
+            // DEFINE VELOCITIES RELATIVE TO BODY ORIENTATION
+            Vx_rel = link_ptr->RelativeLinearVel().X();
+            Vy_rel = link_ptr->RelativeLinearVel().Y();
+            Vz_rel = link_ptr->RelativeLinearVel().Z();
+
+            // CALCULATE OPTICAL FLOW VALUES
+            d_ceil = _H_CEILING - link_ptr->WorldPose().Z();
+
+            Tau = d_ceil/Vz_rel;
+            RREV = Vz_rel/d_ceil;
+            OFx = -Vy_rel/d_ceil;
+            OFy = -Vx_rel/d_ceil;
+
             // PUBLISH OPTICAL FLOW VALUES
             OF_Data_msg.Tau = Tau + GaussianKernel(0,Tau_gaussianNoise);
             OF_Data_msg.OFx = OFx + GaussianKernel(0,OFx_gaussianNoise);
@@ -55,30 +69,10 @@ namespace gazebo
         }
     }
 
-    void OF_SensorPlugin::OnUpdate()
-    {
-
-        model_->SetLinearVel(ignition::math::Vector3d(0.0, 0.0, 2.5));
-        d_ceil = _H_CEILING - link_ptr->WorldPose().Z();
-        
-        
-        // DEFINE VELOCITIES RELATIVE TO BODY ORIENTATION
-        Vx_rel = link_ptr->RelativeLinearVel().X();
-        Vy_rel = link_ptr->RelativeLinearVel().Y();
-        Vz_rel = link_ptr->RelativeLinearVel().Z();
-
-        // CALCULATE OPTICAL FLOW VALUES
-        Tau = d_ceil/Vz_rel;
-        RREV = Vz_rel/d_ceil;
-        OFx = -Vy_rel/d_ceil;
-        OFy = -Vx_rel/d_ceil;
-
-
-    }
 
     float OF_SensorPlugin::GaussianKernel(double mu, double sigma)
     {
-        
+        // PULL VALUE FROM THE GIVEN GAUSSIAN
         unsigned int seed = std::chrono::system_clock::now().time_since_epoch().count();
         std::default_random_engine generator(seed);
         
