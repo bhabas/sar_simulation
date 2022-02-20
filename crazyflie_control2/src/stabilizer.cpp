@@ -3,9 +3,13 @@
 
 void StateCollector::stabilizerLoop() // MAIN CONTROLLER LOOP
 {
-    ros::Rate rate(5);
+    ros::Rate rate(1000);
     tick = 1;
+
+    // INITIATE CONTROLLER
+    controllerGTCInit();
    
+   // RUN STABILIZER LOOP
     while(ros::ok)
     {
 

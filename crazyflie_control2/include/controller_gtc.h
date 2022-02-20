@@ -3,10 +3,10 @@ extern "C" {
 #endif
 
 
-
-
-
+// CRAZYFLIE FIRMWARE CODE BELOW
 // ===========================================================
+
+
 /**
  *
  * controller_gtc.h - Geometric Tracking Controller Interface
@@ -659,7 +659,7 @@ static inline float PWM2thrust(int32_t M_PWM)
 
 
 
-
+#define consolePrintf printf
 
 
 #ifdef __cplusplus
