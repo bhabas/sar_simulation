@@ -96,7 +96,7 @@ static float i_range_R_z = 0.5f;
 // SYSTEM PARAMETERS
 static float m = 0.0376; // [g]
 static float g = 9.81f;
-struct mat33 J; // Rotational Inertia Matrix [kg*m^2]
+static struct mat33 J; // Rotational Inertia Matrix [kg*m^2]
 static float h_ceiling = 2.10f; // [m]
 
 static float d = 0.040f;    // COM to Prop [m]

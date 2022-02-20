@@ -1,16 +1,18 @@
-#include "stabilizer_types.h"
-#include "nml.h"
 
 #include <iostream>
 #include <thread>
 #include <cmath>        // std::abs
+#include <stdio.h>
 
 
+#include "stabilizer_types.h"
 #include "controller_gtc.h"
 #include "estimator.h"
-#include <ros/ros.h>
+#include "power_distribution.h"
+#include "nml.h"
 
-#include <stdio.h>
+
+#include <ros/ros.h>
 #include "nav_msgs/Odometry.h"
 #include "sensor_msgs/Imu.h"
 #include "crazyflie_msgs/OF_SensorData.h"
