@@ -8,7 +8,6 @@
 #include "stabilizer_types.h"
 #include "controller_gtc.h"
 #include "estimator.h"
-#include "power_distribution.h"
 #include "nml.h"
 
 
@@ -16,6 +15,7 @@
 #include "nav_msgs/Odometry.h"
 #include "sensor_msgs/Imu.h"
 #include "crazyflie_msgs/OF_SensorData.h"
+#include "crazyflie_msgs/MS.h"
 
 
 
@@ -36,6 +36,7 @@ class StateCollector
             Vicon_Subscriber = nh->subscribe("/UKF/viconState_Filtered",1,&StateCollector::viconState_Callback,this,ros::TransportHints().tcpNoDelay());
             IMU_Subscriber = nh->subscribe("/CF_Internal/IMU",1,&StateCollector::imuState_Callback,this,ros::TransportHints().tcpNoDelay());
             OF_Subscriber = nh->subscribe("/CF_Internal/OF_Sensor",1,&StateCollector::OFState_Callback,this,ros::TransportHints().tcpNoDelay());
+            MS_PWM_Publisher = nh->advertise<crazyflie_msgs::MS>("/MS",1);
 
             controllerThread = std::thread(&StateCollector::stabilizerLoop, this);
         }
@@ -49,10 +50,14 @@ class StateCollector
         ros::Subscriber IMU_Subscriber;
         ros::Subscriber OF_Subscriber;
 
+        ros::Publisher MS_PWM_Publisher;
+
         // DEFINE THREAD OBJECTS
         std::thread controllerThread;
 
         uint32_t tick;
+
+        crazyflie_msgs::MS MS_msg;
 
 
 };

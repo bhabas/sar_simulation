@@ -502,8 +502,23 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
         f_thrust_g = clamp(f_thrust_g,0.0,f_MAX*0.8);    // Clamp thrust to prevent control saturation
 
+        // Add respective thrust components and limit to (0 <= PWM <= 60,000)
+        M1_pwm = limitPWM(thrust2PWM(f_thrust_g + f_roll_g - f_pitch_g + f_yaw_g)); 
+        M2_pwm = limitPWM(thrust2PWM(f_thrust_g + f_roll_g + f_pitch_g - f_yaw_g));
+        M3_pwm = limitPWM(thrust2PWM(f_thrust_g - f_roll_g + f_pitch_g + f_yaw_g));
+        M4_pwm = limitPWM(thrust2PWM(f_thrust_g - f_roll_g - f_pitch_g - f_yaw_g));
 
-        // THESE CONNECT TO POWER_DISTRIBUTION_STOCK.C 
+        // if(motorstop_flag){ // Cutoff all motor values
+        //     f_thrust_g = 0.0f;
+        //     M1_pwm = 0;
+        //     M2_pwm = 0;
+        //     M3_pwm = 0;
+        //     M4_pwm = 0;
+        // }
+
+
+
+        // THESE CONNECT TO POWER_DISTRIBUTION_STOCK.C TO 
         control->thrust = f_thrust_g;
         control->roll = (int16_t)(f_roll_g*1e3f);
         control->pitch = (int16_t)(f_pitch_g*1e3f);
@@ -513,9 +528,9 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
         
 
-        // compressStates();
-        // compressSetpoints();
-        // compressFlipStates();
+        compressStates();
+        compressSetpoints();
+        compressFlipStates();
         
 
     }
@@ -529,10 +544,10 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
     // }
     // else
     // {
-    //     // motorsSetRatio(MOTOR_M1, M4_pwm);
-    //     // motorsSetRatio(MOTOR_M2, M3_pwm);
-    //     // motorsSetRatio(MOTOR_M3, M2_pwm);
-    //     // motorsSetRatio(MOTOR_M4, M1_pwm);
+    //     motorsSetRatio(MOTOR_M1, M4_pwm);
+    //     motorsSetRatio(MOTOR_M2, M3_pwm);
+    //     motorsSetRatio(MOTOR_M3, M2_pwm);
+    //     motorsSetRatio(MOTOR_M4, M1_pwm);
     // }
 
     

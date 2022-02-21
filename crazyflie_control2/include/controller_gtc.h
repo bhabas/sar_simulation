@@ -491,159 +491,184 @@ static inline float PWM2thrust(int32_t M_PWM)
 
 
 
-// // ==================================
-// //         Logging Compression
-// // ==================================
+// ==================================
+//         Logging Compression
+// ==================================
 
-// static struct {
-//     // Compressed positions [mm]
-//     uint32_t xy; 
-//     int16_t z;
+static struct {
+    // Compressed positions [mm]
+    uint32_t xy; 
+    int16_t z;
 
-//     // Compressed velocities [mm/s]
-//     uint32_t vxy; 
-//     int16_t vz;
+    // Compressed velocities [mm/s]
+    uint32_t vxy; 
+    int16_t vz;
 
-//     // compressed quaternion, see quatcompress.h
-//     int32_t quat; 
+    // compressed quaternion, see quatcompress.h
+    int32_t quat; 
 
-//     // Compressed angular velocity [milli-rad/sec]
-//     uint32_t wxy; 
-//     int16_t wz;
+    // Compressed angular velocity [milli-rad/sec]
+    uint32_t wxy; 
+    int16_t wz;
 
-//     // Compressed actuation states
-//     uint32_t Mxy;   // [N*um]
-//     uint32_t FMz;   // [mN | N*um]
+    // Compressed actuation states
+    uint32_t Mxy;   // [N*um]
+    uint32_t FMz;   // [mN | N*um]
 
-//     uint32_t MS_PWM12; 
-//     uint32_t MS_PWM34;
+    uint32_t MS_PWM12; 
+    uint32_t MS_PWM34;
     
-//     // Compressed Optical Flow Values
-//     uint32_t OF_xy; // [milli-rad/s]
-//     int16_t RREV;   // [milli-rad/s]
-//     int16_t d_ceil; // [mm]
+    // Compressed Optical Flow Values
+    uint32_t OF_xy; // [milli-rad/s]
+    int16_t RREV;   // [milli-rad/s]
+    int16_t d_ceil; // [mm]
 
-//     uint32_t NN_FP; // NN_flip,NN_policy
+    uint32_t NN_FP; // NN_flip,NN_policy
 
-// } StatesZ_GTC;
+} StatesZ_GTC;
 
 
-// static struct {
+static struct {
     
-//     uint32_t xy;  // Compressed position [mm]
-//     int16_t z;
+    uint32_t xy;  // Compressed position [mm]
+    int16_t z;
 
-//     uint32_t vxy; // Compressed velocities [mm/s]
-//     int16_t vz;
+    uint32_t vxy; // Compressed velocities [mm/s]
+    int16_t vz;
 
-//     uint32_t axy; // Compress accelerations [mm/s^2]
-//     int16_t az;
+    uint32_t axy; // Compress accelerations [mm/s^2]
+    int16_t az;
 
-// } setpointZ_GTC;
-
-
-// static struct {
-
-//     // Compressed positions [mm]
-//     uint32_t xy; 
-//     int16_t z;
-
-//     // Compressed velocities [mm/s]
-//     uint32_t vxy; 
-//     int16_t vz;
-
-//     // compressed quaternion, see quatcompress.h
-//     int32_t quat; 
-
-//     // Compressed angular velocity [milli-rad/sec]
-//     uint32_t wxy; 
-//     int16_t wz;
-
-//     // Compressed Optical Flow Values
-//     uint32_t OF_xy; // [milli-rad/s]
-//     int16_t RREV;   // [milli-rad/s]
-//     int16_t d_ceil; // [m]
-
-//     uint32_t NN_FP; // NN_flip,NN_policy
-
-// } FlipStatesZ_GTC;
+} setpointZ_GTC;
 
 
-// static void compressStates(){
-//     StatesZ_GTC.xy = compressXY(statePos.x,statePos.y);
-//     StatesZ_GTC.z = (int16_t)(statePos.z * 1000.0f);
+static struct {
 
-//     StatesZ_GTC.vxy = compressXY(stateVel.x, stateVel.y);
-//     StatesZ_GTC.vz = (int16_t)(stateVel.z * 1000.0f);
+    // Compressed positions [mm]
+    uint32_t xy; 
+    int16_t z;
 
-//     StatesZ_GTC.wxy = compressXY(stateOmega.x,stateOmega.y);
-//     StatesZ_GTC.wz = (int16_t)(stateOmega.z * 1000.0f);
+    // Compressed velocities [mm/s]
+    uint32_t vxy; 
+    int16_t vz;
 
+    // compressed quaternion, see quatcompress.h
+    int32_t quat; 
 
-//     float const q[4] = {
-//         stateQuat.x,
-//         stateQuat.y,
-//         stateQuat.z,
-//         stateQuat.w};
-//     StatesZ_GTC.quat = quatcompress(q);
+    // Compressed angular velocity [milli-rad/sec]
+    uint32_t wxy; 
+    int16_t wz;
 
-//     // COMPRESS SENSORY VALUES
-//     StatesZ_GTC.OF_xy = compressXY(OF_x,OF_y);
-//     StatesZ_GTC.RREV = (int16_t)(RREV * 1000.0f); 
-//     StatesZ_GTC.d_ceil = (int16_t)(d_ceil * 1000.0f);
+    // Compressed Optical Flow Values
+    uint32_t OF_xy; // [milli-rad/s]
+    int16_t RREV;   // [milli-rad/s]
+    int16_t d_ceil; // [m]
 
-//     // COMPRESS THRUST/MOMENT VALUES
-//     StatesZ_GTC.FMz = compressXY(F_thrust,M.z*1000.0f);
-//     StatesZ_GTC.Mxy = compressXY(M.x*1000.0f,M.y*1000.0f);
+    uint32_t NN_FP; // NN_flip,NN_policy
 
-//     // COMPRESS PWM VALUES
-//     StatesZ_GTC.MS_PWM12 = compressXY(M1_pwm*0.5e-3f,M2_pwm*0.5e-3f);
-//     StatesZ_GTC.MS_PWM34 = compressXY(M3_pwm*0.5e-3f,M4_pwm*0.5e-3f);
+} FlipStatesZ_GTC;
 
-//     StatesZ_GTC.NN_FP = compressXY(NN_flip,NN_policy);
+// Compresses values in range (-32.767 - 32.767)
+static uint32_t compressXY(float x, float y)
+{ 
+  
+  uint16_t xnew, ynew;
+  uint32_t xy;
 
-// }
-
-
-
-
-// static void compressSetpoints(){
-//     setpointZ_GTC.xy = compressXY(x_d.x,x_d.y);
-//     setpointZ_GTC.z = (int16_t)(x_d.z * 1000.0f);
-
-//     setpointZ_GTC.vxy = compressXY(v_d.x,v_d.y);
-//     setpointZ_GTC.vz = (int16_t)(v_d.z * 1000.0f);
-
-//     setpointZ_GTC.axy = compressXY(a_d.x,a_d.y);
-//     setpointZ_GTC.az = (int16_t)(a_d.z * 1000.0f);
-// }
+  // CONVERT FLOATS TO INTS OFFSET BY UINT16_MAX/2.0
+  xnew = x*1000.0f + 32767.0f;
+  ynew = y*1000.0f + 32767.0f;
 
 
-// static void compressFlipStates(){
-//     FlipStatesZ_GTC.xy = compressXY(statePos_tr.x,statePos_tr.y);
-//     FlipStatesZ_GTC.z = (int16_t)(statePos_tr.z * 1000.0f);
+  // CLIP RANGES OF VALUES
+  xnew = (xnew < UINT16_MAX) ? xnew : UINT16_MAX;
+  xnew = (xnew > 0) ? xnew : 0;
 
-//     FlipStatesZ_GTC.vxy = compressXY(stateVel_tr.x, stateVel_tr.y);
-//     FlipStatesZ_GTC.vz = (int16_t)(stateVel_tr.z * 1000.0f);
+  ynew = (ynew < UINT16_MAX) ? ynew : UINT16_MAX;
+  ynew = (ynew > 0) ? ynew : 0;
 
-//     FlipStatesZ_GTC.wxy = compressXY(stateOmega_tr.x,stateOmega_tr.y);
-//     FlipStatesZ_GTC.wz = (int16_t)(stateOmega_tr.z * 1000.0f);
+  // APPEND YNEW BYTES TO XNEW BYTES
+  xy = (xnew << 16 | ynew); // Shift xnew by 16 and combine
+
+  return xy;
+};
 
 
-//     float const q[4] = {
-//         stateQuat_tr.x,
-//         stateQuat_tr.y,
-//         stateQuat_tr.z,
-//         stateQuat_tr.w};
-//     FlipStatesZ_GTC.quat = quatcompress(q);
+static void compressStates(){
+    StatesZ_GTC.xy = compressXY(statePos.x,statePos.y);
+    StatesZ_GTC.z = (int16_t)(statePos.z * 1000.0f);
 
-//    FlipStatesZ_GTC.OF_xy = compressXY(OF_x_tr,OF_y_tr);
-//    FlipStatesZ_GTC.RREV = (int16_t)(RREV_tr * 1000.0f); 
-//    FlipStatesZ_GTC.d_ceil = (int16_t)(d_ceil_tr * 1000.0f);
+    StatesZ_GTC.vxy = compressXY(stateVel.x, stateVel.y);
+    StatesZ_GTC.vz = (int16_t)(stateVel.z * 1000.0f);
 
-//    FlipStatesZ_GTC.NN_FP = compressXY(NN_tr_flip,NN_tr_policy);
+    StatesZ_GTC.wxy = compressXY(stateOmega.x,stateOmega.y);
+    StatesZ_GTC.wz = (int16_t)(stateOmega.z * 1000.0f);
 
-// }
+
+    float const q[4] = {
+        stateQuat.x,
+        stateQuat.y,
+        stateQuat.z,
+        stateQuat.w};
+    StatesZ_GTC.quat = quatcompress(q);
+
+    // COMPRESS SENSORY VALUES
+    StatesZ_GTC.OF_xy = compressXY(OF_x,OF_y);
+    StatesZ_GTC.RREV = (int16_t)(RREV * 1000.0f); 
+    StatesZ_GTC.d_ceil = (int16_t)(d_ceil * 1000.0f);
+
+    // COMPRESS THRUST/MOMENT VALUES
+    StatesZ_GTC.FMz = compressXY(F_thrust,M.z*1000.0f);
+    StatesZ_GTC.Mxy = compressXY(M.x*1000.0f,M.y*1000.0f);
+
+    // COMPRESS PWM VALUES
+    StatesZ_GTC.MS_PWM12 = compressXY(M1_pwm*0.5e-3f,M2_pwm*0.5e-3f);
+    StatesZ_GTC.MS_PWM34 = compressXY(M3_pwm*0.5e-3f,M4_pwm*0.5e-3f);
+
+    StatesZ_GTC.NN_FP = compressXY(NN_flip,NN_policy);
+
+}
+
+
+
+
+static void compressSetpoints(){
+    setpointZ_GTC.xy = compressXY(x_d.x,x_d.y);
+    setpointZ_GTC.z = (int16_t)(x_d.z * 1000.0f);
+
+    setpointZ_GTC.vxy = compressXY(v_d.x,v_d.y);
+    setpointZ_GTC.vz = (int16_t)(v_d.z * 1000.0f);
+
+    setpointZ_GTC.axy = compressXY(a_d.x,a_d.y);
+    setpointZ_GTC.az = (int16_t)(a_d.z * 1000.0f);
+}
+
+
+static void compressFlipStates(){
+    FlipStatesZ_GTC.xy = compressXY(statePos_tr.x,statePos_tr.y);
+    FlipStatesZ_GTC.z = (int16_t)(statePos_tr.z * 1000.0f);
+
+    FlipStatesZ_GTC.vxy = compressXY(stateVel_tr.x, stateVel_tr.y);
+    FlipStatesZ_GTC.vz = (int16_t)(stateVel_tr.z * 1000.0f);
+
+    FlipStatesZ_GTC.wxy = compressXY(stateOmega_tr.x,stateOmega_tr.y);
+    FlipStatesZ_GTC.wz = (int16_t)(stateOmega_tr.z * 1000.0f);
+
+
+    float const q[4] = {
+        stateQuat_tr.x,
+        stateQuat_tr.y,
+        stateQuat_tr.z,
+        stateQuat_tr.w};
+    FlipStatesZ_GTC.quat = quatcompress(q);
+
+   FlipStatesZ_GTC.OF_xy = compressXY(OF_x_tr,OF_y_tr);
+   FlipStatesZ_GTC.RREV = (int16_t)(RREV_tr * 1000.0f); 
+   FlipStatesZ_GTC.d_ceil = (int16_t)(d_ceil_tr * 1000.0f);
+
+   FlipStatesZ_GTC.NN_FP = compressXY(NN_tr_flip,NN_tr_policy);
+
+}
 
 
 

@@ -30,3 +30,19 @@
  * The precision is set in number of bits by the define MOTORS_PWM_BITS
  * The timer prescaler is set by MOTORS_PWM_PRESCALE
  */
+
+#ifndef __MOTORS_H__
+#define __MOTORS_H__
+
+#define MOTOR_M1  0
+#define MOTOR_M2  1
+#define MOTOR_M3  2
+#define MOTOR_M4  3
+
+static void motorsSetRatio(uint32_t id, uint16_t ithrust) // motor_ID, thrust [PWM]
+{
+    // DO NOTHING
+
+}
+
+#endif

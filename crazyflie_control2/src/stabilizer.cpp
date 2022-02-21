@@ -8,6 +8,7 @@ void StateCollector::stabilizerLoop() // MAIN CONTROLLER LOOP
 
     // INITIATE CONTROLLER
     controllerGTCInit();
+    safeModeEnable = false;
    
    // RUN STABILIZER LOOP
     while(ros::ok)
@@ -15,7 +16,12 @@ void StateCollector::stabilizerLoop() // MAIN CONTROLLER LOOP
 
         stateEstimator(&state, &sensorData, &control, tick); // Run state/sensor values through "Kalman filter"
         controllerGTC(&control, &setpoint, &sensorData, &state, tick);
-        powerDistribution(&control,tick);
+        printf("M1: %u\t M2: %u\t M3: %u\t M3: %u\n",M1_pwm,M2_pwm,M3_pwm,M4_pwm);
+        printf("pos: %.3f\n",statePos.x);
+
+
+        // MS_msg.MotorPWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
+        // MS_PWM_Publisher.publish(MS_msg);
 
         
         tick++;
