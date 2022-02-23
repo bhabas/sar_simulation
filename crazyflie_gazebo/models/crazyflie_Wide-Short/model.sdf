@@ -1737,7 +1737,7 @@
       <turningDirection>cw</turningDirection>
       <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
       <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
-      <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
+      <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
     </plugin>
     <plugin name='back_left_motor_model' filename='libmotor_plugin.so'>
       <motorNumber>2</motorNumber>
@@ -1746,7 +1746,7 @@
       <turningDirection>ccw</turningDirection>
       <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
       <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
-      <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
+      <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
     </plugin>
     <plugin name='back_right_motor_model' filename='libmotor_plugin.so'>
       <motorNumber>3</motorNumber>
@@ -1755,7 +1755,7 @@
       <turningDirection>cw</turningDirection>
       <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
       <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
-      <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
+      <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
     </plugin>
     <plugin name='front_right_motor_model' filename='libmotor_plugin.so'>
       <motorNumber>4</motorNumber>
@@ -1764,7 +1764,7 @@
       <turningDirection>ccw</turningDirection>
       <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
       <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
-      <rotorVelocitySlowdownSim>1000</rotorVelocitySlowdownSim>
+      <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
     </plugin>
     <plugin name='OF_sensor' filename='libgazebo_ros_p3d.so'>
       <alwaysOn>1</alwaysOn>
