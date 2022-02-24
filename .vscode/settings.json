@@ -75,7 +75,8 @@
         "*.ipp": "cpp",
         "values.h": "c",
         "nn_layers_policy_wl.h": "c",
-        "controller_gtc.h": "c"
+        "controller_gtc.h": "c",
+        "nn_layers_flip_wl.h": "c"
     },
     "python.analysis.extraPaths": [
         "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_rl/src/",
