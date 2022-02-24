@@ -5,11 +5,7 @@
     <include>
       <uri>model://sun</uri>
     </include>
-    <!-- A ground plane -->
-    <include>
-      <uri>model://GroundPlane_Desert</uri>
-    </include>
-    <!-- A ceiling plane -->
+
 
     <light name='user_directional_light_0' type='directional'>
       <pose>0 0 0 0 -0 0</pose>
