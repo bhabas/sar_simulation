@@ -226,16 +226,16 @@ if __name__ == '__main__':
     env.logging_flag = True
     env.create_csv(env.filepath)
 
-    V_d = 3.5
-    phi = 50
+    V_d = 2.5
+    phi = 60
     phi_rad = np.radians(phi)
     env.vel_trial = [V_d*np.cos(phi_rad), 0.0, V_d*np.sin(phi_rad)] # [m/s]
-    env.policy = [4.5,7.0,0] # NN policy
+    env.policy = [5,8.0,0] # NN policy
 
 
     ## RUN TRIAL
     env.RL_Publish() # Publish data to rl_data topic
-    time.sleep(3)
+    # time.sleep(3)
 
     while True:
         executeFlight(env,agent)

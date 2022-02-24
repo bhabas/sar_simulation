@@ -5,14 +5,21 @@
     <include>
       <uri>model://sun</uri>
     </include>
-    <!-- A ground plane -->
-    <include>
-      <uri>model://GroundPlane_Desert</uri>
-    </include>
-    <!-- A ceiling plane -->
-    <include>
-      <uri>model://FlightCage</uri>
-    </include>
+
+
+    <light name='user_directional_light_0' type='directional'>
+      <pose>0 0 0 0 -0 0</pose>
+      <diffuse>0.5 0.5 0.5 1</diffuse>
+      <specular>0.1 0.1 0.1 1</specular>
+      <direction>0 0 1</direction>
+      <attenuation>
+        <range>20</range>
+        <constant>0.5</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <cast_shadows>1</cast_shadows>
+    </light>
 
     <!-- Default camera pose -->
     <gui>
@@ -50,10 +57,11 @@
       </sky>
     </scene>
 
+
     <!-- Camera for recording video inside of Gazebo environment -->
   <!-- <model name='camera'>
       <static>true</static>
-      <pose>0 -0.25 0.44  0 0.33  1.57</pose>
+      <pose>-0.46 -0.55 1.92 0 0.064 0.786</pose>
       <link name='link'>
         <visual name='visual'>
           <geometry>
@@ -62,9 +70,9 @@
             </box>
           </geometry>
         </visual>
-        <sensor name='my_camera' type='camera'>
+        <sensor name='camera_link' type='camera'>
           <camera>
-            <save enabled="true">
+            <save enabled="false">
               <path>/tmp/camera_save_tutorial</path>
             </save>
             <horizontal_fov>1.047</horizontal_fov>
@@ -78,7 +86,7 @@
             </clip>
           </camera>
           <always_on>1</always_on>
-          <update_rate>10</update_rate>
+          <update_rate>1000</update_rate>
         </sensor>
       </link>
     </model> -->

@@ -1,5 +1,4 @@
 #include <ros/ros.h>
-#include "example_msgs/CustomMessage.h"
 #include <geometry_msgs/WrenchStamped.h>
 #include "crazyflie_msgs/RLData.h"
 #include "crazyflie_msgs/ImpactData.h"

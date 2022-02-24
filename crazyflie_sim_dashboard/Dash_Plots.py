@@ -677,9 +677,17 @@ if __name__ == '__main__':
 
     ## INITIALIZE APPLICATION   
     app = QApplication(sys.argv)
+    val = int(input("1 or 2"))
 
-    ## INITIALIZE DASHBOARD WINDOW
-    myApp = Mu_Widget()
-    myApp.show()
+    if val == 1:
+
+        ## INITIALIZE DASHBOARD WINDOW
+        myApp = Mu_Widget()
+        myApp.show()
+    else:
+        ## INITIALIZE DASHBOARD WINDOW
+        myApp = RL_Widget()
+        myApp.show()
+
 
     sys.exit(app.exec_())
