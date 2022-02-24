@@ -1,15 +1,18 @@
 <launch>
   
     <arg name="model_name" default="crazyflie_Wide-Short"/>
-    <arg name="world_name" default="CeilingSurface_Large"/>
+    <arg name="model_sdf_path" default="$(find crazyflie_gazebo)/models/Crazyflie_Models/$(arg model_name)/model.sdf"/>
+
+    <arg name="surface_name" default="CeilingSurface_Large"/>
+    <arg name="surface_sdf_path" default="$(find crazyflie_gazebo)/models/Landing_Surfaces/$(arg surface_name)/model.sdf"/>
+
     <arg name="gui_flag" default="true"/>
-    <arg name="sdf_path" default="$(find crazyflie_gazebo)/models/$(arg model_name)/model.sdf"/>
     <arg name="verbose" default="true"/>
     <arg name="pause_flag" default="false"/>
 
     <!-- LAUNCH GAZEBO WITH SPECIFIED WORLD FILE -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
-        <arg name="world_name" value="--lockstep $(find crazyflie_gazebo)/worlds/$(arg world_name).world"/>
+        <arg name="world_name" value="--lockstep $(find crazyflie_gazebo)/worlds/Gazebo_World.world"/>
         <!-- lockstep command ensures sim updates and sensor frequency updates are synced together -->
         <!-- http://gazebosim.org/tutorials?tut=lockstep_physics_sensors&cat=sensors -->
         <!-- http://gazebosim.org/tutorials?tut=performance_metrics&cat=tools_utilities -->
@@ -24,8 +27,11 @@
     </include>
 
     <!-- SPAWN SDF FILE INTO GAZEBO -->
-    <node name="spawn_sdf" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
-        args="-file $(arg sdf_path) -sdf -model $(arg model_name) -z 0.1" />
+    <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
+        args="-file $(arg model_sdf_path) -sdf -model $(arg model_name) -z 0.1" />
+
+    <node name="spawn_surface" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
+        args="-file $(arg surface_sdf_path) -sdf -model $(arg surface_name)" />
 
     <node name="Ceiling_FT_Sensor" pkg="crazyflie_gazebo" type="Ceiling_FT_Sensor" />
 

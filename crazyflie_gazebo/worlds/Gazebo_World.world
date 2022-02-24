@@ -7,12 +7,9 @@
     </include>
     <!-- A ground plane -->
     <include>
-      <uri>model://GroundPlane_Desert_Collision</uri>
+      <uri>model://GroundPlane_Desert</uri>
     </include>
     <!-- A ceiling plane -->
-    <include>
-      <uri>model://CeilingPlane_Large</uri>
-    </include>
 
     <light name='user_directional_light_0' type='directional'>
       <pose>0 0 0 0 -0 0</pose>
