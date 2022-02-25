@@ -78,7 +78,9 @@
         "controller_gtc.h": "c",
         "nn_layers_flip_wl.h": "c",
         "stdio.h": "c",
-        "library.h": "c"
+        "library.h": "c",
+        "quatcompress.h": "c",
+        "physicalconstants.h": "c"
     },
     "python.analysis.extraPaths": [
         "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_rl/src/",

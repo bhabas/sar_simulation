@@ -1,5 +1,6 @@
 // CF HEADERS
 #include "controller_gtc.h"
+#include "NN_funcs.h"
 
 // =================================
 //    CONTROL GAIN INITIALIZATION
@@ -237,7 +238,11 @@ float NN_tr_policy = 0.0f;      // NN policy value at flip trigger
 
 void controllerGTCInit(void)
 {
-  
+    controllerGTCTest();
+    X = nml_mat_new(3,1);
+    initNN_Layers(&Scaler_Flip,W_flip,b_flip,NN_Params_Flip,3);
+    initNN_Layers(&Scaler_Policy,W_policy,b_policy,NN_Params_Policy,3);
+    controllerGTCReset();
     consolePrintf("GTC Initiated\n");
 }
 

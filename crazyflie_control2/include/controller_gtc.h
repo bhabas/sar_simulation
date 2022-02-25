@@ -43,11 +43,6 @@ extern "C" {
 #define g2Newton (9.81f/1000.0f)
 #define Newton2g (1000.0f/9.81f)
 
-typedef struct{
-    nml_mat* mean;
-    nml_mat* std;
-}Scaler;
-
 // FUNCTION PRIMITIVES
 void controllerGTCInit(void);
 bool controllerGTCTest(void);
