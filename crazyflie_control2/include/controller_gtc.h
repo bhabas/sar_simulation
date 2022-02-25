@@ -60,10 +60,11 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 void GTC_Command(setpoint_t *setpoint);
 
 
+extern struct vec statePos;
+extern struct vec stateVel;
+extern struct quat stateQuat;
+extern struct vec stateOmega;
 
-
-
-extern int val;
 
 #endif //__CONTROLLER_GTC_H__
 

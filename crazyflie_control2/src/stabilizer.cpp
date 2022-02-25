@@ -16,7 +16,7 @@ void StateCollector::stabilizerLoop() // MAIN CONTROLLER LOOP
         stateEstimator(&state, &sensorData, &control, tick); // Run state/sensor values through "Kalman filter"
         controllerGTC(&control, &setpoint, &sensorData, &state, tick);
 
-        printf("val: %u\n",val);
+        printf("val: %.3f\n",statePos.x);
     
 
 
