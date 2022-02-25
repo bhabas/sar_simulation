@@ -1,6 +1,7 @@
 // CF HEADERS
 #include "controller_gtc.h"
 #include "NN_funcs.h"
+#include "CompressedStates.h"
 
 // =================================
 //    CONTROL GAIN INITIALIZATION
@@ -51,8 +52,14 @@ float h_ceiling = 2.10f;    // [m]
 struct mat33 J = {          // Rotational Inertia Matrix [kg*m^2]
     .m[0][0]=1.65717e-5f, 
     .m[1][1]=1.65717e-5f, 
-    .m[2][2]=2.92617e-5f
-}; 
+    .m[2][2]=2.92617e-5f}; 
+
+static float d = 0.040f;    // COM to Prop [m]
+static float dp = 0.028284; // COM to Prop along x-axis [m]
+                            // [dp = d*sin(45 deg)]
+
+static float const kf = 2.2e-8f;    // Thrust Coeff [N/(rad/s)^2]
+static float const c_tf = 0.00618f; // Moment Coeff [Nm/N]
 static float dt = (float)(1.0f/RATE_500_HZ);
 
 
@@ -146,6 +153,7 @@ bool tumbled = false;
 bool tumble_detection = true;
 bool motorstop_flag = false;
 bool errorReset = false; // Resets error vectors (removed integral windup)
+bool safeModeFlag = false;
 
 bool execute_traj = false;
 bool policy_armed_flag = false;
@@ -314,6 +322,337 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         X->data[0][0] = RREV;
         X->data[1][0] = OFy;
         X->data[2][0] = d_ceil; // d_ceiling [m]
+
+        if(statePos.z >= 2.3)
+        {
+            motorstop_flag = true;
+        }
+
+        omega_d = mkvec(0.0f,0.0f,0.0f);    // Omega-desired [rad/s]
+        domega_d = mkvec(0.0f,0.0f,0.0f);   // Omega-Accl. [rad/s^2]
+
+        eul_d = mkvec(0.0f,0.0f,0.0f);
+        quat_d = rpy2quat(eul_d);           // Desired orientation from eul angles [ZYX NOTATION]
+
+        // =========== ROTATION MATRIX =========== //
+        // R changes Body axes to be in terms of Global axes
+        // https://www.andre-gaschler.com/rotationconverter/
+        R = quat2rotmat(stateQuat); // Quaternion to Rotation Matrix Conversion
+        b3 = mvmul(R, e_3);         // Current body vertical axis in terms of global axes | [b3 = R*e_3] 
+        
+        // TUMBLE DETECTION
+        if (b3.z <= 0 && tumble_detection == true){
+            tumbled = true;
+        }
+
+        // =========== TRANSLATIONAL EFFORT =========== //
+        e_x = vsub(statePos, x_d); // [e_x = pos-x_d]
+        e_v = vsub(stateVel, v_d); // [e_v = vel-v_d]
+
+
+        // POS. INTEGRAL ERROR
+        e_PI.x += (e_x.x)*dt;
+        e_PI.x = clamp(e_PI.x, -i_range_xy, i_range_xy);
+
+        e_PI.y += (e_x.y)*dt;
+        e_PI.y = clamp(e_PI.y, -i_range_xy, i_range_xy);
+
+        e_PI.z += (e_x.z)*dt;
+        e_PI.z = clamp(e_PI.z, -i_range_z, i_range_z);
+
+        /* [F_thrust_ideal = -kp_x*e_x*(kp_x_flag) + -kd_x*e_v + -kI_x*e_PI*(kp_x_flag) + m*g*e_3 + m*a_d] */
+        temp1_v = veltmul(vneg(Kp_p), e_x);
+        temp1_v = vscl(kp_xf,temp1_v);
+        temp2_v = veltmul(vneg(Kd_p), e_v);
+        temp1_v = vscl(kd_xf,temp1_v);
+        temp3_v = veltmul(vneg(Ki_p), e_PI);
+        P_effort = vadd3(temp1_v,temp2_v,temp3_v);
+        temp1_v = vscl(m*g, e_3); // Feed-forward term
+        temp2_v = vscl(m, a_d);
+
+        F_thrust_ideal = vadd3(P_effort, temp1_v,temp2_v); 
+
+        // =========== DESIRED BODY AXES =========== // 
+        b3_d = vnormalize(F_thrust_ideal);
+        b2_d = vnormalize(vcross(b3_d, b1_d));      // [b3_d x b1_d] | body-fixed horizontal axis
+        temp1_v = vnormalize(vcross(b2_d, b3_d));
+        R_d = mcolumns(temp1_v, b2_d, b3_d);        // Desired rotation matrix from calculations
+
+        // ATTITUDE CONTROL
+        if (attCtrlEnable){ 
+            R_d = quat2rotmat(quat_d); // Desired rotation matrix from att. control
+        }
+
+
+        // =========== ROTATIONAL ERRORS =========== // 
+        RdT_R = mmul(mtranspose(R_d), R);       // [R_d'*R]
+        RT_Rd = mmul(mtranspose(R), R_d);       // [R'*R_d]
+
+        temp1_v = dehat(msub(RdT_R, RT_Rd));    // [dehat(R_d'*R - R'*R)]
+        e_R = vscl(0.5f, temp1_v);              // Rotation error | [eR = 0.5*dehat(R_d'*R - R'*R)]
+
+        temp1_v = mvmul(RT_Rd, omega_d);        // [R'*R_d*omega_d]
+        e_w = vsub(stateOmega, temp1_v);        // Ang. vel error | [e_w = omega - R'*R_d*omega_d] 
+
+        // ROT. INTEGRAL ERROR
+        e_RI.x += (e_R.x)*dt;
+        e_RI.x = clamp(e_RI.x, -i_range_R_xy, i_range_R_xy);
+
+        e_RI.y += (e_R.y)*dt;
+        e_RI.y = clamp(e_RI.y, -i_range_R_xy, i_range_R_xy);
+
+        e_RI.z += (e_R.z)*dt;
+        e_RI.z = clamp(e_RI.z, -i_range_R_z, i_range_R_z);
+
+        // =========== CONTROL EQUATIONS =========== // 
+        /* [M = -kp_R*e_R - kd_R*e_w -ki_R*e_RI + Gyro_dyn] */
+
+        temp1_v = veltmul(vneg(Kp_R), e_R);     // [-kp_R*e_R]
+        temp2_v = veltmul(vneg(Kd_R), e_w);     // [-kd_R*e_w]
+        temp3_v = veltmul(vneg(Ki_R), e_RI);    // [-ki_R*e_RI]
+        R_effort = vadd3(temp1_v,temp2_v,temp3_v);
+
+        /* Gyro_dyn = [omega x (J*omega)] - [J*( hat(omega)*R'*R_d*omega_d - R'*R_d*domega_d )] */
+        temp1_v = vcross(stateOmega, mvmul(J, stateOmega)); // [omega x J*omega]
+
+
+        temp1_m = mmul(hat(stateOmega), RT_Rd); //  hat(omega)*R'*R_d
+        temp2_v = mvmul(temp1_m, omega_d);      // (hat(omega)*R'*R_d)*omega_d
+        temp3_v = mvmul(RT_Rd, domega_d);       // (R'*R_d*domega_d)
+
+        temp4_v = mvmul(J, vsub(temp2_v, temp3_v)); // J*(hat(omega)*R'*R_d*omega_d - R'*R_d*domega_d)
+        Gyro_dyn = vsub(temp1_v,temp4_v);
+
+        F_thrust = vdot(F_thrust_ideal, b3);    // Project ideal thrust onto b3 vector [N]
+        M = vadd(R_effort,Gyro_dyn);            // Control moments [Nm]
+    
+        // =========== THRUST AND MOMENTS [FORCE NOTATION] =========== // 
+        if(!tumbled){
+            if(policy_armed_flag == true){ 
+                
+                switch(POLICY_TYPE)
+                {
+                    case RL:
+                    {
+                        if(RREV >= RREV_thr && onceFlag == false){
+                            onceFlag = true;
+                            flip_flag = true;  
+
+                            // UPDATE AND RECORD FLIP VALUES
+                            statePos_tr = statePos;
+                            stateVel_tr = stateVel;
+                            stateQuat_tr = stateQuat;
+                            stateOmega_tr = stateOmega;
+
+                            OFy_tr = OFy;
+                            OFx_tr = OFx;
+                            RREV_tr = RREV;
+                        
+                            M_d.x = 0.0f;
+                            M_d.y = -G1*1e-3;
+                            M_d.z = 0.0f;
+                        }
+                        break;
+                    }
+
+                    case NN:
+                    {   
+                        // NN_flip = NN_Forward_Flip(X,&Scaler_Flip,W_flip,b_flip);
+                        // NN_policy = -NN_Forward_Policy(X,&Scaler_Policy,W_policy,b_policy);
+
+                        // DEBUG_PRINT("NN_Flip: %.5f \t NN_Policy: %.5f \n",NN_flip,NN_policy);
+
+                        if(NN_flip >= 0.9 && onceFlag == false)
+                        {   
+                            onceFlag = true;
+                            flip_flag = true;
+
+                            // UPDATE AND RECORD FLIP VALUES
+                            statePos_tr = statePos;
+                            stateVel_tr = stateVel;
+                            stateQuat_tr = stateQuat;
+                            stateOmega_tr = stateOmega;
+
+                            OFy_tr = OFy;
+                            OFx_tr = OFx;
+                            RREV_tr = RREV;
+                            d_ceil_tr = d_ceil;
+
+                            NN_tr_flip = NN_Forward_Flip(X,&Scaler_Flip,W_flip,b_flip);
+                            NN_tr_policy = NN_Forward_Policy(X,&Scaler_Policy,W_policy,b_policy);
+
+
+                            M_d.x = 0.0f;
+                            M_d.y = -NN_tr_policy*1e-3;
+                            M_d.z = 0.0f;
+                        }
+
+                        break;
+                    }
+
+                }
+
+                
+                if(flip_flag == true)
+                {
+                    // Doubling front motor values and zeroing back motors is
+                    // equal to increasing front motors and decreasing back motors.
+                    // This gives us the highest possible moment and avoids PWM cutoff issue
+                    M = vscl(2.0f,M_d); 
+                    F_thrust = 0.0f;
+                }
+
+            }
+
+            // MANUAL MOMENT CONTROL
+            else if (Moment_flag == true){ 
+
+                M.x = M_d.x;
+                M.y = M_d.y;
+                M.z = M_d.z;
+
+                M = vscl(2.0f,M_d); // Need to double moment to ensure it survives the PWM<0 cutoff
+                F_thrust = 0.0f;
+
+            }
+            else{ // Behave like normal
+                F_thrust = F_thrust;
+                M = M;
+            }
+
+        }
+        else if(tumbled && tumble_detection == true){
+            // consolePrintf("System Tumbled: \n");
+            F_thrust = 0.0f;
+            M.x = 0.0f;
+            M.y = 0.0f;
+            M.z = 0.0f;
+        }
+
+        
+        // =========== CONVERT THRUSTS AND MOMENTS TO PWM =========== // 
+        f_thrust_g = F_thrust/4.0f*Newton2g;
+        f_roll_g = M.x/(4.0f*dp)*Newton2g;
+        f_pitch_g = M.y/(4.0f*dp)*Newton2g;
+        f_yaw_g = M.z/(4.0*c_tf)*Newton2g;
+
+        f_thrust_g = clamp(f_thrust_g,0.0,f_MAX*0.8);    // Clamp thrust to prevent control saturation
+
+        // Add respective thrust components and limit to (0 <= PWM <= 60,000)
+        M1_pwm = limitPWM(thrust2PWM(f_thrust_g + f_roll_g - f_pitch_g + f_yaw_g)); 
+        M2_pwm = limitPWM(thrust2PWM(f_thrust_g + f_roll_g + f_pitch_g - f_yaw_g));
+        M3_pwm = limitPWM(thrust2PWM(f_thrust_g - f_roll_g + f_pitch_g + f_yaw_g));
+        M4_pwm = limitPWM(thrust2PWM(f_thrust_g - f_roll_g - f_pitch_g - f_yaw_g));
+
+        if(motorstop_flag){ // Cutoff all motor values
+            f_thrust_g = 0.0f;
+            M1_pwm = 0;
+            M2_pwm = 0;
+            M3_pwm = 0;
+            M4_pwm = 0;
+        }
+
+        // THESE CONNECT TO POWER_DISTRIBUTION_STOCK.C TO 
+        control->thrust = f_thrust_g;
+        control->roll = (int16_t)(f_roll_g*1e3f);
+        control->pitch = (int16_t)(f_pitch_g*1e3f);
+        control->yaw = (int16_t)(f_yaw_g*1e3f);
+
+        compressStates();
+        compressSetpoints();
+        compressFlipStates();
     }
+
+    if(safeModeFlag) // If safeMode is enabled then override all PWM commands
+    {
+        M1_pwm = 0;
+        M2_pwm = 0;
+        M3_pwm = 0;
+        M4_pwm = 0;
+    }
+    else
+    {
+        motorsSetRatio(MOTOR_M1, M4_pwm);
+        motorsSetRatio(MOTOR_M2, M3_pwm);
+        motorsSetRatio(MOTOR_M3, M2_pwm);
+        motorsSetRatio(MOTOR_M4, M1_pwm);
+    }
+
+}
+
+
+void compressStates(){
+    StatesZ_GTC.xy = compressXY(statePos.x,statePos.y);
+    StatesZ_GTC.z = (int16_t)(statePos.z * 1000.0f);
+
+    StatesZ_GTC.vxy = compressXY(stateVel.x, stateVel.y);
+    StatesZ_GTC.vz = (int16_t)(stateVel.z * 1000.0f);
+
+    StatesZ_GTC.wxy = compressXY(stateOmega.x,stateOmega.y);
+    StatesZ_GTC.wz = (int16_t)(stateOmega.z * 1000.0f);
+
+
+    float const q[4] = {
+        stateQuat.x,
+        stateQuat.y,
+        stateQuat.z,
+        stateQuat.w};
+    StatesZ_GTC.quat = quatcompress(q);
+
+    // COMPRESS SENSORY VALUES
+    StatesZ_GTC.OF_xy = compressXY(OFx,OFy);
+    StatesZ_GTC.RREV = (int16_t)(RREV * 1000.0f); 
+    StatesZ_GTC.d_ceil = (int16_t)(d_ceil * 1000.0f);
+
+    // COMPRESS THRUST/MOMENT VALUES
+    StatesZ_GTC.FMz = compressXY(F_thrust,M.z*1000.0f);
+    StatesZ_GTC.Mxy = compressXY(M.x*1000.0f,M.y*1000.0f);
+
+    // COMPRESS PWM VALUES
+    StatesZ_GTC.MS_PWM12 = compressXY(M1_pwm*0.5e-3f,M2_pwm*0.5e-3f);
+    StatesZ_GTC.MS_PWM34 = compressXY(M3_pwm*0.5e-3f,M4_pwm*0.5e-3f);
+
+    StatesZ_GTC.NN_FP = compressXY(NN_flip,NN_policy);
+
+}
+
+
+
+
+void compressSetpoints(){
+    setpointZ_GTC.xy = compressXY(x_d.x,x_d.y);
+    setpointZ_GTC.z = (int16_t)(x_d.z * 1000.0f);
+
+    setpointZ_GTC.vxy = compressXY(v_d.x,v_d.y);
+    setpointZ_GTC.vz = (int16_t)(v_d.z * 1000.0f);
+
+    setpointZ_GTC.axy = compressXY(a_d.x,a_d.y);
+    setpointZ_GTC.az = (int16_t)(a_d.z * 1000.0f);
+}
+
+
+void compressFlipStates(){
+    FlipStatesZ_GTC.xy = compressXY(statePos_tr.x,statePos_tr.y);
+    FlipStatesZ_GTC.z = (int16_t)(statePos_tr.z * 1000.0f);
+
+    FlipStatesZ_GTC.vxy = compressXY(stateVel_tr.x, stateVel_tr.y);
+    FlipStatesZ_GTC.vz = (int16_t)(stateVel_tr.z * 1000.0f);
+
+    FlipStatesZ_GTC.wxy = compressXY(stateOmega_tr.x,stateOmega_tr.y);
+    FlipStatesZ_GTC.wz = (int16_t)(stateOmega_tr.z * 1000.0f);
+
+
+    float const q[4] = {
+        stateQuat_tr.x,
+        stateQuat_tr.y,
+        stateQuat_tr.z,
+        stateQuat_tr.w};
+    FlipStatesZ_GTC.quat = quatcompress(q);
+
+   FlipStatesZ_GTC.OF_xy = compressXY(OFx_tr,OFy_tr);
+   FlipStatesZ_GTC.RREV = (int16_t)(RREV_tr * 1000.0f); 
+   FlipStatesZ_GTC.d_ceil = (int16_t)(d_ceil_tr * 1000.0f);
+
+   FlipStatesZ_GTC.NN_FP = compressXY(NN_tr_flip,NN_tr_policy);
 
 }

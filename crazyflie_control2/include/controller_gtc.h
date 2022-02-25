@@ -158,6 +158,7 @@ extern bool tumbled;
 extern bool tumble_detection;
 extern bool motorstop_flag;
 extern bool errorReset; // Resets error vectors (removed integral windup)
+extern bool safeModeFlag;
 
 extern bool execute_traj;
 extern bool policy_armed_flag;
@@ -209,6 +210,66 @@ extern float NN_policy;         // NN output value for policy My
 // NN OUTPUTS AT FLIP TRIGGER
 extern float NN_tr_flip;        // NN value at flip trigger
 extern float NN_tr_policy;      // NN policy value at flip trigger
+
+
+
+// Limit PWM value to accurate motor curve limit (60,000)
+static uint16_t limitPWM(int32_t value) 
+{
+  if(value > 60000)
+  {
+    value = 60000;
+  }
+  else if(value < 0)
+  {
+    value = 0;
+  }
+
+  return (uint16_t)value;
+}
+
+// Converts thrust in Newtons to their respective PWM values
+static int32_t thrust2PWM(float f) 
+{
+    // Conversion values calculated from self motor analysis
+    float a = 3.31e4;
+    float b = 1.12e1;
+    float c = 8.72;
+    float d = 3.26e4;
+
+    float s = 1.0f; // sign of value
+    int32_t f_pwm = 0;
+
+    s = f/fabsf(f);
+    f = fabsf(f);
+    
+    f_pwm = a*tanf((f-c)/b)+d;
+
+    return s*f_pwm;
+
+}      
+
+// Converts thrust in PWM to their respective Newton values
+static float PWM2thrust(int32_t M_PWM) 
+{
+    // Conversion values calculated from PWM to Thrust Curve
+    // Linear Fit: Thrust [g] = a*PWM + b
+    float a = 3.31e4;
+    float b = 1.12e1;
+    float c = 8.72;
+    float d = 3.26e4;
+
+    float f = b*atan2f(M_PWM-d,a)+c;
+    // float f = (a*M_PWM + b); // Convert thrust to grams
+
+    if(f<0)
+    {
+      f = 0;
+    }
+
+    return f;
+}
+
 
 
 #endif //__CONTROLLER_GTC_H__
