@@ -175,13 +175,13 @@ struct vec stateOmega_tr = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
 
 // OPTICAL FLOW STATES
 float Tau_tr = 0.0f;    // [rad/s]
-float OFx_tr = 0.0f;   // [rad/s]
-float OFy_tr = 0.0f;   // [rad/s]
+float OFx_tr = 0.0f;    // [rad/s]
+float OFy_tr = 0.0f;    // [rad/s]
 float RREV_tr = 0.0f;   // [rad/s]
 float d_ceil_tr = 0.0f; // [m/s]
 
 // CONTROLLER STATES
-float F_thrust_flip = 0.0f; // [g]
+float F_thrust_flip = 0.0f; // [N]
 float M_x_flip = 0.0f;      // [N*m]
 float M_y_flip = 0.0f;      // [N*m]
 float M_z_flip = 0.0f;      // [N*m]
@@ -278,14 +278,37 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         J = mdiag(1.65717e-5f, 1.66556e-5f, 2.92617e-5f); // Rotational Inertia of CF [kg m^2]
 
         // CONTROL GAINS
-        // Kp_p = mkvec(P_kp_xy,P_kp_xy,P_kp_z);
-        // Kd_p = mkvec(P_kd_xy,P_kd_xy,P_kd_z);
-        // Ki_p = mkvec(P_ki_xy,P_ki_xy,P_ki_z);
+        Kp_p = mkvec(P_kp_xy,P_kp_xy,P_kp_z);
+        Kd_p = mkvec(P_kd_xy,P_kd_xy,P_kd_z);
+        Ki_p = mkvec(P_ki_xy,P_ki_xy,P_ki_z);
 
-        // Kp_R = mkvec(R_kp_xy,R_kp_xy,R_kp_z);
-        // Kd_R = mkvec(R_kd_xy,R_kd_xy,R_kd_z);
-        // Ki_R = mkvec(R_ki_xy,R_ki_xy,R_ki_z);
+        Kp_R = mkvec(R_kp_xy,R_kp_xy,R_kp_z);
+        Kd_R = mkvec(R_kd_xy,R_kd_xy,R_kd_z);
+        Ki_R = mkvec(R_ki_xy,R_ki_xy,R_ki_z);
+
+        // =========== STATE DEFINITIONS =========== //
+        statePos = mkvec(state->position.x, state->position.y, state->position.z);                      // [m]
+        stateVel = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);                      // [m]
+        stateOmega = mkvec(radians(sensors->gyro.x), radians(sensors->gyro.y), radians(sensors->gyro.z));   // [rad/s]
+        stateQuat = mkquat(state->attitudeQuaternion.x,
+                        state->attitudeQuaternion.y,
+                        state->attitudeQuaternion.z,
+                        state->attitudeQuaternion.w);
+
+        // EULER ANGLES EXPRESSED IN YZX NOTATION
+        stateEul = quat2eul(stateQuat);
+        stateEul.x = degrees(stateEul.x);
+        stateEul.y = degrees(stateEul.y);
+        stateEul.z = degrees(stateEul.z);
+
+        RREV = sensors->RREV;
+        OFx = sensors->OFx;
+        OFy = sensors->OFy;
+        d_ceil = h_ceiling - statePos.x;
+
+        X->data[0][0] = RREV;
+        X->data[1][0] = OFy;
+        X->data[2][0] = d_ceil; // d_ceiling [m]
     }
-    
 
 }

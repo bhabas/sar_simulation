@@ -10,6 +10,9 @@ from ExecuteFlight import executeFlight
 from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState
 
+from rosgraph_msgs.msg import Clock
+
+
 
 
 os.system("clear")
@@ -102,11 +105,10 @@ if __name__ == '__main__':
     env.create_csv(env.filepath)
 
 
-
     cmd_thread = threading.Thread(target=cmd_send,args=(env,))
     cmd_thread.start()   
 
-    time.sleep(2)
+
     logging_thread = threading.Thread(target=logFlight,args=(env,))
     logging_thread.start()   
 

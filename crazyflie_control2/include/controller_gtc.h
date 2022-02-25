@@ -164,14 +164,56 @@ extern bool tumble_detection;
 extern bool motorstop_flag;
 extern bool errorReset; // Resets error vectors (removed integral windup)
 
-extern bool execute_traj = false;
-extern bool policy_armed_flag = false;
+extern bool execute_traj;
+extern bool policy_armed_flag;
 
-extern bool flip_flag = false;
-extern bool onceFlag = false;
+extern bool flip_flag;
+extern bool onceFlag;
 
-extern bool Moment_flag = false;
-extern bool attCtrlEnable = false;
+extern bool Moment_flag;
+extern bool attCtrlEnable;
+
+// ======================================
+//  RECORD SYSTEM STATES AT FLIP TRIGGER
+// ======================================
+
+// CARTESIAN STATES
+extern struct vec statePos_tr;      // Pos [m]
+extern struct vec stateVel_tr;      // Vel [m/s]
+extern struct quat stateQuat_tr;    // Orientation
+extern struct vec stateOmega_tr;    // Angular Rate [rad/s]
+
+// OPTICAL FLOW STATES
+extern float Tau_tr;        // [rad/s]
+extern float OFx_tr;        // [rad/s]
+extern float OFy_tr;        // [rad/s]
+extern float RREV_tr;       // [rad/s]
+extern float d_ceil_tr;     // [m/s]
+
+// CONTROLLER STATES
+extern float F_thrust_flip; // [N]
+extern float M_x_flip;      // [N*m]
+extern float M_y_flip;      // [N*m]
+extern float M_z_flip;      // [N*m]
+
+// ==========================
+//  RL POLICY INITIALIZATION
+// ==========================
+extern float RREV_thr;  // RREV trigger
+extern float G1;        // Body moment value
+extern float G2;        // Deprecated state value
+
+// ===============================
+//  NEURAL NETWORK INITIALIZATION
+// ===============================
+
+// NN OUTPUTS
+extern float NN_flip;           // NN output value for flip classification
+extern float NN_policy;         // NN output value for policy My
+
+// NN OUTPUTS AT FLIP TRIGGER
+extern float NN_tr_flip;        // NN value at flip trigger
+extern float NN_tr_policy;      // NN policy value at flip trigger
 
 
 #endif //__CONTROLLER_GTC_H__
