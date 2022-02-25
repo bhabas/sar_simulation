@@ -1,7 +1,9 @@
 // CF HEADERS
 #include "controller_gtc.h"
 
-// INIT PID VALUES BEFORE OVERWRITTEN BY CONFIG FILE
+// =================================
+//    CONTROL GAIN INITIALIZATION
+// =================================
 // XY POSITION PID
 float P_kp_xy = 0.3f;
 float P_kd_xy = 0.01f;
@@ -54,19 +56,20 @@ static float dt = (float)(1.0f/RATE_500_HZ);
 
 
 // INIT STATE VALUES
-struct vec statePos = {0.253f,0.0f,0.0f};         // Pos [m]
+struct vec statePos = {0.0,0.0f,0.0f};         // Pos [m]
 struct vec stateVel = {0.0f,0.0f,0.0f};         // Vel [m/s]
 struct quat stateQuat = {0.0f,0.0f,0.0f,1.0f};  // Orientation
 struct vec stateOmega = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
 
 // OPTICAL FLOW STATES
-float RREV = 0.0f;   // [rad/s]
-float OF_x = 0.0f;   // [rad/s]
-float OF_y = 0.0f;   // [rad/s] 
+float Tau = 0.0f;   // [s]
+float OFx = 0.0f;  // [rad/s]
+float OFy = 0.0f;  // [rad/s] 
+float RREV = 0.0f;  // [rad/s]
 float d_ceil = 0.0f;
 
-struct mat33 R; // Orientation as rotation matrix
-struct vec stateEul = {0.0f,0.0f,0.0f}; // Pose in Euler Angles [YZX Notation]
+static struct mat33 R; // Orientation as rotation matrix
+static struct vec stateEul = {0.0f,0.0f,0.0f}; // Pose in Euler Angles [YZX Notation]
 
 
 // INIT DESIRED STATES
@@ -79,13 +82,15 @@ struct vec eul_d = {0.0f,0.0f,0.0f};        // Euler Angle-desired [rad? deg? TB
 struct vec omega_d = {0.0f,0.0f,0.0f};      // Omega-desired [rad/s]
 struct vec domega_d = {0.0f,0.0f,0.0f};     // Ang. Acc-desired [rad/s^2]
 
-struct vec b1_d = {1.0f,0.0f,0.0f};    // Desired body x-axis in global coord. [x,y,z]
-struct vec b2_d;    // Desired body y-axis in global coord.
-struct vec b3_d;    // Desired body z-axis in global coord.
-struct vec b3;      // Current body z-axis in global coord.
+struct vec M_d = {0.0f,0.0f,0.0f};   // Desired moment [N*m]
 
-struct mat33 R_d;   // Desired rotational matrix from b_d vectors
-struct vec e_3 = {0.0f, 0.0f, 1.0f}; // Global z-axis
+static struct vec b1_d = {1.0f,0.0f,0.0f};    // Desired body x-axis in global coord. [x,y,z]
+static struct vec b2_d;    // Desired body y-axis in global coord.
+static struct vec b3_d;    // Desired body z-axis in global coord.
+static struct vec b3;      // Current body z-axis in global coord.
+
+static struct mat33 R_d;   // Desired rotational matrix from b_d vectors
+static struct vec e_3 = {0.0f, 0.0f, 1.0f}; // Global z-axis
 
 // STATE ERRORS
 struct vec e_x;  // Pos-error [m]
@@ -112,17 +117,15 @@ static struct vec Gyro_dyn;
 
 // CONTROLLER ACTUATIONS
 struct vec F_thrust_ideal;           // Ideal thrust vector [N]
-struct vec M_d = {0.0f,0.0f,0.0f};   // Desired moment [N*m]
-
 float F_thrust = 0.0f;               // Implemented body thrust [N]
 struct vec M = {0.0f,0.0f,0.0f};     // Implemented body moments [N*m]
 
 
 // MOTOR THRUSTS
-static float f_thrust_g; // Motor thrust - Thrust [g]
-static float f_roll_g;   // Motor thrust - Roll   [g]
-static float f_pitch_g;  // Motor thrust - Pitch  [g]
-static float f_yaw_g;    // Motor thrust - Yaw    [g]
+float f_thrust_g = 0.0f; // Motor thrust - Thrust [g]
+float f_roll_g = 0.0f;   // Motor thrust - Roll   [g]
+float f_pitch_g = 0.0f;  // Motor thrust - Pitch  [g]
+float f_yaw_g = 0.0f;    // Motor thrust - Yaw    [g]
 
 
 // MOTOR VARIABLES
@@ -131,10 +134,6 @@ uint16_t M2_pwm = 0;
 uint16_t M3_pwm = 0; 
 uint16_t M4_pwm = 0; 
 
-uint16_t MS1 = 0;
-uint16_t MS2 = 0;
-uint16_t MS3 = 0;
-uint16_t MS4 = 0;
 
 
 // =================================
@@ -176,8 +175,8 @@ struct vec stateOmega_tr = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
 
 // OPTICAL FLOW STATES
 float Tau_tr = 0.0f;    // [rad/s]
-float OF_x_tr = 0.0f;   // [rad/s]
-float OF_y_tr = 0.0f;   // [rad/s]
+float OFx_tr = 0.0f;   // [rad/s]
+float OFy_tr = 0.0f;   // [rad/s]
 float RREV_tr = 0.0f;   // [rad/s]
 float d_ceil_tr = 0.0f; // [m/s]
 
