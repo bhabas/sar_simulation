@@ -468,7 +468,7 @@ void controlOutput(ControlOutput *FM, state_t *state, sensorData_t *sensors)
 
     FM->F_thrust = 1.0;
     state->position.x = 5.0;
-    consolePrintf("val: %.3f\n",sensors->gyro.x);
+    consolePrintf("val: %.3f\n",state->position.y);
     // // CONTROL GAINS
     //     Kp_p = mkvec(P_kp_xy,P_kp_xy,P_kp_z);
     //     Kd_p = mkvec(P_kd_xy,P_kd_xy,P_kd_z);
@@ -596,10 +596,28 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 {
     if (RATE_DO_EXECUTE(5, tick)) {
 
-        state_t state_test;
-        sensorData_t sensorData_test;
-        sensorData_test.gyro.x = 2.0;
-        ControlOutput FM_test = {0.0f,0.0f,0.0f,0.0f};
+
+        ControlOutput FM_test = {
+            .F_thrust = 0.0f,
+            .Mx = 0.0f,
+            .My = 0.0f,
+            .Mz = 0.0f
+        };
+
+        state_t state_test = {
+            .position = {0.0f, 0.0f, 0.0f},
+            .velocity = {0.0f, 0.0f, 0.0f},
+            .attitudeQuaternion = {0.0f, 0.0f, 0.0f, 1.0f}
+        };
+
+        sensorData_t sensorData_test = {
+            .gyro = {0.0f, 0.0f, 0.0f},
+            .acc = {0.0f, 0.0f, 0.0f},
+            .Tau = 0.0f,
+            .OFx = 0.0f,
+            .OFy = 0.0f,
+            .RREV = 0.0f
+        };
         controlOutput(&FM_test,&state_test,&sensorData_test);
         
 
