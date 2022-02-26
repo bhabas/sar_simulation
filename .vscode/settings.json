@@ -82,7 +82,8 @@
         "quatcompress.h": "c",
         "physicalconstants.h": "c",
         "math.h": "c",
-        "stdint.h": "c"
+        "stdint.h": "c",
+        "stabilizer_types.h": "c"
     },
     "python.analysis.extraPaths": [
         "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_rl/src/",

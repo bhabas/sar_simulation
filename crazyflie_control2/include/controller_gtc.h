@@ -49,9 +49,10 @@ bool controllerGTCTest(void);
 void controllerGTCReset(void);
 void controllerGTCTraj(void);
 void controllerGTC(control_t *control, setpoint_t *setpoint,
-                                         const sensorData_t *sensors,
-                                         const state_t *state,
+                                         sensorData_t *sensors,
+                                         state_t *state,
                                          const uint32_t tick);
+void controlOutput(ControlOutput *FM, state_t *state, sensorData_t *sensors);
 void GTC_Command(setpoint_t *setpoint);
 
 // =================================
@@ -103,6 +104,7 @@ extern struct vec statePos;
 extern struct vec stateVel;
 extern struct quat stateQuat;
 extern struct vec stateOmega;
+extern struct vec stateEul;
 
 // OPTICAL FLOW STATES
 extern float Tau;   // [s]
