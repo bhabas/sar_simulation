@@ -6,6 +6,10 @@
       <uri>model://sun</uri>
     </include>
 
+    <include>
+      <uri>model://GroundPlane_Desert_Physical</uri>
+    </include>
+
 
     <light name='user_directional_light_0' type='directional'>
       <pose>0 0 0 0 -0 0</pose>

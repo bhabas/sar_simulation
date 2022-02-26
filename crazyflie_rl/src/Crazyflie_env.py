@@ -177,7 +177,7 @@ class CrazyflieEnv:
         # NOTE: Queue sizes=1 so that we are always looking at the most current data and 
         #       not data at back of a queue waiting to be processed by callbacks
         self.clock_Subscriber = rospy.Subscriber("/clock",Clock,self.clockCallback,queue_size=1)
-        self.state_Subscriber = rospy.Subscriber('/env/global_state_data',Odometry,self.global_stateCallback,queue_size=1)      
+        self.state_Subscriber = rospy.Subscriber('/UKF/viconState_Filtered',Odometry,self.global_stateCallback,queue_size=1)      
         self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback,queue_size=1)                                   
 
         self.OF_Subscriber = rospy.Subscriber('/cf1/OF_sensor',Odometry,self.OFsensor_Callback,queue_size=1)    
@@ -189,7 +189,7 @@ class CrazyflieEnv:
         self.ceiling_ft_Subscriber = rospy.Subscriber('/CF_DC/ImpactData',ImpactData,self.ceiling_ftsensorCallback,queue_size=10) 
                       
 
-        rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
+        # rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
 
 
 
