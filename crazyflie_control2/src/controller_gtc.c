@@ -7,8 +7,8 @@
 //    CONTROL GAIN INITIALIZATION
 // =================================
 // XY POSITION PID
-float P_kp_xy = 0.3f;
-float P_kd_xy = 0.01f;
+float P_kp_xy = 0.5f;
+float P_kd_xy = 0.3f;
 float P_ki_xy = 0.0f;
 float i_range_xy = 0.3f;
 
@@ -258,6 +258,50 @@ void controllerGTCReset(void)
 {
     consolePrintf("GTC Reset\n");
 
+    // RESET ERRORS
+    e_PI = vzero();
+    e_RI = vzero();
+
+    // TURN POS/VEL CONTROLLER FLAGS ON
+    kp_xf = 1.0;
+    kd_xf = 1.0;
+
+    // RESET SETPOINTS TO HOME POSITION
+    x_d = mkvec(-0.25f,0.0f,0.4f);
+    v_d = mkvec(0.0f,0.0f,0.0f);
+    a_d = mkvec(0.0f,0.0f,0.0f);
+    
+
+    // RESET SYSTEM FLAGS
+    tumbled = false;
+    motorstop_flag = false;
+
+    Moment_flag = false;
+    policy_armed_flag = false;
+    flip_flag = false;
+    onceFlag = false;
+
+    // RESET TRAJECTORY VALUES
+    execute_traj = false;
+    s_0_t = vzero();
+    v_t = vzero();
+    a_t = vzero();
+    T = vzero();
+    t_traj = vzero();
+
+    // RESET LOGGED FLIP VALUES
+    statePos_tr = vzero();
+    stateVel_tr = vzero();
+    stateQuat_tr = mkquat(0.0f,0.0f,0.0f,1.0f);
+    stateOmega_tr = vzero();
+
+    RREV_tr = 0.0;
+    OFx_tr = 0.0;
+    OFy_tr = 0.0;
+
+    NN_tr_flip = 0.0;
+    NN_tr_policy = 0.0;
+
 }
 
 bool controllerGTCTest(void)
@@ -267,13 +311,150 @@ bool controllerGTCTest(void)
 
 void GTC_Command(setpoint_t *setpoint)
 {   
-    
+    switch(setpoint->cmd_type){
+        case 0: // Reset
+            controllerGTCReset();
+            break;
+
+
+        case 1: // Position
+            x_d.x = setpoint->cmd_val1;
+            x_d.y = setpoint->cmd_val2;
+            x_d.z = setpoint->cmd_val3;
+            kp_xf = setpoint->cmd_flag;
+            break;
+
+
+        case 2: // Velocity
+            v_d.x = setpoint->cmd_val1;
+            v_d.y = setpoint->cmd_val2;
+            v_d.z = setpoint->cmd_val3;
+            kd_xf = setpoint->cmd_flag;
+            break;
+
+
+        case 3: // Acceleration
+            a_d.x = setpoint->cmd_val1;
+            a_d.y = setpoint->cmd_val2;
+            a_d.z = setpoint->cmd_val3;
+            break;
+
+        case 4: // Tumble-Detection
+            tumble_detection = setpoint->cmd_flag;
+            break;
+
+        case 5: // Hard Set All Motorspeeds to Zero
+            motorstop_flag = true;
+            break;
+        
+        case 6: // Update Controller Gains
+            
+ 
+            break;
+
+        case 7: // Execute Moment-Based Flip
+
+            M_d.x = setpoint->cmd_val1*1e-3;
+            M_d.y = setpoint->cmd_val2*1e-3;
+            M_d.z = setpoint->cmd_val3*1e-3;
+
+            Moment_flag = (bool)setpoint->cmd_flag;
+            break;
+
+        case 8: // Arm Policy Maneuver
+            RREV_thr = setpoint->cmd_val1;
+            G1 = setpoint->cmd_val2;
+            G2 = setpoint->cmd_val3;
+
+            policy_armed_flag = setpoint->cmd_flag;
+
+            break;
+            
+        case 9: // Trajectory Values
+            traj_type = (axis_direction)setpoint->cmd_flag;
+
+            switch(traj_type){
+
+                case x:
+
+                    s_0_t.x = setpoint->cmd_val1;               // Starting position [m]
+                    v_t.x = setpoint->cmd_val2;                 // Desired velocity [m/s]
+                    a_t.x = setpoint->cmd_val3;                 // Max acceleration [m/s^2]
+                    T.x = (a_t.x+fsqr(v_t.x))/(a_t.x*v_t.x);    // Find trajectory manuever length [s]
+
+                    t_traj.x = 0.0f; // Reset timer
+                    execute_traj = true;
+                    break;
+
+                case y:
+
+                    s_0_t.y = setpoint->cmd_val1;
+                    v_t.y = setpoint->cmd_val2;
+                    a_t.y = setpoint->cmd_val3;
+                    T.y = (a_t.y+fsqr(v_t.y))/(a_t.y*v_t.y); 
+
+                    t_traj.y = 0.0f;
+                    execute_traj = true;
+                    break;
+
+                case z:
+
+                    s_0_t.z = setpoint->cmd_val1;
+                    v_t.z = setpoint->cmd_val2;
+                    a_t.z = setpoint->cmd_val3;
+                    T.z = (a_t.z+fsqr(v_t.z))/(a_t.z*v_t.z); 
+
+                    t_traj.z = 0.0f;
+                    execute_traj = true;
+                    break;
+                
+
+            }
+
+            break;
+    }
     
 }
 
 void controllerGTCTraj()
 {
-   
+   for (int i = 0; i < 3; i++)
+    {
+    
+        if(t_traj.idx[i]<=v_t.idx[i]/a_t.idx[i]) // t <= v/a
+        {
+            x_d.idx[i] = 0.5f*a_t.idx[i]*t_traj.idx[i]*t_traj.idx[i] + s_0_t.idx[i]; // 0.5*a*t^2 + s_0
+            v_d.idx[i] = a_t.idx[i]*t_traj.idx[i]; // a*t
+            a_d.idx[i] = a_t.idx[i]; // a
+
+        }
+
+        // CONSTANT VELOCITY TRAJECTORY
+        if(v_t.idx[i]/a_t.idx[i] < t_traj.idx[i]) // v/a < t
+        {
+            x_d.idx[i] = v_t.idx[i]*t_traj.idx[i] - fsqr(v_t.idx[i])/(2.0f*a_t.idx[i]) + s_0_t.idx[i]; // v*t - (v/(2*a))^2 + s_0
+            v_d.idx[i] = v_t.idx[i]; // v
+            a_d.idx[i] = 0.0f;
+        }
+
+        // // POINT-TO-POINT (1m) POSITION TRAJECTORY
+        // if(v_t.idx[i]/a_t.idx[i] <= t_traj.idx[i] && t_traj.idx[i] < (T.idx[i]-v_t.idx[i]/a_t.idx[i])) // v/a < t < (T-v/a)
+        // {
+        //     x_d.idx[i] = v_t.idx[i]*t_traj.idx[i] - fsqr(v_t.idx[i])/(2.0f*a_t.idx[i]) + s_0_t.idx[i]; // v*t - (v/2*a)^2 = s_0
+        //     v_d.idx[i] = v_t.idx[i]; // v
+        //     a_d.idx[i] = 0.0f; 
+        // }
+
+        // if((T.idx[i]-v_t.idx[i]/a_t.idx[i]) < t_traj.idx[i] && t_traj.idx[i] <= T.idx[i]) // (T-v/a) < t < T
+        // {
+        //     x_d.idx[i] = (2.0f*a_t.idx[i]*v_t.idx[i]*T.idx[i]-2.0f*fsqr(v_t.idx[i])-fsqr(a_t.idx[i])*fsqr(t_traj.idx[i]-T.idx[i]))/(2.0f*a_t.idx[i]) + s_0_t.idx[i];
+        //     v_d.idx[i] = a_t.idx[i]*(T.idx[i]-t_traj.idx[i]);
+        //     a_d.idx[i] = -a_t.idx[i];
+        // }
+
+
+        t_traj.idx[i] += dt;
+    }
 
     
 }
@@ -285,10 +466,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                                          const state_t *state,
                                          const uint32_t tick)
 {
-    if (RATE_DO_EXECUTE(5, tick)) {
-
-        // SYSTEM PARAMETERS 
-        J = mdiag(1.65717e-5f, 1.66556e-5f, 2.92617e-5f); // Rotational Inertia of CF [kg m^2]
+    if (RATE_DO_EXECUTE(RATE_500_HZ, tick)) {
 
         // CONTROL GAINS
         Kp_p = mkvec(P_kp_xy,P_kp_xy,P_kp_z);
