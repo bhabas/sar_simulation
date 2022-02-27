@@ -581,7 +581,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                                         state_t *state,
                                         const uint32_t tick)
 {
-    if (RATE_DO_EXECUTE(500, tick)) {
+    if (RATE_DO_EXECUTE(RATE_500_HZ, tick)) {
 
         if (setpoint->GTC_cmd_rec == true)
             {
