@@ -583,8 +583,30 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 {
     if (RATE_DO_EXECUTE(500, tick)) {
 
+        if (setpoint->GTC_cmd_rec == true)
+            {
+                GTC_Command(setpoint);
+                setpoint->GTC_cmd_rec = false;
+            }
 
+        if (errorReset){
+            controllerGTCReset();
+            errorReset = false;
+            }
 
+        if(execute_traj){
+            controllerGTCTraj();
+        }
+
+        Tau = sensors->Tau;
+        OFx = sensors->OFx;
+        OFy = sensors->OFy;
+        RREV = sensors->RREV;
+        d_ceil = (h_ceiling - statePos.z);
+
+        X->data[0][0] = 4.7f;
+        X->data[1][0] = -5.0f;
+        X->data[2][0] = 0.4f; // d_ceiling [m]
 
         
         controlOutput(state,sensors);
@@ -604,10 +626,34 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         M4_pwm = limitPWM(thrust2PWM(f_thrust_g - f_roll_g - f_pitch_g - f_yaw_g));
 
 
-    //     // TUMBLE DETECTION
-    //     if (b3.z <= 0 && tumble_detection == true){
-    //         tumbled = true;
-    //     }
+        // TUMBLE DETECTION
+        if (b3.z <= 0 && tumble_detection == true){
+            tumbled = true;
+        }
+        
+        if(motorstop_flag || tumbled){ // Cutoff all motor values
+            f_thrust_g = 0.0f;
+            M1_pwm = 0;
+            M2_pwm = 0;
+            M3_pwm = 0;
+            M4_pwm = 0;
+        }
+
+
+
+        // THESE CONNECT TO POWER_DISTRIBUTION_STOCK.C TO 
+        control->thrust = f_thrust_g;
+        control->roll = (int16_t)(f_roll_g*1e3f);
+        control->pitch = (int16_t)(f_pitch_g*1e3f);
+        control->yaw = (int16_t)(f_yaw_g*1e3f);
+       
+
+
+        
+
+        compressStates();
+        compressSetpoints();
+        compressFlipStates();
         
 
     }

@@ -15,8 +15,6 @@ void StateCollector::stabilizerLoop() // MAIN CONTROLLER LOOP
 
         stateEstimator(&state, &sensorData, &control, tick); // Run state/sensor values through "Kalman filter"
         controllerGTC(&control, &setpoint, &sensorData, &state, tick);
-
-        // printf("M1_PWM: %u \t M2_PWM: %u \t M3_PWM: %u \t M4_PWM: %u \n",M1_pwm,M2_pwm,M3_pwm,M4_pwm);
     
         if (RATE_DO_EXECUTE(100, tick)) {
             printf("t: %.4f \tCmd: \n",0.0);
@@ -27,6 +25,7 @@ void StateCollector::stabilizerLoop() // MAIN CONTROLLER LOOP
             printf("Policy_armed:\t %u  Slowdown_type:\t %u  kp_xf:\t %u \n",policy_armed_flag,5,(int)kp_xf);
             printf("Flip_flag:\t %u  Impact_flag:\t %u  kd_xf:\t %u \n",flip_flag,5,(int)kd_xf);
             printf("Tumbled: \t %u  Tumble Detect:\t %u  Traj Active: %u \n",tumbled,tumble_detection,execute_traj);
+            printf("Motorstop \t %u\n",motorstop_flag);
             printf("\n");
 
             printf("==== Setpoints ====\n");
@@ -84,8 +83,6 @@ void StateCollector::stabilizerLoop() // MAIN CONTROLLER LOOP
 
 
         MS_msg.MotorPWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
-        // MS_msg.MotorPWM = {0,0,0,0};
-
         MS_PWM_Publisher.publish(MS_msg);
 
         

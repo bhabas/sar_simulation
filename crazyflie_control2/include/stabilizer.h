@@ -17,6 +17,12 @@
 #include "crazyflie_msgs/OF_SensorData.h"
 #include "crazyflie_msgs/MS.h"
 
+#include "crazyflie_msgs/CtrlData.h"
+#include "crazyflie_msgs/ImpactData.h"
+#include "crazyflie_msgs/RLCmd.h"
+#include "crazyflie_msgs/RLData.h"
+#include "crazyflie_msgs/PadConnect.h"
+#include "crazyflie_msgs/MS.h"
 
 
 uint32_t tick;
@@ -36,6 +42,7 @@ class StateCollector
             Vicon_Subscriber = nh->subscribe("/UKF/viconState_Filtered",1,&StateCollector::viconState_Callback,this,ros::TransportHints().tcpNoDelay());
             IMU_Subscriber = nh->subscribe("/CF_Internal/IMU",1,&StateCollector::imuState_Callback,this,ros::TransportHints().tcpNoDelay());
             OF_Subscriber = nh->subscribe("/CF_Internal/OF_Sensor",1,&StateCollector::OFState_Callback,this,ros::TransportHints().tcpNoDelay());
+            CMD_Subscriber = nh->subscribe("/rl_ctrl",50,&StateCollector::CMD_Callback,this,ros::TransportHints().tcpNoDelay());
             MS_PWM_Publisher = nh->advertise<crazyflie_msgs::MS>("/MS",1);
 
             controllerThread = std::thread(&StateCollector::stabilizerLoop, this);
@@ -44,11 +51,15 @@ class StateCollector
         void viconState_Callback(const nav_msgs::Odometry::ConstPtr &msg);
         void imuState_Callback(const sensor_msgs::Imu::ConstPtr &msg);
         void OFState_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg);
+        void CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
+
         void stabilizerLoop();
 
         ros::Subscriber Vicon_Subscriber;
         ros::Subscriber IMU_Subscriber;
         ros::Subscriber OF_Subscriber;
+        ros::Subscriber CMD_Subscriber;
+
 
         ros::Publisher MS_PWM_Publisher;
 
@@ -103,4 +114,14 @@ void StateCollector::viconState_Callback(const nav_msgs::Odometry::ConstPtr &msg
 
 }
 
+void StateCollector::CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
+{
+    setpoint.cmd_type = msg->cmd_type;
+    setpoint.cmd_val1 = msg->cmd_vals.x;
+    setpoint.cmd_val2 = msg->cmd_vals.y;
+    setpoint.cmd_val3 = msg->cmd_vals.z;
+    setpoint.cmd_flag = msg->cmd_flag;
+
+    setpoint.GTC_cmd_rec = true;
+}
 
