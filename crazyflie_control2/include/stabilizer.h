@@ -51,39 +51,7 @@ class Controller
             // PUBLISHERS
             MS_PWM_Publisher = nh->advertise<crazyflie_msgs::MS>("/MS",1);
 
-            // SIMULATION SETTINGS FROM CONFIG FILE
-            ros::param::get("/MODEL_NAME",_MODEL_NAME);
-            ros::param::get("/CEILING_HEIGHT",_H_CEILING);
-            ros::param::get("/CF_MASS",_CF_MASS);
-            ros::param::get("/POLICY_TYPE",_POLICY_TYPE);
-            // POLICY_TYPE = (Policy_Type)_POLICY_TYPE; // Cast ROS param (int) to enum (Policy_Type)
-
-            // DEBUG SETTINGS
-            ros::param::get("/SIM_SPEED",_SIM_SPEED);
-            ros::param::get("/CTRL_DEBUG_SLOWDOWN", _CTRL_DEBUG_SLOWDOWN);
-            ros::param::get("/LANDING_SLOWDOWN",_LANDING_SLOWDOWN_FLAG);
-            ros::param::get("/SIM_SLOWDOWN_SPEED",_SIM_SLOWDOWN_SPEED);
-
-            // COLLECT CTRL GAINS FROM CONFIG FILE
-            ros::param::get("P_kp_xy",P_kp_xy);
-            ros::param::get("P_kd_xy",P_kd_xy);
-            ros::param::get("P_ki_xy",P_ki_xy);
-            ros::param::get("i_range_xy",i_range_xy);
-
-            ros::param::get("P_kp_z",P_kp_z);
-            ros::param::get("P_kd_z",P_kd_z);
-            ros::param::get("P_ki_z",P_ki_z);
-            ros::param::get("i_range_z",i_range_z);
-
-            ros::param::get("R_kp_xy",R_kp_xy);
-            ros::param::get("R_kd_xy",R_kd_xy);
-            ros::param::get("R_ki_xy",R_ki_xy);
-            ros::param::get("i_range_R_xy",i_range_R_xy);
             
-            ros::param::get("R_kp_z",R_kp_z);
-            ros::param::get("R_kd_z",R_kd_z);
-            ros::param::get("R_ki_z",R_ki_z);
-            ros::param::get("i_range_R_z",i_range_R_z);
 
             controllerThread = std::thread(&Controller::stabilizerLoop, this);
         }
@@ -132,11 +100,13 @@ class Controller
         void RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg);
 
         void stabilizerLoop();
+        void LoadParams();
 
         crazyflie_msgs::MS MS_msg;
 
 
 };
+
 
 void Controller::OFState_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg)
 {
@@ -188,6 +158,11 @@ void Controller::CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
     setpoint.cmd_flag = msg->cmd_flag;
 
     setpoint.GTC_cmd_rec = true;
+
+    if(msg->cmd_type == 6)
+    {
+        Controller::LoadParams();
+    }
 }
 
 void Controller::ceilingFT_Callback(const crazyflie_msgs::ImpactData::ConstPtr &msg)
@@ -202,4 +177,43 @@ void Controller::RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){
         controllerGTCReset();
 
     }
+}
+
+
+void Controller::LoadParams()
+{
+    // SIMULATION SETTINGS FROM CONFIG FILE
+    ros::param::get("/MODEL_NAME",_MODEL_NAME);
+    ros::param::get("/CEILING_HEIGHT",_H_CEILING);
+    ros::param::get("/CF_MASS",_CF_MASS);
+    ros::param::get("/POLICY_TYPE",_POLICY_TYPE);
+    // POLICY_TYPE = (Policy_Type)_POLICY_TYPE; // Cast ROS param (int) to enum (Policy_Type)
+
+    // DEBUG SETTINGS
+    ros::param::get("/SIM_SPEED",_SIM_SPEED);
+    ros::param::get("/CTRL_DEBUG_SLOWDOWN", _CTRL_DEBUG_SLOWDOWN);
+    ros::param::get("/LANDING_SLOWDOWN",_LANDING_SLOWDOWN_FLAG);
+    ros::param::get("/SIM_SLOWDOWN_SPEED",_SIM_SLOWDOWN_SPEED);
+
+    // COLLECT CTRL GAINS FROM CONFIG FILE
+    ros::param::get("P_kp_xy",P_kp_xy);
+    ros::param::get("P_kd_xy",P_kd_xy);
+    ros::param::get("P_ki_xy",P_ki_xy);
+    ros::param::get("i_range_xy",i_range_xy);
+
+    ros::param::get("P_kp_z",P_kp_z);
+    ros::param::get("P_kd_z",P_kd_z);
+    ros::param::get("P_ki_z",P_ki_z);
+    ros::param::get("i_range_z",i_range_z);
+
+    ros::param::get("R_kp_xy",R_kp_xy);
+    ros::param::get("R_kd_xy",R_kd_xy);
+    ros::param::get("R_ki_xy",R_ki_xy);
+    ros::param::get("i_range_R_xy",i_range_R_xy);
+    
+    ros::param::get("R_kp_z",R_kp_z);
+    ros::param::get("R_kd_z",R_kd_z);
+    ros::param::get("R_ki_z",R_ki_z);
+    ros::param::get("i_range_R_z",i_range_R_z);
+
 }
