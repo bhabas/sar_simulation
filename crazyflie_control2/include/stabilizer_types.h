@@ -260,13 +260,6 @@ typedef struct {
   float stdDev;
 } yawErrorMeasurement_t;
 
-typedef struct{
-	float F_thrust;
-	float Mx;
-	float My;
-	float Mz;
-} ControlOutput;
-
 // /** Sweep angle measurement */
 // typedef struct {
 //   uint32_t timestamp;

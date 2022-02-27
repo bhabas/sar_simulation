@@ -52,7 +52,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                                          sensorData_t *sensors,
                                          state_t *state,
                                          const uint32_t tick);
-void controlOutput(ControlOutput *FM, state_t *state, sensorData_t *sensors);
+void controlOutput(state_t *state, sensorData_t *sensors);
 void GTC_Command(setpoint_t *setpoint);
 
 // =================================
