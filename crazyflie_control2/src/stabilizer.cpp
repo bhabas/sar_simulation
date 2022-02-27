@@ -1,7 +1,7 @@
 #include "stabilizer.h"
 #include "controller_gtc.h"
 
-void StateCollector::stabilizerLoop() // MAIN CONTROLLER LOOP
+void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
 {
     ros::Rate rate(1000);
     tick = 1;
@@ -97,7 +97,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "Stabilizer_Node");
     ros::NodeHandle nh;
 
-    StateCollector SC = StateCollector(&nh);
+    Controller SC = Controller(&nh);
     ros::spin();
 
     

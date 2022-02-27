@@ -33,47 +33,65 @@ static sensorData_t sensorData;
 static state_t state;
 static control_t control;
 
-class StateCollector
+class Controller
 {
     public:
 
-        StateCollector(ros::NodeHandle *nh)
+        Controller(ros::NodeHandle *nh)
         {
-            Vicon_Subscriber = nh->subscribe("/UKF/viconState_Filtered",1,&StateCollector::viconState_Callback,this,ros::TransportHints().tcpNoDelay());
-            IMU_Subscriber = nh->subscribe("/CF_Internal/IMU",1,&StateCollector::imuState_Callback,this,ros::TransportHints().tcpNoDelay());
-            OF_Subscriber = nh->subscribe("/CF_Internal/OF_Sensor",1,&StateCollector::OFState_Callback,this,ros::TransportHints().tcpNoDelay());
-            CMD_Subscriber = nh->subscribe("/rl_ctrl",50,&StateCollector::CMD_Callback,this,ros::TransportHints().tcpNoDelay());
+            // SUBSCRIBERS
+            Vicon_Subscriber = nh->subscribe("/UKF/viconState_Filtered",1,&Controller::viconState_Callback,this,ros::TransportHints().tcpNoDelay());
+            IMU_Subscriber = nh->subscribe("/CF_Internal/IMU",1,&Controller::imuState_Callback,this,ros::TransportHints().tcpNoDelay());
+            OF_Subscriber = nh->subscribe("/CF_Internal/OF_Sensor",1,&Controller::OFState_Callback,this,ros::TransportHints().tcpNoDelay());
+            CMD_Subscriber = nh->subscribe("/rl_ctrl",50,&Controller::CMD_Callback,this,ros::TransportHints().tcpNoDelay());
+            CeilingFT_Subcriber = nh->subscribe("/env/ceiling_force_sensor",5,&Controller::ceilingFT_Callback,this,ros::TransportHints().tcpNoDelay());
+            RLData_Subscriber = nh->subscribe("/rl_data",5,&Controller::RLData_Callback,this,ros::TransportHints().tcpNoDelay());
+
+            // PUBLISHERS
             MS_PWM_Publisher = nh->advertise<crazyflie_msgs::MS>("/MS",1);
 
-            controllerThread = std::thread(&StateCollector::stabilizerLoop, this);
+            controllerThread = std::thread(&Controller::stabilizerLoop, this);
         }
 
-        void viconState_Callback(const nav_msgs::Odometry::ConstPtr &msg);
-        void imuState_Callback(const sensor_msgs::Imu::ConstPtr &msg);
-        void OFState_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg);
-        void CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
+        
 
-        void stabilizerLoop();
-
+        // SUBSCRIBERS
         ros::Subscriber Vicon_Subscriber;
         ros::Subscriber IMU_Subscriber;
         ros::Subscriber OF_Subscriber;
         ros::Subscriber CMD_Subscriber;
 
+        ros::Subscriber CeilingFT_Subcriber;
+        ros::Subscriber RLData_Subscriber;
 
+        // PUBLISHERS
         ros::Publisher MS_PWM_Publisher;
+
+        // SERVICES
+        ros::ServiceClient _SimSpeed_Client;
 
         // DEFINE THREAD OBJECTS
         std::thread controllerThread;
 
         uint32_t tick;
 
+        // FUNCTION PRIMITIVES
+        void viconState_Callback(const nav_msgs::Odometry::ConstPtr &msg);
+        void imuState_Callback(const sensor_msgs::Imu::ConstPtr &msg);
+        void OFState_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg);
+
+        void CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
+        void ceilingFT_Callback(const crazyflie_msgs::ImpactData::ConstPtr &msg);
+        void RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg);
+
+        void stabilizerLoop();
+
         crazyflie_msgs::MS MS_msg;
 
 
 };
 
-void StateCollector::OFState_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg)
+void Controller::OFState_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg)
 {
     sensorData.Tau = msg->Tau;
     sensorData.OFx = msg->OFx;
@@ -82,7 +100,7 @@ void StateCollector::OFState_Callback(const crazyflie_msgs::OF_SensorData::Const
 
 }
 
-void StateCollector::imuState_Callback(const sensor_msgs::Imu::ConstPtr &msg)
+void Controller::imuState_Callback(const sensor_msgs::Imu::ConstPtr &msg)
 {
     sensorData.acc.x = msg->linear_acceleration.x/9.8066; // Convert to Gs to match crazyflie sensors
     sensorData.acc.y = msg->linear_acceleration.y/9.8066;
@@ -90,7 +108,7 @@ void StateCollector::imuState_Callback(const sensor_msgs::Imu::ConstPtr &msg)
 
 }
 
-void StateCollector::viconState_Callback(const nav_msgs::Odometry::ConstPtr &msg)
+void Controller::viconState_Callback(const nav_msgs::Odometry::ConstPtr &msg)
 {
     
     // UPDATE POSE FROM VICON SYSTEM
@@ -114,7 +132,7 @@ void StateCollector::viconState_Callback(const nav_msgs::Odometry::ConstPtr &msg
 
 }
 
-void StateCollector::CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
+void Controller::CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 {
     setpoint.cmd_type = msg->cmd_type;
     setpoint.cmd_val1 = msg->cmd_vals.x;
@@ -125,3 +143,16 @@ void StateCollector::CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
     setpoint.GTC_cmd_rec = true;
 }
 
+void Controller::ceilingFT_Callback(const crazyflie_msgs::ImpactData::ConstPtr &msg)
+{
+    // _impact_flag = msg->impact_flag;
+}
+
+void Controller::RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){
+
+    // if (msg->reset_flag == true){
+
+    //     controllerGTCReset();
+
+    // }
+}
