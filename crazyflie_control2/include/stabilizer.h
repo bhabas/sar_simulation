@@ -52,7 +52,7 @@ class Controller
             MS_PWM_Publisher = nh->advertise<crazyflie_msgs::MS>("/MS",1);
 
             
-
+            Controller::LoadParams();
             controllerThread = std::thread(&Controller::stabilizerLoop, this);
         }
 
@@ -62,8 +62,8 @@ class Controller
         ros::Subscriber Vicon_Subscriber;
         ros::Subscriber IMU_Subscriber;
         ros::Subscriber OF_Subscriber;
-        ros::Subscriber CMD_Subscriber;
 
+        ros::Subscriber CMD_Subscriber;
         ros::Subscriber CeilingFT_Subcriber;
         ros::Subscriber RLData_Subscriber;
 
@@ -77,6 +77,7 @@ class Controller
         std::thread controllerThread;
 
         uint32_t tick;
+        ros::Time t;
 
         // ROS SPECIFIC VALUES
         int _impact_flag = 0;
@@ -106,7 +107,6 @@ class Controller
 
 
 };
-
 
 void Controller::OFState_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg)
 {

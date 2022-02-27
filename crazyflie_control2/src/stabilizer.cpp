@@ -15,11 +15,13 @@ void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
 
         stateEstimator(&state, &sensorData, &control, tick); // Run state/sensor values through "Kalman filter"
         controllerGTC(&control, &setpoint, &sensorData, &state, tick);
+
+        t = ros::Time::now();
     
-        if (RATE_DO_EXECUTE(100, tick)) {
+        if (RATE_DO_EXECUTE(20, tick)) {
             system("clear");
-            printf("t: %.4f \tCmd: \n",0.0);
-            printf("Model: %s\n","CF_*****");
+            printf("t: %.4f \tCmd: \n",ros::Time::now().toSec());
+            printf("Model: %s\n",_MODEL_NAME.c_str());
             printf("\n");
 
             printf("==== Flags ====\n");
