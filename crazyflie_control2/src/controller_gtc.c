@@ -574,8 +574,6 @@ void controlOutput(state_t *state, sensorData_t *sensors)
     F_thrust = vdot(F_thrust_ideal, b3);    // Project ideal thrust onto b3 vector [N]
     M = vadd(R_effort,Gyro_dyn);            // Control moments [Nm]
 
-    // consolePrintf("F: %.3f  Mx: %.3f  My: %.3f  Mz: %.3f\n",M.x*1e3f,M.y*1e3f,M.z*1e3f);
-    // consolePrintf("\n\n");
 }
 
 void controllerGTC(control_t *control, setpoint_t *setpoint,
@@ -590,6 +588,20 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
         
         controlOutput(state,sensors);
+
+        // =========== CONVERT THRUSTS AND MOMENTS TO PWM =========== // 
+        f_thrust_g = F_thrust/4.0f*Newton2g;
+        f_roll_g = M.x/(4.0f*dp)*Newton2g;
+        f_pitch_g = M.y/(4.0f*dp)*Newton2g;
+        f_yaw_g = M.z/(4.0*c_tf)*Newton2g;
+
+        f_thrust_g = clamp(f_thrust_g,0.0,f_MAX*0.8);    // Clamp thrust to prevent control saturation
+
+        // Add respective thrust components and limit to (0 <= PWM <= 60,000)
+        M1_pwm = limitPWM(thrust2PWM(f_thrust_g + f_roll_g - f_pitch_g + f_yaw_g)); 
+        M2_pwm = limitPWM(thrust2PWM(f_thrust_g + f_roll_g + f_pitch_g - f_yaw_g));
+        M3_pwm = limitPWM(thrust2PWM(f_thrust_g - f_roll_g + f_pitch_g + f_yaw_g));
+        M4_pwm = limitPWM(thrust2PWM(f_thrust_g - f_roll_g - f_pitch_g - f_yaw_g));
 
 
     //     // TUMBLE DETECTION

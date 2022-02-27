@@ -18,7 +18,7 @@ void StateCollector::stabilizerLoop() // MAIN CONTROLLER LOOP
 
         // printf("M1_PWM: %u \t M2_PWM: %u \t M3_PWM: %u \t M4_PWM: %u \n",M1_pwm,M2_pwm,M3_pwm,M4_pwm);
     
-        if (RATE_DO_EXECUTE(500, tick)) {
+        if (RATE_DO_EXECUTE(100, tick)) {
             printf("t: %.4f \tCmd: \n",0.0);
             printf("Model: %s\n","CF_*****");
             printf("\n");
@@ -40,13 +40,6 @@ void StateCollector::stabilizerLoop() // MAIN CONTROLLER LOOP
             printf("Vel [m/s]:\t %.3f  %.3f  %.3f\n",stateVel.x,stateVel.y,stateVel.z);
             printf("Omega [rad/s]:\t %.3f  %.3f  %.3f\n",stateOmega.x,stateOmega.y,stateOmega.z);
             printf("Eul [deg]:\t %.3f  %.3f  %.3f\n",stateEul.x,stateEul.y,stateEul.z);
-            printf("\n");
-
-            printf("==== System Errors ====\n");
-            printf("e_Pos [m]:\t %.3f  %.3f  %.3f\n",e_x.x,e_x.y,e_x.z);
-            printf("e_Vel [m/s]:\t %.3f  %.3f  %.3f\n",e_v.x,e_v.y,e_v.z);
-            printf("e_W [rad/s]:\t %.3f  %.3f  %.3f\n",e_w.x,e_w.y,e_w.z);
-            printf("Eul [rad]:\t %.3f  %.3f  %.3f\n",e_R.x,e_R.y,e_R.z);
             printf("\n");
 
             printf("Tau: %.3f \tOFx: %.3f \tOFy: %.3f \tRREV: %.3f\n",Tau,OFx,OFy,RREV);
@@ -90,8 +83,10 @@ void StateCollector::stabilizerLoop() // MAIN CONTROLLER LOOP
         }
 
 
-        // MS_msg.MotorPWM = {0,0,0,0};
-        // MS_PWM_Publisher.publish(MS_msg);
+        MS_msg.MotorPWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
+        MS_msg.MotorPWM = {0,0,0,0};
+
+        MS_PWM_Publisher.publish(MS_msg);
 
         
         tick++;

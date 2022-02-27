@@ -21,7 +21,7 @@ def dehat(arr):
 
 
 ## DEFINE SYSTEM CONSTANTS
-m = 0.037               # Mass [kg]
+m = 0.0376               # Mass [kg]
 g = 9.8066              # Gravity [m/s^2]
 
 d = 0.04                # Absolute distance from CoM to prop [m]
@@ -38,20 +38,20 @@ e_3 = np.array([[0,0,1]]).T # Define vertical z-axis
 
 
 K = {
-        "P_kp_xy": 0.7,
-        "P_kd_xy": 0.25,
+        "P_kp_xy": 0.5,
+        "P_kd_xy": 0.3,
         "P_ki_xy": 0.0,
 
-        "P_kp_z": 0.7,
-        "P_kd_z": 0.25,
+        "P_kp_z": 1.2,
+        "P_kd_z": 0.35,
         "P_ki_z": 0.0,
 
-        "R_kp_xy": 0.004,
-        "R_kd_xy": 0.0008,
+        "R_kp_xy": 0.02,
+        "R_kd_xy": 0.08,
         "R_ki_xy": 0.0,
 
-        "R_kp_z": 0.004,
-        "R_kd_z": 0.0008,
+        "R_kp_z": 0.003,
+        "R_kd_z": 0.025,
         "R_ki_z": 0,
     }
 
@@ -68,11 +68,11 @@ Ki_R = np.array([[K['R_ki_xy'],K['R_ki_xy'],K['R_ki_z']]]).T
 
 
 FullState = {
-        'x': np.array([[0.0,0.0,0.0]]).T,      # Pos. [x,y,z] - [m]
+        'x': np.array([[0.0,0.0,0.4]]).T,      # Pos. [x,y,z] - [m]
         'v': np.array([[0.0,0.0,0.0]]).T,      # Lin. Vel [vx,vy,vz] - [m/s]
-        'w': np.array([[0.0,0.0,0.0]]).T,      # Ang. Vel [wx,wy,wz] - [rad/s]
-        'eul': np.array([[0,0,0]]).T,    
-        'quat': np.array([[0,0,0,1.]]),     # Orientation [qx,qy,qz,qw]
+        'w': np.array([[0.0,-0.033,0.0]]).T,      # Ang. Vel [wx,wy,wz] - [rad/s]
+        'eul': np.array([[0.0,0.0,0.0]]).T,    
+        'quat': np.array([[0,0,0,1]]),     # Orientation [qx,qy,qz,qw]
     }
 
 DesiredState = {

@@ -63,7 +63,7 @@ namespace gazebo
     void GazeboMotorPlugin::updateThrust()
     {
         // APPLY ROTOR THRUST TO LINK
-        thrust = PWM2thrust(rotorPWM)*g2Newton;
+        thrust = (rotorPWM < 100) ? 0.0 : PWM2thrust(rotorPWM)*g2Newton;
         link_ptr->AddRelativeForce(ignition::math::Vector3d(0, 0, thrust));
 
     }
