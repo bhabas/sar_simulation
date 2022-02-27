@@ -68,10 +68,10 @@ Ki_R = np.array([[K['R_ki_xy'],K['R_ki_xy'],K['R_ki_z']]]).T
 
 
 FullState = {
-        'x': np.array([[0.0,0.0,0.4]]).T,      # Pos. [x,y,z] - [m]
-        'v': np.array([[0.0,0.0,0.0]]).T,      # Lin. Vel [vx,vy,vz] - [m/s]
-        'w': np.array([[0.0,-0.033,0.0]]).T,      # Ang. Vel [wx,wy,wz] - [rad/s]
-        'eul': np.array([[0.0,0.0,0.0]]).T,    
+        'x': np.array([[0.0,0.001,0.309]]).T,      # Pos. [x,y,z] - [m]
+        'v': np.array([[-0.006,0.011,-0.007]]).T,      # Lin. Vel [vx,vy,vz] - [m/s]
+        'w': np.array([[0.0,0.0,0.0]]).T,      # Ang. Vel [wx,wy,wz] - [rad/s]
+        'eul': np.array([[0.682,0.029,-0.070]]).T,    
         'quat': np.array([[0,0,0,1]]),     # Orientation [qx,qy,qz,qw]
     }
 

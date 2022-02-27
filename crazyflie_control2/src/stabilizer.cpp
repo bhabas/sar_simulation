@@ -84,7 +84,7 @@ void StateCollector::stabilizerLoop() // MAIN CONTROLLER LOOP
 
 
         MS_msg.MotorPWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
-        MS_msg.MotorPWM = {0,0,0,0};
+        // MS_msg.MotorPWM = {0,0,0,0};
 
         MS_PWM_Publisher.publish(MS_msg);
 
