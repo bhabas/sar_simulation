@@ -1,5 +1,7 @@
 #include <iostream>
 #include "OF_Sensor_plugin.h"
+#include <boost/algorithm/clamp.hpp>
+
 
 
 namespace gazebo
@@ -58,7 +60,7 @@ namespace gazebo
             OFy = -Vx_rel/d_ceil;
 
             // PUBLISH OPTICAL FLOW VALUES
-            OF_Data_msg.Tau = Tau + GaussianKernel(0,Tau_gaussianNoise);
+            OF_Data_msg.Tau = boost::algorithm::clamp(Tau + GaussianKernel(0,Tau_gaussianNoise), -30, 30);
             OF_Data_msg.OFx = OFx + GaussianKernel(0,OFx_gaussianNoise);
             OF_Data_msg.OFy = OFy + GaussianKernel(0,OFy_gaussianNoise);
             OF_Data_msg.RREV = RREV + GaussianKernel(0,RREV_gaussianNoise);

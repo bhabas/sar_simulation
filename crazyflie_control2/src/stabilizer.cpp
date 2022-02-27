@@ -17,13 +17,14 @@ void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
         controllerGTC(&control, &setpoint, &sensorData, &state, tick);
     
         if (RATE_DO_EXECUTE(100, tick)) {
+            system("clear");
             printf("t: %.4f \tCmd: \n",0.0);
             printf("Model: %s\n","CF_*****");
             printf("\n");
 
             printf("==== Flags ====\n");
-            printf("Policy_armed:\t %u  Slowdown_type:\t %u  kp_xf:\t %u \n",policy_armed_flag,5,(int)kp_xf);
-            printf("Flip_flag:\t %u  Impact_flag:\t %u  kd_xf:\t %u \n",flip_flag,5,(int)kd_xf);
+            printf("Policy_armed:\t %u  Slowdown_type:\t %u  kp_xf:\t %u \n",policy_armed_flag,_slowdown_type,(int)kp_xf);
+            printf("Flip_flag:\t %u  Impact_flag:\t %u  kd_xf:\t %u \n",flip_flag,_impact_flag,(int)kd_xf);
             printf("Tumbled: \t %u  Tumble Detect:\t %u  Traj Active: %u \n",tumbled,tumble_detection,execute_traj);
             printf("Motorstop \t %u\n",motorstop_flag);
             printf("\n");
