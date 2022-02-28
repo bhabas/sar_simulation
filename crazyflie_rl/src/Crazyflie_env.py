@@ -28,7 +28,7 @@ class CrazyflieEnv:
         print("[STARTING] CrazyflieEnv is starting...")
 
 
-        ## INIT GAZEBO SIMULATION
+        ## GAZEBO SIMULATION INITIALIZATION
         rospy.init_node("crazyflie_env_node") 
         os.system("roslaunch crazyflie_launch params.launch")
         # self.launch_controller()
@@ -39,32 +39,51 @@ class CrazyflieEnv:
 
         self.username = getpass.getuser()
         self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs"
+        self.dataType = "SIM"
         self.filepath = ""
         self.trial_name = '' 
         self.error_str = ''     # Label for why rollout was terminated/completed
         self.agent_name = ''    # Learning agent used for training (PEPG,EM,etc...)
         self.logging_flag = True
         self.runComplete_flag = False
+        self.trialComplete_flag = False
+        self.reset_flag = False
 
 
-        self.isRunning = True
-        self.dataType = "SIM"
 
 
         ## LOAD SIM_SETTINGS/ROS_PARAMETERS
         self.modelName = rospy.get_param('/MODEL_NAME')
         self.modelInitials = self.modelInitial()
         
-        
+        self.t_start = rospy.get_time()
 
-        ## INIT CRAZYFLIE ESTIMATED
+        ## RAW VICON VALUES
+        self.posViconRaw = [0,0,0]
+        self.quatViconRaw = [0,0,0,1]
+
+        ## FILTERED VICON STATES
+        self.posVicon = [0,0,0]
+        self.velVicon = [0,0,0]
+
+        self.quatVicon = [0,0,0,1]
+        self.eulVicon = [0,0,0]
+        self.omegaVicon = [0,0,0]
+
+        ## CRAZYFLIE STATES
+        self.posCF = [0,0,0]
+        self.velCF = [0,0,0]
+
+        self.quatCF = [0,0,0,1]
+        self.eulCF = [0,0,0]
+        self.omegaCF = [0,0,0]
+
         self.x_d = [0,0,0]
         self.v_d = [0,0,0]
         self.a_d = [0,0,0]
 
-        self.MS_pwm = [0,0,0,0]     # Controller Motor Speeds (MS1,MS2,MS3,MS4) [PWM]
+        self.MS_pwm = [0,0,0,0] # Controller Motor Speeds (MS1,MS2,MS3,MS4) [PWM]
         self.FM = [0,0,0,0]     # Controller Force/Moments (F_thrust,Mx,My,Mz) [N,N*mm]
-
         self.V_Battery = 0.0
         self.flip_flag = False      # Flag if model has started flip maneuver
 
@@ -94,7 +113,6 @@ class CrazyflieEnv:
         self.sigma_1_list = []
         self.sigma_2_list = []
 
-
         self.reward = 0.0       # Calculated reward from run
         self.reward_avg = 0.0   # Averaged rewards over episode
         self.reward_inputs = [] # List of inputs to reward func
@@ -104,92 +122,78 @@ class CrazyflieEnv:
         self.pitch_max = 0.0
 
         self.vel_trial = [0.0,0.0,0.0] # Desired velocity for trial
-
-        ## INIT RL_DATA VARIABLES 
-        # NOTE: All time units are in terms of Sim-Time unless specified
-        self.trialComplete_flag = False
-        self.reset_flag = False
-        
-
+     
         ## TRAJECTORY VALUES
-        self.z_0 = 0.4      # Default hover height [m]
-        self.az_max = 4.3   # Max vertical acceleration [m/s^2]
+        self.posCF_0 = [0,0,0.4] # Default hover position [m]
+        self.accCF_max = [2.0,2.0,4.0] # Max acceleration values for trajectory generation [m/s^2]
+        
       
 
 
         self.t_prev = 0.0       # [s]
 
-        ## FLIP VALS
-        self.t_flip = 0.0
-        self.pos_flip = [0,0,0]
-        self.vel_flip = [0,0,0]
-        self.quat_flip = [0,0,0,1]
-        self.omega_flip = [0,0,0]
+        ## INITIALIZE FLIP VALUES
+        self.t_tr = 0.0             # [s]
+        self.posCF_tr = [0,0,0]     # [m]
+        self.velCF_tr = [0,0,0]     # [m/s]
+        self.quatCF_tr = [0,0,0,1]  # [quat]
+        self.omegaCF_tr = [0,0,0]   # [rad/s]
 
-        self.RREV_tr = 0.0
-        self.OFx_tr = 0.0
-        self.OFy_tr = 0.0
-        self.d_ceil_tr = 0.0
+        self.RREV_tr = 0.0          # [rad/s]
+        self.OFx_tr = 0.0           # [rad/s]
+        self.OFy_tr = 0.0           # [rad/s]
+        self.d_ceil_tr = 0.0        # [m]
 
-        self.FM_flip = [0,0,0,0]    # [N,N*mm]
+        self.FM_tr = [0,0,0,0]      # [N,N*mm]
 
         self.NN_tr_flip = 0.0
-        self.NN_tr_policy = 0.0
+        self.NN_tr_policy = 0.0     # [N*mm]
 
         
 
-        ## IMPACT VALS
-        self.t_impact = 0.0
-        self.pos_impact = [0,0,0]
-        self.vel_impact = [0,0,0]
-        self.quat_impact = np.array([0,0,0,1])
-        self.omega_impact = [0,0,0]
+        ## INITIALIZE IMPACT VALUES
+        self.t_impact = np.nan
+        self.posCF_impact = [np.nan,np.nan,np.nan]
+        self.velCF_impact = [np.nan,np.nan,np.nan]
+        self.quatCF_impact = [np.nan,np.nan,np.nan,np.nan]
+        self.omegaCF_impact = [np.nan,np.nan,np.nan]
 
         self.FM_impact = [0,0,0,0]  # [N,N*mm]
 
-        self.pad_contacts = [] # Flag if pads impact ceiling plane
+        self.pad_contacts = 0       # Flag if pads impact ceiling plane
         self.body_contact = False   # Flag if model body impacts ceiling plane
         self.impact_flag = False    # Flag if any model part impact ceiling plane
 
-        self.ceiling_ft_x = 0.0     # Ceiling impact force, X-dir [N]
-        self.ceiling_ft_y = 0.0     # Ceiling impact force, Y-dir [N]
-        self.ceiling_ft_z = 0.0     # Ceiling impact force, Z-dir [N]
+        self.ceiling_ft_x = np.nan     # Ceiling impact force, X-dir [N]
+        self.ceiling_ft_y = np.nan     # Ceiling impact force, Y-dir [N]
+        self.ceiling_ft_z = np.nan     # Ceiling impact force, Z-dir [N]
 
 
-        
-
-
-        
-    
-
-        
 
         ## INIT ROS SUBSCRIBERS [Pub/Sampling Frequencies]
         # NOTE: Queue sizes=1 so that we are always looking at the most current data and 
         #       not data at back of a queue waiting to be processed by callbacks
-        self.clock_Subscriber = rospy.Subscriber("/clock",Clock,self.clock_Callback,queue_size=1)
-        self.state_Subscriber = rospy.Subscriber('/ENV/viconState_UKF',Odometry,self.viconState_Callback,queue_size=1)      
-        self.ctrl_Subscriber = rospy.Subscriber('/CTRL/data',CtrlData,self.ctrlData_Callback,queue_size=1)                                   
 
-        self.OF_Subscriber = rospy.Subscriber('/CF_Internal/OF_sensor',Odometry,self.OFsensor_Callback,queue_size=1)    
-        self.laser_Subscriber = rospy.Subscriber('/CF_Internal/Laser_sensor',LaserScan,self.laser_sensorCallback)       
-                      
-        # WE WANT TO BE SURE WE GET THESE MESSAGES WHEN THEY COME THROUGH              
-        self.contact_Subscriber = rospy.Subscriber('/ENV/BodyContact',ContactsState,self.contactSensorCallback,queue_size=10)     
-        self.padcontact_Subcriber = rospy.Subscriber('/ENV/Pad_Connections',PadConnect,self.padConnect_Callback,queue_size=10)       
-        self.ceiling_ft_Subscriber = rospy.Subscriber('/CF_DC/ImpactData',ImpactData,self.ceiling_ftsensorCallback,queue_size=10) 
-                      
+        ## CONTROLLER TOPICS 
+        self.CTRL_Data_Subscriber = rospy.Subscriber('/CTRL/data',CtrlData,self.ctrlData_Callback,queue_size=1)                                   
 
-        # rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
-
-
-
-        ## INIT ROS PUBLISHERS
-        self.RL_Publisher = rospy.Publisher('/RL/data',RLData,queue_size=10)
-        self.Cmd_Publisher = rospy.Publisher('/RL/cmd',RLCmd,queue_size=10)
+        ## RL TOPICS 
+        self.RL_Data_Publisher = rospy.Publisher('/RL/data',RLData,queue_size=10)
+        self.RL_CMD_Publisher = rospy.Publisher('/RL/cmd',RLCmd,queue_size=10)
         self.RL_Convg_Publisher = rospy.Publisher('/RL/convg_data',RLConvg,queue_size=10)
 
-        
+        ## INTERNAL TOPICS
+        self.CF_OF_Subscriber = rospy.Subscriber('/CF_Internal/OF_sensor',Odometry,self.OFsensor_Callback,queue_size=1)    
+        self.CF_Laser_Subscriber = rospy.Subscriber('/CF_Internal/Laser_sensor',LaserScan,self.laser_sensorCallback)       
+
+        ## ENVIRONMENT TOPICS
+        self.ENV_Clock_Subscriber = rospy.Subscriber("/clock",Clock,self.clock_Callback,queue_size=1)
+        self.ENV_Vicon_Subscriber = rospy.Subscriber('/ENV/viconState_UKF',Odometry,self.viconState_Callback,queue_size=1)      
+        self.ENV_BodyContact_Subscriber = rospy.Subscriber('/ENV/BodyContact',ContactsState,self.contactSensorCallback,queue_size=10)     
+        self.ENV_PadConnect_Subcriber = rospy.Subscriber('/ENV/Pad_Connections',PadConnect,self.padConnect_Callback,queue_size=10)       
+        self.ENV_Ceiling_FT_Subscriber = rospy.Subscriber('/CF_DC/ImpactData',ImpactData,self.ceiling_ftsensorCallback,queue_size=10) 
+
+        # rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
 
 
 
@@ -247,7 +251,7 @@ class CrazyflieEnv:
         # rl_msg.M_d = self.M_d
         rl_msg.leg_contacts = self.pad_contacts
         rl_msg.body_contact = self.body_contact
-        self.RL_Publisher.publish(rl_msg) ## Publish RLData message
+        self.RL_Data_Publisher.publish(rl_msg) ## Publish RLData message
 
         rl_convg_msg = RLConvg()
         rl_convg_msg.mu_1_list = self.mu_1_list
@@ -287,27 +291,27 @@ class CrazyflieEnv:
 
         t_temp = ctrl_msg.Pose_tr.header.stamp.secs
         ns_temp = ctrl_msg.Pose_tr.header.stamp.nsecs
-        self.t_flip = np.round(t_temp+ns_temp*1e-9,4)  # Treat nsecs here at micro-secs
+        self.t_tr = np.round(t_temp+ns_temp*1e-9,4)  # Treat nsecs here at micro-secs
 
         # POSE_FLIP
-        self.pos_flip = np.round([ctrl_msg.Pose_tr.pose.position.x,
+        self.posCF_tr = np.round([ctrl_msg.Pose_tr.pose.position.x,
                                     ctrl_msg.Pose_tr.pose.position.y,
                                     ctrl_msg.Pose_tr.pose.position.z],3) # [m]
-        self.quat_flip = np.round([ctrl_msg.Pose_tr.pose.orientation.x,
+        self.quatCF_tr = np.round([ctrl_msg.Pose_tr.pose.orientation.x,
                                     ctrl_msg.Pose_tr.pose.orientation.y,
                                     ctrl_msg.Pose_tr.pose.orientation.z,
                                     ctrl_msg.Pose_tr.pose.orientation.w],5) # [quat]
         # TWIST_FLIP
-        self.vel_flip = np.round([ctrl_msg.Twist_tr.linear.x,
+        self.velCF_tr = np.round([ctrl_msg.Twist_tr.linear.x,
                                     ctrl_msg.Twist_tr.linear.y,
                                     ctrl_msg.Twist_tr.linear.z],3) # [m/s]
-        self.omega_flip = np.round([ctrl_msg.Twist_tr.angular.x,
+        self.omegaCF_tr = np.round([ctrl_msg.Twist_tr.angular.x,
                                     ctrl_msg.Twist_tr.angular.y,
                                     ctrl_msg.Twist_tr.angular.z],3) # [rad/s]
 
 
-        self.FM_flip = np.asarray(ctrl_msg.FM_flip) # Force/Moments [N,N*mm]
-        self.FM_flip = np.round(self.FM_flip,3)
+        self.FM_tr = np.asarray(ctrl_msg.FM_flip) # Force/Moments [N,N*mm]
+        self.FM_tr = np.round(self.FM_tr,3)
         
         self.RREV_tr = np.round(ctrl_msg.RREV_tr,3) # Recorded trigger RREV [rad/s]
         self.OFy_tr = np.round(ctrl_msg.OFy_tr,3) # Recorded OFy at trigger [rad/s]
@@ -409,21 +413,21 @@ class CrazyflieEnv:
         ns_temp = ft_msg.Header.stamp.nsecs
         self.t_impact = np.round(t_temp+ns_temp*1e-9,4)  
 
-        self.pos_impact = np.round([ft_msg.Pose_impact.position.x,
+        self.posCF_impact = np.round([ft_msg.Pose_impact.position.x,
                                     ft_msg.Pose_impact.position.y,
                                     ft_msg.Pose_impact.position.z],3)
 
-        self.quat_impact = np.round([
+        self.quatCF_impact = np.round([
                                     ft_msg.Pose_impact.orientation.x,
                                     ft_msg.Pose_impact.orientation.y,
                                     ft_msg.Pose_impact.orientation.z,
                                     ft_msg.Pose_impact.orientation.w,],5)
 
-        self.vel_impact = np.round([ft_msg.Twist_impact.linear.x,
+        self.velCF_impact = np.round([ft_msg.Twist_impact.linear.x,
                                     ft_msg.Twist_impact.linear.y,
                                     ft_msg.Twist_impact.linear.z],3)
 
-        self.omega_impact = np.round([ft_msg.Twist_impact.angular.x,
+        self.omegaCF_impact = np.round([ft_msg.Twist_impact.angular.x,
                                     ft_msg.Twist_impact.angular.y,
                                     ft_msg.Twist_impact.angular.z],3)
 
@@ -470,7 +474,6 @@ class CrazyflieEnv:
         os.killpg(self.dashboard_p.pid, signal.SIGTERM)
 
     def __del__(self):
-        self.isRunning = False
         os.killpg(self.gazebo_p.pid, signal.SIGTERM)
         # os.killpg(self.dashboard_p.pid, signal.SIGTERM)
         # os.killpg(self.controller_p.pid, signal.SIGTERM)
@@ -615,7 +618,7 @@ class CrazyflieEnv:
         cmd_msg.cmd_flag = ctrl_flag
         
         for ii in range(1):
-            self.Cmd_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
+            self.RL_CMD_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
         
         time.sleep(0.05)
         
@@ -641,7 +644,7 @@ class CrazyflieEnv:
         self.pitch_max = 0.0
 
 
-        self.quat_impact = [0,0,0,1]
+        self.quatCF_impact = [0,0,0,1]
 
 
 
@@ -731,16 +734,16 @@ class CrazyflieEnv:
                 state_writer.writerow([
                     # Generic Labels
                     self.k_ep,self.k_run,
-                    self.t_flip,
+                    self.t_tr,
                     self.NN_tr_flip,self.NN_tr_policy, # NN_flip, NN_policy
                     "","","", # mu,sigma,policy
                     
                     
                     # Internal State Estimates (EKF)
-                    self.pos_flip[0],self.pos_flip[1],self.pos_flip[2],    # t,x,y,z
-                    self.vel_flip[0],self.vel_flip[1],self.vel_flip[2],    # vx_d,vy_d,vz_d
-                    self.quat_flip[3],self.quat_flip[0],self.quat_flip[1],self.quat_flip[2],    # qw,qx,qy,qz
-                    self.omega_flip[0],self.omega_flip[1],self.omega_flip[2],  # wx,wy,wz
+                    self.posCF_tr[0],self.posCF_tr[1],self.posCF_tr[2],    # t,x,y,z
+                    self.velCF_tr[0],self.velCF_tr[1],self.velCF_tr[2],    # vx_d,vy_d,vz_d
+                    self.quatCF_tr[3],self.quatCF_tr[0],self.quatCF_tr[1],self.quatCF_tr[2],    # qw,qx,qy,qz
+                    self.omegaCF_tr[0],self.omegaCF_tr[1],self.omegaCF_tr[2],  # wx,wy,wz
                     
 
                     # Misc RL labels
@@ -748,7 +751,7 @@ class CrazyflieEnv:
 
                     # Misc Internal State Estimates
                     self.Tau_tr,self.OFx_tr,self.OFy_tr,self.RREV_tr,self.d_ceil_tr, # Tau,OFx,OFy,RREV,d_ceil
-                    self.FM_flip[0],self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # F_thrust,Mx,My,Mz
+                    self.FM_tr[0],self.FM_tr[1],self.FM_tr[2],self.FM_tr[3], # F_thrust,Mx,My,Mz
                     "","","","",
 
                     # Setpoint Values
@@ -773,10 +776,10 @@ class CrazyflieEnv:
                     "","","", # mu,sigma,policy
 
                     # Internal State Estimates (EKF)
-                    self.pos_impact[0],self.pos_impact[1],self.pos_impact[2],    # t,x,y,z
-                    self.vel_impact[0],self.vel_impact[1],self.vel_impact[2],    # vx_d,vy_d,vz_d
-                    self.quat_impact[3],self.quat_impact[0],self.quat_impact[1],self.quat_impact[2],    # qw,qx,qy,qz
-                    self.omega_impact[0],self.omega_impact[1],self.omega_impact[2],  # wx,wy,wz
+                    self.posCF_impact[0],self.posCF_impact[1],self.posCF_impact[2],    # t,x,y,z
+                    self.velCF_impact[0],self.velCF_impact[1],self.velCF_impact[2],    # vx_d,vy_d,vz_d
+                    self.quatCF_impact[3],self.quatCF_impact[0],self.quatCF_impact[1],self.quatCF_impact[2],    # qw,qx,qy,qz
+                    self.omegaCF_impact[0],self.omegaCF_impact[1],self.omegaCF_impact[2],  # wx,wy,wz
                     
                     # Misc RL labels
                     self.impact_flag,self.body_contact,np.array(self.pad_contacts),"",  # "", "", body_impact flag, num leg contacts, ""
