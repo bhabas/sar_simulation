@@ -177,11 +177,11 @@ class CrazyflieEnv:
         # NOTE: Queue sizes=1 so that we are always looking at the most current data and 
         #       not data at back of a queue waiting to be processed by callbacks
         self.clock_Subscriber = rospy.Subscriber("/clock",Clock,self.clockCallback,queue_size=1)
-        self.state_Subscriber = rospy.Subscriber('/UKF/viconState_Filtered',Odometry,self.global_stateCallback,queue_size=1)      
-        self.ctrl_Subscriber = rospy.Subscriber('/ctrl_data',CtrlData,self.ctrlCallback,queue_size=1)                                   
+        self.state_Subscriber = rospy.Subscriber('/ENV/viconState_UKF',Odometry,self.global_stateCallback,queue_size=1)      
+        self.ctrl_Subscriber = rospy.Subscriber('/CTRL/data',CtrlData,self.ctrlCallback,queue_size=1)                                   
 
-        self.OF_Subscriber = rospy.Subscriber('/cf1/OF_sensor',Odometry,self.OFsensor_Callback,queue_size=1)    
-        self.laser_Subscriber = rospy.Subscriber('/cf1/laser',LaserScan,self.laser_sensorCallback)       
+        self.OF_Subscriber = rospy.Subscriber('/CF_Internal/OF_sensor',Odometry,self.OFsensor_Callback,queue_size=1)    
+        self.laser_Subscriber = rospy.Subscriber('/CF_Internal/Laser_sensor',LaserScan,self.laser_sensorCallback)       
                       
         # WE WANT TO BE SURE WE GET THESE MESSAGES WHEN THEY COME THROUGH              
         self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback,queue_size=10)     
@@ -194,9 +194,9 @@ class CrazyflieEnv:
 
 
         ## INIT ROS PUBLISHERS
-        self.RL_Publisher = rospy.Publisher('/rl_data',RLData,queue_size=10)
-        self.Cmd_Publisher = rospy.Publisher('/rl_ctrl',RLCmd,queue_size=10)
-        self.RL_Convg_Publisher = rospy.Publisher('/rl_convg',RLConvg,queue_size=10)
+        self.RL_Publisher = rospy.Publisher('/RL/data',RLData,queue_size=10)
+        self.Cmd_Publisher = rospy.Publisher('/RL/cmd',RLCmd,queue_size=10)
+        self.RL_Convg_Publisher = rospy.Publisher('/RL/convg_data',RLConvg,queue_size=10)
 
         
 
@@ -660,29 +660,9 @@ class CrazyflieEnv:
         self.pitch_sum = 0.0
         self.pitch_max = 0.0
 
-                
-        # self.t_flip = np.nan
 
-        # self.pos_flip = np.full_like(self.pos_flip,np.nan)
-        # self.quat_flip = np.full_like(self.quat_flip,np.nan)
-        # self.vel_flip = np.full_like(self.vel_flip,np.nan)
-        # self.omega_flip = np.full_like(self.omega_flip,np.nan)
-
-        # self.FM_flip = np.full_like(self.FM_flip,np.nan)
-        # self.RREV_tr = np.full_like(self.RREV_tr,np.nan)
-        # self.OF_y_tr = np.full_like(self.OF_y_tr,np.nan)
-
-
-
-        # self.t_impact = np.nan
-
-        # self.pos_impact = np.full_like(self.pos_impact,np.nan)
         self.quat_impact = [0,0,0,1]
-        # self.vel_impact = np.full_like(self.vel_impact,np.nan)
-        # self.omega_impact = np.full_like(self.omega_impact,np.nan)
 
-        # self.ceiling_ft_z = np.nan
-        # self.ceiling_ft_x = np.nan
 
 
     # ============================

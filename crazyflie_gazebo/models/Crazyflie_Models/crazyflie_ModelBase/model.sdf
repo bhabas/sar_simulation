@@ -196,7 +196,7 @@
           </noise>
         </ray>
         <plugin name='gazebo_ros_head_hokuyo_controller' filename='libgazebo_ros_laser.so'>
-          <topicName>/cf1/laser</topicName>
+          <topicName>/CF_Internal/Laser_sensor</topicName>
           <frameName>crazyflie_body</frameName>
         </plugin>
       </sensor>
