@@ -53,6 +53,8 @@ class Controller
 
             // PUBLISHERS
             MS_PWM_Publisher = nh->advertise<crazyflie_msgs::MS>("/MS",1);
+            CTRL_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/ctrl_data",1);
+
 
 
             // SERVICES
@@ -77,6 +79,7 @@ class Controller
 
         // PUBLISHERS
         ros::Publisher MS_PWM_Publisher;
+        ros::Publisher CTRL_Publisher;
 
         // SERVICES
         ros::ServiceClient _SimSpeed_Client;
@@ -115,6 +118,8 @@ class Controller
         
 
         crazyflie_msgs::MS MS_msg;
+        crazyflie_msgs::CtrlData CTRL_msg;
+
         gazebo_msgs::SetPhysicsProperties srv;
 
 

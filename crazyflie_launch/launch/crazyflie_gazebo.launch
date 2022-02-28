@@ -22,7 +22,7 @@
         <!-- http://gazebosim.org/tutorials?tut=lockstep_physics_sensors&cat=sensors -->
         <!-- http://gazebosim.org/tutorials?tut=performance_metrics&cat=tools_utilities -->
     
-        <arg name="gui" value="$(arg gui_flag)"/>
+        <arg name="gui" value="false"/>
         <arg name="paused" value="$(arg pause_flag)"/>
         <arg name="verbose" value="true"/>
         <arg name="debug" value="false"/>

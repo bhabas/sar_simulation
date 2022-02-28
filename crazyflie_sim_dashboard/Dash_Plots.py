@@ -367,7 +367,7 @@ class OF_Widget(QWidget):
         self.curve_y.setData(self.y_arr)
 
         self.z_arr = np.roll(self.z_arr,-1)
-        self.z_arr[-1] = DashNode.OF_y
+        self.z_arr[-1] = DashNode.OFy
         self.curve_z.setData(self.z_arr)
 
     def reset_axes(self):

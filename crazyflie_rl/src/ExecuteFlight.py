@@ -65,7 +65,7 @@ def executeFlight(env,agent):
     env.step('sticky',ctrl_flag=1)              # Enable sticky pads
     env.step('pos',ctrl_flag=0)                 # Turn off pos control
     env.step('vel',env.vel_trial,ctrl_flag=1)   # Set desired vel
-    env.launch_IC(                              # Use Gazebo to impart desired vel with extra vx to ensure -OF_y when around zero
+    env.launch_IC(                              # Use Gazebo to impart desired vel with extra vx to ensure -OFy when around zero
         z_0,
         env.vel_trial[0]+0.03,
         env.vel_trial[2])   
@@ -94,7 +94,7 @@ def executeFlight(env,agent):
         
             print("----- pitch starts -----")
             print(f"vx={vx:.3f}, vy={vy:.3f}, vz={vz:.3f}")
-            print(f"RREV_tr={env.RREV_tr:.3f}, OF_y_tr={env.OF_y_tr:.3f}, My_d={My_d:.3f} [N*mm]")  
+            print(f"RREV_tr={env.RREV_tr:.3f}, OFy_tr={env.OFy_tr:.3f}, My_d={My_d:.3f} [N*mm]")  
             print(f"Pitch Time: {env.t_flip:.3f} [s]")
             
             onceFlag = True # Turns on to make sure this only runs once per rollout

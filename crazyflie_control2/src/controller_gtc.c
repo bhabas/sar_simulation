@@ -402,8 +402,7 @@ void GTC_Command(setpoint_t *setpoint)
                     t_traj.z = 0.0f;
                     execute_traj = true;
                     break;
-                
-
+                    
             }
 
             break;

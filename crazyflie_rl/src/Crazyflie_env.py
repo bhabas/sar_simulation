@@ -76,8 +76,8 @@ class CrazyflieEnv:
         self.flip_flag = False      # Flag if model has started flip maneuver
 
         self.RREV = 0.0
-        self.OF_x = 0.0
-        self.OF_y = 0.0
+        self.OFx = 0.0
+        self.OFy = 0.0
         self.d_ceil = 0.0 
 
         self.NN_flip = 0.0
@@ -136,8 +136,8 @@ class CrazyflieEnv:
         self.omega_flip = [0,0,0]
 
         self.RREV_tr = 0.0
-        self.OF_x_tr = 0.0
-        self.OF_y_tr = 0.0
+        self.OFx_tr = 0.0
+        self.OFy_tr = 0.0
         self.d_ceil_tr = 0.0
 
         self.FM_flip = [0,0,0,0]    # [N,N*mm]
@@ -319,8 +319,8 @@ class CrazyflieEnv:
         self.FM_flip = np.round(self.FM_flip,3)
         
         self.RREV_tr = np.round(ctrl_msg.RREV_tr,3) # Recorded trigger RREV [rad/s]
-        self.OF_y_tr = np.round(ctrl_msg.OF_y_tr,3) # Recorded OF_y at trigger [rad/s]
-        self.OF_x_tr = np.round(ctrl_msg.OF_y_tr,3) # Recorded OF_x at trigger [rad/s]
+        self.OFy_tr = np.round(ctrl_msg.OFy_tr,3) # Recorded OFy at trigger [rad/s]
+        self.OFx_tr = np.round(ctrl_msg.OFy_tr,3) # Recorded OF_x at trigger [rad/s]
 
         self.NN_tr_flip = np.round(ctrl_msg.NN_tr_flip,3)
         self.NN_tr_policy = np.round(ctrl_msg.NN_tr_policy,3)
@@ -394,8 +394,8 @@ class CrazyflieEnv:
         self.d_ceil = self.h_ceiling - OF_msg.pose.pose.position.z    # Distance from CF to ceiling [m]
 
         self.RREV = round( OF_msg.twist.twist.linear.z/self.d_ceil,3) # [rad/s]
-        self.OF_x = round(-OF_msg.twist.twist.linear.y/self.d_ceil,3) # [rad/s]
-        self.OF_y = round(-OF_msg.twist.twist.linear.x/self.d_ceil,3) # [rad/s]
+        self.OFx = round(-OF_msg.twist.twist.linear.y/self.d_ceil,3) # [rad/s]
+        self.OFy = round(-OF_msg.twist.twist.linear.x/self.d_ceil,3) # [rad/s]
         self.d_ceil = round(self.d_ceil,3)
 
         
@@ -748,7 +748,7 @@ class CrazyflieEnv:
                     "",self.flip_flag,self.impact_flag,"", # reward, flip_triggered, impact_flag, n_rollout
 
                     # Misc Internal State Estimates
-                    self.RREV,self.OF_x,self.OF_y,self.d_ceil, # RREV, OF_x, OF_y, d
+                    self.RREV,self.OFx,self.OFy,self.d_ceil, # RREV, OF_x, OF_y, d
                     self.FM[0],self.FM[1],self.FM[2],self.FM[3], # F_thrust[N],Mx[Nmm],My[Nmm],Mz[Nmm]
                     self.MS_pwm[0],self.MS_pwm[1],self.MS_pwm[2],self.MS_pwm[3],
 
@@ -787,7 +787,7 @@ class CrazyflieEnv:
                     "","","","", # reward, body_impact, num leg contacts, impact force
 
                     # Misc Internal State Estimates
-                    self.RREV_tr,self.OF_x_tr,self.OF_y_tr,self.d_ceil_tr, # RREV, OF_x, OF_y, d
+                    self.RREV_tr,self.OFx_tr,self.OFy_tr,self.d_ceil_tr, # RREV, OF_x, OF_y, d
                     self.FM_flip[0],self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # F_thrust,Mx,My,Mz
                     "","","","",
 
