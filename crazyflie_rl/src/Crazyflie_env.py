@@ -192,7 +192,7 @@ class CrazyflieEnv:
         self.ENV_Vicon_Subscriber = rospy.Subscriber('/ENV/viconState_UKF',Odometry,self.viconState_Callback,queue_size=1)      
         self.ENV_BodyContact_Subscriber = rospy.Subscriber('/ENV/BodyContact',ContactsState,self.contactSensorCallback,queue_size=10)     
         self.ENV_PadConnect_Subcriber = rospy.Subscriber('/ENV/Pad_Connections',PadConnect,self.padConnect_Callback,queue_size=10)       
-        self.ENV_Ceiling_FT_Subscriber = rospy.Subscriber('/CF_DC/ImpactData',ImpactData,self.ceiling_ftsensorCallback,queue_size=10) 
+        # self.ENV_Ceiling_FT_Subscriber = rospy.Subscriber('/CF_DC/ImpactData',ImpactData,self.ceiling_ftsensorCallback,queue_size=10) 
 
         # rospy.wait_for_message('/ctrl_data',CtrlData) # Wait to receive ctrl pub to run before continuing
 
@@ -267,62 +267,62 @@ class CrazyflieEnv:
 
     def ctrlData_Callback(self,ctrl_msg): ## Callback to parse data received from controller
         
-        ## SET & TRIM CTRL VALUES FROM CTRL_DATA TOPIC
+        # ## SET & TRIM CTRL VALUES FROM CTRL_DATA TOPIC
 
-        self.FM = np.asarray(ctrl_msg.FM)   # Force/Moments [N,N*mm]
-        self.FM = np.round(self.FM,3)       # Round data for logging
-        self.MS_pwm = np.asarray(ctrl_msg.MS_PWM)
-        self.MS_pwm = np.round(self.MS_pwm,0)
+        # self.FM = np.asarray(ctrl_msg.FM)   # Force/Moments [N,N*mm]
+        # self.FM = np.round(self.FM,3)       # Round data for logging
+        # self.MS_pwm = np.asarray(ctrl_msg.MS_PWM)
+        # self.MS_pwm = np.round(self.MS_pwm,0)
 
-        self.NN_flip = np.round(ctrl_msg.NN_flip,3)
-        self.NN_policy = np.round(ctrl_msg.NN_policy,3)
+        # self.NN_flip = np.round(ctrl_msg.NN_flip,3)
+        # self.NN_policy = np.round(ctrl_msg.NN_policy,3)
 
 
         
-        # if ctrl_msg.flip_flag == True and self.flip_flag == False: # Activates only once per run when flip_flag is about to change
+        # # if ctrl_msg.flip_flag == True and self.flip_flag == False: # Activates only once per run when flip_flag is about to change
 
-        self.flip_flag = ctrl_msg.flip_flag # Update flip_flag
+        # self.flip_flag = ctrl_msg.flip_flag # Update flip_flag
 
-        # Save state data at time of flip activation
-        ## SET STATE VALUES FROM TOPIC
-        # TIME_FLIP
-        # t_temp = ft_msg.Header.stamp.secs
-        # ns_temp = ft_msg.Header.stamp.nsecs
-        # self.t_impact = np.round(t_temp+ns_temp*1e-9,4)  
+        # # Save state data at time of flip activation
+        # ## SET STATE VALUES FROM TOPIC
+        # # TIME_FLIP
+        # # t_temp = ft_msg.Header.stamp.secs
+        # # ns_temp = ft_msg.Header.stamp.nsecs
+        # # self.t_impact = np.round(t_temp+ns_temp*1e-9,4)  
 
-        t_temp = ctrl_msg.Pose_tr.header.stamp.secs
-        ns_temp = ctrl_msg.Pose_tr.header.stamp.nsecs
-        self.t_tr = np.round(t_temp+ns_temp*1e-9,4)  # Treat nsecs here at micro-secs
+        # t_temp = ctrl_msg.Pose_tr.header.stamp.secs
+        # ns_temp = ctrl_msg.Pose_tr.header.stamp.nsecs
+        # self.t_tr = np.round(t_temp+ns_temp*1e-9,4)  # Treat nsecs here at micro-secs
 
-        # POSE_FLIP
-        self.posCF_tr = np.round([ctrl_msg.Pose_tr.pose.position.x,
-                                    ctrl_msg.Pose_tr.pose.position.y,
-                                    ctrl_msg.Pose_tr.pose.position.z],3) # [m]
-        self.quatCF_tr = np.round([ctrl_msg.Pose_tr.pose.orientation.x,
-                                    ctrl_msg.Pose_tr.pose.orientation.y,
-                                    ctrl_msg.Pose_tr.pose.orientation.z,
-                                    ctrl_msg.Pose_tr.pose.orientation.w],5) # [quat]
-        # TWIST_FLIP
-        self.velCF_tr = np.round([ctrl_msg.Twist_tr.linear.x,
-                                    ctrl_msg.Twist_tr.linear.y,
-                                    ctrl_msg.Twist_tr.linear.z],3) # [m/s]
-        self.omegaCF_tr = np.round([ctrl_msg.Twist_tr.angular.x,
-                                    ctrl_msg.Twist_tr.angular.y,
-                                    ctrl_msg.Twist_tr.angular.z],3) # [rad/s]
+        # # POSE_FLIP
+        # self.posCF_tr = np.round([ctrl_msg.Pose_tr.pose.position.x,
+        #                             ctrl_msg.Pose_tr.pose.position.y,
+        #                             ctrl_msg.Pose_tr.pose.position.z],3) # [m]
+        # self.quatCF_tr = np.round([ctrl_msg.Pose_tr.pose.orientation.x,
+        #                             ctrl_msg.Pose_tr.pose.orientation.y,
+        #                             ctrl_msg.Pose_tr.pose.orientation.z,
+        #                             ctrl_msg.Pose_tr.pose.orientation.w],5) # [quat]
+        # # TWIST_FLIP
+        # self.velCF_tr = np.round([ctrl_msg.Twist_tr.linear.x,
+        #                             ctrl_msg.Twist_tr.linear.y,
+        #                             ctrl_msg.Twist_tr.linear.z],3) # [m/s]
+        # self.omegaCF_tr = np.round([ctrl_msg.Twist_tr.angular.x,
+        #                             ctrl_msg.Twist_tr.angular.y,
+        #                             ctrl_msg.Twist_tr.angular.z],3) # [rad/s]
 
 
-        self.FM_tr = np.asarray(ctrl_msg.FM_flip) # Force/Moments [N,N*mm]
-        self.FM_tr = np.round(self.FM_tr,3)
+        # self.FM_tr = np.asarray(ctrl_msg.FM_flip) # Force/Moments [N,N*mm]
+        # self.FM_tr = np.round(self.FM_tr,3)
         
-        self.RREV_tr = np.round(ctrl_msg.RREV_tr,3) # Recorded trigger RREV [rad/s]
-        self.OFy_tr = np.round(ctrl_msg.OFy_tr,3) # Recorded OFy at trigger [rad/s]
-        self.OFx_tr = np.round(ctrl_msg.OFy_tr,3) # Recorded OF_x at trigger [rad/s]
+        # self.RREV_tr = np.round(ctrl_msg.RREV_tr,3) # Recorded trigger RREV [rad/s]
+        # self.OFy_tr = np.round(ctrl_msg.OFy_tr,3) # Recorded OFy at trigger [rad/s]
+        # self.OFx_tr = np.round(ctrl_msg.OFy_tr,3) # Recorded OF_x at trigger [rad/s]
 
-        self.NN_tr_flip = np.round(ctrl_msg.NN_tr_flip,3)
-        self.NN_tr_policy = np.round(ctrl_msg.NN_tr_policy,3)
+        # self.NN_tr_flip = np.round(ctrl_msg.NN_tr_flip,3)
+        # self.NN_tr_policy = np.round(ctrl_msg.NN_tr_policy,3)
 
 
-
+        pass
 
 
 

@@ -19,6 +19,7 @@ and then republishes the data in an organized manner that is easy to use.
 #include "crazyflie_msgs_exp/GenericLogData.h"
 
 #include "crazyflie_msgs/CtrlData.h"
+#include "crazyflie_msgs/RLCmd.h"
 
 
 
@@ -31,6 +32,7 @@ class CF_DataConverter
         {
             // INITIALIZE SUBSCRIBERS
             CTRL_Data_Subscriber = nh->subscribe("/CTRL/data", 1, &CF_DataConverter::ctrlData_Callback, this, ros::TransportHints().tcpNoDelay());
+            RL_CMD_Subscriber = nh->subscribe("/RL/cmd",5,&CF_DataConverter::RL_CMD_Callback,this,ros::TransportHints().tcpNoDelay());
             // log2_Sub = nh->subscribe("/cf1/log2", 1, &CF_DataConverter::log2_Callback, this, ros::TransportHints().tcpNoDelay());
             // log3_Sub = nh->subscribe("/cf1/log3", 1, &CF_DataConverter::log3_Callback, this, ros::TransportHints().tcpNoDelay());
             // log4_Sub = nh->subscribe("/cf1/log4", 1, &CF_DataConverter::log4_Callback, this, ros::TransportHints().tcpNoDelay());
@@ -45,6 +47,7 @@ class CF_DataConverter
 
         // FUNCTION PRIMITIVES
         void ctrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_msg);
+        void RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
         // void log2_Callback(const crazyflie_msgs_exp::GenericLogData::ConstPtr &log2_msg);
         // void log3_Callback(const crazyflie_msgs_exp::GenericLogData::ConstPtr &log3_msg);
         // void log4_Callback(const crazyflie_msgs_exp::GenericLogData::ConstPtr &log4_msg);
@@ -56,7 +59,7 @@ class CF_DataConverter
 
         // SUBSCRIBERS
         ros::Subscriber CTRL_Data_Subscriber;
-        ros::Subscriber log2_Sub;
+        ros::Subscriber RL_CMD_Subscriber;
         ros::Subscriber log3_Sub;
         ros::Subscriber log4_Sub;
 
@@ -72,12 +75,17 @@ class CF_DataConverter
         crazyflie_msgs::CF_ImpactData ImpactData_msg;
         crazyflie_msgs::CF_MiscData MiscData_msg;
 
+        bool OnceFlag_flip = false;
+
 };
 
 
 void CF_DataConverter::ctrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_msg)
 {
-    printf("Hello\n");
+
+    // ===================
+    //     FLIGHT DATA
+    // ===================
     StateData_msg.header.stamp = ros::Time::now();
 
     // CARTESIAN SPACE DATA
@@ -126,8 +134,20 @@ void CF_DataConverter::ctrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
     StateData_Pub.publish(StateData_msg);
 
 
+    // =================
+    //     FLIP DATA
+    // =================
+
     // CARTESIAN SPACE DATA
-    // FlipData_msg.header.stamp = time;
+    if(ctrl_msg.flip_flag == true && OnceFlag_flip == false)
+    {   
+        FlipData_msg.header.stamp = ros::Time::now();
+        OnceFlag_flip = true;
+
+    }
+    
+
+    FlipData_msg.flip_flag = ctrl_msg.flip_flag;
     FlipData_msg.Pose_tr.position = ctrl_msg.Pose_tr.position;
     FlipData_msg.Pose_tr.orientation = ctrl_msg.Pose_tr.orientation;
     FlipData_msg.Twist_tr.linear = ctrl_msg.Twist_tr.linear;
@@ -149,6 +169,19 @@ void CF_DataConverter::ctrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
 
     // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE CONTROLLER
     FlipData_Pub.publish(FlipData_msg);
+
+}
+
+void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
+{
+    
+    if(msg->cmd_type == 0)
+    {
+        FlipData_msg.header.stamp.sec = 0.0;
+        FlipData_msg.header.stamp.nsec = 0.0;
+        OnceFlag_flip = false;
+    }
+
 
 }
 

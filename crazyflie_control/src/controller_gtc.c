@@ -260,8 +260,8 @@ void controllerGTCReset(void)
     e_RI = vzero();
 
     // TURN POS/VEL CONTROLLER FLAGS ON
-    kp_xf = 1.0;
-    kd_xf = 1.0;
+    kp_xf = 1.0f;
+    kd_xf = 1.0f;
 
     // RESET SETPOINTS TO HOME POSITION
     x_d = mkvec(0.0f,0.0f,0.4f);
@@ -291,12 +291,13 @@ void controllerGTCReset(void)
     stateQuat_tr = mkquat(0.0f,0.0f,0.0f,1.0f);
     stateOmega_tr = vzero();
 
-    RREV_tr = 0.0;
-    OFx_tr = 0.0;
-    OFy_tr = 0.0;
+    Tau_tr = 0.0f;
+    OFx_tr = 0.0f;
+    OFy_tr = 0.0f;
+    RREV_tr = 0.0f;
 
-    NN_tr_flip = 0.0;
-    NN_tr_policy = 0.0;
+    NN_tr_flip = 0.0f;
+    NN_tr_policy = 0.0f;
 
 }
 
@@ -511,8 +512,13 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                         RREV_tr = RREV;
                     
                         M_d.x = 0.0f;
-                        M_d.y = -G1*1e-3;
+                        M_d.y = -G1*1e-3f;
                         M_d.z = 0.0f;
+
+                        F_thrust_flip = 0.0;
+                        M_x_flip = M_d.x*1e3f;
+                        M_y_flip = M_d.y*1e3f;
+                        M_z_flip = M_d.z*1e3f;
                     }
                     break;
                 }
@@ -544,8 +550,13 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
 
                         M_d.x = 0.0f;
-                        M_d.y = -NN_tr_policy*1e-3;
+                        M_d.y = -NN_tr_policy*1e-3f;
                         M_d.z = 0.0f;
+
+                        F_thrust_flip = 0.0;
+                        M_x_flip = M_d.x*1e3f;
+                        M_y_flip = M_d.y*1e3f;
+                        M_z_flip = M_d.z*1e3f;
                     }
 
                     break;

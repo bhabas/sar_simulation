@@ -1,4 +1,5 @@
-float64 t_tr
+Header header
+bool flip_flag
 geometry_msgs/Pose Pose_tr
 geometry_msgs/Twist Twist_tr
 

@@ -448,6 +448,7 @@ void Controller::publishCtrlData()
     CtrlData_msg.OFx_tr = OFx_tr;
     CtrlData_msg.OFy_tr = OFy_tr;
     CtrlData_msg.RREV_tr = RREV_tr;
+    CtrlData_msg.D_ceil_tr = d_ceil_tr;
 
     // NEURAL NETWORK DATA (FLIP)
     CtrlData_msg.NN_tr_flip = NN_tr_flip;
