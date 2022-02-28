@@ -5,10 +5,10 @@ void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
 {
     ros::Rate rate(1000);
     tick = 1;
+    safeModeEnable = false;
     // INITIATE CONTROLLER
     controllerGTCInit();
-   
-   // RUN STABILIZER LOOP
+    // RUN STABILIZER LOOP
     while(ros::ok)
     {
 

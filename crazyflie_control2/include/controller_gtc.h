@@ -170,6 +170,7 @@ extern bool onceFlag;
 
 extern bool Moment_flag;
 extern bool attCtrlEnable;
+extern bool safeModeEnable;
 
 // ======================================
 //  RECORD SYSTEM STATES AT FLIP TRIGGER

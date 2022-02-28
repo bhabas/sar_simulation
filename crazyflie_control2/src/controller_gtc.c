@@ -160,6 +160,7 @@ bool onceFlag = false;
 
 bool Moment_flag = false;
 bool attCtrlEnable = false;
+bool safeModeEnable = true;
 
 
 // DEFINE POLICY TYPE ACTIVATED
@@ -605,9 +606,25 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         compressStates();
         compressSetpoints();
         compressFlipStates();
-        
-
     }
+
+        
+    if(safeModeEnable) // If safeMode is enabled then override all PWM commands
+    {
+        M1_pwm = 0;
+        M2_pwm = 0;
+        M3_pwm = 0;
+        M4_pwm = 0;
+    }
+    else
+    {
+        motorsSetRatio(MOTOR_M1, M4_pwm);
+        motorsSetRatio(MOTOR_M2, M3_pwm);
+        motorsSetRatio(MOTOR_M3, M2_pwm);
+        motorsSetRatio(MOTOR_M4, M1_pwm);
+    }
+
+    
 
 }
 
