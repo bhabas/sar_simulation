@@ -90,7 +90,7 @@ class Controller
         // DEFINE THREAD OBJECTS
         std::thread controllerThread;
 
-        uint32_t tick;
+        uint32_t tick = 1;
         ros::Time t;
 
         // ROS SPECIFIC VALUES
