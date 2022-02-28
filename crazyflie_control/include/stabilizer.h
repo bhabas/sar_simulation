@@ -1,11 +1,11 @@
 
+// C++ Includes
 #include <iostream>
 #include <thread>
-#include <cmath>        // std::abs
 #include <stdio.h>
 #include <string>
 
-
+// "Firmware" Includes
 #include "stabilizer_types.h"
 #include "controller_gtc.h"
 #include "estimator.h"
@@ -23,15 +23,11 @@
 #include "crazyflie_msgs/RLCmd.h"
 #include "crazyflie_msgs/RLData.h"
 #include "crazyflie_msgs/PadConnect.h"
-#include "crazyflie_msgs/MS.h"
 
 #include "gazebo_msgs/SetPhysicsProperties.h"
 
 
-
-uint32_t tick;
-
-// State variables for the stabilizer
+// FIRMWARE VARIABLES FOR CONTROLLER
 static setpoint_t setpoint;
 static sensorData_t sensorData;
 static state_t state;
@@ -43,22 +39,28 @@ class Controller
 
         Controller(ros::NodeHandle *nh)
         {
-            // SUBSCRIBERS
-            Vicon_Subscriber = nh->subscribe("/UKF/viconState_Filtered",1,&Controller::viconState_Callback,this,ros::TransportHints().tcpNoDelay());
-            IMU_Subscriber = nh->subscribe("/CF_Internal/IMU",1,&Controller::imuState_Callback,this,ros::TransportHints().tcpNoDelay());
-            OF_Subscriber = nh->subscribe("/CF_Internal/OF_Sensor",1,&Controller::OFState_Callback,this,ros::TransportHints().tcpNoDelay());
-            CMD_Subscriber = nh->subscribe("/rl_ctrl",50,&Controller::CMD_Callback,this,ros::TransportHints().tcpNoDelay());
-            CeilingFT_Subcriber = nh->subscribe("/env/ceiling_force_sensor",5,&Controller::ceilingFT_Callback,this,ros::TransportHints().tcpNoDelay());
-            RLData_Subscriber = nh->subscribe("/rl_data",5,&Controller::RLData_Callback,this,ros::TransportHints().tcpNoDelay());
+            // ===========================
+            //     ROS TOPICS/SERVICES
+            // ===========================
 
-            // PUBLISHERS
-            MS_PWM_Publisher = nh->advertise<crazyflie_msgs::MS>("/CF_Internal/MS_PWM",1);
-            CTRL_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/ctrl_data",1);
+            // CONTROLLER TOPICS
+            CTRL_Data_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/CTRL/data",1);
 
+            // RL TOPICS
+            RL_CMD_Subscriber = nh->subscribe("/RL/cmd",5,&Controller::RL_CMD_Callback,this,ros::TransportHints().tcpNoDelay());
+            RL_Data_Subscriber = nh->subscribe("/RL/data",5,&Controller::RL_Data_Callback,this,ros::TransportHints().tcpNoDelay());
 
+            // INTERNAL TOPICS
+            CF_IMU_Subscriber = nh->subscribe("/CF_Internal/IMU",1,&Controller::IMU_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
+            CF_OF_Subscriber = nh->subscribe("/CF_Internal/OF_Sensor",1,&Controller::OF_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
+            CF_PWM_Publisher = nh->advertise<crazyflie_msgs::MS>("/CF_Internal/MS_PWM",1);
 
-            // SERVICES
-            _SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
+            // EXTERNAL TOPICS
+            ENV_Vicon_Subscriber = nh->subscribe("/ENV/viconState_UKF",1,&Controller::viconState_Callback,this,ros::TransportHints().tcpNoDelay());
+            ENV_CeilingFT_Subscriber = nh->subscribe("/ENV/ceiling_force_sensor",5,&Controller::ceilingFT_Callback,this,ros::TransportHints().tcpNoDelay());
+            
+            // GAZEBO SERVICES
+            GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
 
             
             Controller::loadParams();
@@ -69,20 +71,21 @@ class Controller
         
 
         // SUBSCRIBERS
-        ros::Subscriber Vicon_Subscriber;
-        ros::Subscriber IMU_Subscriber;
-        ros::Subscriber OF_Subscriber;
+        ros::Subscriber CF_IMU_Subscriber;
+        ros::Subscriber CF_OF_Subscriber;
 
-        ros::Subscriber CMD_Subscriber;
-        ros::Subscriber CeilingFT_Subcriber;
-        ros::Subscriber RLData_Subscriber;
+        ros::Subscriber RL_CMD_Subscriber;
+        ros::Subscriber RL_Data_Subscriber;
+
+        ros::Subscriber ENV_Vicon_Subscriber;
+        ros::Subscriber ENV_CeilingFT_Subscriber;
 
         // PUBLISHERS
-        ros::Publisher MS_PWM_Publisher;
-        ros::Publisher CTRL_Publisher;
+        ros::Publisher CF_PWM_Publisher;
+        ros::Publisher CTRL_Data_Publisher;
 
         // SERVICES
-        ros::ServiceClient _SimSpeed_Client;
+        ros::ServiceClient GZ_SimSpeed_Client;
 
         // DEFINE THREAD OBJECTS
         std::thread controllerThread;
@@ -103,12 +106,12 @@ class Controller
 
         // FUNCTION PRIMITIVES
         void viconState_Callback(const nav_msgs::Odometry::ConstPtr &msg);
-        void imuState_Callback(const sensor_msgs::Imu::ConstPtr &msg);
-        void OFState_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg);
+        void IMU_Sensor_Callback(const sensor_msgs::Imu::ConstPtr &msg);
+        void OF_Sensor_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg);
 
-        void CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
+        void RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
+        void RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &msg);
         void ceilingFT_Callback(const crazyflie_msgs::ImpactData::ConstPtr &msg);
-        void RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg);
 
         void stabilizerLoop();
         void loadParams();
@@ -118,18 +121,17 @@ class Controller
         void publishCtrlData();
         
 
-        crazyflie_msgs::MS MS_msg;
-        crazyflie_msgs::CtrlData CTRL_msg;
+        crazyflie_msgs::MS MS_PWM_msg;
+        crazyflie_msgs::CtrlData CtrlData_msg;
 
         gazebo_msgs::SetPhysicsProperties srv;
-
 
 };
 
 
 
 
-void Controller::OFState_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg)
+void Controller::OF_Sensor_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg)
 {
     sensorData.Tau = msg->Tau;
     sensorData.OFx = msg->OFx;
@@ -138,7 +140,7 @@ void Controller::OFState_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr 
 
 }
 
-void Controller::imuState_Callback(const sensor_msgs::Imu::ConstPtr &msg)
+void Controller::IMU_Sensor_Callback(const sensor_msgs::Imu::ConstPtr &msg)
 {
     sensorData.acc.x = msg->linear_acceleration.x/9.8066; // Convert to Gs to match crazyflie sensors
     sensorData.acc.y = msg->linear_acceleration.y/9.8066;
@@ -170,7 +172,7 @@ void Controller::viconState_Callback(const nav_msgs::Odometry::ConstPtr &msg)
 
 }
 
-void Controller::CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
+void Controller::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 {
     setpoint.cmd_type = msg->cmd_type;
     setpoint.cmd_val1 = msg->cmd_vals.x;
@@ -198,7 +200,7 @@ void Controller::ceilingFT_Callback(const crazyflie_msgs::ImpactData::ConstPtr &
     _impact_flag = msg->impact_flag;
 }
 
-void Controller::RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){
+void Controller::RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){
 
     if (msg->reset_flag == true){
 
@@ -273,7 +275,7 @@ void Controller::adjustSimSpeed(float speed_mult)
 
     srv.request.ode_config = ode_config;
 
-    _SimSpeed_Client.call(srv);
+    GZ_SimSpeed_Client.call(srv);
 }
 
 void Controller::consoleOuput()
@@ -371,48 +373,48 @@ void Controller::checkSlowdown()
 void Controller::publishCtrlData()
 {
     // MISC INFO
-        CTRL_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
-        CTRL_msg.MS_PWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
+        CtrlData_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
+        CtrlData_msg.MS_PWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
 
         // NEURAL NETWORK INFO
-        CTRL_msg.NN_policy = NN_policy;
-        CTRL_msg.NN_flip = NN_flip;
+        CtrlData_msg.NN_policy = NN_policy;
+        CtrlData_msg.NN_flip = NN_flip;
 
-        CTRL_msg.Tau = Tau;
-        CTRL_msg.RREV = RREV;
-        CTRL_msg.OFy = OFy;
-        CTRL_msg.OFx = OFx;
-        CTRL_msg.D_ceil = d_ceil;
+        CtrlData_msg.Tau = Tau;
+        CtrlData_msg.RREV = RREV;
+        CtrlData_msg.OFy = OFy;
+        CtrlData_msg.OFx = OFx;
+        CtrlData_msg.D_ceil = d_ceil;
 
         // FLIP INFO
-        CTRL_msg.flip_flag = flip_flag;
-        CTRL_msg.RREV_tr = RREV_tr;
-        CTRL_msg.OFx_tr = OFx_tr;
-        CTRL_msg.OFy_tr = OFy_tr;
-        CTRL_msg.Tau_tr = Tau_tr;
-        CTRL_msg.FM_flip = {F_thrust_flip,M_x_flip*1.0e3,M_y_flip*1.0e3,M_z_flip*1.0e3};
+        CtrlData_msg.flip_flag = flip_flag;
+        CtrlData_msg.RREV_tr = RREV_tr;
+        CtrlData_msg.OFx_tr = OFx_tr;
+        CtrlData_msg.OFy_tr = OFy_tr;
+        CtrlData_msg.Tau_tr = Tau_tr;
+        CtrlData_msg.FM_flip = {F_thrust_flip,M_x_flip*1.0e3,M_y_flip*1.0e3,M_z_flip*1.0e3};
 
-        CTRL_msg.NN_tr_flip = NN_tr_flip;
-        CTRL_msg.NN_tr_policy = NN_tr_policy;
+        CtrlData_msg.NN_tr_flip = NN_tr_flip;
+        CtrlData_msg.NN_tr_policy = NN_tr_policy;
 
-        // CTRL_msg.Pose_tr.header.stamp = t_flip;             
+        // CtrlData_msg.Pose_tr.header.stamp = t_flip;             
 
-        CTRL_msg.Pose_tr.pose.position.x = statePos_tr.x;
-        CTRL_msg.Pose_tr.pose.position.y = statePos_tr.y;
-        CTRL_msg.Pose_tr.pose.position.z = statePos_tr.z;
+        CtrlData_msg.Pose_tr.pose.position.x = statePos_tr.x;
+        CtrlData_msg.Pose_tr.pose.position.y = statePos_tr.y;
+        CtrlData_msg.Pose_tr.pose.position.z = statePos_tr.z;
 
-        CTRL_msg.Pose_tr.pose.orientation.x = stateQuat_tr.x;
-        CTRL_msg.Pose_tr.pose.orientation.y = stateQuat_tr.y;
-        CTRL_msg.Pose_tr.pose.orientation.z = stateQuat_tr.z;
-        CTRL_msg.Pose_tr.pose.orientation.w = stateQuat_tr.w;
+        CtrlData_msg.Pose_tr.pose.orientation.x = stateQuat_tr.x;
+        CtrlData_msg.Pose_tr.pose.orientation.y = stateQuat_tr.y;
+        CtrlData_msg.Pose_tr.pose.orientation.z = stateQuat_tr.z;
+        CtrlData_msg.Pose_tr.pose.orientation.w = stateQuat_tr.w;
 
-        CTRL_msg.Twist_tr.linear.x = stateVel_tr.x;
-        CTRL_msg.Twist_tr.linear.y = stateVel_tr.y;
-        CTRL_msg.Twist_tr.linear.z = stateVel_tr.z;
+        CtrlData_msg.Twist_tr.linear.x = stateVel_tr.x;
+        CtrlData_msg.Twist_tr.linear.y = stateVel_tr.y;
+        CtrlData_msg.Twist_tr.linear.z = stateVel_tr.z;
 
-        CTRL_msg.Twist_tr.angular.x = stateOmega_tr.x;
-        CTRL_msg.Twist_tr.angular.y = stateOmega_tr.y;
-        CTRL_msg.Twist_tr.angular.z = stateOmega_tr.z;
-        CTRL_Publisher.publish(CTRL_msg);
+        CtrlData_msg.Twist_tr.angular.x = stateOmega_tr.x;
+        CtrlData_msg.Twist_tr.angular.y = stateOmega_tr.y;
+        CtrlData_msg.Twist_tr.angular.z = stateOmega_tr.z;
+        CTRL_Data_Publisher.publish(CtrlData_msg);
 
 }
