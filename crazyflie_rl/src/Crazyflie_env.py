@@ -139,6 +139,7 @@ class CrazyflieEnv:
         self.quatCF_tr = [0,0,0,1]  # [quat]
         self.omegaCF_tr = [0,0,0]   # [rad/s]
 
+        self.Tau_tr = 0.0
         self.RREV_tr = 0.0          # [rad/s]
         self.OFx_tr = 0.0           # [rad/s]
         self.OFy_tr = 0.0           # [rad/s]
