@@ -10,13 +10,13 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 catkin_package(
- INCLUDE_DIRS include
+ INCLUDE_DIRS include include_CF_Firmware
 #  LIBRARIES
  CATKIN_DEPENDS roscpp 
 #  DEPENDS 
 )
 
-include_directories(include ${catkin_INCLUDE_DIRS})
+include_directories(include include_CF_Firmware ${catkin_INCLUDE_DIRS})
 
 
 add_executable(controller src/stabilizer.cpp src/controller_gtc.c src/estimator.cpp src/nml.c src/nml_util.c)
