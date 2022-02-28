@@ -163,10 +163,7 @@ bool attCtrlEnable = false;
 
 
 // DEFINE POLICY TYPE ACTIVATED
-typedef enum {
-    RL = 0, // Reinforcement Learning
-    NN = 1  // Neural Network
-} Policy_Type;
+
 Policy_Type POLICY_TYPE = RL; // Default to RL
 
 // ======================================
@@ -345,9 +342,8 @@ void GTC_Command(setpoint_t *setpoint)
             motorstop_flag = true;
             break;
         
-        case 6: // Update Controller Gains
+        case 6: // Reset ROS Parameters
             
- 
             break;
 
         case 7: // Execute Moment-Based Flip
@@ -378,7 +374,7 @@ void GTC_Command(setpoint_t *setpoint)
                     s_0_t.x = setpoint->cmd_val1;               // Starting position [m]
                     v_t.x = setpoint->cmd_val2;                 // Desired velocity [m/s]
                     a_t.x = setpoint->cmd_val3;                 // Max acceleration [m/s^2]
-                    T.x = (a_t.x+fsqr(v_t.x))/(a_t.x*v_t.x);    // Find trajectory manuever length [s]
+                    T.x = (a_t.x+fsqr(v_t.x))/(a_t.x*v_t.x);    // Find trajectory manuever time [s]
 
                     t_traj.x = 0.0f; // Reset timer
                     execute_traj = true;
@@ -610,6 +606,82 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
         
         controlOutput(state,sensors);
+
+        if(policy_armed_flag == true){ 
+                
+            switch(POLICY_TYPE)
+            {
+                case RL:
+                {
+                    if(RREV >= RREV_thr && onceFlag == false){
+                        onceFlag = true;
+                        flip_flag = true;  
+
+                        // UPDATE AND RECORD FLIP VALUES
+                        statePos_tr = statePos;
+                        stateVel_tr = stateVel;
+                        stateQuat_tr = stateQuat;
+                        stateOmega_tr = stateOmega;
+
+                        OFy_tr = OFy;
+                        OFx_tr = OFx;
+                        RREV_tr = RREV;
+                    
+                        M_d.x = 0.0f;
+                        M_d.y = -G1*1e-3;
+                        M_d.z = 0.0f;
+                    }
+                    break;
+                }
+
+                case NN:
+                {   
+                    consolePrintf("Hello Me\n");
+                    // NN_flip = NN_Forward_Flip(X,&Scaler_Flip,W_flip,b_flip);
+                    // NN_policy = -NN_Forward_Policy(X,&Scaler_Policy,W_policy,b_policy);
+
+                    // DEBUG_PRINT("NN_Flip: %.5f \t NN_Policy: %.5f \n",NN_flip,NN_policy);
+
+                    // if(NN_flip >= 0.9 && onceFlag == false)
+                    // {   
+                    //     onceFlag = true;
+                    //     flip_flag = true;
+
+                    //     // UPDATE AND RECORD FLIP VALUES
+                    //     statePos_tr = statePos;
+                    //     stateVel_tr = stateVel;
+                    //     stateQuat_tr = stateQuat;
+                    //     stateOmega_tr = stateOmega;
+
+                    //     OFy_tr = OFy;
+                    //     OFx_tr = OFx;
+                    //     RREV_tr = RREV;
+                    //     d_ceil_tr = d_ceil;
+
+                    //     NN_tr_flip = NN_Forward_Flip(X,&Scaler_Flip,W_flip,b_flip);
+                    //     NN_tr_policy = NN_Forward_Policy(X,&Scaler_Policy,W_policy,b_policy);
+
+
+                    //     M_d.x = 0.0f;
+                    //     M_d.y = -NN_tr_policy*1e-3;
+                    //     M_d.z = 0.0f;
+                    // }
+
+                    break;
+                }
+
+            }
+
+            
+            if(flip_flag == true)
+            {
+                // Doubling front motor values and zeroing back motors is
+                // equal to increasing front motors and decreasing back motors.
+                // This gives us the highest possible moment and avoids PWM cutoff issue
+                M = vscl(2.0f,M_d); 
+                F_thrust = 0.0f;
+            }
+        }
 
         // =========== CONVERT THRUSTS AND MOMENTS TO PWM =========== // 
         f_thrust_g = F_thrust/4.0f*Newton2g;

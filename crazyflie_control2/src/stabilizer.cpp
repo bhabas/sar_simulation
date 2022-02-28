@@ -18,7 +18,7 @@ void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
         t = ros::Time::now();
     
         if (RATE_DO_EXECUTE(20, tick)) {
-            // Controller::consoleOuput();
+            Controller::consoleOuput();
         }
 
         Controller::checkSlowdown();

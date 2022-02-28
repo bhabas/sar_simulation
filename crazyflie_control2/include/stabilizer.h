@@ -120,32 +120,7 @@ class Controller
 
 };
 
-void Controller::checkSlowdown()
-{   
-    // SIMULATION SLOWDOWN
-    if(_LANDING_SLOWDOWN_FLAG==true && tick >= 500){
 
-        // WHEN CLOSE TO THE CEILING REDUCE SIM SPEED
-        if(d_ceil<=0.5 && _slowdown_type == 0){
-            
-            Controller::adjustSimSpeed(_SIM_SLOWDOWN_SPEED);
-            _slowdown_type = 1;
-        }
-
-        // IF IMPACTED CEILING OR FALLING AWAY, INCREASE SIM SPEED TO DEFAULT
-        if(_impact_flag == true && _slowdown_type == 1)
-        {
-            Controller::adjustSimSpeed(_SIM_SPEED);
-            _slowdown_type = 2;
-        }
-        else if(stateVel.z <= -0.5 && _slowdown_type == 1){
-            Controller::adjustSimSpeed(_SIM_SPEED);
-            _slowdown_type = 2;
-        }
-    
-    }
-
-}
 
 
 void Controller::OFState_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg)
@@ -227,7 +202,7 @@ void Controller::loadParams()
     ros::param::get("/CEILING_HEIGHT",_H_CEILING);
     ros::param::get("/CF_MASS",_CF_MASS);
     ros::param::get("/POLICY_TYPE",_POLICY_TYPE);
-    // POLICY_TYPE = (Policy_Type)_POLICY_TYPE; // Cast ROS param (int) to enum (Policy_Type)
+    POLICY_TYPE = (Policy_Type)_POLICY_TYPE; // Cast ROS param (int) to enum (Policy_Type)
 
     // DEBUG SETTINGS
     ros::param::get("/SIM_SPEED",_SIM_SPEED);
@@ -297,8 +272,8 @@ void Controller::consoleOuput()
     printf("==== Flags ====\n");
     printf("Policy_armed:\t %u  Slowdown_type:\t %u  kp_xf:\t %u \n",policy_armed_flag,_slowdown_type,(int)kp_xf);
     printf("Flip_flag:\t %u  Impact_flag:\t %u  kd_xf:\t %u \n",flip_flag,_impact_flag,(int)kd_xf);
-    printf("Tumbled: \t %u  Tumble Detect:\t %u  Traj Active: %u \n",tumbled,tumble_detection,execute_traj);
-    printf("Motorstop \t %u\n",motorstop_flag);
+    printf("Tumbled:\t %u  Tumble Detect:\t %u  Traj Active: %u \n",tumbled,tumble_detection,execute_traj);
+    printf("Motorstop:\t %u  Policy_type:\t %u\n",motorstop_flag,POLICY_TYPE);
     printf("\n");
 
     printf("==== Setpoints ====\n");
@@ -350,4 +325,31 @@ void Controller::consoleOuput()
     printf("Ki_P: %.3f  %.3f  %.3f \t",Ki_p.x,Ki_p.y,Ki_p.z);
     printf("Ki_R: %.3f  %.3f  %.3f \n",Ki_p.x,Ki_p.y,Ki_p.z);
     printf("======\n");
+}
+
+void Controller::checkSlowdown()
+{   
+    // SIMULATION SLOWDOWN
+    if(_LANDING_SLOWDOWN_FLAG==true && tick >= 500){
+
+        // WHEN CLOSE TO THE CEILING REDUCE SIM SPEED
+        if(d_ceil<=0.5 && _slowdown_type == 0){
+            
+            Controller::adjustSimSpeed(_SIM_SLOWDOWN_SPEED);
+            _slowdown_type = 1;
+        }
+
+        // IF IMPACTED CEILING OR FALLING AWAY, INCREASE SIM SPEED TO DEFAULT
+        if(_impact_flag == true && _slowdown_type == 1)
+        {
+            Controller::adjustSimSpeed(_SIM_SPEED);
+            _slowdown_type = 2;
+        }
+        else if(stateVel.z <= -0.5 && _slowdown_type == 1){
+            Controller::adjustSimSpeed(_SIM_SPEED);
+            _slowdown_type = 2;
+        }
+    
+    }
+
 }

@@ -213,6 +213,12 @@ extern float NN_policy;         // NN output value for policy My
 extern float NN_tr_flip;        // NN value at flip trigger
 extern float NN_tr_policy;      // NN policy value at flip trigger
 
+typedef enum {
+    RL = 0, // Reinforcement Learning
+    NN = 1  // Neural Network
+} Policy_Type;
+extern Policy_Type POLICY_TYPE;
+
 
 
 // Limit PWM value to accurate motor curve limit (60,000)
