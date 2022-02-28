@@ -58,13 +58,6 @@ class CrazyflieEnv:
         
 
         ## INIT CRAZYFLIE ESTIMATED
-        self.posEst = [0,0,0]
-        self.velEst = [0,0,0]
-
-        self.quatEst = [0,0,0,1]
-        self.eulEst = [0,0,0]
-        self.omegaEst = [0,0,0]
-
         self.x_d = [0,0,0]
         self.v_d = [0,0,0]
         self.a_d = [0,0,0]
@@ -75,9 +68,10 @@ class CrazyflieEnv:
         self.V_Battery = 0.0
         self.flip_flag = False      # Flag if model has started flip maneuver
 
-        self.RREV = 0.0
+        self.Tau = 0.0
         self.OFx = 0.0
         self.OFy = 0.0
+        self.RREV = 0.0
         self.d_ceil = 0.0 
 
         self.NN_flip = 0.0
@@ -89,9 +83,6 @@ class CrazyflieEnv:
 
         self.k_ep = 0           # Episode number
         self.k_run = 0          # Run number
-
-        self.alpha_mu = []      # PEPG learning rate for mu
-        self.alpha_sigma = []   # PEPG learning rate for sigma
 
         self.mu = []            # Gaussian mean that policies are sampled from
         self.sigma = []         # Gaussian standard deviation policies are sampled from
@@ -176,9 +167,9 @@ class CrazyflieEnv:
         ## INIT ROS SUBSCRIBERS [Pub/Sampling Frequencies]
         # NOTE: Queue sizes=1 so that we are always looking at the most current data and 
         #       not data at back of a queue waiting to be processed by callbacks
-        self.clock_Subscriber = rospy.Subscriber("/clock",Clock,self.clockCallback,queue_size=1)
-        self.state_Subscriber = rospy.Subscriber('/ENV/viconState_UKF',Odometry,self.global_stateCallback,queue_size=1)      
-        self.ctrl_Subscriber = rospy.Subscriber('/CTRL/data',CtrlData,self.ctrlCallback,queue_size=1)                                   
+        self.clock_Subscriber = rospy.Subscriber("/clock",Clock,self.clock_Callback,queue_size=1)
+        self.state_Subscriber = rospy.Subscriber('/ENV/viconState_UKF',Odometry,self.viconState_Callback,queue_size=1)      
+        self.ctrl_Subscriber = rospy.Subscriber('/CTRL/data',CtrlData,self.ctrlData_Callback,queue_size=1)                                   
 
         self.OF_Subscriber = rospy.Subscriber('/CF_Internal/OF_sensor',Odometry,self.OFsensor_Callback,queue_size=1)    
         self.laser_Subscriber = rospy.Subscriber('/CF_Internal/Laser_sensor',LaserScan,self.laser_sensorCallback)       
@@ -269,7 +260,7 @@ class CrazyflieEnv:
         
 
 
-    def ctrlCallback(self,ctrl_msg): ## Callback to parse data received from controller
+    def ctrlData_Callback(self,ctrl_msg): ## Callback to parse data received from controller
         
         ## SET & TRIM CTRL VALUES FROM CTRL_DATA TOPIC
 
@@ -334,51 +325,42 @@ class CrazyflieEnv:
     ##    Sensors/Data Topics
     # ============================
 
-    def clockCallback(self,clock_msg): ## Callback to grab time from sim clock
-        t_temp = clock_msg.clock.secs
-        ns_temp = clock_msg.clock.nsecs
+    def clock_Callback(self,clock_msg): ## Callback to grab time from sim clock
 
-        self.t = np.round(t_temp+ns_temp*1e-9,4)    # Processed timestamp from /clock msg
-        self.t_raw = clock_msg.clock                # Unprocessed timestamp from /clock msg
+        self.t = np.round(clock_msg.clock.to_sec(),4)    # Processed timestamp from /clock msg
 
-    def global_stateCallback(self,gs_msg): ## Callback to parse state data received from external pos. sensor
+    def viconState_Callback(self,msg): ## Callback to parse state data received from external pos. sensor
 
-        t_temp = gs_msg.header.stamp.secs
-        ns_temp = gs_msg.header.stamp.nsecs
 
-        t = np.round(t_temp+ns_temp*1e-9,4)      
+        t = np.round(msg.header.stamp.to_sec(),4)
         
         ## SIMPLIFY STATE VALUES FROM TOPIC
-        global_pos = gs_msg.pose.pose.position
-        global_quat = gs_msg.pose.pose.orientation
-        global_vel = gs_msg.twist.twist.linear
-        global_omega = gs_msg.twist.twist.angular
+        pos = msg.pose.pose.position
+        quat = msg.pose.pose.orientation
+        vel = msg.twist.twist.linear
+        omega = msg.twist.twist.angular
         
-        if global_quat.w == 0: # If zero at startup set quat.w to one to prevent errors
-            global_quat.w = 1
+        if quat.w == 0: # If zero at startup set quat.w to one to prevent errors
+            quat.w = 1
 
         ## SET STATE VALUES FROM TOPIC
-        self.position = np.round([global_pos.x,global_pos.y,global_pos.z],3)    # [m]
-        self.orientation_q = np.round([global_quat.x,global_quat.y,global_quat.z,global_quat.w],5) # [quat]
-        self.velocity = np.round([global_vel.x,global_vel.y,global_vel.z],3)    # [m/s]
-        self.omega = np.round([global_omega.x,global_omega.y,global_omega.z],3) # [rad/s]
-
-
-        ## COMBINE INTO COMPREHENSIVE LIST
-        self.state_current = np.concatenate([self.position,self.orientation_q,self.velocity,self.omega])
+        self.posCF = np.round([pos.x,pos.y,pos.z],3)            # [m]
+        self.quatCF = np.round([quat.x,quat.y,quat.z,quat.w],5) # [quat]
+        self.velCF = np.round([vel.x,vel.y,vel.z],3)            # [m/s]
+        self.omegaCF = np.round([omega.x,omega.y,omega.z],3)    # [rad/s]
         
 
         ## ======== REWARD INPUT CALCS ======== ##
 
         ## MAX Z CALC
-        if self.position[2] > self.z_max:
-            self.z_max = self.position[2]       # Max height achieved, used for reward calc
+        if self.posCF[2] > self.z_max:
+            self.z_max = self.posCF[2]       # Max height achieved, used for reward calc
             self.z_max = np.round(self.z_max,3) # Rounded for data logging
 
         ## MAX PITCH CALC
         # Integrate omega_y over time to get full rotation estimate
         # This accounts for multiple revolutions that euler angles/quaternions can't
-        self.pitch_sum = self.pitch_sum + self.omega[1]*(180/np.pi)*(t - self.t_prev) # [deg]
+        self.pitch_sum = self.pitch_sum + self.omegaCF[1]*(180/np.pi)*(t - self.t_prev) # [deg]
         
         if self.pitch_sum < self.pitch_max:     # Recording the most negative value
             self.pitch_max = self.pitch_sum
@@ -391,13 +373,11 @@ class CrazyflieEnv:
     def OFsensor_Callback(self,OF_msg): ## Callback to parse state data received from mock OF sensor
 
         ## SET VISUAL CUE SENSOR VALUES FROM TOPIC
-        self.d_ceil = self.h_ceiling - OF_msg.pose.pose.position.z    # Distance from CF to ceiling [m]
-
-        self.RREV = round( OF_msg.twist.twist.linear.z/self.d_ceil,3) # [rad/s]
-        self.OFx = round(-OF_msg.twist.twist.linear.y/self.d_ceil,3) # [rad/s]
-        self.OFy = round(-OF_msg.twist.twist.linear.x/self.d_ceil,3) # [rad/s]
-        self.d_ceil = round(self.d_ceil,3)
-
+        self.Tau = OF_msg.Tau
+        self.OFx = OF_msg.OFx
+        self.OFy = OF_msg.OFy
+        self.RREV = OF_msg.RREV
+        self.d_ceil = OF_msg.d_ceil
         
 
     def contactSensorCallback(self,msg_arr): ## Callback to indicate if quadrotor body contacts ceiling
@@ -692,7 +672,7 @@ class CrazyflieEnv:
                     'reward','flip_flag','impact_flag','n_rollouts', 
 
                     # Misc Internal State Estimates
-                    'RREV','OF_x','OF_y','d_ceil',       
+                    'Tau','OF_x','OF_y','RREV','d_ceil',       
                     'F_thrust[N]','Mx[Nmm]','My[Nmm]','Mz[Nmm]',
                     'M1_pwm','M2_pwm','M3_pwm','M4_pwm',
 
@@ -719,16 +699,16 @@ class CrazyflieEnv:
                     "","","", # mu,sigma,policy
 
                     # Internal State Estimates (EKF)
-                    self.position[0],self.position[1],self.position[2], # t,x,y,z
-                    self.velocity[0],self.velocity[1],self.velocity[2], # vx,vy,vz
-                    self.orientation_q[3],self.orientation_q[0],self.orientation_q[1],self.orientation_q[2], # qw,qx,qy,qz
-                    self.omega[0],self.omega[1],self.omega[2], # wx,wy,wz
+                    self.posCF[0],self.posCF[1],self.posCF[2], # t,x,y,z
+                    self.velCF[0],self.velCF[1],self.velCF[2], # vx,vy,vz
+                    self.quatCF[3],self.quatCF[0],self.quatCF[1],self.quatCF[2], # qw,qx,qy,qz
+                    self.omegaCF[0],self.omegaCF[1],self.omegaCF[2], # wx,wy,wz
 
                     # Misc RL labels
                     "",self.flip_flag,self.impact_flag,"", # reward, flip_triggered, impact_flag, n_rollout
 
                     # Misc Internal State Estimates
-                    self.RREV,self.OFx,self.OFy,self.d_ceil, # RREV, OF_x, OF_y, d
+                    self.Tau,self.OFx,self.OFy,self.RREV,self.d_ceil, # Tau,OF_x,OF_y,RREV,d_ceil
                     self.FM[0],self.FM[1],self.FM[2],self.FM[3], # F_thrust[N],Mx[Nmm],My[Nmm],Mz[Nmm]
                     self.MS_pwm[0],self.MS_pwm[1],self.MS_pwm[2],self.MS_pwm[3],
 
@@ -767,7 +747,7 @@ class CrazyflieEnv:
                     "","","","", # reward, body_impact, num leg contacts, impact force
 
                     # Misc Internal State Estimates
-                    self.RREV_tr,self.OFx_tr,self.OFy_tr,self.d_ceil_tr, # RREV, OF_x, OF_y, d
+                    self.Tau_tr,self.OFx_tr,self.OFy_tr,self.RREV_tr,self.d_ceil_tr, # Tau,OFx,OFy,RREV,d_ceil
                     self.FM_flip[0],self.FM_flip[1],self.FM_flip[2],self.FM_flip[3], # F_thrust,Mx,My,Mz
                     "","","","",
 
@@ -802,7 +782,7 @@ class CrazyflieEnv:
                     self.impact_flag,self.body_contact,np.array(self.pad_contacts),"",  # "", "", body_impact flag, num leg contacts, ""
                     
                     # Misc Internal State Estimates
-                    self.ceiling_ft_z,self.ceiling_ft_x,self.ceiling_ft_y,"",             # Max impact force [z], =Max impact force [x], ""
+                    self.ceiling_ft_z,self.ceiling_ft_x,self.ceiling_ft_y,"","",             # Max impact force [z], =Max impact force [x], ""
                     "","","","", # F_thrust,Mx,My,Mz (Impact)
                     "","","","", # M_pwm
                     
@@ -838,7 +818,7 @@ class CrazyflieEnv:
                     np.round(self.reward,2),np.round(self.reward_inputs,3),"",self.n_rollouts, # reward, 
 
                     # Misc Internal State Estimates
-                    "","","","",    # RREV, OF_x, OF_y,d,d
+                    "","","","","",    # Tau,OFx,OFy,RREV,d_ceil
                     "","","","",    # F_thrust,Mx,My,Mz 
                     "","","","",    # M_pwm
 
