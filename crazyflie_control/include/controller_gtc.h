@@ -198,7 +198,7 @@ extern float M_z_flip;      // [N*m]
 // ==========================
 //  RL POLICY INITIALIZATION
 // ==========================
-extern float RREV_thr;  // RREV trigger
+extern float RREV_thr;  // RREV threshold
 extern float G1;        // Body moment value
 extern float G2;        // Deprecated state value
 

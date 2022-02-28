@@ -286,17 +286,12 @@ void Controller::consoleOuput()
     printf("\n");
 
     printf("==== Flags ====\n");
-    printf("Policy_armed:\t %u  Slowdown_type:\t %u  kp_xf:\t %u \n",policy_armed_flag,_slowdown_type,(int)kp_xf);
-    printf("Flip_flag:\t %u  Impact_flag:\t %u  kd_xf:\t %u \n",flip_flag,_impact_flag,(int)kd_xf);
-    printf("Tumbled:\t %u  Tumble Detect:\t %u  Traj Active: %u \n",tumbled,tumble_detection,execute_traj);
-    printf("Motorstop:\t %u  Policy_type:\t %u  Moment_Flag: %u\n",motorstop_flag,POLICY_TYPE,moment_flag);
+    printf("Motorstop:\t%u  Flip_flag:\t  %u  Pos Ctrl:\t    %u \n",motorstop_flag, flip_flag,(int)kp_xf);
+    printf("Traj Active:\t%u  Impact_flag:\t  %u  Vel Ctrl:\t    %u \n",execute_traj,_impact_flag,(int)kd_xf);
+    printf("Policy_type:\t%u  Tumble Detect: %u  Moment_Flag:   %u \n",POLICY_TYPE,tumble_detection,moment_flag);
+    printf("Policy_armed:\t%u  Tumbled:\t  %u  Slowdown_type: %u\n",policy_armed_flag,tumbled,_slowdown_type);
     printf("\n");
 
-    printf("==== Setpoints ====\n");
-    printf("x_d: %.3f  %.3f  %.3f\n",x_d.x,x_d.y,x_d.z);
-    printf("v_d: %.3f  %.3f  %.3f\n",v_d.x,v_d.y,v_d.z);
-    printf("a_d: %.3f  %.3f  %.3f\n",a_d.x,a_d.y,a_d.z);
-    printf("\n");
 
     printf("==== System States ====\n");
     printf("Pos [m]:\t %.3f  %.3f  %.3f\n",statePos.x,statePos.y,statePos.z);
@@ -309,6 +304,14 @@ void Controller::consoleOuput()
     printf("D_ceil: %.3f\n",d_ceil);
     printf("\n");
 
+
+    printf("==== Setpoints ====\n");
+    printf("x_d: %.3f  %.3f  %.3f\n",x_d.x,x_d.y,x_d.z);
+    printf("v_d: %.3f  %.3f  %.3f\n",v_d.x,v_d.y,v_d.z);
+    printf("a_d: %.3f  %.3f  %.3f\n",a_d.x,a_d.y,a_d.z);
+    printf("\n");
+
+    
     printf("==== Policy Values ====\n");
     printf("RL: \n");
     printf("RREV_thr: %.3f \tG1: %.3f \tG2: %.3f\n",RREV_thr,G1,G2);
