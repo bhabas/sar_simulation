@@ -77,13 +77,13 @@ class CF_DataConverter
 
 void CF_DataConverter::ctrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_msg)
 {
-    ros::Time time = ros::Time::now();
-    StateData_msg.header.stamp = time;
+    printf("Hello\n");
+    StateData_msg.header.stamp = ros::Time::now();
 
     // CARTESIAN SPACE DATA
     StateData_msg.Pose.position = ctrl_msg.Pose.position;
-    StateData_msg.Twist.linear = ctrl_msg.Twist.linear;
     StateData_msg.Pose.orientation = ctrl_msg.Pose.orientation;
+    StateData_msg.Twist.linear = ctrl_msg.Twist.linear;
     StateData_msg.Twist.angular = ctrl_msg.Twist.angular;
 
 
@@ -124,6 +124,32 @@ void CF_DataConverter::ctrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
 
     // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE CONTROLLER
     StateData_Pub.publish(StateData_msg);
+
+
+    // CARTESIAN SPACE DATA
+    // FlipData_msg.header.stamp = time;
+    FlipData_msg.Pose_tr.position = ctrl_msg.Pose_tr.position;
+    FlipData_msg.Pose_tr.orientation = ctrl_msg.Pose_tr.orientation;
+    FlipData_msg.Twist_tr.linear = ctrl_msg.Twist_tr.linear;
+    FlipData_msg.Twist_tr.angular = ctrl_msg.Twist_tr.angular;
+
+    // OPTICAL FLOW
+    FlipData_msg.Tau_tr = ctrl_msg.Tau_tr;
+    FlipData_msg.OFx_tr = ctrl_msg.OFx_tr;
+    FlipData_msg.OFy_tr = ctrl_msg.OFy_tr;
+    FlipData_msg.RREV_tr = ctrl_msg.RREV_tr;
+    FlipData_msg.D_ceil_tr = ctrl_msg.D_ceil_tr;
+
+    // CONTROLLER ACTIONS
+    FlipData_msg.FM_tr = ctrl_msg.FM_flip;
+
+    // NEURAL NETWORK DATA
+    FlipData_msg.NN_tr_flip = ctrl_msg.NN_tr_flip;
+    FlipData_msg.NN_tr_policy = ctrl_msg.NN_tr_policy;
+
+    // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE CONTROLLER
+    FlipData_Pub.publish(FlipData_msg);
+
 }
 
 // void CF_DataConverter::log2_Callback(const crazyflie_msgs_exp::GenericLogData::ConstPtr &log2_msg)
