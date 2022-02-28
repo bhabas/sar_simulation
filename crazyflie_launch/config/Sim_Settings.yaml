@@ -1,4 +1,4 @@
-MODEL_NAME: "crazyflie_Wide-Short"
+MODEL_NAME: "crazyflie_Narrow-Long"
 SURFACE_NAME: "CeilingPlane_Large"
 GROUND_NAME: "GroundPlane_Desert_Physical"
 
