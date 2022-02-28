@@ -168,7 +168,7 @@ extern bool policy_armed_flag;
 extern bool flip_flag;
 extern bool onceFlag;
 
-extern bool Moment_flag;
+extern bool moment_flag;
 extern bool attCtrlEnable;
 extern bool safeModeEnable;
 

@@ -158,7 +158,7 @@ bool policy_armed_flag = false;
 bool flip_flag = false;
 bool onceFlag = false;
 
-bool Moment_flag = false;
+bool moment_flag = false;
 bool attCtrlEnable = false;
 bool safeModeEnable = true;
 
@@ -272,7 +272,7 @@ void controllerGTCReset(void)
     tumbled = false;
     motorstop_flag = false;
 
-    Moment_flag = false;
+    moment_flag = false;
     policy_armed_flag = false;
     flip_flag = false;
     onceFlag = false;
@@ -353,7 +353,7 @@ void GTC_Command(setpoint_t *setpoint)
             M_d.y = setpoint->cmd_val2*1e-3;
             M_d.z = setpoint->cmd_val3*1e-3;
 
-            Moment_flag = (bool)setpoint->cmd_flag;
+            moment_flag = (bool)setpoint->cmd_flag;
             break;
 
         case 8: // Arm Policy Maneuver
@@ -563,6 +563,11 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                 F_thrust = 0.0f;
             }
         }
+        if(moment_flag == true)
+        {
+            F_thrust = 0.0f;
+            M = M_d;
+        }
 
         // =========== CONVERT THRUSTS AND MOMENTS TO PWM =========== // 
         f_thrust_g = F_thrust/4.0f*Newton2g;
@@ -702,7 +707,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 // // LOG_ADD(LOG_UINT8, MotorStop_Flag, &motorstop_flag)
 // // LOG_ADD(LOG_UINT8, Execute_Traj_Flag, &execute_traj)
 // // LOG_ADD(LOG_UINT8, Policy_Armed_Flag, &policy_armed_flag)
-// // LOG_ADD(LOG_UINT8, Moment_Flag, &Moment_flag)
+// // LOG_ADD(LOG_UINT8, Moment_Flag, &moment_flag)
 // // LOG_ADD(LOG_UINT8, Att_Ctrl_Flag, &attCtrlEnable)
 // LOG_GROUP_STOP(LogMiscData_GTC)
 
