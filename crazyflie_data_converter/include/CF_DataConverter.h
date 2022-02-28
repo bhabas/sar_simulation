@@ -44,7 +44,7 @@ class CF_DataConverter
 
 
         // FUNCTION PRIMITIVES
-        void ctrlData_Callback(const crazyflie_msgs::CtrlData::ConstPtr &ctrl_msg);
+        void ctrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_msg);
         // void log2_Callback(const crazyflie_msgs_exp::GenericLogData::ConstPtr &log2_msg);
         // void log3_Callback(const crazyflie_msgs_exp::GenericLogData::ConstPtr &log3_msg);
         // void log4_Callback(const crazyflie_msgs_exp::GenericLogData::ConstPtr &log4_msg);
@@ -75,60 +75,55 @@ class CF_DataConverter
 };
 
 
-void CF_DataConverter::ctrlData_Callback(const crazyflie_msgs::CtrlData::ConstPtr &ctrl_msg)
+void CF_DataConverter::ctrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_msg)
 {
     ros::Time time = ros::Time::now();
     StateData_msg.header.stamp = time;
 
-    // POSITION
-
-    // StateData_msg.Pose.position.x = xy_arr[0];
-    // StateData_msg.Pose.position.y = xy_arr[1];
-    // StateData_msg.Pose.position.z = log1_msg->values[1]*1e-3;
-
-    // // VELOCITY
-    // float vxy_arr[2];
-    // decompressXY(log1_msg->values[2],vxy_arr);
-    
-    // StateData_msg.Twist.linear.x = vxy_arr[0];
-    // StateData_msg.Twist.linear.y = vxy_arr[1];
-    // StateData_msg.Twist.linear.z = log1_msg->values[3]*1e-3;
-
-    // // ORIENTATION
-    // float quat[4];
-    // uint32_t quatZ = (uint32_t)log1_msg->values[4];
-    // quatdecompress(quatZ,quat);
-
-    // StateData_msg.Pose.orientation.x = quat[0];
-    // StateData_msg.Pose.orientation.y = quat[1];
-    // StateData_msg.Pose.orientation.z = quat[2];
-    // StateData_msg.Pose.orientation.w = quat[3]; 
-
-    // // PROCESS EULER ANGLES
-    // float eul[3];
-    // quat2euler(quat,eul);
-    // StateData_msg.Eul.x = eul[0]*180/M_PI;
-    // StateData_msg.Eul.y = eul[1]*180/M_PI;
-    // StateData_msg.Eul.z = eul[2]*180/M_PI;
-
-    // // ANGULAR VELOCITY
-    // float wxy_arr[2];
-    // decompressXY(log1_msg->values[5],wxy_arr);
-    
-    // StateData_msg.Twist.angular.x = wxy_arr[0];
-    // StateData_msg.Twist.angular.y = wxy_arr[1];
+    // CARTESIAN SPACE DATA
+    StateData_msg.Pose.position = ctrl_msg.Pose.position;
+    StateData_msg.Twist.linear = ctrl_msg.Twist.linear;
+    StateData_msg.Pose.orientation = ctrl_msg.Pose.orientation;
+    StateData_msg.Twist.angular = ctrl_msg.Twist.angular;
 
 
-    // // OPTICAL FLOW
-    // float OF_xy_arr[2];
-    // decompressXY(log1_msg->values[6],OF_xy_arr);
-    
-    // StateData_msg.OFx = OF_xy_arr[0];
-    // StateData_msg.OFy = OF_xy_arr[1];
-    // StateData_msg.RREV = log1_msg->values[7]*1e-3;
+    // PROCESS EULER ANGLES
+    float quat[4] = {
+        (float)ctrl_msg.Pose.orientation.x,
+        (float)ctrl_msg.Pose.orientation.y,
+        (float)ctrl_msg.Pose.orientation.z,
+        (float)ctrl_msg.Pose.orientation.w
+    };
+    float eul[3];
+    quat2euler(quat,eul);
+    StateData_msg.Eul.x = eul[0]*180/M_PI;
+    StateData_msg.Eul.y = eul[1]*180/M_PI;
+    StateData_msg.Eul.z = eul[2]*180/M_PI;
 
-    // // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE (VIA CRAZYSWARM)
-    // StateData_Pub.publish(StateData_msg);
+
+    // OPTICAL FLOW
+    StateData_msg.Tau = ctrl_msg.Tau;
+    StateData_msg.OFx = ctrl_msg.OFx;
+    StateData_msg.OFy = ctrl_msg.OFy;
+    StateData_msg.RREV = ctrl_msg.RREV;
+    StateData_msg.D_ceil = ctrl_msg.D_ceil;
+
+    // STATE SETPOINTS
+    StateData_msg.x_d = ctrl_msg.x_d;
+    StateData_msg.v_d = ctrl_msg.v_d;
+    StateData_msg.a_d = ctrl_msg.a_d;
+
+    // CONTROL ACTIONS
+    StateData_msg.FM = ctrl_msg.FM;
+    StateData_msg.MS_PWM = ctrl_msg.MS_PWM;
+
+    // NEURAL NETWORK DATA
+    StateData_msg.NN_flip = ctrl_msg.NN_flip;
+    StateData_msg.NN_policy = ctrl_msg.NN_policy;
+
+
+    // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE CONTROLLER
+    StateData_Pub.publish(StateData_msg);
 }
 
 // void CF_DataConverter::log2_Callback(const crazyflie_msgs_exp::GenericLogData::ConstPtr &log2_msg)

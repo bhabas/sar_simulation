@@ -376,14 +376,14 @@ void Controller::checkSlowdown()
 void Controller::publishCtrlData()
 {
     // STATE DATA
-    CtrlData_msg.Pose.pose.position.x = statePos.x;
-    CtrlData_msg.Pose.pose.position.y = statePos.y;
-    CtrlData_msg.Pose.pose.position.z = statePos.z;
+    CtrlData_msg.Pose.position.x = statePos.x;
+    CtrlData_msg.Pose.position.y = statePos.y;
+    CtrlData_msg.Pose.position.z = statePos.z;
 
-    CtrlData_msg.Pose.pose.orientation.x = stateQuat.x;
-    CtrlData_msg.Pose.pose.orientation.y = stateQuat.y;
-    CtrlData_msg.Pose.pose.orientation.z = stateQuat.z;
-    CtrlData_msg.Pose.pose.orientation.w = stateQuat.w;
+    CtrlData_msg.Pose.orientation.x = stateQuat.x;
+    CtrlData_msg.Pose.orientation.y = stateQuat.y;
+    CtrlData_msg.Pose.orientation.z = stateQuat.z;
+    CtrlData_msg.Pose.orientation.w = stateQuat.w;
 
     CtrlData_msg.Twist.linear.x = stateVel.x;
     CtrlData_msg.Twist.linear.y = stateVel.y;
@@ -408,19 +408,32 @@ void Controller::publishCtrlData()
     CtrlData_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
     CtrlData_msg.MS_PWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
 
+    CtrlData_msg.x_d.x = x_d.x;
+    CtrlData_msg.x_d.y = x_d.y;
+    CtrlData_msg.x_d.z = x_d.z;
+
+    CtrlData_msg.v_d.x = v_d.x;
+    CtrlData_msg.v_d.y = v_d.y;
+    CtrlData_msg.v_d.z = v_d.z;
+
+    CtrlData_msg.a_d.x = a_d.x;
+    CtrlData_msg.a_d.y = a_d.y;
+    CtrlData_msg.a_d.z = a_d.z;
+
+
 
     // STATE DATA (FLIP)
     CtrlData_msg.flip_flag = flip_flag;
 
     // CtrlData_msg.Pose_tr.header.stamp = t_flip;             
-    CtrlData_msg.Pose_tr.pose.position.x = statePos_tr.x;
-    CtrlData_msg.Pose_tr.pose.position.y = statePos_tr.y;
-    CtrlData_msg.Pose_tr.pose.position.z = statePos_tr.z;
+    CtrlData_msg.Pose_tr.position.x = statePos_tr.x;
+    CtrlData_msg.Pose_tr.position.y = statePos_tr.y;
+    CtrlData_msg.Pose_tr.position.z = statePos_tr.z;
 
-    CtrlData_msg.Pose_tr.pose.orientation.x = stateQuat_tr.x;
-    CtrlData_msg.Pose_tr.pose.orientation.y = stateQuat_tr.y;
-    CtrlData_msg.Pose_tr.pose.orientation.z = stateQuat_tr.z;
-    CtrlData_msg.Pose_tr.pose.orientation.w = stateQuat_tr.w;
+    CtrlData_msg.Pose_tr.orientation.x = stateQuat_tr.x;
+    CtrlData_msg.Pose_tr.orientation.y = stateQuat_tr.y;
+    CtrlData_msg.Pose_tr.orientation.z = stateQuat_tr.z;
+    CtrlData_msg.Pose_tr.orientation.w = stateQuat_tr.w;
 
     CtrlData_msg.Twist_tr.linear.x = stateVel_tr.x;
     CtrlData_msg.Twist_tr.linear.y = stateVel_tr.y;
