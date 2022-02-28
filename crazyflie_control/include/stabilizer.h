@@ -57,7 +57,7 @@ class Controller
 
             // EXTERNAL TOPICS
             ENV_Vicon_Subscriber = nh->subscribe("/ENV/viconState_UKF",1,&Controller::viconState_Callback,this,ros::TransportHints().tcpNoDelay());
-            ENV_CeilingFT_Subscriber = nh->subscribe("/ENV/ceiling_force_sensor",5,&Controller::ceilingFT_Callback,this,ros::TransportHints().tcpNoDelay());
+            ENV_CeilingFT_Subscriber = nh->subscribe("/ENV/",5,&Controller::ceilingFT_Callback,this,ros::TransportHints().tcpNoDelay());
             
             // GAZEBO SERVICES
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");

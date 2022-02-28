@@ -103,10 +103,10 @@
           <topic>__default_topic__</topic>
         </contact>
         <plugin name='contact_plugin' filename='libgazebo_ros_bumper.so'>
-          <bumperTopicName>ceiling_contact</bumperTopicName>
+          <bumperTopicName>/ENV/BodyContact</bumperTopicName>
           <frameName>ceiling</frameName>
           <alwaysOn>true</alwaysOn>
-          <updateRate>1000</updateRate>
+          <updateRate>500</updateRate>
         </plugin>
         <pose>0 0 0 0 -0 0</pose>
       </sensor>
@@ -124,9 +124,9 @@
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
 
-    <plugin name="ft_sensor" filename="libgazebo_ros_ft_sensor.so">
+    <plugin name="ForceTorque_Sensor" filename="libgazebo_ros_ft_sensor.so">
       <jointName>ceiling_joint</jointName>
-      <topicName>/Gazebo/Ceiling_FT</topicName>
+      <topicName>/ENV/Surface_FT_sensor</topicName>
       <updateRate>500</updateRate>
   </plugin>
   </model>

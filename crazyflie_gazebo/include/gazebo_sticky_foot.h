@@ -47,7 +47,7 @@ namespace gazebo {
             event::ConnectionPtr updateConnection_;
 
             ros::NodeHandle nh;
-            ros::Publisher PadConnect_Publisher = nh.advertise<crazyflie_msgs::PadConnect>("/pad_connections", 5);
+            ros::Publisher PadConnect_Publisher = nh.advertise<crazyflie_msgs::PadConnect>("/ENV/Pad_Connections", 5);
             ros::ServiceServer stickyService;
 
             bool sticky_;

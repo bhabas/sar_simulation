@@ -13,7 +13,7 @@ class Ceiling_FT_Sensor
         {
             impactForce_Publisher = nh->advertise<crazyflie_msgs::ImpactData>("CF_DC/ImpactData", 1);
             gloabalState_Subscriber = nh->subscribe("/env/global_state_data",1,&Ceiling_FT_Sensor::vicon_stateCallback,this,ros::TransportHints().tcpNoDelay());
-            RLdata_Subscriber = nh->subscribe("/rl_data",5,&Ceiling_FT_Sensor::RLdata_Callback,this);  
+            RLdata_Subscriber = nh->subscribe("/RL/data",5,&Ceiling_FT_Sensor::RLdata_Callback,this);  
             Surface_FT_Subscriber = nh->subscribe("/Gazebo/Ceiling_FT",5,&Ceiling_FT_Sensor::Surface_FT_Callback,this,ros::TransportHints().tcpNoDelay());  
         }
 

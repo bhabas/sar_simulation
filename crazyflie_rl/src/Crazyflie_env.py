@@ -184,8 +184,8 @@ class CrazyflieEnv:
         self.laser_Subscriber = rospy.Subscriber('/CF_Internal/Laser_sensor',LaserScan,self.laser_sensorCallback)       
                       
         # WE WANT TO BE SURE WE GET THESE MESSAGES WHEN THEY COME THROUGH              
-        self.contact_Subscriber = rospy.Subscriber('/ceiling_contact',ContactsState,self.contactSensorCallback,queue_size=10)     
-        self.padcontact_Subcriber = rospy.Subscriber('/pad_connections',PadConnect,self.padConnect_Callback,queue_size=10)       
+        self.contact_Subscriber = rospy.Subscriber('/ENV/BodyContact',ContactsState,self.contactSensorCallback,queue_size=10)     
+        self.padcontact_Subcriber = rospy.Subscriber('/ENV/Pad_Connections',PadConnect,self.padConnect_Callback,queue_size=10)       
         self.ceiling_ft_Subscriber = rospy.Subscriber('/CF_DC/ImpactData',ImpactData,self.ceiling_ftsensorCallback,queue_size=10) 
                       
 
