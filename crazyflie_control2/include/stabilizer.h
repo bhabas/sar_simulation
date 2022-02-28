@@ -25,6 +25,9 @@
 #include "crazyflie_msgs/PadConnect.h"
 #include "crazyflie_msgs/MS.h"
 
+#include "gazebo_msgs/SetPhysicsProperties.h"
+
+
 
 uint32_t tick;
 
@@ -51,8 +54,13 @@ class Controller
             // PUBLISHERS
             MS_PWM_Publisher = nh->advertise<crazyflie_msgs::MS>("/MS",1);
 
+
+            // SERVICES
+            _SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
+
             
-            Controller::LoadParams();
+            Controller::loadParams();
+            Controller::adjustSimSpeed(_SIM_SPEED);
             controllerThread = std::thread(&Controller::stabilizerLoop, this);
         }
 
@@ -87,7 +95,6 @@ class Controller
         float _SIM_SPEED; 
         float _SIM_SLOWDOWN_SPEED;
         float _CF_MASS;
-        int _CTRL_DEBUG_SLOWDOWN;
         int _POLICY_TYPE;
         std::string _MODEL_NAME;
 
@@ -101,12 +108,45 @@ class Controller
         void RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg);
 
         void stabilizerLoop();
-        void LoadParams();
+        void loadParams();
+        void adjustSimSpeed(float speed_mult);
+        void consoleOuput();
+        void checkSlowdown();
+        
 
         crazyflie_msgs::MS MS_msg;
+        gazebo_msgs::SetPhysicsProperties srv;
 
 
 };
+
+void Controller::checkSlowdown()
+{   
+    // SIMULATION SLOWDOWN
+    if(_LANDING_SLOWDOWN_FLAG==true && tick >= 500){
+
+        // WHEN CLOSE TO THE CEILING REDUCE SIM SPEED
+        if(d_ceil<=0.5 && _slowdown_type == 0){
+            
+            Controller::adjustSimSpeed(_SIM_SLOWDOWN_SPEED);
+            _slowdown_type = 1;
+        }
+
+        // IF IMPACTED CEILING OR FALLING AWAY, INCREASE SIM SPEED TO DEFAULT
+        if(_impact_flag == true && _slowdown_type == 1)
+        {
+            Controller::adjustSimSpeed(_SIM_SPEED);
+            _slowdown_type = 2;
+        }
+        else if(stateVel.z <= -0.5 && _slowdown_type == 1){
+            Controller::adjustSimSpeed(_SIM_SPEED);
+            _slowdown_type = 2;
+        }
+    
+    }
+
+}
+
 
 void Controller::OFState_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg)
 {
@@ -161,7 +201,7 @@ void Controller::CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 
     if(msg->cmd_type == 6)
     {
-        Controller::LoadParams();
+        Controller::loadParams();
     }
 }
 
@@ -180,7 +220,7 @@ void Controller::RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){
 }
 
 
-void Controller::LoadParams()
+void Controller::loadParams()
 {
     // SIMULATION SETTINGS FROM CONFIG FILE
     ros::param::get("/MODEL_NAME",_MODEL_NAME);
@@ -191,9 +231,8 @@ void Controller::LoadParams()
 
     // DEBUG SETTINGS
     ros::param::get("/SIM_SPEED",_SIM_SPEED);
-    ros::param::get("/CTRL_DEBUG_SLOWDOWN", _CTRL_DEBUG_SLOWDOWN);
-    ros::param::get("/LANDING_SLOWDOWN",_LANDING_SLOWDOWN_FLAG);
     ros::param::get("/SIM_SLOWDOWN_SPEED",_SIM_SLOWDOWN_SPEED);
+    ros::param::get("/LANDING_SLOWDOWN_FLAG",_LANDING_SLOWDOWN_FLAG);
 
     // COLLECT CTRL GAINS FROM CONFIG FILE
     ros::param::get("P_kp_xy",P_kp_xy);
@@ -216,4 +255,99 @@ void Controller::LoadParams()
     ros::param::get("R_ki_z",R_ki_z);
     ros::param::get("i_range_R_z",i_range_R_z);
 
+}
+
+void Controller::adjustSimSpeed(float speed_mult)
+{
+    gazebo_msgs::SetPhysicsProperties srv;
+    srv.request.time_step = 0.001;
+    srv.request.max_update_rate = (int)(speed_mult/0.001);
+
+
+    geometry_msgs::Vector3 gravity_vec;
+    gravity_vec.x = 0.0;
+    gravity_vec.y = 0.0;
+    gravity_vec.z = -9.8066;
+    srv.request.gravity = gravity_vec;
+
+    gazebo_msgs::ODEPhysics ode_config;
+    ode_config.auto_disable_bodies = false;
+    ode_config.sor_pgs_precon_iters = 0;
+    ode_config.sor_pgs_iters = 50;
+    ode_config.sor_pgs_w = 1.3;
+    ode_config.sor_pgs_rms_error_tol = 0.0;
+    ode_config.contact_surface_layer = 0.001;
+    ode_config.contact_max_correcting_vel = 0.0;
+    ode_config.cfm = 0.0;
+    ode_config.erp = 0.2;
+    ode_config.max_contacts = 20;
+
+    srv.request.ode_config = ode_config;
+
+    _SimSpeed_Client.call(srv);
+}
+
+void Controller::consoleOuput()
+{
+    system("clear");
+    printf("t: %.4f \tCmd: \n",ros::Time::now().toSec());
+    printf("Model: %s\n",_MODEL_NAME.c_str());
+    printf("\n");
+
+    printf("==== Flags ====\n");
+    printf("Policy_armed:\t %u  Slowdown_type:\t %u  kp_xf:\t %u \n",policy_armed_flag,_slowdown_type,(int)kp_xf);
+    printf("Flip_flag:\t %u  Impact_flag:\t %u  kd_xf:\t %u \n",flip_flag,_impact_flag,(int)kd_xf);
+    printf("Tumbled: \t %u  Tumble Detect:\t %u  Traj Active: %u \n",tumbled,tumble_detection,execute_traj);
+    printf("Motorstop \t %u\n",motorstop_flag);
+    printf("\n");
+
+    printf("==== Setpoints ====\n");
+    printf("x_d: %.3f  %.3f  %.3f\n",x_d.x,x_d.y,x_d.z);
+    printf("v_d: %.3f  %.3f  %.3f\n",v_d.x,v_d.y,v_d.z);
+    printf("a_d: %.3f  %.3f  %.3f\n",a_d.x,a_d.y,a_d.z);
+    printf("\n");
+
+    printf("==== System States ====\n");
+    printf("Pos [m]:\t %.3f  %.3f  %.3f\n",statePos.x,statePos.y,statePos.z);
+    printf("Vel [m/s]:\t %.3f  %.3f  %.3f\n",stateVel.x,stateVel.y,stateVel.z);
+    printf("Omega [rad/s]:\t %.3f  %.3f  %.3f\n",stateOmega.x,stateOmega.y,stateOmega.z);
+    printf("Eul [deg]:\t %.3f  %.3f  %.3f\n",stateEul.x,stateEul.y,stateEul.z);
+    printf("\n");
+
+    printf("Tau: %.3f \tOFx: %.3f \tOFy: %.3f \tRREV: %.3f\n",Tau,OFx,OFy,RREV);
+    printf("D_ceil: %.3f\n",d_ceil);
+    printf("\n");
+
+    printf("==== Policy Values ====\n");
+    printf("RL: \n");
+    printf("RREV_thr: %.3f \tG1: %.3f \tG2: %.3f\n",RREV_thr,G1,G2);
+    printf("\n");
+
+    printf("NN_Outputs: \n");
+    printf("NN_Flip:  %.3f \tNN_Policy: %.3f \n",NN_flip,NN_policy);
+    printf("\n");
+
+    printf("==== Flip Trigger Values ====\n");
+    printf("RREV_tr:    %.3f \tNN_tr_Flip:    %.3f \n",RREV_tr,NN_tr_flip);
+    printf("OFy_tr:     %.3f \tNN_tr_Policy:  %.3f \n",OFy_tr,NN_tr_policy);
+    printf("D_ceil_tr:  %.3f \n",d_ceil_tr);
+    printf("\n");
+
+    printf("==== Controller Actions ====\n");
+    printf("FM [N/N*mm]: %.3f  %.3f  %.3f  %.3f\n",F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3);
+    printf("f [g]: %.3f  %.3f  %.3f  %.3f\n",f_thrust_g,f_roll_g,f_pitch_g,f_yaw_g);
+    printf("\n");
+
+    printf("MS_PWM: %u  %u  %u  %u\n",M1_pwm,M2_pwm,M3_pwm,M4_pwm);
+    printf("\n");
+
+
+    printf("=== Parameters ====\n");
+    printf("Kp_P: %.3f  %.3f  %.3f \t",Kp_p.x,Kp_p.y,Kp_p.z);
+    printf("Kp_R: %.3f  %.3f  %.3f \n",Kp_R.x,Kp_R.y,Kp_R.z);
+    printf("Kd_P: %.3f  %.3f  %.3f \t",Kd_p.x,Kd_p.y,Kd_p.z);
+    printf("Kd_R: %.3f  %.3f  %.3f \n",Kd_R.x,Kd_R.y,Kd_R.z);
+    printf("Ki_P: %.3f  %.3f  %.3f \t",Ki_p.x,Ki_p.y,Ki_p.z);
+    printf("Ki_R: %.3f  %.3f  %.3f \n",Ki_p.x,Ki_p.y,Ki_p.z);
+    printf("======\n");
 }
