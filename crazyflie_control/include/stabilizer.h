@@ -375,49 +375,75 @@ void Controller::checkSlowdown()
 
 void Controller::publishCtrlData()
 {
-    // MISC INFO
-        CtrlData_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
-        CtrlData_msg.MS_PWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
+    // STATE DATA
+    CtrlData_msg.Pose.pose.position.x = statePos.x;
+    CtrlData_msg.Pose.pose.position.y = statePos.y;
+    CtrlData_msg.Pose.pose.position.z = statePos.z;
 
-        // NEURAL NETWORK INFO
-        CtrlData_msg.NN_policy = NN_policy;
-        CtrlData_msg.NN_flip = NN_flip;
+    CtrlData_msg.Pose.pose.orientation.x = stateQuat.x;
+    CtrlData_msg.Pose.pose.orientation.y = stateQuat.y;
+    CtrlData_msg.Pose.pose.orientation.z = stateQuat.z;
+    CtrlData_msg.Pose.pose.orientation.w = stateQuat.w;
 
-        CtrlData_msg.Tau = Tau;
-        CtrlData_msg.RREV = RREV;
-        CtrlData_msg.OFy = OFy;
-        CtrlData_msg.OFx = OFx;
-        CtrlData_msg.D_ceil = d_ceil;
+    CtrlData_msg.Twist.linear.x = stateVel.x;
+    CtrlData_msg.Twist.linear.y = stateVel.y;
+    CtrlData_msg.Twist.linear.z = stateVel.z;
 
-        // FLIP INFO
-        CtrlData_msg.flip_flag = flip_flag;
-        CtrlData_msg.RREV_tr = RREV_tr;
-        CtrlData_msg.OFx_tr = OFx_tr;
-        CtrlData_msg.OFy_tr = OFy_tr;
-        CtrlData_msg.Tau_tr = Tau_tr;
-        CtrlData_msg.FM_flip = {F_thrust_flip,M_x_flip*1.0e3,M_y_flip*1.0e3,M_z_flip*1.0e3};
+    CtrlData_msg.Twist.angular.x = stateOmega.x;
+    CtrlData_msg.Twist.angular.y = stateOmega.y;
+    CtrlData_msg.Twist.angular.z = stateOmega.z;
 
-        CtrlData_msg.NN_tr_flip = NN_tr_flip;
-        CtrlData_msg.NN_tr_policy = NN_tr_policy;
+    // OPTICAL FLOW DATA
+    CtrlData_msg.Tau = Tau;
+    CtrlData_msg.OFx = OFx;
+    CtrlData_msg.OFy = OFy;
+    CtrlData_msg.RREV = RREV;
+    CtrlData_msg.D_ceil = d_ceil;
 
-        // CtrlData_msg.Pose_tr.header.stamp = t_flip;             
+    // NEURAL NETWORK DATA
+    CtrlData_msg.NN_policy = NN_policy;
+    CtrlData_msg.NN_flip = NN_flip;
 
-        CtrlData_msg.Pose_tr.pose.position.x = statePos_tr.x;
-        CtrlData_msg.Pose_tr.pose.position.y = statePos_tr.y;
-        CtrlData_msg.Pose_tr.pose.position.z = statePos_tr.z;
+    // CONTROL ACTIONS
+    CtrlData_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
+    CtrlData_msg.MS_PWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
 
-        CtrlData_msg.Pose_tr.pose.orientation.x = stateQuat_tr.x;
-        CtrlData_msg.Pose_tr.pose.orientation.y = stateQuat_tr.y;
-        CtrlData_msg.Pose_tr.pose.orientation.z = stateQuat_tr.z;
-        CtrlData_msg.Pose_tr.pose.orientation.w = stateQuat_tr.w;
 
-        CtrlData_msg.Twist_tr.linear.x = stateVel_tr.x;
-        CtrlData_msg.Twist_tr.linear.y = stateVel_tr.y;
-        CtrlData_msg.Twist_tr.linear.z = stateVel_tr.z;
+    // STATE DATA (FLIP)
+    CtrlData_msg.flip_flag = flip_flag;
 
-        CtrlData_msg.Twist_tr.angular.x = stateOmega_tr.x;
-        CtrlData_msg.Twist_tr.angular.y = stateOmega_tr.y;
-        CtrlData_msg.Twist_tr.angular.z = stateOmega_tr.z;
-        CTRL_Data_Publisher.publish(CtrlData_msg);
+    // CtrlData_msg.Pose_tr.header.stamp = t_flip;             
+    CtrlData_msg.Pose_tr.pose.position.x = statePos_tr.x;
+    CtrlData_msg.Pose_tr.pose.position.y = statePos_tr.y;
+    CtrlData_msg.Pose_tr.pose.position.z = statePos_tr.z;
+
+    CtrlData_msg.Pose_tr.pose.orientation.x = stateQuat_tr.x;
+    CtrlData_msg.Pose_tr.pose.orientation.y = stateQuat_tr.y;
+    CtrlData_msg.Pose_tr.pose.orientation.z = stateQuat_tr.z;
+    CtrlData_msg.Pose_tr.pose.orientation.w = stateQuat_tr.w;
+
+    CtrlData_msg.Twist_tr.linear.x = stateVel_tr.x;
+    CtrlData_msg.Twist_tr.linear.y = stateVel_tr.y;
+    CtrlData_msg.Twist_tr.linear.z = stateVel_tr.z;
+
+    CtrlData_msg.Twist_tr.angular.x = stateOmega_tr.x;
+    CtrlData_msg.Twist_tr.angular.y = stateOmega_tr.y;
+    CtrlData_msg.Twist_tr.angular.z = stateOmega_tr.z;
+
+    // OPTICAL FLOW DATA (FLIP)
+    CtrlData_msg.Tau_tr = Tau_tr;
+    CtrlData_msg.OFx_tr = OFx_tr;
+    CtrlData_msg.OFy_tr = OFy_tr;
+    CtrlData_msg.RREV_tr = RREV_tr;
+
+    // NEURAL NETWORK DATA (FLIP)
+    CtrlData_msg.NN_tr_flip = NN_tr_flip;
+    CtrlData_msg.NN_tr_policy = NN_tr_policy;
+
+    // CONTROL ACTIONS (FLIP)
+    CtrlData_msg.FM_flip = {F_thrust_flip,M_x_flip*1.0e3,M_y_flip*1.0e3,M_z_flip*1.0e3};
+
+    
+    CTRL_Data_Publisher.publish(CtrlData_msg);
 
 }
