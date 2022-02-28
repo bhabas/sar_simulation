@@ -505,8 +505,9 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                         stateQuat_tr = stateQuat;
                         stateOmega_tr = stateOmega;
 
-                        OFy_tr = OFy;
+                        Tau_tr = Tau;
                         OFx_tr = OFx;
+                        OFy_tr = OFy;
                         RREV_tr = RREV;
                     
                         M_d.x = 0.0f;
@@ -532,8 +533,9 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                         stateQuat_tr = stateQuat;
                         stateOmega_tr = stateOmega;
 
-                        OFy_tr = OFy;
+                        Tau_tr = Tau;
                         OFx_tr = OFx;
+                        OFy_tr = OFy;
                         RREV_tr = RREV;
                         d_ceil_tr = d_ceil;
 

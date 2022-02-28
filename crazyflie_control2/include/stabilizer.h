@@ -179,6 +179,12 @@ void Controller::CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 
     setpoint.GTC_cmd_rec = true;
 
+    if(msg->cmd_type == 0)
+    {
+        _slowdown_type = 0;
+        Controller::adjustSimSpeed(_SIM_SPEED);
+    }
+
     if(msg->cmd_type == 6)
     {
         Controller::loadParams();
@@ -195,6 +201,7 @@ void Controller::RLData_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){
     if (msg->reset_flag == true){
 
         controllerGTCReset();
+        
 
     }
 }
@@ -348,7 +355,7 @@ void Controller::checkSlowdown()
         if(_impact_flag == true && _slowdown_type == 1)
         {
             Controller::adjustSimSpeed(_SIM_SPEED);
-            _slowdown_type = 2;
+            _slowdown_type = 2; // (Don't call adjustSimSpeed more than once)
         }
         else if(stateVel.z <= -0.5 && _slowdown_type == 1){
             Controller::adjustSimSpeed(_SIM_SPEED);
