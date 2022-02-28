@@ -54,7 +54,7 @@ namespace gazebo {
             event::ConnectionPtr updateConnection;
 
             ros::NodeHandle nh;
-            ros::Subscriber MS_Subscriber = nh.subscribe<crazyflie_msgs::MS>("/MS", 1, &GazeboMotorPlugin::MotorSpeedCallback, this, ros::TransportHints().tcpNoDelay());
+            ros::Subscriber MS_Subscriber = nh.subscribe<crazyflie_msgs::MS>("/CF_Internal/MS_PWM", 1, &GazeboMotorPlugin::MotorSpeedCallback, this, ros::TransportHints().tcpNoDelay());
     };
 
 }

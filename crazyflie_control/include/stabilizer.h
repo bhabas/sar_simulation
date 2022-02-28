@@ -52,7 +52,7 @@ class Controller
             RLData_Subscriber = nh->subscribe("/rl_data",5,&Controller::RLData_Callback,this,ros::TransportHints().tcpNoDelay());
 
             // PUBLISHERS
-            MS_PWM_Publisher = nh->advertise<crazyflie_msgs::MS>("/MS",1);
+            MS_PWM_Publisher = nh->advertise<crazyflie_msgs::MS>("/CF_Internal/MS_PWM",1);
             CTRL_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/ctrl_data",1);
 
 
