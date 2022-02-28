@@ -349,7 +349,7 @@ class CrazyflieEnv:
 
         ## SET STATE VALUES FROM TOPIC
         self.posCF = np.round([pos.x,pos.y,pos.z],3)            # [m]
-        self.quatCF = np.round([quat.x,quat.y,quat.z,quat.w],5) # [quat]
+        self.quatCF = np.round([quat.x,quat.y,quat.z,quat.w],4) # [quat]
         self.velCF = np.round([vel.x,vel.y,vel.z],3)            # [m/s]
         self.omegaCF = np.round([omega.x,omega.y,omega.z],3)    # [rad/s]
         
@@ -668,7 +668,7 @@ class CrazyflieEnv:
                     # Internal State Estimates (EKF)
                     'x','y','z',            
                     'vx','vy','vz',
-                    'qw','qx','qy','qz',
+                    'qx','qy','qz','qw',
                     'wx','wy','wz',
 
                     # Misc RL labels
@@ -704,7 +704,7 @@ class CrazyflieEnv:
                     # Internal State Estimates (EKF)
                     self.posCF[0],self.posCF[1],self.posCF[2], # t,x,y,z
                     self.velCF[0],self.velCF[1],self.velCF[2], # vx,vy,vz
-                    self.quatCF[3],self.quatCF[0],self.quatCF[1],self.quatCF[2], # qw,qx,qy,qz
+                    self.quatCF[0],self.quatCF[1],self.quatCF[2],self.quatCF[3], # qx,qy,qz,qw
                     self.omegaCF[0],self.omegaCF[1],self.omegaCF[2], # wx,wy,wz
 
                     # Misc RL labels
@@ -742,7 +742,7 @@ class CrazyflieEnv:
                     # Internal State Estimates (EKF)
                     self.posCF_tr[0],self.posCF_tr[1],self.posCF_tr[2],    # t,x,y,z
                     self.velCF_tr[0],self.velCF_tr[1],self.velCF_tr[2],    # vx_d,vy_d,vz_d
-                    self.quatCF_tr[3],self.quatCF_tr[0],self.quatCF_tr[1],self.quatCF_tr[2],    # qw,qx,qy,qz
+                    self.quatCF_tr[0],self.quatCF_tr[1],self.quatCF_tr[2],self.quatCF_tr[3],    # qx,qy,qz,qw
                     self.omegaCF_tr[0],self.omegaCF_tr[1],self.omegaCF_tr[2],  # wx,wy,wz
                     
 
@@ -778,7 +778,7 @@ class CrazyflieEnv:
                     # Internal State Estimates (EKF)
                     self.posCF_impact[0],self.posCF_impact[1],self.posCF_impact[2],    # t,x,y,z
                     self.velCF_impact[0],self.velCF_impact[1],self.velCF_impact[2],    # vx_d,vy_d,vz_d
-                    self.quatCF_impact[3],self.quatCF_impact[0],self.quatCF_impact[1],self.quatCF_impact[2],    # qw,qx,qy,qz
+                    self.quatCF_impact[0],self.quatCF_impact[1],self.quatCF_impact[2],self.quatCF_impact[3],    # qx,qy,qz,qw
                     self.omegaCF_impact[0],self.omegaCF_impact[1],self.omegaCF_impact[2],  # wx,wy,wz
                     
                     # Misc RL labels

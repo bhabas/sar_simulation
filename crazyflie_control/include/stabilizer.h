@@ -55,7 +55,7 @@ class Controller
             CF_OF_Subscriber = nh->subscribe("/CF_Internal/OF_Sensor",1,&Controller::OF_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
             CF_PWM_Publisher = nh->advertise<crazyflie_msgs::MS>("/CF_Internal/MS_PWM",1);
 
-            // EXTERNAL TOPICS
+            // ENVIRONMENT TOPICS
             ENV_Vicon_Subscriber = nh->subscribe("/ENV/viconState_UKF",1,&Controller::viconState_Callback,this,ros::TransportHints().tcpNoDelay());
             ENV_CeilingFT_Subscriber = nh->subscribe("/ENV/aaa",5,&Controller::ceilingFT_Callback,this,ros::TransportHints().tcpNoDelay());
             
