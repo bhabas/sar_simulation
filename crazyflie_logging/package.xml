@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>crazyflie_data</name>
+  <name>crazyflie_logging</name>
   <version>0.0.0</version>
   <description>The crazyflie_data package</description>
 
