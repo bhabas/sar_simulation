@@ -25,8 +25,11 @@ be transferred to the Crazyflie Firmware.
 
 
 #include <ros/ros.h>
-#include "nav_msgs/Odometry.h"
-#include "sensor_msgs/Imu.h"
+#include <nav_msgs/Odometry.h>
+#include <sensor_msgs/Imu.h>
+#include <gazebo_msgs/SetPhysicsProperties.h>
+
+
 #include "crazyflie_msgs/OF_SensorData.h"
 #include "crazyflie_msgs/MS.h"
 
@@ -36,7 +39,6 @@ be transferred to the Crazyflie Firmware.
 #include "crazyflie_msgs/RLData.h"
 #include "crazyflie_msgs/PadConnect.h"
 
-#include "gazebo_msgs/SetPhysicsProperties.h"
 
 
 // FIRMWARE VARIABLES FOR CONTROLLER
