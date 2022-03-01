@@ -1,8 +1,7 @@
 /* 
-Data from the crazyflie is compressed and streamed to the Crazyswarm node via CRTP which then 
-then directly converts the raw data into ROS topics. This script subscribes to the ROS topics 
-with the raw data from the crazyflie, decompresses the data, organizes it, 
-and then republishes the data in an organized manner that is easy to use.
+This script subscribes to the ROS topics with the raw data from the crazyflie,
+organizes it, and then republishes the data in an organized manner that 
+is easy to use.
 */
 
 #include <stdio.h>
@@ -16,7 +15,6 @@ and then republishes the data in an organized manner that is easy to use.
 #include "crazyflie_msgs/CF_FlipData.h"
 #include "crazyflie_msgs/CF_ImpactData.h"
 #include "crazyflie_msgs/CF_MiscData.h"
-#include "crazyflie_msgs_exp/GenericLogData.h"
 
 #include "crazyflie_msgs/CtrlData.h"
 #include "crazyflie_msgs/RLCmd.h"
@@ -31,7 +29,7 @@ class CF_DataConverter
         CF_DataConverter(ros::NodeHandle* nh)
         {
             // INITIALIZE SUBSCRIBERS
-            CTRL_Data_Subscriber = nh->subscribe("/CTRL/data", 1, &CF_DataConverter::ctrlData_Callback, this, ros::TransportHints().tcpNoDelay());
+            CTRL_Data_Subscriber = nh->subscribe("/CTRL/data", 1, &CF_DataConverter::CtrlData_Callback, this, ros::TransportHints().tcpNoDelay());
             RL_CMD_Subscriber = nh->subscribe("/RL/cmd",5,&CF_DataConverter::RL_CMD_Callback,this,ros::TransportHints().tcpNoDelay());
 
             // INITIALIZE PUBLISHERS
@@ -43,7 +41,7 @@ class CF_DataConverter
 
 
         // FUNCTION PRIMITIVES
-        void ctrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_msg);
+        void CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_msg);
         void RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
 
         void Publish_StateData();
@@ -231,7 +229,18 @@ void CF_DataConverter::Publish_FlipData()
 
 }
 
-void CF_DataConverter::ctrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_msg)
+void CF_DataConverter::Publish_ImpactData()
+{
+    ImpactData_Pub.publish(ImpactData_msg);
+}
+
+void CF_DataConverter::Publish_MiscData()
+{
+    MiscData_msg.battery_voltage = 0.0;
+    MiscData_Pub.publish(MiscData_msg);
+}
+
+void CF_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_msg)
 {
     // ===================
     //     FLIGHT DATA
@@ -320,6 +329,8 @@ void CF_DataConverter::ctrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
 
     Publish_StateData();
     Publish_FlipData();
+    Publish_ImpactData();
+    Publish_MiscData();
 
 }
 

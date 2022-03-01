@@ -5,7 +5,7 @@ void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
 {
     ros::Rate rate(1000);
     
-    // TURN OFF SAFEMODE (EXP ONLY SETTING)
+    // TURN OFF SAFEMODE (EXPERIMENT ONLY SETTING)
     safeModeEnable = false;
 
     // INITIATE CONTROLLER
@@ -14,8 +14,6 @@ void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
     // RUN STABILIZER LOOP
     while(ros::ok)
     {
-        t = ros::Time::now();
-
         stateEstimator(&state, &sensorData, &control, tick); // Run state/sensor values through "Kalman filter"
         controllerGTC(&control, &setpoint, &sensorData, &state, tick);
     

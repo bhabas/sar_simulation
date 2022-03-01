@@ -1,3 +1,15 @@
+/* 
+This script is the main controller loop for the crazyflie. It receives
+system and sensor states from the crazyflie model/gazebo via ROS topics
+which it then passes to the Geometric Tracking Controller (controller_gtc.c).
+It then outputs all of the chosen values via ROS topics to the 
+Crazyflie_DataConverter (CF_DC) which collates all data from multiple nodes, 
+reorganizes it, then republishes it. 
+
+All changes to controller_gtc.c should remain in terms of C so it can easily
+be transferred to the Crazyflie Firmware.
+*/
+
 
 // C++ Includes
 #include <iostream>
@@ -48,7 +60,6 @@ class Controller
 
             // RL TOPICS
             RL_CMD_Subscriber = nh->subscribe("/RL/cmd",5,&Controller::RL_CMD_Callback,this,ros::TransportHints().tcpNoDelay());
-            RL_Data_Subscriber = nh->subscribe("/RL/data",5,&Controller::RL_Data_Callback,this,ros::TransportHints().tcpNoDelay());
 
             // INTERNAL TOPICS
             CF_IMU_Subscriber = nh->subscribe("/CF_Internal/IMU",1,&Controller::IMU_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
@@ -65,6 +76,8 @@ class Controller
             
             Controller::loadParams();
             Controller::adjustSimSpeed(_SIM_SPEED);
+
+            // Thread main controller loop so other callbacks can work fine
             controllerThread = std::thread(&Controller::stabilizerLoop, this);
         }
 
@@ -91,7 +104,6 @@ class Controller
         std::thread controllerThread;
 
         uint32_t tick = 1;
-        ros::Time t;
 
         // ROS SPECIFIC VALUES
         int _impact_flag = 0;
@@ -110,7 +122,6 @@ class Controller
         void OF_Sensor_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg);
 
         void RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
-        void RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &msg);
         void ceilingFT_Callback(const crazyflie_msgs::ImpactData::ConstPtr &msg);
 
         void stabilizerLoop();
@@ -130,7 +141,7 @@ class Controller
 
 
 
-
+// OPTICAL FLOW VALUES (IN BODY FRAME) FROM MODEL SENSOR PLUGIN
 void Controller::OF_Sensor_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg)
 {
     sensorData.Tau = msg->Tau;
@@ -140,6 +151,7 @@ void Controller::OF_Sensor_Callback(const crazyflie_msgs::OF_SensorData::ConstPt
 
 }
 
+// IMU VALUES FROM MODEL SENSOR PLUGIN
 void Controller::IMU_Sensor_Callback(const sensor_msgs::Imu::ConstPtr &msg)
 {
     sensorData.acc.x = msg->linear_acceleration.x/9.8066; // Convert to Gs to match crazyflie sensors
@@ -148,9 +160,9 @@ void Controller::IMU_Sensor_Callback(const sensor_msgs::Imu::ConstPtr &msg)
 
 }
 
+// POSE AND TWIST FROM "VICON" SYSTEM (GAZEBO WORLD FRAME)
 void Controller::viconState_Callback(const nav_msgs::Odometry::ConstPtr &msg)
 {
-    
     // UPDATE POSE FROM VICON SYSTEM
     state.position.x = msg->pose.pose.position.x;
     state.position.y = msg->pose.pose.position.y;
@@ -172,6 +184,7 @@ void Controller::viconState_Callback(const nav_msgs::Odometry::ConstPtr &msg)
 
 }
 
+// RECEIVE COMMANDS FROM RL SCRIPTS
 void Controller::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 {
     setpoint.cmd_type = msg->cmd_type;
@@ -182,14 +195,14 @@ void Controller::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 
     setpoint.GTC_cmd_rec = true;
 
-    if(msg->cmd_type == 0)
+    if(msg->cmd_type == 0) // RESET SIMULATION SPEED
     {
         _impact_flag = false;
         _slowdown_type = 0;
         Controller::adjustSimSpeed(_SIM_SPEED);
     }
 
-    if(msg->cmd_type == 6)
+    if(msg->cmd_type == 6) // RESET ROS PARAM VALUES
     {
         Controller::loadParams();
     }
@@ -197,20 +210,11 @@ void Controller::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 
 void Controller::ceilingFT_Callback(const crazyflie_msgs::ImpactData::ConstPtr &msg)
 {
+    // THIS IS USED TO INCREASE SIM SPEED WHEN CEILING IMPACT DETECTED
     _impact_flag = msg->impact_flag;
 }
 
-void Controller::RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &msg){
-
-    if (msg->reset_flag == true){
-
-        controllerGTCReset();
-        
-
-    }
-}
-
-
+// LOAD VALUES FROM ROSPARAM SERVER
 void Controller::loadParams()
 {
     // SIMULATION SETTINGS FROM CONFIG FILE
@@ -248,6 +252,7 @@ void Controller::loadParams()
 
 }
 
+// CHANGES REAL TIME FACTOR FOR THE SIMULATION (LOWER = SLOWER)
 void Controller::adjustSimSpeed(float speed_mult)
 {
     gazebo_msgs::SetPhysicsProperties srv;
@@ -278,6 +283,7 @@ void Controller::adjustSimSpeed(float speed_mult)
     GZ_SimSpeed_Client.call(srv);
 }
 
+// CONTROLLER DEBUG OUTPUT
 void Controller::consoleOuput()
 {
     system("clear");
@@ -346,6 +352,7 @@ void Controller::consoleOuput()
     printf("======\n");
 }
 
+// CHECK IF SIM SPEED NEEDS TO BE ADJUSTED
 void Controller::checkSlowdown()
 {   
     // SIMULATION SLOWDOWN
@@ -373,6 +380,7 @@ void Controller::checkSlowdown()
 
 }
 
+// PUBLISH CONTROLLER DATA ON ROS TOPIC
 void Controller::publishCtrlData()
 {
     // STATE DATA
