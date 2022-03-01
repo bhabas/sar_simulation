@@ -198,7 +198,7 @@ void CF_DataConverter::Publish_StateData()
 void CF_DataConverter::Publish_FlipData()
 {
 
-    FlipData_msg.header_tr.stamp = Time_tr;
+    FlipData_msg.header.stamp = Time_tr;
     FlipData_msg.flip_flag = flip_flag;
 
 
