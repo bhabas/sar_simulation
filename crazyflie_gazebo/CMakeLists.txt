@@ -33,7 +33,3 @@ target_link_libraries(motor_plugin ${GAZEBO_LIBRARIES})
 
 add_library(OF_Sensor_plugin SHARED src/OF_Sensor_plugin.cpp)
 target_link_libraries(OF_Sensor_plugin ${GAZEBO_LIBRARIES})
-
-add_executable(Ceiling_FT_Sensor src/Ceiling_FT_Sensor.cpp)
-add_dependencies(Ceiling_FT_Sensor ${catkin_EXPORTED_TARGETS})
-target_link_libraries(Ceiling_FT_Sensor ${catkin_LIBRARIES})
