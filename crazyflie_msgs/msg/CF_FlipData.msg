@@ -1,7 +1,9 @@
-Header header
+Header header_tr
 bool flip_flag
 geometry_msgs/Pose Pose_tr
 geometry_msgs/Twist Twist_tr
+geometry_msgs/Vector3 Eul_tr
+
 
 float64 Tau_tr
 float64 OFx_tr

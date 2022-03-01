@@ -295,7 +295,8 @@ void controllerGTCReset(void)
     OFx_tr = 0.0f;
     OFy_tr = 0.0f;
     RREV_tr = 0.0f;
-
+    d_ceil_tr = 0.0f;
+    
     NN_tr_flip = 0.0f;
     NN_tr_policy = 0.0f;
 
@@ -510,6 +511,8 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                         OFx_tr = OFx;
                         OFy_tr = OFy;
                         RREV_tr = RREV;
+                        d_ceil_tr = d_ceil;
+
                     
                         M_d.x = 0.0f;
                         M_d.y = -G1*1e-3f;

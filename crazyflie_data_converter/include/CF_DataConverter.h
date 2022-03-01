@@ -33,9 +33,6 @@ class CF_DataConverter
             // INITIALIZE SUBSCRIBERS
             CTRL_Data_Subscriber = nh->subscribe("/CTRL/data", 1, &CF_DataConverter::ctrlData_Callback, this, ros::TransportHints().tcpNoDelay());
             RL_CMD_Subscriber = nh->subscribe("/RL/cmd",5,&CF_DataConverter::RL_CMD_Callback,this,ros::TransportHints().tcpNoDelay());
-            // log2_Sub = nh->subscribe("/cf1/log2", 1, &CF_DataConverter::log2_Callback, this, ros::TransportHints().tcpNoDelay());
-            // log3_Sub = nh->subscribe("/cf1/log3", 1, &CF_DataConverter::log3_Callback, this, ros::TransportHints().tcpNoDelay());
-            // log4_Sub = nh->subscribe("/cf1/log4", 1, &CF_DataConverter::log4_Callback, this, ros::TransportHints().tcpNoDelay());
 
             // INITIALIZE PUBLISHERS
             StateData_Pub = nh->advertise<crazyflie_msgs::CF_StateData>("/CF_DC/StateData",1);
@@ -48,9 +45,12 @@ class CF_DataConverter
         // FUNCTION PRIMITIVES
         void ctrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_msg);
         void RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
-        // void log2_Callback(const crazyflie_msgs_exp::GenericLogData::ConstPtr &log2_msg);
-        // void log3_Callback(const crazyflie_msgs_exp::GenericLogData::ConstPtr &log3_msg);
-        // void log4_Callback(const crazyflie_msgs_exp::GenericLogData::ConstPtr &log4_msg);
+
+        void Publish_StateData();
+        void Publish_FlipData();
+        void Publish_ImpactData();
+        void Publish_MiscData();
+
 
         void decompressXY(uint32_t xy, float xy_arr[]);
         void quat2euler(float quat[], float eul[]);
@@ -60,8 +60,6 @@ class CF_DataConverter
         // SUBSCRIBERS
         ros::Subscriber CTRL_Data_Subscriber;
         ros::Subscriber RL_CMD_Subscriber;
-        ros::Subscriber log3_Sub;
-        ros::Subscriber log4_Sub;
 
         // PUBLISHERS
         ros::Publisher StateData_Pub;
@@ -110,11 +108,13 @@ class CF_DataConverter
         bool flip_flag = false;
         bool OnceFlag_flip = false;
 
-        ros::Time Time_flip;
-        std_msgs::Header header_flip;
+        ros::Time Time_tr;
+        std_msgs::Header header_tr;
 
         geometry_msgs::Pose Pose_tr;
         geometry_msgs::Twist Twist_tr;
+        geometry_msgs::Vector3 Eul_tr;
+
 
         double Tau_tr;
         double OFx_tr;
@@ -156,6 +156,80 @@ class CF_DataConverter
 
 
 };
+
+void CF_DataConverter::Publish_StateData()
+{
+    // ===================
+    //     FLIGHT DATA
+    // ===================
+    StateData_msg.header.stamp = Time;
+
+    // CARTESIAN SPACE DATA
+    StateData_msg.Pose = Pose;
+    StateData_msg.Twist = Twist;
+
+    StateData_msg.Eul = Eul;
+
+
+
+    // OPTICAL FLOW
+    StateData_msg.Tau = Tau;
+    StateData_msg.OFx = OFx;
+    StateData_msg.OFy = OFy;
+    StateData_msg.RREV = RREV;
+    StateData_msg.D_ceil = D_ceil;
+
+    // STATE SETPOINTS
+    StateData_msg.x_d = x_d;
+    StateData_msg.v_d = v_d;
+    StateData_msg.a_d = a_d;
+
+    // CONTROL ACTIONS
+    StateData_msg.FM = FM;
+    StateData_msg.MS_PWM = MS_PWM;
+
+    // NEURAL NETWORK DATA
+    StateData_msg.NN_flip = NN_flip;
+    StateData_msg.NN_policy = NN_policy;
+
+
+    // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE CONTROLLER
+    StateData_Pub.publish(StateData_msg);
+}
+
+void CF_DataConverter::Publish_FlipData()
+{
+
+    FlipData_msg.header_tr.stamp = Time_tr;
+    FlipData_msg.flip_flag = flip_flag;
+
+
+    // CARTESIAN SPACE DATA
+    FlipData_msg.Pose_tr = Pose_tr;
+    FlipData_msg.Twist_tr = Twist_tr;
+    FlipData_msg.Eul_tr = Eul_tr;
+
+
+
+    // OPTICAL FLOW
+    FlipData_msg.Tau_tr = Tau_tr;
+    FlipData_msg.OFx_tr = OFx_tr;
+    FlipData_msg.OFy_tr = OFy_tr;
+    FlipData_msg.RREV_tr = RREV_tr;
+    FlipData_msg.D_ceil_tr = D_ceil_tr;
+
+    // CONTROL ACTIONS
+    FlipData_msg.FM_tr = FM_tr;
+
+    // NEURAL NETWORK DATA
+    FlipData_msg.NN_tr_flip = NN_tr_flip;
+    FlipData_msg.NN_tr_policy = NN_tr_policy;
+
+
+    // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE CONTROLLER
+    FlipData_Pub.publish(FlipData_msg);
+
+}
 
 void CF_DataConverter::ctrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_msg)
 {
@@ -207,7 +281,7 @@ void CF_DataConverter::ctrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
     // CARTESIAN SPACE DATA
     if(ctrl_msg.flip_flag == true && OnceFlag_flip == false)
     {   
-        // FlipData_msg.header.stamp = ros::Time::now();
+        Time_tr = ros::Time::now();
         OnceFlag_flip = true;
 
     }
@@ -216,6 +290,19 @@ void CF_DataConverter::ctrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
     flip_flag = ctrl_msg.flip_flag;
     Pose_tr = ctrl_msg.Pose_tr;
     Twist_tr = ctrl_msg.Twist_tr;
+
+    // PROCESS EULER ANGLES
+    float quat_tr[4] = {
+        (float)ctrl_msg.Pose_tr.orientation.x,
+        (float)ctrl_msg.Pose_tr.orientation.y,
+        (float)ctrl_msg.Pose_tr.orientation.z,
+        (float)ctrl_msg.Pose_tr.orientation.w
+    };
+    float eul_tr[3];
+    quat2euler(quat_tr,eul_tr);
+    Eul_tr.x = eul_tr[0]*180/M_PI;
+    Eul_tr.y = eul_tr[1]*180/M_PI;
+    Eul_tr.z = eul_tr[2]*180/M_PI;
 
     // OPTICAL FLOW
     Tau_tr = ctrl_msg.Tau_tr;
@@ -231,62 +318,28 @@ void CF_DataConverter::ctrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
     NN_tr_flip = ctrl_msg.NN_tr_flip;
     NN_tr_policy = ctrl_msg.NN_tr_policy;
 
+    Publish_StateData();
+    Publish_FlipData();
 
 }
 
 
-
-//     // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE CONTROLLER
-//     StateData_Pub.publish(StateData_msg);
-
-
-//     // =================
-//     //     FLIP DATA
-//     // =================
-
-//     // CARTESIAN SPACE DATA
-//     if(ctrl_msg.flip_flag == true && OnceFlag_flip == false)
-//     {   
-//         FlipData_msg.header.stamp = ros::Time::now();
-//         OnceFlag_flip = true;
-
-//     }
-    
-
-//     FlipData_msg.flip_flag = ctrl_msg.flip_flag;
-//     FlipData_msg.Pose_tr.position = ctrl_msg.Pose_tr.position;
-//     FlipData_msg.Pose_tr.orientation = ctrl_msg.Pose_tr.orientation;
-//     FlipData_msg.Twist_tr.linear = ctrl_msg.Twist_tr.linear;
-//     FlipData_msg.Twist_tr.angular = ctrl_msg.Twist_tr.angular;
-
-//     // OPTICAL FLOW
-//     FlipData_msg.Tau_tr = ctrl_msg.Tau_tr;
-//     FlipData_msg.OFx_tr = ctrl_msg.OFx_tr;
-//     FlipData_msg.OFy_tr = ctrl_msg.OFy_tr;
-//     FlipData_msg.RREV_tr = ctrl_msg.RREV_tr;
-//     FlipData_msg.D_ceil_tr = ctrl_msg.D_ceil_tr;
-
-//     // CONTROLLER ACTIONS
-//     FlipData_msg.FM_tr = ctrl_msg.FM_flip;
-
-//     // NEURAL NETWORK DATA
-//     FlipData_msg.NN_tr_flip = ctrl_msg.NN_tr_flip;
-//     FlipData_msg.NN_tr_policy = ctrl_msg.NN_tr_policy;
-
-//     // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE CONTROLLER
-//     FlipData_Pub.publish(FlipData_msg);
-
-// }
 
 void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 {
     
     if(msg->cmd_type == 0)
     {
-        FlipData_msg.header.stamp.sec = 0.0;
-        FlipData_msg.header.stamp.nsec = 0.0;
+        // RESET FLIP TIME
         OnceFlag_flip = false;
+        Time_tr.sec = 0.0;
+        Time_tr.nsec = 0.0;
+
+        // RESET IMPACT TIME
         OnceFlag_impact = false;
+        Time_impact.sec = 0.0;
+        Time_impact.nsec = 0.0;
+        
     }
 
 
