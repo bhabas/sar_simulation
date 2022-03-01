@@ -124,6 +124,9 @@ void CF_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
     NN_flip = ctrl_msg.NN_flip;
     NN_policy = ctrl_msg.NN_policy;
 
+    Pose_impact_buff.push_back(Pose);
+    Twist_impact_buff.push_back(Twist);
+
 
     // =================
     //     FLIP DATA
@@ -187,9 +190,32 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
         Time_tr.nsec = 0.0;
 
         // RESET IMPACT TIME
+        impact_flag = false;
         OnceFlag_impact = false;
         Time_impact.sec = 0.0;
         Time_impact.nsec = 0.0;
+
+        // RESET IMPACT VALUES WHENEVER RESET IS CALLED
+        Pose_impact.position.x = 0.0;
+        Pose_impact.position.y = 0.0;
+        Pose_impact.position.z = 0.0;
+
+        Pose_impact.orientation.x = 0.0;
+        Pose_impact.orientation.y = 0.0;
+        Pose_impact.orientation.z = 0.0;
+        Pose_impact.orientation.w = 0.0;
+
+        Twist_impact.linear.x = 0.0;
+        Twist_impact.linear.y = 0.0;
+        Twist_impact.linear.z = 0.0;
+
+        Twist_impact.angular.x = 0.0;
+        Twist_impact.angular.y = 0.0;
+        Twist_impact.angular.z = 0.0;
+
+        Eul_impact.x = 0.0;
+        Eul_impact.y = 0.0;
+        Eul_impact.z = 0.0;
 
         // RESET MAX IMPACT FORCE
         impact_force_x = 0.0;

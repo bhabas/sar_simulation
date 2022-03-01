@@ -6,6 +6,7 @@ is easy to use.
 
 #include <stdio.h>
 #include <iostream>
+#include <boost/circular_buffer.hpp>
 
 #include <ros/ros.h>
 #include <math.h>       /* sqrt */
@@ -37,7 +38,10 @@ class CF_DataConverter
             StateData_Pub = nh->advertise<crazyflie_msgs::CF_StateData>("/CF_DC/StateData",1);
             MiscData_Pub =  nh->advertise<crazyflie_msgs::CF_MiscData>("/CF_DC/MiscData",1);
             FlipData_Pub =  nh->advertise<crazyflie_msgs::CF_FlipData>("/CF_DC/FlipData",1);
-            ImpactData_Pub = nh->advertise<crazyflie_msgs::CF_ImpactData>("/CF_DC/ImpactData",1);
+            ImpactData_Pub = nh->advertise<crazyflie_msgs::CF_ImpactData>("/CF_DC/ImpactData",1);         
+
+
+
         }
 
 
@@ -135,16 +139,22 @@ class CF_DataConverter
         bool OnceFlag_impact = false;
 
         ros::Time Time_impact;
-
+        geometry_msgs::Vector3 Force_impact;
         geometry_msgs::Pose Pose_impact;
         geometry_msgs::Twist Twist_impact;
-        geometry_msgs::Vector3 Force_impact;
-        uint16_t Pad_Connections = 0;
+        geometry_msgs::Vector3 Eul_impact;
+
 
         double impact_force_x = 0.0; // Max impact force in X-direction [N]
         double impact_force_y = 0.0; // Max impact force in Y-direction [N]
         double impact_force_z = 0.0; // Max impact force in Z-direction [N]
         double impact_force_resultant = 0.0; // 
+
+        boost::circular_buffer<geometry_msgs::Pose> Pose_impact_buff {5};
+        boost::circular_buffer<geometry_msgs::Twist> Twist_impact_buff {5};
+        uint16_t Pad_Connections = 0;
+
+        
 
 
         // ==================
@@ -184,11 +194,26 @@ void CF_DataConverter::SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStam
 
         // RECORD IMPACT STATE DATA FROM 2 DATAPOINTS BEHIND WHEN IMPACT FLAGGED
         Time_impact = ros::Time::now();
-        // pos_impact = _pos_arr[2];
-        // vel_impact = _vel_arr[2];
-        // quat_impact = _quat_arr[2];
-        // omega_impact = _omega_arr[2];
+        Pose_impact = Pose_impact_buff.front();
+        Twist_impact = Twist_impact_buff.front();
+
+        // PROCESS EULER ANGLES
+        float quat_impact[4] = {
+            (float)Pose_impact.orientation.x,
+            (float)Pose_impact.orientation.y,
+            (float)Pose_impact.orientation.z,
+            (float)Pose_impact.orientation.w
+        };
+        float eul_impact[3];
+        quat2euler(quat_impact,eul_impact);
+        Eul_impact.x = eul_impact[0]*180/M_PI;
+        Eul_impact.y = eul_impact[1]*180/M_PI;
+        Eul_impact.z = eul_impact[2]*180/M_PI;
+
     }
+
+
+
 }
 
 
@@ -201,6 +226,11 @@ void CF_DataConverter::Publish_ImpactData()
     ImpactData_msg.Force_impact.x = impact_force_x;
     ImpactData_msg.Force_impact.y = impact_force_y;
     ImpactData_msg.Force_impact.z = impact_force_z;
+
+    ImpactData_msg.Pose_impact = Pose_impact;
+    ImpactData_msg.Twist_impact = Twist_impact;
+    ImpactData_msg.Eul_impact = Eul_impact;
+
 
 
     ImpactData_Pub.publish(ImpactData_msg);

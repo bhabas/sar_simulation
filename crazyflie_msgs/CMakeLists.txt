@@ -23,7 +23,6 @@ add_message_files(
   RLCmd.msg
   RLData.msg
   CtrlData.msg
-  ImpactData.msg
   PadConnect.msg
   RLConvg.msg
   MS.msg
