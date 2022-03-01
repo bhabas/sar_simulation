@@ -38,7 +38,7 @@ class CrazyflieEnv:
 
 
         self.username = getpass.getuser()
-        self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/crazyflie_data/local_logs"
+        self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/crazyflie_logging/local_logs"
         self.dataType = "SIM"
         self.filepath = ""
         self.trial_name = '' 

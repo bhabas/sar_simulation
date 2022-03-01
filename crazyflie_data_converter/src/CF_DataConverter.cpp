@@ -76,6 +76,7 @@ void CF_DataConverter::Publish_FlipData()
 
 void CF_DataConverter::Publish_MiscData()
 {
+    MiscData_msg.header.stamp = ros::Time::now();
     MiscData_msg.battery_voltage = 0.0;
     MiscData_Pub.publish(MiscData_msg);
 }
@@ -189,7 +190,12 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
         OnceFlag_impact = false;
         Time_impact.sec = 0.0;
         Time_impact.nsec = 0.0;
-        
+
+        // RESET MAX IMPACT FORCE
+        impact_force_x = 0.0;
+        impact_force_y = 0.0;
+        impact_force_z = 0.0;
+                
     }
 
 

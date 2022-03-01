@@ -8,6 +8,7 @@ is easy to use.
 #include <iostream>
 
 #include <ros/ros.h>
+#include <math.h>       /* sqrt */
 #include <geometry_msgs/WrenchStamped.h>
 #include "quatcompress.h"
 
@@ -79,7 +80,6 @@ class CF_DataConverter
         // ===================
 
         ros::Time Time;
-        std_msgs::Header header;
 
         geometry_msgs::Pose Pose;
         geometry_msgs::Twist Twist;
@@ -109,7 +109,6 @@ class CF_DataConverter
         bool OnceFlag_flip = false;
 
         ros::Time Time_tr;
-        std_msgs::Header header_tr;
 
         geometry_msgs::Pose Pose_tr;
         geometry_msgs::Twist Twist_tr;
@@ -136,12 +135,16 @@ class CF_DataConverter
         bool OnceFlag_impact = false;
 
         ros::Time Time_impact;
-        std_msgs::Header header_impact;
 
         geometry_msgs::Pose Pose_impact;
         geometry_msgs::Twist Twist_impact;
         geometry_msgs::Vector3 Force_impact;
         uint16_t Pad_Connections = 0;
+
+        double impact_force_x = 0.0; // Max impact force in X-direction [N]
+        double impact_force_y = 0.0; // Max impact force in Y-direction [N]
+        double impact_force_z = 0.0; // Max impact force in Z-direction [N]
+        double impact_force_resultant = 0.0; // 
 
 
         // ==================
@@ -159,12 +162,46 @@ class CF_DataConverter
 
 void CF_DataConverter::SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStamped::ConstPtr &msg)
 {
-    printf("hello\n");
+    // RECORD MAX FORCE EXPERIENCED
+    if (msg->wrench.force.x > impact_force_x){
+        impact_force_x = msg->wrench.force.x;
+    }
+    if (msg->wrench.force.y > impact_force_y){
+        impact_force_y = msg->wrench.force.y;
+    }
+    if (msg->wrench.force.z > impact_force_z){
+        impact_force_z = msg->wrench.force.z;
+    }
+
+    impact_force_resultant = sqrt(
+        pow(msg->wrench.force.x,2) + 
+        pow(msg->wrench.force.y,2) + 
+        pow(msg->wrench.force.z,2));
+
+    if (impact_force_resultant >= 0.1 && impact_flag == false){ 
+        // LOCK IN STATE DATA WHEN IMPACT DETECTED
+        impact_flag = true;
+
+        // RECORD IMPACT STATE DATA FROM 2 DATAPOINTS BEHIND WHEN IMPACT FLAGGED
+        Time_impact = ros::Time::now();
+        // pos_impact = _pos_arr[2];
+        // vel_impact = _vel_arr[2];
+        // quat_impact = _quat_arr[2];
+        // omega_impact = _omega_arr[2];
+    }
 }
 
 
 
 void CF_DataConverter::Publish_ImpactData()
 {
+    ImpactData_msg.impact_flag = impact_flag;
+    ImpactData_msg.header.stamp = Time_impact;
+
+    ImpactData_msg.Force_impact.x = impact_force_x;
+    ImpactData_msg.Force_impact.y = impact_force_y;
+    ImpactData_msg.Force_impact.z = impact_force_z;
+
+
     ImpactData_Pub.publish(ImpactData_msg);
 }
