@@ -117,6 +117,7 @@ class Controller
         float _CF_MASS;
         int _POLICY_TYPE;
         std::string _MODEL_NAME;
+        bool STICKY_FLAG = false;
 
         // FUNCTION PRIMITIVES
         void viconState_Callback(const nav_msgs::Odometry::ConstPtr &msg);
@@ -204,10 +205,25 @@ void Controller::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
         Controller::adjustSimSpeed(_SIM_SPEED);
     }
 
-    if(msg->cmd_type == 6) // RESET ROS PARAM VALUES
+    else if(msg->cmd_type == 6) // RESET ROS PARAM VALUES
     {
         Controller::loadParams();
+
     }
+
+    else if(msg->cmd_type == 11) // MARK STICKY_FLAG IS ON
+    {
+        if(msg->cmd_flag == 0)
+        {
+            STICKY_FLAG = false; 
+        } 
+        else if(msg->cmd_flag == 1)
+        {
+            STICKY_FLAG = true;
+        } 
+
+    }   
+
 }
 
 void Controller::ceilingFT_Callback(const crazyflie_msgs::ImpactData::ConstPtr &msg)
@@ -298,6 +314,7 @@ void Controller::consoleOuput()
     printf("Traj Active:\t%u  Impact_flag:\t  %u  Vel Ctrl:\t    %u \n",execute_traj,_impact_flag,(int)kd_xf);
     printf("Policy_type:\t%u  Tumble Detect: %u  Moment_Flag:   %u \n",POLICY_TYPE,tumble_detection,moment_flag);
     printf("Policy_armed:\t%u  Tumbled:\t  %u  Slowdown_type: %u\n",policy_armed_flag,tumbled,_slowdown_type);
+    printf("Sticky_flag:\t%u\n",STICKY_FLAG);
     printf("\n");
 
 

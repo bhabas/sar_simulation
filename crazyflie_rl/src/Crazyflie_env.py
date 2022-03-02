@@ -597,7 +597,6 @@ class CrazyflieEnv:
                     sticky_srv(False)
                     
             # rospy.wait_for_message("/ctrl_data",CtrlData,timeout=0.5) # Ensure controller has time to process command
-            return
 
         cmd_msg = RLCmd()
 
@@ -610,7 +609,8 @@ class CrazyflieEnv:
                     'gains':6,
                     'moment':7,
                     'policy':8,
-                    'traj':9}
+                    'traj':9,
+                    'sticky':11}
         
 
         cmd_msg.cmd_type = cmd_dict[action]
