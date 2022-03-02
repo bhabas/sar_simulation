@@ -196,11 +196,6 @@ void CF_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
     NN_tr_flip = ctrl_msg.NN_tr_flip;
     NN_tr_policy = ctrl_msg.NN_tr_policy;
 
-    Publish_StateData();
-    Publish_FlipData();
-    Publish_ImpactData();
-    Publish_MiscData();
-
 }
 
 void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)

@@ -9,6 +9,7 @@ is easy to use.
 #include <iostream>
 #include <boost/circular_buffer.hpp>
 #include <math.h>       /* sqrt */
+#include <thread>
 
 // ROS INCLUDES
 #include <ros/ros.h>
@@ -41,7 +42,10 @@ class CF_DataConverter
             StateData_Pub = nh->advertise<crazyflie_msgs::CF_StateData>("/CF_DC/StateData",1);
             MiscData_Pub =  nh->advertise<crazyflie_msgs::CF_MiscData>("/CF_DC/MiscData",1);
             FlipData_Pub =  nh->advertise<crazyflie_msgs::CF_FlipData>("/CF_DC/FlipData",1);
-            ImpactData_Pub = nh->advertise<crazyflie_msgs::CF_ImpactData>("/CF_DC/ImpactData",1);         
+            ImpactData_Pub = nh->advertise<crazyflie_msgs::CF_ImpactData>("/CF_DC/ImpactData",1);    
+
+            controllerThread = std::thread(&CF_DataConverter::MainLoop, this);
+
 
         }
 
@@ -57,7 +61,7 @@ class CF_DataConverter
         void Publish_ImpactData();
         void Publish_MiscData();
 
-
+        void MainLoop();
         void decompressXY(uint32_t xy, float xy_arr[]);
         void quat2euler(float quat[], float eul[]);
 
@@ -80,6 +84,8 @@ class CF_DataConverter
         crazyflie_msgs::CF_FlipData FlipData_msg;
         crazyflie_msgs::CF_ImpactData ImpactData_msg;
         crazyflie_msgs::CF_MiscData MiscData_msg;
+
+        std::thread controllerThread;
 
 
         // ===================
@@ -179,6 +185,22 @@ class CF_DataConverter
 
 
 };
+
+void CF_DataConverter::MainLoop()
+{
+    ros::Rate rate(100);
+    
+    while(ros::ok)
+    {
+
+        Publish_StateData();
+        Publish_FlipData();
+        Publish_ImpactData();
+        Publish_MiscData();
+        
+        rate.sleep();
+    }
+}
 
 void CF_DataConverter::Pad_Connections_Callback(const crazyflie_msgs::PadConnect &msg)
 {
