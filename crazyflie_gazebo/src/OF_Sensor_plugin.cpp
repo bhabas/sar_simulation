@@ -54,10 +54,10 @@ namespace gazebo
             // CALCULATE OPTICAL FLOW VALUES
             d_ceil = _H_CEILING - link_ptr->WorldPose().Z();
 
-            Tau = d_ceil/Vz_rel;
-            RREV = Vz_rel/d_ceil;
-            OFx = -Vy_rel/d_ceil;
-            OFy = -Vx_rel/d_ceil;
+            Tau = d_ceil/Vz_rel; 
+            RREV = Vz_rel/d_ceil; // + Angular velocity values
+            OFx = -Vy_rel/d_ceil; // + Angular velocity values
+            OFy = -Vx_rel/d_ceil; // + Angular velocity values
 
             // PUBLISH OPTICAL FLOW VALUES
             OF_Data_msg.Tau = boost::algorithm::clamp(Tau + GaussianKernel(0,Tau_gaussianNoise), -30, 30);
