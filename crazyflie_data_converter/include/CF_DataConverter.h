@@ -62,6 +62,7 @@ class CF_DataConverter
         void Publish_MiscData();
 
         void MainLoop();
+        void consoleOuput();
         void decompressXY(uint32_t xy, float xy_arr[]);
         void quat2euler(float quat[], float eul[]);
 
@@ -86,7 +87,7 @@ class CF_DataConverter
         crazyflie_msgs::CF_MiscData MiscData_msg;
 
         std::thread controllerThread;
-
+        uint32_t tick = 1;
 
         // ===================
         //     FLIGHT DATA
@@ -164,9 +165,6 @@ class CF_DataConverter
         boost::circular_buffer<geometry_msgs::Pose> Pose_impact_buff {5};
         boost::circular_buffer<geometry_msgs::Twist> Twist_impact_buff {5};
 
-        // DO CODE CLEANUP NEXT AND THEN WORK ON APD CONNECTIONS
-
-
         // ==================
         //     MISC DATA
         // ==================
@@ -180,26 +178,11 @@ class CF_DataConverter
 
         uint8_t Pad_Connections = 0;
 
-
-        
-
-
 };
 
-void CF_DataConverter::MainLoop()
+void CF_DataConverter::consoleOuput()
 {
-    ros::Rate rate(100);
-    
-    while(ros::ok)
-    {
-
-        Publish_StateData();
-        Publish_FlipData();
-        Publish_ImpactData();
-        Publish_MiscData();
-        
-        rate.sleep();
-    }
+    // POTENTIAL IMPLEMENTATION HERE
 }
 
 void CF_DataConverter::Pad_Connections_Callback(const crazyflie_msgs::PadConnect &msg)

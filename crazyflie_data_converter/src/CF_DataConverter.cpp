@@ -325,6 +325,30 @@ void CF_DataConverter::quat2euler(float quat[], float eul[]){
     eul[2] = psi;   // Z-axis
 }
 
+void CF_DataConverter::MainLoop()
+{
+    int loopRate = 100;     // [Hz]
+    int consoleRate = 20;   // [Hz]
+    ros::Rate rate(loopRate);
+    
+    while(ros::ok)
+    {   
+        // DISPLAY CONSOLE AT CONSOLE_RATE FREQUENCY
+        if (tick%(loopRate/consoleRate) == 0) {
+            CF_DataConverter::consoleOuput();
+        }
+
+        // PUBLISH ORGANIZED DATA
+        Publish_StateData();
+        Publish_FlipData();
+        Publish_ImpactData();
+        Publish_MiscData();
+
+        tick++;
+        rate.sleep();
+    }
+}
+
 int main(int argc, char** argv)
 {
     ros::init(argc,argv,"CF_DataConverter_Node");
