@@ -81,6 +81,23 @@ void CF_DataConverter::Publish_MiscData()
     MiscData_Pub.publish(MiscData_msg);
 }
 
+void CF_DataConverter::Publish_ImpactData()
+{
+    ImpactData_msg.impact_flag = impact_flag;
+    ImpactData_msg.header.stamp = Time_impact;
+
+    ImpactData_msg.Force_impact.x = impact_force_x;
+    ImpactData_msg.Force_impact.y = impact_force_y;
+    ImpactData_msg.Force_impact.z = impact_force_z;
+
+    ImpactData_msg.Pose_impact = Pose_impact;
+    ImpactData_msg.Twist_impact = Twist_impact;
+    ImpactData_msg.Eul_impact = Eul_impact;
+
+
+
+    ImpactData_Pub.publish(ImpactData_msg);
+}
 
 void CF_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_msg)
 {
@@ -181,7 +198,6 @@ void CF_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
 
 void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 {
-    
     if(msg->cmd_type == 0)
     {
         // RESET FLIP TIME
@@ -227,15 +243,51 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
 
 }
 
-
-// DECOMPRESS COMBINED PAIR OF VALUES FROM CF MESSAGE INTO THEIR RESPECTIVE FLOAT VALUES
-void CF_DataConverter::decompressXY(uint32_t xy, float xy_arr[])
+void CF_DataConverter::SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStamped::ConstPtr &msg)
 {
-    uint16_t xd = ((uint32_t)xy >> 16) & 0xFFFF;    // Shift out y-value bits
-    xy_arr[0] = ((float)xd - 32767.0f)*1e-3;        // Convert to normal value
+    // RECORD MAX FORCE EXPERIENCED
+    if (msg->wrench.force.x > impact_force_x){
+        impact_force_x = msg->wrench.force.x;
+    }
+    if (msg->wrench.force.y > impact_force_y){
+        impact_force_y = msg->wrench.force.y;
+    }
+    if (msg->wrench.force.z > impact_force_z){
+        impact_force_z = msg->wrench.force.z;
+    }
 
-    uint16_t yd = (uint32_t)xy & 0xFFFF;            // Save only y-value bits
-    xy_arr[1] = ((float)yd - 32767.0f)*1e-3;
+    // CHECK IF IMPACT FORCE THRESHOLD HAS BEEN CROSSED
+    impact_force_resultant = sqrt(
+        pow(msg->wrench.force.x,2) + 
+        pow(msg->wrench.force.y,2) + 
+        pow(msg->wrench.force.z,2));
+
+    if (impact_force_resultant >= impact_thr && impact_flag == false){ 
+
+        // LOCK IN STATE DATA WHEN IMPACT DETECTED
+        impact_flag = true;
+
+        // RECORD IMPACT STATE DATA FROM END OF CIRCULAR BUFFER WHEN IMPACT FLAGGED
+        Time_impact = ros::Time::now();
+        Pose_impact = Pose_impact_buff.front();
+        Twist_impact = Twist_impact_buff.front();
+
+        // PROCESS EULER ANGLES
+        float quat_impact[4] = {
+            (float)Pose_impact.orientation.x,
+            (float)Pose_impact.orientation.y,
+            (float)Pose_impact.orientation.z,
+            (float)Pose_impact.orientation.w
+        };
+        float eul_impact[3];
+        quat2euler(quat_impact,eul_impact);
+        Eul_impact.x = eul_impact[0]*180/M_PI;
+        Eul_impact.y = eul_impact[1]*180/M_PI;
+        Eul_impact.z = eul_impact[2]*180/M_PI;
+
+    }
+
+
 
 }
 

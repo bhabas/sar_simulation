@@ -4,16 +4,17 @@ organizes it, and then republishes the data in an organized manner that
 is easy to use.
 */
 
+// STANDARD INCLUDES
 #include <stdio.h>
 #include <iostream>
 #include <boost/circular_buffer.hpp>
-
-#include <ros/ros.h>
 #include <math.h>       /* sqrt */
-#include <geometry_msgs/WrenchStamped.h>
-#include "quatcompress.h"
 
-// MESSAGE INCLUDES
+// ROS INCLUDES
+#include <ros/ros.h>
+#include <geometry_msgs/WrenchStamped.h>
+
+// CUSTOM INCLUDES
 #include "crazyflie_msgs/CF_StateData.h"
 #include "crazyflie_msgs/CF_FlipData.h"
 #include "crazyflie_msgs/CF_ImpactData.h"
@@ -22,25 +23,24 @@ is easy to use.
 #include "crazyflie_msgs/CtrlData.h"
 #include "crazyflie_msgs/RLCmd.h"
 
-
 class CF_DataConverter
 {
     public:
         // CONSTRUCTOR TO START PUBLISHERS AND SUBSCRIBERS (Similar to Python's __init__())
         CF_DataConverter(ros::NodeHandle* nh)
         {
+
             // INITIALIZE SUBSCRIBERS
             CTRL_Data_Subscriber = nh->subscribe("/CTRL/data", 1, &CF_DataConverter::CtrlData_Callback, this, ros::TransportHints().tcpNoDelay());
             RL_CMD_Subscriber = nh->subscribe("/RL/cmd",5,&CF_DataConverter::RL_CMD_Callback,this,ros::TransportHints().tcpNoDelay());
             Surface_FT_Subscriber = nh->subscribe("/ENV/Surface_FT_sensor",5,&CF_DataConverter::SurfaceFT_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
 
-            // INITIALIZE PUBLISHERS
+
+            // INITIALIZE MAIN PUBLISHERS
             StateData_Pub = nh->advertise<crazyflie_msgs::CF_StateData>("/CF_DC/StateData",1);
             MiscData_Pub =  nh->advertise<crazyflie_msgs::CF_MiscData>("/CF_DC/MiscData",1);
             FlipData_Pub =  nh->advertise<crazyflie_msgs::CF_FlipData>("/CF_DC/FlipData",1);
             ImpactData_Pub = nh->advertise<crazyflie_msgs::CF_ImpactData>("/CF_DC/ImpactData",1);         
-
-
 
         }
 
@@ -137,6 +137,7 @@ class CF_DataConverter
 
         bool impact_flag = false;
         bool OnceFlag_impact = false;
+        double impact_thr = 0.1; // Impact threshold [N]
 
         ros::Time Time_impact;
         geometry_msgs::Vector3 Force_impact;
@@ -148,21 +149,21 @@ class CF_DataConverter
         double impact_force_x = 0.0; // Max impact force in X-direction [N]
         double impact_force_y = 0.0; // Max impact force in Y-direction [N]
         double impact_force_z = 0.0; // Max impact force in Z-direction [N]
-        double impact_force_resultant = 0.0; // 
+        double impact_force_resultant = 0.0; // Current impact force magnitude
 
+        // CIRCULAR BUFFERES TO LAG IMPACT STATE DATA (WE WANT STATE DATA THE INSTANT BEFORE IMPACT)
         boost::circular_buffer<geometry_msgs::Pose> Pose_impact_buff {5};
         boost::circular_buffer<geometry_msgs::Twist> Twist_impact_buff {5};
-        uint16_t Pad_Connections = 0;
 
-        
+        // DO CODE CLEANUP NEXT AND THEN WORK ON APD CONNECTIONS
 
 
         // ==================
         //     MISC DATA
         // ==================
 
-        std_msgs::Header header_misc;
         double V_battery = 0.0;
+        uint16_t Pad_Connections = 0;
 
 
         
@@ -170,68 +171,4 @@ class CF_DataConverter
 
 };
 
-void CF_DataConverter::SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStamped::ConstPtr &msg)
-{
-    // RECORD MAX FORCE EXPERIENCED
-    if (msg->wrench.force.x > impact_force_x){
-        impact_force_x = msg->wrench.force.x;
-    }
-    if (msg->wrench.force.y > impact_force_y){
-        impact_force_y = msg->wrench.force.y;
-    }
-    if (msg->wrench.force.z > impact_force_z){
-        impact_force_z = msg->wrench.force.z;
-    }
 
-    impact_force_resultant = sqrt(
-        pow(msg->wrench.force.x,2) + 
-        pow(msg->wrench.force.y,2) + 
-        pow(msg->wrench.force.z,2));
-
-    if (impact_force_resultant >= 0.1 && impact_flag == false){ 
-        // LOCK IN STATE DATA WHEN IMPACT DETECTED
-        impact_flag = true;
-
-        // RECORD IMPACT STATE DATA FROM 2 DATAPOINTS BEHIND WHEN IMPACT FLAGGED
-        Time_impact = ros::Time::now();
-        Pose_impact = Pose_impact_buff.front();
-        Twist_impact = Twist_impact_buff.front();
-
-        // PROCESS EULER ANGLES
-        float quat_impact[4] = {
-            (float)Pose_impact.orientation.x,
-            (float)Pose_impact.orientation.y,
-            (float)Pose_impact.orientation.z,
-            (float)Pose_impact.orientation.w
-        };
-        float eul_impact[3];
-        quat2euler(quat_impact,eul_impact);
-        Eul_impact.x = eul_impact[0]*180/M_PI;
-        Eul_impact.y = eul_impact[1]*180/M_PI;
-        Eul_impact.z = eul_impact[2]*180/M_PI;
-
-    }
-
-
-
-}
-
-
-
-void CF_DataConverter::Publish_ImpactData()
-{
-    ImpactData_msg.impact_flag = impact_flag;
-    ImpactData_msg.header.stamp = Time_impact;
-
-    ImpactData_msg.Force_impact.x = impact_force_x;
-    ImpactData_msg.Force_impact.y = impact_force_y;
-    ImpactData_msg.Force_impact.z = impact_force_z;
-
-    ImpactData_msg.Pose_impact = Pose_impact;
-    ImpactData_msg.Twist_impact = Twist_impact;
-    ImpactData_msg.Eul_impact = Eul_impact;
-
-
-
-    ImpactData_Pub.publish(ImpactData_msg);
-}
