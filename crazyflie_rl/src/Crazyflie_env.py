@@ -50,7 +50,7 @@ class CrazyflieEnv:
 
         ## LOAD SIM_SETTINGS/ROS_PARAMETERS
         self.modelName = rospy.get_param('/MODEL_NAME')
-        self.modelInitials = self.modelInitial()
+        self.modelInitials = self.modelInitials()
         
         self.t_start = rospy.get_time() # [s]
         self.t_prev = 0.0 # [s]
@@ -159,7 +159,7 @@ class CrazyflieEnv:
         self.reward_avg = 0.0   # Averaged rewards over episode
         self.reward_inputs = [] # List of inputs to reward func
 
-        self.z_max = 0.0
+        self.d_ceil_min = 50.0
         self.pitch_sum = 0.0
         self.pitch_max = 0.0
 
@@ -204,7 +204,7 @@ class CrazyflieEnv:
 
     
 
-    def modelInitial(self): # RETURNS INITIALS FOR MODEL
+    def modelInitials(self): # RETURNS INITIALS FOR MODEL
         str = self.modelName
         charA = str[self.modelName.find("_")+1] # [W]ide
         charB = str[self.modelName.find("-")+1] # [L]ong
@@ -276,6 +276,23 @@ class CrazyflieEnv:
         self.a_d = np.round([StateData_msg.a_d.x,
                              StateData_msg.a_d.y,
                              StateData_msg.a_d.z],3)
+
+       
+        ## ======== REWARD INPUT CALCS ======== ##
+
+        ## MIN D_CEIL CALC
+        if self.d_ceil < self.d_ceil_min:
+            self.d_ceil_min = np.round(self.d_ceil,3) # Min distance achieved, used for reward calc
+
+        ## MAX PITCH CALC
+        # Integrate omega_y over time to get full rotation estimate
+        # This accounts for multiple revolutions that euler angles/quaternions can't
+        self.pitch_sum = self.pitch_sum + self.omegaCF[1]*(180/np.pi)*(self.t - self.t_prev) # [deg]
+        
+        if self.pitch_sum < self.pitch_max:     # Recording the most negative value
+            self.pitch_max = np.round(self.pitch_sum,3)
+
+        self.t_prev = self.t # Save t value for next callback iteration
 
     def CF_FlipDataCallback(self,FlipData_msg):
 
@@ -380,107 +397,38 @@ class CrazyflieEnv:
     def RL_Publish(self):
         # Publishes all the RL data from the RL script
         
-        rl_msg = RLData() ## Initialize RLData message
+        RL_msg = RLData() ## Initialize RLData message
         
-        rl_msg.trial_name = self.trial_name
-        rl_msg.agent = self.agent_name
-        rl_msg.error = self.error_str
-        rl_msg.impact_flag = self.impact_flag
-        rl_msg.runComplete_flag = self.runComplete_flag
-        rl_msg.trialComplete_flag = self.trialComplete_flag
-        rl_msg.reset_flag = self.reset_flag
+        RL_msg.trial_name = self.trial_name
+        RL_msg.agent = self.agent_name
+        RL_msg.error = self.error_str
+        RL_msg.runComplete_flag = self.runComplete_flag
+        RL_msg.trialComplete_flag = self.trialComplete_flag
+        RL_msg.reset_flag = self.reset_flag
 
+        RL_msg.n_rollouts = self.n_rollouts
+        RL_msg.h_ceiling = self.h_ceiling
 
-        rl_msg.n_rollouts = self.n_rollouts
-        rl_msg.h_ceiling = self.h_ceiling
+        RL_msg.k_ep = self.k_ep
+        RL_msg.k_run = self.k_run
 
-        rl_msg.k_ep = self.k_ep
-        rl_msg.k_run = self.k_run
+        RL_msg.mu = self.mu
+        RL_msg.sigma = self.sigma
+        RL_msg.policy = self.policy
 
-        rl_msg.mu = self.mu
-        rl_msg.sigma = self.sigma
-        rl_msg.policy = self.policy
+        RL_msg.reward = self.reward
+        RL_msg.reward_avg = self.reward_avg
 
-        rl_msg.reward = self.reward
-        rl_msg.reward_avg = self.reward_avg
+        RL_msg.vel_d = self.vel_trial
+        self.RL_Data_Publisher.publish(RL_msg) ## Publish RLData message
 
-        rl_msg.vel_d = self.vel_trial
-        # rl_msg.M_d = self.M_d
-        rl_msg.leg_contacts = self.pad_contacts
-        rl_msg.body_contact = self.body_contact
-        self.RL_Data_Publisher.publish(rl_msg) ## Publish RLData message
-
-        rl_convg_msg = RLConvg()
-        rl_convg_msg.mu_1_list = self.mu_1_list
-        rl_convg_msg.mu_2_list = self.mu_2_list
-        rl_convg_msg.sigma_1_list = self.sigma_1_list
-        rl_convg_msg.sigma_2_list = self.sigma_2_list
-        self.RL_Convg_Publisher.publish(rl_convg_msg) ## Publish RLData message
-
-
-    
-
-
-
-    # ============================
-    ##    Sensors/Data Topics
-    # ============================
-
-
-    def viconState_Callback(self,msg): ## Callback to parse state data received from external pos. sensor
-
-        pass
-
-
-        # t = np.round(msg.header.stamp.to_sec(),4)
-        
-        # ## SIMPLIFY STATE VALUES FROM TOPIC
-        # pos = msg.pose.pose.position
-        # quat = msg.pose.pose.orientation
-        # vel = msg.twist.twist.linear
-        # omega = msg.twist.twist.angular
-        
-        # if quat.w == 0: # If zero at startup set quat.w to one to prevent errors
-        #     quat.w = 1
-
-        # ## SET STATE VALUES FROM TOPIC
-        # self.posCF = np.round([pos.x,pos.y,pos.z],3)            # [m]
-        # self.quatCF = np.round([quat.x,quat.y,quat.z,quat.w],4) # [quat]
-        # self.velCF = np.round([vel.x,vel.y,vel.z],3)            # [m/s]
-        # self.omegaCF = np.round([omega.x,omega.y,omega.z],3)    # [rad/s]
-        
-
-        # ## ======== REWARD INPUT CALCS ======== ##
-
-        # ## MAX Z CALC
-        # if self.posCF[2] > self.z_max:
-        #     self.z_max = self.posCF[2]       # Max height achieved, used for reward calc
-        #     self.z_max = np.round(self.z_max,3) # Rounded for data logging
-
-        # ## MAX PITCH CALC
-        # # Integrate omega_y over time to get full rotation estimate
-        # # This accounts for multiple revolutions that euler angles/quaternions can't
-        # self.pitch_sum = self.pitch_sum + self.omegaCF[1]*(180/np.pi)*(t - self.t_prev) # [deg]
-        
-        # if self.pitch_sum < self.pitch_max:     # Recording the most negative value
-        #     self.pitch_max = self.pitch_sum
-        #     self.pitch_max = np.round(self.pitch_max,3)
-
-
-        # self.t_prev = t # Save t value for next callback iteration
-
-    # def contactSensorCallback(self,msg_arr): ## Callback to indicate if quadrotor body contacts ceiling
-
-    #     for msg in msg_arr.states: ## ContactsState message includes an array of ContactState messages
-
-    #         if msg.collision1_name == f"{self.modelName}::crazyflie_body::body_collision" and self.body_contact == False:
-    #             self.body_contact = True
-
-
-
-
-
-            
+        ## CONVERGENCE HISTORY
+        RL_convg_msg = RLConvg()
+        RL_convg_msg.mu_1_list = self.mu_1_list
+        RL_convg_msg.mu_2_list = self.mu_2_list
+        RL_convg_msg.sigma_1_list = self.sigma_1_list
+        RL_convg_msg.sigma_2_list = self.sigma_2_list
+        self.RL_Convg_Publisher.publish(RL_convg_msg) ## Publish RLData message
 
 
 
@@ -576,13 +524,6 @@ class CrazyflieEnv:
 
     def reset_pos(self): # Disable sticky then places spawn_model at origin
         
-        ## TURN OFF STICKY FEET
-        self.step('tumble',ctrl_flag=0) # Tumble Detection off
-        self.step('sticky',ctrl_flag=0)
-        self.step('home')
-        
-        
-
         ## RESET POSITION AND VELOCITY
         state_msg = ModelState()
         state_msg.model_name = self.modelName
@@ -607,14 +548,15 @@ class CrazyflieEnv:
         set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         set_state_srv(state_msg)
 
-        ## WAIT FOR CONTROLLER TO UPDATE STATE x2 BEFORE TURNING ON TUMBLE DETECTION
-        time.sleep(0.1)
-        self.step('tumble',ctrl_flag=1) # Tumble Detection on
+
+        ## RESET HOME/TUMBLE DETECTION AND STICKY
+        self.step('tumble',ctrl_flag=1) # Tumble Detection On
+        self.step('sticky',ctrl_flag=0)
+        self.step('home')
+
 
         # time.sleep(0.1) # Give it time for controller to receive new states
         # rospy.wait_for_service('/gazebo/get_link_state')
-
-        ## RESET TO HOME
         
 
 
@@ -656,34 +598,29 @@ class CrazyflieEnv:
         cmd_msg.cmd_vals.z = ctrl_vals[2]
         cmd_msg.cmd_flag = ctrl_flag
         
-        for ii in range(1):
-            self.RL_CMD_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
-        
+        self.RL_CMD_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
         time.sleep(0.05)
         
-    def clear_rollout_Data(self):
-        """Clears all logged impact and flip data & resets default values before next rollout
-        """               
+    # def clear_rollout_Data(self):
+    #     """Clears all logged impact and flip data & resets default values before next rollout
+    #     """               
 
-        ## RESET IMPACT CONDITIONS
-        self.impact_flag = False
-        self.pad_contacts = [] # Reset impact condition variables
-        self.body_contact = False
-        self.ceiling_ft_x = 0.0
-        self.ceiling_ft_y = 0.0
-        self.ceiling_ft_z = 0.0
+    #     ## RESET IMPACT CONDITIONS
+    #     self.impact_flag = False
+    #     self.pad_contacts = [] # Reset impact condition variables
+    #     self.body_contact = False
+    #     self.ceiling_ft_x = 0.0
+    #     self.ceiling_ft_y = 0.0
+    #     self.ceiling_ft_z = 0.0
 
-        ## RESET FLIP CONDITIONS
-        self.flip_flag = False
-
-
-        ## RESET REWARD CALC VALUES
-        self.z_max = 0.0
-        self.pitch_sum = 0.0
-        self.pitch_max = 0.0
+    #     ## RESET FLIP CONDITIONS
+    #     self.flip_flag = False
 
 
-        self.quatCF_impact = [0,0,0,1]
+    #     ## RESET REWARD CALC VALUES
+    #     self.d_ceil_min = 0.0
+    #     self.pitch_sum = 0.0
+    #     self.pitch_max = 0.0
 
 
 
@@ -695,23 +632,24 @@ class CrazyflieEnv:
 
         if self.logging_flag:
         
-            with open(filepath,mode='w') as state_file:
-                state_writer = csv.writer(state_file,delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                state_writer.writerow([
+            with open(filepath,mode='w') as data_file:
+                data_writer = csv.writer(data_file,delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                data_writer.writerow([
                     # Generic Labels
                     'k_ep','k_run',    
                     't',         
                     'NN_flip','NN_policy',
                     'mu','sigma', 'policy',
 
-                    # Internal State Estimates (EKF)
+                    # Internal State Estimates (CF)
                     'x','y','z',            
                     'vx','vy','vz',
                     'qx','qy','qz','qw',
                     'wx','wy','wz',
+                    'eul_x','eul_y','eul_z',
 
                     # Misc RL labels
-                    'reward','flip_flag','impact_flag','n_rollouts', 
+                    'flip_flag','impact_flag', 
 
                     # Misc Internal State Estimates
                     'Tau','OF_x','OF_y','RREV','d_ceil',       
@@ -731,46 +669,84 @@ class CrazyflieEnv:
     def append_csv(self,error_str= ""):
 
         if self.logging_flag:
-            with open(self.filepath, mode='a') as state_file:
-                state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                state_writer.writerow([
+            with open(self.filepath, mode='a') as data_file:
+                data_write = csv.writer(data_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                data_write.writerow([
                     # Generic Labels
                     self.k_ep,self.k_run,
                     self.t,
-                    self.NN_flip,self.NN_policy, # alpha_mu,alpha_sig
+                    self.NN_flip,self.NN_policy, # NN_flip,NN_policy
                     "","","", # mu,sigma,policy
 
-                    # Internal State Estimates (EKF)
-                    self.posCF[0],self.posCF[1],self.posCF[2], # t,x,y,z
+                    # Internal State Estimates (CF)
+                    self.posCF[0],self.posCF[1],self.posCF[2], # x,y,z
                     self.velCF[0],self.velCF[1],self.velCF[2], # vx,vy,vz
                     self.quatCF[0],self.quatCF[1],self.quatCF[2],self.quatCF[3], # qx,qy,qz,qw
                     self.omegaCF[0],self.omegaCF[1],self.omegaCF[2], # wx,wy,wz
+                    self.eulCF[0],self.eulCF[1],self.eulCF[2], # eul_x,eul_y,eul_z
+
 
                     # Misc RL labels
-                    "",self.flip_flag,self.impact_flag,"", # reward, flip_triggered, impact_flag, n_rollout
+                    self.flip_flag,self.impact_flag, #  flip_flag, impact_flag,
 
                     # Misc Internal State Estimates
-                    self.Tau,self.OFx,self.OFy,self.RREV,self.d_ceil, # Tau,OF_x,OF_y,RREV,d_ceil
-                    self.FM[0],self.FM[1],self.FM[2],self.FM[3], # F_thrust[N],Mx[Nmm],My[Nmm],Mz[Nmm]
+                    self.Tau,self.OFx,self.OFy,self.RREV,self.d_ceil,   # Tau,OF_x,OF_y,RREV,d_ceil
+                    self.FM[0],self.FM[1],self.FM[2],self.FM[3],        # F_thrust[N],Mx[Nmm],My[Nmm],Mz[Nmm]
                     self.MS_pwm[0],self.MS_pwm[1],self.MS_pwm[2],self.MS_pwm[3],
 
                     # Setpoint Values
-                    self.x_d[0],self.x_d[1],self.x_d[2],                                # Position Setpoints
-                    self.v_d[0],self.v_d[1],self.v_d[2],                                # Velocity Setpoints
-                    self.a_d[0],self.a_d[1],self.a_d[2],                                # Acceleration Setpoints
+                    self.x_d[0],self.x_d[1],self.x_d[2], # Position Setpoints
+                    self.v_d[0],self.v_d[1],self.v_d[2], # Velocity Setpoints
+                    self.a_d[0],self.a_d[1],self.a_d[2], # Acceleration Setpoints
                     
                     # Misc Values
-                    "",
+                    self.V_battery,
                     error_str]) # Error
 
+    def append_IC(self):
+        if self.logging_flag:
     
+            with open(self.filepath,mode='a') as data_file:
+                data_writer = csv.writer(data_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                data_writer.writerow([
+
+                    # Generic Labels
+                    self.k_ep,self.k_run,
+                    "",             # t
+                    self.n_rollouts,"", 
+                    np.round(self.mu,2),np.round(self.sigma,2),np.round(self.policy,2), # mu,sigma,policy
+
+                    # Internal State Estimates (EKF)
+                    "","","",       # x,y,z
+                    np.round(self.vel_trial[0],2),np.round(self.vel_trial[1],2),np.round(self.vel_trial[2],2), # vx_d,vy_d,vz_d
+                    "","","","",    # qx,qy,qz,qw
+                    "","","",       # wx,wy,wz
+                    "","","",       # eul_x,eul_y,eul_z
+
+
+                    # Misc RL labels
+                    np.round(self.reward,2),np.round(self.reward_inputs,3), # reward, 
+
+                    # Misc Internal State Estimates
+                    "","","","","",    # Tau,OFx,OFy,RREV,d_ceil
+                    "","","","",    # F_thrust,Mx,My,Mz 
+                    "","","","",    # M_pwm
+
+                    # Setpoint Values
+                    "","","",
+                    "","","",
+                    "","","",
+
+                    # Misc Values
+                    "",
+                    self.error_str])    # Error
 
     def append_flip(self):
         if self.logging_flag:
     
-            with open(self.filepath,mode='a') as state_file:
-                state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                state_writer.writerow([
+            with open(self.filepath,mode='a') as data_file:
+                data_writer = csv.writer(data_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                data_writer.writerow([
                     # Generic Labels
                     self.k_ep,self.k_run,
                     self.t_tr,
@@ -783,10 +759,10 @@ class CrazyflieEnv:
                     self.velCF_tr[0],self.velCF_tr[1],self.velCF_tr[2],    # vx_d,vy_d,vz_d
                     self.quatCF_tr[0],self.quatCF_tr[1],self.quatCF_tr[2],self.quatCF_tr[3],    # qx,qy,qz,qw
                     self.omegaCF_tr[0],self.omegaCF_tr[1],self.omegaCF_tr[2],  # wx,wy,wz
-                    
+                    self.eulCF_tr[0],self.eulCF_tr[1],self.eulCF_tr[2],     # eul_x,eul_y,eul_z
 
                     # Misc RL labels
-                    "","","","", # reward, body_impact, num leg contacts, impact force
+                    self.flip_flag,"", # flip_flag, impact_flag
 
                     # Misc Internal State Estimates
                     self.Tau_tr,self.OFx_tr,self.OFy_tr,self.RREV_tr,self.d_ceil_tr, # Tau,OFx,OFy,RREV,d_ceil
@@ -805,9 +781,9 @@ class CrazyflieEnv:
     def append_impact(self):
         if self.logging_flag:
     
-            with open(self.filepath,mode='a') as state_file:
-                state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                state_writer.writerow([
+            with open(self.filepath,mode='a') as data_file:
+                data_writer = csv.writer(data_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                data_writer.writerow([
                     # Generic Labels
                     self.k_ep,self.k_run,
                     self.t_impact,
@@ -819,13 +795,14 @@ class CrazyflieEnv:
                     self.velCF_impact[0],self.velCF_impact[1],self.velCF_impact[2],    # vx_d,vy_d,vz_d
                     self.quatCF_impact[0],self.quatCF_impact[1],self.quatCF_impact[2],self.quatCF_impact[3],    # qx,qy,qz,qw
                     self.omegaCF_impact[0],self.omegaCF_impact[1],self.omegaCF_impact[2],  # wx,wy,wz
-                    
+                    self.eulCF_impact[0],self.eulCF_impact[1],self.eulCF_impact[2],     # eul_x,eul_y,eul_z
+
                     # Misc RL labels
-                    self.impact_flag,self.body_contact,np.array(self.pad_contacts),"",  # "", "", body_impact flag, num leg contacts, ""
+                    self.BodyContact_flag,self.impact_flag, 
                     
                     # Misc Internal State Estimates
-                    self.ceiling_ft_z,self.ceiling_ft_x,self.ceiling_ft_y,"","",             # Max impact force [z], =Max impact force [x], ""
-                    "","","","", # F_thrust,Mx,My,Mz (Impact)
+                    self.pad_connections,self.Pad1_Contact,self.Pad2_Contact,self.Pad3_Contact,self.Pad4_Contact, 
+                    self.impact_magnitude,self.Force_impact[0],self.Force_impact[1],self.Force_impact[2], # F_thrust,Mx,My,Mz (Impact)
                     "","","","", # M_pwm
                     
                     # Setpoint Values
@@ -837,47 +814,13 @@ class CrazyflieEnv:
                     "",
                     "Impact Data"]) # Error
 
-    def append_IC(self):
-        if self.logging_flag:
     
-            with open(self.filepath,mode='a') as state_file:
-                state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                state_writer.writerow([
-
-                    # Generic Labels
-                    self.k_ep,self.k_run,
-                    "",             # t
-                    "","", 
-                    np.round(self.mu,2),np.round(self.sigma,2),np.round(self.policy,2), # mu,sigma,policy
-
-                    # Internal State Estimates (EKF)
-                    "","","",       # x,y,z
-                    np.round(self.vel_trial[0],2),np.round(self.vel_trial[1],2),np.round(self.vel_trial[2],2), # vx_d,vy_d,vz_d
-                    "","","","",    # qx,qy,qz,qw
-                    "","","",       # wx,wy,wz
-
-                    # Misc RL labels
-                    np.round(self.reward,2),np.round(self.reward_inputs,3),"",self.n_rollouts, # reward, 
-
-                    # Misc Internal State Estimates
-                    "","","","","",    # Tau,OFx,OFy,RREV,d_ceil
-                    "","","","",    # F_thrust,Mx,My,Mz 
-                    "","","","",    # M_pwm
-
-                    # Setpoint Values
-                    "","","",
-                    "","","",
-                    "","","",
-
-                    # Misc Values
-                    "",
-                    self.error_str])    # Error
 
     def append_csv_blank(self):
         if self.logging_flag:
-            with open(self.filepath, mode='a') as state_file:
-                state_writer = csv.writer(state_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                state_writer.writerow([])
+            with open(self.filepath, mode='a') as data_file:
+                data_writer = csv.writer(data_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                data_writer.writerow([])
 
    
 
