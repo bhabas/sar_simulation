@@ -14,6 +14,7 @@ is easy to use.
 // ROS INCLUDES
 #include <ros/ros.h>
 #include <geometry_msgs/WrenchStamped.h>
+#include <gazebo_msgs/ContactsState.h>
 
 // CUSTOM INCLUDES
 #include "crazyflie_msgs/CF_StateData.h"
@@ -36,13 +37,26 @@ class CF_DataConverter
             CTRL_Data_Sub = nh->subscribe("/CTRL/data", 1, &CF_DataConverter::CtrlData_Callback, this, ros::TransportHints().tcpNoDelay());
             RL_CMD_Sub = nh->subscribe("/RL/cmd",5,&CF_DataConverter::RL_CMD_Callback,this,ros::TransportHints().tcpNoDelay());
             Surface_FT_Sub = nh->subscribe("/ENV/Surface_FT_sensor",5,&CF_DataConverter::SurfaceFT_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
+            Surface_Contact_Sub = nh->subscribe("/ENV/BodyContact",5,&CF_DataConverter::Surface_Contact_Callback,this,ros::TransportHints().tcpNoDelay());
             PadConnect_Sub = nh->subscribe("/ENV/Pad_Connections",5,&CF_DataConverter::Pad_Connections_Callback,this,ros::TransportHints().tcpNoDelay());
 
             // INITIALIZE MAIN PUBLISHERS
             StateData_Pub = nh->advertise<crazyflie_msgs::CF_StateData>("/CF_DC/StateData",1);
             MiscData_Pub =  nh->advertise<crazyflie_msgs::CF_MiscData>("/CF_DC/MiscData",1);
             FlipData_Pub =  nh->advertise<crazyflie_msgs::CF_FlipData>("/CF_DC/FlipData",1);
-            ImpactData_Pub = nh->advertise<crazyflie_msgs::CF_ImpactData>("/CF_DC/ImpactData",1);    
+            ImpactData_Pub = nh->advertise<crazyflie_msgs::CF_ImpactData>("/CF_DC/ImpactData",1);   
+
+            ros::param::get("/MODEL_NAME",MODEL_NAME);
+            // ros::param::get("/CEILING_HEIGHT",_H_CEILING);
+            // ros::param::get("/CF_MASS",_CF_MASS);
+            // ros::param::get("/POLICY_TYPE",_POLICY_TYPE);
+
+            // // DEBUG SETTINGS
+            // ros::param::get("/SIM_SPEED",_SIM_SPEED);
+            // ros::param::get("/SIM_SLOWDOWN_SPEED",_SIM_SLOWDOWN_SPEED);
+            // ros::param::get("/LANDING_SLOWDOWN_FLAG",_LANDING_SLOWDOWN_FLAG);
+
+            BodyCollision_str = MODEL_NAME + "::crazyflie_ModelBase::crazyflie_body::body_collision";
 
             controllerThread = std::thread(&CF_DataConverter::MainLoop, this);
 
@@ -54,6 +68,7 @@ class CF_DataConverter
         void CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_msg);
         void RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
         void SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStamped::ConstPtr &msg);
+        void Surface_Contact_Callback(const gazebo_msgs::ContactsState &msg);
         void Pad_Connections_Callback(const crazyflie_msgs::PadConnect &msg);
 
         void Publish_StateData();
@@ -72,6 +87,7 @@ class CF_DataConverter
         ros::Subscriber CTRL_Data_Sub;
         ros::Subscriber RL_CMD_Sub;
         ros::Subscriber Surface_FT_Sub;
+        ros::Subscriber Surface_Contact_Sub;
         ros::Subscriber PadConnect_Sub;
 
         // PUBLISHERS
@@ -87,6 +103,8 @@ class CF_DataConverter
         crazyflie_msgs::CF_MiscData MiscData_msg;
 
         std::thread controllerThread;
+        std::string MODEL_NAME;
+        std::string BodyCollision_str;
         uint32_t tick = 1;
 
         // ===================
@@ -146,6 +164,7 @@ class CF_DataConverter
         // ===================
 
         bool impact_flag = false;
+        bool BodyContact_flag = false;
         bool OnceFlag_impact = false;
         double impact_thr = 0.1; // Impact threshold [N]
 
@@ -193,6 +212,21 @@ void CF_DataConverter::Pad_Connections_Callback(const crazyflie_msgs::PadConnect
     if(msg.Pad3_Contact == 1) Pad3_Contact = 1;
     if(msg.Pad4_Contact == 1) Pad4_Contact = 1;
     Pad_Connections = Pad1_Contact + Pad2_Contact + Pad3_Contact + Pad4_Contact;
+
+}
+
+void CF_DataConverter::Surface_Contact_Callback(const gazebo_msgs::ContactsState &msg)
+{
+    
+    for (int i=0; i<msg.states.size(); i++)
+    {
+        if(BodyContact_flag == false && strcmp(msg.states[i].collision1_name.c_str(),BodyCollision_str.c_str()) == 0)
+        {
+            BodyContact_flag = true;
+        }
+       
+    }
+    printf("======\n");
 
 }
 

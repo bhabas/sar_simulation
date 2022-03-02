@@ -325,6 +325,14 @@ class CrazyflieEnv:
 
         # self.t_prev = t # Save t value for next callback iteration
 
+    # def contactSensorCallback(self,msg_arr): ## Callback to indicate if quadrotor body contacts ceiling
+
+    #     for msg in msg_arr.states: ## ContactsState message includes an array of ContactState messages
+
+    #         if msg.collision1_name == f"{self.modelName}::crazyflie_body::body_collision" and self.body_contact == False:
+    #             self.body_contact = True
+
+
 
 
 

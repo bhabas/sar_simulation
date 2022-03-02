@@ -84,6 +84,7 @@ void CF_DataConverter::Publish_MiscData()
 void CF_DataConverter::Publish_ImpactData()
 {
     ImpactData_msg.impact_flag = impact_flag;
+    ImpactData_msg.BodyContact_flag = BodyContact_flag;
     ImpactData_msg.header.stamp = Time_impact;
 
     ImpactData_msg.Force_impact.x = impact_force_x;
@@ -209,6 +210,7 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
 
         // RESET IMPACT TIME
         impact_flag = false;
+        BodyContact_flag = false;
         OnceFlag_impact = false;
         Time_impact.sec = 0.0;
         Time_impact.nsec = 0.0;
