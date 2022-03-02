@@ -204,6 +204,7 @@ void CF_DataConverter::consoleOuput()
     // POTENTIAL IMPLEMENTATION HERE
 }
 
+// MARK IF PAD CONTACT HAS OCCURED AND SUM NUMBER OF PAD CONTACTS
 void CF_DataConverter::Pad_Connections_Callback(const crazyflie_msgs::PadConnect &msg)
 {
     
@@ -215,19 +216,18 @@ void CF_DataConverter::Pad_Connections_Callback(const crazyflie_msgs::PadConnect
 
 }
 
+// MARK IF CF BODY COLLIDES WITH CEILING
 void CF_DataConverter::Surface_Contact_Callback(const gazebo_msgs::ContactsState &msg)
 {
-    
+    // CYCLE THROUGH VECTOR OF CONTACT MESSAGES
     for (int i=0; i<msg.states.size(); i++)
     {
+        // IF CONTACT MSG MATCHES BODY COLLISION STR THEN TURN ON BODY_CONTACT_FLAG 
         if(BodyContact_flag == false && strcmp(msg.states[i].collision1_name.c_str(),BodyCollision_str.c_str()) == 0)
         {
             BodyContact_flag = true;
-        }
-       
+        }  
     }
-    printf("======\n");
-
 }
 
 
