@@ -22,6 +22,7 @@ is easy to use.
 
 #include "crazyflie_msgs/CtrlData.h"
 #include "crazyflie_msgs/RLCmd.h"
+#include "crazyflie_msgs/PadConnect.h"
 
 class CF_DataConverter
 {
@@ -31,10 +32,10 @@ class CF_DataConverter
         {
 
             // INITIALIZE SUBSCRIBERS
-            CTRL_Data_Subscriber = nh->subscribe("/CTRL/data", 1, &CF_DataConverter::CtrlData_Callback, this, ros::TransportHints().tcpNoDelay());
-            RL_CMD_Subscriber = nh->subscribe("/RL/cmd",5,&CF_DataConverter::RL_CMD_Callback,this,ros::TransportHints().tcpNoDelay());
-            Surface_FT_Subscriber = nh->subscribe("/ENV/Surface_FT_sensor",5,&CF_DataConverter::SurfaceFT_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
-
+            CTRL_Data_Sub = nh->subscribe("/CTRL/data", 1, &CF_DataConverter::CtrlData_Callback, this, ros::TransportHints().tcpNoDelay());
+            RL_CMD_Sub = nh->subscribe("/RL/cmd",5,&CF_DataConverter::RL_CMD_Callback,this,ros::TransportHints().tcpNoDelay());
+            Surface_FT_Sub = nh->subscribe("/ENV/Surface_FT_sensor",5,&CF_DataConverter::SurfaceFT_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
+            PadConnect_Sub = nh->subscribe("/ENV/Pad_Connections",5,&CF_DataConverter::Pad_Connections_Callback,this,ros::TransportHints().tcpNoDelay());
 
             // INITIALIZE MAIN PUBLISHERS
             StateData_Pub = nh->advertise<crazyflie_msgs::CF_StateData>("/CF_DC/StateData",1);
@@ -49,6 +50,7 @@ class CF_DataConverter
         void CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_msg);
         void RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
         void SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStamped::ConstPtr &msg);
+        void Pad_Connections_Callback(const crazyflie_msgs::PadConnect &msg);
 
         void Publish_StateData();
         void Publish_FlipData();
@@ -62,9 +64,10 @@ class CF_DataConverter
     private:
 
         // SUBSCRIBERS
-        ros::Subscriber CTRL_Data_Subscriber;
-        ros::Subscriber RL_CMD_Subscriber;
-        ros::Subscriber Surface_FT_Subscriber;
+        ros::Subscriber CTRL_Data_Sub;
+        ros::Subscriber RL_CMD_Sub;
+        ros::Subscriber Surface_FT_Sub;
+        ros::Subscriber PadConnect_Sub;
 
         // PUBLISHERS
         ros::Publisher StateData_Pub;
@@ -162,13 +165,31 @@ class CF_DataConverter
         //     MISC DATA
         // ==================
 
-        double V_battery = 0.0;
-        uint16_t Pad_Connections = 0;
+        double V_battery = 4.0;
+
+        uint8_t Pad1_Contact = 0;
+        uint8_t Pad2_Contact = 0;
+        uint8_t Pad3_Contact = 0;
+        uint8_t Pad4_Contact = 0;
+
+        uint8_t Pad_Connections = 0;
 
 
         
 
 
 };
+
+void CF_DataConverter::Pad_Connections_Callback(const crazyflie_msgs::PadConnect &msg)
+{
+    
+    if(msg.Pad1_Contact == 1) Pad1_Contact = 1;
+    if(msg.Pad2_Contact == 1) Pad2_Contact = 1;
+    if(msg.Pad3_Contact == 1) Pad3_Contact = 1;
+    if(msg.Pad4_Contact == 1) Pad4_Contact = 1;
+    Pad_Connections = Pad1_Contact + Pad2_Contact + Pad3_Contact + Pad4_Contact;
+
+}
+
 
 

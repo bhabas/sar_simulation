@@ -724,7 +724,7 @@
 
     <plugin name='OF_sensor' filename='libOF_Sensor_plugin.so'>
       <updateRate>100</updateRate>
-      <bodyName>body_sensors</bodyName>
+      <bodyName>crazyflie_body</bodyName>
       <topicName>/CF_Internal/OF_Sensor</topicName>
       <Tau_gaussianNoise>0.0</Tau_gaussianNoise>
       <RREV_gaussianNoise>0.0</RREV_gaussianNoise>

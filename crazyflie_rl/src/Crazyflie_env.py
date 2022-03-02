@@ -395,7 +395,8 @@ class CrazyflieEnv:
 
     def padConnect_Callback(self,msg): ## Callback that records number of pads that stick to ceiling (from gazebo_sticky_foot.cpp)
 
-        self.pad_contacts.append(msg.Pad_Num)
+        # self.pad_contacts.append(msg.Pad_Num)
+        pass
         
 
             

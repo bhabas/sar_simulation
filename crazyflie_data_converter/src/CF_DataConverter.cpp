@@ -94,6 +94,13 @@ void CF_DataConverter::Publish_ImpactData()
     ImpactData_msg.Twist_impact = Twist_impact;
     ImpactData_msg.Eul_impact = Eul_impact;
 
+    ImpactData_msg.Pad_Connections = Pad_Connections;
+
+    ImpactData_msg.Pad1_Contact = Pad1_Contact;
+    ImpactData_msg.Pad2_Contact = Pad2_Contact;
+    ImpactData_msg.Pad3_Contact = Pad3_Contact;
+    ImpactData_msg.Pad4_Contact = Pad4_Contact;
+
 
 
     ImpactData_Pub.publish(ImpactData_msg);
@@ -211,7 +218,7 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
         Time_impact.sec = 0.0;
         Time_impact.nsec = 0.0;
 
-        // RESET IMPACT VALUES WHENEVER RESET IS CALLED
+        // RESET IMPACT VALUES
         Pose_impact.position.x = 0.0;
         Pose_impact.position.y = 0.0;
         Pose_impact.position.z = 0.0;
@@ -237,6 +244,14 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
         impact_force_x = 0.0;
         impact_force_y = 0.0;
         impact_force_z = 0.0;
+
+        // RESET PAD CONTACTS FLAGS
+        Pad1_Contact = 0;
+        Pad2_Contact = 0;
+        Pad3_Contact = 0;
+        Pad4_Contact = 0;
+
+        Pad_Connections = 0;
                 
     }
 
