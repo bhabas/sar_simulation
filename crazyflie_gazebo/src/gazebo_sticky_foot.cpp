@@ -7,12 +7,11 @@
 
 namespace gazebo{
 
-
-    // This gets called when model is loaded and pulls values from sdf file
+    // INITIALIZE PLUGIN AND LOAD VALUES FROM SDF
     void GazeboStickyFoot::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) 
     {
         // SET INITIAL VALUES FOR PARAMETERS
-        sticky_ = false;
+        sticky_flag = false;
         contactLink_ptr = NULL; // Link that pad will join to at contact
         joint_ptr = NULL;       // The future joint between contacting links
 
@@ -29,12 +28,13 @@ namespace gazebo{
 
 
         // CREATE JOINT NAME
-        pad_number_ = _sdf->GetElement("padNumber")->Get<int>(); // Convert SDF element to int
-        gzmsg << "\t Pad Number: \t" << pad_number_ << std::endl;
-        jointName = "pad_" + std::to_string(pad_number_) + "_sticky_joint";
+        PAD_NUMBER = _sdf->GetElement("padNumber")->Get<int>(); // Convert SDF element to int
+        gzmsg << "\t Pad Number: \t" << PAD_NUMBER << std::endl;
+        jointName = "pad_" + std::to_string(PAD_NUMBER) + "_sticky_joint";
         gzmsg << "\t Joint Name:\t" << jointName << std::endl;
 
-        serviceName = "/activate_Sticky_Pad_" + std::to_string(pad_number_);
+        // INITIALIZE SERVICE TO ACTIVATE STICKY PAD
+        serviceName = "/activate_Sticky_Pad_" + std::to_string(PAD_NUMBER);
         stickyService = nh.advertiseService(serviceName, &GazeboStickyFoot::activateSticky, this);
 
         // SOMETHING ABOUT CREATING A NAMESPACE ("/"" PREFIX FOR GZTOPICS)
@@ -76,10 +76,11 @@ namespace gazebo{
         }
         std::cout << "\n\n";
     }
+
     // CALLBACK ACTIVATED WHENEVER CONTACT DETECTED (MSG RECEIVED FROM GZ-PUB)
     void GazeboStickyFoot::ContactCallback(ConstContactsPtr &msg)
     {
-        if (sticky_ == true && contactLink_ptr == NULL) // If sticky activated and link2 not created yet
+        if (sticky_flag == true && contactLink_ptr == NULL) // If sticky activated and link2 not created yet
         {
             for (int i = 0; i < msg->contact_size(); i++)
             {
@@ -90,33 +91,50 @@ namespace gazebo{
 
                 // IF JOINT DOESN'T ALREADY EXIST CREATE IT
                 if (joint_ptr == NULL)
+                {
                     joint_ptr = model_->CreateJoint(jointName, "fixed", padLink_ptr, contactLink_ptr);
-                printf("[Pad_%d]: Joint Created\t(%s->%s)\n", pad_number_, padLink_ptr->GetName().c_str(), contactLink_ptr->GetName().c_str());
+                    printf("[Pad_%d]: Joint Created\t(%s->%s)\n", PAD_NUMBER, padLink_ptr->GetName().c_str(), contactLink_ptr->GetName().c_str());
 
-                // PUBLISH EACH TIME A PAD IS CONNECTS TO THE CEILING
-                crazyflie_msgs::PadConnect msg;
-                msg.Pad_Num = pad_number_;
-                PadConnect_Publisher.publish(msg);
+                    // PUBLISH EACH TIME A PAD IS CONNECTS TO THE CEILING
+                    switch(PAD_NUMBER)
+                    {
+                        case 1:
+                            PadConnect_msg.Pad1_Contact = 1;
+                            break;
+                        case 2:
+                            PadConnect_msg.Pad2_Contact = 1;
+                            break;
+                        case 3:
+                            PadConnect_msg.Pad3_Contact = 1;
+                            break;
+                        case 4:
+                            PadConnect_msg.Pad4_Contact = 1;
+                            break;
+                    }
+
+                    PadConnect_Publisher.publish(PadConnect_msg);
+                }
 
                 break;
             }
         }
     }
 
+    // ROS SERVICE CALLBACK TO ACTIVATE/DEACTIVATE STICKY FOOT BEHAVIOR
     bool GazeboStickyFoot::activateSticky(crazyflie_msgs::activateSticky::Request &req, crazyflie_msgs::activateSticky::Response &res)
     {
-        if (req.stickyFlag == false && sticky_) // TURN OFF STICKY FOOT
+        if (req.stickyFlag == false && sticky_flag == true) // TURN OFF STICKY FOOT
         {
-            sticky_ = false;
-            printf("[Pad_%d]: Sticky_Disabled\n", pad_number_);
+            sticky_flag = false;
+            printf("[Pad_%d]: Sticky_Disabled\n", PAD_NUMBER);
 
             if (joint_ptr != NULL)
             {
                 model_->RemoveJoint(jointName);
-                printf("[Pad_%d]: Joint Removed\t(%s->%s)\n", pad_number_, padLink_ptr->GetName().c_str(), contactLink_ptr->GetName().c_str());
+                printf("[Pad_%d]: Joint Removed\t(%s->%s)\n", PAD_NUMBER, padLink_ptr->GetName().c_str(), contactLink_ptr->GetName().c_str());
             }
 
-            if (pad_number_ == 4)
+            if (PAD_NUMBER == 4)
             {
                 printf("\n"); // Add extra space to break up console output
             }
@@ -125,11 +143,11 @@ namespace gazebo{
             joint_ptr = NULL;
             contactLink_ptr = NULL;
         }
-        if (req.stickyFlag == true && !sticky_) // TURN ON STICKY FOOT
+        if (req.stickyFlag == true && sticky_flag == false) // TURN ON STICKY FOOT
         {
-            sticky_ = true;
-            printf("[Pad_%d]: Sticky_Enabled\n", pad_number_);
-            if (pad_number_ == 4)
+            sticky_flag = true;
+            printf("[Pad_%d]: Sticky_Enabled\n", PAD_NUMBER);
+            if (PAD_NUMBER == 4)
             {
                 printf("\n"); // Add extra space to break up console output
             }
