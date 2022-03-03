@@ -17,7 +17,7 @@ np.set_printoptions(precision=2, suppress=True)
 if __name__ == '__main__':
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv(gazeboTimeout=False)
-    env.launch_dashboard()
+    # env.launch_dashboard()
     
 
     ## INIT LEARNING AGENT
@@ -103,7 +103,6 @@ if __name__ == '__main__':
             env.policy = [Tau_thr/10,np.abs(My),G2]
 
             try: # Use try block to catch raised exceptions and attempt rollout again
-
                 executeFlight(env,agent)
 
             except rospy.service.ServiceException:
