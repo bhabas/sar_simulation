@@ -145,6 +145,10 @@ void CF_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
     FM = ctrl_msg.FM;
     MS_PWM = ctrl_msg.MS_PWM;
 
+    // RL POLICY DATA
+    RREV_thr = ctrl_msg.RREV_thr;
+    G1 = ctrl_msg.G1;
+
     // NEURAL NETWORK DATA
     NN_flip = ctrl_msg.NN_flip;
     NN_policy = ctrl_msg.NN_policy;

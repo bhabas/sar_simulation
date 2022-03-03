@@ -52,15 +52,9 @@ class CF_DataConverter
             // GAZEBO SERVICES
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
 
-            ros::param::get("/MODEL_NAME",MODEL_NAME);
-            ros::param::get("/CEILING_HEIGHT",H_CEILING);
-            // ros::param::get("/CF_MASS",_CF_MASS);
-            // ros::param::get("/POLICY_TYPE",_POLICY_TYPE);
+            
 
-            // // DEBUG SETTINGS
-            ros::param::get("/SIM_SPEED",SIM_SPEED);
-            ros::param::get("/SIM_SLOWDOWN_SPEED",SIM_SLOWDOWN_SPEED);
-            ros::param::get("/LANDING_SLOWDOWN_FLAG",LANDING_SLOWDOWN_FLAG);
+            CF_DataConverter::LoadParams();
 
             CF_DataConverter::adjustSimSpeed(SIM_SPEED);
             BodyCollision_str = MODEL_NAME + "::crazyflie_ModelBase::crazyflie_body::body_collision";
@@ -86,6 +80,7 @@ class CF_DataConverter
         void Publish_MiscData();
 
         void MainLoop();
+        void LoadParams();
         void consoleOuput();
         void checkSlowdown();
         void adjustSimSpeed(float speed_mult);
@@ -128,6 +123,7 @@ class CF_DataConverter
         bool LANDING_SLOWDOWN_FLAG;
         float SIM_SPEED; 
         float SIM_SLOWDOWN_SPEED;
+        int POLICY_TYPE = 0;
 
 
 
@@ -148,7 +144,10 @@ class CF_DataConverter
         double D_ceil;
 
         boost::array<double, 4> FM;
-        boost::array<double, 4> MS_PWM;
+        boost::array<uint16_t, 4> MS_PWM;
+
+        double RREV_thr;
+        double G1;
 
         double NN_flip;
         double NN_policy;
@@ -235,7 +234,51 @@ class CF_DataConverter
         bool Policy_Armed_Flag = false;
         bool Sticky_Flag = false;
 
+
+        float P_kp_xy;
+        float P_kd_xy;
+        float P_ki_xy;
+        float P_kp_z;
+        float P_kd_z;
+        float P_ki_z;
+        float R_kp_xy;
+        float R_kd_xy;
+        float R_ki_xy;     
+        float R_kp_z;
+        float R_kd_z;
+        float R_ki_z;
+
 };
+
+void CF_DataConverter::LoadParams()
+{
+    ros::param::get("/MODEL_NAME",MODEL_NAME);
+    ros::param::get("/CEILING_HEIGHT",H_CEILING);
+    // ros::param::get("/CF_MASS",_CF_MASS);
+    ros::param::get("/POLICY_TYPE",POLICY_TYPE);
+
+    // // DEBUG SETTINGS
+    ros::param::get("/SIM_SPEED",SIM_SPEED);
+    ros::param::get("/SIM_SLOWDOWN_SPEED",SIM_SLOWDOWN_SPEED);
+    ros::param::get("/LANDING_SLOWDOWN_FLAG",LANDING_SLOWDOWN_FLAG);
+
+    ros::param::get("P_kp_xy",P_kp_xy);
+    ros::param::get("P_kd_xy",P_kd_xy);
+    ros::param::get("P_ki_xy",P_ki_xy);
+
+    ros::param::get("P_kp_z",P_kp_z);
+    ros::param::get("P_kd_z",P_kd_z);
+    ros::param::get("P_ki_z",P_ki_z);
+
+    ros::param::get("R_kp_xy",R_kp_xy);
+    ros::param::get("R_kd_xy",R_kd_xy);
+    ros::param::get("R_ki_xy",R_ki_xy);
+    
+    ros::param::get("R_kp_z",R_kp_z);
+    ros::param::get("R_kd_z",R_kd_z);
+    ros::param::get("R_ki_z",R_ki_z);
+
+}
 
 void CF_DataConverter::consoleOuput()
 {
@@ -247,63 +290,60 @@ void CF_DataConverter::consoleOuput()
     printf("==== Flags ====\n");
     printf("Motorstop:\t%u  Flip_flag:\t  %u  Pos Ctrl:\t    %u \n",Motorstop_Flag, flip_flag, Pos_Ctrl_Flag);
     printf("Traj Active:\t%u  Impact_flag:\t  %u  Vel Ctrl:\t    %u \n",Traj_Active_Flag,impact_flag,Vel_Ctrl_Flag);
-    printf("Policy_type:\t%u  Tumble Detect: %u  Moment_Flag:   %u \n",0,Tumble_Detection,Moment_Flag);
+    printf("Policy_type:\t%u  Tumble Detect: %u  Moment_Flag:   %u \n",POLICY_TYPE,Tumble_Detection,Moment_Flag);
     printf("Policy_armed:\t%u  Tumbled:\t  %u  Slowdown_type: %u\n",Policy_Armed_Flag,Tumbled_Flag,SLOWDOWN_TYPE);
     printf("Sticky_flag:\t%u\n",Sticky_Flag);
     printf("\n");
 
 
-    // printf("==== System States ====\n");
-    // printf("Pos [m]:\t %.3f  %.3f  %.3f\n",statePos.x,statePos.y,statePos.z);
-    // printf("Vel [m/s]:\t %.3f  %.3f  %.3f\n",stateVel.x,stateVel.y,stateVel.z);
-    // printf("Omega [rad/s]:\t %.3f  %.3f  %.3f\n",stateOmega.x,stateOmega.y,stateOmega.z);
-    // printf("Eul [deg]:\t %.3f  %.3f  %.3f\n",stateEul.x,stateEul.y,stateEul.z);
-    // printf("\n");
+    printf("==== System States ====\n");
+    printf("Pos [m]:\t %.3f  %.3f  %.3f\n",Pose.position.x,Pose.position.y,Pose.position.z);
+    printf("Vel [m/s]:\t %.3f  %.3f  %.3f\n",Twist.linear.x,Twist.linear.y,Twist.linear.z);
+    printf("Omega [rad/s]:\t %.3f  %.3f  %.3f\n",Twist.angular.x,Twist.angular.y,Twist.angular.z);
+    printf("Eul [deg]:\t %.3f  %.3f  %.3f\n",Eul.x,Eul.y,Eul.z);
+    printf("\n");
 
-    // printf("Tau: %.3f \tOFx: %.3f \tOFy: %.3f \tRREV: %.3f\n",Tau,OFx,OFy,RREV);
-    // printf("D_ceil: %.3f\n",d_ceil);
-    // printf("\n");
+    printf("Tau: %.3f \tOFx: %.3f \tOFy: %.3f \tRREV: %.3f\n",Tau,OFx,OFy,RREV);
+    printf("D_ceil: %.3f\n",D_ceil);
+    printf("\n");
 
 
-    // printf("==== Setpoints ====\n");
-    // printf("x_d: %.3f  %.3f  %.3f\n",x_d.x,x_d.y,x_d.z);
-    // printf("v_d: %.3f  %.3f  %.3f\n",v_d.x,v_d.y,v_d.z);
-    // printf("a_d: %.3f  %.3f  %.3f\n",a_d.x,a_d.y,a_d.z);
-    // printf("\n");
+    printf("==== Setpoints ====\n");
+    printf("x_d: %.3f  %.3f  %.3f\n",x_d.x,x_d.y,x_d.z);
+    printf("v_d: %.3f  %.3f  %.3f\n",v_d.x,v_d.y,v_d.z);
+    printf("a_d: %.3f  %.3f  %.3f\n",a_d.x,a_d.y,a_d.z);
+    printf("\n");
 
     
-    // printf("==== Policy Values ====\n");
-    // printf("RL: \n");
-    // printf("RREV_thr: %.3f \tG1: %.3f \tG2: %.3f\n",RREV_thr,G1,G2);
-    // printf("\n");
+    printf("==== Policy Values ====\n");
+    printf("RL: \n");
+    printf("RREV_thr: %.3f \tG1: %.3f \tG2: %.3f\n",RREV_thr,G1,0.0);
+    printf("\n");
 
-    // printf("NN_Outputs: \n");
-    // printf("NN_Flip:  %.3f \tNN_Policy: %.3f \n",NN_flip,NN_policy);
-    // printf("\n");
+    printf("NN_Outputs: \n");
+    printf("NN_Flip:  %.3f \tNN_Policy: %.3f \n",NN_flip,NN_policy);
+    printf("\n");
 
-    // printf("==== Flip Trigger Values ====\n");
-    // printf("RREV_tr:    %.3f \tNN_tr_Flip:    %.3f \n",RREV_tr,NN_tr_flip);
-    // printf("OFy_tr:     %.3f \tNN_tr_Policy:  %.3f \n",OFy_tr,NN_tr_policy);
-    // printf("D_ceil_tr:  %.3f \n",d_ceil_tr);
-    // printf("\n");
+    printf("==== Flip Trigger Values ====\n");
+    printf("RREV_tr:    %.3f \tNN_tr_Flip:    %.3f \n",RREV_tr,NN_tr_flip);
+    printf("OFy_tr:     %.3f \tNN_tr_Policy:  %.3f \n",OFy_tr,NN_tr_policy);
+    printf("D_ceil_tr:  %.3f \n",D_ceil_tr);
+    printf("\n");
 
-    // printf("==== Controller Actions ====\n");
-    // printf("FM [N/N*mm]: %.3f  %.3f  %.3f  %.3f\n",F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3);
-    // printf("f [g]: %.3f  %.3f  %.3f  %.3f\n",f_thrust_g,f_roll_g,f_pitch_g,f_yaw_g);
-    // printf("\n");
-
-    // printf("MS_PWM: %u  %u  %u  %u\n",M1_pwm,M2_pwm,M3_pwm,M4_pwm);
-    // printf("\n");
+    printf("==== Controller Actions ====\n");
+    printf("FM [N/N*mm]: %.3f  %.3f  %.3f  %.3f\n",FM[0],FM[1],FM[2],FM[3]);
+    printf("MS_PWM: %u  %u  %u  %u\n",MS_PWM[0],MS_PWM[1],MS_PWM[2],MS_PWM[3]);
+    printf("\n");
 
 
-    // printf("=== Parameters ====\n");
-    // printf("Kp_P: %.3f  %.3f  %.3f \t",Kp_p.x,Kp_p.y,Kp_p.z);
-    // printf("Kp_R: %.3f  %.3f  %.3f \n",Kp_R.x,Kp_R.y,Kp_R.z);
-    // printf("Kd_P: %.3f  %.3f  %.3f \t",Kd_p.x,Kd_p.y,Kd_p.z);
-    // printf("Kd_R: %.3f  %.3f  %.3f \n",Kd_R.x,Kd_R.y,Kd_R.z);
-    // printf("Ki_P: %.3f  %.3f  %.3f \t",Ki_p.x,Ki_p.y,Ki_p.z);
-    // printf("Ki_R: %.3f  %.3f  %.3f \n",Ki_p.x,Ki_p.y,Ki_p.z);
-    // printf("======\n");
+    printf("=== Parameters ====\n");
+    printf("Kp_P: %.3f  %.3f  %.3f \t",P_kp_xy,P_kp_xy,P_kp_z);
+    printf("Kp_R: %.3f  %.3f  %.3f \n",R_kd_xy,R_kd_xy,R_kd_z);
+    printf("Kd_P: %.3f  %.3f  %.3f \t",P_kp_xy,P_kp_xy,P_kp_z);
+    printf("Kd_R: %.3f  %.3f  %.3f \n",R_kd_xy,R_kd_xy,R_kd_z);
+    printf("Ki_P: %.3f  %.3f  %.3f \t",P_ki_xy,P_ki_xy,P_ki_z);
+    printf("Ki_R: %.3f  %.3f  %.3f \n",R_ki_xy,R_ki_xy,R_ki_z);
+    printf("======\n");
 }
 
 // MARK IF PAD CONTACT HAS OCCURED AND SUM NUMBER OF PAD CONTACTS

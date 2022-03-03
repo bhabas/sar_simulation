@@ -9,6 +9,9 @@ float64 D_ceil
 float64[4] FM
 uint32[4] MS_PWM
 
+float64 RREV_thr
+float64 G1
+
 float64 NN_flip
 float64 NN_policy
 
