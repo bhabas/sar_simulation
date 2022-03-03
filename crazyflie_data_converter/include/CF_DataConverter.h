@@ -116,14 +116,22 @@ class CF_DataConverter
         std::string BodyCollision_str;
         uint32_t tick = 1;
         
+        // ===================
+        //     ROS PARAMS
+        // ===================
+
         std::string MODEL_NAME;
-        float H_CEILING = 2.10;
 
         int SLOWDOWN_TYPE = 0;
         bool LANDING_SLOWDOWN_FLAG;
         float SIM_SPEED; 
         float SIM_SLOWDOWN_SPEED;
         int POLICY_TYPE = 0;
+        
+        float P_kp_xy,P_kd_xy,P_ki_xy;
+        float P_kp_z,P_kd_z,P_ki_z;
+        float R_kp_xy,R_kd_xy,R_ki_xy;     
+        float R_kp_z,R_kd_z,R_ki_z;
 
 
 
@@ -235,25 +243,14 @@ class CF_DataConverter
         bool Sticky_Flag = false;
 
 
-        float P_kp_xy;
-        float P_kd_xy;
-        float P_ki_xy;
-        float P_kp_z;
-        float P_kd_z;
-        float P_ki_z;
-        float R_kp_xy;
-        float R_kd_xy;
-        float R_ki_xy;     
-        float R_kp_z;
-        float R_kd_z;
-        float R_ki_z;
+        
+
 
 };
 
 void CF_DataConverter::LoadParams()
 {
     ros::param::get("/MODEL_NAME",MODEL_NAME);
-    ros::param::get("/CEILING_HEIGHT",H_CEILING);
     // ros::param::get("/CF_MASS",_CF_MASS);
     ros::param::get("/POLICY_TYPE",POLICY_TYPE);
 
@@ -280,166 +277,8 @@ void CF_DataConverter::LoadParams()
 
 }
 
-void CF_DataConverter::consoleOuput()
-{
-    system("clear");
-    printf("t: %.4f \tCmd: \n",Time.toSec());
-    printf("Model: %s\n",MODEL_NAME.c_str());
-    printf("\n");
-
-    printf("==== Flags ====\n");
-    printf("Motorstop:\t%u  Flip_flag:\t  %u  Pos Ctrl:\t    %u \n",Motorstop_Flag, flip_flag, Pos_Ctrl_Flag);
-    printf("Traj Active:\t%u  Impact_flag:\t  %u  Vel Ctrl:\t    %u \n",Traj_Active_Flag,impact_flag,Vel_Ctrl_Flag);
-    printf("Policy_type:\t%u  Tumble Detect: %u  Moment_Flag:   %u \n",POLICY_TYPE,Tumble_Detection,Moment_Flag);
-    printf("Policy_armed:\t%u  Tumbled:\t  %u  Slowdown_type: %u\n",Policy_Armed_Flag,Tumbled_Flag,SLOWDOWN_TYPE);
-    printf("Sticky_flag:\t%u\n",Sticky_Flag);
-    printf("\n");
 
 
-    printf("==== System States ====\n");
-    printf("Pos [m]:\t %.3f  %.3f  %.3f\n",Pose.position.x,Pose.position.y,Pose.position.z);
-    printf("Vel [m/s]:\t %.3f  %.3f  %.3f\n",Twist.linear.x,Twist.linear.y,Twist.linear.z);
-    printf("Omega [rad/s]:\t %.3f  %.3f  %.3f\n",Twist.angular.x,Twist.angular.y,Twist.angular.z);
-    printf("Eul [deg]:\t %.3f  %.3f  %.3f\n",Eul.x,Eul.y,Eul.z);
-    printf("\n");
-
-    printf("Tau: %.3f \tOFx: %.3f \tOFy: %.3f \tRREV: %.3f\n",Tau,OFx,OFy,RREV);
-    printf("D_ceil: %.3f\n",D_ceil);
-    printf("\n");
 
 
-    printf("==== Setpoints ====\n");
-    printf("x_d: %.3f  %.3f  %.3f\n",x_d.x,x_d.y,x_d.z);
-    printf("v_d: %.3f  %.3f  %.3f\n",v_d.x,v_d.y,v_d.z);
-    printf("a_d: %.3f  %.3f  %.3f\n",a_d.x,a_d.y,a_d.z);
-    printf("\n");
-
-    
-    printf("==== Policy Values ====\n");
-    printf("RL: \n");
-    printf("RREV_thr: %.3f \tG1: %.3f \tG2: %.3f\n",RREV_thr,G1,0.0);
-    printf("\n");
-
-    printf("NN_Outputs: \n");
-    printf("NN_Flip:  %.3f \tNN_Policy: %.3f \n",NN_flip,NN_policy);
-    printf("\n");
-
-    printf("==== Flip Trigger Values ====\n");
-    printf("RREV_tr:    %.3f \tNN_tr_Flip:    %.3f \n",RREV_tr,NN_tr_flip);
-    printf("OFy_tr:     %.3f \tNN_tr_Policy:  %.3f \n",OFy_tr,NN_tr_policy);
-    printf("D_ceil_tr:  %.3f \n",D_ceil_tr);
-    printf("\n");
-
-    printf("==== Controller Actions ====\n");
-    printf("FM [N/N*mm]: %.3f  %.3f  %.3f  %.3f\n",FM[0],FM[1],FM[2],FM[3]);
-    printf("MS_PWM: %u  %u  %u  %u\n",MS_PWM[0],MS_PWM[1],MS_PWM[2],MS_PWM[3]);
-    printf("\n");
-
-
-    printf("=== Parameters ====\n");
-    printf("Kp_P: %.3f  %.3f  %.3f \t",P_kp_xy,P_kp_xy,P_kp_z);
-    printf("Kp_R: %.3f  %.3f  %.3f \n",R_kd_xy,R_kd_xy,R_kd_z);
-    printf("Kd_P: %.3f  %.3f  %.3f \t",P_kp_xy,P_kp_xy,P_kp_z);
-    printf("Kd_R: %.3f  %.3f  %.3f \n",R_kd_xy,R_kd_xy,R_kd_z);
-    printf("Ki_P: %.3f  %.3f  %.3f \t",P_ki_xy,P_ki_xy,P_ki_z);
-    printf("Ki_R: %.3f  %.3f  %.3f \n",R_ki_xy,R_ki_xy,R_ki_z);
-    printf("======\n");
-}
-
-// MARK IF PAD CONTACT HAS OCCURED AND SUM NUMBER OF PAD CONTACTS
-void CF_DataConverter::Pad_Connections_Callback(const crazyflie_msgs::PadConnect &msg)
-{
-    
-    if(msg.Pad1_Contact == 1) Pad1_Contact = 1;
-    if(msg.Pad2_Contact == 1) Pad2_Contact = 1;
-    if(msg.Pad3_Contact == 1) Pad3_Contact = 1;
-    if(msg.Pad4_Contact == 1) Pad4_Contact = 1;
-    Pad_Connections = Pad1_Contact + Pad2_Contact + Pad3_Contact + Pad4_Contact;
-
-}
-
-// MARK IF CF BODY COLLIDES WITH CEILING
-void CF_DataConverter::Surface_Contact_Callback(const gazebo_msgs::ContactsState &msg)
-{
-    // CYCLE THROUGH VECTOR OF CONTACT MESSAGES
-    for (int i=0; i<msg.states.size(); i++)
-    {
-        // IF CONTACT MSG MATCHES BODY COLLISION STR THEN TURN ON BODY_CONTACT_FLAG 
-        if(BodyContact_flag == false && strcmp(msg.states[i].collision1_name.c_str(),BodyCollision_str.c_str()) == 0)
-        {
-            BodyContact_flag = true;
-        }  
-    }
-}
-
-// CHECK IF SIM SPEED NEEDS TO BE ADJUSTED
-void CF_DataConverter::checkSlowdown()
-{   
-    // SIMULATION SLOWDOWN
-    if(LANDING_SLOWDOWN_FLAG==true && tick >= 500){
-
-        // WHEN CLOSE TO THE CEILING REDUCE SIM SPEED
-        if(D_ceil<=0.5 && SLOWDOWN_TYPE == 0){
-            
-            CF_DataConverter::adjustSimSpeed(SIM_SLOWDOWN_SPEED);
-            SLOWDOWN_TYPE = 1;
-        }
-
-        // IF IMPACTED CEILING OR FALLING AWAY, INCREASE SIM SPEED TO DEFAULT
-        if(impact_flag == true && SLOWDOWN_TYPE == 1)
-        {
-            CF_DataConverter::adjustSimSpeed(SIM_SPEED);
-            SLOWDOWN_TYPE = 2; // (Don't call adjustSimSpeed more than once)
-        }
-        else if(Twist.linear.z <= -0.5 && SLOWDOWN_TYPE == 1){
-            CF_DataConverter::adjustSimSpeed(SIM_SPEED);
-            SLOWDOWN_TYPE = 2;
-        }
-    
-    }
-
-}
-
-// CHANGES REAL TIME FACTOR FOR THE SIMULATION (LOWER = SLOWER)
-void CF_DataConverter::adjustSimSpeed(float speed_mult)
-{
-    gazebo_msgs::SetPhysicsProperties srv;
-    srv.request.time_step = 0.001;
-    srv.request.max_update_rate = (int)(speed_mult/0.001);
-
-
-    geometry_msgs::Vector3 gravity_vec;
-    gravity_vec.x = 0.0;
-    gravity_vec.y = 0.0;
-    gravity_vec.z = -9.8066;
-    srv.request.gravity = gravity_vec;
-
-    gazebo_msgs::ODEPhysics ode_config;
-    ode_config.auto_disable_bodies = false;
-    ode_config.sor_pgs_precon_iters = 0;
-    ode_config.sor_pgs_iters = 50;
-    ode_config.sor_pgs_w = 1.3;
-    ode_config.sor_pgs_rms_error_tol = 0.0;
-    ode_config.contact_surface_layer = 0.001;
-    ode_config.contact_max_correcting_vel = 0.0;
-    ode_config.cfm = 0.0;
-    ode_config.erp = 0.2;
-    ode_config.max_contacts = 20;
-
-    srv.request.ode_config = ode_config;
-
-    GZ_SimSpeed_Client.call(srv);
-}
-
-void CF_DataConverter::CtrlDebug_Callback(const crazyflie_msgs::CtrlDebug &ctrl_msg)
-{
-    Motorstop_Flag = ctrl_msg.Motorstop_Flag;
-    Pos_Ctrl_Flag = ctrl_msg.Pos_Ctrl;
-    Vel_Ctrl_Flag = ctrl_msg.Vel_Ctrl;
-    Traj_Active_Flag = ctrl_msg.Traj_Active;
-    Tumble_Detection = ctrl_msg.Tumble_Detection;
-    Tumbled_Flag = ctrl_msg.Tumbled_Flag;
-    Moment_Flag = ctrl_msg.Moment_Flag;
-    Policy_Armed_Flag = ctrl_msg.Policy_Armed;
-}
 
