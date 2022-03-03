@@ -154,7 +154,7 @@ class CF_DataConverter
         boost::array<double, 4> FM;
         boost::array<uint16_t, 4> MS_PWM;
 
-        double RREV_thr;
+        double Tau_thr;
         double G1;
 
         double NN_flip;

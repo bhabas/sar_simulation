@@ -278,7 +278,7 @@ void Controller::publishCtrlData()
     CtrlData_msg.RREV = RREV;
     CtrlData_msg.D_ceil = d_ceil;
 
-    CtrlData_msg.RREV_thr = RREV_thr;
+    CtrlData_msg.Tau_thr = Tau_thr;
     CtrlData_msg.G1 = G1;
 
     // NEURAL NETWORK DATA

@@ -60,7 +60,12 @@ namespace gazebo
             OFy = -Vx_rel/d_ceil; // + Angular velocity values
 
             // PUBLISH OPTICAL FLOW VALUES
-            OF_Data_msg.Tau = boost::algorithm::clamp(Tau + GaussianKernel(0,Tau_gaussianNoise), -30, 30);
+
+            if(Tau < 0 || Tau > 20)
+            {
+                Tau = 20.0;
+            }
+            OF_Data_msg.Tau = Tau + GaussianKernel(0,Tau_gaussianNoise);
             OF_Data_msg.OFx = OFx + GaussianKernel(0,OFx_gaussianNoise);
             OF_Data_msg.OFy = OFy + GaussianKernel(0,OFy_gaussianNoise);
             OF_Data_msg.RREV = RREV + GaussianKernel(0,RREV_gaussianNoise);

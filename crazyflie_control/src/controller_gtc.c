@@ -209,7 +209,7 @@ static struct vec t_traj = {0.0f, 0.0f, 0.0f};
 // ==========================
 //  RL POLICY INITIALIZATION
 // ==========================
-float RREV_thr = 0.0f;  // RREV trigger
+float Tau_thr = 0.0f;   // Tau threshold
 float G1 = 0.0f;        // Body moment value
 float G2 = 0.0f;        // Deprecated state value
 
@@ -359,7 +359,7 @@ void GTC_Command(setpoint_t *setpoint)
             break;
 
         case 8: // Arm Policy Maneuver
-            RREV_thr = setpoint->cmd_val1;
+            Tau_thr = setpoint->cmd_val1;
             G1 = setpoint->cmd_val2;
             G2 = setpoint->cmd_val3;
 
@@ -497,7 +497,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
             {
                 case RL:
                 {
-                    if(RREV >= RREV_thr && onceFlag == false){
+                    if(Tau <= Tau_thr && onceFlag == false){
                         onceFlag = true;
                         flip_flag = true;  
 

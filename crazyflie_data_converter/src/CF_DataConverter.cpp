@@ -146,7 +146,7 @@ void CF_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
     MS_PWM = ctrl_msg.MS_PWM;
 
     // RL POLICY DATA
-    RREV_thr = ctrl_msg.RREV_thr;
+    Tau_thr = ctrl_msg.Tau_thr;
     G1 = ctrl_msg.G1;
 
     // NEURAL NETWORK DATA
@@ -487,15 +487,15 @@ void CF_DataConverter::consoleOuput()
     
     printf("==== Policy Values ====\n");
     printf("RL: \n");
-    printf("RREV_thr: %.3f \tG1: %.3f \tG2: %.3f\n",RREV_thr,G1,0.0);
+    printf("Tau_thr: %.3f \tG1: %.3f \tG2: %.3f\n",Tau_thr,G1,0.0);
     printf("\n");
 
     printf("NN_Outputs: \n");
-    printf("NN_Flip:  %.3f \tNN_Policy: %.3f \n",NN_flip,NN_policy);
+    printf("NN_Flip: %.3f \tNN_Policy: %.3f \n",NN_flip,NN_policy);
     printf("\n");
 
     printf("==== Flip Trigger Values ====\n");
-    printf("RREV_tr:    %.3f \tNN_tr_Flip:    %.3f \n",RREV_tr,NN_tr_flip);
+    printf("Tau_tr:     %.3f \tNN_tr_Flip:    %.3f \n",Tau_tr,NN_tr_flip);
     printf("OFy_tr:     %.3f \tNN_tr_Policy:  %.3f \n",OFy_tr,NN_tr_policy);
     printf("D_ceil_tr:  %.3f \n",D_ceil_tr);
     printf("\n");
