@@ -619,26 +619,12 @@ class CrazyflieEnv:
         self.RL_CMD_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
         time.sleep(0.05)
         
-    # def clear_rollout_Data(self):
-    #     """Clears all logged impact and flip data & resets default values before next rollout
-    #     """               
+    def clear_rollout_Data(self):
 
-    #     ## RESET IMPACT CONDITIONS
-    #     self.impact_flag = False
-    #     self.pad_contacts = [] # Reset impact condition variables
-    #     self.body_contact = False
-    #     self.ceiling_ft_x = 0.0
-    #     self.ceiling_ft_y = 0.0
-    #     self.ceiling_ft_z = 0.0
-
-    #     ## RESET FLIP CONDITIONS
-    #     self.flip_flag = False
-
-
-    #     ## RESET REWARD CALC VALUES
-    #     self.d_ceil_min = 0.0
-    #     self.pitch_sum = 0.0
-    #     self.pitch_max = 0.0
+        ## RESET REWARD CALC VALUES
+        self.d_ceil_min = 50.0
+        self.pitch_sum = 0.0
+        self.pitch_max = 0.0
 
 
 

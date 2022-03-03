@@ -5,14 +5,6 @@ import time
 
 from RL_agents.rl_EM import rlEM_PEPGAgent
 from Crazyflie_env import CrazyflieEnv
-from ExecuteFlight import executeFlight
-
-from gazebo_msgs.msg import ModelState
-from gazebo_msgs.srv import SetModelState
-
-from rosgraph_msgs.msg import Clock
-
-
 
 
 os.system("clear")
@@ -96,7 +88,7 @@ def cmd_send(env):
                 env.step(action,cmd_vals,cmd_flag)
 
             elif action=='policy':
-                cmd_vals = env.userInput("Set desired (RREV,My_d) policy: ",float)
+                cmd_vals = env.userInput("Set desired (Tau,My_d) policy: ",float)
                 cmd_vals.append(0) # Append extra value to match framework
                 cmd_flag = 1
                 print()

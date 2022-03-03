@@ -63,16 +63,10 @@ class ES:
     def calcReward_Impact(self,env):
 
         ## CALC R_1 FROM MAXIMUM HEIGHT ACHIEVED
-        R_1 = (env.z_max/env.h_ceiling)
+        R_1 = 1/env.d_ceil_min
 
         ## CALC R2 FROM THE IMPACT ANGLE
-
-        if env.quat_impact[3] == 0.0: # Check if valid quat
-            env.quat_impact = [0,0,0,1]
-
-        R = Rotation.from_quat(env.quat_impact)
-        eul_impact_arr = R.as_euler('YZX', degrees=True)
-        eul_y_impact = eul_impact_arr[0]
+        eul_y_impact = env.eulCF_impact[1]
         # Center axis [theta_2] is limited to +- 90deg while [theta_1 & theta_3] can rotate to 180deg 
         # https://graphics.fandom.com/wiki/Conversion_between_quaternions_and_Euler_angles
         # https://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/Quaternions.pdf
@@ -90,41 +84,29 @@ class ES:
             R_2 = 0
 
 
-        # if env.impact_flag == True and env.body_contact == False:
-        #     ## CALC R_3 FROM FINAL ORIENTATION AT END OF ROLLOUT
-        #     Rot = Rotation.from_quat([env.orientation_q[1],env.orientation_q[2],env.orientation_q[3],env.orientation_q[0]])
-        #     b3 = Rot.as_matrix()[:,2]
-        #     R_3 = np.exp(np.dot(b3, np.array([0,0,-1]))-1)*150 # (0.135 < e^(x-1) <= 1.0) | (-1 < x <= 1)
-
-        # else:
-            R_3 = 0
         ## CALC R_4 FROM NUMBER OF LEGS CONNECT
-        # if env.impact_flag == True: # The pad connection callback is weird w/o impact so only check in this case
 
-        if len(env.pad_contacts) >= 3: 
-            if env.body_contact == False:
+        if env.pad_connections >= 3: 
+            if env.BodyContact_flag == False:
                 R_4 = 150
             else:
                 R_4 = 100
             
-        elif len(env.pad_contacts) == 2: 
-            if env.body_contact == False:
+        elif env.pad_connections == 2: 
+            if env.BodyContact_flag == False:
                 R_4 = 50
             else:
                 R_4 = 25
                 
-        elif len(env.pad_contacts) == 1:
+        elif env.pad_connections == 1:
             R_4 = 10
         
         else:
             R_4 = 0.0
                 
-        # else:
-        #     R_4 = 0.0
 
 
         R_total = R_1*10 + R_2*10 + R_4 + 0.001
-        # print(f"Reward: r_c: {r_contact:.3f} | r_theta: {r_theta:.3f} | r_h: {r_h:.3f} | Pitch Max: {env.pitch_max:.2f}")
         return R_total
 
     def get_baseline(self, span):

@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 import numpy as np
-import time,os
+import time
+import os
 import rospy
-from crazyflie_msgs.msg import ImpactData,CtrlData
-import math
+from rospy.exceptions import ROSException
 
 
-from nav_msgs.msg import Odometry
 from Crazyflie_env import CrazyflieEnv
 from RL_agents.rl_EM import rlEM_PEPGAgent
-from rospy.exceptions import ROSException
+from crazyflie_msgs.msg import CF_StateData
+from rosgraph_msgs.msg import Clock
 
 os.system("clear")
 np.set_printoptions(precision=2, suppress=True)
@@ -21,11 +21,12 @@ def executeFlight(env,agent):
     env.trialComplete_flag = False
     env.RL_Publish() # Publish that rollout completed 
 
+
     ## MAKE SURE CONTROLLER IS WORKING
     while True:
         try:
-            rospy.wait_for_message('/env/global_state_data',Odometry) # Wait for global state message before resuming training
-            rospy.wait_for_message("/ctrl_data",CtrlData,timeout=5.0)
+            rospy.wait_for_message("/clock",Clock,timeout=20)
+            rospy.wait_for_message("/CF_DC/StateData",CF_StateData,timeout=5.0)
             break
 
         except rospy.exceptions.ROSException:
@@ -39,7 +40,7 @@ def executeFlight(env,agent):
     env.step("home") # Reset control vals and functionality to default vals
     time.sleep(0.65) # Time for CF to settle [Real-Time seconds]
 
-    env.step("policy",env.policy,ctrl_flag=1) # Arm policy inside controller
+    env.step("policy",env.policy,cmd_flag=1) # Arm policy inside controller
 
     ## RESET/UPDATE RUN CONDITIONS
     repeat_run= False
@@ -51,8 +52,8 @@ def executeFlight(env,agent):
     ## RESET LOGGING CONDITIONS 
     t_prev = 0.0
 
-    onceFlag = False    # Ensures flip data recorded only once
-    onceFlag2 = False   # Ensures impact data recorded only once 
+    onceFlag_flip = False    # Ensures flip data recorded only once
+    onceFlag_impact = False   # Ensures impact data recorded only once 
 
     ## PRINT RUN CONDITIONS AND POLICY
     print(f"Vx_d: {env.vel_trial[0]:.3f} \t Vy_d: {env.vel_trial[1]:.3f} \t Vz_d: {env.vel_trial[2]:.3f}")
@@ -62,9 +63,9 @@ def executeFlight(env,agent):
     ##          Rollout 
     # ============================
     z_0 = 0.3986
-    env.step('sticky',ctrl_flag=1)              # Enable sticky pads
-    env.step('pos',ctrl_flag=0)                 # Turn off pos control
-    env.step('vel',env.vel_trial,ctrl_flag=1)   # Set desired vel
+    env.step('sticky',cmd_flag=1)              # Enable sticky pads
+    env.step('pos',cmd_flag=0)                 # Turn off pos control
+    env.step('vel',env.vel_trial,cmd_flag=1)   # Set desired vel
     env.launch_IC(                              # Use Gazebo to impart desired vel with extra vx to ensure -OFy when around zero
         z_0,
         env.vel_trial[0]+0.03,
@@ -74,35 +75,34 @@ def executeFlight(env,agent):
     while 1: 
 
         ## DEFINE CURRENT STATE
-        state = env.state_current   # Collect state values here so they are thread-safe
         
-        vx,vy,vz = state[7:10] # [vx,vy,vz]
+        
 
         # ============================
         ##      Pitch Recording 
         # ============================
 
-        if (env.flip_flag == True and onceFlag == False):
+        if (env.flip_flag == True and onceFlag_flip == False):
             start_time_pitch = env.getTime() # Starts countdown for when to reset run
 
             # Recieve flip moments from controller and then update class var to be sent out of /rl_data topic
-            Mx_d = env.FM_flip[1] 
-            My_d = env.FM_flip[2]
-            Mz_d = env.FM_flip[3]
+            Mx_d = env.FM_tr[1] 
+            My_d = env.FM_tr[2]
+            Mz_d = env.FM_tr[3]
             env.M_d = [Mx_d,My_d,Mz_d] # [N*mm]
 
         
             print("----- pitch starts -----")
-            print(f"vx={vx:.3f}, vy={vy:.3f}, vz={vz:.3f}")
-            print(f"RREV_tr={env.RREV_tr:.3f}, OFy_tr={env.OFy_tr:.3f}, My_d={My_d:.3f} [N*mm]")  
-            print(f"Pitch Time: {env.t_flip:.3f} [s]")
+            print(f"vx={env.velCF[0]:.3f}, vy={env.velCF[1]:.3f}, vz={env.velCF[2]:.3f}")
+            print(f"Tau_tr={env.Tau_tr:.3f}, OFy_tr={env.OFy_tr:.3f}, My_d={My_d:.3f} [N*mm]")  
+            print(f"Pitch Time: {env.t_tr:.3f} [s]")
             
-            onceFlag = True # Turns on to make sure this only runs once per rollout
+            onceFlag_flip = True # Turns on to make sure this only runs once per rollout
 
         
-        if ((env.impact_flag or env.body_contact) and onceFlag2 == False):
+        if ((env.impact_flag or env.BodyContact_flag) and onceFlag_impact == False):
             start_time_impact = env.getTime()
-            onceFlag2 = True
+            onceFlag_impact = True
 
         # ============================
         ##      Record Keeping  
@@ -115,7 +115,7 @@ def executeFlight(env,agent):
         # ============================
         ##    Termination Criteria 
         # ============================
-        if (env.impact_flag or env.body_contact) and ((env.getTime()-start_time_impact) > 0.5):
+        if (env.impact_flag or env.BodyContact_flag) and ((env.getTime()-start_time_impact) > 0.5):
             env.error_str = "Rollout Completed: Impact Timeout"
             print(env.error_str)
 
@@ -129,7 +129,7 @@ def executeFlight(env,agent):
             env.runComplete_flag = True
 
         # IF POSITION FALLS BELOW FLOOR HEIGHT
-        elif env.position[2] <= -8.0: # Note: there is a lag with this at high RTF
+        elif env.posCF[2] <= -8.0: # Note: there is a lag with this at high RTF
             env.error_str = "Rollout Completed: Falling Drone"
             print(env.error_str)
 
@@ -147,14 +147,8 @@ def executeFlight(env,agent):
         # ============================
 
         ## IF NAN IS FOUND IN STATE VECTOR REPEAT RUN (Model collision Error)
-        if any(np.isnan(env.state_current)): 
+        if any(np.isnan(env.posCF)): 
             env.error_str = "Error: NAN found in state vector"
-            print(env.error_str)
-            repeat_run = True
-            break
-
-        if np.abs(env.position[1]) >= 1.0: # If CF goes crazy it'll usually shoot out in y-direction
-            env.error_str = "Error: Y-Position Exceeded"
             print(env.error_str)
             repeat_run = True
             break
@@ -164,15 +158,13 @@ def executeFlight(env,agent):
         # ============================
         if env.runComplete_flag==True:
 
-            
-            
             print("\n")
             env.reward = agent.calcReward_Impact(env)
-            env.reward_inputs = [env.z_max,env.pitch_sum,env.pitch_max]
+            env.reward_inputs = [env.d_ceil_min,env.pitch_sum,env.pitch_max]
             
             
             print(f"Reward = {env.reward:.3f}")
-            print(f"# of Leg contacts: {len(env.pad_contacts)}")
+            print(f"# of Leg contacts: {env.pad_connections}")
             print("!------------------------End Run------------------------! \n")  
 
             

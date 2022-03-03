@@ -21,8 +21,8 @@ if __name__ == '__main__':
     
 
     ## INIT LEARNING AGENT
-    mu = np.array([[4.0], [8.0]])       # Initial mu starting point
-    sigma = np.array([[1.5],[1.5]])     # Initial sigma starting point
+    mu = np.array([[30], [8.0]])       # Initial mu starting point
+    sigma = np.array([[10],[1.5]])     # Initial sigma starting point
     env.n_rollouts = 8
     agent = rlEM_PEPGAgent(mu,sigma,env.n_rollouts)
 
@@ -82,7 +82,7 @@ if __name__ == '__main__':
         
 
         print("theta_rl = ")
-        print(theta_rl[0,:], "--> RREV")
+        print(theta_rl[0,:], "--> Tau")
         print(theta_rl[1,:], "--> My")
 
         # ============================
@@ -96,11 +96,11 @@ if __name__ == '__main__':
 
             ## INITIALIZE POLICY PARAMETERS: 
             #  Policy implemented in controller node (controller.cpp)
-            RREV_thr = theta_rl[0, k_run] # RREV threshold (FOV expansion velocity) [rad/s]
+            Tau_thr = theta_rl[0, k_run] # RREV threshold (FOV expansion velocity) [rad/s]
             My = theta_rl[1, k_run]
             G2 = 0.0    # Deprecated policy term
             
-            env.policy = [RREV_thr,np.abs(My),G2]
+            env.policy = [Tau_thr/10,np.abs(My),G2]
 
             try: # Use try block to catch raised exceptions and attempt rollout again
 
