@@ -144,5 +144,6 @@
         "Default",
         "Priot"
     ],
-    "favorites.currentGroup": "Default"
+    "favorites.currentGroup": "Default",
+    "cmake.configureOnOpen": false
 }
