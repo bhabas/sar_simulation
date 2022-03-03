@@ -2,6 +2,7 @@ import numpy as np
 from threading import Thread, Timer
 
 import time
+import sys
 import csv
 import os
 import subprocess
@@ -12,6 +13,7 @@ import getpass
 
 from std_srvs.srv import Empty
 from crazyflie_msgs.msg import RLData,RLCmd,RLConvg
+from crazyflie_msgs.msg import CtrlData
 from crazyflie_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
 from crazyflie_msgs.srv import activateSticky
 
@@ -24,7 +26,6 @@ from gazebo_msgs.srv import SetModelState
 class CrazyflieEnv:
     def __init__(self,gazeboTimeout=True):
         print("[STARTING] CrazyflieEnv is starting...")
-
 
         ## GAZEBO SIMULATION INITIALIZATION
         rospy.init_node("crazyflie_env_node") 
@@ -455,15 +456,16 @@ class CrazyflieEnv:
     def close_controller(self):
         os.killpg(self.controller_p.pid, signal.SIGTERM)
 
-
-
     def close_dashboard(self):
         os.killpg(self.dashboard_p.pid, signal.SIGTERM)
 
-    def __del__(self):
+
+    def close_proc(self):
+        os.system("killall gzserver gzclient")
         os.killpg(self.gazebo_p.pid, signal.SIGTERM)
-        # os.killpg(self.dashboard_p.pid, signal.SIGTERM)
-        # os.killpg(self.controller_p.pid, signal.SIGTERM)
+        os.killpg(self.controller_p.pid, signal.SIGTERM)
+        sys.exit(0)
+
      
     def getTime(self):
         return self.t
@@ -473,11 +475,11 @@ class CrazyflieEnv:
         print("[STARTING] Starting Gazebo Process...")
         self.gazebo_p = subprocess.Popen( # Gazebo Process
             "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_launch launch_gazebo.bash", 
-            close_fds=True, preexec_fn=os.setsid, shell=True)
+            start_new_session=True, shell=True)
 
     def userInput(self,input_string,dataType=float):
+
         while True:
-        
             try:
                 vals = [dataType(i) for i in input(input_string).split(',')]
             except:
@@ -507,6 +509,7 @@ class CrazyflieEnv:
 
     def launch_controller(self):
         print("[STARTING] Starting Controller Process...")
+        os.system("rosnode kill /controller_node")
         self.controller_p = subprocess.Popen( # Controller Process
             "roslaunch crazyflie_launch controller.launch",
             close_fds=True, preexec_fn=os.setsid, shell=True)
@@ -879,6 +882,13 @@ class CrazyflieEnv:
 
 
 
+    
+
+
+
+
 if __name__ == "__main__":
     env = CrazyflieEnv()
+    rospy.on_shutdown(env.close_proc)
+
     rospy.spin()
