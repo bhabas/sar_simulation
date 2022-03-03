@@ -41,6 +41,5 @@
     <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
         args="-file $(arg model_sdf_path) -sdf -model $(arg model_name) -z 0.3" />
 
-    <node name="CF_DC_Node" pkg="crazyflie_data_converter" type="CF_DataConverter"/>
 
 </launch>

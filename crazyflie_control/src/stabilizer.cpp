@@ -17,11 +17,9 @@ void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
         stateEstimator(&state, &sensorData, &control, tick); // Run state/sensor values through "Kalman filter"
         controllerGTC(&control, &setpoint, &sensorData, &state, tick);
     
-        if (RATE_DO_EXECUTE(20, tick)) {
-            Controller::consoleOuput();
-        }
 
         Controller::publishCtrlData();
+        Controller::publishCtrlDebug();
 
 
         // PUBLISH MOTOR COMMANDS

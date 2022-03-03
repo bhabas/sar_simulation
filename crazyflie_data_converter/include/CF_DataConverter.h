@@ -24,6 +24,7 @@ is easy to use.
 #include "crazyflie_msgs/CF_MiscData.h"
 
 #include "crazyflie_msgs/CtrlData.h"
+#include "crazyflie_msgs/CtrlDebug.h"
 #include "crazyflie_msgs/RLCmd.h"
 #include "crazyflie_msgs/PadConnect.h"
 
@@ -36,6 +37,7 @@ class CF_DataConverter
 
             // INITIALIZE SUBSCRIBERS
             CTRL_Data_Sub = nh->subscribe("/CTRL/data", 1, &CF_DataConverter::CtrlData_Callback, this, ros::TransportHints().tcpNoDelay());
+            CTRL_Debug_Sub = nh->subscribe("/CTRL/debug", 1, &CF_DataConverter::CtrlDebug_Callback, this, ros::TransportHints().tcpNoDelay());
             RL_CMD_Sub = nh->subscribe("/RL/cmd",5,&CF_DataConverter::RL_CMD_Callback,this,ros::TransportHints().tcpNoDelay());
             Surface_FT_Sub = nh->subscribe("/ENV/Surface_FT_sensor",5,&CF_DataConverter::SurfaceFT_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
             Surface_Contact_Sub = nh->subscribe("/ENV/BodyContact",5,&CF_DataConverter::Surface_Contact_Callback,this,ros::TransportHints().tcpNoDelay());
@@ -71,6 +73,8 @@ class CF_DataConverter
 
         // FUNCTION PRIMITIVES
         void CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_msg);
+        void CtrlDebug_Callback(const crazyflie_msgs::CtrlDebug &ctrl_msg);
+
         void RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
         void SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStamped::ConstPtr &msg);
         void Surface_Contact_Callback(const gazebo_msgs::ContactsState &msg);
@@ -92,6 +96,7 @@ class CF_DataConverter
 
         // SUBSCRIBERS
         ros::Subscriber CTRL_Data_Sub;
+        ros::Subscriber CTRL_Debug_Sub;
         ros::Subscriber RL_CMD_Sub;
         ros::Subscriber Surface_FT_Sub;
         ros::Subscriber Surface_Contact_Sub;
@@ -216,11 +221,89 @@ class CF_DataConverter
 
         uint8_t Pad_Connections = 0;
 
+        // ====================
+        //     DEBUG VALUES
+        // ====================
+
+        bool Motorstop_Flag = false;
+        bool Pos_Ctrl_Flag = false;
+        bool Vel_Ctrl_Flag = false;
+        bool Traj_Active_Flag = false;
+        bool Tumble_Detection = false;
+        bool Tumbled_Flag = false;
+        bool Moment_Flag = false;
+        bool Policy_Armed_Flag = false;
+        bool Sticky_Flag = false;
+
 };
 
 void CF_DataConverter::consoleOuput()
 {
-    // POTENTIAL IMPLEMENTATION HERE
+    system("clear");
+    printf("t: %.4f \tCmd: \n",Time.toSec());
+    printf("Model: %s\n",MODEL_NAME.c_str());
+    printf("\n");
+
+    printf("==== Flags ====\n");
+    printf("Motorstop:\t%u  Flip_flag:\t  %u  Pos Ctrl:\t    %u \n",Motorstop_Flag, flip_flag, Pos_Ctrl_Flag);
+    printf("Traj Active:\t%u  Impact_flag:\t  %u  Vel Ctrl:\t    %u \n",Traj_Active_Flag,impact_flag,Vel_Ctrl_Flag);
+    printf("Policy_type:\t%u  Tumble Detect: %u  Moment_Flag:   %u \n",0,Tumble_Detection,Moment_Flag);
+    printf("Policy_armed:\t%u  Tumbled:\t  %u  Slowdown_type: %u\n",Policy_Armed_Flag,Tumbled_Flag,SLOWDOWN_TYPE);
+    printf("Sticky_flag:\t%u\n",Sticky_Flag);
+    printf("\n");
+
+
+    // printf("==== System States ====\n");
+    // printf("Pos [m]:\t %.3f  %.3f  %.3f\n",statePos.x,statePos.y,statePos.z);
+    // printf("Vel [m/s]:\t %.3f  %.3f  %.3f\n",stateVel.x,stateVel.y,stateVel.z);
+    // printf("Omega [rad/s]:\t %.3f  %.3f  %.3f\n",stateOmega.x,stateOmega.y,stateOmega.z);
+    // printf("Eul [deg]:\t %.3f  %.3f  %.3f\n",stateEul.x,stateEul.y,stateEul.z);
+    // printf("\n");
+
+    // printf("Tau: %.3f \tOFx: %.3f \tOFy: %.3f \tRREV: %.3f\n",Tau,OFx,OFy,RREV);
+    // printf("D_ceil: %.3f\n",d_ceil);
+    // printf("\n");
+
+
+    // printf("==== Setpoints ====\n");
+    // printf("x_d: %.3f  %.3f  %.3f\n",x_d.x,x_d.y,x_d.z);
+    // printf("v_d: %.3f  %.3f  %.3f\n",v_d.x,v_d.y,v_d.z);
+    // printf("a_d: %.3f  %.3f  %.3f\n",a_d.x,a_d.y,a_d.z);
+    // printf("\n");
+
+    
+    // printf("==== Policy Values ====\n");
+    // printf("RL: \n");
+    // printf("RREV_thr: %.3f \tG1: %.3f \tG2: %.3f\n",RREV_thr,G1,G2);
+    // printf("\n");
+
+    // printf("NN_Outputs: \n");
+    // printf("NN_Flip:  %.3f \tNN_Policy: %.3f \n",NN_flip,NN_policy);
+    // printf("\n");
+
+    // printf("==== Flip Trigger Values ====\n");
+    // printf("RREV_tr:    %.3f \tNN_tr_Flip:    %.3f \n",RREV_tr,NN_tr_flip);
+    // printf("OFy_tr:     %.3f \tNN_tr_Policy:  %.3f \n",OFy_tr,NN_tr_policy);
+    // printf("D_ceil_tr:  %.3f \n",d_ceil_tr);
+    // printf("\n");
+
+    // printf("==== Controller Actions ====\n");
+    // printf("FM [N/N*mm]: %.3f  %.3f  %.3f  %.3f\n",F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3);
+    // printf("f [g]: %.3f  %.3f  %.3f  %.3f\n",f_thrust_g,f_roll_g,f_pitch_g,f_yaw_g);
+    // printf("\n");
+
+    // printf("MS_PWM: %u  %u  %u  %u\n",M1_pwm,M2_pwm,M3_pwm,M4_pwm);
+    // printf("\n");
+
+
+    // printf("=== Parameters ====\n");
+    // printf("Kp_P: %.3f  %.3f  %.3f \t",Kp_p.x,Kp_p.y,Kp_p.z);
+    // printf("Kp_R: %.3f  %.3f  %.3f \n",Kp_R.x,Kp_R.y,Kp_R.z);
+    // printf("Kd_P: %.3f  %.3f  %.3f \t",Kd_p.x,Kd_p.y,Kd_p.z);
+    // printf("Kd_R: %.3f  %.3f  %.3f \n",Kd_R.x,Kd_R.y,Kd_R.z);
+    // printf("Ki_P: %.3f  %.3f  %.3f \t",Ki_p.x,Ki_p.y,Ki_p.z);
+    // printf("Ki_R: %.3f  %.3f  %.3f \n",Ki_p.x,Ki_p.y,Ki_p.z);
+    // printf("======\n");
 }
 
 // MARK IF PAD CONTACT HAS OCCURED AND SUM NUMBER OF PAD CONTACTS
@@ -308,5 +391,15 @@ void CF_DataConverter::adjustSimSpeed(float speed_mult)
     GZ_SimSpeed_Client.call(srv);
 }
 
-
+void CF_DataConverter::CtrlDebug_Callback(const crazyflie_msgs::CtrlDebug &ctrl_msg)
+{
+    Motorstop_Flag = ctrl_msg.Motorstop_Flag;
+    Pos_Ctrl_Flag = ctrl_msg.Pos_Ctrl;
+    Vel_Ctrl_Flag = ctrl_msg.Vel_Ctrl;
+    Traj_Active_Flag = ctrl_msg.Traj_Active;
+    Tumble_Detection = ctrl_msg.Tumble_Detection;
+    Tumbled_Flag = ctrl_msg.Tumbled_Flag;
+    Moment_Flag = ctrl_msg.Moment_Flag;
+    Policy_Armed_Flag = ctrl_msg.Policy_Armed;
+}
 

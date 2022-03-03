@@ -27,17 +27,16 @@ be transferred to the Crazyflie Firmware.
 #include <ros/ros.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
-#include <gazebo_msgs/SetPhysicsProperties.h>
 
 
 #include "crazyflie_msgs/OF_SensorData.h"
 #include "crazyflie_msgs/MS.h"
 
 #include "crazyflie_msgs/CtrlData.h"
-#include "crazyflie_msgs/ImpactData.h"
+#include "crazyflie_msgs/CtrlDebug.h"
+
 #include "crazyflie_msgs/RLCmd.h"
 #include "crazyflie_msgs/RLData.h"
-#include "crazyflie_msgs/PadConnect.h"
 
 
 
@@ -59,6 +58,7 @@ class Controller
 
             // CONTROLLER TOPICS
             CTRL_Data_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/CTRL/data",1);
+            CTRL_Debug_Publisher = nh->advertise<crazyflie_msgs::CtrlDebug>("CTRL/debug",1);
 
             // RL TOPICS
             RL_CMD_Subscriber = nh->subscribe("/RL/cmd",5,&Controller::RL_CMD_Callback,this,ros::TransportHints().tcpNoDelay());
@@ -70,11 +70,6 @@ class Controller
 
             // ENVIRONMENT TOPICS
             ENV_Vicon_Subscriber = nh->subscribe("/ENV/viconState_UKF",1,&Controller::viconState_Callback,this,ros::TransportHints().tcpNoDelay());
-            ENV_CeilingFT_Subscriber = nh->subscribe("/ENV/aaa",5,&Controller::ceilingFT_Callback,this,ros::TransportHints().tcpNoDelay());
-            
-            // GAZEBO SERVICES
-            GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
-
             
             Controller::loadParams();
 
@@ -97,6 +92,7 @@ class Controller
         // PUBLISHERS
         ros::Publisher CF_PWM_Publisher;
         ros::Publisher CTRL_Data_Publisher;
+        ros::Publisher CTRL_Debug_Publisher;
 
         // SERVICES
         ros::ServiceClient GZ_SimSpeed_Client;
@@ -121,20 +117,18 @@ class Controller
         void viconState_Callback(const nav_msgs::Odometry::ConstPtr &msg);
         void IMU_Sensor_Callback(const sensor_msgs::Imu::ConstPtr &msg);
         void OF_Sensor_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg);
-
         void RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
-        void ceilingFT_Callback(const crazyflie_msgs::ImpactData::ConstPtr &msg);
 
         void stabilizerLoop();
         void loadParams();
         void consoleOuput();
         void publishCtrlData();
+        void publishCtrlDebug();
         
 
         crazyflie_msgs::MS MS_PWM_msg;
         crazyflie_msgs::CtrlData CtrlData_msg;
-
-        gazebo_msgs::SetPhysicsProperties srv;
+        crazyflie_msgs::CtrlDebug CtrlDebug_msg;
 
 };
 
@@ -194,50 +188,29 @@ void Controller::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 
     setpoint.GTC_cmd_rec = true;
 
-    if(msg->cmd_type == 0) // RESET SIMULATION SPEED
-    {
-    }
-
-    else if(msg->cmd_type == 6) // RESET ROS PARAM VALUES
+    if(msg->cmd_type == 6) // RESET ROS PARAM VALUES
     {
         Controller::loadParams();
 
     }
 
-    else if(msg->cmd_type == 11) // MARK STICKY_FLAG IS ON
-    {
-        if(msg->cmd_flag == 0)
-        {
-            STICKY_FLAG = false; 
-        } 
-        else if(msg->cmd_flag == 1)
-        {
-            STICKY_FLAG = true;
-        } 
-
-    }   
-
 }
 
-void Controller::ceilingFT_Callback(const crazyflie_msgs::ImpactData::ConstPtr &msg)
-{
-    // THIS IS USED TO INCREASE SIM SPEED WHEN CEILING IMPACT DETECTED
-}
 
 // LOAD VALUES FROM ROSPARAM SERVER
 void Controller::loadParams()
 {
     // SIMULATION SETTINGS FROM CONFIG FILE
-    ros::param::get("/MODEL_NAME",_MODEL_NAME);
-    ros::param::get("/CEILING_HEIGHT",_H_CEILING);
+    // ros::param::get("/MODEL_NAME",_MODEL_NAME);
+    // ros::param::get("/CEILING_HEIGHT",_H_CEILING);
     ros::param::get("/CF_MASS",_CF_MASS);
     ros::param::get("/POLICY_TYPE",_POLICY_TYPE);
     POLICY_TYPE = (Policy_Type)_POLICY_TYPE; // Cast ROS param (int) to enum (Policy_Type)
 
     // DEBUG SETTINGS
-    ros::param::get("/SIM_SPEED",_SIM_SPEED);
-    ros::param::get("/SIM_SLOWDOWN_SPEED",_SIM_SLOWDOWN_SPEED);
-    ros::param::get("/LANDING_SLOWDOWN_FLAG",_LANDING_SLOWDOWN_FLAG);
+    // ros::param::get("/SIM_SPEED",_SIM_SPEED);
+    // ros::param::get("/SIM_SLOWDOWN_SPEED",_SIM_SLOWDOWN_SPEED);
+    // ros::param::get("/LANDING_SLOWDOWN_FLAG",_LANDING_SLOWDOWN_FLAG);
 
     // COLLECT CTRL GAINS FROM CONFIG FILE
     ros::param::get("P_kp_xy",P_kp_xy);
@@ -262,76 +235,20 @@ void Controller::loadParams()
 
 }
 
-// CONTROLLER DEBUG OUTPUT
-void Controller::consoleOuput()
+
+void Controller::publishCtrlDebug()
 {
-    system("clear");
-    printf("t: %.4f \tCmd: \n",ros::Time::now().toSec());
-    printf("Model: %s\n",_MODEL_NAME.c_str());
-    printf("\n");
+    CtrlDebug_msg.Motorstop_Flag = motorstop_flag;
+    CtrlDebug_msg.Pos_Ctrl = (bool)kp_xf;
+    CtrlDebug_msg.Vel_Ctrl = (bool)kd_xf;
+    CtrlDebug_msg.Traj_Active = execute_traj;
+    CtrlDebug_msg.Tumble_Detection = tumble_detection;
+    CtrlDebug_msg.Tumbled_Flag = tumbled;
+    CtrlDebug_msg.Moment_Flag = moment_flag; 
+    CtrlDebug_msg.Policy_Armed = policy_armed_flag; 
 
-    printf("==== Flags ====\n");
-    printf("Motorstop:\t%u  Flip_flag:\t  %u  Pos Ctrl:\t    %u \n",motorstop_flag, flip_flag,(int)kp_xf);
-    printf("Traj Active:\t%u  Impact_flag:\t  %u  Vel Ctrl:\t    %u \n",execute_traj,0,(int)kd_xf);
-    printf("Policy_type:\t%u  Tumble Detect: %u  Moment_Flag:   %u \n",POLICY_TYPE,tumble_detection,moment_flag);
-    printf("Policy_armed:\t%u  Tumbled:\t  %u  Slowdown_type: %u\n",policy_armed_flag,tumbled,_slowdown_type);
-    printf("Sticky_flag:\t%u\n",STICKY_FLAG);
-    printf("\n");
-
-
-    printf("==== System States ====\n");
-    printf("Pos [m]:\t %.3f  %.3f  %.3f\n",statePos.x,statePos.y,statePos.z);
-    printf("Vel [m/s]:\t %.3f  %.3f  %.3f\n",stateVel.x,stateVel.y,stateVel.z);
-    printf("Omega [rad/s]:\t %.3f  %.3f  %.3f\n",stateOmega.x,stateOmega.y,stateOmega.z);
-    printf("Eul [deg]:\t %.3f  %.3f  %.3f\n",stateEul.x,stateEul.y,stateEul.z);
-    printf("\n");
-
-    printf("Tau: %.3f \tOFx: %.3f \tOFy: %.3f \tRREV: %.3f\n",Tau,OFx,OFy,RREV);
-    printf("D_ceil: %.3f\n",d_ceil);
-    printf("\n");
-
-
-    printf("==== Setpoints ====\n");
-    printf("x_d: %.3f  %.3f  %.3f\n",x_d.x,x_d.y,x_d.z);
-    printf("v_d: %.3f  %.3f  %.3f\n",v_d.x,v_d.y,v_d.z);
-    printf("a_d: %.3f  %.3f  %.3f\n",a_d.x,a_d.y,a_d.z);
-    printf("\n");
-
-    
-    printf("==== Policy Values ====\n");
-    printf("RL: \n");
-    printf("RREV_thr: %.3f \tG1: %.3f \tG2: %.3f\n",RREV_thr,G1,G2);
-    printf("\n");
-
-    printf("NN_Outputs: \n");
-    printf("NN_Flip:  %.3f \tNN_Policy: %.3f \n",NN_flip,NN_policy);
-    printf("\n");
-
-    printf("==== Flip Trigger Values ====\n");
-    printf("RREV_tr:    %.3f \tNN_tr_Flip:    %.3f \n",RREV_tr,NN_tr_flip);
-    printf("OFy_tr:     %.3f \tNN_tr_Policy:  %.3f \n",OFy_tr,NN_tr_policy);
-    printf("D_ceil_tr:  %.3f \n",d_ceil_tr);
-    printf("\n");
-
-    printf("==== Controller Actions ====\n");
-    printf("FM [N/N*mm]: %.3f  %.3f  %.3f  %.3f\n",F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3);
-    printf("f [g]: %.3f  %.3f  %.3f  %.3f\n",f_thrust_g,f_roll_g,f_pitch_g,f_yaw_g);
-    printf("\n");
-
-    printf("MS_PWM: %u  %u  %u  %u\n",M1_pwm,M2_pwm,M3_pwm,M4_pwm);
-    printf("\n");
-
-
-    printf("=== Parameters ====\n");
-    printf("Kp_P: %.3f  %.3f  %.3f \t",Kp_p.x,Kp_p.y,Kp_p.z);
-    printf("Kp_R: %.3f  %.3f  %.3f \n",Kp_R.x,Kp_R.y,Kp_R.z);
-    printf("Kd_P: %.3f  %.3f  %.3f \t",Kd_p.x,Kd_p.y,Kd_p.z);
-    printf("Kd_R: %.3f  %.3f  %.3f \n",Kd_R.x,Kd_R.y,Kd_R.z);
-    printf("Ki_P: %.3f  %.3f  %.3f \t",Ki_p.x,Ki_p.y,Ki_p.z);
-    printf("Ki_R: %.3f  %.3f  %.3f \n",Ki_p.x,Ki_p.y,Ki_p.z);
-    printf("======\n");
+    CTRL_Debug_Publisher.publish(CtrlDebug_msg);
 }
-
 
 // PUBLISH CONTROLLER DATA ON ROS TOPIC
 void Controller::publishCtrlData()

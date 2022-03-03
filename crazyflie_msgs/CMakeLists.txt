@@ -22,9 +22,10 @@ add_message_files(
   CF_StateData.msg
   RLCmd.msg
   RLData.msg
-  CtrlData.msg
-  PadConnect.msg
   RLConvg.msg
+  CtrlData.msg
+  CtrlDebug.msg
+  PadConnect.msg
   MS.msg
   OF_SensorData.msg
 )

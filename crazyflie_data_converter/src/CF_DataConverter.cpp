@@ -256,6 +256,19 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
                 
     }
 
+    if(msg->cmd_type == 11)
+    {
+        if(msg->cmd_flag == 0)
+        {
+            Sticky_Flag = false;
+        }
+
+        if(msg->cmd_flag == 1)
+        {
+            Sticky_Flag = true;
+        }
+    }
+
 
 }
 
