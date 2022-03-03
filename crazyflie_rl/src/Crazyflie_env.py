@@ -474,6 +474,19 @@ class CrazyflieEnv:
         self.gazebo_p = subprocess.Popen( # Gazebo Process
             "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_launch launch_gazebo.bash", 
             close_fds=True, preexec_fn=os.setsid, shell=True)
+
+    def userInput(self,input_string,dataType=float):
+        while True:
+        
+            try:
+                vals = [dataType(i) for i in input(input_string).split(',')]
+            except:
+                continue
+        
+            if len(vals) == 1:
+                return vals[0]
+            else:
+                return vals
         
         
     def pause_sim(self,pause_flag):
@@ -523,6 +536,10 @@ class CrazyflieEnv:
                 
 
     def reset_pos(self): # Disable sticky then places spawn_model at origin
+
+        ## DISABLE STICKY
+        self.step('sticky',ctrl_flag=0)
+        time.sleep(0.05)
         
         ## RESET POSITION AND VELOCITY
         state_msg = ModelState()
@@ -548,10 +565,8 @@ class CrazyflieEnv:
         set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         set_state_srv(state_msg)
 
-
         ## RESET HOME/TUMBLE DETECTION AND STICKY
         self.step('tumble',ctrl_flag=1) # Tumble Detection On
-        self.step('sticky',ctrl_flag=0)
         self.step('home')
 
 
@@ -585,7 +600,7 @@ class CrazyflieEnv:
                     'acc':3,
                     'tumble':4,
                     'stop':5,
-                    'gains':6,
+                    'params':6,
                     'moment':7,
                     'policy':8,
                     'traj':9,
