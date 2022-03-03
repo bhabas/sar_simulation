@@ -538,7 +538,7 @@ class CrazyflieEnv:
     def reset_pos(self): # Disable sticky then places spawn_model at origin
 
         ## DISABLE STICKY
-        self.step('sticky',ctrl_flag=0)
+        self.step('sticky',cmd_flag=0)
         time.sleep(0.05)
         
         ## RESET POSITION AND VELOCITY
@@ -566,7 +566,7 @@ class CrazyflieEnv:
         set_state_srv(state_msg)
 
         ## RESET HOME/TUMBLE DETECTION AND STICKY
-        self.step('tumble',ctrl_flag=1) # Tumble Detection On
+        self.step('tumble',cmd_flag=1) # Tumble Detection On
         self.step('home')
 
 
@@ -575,17 +575,17 @@ class CrazyflieEnv:
         
 
 
-    def step(self,action,ctrl_vals=[0,0,0],ctrl_flag=1):
+    def step(self,action,cmd_vals=[0,0,0],cmd_flag=1):
 
         if action == "sticky":
 
             rospy.wait_for_service("/activate_Sticky_Pad_1")
-            if ctrl_flag == 1: 
+            if cmd_flag == 1: 
                 for ii in range(4):
                     sticky_srv = rospy.ServiceProxy(f"/activate_Sticky_Pad_{ii+1}", activateSticky)
                     sticky_srv(True)
                     
-            elif ctrl_flag == 0:
+            elif cmd_flag == 0:
                 for ii in range(4):
                     sticky_srv = rospy.ServiceProxy(f"/activate_Sticky_Pad_{ii+1}", activateSticky)
                     sticky_srv(False)
@@ -608,10 +608,10 @@ class CrazyflieEnv:
         
 
         cmd_msg.cmd_type = cmd_dict[action]
-        cmd_msg.cmd_vals.x = ctrl_vals[0]
-        cmd_msg.cmd_vals.y = ctrl_vals[1]
-        cmd_msg.cmd_vals.z = ctrl_vals[2]
-        cmd_msg.cmd_flag = ctrl_flag
+        cmd_msg.cmd_vals.x = cmd_vals[0]
+        cmd_msg.cmd_vals.y = cmd_vals[1]
+        cmd_msg.cmd_vals.z = cmd_vals[2]
+        cmd_msg.cmd_flag = cmd_flag
         
         self.RL_CMD_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
         time.sleep(0.05)

@@ -43,79 +43,80 @@ def cmd_send(env):
 
 
             if action=='home': # Execute home or stop action
-                ctrl_vals = [0,0,0]
-                ctrl_flag = 1
+                cmd_vals = [0,0,0]
+                cmd_flag = 1
                 print("Reset controller to default values\n")
 
-                env.step('sticky',ctrl_vals,0)
-                env.step(action,ctrl_vals,ctrl_flag)
+                env.step('sticky',cmd_vals,0)
+                env.step(action,cmd_vals,cmd_flag)
 
             elif action=='pos':
-                ctrl_vals = env.userInput("Set desired position values (x,y,z): ",float)
-                ctrl_flag = env.userInput("Pos control On/Off (1,0): ",int)
+                cmd_vals = env.userInput("Set desired position values (x,y,z): ",float)
+                cmd_flag = env.userInput("Pos control On/Off (1,0): ",int)
                 print()
 
-                env.step(action,ctrl_vals,ctrl_flag)
+                env.step(action,cmd_vals,cmd_flag)
 
             elif action=='vel':
-                ctrl_vals = env.userInput("Set desired velocity values (x,y,z): ",float)
-                ctrl_flag = env.userInput("Vel control On/Off (1,0): ",int)
+                cmd_vals = env.userInput("Set desired velocity values (x,y,z): ",float)
+                cmd_flag = env.userInput("Vel control On/Off (1,0): ",int)
                 print()
 
-                env.step(action,ctrl_vals,ctrl_flag)
+                env.step(action,cmd_vals,cmd_flag)
 
             elif action=='tumble': # Turn on tumble detection
 
-                ctrl_vals = [0,0,0]
-                ctrl_flag = env.userInput("Tumble Detection On/Off (1,0): ",int)
+                cmd_vals = [0,0,0]
+                cmd_flag = env.userInput("Tumble Detection On/Off (1,0): ",int)
                 print()
 
-                env.step('tumble',ctrl_vals,ctrl_flag)
+                env.step('tumble',cmd_vals,cmd_flag)
 
             if action=='stop': # Execute home or stop action
-                ctrl_vals = [0,0,0]
-                ctrl_flag = 1
+                cmd_vals = [0,0,0]
+                cmd_flag = 1
                 print("Rotors turned of\n")
 
-                env.step(action,ctrl_vals,ctrl_flag)
+                env.step(action,cmd_vals,cmd_flag)
 
 
             elif action=='params': # Updates gain values from config file
-                ctrl_vals = [0,0,0]
-                ctrl_flag = 1
+                cmd_vals = [0,0,0]
+                cmd_flag = 1
                 print("Reset ROS Parameters\n")
 
                 os.system("roslaunch crazyflie_launch params.launch")
-                env.step(action,ctrl_vals,ctrl_flag)
+                env.step(action,cmd_vals,cmd_flag)
 
             elif action=='moment':
-                ctrl_vals = env.userInput("Set desired moment values (x,y,z): ",float)
-                ctrl_flag = 1
+                cmd_vals = env.userInput("Set desired moment values (x,y,z): ",float)
+                cmd_flag = 1
                 print()
 
-                env.step(action,ctrl_vals,ctrl_flag)
+                env.step(action,cmd_vals,cmd_flag)
 
             elif action=='policy':
-                ctrl_vals = env.userInput("Set desired (RREV,My_d) policy: ",float)
-                ctrl_vals.append(0) # Append extra value to match framework
-                ctrl_flag = 1
+                cmd_vals = env.userInput("Set desired (RREV,My_d) policy: ",float)
+                cmd_vals.append(0) # Append extra value to match framework
+                cmd_flag = 1
                 print()
 
-                env.step(action,ctrl_vals,ctrl_flag)
+                env.step(action,cmd_vals,cmd_flag)
 
             elif action=='traj':
-                ctrl_vals = env.userInput("Set desired velocity trajectory (Pos_0,Vel_d,Acc_max): ",float)
-                ctrl_flag = env.userInput("Set desired axis (x:0,y:1,z:2): ",int)
+                axis = env.userInput("Set desired axis (x:0,y:1,z:2): ",int)
+                Pos_0 = env.posCF[axis]
+                cmd_vals = env.userInput("Set desired velocity trajectory (Vel_d,Acc_max): ",float)
                 print()
 
-                env.step(action,ctrl_vals,ctrl_flag)
+                env.step(action,[Pos_0,cmd_vals[0],cmd_vals[1]],cmd_flag=axis)
 
             elif action=='sticky':
-                ctrl_vals = [0,0,0]
-                ctrl_flag = env.userInput("Turn sticky pads On/Off (1,0): ",int)
+                cmd_vals = [0,0,0]
+                cmd_flag = env.userInput("Turn sticky pads On/Off (1,0): ",int)
                 print()
 
-                env.step(action,ctrl_vals,ctrl_flag)
+                env.step(action,cmd_vals,cmd_flag)
             
             elif action == 'reset':
                 print("Reset Pos/Vel -- Sticky off -- Controller Reset\n")
