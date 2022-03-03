@@ -249,6 +249,10 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
         Pad4_Contact = 0;
 
         Pad_Connections = 0;
+
+        // RESET SIM SPEED
+        CF_DataConverter::adjustSimSpeed(SIM_SPEED);
+
                 
     }
 
@@ -339,6 +343,9 @@ void CF_DataConverter::MainLoop()
         if (tick%(loopRate/consoleRate) == 0) {
             CF_DataConverter::consoleOuput();
         }
+
+        CF_DataConverter::checkSlowdown();
+
 
         // PUBLISH ORGANIZED DATA
         Publish_StateData();

@@ -77,7 +77,6 @@ class Controller
 
             
             Controller::loadParams();
-            Controller::adjustSimSpeed(_SIM_SPEED);
 
             // Thread main controller loop so other callbacks can work fine
             controllerThread = std::thread(&Controller::stabilizerLoop, this);
@@ -108,7 +107,6 @@ class Controller
         uint32_t tick = 1;
 
         // ROS SPECIFIC VALUES
-        int _impact_flag = 0;
         int _slowdown_type = 0;
         float _H_CEILING = 2.10;
         bool _LANDING_SLOWDOWN_FLAG;
@@ -129,9 +127,7 @@ class Controller
 
         void stabilizerLoop();
         void loadParams();
-        void adjustSimSpeed(float speed_mult);
         void consoleOuput();
-        void checkSlowdown();
         void publishCtrlData();
         
 
@@ -200,9 +196,6 @@ void Controller::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 
     if(msg->cmd_type == 0) // RESET SIMULATION SPEED
     {
-        _impact_flag = false;
-        _slowdown_type = 0;
-        Controller::adjustSimSpeed(_SIM_SPEED);
     }
 
     else if(msg->cmd_type == 6) // RESET ROS PARAM VALUES
@@ -229,7 +222,6 @@ void Controller::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 void Controller::ceilingFT_Callback(const crazyflie_msgs::ImpactData::ConstPtr &msg)
 {
     // THIS IS USED TO INCREASE SIM SPEED WHEN CEILING IMPACT DETECTED
-    _impact_flag = msg->impact_flag;
 }
 
 // LOAD VALUES FROM ROSPARAM SERVER
@@ -270,37 +262,6 @@ void Controller::loadParams()
 
 }
 
-// CHANGES REAL TIME FACTOR FOR THE SIMULATION (LOWER = SLOWER)
-void Controller::adjustSimSpeed(float speed_mult)
-{
-    gazebo_msgs::SetPhysicsProperties srv;
-    srv.request.time_step = 0.001;
-    srv.request.max_update_rate = (int)(speed_mult/0.001);
-
-
-    geometry_msgs::Vector3 gravity_vec;
-    gravity_vec.x = 0.0;
-    gravity_vec.y = 0.0;
-    gravity_vec.z = -9.8066;
-    srv.request.gravity = gravity_vec;
-
-    gazebo_msgs::ODEPhysics ode_config;
-    ode_config.auto_disable_bodies = false;
-    ode_config.sor_pgs_precon_iters = 0;
-    ode_config.sor_pgs_iters = 50;
-    ode_config.sor_pgs_w = 1.3;
-    ode_config.sor_pgs_rms_error_tol = 0.0;
-    ode_config.contact_surface_layer = 0.001;
-    ode_config.contact_max_correcting_vel = 0.0;
-    ode_config.cfm = 0.0;
-    ode_config.erp = 0.2;
-    ode_config.max_contacts = 20;
-
-    srv.request.ode_config = ode_config;
-
-    GZ_SimSpeed_Client.call(srv);
-}
-
 // CONTROLLER DEBUG OUTPUT
 void Controller::consoleOuput()
 {
@@ -311,7 +272,7 @@ void Controller::consoleOuput()
 
     printf("==== Flags ====\n");
     printf("Motorstop:\t%u  Flip_flag:\t  %u  Pos Ctrl:\t    %u \n",motorstop_flag, flip_flag,(int)kp_xf);
-    printf("Traj Active:\t%u  Impact_flag:\t  %u  Vel Ctrl:\t    %u \n",execute_traj,_impact_flag,(int)kd_xf);
+    printf("Traj Active:\t%u  Impact_flag:\t  %u  Vel Ctrl:\t    %u \n",execute_traj,0,(int)kd_xf);
     printf("Policy_type:\t%u  Tumble Detect: %u  Moment_Flag:   %u \n",POLICY_TYPE,tumble_detection,moment_flag);
     printf("Policy_armed:\t%u  Tumbled:\t  %u  Slowdown_type: %u\n",policy_armed_flag,tumbled,_slowdown_type);
     printf("Sticky_flag:\t%u\n",STICKY_FLAG);
@@ -371,33 +332,6 @@ void Controller::consoleOuput()
     printf("======\n");
 }
 
-// CHECK IF SIM SPEED NEEDS TO BE ADJUSTED
-void Controller::checkSlowdown()
-{   
-    // SIMULATION SLOWDOWN
-    if(_LANDING_SLOWDOWN_FLAG==true && tick >= 500){
-
-        // WHEN CLOSE TO THE CEILING REDUCE SIM SPEED
-        if(d_ceil<=0.5 && _slowdown_type == 0){
-            
-            Controller::adjustSimSpeed(_SIM_SLOWDOWN_SPEED);
-            _slowdown_type = 1;
-        }
-
-        // IF IMPACTED CEILING OR FALLING AWAY, INCREASE SIM SPEED TO DEFAULT
-        if(_impact_flag == true && _slowdown_type == 1)
-        {
-            Controller::adjustSimSpeed(_SIM_SPEED);
-            _slowdown_type = 2; // (Don't call adjustSimSpeed more than once)
-        }
-        else if(stateVel.z <= -0.5 && _slowdown_type == 1){
-            Controller::adjustSimSpeed(_SIM_SPEED);
-            _slowdown_type = 2;
-        }
-    
-    }
-
-}
 
 // PUBLISH CONTROLLER DATA ON ROS TOPIC
 void Controller::publishCtrlData()

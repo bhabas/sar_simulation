@@ -21,7 +21,6 @@ void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
             Controller::consoleOuput();
         }
 
-        Controller::checkSlowdown();
         Controller::publishCtrlData();
 
 

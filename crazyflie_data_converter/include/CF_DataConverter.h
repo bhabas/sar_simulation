@@ -15,6 +15,7 @@ is easy to use.
 #include <ros/ros.h>
 #include <geometry_msgs/WrenchStamped.h>
 #include <gazebo_msgs/ContactsState.h>
+#include <gazebo_msgs/SetPhysicsProperties.h>
 
 // CUSTOM INCLUDES
 #include "crazyflie_msgs/CF_StateData.h"
@@ -46,16 +47,20 @@ class CF_DataConverter
             FlipData_Pub =  nh->advertise<crazyflie_msgs::CF_FlipData>("/CF_DC/FlipData",1);
             ImpactData_Pub = nh->advertise<crazyflie_msgs::CF_ImpactData>("/CF_DC/ImpactData",1);   
 
+            // GAZEBO SERVICES
+            GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
+
             ros::param::get("/MODEL_NAME",MODEL_NAME);
-            // ros::param::get("/CEILING_HEIGHT",_H_CEILING);
+            ros::param::get("/CEILING_HEIGHT",H_CEILING);
             // ros::param::get("/CF_MASS",_CF_MASS);
             // ros::param::get("/POLICY_TYPE",_POLICY_TYPE);
 
             // // DEBUG SETTINGS
-            // ros::param::get("/SIM_SPEED",_SIM_SPEED);
-            // ros::param::get("/SIM_SLOWDOWN_SPEED",_SIM_SLOWDOWN_SPEED);
-            // ros::param::get("/LANDING_SLOWDOWN_FLAG",_LANDING_SLOWDOWN_FLAG);
+            ros::param::get("/SIM_SPEED",SIM_SPEED);
+            ros::param::get("/SIM_SLOWDOWN_SPEED",SIM_SLOWDOWN_SPEED);
+            ros::param::get("/LANDING_SLOWDOWN_FLAG",LANDING_SLOWDOWN_FLAG);
 
+            CF_DataConverter::adjustSimSpeed(SIM_SPEED);
             BodyCollision_str = MODEL_NAME + "::crazyflie_ModelBase::crazyflie_body::body_collision";
 
             controllerThread = std::thread(&CF_DataConverter::MainLoop, this);
@@ -78,6 +83,8 @@ class CF_DataConverter
 
         void MainLoop();
         void consoleOuput();
+        void checkSlowdown();
+        void adjustSimSpeed(float speed_mult);
         void decompressXY(uint32_t xy, float xy_arr[]);
         void quat2euler(float quat[], float eul[]);
 
@@ -96,6 +103,9 @@ class CF_DataConverter
         ros::Publisher ImpactData_Pub;
         ros::Publisher MiscData_Pub;
 
+        // SERVICES
+        ros::ServiceClient GZ_SimSpeed_Client;
+
         // MESSAGES
         crazyflie_msgs::CF_StateData StateData_msg;
         crazyflie_msgs::CF_FlipData FlipData_msg;
@@ -103,9 +113,18 @@ class CF_DataConverter
         crazyflie_msgs::CF_MiscData MiscData_msg;
 
         std::thread controllerThread;
-        std::string MODEL_NAME;
         std::string BodyCollision_str;
         uint32_t tick = 1;
+        
+        std::string MODEL_NAME;
+        float H_CEILING = 2.10;
+
+        int SLOWDOWN_TYPE = 0;
+        bool LANDING_SLOWDOWN_FLAG;
+        float SIM_SPEED; 
+        float SIM_SLOWDOWN_SPEED;
+
+
 
         // ===================
         //     FLIGHT DATA
@@ -228,6 +247,65 @@ void CF_DataConverter::Surface_Contact_Callback(const gazebo_msgs::ContactsState
             BodyContact_flag = true;
         }  
     }
+}
+
+// CHECK IF SIM SPEED NEEDS TO BE ADJUSTED
+void CF_DataConverter::checkSlowdown()
+{   
+    // SIMULATION SLOWDOWN
+    if(LANDING_SLOWDOWN_FLAG==true && tick >= 500){
+
+        // WHEN CLOSE TO THE CEILING REDUCE SIM SPEED
+        if(D_ceil<=0.5 && SLOWDOWN_TYPE == 0){
+            
+            CF_DataConverter::adjustSimSpeed(SIM_SLOWDOWN_SPEED);
+            SLOWDOWN_TYPE = 1;
+        }
+
+        // IF IMPACTED CEILING OR FALLING AWAY, INCREASE SIM SPEED TO DEFAULT
+        if(impact_flag == true && SLOWDOWN_TYPE == 1)
+        {
+            CF_DataConverter::adjustSimSpeed(SIM_SPEED);
+            SLOWDOWN_TYPE = 2; // (Don't call adjustSimSpeed more than once)
+        }
+        else if(Twist.linear.z <= -0.5 && SLOWDOWN_TYPE == 1){
+            CF_DataConverter::adjustSimSpeed(SIM_SPEED);
+            SLOWDOWN_TYPE = 2;
+        }
+    
+    }
+
+}
+
+// CHANGES REAL TIME FACTOR FOR THE SIMULATION (LOWER = SLOWER)
+void CF_DataConverter::adjustSimSpeed(float speed_mult)
+{
+    gazebo_msgs::SetPhysicsProperties srv;
+    srv.request.time_step = 0.001;
+    srv.request.max_update_rate = (int)(speed_mult/0.001);
+
+
+    geometry_msgs::Vector3 gravity_vec;
+    gravity_vec.x = 0.0;
+    gravity_vec.y = 0.0;
+    gravity_vec.z = -9.8066;
+    srv.request.gravity = gravity_vec;
+
+    gazebo_msgs::ODEPhysics ode_config;
+    ode_config.auto_disable_bodies = false;
+    ode_config.sor_pgs_precon_iters = 0;
+    ode_config.sor_pgs_iters = 50;
+    ode_config.sor_pgs_w = 1.3;
+    ode_config.sor_pgs_rms_error_tol = 0.0;
+    ode_config.contact_surface_layer = 0.001;
+    ode_config.contact_max_correcting_vel = 0.0;
+    ode_config.cfm = 0.0;
+    ode_config.erp = 0.2;
+    ode_config.max_contacts = 20;
+
+    srv.request.ode_config = ode_config;
+
+    GZ_SimSpeed_Client.call(srv);
 }
 
 
