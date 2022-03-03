@@ -1,0 +1,14 @@
+material ceilingMat/Checkerboard
+{
+    receive_shadows off
+    technique
+    {
+        pass
+        {
+            texture_unit
+            {
+                texture Checkerboard__0.1m_2.5m_x_1.5m.png
+            }
+        }
+    }
+}

@@ -1,1 +1,1 @@
-uint16[4] MotorSpeeds
+uint16[4] MotorPWM

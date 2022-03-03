@@ -101,7 +101,7 @@ class DashboardNode:
 
         self.RREV = np.nan
         # self.tau = 1/msg.RREV
-        self.OF_y = msg.OF_y
+        self.OFy = msg.OFy
         self.OF_x = msg.OF_x    
         
 

@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import *
 import pyqtgraph as pg
 
 import os,rospkg
-from crazyflie_sim_dashboard.Dashboard_Node import DashboardNode
+from Dashboard_Node import DashboardNode
 import numpy as np
 
 
@@ -367,7 +367,7 @@ class OF_Widget(QWidget):
         self.curve_y.setData(self.y_arr)
 
         self.z_arr = np.roll(self.z_arr,-1)
-        self.z_arr[-1] = DashNode.OF_y
+        self.z_arr[-1] = DashNode.OFy
         self.curve_z.setData(self.z_arr)
 
     def reset_axes(self):
@@ -583,14 +583,14 @@ class Mu_Widget(QWidget):
         self.setLayout(self.layout)
 
 
-        self.PW = pg.PlotWidget(name='Plot1',labels =  {'left':'Mu', 'bottom':'Time [s]'}) # Plot window 1
+        self.PW = pg.PlotWidget(name='Plot1',labels = {'left':'RREV (rad/s)', 'bottom':'Episode','right':'My (N*mm)'}) # Plot window 1
         self.layout.addWidget(self.PW)
         
 
         ## UPDATE PLOT 1
         self.PW.setBackground('w')
         self.PW.setXRange(0,20)
-        self.PW.setYRange(0,16)
+        self.PW.setYRange(0,12)
         self.PW.showGrid(x=True, y=True, alpha=0.2)
 
 
@@ -641,7 +641,7 @@ class Sigma_Widget(QWidget):
         self.setLayout(self.layout)
 
 
-        self.PW = pg.PlotWidget(name='Plot1',labels =  {'left':'Mu', 'bottom':'Time [s]'}) # Plot window 1
+        self.PW = pg.PlotWidget(name='Plot1',labels =  {'left':'RREV (rad/s)', 'bottom':'Episode','right':'My (N*mm)'}) # Plot window 1
         self.layout.addWidget(self.PW)
         
 
@@ -677,9 +677,17 @@ if __name__ == '__main__':
 
     ## INITIALIZE APPLICATION   
     app = QApplication(sys.argv)
+    val = int(input("1 or 2"))
 
-    ## INITIALIZE DASHBOARD WINDOW
-    myApp = Sigma_Widget()
-    myApp.show()
+    if val == 1:
+
+        ## INITIALIZE DASHBOARD WINDOW
+        myApp = Mu_Widget()
+        myApp.show()
+    else:
+        ## INITIALIZE DASHBOARD WINDOW
+        myApp = RL_Widget()
+        myApp.show()
+
 
     sys.exit(app.exec_())

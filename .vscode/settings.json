@@ -72,7 +72,18 @@
         "nml_util.h": "c",
         "string.h": "c",
         "nml.h": "c",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "values.h": "c",
+        "nn_layers_policy_wl.h": "c",
+        "controller_gtc.h": "c",
+        "nn_layers_flip_wl.h": "c",
+        "stdio.h": "c",
+        "library.h": "c",
+        "quatcompress.h": "c",
+        "physicalconstants.h": "c",
+        "math.h": "c",
+        "stdint.h": "c",
+        "stabilizer_types.h": "c"
     },
     "python.analysis.extraPaths": [
         "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_rl/src/",
