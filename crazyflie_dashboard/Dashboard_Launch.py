@@ -11,9 +11,9 @@ import numpy as np
 import pandas as pd
 import sys  # We need sys so that we can pass argv to QApplication
 from Dashboard_Node import DashboardNode
-from geometry_msgs.msg import TransformStamped
 
 from crazyflie_msgs.msg import CF_StateData
+from nav_msgs.msg import Odometry
 
 
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
@@ -49,6 +49,8 @@ class Dashboard(QMainWindow,DashboardNode):
         
         self.Vicon_LED.setPixmap(QPixmap(ICON_RED_LED))
         self.EmergencyStop.clicked.connect(self.Emergency_Stop)
+        self.HomeButton.clicked.connect(self.HomeCmd)
+
 
 
         ## ON BUTTON PRESS EXECUTE FUNCTIONS
@@ -67,7 +69,6 @@ class Dashboard(QMainWindow,DashboardNode):
 
 
         self.timer.start(500) # number of milliseconds (every 1000) for next update
-
         
     def update_LCD(self):
         self.K_ep_LCD.display(self.k_ep)
@@ -75,27 +76,32 @@ class Dashboard(QMainWindow,DashboardNode):
         self.Battery_Voltage.setText(f"{self.V_Battery:.3f}")
         self.Battery_Percentage.setValue(int((self.V_Battery-3.6)/(4.2-3.6)*100))
 
-    def Emergency_Stop(self):
-        os.system("rosrun rl_experiment Emergency_Stop.py")
+    def Emergency_Stop(self):       
+        self.cmd_msg.cmd_type = 5
+        self.RL_CMD_Publisher.publish(self.cmd_msg) # For some reason it doesn't always publish
+
+    def HomeCmd(self):       
+        self.cmd_msg.cmd_type = 0
+        self.RL_CMD_Publisher.publish(self.cmd_msg) # For some reason it doesn't always publish
 
 
     def check_Vicon_Connection(self): ## CHECK IF RECEIVING VALID VICON DATA
         try:
-            rospy.wait_for_message('/vicon/cf1/cf1',TransformStamped,timeout=0.1)
+            # rospy.wait_for_message('/vicon/cf1/cf1',TransformStamped,timeout=0.1)
             self.Vicon_LED.setPixmap(QPixmap(ICON_GREEN_LED))
         except:
             self.Vicon_LED.setPixmap(QPixmap(ICON_RED_LED))
 
     def check_UKF_Connection(self): ## CHECK IF RECEIVING VALID VICON DATA
         try:
-            # rospy.wait_for_message('/UKF/viconState_Filtered',Vicon_Filtered,timeout=0.1)
+            # rospy.wait_for_message("/ENV/viconState_UKF",Odometry,timeout=0.1)
             self.Vicon_UKF_LED.setPixmap(QPixmap(ICON_GREEN_LED))
         except:
             self.Vicon_UKF_LED.setPixmap(QPixmap(ICON_RED_LED))
 
     def check_CFDC_Connection(self): ## CHECK IF RECEIVING VALID VICON DATA
         try:
-            rospy.wait_for_message('/CF_DC/StateData',CF_StateData,timeout=0.1)
+            # rospy.wait_for_message('/CF_DC/StateData',CF_StateData,timeout=0.1)
             self.CF_DC_LED.setPixmap(QPixmap(ICON_GREEN_LED))
         except:
             self.CF_DC_LED.setPixmap(QPixmap(ICON_RED_LED))

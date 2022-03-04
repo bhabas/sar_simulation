@@ -142,7 +142,6 @@ class Pos_Widget(QWidget):
         self.z_arr = np.zeros(buffer_length)
         self.zd_arr = np.zeros(buffer_length)
 
-
 class Vel_Widget(QWidget):
     def __init__(self,parent=None):
         super().__init__()
@@ -305,7 +304,6 @@ class Omega_Widget(QWidget):
         self.y_arr = np.zeros(buffer_length)
         self.z_arr = np.zeros(buffer_length)
 
-
 class Eul_Widget(QWidget):
     def __init__(self,parent=None):
         super().__init__()
@@ -375,6 +373,59 @@ class Eul_Widget(QWidget):
         self.y_arr = np.zeros(buffer_length)
         self.z_arr = np.zeros(buffer_length)
 
+class Tau_Widget(QWidget):
+    def __init__(self,parent=None):
+        super().__init__()
+
+        ## INIT LAYOUT
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+        ## CREATE AXIS ITEM TO CREATE CUSTOM TICK LABELS
+        ax = pg.AxisItem(orientation='bottom')
+        ax.setTicks([tick_labels.items()])
+
+
+        self.PW = pg.PlotWidget(name='Plot1',labels =  {'left':'Tau [s]', 'bottom':'Time [s]'},axisItems={'bottom': ax}) # Plot window 1
+        self.layout.addWidget(self.PW)
+        
+
+        ## UPDATE PLOT 1
+        self.PW.setBackground('w')
+        self.PW.setXRange(buffer_length*0.0,buffer_length)
+        self.PW.setYRange(0,10)
+        self.PW.showGrid(x=True, y=True, alpha=0.2)
+
+
+        # ## INIT DATA CURVES
+        self.x_arr = np.zeros(buffer_length)
+        self.curve_x = self.PW.plot(self.x_arr, pen=pg.mkPen(color=colors["blue"], width=width))
+
+        ## INIT UPDATE TIMER
+        self.timer = pg.QtCore.QTimer(self)
+        self.timer.timeout.connect(self.update)
+        self.timer.start(update_interval) # number of milliseconds for next update
+
+    def update(self):
+                        
+        self.x_arr = np.roll(self.x_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
+        self.x_arr[-1] = DashNode.Tau
+        self.curve_x.setData(self.x_arr)
+
+    def reset_axes(self):
+        # self.p1.enableAutoRange(enable=True)
+        self.PW.setYRange(0,10)
+        self.PW.setXRange(buffer_length*0.0,buffer_length)
+
+    def pause(self,pause_flag):
+        if pause_flag == True:
+            self.timer.stop()
+        else: 
+            self.timer.start()
+    
+    def clear_data(self):
+        self.x_arr = np.zeros(buffer_length)
+
 
 class OF_Widget(QWidget):
     def __init__(self,parent=None):
@@ -407,9 +458,6 @@ class OF_Widget(QWidget):
         self.y_arr = np.zeros(buffer_length)
         self.curve_y = self.PW.plot(self.y_arr, pen=pg.mkPen(color=colors["green"], width=width))
 
-        self.z_arr = np.zeros(buffer_length)
-        self.curve_z = self.PW.plot(self.z_arr, pen=pg.mkPen(color=colors["blue"], width=width))
-
         ## INIT UPDATE TIMER
         self.timer = pg.QtCore.QTimer(self)
         self.timer.timeout.connect(self.update)
@@ -418,16 +466,12 @@ class OF_Widget(QWidget):
     def update(self):
                         
         self.x_arr = np.roll(self.x_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
-        self.x_arr[-1] = DashNode.Tau
+        self.x_arr[-1] = DashNode.OFx
         self.curve_x.setData(self.x_arr)
 
         self.y_arr = np.roll(self.y_arr,-1)
-        self.y_arr[-1] = DashNode.OFx
+        self.y_arr[-1] = DashNode.OFy
         self.curve_y.setData(self.y_arr)
-
-        self.z_arr = np.roll(self.z_arr,-1)
-        self.z_arr[-1] = DashNode.OFy
-        self.curve_z.setData(self.z_arr)
 
     def reset_axes(self):
         # self.p1.enableAutoRange(enable=True)
@@ -443,7 +487,6 @@ class OF_Widget(QWidget):
     def clear_data(self):
         self.x_arr = np.zeros(buffer_length)
         self.y_arr = np.zeros(buffer_length)
-        self.z_arr = np.zeros(buffer_length)
 
 class Dist_Widget(QWidget):
     def __init__(self,parent=None):
@@ -738,7 +781,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     ## INITIALIZE DASHBOARD WINDOW
-    myApp = Pos_Widget()
+    myApp = Tau_Widget()
     myApp.show()
 
     sys.exit(app.exec_())

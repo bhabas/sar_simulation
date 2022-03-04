@@ -2,7 +2,8 @@ import rospy
 import numpy as np
 
 from crazyflie_msgs.msg import CF_StateData,CF_MiscData,CF_FlipData,CF_ImpactData
-from crazyflie_msgs.msg import RLData,RLConvg
+from crazyflie_msgs.msg import RLData,RLConvg,RLCmd
+from nav_msgs.msg import Odometry
 
 
 class DashboardNode:
@@ -103,7 +104,7 @@ class DashboardNode:
 
 
         ## INITIALIZE GLOBAL STATE SUBSCRIBER 
-        # rospy.Subscriber("/UKF/viconState_Filtered",Vicon_Filtered,self.viconFilteredCallback,queue_size=1)
+        rospy.Subscriber("/ENV/viconState_UKF",Odometry,self.viconFilteredCallback,queue_size=1)
         rospy.Subscriber("/CF_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size=1)
         rospy.Subscriber("/CF_DC/MiscData",CF_MiscData,self.CF_MiscDataCallback,queue_size=1)
         rospy.Subscriber("/CF_DC/FlipData",CF_FlipData,self.CF_FlipDataCallback,queue_size=1)
@@ -113,15 +114,21 @@ class DashboardNode:
         ## INITIAILIZE REWARD SUBSCRIBER 
         rospy.Subscriber('/RL/rl_data',RLData,self.rewardCallback,queue_size=10)
         rospy.Subscriber('/RL/rl_convg',RLConvg,self.rlConvgCallback,queue_size=10)
+
+        self.RL_CMD_Publisher = rospy.Publisher('/RL/cmd',RLCmd,queue_size=10)
+        self.cmd_msg = RLCmd()
+
    
         print("[COMPLETED] Dashboard node is running...")
 
 
     def viconFilteredCallback(self,vicon_msg):
-        self.posVicon = np.round([vicon_msg.pos.x,vicon_msg.pos.y,vicon_msg.pos.z],3)
+        self.posVicon = np.round([
+            vicon_msg.pose.pose.position.x,
+            vicon_msg.pose.pose.position.y,
+            vicon_msg.pose.pose.position.z],3)
         self.velVicon = np.round([np.nan,np.nan,np.nan],3)
-        self.eulVicon = np.round([vicon_msg.eul.x,vicon_msg.eul.y,vicon_msg.eul.z],3)
-        # self.eulVicon = np.round([np.nan,np.nan,vicon_msg.eul.z],3)
+        # self.eulVicon = np.round([vicon_msg.eul.x,vicon_msg.eul.y,vicon_msg.eul.z],3)
 
 
     def CF_StateDataCallback(self,StateData_msg):
