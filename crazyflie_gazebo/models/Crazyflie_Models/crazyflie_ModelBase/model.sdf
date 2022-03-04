@@ -159,7 +159,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>0 0 0.015 0 -1.57 1.57</pose>
+      <pose>0 0 0.011 0 0 0</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -167,7 +167,7 @@
       
      
       <sensor name='head_hokuyo_sensor' type='ray'>
-        <pose>0 0 0 0 0 0</pose>
+        <pose>0 0 0 0 -1.57 0</pose>
         <visualize>1</visualize>
         <update_rate>40</update_rate>
         <ray>
@@ -201,6 +201,7 @@
         </plugin>
       </sensor>
       <sensor type="camera" name="camera1">
+        <pose>0 0 0 0 -1.57 0</pose>
         <update_rate>120.0</update_rate>
         <camera name="head">
           <save enabled="false">
@@ -724,7 +725,7 @@
 
     <plugin name='OF_sensor' filename='libOF_Sensor_plugin.so'>
       <updateRate>100</updateRate>
-      <bodyName>crazyflie_body</bodyName>
+      <bodyName>body_sensors</bodyName>
       <topicName>/CF_Internal/OF_Sensor</topicName>
       <Tau_gaussianNoise>0.0</Tau_gaussianNoise>
       <RREV_gaussianNoise>0.0</RREV_gaussianNoise>
