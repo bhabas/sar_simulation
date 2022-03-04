@@ -38,10 +38,10 @@
       <collision name='body_collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose>0 0 0.011 0 -0 0</pose>
+        <pose>0 0 0.01 0 -0 0</pose>
         <geometry>
           <box>
-            <size>0.11 0.11 0.005</size>
+            <size>0.12 0.12 0.01</size>
           </box>
         </geometry>
         <surface>
@@ -159,7 +159,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>0 0 0.011 0 0 0</pose>
+      <pose>0 0 0.015 0 0 0</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
