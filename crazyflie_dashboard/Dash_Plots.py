@@ -1,8 +1,14 @@
 import sys
 from PyQt5.QtWidgets import *
+from PyQt5 import QtCore
 import pyqtgraph as pg
 
 import os,rospkg
+
+
+BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_projects'))
+sys.path.insert(0,BASE_PATH)
+
 from Dashboard_Node import DashboardNode
 import numpy as np
 
@@ -62,7 +68,7 @@ class Pos_Widget(QWidget):
         self.PW.showGrid(x=True, y=True, alpha=0.2)
 
 
-        # ## INIT DATA CURVES
+        ## INIT POSITION CURVES
         self.x_arr = np.zeros(buffer_length)
         self.curve_x = self.PW.plot(self.x_arr, pen=pg.mkPen(color=colors["red"], width=width))
 
@@ -72,6 +78,16 @@ class Pos_Widget(QWidget):
         self.z_arr = np.zeros(buffer_length)
         self.curve_z = self.PW.plot(self.z_arr, pen=pg.mkPen(color=colors["blue"], width=width))
 
+        ## INIT SETPOINT CURVES
+        self.xd_arr = np.zeros(buffer_length)
+        self.curve_xd = self.PW.plot(self.xd_arr, pen=pg.mkPen(color=colors["red"], width=1.2,style=QtCore.Qt.DotLine))
+
+        self.yd_arr = np.zeros(buffer_length)
+        self.curve_yd = self.PW.plot(self.yd_arr, pen=pg.mkPen(color=colors["green"], width=1.2,style=QtCore.Qt.DotLine))
+
+        self.zd_arr = np.zeros(buffer_length)
+        self.curve_zd = self.PW.plot(self.zd_arr, pen=pg.mkPen(color=colors["blue"], width=1.2,style=QtCore.Qt.DotLine))
+
         ## INIT UPDATE TIMER
         self.timer = pg.QtCore.QTimer(self)
         self.timer.timeout.connect(self.update)
@@ -79,17 +95,31 @@ class Pos_Widget(QWidget):
 
     def update(self):
                         
+        ## UPDATE POSITION CURVES
         self.x_arr = np.roll(self.x_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
-        self.x_arr[-1] = DashNode.pos[0]
+        self.x_arr[-1] = DashNode.posCF[0]
         self.curve_x.setData(self.x_arr)
 
         self.y_arr = np.roll(self.y_arr,-1)
-        self.y_arr[-1] = DashNode.pos[1]
+        self.y_arr[-1] = DashNode.posCF[1]
         self.curve_y.setData(self.y_arr)
 
         self.z_arr = np.roll(self.z_arr,-1)
-        self.z_arr[-1] = DashNode.pos[2]
+        self.z_arr[-1] = DashNode.posCF[2]
         self.curve_z.setData(self.z_arr)
+
+        ## UPDATE SETPOINT CURVES
+        self.xd_arr = np.roll(self.xd_arr,-1) 
+        self.xd_arr[-1] = DashNode.x_d[0]
+        self.curve_xd.setData(self.xd_arr)
+
+        self.yd_arr = np.roll(self.yd_arr,-1) 
+        self.yd_arr[-1] = DashNode.x_d[1]
+        self.curve_yd.setData(self.yd_arr)
+
+        self.zd_arr = np.roll(self.zd_arr,-1) 
+        self.zd_arr[-1] = DashNode.x_d[2]
+        self.curve_zd.setData(self.zd_arr)
 
     def reset_axes(self):
         # self.p1.enableAutoRange(enable=True)
@@ -104,9 +134,13 @@ class Pos_Widget(QWidget):
     
     def clear_data(self):
         self.x_arr = np.zeros(buffer_length)
-        self.y_arr = np.zeros(buffer_length)
-        self.z_arr = np.zeros(buffer_length)
+        self.xd_arr = np.zeros(buffer_length)
 
+        self.y_arr = np.zeros(buffer_length)
+        self.yd_arr = np.zeros(buffer_length)
+
+        self.z_arr = np.zeros(buffer_length)
+        self.zd_arr = np.zeros(buffer_length)
 
 class Vel_Widget(QWidget):
     def __init__(self,parent=None):
@@ -142,24 +176,48 @@ class Vel_Widget(QWidget):
         self.z_arr = np.zeros(buffer_length)
         self.curve_z = self.PW.plot(self.z_arr, pen=pg.mkPen(color=colors["blue"], width=width))
 
+         ## INIT SETPOINT CURVES
+        self.vx_d_arr = np.zeros(buffer_length)
+        self.curve_vx_d = self.PW.plot(self.vx_d_arr, pen=pg.mkPen(color=colors["red"], width=1.2,style=QtCore.Qt.DotLine))
+
+        self.vy_d_arr = np.zeros(buffer_length)
+        self.curve_vy_d = self.PW.plot(self.vy_d_arr, pen=pg.mkPen(color=colors["green"], width=1.2,style=QtCore.Qt.DotLine))
+
+        self.vz_d_arr = np.zeros(buffer_length)
+        self.curve_vz_d = self.PW.plot(self.vz_d_arr, pen=pg.mkPen(color=colors["blue"], width=1.2,style=QtCore.Qt.DotLine))
+
         ## INIT UPDATE TIMER
         self.timer = pg.QtCore.QTimer(self)
         self.timer.timeout.connect(self.update)
         self.timer.start(update_interval) # number of milliseconds for next update
 
     def update(self):
-                        
+        
+        ## UPDATE VELOCITY CURVES
         self.x_arr = np.roll(self.x_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
-        self.x_arr[-1] = DashNode.vel[0]
+        self.x_arr[-1] = DashNode.velCF[0]
         self.curve_x.setData(self.x_arr)
 
         self.y_arr = np.roll(self.y_arr,-1)
-        self.y_arr[-1] = DashNode.vel[1]
+        self.y_arr[-1] = DashNode.velCF[1]
         self.curve_y.setData(self.y_arr)
 
         self.z_arr = np.roll(self.z_arr,-1)
-        self.z_arr[-1] = DashNode.vel[2]
+        self.z_arr[-1] = DashNode.velCF[2]
         self.curve_z.setData(self.z_arr)
+
+        ## UPDATE SETPOINT CURVES
+        self.vx_d_arr = np.roll(self.vx_d_arr,-1) 
+        self.vx_d_arr[-1] = DashNode.v_d[0]
+        self.curve_vx_d.setData(self.vx_d_arr)
+
+        self.vy_d_arr = np.roll(self.vy_d_arr,-1) 
+        self.vy_d_arr[-1] = DashNode.v_d[1]
+        self.curve_vy_d.setData(self.vy_d_arr)
+
+        self.vz_d_arr = np.roll(self.vz_d_arr,-1) 
+        self.vz_d_arr[-1] = DashNode.v_d[2]
+        self.curve_vz_d.setData(self.vz_d_arr)
 
     def reset_axes(self):
         # self.p1.enableAutoRange(enable=True)
@@ -219,15 +277,15 @@ class Omega_Widget(QWidget):
     def update(self):
                         
         self.x_arr = np.roll(self.x_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
-        self.x_arr[-1] = DashNode.omega[0]
+        self.x_arr[-1] = DashNode.omegaCF[0]
         self.curve_x.setData(self.x_arr)
 
         self.y_arr = np.roll(self.y_arr,-1)
-        self.y_arr[-1] = DashNode.omega[1]
+        self.y_arr[-1] = DashNode.omegaCF[1]
         self.curve_y.setData(self.y_arr)
 
         self.z_arr = np.roll(self.z_arr,-1)
-        self.z_arr[-1] = DashNode.omega[2]
+        self.z_arr[-1] = DashNode.omegaCF[2]
         self.curve_z.setData(self.z_arr)
 
     def reset_axes(self):
@@ -245,7 +303,6 @@ class Omega_Widget(QWidget):
         self.x_arr = np.zeros(buffer_length)
         self.y_arr = np.zeros(buffer_length)
         self.z_arr = np.zeros(buffer_length)
-
 
 class Eul_Widget(QWidget):
     def __init__(self,parent=None):
@@ -289,15 +346,15 @@ class Eul_Widget(QWidget):
     def update(self):
                         
         self.x_arr = np.roll(self.x_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
-        self.x_arr[-1] = DashNode.eul[0]
+        self.x_arr[-1] = DashNode.eulCF[0]
         self.curve_x.setData(self.x_arr)
 
         self.y_arr = np.roll(self.y_arr,-1)
-        self.y_arr[-1] = DashNode.eul[1]
+        self.y_arr[-1] = DashNode.eulCF[1]
         self.curve_y.setData(self.y_arr)
 
         self.z_arr = np.roll(self.z_arr,-1)
-        self.z_arr[-1] = DashNode.eul[2]
+        self.z_arr[-1] = DashNode.eulCF[2]
         self.curve_z.setData(self.z_arr)
 
     def reset_axes(self):
@@ -315,6 +372,59 @@ class Eul_Widget(QWidget):
         self.x_arr = np.zeros(buffer_length)
         self.y_arr = np.zeros(buffer_length)
         self.z_arr = np.zeros(buffer_length)
+
+class Tau_Widget(QWidget):
+    def __init__(self,parent=None):
+        super().__init__()
+
+        ## INIT LAYOUT
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+        ## CREATE AXIS ITEM TO CREATE CUSTOM TICK LABELS
+        ax = pg.AxisItem(orientation='bottom')
+        ax.setTicks([tick_labels.items()])
+
+
+        self.PW = pg.PlotWidget(name='Plot1',labels =  {'left':'Tau [s]', 'bottom':'Time [s]'},axisItems={'bottom': ax}) # Plot window 1
+        self.layout.addWidget(self.PW)
+        
+
+        ## UPDATE PLOT 1
+        self.PW.setBackground('w')
+        self.PW.setXRange(buffer_length*0.0,buffer_length)
+        self.PW.setYRange(0,10)
+        self.PW.showGrid(x=True, y=True, alpha=0.2)
+
+
+        # ## INIT DATA CURVES
+        self.x_arr = np.zeros(buffer_length)
+        self.curve_x = self.PW.plot(self.x_arr, pen=pg.mkPen(color=colors["blue"], width=width))
+
+        ## INIT UPDATE TIMER
+        self.timer = pg.QtCore.QTimer(self)
+        self.timer.timeout.connect(self.update)
+        self.timer.start(update_interval) # number of milliseconds for next update
+
+    def update(self):
+                        
+        self.x_arr = np.roll(self.x_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
+        self.x_arr[-1] = DashNode.Tau
+        self.curve_x.setData(self.x_arr)
+
+    def reset_axes(self):
+        # self.p1.enableAutoRange(enable=True)
+        self.PW.setYRange(0,10)
+        self.PW.setXRange(buffer_length*0.0,buffer_length)
+
+    def pause(self,pause_flag):
+        if pause_flag == True:
+            self.timer.stop()
+        else: 
+            self.timer.start()
+    
+    def clear_data(self):
+        self.x_arr = np.zeros(buffer_length)
 
 
 class OF_Widget(QWidget):
@@ -348,9 +458,6 @@ class OF_Widget(QWidget):
         self.y_arr = np.zeros(buffer_length)
         self.curve_y = self.PW.plot(self.y_arr, pen=pg.mkPen(color=colors["green"], width=width))
 
-        self.z_arr = np.zeros(buffer_length)
-        self.curve_z = self.PW.plot(self.z_arr, pen=pg.mkPen(color=colors["blue"], width=width))
-
         ## INIT UPDATE TIMER
         self.timer = pg.QtCore.QTimer(self)
         self.timer.timeout.connect(self.update)
@@ -359,16 +466,12 @@ class OF_Widget(QWidget):
     def update(self):
                         
         self.x_arr = np.roll(self.x_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
-        self.x_arr[-1] = DashNode.RREV
+        self.x_arr[-1] = DashNode.OFx
         self.curve_x.setData(self.x_arr)
 
         self.y_arr = np.roll(self.y_arr,-1)
-        self.y_arr[-1] = DashNode.OF_x
+        self.y_arr[-1] = DashNode.OFy
         self.curve_y.setData(self.y_arr)
-
-        self.z_arr = np.roll(self.z_arr,-1)
-        self.z_arr[-1] = DashNode.OFy
-        self.curve_z.setData(self.z_arr)
 
     def reset_axes(self):
         # self.p1.enableAutoRange(enable=True)
@@ -384,7 +487,6 @@ class OF_Widget(QWidget):
     def clear_data(self):
         self.x_arr = np.zeros(buffer_length)
         self.y_arr = np.zeros(buffer_length)
-        self.z_arr = np.zeros(buffer_length)
 
 class Dist_Widget(QWidget):
     def __init__(self,parent=None):
@@ -422,7 +524,7 @@ class Dist_Widget(QWidget):
     def update(self):
                         
         self.x_arr = np.roll(self.x_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
-        self.x_arr[-1] = DashNode.d_ceiling
+        self.x_arr[-1] = DashNode.d_ceil
         self.curve_x.setData(self.x_arr)
 
 
@@ -564,8 +666,8 @@ class RL_Widget(QWidget):
 
     def update(self):
                         
-        self.curve_reward.setData(DashNode.k_ep_list1,DashNode.r_list)
-        self.curve_reward_avg.setData(DashNode.k_ep_list2,DashNode.r_avg_list)
+        self.curve_reward.setData([0,1],[50,60])
+        # self.curve_reward_avg.setData(DashNode.k_ep_list2,DashNode.r_avg_list)
 
 
 
@@ -583,14 +685,14 @@ class Mu_Widget(QWidget):
         self.setLayout(self.layout)
 
 
-        self.PW = pg.PlotWidget(name='Plot1',labels = {'left':'RREV (rad/s)', 'bottom':'Episode','right':'My (N*mm)'}) # Plot window 1
+        self.PW = pg.PlotWidget(name='Plot1',labels =  {'left':'Mu', 'bottom':'Time [s]'}) # Plot window 1
         self.layout.addWidget(self.PW)
         
 
         ## UPDATE PLOT 1
         self.PW.setBackground('w')
         self.PW.setXRange(0,20)
-        self.PW.setYRange(0,12)
+        self.PW.setYRange(0,16)
         self.PW.showGrid(x=True, y=True, alpha=0.2)
 
 
@@ -641,7 +743,7 @@ class Sigma_Widget(QWidget):
         self.setLayout(self.layout)
 
 
-        self.PW = pg.PlotWidget(name='Plot1',labels =  {'left':'RREV (rad/s)', 'bottom':'Episode','right':'My (N*mm)'}) # Plot window 1
+        self.PW = pg.PlotWidget(name='Plot1',labels =  {'left':'Mu', 'bottom':'Time [s]'}) # Plot window 1
         self.layout.addWidget(self.PW)
         
 
@@ -677,17 +779,9 @@ if __name__ == '__main__':
 
     ## INITIALIZE APPLICATION   
     app = QApplication(sys.argv)
-    val = int(input("1 or 2"))
 
-    if val == 1:
-
-        ## INITIALIZE DASHBOARD WINDOW
-        myApp = Mu_Widget()
-        myApp.show()
-    else:
-        ## INITIALIZE DASHBOARD WINDOW
-        myApp = RL_Widget()
-        myApp.show()
-
+    ## INITIALIZE DASHBOARD WINDOW
+    myApp = Tau_Widget()
+    myApp.show()
 
     sys.exit(app.exec_())

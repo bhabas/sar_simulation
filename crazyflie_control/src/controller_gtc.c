@@ -300,6 +300,9 @@ void controllerGTCReset(void)
     NN_tr_flip = 0.0f;
     NN_tr_policy = 0.0f;
 
+    Tau_thr = 0.0f;
+    G1 = 0.0f;
+
 }
 
 bool controllerGTCTest(void)
