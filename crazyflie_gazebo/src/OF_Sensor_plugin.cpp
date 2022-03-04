@@ -1,6 +1,4 @@
-#include <iostream>
 #include "OF_Sensor_plugin.h"
-#include <boost/algorithm/clamp.hpp>
 
 
 
@@ -63,7 +61,7 @@ namespace gazebo
 
             if(Tau < 0 || Tau > 20)
             {
-                Tau = 20.0;
+                Tau = NAN;
             }
             OF_Data_msg.Tau = Tau + GaussianKernel(0,Tau_gaussianNoise);
             OF_Data_msg.OFx = OFx + GaussianKernel(0,OFx_gaussianNoise);
