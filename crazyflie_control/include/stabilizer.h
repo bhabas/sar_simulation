@@ -141,6 +141,7 @@ void Controller::OF_Sensor_Callback(const crazyflie_msgs::OF_SensorData::ConstPt
     sensorData.OFx = msg->OFx;
     sensorData.OFy = msg->OFy;
     sensorData.RREV = msg->RREV;
+    sensorData.d_ceil = msg->d_ceil;
 
 }
 

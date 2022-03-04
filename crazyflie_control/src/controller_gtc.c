@@ -485,7 +485,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         OFx = sensors->OFx;
         OFy = sensors->OFy;
         RREV = sensors->RREV;
-        d_ceil = (h_ceiling - statePos.z);
+        d_ceil = sensors->d_ceil;
 
         X->data[0][0] = RREV;
         X->data[1][0] = OFy;
