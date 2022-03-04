@@ -6,7 +6,7 @@ import csv
 import sys
 
 from sensor_msgs.msg import Image
-from nav_msgs.msg import Odometry
+from crazyflie_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
 from rosgraph_msgs.msg import Clock
 
 
@@ -17,27 +17,27 @@ class CameraParser:
         
         rospy.init_node('Camera_Data', anonymous = True)#start nodes
 
-        #init variables
-        self.x_pos = 0.0
-        self.y_pos = 0.0
-        self.z_pos = 0.0
+        ## INITIALIZE STATE VALUES
+        self.posCF = [0,0,0]
+        self.velCF = [0,0,0]
 
-        self.x_vel = 0.0
-        self.y_vel = 0.0
-        self.z_vel = 0.0
+        self.quatCF = [0,0,0,1]
+        self.eulCF = [0,0,0]
+        self.omegaCF = [0,0,0]
+        self.eulCF = [0,0,0]
 
+        self.Tau = 0.0
+        self.OFx = 0.0
+        self.OFy = 0.0
+        self.RREV = 0.0
+        self.d_ceil = 0.0 
+        
         self.t = 0.0
         self.t_prev = 0.0
         self.n = 0
 
         self.Camera_raw = np.array([])
 
-        self.d_ceil =  0.0
-        self.RREV = 0.0
-        self.OFx = 0.0
-        self.OFy = 0.0
-        self.Tau = 0.0
-        
         #initialize params
         self.ceiling_h = rospy.get_param("/CEILING_HEIGHT")
 
@@ -50,8 +50,8 @@ class CameraParser:
 
         #collect misc. data
         # while(self.Log_Flag):
-        self.Cam_sub = rospy.Subscriber("cf/camera/image_raw",Image,self.Camera_cb,queue_size = 1)
-        self.Global_data_sub = rospy.Subscriber("env/global_state_data", Odometry,self.Global_State_cb,queue_size = 1)
+        rospy.Subscriber("/CF_Internal/camera/image_raw",Image,self.Camera_cb,queue_size = 1)
+        rospy.Subscriber("/CF_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size = 1)
 
     def Create_csv(self):
 
@@ -63,20 +63,20 @@ class CameraParser:
     def Append_data(self):
         
         Camera_data = np.array2string(self.Camera_raw,separator = ' ').replace('\n','').replace('[','').replace(']','') #throw raw camera array into a long string
-        time = np.round(self.t,4) #round data to fit into pandas data frames
-        x_pos = np.round(self.x_pos,4)
-        y_pos = np.round(self.y_pos,4)
-        z_pos = np.round(self.z_pos,4)
+        time = np.round(self.t,6) #round data to fit into pandas data frames
+        x_pos = np.round(self.posCF[0],4)
+        y_pos = np.round(self.posCF[1],4)
+        z_pos = np.round(self.posCF[2],4)
 
-        x_vel = np.round(self.x_vel,4)
-        y_vel = np.round(self.y_vel,4)
-        z_vel = np.round(self.z_vel,4)
+        x_vel = np.round(self.velCF[0],4)
+        y_vel = np.round(self.velCF[1],4)
+        z_vel = np.round(self.velCF[2],4)
 
         d_ceil = np.round(self.d_ceil,4)
-        RREV = np.round(self.RREV,4)
+        Tau = np.round(np.clip(self.Tau,-20,20),4)
         OFx = np.round(self.OFx,4)
         OFy = np.round(self.OFy,4)
-        Tau = np.round(np.clip(self.Tau,-20,20),4)
+        RREV = np.round(self.RREV,4)
 
         if(time != self.t_prev): #was getting duplicates
 
@@ -96,27 +96,44 @@ class CameraParser:
 
     def Camera_cb(self,Cam_msg):
         
-        self.t = np.round(rospy.get_time(), 4) #rounded sim time
+        self.t = rospy.get_time() # sim time
         self.Camera_raw = np.frombuffer(Cam_msg.data,np.uint8) # 1D array to package into CSV
         self.Append_data()
 
-    def Global_State_cb(self,msg):
+    def CF_StateDataCallback(self,StateData_msg):
 
-        self.global_pos = msg.pose.pose.position
-        self.x_pos = self.global_pos.x #x,y,z global positions
-        self.y_pos = self.global_pos.y
-        self.z_pos = self.global_pos.z
+        self.t = np.round(StateData_msg.header.stamp.to_sec(),4)
 
-        self.global_vel = msg.twist.twist.linear
-        self.x_vel = self.global_vel.x #x,y,z global velocities
-        self.y_vel = self.global_vel.y
-        self.z_vel = self.global_vel.z
+        self.posCF = np.round([ StateData_msg.Pose.position.x,
+                                StateData_msg.Pose.position.y,
+                                StateData_msg.Pose.position.z],3)
 
-        self.d_ceil = (self.ceiling_h - self.z_pos)
-        self.RREV = self.z_vel/self.d_ceil
-        self.OFx = -self.y_vel/self.d_ceil
-        self.OFy = -self.x_vel/self.d_ceil
-        self.Tau = self.d_ceil/self.z_vel
+        
+
+        self.quatCF = np.round([StateData_msg.Pose.orientation.x,
+                                StateData_msg.Pose.orientation.y,
+                                StateData_msg.Pose.orientation.z,
+                                StateData_msg.Pose.orientation.w],3)
+
+        self.eulCF = np.round([ StateData_msg.Eul.x,
+                                StateData_msg.Eul.y,
+                                StateData_msg.Eul.z],3)
+
+        ## CF_TWIST
+        self.velCF = np.round([ StateData_msg.Twist.linear.x,
+                                StateData_msg.Twist.linear.y,
+                                StateData_msg.Twist.linear.z],3)
+
+        self.omegaCF = np.round([StateData_msg.Twist.angular.x,
+                                 StateData_msg.Twist.angular.y,
+                                 StateData_msg.Twist.angular.z],3)
+
+        ## CF_VISUAL STATES
+        self.Tau = np.round(StateData_msg.Tau,3)
+        self.OFx = np.round(StateData_msg.OFx,3)
+        self.OFy = np.round(StateData_msg.OFy,3)
+        self.RREV = np.round(StateData_msg.RREV,3)
+        self.d_ceil = np.round(StateData_msg.D_ceil,3)
 
         
     
