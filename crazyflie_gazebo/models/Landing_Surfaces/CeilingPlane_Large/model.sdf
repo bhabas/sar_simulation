@@ -25,19 +25,19 @@
         <pose>0 0 0.005 0 -0 0</pose>
         <geometry>
           <box>
-            <size>5.0 2.0 0.01</size>
+            <size>10 10 0.01</size>
           </box>
         </geometry>
         <material>
           <script>
-            <uri>model://CeilingPlane_Large/materials/scripts</uri>
-            <uri>model://CeilingPlane_Large/materials/textures</uri>
-            <name>ceilingMat/Checkerboard</name>
-
+            <uri>model://GroundPlane_Desert_Physical/materials/scripts</uri>
+            <uri>model://GroundPlane_Desert_Physical/materials/textures</uri>
+            <name>groundMat/Dirt</name>
           </script>
           <shader type='pixel'>
             <normal_map>__default__</normal_map>
           </shader>
+          <emissive>0 0 0 1</emissive>
         </material>
       </visual>
       <collision name='ceiling_collision'>

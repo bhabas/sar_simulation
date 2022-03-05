@@ -56,8 +56,8 @@ class DataParser:
         xx , yy = np.meshgrid(xgrid,ygrid)
         Ix = np.zeros((120,160))
         Iy = Ix
-        Kx = np.array([[-1,0,1],[-2,0,2],[-1,0,1]])/8 #Kernel x
-        Ky = np.array([[1,2,1],[0,0,0],[-1,-2,-1]])/8 #Kernel y
+        Kx = np.array([[-1,0,1],[-2,0,2],[-1,0,1]]) #Kernel x
+        Ky = np.array([[1,2,1],[0,0,0],[-1,-2,-1]]) #Kernel y
         #Kx = np.array([[-1,0,1],[-2,0,2],[-1,0,1]]) #Kernel x
         #Ky = np.array([[1,2,1],[0,0,0],[-1,-2,-1]]) #Kernel y
         self.TTC_est1 = np.zeros((self.Camera_array.shape[0])) # (BHabas) I removed the extra dimension here to keep array 1-D like the rest
@@ -105,9 +105,9 @@ class DataParser:
         
         fig, ax = plt.subplots(3,1, sharex = True)
         ax[0].set_title("TTC Comparison")
-        ax[0].plot(self.Time,self.TTC_est1,'r', label = 'TTC_est1')
+        ax[0].plot(self.Time,self.TTC_est1*0.05,'r', label = 'TTC_est1')
         ax[0].plot(self.Time,self.Tau,'b',label = 'TTC')
-        ax[0].plot(self.Time,self.TTC_est2,'g',label = 'TTC_est2')
+        ax[0].plot(self.Time,self.TTC_est2*0.05,'g',label = 'TTC_est2')
         ax[0].set_ylabel("TTC (seconds)")
         ax[0].set_ylim(-1,10)
         ax[0].grid()
