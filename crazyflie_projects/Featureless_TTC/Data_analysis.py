@@ -15,6 +15,10 @@ class DataParser:
         self.Username = getpass.getuser()
         self.Path = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Featureless_TTC/logs/'
         self.Filepath = self.Path + self.Filename
+
+        ## Check if data has already been compile
+        pre_compiled_Flag = int(input('Is the data already compiled? (1/0): '))
+
         #check if the file exists and loop back if not
         if os.path.isfile(self.Filepath) and os.access(self.Filepath, os.R_OK):
             print("\nSuccessfully opened file\n")
@@ -34,8 +38,38 @@ class DataParser:
         self.OFx = self.Data['OFx'].to_numpy()
         self.OFy = self.Data['OFy'].to_numpy()
 
-        self.Data_analysis()
-        self.Plotter()
+        
+
+
+
+        if pre_compiled_Flag == True:
+
+            self.TTC_est1 = self.Data['TTC_est1'].to_numpy()
+            self.TTC_est2 = self.Data['TTC_est2'].to_numpy()
+            self.OFx_est = self.Data['OFx_est'].to_numpy()
+            self.OFy_est = self.Data['OFy_est'].to_numpy()
+
+            self.Plotter()
+
+
+        else: 
+            self.Data_analysis()
+
+            ## Append estimated tau values to avoid recalculating each time
+            df_Tau = pd.DataFrame({
+                'TTC_est1':self.TTC_est1, 
+                'TTC_est2':self.TTC_est2,
+                'OFx_est':self.OFx_est,
+                'OFy_est':self.OFy_est,
+                })
+            pd.concat([self.Data.iloc[:,:-1],df_Tau,self.Data.iloc[:,-1]],axis=1).to_csv(self.Path+"Appended_"+self.Filename,index=False)
+
+            self.Plotter()
+
+
+        
+
+        
 
     def Camera_splitter(self): # turn each string into an array
 
@@ -60,7 +94,7 @@ class DataParser:
         Ky = np.array([[1,2,1],[0,0,0],[-1,-2,-1]]) #Kernel y
         #Kx = np.array([[-1,0,1],[-2,0,2],[-1,0,1]]) #Kernel x
         #Ky = np.array([[1,2,1],[0,0,0],[-1,-2,-1]]) #Kernel y
-        self.TTC_est1 = np.zeros((self.Camera_array.shape[0])) # (BHabas) I removed the extra dimension here to keep array 1-D like the rest
+        self.TTC_est1 = np.zeros((self.Camera_array.shape[0]))
         self.TTC_est2 = np.zeros((self.Camera_array.shape[0]))
         self.OFx_est = np.zeros((self.Camera_array.shape[0]))
         self.OFy_est = np.zeros((self.Camera_array.shape[0]))
@@ -89,13 +123,13 @@ class DataParser:
             #CASE II
             LHS = np.array([[np.sum(Ix*Ix),np.sum(Ix*Iy),np.sum(G*Ix)],[np.sum(Ix*Iy),np.sum(Iy*Iy),np.sum(G*Iy)],[np.sum(G*Ix),np.sum(G*Iy),np.sum(G*G)]])
             RHS = np.array([-np.sum(Ix*It),-np.sum(Iy*It),-np.sum(G*It)])
-            ABC, _, _ , _ = np.linalg.lstsq(LHS,RHS, rcond = None)
+            ABC,_,_,_ = np.linalg.lstsq(LHS,RHS, rcond = None)
             A = ABC[0]
             B = ABC[1]
-            fl = 1 #need to find actual value for proper estimates
+            f = 0.607e-3 # Camera Focal Length [m] (Validate with measured values)
             self.TTC_est2[n-1] = 1/(ABC[2])
-            self.OFx_est[n-1] = -B/fl
-            self.OFy_est[n-1] = -A/fl
+            self.OFx_est[n-1] = -B/f
+            self.OFy_est[n-1] = -A/f
 
             Prev_img = Cur_img
 
@@ -105,16 +139,15 @@ class DataParser:
         
         fig, ax = plt.subplots(3,1, sharex = True)
         ax[0].set_title("TTC Comparison")
-        ax[0].plot(self.Time,self.TTC_est1*0.05,'r', label = 'TTC_est1')
+        ax[0].plot(self.Time,self.TTC_est1*0.04,'r', label = 'TTC_est1')
         ax[0].plot(self.Time,self.Tau,'b',label = 'TTC')
-        ax[0].plot(self.Time,self.TTC_est2*0.05,'g',label = 'TTC_est2')
+        ax[0].plot(self.Time,self.TTC_est2*0.04,'g',label = 'TTC_est2')
         ax[0].set_ylabel("TTC (seconds)")
-        ax[0].set_ylim(-1,10)
+        ax[0].set_ylim(-1,6)
         ax[0].grid()
         ax[0].legend(loc='upper right')
 
         ax[1].plot(self.Time,self.Z_pos,'g', label = 'Z position')
-        # ax[1].plot(self.Time,2.10-self.TTC_est2*self.Z_vel,'r--') ## Testing position from estimated Tau
         ax[1].set_ylim(-1,2.5)
         ax[1].axhline(2.10,color='k',linestyle='dashed',label='Ceiling Height')
         ax[1].set_ylabel("Position (m)")
