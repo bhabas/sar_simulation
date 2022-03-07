@@ -29,10 +29,12 @@ class CrazyflieEnv:
         print("[STARTING] CrazyflieEnv is starting...")
 
         ## GAZEBO SIMULATION INITIALIZATION
+        # Load params -> Launch sim -> Wait for sim running -> Launch controller
         rospy.init_node("crazyflie_env_node") 
-        os.system("roslaunch crazyflie_launch params.launch")
-        self.launch_controller()
+        os.system("roslaunch crazyflie_launch params.launch") 
         self.launch_sim() 
+        rospy.wait_for_message("/clock",Clock)
+        self.launch_controller()
         print("[INITIATING] Gazebo simulation started")
 
 

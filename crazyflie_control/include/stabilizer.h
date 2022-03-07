@@ -206,7 +206,6 @@ void Controller::loadParams()
     // ros::param::get("/CEILING_HEIGHT",_H_CEILING);
     ros::param::get("/CF_MASS",_CF_MASS);
     ros::param::get("/POLICY_TYPE",_POLICY_TYPE);
-    POLICY_TYPE = (Policy_Type)_POLICY_TYPE; // Cast ROS param (int) to enum (Policy_Type)
 
     // DEBUG SETTINGS
     // ros::param::get("/SIM_SPEED",_SIM_SPEED);

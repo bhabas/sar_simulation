@@ -36,8 +36,8 @@ struct {
     uint32_t MS_PWM34;
     
     // Compressed Optical Flow Values
+    int16_t Tau;   // [milli-rad/s]
     uint32_t OF_xy; // [milli-rad/s]
-    int16_t RREV;   // [milli-rad/s]
     int16_t d_ceil; // [mm]
 
     uint32_t NN_FP; // NN_flip,NN_policy
@@ -77,8 +77,8 @@ struct {
     int16_t wz;
 
     // Compressed Optical Flow Values
+    int16_t Tau;   // [milli-rad/s]
     uint32_t OF_xy; // [milli-rad/s]
-    int16_t RREV;   // [milli-rad/s]
     int16_t d_ceil; // [m]
 
     uint32_t NN_FP; // NN_flip,NN_policy
