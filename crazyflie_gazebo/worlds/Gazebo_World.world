@@ -7,7 +7,7 @@
     </include>
 
     <include>
-      <uri>model://GroundPlane_Desert_Physical</uri>
+      <uri>model://GroundPlane_Desert_Visual</uri>
     </include>
 
 

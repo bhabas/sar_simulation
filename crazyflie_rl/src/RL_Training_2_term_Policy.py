@@ -21,8 +21,8 @@ if __name__ == '__main__':
     
 
     ## INIT LEARNING AGENT
-    mu = np.array([[30], [8.0]])       # Initial mu starting point
-    sigma = np.array([[10],[1.5]])     # Initial sigma starting point
+    mu = np.array([[2.5], [5]])       # Initial mu starting point
+    sigma = np.array([[0.5],[1.5]])     # Initial sigma starting point
     env.n_rollouts = 8
     agent = rlEM_PEPGAgent(mu,sigma,env.n_rollouts)
 
