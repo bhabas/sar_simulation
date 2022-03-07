@@ -6,9 +6,9 @@
       <uri>model://sun</uri>
     </include>
 
-    <include>
+    <!-- <include>
       <uri>model://GroundPlane_Desert_Visual</uri>
-    </include>
+    </include> -->
 
 
     <light name='user_directional_light_0' type='directional'>
