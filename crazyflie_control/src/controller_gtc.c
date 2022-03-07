@@ -165,7 +165,7 @@ bool safeModeEnable = true;
 
 // DEFINE POLICY TYPE ACTIVATED
 
-Policy_Type POLICY_TYPE = RL; // Default to RL
+uint8_t PolicyType = 0; // Default to RL
 
 // ======================================
 //  RECORD SYSTEM STATES AT FLIP TRIGGER
@@ -481,11 +481,17 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
             controllerGTCTraj();
         }
 
-        d_ceil = 2.10f-state->position.z;
-        Tau = d_ceil/state->velocity.z;
-        OFx = -state->velocity.y/d_ceil;
-        OFy = -state->velocity.x/d_ceil;
-        RREV = state->velocity.z/d_ceil;
+        // d_ceil = 2.10f-state->position.z;
+        // Tau = d_ceil/state->velocity.z;
+        // OFx = -state->velocity.y/d_ceil;
+        // OFy = -state->velocity.x/d_ceil;
+        // RREV = state->velocity.z/d_ceil;
+
+        d_ceil = sensors->d_ceil;
+        Tau = sensors->Tau;
+        OFx = sensors->OFx;
+        OFy = sensors->OFy;
+        RREV = sensors->RREV;
 
         X->data[0][0] = RREV;
         X->data[1][0] = OFy;
@@ -496,9 +502,9 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
         if(policy_armed_flag == true){ 
                 
-            switch(POLICY_TYPE)
+            switch(PolicyType)
             {
-                case RL:
+                case 0: // RL
                 {
                     if(Tau <= Tau_thr && onceFlag == false){
                         onceFlag = true;
@@ -529,7 +535,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                     break;
                 }
 
-                case NN:
+                case 1: // NN
                 {   
                     NN_flip = NN_Forward_Flip(X,&Scaler_Flip,W_flip,b_flip);
                     NN_policy = -NN_Forward_Policy(X,&Scaler_Policy,W_policy,b_policy);
