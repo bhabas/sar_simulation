@@ -481,11 +481,11 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
             controllerGTCTraj();
         }
 
-        Tau = sensors->Tau;
-        OFx = sensors->OFx;
-        OFy = sensors->OFy;
-        RREV = sensors->RREV;
-        d_ceil = sensors->d_ceil;
+        d_ceil = 2.10f-state->position.z;
+        Tau = d_ceil/state->velocity.z;
+        OFx = -state->velocity.y/d_ceil;
+        OFy = -state->velocity.x/d_ceil;
+        RREV = state->velocity.z/d_ceil;
 
         X->data[0][0] = RREV;
         X->data[1][0] = OFy;
@@ -653,112 +653,6 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
 
 
-// // PARAMETER GROUPS
-// PARAM_GROUP_START(GTC_Params)
-// PARAM_ADD(PARAM_FLOAT, P_kp_xy, &P_kp_xy)
-// PARAM_ADD(PARAM_FLOAT, P_kp_z,  &P_kp_z)
-// PARAM_ADD(PARAM_FLOAT, P_kd_xy, &P_kd_xy) 
-// PARAM_ADD(PARAM_FLOAT, i_range_xy, &i_range_xy)
-// PARAM_ADD(PARAM_FLOAT, P_kd_z,  &P_kd_z)
-// PARAM_ADD(PARAM_FLOAT, P_ki_xy, &P_ki_xy)
-// PARAM_ADD(PARAM_FLOAT, P_ki_z,  &P_ki_z)
-// PARAM_ADD(PARAM_FLOAT, i_range_z, &i_range_z)
-
-// PARAM_ADD(PARAM_FLOAT, R_kp_xy, &R_kp_xy)
-// PARAM_ADD(PARAM_FLOAT, R_kd_xy, &R_kd_xy) 
-// PARAM_ADD(PARAM_FLOAT, R_ki_xy, &R_ki_xy)
-// PARAM_ADD(PARAM_FLOAT, i_range_R_xy, &i_range_R_xy)
-
-// PARAM_ADD(PARAM_FLOAT, R_kp_z,  &R_kp_z)
-// PARAM_ADD(PARAM_FLOAT, R_kd_z,  &R_kd_z)
-// PARAM_ADD(PARAM_FLOAT, R_ki_z,  &R_ki_z)
-// PARAM_ADD(PARAM_FLOAT, i_range_R_z, &i_range_R_z)
-
-// PARAM_ADD(PARAM_FLOAT, b1_d_x, &b1_d.x)
-// PARAM_ADD(PARAM_FLOAT, b1_d_y, &b1_d.y)
-// PARAM_ADD(PARAM_FLOAT, b1_d_z, &b1_d.z)
-
-// PARAM_ADD(PARAM_FLOAT, CF_mass, &m)
-
-// // PARAM_ADD(PARAM_UINT8, AttCtrl, &attCtrlEnable)
-// // PARAM_ADD(PARAM_UINT8, Tumbled, &tumbled)
-// // PARAM_ADD(PARAM_UINT8, Error_Reset, &errorReset)
-// PARAM_ADD(PARAM_UINT8, SafeModeFlag, &safeModeEnable)
-
-// PARAM_GROUP_STOP(GTC_Params)
-
-
-// // LOGGING GROUPS
-
-// LOG_GROUP_START(LogStateData_GTC)
-// LOG_ADD(LOG_UINT32, Z_xy,   &StatesZ_GTC.xy)
-// LOG_ADD(LOG_INT16,  Z_z,    &StatesZ_GTC.z)
-
-// LOG_ADD(LOG_UINT32, Z_vxy,  &StatesZ_GTC.vxy)
-// LOG_ADD(LOG_INT16,  Z_vz,   &StatesZ_GTC.vz)
-
-// LOG_ADD(LOG_UINT32, Z_quat, &StatesZ_GTC.quat)
-
-// LOG_ADD(LOG_UINT32, Z_wxy,  &StatesZ_GTC.wxy)
-// LOG_ADD(LOG_INT16,  Z_wz,   &StatesZ_GTC.wz)
-
-// LOG_ADD(LOG_UINT32, Z_OFxy, &StatesZ_GTC.OF_xy)
-// LOG_ADD(LOG_INT16,  Z_RREV, &StatesZ_GTC.RREV)
-// LOG_ADD(LOG_INT16,  Z_d_ceil, &StatesZ_GTC.d_ceil)
-
-// LOG_ADD(LOG_UINT32, Z_FMz, &StatesZ_GTC.FMz)
-// LOG_ADD(LOG_UINT32, Z_Mxy, &StatesZ_GTC.Mxy)
-
-// LOG_ADD(LOG_UINT32, Z_PWM12, &StatesZ_GTC.MS_PWM12)
-// LOG_ADD(LOG_UINT32, Z_PWM34, &StatesZ_GTC.MS_PWM34)
-
-// LOG_ADD(LOG_UINT32, Z_NN_FP, &StatesZ_GTC.NN_FP)
-// LOG_GROUP_STOP(LogStateData_GTC)
-
-
-
-// LOG_GROUP_START(LogMiscData_GTC)
-// LOG_ADD(LOG_UINT8, Flip_Flag, &flip_flag)
-// // LOG_ADD(LOG_UINT8, Tumbled_Flag, &tumbled)
-// // LOG_ADD(LOG_UINT8, Tumbled_Det_Flag, &tumble_detection)
-// // LOG_ADD(LOG_UINT8, MotorStop_Flag, &motorstop_flag)
-// // LOG_ADD(LOG_UINT8, Execute_Traj_Flag, &execute_traj)
-// // LOG_ADD(LOG_UINT8, Policy_Armed_Flag, &policy_armed_flag)
-// // LOG_ADD(LOG_UINT8, Moment_Flag, &moment_flag)
-// // LOG_ADD(LOG_UINT8, Att_Ctrl_Flag, &attCtrlEnable)
-// LOG_GROUP_STOP(LogMiscData_GTC)
-
-
-
-// LOG_GROUP_START(LogSetPoints_GTC)
-// LOG_ADD(LOG_UINT32, Z_xy,   &setpointZ_GTC.xy)
-// LOG_ADD(LOG_INT16,  Z_z,    &setpointZ_GTC.z)
-
-// LOG_ADD(LOG_UINT32, Z_vxy,  &setpointZ_GTC.vxy)
-// LOG_ADD(LOG_INT16,  Z_vz,   &setpointZ_GTC.vz)
-
-// LOG_ADD(LOG_UINT32, Z_axy,  &setpointZ_GTC.axy)
-// LOG_ADD(LOG_INT16,  Z_az,   &setpointZ_GTC.az)
-// LOG_GROUP_STOP(LogSetPoints_GTC)
-
-
-// LOG_GROUP_START(LogFlipData_GTC)
-// LOG_ADD(LOG_UINT32, Z_xy,   &FlipStatesZ_GTC.xy)
-// LOG_ADD(LOG_INT16,  Z_z,    &FlipStatesZ_GTC.z)
-
-// LOG_ADD(LOG_UINT32, Z_vxy,  &FlipStatesZ_GTC.vxy)
-// LOG_ADD(LOG_INT16,  Z_vz,   &FlipStatesZ_GTC.vz)
-
-// LOG_ADD(LOG_UINT32, Z_quat, &FlipStatesZ_GTC.quat)
-
-// LOG_ADD(LOG_UINT32, Z_wxy,  &FlipStatesZ_GTC.wxy)
-// LOG_ADD(LOG_INT16,  Z_wz,   &FlipStatesZ_GTC.wz)
-
-// LOG_ADD(LOG_UINT32, Z_OFxy, &FlipStatesZ_GTC.OF_xy)
-// LOG_ADD(LOG_INT16,  Z_RREV, &FlipStatesZ_GTC.RREV)
-// LOG_ADD(LOG_INT16,  Z_d_ceil, &FlipStatesZ_GTC.d_ceil)
-
-// LOG_GROUP_STOP(LogFlipData_GTC)
 
 
 
@@ -782,7 +676,7 @@ void compressStates(){
 
     // COMPRESS SENSORY VALUES
     StatesZ_GTC.OF_xy = compressXY(OFx,OFy);
-    StatesZ_GTC.RREV = (int16_t)(RREV * 1000.0f); 
+    StatesZ_GTC.Tau = (int16_t)(Tau * 1000.0f); 
     StatesZ_GTC.d_ceil = (int16_t)(d_ceil * 1000.0f);
 
     // COMPRESS THRUST/MOMENT VALUES
@@ -831,7 +725,7 @@ void compressFlipStates(){
     FlipStatesZ_GTC.quat = quatcompress(q);
 
    FlipStatesZ_GTC.OF_xy = compressXY(OFx_tr,OFy_tr);
-   FlipStatesZ_GTC.RREV = (int16_t)(RREV_tr * 1000.0f); 
+   FlipStatesZ_GTC.Tau = (int16_t)(Tau_tr * 1000.0f); 
    FlipStatesZ_GTC.d_ceil = (int16_t)(d_ceil_tr * 1000.0f);
 
    FlipStatesZ_GTC.NN_FP = compressXY(NN_tr_flip,NN_tr_policy);
@@ -957,3 +851,109 @@ void controlOutput(state_t *state, sensorData_t *sensors)
     M = vadd(R_effort,Gyro_dyn);            // Control moments [Nm]
 
 }
+
+
+// // PARAMETER GROUPS
+// PARAM_GROUP_START(GTC_Params)
+// PARAM_ADD(PARAM_FLOAT, P_kp_xy, &P_kp_xy)
+// PARAM_ADD(PARAM_FLOAT, P_kp_z,  &P_kp_z)
+// PARAM_ADD(PARAM_FLOAT, P_kd_xy, &P_kd_xy) 
+// PARAM_ADD(PARAM_FLOAT, i_range_xy, &i_range_xy)
+// PARAM_ADD(PARAM_FLOAT, P_kd_z,  &P_kd_z)
+// PARAM_ADD(PARAM_FLOAT, P_ki_xy, &P_ki_xy)
+// PARAM_ADD(PARAM_FLOAT, P_ki_z,  &P_ki_z)
+// PARAM_ADD(PARAM_FLOAT, i_range_z, &i_range_z)
+
+// PARAM_ADD(PARAM_FLOAT, R_kp_xy, &R_kp_xy)
+// PARAM_ADD(PARAM_FLOAT, R_kd_xy, &R_kd_xy) 
+// PARAM_ADD(PARAM_FLOAT, R_ki_xy, &R_ki_xy)
+// PARAM_ADD(PARAM_FLOAT, i_range_R_xy, &i_range_R_xy)
+
+// PARAM_ADD(PARAM_FLOAT, R_kp_z,  &R_kp_z)
+// PARAM_ADD(PARAM_FLOAT, R_kd_z,  &R_kd_z)
+// PARAM_ADD(PARAM_FLOAT, R_ki_z,  &R_ki_z)
+// PARAM_ADD(PARAM_FLOAT, i_range_R_z, &i_range_R_z)
+
+// PARAM_ADD(PARAM_FLOAT, b1_d_x, &b1_d.x)
+// PARAM_ADD(PARAM_FLOAT, b1_d_y, &b1_d.y)
+// PARAM_ADD(PARAM_FLOAT, b1_d_z, &b1_d.z)
+
+// PARAM_ADD(PARAM_FLOAT, CF_mass, &m)
+
+// // PARAM_ADD(PARAM_UINT8, AttCtrl, &attCtrlEnable)
+// // PARAM_ADD(PARAM_UINT8, Tumbled, &tumbled)
+// // PARAM_ADD(PARAM_UINT8, Error_Reset, &errorReset)
+// PARAM_ADD(PARAM_UINT8, SafeModeFlag, &safeModeEnable)
+
+// PARAM_GROUP_STOP(GTC_Params)
+
+
+// // LOGGING GROUPS
+
+// LOG_GROUP_START(LogStateData_GTC)
+// LOG_ADD(LOG_UINT32, Z_xy,   &StatesZ_GTC.xy)
+// LOG_ADD(LOG_INT16,  Z_z,    &StatesZ_GTC.z)
+
+// LOG_ADD(LOG_UINT32, Z_vxy,  &StatesZ_GTC.vxy)
+// LOG_ADD(LOG_INT16,  Z_vz,   &StatesZ_GTC.vz)
+
+// LOG_ADD(LOG_UINT32, Z_quat, &StatesZ_GTC.quat)
+
+// LOG_ADD(LOG_UINT32, Z_wxy,  &StatesZ_GTC.wxy)
+// LOG_ADD(LOG_INT16,  Z_wz,   &StatesZ_GTC.wz)
+
+// LOG_ADD(LOG_UINT32, Z_OFxy, &StatesZ_GTC.OF_xy)
+// LOG_ADD(LOG_INT16,  Z_Tau,  &StatesZ_GTC.Tau)
+// LOG_ADD(LOG_INT16,  Z_d_ceil, &StatesZ_GTC.d_ceil)
+
+// LOG_ADD(LOG_UINT32, Z_FMz, &StatesZ_GTC.FMz)
+// LOG_ADD(LOG_UINT32, Z_Mxy, &StatesZ_GTC.Mxy)
+
+// LOG_ADD(LOG_UINT32, Z_PWM12, &StatesZ_GTC.MS_PWM12)
+// LOG_ADD(LOG_UINT32, Z_PWM34, &StatesZ_GTC.MS_PWM34)
+
+// LOG_ADD(LOG_UINT32, Z_NN_FP, &StatesZ_GTC.NN_FP)
+// LOG_GROUP_STOP(LogStateData_GTC)
+
+
+// LOG_GROUP_START(LogSetPoints_GTC)
+// LOG_ADD(LOG_UINT32, Z_xy,   &setpointZ_GTC.xy)
+// LOG_ADD(LOG_INT16,  Z_z,    &setpointZ_GTC.z)
+
+// LOG_ADD(LOG_UINT32, Z_vxy,  &setpointZ_GTC.vxy)
+// LOG_ADD(LOG_INT16,  Z_vz,   &setpointZ_GTC.vz)
+
+// LOG_ADD(LOG_UINT32, Z_axy,  &setpointZ_GTC.axy)
+// LOG_ADD(LOG_INT16,  Z_az,   &setpointZ_GTC.az)
+// LOG_GROUP_STOP(LogSetPoints_GTC)
+
+
+// LOG_GROUP_START(LogFlipData_GTC)
+// LOG_ADD(LOG_UINT32, Z_xy,   &FlipStatesZ_GTC.xy)
+// LOG_ADD(LOG_INT16,  Z_z,    &FlipStatesZ_GTC.z)
+
+// LOG_ADD(LOG_UINT32, Z_vxy,  &FlipStatesZ_GTC.vxy)
+// LOG_ADD(LOG_INT16,  Z_vz,   &FlipStatesZ_GTC.vz)
+
+// LOG_ADD(LOG_UINT32, Z_quat, &FlipStatesZ_GTC.quat)
+
+// LOG_ADD(LOG_UINT32, Z_wxy,  &FlipStatesZ_GTC.wxy)
+// LOG_ADD(LOG_INT16,  Z_wz,   &FlipStatesZ_GTC.wz)
+
+// LOG_ADD(LOG_UINT32, Z_OFxy, &FlipStatesZ_GTC.OF_xy)
+// LOG_ADD(LOG_INT16,  Z_Tau,  &FlipStatesZ_GTC.Tau)
+// LOG_ADD(LOG_INT16,  Z_d_ceil, &FlipStatesZ_GTC.d_ceil)
+
+// LOG_ADD(LOG_UINT8, Flip_Flag, &flip_flag)
+// LOG_GROUP_STOP(LogFlipData_GTC)
+
+
+// LOG_GROUP_START(valsLog)
+// LOG_ADD(LOG_UINT8, Motorstop_Flag, &motorstop_flag)
+// LOG_ADD(LOG_FLOAT, Pos_Ctrl_Flag, &kp_xf)
+// LOG_ADD(LOG_FLOAT, Vel_Ctrl_Flag, &kd_xf)
+// LOG_ADD(LOG_UINT8, Execute_Traj_Flag, &execute_traj)
+// LOG_ADD(LOG_UINT8, Tumbled_Flag, &tumbled)
+// LOG_ADD(LOG_UINT8, Moment_Flag, &moment_flag)
+// LOG_ADD(LOG_UINT8, Policy_Armed_Flag, &policy_armed_flag)
+// LOG_GROUP_STOP(valsLog)
