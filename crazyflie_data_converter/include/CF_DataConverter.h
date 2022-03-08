@@ -57,7 +57,7 @@ class CF_DataConverter
             CF_DataConverter::LoadParams();
 
             CF_DataConverter::adjustSimSpeed(SIM_SPEED);
-            BodyCollision_str = MODEL_NAME + "::crazyflie_ModelBase::crazyflie_body::body_collision";
+            BodyCollision_str = MODEL_NAME + "::crazyflie_BaseModel::crazyflie_body::body_collision";
 
             CF_DCThread = std::thread(&CF_DataConverter::MainLoop, this);
 

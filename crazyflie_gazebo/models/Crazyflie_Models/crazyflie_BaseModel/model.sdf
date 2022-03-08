@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='crazyflie_ModelBase'>
+  <model name='crazyflie_BaseModel'>
     <link name='crazyflie_body'>
       <inertial>
         <mass>0.03584</mass>
@@ -23,7 +23,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_ModelBase/meshes/crazyflie.dae</uri>
+            <uri>model://crazyflie_BaseModel/meshes/crazyflie.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -265,7 +265,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_ModelBase/meshes/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_BaseModel/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -290,7 +290,7 @@
         <pose>0 0 0 0 -0 3.14</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_ModelBase/meshes/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_BaseModel/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -334,7 +334,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_ModelBase/meshes/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_BaseModel/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -359,7 +359,7 @@
         <pose>0 0 0 0 -0 3.14</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_ModelBase/meshes/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_BaseModel/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -403,7 +403,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_ModelBase/meshes/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_BaseModel/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -428,7 +428,7 @@
         <pose>0 0 0 0 -0 3.14</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_ModelBase/meshes/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_BaseModel/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -472,7 +472,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_ModelBase/meshes/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_BaseModel/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -497,7 +497,7 @@
         <pose>0 0 0 0 -0 3.14</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_ModelBase/meshes/crazyflie_prop.dae</uri>
+            <uri>model://crazyflie_BaseModel/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
