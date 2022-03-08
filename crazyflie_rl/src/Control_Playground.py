@@ -123,10 +123,9 @@ def logFlight(env):
 
     ## RESET LOGGING CONDITIONS 
     t_prev = 0.0
-    t_start = rospy.Time.now().to_sec()
 
-    while env.t - t_start <= 30: 
-
+    while 1: 
+        
         # If time changes then append csv file
         if env.t != t_prev:
             env.append_csv()

@@ -204,15 +204,6 @@ class CrazyflieEnv:
         self.reset_pos()
         print("[COMPLETED] Environment done")
 
-    
-
-    def modelInitials(self): # RETURNS INITIALS FOR MODEL
-        str = self.modelName
-        charA = str[self.modelName.find("_")+1] # [W]ide
-        charB = str[self.modelName.find("-")+1] # [L]ong
-
-        return charA+charB  # [WL]
-
 
     # ============================
     ##   Publishers/Subscribers 
@@ -393,7 +384,7 @@ class CrazyflieEnv:
 
     def CF_MiscDataCallback(self,MiscData_msg):
 
-        self.V_battery = np.round(MiscData_msg.battery_voltage,4)
+        self.V_Battery = np.round(MiscData_msg.battery_voltage,4)
     
 
     def RL_Publish(self):
@@ -443,6 +434,94 @@ class CrazyflieEnv:
     ##       Sim Operation
     # ============================
 
+    def modelInitials(self): # RETURNS INITIALS FOR MODEL
+        str = self.modelName
+        charA = str[self.modelName.find("_")+1] # [W]ide
+        charB = str[self.modelName.find("-")+1] # [L]ong
+
+        return charA+charB  # [WL]
+
+    def userInput(self,input_string,dataType=float):
+
+        while True:
+            try:
+                vals = [dataType(i) for i in input(input_string).split(',')]
+            except:
+                continue
+        
+            if len(vals) == 1:
+                return vals[0]
+            else:
+                return vals
+
+    def getTime(self):
+        
+        return self.t
+
+    def impactEstimate(self,posCF_0,vel_trial):
+
+        t_impact = (self.h_ceiling - posCF_0[2])/vel_trial[2]
+
+        x_impact = posCF_0[0] + vel_trial[0]*t_impact
+        y_impact = posCF_0[1] + vel_trial[1]*t_impact
+        z_impact = posCF_0[2] + vel_trial[2]*t_impact
+
+        return [x_impact,y_impact,z_impact]
+
+
+    def step(self,action,cmd_vals=[0,0,0],cmd_flag=1):
+
+        if action == "sticky":
+
+            rospy.wait_for_service("/activate_Sticky_Pad_1")
+            if cmd_flag == 1: 
+                for ii in range(4):
+                    sticky_srv = rospy.ServiceProxy(f"/activate_Sticky_Pad_{ii+1}", activateSticky)
+                    sticky_srv(True)
+                    
+            elif cmd_flag == 0:
+                for ii in range(4):
+                    sticky_srv = rospy.ServiceProxy(f"/activate_Sticky_Pad_{ii+1}", activateSticky)
+                    sticky_srv(False)
+                    
+            # rospy.wait_for_message("/ctrl_data",CtrlData,timeout=0.5) # Ensure controller has time to process command
+
+        cmd_msg = RLCmd()
+
+        cmd_dict = {'home':0,
+                    'pos':1,
+                    'vel':2,
+                    'acc':3,
+                    'tumble':4,
+                    'stop':5,
+                    'params':6,
+                    'moment':7,
+                    'policy':8,
+                    'traj':9,
+                    'sticky':11}
+        
+
+        cmd_msg.cmd_type = cmd_dict[action]
+        cmd_msg.cmd_vals.x = cmd_vals[0]
+        cmd_msg.cmd_vals.y = cmd_vals[1]
+        cmd_msg.cmd_vals.z = cmd_vals[2]
+        cmd_msg.cmd_flag = cmd_flag
+        
+        self.RL_CMD_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
+        time.sleep(0.05)
+
+    def reset_reward_terms(self):
+
+        ## RESET REWARD CALC VALUES
+        self.d_ceil_min = 50.0
+        self.pitch_sum = 0.0
+        self.pitch_max = 0.0
+
+    # ============================
+    ##       GAZEBO OPERATION
+    # ============================
+    
+
     def relaunch_sim(self):
         """
             Relaunches Gazebo and resets model position but doesn't touch controller node
@@ -471,32 +550,14 @@ class CrazyflieEnv:
         os.killpg(self.gazebo_p.pid, signal.SIGTERM)
         os.killpg(self.controller_p.pid, signal.SIGTERM)
         sys.exit(0)
-
-     
-    def getTime(self):
-        return self.t
-
+    
     def launch_sim(self):
         
         print("[STARTING] Starting Gazebo Process...")
         self.gazebo_p = subprocess.Popen( # Gazebo Process
             "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_launch launch_gazebo.bash", 
             start_new_session=True, shell=True)
-
-    def userInput(self,input_string,dataType=float):
-
-        while True:
-            try:
-                vals = [dataType(i) for i in input(input_string).split(',')]
-            except:
-                continue
-        
-            if len(vals) == 1:
-                return vals[0]
-            else:
-                return vals
-        
-        
+  
     def pause_sim(self,pause_flag):
 
         if pause_flag:
@@ -511,8 +572,6 @@ class CrazyflieEnv:
             "gnome-terminal -- roslaunch crazyflie_launch dashboard.launch",
             close_fds=True, preexec_fn=os.setsid, shell=True)
     
-    
-
     def launch_controller(self):
         print("[STARTING] Starting Controller Process...")
         os.system("rosnode kill /controller_node")
@@ -578,56 +637,6 @@ class CrazyflieEnv:
         self.step('tumble',cmd_flag=1) # Tumble Detection On
         self.step('home')
        
-
-
-    def step(self,action,cmd_vals=[0,0,0],cmd_flag=1):
-
-        if action == "sticky":
-
-            rospy.wait_for_service("/activate_Sticky_Pad_1")
-            if cmd_flag == 1: 
-                for ii in range(4):
-                    sticky_srv = rospy.ServiceProxy(f"/activate_Sticky_Pad_{ii+1}", activateSticky)
-                    sticky_srv(True)
-                    
-            elif cmd_flag == 0:
-                for ii in range(4):
-                    sticky_srv = rospy.ServiceProxy(f"/activate_Sticky_Pad_{ii+1}", activateSticky)
-                    sticky_srv(False)
-                    
-            # rospy.wait_for_message("/ctrl_data",CtrlData,timeout=0.5) # Ensure controller has time to process command
-
-        cmd_msg = RLCmd()
-
-        cmd_dict = {'home':0,
-                    'pos':1,
-                    'vel':2,
-                    'acc':3,
-                    'tumble':4,
-                    'stop':5,
-                    'params':6,
-                    'moment':7,
-                    'policy':8,
-                    'traj':9,
-                    'sticky':11}
-        
-
-        cmd_msg.cmd_type = cmd_dict[action]
-        cmd_msg.cmd_vals.x = cmd_vals[0]
-        cmd_msg.cmd_vals.y = cmd_vals[1]
-        cmd_msg.cmd_vals.z = cmd_vals[2]
-        cmd_msg.cmd_flag = cmd_flag
-        
-        self.RL_CMD_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
-        time.sleep(0.05)
-        
-    def reset_reward_terms(self):
-
-        ## RESET REWARD CALC VALUES
-        self.d_ceil_min = 50.0
-        self.pitch_sum = 0.0
-        self.pitch_max = 0.0
-
 
 
     # ============================
@@ -706,7 +715,7 @@ class CrazyflieEnv:
                     self.a_d[0],self.a_d[1],self.a_d[2], # Acceleration Setpoints
                     
                     # Misc Values
-                    self.V_battery,
+                    self.V_Battery,
                     error_str]) # Error
 
     def append_IC(self):
