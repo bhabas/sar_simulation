@@ -112,8 +112,8 @@ class DashboardNode:
 
 
         ## INITIAILIZE REWARD SUBSCRIBER 
-        rospy.Subscriber('/RL/rl_data',RLData,self.rewardCallback,queue_size=10)
-        rospy.Subscriber('/RL/rl_convg',RLConvg,self.rlConvgCallback,queue_size=10)
+        rospy.Subscriber('/RL/data',RLData,self.rewardCallback,queue_size=10)
+        rospy.Subscriber('/RL/convg_data',RLConvg,self.rlConvgCallback,queue_size=10)
 
         self.RL_CMD_Publisher = rospy.Publisher('/RL/cmd',RLCmd,queue_size=10)
         self.cmd_msg = RLCmd()
