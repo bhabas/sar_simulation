@@ -18,5 +18,5 @@ float32 reward_avg
 
 float32[] vel_d
 bool impact_flag
-uint8[] leg_contacts
 bool body_contact
+uint8 leg_contacts

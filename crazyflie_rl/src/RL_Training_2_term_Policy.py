@@ -21,9 +21,11 @@ if __name__ == '__main__':
     
 
     ## INIT LEARNING AGENT
+    # Mu_Tau value is multiplied by 10 so complete policy is more normalized
     mu = np.array([[2.5], [5]])       # Initial mu starting point
-    sigma = np.array([[0.5],[1.5]])     # Initial sigma starting point
-    env.n_rollouts = 3
+    sigma = np.array([[0.5],[1.5]])   # Initial sigma starting point
+
+    env.n_rollouts = 6
     agent = rlEM_PEPGAgent(mu,sigma,env.n_rollouts)
 
 
@@ -56,8 +58,8 @@ if __name__ == '__main__':
         env.k_ep = k_ep
 
         ## CONVERT AGENT ARRAYS TO LISTS FOR PUBLISHING
-        env.mu = agent.mu.flatten().tolist()                    # Mean for Gaussian distribution
-        env.sigma = agent.sigma.flatten().tolist()              # Standard Deviation for Gaussian distribution
+        env.mu = agent.mu.flatten().tolist()                # Mean for Gaussian distribution
+        env.sigma = agent.sigma.flatten().tolist()          # Standard Deviation for Gaussian distribution
 
         env.mu_1_list.append(env.mu[0])
         env.mu_2_list.append(env.mu[1])
@@ -67,7 +69,7 @@ if __name__ == '__main__':
 
         
         ## PRE-ALLOCATE REWARD VEC AND OBTAIN THETA VALS
-        training_arr = np.zeros(shape=(agent.n_rollouts,1))   # Array of reward values
+        training_arr = np.zeros(shape=(agent.n_rollouts,1)) # Array of reward values for training
         theta_rl,epsilon_rl = agent.get_theta()             # Generate sample policies from distribution
 
         ## PRINT EPISODE DATA
@@ -97,10 +99,9 @@ if __name__ == '__main__':
 
 
             ## INITIALIZE POLICY PARAMETERS: 
-            #  Policy implemented in controller node (controller.cpp)
-            Tau_thr = theta_rl[0, k_run] # RREV threshold (FOV expansion velocity) [rad/s]
-            My = theta_rl[1, k_run]
-            G2 = 0.0    # Deprecated policy term
+            Tau_thr = theta_rl[0, k_run]    # Tau threshold 10*[s]
+            My = theta_rl[1, k_run]         # Policy Moment Action [N*mm]
+            G2 = 0.0                        # Deprecated policy term
             
             env.policy = [Tau_thr/10,np.abs(My),G2]
 

@@ -283,7 +283,7 @@ class CrazyflieEnv:
         ## ======== REWARD INPUT CALCS ======== ##
 
         ## MIN D_CEIL CALC
-        if self.d_ceil < self.d_ceil_min:
+        if 0.1 < self.d_ceil < self.d_ceil_min:
             self.d_ceil_min = np.round(self.d_ceil,3) # Min distance achieved, used for reward calc
 
         ## MAX PITCH CALC
@@ -419,6 +419,9 @@ class CrazyflieEnv:
         RL_msg.reward_avg = self.reward_avg
 
         RL_msg.vel_d = self.vel_trial
+        RL_msg.impact_flag = self.impact_flag
+        RL_msg.body_contact = self.BodyContact_flag
+        RL_msg.leg_contacts = self.pad_connections
         self.RL_Data_Publisher.publish(RL_msg) ## Publish RLData message
 
         ## CONVERGENCE HISTORY
