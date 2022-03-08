@@ -2,8 +2,6 @@ string trial_name
 string agent
 string error
 
-bool impact_flag
-bool runComplete_flag
 
 uint16 k_ep
 uint16 k_run
@@ -19,5 +17,6 @@ float32 reward
 float32 reward_avg
 
 float32[] vel_d
+bool impact_flag
 uint8[] leg_contacts
 bool body_contact

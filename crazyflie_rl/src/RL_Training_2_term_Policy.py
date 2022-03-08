@@ -23,7 +23,7 @@ if __name__ == '__main__':
     ## INIT LEARNING AGENT
     mu = np.array([[2.5], [5]])       # Initial mu starting point
     sigma = np.array([[0.5],[1.5]])     # Initial sigma starting point
-    env.n_rollouts = 8
+    env.n_rollouts = 3
     agent = rlEM_PEPGAgent(mu,sigma,env.n_rollouts)
 
 
@@ -67,7 +67,7 @@ if __name__ == '__main__':
 
         
         ## PRE-ALLOCATE REWARD VEC AND OBTAIN THETA VALS
-        reward_arr = np.zeros(shape=(agent.n_rollouts,1))   # Array of reward values
+        training_arr = np.zeros(shape=(agent.n_rollouts,1))   # Array of reward values
         theta_rl,epsilon_rl = agent.get_theta()             # Generate sample policies from distribution
 
         ## PRINT EPISODE DATA
@@ -89,6 +89,8 @@ if __name__ == '__main__':
         ##          Run 
         # ============================
         for env.k_run in range(0,env.n_rollouts):
+            # input("press enter")
+
 
             ## UPDATE RUN NUMBER
             k_run = env.k_run # Local variables are faster to access then class variables
@@ -105,14 +107,27 @@ if __name__ == '__main__':
             try: # Use try block to catch raised exceptions and attempt rollout again
                 executeFlight(env,agent)
 
+                if env.repeat_run == True: # Runs when error detected
+                    env.relaunch_sim()
+                    continue
+
             except rospy.service.ServiceException:
                 continue
 
-            reward_arr[k_run] = env.reward
-            env.reward_avg = reward_arr[np.nonzero(reward_arr)].mean()
+            ## ADD VALID REWARD TO TRAINING ARRAY
+            training_arr[k_run] = env.reward
+
+            env.reward_list.append(int(env.reward))
+            env.reward_avg = training_arr[np.nonzero(training_arr)].mean()
+
+            ## PUBLISH UPDATED REWARD VARIABLES
+            env.RL_Publish()
+
+        env.reward_avg_list.append(int(env.reward_avg))
+        env.RL_Publish()
 
         ## =======  EPISODE COMPLETED  ======= ##
         print(f"Episode # {k_ep:d} training, average reward {env.reward_avg:.3f}")
-        agent.train(theta_rl,reward_arr,epsilon_rl)
+        agent.train(theta_rl,training_arr,epsilon_rl)
 
 

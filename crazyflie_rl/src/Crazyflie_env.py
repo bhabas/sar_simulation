@@ -47,6 +47,7 @@ class CrazyflieEnv:
         self.agent_name = ''    # Learning agent used for training (PEPG,EM,etc...)
         self.logging_flag = False
         self.runComplete_flag = False
+        self.repeat_run = False
 
 
 
@@ -403,7 +404,6 @@ class CrazyflieEnv:
         RL_msg.trial_name = self.trial_name
         RL_msg.agent = self.agent_name
         RL_msg.error = self.error_str
-        RL_msg.runComplete_flag = self.runComplete_flag
 
         RL_msg.n_rollouts = self.n_rollouts
         RL_msg.h_ceiling = self.h_ceiling
@@ -423,10 +423,15 @@ class CrazyflieEnv:
 
         ## CONVERGENCE HISTORY
         RL_convg_msg = RLConvg()
+
         RL_convg_msg.mu_1_list = self.mu_1_list
         RL_convg_msg.mu_2_list = self.mu_2_list
+
         RL_convg_msg.sigma_1_list = self.sigma_1_list
         RL_convg_msg.sigma_2_list = self.sigma_2_list
+
+        RL_convg_msg.reward_list = self.reward_list
+        RL_convg_msg.reward_avg_list = self.reward_avg_list
         self.RL_Convg_Publisher.publish(RL_convg_msg) ## Publish RLData message
 
 
@@ -613,7 +618,7 @@ class CrazyflieEnv:
         self.RL_CMD_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
         time.sleep(0.05)
         
-    def clear_rollout_Data(self):
+    def reset_reward_terms(self):
 
         ## RESET REWARD CALC VALUES
         self.d_ceil_min = 50.0

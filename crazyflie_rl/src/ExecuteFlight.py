@@ -143,7 +143,7 @@ def executeFlight(env,agent):
         if any(np.isnan(env.posCF)): 
             env.error_str = "Error: NAN found in state vector"
             print(env.error_str)
-            repeat_run = True
+            env.repeat_run = True
             break
 
         # ============================
@@ -175,19 +175,14 @@ def executeFlight(env,agent):
             ## PUBLISH RL DATA AND RESET LOGS/POSITIONS FOR NEXT ROLLOUT
             env.runComplete_flag = False            
             env.reset_pos()
-            env.clear_rollout_Data()
+            env.reset_reward_terms()
         
             break # Break from run loop
             
         t_prev = env.t   
 
     ## =======  RUN COMPLETED  ======= ##
-    if repeat_run == True: # Runs when error detected
-        env.relaunch_sim()
     
-    else:
-        ## PUBLISH UPDATED REWARD VARIABLES
-        env.RL_Publish()
 
 
 if __name__ == '__main__':
