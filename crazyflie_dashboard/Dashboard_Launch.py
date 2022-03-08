@@ -32,9 +32,10 @@ class Dashboard(QMainWindow,DashboardNode):
         self.setWindowIcon(QtGui.QIcon(ICON_TASKBAR))
 
 
-
         #LOAD UI
         loadUi(f'{BASE_PATH}/crazyflie_dashboard/DashboardWindow.ui', self)
+        self.tabWidget.setCurrentIndex(0)
+
 
         self.plot_list = [
             self.Pos_Graph,

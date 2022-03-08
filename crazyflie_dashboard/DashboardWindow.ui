@@ -223,7 +223,7 @@ font: 13pt &quot;Ubuntu&quot;;</string>
         </property>
         <property name="minimumSize">
          <size>
-          <width>150</width>
+          <width>160</width>
           <height>0</height>
          </size>
         </property>
@@ -471,7 +471,7 @@ font: 14pt &quot;Ubuntu&quot;;
          <enum>QTabWidget::Rounded</enum>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>2</number>
         </property>
         <property name="tabsClosable">
          <bool>false</bool>
@@ -1053,7 +1053,7 @@ font: 14pt &quot;Ubuntu&quot;;
                     </widget>
                    </item>
                    <item>
-                    <widget class="Omega_Widget" name="Omega_Graph_2" native="true">
+                    <widget class="Dist_Widget" name="Dist_Graph" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
@@ -1136,7 +1136,7 @@ font: 14pt &quot;Ubuntu&quot;;
                     </widget>
                    </item>
                    <item>
-                    <widget class="OF_Widget" name="OF_Graph_3" native="true">
+                    <widget class="OF_Widget" name="OF_Graph" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
@@ -1157,7 +1157,7 @@ font: 14pt &quot;Ubuntu&quot;;
                      <item>
                       <widget class="Line" name="line_50">
                        <property name="styleSheet">
-                        <string notr="true">color: rgb(44, 160, 44);</string>
+                        <string notr="true">color: rgb(214, 39, 40);</string>
                        </property>
                        <property name="frameShadow">
                         <enum>QFrame::Plain</enum>
@@ -1183,7 +1183,7 @@ font: 14pt &quot;Ubuntu&quot;;
                      <item>
                       <widget class="Line" name="line_51">
                        <property name="styleSheet">
-                        <string notr="true">color: rgb(31, 119, 180);</string>
+                        <string notr="true">color: rgb(44, 160, 44);</string>
                        </property>
                        <property name="frameShadow">
                         <enum>QFrame::Plain</enum>
@@ -1241,7 +1241,19 @@ font: 14pt &quot;Ubuntu&quot;;
                     </widget>
                    </item>
                    <item>
-                    <widget class="Omega_Widget" name="Omega_Graph_3" native="true">
+                    <widget class="QWidget" name="ExtraPlot_3" native="true">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="minimumSize">
+                      <size>
+                       <width>304</width>
+                       <height>213</height>
+                      </size>
+                     </property>
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
@@ -1645,7 +1657,19 @@ font: 14pt &quot;Ubuntu&quot;;
                 </widget>
                </item>
                <item>
-                <widget class="OF_Widget" name="OF_Graph" native="true">
+                <widget class="QWidget" name="ExtraPLot_1" native="true">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>304</width>
+                   <height>213</height>
+                  </size>
+                 </property>
                  <property name="styleSheet">
                   <string notr="true">background-color: rgb(136, 138, 133);</string>
                  </property>
@@ -1776,7 +1800,19 @@ font: 14pt &quot;Ubuntu&quot;;
                 </widget>
                </item>
                <item>
-                <widget class="Dist_Widget" name="Dist_Graph" native="true">
+                <widget class="QWidget" name="ExtraPlot_2" native="true">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>304</width>
+                   <height>213</height>
+                  </size>
+                 </property>
                  <property name="styleSheet">
                   <string notr="true">background-color: rgb(136, 138, 133);</string>
                  </property>

@@ -47,8 +47,7 @@ class CrazyflieEnv:
         self.agent_name = ''    # Learning agent used for training (PEPG,EM,etc...)
         self.logging_flag = False
         self.runComplete_flag = False
-        self.trialComplete_flag = False
-        self.reset_flag = False
+        self.repeat_run = False
 
 
 
@@ -159,6 +158,9 @@ class CrazyflieEnv:
         self.sigma_1_list = []
         self.sigma_2_list = []
 
+        self.reward_list = []
+        self.reward_avg_list = []
+
         self.reward = 0.0       # Calculated reward from run
         self.reward_avg = 0.0   # Averaged rewards over episode
         self.reward_inputs = [] # List of inputs to reward func
@@ -193,17 +195,13 @@ class CrazyflieEnv:
         self.RL_Convg_Publisher = rospy.Publisher('/RL/convg_data',RLConvg,queue_size=10)
 
 
-        ## ENVIRONMENT TOPICS
-        # self.ENV_BodyContact_Subscriber = rospy.Subscriber('/ENV/BodyContact',ContactsState,self.contactSensorCallback,queue_size=10)     
-
-
-
-
         ## INIT GAZEBO TIMEOUT THREAD
         if gazeboTimeout==True:
             self.timeoutThread = Thread(target=self.timeoutSub)
             self.timeoutThread.start()
 
+
+        self.reset_pos()
         print("[COMPLETED] Environment done")
 
     
@@ -285,7 +283,7 @@ class CrazyflieEnv:
         ## ======== REWARD INPUT CALCS ======== ##
 
         ## MIN D_CEIL CALC
-        if self.d_ceil < self.d_ceil_min:
+        if 0.1 < self.d_ceil < self.d_ceil_min:
             self.d_ceil_min = np.round(self.d_ceil,3) # Min distance achieved, used for reward calc
 
         ## MAX PITCH CALC
@@ -406,9 +404,6 @@ class CrazyflieEnv:
         RL_msg.trial_name = self.trial_name
         RL_msg.agent = self.agent_name
         RL_msg.error = self.error_str
-        RL_msg.runComplete_flag = self.runComplete_flag
-        RL_msg.trialComplete_flag = self.trialComplete_flag
-        RL_msg.reset_flag = self.reset_flag
 
         RL_msg.n_rollouts = self.n_rollouts
         RL_msg.h_ceiling = self.h_ceiling
@@ -424,14 +419,22 @@ class CrazyflieEnv:
         RL_msg.reward_avg = self.reward_avg
 
         RL_msg.vel_d = self.vel_trial
+        RL_msg.impact_flag = self.impact_flag
+        RL_msg.body_contact = self.BodyContact_flag
+        RL_msg.leg_contacts = self.pad_connections
         self.RL_Data_Publisher.publish(RL_msg) ## Publish RLData message
 
         ## CONVERGENCE HISTORY
         RL_convg_msg = RLConvg()
+
         RL_convg_msg.mu_1_list = self.mu_1_list
         RL_convg_msg.mu_2_list = self.mu_2_list
+
         RL_convg_msg.sigma_1_list = self.sigma_1_list
         RL_convg_msg.sigma_2_list = self.sigma_2_list
+
+        RL_convg_msg.reward_list = self.reward_list
+        RL_convg_msg.reward_avg_list = self.reward_avg_list
         self.RL_Convg_Publisher.publish(RL_convg_msg) ## Publish RLData message
 
 
@@ -574,11 +577,7 @@ class CrazyflieEnv:
         ## RESET HOME/TUMBLE DETECTION AND STICKY
         self.step('tumble',cmd_flag=1) # Tumble Detection On
         self.step('home')
-
-
-        # time.sleep(0.1) # Give it time for controller to receive new states
-        # rospy.wait_for_service('/gazebo/get_link_state')
-        
+       
 
 
     def step(self,action,cmd_vals=[0,0,0],cmd_flag=1):
@@ -622,7 +621,7 @@ class CrazyflieEnv:
         self.RL_CMD_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
         time.sleep(0.05)
         
-    def clear_rollout_Data(self):
+    def reset_reward_terms(self):
 
         ## RESET REWARD CALC VALUES
         self.d_ceil_min = 50.0

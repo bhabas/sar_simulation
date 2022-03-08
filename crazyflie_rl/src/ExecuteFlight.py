@@ -16,12 +16,6 @@ np.set_printoptions(precision=2, suppress=True)
 
 def executeFlight(env,agent):
 
-    ## SEND MESSAGE FOR ALL NODES TO RESET TO DEFAULT VALUES
-    env.reset_flag = True
-    env.trialComplete_flag = False
-    env.RL_Publish() # Publish that rollout completed 
-
-
     ## MAKE SURE CONTROLLER IS WORKING
     while True:
         try:
@@ -89,7 +83,6 @@ def executeFlight(env,agent):
             Mx_d = env.FM_tr[1] 
             My_d = env.FM_tr[2]
             Mz_d = env.FM_tr[3]
-            env.M_d = [Mx_d,My_d,Mz_d] # [N*mm]
 
         
             print("----- pitch starts -----")
@@ -150,7 +143,7 @@ def executeFlight(env,agent):
         if any(np.isnan(env.posCF)): 
             env.error_str = "Error: NAN found in state vector"
             print(env.error_str)
-            repeat_run = True
+            env.repeat_run = True
             break
 
         # ============================
@@ -180,24 +173,16 @@ def executeFlight(env,agent):
 
 
             ## PUBLISH RL DATA AND RESET LOGS/POSITIONS FOR NEXT ROLLOUT
-            env.reset_flag = True
-            env.runComplete_flag = False
-            env.RL_Publish() # Publish that rollout completed 
-            
+            env.runComplete_flag = False            
             env.reset_pos()
-            env.clear_rollout_Data()
+            env.reset_reward_terms()
         
             break # Break from run loop
             
         t_prev = env.t   
 
     ## =======  RUN COMPLETED  ======= ##
-    if repeat_run == True: # Runs when error detected
-        env.relaunch_sim()
     
-    else:
-        ## PUBLISH UPDATED REWARD VARIABLES
-        env.RL_Publish()
 
 
 if __name__ == '__main__':
@@ -226,8 +211,6 @@ if __name__ == '__main__':
 
 
     ## RUN TRIAL
-    env.RL_Publish() # Publish data to rl_data topic
-    # time.sleep(3)
 
     while True:
         executeFlight(env,agent)
