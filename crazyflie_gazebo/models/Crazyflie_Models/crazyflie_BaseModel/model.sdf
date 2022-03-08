@@ -3,7 +3,7 @@
   <model name='crazyflie_BaseModel'>
     <link name='crazyflie_body'>
       <inertial>
-        <mass>0.03584</mass>
+        <mass>0.0321</mass>
         <inertia>
           <ixx>49.35e-6</ixx>
           <ixy>0</ixy>
@@ -20,7 +20,7 @@
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
       <visual name='body_visual'>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 -0.001 0 -0 0</pose>
         <geometry>
           <mesh>
             <uri>model://crazyflie_BaseModel/meshes/crazyflie.dae</uri>
@@ -147,6 +147,7 @@
       </collision>
     </link>
     <link name='body_sensors'>
+      <pose>0 0 0.012 0 0 0</pose>
       <inertial>
         <mass>0.0001</mass>
         <inertia>
@@ -159,7 +160,6 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>0 0 0.015 0 0 0</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -256,7 +256,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>0.033 0.033 0.014 0 -0 0</pose>
+      <pose>0.0325 0.0325 0.014 0 -0 0</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -325,7 +325,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>-0.033 0.033 0.014 0 -0 0</pose>
+      <pose>-0.0325 0.0325 0.014 0 -0 0</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -394,7 +394,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>-0.033 -0.033 0.014 0 -0 0</pose>
+      <pose>-0.0325 -0.0325 0.014 0 -0 0</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -463,7 +463,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>0.033 -0.033 0.014 0 -0 0</pose>
+      <pose>0.0325 -0.0325 0.014 0 -0 0</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
