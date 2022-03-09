@@ -508,9 +508,11 @@ void CF_DataConverter::consoleOuput()
 
     printf("=== Parameters ====\n");
     printf("Kp_P: %.3f  %.3f  %.3f \t",P_kp_xy,P_kp_xy,P_kp_z);
-    printf("Kp_R: %.3f  %.3f  %.3f \n",R_kd_xy,R_kd_xy,R_kd_z);
-    printf("Kd_P: %.3f  %.3f  %.3f \t",P_kp_xy,P_kp_xy,P_kp_z);
+    printf("Kp_R: %.3f  %.3f  %.3f \n",R_kp_xy,R_kp_xy,R_kp_z);
+
+    printf("Kd_P: %.3f  %.3f  %.3f \t",P_kd_xy,P_kd_xy,P_kd_z);
     printf("Kd_R: %.3f  %.3f  %.3f \n",R_kd_xy,R_kd_xy,R_kd_z);
+
     printf("Ki_P: %.3f  %.3f  %.3f \t",P_ki_xy,P_ki_xy,P_ki_z);
     printf("Ki_R: %.3f  %.3f  %.3f \n",R_ki_xy,R_ki_xy,R_ki_z);
     printf("======\n");

@@ -5,12 +5,12 @@
       <inertial>
         <mass>0.0343</mass>
         <inertia>
-          <ixx>15.93e-6</ixx>
+          <ixx>15.83e-6</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
           <iyy>17.00e-6</iyy>
           <iyz>0</iyz>
-          <izz>31.84e-6</izz>
+          <izz>31.19e-6</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
@@ -151,12 +151,12 @@
       <inertial>
         <mass>0.0001</mass>
         <inertia>
-          <ixx>4.3354e-08</ixx>
+          <ixx>4.3354e-10</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>4.3354e-08</iyy>
+          <iyy>4.3354e-10</iyy>
           <iyz>0</iyz>
-          <izz>4.3354e-08</izz>
+          <izz>4.3354e-10</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>

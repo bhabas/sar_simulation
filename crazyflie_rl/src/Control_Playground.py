@@ -152,7 +152,7 @@ if __name__ == '__main__':
     env.logging_flag = True
     env.create_csv(env.filepath)
 
-    time.sleep(5)
+    # time.sleep(5)
     cmd_thread = threading.Thread(target=cmd_send,args=(env,))
     cmd_thread.start()   
 
