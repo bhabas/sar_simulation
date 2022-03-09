@@ -3,14 +3,14 @@
   <model name='crazyflie_BaseModel'>
     <link name='crazyflie_body'>
       <inertial>
-        <mass>0.0321</mass>
+        <mass>0.0343</mass>
         <inertia>
-          <ixx>49.35e-6</ixx>
+          <ixx>15.93e-6</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>49.35e-6</iyy>
+          <iyy>17.00e-6</iyy>
           <iyz>0</iyz>
-          <izz>29.26e-6</izz>
+          <izz>31.84e-6</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
