@@ -732,6 +732,10 @@
       <OFx_gaussianNoise>0.0</OFx_gaussianNoise>
       <OFy_gaussianNoise>0.0</OFy_gaussianNoise>
     </plugin>
+
+    <plugin name='MomentPlugin' filename='libMoment_plugin.so'>
+
+    </plugin>
   
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
