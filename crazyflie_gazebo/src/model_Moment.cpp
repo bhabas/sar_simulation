@@ -9,7 +9,7 @@ namespace gazebo
     void ModelMoment::Load(physics::ModelPtr parent, sdf::ElementPtr _sdf)
     {
         gzmsg << "Loading GazeboMomentPlugin\n";
-        model_ = parent;
+        model = parent;
         
         // RUN FUNCTION EACH TIME SIMULATION UPDATES
         updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&ModelMoment::OnUpdate, this));
@@ -19,7 +19,11 @@ namespace gazebo
 
     void ModelMoment::OnUpdate()
     {
-       
+        printf("flag: %u\n",executeMoment);
+        if(executeMoment == true)
+        {
+            model->SetLinearVel(ignition::math::Vector3d(.3, 0, 0));
+        }
     }
 
     // void GazeboMotorPlugin::updateTorque()
@@ -36,7 +40,27 @@ namespace gazebo
 
     void ModelMoment::RLCmd_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
     {
-        // rotorPWM = msg->MotorPWM[motor_number-1];
+        if(msg->cmd_type == 50)
+        {
+            if(msg->cmd_flag == 1)
+            {
+                executeMoment = true;
+            }
+            else
+            {
+                executeMoment = false;
+            }
+        }
+        else if(msg->cmd_type == 0)
+        {
+            ignition::math::Pose3d pose(
+                ignition::math::Vector3d(0, 0, 0.5),
+                ignition::math::Quaterniond(1.0, 0.0, 0.0, 0.0)
+            );
+            model->SetWorldPose(pose);
+            model->SetWorldTwist(ignition::math::Vector3d(0, 0, 0),ignition::math::Vector3d(0, 0, 0));
+
+        }
     }
 
     GZ_REGISTER_MODEL_PLUGIN(ModelMoment);
