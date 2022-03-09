@@ -734,7 +734,7 @@
     </plugin>
 
     <plugin name='MomentPlugin' filename='libMoment_plugin.so'>
-
+      <bodyName>crazyflie_body</bodyName>
     </plugin>
   
     <static>0</static>

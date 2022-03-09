@@ -27,8 +27,13 @@ namespace gazebo {
 
         private:
             physics::WorldPtr world;
-            physics::ModelPtr model;
+            physics::ModelPtr model_ptr;
+            physics::LinkPtr link_ptr;
 
+
+            ignition::math::Vector3d torque_vec;
+
+            std::string linkName;
 
             event::ConnectionPtr updateConnection;
 

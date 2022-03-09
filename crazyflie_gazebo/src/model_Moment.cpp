@@ -9,7 +9,11 @@ namespace gazebo
     void ModelMoment::Load(physics::ModelPtr parent, sdf::ElementPtr _sdf)
     {
         gzmsg << "Loading GazeboMomentPlugin\n";
-        model = parent;
+        model_ptr = parent;
+
+        linkName = _sdf->GetElement("bodyName")->Get<std::string>();
+        gzmsg << "\t Link Name:\t" << linkName << std::endl;
+        link_ptr = model_ptr->GetLink(linkName);
         
         // RUN FUNCTION EACH TIME SIMULATION UPDATES
         updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&ModelMoment::OnUpdate, this));
@@ -19,10 +23,12 @@ namespace gazebo
 
     void ModelMoment::OnUpdate()
     {
-        printf("flag: %u\n",executeMoment);
+        // printf("flag: %u\n",executeMoment);
         if(executeMoment == true)
         {
-            model->SetLinearVel(ignition::math::Vector3d(.3, 0, 0));
+            link_ptr->AddRelativeTorque(torque_vec);
+            std::cout << model_ptr->RelativeAngularAccel() << std::endl;
+
         }
     }
 
@@ -45,6 +51,7 @@ namespace gazebo
             if(msg->cmd_flag == 1)
             {
                 executeMoment = true;
+                torque_vec.Set(msg->cmd_vals.x, msg->cmd_vals.y, msg->cmd_vals.z);
             }
             else
             {
@@ -57,8 +64,9 @@ namespace gazebo
                 ignition::math::Vector3d(0, 0, 0.5),
                 ignition::math::Quaterniond(1.0, 0.0, 0.0, 0.0)
             );
-            model->SetWorldPose(pose);
-            model->SetWorldTwist(ignition::math::Vector3d(0, 0, 0),ignition::math::Vector3d(0, 0, 0));
+            model_ptr->SetWorldPose(pose);
+            model_ptr->SetWorldTwist(ignition::math::Vector3d(0, 0, 0),ignition::math::Vector3d(0, 0, 0));
+            torque_vec.Set(0,0,0);
 
         }
     }
