@@ -3,11 +3,6 @@ string agent
 string error
 
 
-bool impact_flag
-bool runComplete_flag
-bool trialComplete_flag
-bool reset_flag
-
 uint16 k_ep
 uint16 k_run
 
@@ -22,6 +17,6 @@ float32 reward
 float32 reward_avg
 
 float32[] vel_d
-float32[] M_d
-uint8[] leg_contacts
+bool impact_flag
 bool body_contact
+uint8 leg_contacts

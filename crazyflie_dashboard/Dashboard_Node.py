@@ -1,3 +1,4 @@
+from numpy.lib.index_tricks import r_
 import rospy
 import numpy as np
 
@@ -14,17 +15,17 @@ class DashboardNode:
         ## INITIALIZE CLASS VARIABLES
         # Publisher is very slow compared to Subscriber so this prevents calling uninitilized variables
         # while waiting to recieve them from the Publisher
-        self.n_rollouts = 0
+        self.n_rollouts = 1
         self.k_run = 0
         self.k_ep = 0
 
 
-        self.k_ep_list1 = [0]
-        self.k_ep_list2 = [0]
+        self.K_ep_list1 = []
+        self.K_ep_list2 = []
 
 
-        self.r_list = [np.nan]
-        self.r_avg_list = [np.nan]
+        self.r_list = []
+        self.r_avg_list = []
 
 
         self.mu_1_list = [] # I can generalize this if needed
@@ -48,7 +49,7 @@ class DashboardNode:
         self.RREV = 0.0
         self.d_ceil = 0.0 
 
-        self.MS_pwm = [0,0,0,0] # Controller Motor Speeds (MS1,MS2,MS3,MS4) [PWM]
+        self.MS_PWM = [0,0,0,0] # Controller Motor Speeds (MS1,MS2,MS3,MS4) [PWM]
         self.FM = [0,0,0,0]     # Controller Force/Moments (F_thrust,Mx,My,Mz) [N,N*mm]
         
         self.NN_flip = 0.0
@@ -112,8 +113,8 @@ class DashboardNode:
 
 
         ## INITIAILIZE REWARD SUBSCRIBER 
-        rospy.Subscriber('/RL/rl_data',RLData,self.rewardCallback,queue_size=10)
-        rospy.Subscriber('/RL/rl_convg',RLConvg,self.rlConvgCallback,queue_size=10)
+        rospy.Subscriber('/RL/data',RLData,self.rewardCallback,queue_size=10)
+        rospy.Subscriber('/RL/convg_data',RLConvg,self.rlConvgCallback,queue_size=10)
 
         self.RL_CMD_Publisher = rospy.Publisher('/RL/cmd',RLCmd,queue_size=10)
         self.cmd_msg = RLCmd()
@@ -299,22 +300,27 @@ class DashboardNode:
         self.k_run = reward_msg.k_run
         self.k_ep = reward_msg.k_ep
             
-        ## IF REWARD CHANGES THEN APPEND NEW REWARD TO LIST
-        if self.r_list[-1] != reward_msg.reward:
-            self.k_ep_list1.append(reward_msg.k_ep)
-            self.r_list.append(reward_msg.reward)
-
-        ## IF FINAL RUN, THEN APPEND REWARD AVG TO LIST
-        if self.k_run == self.n_rollouts-1:
-            self.r_avg_list.append(reward_msg.reward_avg)
-            self.k_ep_list2.append(self.k_ep)
-
-
     def rlConvgCallback(self,msg):
         self.mu_1_list = np.array(msg.mu_1_list)
         self.mu_2_list = np.array(msg.mu_2_list)
         self.sigma_1_list = np.array(msg.sigma_1_list)
         self.sigma_2_list = np.array(msg.sigma_2_list)
+
+        ## REWARD ARRAYS
+        self.r_list = np.array(msg.reward_list).astype(int)
+
+        k_ep = len(self.r_list)//self.n_rollouts
+        k_run = len(self.r_list)%self.n_rollouts
+
+        if k_ep == 0:
+            self.K_ep_list1 = np.repeat(0,k_run)
+        else:
+            self.K_ep_list1 = np.concatenate((np.repeat(range(k_ep),self.n_rollouts),np.repeat(k_ep,k_run)))
+
+        ## AVERAGE REWARD ARRAYS
+        self.r_avg_list = np.array(msg.reward_avg_list).astype(int)
+        self.K_ep_list2 = np.array(range(0,len(self.r_avg_list)))
+
 
 
 

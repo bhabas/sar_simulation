@@ -393,7 +393,7 @@ class Tau_Widget(QWidget):
         ## UPDATE PLOT 1
         self.PW.setBackground('w')
         self.PW.setXRange(buffer_length*0.0,buffer_length)
-        self.PW.setYRange(0,10)
+        self.PW.setYRange(0,5)
         self.PW.showGrid(x=True, y=True, alpha=0.2)
 
 
@@ -414,7 +414,7 @@ class Tau_Widget(QWidget):
 
     def reset_axes(self):
         # self.p1.enableAutoRange(enable=True)
-        self.PW.setYRange(0,10)
+        self.PW.setYRange(0,5)
         self.PW.setXRange(buffer_length*0.0,buffer_length)
 
     def pause(self,pause_flag):
@@ -649,7 +649,7 @@ class RL_Widget(QWidget):
         ## UPDATE PLOT 1
         self.PW.setBackground('w')
         self.PW.setXRange(0,25)
-        self.PW.setYRange(0,200)
+        self.PW.setYRange(0,400)
         self.PW.showGrid(x=True, y=True, alpha=0.2)
 
 
@@ -666,8 +666,8 @@ class RL_Widget(QWidget):
 
     def update(self):
                         
-        self.curve_reward.setData([0,1],[50,60])
-        # self.curve_reward_avg.setData(DashNode.k_ep_list2,DashNode.r_avg_list)
+        self.curve_reward.setData(DashNode.K_ep_list1,DashNode.r_list)
+        self.curve_reward_avg.setData(DashNode.K_ep_list2,DashNode.r_avg_list)
 
 
 
