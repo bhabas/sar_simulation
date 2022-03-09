@@ -244,7 +244,7 @@ void controllerGTCInit(void)
     controllerGTCReset();
     controllerGTCTest();
     X = nml_mat_new(3,1);
-    J = mdiag(1.65717e-5f,1.65717e-5f,2.92617e-5f);
+    J = mdiag(15.83e-6f,17.00e-6f,31.19e-6f);
 
     initNN_Layers(&Scaler_Flip,W_flip,b_flip,NN_Params_Flip,3);
     initNN_Layers(&Scaler_Policy,W_policy,b_policy,NN_Params_Policy,3);

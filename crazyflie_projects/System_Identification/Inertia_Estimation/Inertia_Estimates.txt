@@ -1,0 +1,23 @@
+Base Model
+===========
+
+m_CF = 34.3e-3  [kg]
+
+Ixx = 15.83e-6 [kg*m^2]
+Iyy = 17.00e-6 [kg*m^2]
+Izz = 31.19e-6 [kg*m^2]
+
+
+
+Narrow-Medium Model
+====================
+
+m_leg = 0.94e-3 [kg]
+m_CF = 38.1e-3  [kg]
+
+Ixx = 27.93e-6 [kg*m^2]
+Iyy = 30.46e-6 [kg*m^2]
+Izz = 47.12e-6 [kg*m^2]
+
+
+
