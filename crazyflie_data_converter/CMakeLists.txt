@@ -8,7 +8,7 @@ project(crazyflie_data_converter)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
-  crazyflie_msgs_exp
+  crazyflie_msgs
 )
 
 catkin_package(

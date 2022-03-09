@@ -15,6 +15,7 @@
   <build_export_depend>rospy</build_export_depend>
   <exec_depend>roscpp</exec_depend>
   <exec_depend>rospy</exec_depend>
+  <depend>crazyflie_msgs</depend>
 
 
 </package>
