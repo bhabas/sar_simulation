@@ -29,9 +29,9 @@ namespace gazebo
 
         if(executeMoment == true)
         {
-            // link_ptr->AddRelativeTorque(torque_vec);
-            rotor1_ptr->AddRelativeForce(thrust_vec);
-            rotor4_ptr->AddRelativeForce(thrust_vec);
+            link_ptr->AddRelativeTorque(torque_vec);
+            // rotor1_ptr->AddRelativeForce(thrust_vec);
+            // rotor4_ptr->AddRelativeForce(thrust_vec);
 
             std::cout << model_ptr->RelativeAngularAccel() << std::endl;
 

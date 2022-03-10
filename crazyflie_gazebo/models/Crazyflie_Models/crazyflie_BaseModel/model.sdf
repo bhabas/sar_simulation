@@ -732,8 +732,8 @@
       <OFx_gaussianNoise>0.0</OFx_gaussianNoise>
       <OFy_gaussianNoise>0.0</OFy_gaussianNoise>
     </plugin>
-<!-- 
-    <plugin name='MomentPlugin' filename='libMoment_plugin.so'>
+
+    <!-- <plugin name='MomentPlugin' filename='libMoment_plugin.so'>
       <bodyName>crazyflie_body</bodyName>
     </plugin> -->
   
