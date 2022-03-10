@@ -30,8 +30,13 @@ namespace gazebo {
             physics::ModelPtr model_ptr;
             physics::LinkPtr link_ptr;
 
+            physics::LinkPtr rotor1_ptr;
+            physics::LinkPtr rotor4_ptr;
+            
 
             ignition::math::Vector3d torque_vec;
+            ignition::math::Vector3d thrust_vec;
+
 
             std::string linkName;
 

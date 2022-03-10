@@ -52,8 +52,7 @@ float h_ceiling = 2.10f;    // [m]
 static struct mat33 J; // Rotational Inertia Matrix [kg*m^2]
 
 
-static float d = 0.040f;    // COM to Prop [m]
-static float dp = 0.028284; // COM to Prop along x-axis [m]
+static float dp = 0.035; // COM to Prop along x-axis [m]
                             // [dp = d*sin(45 deg)]
 
 static float const kf = 2.2e-8f;    // Thrust Coeff [N/(rad/s)^2]
@@ -149,7 +148,6 @@ uint16_t M4_pwm = 0;
 bool tumbled = false;
 bool tumble_detection = true;
 bool motorstop_flag = false;
-bool errorReset = false; // Resets error vectors (removed integral windup)
 bool safeModeFlag = false;
 
 bool execute_traj = false;
@@ -472,10 +470,6 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                 setpoint->GTC_cmd_rec = false;
             }
 
-        if (errorReset){
-            controllerGTCReset();
-            errorReset = false;
-            }
 
         if(execute_traj){
             controllerGTCTraj();
@@ -589,7 +583,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         if(moment_flag == true)
         {
             F_thrust = 0.0f;
-            M = M_d;
+            M = vscl(2.0f,M_d);
         }
 
         // =========== CONVERT THRUSTS AND MOMENTS TO PWM =========== // 

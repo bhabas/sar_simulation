@@ -1,13 +1,13 @@
 MODEL_NAME: "crazyflie_BaseModel"
 SURFACE_NAME: "CeilingPlane_Large"
-GROUND_NAME: "GroundPlane_Desert_Physical"
+GROUND_NAME: "GroundPlane_Desert_Visual"
 
 GUI_FLAG: True
 PAUSE_FLAG: True
 LOGGING_FLAG: False
 
-SIM_SPEED: 0.5
-SIM_SLOWDOWN_SPEED: 0.4
+SIM_SPEED: 0.2
+SIM_SLOWDOWN_SPEED: 0.2
 LANDING_SLOWDOWN_FLAG: True
 
 

@@ -14,6 +14,9 @@ namespace gazebo
         linkName = _sdf->GetElement("bodyName")->Get<std::string>();
         gzmsg << "\t Link Name:\t" << linkName << std::endl;
         link_ptr = model_ptr->GetLink(linkName);
+
+        rotor1_ptr = model_ptr->GetLink("rotor_1");
+        rotor4_ptr = model_ptr->GetLink("rotor_4");
         
         // RUN FUNCTION EACH TIME SIMULATION UPDATES
         updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&ModelMoment::OnUpdate, this));
@@ -23,26 +26,17 @@ namespace gazebo
 
     void ModelMoment::OnUpdate()
     {
-        // printf("flag: %u\n",executeMoment);
+
         if(executeMoment == true)
         {
-            link_ptr->AddRelativeTorque(torque_vec);
+            // link_ptr->AddRelativeTorque(torque_vec);
+            rotor1_ptr->AddRelativeForce(thrust_vec);
+            rotor4_ptr->AddRelativeForce(thrust_vec);
+
             std::cout << model_ptr->RelativeAngularAccel() << std::endl;
 
         }
     }
-
-    // void GazeboMotorPlugin::updateTorque()
-    // {
-    //     // APPLY ROTOR TORQUE TO MAIN BODY
-    //     torque = torque_coeff*thrust;
-    //     ignition::math::Vector3d torque_vec(0, 0, -turning_direction * torque); // Torque is opposite direction of rotation
-
-    //     physics::Link_V parent_links = link_ptr->GetParentJointsLinks(); // Get <vector> of parent links
-    //     ignition::math::Pose3d pose_difference = link_ptr->WorldCoGPose() - parent_links.at(0)->WorldCoGPose(); // Find rotor pos relative to body
-    //     ignition::math::Vector3d torque_parent_frame = pose_difference.Rot().RotateVector(torque_vec); // Rotate torque vector to match body orientation
-    //     parent_links.at(0)->AddRelativeTorque(torque_parent_frame); // Apply torque vector to body
-    // }
 
     void ModelMoment::RLCmd_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
     {
@@ -52,6 +46,8 @@ namespace gazebo
             {
                 executeMoment = true;
                 torque_vec.Set(msg->cmd_vals.x, msg->cmd_vals.y, msg->cmd_vals.z);
+                thrust_vec.Set(msg->cmd_vals.x, msg->cmd_vals.y, msg->cmd_vals.z);
+                
             }
             else
             {
@@ -67,6 +63,7 @@ namespace gazebo
             model_ptr->SetWorldPose(pose);
             model_ptr->SetWorldTwist(ignition::math::Vector3d(0, 0, 0),ignition::math::Vector3d(0, 0, 0));
             torque_vec.Set(0,0,0);
+            thrust_vec.Set(0,0,0);
 
         }
     }

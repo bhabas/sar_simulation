@@ -159,7 +159,6 @@ extern uint16_t M4_pwm;
 extern bool tumbled;
 extern bool tumble_detection;
 extern bool motorstop_flag;
-extern bool errorReset; // Resets error vectors (removed integral windup)
 extern bool safeModeFlag;
 
 extern bool execute_traj;
