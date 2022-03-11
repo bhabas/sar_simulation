@@ -126,7 +126,7 @@ class DataParser:
             ABC,_,_,_ = np.linalg.lstsq(LHS,RHS, rcond = None)
             A = ABC[0]
             B = ABC[1]
-            f = 0.607e-3 # Camera Focal Length [m] (Validate with measured values)
+            f = 0.66e-3 # Camera Focal Length [m] (Validate with measured values)
             self.TTC_est2[n-1] = 1/(ABC[2])
             self.OFx_est[n-1] = -B/f
             self.OFy_est[n-1] = -A/f
