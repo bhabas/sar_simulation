@@ -82,7 +82,11 @@ class DataParser:
     def Data_analysis(self):
 
         #init values for data processing
-        Prev_img = np.reshape(self.Camera_array[0],(120,160)) #first image of the dataset 
+
+        WIDTH_PIXELS = 160
+        HEIGHT_PIXELS = 120
+
+        Prev_img = np.reshape(self.Camera_array[0],(HEIGHT_PIXELS,WIDTH_PIXELS)) #first image of the dataset 
         xgrid = np.linspace(-160/2,160/2,161)
         xgrid = np.delete(xgrid,[-1]) #remove the last element because the Cam_array is even
         ygrid = np.linspace(120/2,-120/2,121)
