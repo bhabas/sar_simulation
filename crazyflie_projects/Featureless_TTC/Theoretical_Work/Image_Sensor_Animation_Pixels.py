@@ -13,8 +13,10 @@ L = 0.2    # [m]
 f = 0.66e-3 # Focal Length [m]
 d = 0.6     # Camera distance [m]
 w = 3.6e-6  # Pixel width [m]
+O_x = 80    # Pixel X_offset [pixels]
+O_y = 60    # Pixel Y_offset [pixels]
 FPS = 60    # Frame Rate [1/s]
-vx = 0.0    # Camera velocity [m/s]
+vx = 0.1    # Camera velocity [m/s]
 
 Vx = vx/d   # Optical flow from x-vel [rad/s]
 print(f"Vx = {Vx:.3f} [rad/s]")
@@ -27,24 +29,24 @@ print(f"Gamma_d = {gamma_d:.3f}")
 print(f"Gamma_x = {gamma_x:.3f}")
 
 ## IMAGE ARRAY [m]
-u = np.arange(-80,80,1)*3.6e-6
-v = np.arange(-60,60,1)*3.6e-6
-U,V = np.meshgrid(u,v)
+u_p = np.arange(0,160,1)
+v_p = np.arange(0,120,1)
+U_p,V_p = np.meshgrid(u_p,v_p)
 
-def Intensity(u,i):
-    return I_0/2*(np.sin(2*np.pi/L*(u*d/f+vx*i))+1)
+def Intensity(u_p,i):
+    u = (u_p - O_x)*w + w/2
+    return I_0/2 * f*L/(np.pi*d*w) * np.sin(np.pi*d*w/(f*L)) * np.sin(2*np.pi*(u*d/(f*L) + vx*i/L)) + I_0/2
 
 ## CREATE INITIAL PLOT
 fig = plt.figure()
 ax = fig.add_subplot(111)
-im = ax.imshow(Intensity(U,0), interpolation='bilinear', 
+im = ax.imshow(Intensity(U_p,0), interpolation='none', 
                 vmin=0, vmax=255, cmap=cm.Greys,
                 origin='upper',
-                extent=[np.min(u),np.max(u),np.min(v),np.max(v)]
 )
-ax.set_title("Image Sensor Pattern (m)")
-ax.set_xlabel("u [m]")
-ax.set_ylabel("v [m]")
+ax.set_title("Image Sensor Pattern (Pixels)")
+ax.set_xlabel("u [pixels]")
+ax.set_ylabel("v [pixels]")
 fig.tight_layout()
 
 ## ANIMATE PLOT
@@ -53,7 +55,7 @@ def animate_func(i):
     if i % FPS == 0:
         print( '.', end ='' )
 
-    im.set_array(Intensity(U,i/FPS))
+    im.set_array(Intensity(U_p,i/FPS))
     return [im]
 
 anim = animation.FuncAnimation(fig, 
