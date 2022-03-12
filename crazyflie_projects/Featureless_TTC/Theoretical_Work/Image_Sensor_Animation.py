@@ -7,12 +7,24 @@ from matplotlib.patches import Rectangle
 
 ## PLOT BRIGHTNESS PATTERN FROM 2.4.1 HORIZONTAL MOTION
 I_0 = 255   # Brightness value (0-255)
-L = 0.2     # [m]
+L = 0.05    # [m]
 
 ## CAMERA PARAMETERS
-f = 0.66e-3         # Focal Length [m]
-d = 0.6             # Camera distance [m]
-vx = 0.1
+f = 0.66e-3 # Focal Length [m]
+d = 0.6     # Camera distance [m]
+w = 3.6e-6  # Pixel width [m]
+FPS = 60    # Frame Rate [1/s]
+vx = 1.0    # Camera velocity [m/s]
+
+Vx = vx/d   # Optical flow from x-vel [rad/s]
+print(f"Vx = {Vx:.3f} [rad/s]")
+
+
+## GRADIENT ERRORS
+gamma_d = np.pi*d*w/(f*L)
+gamma_x = 2*np.pi*vx/(FPS*L)
+print(f"Gamma_d = {gamma_d:.3f}")
+print(f"Gamma_x = {gamma_x:.3f}")
 
 
 u = np.arange(-80,80,1)*3.6e-6
