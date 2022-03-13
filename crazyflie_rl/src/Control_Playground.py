@@ -2,9 +2,11 @@
 import threading,os
 import rospy
 import time
+import numpy as np
 
 from RL_agents.rl_EM import rlEM_PEPGAgent
 from Crazyflie_env import CrazyflieEnv
+from gazebo_msgs.msg import ModelState
 
 
 os.system("clear")
@@ -25,6 +27,7 @@ def cmd_send(env):
             8:'policy',
             9:'traj',
             11:'sticky',
+            19:'traj_tp',
             101:'reset',
         }
 
@@ -96,12 +99,28 @@ def cmd_send(env):
                 env.step(action,cmd_vals,cmd_flag)
 
             elif action=='traj':
-                axis = env.userInput("Set desired axis (x:0,y:1,z:2): ",int)
-                Pos_0 = env.posCF[axis]
-                cmd_vals = env.userInput("Set desired velocity trajectory (Vel_d,Acc_max): ",float)
-                print()
 
-                env.step(action,[Pos_0,cmd_vals[0],cmd_vals[1]],cmd_flag=axis)
+                ## GET INPUT VALUES
+                V_d,phi,alpha = env.userInput("Flight Velocity (V_d,phi,alpha):",int)
+
+                ## DEFINE CARTESIAN VELOCITIES
+                phi_rad = np.radians(phi)
+                alpha_rad = np.radians(alpha)
+                Vx_d = V_d*np.cos(phi_rad)*np.cos(alpha_rad)
+                Vy_d = V_d*np.cos(phi_rad)*np.sin(alpha_rad)
+                Vz_d = V_d*np.sin(phi_rad)
+
+                ## ESTIMATE IMPACT POINT
+                P_impact = env.impactEstimate(env.posCF_0,[Vx_d,Vy_d,Vz_d])
+
+                ## CHECK VALID IMPACT POINT AND EXECUTE TRAJECTORY
+                validate = input(f"Approve impact point (y/n): {P_impact[0]:.2f}, {P_impact[1]:.2f}, {P_impact[2]:.2f}\n")
+                if validate == 'y':
+                    env.step('traj',cmd_vals=[env.posCF_0[0],Vx_d,env.accCF_max[0]],cmd_flag=0)
+                    env.step('traj',cmd_vals=[env.posCF_0[1],Vy_d,env.accCF_max[1]],cmd_flag=1)
+                    env.step('traj',cmd_vals=[env.posCF_0[2],Vz_d,env.accCF_max[2]],cmd_flag=2)
+                else:
+                    pass
 
             elif action=='sticky':
                 cmd_vals = [0,0,0]
@@ -109,7 +128,33 @@ def cmd_send(env):
                 print()
 
                 env.step(action,cmd_vals,cmd_flag)
-            
+
+            elif action=='traj_tp':
+
+
+                ## GET INPUT VALUES
+                V_d,phi,alpha = env.userInput("Flight Velocity (V_d,phi,alpha):",int)
+
+                ## DEFINE CARTESIAN VELOCITIES
+                phi_rad = np.radians(phi)
+                alpha_rad = np.radians(alpha)
+                Vx_d = V_d*np.cos(phi_rad)*np.cos(alpha_rad)
+                Vy_d = V_d*np.cos(phi_rad)*np.sin(alpha_rad)
+                Vz_d = V_d*np.sin(phi_rad)
+
+                ## ESTIMATE IMPACT POINT
+                P_impact = env.impactEstimate(env.posCF_0,[Vx_d,Vy_d,Vz_d])
+
+                ## CHECK VALID IMPACT POINT AND EXECUTE TRAJECTORY VIA SET_MODEL_STATE
+                validate = input(f"Approve impact point (y/n): {P_impact[0]:.2f}, {P_impact[1]:.2f}, {P_impact[2]:.2f}\n")
+                if validate == 'y':
+                    env.traj_launch(env.posCF_0,[Vx_d,Vy_d,Vz_d])
+                else:
+                    pass
+
+
+
+                    
             elif action == 'reset':
                 print("Reset Pos/Vel -- Sticky off -- Controller Reset\n")
                 env.reset_pos()
