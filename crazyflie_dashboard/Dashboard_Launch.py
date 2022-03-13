@@ -52,6 +52,7 @@ class Dashboard(QMainWindow,DashboardNode):
         self.Vicon_LED.setPixmap(QPixmap(ICON_RED_LED))
         self.EmergencyStop.clicked.connect(self.Emergency_Stop)
         self.HomeButton.clicked.connect(self.HomeCmd)
+        self.Cmd_Button.clicked.connect(self.SendCmd)
 
 
 
@@ -80,11 +81,31 @@ class Dashboard(QMainWindow,DashboardNode):
 
     def Emergency_Stop(self):       
         self.cmd_msg.cmd_type = 5
-        self.RL_CMD_Publisher.publish(self.cmd_msg) # For some reason it doesn't always publish
+        self.RL_CMD_Publisher.publish(self.cmd_msg) 
 
     def HomeCmd(self):       
         self.cmd_msg.cmd_type = 0
-        self.RL_CMD_Publisher.publish(self.cmd_msg) # For some reason it doesn't always publish
+        self.RL_CMD_Publisher.publish(self.cmd_msg)
+
+    def SendCmd(self):
+        print("Command Sent")
+
+        ## INSERT VALS INTO COMMAND MSG
+        self.cmd_msg.cmd_type = int(self.Cmd_Type_LineEdit.text())
+        self.cmd_msg.cmd_vals.x = float(self.Cmd_X_LineEdit.text())
+        self.cmd_msg.cmd_vals.y = float(self.Cmd_Y_LineEdit.text())
+        self.cmd_msg.cmd_vals.z = float(self.Cmd_Z_LineEdit.text())
+        self.cmd_msg.cmd_flag = float(self.Cmd_Flag_LineEdit.text())
+
+        ## PUBLISH COMMAND
+        self.RL_CMD_Publisher.publish(self.cmd_msg)
+
+        ## CLEAR LINE EDITS
+        self.Cmd_Type_LineEdit.clear()
+        self.Cmd_X_LineEdit.clear()
+        self.Cmd_Y_LineEdit.clear()
+        self.Cmd_Z_LineEdit.clear()
+        self.Cmd_Flag_LineEdit.clear()
 
 
     def check_Vicon_Connection(self): ## CHECK IF RECEIVING VALID VICON DATA

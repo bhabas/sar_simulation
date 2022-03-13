@@ -27,13 +27,28 @@ Vicon_Tray = 2.15e-3    # [kg]
 AI_Deck = 4.43e-3       # [kg]
 
 
-m_prop = 0.31e-3    # [kg]
-m_Leg = 0.0        # [kg]
+## LEG INERTIA
+m_leg = 0.74e-3         # [kg]
+radius_leg = 2.5e-3     # [m]
+L_leg = 75e-3           # [m]
 
+I_xx_leg = 1/12*m_leg*(3*radius_leg**2 + L_leg**2)
+I_yy_leg = I_xx_leg
+I_zz_leg = 1/2*m_leg*radius_leg**2
+print(f"Leg I_xx/I_yy: {I_xx_leg:0.3E}")
+print(f"Leg I_zz: {I_zz_leg:0.3E}")
+
+
+
+## PAD INERTIA
+m_pad = 0.159e-3        # [kg]
+radius_pad = 8.667e-3   # [m]
+I_pad = 2/5*m_pad*radius_pad**2
+print(f"Pad Inertia: {I_pad:0.3E}")
 
 
 CF_body = (CF_base + Motor_Assembly*4 + Battery + Vicon_Tray) # [kg]
-CF_extra = m_Leg*4              # [kg]
+CF_extra = m_leg*4              # [kg]
 CF_total = CF_body + CF_extra   # [kg]
 
 print(f"CF_body Mass: {CF_body:.5f} [kg]")

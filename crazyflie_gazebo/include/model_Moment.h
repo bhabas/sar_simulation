@@ -26,14 +26,27 @@ namespace gazebo {
 
 
         private:
-            physics::WorldPtr world_;
-            physics::ModelPtr model_;
+            physics::WorldPtr world;
+            physics::ModelPtr model_ptr;
+            physics::LinkPtr link_ptr;
 
+            physics::LinkPtr rotor1_ptr;
+            physics::LinkPtr rotor4_ptr;
+            
+
+            ignition::math::Vector3d torque_vec;
+            ignition::math::Vector3d thrust_vec;
+
+
+            std::string linkName;
 
             event::ConnectionPtr updateConnection;
 
+
+            bool executeMoment = false;
+
             ros::NodeHandle nh;
-            ros::Subscriber MS_Subscriber = nh.subscribe<crazyflie_msgs::RLCmd>("/RL/cmd", 1, &ModelMoment::RLCmd_Callback, this, ros::TransportHints().tcpNoDelay());
+            ros::Subscriber MS_Subscriber = nh.subscribe<crazyflie_msgs::RLCmd>("/RL/cmd", 5, &ModelMoment::RLCmd_Callback, this, ros::TransportHints().tcpNoDelay());
     };
 
 }
