@@ -1,23 +1,33 @@
-from cProfile import label
 import numpy as np
 import pandas as pd
 import getpass
 import os
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+
 import cv2 as cv
 
+WIDTH_PIXELS = 160
+HEIGHT_PIXELS = 120
 
 class DataParser:
 
     def __init__(self):
 
+        ## FILEPATH PROPERTIES
         self.Filename = input('\nInput the name of the file to be parsed:\n')
         self.Username = getpass.getuser()
         self.Path = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Featureless_TTC/logs/'
         self.Filepath = self.Path + self.Filename
 
+        ## CAMERA PROPERTIES
+        self.w = 3.6e-6  # Pixel width [m]
+        self.f = 0.66e-3 # Focal Length [m]
+        self.O_x = WIDTH_PIXELS/2    # Pixel X_offset [pixels]
+        self.O_y = HEIGHT_PIXELS/2   # Pixel Y_offset [pixels]
+
         ## Check if data has already been compile
-        pre_compiled_Flag = int(input('Is the data already compiled? (1/0): '))
+        pre_compiled_Flag = input('Is the data already compiled? (y/n): ')
 
         #check if the file exists and loop back if not
         if os.path.isfile(self.Filepath) and os.access(self.Filepath, os.R_OK):
@@ -38,11 +48,11 @@ class DataParser:
         self.OFx = self.Data['OFx'].to_numpy()
         self.OFy = self.Data['OFy'].to_numpy()
 
-        
+      
 
 
 
-        if pre_compiled_Flag == True:
+        if pre_compiled_Flag == 'y':
 
             self.TTC_est1 = self.Data['TTC_est1'].to_numpy()
             self.TTC_est2 = self.Data['TTC_est2'].to_numpy()
@@ -74,66 +84,80 @@ class DataParser:
     def Camera_splitter(self): # turn each string into an array
 
         self.Camera_data = self.Data["Camera_Data"].to_numpy()
-        self.Camera_array = np.zeros([self.Camera_data.shape[0], 160*120]) #leave the data as a 1D array, easier to index
+        self.Camera_array = np.zeros((len(self.Camera_data), WIDTH_PIXELS*HEIGHT_PIXELS)) #leave the data as a 1D array, easier to index
         for n in range(0,self.Camera_data.size): #iterate through each row
             #make each row an array of ints
-            self.Camera_array[n] = np.fromstring(self.Camera_data[n], dtype = int, sep = ' ')
+            self.Camera_array[n] = np.fromstring(self.Camera_data[n], dtype=int, sep = ' ')
 
     def Data_analysis(self):
 
-        #init values for data processing
+        ## DEFINE PIXEL GRID
+        u_grid = np.arange(0,WIDTH_PIXELS,1)
+        v_grid = np.arange(0,HEIGHT_PIXELS,1)
+        U_grid,V_grid = np.meshgrid(u_grid,v_grid)
 
-        WIDTH_PIXELS = 160
-        HEIGHT_PIXELS = 120
+        xi_grid = (U_grid - self.O_x)*self.w + self.w/2
+        yi_grid = (V_grid - self.O_y)*self.w + self.w/2
+
+        Ix = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+        Iy = np.zeros_like(Ix)
 
         Prev_img = np.reshape(self.Camera_array[0],(HEIGHT_PIXELS,WIDTH_PIXELS)) #first image of the dataset 
-        xgrid = np.linspace(-160/2,160/2,161)
-        xgrid = np.delete(xgrid,[-1]) #remove the last element because the Cam_array is even
-        ygrid = np.linspace(120/2,-120/2,121)
-        ygrid = np.delete(ygrid,[-1]) #remove the last element because the Cam_array is even
-        xx , yy = np.meshgrid(xgrid,ygrid)
-        Ix = np.zeros((120,160))
-        Iy = Ix
-        Kx = np.array([[-1,0,1],[-2,0,2],[-1,0,1]]) #Kernel x
-        Ky = np.array([[1,2,1],[0,0,0],[-1,-2,-1]]) #Kernel y
-        #Kx = np.array([[-1,0,1],[-2,0,2],[-1,0,1]]) #Kernel x
-        #Ky = np.array([[1,2,1],[0,0,0],[-1,-2,-1]]) #Kernel y
-        self.TTC_est1 = np.zeros((self.Camera_array.shape[0]))
-        self.TTC_est2 = np.zeros((self.Camera_array.shape[0]))
-        self.OFx_est = np.zeros((self.Camera_array.shape[0]))
-        self.OFy_est = np.zeros((self.Camera_array.shape[0]))
+
+        ## DEFINE KERNALS USED TO CALCULATE INTENSITY GRADIENTS
+        Kx = 1/8*np.array([ # NORMALIZED SOBEL KERNAL (X-DIRECTION)
+            [-1,0,1],
+            [-2,0,2],
+            [-1,0,1]]) 
+
+        Ky = 1/8*np.array([ # NORMALIZED SOBEL KERNAL (Y-DIRECTION)
+            [ 1, 2, 1],
+            [ 0, 0, 0],
+            [-1,-2,-1]]) 
+
+        ## PRE-INITIALIZE SPACE FOR ESTIMATED VALUES
+        self.TTC_est1 = np.zeros_like(self.Time)
+        self.TTC_est2 = np.zeros_like(self.Time)
+        self.OFx_est = np.zeros_like(self.Time)
+        self.OFy_est = np.zeros_like(self.Time)
 
         for n in range(1,self.Camera_array.shape[0]): #start at the second data point
             
-            Cur_img = np.reshape(self.Camera_array[n],(120,160)) #reshape the array back into the image
-            #plt.imshow(Cur_img, interpolation = 'nearest')
-            #plt.show()
+            Cur_img = np.reshape(self.Camera_array[n],(HEIGHT_PIXELS,WIDTH_PIXELS)) #reshape the array back into the image
+            # plt.imshow(Cur_img, interpolation='none',cmap=cm.Greys)
+            # plt.show()
 
             #gaussian smoothing the image
-            Cur_img = cv.GaussianBlur(Cur_img,(5,5),0)
+            # Cur_img = cv.GaussianBlur(Cur_img,(5,5),0)
+            # plt.imshow(Cur_img, interpolation='none',cmap=cm.Greys)
+            # plt.show()
 
             for i in range(1,Prev_img.shape[0] - 1): #Calculate Radial gradient G
                 for j in range(1,Prev_img.shape[1] - 1):
-                    Ix[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Kx) 
-                    Iy[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Ky)
+                    Ix[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Kx)/self.w 
+                    Iy[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Ky)/self.w
 
             #CASE I
-            G = (xx * Ix) + (Iy * yy)
+            G = (xi_grid * Ix) + (yi_grid * Iy)
             It = (Cur_img - Prev_img)/(self.Time[n] - self.Time[n-1]) #Brightness gradient
             C = (-np.sum(G*It))/(np.sum(G*G)) #checking order of operations to see if it fixes how off it is
             #C = (-(np.sum(G)) * np.sum(It)) / (np.sum(G) ** 2)
             self.TTC_est1[n-1] = 1/C
 
             #CASE II
-            LHS = np.array([[np.sum(Ix*Ix),np.sum(Ix*Iy),np.sum(G*Ix)],[np.sum(Ix*Iy),np.sum(Iy*Iy),np.sum(G*Iy)],[np.sum(G*Ix),np.sum(G*Iy),np.sum(G*G)]])
+            LHS = np.array([
+                [np.sum(Ix*Ix),np.sum(Ix*Iy),np.sum(G*Ix)],
+                [np.sum(Ix*Iy),np.sum(Iy*Iy),np.sum(G*Iy)],
+                [np.sum(G*Ix),np.sum(G*Iy),np.sum(G*G)]
+            ])
+
             RHS = np.array([-np.sum(Ix*It),-np.sum(Iy*It),-np.sum(G*It)])
             ABC,_,_,_ = np.linalg.lstsq(LHS,RHS, rcond = None)
             A = ABC[0]
             B = ABC[1]
-            f = 0.66e-3 # Camera Focal Length [m] (Validate with measured values)
             self.TTC_est2[n-1] = 1/(ABC[2])
-            self.OFx_est[n-1] = -B/f
-            self.OFy_est[n-1] = -A/f
+            self.OFx_est[n-1] = -B/self.f
+            self.OFy_est[n-1] = -A/self.f
 
             Prev_img = Cur_img
 
@@ -143,9 +167,9 @@ class DataParser:
         
         fig, ax = plt.subplots(3,1, sharex = True)
         ax[0].set_title("TTC Comparison")
-        ax[0].plot(self.Time,self.TTC_est1*0.04,'r', label = 'TTC_est1')
+        ax[0].plot(self.Time,self.TTC_est1,'r', label = 'TTC_est1')
         ax[0].plot(self.Time,self.Tau,'b',label = 'TTC')
-        ax[0].plot(self.Time,self.TTC_est2*0.04,'g',label = 'TTC_est2')
+        # ax[0].plot(self.Time,self.TTC_est2*0.04,'g',label = 'TTC_est2')
         ax[0].set_ylabel("TTC (seconds)")
         ax[0].set_ylim(-1,6)
         ax[0].grid()
