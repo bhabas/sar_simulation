@@ -6,12 +6,12 @@ import matplotlib.animation as animation
 
 ## PLOT BRIGHTNESS PATTERN FROM 2.4.1 HORIZONTAL MOTION
 I_0 = 255   # Brightness value (0-255)
-L = 0.025    # [m]
+L = 0.05    # [m]
 
 ## CAMERA PARAMETERS
 WIDTH_PIXELS = 160
 HEIGHT_PIXELS = 120
-FPS = 60                # Frame Rate [1/s]
+FPS = 120                # Frame Rate [1/s]
 w = 3.6e-6              # Pixel width [m]
 f = 0.66e-3             # Focal Length [m]
 O_x = WIDTH_PIXELS/2    # Pixel X_offset [pixels]
@@ -19,7 +19,7 @@ O_y = HEIGHT_PIXELS/2   # Pixel Y_offset [pixels]
 
 
 z_0 = 0.6     # Camera height [m]
-vz = -0.2    # Camera velocity [m/s]
+vz = -1    # Camera velocity [m/s]
 
 ## PRE-ALLOCATE IMAGE ARRAY [pixels]
 u_p = np.arange(0,WIDTH_PIXELS,1)
@@ -89,11 +89,17 @@ def cam_alg(Cur_img,Prev_img):
             Ix[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Kx)/(w)
             Iy[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Ky)/(w)
 
+
+
     It = (Cur_img - Prev_img)/(1/FPS)
 
     U = (U_p - O_x)*w + w/2 
-    Vz_est = np.mean(-It[1:-1,1:-1]/(U[1:-1,1:-1]*Ix[1:-1,1:-1]))
+    V = (V_p - O_y)*w + w/2
+    G = U[1:-1,1:-1]*Ix[1:-1,1:-1] + V[1:-1,1:-1]*Iy[1:-1,1:-1]
 
+    Vz_est = -np.sum(G*It[1:-1,1:-1])/np.sum(G**2)
+
+    # Vz_est = np.mean(-It[1:-1,1:-1]/G)
     return Vz_est
 
 
@@ -111,9 +117,12 @@ def animate_func(i):
     Cur_img = I_pixel(U_p,z_0,t)
     Prev_img = I_pixel(U_p,z_0,t-1/FPS)
     Vz_est = cam_alg(Cur_img,Prev_img)
+    
 
     U = (U_p - O_x)*w + w/2 
-    Vz_an = np.mean(-dI_dt_pixel(U_p,z_0,t)[1:-1,1:-1]/(U[1:-1,1:-1]*dI_du_pixel(U_p,z_0,t)[1:-1,1:-1]))
+    G = U[1:-1,1:-1]*dI_du_pixel(U_p,z_0,t)[1:-1,1:-1]
+
+    Vz_an =-np.sum(G*dI_dt_pixel(U_p,z_0,t)[1:-1,1:-1])/np.sum(G**2)
     Vz_act = -vz/(z_0 + vz*t)
 
     print(f"Vz_act: {Vz_act:.3f} | Vz_an: {Vz_an:.3f} | Vz_est: {Vz_est:.3f}")
@@ -138,9 +147,9 @@ plt.show()
 fig2 = plt.figure(1)
 ax = fig2.add_subplot(111)
 
-ax.plot(t_List,Vz_act_List,label="Vz_act")
-ax.plot(t_List,Vz_an_List,'--k',label="Vz_an")
-ax.plot(t_List,Vz_est_List,'ro',label="Vz_est")
+# ax.plot(t_List,Vz_an_List,'--k',label="Tau_analytical")
+ax.plot(t_List,Vz_est_List,'ro',label="Tau_algortihm")
+ax.plot(t_List,Vz_act_List,label="Tau_actual")
 
 ax.grid()
 ax.legend()
