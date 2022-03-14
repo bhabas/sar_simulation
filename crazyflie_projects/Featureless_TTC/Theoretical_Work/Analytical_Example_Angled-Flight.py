@@ -2,24 +2,26 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.animation as animation
+import cv2 as cv
 
 
 ## PLOT BRIGHTNESS PATTERN FROM 2.4.1 HORIZONTAL MOTION
 I_0 = 255   # Brightness value (0-255)
-L = 0.05    # [m]
+L = 0.4    # [m]
 
 ## CAMERA PARAMETERS
 WIDTH_PIXELS = 160
-HEIGHT_PIXELS = 120
+HEIGHT_PIXELS = 160
 FPS = 60                # Frame Rate [1/s]
 w = 3.6e-6              # Pixel width [m]
-f = 0.66e-3             # Focal Length [m]
+f = 0.66e-3/2             # Focal Length [m]
+# f_effective = f/2 # halve focal length if half the pixels
 O_x = WIDTH_PIXELS/2    # Pixel X_offset [pixels]
 O_y = HEIGHT_PIXELS/2   # Pixel Y_offset [pixels]
 
 
-z_0 = 0.6     # Camera height [m]
-vz = -0.8    # Camera velocity [m/s]
+z_0 = 2     # Camera height [m]
+vz = -2.5    # Camera velocity [m/s]
 vx = 0.2
 
 ## PRE-ALLOCATE IMAGE ARRAY [pixels]
@@ -44,11 +46,12 @@ def I_pixel(u_p,z_0,t):
     ## CONVERT PIXEL INDEX TO METERS
     u = (u_p - O_x)*w + w/2 
     z = z_0 + vz*t
-    ## RETURN AVERAGE BRIGHTNESS VALUE OVER PIXEL
-    I = I_0/2 * (f*L/(np.pi*z*w) * np.sin(np.pi*z*w/(f*L) * np.sin(np.pi*(u*z/(f*L) + vx*t/L))) + 1)
 
-    # ## CLIP VALUES TO BE HIGH/LOW
-    # I = np.round(I/255,0)*255
+    ## RETURN AVERAGE BRIGHTNESS VALUE OVER PIXEL
+    I = I_0/2 * (f*L/(np.pi*z*w) * np.sin(np.pi*z*w/(f*L) * np.sin(2*np.pi*(z*u/(f*L) + vx*t/L))) + 1)
+
+    ## CLIP VALUES TO BE HIGH/LOW
+    I = np.round(I/255,0)*255
 
     return I
 
@@ -80,6 +83,9 @@ def cam_alg(Cur_img,Prev_img):
 
     Ix = np.zeros_like(Cur_img)
     Iy = np.zeros_like(Cur_img)
+
+    Cur_img = cv.GaussianBlur(Cur_img,(5,5),0)
+    Prev_img = cv.GaussianBlur(Prev_img,(5,5),0)
 
     for i in range(1,HEIGHT_PIXELS - 1): 
         for j in range(1,WIDTH_PIXELS - 1):
@@ -118,7 +124,11 @@ t_List = []
 ## ANIMATE PLOT
 num_sec = 3
 def animate_func(i):
+
+    t_contact = z_0/np.abs(vz)
     t = i/FPS # time [s]
+    if t>=t_contact:
+        return
 
     Cur_img = I_pixel(U_p,z_0,t)
     Prev_img = I_pixel(U_p,z_0,t-1/FPS)
@@ -139,8 +149,9 @@ def animate_func(i):
 
 
     t_List.append(t)
+
     ## UPDATE IMAGE
-    im.set_array(I_pixel(U_p,z_0,0))
+    im.set_array(cv.GaussianBlur(I_pixel(U_p,z_0,t),(5,5),0))
     
 anim = animation.FuncAnimation(fig, 
                                animate_func, 
