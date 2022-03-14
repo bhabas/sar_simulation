@@ -134,7 +134,7 @@ class DataParser:
 
 
             
-
+            ## FIND IMAGE GRADIENTS
             for i in range(1,HEIGHT_PIXELS - 1): 
                 for j in range(1,WIDTH_PIXELS - 1):
                     Ix[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Kx)/self.w
@@ -142,22 +142,25 @@ class DataParser:
 
 
 
-            # It = ((Cur_img - Prev_img)/(1/FPS))[1:-1,1:-1]
             It = (Cur_img - Prev_img)/(self.Time[n] - self.Time[n-1]) #Brightness gradient
+            G = xi_grid*Ix + yi_grid*Iy
 
-            G = xi_grid[1:-1,1:-1]*Ix[1:-1,1:-1] + yi_grid[1:-1,1:-1]*Iy[1:-1,1:-1]
-
+            ## SOLVE LEAST SQUARES PROBLEM
             X = np.array([
-                [np.sum(Ix[1:-1,1:-1]**2),np.sum(G*Ix[1:-1,1:-1])],
-                [np.sum(G*Ix[1:-1,1:-1]),np.sum(G**2)]
+                [np.sum(Ix**2),np.sum(Ix*Iy),np.sum(G*Ix)],
+                [np.sum(Ix*Iy),np.sum(Iy**2),np.sum(G*Iy)],
+                [np.sum(G*Ix),np.sum(G*Iy),np.sum(G**2)]
             ])
 
-            y = -np.array([[np.sum(Ix[1:-1,1:-1]*It[1:-1,1:-1])],[np.sum(G*It[1:-1,1:-1])]])
+            y = -np.array([[np.sum(Ix*It)],[np.sum(Iy*It)],[np.sum(G*It)]])
 
+            ## SOLVE b VIA PSEUDO-INVERSE
             b = np.linalg.pinv(X)@y
 
-            self.TTC_est2[n-1] = 1/(b[1,0])
             self.OFy_est[n-1] = b[0,0]/self.f
+            self.OFx_est[n-1] = b[1,0]/self.f
+            self.TTC_est2[n-1] = 1/(b[2,0])
+
 
 
             # for i in range(1,HEIGHT_PIXELS-1): #Calculate Radial gradient G

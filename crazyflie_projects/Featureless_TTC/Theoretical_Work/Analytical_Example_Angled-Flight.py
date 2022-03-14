@@ -45,7 +45,12 @@ def I_pixel(u_p,z_0,t):
     u = (u_p - O_x)*w + w/2 
     z = z_0 + vz*t
     ## RETURN AVERAGE BRIGHTNESS VALUE OVER PIXEL
-    return I_0/2 * (f*L/(np.pi*z*w) * np.sin(np.pi*z*w/(f*L) * np.sin(np.pi*(u*z/(f*L) + vx*t/L))) + 1)
+    I = I_0/2 * (f*L/(np.pi*z*w) * np.sin(np.pi*z*w/(f*L) * np.sin(np.pi*(u*z/(f*L) + vx*t/L))) + 1)
+
+    # ## CLIP VALUES TO BE HIGH/LOW
+    # I = np.round(I/255,0)*255
+
+    return I
 
 
 
@@ -83,18 +88,19 @@ def cam_alg(Cur_img,Prev_img):
 
 
 
-    It = ((Cur_img - Prev_img)/(1/FPS))[1:-1,1:-1]
+    It = (Cur_img - Prev_img)/(1/FPS)
 
     U = (U_p - O_x)*w + w/2 
     V = (V_p - O_y)*w + w/2
-    G = U[1:-1,1:-1]*Ix[1:-1,1:-1] + V[1:-1,1:-1]*Iy[1:-1,1:-1]
+    G = U*Ix + V*Iy
 
     X = np.array([
-        [np.sum(Ix[1:-1,1:-1]**2),np.sum(G*Ix[1:-1,1:-1])],
-        [np.sum(G*Ix[1:-1,1:-1]),np.sum(G**2)]
+        [np.sum(Ix**2),np.sum(Ix*Iy),np.sum(G*Ix)],
+        [np.sum(Ix*Iy),np.sum(Iy**2),np.sum(G*Iy)],
+        [np.sum(G*Ix),np.sum(G*Iy),np.sum(G**2)]
     ])
 
-    y = - np.array([[np.sum(Ix[1:-1,1:-1]*It)],[np.sum(G*It)]])
+    y = -np.array([[np.sum(Ix*It)],[np.sum(Iy*It)],[np.sum(G*It)]])
 
     b = np.linalg.pinv(X)@y
 
@@ -122,11 +128,11 @@ def animate_func(i):
     Vx_act = -vx/d
 
 
-    print(f"Tau_act: {Tau_act:.3f} | Tau_est: {1/b[1,0]:.3f}")
+    print(f"Tau_act: {Tau_act:.3f} | Tau_est: {1/b[2,0]:.3f}")
     print(f"Vx_act: {Vx_act:.3f} | Vx_est: {b[0,0]/f:.3f}")
 
 
-    Tau_est_List.append(1/b[1,0])
+    Tau_est_List.append(1/b[2,0])
     Tau_act_List.append(Tau_act)
     Vx_act_List.append(Vx_act)
     Vx_est_List.append(b[0,0]/f)
