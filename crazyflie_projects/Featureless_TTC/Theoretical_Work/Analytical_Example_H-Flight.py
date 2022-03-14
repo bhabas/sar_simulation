@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.animation as animation
-from matplotlib.patches import Rectangle
 
 
 ## PLOT BRIGHTNESS PATTERN FROM 2.4.1 HORIZONTAL MOTION
@@ -12,40 +11,20 @@ L = 0.025    # [m]
 ## CAMERA PARAMETERS
 WIDTH_PIXELS = 160
 HEIGHT_PIXELS = 120
-w = 3.6e-6  # Pixel width [m]
-
-f = 0.66e-3 # Focal Length [m]
+FPS = 60                # Frame Rate [1/s]
+w = 3.6e-6              # Pixel width [m]
+f = 0.66e-3             # Focal Length [m]
 O_x = WIDTH_PIXELS/2    # Pixel X_offset [pixels]
 O_y = HEIGHT_PIXELS/2   # Pixel Y_offset [pixels]
 
-FPS = 60    # Frame Rate [1/s]
+
 d = 0.6     # Camera distance [m]
 vx = 0.2    # Camera velocity [m/s]
-Vx = vx/d   # Optical flow from x-vel [rad/s]
-print(f"Vx = {Vx:.3f} [rad/s]")
 
-
-## GRADIENT ERRORS
-gamma_d = np.pi*d*w/(f*L)
-gamma_x = 2*np.pi*vx/(FPS*L)
-print(f"Gamma_d = {gamma_d:.3f}")
-print(f"Gamma_x = {gamma_x:.3f}")
-print("\n\n")
-
-## IMAGE ARRAY [m]
+## PRE-ALLOCATE IMAGE ARRAY [pixels]
 u_p = np.arange(0,WIDTH_PIXELS,1)
 v_p = np.arange(0,HEIGHT_PIXELS,1)
 U_p,V_p = np.meshgrid(u_p,v_p)
-
-## CONINTUOUS INTENSITY VALUES/GRADIENTS
-def I(u,t):
-    return I_0/2 * np.sin(2*np.pi/L * (u*d/f + vx*t)) + I_0/2
-
-def dI_dt(u,t):
-    return 2*np.pi*vx/L * I_0/2 * np.cos(2*np.pi/L * (u*d/f + vx*t))
-
-def dI_du(u,t):
-    return 2*np.pi*d/(f*L) * I_0/2 * np.cos(2*np.pi/L * (u*d/f + vx*t))
 
 
 
@@ -61,12 +40,14 @@ def I_pixel(u_p,t):
 def dI_dt_pixel(u_p,t):
 
     ## RETURN TIME GRADIENT VIA CENTRAL DIFFERENCE
-    return FPS/2*(I_pixel(u_p,t+1/FPS) - I_pixel(u_p,t-1/FPS))
+    return (I_pixel(u_p,t+1/FPS) - I_pixel(u_p,t-1/FPS))/(2/FPS)
 
 def dI_du_pixel(u_p,t):
 
     ## RETURN X-AXIS GRADIENT VIA CENTRAL DIFFERENCE
     return 1/(2*w)*(I_pixel(u_p+1,t) - I_pixel(u_p-1,t))
+
+
 
 ## IMAGE SENSOR PLOT
 fig = plt.figure()
@@ -80,38 +61,53 @@ ax.set_xlabel("u [pixels]")
 ax.set_ylabel("v [pixels]")
 fig.tight_layout()
 
-## ANIMATE PLOT
-num_sec = 5
-def animate_func(i):
-    t = i/FPS # time [s]
+def cam_alg(Cur_img,Prev_img):
 
-    Kx = 1/4 * np.array([ # SOBEL KERNEL X
+    Kx = 1/8 * np.array([ # SOBEL KERNEL X
         [-1,0,1],
         [-2,0,2],
         [-1,0,1]
     ]) 
-    Ky = np.array([ # SOBEL KERNEL Y
+    Ky = 1/8 *np.array([ # SOBEL KERNEL Y
         [ 1, 2, 1],
         [ 0, 0, 0],
         [-1,-2,-1]])
-    
-    Cur_img = I_pixel(U_p,t)
+
     Ix = np.zeros_like(Cur_img)
+    Iy = np.zeros_like(Cur_img)
 
-    for i in range(1,Cur_img.shape[0] - 1): #Calculate Radial gradient G
-        for j in range(1,Cur_img.shape[1] - 1):
-            Ix[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Kx)/(2*w)
+    for i in range(1,HEIGHT_PIXELS - 1): 
+        for j in range(1,WIDTH_PIXELS - 1):
+            Ix[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Kx)/(w)
+            Iy[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Ky)/(w)
+
+    It = (Cur_img - Prev_img)/(1/FPS)
+
+    Vx = np.mean(1/f*It[1:-1,1:-1]/Ix[1:-1,1:-1])    
+
+    return Vx
 
 
-    It = dI_dt_pixel(U_p,t)
-    Vx = np.mean(1/f*It/dI_du_pixel(U_p,t))
-    print(f"Vx: {Vx:.3f}")
-            
-            # Iy[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Ky)
+Vx_an_List = []
+Vx_est_List = []
 
+## ANIMATE PLOT
+num_sec = 1
+def animate_func(i):
+    t = i/FPS # time [s]
+
+    Cur_img = I_pixel(U_p,t)
+    Prev_img = I_pixel(U_p,t-1/FPS)
+    Vx_est = cam_alg(Cur_img,Prev_img)
+    Vx_an = np.mean(1/f*dI_dt_pixel(U_p,t)[1:-1,1:-1]/dI_du_pixel(U_p,t)[1:-1,1:-1])
+    print(f"Vx: {Vx_an:.3f} | Vx_est: {Vx_est:.3f}")
+
+    Vx_an_List.append(Vx_an)
+    Vx_est_List.append(Vx_est)
+    
+    ## UPDATE IMAGE
     im.set_array(I_pixel(U_p,t))
-    return [Ix]
-
+    
 anim = animation.FuncAnimation(fig, 
                                animate_func, 
                                frames = num_sec * FPS,
@@ -121,8 +117,4 @@ anim = animation.FuncAnimation(fig,
 plt.show()
 
 
-
-
-
-
-
+pass
