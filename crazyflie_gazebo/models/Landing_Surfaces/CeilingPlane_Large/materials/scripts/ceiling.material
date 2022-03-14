@@ -7,7 +7,7 @@ material ceilingMat/Checkerboard
         {
             texture_unit
             {
-                texture Stripes__0.025m_5.0m_x_2.0m.png
+                texture Stripes__0.050m_1.0m_x_1.0m.png
             }
         }
     }

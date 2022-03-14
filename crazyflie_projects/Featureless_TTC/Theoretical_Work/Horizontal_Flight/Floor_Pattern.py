@@ -7,16 +7,22 @@ from matplotlib.patches import Rectangle
 
 ## PLOT BRIGHTNESS PATTERN FROM 2.4.1 HORIZONTAL MOTION
 I_0 = 255   # Brightness value (0-255)
-L = 0.2     # [m]
+L = 0.1     # Stripe Period [m]
+
 
 ## CAMERA PARAMETERS
-u_min = 3.6e-6*80   # Image Sensor min [m]
-v_min = 3.6e-6*60   # Image Sensor min [m]
-f = 0.66e-3         # Focal Length [m]
-d = 0.6             # Camera distance [m]
+WIDTH_PIXELS = 160
+HEIGHT_PIXELS = 120
+FPS = 60                # Frame Rate [1/s]
+w = 3.6e-6              # Pixel width [m]
+f = 0.66e-3             # Focal Length [m]
+O_x = WIDTH_PIXELS/2    # Pixel X_offset [pixels]
+O_y = HEIGHT_PIXELS/2   # Pixel Y_offset [pixels]
 
-X_min_c = u_min*d/f
-Y_min_c = v_min*d/f
+d = 0.6
+
+Xi_Width = d*(WIDTH_PIXELS*w)/f 
+Yi_Width = d*(HEIGHT_PIXELS*w)/f 
 
 x = np.linspace(-0.5, 0.5, 1000)    # [m]
 y = np.linspace(-0.5, 0.5, 1000)    # [m]
@@ -27,12 +33,12 @@ def Intensity(X):
 
 fig, ax = plt.subplots()
 im = ax.imshow(Intensity(X), interpolation='bilinear', 
-                vmin=0, vmax=255, cmap=cm.Greys,
+                vmin=0, vmax=255, cmap=cm.gray,
                 origin='upper',
                 extent=[-0.5,0.5,-0.5,0.5]
 )
 
-ax.add_patch(Rectangle((-X_min_c,-Y_min_c),X_min_c*2,Y_min_c*2,lw=1.5,fill=False,color="tab:blue"))
+ax.add_patch(Rectangle((-Xi_Width/2,-Yi_Width/2),Xi_Width,Yi_Width,lw=1.5,fill=False,color="tab:blue"))
 
 ax.set_title("Floor Pattern")
 ax.set_xlabel("x [m]")

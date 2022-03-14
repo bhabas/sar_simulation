@@ -164,6 +164,27 @@
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
+
+      <sensor name='Camera_Lines' type='ray'>
+        <pose>0 0 0 0 -1.57 0</pose>
+        <visualize>1</visualize>
+        <update_rate>1</update_rate>
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>2</samples>
+              <resolution>1</resolution>
+              <min_angle>-0.786</min_angle>
+              <max_angle>0.786</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>2</samples>
+              <min_angle>-0.786</min_angle>
+              <max_angle>0.786</max_angle>
+            </vertical>
+          </scan>
+        </ray>
+      </sensor>
       
      
       <sensor name='head_hokuyo_sensor' type='ray'>
@@ -202,13 +223,14 @@
       </sensor>
       <sensor type="camera" name="camera1">
         <pose>0 0 0 0 -1.57 1.57</pose>
-        <update_rate>120.0</update_rate>
+        <update_rate>60</update_rate>
+        <visualize>true</visualize>
         <camera name="head">
           <save enabled="false">
             <path>/home/bhabas/Downloads/Video_images</path>
             <!--Convert Command: ffmpeg -framerate 60 -pattern_type glob -i '*.jpg' -c:v libx264 -pix_fmt yuv420p out.mp4 -->
           </save>
-          <horizontal_fov>1.52</horizontal_fov> <!-- 87 deg FoV to match AI Deck -->
+          <horizontal_fov>0.76</horizontal_fov> <!-- 87 deg FoV to match AI Deck -->
           <image>
             <width>160</width>
             <height>120</height>

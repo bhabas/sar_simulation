@@ -132,15 +132,43 @@ class DataParser:
             # plt.imshow(Cur_img, interpolation='none',cmap=cm.Greys)
             # plt.show()
 
-            for i in range(1,HEIGHT_PIXELS-1): #Calculate Radial gradient G
-                for j in range(1,WIDTH_PIXELS-1):
-                    Ix[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Kx)/self.w 
+
+            
+
+            for i in range(1,HEIGHT_PIXELS - 1): 
+                for j in range(1,WIDTH_PIXELS - 1):
+                    Ix[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Kx)/self.w
                     Iy[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Ky)/self.w
 
-            #CASE I
-            G = (xi_grid * Ix) + (yi_grid * Iy)
+
+
+            # It = ((Cur_img - Prev_img)/(1/FPS))[1:-1,1:-1]
             It = (Cur_img - Prev_img)/(self.Time[n] - self.Time[n-1]) #Brightness gradient
-            C = (-np.sum(G*It))/(np.sum(G*G)) #checking order of operations to see if it fixes how off it is
+
+            G = xi_grid[1:-1,1:-1]*Ix[1:-1,1:-1] + yi_grid[1:-1,1:-1]*Iy[1:-1,1:-1]
+
+            X = np.array([
+                [np.sum(Ix[1:-1,1:-1]**2),np.sum(G*Ix[1:-1,1:-1])],
+                [np.sum(G*Ix[1:-1,1:-1]),np.sum(G**2)]
+            ])
+
+            y = -np.array([[np.sum(Ix[1:-1,1:-1]*It[1:-1,1:-1])],[np.sum(G*It[1:-1,1:-1])]])
+
+            b = np.linalg.pinv(X)@y
+
+            self.TTC_est2[n-1] = 1/(b[1,0])
+            self.OFy_est[n-1] = b[0,0]/self.f
+
+
+            # for i in range(1,HEIGHT_PIXELS-1): #Calculate Radial gradient G
+            #     for j in range(1,WIDTH_PIXELS-1):
+            #         Ix[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Kx)/self.w 
+            #         Iy[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Ky)/self.w
+
+            #CASE I
+            # G = (xi_grid * Ix) + (yi_grid * Iy)
+            # It = (Cur_img - Prev_img)/(self.Time[n] - self.Time[n-1]) #Brightness gradient
+            # C = (-np.sum(G*It))/(np.sum(G*G)) #checking order of operations to see if it fixes how off it is
             #C = (-(np.sum(G)) * np.sum(It)) / (np.sum(G) ** 2)
             # self.TTC_est1[n-1] = 1/C
 
@@ -158,9 +186,6 @@ class DataParser:
             # self.TTC_est2[n-1] = 1/(ABC[2])
             # self.OFx_est[n-1] = -B/self.f
             # self.OFy_est[n-1] = -A/self.f
-
-            Vx = np.mean(1/self.f*It[1:-1,1:-1]/Ix[1:-1,1:-1])
-            print(f"Vx: {Vx:.3f}")
 
             Prev_img = Cur_img
 
