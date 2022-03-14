@@ -101,7 +101,7 @@ def cmd_send(env):
             elif action=='traj':
 
                 ## GET INPUT VALUES
-                V_d,phi,alpha = env.userInput("Flight Velocity (V_d,phi,alpha):",int)
+                V_d,phi,alpha = env.userInput("Flight Velocity (V_d,phi,alpha):",float)
 
                 ## DEFINE CARTESIAN VELOCITIES
                 phi_rad = np.radians(phi)
@@ -133,7 +133,7 @@ def cmd_send(env):
 
 
                 ## GET INPUT VALUES
-                V_d,phi,alpha = env.userInput("Flight Velocity (V_d,phi,alpha):",int)
+                V_d,phi,alpha = env.userInput("Flight Velocity (V_d,phi,alpha):",float)
 
                 ## DEFINE CARTESIAN VELOCITIES
                 phi_rad = np.radians(phi)
@@ -143,12 +143,12 @@ def cmd_send(env):
                 Vz_d = V_d*np.sin(phi_rad)
 
                 ## ESTIMATE IMPACT POINT
-                P_impact = env.impactEstimate(env.posCF_0,[Vx_d,Vy_d,Vz_d])
+                P_impact = env.impactEstimate(env.posCF,[Vx_d,Vy_d,Vz_d])
 
                 ## CHECK VALID IMPACT POINT AND EXECUTE TRAJECTORY VIA SET_MODEL_STATE
                 validate = input(f"Approve impact point (y/n): {P_impact[0]:.2f}, {P_impact[1]:.2f}, {P_impact[2]:.2f}\n")
                 if validate == 'y':
-                    env.traj_launch(env.posCF_0,[Vx_d,Vy_d,Vz_d])
+                    env.traj_launch(env.posCF,[Vx_d,Vy_d,Vz_d])
                 else:
                     pass
 

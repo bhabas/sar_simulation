@@ -7,7 +7,7 @@ from matplotlib.patches import Rectangle
 
 ## PLOT BRIGHTNESS PATTERN FROM 2.4.1 HORIZONTAL MOTION
 I_0 = 255   # Brightness value (0-255)
-L = 0.2    # [m]
+L = 0.025    # [m]
 
 ## CAMERA PARAMETERS
 WIDTH_PIXELS = 160
@@ -101,10 +101,14 @@ def animate_func(i):
     for i in range(1,Cur_img.shape[0] - 1): #Calculate Radial gradient G
         for j in range(1,Cur_img.shape[1] - 1):
             Ix[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Kx)/(2*w)
+
+
+    It = dI_dt_pixel(U_p,t)
+    Vx = np.mean(1/f*It/dI_du_pixel(U_p,t))
+    print(f"Vx: {Vx:.3f}")
             
             # Iy[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Ky)
 
-    print(t)
     im.set_array(I_pixel(U_p,t))
     return [Ix]
 
