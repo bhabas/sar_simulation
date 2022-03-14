@@ -165,33 +165,6 @@
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
 
-      <sensor name='head_hokuyo_sensor2' type='ray'>
-        <pose>0 0 0 0 -1.57 1.57</pose>
-        <visualize>1</visualize>
-        <update_rate>1</update_rate>
-        <ray>
-          <scan>
-            <horizontal>
-              <samples>3</samples>
-            <resolution>1</resolution>
-            <min_angle>-0.7854</min_angle>
-            <max_angle>0.7854</max_angle>
-            </horizontal>
-          </scan>
-          <range>
-            <min>0.01</min>
-            <max>4</max>
-            <resolution>0.01</resolution>
-          </range>
-          <noise>
-            <type>gaussian</type>
-            <mean>0.0</mean>
-            <stddev>0.0035</stddev>
-          </noise>
-        </ray>
-      </sensor>
-      
-<!--      
       <sensor name='head_hokuyo_sensor' type='ray'>
         <pose>0 0 0 0 -1.57 0</pose>
         <visualize>1</visualize>
@@ -225,21 +198,21 @@
           <topicName>/CF_Internal/Laser_sensor</topicName>
           <frameName>crazyflie_body</frameName>
         </plugin>
-      </sensor> -->
+      </sensor>
 
       <sensor type="camera" name="camera1">
-        <pose>0 0 0 0 -1.57 1.57</pose>
-        <update_rate>60</update_rate>
+        <pose>0 0 0 0 -1.5708 1.5708</pose>
+        <update_rate>120</update_rate>
         <visualize>true</visualize>
         <camera name="head">
           <save enabled="false">
             <path>/home/bhabas/Downloads/Video_images</path>
             <!--Convert Command: ffmpeg -framerate 60 -pattern_type glob -i '*.jpg' -c:v libx264 -pix_fmt yuv420p out.mp4 -->
           </save>
-          <horizontal_fov>1.52</horizontal_fov> <!-- 87 deg FoV to match AI Deck -->
+          <horizontal_fov>1.435</horizontal_fov> <!-- 82.22 deg FoV to match AI Deck -->
           <image>
-            <width>160</width>
-            <height>120</height>
+            <width>320</width>
+            <height>320</height>
             <format>L8</format>
           </image>
           <clip>
@@ -252,7 +225,7 @@
                  That pixel's noise value is added to each of its color
                  channels, which at that point lie in the range [0,1]. -->
             <mean>0.0</mean>
-            <stddev>0.007</stddev>
+            <stddev>0.00</stddev>
           </noise>
           <lens>
             <type>sterographic</type>
