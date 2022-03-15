@@ -138,7 +138,7 @@ class DataParser:
             for i in range(1,HEIGHT_PIXELS - 1): 
                 for j in range(1,WIDTH_PIXELS - 1):
                     Ix[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Kx)/self.w
-                    Iy[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Ky)/self.w
+                    Iy[i,j] = -np.sum(Cur_img[i-1:i+2,j-1:j+2] * Ky)/self.w
 
 
 
@@ -195,81 +195,51 @@ class DataParser:
             print(f"Current Image: {n}/{self.Camera_array.shape[0]}")
                 
     def Plotter(self): #plot results
+        
+        fig, ax = plt.subplots(3,1, sharex = True)
+        ax[0].set_title("TTC Comparison")
+        # ax[0].plot(self.Time,self.TTC_est1,'r', label = 'TTC_est1')
+        ax[0].plot(self.Time,self.Tau,'b',label = 'TTC')
+        ax[0].plot(self.Time,self.TTC_est2,'g',label = 'TTC_est2')
+        ax[0].set_ylabel("TTC (seconds)")
+        ax[0].set_ylim(-1,6)
+        ax[0].grid()
+        ax[0].legend(loc='upper right')
+
+        ax[1].plot(self.Time,self.Z_pos,'g', label = 'Z position')
+        ax[1].set_ylim(-1,2.5)
+        ax[1].axhline(2.10,color='k',linestyle='dashed',label='Ceiling Height')
+        ax[1].set_ylabel("Position (m)")
+        ax[1].grid()
+        ax[1].legend(loc='lower right')
+
+        ax[2].plot(self.Time,self.Z_vel,color = 'black', label = 'Z velocity')
+        ax[2].plot(self.Time,self.X_vel,color = 'r', label = 'X velocity')
+        ax[2].set_ylim(-1,4.0)
+        ax[2].set_ylabel("Velocity (m)")
+        ax[2].set_xlabel("Time") 
+        ax[2].grid()
+        ax[2].legend(loc='upper right')
 
 
-        fig2 = plt.figure(1)
-        ax = fig2.add_subplot(111)
+        #plt.figure(2)
+        fig2 , ax2 = plt.subplots(2,1, sharex = True)
+        ax2[0].set_title('Optical Flow Comparison')
+        ax2[0].plot(self.Time,self.OFy, color = 'black', label = 'OFy')
+        ax2[0].plot(self.Time,self.OFy_est, color = 'r',label = 'OFy_est')
+        ax2[0].set_ylim(-1,10.0)
+        ax2[0].grid()
+        ax2[0].legend()
 
-        ax.plot(self.Time-self.Time[0],self.TTC_est2,'rx',label="Tau_algortihm")
-        ax.plot(self.Time-self.Time[0],self.Tau,label="Tau_actual")
-        ax.set_xlim(0,1.5)
-        ax.set_ylim(-1,4)
-
-        ax.grid()
-        ax.legend()
-
-        fig2.tight_layout()
-
-
-
-        fig3 = plt.figure(2)
-        ax = fig3.add_subplot(111)
-
-        ax.plot(self.Time-self.Time[0],self.OFy_est,'rx',label="OFy_est")
-        ax.plot(self.Time-self.Time[0],self.OFy,label="OFy_actual")
-        ax.set_xlim(0,1.5)
-        ax.set_ylim(-20,0)
-        ax.grid()
-        ax.legend()
-
-        fig3.tight_layout()
+        ax2[1].plot(self.Time,self.OFx, color = 'black',label = 'OFx')
+        ax2[1].plot(self.Time,self.OFx_est, color = 'b',label = 'OFx_est')
+        ax2[1].set_xlabel("Time")
+        ax2[1].set_ylabel('Optical Flow')
+        ax2[1].set_ylim(-1,10.0)
+        ax2[1].grid()
+        ax2[1].legend()
 
         plt.show()
-        
-        # fig, ax = plt.subplots(3,1, sharex = True)
-        # ax[0].set_title("TTC Comparison")
-        # # ax[0].plot(self.Time,self.TTC_est1,'r', label = 'TTC_est1')
-        # ax[0].plot(self.Time,self.Tau,'b',label = 'TTC')
-        # ax[0].plot(self.Time,self.TTC_est2,'g',label = 'TTC_est2')
-        # ax[0].set_ylabel("TTC (seconds)")
-        # ax[0].set_ylim(-1,6)
-        # ax[0].grid()
-        # ax[0].legend(loc='upper right')
-
-        # ax[1].plot(self.Time,self.Z_pos,'g', label = 'Z position')
-        # ax[1].set_ylim(-1,2.5)
-        # ax[1].axhline(2.10,color='k',linestyle='dashed',label='Ceiling Height')
-        # ax[1].set_ylabel("Position (m)")
-        # ax[1].grid()
-        # ax[1].legend(loc='lower right')
-
-        # ax[2].plot(self.Time,self.Z_vel,color = 'black', label = 'Z velocity')
-        # ax[2].plot(self.Time,self.X_vel,color = 'r', label = 'X velocity')
-        # ax[2].set_ylim(-1,4.0)
-        # ax[2].set_ylabel("Velocity (m)")
-        # ax[2].set_xlabel("Time") 
-        # ax[2].grid()
-        # ax[2].legend(loc='upper right')
-
-
-        # #plt.figure(2)
-        # fig2 , ax2 = plt.subplots(2,1, sharex = True)
-        # ax2[0].set_title('Optical Flow Comparison')
-        # ax2[0].plot(self.Time,self.OFy, color = 'black', label = 'OFy')
-        # ax2[0].plot(self.Time,self.OFy_est, color = 'r',label = 'OFy_est')
-        # ax2[0].set_ylim(-1,10.0)
-        # ax2[0].grid()
-        # ax2[0].legend()
-
-        # ax2[1].plot(self.Time,self.OFx, color = 'black',label = 'OFx')
-        # ax2[1].plot(self.Time,self.OFx_est, color = 'b',label = 'OFx_est')
-        # ax2[1].set_xlabel("Time")
-        # ax2[1].set_ylabel('Optical Flow')
-        # ax2[1].set_ylim(-1,10.0)
-        # ax2[1].grid()
-        # ax2[1].legend()
-
-        # plt.show()
 
 
 if __name__ == '__main__':

@@ -30,7 +30,10 @@ y = np.linspace(-1.0, 1.0, 1000)    # [m]
 X, Y = np.meshgrid(x, y)
 
 def Intensity(X):
-    I = I_0/2*(np.sin(2*np.pi*X/L)+1)
+    I_x = I_0/2*(np.sin(2*np.pi*X/L)+1)
+    I_y = I_0/2*(np.sin(2*np.pi*Y/L)+1)
+    I = (I_x+I_y)/2
+
     # I = np.round(I/255,0)*255
     return I
 
