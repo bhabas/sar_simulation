@@ -202,7 +202,7 @@
 
       <sensor type="camera" name="camera1">
         <pose>0 0 0 0 -1.5708 1.5708</pose>
-        <update_rate>120</update_rate>
+        <update_rate>60</update_rate>
         <visualize>true</visualize>
         <camera name="head">
           <save enabled="false">
@@ -211,8 +211,8 @@
           </save>
           <horizontal_fov>1.435</horizontal_fov> <!-- 82.22 deg FoV to match AI Deck -->
           <image>
-            <width>320</width>
-            <height>320</height>
+            <width>160</width>
+            <height>160</height>
             <format>L8</format>
           </image>
           <clip>

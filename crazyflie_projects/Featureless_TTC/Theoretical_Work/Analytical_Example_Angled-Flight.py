@@ -7,7 +7,7 @@ import cv2 as cv
 
 ## PLOT BRIGHTNESS PATTERN FROM 2.4.1 HORIZONTAL MOTION
 I_0 = 255   # Brightness value (0-255)
-L = 0.4    # [m]
+L = 0.1    # [m]
 
 ## CAMERA PARAMETERS
 WIDTH_PIXELS = 160
@@ -20,9 +20,9 @@ O_x = WIDTH_PIXELS/2    # Pixel X_offset [pixels]
 O_y = HEIGHT_PIXELS/2   # Pixel Y_offset [pixels]
 
 
-z_0 = 2     # Camera height [m]
-vz = -2.5    # Camera velocity [m/s]
-vx = 0.2
+z_0 = 0.6    # Camera height [m]
+vz = -0.2    # Camera velocity [m/s]
+vx = 0.4
 
 ## PRE-ALLOCATE IMAGE ARRAY [pixels]
 u_p = np.arange(0,WIDTH_PIXELS,1)
@@ -51,7 +51,7 @@ def I_pixel(u_p,z_0,t):
     I = I_0/2 * (f*L/(np.pi*z*w) * np.sin(np.pi*z*w/(f*L) * np.sin(2*np.pi*(z*u/(f*L) + vx*t/L))) + 1)
 
     ## CLIP VALUES TO BE HIGH/LOW
-    I = np.round(I/255,0)*255
+    # I = np.round(I/255,0)*255
 
     return I
 
@@ -68,6 +68,7 @@ ax.set_title("Image Sensor Pattern (Pixels)")
 ax.set_xlabel("u [pixels]")
 ax.set_ylabel("v [pixels]")
 fig.tight_layout()
+# plt.show()
 
 def cam_alg(Cur_img,Prev_img):
 
@@ -151,7 +152,7 @@ def animate_func(i):
     t_List.append(t)
 
     ## UPDATE IMAGE
-    im.set_array(cv.GaussianBlur(I_pixel(U_p,z_0,t),(5,5),0))
+    # im.set_array(I_pixel(U_p,z_0,t))
     
 anim = animation.FuncAnimation(fig, 
                                animate_func, 
@@ -167,6 +168,8 @@ ax = fig2.add_subplot(111)
 
 ax.plot(t_List,Tau_est_List,'rx',label="Tau_algortihm")
 ax.plot(t_List,Tau_act_List,label="Tau_actual")
+ax.set_xlim(0,1.5)
+ax.set_ylim(-1,4)
 
 ax.grid()
 ax.legend()
@@ -178,9 +181,10 @@ fig2.tight_layout()
 fig3 = plt.figure(2)
 ax = fig3.add_subplot(111)
 
-ax.plot(t_List,Vx_est_List,'rx',label="Vx_algortihm")
-ax.plot(t_List,Vx_act_List,label="Vx_actual")
-
+ax.plot(t_List,Vx_est_List,'rx',label="OFy_estimate")
+ax.plot(t_List,Vx_act_List,label="OFy_actual")
+ax.set_xlim(0,1.5)
+ax.set_ylim(-20,0)
 ax.grid()
 ax.legend()
 
