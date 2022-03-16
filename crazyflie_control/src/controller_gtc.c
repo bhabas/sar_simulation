@@ -138,6 +138,8 @@ uint16_t M2_pwm = 0;
 uint16_t M3_pwm = 0; 
 uint16_t M4_pwm = 0; 
 
+uint16_t PWM_arr[4] = {0,0,0,0};
+
 
 
 // =================================
@@ -159,6 +161,7 @@ bool onceFlag = false;
 bool moment_flag = false;
 bool attCtrlEnable = false;
 bool safeModeEnable = true;
+bool customPWM_Flag = false;
 
 
 // DEFINE POLICY TYPE ACTIVATED
@@ -269,6 +272,7 @@ void controllerGTCReset(void)
     // RESET SYSTEM FLAGS
     tumbled = false;
     motorstop_flag = false;
+    customPWM_Flag = false;
 
     moment_flag = false;
     policy_armed_flag = false;
@@ -407,6 +411,16 @@ void GTC_Command(setpoint_t *setpoint)
                     break;
                     
             }
+
+            break;
+
+        case 10: // PWM Values
+
+            customPWM_Flag = true;
+            PWM_arr[0] = setpoint->cmd_val1;
+            PWM_arr[1] = setpoint->cmd_val2;
+            PWM_arr[2] = setpoint->cmd_val3;
+            PWM_arr[3] = setpoint->cmd_flag;
 
             break;
     }
@@ -594,6 +608,12 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
         f_thrust_g = clamp(f_thrust_g,0.0,f_MAX*0.8);    // Clamp thrust to prevent control saturation
 
+        // THESE CONNECT TO POWER_DISTRIBUTION_STOCK.C TO 
+        control->thrust = f_thrust_g;
+        control->roll = (int16_t)(f_roll_g*1e3f);
+        control->pitch = (int16_t)(f_pitch_g*1e3f);
+        control->yaw = (int16_t)(f_yaw_g*1e3f);
+
         // Add respective thrust components and limit to (0 <= PWM <= 60,000)
         M1_pwm = limitPWM(thrust2PWM(f_thrust_g + f_roll_g - f_pitch_g + f_yaw_g)); 
         M2_pwm = limitPWM(thrust2PWM(f_thrust_g + f_roll_g + f_pitch_g - f_yaw_g));
@@ -607,128 +627,41 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         }
         
         if(motorstop_flag || tumbled){ // Cutoff all motor values
-            f_thrust_g = 0.0f;
+        
             M1_pwm = 0;
             M2_pwm = 0;
             M3_pwm = 0;
             M4_pwm = 0;
         }
 
-
-
-        // THESE CONNECT TO POWER_DISTRIBUTION_STOCK.C TO 
-        control->thrust = f_thrust_g;
-        control->roll = (int16_t)(f_roll_g*1e3f);
-        control->pitch = (int16_t)(f_pitch_g*1e3f);
-        control->yaw = (int16_t)(f_yaw_g*1e3f);
-       
-
-
-        
+        if(safeModeEnable) // If safeMode is enabled then override all PWM commands
+        {
+            M1_pwm = 0;
+            M2_pwm = 0;
+            M3_pwm = 0;
+            M4_pwm = 0;
+        }
+        else if(customPWM_Flag) // If custom PWM commands are given then use those
+        {
+            M1_pwm = PWM_arr[0];
+            M2_pwm = PWM_arr[1];
+            M3_pwm = PWM_arr[2];
+            M4_pwm = PWM_arr[3];
+        }
+  
 
         compressStates();
         compressSetpoints();
         compressFlipStates();
     }
 
-        
-    if(safeModeEnable) // If safeMode is enabled then override all PWM commands
-    {
-        M1_pwm = 0;
-        M2_pwm = 0;
-        M3_pwm = 0;
-        M4_pwm = 0;
-    }
-    else
-    {
-        motorsSetRatio(MOTOR_M1, M4_pwm);
-        motorsSetRatio(MOTOR_M2, M3_pwm);
-        motorsSetRatio(MOTOR_M3, M2_pwm);
-        motorsSetRatio(MOTOR_M4, M1_pwm);
-    }
+    // SEND PWM VALUES TO MOTORS
+    motorsSetRatio(MOTOR_M1, M4_pwm);
+    motorsSetRatio(MOTOR_M2, M3_pwm);
+    motorsSetRatio(MOTOR_M3, M2_pwm);
+    motorsSetRatio(MOTOR_M4, M1_pwm);
 
     
-
-}
-
-
-
-
-
-
-void compressStates(){
-    StatesZ_GTC.xy = compressXY(statePos.x,statePos.y);
-    StatesZ_GTC.z = (int16_t)(statePos.z * 1000.0f);
-
-    StatesZ_GTC.vxy = compressXY(stateVel.x, stateVel.y);
-    StatesZ_GTC.vz = (int16_t)(stateVel.z * 1000.0f);
-
-    StatesZ_GTC.wxy = compressXY(stateOmega.x,stateOmega.y);
-    StatesZ_GTC.wz = (int16_t)(stateOmega.z * 1000.0f);
-
-
-    float const q[4] = {
-        stateQuat.x,
-        stateQuat.y,
-        stateQuat.z,
-        stateQuat.w};
-    StatesZ_GTC.quat = quatcompress(q);
-
-    // COMPRESS SENSORY VALUES
-    StatesZ_GTC.OF_xy = compressXY(OFx,OFy);
-    StatesZ_GTC.Tau = (int16_t)(Tau * 1000.0f); 
-    StatesZ_GTC.d_ceil = (int16_t)(d_ceil * 1000.0f);
-
-    // COMPRESS THRUST/MOMENT VALUES
-    StatesZ_GTC.FMz = compressXY(F_thrust,M.z*1000.0f);
-    StatesZ_GTC.Mxy = compressXY(M.x*1000.0f,M.y*1000.0f);
-
-    // COMPRESS PWM VALUES
-    StatesZ_GTC.MS_PWM12 = compressXY(M1_pwm*0.5e-3f,M2_pwm*0.5e-3f);
-    StatesZ_GTC.MS_PWM34 = compressXY(M3_pwm*0.5e-3f,M4_pwm*0.5e-3f);
-
-    StatesZ_GTC.NN_FP = compressXY(NN_flip,NN_policy);
-
-}
-
-
-
-
-void compressSetpoints(){
-    setpointZ_GTC.xy = compressXY(x_d.x,x_d.y);
-    setpointZ_GTC.z = (int16_t)(x_d.z * 1000.0f);
-
-    setpointZ_GTC.vxy = compressXY(v_d.x,v_d.y);
-    setpointZ_GTC.vz = (int16_t)(v_d.z * 1000.0f);
-
-    setpointZ_GTC.axy = compressXY(a_d.x,a_d.y);
-    setpointZ_GTC.az = (int16_t)(a_d.z * 1000.0f);
-}
-
-
-void compressFlipStates(){
-    FlipStatesZ_GTC.xy = compressXY(statePos_tr.x,statePos_tr.y);
-    FlipStatesZ_GTC.z = (int16_t)(statePos_tr.z * 1000.0f);
-
-    FlipStatesZ_GTC.vxy = compressXY(stateVel_tr.x, stateVel_tr.y);
-    FlipStatesZ_GTC.vz = (int16_t)(stateVel_tr.z * 1000.0f);
-
-    FlipStatesZ_GTC.wxy = compressXY(stateOmega_tr.x,stateOmega_tr.y);
-    FlipStatesZ_GTC.wz = (int16_t)(stateOmega_tr.z * 1000.0f);
-
-
-    float const q[4] = {
-        stateQuat_tr.x,
-        stateQuat_tr.y,
-        stateQuat_tr.z,
-        stateQuat_tr.w};
-    FlipStatesZ_GTC.quat = quatcompress(q);
-
-   FlipStatesZ_GTC.OF_xy = compressXY(OFx_tr,OFy_tr);
-   FlipStatesZ_GTC.Tau = (int16_t)(Tau_tr * 1000.0f); 
-   FlipStatesZ_GTC.d_ceil = (int16_t)(d_ceil_tr * 1000.0f);
-
-   FlipStatesZ_GTC.NN_FP = compressXY(NN_tr_flip,NN_tr_policy);
 
 }
 
@@ -849,5 +782,82 @@ void controlOutput(state_t *state, sensorData_t *sensors)
 
     F_thrust = vdot(F_thrust_ideal, b3);    // Project ideal thrust onto b3 vector [N]
     M = vadd(R_effort,Gyro_dyn);            // Control moments [Nm]
+
+}
+
+
+void compressStates(){
+    StatesZ_GTC.xy = compressXY(statePos.x,statePos.y);
+    StatesZ_GTC.z = (int16_t)(statePos.z * 1000.0f);
+
+    StatesZ_GTC.vxy = compressXY(stateVel.x, stateVel.y);
+    StatesZ_GTC.vz = (int16_t)(stateVel.z * 1000.0f);
+
+    StatesZ_GTC.wxy = compressXY(stateOmega.x,stateOmega.y);
+    StatesZ_GTC.wz = (int16_t)(stateOmega.z * 1000.0f);
+
+
+    float const q[4] = {
+        stateQuat.x,
+        stateQuat.y,
+        stateQuat.z,
+        stateQuat.w};
+    StatesZ_GTC.quat = quatcompress(q);
+
+    // COMPRESS SENSORY VALUES
+    StatesZ_GTC.OF_xy = compressXY(OFx,OFy);
+    StatesZ_GTC.Tau = (int16_t)(Tau * 1000.0f); 
+    StatesZ_GTC.d_ceil = (int16_t)(d_ceil * 1000.0f);
+
+    // COMPRESS THRUST/MOMENT VALUES
+    StatesZ_GTC.FMz = compressXY(F_thrust,M.z*1000.0f);
+    StatesZ_GTC.Mxy = compressXY(M.x*1000.0f,M.y*1000.0f);
+
+    // COMPRESS PWM VALUES
+    StatesZ_GTC.MS_PWM12 = compressXY(M1_pwm*0.5e-3f,M2_pwm*0.5e-3f);
+    StatesZ_GTC.MS_PWM34 = compressXY(M3_pwm*0.5e-3f,M4_pwm*0.5e-3f);
+
+    StatesZ_GTC.NN_FP = compressXY(NN_flip,NN_policy);
+
+}
+
+
+
+
+void compressSetpoints(){
+    setpointZ_GTC.xy = compressXY(x_d.x,x_d.y);
+    setpointZ_GTC.z = (int16_t)(x_d.z * 1000.0f);
+
+    setpointZ_GTC.vxy = compressXY(v_d.x,v_d.y);
+    setpointZ_GTC.vz = (int16_t)(v_d.z * 1000.0f);
+
+    setpointZ_GTC.axy = compressXY(a_d.x,a_d.y);
+    setpointZ_GTC.az = (int16_t)(a_d.z * 1000.0f);
+}
+
+
+void compressFlipStates(){
+    FlipStatesZ_GTC.xy = compressXY(statePos_tr.x,statePos_tr.y);
+    FlipStatesZ_GTC.z = (int16_t)(statePos_tr.z * 1000.0f);
+
+    FlipStatesZ_GTC.vxy = compressXY(stateVel_tr.x, stateVel_tr.y);
+    FlipStatesZ_GTC.vz = (int16_t)(stateVel_tr.z * 1000.0f);
+
+    FlipStatesZ_GTC.wxy = compressXY(stateOmega_tr.x,stateOmega_tr.y);
+    FlipStatesZ_GTC.wz = (int16_t)(stateOmega_tr.z * 1000.0f);
+
+
+    float const q[4] = {
+        stateQuat_tr.x,
+        stateQuat_tr.y,
+        stateQuat_tr.z,
+        stateQuat_tr.w};
+    FlipStatesZ_GTC.quat = quatcompress(q);
+
+   FlipStatesZ_GTC.OF_xy = compressXY(OFx_tr,OFy_tr);
+   FlipStatesZ_GTC.Tau = (int16_t)(Tau_tr * 1000.0f); 
+   FlipStatesZ_GTC.d_ceil = (int16_t)(d_ceil_tr * 1000.0f);
+
+   FlipStatesZ_GTC.NN_FP = compressXY(NN_tr_flip,NN_tr_policy);
 
 }
