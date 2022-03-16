@@ -17,7 +17,7 @@ class DataParser:
         ## FILEPATH PROPERTIES
         self.Filename = input('\nInput the name of the file to be parsed:\n')
         self.Username = getpass.getuser()
-        self.Path = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Featureless_TTC/logs/'
+        self.Path = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Featureless_TTC/local_logs/'
         self.Filepath = self.Path + self.Filename
 
         ## CAMERA PROPERTIES
