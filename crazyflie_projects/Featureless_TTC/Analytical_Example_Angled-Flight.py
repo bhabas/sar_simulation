@@ -16,8 +16,8 @@ FPS = 100               # Frame Rate [1/s]
 w = 3.6e-6              # Pixel width [m]
 f = 0.66e-3/2           # Focal Length [m]
 # f_effective = f/2 # halve focal length if half the pixels
-O_x = WIDTH_PIXELS/2    # Pixel X_offset [pixels]
-O_y = HEIGHT_PIXELS/2   # Pixel Y_offset [pixels]
+O_up = WIDTH_PIXELS/2    # Pixel X_offset [pixels]
+O_vp = HEIGHT_PIXELS/2   # Pixel Y_offset [pixels]
 
 
 d_0 = 0.6   # Initial Camera height [m]
@@ -35,7 +35,7 @@ U_p,V_p = np.meshgrid(u_p,v_p)
 ## PIXEL INTENSITIES/GRADIENTS
 def I_continuous(u_p,z_0,t):
     ## CONVERT PIXEL INDEX TO METERS
-    u = (u_p - O_x)*w + w/2 
+    u = (u_p - O_up)*w + w/2 
     d = z_0+vz*t
 
     ## RETURN AVERAGE BRIGHTNESS VALUE OVER PIXEL
@@ -45,14 +45,12 @@ def I_continuous(u_p,z_0,t):
 def I_pixel(u_p,v_p,d_0,t):
 
     ## CONVERT PIXEL INDEX TO METERS
-    u = (u_p - O_x)*w + w/2 
-    v = (v_p - O_y)*w + w/2 
+    u = (u_p - O_up)*w + w/2 
+    v = (v_p - O_vp)*w + w/2 
 
     d = d_0 - vz*t
 
     ## RETURN AVERAGE BRIGHTNESS VALUE OVER PIXEL
-    # I = I_0/2 * (f*L/(np.pi*z*w) * np.sin(np.pi*z*w/(f*L) * np.sin(2*np.pi*(z*u/(f*L) + vx*t/L))) + 1)
-
     I_x = I_0/2*(np.sin(2*np.pi*(d*u/(f*L) + vx*t/L) ) + 1)
     I_y = I_0/2*(np.sin(2*np.pi*(d*v/(f*L) + vy*t/L) ) + 1)
     I = (I_x+I_y)/2
@@ -80,48 +78,54 @@ fig.tight_layout()
 
 def cam_alg(Cur_img,Prev_img):
 
-    Kx = 1/8 * np.array([ # SOBEL KERNEL X
+    Kx = 1/8 * np.array([ # NORMALIZED SOBEL KERNAL (U-DIRECTION)
         [-1,0,1],
         [-2,0,2],
         [-1,0,1]
     ]) 
-    Ky = 1/8 *np.array([ # SOBEL KERNEL Y
+    Ky = 1/8 *np.array([ # NORMALIZED SOBEL KERNAL (V--DIRECTION)
         [-1,-2,-1],
         [ 0, 0, 0],
         [ 1, 2, 1]
     ])
 
-    Iu = np.zeros_like(Cur_img)
-    Iv = np.zeros_like(Cur_img)
+    Iu = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+    Iv = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+
+    U_grid = (U_p - O_up)*w + w/2 
+    V_grid = (V_p - O_vp)*w + w/2
 
     # Cur_img = cv.GaussianBlur(Cur_img,(5,5),0)
     # Prev_img = cv.GaussianBlur(Prev_img,(5,5),0)
 
+    ## FIND IMAGE GRADIENTS
     for i in range(1,HEIGHT_PIXELS - 1): 
         for j in range(1,WIDTH_PIXELS - 1):
             Iu[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Kx)/w
             Iv[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Ky)/w
 
+    It = (Cur_img - Prev_img)/(1/FPS) # Time Gradient
+    G = U_grid*Iu + V_grid*Iv # Radial Gradient
 
-
-    It = (Cur_img - Prev_img)/(1/FPS)
-
-    U = (U_p - O_x)*w + w/2 
-    V = (V_p - O_y)*w + w/2
-    G = U*Iu + V*Iv
-
+    ## SOLVE LEAST SQUARES PROBLEM
     X = np.array([
         [f*np.sum(Iu**2), f*np.sum(Iu*Iv), np.sum(G*Iu)],
         [f*np.sum(Iu*Iv), f*np.sum(Iv**2), np.sum(G*Iv)],
         [f*np.sum(G*Iu),  f*np.sum(G*Iv),  np.sum(G**2)]
     ])
 
-    y = np.array([[-np.sum(Iu*It)],[-np.sum(Iv*It)],[np.sum(-G*It)]])
+    y = np.array([
+                [-np.sum(Iu*It)],
+                [-np.sum(Iv*It)],
+                [-np.sum(G*It)]
+            ])
 
+    ## SOLVE b VIA PSEUDO-INVERSE
     b = np.linalg.pinv(X)@y
+    b = b.flatten()
 
     
-    return b.flatten()
+    return b
 
 
 Tau_act_List = []
