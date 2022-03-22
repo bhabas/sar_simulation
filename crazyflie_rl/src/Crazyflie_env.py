@@ -542,6 +542,40 @@ class CrazyflieEnv:
         rospy.wait_for_service('/gazebo/set_model_state')
         set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         set_state_srv(state_msg)
+
+    def traj_launch(self,pos_0,vel_d,quat_0=[0,0,0,1]): ## LAUNCH MODEL AT DESIRED VEL TRAJECTORY
+
+        ## SET DESIRED VEL IN CONTROLLER
+        self.step('pos',cmd_flag=0)
+        self.step('vel',cmd_vals=vel_d,cmd_flag=1)
+
+        ## CREATE SERVICE MESSAGE
+        state_msg = ModelState()
+        state_msg.model_name = self.modelName
+
+        ## POS AND QUAT
+        state_msg.pose.position.x = pos_0[0]
+        state_msg.pose.position.y = pos_0[1]
+        state_msg.pose.position.z = pos_0[2]
+
+        state_msg.pose.orientation.x = quat_0[0]
+        state_msg.pose.orientation.y = quat_0[1]
+        state_msg.pose.orientation.z = quat_0[2]
+        state_msg.pose.orientation.w = quat_0[3]
+
+        ## LINEAR AND ANG. VEL
+        state_msg.twist.linear.x = vel_d[0]
+        state_msg.twist.linear.y = vel_d[1]
+        state_msg.twist.linear.z = vel_d[2]
+
+        state_msg.twist.angular.x = 0
+        state_msg.twist.angular.y = 0
+        state_msg.twist.angular.z = 0
+
+        ## PUBLISH MODEL STATE SERVICE REQUEST
+        rospy.wait_for_service('/gazebo/set_model_state')
+        set_state_service = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
+        set_state_service(state_msg)
                 
 
     def reset_pos(self): # Disable sticky then places spawn_model at origin
@@ -627,6 +661,19 @@ class CrazyflieEnv:
         self.d_ceil_min = 50.0
         self.pitch_sum = 0.0
         self.pitch_max = 0.0
+
+
+    def impactEstimate(self,pos_0,vel_d):
+        
+        ## ASSUME INSTANT VELOCITY
+        t_impact = (self.h_ceiling - pos_0[2])/vel_d[2]
+
+        ## FIND IMPACT POINT FROM IMPACT TIME
+        x_impact = pos_0[0] + vel_d[0]*t_impact
+        y_impact = pos_0[1] + vel_d[1]*t_impact
+        z_impact = pos_0[2] + vel_d[2]*t_impact
+
+        return [x_impact,y_impact,z_impact]
 
 
 

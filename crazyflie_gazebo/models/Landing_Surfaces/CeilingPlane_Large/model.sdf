@@ -22,10 +22,10 @@
       <gravity>0</gravity>
       <visual name='ceiling_visual'>
         <cast_shadows>0</cast_shadows>
-        <pose>0 0 0.005 0 -0 0</pose>
+        <pose>0 0 0.005 0 -0 1.57</pose>
         <geometry>
           <box>
-            <size>5.0 2.0 0.01</size>
+            <size>2 2 0.01</size>
           </box>
         </geometry>
         <material>
@@ -33,11 +33,11 @@
             <uri>model://CeilingPlane_Large/materials/scripts</uri>
             <uri>model://CeilingPlane_Large/materials/textures</uri>
             <name>ceilingMat/Checkerboard</name>
-
           </script>
           <shader type='pixel'>
             <normal_map>__default__</normal_map>
           </shader>
+          <emissive>0 0 0 1</emissive>
         </material>
       </visual>
       <collision name='ceiling_collision'>
