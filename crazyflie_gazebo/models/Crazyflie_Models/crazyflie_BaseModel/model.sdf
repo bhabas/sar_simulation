@@ -164,8 +164,7 @@
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
-      
-     
+
       <sensor name='head_hokuyo_sensor' type='ray'>
         <pose>0 0 0 0 -1.57 0</pose>
         <visualize>1</visualize>
@@ -200,18 +199,20 @@
           <frameName>crazyflie_body</frameName>
         </plugin>
       </sensor>
+
       <sensor type="camera" name="camera1">
-        <pose>0 0 0 0 -1.57 0</pose>
-        <update_rate>120.0</update_rate>
+        <pose>0 0 0 0 -1.5708 1.5708</pose>
+        <update_rate>60</update_rate>
+        <visualize>true</visualize>
         <camera name="head">
           <save enabled="false">
             <path>/home/bhabas/Downloads/Video_images</path>
             <!--Convert Command: ffmpeg -framerate 60 -pattern_type glob -i '*.jpg' -c:v libx264 -pix_fmt yuv420p out.mp4 -->
           </save>
-          <horizontal_fov>1.3962634</horizontal_fov>
+          <horizontal_fov>1.435</horizontal_fov> <!-- 82.22 deg FoV to match AI Deck -->
           <image>
             <width>160</width>
-            <height>120</height>
+            <height>160</height>
             <format>L8</format>
           </image>
           <clip>
@@ -224,8 +225,12 @@
                  That pixel's noise value is added to each of its color
                  channels, which at that point lie in the range [0,1]. -->
             <mean>0.0</mean>
-            <stddev>0.007</stddev>
+            <stddev>0.00</stddev>
           </noise>
+          <lens>
+            <type>sterographic</type>
+
+          </lens>
         </camera>
         <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
           <alwaysOn>true</alwaysOn>
