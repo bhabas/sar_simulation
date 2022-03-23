@@ -121,6 +121,10 @@ class CF_DataConverter
         // ===================
 
         std::string MODEL_NAME;
+        float CF_MASS = 34.4e3; // [kg]
+        float Ixx = 15.83e-6f;  // [kg*m^2]
+        float Iyy = 17.00e-6f;  // [kg*m^2]
+        float Izz = 31.19e-6f;  // [kg*m^2]
 
         int SLOWDOWN_TYPE = 0;
         bool LANDING_SLOWDOWN_FLAG;
@@ -251,11 +255,16 @@ class CF_DataConverter
 
 void CF_DataConverter::LoadParams()
 {
+
+    // COLLECT MODEL PARAMETERS
     ros::param::get("/MODEL_NAME",MODEL_NAME);
-    // ros::param::get("/CF_MASS",_CF_MASS);
+    ros::param::get("/CF_MASS",CF_MASS);
+    ros::param::get("/Ixx",Ixx);
+    ros::param::get("/Iyy",Iyy);
+    ros::param::get("/Izz",Izz);
     ros::param::get("/POLICY_TYPE",POLICY_TYPE);
 
-    // // DEBUG SETTINGS
+    // DEBUG SETTINGS
     ros::param::get("/SIM_SPEED",SIM_SPEED);
     ros::param::get("/SIM_SLOWDOWN_SPEED",SIM_SLOWDOWN_SPEED);
     ros::param::get("/LANDING_SLOWDOWN_FLAG",LANDING_SLOWDOWN_FLAG);

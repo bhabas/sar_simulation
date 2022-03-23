@@ -98,6 +98,9 @@ extern float kd_xf; // Pos. Derivative Gain Flag
 
 // SYSTEM PARAMETERS
 extern float m;
+extern float Ixx;
+extern float Iyy;
+extern float Izz;
 extern float h_ceiling;
 
 // INIT STATE VALUES
@@ -227,23 +230,23 @@ extern uint8_t PolicyType;
 // Converts thrust in grams to their respective PWM values
 static int32_t thrust2PWM(float f) 
 {
-  // VOLTAGE IS WHAT DRIVES THE MOTORS, THEREFORE ADJUST PWM TO MEET VOLTAGE NEED
+    // VOLTAGE IS WHAT DRIVES THE MOTORS, THEREFORE ADJUST PWM TO MEET VOLTAGE NEED
 
-  // CALCULATE REQUIRED VOLTAGE FOR DESIRED THRUST
-  float a = 1.28034692f;
-  float b = 1.15043354f;
-  float voltage_needed = (-b + sqrtf(4*a*f + b*b))/(2*a);
+    // CALCULATE REQUIRED VOLTAGE FOR DESIRED THRUST
+    float a = 1.42428f;
+    float b = 1.24392f;
+    float voltage_needed = (-b + sqrtf(4*a*f + b*b))/(2*a);
 
-  // GET RATIO OF REQUIRED VOLTAGE VS SUPPLY VOLTAGE
-  float supply_voltage = pmGetBatteryVoltage();
-  float percentage = voltage_needed / supply_voltage;
-  percentage = percentage > 1.0f ? 1.0f : percentage; // If % > 100%, then cap at 100% else keep same
+    // GET RATIO OF REQUIRED VOLTAGE VS SUPPLY VOLTAGE
+    float supply_voltage = pmGetBatteryVoltage();
+    float percentage = voltage_needed / supply_voltage;
+    percentage = percentage > 1.0f ? 1.0f : percentage; // If % > 100%, then cap at 100% else keep same
 
-  // CONVERT RATIO TO PWM OF PWM_MAX
-  float f_PWM = percentage * (float)UINT16_MAX; // Remap percentage back to PWM range
+    // CONVERT RATIO TO PWM OF PWM_MAX
+    float f_PWM = percentage * (float)UINT16_MAX; // Remap percentage back to PWM range
 
 
-  return f_PWM;
+    return f_PWM;
 
 }      
 

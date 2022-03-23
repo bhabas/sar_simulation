@@ -46,9 +46,13 @@ float kd_xf = 1; // Pos. Derivative Gain Flag
 
 
 // SYSTEM PARAMETERS
-float m = 0.0376;           // [kg]
-float g = 9.81f;            // [m/s^2]
+float m = 34.3e-3f;     // [kg]
+float Ixx = 15.83e-6f;  // [kg*m^2]
+float Iyy = 17.00e-6f;  // [kg*m^2]
+float Izz = 31.19e-6f;  // [kg*m^2]
 float h_ceiling = 2.10f;    // [m]
+
+float g = 9.81f;            // [m/s^2]
 static struct mat33 J; // Rotational Inertia Matrix [kg*m^2]
 
 
@@ -256,7 +260,7 @@ void controllerGTCInit(void)
     controllerGTCReset();
     controllerGTCTest();
     X = nml_mat_new(3,1);
-    J = mdiag(15.83e-6f,17.00e-6f,31.19e-6f);
+    J = mdiag(Ixx,Iyy,Izz);
 
     initNN_Layers(&Scaler_Flip,W_flip,b_flip,NN_Params_Flip,3);
     initNN_Layers(&Scaler_Policy,W_policy,b_policy,NN_Params_Policy,3);
@@ -498,6 +502,12 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                                         state_t *state,
                                         const uint32_t tick)
 {
+
+    // if (RATE_DO_EXECUTE(20, tick)) {
+    //     consolePrintf("Mass: %.6f\n",m);
+    //     consolePrintf("Ixx: %.3E \t Iyy: %.3E \t Izz: %.3E\n",Ixx,Iyy,Izz);
+    // }
+
     if (RATE_DO_EXECUTE(RATE_500_HZ, tick)) {
 
         if (setpoint->GTC_cmd_rec == true)

@@ -196,11 +196,16 @@ void Controller::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 }
 
 
-// LOAD VALUES FROM ROSPARAM SERVER
+// LOAD VALUES FROM ROSPARAM SERVER INTO CONTROLLER
 void Controller::loadParams()
 {
+    // COLLECT MODEL PARAMETERS
+    ros::param::get("/CF_MASS",m);
+    ros::param::get("/Ixx",Ixx);
+    ros::param::get("/Iyy",Iyy);
+    ros::param::get("/Izz",Izz);
+
     // SIMULATION SETTINGS FROM CONFIG FILE
-    ros::param::get("/CF_MASS",_CF_MASS);
     ros::param::get("/POLICY_TYPE",_POLICY_TYPE);
 
     // COLLECT CTRL GAINS FROM CONFIG FILE
