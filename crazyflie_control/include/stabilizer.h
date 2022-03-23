@@ -66,7 +66,6 @@ class Controller
             // INTERNAL TOPICS
             CF_IMU_Subscriber = nh->subscribe("/CF_Internal/IMU",1,&Controller::IMU_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
             CF_OF_Subscriber = nh->subscribe("/CF_Internal/OF_Sensor",1,&Controller::OF_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
-            CF_PWM_Publisher = nh->advertise<crazyflie_msgs::MS>("/CF_Internal/MS_PWM",1);
 
             // ENVIRONMENT TOPICS
             ENV_Vicon_Subscriber = nh->subscribe("/ENV/viconState_UKF",1,&Controller::viconState_Callback,this,ros::TransportHints().tcpNoDelay());
@@ -126,7 +125,6 @@ class Controller
         void publishCtrlDebug();
         
 
-        crazyflie_msgs::MS MS_PWM_msg;
         crazyflie_msgs::CtrlData CtrlData_msg;
         crazyflie_msgs::CtrlDebug CtrlDebug_msg;
 

@@ -10,7 +10,7 @@
 
 #include <ros/ros.h>
 #include "crazyflie_msgs/RLCmd.h"
-#include "crazyflie_msgs/MS.h"
+#include "crazyflie_msgs/CtrlData.h"
 #define g2Newton (9.81f/1000.0f)
 #define Newton2g (1000.0f/9.81f)
 
@@ -26,7 +26,7 @@ namespace gazebo {
             void OnUpdate();
             void updateThrust();
             void updateTorque();
-            void MotorSpeedCallback(const crazyflie_msgs::MS::ConstPtr &msg);
+            void CtrlData_Callback(const crazyflie_msgs::CtrlData::ConstPtr &msg);
 
 
         private:
@@ -43,7 +43,7 @@ namespace gazebo {
 
             double rot_vel_visual_slowdown;
             double rot_vel;
-            uint16_t rotorPWM = 0;
+            float MotorThrust = 0.0f;
 
             double thrust_coeff;
             double torque_coeff;
@@ -54,27 +54,7 @@ namespace gazebo {
             event::ConnectionPtr updateConnection;
 
             ros::NodeHandle nh;
-            ros::Subscriber MS_Subscriber = nh.subscribe<crazyflie_msgs::MS>("/CF_Internal/MS_PWM", 1, &GazeboMotorPlugin::MotorSpeedCallback, this, ros::TransportHints().tcpNoDelay());
+            ros::Subscriber CTRL_Data_Sub = nh.subscribe<crazyflie_msgs::CtrlData>("/CTRL/data", 1, &GazeboMotorPlugin::CtrlData_Callback, this, ros::TransportHints().tcpNoDelay());
     };
 
-}
-
-
-// Converts thrust in PWM to their respective values in grams
-static inline float PWM2thrust(uint16_t M_PWM) 
-{
-    // Conversion values calculated from PWM to Thrust Curve
-    float a = 3.31e4;
-    float b = 1.12e1;
-    float c = 8.72;
-    float d = 3.26e4;
-
-    float f = b*atan2f((float)M_PWM-d,a)+c;
-
-    if(f<0)
-    {
-      f = 0;
-    }
-
-    return f;
 }

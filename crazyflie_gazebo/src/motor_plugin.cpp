@@ -63,7 +63,7 @@ namespace gazebo
     void GazeboMotorPlugin::updateThrust()
     {
         // APPLY ROTOR THRUST TO LINK
-        thrust = (rotorPWM < 100) ? 0.0 : PWM2thrust(rotorPWM)*g2Newton;
+        thrust = MotorThrust*g2Newton;
         link_ptr->AddRelativeForce(ignition::math::Vector3d(0, 0, thrust));
 
     }
@@ -80,9 +80,9 @@ namespace gazebo
         parent_links.at(0)->AddRelativeTorque(torque_parent_frame); // Apply torque vector to body
     }
 
-    void GazeboMotorPlugin::MotorSpeedCallback(const crazyflie_msgs::MS::ConstPtr &msg)
+    void GazeboMotorPlugin::CtrlData_Callback(const crazyflie_msgs::CtrlData::ConstPtr &msg)
     {
-        rotorPWM = msg->MotorPWM[motor_number-1];
+        MotorThrust = msg->MotorThrusts[motor_number-1];
     }
 
     GZ_REGISTER_MODEL_PLUGIN(GazeboMotorPlugin);
