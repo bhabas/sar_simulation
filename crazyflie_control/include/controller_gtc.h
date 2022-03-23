@@ -31,6 +31,7 @@ extern "C" {
 #include "param.h"
 #include "debug.h"
 #include "motors.h"
+#include "pm.h"
 
 // CF HEADERS
 #include "stabilizer_types.h"
@@ -39,7 +40,7 @@ extern "C" {
 #include "nml.h"
 
 #define PWM_MAX 60000
-#define f_MAX (16.5)
+#define f_MAX 15.0f 
 #define g2Newton (9.81f/1000.0f)
 #define Newton2g (1000.0f/9.81f)
 
@@ -217,64 +218,28 @@ extern float NN_tr_policy;      // NN policy value at flip trigger
 extern uint8_t PolicyType;
 
 
-
-// Limit PWM value to accurate motor curve limit (60,000)
-static uint16_t limitPWM(int32_t value) 
-{
-  if(value > 60000)
-  {
-    value = 60000;
-  }
-  else if(value < 0)
-  {
-    value = 0;
-  }
-
-  return (uint16_t)value;
-}
-
-// Converts thrust in Newtons to their respective PWM values
+// Converts thrust in grams to their respective PWM values
 static int32_t thrust2PWM(float f) 
 {
-    // Conversion values calculated from self motor analysis
-    float a = 3.31e4;
-    float b = 1.12e1;
-    float c = 8.72;
-    float d = 3.26e4;
+  // VOLTAGE IS WHAT DRIVES THE MOTORS, THEREFORE ADJUST PWM TO MEET VOLTAGE NEED
 
-    float s = 1.0f; // sign of value
-    int32_t f_pwm = 0;
+  // CALCULATE REQUIRED VOLTAGE FOR DESIRED THRUST
+  float a = 1.28034692f;
+  float b = 1.15043354f;
+  float voltage_needed = (-b + sqrtf(4*a*f + b*b))/(2*a);
 
-    s = f/fabsf(f);
-    f = fabsf(f);
-    
-    f_pwm = a*tanf((f-c)/b)+d;
+  // GET RATIO OF REQUIRED VOLTAGE VS SUPPLY VOLTAGE
+  float supply_voltage = pmGetBatteryVoltage();
+  float percentage = voltage_needed / supply_voltage;
+  percentage = percentage > 1.0f ? 1.0f : percentage; // If % > 100%, then cap at 100% else keep same
 
-    return s*f_pwm;
+  // CONVERT RATIO TO PWM OF PWM_MAX
+  float f_PWM = percentage * (float)UINT16_MAX; // Remap percentage back to PWM range
+
+
+  return f_PWM;
 
 }      
-
-// Converts thrust in PWM to their respective Newton values
-static float PWM2thrust(int32_t M_PWM) 
-{
-    // Conversion values calculated from PWM to Thrust Curve
-    // Linear Fit: Thrust [g] = a*PWM + b
-    float a = 3.31e4;
-    float b = 1.12e1;
-    float c = 8.72;
-    float d = 3.26e4;
-
-    float f = b*atan2f(M_PWM-d,a)+c;
-    // float f = (a*M_PWM + b); // Convert thrust to grams
-
-    if(f<0)
-    {
-      f = 0;
-    }
-
-    return f;
-}
-
 
 
 #endif //__CONTROLLER_GTC_H__

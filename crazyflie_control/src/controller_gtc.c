@@ -138,7 +138,11 @@ uint16_t M2_pwm = 0;
 uint16_t M3_pwm = 0; 
 uint16_t M4_pwm = 0; 
 
+// CONTROL OVERRIDE VALUES
+float thrust_arr[4] = {0.0f,0.0f,0.0f,0.0f};
 uint16_t PWM_arr[4] = {0,0,0,0};
+
+
 
 
 
@@ -161,7 +165,8 @@ bool onceFlag = false;
 bool moment_flag = false;
 bool attCtrlEnable = false;
 bool safeModeEnable = true;
-bool customPWM_Flag = false;
+bool customThrust_flag = false;
+bool customPWM_flag = false;
 
 
 // DEFINE POLICY TYPE ACTIVATED
@@ -272,7 +277,7 @@ void controllerGTCReset(void)
     // RESET SYSTEM FLAGS
     tumbled = false;
     motorstop_flag = false;
-    customPWM_Flag = false;
+    customThrust_flag = false;
 
     moment_flag = false;
     policy_armed_flag = false;
@@ -414,15 +419,26 @@ void GTC_Command(setpoint_t *setpoint)
 
             break;
 
-        case 10: // PWM Values
+        case 10: // Custom Thrust Values
 
-            customPWM_Flag = true;
+            customThrust_flag = true;
+            thrust_arr[0] = setpoint->cmd_val1;
+            thrust_arr[1] = setpoint->cmd_val2;
+            thrust_arr[2] = setpoint->cmd_val3;
+            thrust_arr[3] = setpoint->cmd_flag;
+
+            break;
+
+        case 12: // Custom PWM Values
+
+            customPWM_flag = true;
             PWM_arr[0] = setpoint->cmd_val1;
             PWM_arr[1] = setpoint->cmd_val2;
             PWM_arr[2] = setpoint->cmd_val3;
             PWM_arr[3] = setpoint->cmd_flag;
 
             break;
+
     }
     
 }
@@ -600,53 +616,63 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
             M = vscl(2.0f,M_d);
         }
 
-        // =========== CONVERT THRUSTS AND MOMENTS TO PWM =========== // 
-        f_thrust_g = F_thrust/4.0f*Newton2g;
+        // =========== CONVERT THRUSTS [N] AND MOMENTS [N*m] TO PWM =========== // 
+        f_thrust_g = clamp(F_thrust/4.0f*Newton2g, 0.0f, f_MAX*0.8f); // Clamp thrust to prevent control saturation
         f_roll_g = M.x/(4.0f*dp)*Newton2g;
         f_pitch_g = M.y/(4.0f*dp)*Newton2g;
         f_yaw_g = M.z/(4.0*c_tf)*Newton2g;
 
-        f_thrust_g = clamp(f_thrust_g,0.0,f_MAX*0.8);    // Clamp thrust to prevent control saturation
-
-        // THESE CONNECT TO POWER_DISTRIBUTION_STOCK.C TO 
-        control->thrust = f_thrust_g;
+        // THESE CONNECT TO POWER_DISTRIBUTION_STOCK.C
+        control->thrust = f_thrust_g;                   // This gets passed to firmware EKF
         control->roll = (int16_t)(f_roll_g*1e3f);
         control->pitch = (int16_t)(f_pitch_g*1e3f);
         control->yaw = (int16_t)(f_yaw_g*1e3f);
 
-        // Add respective thrust components and limit to (0 <= PWM <= 60,000)
-        M1_pwm = limitPWM(thrust2PWM(f_thrust_g + f_roll_g - f_pitch_g + f_yaw_g)); 
-        M2_pwm = limitPWM(thrust2PWM(f_thrust_g + f_roll_g + f_pitch_g - f_yaw_g));
-        M3_pwm = limitPWM(thrust2PWM(f_thrust_g - f_roll_g + f_pitch_g + f_yaw_g));
-        M4_pwm = limitPWM(thrust2PWM(f_thrust_g - f_roll_g - f_pitch_g - f_yaw_g));
 
+        // Add respective thrust components
+        M1_pwm = thrust2PWM(clamp(f_thrust_g + f_roll_g - f_pitch_g + f_yaw_g, 0.0f, f_MAX)); 
+        M2_pwm = thrust2PWM(clamp(f_thrust_g + f_roll_g + f_pitch_g - f_yaw_g, 0.0f, f_MAX));
+        M3_pwm = thrust2PWM(clamp(f_thrust_g - f_roll_g + f_pitch_g + f_yaw_g, 0.0f, f_MAX));
+        M4_pwm = thrust2PWM(clamp(f_thrust_g - f_roll_g - f_pitch_g - f_yaw_g, 0.0f, f_MAX));
 
-        // TUMBLE DETECTION
-        if (b3.z <= 0 && tumble_detection == true){
-            tumbled = true;
-        }
         
-        if(motorstop_flag || tumbled){ // Cutoff all motor values
+
         
-            M1_pwm = 0;
-            M2_pwm = 0;
-            M3_pwm = 0;
-            M4_pwm = 0;
+        
+        // CUSTOM MOTOR COMMANDS
+        if(customThrust_flag) // If custom thrust components are given then use those
+        {
+            f_thrust_g = thrust_arr[0];
+            f_roll_g = thrust_arr[1];
+            f_pitch_g = thrust_arr[2];
+            f_yaw_g = thrust_arr[3];
+
+            M1_pwm = thrust2PWM(clamp(f_thrust_g + f_roll_g - f_pitch_g + f_yaw_g, 0.0f, f_MAX)); 
+            M2_pwm = thrust2PWM(clamp(f_thrust_g + f_roll_g + f_pitch_g - f_yaw_g, 0.0f, f_MAX));
+            M3_pwm = thrust2PWM(clamp(f_thrust_g - f_roll_g + f_pitch_g + f_yaw_g, 0.0f, f_MAX));
+            M4_pwm = thrust2PWM(clamp(f_thrust_g - f_roll_g - f_pitch_g - f_yaw_g, 0.0f, f_MAX));
         }
 
-        if(safeModeEnable) // If safeMode is enabled then override all PWM commands
+        if(customPWM_flag) // If custom thrust components are given then use those
         {
-            M1_pwm = 0;
-            M2_pwm = 0;
-            M3_pwm = 0;
-            M4_pwm = 0;
-        }
-        else if(customPWM_Flag) // If custom PWM commands are given then use those
-        {
-            M1_pwm = PWM_arr[0];
+            M1_pwm = PWM_arr[0]; 
             M2_pwm = PWM_arr[1];
             M3_pwm = PWM_arr[2];
             M4_pwm = PWM_arr[3];
+        }
+
+        // TUMBLE DETECTION
+        if (b3.z <= 0 && tumble_detection == true){ // If b3 axis has a negative z-component (Quadrotor is inverted)
+            tumbled = true;
+        }
+
+        // STOP MOTOR COMMANDS
+        if(motorstop_flag || tumbled || safeModeEnable){ // Cutoff all motor values
+        
+            M1_pwm = 0;
+            M2_pwm = 0;
+            M3_pwm = 0;
+            M4_pwm = 0;
         }
   
 
