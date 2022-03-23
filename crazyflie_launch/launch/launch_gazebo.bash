@@ -11,4 +11,9 @@ GUI_FLAG=$(rosparam get /GUI_FLAG)
 PAUSE_FLAG=$(rosparam get /PAUSE_FLAG)
 
 ## START GAZEBO 
-roslaunch crazyflie_launch crazyflie_gazebo.launch surface_name:=$SURFACE_NAME model_name:=$MODEL_NAME ground_name:=$GROUND_NAME gui:=$GUI_FLAG paused:=$PAUSED_FLAG
+roslaunch crazyflie_launch crazyflie_gazebo.launch \
+    surface_name:=$SURFACE_NAME \
+    model_name:=$MODEL_NAME \
+    ground_name:=$GROUND_NAME \
+    gui_flag:=$GUI_FLAG \
+    pause_flag:=$PAUSE_FLAG \

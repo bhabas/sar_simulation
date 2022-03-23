@@ -3,7 +3,7 @@ SURFACE_NAME: "CeilingPlane_Large"
 GROUND_NAME: "GroundPlane_Desert_Visual"
 
 GUI_FLAG: True
-PAUSE_FLAG: True
+PAUSE_FLAG: False
 LOGGING_FLAG: False
 
 SIM_SPEED: 0.1
