@@ -136,10 +136,7 @@ float f_pitch_g = 0.0f;  // Motor thrust - Pitch  [g]
 float f_yaw_g = 0.0f;    // Motor thrust - Yaw    [g]
 
 // INDIVIDUAL MOTOR THRUSTS
-float f1_g = 0.0f;  // Motor_1 thrust [g] 
-float f2_g = 0.0f;  // Motor_2 thrust [g]
-float f3_g = 0.0f;  // Motor_3 thrust [g]
-float f4_g = 0.0f;  // Motor_4 thrust [g]
+float thrust_arr[4] = {0.0f,0.0f,0.0f,0.0f};  // Motor thrust [g] 
 
 
 // MOTOR VARIABLES
@@ -149,8 +146,9 @@ uint16_t M3_pwm = 0;
 uint16_t M4_pwm = 0; 
 
 // CONTROL OVERRIDE VALUES
-float thrust_arr[4] = {0.0f,0.0f,0.0f,0.0f};
-uint16_t PWM_arr[4] = {0,0,0,0};
+
+uint16_t PWM_arr_override[4] = {0,0,0,0};               // Motor PWM values
+float thrust_arr_override[4] = {0.0f,0.0f,0.0f,0.0f}; // Motor thrusts [g] 
 
 
 
@@ -288,6 +286,7 @@ void controllerGTCReset(void)
     tumbled = false;
     motorstop_flag = false;
     customThrust_flag = false;
+    customPWM_flag = false;
 
     moment_flag = false;
     policy_armed_flag = false;
@@ -432,20 +431,20 @@ void GTC_Command(setpoint_t *setpoint)
         case 10: // Custom Thrust Values
 
             customThrust_flag = true;
-            thrust_arr[0] = setpoint->cmd_val1;
-            thrust_arr[1] = setpoint->cmd_val2;
-            thrust_arr[2] = setpoint->cmd_val3;
-            thrust_arr[3] = setpoint->cmd_flag;
+            thrust_arr_override[0] = setpoint->cmd_val1;
+            thrust_arr_override[1] = setpoint->cmd_val2;
+            thrust_arr_override[2] = setpoint->cmd_val3;
+            thrust_arr_override[3] = setpoint->cmd_flag;
 
             break;
 
         case 12: // Custom PWM Values
 
             customPWM_flag = true;
-            PWM_arr[0] = setpoint->cmd_val1;
-            PWM_arr[1] = setpoint->cmd_val2;
-            PWM_arr[2] = setpoint->cmd_val3;
-            PWM_arr[3] = setpoint->cmd_flag;
+            PWM_arr_override[0] = setpoint->cmd_val1;
+            PWM_arr_override[1] = setpoint->cmd_val2;
+            PWM_arr_override[2] = setpoint->cmd_val3;
+            PWM_arr_override[3] = setpoint->cmd_flag;
 
             break;
 
@@ -645,55 +644,50 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         control->yaw = (int16_t)(f_yaw_g*1e3f);
 
         // ADD RESPECTIVE THRUST COMPONENTS
-        f1_g = clamp(f_thrust_g + f_roll_g - f_pitch_g + f_yaw_g, 0.0f, f_MAX);
-        f2_g = clamp(f_thrust_g + f_roll_g + f_pitch_g - f_yaw_g, 0.0f, f_MAX);
-        f3_g = clamp(f_thrust_g - f_roll_g + f_pitch_g + f_yaw_g, 0.0f, f_MAX);
-        f4_g = clamp(f_thrust_g - f_roll_g - f_pitch_g - f_yaw_g, 0.0f, f_MAX);
-
-        // CONVERT THRUSTS TO PWM SIGNALS
-        M1_pwm = thrust2PWM(f1_g); 
-        M2_pwm = thrust2PWM(f2_g);
-        M3_pwm = thrust2PWM(f3_g);
-        M4_pwm = thrust2PWM(f4_g);
+        thrust_arr[0] = clamp(f_thrust_g + f_roll_g - f_pitch_g + f_yaw_g, 0.0f, f_MAX);
+        thrust_arr[1] = clamp(f_thrust_g + f_roll_g + f_pitch_g - f_yaw_g, 0.0f, f_MAX);
+        thrust_arr[2] = clamp(f_thrust_g - f_roll_g + f_pitch_g + f_yaw_g, 0.0f, f_MAX);
+        thrust_arr[3] = clamp(f_thrust_g - f_roll_g - f_pitch_g - f_yaw_g, 0.0f, f_MAX);
 
         
 
-        
+        // TUMBLE DETECTION
+        if(b3.z <= 0 && tumble_detection == true){ // If b3 axis has a negative z-component (Quadrotor is inverted)
+            tumbled = true;
+        }
         
         // CUSTOM MOTOR COMMANDS
         if(customThrust_flag) // If custom thrust components are given then use those
         {
-            f_thrust_g = thrust_arr[0];
-            f_roll_g = thrust_arr[1];
-            f_pitch_g = thrust_arr[2];
-            f_yaw_g = thrust_arr[3];
+            // REPLACE THRUST VALUES WITH CUSTOM VALUES
+            thrust_arr[0] = thrust_arr_override[0];
+            thrust_arr[1] = thrust_arr_override[1];
+            thrust_arr[2] = thrust_arr_override[2];
+            thrust_arr[3] = thrust_arr_override[3];
 
-            M1_pwm = thrust2PWM(clamp(f_thrust_g + f_roll_g - f_pitch_g + f_yaw_g, 0.0f, f_MAX)); 
-            M2_pwm = thrust2PWM(clamp(f_thrust_g + f_roll_g + f_pitch_g - f_yaw_g, 0.0f, f_MAX));
-            M3_pwm = thrust2PWM(clamp(f_thrust_g - f_roll_g + f_pitch_g + f_yaw_g, 0.0f, f_MAX));
-            M4_pwm = thrust2PWM(clamp(f_thrust_g - f_roll_g - f_pitch_g - f_yaw_g, 0.0f, f_MAX));
         }
-
-        if(customPWM_flag) // If custom thrust components are given then use those
+        else if(customPWM_flag) // If custom thrust components are given then use those
         {
-            M1_pwm = PWM_arr[0]; 
-            M2_pwm = PWM_arr[1];
-            M3_pwm = PWM_arr[2];
-            M4_pwm = PWM_arr[3];
+            M1_pwm = PWM_arr_override[0]; 
+            M2_pwm = PWM_arr_override[1];
+            M3_pwm = PWM_arr_override[2];
+            M4_pwm = PWM_arr_override[3];
         }
 
-        // TUMBLE DETECTION
-        if (b3.z <= 0 && tumble_detection == true){ // If b3 axis has a negative z-component (Quadrotor is inverted)
-            tumbled = true;
-        }
-
-        // STOP MOTOR COMMANDS
-        if(motorstop_flag || tumbled || safeModeEnable){ // Cutoff all motor values
-        
+        else if(motorstop_flag || tumbled || safeModeEnable) // STOP MOTOR COMMANDS
+        { 
             M1_pwm = 0;
             M2_pwm = 0;
             M3_pwm = 0;
             M4_pwm = 0;
+        }
+        else
+        {
+            // CONVERT THRUSTS TO PWM SIGNALS
+            M1_pwm = thrust2PWM(thrust_arr[0]); 
+            M2_pwm = thrust2PWM(thrust_arr[1]);
+            M3_pwm = thrust2PWM(thrust_arr[2]);
+            M4_pwm = thrust2PWM(thrust_arr[3]);
         }
   
 

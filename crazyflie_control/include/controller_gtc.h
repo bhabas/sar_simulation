@@ -150,10 +150,7 @@ extern float f_pitch_g;     // Motor thrust - Pitch  [g]
 extern float f_yaw_g;       // Motor thrust - Yaw    [g]
 
 // INDIVIDUAL MOTOR THRUSTS
-extern float f1_g;          // Motor_1 thrust [g] 
-extern float f2_g;          // Motor_2 thrust [g]
-extern float f3_g;          // Motor_3 thrust [g]
-extern float f4_g;          // Motor_4 thrust [g]
+extern float thrust_arr[4];
 
 // MOTOR PWM VALUES
 extern uint16_t M1_pwm; 
