@@ -202,15 +202,8 @@ void Controller::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 void Controller::loadParams()
 {
     // SIMULATION SETTINGS FROM CONFIG FILE
-    // ros::param::get("/MODEL_NAME",_MODEL_NAME);
-    // ros::param::get("/CEILING_HEIGHT",_H_CEILING);
     ros::param::get("/CF_MASS",_CF_MASS);
     ros::param::get("/POLICY_TYPE",_POLICY_TYPE);
-
-    // DEBUG SETTINGS
-    // ros::param::get("/SIM_SPEED",_SIM_SPEED);
-    // ros::param::get("/SIM_SLOWDOWN_SPEED",_SIM_SLOWDOWN_SPEED);
-    // ros::param::get("/LANDING_SLOWDOWN_FLAG",_LANDING_SLOWDOWN_FLAG);
 
     // COLLECT CTRL GAINS FROM CONFIG FILE
     ros::param::get("P_kp_xy",P_kp_xy);
@@ -287,6 +280,7 @@ void Controller::publishCtrlData()
 
     // CONTROL ACTIONS
     CtrlData_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
+    CtrlData_msg.MotorThrusts = {f1_g,f2_g,f3_g,f4_g};
     CtrlData_msg.MS_PWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
 
     CtrlData_msg.x_d.x = x_d.x;

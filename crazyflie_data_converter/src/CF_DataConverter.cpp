@@ -29,6 +29,7 @@ void CF_DataConverter::Publish_StateData()
 
     // CONTROL ACTIONS
     StateData_msg.FM = FM;
+    StateData_msg.MotorThrusts = MotorThrusts;
     StateData_msg.MS_PWM = MS_PWM;
 
     // NEURAL NETWORK DATA
@@ -143,6 +144,7 @@ void CF_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
 
     // CONTROL ACTIONS
     FM = ctrl_msg.FM;
+    MotorThrusts = ctrl_msg.MotorThrusts;
     MS_PWM = ctrl_msg.MS_PWM;
 
     // RL POLICY DATA
@@ -502,6 +504,7 @@ void CF_DataConverter::consoleOuput()
 
     printf("==== Controller Actions ====\n");
     printf("FM [N/N*mm]: %.3f  %.3f  %.3f  %.3f\n",FM[0],FM[1],FM[2],FM[3]);
+    printf("Motor Thrusts [g]: %.3f  %.3f  %.3f  %.3f\n",MotorThrusts[0],MotorThrusts[1],MotorThrusts[2],MotorThrusts[3]);
     printf("MS_PWM: %u  %u  %u  %u\n",MS_PWM[0],MS_PWM[1],MS_PWM[2],MS_PWM[3]);
     printf("\n");
 

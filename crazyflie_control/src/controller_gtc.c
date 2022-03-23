@@ -125,11 +125,17 @@ struct vec F_thrust_ideal;           // Ideal thrust vector [N]
 float F_thrust = 0.0f;               // Implemented body thrust [N]
 struct vec M = {0.0f,0.0f,0.0f};     // Implemented body moments [N*m]
 
-// MOTOR THRUSTS
+// MOTOR THRUST ACTIONS
 float f_thrust_g = 0.0f; // Motor thrust - Thrust [g]
 float f_roll_g = 0.0f;   // Motor thrust - Roll   [g]
 float f_pitch_g = 0.0f;  // Motor thrust - Pitch  [g]
 float f_yaw_g = 0.0f;    // Motor thrust - Yaw    [g]
+
+// INDIVIDUAL MOTOR THRUSTS
+float f1_g = 0.0f;  // Motor_1 thrust [g] 
+float f2_g = 0.0f;  // Motor_2 thrust [g]
+float f3_g = 0.0f;  // Motor_3 thrust [g]
+float f4_g = 0.0f;  // Motor_4 thrust [g]
 
 
 // MOTOR VARIABLES
@@ -628,12 +634,17 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         control->pitch = (int16_t)(f_pitch_g*1e3f);
         control->yaw = (int16_t)(f_yaw_g*1e3f);
 
+        // ADD RESPECTIVE THRUST COMPONENTS
+        f1_g = clamp(f_thrust_g + f_roll_g - f_pitch_g + f_yaw_g, 0.0f, f_MAX);
+        f2_g = clamp(f_thrust_g + f_roll_g + f_pitch_g - f_yaw_g, 0.0f, f_MAX);
+        f3_g = clamp(f_thrust_g - f_roll_g + f_pitch_g + f_yaw_g, 0.0f, f_MAX);
+        f4_g = clamp(f_thrust_g - f_roll_g - f_pitch_g - f_yaw_g, 0.0f, f_MAX);
 
-        // Add respective thrust components
-        M1_pwm = thrust2PWM(clamp(f_thrust_g + f_roll_g - f_pitch_g + f_yaw_g, 0.0f, f_MAX)); 
-        M2_pwm = thrust2PWM(clamp(f_thrust_g + f_roll_g + f_pitch_g - f_yaw_g, 0.0f, f_MAX));
-        M3_pwm = thrust2PWM(clamp(f_thrust_g - f_roll_g + f_pitch_g + f_yaw_g, 0.0f, f_MAX));
-        M4_pwm = thrust2PWM(clamp(f_thrust_g - f_roll_g - f_pitch_g - f_yaw_g, 0.0f, f_MAX));
+        // CONVERT THRUSTS TO PWM SIGNALS
+        M1_pwm = thrust2PWM(f1_g); 
+        M2_pwm = thrust2PWM(f2_g);
+        M3_pwm = thrust2PWM(f3_g);
+        M4_pwm = thrust2PWM(f4_g);
 
         
 

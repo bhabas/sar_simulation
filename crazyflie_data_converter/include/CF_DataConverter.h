@@ -152,6 +152,7 @@ class CF_DataConverter
         double D_ceil;
 
         boost::array<double, 4> FM;
+        boost::array<double, 4> MotorThrusts;
         boost::array<uint16_t, 4> MS_PWM;
 
         double Tau_thr;

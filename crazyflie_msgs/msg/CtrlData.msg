@@ -7,6 +7,7 @@ float64 RREV
 float64 D_ceil
 
 float64[4] FM
+float64[4] MotorThrusts
 uint32[4] MS_PWM
 
 float64 Tau_thr

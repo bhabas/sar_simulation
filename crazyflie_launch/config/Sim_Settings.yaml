@@ -1,6 +1,6 @@
 MODEL_NAME: "crazyflie_Narrow-Long"
 SURFACE_NAME: "CeilingPlane_Large"
-GROUND_NAME: "GroundPlane_Desert_Visual"
+GROUND_NAME: "GroundPlane_Desert_Physical"
 
 GUI_FLAG: True
 PAUSE_FLAG: True

@@ -140,13 +140,19 @@ struct vec F_thrust_ideal;  // Ideal thrust vector [N]
 extern float F_thrust;      // Implemented body thrust [N]
 extern struct vec M;        // Implemented body moments [N*m]
 
-// MOTOR THRUSTS
-extern float f_thrust_g; // Motor thrust - Thrust [g]
-extern float f_roll_g;   // Motor thrust - Roll   [g]
-extern float f_pitch_g;  // Motor thrust - Pitch  [g]
-extern float f_yaw_g;    // Motor thrust - Yaw    [g]
+// MOTOR THRUST ACTIONS
+extern float f_thrust_g;    // Motor thrust - Thrust [g]
+extern float f_roll_g;      // Motor thrust - Roll   [g]
+extern float f_pitch_g;     // Motor thrust - Pitch  [g]
+extern float f_yaw_g;       // Motor thrust - Yaw    [g]
 
-// MOTOR VARIABLES
+// INDIVIDUAL MOTOR THRUSTS
+extern float f1_g;          // Motor_1 thrust [g] 
+extern float f2_g;          // Motor_2 thrust [g]
+extern float f3_g;          // Motor_3 thrust [g]
+extern float f4_g;          // Motor_4 thrust [g]
+
+// MOTOR PWM VALUES
 extern uint16_t M1_pwm; 
 extern uint16_t M2_pwm; 
 extern uint16_t M3_pwm; 
