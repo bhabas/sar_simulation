@@ -22,10 +22,10 @@
       <gravity>0</gravity>
       <visual name='ceiling_visual'>
         <cast_shadows>0</cast_shadows>
-        <pose>0 0 0.005 0 -0 0</pose>
+        <pose>0 0 0.005 0 -0 1.57</pose>
         <geometry>
           <box>
-            <size>1 1 0.01</size>
+            <size>2 2 0.01</size>
           </box>
         </geometry>
         <material>

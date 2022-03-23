@@ -1,0 +1,2 @@
+string custom_msg
+geometry_msgs/Vector3 custom_vector

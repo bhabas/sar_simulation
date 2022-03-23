@@ -8,36 +8,30 @@ import matplotlib.cm as cm
 import cv2 as cv
 
 WIDTH_PIXELS = 160
-HEIGHT_PIXELS = 120
+HEIGHT_PIXELS = 160
 
 class DataParser:
 
     def __init__(self):
 
         ## FILEPATH PROPERTIES
-        self.Filename = input('\nInput the name of the file to be parsed:\n')
+        filename = input('\nInput the name of the file to be parsed:\n')
         self.Username = getpass.getuser()
-        self.Path = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Featureless_TTC/logs/'
-        self.Filepath = self.Path + self.Filename
-
-        ## CAMERA PROPERTIES
-        self.w = 3.6e-6  # Pixel width [m]
-        self.f = 0.66e-3 # Focal Length [m]
-        self.O_x = WIDTH_PIXELS/2    # Pixel X_offset [pixels]
-        self.O_y = HEIGHT_PIXELS/2   # Pixel Y_offset [pixels]
+        self.Path = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Featureless_TTC/local_logs/'
+        filepath = self.Path + filename
 
         ## Check if data has already been compile
         pre_compiled_Flag = input('Is the data already compiled? (y/n): ')
 
         #check if the file exists and loop back if not
-        if os.path.isfile(self.Filepath) and os.access(self.Filepath, os.R_OK):
+        if os.path.isfile(filepath) and os.access(filepath, os.R_OK):
             print("\nSuccessfully opened file\n")
         else:
-            print(f"\nCould not access file named {self.Filename}\n")
+            print(f"\nCould not access file named {filename}\n")
             DataParser() #loop back so program doesn't exit from a typo
 
         #convert data into a useable format
-        self.Data = pd.read_csv(self.Filepath,quotechar = '"',low_memory = False)
+        self.Data = pd.read_csv(filepath,quotechar = '"',low_memory = False)
         self.Camera_splitter()
         #self.CameraData = np.fromstring(self.Data['Camera_Data'],str = ' ')
         self.Time = self.Data['Time'].to_numpy()
@@ -72,7 +66,7 @@ class DataParser:
                 'OFx_est':self.OFx_est,
                 'OFy_est':self.OFy_est,
                 })
-            pd.concat([self.Data.iloc[:,:-1],df_Tau,self.Data.iloc[:,-1]],axis=1).to_csv(self.Path+"Appended_"+self.Filename,index=False)
+            pd.concat([self.Data.iloc[:,:-1],df_Tau,self.Data.iloc[:,-1]],axis=1).to_csv(self.Path+"Appended_"+filename,index=False)
 
             self.Plotter()
 
@@ -91,29 +85,38 @@ class DataParser:
 
     def Data_analysis(self):
 
+        ## CAMERA PROPERTIES
+        w = 3.6e-6  # Pixel width [m]
+        f = 0.66e-3/2 # Focal Length [m]
+        O_up = WIDTH_PIXELS/2    # Pixel X_offset [pixels]
+        O_vp = HEIGHT_PIXELS/2   # Pixel Y_offset [pixels]
+
         ## DEFINE PIXEL GRID
-        u_grid = np.arange(0,WIDTH_PIXELS,1)
-        v_grid = np.arange(0,HEIGHT_PIXELS,1)
-        U_grid,V_grid = np.meshgrid(u_grid,v_grid)
+        up_grid = np.arange(0,WIDTH_PIXELS,1)
+        vp_grid = np.arange(0,HEIGHT_PIXELS,1)
+        Up_grid,Vp_grid = np.meshgrid(up_grid,vp_grid)
 
-        xi_grid = (U_grid - self.O_x)*self.w + self.w/2
-        yi_grid = (V_grid - self.O_y)*self.w + self.w/2
+        ## DEFINE IMAGE SENSOR COORDS
+        U_grid = (Up_grid - O_up)*w + w/2
+        V_grid = (Vp_grid - O_vp)*w + w/2
 
-        Ix = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
-        Iy = np.zeros_like(Ix)
+        Iu = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+        Iv = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
 
         Prev_img = np.reshape(self.Camera_array[0],(HEIGHT_PIXELS,WIDTH_PIXELS)) #first image of the dataset 
 
         ## DEFINE KERNALS USED TO CALCULATE INTENSITY GRADIENTS
-        Kx = 1/8*np.array([ # NORMALIZED SOBEL KERNAL (X-DIRECTION)
-            [-1,0,1],
-            [-2,0,2],
-            [-1,0,1]]) 
+        Ku = 1/8*np.array([ # NORMALIZED SOBEL KERNAL (U-DIRECTION)
+            [-1, 0, 1],
+            [-2, 0, 2],
+            [-1, 0, 1]
+        ]) 
 
-        Ky = 1/8*np.array([ # NORMALIZED SOBEL KERNAL (Y-DIRECTION)
-            [ 1, 2, 1],
+        Kv = 1/8*np.array([ # NORMALIZED SOBEL KERNAL (V-DIRECTION)
+            [-1,-2,-1],
             [ 0, 0, 0],
-            [-1,-2,-1]]) 
+            [ 1, 2, 1]
+        ]) 
 
         ## PRE-INITIALIZE SPACE FOR ESTIMATED VALUES
         self.TTC_est1 = np.zeros_like(self.Time)
@@ -137,36 +140,41 @@ class DataParser:
             ## FIND IMAGE GRADIENTS
             for i in range(1,HEIGHT_PIXELS - 1): 
                 for j in range(1,WIDTH_PIXELS - 1):
-                    Ix[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Kx)/self.w
-                    Iy[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Ky)/self.w
+                    Iu[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Ku)/w
+                    Iv[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Kv)/w
 
 
 
-            It = (Cur_img - Prev_img)/(self.Time[n] - self.Time[n-1]) #Brightness gradient
-            G = xi_grid*Ix + yi_grid*Iy
+            It = (Cur_img - Prev_img)/(self.Time[n] - self.Time[n-1]) # Time gradient
+            G = U_grid*Iu + V_grid*Iv # Radial Gradient
 
             ## SOLVE LEAST SQUARES PROBLEM
             X = np.array([
-                [np.sum(Ix**2),np.sum(Ix*Iy),np.sum(G*Ix)],
-                [np.sum(Ix*Iy),np.sum(Iy**2),np.sum(G*Iy)],
-                [np.sum(G*Ix),np.sum(G*Iy),np.sum(G**2)]
+                [f*np.sum(Iu**2), f*np.sum(Iu*Iv), np.sum(G*Iu)],
+                [f*np.sum(Iu*Iv), f*np.sum(Iv**2), np.sum(G*Iv)],
+                [f*np.sum(G*Iu),  f*np.sum(G*Iv),  np.sum(G**2)]
             ])
 
-            y = -np.array([[np.sum(Ix*It)],[np.sum(Iy*It)],[np.sum(G*It)]])
+            y = np.array([
+                [-np.sum(Iu*It)],
+                [-np.sum(Iv*It)],
+                [-np.sum(G*It)]
+            ])
 
             ## SOLVE b VIA PSEUDO-INVERSE
             b = np.linalg.pinv(X)@y
+            b = b.flatten()
 
-            self.OFy_est[n-1] = b[0,0]/self.f
-            self.OFx_est[n-1] = b[1,0]/self.f
-            self.TTC_est2[n-1] = 1/(b[2,0])
+            self.OFy_est[n-1] = b[0]
+            self.OFx_est[n-1] = b[1]
+            self.TTC_est2[n-1] = 1/(b[2])
 
 
 
             # for i in range(1,HEIGHT_PIXELS-1): #Calculate Radial gradient G
             #     for j in range(1,WIDTH_PIXELS-1):
-            #         Ix[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Kx)/self.w 
-            #         Iy[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Ky)/self.w
+            #         Ix[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Kx)/w 
+            #         Iy[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Ky)/w
 
             #CASE I
             # G = (xi_grid * Ix) + (yi_grid * Iy)
@@ -187,8 +195,8 @@ class DataParser:
             # A = ABC[0]
             # B = ABC[1]
             # self.TTC_est2[n-1] = 1/(ABC[2])
-            # self.OFx_est[n-1] = -B/self.f
-            # self.OFy_est[n-1] = -A/self.f
+            # self.OFx_est[n-1] = -B/f
+            # self.OFy_est[n-1] = -A/f
 
             Prev_img = Cur_img
 
@@ -198,9 +206,9 @@ class DataParser:
         
         fig, ax = plt.subplots(3,1, sharex = True)
         ax[0].set_title("TTC Comparison")
-        ax[0].plot(self.Time,self.TTC_est1,'r', label = 'TTC_est1')
+        # ax[0].plot(self.Time,self.TTC_est1,'r', label = 'TTC_est1')
         ax[0].plot(self.Time,self.Tau,'b',label = 'TTC')
-        # ax[0].plot(self.Time,self.TTC_est2*0.04,'g',label = 'TTC_est2')
+        ax[0].plot(self.Time,self.TTC_est2,'g',label = 'TTC_est2')
         ax[0].set_ylabel("TTC (seconds)")
         ax[0].set_ylim(-1,6)
         ax[0].grid()
