@@ -88,6 +88,7 @@ class CrazyflieEnv:
         self.d_ceil = 0.0 
 
         self.MS_pwm = [0,0,0,0] # Controller Motor Speeds (MS1,MS2,MS3,MS4) [PWM]
+        self.MotorThrusts = [0,0,0,0] # Controller Motor Thrusts [M1,M2,M3,M4][g]
         self.FM = [0,0,0,0]     # Controller Force/Moments (F_thrust,Mx,My,Mz) [N,N*mm]
         
         self.NN_flip = 0.0
@@ -249,6 +250,11 @@ class CrazyflieEnv:
                             StateData_msg.FM[1],
                             StateData_msg.FM[2],
                             StateData_msg.FM[3]],3)
+
+        self.MotorThrusts = np.round([StateData_msg.MotorThrusts[0],
+                                      StateData_msg.MotorThrusts[1],
+                                      StateData_msg.MotorThrusts[2],
+                                      StateData_msg.MotorThrusts[3]],3)
 
         self.MS_pwm = np.round([StateData_msg.MS_PWM[0],
                                 StateData_msg.MS_PWM[1],
@@ -765,7 +771,7 @@ class CrazyflieEnv:
                     # Misc Internal State Estimates
                     'Tau','OF_x','OF_y','RREV','d_ceil',       
                     'F_thrust[N]','Mx[Nmm]','My[Nmm]','Mz[Nmm]',
-                    'M1_pwm','M2_pwm','M3_pwm','M4_pwm',
+                    'M1_thrust','M2_thrust','M3_thrust','M4_thrust',
 
                     # Setpoint Values
                     'x_d.x','x_d.y','x_d.z',    
@@ -803,7 +809,7 @@ class CrazyflieEnv:
                     # Misc Internal State Estimates
                     self.Tau,self.OFx,self.OFy,self.RREV,self.d_ceil,   # Tau,OF_x,OF_y,RREV,d_ceil
                     self.FM[0],self.FM[1],self.FM[2],self.FM[3],        # F_thrust[N],Mx[Nmm],My[Nmm],Mz[Nmm]
-                    self.MS_pwm[0],self.MS_pwm[1],self.MS_pwm[2],self.MS_pwm[3],
+                    self.MotorThrusts[0],self.MotorThrusts[1],self.MotorThrusts[2],self.MotorThrusts[3],
 
                     # Setpoint Values
                     self.x_d[0],self.x_d[1],self.x_d[2], # Position Setpoints
