@@ -150,7 +150,10 @@ extern float f_pitch_g;     // Motor thrust - Pitch  [g]
 extern float f_yaw_g;       // Motor thrust - Yaw    [g]
 
 // INDIVIDUAL MOTOR THRUSTS
-extern float thrust_arr[4];
+extern float M1_thrust;
+extern float M2_thrust;
+extern float M3_thrust;
+extern float M4_thrust;
 
 // MOTOR PWM VALUES
 extern uint16_t M1_pwm; 
@@ -230,8 +233,8 @@ static int32_t thrust2PWM(float f)
     // VOLTAGE IS WHAT DRIVES THE MOTORS, THEREFORE ADJUST PWM TO MEET VOLTAGE NEED
 
     // CALCULATE REQUIRED VOLTAGE FOR DESIRED THRUST
-    float a = 1.42428f;
-    float b = 1.24392f;
+    float a = 1.82098f;
+    float b = 0.22138f;
     float voltage_needed = (-b + sqrtf(4*a*f + b*b))/(2*a);
 
     // GET RATIO OF REQUIRED VOLTAGE VS SUPPLY VOLTAGE

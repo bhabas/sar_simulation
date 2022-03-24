@@ -283,7 +283,7 @@ void Controller::publishCtrlData()
 
     // CONTROL ACTIONS
     CtrlData_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
-    CtrlData_msg.MotorThrusts = {thrust_arr[0],thrust_arr[1],thrust_arr[2],thrust_arr[3]};
+    CtrlData_msg.MotorThrusts = {M1_thrust,M2_thrust,M3_thrust,M4_thrust};
     CtrlData_msg.MS_PWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
 
     CtrlData_msg.x_d.x = x_d.x;

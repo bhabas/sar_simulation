@@ -1,5 +1,5 @@
 SURFACE_NAME: "CeilingPlane_Large"
-GROUND_NAME: "GroundPlane_Desert_Physical"
+GROUND_NAME: "GroundPlane_Desert_Visual"
 
 GUI_FLAG: True
 PAUSE_FLAG: False

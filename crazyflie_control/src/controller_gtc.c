@@ -136,7 +136,10 @@ float f_pitch_g = 0.0f;  // Motor thrust - Pitch  [g]
 float f_yaw_g = 0.0f;    // Motor thrust - Yaw    [g]
 
 // INDIVIDUAL MOTOR THRUSTS
-float thrust_arr[4] = {0.0f,0.0f,0.0f,0.0f};  // Motor thrust [g] 
+float M1_thrust = 0.0f;
+float M2_thrust = 0.0f;
+float M3_thrust = 0.0f;
+float M4_thrust = 0.0f;
 
 
 // MOTOR VARIABLES
@@ -147,8 +150,8 @@ uint16_t M4_pwm = 0;
 
 // CONTROL OVERRIDE VALUES
 
-uint16_t PWM_arr_override[4] = {0,0,0,0};               // Motor PWM values
-float thrust_arr_override[4] = {0.0f,0.0f,0.0f,0.0f}; // Motor thrusts [g] 
+uint16_t PWM_override[4] = {0,0,0,0};               // Motor PWM values
+float thrust_override[4] = {0.0f,0.0f,0.0f,0.0f}; // Motor thrusts [g] 
 
 
 
@@ -431,20 +434,20 @@ void GTC_Command(setpoint_t *setpoint)
         case 10: // Custom Thrust Values
 
             customThrust_flag = true;
-            thrust_arr_override[0] = setpoint->cmd_val1;
-            thrust_arr_override[1] = setpoint->cmd_val2;
-            thrust_arr_override[2] = setpoint->cmd_val3;
-            thrust_arr_override[3] = setpoint->cmd_flag;
+            thrust_override[0] = setpoint->cmd_val1;
+            thrust_override[1] = setpoint->cmd_val2;
+            thrust_override[2] = setpoint->cmd_val3;
+            thrust_override[3] = setpoint->cmd_flag;
 
             break;
 
         case 12: // Custom PWM Values
 
             customPWM_flag = true;
-            PWM_arr_override[0] = setpoint->cmd_val1;
-            PWM_arr_override[1] = setpoint->cmd_val2;
-            PWM_arr_override[2] = setpoint->cmd_val3;
-            PWM_arr_override[3] = setpoint->cmd_flag;
+            PWM_override[0] = setpoint->cmd_val1;
+            PWM_override[1] = setpoint->cmd_val2;
+            PWM_override[2] = setpoint->cmd_val3;
+            PWM_override[3] = setpoint->cmd_flag;
 
             break;
 
@@ -644,10 +647,10 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         control->yaw = (int16_t)(f_yaw_g*1e3f);
 
         // ADD RESPECTIVE THRUST COMPONENTS
-        thrust_arr[0] = clamp(f_thrust_g + f_roll_g - f_pitch_g + f_yaw_g, 0.0f, f_MAX);
-        thrust_arr[1] = clamp(f_thrust_g + f_roll_g + f_pitch_g - f_yaw_g, 0.0f, f_MAX);
-        thrust_arr[2] = clamp(f_thrust_g - f_roll_g + f_pitch_g + f_yaw_g, 0.0f, f_MAX);
-        thrust_arr[3] = clamp(f_thrust_g - f_roll_g - f_pitch_g - f_yaw_g, 0.0f, f_MAX);
+        M1_thrust = clamp(f_thrust_g + f_roll_g - f_pitch_g + f_yaw_g, 0.0f, f_MAX);
+        M2_thrust = clamp(f_thrust_g + f_roll_g + f_pitch_g - f_yaw_g, 0.0f, f_MAX);
+        M3_thrust = clamp(f_thrust_g - f_roll_g + f_pitch_g + f_yaw_g, 0.0f, f_MAX);
+        M4_thrust = clamp(f_thrust_g - f_roll_g - f_pitch_g - f_yaw_g, 0.0f, f_MAX);
 
         
 
@@ -657,37 +660,39 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         }
         
         // CUSTOM MOTOR COMMANDS
-        if(customThrust_flag) // If custom thrust components are given then use those
-        {
-            // REPLACE THRUST VALUES WITH CUSTOM VALUES
-            thrust_arr[0] = thrust_arr_override[0];
-            thrust_arr[1] = thrust_arr_override[1];
-            thrust_arr[2] = thrust_arr_override[2];
-            thrust_arr[3] = thrust_arr_override[3];
-
-        }
-        else if(customPWM_flag) // If custom thrust components are given then use those
-        {
-            M1_pwm = PWM_arr_override[0]; 
-            M2_pwm = PWM_arr_override[1];
-            M3_pwm = PWM_arr_override[2];
-            M4_pwm = PWM_arr_override[3];
-        }
-
-        else if(motorstop_flag || tumbled || safeModeEnable) // STOP MOTOR COMMANDS
+        if(motorstop_flag || tumbled || safeModeEnable) // STOP MOTOR COMMANDS
         { 
-            M1_pwm = 0;
-            M2_pwm = 0;
-            M3_pwm = 0;
-            M4_pwm = 0;
+            M1_thrust = 0.0f;
+            M2_thrust = 0.0f;
+            M3_thrust = 0.0f;
+            M4_thrust = 0.0f;
+
         }
-        else
+        else if(customThrust_flag) // REPLACE THRUST VALUES WITH CUSTOM VALUES
+        {
+            
+            M1_thrust = thrust_override[0];
+            M2_thrust = thrust_override[1];
+            M3_thrust = thrust_override[2];
+            M4_thrust = thrust_override[3];
+
+        }
+
+        // UPDATE PWM COMMANDS
+        if(customPWM_flag)
+        {
+            M1_pwm = PWM_override[0]; 
+            M2_pwm = PWM_override[1];
+            M3_pwm = PWM_override[2];
+            M4_pwm = PWM_override[3];
+        }
+        else 
         {
             // CONVERT THRUSTS TO PWM SIGNALS
-            M1_pwm = thrust2PWM(thrust_arr[0]); 
-            M2_pwm = thrust2PWM(thrust_arr[1]);
-            M3_pwm = thrust2PWM(thrust_arr[2]);
-            M4_pwm = thrust2PWM(thrust_arr[3]);
+            M1_pwm = thrust2PWM(M1_thrust); 
+            M2_pwm = thrust2PWM(M2_thrust);
+            M3_pwm = thrust2PWM(M3_thrust);
+            M4_pwm = thrust2PWM(M4_thrust);
         }
   
 
