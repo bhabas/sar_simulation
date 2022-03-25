@@ -50,7 +50,7 @@ if __name__ == '__main__':
         except:
             continue
 
-        env.vel_trial = [V_d*np.cos(phi_rad), 0.0, V_d*np.sin(phi_rad)] # [m/s]
+        env.vel_d = [V_d*np.cos(phi_rad), 0.0, V_d*np.sin(phi_rad)] # [m/s]
         env.policy = [policy[0],policy[1],0]
 
     

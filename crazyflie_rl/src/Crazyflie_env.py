@@ -37,6 +37,11 @@ class CrazyflieEnv:
         self.launch_controller()
         print("[INITIATING] Gazebo simulation started")
 
+        ## INIT GAZEBO TIMEOUT THREAD
+        if gazeboTimeout==True:
+            self.timeoutThread = Thread(target=self.timeoutSub)
+            self.timeoutThread.start()
+
 
         self.username = getpass.getuser()
         self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/crazyflie_logging/local_logs"
@@ -170,7 +175,7 @@ class CrazyflieEnv:
         self.pitch_sum = 0.0
         self.pitch_max = 0.0
 
-        self.vel_trial = [0.0,0.0,0.0] # Desired velocity for trial
+        self.vel_d = [0.0,0.0,0.0] # Desired velocity for trial
      
         ## TRAJECTORY VALUES
         self.posCF_0 = [0,0,0.4]        # Default hover position [m]
@@ -195,14 +200,6 @@ class CrazyflieEnv:
         self.RL_CMD_Publisher = rospy.Publisher('/RL/cmd',RLCmd,queue_size=10)
         self.RL_Convg_Publisher = rospy.Publisher('/RL/convg_data',RLConvg,queue_size=10)
 
-
-        ## INIT GAZEBO TIMEOUT THREAD
-        if gazeboTimeout==True:
-            self.timeoutThread = Thread(target=self.timeoutSub)
-            self.timeoutThread.start()
-
-
-        self.reset_pos()
         print("[COMPLETED] Environment done")
 
 
@@ -415,7 +412,7 @@ class CrazyflieEnv:
         RL_msg.reward = self.reward
         RL_msg.reward_avg = self.reward_avg
 
-        RL_msg.vel_d = self.vel_trial
+        RL_msg.vel_d = self.vel_d
         RL_msg.impact_flag = self.impact_flag
         RL_msg.body_contact = self.BodyContact_flag
         RL_msg.leg_contacts = self.pad_connections
@@ -435,10 +432,74 @@ class CrazyflieEnv:
         self.RL_Convg_Publisher.publish(RL_convg_msg) ## Publish RLData message
 
 
+    def modelInitials(self): # RETURNS INITIALS FOR MODEL
+        str = self.modelName
+        charA = str[self.modelName.find("_")+1] # [W]ide
+        charB = str[self.modelName.find("-")+1] # [L]ong
 
-    # ============================
-    ##       Sim Operation
-    # ============================
+        return charA+charB  # [WL]
+
+    def userInput(self,input_string,dataType=float):
+
+        while True:
+            try:
+                vals = [dataType(i) for i in input(input_string).split(',')]
+            except:
+                continue
+        
+            if len(vals) == 1:
+                return vals[0]
+            else:
+                return vals
+
+    def getTime(self):
+        
+        return self.t
+
+    def impactEstimate(self,posCF_0,vel_d):
+
+        t_impact = (self.h_ceiling - posCF_0[2])/vel_d[2]
+
+        x_impact = posCF_0[0] + vel_d[0]*t_impact
+        y_impact = posCF_0[1] + vel_d[1]*t_impact
+        z_impact = posCF_0[2] + vel_d[2]*t_impact
+
+        return [x_impact,y_impact,z_impact]
+
+
+    def step(self,action,cmd_vals=[0,0,0],cmd_flag=1):
+
+        cmd_msg = RLCmd()
+
+        cmd_dict = {'home':0,
+                    'pos':1,
+                    'vel':2,
+                    'acc':3,
+                    'tumble':4,
+                    'stop':5,
+                    'params':6,
+                    'moment':7,
+                    'policy':8,
+                    'traj':9,
+                    'thrusts':10,
+                    'sticky':11,
+                    'M_PWM':12}
+        
+
+        cmd_msg.cmd_type = cmd_dict[action]
+        cmd_msg.cmd_vals.x = cmd_vals[0]
+        cmd_msg.cmd_vals.y = cmd_vals[1]
+        cmd_msg.cmd_vals.z = cmd_vals[2]
+        cmd_msg.cmd_flag = cmd_flag
+        
+        self.RL_CMD_Publisher.publish(cmd_msg)
+        
+    def reset_reward_terms(self):
+
+        ## RESET REWARD CALC VALUES
+        self.d_ceil_min = 50.0
+        self.pitch_sum = 0.0
+        self.pitch_max = 0.0
 
     def modelInitials(self): # RETURNS INITIALS FOR MODEL
         str = self.modelName
@@ -489,7 +550,9 @@ class CrazyflieEnv:
                     'moment':7,
                     'policy':8,
                     'traj':9,
-                    'sticky':11}
+                    'thrusts':10,
+                    'sticky':11,
+                    'M_PWM':12}
         
 
         cmd_msg.cmd_type = cmd_dict[action]
@@ -498,9 +561,8 @@ class CrazyflieEnv:
         cmd_msg.cmd_vals.z = cmd_vals[2]
         cmd_msg.cmd_flag = cmd_flag
         
-        self.RL_CMD_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
-        time.sleep(0.05)
-
+        self.RL_CMD_Publisher.publish(cmd_msg)
+        
     def reset_reward_terms(self):
 
         ## RESET REWARD CALC VALUES
@@ -744,6 +806,7 @@ class CrazyflieEnv:
                     'Tau','OF_x','OF_y','RREV','d_ceil',       
                     'F_thrust[N]','Mx[Nmm]','My[Nmm]','Mz[Nmm]',
                     'M1_thrust','M2_thrust','M3_thrust','M4_thrust',
+                    'M1_pwm','M2_pwm','M3_pwm','M4_pwm',
 
                     # Setpoint Values
                     'x_d.x','x_d.y','x_d.z',    
@@ -782,6 +845,7 @@ class CrazyflieEnv:
                     self.Tau,self.OFx,self.OFy,self.RREV,self.d_ceil,   # Tau,OF_x,OF_y,RREV,d_ceil
                     self.FM[0],self.FM[1],self.FM[2],self.FM[3],        # F_thrust[N],Mx[Nmm],My[Nmm],Mz[Nmm]
                     self.MotorThrusts[0],self.MotorThrusts[1],self.MotorThrusts[2],self.MotorThrusts[3],
+                    self.MS_pwm[0],self.MS_pwm[1],self.MS_pwm[2],self.MS_pwm[3],
 
                     # Setpoint Values
                     self.x_d[0],self.x_d[1],self.x_d[2], # Position Setpoints
@@ -807,7 +871,7 @@ class CrazyflieEnv:
 
                     # Internal State Estimates (EKF)
                     "","","",       # x,y,z
-                    np.round(self.vel_trial[0],2),np.round(self.vel_trial[1],2),np.round(self.vel_trial[2],2), # vx_d,vy_d,vz_d
+                    np.round(self.vel_d[0],2),np.round(self.vel_d[1],2),np.round(self.vel_d[2],2), # vx_d,vy_d,vz_d
                     "","","","",    # qx,qy,qz,qw
                     "","","",       # wx,wy,wz
                     "","","",       # eul_x,eul_y,eul_z
@@ -819,7 +883,9 @@ class CrazyflieEnv:
                     # Misc Internal State Estimates
                     "","","","","",    # Tau,OFx,OFy,RREV,d_ceil
                     "","","","",    # F_thrust,Mx,My,Mz 
+                    "","","","",    # M_thrust [g]
                     "","","","",    # M_pwm
+
 
                     # Setpoint Values
                     "","","",
@@ -856,7 +922,8 @@ class CrazyflieEnv:
                     # Misc Internal State Estimates
                     self.Tau_tr,self.OFx_tr,self.OFy_tr,self.RREV_tr,self.d_ceil_tr, # Tau,OFx,OFy,RREV,d_ceil
                     self.FM_tr[0],self.FM_tr[1],self.FM_tr[2],self.FM_tr[3], # F_thrust,Mx,My,Mz
-                    "","","","",
+                    "","","","",    # M_thrust [g]
+                    "","","","",    # M_pwm
 
                     # Setpoint Values
                     "","","",
@@ -892,7 +959,8 @@ class CrazyflieEnv:
                     # Misc Internal State Estimates
                     self.pad_connections,self.Pad1_Contact,self.Pad2_Contact,self.Pad3_Contact,self.Pad4_Contact, 
                     self.impact_magnitude,self.Force_impact[0],self.Force_impact[1],self.Force_impact[2], # F_thrust,Mx,My,Mz (Impact)
-                    "","","","", # M_pwm
+                    "","","","",    # M_thrust [g]
+                    "","","","",    # M_pwm
                     
                     # Setpoint Values
                     "","","",

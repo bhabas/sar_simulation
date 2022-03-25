@@ -53,7 +53,7 @@ if __name__ == '__main__':
     for ii in range(num_flights):
         V_d = vels[ii]
         phi_rad = np.radians(angles[ii])
-        env.vel_trial = [V_d*np.cos(phi_rad), 0.0, V_d*np.sin(phi_rad)] # [m/s]
+        env.vel_d = [V_d*np.cos(phi_rad), 0.0, V_d*np.sin(phi_rad)] # [m/s]
         env.k_run = ii
 
         try:
