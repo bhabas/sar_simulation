@@ -28,6 +28,8 @@ is easy to use.
 #include "crazyflie_msgs/RLCmd.h"
 #include "crazyflie_msgs/PadConnect.h"
 
+#include "crazyflie_msgs/activateSticky.h"
+
 class CF_DataConverter
 {
     public:
@@ -80,6 +82,7 @@ class CF_DataConverter
         void Publish_MiscData();
 
         void MainLoop();
+        void activateStickyFeet();
         void LoadParams();
         void consoleOuput();
         void checkSlowdown();
@@ -121,6 +124,8 @@ class CF_DataConverter
         // ===================
 
         std::string MODEL_NAME;
+
+        // DEFAULT INERTIA VALUES FOR BASE CRAZYFLIE
         float CF_MASS = 34.4e3; // [kg]
         float Ixx = 15.83e-6f;  // [kg*m^2]
         float Iyy = 17.00e-6f;  // [kg*m^2]

@@ -290,10 +290,20 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
         {
             Sticky_Flag = true;
         }
+
+        CF_DataConverter::activateStickyFeet();
+
+    }
+
+    if(msg->cmd_type == 101)
+    {
+
     }
 
 
 }
+
+
 
 void CF_DataConverter::SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStamped::ConstPtr &msg)
 {
@@ -426,6 +436,21 @@ void CF_DataConverter::adjustSimSpeed(float speed_mult)
     srv.request.ode_config = ode_config;
 
     GZ_SimSpeed_Client.call(srv);
+}
+
+void CF_DataConverter::activateStickyFeet()
+{
+    if(MODEL_NAME != "crazyflie_BaseModel")
+    {
+        crazyflie_msgs::activateSticky srv;
+        srv.request.stickyFlag = Sticky_Flag;
+
+        ros::service::call("/activate_Sticky_Pad_1", srv);
+        ros::service::call("/activate_Sticky_Pad_2", srv);
+        ros::service::call("/activate_Sticky_Pad_3", srv);
+        ros::service::call("/activate_Sticky_Pad_4", srv);
+    }
+    
 }
 
 // CONVERT QUATERNION TO EULER ANGLES (YZX NOTATION)
