@@ -15,6 +15,13 @@ from Dashboard_Node import DashboardNode
 from crazyflie_msgs.msg import CF_StateData
 from nav_msgs.msg import Odometry
 
+## CHECK IF SIM OR EXPERIMENT IS RUNNING
+DATA_TYPE = rospy.get_param("DATA_TYPE")
+if DATA_TYPE == "EXPERIMENT":
+    from crazyflie_msgs_exp.msg import Vicon_Filtered,CF_StateData,GenericLogData
+    from geometry_msgs.msg import TransformStamped
+    
+
 
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_projects'))
@@ -65,10 +72,12 @@ class Dashboard(QMainWindow,DashboardNode):
         ## ON TIMER TIMEOUTS EXECUTE FUNCTIONS
         self.timer = pg.QtCore.QTimer(self)
         self.timer.timeout.connect(self.update_LCD)
-        self.timer.timeout.connect(self.check_Vicon_Connection)
-        self.timer.timeout.connect(self.check_UKF_Connection)
         self.timer.timeout.connect(self.check_CFDC_Connection)
-        self.timer.timeout.connect(self.check_CS_Connection)
+
+        if DATA_TYPE == "EXPERIMENT":
+            self.timer.timeout.connect(self.check_Vicon_Connection)
+            self.timer.timeout.connect(self.check_UKF_Connection)
+            self.timer.timeout.connect(self.check_CS_Connection)
 
 
         self.timer.start(500) # number of milliseconds (every 1000) for next update
@@ -107,34 +116,38 @@ class Dashboard(QMainWindow,DashboardNode):
         self.Cmd_Z_LineEdit.clear()
         self.Cmd_Flag_LineEdit.clear()
 
+        
+
 
     def check_Vicon_Connection(self): ## CHECK IF RECEIVING VALID VICON DATA
         try:
-            # rospy.wait_for_message('/vicon/cf1/cf1',TransformStamped,timeout=0.1)
+            rospy.wait_for_message('/vicon/cf1/cf1',TransformStamped,timeout=0.1)
             self.Vicon_LED.setPixmap(QPixmap(ICON_GREEN_LED))
         except:
             self.Vicon_LED.setPixmap(QPixmap(ICON_RED_LED))
 
     def check_UKF_Connection(self): ## CHECK IF RECEIVING VALID VICON DATA
         try:
-            # rospy.wait_for_message("/ENV/viconState_UKF",Odometry,timeout=0.1)
+            rospy.wait_for_message("/UKF/viconState_Filtered",Vicon_Filtered,timeout=0.1)
             self.Vicon_UKF_LED.setPixmap(QPixmap(ICON_GREEN_LED))
         except:
             self.Vicon_UKF_LED.setPixmap(QPixmap(ICON_RED_LED))
+    
+    def check_CS_Connection(self): ## CHECK IF RECEIVING VALID VICON DATA
+        try:
+            rospy.wait_for_message('/cf1/log1',GenericLogData,timeout=0.1)
+            self.Crazyswarm_LED.setPixmap(QPixmap(ICON_GREEN_LED))
+        except:
+            self.Crazyswarm_LED.setPixmap(QPixmap(ICON_RED_LED))
 
     def check_CFDC_Connection(self): ## CHECK IF RECEIVING VALID VICON DATA
         try:
-            # rospy.wait_for_message('/CF_DC/StateData',CF_StateData,timeout=0.1)
+            rospy.wait_for_message('/CF_DC/StateData',CF_StateData,timeout=0.1)
             self.CF_DC_LED.setPixmap(QPixmap(ICON_GREEN_LED))
         except:
             self.CF_DC_LED.setPixmap(QPixmap(ICON_RED_LED))
 
-    def check_CS_Connection(self): ## CHECK IF RECEIVING VALID VICON DATA
-        try:
-            # rospy.wait_for_message('/cf1/log1',GenericLogData,timeout=0.1)
-            self.Crazyswarm_LED.setPixmap(QPixmap(ICON_GREEN_LED))
-        except:
-            self.Crazyswarm_LED.setPixmap(QPixmap(ICON_RED_LED))
+    
 
 
     def pause_plots(self):
