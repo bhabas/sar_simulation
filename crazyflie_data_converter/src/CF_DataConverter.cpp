@@ -78,7 +78,7 @@ void CF_DataConverter::Publish_FlipData()
 void CF_DataConverter::Publish_MiscData()
 {
     MiscData_msg.header.stamp = ros::Time::now();
-    MiscData_msg.battery_voltage = 0.0;
+    MiscData_msg.battery_voltage = V_battery;
     MiscData_Pub.publish(MiscData_msg);
 }
 

@@ -15,6 +15,7 @@ import numpy as np
 
 
 colors = {
+    "gray": (25,25,25),
     "blue": (31,119,180),
     "orange": (255,127,14),
     "red": (214,39,40),
@@ -570,12 +571,16 @@ class PWM_Widget(QWidget):
 
         self.PW = pg.PlotWidget(name='Plot1',labels =  {'left':'Motor Command [PWM]', 'bottom':'Time [s]'},axisItems={'bottom': ax}) # Plot window 1
         self.layout.addWidget(self.PW)
+
+        ay = self.PW.getAxis('left')
+        ticks = [0,20e3,40e3,60e3]
+        ay.setTicks([[(v, str(v)) for v in ticks ]])
         
 
         ## UPDATE PLOT 1
         self.PW.setBackground('w')
         self.PW.setXRange(buffer_length*0.0,buffer_length)
-        self.PW.setYRange(0,65_000)
+        self.PW.setYRange(0,70_000)
         self.PW.showGrid(x=True, y=True, alpha=0.2)
 
 
@@ -591,6 +596,10 @@ class PWM_Widget(QWidget):
 
         self.M4_arr = np.zeros(buffer_length)
         self.curve_M4 = self.PW.plot(self.M4_arr, pen=pg.mkPen(color=colors["orange"], width=width))
+
+        self.PWM_Max = np.ones(buffer_length)*65535
+        self.curve_PWM_Max = self.PW.plot(self.PWM_Max, pen=pg.mkPen(color=colors["gray"], width=width, style=QtCore.Qt.DashLine))
+        self.curve_PWM_Max.setAlpha(0.4,False)
 
         ## INIT UPDATE TIMER
         self.timer = pg.QtCore.QTimer(self)
@@ -618,7 +627,7 @@ class PWM_Widget(QWidget):
 
     def reset_axes(self):
         # self.p1.enableAutoRange(enable=True)
-        self.PW.setYRange(0,65_000)
+        self.PW.setYRange(0,70_000)
         self.PW.setXRange(buffer_length*0.0,buffer_length)
 
     def pause(self,pause_flag):
@@ -632,6 +641,102 @@ class PWM_Widget(QWidget):
         self.M2_arr = np.zeros(buffer_length)
         self.M3_arr = np.zeros(buffer_length)
         self.M4_arr = np.zeros(buffer_length)
+
+class MotorThrust_Widget(QWidget):
+    def __init__(self,parent=None):
+        super().__init__()
+
+        ## INIT LAYOUT
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+        ## DEFINE HOW LONG TO PRESERVE DATA
+        self.buffer_time = 20_000                               # Amount of data to save [ms]
+        update_interval = 1_000//refresh_rate                        # [ms]
+        self.buffer_length = self.buffer_time//update_interval   # Number of datapoints in plot
+
+        ## UPDATE X-AXIS TICKS
+        num_ticks = 11
+        buff_ticks = np.linspace(0,self.buffer_length,num_ticks)         # Tick locations
+        time_ticks = np.linspace(-self.buffer_time//1000,0,num_ticks)    # Tick values
+        tick_labels = dict(zip(buff_ticks,['{:.1f}'.format(tick) for tick in time_ticks]))
+
+        
+        ## CREATE AXIS ITEM TO CREATE CUSTOM TICK LABELS
+        ax = pg.AxisItem(orientation='bottom')
+        ax.setTicks([tick_labels.items()])
+
+        
+
+
+
+        self.PW = pg.PlotWidget(name='Plot1',labels =  {'left':'Motor Thrust [g]', 'bottom':'Time [s]'},axisItems={'bottom': ax}) # Plot window 1
+        self.layout.addWidget(self.PW)
+
+        ay = self.PW.getAxis('left')
+        ticks = np.arange(0,20,2)
+        ay.setTicks([[(v, str(v)) for v in ticks ]])
+        
+
+        ## UPDATE PLOT 1
+        self.PW.setBackground('w')
+        self.PW.setXRange(buffer_length*0.0,buffer_length)
+        self.PW.setYRange(0,20)
+        self.PW.showGrid(x=True, y=True, alpha=0.2)
+
+
+        # ## INIT DATA CURVES
+        self.MotorThrust1_arr = np.zeros(buffer_length)
+        self.curve_M1 = self.PW.plot(self.MotorThrust1_arr, pen=pg.mkPen(color=colors["red"], width=width))
+
+        self.MotorThrust2_arr = np.zeros(buffer_length)
+        self.curve_M2 = self.PW.plot(self.MotorThrust2_arr, pen=pg.mkPen(color=colors["green"], width=width))
+
+        self.MotorThrust3_arr = np.zeros(buffer_length)
+        self.curve_M3 = self.PW.plot(self.MotorThrust3_arr, pen=pg.mkPen(color=colors["blue"], width=width))
+
+        self.MotorThrust4_arr = np.zeros(buffer_length)
+        self.curve_M4 = self.PW.plot(self.MotorThrust4_arr, pen=pg.mkPen(color=colors["orange"], width=width))
+
+        ## INIT UPDATE TIMER
+        self.timer = pg.QtCore.QTimer(self)
+        self.timer.timeout.connect(self.update)
+        self.timer.start(update_interval) # number of milliseconds for next update
+
+    def update(self):
+                        
+        self.MotorThrust1_arr = np.roll(self.MotorThrust1_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
+        self.MotorThrust1_arr[-1] = DashNode.MotorThrusts[0]
+        self.curve_M1.setData(self.MotorThrust1_arr)
+
+        self.MotorThrust2_arr = np.roll(self.MotorThrust2_arr,-1)
+        self.MotorThrust2_arr[-1] = DashNode.MotorThrusts[1]
+        self.curve_M2.setData(self.MotorThrust2_arr)
+
+        self.MotorThrust3_arr = np.roll(self.MotorThrust3_arr,-1)
+        self.MotorThrust3_arr[-1] = DashNode.MotorThrusts[2]
+        self.curve_M3.setData(self.MotorThrust3_arr)
+
+        self.MotorThrust4_arr = np.roll(self.MotorThrust4_arr,-1)
+        self.MotorThrust4_arr[-1] = DashNode.MotorThrusts[3]
+        self.curve_M4.setData(self.MotorThrust4_arr)
+
+
+    def reset_axes(self):
+        self.PW.setYRange(0,20)
+        self.PW.setXRange(buffer_length*0.0,buffer_length)
+
+    def pause(self,pause_flag):
+        if pause_flag == True:
+            self.timer.stop()
+        else: 
+            self.timer.start()
+    
+    def clear_data(self):
+        self.MotorThrust1_arr = np.zeros(buffer_length)
+        self.MotorThrust2_arr = np.zeros(buffer_length)
+        self.MotorThrust3_arr = np.zeros(buffer_length)
+        self.MotorThrust4_arr = np.zeros(buffer_length)
 
 class RL_Widget(QWidget):
     def __init__(self,parent=None):
@@ -781,7 +886,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     ## INITIALIZE DASHBOARD WINDOW
-    myApp = Tau_Widget()
+    myApp = MotorThrust_Widget()
     myApp.show()
 
     sys.exit(app.exec_())

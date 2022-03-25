@@ -666,21 +666,6 @@ class CrazyflieEnv:
 
     def step(self,action,cmd_vals=[0,0,0],cmd_flag=1):
 
-        # if action == "sticky":
-
-        #     rospy.wait_for_service("/activate_Sticky_Pad_1")
-        #     if cmd_flag == 1: 
-        #         for ii in range(4):
-        #             sticky_srv = rospy.ServiceProxy(f"/activate_Sticky_Pad_{ii+1}", activateSticky)
-        #             sticky_srv(True)
-                    
-        #     elif cmd_flag == 0:
-        #         for ii in range(4):
-        #             sticky_srv = rospy.ServiceProxy(f"/activate_Sticky_Pad_{ii+1}", activateSticky)
-        #             sticky_srv(False)
-                    
-            # rospy.wait_for_message("/ctrl_data",CtrlData,timeout=0.5) # Ensure controller has time to process command
-
         cmd_msg = RLCmd()
 
         cmd_dict = {'home':0,
