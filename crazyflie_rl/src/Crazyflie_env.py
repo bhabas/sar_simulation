@@ -678,7 +678,9 @@ class CrazyflieEnv:
                     'moment':7,
                     'policy':8,
                     'traj':9,
-                    'sticky':11}
+                    'thrusts':10,
+                    'sticky':11,
+                    'M_PWM':12}
         
 
         cmd_msg.cmd_type = cmd_dict[action]
@@ -688,7 +690,6 @@ class CrazyflieEnv:
         cmd_msg.cmd_flag = cmd_flag
         
         self.RL_CMD_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
-        time.sleep(0.05)
         
     def reset_reward_terms(self):
 

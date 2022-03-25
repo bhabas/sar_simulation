@@ -60,7 +60,14 @@ class Dashboard(QMainWindow,DashboardNode):
         self.Vicon_LED.setPixmap(QPixmap(ICON_RED_LED))
         self.EmergencyStop.clicked.connect(self.Emergency_Stop)
         self.HomeButton.clicked.connect(self.HomeCmd)
+
+        ## COMMAND BUTTON ACTIVATION
         self.Cmd_Button.clicked.connect(self.SendCmd)
+        self.Cmd_Type_LineEdit.returnPressed.connect(self.SendCmd)
+        self.Cmd_X_LineEdit.returnPressed.connect(self.SendCmd)
+        self.Cmd_Y_LineEdit.returnPressed.connect(self.SendCmd)
+        self.Cmd_Z_LineEdit.returnPressed.connect(self.SendCmd)
+        self.Cmd_Flag_LineEdit.returnPressed.connect(self.SendCmd)
 
 
 
@@ -103,24 +110,34 @@ class Dashboard(QMainWindow,DashboardNode):
         self.RL_CMD_Publisher.publish(self.cmd_msg)
 
     def SendCmd(self):
-        print("Command Sent")
+
+        ## CREATE LIST OF CMD LINE EDIT OBJECTS
+        cmd_list = [
+            self.Cmd_Type_LineEdit,
+            self.Cmd_X_LineEdit,
+            self.Cmd_Y_LineEdit,
+            self.Cmd_Z_LineEdit,
+            self.Cmd_Flag_LineEdit]
+
+        ## SET ALL BLANK VALUES TO ZERO
+        for cmd in cmd_list:
+            if cmd.text() == '':
+                cmd.setText('0')
 
         ## INSERT VALS INTO COMMAND MSG
-        self.cmd_msg.cmd_type = int(self.Cmd_Type_LineEdit.text())
-        self.cmd_msg.cmd_vals.x = float(self.Cmd_X_LineEdit.text())
-        self.cmd_msg.cmd_vals.y = float(self.Cmd_Y_LineEdit.text())
-        self.cmd_msg.cmd_vals.z = float(self.Cmd_Z_LineEdit.text())
-        self.cmd_msg.cmd_flag = float(self.Cmd_Flag_LineEdit.text())
+        self.cmd_msg.cmd_type = int(cmd_list[0].text())
+        self.cmd_msg.cmd_vals.x = float(cmd_list[1].text())
+        self.cmd_msg.cmd_vals.y = float(cmd_list[2].text())
+        self.cmd_msg.cmd_vals.z = float(cmd_list[3].text())
+        self.cmd_msg.cmd_flag = float(cmd_list[4].text())
 
         ## PUBLISH COMMAND
         self.RL_CMD_Publisher.publish(self.cmd_msg)
 
-        ## CLEAR LINE EDITS
-        self.Cmd_Type_LineEdit.clear()
-        self.Cmd_X_LineEdit.clear()
-        self.Cmd_Y_LineEdit.clear()
-        self.Cmd_Z_LineEdit.clear()
-        self.Cmd_Flag_LineEdit.clear()
+        ## CLEAR LINE EDIT BOXES
+        for cmd_val in cmd_list:
+            cmd_val.clear()
+        
 
         
 
