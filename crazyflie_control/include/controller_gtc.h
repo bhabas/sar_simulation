@@ -233,9 +233,26 @@ static int32_t thrust2PWM(float f)
     // VOLTAGE IS WHAT DRIVES THE MOTORS, THEREFORE ADJUST PWM TO MEET VOLTAGE NEED
 
     // CALCULATE REQUIRED VOLTAGE FOR DESIRED THRUST
-    float a = 1.82098f;
-    float b = 0.22138f;
-    float voltage_needed = (-b + sqrtf(4*a*f + b*b))/(2*a);
+
+    float a,b,c;
+
+    if(f<=5)
+    {
+        a = 1.01039f;
+        b = 1.90040f;
+        c = 0.0f;
+    }
+    else
+    {
+        a = 2.85606f;
+        b = -4.55862f;
+        c = 5.42844f;
+    }
+    
+
+
+    float voltage_needed = -b/(2*a) + sqrtf(4*a*(f-c) + b*b)/(2*a);
+
 
     // GET RATIO OF REQUIRED VOLTAGE VS SUPPLY VOLTAGE
     float supply_voltage = pmGetBatteryVoltage();
@@ -243,10 +260,15 @@ static int32_t thrust2PWM(float f)
     percentage = percentage > 1.0f ? 1.0f : percentage; // If % > 100%, then cap at 100% else keep same
 
     // CONVERT RATIO TO PWM OF PWM_MAX
-    float f_PWM = percentage * (float)UINT16_MAX; // Remap percentage back to PWM range
+    float PWM = percentage * (float)UINT16_MAX; // Remap percentage back to PWM range
 
+    // IF MINIMAL THRUST ENSURE PWM = 0
+    if(f <= 0.25)
+    {
+        PWM = 0.0f;
+    }
 
-    return f_PWM;
+    return PWM;
 
 }      
 

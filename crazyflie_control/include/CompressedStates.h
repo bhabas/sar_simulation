@@ -34,7 +34,10 @@ struct {
 
     uint32_t MS_PWM12; 
     uint32_t MS_PWM34;
-    
+
+    uint32_t M_thrust12;
+    uint32_t M_thrust34;
+
     // Compressed Optical Flow Values
     int16_t Tau;   // [milli-rad/s]
     uint32_t OF_xy; // [milli-rad/s]

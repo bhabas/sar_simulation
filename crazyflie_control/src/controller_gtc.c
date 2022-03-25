@@ -859,6 +859,11 @@ void compressStates(){
     StatesZ_GTC.FMz = compressXY(F_thrust,M.z*1000.0f);
     StatesZ_GTC.Mxy = compressXY(M.x*1000.0f,M.y*1000.0f);
 
+    // COMPRESS MOTOR THRUST VALUES
+    StatesZ_GTC.M_thrust12 = compressXY(M1_thrust,M2_thrust);
+    StatesZ_GTC.M_thrust34 = compressXY(M3_thrust,M4_thrust);
+
+    
     // COMPRESS PWM VALUES
     StatesZ_GTC.MS_PWM12 = compressXY(M1_pwm*0.5e-3f,M2_pwm*0.5e-3f);
     StatesZ_GTC.MS_PWM34 = compressXY(M3_pwm*0.5e-3f,M4_pwm*0.5e-3f);
