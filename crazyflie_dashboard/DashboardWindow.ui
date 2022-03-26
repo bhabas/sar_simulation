@@ -657,7 +657,7 @@ font: 14pt &quot;Ubuntu&quot;;
          <enum>QTabWidget::Rounded</enum>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>2</number>
         </property>
         <property name="tabsClosable">
          <bool>false</bool>
@@ -1843,7 +1843,7 @@ font: 14pt &quot;Ubuntu&quot;;
                 </widget>
                </item>
                <item>
-                <widget class="MotorThrust_Widget" name="PWM_Graph_2" native="true">
+                <widget class="MotorThrust_Widget" name="Thrust_Graph" native="true">
                  <property name="styleSheet">
                   <string notr="true">background-color: rgb(136, 138, 133);</string>
                  </property>

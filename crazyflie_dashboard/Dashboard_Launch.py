@@ -54,6 +54,7 @@ class Dashboard(QMainWindow,DashboardNode):
             self.Tau_Graph,
             self.OF_Graph,
             self.Omega_Graph,
+            self.Thrust_Graph
             ]
 
         
