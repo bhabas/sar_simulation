@@ -505,9 +505,9 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                                         const uint32_t tick)
 {
 
-    // if (RATE_DO_EXECUTE(20, tick)) {
+    // if (RATE_DO_EXECUTE(5, tick)) {
     //     consolePrintf("Mass: %.6f\n",m);
-    //     consolePrintf("Ixx: %.3E \t Iyy: %.3E \t Izz: %.3E\n",Ixx,Iyy,Izz);
+    //     consolePrintf("Ixx: %.3f \t Iyy: %.3f \t Izz: %.3f\n",Ixx*1e6f,Iyy*1e6f,Izz*1e6f);
     // }
 
     if (RATE_DO_EXECUTE(RATE_500_HZ, tick)) {
@@ -659,8 +659,8 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
             tumbled = true;
         }
         
-        // CUSTOM MOTOR COMMANDS
-        if(motorstop_flag || tumbled || safeModeEnable) // STOP MOTOR COMMANDS
+        // UPDATE THRUST COMMANDS
+        if(motorstop_flag || tumbled) // STOP MOTOR COMMANDS
         { 
             M1_thrust = 0.0f;
             M2_thrust = 0.0f;
@@ -701,11 +701,22 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         compressFlipStates();
     }
 
-    // SEND PWM VALUES TO MOTORS
-    motorsSetRatio(MOTOR_M1, M4_pwm);
-    motorsSetRatio(MOTOR_M2, M3_pwm);
-    motorsSetRatio(MOTOR_M3, M2_pwm);
-    motorsSetRatio(MOTOR_M4, M1_pwm);
+    if(safeModeEnable)
+    {
+        motorsSetRatio(MOTOR_M1, 0);
+        motorsSetRatio(MOTOR_M2, 0);
+        motorsSetRatio(MOTOR_M3, 0);
+        motorsSetRatio(MOTOR_M4, 0);
+    }
+    else{
+        // SEND PWM VALUES TO MOTORS
+        motorsSetRatio(MOTOR_M1, M4_pwm);
+        motorsSetRatio(MOTOR_M2, M3_pwm);
+        motorsSetRatio(MOTOR_M3, M2_pwm);
+        motorsSetRatio(MOTOR_M4, M1_pwm);
+
+    }
+    
 
     
 
