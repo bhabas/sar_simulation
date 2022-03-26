@@ -36,8 +36,8 @@ class DataFile:
         # self.trial_df.drop(0,inplace=True)
 
         # Remove rows past final complete rollout
-        final_valid_index = self.trial_df[self.trial_df['Error']=='Impact Data'].index.values[-1]
-        self.trial_df = self.trial_df.iloc[:final_valid_index+1]
+        # final_valid_index = self.trial_df[self.trial_df['Error']=='Impact Data'].index.values[-1]
+        # self.trial_df = self.trial_df.iloc[:final_valid_index+1]
 
         # Round values to prevent floating point precision issues
         self.trial_df = self.trial_df.round(3) 

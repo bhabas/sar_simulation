@@ -179,7 +179,7 @@ class CrazyflieEnv:
      
         ## TRAJECTORY VALUES
         self.posCF_0 = [0,0,0.4]        # Default hover position [m]
-        self.accCF_max = [2.0,2.0,4.0]  # Max acceleration values for trajectory generation [m/s^2]
+        self.accCF_max = [2.0,2.0,0.5]  # Max acceleration values for trajectory generation [m/s^2]
         
       
 
