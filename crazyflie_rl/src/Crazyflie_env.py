@@ -501,74 +501,7 @@ class CrazyflieEnv:
         self.pitch_sum = 0.0
         self.pitch_max = 0.0
 
-    def modelInitials(self): # RETURNS INITIALS FOR MODEL
-        str = self.modelName
-        charA = str[self.modelName.find("_")+1] # [W]ide
-        charB = str[self.modelName.find("-")+1] # [L]ong
-
-        return charA+charB  # [WL]
-
-    def userInput(self,input_string,dataType=float):
-
-        while True:
-            try:
-                vals = [dataType(i) for i in input(input_string).split(',')]
-            except:
-                continue
-        
-            if len(vals) == 1:
-                return vals[0]
-            else:
-                return vals
-
-    def getTime(self):
-        
-        return self.t
-
-    def impactEstimate(self,posCF_0,vel_trial):
-
-        t_impact = (self.h_ceiling - posCF_0[2])/vel_trial[2]
-
-        x_impact = posCF_0[0] + vel_trial[0]*t_impact
-        y_impact = posCF_0[1] + vel_trial[1]*t_impact
-        z_impact = posCF_0[2] + vel_trial[2]*t_impact
-
-        return [x_impact,y_impact,z_impact]
-
-
-    def step(self,action,cmd_vals=[0,0,0],cmd_flag=1):
-
-        cmd_msg = RLCmd()
-
-        cmd_dict = {'home':0,
-                    'pos':1,
-                    'vel':2,
-                    'acc':3,
-                    'tumble':4,
-                    'stop':5,
-                    'params':6,
-                    'moment':7,
-                    'policy':8,
-                    'traj':9,
-                    'thrusts':10,
-                    'sticky':11,
-                    'M_PWM':12}
-        
-
-        cmd_msg.cmd_type = cmd_dict[action]
-        cmd_msg.cmd_vals.x = cmd_vals[0]
-        cmd_msg.cmd_vals.y = cmd_vals[1]
-        cmd_msg.cmd_vals.z = cmd_vals[2]
-        cmd_msg.cmd_flag = cmd_flag
-        
-        self.RL_CMD_Publisher.publish(cmd_msg)
-        
-    def reset_reward_terms(self):
-
-        ## RESET REWARD CALC VALUES
-        self.d_ceil_min = 50.0
-        self.pitch_sum = 0.0
-        self.pitch_max = 0.0
+    
 
     # ============================
     ##       GAZEBO OPERATION
