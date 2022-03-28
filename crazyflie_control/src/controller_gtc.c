@@ -56,7 +56,7 @@ float g = 9.81f;            // [m/s^2]
 static struct mat33 J; // Rotational Inertia Matrix [kg*m^2]
 
 
-static float dp = 0.035; // COM to Prop along x-axis [m]
+static float dp = 0.0325; // COM to Prop along x-axis [m]
                             // [dp = d*sin(45 deg)]
 
 static float const kf = 2.2e-8f;    // Thrust Coeff [N/(rad/s)^2]
