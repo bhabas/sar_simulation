@@ -24,8 +24,7 @@ namespace gazebo {
         protected:
             void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
             void OnUpdate();
-            void updateThrust();
-            void updateTorque();
+            void UpdateForcesAndMoments();
             void CtrlData_Callback(const crazyflie_msgs::CtrlData::ConstPtr &msg);
 
 
@@ -35,21 +34,34 @@ namespace gazebo {
             physics::JointPtr joint_ptr;
             physics::LinkPtr link_ptr;
 
-            int motor_number;
-            int turning_direction;
-
             std::string jointName;
             std::string linkName;
 
+
+            // MOTOR PARAMETERS
+            int motor_number;
+            int turning_direction;
+
+            
+
             double rot_vel_visual_slowdown;
-            double rot_vel;
-            float MotorThrust = 0.0f;
+            double rot_vel = 0.0f;
+            float MotorThrust_input = 0.0f;
 
             double thrust_coeff;
             double torque_coeff;
 
             double thrust;
             double torque;
+
+
+            // FIRST ORDER FILTER BEHAVIOR
+            double timeConstantUp;
+            double timeConstantDown;
+            double sampling_time;
+            double prev_sim_time = 0.0;
+            double prev_thrust = 0.0;
+            
 
             event::ConnectionPtr updateConnection;
 
