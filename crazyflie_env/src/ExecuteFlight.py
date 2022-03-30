@@ -6,8 +6,8 @@ import rospy
 from rospy.exceptions import ROSException
 
 
-from Crazyflie_env import CrazyflieEnv
-from RL_agents.rl_EM import rlEM_PEPGAgent
+# from Crazyflie_env import CrazyflieEnv
+# from RL_agents.rl_EM import rlEM_PEPGAgent
 from crazyflie_msgs.msg import CF_StateData
 from rosgraph_msgs.msg import Clock
 
@@ -50,7 +50,7 @@ def executeFlight(env,agent):
     onceFlag_impact = False   # Ensures impact data recorded only once 
 
     ## PRINT RUN CONDITIONS AND POLICY
-    print(f"Vx_d: {env.vel_trial[0]:.3f} \t Vy_d: {env.vel_trial[1]:.3f} \t Vz_d: {env.vel_trial[2]:.3f}")
+    print(f"Vx_d: {env.vel_d[0]:.3f} \t Vy_d: {env.vel_d[1]:.3f} \t Vz_d: {env.vel_d[2]:.3f}")
     print("\n")
 
     # ============================
@@ -59,11 +59,11 @@ def executeFlight(env,agent):
     z_0 = 0.3986
     env.step('sticky',cmd_flag=1)              # Enable sticky pads
     env.step('pos',cmd_flag=0)                 # Turn off pos control
-    env.step('vel',env.vel_trial,cmd_flag=1)   # Set desired vel
+    env.step('vel',env.vel_d,cmd_flag=1)   # Set desired vel
     env.launch_IC(                              # Use Gazebo to impart desired vel with extra vx to ensure -OFy when around zero
         z_0,
-        env.vel_trial[0]+0.03,
-        env.vel_trial[2])   
+        env.vel_d[0]+0.03,
+        env.vel_d[2])   
 
 
     while 1: 

@@ -4,9 +4,9 @@ import scipy.stats
 from scipy.spatial.transform import Rotation
 import matplotlib.pyplot as plt
 from math import asin,pi,ceil,floor
-from RL_agents.rl_syspepg import ES
+# from RL_agents.rl_syspepg import ES
 
-class rlEM_PEPGAgent(ES):
+class rlEM_PEPGAgent():
     ## CITED HERE: DOI 10.1007/s10015-015-0260-7
     def __init__(self,mu=[0,0,0],sigma=[0,0,0], n_rollouts = 6):
         
@@ -60,6 +60,56 @@ class rlEM_PEPGAgent(ES):
         S_reward = np.sum(reward)
         S_diff = np.square(theta - self.mu).dot(reward)'''
 
+    
+    def calcReward_Impact(self,env):
+
+        ## CALC R_1 FROM MAXIMUM HEIGHT ACHIEVED
+        R_1 = 1/env.d_ceil_min
+
+        ## CALC R2 FROM THE IMPACT ANGLE
+        eul_y_impact = env.eulCF_impact[1]
+        # Center axis [theta_2] is limited to +- 90deg while [theta_1 & theta_3] can rotate to 180deg 
+        # https://graphics.fandom.com/wiki/Conversion_between_quaternions_and_Euler_angles
+        # https://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/Quaternions.pdf
+        
+
+        if -180 <= eul_y_impact <= -90:
+            R_2 = 1.0
+        elif -90 < eul_y_impact <= 0:
+            R_2 = -1/90*eul_y_impact
+        elif 0 < eul_y_impact <= 90:
+            R_2 = 1/90*eul_y_impact
+        elif 90 < eul_y_impact <= 180:
+            R_2 = 1.0
+        else:
+            R_2 = 0
+
+
+        ## CALC R_4 FROM NUMBER OF LEGS CONNECT
+
+        if env.pad_connections >= 3: 
+            if env.BodyContact_flag == False:
+                R_4 = 150
+            else:
+                R_4 = 100
+            
+        elif env.pad_connections == 2: 
+            if env.BodyContact_flag == False:
+                R_4 = 50
+            else:
+                R_4 = 25
+                
+        elif env.pad_connections == 1:
+            R_4 = 10
+        
+        else:
+            R_4 = 0.0
+                
+
+
+        R_total = R_1*10 + R_2*10 + R_4 + 0.001
+        return R_total
+
 class rlEM_AdaptiveAgent(rlEM_PEPGAgent):
 
     def train(self,theta,reward,epsilon):
@@ -101,7 +151,7 @@ class rlEM_AdaptiveAgent(rlEM_PEPGAgent):
 
 
 
-class EPHE_Agent(ES):  # EM Policy Hyper Paramter Exploration
+class EPHE_Agent():  # EM Policy Hyper Paramter Exploration
      def __init__(self, mu, sigma, n_rollouts = 8, adaptive = True, lamda = 1):
          self.n_rollouts = n_rollouts
          self.agent_type = 'EPHE'

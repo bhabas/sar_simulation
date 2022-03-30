@@ -679,7 +679,7 @@
       <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
       <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
       <timeConstantUp>0.0125</timeConstantUp>
-      <timeConstantDown>0.2</timeConstantDown>
+      <timeConstantDown>0.02</timeConstantDown>
       <rotorVisualSlowdown>100</rotorVisualSlowdown>
     </plugin>
     <plugin name='back_left_motor_model' filename='libmotor_plugin.so'>
@@ -690,7 +690,7 @@
       <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
       <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
       <timeConstantUp>0.0125</timeConstantUp>
-      <timeConstantDown>0.2</timeConstantDown>
+      <timeConstantDown>0.02</timeConstantDown>
       <rotorVisualSlowdown>100</rotorVisualSlowdown>
     </plugin>
     <plugin name='back_right_motor_model' filename='libmotor_plugin.so'>
@@ -701,7 +701,7 @@
       <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
       <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
       <timeConstantUp>0.0125</timeConstantUp>
-      <timeConstantDown>0.2</timeConstantDown>
+      <timeConstantDown>0.02</timeConstantDown>
       <rotorVisualSlowdown>100</rotorVisualSlowdown>
     </plugin>
     <plugin name='front_right_motor_model' filename='libmotor_plugin.so'>
@@ -712,7 +712,7 @@
       <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
       <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
       <timeConstantUp>0.0125</timeConstantUp>
-      <timeConstantDown>0.2</timeConstantDown>
+      <timeConstantDown>0.02</timeConstantDown>
       <rotorVisualSlowdown>100</rotorVisualSlowdown>
     </plugin>
         
