@@ -31,7 +31,7 @@ def executeFlight(env,agent):
 
     ## RESET TO INITIAL STATE
     env.step("home") # Reset control vals and functionality to default vals
-    time.sleep(0.65) # Time for CF to settle [Real-Time seconds]
+    time.sleep(0.3) # Time for CF to settle [Real-Time seconds]
 
     env.step("policy",env.policy,cmd_flag=1) # Arm policy inside controller
 
@@ -133,7 +133,7 @@ def executeFlight(env,agent):
         # ============================
 
         ## IF NAN IS FOUND IN STATE VECTOR REPEAT RUN (Model collision Error)
-        if any(np.isnan(env.posCF)): 
+        if any(np.isnan(env.velCF)): 
             env.error_str = "Error: NAN found in state vector"
             print(env.error_str)
             env.repeat_run = True

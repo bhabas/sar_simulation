@@ -848,7 +848,7 @@ class Sigma_Widget(QWidget):
         self.setLayout(self.layout)
 
 
-        self.PW = pg.PlotWidget(name='Plot1',labels =  {'left':'Mu', 'bottom':'Time [s]'}) # Plot window 1
+        self.PW = pg.PlotWidget(name='Plot1',labels =  {'left':'Sigma', 'bottom':'Time [s]'}) # Plot window 1
         self.layout.addWidget(self.PW)
         
 
@@ -872,7 +872,7 @@ class Sigma_Widget(QWidget):
 
     def update(self):
                         
-        self.curve_sig1.setData(np.arange(0,DashNode.k_ep+1),DashNode.sigma_1_list)
+        self.curve_sig1.setData(np.arange(0,DashNode.k_ep+1),DashNode.sigma_1_list*10)
         self.curve_sig2.setData(np.arange(0,DashNode.k_ep+1),DashNode.sigma_2_list)
 
     def reset_axes(self):
@@ -886,7 +886,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     ## INITIALIZE DASHBOARD WINDOW
-    myApp = MotorThrust_Widget()
+    myApp = Sigma_Widget()
     myApp.show()
 
     sys.exit(app.exec_())
