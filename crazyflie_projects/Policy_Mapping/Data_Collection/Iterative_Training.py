@@ -130,3 +130,11 @@ if __name__ == '__main__':
         env.create_csv(env.filepath)
 
         runTraining(env,agent)
+
+        ## CLEAR OUT REWARD DATA BUFFERS
+        env.mu_1_list = []
+        env.mu_2_list = []
+        env.sigma_1_list = []
+        env.sigma_2_list = []
+        env.reward_list = []
+        env.reward_avg_list = []
