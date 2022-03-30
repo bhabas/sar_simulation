@@ -52,6 +52,7 @@ class CrazyflieEnv:
         self.agent_name = ''    # Learning agent used for training (PEPG,EM,etc...)
         self.logging_flag = False
         self.runComplete_flag = False
+        self.trialComplete_flag = False
         self.repeat_run = False
 
 
@@ -416,6 +417,8 @@ class CrazyflieEnv:
         RL_msg.impact_flag = self.impact_flag
         RL_msg.body_contact = self.BodyContact_flag
         RL_msg.leg_contacts = self.pad_connections
+
+        RL_msg.trialComplete_flag = self.trialComplete_flag
         self.RL_Data_Publisher.publish(RL_msg) ## Publish RLData message
 
         ## CONVERGENCE HISTORY

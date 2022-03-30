@@ -5,7 +5,9 @@ void CF_DataConverter::Publish_StateData()
     // ===================
     //     FLIGHT DATA
     // ===================
-    StateData_msg.header.stamp = Time;
+    ros::Duration Time_delta(Time-Time_start);
+    StateData_msg.header.stamp.sec = Time_delta.sec;
+    StateData_msg.header.stamp.nsec = Time_delta.nsec;
 
     // CARTESIAN SPACE DATA
     StateData_msg.Pose = Pose;
@@ -44,7 +46,9 @@ void CF_DataConverter::Publish_StateData()
 void CF_DataConverter::Publish_FlipData()
 {
 
-    FlipData_msg.header.stamp = Time_tr;
+    ros::Duration Time_delta(Time_tr-Time_start);
+    FlipData_msg.header.stamp.sec = Time_delta.sec;
+    FlipData_msg.header.stamp.nsec = Time_delta.nsec;
     FlipData_msg.flip_flag = flip_flag;
 
 
@@ -84,9 +88,12 @@ void CF_DataConverter::Publish_MiscData()
 
 void CF_DataConverter::Publish_ImpactData()
 {
+    ros::Duration Time_delta(Time_impact-Time_start);
+    ImpactData_msg.header.stamp.sec = Time_delta.sec;
+    ImpactData_msg.header.stamp.nsec = Time_delta.nsec;
+
     ImpactData_msg.impact_flag = impact_flag;
     ImpactData_msg.BodyContact_flag = BodyContact_flag;
-    ImpactData_msg.header.stamp = Time_impact;
 
     ImpactData_msg.Force_impact.x = impact_force_x;
     ImpactData_msg.Force_impact.y = impact_force_y;
@@ -304,6 +311,14 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
 
 }
 
+void CF_DataConverter::RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &msg)
+{
+    if(msg->trialComplete_flag == true)
+    {
+        Time_start = ros::Time::now();
+    }
+
+}
 
 
 void CF_DataConverter::SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStamped::ConstPtr &msg)

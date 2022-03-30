@@ -26,6 +26,7 @@ is easy to use.
 #include "crazyflie_msgs/CtrlData.h"
 #include "crazyflie_msgs/CtrlDebug.h"
 #include "crazyflie_msgs/RLCmd.h"
+#include "crazyflie_msgs/RLData.h"
 #include "crazyflie_msgs/PadConnect.h"
 
 #include "crazyflie_msgs/activateSticky.h"
@@ -41,6 +42,7 @@ class CF_DataConverter
             CTRL_Data_Sub = nh->subscribe("/CTRL/data", 1, &CF_DataConverter::CtrlData_Callback, this, ros::TransportHints().tcpNoDelay());
             CTRL_Debug_Sub = nh->subscribe("/CTRL/debug", 1, &CF_DataConverter::CtrlDebug_Callback, this, ros::TransportHints().tcpNoDelay());
             RL_CMD_Sub = nh->subscribe("/RL/cmd",5,&CF_DataConverter::RL_CMD_Callback,this,ros::TransportHints().tcpNoDelay());
+            RL_Data_Sub = nh->subscribe("/RL/data",5,&CF_DataConverter::RL_Data_Callback,this,ros::TransportHints().tcpNoDelay());
             Surface_FT_Sub = nh->subscribe("/ENV/Surface_FT_sensor",5,&CF_DataConverter::SurfaceFT_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
             Surface_Contact_Sub = nh->subscribe("/ENV/BodyContact",5,&CF_DataConverter::Surface_Contact_Callback,this,ros::TransportHints().tcpNoDelay());
             PadConnect_Sub = nh->subscribe("/ENV/Pad_Connections",5,&CF_DataConverter::Pad_Connections_Callback,this,ros::TransportHints().tcpNoDelay());
@@ -57,6 +59,7 @@ class CF_DataConverter
             
 
             CF_DataConverter::LoadParams();
+            Time_start = ros::Time::now();
 
             CF_DataConverter::adjustSimSpeed(SIM_SPEED);
             BodyCollision_str = MODEL_NAME + "::crazyflie_BaseModel::crazyflie_body::body_collision";
@@ -72,6 +75,7 @@ class CF_DataConverter
         void CtrlDebug_Callback(const crazyflie_msgs::CtrlDebug &ctrl_msg);
 
         void RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
+        void RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &msg);
         void SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStamped::ConstPtr &msg);
         void Surface_Contact_Callback(const gazebo_msgs::ContactsState &msg);
         void Pad_Connections_Callback(const crazyflie_msgs::PadConnect &msg);
@@ -96,6 +100,7 @@ class CF_DataConverter
         ros::Subscriber CTRL_Data_Sub;
         ros::Subscriber CTRL_Debug_Sub;
         ros::Subscriber RL_CMD_Sub;
+        ros::Subscriber RL_Data_Sub;
         ros::Subscriber Surface_FT_Sub;
         ros::Subscriber Surface_Contact_Sub;
         ros::Subscriber PadConnect_Sub;
@@ -118,6 +123,7 @@ class CF_DataConverter
         std::thread CF_DCThread;
         std::string BodyCollision_str;
         uint32_t tick = 1;
+        ros::Time Time_start;
         
         // ===================
         //     ROS PARAMS
