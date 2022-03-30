@@ -270,6 +270,7 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
 
         // RESET SIM SPEED
         CF_DataConverter::adjustSimSpeed(SIM_SPEED);
+        SLOWDOWN_TYPE = 0;
 
                 
     }
