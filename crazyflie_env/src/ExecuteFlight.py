@@ -6,8 +6,7 @@ import rospy
 from rospy.exceptions import ROSException
 
 
-# from Crazyflie_env import CrazyflieEnv
-# from RL_agents.rl_EM import rlEM_PEPGAgent
+
 from crazyflie_msgs.msg import CF_StateData
 from rosgraph_msgs.msg import Clock
 
@@ -56,17 +55,11 @@ def executeFlight(env,agent):
     # ============================
     ##          Rollout 
     # ============================
-    z_0 = 0.3986
     env.step('sticky',cmd_flag=1)              # Enable sticky pads
-    env.step('pos',cmd_flag=0)                 # Turn off pos control
-    env.step('vel',env.vel_d,cmd_flag=1)   # Set desired vel
-    env.launch_IC(                              # Use Gazebo to impart desired vel with extra vx to ensure -OFy when around zero
-        z_0,
-        env.vel_d[0]+0.03,
-        env.vel_d[2])   
+    env.traj_launch(env.posCF,env.vel_d)
 
 
-    while 1: 
+    while True: 
 
         ## DEFINE CURRENT STATE
         
@@ -128,7 +121,7 @@ def executeFlight(env,agent):
 
             env.runComplete_flag = True
 
-        # IF TIME SINCE RUN START EXCEEDS [6.0s]
+        # IF TIME SINCE RUN START EXCEEDS 
         elif (env.getTime() - start_time_rollout) > (5.0):
             env.error_str = "Rollout Completed: Time Exceeded"
             print(env.error_str)
@@ -186,6 +179,10 @@ def executeFlight(env,agent):
 
 
 if __name__ == '__main__':
+
+    from Crazyflie_env import CrazyflieEnv
+    from RL_agents.rl_EM import rlEM_PEPGAgent
+
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv(gazeboTimeout=False)
     agent = rlEM_PEPGAgent(n_rollouts=env.n_rollouts)
@@ -203,7 +200,7 @@ if __name__ == '__main__':
     env.logging_flag = True
     env.create_csv(env.filepath)
 
-    V_d = 2.5
+    V_d = 3.0
     phi = 60
     phi_rad = np.radians(phi)
     env.vel_d = [V_d*np.cos(phi_rad), 0.0, V_d*np.sin(phi_rad)] # [m/s]

@@ -685,6 +685,7 @@ class CrazyflieEnv:
         cmd_msg.cmd_flag = cmd_flag
         
         self.RL_CMD_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
+        time.sleep(0.02)
         
     def reset_reward_terms(self):
 
