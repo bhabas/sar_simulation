@@ -149,7 +149,7 @@ class CrazyflieEnv:
 
         ## INIT RL PARAMETERS
         self.h_ceiling = rospy.get_param("/CEILING_HEIGHT") # [m]
-        self.n_rollouts = 0     # Rollouts per episode
+        self.n_rollouts = 6     # Rollouts per episode
 
         self.k_ep = 0           # Episode number
         self.k_run = 0          # Run number
@@ -179,7 +179,7 @@ class CrazyflieEnv:
      
         ## TRAJECTORY VALUES
         self.posCF_0 = [0,0,0.4]        # Default hover position [m]
-        self.accCF_max = [2.0,2.0,0.5]  # Max acceleration values for trajectory generation [m/s^2]
+        self.accCF_max = [2.0,2.0,4.0]  # Max acceleration values for trajectory generation [m/s^2]
         
       
 
@@ -592,7 +592,7 @@ class CrazyflieEnv:
 
         ## SET DESIRED VEL IN CONTROLLER
         self.step('pos',cmd_flag=0)
-        self.step('vel',cmd_vals=vel_d,cmd_flag=1)
+        self.step('vel',cmd_vals=vel_d,cmd_flag=0)
 
         ## CREATE SERVICE MESSAGE
         state_msg = ModelState()

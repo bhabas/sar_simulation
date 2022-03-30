@@ -200,8 +200,8 @@ if __name__ == '__main__':
     env.logging_flag = True
     env.create_csv(env.filepath)
 
-    V_d = 3.0
-    phi = 60
+    V_d = 0.5
+    phi = 90
     phi_rad = np.radians(phi)
     env.vel_d = [V_d*np.cos(phi_rad), 0.0, V_d*np.sin(phi_rad)] # [m/s]
     env.policy = [0.25,8.0,0] # NN policy

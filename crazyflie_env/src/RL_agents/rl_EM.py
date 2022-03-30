@@ -12,8 +12,8 @@ class rlEM_PEPGAgent():
         
         self.agent_type = 'EM_PEPG'
         self.n_rollouts = n_rollouts
-        self.mu = mu
-        self.sigma = sigma
+        self.mu = np.array(mu).reshape(-1,1)
+        self.sigma = np.array(sigma).reshape(-1,1)
 
         self.n_rollouts = n_rollouts
         self.d = len(self.mu)

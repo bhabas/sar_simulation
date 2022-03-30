@@ -17,204 +17,116 @@ from crazyflie_env.src.ExecuteFlight import executeFlight
 from crazyflie_env.src.Crazyflie_env import CrazyflieEnv
 from crazyflie_env.src.RL_agents.rl_EM import rlEM_PEPGAgent
 
+def runTraining(env,agent):
 
+    # ============================
+    ##          Episode         
+    # ============================
 
+    for k_ep in range(0,rospy.get_param("K_EP_MAX")):
 
+        ## UPDATE EPISODE NUMBER
+        env.k_ep = k_ep
 
-os.system("clear")
+        ## CONVERT AGENT ARRAYS TO LISTS FOR PUBLISHING
+        env.mu = agent.mu.flatten().tolist()                # Mean for Gaussian distribution
+        env.sigma = agent.sigma.flatten().tolist()          # Standard Deviation for Gaussian distribution
 
-       
-def cmd_send(env):
-    while True:
-        # Converts input number into action name
-        cmd_dict = {
-            0:'home',
-            1:'pos',
-            2:'vel',
-            3:'acc',
-            4:'tumble',
-            5:'stop',
-            6:'params',
-            7:'moment',
-            8:'policy',
-            9:'traj',
-            11:'sticky',
-            19:'traj_tp',
-            101:'reset',
-        }
+        env.mu_1_list.append(env.mu[0])
+        env.mu_2_list.append(env.mu[1])
 
-        try:
-            val = env.userInput("Cmd Type (0:home,1:pos,2:vel,5:stop,6:Param Reset,8:Policy,9:Traj,11:sticky,101:reset_state): ",int)
-            print()
-            action = cmd_dict[val]
+        env.sigma_1_list.append(env.sigma[0])
+        env.sigma_2_list.append(env.sigma[1])
 
-
-            if action=='home': # Execute home or stop action
-                cmd_vals = [0,0,0]
-                cmd_flag = 1
-                print("Reset controller to default values\n")
-
-                env.step('sticky',cmd_vals,0)
-                env.step(action,cmd_vals,cmd_flag)
-
-            elif action=='pos':
-                cmd_vals = env.userInput("Set desired position values (x,y,z): ",float)
-                cmd_flag = env.userInput("Pos control On/Off (1,0): ",int)
-                print()
-
-                env.step(action,cmd_vals,cmd_flag)
-
-            elif action=='vel':
-                cmd_vals = env.userInput("Set desired velocity values (x,y,z): ",float)
-                cmd_flag = env.userInput("Vel control On/Off (1,0): ",int)
-                print()
-
-                env.step(action,cmd_vals,cmd_flag)
-
-            elif action=='tumble': # Turn on tumble detection
-
-                cmd_vals = [0,0,0]
-                cmd_flag = env.userInput("Tumble Detection On/Off (1,0): ",int)
-                print()
-
-                env.step('tumble',cmd_vals,cmd_flag)
-
-            if action=='stop': # Execute home or stop action
-                cmd_vals = [0,0,0]
-                cmd_flag = 1
-                print("Rotors turned of\n")
-
-                env.step(action,cmd_vals,cmd_flag)
-
-
-            elif action=='params': # Updates gain values from config file
-                cmd_vals = [0,0,0]
-                cmd_flag = 1
-                print("Reset ROS Parameters\n")
-
-                os.system("roslaunch crazyflie_launch params.launch")
-                env.step(action,cmd_vals,cmd_flag)
-
-            elif action=='moment':
-                cmd_vals = env.userInput("Set desired moment values (x,y,z): ",float)
-                cmd_flag = 1
-                print()
-
-                env.step(action,cmd_vals,cmd_flag)
-
-            elif action=='policy':
-                cmd_vals = env.userInput("Set desired (Tau,My_d) policy: ",float)
-                cmd_vals.append(0) # Append extra value to match framework
-                cmd_flag = 1
-                print()
-
-                env.step(action,cmd_vals,cmd_flag)
-
-            elif action=='traj':
-
-                ## GET INPUT VALUES
-                V_d,phi,alpha = env.userInput("Flight Velocity (V_d,phi,alpha):",float)
-
-                ## DEFINE CARTESIAN VELOCITIES
-                phi_rad = np.radians(phi)
-                alpha_rad = np.radians(alpha)
-                Vx_d = V_d*np.cos(phi_rad)*np.cos(alpha_rad)
-                Vy_d = V_d*np.cos(phi_rad)*np.sin(alpha_rad)
-                Vz_d = V_d*np.sin(phi_rad)
-
-                ## ESTIMATE IMPACT POINT
-                P_impact = env.impactEstimate(env.posCF_0,[Vx_d,Vy_d,Vz_d])
-
-                ## CHECK VALID IMPACT POINT AND EXECUTE TRAJECTORY
-                validate = input(f"Approve impact point (y/n): {P_impact[0]:.2f}, {P_impact[1]:.2f}, {P_impact[2]:.2f}\n")
-                if validate == 'y':
-                    env.step('traj',cmd_vals=[env.posCF_0[0],Vx_d,env.accCF_max[0]],cmd_flag=0)
-                    env.step('traj',cmd_vals=[env.posCF_0[1],Vy_d,env.accCF_max[1]],cmd_flag=1)
-                    env.step('traj',cmd_vals=[env.posCF_0[2],Vz_d,env.accCF_max[2]],cmd_flag=2)
-                else:
-                    pass
-
-            elif action=='sticky':
-                cmd_vals = [0,0,0]
-                cmd_flag = env.userInput("Turn sticky pads On/Off (1,0): ",int)
-                print()
-
-                env.step(action,cmd_vals,cmd_flag)
-
-            elif action=='traj_tp':
-
-
-                ## GET INPUT VALUES
-                V_d,phi,alpha = env.userInput("Flight Velocity (V_d,phi,alpha):",float)
-
-                ## DEFINE CARTESIAN VELOCITIES
-                phi_rad = np.radians(phi)
-                alpha_rad = np.radians(alpha)
-                Vx_d = V_d*np.cos(phi_rad)*np.cos(alpha_rad)
-                Vy_d = V_d*np.cos(phi_rad)*np.sin(alpha_rad)
-                Vz_d = V_d*np.sin(phi_rad)
-
-                ## ESTIMATE IMPACT POINT
-                P_impact = env.impactEstimate(env.posCF,[Vx_d,Vy_d,Vz_d])
-
-                ## CHECK VALID IMPACT POINT AND EXECUTE TRAJECTORY VIA SET_MODEL_STATE
-                validate = input(f"Approve impact point (y/n): {P_impact[0]:.2f}, {P_impact[1]:.2f}, {P_impact[2]:.2f}\n")
-                if validate == 'y':
-                    env.traj_launch(env.posCF,[Vx_d,Vy_d,Vz_d])
-                else:
-                    pass
-
-
-
-                    
-            elif action == 'reset':
-                print("Reset Pos/Vel -- Sticky off -- Controller Reset\n")
-                env.reset_pos()
-
-        except:
-            print('\033[93m' + "INVALID INPUT: Try again" + '\x1b[0m')
-            continue
-
-       
-def logFlight(env):
-
-    ## RESET LOGGING CONDITIONS 
-    t_prev = 0.0
-
-    while 1: 
         
-        # If time changes then append csv file
-        if env.t != t_prev:
-            env.append_csv()
+        ## PRE-ALLOCATE REWARD VEC AND OBTAIN THETA VALS
+        training_arr = np.zeros(shape=(agent.n_rollouts,1)) # Array of reward values for training
+        theta_rl,epsilon_rl = agent.get_theta()             # Generate sample policies from distribution
 
-        t_prev = env.t   
-    
-    env.append_IC()
-    env.append_flip()
-    env.append_impact()
-    env.append_csv_blank()
+        ## PRINT EPISODE DATA
+        print("=============================================")
+        print("STARTING Episode # %d" %k_ep)
+        print("=============================================")
 
+        print( time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())) )
+        print(f"mu_0 = {agent.mu[0,0]:.3f}, \t sig_0 = {agent.sigma[0,0]:.3f}")
+        print(f"mu_1 = {agent.mu[1,0]:.3f}, \t sig_1 = {agent.sigma[1,0]:.3f}")
+        print('\n')
+        
+
+        print("theta_rl = ")
+        print(theta_rl[0,:], "--> Tau")
+        print(theta_rl[1,:], "--> My")
+
+        # ============================
+        ##          Run 
+        # ============================
+        for env.k_run in range(0,env.n_rollouts):
+            # input("press enter")
+
+
+            ## UPDATE RUN NUMBER
+            k_run = env.k_run # Local variables are faster to access then class variables
+
+
+            ## INITIALIZE POLICY PARAMETERS: 
+            Tau_thr = theta_rl[0, k_run]    # Tau threshold 10*[s]
+            My = theta_rl[1, k_run]         # Policy Moment Action [N*mm]
+            G2 = 0.0                        # Deprecated policy term
+            
+            env.policy = [Tau_thr/10,np.abs(My),G2]
+
+            try: # Use try block to catch raised exceptions and attempt rollout again
+                executeFlight(env,agent)
+
+                if env.repeat_run == True: # Runs when error detected
+                    env.relaunch_sim()
+                    continue
+
+            except rospy.service.ServiceException:
+                continue
+
+            ## ADD VALID REWARD TO TRAINING ARRAY
+            training_arr[k_run] = env.reward
+
+            env.reward_list.append(int(env.reward))
+            env.reward_avg = training_arr[np.nonzero(training_arr)].mean()
+
+            ## PUBLISH UPDATED REWARD VARIABLES
+            env.RL_Publish()
+
+        env.reward_avg_list.append(int(env.reward_avg))
+        env.RL_Publish()
+
+        ## =======  EPISODE COMPLETED  ======= ##
+        print(f"Episode # {k_ep:d} training, average reward {env.reward_avg:.3f}")
+        agent.train(theta_rl,training_arr,epsilon_rl)
 
 if __name__ == '__main__':
     
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv(gazeboTimeout=False)
-    agent = rlEM_PEPGAgent(n_rollouts=env.n_rollouts)
 
-    ## INITIALIALIZE LOGGING DATA
-    trial_num = 24
-    env.agent_name = agent.agent_type
-    env.trial_name = f"Control_Playground--trial_{int(trial_num):02d}--{env.modelInitials}"
-    env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
-    env.logging_flag = True
-    env.create_csv(env.filepath)
+    ## Home Test List
+    df = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/Policy_Mapping/Data_Collection/MasterTestList.csv")
+    arr = df.to_numpy()
 
-    # time.sleep(5)
-    cmd_thread = threading.Thread(target=cmd_send,args=(env,))
-    cmd_thread.start()   
+    for V_d,phi,tau_0,trial_num in arr:
+        
+        mu = [tau_0*10,np.random.uniform(3.0,8.0)]       # Initial mu starting point
+        sigma = [0.2,1.5]   # Initial sigma starting point
+        agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=env.n_rollouts)
 
 
-    logging_thread = threading.Thread(target=logFlight,args=(env,))
-    logging_thread.start()   
+        ## CONSTANT VELOCITY LAUNCH CONDITIONS
+        phi_rad = np.radians(phi)
+        env.vel_d = [V_d*np.cos(phi_rad), 0.0, V_d*np.sin(phi_rad)] # [m/s]
 
-    rospy.spin()
+        ## INITIALIALIZE LOGGING DATA
+        env.agent_name = agent.agent_type
+        env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--{env.modelInitials}"
+        env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
+        env.logging_flag = True
+        env.create_csv(env.filepath)
+
+        runTraining(env,agent)
