@@ -11,6 +11,8 @@
 #include <ros/ros.h>
 #include "crazyflie_msgs/RLCmd.h"
 #include "crazyflie_msgs/CtrlData.h"
+#include "crazyflie_msgs/MS.h"
+
 #define g2Newton (9.81f/1000.0f)
 #define Newton2g (1000.0f/9.81f)
 
@@ -67,6 +69,9 @@ namespace gazebo {
 
             ros::NodeHandle nh;
             ros::Subscriber CTRL_Data_Sub = nh.subscribe<crazyflie_msgs::CtrlData>("/CTRL/data", 1, &GazeboMotorPlugin::CtrlData_Callback, this, ros::TransportHints().tcpNoDelay());
+            ros::Publisher MS_Data_Pub = nh.advertise<crazyflie_msgs::MS>("/CF_Internal/MS",1);
+
+            crazyflie_msgs::MS Thrust_msg;
     };
 
 }

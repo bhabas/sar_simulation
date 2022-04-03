@@ -90,7 +90,7 @@ namespace gazebo
             thrust = alpha_down*prev_thrust + (1-alpha_down)*MotorThrust_input;
         }
         
-
+        
         // APPLY ROTOR THRUST TO LINK
         link_ptr->AddRelativeForce(ignition::math::Vector3d(0, 0, (thrust*g2Newton)));
 
@@ -105,6 +105,11 @@ namespace gazebo
     
 
         prev_thrust = thrust;
+
+        Thrust_msg.Motor_Number = motor_number;
+        Thrust_msg.MotorThrust = MotorThrust_input;
+        Thrust_msg.MotorThrust_actual = thrust;
+        MS_Data_Pub.publish(Thrust_msg);
 
     }
 
