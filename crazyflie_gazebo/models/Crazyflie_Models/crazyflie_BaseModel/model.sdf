@@ -678,8 +678,8 @@
       <turningDirection>cw</turningDirection>
       <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
       <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
-      <timeConstantUp>0.06</timeConstantUp>
-      <timeConstantDown>0.16</timeConstantDown>
+      <timeConstantUp>0.05</timeConstantUp>
+      <timeConstantDown>0.15</timeConstantDown>
       <rotorVisualSlowdown>100</rotorVisualSlowdown>
     </plugin>
     <plugin name='back_left_motor_model' filename='libmotor_plugin.so'>
@@ -689,8 +689,8 @@
       <turningDirection>ccw</turningDirection>
       <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
       <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
-      <timeConstantUp>0.06</timeConstantUp>
-      <timeConstantDown>0.16</timeConstantDown>
+      <timeConstantUp>0.05</timeConstantUp>
+      <timeConstantDown>0.15</timeConstantDown>
       <rotorVisualSlowdown>100</rotorVisualSlowdown>
     </plugin>
     <plugin name='back_right_motor_model' filename='libmotor_plugin.so'>
@@ -700,8 +700,8 @@
       <turningDirection>cw</turningDirection>
       <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
       <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
-      <timeConstantUp>0.06</timeConstantUp>
-      <timeConstantDown>0.16</timeConstantDown>
+      <timeConstantUp>0.05</timeConstantUp>
+      <timeConstantDown>0.15</timeConstantDown>
       <rotorVisualSlowdown>100</rotorVisualSlowdown>
     </plugin>
     <plugin name='front_right_motor_model' filename='libmotor_plugin.so'>
@@ -711,8 +711,8 @@
       <turningDirection>ccw</turningDirection>
       <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
       <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
-      <timeConstantUp>0.06</timeConstantUp>
-      <timeConstantDown>0.16</timeConstantDown>
+      <timeConstantUp>0.05</timeConstantUp>
+      <timeConstantDown>0.15</timeConstantDown>
       <rotorVisualSlowdown>100</rotorVisualSlowdown>
     </plugin>
         
@@ -749,6 +749,17 @@
     <!-- <plugin name='MomentPlugin' filename='libMoment_plugin.so'>
       <bodyName>crazyflie_body</bodyName>
     </plugin> -->
+
+    <joint name="FixedJoint" type="fixed">
+        <parent>world</parent>
+        <child>crazyflie_body</child>
+        <pose>0 0 0 0 0 0</pose>    
+        <physics>
+          <ode>
+          </ode>
+          <provide_feedback>true</provide_feedback>
+        </physics>
+      </joint>
   
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
