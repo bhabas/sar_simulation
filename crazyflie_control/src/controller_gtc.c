@@ -850,7 +850,7 @@ void compressStates(){
     StatesZ_GTC.vxy = compressXY(stateVel.x, stateVel.y);
     StatesZ_GTC.vz = (int16_t)(stateVel.z * 1000.0f);
 
-    StatesZ_GTC.wxy = compressXY(stateOmega.x,stateOmega.y);
+    StatesZ_GTC.wxy = compressXY(stateOmega.x/10,stateOmega.y/10);
     StatesZ_GTC.wz = (int16_t)(stateOmega.z * 1000.0f);
 
 

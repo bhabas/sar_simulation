@@ -750,7 +750,7 @@
       <bodyName>crazyflie_body</bodyName>
     </plugin> -->
 
-    <joint name="FixedJoint" type="fixed">
+    <!-- <joint name="FixedJoint" type="fixed">
         <parent>world</parent>
         <child>crazyflie_body</child>
         <pose>0 0 0 0 0 0</pose>    
@@ -759,7 +759,7 @@
           </ode>
           <provide_feedback>true</provide_feedback>
         </physics>
-      </joint>
+      </joint> -->
   
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
