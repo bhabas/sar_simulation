@@ -66,7 +66,6 @@ class Controller
             // INTERNAL TOPICS
             CF_IMU_Subscriber = nh->subscribe("/CF_Internal/IMU",1,&Controller::IMU_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
             CF_OF_Subscriber = nh->subscribe("/CF_Internal/OF_Sensor",1,&Controller::OF_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
-            CF_PWM_Publisher = nh->advertise<crazyflie_msgs::MS>("/CF_Internal/MS_PWM",1);
 
             // ENVIRONMENT TOPICS
             ENV_Vicon_Subscriber = nh->subscribe("/ENV/viconState_UKF",1,&Controller::viconState_Callback,this,ros::TransportHints().tcpNoDelay());
@@ -126,7 +125,6 @@ class Controller
         void publishCtrlDebug();
         
 
-        crazyflie_msgs::MS MS_PWM_msg;
         crazyflie_msgs::CtrlData CtrlData_msg;
         crazyflie_msgs::CtrlDebug CtrlDebug_msg;
 
@@ -198,19 +196,17 @@ void Controller::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 }
 
 
-// LOAD VALUES FROM ROSPARAM SERVER
+// LOAD VALUES FROM ROSPARAM SERVER INTO CONTROLLER
 void Controller::loadParams()
 {
-    // SIMULATION SETTINGS FROM CONFIG FILE
-    // ros::param::get("/MODEL_NAME",_MODEL_NAME);
-    // ros::param::get("/CEILING_HEIGHT",_H_CEILING);
-    ros::param::get("/CF_MASS",_CF_MASS);
-    ros::param::get("/POLICY_TYPE",_POLICY_TYPE);
+    // COLLECT MODEL PARAMETERS
+    ros::param::get("/CF_MASS",m);
+    ros::param::get("/Ixx",Ixx);
+    ros::param::get("/Iyy",Iyy);
+    ros::param::get("/Izz",Izz);
 
-    // DEBUG SETTINGS
-    // ros::param::get("/SIM_SPEED",_SIM_SPEED);
-    // ros::param::get("/SIM_SLOWDOWN_SPEED",_SIM_SLOWDOWN_SPEED);
-    // ros::param::get("/LANDING_SLOWDOWN_FLAG",_LANDING_SLOWDOWN_FLAG);
+    // SIMULATION SETTINGS FROM CONFIG FILE
+    ros::param::get("/POLICY_TYPE",_POLICY_TYPE);
 
     // COLLECT CTRL GAINS FROM CONFIG FILE
     ros::param::get("P_kp_xy",P_kp_xy);
@@ -287,6 +283,7 @@ void Controller::publishCtrlData()
 
     // CONTROL ACTIONS
     CtrlData_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
+    CtrlData_msg.MotorThrusts = {M1_thrust,M2_thrust,M3_thrust,M4_thrust};
     CtrlData_msg.MS_PWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
 
     CtrlData_msg.x_d.x = x_d.x;

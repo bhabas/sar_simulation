@@ -2,7 +2,6 @@ string trial_name
 string agent
 string error
 
-
 uint16 k_ep
 uint16 k_run
 
@@ -20,3 +19,5 @@ float32[] vel_d
 bool impact_flag
 bool body_contact
 uint8 leg_contacts
+
+bool trialComplete_flag

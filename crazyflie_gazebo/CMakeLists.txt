@@ -22,9 +22,6 @@ catkin_package(
 include_directories(include ${catkin_INCLUDE_DIRS} ${GAZEBO_INCLUDE_DIRS})
 
 
-add_library(model_push SHARED src/model_push.cpp)
-target_link_libraries(model_push ${GAZEBO_LIBRARIES})
-
 add_library(gazebo_sticky_foot SHARED src/gazebo_sticky_foot.cpp)
 target_link_libraries(gazebo_sticky_foot ${GAZEBO_LIBRARIES})
 
@@ -33,3 +30,6 @@ target_link_libraries(motor_plugin ${GAZEBO_LIBRARIES})
 
 add_library(OF_Sensor_plugin SHARED src/OF_Sensor_plugin.cpp)
 target_link_libraries(OF_Sensor_plugin ${GAZEBO_LIBRARIES})
+
+add_library(Moment_plugin SHARED src/model_Moment.cpp)
+target_link_libraries(Moment_plugin ${GAZEBO_LIBRARIES})

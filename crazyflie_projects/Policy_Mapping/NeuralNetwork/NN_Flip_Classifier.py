@@ -237,10 +237,11 @@ class NN_Flip_Classifier():
                 opacity=0.1,
                 isomin=0.85,
                 isomax=0.90,
-                colorscale='Viridis',  
+                # colorscale='Viridis',  
                 cmin=0,
                 cmax=1,     
-                caps=dict(x_show=False, y_show=False)
+                caps=dict(x_show=False, y_show=False),
+                colorbar=dict(title='Title',) , 
             ))
 
         fig.add_trace(
@@ -256,6 +257,18 @@ class NN_Flip_Classifier():
                 opacity=1.0)
         ))
 
+        fig.update_layout(
+            title='something', 
+            autosize=False,
+            width=750, 
+            height=750,
+            margin=dict(l=65, r=50, b=65, t=90),
+            scene=dict(
+                xaxis_title='OFy [rad/s]',
+                yaxis_title='RREV [rad/s]',
+                zaxis_title='D_ceiling [m]',
+            ),
+        )
         fig.show()
 
     def saveParams(self):
@@ -369,7 +382,7 @@ if __name__ == "__main__":
     ## LOAD RAW DATA
     df_raw = pd.read_csv(f"crazyflie_projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
     df_bounds = pd.read_csv(f"crazyflie_projects/Policy_Mapping/NeuralNetwork/dataBounds.csv")
-    df_raw = pd.concat([df_raw,df_bounds])
+    # df_raw = pd.concat([df_raw,df_bounds])
 
     ## ORGANIZE DATA
     RREV = df_raw["RREV_flip_mean"]
@@ -395,10 +408,10 @@ if __name__ == "__main__":
 
 
 
-    FC.createScaler(X)
-    FC.trainModel(X_train,y_train,X_test,y_test,epochs=400)
-    FC.saveParams()
-    FC.evalModel(X,y)
+    # FC.createScaler(X)
+    # FC.trainModel(X_train,y_train,X_test,y_test,epochs=400)
+    # FC.saveParams()
+    # FC.evalModel(X,y)
 
 
     FC.loadModelFromParams()

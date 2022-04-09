@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>900</width>
+    <width>906</width>
     <height>738</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>770</width>
-    <height>500</height>
+    <height>738</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -24,7 +24,7 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="sizePolicy">
-    <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+    <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
@@ -216,7 +216,7 @@ font: 13pt &quot;Ubuntu&quot;;</string>
       <item>
        <widget class="QFrame" name="frame_11">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+         <sizepolicy hsizetype="Fixed" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -224,7 +224,13 @@ font: 13pt &quot;Ubuntu&quot;;</string>
         <property name="minimumSize">
          <size>
           <width>160</width>
-          <height>0</height>
+          <height>641</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>160</width>
+          <height>641</height>
          </size>
         </property>
         <property name="frameShape">
@@ -233,9 +239,9 @@ font: 13pt &quot;Ubuntu&quot;;</string>
         <property name="frameShadow">
          <enum>QFrame::Raised</enum>
         </property>
-        <layout class="QVBoxLayout" name="verticalLayout_2">
+        <layout class="QVBoxLayout" name="verticalLayout_5">
          <item>
-          <layout class="QFormLayout" name="formLayout">
+          <layout class="QGridLayout" name="gridLayout_3">
            <item row="0" column="0">
             <layout class="QHBoxLayout" name="horizontalLayout_25">
              <item>
@@ -407,6 +413,186 @@ font: 13pt &quot;Ubuntu&quot;;</string>
           </layout>
          </item>
          <item>
+          <spacer name="verticalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>204</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QFrame" name="frame_16">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>210</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>210</height>
+            </size>
+           </property>
+           <property name="frameShape">
+            <enum>QFrame::StyledPanel</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Raised</enum>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_2">
+            <item>
+             <layout class="QHBoxLayout" name="Cmd_Type">
+              <item>
+               <widget class="QLabel" name="label">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>40</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>Cmd:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="Cmd_Type_LineEdit"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="Cmd_X">
+              <item>
+               <widget class="QLabel" name="label_2">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>40</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>X:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="Cmd_X_LineEdit"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="Cmd_Y">
+              <item>
+               <widget class="QLabel" name="label_3">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>40</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>Y:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="Cmd_Y_LineEdit"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="Cmd_Z">
+              <item>
+               <widget class="QLabel" name="label_4">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>40</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>Z:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="Cmd_Z_LineEdit"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="Cmd_Flag">
+              <item>
+               <widget class="QLabel" name="label_5">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>40</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>Flag:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="Cmd_Flag_LineEdit"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QPushButton" name="Cmd_Button">
+              <property name="text">
+               <string>Send Cmd</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
           <spacer name="verticalSpacer">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
@@ -471,7 +657,7 @@ font: 14pt &quot;Ubuntu&quot;;
          <enum>QTabWidget::Rounded</enum>
         </property>
         <property name="currentIndex">
-         <number>2</number>
+         <number>3</number>
         </property>
         <property name="tabsClosable">
          <bool>false</bool>
@@ -1370,137 +1556,6 @@ font: 14pt &quot;Ubuntu&quot;;
           <string>Misc Data</string>
          </attribute>
          <layout class="QGridLayout" name="gridLayout">
-          <item row="0" column="0">
-           <widget class="QFrame" name="frame_4">
-            <property name="frameShape">
-             <enum>QFrame::Box</enum>
-            </property>
-            <property name="frameShadow">
-             <enum>QFrame::Plain</enum>
-            </property>
-            <property name="lineWidth">
-             <number>1</number>
-            </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_16">
-             <item>
-              <layout class="QVBoxLayout" name="verticalLayout_11" stretch="1,10,1">
-               <item>
-                <widget class="QLabel" name="label_40">
-                 <property name="text">
-                  <string>Ang. Vel - [rad/s]</string>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignCenter</set>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="Omega_Widget" name="Omega_Graph" native="true">
-                 <property name="styleSheet">
-                  <string notr="true">background-color: rgb(136, 138, 133);</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <layout class="QHBoxLayout" name="horizontalLayout_17" stretch="10,5,10,5,10,5,2">
-                 <item>
-                  <widget class="QLabel" name="label_41">
-                   <property name="text">
-                    <string>Wx</string>
-                   </property>
-                   <property name="alignment">
-                    <set>Qt::AlignCenter</set>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="Line" name="line_32">
-                   <property name="styleSheet">
-                    <string notr="true">color: rgb(214, 39, 40);</string>
-                   </property>
-                   <property name="frameShadow">
-                    <enum>QFrame::Plain</enum>
-                   </property>
-                   <property name="lineWidth">
-                    <number>2</number>
-                   </property>
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QLabel" name="label_42">
-                   <property name="text">
-                    <string>Wy</string>
-                   </property>
-                   <property name="alignment">
-                    <set>Qt::AlignCenter</set>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="Line" name="line_33">
-                   <property name="styleSheet">
-                    <string notr="true">color: rgb(44, 160, 44);</string>
-                   </property>
-                   <property name="frameShadow">
-                    <enum>QFrame::Plain</enum>
-                   </property>
-                   <property name="lineWidth">
-                    <number>2</number>
-                   </property>
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QLabel" name="label_43">
-                   <property name="text">
-                    <string>Wz</string>
-                   </property>
-                   <property name="alignment">
-                    <set>Qt::AlignCenter</set>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="Line" name="line_34">
-                   <property name="styleSheet">
-                    <string notr="true">color: rgb(31, 119, 180);</string>
-                   </property>
-                   <property name="frameShadow">
-                    <enum>QFrame::Plain</enum>
-                   </property>
-                   <property name="lineWidth">
-                    <number>2</number>
-                   </property>
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <spacer name="horizontalSpacer_13">
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>40</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                </layout>
-               </item>
-              </layout>
-             </item>
-            </layout>
-           </widget>
-          </item>
           <item row="0" column="1">
            <widget class="QFrame" name="frame_2">
             <property name="frameShape">
@@ -1632,8 +1687,8 @@ font: 14pt &quot;Ubuntu&quot;;
             </layout>
            </widget>
           </item>
-          <item row="1" column="0">
-           <widget class="QFrame" name="frame_3">
+          <item row="0" column="0">
+           <widget class="QFrame" name="frame_4">
             <property name="frameShape">
              <enum>QFrame::Box</enum>
             </property>
@@ -1643,13 +1698,13 @@ font: 14pt &quot;Ubuntu&quot;;
             <property name="lineWidth">
              <number>1</number>
             </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_12">
+            <layout class="QHBoxLayout" name="horizontalLayout_16">
              <item>
-              <layout class="QVBoxLayout" name="verticalLayout_10" stretch="1,10,1">
+              <layout class="QVBoxLayout" name="verticalLayout_11" stretch="1,10,1">
                <item>
-                <widget class="QLabel" name="label_30">
+                <widget class="QLabel" name="label_40">
                  <property name="text">
-                  <string>Optical Flow</string>
+                  <string>Ang. Vel - [rad/s]</string>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignCenter</set>
@@ -1657,30 +1712,18 @@ font: 14pt &quot;Ubuntu&quot;;
                 </widget>
                </item>
                <item>
-                <widget class="QWidget" name="ExtraPLot_1" native="true">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>304</width>
-                   <height>213</height>
-                  </size>
-                 </property>
+                <widget class="Omega_Widget" name="Omega_Graph" native="true">
                  <property name="styleSheet">
                   <string notr="true">background-color: rgb(136, 138, 133);</string>
                  </property>
                 </widget>
                </item>
                <item>
-                <layout class="QHBoxLayout" name="horizontalLayout_15" stretch="10,5,10,5,10,5,2">
+                <layout class="QHBoxLayout" name="horizontalLayout_17" stretch="10,5,10,5,10,5,2">
                  <item>
-                  <widget class="QLabel" name="label_31">
+                  <widget class="QLabel" name="label_41">
                    <property name="text">
-                    <string>RREV</string>
+                    <string>Wx</string>
                    </property>
                    <property name="alignment">
                     <set>Qt::AlignCenter</set>
@@ -1688,7 +1731,7 @@ font: 14pt &quot;Ubuntu&quot;;
                   </widget>
                  </item>
                  <item>
-                  <widget class="Line" name="line_23">
+                  <widget class="Line" name="line_32">
                    <property name="styleSheet">
                     <string notr="true">color: rgb(214, 39, 40);</string>
                    </property>
@@ -1704,9 +1747,9 @@ font: 14pt &quot;Ubuntu&quot;;
                   </widget>
                  </item>
                  <item>
-                  <widget class="QLabel" name="label_32">
+                  <widget class="QLabel" name="label_42">
                    <property name="text">
-                    <string>OFx</string>
+                    <string>Wy</string>
                    </property>
                    <property name="alignment">
                     <set>Qt::AlignCenter</set>
@@ -1714,7 +1757,7 @@ font: 14pt &quot;Ubuntu&quot;;
                   </widget>
                  </item>
                  <item>
-                  <widget class="Line" name="line_24">
+                  <widget class="Line" name="line_33">
                    <property name="styleSheet">
                     <string notr="true">color: rgb(44, 160, 44);</string>
                    </property>
@@ -1730,9 +1773,9 @@ font: 14pt &quot;Ubuntu&quot;;
                   </widget>
                  </item>
                  <item>
-                  <widget class="QLabel" name="label_33">
+                  <widget class="QLabel" name="label_43">
                    <property name="text">
-                    <string>OFy</string>
+                    <string>Wz</string>
                    </property>
                    <property name="alignment">
                     <set>Qt::AlignCenter</set>
@@ -1740,7 +1783,7 @@ font: 14pt &quot;Ubuntu&quot;;
                   </widget>
                  </item>
                  <item>
-                  <widget class="Line" name="line_25">
+                  <widget class="Line" name="line_34">
                    <property name="styleSheet">
                     <string notr="true">color: rgb(31, 119, 180);</string>
                    </property>
@@ -1756,7 +1799,7 @@ font: 14pt &quot;Ubuntu&quot;;
                   </widget>
                  </item>
                  <item>
-                  <spacer name="horizontalSpacer_10">
+                  <spacer name="horizontalSpacer_13">
                    <property name="orientation">
                     <enum>Qt::Horizontal</enum>
                    </property>
@@ -1775,8 +1818,8 @@ font: 14pt &quot;Ubuntu&quot;;
             </layout>
            </widget>
           </item>
-          <item row="1" column="1">
-           <widget class="QFrame" name="frame">
+          <item row="1" column="0" colspan="2">
+           <widget class="QFrame" name="frame_17">
             <property name="frameShape">
              <enum>QFrame::Box</enum>
             </property>
@@ -1786,13 +1829,13 @@ font: 14pt &quot;Ubuntu&quot;;
             <property name="lineWidth">
              <number>1</number>
             </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_9">
+            <layout class="QHBoxLayout" name="horizontalLayout_7">
              <item>
-              <layout class="QVBoxLayout" name="verticalLayout_8" stretch="1,10,0">
+              <layout class="QVBoxLayout" name="verticalLayout_24" stretch="1,10,1">
                <item>
-                <widget class="QLabel" name="label_22">
+                <widget class="QLabel" name="label_59">
                  <property name="text">
-                  <string>Distance Estimate - [m]</string>
+                  <string>Motor Thrusts - [g]</string>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignCenter</set>
@@ -1800,30 +1843,18 @@ font: 14pt &quot;Ubuntu&quot;;
                 </widget>
                </item>
                <item>
-                <widget class="QWidget" name="ExtraPlot_2" native="true">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>304</width>
-                   <height>213</height>
-                  </size>
-                 </property>
+                <widget class="MotorThrust_Widget" name="Thrust_Graph" native="true">
                  <property name="styleSheet">
                   <string notr="true">background-color: rgb(136, 138, 133);</string>
                  </property>
                 </widget>
                </item>
                <item>
-                <layout class="QHBoxLayout" name="horizontalLayout_8" stretch="10,5,0,0,2">
+                <layout class="QHBoxLayout" name="horizontalLayout_44" stretch="10,5,10,5,10,5,10,5,2">
                  <item>
-                  <widget class="QLabel" name="label_23">
+                  <widget class="QLabel" name="label_60">
                    <property name="text">
-                    <string>D_ceiling</string>
+                    <string>M1</string>
                    </property>
                    <property name="alignment">
                     <set>Qt::AlignCenter</set>
@@ -1831,10 +1862,9 @@ font: 14pt &quot;Ubuntu&quot;;
                   </widget>
                  </item>
                  <item>
-                  <widget class="Line" name="line_17">
+                  <widget class="Line" name="line_42">
                    <property name="styleSheet">
-                    <string notr="true">color: rgb(204, 0, 0);
-color: rgb(214, 39, 40);</string>
+                    <string notr="true">color: rgb(214, 39, 40);</string>
                    </property>
                    <property name="frameShadow">
                     <enum>QFrame::Plain</enum>
@@ -1848,7 +1878,17 @@ color: rgb(214, 39, 40);</string>
                   </widget>
                  </item>
                  <item>
-                  <widget class="Line" name="line_18">
+                  <widget class="QLabel" name="label_64">
+                   <property name="text">
+                    <string>M2</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="Line" name="line_43">
                    <property name="styleSheet">
                     <string notr="true">color: rgb(44, 160, 44);</string>
                    </property>
@@ -1864,7 +1904,17 @@ color: rgb(214, 39, 40);</string>
                   </widget>
                  </item>
                  <item>
-                  <widget class="Line" name="line_19">
+                  <widget class="QLabel" name="label_65">
+                   <property name="text">
+                    <string>M3</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="Line" name="line_44">
                    <property name="styleSheet">
                     <string notr="true">color: rgb(31, 119, 180);</string>
                    </property>
@@ -1880,7 +1930,33 @@ color: rgb(214, 39, 40);</string>
                   </widget>
                  </item>
                  <item>
-                  <spacer name="horizontalSpacer_8">
+                  <widget class="QLabel" name="label_67">
+                   <property name="text">
+                    <string>M4</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="Line" name="line_47">
+                   <property name="styleSheet">
+                    <string notr="true">color: rgb(255, 127, 14);</string>
+                   </property>
+                   <property name="frameShadow">
+                    <enum>QFrame::Plain</enum>
+                   </property>
+                   <property name="lineWidth">
+                    <number>2</number>
+                   </property>
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="horizontalSpacer_21">
                    <property name="orientation">
                     <enum>Qt::Horizontal</enum>
                    </property>
@@ -2173,7 +2249,7 @@ color: rgb(214, 39, 40);</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>900</width>
+     <width>906</width>
      <height>22</height>
     </rect>
    </property>
@@ -2249,6 +2325,12 @@ color: rgb(214, 39, 40);</string>
   </customwidget>
   <customwidget>
    <class>Tau_Widget</class>
+   <extends>QWidget</extends>
+   <header>Dash_Plots</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>MotorThrust_Widget</class>
    <extends>QWidget</extends>
    <header>Dash_Plots</header>
    <container>1</container>

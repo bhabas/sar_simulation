@@ -5,7 +5,9 @@ void CF_DataConverter::Publish_StateData()
     // ===================
     //     FLIGHT DATA
     // ===================
-    StateData_msg.header.stamp = Time;
+    ros::Duration Time_delta(Time-Time_start);
+    StateData_msg.header.stamp.sec = Time_delta.sec;
+    StateData_msg.header.stamp.nsec = Time_delta.nsec;
 
     // CARTESIAN SPACE DATA
     StateData_msg.Pose = Pose;
@@ -29,6 +31,7 @@ void CF_DataConverter::Publish_StateData()
 
     // CONTROL ACTIONS
     StateData_msg.FM = FM;
+    StateData_msg.MotorThrusts = MotorThrusts;
     StateData_msg.MS_PWM = MS_PWM;
 
     // NEURAL NETWORK DATA
@@ -43,7 +46,9 @@ void CF_DataConverter::Publish_StateData()
 void CF_DataConverter::Publish_FlipData()
 {
 
-    FlipData_msg.header.stamp = Time_tr;
+    ros::Duration Time_delta(Time_tr-Time_start);
+    FlipData_msg.header.stamp.sec = Time_delta.sec;
+    FlipData_msg.header.stamp.nsec = Time_delta.nsec;
     FlipData_msg.flip_flag = flip_flag;
 
 
@@ -77,15 +82,18 @@ void CF_DataConverter::Publish_FlipData()
 void CF_DataConverter::Publish_MiscData()
 {
     MiscData_msg.header.stamp = ros::Time::now();
-    MiscData_msg.battery_voltage = 0.0;
+    MiscData_msg.battery_voltage = V_battery;
     MiscData_Pub.publish(MiscData_msg);
 }
 
 void CF_DataConverter::Publish_ImpactData()
 {
+    ros::Duration Time_delta(Time_impact-Time_start);
+    ImpactData_msg.header.stamp.sec = Time_delta.sec;
+    ImpactData_msg.header.stamp.nsec = Time_delta.nsec;
+
     ImpactData_msg.impact_flag = impact_flag;
     ImpactData_msg.BodyContact_flag = BodyContact_flag;
-    ImpactData_msg.header.stamp = Time_impact;
 
     ImpactData_msg.Force_impact.x = impact_force_x;
     ImpactData_msg.Force_impact.y = impact_force_y;
@@ -143,6 +151,7 @@ void CF_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
 
     // CONTROL ACTIONS
     FM = ctrl_msg.FM;
+    MotorThrusts = ctrl_msg.MotorThrusts;
     MS_PWM = ctrl_msg.MS_PWM;
 
     // RL POLICY DATA
@@ -268,6 +277,7 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
 
         // RESET SIM SPEED
         CF_DataConverter::adjustSimSpeed(SIM_SPEED);
+        SLOWDOWN_TYPE = 0;
 
                 
     }
@@ -288,10 +298,28 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
         {
             Sticky_Flag = true;
         }
+
+        CF_DataConverter::activateStickyFeet();
+
+    }
+
+    if(msg->cmd_type == 101)
+    {
+
     }
 
 
 }
+
+void CF_DataConverter::RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &msg)
+{
+    if(msg->trialComplete_flag == true)
+    {
+        Time_start = ros::Time::now();
+    }
+
+}
+
 
 void CF_DataConverter::SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStamped::ConstPtr &msg)
 {
@@ -426,6 +454,21 @@ void CF_DataConverter::adjustSimSpeed(float speed_mult)
     GZ_SimSpeed_Client.call(srv);
 }
 
+void CF_DataConverter::activateStickyFeet()
+{
+    if(MODEL_NAME != "crazyflie_BaseModel")
+    {
+        crazyflie_msgs::activateSticky srv;
+        srv.request.stickyFlag = Sticky_Flag;
+
+        ros::service::call("/activate_Sticky_Pad_1", srv);
+        ros::service::call("/activate_Sticky_Pad_2", srv);
+        ros::service::call("/activate_Sticky_Pad_3", srv);
+        ros::service::call("/activate_Sticky_Pad_4", srv);
+    }
+    
+}
+
 // CONVERT QUATERNION TO EULER ANGLES (YZX NOTATION)
 void CF_DataConverter::quat2euler(float quat[], float eul[]){
 
@@ -502,15 +545,18 @@ void CF_DataConverter::consoleOuput()
 
     printf("==== Controller Actions ====\n");
     printf("FM [N/N*mm]: %.3f  %.3f  %.3f  %.3f\n",FM[0],FM[1],FM[2],FM[3]);
+    printf("Motor Thrusts [g]: %.3f  %.3f  %.3f  %.3f\n",MotorThrusts[0],MotorThrusts[1],MotorThrusts[2],MotorThrusts[3]);
     printf("MS_PWM: %u  %u  %u  %u\n",MS_PWM[0],MS_PWM[1],MS_PWM[2],MS_PWM[3]);
     printf("\n");
 
 
     printf("=== Parameters ====\n");
     printf("Kp_P: %.3f  %.3f  %.3f \t",P_kp_xy,P_kp_xy,P_kp_z);
-    printf("Kp_R: %.3f  %.3f  %.3f \n",R_kd_xy,R_kd_xy,R_kd_z);
-    printf("Kd_P: %.3f  %.3f  %.3f \t",P_kp_xy,P_kp_xy,P_kp_z);
+    printf("Kp_R: %.3f  %.3f  %.3f \n",R_kp_xy,R_kp_xy,R_kp_z);
+
+    printf("Kd_P: %.3f  %.3f  %.3f \t",P_kd_xy,P_kd_xy,P_kd_z);
     printf("Kd_R: %.3f  %.3f  %.3f \n",R_kd_xy,R_kd_xy,R_kd_z);
+
     printf("Ki_P: %.3f  %.3f  %.3f \t",P_ki_xy,P_ki_xy,P_ki_z);
     printf("Ki_R: %.3f  %.3f  %.3f \n",R_ki_xy,R_ki_xy,R_ki_z);
     printf("======\n");

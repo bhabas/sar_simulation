@@ -10,7 +10,9 @@
 
 #include <ros/ros.h>
 #include "crazyflie_msgs/RLCmd.h"
+#include "crazyflie_msgs/CtrlData.h"
 #include "crazyflie_msgs/MS.h"
+
 #define g2Newton (9.81f/1000.0f)
 #define Newton2g (1000.0f/9.81f)
 
@@ -24,9 +26,8 @@ namespace gazebo {
         protected:
             void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
             void OnUpdate();
-            void updateThrust();
-            void updateTorque();
-            void MotorSpeedCallback(const crazyflie_msgs::MS::ConstPtr &msg);
+            void UpdateForcesAndMoments();
+            void CtrlData_Callback(const crazyflie_msgs::CtrlData::ConstPtr &msg);
 
 
         private:
@@ -35,15 +36,19 @@ namespace gazebo {
             physics::JointPtr joint_ptr;
             physics::LinkPtr link_ptr;
 
-            int motor_number;
-            int turning_direction;
-
             std::string jointName;
             std::string linkName;
 
+
+            // MOTOR PARAMETERS
+            int motor_number;
+            int turning_direction;
+
+            
+
             double rot_vel_visual_slowdown;
-            double rot_vel;
-            uint16_t rotorPWM = 0;
+            double rot_vel = 0.0f;
+            float MotorThrust_input = 0.0f;
 
             double thrust_coeff;
             double torque_coeff;
@@ -51,30 +56,22 @@ namespace gazebo {
             double thrust;
             double torque;
 
+
+            // FIRST ORDER FILTER BEHAVIOR
+            double timeConstantUp;
+            double timeConstantDown;
+            double sampling_time;
+            double prev_sim_time = 0.0;
+            double prev_thrust = 0.0;
+            
+
             event::ConnectionPtr updateConnection;
 
             ros::NodeHandle nh;
-            ros::Subscriber MS_Subscriber = nh.subscribe<crazyflie_msgs::MS>("/CF_Internal/MS_PWM", 1, &GazeboMotorPlugin::MotorSpeedCallback, this, ros::TransportHints().tcpNoDelay());
+            ros::Subscriber CTRL_Data_Sub = nh.subscribe<crazyflie_msgs::CtrlData>("/CTRL/data", 1, &GazeboMotorPlugin::CtrlData_Callback, this, ros::TransportHints().tcpNoDelay());
+            ros::Publisher MS_Data_Pub = nh.advertise<crazyflie_msgs::MS>("/CF_Internal/MS",1);
+
+            crazyflie_msgs::MS Thrust_msg;
     };
 
-}
-
-
-// Converts thrust in PWM to their respective values in grams
-static inline float PWM2thrust(uint16_t M_PWM) 
-{
-    // Conversion values calculated from PWM to Thrust Curve
-    float a = 3.31e4;
-    float b = 1.12e1;
-    float c = 8.72;
-    float d = 3.26e4;
-
-    float f = b*atan2f((float)M_PWM-d,a)+c;
-
-    if(f<0)
-    {
-      f = 0;
-    }
-
-    return f;
 }

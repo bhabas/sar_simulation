@@ -7,11 +7,11 @@ import os
 
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg
-BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_data'))
+BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
 sys.path.insert(0,BASE_PATH)
 
 
-from crazyflie_data.data_analysis.Data_Analysis import DataFile
+from crazyflie_logging.data_analysis.Data_Analysis import DataFile
 # os.system("clear")
 
 dataPath = f"crazyflie_data/local_logs/"
