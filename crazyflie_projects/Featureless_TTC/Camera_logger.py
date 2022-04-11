@@ -38,19 +38,22 @@ class CameraParser:
 
         self.Camera_raw = np.array([])
 
-        #initialize params
+        #INIT PARAMETERS
         self.ceiling_h = rospy.get_param("/CEILING_HEIGHT")
 
         self.Username = getpass.getuser()
-        self.Path = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Featureless_TTC/local_logs' #store the logs in a folder for organization
+        self.Path = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Featureless_TTC/logs' #store the logs in a folder for organization
         self.Filename = input("\ninput the name of the log file:\n") #wait for user input then create CSV with the given Filename
         self.Path = self.Path + '/' + self.Filename + '.csv'
         self.Create_csv()
         np.set_printoptions(threshold = sys.maxsize) #allows it to print the full string without truncation
 
-        #collect misc. data
+        #COLLECT MISC. DATA
+
         # while(self.Log_Flag):
         rospy.Subscriber("/CF_Internal/camera/image_raw",Image,self.Camera_cb,queue_size = 1)
+        # msg = rospy.wait_for_message("/CF_Internal/camera/image_raw",Image,timeout = None)
+        # self.Camera_cb(msg)
         rospy.Subscriber("/CF_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size = 1)
 
     def Create_csv(self):

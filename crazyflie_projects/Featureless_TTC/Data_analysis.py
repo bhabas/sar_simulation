@@ -147,6 +147,12 @@ class DataParser:
 
 
             It = (Cur_img - Prev_img)/(self.Time[n] - self.Time[n-1]) # Time gradient
+
+            # PLOT IMAGE GRADIENTS
+            #plt.imshow(Iu,interpolation = "none", cmap = cm.Greys)
+            #plt.imshow(Iv,interpolation = "none", cmap = cm.Greys)
+            #plt.show()
+
             G = U_grid*Iu + V_grid*Iv # Radial Gradient
 
             ## SOLVE LEAST SQUARES PROBLEM
