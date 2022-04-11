@@ -1,21 +1,4 @@
 {
-<<<<<<< HEAD
-    "configurations": [
-        {
-            "name": "Linux",
-            "includePath": [
-                "${workspaceFolder}/**",
-                "/usr/include/gazebo-11"
-            ],
-            "defines": [],
-            "compilerPath": "/usr/bin/gcc",
-            "cStandard": "gnu17",
-            "cppStandard": "gnu++14",
-            "intelliSenseMode": "linux-gcc-x64"
-        }
-    ],
-    "version": 4
-=======
   "configurations": [
     {
       "browse": {
@@ -46,5 +29,4 @@
     }
   ],
   "version": 4
->>>>>>> ec82d91aec84cabfd3ec52ba6d174868c54a5acd
 }
