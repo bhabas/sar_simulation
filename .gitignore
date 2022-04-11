@@ -15,11 +15,14 @@ crazyflie_projects/Featureless_TTC/local_logs/*
 !.gitkeep
 local_files/
 *.zip
+browse.vc.db*
+c_cpp_properities.json
 
 
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
+
 
 
 

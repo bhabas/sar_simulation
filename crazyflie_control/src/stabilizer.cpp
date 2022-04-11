@@ -21,11 +21,6 @@ void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
         Controller::publishCtrlData();
         Controller::publishCtrlDebug();
 
-
-        // PUBLISH MOTOR COMMANDS
-        MS_PWM_msg.MotorPWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
-        CF_PWM_Publisher.publish(MS_PWM_msg);
-
         
         tick++;
         rate.sleep();

@@ -2,19 +2,19 @@
 <sdf version='1.7'>
   <model name='crazyflie_Narrow-Long'>
     <include>
-      <uri>model://crazyflie_ModelBase</uri>
+      <uri>model://crazyflie_BaseModel</uri>
       <pose>0 0 0 0 0 0</pose>
     </include>
     <link name='leg1'>
       <inertial>
-        <mass>0.00066</mass>
+        <mass>0.74e-3</mass>
         <inertia>
-          <ixx>3.09e-7</ixx>
+          <ixx>3.48e-7</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>3.09e-7</iyy>
+          <iyy>3.48e-7</iyy>
           <iyz>0</iyz>
-          <izz>2.06e-9</izz>
+          <izz>2.313e-9</izz>
         </inertia>
         <pose>0 0 -0.0375 0 -0 0</pose>
       </inertial>
@@ -106,14 +106,14 @@
     </link>
     <link name='leg2'>
       <inertial>
-        <mass>0.00066</mass>
+        <mass>0.74e-3</mass>
         <inertia>
-          <ixx>3.09e-7</ixx>
+          <ixx>3.48e-7</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>3.09e-7</iyy>
+          <iyy>3.48e-7</iyy>
           <iyz>0</iyz>
-          <izz>2.06e-9</izz>
+          <izz>2.313e-9</izz>
         </inertia>
         <pose>0 0 -0.0375 0 -0 0</pose>
       </inertial>
@@ -206,14 +206,14 @@
     </link>
     <link name='leg3'>
       <inertial>
-        <mass>0.00066</mass>
+        <mass>0.74e-3</mass>
         <inertia>
-          <ixx>3.09e-7</ixx>
+          <ixx>3.48e-7</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>3.09e-7</iyy>
+          <iyy>3.48e-7</iyy>
           <iyz>0</iyz>
-          <izz>2.06e-9</izz>
+          <izz>2.313e-9</izz>
         </inertia>
         <pose>0 0 -0.0375 0 -0 0</pose>
       </inertial>
@@ -306,14 +306,14 @@
     </link>
     <link name='leg4'>
       <inertial>
-        <mass>0.00066</mass>
+        <mass>0.74e-3</mass>
         <inertia>
-          <ixx>3.09e-7</ixx>
+          <ixx>3.48e-7</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>3.09e-7</iyy>
+          <iyy>3.48e-7</iyy>
           <iyz>0</iyz>
-          <izz>2.06e-9</izz>
+          <izz>2.313e-9</izz>
         </inertia>
         <pose>0 0 -0.0375 0 -0 0</pose>
       </inertial>
@@ -405,14 +405,14 @@
     </link>
     <link name='pad_1'>
       <inertial>
-        <mass>1e-05</mass>
+        <mass>0.159e-3</mass>
         <inertia>
-          <ixx>4e-08</ixx>
+          <ixx>4.777e-09</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>4e-08</iyy>
+          <iyy>4.777e-09</iyy>
           <iyz>0</iyz>
-          <izz>4e-08</izz>
+          <izz>4.777e-09</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
@@ -502,14 +502,14 @@
     </link>
     <link name='pad_2'>
       <inertial>
-        <mass>1e-05</mass>
+        <mass>0.159e-3</mass>
         <inertia>
-          <ixx>4.3354e-08</ixx>
+          <ixx>4.777e-09</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>4.3354e-08</iyy>
+          <iyy>4.777e-09</iyy>
           <iyz>0</iyz>
-          <izz>4.3354e-08</izz>
+          <izz>4.777e-09</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
@@ -596,14 +596,14 @@
     </link>
     <link name='pad_3'>
       <inertial>
-        <mass>1e-05</mass>
+        <mass>0.159e-3</mass>
         <inertia>
-          <ixx>4.3354e-08</ixx>
+          <ixx>4.777e-09</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>4.3354e-08</iyy>
+          <iyy>4.777e-09</iyy>
           <iyz>0</iyz>
-          <izz>4.3354e-08</izz>
+          <izz>4.777e-09</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
@@ -690,14 +690,14 @@
     </link>
     <link name='pad_4'>
       <inertial>
-        <mass>1e-05</mass>
+        <mass>0.159e-3</mass>
         <inertia>
-          <ixx>4.3354e-08</ixx>
+          <ixx>4.777e-09</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>4.3354e-08</iyy>
+          <iyy>4.777e-09</iyy>
           <iyz>0</iyz>
-          <izz>4.3354e-08</izz>
+          <izz>4.777e-09</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
@@ -783,7 +783,7 @@
       </collision>
     </link>
     <joint name='leg_joint_1' type='universal'>
-      <parent>crazyflie_ModelBase::crazyflie_body</parent>
+      <parent>crazyflie_BaseModel::crazyflie_body</parent>
       <child>leg1</child>
       <pose>0 0 0 0 0.786 0</pose>
       <axis>
@@ -830,7 +830,7 @@
       </physics>
     </joint>
     <joint name='leg_joint_2' type='universal'>
-      <parent>crazyflie_ModelBase::crazyflie_body</parent>
+      <parent>crazyflie_BaseModel::crazyflie_body</parent>
       <child>leg2</child>
       <pose>0 0 0 0 0.786 0</pose>
       <axis>
@@ -877,7 +877,7 @@
       </physics>
     </joint>
     <joint name='leg_joint_3' type='universal'>
-      <parent>crazyflie_ModelBase::crazyflie_body</parent>
+      <parent>crazyflie_BaseModel::crazyflie_body</parent>
       <child>leg3</child>
       <pose>0 0 0 0 0.786 0</pose>
       <axis>
@@ -924,7 +924,7 @@
       </physics>
     </joint>
     <joint name='leg_joint_4' type='universal'>
-      <parent>crazyflie_ModelBase::crazyflie_body</parent>
+      <parent>crazyflie_BaseModel::crazyflie_body</parent>
       <child>leg4</child>
       <pose>0 0 0 0 0.786 0</pose>
       <axis>

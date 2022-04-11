@@ -23,9 +23,9 @@ class DataFile:
         filepath = self.dataPath + self.fileName
 
         # self.dataType = re.findall('SIM|EXP',fileName)[0] # FIND 'SIM' OR 'EXP'
-        self.trialNum = int(re.findall('trial_(\d+)',fileName)[0])
-        self.vel_IC = float(re.findall('Vd_(\d+\.?\d*)',fileName)[0])
-        self.phi_IC = float(re.findall('phi_(\d+\.?\d*)',fileName)[0])
+        # self.trialNum = int(re.findall('trial_(\d+)',fileName)[0])
+        # self.vel_IC = float(re.findall('Vd_(\d+\.?\d*)',fileName)[0])
+        # self.phi_IC = float(re.findall('phi_(\d+\.?\d*)',fileName)[0])
 
 
         self.trial_df = pd.read_csv(filepath,low_memory=False)
@@ -36,8 +36,8 @@ class DataFile:
         # self.trial_df.drop(0,inplace=True)
 
         # Remove rows past final complete rollout
-        final_valid_index = self.trial_df[self.trial_df['Error']=='Impact Data'].index.values[-1]
-        self.trial_df = self.trial_df.iloc[:final_valid_index+1]
+        # final_valid_index = self.trial_df[self.trial_df['Error']=='Impact Data'].index.values[-1]
+        # self.trial_df = self.trial_df.iloc[:final_valid_index+1]
 
         # Round values to prevent floating point precision issues
         self.trial_df = self.trial_df.round(3) 
@@ -46,7 +46,7 @@ class DataFile:
         self.trial_df = self.trial_df.replace({'False':False,'True':True})
 
         ## CREATE BASIC DF OF K_EP,K_RUN, & REWARD
-        self.k_df = self.trial_df.iloc[:][['k_ep','k_run','reward']].dropna()
+        self.k_df = self.trial_df.iloc[:][['k_ep','k_run']].dropna()
         self.k_df.reset_index(inplace=True)
 
         if self.dataType=='EXP':
@@ -58,9 +58,6 @@ class DataFile:
         self.k_epMax = int(self.trial_df.iloc[-1]['k_ep'])
         self.k_runMax = int(self.trial_df.iloc[-1]['k_run'])
 
-
-        ## INITIATE CLASS FOR GTC MODEL (UNFINISHED)
-        # self.GTC = GTC_Model()
         
 
         
@@ -82,7 +79,7 @@ class DataFile:
 
             self.trial_df.drop(np.arange(idx_start,idx_end,dtype='int'),inplace=True)
 
-        self.k_df = self.trial_df.iloc[:][['k_ep','k_run','reward']].dropna()
+        self.k_df = self.trial_df.iloc[:][['k_ep','k_run']].dropna()
         self.k_df.reset_index(inplace=True)
 
     def select_run(self,k_ep,k_run): ## Create run dataframe from k_ep and k_run

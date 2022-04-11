@@ -26,7 +26,10 @@ is easy to use.
 #include "crazyflie_msgs/CtrlData.h"
 #include "crazyflie_msgs/CtrlDebug.h"
 #include "crazyflie_msgs/RLCmd.h"
+#include "crazyflie_msgs/RLData.h"
 #include "crazyflie_msgs/PadConnect.h"
+
+#include "crazyflie_msgs/activateSticky.h"
 
 class CF_DataConverter
 {
@@ -39,6 +42,7 @@ class CF_DataConverter
             CTRL_Data_Sub = nh->subscribe("/CTRL/data", 1, &CF_DataConverter::CtrlData_Callback, this, ros::TransportHints().tcpNoDelay());
             CTRL_Debug_Sub = nh->subscribe("/CTRL/debug", 1, &CF_DataConverter::CtrlDebug_Callback, this, ros::TransportHints().tcpNoDelay());
             RL_CMD_Sub = nh->subscribe("/RL/cmd",5,&CF_DataConverter::RL_CMD_Callback,this,ros::TransportHints().tcpNoDelay());
+            RL_Data_Sub = nh->subscribe("/RL/data",5,&CF_DataConverter::RL_Data_Callback,this,ros::TransportHints().tcpNoDelay());
             Surface_FT_Sub = nh->subscribe("/ENV/Surface_FT_sensor",5,&CF_DataConverter::SurfaceFT_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
             Surface_Contact_Sub = nh->subscribe("/ENV/BodyContact",5,&CF_DataConverter::Surface_Contact_Callback,this,ros::TransportHints().tcpNoDelay());
             PadConnect_Sub = nh->subscribe("/ENV/Pad_Connections",5,&CF_DataConverter::Pad_Connections_Callback,this,ros::TransportHints().tcpNoDelay());
@@ -55,9 +59,10 @@ class CF_DataConverter
             
 
             CF_DataConverter::LoadParams();
+            Time_start = ros::Time::now();
 
             CF_DataConverter::adjustSimSpeed(SIM_SPEED);
-            BodyCollision_str = MODEL_NAME + "::crazyflie_ModelBase::crazyflie_body::body_collision";
+            BodyCollision_str = MODEL_NAME + "::crazyflie_BaseModel::crazyflie_body::body_collision";
 
             CF_DCThread = std::thread(&CF_DataConverter::MainLoop, this);
 
@@ -70,6 +75,7 @@ class CF_DataConverter
         void CtrlDebug_Callback(const crazyflie_msgs::CtrlDebug &ctrl_msg);
 
         void RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
+        void RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &msg);
         void SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStamped::ConstPtr &msg);
         void Surface_Contact_Callback(const gazebo_msgs::ContactsState &msg);
         void Pad_Connections_Callback(const crazyflie_msgs::PadConnect &msg);
@@ -80,6 +86,7 @@ class CF_DataConverter
         void Publish_MiscData();
 
         void MainLoop();
+        void activateStickyFeet();
         void LoadParams();
         void consoleOuput();
         void checkSlowdown();
@@ -93,6 +100,7 @@ class CF_DataConverter
         ros::Subscriber CTRL_Data_Sub;
         ros::Subscriber CTRL_Debug_Sub;
         ros::Subscriber RL_CMD_Sub;
+        ros::Subscriber RL_Data_Sub;
         ros::Subscriber Surface_FT_Sub;
         ros::Subscriber Surface_Contact_Sub;
         ros::Subscriber PadConnect_Sub;
@@ -115,12 +123,19 @@ class CF_DataConverter
         std::thread CF_DCThread;
         std::string BodyCollision_str;
         uint32_t tick = 1;
+        ros::Time Time_start;
         
         // ===================
         //     ROS PARAMS
         // ===================
 
         std::string MODEL_NAME;
+
+        // DEFAULT INERTIA VALUES FOR BASE CRAZYFLIE
+        float CF_MASS = 34.4e3; // [kg]
+        float Ixx = 15.83e-6f;  // [kg*m^2]
+        float Iyy = 17.00e-6f;  // [kg*m^2]
+        float Izz = 31.19e-6f;  // [kg*m^2]
 
         int SLOWDOWN_TYPE = 0;
         bool LANDING_SLOWDOWN_FLAG;
@@ -152,6 +167,7 @@ class CF_DataConverter
         double D_ceil;
 
         boost::array<double, 4> FM;
+        boost::array<double, 4> MotorThrusts;
         boost::array<uint16_t, 4> MS_PWM;
 
         double Tau_thr;
@@ -250,11 +266,16 @@ class CF_DataConverter
 
 void CF_DataConverter::LoadParams()
 {
+
+    // COLLECT MODEL PARAMETERS
     ros::param::get("/MODEL_NAME",MODEL_NAME);
-    // ros::param::get("/CF_MASS",_CF_MASS);
+    ros::param::get("/CF_MASS",CF_MASS);
+    ros::param::get("/Ixx",Ixx);
+    ros::param::get("/Iyy",Iyy);
+    ros::param::get("/Izz",Izz);
     ros::param::get("/POLICY_TYPE",POLICY_TYPE);
 
-    // // DEBUG SETTINGS
+    // DEBUG SETTINGS
     ros::param::get("/SIM_SPEED",SIM_SPEED);
     ros::param::get("/SIM_SLOWDOWN_SPEED",SIM_SLOWDOWN_SPEED);
     ros::param::get("/LANDING_SLOWDOWN_FLAG",LANDING_SLOWDOWN_FLAG);

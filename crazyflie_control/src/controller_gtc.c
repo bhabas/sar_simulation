@@ -46,14 +46,17 @@ float kd_xf = 1; // Pos. Derivative Gain Flag
 
 
 // SYSTEM PARAMETERS
-float m = 0.0376;           // [kg]
-float g = 9.81f;            // [m/s^2]
+float m = 34.3e-3f;     // [kg]
+float Ixx = 15.83e-6f;  // [kg*m^2]
+float Iyy = 17.00e-6f;  // [kg*m^2]
+float Izz = 31.19e-6f;  // [kg*m^2]
 float h_ceiling = 2.10f;    // [m]
+
+float g = 9.81f;            // [m/s^2]
 static struct mat33 J; // Rotational Inertia Matrix [kg*m^2]
 
 
-static float d = 0.040f;    // COM to Prop [m]
-static float dp = 0.028284; // COM to Prop along x-axis [m]
+static float dp = 0.0325; // COM to Prop along x-axis [m]
                             // [dp = d*sin(45 deg)]
 
 static float const kf = 2.2e-8f;    // Thrust Coeff [N/(rad/s)^2]
@@ -126,11 +129,17 @@ struct vec F_thrust_ideal;           // Ideal thrust vector [N]
 float F_thrust = 0.0f;               // Implemented body thrust [N]
 struct vec M = {0.0f,0.0f,0.0f};     // Implemented body moments [N*m]
 
-// MOTOR THRUSTS
+// MOTOR THRUST ACTIONS
 float f_thrust_g = 0.0f; // Motor thrust - Thrust [g]
 float f_roll_g = 0.0f;   // Motor thrust - Roll   [g]
 float f_pitch_g = 0.0f;  // Motor thrust - Pitch  [g]
 float f_yaw_g = 0.0f;    // Motor thrust - Yaw    [g]
+
+// INDIVIDUAL MOTOR THRUSTS
+float M1_thrust = 0.0f;
+float M2_thrust = 0.0f;
+float M3_thrust = 0.0f;
+float M4_thrust = 0.0f;
 
 
 // MOTOR VARIABLES
@@ -138,6 +147,13 @@ uint16_t M1_pwm = 0;
 uint16_t M2_pwm = 0; 
 uint16_t M3_pwm = 0; 
 uint16_t M4_pwm = 0; 
+
+// CONTROL OVERRIDE VALUES
+
+uint16_t PWM_override[4] = {0,0,0,0};               // Motor PWM values
+float thrust_override[4] = {0.0f,0.0f,0.0f,0.0f}; // Motor thrusts [g] 
+
+
 
 
 
@@ -149,7 +165,6 @@ uint16_t M4_pwm = 0;
 bool tumbled = false;
 bool tumble_detection = true;
 bool motorstop_flag = false;
-bool errorReset = false; // Resets error vectors (removed integral windup)
 bool safeModeFlag = false;
 
 bool execute_traj = false;
@@ -161,6 +176,8 @@ bool onceFlag = false;
 bool moment_flag = false;
 bool attCtrlEnable = false;
 bool safeModeEnable = true;
+bool customThrust_flag = false;
+bool customPWM_flag = false;
 
 
 // DEFINE POLICY TYPE ACTIVATED
@@ -244,7 +261,7 @@ void controllerGTCInit(void)
     controllerGTCReset();
     controllerGTCTest();
     X = nml_mat_new(3,1);
-    J = mdiag(1.65717e-5f,1.65717e-5f,2.92617e-5f);
+    J = mdiag(Ixx,Iyy,Izz);
 
     initNN_Layers(&Scaler_Flip,W_flip,b_flip,NN_Params_Flip,3);
     initNN_Layers(&Scaler_Policy,W_policy,b_policy,NN_Params_Policy,3);
@@ -271,6 +288,8 @@ void controllerGTCReset(void)
     // RESET SYSTEM FLAGS
     tumbled = false;
     motorstop_flag = false;
+    customThrust_flag = false;
+    customPWM_flag = false;
 
     moment_flag = false;
     policy_armed_flag = false;
@@ -411,6 +430,27 @@ void GTC_Command(setpoint_t *setpoint)
             }
 
             break;
+
+        case 10: // Custom Thrust Values
+
+            customThrust_flag = true;
+            thrust_override[0] = setpoint->cmd_val1;
+            thrust_override[1] = setpoint->cmd_val2;
+            thrust_override[2] = setpoint->cmd_val3;
+            thrust_override[3] = setpoint->cmd_flag;
+
+            break;
+
+        case 12: // Custom PWM Values
+
+            customPWM_flag = true;
+            PWM_override[0] = setpoint->cmd_val1;
+            PWM_override[1] = setpoint->cmd_val2;
+            PWM_override[2] = setpoint->cmd_val3;
+            PWM_override[3] = setpoint->cmd_flag;
+
+            break;
+
     }
     
 }
@@ -464,6 +504,12 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                                         state_t *state,
                                         const uint32_t tick)
 {
+
+    // if (RATE_DO_EXECUTE(5, tick)) {
+    //     consolePrintf("Mass: %.6f\n",m);
+    //     consolePrintf("Ixx: %.3f \t Iyy: %.3f \t Izz: %.3f\n",Ixx*1e6f,Iyy*1e6f,Izz*1e6f);
+    // }
+
     if (RATE_DO_EXECUTE(RATE_500_HZ, tick)) {
 
         if (setpoint->GTC_cmd_rec == true)
@@ -472,10 +518,6 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                 setpoint->GTC_cmd_rec = false;
             }
 
-        if (errorReset){
-            controllerGTCReset();
-            errorReset = false;
-            }
 
         if(execute_traj){
             controllerGTCTraj();
@@ -589,152 +631,94 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         if(moment_flag == true)
         {
             F_thrust = 0.0f;
-            M = M_d;
+            M = vscl(2.0f,M_d);
         }
 
-        // =========== CONVERT THRUSTS AND MOMENTS TO PWM =========== // 
-        f_thrust_g = F_thrust/4.0f*Newton2g;
+        // =========== CONVERT THRUSTS [N] AND MOMENTS [N*m] TO PWM =========== // 
+        f_thrust_g = clamp(F_thrust/4.0f*Newton2g, 0.0f, f_MAX*0.8f); // Clamp thrust to prevent control saturation
         f_roll_g = M.x/(4.0f*dp)*Newton2g;
         f_pitch_g = M.y/(4.0f*dp)*Newton2g;
         f_yaw_g = M.z/(4.0*c_tf)*Newton2g;
 
-        f_thrust_g = clamp(f_thrust_g,0.0,f_MAX*0.8);    // Clamp thrust to prevent control saturation
-
-        // Add respective thrust components and limit to (0 <= PWM <= 60,000)
-        M1_pwm = limitPWM(thrust2PWM(f_thrust_g + f_roll_g - f_pitch_g + f_yaw_g)); 
-        M2_pwm = limitPWM(thrust2PWM(f_thrust_g + f_roll_g + f_pitch_g - f_yaw_g));
-        M3_pwm = limitPWM(thrust2PWM(f_thrust_g - f_roll_g + f_pitch_g + f_yaw_g));
-        M4_pwm = limitPWM(thrust2PWM(f_thrust_g - f_roll_g - f_pitch_g - f_yaw_g));
-
-
-        // TUMBLE DETECTION
-        if (b3.z <= 0 && tumble_detection == true){
-            tumbled = true;
-        }
-        
-        if(motorstop_flag || tumbled){ // Cutoff all motor values
-            f_thrust_g = 0.0f;
-            M1_pwm = 0;
-            M2_pwm = 0;
-            M3_pwm = 0;
-            M4_pwm = 0;
-        }
-
-
-
-        // THESE CONNECT TO POWER_DISTRIBUTION_STOCK.C TO 
-        control->thrust = f_thrust_g;
+        // THESE CONNECT TO POWER_DISTRIBUTION_STOCK.C
+        control->thrust = f_thrust_g;                   // This gets passed to firmware EKF
         control->roll = (int16_t)(f_roll_g*1e3f);
         control->pitch = (int16_t)(f_pitch_g*1e3f);
         control->yaw = (int16_t)(f_yaw_g*1e3f);
-       
 
+        // ADD RESPECTIVE THRUST COMPONENTS
+        M1_thrust = clamp(f_thrust_g + f_roll_g - f_pitch_g + f_yaw_g, 0.0f, f_MAX);
+        M2_thrust = clamp(f_thrust_g + f_roll_g + f_pitch_g - f_yaw_g, 0.0f, f_MAX);
+        M3_thrust = clamp(f_thrust_g - f_roll_g + f_pitch_g + f_yaw_g, 0.0f, f_MAX);
+        M4_thrust = clamp(f_thrust_g - f_roll_g - f_pitch_g - f_yaw_g, 0.0f, f_MAX);
 
         
+
+        // TUMBLE DETECTION
+        if(b3.z <= 0 && tumble_detection == true){ // If b3 axis has a negative z-component (Quadrotor is inverted)
+            tumbled = true;
+        }
+        
+        // UPDATE THRUST COMMANDS
+        if(motorstop_flag || tumbled) // STOP MOTOR COMMANDS
+        { 
+            M1_thrust = 0.0f;
+            M2_thrust = 0.0f;
+            M3_thrust = 0.0f;
+            M4_thrust = 0.0f;
+
+        }
+        else if(customThrust_flag) // REPLACE THRUST VALUES WITH CUSTOM VALUES
+        {
+            
+            M1_thrust = thrust_override[0];
+            M2_thrust = thrust_override[1];
+            M3_thrust = thrust_override[2];
+            M4_thrust = thrust_override[3];
+
+        }
+
+        // UPDATE PWM COMMANDS
+        if(customPWM_flag)
+        {
+            M1_pwm = PWM_override[0]; 
+            M2_pwm = PWM_override[1];
+            M3_pwm = PWM_override[2];
+            M4_pwm = PWM_override[3];
+        }
+        else 
+        {
+            // CONVERT THRUSTS TO PWM SIGNALS
+            M1_pwm = thrust2PWM(M1_thrust); 
+            M2_pwm = thrust2PWM(M2_thrust);
+            M3_pwm = thrust2PWM(M3_thrust);
+            M4_pwm = thrust2PWM(M4_thrust);
+        }
+  
 
         compressStates();
         compressSetpoints();
         compressFlipStates();
     }
 
-        
-    if(safeModeEnable) // If safeMode is enabled then override all PWM commands
+    if(safeModeEnable)
     {
-        M1_pwm = 0;
-        M2_pwm = 0;
-        M3_pwm = 0;
-        M4_pwm = 0;
+        motorsSetRatio(MOTOR_M1, 0);
+        motorsSetRatio(MOTOR_M2, 0);
+        motorsSetRatio(MOTOR_M3, 0);
+        motorsSetRatio(MOTOR_M4, 0);
     }
-    else
-    {
+    else{
+        // SEND PWM VALUES TO MOTORS
         motorsSetRatio(MOTOR_M1, M4_pwm);
         motorsSetRatio(MOTOR_M2, M3_pwm);
         motorsSetRatio(MOTOR_M3, M2_pwm);
         motorsSetRatio(MOTOR_M4, M1_pwm);
-    }
 
+    }
     
 
-}
-
-
-
-
-
-
-void compressStates(){
-    StatesZ_GTC.xy = compressXY(statePos.x,statePos.y);
-    StatesZ_GTC.z = (int16_t)(statePos.z * 1000.0f);
-
-    StatesZ_GTC.vxy = compressXY(stateVel.x, stateVel.y);
-    StatesZ_GTC.vz = (int16_t)(stateVel.z * 1000.0f);
-
-    StatesZ_GTC.wxy = compressXY(stateOmega.x,stateOmega.y);
-    StatesZ_GTC.wz = (int16_t)(stateOmega.z * 1000.0f);
-
-
-    float const q[4] = {
-        stateQuat.x,
-        stateQuat.y,
-        stateQuat.z,
-        stateQuat.w};
-    StatesZ_GTC.quat = quatcompress(q);
-
-    // COMPRESS SENSORY VALUES
-    StatesZ_GTC.OF_xy = compressXY(OFx,OFy);
-    StatesZ_GTC.Tau = (int16_t)(Tau * 1000.0f); 
-    StatesZ_GTC.d_ceil = (int16_t)(d_ceil * 1000.0f);
-
-    // COMPRESS THRUST/MOMENT VALUES
-    StatesZ_GTC.FMz = compressXY(F_thrust,M.z*1000.0f);
-    StatesZ_GTC.Mxy = compressXY(M.x*1000.0f,M.y*1000.0f);
-
-    // COMPRESS PWM VALUES
-    StatesZ_GTC.MS_PWM12 = compressXY(M1_pwm*0.5e-3f,M2_pwm*0.5e-3f);
-    StatesZ_GTC.MS_PWM34 = compressXY(M3_pwm*0.5e-3f,M4_pwm*0.5e-3f);
-
-    StatesZ_GTC.NN_FP = compressXY(NN_flip,NN_policy);
-
-}
-
-
-
-
-void compressSetpoints(){
-    setpointZ_GTC.xy = compressXY(x_d.x,x_d.y);
-    setpointZ_GTC.z = (int16_t)(x_d.z * 1000.0f);
-
-    setpointZ_GTC.vxy = compressXY(v_d.x,v_d.y);
-    setpointZ_GTC.vz = (int16_t)(v_d.z * 1000.0f);
-
-    setpointZ_GTC.axy = compressXY(a_d.x,a_d.y);
-    setpointZ_GTC.az = (int16_t)(a_d.z * 1000.0f);
-}
-
-
-void compressFlipStates(){
-    FlipStatesZ_GTC.xy = compressXY(statePos_tr.x,statePos_tr.y);
-    FlipStatesZ_GTC.z = (int16_t)(statePos_tr.z * 1000.0f);
-
-    FlipStatesZ_GTC.vxy = compressXY(stateVel_tr.x, stateVel_tr.y);
-    FlipStatesZ_GTC.vz = (int16_t)(stateVel_tr.z * 1000.0f);
-
-    FlipStatesZ_GTC.wxy = compressXY(stateOmega_tr.x,stateOmega_tr.y);
-    FlipStatesZ_GTC.wz = (int16_t)(stateOmega_tr.z * 1000.0f);
-
-
-    float const q[4] = {
-        stateQuat_tr.x,
-        stateQuat_tr.y,
-        stateQuat_tr.z,
-        stateQuat_tr.w};
-    FlipStatesZ_GTC.quat = quatcompress(q);
-
-   FlipStatesZ_GTC.OF_xy = compressXY(OFx_tr,OFy_tr);
-   FlipStatesZ_GTC.Tau = (int16_t)(Tau_tr * 1000.0f); 
-   FlipStatesZ_GTC.d_ceil = (int16_t)(d_ceil_tr * 1000.0f);
-
-   FlipStatesZ_GTC.NN_FP = compressXY(NN_tr_flip,NN_tr_policy);
+    
 
 }
 
@@ -855,5 +839,87 @@ void controlOutput(state_t *state, sensorData_t *sensors)
 
     F_thrust = vdot(F_thrust_ideal, b3);    // Project ideal thrust onto b3 vector [N]
     M = vadd(R_effort,Gyro_dyn);            // Control moments [Nm]
+
+}
+
+
+void compressStates(){
+    StatesZ_GTC.xy = compressXY(statePos.x,statePos.y);
+    StatesZ_GTC.z = (int16_t)(statePos.z * 1000.0f);
+
+    StatesZ_GTC.vxy = compressXY(stateVel.x, stateVel.y);
+    StatesZ_GTC.vz = (int16_t)(stateVel.z * 1000.0f);
+
+    StatesZ_GTC.wxy = compressXY(stateOmega.x/10,stateOmega.y/10);
+    StatesZ_GTC.wz = (int16_t)(stateOmega.z * 1000.0f);
+
+
+    float const q[4] = {
+        stateQuat.x,
+        stateQuat.y,
+        stateQuat.z,
+        stateQuat.w};
+    StatesZ_GTC.quat = quatcompress(q);
+
+    // COMPRESS SENSORY VALUES
+    StatesZ_GTC.OF_xy = compressXY(OFx,OFy);
+    StatesZ_GTC.Tau = (int16_t)(Tau * 1000.0f); 
+    StatesZ_GTC.d_ceil = (int16_t)(d_ceil * 1000.0f);
+
+    // COMPRESS THRUST/MOMENT VALUES
+    StatesZ_GTC.FMz = compressXY(F_thrust,M.z*1000.0f);
+    StatesZ_GTC.Mxy = compressXY(M.x*1000.0f,M.y*1000.0f);
+
+    // COMPRESS MOTOR THRUST VALUES
+    StatesZ_GTC.M_thrust12 = compressXY(M1_thrust,M2_thrust);
+    StatesZ_GTC.M_thrust34 = compressXY(M3_thrust,M4_thrust);
+
+    
+    // COMPRESS PWM VALUES
+    StatesZ_GTC.MS_PWM12 = compressXY(M1_pwm*0.5e-3f,M2_pwm*0.5e-3f);
+    StatesZ_GTC.MS_PWM34 = compressXY(M3_pwm*0.5e-3f,M4_pwm*0.5e-3f);
+
+    StatesZ_GTC.NN_FP = compressXY(NN_flip,NN_policy);
+
+}
+
+
+
+
+void compressSetpoints(){
+    setpointZ_GTC.xy = compressXY(x_d.x,x_d.y);
+    setpointZ_GTC.z = (int16_t)(x_d.z * 1000.0f);
+
+    setpointZ_GTC.vxy = compressXY(v_d.x,v_d.y);
+    setpointZ_GTC.vz = (int16_t)(v_d.z * 1000.0f);
+
+    setpointZ_GTC.axy = compressXY(a_d.x,a_d.y);
+    setpointZ_GTC.az = (int16_t)(a_d.z * 1000.0f);
+}
+
+
+void compressFlipStates(){
+    FlipStatesZ_GTC.xy = compressXY(statePos_tr.x,statePos_tr.y);
+    FlipStatesZ_GTC.z = (int16_t)(statePos_tr.z * 1000.0f);
+
+    FlipStatesZ_GTC.vxy = compressXY(stateVel_tr.x, stateVel_tr.y);
+    FlipStatesZ_GTC.vz = (int16_t)(stateVel_tr.z * 1000.0f);
+
+    FlipStatesZ_GTC.wxy = compressXY(stateOmega_tr.x,stateOmega_tr.y);
+    FlipStatesZ_GTC.wz = (int16_t)(stateOmega_tr.z * 1000.0f);
+
+
+    float const q[4] = {
+        stateQuat_tr.x,
+        stateQuat_tr.y,
+        stateQuat_tr.z,
+        stateQuat_tr.w};
+    FlipStatesZ_GTC.quat = quatcompress(q);
+
+   FlipStatesZ_GTC.OF_xy = compressXY(OFx_tr,OFy_tr);
+   FlipStatesZ_GTC.Tau = (int16_t)(Tau_tr * 1000.0f); 
+   FlipStatesZ_GTC.d_ceil = (int16_t)(d_ceil_tr * 1000.0f);
+
+   FlipStatesZ_GTC.NN_FP = compressXY(NN_tr_flip,NN_tr_policy);
 
 }

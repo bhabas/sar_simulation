@@ -50,6 +50,7 @@ class DashboardNode:
         self.d_ceil = 0.0 
 
         self.MS_PWM = [0,0,0,0] # Controller Motor Speeds (MS1,MS2,MS3,MS4) [PWM]
+        self.MotorThrusts = [0,0,0,0] # Controller Motor Thrusts [M1,M2,M3,M4][g]
         self.FM = [0,0,0,0]     # Controller Force/Moments (F_thrust,Mx,My,Mz) [N,N*mm]
         
         self.NN_flip = 0.0
@@ -173,6 +174,11 @@ class DashboardNode:
                             StateData_msg.FM[2],
                             StateData_msg.FM[3]],3)
 
+        self.MotorThrusts = np.round([StateData_msg.MotorThrusts[0],
+                                      StateData_msg.MotorThrusts[1],
+                                      StateData_msg.MotorThrusts[2],
+                                      StateData_msg.MotorThrusts[3]],3)
+
         self.MS_PWM = np.round([StateData_msg.MS_PWM[0],
                                 StateData_msg.MS_PWM[1],
                                 StateData_msg.MS_PWM[2],
@@ -289,7 +295,7 @@ class DashboardNode:
 
     def CF_MiscDataCallback(self,MiscData_msg):
         
-        self.V_battery = np.round(MiscData_msg.battery_voltage,4)
+        self.V_Battery = np.round(MiscData_msg.battery_voltage,4)
 
     # ============================
     ##     Reward Subscriber

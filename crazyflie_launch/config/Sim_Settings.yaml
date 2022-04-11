@@ -1,6 +1,6 @@
-MODEL_NAME: "crazyflie_Wide-Short"
+DATA_TYPE: "SIM"
 SURFACE_NAME: "CeilingPlane_Large"
-GROUND_NAME: "GroundPlane_Desert_Visual"
+GROUND_NAME: "GroundPlane_Desert_Physical"
 
 GUI_FLAG: False
 PAUSE_FLAG: True
@@ -11,9 +11,8 @@ SIM_SLOWDOWN_SPEED: 0.01
 LANDING_SLOWDOWN_FLAG: True
 
 
-K_EP_MAX: 250
+K_EP_MAX: 2
 CEILING_HEIGHT: 2.1
-CF_MASS: 0.0376
 
 POLICY_TYPE: 0 # 0: RL POLICY 1: NN POLICY
 
