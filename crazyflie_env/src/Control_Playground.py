@@ -9,7 +9,6 @@ from Crazyflie_env import CrazyflieEnv
 from gazebo_msgs.msg import ModelState
 
 
-os.system("clear")
 
        
 def cmd_send(env):

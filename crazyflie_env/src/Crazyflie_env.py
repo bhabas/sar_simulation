@@ -179,9 +179,8 @@ class CrazyflieEnv:
         self.vel_d = [0.0,0.0,0.0] # Desired velocity for trial
      
         ## TRAJECTORY VALUES
-        self.posCF_0 = [0,0,0.4]        # Default hover position [m]
-        self.accCF_max = [2.0,2.0,3.4]  # Max acceleration values for trajectory generation [m/s^2]
-        
+        self.posCF_0 = [0.0, 0.0, 0.4]        # Default hover position [m]
+        self.accCF_max = [1.0, 1.0, 3.1]  # Max 5acceleration values for trajectory generation [m/s^2]
       
 
 
