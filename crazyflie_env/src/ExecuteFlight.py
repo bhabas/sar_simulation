@@ -32,7 +32,8 @@ def executeFlight(env,agent):
     ## RESET TO INITIAL STATE
     env.step("home") # Reset control vals and functionality to default vals
     # time.sleep(0.5) # Time for CF to settle [Real-Time seconds]
-    input("here")
+    # input("here")
+    env.RL_Publish()
     env.startLogging()
 
 
@@ -44,8 +45,6 @@ def executeFlight(env,agent):
     start_time_impact = np.nan
 
     ## RESET LOGGING CONDITIONS 
-    t_prev = 0.0
-
     onceFlag_flip = False    # Ensures flip data recorded only once
     onceFlag_impact = False   # Ensures impact data recorded only once 
 
@@ -153,6 +152,7 @@ def executeFlight(env,agent):
             
 
             ## RUN DATA LOGGING
+            env.RL_Publish()
             env.capLogging()
 
             
@@ -165,7 +165,6 @@ def executeFlight(env,agent):
         
             break # Break from run loop
             
-        t_prev = env.t   
 
     ## =======  RUN COMPLETED  ======= ##
     
@@ -187,7 +186,6 @@ if __name__ == '__main__':
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 24
-    env.agent_name = agent.agent_type
     env.trial_name = f"ExampleFlight--trial_{int(trial_num):02d}--{env.modelInitials}"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
     env.logging_flag = True

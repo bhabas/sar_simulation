@@ -154,9 +154,9 @@ class CrazyflieEnv:
         self.k_ep = 0           # Episode number
         self.k_run = 0          # Run number
 
-        self.mu = []            # Gaussian mean that policies are sampled from
-        self.sigma = []         # Gaussian standard deviation policies are sampled from
-        self.policy = []        # Policy sampled from Gaussian distribution
+        self.mu = [0.0,0.0]            # Gaussian mean that policies are sampled from
+        self.sigma = [0.0,0.0]         # Gaussian standard deviation policies are sampled from
+        self.policy = [0.0,0.0,0.0]        # Policy sampled from Gaussian distribution
 
         self.mu_1_list = []
         self.mu_2_list = []
@@ -433,10 +433,6 @@ class CrazyflieEnv:
         
         RL_msg = RLData() ## Initialize RLData message
         
-        # RL_msg.trial_name = self.trial_name
-        # RL_msg.agent = self.agent_name
-        # RL_msg.error = self.error_str
-
         # RL_msg.n_rollouts = self.n_rollouts
         # RL_msg.h_ceiling = self.h_ceiling
 
@@ -444,18 +440,15 @@ class CrazyflieEnv:
         RL_msg.k_run = self.k_run
 
         RL_msg.mu = self.mu
-        # RL_msg.sigma = self.sigma
-        # RL_msg.policy = self.policy
+        RL_msg.sigma = self.sigma
+        RL_msg.policy = self.policy
 
-        # RL_msg.reward = self.reward
-        # RL_msg.reward_avg = self.reward_avg
+        RL_msg.reward = self.reward
+        RL_msg.reward_avg = self.reward_avg
 
-        # RL_msg.vel_d = self.vel_d
-        # RL_msg.impact_flag = self.impact_flag
-        # RL_msg.body_contact = self.BodyContact_flag
-        # RL_msg.leg_contacts = self.pad_connections
+        RL_msg.vel_d = self.vel_d
 
-        # RL_msg.trialComplete_flag = self.trialComplete_flag
+        RL_msg.trialComplete_flag = self.trialComplete_flag
         self.RL_Data_Publisher.publish(RL_msg) ## Publish RLData message
 
         ## CONVERGENCE HISTORY

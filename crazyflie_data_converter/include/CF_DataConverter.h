@@ -292,7 +292,7 @@ class CF_DataConverter
 
         boost::array<double,2> mu{0.0,0.0};
         boost::array<float,2> sigma{0.0,0.0};
-        boost::array<float,2> policy{0.0,0.0};
+        boost::array<float,3> policy{0.0,0.0,0.0};
 
         float reward = 0.0;
 

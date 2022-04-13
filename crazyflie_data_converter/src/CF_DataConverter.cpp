@@ -320,8 +320,8 @@ void CF_DataConverter::RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &
     n_rollouts = msg->n_rollouts;
 
     mu = msg->mu;
-    // sigma = msg->sigma;
-    // policy = msg->policy;
+    sigma = msg->sigma;
+    policy = msg->policy;
 
     reward = msg->reward;
 
@@ -333,7 +333,6 @@ void CF_DataConverter::RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &
     {
         Time_start = ros::Time::now();
     }
-
 }
 
 
@@ -582,7 +581,7 @@ void CF_DataConverter::consoleOuput()
 void CF_DataConverter::MainLoop()
 {
     int loopRate = 100;     // [Hz]
-    int consoleRate = 20;   // [Hz]
+    int consoleRate = 40;   // [Hz]
     ros::Rate rate(loopRate);
 
     
