@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
 import threading,os
 import rospy
-import time
 import numpy as np
 
 from RL_agents.rl_EM import rlEM_PEPGAgent
 from Crazyflie_env import CrazyflieEnv
-from gazebo_msgs.msg import ModelState
-
-
 
        
 def cmd_send(env):
@@ -177,7 +173,6 @@ if __name__ == '__main__':
 
     env.createCSV()
     env.startLogging()
-    env.capLogging()
 
     # time.sleep(5)
     cmd_thread = threading.Thread(target=cmd_send,args=(env,))

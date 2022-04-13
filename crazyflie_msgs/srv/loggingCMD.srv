@@ -1,5 +1,4 @@
-string loggingPath
-string fileName
+string filePath
 bool createCSV
 bool logging_flag
 bool capLogging

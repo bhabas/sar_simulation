@@ -585,7 +585,6 @@ void CF_DataConverter::MainLoop()
     int consoleRate = 20;   // [Hz]
     ros::Rate rate(loopRate);
 
-    // create_CSV();
     
     while(ros::ok)
     {   

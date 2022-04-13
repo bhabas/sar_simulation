@@ -206,8 +206,7 @@ class CrazyflieEnv:
         srv = loggingCMDRequest()
 
         srv.createCSV = True
-        srv.loggingPath = self.loggingPath
-        srv.fileName = "Example.csv"
+        srv.filePath = self.filepath
         
 
         # ## PUBLISH MODEL STATE SERVICE REQUEST

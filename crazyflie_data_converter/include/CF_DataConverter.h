@@ -550,8 +550,7 @@ bool CF_DataConverter::DataLogging(crazyflie_msgs::loggingCMD::Request &req, cra
 
     if(req.createCSV == true)
     {   
-        std::string str = req.loggingPath + "/" + req.fileName;
-        fPtr = fopen(str.c_str(), "w");
+        fPtr = fopen(req.filePath.c_str(), "w");
         create_CSV();
     }
     else if(req.capLogging == true)
@@ -561,7 +560,6 @@ bool CF_DataConverter::DataLogging(crazyflie_msgs::loggingCMD::Request &req, cra
         append_CSV_flip();
         append_CSV_impact();
         append_CSV_blank();
-
     }
 
     
