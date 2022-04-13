@@ -51,6 +51,7 @@ class CrazyflieEnv:
         self.agent_name = ''    # Learning agent used for training (PEPG,EM,etc...)
         self.runComplete_flag = False
         self.trialComplete_flag = False
+        self.logging_flag = False
         self.repeat_run = False
 
 
@@ -200,16 +201,45 @@ class CrazyflieEnv:
 
         print("[COMPLETED] Environment done")
 
-    def startLogging(self):
+    def createCSV(self):
 
-        logging_srv = loggingCMDRequest()
+        srv = loggingCMDRequest()
 
-        logging_srv.val1 = 5.0
+        srv.createCSV = True
+        srv.loggingPath = self.loggingPath
+        srv.fileName = "Example.csv"
+        
 
         # ## PUBLISH MODEL STATE SERVICE REQUEST
-        rospy.wait_for_service('/DataLogging')
-        logging_service = rospy.ServiceProxy('/DataLogging', loggingCMD)
-        logging_service(logging_srv)
+        rospy.wait_for_service('/CF_DC/DataLogging')
+        logging_service = rospy.ServiceProxy('/CF_DC/DataLogging', loggingCMD)
+        logging_service(srv)
+
+    def startLogging(self):
+
+        srv = loggingCMDRequest()
+
+        self.logging_flag = True
+        srv.logging_flag = self.logging_flag
+        
+
+        # ## PUBLISH MODEL STATE SERVICE REQUEST
+        rospy.wait_for_service('/CF_DC/DataLogging')
+        logging_service = rospy.ServiceProxy('/CF_DC/DataLogging', loggingCMD)
+        logging_service(srv)
+
+    def capLogging(self):
+
+        srv = loggingCMDRequest()
+
+        self.logging_flag = False
+        srv.logging_flag = self.logging_flag
+        srv.capLogging = True
+        
+        # ## PUBLISH MODEL STATE SERVICE REQUEST
+        rospy.wait_for_service('/CF_DC/DataLogging')
+        logging_service = rospy.ServiceProxy('/CF_DC/DataLogging', loggingCMD)
+        logging_service(srv)
         
 
     # ============================

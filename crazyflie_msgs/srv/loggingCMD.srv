@@ -1,3 +1,7 @@
-float64 val1
+string loggingPath
+string fileName
+bool createCSV
+bool logging_flag
+bool capLogging
 ---
-bool cmd_Success
+bool srv_Success

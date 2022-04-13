@@ -59,11 +59,11 @@ class CF_DataConverter
 
             // GAZEBO SERVICES
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
-            loggingService = nh->advertiseService("/DataLogging", &CF_DataConverter::DataLogging, this);
+            loggingService = nh->advertiseService("/CF_DC/DataLogging", &CF_DataConverter::DataLogging, this);
             
 
             
-            fPtr = fopen(filePath, "w");
+            
 
             CF_DataConverter::LoadParams();
             Time_start = ros::Time::now();
@@ -145,8 +145,8 @@ class CF_DataConverter
         uint32_t tick = 1;
         ros::Time Time_start;
 
-        FILE* fPtr;
-        char filePath[100] = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_logging/local_logs/Example.csv";
+        FILE* fPtr; // file pointer
+        bool logging_flag = false;
 
         
         // ===================
@@ -546,7 +546,26 @@ void CF_DataConverter::append_CSV_blank()
 bool CF_DataConverter::DataLogging(crazyflie_msgs::loggingCMD::Request &req, crazyflie_msgs::loggingCMD::Response &res)
 {
 
-    printf("Hello service\n");
+    logging_flag = req.logging_flag;
+
+    if(req.createCSV == true)
+    {   
+        std::string str = req.loggingPath + "/" + req.fileName;
+        fPtr = fopen(str.c_str(), "w");
+        create_CSV();
+    }
+    else if(req.capLogging == true)
+    {
+        append_CSV_blank();
+        append_CSV_misc();
+        append_CSV_flip();
+        append_CSV_impact();
+        append_CSV_blank();
+
+    }
+
+    
+
     return 1;
 }
 

@@ -592,7 +592,12 @@ void CF_DataConverter::MainLoop()
         // DISPLAY CONSOLE AT CONSOLE_RATE FREQUENCY
         if (tick%(loopRate/consoleRate) == 0) {
             // CF_DataConverter::consoleOuput();
-            // append_CSV_states();
+            
+            if(logging_flag == true)
+            {
+                append_CSV_states();
+            }
+
         }
 
         
