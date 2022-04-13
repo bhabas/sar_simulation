@@ -568,13 +568,18 @@ void CF_DataConverter::MainLoop()
     int loopRate = 100;     // [Hz]
     int consoleRate = 20;   // [Hz]
     ros::Rate rate(loopRate);
+
+    create_CSV();
     
     while(ros::ok)
     {   
         // DISPLAY CONSOLE AT CONSOLE_RATE FREQUENCY
         if (tick%(loopRate/consoleRate) == 0) {
-            CF_DataConverter::consoleOuput();
+            // CF_DataConverter::consoleOuput();
+            append_CSV();
         }
+
+        
 
         CF_DataConverter::checkSlowdown();
 

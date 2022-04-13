@@ -31,6 +31,8 @@ is easy to use.
 
 #include "crazyflie_msgs/activateSticky.h"
 
+#define formatBool(b) ((b) ? "True" : "False")
+
 class CF_DataConverter
 {
     public:
@@ -57,6 +59,7 @@ class CF_DataConverter
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
 
             
+            fPtr = fopen(filePath, "w");
 
             CF_DataConverter::LoadParams();
             Time_start = ros::Time::now();
@@ -66,6 +69,80 @@ class CF_DataConverter
 
             CF_DCThread = std::thread(&CF_DataConverter::MainLoop, this);
 
+
+        }
+
+        void create_CSV()
+        {
+            fprintf(fPtr,"k_ep,k_run,");
+            fprintf(fPtr,"t,");
+            fprintf(fPtr,"NN_flip,NN_policy,");
+            fprintf(fPtr,"mu,sigma,policy,");
+
+            // INTERNAL STATE ESTIMATES (CF)
+            fprintf(fPtr,"x,y,z,");
+            fprintf(fPtr,"vx,vy,vz,");
+            fprintf(fPtr,"qx,qy,qz,qw,");
+            fprintf(fPtr,"wx,wy,wz,");
+            fprintf(fPtr,"eul_x,eul_y,eul_z,");
+
+            // MISC RL LABELS
+            fprintf(fPtr,"flip_flag,impact_flag,");
+
+            //  MISC INTERNAL STATE ESTIMATES
+            fprintf(fPtr,"Tau,OF_x,OF_y,RREV,d_ceil,");
+            fprintf(fPtr,"F_thrust,Mx,My,Mz,");
+            fprintf(fPtr,"M1_thrust,M2_thrust,M3_thrust,M4_thrust,");
+            fprintf(fPtr,"M1_pwm,M2_pwm,M3_pwm,M4_pwm,");
+
+
+            // SETPOINT VALUES
+            fprintf(fPtr,"x_d.x,x_d.y,x_d.z,");
+            fprintf(fPtr,"v_d.x,v_d.y,v_d.z,");
+            fprintf(fPtr,"a_d.x,a_d.y,a_d.z,");
+
+            // MISC VALUES
+            fprintf(fPtr,"Volts,Error,");
+
+            fflush(fPtr);
+
+        }
+
+        void append_CSV()
+        {
+            fprintf(fPtr,"--,--,");
+            fprintf(fPtr,"%.3f,",Time.toSec());
+            fprintf(fPtr,"%.3f,%.3f,",NN_flip,NN_policy);
+            fprintf(fPtr,"--,--,--,");
+
+            // // INTERNAL STATE ESTIMATES (CF)
+            fprintf(fPtr,"%.3f,%.3f,%.3f,",Pose.position.x,Pose.position.y,Pose.position.z);
+            fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist.linear.x,Twist.linear.y,Twist.linear.z);
+            fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Pose.orientation.x,Pose.orientation.y,Pose.orientation.z,Pose.orientation.w);
+            fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist.angular.x,Twist.angular.y,Twist.angular.z);
+            fprintf(fPtr,"%.3f,%.3f,%.3f,",Eul.x,Eul.y,Eul.z);
+
+
+            // MISC RL LABELS
+            fprintf(fPtr,"%s,%s,",formatBool(flip_flag),formatBool(impact_flag));
+
+            // MISC INTERNAL STATE ESTIMATES
+            fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,%.3f,",Tau,OFx,OFy,RREV,D_ceil);
+            fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",FM[0],FM[1],FM[2],FM[3]);
+            fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",MotorThrusts[0],MotorThrusts[1],MotorThrusts[2],MotorThrusts[3]);
+            fprintf(fPtr,"%u,%u,%u,%u,",MS_PWM[0],MS_PWM[1],MS_PWM[2],MS_PWM[3]);
+
+
+            // SETPOINT VALUES
+            fprintf(fPtr,"%.3f,%.3f,%.3f,",x_d.x,x_d.y,x_d.z);
+            fprintf(fPtr,"%.3f,%.3f,%.3f,",v_d.x,v_d.y,v_d.z);
+            fprintf(fPtr,"%.3f,%.3f,%.3f,",a_d.x,a_d.y,a_d.z);
+
+
+            // MISC VALUES
+            fprintf(fPtr,"%.3f,%s",V_battery,"--");
+            fprintf(fPtr,"\n");
+            fflush(fPtr);
 
         }
 
@@ -124,6 +201,11 @@ class CF_DataConverter
         std::string BodyCollision_str;
         uint32_t tick = 1;
         ros::Time Time_start;
+
+        FILE* fPtr;
+        char filePath[100] = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_logging/local_logs/Example.csv";
+    // fprintf(fPtr, "This is testing for fprintf...%d\n",555);
+    // fputs("This is testing for fputs...\n", fPtr);
         
         // ===================
         //     ROS PARAMS
