@@ -276,6 +276,27 @@ class CF_DataConverter
         bool Sticky_Flag = false;
 
 
+        // ===================
+        //     RL DATA
+        // ===================
+        uint8_t k_ep = 0;
+        uint8_t k_run = 0;
+        uint8_t n_rollouts = 8;
+
+        boost::array<double,2> mu{0.0,0.0};
+        boost::array<float,2> sigma{0.0,0.0};
+        boost::array<float,2> policy{0.0,0.0};
+
+        float reward = 0.0;
+
+        boost::array<float,3> vel_d{0.0,0.0,0.0};
+
+        bool runComplete_flag = false;
+
+
+
+
+
         
 
 
@@ -354,7 +375,7 @@ void CF_DataConverter::create_CSV()
 
 void CF_DataConverter::append_CSV_states()
 {
-    fprintf(fPtr,"--,--,");
+    fprintf(fPtr,"%u,%u,",k_ep,k_run);
     fprintf(fPtr,"%.3f,",Time.toSec());
     fprintf(fPtr,"%.3f,%.3f,",NN_flip,NN_policy);
     fprintf(fPtr,"--,--,--,");
@@ -392,14 +413,14 @@ void CF_DataConverter::append_CSV_states()
 
 void CF_DataConverter::append_CSV_misc()
 {
-    fprintf(fPtr,"--,--,");
+    fprintf(fPtr,"%u,%u,",k_ep,k_run);
     fprintf(fPtr,"--,");
-    fprintf(fPtr,"n_rollouts,--,");
-    fprintf(fPtr,"mu,sigma,policy,");
+    fprintf(fPtr,"%u,--,",n_rollouts);
+    fprintf(fPtr,"[%.3f %.3f],[%.3f %.3f],[%.3f %.3f],",mu[0],mu[1],sigma[0],sigma[1],policy[0],policy[1]);
 
     // // INTERNAL STATE ESTIMATES (CF)
     fprintf(fPtr,"--,--,--,");
-    fprintf(fPtr,"vel_d,vel_d,vel_d,");
+    fprintf(fPtr,"%.3f,%.3f,%.3f",vel_d[0],vel_d[1],vel_d[2]);
     fprintf(fPtr,"--,--,--,--,");
     fprintf(fPtr,"--,--,--,");
     fprintf(fPtr,"--,--,--,");
@@ -408,7 +429,7 @@ void CF_DataConverter::append_CSV_misc()
 
 
     // MISC RL LABELS
-    fprintf(fPtr,"%s,%s,","reward","stuff");
+    fprintf(fPtr,"%.2f,stuff,",reward);
 
     // MISC INTERNAL STATE ESTIMATES
     fprintf(fPtr,"--,--,--,--,--,");
@@ -433,7 +454,7 @@ void CF_DataConverter::append_CSV_misc()
 
 void CF_DataConverter::append_CSV_flip()
 {
-    fprintf(fPtr,"--,--,");
+    fprintf(fPtr,"%u,%u,",k_ep,k_run);
     fprintf(fPtr,"%.3f,",Time_tr.toSec());
     fprintf(fPtr,"%.3f,%.3f,",NN_tr_flip,NN_tr_policy);
     fprintf(fPtr,"--,--,--,");
@@ -471,7 +492,7 @@ void CF_DataConverter::append_CSV_flip()
 
 void CF_DataConverter::append_CSV_impact()
 {
-    fprintf(fPtr,"--,--,");
+    fprintf(fPtr,"%u,%u,",k_ep,k_run);
     fprintf(fPtr,"%.3f,",Time_impact.toSec());
     fprintf(fPtr,"--,--,");
     fprintf(fPtr,"--,--,--,");
@@ -485,7 +506,7 @@ void CF_DataConverter::append_CSV_impact()
 
 
     // MISC RL LABELS
-    fprintf(fPtr,"%s,%s,","body_impact",formatBool(impact_flag));
+    fprintf(fPtr,"%s,%s,",formatBool(BodyContact_flag),formatBool(impact_flag));
 
     // MISC INTERNAL STATE ESTIMATES
     fprintf(fPtr,"%u,%u,%u,%u,%u,",Pad_Connections,Pad1_Contact,Pad2_Contact,Pad3_Contact,Pad4_Contact);

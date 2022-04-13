@@ -320,6 +320,21 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
 
 void CF_DataConverter::RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &msg)
 {
+
+    k_ep = msg->k_ep;
+    k_run = msg->k_run;
+    n_rollouts = msg->n_rollouts;
+
+    mu = msg->mu;
+    // sigma = msg->sigma;
+    // policy = msg->policy;
+
+    reward = msg->reward;
+
+    // vel_d = msg->vel_d;
+
+    runComplete_flag = msg->runComplete_flag;
+
     if(msg->trialComplete_flag == true)
     {
         Time_start = ros::Time::now();
