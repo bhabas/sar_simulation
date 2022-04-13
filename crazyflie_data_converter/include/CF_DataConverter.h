@@ -30,6 +30,8 @@ is easy to use.
 #include "crazyflie_msgs/PadConnect.h"
 
 #include "crazyflie_msgs/activateSticky.h"
+#include "crazyflie_msgs/loggingCMD.h"
+
 
 #define formatBool(b) ((b) ? "True" : "False")
 
@@ -57,6 +59,8 @@ class CF_DataConverter
 
             // GAZEBO SERVICES
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
+            loggingService = nh->advertiseService("/DataLogging", &CF_DataConverter::DataLogging, this);
+            
 
             
             fPtr = fopen(filePath, "w");
@@ -84,6 +88,8 @@ class CF_DataConverter
         void SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStamped::ConstPtr &msg);
         void Surface_Contact_Callback(const gazebo_msgs::ContactsState &msg);
         void Pad_Connections_Callback(const crazyflie_msgs::PadConnect &msg);
+
+        bool DataLogging(crazyflie_msgs::loggingCMD::Request &req, crazyflie_msgs::loggingCMD::Response &res);
 
         void Publish_StateData();
         void Publish_FlipData();
@@ -126,6 +132,7 @@ class CF_DataConverter
 
         // SERVICES
         ros::ServiceClient GZ_SimSpeed_Client;
+        ros::ServiceServer loggingService;
 
         // MESSAGES
         crazyflie_msgs::CF_StateData StateData_msg;
@@ -535,6 +542,13 @@ void CF_DataConverter::append_CSV_blank()
 
 }
 
+
+bool CF_DataConverter::DataLogging(crazyflie_msgs::loggingCMD::Request &req, crazyflie_msgs::loggingCMD::Response &res)
+{
+
+    printf("Hello service\n");
+    return 1;
+}
 
 
 

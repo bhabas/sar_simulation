@@ -162,25 +162,6 @@ def cmd_send(env):
             print('\033[93m' + "INVALID INPUT: Try again" + '\x1b[0m')
             continue
 
-       
-def logFlight(env):
-
-    ## RESET LOGGING CONDITIONS 
-    t_prev = 0.0
-
-    while 1: 
-        
-        # If time changes then append csv file
-        if env.t != t_prev:
-            env.append_csv()
-
-        t_prev = env.t   
-    
-    env.append_IC()
-    env.append_flip()
-    env.append_impact()
-    env.append_csv_blank()
-
 
 if __name__ == '__main__':
     
@@ -193,15 +174,12 @@ if __name__ == '__main__':
     env.agent_name = agent.agent_type
     env.trial_name = f"Control_Playground--trial_{int(trial_num):02d}--{env.modelInitials}"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
-    env.logging_flag = True
-    env.create_csv(env.filepath)
+
+    env.startLogging()
 
     # time.sleep(5)
     cmd_thread = threading.Thread(target=cmd_send,args=(env,))
     cmd_thread.start()   
 
-
-    logging_thread = threading.Thread(target=logFlight,args=(env,))
-    logging_thread.start()   
 
     rospy.spin()

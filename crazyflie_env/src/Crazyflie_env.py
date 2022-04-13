@@ -14,12 +14,11 @@ import getpass
 
 from std_srvs.srv import Empty
 from crazyflie_msgs.msg import RLData,RLCmd,RLConvg
-from crazyflie_msgs.msg import CtrlData
 from crazyflie_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
-from crazyflie_msgs.srv import activateSticky
+from crazyflie_msgs.srv import loggingCMD,loggingCMDRequest
 
 from rosgraph_msgs.msg import Clock
-from gazebo_msgs.msg import ModelState,ContactsState
+from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState
 
 
@@ -50,7 +49,6 @@ class CrazyflieEnv:
         self.trial_name = '' 
         self.error_str = ''     # Label for why rollout was terminated/completed
         self.agent_name = ''    # Learning agent used for training (PEPG,EM,etc...)
-        self.logging_flag = False
         self.runComplete_flag = False
         self.trialComplete_flag = False
         self.repeat_run = False
@@ -202,6 +200,17 @@ class CrazyflieEnv:
 
         print("[COMPLETED] Environment done")
 
+    def startLogging(self):
+
+        logging_srv = loggingCMDRequest()
+
+        logging_srv.val1 = 5.0
+
+        # ## PUBLISH MODEL STATE SERVICE REQUEST
+        rospy.wait_for_service('/DataLogging')
+        logging_service = rospy.ServiceProxy('/DataLogging', loggingCMD)
+        logging_service(logging_srv)
+        
 
     # ============================
     ##   Publishers/Subscribers 
@@ -708,212 +717,6 @@ class CrazyflieEnv:
         z_impact = pos_0[2] + vel_d[2]*t_impact
 
         return [x_impact,y_impact,z_impact]
-
-
-
-    # ============================
-    ##      Data Logging 
-    # ============================
-    
-    def create_csv(self,filepath):
-
-        if self.logging_flag:
-        
-            with open(filepath,mode='w') as data_file:
-                data_writer = csv.writer(data_file,delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                data_writer.writerow([
-                    # Generic Labels
-                    'k_ep','k_run',    
-                    't',         
-                    'NN_flip','NN_policy',
-                    'mu','sigma', 'policy',
-
-                    # Internal State Estimates (CF)
-                    'x','y','z',            
-                    'vx','vy','vz',
-                    'qx','qy','qz','qw',
-                    'wx','wy','wz',
-                    'eul_x','eul_y','eul_z',
-
-                    # Misc RL labels
-                    'flip_flag','impact_flag', 
-
-                    # Misc Internal State Estimates
-                    'Tau','OF_x','OF_y','RREV','d_ceil',       
-                    'F_thrust[N]','Mx[Nmm]','My[Nmm]','Mz[Nmm]',
-                    'M1_thrust','M2_thrust','M3_thrust','M4_thrust',
-                    'M1_pwm','M2_pwm','M3_pwm','M4_pwm',
-
-                    # Setpoint Values
-                    'x_d.x','x_d.y','x_d.z',    
-                    'v_d.x','v_d.y','v_d.z',
-                    'a_d.x','a_d.y','a_d.z',
-
-                    # Misc Values
-                    'Volts',
-                    'Error'])# Place holders
-
-
-    def append_csv(self,error_str= ""):
-
-        if self.logging_flag:
-            with open(self.filepath, mode='a') as data_file:
-                data_write = csv.writer(data_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                data_write.writerow([
-                    # Generic Labels
-                    self.k_ep,self.k_run,
-                    self.t,
-                    self.NN_flip,self.NN_policy, # NN_flip,NN_policy
-                    "","","", # mu,sigma,policy
-
-                    # Internal State Estimates (CF)
-                    self.posCF[0],self.posCF[1],self.posCF[2], # x,y,z
-                    self.velCF[0],self.velCF[1],self.velCF[2], # vx,vy,vz
-                    self.quatCF[0],self.quatCF[1],self.quatCF[2],self.quatCF[3], # qx,qy,qz,qw
-                    self.omegaCF[0],self.omegaCF[1],self.omegaCF[2], # wx,wy,wz
-                    self.eulCF[0],self.eulCF[1],self.eulCF[2], # eul_x,eul_y,eul_z
-
-
-                    # Misc RL labels
-                    self.flip_flag,self.impact_flag, #  flip_flag, impact_flag,
-
-                    # Misc Internal State Estimates
-                    self.Tau,self.OFx,self.OFy,self.RREV,self.d_ceil,   # Tau,OF_x,OF_y,RREV,d_ceil
-                    self.FM[0],self.FM[1],self.FM[2],self.FM[3],        # F_thrust[N],Mx[Nmm],My[Nmm],Mz[Nmm]
-                    self.MotorThrusts[0],self.MotorThrusts[1],self.MotorThrusts[2],self.MotorThrusts[3],
-                    self.MS_pwm[0],self.MS_pwm[1],self.MS_pwm[2],self.MS_pwm[3],
-
-                    # Setpoint Values
-                    self.x_d[0],self.x_d[1],self.x_d[2], # Position Setpoints
-                    self.v_d[0],self.v_d[1],self.v_d[2], # Velocity Setpoints
-                    self.a_d[0],self.a_d[1],self.a_d[2], # Acceleration Setpoints
-                    
-                    # Misc Values
-                    self.V_Battery,
-                    error_str]) # Error
-
-    def append_IC(self):
-        if self.logging_flag:
-    
-            with open(self.filepath,mode='a') as data_file:
-                data_writer = csv.writer(data_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                data_writer.writerow([
-
-                    # Generic Labels
-                    self.k_ep,self.k_run,
-                    "",             # t
-                    self.n_rollouts,"", 
-                    np.round(self.mu,2),np.round(self.sigma,2),np.round(self.policy,2), # mu,sigma,policy
-
-                    # Internal State Estimates (EKF)
-                    "","","",       # x,y,z
-                    np.round(self.vel_d[0],2),np.round(self.vel_d[1],2),np.round(self.vel_d[2],2), # vx_d,vy_d,vz_d
-                    "","","","",    # qx,qy,qz,qw
-                    "","","",       # wx,wy,wz
-                    "","","",       # eul_x,eul_y,eul_z
-
-
-                    # Misc RL labels
-                    np.round(self.reward,2),np.round(self.reward_inputs,3), # reward, 
-
-                    # Misc Internal State Estimates
-                    "","","","","",    # Tau,OFx,OFy,RREV,d_ceil
-                    "","","","",    # F_thrust,Mx,My,Mz 
-                    "","","","",    # M_thrust [g]
-                    "","","","",    # M_pwm
-
-
-                    # Setpoint Values
-                    "","","",
-                    "","","",
-                    "","","",
-
-                    # Misc Values
-                    "",
-                    self.error_str])    # Error
-
-    def append_flip(self):
-        if self.logging_flag:
-    
-            with open(self.filepath,mode='a') as data_file:
-                data_writer = csv.writer(data_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                data_writer.writerow([
-                    # Generic Labels
-                    self.k_ep,self.k_run,
-                    self.t_tr,
-                    self.NN_tr_flip,self.NN_tr_policy, # NN_flip, NN_policy
-                    "","","", # mu,sigma,policy
-                    
-                    
-                    # Internal State Estimates (EKF)
-                    self.posCF_tr[0],self.posCF_tr[1],self.posCF_tr[2],    # t,x,y,z
-                    self.velCF_tr[0],self.velCF_tr[1],self.velCF_tr[2],    # vx_d,vy_d,vz_d
-                    self.quatCF_tr[0],self.quatCF_tr[1],self.quatCF_tr[2],self.quatCF_tr[3],    # qx,qy,qz,qw
-                    self.omegaCF_tr[0],self.omegaCF_tr[1],self.omegaCF_tr[2],  # wx,wy,wz
-                    self.eulCF_tr[0],self.eulCF_tr[1],self.eulCF_tr[2],     # eul_x,eul_y,eul_z
-
-                    # Misc RL labels
-                    self.flip_flag,"", # flip_flag, impact_flag
-
-                    # Misc Internal State Estimates
-                    self.Tau_tr,self.OFx_tr,self.OFy_tr,self.RREV_tr,self.d_ceil_tr, # Tau,OFx,OFy,RREV,d_ceil
-                    self.FM_tr[0],self.FM_tr[1],self.FM_tr[2],self.FM_tr[3], # F_thrust,Mx,My,Mz
-                    "","","","",    # M_thrust [g]
-                    "","","","",    # M_pwm
-
-                    # Setpoint Values
-                    "","","",
-                    "","","",
-                    "","","",
-
-                    # Misc Values
-                    "",
-                    "Flip Data"]) # Error
-    
-    def append_impact(self):
-        if self.logging_flag:
-    
-            with open(self.filepath,mode='a') as data_file:
-                data_writer = csv.writer(data_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                data_writer.writerow([
-                    # Generic Labels
-                    self.k_ep,self.k_run,
-                    self.t_impact,
-                    "","", # alpha_mu,alpha_sig
-                    "","","", # mu,sigma,policy
-
-                    # Internal State Estimates (EKF)
-                    self.posCF_impact[0],self.posCF_impact[1],self.posCF_impact[2],    # t,x,y,z
-                    self.velCF_impact[0],self.velCF_impact[1],self.velCF_impact[2],    # vx_d,vy_d,vz_d
-                    self.quatCF_impact[0],self.quatCF_impact[1],self.quatCF_impact[2],self.quatCF_impact[3],    # qx,qy,qz,qw
-                    self.omegaCF_impact[0],self.omegaCF_impact[1],self.omegaCF_impact[2],  # wx,wy,wz
-                    self.eulCF_impact[0],self.eulCF_impact[1],self.eulCF_impact[2],     # eul_x,eul_y,eul_z
-
-                    # Misc RL labels
-                    self.BodyContact_flag,self.impact_flag, 
-                    
-                    # Misc Internal State Estimates
-                    self.pad_connections,self.Pad1_Contact,self.Pad2_Contact,self.Pad3_Contact,self.Pad4_Contact, 
-                    self.impact_magnitude,self.Force_impact[0],self.Force_impact[1],self.Force_impact[2], # F_thrust,Mx,My,Mz (Impact)
-                    "","","","",    # M_thrust [g]
-                    "","","","",    # M_pwm
-                    
-                    # Setpoint Values
-                    "","","",
-                    "","","",
-                    "","","",
-
-                    # Misc Values
-                    "",
-                    "Impact Data"]) # Error
-
-    
-
-    def append_csv_blank(self):
-        if self.logging_flag:
-            with open(self.filepath, mode='a') as data_file:
-                data_writer = csv.writer(data_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                data_writer.writerow([])
 
    
 
