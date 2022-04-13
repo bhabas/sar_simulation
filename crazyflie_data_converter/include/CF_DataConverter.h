@@ -108,7 +108,7 @@ class CF_DataConverter
 
         }
 
-        void append_CSV()
+        void append_CSV_states()
         {
             fprintf(fPtr,"--,--,");
             fprintf(fPtr,"%.3f,",Time.toSec());
@@ -141,6 +141,131 @@ class CF_DataConverter
 
             // MISC VALUES
             fprintf(fPtr,"%.3f,%s",V_battery,"--");
+            fprintf(fPtr,"\n");
+            fflush(fPtr);
+
+        }
+
+        void append_CSV_misc()
+        {
+            fprintf(fPtr,"--,--,");
+            fprintf(fPtr,"--,");
+            fprintf(fPtr,"n_rollouts,--,");
+            fprintf(fPtr,"mu,sigma,policy,");
+
+            // // INTERNAL STATE ESTIMATES (CF)
+            fprintf(fPtr,"--,--,--,");
+            fprintf(fPtr,"vel_d,vel_d,vel_d,");
+            fprintf(fPtr,"--,--,--,--,");
+            fprintf(fPtr,"--,--,--,");
+            fprintf(fPtr,"--,--,--,");
+
+
+
+
+            // MISC RL LABELS
+            fprintf(fPtr,"%s,%s,","reward","stuff");
+
+            // MISC INTERNAL STATE ESTIMATES
+            fprintf(fPtr,"--,--,--,--,--,");
+            fprintf(fPtr,"--,--,--,--,");
+            fprintf(fPtr,"--,--,--,--,");
+            fprintf(fPtr,"--,--,--,--,");
+            
+
+            // SETPOINT VALUES
+            fprintf(fPtr,"--,--,--,");
+            fprintf(fPtr,"--,--,--,");
+            fprintf(fPtr,"--,--,--,");
+
+
+
+            // MISC VALUES
+            fprintf(fPtr,"--,%s","Error string");
+            fprintf(fPtr,"\n");
+            fflush(fPtr);
+
+        }
+
+
+        void append_CSV_flip()
+        {
+            fprintf(fPtr,"--,--,");
+            fprintf(fPtr,"%.3f,",Time_tr.toSec());
+            fprintf(fPtr,"%.3f,%.3f,",NN_tr_flip,NN_tr_policy);
+            fprintf(fPtr,"--,--,--,");
+
+            // // INTERNAL STATE ESTIMATES (CF)
+            fprintf(fPtr,"%.3f,%.3f,%.3f,",Pose_tr.position.x,Pose_tr.position.y,Pose_tr.position.z);
+            fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist_tr.linear.x,Twist_tr.linear.y,Twist_tr.linear.z);
+            fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Pose_tr.orientation.x,Pose_tr.orientation.y,Pose_tr.orientation.z,Pose_tr.orientation.w);
+            fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist_tr.angular.x,Twist_tr.angular.y,Twist_tr.angular.z);
+            fprintf(fPtr,"%.3f,%.3f,%.3f,",Eul_tr.x,Eul_tr.y,Eul_tr.z);
+
+
+            // MISC RL LABELS
+            fprintf(fPtr,"%s,--,",formatBool(flip_flag));
+
+            // MISC INTERNAL STATE ESTIMATES
+            fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,%.3f,",Tau_tr,OFx_tr,OFy_tr,RREV_tr,D_ceil_tr);
+            fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",FM_tr[0],FM_tr[1],FM_tr[2],FM_tr[3]);
+            fprintf(fPtr,"--,--,--,--,");
+            fprintf(fPtr,"--,--,--,--,");
+
+
+            // SETPOINT VALUES
+            fprintf(fPtr,"--,--,--,");
+            fprintf(fPtr,"--,--,--,");
+            fprintf(fPtr,"--,--,--,");
+
+
+            // MISC VALUES
+            fprintf(fPtr,"--,%s","Flip Data");
+            fprintf(fPtr,"\n");
+            fflush(fPtr);
+
+        }
+
+        void append_CSV_impact()
+        {
+            fprintf(fPtr,"--,--,");
+            fprintf(fPtr,"%.3f,",Time_impact.toSec());
+            fprintf(fPtr,"--,--,");
+            fprintf(fPtr,"--,--,--,");
+
+            // // INTERNAL STATE ESTIMATES (CF)
+            fprintf(fPtr,"%.3f,%.3f,%.3f,",Pose_impact.position.x,Pose_impact.position.y,Pose_impact.position.z);
+            fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist_impact.linear.x,Twist_impact.linear.y,Twist_impact.linear.z);
+            fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Pose_impact.orientation.x,Pose_impact.orientation.y,Pose_impact.orientation.z,Pose_impact.orientation.w);
+            fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist_impact.angular.x,Twist_impact.angular.y,Twist_impact.angular.z);
+            fprintf(fPtr,"%.3f,%.3f,%.3f,",Eul_impact.x,Eul_impact.y,Eul_impact.z);
+
+
+            // MISC RL LABELS
+            fprintf(fPtr,"%s,%s,","body_impact",formatBool(impact_flag));
+
+            // MISC INTERNAL STATE ESTIMATES
+            fprintf(fPtr,"%u,%u,%u,%u,%u,",Pad_Connections,Pad1_Contact,Pad2_Contact,Pad3_Contact,Pad4_Contact);
+            fprintf(fPtr,"%s,%.3f,%.3f,%.3f,","impact_mag",impact_force_x,impact_force_y,impact_force_z);
+            fprintf(fPtr,"--,--,--,--,");
+            fprintf(fPtr,"--,--,--,--,");
+
+
+            // SETPOINT VALUES
+            fprintf(fPtr,"--,--,--,");
+            fprintf(fPtr,"--,--,--,");
+            fprintf(fPtr,"--,--,--,");
+
+
+            // MISC VALUES
+            fprintf(fPtr,"--,%s","Impact Data");
+            fprintf(fPtr,"\n");
+            fflush(fPtr);
+
+        }
+
+        void append_CSV_blank()
+        {
             fprintf(fPtr,"\n");
             fflush(fPtr);
 

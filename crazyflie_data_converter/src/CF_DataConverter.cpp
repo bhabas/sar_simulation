@@ -228,6 +228,12 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
 {
     if(msg->cmd_type == 0)
     {
+
+        append_CSV_blank();
+        append_CSV_flip();
+        append_CSV_impact();
+        append_CSV_misc();
+
         // RESET FLIP TIME
         OnceFlag_flip = false;
         Time_tr.sec = 0.0;
@@ -279,6 +285,7 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
         CF_DataConverter::adjustSimSpeed(SIM_SPEED);
         SLOWDOWN_TYPE = 0;
 
+        
                 
     }
 
@@ -576,7 +583,7 @@ void CF_DataConverter::MainLoop()
         // DISPLAY CONSOLE AT CONSOLE_RATE FREQUENCY
         if (tick%(loopRate/consoleRate) == 0) {
             // CF_DataConverter::consoleOuput();
-            append_CSV();
+            append_CSV_states();
         }
 
         
