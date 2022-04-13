@@ -201,14 +201,14 @@ class CrazyflieEnv:
 
         print("[COMPLETED] Environment done")
 
-    def createCSV(self):
+    def createCSV(self,filePath):
 
         srv = loggingCMDRequest()
 
         srv.createCSV = True
-        srv.filePath = self.filepath
+        srv.filePath = filePath
+        srv.logging_flag = False
         
-
         # ## PUBLISH MODEL STATE SERVICE REQUEST
         rospy.wait_for_service('/CF_DC/DataLogging')
         logging_service = rospy.ServiceProxy('/CF_DC/DataLogging', loggingCMD)
@@ -433,29 +433,29 @@ class CrazyflieEnv:
         
         RL_msg = RLData() ## Initialize RLData message
         
-        RL_msg.trial_name = self.trial_name
-        RL_msg.agent = self.agent_name
-        RL_msg.error = self.error_str
+        # RL_msg.trial_name = self.trial_name
+        # RL_msg.agent = self.agent_name
+        # RL_msg.error = self.error_str
 
-        RL_msg.n_rollouts = self.n_rollouts
-        RL_msg.h_ceiling = self.h_ceiling
+        # RL_msg.n_rollouts = self.n_rollouts
+        # RL_msg.h_ceiling = self.h_ceiling
 
         RL_msg.k_ep = self.k_ep
         RL_msg.k_run = self.k_run
 
         RL_msg.mu = self.mu
-        RL_msg.sigma = self.sigma
-        RL_msg.policy = self.policy
+        # RL_msg.sigma = self.sigma
+        # RL_msg.policy = self.policy
 
-        RL_msg.reward = self.reward
-        RL_msg.reward_avg = self.reward_avg
+        # RL_msg.reward = self.reward
+        # RL_msg.reward_avg = self.reward_avg
 
-        RL_msg.vel_d = self.vel_d
-        RL_msg.impact_flag = self.impact_flag
-        RL_msg.body_contact = self.BodyContact_flag
-        RL_msg.leg_contacts = self.pad_connections
+        # RL_msg.vel_d = self.vel_d
+        # RL_msg.impact_flag = self.impact_flag
+        # RL_msg.body_contact = self.BodyContact_flag
+        # RL_msg.leg_contacts = self.pad_connections
 
-        RL_msg.trialComplete_flag = self.trialComplete_flag
+        # RL_msg.trialComplete_flag = self.trialComplete_flag
         self.RL_Data_Publisher.publish(RL_msg) ## Publish RLData message
 
         ## CONVERGENCE HISTORY

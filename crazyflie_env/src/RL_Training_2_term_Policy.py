@@ -46,7 +46,8 @@ if __name__ == '__main__':
     env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--{env.modelInitials}"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
     env.logging_flag = True
-    env.create_csv(env.filepath)
+    env.createCSV(env.filepath)
+
 
     # ============================
     ##          Episode         
@@ -96,6 +97,7 @@ if __name__ == '__main__':
 
             ## UPDATE RUN NUMBER
             k_run = env.k_run # Local variables are faster to access then class variables
+            
 
 
             ## INITIALIZE POLICY PARAMETERS: 
@@ -104,6 +106,8 @@ if __name__ == '__main__':
             G2 = 0.0                        # Deprecated policy term
             
             env.policy = [Tau_thr/10,np.abs(My),G2]
+
+            env.RL_Publish()
 
             try: # Use try block to catch raised exceptions and attempt rollout again
                 executeFlight(env,agent)

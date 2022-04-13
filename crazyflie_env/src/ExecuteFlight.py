@@ -33,6 +33,7 @@ def executeFlight(env,agent):
     env.step("home") # Reset control vals and functionality to default vals
     # time.sleep(0.5) # Time for CF to settle [Real-Time seconds]
     input("here")
+    env.startLogging()
 
 
     ## RESET/UPDATE RUN CONDITIONS
@@ -57,10 +58,10 @@ def executeFlight(env,agent):
     # ============================
     env.step("policy",env.policy,cmd_flag=1) # Arm policy inside controller
     env.step('sticky',cmd_flag=1)              # Enable sticky pads
-    # env.traj_launch(env.posCF,env.vel_d)
-    env.step('traj',cmd_vals=[env.posCF_0[0],env.vel_d[0],env.accCF_max[0]],cmd_flag=0)
-    env.step('traj',cmd_vals=[env.posCF_0[1],env.vel_d[1],env.accCF_max[1]],cmd_flag=1)
-    env.step('traj',cmd_vals=[env.posCF_0[2],env.vel_d[2],env.accCF_max[2]],cmd_flag=2)
+    env.traj_launch(env.posCF,env.vel_d)
+    # env.step('traj',cmd_vals=[env.posCF_0[0],env.vel_d[0],env.accCF_max[0]],cmd_flag=0)
+    # env.step('traj',cmd_vals=[env.posCF_0[1],env.vel_d[1],env.accCF_max[1]],cmd_flag=1)
+    # env.step('traj',cmd_vals=[env.posCF_0[2],env.vel_d[2],env.accCF_max[2]],cmd_flag=2)
 
 
     while True: 
@@ -93,14 +94,6 @@ def executeFlight(env,agent):
         if ((env.impact_flag or env.BodyContact_flag) and onceFlag_impact == False):
             start_time_impact = env.getTime()
             onceFlag_impact = True
-
-        # ============================
-        ##      Record Keeping  
-        # ============================
-
-        # If time changes then append csv file
-        if env.t != t_prev:
-            env.append_csv()
 
         # ============================
         ##    Termination Criteria 
@@ -160,11 +153,7 @@ def executeFlight(env,agent):
             
 
             ## RUN DATA LOGGING
-            env.append_csv_blank()
-            env.append_IC()
-            env.append_flip()
-            env.append_impact()
-            env.append_csv_blank()
+            env.capLogging()
 
             
 
@@ -202,7 +191,7 @@ if __name__ == '__main__':
     env.trial_name = f"ExampleFlight--trial_{int(trial_num):02d}--{env.modelInitials}"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
     env.logging_flag = True
-    env.create_csv(env.filepath)
+    env.createCSV(env.filepath)
 
     V_d = 2.5
     phi = 90

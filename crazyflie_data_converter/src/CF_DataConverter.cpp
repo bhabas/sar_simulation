@@ -325,7 +325,7 @@ void CF_DataConverter::RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &
 
     reward = msg->reward;
 
-    // vel_d = msg->vel_d;
+    vel_d = msg->vel_d;
 
     runComplete_flag = msg->runComplete_flag;
 
