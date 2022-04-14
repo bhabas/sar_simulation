@@ -738,7 +738,7 @@ class MotorThrust_Widget(QWidget):
         self.MotorThrust3_arr = np.zeros(buffer_length)
         self.MotorThrust4_arr = np.zeros(buffer_length)
 
-class RL_Widget(QWidget):
+class Reward_Widget(QWidget):
     def __init__(self,parent=None):
         super().__init__()
 
@@ -754,7 +754,7 @@ class RL_Widget(QWidget):
         ## UPDATE PLOT 1
         self.PW.setBackground('w')
         self.PW.setXRange(0,25)
-        self.PW.setYRange(0,400)
+        self.PW.setYRange(0,300)
         self.PW.showGrid(x=True, y=True, alpha=0.2)
 
 
@@ -777,7 +777,7 @@ class RL_Widget(QWidget):
 
 
     def reset_axes(self):
-        self.PW.setYRange(0,200)
+        self.PW.setYRange(0,300)
         self.PW.setXRange(0,25)
 
 
@@ -797,7 +797,7 @@ class Mu_Widget(QWidget):
         ## UPDATE PLOT 1
         self.PW.setBackground('w')
         self.PW.setXRange(0,20)
-        self.PW.setYRange(0,16)
+        self.PW.setYRange(0,12)
         self.PW.showGrid(x=True, y=True, alpha=0.2)
 
 
@@ -837,7 +837,7 @@ class Mu_Widget(QWidget):
     def reset_axes(self):
         # self.p1.enableAutoRange(enable=True)
         self.PW.setXRange(0,20)
-        self.PW.setYRange(0,16)
+        self.PW.setYRange(0,12)
 
 class Sigma_Widget(QWidget):
     def __init__(self,parent=None):
@@ -886,7 +886,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     ## INITIALIZE DASHBOARD WINDOW
-    myApp = Sigma_Widget()
+    myApp = Reward_Widget()
     myApp.show()
 
     sys.exit(app.exec_())

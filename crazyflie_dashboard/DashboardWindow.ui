@@ -2009,7 +2009,7 @@ font: 14pt &quot;Ubuntu&quot;;
                   </widget>
                  </item>
                  <item>
-                  <widget class="RL_Widget" name="widget_11" native="true">
+                  <widget class="Reward_Widget" name="widget_11" native="true">
                    <property name="styleSheet">
                     <string notr="true">background-color: rgb(136, 138, 133);</string>
                    </property>
@@ -2163,7 +2163,7 @@ font: 14pt &quot;Ubuntu&quot;;
                      <item>
                       <widget class="QLabel" name="label_53">
                        <property name="text">
-                        <string>Sig_1</string>
+                        <string>Sig_Tau</string>
                        </property>
                        <property name="alignment">
                         <set>Qt::AlignCenter</set>
@@ -2189,7 +2189,7 @@ font: 14pt &quot;Ubuntu&quot;;
                      <item>
                       <widget class="QLabel" name="label_57">
                        <property name="text">
-                        <string>Sig_2</string>
+                        <string>Sig_My</string>
                        </property>
                        <property name="alignment">
                         <set>Qt::AlignCenter</set>
@@ -2306,7 +2306,7 @@ font: 14pt &quot;Ubuntu&quot;;
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>RL_Widget</class>
+   <class>Reward_Widget</class>
    <extends>QWidget</extends>
    <header>Dash_Plots</header>
    <container>1</container>
