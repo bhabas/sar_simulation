@@ -34,6 +34,7 @@ is easy to use.
 
 
 #define formatBool(b) ((b) ? "True" : "False")
+#define RATE_DO_EXECUTE(RATE_HZ, TICK) ((TICK % (100 / RATE_HZ)) == 0)
 
 class CF_DataConverter
 {
@@ -59,16 +60,17 @@ class CF_DataConverter
 
             // GAZEBO SERVICES
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
-            loggingService = nh->advertiseService("/CF_DC/DataLogging", &CF_DataConverter::DataLogging, this);
+            Logging_Service = nh->advertiseService("/CF_DC/DataLogging", &CF_DataConverter::DataLogging_Callback, this);
             
 
             
             
 
             CF_DataConverter::LoadParams();
+            CF_DataConverter::adjustSimSpeed(SIM_SPEED);
             Time_start = ros::Time::now();
 
-            CF_DataConverter::adjustSimSpeed(SIM_SPEED);
+
             BodyCollision_str = MODEL_NAME + "::crazyflie_BaseModel::crazyflie_body::body_collision";
 
             CF_DCThread = std::thread(&CF_DataConverter::MainLoop, this);
@@ -89,7 +91,7 @@ class CF_DataConverter
         void Surface_Contact_Callback(const gazebo_msgs::ContactsState &msg);
         void Pad_Connections_Callback(const crazyflie_msgs::PadConnect &msg);
 
-        bool DataLogging(crazyflie_msgs::loggingCMD::Request &req, crazyflie_msgs::loggingCMD::Response &res);
+        bool DataLogging_Callback(crazyflie_msgs::loggingCMD::Request &req, crazyflie_msgs::loggingCMD::Response &res);
 
         void Publish_StateData();
         void Publish_FlipData();
@@ -132,7 +134,7 @@ class CF_DataConverter
 
         // SERVICES
         ros::ServiceClient GZ_SimSpeed_Client;
-        ros::ServiceServer loggingService;
+        ros::ServiceServer Logging_Service;
 
         // MESSAGES
         crazyflie_msgs::CF_StateData StateData_msg;
@@ -141,12 +143,12 @@ class CF_DataConverter
         crazyflie_msgs::CF_MiscData MiscData_msg;
 
         std::thread CF_DCThread;
-        std::string BodyCollision_str;
-        uint32_t tick = 1;
-        ros::Time Time_start;
+        uint32_t tick = 1;      // Tick for each loop iteration
+        ros::Time Time_start;   // Initial time in UNIX notation
 
-        FILE* fPtr; // file pointer
-        bool logging_flag = false;
+        // LOGGING VALS
+        FILE* fPtr; // File Pointer to logging file
+        bool Logging_Flag = false;
 
         
         // ===================
@@ -165,6 +167,8 @@ class CF_DataConverter
         bool LANDING_SLOWDOWN_FLAG;
         float SIM_SPEED; 
         float SIM_SLOWDOWN_SPEED;
+        int LOGGING_RATE = 20;
+        int CONSOLE_RATE = 50;
         int POLICY_TYPE = 0;
         
         float P_kp_xy,P_kd_xy,P_ki_xy;
@@ -237,7 +241,9 @@ class CF_DataConverter
         bool impact_flag = false;
         bool BodyContact_flag = false;
         bool OnceFlag_impact = false;
-        double impact_thr = 0.1; // Impact threshold [N]
+        double impact_thr = 0.1;        // Impact threshold [N]
+        std::string BodyCollision_str;  // String of Body Name
+
 
         ros::Time Time_impact;
         geometry_msgs::Vector3 Force_impact;
@@ -290,21 +296,15 @@ class CF_DataConverter
         uint8_t k_run = 0;
         uint8_t n_rollouts = 8;
 
-        boost::array<double,2> mu{0.0,0.0};
-        boost::array<float,2> sigma{0.0,0.0};
-        boost::array<float,3> policy{0.0,0.0,0.0};
+        boost::array<double,2> mu{0,0};
+        boost::array<float,2> sigma{0,0};
+        boost::array<float,3> policy{0,0,0};
 
         float reward = 0.0;
 
-        boost::array<float,3> vel_d{0.0,0.0,0.0};
+        boost::array<float,3> vel_d{0,0,0};
 
         bool runComplete_flag = false;
-
-
-
-
-
-        
 
 
 };
@@ -324,6 +324,8 @@ void CF_DataConverter::LoadParams()
     ros::param::get("/SIM_SPEED",SIM_SPEED);
     ros::param::get("/SIM_SLOWDOWN_SPEED",SIM_SLOWDOWN_SPEED);
     ros::param::get("/LANDING_SLOWDOWN_FLAG",LANDING_SLOWDOWN_FLAG);
+    ros::param::get("/LOGGING_RATE",LOGGING_RATE);
+    ros::param::get("/CONSOLE_RATE",CONSOLE_RATE);
 
     ros::param::get("P_kp_xy",P_kp_xy);
     ros::param::get("P_kd_xy",P_kd_xy);
@@ -543,16 +545,18 @@ void CF_DataConverter::append_CSV_blank()
 }
 
 
-bool CF_DataConverter::DataLogging(crazyflie_msgs::loggingCMD::Request &req, crazyflie_msgs::loggingCMD::Response &res)
+bool CF_DataConverter::DataLogging_Callback(crazyflie_msgs::loggingCMD::Request &req, crazyflie_msgs::loggingCMD::Response &res)
 {
+    // TURN ON/OFF LOGGING
+    Logging_Flag = req.Logging_Flag;
 
-    logging_flag = req.logging_flag;
-
+    // CREATE CSV WHEN ACTIVATED
     if(req.createCSV == true)
     {   
         fPtr = fopen(req.filePath.c_str(), "w");
         create_CSV();
     }
+    // CAP CSV W/ FLIP,IMPACT,MISC DATA
     else if(req.capLogging == true)
     {
         append_CSV_blank();
@@ -561,8 +565,6 @@ bool CF_DataConverter::DataLogging(crazyflie_msgs::loggingCMD::Request &req, cra
         append_CSV_impact();
         append_CSV_blank();
     }
-
-    
 
     return 1;
 }

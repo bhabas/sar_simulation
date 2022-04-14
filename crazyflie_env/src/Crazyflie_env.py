@@ -51,7 +51,7 @@ class CrazyflieEnv:
         self.agent_name = ''    # Learning agent used for training (PEPG,EM,etc...)
         self.runComplete_flag = False
         self.trialComplete_flag = False
-        self.logging_flag = False
+        self.Logging_Flag = False
         self.repeat_run = False
 
 
@@ -201,44 +201,7 @@ class CrazyflieEnv:
 
         print("[COMPLETED] Environment done")
 
-    def createCSV(self,filePath):
-
-        srv = loggingCMDRequest()
-
-        srv.createCSV = True
-        srv.filePath = filePath
-        srv.logging_flag = False
-        
-        # ## PUBLISH MODEL STATE SERVICE REQUEST
-        rospy.wait_for_service('/CF_DC/DataLogging')
-        logging_service = rospy.ServiceProxy('/CF_DC/DataLogging', loggingCMD)
-        logging_service(srv)
-
-    def startLogging(self):
-
-        srv = loggingCMDRequest()
-
-        self.logging_flag = True
-        srv.logging_flag = self.logging_flag
-        
-
-        # ## PUBLISH MODEL STATE SERVICE REQUEST
-        rospy.wait_for_service('/CF_DC/DataLogging')
-        logging_service = rospy.ServiceProxy('/CF_DC/DataLogging', loggingCMD)
-        logging_service(srv)
-
-    def capLogging(self):
-
-        srv = loggingCMDRequest()
-
-        self.logging_flag = False
-        srv.logging_flag = self.logging_flag
-        srv.capLogging = True
-        
-        # ## PUBLISH MODEL STATE SERVICE REQUEST
-        rospy.wait_for_service('/CF_DC/DataLogging')
-        logging_service = rospy.ServiceProxy('/CF_DC/DataLogging', loggingCMD)
-        logging_service(srv)
+    
         
 
     # ============================
@@ -464,6 +427,48 @@ class CrazyflieEnv:
         RL_convg_msg.reward_avg_list = self.reward_avg_list
         self.RL_Convg_Publisher.publish(RL_convg_msg) ## Publish RLData message
 
+    # ========================
+    ##    Logging Services 
+    # ========================
+
+    def createCSV(self,filePath):
+
+        srv = loggingCMDRequest()
+
+        srv.createCSV = True
+        srv.filePath = filePath
+        self.Logging_Flag = False
+        srv.Logging_Flag = False
+        
+        ## SEND LOGGING REQUEST VIA SERVICE
+        rospy.wait_for_service('/CF_DC/DataLogging')
+        logging_service = rospy.ServiceProxy('/CF_DC/DataLogging', loggingCMD)
+        logging_service(srv)
+
+    def startLogging(self):
+
+        srv = loggingCMDRequest()
+
+        self.Logging_Flag = True
+        srv.Logging_Flag = True
+
+        ## SEND LOGGING REQUEST VIA SERVICE
+        rospy.wait_for_service('/CF_DC/DataLogging')
+        logging_service = rospy.ServiceProxy('/CF_DC/DataLogging', loggingCMD)
+        logging_service(srv)
+
+    def capLogging(self):
+
+        srv = loggingCMDRequest()
+
+        self.Logging_Flag = False
+        srv.Logging_Flag = False
+        srv.capLogging = True
+        
+        ## SEND LOGGING REQUEST VIA SERVICE
+        rospy.wait_for_service('/CF_DC/DataLogging')
+        logging_service = rospy.ServiceProxy('/CF_DC/DataLogging', loggingCMD)
+        logging_service(srv)
 
     def modelInitials(self): # RETURNS INITIALS FOR MODEL
         str = self.modelName

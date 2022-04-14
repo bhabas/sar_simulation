@@ -171,7 +171,7 @@ if __name__ == '__main__':
     env.trial_name = f"Control_Playground--trial_{int(trial_num):02d}--{env.modelInitials}"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
 
-    env.createCSV()
+    env.createCSV(env.filepath)
     env.startLogging()
 
     # time.sleep(5)

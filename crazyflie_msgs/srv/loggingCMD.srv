@@ -1,6 +1,6 @@
 string filePath
 bool createCSV
-bool logging_flag
+bool Logging_Flag
 bool capLogging
 ---
 bool srv_Success
