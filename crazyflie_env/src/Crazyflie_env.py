@@ -169,7 +169,7 @@ class CrazyflieEnv:
 
         self.reward = 0.0       # Calculated reward from run
         self.reward_avg = 0.0   # Averaged rewards over episode
-        self.reward_inputs = [] # List of inputs to reward func
+        self.reward_inputs = [0.0, 0.0, 0.0] # List of inputs to reward func
 
         self.d_ceil_min = 50.0
         self.pitch_sum = 0.0
@@ -396,11 +396,11 @@ class CrazyflieEnv:
         
         RL_msg = RLData() ## Initialize RLData message
         
-        # RL_msg.n_rollouts = self.n_rollouts
-        # RL_msg.h_ceiling = self.h_ceiling
+        RL_msg.n_rollouts = self.n_rollouts
 
         RL_msg.k_ep = self.k_ep
         RL_msg.k_run = self.k_run
+        RL_msg.error_string = self.error_str
 
         RL_msg.mu = self.mu
         RL_msg.sigma = self.sigma
@@ -408,6 +408,7 @@ class CrazyflieEnv:
 
         RL_msg.reward = self.reward
         RL_msg.reward_avg = self.reward_avg
+        RL_msg.reward_inputs = self.reward_inputs
 
         RL_msg.vel_d = self.vel_d
 
@@ -464,6 +465,7 @@ class CrazyflieEnv:
         self.Logging_Flag = False
         srv.Logging_Flag = False
         srv.capLogging = True
+        srv.error_string = self.error_str
         
         ## SEND LOGGING REQUEST VIA SERVICE
         rospy.wait_for_service('/CF_DC/DataLogging')

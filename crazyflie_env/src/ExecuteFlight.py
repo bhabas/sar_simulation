@@ -188,7 +188,7 @@ if __name__ == '__main__':
     trial_num = 24
     env.trial_name = f"ExampleFlight--trial_{int(trial_num):02d}--{env.modelInitials}"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
-    env.logging_flag = True
+    env.Logging_Flag = True
     env.createCSV(env.filepath)
 
     V_d = 2.5

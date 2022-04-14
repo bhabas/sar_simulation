@@ -149,6 +149,7 @@ class CF_DataConverter
         // LOGGING VALS
         FILE* fPtr; // File Pointer to logging file
         bool Logging_Flag = false;
+        std::string error_string;
 
         
         // ===================
@@ -301,6 +302,7 @@ class CF_DataConverter
         boost::array<float,3> policy{0,0,0};
 
         float reward = 0.0;
+        boost::array<double,3> reward_inputs{0,0,0};
 
         boost::array<float,3> vel_d{0,0,0};
 
@@ -438,7 +440,7 @@ void CF_DataConverter::append_CSV_misc()
 
 
     // MISC RL LABELS
-    fprintf(fPtr,"%.2f,reward_inputs,",reward);
+    fprintf(fPtr,"%.2f,[%.3f %.3f %.3f],",reward,reward_inputs[0],reward_inputs[1],reward_inputs[2]);
 
     // MISC INTERNAL STATE ESTIMATES
     fprintf(fPtr,"--,--,--,--,--,"); // Tau,OF_x,OF_y,RREV,d_ceil
@@ -455,7 +457,7 @@ void CF_DataConverter::append_CSV_misc()
 
 
     // MISC VALUES
-    fprintf(fPtr,"--,%s","Error string"); // Volts,Error
+    fprintf(fPtr,"--,%s",error_string.c_str()); // Volts,Error
     fprintf(fPtr,"\n");
     fflush(fPtr);
 
@@ -519,7 +521,7 @@ void CF_DataConverter::append_CSV_impact()
 
     // MISC INTERNAL STATE ESTIMATES
     fprintf(fPtr,"%u,%u,%u,%u,%u,",Pad_Connections,Pad1_Contact,Pad2_Contact,Pad3_Contact,Pad4_Contact);
-    fprintf(fPtr,"%s,%.3f,%.3f,%.3f,","impact_mag",impact_force_x,impact_force_y,impact_force_z);
+    fprintf(fPtr,"--,%.3f,%.3f,%.3f,",impact_force_x,impact_force_y,impact_force_z);
     fprintf(fPtr,"--,--,--,--,");
     fprintf(fPtr,"--,--,--,--,");
 
@@ -559,6 +561,8 @@ bool CF_DataConverter::DataLogging_Callback(crazyflie_msgs::loggingCMD::Request 
     // CAP CSV W/ FLIP,IMPACT,MISC DATA
     else if(req.capLogging == true)
     {
+
+        error_string = req.error_string;
         append_CSV_blank();
         append_CSV_misc();
         append_CSV_flip();

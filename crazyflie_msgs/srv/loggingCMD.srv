@@ -2,5 +2,6 @@ string filePath
 bool createCSV
 bool Logging_Flag
 bool capLogging
+string error_string
 ---
 bool srv_Success
