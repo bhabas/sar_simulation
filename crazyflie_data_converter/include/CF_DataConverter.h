@@ -56,7 +56,11 @@ class CF_DataConverter
             PadConnect_Sub = nh->subscribe("/ENV/Pad_Connections",5,&CF_DataConverter::Pad_Connections_Callback,this,ros::TransportHints().tcpNoDelay());
 
             log1_Sub = nh->subscribe("/cf1/log1", 1, &CF_DataConverter::log1_Callback, this, ros::TransportHints().tcpNoDelay());
-            
+            log2_Sub = nh->subscribe("/cf1/log2", 1, &CF_DataConverter::log2_Callback, this, ros::TransportHints().tcpNoDelay());
+            log3_Sub = nh->subscribe("/cf1/log3", 1, &CF_DataConverter::log3_Callback, this, ros::TransportHints().tcpNoDelay());
+            log4_Sub = nh->subscribe("/cf1/log4", 1, &CF_DataConverter::log4_Callback, this, ros::TransportHints().tcpNoDelay());
+            log5_Sub = nh->subscribe("/cf1/log5", 1, &CF_DataConverter::log5_Callback, this, ros::TransportHints().tcpNoDelay());
+
             // INITIALIZE MAIN PUBLISHERS
             StateData_Pub = nh->advertise<crazyflie_msgs::CF_StateData>("/CF_DC/StateData",1);
             MiscData_Pub =  nh->advertise<crazyflie_msgs::CF_MiscData>("/CF_DC/MiscData",1);
@@ -86,7 +90,7 @@ class CF_DataConverter
 
 
 
-        // FUNCTION PRIMITIVES
+        // SIMULATION DATA CALLBACKS
         void CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_msg);
         void CtrlDebug_Callback(const crazyflie_msgs::CtrlDebug &ctrl_msg);
 
@@ -97,20 +101,21 @@ class CF_DataConverter
         void Pad_Connections_Callback(const crazyflie_msgs::PadConnect &msg);
 
 
-        // FUNCTION PRIMITIVES
+        // EXPERIMENT DATA CALLBACKS
         void log1_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log1_msg);
         void log2_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log2_msg);
         void log3_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log3_msg);
         void log4_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log4_msg);
         void log5_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log5_msg);
 
-        bool DataLogging_Callback(crazyflie_msgs::loggingCMD::Request &req, crazyflie_msgs::loggingCMD::Response &res);
-
+        // ORGANIZED DATA PUBLISHERS
         void Publish_StateData();
         void Publish_FlipData();
         void Publish_ImpactData();
         void Publish_MiscData();
 
+        // LOGGING FUNCTIONS
+        bool DataLogging_Callback(crazyflie_msgs::loggingCMD::Request &req, crazyflie_msgs::loggingCMD::Response &res);
         void create_CSV();
         void append_CSV_states();
         void append_CSV_misc();
@@ -118,13 +123,15 @@ class CF_DataConverter
         void append_CSV_impact();
         void append_CSV_blank();
 
-
-        void MainLoop();
+        // SIMULATION FUNCTIONS
         void activateStickyFeet();
-        void LoadParams();
-        void consoleOuput();
         void checkSlowdown();
         void adjustSimSpeed(float speed_mult);
+
+        
+        void MainLoop();
+        void LoadParams();
+        void consoleOuput();
         void decompressXY(uint32_t xy, float xy_arr[]);
         void quat2euler(float quat[], float eul[]);
 
@@ -216,9 +223,9 @@ class CF_DataConverter
         double RREV;
         double D_ceil;
 
-        boost::array<double, 4> FM;
-        boost::array<double, 4> MotorThrusts;
-        boost::array<uint16_t, 4> MS_PWM;
+        boost::array<double,4> FM;
+        boost::array<double,4> MotorThrusts;
+        boost::array<uint16_t,4> MS_PWM;
 
         double Tau_thr;
         double G1;
@@ -250,7 +257,7 @@ class CF_DataConverter
         double RREV_tr;
         double D_ceil_tr;
 
-        boost::array<double, 4> FM_tr;
+        boost::array<double,4> FM_tr;
 
         double NN_tr_flip;
         double NN_tr_policy;
@@ -583,6 +590,25 @@ void CF_DataConverter::LoadParams()
 
 }
 
+
+
+// DECOMPRESS COMBINED PAIR OF VALUES FROM CF MESSAGE INTO THEIR RESPECTIVE FLOAT VALUES
+void CF_DataConverter::decompressXY(uint32_t xy, float xy_arr[])
+{
+    uint16_t xd = ((uint32_t)xy >> 16) & 0xFFFF;    // Shift out y-value bits
+    xy_arr[0] = ((float)xd - 32767.0f)*1e-3;        // Convert to normal value
+
+    uint16_t yd = (uint32_t)xy & 0xFFFF;            // Save only y-value bits
+    xy_arr[1] = ((float)yd - 32767.0f)*1e-3;
+
+}
+
+
+
+// =========================
+//     LOGGING FUNCTIONS
+// =========================
+
 void CF_DataConverter::create_CSV()
 {
     fprintf(fPtr,"k_ep,k_run,");
@@ -779,9 +805,7 @@ void CF_DataConverter::append_CSV_blank()
 {
     fprintf(fPtr,"\n");
     fflush(fPtr);
-
 }
-
 
 bool CF_DataConverter::DataLogging_Callback(crazyflie_msgs::loggingCMD::Request &req, crazyflie_msgs::loggingCMD::Response &res)
 {
@@ -807,15 +831,4 @@ bool CF_DataConverter::DataLogging_Callback(crazyflie_msgs::loggingCMD::Request 
     }
 
     return 1;
-}
-
-// DECOMPRESS COMBINED PAIR OF VALUES FROM CF MESSAGE INTO THEIR RESPECTIVE FLOAT VALUES
-void CF_DataConverter::decompressXY(uint32_t xy, float xy_arr[])
-{
-    uint16_t xd = ((uint32_t)xy >> 16) & 0xFFFF;    // Shift out y-value bits
-    xy_arr[0] = ((float)xd - 32767.0f)*1e-3;        // Convert to normal value
-
-    uint16_t yd = (uint32_t)xy & 0xFFFF;            // Save only y-value bits
-    xy_arr[1] = ((float)yd - 32767.0f)*1e-3;
-
 }
