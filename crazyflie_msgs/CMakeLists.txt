@@ -28,6 +28,8 @@ add_message_files(
   PadConnect.msg
   MS.msg
   OF_SensorData.msg
+  GenericLogData.msg
+  Vicon_Filtered.msg
 )
 
 # Generate services in the 'srv' folder
