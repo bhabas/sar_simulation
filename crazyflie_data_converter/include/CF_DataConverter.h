@@ -217,21 +217,21 @@ class CF_DataConverter
         geometry_msgs::Twist Twist;
         geometry_msgs::Vector3 Eul;
 
-        double Tau;
-        double OFx;
-        double OFy;
-        double RREV;
-        double D_ceil;
+        double Tau = 0.0;
+        double OFx = 0.0;
+        double OFy = 0.0;
+        double RREV = 0.0;
+        double D_ceil = 0.0;
 
-        boost::array<double,4> FM;
-        boost::array<double,4> MotorThrusts;
-        boost::array<uint16_t,4> MS_PWM;
+        boost::array<double,4> FM{0,0,0,0};
+        boost::array<double,4> MotorThrusts{0,0,0,0};
+        boost::array<uint16_t,4> MS_PWM{0,0,0,0};
 
-        double Tau_thr;
-        double G1;
+        double Tau_thr = 0.0;
+        double G1 = 0.0;
 
-        double NN_flip;
-        double NN_policy;
+        double NN_flip = 0.0;
+        double NN_policy = 0.0;
 
         geometry_msgs::Vector3 x_d;
         geometry_msgs::Vector3 v_d;
@@ -251,16 +251,16 @@ class CF_DataConverter
         geometry_msgs::Vector3 Eul_tr;
 
 
-        double Tau_tr;
-        double OFx_tr;
-        double OFy_tr;
-        double RREV_tr;
-        double D_ceil_tr;
+        double Tau_tr = 0.0;
+        double OFx_tr = 0.0;
+        double OFy_tr = 0.0;
+        double RREV_tr = 0.0;
+        double D_ceil_tr = 0.0;
 
-        boost::array<double,4> FM_tr;
+        boost::array<double,4> FM_tr{0,0,0,0};
 
-        double NN_tr_flip;
-        double NN_tr_policy;
+        double NN_tr_flip = 0.0;
+        double NN_tr_policy = 0.0;
 
 
         // ===================
@@ -649,7 +649,7 @@ void CF_DataConverter::create_CSV()
 void CF_DataConverter::append_CSV_states()
 {
     fprintf(fPtr,"%u,%u,",k_ep,k_run);              // k_ep,k_run
-    fprintf(fPtr,"%.3f,",Time.toSec());             // t
+    fprintf(fPtr,"%.3f,",(Time-Time_start).toSec());             // t
     fprintf(fPtr,"%.3f,%.3f,",NN_flip,NN_policy);   // NN_flip,NN_policy
     fprintf(fPtr,"--,--,--,");                      // mu,sigma,policy
 

@@ -4,7 +4,6 @@ from threading import Thread, Timer
 
 import time
 import sys
-import csv
 import os
 import subprocess
 import signal

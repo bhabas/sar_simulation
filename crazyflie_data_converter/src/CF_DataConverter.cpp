@@ -512,8 +512,8 @@ void CF_DataConverter::quat2euler(float quat[], float eul[]){
 void CF_DataConverter::consoleOuput()
 {
     system("clear");
-    printf("t: %.4f V: \n",(Time-Time_start).toSec(),V_battery);
-    printf("Model: %s DataType: %s\n",MODEL_NAME.c_str(),DATA_TYPE.c_str());
+    printf("t: %.4f V: %.3f\n",(Time-Time_start).toSec(),V_battery);
+    printf("DataType: %s \t Model: %s\n",DATA_TYPE.c_str(),MODEL_NAME.c_str());
     printf("\n");
 
     printf("==== Flags ====\n");
