@@ -589,35 +589,29 @@ void CF_DataConverter::MainLoop()
     while(ros::ok)
     {   
 
-        printf("heres\n");
 
-        // // DISPLAY CONSOLE AT CONSOLE_RATE FREQUENCY
-        // if (RATE_DO_EXECUTE(CONSOLE_RATE, tick))
-        // {
-        //     // CF_DataConverter::consoleOuput();
+        // DISPLAY CONSOLE AT CONSOLE_RATE FREQUENCY
+        if (RATE_DO_EXECUTE(CONSOLE_RATE, tick))
+        {
+            CF_DataConverter::consoleOuput();
 
-        // }
+        }
 
-        // if (RATE_DO_EXECUTE(LOGGING_RATE, tick))
-        // {
-        //     if(Logging_Flag == true)
-        //     {
-        //         append_CSV_states();
-        //     }
-        // }
+        if (RATE_DO_EXECUTE(LOGGING_RATE, tick))
+        {
+            if(Logging_Flag == true)
+            {
+                append_CSV_states();
+            }
+        }
 
+        CF_DataConverter::checkSlowdown();
 
-
-        
-
-        // // CF_DataConverter::checkSlowdown();
-
-
-        // // // PUBLISH ORGANIZED DATA
-        // // Publish_StateData();
-        // // Publish_FlipData();
-        // // Publish_ImpactData();
-        // // Publish_MiscData();
+        // PUBLISH ORGANIZED DATA
+        Publish_StateData();
+        Publish_FlipData();
+        Publish_ImpactData();
+        Publish_MiscData();
 
         tick++;
         rate.sleep();
