@@ -827,12 +827,12 @@ class Mu_Widget(QWidget):
     def update(self):
                         
         self.curve_1_mu.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_1_list)
-        self.curve_1_SD1.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_1_list + 2*DashNode.sigma_1_list)
-        self.curve_1_SD2.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_1_list + -2*DashNode.sigma_1_list)
+        self.curve_1_SD1.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_1_list + 2*np.array(DashNode.sigma_1_list))
+        self.curve_1_SD2.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_1_list + -2*np.array(DashNode.sigma_1_list))
 
         self.curve_2_mu.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_2_list)
-        self.curve_2_SD1.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_2_list + 2*DashNode.sigma_2_list)
-        self.curve_2_SD2.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_2_list + -2*DashNode.sigma_2_list)
+        self.curve_2_SD1.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_2_list + 2*np.array(DashNode.sigma_2_list))
+        self.curve_2_SD2.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_2_list + -2*np.array(DashNode.sigma_2_list))
 
     def reset_axes(self):
         # self.p1.enableAutoRange(enable=True)
@@ -872,8 +872,8 @@ class Sigma_Widget(QWidget):
 
     def update(self):
                         
-        self.curve_sig1.setData(np.arange(0,DashNode.k_ep+1),DashNode.sigma_1_list*10)
-        self.curve_sig2.setData(np.arange(0,DashNode.k_ep+1),DashNode.sigma_2_list)
+        self.curve_sig1.setData(np.arange(0,DashNode.k_ep+1),np.array(DashNode.sigma_1_list)*10)
+        self.curve_sig2.setData(np.arange(0,DashNode.k_ep+1),np.array(DashNode.sigma_2_list))
 
     def reset_axes(self):
         self.PW.setXRange(0,20)
