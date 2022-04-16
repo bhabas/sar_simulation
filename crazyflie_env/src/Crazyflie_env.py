@@ -23,27 +23,29 @@ from gazebo_msgs.srv import SetModelState
 
 
 class CrazyflieEnv:
-    def __init__(self,gazeboTimeout=True):
+    def __init__(self,gazeboTimeout=True,DataType='SIM'):
         print("[STARTING] CrazyflieEnv is starting...")
 
         ## GAZEBO SIMULATION INITIALIZATION
         # Load params -> Launch sim -> Wait for sim running -> Launch controller
         rospy.init_node("crazyflie_env_node") 
         os.system("roslaunch crazyflie_launch params.launch") 
-        self.launch_sim() 
-        rospy.wait_for_message("/clock",Clock)
-        self.launch_controller()
-        print("[INITIATING] Gazebo simulation started")
 
-        ## INIT GAZEBO TIMEOUT THREAD
-        if gazeboTimeout==True:
-            self.timeoutThread = Thread(target=self.timeoutSub)
-            self.timeoutThread.start()
+        if DataType == 'SIM':
+            self.launch_sim() 
+            rospy.wait_for_message("/clock",Clock)
+            self.launch_controller()
+            print("[INITIATING] Gazebo simulation started")
+
+            ## INIT GAZEBO TIMEOUT THREAD
+            if gazeboTimeout==True:
+                self.timeoutThread = Thread(target=self.timeoutSub)
+                self.timeoutThread.start()
 
 
         self.username = getpass.getuser()
         self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/crazyflie_logging/local_logs"
-        self.dataType = "SIM"
+        self.DataType = DataType
         self.filepath = ""
         self.trial_name = '' 
         self.error_str = ''     # Label for why rollout was terminated/completed
@@ -57,7 +59,6 @@ class CrazyflieEnv:
 
         ## LOAD SIM_SETTINGS/ROS_PARAMETERS
         self.modelName = rospy.get_param('/MODEL_NAME')
-        self.modelInitials = self.modelInitials()
         
         self.t_start = rospy.get_time() # [s]
         self.t_prev = 0.0 # [s]
@@ -743,6 +744,13 @@ class CrazyflieEnv:
         x_impact = pos_0[0] + vel_d[0]*t_impact
         y_impact = pos_0[1] + vel_d[1]*t_impact
         z_impact = pos_0[2] + vel_d[2]*t_impact
+
+        if -0.8 < x_impact < 1.2 and -0.6 < y_impact < 0.7:
+            print("Impact Location Inboud")
+
+        else:
+            print("WARNING: IMPACT LOCATION OUT OF BOUNDS!!!")
+            
 
         return [x_impact,y_impact,z_impact]
 

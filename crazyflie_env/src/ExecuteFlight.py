@@ -57,10 +57,10 @@ def executeFlight(env,agent):
     # ============================
     env.step("policy",env.policy,cmd_flag=1) # Arm policy inside controller
     env.step('sticky',cmd_flag=1)              # Enable sticky pads
-    env.traj_launch(env.posCF,env.vel_d)
-    # env.step('traj',cmd_vals=[env.posCF_0[0],env.vel_d[0],env.accCF_max[0]],cmd_flag=0)
-    # env.step('traj',cmd_vals=[env.posCF_0[1],env.vel_d[1],env.accCF_max[1]],cmd_flag=1)
-    # env.step('traj',cmd_vals=[env.posCF_0[2],env.vel_d[2],env.accCF_max[2]],cmd_flag=2)
+    # env.traj_launch(env.posCF,env.vel_d)
+    env.step('traj',cmd_vals=[env.posCF_0[0],env.vel_d[0],env.accCF_max[0]],cmd_flag=0)
+    env.step('traj',cmd_vals=[env.posCF_0[1],env.vel_d[1],env.accCF_max[1]],cmd_flag=1)
+    env.step('traj',cmd_vals=[env.posCF_0[2],env.vel_d[2],env.accCF_max[2]],cmd_flag=2)
 
 
     while True: 

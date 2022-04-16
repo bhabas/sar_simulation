@@ -440,6 +440,7 @@ void CF_DataConverter::log2_Callback(const crazyflie_msgs::GenericLogData::Const
     if(flip_flag == true && OnceFlag_flip == false)
     {
         Time_tr = ros::Time::now();
+        OnceFlag_flip = true;
     }
 
     V_battery = 3.5 + (log2_msg->values[8]/256)*(4.2-3.5);
@@ -728,7 +729,7 @@ void CF_DataConverter::append_CSV_misc()
 void CF_DataConverter::append_CSV_flip()
 {
     fprintf(fPtr,"%u,%u,",k_ep,k_run);
-    fprintf(fPtr,"%.3f,",Time_tr.toSec());
+    fprintf(fPtr,"%.3f,",(Time_tr-Time_start).toSec());
     fprintf(fPtr,"%.3f,%.3f,",NN_tr_flip,NN_tr_policy);
     fprintf(fPtr,"--,--,--,");
 
@@ -766,7 +767,7 @@ void CF_DataConverter::append_CSV_flip()
 void CF_DataConverter::append_CSV_impact()
 {
     fprintf(fPtr,"%u,%u,",k_ep,k_run);
-    fprintf(fPtr,"%.3f,",Time_impact.toSec());
+    fprintf(fPtr,"%.3f,",(Time_impact-Time_start).toSec());
     fprintf(fPtr,"--,--,");
     fprintf(fPtr,"--,--,--,");
 

@@ -24,6 +24,7 @@ def cmd_send(env):
             11:'sticky',
             19:'traj_tp',
             101:'reset',
+            102:'cap_logging'
         }
 
         try:
@@ -39,6 +40,9 @@ def cmd_send(env):
 
                 env.step('sticky',cmd_vals,0)
                 env.step(action,cmd_vals,cmd_flag)
+
+            elif action=='cap_logging':
+                env.capLogging()
 
             elif action=='pos':
                 cmd_vals = env.userInput("Set desired position values (x,y,z): ",float)
@@ -168,7 +172,7 @@ if __name__ == '__main__':
     ## INITIALIALIZE LOGGING DATA
     trial_num = 24
     env.agent_name = agent.agent_type
-    env.trial_name = f"Control_Playground--trial_{int(trial_num):02d}--{env.modelInitials}"
+    env.trial_name = f"Control_Playground--trial_{int(trial_num):02d}--{env.modelInitials()}"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
 
     env.createCSV(env.filepath)

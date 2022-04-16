@@ -34,8 +34,8 @@ if __name__ == '__main__':
     # ============================
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
-    V_d = 3.2 # [m/s]
-    phi = 90   # [deg]
+    V_d = 2.0 # [m/s]
+    phi = 60   # [deg]
     phi_rad = np.radians(phi)
     env.vel_d = [V_d*np.cos(phi_rad), 0.0, V_d*np.sin(phi_rad)] # [m/s]
 
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     ## INITIALIALIZE LOGGING DATA
     trial_num = 24
     env.agent_name = agent.agent_type
-    env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--{env.modelInitials}"
+    env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--{env.modelInitials()}"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
     env.Logging_Flag = True
     env.createCSV(env.filepath)
