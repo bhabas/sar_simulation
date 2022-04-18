@@ -13,7 +13,7 @@
 #include <stdio.h>
 
 #define Pixel_width 160 //Picture dimensions
-#define Pixel_height 120
+#define Pixel_height 160
 float w = 3.6e-6; //Pixel width in meters
 float f = 0.33e-3;//Focal length in meters
 float O_up = Pixel_width/2; //Pixel x,y offsets
@@ -25,6 +25,22 @@ float Ky[3] = {1,2,1};
 float Kx[3] = {1,0,-1};
 float kernelX[9] = {1,0,-1,2,0,-2,1,0,-1};
 float kernelY[9] = {-1,-2,-1,0,0,0,1,2,1};
+
+
+
+unsigned char img[25] = {10,12,19,13,20,7,6,12,18,4,3,31,6,3,7,7,3,2,6,8,5,2,5,8,4};
+//int Ix[25] = {0};
+//int Iy[25] = {0};
+int Ix[Pixel_height*Pixel_width] = {0}; //zero init Ix Iy
+int Iy[Pixel_height*Pixel_width] = {0};
+
+int kx0[3] = {-1, 0, 1};
+int kx1[3] = {-2, 0, 2};
+int kx2[3] = {-1, 0, 1};
+int ky0[3] = {-1,-2,-1};
+int ky2[3] = {1,2,1};
+
+
 
 unsigned char *input;
 unsigned char *Output;
@@ -50,6 +66,7 @@ class MyClass // DEFINE CLASS
         void Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg);
         bool convolve2DSeparable(unsigned char* in, unsigned char* out, int dataSizeX, int dataSizeY, float* kernelX, int kSizeX, float* kernelY, int kSizeY);
         bool convolve2DSlow(unsigned char* in, unsigned char* out, int dataSizeX, int dataSizeY, float* kernel, int kernelSizeX, int kernelSizeY);
+        void Convolution_X_Y(unsigned char* input, int ImgX,int ImgY);
 
 
     private: // CLASS VARIABLES ONLY THAT ARE CALLABLE INSIDE INTERNAL CLASS FUNCTIONS
@@ -66,7 +83,8 @@ void MyClass::Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg){
 
     //CREATE VECTOR TO STORE DATA FROM ROS MSG
     std::vector<uint8_t> Cam_Vec = Camera_msg->data;
-    Cam_Vec.erase(Cam_Vec.begin() + Pixel_width*Pixel_height, Cam_Vec.end());
+    // CROP IMAGE TO 120 ROWS x 160 COLUMNS
+    //Cam_Vec.erase(Cam_Vec.begin() + Pixel_width*Pixel_height, Cam_Vec.end());
 
     //CREATE POINTER(ARRAY) TO DATA LOCATION OF FIRST INDEX
     uint8_t* Cur_img = &Cam_Vec[0];
@@ -75,43 +93,37 @@ void MyClass::Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg){
 
     //iterate through the whole array and print the current image
     //pre-init vars
-    uint i = 0; //i has to be initialized as 1 to prevent divide by zero
-    uint x = 0;
-    uint y = 0;
-    unsigned char X_Output[Pixel_width*Pixel_height];
-    unsigned char Y_Output[Pixel_width*Pixel_height];
-    uint j = 0;
+    //unsigned char X_Output[Pixel_width*Pixel_height];
+    //unsigned char Y_Output[Pixel_width*Pixel_height];
 
-    //MyClass::convolve2DSeparable(Cur_img,X_Output,Pixel_width,Pixel_height,Kx,3,Ky,3);
-    //MyClass::convolve2DSeparable(Cur_img,Y_Output,Pixel_width,Pixel_height,Ky,3,Kx,3);
-    MyClass::convolve2DSlow(Cur_img,X_Output,Pixel_width,Pixel_height,kernelX,3,3);
-    MyClass::convolve2DSlow(Cur_img,Y_Output,Pixel_width,Pixel_height,kernelY,3,3);
 
-    std::vector<uint8_t> ConvX;
-    std::copy(std::begin(X_Output),std::end(X_Output),std::back_inserter(ConvX));
+    // Calling Convolution
+    //MyClass::Convolution_X_Y(Cur_img,Pixel_width,Pixel_width);
+    MyClass::Convolution_X_Y(Cur_img,Pixel_width,Pixel_height);
+    //MyClass::convolve2DSlow(Cur_img,X_Output,Pixel_width,Pixel_height,kernelX,3,3);
+    //MyClass::convolve2DSlow(Cur_img,Y_Output,Pixel_width,Pixel_height,kernelY,3,3);
 
-    std::vector<uint8_t> ConvY;
-    std::copy(std::begin(Y_Output),std::end(Y_Output),std::back_inserter(ConvY));
+    // Copying and Writing to Output Message
+    std::vector<int64_t> ConvX_Vec;
+    std::copy(std::begin(Ix),std::end(Ix),std::back_inserter(ConvX_Vec));
 
-    // int Img_data[Pixel_width*Pixel_height];
+    std::vector<int64_t> ConvY_Vec;
+    std::copy(std::begin(Iy),std::end(Iy),std::back_inserter(ConvY_Vec));
 
-    // for(int i = 0; i < Pixel_width*Pixel_height;i++){
-    //     Img_data[i] = (int)Cur_img[i];
-    // }
+    //std::vector<uint8_t> Img_Vec;
+    //std::copy(std::begin(img),std::end(img),std::back_inserter(Img_Vec));
 
     example_msgs::CustomMessage new_msg;
-    //new_msg.custom_vector.x = 5;
     new_msg.Camera_data = Cam_Vec;
-    new_msg.Xconv = ConvX;
-    new_msg.Yconv = ConvY;
+    //new_msg.Camera_data = Img_Vec;
+    new_msg.Xconv = ConvX_Vec;
+    new_msg.Yconv = ConvY_Vec;
 
     pub.publish(new_msg);
 
+    //printf("\nTest Output\n");
 
-    printf("\nTest Output\n");
-
-
-/*  //=========================================================
+/*  //===================DEBUGGING=====================
 
     for(y = 0; y < 5;){
         
@@ -142,65 +154,9 @@ void MyClass::Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg){
 
     }
 
-    printf("\n");
+    */ // === END OF DEBUGGING ===
 
-    for(y = 0; y < 6;){
-        
-        for(x = 0; x < 6;){
-
-            i = x + Pixel_width * y;
-            printf("%u,",Output[i]);
-            x++;
-
-        }
-        y++;
-        printf("\n");
-    }
-
-    printf("\n");
-
-    for(y = 0; y < 6;){
-        
-        for(x = 0; x < 6;){
-
-            i = x + Pixel_width * y;
-            printf("%u,",Output2[i]);
-            x++;
-
-        }
-        y++;
-        printf("\n");
-    }
-
-
-
-// ===================================================*/
-
-
-
-    // for(uint n = 0; n < Pixel_height * Pixel_width; n++){
-
-    //     if(i % 120 == 0) printf("%u\n",Cur_img[n]);
-
-    //     else printf("%u,",Cur_img[n]);
-
-    //     i++;
-        
-    // }
-
-    // printf("\nOutput of Separable Convolution\n");
-    // i = 1;
-
-    // for(uint n = 0; n < Pixel_height * Pixel_width; n++){
-
-    //     if(i %120 == 0) printf("%u\n",Output[n]);
-
-    //     else printf("%u,", Output[n]);
-    //     i++;
-
-    // }
-
-}
+} // ============ END OF MAIN LOOP ============ //
 
 // SUBSCRIBER CALLBACK FUNCTIONS (SIMILAR TO SELF.CLOCK_CALLBACK)
 // void MyClass::clock_Callback(const rosgraph_msgs::Clock::ConstPtr &msg)
@@ -230,17 +186,120 @@ void MyClass::Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg){
 //     nml_mat_free(m2);
 //     nml_mat_free(m3);
 
-
-
-//     // BASIC CUSTOM PUBLISHER
-//     example_msgs::CustomMessage new_msg;
-//     new_msg.custom_msg = "Hello c++";
-//     new_msg.custom_vector.x = 5;
-
-//     pub.publish(new_msg);
-
-
 // }
+
+
+void MyClass::Convolution_X_Y(unsigned char* input, int ImgX, int ImgY) 
+{
+
+    //Where the convolution starts
+    int X = 1;
+    int Y = 1;
+    
+    for(int j = 0; j < (ImgX - 2)*(ImgY - 2); j++) // How many times the kernel center moves around the image
+    {
+
+        //GENERALIZE FOR CHANGE IN KERNEL SIZE
+        if(X <= ImgX - 1) //if the edge of the kernel hits the edge of the image
+        { 
+        
+            X = 1; //move the kernel back to the left edge of the image
+            Y++; //and slide the kernel down the image
+
+        }
+
+        //Sub Kernel Indexing 
+        int i0 = (X - 1) + (Y - 1) * ImgX; //First grab top left location of whole kernel
+        int i1 = i0 + ImgX; //then each following row is separated by the image width
+        int i2 = i1 + ImgX;
+
+        // ######  DEBUGGING  ######
+        /*//
+        std::cout << "i0: " << i0 << "\n";
+        std::cout << "i1: " << i1 << "\n";
+        std::cout << "i2: " << i2 << "\n";
+        *///
+
+        int Xsum = 0; //reset rolling sum to 0
+        int Ysum = 0;
+
+        //GENERALIZE FOR CHANGE IN KERNEL SIZE
+        for(int k = 0; k < 3; k++){
+
+            //Sub kernel 0
+            Xsum += kx0[k] * input[i0 + k];
+            Ysum += ky0[k] * input[i0 + k];
+
+            //Sub kernel 1 (skipping ky1)
+            Xsum += kx1[k] * input[i1 + k];
+
+            //Sub kernel 2
+            Xsum += kx2[k] * input[i2 + k];
+            Ysum += ky2[k] * input[i2 + k];
+
+        }
+
+        //Sum assigned to middle value
+        Ix[i1 + 1] = Xsum;
+        Iy[i1 + 1] = Ysum;
+        X++; // move top left corner of kernel over one
+        
+    }
+
+    // ######  DEBUGGING  ######
+    /*
+    
+    std::cout << "\n Ix \n";
+    
+    int i = 0;
+
+    for(int j = 0; j < ImgX * ImgY; j++){
+
+        if(i == Pixel_width - 1) {
+            printf("%d\n\n", Ix[j]);
+            i = 0;
+        }
+
+        else {
+            printf("%d,", Ix[j]);
+        }
+
+       i++;
+
+            //printf("%d\n", Ix[j]);
+
+    }
+
+    std::cout << "\n Iy \n";
+
+    i = 0;
+
+    for(int j = 0; j < ImgX * ImgY; j++){
+
+        if(i == Pixel_width - 1) {
+            printf("%d\n\n", Iy[j]);
+            i = 0;
+        }
+
+        else {
+            printf("%d,", Iy[j]);
+        }
+
+       i++;
+
+            //printf("%d\n", Ix[j]);
+
+    }
+
+            //printf("%d\n",Iy[j]);
+
+    
+     // END OF DEBUGGING 
+     */
+
+} // ========= END OF CONVOLUTION X Y =========
+
+
 
 bool MyClass::convolve2DSeparable(unsigned char* in, unsigned char* out, int dataSizeX, int dataSizeY, float* kernelX,
     int kSizeX, float* kernelY, int kSizeY)

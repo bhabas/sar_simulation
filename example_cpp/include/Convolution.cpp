@@ -4,7 +4,18 @@
 #include <iostream>
 
 //Initial test image
-int img[9] = {10,12,19,13,20,7,6,12,18};
+unsigned char Cur_img[25] = {0, 0 , 0 , 0 , 0,
+                         0, 0 , 10, 0 , 0,
+                         0,10 , 20, 10, 0,
+                         0, 0 , 10, 0 , 0,
+                         0, 0 , 0 , 0 , 0};                       
+
+
+unsigned char prev_img[25] = {0,0,0,0,0,
+                              0,0,0,0,0,
+                              0,0,10,0,0,
+                              0,0,0,0,0,
+                              0,0,0,0,0};                       
 
 // Init Kernels
 int kx0[3] = {-1, 0, 1};
@@ -12,103 +23,172 @@ int kx1[3] = {-2, 0, 2};
 int kx2[3] = {-1, 0, 1};
 int ky0[3] = {-1,-2,-1};
 int ky2[3] = {1,2,1};
-float Output[9] = {0}; //init all entries to be zero
+// Init floating point constants
+float Ugrid;
+float Vgrid;
+float w = 3.6e-6;
+float f = 3.3e-4;
+//float Output[9] = {0}; //init all entries to be zero
 
-int Ix[9] = {0};
-int Iy[9] = {0};
+//Init outputs
+int Ix[25] = {0};
+int Iy[25] = {0};
+int It[25] = {0};
+float Iuu = 0;
+float Ivv = 0;
+float Iuv = 0;
+float Gtemp = 0;
+float IGu;
+float IGv;
+float IGG;
+float Iut;
+float Ivt;
+float IGt;
 
-bool Convolution(int in[9], int ImgX, int ImgY); //init function
+void Convolution_X_Y(unsigned char* input, int ImgX, int ImgY); //init functions
+void Convolution_T();
 
 
 int main(){
     
    // Convolution(); //init function
-    Convolution(img,3,3);
+    Convolution_T();
+    Convolution_X_Y(Cur_img,5,5);
     return 1;
 
 }
 
-bool Convolution(int in[9], int ImgX, int ImgY) 
+void Convolution_T() //Still not sure where to do this in the most efficient way
+{
+
+    for(int i = 0; i < 25; i++){
+        It[i] = Cur_img[i] - prev_img[i]; //assumes dt = 1
+    }
+
+}
+
+void Convolution_X_Y(unsigned char* input, int ImgX, int ImgY) 
 {
 
     //Where the convolution starts
     int X = 1;
     int Y = 1;
-    //sub Kernel locations
-    int y0;
-    int y1;
-    int y2;
-
-    //Rolling sum
-    int Xsum = 0;
-    int Ysum = 0;
+    Ugrid = -2.826e-4; //both start in the same location
+    Vgrid = -2.826e-4;
+    
     
     for(int j = 0; j < (ImgX - 2)*(ImgY - 2); j++) // How many times the kernel center moves around the image
     {
 
         //GENERALIZE FOR CHANGE IN KERNEL SIZE
-        if(X == ImgX - 1) //if the edge of the kernel hits the edge of the image
+        if(X <= ImgX - 1) //if the edge of the kernel hits the edge of the image
         { 
         
             X = 1; //move the kernel back to the left edge of the image
             Y++; //and slide the kernel down the image
+            Vgrid += w; // add one pixel width to Vgrid
+            Ugrid = -2.826e-4; // and reset Ugrid back to original value
 
         }
 
-        //sub Kernel indexing locations
-        int x0 = X , x1 = X , x2 = X; 
-        int y0 = Y * ImgX;
-        int y2 = y0 + (ImgX * 2); //skipping the middle y kernel so move the last Ysub kernel two rows down
-
-        //Can do this in the aboce step just doing this for readability
-        int i0 = x0 - 1;
+        //Sub Kernel Idexing
+        int i0 = (X - 1) + (Y - 1) * ImgX;
         int i1 = i0 + ImgX;
         int i2 = i1 + ImgX;
 
         // ######  DEBUGGING  ######
-        /*
+        /*//
         std::cout << "i0: " << i0 << "\n";
         std::cout << "i1: " << i1 << "\n";
         std::cout << "i2: " << i2 << "\n";
-        */
+        *///
+
+        int Xsum = 0; //reset rolling sum to 0
+        int Ysum = 0;
+        float Usum = 0;
+        float Vsum = 0;
 
         //GENERALIZE FOR CHANGE IN KERNEL SIZE
         for(int k = 0; k < 3; k++){
 
             //Sub kernel 0
-            Xsum += kx0[k] * img[i0 + k];
-            Ysum += ky0[k] * img[i0 + k];
+            Xsum += kx0[k] * input[i0 + k];
+            Ysum += ky0[k] * input[i0 + k];
 
             //Sub kernel 1 (skipping ky1)
-            Xsum += kx1[k] * img[i1 + k];
+            Xsum += kx1[k] * input[i1 + k];
 
             //Sub kernel 2
-            Xsum += kx2[k] * img[i2 + k];
-            Ysum += ky2[k] * img[i2 + k];
+            Xsum += kx2[k] * input[i2 + k];
+            Ysum += ky2[k] * input[i2 + k];
 
         }
 
         //Sum assigned to middle value
-        Ix[i1 + 1] = Xsum;
-        Iy[i1 + 1] = Ysum;
-        X++;
+        Usum = 8*Xsum/w; //kernel normalization and divide by pixel width
+        Vsum = 8*Ysum/w;
+        Ix[i1 + 1] = Usum;
+        Iy[i1 + 1] = Vsum;
+        int Ittemp = It[i1 + 1]; //this will crop It the same way the imageGrads are shouldn't be a problem
 
-        for(int j = 0; j < 10; j++){
+        Gtemp = (Usum*Ugrid + Vsum*Vgrid);
 
-            printf("%d\n",Ix[j]);
+        //LHS Matrix values (rolling sums)
+        Iuu += Usum*Usum;
+        Ivv += Vsum*Vsum;
+        Iuv += Usum*Vsum;
+        IGu += Gtemp*Usum;
+        IGv += Gtemp*Vsum;
+        IGG += Gtemp*Gtemp;
 
-        }
+        //RHS Matrix Values (rolling sums
+        Iut -= Usum*Ittemp;
+        Ivt -= Vsum*Ittemp;
+        IGt -= Gtemp*Ittemp;
 
-        std::cout << "\n Iy \n";
+        X++; // move top left of kernel over
+        Ugrid += w; //add a pixel width to the Ugrid
 
-        for(int j = 0; j < 10; j++){
-
-            printf("%d\n",Iy[j]);
-
-        }
-
-        std::cout << "loop \n";
+        //std::cout << "loop (X , Y): " << X << "\n";
 
     }
 
-}
+    // ======= DEBUGGING ========
+
+    /*
+    std::cout << "\n Ix \n";
+
+    int i = 0;
+
+    for(int j = 0; j < ImgX * ImgY; j++){
+
+        if(i == ImgX - 1){
+            printf("%d\n",Ix[j]);
+            i = -1;
+        }
+
+        else{
+            printf("%d,",Ix[j]);
+        }
+
+        i++;
+    }
+
+    std::cout << "\n Iy \n";
+    i = 0;
+
+    for(int j = 0; j < ImgX * ImgY; j++){
+
+        if(i == ImgX - 1){
+            printf("%d\n",Iy[j]);
+            i = -1;
+        }
+
+        else{
+            printf("%d,",Iy[j]);
+        }
+
+        i++;
+    } */// END OF DEBUGGING 
+
+} // ========= END OF CONVOLUTION X Y =========
