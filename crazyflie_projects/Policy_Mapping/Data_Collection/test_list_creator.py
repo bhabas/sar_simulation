@@ -5,7 +5,7 @@ import rospkg
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_projects'))
 
 test_list = []
-Tau_0_list = [0.16,0.20,0.25,0.30] # Initial tau values for mu distribution
+Tau_0_list = [0.20,0.25,0.30] # Initial tau values for mu distribution
 
 for V_d in np.arange(1.0,3.75,0.25):    # [m/s]
     for phi in np.arange(90,15,-5):      # [deg]

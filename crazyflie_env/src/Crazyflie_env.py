@@ -790,6 +790,7 @@ class CrazyflieEnv:
         self.close_sim()
         time.sleep(1)
         self.launch_sim()
+        time.sleep(1)
 
 
 
