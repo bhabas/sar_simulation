@@ -110,14 +110,14 @@ def cmd_send(env):
                 Vz_d = V_d*np.sin(phi_rad)
 
                 ## ESTIMATE IMPACT POINT
-                P_impact = env.impactEstimate(env.posCF_0,[Vx_d,Vy_d,Vz_d])
+                P_impact = env.impactEstimate(env.posCF,[Vx_d,Vy_d,Vz_d])
 
                 ## CHECK VALID IMPACT POINT AND EXECUTE TRAJECTORY
                 validate = input(f"Approve impact point (y/n): {P_impact[0]:.2f}, {P_impact[1]:.2f}, {P_impact[2]:.2f}\n")
                 if validate == 'y':
-                    env.step('traj',cmd_vals=[env.posCF_0[0],Vx_d,env.accCF_max[0]],cmd_flag=0)
-                    env.step('traj',cmd_vals=[env.posCF_0[1],Vy_d,env.accCF_max[1]],cmd_flag=1)
-                    env.step('traj',cmd_vals=[env.posCF_0[2],Vz_d,env.accCF_max[2]],cmd_flag=2)
+                    env.step('traj',cmd_vals=[env.posCF[0],Vx_d,env.accCF_max[0]],cmd_flag=0)
+                    env.step('traj',cmd_vals=[env.posCF[1],Vy_d,env.accCF_max[1]],cmd_flag=1)
+                    env.step('traj',cmd_vals=[env.posCF[2],Vz_d,env.accCF_max[2]],cmd_flag=2)
                 else:
                     pass
 

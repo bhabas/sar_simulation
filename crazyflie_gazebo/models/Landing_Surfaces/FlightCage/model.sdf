@@ -495,5 +495,11 @@
     </link>
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
+
+    <plugin name="ForceTorque_Sensor" filename="libgazebo_ros_ft_sensor.so">
+        <jointName>ceiling_joint</jointName>
+        <topicName>/ENV/Surface_FT_sensor</topicName>
+        <updateRate>500</updateRate>
+    </plugin>
   </model>
 </sdf>
