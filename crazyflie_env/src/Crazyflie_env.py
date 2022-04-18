@@ -743,7 +743,10 @@ class CrazyflieEnv:
         y_impact = pos_0[1] + vel_d[1]*t_impact
         z_impact = pos_0[2] + vel_d[2]*t_impact
 
-        if -0.8 < x_impact < 1.2 and -0.6 < y_impact < 0.7:
+        x_bound = [-0.8,1.2]
+        y_bound = [-0.6,0.7]
+
+        if x_bound[0] < x_impact < x_bound[1] and y_bound[0] < y_impact < y_bound[1]:
             print("Impact Location Inboud")
 
         else:
