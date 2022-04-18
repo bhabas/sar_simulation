@@ -553,9 +553,7 @@ class CrazyflieEnv:
             Relaunches Gazebo and resets model position but doesn't touch controller node
         """        
         self.close_sim()
-        self.close_controller()
         time.sleep(5.0)
-        self.launch_controller()
         self.launch_sim()
 
         self.reset_pos()
@@ -674,7 +672,7 @@ class CrazyflieEnv:
         state_msg.model_name = self.modelName
         state_msg.pose.position.x = 0.0
         state_msg.pose.position.y = 0.0
-        state_msg.pose.position.z = 0.4
+        state_msg.pose.position.z = 0.379
 
         state_msg.pose.orientation.w = 1.0
         state_msg.pose.orientation.x = 0.0
@@ -791,7 +789,6 @@ class CrazyflieEnv:
         print("[RELAUNCHING] No Gazebo communication in 7 seconds")
         self.close_sim()
         time.sleep(1)
-        self.launch_controller()
         self.launch_sim()
 
 

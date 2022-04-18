@@ -16,22 +16,22 @@ np.set_printoptions(precision=2, suppress=True)
 def executeFlight(env,agent):
 
     ## MAKE SURE CONTROLLER IS WORKING
-    while True:
-        try:
-            rospy.wait_for_message("/clock",Clock,timeout=20)
-            rospy.wait_for_message("/CF_DC/StateData",CF_StateData,timeout=5.0)
-            break
+    # while True:
+        # try:
+        #     rospy.wait_for_message("/clock",Clock,timeout=20)
+        #     rospy.wait_for_message("/CF_DC/StateData",CF_StateData,timeout=5.0)
+        #     break
 
-        except rospy.exceptions.ROSException:
-            print("Restarting Controller")
-            env.launch_controller()
-            time.sleep(2)
-            env.reset_pos()
-            continue
+        # except rospy.exceptions.ROSException:
+        #     print("Restarting Controller")
+        #     env.launch_controller()
+        #     time.sleep(2)
+        #     env.reset_pos()
+        #     continue
 
     ## RESET TO INITIAL STATE
     env.step("home") # Reset control vals and functionality to default vals
-    # time.sleep(0.5) # Time for CF to settle [Real-Time seconds]
+    time.sleep(0.5) # Time for CF to settle [Real-Time seconds]
     # input("here")
     env.RL_Publish()
     env.startLogging()
@@ -57,10 +57,10 @@ def executeFlight(env,agent):
     # ============================
     env.step("policy",env.policy,cmd_flag=1) # Arm policy inside controller
     env.step('sticky',cmd_flag=1)              # Enable sticky pads
-    # env.traj_launch(env.posCF,env.vel_d)
-    env.step('traj',cmd_vals=[env.posCF_0[0],env.vel_d[0],env.accCF_max[0]],cmd_flag=0)
-    env.step('traj',cmd_vals=[env.posCF_0[1],env.vel_d[1],env.accCF_max[1]],cmd_flag=1)
-    env.step('traj',cmd_vals=[env.posCF_0[2],env.vel_d[2],env.accCF_max[2]],cmd_flag=2)
+    env.traj_launch(env.posCF,env.vel_d)
+    # env.step('traj',cmd_vals=[env.posCF_0[0],env.vel_d[0],env.accCF_max[0]],cmd_flag=0)
+    # env.step('traj',cmd_vals=[env.posCF_0[1],env.vel_d[1],env.accCF_max[1]],cmd_flag=1)
+    # env.step('traj',cmd_vals=[env.posCF_0[2],env.vel_d[2],env.accCF_max[2]],cmd_flag=2)
 
 
     while True: 
@@ -186,7 +186,7 @@ if __name__ == '__main__':
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 24
-    env.trial_name = f"ExampleFlight--trial_{int(trial_num):02d}--{env.modelInitials}"
+    env.trial_name = f"ExampleFlight--trial_{int(trial_num):02d}--{env.modelInitials()}"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
     env.Logging_Flag = True
     env.createCSV(env.filepath)
