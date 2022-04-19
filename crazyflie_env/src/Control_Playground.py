@@ -1,15 +1,10 @@
 #!/usr/bin/env python3
 import threading,os
 import rospy
-import time
 import numpy as np
 
 from RL_agents.rl_EM import rlEM_PEPGAgent
 from Crazyflie_env import CrazyflieEnv
-from gazebo_msgs.msg import ModelState
-
-
-os.system("clear")
 
        
 def cmd_send(env):
@@ -29,6 +24,7 @@ def cmd_send(env):
             11:'sticky',
             19:'traj_tp',
             101:'reset',
+            102:'cap_logging'
         }
 
         try:
@@ -44,6 +40,9 @@ def cmd_send(env):
 
                 env.step('sticky',cmd_vals,0)
                 env.step(action,cmd_vals,cmd_flag)
+
+            elif action=='cap_logging':
+                env.capLogging()
 
             elif action=='pos':
                 cmd_vals = env.userInput("Set desired position values (x,y,z): ",float)
@@ -163,25 +162,6 @@ def cmd_send(env):
             print('\033[93m' + "INVALID INPUT: Try again" + '\x1b[0m')
             continue
 
-       
-def logFlight(env):
-
-    ## RESET LOGGING CONDITIONS 
-    t_prev = 0.0
-
-    while 1: 
-        
-        # If time changes then append csv file
-        if env.t != t_prev:
-            env.append_csv()
-
-        t_prev = env.t   
-    
-    env.append_IC()
-    env.append_flip()
-    env.append_impact()
-    env.append_csv_blank()
-
 
 if __name__ == '__main__':
     
@@ -192,17 +172,15 @@ if __name__ == '__main__':
     ## INITIALIALIZE LOGGING DATA
     trial_num = 24
     env.agent_name = agent.agent_type
-    env.trial_name = f"Control_Playground--trial_{int(trial_num):02d}--{env.modelInitials}"
+    env.trial_name = f"Control_Playground--trial_{int(trial_num):02d}--{env.modelInitials()}"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
-    env.logging_flag = True
-    env.create_csv(env.filepath)
+
+    env.createCSV(env.filepath)
+    env.startLogging()
 
     # time.sleep(5)
     cmd_thread = threading.Thread(target=cmd_send,args=(env,))
     cmd_thread.start()   
 
-
-    logging_thread = threading.Thread(target=logFlight,args=(env,))
-    logging_thread.start()   
 
     rospy.spin()

@@ -333,7 +333,7 @@ void Controller::publishCtrlData()
     CtrlData_msg.NN_tr_policy = NN_tr_policy;
 
     // CONTROL ACTIONS (FLIP)
-    CtrlData_msg.FM_flip = {F_thrust_flip,M_x_flip*1.0e3,M_y_flip*1.0e3,M_z_flip*1.0e3};
+    CtrlData_msg.FM_flip = {F_thrust_flip,M_x_flip,M_y_flip,M_z_flip};
 
     
     CTRL_Data_Publisher.publish(CtrlData_msg);
