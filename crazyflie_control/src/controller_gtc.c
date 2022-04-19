@@ -635,7 +635,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         }
 
         // =========== CONVERT THRUSTS [N] AND MOMENTS [N*m] TO PWM =========== // 
-        f_thrust_g = clamp(F_thrust/4.0f*Newton2g, 0.0f, f_MAX*0.8f); // Clamp thrust to prevent control saturation
+        f_thrust_g = clamp(F_thrust/4.0f*Newton2g, 0.0f, f_MAX*0.9f); // Clamp thrust to prevent control saturation
         f_roll_g = M.x/(4.0f*dp)*Newton2g;
         f_pitch_g = M.y/(4.0f*dp)*Newton2g;
         f_yaw_g = M.z/(4.0*c_tf)*Newton2g;
