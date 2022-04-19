@@ -670,7 +670,7 @@
       </physics>
     </joint>
 
-<!-- 
+
     <plugin name='front_left_motor_model' filename='libmotor_plugin.so'>
       <motorNumber>1</motorNumber>
       <jointName>rotor_1_joint</jointName>
@@ -715,7 +715,7 @@
       <timeConstantDown>0.15</timeConstantDown>
       <rotorVisualSlowdown>100</rotorVisualSlowdown>
     </plugin>
-         -->
+        
     <plugin name='Vicon_plugin' filename='libgazebo_ros_p3d.so'>
       <alwaysOn>1</alwaysOn>
       <updateRate>100</updateRate>
@@ -746,9 +746,13 @@
       <OFy_gaussianNoise>0.0</OFy_gaussianNoise>
     </plugin>
 
-    <!-- <plugin name='MomentPlugin' filename='libMoment_plugin.so'>
-      <bodyName>crazyflie_body</bodyName>
-    </plugin> -->
+    <plugin name='MomentPlugin' filename='libMoment_plugin.so'>
+        <bodyName>crazyflie_body</bodyName>
+    </plugin>
+
+    <plugin name='DomainRandomization_Plugin' filename='libDomainRand_plugin.so'>
+        <bodyName>crazyflie_body</bodyName>
+    </plugin>
 
     <!-- <joint name="FixedJoint" type="fixed">
         <parent>world</parent>

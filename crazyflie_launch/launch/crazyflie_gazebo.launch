@@ -37,9 +37,9 @@
 
     <node name="spawn_surface" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
         args="-file $(arg surface_sdf_path) -sdf -model $(arg surface_name)" />
-<!-- 
+
     <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
-        args="-file $(arg model_sdf_path) -sdf -model $(arg model_name) -z 0.3" /> -->
+        args="-file $(arg model_sdf_path) -sdf -model $(arg model_name) -z 0.3" />
 
 
 </launch>
