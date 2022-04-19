@@ -16,7 +16,6 @@ namespace gazebo
         link_ptr = model_ptr->GetLink(linkName);
 
         inertia_ptr = link_ptr->GetInertial();
-        std::cout << inertia_ptr->Mass() << std::endl;
         
         printf("\n\n");
 
@@ -29,19 +28,25 @@ namespace gazebo
         {
             printf("Domain Rand Plugin\n");
             // inertia_ptr->SetMass(1.0);
-            inertia_ptr->SetInertiaMatrix(
-                15.83e-6,
-                17.00e-5,
-                31.19e-6,
-                0.0,
-                0.0,
-                0.0);
-            // inertia_ptr->SetCoG(0.1,0,0);
+            // inertia_ptr->SetInertiaMatrix(
+            //     15.83e-6,
+            //     17.00e-5,
+            //     31.19e-6,
+            //     0.0,
+            //     0.0,
+            //     0.0);
+            ignition::math::Pose3d pose(
+                ignition::math::Vector3d(0, 0, 0.2),
+                ignition::math::Quaterniond(1.0, 0.0, 0.0, 0.0)
+            );
+            inertia_ptr->SetCoG(pose);
             link_ptr->UpdateMass();
+            link_ptr->Update();
         }
         if(msg->cmd_type == 51)
         {
-            printf("%.3f\n",inertia_ptr->Mass());
+            // printf("%.3f\n",inertia_ptr->CoG().);
+            std::cout << inertia_ptr->CoG() << std::endl;
             // inertia_ptr->UpdateParameters()
         }
         else if(msg->cmd_type == 0)
