@@ -6,7 +6,7 @@ import numpy as np
 
 ## FLIGHT CONDITIONS
 V = 3.0     # [m/s]
-phi = 20    # [deg]
+phi = 40    # [deg]
 h_c = 2.1
 
 ## VELOCITY REACHED LOCATION
@@ -39,7 +39,8 @@ def Vals(t_arr):
     Vx_t = np.zeros_like(t_arr)
     Vz_t = np.zeros_like(t_arr)
 
-    OnceFlag = False
+    OnceFlag = True
+    t_impact = np.nan
 
     for ii,t in enumerate(t_arr):
 
@@ -69,15 +70,19 @@ def Vals(t_arr):
             t_impact = t_arr[ii]
 
     if len(t_arr) == 1:
-        return x_t[0],Vx_t[0],z_t[0],Vz_t[0]
+        return x_t[0],Vx_t[0],z_t[0],Vz_t[0],t_impact
     else:
-        return x_t,Vx_t,z_t,Vz_t
+        return x_t,Vx_t,z_t,Vz_t,t_impact
 
-x_t,Vx_t,z_t,Vz_t = Vals(t_arr)
-x_f,_,z_val,_ = Vals([t_x])
-x_val,_,z_f,_ = Vals([t_x+t_z])
+x_t,Vx_t,z_t,Vz_t,t_impact = Vals(t_arr)
+x_f,_,z_val,_,_ = Vals([t_x])
+x_val,_,z_f,_,_ = Vals([t_x+t_z])
 
-# x_impact,_,z_impact,_,_ = Vals([t_impact])
+x_impact,_,z_impact,_,_ = Vals([t_impact])
+# x_0 = -x_impact
+# x_t,Vx_t,z_t,Vz_t,t_impact = Vals(t_arr)
+# x_f,_,z_val,_,_ = Vals([t_x])
+# x_val,_,z_f,_,_ = Vals([t_x+t_z])
 
 
 
@@ -91,7 +96,7 @@ ax.scatter(x_val,z_f,label='Vz reached')
 
 ax.axhline(y=h_c,color='k',linestyle='--')
 ax.set_ylim(0,h_c + 0.5)
-ax.set_xlim(-0.5,5)
+ax.set_xlim(-5,2)
 
 ax.set_xlabel('X_Pos [m]')
 ax.set_ylabel('Z_Pos [m]')

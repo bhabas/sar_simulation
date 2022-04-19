@@ -49,6 +49,7 @@ void controllerGTCInit(void);
 bool controllerGTCTest(void);
 void controllerGTCReset(void);
 void controllerGTCTraj(void);
+void velocityTraj(void);
 void controllerGTC(control_t *control, setpoint_t *setpoint,
                                          sensorData_t *sensors,
                                          state_t *state,

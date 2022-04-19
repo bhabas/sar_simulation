@@ -498,17 +498,57 @@ void controllerGTCTraj()
     
 }
 
+void velocityTraj()
+{
+   
+    float t_x = v_t.idx[0]/a_t.idx[0];
+    float t_z = v_t.idx[2]/a_t.idx[2];
+    float t = t_traj.idx[0];
+     
+
+    if(t < t_x) // t <= v/a
+    {
+        x_d.idx[0] = 0.5f*a_t.idx[0]*t*t + s_0_t.idx[0]; // 0.5*a_x*t^2 + x_0
+        v_d.idx[0] = a_t.idx[0]*t;  // a_x*t
+        a_d.idx[0] = a_t.idx[0];    // a_x
+
+        x_d.idx[2] = s_0_t.idx[2]; // z_0
+        v_d.idx[2] = 0.0f;
+        a_d.idx[2] = 0.0f;
+
+    }
+
+    else if(t_x <= t && t < (t_x+t_z))
+    {
+        x_d.idx[0] = v_t.idx[0]*t - fsqr(v_t.idx[0])/(2.0f*a_t.idx[0]) + s_0_t.idx[0]; // vx*t - (vx/(2*ax))^2 + x_0
+        v_d.idx[0] = v_t.idx[0]; // vx
+        a_d.idx[0] = 0.0f;
+
+        x_d.idx[2] = 0.5f*a_t.idx[2]*fsqr(t-t_x) + s_0_t.idx[2]; // 0.5*az*t^2 + z_0
+        v_d.idx[2] = a_t.idx[2]*(t-t_x); // az*t
+        a_d.idx[2] = a_t.idx[2]; // az
+    }
+
+    else if((t_x+t_z) <= t )
+    {
+        x_d.idx[0] = v_t.idx[0]*t - fsqr(v_t.idx[0])/(2.0f*a_t.idx[0]) + s_0_t.idx[0]; // vx*t - (vx/(2*ax))^2 + x_0
+        v_d.idx[0] = v_t.idx[0]; // vx
+        a_d.idx[0] = 0.0;
+
+        x_d.idx[2] = v_t.idx[2]*(t-t_x) - fsqr(v_t.idx[2])/(2.0f*a_t.idx[2]) + s_0_t.idx[2]; // vz*t - (vz/(2*az))^2 + z_0
+        v_d.idx[2] = v_t.idx[2]; // vz
+        a_d.idx[2] = 0.0f;
+    }
+
+    t_traj.idx[0] += dt;
+    
+}
 
 void controllerGTC(control_t *control, setpoint_t *setpoint,
                                         sensorData_t *sensors,
                                         state_t *state,
                                         const uint32_t tick)
 {
-
-    // if (RATE_DO_EXECUTE(5, tick)) {
-    //     consolePrintf("Mass: %.6f\n",m);
-    //     consolePrintf("Ixx: %.3f \t Iyy: %.3f \t Izz: %.3f\n",Ixx*1e6f,Iyy*1e6f,Izz*1e6f);
-    // }
 
     if (RATE_DO_EXECUTE(RATE_500_HZ, tick)) {
 
@@ -520,7 +560,8 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
 
         if(execute_traj){
-            controllerGTCTraj();
+            // controllerGTCTraj();
+            velocityTraj();
         }
 
         // d_ceil = 2.10f-state->position.z;
