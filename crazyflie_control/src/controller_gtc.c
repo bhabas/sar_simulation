@@ -153,8 +153,6 @@ float thrust_override[4] = {0.0f,0.0f,0.0f,0.0f}; // Motor thrusts [g]
 
 
 
-
-
 // =================================
 //  FLAGS AND SYSTEM INITIALIZATION
 // =================================
@@ -216,6 +214,7 @@ typedef enum {
 } axis_direction;
 axis_direction traj_type;
 
+static struct vec P2P_traj_flag = {0.0f, 0.0f, 0.0f};
 static struct vec s_0_t = {0.0f, 0.0f, 0.0f};   // Traj Start Point [m]
 static struct vec s_f_t = {0.0f, 0.0f, 0.0f};   // Traj End Point [m]
 static struct vec v_t = {0.0f, 0.0f, 0.0f};     // Traj Vel [m/s]
@@ -299,6 +298,7 @@ void controllerGTCReset(void)
     // RESET TRAJECTORY VALUES
     execute_vel_traj = false;
     execute_P2P_traj = false;
+    P2P_traj_flag = vzero();
     s_0_t = vzero();
     s_f_t = vzero();
     v_t = vzero();
@@ -459,40 +459,42 @@ void GTC_Command(setpoint_t *setpoint)
         case 13: // Point-to-Point Trajectory
 
             traj_type = (axis_direction)setpoint->cmd_flag;
+            execute_P2P_traj = true;
+
 
             switch(traj_type){
 
                 case x:
 
+                    P2P_traj_flag.x = 1.0f;
                     s_0_t.x = setpoint->cmd_val1;  // Starting position [m]
                     s_f_t.x = setpoint->cmd_val2;  // Ending position [m]
                     a_t.x = setpoint->cmd_val3;    // Acceleration [m/s^2]
 
                     T.x = sqrtf(6/a_t.x*fabs(s_f_t.x - s_0_t.x)); // Find trajectory manuever time [s]
                     t_traj.x = 0.0f; // Reset timer
-                    execute_P2P_traj = true;
                     break;
 
                 case y:
 
+                    P2P_traj_flag.y = 1.0f;
                     s_0_t.y = setpoint->cmd_val1;  // Starting position [m]
                     s_f_t.y = setpoint->cmd_val2;  // Ending position [m]
                     a_t.y = setpoint->cmd_val3;    // Acceleration [m/s^2]
 
                     T.y = sqrtf(6/a_t.y*fabs(s_f_t.y - s_0_t.y)); // Find trajectory manuever time [s]
                     t_traj.y = 0.0f; // Reset timer
-                    execute_P2P_traj = true;
                     break;
 
                 case z:
 
+                    P2P_traj_flag.z = 1.0f;
                     s_0_t.z = setpoint->cmd_val1;  // Starting position [m]
                     s_f_t.z = setpoint->cmd_val2;  // Ending position [m]
                     a_t.z = setpoint->cmd_val3;    // Acceleration [m/s^2]
 
                     T.z = sqrtf(6/a_t.z*fabs(s_f_t.z - s_0_t.z)); // Find trajectory manuever time [s]
                     t_traj.z = 0.0f; // Reset timer
-                    execute_P2P_traj = true;
                     break;
                     
             }
@@ -555,25 +557,29 @@ void velocity_Traj()
 
 void point2point_Traj()
 {
-    // for(int i = 0; i<3; i++)
-    // {
-    float t = t_traj.idx[0];
-
-    if (t_traj.idx[0] <= T.idx[0])
+    for(int i = 0; i<3; i++)
     {
-        x_d.idx[0] = s_0_t.idx[0] + (3*powf(t,2)/powf(T.idx[0],2) - 2*powf(t,3)/powf(T.idx[0],3)) * (s_f_t.idx[0]-s_0_t.idx[0]);
-        v_d.idx[0] = (6*t/powf(T.idx[0],2) - 6*powf(t,2)/powf(T.idx[0],3)) * (s_f_t.idx[0]-s_0_t.idx[0]);
-        a_d.idx[0] = (6/powf(T.idx[0],2) - 12*t/powf(T.idx[0],3)) * (s_f_t.idx[0]-s_0_t.idx[0]);
-    }
-    else
-    {
-        x_d.idx[0] = s_f_t.idx[0];
-        v_d.idx[0] = 0.0f;
-        a_d.idx[0] = 0.0f;
-    }
+        
+        if(P2P_traj_flag.idx[i] == 1.0f)
+        {
+            float t = t_traj.idx[i];
+            if(t_traj.idx[i] <= T.idx[i])
+            {
+                x_d.idx[i] = s_0_t.idx[i] + (3*powf(t,2)/powf(T.idx[i],2) - 2*powf(t,3)/powf(T.idx[i],3)) * (s_f_t.idx[i]-s_0_t.idx[i]);
+                v_d.idx[i] = (6*t/powf(T.idx[i],2) - 6*powf(t,2)/powf(T.idx[i],3)) * (s_f_t.idx[i]-s_0_t.idx[i]);
+                a_d.idx[i] = (6/powf(T.idx[i],2) - 12*t/powf(T.idx[i],3)) * (s_f_t.idx[i]-s_0_t.idx[i]);
+            }
+            else
+            {
+                x_d.idx[i] = s_f_t.idx[i];
+                v_d.idx[i] = 0.0f;
+                a_d.idx[i] = 0.0f;
+            }
 
-    t_traj.idx[0] += dt;
-    // }
+            t_traj.idx[i] += dt;
+        }
+
+    }
     
 
 }
