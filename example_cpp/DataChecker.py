@@ -7,8 +7,8 @@ import matplotlib.cm as cm
 import sys
 
 from example_msgs.msg import CustomMessage
-Pixel_Height = 160
-Pixel_Width = 160
+Pixel_Height = 5
+Pixel_Width = 5
 
 class DataCheck:
 
@@ -16,19 +16,20 @@ class DataCheck:
 
 
         #INIT VARS
-        self.Ku = np.array([
+        self.Ku = 1/8*np.array([
             [-1, 0, 1],
             [-2, 0, 2],
             [-1, 0 ,1]
         ])
 
-        self.Kv = np.array([
+        self.Kv = 1/8*np.array([
             [-1,-2,-1],
             [ 0, 0, 0],
             [ 1, 2, 1]
         ])
 
-        self.img = np.array([10,12,19,13,20,7,6,12,18,4,3,31,6,3,7,7,3,2,6,8,5,2,5,8,4]).reshape(5,5)
+        self.img = np.array([0,0,0,0,0,0,0,10,0,0,0,10,20,10,0,0,0,10,0,0,0,0,0,0,0]).reshape(5,5)
+        self.prev_img= np.array([0,0,0,0,0,0,0,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0,0]).reshape(5,5) 
 
         # self.Iu = np.zeros((5,5))
         # self.Iv = np.zeros_like(self.Iu)
@@ -36,35 +37,85 @@ class DataCheck:
         self.Iu = np.zeros((Pixel_Height,Pixel_Width))
         self.Iv = np.zeros_like(self.Iu)
 
-        rospy.init_node('DataChecker',anonymous=True)
+        # rospy.init_node('DataChecker',anonymous=True)
         
-        np.set_printoptions(threshold = sys.maxsize) #allows it to print the full string without truncation
+        # np.set_printoptions(threshold = sys.maxsize) #allows it to print the full string without truncation
 
-        msg = rospy.wait_for_message("/MyPub_cpp",CustomMessage,timeout = None)
-        self.DataCheck_cb(msg)
-        #self.Check(msg)
+        # msg = rospy.wait_for_message("/MyPub_cpp",CustomMessage,timeout = None)
+        # self.DataCheck_cb(msg)
+        self.Check()
 
-    def Check(self,Data):
+    def Check(self):
 
-        self.Image = np.frombuffer(Data.Camera_data, np.uint8).reshape(5,5)
-        self.Convy = np.array(Data.Yconv).reshape(5,5)
-        self.Convx = np.array(Data.Xconv).reshape(5,5)
+        # self.Image = np.frombuffer(Data.Camera_data, np.uint8).reshape(5,5)
+        # self.Convy = np.array(Data.Yconv).reshape(5,5)
+        # self.Convx = np.array(Data.Xconv).reshape(5,5)
+
+        w = 3.6e-6
+        f = 3.3e-4
+        O_up = Pixel_Width/2    # Pixel X_offset [pixels]
+        O_vp = Pixel_Height/2   # Pixel Y_offset [pixels]
+
+        ## DEFINE PIXEL GRID
+        up_grid = np.arange(0,Pixel_Width,1)
+        vp_grid = np.arange(0,Pixel_Height,1)
+        Up_grid,Vp_grid = np.meshgrid(up_grid,vp_grid)
+
+        ## DEFINE IMAGE SENSOR COORDS
+        U_grid = (Up_grid - O_up)*w + w/2 #GENERALIZE THE VGRID AND UGRID IN C++
+        V_grid = (Vp_grid - O_vp)*w + w/2
+
+        Iu = np.zeros((Pixel_Height,Pixel_Width))
+        Iv = np.zeros((Pixel_Height,Pixel_Width))
 
 
-        for i in range(1,5 - 1):
-            for j in range(1,5 - 1):
-                self.Iu[i,j] = np.sum(self.img[i-1:i+2,j-1:j+2] * self.Ku)
-                self.Iv[i,j] = np.sum(self.img[i-1:i+2,j-1:j+2] * self.Kv)
+        for i in range(1,Pixel_Height - 1):
+            for j in range(1,Pixel_Width - 1):
+                self.Iu[i,j] = np.sum(self.img[i-1:i+2,j-1:j+2] * self.Ku)/w
+                self.Iv[i,j] = np.sum(self.img[i-1:i+2,j-1:j+2] * self.Kv)/w
 
-        print(self.Image)
-        print("Iu:")
-        print(self.Iu)
-        print("\nIv:")
-        print(self.Iv)
-        print("Ix:")
-        print(self.Convx)
-        print("\nIy:")
-        print(self.Convy)
+        It = self.img - self.prev_img #assuming dt is 1
+
+        G = U_grid*Iu + V_grid*Iv # Radial Gradient
+
+
+
+        ## SOLVE LEAST SQUARES PROBLEM
+        X = np.array([
+                [f*np.sum(Iu**2), f*np.sum(Iu*Iv), np.sum(G*Iu)],
+                [f*np.sum(Iu*Iv), f*np.sum(Iv**2), np.sum(G*Iv)],
+                [f*np.sum(G*Iu),  f*np.sum(G*Iv),  np.sum(G**2)]
+            ])
+
+        y = np.array([
+                [-np.sum(Iu*It)],
+                [-np.sum(Iv*It)],
+                [-np.sum(G*It)]
+            ])
+
+        ## SOLVE b VIA PSEUDO-INVERSE
+        b = np.linalg.pinv(X)@y
+        b = b.flatten()
+
+        self.OFy_est = b[0]
+        self.OFx_est = b[1]
+        self.TTC_est = 1/(b[2])
+
+        print(f"\nOFy estimate: {self.OFy_est}\n")
+        print(f"\nOFx estimate: {self.OFx_est}\n")
+        print(f"\nTTC estimate: {self.TTC_est}\n")
+
+        # ====== DEBUGGING ======
+
+        # print(self.Image)
+        # print("Iu:")
+        # print(self.Iu)
+        # print("\nIv:")
+        # print(self.Iv)
+        # print("Ix:")
+        # print(self.Convx)
+        # print("\nIy:")
+        # print(self.Convy)
 
 
     def Convolution(self):

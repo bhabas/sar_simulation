@@ -3,12 +3,14 @@
 #include <string.h>
 #include <iostream>
 
+#include "nml.h"
+
 //Initial test image
 unsigned char Cur_img[25] = {0, 0 , 0 , 0 , 0,
-                         0, 0 , 10, 0 , 0,
-                         0,10 , 20, 10, 0,
-                         0, 0 , 10, 0 , 0,
-                         0, 0 , 0 , 0 , 0};                       
+                             0, 0 , 10, 0 , 0,
+                             0,10 , 20, 10, 0,
+                             0, 0 , 10, 0 , 0,
+                             0, 0 , 0 , 0 , 0};                       
 
 
 unsigned char prev_img[25] = {0,0,0,0,0,
@@ -21,8 +23,9 @@ unsigned char prev_img[25] = {0,0,0,0,0,
 int kx0[3] = {-1, 0, 1};
 int kx1[3] = {-2, 0, 2};
 int kx2[3] = {-1, 0, 1};
+
 int ky0[3] = {-1,-2,-1};
-int ky2[3] = {1,2,1};
+int ky2[3] = {1 , 2, 1};
 // Init floating point constants
 float Ugrid;
 float Vgrid;
@@ -86,8 +89,6 @@ void Convolution_X_Y(unsigned char* input, int ImgX, int ImgY)
         
             X = 1; //move the kernel back to the left edge of the image
             Y++; //and slide the kernel down the image
-            Vgrid += w; // add one pixel width to Vgrid
-            Ugrid = -2.826e-4; // and reset Ugrid back to original value
 
         }
 
@@ -95,6 +96,9 @@ void Convolution_X_Y(unsigned char* input, int ImgX, int ImgY)
         int i0 = (X - 1) + (Y - 1) * ImgX;
         int i1 = i0 + ImgX;
         int i2 = i1 + ImgX;
+
+        Ugrid = (X - w/2)*w + w/2; // Using current location of the Kernel center
+        Vgrid = (Y - w/2)*w + w/2; //calculate the current pixel grid locations (u,v)
 
         // ######  DEBUGGING  ######
         /*//
@@ -125,8 +129,8 @@ void Convolution_X_Y(unsigned char* input, int ImgX, int ImgY)
         }
 
         //Sum assigned to middle value
-        Usum = 8*Xsum/w; //kernel normalization and divide by pixel width
-        Vsum = 8*Ysum/w;
+        Usum = Xsum/(8*w); //kernel normalization and divide by pixel width
+        Vsum = Ysum/(8*w);
         Ix[i1 + 1] = Usum;
         Iy[i1 + 1] = Vsum;
         int Ittemp = It[i1 + 1]; //this will crop It the same way the imageGrads are shouldn't be a problem
@@ -142,16 +146,34 @@ void Convolution_X_Y(unsigned char* input, int ImgX, int ImgY)
         IGG += Gtemp*Gtemp;
 
         //RHS Matrix Values (rolling sums
-        Iut -= Usum*Ittemp;
-        Ivt -= Vsum*Ittemp;
-        IGt -= Gtemp*Ittemp;
+        Iut += Usum*Ittemp; //MAKE SURE THIS IS RIGHT ORDER OF OPERATIONS
+        Ivt += Vsum*Ittemp; 
+        IGt += Gtemp*Ittemp;
+        
 
         X++; // move top left of kernel over
-        Ugrid += w; //add a pixel width to the Ugrid
 
         //std::cout << "loop (X , Y): " << X << "\n";
 
     }
+
+    double LHS[9] = {f*Iuu, f*Iuv, IGu,
+                     f*Iuv, f*Ivv, IGv,
+                     f*IGu, f*IGv, IGG};
+
+    double RHS[3] = {-Iut, -Ivt, -IGt};
+
+    //DO MATRIX MAGIC
+    
+
+    //Create matrix pointers
+    nml_mat* lhs = nml_mat_from(3,3,9, LHS);
+    nml_mat* rhs = nml_mat_from(1,3,3,RHS); 
+
+
+
+    nml_mat_free(lhs);
+    nml_mat_free(rhs);
 
     // ======= DEBUGGING ========
 
