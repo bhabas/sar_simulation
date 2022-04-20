@@ -559,15 +559,23 @@ void point2point_Traj()
 {
     for(int i = 0; i<3; i++)
     {
-        
+        // CALCULATE ONLY DESIRED TRAJECTORIES
         if(P2P_traj_flag.idx[i] == 1.0f)
         {
             float t = t_traj.idx[i];
-            if(t_traj.idx[i] <= T.idx[i])
+
+    
+            if(t_traj.idx[i] <= T.idx[i] && T.idx[i] != 0.0) // SKIP CALC IF ALREADY AT END POSITION
             {
-                x_d.idx[i] = s_0_t.idx[i] + (3*powf(t,2)/powf(T.idx[i],2) - 2*powf(t,3)/powf(T.idx[i],3)) * (s_f_t.idx[i]-s_0_t.idx[i]);
-                v_d.idx[i] = (6*t/powf(T.idx[i],2) - 6*powf(t,2)/powf(T.idx[i],3)) * (s_f_t.idx[i]-s_0_t.idx[i]);
-                a_d.idx[i] = (6/powf(T.idx[i],2) - 12*t/powf(T.idx[i],3)) * (s_f_t.idx[i]-s_0_t.idx[i]);
+                // CALCULATE TIME SCALING VALUE S(t)
+                float s_t = (3*powf(t,2)/powf(T.idx[i],2) - 2*powf(t,3)/powf(T.idx[i],3));
+                float ds_t = (6*t/powf(T.idx[i],2) - 6*powf(t,2)/powf(T.idx[i],3));
+                float dds_t = (6/powf(T.idx[i],2) - 12*t/powf(T.idx[i],3));
+
+                // CONVERT PATH VALUES X(S) TO TRAJECTORY VALUES X(S(t))
+                x_d.idx[i] = s_0_t.idx[i] +  s_t*(s_f_t.idx[i]-s_0_t.idx[i]);
+                v_d.idx[i] =  ds_t*(s_f_t.idx[i]-s_0_t.idx[i]);
+                a_d.idx[i] =  dds_t*(s_f_t.idx[i]-s_0_t.idx[i]);
             }
             else
             {
@@ -576,6 +584,7 @@ void point2point_Traj()
                 a_d.idx[i] = 0.0f;
             }
 
+            // INCREMENT TIME COUNTER FOR TRAJECTORY CALCULATIONS
             t_traj.idx[i] += dt;
         }
 

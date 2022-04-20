@@ -20,8 +20,9 @@ def cmd_send(env):
             6:'params',
             7:'moment',
             8:'policy',
-            9:'traj',
+            9:'vel_traj',
             11:'sticky',
+            13:'P2P_traj',
             19:'traj_tp',
             101:'reset',
             102:'cap_logging'
@@ -97,7 +98,7 @@ def cmd_send(env):
 
                 env.step(action,cmd_vals,cmd_flag)
 
-            elif action=='traj':
+            elif action=='vel_traj':
 
                 ## GET INPUT VALUES
                 V_d,phi,alpha = env.userInput("Flight Velocity (V_d,phi,alpha):",float)
@@ -115,9 +116,9 @@ def cmd_send(env):
                 ## CHECK VALID IMPACT POINT AND EXECUTE TRAJECTORY
                 validate = input(f"Approve impact point (y/n): {P_impact[0]:.2f}, {P_impact[1]:.2f}, {P_impact[2]:.2f}\n")
                 if validate == 'y':
-                    env.step('traj',cmd_vals=[env.posCF_0[0],Vx_d,env.accCF_max[0]],cmd_flag=0)
-                    env.step('traj',cmd_vals=[env.posCF_0[1],Vy_d,env.accCF_max[1]],cmd_flag=1)
-                    env.step('traj',cmd_vals=[env.posCF_0[2],Vz_d,env.accCF_max[2]],cmd_flag=2)
+                    env.step('traj',cmd_vals=[env.posCF[0],Vx_d,env.accCF_max[0]],cmd_flag=0)
+                    env.step('traj',cmd_vals=[env.posCF[1],Vy_d,env.accCF_max[1]],cmd_flag=1)
+                    env.step('traj',cmd_vals=[env.posCF[2],Vz_d,env.accCF_max[2]],cmd_flag=2)
                 else:
                     pass
 
@@ -127,6 +128,14 @@ def cmd_send(env):
                 print()
 
                 env.step(action,cmd_vals,cmd_flag)
+
+            elif action=='P2P_traj':
+                ## GET INPUT VALUES
+                x_d = env.userInput("Desired position (x,y,z):",float)
+                env.step('P2P_traj',cmd_vals=[env.posCF[0],x_d[0],env.accCF_max[0]],cmd_flag=0)
+                env.step('P2P_traj',cmd_vals=[env.posCF[1],x_d[1],env.accCF_max[1]],cmd_flag=1)
+                env.step('P2P_traj',cmd_vals=[env.posCF[2],x_d[2],env.accCF_max[2]],cmd_flag=2)
+
 
             elif action=='traj_tp':
 

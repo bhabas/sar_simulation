@@ -710,10 +710,12 @@ class CrazyflieEnv:
                     'params':6,
                     'moment':7,
                     'policy':8,
-                    'traj':9,
+                    'vel_traj':9,
                     'thrusts':10,
                     'sticky':11,
-                    'M_PWM':12}
+                    'M_PWM':12,
+                    'P2P_traj':13
+                    }
         
 
         cmd_msg.cmd_type = cmd_dict[action]
