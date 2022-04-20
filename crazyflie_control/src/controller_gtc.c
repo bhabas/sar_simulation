@@ -555,25 +555,25 @@ void velocity_Traj()
 
 void point2point_Traj()
 {
-    for(int i = 0; i<3; i++)
+    // for(int i = 0; i<3; i++)
+    // {
+    float t = t_traj.idx[0];
+
+    if (t_traj.idx[0] <= T.idx[0])
     {
-        float t = t_traj.idx[i];
-
-        if (t_traj.idx[i] <= T.idx[i])
-        {
-            x_d.idx[i] = s_0_t.idx[i] + (3*powf(t,2)/powf(T.idx[i],2) - 2*powf(t,3)/powf(T.idx[i],3)) * (s_f_t.idx[i]-s_0_t.idx[i]);
-            v_d.idx[i] = (6*t/powf(T.idx[i],2) - 6*powf(t,2)/powf(T.idx[i],3)) * (s_f_t.idx[i]-s_0_t.idx[i]);
-            a_d.idx[i] = (6/powf(T.idx[i],2) - 12*t/powf(T.idx[i],3)) * (s_f_t.idx[i]-s_0_t.idx[i]);
-        }
-        else
-        {
-            x_d.idx[i] = s_f_t.idx[i];
-            v_d.idx[i] = 0.0f;
-            a_d.idx[i] = 0.0f;
-        }
-
-        t_traj.idx[i] += dt;
+        x_d.idx[0] = s_0_t.idx[0] + (3*powf(t,2)/powf(T.idx[0],2) - 2*powf(t,3)/powf(T.idx[0],3)) * (s_f_t.idx[0]-s_0_t.idx[0]);
+        v_d.idx[0] = (6*t/powf(T.idx[0],2) - 6*powf(t,2)/powf(T.idx[0],3)) * (s_f_t.idx[0]-s_0_t.idx[0]);
+        a_d.idx[0] = (6/powf(T.idx[0],2) - 12*t/powf(T.idx[0],3)) * (s_f_t.idx[0]-s_0_t.idx[0]);
     }
+    else
+    {
+        x_d.idx[0] = s_f_t.idx[0];
+        v_d.idx[0] = 0.0f;
+        a_d.idx[0] = 0.0f;
+    }
+
+    t_traj.idx[0] += dt;
+    // }
     
 
 }
