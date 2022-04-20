@@ -16,8 +16,8 @@ def ddTheta(t,T,theta_0,theta_f):
 
 
 a_max = 1.0 # [m/s^2]
-x_0 = 1.0
-x_f = 3.0
+x_0 = 0.4
+x_f = 1.4
 
 T = np.sqrt(6/a_max*np.abs(x_f - x_0))
 t = np.linspace(0,T,50)

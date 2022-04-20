@@ -237,7 +237,7 @@ void Controller::publishCtrlDebug()
     CtrlDebug_msg.Motorstop_Flag = motorstop_flag;
     CtrlDebug_msg.Pos_Ctrl = (bool)kp_xf;
     CtrlDebug_msg.Vel_Ctrl = (bool)kd_xf;
-    CtrlDebug_msg.Traj_Active = execute_traj;
+    CtrlDebug_msg.Traj_Active = execute_vel_traj;
     CtrlDebug_msg.Tumble_Detection = tumble_detection;
     CtrlDebug_msg.Tumbled_Flag = tumbled;
     CtrlDebug_msg.Moment_Flag = moment_flag; 
