@@ -593,7 +593,7 @@ void CF_DataConverter::MainLoop()
         // DISPLAY CONSOLE AT CONSOLE_RATE FREQUENCY
         if (RATE_DO_EXECUTE(CONSOLE_RATE, tick))
         {
-            CF_DataConverter::consoleOuput();
+            // CF_DataConverter::consoleOuput();
 
         }
 
