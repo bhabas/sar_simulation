@@ -28,14 +28,12 @@ class DataCheck:
             [ 1, 2, 1]
         ])
 
-        self.img = np.array([0,0,0,0,0,0,0,10,0,0,0,10,20,10,0,0,0,10,0,0,0,0,0,0,0]).reshape(5,5)
-        self.prev_img= np.array([0,0,0,0,0,0,0,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0,0]).reshape(5,5) 
+        self.img = np.array([0,0,0,0,0,0,0,8,8,8,8,0,0,8,0,0,8,0,0,8,0,0,8,0,0,8,8,8,8,0,0,0,0,0,0,0]).reshape(5,5)
+        self.prev_img= np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,8,0,0,0,0,8,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0]).reshape(5,5) 
+        print(self.img)
 
         # self.Iu = np.zeros((5,5))
         # self.Iv = np.zeros_like(self.Iu)
-        
-        self.Iu = np.zeros((Pixel_Height,Pixel_Width))
-        self.Iv = np.zeros_like(self.Iu)
 
         # rospy.init_node('DataChecker',anonymous=True)
         
@@ -64,6 +62,8 @@ class DataCheck:
         ## DEFINE IMAGE SENSOR COORDS
         U_grid = (Up_grid - O_up)*w + w/2 #GENERALIZE THE VGRID AND UGRID IN C++
         V_grid = (Vp_grid - O_vp)*w + w/2
+        # print(f"U_grid:\n{U_grid}")
+        # print(f"V_grid:\n{V_grid}")
 
         Iu = np.zeros((Pixel_Height,Pixel_Width))
         Iv = np.zeros((Pixel_Height,Pixel_Width))
@@ -71,14 +71,15 @@ class DataCheck:
 
         for i in range(1,Pixel_Height - 1):
             for j in range(1,Pixel_Width - 1):
-                self.Iu[i,j] = np.sum(self.img[i-1:i+2,j-1:j+2] * self.Ku)/w
-                self.Iv[i,j] = np.sum(self.img[i-1:i+2,j-1:j+2] * self.Kv)/w
+                Iu[i,j] = np.sum(self.img[i-1:i+2,j-1:j+2] * self.Ku)/w
+                Iv[i,j] = np.sum(self.img[i-1:i+2,j-1:j+2] * self.Kv)/w
+                print(np.sum(self.img[i-1:i+2,j-1:j+2] * self.Ku)/w)
 
         It = self.img - self.prev_img #assuming dt is 1
+        # print(f"\nIu:\n{Iu}")
 
         G = U_grid*Iu + V_grid*Iv # Radial Gradient
-
-
+        print(f"\nIG:\n{(G)}")
 
         ## SOLVE LEAST SQUARES PROBLEM
         X = np.array([
@@ -98,6 +99,7 @@ class DataCheck:
 
         ## SOLVE b VIA PSEUDO-INVERSE
         b = np.linalg.pinv(X)@y
+        print(f"\nX:\n{b}")
         b = b.flatten()
 
         self.OFy_est = b[0]
