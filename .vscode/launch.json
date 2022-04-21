@@ -4,12 +4,20 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        {
+            "name": "ROS: Launch",
+            "type": "ros",
+            "request": "launch",
+            "target": "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_launch/launch/example.launch"
+        },
+        
         
         {
             "name": "ROS: Attach",
             "type": "ros",
             "request": "attach"
         },
+
 
         {
             "name": "Python: Current File",
