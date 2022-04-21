@@ -1,4 +1,4 @@
 <launch>
-    <node name="example_node" pkg="example_cpp" type="nml_example" />
+    <node name="example_node" pkg="example_cpp" type="conv_example" />
 
 </launch>
