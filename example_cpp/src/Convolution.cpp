@@ -1,7 +1,9 @@
-#include <cmath>
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <iostream>
+#include <stdlib.h>
+#include <stdint.h>
 
 #include "nml.h"
 
@@ -168,9 +170,10 @@ void Convolution_X_Y(unsigned char* input, int ImgX, int ImgY)
 
     //Create matrix pointers
     nml_mat* lhs = nml_mat_from(3,3,9, LHS);
-    nml_mat* rhs = nml_mat_from(1,3,3,RHS); 
+    nml_mat* rhs = nml_mat_from(1,3,3, RHS); 
 
-
+    nml_mat_print(lhs);
+    nml_mat_print(rhs);
 
     nml_mat_free(lhs);
     nml_mat_free(rhs);

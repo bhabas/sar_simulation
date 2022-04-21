@@ -93,6 +93,9 @@ class DataCheck:
                 [-np.sum(G*It)]
             ])
 
+        print(f"\nLHS:\n{X}")
+        print(f"\nRHS:\n{y}")
+
         ## SOLVE b VIA PSEUDO-INVERSE
         b = np.linalg.pinv(X)@y
         b = b.flatten()
