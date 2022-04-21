@@ -3,35 +3,43 @@ import numpy as np
 
 ## GOAL: FIND TRAJECTORY STARTING POSITIONS THAT ALLOW FOR DESIRED VELOCITIES TO BE REACHED
 
-
-## FLIGHT CONDITIONS
-V = 3.0     # [m/s]
-phi = 20    # [deg]
-h_c = 2.1
+## SYSTEM CONSTRAINTS
+H_CEIL = 2.1    # Height of ceiling [m]
+a_x = 1.0       # X-acceleration [m/s^2]
+a_z = 1.0       # Z-acceleration [m/s^2]
 
 ## DESIRED IMPACT LOCATION
-X_f = 5.0
-Z_f = h_c
-d_min = 0.2
+x_d = 0
 
-phi_rad = np.radians(phi)
-Vx = V*np.cos(phi_rad)
-Vz = V*np.sin(phi_rad)
+## FLIGHT CONDITIONS
+V = 2.79     # Flight vel [m/s]
+phi = 18.01    # Flight angle [deg]
+phi_rad = np.radians(phi) # [rad]
+d_min = 0.5     # Distance where (Vx,Vz) are reached [m]
 
-
-## SYSTEM ACCELERATIONS
-a_z = 3.1   # [m/s^2]
-a_x = 1.0   # [m/s^2]
+Vx = V*np.cos(phi_rad) # [m/s]
+Vz = V*np.sin(phi_rad) # [m/s]
 
 
 t_x = Vx/a_x   # Time Vx reached
 t_z = Vz/a_z   # Time Vz reached
-t_arr = np.linspace(0,5,500)
+t_arr = np.linspace(0,10,1000)
 
-z_0_guess = 0.4
-x_0_guess = 0
+
 
 def calcTraj(t,x_0,z_0,v_x,v_z):
+    """Returns trajectory values at a given time
+
+    Args:
+        t (float): Time along trajectory
+        x_0 (float): Starting x-location
+        z_0 (float): Starting z-location
+        v_x (float): Desired x-vel
+        v_z (float): Desired z-vel
+
+    Returns:
+        [x_t,Vx_t,z_t,Vz_t]: State values at given time
+    """    
 
     if t < t_x:
         x_t = 0.5*a_x*t**2 + x_0
@@ -59,16 +67,24 @@ def calcTraj(t,x_0,z_0,v_x,v_z):
     return [x_t,Vx_t,z_t,Vz_t]
 
 
+z_vz = 1/2*a_z*t_z**2
+z_0 = H_CEIL - d_min - z_vz
+
+x_vz = Vx*(t_x+t_z) - Vx**2/(2*a_x)
+x_0 = x_d - x_vz - d_min*Vx/Vz
+
 ## CALCULATE ORIGINAL TRAJECTORY
 x_t = []
 z_t = []
 Vx_t = []
 Vz_t = []
+
+
 for ii,t in enumerate(t_arr):
 
-    X = calcTraj(t,x_0_guess,z_0_guess,Vx,Vz)
+    X = calcTraj(t,x_0,z_0,Vx,Vz)
 
-    if X[2] >= h_c:
+    if X[2] >= H_CEIL:
         t_arr = t_arr[:ii]
         break
 
@@ -77,36 +93,26 @@ for ii,t in enumerate(t_arr):
     z_t.append(X[2])
     Vz_t.append(X[3])
 
-_,_,z_vz,_ = calcTraj(t_x+t_z,x_0_guess,z_0_guess,Vx,Vz)
-z_0 = z_0_guess + (h_c - d_min - z_vz)
-
-
-## CALCULATE SHIFTED LEFT TRAJECTORY
-x_impact = x_t[-1]
-x_0 = x_0_guess + X_f - x_t[-1] + (z_0 - z_0_guess)*Vx/Vz
-
-
 
 
 fig = plt.figure()
 ax = fig.add_subplot(211)
-ax.plot(np.array(x_t)+(x_0-x_0_guess),np.array(z_t)+(z_0 - z_0_guess))
+ax.plot(x_t,z_t)
+ax.scatter(x_0+x_vz,z_0+z_vz,label='Vel reached')
 
 
 
-# ax.scatter(x_f,z_val,label='Vx reached')
-# ax.scatter(x_val,z_f,label='Vz reached')
 
 
-ax.axhline(y=h_c,color='k',linestyle='--',label='h_ceiling')
-ax.axhline(y=h_c-d_min,color='k',linestyle='--',alpha=0.5,label='d_min')
-ax.set_ylim(0,h_c + 0.5)
+ax.axhline(y=H_CEIL,color='k',linestyle='--',label='h_ceiling')
+ax.axhline(y=H_CEIL-d_min,color='k',linestyle='--',alpha=0.5,label='d_min',zorder=0)
+ax.set_ylim(0,H_CEIL + 0.5)
 ax.set_xlim(-10,10)
 
 ax.set_xlabel('X_Pos [m]')
 ax.set_ylabel('Z_Pos [m]')
 ax.grid()
-ax.legend(loc='upper left')
+ax.legend(loc='lower right')
 
 ax2 = fig.add_subplot(212)
 ax2.plot(t_arr,Vz_t,label='V_z')

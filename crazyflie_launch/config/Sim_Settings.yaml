@@ -1,5 +1,5 @@
 DATA_TYPE: "SIM"
-SURFACE_NAME: "CeilingPlane_Large"
+SURFACE_NAME: "FlightCage"
 GROUND_NAME: "GroundPlane_Desert_Physical"
 
 GUI_FLAG: True

@@ -400,7 +400,6 @@ void GTC_Command(setpoint_t *setpoint)
                     s_0_t.x = setpoint->cmd_val1;               // Starting position [m]
                     v_t.x = setpoint->cmd_val2;                 // Desired velocity [m/s]
                     a_t.x = setpoint->cmd_val3;                 // Acceleration [m/s^2]
-                    T.x = (a_t.x+fsqr(v_t.x))/(a_t.x*v_t.x);    // Find trajectory manuever time [s]
 
                     t_traj.x = 0.0f; // Reset timer
                     execute_vel_traj = true;
@@ -411,7 +410,6 @@ void GTC_Command(setpoint_t *setpoint)
                     s_0_t.y = setpoint->cmd_val1;
                     v_t.y = setpoint->cmd_val2;
                     a_t.y = setpoint->cmd_val3;
-                    T.y = (a_t.y+fsqr(v_t.y))/(a_t.y*v_t.y); 
 
                     t_traj.y = 0.0f;
                     execute_vel_traj = true;
@@ -422,7 +420,6 @@ void GTC_Command(setpoint_t *setpoint)
                     s_0_t.z = setpoint->cmd_val1;
                     v_t.z = setpoint->cmd_val2;
                     a_t.z = setpoint->cmd_val3;
-                    T.z = (a_t.z+fsqr(v_t.z))/(a_t.z*v_t.z); 
 
                     t_traj.z = 0.0f;
                     execute_vel_traj = true;

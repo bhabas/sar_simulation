@@ -101,26 +101,17 @@ def cmd_send(env):
             elif action=='vel_traj':
 
                 ## GET INPUT VALUES
-                V_d,phi,alpha = env.userInput("Flight Velocity (V_d,phi,alpha):",float)
+                V_d,phi = env.userInput("Flight Velocity (V_d,phi):",float)
 
                 ## DEFINE CARTESIAN VELOCITIES
                 phi_rad = np.radians(phi)
-                alpha_rad = np.radians(alpha)
-                Vx_d = V_d*np.cos(phi_rad)*np.cos(alpha_rad)
-                Vy_d = V_d*np.cos(phi_rad)*np.sin(alpha_rad)
+
+                Vx_d = V_d*np.cos(phi_rad)
                 Vz_d = V_d*np.sin(phi_rad)
 
-                ## ESTIMATE IMPACT POINT
-                P_impact = env.impactEstimate(env.posCF_0,[Vx_d,Vy_d,Vz_d])
+                env.step('vel_traj',cmd_vals=[env.posCF[0],Vx_d,env.accCF_max[0]],cmd_flag=0)
+                env.step('vel_traj',cmd_vals=[env.posCF[2],Vz_d,env.accCF_max[2]],cmd_flag=2)
 
-                ## CHECK VALID IMPACT POINT AND EXECUTE TRAJECTORY
-                validate = input(f"Approve impact point (y/n): {P_impact[0]:.2f}, {P_impact[1]:.2f}, {P_impact[2]:.2f}\n")
-                if validate == 'y':
-                    env.step('traj',cmd_vals=[env.posCF[0],Vx_d,env.accCF_max[0]],cmd_flag=0)
-                    env.step('traj',cmd_vals=[env.posCF[1],Vy_d,env.accCF_max[1]],cmd_flag=1)
-                    env.step('traj',cmd_vals=[env.posCF[2],Vz_d,env.accCF_max[2]],cmd_flag=2)
-                else:
-                    pass
 
             elif action=='sticky':
                 cmd_vals = [0,0,0]
@@ -167,7 +158,7 @@ def cmd_send(env):
                 print("Reset Pos/Vel -- Sticky off -- Controller Reset\n")
                 env.reset_pos()
 
-        except:
+        except rospy.ROSInternalException:
             print('\033[93m' + "INVALID INPUT: Try again" + '\x1b[0m')
             continue
 
@@ -183,6 +174,8 @@ if __name__ == '__main__':
     env.agent_name = agent.agent_type
     env.trial_name = f"Control_Playground--trial_{int(trial_num):02d}--{env.modelInitials()}"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
+
+    env.accCF_max = [1.0, 1.0, 1.0]
 
     env.createCSV(env.filepath)
     env.startLogging()

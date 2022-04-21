@@ -735,28 +735,28 @@ class CrazyflieEnv:
         self.pitch_max = 0.0
 
 
-    def impactEstimate(self,pos_0,vel_d):
+    def VelTraj_StartPos(self,x_impact,V_d,accel_d=None,d_min=0.5):
+
+        if accel_d == None:
+            accel_d = self.accCF_max
+    
+        a_x = accel_d[0]
+        a_z = accel_d[2]
+
+        ## CALC OFFSET POSITIONS
+        Vx = V_d[0]
+        Vz = V_d[2]
+
+        t_x = Vx/a_x
+        t_z = Vz/a_z
+
+        z_vz = 0.5*a_z*(t_z)**2
+        z_0 = self.h_ceiling - d_min - z_vz
         
-        ## ASSUME INSTANT VELOCITY
-        t_impact = (self.h_ceiling - pos_0[2])/vel_d[2]
+        x_vz = Vx*(t_x+t_z) - Vx**2/(2*a_x)
+        x_0 = x_impact - x_vz - d_min*Vx/Vz
 
-        ## FIND IMPACT POINT FROM IMPACT TIME
-        x_impact = pos_0[0] + vel_d[0]*t_impact
-        y_impact = pos_0[1] + vel_d[1]*t_impact
-        z_impact = pos_0[2] + vel_d[2]*t_impact
-
-        x_bound = [-0.8,1.2]
-        y_bound = [-0.6,0.7]
-
-        if x_bound[0] < x_impact < x_bound[1] and y_bound[0] < y_impact < y_bound[1]:
-            print("Impact Location Inboud")
-
-        else:
-            print("WARNING: IMPACT LOCATION OUT OF BOUNDS!!!")
-            
-
-        return [x_impact,y_impact,z_impact]
-
+        return x_0,z_0
    
 
     # ============================
