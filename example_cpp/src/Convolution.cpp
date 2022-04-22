@@ -115,8 +115,8 @@ void Convolution_X_Y(unsigned char* input, int ImgX, int ImgY)
         std::cout << "Ugrid: " << Ugrid << "\tVgrid: " << Vgrid << "\n";        
         *///
 
-        float Xsum = 0; //reset rolling sum to 0
-        float Ysum = 0;
+        int Xsum = 0; //reset rolling sum to 0
+        int Ysum = 0;
         float Usum = 0;
         float Vsum = 0;
 
@@ -142,7 +142,7 @@ void Convolution_X_Y(unsigned char* input, int ImgX, int ImgY)
 
         //Sum assigned to middle value
         Usum = Xsum/(8*w); //kernel normalization and divide by pixel width
-        Vsum = Ysum/(8*w);
+        Vsum = Ysum/(8*w); // CHECK ORDER OF OPERATIONS TO SEE IF THIS CAN BE MOVED TO LAST STEP
         Ix[i1 + 1] = Usum;
         Iy[i1 + 1] = Vsum;
         //std::cout << "Iu: " << Usum << "\tIv: " << Vsum << "\n";
