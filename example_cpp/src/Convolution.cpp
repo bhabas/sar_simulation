@@ -141,8 +141,8 @@ void Convolution_X_Y(unsigned char* input, int ImgX, int ImgY)
         //}
 
         //Sum assigned to middle value
-        Usum = Xsum/(8*w); //kernel normalization and divide by pixel width
-        Vsum = Ysum/(8*w); // CHECK ORDER OF OPERATIONS TO SEE IF THIS CAN BE MOVED TO LAST STEP
+        Usum = Xsum; //kernel normalization and divide by pixel width
+        Vsum = Ysum;
         Ix[i1 + 1] = Usum;
         Iy[i1 + 1] = Vsum;
         //std::cout << "Iu: " << Usum << "\tIv: " << Vsum << "\n";
@@ -171,11 +171,9 @@ void Convolution_X_Y(unsigned char* input, int ImgX, int ImgY)
 
     }
 
-    std::cout << "\nIvv: " << Ivv; 
-
-    double LHS[9] = {f*Iuu, f*Iuv, IGu,
-                    f*Iuv, f*Ivv, IGv,
-                    f*IGu, f*IGv, IGG};
+    double LHS[9] = {f/powf(8*w,2)*Iuu, f/powf(8*w,2)*Iuv, 1/powf(8*w,2)*IGu,
+                     f/powf(8*w,2)*Iuv, f/powf(8*w,2)*Ivv, 1/powf(8*w,2)*IGv,
+                     f/powf(8*w,2)*IGu, f/powf(8*w,2)*IGv, 1/powf(8*w,2)*IGG};
 
     double RHS[3] = {-Iut, -Ivt, -IGt};
 
@@ -197,17 +195,16 @@ void Convolution_X_Y(unsigned char* input, int ImgX, int ImgY)
     nml_mat_print(m_B);
 
 
-    // SOLVE FOR OPTICAL FLOW VALUES
-    nml_mat_lup *LUP = nml_mat_lup_solve(m_A);
-    nml_mat* x = nml_ls_solve(LUP,m_B);
-    printf("\nX:\n");
-    nml_mat_print(x);
+    // // SOLVE FOR OPTICAL FLOW VALUES
+    // nml_mat_lup *LUP = nml_mat_lup_solve(m_A);
+    // nml_mat* x = nml_ls_solve(LUP,m_B);
+    // nml_mat_print(x);
 
-    // DEALLOCATE MATRIX MEMORY
-    nml_mat_free(m_A);
-    nml_mat_free(m_B);
-    nml_mat_lup_free(LUP);
-    nml_mat_free(x);
+    // // DEALLOCATE MATRIX MEMORY
+    // nml_mat_free(m_A);
+    // nml_mat_free(m_B);
+    // nml_mat_lup_free(LUP);
+    // nml_mat_free(x);
 
 
     // // EXAMPLE SOLVE Ax = b
