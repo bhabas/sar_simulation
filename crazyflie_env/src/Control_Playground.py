@@ -20,6 +20,7 @@ def cmd_send(env):
             7:'moment',
             8:'policy',
             9:'vel_traj',
+            10:'impact_traj',
             11:'sticky',
             13:'P2P_traj',
             19:'traj_tp',
@@ -110,6 +111,39 @@ def cmd_send(env):
 
                 env.step('vel_traj',cmd_vals=[env.posCF[0],Vx_d,env.accCF_max[0]],cmd_flag=0)
                 env.step('vel_traj',cmd_vals=[env.posCF[2],Vz_d,env.accCF_max[2]],cmd_flag=2)
+
+            elif action=='impact_traj':
+
+                ## GET VEL CONDITIONS 
+                V_d,phi,d_vz = env.userInput("Flight Velocity (V_d,phi,d_vz):",float)
+
+                ## DEFINE CARTESIAN VELOCITIES
+                phi_rad = np.radians(phi)
+
+                Vx_d = V_d*np.cos(phi_rad)
+                Vz_d = V_d*np.sin(phi_rad)
+
+                x_impact,y_0 = env.userInput("Desired impact position (x,y):",float)
+
+                x_0,z_0 = env.VelTraj_StartPos(x_impact,[Vx_d,0,Vz_d],d_vz=d_vz)
+
+                print(f"Desired start position x_0: {x_0:.2f} y_0: {y_0:.2f} z_0: {z_0:.2f}")
+                str_input = env.userInput("Approve start position (y/n): ",str)
+
+                if str_input == 'y':
+                    env.step('P2P_traj',cmd_vals=[env.posCF[0],x_0,env.accCF_max[0]],cmd_flag=0)
+                    env.step('P2P_traj',cmd_vals=[env.posCF[1],y_0,env.accCF_max[1]],cmd_flag=1)
+                    env.step('P2P_traj',cmd_vals=[env.posCF[2],z_0,env.accCF_max[2]],cmd_flag=2)
+
+                    str_input = env.userInput("Approve flight (y/n): ",str)
+                    if str_input == 'y':
+                        env.step('vel_traj',cmd_vals=[env.posCF[0],Vx_d,env.accCF_max[0]],cmd_flag=0)
+                        env.step('vel_traj',cmd_vals=[env.posCF[2],Vz_d,env.accCF_max[2]],cmd_flag=2)
+
+                else:
+                    print(f"Try again")
+
+
 
 
             elif action=='sticky':

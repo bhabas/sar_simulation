@@ -378,11 +378,12 @@ class CrazyflieEnv:
         self.impact_magnitude = np.round(ImpactData_msg.Impact_Magnitude,3)
 
         ## STICKY PAD CONNECTIONS
-        self.pad_connections = ImpactData_msg.Pad_Connections
-        self.Pad1_Contact = ImpactData_msg.Pad1_Contact
-        self.Pad2_Contact = ImpactData_msg.Pad2_Contact
-        self.Pad3_Contact = ImpactData_msg.Pad3_Contact
-        self.Pad4_Contact = ImpactData_msg.Pad4_Contact
+        if self.DataType == 'SIM':
+            self.pad_connections = ImpactData_msg.Pad_Connections
+            self.Pad1_Contact = ImpactData_msg.Pad1_Contact
+            self.Pad2_Contact = ImpactData_msg.Pad2_Contact
+            self.Pad3_Contact = ImpactData_msg.Pad3_Contact
+            self.Pad4_Contact = ImpactData_msg.Pad4_Contact
 
 
     def CF_MiscDataCallback(self,MiscData_msg):        
