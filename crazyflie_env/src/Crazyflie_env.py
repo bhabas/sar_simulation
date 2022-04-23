@@ -428,6 +428,8 @@ class CrazyflieEnv:
         RL_convg_msg.reward_avg_list = self.reward_avg_list
         self.RL_Convg_Publisher.publish(RL_convg_msg) ## Publish RLData message
 
+    def setParams(self):
+        os.system("roslaunch crazyflie_launch params.launch")
     
 
     def modelInitials(self):

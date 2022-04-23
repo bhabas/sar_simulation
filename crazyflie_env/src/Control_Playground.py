@@ -3,8 +3,7 @@ import threading,os
 import rospy
 import numpy as np
 
-from RL_agents.rl_EM import rlEM_PEPGAgent
-from Crazyflie_env import CrazyflieEnv
+
 
        
 def cmd_send(env):
@@ -80,7 +79,7 @@ def cmd_send(env):
                 cmd_flag = 1
                 print("Reset ROS Parameters\n")
 
-                os.system("roslaunch crazyflie_launch params.launch")
+                env.setParams()
                 env.step(action,cmd_vals,cmd_flag)
 
             elif action=='moment':
@@ -164,6 +163,9 @@ def cmd_send(env):
 
 
 if __name__ == '__main__':
+
+    from RL_agents.rl_EM import rlEM_PEPGAgent
+    from Crazyflie_env import CrazyflieEnv
     
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv(gazeboTimeout=False)
