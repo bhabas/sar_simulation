@@ -746,9 +746,13 @@
       <OFy_gaussianNoise>0.0</OFy_gaussianNoise>
     </plugin>
 
-    <!-- <plugin name='MomentPlugin' filename='libMoment_plugin.so'>
-      <bodyName>crazyflie_body</bodyName>
-    </plugin> -->
+    <plugin name='MomentPlugin' filename='libMoment_plugin.so'>
+        <bodyName>crazyflie_body</bodyName>
+    </plugin>
+
+    <plugin name='DomainRandomization_Plugin' filename='libDomainRand_plugin.so'>
+        <bodyName>crazyflie_body</bodyName>
+    </plugin>
 
     <!-- <joint name="FixedJoint" type="fixed">
         <parent>world</parent>
