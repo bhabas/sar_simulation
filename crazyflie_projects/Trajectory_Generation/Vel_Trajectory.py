@@ -6,16 +6,16 @@ import numpy as np
 ## SYSTEM CONSTRAINTS
 H_CEIL = 2.1    # Height of ceiling [m]
 a_x = 1.0       # X-acceleration [m/s^2]
-a_z = 1.0       # Z-acceleration [m/s^2]
+a_z = 2.7       # Z-acceleration [m/s^2]
 
 ## DESIRED IMPACT LOCATION
-x_d = 0
+x_d = 1.0
 
 ## FLIGHT CONDITIONS
-V = 2.79     # Flight vel [m/s]
-phi = 18.01    # Flight angle [deg]
+V = 2.5     # Flight vel [m/s]
+phi = 40    # Flight angle [deg]
 phi_rad = np.radians(phi) # [rad]
-d_min = 0.5     # Distance where (Vx,Vz) are reached [m]
+d_min = 0.6     # Distance where (Vx,Vz) are reached [m]
 
 Vx = V*np.cos(phi_rad) # [m/s]
 Vz = V*np.sin(phi_rad) # [m/s]

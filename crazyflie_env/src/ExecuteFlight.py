@@ -57,7 +57,9 @@ def executeFlight(env,agent):
     # ============================
     env.step("policy",env.policy,cmd_flag=1) # Arm policy inside controller
     env.step('sticky',cmd_flag=1)              # Enable sticky pads
-    env.traj_launch(env.posCF,env.vel_d)
+
+    z_0 = env.h_ceiling - 1.0*env.vel_d[2]
+    env.traj_launch([0,0,z_0],env.vel_d)
     # env.step('traj',cmd_vals=[env.posCF_0[0],env.vel_d[0],env.accCF_max[0]],cmd_flag=0)
     # env.step('traj',cmd_vals=[env.posCF_0[1],env.vel_d[1],env.accCF_max[1]],cmd_flag=1)
     # env.step('traj',cmd_vals=[env.posCF_0[2],env.vel_d[2],env.accCF_max[2]],cmd_flag=2)
@@ -191,7 +193,7 @@ if __name__ == '__main__':
     env.Logging_Flag = True
     env.createCSV(env.filepath)
 
-    V_d = 2.5
+    V_d = 1.0
     phi = 90
     phi_rad = np.radians(phi)
     env.vel_d = [V_d*np.cos(phi_rad), 0.0, V_d*np.sin(phi_rad)] # [m/s]
