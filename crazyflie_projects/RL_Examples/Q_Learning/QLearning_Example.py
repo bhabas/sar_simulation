@@ -76,7 +76,7 @@ for episode in range(EPISODES):
             ## UPDATE Q-TABLE
             Q_current = Q_table[discrete_state][action]
             Q_max_future = np.max(Q_table[new_discrete_state])
-            Q_current = Q_current + LR*(reward + DISCOUNT_RATE*Q_max_future - Q_current)
+            Q_current = (1-LR)*Q_current + LR*(reward + DISCOUNT_RATE*Q_max_future)
             Q_table[discrete_state][action] = Q_current
 
         elif new_state[0] >= env.goal_position:
