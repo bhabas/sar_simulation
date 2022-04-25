@@ -61,7 +61,7 @@ int main(){
     
    // Convolution(); //init function
     Convolution_T();
-    Convolution_X_Y(Cur_img,5,5);
+    Convolution_X_Y(Cur_img,6,6);
     return 1;
 
 }
@@ -102,8 +102,8 @@ void Convolution_X_Y(unsigned char* input, int ImgX, int ImgY)
         int i1 = i0 + ImgX;
         int i2 = i1 + ImgX;
 
-        Ugrid = (X - O_up*w) + (w/2); // Using current location of the Kernel center
-        Vgrid = (Y - V_up*w) + (w/2); //calculate the current pixel grid locations (u,v)
+        Ugrid = (X - O_up)*w + (w/2); // Using current location of the Kernel center
+        Vgrid = (Y - V_up)*w + (w/2); //calculate the current pixel grid locations (u,v)
 
         
         // ######  DEBUGGING  ######
@@ -141,15 +141,15 @@ void Convolution_X_Y(unsigned char* input, int ImgX, int ImgY)
         //}
 
         //Sum assigned to middle value
-        Usum = Xsum; //kernel normalization and divide by pixel width
-        Vsum = Ysum;
+        Usum = Xsum;//(8*w); //kernel normalization and divide by pixel width
+        Vsum = Ysum;//(8*w);
         Ix[i1 + 1] = Usum;
         Iy[i1 + 1] = Vsum;
         //std::cout << "Iu: " << Usum << "\tIv: " << Vsum << "\n";
         int Ittemp = It[i1 + 1]; //this will crop It the same way the imageGrads are shouldn't be a problem
 
         Gtemp = (Usum*Ugrid + Vsum*Vgrid);
-        std::cout << "\nIG: " << Gtemp << "\n";
+        std::cout << "\nIG: " << Gtemp << "\tIu: " << Usum << "\tIv: " << Vsum << "\n";
 
         //LHS Matrix values (rolling sums)
         Iuu += Usum*Usum;
@@ -171,11 +171,15 @@ void Convolution_X_Y(unsigned char* input, int ImgX, int ImgY)
 
     }
 
+    // double LHS[9] = {f*Iuu, f*Iuv, IGu,
+    //                 f*Iuv, f*Ivv, IGv,
+    //                 f*IGu, f*IGv, IGG};
+
     double LHS[9] = {f/powf(8*w,2)*Iuu, f/powf(8*w,2)*Iuv, 1/powf(8*w,2)*IGu,
                      f/powf(8*w,2)*Iuv, f/powf(8*w,2)*Ivv, 1/powf(8*w,2)*IGv,
                      f/powf(8*w,2)*IGu, f/powf(8*w,2)*IGv, 1/powf(8*w,2)*IGG};
 
-    double RHS[3] = {-Iut, -Ivt, -IGt};
+    double RHS[3] = {-Iut/(8*w), -Ivt/(8*w), -IGt/(8*w)};
 
     //DO MATRIX MAGIC
 

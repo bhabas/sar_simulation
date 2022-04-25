@@ -7,8 +7,8 @@ import matplotlib.cm as cm
 import sys
 
 from example_msgs.msg import CustomMessage
-Pixel_Height = 5
-Pixel_Width = 5
+Pixel_Height = 6
+Pixel_Width = 6
 
 class DataCheck:
 
@@ -28,8 +28,8 @@ class DataCheck:
             [ 1, 2, 1]
         ])
 
-        self.img = np.array([0,0,0,0,0,0,0,8,8,8,8,0,0,8,0,0,8,0,0,8,0,0,8,0,0,8,8,8,8,0,0,0,0,0,0,0]).reshape(5,5)
-        self.prev_img= np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,8,0,0,0,0,8,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0]).reshape(5,5) 
+        self.img = np.array([0,0,0,0,0,0,0,8,8,8,8,0,0,8,0,0,8,0,0,8,0,0,8,0,0,8,8,8,8,0,0,0,0,0,0,0]).reshape(Pixel_Height,Pixel_Width)
+        self.prev_img= np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,8,0,0,0,0,8,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0]).reshape(Pixel_Height,Pixel_Width) 
         print(self.img)
 
         # self.Iu = np.zeros((5,5))
@@ -66,16 +66,18 @@ class DataCheck:
         # print(f"V_grid:\n{V_grid}")
 
         Iu = np.zeros((Pixel_Height,Pixel_Width))
-        Iv = np.zeros((Pixel_Height,Pixel_Width))
+        Iv = np.zeros_like(Iu)
+        It = np.zeros_like(Iu)
 
 
         for i in range(1,Pixel_Height - 1):
             for j in range(1,Pixel_Width - 1):
                 Iu[i,j] = np.sum(self.img[i-1:i+2,j-1:j+2] * self.Ku)/w
                 Iv[i,j] = np.sum(self.img[i-1:i+2,j-1:j+2] * self.Kv)/w
-                print(np.sum(self.img[i-1:i+2,j-1:j+2] * self.Ku)/w)
+                It[i,j] = self.img[i,j] - self.prev_img[i,j] #assuming dt = 1
+                # print(np.sum(self.img[i-1:i+2,j-1:j+2] * self.Ku)/w)
 
-        It = self.img - self.prev_img #assuming dt is 1
+        # It = self.img - self.prev_img #assuming dt is 1
         # print(f"\nIu:\n{Iu}")
 
         G = U_grid*Iu + V_grid*Iv # Radial Gradient
