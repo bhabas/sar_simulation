@@ -22,8 +22,6 @@ class DataFile:
         self.dataPath = dataPath
         filepath = self.dataPath + self.fileName
 
-        # self.dataType = re.findall('SIM|EXP',fileName)[0] # FIND 'SIM' OR 'EXP'
-
         self.trial_df = pd.read_csv(filepath,low_memory=False)
 
         ## CLEAN UP TRIAL DATAFRAME
@@ -44,8 +42,7 @@ class DataFile:
 
         ## CREATE BASIC DF OF K_EP,K_RUN, & REWARD
         self.k_df = self.trial_df.iloc[:][['k_ep','k_run']]
-        self.k_df.drop_duplicates()
-        self.k_df.reset_index(inplace=True)
+        self.k_df = self.k_df.drop_duplicates()
 
         if self.dataType=='EXP':
             self.remove_FailedRuns()
@@ -54,10 +51,6 @@ class DataFile:
         self.n_rollouts = int(self.trial_df.iloc[-3]['NN_flip'])
         self.k_epMax = int(self.trial_df.iloc[-3]['k_ep'])
         self.k_runMax = int(self.trial_df.iloc[-3]['k_run'])
-
-        
-
-        
 
     def remove_FailedRuns(self):
         """Drop all rollouts in dataframe that were labelled as 'Failed Rollout'
@@ -456,20 +449,14 @@ class DataFile:
             phi_IC (float): Desired flight angle
         """        
         ## SELECT X,Y,Z LAUNCH VELOCITIES
-        vel_df = self.trial_df[['mu','vx','vy','vz']].dropna()
-        vx_IC,vy_IC,vz_IC = vel_df.iloc[0][['vx','vy','vz']]
+        vx_IC,vy_IC,vz_IC = self.trial_df.iloc[-3][['vx','vy','vz']].astype('float').tolist()
 
         ## CONVERT CARTESIAN VELOCITIES TO POLAR
         Vel_IC = np.sqrt(vx_IC**2 + vz_IC**2)
         phi_IC = np.rad2deg(np.arctan2(vz_IC,vx_IC))
 
-        Vel_IC = self.vel_IC
-        phi_IC = self.phi_IC
-
-        
-
-        # Vel_IC = np.round(Vel_IC,2)
-        # phi_IC = np.round(phi_IC,0)
+        Vel_IC = np.round(Vel_IC,3)
+        phi_IC = np.round(phi_IC,3)
         
         return Vel_IC,phi_IC
         
@@ -495,7 +482,7 @@ class DataFile:
 
         return t_flip,t_flip_norm
 
-    def grab_flip_state(self,k_ep,k_run,stateName):
+    def grab_flip_state(self,k_ep,k_run,stateName: list):
         """Returns desired state at time of flip
 
         Data Type: Sim/Exp
@@ -510,7 +497,8 @@ class DataFile:
         """        
 
         _,_,flip_df,_ = self.select_run(k_ep,k_run)
-        state_flip = float(flip_df.iloc[0][stateName])
+        state_flip = flip_df[stateName]
+        state_flip = state_flip.to_numpy(dtype=np.float64).flatten()
 
 
         return state_flip
@@ -586,7 +574,6 @@ class DataFile:
 
         Returns:
             leg_contacts (int): Number legs that joined to the ceiling
-            impact_leg (int): First leg to impact the ceiling
             contact_list (list): List of the order legs impacted the ceiling
             body_impact (bool): True if body impacted the ceiling
         """        
@@ -683,7 +670,7 @@ if __name__ == "__main__":
 
     dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_logging/local_logs/"
 
-    fileName = "EM_PEPG--Vd_3.50--phi_90.00--trial_01--NL.csv"
+    fileName = "EM_PEPG--Vd_3.50--phi_90.00--trial_00--NL.csv"
     trial = DataFile(dataPath,fileName,dataType='Sim')
 
     print(trial.grab_trial_data(trial.grab_impact_state,'vz'))
