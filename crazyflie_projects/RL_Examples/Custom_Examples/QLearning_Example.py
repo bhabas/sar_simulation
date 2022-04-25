@@ -85,9 +85,9 @@ for episode in range(EPISODES):
         ## UPDATE CURRENT STATE
         discrete_state = new_discrete_state
 
-        ## REDUCE EPSILON AS EPISODE COUNT INCREASES
-        if START_EPSILON_DECAYING <= episode <= END_EPSILONG_DECAYING:
-            epsilon -= epsilon_decay_value
+    ## REDUCE EPSILON AS EPISODE COUNT INCREASES
+    if START_EPSILON_DECAYING <= episode <= END_EPSILONG_DECAYING:
+        epsilon -= epsilon_decay_value
             
     ## LOG EPISODE TOTAL REWARD
     ep_rewards.append(episode_reward)
