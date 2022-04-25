@@ -1,4 +1,11 @@
 "Evolved" Paper so can reuse work from conference paper
+Page length: 12-20 pages
+
+NOTE:
+The earlier conference version(s) must be cited in this statement. 
+This statement is preferably a single, standalone paragraph near the end of the first section, 
+so it is obvious what is being claimed as new. In addition, the earlier conference version(s) 
+must be cited in the submission's cover letter and must be uploaded along with the journal submission
 
 Introduction
 - Dynamic perching onto ceiling surface is hard
