@@ -37,29 +37,39 @@ class QTrainer:
         self.optimizer = optim.Adam(Q_NN.parameters(), lr=self.lr)
         self.criterion = nn.MSELoss()
 
-    def train_step(self,state,action,reward,next_state,done):
+    def train_step(self,df_train):
 
-        state = torch.tensor(state, dtype=torch.float)
-        next_state = torch.tensor(next_state, dtype=torch.float)
-        action = torch.tensor(action, dtype=torch.long)
-        reward = torch.tensor(reward, dtype=torch.float)
+        state = torch.tensor(df_train['state'], dtype=torch.float)
+        next_state = torch.tensor(df_train['next_state'], dtype=torch.float)
+        action = torch.tensor(df_train['action'], dtype=torch.long)
+        reward = torch.tensor(df_train['reward'], dtype=torch.float)
+        done = df_train['done']
 
-        ## IF LENGTH OF TRAINING DATA IS 1 THEN TURN INTO 2-D TENSOR
-        if len(state.shape) == 1:
-            
-            state = torch.unsqueeze(state, 0)
-            next_state = torch.unsqueeze(next_state, 0)
-            action = torch.unsqueeze(action, 0)
-            reward = torch.unsqueeze(reward, 0)
-            done = (done, )
-            
+
+         
 
         ## PREDICT Q-VALUES FROM CURRENT DATA BATCH
-        Q_prediction = self.Q_NN.forward(state)         # Predict Q value for current state
-        Q_target = self.Q_Target_NN.forward(next_state) # Predict Q-value for next state
-
+        Q_prediction = self.Q_NN.forward(state)             
+        Q_target = self.Q_Target_NN.forward(next_state)     
         for idx in range(len(done)):
-            Q_new = reward[idx]
+
+            Q_prediction[idx][0] = Q_prediction[idx][action[idx]] # Predict Q-value for current (states,action)
+
+            if not done[idx]:
+                Q_target[idx][0] = reward[idx] + self.gamma*torch.max(Q_target[idx]).item() # Predict Q-value for next state
+            else:
+                Q_target[idx][0] = reward[idx]
+
+        Q_prediction = Q_prediction[:,0].reshape(1,-1)
+        Q_target = Q_target[:,0].reshape(1,-1)
+
+        self.optimizer.zero_grad()
+        loss = self.criterion(Q_prediction, Q_target)
+        loss.backward()
+
+        self.optimizer.step()
+
+
 
         
 

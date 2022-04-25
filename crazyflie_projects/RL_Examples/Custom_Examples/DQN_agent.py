@@ -3,10 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import os
-
 import torch
 import random
 from collections import deque
+import pandas as pd
 
 from DQN_model import Linear_QNet, QTrainer
 
@@ -32,7 +32,7 @@ class Agent:
 
         if np.random.random() >= self.epsilon:
             state = torch.tensor(state,dtype=torch.float)
-            Q_prediction = self.Q_Net(state)
+            Q_prediction = self.Q_Net.forward(state)
             action = torch.argmax(Q_prediction).item()
 
         else:
@@ -41,9 +41,10 @@ class Agent:
 
         return action
 
-    def train_short_memory(self,state,action,reward,next_state,done):
-
-        self.trainer.train_step(state,action,reward,next_state,done)
+    def train_short_memory(self):
+        
+        df_train = pd.DataFrame(random.sample(self.memory,50),columns=['state','action','reward','next_state','done'])
+        self.trainer.train_step(df_train)
 
 
 env = gym.make("MountainCar-v0")
@@ -58,30 +59,37 @@ if __name__ == '__main__':
     agent = Agent()
     env = gym.make("MountainCar-v0")
 
+    
 
-    ## INITIALIZE EPISODE
-    episode_reward = 0
-    state = env.reset()
-    done = False
+    for episode in range(EPISODES):
 
-    while not done:
+        ## INITIALIZE EPISODE
+        episode_reward = 0
+        state = env.reset()
+        done = False
 
-        ## SELECT ACTION FROM CURRENT STATE
-        action = agent.get_action(state)
+        while not done:
 
-        ## PERFORM ACTION AND GET NEW STATE
-        next_state,reward,done,_ = env.step(action)
+            ## SELECT ACTION FROM CURRENT STATE
+            action = agent.get_action(state)
+
+            ## PERFORM ACTION AND GET NEW STATE
+            next_state,reward,done,_ = env.step(action)
+            env.render()
+            
+            if episode >= 1:
+                ## TRAIN SHORT TERM MEMORY
+                agent.train_short_memory()
+
+            ## STORE SAMPLE OF TRAINING DATA
+            agent.memory.append((state,action,reward,next_state,done))
+
+
+            episode_reward += reward
+
+
+            # STORE IN MEMORY
+
+            state = next_state
+
         
-        ## TRAIN SHORT TERM MEMORY
-        agent.train_short_memory(state,action,reward,next_state,done)
-
-        ## STORE SAMPLE OF TRAINING DATA
-        agent.memory.append((state,action,reward,next_state,done))
-
-
-        episode_reward += reward
-
-
-        # STORE IN MEMORY
-
-        state = next_state
