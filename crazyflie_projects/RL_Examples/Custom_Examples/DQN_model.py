@@ -32,10 +32,13 @@ class QTrainer:
         self.gamma = gamma
 
         self.Q_NN = Q_NN
-        self.Q_Target_NN = copy.deepcopy(self.Q_NN) # Create target network as copy of Q_NN
+        self.copy_TargetNN() 
 
         self.optimizer = optim.Adam(Q_NN.parameters(), lr=self.lr)
         self.criterion = nn.MSELoss()
+
+    def copy_TargetNN(self): # Create target network as copy of Q_NN
+        self.Q_Target_NN = copy.deepcopy(self.Q_NN)
 
     def train_step(self,df_train):
 
