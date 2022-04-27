@@ -21,9 +21,6 @@ float V_up = Pixel_height/2;
 float U; //defining image coords
 float V;
 
-uint8_t* Cur_img;
-uint8_t* Prev_img; //Pre-init previous image to equal 0
-
 //Init outputs
 int Ix[Pixel_height*Pixel_width] = {0}; //zero init Ix Iy
 int Iy[Pixel_height*Pixel_width] = {0};
@@ -58,14 +55,23 @@ class MyClass // DEFINE CLASS
             pub = nh->advertise<example_msgs::CustomMessage>("/MyPub_cpp",1);
             Camera_sub = nh->subscribe("/CF_Internal/camera/image_raw",1,&MyClass::Camera_Callback,this);
 
+            // DYNAMICALLY ALLOCATE MEMORY TO STORE PREVIOUS IMAGE
+            Prev_img = (uint8_t*)calloc(WIDTH_PIXELS*HEIGHT_PIXELS,sizeof(uint8_t));
+
         }
 
 
         // DECLARE FUNCTION PROTOTYPES
         void Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg);
-        void Convolution_X_Y(unsigned char* input, int ImgX,int ImgY);
-        void Convolution_T(unsigned char* CurImg, unsigned char* PrevImg);
+        void Convolution_X_Y(const unsigned char* input, int ImgX,int ImgY);
+        void Convolution_T(const unsigned char* CurImg,const unsigned char* PrevImg);
 
+        // IMAGE PROCESSING VARIABLES
+        uint8_t WIDTH_PIXELS = 160;
+        uint8_t HEIGHT_PIXELS = 160;
+
+        const uint8_t* Cur_img = NULL;  // Ptr to current image memory
+        uint8_t* Prev_img = NULL;       // Ptr to prev image memory
 
 
     private: // CLASS VARIABLES ONLY THAT ARE CALLABLE INSIDE INTERNAL CLASS FUNCTIONS
@@ -81,16 +87,23 @@ void MyClass::Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg){
 
     //CREATE VECTOR TO STORE DATA FROM ROS MSG
     std::vector<uint8_t> Cam_Vec = Camera_msg->data;
-    // CROP IMAGE TO 120 ROWS x 160 COLUMNS
-    //Cam_Vec.erase(Cam_Vec.begin() + Pixel_width*Pixel_height, Cam_Vec.end());
 
-    //CREATE POINTER(ARRAY) TO DATA LOCATION OF FIRST INDEX
-    uint8_t* Cur_img = &Cam_Vec[0];
+    // IMAGE PROCESSING WORK GOES HERE
+    Cur_img = &(Camera_msg->data)[0]; // Point to current image data address
 
     // Calling Convolution
     MyClass::Convolution_T(Cur_img,Prev_img);
     MyClass::Convolution_X_Y(Cur_img,Pixel_width,Pixel_height);
-    
+
+    // sensorData.Tau = 0.0f;
+    // sensorData.OFx = 0.0f;
+    // sensorData.OFy = 0.0f;
+
+    printf("Prev_Val: %u\n",Prev_img[0]);
+    printf("Cur_Val: %u\n",Cur_img[0]);
+    printf("\n");
+
+    memcpy(Prev_img,Cur_img,sizeof(Camera_msg->data)); // Copy memory to Prev_img address
 
     // Copying and Writing to Output Message
     std::vector<int64_t> ConvX_Vec;
@@ -110,46 +123,10 @@ void MyClass::Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg){
 
     pub.publish(new_msg);
 
-    Prev_img = Cur_img;
-
-    //printf("\nTest Output\n");
-
-/*  //===================DEBUGGING=====================
-
-    for(y = 0; y < 5;){
-        
-        for(x = 0; x < 5;){
-
-            i = x + Pixel_width * y;
-            printf("%u,",Cur_img[i]);
-            x++;
-
-        }
-        y++;
-        printf("\n");
-    }
-    
-
-   for(uint n = 0; n < Pixel_width*4; n++){
-
-        if(i == Pixel_width - 1) {
-            printf("%u\n\n",Cur_img[n]);
-            i = 0;
-        }
-
-        else {
-            printf("%u,",Cur_img[n]);
-        }
-
-       i++;
-
-    }
-
-    */ // === END OF DEBUGGING ===
 
 } // ============ END OF MAIN LOOP ============ //
 
-void MyClass::Convolution_T(unsigned char* CurImg, unsigned char* PrevImg) //Still not sure where to do this in the most efficient way
+void MyClass::Convolution_T(const unsigned char* CurImg,const unsigned char* PrevImg) //Still not sure where to do this in the most efficient way
 {
 
     for(int i = 0; i < Pixel_width*Pixel_height; i++){
@@ -159,7 +136,7 @@ void MyClass::Convolution_T(unsigned char* CurImg, unsigned char* PrevImg) //Sti
 
 }
 
-void MyClass::Convolution_X_Y(unsigned char* input, int ImgX, int ImgY) 
+void MyClass::Convolution_X_Y(const unsigned char* input, int ImgX, int ImgY) 
 {
 
     //Where the convolution starts
