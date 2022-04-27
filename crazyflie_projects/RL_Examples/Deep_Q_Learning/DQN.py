@@ -23,7 +23,7 @@ EXPLORATION_MIN = 0.001
 
 FC1_DIMS = 1024
 FC2_DIMS = 512
-DEVICE = torch.device("cpu")
+DEVICE = torch.device("cuda")
 
 best_reward = 0
 average_reward = 0
