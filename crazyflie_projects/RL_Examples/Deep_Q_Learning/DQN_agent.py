@@ -8,6 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
+from collections import deque
 
 env = gym.make("CartPole-v1")
 observation_space = env.observation_space.shape[0]
@@ -19,9 +20,6 @@ MEM_SIZE = 10_000
 BATCH_SIZE = 64
 GAMMA = 0.95
 
-epsilon_max = 1.0
-epsilon_decay = 0.999
-epsilon_min = 0.001
 
 DEVICE = torch.device("cuda")
 
@@ -52,11 +50,51 @@ class Network(nn.Module):
 
         return x
 
+class ReplayBuffer:
+    def __init__(self):
+        self.mem_count = 0
+        
+        self.states = np.zeros((MEM_SIZE, *env.observation_space.shape),dtype=np.float32)
+        self.actions = np.zeros(MEM_SIZE, dtype=np.int64)
+        self.rewards = np.zeros(MEM_SIZE, dtype=np.float32)
+        self.states_ = np.zeros((MEM_SIZE, *env.observation_space.shape),dtype=np.float32)
+        self.dones = np.zeros(MEM_SIZE, dtype=np.bool)
+    
+    def add(self, state, action, reward, state_, done):
+        mem_index = self.mem_count % MEM_SIZE
+        
+        self.states[mem_index]  = state
+        self.actions[mem_index] = action
+        self.rewards[mem_index] = reward
+        self.states_[mem_index] = state_
+        self.dones[mem_index] =  1 - done
+
+        self.mem_count += 1
+    
+    def sample(self):
+        MEM_MAX = min(self.mem_count, MEM_SIZE)
+        batch_indices = np.random.choice(MEM_MAX, BATCH_SIZE, replace=True)
+        
+        states  = self.states[batch_indices]
+        actions = self.actions[batch_indices]
+        rewards = self.rewards[batch_indices]
+        states_ = self.states_[batch_indices]
+        dones   = self.dones[batch_indices]
+
+        return states, actions, rewards, states_, dones
+
 
 class DQN_Agent():
     def __init__(self):
-        self.epsilon = epsilon_max
+
+        self.epsilon_max = 1.0
+        self.epsilon_decay = 0.999
+        self.epsilon_min = 0.001
+        self.epsilon = self.epsilon_max
+
         self.network = Network(input_size=4,output_size=2)
+        # self.memory = deque(maxlen=MEM_SIZE)
+        self.memory = ReplayBuffer()
 
     def choose_action(self,state):
 
@@ -70,8 +108,80 @@ class DQN_Agent():
 
         return torch.argmax(q_vals).item()
 
+    def remember(self,state,action,reward,next_state,done):
+        self.memory.append((state,action,reward,next_state,done))
+
+        if len(self.memory) > BATCH_SIZE:
+
+            ## EPSILON DECAY
+            if self.epsilon > self.epsilon_min:
+                self.epsilon *= self.epsilon_decay
+
+        
+
     def learn(self):
-        pass
+
+        # if len(self.memory) < BATCH_SIZE:
+        #     return
+
+        # minibatch = random.sample(self.memory, min(len(self.memory),BATCH_SIZE))
+
+        # state = np.zeros((BATCH_SIZE,4))
+        # next_state = np.zeros((BATCH_SIZE,4))
+        # action,reward,done = [],[],[]
+
+        # # Do this before prediction
+        # # for speedup, this could be done on the tensor level
+        # # but easier to understand using a loop
+        # for ii in range(BATCH_SIZE):
+        #     state[ii] = minibatch[ii][0]
+        #     action.append(minibatch[ii][1])
+        #     reward.append(minibatch[ii][2])
+        #     next_state[ii] = minibatch[ii][3]
+        #     done.append(minibatch[ii][4])
+
+        # states = torch.tensor(state,dtype=torch.float).to(DEVICE)
+        # actions = torch.tensor(action,dtype=torch.long).to(DEVICE)
+        # next_states = torch.tensor(next_state,dtype=torch.float).to(DEVICE)
+        # rewards = torch.tensor(reward,dtype=torch.float).to(DEVICE)
+        # dones = torch.tensor(done, dtype=torch.bool).to(DEVICE)
+        # batch_indices = np.arange(BATCH_SIZE, dtype=np.int64)
+
+        if self.memory.mem_count < BATCH_SIZE:
+            return
+        
+        states, actions, rewards, states_, dones = self.memory.sample()
+        states = torch.tensor(states , dtype=torch.float32).to(DEVICE)
+        actions = torch.tensor(actions, dtype=torch.long).to(DEVICE)
+        rewards = torch.tensor(rewards, dtype=torch.float32).to(DEVICE)
+        states_ = torch.tensor(states_, dtype=torch.float32).to(DEVICE)
+        dones = torch.tensor(dones, dtype=torch.bool).to(DEVICE)
+        batch_indices = np.arange(BATCH_SIZE, dtype=np.int64)
+
+
+
+        q_values = self.network(states)
+        next_q_values = self.network(states_)
+        
+        predicted_value_of_now = q_values[batch_indices, actions]
+        predicted_value_of_future = torch.max(next_q_values, dim=1)[0]
+        
+        q_target = rewards + GAMMA * predicted_value_of_future * dones
+
+        loss = self.network.loss(q_target, predicted_value_of_now)
+        self.network.optimizer.zero_grad()
+        loss.backward()
+        self.network.optimizer.step()
+
+
+        predicted_value_of_now = q_values[batch_indices, actions]
+        predicted_value_of_future = torch.max(next_q_values, dim=1)[0]
+
+        ## EPSILON DECAY
+        if self.epsilon > self.epsilon_min:
+            self.epsilon *= self.epsilon_decay
+
+
 
 
 if __name__ == '__main__':
@@ -86,12 +196,13 @@ if __name__ == '__main__':
         score = 0
 
         while True:
-            env.render()
+            # env.render()
             action = agent.choose_action(state)
             next_state,reward,done,_ = env.step(action)
             next_state = next_state.reshape(1,-1)
+            # agent.remember(state,action,reward,next_state,done)
+            agent.memory.add(state, action, reward, next_state, done)
 
-            # agent.memory.add(state,action,reward,next_state,done)
             agent.learn()
             state = next_state
             score += reward
