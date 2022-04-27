@@ -28,36 +28,36 @@ unsigned char prev_img[Pixel_width*Pixel_height] = {0, 0, 0, 0, 0, 0,
                               0, 0, 0, 0, 0, 0}; 
                                               
 
-// Init Kernels
+// Init floating point constants
+float w = 3.6e-6;
+float f = 3.3e-4;
+float O_up = Pixel_width/2;
+float V_up = Pixel_height/2;
+float U;
+float V;
+
+//Init outputs
+float Ix[Pixel_width*Pixel_height] = {0};
+float Iy[Pixel_width*Pixel_height] = {0};
+float It[Pixel_width*Pixel_height] = {0};
+float Gtemp = 0;
+float Iuu = 0;
+float Ivv = 0;
+float Iuv = 0;
+float IGu = 0;
+float IGv = 0;
+float IGG = 0;
+float Iut = 0;
+float Ivt = 0;
+float IGt = 0;
+
+// Init Sub-kernels
 int kx0[3] = {-1, 0, 1};
 int kx1[3] = {-2, 0, 2};
 int kx2[3] = {-1, 0, 1};
 
 int ky0[3] = {-1,-2,-1};
 int ky2[3] = {1 , 2, 1};
-// Init floating point constants
-float U;
-float V;
-float O_up = Pixel_width/2;
-float V_up = Pixel_height/2;
-float w = 3.6e-6;
-float f = 3.3e-4;
-//float Output[9] = {0}; //init all entries to be zero
-
-//Init outputs
-float Ix[Pixel_width*Pixel_height] = {0};
-float Iy[Pixel_width*Pixel_height] = {0};
-float It[Pixel_width*Pixel_height] = {0};
-float Iuu = 0;
-float Ivv = 0;
-float Iuv = 0;
-float Gtemp = 0;
-float IGu;
-float IGv;
-float IGG;
-float Iut;
-float Ivt;
-float IGt;
 
 void Convolution_X_Y(unsigned char* input, int ImgX, int ImgY); //init functions
 void Convolution_T();

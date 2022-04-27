@@ -2,7 +2,7 @@ DATA_TYPE: "SIM"
 SURFACE_NAME: "CeilingPlane_Large"
 GROUND_NAME: "GroundPlane_Desert_Physical"
 
-GUI_FLAG: True
+GUI_FLAG: False
 PAUSE_FLAG: True
 LOGGING_FLAG: False
 

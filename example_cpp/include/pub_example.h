@@ -12,29 +12,29 @@
 #include <cmath>
 #include <stdio.h>
 
-#define Pixel_width 160 //Picture dimensions
-#define Pixel_height 160
+#define WIDTH_PIXELS 160 //Picture dimensions
+#define HEIGHT_PIXELS 160
 float w = 3.6e-6; //Pixel width in meters
 float f = 0.33e-3;//Focal length in meters
-float O_up = Pixel_width/2; //Pixel x,y offsets
-float V_up = Pixel_height/2;
+float O_up = WIDTH_PIXELS/2; //Pixel x,y offsets
+float V_up = HEIGHT_PIXELS/2;
 float U; //defining image coords
 float V;
 
 //Init outputs
-int Ix[Pixel_height*Pixel_width] = {0}; //zero init Ix Iy
-int Iy[Pixel_height*Pixel_width] = {0};
-int It[Pixel_height*Pixel_width] = {0};
+int Ix[HEIGHT_PIXELS*WIDTH_PIXELS] = {0}; //zero init Ix Iy
+int Iy[HEIGHT_PIXELS*WIDTH_PIXELS] = {0};
+int It[HEIGHT_PIXELS*WIDTH_PIXELS] = {0};
+float Gtemp = 0;
 float Iuu = 0;
 float Ivv = 0;
 float Iuv = 0;
-float Gtemp = 0;
-float IGu;
-float IGv;
-float IGG;
-float Iut;
-float Ivt;
-float IGt;
+float IGu = 0;
+float IGv = 0;
+float IGG = 0;
+float Iut = 0;
+float Ivt = 0;
+float IGt = 0;
 
 // Init Sub-kernels
 int kx0[3] = {-1, 0, 1};
@@ -67,8 +67,8 @@ class MyClass // DEFINE CLASS
         void Convolution_T(const unsigned char* CurImg,const unsigned char* PrevImg);
 
         // IMAGE PROCESSING VARIABLES
-        uint8_t WIDTH_PIXELS = 160;
-        uint8_t HEIGHT_PIXELS = 160;
+        // uint8_t WIDTH_PIXELS = 160;
+        // uint8_t HEIGHT_PIXELS = 160;
 
         const uint8_t* Cur_img = NULL;  // Ptr to current image memory
         uint8_t* Prev_img = NULL;       // Ptr to prev image memory
@@ -93,7 +93,7 @@ void MyClass::Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg){
 
     // Calling Convolution
     MyClass::Convolution_T(Cur_img,Prev_img);
-    MyClass::Convolution_X_Y(Cur_img,Pixel_width,Pixel_height);
+    MyClass::Convolution_X_Y(Cur_img,WIDTH_PIXELS,HEIGHT_PIXELS);
 
     // sensorData.Tau = 0.0f;
     // sensorData.OFx = 0.0f;
@@ -129,7 +129,7 @@ void MyClass::Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg){
 void MyClass::Convolution_T(const unsigned char* CurImg,const unsigned char* PrevImg) //Still not sure where to do this in the most efficient way
 {
 
-    for(int i = 0; i < Pixel_width*Pixel_height; i++){
+    for(int i = 0; i < WIDTH_PIXELS*HEIGHT_PIXELS; i++){
         It[i] = CurImg[i] - PrevImg[i]; //assumes dt = 1
         //std::cout << (It[i]) << "\n";
     }
