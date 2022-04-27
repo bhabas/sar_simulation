@@ -7,8 +7,12 @@
 
 #include "nml.h"
 
+//Define Image size
+#define Pixel_width 6
+#define Pixel_height 6
+
 //Initial test image
-unsigned char Cur_img[36] = {0, 0, 0, 0, 0, 0,
+unsigned char Cur_img[Pixel_width*Pixel_height] = {0, 0, 0, 0, 0, 0,
                              0, 8, 8, 8, 8, 0,
                              0, 8, 0, 0, 8, 0,
                              0, 8, 0, 0, 8, 0,
@@ -16,7 +20,7 @@ unsigned char Cur_img[36] = {0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0};                      
 
 
-unsigned char prev_img[36] = {0, 0, 0, 0, 0, 0,
+unsigned char prev_img[Pixel_width*Pixel_height] = {0, 0, 0, 0, 0, 0,
                               0, 0, 0, 0, 0, 0,
                               0, 0, 8, 8, 0, 0,
                               0, 0, 8, 8, 0, 0,
@@ -32,16 +36,18 @@ int kx2[3] = {-1, 0, 1};
 int ky0[3] = {-1,-2,-1};
 int ky2[3] = {1 , 2, 1};
 // Init floating point constants
-float Ugrid;
-float Vgrid;
+float U;
+float V;
+float O_up = Pixel_width/2;
+float V_up = Pixel_height/2;
 float w = 3.6e-6;
 float f = 3.3e-4;
 //float Output[9] = {0}; //init all entries to be zero
 
 //Init outputs
-float Ix[25] = {0};
-float Iy[25] = {0};
-float It[25] = {0};
+float Ix[Pixel_width*Pixel_height] = {0};
+float Iy[Pixel_width*Pixel_height] = {0};
+float It[Pixel_width*Pixel_height] = {0};
 float Iuu = 0;
 float Ivv = 0;
 float Iuv = 0;
@@ -61,7 +67,7 @@ int main(){
     
    // Convolution(); //init function
     Convolution_T();
-    Convolution_X_Y(Cur_img,6,6);
+    Convolution_X_Y(Cur_img,Pixel_width,Pixel_height);
     return 1;
 
 }
@@ -69,7 +75,7 @@ int main(){
 void Convolution_T() //Still not sure where to do this in the most efficient way
 {
 
-    for(int i = 0; i < 25; i++){
+    for(int i = 0; i < Pixel_width*Pixel_height; i++){
         It[i] = Cur_img[i] - prev_img[i]; //assumes dt = 1
         //std::cout << (It[i]) << "\n";
     }
@@ -82,8 +88,6 @@ void Convolution_X_Y(unsigned char* input, int ImgX, int ImgY)
     //Where the convolution starts
     int X = 1;
     int Y = 1;
-    float O_up = ImgX/2;
-    float V_up = ImgY/2;
     
     for(int j = 0; j < (ImgX - 2)*(ImgY - 2); j++) // How many times the kernel center moves around the image
     {
@@ -98,21 +102,21 @@ void Convolution_X_Y(unsigned char* input, int ImgX, int ImgY)
         }
 
         //Sub Kernel Idexing
-        int i0 = (X - 1) + (Y - 1) * ImgX;
-        int i1 = i0 + ImgX;
+        int i0 = (X - 1) + (Y - 1) * ImgX; //First grab top left location of whole kernel
+        int i1 = i0 + ImgX; //then each following row is separated by the image width
         int i2 = i1 + ImgX;
 
-        Ugrid = (X - O_up)*w + (w/2); // Using current location of the Kernel center
-        Vgrid = (Y - V_up)*w + (w/2); //calculate the current pixel grid locations (u,v)
+        U = (X - O_up)*w + (w/2); // Using current location of the Kernel center
+        V = (Y - V_up)*w + (w/2); //calculate the current pixel grid locations (u,v)
 
-        
         // ######  DEBUGGING  ######
         /*//
         std::cout << "i0: " << i0 << "\n";
         std::cout << "i1: " << i1 << "\n";
         std::cout << "i2: " << i2 << "\n";
         std::cout << "X: " << X << "\tO_up: " << O_up << "\n";
-        std::cout << "Ugrid: " << Ugrid << "\tVgrid: " << Vgrid << "\n";        
+        std::cout << "U: " << U << "\tVgrid: " << V << "\n";    
+        std::cout << "\nIG: " << Gtemp << "\tIu: " << Usum << "\tIv: " << Vsum << "\n";
         *///
 
         int Xsum = 0; //reset rolling sum to 0
@@ -136,44 +140,33 @@ void Convolution_X_Y(unsigned char* input, int ImgX, int ImgY)
 
         }
 
-        //if(X == 2 && Y == 1){
-        //    std::cout << "Xsum: " << Xsum << "\tYsum: " << Ysum << "\n";
-        //}
-
         //Sum assigned to middle value
-        Usum = Xsum;//(8*w); //kernel normalization and divide by pixel width
-        Vsum = Ysum;//(8*w);
-        Ix[i1 + 1] = Usum;
-        Iy[i1 + 1] = Vsum;
+        //Usum = Xsum;//(8*w); //kernel normalization and divide by pixel width
+        //Vsum = Ysum;//(8*w);
+        //Ix[i1 + 1] = Usum;
+        //Iy[i1 + 1] = Vsum;
         //std::cout << "Iu: " << Usum << "\tIv: " << Vsum << "\n";
         int Ittemp = It[i1 + 1]; //this will crop It the same way the imageGrads are shouldn't be a problem
 
-        Gtemp = (Usum*Ugrid + Vsum*Vgrid);
+        Gtemp = (Xsum*U + Ysum*V);
         std::cout << "\nIG: " << Gtemp << "\tIu: " << Usum << "\tIv: " << Vsum << "\n";
 
         //LHS Matrix values (rolling sums)
-        Iuu += Usum*Usum;
-        Ivv += Vsum*Vsum;
-        Iuv += Usum*Vsum;
-        IGu += Gtemp*Usum;
-        IGv += Gtemp*Vsum;
+        Iuu += Xsum*Xsum;
+        Ivv += Ysum*Ysum;
+        Iuv += Xsum*Ysum;
+        IGu += Gtemp*Xsum;
+        IGv += Gtemp*Ysum;
         IGG += Gtemp*Gtemp;
 
-        //RHS Matrix Values (rolling sums
-        Iut += Usum*Ittemp; //MAKE SURE THIS IS RIGHT ORDER OF OPERATIONS
-        Ivt += Vsum*Ittemp; 
+        //RHS Matrix Values (rolling sums)
+        Iut += Xsum*Ittemp;
+        Ivt += Ysum*Ittemp; 
         IGt += Gtemp*Ittemp;
         
+        X++; // move center of kernel over
 
-        X++; // move top left of kernel over
-
-        //std::cout << "loop (X , Y): " << X << "\n";
-
-    }
-
-    // double LHS[9] = {f*Iuu, f*Iuv, IGu,
-    //                 f*Iuv, f*Ivv, IGv,
-    //                 f*IGu, f*IGv, IGG};
+    } // END OF CONVOLUTION
 
     double LHS[9] = {f/powf(8*w,2)*Iuu, f/powf(8*w,2)*Iuv, 1/powf(8*w,2)*IGu,
                      f/powf(8*w,2)*Iuv, f/powf(8*w,2)*Ivv, 1/powf(8*w,2)*IGv,
@@ -182,93 +175,24 @@ void Convolution_X_Y(unsigned char* input, int ImgX, int ImgY)
     double RHS[3] = {-Iut/(8*w), -Ivt/(8*w), -IGt/(8*w)};
 
     //DO MATRIX MAGIC
-
-    // double LHS[9] = {1,2,3,
-    //                  4,5,6,
-    //                  7,8,1};
-    
-    // double RHS[3] = {5,3,1};
     
     // INITIALIZE MATRICES FROM DATA
     nml_mat* m_A = nml_mat_from(3,3,9, LHS);
-    nml_mat* m_B = nml_mat_from(3,1,3,RHS); 
+    nml_mat* m_b = nml_mat_from(3,1,3,RHS); 
 
     printf("\nLHS:\n");
     nml_mat_print(m_A);
     printf("\nRHS:\n");
-    nml_mat_print(m_B);
+    nml_mat_print(m_b);
 
+    nml_mat_qr *QR = nml_mat_qr_solve(m_A); // A = Q*R
+    nml_mat* y = nml_mat_dot(nml_mat_transp(QR->Q),m_b); // y = Q^T*b
+    nml_mat* x_QR = nml_ls_solvebck(QR->R,y); // Solve R*x = y via back substitution
+    nml_mat_print(x_QR);
 
-    // // SOLVE FOR OPTICAL FLOW VALUES
-    // nml_mat_lup *LUP = nml_mat_lup_solve(m_A);
-    // nml_mat* x = nml_ls_solve(LUP,m_B);
-    // nml_mat_print(x);
-
-    // // DEALLOCATE MATRIX MEMORY
-    // nml_mat_free(m_A);
-    // nml_mat_free(m_B);
-    // nml_mat_lup_free(LUP);
-    // nml_mat_free(x);
-
-
-    // // EXAMPLE SOLVE Ax = b
-
-    // double A[9] = {
-    //     1.0, 2.0, 3.0,
-    //     4.0, 5.0, 6.0,
-    //     7.0, 8.0, 1.0,
-    // };
-
-    // double b[3] = {5.0,3.0,1.0};
-    
-    // nml_mat* m_A = nml_mat_from(3,3,9,A);
-    // nml_mat* m_b = nml_mat_from(3,1,3,b);
-    // nml_mat_lup *LUP = nml_mat_lup_solve(m_A);
-
-    // nml_mat *x = nml_ls_solve(LUP, m_b);
-    // nml_mat_print(x);
-
-    // nml_mat_free(m_A);
-    // nml_mat_free(m_b);
-    // nml_mat_lup_free(LUP);
-    // nml_mat_free(x);
-
-    // ======= DEBUGGING ========
-
-    /*
-    std::cout << "\n Ix \n";
-
-    int i = 0;
-
-    for(int j = 0; j < ImgX * ImgY; j++){
-
-        if(i == ImgX - 1){
-            printf("%d\n",Ix[j]);
-            i = -1;
-        }
-
-        else{
-            printf("%d,",Ix[j]);
-        }
-
-        i++;
-    }
-
-    std::cout << "\n Iy \n";
-    i = 0;
-
-    for(int j = 0; j < ImgX * ImgY; j++){
-
-        if(i == ImgX - 1){
-            printf("%d\n",Iy[j]);
-            i = -1;
-        }
-
-        else{
-            printf("%d,",Iy[j]);
-        }
-
-        i++;
-    } */// END OF DEBUGGING 
+    nml_mat_free(m_A);
+    nml_mat_free(m_b);
+    nml_mat_qr_free(QR);
+    nml_mat_free(x_QR);
 
 } // ========= END OF CONVOLUTION X Y =========
