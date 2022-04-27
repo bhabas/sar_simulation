@@ -27,6 +27,7 @@ be transferred to the Crazyflie Firmware.
 #include <ros/ros.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
+#include "sensor_msgs/Image.h"
 
 
 #include "crazyflie_msgs/OF_SensorData.h"
@@ -66,10 +67,16 @@ class Controller
             // INTERNAL TOPICS
             CF_IMU_Subscriber = nh->subscribe("/CF_Internal/IMU",1,&Controller::IMU_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
             CF_OF_Subscriber = nh->subscribe("/CF_Internal/OF_Sensor",1,&Controller::OF_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
+            CF_Camera_Subscriber = nh->subscribe("/CF_Internal/camera/image_raw",1,&Controller::Camera_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
 
             // ENVIRONMENT TOPICS
             ENV_Vicon_Subscriber = nh->subscribe("/ENV/viconState_UKF",1,&Controller::viconState_Callback,this,ros::TransportHints().tcpNoDelay());
             
+            // DYNAMICALLY ALLOCATE MEMORY TO STORE PREVIOUS IMAGE
+            Prev_img = (uint8_t*)calloc(WIDTH_PIXELS*HEIGHT_PIXELS,sizeof(uint8_t));
+
+
+
             Controller::loadParams();
 
             // Thread main controller loop so other callbacks can work fine
@@ -81,6 +88,7 @@ class Controller
         // SUBSCRIBERS
         ros::Subscriber CF_IMU_Subscriber;
         ros::Subscriber CF_OF_Subscriber;
+        ros::Subscriber CF_Camera_Subscriber;
 
         ros::Subscriber RL_CMD_Subscriber;
         ros::Subscriber RL_Data_Subscriber;
@@ -112,10 +120,19 @@ class Controller
         std::string _MODEL_NAME;
         bool STICKY_FLAG = false;
 
+        // IMAGE PROCESSING VARIABLES
+        uint8_t WIDTH_PIXELS = 160;
+        uint8_t HEIGHT_PIXELS = 160;
+
+        const uint8_t* Cur_img = NULL;  // Ptr to current image memory
+        uint8_t* Prev_img = NULL;       // Ptr to prev image memory
+
+
         // FUNCTION PRIMITIVES
         void viconState_Callback(const nav_msgs::Odometry::ConstPtr &msg);
         void IMU_Sensor_Callback(const sensor_msgs::Imu::ConstPtr &msg);
         void OF_Sensor_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg);
+        void Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg);
         void RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
 
         void stabilizerLoop();
@@ -130,6 +147,25 @@ class Controller
 
 };
 
+void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
+{
+    Cur_img = &(msg->data)[0]; // Point to current image data address
+
+    // IMAGE PROCESSING ALGORITHM GOES HERE
+
+
+
+    // sensorData.Tau = 0.0f;
+    // sensorData.OFx = 0.0f;
+    // sensorData.OFy = 0.0f;
+
+    printf("Prev_Val: %u\n",Prev_img[0]);
+    printf("Cur_Val: %u\n",Cur_img[0]);
+    printf("\n");
+
+    
+    memcpy(Prev_img,Cur_img,sizeof(msg->data)); // Copy memory to Prev_img address
+}
 
 
 // OPTICAL FLOW VALUES (IN BODY FRAME) FROM MODEL SENSOR PLUGIN
