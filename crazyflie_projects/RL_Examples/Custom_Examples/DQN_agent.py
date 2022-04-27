@@ -12,11 +12,10 @@ from DQN_model import Linear_QNet, QTrainer
 from helper import plot
 
 MAX_MEMORY = 100_000 
-BATCH_SIZE = 1_000
-LR = 0.1
+BATCH_SIZE = 500
+LR = 0.001
 DISCOUNT_RATE = 0.99
 EPISODES = 10_000
-T = 20
 
 
 class Agent:
@@ -43,10 +42,26 @@ class Agent:
 
         return action
 
-    def train_short_memory(self):
+    def train_short_memory(self,state,action,reward,next_state,done):
         
-        df_train = pd.DataFrame(random.sample(self.memory,50),columns=['state','action','reward','next_state','done'])
-        self.trainer.train_step(df_train)
+        
+        state = torch.tensor(state, dtype=torch.float).reshape(1,-1)
+        next_state = torch.tensor(next_state, dtype=torch.float).reshape(1,-1)
+        action = torch.tensor(action, dtype=torch.long).reshape(1,-1)
+        reward = torch.tensor(reward, dtype=torch.float).reshape(1,-1)
+        done = torch.tensor(done, dtype=torch.float).reshape(1,-1)
+        self.trainer.train_step(state,action,reward,next_state,done)
+
+    def train_long_memory(self):
+        
+        df_train = pd.DataFrame(random.sample(self.memory,BATCH_SIZE),columns=['state','action','reward','next_state','done'])
+        state = torch.tensor(df_train['state'], dtype=torch.float)
+        next_state = torch.tensor(df_train['next_state'], dtype=torch.float)
+        action = torch.tensor(df_train['action'], dtype=torch.long).reshape(-1,1)
+        reward = torch.tensor(df_train['reward'], dtype=torch.float).reshape(-1,1)
+        done = torch.tensor(df_train['done'], dtype=torch.float).reshape(-1,1)
+
+        self.trainer.train_step(state,action,reward,next_state,done)
 
 
 
@@ -61,14 +76,15 @@ if __name__ == '__main__':
     env = gym.make("CartPole-v1")
 
     
-
+    t_step = 0
+    
     for episode in range(EPISODES):
 
         ## INITIALIZE EPISODE
         episode_reward = 0
         state = env.reset()
         done = False
-        t_step = 0
+        
 
         while not done:
 
@@ -78,25 +94,31 @@ if __name__ == '__main__':
             ## PERFORM ACTION AND GET NEW STATE
             next_state,reward,done,_ = env.step(action)
 
-            if episode%100==0:
-                env.render()
-            
-            if episode >= 1:
-                
-                ## UPDATE Q-NETWORK TO TARGET NETWORK
-                if t_step%T == 0:
-                    agent.trainer.copy_TargetNN()
-
-                ## TRAIN Q-NETWORK
-                agent.train_short_memory()
-
             ## STORE SAMPLE OF TRAINING DATA
             agent.memory.append((state,action,reward,next_state,done))
 
+            if episode%100==0:
+                env.render()
+            
+         
+                
+            ## UPDATE Q-NETWORK TO TARGET NETWORK
+            agent.train_short_memory(state,action,reward,next_state,done)
+            
+
+            
+
+            
             episode_reward += reward
 
             state = next_state
             t_step += 1
+
+        agent.trainer.copy_TargetNN()
+
+        if len(agent.memory) >= BATCH_SIZE:
+            ## TRAIN Q-NETWORK
+            agent.train_long_memory()
 
         if episode_reward > record:
             record = episode_reward

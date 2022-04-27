@@ -40,20 +40,11 @@ class QTrainer:
     def copy_TargetNN(self): # Create target network as copy of Q_NN
         self.Q_Target_NN = copy.deepcopy(self.Q_NN)
 
-    def train_step(self,df_train):
-
-        state = torch.tensor(df_train['state'], dtype=torch.float)
-        next_state = torch.tensor(df_train['next_state'], dtype=torch.float)
-        action = torch.tensor(df_train['action'], dtype=torch.long)
-        reward = torch.tensor(df_train['reward'], dtype=torch.float)
-        done = df_train['done']
-
-
-         
+    def train_step(self,state,action,reward,next_state,done):
 
         ## PREDICT Q-VALUES FROM CURRENT DATA BATCH
-        Q_prediction = self.Q_NN.forward(state)             
-        Q_target = self.Q_Target_NN.forward(next_state)     
+        Q_prediction = self.Q_NN.forward(state)
+        Q_target = self.Q_Target_NN.forward(next_state)
         for idx in range(len(done)):
 
             Q_prediction[idx][0] = Q_prediction[idx][action[idx]] # Predict Q-value for current (states,action)
