@@ -58,6 +58,9 @@ class MyClass // DEFINE CLASS
             //sub = nh->subscribe("/clock",1,&MyClass::clock_Callback,this,ros::TransportHints().tcpNoDelay());
             Camera_sub = nh->subscribe("/CF_Internal/camera/image_raw",1,&MyClass::Camera_Callback,this);
 
+            // DYNAMICALLY ALLOCATE MEMORY TO STORE PREVIOUS IMAGE
+            Prev_img = (uint8_t*)calloc(WIDTH_PIXELS*HEIGHT_PIXELS,sizeof(uint8_t));
+
         }
 
 
@@ -66,7 +69,15 @@ class MyClass // DEFINE CLASS
         void Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg);
         bool convolve2DSeparable(unsigned char* in, unsigned char* out, int dataSizeX, int dataSizeY, float* kernelX, int kSizeX, float* kernelY, int kSizeY);
         bool convolve2DSlow(unsigned char* in, unsigned char* out, int dataSizeX, int dataSizeY, float* kernel, int kernelSizeX, int kernelSizeY);
-        void Convolution_X_Y(unsigned char* input, int ImgX,int ImgY);
+        void Convolution_X_Y(const unsigned char* input, int ImgX,int ImgY);
+
+
+        // IMAGE PROCESSING VARIABLES
+        uint8_t WIDTH_PIXELS = 160;
+        uint8_t HEIGHT_PIXELS = 160;
+
+        const uint8_t* Cur_img = NULL;  // Ptr to current image memory
+        uint8_t* Prev_img = NULL;       // Ptr to prev image memory
 
 
     private: // CLASS VARIABLES ONLY THAT ARE CALLABLE INSIDE INTERNAL CLASS FUNCTIONS
@@ -83,11 +94,44 @@ void MyClass::Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg){
 
     //CREATE VECTOR TO STORE DATA FROM ROS MSG
     std::vector<uint8_t> Cam_Vec = Camera_msg->data;
+
+    
+
+    
+
+    // IMAGE PROCESSING WORK GOES HERE
+    Cur_img = &(Camera_msg->data)[0]; // Point to current image data address
+
+    /*
+    *
+    *
+    *
+    *
+    *
+    *
+    *
+    *
+    */
+
+
+    // sensorData.Tau = 0.0f;
+    // sensorData.OFx = 0.0f;
+    // sensorData.OFy = 0.0f;
+
+    printf("Prev_Val: %u\n",Prev_img[0]);
+    printf("Cur_Val: %u\n",Cur_img[0]);
+    printf("\n");
+
+    memcpy(Prev_img,Cur_img,sizeof(Camera_msg->data)); // Copy memory to Prev_img address
+
+
+    
+    
     // CROP IMAGE TO 120 ROWS x 160 COLUMNS
     //Cam_Vec.erase(Cam_Vec.begin() + Pixel_width*Pixel_height, Cam_Vec.end());
 
     //CREATE POINTER(ARRAY) TO DATA LOCATION OF FIRST INDEX
-    uint8_t* Cur_img = &Cam_Vec[0];
+
 
     std::cout << "\n\nCamera Array\n";
 
@@ -189,7 +233,7 @@ void MyClass::Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg){
 // }
 
 
-void MyClass::Convolution_X_Y(unsigned char* input, int ImgX, int ImgY) 
+void MyClass::Convolution_X_Y(const unsigned char* input, int ImgX, int ImgY) 
 {
 
     //Where the convolution starts
