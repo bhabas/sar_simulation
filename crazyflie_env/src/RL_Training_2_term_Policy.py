@@ -110,9 +110,7 @@ if __name__ == '__main__':
             env.RL_Publish()
 
             try: # Use try block to catch raised exceptions and attempt rollout again
-                env.Iyy = rospy.get_param("Iyy") + np.random.normal(0,1.5e-6)
-                env.mass = rospy.get_param("/CF_Mass") + np.random.normal(0,0.0005)
-                env.updateInertia()
+                
                 executeFlight(env,agent)
 
                 if env.repeat_run == True: # Runs when error detected
