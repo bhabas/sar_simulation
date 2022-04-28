@@ -15,6 +15,8 @@ from std_srvs.srv import Empty
 from crazyflie_msgs.msg import RLData,RLCmd,RLConvg
 from crazyflie_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
 from crazyflie_msgs.srv import loggingCMD,loggingCMDRequest
+from crazyflie_msgs.srv import domainRand,domainRandRequest
+
 
 from rosgraph_msgs.msg import Clock
 from gazebo_msgs.msg import ModelState
@@ -26,12 +28,11 @@ class CrazyflieEnv:
     def __init__(self,gazeboTimeout=True,DataType='SIM'):
         print("[STARTING] CrazyflieEnv is starting...")
 
-        ## GAZEBO SIMULATION INITIALIZATION
-        # Load params -> Launch sim -> Wait for sim running -> Launch controller
         rospy.init_node("crazyflie_env_node") 
         os.system("roslaunch crazyflie_launch params.launch") 
 
-        if DataType == 'SIM':
+        ## GAZEBO SIMULATION INITIALIZATION
+        if DataType == 'SIM': 
             self.launch_sim() 
             rospy.wait_for_message("/clock",Clock)
             self.launch_controller()
@@ -59,6 +60,11 @@ class CrazyflieEnv:
 
         ## LOAD SIM_SETTINGS/ROS_PARAMETERS
         self.modelName = rospy.get_param('/MODEL_NAME')
+        self.mass = rospy.get_param("/CF_Mass")
+        self.Ixx = rospy.get_param("/Ixx")
+        self.Iyy = rospy.get_param("/Iyy")
+        self.Izz = rospy.get_param("/Izz")
+
         
         self.t_start = rospy.get_time() # [s]
         self.t_prev = 0.0 # [s]
@@ -149,31 +155,31 @@ class CrazyflieEnv:
 
         ## INIT RL PARAMETERS
         self.h_ceiling = rospy.get_param("/CEILING_HEIGHT") # [m]
-        self.n_rollouts = 6     # Rollouts per episode
 
-        self.k_ep = 0           # Episode number
-        self.k_run = 0          # Run number
+        self.n_rollouts = 6            # Rollouts per episode
+        self.k_ep = 0                  # Episode number
+        self.k_run = 0                 # Run number
 
         self.mu = [0.0,0.0]            # Gaussian mean that policies are sampled from
         self.sigma = [0.0,0.0]         # Gaussian standard deviation policies are sampled from
-        self.policy = [0.0,0.0,0.0]        # Policy sampled from Gaussian distribution
+        self.policy = [0.0,0.0,0.0]    # Policy sampled from Gaussian distribution
 
-        self.mu_1_list = []
-        self.mu_2_list = []
+        self.mu_1_list = []         # List of mu values over course of convergence
+        self.mu_2_list = [] 
 
-        self.sigma_1_list = []
+        self.sigma_1_list = []      # List of sigma values over course of convergence
         self.sigma_2_list = []
 
-        self.reward_list = []
-        self.reward_avg_list = []
+        self.reward_list = []       # List of reward values over course of convergence
+        self.reward_avg_list = []   # List of reward averages ""
 
-        self.reward = 0.0       # Calculated reward from run
-        self.reward_avg = 0.0   # Averaged rewards over episode
+        self.reward = 0.0           # Calculated reward from run
+        self.reward_avg = 0.0       # Averaged rewards over episode
         self.reward_inputs = [0.0, 0.0, 0.0] # List of inputs to reward func
 
-        self.d_ceil_min = 50.0
-        self.pitch_sum = 0.0
-        self.pitch_max = 0.0
+        self.d_ceil_max = 50.0 # Assumed max distance from ceiling (will decrease when values measured)
+        self.pitch_sum = 0.0    # Current pitch angle (roughly integrated from Wy because euler angle wrap-around issue)
+        self.pitch_max = 0.0    # Max pitch angle received
 
         self.vel_d = [0.0,0.0,0.0] # Desired velocity for trial
      
@@ -201,7 +207,6 @@ class CrazyflieEnv:
 
         print("[COMPLETED] Environment done")
 
-    
         
 
     # ============================
@@ -278,8 +283,8 @@ class CrazyflieEnv:
         ## ======== REWARD INPUT CALCS ======== ##
 
         ## MIN D_CEIL CALC
-        if 0.1 < self.d_ceil < self.d_ceil_min:
-            self.d_ceil_min = np.round(self.d_ceil,3) # Min distance achieved, used for reward calc
+        if 0.1 < self.d_ceil < self.d_ceil_max:
+            self.d_ceil_max = np.round(self.d_ceil,3) # Min distance achieved, used for reward calc
 
         ## MAX PITCH CALC
         # Integrate omega_y over time to get full rotation estimate
@@ -379,20 +384,22 @@ class CrazyflieEnv:
         self.impact_magnitude = np.round(ImpactData_msg.Impact_Magnitude,3)
 
         ## STICKY PAD CONNECTIONS
-        self.pad_connections = ImpactData_msg.Pad_Connections
-        self.Pad1_Contact = ImpactData_msg.Pad1_Contact
-        self.Pad2_Contact = ImpactData_msg.Pad2_Contact
-        self.Pad3_Contact = ImpactData_msg.Pad3_Contact
-        self.Pad4_Contact = ImpactData_msg.Pad4_Contact
+        if self.DataType == 'SIM':
+            self.pad_connections = ImpactData_msg.Pad_Connections
+            self.Pad1_Contact = ImpactData_msg.Pad1_Contact
+            self.Pad2_Contact = ImpactData_msg.Pad2_Contact
+            self.Pad3_Contact = ImpactData_msg.Pad3_Contact
+            self.Pad4_Contact = ImpactData_msg.Pad4_Contact
 
 
-    def CF_MiscDataCallback(self,MiscData_msg):
+    def CF_MiscDataCallback(self,MiscData_msg):        
 
         self.V_Battery = np.round(MiscData_msg.battery_voltage,4)
     
 
     def RL_Publish(self):
-        # Publishes all the RL data from the RL script
+        """Publishes all of the RL data from
+        """
         
         RL_msg = RLData() ## Initialize RLData message
         
@@ -428,51 +435,16 @@ class CrazyflieEnv:
         RL_convg_msg.reward_avg_list = self.reward_avg_list
         self.RL_Convg_Publisher.publish(RL_convg_msg) ## Publish RLData message
 
-    # ========================
-    ##    Logging Services 
-    # ========================
+    def setParams(self):
+        os.system("roslaunch crazyflie_launch params.launch")
+    
 
-    def createCSV(self,filePath):
+    def modelInitials(self):
+        """Returns initials for the model
 
-        srv = loggingCMDRequest()
-
-        srv.createCSV = True
-        srv.filePath = filePath
-        self.Logging_Flag = False
-        srv.Logging_Flag = False
-        
-        ## SEND LOGGING REQUEST VIA SERVICE
-        rospy.wait_for_service('/CF_DC/DataLogging')
-        logging_service = rospy.ServiceProxy('/CF_DC/DataLogging', loggingCMD)
-        logging_service(srv)
-
-    def startLogging(self):
-
-        srv = loggingCMDRequest()
-
-        self.Logging_Flag = True
-        srv.Logging_Flag = True
-
-        ## SEND LOGGING REQUEST VIA SERVICE
-        rospy.wait_for_service('/CF_DC/DataLogging')
-        logging_service = rospy.ServiceProxy('/CF_DC/DataLogging', loggingCMD)
-        logging_service(srv)
-
-    def capLogging(self):
-
-        srv = loggingCMDRequest()
-
-        self.Logging_Flag = False
-        srv.Logging_Flag = False
-        srv.capLogging = True
-        srv.error_string = self.error_str
-        
-        ## SEND LOGGING REQUEST VIA SERVICE
-        rospy.wait_for_service('/CF_DC/DataLogging')
-        logging_service = rospy.ServiceProxy('/CF_DC/DataLogging', loggingCMD)
-        logging_service(srv)
-
-    def modelInitials(self): # RETURNS INITIALS FOR MODEL
+        Returns:
+            string: Model name initials
+        """        
         str = self.modelName
         charA = str[self.modelName.find("_")+1] # [W]ide
         charB = str[self.modelName.find("-")+1] # [L]ong
@@ -480,6 +452,15 @@ class CrazyflieEnv:
         return charA+charB  # [WL]
 
     def userInput(self,input_string,dataType=float):
+        """Processes user input and return values as either indiviual value or list
+
+        Args:
+            input_string (string): String received from user
+            dataType (dataType, optional): Datatype to parse string to. Defaults to float.
+
+        Returns:
+            vals: Values parsed by ','. If multiple values then return list
+        """        
 
         while True:
             try:
@@ -487,60 +468,171 @@ class CrazyflieEnv:
             except:
                 continue
         
+            ## RETURN MULTIPLE VALUES IF MORE THAN ONE
             if len(vals) == 1:
                 return vals[0]
             else:
                 return vals
 
     def getTime(self):
+        """Returns current known time.
+
+        Returns:
+            float: Current known time.
+        """        
         
         return self.t
+        
+    def reset_reward_terms(self):
+        """Reset values used in reward calculation.
+        """        
 
-    def impactEstimate(self,posCF_0,vel_d):
-
-        t_impact = (self.h_ceiling - posCF_0[2])/vel_d[2]
-
-        x_impact = posCF_0[0] + vel_d[0]*t_impact
-        y_impact = posCF_0[1] + vel_d[1]*t_impact
-        z_impact = posCF_0[2] + vel_d[2]*t_impact
-
-        return [x_impact,y_impact,z_impact]
-
+        ## RESET REWARD CALC VALUES
+        self.d_ceil_max = 50.0  # Reset max from ceiling [m]
+        self.pitch_sum = 0.0    # Reset recorded pitch amount [deg]
+        self.pitch_max = 0.0    # Reset max pitch angle [deg]
 
     def step(self,action,cmd_vals=[0,0,0],cmd_flag=1):
+        """Sends commands to Crazyflie controller via rostopic
 
-        cmd_msg = RLCmd()
+        Args:
+            action (string): The desired command
+            cmd_vals (list, optional): Command values typically in [x,y,z] notation. Defaults to [0,0,0].
+            cmd_flag (float, optional): Used as either a on/off flag for command or an extra float value if needed. Defaults to 1.
+        """        
 
-        cmd_dict = {'home':0,
-                    'pos':1,
-                    'vel':2,
-                    'acc':3,
-                    'tumble':4,
-                    'stop':5,
-                    'params':6,
-                    'moment':7,
-                    'policy':8,
-                    'traj':9,
-                    'thrusts':10,
-                    'sticky':11,
-                    'M_PWM':12}
+        cmd_msg = RLCmd()   # Create message object
+        cmd_dict = {
+            'home':0,       # Resets controller values to defaults
+            'pos':1,        # Set desired position values (Also on/off for position control)
+            'vel':2,        # Set desired vel values (Also on/off for vel control)
+            'acc':3,        # --- Unused ---
+            'tumble':4,     # Turns tumble detection on/off (Uneeded?)
+            'stop':5,       # Cutoff motor values
+            'params':6,     # Reloads ROS params and updates params in controller
+            'moment':7,     # Execute the desired moment in terms of [Mx,My,Mz] in [N*mm]
+            'policy':8,     # Activate policy triggering and policy values [tau_thr,My,G2]
+            'sticky':11,    # Turns on/off sticky legs via cmd_flag
+
+            'thrusts':10,   # Controls individual motor thrusts [M1,M2,M3,M4]
+            'M_PWM':12,     # Control individual motor pwm values (bypasses thrust values)
+
+            'vel_traj':9,   # Execute constant velocity trajectory cmd_val=[s_0,v_0,a_0] | cmd_flag=[x:0,y:1,z:2]
+            'P2P_traj':13   # Execute point-to-point trajectory cmd_vals=[s_0,s_f,a_0] | cmd_flag=[x:0,y:1,z:2]
+        }
         
 
+        ## INSERT VALUES TO ROS MSG
         cmd_msg.cmd_type = cmd_dict[action]
         cmd_msg.cmd_vals.x = cmd_vals[0]
         cmd_msg.cmd_vals.y = cmd_vals[1]
         cmd_msg.cmd_vals.z = cmd_vals[2]
         cmd_msg.cmd_flag = cmd_flag
         
-        self.RL_CMD_Publisher.publish(cmd_msg)
+        ## PUBLISH MESSAGE
+        self.RL_CMD_Publisher.publish(cmd_msg) 
+        time.sleep(0.02) # Give time for controller to process message
         
-    def reset_reward_terms(self):
 
-        ## RESET REWARD CALC VALUES
-        self.d_ceil_min = 50.0
-        self.pitch_sum = 0.0
-        self.pitch_max = 0.0
+    def VelTraj_StartPos(self,x_impact,V_d,accel_d=None,d_vz=0.6):
+        """Returns the required start position (x_0,z_0) to intercept the ceiling 
+        at a specific x-location; while also achieving the desired velocity conditions 
+        at by a certain distance from the ceiling.
 
+        Args:
+            x_impact (float): X-location to impact the ceiling
+            V_d (list): List of desired velocity components [Vx,Vy,Vz]
+            accel_d (list, optional): List of acceleration components [ax,ay,az]. Defaults to env values if (None).
+            d_vz (float, optional): Distance from ceiling at which velocity conditions are met. Defaults to 0.6 m.
+
+        Returns:
+            x_0: Start x-location for trajectory
+            z_0: Start z-location for trajectory
+        """        
+
+        ## DEFAULT TO CLASS VALUES
+        if accel_d == None:
+            accel_d = self.accCF_max
+    
+        a_x = accel_d[0]
+        a_z = accel_d[2]
+
+        ## CALC OFFSET POSITIONS
+        Vx = V_d[0]
+        Vz = V_d[2]
+
+        t_x = Vx/a_x    # Time required to reach Vx
+        t_z = Vz/a_z    # Time required to reach Vz
+
+        z_vz = 0.5*a_z*(t_z)**2                 # Height Vz reached
+        z_0 = (self.h_ceiling - d_vz) - z_vz    # Offset to move z_vz to d_vz
+        
+        x_vz = Vx*(t_x+t_z) - Vx**2/(2*a_x)     # X-position Vz reached
+        x_0 = x_impact - x_vz - d_vz*Vx/Vz      # Account for shift up and shift left
+
+        return x_0,z_0
+
+    # ========================
+    ##    Logging Services 
+    # ========================
+
+    def createCSV(self,filePath):
+        """Sends service to CF_DataConverter to create CSV file to write logs to
+
+        Args:
+            filePath (string): Send full path and file name to write to
+        """      
+
+        ## CREATE SERVICE REQUEST MSG
+        srv = loggingCMDRequest() 
+
+        ## CREATE CSV COMMANDS
+        srv.createCSV = True
+        srv.filePath = filePath
+
+        ## MAKE SURE LOGGING IS TURNED OFF
+        srv.Logging_Flag = False
+        self.Logging_Flag = srv.Logging_Flag
+        
+        ## SEND LOGGING REQUEST VIA SERVICE
+        rospy.wait_for_service('/CF_DC/DataLogging')
+        logging_service = rospy.ServiceProxy('/CF_DC/DataLogging', loggingCMD)
+        logging_service(srv)
+
+    def startLogging(self):
+        """Start logging values to the current CSV file
+        """        
+
+        ## CREATE SERVICE REQUEST MSG
+        srv = loggingCMDRequest()
+
+        ## CREATE CSV COMMANDS
+        srv.Logging_Flag = True
+        self.Logging_Flag = srv.Logging_Flag
+
+        ## SEND LOGGING REQUEST VIA SERVICE
+        rospy.wait_for_service('/CF_DC/DataLogging')
+        logging_service = rospy.ServiceProxy('/CF_DC/DataLogging', loggingCMD)
+        logging_service(srv)
+
+    def capLogging(self):
+        """Cap logging values with IC,Flip, and Impact conditions and stop logging
+        """        
+
+        ## CREATE SERVICE REQUEST MSG
+        srv = loggingCMDRequest()
+
+        ## STOP LOGGING
+        srv.Logging_Flag = False
+        self.Logging_Flag = srv.Logging_Flag
+
+        srv.capLogging = True
+        srv.error_string = self.error_str # String for why logging was capped
+        
+        ## SEND LOGGING REQUEST VIA SERVICE
+        rospy.wait_for_service('/CF_DC/DataLogging')
+        logging_service = rospy.ServiceProxy('/CF_DC/DataLogging', loggingCMD)
+        logging_service(srv)
     
 
     # ============================
@@ -550,32 +642,41 @@ class CrazyflieEnv:
 
     def relaunch_sim(self):
         """
-            Relaunches Gazebo and resets model position but doesn't touch controller node
+        Relaunches Gazebo and resets model position but doesn't touch controller node
         """        
         self.close_sim()
         time.sleep(5.0)
         self.launch_sim()
-
         self.reset_pos()
-        # rospy.wait_for_message('/env/global_state_data',Odometry) # Wait for global state message before resuming training
 
     def close_sim(self):
+        """ 
+        Terminates gazebo process
+        """        
         os.killpg(self.gazebo_p.pid, signal.SIGTERM)
         
     def close_controller(self):
+        """ Terminates controller process
+        """        
         os.killpg(self.controller_p.pid, signal.SIGTERM)
 
     def close_dashboard(self):
+        """ Terminates dashboard process
+        """        
         os.killpg(self.dashboard_p.pid, signal.SIGTERM)
 
 
     def close_proc(self):
+        """Cleanly shut downs gazebo/controller node when shutdown command recieved (CTRL+c)
+        """        
         os.system("killall gzserver gzclient")
         os.killpg(self.gazebo_p.pid, signal.SIGTERM)
         os.killpg(self.controller_p.pid, signal.SIGTERM)
         sys.exit(0)
     
     def launch_sim(self):
+        """ Launches Gazebo environment with crazyflie drone
+        """        
         
         print("[STARTING] Starting Gazebo Process...")
         self.gazebo_p = subprocess.Popen( # Gazebo Process
@@ -583,6 +684,11 @@ class CrazyflieEnv:
             start_new_session=True, shell=True)
   
     def pause_sim(self,pause_flag):
+        """Pauses simulation
+
+        Args:
+            pause_flag (bool): On/Off pause of simulation
+        """        
 
         if pause_flag:
             rospy.ServiceProxy('/gazebo/pause_physics', Empty)
@@ -591,12 +697,17 @@ class CrazyflieEnv:
 
 
     def launch_dashboard(self):
+        """ Launch dashboard subprocess
+        """        
         print("[STARTING] Starting Dashboard...")
         self.dashboard_p = subprocess.Popen(
             "gnome-terminal -- roslaunch crazyflie_launch dashboard.launch",
             close_fds=True, preexec_fn=os.setsid, shell=True)
     
     def launch_controller(self):
+        """
+        Kill previous controller node if active and launch controller node
+        """        
         print("[STARTING] Starting Controller Process...")
         os.system("rosnode kill /controller_node")
         self.controller_p = subprocess.Popen( # Controller Process
@@ -604,39 +715,25 @@ class CrazyflieEnv:
             close_fds=True, preexec_fn=os.setsid, shell=True)
 
 
-    def launch_IC(self,pos_z,vx_d,vz_d): # Imparts desired velocity to model (should retain current position)
-        
-        ## SET POSE AND TWIST OF MODEL
-        state_msg = ModelState()
-        state_msg.model_name = self.modelName
-        state_msg.pose.position.x = 0.0
-        state_msg.pose.position.y = 0.0
-        state_msg.pose.position.z = pos_z
+    def Vel_Launch(self,pos_0,vel_d,quat_0=[0,0,0,1]): 
+        """Launch crazyflie from the specified position/orientation with an imparted velocity.
+        NOTE: Due to controller dynamics, the actual velocity will NOT be exactly the desired velocity
 
-        state_msg.pose.orientation.x = 0.0
-        state_msg.pose.orientation.y = 0.0
-        state_msg.pose.orientation.z = 0.0
-        state_msg.pose.orientation.w = 1.0
-
-        state_msg.twist.linear.x = vx_d
-        state_msg.twist.linear.y = 0.0
-        state_msg.twist.linear.z = vz_d
-
-        rospy.wait_for_service('/gazebo/set_model_state')
-        set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
-        set_state_srv(state_msg)
-
-    def traj_launch(self,pos_0,vel_d,quat_0=[0,0,0,1]): ## LAUNCH MODEL AT DESIRED VEL TRAJECTORY
+        Args:
+            pos_0 (list): Launch position [m] | [x,y,z]
+            vel_d (list): Launch velocity [m/s] | [Vx,Vy,Vz]
+            quat_0 (list, optional): Orientation at launch. Defaults to [0,0,0,1].
+        """        
 
         ## SET DESIRED VEL IN CONTROLLER
         self.step('pos',cmd_flag=0)
-        self.step('vel',cmd_vals=vel_d,cmd_flag=0)
+        self.step('vel',cmd_vals=vel_d,cmd_flag=1)
 
         ## CREATE SERVICE MESSAGE
         state_msg = ModelState()
         state_msg.model_name = self.modelName
 
-        ## POS AND QUAT
+        ## INPUT POSITION AND ORIENTATION
         state_msg.pose.position.x = pos_0[0]
         state_msg.pose.position.y = pos_0[1]
         state_msg.pose.position.z = pos_0[2]
@@ -646,7 +743,7 @@ class CrazyflieEnv:
         state_msg.pose.orientation.z = quat_0[2]
         state_msg.pose.orientation.w = quat_0[3]
 
-        ## LINEAR AND ANG. VEL
+        ## INPUT LINEAR AND ANGULAR VELOCITY
         state_msg.twist.linear.x = vel_d[0]
         state_msg.twist.linear.y = vel_d[1]
         state_msg.twist.linear.z = vel_d[2]
@@ -661,9 +758,14 @@ class CrazyflieEnv:
         set_state_service(state_msg)
                 
 
-    def reset_pos(self): # Disable sticky then places spawn_model at origin
+    def reset_pos(self,z_0=0.379): # Disable sticky then places spawn_model at origin
+        """Reset pose/twist of simulated drone back to home position. 
+        As well as turning off stickyfeet
 
-        ## DISABLE STICKY
+        Args:
+            z_0 (float, optional): Starting height of crazyflie. Defaults to 0.379.
+        """        
+        ## DISABLE STICKY LEGS (ALSO BREAKS CURRENT CONNECTION JOINTS)
         self.step('sticky',cmd_flag=0)
         time.sleep(0.05)
         
@@ -672,7 +774,7 @@ class CrazyflieEnv:
         state_msg.model_name = self.modelName
         state_msg.pose.position.x = 0.0
         state_msg.pose.position.y = 0.0
-        state_msg.pose.position.z = 0.379
+        state_msg.pose.position.z = z_0
 
         state_msg.pose.orientation.w = 1.0
         state_msg.pose.orientation.x = 0.0
@@ -692,69 +794,23 @@ class CrazyflieEnv:
         set_state_srv(state_msg)
 
         ## RESET HOME/TUMBLE DETECTION AND STICKY
-        self.step('tumble',cmd_flag=1) # Tumble Detection On
+        # self.step('tumble',cmd_flag=1) # Tumble Detection On
         self.step('home')
+
+    def updateInertia(self):
+
+        ## CREATE SERVICE REQUEST MSG
+        srv = domainRandRequest() 
+        srv.mass = self.mass
+        srv.Inertia.x = self.Ixx
+        srv.Inertia.y = self.Iyy
+        srv.Inertia.z = self.Izz
+
+        ## SEND LOGGING REQUEST VIA SERVICE
+        rospy.wait_for_service('/CF_Internal/DomainRand',timeout=1.0)
+        domainRand_service = rospy.ServiceProxy('/CF_Internal/DomainRand', domainRand)
+        domainRand_service(srv)
        
-
-
-    def step(self,action,cmd_vals=[0,0,0],cmd_flag=1):
-
-        cmd_msg = RLCmd()
-
-        cmd_dict = {'home':0,
-                    'pos':1,
-                    'vel':2,
-                    'acc':3,
-                    'tumble':4,
-                    'stop':5,
-                    'params':6,
-                    'moment':7,
-                    'policy':8,
-                    'traj':9,
-                    'thrusts':10,
-                    'sticky':11,
-                    'M_PWM':12}
-        
-
-        cmd_msg.cmd_type = cmd_dict[action]
-        cmd_msg.cmd_vals.x = cmd_vals[0]
-        cmd_msg.cmd_vals.y = cmd_vals[1]
-        cmd_msg.cmd_vals.z = cmd_vals[2]
-        cmd_msg.cmd_flag = cmd_flag
-        
-        self.RL_CMD_Publisher.publish(cmd_msg) # For some reason it doesn't always publish
-        time.sleep(0.02)
-        
-    def reset_reward_terms(self):
-
-        ## RESET REWARD CALC VALUES
-        self.d_ceil_min = 50.0
-        self.pitch_sum = 0.0
-        self.pitch_max = 0.0
-
-
-    def impactEstimate(self,pos_0,vel_d):
-        
-        ## ASSUME INSTANT VELOCITY
-        t_impact = (self.h_ceiling - pos_0[2])/vel_d[2]
-
-        ## FIND IMPACT POINT FROM IMPACT TIME
-        x_impact = pos_0[0] + vel_d[0]*t_impact
-        y_impact = pos_0[1] + vel_d[1]*t_impact
-        z_impact = pos_0[2] + vel_d[2]*t_impact
-
-        x_bound = [-0.8,1.2]
-        y_bound = [-0.6,0.7]
-
-        if x_bound[0] < x_impact < x_bound[1] and y_bound[0] < y_impact < y_bound[1]:
-            print("Impact Location Inboud")
-
-        else:
-            print("WARNING: IMPACT LOCATION OUT OF BOUNDS!!!")
-            
-
-        return [x_impact,y_impact,z_impact]
-
    
 
     # ============================
@@ -793,6 +849,7 @@ class CrazyflieEnv:
         self.close_sim()
         time.sleep(1)
         self.launch_sim()
+        time.sleep(1)
 
 
 

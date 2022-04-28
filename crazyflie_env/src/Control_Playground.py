@@ -3,8 +3,7 @@ import threading,os
 import rospy
 import numpy as np
 
-from RL_agents.rl_EM import rlEM_PEPGAgent
-from Crazyflie_env import CrazyflieEnv
+
 
        
 def cmd_send(env):
@@ -20,8 +19,10 @@ def cmd_send(env):
             6:'params',
             7:'moment',
             8:'policy',
-            9:'traj',
+            9:'vel_traj',
+            10:'impact_traj',
             11:'sticky',
+            13:'P2P_traj',
             19:'traj_tp',
             101:'reset',
             102:'cap_logging'
@@ -79,7 +80,7 @@ def cmd_send(env):
                 cmd_flag = 1
                 print("Reset ROS Parameters\n")
 
-                os.system("roslaunch crazyflie_launch params.launch")
+                env.setParams()
                 env.step(action,cmd_vals,cmd_flag)
 
             elif action=='moment':
@@ -97,29 +98,53 @@ def cmd_send(env):
 
                 env.step(action,cmd_vals,cmd_flag)
 
-            elif action=='traj':
+            elif action=='vel_traj':
 
                 ## GET INPUT VALUES
-                V_d,phi,alpha = env.userInput("Flight Velocity (V_d,phi,alpha):",float)
+                V_d,phi = env.userInput("Flight Velocity (V_d,phi):",float)
 
                 ## DEFINE CARTESIAN VELOCITIES
                 phi_rad = np.radians(phi)
-                alpha_rad = np.radians(alpha)
-                Vx_d = V_d*np.cos(phi_rad)*np.cos(alpha_rad)
-                Vy_d = V_d*np.cos(phi_rad)*np.sin(alpha_rad)
+
+                Vx_d = V_d*np.cos(phi_rad)
                 Vz_d = V_d*np.sin(phi_rad)
 
-                ## ESTIMATE IMPACT POINT
-                P_impact = env.impactEstimate(env.posCF_0,[Vx_d,Vy_d,Vz_d])
+                env.step('vel_traj',cmd_vals=[env.posCF[0],Vx_d,env.accCF_max[0]],cmd_flag=0)
+                env.step('vel_traj',cmd_vals=[env.posCF[2],Vz_d,env.accCF_max[2]],cmd_flag=2)
 
-                ## CHECK VALID IMPACT POINT AND EXECUTE TRAJECTORY
-                validate = input(f"Approve impact point (y/n): {P_impact[0]:.2f}, {P_impact[1]:.2f}, {P_impact[2]:.2f}\n")
-                if validate == 'y':
-                    env.step('traj',cmd_vals=[env.posCF_0[0],Vx_d,env.accCF_max[0]],cmd_flag=0)
-                    env.step('traj',cmd_vals=[env.posCF_0[1],Vy_d,env.accCF_max[1]],cmd_flag=1)
-                    env.step('traj',cmd_vals=[env.posCF_0[2],Vz_d,env.accCF_max[2]],cmd_flag=2)
+            elif action=='impact_traj':
+
+                ## GET VEL CONDITIONS 
+                V_d,phi,d_vz = env.userInput("Flight Velocity (V_d,phi,d_vz):",float)
+
+                ## DEFINE CARTESIAN VELOCITIES
+                phi_rad = np.radians(phi)
+
+                Vx_d = V_d*np.cos(phi_rad)
+                Vz_d = V_d*np.sin(phi_rad)
+
+                x_impact,y_0 = env.userInput("Desired impact position (x,y):",float)
+
+                x_0,z_0 = env.VelTraj_StartPos(x_impact,[Vx_d,0,Vz_d],d_vz=d_vz)
+
+                print(f"Desired start position x_0: {x_0:.2f} y_0: {y_0:.2f} z_0: {z_0:.2f}")
+                str_input = env.userInput("Approve start position (y/n): ",str)
+
+                if str_input == 'y':
+                    env.step('P2P_traj',cmd_vals=[env.posCF[0],x_0,env.accCF_max[0]],cmd_flag=0)
+                    env.step('P2P_traj',cmd_vals=[env.posCF[1],y_0,env.accCF_max[1]],cmd_flag=1)
+                    env.step('P2P_traj',cmd_vals=[env.posCF[2],z_0,env.accCF_max[2]],cmd_flag=2)
+
+                    str_input = env.userInput("Approve flight (y/n): ",str)
+                    if str_input == 'y':
+                        env.step('vel_traj',cmd_vals=[env.posCF[0],Vx_d,env.accCF_max[0]],cmd_flag=0)
+                        env.step('vel_traj',cmd_vals=[env.posCF[2],Vz_d,env.accCF_max[2]],cmd_flag=2)
+
                 else:
-                    pass
+                    print(f"Try again")
+
+
+
 
             elif action=='sticky':
                 cmd_vals = [0,0,0]
@@ -127,6 +152,14 @@ def cmd_send(env):
                 print()
 
                 env.step(action,cmd_vals,cmd_flag)
+
+            elif action=='P2P_traj':
+                ## GET INPUT VALUES
+                x_d = env.userInput("Desired position (x,y,z):",float)
+                env.step('P2P_traj',cmd_vals=[env.posCF[0],x_d[0],env.accCF_max[0]],cmd_flag=0)
+                env.step('P2P_traj',cmd_vals=[env.posCF[1],x_d[1],env.accCF_max[1]],cmd_flag=1)
+                env.step('P2P_traj',cmd_vals=[env.posCF[2],x_d[2],env.accCF_max[2]],cmd_flag=2)
+
 
             elif action=='traj_tp':
 
@@ -158,12 +191,15 @@ def cmd_send(env):
                 print("Reset Pos/Vel -- Sticky off -- Controller Reset\n")
                 env.reset_pos()
 
-        except:
+        except rospy.ROSInternalException:
             print('\033[93m' + "INVALID INPUT: Try again" + '\x1b[0m')
             continue
 
 
 if __name__ == '__main__':
+
+    from RL_agents.rl_EM import rlEM_PEPGAgent
+    from Crazyflie_env import CrazyflieEnv
     
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv(gazeboTimeout=False)
@@ -174,6 +210,8 @@ if __name__ == '__main__':
     env.agent_name = agent.agent_type
     env.trial_name = f"Control_Playground--trial_{int(trial_num):02d}--{env.modelInitials()}"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
+
+    env.accCF_max = [1.0, 1.0, 1.0]
 
     env.createCSV(env.filepath)
     env.startLogging()

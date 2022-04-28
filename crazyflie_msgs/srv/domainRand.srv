@@ -1,0 +1,4 @@
+geometry_msgs/Vector3 Inertia
+float64 mass
+---
+bool srv_Success

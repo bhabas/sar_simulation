@@ -3,52 +3,60 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 from mpl_toolkits.mplot3d import Axes3D
 import pandas as pd
-
-BASEPATH = "crazyflie_projects/ICRA_DataAnalysis/Wide-Long_2-Policy"
-
-df = pd.read_csv(f"{BASEPATH}/Wide-Long_2-Policy_Summary.csv")
-# df = df.query('My_d >= 3.0 and My_d < 5.0')
+import plotly.graph_objects as go
 
 
+BASEPATH = "crazyflie_projects/Policy_Mapping/Data_Logs/"
 
+df = pd.read_csv(f"{BASEPATH}/test_file_1.csv")
 
-fig = plt.figure(1)
-ax = fig.add_subplot(111,projection="3d")
+all_files = [
+    f"{BASEPATH}/test_file_1.csv",
+    f"{BASEPATH}/test_file_2.csv",
+    f"{BASEPATH}/test_file_3.csv",
+    f"{BASEPATH}/test_file_4.csv",
+    f"{BASEPATH}/test_file_5.csv",
+    f"{BASEPATH}/test_file_6.csv",
+    f"{BASEPATH}/test_file_7.csv"
+]
 
-X_1 = df.query('landing_rate_4_leg >= 0.6')['OF_y_flip_mean']
-Y_1 = df.query('landing_rate_4_leg >= 0.6')['RREV_flip_mean']
-Z_1 = 2.1 - df.query('landing_rate_4_leg >= 0.6')['flip_height_mean']
-C_1 = df.query('landing_rate_4_leg >= 0.6')['My_d']
+# all_files = [
+#     f"{BASEPATH}/test_file_1.csv",
+#     f"{BASEPATH}/test_file_2.csv"
+# ]
 
-X_2 = df.query('landing_rate_4_leg < 0.5')['OF_y_flip_mean']
-Y_2 = df.query('landing_rate_4_leg < 0.5')['RREV_flip_mean']
-Z_2 = 2.1 - df.query('landing_rate_4_leg < 0.5')['flip_height_mean']
-C_2 = df.query('landing_rate_4_leg < 0.5')['My_d']
-
-
-
-cmap = mpl.cm.jet
-norm = mpl.colors.Normalize(vmin=0,vmax=10.0)
-
+df = pd.concat((pd.read_csv(f) for f in all_files))
+df = df.sample(frac=0.01)
+df = df.query('success_flag == True')
 
 
 
+
+
+X_1 = df['OF_y']
+Y_1 = 1/df['Tau']
+Z_1 = df['d_ceil']
+C_1 = df['My_d']
+
+
+
+
+fig = go.Figure(data=[go.Scatter3d(x=X_1, y=Y_1, z=Z_1,
+                                   mode='markers',marker=dict(
+        size=2,
+        color=C_1.astype(float),                # set color to an array/list of desired values
+        colorscale='Jet',   # choose a colorscale
+        opacity=0.7
+    ))])
+    
 # CREATE PLOTS AND COLOR BAR
-ax.scatter(X_1,Y_1,Z_1,c=C_1,cmap=cmap,norm=norm,alpha=0.8,depthshade=False)
-# ax.scatter(X_2,Y_2,Z_2,c=C_2,cmap=cmap,norm=norm,alpha=0.25,depthshade=False)
+fig.update_layout(
+    scene = dict(
+        xaxis = dict(nticks=4, range=[-15,0],),
+        yaxis = dict(nticks=4, range=[0,7],),
+        zaxis = dict(nticks=4, range=[0,1],)
+    ),
+)
 
-ax.set_xlabel('OF_y')
-ax.set_xlim(-20,0)
-ax.set_xticks([-20,-15,-10,-5,0])
 
-
-ax.set_ylabel('RREV')
-ax.set_ylim(0,8)
-ax.set_yticks([0,2,4,6,8])
-
-ax.set_zlabel('d_ceiling')
-ax.set_zlim(0,1.0)
-ax.set_zticks([0,0.2,0.4,0.6,0.8,1.0])
-
-plt.show()
-
+fig.show()
