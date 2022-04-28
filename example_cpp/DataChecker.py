@@ -5,10 +5,11 @@ import cv2 as cv
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import sys
+import time
 
 from example_msgs.msg import CustomMessage
-Pixel_Height = 6
-Pixel_Width = 6
+Pixel_Height = 160
+Pixel_Width = 160
 
 class DataCheck:
 
@@ -28,22 +29,25 @@ class DataCheck:
             [ 1, 2, 1]
         ])
 
-        self.img = np.array([0,0,0,0,0,0,0,8,8,8,8,0,0,8,0,0,8,0,0,8,0,0,8,0,0,8,8,8,8,0,0,0,0,0,0,0]).reshape(Pixel_Height,Pixel_Width)
-        self.prev_img= np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,8,0,0,0,0,8,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0]).reshape(Pixel_Height,Pixel_Width) 
-        print(self.img)
+        # self.img = np.array([0,0,0,0,0,0,0,8,8,8,8,0,0,8,0,0,8,0,0,8,0,0,8,0,0,8,8,8,8,0,0,0,0,0,0,0]).reshape(Pixel_Height,Pixel_Width)
+        # self.prev_img= np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,8,0,0,0,0,8,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0]).reshape(Pixel_Height,Pixel_Width) 
+        # print(self.img)
+
+        self.Iu = np.zeros((Pixel_Height,Pixel_Width))
+        self.Iv = np.zeros_like(self.Iu)
+        self.It = np.zeros_like(self.Iu)
 
         # self.Iu = np.zeros((5,5))
         # self.Iv = np.zeros_like(self.Iu)
 
-        # rospy.init_node('DataChecker',anonymous=True)
+        rospy.init_node('DataChecker',anonymous=True)
         
-        # np.set_printoptions(threshold = sys.maxsize) #allows it to print the full string without truncation
+        np.set_printoptions(threshold = sys.maxsize) #allows it to print the full string without truncation
 
-        # msg = rospy.wait_for_message("/MyPub_cpp",CustomMessage,timeout = None)
-        # self.DataCheck_cb(msg)
-        self.Check()
+        msg = rospy.wait_for_message("/MyPub_cpp",CustomMessage,timeout = None)
+        self.DataCheck_cb(msg)
 
-    def Check(self):
+    def QuickCheck(self): #For custom images created above
 
         # self.Image = np.frombuffer(Data.Camera_data, np.uint8).reshape(5,5)
         # self.Convy = np.array(Data.Yconv).reshape(5,5)
@@ -65,35 +69,31 @@ class DataCheck:
         # print(f"U_grid:\n{U_grid}")
         # print(f"V_grid:\n{V_grid}")
 
-        Iu = np.zeros((Pixel_Height,Pixel_Width))
-        Iv = np.zeros_like(Iu)
-        It = np.zeros_like(Iu)
-
 
         for i in range(1,Pixel_Height - 1):
             for j in range(1,Pixel_Width - 1):
-                Iu[i,j] = np.sum(self.img[i-1:i+2,j-1:j+2] * self.Ku)/w
-                Iv[i,j] = np.sum(self.img[i-1:i+2,j-1:j+2] * self.Kv)/w
-                It[i,j] = self.img[i,j] - self.prev_img[i,j] #assuming dt = 1
+                self.Iu[i,j] = np.sum(self.img[i-1:i+2,j-1:j+2] * self.Ku)/w
+                self.Iv[i,j] = np.sum(self.img[i-1:i+2,j-1:j+2] * self.Kv)/w
+                self.It[i,j] = self.img[i,j] - self.prev_img[i,j] #assuming dt = 1
                 # print(np.sum(self.img[i-1:i+2,j-1:j+2] * self.Ku)/w)
 
         # It = self.img - self.prev_img #assuming dt is 1
         # print(f"\nIu:\n{Iu}")
 
-        G = U_grid*Iu + V_grid*Iv # Radial Gradient
+        G = U_grid*self.Iu + V_grid*self.Iv # Radial Gradient
         print(f"\nIG:\n{(G)}")
 
         ## SOLVE LEAST SQUARES PROBLEM
         X = np.array([
-                [f*np.sum(Iu**2), f*np.sum(Iu*Iv), np.sum(G*Iu)],
-                [f*np.sum(Iu*Iv), f*np.sum(Iv**2), np.sum(G*Iv)],
-                [f*np.sum(G*Iu),  f*np.sum(G*Iv),  np.sum(G**2)]
+                [f*np.sum(self.Iu**2), f*np.sum(self.Iu*self.Iv), np.sum(G*self.Iu)],
+                [f*np.sum(self.Iu*self.Iv), f*np.sum(self.Iv**2), np.sum(G*self.Iv)],
+                [f*np.sum(G*self.Iu),  f*np.sum(G*self.Iv),  np.sum(G**2)]
             ])
 
         y = np.array([
-                [-np.sum(Iu*It)],
-                [-np.sum(Iv*It)],
-                [-np.sum(G*It)]
+                [-np.sum(self.Iu*self.It)],
+                [-np.sum(self.Iv*self.It)],
+                [-np.sum(G*self.It)]
             ])
 
         print(f"\nLHS:\n{X}")
@@ -125,19 +125,24 @@ class DataCheck:
         # print(self.Convy)
 
 
-    def Convolution(self):
+    def Convolution_XY(self):
+
+        msg = rospy.wait_for_message("/MyPub_cpp",CustomMessage,timeout = None)
+        self.DataCheck_cb(msg)
+
 
         # NP CONVOLUTION WE HAVE BEEN USING
         for i in range(1,Pixel_Width - 1):
             for j in range(1,Pixel_Width - 1):
-                self.Iu[i,j] = np.sum(self.Image[i-1:i+2,j-1:j+2] * self.Ku)
-                self.Iv[i,j] = np.sum(self.Image[i-1:i+2,j-1:j+2] * self.Kv)
+                self.Iu[i,j] = np.sum(self.Cur_Img[i-1:i+2,j-1:j+2] * self.Ku)
+                self.Iv[i,j] = np.sum(self.Cur_Img[i-1:i+2,j-1:j+2] * self.Kv)
+                self.It[i,j] = self.Cur_Img[i,j] - self.Prev_Img[i,j]
 
         # TESTING OPEN CV FUNCTIONS
 
         # img = cv.cvtColor(self.Image, cv.COLOR_BGR2GRAY)
-        self.grad_x = cv.Sobel(self.Image,cv.CV_16S,1,0,ksize = 3,delta = 0)
-        self.grad_y = cv.Sobel(self.Image,cv.CV_16S,0,1,ksize = 3,delta = 0)
+        self.grad_x = cv.Sobel(self.Cur_Img,cv.CV_16S,1,0,ksize = 3,delta = 0)
+        self.grad_y = cv.Sobel(self.Cur_Img,cv.CV_16S,0,1,ksize = 3,delta = 0)
 
         self.Comparator()
         # self.Math()
@@ -152,17 +157,16 @@ class DataCheck:
         # print(flatU - self.grad_x.flatten())
 
 
-    def DataCheck_cb(self,Data):
+    def DataCheck_cb(self,Data): #Parsing the vectors sent over ROS
 
-        self.Image = np.frombuffer(Data.Camera_data, np.uint8).reshape(160,160)#create as 120rows x 160col
-        # self.Image = np.delete(self.Image, slice(120,160), axis = 1) # now remove the last 40 rows
-        self.Convy = np.array(Data.Yconv).reshape(160,160) #np.frombuffer(Data.Yconv,np.int8).reshape(120,160)
-        #self.Convy = np.delete(self.Convy, np.slice(120,160), axis = 1)
-        self.Convx = np.array(Data.Xconv).reshape(160,160)#np.frombuffer(Data.Xconv,np.int8).reshape(120,160)
-        #self.Convx = np.delete(self.Convx, np.slice(120,160), axis = 1)
+        self.Cur_Img = np.frombuffer(Data.Camera_data, np.uint8).reshape(160,160)#create as 120rows x 160col
+        self.Prev_Img = np.frombuffer(Data.Prev_img, np.uint8).reshape(160,160)
+        # self.Convy = np.array(Data.Yconv).reshape(160,160) #np.frombuffer(Data.Yconv,np.int8).reshape(120,160)
+        # self.Convx = np.array(Data.Xconv).reshape(160,160)#np.frombuffer(Data.Xconv,np.int8).reshape(120,160)
         
-        self.Convolution()
-        # print(self.Convx)
+        self.Convolution_XY()
+
+
 
     def Comparator(self):
 
@@ -171,8 +175,8 @@ class DataCheck:
         ax[0].set_title("Image Comparison Y")
         ax[0].imshow(self.Image, interpolation = "none",cmap = cm.Greys)
 
-        ax[1].imshow(self.Convy,interpolation = "none",cmap = cm.Greys)
-        ax[1].set_ylabel("Conv Y")
+        # ax[1].imshow(self.Convy,interpolation = "none",cmap = cm.Greys)
+        # ax[1].set_ylabel("Conv Y")
 
         # Yu = self.Convy - self.Iu
         ax[2].imshow(self.grad_y,interpolation = "none",cmap = cm.Greys)
@@ -187,8 +191,8 @@ class DataCheck:
         ax2[0].set_title("Image Comparison X")
         ax2[0].imshow(self.Image, interpolation = "none", cmap = cm.Greys)
 
-        ax2[1].imshow(self.Convx, interpolation = "none",cmap = cm.Greys)
-        ax2[1].set_ylabel("Conv X")
+        # ax2[1].imshow(self.Convx, interpolation = "none",cmap = cm.Greys)
+        # ax2[1].set_ylabel("Conv X")
 
         ax2[2].imshow(self.Iu, interpolation = "none",cmap = cm.Greys)
         ax2[2].set_ylabel("Iu")

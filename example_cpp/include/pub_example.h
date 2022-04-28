@@ -91,9 +91,12 @@ void MyClass::Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg){
     // IMAGE PROCESSING WORK GOES HERE
     Cur_img = &(Camera_msg->data)[0]; // Point to current image data address
 
-    // Calling Convolution
+    // Calling Convolutions
     MyClass::Convolution_T(Cur_img,Prev_img);
     MyClass::Convolution_X_Y(Cur_img,WIDTH_PIXELS,HEIGHT_PIXELS);
+
+    // std::vector<uint8_t> Prev_img_Vec;
+    // std::copy(std::begin(Prev_img),std::end(Prev_img),std::back_inserter(Prev_img_Vec));
 
     // sensorData.Tau = 0.0f;
     // sensorData.OFx = 0.0f;
@@ -106,20 +109,13 @@ void MyClass::Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg){
     memcpy(Prev_img,Cur_img,sizeof(Camera_msg->data)); // Copy memory to Prev_img address
 
     // Copying and Writing to Output Message
-    std::vector<int64_t> ConvX_Vec;
-    std::copy(std::begin(Ix),std::end(Ix),std::back_inserter(ConvX_Vec));
-
-    std::vector<int64_t> ConvY_Vec;
-    std::copy(std::begin(Iy),std::end(Iy),std::back_inserter(ConvY_Vec));
-
-    //std::vector<uint8_t> Img_Vec;
-    //std::copy(std::begin(img),std::end(img),std::back_inserter(Img_Vec));
+    // std::vector<int64_t> ConvX_Vec;
+    // std::copy(st// std::vector<uint8_t> Prev_img_Vec;
+    // std::copy(std::begin(Prev_img),std::end(Prev_img),std::back_inserter(Prev_img_Vec));
 
     example_msgs::CustomMessage new_msg;
     new_msg.Camera_data = Cam_Vec;
-    //new_msg.Camera_data = Img_Vec;
-    new_msg.Xconv = ConvX_Vec;
-    new_msg.Yconv = ConvY_Vec;
+    // new_msg.Prev_img = Prev_img_Vec;
 
     pub.publish(new_msg);
 
