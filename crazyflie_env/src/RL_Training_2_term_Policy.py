@@ -25,7 +25,7 @@ if __name__ == '__main__':
     mu = np.array([[2.5], [5]])       # Initial mu starting point
     sigma = np.array([[0.5],[1.5]])   # Initial sigma starting point
 
-    env.n_rollouts = 6
+    env.n_rollouts = 8
     agent = rlEM_PEPGAgent(mu,sigma,env.n_rollouts)
 
 
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     # ============================
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
-    V_d = 2.0 # [m/s]
+    V_d = 2.5 # [m/s]
     phi = 60   # [deg]
     phi_rad = np.radians(phi)
     env.vel_d = [V_d*np.cos(phi_rad), 0.0, V_d*np.sin(phi_rad)] # [m/s]
@@ -110,6 +110,9 @@ if __name__ == '__main__':
             env.RL_Publish()
 
             try: # Use try block to catch raised exceptions and attempt rollout again
+                env.Iyy = rospy.get_param("Iyy") + np.random.normal(0,1.5e-6)
+                env.mass = rospy.get_param("/CF_Mass") + np.random.normal(0,0.0005)
+                env.updateInertia()
                 executeFlight(env,agent)
 
                 if env.repeat_run == True: # Runs when error detected

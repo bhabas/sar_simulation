@@ -1,6 +1,6 @@
 DATA_TYPE: "SIM"
-SURFACE_NAME: "FlightCage"
-GROUND_NAME: "GroundPlane_Desert_Physical"
+SURFACE_NAME: "CeilingPlane_Large"
+GROUND_NAME: "GroundPlane_Desert_Visual"
 
 GUI_FLAG: True
 PAUSE_FLAG: False
@@ -12,7 +12,7 @@ SIM_SLOWDOWN_SPEED: 0.5
 LANDING_SLOWDOWN_FLAG: True
 
 
-K_EP_MAX: 15
+K_EP_MAX: 30
 CEILING_HEIGHT: 2.1
 
 POLICY_TYPE: 0 # 0: RL POLICY 1: NN POLICY

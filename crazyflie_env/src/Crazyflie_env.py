@@ -60,6 +60,11 @@ class CrazyflieEnv:
 
         ## LOAD SIM_SETTINGS/ROS_PARAMETERS
         self.modelName = rospy.get_param('/MODEL_NAME')
+        self.mass = rospy.get_param("/CF_Mass")
+        self.Ixx = rospy.get_param("/Ixx")
+        self.Iyy = rospy.get_param("/Iyy")
+        self.Izz = rospy.get_param("/Izz")
+
         
         self.t_start = rospy.get_time() # [s]
         self.t_prev = 0.0 # [s]
@@ -792,17 +797,17 @@ class CrazyflieEnv:
         # self.step('tumble',cmd_flag=1) # Tumble Detection On
         self.step('home')
 
-    def updateInertia(self,mass=34.3e-3,Ixx=15.83e-6,Iyy=17.00e-6,Izz=31.19e-6):
+    def updateInertia(self):
 
         ## CREATE SERVICE REQUEST MSG
         srv = domainRandRequest() 
-        srv.mass = mass
-        srv.Inertia.x = Ixx
-        srv.Inertia.y = Iyy
-        srv.Inertia.z = Izz
+        srv.mass = self.mass
+        srv.Inertia.x = self.Ixx
+        srv.Inertia.y = self.Iyy
+        srv.Inertia.z = self.Izz
 
         ## SEND LOGGING REQUEST VIA SERVICE
-        rospy.wait_for_service('/CF_Internal/DomainRand')
+        rospy.wait_for_service('/CF_Internal/DomainRand',timeout=1.0)
         domainRand_service = rospy.ServiceProxy('/CF_Internal/DomainRand', domainRand)
         domainRand_service(srv)
        

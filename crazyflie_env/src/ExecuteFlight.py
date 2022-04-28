@@ -59,7 +59,7 @@ def executeFlight(env,agent):
     env.step('sticky',cmd_flag=1)              # Enable sticky pads
 
     z_0 = env.h_ceiling - 1.0*env.vel_d[2]
-    env.traj_launch([0,0,z_0],env.vel_d)
+    env.Vel_Launch([0,0,z_0],env.vel_d)
     # env.step('traj',cmd_vals=[env.posCF_0[0],env.vel_d[0],env.accCF_max[0]],cmd_flag=0)
     # env.step('traj',cmd_vals=[env.posCF_0[1],env.vel_d[1],env.accCF_max[1]],cmd_flag=1)
     # env.step('traj',cmd_vals=[env.posCF_0[2],env.vel_d[2],env.accCF_max[2]],cmd_flag=2)
@@ -144,7 +144,7 @@ def executeFlight(env,agent):
 
             print("\n")
             env.reward = agent.calcReward_Impact(env)
-            env.reward_inputs = [env.d_ceil_min,env.pitch_sum,env.pitch_max]
+            env.reward_inputs = [env.d_ceil_max,env.pitch_sum,env.pitch_max]
             
             
             print(f"Reward = {env.reward:.3f}")
