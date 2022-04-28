@@ -10,7 +10,7 @@ BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
 sys.path.insert(0,BASE_PATH)
 from crazyflie_logging.data_analysis.Data_Analysis import DataFile
 dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/NL_Raw_Trials/"
-compiledPath = f"{BASE_PATH}/crazyflie_projects/Policy_Mapping/Data_Logs/"
+compiledPath = f"{BASE_PATH}/crazyflie_projects/Policy_Mapping/Data_Logs"
 df_list = []
 num_files = len(os.listdir(dataPath))
 
