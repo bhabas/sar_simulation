@@ -15,6 +15,8 @@ from std_srvs.srv import Empty
 from crazyflie_msgs.msg import RLData,RLCmd,RLConvg
 from crazyflie_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
 from crazyflie_msgs.srv import loggingCMD,loggingCMDRequest
+from crazyflie_msgs.srv import domainRand,domainRandRequest
+
 
 from rosgraph_msgs.msg import Clock
 from gazebo_msgs.msg import ModelState
@@ -200,7 +202,6 @@ class CrazyflieEnv:
 
         print("[COMPLETED] Environment done")
 
-    
         
 
     # ============================
@@ -790,6 +791,20 @@ class CrazyflieEnv:
         ## RESET HOME/TUMBLE DETECTION AND STICKY
         # self.step('tumble',cmd_flag=1) # Tumble Detection On
         self.step('home')
+
+    def updateInertia(self,mass=34.3e-3,Ixx=15.83e-6,Iyy=17.00e-6,Izz=31.19e-6):
+
+        ## CREATE SERVICE REQUEST MSG
+        srv = domainRandRequest() 
+        srv.mass = mass
+        srv.Inertia.x = Ixx
+        srv.Inertia.y = Iyy
+        srv.Inertia.z = Izz
+
+        ## SEND LOGGING REQUEST VIA SERVICE
+        rospy.wait_for_service('/CF_Internal/DomainRand')
+        domainRand_service = rospy.ServiceProxy('/CF_Internal/DomainRand', domainRand)
+        domainRand_service(srv)
        
    
 
