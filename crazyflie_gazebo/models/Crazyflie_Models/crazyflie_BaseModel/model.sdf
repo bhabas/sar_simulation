@@ -746,9 +746,9 @@
       <OFy_gaussianNoise>0.0</OFy_gaussianNoise>
     </plugin>
 
-    <plugin name='MomentPlugin' filename='libMoment_plugin.so'>
+    <!-- <plugin name='MomentPlugin' filename='libMoment_plugin.so'>
         <bodyName>crazyflie_body</bodyName>
-    </plugin>
+    </plugin> -->
 
     <plugin name='DomainRandomization_Plugin' filename='libDomainRand_plugin.so'>
         <bodyName>crazyflie_body</bodyName>
