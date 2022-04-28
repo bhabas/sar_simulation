@@ -8,7 +8,7 @@
             "name": "ROS: Launch",
             "type": "ros",
             "request": "launch",
-            "target": "/home/mrrobot/catkin_ws/src/crazyflie_simulation/crazyflie_launch/launch/example.launch"
+            "target": "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_launch/launch/example.launch"
         },
         
         

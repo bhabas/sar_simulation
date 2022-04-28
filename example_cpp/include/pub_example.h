@@ -87,6 +87,9 @@ void MyClass::Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg){
 
     //CREATE VECTOR TO STORE DATA FROM ROS MSG
     std::vector<uint8_t> Cam_Vec = Camera_msg->data;
+    // std::vector<uint8_t> Cam_Vec_prev(Prev_img, Prev_img + sizeof(Camera_msg->data)/sizeof(Prev_img[0]));
+    std::vector<uint8_t> Cam_Vec_prev;
+    Cam_Vec_prev.assign(Prev_img,Prev_img+WIDTH_PIXELS*HEIGHT_PIXELS);
 
     // IMAGE PROCESSING WORK GOES HERE
     Cur_img = &(Camera_msg->data)[0]; // Point to current image data address
