@@ -37,6 +37,7 @@ add_service_files(
   FILES
   activateSticky.srv
   loggingCMD.srv
+  domainRand.srv
 )
 
 ## Generate added messages and services with any dependencies listed here

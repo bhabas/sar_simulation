@@ -10,6 +10,10 @@
 
 #include <ros/ros.h>
 #include "crazyflie_msgs/RLCmd.h"
+#include "crazyflie_msgs/activateSticky.h"
+#include "crazyflie_msgs/domainRand.h"
+
+
 
 
 
@@ -22,6 +26,8 @@ namespace gazebo {
         protected:
             void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
             void RLCmd_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
+            bool UpdateInertia(crazyflie_msgs::domainRand::Request &req, crazyflie_msgs::domainRand::Response &res);
+
 
 
         private:
@@ -30,6 +36,7 @@ namespace gazebo {
             physics::LinkPtr link_ptr;
 
             physics::InertialPtr inertia_ptr;
+            ros::ServiceServer DomainRandService;
 
             std::string linkName;
 

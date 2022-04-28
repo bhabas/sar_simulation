@@ -14,11 +14,17 @@ namespace gazebo
         linkName = _sdf->GetElement("bodyName")->Get<std::string>();
         gzmsg << "\t Link Name:\t" << linkName << std::endl;
         link_ptr = model_ptr->GetLink(linkName);
-
+        DomainRandService = nh.advertiseService("/CF_Internal/DomainRand", &DomainRand_plugin::UpdateInertia, this);
         inertia_ptr = link_ptr->GetInertial();
         
         printf("\n\n");
 
+    }
+
+    bool DomainRand_plugin::UpdateInertia(crazyflie_msgs::domainRand::Request &req, crazyflie_msgs::domainRand::Response &res)
+    {
+        printf("ehere\n");
+        return true;
     }
 
 
