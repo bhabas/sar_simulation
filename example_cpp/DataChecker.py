@@ -5,7 +5,6 @@ import cv2 as cv
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import sys
-import time
 
 from example_msgs.msg import CustomMessage
 Pixel_Height = 160
@@ -32,6 +31,9 @@ class DataCheck:
         # self.img = np.array([0,0,0,0,0,0,0,8,8,8,8,0,0,8,0,0,8,0,0,8,0,0,8,0,0,8,8,8,8,0,0,0,0,0,0,0]).reshape(Pixel_Height,Pixel_Width)
         # self.prev_img= np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,8,0,0,0,0,8,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0]).reshape(Pixel_Height,Pixel_Width) 
         # print(self.img)
+
+        self.w = 3.6e-6
+        self.f = 3.3e-4
 
         self.Iu = np.zeros((Pixel_Height,Pixel_Width))
         self.Iv = np.zeros_like(self.Iu)
@@ -64,16 +66,16 @@ class DataCheck:
         Up_grid,Vp_grid = np.meshgrid(up_grid,vp_grid)
 
         ## DEFINE IMAGE SENSOR COORDS
-        U_grid = (Up_grid - O_up)*w + w/2 #GENERALIZE THE VGRID AND UGRID IN C++
-        V_grid = (Vp_grid - O_vp)*w + w/2
+        U_grid = (Up_grid - O_up)*self.w + self.w/2 #GENERALIZE THE VGRID AND UGRID IN C++
+        V_grid = (Vp_grid - O_vp)*self.w + self.w/2
         # print(f"U_grid:\n{U_grid}")
         # print(f"V_grid:\n{V_grid}")
 
 
         for i in range(1,Pixel_Height - 1):
             for j in range(1,Pixel_Width - 1):
-                self.Iu[i,j] = np.sum(self.img[i-1:i+2,j-1:j+2] * self.Ku)/w
-                self.Iv[i,j] = np.sum(self.img[i-1:i+2,j-1:j+2] * self.Kv)/w
+                self.Iu[i,j] = np.sum(self.img[i-1:i+2,j-1:j+2] * self.Ku)/self.w
+                self.Iv[i,j] = np.sum(self.img[i-1:i+2,j-1:j+2] * self.Kv)/self.w
                 self.It[i,j] = self.img[i,j] - self.prev_img[i,j] #assuming dt = 1
                 # print(np.sum(self.img[i-1:i+2,j-1:j+2] * self.Ku)/w)
 
@@ -127,34 +129,56 @@ class DataCheck:
 
     def Convolution_XY(self):
 
-        msg = rospy.wait_for_message("/MyPub_cpp",CustomMessage,timeout = None)
-        self.DataCheck_cb(msg)
-
-
         # NP CONVOLUTION WE HAVE BEEN USING
         for i in range(1,Pixel_Width - 1):
             for j in range(1,Pixel_Width - 1):
-                self.Iu[i,j] = np.sum(self.Cur_Img[i-1:i+2,j-1:j+2] * self.Ku)
-                self.Iv[i,j] = np.sum(self.Cur_Img[i-1:i+2,j-1:j+2] * self.Kv)
+                self.Iu[i,j] = np.sum(self.Cur_Img[i-1:i+2,j-1:j+2] * self.Ku)/self.w
+                self.Iv[i,j] = np.sum(self.Cur_Img[i-1:i+2,j-1:j+2] * self.Kv)/self.w
                 self.It[i,j] = self.Cur_Img[i,j] - self.Prev_Img[i,j]
 
         # TESTING OPEN CV FUNCTIONS
 
         # img = cv.cvtColor(self.Image, cv.COLOR_BGR2GRAY)
-        self.grad_x = cv.Sobel(self.Cur_Img,cv.CV_16S,1,0,ksize = 3,delta = 0)
-        self.grad_y = cv.Sobel(self.Cur_Img,cv.CV_16S,0,1,ksize = 3,delta = 0)
+        # self.grad_x = cv.Sobel(self.Cur_Img,cv.CV_16S,1,0,ksize = 3,delta = 0)
+        # self.grad_y = cv.Sobel(self.Cur_Img,cv.CV_16S,0,1,ksize = 3,delta = 0)
 
-        self.Comparator()
-        # self.Math()
+        # self.Comparator()
+        self.Math()
 
-    def Math(self):
+    def Math(self): #Checking the final matrices to make sure they match
 
-        flatU = self.Iu.flatten()
-        flatX = self.Convx.flatten()
-        # for i in range(Pixel_Height*Pixel_Width):
-        print(flatX - flatU)
-        print("\n\n")
-        # print(flatU - self.grad_x.flatten())
+        #Setting constants
+        w = self.w
+        f = self.f
+        O_up = Pixel_Width/2    # Pixel X_offset [pixels]
+        O_vp = Pixel_Height/2   # Pixel Y_offset [pixels]
+
+        ## DEFINE PIXEL GRID
+        up_grid = np.arange(0,Pixel_Width,1)
+        vp_grid = np.arange(0,Pixel_Height,1)
+        Up_grid,Vp_grid = np.meshgrid(up_grid,vp_grid)
+
+        ## DEFINE IMAGE SENSOR COORDS
+        U_grid = (Up_grid - O_up)*w + w/2 #GENERALIZE THE VGRID AND UGRID IN C++
+        V_grid = (Vp_grid - O_vp)*w + w/2
+
+        G = U_grid*self.Iu + V_grid*self.Iv # Radial Gradient
+
+        X = np.array([
+                [f*np.sum(self.Iu**2),      f*np.sum(self.Iu*self.Iv),  np.sum(G*self.Iu)],
+                [f*np.sum(self.Iu*self.Iv), f*np.sum(self.Iv**2),       np.sum(G*self.Iv)],
+                [f*np.sum(G*self.Iu),       f*np.sum(G*self.Iv),        np.sum(G**2)]
+        ])
+
+        y = np.array([
+                [-np.sum(self.Iu*self.It)],
+                [-np.sum(self.Iv*self.It)],
+                [-np.sum(G*self.It)]
+        ])
+
+        ## SOLVE b VIA PSEUDO-INVERSE
+        b = np.linalg.pinv(X)@y
+        print(b)
 
 
     def DataCheck_cb(self,Data): #Parsing the vectors sent over ROS
@@ -173,7 +197,7 @@ class DataCheck:
         #Y PLOT
         fig,ax = plt.subplots(4,1, sharex = False)
         ax[0].set_title("Image Comparison Y")
-        ax[0].imshow(self.Image, interpolation = "none",cmap = cm.Greys)
+        ax[0].imshow(self.Cur_Img, interpolation = "none",cmap = cm.Greys)
 
         # ax[1].imshow(self.Convy,interpolation = "none",cmap = cm.Greys)
         # ax[1].set_ylabel("Conv Y")
@@ -189,7 +213,7 @@ class DataCheck:
         #X PLOT
         fig2, ax2 = plt.subplots(4,1)
         ax2[0].set_title("Image Comparison X")
-        ax2[0].imshow(self.Image, interpolation = "none", cmap = cm.Greys)
+        ax2[0].imshow(self.Cur_Img, interpolation = "none", cmap = cm.Greys)
 
         # ax2[1].imshow(self.Convx, interpolation = "none",cmap = cm.Greys)
         # ax2[1].set_ylabel("Conv X")

@@ -64,7 +64,7 @@ class MyClass // DEFINE CLASS
         // DECLARE FUNCTION PROTOTYPES
         void Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg);
         void Convolution_X_Y(const unsigned char* input, int ImgX,int ImgY);
-        void Convolution_T(const unsigned char* CurImg,const unsigned char* PrevImg);
+        void Convolution_T(const unsigned char* CurImg,unsigned char* PrevImg);
 
         // IMAGE PROCESSING VARIABLES
         // uint8_t WIDTH_PIXELS = 160;
@@ -98,6 +98,12 @@ void MyClass::Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg){
     MyClass::Convolution_T(Cur_img,Prev_img);
     MyClass::Convolution_X_Y(Cur_img,WIDTH_PIXELS,HEIGHT_PIXELS);
 
+    example_msgs::CustomMessage new_msg;
+    new_msg.Camera_data = Cam_Vec;
+    new_msg.Prev_img = Cam_Vec_prev;
+
+    pub.publish(new_msg);
+
     // std::vector<uint8_t> Prev_img_Vec;
     // std::copy(std::begin(Prev_img),std::end(Prev_img),std::back_inserter(Prev_img_Vec));
 
@@ -116,16 +122,10 @@ void MyClass::Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg){
     // std::copy(st// std::vector<uint8_t> Prev_img_Vec;
     // std::copy(std::begin(Prev_img),std::end(Prev_img),std::back_inserter(Prev_img_Vec));
 
-    example_msgs::CustomMessage new_msg;
-    new_msg.Camera_data = Cam_Vec;
-    // new_msg.Prev_img = Prev_img_Vec;
-
-    pub.publish(new_msg);
-
 
 } // ============ END OF MAIN LOOP ============ //
 
-void MyClass::Convolution_T(const unsigned char* CurImg,const unsigned char* PrevImg) //Still not sure where to do this in the most efficient way
+void MyClass::Convolution_T(const unsigned char* CurImg,unsigned char* PrevImg) //Still not sure where to do this in the most efficient way
 {
 
     for(int i = 0; i < WIDTH_PIXELS*HEIGHT_PIXELS; i++){
@@ -204,7 +204,6 @@ void MyClass::Convolution_X_Y(const unsigned char* input, int ImgX, int ImgY)
         Iut += Xsum*Ittemp;
         Ivt += Ysum*Ittemp; 
         IGt += Gtemp*Ittemp;
-
 
         X++; // move center of kernel over
         

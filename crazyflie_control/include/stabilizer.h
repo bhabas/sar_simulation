@@ -123,6 +123,12 @@ class Controller
         // IMAGE PROCESSING VARIABLES
         uint8_t WIDTH_PIXELS = 160;
         uint8_t HEIGHT_PIXELS = 160;
+        int kx0[3] = {-1, 0, 1};
+        int kx1[3] = {-2, 0, 2};
+        int kx2[3] = {-1, 0, 1};
+        int ky0[3] = {-1,-2,-1};
+        int ky2[3] = {1,2,1};
+        uint32_t Prev_time = 1; //init as 1 to prevent divide by zero for first image
 
         const uint8_t* Cur_img = NULL;  // Ptr to current image memory
         uint8_t* Prev_img = NULL;       // Ptr to prev image memory
@@ -151,8 +157,117 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
 {
     Cur_img = &(msg->data)[0]; // Point to current image data address
 
-    // IMAGE PROCESSING ALGORITHM GOES HERE
+    //Where the convolution starts
+    uint16_t X = 1;
+    uint16_t Y = 1;
+    float w = 3.6e-6; //Pixel width in meters
+    float f = 0.33e-3;//Focal length in meters
+    float U;
+    float V;
+    float O_up = WIDTH_PIXELS/2;
+    float V_up = WIDTH_PIXELS/2;
+    float Gtemp = 0;
+    float Iuu = 0;
+    float Ivv = 0;
+    float Iuv = 0;
+    float IGu = 0;
+    float IGv = 0;
+    float IGG = 0;
+    float Iut = 0;
+    float Ivt = 0;
+    float IGt = 0;
+    float dt;
+    int16_t Ittemp;
+    uint32_t Cur_time = ros::Time::now().toSec();
+    
+    for(int j = 0; j < (WIDTH_PIXELS - 2)*(HEIGHT_PIXELS - 2); j++) // How many times the kernel center moves around the image
+    {
 
+        //GENERALIZE FOR CHANGE IN KERNEL SIZE
+        if(X >= WIDTH_PIXELS - 1) //if the edge of the kernel hits the edge of the image
+        { 
+        
+            X = 1; //move the kernel back to the left edge of the image
+            Y++; //and slide the kernel down the image
+
+        }
+
+        //Sub Kernel Indexing 
+        uint16_t i0 = (X - 1) + (Y - 1) * WIDTH_PIXELS; //First grab top left location of whole kernel
+        uint16_t i1 = i0 + WIDTH_PIXELS; //then each following row is separated by the image width
+        uint16_t i2 = i1 + WIDTH_PIXELS;
+
+        U = (X - O_up)*w + (w/2); // Using current location of the Kernel center
+        V = (Y - V_up)*w + (w/2); //calculate the current pixel grid locations (u,v)
+
+        // ######  DEBUGGING  ######
+        /*//
+        std::cout << "i0: " << i0 << "\n";
+        std::cout << "i1: " << i1 << "\n";
+        std::cout << "i2: " << i2 << "\n";
+        *///
+
+        int Xsum = 0; //reset rolling sum to 0
+        int Ysum = 0;
+
+        //GENERALIZE FOR CHANGE IN KERNEL SIZE
+        for(int k = 0; k < 3; k++){
+
+            //Sub kernel 0
+            Xsum += kx0[k] * Cur_img[i0 + k];
+            Ysum += ky0[k] * Cur_img[i0 + k];
+
+            //Sub kernel 1 (skipping ky1)
+            Xsum += kx1[k] * Cur_img[i1 + k];
+
+            //Sub kernel 2
+            Xsum += kx2[k] * Cur_img[i2 + k];
+            Ysum += ky2[k] * Cur_img[i2 + k];
+
+        }
+
+        //Sum assigned to middle value: (i1 + 1)
+        Ittemp = (Cur_img[i1 + 1] - Prev_img[i1 + 1]); //moved /dt to last step
+        Gtemp = (Xsum*U + Ysum*V);
+
+        //LHS Matrix values (rolling sums)
+        Iuu += Xsum*Xsum;
+        Ivv += Ysum*Ysum;
+        Iuv += Xsum*Ysum;
+        IGu += Gtemp*Xsum;
+        IGv += Gtemp*Ysum;
+        IGG += Gtemp*Gtemp;
+
+        //RHS Matrix Values (rolling sums)
+        Iut += Xsum*Ittemp;
+        Ivt += Ysum*Ittemp; 
+        IGt += Gtemp*Ittemp;
+
+        X++; // move center of kernel over
+        
+    } // END OF CONVOLUTION
+
+    dt = Cur_time - Prev_time;
+
+    // Packing final result into the matrices and applying the floating point math
+    double LHS[9] = {f/powf(8*w,2)*Iuu, f/powf(8*w,2)*Iuv, 1/powf(8*w,2)*IGu,
+                     f/powf(8*w,2)*Iuv, f/powf(8*w,2)*Ivv, 1/powf(8*w,2)*IGv,
+                     f/powf(8*w,2)*IGu, f/powf(8*w,2)*IGv, 1/powf(8*w,2)*IGG};
+
+    double RHS[3] = {-Iut/(8*w*dt), -Ivt/(8*w*dt), -IGt/(8*w*dt)}; //added change in time to final step
+
+    nml_mat* m_A = nml_mat_from(3,3,9,LHS);
+    nml_mat* m_b = nml_mat_from(3,1,3,RHS);
+
+    nml_mat_qr *QR = nml_mat_qr_solve(m_A); // A = Q*R
+    nml_mat* y = nml_mat_dot(nml_mat_transp(QR->Q),m_b); // y = Q^T*b
+    nml_mat* x_QR = nml_ls_solvebck(QR->R,y); // Solve R*x = y via back substitution
+    nml_mat_print(x_QR);
+
+    nml_mat_free(m_A);
+    nml_mat_free(m_b);
+    nml_mat_qr_free(QR);
+    nml_mat_free(x_QR);
 
 
     // sensorData.Tau = 0.0f;
@@ -165,7 +280,9 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
 
     
     memcpy(Prev_img,Cur_img,sizeof(msg->data)); // Copy memory to Prev_img address
-}
+    Prev_time = Cur_time; // Setup previous time for next calculation
+
+} // End of Camera_Sensor_Callback
 
 
 // OPTICAL FLOW VALUES (IN BODY FRAME) FROM MODEL SENSOR PLUGIN
