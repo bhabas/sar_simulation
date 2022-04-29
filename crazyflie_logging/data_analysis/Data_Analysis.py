@@ -581,7 +581,7 @@ class DataFile:
         body_impact = impact_df.iloc[0]['flip_flag']
         impact_flag = impact_df.iloc[0]['impact_flag']
         leg_contacts = int(impact_df.iloc[0]['Tau'])
-        contact_list = impact_df.iloc[0][['OF_x','OF_y','RREV','d_ceil']].to_numpy(dtype=np.bool8)
+        contact_list = impact_df.iloc[0][['OF_x','OF_y','RREV','d_ceil']].to_numpy(dtype=np.int8)
 
         
 
@@ -611,26 +611,20 @@ class DataFile:
         four_leg_landing = 0
         two_leg_landing = 0
         one_leg_landing = 0
-        missed_landing = 0
+        failed_landing = 0
         contact_list = []
         
         for k_ep,k_run in ep_arr[:,:2]:
             
             ## RECORD LANDING CONDITIONS
-            leg_contacts,_,_ = self.landing_conditions(k_ep, k_run)
+            leg_contacts,_,body_impact = self.landing_conditions(k_ep, k_run)
 
-            if leg_contacts >= 3: 
+            if leg_contacts >= 3 and body_impact == False: 
                 four_leg_landing += 1
 
-            elif leg_contacts == 2:
+            elif leg_contacts == 2 and body_impact == False:
                 two_leg_landing += 1
 
-            elif leg_contacts == 1:
-                one_leg_landing += 1
-
-            else:
-                missed_landing += 1
-            
             contact_list.append(leg_contacts)
 
         ## CALC LANDING PERCENTAGE

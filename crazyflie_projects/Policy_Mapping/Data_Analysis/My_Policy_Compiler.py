@@ -28,6 +28,7 @@ df = pd.DataFrame(columns=(
     'vx','vz',
     'Tau','d_ceil','OF_y',
     'My_d'))
+df.to_csv(f'{compiledPath}/NL_PolicyVal_Trials_Raw_{file_index}.csv',index=False,mode='a',header=True)
 
 
 ## ITER OVER ALL FILES IN DIR
@@ -39,10 +40,7 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
     time_delta = alpha*diff + (1-alpha)*(time_delta)
     start_time = time.time()
 
-    if ii%75 == 0:
-
-        file_index += 1
-        df.to_csv(f'{compiledPath}/test_file_{file_index}.csv',index=False)
+    
 
     try: ## TRY OPENING FILE
 
@@ -85,8 +83,11 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
         continue
 
 
-    
-    master_df = pd.DataFrame(df_list).to_csv(f'{compiledPath}/test_file_{file_index}.csv',index=False,mode='a',header=False)
+    if ii%75 == 0:
+
+        file_index += 1
+
+    master_df = pd.DataFrame(df_list).to_csv(f'{compiledPath}/NL_PolicyVal_Trials_Raw_{file_index}.csv',index=False,mode='a',header=False)
     end_time = time.time()
     
 
