@@ -36,7 +36,7 @@ float Iut = 0;
 float Ivt = 0;
 float IGt = 0;
 float dt = 1;
-uint32_t Prev_time = 1; //init as 1 to prevent divide by zero for first image
+float Prev_time = 1; //init as 1 to prevent divide by zero for first image
 
 
 // Init Sub-kernels
@@ -146,7 +146,7 @@ void MyClass::Convolution_X_Y(const unsigned char* input, int ImgX, int ImgY)
     int X = 1;
     int Y = 1;
 
-    uint32_t Cur_time = ros::Time::now().toSec();
+    float Cur_time = ros::Time::now().toSec();
     
     for(int j = 0; j < (ImgX - 2)*(ImgY - 2); j++) // How many times the kernel center moves around the image
     {

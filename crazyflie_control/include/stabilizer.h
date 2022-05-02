@@ -128,7 +128,7 @@ class Controller
         int kx2[3] = {-1, 0, 1};
         int ky0[3] = {-1,-2,-1};
         int ky2[3] = {1,2,1};
-        uint32_t Prev_time = 1; //init as 1 to prevent divide by zero for first image
+        float Prev_time = 1; //init as 1 to prevent divide by zero for first image
 
         const uint8_t* Cur_img = NULL;  // Ptr to current image memory
         uint8_t* Prev_img = NULL;       // Ptr to prev image memory
@@ -178,7 +178,7 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
     float IGt = 0;
     float dt;
     int16_t Ittemp;
-    uint32_t Cur_time = ros::Time::now().toSec();
+    float Cur_time = ros::Time::now().toSec();
     
     for(int j = 0; j < (WIDTH_PIXELS - 2)*(HEIGHT_PIXELS - 2); j++) // How many times the kernel center moves around the image
     {
