@@ -24,7 +24,6 @@ class ReinforceModel(nn.Module):
         self.fc2 = nn.Linear(64,output_size)
 
         self.optimizer = optim.Adam(self.parameters(), lr=LR)
-        self.loss = nn.MSELoss()
         self.to(DEVICE)
 
     def forward(self, x):
