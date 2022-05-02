@@ -35,6 +35,9 @@ float IGG = 0;
 float Iut = 0;
 float Ivt = 0;
 float IGt = 0;
+float dt = 1;
+uint32_t Prev_time = 1; //init as 1 to prevent divide by zero for first image
+
 
 // Init Sub-kernels
 int kx0[3] = {-1, 0, 1};
@@ -94,6 +97,7 @@ void MyClass::Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg){
     // IMAGE PROCESSING WORK GOES HERE
     Cur_img = &(Camera_msg->data)[0]; // Point to current image data address
 
+
     // Calling Convolutions
     MyClass::Convolution_T(Cur_img,Prev_img);
     MyClass::Convolution_X_Y(Cur_img,WIDTH_PIXELS,HEIGHT_PIXELS);
@@ -111,9 +115,9 @@ void MyClass::Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg){
     // sensorData.OFx = 0.0f;
     // sensorData.OFy = 0.0f;
 
-    printf("Prev_Val: %u\n",Prev_img[0]);
-    printf("Cur_Val: %u\n",Cur_img[0]);
-    printf("\n");
+    // printf("Prev_Val: %u\n",Prev_img[0]);
+    // printf("Cur_Val: %u\n",Cur_img[0]);
+    // printf("\n");
 
     memcpy(Prev_img,Cur_img,sizeof(Camera_msg->data)); // Copy memory to Prev_img address
 
@@ -141,6 +145,8 @@ void MyClass::Convolution_X_Y(const unsigned char* input, int ImgX, int ImgY)
     //Where the convolution starts
     int X = 1;
     int Y = 1;
+
+    uint32_t Cur_time = ros::Time::now().toSec();
     
     for(int j = 0; j < (ImgX - 2)*(ImgY - 2); j++) // How many times the kernel center moves around the image
     {
@@ -209,12 +215,16 @@ void MyClass::Convolution_X_Y(const unsigned char* input, int ImgX, int ImgY)
         
     } // END OF CONVOLUTION
 
+    dt = Cur_time - Prev_time;
+    printf("\ndt: %f\n",dt);
+
+
     // Packing final result into the matrices and applying the floating point math
     double LHS[9] = {f/powf(8*w,2)*Iuu, f/powf(8*w,2)*Iuv, 1/powf(8*w,2)*IGu,
                      f/powf(8*w,2)*Iuv, f/powf(8*w,2)*Ivv, 1/powf(8*w,2)*IGv,
                      f/powf(8*w,2)*IGu, f/powf(8*w,2)*IGv, 1/powf(8*w,2)*IGG};
 
-    double RHS[3] = {-Iut/(8*w), -Ivt/(8*w), -IGt/(8*w)};
+    double RHS[3] = {-Iut/(8*w*dt), -Ivt/(8*w*dt), -IGt/(8*w*dt)};
 
     nml_mat* m_A = nml_mat_from(3,3,9,LHS);
     nml_mat* m_b = nml_mat_from(3,1,3,RHS);
@@ -228,6 +238,8 @@ void MyClass::Convolution_X_Y(const unsigned char* input, int ImgX, int ImgY)
     nml_mat_free(m_b);
     nml_mat_qr_free(QR);
     nml_mat_free(x_QR);
+
+    Prev_time = Cur_time; //reset Prev_time to Current iteration time
 
 
 } // ========= END OF CONVOLUTION X Y =========
