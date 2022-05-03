@@ -10,10 +10,10 @@ import torch.nn.functional as F
 from torch.distributions import Categorical
 
 DEVICE = "cuda:0"
-EPISODES = 3000
+EPISODES = 2000
 GAMMA = 0.99
-NUM_STEPS = 300
-LR = 3e-4
+NUM_STEPS = 50
+LR = 0.0001
 RENDER = True
 
 
@@ -69,39 +69,43 @@ if __name__ == "__main__":
     num_actions = env.action_space.n
     
     agent = A2C(num_inputs,num_actions,hidden_size=256)
-    ep_score = []
-    avg_ep_score = []
+    ep_score_list = []
+    avg_ep_score_list = []
     entropy_term = 0
 
     for episode in range(EPISODES):
 
-        
-        
+        ## RESET EPISODE
         done = False
         state = env.reset()
+        ep_score = 0
 
         while not done:
 
+            ## INITIALIZE EPISODE MINIBATCH
             log_probs = []
             V_states = []
             rewards = []
 
-            for t in range(500):
+            for k in range(NUM_STEPS):
 
                 if RENDER:
                     # env.render()
                     pass
-
+                
+                ## SELECT ACTION a_k USING ACTOR pi_theta
                 V_state, policy_dist = agent.forward(state)
                 V_state = V_state.item()
                 policy_dist_np = policy_dist.cpu().detach().numpy()
-
                 action = np.random.choice(num_actions,p=np.squeeze(policy_dist_np))
+
                 log_prob = torch.log(policy_dist.squeeze()[action])
                 entropy = -np.sum(np.mean(policy_dist_np)*np.log(policy_dist_np))
 
+                ## PERFORM ACTION a_k AND OBSERVE NEXT STATE s_k+1 AND REWARD r_k+1
                 next_state,reward,done,_ = env.step(action)
 
+                ## STORE IN EPISODE MINIBATCH
                 rewards.append(reward)
                 V_states.append(V_state)
                 log_probs.append(log_prob)
@@ -112,19 +116,20 @@ if __name__ == "__main__":
 
                 state = next_state
 
+            ## IF s_n IS NOT TERMINAL: SET R=V(s_n) WITH CRITIC, ELSE R = 0
             if not done:
                 V_f,_ = agent.forward(next_state)
-                V_f = V_f.item()
-
             else:
                 V_f = 0
 
-
-            ## COMPUTE DISCOUNTED REWARDS
+            ## CALCULATE DISCOUNTED RETURNS
             Rs = np.zeros_like(V_states)
-            for t in reversed(range(len(rewards))):
-                V_f = rewards[t] + GAMMA * V_f
-                Rs[t] = V_f
+            R = V_f
+            for k in reversed(range(len(V_states))):
+                R = rewards[k] + GAMMA*R
+                Rs[k] = R
+
+            
 
             ## UPDATE ACTOR-CRITIC NETWORKS
             V_states = torch.tensor(V_states,dtype=torch.float).to(DEVICE)
@@ -133,27 +138,31 @@ if __name__ == "__main__":
 
             advantage = Rs - V_states
             actor_loss = (-log_probs*advantage).mean()
-            critic_loss = 0.5*advantage.pow(2).mean()
+            critic_loss = advantage.pow(2).mean()
             AC_Loss = actor_loss + critic_loss + 0.001*entropy_term*0.0
 
             agent.optimizer.zero_grad()
             AC_Loss.backward()
             agent.optimizer.step()
 
-        ep_score.append(np.sum(rewards))
-        avg_ep_score.append(np.nanmean(ep_score[-10:]))
+            ## UPDATE EPISODE SCORE
+            ep_score += np.sum(rewards)
+
+        ## APPEND EPISODE DATA
+        ep_score_list.append(ep_score)
+        avg_ep_score_list.append(np.nanmean(ep_score_list[-20:]))
 
         if episode%100 == 0:
             RENDER = True
-            print(f"EPISODE: {episode} Score: {np.sum(rewards)} MA_Reward: {np.nanmean(ep_score[-10:]):.2f}")
+            print(f"EPISODE: {episode} Score: {np.sum(rewards)} MA_Reward: {np.nanmean(ep_score_list[-20:]):.2f}")
         else:
             RENDER = False
 
 
 
-    # Plot results
-    plt.plot(range(EPISODES),ep_score)
-    plt.plot(range(EPISODES), avg_ep_score)
+    # PLOT RESULTS
+    plt.plot(range(EPISODES),ep_score_list)
+    plt.plot(range(EPISODES), avg_ep_score_list)
     plt.show()
         
 
