@@ -1,6 +1,0 @@
-<chess>
-    <Opening>
-        <E4 type="Accepted">King's Gambit Accepted</E4>
-        <D4 type="Declined">Queen's Gambit Declined</D4>
-    </Opening>
-</chess>

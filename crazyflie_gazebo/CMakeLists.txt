@@ -33,3 +33,6 @@ target_link_libraries(OF_Sensor_plugin ${GAZEBO_LIBRARIES})
 
 add_library(Moment_plugin SHARED src/model_Moment.cpp)
 target_link_libraries(Moment_plugin ${GAZEBO_LIBRARIES})
+
+add_library(DomainRand_plugin SHARED src/DomainRandomization.cpp)
+target_link_libraries(DomainRand_plugin ${GAZEBO_LIBRARIES})

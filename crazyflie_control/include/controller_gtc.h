@@ -49,6 +49,8 @@ void controllerGTCInit(void);
 bool controllerGTCTest(void);
 void controllerGTCReset(void);
 void controllerGTCTraj(void);
+void velocity_Traj(void);
+void point2point_Traj(void);
 void controllerGTC(control_t *control, setpoint_t *setpoint,
                                          sensorData_t *sensors,
                                          state_t *state,
@@ -171,7 +173,8 @@ extern bool tumble_detection;
 extern bool motorstop_flag;
 extern bool safeModeFlag;
 
-extern bool execute_traj;
+extern bool execute_P2P_traj;
+extern bool execute_vel_traj;
 extern bool policy_armed_flag;
 
 extern bool flip_flag;

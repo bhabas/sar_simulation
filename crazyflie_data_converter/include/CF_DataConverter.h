@@ -468,7 +468,7 @@ void CF_DataConverter::log3_Callback(const crazyflie_msgs::GenericLogData::Const
 
     // ACCELERATION SETPOINTS
     float ad_xy[2];
-    decompressXY(log3_msg->values[2],ad_xy);
+    decompressXY(log3_msg->values[4],ad_xy);
 
     a_d.x = ad_xy[0];
     a_d.y = ad_xy[1];
