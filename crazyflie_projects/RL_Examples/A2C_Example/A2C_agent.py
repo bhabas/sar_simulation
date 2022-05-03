@@ -76,7 +76,7 @@ if __name__ == "__main__":
     for episode in range(EPISODES):
 
         log_probs = []
-        values = []
+        V_states = []
         rewards = []
         
         done = False
@@ -85,7 +85,8 @@ if __name__ == "__main__":
         while not done:
 
             if RENDER:
-                env.render()
+                # env.render()
+                pass
 
             V_state, policy_dist = agent.forward(state)
             V_state = V_state.item()
@@ -98,13 +99,13 @@ if __name__ == "__main__":
             next_state,reward,done,_ = env.step(action)
 
             rewards.append(reward)
-            values.append(V_state)
+            V_states.append(V_state)
             log_probs.append(log_prob)
             entropy_term += entropy
 
             if done:
-                Q_val,_ = agent.forward(next_state)
-                Q_val = Q_val.item()
+                V_f,_ = agent.forward(next_state)
+                V_f = V_f.item()
 
                 ep_score.append(np.sum(rewards))
                 avg_ep_score.append(np.nanmean(ep_score[-10:]))
@@ -118,23 +119,23 @@ if __name__ == "__main__":
             state = next_state
 
         ## COMPUTE Q VALUES
-        Q_vals = np.zeros_like(values)
+        Rs = np.zeros_like(V_states)
         for t in reversed(range(len(rewards))):
-            Q_val = rewards[t] + GAMMA * Q_val
-            Q_vals[t] = Q_val
+            V_f = rewards[t] + GAMMA * V_f
+            Rs[t] = V_f
 
         ## UPDATE ACTOR-CRITIC NETWORKS
-        values = torch.tensor(values,dtype=torch.float).to(DEVICE)
-        Q_vals = torch.tensor(Q_vals,dtype=torch.float).to(DEVICE)
+        V_states = torch.tensor(V_states,dtype=torch.float).to(DEVICE)
+        Rs = torch.tensor(Rs,dtype=torch.float).to(DEVICE)
         log_probs = torch.stack(log_probs)
 
-        advantage = Q_vals - values
+        advantage = Rs - V_states
         actor_loss = (-log_probs*advantage).mean()
         critic_loss = 0.5*advantage.pow(2).mean()
-        ac_loss = actor_loss + critic_loss + 0.001*entropy_term
+        AC_Loss = actor_loss + critic_loss + 0.001*entropy_term*0.0
 
         agent.optimizer.zero_grad()
-        ac_loss.backward()
+        AC_Loss.backward()
         agent.optimizer.step()
 
 
