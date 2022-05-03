@@ -75,68 +75,79 @@ if __name__ == "__main__":
 
     for episode in range(EPISODES):
 
-        log_probs = []
-        V_states = []
-        rewards = []
+        
         
         done = False
         state = env.reset()
 
         while not done:
 
-            if RENDER:
-                # env.render()
-                pass
+            log_probs = []
+            V_states = []
+            rewards = []
 
-            V_state, policy_dist = agent.forward(state)
-            V_state = V_state.item()
-            policy_dist_np = policy_dist.cpu().detach().numpy()
+            for t in range(500):
 
-            action = np.random.choice(num_actions,p=np.squeeze(policy_dist_np))
-            log_prob = torch.log(policy_dist.squeeze()[action])
-            entropy = -np.sum(np.mean(policy_dist_np)*np.log(policy_dist_np))
+                if RENDER:
+                    # env.render()
+                    pass
 
-            next_state,reward,done,_ = env.step(action)
+                V_state, policy_dist = agent.forward(state)
+                V_state = V_state.item()
+                policy_dist_np = policy_dist.cpu().detach().numpy()
 
-            rewards.append(reward)
-            V_states.append(V_state)
-            log_probs.append(log_prob)
-            entropy_term += entropy
+                action = np.random.choice(num_actions,p=np.squeeze(policy_dist_np))
+                log_prob = torch.log(policy_dist.squeeze()[action])
+                entropy = -np.sum(np.mean(policy_dist_np)*np.log(policy_dist_np))
 
-            if done:
+                next_state,reward,done,_ = env.step(action)
+
+                rewards.append(reward)
+                V_states.append(V_state)
+                log_probs.append(log_prob)
+                entropy_term += entropy
+
+                if done:
+                    break
+
+                state = next_state
+
+            if not done:
                 V_f,_ = agent.forward(next_state)
                 V_f = V_f.item()
 
-                ep_score.append(np.sum(rewards))
-                avg_ep_score.append(np.nanmean(ep_score[-10:]))
+            else:
+                V_f = 0
 
-                if episode%100 == 0:
-                    RENDER = True
-                    print(f"EPISODE: {episode} Score: {np.sum(rewards)} MA_Reward: {np.nanmean(ep_score[-10:]):.2f}")
-                else:
-                    RENDER = False
 
-            state = next_state
+            ## COMPUTE DISCOUNTED REWARDS
+            Rs = np.zeros_like(V_states)
+            for t in reversed(range(len(rewards))):
+                V_f = rewards[t] + GAMMA * V_f
+                Rs[t] = V_f
 
-        ## COMPUTE Q VALUES
-        Rs = np.zeros_like(V_states)
-        for t in reversed(range(len(rewards))):
-            V_f = rewards[t] + GAMMA * V_f
-            Rs[t] = V_f
+            ## UPDATE ACTOR-CRITIC NETWORKS
+            V_states = torch.tensor(V_states,dtype=torch.float).to(DEVICE)
+            Rs = torch.tensor(Rs,dtype=torch.float).to(DEVICE)
+            log_probs = torch.stack(log_probs)
 
-        ## UPDATE ACTOR-CRITIC NETWORKS
-        V_states = torch.tensor(V_states,dtype=torch.float).to(DEVICE)
-        Rs = torch.tensor(Rs,dtype=torch.float).to(DEVICE)
-        log_probs = torch.stack(log_probs)
+            advantage = Rs - V_states
+            actor_loss = (-log_probs*advantage).mean()
+            critic_loss = 0.5*advantage.pow(2).mean()
+            AC_Loss = actor_loss + critic_loss + 0.001*entropy_term*0.0
 
-        advantage = Rs - V_states
-        actor_loss = (-log_probs*advantage).mean()
-        critic_loss = 0.5*advantage.pow(2).mean()
-        AC_Loss = actor_loss + critic_loss + 0.001*entropy_term*0.0
+            agent.optimizer.zero_grad()
+            AC_Loss.backward()
+            agent.optimizer.step()
 
-        agent.optimizer.zero_grad()
-        AC_Loss.backward()
-        agent.optimizer.step()
+        ep_score.append(np.sum(rewards))
+        avg_ep_score.append(np.nanmean(ep_score[-10:]))
+
+        if episode%100 == 0:
+            RENDER = True
+            print(f"EPISODE: {episode} Score: {np.sum(rewards)} MA_Reward: {np.nanmean(ep_score[-10:]):.2f}")
+        else:
+            RENDER = False
 
 
 
