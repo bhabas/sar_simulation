@@ -4,7 +4,7 @@
     <arg name="ground_name" default="GroundPlane_Desert_Physical"/>
     <arg name="ground_sdf_path" default="$(find crazyflie_gazebo)/models/Landing_Surfaces/$(arg ground_name)/model.sdf"/>
 
-    <arg name="surface_name" default="CeilingSurface_Large"/>
+    <arg name="surface_name" default="CeilingPlane_Large"/>
     <arg name="surface_sdf_path" default="$(find crazyflie_gazebo)/models/Landing_Surfaces/$(arg surface_name)/model.sdf"/>
 
     <arg name="model_name" default="crazyflie_Wide-Short"/>

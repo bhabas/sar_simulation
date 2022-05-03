@@ -28,10 +28,10 @@ class DashboardNode:
         self.r_avg_list = []
 
 
-        self.mu_1_list = [] # I can generalize this if needed
-        self.mu_2_list = []
-        self.sigma_1_list = []
-        self.sigma_2_list = []
+        self.mu_1_list = [0] # I can generalize this if needed
+        self.mu_2_list = [0]
+        self.sigma_1_list = [0]
+        self.sigma_2_list = [0]
 
         ## INITIALIZE STATE VALUES
         self.t = 0.0

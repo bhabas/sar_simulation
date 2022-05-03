@@ -17,7 +17,7 @@ from nav_msgs.msg import Odometry
 
 ## CHECK IF SIM OR EXPERIMENT IS RUNNING
 DATA_TYPE = rospy.get_param("DATA_TYPE")
-if DATA_TYPE == "EXPERIMENT":
+if DATA_TYPE == "EXP":
     from crazyflie_msgs_exp.msg import Vicon_Filtered,CF_StateData,GenericLogData
     from geometry_msgs.msg import TransformStamped
     
@@ -87,7 +87,7 @@ class Dashboard(QMainWindow,DashboardNode):
             self.check_CFDC_Connection()
             self.update_LCD()
 
-            if DATA_TYPE == "EXPERIMENT":
+            if DATA_TYPE == "EXP":
                 self.check_Vicon_Connection()
                 self.check_UKF_Connection()
                 self.check_CS_Connection()

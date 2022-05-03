@@ -16,24 +16,26 @@ np.set_printoptions(precision=2, suppress=True)
 def executeFlight(env,agent):
 
     ## MAKE SURE CONTROLLER IS WORKING
-    while True:
-        try:
-            rospy.wait_for_message("/clock",Clock,timeout=20)
-            rospy.wait_for_message("/CF_DC/StateData",CF_StateData,timeout=5.0)
-            break
+    # while True:
+        # try:
+        #     rospy.wait_for_message("/clock",Clock,timeout=20)
+        #     rospy.wait_for_message("/CF_DC/StateData",CF_StateData,timeout=5.0)
+        #     break
 
-        except rospy.exceptions.ROSException:
-            print("Restarting Controller")
-            env.launch_controller()
-            time.sleep(2)
-            env.reset_pos()
-            continue
+        # except rospy.exceptions.ROSException:
+        #     print("Restarting Controller")
+        #     env.launch_controller()
+        #     time.sleep(2)
+        #     env.reset_pos()
+        #     continue
 
     ## RESET TO INITIAL STATE
     env.step("home") # Reset control vals and functionality to default vals
-    time.sleep(0.3) # Time for CF to settle [Real-Time seconds]
+    time.sleep(0.5) # Time for CF to settle [Real-Time seconds]
+    # input("here")
+    env.RL_Publish()
+    env.startLogging()
 
-    env.step("policy",env.policy,cmd_flag=1) # Arm policy inside controller
 
     ## RESET/UPDATE RUN CONDITIONS
     repeat_run= False
@@ -43,8 +45,6 @@ def executeFlight(env,agent):
     start_time_impact = np.nan
 
     ## RESET LOGGING CONDITIONS 
-    t_prev = 0.0
-
     onceFlag_flip = False    # Ensures flip data recorded only once
     onceFlag_impact = False   # Ensures impact data recorded only once 
 
@@ -55,8 +55,14 @@ def executeFlight(env,agent):
     # ============================
     ##          Rollout 
     # ============================
+    env.step("policy",env.policy,cmd_flag=1) # Arm policy inside controller
     env.step('sticky',cmd_flag=1)              # Enable sticky pads
-    env.traj_launch(env.posCF,env.vel_d)
+
+    z_0 = env.h_ceiling - 1.0*env.vel_d[2]
+    env.Vel_Launch([0,0,z_0],env.vel_d)
+    # env.step('traj',cmd_vals=[env.posCF_0[0],env.vel_d[0],env.accCF_max[0]],cmd_flag=0)
+    # env.step('traj',cmd_vals=[env.posCF_0[1],env.vel_d[1],env.accCF_max[1]],cmd_flag=1)
+    # env.step('traj',cmd_vals=[env.posCF_0[2],env.vel_d[2],env.accCF_max[2]],cmd_flag=2)
 
 
     while True: 
@@ -89,14 +95,6 @@ def executeFlight(env,agent):
         if ((env.impact_flag or env.BodyContact_flag) and onceFlag_impact == False):
             start_time_impact = env.getTime()
             onceFlag_impact = True
-
-        # ============================
-        ##      Record Keeping  
-        # ============================
-
-        # If time changes then append csv file
-        if env.t != t_prev:
-            env.append_csv()
 
         # ============================
         ##    Termination Criteria 
@@ -146,7 +144,7 @@ def executeFlight(env,agent):
 
             print("\n")
             env.reward = agent.calcReward_Impact(env)
-            env.reward_inputs = [env.d_ceil_min,env.pitch_sum,env.pitch_max]
+            env.reward_inputs = [env.d_ceil_max,env.pitch_sum,env.pitch_max]
             
             
             print(f"Reward = {env.reward:.3f}")
@@ -156,11 +154,8 @@ def executeFlight(env,agent):
             
 
             ## RUN DATA LOGGING
-            env.append_csv_blank()
-            env.append_IC()
-            env.append_flip()
-            env.append_impact()
-            env.append_csv_blank()
+            env.RL_Publish()
+            env.capLogging()
 
             
 
@@ -172,7 +167,6 @@ def executeFlight(env,agent):
         
             break # Break from run loop
             
-        t_prev = env.t   
 
     ## =======  RUN COMPLETED  ======= ##
     
@@ -194,17 +188,16 @@ if __name__ == '__main__':
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 24
-    env.agent_name = agent.agent_type
-    env.trial_name = f"ExampleFlight--trial_{int(trial_num):02d}--{env.modelInitials}"
+    env.trial_name = f"ExampleFlight--trial_{int(trial_num):02d}--{env.modelInitials()}"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
-    env.logging_flag = True
-    env.create_csv(env.filepath)
+    env.Logging_Flag = True
+    env.createCSV(env.filepath)
 
-    V_d = 0.5
+    V_d = 1.0
     phi = 90
     phi_rad = np.radians(phi)
     env.vel_d = [V_d*np.cos(phi_rad), 0.0, V_d*np.sin(phi_rad)] # [m/s]
-    env.policy = [0.25,8.0,0] # NN policy
+    env.policy = [0.28,7.0,0] # NN policy
 
 
     ## RUN TRIAL

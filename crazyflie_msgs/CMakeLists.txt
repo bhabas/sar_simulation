@@ -28,12 +28,16 @@ add_message_files(
   PadConnect.msg
   MS.msg
   OF_SensorData.msg
+  GenericLogData.msg
+  Vicon_Filtered.msg
 )
 
 # Generate services in the 'srv' folder
 add_service_files(
   FILES
   activateSticky.srv
+  loggingCMD.srv
+  domainRand.srv
 )
 
 ## Generate added messages and services with any dependencies listed here

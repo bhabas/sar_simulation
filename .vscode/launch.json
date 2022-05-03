@@ -8,23 +8,20 @@
             "name": "ROS: Launch",
             "type": "ros",
             "request": "launch",
-            "target": "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_launch/launch/example.launch"
+            "target": "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_launch/launch/controller.launch"
         },
         
-        
-        {
-            "name": "ROS: Attach",
-            "type": "ros",
-            "request": "attach"
-        },
-
-
         {
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal"
+        },
+        {
+            "name": "ROS: Attach",
+            "type": "ros",
+            "request": "attach"
         },
         {
             "name": "gcc-9 - Build and debug active file",
