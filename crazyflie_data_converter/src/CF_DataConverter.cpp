@@ -21,7 +21,6 @@ void CF_DataConverter::Publish_StateData()
     StateData_msg.Tau = Tau;
     StateData_msg.OFx = OFx;
     StateData_msg.OFy = OFy;
-    StateData_msg.RREV = RREV;
     StateData_msg.D_ceil = D_ceil;
 
     // STATE SETPOINTS
@@ -63,7 +62,6 @@ void CF_DataConverter::Publish_FlipData()
     FlipData_msg.Tau_tr = Tau_tr;
     FlipData_msg.OFx_tr = OFx_tr;
     FlipData_msg.OFy_tr = OFy_tr;
-    FlipData_msg.RREV_tr = RREV_tr;
     FlipData_msg.D_ceil_tr = D_ceil_tr;
 
     // CONTROL ACTIONS
@@ -141,7 +139,6 @@ void CF_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
     Tau = ctrl_msg.Tau;
     OFx = ctrl_msg.OFx;
     OFy = ctrl_msg.OFy;
-    RREV = ctrl_msg.RREV;
     D_ceil = ctrl_msg.D_ceil;
 
     // STATE SETPOINTS
@@ -200,7 +197,6 @@ void CF_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
     Tau_tr = ctrl_msg.Tau_tr;
     OFx_tr = ctrl_msg.OFx_tr;
     OFy_tr = ctrl_msg.OFy_tr;
-    RREV_tr = ctrl_msg.RREV_tr;
     D_ceil_tr = ctrl_msg.D_ceil_tr;
 
     // CONTROLLER ACTIONS
@@ -532,7 +528,7 @@ void CF_DataConverter::consoleOuput()
     printf("Eul [deg]:\t %.3f  %.3f  %.3f\n",Eul.x,Eul.y,Eul.z);
     printf("\n");
 
-    printf("Tau: %.3f \tOFx: %.3f \tOFy: %.3f \tRREV: %.3f\n",Tau,OFx,OFy,RREV);
+    printf("Tau: %.3f \tOFx: %.3f \tOFy: %.3f\n",Tau,OFx,OFy);
     printf("D_ceil: %.3f\n",D_ceil);
     printf("\n");
 

@@ -146,10 +146,13 @@ typedef struct sensorData_s {
   baro_t baro;
 
   // CUSTOM SENSOR VALUES
+  float Tau_est;    // [s]
+  float OFx_est;    // [rad/s]
+  float OFy_est;    // [rad/s]
+
   float Tau;    // [s]
   float OFx;    // [rad/s]
   float OFy;    // [rad/s]
-  float RREV;   // [rad/s]
   float d_ceil; // [m]
 
 #ifdef LOG_SEC_IMU

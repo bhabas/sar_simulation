@@ -72,7 +72,6 @@ struct vec stateOmega = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
 float Tau = 0.0f;       // [s]
 float OFx = 0.0f;       // [rad/s]
 float OFy = 0.0f;       // [rad/s] 
-float RREV = 0.0f;      // [rad/s]
 float d_ceil = 0.0f;    // [m]
 
 static struct mat33 R; // Orientation as rotation matrix
@@ -195,7 +194,6 @@ struct vec stateOmega_tr = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
 float Tau_tr = 0.0f;    // [rad/s]
 float OFx_tr = 0.0f;    // [rad/s]
 float OFy_tr = 0.0f;    // [rad/s]
-float RREV_tr = 0.0f;   // [rad/s]
 float d_ceil_tr = 0.0f; // [m/s]
 
 // CONTROLLER STATES
@@ -315,7 +313,6 @@ void controllerGTCReset(void)
     Tau_tr = 0.0f;
     OFx_tr = 0.0f;
     OFy_tr = 0.0f;
-    RREV_tr = 0.0f;
     d_ceil_tr = 0.0f;
     
     NN_tr_flip = 0.0f;
@@ -618,9 +615,8 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         Tau = sensors->Tau;
         OFx = sensors->OFx;
         OFy = sensors->OFy;
-        RREV = sensors->RREV;
 
-        X->data[0][0] = RREV;
+        // X->data[0][0] = RREV;
         X->data[1][0] = OFy;
         X->data[2][0] = d_ceil; // d_ceiling [m]
 
@@ -646,7 +642,6 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                         Tau_tr = Tau;
                         OFx_tr = OFx;
                         OFy_tr = OFy;
-                        RREV_tr = RREV;
                         d_ceil_tr = d_ceil;
 
                     
@@ -681,7 +676,6 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                         Tau_tr = Tau;
                         OFx_tr = OFx;
                         OFy_tr = OFy;
-                        RREV_tr = RREV;
                         d_ceil_tr = d_ceil;
 
                         NN_tr_flip = NN_Forward_Flip(X,&Scaler_Flip,W_flip,b_flip);

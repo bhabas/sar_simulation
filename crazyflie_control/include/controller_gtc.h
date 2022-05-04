@@ -116,7 +116,6 @@ extern struct vec stateEul;
 extern float Tau;   // [s]
 extern float OFx;   // [rad/s]
 extern float OFy;   // [rad/s] 
-extern float RREV;  // [rad/s]
 extern float d_ceil;
 
 // INIT DESIRED STATES
@@ -198,7 +197,6 @@ extern struct vec stateOmega_tr;    // Angular Rate [rad/s]
 extern float Tau_tr;        // [rad/s]
 extern float OFx_tr;        // [rad/s]
 extern float OFy_tr;        // [rad/s]
-extern float RREV_tr;       // [rad/s]
 extern float d_ceil_tr;     // [m/s]
 
 // CONTROLLER STATES
@@ -210,7 +208,7 @@ extern float M_z_flip;      // [N*m]
 // ==========================
 //  RL POLICY INITIALIZATION
 // ==========================
-extern float Tau_thr;  // RREV threshold
+extern float Tau_thr;   // Tau threshold
 extern float G1;        // Body moment value
 extern float G2;        // Deprecated state value
 
