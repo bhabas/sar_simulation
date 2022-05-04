@@ -361,6 +361,8 @@ void Controller::loadParams()
 
     // SIMULATION SETTINGS FROM CONFIG FILE
     ros::param::get("/POLICY_TYPE",_POLICY_TYPE);
+    ros::param::get("/CAM_SENSOR",camera_sensor_active);
+
 
     // COLLECT CTRL GAINS FROM CONFIG FILE
     ros::param::get("P_kp_xy",P_kp_xy);
