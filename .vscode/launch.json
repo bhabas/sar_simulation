@@ -5,18 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "ROS: Launch",
-            "type": "ros",
-            "request": "launch",
-            "target": "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_launch/launch/controller.launch"
-        },
-        
-        {
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "ROS: Launch",
+            "type": "ros",
+            "request": "launch",
+            "target": "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_launch/launch/controller.launch"
         },
         {
             "name": "ROS: Attach",

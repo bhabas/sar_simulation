@@ -116,7 +116,7 @@ class Controller
         float _SIM_SPEED; 
         float _SIM_SLOWDOWN_SPEED;
         float _CF_MASS;
-        int _POLICY_TYPE;
+        int POLICY_TYPE;
         std::string _MODEL_NAME;
         bool STICKY_FLAG = false;
 
@@ -155,134 +155,131 @@ class Controller
 
 void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
 {
-    Cur_img = &(msg->data)[0]; // Point to current image data address
-
-    //Where the convolution starts
-    uint16_t X = 1;
-    uint16_t Y = 1;
-    float w = 3.6e-6; //Pixel width in meters
-    float f = 0.33e-3;//Focal length in meters
-    float U;
-    float V;
-    float O_up = WIDTH_PIXELS/2;
-    float V_up = WIDTH_PIXELS/2;
-    float Gtemp = 0;
-    float Iuu = 0;
-    float Ivv = 0;
-    float Iuv = 0;
-    float IGu = 0;
-    float IGv = 0;
-    float IGG = 0;
-    float Iut = 0;
-    float Ivt = 0;
-    float IGt = 0;
-    float dt;
-    int16_t Ittemp;
-    float Cur_time = ros::Time::now().toSec();
-    
-    for(int j = 0; j < (WIDTH_PIXELS - 2)*(HEIGHT_PIXELS - 2); j++) // How many times the kernel center moves around the image
+    if(camera_sensor_active == true)
     {
-
-        //GENERALIZE FOR CHANGE IN KERNEL SIZE
-        if(X >= WIDTH_PIXELS - 1) //if the edge of the kernel hits the edge of the image
-        { 
-        
-            X = 1; //move the kernel back to the left edge of the image
-            Y++; //and slide the kernel down the image
-
-        }
-
-        //Sub Kernel Indexing 
-        uint16_t i0 = (X - 1) + (Y - 1) * WIDTH_PIXELS; //First grab top left location of whole kernel
-        uint16_t i1 = i0 + WIDTH_PIXELS; //then each following row is separated by the image width
-        uint16_t i2 = i1 + WIDTH_PIXELS;
-
-        U = (X - O_up)*w + (w/2); // Using current location of the Kernel center
-        V = (Y - V_up)*w + (w/2); //calculate the current pixel grid locations (u,v)
-
-        // ######  DEBUGGING  ######
-        /*//
-        std::cout << "i0: " << i0 << "\n";
-        std::cout << "i1: " << i1 << "\n";
-        std::cout << "i2: " << i2 << "\n";
-        *///
-
-        int Xsum = 0; //reset rolling sum to 0
-        int Ysum = 0;
-
-        //GENERALIZE FOR CHANGE IN KERNEL SIZE
-        for(int k = 0; k < 3; k++){
-
-            //Sub kernel 0
-            Xsum += kx0[k] * Cur_img[i0 + k];
-            Ysum += ky0[k] * Cur_img[i0 + k];
-
-            //Sub kernel 1 (skipping ky1)
-            Xsum += kx1[k] * Cur_img[i1 + k];
-
-            //Sub kernel 2
-            Xsum += kx2[k] * Cur_img[i2 + k];
-            Ysum += ky2[k] * Cur_img[i2 + k];
-
-        }
-
-        //Sum assigned to middle value: (i1 + 1)
-        Ittemp = (Cur_img[i1 + 1] - Prev_img[i1 + 1]); //moved /dt to last step
-        Gtemp = (Xsum*U + Ysum*V);
-
-        //LHS Matrix values (rolling sums)
-        Iuu += Xsum*Xsum;
-        Ivv += Ysum*Ysum;
-        Iuv += Xsum*Ysum;
-        IGu += Gtemp*Xsum;
-        IGv += Gtemp*Ysum;
-        IGG += Gtemp*Gtemp;
-
-        //RHS Matrix Values (rolling sums)
-        Iut += Xsum*Ittemp;
-        Ivt += Ysum*Ittemp; 
-        IGt += Gtemp*Ittemp;
-
-        X++; // move center of kernel over
-        
-    } // END OF CONVOLUTION
-
-    dt = Cur_time - Prev_time;
-
-    // Packing final result into the matrices and applying the floating point math
-    double LHS[9] = {f/powf(8*w,2)*Iuu, f/powf(8*w,2)*Iuv, 1/powf(8*w,2)*IGu,
-                     f/powf(8*w,2)*Iuv, f/powf(8*w,2)*Ivv, 1/powf(8*w,2)*IGv,
-                     f/powf(8*w,2)*IGu, f/powf(8*w,2)*IGv, 1/powf(8*w,2)*IGG};
-
-    double RHS[3] = {-Iut/(8*w*dt), -Ivt/(8*w*dt), -IGt/(8*w*dt)}; //added change in time to final step
-
-    nml_mat* m_A = nml_mat_from(3,3,9,LHS);
-    nml_mat* m_b = nml_mat_from(3,1,3,RHS);
-
-    nml_mat_qr *QR = nml_mat_qr_solve(m_A); // A = Q*R
-    nml_mat* y = nml_mat_dot(nml_mat_transp(QR->Q),m_b); // y = Q^T*b
-    nml_mat* x_QR = nml_ls_solvebck(QR->R,y); // Solve R*x = y via back substitution
-    nml_mat_print(x_QR);
-
-    // sensorData.OFx = x_QR->data[0][0];
-    // sensorData.OFy = x_QR->data[1][0];
-    // sensorData.Tau = 1/x_QR->data[2][0];
-    // sensorData.RREV = x_QR->data[2][0];
-
-    nml_mat_free(m_A);
-    nml_mat_free(m_b);
-    nml_mat_qr_free(QR);
-    nml_mat_free(x_QR);
-
-
-
-    printf("Prev_Val: %u\n",Prev_img[0]);
-    printf("Cur_Val: %u\n",Cur_img[0]);
-    printf("\n");
-
     
-    memcpy(Prev_img,Cur_img,sizeof(msg->data)); // Copy memory to Prev_img address
-    Prev_time = Cur_time; // Setup previous time for next calculation
+        Cur_img = &(msg->data)[0]; // Point to current image data address
+
+        //Where the convolution starts
+        uint16_t X = 1;
+        uint16_t Y = 1;
+        float w = 3.6e-6; //Pixel width in meters
+        float f = 0.66e-3/2;//Focal length in meters
+        float U;
+        float V;
+        float O_up = WIDTH_PIXELS/2;
+        float V_up = WIDTH_PIXELS/2;
+        float Gtemp = 0;
+        float Iuu = 0;
+        float Ivv = 0;
+        float Iuv = 0;
+        float IGu = 0;
+        float IGv = 0;
+        float IGG = 0;
+        float Iut = 0;
+        float Ivt = 0;
+        float IGt = 0;
+        float dt;
+        int16_t Ittemp;
+        float Cur_time = ros::Time::now().toSec();
+        
+        for(int j = 0; j < (WIDTH_PIXELS - 2)*(HEIGHT_PIXELS - 2); j++) // How many times the kernel center moves around the image
+        {
+
+            //GENERALIZE FOR CHANGE IN KERNEL SIZE
+            if(X >= WIDTH_PIXELS - 1) //if the edge of the kernel hits the edge of the image
+            { 
+            
+                X = 1; //move the kernel back to the left edge of the image
+                Y++; //and slide the kernel down the image
+
+            }
+
+            //Sub Kernel Indexing 
+            uint16_t i0 = (X - 1) + (Y - 1) * WIDTH_PIXELS; //First grab top left location of whole kernel
+            uint16_t i1 = i0 + WIDTH_PIXELS; //then each following row is separated by the image width
+            uint16_t i2 = i1 + WIDTH_PIXELS;
+
+            U = (X - O_up)*w + (w/2); // Using current location of the Kernel center
+            V = (Y - V_up)*w + (w/2); //calculate the current pixel grid locations (u,v)
+
+            // ######  DEBUGGING  ######
+            /*//
+            std::cout << "i0: " << i0 << "\n";
+            std::cout << "i1: " << i1 << "\n";
+            std::cout << "i2: " << i2 << "\n";
+            *///
+
+            int Xsum = 0; //reset rolling sum to 0
+            int Ysum = 0;
+
+            //GENERALIZE FOR CHANGE IN KERNEL SIZE
+            for(int k = 0; k < 3; k++){
+
+                //Sub kernel 0
+                Xsum += kx0[k] * Cur_img[i0 + k];
+                Ysum += ky0[k] * Cur_img[i0 + k];
+
+                //Sub kernel 1 (skipping ky1)
+                Xsum += kx1[k] * Cur_img[i1 + k];
+
+                //Sub kernel 2
+                Xsum += kx2[k] * Cur_img[i2 + k];
+                Ysum += ky2[k] * Cur_img[i2 + k];
+
+            }
+
+            //Sum assigned to middle value: (i1 + 1)
+            Ittemp = (Cur_img[i1 + 1] - Prev_img[i1 + 1]); //moved /dt to last step
+            Gtemp = (Xsum*U + Ysum*V);
+
+            //LHS Matrix values (rolling sums)
+            Iuu += Xsum*Xsum;
+            Ivv += Ysum*Ysum;
+            Iuv += Xsum*Ysum;
+            IGu += Gtemp*Xsum;
+            IGv += Gtemp*Ysum;
+            IGG += Gtemp*Gtemp;
+
+            //RHS Matrix Values (rolling sums)
+            Iut += Xsum*Ittemp;
+            Ivt += Ysum*Ittemp; 
+            IGt += Gtemp*Ittemp;
+
+            X++; // move center of kernel over
+            
+        } // END OF CONVOLUTION
+
+        dt = Cur_time - Prev_time;
+
+        // Packing final result into the matrices and applying the floating point math
+        double LHS[9] = {f/powf(8*w,2)*Iuu, f/powf(8*w,2)*Iuv, 1/powf(8*w,2)*IGu,
+                        f/powf(8*w,2)*Iuv, f/powf(8*w,2)*Ivv, 1/powf(8*w,2)*IGv,
+                        f/powf(8*w,2)*IGu, f/powf(8*w,2)*IGv, 1/powf(8*w,2)*IGG};
+
+        double RHS[3] = {-Iut/(8*w*dt), -Ivt/(8*w*dt), -IGt/(8*w*dt)}; //added change in time to final step
+
+        nml_mat* m_A = nml_mat_from(3,3,9,LHS);
+        nml_mat* m_b = nml_mat_from(3,1,3,RHS);
+
+        nml_mat_qr *QR = nml_mat_qr_solve(m_A); // A = Q*R
+        nml_mat* y = nml_mat_dot(nml_mat_transp(QR->Q),m_b); // y = Q^T*b
+        nml_mat* x_QR = nml_ls_solvebck(QR->R,y); // Solve R*x = y via back substitution
+
+        sensorData.OFx_est = x_QR->data[0][0];
+        sensorData.OFy_est = x_QR->data[1][0];
+        sensorData.Tau_est = 1/x_QR->data[2][0];
+
+
+        nml_mat_free(m_A);
+        nml_mat_free(m_b);
+        nml_mat_qr_free(QR);
+        nml_mat_free(x_QR);
+
+
+        memcpy(Prev_img,Cur_img,sizeof(msg->data)); // Copy memory to Prev_img address
+        Prev_time = Cur_time; // Setup previous time for next calculation
+    }
 
 } // End of Camera_Sensor_Callback
 
@@ -293,7 +290,6 @@ void Controller::OF_Sensor_Callback(const crazyflie_msgs::OF_SensorData::ConstPt
     sensorData.Tau = msg->Tau;
     sensorData.OFx = msg->OFx;
     sensorData.OFy = msg->OFy;
-    sensorData.RREV = msg->RREV;
     sensorData.d_ceil = msg->d_ceil;
 
 }
@@ -361,7 +357,10 @@ void Controller::loadParams()
     ros::param::get("/Izz",Izz);
 
     // SIMULATION SETTINGS FROM CONFIG FILE
-    ros::param::get("/POLICY_TYPE",_POLICY_TYPE);
+    ros::param::get("/POLICY_TYPE",POLICY_TYPE);
+    PolicyType = POLICY_TYPE;
+    ros::param::get("/CAM_SENSOR",camera_sensor_active);
+
 
     // COLLECT CTRL GAINS FROM CONFIG FILE
     ros::param::get("P_kp_xy",P_kp_xy);
@@ -397,6 +396,7 @@ void Controller::publishCtrlDebug()
     CtrlDebug_msg.Tumbled_Flag = tumbled;
     CtrlDebug_msg.Moment_Flag = moment_flag; 
     CtrlDebug_msg.Policy_Armed = policy_armed_flag; 
+    CtrlDebug_msg.Camera_Sensor_Active = camera_sensor_active;
 
     CTRL_Debug_Publisher.publish(CtrlDebug_msg);
 }
@@ -423,11 +423,15 @@ void Controller::publishCtrlData()
     CtrlData_msg.Twist.angular.z = stateOmega.z;
 
     // OPTICAL FLOW DATA
-    CtrlData_msg.Tau = Tau;
-    CtrlData_msg.OFx = OFx;
-    CtrlData_msg.OFy = OFy;
-    CtrlData_msg.RREV = RREV;
-    CtrlData_msg.D_ceil = d_ceil;
+    CtrlData_msg.Tau = sensorData.Tau;
+    CtrlData_msg.OFx = sensorData.OFx;
+    CtrlData_msg.OFy = sensorData.OFy;
+    CtrlData_msg.D_ceil = sensorData.d_ceil;
+
+    // ESTIMATED OPTICAL FLOW DATA
+    CtrlData_msg.Tau_est = sensorData.Tau_est;
+    CtrlData_msg.OFx_est = sensorData.OFx_est;
+    CtrlData_msg.OFy_est = sensorData.OFy_est;
 
     CtrlData_msg.Tau_thr = Tau_thr;
     CtrlData_msg.G1 = G1;
@@ -480,7 +484,6 @@ void Controller::publishCtrlData()
     CtrlData_msg.Tau_tr = Tau_tr;
     CtrlData_msg.OFx_tr = OFx_tr;
     CtrlData_msg.OFy_tr = OFy_tr;
-    CtrlData_msg.RREV_tr = RREV_tr;
     CtrlData_msg.D_ceil_tr = d_ceil_tr;
 
     // NEURAL NETWORK DATA (FLIP)
