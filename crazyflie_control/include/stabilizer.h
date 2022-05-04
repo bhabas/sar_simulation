@@ -116,7 +116,7 @@ class Controller
         float _SIM_SPEED; 
         float _SIM_SLOWDOWN_SPEED;
         float _CF_MASS;
-        int _POLICY_TYPE;
+        int POLICY_TYPE;
         std::string _MODEL_NAME;
         bool STICKY_FLAG = false;
 
@@ -360,7 +360,8 @@ void Controller::loadParams()
     ros::param::get("/Izz",Izz);
 
     // SIMULATION SETTINGS FROM CONFIG FILE
-    ros::param::get("/POLICY_TYPE",_POLICY_TYPE);
+    ros::param::get("/POLICY_TYPE",POLICY_TYPE);
+    PolicyType = POLICY_TYPE;
     ros::param::get("/CAM_SENSOR",camera_sensor_active);
 
 
