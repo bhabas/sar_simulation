@@ -262,7 +262,6 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
     nml_mat_qr *QR = nml_mat_qr_solve(m_A); // A = Q*R
     nml_mat* y = nml_mat_dot(nml_mat_transp(QR->Q),m_b); // y = Q^T*b
     nml_mat* x_QR = nml_ls_solvebck(QR->R,y); // Solve R*x = y via back substitution
-    nml_mat_print(x_QR);
 
     sensorData.OFx_est = x_QR->data[0][0];
     sensorData.OFy_est = x_QR->data[1][0];
@@ -275,12 +274,6 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
     nml_mat_free(x_QR);
 
 
-
-    printf("Prev_Val: %u\n",Prev_img[0]);
-    printf("Cur_Val: %u\n",Cur_img[0]);
-    printf("\n");
-
-    
     memcpy(Prev_img,Cur_img,sizeof(msg->data)); // Copy memory to Prev_img address
     Prev_time = Cur_time; // Setup previous time for next calculation
 
@@ -426,10 +419,15 @@ void Controller::publishCtrlData()
     CtrlData_msg.Twist.angular.z = stateOmega.z;
 
     // OPTICAL FLOW DATA
-    CtrlData_msg.Tau = Tau;
-    CtrlData_msg.OFx = OFx;
-    CtrlData_msg.OFy = OFy;
-    CtrlData_msg.D_ceil = d_ceil;
+    CtrlData_msg.Tau = sensorData.Tau;
+    CtrlData_msg.OFx = sensorData.OFx;
+    CtrlData_msg.OFy = sensorData.OFy;
+    CtrlData_msg.D_ceil = sensorData.d_ceil;
+
+    // ESTIMATED OPTICAL FLOW DATA
+    CtrlData_msg.Tau_est = sensorData.Tau_est;
+    CtrlData_msg.OFx_est = sensorData.OFx_est;
+    CtrlData_msg.OFy_est = sensorData.OFy_est;
 
     CtrlData_msg.Tau_thr = Tau_thr;
     CtrlData_msg.G1 = G1;

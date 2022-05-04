@@ -5,6 +5,10 @@ float64 OFx
 float64 OFy
 float64 D_ceil
 
+float64 Tau_est
+float64 OFx_est
+float64 OFy_est
+
 float64[4] FM
 float64[4] MotorThrusts
 uint32[4] MS_PWM

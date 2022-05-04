@@ -619,14 +619,9 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
         if(camera_sensor_active == true)
         {
-            Tau_est = sensors->Tau_est;
-            OFx_est = sensors->OFx_est;
-            OFy_est = sensors->OFy_est;
-
-            Tau = Tau_est;
-            OFx = OFx_est;
-            OFy = OFy_est;
-
+            Tau = sensors->Tau_est;
+            OFx = sensors->OFx_est;
+            OFy = sensors->OFy_est;
         }
         else
         {

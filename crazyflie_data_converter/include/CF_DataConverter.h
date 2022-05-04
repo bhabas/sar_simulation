@@ -631,6 +631,7 @@ void CF_DataConverter::create_CSV()
     fprintf(fPtr,"flip_flag,impact_flag,");
 
     //  MISC INTERNAL STATE ESTIMATES
+    fprintf(fPtr,"Tau_est,OF_x_est,OF_y_est,");
     fprintf(fPtr,"Tau,OF_x,OF_y,d_ceil,");
     fprintf(fPtr,"F_thrust,Mx,My,Mz,");
     fprintf(fPtr,"M1_thrust,M2_thrust,M3_thrust,M4_thrust,");
@@ -669,6 +670,7 @@ void CF_DataConverter::append_CSV_states()
     fprintf(fPtr,"%s,%s,",formatBool(flip_flag),formatBool(impact_flag));   // flip_flag,impact_flag
 
     // MISC INTERNAL STATE ESTIMATES
+    fprintf(fPtr,"%.3f,%.3f,%.3f,",Tau_est,OFx_est,OFy_est);      // Tau,OF_x,OF_y,d_ceil
     fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Tau,OFx,OFy,D_ceil);      // Tau,OF_x,OF_y,d_ceil
     fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",FM[0],FM[1],FM[2],FM[3]);           // F_thrust,Mx,My,Mz
     fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",MotorThrusts[0],MotorThrusts[1],MotorThrusts[2],MotorThrusts[3]); // M1_thrust,M2_thrust,M3_thrust,M4_thrust
@@ -709,6 +711,7 @@ void CF_DataConverter::append_CSV_misc()
     fprintf(fPtr,"%.2f,[%.3f %.3f %.3f],",reward,reward_inputs[0],reward_inputs[1],reward_inputs[2]);
 
     // MISC INTERNAL STATE ESTIMATES
+    fprintf(fPtr,"--,--,--,"); // Tau_est,OF_x_est,OF_y_est
     fprintf(fPtr,"--,--,--,--,"); // Tau,OF_x,OF_y,d_ceil
     fprintf(fPtr,"--,--,--,--,"); // F_thrust,Mx,My,Mz
     fprintf(fPtr,"--,--,--,--,"); // M1_thrust,M2_thrust,M3_thrust,M4_thrust
@@ -748,6 +751,7 @@ void CF_DataConverter::append_CSV_flip()
     fprintf(fPtr,"%s,--,",formatBool(flip_flag));
 
     // MISC INTERNAL STATE ESTIMATES
+    fprintf(fPtr,"--,--,--,"); // Tau_est,OF_x_est,OF_y_est
     fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Tau_tr,OFx_tr,OFy_tr,D_ceil_tr);
     fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",FM_tr[0],FM_tr[1],FM_tr[2],FM_tr[3]);
     fprintf(fPtr,"--,--,--,--,");
@@ -786,6 +790,7 @@ void CF_DataConverter::append_CSV_impact()
     fprintf(fPtr,"%s,%s,",formatBool(BodyContact_flag),formatBool(impact_flag));
 
     // MISC INTERNAL STATE ESTIMATES
+    fprintf(fPtr,"--,--,--,"); // Tau_est,OF_x_est,OF_y_est
     fprintf(fPtr,"%u,%u,%u,%u,%u,",Pad_Connections,Pad1_Contact,Pad2_Contact,Pad3_Contact,Pad4_Contact);
     fprintf(fPtr,"--,%.3f,%.3f,%.3f,",impact_force_x,impact_force_y,impact_force_z);
     fprintf(fPtr,"--,--,--,--,");

@@ -17,11 +17,16 @@ void CF_DataConverter::Publish_StateData()
 
 
 
-    // OPTICAL FLOW
+    // OPTICAL FLOW STATES
     StateData_msg.Tau = Tau;
     StateData_msg.OFx = OFx;
     StateData_msg.OFy = OFy;
     StateData_msg.D_ceil = D_ceil;
+
+    // OPTICAL FLOW STATE ESTIMATES
+    StateData_msg.Tau_est = Tau_est;
+    StateData_msg.OFx_est = OFx_est;
+    StateData_msg.OFy_est = OFy_est;
 
     // STATE SETPOINTS
     StateData_msg.x_d = x_d;
@@ -135,11 +140,16 @@ void CF_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
     Eul.y = eul[1]*180/M_PI;
     Eul.z = eul[2]*180/M_PI;
 
-    // OPTICAL FLOW
+    // OPTICAL FLOW STATES
     Tau = ctrl_msg.Tau;
     OFx = ctrl_msg.OFx;
     OFy = ctrl_msg.OFy;
     D_ceil = ctrl_msg.D_ceil;
+
+    // ESTIMATED OPTICAL FLOW STATES
+    Tau_est = ctrl_msg.Tau_est;
+    OFx_est = ctrl_msg.OFx_est;
+    OFy_est = ctrl_msg.OFy_est;    
 
     // STATE SETPOINTS
     x_d = ctrl_msg.x_d;
