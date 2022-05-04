@@ -77,6 +77,9 @@ def runTraining(env,agent):
             env.policy = [Tau_thr/10,np.abs(My),G2]
 
             try: # Use try block to catch raised exceptions and attempt rollout again
+                env.Iyy = rospy.get_param("Iyy") + np.random.normal(0,1.5e-6)
+                env.mass = rospy.get_param("/CF_Mass") + np.random.normal(0,0.0005)
+                env.updateInertia()
                 executeFlight(env,agent)
 
                 if env.repeat_run == True: # Runs when error detected
@@ -105,7 +108,7 @@ def runTraining(env,agent):
 if __name__ == '__main__':
     
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=False)
+    env = CrazyflieEnv(gazeboTimeout=True)
 
     ## Home Test List
     df = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/Policy_Mapping/Data_Collection/MasterTestList.csv")
@@ -114,7 +117,7 @@ if __name__ == '__main__':
     for V_d,phi,tau_0,trial_num in arr:
         
         mu = [tau_0*10,np.random.uniform(3.0,8.0)]       # Initial mu starting point
-        sigma = [0.2,1.5]   # Initial sigma starting point
+        sigma = [0.5,1.5]   # Initial sigma starting point
         agent = rlEM_PEPGAgent(mu,sigma,n_rollouts=env.n_rollouts)
 
 
@@ -125,10 +128,10 @@ if __name__ == '__main__':
         ## INITIALIALIZE LOGGING DATA
         env.agent_name = agent.agent_type
         env.trialComplete_flag = False
-        env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--{env.modelInitials}"
+        env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--{env.modelInitials()}--DR"
         env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
-        env.logging_flag = True
-        env.create_csv(env.filepath)
+        env.Logging_Flag = True
+        env.createCSV(env.filepath)
 
         runTraining(env,agent)
         env.trialComplete_flag = True

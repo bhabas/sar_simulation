@@ -264,15 +264,18 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
     nml_mat* x_QR = nml_ls_solvebck(QR->R,y); // Solve R*x = y via back substitution
     nml_mat_print(x_QR);
 
+    sensorData.OFx = x_QR->data[0][0];
+    sensorData.OFy = x_QR->data[1][0];
+    sensorData.Tau = 1/x_QR->data[2][0];
+    sensorData.RREV = x_QR->data[2][0];
+
+
     nml_mat_free(m_A);
     nml_mat_free(m_b);
     nml_mat_qr_free(QR);
     nml_mat_free(x_QR);
 
 
-    // sensorData.Tau = 0.0f;
-    // sensorData.OFx = 0.0f;
-    // sensorData.OFy = 0.0f;
 
     printf("Prev_Val: %u\n",Prev_img[0]);
     printf("Cur_Val: %u\n",Cur_img[0]);
@@ -288,10 +291,10 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
 // OPTICAL FLOW VALUES (IN BODY FRAME) FROM MODEL SENSOR PLUGIN
 void Controller::OF_Sensor_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg)
 {
-    sensorData.Tau = msg->Tau;
-    sensorData.OFx = msg->OFx;
-    sensorData.OFy = msg->OFy;
-    sensorData.RREV = msg->RREV;
+    // sensorData.Tau = msg->Tau;
+    // sensorData.OFx = msg->OFx;
+    // sensorData.OFy = msg->OFy;
+    // sensorData.RREV = msg->RREV;
     sensorData.d_ceil = msg->d_ceil;
 
 }
@@ -390,7 +393,7 @@ void Controller::publishCtrlDebug()
     CtrlDebug_msg.Motorstop_Flag = motorstop_flag;
     CtrlDebug_msg.Pos_Ctrl = (bool)kp_xf;
     CtrlDebug_msg.Vel_Ctrl = (bool)kd_xf;
-    CtrlDebug_msg.Traj_Active = execute_traj;
+    CtrlDebug_msg.Traj_Active = execute_vel_traj;
     CtrlDebug_msg.Tumble_Detection = tumble_detection;
     CtrlDebug_msg.Tumbled_Flag = tumbled;
     CtrlDebug_msg.Moment_Flag = moment_flag; 
@@ -486,7 +489,7 @@ void Controller::publishCtrlData()
     CtrlData_msg.NN_tr_policy = NN_tr_policy;
 
     // CONTROL ACTIONS (FLIP)
-    CtrlData_msg.FM_flip = {F_thrust_flip,M_x_flip*1.0e3,M_y_flip*1.0e3,M_z_flip*1.0e3};
+    CtrlData_msg.FM_flip = {F_thrust_flip,M_x_flip,M_y_flip,M_z_flip};
 
     
     CTRL_Data_Publisher.publish(CtrlData_msg);

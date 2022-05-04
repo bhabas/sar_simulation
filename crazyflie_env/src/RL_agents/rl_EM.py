@@ -28,7 +28,7 @@ class rlEM_PEPGAgent():
         theta = np.zeros((len(self.mu),self.n_rollouts))
         
         lower_limit = [0.0,0.0] # Lower and Upper limits for truncated normal distribution 
-        upper_limit = [7.0,10.0]
+        upper_limit = [6.0,10.0]
                                 # 9.10 N*mm is the upper limit for My_d
 
         for ii,mu_ii in enumerate(self.mu):
@@ -45,7 +45,7 @@ class rlEM_PEPGAgent():
         print(summary)
 
         k = ceil(self.n_rollouts/3)
-        k = 2 # Select the top 3 rollouts for training
+        k = 3 # Select the top 3 rollouts for training
 
         S_theta = (summary[0:self.d,0:k].dot(summary[self.d,0:k].reshape(k,1)))
         S_reward = np.sum(summary[self.d,0:k])
@@ -64,7 +64,7 @@ class rlEM_PEPGAgent():
     def calcReward_Impact(self,env):
 
         ## CALC R_1 FROM MAXIMUM HEIGHT ACHIEVED
-        R_1 = 1/env.d_ceil_min
+        R_1 = 1/env.d_ceil_max
 
         ## CALC R2 FROM THE IMPACT ANGLE
         eul_y_impact = env.eulCF_impact[1]

@@ -20,6 +20,9 @@ namespace gazebo {
     class OF_SensorPlugin: public ModelPlugin
     {
         public:
+            OF_SensorPlugin();
+            ~OF_SensorPlugin();
+
             
         protected:
             void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
@@ -62,6 +65,15 @@ namespace gazebo {
             ros::NodeHandle nh;
             ros::Publisher OF_Publisher;
             crazyflie_msgs::OF_SensorData OF_Data_msg;
+    };
+
+    OF_SensorPlugin::OF_SensorPlugin()
+    {
+    };
+
+    OF_SensorPlugin::~OF_SensorPlugin()
+    {
+        publisherThread.join();
     };
 
 }

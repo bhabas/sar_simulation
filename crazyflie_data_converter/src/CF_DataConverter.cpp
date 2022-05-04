@@ -279,6 +279,7 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
         CF_DataConverter::adjustSimSpeed(SIM_SPEED);
         SLOWDOWN_TYPE = 0;
 
+        
                 
     }
 
@@ -313,11 +314,26 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
 
 void CF_DataConverter::RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &msg)
 {
+
+    k_ep = msg->k_ep;
+    k_run = msg->k_run;
+    n_rollouts = msg->n_rollouts;
+
+    mu = msg->mu;
+    sigma = msg->sigma;
+    policy = msg->policy;
+
+    reward = msg->reward;
+    reward_inputs = msg->reward_inputs;
+
+    vel_d = msg->vel_d;
+
+    runComplete_flag = msg->runComplete_flag;
+
     if(msg->trialComplete_flag == true)
     {
         Time_start = ros::Time::now();
     }
-
 }
 
 
@@ -496,8 +512,8 @@ void CF_DataConverter::quat2euler(float quat[], float eul[]){
 void CF_DataConverter::consoleOuput()
 {
     system("clear");
-    printf("t: %.4f \tCmd: \n",Time.toSec());
-    printf("Model: %s\n",MODEL_NAME.c_str());
+    printf("t: %.4f V: %.3f\n",(Time-Time_start).toSec(),V_battery);
+    printf("DataType: %s \t Model: %s\n",DATA_TYPE.c_str(),MODEL_NAME.c_str());
     printf("\n");
 
     printf("==== Flags ====\n");
@@ -566,18 +582,30 @@ void CF_DataConverter::consoleOuput()
 void CF_DataConverter::MainLoop()
 {
     int loopRate = 100;     // [Hz]
-    int consoleRate = 20;   // [Hz]
     ros::Rate rate(loopRate);
+
+
     
     while(ros::ok)
     {   
+
+
         // DISPLAY CONSOLE AT CONSOLE_RATE FREQUENCY
-        if (tick%(loopRate/consoleRate) == 0) {
+        if (RATE_DO_EXECUTE(CONSOLE_RATE, tick))
+        {
             CF_DataConverter::consoleOuput();
+
+        }
+
+        if (RATE_DO_EXECUTE(LOGGING_RATE, tick))
+        {
+            if(Logging_Flag == true)
+            {
+                append_CSV_states();
+            }
         }
 
         CF_DataConverter::checkSlowdown();
-
 
         // PUBLISH ORGANIZED DATA
         Publish_StateData();
@@ -588,6 +616,8 @@ void CF_DataConverter::MainLoop()
         tick++;
         rate.sleep();
     }
+
+
 }
 
 int main(int argc, char** argv)
