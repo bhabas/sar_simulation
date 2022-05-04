@@ -234,6 +234,8 @@ void MyClass::Convolution_X_Y(const unsigned char* input, int ImgX, int ImgY)
     nml_mat* x_QR = nml_ls_solvebck(QR->R,y); // Solve R*x = y via back substitution
     nml_mat_print(x_QR);
 
+    std::cout <<"\nTTC: " << 1/x_QR->data[2][0] << "\n";
+
     nml_mat_free(m_A);
     nml_mat_free(m_b);
     nml_mat_qr_free(QR);

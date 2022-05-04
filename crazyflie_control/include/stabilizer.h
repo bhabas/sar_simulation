@@ -264,11 +264,10 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
     nml_mat* x_QR = nml_ls_solvebck(QR->R,y); // Solve R*x = y via back substitution
     nml_mat_print(x_QR);
 
-    sensorData.OFx = x_QR->data[0][0];
-    sensorData.OFy = x_QR->data[1][0];
-    sensorData.Tau = 1/x_QR->data[2][0];
-    sensorData.RREV = x_QR->data[2][0];
-
+    // sensorData.OFx = x_QR->data[0][0];
+    // sensorData.OFy = x_QR->data[1][0];
+    // sensorData.Tau = 1/x_QR->data[2][0];
+    // sensorData.RREV = x_QR->data[2][0];
 
     nml_mat_free(m_A);
     nml_mat_free(m_b);
@@ -291,10 +290,10 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
 // OPTICAL FLOW VALUES (IN BODY FRAME) FROM MODEL SENSOR PLUGIN
 void Controller::OF_Sensor_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg)
 {
-    // sensorData.Tau = msg->Tau;
-    // sensorData.OFx = msg->OFx;
-    // sensorData.OFy = msg->OFy;
-    // sensorData.RREV = msg->RREV;
+    sensorData.Tau = msg->Tau;
+    sensorData.OFx = msg->OFx;
+    sensorData.OFy = msg->OFy;
+    sensorData.RREV = msg->RREV;
     sensorData.d_ceil = msg->d_ceil;
 
 }
