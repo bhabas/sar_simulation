@@ -76,6 +76,12 @@ float OFx = 0.0f;       // [rad/s]
 float OFy = 0.0f;       // [rad/s] 
 float d_ceil = 0.0f;    // [m]
 
+// ESTIMATED OPTICAL FLOW STATES
+float Tau_est = 0.0f; // [s]
+float OFx_est = 0.0f; // [rad/s]
+float OFy_est = 0.0f; // [rad/s]
+
+
 static struct mat33 R; // Orientation as rotation matrix
 struct vec stateEul = {0.0f,0.0f,0.0f}; // Pose in Euler Angles [YZX Notation]
 
@@ -613,9 +619,14 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
         if(camera_sensor_active == true)
         {
-            Tau = sensors->Tau_est;
-            OFx = sensors->OFx_est;
-            OFy = sensors->OFy_est;
+            Tau_est = sensors->Tau_est;
+            OFx_est = sensors->OFx_est;
+            OFy_est = sensors->OFy_est;
+
+            Tau = Tau_est;
+            OFx = OFx_est;
+            OFy = OFy_est;
+
         }
         else
         {

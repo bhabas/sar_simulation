@@ -222,6 +222,10 @@ class CF_DataConverter
         double OFy = 0.0;
         double D_ceil = 0.0;
 
+        double Tau_est = 0.0;
+        double OFx_est = 0.0;
+        double OFy_est = 0.0;
+
         boost::array<double,4> FM{0,0,0,0};
         boost::array<double,4> MotorThrusts{0,0,0,0};
         boost::array<uint16_t,4> MS_PWM{0,0,0,0};

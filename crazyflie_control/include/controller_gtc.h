@@ -118,6 +118,11 @@ extern float OFx;   // [rad/s]
 extern float OFy;   // [rad/s] 
 extern float d_ceil;
 
+// ESTIMATED OPTICAL FLOW STATES
+extern float Tau_est; // [s]
+extern float OFx_est; // [rad/s]
+extern float OFy_est; // [rad/s]
+
 // INIT DESIRED STATES
 extern struct vec x_d;      // Pos-desired [m]
 extern struct vec v_d;      // Vel-desired [m/s]
