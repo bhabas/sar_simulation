@@ -1,155 +1,17 @@
 {
-    "files.associations": {
-        "iostream": "cpp",
-        "unordered_map": "c",
-        "unordered_set": "c",
-        "regex": "c",
-        "array": "c",
-        "tuple": "c",
-        "utility": "c",
-        "variant": "c",
-        "thread": "c",
-        "ostream": "cpp",
-        "iomanip": "cpp",
-        "cctype": "c",
-        "clocale": "c",
-        "cmath": "c",
-        "csignal": "c",
-        "cstdarg": "c",
-        "cstddef": "c",
-        "cstdio": "c",
-        "cstdlib": "c",
-        "cstring": "c",
-        "ctime": "c",
-        "cwchar": "c",
-        "cwctype": "c",
-        "any": "c",
-        "atomic": "c",
-        "hash_map": "c",
-        "hash_set": "c",
-        "*.tcc": "c",
-        "bitset": "c",
-        "chrono": "c",
-        "codecvt": "c",
-        "complex": "c",
-        "condition_variable": "c",
-        "cstdint": "c",
-        "deque": "c",
-        "list": "c",
-        "vector": "c",
-        "exception": "c",
-        "algorithm": "c",
-        "functional": "c",
-        "iterator": "c",
-        "map": "c",
-        "memory": "c",
-        "memory_resource": "c",
-        "numeric": "c",
-        "optional": "c",
-        "random": "c",
-        "ratio": "c",
-        "set": "c",
-        "string": "c",
-        "string_view": "c",
-        "system_error": "c",
-        "type_traits": "c",
-        "fstream": "c",
-        "future": "c",
-        "initializer_list": "c",
-        "iosfwd": "c",
-        "istream": "c",
-        "limits": "c",
-        "mutex": "c",
-        "new": "c",
-        "shared_mutex": "c",
-        "sstream": "c",
-        "stdexcept": "c",
-        "streambuf": "c",
-        "cinttypes": "c",
-        "typeindex": "c",
-        "typeinfo": "c",
-        "bit": "c",
-        "nml_util.h": "c",
-        "string.h": "c",
-        "nml.h": "c",
-        "*.ipp": "cpp",
-        "values.h": "c",
-        "nn_layers_policy_wl.h": "c",
-        "controller_gtc.h": "c",
-        "nn_layers_flip_wl.h": "c",
-        "stdio.h": "c",
-        "library.h": "c",
-        "quatcompress.h": "c",
-        "physicalconstants.h": "c",
-        "math.h": "c",
-        "stdint.h": "c",
-        "stabilizer_types.h": "c",
-        "strstream": "cpp",
-        "cfenv": "cpp"
-    },
-    "python.analysis.extraPaths": [
-        "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_rl/src/",
-        "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_rl/src/Crazyflie_env.py"
-    ],
-    "favorites.resources": [
-        {
-            "filePath": "crazyflie_gazebo/src/controller.cpp",
-            "group": "Default"
-        },
-        {
-            "filePath": "crazyflie_rl/src/CF_training_2term_Policy.py",
-            "group": "Default"
-        },
-        {
-            "filePath": "crazyflie_gazebo/include/controller.h",
-            "group": "Default"
-        },
-        {
-            "filePath": "crazyflie_projects/Policy_Mapping/NeuralNetwork/NN_Flip_Classifier.py",
-            "group": "Default"
-        },
-        {
-            "filePath": "crazyflie_projects/Policy_Mapping/NeuralNetwork/NN_Policy_Value.py",
-            "group": "Default"
-        },
-        {
-            "filePath": "crazyflie_rl/src/Control_Playground.py",
-            "group": "Default"
-        },
-        {
-            "filePath": "crazyflie_launch/config/Sim_Settings.yaml",
-            "group": "Default"
-        },
-        {
-            "filePath": "crazyflie_data/local_logs",
-            "group": "Default"
-        },
-        {
-            "filePath": "crazyflie_projects/ICRA_DataAnalysis/Wide-Long_2-Policy",
-            "group": "Default"
-        },
-        {
-            "filePath": "crazyflie_data/ICRA_2022_Data/Wide-Long_2-Policy/Wide-Long_2-Policy_Summary.csv",
-            "group": "Default"
-        },
-        {
-            "filePath": "crazyflie_projects/Policy_Mapping",
-            "group": "Default"
-        },
-        {
-            "filePath": "crazyflie_rl/src/Crazyflie_env.py",
-            "group": "Default"
-        }
-    ],
-    "favorites.sortOrder": "DESC",
-    "favorites.groups": [
-        "Default",
-        "Priot"
-    ],
-    "favorites.currentGroup": "Default",
-    "cmake.configureOnOpen": false,
+    "ros.distro": "noetic",
     "python.autoComplete.extraPaths": [
-        "/home/mrrobot/catkin_ws/devel/lib/python3/dist-packages",
+        "/home/bhabas/catkin_ws/src/crazyflie_experiment/crazyswarm/ros_ws/devel/lib/python3/dist-packages",
+        "/home/bhabas/catkin_ws/devel/lib/python3/dist-packages",
         "/opt/ros/noetic/lib/python3/dist-packages"
-    ]
+    ],
+    "python.analysis.extraPaths": [
+        "/home/bhabas/catkin_ws/src/crazyflie_experiment/crazyswarm/ros_ws/devel/lib/python3/dist-packages",
+        "/home/bhabas/catkin_ws/devel/lib/python3/dist-packages",
+        "/opt/ros/noetic/lib/python3/dist-packages"
+    ],
+    "cmake.configureOnOpen": false,
+    "files.associations": {
+        "controller_gtc.h": "c"
+    }
 }

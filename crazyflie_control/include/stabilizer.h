@@ -161,7 +161,7 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
     uint16_t X = 1;
     uint16_t Y = 1;
     float w = 3.6e-6; //Pixel width in meters
-    float f = 0.33e-3;//Focal length in meters
+    float f = 0.66e-3/2;//Focal length in meters
     float U;
     float V;
     float O_up = WIDTH_PIXELS/2;
@@ -264,9 +264,9 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
     nml_mat* x_QR = nml_ls_solvebck(QR->R,y); // Solve R*x = y via back substitution
     nml_mat_print(x_QR);
 
-    // sensorData.OFx = x_QR->data[0][0];
-    // sensorData.OFy = x_QR->data[1][0];
-    // sensorData.Tau = 1/x_QR->data[2][0];
+    sensorData.OFx_est = x_QR->data[0][0];
+    sensorData.OFy_est = x_QR->data[1][0];
+    sensorData.Tau_est = 1/x_QR->data[2][0];
 
 
     nml_mat_free(m_A);
@@ -396,6 +396,7 @@ void Controller::publishCtrlDebug()
     CtrlDebug_msg.Tumbled_Flag = tumbled;
     CtrlDebug_msg.Moment_Flag = moment_flag; 
     CtrlDebug_msg.Policy_Armed = policy_armed_flag; 
+    CtrlDebug_msg.Camera_Sensor_Active = camera_sensor_active;
 
     CTRL_Debug_Publisher.publish(CtrlDebug_msg);
 }

@@ -218,6 +218,7 @@ void CF_DataConverter::CtrlDebug_Callback(const crazyflie_msgs::CtrlDebug &ctrl_
     Tumbled_Flag = ctrl_msg.Tumbled_Flag;
     Moment_Flag = ctrl_msg.Moment_Flag;
     Policy_Armed_Flag = ctrl_msg.Policy_Armed;
+    Camera_Sensor_Active = ctrl_msg.Camera_Sensor_Active;
 }
 
 void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
@@ -517,7 +518,7 @@ void CF_DataConverter::consoleOuput()
     printf("Traj Active:\t%u  Impact_flag:\t  %u  Vel Ctrl:\t    %u \n",Traj_Active_Flag,impact_flag,Vel_Ctrl_Flag);
     printf("Policy_type:\t%u  Tumble Detect: %u  Moment_Flag:   %u \n",POLICY_TYPE,Tumble_Detection,Moment_Flag);
     printf("Policy_armed:\t%u  Tumbled:\t  %u  Slowdown_type: %u\n",Policy_Armed_Flag,Tumbled_Flag,SLOWDOWN_TYPE);
-    printf("Sticky_flag:\t%u\n",Sticky_Flag);
+    printf("Sticky_flag:\t%u  Cam_Est:\t  %u\n",Sticky_Flag,Camera_Sensor_Active);
     printf("\n");
 
 

@@ -6,6 +6,8 @@
 // =================================
 //    CONTROL GAIN INITIALIZATION
 // =================================
+// (INITIAL VALUES THAT ARE OVERWRITTEN BY Ctrl_Gains.yaml)
+
 // XY POSITION PID
 float P_kp_xy = 0.5f;
 float P_kd_xy = 0.3f;
@@ -165,6 +167,7 @@ bool safeModeFlag = false;
 bool execute_P2P_traj = false;
 bool execute_vel_traj = false;
 bool policy_armed_flag = false;
+bool camera_sensor_active = false;
 
 bool flip_flag = false;
 bool onceFlag = false;
@@ -601,9 +604,6 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
             setpoint->GTC_cmd_rec = false;
         }
 
-
-        
-        
         if(execute_vel_traj){
             velocity_Traj();
         }
@@ -611,12 +611,22 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
             point2point_Traj();
         }
 
+        if(camera_sensor_active == true)
+        {
+            Tau = sensors->Tau_est;
+            OFx = sensors->OFx_est;
+            OFy = sensors->OFy_est;
+        }
+        else
+        {
+            Tau = sensors->Tau;
+            OFx = sensors->OFx;
+            OFy = sensors->OFy;
+        }
+        
         d_ceil = sensors->d_ceil;
-        Tau = sensors->Tau;
-        OFx = sensors->OFx;
-        OFy = sensors->OFy;
 
-        // X->data[0][0] = RREV;
+        X->data[0][0] = Tau;
         X->data[1][0] = OFy;
         X->data[2][0] = d_ceil; // d_ceiling [m]
 

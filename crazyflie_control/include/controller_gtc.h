@@ -175,6 +175,8 @@ extern bool safeModeFlag;
 extern bool execute_P2P_traj;
 extern bool execute_vel_traj;
 extern bool policy_armed_flag;
+extern bool camera_sensor_active;
+
 
 extern bool flip_flag;
 extern bool onceFlag;

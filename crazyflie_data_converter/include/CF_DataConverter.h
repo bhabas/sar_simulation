@@ -313,6 +313,7 @@ class CF_DataConverter
         bool Tumbled_Flag = false;
         bool Moment_Flag = false;
         bool Policy_Armed_Flag = false;
+        bool Camera_Sensor_Active = false;
         bool Sticky_Flag = false;
 
 
