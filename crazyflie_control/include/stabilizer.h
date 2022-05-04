@@ -155,127 +155,131 @@ class Controller
 
 void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
 {
-    Cur_img = &(msg->data)[0]; // Point to current image data address
-
-    //Where the convolution starts
-    uint16_t X = 1;
-    uint16_t Y = 1;
-    float w = 3.6e-6; //Pixel width in meters
-    float f = 0.66e-3/2;//Focal length in meters
-    float U;
-    float V;
-    float O_up = WIDTH_PIXELS/2;
-    float V_up = WIDTH_PIXELS/2;
-    float Gtemp = 0;
-    float Iuu = 0;
-    float Ivv = 0;
-    float Iuv = 0;
-    float IGu = 0;
-    float IGv = 0;
-    float IGG = 0;
-    float Iut = 0;
-    float Ivt = 0;
-    float IGt = 0;
-    float dt;
-    int16_t Ittemp;
-    float Cur_time = ros::Time::now().toSec();
-    
-    for(int j = 0; j < (WIDTH_PIXELS - 2)*(HEIGHT_PIXELS - 2); j++) // How many times the kernel center moves around the image
+    if(camera_sensor_active == true)
     {
+    
+        Cur_img = &(msg->data)[0]; // Point to current image data address
 
-        //GENERALIZE FOR CHANGE IN KERNEL SIZE
-        if(X >= WIDTH_PIXELS - 1) //if the edge of the kernel hits the edge of the image
-        { 
+        //Where the convolution starts
+        uint16_t X = 1;
+        uint16_t Y = 1;
+        float w = 3.6e-6; //Pixel width in meters
+        float f = 0.66e-3/2;//Focal length in meters
+        float U;
+        float V;
+        float O_up = WIDTH_PIXELS/2;
+        float V_up = WIDTH_PIXELS/2;
+        float Gtemp = 0;
+        float Iuu = 0;
+        float Ivv = 0;
+        float Iuv = 0;
+        float IGu = 0;
+        float IGv = 0;
+        float IGG = 0;
+        float Iut = 0;
+        float Ivt = 0;
+        float IGt = 0;
+        float dt;
+        int16_t Ittemp;
+        float Cur_time = ros::Time::now().toSec();
         
-            X = 1; //move the kernel back to the left edge of the image
-            Y++; //and slide the kernel down the image
+        for(int j = 0; j < (WIDTH_PIXELS - 2)*(HEIGHT_PIXELS - 2); j++) // How many times the kernel center moves around the image
+        {
 
-        }
+            //GENERALIZE FOR CHANGE IN KERNEL SIZE
+            if(X >= WIDTH_PIXELS - 1) //if the edge of the kernel hits the edge of the image
+            { 
+            
+                X = 1; //move the kernel back to the left edge of the image
+                Y++; //and slide the kernel down the image
 
-        //Sub Kernel Indexing 
-        uint16_t i0 = (X - 1) + (Y - 1) * WIDTH_PIXELS; //First grab top left location of whole kernel
-        uint16_t i1 = i0 + WIDTH_PIXELS; //then each following row is separated by the image width
-        uint16_t i2 = i1 + WIDTH_PIXELS;
+            }
 
-        U = (X - O_up)*w + (w/2); // Using current location of the Kernel center
-        V = (Y - V_up)*w + (w/2); //calculate the current pixel grid locations (u,v)
+            //Sub Kernel Indexing 
+            uint16_t i0 = (X - 1) + (Y - 1) * WIDTH_PIXELS; //First grab top left location of whole kernel
+            uint16_t i1 = i0 + WIDTH_PIXELS; //then each following row is separated by the image width
+            uint16_t i2 = i1 + WIDTH_PIXELS;
 
-        // ######  DEBUGGING  ######
-        /*//
-        std::cout << "i0: " << i0 << "\n";
-        std::cout << "i1: " << i1 << "\n";
-        std::cout << "i2: " << i2 << "\n";
-        *///
+            U = (X - O_up)*w + (w/2); // Using current location of the Kernel center
+            V = (Y - V_up)*w + (w/2); //calculate the current pixel grid locations (u,v)
 
-        int Xsum = 0; //reset rolling sum to 0
-        int Ysum = 0;
+            // ######  DEBUGGING  ######
+            /*//
+            std::cout << "i0: " << i0 << "\n";
+            std::cout << "i1: " << i1 << "\n";
+            std::cout << "i2: " << i2 << "\n";
+            *///
 
-        //GENERALIZE FOR CHANGE IN KERNEL SIZE
-        for(int k = 0; k < 3; k++){
+            int Xsum = 0; //reset rolling sum to 0
+            int Ysum = 0;
 
-            //Sub kernel 0
-            Xsum += kx0[k] * Cur_img[i0 + k];
-            Ysum += ky0[k] * Cur_img[i0 + k];
+            //GENERALIZE FOR CHANGE IN KERNEL SIZE
+            for(int k = 0; k < 3; k++){
 
-            //Sub kernel 1 (skipping ky1)
-            Xsum += kx1[k] * Cur_img[i1 + k];
+                //Sub kernel 0
+                Xsum += kx0[k] * Cur_img[i0 + k];
+                Ysum += ky0[k] * Cur_img[i0 + k];
 
-            //Sub kernel 2
-            Xsum += kx2[k] * Cur_img[i2 + k];
-            Ysum += ky2[k] * Cur_img[i2 + k];
+                //Sub kernel 1 (skipping ky1)
+                Xsum += kx1[k] * Cur_img[i1 + k];
 
-        }
+                //Sub kernel 2
+                Xsum += kx2[k] * Cur_img[i2 + k];
+                Ysum += ky2[k] * Cur_img[i2 + k];
 
-        //Sum assigned to middle value: (i1 + 1)
-        Ittemp = (Cur_img[i1 + 1] - Prev_img[i1 + 1]); //moved /dt to last step
-        Gtemp = (Xsum*U + Ysum*V);
+            }
 
-        //LHS Matrix values (rolling sums)
-        Iuu += Xsum*Xsum;
-        Ivv += Ysum*Ysum;
-        Iuv += Xsum*Ysum;
-        IGu += Gtemp*Xsum;
-        IGv += Gtemp*Ysum;
-        IGG += Gtemp*Gtemp;
+            //Sum assigned to middle value: (i1 + 1)
+            Ittemp = (Cur_img[i1 + 1] - Prev_img[i1 + 1]); //moved /dt to last step
+            Gtemp = (Xsum*U + Ysum*V);
 
-        //RHS Matrix Values (rolling sums)
-        Iut += Xsum*Ittemp;
-        Ivt += Ysum*Ittemp; 
-        IGt += Gtemp*Ittemp;
+            //LHS Matrix values (rolling sums)
+            Iuu += Xsum*Xsum;
+            Ivv += Ysum*Ysum;
+            Iuv += Xsum*Ysum;
+            IGu += Gtemp*Xsum;
+            IGv += Gtemp*Ysum;
+            IGG += Gtemp*Gtemp;
 
-        X++; // move center of kernel over
-        
-    } // END OF CONVOLUTION
+            //RHS Matrix Values (rolling sums)
+            Iut += Xsum*Ittemp;
+            Ivt += Ysum*Ittemp; 
+            IGt += Gtemp*Ittemp;
 
-    dt = Cur_time - Prev_time;
+            X++; // move center of kernel over
+            
+        } // END OF CONVOLUTION
 
-    // Packing final result into the matrices and applying the floating point math
-    double LHS[9] = {f/powf(8*w,2)*Iuu, f/powf(8*w,2)*Iuv, 1/powf(8*w,2)*IGu,
-                     f/powf(8*w,2)*Iuv, f/powf(8*w,2)*Ivv, 1/powf(8*w,2)*IGv,
-                     f/powf(8*w,2)*IGu, f/powf(8*w,2)*IGv, 1/powf(8*w,2)*IGG};
+        dt = Cur_time - Prev_time;
 
-    double RHS[3] = {-Iut/(8*w*dt), -Ivt/(8*w*dt), -IGt/(8*w*dt)}; //added change in time to final step
+        // Packing final result into the matrices and applying the floating point math
+        double LHS[9] = {f/powf(8*w,2)*Iuu, f/powf(8*w,2)*Iuv, 1/powf(8*w,2)*IGu,
+                        f/powf(8*w,2)*Iuv, f/powf(8*w,2)*Ivv, 1/powf(8*w,2)*IGv,
+                        f/powf(8*w,2)*IGu, f/powf(8*w,2)*IGv, 1/powf(8*w,2)*IGG};
 
-    nml_mat* m_A = nml_mat_from(3,3,9,LHS);
-    nml_mat* m_b = nml_mat_from(3,1,3,RHS);
+        double RHS[3] = {-Iut/(8*w*dt), -Ivt/(8*w*dt), -IGt/(8*w*dt)}; //added change in time to final step
 
-    nml_mat_qr *QR = nml_mat_qr_solve(m_A); // A = Q*R
-    nml_mat* y = nml_mat_dot(nml_mat_transp(QR->Q),m_b); // y = Q^T*b
-    nml_mat* x_QR = nml_ls_solvebck(QR->R,y); // Solve R*x = y via back substitution
+        nml_mat* m_A = nml_mat_from(3,3,9,LHS);
+        nml_mat* m_b = nml_mat_from(3,1,3,RHS);
 
-    sensorData.OFx_est = x_QR->data[0][0];
-    sensorData.OFy_est = x_QR->data[1][0];
-    sensorData.Tau_est = 1/x_QR->data[2][0];
+        nml_mat_qr *QR = nml_mat_qr_solve(m_A); // A = Q*R
+        nml_mat* y = nml_mat_dot(nml_mat_transp(QR->Q),m_b); // y = Q^T*b
+        nml_mat* x_QR = nml_ls_solvebck(QR->R,y); // Solve R*x = y via back substitution
 
-
-    nml_mat_free(m_A);
-    nml_mat_free(m_b);
-    nml_mat_qr_free(QR);
-    nml_mat_free(x_QR);
+        sensorData.OFx_est = x_QR->data[0][0];
+        sensorData.OFy_est = x_QR->data[1][0];
+        sensorData.Tau_est = 1/x_QR->data[2][0];
 
 
-    memcpy(Prev_img,Cur_img,sizeof(msg->data)); // Copy memory to Prev_img address
-    Prev_time = Cur_time; // Setup previous time for next calculation
+        nml_mat_free(m_A);
+        nml_mat_free(m_b);
+        nml_mat_qr_free(QR);
+        nml_mat_free(x_QR);
+
+
+        memcpy(Prev_img,Cur_img,sizeof(msg->data)); // Copy memory to Prev_img address
+        Prev_time = Cur_time; // Setup previous time for next calculation
+    }
 
 } // End of Camera_Sensor_Callback
 

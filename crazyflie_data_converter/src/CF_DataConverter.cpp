@@ -540,6 +540,7 @@ void CF_DataConverter::consoleOuput()
     printf("\n");
 
     printf("Tau: %.3f \tOFx: %.3f \tOFy: %.3f\n",Tau,OFx,OFy);
+    printf("Tau_est: %.3f\tOFx_est: %.3f \tOFy_est: %.3f\n",Tau_est,OFx_est,OFy_est);
     printf("D_ceil: %.3f\n",D_ceil);
     printf("\n");
 
