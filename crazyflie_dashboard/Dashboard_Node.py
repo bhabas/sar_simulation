@@ -48,6 +48,10 @@ class DashboardNode:
         self.OFy = 0.0
         self.d_ceil = 0.0 
 
+        self.Tau_est = 0.0
+        self.OFx_est = 0.0
+        self.OFy_est = 0.0
+
         self.MS_PWM = [0,0,0,0] # Controller Motor Speeds (MS1,MS2,MS3,MS4) [PWM]
         self.MotorThrusts = [0,0,0,0] # Controller Motor Thrusts [M1,M2,M3,M4][g]
         self.FM = [0,0,0,0]     # Controller Force/Moments (F_thrust,Mx,My,Mz) [N,N*mm]
@@ -164,6 +168,11 @@ class DashboardNode:
         self.OFx = np.round(StateData_msg.OFx,3)
         self.OFy = np.round(StateData_msg.OFy,3)
         self.d_ceil = np.round(StateData_msg.D_ceil,3)
+
+        ## CF_VISUAL STATE ESTIMATES
+        self.Tau_est = np.round(StateData_msg.Tau_est,3)
+        self.OFx_est = np.round(StateData_msg.OFx_est,3)
+        self.OFy_est = np.round(StateData_msg.OFy_est,3)
 
         ## CONTROLLER ACTIONS
         self.FM = np.round([StateData_msg.FM[0],
