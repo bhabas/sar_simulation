@@ -807,9 +807,13 @@ class CrazyflieEnv:
         srv.Inertia.z = self.Izz
 
         ## SEND LOGGING REQUEST VIA SERVICE
-        rospy.wait_for_service('/CF_Internal/DomainRand',timeout=1.0)
-        domainRand_service = rospy.ServiceProxy('/CF_Internal/DomainRand', domainRand)
-        domainRand_service(srv)
+        try:
+            rospy.wait_for_service('/CF_Internal/DomainRand',timeout=1.0)
+            domainRand_service = rospy.ServiceProxy('/CF_Internal/DomainRand', domainRand)
+            domainRand_service(srv)
+        except rospy.exceptions.ROSException:
+            
+            pass
        
    
 
