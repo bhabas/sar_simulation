@@ -43,13 +43,16 @@ class NN_Model(nn.Module):
 
 
 class NN_Flip_Classifier():
-    def __init__(self,model_config):
+    def __init__(self,model_config,model_initials,LR_bound):
         self.model_config = model_config
-        self.modelInitials()
-        self.loadModel()
+        self.model_initials = model_initials
+        self.LR_bound = LR_bound
 
-        self.scaler = None
-        self.loadScaler()
+        self.model = NN_Model()
+        # self.loadModel()
+
+        # self.scaler = None
+        # self.loadScaler()
 
     def modelInitials(self): # RETURNS INITIALS FOR MODEL
         str = self.model_config
@@ -106,10 +109,9 @@ class NN_Flip_Classifier():
         y_test = torch.FloatTensor(y_test)
 
         ## INIT MODEL AND OPTIMIZER
-        self.model = NN_Model()
+        
         optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01)
-        class_weight = [0.1, 0.5] # Weights as binary classes [0,1]
-        pred_cutoff = 0.5 
+        class_weight = [0.1, 0.9] # Weights as binary classes [0,1]
     
         ## DEFINE TRAINING LOSS
         weights = np.where(y_train==1,class_weight[1],class_weight[0])      # Convert class weights to element weights
@@ -131,12 +133,6 @@ class NN_Flip_Classifier():
             loss_train = criterion(y_pred_train,y_train)
             losses_train.append(loss_train.item())
 
-            ## CALC TRAINING ACCURACY
-            y_pred_train_class = np.where(y_pred_train.detach().numpy() < pred_cutoff,0,1)
-            accuracy_train = balanced_accuracy_score(y_train[:,0],y_pred_train_class)
-            accuracies_train.append(accuracy_train)
-
-            
             ## CALC VALIDATION LOSS
             with torch.no_grad():
                 y_pred_test = self.model.forward(X_test)
@@ -144,8 +140,15 @@ class NN_Flip_Classifier():
             loss_test = criterion_val(y_pred_test,y_test)
             losses_test.append(loss_test.item())
 
+
+
+            ## CALC TRAINING ACCURACY
+            y_pred_train_class = np.where(y_pred_train.detach().numpy() < self.LR_bound,0,1)
+            accuracy_train = balanced_accuracy_score(y_train[:,0],y_pred_train_class)
+            accuracies_train.append(accuracy_train)
+
             ## CALC TESTING ACCURACY
-            y_pred_test_class = np.where(y_pred_test.detach().numpy() < pred_cutoff,0,1)
+            y_pred_test_class = np.where(y_pred_test.detach().numpy() < self.LR_bound,0,1)
             accuracy_test = balanced_accuracy_score(y_test[:,0],y_pred_test_class)
             accuracies_test.append(accuracy_test)
 
@@ -196,7 +199,7 @@ class NN_Flip_Classifier():
 
         with torch.no_grad():
             y_pred = self.modelForward(X)
-            y_pred = np.where(y_pred.detach().numpy() < 0.5,0,1)
+            y_pred = np.where(y_pred.detach().numpy() < 0.8,0,1)
 
         cfnMatrix = confusion_matrix(y,y_pred,normalize=None)
         print("\n=========== Model Evaluation ===========")
@@ -210,15 +213,15 @@ class NN_Flip_Classifier():
     def plotModel(self,df_custom):
 
         ## CREATE GRID
-        RREV_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
-            np.linspace(0, 8, 30),
+        Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
+            np.linspace(0, 0.5, 30),
             np.linspace(-15, 0, 30),
             np.linspace(0, 1.5, 30)
         )
 
         ## CONCATENATE DATA TO MATCH INPUT
         X_grid = np.stack((
-            RREV_grid.flatten(),
+            Tau_grid.flatten(),
             OF_y_grid.flatten(),
             d_ceil_grid.flatten()),axis=1)
 
@@ -228,45 +231,59 @@ class NN_Flip_Classifier():
 
         fig.add_trace(
             go.Volume(
-            # go.Isosurface(
+                ## ISO SURFACE
                 x=X_grid[:,1].flatten(),
                 y=X_grid[:,0].flatten(),
                 z=X_grid[:,2].flatten(),
                 value=y_pred_grid.flatten(),
+                
                 surface_count=10,
                 opacity=0.1,
-                isomin=0.85,
-                isomax=0.90,
+                isomin=self.LR_bound-0.05,
+                isomax=self.LR_bound,
                 # colorscale='Viridis',  
                 cmin=0,
                 cmax=1,     
                 caps=dict(x_show=False, y_show=False),
                 colorbar=dict(title='Title',) , 
-            ))
+                hoverinfo='skip'
+            )
+        )
 
+        ## PLOT DATA POINTS
         fig.add_trace(
-        go.Scatter3d(
-            x=df_custom["OF_y_flip_mean"],
-            y=df_custom["RREV_flip_mean"],
-            z=df_custom["flip_d_mean"],
-            mode='markers',
-            marker=dict(
-                size=3,
-                color=df_custom["landing_rate_4_leg"],                # set color to an array/list of desired values
-                colorscale='Viridis',   # choose a colorscale
-                opacity=1.0)
-        ))
+            go.Scatter3d(
+                ## DATA
+                x=df_custom["OFy_flip_mean"],
+                y=df_custom["Tau_flip_mean"],
+                z=df_custom["D_ceil_flip_mean"],
+
+                ## HOVER DATA
+                customdata=df_custom,
+                hovertemplate=" \
+                    <b>LR: %{customdata[3]:.3f}</b> \
+                    <br>OFy: %{customdata[10]:.3f} Vel: %{customdata[0]:.2f} </br> \
+                    <br>Tau: %{customdata[8]:.3f} Phi: %{customdata[1]:.0f}</br> \
+                    <br>D_ceil: %{customdata[12]:.3f}</br>",
+
+                ## MARKER
+                mode='markers',
+                marker=dict(
+                    size=3,
+                    color=df_custom["LR_4leg"],                # set color to an array/list of desired values
+                    colorscale='Viridis',   # choose a colorscale
+                    opacity=1.0)
+            )
+        )
 
         fig.update_layout(
-            title='something', 
-            autosize=False,
-            width=750, 
-            height=750,
-            margin=dict(l=65, r=50, b=65, t=90),
             scene=dict(
                 xaxis_title='OFy [rad/s]',
-                yaxis_title='RREV [rad/s]',
+                yaxis_title='Tau [s]',
                 zaxis_title='D_ceiling [m]',
+                xaxis_range=[-20,1],
+                yaxis_range=[0.1,0.4],
+                zaxis_range=[0,1.2],
             ),
         )
         fig.show()
@@ -376,47 +393,51 @@ if __name__ == "__main__":
     torch.manual_seed(0)
     np.random.seed(0)
 
-    model_config = "Wide-Long"
-    FC = NN_Flip_Classifier(model_config)
+    LR_bound = 0.85
+
+    model_config = "Narrow-Long"
+    model_initials = "NL_Raw"
+    FlipClassifier = NN_Flip_Classifier(model_config,model_initials,LR_bound)
 
     ## LOAD RAW DATA
-    df_raw = pd.read_csv(f"crazyflie_projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
-    df_bounds = pd.read_csv(f"crazyflie_projects/Policy_Mapping/NeuralNetwork/dataBounds.csv")
-    # df_raw = pd.concat([df_raw,df_bounds])
+    df_raw = pd.read_csv(f"crazyflie_projects/Policy_Mapping/Data_Logs/NL_Raw/NL_LR_Trials_Raw.csv").dropna()
+    df_bounds = pd.read_csv(f"crazyflie_projects/Policy_Mapping/Data_Logs/NL_Raw/Boundary.csv")
+    df_all = pd.concat([df_raw,df_bounds])
 
     ## ORGANIZE DATA
-    RREV = df_raw["RREV_flip_mean"]
-    OF_y = df_raw["OF_y_flip_mean"]
-    d_ceil = df_raw["flip_d_mean"]
-    y = df_raw["landing_rate_4_leg"]
-    y = np.where(y < 0.8,0,1)
+    Tau = df_all["Tau_flip_mean"]
+    OF_y = df_all["OFy_flip_mean"]
+    d_ceil = df_all["D_ceil_flip_mean"]
+    y = df_all["LR_4leg"]
+    y = np.where(y < LR_bound,0,1)
 
-    X = np.stack((RREV,OF_y,d_ceil),axis=1)
+    X = np.stack((Tau,OF_y,d_ceil),axis=1)
 
     ## SPLIT DATA FEATURES INTO TRAINING AND TESTING SETS
-    data_array = np.stack((RREV,OF_y,d_ceil,y),axis=1)
-    df = pd.DataFrame(data_array,columns=['RREV','OF_y','d_ceil','y'])
-    # df = df.sort_values(by='y')
+    data_array = np.stack((Tau,OF_y,d_ceil,y),axis=1)
+    df = pd.DataFrame(data_array,columns=['Tau','OFy','d_ceil','y'])
+    df = df.sort_values(by='y')
 
     train_df, test_df = train_test_split(df,test_size=0.25,random_state=73)
     test_df = test_df.sort_values(by='y')
 
-    X_train = train_df[['RREV','OF_y','d_ceil']].to_numpy()
-    X_test = test_df[['RREV','OF_y','d_ceil']].to_numpy()
+    X_train = train_df[['Tau','OFy','d_ceil']].to_numpy()
     y_train = train_df[['y']].to_numpy()
+
+    X_test = test_df[['Tau','OFy','d_ceil']].to_numpy()
     y_test = test_df[['y']].to_numpy()
 
 
 
-    # FC.createScaler(X)
-    # FC.trainModel(X_train,y_train,X_test,y_test,epochs=400)
-    # FC.saveParams()
-    # FC.evalModel(X,y)
+    FlipClassifier.createScaler(X)
+    FlipClassifier.trainModel(X_train,y_train,X_test,y_test,epochs=250)
+    FlipClassifier.saveParams()
+    FlipClassifier.evalModel(X,y)
 
 
-    FC.loadModelFromParams()
-    FC.evalModel(X,y)
-    FC.plotModel(df_raw)
+    # FlipClassifier.loadModelFromParams()
+    # FlipClassifier.evalModel(X,y)
+    FlipClassifier.plotModel(df_raw)
 
     pass
 
