@@ -13,6 +13,7 @@ import torch.nn.functional as F
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import *
 from sklearn import preprocessing
+from imblearn.over_sampling import RandomOverSampler
 
 import plotly.graph_objects as go
 
@@ -105,17 +106,14 @@ class NN_Flip_Classifier():
         ## INIT MODEL AND OPTIMIZER
         
         optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01)
-        class_weight = [0.1, 0.9] # Weights as binary classes [0,1]
     
         ## DEFINE TRAINING LOSS
-        weights_train = np.where(y_train==1,class_weight[1],class_weight[0])      # Convert class weights to element weights
-        criterion_train = nn.BCELoss(weight=torch.FloatTensor(weights_train))       
+        criterion_train = nn.BCELoss()       
         losses_train = []
         accuracies_train = []
 
         ## DEFINE VALIDATION LOSS
-        weights_test = np.where(y_test==1,class_weight[1],class_weight[0])   # Convert class weights to element weights
-        criterion_test = nn.BCELoss(weight=torch.FloatTensor(weights_test))   
+        criterion_test = nn.BCELoss()   
         losses_test = []
         accuracies_test = []
 
@@ -399,7 +397,7 @@ if __name__ == "__main__":
     torch.manual_seed(0)
     np.random.seed(0)
 
-    LR_bound = 0.9 # Classify states with LR higher than this value as valid
+    LR_bound = 0.85 # Classify states with LR higher than this value as valid
     model_initials = "NL_Raw"
     FlipClassifier = NN_Flip_Classifier(model_initials,LR_bound)
 
@@ -423,18 +421,20 @@ if __name__ == "__main__":
     df = df.sort_values(by='y')
 
     train_df, test_df = train_test_split(df,test_size=0.25,random_state=73)
-    test_df = test_df.sort_values(by='y')
-
     X_train = train_df[['Tau','OFy','d_ceil']].to_numpy()
     y_train = train_df[['y']].to_numpy()
 
     X_test = test_df[['Tau','OFy','d_ceil']].to_numpy()
     y_test = test_df[['y']].to_numpy()
 
+    ## OVERSAMPLE TRAINING DATASET BECAUSE THERE'S LESS VALID LR SAMPLES THAN INVALID
+    oversample = RandomOverSampler(sampling_strategy='minority')
+    X_train, y_train = oversample.fit_resample(X_train, y_train)
+    y_train = y_train.reshape(-1,1)
 
 
     FlipClassifier.createScaler(X)
-    FlipClassifier.trainModel(X_train,y_train,X_test,y_test,epochs=95)
+    FlipClassifier.trainModel(X_train,y_train,X_test,y_test,epochs=160)
     FlipClassifier.saveParams()
     FlipClassifier.evalModel(X,y)
 

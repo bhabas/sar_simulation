@@ -20,7 +20,7 @@ df = pd.read_csv(DATA_PATH)
 ## SYSTEM CONSTANTS
 H_CEIL = 2.1
 Z_0 = 0.4
-Tau_max = 0.35 # Cutoff value for plots (Practically contact at this point (0.125s))
+Tau_max = 0.27 # Cutoff value for plots (Practically contact at this point (0.125s))
 Tau_min = 0.17
 
 ## GENERATE MAX TAU WALL
