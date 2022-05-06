@@ -22,7 +22,7 @@ np.set_printoptions(suppress=True)
 BASEPATH = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Policy_Mapping"
 
 ## DEFINE NN MODEL
-class NN_Model(nn.Module):
+class NN_Flip_Model(nn.Module):
     def __init__(self,in_features=3,h=20,out_features=1):
         super().__init__()
         self.fc1 = nn.Linear(in_features,h)     # Layer 1 
@@ -41,12 +41,13 @@ class NN_Model(nn.Module):
 
 
 
-class NN_Flip_Classifier():
-    def __init__(self,model_initials,LR_bound):
+class NN_Trainer():
+    def __init__(self,model,model_initials,LR_bound):
+
+        self.model = model
         self.model_initials = model_initials
         self.LR_bound = LR_bound
 
-        self.model = NN_Model()
         self.scaler = preprocessing.StandardScaler()
 
     def createScaler(self,X):
@@ -67,7 +68,6 @@ class NN_Flip_Classifier():
             comments='',
             header=f'mean,std',
             footer='')
-
 
     def loadScaler(self):
         """Load scaler terms from csv file
@@ -94,88 +94,6 @@ class NN_Flip_Classifier():
 
         return self.scaler.inverse_transform(X_scaled)
 
-    def trainModel(self,X_train,y_train,X_test,y_test,epochs=500):
-
-        ## CONVERT DATA ARRAYS TO TENSORS
-        X_train = torch.FloatTensor(self.scaleData(X_train))
-        X_test = torch.FloatTensor(self.scaleData(X_test))
-
-        y_train = torch.FloatTensor(y_train)
-        y_test = torch.FloatTensor(y_test)
-
-        ## INIT MODEL AND OPTIMIZER
-        
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01)
-    
-        ## DEFINE TRAINING LOSS
-        criterion_train = nn.BCELoss()       
-        losses_train = []
-        accuracies_train = []
-
-        ## DEFINE VALIDATION LOSS
-        criterion_test = nn.BCELoss()   
-        losses_test = []
-        accuracies_test = []
-
-        for ii in range(epochs):
-
-
-            ## CALC TRAINING LOSS
-            y_pred_train = self.model.forward(X_train)
-            loss_train = criterion_train(y_pred_train,y_train)
-            losses_train.append(loss_train.item())
-
-            ## CALC VALIDATION LOSS
-            with torch.no_grad():
-                y_pred_test = self.model.forward(X_test)
-                loss_test = criterion_test(y_pred_test,y_test)
-                losses_test.append(loss_test.item())
-
-
-
-            ## CALC TRAINING ACCURACY
-            y_pred_train_class = np.where(y_pred_train.detach().numpy() < self.LR_bound,0,1)
-            accuracy_train = balanced_accuracy_score(y_train[:,0],y_pred_train_class)
-            accuracies_train.append(accuracy_train)
-
-            ## CALC TESTING ACCURACY
-            y_pred_test_class = np.where(y_pred_test.detach().numpy() < self.LR_bound,0,1)
-            accuracy_test = balanced_accuracy_score(y_test[:,0],y_pred_test_class)
-            accuracies_test.append(accuracy_test)
-
-            if ii%10 == 1:
-                print(f"epoch {ii} and loss is: {loss_train}")
-
-            ## BACKPROPAGATION
-            optimizer.zero_grad()
-            loss_train.backward()
-            optimizer.step()
-
-
-        ## PLOT LOSSES AND ACCURACIES
-        fig = plt.figure(1,figsize=(12,8))
-        ax1 = fig.add_subplot(2,1,1)
-        ax1.plot(losses_train,label="Training Loss")
-        ax1.plot(losses_test,label="Validation Loss")
-        ax1.set_ylabel("Loss")
-        ax1.set_title("Losses")
-        ax1.set_ylim(0)
-        ax1.legend()
-        ax1.grid()
-
-        ax2 = fig.add_subplot(2,1,2)
-        ax2.plot(accuracies_train,label="Training Accuracry")
-        ax2.plot(accuracies_test,label="Validation Accuracy")
-        ax2.set_ylim(0,1.1)
-        ax2.set_ylabel("Classification Accuracy")
-        ax2.set_title("Balanced Accuracy")
-        ax2.grid()
-        ax2.legend(loc="lower right")
-
-
-        plt.tight_layout()
-        plt.show()
-
     def modelPredict(self,X):
         X_scaled = torch.FloatTensor(self.scaleData(X))
 
@@ -184,107 +102,8 @@ class NN_Flip_Classifier():
 
         return y_pred
 
-    def evalModel(self,X,y):
-        """Evaluate the model
-
-        Args:
-            X (_type_): Evaluation dataset
-            y (_type_): Evaluation dataset
-        """        
-
-        ## PREDICT VALUES FROM EVALUATION DATASET
-        y_pred = self.modelPredict(X)
-        y_pred = np.where(y_pred.detach().numpy() < self.LR_bound,0,1)
-
-        cfnMatrix = confusion_matrix(y,y_pred,normalize=None)
-        print("\n=========== Model Evaluation ===========")
-        print(f"Balanced Accuracy: {balanced_accuracy_score(y,y_pred):.3f}")
-        print(f"Confusion Matrix: \n{cfnMatrix}")
-        print(f"False Positives: {cfnMatrix[0,1]}")
-        print(f"False Negatives: {cfnMatrix[1,0]}")
-        print(f"Classification Report: {classification_report(y,y_pred)}")
-
-
-    def plotModel(self,df_custom):
-
-        ## CREATE GRID
-        Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
-            np.linspace(0, 0.5, 30),
-            np.linspace(-15, 0, 30),
-            np.linspace(0, 1.5, 30)
-        )
-
-        ## CONCATENATE DATA TO MATCH INPUT
-        X_grid = np.stack((
-            Tau_grid.flatten(),
-            OF_y_grid.flatten(),
-            d_ceil_grid.flatten()),axis=1)
-
-        y_pred_grid = self.modelPredict(X_grid)
-
-        fig = go.Figure()
-
-        fig.add_trace(
-            go.Volume(
-                ## ISO SURFACE
-                x=X_grid[:,1].flatten(),
-                y=X_grid[:,0].flatten(),
-                z=X_grid[:,2].flatten(),
-                value=y_pred_grid.flatten(),
-                
-                surface_count=10,
-                opacity=0.1,
-                isomin=self.LR_bound-0.05,
-                isomax=self.LR_bound,
-                # colorscale='Viridis',  
-                cmin=0,
-                cmax=1,     
-                caps=dict(x_show=False, y_show=False),
-                colorbar=dict(title='Title',) , 
-                hoverinfo='skip'
-            )
-        )
-
-        ## PLOT DATA POINTS
-        fig.add_trace(
-            go.Scatter3d(
-                ## DATA
-                x=df_custom["OFy_flip_mean"],
-                y=df_custom["Tau_flip_mean"],
-                z=df_custom["D_ceil_flip_mean"],
-
-                ## HOVER DATA
-                customdata=df_custom,
-                hovertemplate=" \
-                    <b>LR: %{customdata[3]:.3f}</b> \
-                    <br>OFy: %{customdata[10]:.3f} Vel: %{customdata[0]:.2f} </br> \
-                    <br>Tau: %{customdata[8]:.3f} Phi: %{customdata[1]:.0f}</br> \
-                    <br>D_ceil: %{customdata[12]:.3f}</br>",
-
-                ## MARKER
-                mode='markers',
-                marker=dict(
-                    size=3,
-                    color=df_custom["LR_4leg"],                # set color to an array/list of desired values
-                    colorscale='Viridis',   # choose a colorscale
-                    opacity=1.0)
-            )
-        )
-
-        fig.update_layout(
-            scene=dict(
-                xaxis_title='OFy [rad/s]',
-                yaxis_title='Tau [s]',
-                zaxis_title='D_ceiling [m]',
-                xaxis_range=[-20,1],
-                yaxis_range=[0.4,0.1],
-                zaxis_range=[0,1.2],
-            ),
-        )
-        fig.show()
-
-    def saveParams(self):
-        f = open(f'{BASEPATH}/NeuralNetwork/Info/NN_Layers_Flip_{self.model_initials}.h','a')
+    def saveParams(self,path):
+        f = open(path,'a')
         f.truncate(0) ## Clears contents of file
         f.write("static char NN_Params_Flip[] = {\n")
         
@@ -385,6 +204,190 @@ class NN_Flip_Classifier():
                 layer_list[ii//2].weight.data = torch.FloatTensor(arr_list[ii])
             else:
                 layer_list[ii//2].bias.data = torch.FloatTensor(arr_list[ii].flatten())
+
+
+
+
+    def trainModel(self,X_train,y_train,X_test,y_test,epochs=500):
+
+        ## CONVERT DATA ARRAYS TO TENSORS
+        X_train = torch.FloatTensor(self.scaleData(X_train))
+        X_test = torch.FloatTensor(self.scaleData(X_test))
+
+        y_train = torch.FloatTensor(y_train)
+        y_test = torch.FloatTensor(y_test)
+
+        ## INIT MODEL AND OPTIMIZER
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01)
+    
+        ## DEFINE TRAINING LOSS
+        criterion_train = nn.BCELoss()       
+        losses_train = []
+        accuracies_train = []
+
+        ## DEFINE VALIDATION LOSS
+        criterion_test = nn.BCELoss()   
+        losses_test = []
+        accuracies_test = []
+
+        for ii in range(epochs):
+
+
+            ## CALC TRAINING LOSS
+            y_pred_train = self.model.forward(X_train)
+            loss_train = criterion_train(y_pred_train,y_train)
+            losses_train.append(loss_train.item())
+
+            ## CALC VALIDATION LOSS
+            with torch.no_grad():
+                y_pred_test = self.model.forward(X_test)
+                loss_test = criterion_test(y_pred_test,y_test)
+                losses_test.append(loss_test.item())
+
+
+
+            ## CALC TRAINING ACCURACY
+            y_pred_train_class = np.where(y_pred_train.detach().numpy() < self.LR_bound,0,1)
+            accuracy_train = balanced_accuracy_score(y_train[:,0],y_pred_train_class)
+            accuracies_train.append(accuracy_train)
+
+            ## CALC TESTING ACCURACY
+            y_pred_test_class = np.where(y_pred_test.detach().numpy() < self.LR_bound,0,1)
+            accuracy_test = balanced_accuracy_score(y_test[:,0],y_pred_test_class)
+            accuracies_test.append(accuracy_test)
+
+            if ii%10 == 1:
+                print(f"epoch {ii} and loss is: {loss_train}")
+
+            ## BACKPROPAGATION
+            optimizer.zero_grad()
+            loss_train.backward()
+            optimizer.step()
+
+
+        ## PLOT LOSSES AND ACCURACIES
+        fig = plt.figure(1,figsize=(12,8))
+        ax1 = fig.add_subplot(2,1,1)
+        ax1.plot(losses_train,label="Training Loss")
+        ax1.plot(losses_test,label="Validation Loss")
+        ax1.set_ylabel("Loss")
+        ax1.set_title("Losses")
+        ax1.set_ylim(0)
+        ax1.legend()
+        ax1.grid()
+
+        ax2 = fig.add_subplot(2,1,2)
+        ax2.plot(accuracies_train,label="Training Accuracry")
+        ax2.plot(accuracies_test,label="Validation Accuracy")
+        ax2.set_ylim(0,1.1)
+        ax2.set_ylabel("Classification Accuracy")
+        ax2.set_title("Balanced Accuracy")
+        ax2.grid()
+        ax2.legend(loc="lower right")
+
+
+        plt.tight_layout()
+        plt.show()
+
+    def evalModel(self,X,y):
+        """Evaluate the model
+
+        Args:
+            X (_type_): Evaluation dataset
+            y (_type_): Evaluation dataset
+        """        
+
+        ## PREDICT VALUES FROM EVALUATION DATASET
+        y_pred = self.modelPredict(X)
+        y_pred = np.where(y_pred.detach().numpy() < self.LR_bound,0,1)
+
+        cfnMatrix = confusion_matrix(y,y_pred,normalize=None)
+        print("\n=========== Model Evaluation ===========")
+        print(f"Balanced Accuracy: {balanced_accuracy_score(y,y_pred):.3f}")
+        print(f"Confusion Matrix: \n{cfnMatrix}")
+        print(f"False Positives: {cfnMatrix[0,1]}")
+        print(f"False Negatives: {cfnMatrix[1,0]}")
+        print(f"Classification Report: {classification_report(y,y_pred)}")
+
+    def plotModel(self,df_custom):
+
+        ## CREATE GRID
+        Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
+            np.linspace(0, 0.5, 30),
+            np.linspace(-15, 0, 30),
+            np.linspace(0, 1.5, 30)
+        )
+
+        ## CONCATENATE DATA TO MATCH INPUT
+        X_grid = np.stack((
+            Tau_grid.flatten(),
+            OF_y_grid.flatten(),
+            d_ceil_grid.flatten()),axis=1)
+
+        y_pred_grid = self.modelPredict(X_grid)
+
+        fig = go.Figure()
+
+        fig.add_trace(
+            go.Volume(
+                ## ISO SURFACE
+                x=X_grid[:,1].flatten(),
+                y=X_grid[:,0].flatten(),
+                z=X_grid[:,2].flatten(),
+                value=y_pred_grid.flatten(),
+                
+                surface_count=10,
+                opacity=0.1,
+                isomin=self.LR_bound-0.05,
+                isomax=self.LR_bound,
+                # colorscale='Viridis',  
+                cmin=0,
+                cmax=1,     
+                caps=dict(x_show=False, y_show=False),
+                colorbar=dict(title='Title',) , 
+                hoverinfo='skip'
+            )
+        )
+
+        ## PLOT DATA POINTS
+        fig.add_trace(
+            go.Scatter3d(
+                ## DATA
+                x=df_custom["OFy_flip_mean"],
+                y=df_custom["Tau_flip_mean"],
+                z=df_custom["D_ceil_flip_mean"],
+
+                ## HOVER DATA
+                customdata=df_custom,
+                hovertemplate=" \
+                    <b>LR: %{customdata[3]:.3f}</b> \
+                    <br>OFy: %{customdata[10]:.3f} Vel: %{customdata[0]:.2f} </br> \
+                    <br>Tau: %{customdata[8]:.3f} Phi: %{customdata[1]:.0f}</br> \
+                    <br>D_ceil: %{customdata[12]:.3f}</br>",
+
+                ## MARKER
+                mode='markers',
+                marker=dict(
+                    size=3,
+                    color=df_custom["LR_4leg"],                # set color to an array/list of desired values
+                    colorscale='Viridis',   # choose a colorscale
+                    opacity=1.0)
+            )
+        )
+
+        fig.update_layout(
+            scene=dict(
+                xaxis_title='OFy [rad/s]',
+                yaxis_title='Tau [s]',
+                zaxis_title='D_ceiling [m]',
+                xaxis_range=[-20,1],
+                yaxis_range=[0.4,0.1],
+                zaxis_range=[0,1.2],
+            ),
+        )
+        fig.show()
+
+    
             
 
 
@@ -399,7 +402,8 @@ if __name__ == "__main__":
 
     LR_bound = 0.85 # Classify states with LR higher than this value as valid
     model_initials = "NL_Raw"
-    FlipClassifier = NN_Flip_Classifier(model_initials,LR_bound)
+    model = NN_Flip_Model()
+    FlipClassifier = NN_Trainer(model,model_initials,LR_bound)
 
     ## LOAD DATA
     df_raw = pd.read_csv(f"{BASEPATH}/Data_Logs/NL_Raw/NL_LR_Trials_Raw.csv").dropna() # Collected data
@@ -417,15 +421,15 @@ if __name__ == "__main__":
 
     ## SPLIT DATA FEATURES INTO TRAINING AND TESTING SETS
     data_array = np.stack((Tau,OF_y,d_ceil,y),axis=1)
-    df = pd.DataFrame(data_array,columns=['Tau','OFy','d_ceil','y'])
-    df = df.sort_values(by='y')
+    df = pd.DataFrame(data_array,columns=['Tau','OFy','d_ceil','LR'])
+    df = df.sort_values(by='LR')
 
     train_df, test_df = train_test_split(df,test_size=0.25,random_state=73)
     X_train = train_df[['Tau','OFy','d_ceil']].to_numpy()
-    y_train = train_df[['y']].to_numpy()
+    y_train = train_df[['LR']].to_numpy()
 
     X_test = test_df[['Tau','OFy','d_ceil']].to_numpy()
-    y_test = test_df[['y']].to_numpy()
+    y_test = test_df[['LR']].to_numpy()
 
     ## OVERSAMPLE TRAINING DATASET BECAUSE THERE'S LESS VALID LR SAMPLES THAN INVALID
     oversample = RandomOverSampler(sampling_strategy='minority')
@@ -435,10 +439,10 @@ if __name__ == "__main__":
 
     FlipClassifier.createScaler(X)
     FlipClassifier.trainModel(X_train,y_train,X_test,y_test,epochs=160)
-    FlipClassifier.saveParams()
+    Param_Path = f'{BASEPATH}/NeuralNetwork/Info/NN_Layers_Flip_{model_initials}.h'
+    FlipClassifier.saveParams(Param_Path)
     FlipClassifier.evalModel(X,y)
 
-    # Param_Path = f"{BASEPATH}/NeuralNetwork/Info/NN_Layers_Flip_NL_Raw.h"
     # FlipClassifier.loadModelFromParams(Param_Path)
     # FlipClassifier.evalModel(X,y)
     FlipClassifier.plotModel(df_raw)

@@ -13,17 +13,20 @@ import torch.nn.functional as F
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import *
 from sklearn import preprocessing
-
+from imblearn.over_sampling import RandomOverSampler
 
 import plotly.graph_objects as go
 
+from NN_Flip_Classifier import NN_Trainer
+
 np.set_printoptions(suppress=True)
-BASEPATH = "crazyflie_projects/Policy_Mapping/NeuralNetwork"
+BASEPATH = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Policy_Mapping"
+
 
 
 
 ## DEFINE NN MODEL
-class NN_Policy_Value(nn.Module):
+class NN_Policy_Model(nn.Module):
     def __init__(self,in_features=3,h=10,out_features=1):
         super().__init__()
 
@@ -40,230 +43,270 @@ class NN_Policy_Value(nn.Module):
 
         return x
 
-def train_model(epochs,X_train,y_train,X_test,y_test):
+class PolicyNetwork(NN_Trainer):
+    def __init__(self,model,model_initials):
+        super().__init__(model,model_initials,1)
 
-    ## INITIALIZE NEURAL NETWORK MODEL
-    model = NN_Policy_Value()
-    optimizer = torch.optim.Adam(model.parameters(),lr=0.01) #  Model parameters are the layers of model
+        self.model = model
+        self.model_initials = model_initials
 
-    ## DEFINE TRAINING LOSS
-    criterion = nn.MSELoss(reduction='mean')
-    losses_train = []
+    def trainModel(self, X_train, y_train, X_test, y_test, epochs=500):
 
-    ## DEFINE VALIDATION LOSS
-    criterion_val = nn.MSELoss(reduction='mean')
-    losses_test = []
+        ## CONVERT DATA ARRAYS TO TENSORS
+        X_train = torch.FloatTensor(self.scaleData(X_train))
+        X_test = torch.FloatTensor(self.scaleData(X_test))
 
+        y_train = torch.FloatTensor(y_train)
+        y_test = torch.FloatTensor(y_test)
 
-    for ii in range(epochs):
-
-        ## MODEL PREDICTION
-        y_pred = model.forward(X_train)
-
-
-        ## CALCULATE LOSS/ERROR
-        loss_train = criterion(y_pred,y_train)
-        losses_train.append(loss_train.item())
-
-        ## CALCULATED VALIDATION LOSS
-        with torch.no_grad():
-            y_pred_test = model.forward(X_test)
-
-        loss_test = criterion_val(y_pred_test,y_test)
-        losses_test.append(loss_test.item())
-
-        if ii%10 == 1:
-            print(f"epoch {ii} and loss is: {loss_train}")
-
-        ## BACKPROPAGATION
-        optimizer.zero_grad()
-        loss_train.backward()
-        optimizer.step()
-
-    torch.save(model,f'{BASEPATH}/Pickle_Files/Policy_Network.pt')
+        ## INIT MODEL AND OPTIMIZER
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01)
     
-    ## PLOT LOSSES AND ACCURACIES
-    fig = plt.figure(1,figsize=(12,8))
-    ax1 = fig.add_subplot(1,1,1)
-    ax1.plot(losses_train,label="Training Loss")
-    ax1.plot(losses_test,label="Validation Loss")
-    ax1.set_ylabel("Loss")
-    ax1.set_title("Losses")
-    ax1.set_ylim(0,4)
-    ax1.legend()
-    ax1.grid()
+        ## DEFINE TRAINING LOSS
+        criterion_train = nn.MSELoss(reduction='mean')
+        losses_train = []
 
+        ## DEFINE VALIDATION LOSS
+        criterion_test = nn.MSELoss(reduction='mean')
+        losses_test = []
 
-    plt.tight_layout()
-    plt.show()
-    return model
+        for ii in range(epochs):
+
+            ## CALC TRAINING LOSS
+            y_pred_train = self.model.forward(X_train)
+            loss_train = criterion_train(y_pred_train,y_train)
+            losses_train.append(loss_train.item())
+
+            ## CALC VALIDATION LOSS
+            with torch.no_grad():
+                y_pred_test = self.model.forward(X_test)
+                loss_test = criterion_test(y_pred_test,y_test)
+                losses_test.append(loss_test.item())
+
+            if ii%10 == 1:
+                print(f"epoch {ii} and loss is: {loss_train}")
+
+            ## BACKPROPAGATION
+            optimizer.zero_grad()
+            loss_train.backward()
+            optimizer.step()
+
+    
+        ## PLOT LOSSES AND ACCURACIES
+        fig = plt.figure(1,figsize=(12,8))
+        ax1 = fig.add_subplot(1,1,1)
+        ax1.plot(losses_train,label="Training Loss")
+        ax1.plot(losses_test,label="Validation Loss")
+        ax1.set_ylabel("Loss")
+        ax1.set_title("Losses")
+        ax1.set_ylim(0)
+        ax1.legend()
+        ax1.grid()
+
+        plt.tight_layout()
+        plt.show()
+
+    def plotModel(self,df_custom):
+
+        ## CREATE GRID
+        Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
+            np.linspace(0.15, 0.35, 10),
+            np.linspace(-10, 1, 10),
+            np.linspace(0.25, 1.0, 10)
+        )
+
+        ## CONCATENATE DATA TO MATCH INPUT
+        X_grid = np.stack((
+            Tau_grid.flatten(),
+            OF_y_grid.flatten(),
+            d_ceil_grid.flatten()),axis=1)
+
+        y_pred_grid = self.modelPredict(X_grid).numpy().flatten()
+
+        fig = go.Figure()
+
+        ## PLOT DATA POINTS
+        fig.add_trace(
+            go.Scatter3d(
+                ## DATA
+                x=X_grid[:,1].flatten(),
+                y=X_grid[:,0].flatten(),
+                z=X_grid[:,2].flatten(),
+
+                ## HOVER DATA
+                # customdata=df_custom,
+                # hovertemplate=" \
+                #     <b>LR: %{customdata[3]:.3f}</b> \
+                #     <br>OFy: %{customdata[10]:.3f} Vel: %{customdata[0]:.2f} </br> \
+                #     <br>Tau: %{customdata[8]:.3f} Phi: %{customdata[1]:.0f}</br> \
+                #     <br>D_ceil: %{customdata[12]:.3f}</br>",
+
+                ## MARKER
+                mode='markers',
+                marker=dict(
+                    size=3,
+                    color=y_pred_grid,                # set color to an array/list of desired values
+                    cmin=4,
+                    cmax=9,
+                    colorscale='Viridis',   # choose a colorscale
+                    opacity=1.0
+                )
+            )
+        )
+
+        X_grid = np.stack((
+            df_custom["Tau"],
+            df_custom["OFy"],
+            df_custom["d_ceil"]),axis=1)
+        y_pred = self.modelPredict(X_grid).numpy().flatten()
+        error = df_custom["My_d"].to_numpy().flatten() - y_pred
+    
+        # ## PLOT DATA POINTS
+        # fig.add_trace(
+        #     go.Scatter3d(
+        #         ## DATA
+        #         x=X_grid[:,1].flatten(),
+        #         y=X_grid[:,0].flatten(),
+        #         z=X_grid[:,2].flatten(),
+
+        #         ## HOVER DATA
+        #         # customdata=df_custom,
+        #         # hovertemplate=" \
+        #         #     <b>LR: %{customdata[3]:.3f}</b> \
+        #         #     <br>OFy: %{customdata[10]:.3f} Vel: %{customdata[0]:.2f} </br> \
+        #         #     <br>Tau: %{customdata[8]:.3f} Phi: %{customdata[1]:.0f}</br> \
+        #         #     <br>D_ceil: %{customdata[12]:.3f}</br>",
+
+        #         ## MARKER
+        #         mode='markers',
+        #         marker=dict(
+        #             size=3,
+        #             color=y_pred,                # set color to an array/list of desired values
+        #             cmin=0,
+        #             cmax=10,
+        #             colorscale='Viridis',   # choose a colorscale
+        #             opacity=1.0
+        #         )
+        #     )
+        # )
+
+        fig.update_layout(
+            scene=dict(
+                xaxis_title='OFy [rad/s]',
+                yaxis_title='Tau [s]',
+                zaxis_title='D_ceiling [m]',
+                xaxis_range=[-20,1],
+                yaxis_range=[0.4,0.1],
+                zaxis_range=[0,1.2],
+            ),
+        )
+        fig.show()
 
 
 if __name__ == '__main__':
 
     ## GENERATE TRAINING DATA
-    torch.manual_seed(22)
+    torch.manual_seed(0)
     np.random.seed(0)
 
+    model_initials = "NL_Raw"
+    model = NN_Policy_Model()
+    Policy_NN = PolicyNetwork(model,model_initials)
 
-    model_config = "Wide-Long"
-    df_raw = pd.read_csv(f"crazyflie_projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
-    df_raw = df_raw.query("landing_rate_4_leg >= 0.8")
+    ## LOAD DATA 
+    df = pd.read_csv(f"{BASEPATH}/Data_Logs/NL_Raw/NL_PolicyVal_Trials_Raw_1.csv").sample(frac=0.05) # Collected data
 
+    ## ORGANIZE DATA
+    Tau = df["Tau"]
+    OF_y = df["OF_y"]
+    d_ceil = df["d_ceil"]
+    X = np.stack((Tau,OF_y,d_ceil),axis=1)
+    y = df["My_d"]
 
-    RREV = df_raw["RREV_flip_mean"]
-    OF_y = df_raw["OF_y_flip_mean"]
-    d_ceil = df_raw["flip_d_mean"]
-    y = df_raw["My_d"].to_numpy().reshape(-1,1)
+    ## SPLIT DATA FEATURES INTO TRAINING AND TESTING SETS
+    data_array = np.stack((Tau,OF_y,d_ceil,y),axis=1)
+    df = pd.DataFrame(data_array,columns=['Tau','OFy','d_ceil','My_d'])
 
-    ## REGULARIZE DATA
-    X = np.stack((RREV,OF_y,d_ceil),axis=1)
-    scaler = preprocessing.StandardScaler().fit(X)
-    X_scaled = scaler.transform(X)
+    train_df, test_df = train_test_split(df,test_size=0.25,random_state=73)
+    X_train = train_df[['Tau','OFy','d_ceil']].to_numpy()
+    y_train = train_df[['My_d']].to_numpy()
 
-    ## CONVERT DATA INTO DATAFRAME
-    data_array = np.hstack((X_scaled,y))
-    df = pd.DataFrame(data_array,columns=['RREV','OF_y','d_ceil','y'])
+    X_test = test_df[['Tau','OFy','d_ceil']].to_numpy()
+    y_test = test_df[['My_d']].to_numpy()
 
+    Param_Path = f'{BASEPATH}/NeuralNetwork/Info/NN_Layers_Policy_{model_initials}.h'
+    Policy_NN.createScaler(X)
+    Policy_NN.trainModel(X_train,y_train,X_test,y_test,epochs=10000)
+    Policy_NN.saveParams(Param_Path)
 
-    ## SPLIT DATA FEATURES INTO TRAINING AND TESTING DATA
-    train_df, test_df = train_test_split(df,test_size=0.2,random_state=33)
-
-
-
-    ## CONVERT DATA INTO TENSORS
-    X_train = torch.FloatTensor(train_df[['RREV','OF_y','d_ceil']].to_numpy())
-    X_test = torch.FloatTensor(test_df[['RREV','OF_y','d_ceil']].to_numpy())
-
-    y_train = torch.FloatTensor(train_df[['y']].to_numpy()).reshape((-1,1))
-    y_test = torch.FloatTensor(test_df[['y']].to_numpy()).reshape((-1,1))
-
-
-
-    ## TRAIN NN MODEL
-    epochs = 2_600
-    # train_model(epochs,X_train,y_train,X_test,y_test)
+    Policy_NN.loadModelFromParams(Param_Path)
+    # Policy_NN.evalModel(X,y)
+    Policy_NN.plotModel(df)
 
 
+    # ## EVALUATE NN MODEL
+    # model = torch.load(f'{BASEPATH}/Pickle_Files/Policy_Network.pt')
 
-    ## EVALUATE NN MODEL
-    model = torch.load(f'{BASEPATH}/Pickle_Files/Policy_Network.pt')
+    # with torch.no_grad():
+    #     y_pred_test = model.forward(X_test.float())
+    #     y_error = (y_pred_test-y_test).numpy()
 
-    with torch.no_grad():
-        y_pred_test = model.forward(X_test.float())
-        y_error = (y_pred_test-y_test).numpy()
+    #     rms = mean_squared_error(y_test, y_pred_test, squared=False)
+    #     print(f"RMSE: {rms:.5f} Standard Deviation: {y_error.std():.2f}")
 
-        rms = mean_squared_error(y_test, y_pred_test, squared=False)
-        print(f"RMSE: {rms:.5f} Standard Deviation: {y_error.std():.2f}")
-
-    # ## SAVE ERROR VALUES TO CSV
-    # y_pred_df = pd.DataFrame(np.hstack((y_test,y_pred_test,y_error)),columns=['y_test','y_pred_test','y_error'])
-    # y_pred_df.to_csv(f'{BASEPATH}/NN_Policy_Value_Errors.csv',index=False,float_format="%.2f")
+    # # ## SAVE ERROR VALUES TO CSV
+    # # y_pred_df = pd.DataFrame(np.hstack((y_test,y_pred_test,y_error)),columns=['y_test','y_pred_test','y_error'])
+    # # y_pred_df.to_csv(f'{BASEPATH}/NN_Policy_Value_Errors.csv',index=False,float_format="%.2f")
 
 
-    # ## PLOT ERROR VARIANCE
-    # plt.hist(y_error, bins=30,histtype='stepfilled', color='steelblue')
-    # plt.show()
+    # # ## PLOT ERROR VARIANCE
+    # # plt.hist(y_error, bins=30,histtype='stepfilled', color='steelblue')
+    # # plt.show()
     
     
 
 
-    ## DEFINE PLOTTING RANGE
-    X_plot = np.stack((
-        RREV,
-        OF_y,
-        d_ceil),axis=1)
+    # ## DEFINE PLOTTING RANGE
+    # X_plot = np.stack((
+    #     RREV,
+    #     OF_y,
+    #     d_ceil),axis=1)
 
-    with torch.no_grad():
-        X_plot = scaler.transform(X_plot)
-        X_plot = torch.FloatTensor(X_plot)
-        y_pred_plot = model.forward(X_plot.float())
+    # with torch.no_grad():
+    #     X_plot = scaler.transform(X_plot)
+    #     X_plot = torch.FloatTensor(X_plot)
+    #     y_pred_plot = model.forward(X_plot.float())
 
-    X_plot = scaler.inverse_transform(X_plot)
+    # X_plot = scaler.inverse_transform(X_plot)
 
-    fig = go.Figure()
+    # fig = go.Figure()
 
 
-    fig.add_trace(
-        go.Scatter3d(
-            x=X_plot[:,0].flatten(),
-            y=X_plot[:,1].flatten(),
-            z=X_plot[:,2].flatten(),
-            mode='markers',
-            marker=dict(
-                size=2,
-                color=y_pred_plot.flatten(),
-                colorbar=dict(title="Colorbar"),
-                colorscale='jet',
-                opacity=0.4)
-        ))
+    # fig.add_trace(
+    #     go.Scatter3d(
+    #         x=X_plot[:,0].flatten(),
+    #         y=X_plot[:,1].flatten(),
+    #         z=X_plot[:,2].flatten(),
+    #         mode='markers',
+    #         marker=dict(
+    #             size=2,
+    #             color=y_pred_plot.flatten(),
+    #             colorbar=dict(title="Colorbar"),
+    #             colorscale='jet',
+    #             opacity=0.4)
+    #     ))
 
-    fig.update_layout(
-        scene = dict(
-            xaxis_title='OF_x',
-            yaxis_title='RREV',
-            zaxis_title='d_ceiling',
-            xaxis = dict(nticks=4, range=[-20,0],),
-            yaxis = dict(nticks=4, range=[0,8],),
-            zaxis = dict(nticks=4, range=[0,1],),
-            ),
-        scene_aspectmode='cube'
+    # fig.update_layout(
+    #     scene = dict(
+    #         xaxis_title='OF_x',
+    #         yaxis_title='RREV',
+    #         zaxis_title='d_ceiling',
+    #         xaxis = dict(nticks=4, range=[-20,0],),
+    #         yaxis = dict(nticks=4, range=[0,8],),
+    #         zaxis = dict(nticks=4, range=[0,1],),
+    #         ),
+    #     scene_aspectmode='cube'
     
-    )
+    # )
 
-    fig.show()
-
-    with torch.no_grad():
-        X = torch.FloatTensor([-1.6974,  0.4014, -1.1264])
-        y = model.forward(X)
-        ii = 0
-        f = open(f'{BASEPATH}/Info/NN_Layers_Policy_{model_config}.h','a')
-        f.truncate(0) ## Clears contents of file
-        f.write("static char NN_Params_Policy[] = {\n")
-
-        ## EXTEND SCALER ARRAY DIMENSIONS
-        scaler_means = scaler.mean_.reshape(-1,1)
-        scaler_stds = scaler.scale_.reshape(-1,1)
-        
-        ## SAVE SCALER ARRAY VALUES
-        np.savetxt(f,scaler_means,
-                    fmt='"%.6f,"',
-                    delimiter='\t',
-                    comments='',
-                    header=f'"{scaler_means.shape[0]},"\t"{scaler_means.shape[1]},"',
-                    footer='"*"\n')
-
-        np.savetxt(f,scaler_stds,
-                    fmt='"%.6f,"',
-                    delimiter='\t',
-                    comments='',
-                    header=f'"{scaler_stds.shape[0]},"\t"{scaler_stds.shape[1]},"',
-                    footer='"*"\n')
-
-        ## SAVE NN LAYER VALUES
-        for name, layer in model.named_modules():
-            if ii > 0: # Skip initialization layer
-
-                W = layer.weight.numpy()
-                np.savetxt(f,W,
-                    fmt='"%.6f,"',
-                    delimiter='\t',
-                    comments='',
-                    header=f'"{W.shape[0]},"\t"{W.shape[1]},"',
-                    footer='"*"\n')
-
-
-                b = layer.bias.numpy().reshape(-1,1)
-                np.savetxt(f,b,
-                    fmt='"%.6f,"',
-                    delimiter='\t',
-                    comments='',
-                    header=f'"{b.shape[0]},"\t"{b.shape[1]},"',
-                    footer='"*"\n')
-
-            ii+=1
-
-        f.write("};")
-        f.close()
-
-        print(y)
+    # fig.show()
