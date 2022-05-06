@@ -18,7 +18,7 @@ import plotly.graph_objects as go
 
 
 np.set_printoptions(suppress=True)
-BASEPATH = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Policy_Mapping/"
+BASEPATH = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Policy_Mapping"
 
 ## DEFINE NN MODEL
 class NN_Model(nn.Module):
@@ -41,8 +41,7 @@ class NN_Model(nn.Module):
 
 
 class NN_Flip_Classifier():
-    def __init__(self,model_config,model_initials,LR_bound):
-        self.model_config = model_config
+    def __init__(self,model_initials,LR_bound):
         self.model_initials = model_initials
         self.LR_bound = LR_bound
 
@@ -60,7 +59,7 @@ class NN_Flip_Classifier():
         self.scaler = preprocessing.StandardScaler().fit(X)
 
         ## SAVE SCALER TO FILE 
-        np.savetxt(f"{BASEPATH}/Info/Scaler_Flip_{self.model_initials}.csv",
+        np.savetxt(f"{BASEPATH}/NeuralNetwork/Info/Scaler_Flip_{self.model_initials}.csv",
             np.stack((self.scaler.mean_,self.scaler.scale_),axis=1),
             fmt='%.6f',
             delimiter=',',
@@ -94,7 +93,7 @@ class NN_Flip_Classifier():
 
         return self.scaler.inverse_transform(X_scaled)
 
-    def trainModel(self,X_train,y_train,X_test,y_test,epochs=500,saveModel=True):
+    def trainModel(self,X_train,y_train,X_test,y_test,epochs=500):
 
         ## CONVERT DATA ARRAYS TO TENSORS
         X_train = torch.FloatTensor(self.scaleData(X_train))
@@ -154,8 +153,6 @@ class NN_Flip_Classifier():
             loss_train.backward()
             optimizer.step()
 
-        if saveModel:
-            torch.save(self.model,f'{BASEPATH}/Pickle_Files/NN_Flip_Classifier_{self.model_initials}.pt')
 
         ## PLOT LOSSES AND ACCURACIES
         fig = plt.figure(1,figsize=(12,8))
@@ -282,14 +279,14 @@ class NN_Flip_Classifier():
                 yaxis_title='Tau [s]',
                 zaxis_title='D_ceiling [m]',
                 xaxis_range=[-20,1],
-                yaxis_range=[0.1,0.4],
+                yaxis_range=[0.4,0.1],
                 zaxis_range=[0,1.2],
             ),
         )
         fig.show()
 
     def saveParams(self):
-        f = open(f'{BASEPATH}/Info/NN_Layers_Flip_{self.model_initials}.h','a')
+        f = open(f'{BASEPATH}/NeuralNetwork/Info/NN_Layers_Flip_{self.model_initials}.h','a')
         f.truncate(0) ## Clears contents of file
         f.write("static char NN_Params_Flip[] = {\n")
         
@@ -402,11 +399,9 @@ if __name__ == "__main__":
     torch.manual_seed(0)
     np.random.seed(0)
 
-    LR_bound = 0.85
-
-    model_config = "Narrow-Long"
+    LR_bound = 0.9 # Classify states with LR higher than this value as valid
     model_initials = "NL_Raw"
-    FlipClassifier = NN_Flip_Classifier(model_config,model_initials,LR_bound)
+    FlipClassifier = NN_Flip_Classifier(model_initials,LR_bound)
 
     ## LOAD DATA
     df_raw = pd.read_csv(f"{BASEPATH}/Data_Logs/NL_Raw/NL_LR_Trials_Raw.csv").dropna() # Collected data
@@ -438,14 +433,14 @@ if __name__ == "__main__":
 
 
 
-    # FlipClassifier.createScaler(X)
-    # FlipClassifier.trainModel(X_train,y_train,X_test,y_test,epochs=250)
-    # FlipClassifier.saveParams()
-    # FlipClassifier.evalModel(X,y)
-
-    Param_Path = f"{BASEPATH}/NeuralNetwork/Info/NN_Layers_Flip_NL_Raw.h"
-    FlipClassifier.loadModelFromParams(Param_Path)
+    FlipClassifier.createScaler(X)
+    FlipClassifier.trainModel(X_train,y_train,X_test,y_test,epochs=95)
+    FlipClassifier.saveParams()
     FlipClassifier.evalModel(X,y)
+
+    # Param_Path = f"{BASEPATH}/NeuralNetwork/Info/NN_Layers_Flip_NL_Raw.h"
+    # FlipClassifier.loadModelFromParams(Param_Path)
+    # FlipClassifier.evalModel(X,y)
     FlipClassifier.plotModel(df_raw)
 
 
