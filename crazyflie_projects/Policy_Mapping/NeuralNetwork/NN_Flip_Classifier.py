@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import pandas as pd
-from sklearn import datasets
 
 ## PYTORCH IMPROTS
 import torch
@@ -12,7 +11,6 @@ import torch.nn.functional as F
 
 ## SKLEARN IMPORTS
 from sklearn.model_selection import train_test_split
-from sklearn.datasets import make_blobs,make_moons
 from sklearn.metrics import *
 from sklearn import preprocessing
 
@@ -20,11 +18,11 @@ import plotly.graph_objects as go
 
 
 np.set_printoptions(suppress=True)
-BASEPATH = "crazyflie_projects/Policy_Mapping/NeuralNetwork"
+BASEPATH = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Policy_Mapping/"
 
 ## DEFINE NN MODEL
 class NN_Model(nn.Module):
-    def __init__(self,in_features=3,h=10,out_features=1):
+    def __init__(self,in_features=3,h=20,out_features=1):
         super().__init__()
         self.fc1 = nn.Linear(in_features,h)     # Layer 1 
         self.fc2 = nn.Linear(h,h)               # Layer 2
@@ -49,28 +47,19 @@ class NN_Flip_Classifier():
         self.LR_bound = LR_bound
 
         self.model = NN_Model()
-        # self.loadModel()
-
-        # self.scaler = None
-        # self.loadScaler()
-
-    def modelInitials(self): # RETURNS INITIALS FOR MODEL
-        str = self.model_config
-        charA = str[0] # [W]ide
-        charB = str[str.find("-")+1] # [L]ong
-
-        self.model_initials = charA+charB
-
-    def loadModel(self):
-        self.model = torch.load(f'{BASEPATH}/Pickle_Files/NN_Flip_Classifier_{self.model_initials}.pt')
+        self.scaler = preprocessing.StandardScaler()
 
     def createScaler(self,X):
+        """Determine scalers to scale training data to mean = 0 and std = 1 before passing through NN
 
-        ## GENERATE SCALER
+        Args:
+            X (np.float array): training data set
+        """        
+
+        ## GENERATE SCALERS
         self.scaler = preprocessing.StandardScaler().fit(X)
-        np.stack((self.scaler.mean_,self.scaler.scale_),axis=1)
 
-        ## SAVE SCALER TO FILE
+        ## SAVE SCALER TO FILE 
         np.savetxt(f"{BASEPATH}/Info/Scaler_Flip_{self.model_initials}.csv",
             np.stack((self.scaler.mean_,self.scaler.scale_),axis=1),
             fmt='%.6f',
@@ -81,6 +70,8 @@ class NN_Flip_Classifier():
 
 
     def loadScaler(self):
+        """Load scaler terms from csv file
+        """        
         
         arr = np.loadtxt(
             open(f"{BASEPATH}/Info/Scaler_Flip_{self.model_initials}.csv", "rb"),
@@ -92,10 +83,14 @@ class NN_Flip_Classifier():
         self.scaler.scale_ = arr[:,1]
 
     def scaleData(self,X):
+        """Scale the given data
+        """        
 
         return self.scaler.transform(X)
 
     def unscaleData(self,X_scaled):
+        """Unscale the given data
+        """        
 
         return self.scaler.inverse_transform(X_scaled)
 
@@ -114,14 +109,14 @@ class NN_Flip_Classifier():
         class_weight = [0.1, 0.9] # Weights as binary classes [0,1]
     
         ## DEFINE TRAINING LOSS
-        weights = np.where(y_train==1,class_weight[1],class_weight[0])      # Convert class weights to element weights
-        criterion = nn.BCELoss(weight=torch.FloatTensor(weights))       
+        weights_train = np.where(y_train==1,class_weight[1],class_weight[0])      # Convert class weights to element weights
+        criterion_train = nn.BCELoss(weight=torch.FloatTensor(weights_train))       
         losses_train = []
         accuracies_train = []
 
         ## DEFINE VALIDATION LOSS
-        weights_val = np.where(y_test==1,class_weight[1],class_weight[0])   # Convert class weights to element weights
-        criterion_val = nn.BCELoss(weight=torch.FloatTensor(weights_val))   
+        weights_test = np.where(y_test==1,class_weight[1],class_weight[0])   # Convert class weights to element weights
+        criterion_test = nn.BCELoss(weight=torch.FloatTensor(weights_test))   
         losses_test = []
         accuracies_test = []
 
@@ -130,15 +125,14 @@ class NN_Flip_Classifier():
 
             ## CALC TRAINING LOSS
             y_pred_train = self.model.forward(X_train)
-            loss_train = criterion(y_pred_train,y_train)
+            loss_train = criterion_train(y_pred_train,y_train)
             losses_train.append(loss_train.item())
 
             ## CALC VALIDATION LOSS
             with torch.no_grad():
                 y_pred_test = self.model.forward(X_test)
-
-            loss_test = criterion_val(y_pred_test,y_test)
-            losses_test.append(loss_test.item())
+                loss_test = criterion_test(y_pred_test,y_test)
+                losses_test.append(loss_test.item())
 
 
 
@@ -187,7 +181,7 @@ class NN_Flip_Classifier():
         plt.tight_layout()
         plt.show()
 
-    def modelForward(self,X):
+    def modelPredict(self,X):
         X_scaled = torch.FloatTensor(self.scaleData(X))
 
         with torch.no_grad():
@@ -196,17 +190,23 @@ class NN_Flip_Classifier():
         return y_pred
 
     def evalModel(self,X,y):
+        """Evaluate the model
 
-        with torch.no_grad():
-            y_pred = self.modelForward(X)
-            y_pred = np.where(y_pred.detach().numpy() < 0.8,0,1)
+        Args:
+            X (_type_): Evaluation dataset
+            y (_type_): Evaluation dataset
+        """        
+
+        ## PREDICT VALUES FROM EVALUATION DATASET
+        y_pred = self.modelPredict(X)
+        y_pred = np.where(y_pred.detach().numpy() < self.LR_bound,0,1)
 
         cfnMatrix = confusion_matrix(y,y_pred,normalize=None)
         print("\n=========== Model Evaluation ===========")
         print(f"Balanced Accuracy: {balanced_accuracy_score(y,y_pred):.3f}")
         print(f"Confusion Matrix: \n{cfnMatrix}")
-        print(f"False Negatives: {cfnMatrix[0,1]}")
-        print(f"False Positives: {cfnMatrix[1,0]}")
+        print(f"False Positives: {cfnMatrix[0,1]}")
+        print(f"False Negatives: {cfnMatrix[1,0]}")
         print(f"Classification Report: {classification_report(y,y_pred)}")
 
 
@@ -225,7 +225,7 @@ class NN_Flip_Classifier():
             OF_y_grid.flatten(),
             d_ceil_grid.flatten()),axis=1)
 
-        y_pred_grid = self.modelForward(X_grid)
+        y_pred_grid = self.modelPredict(X_grid)
 
         fig = go.Figure()
 
@@ -341,39 +341,50 @@ class NN_Flip_Classifier():
         f.write("};")
         f.close()
 
-    def loadModelFromParams(self):
-        path = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Policy_Mapping/NeuralNetwork/Info/NN_Layers_Flip_WL.h"
+    def loadModelFromParams(self,path):
+        """Parse model params from C header file into Pytorch model
 
+        Args:
+            path (string): string to C header file
+        """        
+        
+        ## READ PARAMS FROM FILE AS STRING
         f = open(path,"r")
-        f.readline()
+        f.readline() # Skip first line
         file_string = f.read()
+
+        ## CLEAN STRING FROM EXTRA CHARACTERS
         char_remove = ['"','\n','\t']
         for char in char_remove:
             file_string = file_string.replace(char,'')
 
+        ## CREATE LIST OF MATRIX STRINGS
         matrix_list = file_string.split("*")
 
-        named_layers = dict(self.model.named_modules())
-        layer_list = list(dict(self.model.named_modules()).values())[1:]
+        ## SPLIT STRINGS INTO PROPER SCALERS AND MATRICES
         arr_list = []
-
         for ii,matrix_str in enumerate(matrix_list[:-1]):
-            val_list = matrix_str[:-1].split(",")
-            num_rows = int(val_list[0])
-            num_cols = int(val_list[1])
-            arr = np.array(val_list[2:]).astype(np.float64).reshape(num_rows,num_cols)
+            val_list = matrix_str[:-1].split(",")   # Break string up into components
+            num_rows = int(val_list[0])             # Extract number of rows
+            num_cols = int(val_list[1])             # Extract number of columns
+            arr = np.array(val_list[2:]).astype(np.float64).reshape(num_rows,num_cols) # Extract matrix
 
+            ## EXTRACT SCALER FOR MEAN
             if ii == 0:
                 self.scaler.mean_ = arr[:,0]
 
+            ## EXTRACT SCALER FOR VARIANCE
             elif ii == 1:
                 self.scaler.scale_ = arr[:,0]
 
+            ## ADD MATRIX TO ARRAY LIST
             else:
                 arr_list.append(arr)
-                # with torch.no_grad():
-                #     list(named_layers.values())[ii-1].weight.data = torch.FloatTensor(arr)
 
+        ## EXTRACT LAYERS FROM PYTORCH MODEL
+        layer_list = list(dict(self.model.named_modules()).values())[1:]
+
+        ## FILL MATRICES INTO PYTORCH MODEL
         for ii in range(len(arr_list)):
             if ii%2 == 0:
                 layer_list[ii//2].weight.data = torch.FloatTensor(arr_list[ii])
@@ -382,8 +393,6 @@ class NN_Flip_Classifier():
             
 
 
-        #     self.scaler.mean_ = arr[:,0]
-        # self.scaler.scale_ = arr[:,1]
             
 
 
@@ -399,19 +408,19 @@ if __name__ == "__main__":
     model_initials = "NL_Raw"
     FlipClassifier = NN_Flip_Classifier(model_config,model_initials,LR_bound)
 
-    ## LOAD RAW DATA
-    df_raw = pd.read_csv(f"crazyflie_projects/Policy_Mapping/Data_Logs/NL_Raw/NL_LR_Trials_Raw.csv").dropna()
-    df_bounds = pd.read_csv(f"crazyflie_projects/Policy_Mapping/Data_Logs/NL_Raw/Boundary.csv")
+    ## LOAD DATA
+    df_raw = pd.read_csv(f"{BASEPATH}/Data_Logs/NL_Raw/NL_LR_Trials_Raw.csv").dropna() # Collected data
+    df_bounds = pd.read_csv(f"{BASEPATH}/Data_Logs/NL_Raw/Boundary.csv") # Manufactured data to mold policy region
     df_all = pd.concat([df_raw,df_bounds])
 
     ## ORGANIZE DATA
     Tau = df_all["Tau_flip_mean"]
     OF_y = df_all["OFy_flip_mean"]
     d_ceil = df_all["D_ceil_flip_mean"]
+    X = np.stack((Tau,OF_y,d_ceil),axis=1)
+
     y = df_all["LR_4leg"]
     y = np.where(y < LR_bound,0,1)
-
-    X = np.stack((Tau,OF_y,d_ceil),axis=1)
 
     ## SPLIT DATA FEATURES INTO TRAINING AND TESTING SETS
     data_array = np.stack((Tau,OF_y,d_ceil,y),axis=1)
@@ -429,16 +438,15 @@ if __name__ == "__main__":
 
 
 
-    FlipClassifier.createScaler(X)
-    FlipClassifier.trainModel(X_train,y_train,X_test,y_test,epochs=250)
-    FlipClassifier.saveParams()
-    FlipClassifier.evalModel(X,y)
-
-
-    # FlipClassifier.loadModelFromParams()
+    # FlipClassifier.createScaler(X)
+    # FlipClassifier.trainModel(X_train,y_train,X_test,y_test,epochs=250)
+    # FlipClassifier.saveParams()
     # FlipClassifier.evalModel(X,y)
+
+    Param_Path = f"{BASEPATH}/NeuralNetwork/Info/NN_Layers_Flip_NL_Raw.h"
+    FlipClassifier.loadModelFromParams(Param_Path)
+    FlipClassifier.evalModel(X,y)
     FlipClassifier.plotModel(df_raw)
 
-    pass
 
 
