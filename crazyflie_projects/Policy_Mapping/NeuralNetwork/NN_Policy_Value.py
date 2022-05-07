@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import pandas as pd
+import os
 
 ## PYTORCH IMPROTS
 import torch
@@ -32,13 +33,15 @@ class NN_Policy_Model(nn.Module):
 
         self.fc1 = nn.Linear(in_features,h)     # Layer 1
         self.fc2 = nn.Linear(h,h)               # Layer 2
+        self.fc3 = nn.Linear(h,h)               # Layer 2
         self.out = nn.Linear(h,out_features)    # Layer 3
 
     def forward(self,x):
 
         # PASS DATA THROUGH NETWORK
-        x = torch.sigmoid(self.fc1(x))
-        x = torch.sigmoid(self.fc2(x))
+        x = F.elu(self.fc1(x))
+        x = F.elu(self.fc2(x))
+        x = F.elu(self.fc2(x))
         x = self.out(x)
 
         return x
@@ -126,42 +129,6 @@ class PolicyNetwork(NN_Trainer):
         fig = go.Figure()
 
         ## PLOT DATA POINTS
-        fig.add_trace(
-            go.Scatter3d(
-                ## DATA
-                x=X_grid[:,1].flatten(),
-                y=X_grid[:,0].flatten(),
-                z=X_grid[:,2].flatten(),
-
-                ## HOVER DATA
-                # customdata=df_custom,
-                # hovertemplate=" \
-                #     <b>LR: %{customdata[3]:.3f}</b> \
-                #     <br>OFy: %{customdata[10]:.3f} Vel: %{customdata[0]:.2f} </br> \
-                #     <br>Tau: %{customdata[8]:.3f} Phi: %{customdata[1]:.0f}</br> \
-                #     <br>D_ceil: %{customdata[12]:.3f}</br>",
-
-                ## MARKER
-                mode='markers',
-                marker=dict(
-                    size=3,
-                    color=y_pred_grid,                # set color to an array/list of desired values
-                    cmin=4,
-                    cmax=9,
-                    colorscale='Viridis',   # choose a colorscale
-                    opacity=1.0
-                )
-            )
-        )
-
-        X_grid = np.stack((
-            df_custom["Tau"],
-            df_custom["OFy"],
-            df_custom["d_ceil"]),axis=1)
-        y_pred = self.modelPredict(X_grid).numpy().flatten()
-        error = df_custom["My_d"].to_numpy().flatten() - y_pred
-    
-        # ## PLOT DATA POINTS
         # fig.add_trace(
         #     go.Scatter3d(
         #         ## DATA
@@ -181,14 +148,52 @@ class PolicyNetwork(NN_Trainer):
         #         mode='markers',
         #         marker=dict(
         #             size=3,
-        #             color=y_pred,                # set color to an array/list of desired values
-        #             cmin=0,
-        #             cmax=10,
+        #             color=y_pred_grid,                # set color to an array/list of desired values
+        #             cmin=4,
+        #             cmax=9,
         #             colorscale='Viridis',   # choose a colorscale
         #             opacity=1.0
         #         )
         #     )
         # )
+
+        X_grid = np.stack((
+            df_custom["Tau"],
+            df_custom["OFy"],
+            df_custom["d_ceil"]),axis=1)
+        y_pred = self.modelPredict(X_grid).numpy().flatten()
+        error = df_custom["My_d"].to_numpy().flatten() - y_pred
+    
+        ## PLOT DATA POINTS
+        fig.add_trace(
+            go.Scatter3d(
+                ## DATA
+                x=X_grid[:,1].flatten(),
+                y=X_grid[:,0].flatten(),
+                z=X_grid[:,2].flatten(),
+
+                ## HOVER DATA
+                customdata=np.stack((error,df_custom["My_d"].to_numpy().flatten(),y_pred),axis=1),
+                hovertemplate=
+                "<br>My: %{customdata[1]:.3f}</br> \
+                 <br>Error: %{customdata[0]:.3f}</br> \
+                 <br>Pred: %{customdata[2]:.3f}</br>",
+                    
+
+                ## MARKER
+                mode='markers',
+                marker=dict(
+                    size=3,
+                    # color=df_custom["My_d"].to_numpy().flatten(),
+                    # color=y_pred,
+                    color = np.abs(error),
+                    cmin=0,
+                    cmax=10,
+                    colorscale='Viridis',   # choose a colorscale
+                    opacity=1.0
+                )
+            )
+        )
 
         fig.update_layout(
             scene=dict(
@@ -214,7 +219,16 @@ if __name__ == '__main__':
     Policy_NN = PolicyNetwork(model,model_initials)
 
     ## LOAD DATA 
-    df = pd.read_csv(f"{BASEPATH}/Data_Logs/NL_Raw/NL_PolicyVal_Trials_Raw_1.csv").sample(frac=0.05) # Collected data
+    # df = pd.read_csv(f"{BASEPATH}/Data_Logs/NL_Raw/NL_PolicyVal_Trials_Raw_1.csv").sample(frac=0.05) # Collected data
+
+
+    path = f"{BASEPATH}/Data_Logs/NL_Raw/"
+    all_files = []
+    for file in os.listdir(f"{BASEPATH}/Data_Logs/NL_Raw/"):
+        if file.startswith("NL_PolicyVal"):
+            all_files.append(os.path.join(path, file))
+
+    df = pd.concat((pd.read_csv(f).sample(frac=0.02) for f in all_files))
 
     ## ORGANIZE DATA
     Tau = df["Tau"]
@@ -236,7 +250,7 @@ if __name__ == '__main__':
 
     Param_Path = f'{BASEPATH}/NeuralNetwork/Info/NN_Layers_Policy_{model_initials}.h'
     Policy_NN.createScaler(X)
-    Policy_NN.trainModel(X_train,y_train,X_test,y_test,epochs=10000)
+    Policy_NN.trainModel(X_train,y_train,X_test,y_test,epochs=400)
     Policy_NN.saveParams(Param_Path)
 
     Policy_NN.loadModelFromParams(Param_Path)
@@ -244,69 +258,3 @@ if __name__ == '__main__':
     Policy_NN.plotModel(df)
 
 
-    # ## EVALUATE NN MODEL
-    # model = torch.load(f'{BASEPATH}/Pickle_Files/Policy_Network.pt')
-
-    # with torch.no_grad():
-    #     y_pred_test = model.forward(X_test.float())
-    #     y_error = (y_pred_test-y_test).numpy()
-
-    #     rms = mean_squared_error(y_test, y_pred_test, squared=False)
-    #     print(f"RMSE: {rms:.5f} Standard Deviation: {y_error.std():.2f}")
-
-    # # ## SAVE ERROR VALUES TO CSV
-    # # y_pred_df = pd.DataFrame(np.hstack((y_test,y_pred_test,y_error)),columns=['y_test','y_pred_test','y_error'])
-    # # y_pred_df.to_csv(f'{BASEPATH}/NN_Policy_Value_Errors.csv',index=False,float_format="%.2f")
-
-
-    # # ## PLOT ERROR VARIANCE
-    # # plt.hist(y_error, bins=30,histtype='stepfilled', color='steelblue')
-    # # plt.show()
-    
-    
-
-
-    # ## DEFINE PLOTTING RANGE
-    # X_plot = np.stack((
-    #     RREV,
-    #     OF_y,
-    #     d_ceil),axis=1)
-
-    # with torch.no_grad():
-    #     X_plot = scaler.transform(X_plot)
-    #     X_plot = torch.FloatTensor(X_plot)
-    #     y_pred_plot = model.forward(X_plot.float())
-
-    # X_plot = scaler.inverse_transform(X_plot)
-
-    # fig = go.Figure()
-
-
-    # fig.add_trace(
-    #     go.Scatter3d(
-    #         x=X_plot[:,0].flatten(),
-    #         y=X_plot[:,1].flatten(),
-    #         z=X_plot[:,2].flatten(),
-    #         mode='markers',
-    #         marker=dict(
-    #             size=2,
-    #             color=y_pred_plot.flatten(),
-    #             colorbar=dict(title="Colorbar"),
-    #             colorscale='jet',
-    #             opacity=0.4)
-    #     ))
-
-    # fig.update_layout(
-    #     scene = dict(
-    #         xaxis_title='OF_x',
-    #         yaxis_title='RREV',
-    #         zaxis_title='d_ceiling',
-    #         xaxis = dict(nticks=4, range=[-20,0],),
-    #         yaxis = dict(nticks=4, range=[0,8],),
-    #         zaxis = dict(nticks=4, range=[0,1],),
-    #         ),
-    #     scene_aspectmode='cube'
-    
-    # )
-
-    # fig.show()
