@@ -58,19 +58,19 @@ class Agent(object):
 
         return action.item()
 
-    def learn(self,state,reward,new_state,done):
+    def train(self,state,reward,next_state,done):
 
         ## ZERO NETWORK GRADIENTS
         self.actor.optimizer.zero_grad()
         self.critic.optimizer.zero_grad()
 
         ## CALCULATE STATE VALUES AND REWARDS
-        critic_value = self.critic.forward(state)
-        critic_value_ = self.critic.forward(new_state)
+        V_state = self.critic.forward(state)
+        V_next_state = self.critic.forward(next_state)
         reward = T.tensor(reward,dtype=T.float).to(self.actor.device)
 
-        ## CALC ADVANTAGE
-        delta = reward + self.gamma*critic_value*(1-int(done)) - critic_value_ # If episode is over then discard future term
+        ## TD ADVANTAGE ESTIMATE
+        delta = reward + self.gamma*V_next_state*(1-int(done)) - V_state # If episode is over then discard future term
 
         ## CALCULATE LOSS
         actor_loss = -self.log_probs*delta # Minimize policy gradient
@@ -83,27 +83,38 @@ class Agent(object):
 
 
 if __name__ == '__main__':
-    agent = Agent(alpha=5e-6,beta=10e-5,input_dims=[2],gamma=0.99,
-            layer1_size=256,layer2_size=256)
 
     env = gym.make('MountainCarContinuous-v0')
+    agent = Agent(alpha=0.0001,beta=0.0001,input_dims=[2],gamma=0.99,
+            layer1_size=256,layer2_size=256)
+
     score_history = []
-    num_episodes = 100
-    for i in range(num_episodes):
+
+    num_episodes = 50
+    RENDER = False
+
+    for i in range(1,num_episodes):
         done = False
         score = 0
-        observation = env.reset()
+        state = env.reset()
 
         while not done:
-            action = np.array(agent.choose_action(observation)).reshape((1,))
-            observation_,reward,done,info = env.step(action)
-            agent.learn(observation,reward,observation_,done)
-            observation = observation_
+            if RENDER:
+                env.render()
+
+            action = np.array(agent.choose_action(state)).reshape((1,))
+            next_state,reward,done,info = env.step(action)
+            agent.train(state,reward,next_state,done)
+            state = next_state
             score += reward
 
         score_history.append(score)
-        if i%1 == 0:
+        print(f"EPISODE: {i} Score: {score:.2f} MA_Reward: {np.nanmean(score_history[-5:]):.2f}")
+        if i%10 == 0:
             RENDER = True
-            print(f"EPISODE: {i} Score: {score}")
         else:
             RENDER = False
+
+    # PLOT RESULTS
+    plt.plot(range(num_episodes),score_history)
+    plt.show()
