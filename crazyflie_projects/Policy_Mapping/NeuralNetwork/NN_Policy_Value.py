@@ -13,8 +13,6 @@ import torch.nn.functional as F
 ## SKLEARN IMPORTS
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import *
-from sklearn import preprocessing
-from imblearn.over_sampling import RandomOverSampler
 
 import plotly.graph_objects as go
 
@@ -184,9 +182,9 @@ class PolicyNetwork(NN_Trainer):
                 mode='markers',
                 marker=dict(
                     size=3,
-                    # color=df_custom["My_d"].to_numpy().flatten(),
+                    color=df_custom["My_d"].to_numpy().flatten(),
                     # color=y_pred,
-                    color = np.abs(error),
+                    # color = np.abs(error),
                     cmin=0,
                     cmax=10,
                     colorscale='Viridis',   # choose a colorscale
@@ -249,9 +247,9 @@ if __name__ == '__main__':
     y_test = test_df[['My_d']].to_numpy()
 
     Param_Path = f'{BASEPATH}/NeuralNetwork/Info/NN_Layers_Policy_{model_initials}.h'
-    Policy_NN.createScaler(X)
-    Policy_NN.trainModel(X_train,y_train,X_test,y_test,epochs=400)
-    Policy_NN.saveParams(Param_Path)
+    # Policy_NN.createScaler(X)
+    # Policy_NN.trainModel(X_train,y_train,X_test,y_test,epochs=400)
+    # Policy_NN.saveParams(Param_Path)
 
     Policy_NN.loadModelFromParams(Param_Path)
     # Policy_NN.evalModel(X,y)

@@ -400,7 +400,7 @@ if __name__ == "__main__":
     torch.manual_seed(0)
     np.random.seed(0)
 
-    LR_bound = 0.85 # Classify states with LR higher than this value as valid
+    LR_bound = 0.80 # Classify states with LR higher than this value as valid
     model_initials = "NL_Raw"
     model = NN_Flip_Model()
     FlipClassifier = NN_Trainer(model,model_initials,LR_bound)
@@ -424,7 +424,7 @@ if __name__ == "__main__":
     df = pd.DataFrame(data_array,columns=['Tau','OFy','d_ceil','LR'])
     df = df.sort_values(by='LR')
 
-    train_df, test_df = train_test_split(df,test_size=0.25,random_state=73)
+    train_df, test_df = train_test_split(df,test_size=0.10,random_state=73)
     X_train = train_df[['Tau','OFy','d_ceil']].to_numpy()
     y_train = train_df[['LR']].to_numpy()
 
@@ -437,14 +437,14 @@ if __name__ == "__main__":
     y_train = y_train.reshape(-1,1)
 
 
-    FlipClassifier.createScaler(X)
-    FlipClassifier.trainModel(X_train,y_train,X_test,y_test,epochs=160)
     Param_Path = f'{BASEPATH}/NeuralNetwork/Info/NN_Layers_Flip_{model_initials}.h'
+    FlipClassifier.createScaler(X)
+    FlipClassifier.trainModel(X_train,y_train,X_test,y_test,epochs=200)
     FlipClassifier.saveParams(Param_Path)
     FlipClassifier.evalModel(X,y)
 
-    # FlipClassifier.loadModelFromParams(Param_Path)
-    # FlipClassifier.evalModel(X,y)
+    FlipClassifier.loadModelFromParams(Param_Path)
+    FlipClassifier.evalModel(X,y)
     FlipClassifier.plotModel(df_raw)
 
 
