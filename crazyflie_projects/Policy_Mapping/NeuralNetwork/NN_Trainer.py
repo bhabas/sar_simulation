@@ -465,6 +465,103 @@ class NN_Trainer():
         )
         fig.show()
 
+    def plotLandingRate(self,df_custom,PlotRegion=False):
+
+        fig = go.Figure()
+
+        if PlotRegion:
+            ## CREATE GRID
+            Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
+                np.linspace(0.15, 0.35, 45),
+                np.linspace(-15, 1, 45),
+                np.linspace(0.0, 1.0, 45)
+            )
+
+            ## CONCATENATE DATA TO MATCH INPUT
+            X_grid = np.stack((
+                Tau_grid.flatten(),
+                OF_y_grid.flatten(),
+                d_ceil_grid.flatten()),axis=1)
+
+            y_pred_grid = self.modelPredict(X_grid).numpy()
+            valid_idx = np.where(y_pred_grid[:,0] > 0.2)
+            X_grid = X_grid[valid_idx]
+            y_pred_grid = y_pred_grid[valid_idx]
+
+            ## PLOT DATA POINTS
+            fig.add_trace(
+                go.Scatter3d(
+                    ## DATA
+                    x=X_grid[:,1].flatten(),
+                    y=X_grid[:,0].flatten(),
+                    z=X_grid[:,2].flatten(),
+
+                    ## MARKER
+                    mode='markers',
+                    marker=dict(
+                        size=3,
+                        color=np.abs(y_pred_grid[:,0].flatten()),                # set color to an array/list of desired values
+                        cmin=0,
+                        cmax=1,
+                        showscale=True,
+                        colorscale='Viridis',   # choose a colorscale
+                        opacity=1.0
+                    )
+                )
+            )
+        else:
+            X_grid = np.stack((
+                df_custom["Tau_flip_mean"],
+                df_custom["OFy_flip_mean"],
+                df_custom["D_ceil_flip_mean"]),axis=1)
+            y_pred = self.modelPredict(X_grid)[:,0].numpy().flatten()
+            error = df_custom["LR_4leg"].to_numpy().flatten() - y_pred
+        
+            ## PLOT DATA POINTS
+            fig.add_trace(
+                go.Scatter3d(
+                    ## DATA
+                    x=X_grid[:,1].flatten(),
+                    y=X_grid[:,0].flatten(),
+                    z=X_grid[:,2].flatten(),
+
+                    ## HOVER DATA
+                    customdata=np.stack((error,df_custom["LR_4leg"].to_numpy().flatten(),y_pred),axis=1),
+                    hovertemplate=
+                    "<br>LR: %{customdata[1]:.3f}</br> \
+                     <br>Error: %{customdata[0]:.3f}</br> \
+                     <br>Pred: %{customdata[2]:.3f}</br>",
+                    
+                        
+
+                    ## MARKER
+                    mode='markers',
+                    marker=dict(
+                        size=3,
+                        # color=np.abs(df_custom["My_mean"].to_numpy().flatten()),
+                        color=np.abs(y_pred),
+                        # color = np.abs(error),
+                        cmin=0,
+                        cmax=1,
+                        showscale=True,
+                        colorscale='Viridis',   # choose a colorscale
+                        opacity=1.0
+                    )
+                )
+            )
+
+        fig.update_layout(
+            scene=dict(
+                xaxis_title='OFy [rad/s]',
+                yaxis_title='Tau [s]',
+                zaxis_title='D_ceiling [m]',
+                xaxis_range=[-20,1],
+                yaxis_range=[0.4,0.1],
+                zaxis_range=[0,1.2],
+            ),
+        )
+        fig.show()
+
 
 
 
@@ -546,4 +643,6 @@ if __name__ == "__main__":
     FlipClassifier.evalModel(X,y,LR_bound=LR_bound)
     FlipClassifier.plotClassification(df_raw,LR_bound=0.8)
     FlipClassifier.plotPolicy(df_raw,PlotRegion=True)
+    FlipClassifier.plotLandingRate(df_raw,PlotRegion=True)
+
 
