@@ -20,7 +20,7 @@ df = pd.read_csv(DATA_PATH)
 ## SYSTEM CONSTANTS
 H_CEIL = 2.1
 Z_0 = 0.4
-Tau_max = 0.35 # Cutoff value for plots (Practically contact at this point (0.125s))
+Tau_max = 0.3 # Cutoff value for plots (Practically contact at this point (0.125s))
 Tau_min = 0.17
 
 ## GENERATE MAX TAU WALL
@@ -40,12 +40,12 @@ LR_wall = np.zeros_like(XX)
 data_wall_min = np.vstack((XX.flatten(),Tau_wall.flatten(),YY.flatten(),LR_wall.flatten())).T
 
 ## GENERATE MAX VELOCITY CURVE
-theta_range = np.linspace(20,90,10)
+theta_range = np.linspace(10,90,30)
 v_range = np.linspace(4,5,3)
 v_range,theta_range = np.meshgrid(v_range,theta_range)
 vx_range = v_range.flatten()*np.cos(np.radians(theta_range.flatten()))
 vz_range = v_range.flatten()*np.sin(np.radians(theta_range.flatten()))
-d_range = vz_range/4
+d_range = vz_range/3.5
 Tau_range = d_range/vz_range
 OFy_range = -vx_range/d_range
 LR_vmax = np.zeros_like(d_range)

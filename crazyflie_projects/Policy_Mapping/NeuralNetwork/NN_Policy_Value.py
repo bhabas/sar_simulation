@@ -51,7 +51,7 @@ class PolicyNetwork(NN_Trainer):
         self.model = model
         self.model_initials = model_initials
 
-    def trainModel(self, X_train, y_train, X_test, y_test, epochs=500):
+    def trainClassifier_Model(self, X_train, y_train, X_test, y_test, epochs=500):
 
         ## CONVERT DATA ARRAYS TO TENSORS
         X_train = torch.FloatTensor(self.scaleData(X_train))
