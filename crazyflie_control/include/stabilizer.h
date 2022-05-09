@@ -268,7 +268,8 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
 
         sensorData.OFx_est = x_QR->data[0][0];
         sensorData.OFy_est = x_QR->data[1][0];
-        sensorData.Tau_est = 1/x_QR->data[2][0];
+        float Tau_est = clamp((1/x_QR->data[2][0]), -10,30); //restricting Tau_est to be between -10:30
+        sensorData.Tau_est = Tau_est;
 
 
         nml_mat_free(m_A);
