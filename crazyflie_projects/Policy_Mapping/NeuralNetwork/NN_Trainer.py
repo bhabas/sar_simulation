@@ -350,7 +350,7 @@ class NN_Trainer():
                 mode='markers',
                 marker=dict(
                     size=3,
-                    color=df_custom["LR_4leg"],                # set color to an array/list of desired values
+                    color=df_custom["LR_4leg"],
                     colorscale='Viridis',   # choose a colorscale
                     opacity=1.0)
             )
@@ -450,6 +450,7 @@ class NN_Trainer():
                     # color = np.abs(error),
                     cmin=0,
                     cmax=10,
+                    showscale=True,
                     colorscale='Viridis',   # choose a colorscale
                     opacity=1.0
                 )
