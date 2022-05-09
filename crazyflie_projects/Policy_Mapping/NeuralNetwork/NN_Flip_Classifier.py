@@ -47,7 +47,7 @@ if __name__ == "__main__":
     torch.manual_seed(0)
     np.random.seed(0)
 
-    LR_bound = 0.8 # Classify states with LR higher than this value as valid
+    LR_bound = 0.9 # Classify states with LR higher than this value as valid
     model_initials = "NL_DR"
     model = NN_Flip_Model()
     FlipClassifier = NN_Trainer(model,model_initials,LR_bound)
@@ -90,10 +90,11 @@ if __name__ == "__main__":
     FlipClassifier.trainClassifier_Model(X_train,y_train,X_test,y_test,LR_bound=LR_bound,epochs=2000)
     FlipClassifier.saveParams(Param_Path)
     FlipClassifier.evalModel(X,y)
+ 
 
     FlipClassifier.loadModelFromParams(Param_Path)
     FlipClassifier.evalModel(X,y,LR_bound=LR_bound)
-    FlipClassifier.plotModel(df_all,LR_bound=LR_bound)
+    FlipClassifier.plotModel(df_raw,LR_bound=LR_bound)
 
 
 
