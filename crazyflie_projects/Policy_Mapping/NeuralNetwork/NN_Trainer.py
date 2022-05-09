@@ -21,11 +21,12 @@ np.set_printoptions(suppress=True)
 BASEPATH = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Policy_Mapping"
 
 class NN_Trainer():
-    def __init__(self,model,model_initials,LR_bound):
+    def __init__(self,model,model_initials,LR,LR_bound):
 
         self.model = model
         self.model_initials = model_initials
-        self.LR_bound = LR_bound
+        self.LR_bound = LR_bound # Landing Rate bound
+        self.LR = LR # Learning Rate
 
         self.scaler = preprocessing.StandardScaler()
 
@@ -195,7 +196,7 @@ class NN_Trainer():
         y_test = torch.FloatTensor(y_test)
 
         ## INIT MODEL AND OPTIMIZER
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001)
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.LR)
     
         ## DEFINE TRAINING LOSS
         criterion_train = nn.MSELoss()       
@@ -224,13 +225,13 @@ class NN_Trainer():
 
 
             ## CALC TRAINING ACCURACY
-            y_pred_train_class = np.where(y_pred_train.detach().numpy() < LR_bound,0,1)
+            y_pred_train_class = np.where(y_pred_train[:,0].detach().numpy() < LR_bound,0,1)
             y_train_class = np.where(y_train[:,0] < LR_bound,0,1)
             accuracy_train = balanced_accuracy_score(y_train_class,y_pred_train_class)
             accuracies_train.append(accuracy_train)
 
             ## CALC TESTING ACCURACY
-            y_pred_test_class = np.where(y_pred_test.detach().numpy() < LR_bound,0,1)
+            y_pred_test_class = np.where(y_pred_test[:,0].detach().numpy() < LR_bound,0,1)
             y_test_class = np.where(y_test[:,0] < LR_bound,0,1)
             accuracy_test = balanced_accuracy_score(y_test_class,y_pred_test_class)
             accuracies_test.append(accuracy_test)
@@ -278,8 +279,8 @@ class NN_Trainer():
 
         ## PREDICT VALUES FROM EVALUATION DATASET
         y_pred = self.modelPredict(X)
-        y_pred = np.where(y_pred.detach().numpy() < LR_bound,0,1)
-        y_class = np.where(y < LR_bound,0,1)
+        y_pred = np.where(y_pred[:,0].detach().numpy() < LR_bound,0,1)
+        y_class = np.where(y[:,0] < LR_bound,0,1)
 
         cfnMatrix = confusion_matrix(y_class,y_pred,normalize=None)
         print("\n=========== Model Evaluation ===========")
@@ -289,7 +290,7 @@ class NN_Trainer():
         print(f"False Negatives: {cfnMatrix[1,0]}")
         print(f"Classification Report: {classification_report(y_class,y_pred)}")
 
-    def plotModel(self,df_custom,LR_bound=0.9):
+    def plotClassification(self,df_custom,LR_bound=0.9):
 
         ## CREATE GRID
         Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
@@ -314,7 +315,7 @@ class NN_Trainer():
                 x=X_grid[:,1].flatten(),
                 y=X_grid[:,0].flatten(),
                 z=X_grid[:,2].flatten(),
-                value=y_pred_grid.flatten(),
+                value=y_pred_grid[:,0].flatten(),
                 
                 surface_count=10,
                 opacity=0.1,
@@ -366,3 +367,193 @@ class NN_Trainer():
             ),
         )
         fig.show()
+
+
+    def plotPolicy(self,df_custom):
+
+        ## CREATE GRID
+        Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
+            np.linspace(0.15, 0.35, 10),
+            np.linspace(-10, 1, 10),
+            np.linspace(0.25, 1.0, 10)
+        )
+
+        ## CONCATENATE DATA TO MATCH INPUT
+        X_grid = np.stack((
+            Tau_grid.flatten(),
+            OF_y_grid.flatten(),
+            d_ceil_grid.flatten()),axis=1)
+
+        y_pred_grid = self.modelPredict(X_grid).numpy().flatten()
+
+        fig = go.Figure()
+
+        ## PLOT DATA POINTS
+        # fig.add_trace(
+        #     go.Scatter3d(
+        #         ## DATA
+        #         x=X_grid[:,1].flatten(),
+        #         y=X_grid[:,0].flatten(),
+        #         z=X_grid[:,2].flatten(),
+
+        #         ## HOVER DATA
+        #         # customdata=df_custom,
+        #         # hovertemplate=" \
+        #         #     <b>LR: %{customdata[3]:.3f}</b> \
+        #         #     <br>OFy: %{customdata[10]:.3f} Vel: %{customdata[0]:.2f} </br> \
+        #         #     <br>Tau: %{customdata[8]:.3f} Phi: %{customdata[1]:.0f}</br> \
+        #         #     <br>D_ceil: %{customdata[12]:.3f}</br>",
+
+        #         ## MARKER
+        #         mode='markers',
+        #         marker=dict(
+        #             size=3,
+        #             color=y_pred_grid,                # set color to an array/list of desired values
+        #             cmin=4,
+        #             cmax=9,
+        #             colorscale='Viridis',   # choose a colorscale
+        #             opacity=1.0
+        #         )
+        #     )
+        # )
+
+        X_grid = np.stack((
+            df_custom["Tau_flip_mean"],
+            df_custom["OFy_flip_mean"],
+            df_custom["D_ceil_flip_mean"]),axis=1)
+        y_pred = self.modelPredict(X_grid)[:,1].numpy().flatten()
+        error = df_custom["My_mean"].to_numpy().flatten() - y_pred
+    
+        ## PLOT DATA POINTS
+        fig.add_trace(
+            go.Scatter3d(
+                ## DATA
+                x=X_grid[:,1].flatten(),
+                y=X_grid[:,0].flatten(),
+                z=X_grid[:,2].flatten(),
+
+                ## HOVER DATA
+                customdata=np.stack((error,df_custom["My_mean"].to_numpy().flatten(),y_pred),axis=1),
+                hovertemplate=
+                "<br>My: %{customdata[1]:.3f}</br> \
+                 <br>Error: %{customdata[0]:.3f}</br> \
+                 <br>Pred: %{customdata[2]:.3f}</br>",
+                 
+                    
+
+                ## MARKER
+                mode='markers',
+                marker=dict(
+                    size=3,
+                    # color=np.abs(df_custom["My_mean"].to_numpy().flatten()),
+                    color=np.abs(y_pred),
+                    # color = np.abs(error),
+                    cmin=0,
+                    cmax=10,
+                    colorscale='Viridis',   # choose a colorscale
+                    opacity=1.0
+                )
+            )
+        )
+
+        fig.update_layout(
+            scene=dict(
+                xaxis_title='OFy [rad/s]',
+                yaxis_title='Tau [s]',
+                zaxis_title='D_ceiling [m]',
+                xaxis_range=[-20,1],
+                yaxis_range=[0.4,0.1],
+                zaxis_range=[0,1.2],
+            ),
+        )
+        fig.show()
+
+
+
+
+
+np.set_printoptions(suppress=True)
+BASEPATH = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Policy_Mapping"
+
+## DEFINE NN MODEL
+class NN_Flip_Model(nn.Module):
+    def __init__(self,in_features=3,h=20,out_features=2):
+        super().__init__()
+        self.fc1 = nn.Linear(in_features,h)     # Layer 1
+        self.fc2 = nn.Linear(h,h)               # Layer 2
+        self.fc3 = nn.Linear(h,h)               # Layer 2
+        self.out = nn.Linear(h,out_features)    # Layer 3
+
+    def forward(self,x):
+
+        # PASS DATA THROUGH NETWORK
+        x = F.elu(self.fc1(x))
+        x = F.elu(self.fc2(x))
+        x = F.elu(self.fc2(x))
+        x = self.out(x)
+
+        x[:,0] = torch.sigmoid(x[:,0])
+
+        return x
+
+
+
+if __name__ == "__main__":
+
+    ## SET SEEDS
+    torch.manual_seed(0)
+    np.random.seed(0)
+
+    LR_bound = 0.8 # Classify states with LR higher than this value as valid
+    model_initials = "NL_DR"
+    LR = 0.01
+    model = NN_Flip_Model()
+    FlipClassifier = NN_Trainer(model,model_initials,LR,LR_bound)
+
+    ## LOAD DATAmodelPredict
+    df_raw = pd.read_csv(f"{BASEPATH}/Data_Logs/NL_DR/NL_LR_Trials_DR.csv").dropna() # Collected data
+    df_bounds = pd.read_csv(f"{BASEPATH}/Data_Logs/NL_Raw/Boundary.csv") # Manufactured data to mold policy region
+    df_all = pd.concat([df_raw,df_bounds])
+
+    ## ORGANIZE DATA
+    Tau = df_all["Tau_flip_mean"]
+    OF_y = df_all["OFy_flip_mean"]
+    d_ceil = df_all["D_ceil_flip_mean"]
+    LR = df_all["LR_4leg"]
+    My = df_all["My_mean"]
+
+    X = np.stack((Tau,OF_y,d_ceil),axis=1)
+    y = np.stack((LR,My),axis=1)
+
+    ## SPLIT DATA FEATURES INTO TRAINING AND TESTING SETS
+    data_array = np.stack((Tau,OF_y,d_ceil,LR,My),axis=1)
+    df = pd.DataFrame(data_array,columns=['Tau','OFy','d_ceil','LR','My_mean'])
+    df = df.sort_values(by='LR')
+
+    train_df, test_df = train_test_split(df,test_size=0.10,random_state=73)
+    X_train = train_df[['Tau','OFy','d_ceil']].to_numpy()
+    y_train = train_df[['LR','My_mean']].to_numpy()
+
+    X_test = test_df[['Tau','OFy','d_ceil']].to_numpy()
+    y_test = test_df[['LR','My_mean']].to_numpy()
+
+    # ## OVERSAMPLE TRAINING DATASET BECAUSE THERE'S LESS VALID LR SAMPLES THAN INVALID
+    # oversample = RandomOverSampler(sampling_strategy='minority')
+    # X_train, y_train = oversample.fit_resample(X_train, y_train)
+    # y_train = y_train.reshape(-1,1)
+
+    
+
+
+    Param_Path = f'{BASEPATH}/NeuralNetwork/Info/NN_Layers_Flip_{model_initials}.h'
+    # FlipClassifier.createScaler(X)
+    # FlipClassifier.trainClassifier_Model(X_train,y_train,X_test,y_test,LR_bound=LR_bound,epochs=2000)
+    # FlipClassifier.saveParams(Param_Path)
+    # FlipClassifier.evalModel(X,y)
+ 
+
+    FlipClassifier.loadModelFromParams(Param_Path)
+    FlipClassifier.evalModel(X,y,LR_bound=LR_bound)
+    FlipClassifier.plotClassification(df_raw,LR_bound=0.8)
+    FlipClassifier.plotPolicy(df_raw)
+

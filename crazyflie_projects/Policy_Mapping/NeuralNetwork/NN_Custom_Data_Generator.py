@@ -35,8 +35,9 @@ Tau_range = Tau_range.flatten()
 d_range = vz_range*Tau_range
 OFy_range = -vx_range/d_range
 LR_vmax = np.zeros_like(d_range)
+My_vmax = np.zeros_like(d_range)
 
-data_vmax = np.vstack((OFy_range.flatten(),Tau_range.flatten(),d_range.flatten(),LR_vmax.flatten())).T
+data_vmax = np.vstack((OFy_range.flatten(),Tau_range.flatten(),d_range.flatten(),LR_vmax.flatten(),My_vmax.flatten())).T
 
 
 ## GENERATE MAX TAU WALL
@@ -45,7 +46,8 @@ d_ceil_wall = np.linspace(0,1.5,11)
 XX,YY = np.meshgrid(OFy_wall,d_ceil_wall)
 Tau_wall = Tau_max*np.ones_like(XX)
 LR_wall = np.zeros_like(XX)
-data_wall_max = np.vstack((XX.flatten(),Tau_wall.flatten(),YY.flatten(),LR_wall.flatten())).T
+My_wall = np.zeros_like(XX)
+data_wall_max = np.vstack((XX.flatten(),Tau_wall.flatten(),YY.flatten(),LR_wall.flatten(),My_wall.flatten())).T
 
 ## GENERATE MIN TAU WALL
 OFy_wall = np.linspace(-20,0,11)
@@ -53,13 +55,13 @@ d_ceil_wall = np.linspace(0,1.5,11)
 XX,YY = np.meshgrid(OFy_wall,d_ceil_wall)
 Tau_wall = Tau_min*np.ones_like(XX)
 LR_wall = np.zeros_like(XX)
-data_wall_min = np.vstack((XX.flatten(),Tau_wall.flatten(),YY.flatten(),LR_wall.flatten())).T
+My_wall = np.zeros_like(XX)
+data_wall_min = np.vstack((XX.flatten(),Tau_wall.flatten(),YY.flatten(),LR_wall.flatten(),My_wall.flatten())).T
 
 data = np.vstack((data_vmax,data_wall_max,data_wall_min))
-df_custom = pd.DataFrame(data,columns=["OFy_flip_mean","Tau_flip_mean","D_ceil_flip_mean","LR_4leg"])
+df_custom = pd.DataFrame(data,columns=["OFy_flip_mean","Tau_flip_mean","D_ceil_flip_mean","LR_4leg","My_mean"])
 df_custom = df_custom.round(4)
 df_custom.to_csv(f"{BASE_PATH}/crazyflie_projects/Policy_Mapping/Data_Logs/NL_Raw/Boundary.csv",index=False)
-# df = pd.concat([df,df_custom])
 
 ## PLOT SETUP
 cmap = mpl.cm.jet
