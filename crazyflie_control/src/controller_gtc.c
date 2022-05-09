@@ -240,12 +240,12 @@ static Scaler Scaler_Flip;      // Scale input vector for NN
 static Scaler Scaler_Policy;
 
 // NN WEIGHTS
-static nml_mat* W_flip[3];  
-static nml_mat* W_policy[3];
+static nml_mat* W_flip[4];  
+static nml_mat* W_policy[4];
 
 // NN BIASES
-static nml_mat* b_flip[3];  
-static nml_mat* b_policy[3];
+static nml_mat* b_flip[4];  
+static nml_mat* b_policy[4];
 
 // NN OUTPUTS
 float NN_flip = 0.0f;           // NN output value for flip classification
@@ -263,7 +263,6 @@ void controllerGTCInit(void)
     J = mdiag(Ixx,Iyy,Izz);
 
     initNN_Layers(&Scaler_Flip,W_flip,b_flip,NN_Params_Flip,3);
-    initNN_Layers(&Scaler_Policy,W_policy,b_policy,NN_Params_Policy,3);
     consolePrintf("GTC Initiated\n");
 }
 
@@ -664,8 +663,8 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
                 case 1: // NN
                 {   
-                    NN_flip = NN_Forward_Flip(X,&Scaler_Flip,W_flip,b_flip);
-                    NN_policy = -NN_Forward_Policy(X,&Scaler_Policy,W_policy,b_policy);
+                    // NN_flip = NN_Forward_Flip(X,&Scaler_Flip,W_flip,b_flip);
+                    // NN_policy = -NN_Forward_Policy(X,&Scaler_Policy,W_policy,b_policy);
 
                     if(NN_flip >= 0.9 && onceFlag == false)
                     {   
@@ -684,8 +683,8 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                         RREV_tr = RREV;
                         d_ceil_tr = d_ceil;
 
-                        NN_tr_flip = NN_Forward_Flip(X,&Scaler_Flip,W_flip,b_flip);
-                        NN_tr_policy = NN_Forward_Policy(X,&Scaler_Policy,W_policy,b_policy);
+                        // NN_tr_flip = NN_Forward_Flip(X,&Scaler_Flip,W_flip,b_flip);
+                        // NN_tr_policy = NN_Forward_Policy(X,&Scaler_Policy,W_policy,b_policy);
 
 
                         M_d.x = 0.0f;

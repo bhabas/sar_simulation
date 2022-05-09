@@ -16,8 +16,7 @@ extern "C" {
 #ifndef __CONTROLLER_GTC_H__
 #define __CONTROLLER_GTC_H__
 
-#include "NN_Params/NN_Layers_Policy_WL.h"
-#include "NN_Params/NN_Layers_Flip_WL.h"
+#include "NN_Params/NN_Layers_NL_DR.h"
 
 // STANDARD LIBRARIES
 #include <math.h>
