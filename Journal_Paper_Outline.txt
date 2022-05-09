@@ -23,6 +23,8 @@ Methodology
     - Use EPHE to find (Tau,My) combination
     - Record flip triggering (Tau,OFy,d_ceil) and resulting My_d
         - My_d is not directly true since rear motors give counter moment that decreases with time
+        - Part of environment
+        - Learning in motor control space
     - Approximate values with two Neural Networks
     - Implement NNs to controller
     - Validate with Sim and implement in Experiment
@@ -46,6 +48,7 @@ Methodology
 - NN flip/policy implementation
     - Linear feed forward network
     - One network for classification
+        - Can change threshold to change robustness 
     - One network for policy value
         - Easier to optimize two seperate networks than one combined
         - Easier computationally as well (continually check one network and run other when flip triggered)
@@ -56,6 +59,7 @@ Methodology
 - Sim-to-Real transfer
     - System identification
     - Domain randomization
+        - Compare raw w/ DR
 
 - Experimental setup
     - Used constant velocity trajectory generation to get quadrotor up to speed
@@ -72,6 +76,8 @@ Methodology
     - Show same landing gear plots
     - Quantify success of NN behavior in some way
     - Narrow-Long design used because of overall great performance
+
+    - Approach can be generalized to other surfaces
         
 
 

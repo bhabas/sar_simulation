@@ -17,7 +17,7 @@ class DataParser:
         ## FILEPATH PROPERTIES
         filename = input('\nInput the name of the file to be parsed:\n')
         self.Username = getpass.getuser()
-        self.Path = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Featureless_TTC/local_logs/'
+        self.Path = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Featureless_TTC/logs/'
         filepath = self.Path + filename
 
         ## Check if data has already been compile
@@ -99,6 +99,7 @@ class DataParser:
         ## DEFINE IMAGE SENSOR COORDS
         U_grid = (Up_grid - O_up)*w + w/2
         V_grid = (Vp_grid - O_vp)*w + w/2
+        print(U_grid[1,:])
 
         Iu = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
         Iv = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
@@ -146,6 +147,12 @@ class DataParser:
 
 
             It = (Cur_img - Prev_img)/(self.Time[n] - self.Time[n-1]) # Time gradient
+
+            # PLOT IMAGE GRADIENTS
+            #plt.imshow(Iu,interpolation = "none", cmap = cm.Greys)
+            #plt.imshow(Iv,interpolation = "none", cmap = cm.Greys)
+            #plt.show()
+
             G = U_grid*Iu + V_grid*Iv # Radial Gradient
 
             ## SOLVE LEAST SQUARES PROBLEM

@@ -402,6 +402,10 @@ class Tau_Widget(QWidget):
         self.x_arr = np.zeros(buffer_length)
         self.curve_x = self.PW.plot(self.x_arr, pen=pg.mkPen(color=colors["blue"], width=width))
 
+        ## INIT ESTIMATE CURVES
+        self.x_est_arr = np.zeros(buffer_length)
+        self.curve_x_est = self.PW.plot(self.x_est_arr, pen=pg.mkPen(color=colors["blue"], width=1.2,style=QtCore.Qt.DotLine))
+
         ## INIT UPDATE TIMER
         self.timer = pg.QtCore.QTimer(self)
         self.timer.timeout.connect(self.update)
@@ -412,6 +416,11 @@ class Tau_Widget(QWidget):
         self.x_arr = np.roll(self.x_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
         self.x_arr[-1] = DashNode.Tau
         self.curve_x.setData(self.x_arr)
+
+        ## UPDATE ESTIMATE CURVES
+        self.x_est_arr = np.roll(self.x_est_arr,-1) 
+        self.x_est_arr[-1] = DashNode.Tau_est
+        self.curve_x_est.setData(self.x_est_arr)
 
     def reset_axes(self):
         # self.p1.enableAutoRange(enable=True)
@@ -426,6 +435,7 @@ class Tau_Widget(QWidget):
     
     def clear_data(self):
         self.x_arr = np.zeros(buffer_length)
+        self.x_est_arr = np.zeros(buffer_length)
 
 
 class OF_Widget(QWidget):
@@ -459,6 +469,13 @@ class OF_Widget(QWidget):
         self.y_arr = np.zeros(buffer_length)
         self.curve_y = self.PW.plot(self.y_arr, pen=pg.mkPen(color=colors["green"], width=width))
 
+        ## INIT ESTIMATE CURVES
+        self.x_est_arr = np.zeros(buffer_length)
+        self.curve_x_est = self.PW.plot(self.x_est_arr, pen=pg.mkPen(color=colors["red"], width=1.2,style=QtCore.Qt.DotLine))
+
+        self.y_est_arr = np.zeros(buffer_length)
+        self.curve_y_est = self.PW.plot(self.y_est_arr, pen=pg.mkPen(color=colors["green"], width=1.2,style=QtCore.Qt.DotLine))
+
         ## INIT UPDATE TIMER
         self.timer = pg.QtCore.QTimer(self)
         self.timer.timeout.connect(self.update)
@@ -473,6 +490,17 @@ class OF_Widget(QWidget):
         self.y_arr = np.roll(self.y_arr,-1)
         self.y_arr[-1] = DashNode.OFy
         self.curve_y.setData(self.y_arr)
+
+        ## UPDATE ESTIMATE CURVES
+        self.x_est_arr = np.roll(self.x_est_arr,-1) 
+        self.x_est_arr[-1] = DashNode.OFx_est
+        self.curve_x_est.setData(self.x_est_arr)
+
+        self.y_est_arr = np.roll(self.y_est_arr,-1) 
+        self.y_est_arr[-1] = DashNode.OFy_est
+        self.curve_y_est.setData(self.y_est_arr)
+
+
 
     def reset_axes(self):
         # self.p1.enableAutoRange(enable=True)
@@ -886,7 +914,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     ## INITIALIZE DASHBOARD WINDOW
-    myApp = Reward_Widget()
+    myApp = OF_Widget()
     myApp.show()
 
     sys.exit(app.exec_())

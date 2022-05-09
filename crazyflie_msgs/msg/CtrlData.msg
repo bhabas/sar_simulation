@@ -3,8 +3,11 @@ geometry_msgs/Twist Twist
 float64 Tau
 float64 OFx
 float64 OFy
-float64 RREV
 float64 D_ceil
+
+float64 Tau_est
+float64 OFx_est
+float64 OFy_est
 
 float64[4] FM
 float64[4] MotorThrusts
@@ -28,7 +31,6 @@ geometry_msgs/Twist Twist_tr
 float64 Tau_tr
 float64 OFx_tr
 float64 OFy_tr
-float64 RREV_tr
 float64 D_ceil_tr
 
 float64[4] FM_flip

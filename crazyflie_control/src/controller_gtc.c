@@ -6,6 +6,8 @@
 // =================================
 //    CONTROL GAIN INITIALIZATION
 // =================================
+// (INITIAL VALUES THAT ARE OVERWRITTEN BY Ctrl_Gains.yaml)
+
 // XY POSITION PID
 float P_kp_xy = 0.5f;
 float P_kd_xy = 0.3f;
@@ -72,8 +74,13 @@ struct vec stateOmega = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
 float Tau = 0.0f;       // [s]
 float OFx = 0.0f;       // [rad/s]
 float OFy = 0.0f;       // [rad/s] 
-float RREV = 0.0f;      // [rad/s]
 float d_ceil = 0.0f;    // [m]
+
+// ESTIMATED OPTICAL FLOW STATES
+float Tau_est = 0.0f; // [s]
+float OFx_est = 0.0f; // [rad/s]
+float OFy_est = 0.0f; // [rad/s]
+
 
 static struct mat33 R; // Orientation as rotation matrix
 struct vec stateEul = {0.0f,0.0f,0.0f}; // Pose in Euler Angles [YZX Notation]
@@ -166,6 +173,7 @@ bool safeModeFlag = false;
 bool execute_P2P_traj = false;
 bool execute_vel_traj = false;
 bool policy_armed_flag = false;
+bool camera_sensor_active = false;
 
 bool flip_flag = false;
 bool onceFlag = false;
@@ -195,7 +203,6 @@ struct vec stateOmega_tr = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
 float Tau_tr = 0.0f;    // [rad/s]
 float OFx_tr = 0.0f;    // [rad/s]
 float OFy_tr = 0.0f;    // [rad/s]
-float RREV_tr = 0.0f;   // [rad/s]
 float d_ceil_tr = 0.0f; // [m/s]
 
 // CONTROLLER STATES
@@ -314,7 +321,6 @@ void controllerGTCReset(void)
     Tau_tr = 0.0f;
     OFx_tr = 0.0f;
     OFy_tr = 0.0f;
-    RREV_tr = 0.0f;
     d_ceil_tr = 0.0f;
     
     NN_tr_flip = 0.0f;
@@ -603,9 +609,6 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
             setpoint->GTC_cmd_rec = false;
         }
 
-
-        
-        
         if(execute_vel_traj){
             velocity_Traj();
         }
@@ -613,13 +616,22 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
             point2point_Traj();
         }
 
+        if(camera_sensor_active == true)
+        {
+            Tau = sensors->Tau_est;
+            OFx = sensors->OFx_est;
+            OFy = sensors->OFy_est;
+        }
+        else
+        {
+            Tau = sensors->Tau;
+            OFx = sensors->OFx;
+            OFy = sensors->OFy;
+        }
+        
         d_ceil = sensors->d_ceil;
-        Tau = sensors->Tau;
-        OFx = sensors->OFx;
-        OFy = sensors->OFy;
-        RREV = sensors->RREV;
 
-        X->data[0][0] = RREV;
+        X->data[0][0] = Tau;
         X->data[1][0] = OFy;
         X->data[2][0] = d_ceil; // d_ceiling [m]
 
@@ -645,7 +657,6 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                         Tau_tr = Tau;
                         OFx_tr = OFx;
                         OFy_tr = OFy;
-                        RREV_tr = RREV;
                         d_ceil_tr = d_ceil;
 
                     
@@ -680,7 +691,6 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                         Tau_tr = Tau;
                         OFx_tr = OFx;
                         OFy_tr = OFy;
-                        RREV_tr = RREV;
                         d_ceil_tr = d_ceil;
 
                         // NN_tr_flip = NN_Forward_Flip(X,&Scaler_Flip,W_flip,b_flip);

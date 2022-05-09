@@ -22,7 +22,6 @@ namespace gazebo
         Tau_gaussianNoise = _sdf->GetElement("Tau_gaussianNoise")->Get<double>();
         OFx_gaussianNoise = _sdf->GetElement("OFx_gaussianNoise")->Get<double>();
         OFy_gaussianNoise = _sdf->GetElement("OFy_gaussianNoise")->Get<double>();
-        RREV_gaussianNoise = _sdf->GetElement("RREV_gaussianNoise")->Get<double>();
 
         // GET CEILING HEIGHT FROM ROS PARAM
         ros::param::get("/CEILING_HEIGHT",_H_CEILING);
@@ -53,7 +52,6 @@ namespace gazebo
             d_ceil = _H_CEILING - link_ptr->WorldPose().Z();
 
             Tau = d_ceil/Vz_rel; 
-            RREV = Vz_rel/d_ceil; // + Angular velocity values
             OFx = -Vy_rel/d_ceil; // + Angular velocity values
             OFy = -Vx_rel/d_ceil; // + Angular velocity values
 
@@ -66,7 +64,6 @@ namespace gazebo
             OF_Data_msg.Tau = Tau + GaussianKernel(0,Tau_gaussianNoise);
             OF_Data_msg.OFx = OFx + GaussianKernel(0,OFx_gaussianNoise);
             OF_Data_msg.OFy = OFy + GaussianKernel(0,OFy_gaussianNoise);
-            OF_Data_msg.RREV = RREV + GaussianKernel(0,RREV_gaussianNoise);
             OF_Data_msg.d_ceil = d_ceil;
 
             OF_Publisher.publish(OF_Data_msg);

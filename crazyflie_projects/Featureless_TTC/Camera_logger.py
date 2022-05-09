@@ -29,7 +29,6 @@ class CameraParser:
         self.Tau = 0.0
         self.OFx = 0.0
         self.OFy = 0.0
-        self.RREV = 0.0
         self.d_ceil = 0.0 
         
         self.t = 0.0
@@ -38,26 +37,29 @@ class CameraParser:
 
         self.Camera_raw = np.array([])
 
-        #initialize params
+        #INIT PARAMETERS
         self.ceiling_h = rospy.get_param("/CEILING_HEIGHT")
 
         self.Username = getpass.getuser()
-        self.Path = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Featureless_TTC/local_logs' #store the logs in a folder for organization
+        self.Path = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Featureless_TTC/logs' #store the logs in a folder for organization
         self.Filename = input("\ninput the name of the log file:\n") #wait for user input then create CSV with the given Filename
         self.Path = self.Path + '/' + self.Filename + '.csv'
         self.Create_csv()
         np.set_printoptions(threshold = sys.maxsize) #allows it to print the full string without truncation
 
-        #collect misc. data
+        #COLLECT MISC. DATA
+
         # while(self.Log_Flag):
         rospy.Subscriber("/CF_Internal/camera/image_raw",Image,self.Camera_cb,queue_size = 1)
+        # msg = rospy.wait_for_message("/CF_Internal/camera/image_raw",Image,timeout = None)
+        # self.Camera_cb(msg)
         rospy.Subscriber("/CF_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size = 1)
 
     def Create_csv(self):
 
         with open(self.Path,mode = 'w') as logfile:
             writer = csv.writer(logfile, delimiter = ',',quotechar = '"',quoting = csv.QUOTE_MINIMAL)
-            writer.writerow(['Time','X_pos','Y_pos','Z_pos','X_vel','Y_vel','Z_vel','D_ceil','RREV','OFx','OFy','Tau','Camera_Data'])
+            writer.writerow(['Time','X_pos','Y_pos','Z_pos','X_vel','Y_vel','Z_vel','D_ceil','OFx','OFy','Tau','Camera_Data'])
             print(f'\nLogging file {self.Filename}.csv was successfully created\n')
 
     def Append_data(self):
@@ -76,7 +78,6 @@ class CameraParser:
         Tau = np.round(np.clip(self.Tau,-20,20),4)
         OFx = np.round(self.OFx,4)
         OFy = np.round(self.OFy,4)
-        RREV = np.round(self.RREV,4)
 
         if(time != self.t_prev): #was getting duplicates
 
@@ -85,7 +86,7 @@ class CameraParser:
 
                     with open(self.Path,mode = 'a') as logfile:
                         writer = csv.writer(logfile, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
-                        writer.writerow([time,x_pos,y_pos,z_pos,x_vel,y_vel,z_vel,d_ceil,RREV,OFx,OFy,Tau,Camera_data])
+                        writer.writerow([time,x_pos,y_pos,z_pos,x_vel,y_vel,z_vel,d_ceil,OFx,OFy,Tau,Camera_data])
 
                 else:
                     if(self.n < 1):
@@ -132,7 +133,6 @@ class CameraParser:
         self.Tau = np.round(StateData_msg.Tau,3)
         self.OFx = np.round(StateData_msg.OFx,3)
         self.OFy = np.round(StateData_msg.OFy,3)
-        self.RREV = np.round(StateData_msg.RREV,3)
         self.d_ceil = np.round(StateData_msg.D_ceil,3)
 
         
