@@ -52,14 +52,12 @@ namespace gazebo {
             float d_ceil = 0.0; // [m]
 
             float Tau = 0.0;   // [s]
-            float RREV = 0.0;  // [rad/s]
             float OFx = 0.0;   // [rad/s]
             float OFy = 0.0;   // [rad/s]
 
             float Tau_gaussianNoise;
             float OFx_gaussianNoise;
             float OFy_gaussianNoise;
-            float RREV_gaussianNoise;
 
             // INIT ROS OBJECTS
             ros::NodeHandle nh;

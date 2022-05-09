@@ -21,3 +21,11 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 add_executable(pub_example src/pub_example.cpp src/nml.c src/nml_util.c)
 add_dependencies(pub_example ${catkin_EXPORTED_TARGETS})
 target_link_libraries(pub_example ${catkin_LIBRARIES})
+
+add_executable(nml_example src/nml_example.cpp src/nml.c src/nml_util.c)
+add_dependencies(nml_example ${catkin_EXPORTED_TARGETS})
+target_link_libraries(nml_example ${catkin_LIBRARIES})
+
+add_executable(conv_example src/pub_example.cpp src/nml.c src/nml_util.c)
+add_dependencies(conv_example ${catkin_EXPORTED_TARGETS})
+target_link_libraries(conv_example ${catkin_LIBRARIES})
