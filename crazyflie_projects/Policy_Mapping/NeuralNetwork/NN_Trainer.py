@@ -186,7 +186,7 @@ class NN_Trainer():
                 layer_list[ii//2].bias.data = torch.FloatTensor(arr_list[ii].flatten())
 
 
-    def trainClassifier_Model(self,X_train,y_train,X_test,y_test,LR_bound=0.9,epochs=500):
+    def trainModel(self,X_train,y_train,X_test,y_test,LR_bound=0.9,epochs=500):
 
         ## CONVERT DATA ARRAYS TO TENSORS
         X_train = torch.FloatTensor(self.scaleData(X_train))
@@ -368,94 +368,90 @@ class NN_Trainer():
         )
         fig.show()
 
-
-    def plotPolicy(self,df_custom):
-
-        ## CREATE GRID
-        Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
-            np.linspace(0.15, 0.35, 10),
-            np.linspace(-10, 1, 10),
-            np.linspace(0.25, 1.0, 10)
-        )
-
-        ## CONCATENATE DATA TO MATCH INPUT
-        X_grid = np.stack((
-            Tau_grid.flatten(),
-            OF_y_grid.flatten(),
-            d_ceil_grid.flatten()),axis=1)
-
-        y_pred_grid = self.modelPredict(X_grid).numpy().flatten()
+    def plotPolicy(self,df_custom,PlotRegion=False):
 
         fig = go.Figure()
 
-        ## PLOT DATA POINTS
-        # fig.add_trace(
-        #     go.Scatter3d(
-        #         ## DATA
-        #         x=X_grid[:,1].flatten(),
-        #         y=X_grid[:,0].flatten(),
-        #         z=X_grid[:,2].flatten(),
+        if PlotRegion:
+            ## CREATE GRID
+            Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
+                np.linspace(0.15, 0.35, 45),
+                np.linspace(-15, 1, 45),
+                np.linspace(0.0, 1.0, 45)
+            )
 
-        #         ## HOVER DATA
-        #         # customdata=df_custom,
-        #         # hovertemplate=" \
-        #         #     <b>LR: %{customdata[3]:.3f}</b> \
-        #         #     <br>OFy: %{customdata[10]:.3f} Vel: %{customdata[0]:.2f} </br> \
-        #         #     <br>Tau: %{customdata[8]:.3f} Phi: %{customdata[1]:.0f}</br> \
-        #         #     <br>D_ceil: %{customdata[12]:.3f}</br>",
+            ## CONCATENATE DATA TO MATCH INPUT
+            X_grid = np.stack((
+                Tau_grid.flatten(),
+                OF_y_grid.flatten(),
+                d_ceil_grid.flatten()),axis=1)
 
-        #         ## MARKER
-        #         mode='markers',
-        #         marker=dict(
-        #             size=3,
-        #             color=y_pred_grid,                # set color to an array/list of desired values
-        #             cmin=4,
-        #             cmax=9,
-        #             colorscale='Viridis',   # choose a colorscale
-        #             opacity=1.0
-        #         )
-        #     )
-        # )
+            y_pred_grid = self.modelPredict(X_grid).numpy()
+            valid_idx = np.where(y_pred_grid[:,0] > 0.8)
+            X_grid = X_grid[valid_idx]
+            y_pred_grid = y_pred_grid[valid_idx]
 
-        X_grid = np.stack((
-            df_custom["Tau_flip_mean"],
-            df_custom["OFy_flip_mean"],
-            df_custom["D_ceil_flip_mean"]),axis=1)
-        y_pred = self.modelPredict(X_grid)[:,1].numpy().flatten()
-        error = df_custom["My_mean"].to_numpy().flatten() - y_pred
-    
-        ## PLOT DATA POINTS
-        fig.add_trace(
-            go.Scatter3d(
-                ## DATA
-                x=X_grid[:,1].flatten(),
-                y=X_grid[:,0].flatten(),
-                z=X_grid[:,2].flatten(),
+            ## PLOT DATA POINTS
+            fig.add_trace(
+                go.Scatter3d(
+                    ## DATA
+                    x=X_grid[:,1].flatten(),
+                    y=X_grid[:,0].flatten(),
+                    z=X_grid[:,2].flatten(),
 
-                ## HOVER DATA
-                customdata=np.stack((error,df_custom["My_mean"].to_numpy().flatten(),y_pred),axis=1),
-                hovertemplate=
-                "<br>My: %{customdata[1]:.3f}</br> \
-                 <br>Error: %{customdata[0]:.3f}</br> \
-                 <br>Pred: %{customdata[2]:.3f}</br>",
-                 
-                    
-
-                ## MARKER
-                mode='markers',
-                marker=dict(
-                    size=3,
-                    # color=np.abs(df_custom["My_mean"].to_numpy().flatten()),
-                    color=np.abs(y_pred),
-                    # color = np.abs(error),
-                    cmin=0,
-                    cmax=10,
-                    showscale=True,
-                    colorscale='Viridis',   # choose a colorscale
-                    opacity=1.0
+                    ## MARKER
+                    mode='markers',
+                    marker=dict(
+                        size=3,
+                        color=np.abs(y_pred_grid[:,1].flatten()),                # set color to an array/list of desired values
+                        cmin=0,
+                        cmax=10,
+                        showscale=True,
+                        colorscale='Viridis',   # choose a colorscale
+                        opacity=1.0
+                    )
                 )
             )
-        )
+        else:
+            X_grid = np.stack((
+                df_custom["Tau_flip_mean"],
+                df_custom["OFy_flip_mean"],
+                df_custom["D_ceil_flip_mean"]),axis=1)
+            y_pred = self.modelPredict(X_grid)[:,1].numpy().flatten()
+            error = df_custom["My_mean"].to_numpy().flatten() - y_pred
+        
+            ## PLOT DATA POINTS
+            fig.add_trace(
+                go.Scatter3d(
+                    ## DATA
+                    x=X_grid[:,1].flatten(),
+                    y=X_grid[:,0].flatten(),
+                    z=X_grid[:,2].flatten(),
+
+                    ## HOVER DATA
+                    customdata=np.stack((error,df_custom["My_mean"].to_numpy().flatten(),y_pred),axis=1),
+                    hovertemplate=
+                    "<br>My: %{customdata[1]:.3f}</br> \
+                     <br>Error: %{customdata[0]:.3f}</br> \
+                     <br>Pred: %{customdata[2]:.3f}</br>",
+                    
+                        
+
+                    ## MARKER
+                    mode='markers',
+                    marker=dict(
+                        size=3,
+                        # color=np.abs(df_custom["My_mean"].to_numpy().flatten()),
+                        color=np.abs(y_pred),
+                        # color = np.abs(error),
+                        cmin=0,
+                        cmax=10,
+                        showscale=True,
+                        colorscale='Viridis',   # choose a colorscale
+                        opacity=1.0
+                    )
+                )
+            )
 
         fig.update_layout(
             scene=dict(
@@ -538,13 +534,6 @@ if __name__ == "__main__":
     X_test = test_df[['Tau','OFy','d_ceil']].to_numpy()
     y_test = test_df[['LR','My_mean']].to_numpy()
 
-    # ## OVERSAMPLE TRAINING DATASET BECAUSE THERE'S LESS VALID LR SAMPLES THAN INVALID
-    # oversample = RandomOverSampler(sampling_strategy='minority')
-    # X_train, y_train = oversample.fit_resample(X_train, y_train)
-    # y_train = y_train.reshape(-1,1)
-
-    
-
 
     Param_Path = f'{BASEPATH}/NeuralNetwork/Info/NN_Layers_Flip_{model_initials}.h'
     # FlipClassifier.createScaler(X)
@@ -556,5 +545,5 @@ if __name__ == "__main__":
     FlipClassifier.loadModelFromParams(Param_Path)
     FlipClassifier.evalModel(X,y,LR_bound=LR_bound)
     FlipClassifier.plotClassification(df_raw,LR_bound=0.8)
-    FlipClassifier.plotPolicy(df_raw)
+    FlipClassifier.plotPolicy(df_raw,PlotRegion=True)
 
