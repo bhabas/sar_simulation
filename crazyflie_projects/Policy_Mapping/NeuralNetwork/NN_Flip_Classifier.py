@@ -47,7 +47,7 @@ if __name__ == "__main__":
     torch.manual_seed(0)
     np.random.seed(0)
 
-    LR_bound = 0.9 # Classify states with LR higher than this value as valid
+    LR_bound = 0.8 # Classify states with LR higher than this value as valid
     model_initials = "NL_DR"
     model = NN_Flip_Model()
     FlipClassifier = NN_Trainer(model,model_initials,LR_bound)
@@ -64,7 +64,6 @@ if __name__ == "__main__":
     X = np.stack((Tau,OF_y,d_ceil),axis=1)
 
     y = df_all["LR_4leg"]
-    y = np.where(y < LR_bound,0,1)
 
     ## SPLIT DATA FEATURES INTO TRAINING AND TESTING SETS
     data_array = np.stack((Tau,OF_y,d_ceil,y),axis=1)
@@ -78,21 +77,23 @@ if __name__ == "__main__":
     X_test = test_df[['Tau','OFy','d_ceil']].to_numpy()
     y_test = test_df[['LR']].to_numpy()
 
-    ## OVERSAMPLE TRAINING DATASET BECAUSE THERE'S LESS VALID LR SAMPLES THAN INVALID
-    oversample = RandomOverSampler(sampling_strategy='minority')
-    X_train, y_train = oversample.fit_resample(X_train, y_train)
-    y_train = y_train.reshape(-1,1)
+    # ## OVERSAMPLE TRAINING DATASET BECAUSE THERE'S LESS VALID LR SAMPLES THAN INVALID
+    # oversample = RandomOverSampler(sampling_strategy='minority')
+    # X_train, y_train = oversample.fit_resample(X_train, y_train)
+    # y_train = y_train.reshape(-1,1)
+
+    
 
 
     Param_Path = f'{BASEPATH}/NeuralNetwork/Info/NN_Layers_Flip_{model_initials}.h'
     FlipClassifier.createScaler(X)
-    FlipClassifier.trainClassifier_Model(X_train,y_train,X_test,y_test,epochs=250)
+    FlipClassifier.trainClassifier_Model(X_train,y_train,X_test,y_test,LR_bound=LR_bound,epochs=2000)
     FlipClassifier.saveParams(Param_Path)
     FlipClassifier.evalModel(X,y)
 
     FlipClassifier.loadModelFromParams(Param_Path)
-    FlipClassifier.evalModel(X,y)
-    FlipClassifier.plotModel(df_raw)
+    FlipClassifier.evalModel(X,y,LR_bound=LR_bound)
+    FlipClassifier.plotModel(df_all,LR_bound=LR_bound)
 
 
 

@@ -185,9 +185,7 @@ class NN_Trainer():
                 layer_list[ii//2].bias.data = torch.FloatTensor(arr_list[ii].flatten())
 
 
-
-
-    def trainClassifier_Model(self,X_train,y_train,X_test,y_test,epochs=500):
+    def trainClassifier_Model(self,X_train,y_train,X_test,y_test,LR_bound=0.9,epochs=500):
 
         ## CONVERT DATA ARRAYS TO TENSORS
         X_train = torch.FloatTensor(self.scaleData(X_train))
@@ -197,15 +195,15 @@ class NN_Trainer():
         y_test = torch.FloatTensor(y_test)
 
         ## INIT MODEL AND OPTIMIZER
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01)
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001)
     
         ## DEFINE TRAINING LOSS
-        criterion_train = nn.BCELoss()       
+        criterion_train = nn.MSELoss()       
         losses_train = []
         accuracies_train = []
 
         ## DEFINE VALIDATION LOSS
-        criterion_test = nn.BCELoss()   
+        criterion_test = nn.MSELoss()   
         losses_test = []
         accuracies_test = []
 
@@ -226,13 +224,15 @@ class NN_Trainer():
 
 
             ## CALC TRAINING ACCURACY
-            y_pred_train_class = np.where(y_pred_train.detach().numpy() < self.LR_bound,0,1)
-            accuracy_train = balanced_accuracy_score(y_train[:,0],y_pred_train_class)
+            y_pred_train_class = np.where(y_pred_train.detach().numpy() < LR_bound,0,1)
+            y_train_class = np.where(y_train[:,0] < LR_bound,0,1)
+            accuracy_train = balanced_accuracy_score(y_train_class,y_pred_train_class)
             accuracies_train.append(accuracy_train)
 
             ## CALC TESTING ACCURACY
-            y_pred_test_class = np.where(y_pred_test.detach().numpy() < self.LR_bound,0,1)
-            accuracy_test = balanced_accuracy_score(y_test[:,0],y_pred_test_class)
+            y_pred_test_class = np.where(y_pred_test.detach().numpy() < LR_bound,0,1)
+            y_test_class = np.where(y_test[:,0] < LR_bound,0,1)
+            accuracy_test = balanced_accuracy_score(y_test_class,y_pred_test_class)
             accuracies_test.append(accuracy_test)
 
             if ii%10 == 1:
@@ -268,7 +268,7 @@ class NN_Trainer():
         plt.tight_layout()
         plt.show()
 
-    def evalModel(self,X,y):
+    def evalModel(self,X,y,LR_bound=0.9):
         """Evaluate the model
 
         Args:
@@ -278,17 +278,18 @@ class NN_Trainer():
 
         ## PREDICT VALUES FROM EVALUATION DATASET
         y_pred = self.modelPredict(X)
-        y_pred = np.where(y_pred.detach().numpy() < self.LR_bound,0,1)
+        y_pred = np.where(y_pred.detach().numpy() < LR_bound,0,1)
+        y_class = np.where(y < LR_bound,0,1)
 
-        cfnMatrix = confusion_matrix(y,y_pred,normalize=None)
+        cfnMatrix = confusion_matrix(y_class,y_pred,normalize=None)
         print("\n=========== Model Evaluation ===========")
-        print(f"Balanced Accuracy: {balanced_accuracy_score(y,y_pred):.3f}")
+        print(f"Balanced Accuracy: {balanced_accuracy_score(y_class,y_pred):.3f}")
         print(f"Confusion Matrix: \n{cfnMatrix}")
         print(f"False Positives: {cfnMatrix[0,1]}")
         print(f"False Negatives: {cfnMatrix[1,0]}")
-        print(f"Classification Report: {classification_report(y,y_pred)}")
+        print(f"Classification Report: {classification_report(y_class,y_pred)}")
 
-    def plotModel(self,df_custom):
+    def plotModel(self,df_custom,LR_bound=0.9):
 
         ## CREATE GRID
         Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
@@ -317,8 +318,8 @@ class NN_Trainer():
                 
                 surface_count=10,
                 opacity=0.1,
-                isomin=self.LR_bound-0.05,
-                isomax=self.LR_bound,
+                isomin=LR_bound-0.05,
+                isomax=LR_bound,
                 # colorscale='Viridis',  
                 cmin=0,
                 cmax=1,     
