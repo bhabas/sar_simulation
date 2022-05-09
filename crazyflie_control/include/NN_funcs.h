@@ -22,23 +22,26 @@ float NN_Forward_Flip(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[]);
 
 void initNN_Layers(Scaler* scaler,nml_mat* W[], nml_mat* b[], char str[],int numLayers)
 {
-    char* array_token;
+    char* array_str;
     char* save_ptr;
 
-    array_token = strtok_r(str,"*",&save_ptr);
-    scaler->mean = nml_mat_fromstr(array_token);
-    array_token = strtok_r(NULL,"*",&save_ptr);
+    // PARSE HEADER FILE FOR SCALER VALUES
+    array_str = strtok_r(str,"*",&save_ptr);
+    scaler->mean = nml_mat_fromstr(array_str);
 
-    scaler->std = nml_mat_fromstr(array_token);
-    array_token = strtok_r(NULL,"*",&save_ptr);
+    array_str = strtok_r(NULL,"*",&save_ptr);
+    scaler->std = nml_mat_fromstr(array_str);
 
+    array_str = strtok_r(NULL,"*",&save_ptr); // Load next array string
 
+    // INITIALIZE NETWORK WEIGHTS AND BIASES FROM HEADER FILE VALUES
     for (int i = 0; i < numLayers; i++)
     {
-        W[i] = nml_mat_fromstr(array_token);
-        array_token = strtok_r(NULL,"*",&save_ptr);
-        b[i] = nml_mat_fromstr(array_token);
-        array_token = strtok_r(NULL,"*",&save_ptr);
+        W[i] = nml_mat_fromstr(array_str); // Weights
+        array_str = strtok_r(NULL,"*",&save_ptr);
+
+        b[i] = nml_mat_fromstr(array_str); // Biases
+        array_str = strtok_r(NULL,"*",&save_ptr);
     }
 
 
@@ -47,13 +50,14 @@ void initNN_Layers(Scaler* scaler,nml_mat* W[], nml_mat* b[], char str[],int num
 
 float NN_Forward_Flip(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[])
 {
+    // SCALE INPUT DATA
     nml_mat* X_input = nml_mat_cp(X);
     for(int i=0;i<3;i++)
     {
         X_input->data[i][0] = (X->data[i][0] - scaler->mean->data[i][0])/scaler->std->data[i][0];
     }
 
-
+    // PASS DATA THROUGH NETWORK
     // LAYER 1
     // Elu(W*X+b)
     nml_mat *WX1 = nml_mat_dot(W[0],X_input); 
@@ -80,6 +84,8 @@ float NN_Forward_Flip(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[])
     nml_mat *WX4 = nml_mat_dot(W[3],a3); 
     nml_mat_add_r(WX4,b[3]);
     nml_mat *a4 = nml_mat_funcElement(WX4,Sigmoid);
+
+    nml_mat_print(a4);
 
 
 

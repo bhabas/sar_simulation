@@ -269,7 +269,7 @@ void controllerGTCInit(void)
     X = nml_mat_new(3,1);
     J = mdiag(Ixx,Iyy,Izz);
 
-    initNN_Layers(&Scaler_Flip,W_flip,b_flip,NN_Params_Flip,3);
+    initNN_Layers(&Scaler_Flip,W_flip,b_flip,NN_Params_Flip,4);
     consolePrintf("GTC Initiated\n");
 }
 
@@ -631,12 +631,14 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         
         d_ceil = sensors->d_ceil;
 
-        X->data[0][0] = Tau;
-        X->data[1][0] = OFy;
-        X->data[2][0] = d_ceil; // d_ceiling [m]
+        X->data[0][0] = 0.293;
+        X->data[1][0] = -1.822;
+        X->data[2][0] = 0.857; // d_ceiling [m]
 
         
         controlOutput(state,sensors);
+        NN_flip = NN_Forward_Flip(X,&Scaler_Flip,W_flip,b_flip);
+
 
         if(policy_armed_flag == true){ 
                 
@@ -675,7 +677,6 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                 case 1: // NN
                 {   
                     // NN_flip = NN_Forward_Flip(X,&Scaler_Flip,W_flip,b_flip);
-                    // NN_policy = -NN_Forward_Policy(X,&Scaler_Policy,W_policy,b_policy);
 
                     if(NN_flip >= 0.9 && onceFlag == false)
                     {   

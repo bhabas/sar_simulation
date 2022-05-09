@@ -571,7 +571,7 @@ BASEPATH = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/P
 
 ## DEFINE NN MODEL
 class NN_Model(nn.Module):
-    def __init__(self,in_features=3,h=20,out_features=2):
+    def __init__(self,in_features=3,h=10,out_features=2):
         super().__init__()
         self.fc1 = nn.Linear(in_features,h)     # Layer 1
         self.fc2 = nn.Linear(h,h)               # Layer 2
@@ -634,7 +634,7 @@ if __name__ == "__main__":
 
     Param_Path = f'{BASEPATH}/NeuralNetwork/Info/NN_Layers_{model_initials}.h'
     NN_Policy_Trainer.createScaler(X)
-    NN_Policy_Trainer.trainModel(X_train,y_train,X_test,y_test,LR_bound=LR_bound,epochs=1000)
+    NN_Policy_Trainer.trainModel(X_train,y_train,X_test,y_test,LR_bound=LR_bound,epochs=2000)
     NN_Policy_Trainer.saveParams(Param_Path)
     NN_Policy_Trainer.evalModel(X,y)
  
