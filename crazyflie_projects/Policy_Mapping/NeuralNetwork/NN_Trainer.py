@@ -21,12 +21,12 @@ np.set_printoptions(suppress=True)
 BASEPATH = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Policy_Mapping"
 
 class NN_Trainer():
-    def __init__(self,model,model_initials,LR,LR_bound):
+    def __init__(self,model,model_initials,learning_rate=0.001,LR_bound=0.9):
 
         self.model = model
         self.model_initials = model_initials
         self.LR_bound = LR_bound # Landing Rate bound
-        self.LR = LR # Learning Rate
+        self.learning_rate = learning_rate # Learning Rate
 
         self.scaler = preprocessing.StandardScaler()
 
@@ -196,7 +196,7 @@ class NN_Trainer():
         y_test = torch.FloatTensor(y_test)
 
         ## INIT MODEL AND OPTIMIZER
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.LR)
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
     
         ## DEFINE TRAINING LOSS
         criterion_train = nn.MSELoss()       
@@ -368,7 +368,7 @@ class NN_Trainer():
         )
         fig.show()
 
-    def plotPolicy(self,df_custom,PlotRegion=False):
+    def plotPolicy(self,df_custom,LR_bound=0.9,PlotRegion=False):
 
         fig = go.Figure()
 
@@ -387,7 +387,7 @@ class NN_Trainer():
                 d_ceil_grid.flatten()),axis=1)
 
             y_pred_grid = self.modelPredict(X_grid).numpy()
-            valid_idx = np.where(y_pred_grid[:,0] > 0.8)
+            valid_idx = np.where(y_pred_grid[:,0] >= LR_bound)
             X_grid = X_grid[valid_idx]
             y_pred_grid = y_pred_grid[valid_idx]
 
@@ -570,7 +570,7 @@ np.set_printoptions(suppress=True)
 BASEPATH = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Policy_Mapping"
 
 ## DEFINE NN MODEL
-class NN_Flip_Model(nn.Module):
+class NN_Model(nn.Module):
     def __init__(self,in_features=3,h=20,out_features=2):
         super().__init__()
         self.fc1 = nn.Linear(in_features,h)     # Layer 1
@@ -598,11 +598,11 @@ if __name__ == "__main__":
     torch.manual_seed(0)
     np.random.seed(0)
 
-    LR_bound = 0.8 # Classify states with LR higher than this value as valid
+    LR_bound = 0.9 # Classify states with LR higher than this value as valid
     model_initials = "NL_DR"
-    LR = 0.01
-    model = NN_Flip_Model()
-    FlipClassifier = NN_Trainer(model,model_initials,LR,LR_bound)
+    learning_rate = 0.01
+    model = NN_Model()
+    NN_Policy_Trainer = NN_Trainer(model,model_initials,learning_rate=learning_rate,LR_bound=LR_bound)
 
     ## LOAD DATAmodelPredict
     df_raw = pd.read_csv(f"{BASEPATH}/Data_Logs/NL_DR/NL_LR_Trials_DR.csv").dropna() # Collected data
@@ -613,14 +613,14 @@ if __name__ == "__main__":
     Tau = df_all["Tau_flip_mean"]
     OF_y = df_all["OFy_flip_mean"]
     d_ceil = df_all["D_ceil_flip_mean"]
-    LR = df_all["LR_4leg"]
+    learning_rate = df_all["LR_4leg"]
     My = df_all["My_mean"]
 
     X = np.stack((Tau,OF_y,d_ceil),axis=1)
-    y = np.stack((LR,My),axis=1)
+    y = np.stack((learning_rate,My),axis=1)
 
     ## SPLIT DATA FEATURES INTO TRAINING AND TESTING SETS
-    data_array = np.stack((Tau,OF_y,d_ceil,LR,My),axis=1)
+    data_array = np.stack((Tau,OF_y,d_ceil,learning_rate,My),axis=1)
     df = pd.DataFrame(data_array,columns=['Tau','OFy','d_ceil','LR','My_mean'])
     df = df.sort_values(by='LR')
 
@@ -633,16 +633,16 @@ if __name__ == "__main__":
 
 
     Param_Path = f'{BASEPATH}/NeuralNetwork/Info/NN_Layers_Flip_{model_initials}.h'
-    # FlipClassifier.createScaler(X)
-    # FlipClassifier.trainClassifier_Model(X_train,y_train,X_test,y_test,LR_bound=LR_bound,epochs=2000)
-    # FlipClassifier.saveParams(Param_Path)
-    # FlipClassifier.evalModel(X,y)
+    # NN_Policy_Trainer.createScaler(X)
+    # NN_Policy_Trainer.trainModel(X_train,y_train,X_test,y_test,LR_bound=LR_bound,epochs=1000)
+    # NN_Policy_Trainer.saveParams(Param_Path)
+    # NN_Policy_Trainer.evalModel(X,y)
  
 
-    FlipClassifier.loadModelFromParams(Param_Path)
-    FlipClassifier.evalModel(X,y,LR_bound=LR_bound)
-    FlipClassifier.plotClassification(df_raw,LR_bound=0.8)
-    FlipClassifier.plotPolicy(df_raw,PlotRegion=True)
-    FlipClassifier.plotLandingRate(df_raw,PlotRegion=True)
+    NN_Policy_Trainer.loadModelFromParams(Param_Path)
+    NN_Policy_Trainer.evalModel(X,y,LR_bound=LR_bound)
+    NN_Policy_Trainer.plotClassification(df_raw,LR_bound=0.75)
+    # NN_Policy_Trainer.plotPolicy(df_raw,PlotRegion=True,LR_bound=LR_bound)
+    # NN_Policy_Trainer.plotLandingRate(df_raw,PlotRegion=True)
 
 
