@@ -16,7 +16,7 @@ typedef struct{
 void initNN_Layers(Scaler* scaler,nml_mat* W[], nml_mat* b[], char str[],int numLayers);
 float Sigmoid(float x);
 float Elu(float x);
-float NN_Forward_Flip(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[]);
+void NN_Forward_Flip(nml_mat* X, nml_mat* y_output, Scaler* scaler, nml_mat* W[], nml_mat* b[]);
 
 
 
@@ -48,7 +48,7 @@ void initNN_Layers(Scaler* scaler,nml_mat* W[], nml_mat* b[], char str[],int num
 }
 
 
-float NN_Forward_Flip(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[])
+void NN_Forward_Flip(nml_mat* X, nml_mat* y_output, Scaler* scaler, nml_mat* W[], nml_mat* b[])
 {
     // SCALE INPUT DATA
     nml_mat* X_input = nml_mat_cp(X);
@@ -83,7 +83,7 @@ float NN_Forward_Flip(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[])
     // Sigmoid(W*X+b)
     nml_mat *WX4 = nml_mat_dot(W[3],a3); 
     nml_mat_add_r(WX4,b[3]);
-    nml_mat *a4 = nml_mat_funcElement(WX4,Sigmoid);
+    
 
     // nml_mat_print(a4);
 
@@ -91,7 +91,9 @@ float NN_Forward_Flip(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[])
 
 
     // SAVE OUTPUT VALUE
-    float y_output = a4->data[0][0];
+    y_output->data[0][0] = Sigmoid(WX4->data[0][0]);
+    y_output->data[1][0] = WX4->data[1][0];
+
 
 
     // FREE MATRICES FROM STACK
@@ -105,9 +107,7 @@ float NN_Forward_Flip(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[])
     nml_mat_free(a1);
     nml_mat_free(a2);
     nml_mat_free(a3);
-    nml_mat_free(a4);
 
-    return y_output;
 }
 
 float Sigmoid(float x)

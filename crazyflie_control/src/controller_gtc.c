@@ -215,9 +215,9 @@ float M_z_flip = 0.0f;      // [N*m]
 //  CONSTANT VEL TRAJECTORY GENERATION
 // ====================================
 typedef enum {
-    x = 0, 
-    y = 1,
-    z = 2
+    x_axis = 0, 
+    y_axis = 1,
+    z_axis = 2
 } axis_direction;
 axis_direction traj_type;
 
@@ -241,6 +241,7 @@ float G2 = 0.0f;        // Deprecated state value
 //  NEURAL NETWORK INITIALIZATION
 // ===============================
 static nml_mat* X;  // STATE MATRIX TO BE INPUT INTO NN
+static nml_mat* y_output;  // STATE MATRIX TO BE INPUT INTO NN
 
 // NN INPUT SCALERS
 static Scaler Scaler_Flip;      // Scale input vector for NN
@@ -267,6 +268,7 @@ void controllerGTCInit(void)
     controllerGTCReset();
     controllerGTCTest();
     X = nml_mat_new(3,1);
+    y_output = nml_mat_new(2,1);
     J = mdiag(Ixx,Iyy,Izz);
 
     initNN_Layers(&Scaler_Flip,W_flip,b_flip,NN_Params_Flip,4);
@@ -400,7 +402,7 @@ void GTC_Command(setpoint_t *setpoint)
 
             switch(traj_type){
 
-                case x:
+                case x_axis:
 
                     s_0_t.x = setpoint->cmd_val1;               // Starting position [m]
                     v_t.x = setpoint->cmd_val2;                 // Desired velocity [m/s]
@@ -410,7 +412,7 @@ void GTC_Command(setpoint_t *setpoint)
                     execute_vel_traj = true;
                     break;
 
-                case y:
+                case y_axis:
 
                     s_0_t.y = setpoint->cmd_val1;
                     v_t.y = setpoint->cmd_val2;
@@ -420,7 +422,7 @@ void GTC_Command(setpoint_t *setpoint)
                     execute_vel_traj = true;
                     break;
 
-                case z:
+                case z_axis:
 
                     s_0_t.z = setpoint->cmd_val1;
                     v_t.z = setpoint->cmd_val2;
@@ -466,7 +468,7 @@ void GTC_Command(setpoint_t *setpoint)
 
             switch(traj_type){
 
-                case x:
+                case x_axis:
 
                     P2P_traj_flag.x = 1.0f;
                     s_0_t.x = setpoint->cmd_val1;  // Starting position [m]
@@ -477,7 +479,7 @@ void GTC_Command(setpoint_t *setpoint)
                     t_traj.x = 0.0f; // Reset timer
                     break;
 
-                case y:
+                case y_axis:
 
                     P2P_traj_flag.y = 1.0f;
                     s_0_t.y = setpoint->cmd_val1;  // Starting position [m]
@@ -488,7 +490,7 @@ void GTC_Command(setpoint_t *setpoint)
                     t_traj.y = 0.0f; // Reset timer
                     break;
 
-                case z:
+                case z_axis:
 
                     P2P_traj_flag.z = 1.0f;
                     s_0_t.z = setpoint->cmd_val1;  // Starting position [m]
@@ -637,8 +639,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
         
         controlOutput(state,sensors);
-        NN_flip = NN_Forward_Flip(X,&Scaler_Flip,W_flip,b_flip);
-
+        
 
         if(policy_armed_flag == true){ 
                 
@@ -676,7 +677,9 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
                 case 1: // NN
                 {   
-                    // NN_flip = NN_Forward_Flip(X,&Scaler_Flip,W_flip,b_flip);
+                    NN_Forward_Flip(X,y_output,&Scaler_Flip,W_flip,b_flip);
+                    NN_flip = y_output->data[0][0];
+                    NN_policy = y_output->data[1][0];
 
                     if(NN_flip >= 0.9 && onceFlag == false)
                     {   
@@ -694,12 +697,12 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                         OFy_tr = OFy;
                         d_ceil_tr = d_ceil;
 
-                        // NN_tr_flip = NN_Forward_Flip(X,&Scaler_Flip,W_flip,b_flip);
-                        // NN_tr_policy = NN_Forward_Policy(X,&Scaler_Policy,W_policy,b_policy);
+                        NN_tr_flip = y_output->data[0][0];
+                        NN_tr_policy = y_output->data[1][0];
 
 
                         M_d.x = 0.0f;
-                        M_d.y = -NN_tr_policy*1e-3f;
+                        M_d.y = NN_tr_policy*1e-3f;
                         M_d.z = 0.0f;
 
                         F_thrust_flip = 0.0;

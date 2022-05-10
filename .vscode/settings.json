@@ -12,6 +12,8 @@
     ],
     "cmake.configureOnOpen": false,
     "files.associations": {
-        "controller_gtc.h": "c"
+        "controller_gtc.h": "c",
+        "*.tcc": "c",
+        "optional": "c"
     }
 }
