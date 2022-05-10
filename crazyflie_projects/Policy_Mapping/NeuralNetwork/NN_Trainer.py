@@ -640,10 +640,10 @@ if __name__ == "__main__":
 
     NN_Policy_Trainer.loadModelFromParams(Param_Path)
     print(NN_Policy_Trainer.modelPredict(np.array([0.293,-1.822,0.857]).reshape(1,-1)))
-    # NN_Policy_Trainer.evalModel(X,y,LR_bound=LR_bound)
-    # NN_Policy_Trainer.plotClassification(df_raw,LR_bound=0.75)
-    # NN_Policy_Trainer.plotPolicy(df_raw,PlotRegion=True,LR_bound=0.75)
-    # NN_Policy_Trainer.plotPolicy(df_raw,PlotRegion=False,LR_bound=0.75)
+    NN_Policy_Trainer.evalModel(X,y,LR_bound=LR_bound)
+    NN_Policy_Trainer.plotClassification(df_raw,LR_bound=0.75)
+    NN_Policy_Trainer.plotPolicy(df_raw,PlotRegion=True,LR_bound=0.75)
+    NN_Policy_Trainer.plotPolicy(df_raw,PlotRegion=False,LR_bound=0.75)
 
     # NN_Policy_Trainer.plotLandingRate(df_raw,PlotRegion=True)
 
