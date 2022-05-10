@@ -8,19 +8,19 @@ BASEPATH = "crazyflie_projects/Featureless_TTC/"
 
 ## PLOT BRIGHTNESS PATTERN FROM 2.4.1 HORIZONTAL MOTION
 I_0 = 255   # Brightness value (0-255)
-L = 0.05    # Stripe Period [m]
+L = 0.25    # Stripe Period [m]
 
 
 ## CAMERA PARAMETERS
-WIDTH_PIXELS = 320
-HEIGHT_PIXELS = 320
-FPS = 60                # Frame Rate [1/s]
+WIDTH_PIXELS = 160
+HEIGHT_PIXELS = 160
+FPS = 120                # Frame Rate [1/s]
 w = 3.6e-6              # Pixel width [m]
-f = 0.66e-3             # Focal Length [m]
+f = 0.66e-3/2             # Focal Length [m]
 O_x = WIDTH_PIXELS/2    # Pixel X_offset [pixels]
 O_y = HEIGHT_PIXELS/2   # Pixel Y_offset [pixels]
 
-d = 0.573
+d = 0.6
 
 Xi_Width = d*(WIDTH_PIXELS*w)/f 
 Yi_Width = d*(HEIGHT_PIXELS*w)/f 
@@ -32,7 +32,7 @@ X, Y = np.meshgrid(x, y)
 def Intensity(X):
     I_x = I_0/2*(np.sin(2*np.pi*X/L)+1)
     I_y = I_0/2*(np.sin(2*np.pi*Y/L)+1)
-    I = (I_x+I_y)/2
+    I = I_x # I = (I_x+I_y)/2
 
     # I = np.round(I/255,0)*255
     return I

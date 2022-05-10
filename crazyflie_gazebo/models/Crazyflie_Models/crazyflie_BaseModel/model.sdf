@@ -202,7 +202,7 @@
 
       <sensor type="camera" name="camera1">
         <pose>0 0 0 0 -1.5708 1.5708</pose>
-        <update_rate>60</update_rate>
+        <update_rate>120</update_rate>
         <visualize>false</visualize>
         <camera name="head">
           <save enabled="false">
@@ -225,7 +225,7 @@
                  That pixel's noise value is added to each of its color
                  channels, which at that point lie in the range [0,1]. -->
             <mean>0.0</mean>
-            <stddev>0.07</stddev>
+            <stddev>0.00</stddev> 
           </noise>
           <lens>
             <type>sterographic</type>

@@ -180,7 +180,7 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
         float Ivt = 0;
         float IGt = 0;
         float dt;
-        int16_t Ittemp;
+        int32_t Ittemp;
         float Cur_time = ros::Time::now().toSec();
         
         for(int j = 0; j < (WIDTH_PIXELS - 2)*(HEIGHT_PIXELS - 2); j++) // How many times the kernel center moves around the image
