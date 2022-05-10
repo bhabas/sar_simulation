@@ -633,9 +633,9 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         
         d_ceil = sensors->d_ceil;
 
-        X->data[0][0] = 0.293;
-        X->data[1][0] = -1.822;
-        X->data[2][0] = 0.857; // d_ceiling [m]
+        X->data[0][0] = Tau;
+        X->data[1][0] = OFy;
+        X->data[2][0] = d_ceil; // d_ceiling [m]
 
         
         controlOutput(state,sensors);
@@ -681,7 +681,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                     NN_flip = y_output->data[0][0];
                     NN_policy = y_output->data[1][0];
 
-                    if(NN_flip >= 0.9 && onceFlag == false)
+                    if(NN_flip >= 0.75 && onceFlag == false)
                     {   
                         onceFlag = true;
                         flip_flag = true;
