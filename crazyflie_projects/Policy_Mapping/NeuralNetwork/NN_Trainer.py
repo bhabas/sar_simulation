@@ -29,6 +29,7 @@ class NN_Trainer():
         self.learning_rate = learning_rate # Learning Rate
 
         self.scaler = preprocessing.StandardScaler()
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
 
     def createScaler(self,X):
         """Determine scalers to scale training data to mean = 0 and std = 1 before passing through NN
@@ -186,7 +187,7 @@ class NN_Trainer():
                 layer_list[ii//2].bias.data = torch.FloatTensor(arr_list[ii].flatten())
 
 
-    def trainModel(self,X_train,y_train,X_test,y_test,LR_bound=0.9,epochs=500):
+    def trainModel(self,X_train,y_train,X_test,y_test,LR_bound=0.8,epochs=500):
 
         ## CONVERT DATA ARRAYS TO TENSORS
         X_train = torch.FloatTensor(self.scaleData(X_train))
@@ -195,16 +196,27 @@ class NN_Trainer():
         y_train = torch.FloatTensor(y_train)
         y_test = torch.FloatTensor(y_test)
 
-        ## INIT MODEL AND OPTIMIZER
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
+        class_weight = [1, 10] # Weights as binary classes [0,1]
+
+        y_train_class = y_train[:,0]
+        y_train_My = y_train[:,1]
+        weights_train = np.where(y_train_class>=LR_bound,class_weight[1],class_weight[0]) # Classify and weight values
+
+        y_test_class = y_test[:,0]
+        y_test_My = y_test[:,1]
+        weights_test = np.where(y_test_class>=LR_bound,class_weight[1],class_weight[0])
+
     
         ## DEFINE TRAINING LOSS
-        criterion_train = nn.MSELoss()       
+        criterion_train_My = nn.MSELoss()
+        criterion_train_class = nn.BCELoss(weight=torch.FloatTensor(weights_train))
         losses_train = []
         accuracies_train = []
 
+
         ## DEFINE VALIDATION LOSS
-        criterion_test = nn.MSELoss()   
+        criterion_test_My = nn.MSELoss()
+        criterion_test_class = nn.BCELoss(weight=torch.FloatTensor(weights_test))
         losses_test = []
         accuracies_test = []
 
@@ -213,36 +225,38 @@ class NN_Trainer():
 
             ## CALC TRAINING LOSS
             y_pred_train = self.model.forward(X_train)
-            loss_train = criterion_train(y_pred_train,y_train)
-            losses_train.append(loss_train.item())
+
+            loss_train_class = criterion_train_class(y_pred_train[:,0],y_train_class)
+            loss_train_My = criterion_train_My(y_pred_train[:,1],y_train_My)
+            loss = loss_train_class + loss_train_My
+            losses_train.append(loss_train_class.item() + loss_train_My.item())
 
             ## CALC VALIDATION LOSS
             with torch.no_grad():
                 y_pred_test = self.model.forward(X_test)
-                loss_test = criterion_test(y_pred_test,y_test)
-                losses_test.append(loss_test.item())
+                loss_test_class = criterion_test_class(y_pred_test[:,0],y_test_class)
+                loss_test_My = criterion_test_My(y_pred_test[:,1],y_test_My)
+                losses_test.append(loss_test_class.item() + loss_test_My.item())
 
 
 
             ## CALC TRAINING ACCURACY
-            y_pred_train_class = np.where(y_pred_train[:,0].detach().numpy() < LR_bound,0,1)
-            y_train_class = np.where(y_train[:,0] < LR_bound,0,1)
-            accuracy_train = balanced_accuracy_score(y_train_class,y_pred_train_class)
+            y_pred_train_class = np.where(y_pred_train[:,0].detach().numpy() > LR_bound,1,0)
+            accuracy_train = balanced_accuracy_score(np.where(y_train[:,0] > LR_bound,1,0),y_pred_train_class)
             accuracies_train.append(accuracy_train)
 
             ## CALC TESTING ACCURACY
             y_pred_test_class = np.where(y_pred_test[:,0].detach().numpy() < LR_bound,0,1)
-            y_test_class = np.where(y_test[:,0] < LR_bound,0,1)
-            accuracy_test = balanced_accuracy_score(y_test_class,y_pred_test_class)
+            accuracy_test = balanced_accuracy_score(np.where(y_test[:,0] < LR_bound,0,1),y_pred_test_class)
             accuracies_test.append(accuracy_test)
 
             if ii%10 == 1:
-                print(f"epoch {ii} and loss is: {loss_train}")
+                print(f"epoch {ii} and loss is: {losses_train[-1]}")
 
             ## BACKPROPAGATION
-            optimizer.zero_grad()
-            loss_train.backward()
-            optimizer.step()
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
 
 
         ## PLOT LOSSES AND ACCURACIES
@@ -252,7 +266,8 @@ class NN_Trainer():
         ax1.plot(losses_test,label="Validation Loss")
         ax1.set_ylabel("Loss")
         ax1.set_title("Losses")
-        ax1.set_ylim(0)
+        # ax1.set_ylim(0)
+        ax1.set_yscale('log')
         ax1.legend()
         ax1.grid()
 
@@ -633,17 +648,16 @@ if __name__ == "__main__":
 
 
     Param_Path = f'{BASEPATH}/NeuralNetwork/Info/NN_Layers_{model_initials}.h'
-    # NN_Policy_Trainer.createScaler(X)
-    # NN_Policy_Trainer.trainModel(X_train,y_train,X_test,y_test,LR_bound=LR_bound,epochs=1000)
-    # NN_Policy_Trainer.saveParams(Param_Path)
-    # NN_Policy_Trainer.evalModel(X,y)
+    NN_Policy_Trainer.createScaler(X)
+    NN_Policy_Trainer.trainModel(X_train,y_train,X_test,y_test,LR_bound=LR_bound,epochs=1000)
+    NN_Policy_Trainer.saveParams(Param_Path)
+    NN_Policy_Trainer.evalModel(X,y)
 
     NN_Policy_Trainer.loadModelFromParams(Param_Path)
-    print(NN_Policy_Trainer.modelPredict(np.array([0.293,-1.822,0.857]).reshape(1,-1)))
     NN_Policy_Trainer.evalModel(X,y,LR_bound=LR_bound)
-    NN_Policy_Trainer.plotClassification(df_raw,LR_bound=0.75)
-    NN_Policy_Trainer.plotPolicy(df_raw,PlotRegion=True,LR_bound=0.75)
-    NN_Policy_Trainer.plotPolicy(df_raw,PlotRegion=False,LR_bound=0.75)
+    NN_Policy_Trainer.plotClassification(df_raw,LR_bound=0.8)
+    # NN_Policy_Trainer.plotPolicy(df_raw,PlotRegion=True,LR_bound=0.75)
+    # NN_Policy_Trainer.plotPolicy(df_raw,PlotRegion=False,LR_bound=0.75)
 
     # NN_Policy_Trainer.plotLandingRate(df_raw,PlotRegion=True)
 
