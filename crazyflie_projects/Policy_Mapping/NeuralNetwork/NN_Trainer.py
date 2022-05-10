@@ -583,7 +583,7 @@ class NN_Model(nn.Module):
         # PASS DATA THROUGH NETWORK
         x = F.elu(self.fc1(x))
         x = F.elu(self.fc2(x))
-        x = F.elu(self.fc2(x))
+        x = F.elu(self.fc3(x))
         x = self.out(x)
 
         x[:,0] = torch.sigmoid(x[:,0])
@@ -634,12 +634,12 @@ if __name__ == "__main__":
 
     Param_Path = f'{BASEPATH}/NeuralNetwork/Info/NN_Layers_{model_initials}.h'
     NN_Policy_Trainer.createScaler(X)
-    NN_Policy_Trainer.trainModel(X_train,y_train,X_test,y_test,LR_bound=LR_bound,epochs=2000)
+    NN_Policy_Trainer.trainModel(X_train,y_train,X_test,y_test,LR_bound=LR_bound,epochs=1000)
     NN_Policy_Trainer.saveParams(Param_Path)
     NN_Policy_Trainer.evalModel(X,y)
- 
 
     NN_Policy_Trainer.loadModelFromParams(Param_Path)
+    print(NN_Policy_Trainer.modelPredict(np.array([0.293,-1.822,0.857]).reshape(1,-1)))
     NN_Policy_Trainer.evalModel(X,y,LR_bound=LR_bound)
     NN_Policy_Trainer.plotClassification(df_raw,LR_bound=0.75)
     NN_Policy_Trainer.plotPolicy(df_raw,PlotRegion=True,LR_bound=0.75)

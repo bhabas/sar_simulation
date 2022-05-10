@@ -85,7 +85,7 @@ float NN_Forward_Flip(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[])
     nml_mat_add_r(WX4,b[3]);
     nml_mat *a4 = nml_mat_funcElement(WX4,Sigmoid);
 
-    nml_mat_print(a4);
+    // nml_mat_print(a4);
 
 
 
