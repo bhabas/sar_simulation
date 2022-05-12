@@ -6,16 +6,16 @@ import numpy as np
 ## SYSTEM CONSTRAINTS
 H_CEIL = 2.1    # Height of ceiling [m]
 a_x = 1.0       # X-acceleration [m/s^2]
-a_z = 2.7       # Z-acceleration [m/s^2]
+a_z = 2.0       # Z-acceleration [m/s^2]
 
 ## DESIRED IMPACT LOCATION
-x_d = 1.0
+x_impact = 2.0
 
 ## FLIGHT CONDITIONS
-V = 2.5     # Flight vel [m/s]
-phi = 40    # Flight angle [deg]
+V = 3.0     # Flight vel [m/s]
+phi = 30    # Flight angle [deg]
 phi_rad = np.radians(phi) # [rad]
-d_min = 0.6     # Distance where (Vx,Vz) are reached [m]
+d_vel = 0.7     # Distance where (Vx,Vz) are reached [m]
 
 Vx = V*np.cos(phi_rad) # [m/s]
 Vz = V*np.sin(phi_rad) # [m/s]
@@ -68,10 +68,10 @@ def calcTraj(t,x_0,z_0,v_x,v_z):
 
 
 z_vz = 1/2*a_z*t_z**2
-z_0 = H_CEIL - d_min - z_vz
+z_0 = H_CEIL - d_vel - z_vz
 
 x_vz = Vx*(t_x+t_z) - Vx**2/(2*a_x)
-x_0 = x_d - x_vz - d_min*Vx/Vz
+x_0 = x_impact - x_vz - d_vel*Vx/Vz
 
 ## CALCULATE ORIGINAL TRAJECTORY
 x_t = []
@@ -105,7 +105,7 @@ ax.scatter(x_0+x_vz,z_0+z_vz,label='Vel reached')
 
 
 ax.axhline(y=H_CEIL,color='k',linestyle='--',label='h_ceiling')
-ax.axhline(y=H_CEIL-d_min,color='k',linestyle='--',alpha=0.5,label='d_min',zorder=0)
+ax.axhline(y=H_CEIL-d_vel,color='k',linestyle='--',alpha=0.5,label='d_vel',zorder=0)
 ax.set_ylim(0,H_CEIL + 0.5)
 ax.set_xlim(-10,10)
 

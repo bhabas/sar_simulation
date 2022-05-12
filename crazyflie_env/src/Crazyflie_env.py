@@ -530,7 +530,7 @@ class CrazyflieEnv:
         time.sleep(0.02) # Give time for controller to process message
         
 
-    def VelTraj_StartPos(self,x_impact,V_d,accel_d=None,d_vz=0.6):
+    def VelTraj_StartPos(self,x_impact,V_d,accel_d=None,d_vel=0.6):
         """Returns the required start position (x_0,z_0) to intercept the ceiling 
         at a specific x-location; while also achieving the desired velocity conditions 
         at by a certain distance from the ceiling.
@@ -560,11 +560,11 @@ class CrazyflieEnv:
         t_x = Vx/a_x    # Time required to reach Vx
         t_z = Vz/a_z    # Time required to reach Vz
 
-        z_vz = 0.5*a_z*(t_z)**2                 # Height Vz reached
-        z_0 = (self.h_ceiling - d_vz) - z_vz    # Offset to move z_vz to d_vz
+        z_vz = 1/2*a_z*t_z**2                   # Height Vz reached
+        z_0 = (self.h_ceiling - d_vel) - z_vz    # Offset to move z_vz to d_vz
         
         x_vz = Vx*(t_x+t_z) - Vx**2/(2*a_x)     # X-position Vz reached
-        x_0 = x_impact - x_vz - d_vz*Vx/Vz      # Account for shift up and shift left
+        x_0 = x_impact - x_vz - d_vel*Vx/Vz      # Account for shift up and shift left
 
         return x_0,z_0
 
@@ -785,7 +785,7 @@ class CrazyflieEnv:
         state_msg.twist.angular.y = 0.0
         state_msg.twist.angular.z = 0.0
 
-        rospy.wait_for_service('/gazebo/set_model_state')
+        rospy.wait_for_service('/gazebo/set_model_state',timeout=5)
         set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         set_state_srv(state_msg)
 
