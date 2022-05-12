@@ -22,8 +22,6 @@ float U; //defining image coords
 float V;
 
 //Init outputs
-int Ix[HEIGHT_PIXELS*WIDTH_PIXELS] = {0}; //zero init Ix Iy
-int Iy[HEIGHT_PIXELS*WIDTH_PIXELS] = {0};
 int It[HEIGHT_PIXELS*WIDTH_PIXELS] = {0};
 float Gtemp = 0;
 float Iuu = 0;
@@ -161,9 +159,9 @@ void MyClass::Convolution_X_Y(const unsigned char* input, int ImgX, int ImgY)
         }
 
         //Sub Kernel Indexing 
-        int i0 = (X - 1) + (Y - 1) * ImgX; //First grab top left location of whole kernel
-        int i1 = i0 + ImgX; //then each following row is separated by the image width
-        int i2 = i1 + ImgX;
+        uint32_t i0 = (X - 1) + (Y - 1) * ImgX; //First grab top left location of whole kernel
+        uint32_t i1 = i0 + ImgX; //then each following row is separated by the image width
+        uint32_t i2 = i1 + ImgX;
 
         U = (X - O_up)*w + (w/2); // Using current location of the Kernel center
         V = (Y - V_up)*w + (w/2); //calculate the current pixel grid locations (u,v)
@@ -228,6 +226,8 @@ void MyClass::Convolution_X_Y(const unsigned char* input, int ImgX, int ImgY)
 
     nml_mat* m_A = nml_mat_from(3,3,9,LHS);
     nml_mat* m_b = nml_mat_from(3,1,3,RHS);
+    nml_mat_print(m_A);
+    nml_mat_print(m_b);
 
     nml_mat_qr *QR = nml_mat_qr_solve(m_A); // A = Q*R
     nml_mat* y = nml_mat_dot(nml_mat_transp(QR->Q),m_b); // y = Q^T*b

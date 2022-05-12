@@ -161,10 +161,10 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
         Cur_img = &(msg->data)[0]; // Point to current image data address
 
         //Where the convolution starts
-        uint16_t X = 1;
-        uint16_t Y = 1;
+        int32_t X = 1;
+        int32_t Y = 1;
         float w = 3.6e-6; //Pixel width in meters
-        float f = 0.66e-3/2;//Focal length in meters
+        float f = 0.33e-3;//Focal length in meters
         float U;
         float V;
         float O_up = WIDTH_PIXELS/2;
@@ -196,9 +196,9 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
             }
 
             //Sub Kernel Indexing 
-            uint16_t i0 = (X - 1) + (Y - 1) * WIDTH_PIXELS; //First grab top left location of whole kernel
-            uint16_t i1 = i0 + WIDTH_PIXELS; //then each following row is separated by the image width
-            uint16_t i2 = i1 + WIDTH_PIXELS;
+            uint32_t i0 = (X - 1) + (Y - 1) * WIDTH_PIXELS; //First grab top left location of whole kernel
+            uint32_t i1 = i0 + WIDTH_PIXELS; //then each following row is separated by the image width
+            uint32_t i2 = i1 + WIDTH_PIXELS;
 
             U = (X - O_up)*w + (w/2); // Using current location of the Kernel center
             V = (Y - V_up)*w + (w/2); //calculate the current pixel grid locations (u,v)

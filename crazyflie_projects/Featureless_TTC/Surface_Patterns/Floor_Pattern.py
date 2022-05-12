@@ -7,8 +7,8 @@ from matplotlib.patches import Rectangle
 BASEPATH = "crazyflie_projects/Featureless_TTC/"
 
 ## PLOT BRIGHTNESS PATTERN FROM 2.4.1 HORIZONTAL MOTION
-I_0 = 255   # Brightness value (0-255)
-L = 0.25    # Stripe Period [m]
+I_0 = 60   # Brightness value (0-255)
+L = 0.5   # Stripe Period [m]
 
 
 ## CAMERA PARAMETERS
@@ -32,7 +32,7 @@ X, Y = np.meshgrid(x, y)
 def Intensity(X):
     I_x = I_0/2*(np.sin(2*np.pi*X/L)+1)
     I_y = I_0/2*(np.sin(2*np.pi*Y/L)+1)
-    I = I_x # I = (I_x+I_y)/2
+    I =  (I_x+I_y)/2
 
     # I = np.round(I/255,0)*255
     return I

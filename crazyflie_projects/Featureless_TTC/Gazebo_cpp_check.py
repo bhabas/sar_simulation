@@ -27,14 +27,14 @@ vz = 0.7    # Camera velocity [m/s]
 vx = 0.3
 vy = 0.3
 
-Tau_act_List = []
-Tau_est_List = []
-Tau_cpp_est_List = []
-OFy_act_List = []
-OFy_ext_List = []
-OFx_act_List = []
-OFx_ext_List = []
-t_List = []
+Tau_act_List = [0]
+Tau_est_List = [0]
+Tau_cpp_est_List = [0]
+OFy_act_List = [0]
+OFy_ext_List = [0]
+OFx_act_List = [0]
+OFx_ext_List = [0]
+t_List = [0]
 
 
 class CameraClass:
@@ -45,13 +45,35 @@ class CameraClass:
 
         self.Cur_img = np.array([])
         self.Prev_img = np.zeros([WIDTH_PIXELS,HEIGHT_PIXELS])
-        rospy.Subscriber("/CF_Internal/camera/image_raw",Image,self.Camera_cb,queue_size = 1)
-        rospy.Subscriber("/CF_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size = 1)
+        self.t = 0
+        self.Tau = 0
+        self.OFx = 0
+        self.OFy = 0
+        self.Tau_est_cpp = 0
+        self.d_ceil = 0
+        self.prev_time = 0
+
+        self.cam_sub = rospy.Subscriber("/CF_Internal/camera/image_raw",Image,self.Camera_cb,queue_size = 1)
+        self.state_sub = rospy.Subscriber("/CF_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size = 1)
+        
+
+    def Subscriber(self):
+        while (self.LoggingFlag):
+            Cam_msg = rospy.wait_for_message("/CF_Internal/camera/image_raw",Image,timeout = None)
+            self.Camera_cb(Cam_msg)
+
+            if (self.d_ceil < 0.1):
+                self.LoggingFlag = False
+                self.plotter()
+            
 
     def Camera_cb(self,Cam_msg):
-        self.t = rospy.get_time()
+
+        self.t = np.round(Cam_msg.header.stamp.to_sec(),4)
         self.Cur_img = np.frombuffer(Cam_msg.data,np.uint8).reshape(WIDTH_PIXELS,HEIGHT_PIXELS)
-        self.cam_alg(self.Cur_img,self.Prev_img)  
+        if(self.t != self.prev_time):
+            self.cam_alg(self.Cur_img,self.Prev_img)
+       
 
     def CF_StateDataCallback(self,StateData_msg):
         
@@ -60,16 +82,6 @@ class CameraClass:
         self.OFy = np.round(StateData_msg.OFy,3)
         self.Tau_est_cpp = np.round(StateData_msg.Tau_est,3)
         self.d_ceil = np.round(StateData_msg.D_ceil,3)
-
-
-    ## PIXEL INTENSITIES/GRADIENTS
-    def I_continuous(u_p,z_0,t):
-        ## CONVERT PIXEL INDEX TO METERS
-        u = (u_p - O_up)*w + w/2 
-        d = z_0+vz*t
-
-        ## RETURN AVERAGE BRIGHTNESS VALUE OVER PIXEL
-        return I_0/2 * np.sin(2*np.pi*(u*d/(f*L) + vx*t/L)) + I_0/2
 
 
     def cam_alg(self,Cur_img,Prev_img):
@@ -106,7 +118,7 @@ class CameraClass:
                 Iu[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Kx)/w
                 Iv[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Ky)/w
 
-        It = (Cur_img - Prev_img)/(1/FPS) # Time Gradient
+        It = (Cur_img - Prev_img)/(self.t - self.prev_time) # Time Gradient
         G = U_grid*Iu + V_grid*Iv # Radial Gradient
 
         ## SOLVE LEAST SQUARES PROBLEM
@@ -128,6 +140,7 @@ class CameraClass:
 
         self.Prev_img = Cur_img #set Previous image to Current one before reiterating 
         self.animate_func()
+        self.prev_time = self.t
 
     
     def animate_func(self):
@@ -139,7 +152,8 @@ class CameraClass:
         
         print(f"Tau_act: {Tau_act:.3f} | Tau_est: {1/self.b[2]:.3f} | Tau_est_cpp: {self.Tau_est_cpp}")
         print(f"OFy_act: {OFy_act:.3f} | OFy_est: {self.b[0]:.3f}")
-        print(f"OFx_act: {OFx_act:.3f} | OFx_est: {self.b[1]:.3f}\n")
+        print(f"OFx_act: {OFx_act:.3f} | OFx_est: {self.b[1]:.3f}")
+        print(f"Distance to Ceiling {self.d_ceil:.3f}\n")
 
 
         ## APPEN OPTICAL FLOW ESTIMATES TO LIST FOR PLOTTING
@@ -154,23 +168,21 @@ class CameraClass:
         t_List.append(self.t)
 
         if (self.d_ceil < 0.1):
-            self.plotter()
+                self.LoggingFlag = False
+                self.plotter()
 
     def plotter(self):
+        
         ## TAU PLOT
-        fig2 = plt.figure(1)
-        ax = fig2.add_subplot(111)
-
-        ax.plot(t_List,Tau_est_List,'rx',label="Tau_estimate")
-        ax.plot(t_List,Tau_act_List,label="Tau_actual")
-        ax.plot(t_List,Tau_cpp_est_List,label = "Tau_cpp_estimate")
-        ax.set_title('Tau Estimation')
-        ax.set_xlabel('Time [s]')
-        ax.set_ylabel('Tau [s]')
-        ax.grid()
-        ax.legend()
-
-        fig2.tight_layout()
+        # plt.plot(t_List,Tau_est_List,'rx',label="Tau_estimate")
+        plt.plot(t_List,Tau_act_List,label="Tau_actual")
+        plt.plot(t_List,Tau_cpp_est_List,label = "Tau_cpp_estimate")
+        plt.title('Tau Estimation')
+        plt.xlabel('Time [s]')
+        plt.ylabel('Tau [s]')
+        plt.grid()
+        plt.legend()
+        plt.show()
 
 
 if __name__ == '__main__':
