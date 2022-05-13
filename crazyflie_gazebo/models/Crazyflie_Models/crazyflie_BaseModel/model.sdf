@@ -202,7 +202,7 @@
 
       <sensor type="camera" name="camera1">
         <pose>0 0 0 0 -1.5708 1.5708</pose>
-        <update_rate>120</update_rate>
+        <update_rate>60</update_rate>
         <visualize>false</visualize>
         <camera name="head">
           <save enabled="false">
