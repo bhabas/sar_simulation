@@ -22,24 +22,23 @@ float U; //defining image coords
 float V;
 
 //Init outputs
-int It[HEIGHT_PIXELS*WIDTH_PIXELS] = {0};
-float Gtemp = 0;
-float Iuu = 0;
-float Ivv = 0;
-float Iuv = 0;
-float IGu = 0;
-float IGv = 0;
-float IGG = 0;
-float Iut = 0;
-float Ivt = 0;
-float IGt = 0;
-float dt = 1;
-float Prev_time = 1; //init as 1 to prevent divide by zero for first image
+int16_t It[HEIGHT_PIXELS*WIDTH_PIXELS] = {0};
+double Gtemp = 0;
+double Iuu = 0;
+double Ivv = 0;
+double Iuv = 0;
+double IGu = 0;
+double IGv = 0;
+double IGG = 0;
+double Iut = 0;
+double Ivt = 0;
+double IGt = 0;
+double dt = 1;
+double Prev_time = 1; //init as 1 to prevent divide by zero for first image
 
 float Tau = 0;
 float OFx = 0;
 float OFy = 0;
-
 
 // Init Sub-kernels
 int kx0[3] = {-1, 0, 1};
@@ -48,7 +47,8 @@ int kx2[3] = {-1, 0, 1};
 int ky0[3] = {-1,-2,-1};
 int ky2[3] = {1,2,1};
 
-ros::Time Cur_Time;
+//Creting ROS Time object
+ros::Time Cur_Time; 
 
 
 class MyClass // DEFINE CLASS
@@ -115,11 +115,7 @@ void MyClass::Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg){
 
     pub.publish(new_msg);
 
-    
-
     memcpy(Prev_img,Cur_img,WIDTH_PIXELS*HEIGHT_PIXELS*sizeof(uint8_t)); // Copy memory to Prev_img address
-
-
 
 
 } // ============ END OF MAIN LOOP ============ //
@@ -136,11 +132,22 @@ void MyClass::Convolution_T(const unsigned char* CurImg,unsigned char* PrevImg) 
 void MyClass::Convolution_X_Y(const unsigned char* input, int ImgX, int ImgY) 
 {
 
+    Gtemp = 0;
+    Iuu = 0;
+    Ivv = 0;
+    Iuv = 0;
+    IGu = 0;
+    IGv = 0;
+    IGG = 0;
+    Iut = 0;
+    Ivt = 0;
+    IGt = 0;
+
     //Where the convolution starts
     int X = 1;
     int Y = 1;
 
-    float Cur_time = ros::Time::now().toSec();
+    // float Cur_time = ros::Time::now().toSec();
     
     for(int j = 0; j < (ImgX - 2)*(ImgY - 2); j++) // How many times the kernel center moves around the image
     {
@@ -163,8 +170,8 @@ void MyClass::Convolution_X_Y(const unsigned char* input, int ImgX, int ImgY)
         V = (Y - V_up)*w + (w/2); //calculate the current pixel grid locations (u,v)
 
 
-        int Xsum = 0; //reset rolling sum to 0
-        int Ysum = 0;
+        int32_t Xsum = 0; //reset rolling sum to 0
+        int32_t Ysum = 0;
 
         //GENERALIZE FOR CHANGE IN KERNEL SIZE
         for(int k = 0; k < 3; k++){
@@ -183,7 +190,7 @@ void MyClass::Convolution_X_Y(const unsigned char* input, int ImgX, int ImgY)
         }
 
         //Sum assigned to middle value
-        int Ittemp = It[i1 + 1];
+        int16_t Ittemp = It[i1 + 1];
         Gtemp = (Xsum*U + Ysum*V);
 
         //LHS Matrix values (rolling sums)
@@ -203,7 +210,7 @@ void MyClass::Convolution_X_Y(const unsigned char* input, int ImgX, int ImgY)
         
     } // END OF CONVOLUTION
 
-    dt = Cur_time - Prev_time;
+    dt = Cur_Time.toSec() - Prev_time;
     printf("\ndt: %f\n",dt);
 
 
@@ -235,7 +242,7 @@ void MyClass::Convolution_X_Y(const unsigned char* input, int ImgX, int ImgY)
     nml_mat_qr_free(QR);
     nml_mat_free(x_QR);
 
-    Prev_time = Cur_time; //reset Prev_time to Current iteration time
+    Prev_time = Cur_Time.toSec(); //reset Prev_time to Current iteration time
 
 
 } // ========= END OF CONVOLUTION X Y =========

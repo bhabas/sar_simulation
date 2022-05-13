@@ -278,7 +278,7 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
         nml_mat_free(x_QR);
 
 
-        memcpy(Prev_img,Cur_img,sizeof(msg->data)); // Copy memory to Prev_img address
+        memcpy(Prev_img,Cur_img,WIDTH_PIXELS*HEIGHT_PIXELS*sizeof(uint8_t)); // Copy memory to Prev_img address
         Prev_time = Cur_time; // Setup previous time for next calculation
     }
 
