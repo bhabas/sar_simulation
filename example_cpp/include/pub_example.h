@@ -48,6 +48,8 @@ int kx2[3] = {-1, 0, 1};
 int ky0[3] = {-1,-2,-1};
 int ky2[3] = {1,2,1};
 
+ros::Time Cur_Time;
+
 
 class MyClass // DEFINE CLASS
 {
@@ -95,6 +97,9 @@ void MyClass::Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg){
     // IMAGE PROCESSING WORK GOES HERE
     Cur_img = &(Camera_msg->data)[0]; // Point to current image data address
 
+    Cur_Time = Camera_msg->header.stamp;
+    
+
 
     // Calling Convolutions
     MyClass::Convolution_T(Cur_img,Prev_img);
@@ -106,6 +111,7 @@ void MyClass::Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg){
     new_msg.Tau = Tau;
     new_msg.OFx = OFx;
     new_msg.OFy = OFy;
+    new_msg.header.stamp = Cur_Time;
 
     pub.publish(new_msg);
 

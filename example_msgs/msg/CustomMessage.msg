@@ -1,4 +1,4 @@
-string custom_msg
+Header header
 geometry_msgs/Vector3 custom_vector
 float64 Tau
 float64 OFx
