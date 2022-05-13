@@ -55,27 +55,27 @@ class DataParser:
             self.Camera_array[n] = np.fromstring(self.Camera_data[n], dtype=int, sep = ' ')
 
 
-        # if pre_compiled_Flag == 'y':
+        if pre_compiled_Flag == 'y':
 
-        #     self.TTC_est = self.Data_df['TTC_est1'].to_numpy()
-        #     self.OFx_est = self.Data_df['OFx_est'].to_numpy()
-        #     self.OFy_est = self.Data_df['OFy_est'].to_numpy()
+            self.TTC_est = self.Data_df['Tau_est'].to_numpy()
+            self.OFx_est = self.Data_df['OFx_est'].to_numpy()
+            self.OFy_est = self.Data_df['OFy_est'].to_numpy()
 
-        #     self.Plotter()
+            self.Plotter()
 
 
-        # else: 
-        self.Data_analysis()
+        else: 
+            self.Data_analysis()
 
-        # ## Append estimated tau values to avoid recalculating each time
-        # df_Tau = pd.DataFrame({
-        #     'TTC_est1':self.TTC_est1, 
-        #     'OFx_est':self.OFx_est,
-        #     'OFy_est':self.OFy_est,
-        #     })
-        # pd.concat([self.Data_df.iloc[:,:-1],df_Tau,self.Data_df.iloc[:,-1]],axis=1).to_csv(self.Path+"Appended_"+filename,index=False)
+            ## Append estimated tau values to avoid recalculating each time
+            df_Tau = pd.DataFrame({
+                'Tau_est':self.Tau_est, 
+                'OFx_est':self.OFx_est,
+                'OFy_est':self.OFy_est,
+                })
+            pd.concat([self.Data_df.iloc[:,:-1],df_Tau,self.Data_df.iloc[:,-1]],axis=1).to_csv(self.Path+"Appended_"+filename,index=False)
 
-        self.Plotter()
+            self.Plotter()
 
 
 
@@ -165,14 +165,32 @@ class DataParser:
 
         ## PLOT TAU VALUES
         ax1 = fig.add_subplot(311)
-        ax1.plot(self.Time,self.Tau_est,'r')
-        ax1.plot(self.Time,self.Tau,'b')
+        ax1.plot(self.Time,self.Tau,color='tab:blue',label='Tau')
+        ax1.plot(self.Time,self.Tau_est,color='r',linestyle='--',label='Tau_est')
+        ax1.grid()
+        ax1.legend(loc='upper right')
+        ax1.set_ylabel("Tau [s]")
+        ax1.set_xlabel("Time [s]")
 
         ## PLOT OFx VALUES
         ax2 = fig.add_subplot(312,sharex = ax1)
+        ax2.plot(self.Time,self.OFx,color='tab:blue',label='OFx')
+        ax2.plot(self.Time,self.OFx_est,color='g',linestyle='--',label='OFx_est')
+        ax2.grid()
+        ax2.legend(loc='upper right')
+        ax2.set_ylabel("OFx [rad/s]")
+        ax2.set_xlabel("Time [s]")
+        ax2.set_ylim(-10,10)
 
         ## PLOT OFy VALUES
         ax3 = fig.add_subplot(313,sharex = ax1)
+        ax3.plot(self.Time,self.OFy,color='tab:blue',label='OFy')
+        ax3.plot(self.Time,self.OFy_est,color='tab:orange',linestyle='--',label='OFy_est')
+        ax3.grid()
+        ax3.legend(loc='upper right')
+        ax3.set_ylabel("OFy [rad/s]")
+        ax3.set_xlabel("Time [s]")
+        ax3.set_ylim(-10,10)
 
         plt.show()
 
