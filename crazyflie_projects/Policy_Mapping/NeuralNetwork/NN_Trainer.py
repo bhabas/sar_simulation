@@ -324,26 +324,26 @@ class NN_Trainer():
 
         fig = go.Figure()
 
-        fig.add_trace(
-            go.Volume(
-                ## ISO SURFACE
-                x=X_grid[:,1].flatten(),
-                y=X_grid[:,0].flatten(),
-                z=X_grid[:,2].flatten(),
-                value=y_pred_grid[:,0].flatten(),
+        # fig.add_trace(
+        #     go.Volume(
+        #         ## ISO SURFACE
+        #         x=X_grid[:,1].flatten(),
+        #         y=X_grid[:,0].flatten(),
+        #         z=X_grid[:,2].flatten(),
+        #         value=y_pred_grid[:,0].flatten(),
                 
-                surface_count=10,
-                opacity=0.1,
-                isomin=LR_bound-0.05,
-                isomax=LR_bound,
-                # colorscale='Viridis',  
-                cmin=0,
-                cmax=1,     
-                caps=dict(x_show=False, y_show=False),
-                colorbar=dict(title='Title',) , 
-                hoverinfo='skip'
-            )
-        )
+        #         surface_count=10,
+        #         opacity=0.1,
+        #         isomin=LR_bound-0.05,
+        #         isomax=LR_bound,
+        #         # colorscale='Viridis',  
+        #         cmin=0,
+        #         cmax=1,     
+        #         caps=dict(x_show=False, y_show=False),
+        #         colorbar=dict(title='Title',) , 
+        #         hoverinfo='skip'
+        #     )
+        # )
 
         ## PLOT DATA POINTS
         fig.add_trace(
@@ -366,6 +366,24 @@ class NN_Trainer():
                 marker=dict(
                     size=3,
                     color=df_custom["LR_4leg"],
+                    colorscale='Viridis',   # choose a colorscale
+                    opacity=0.3)
+            )
+        )
+
+        ## PLOT DATA POINTS
+        fig.add_trace(
+            go.Scatter3d(
+                ## DATA
+                x=[-7.754],
+                y=[0.259],
+                z=[0.298],
+
+                ## MARKER
+                mode='markers',
+                marker=dict(
+                    size=3,
+                    color=[1.0],
                     colorscale='Viridis',   # choose a colorscale
                     opacity=1.0)
             )
@@ -648,16 +666,17 @@ if __name__ == "__main__":
 
 
     Param_Path = f'{BASEPATH}/NeuralNetwork/Info/NN_Layers_{model_initials}.h'
-    NN_Policy_Trainer.createScaler(X)
-    NN_Policy_Trainer.trainModel(X_train,y_train,X_test,y_test,LR_bound=LR_bound,epochs=1000)
-    NN_Policy_Trainer.saveParams(Param_Path)
-    NN_Policy_Trainer.evalModel(X,y)
+    # NN_Policy_Trainer.createScaler(X)
+    # NN_Policy_Trainer.trainModel(X_train,y_train,X_test,y_test,LR_bound=LR_bound,epochs=1000)
+    # NN_Policy_Trainer.saveParams(Param_Path)
+    # NN_Policy_Trainer.evalModel(X,y)
 
     NN_Policy_Trainer.loadModelFromParams(Param_Path)
-    NN_Policy_Trainer.evalModel(X,y,LR_bound=LR_bound)
-    NN_Policy_Trainer.plotClassification(df_raw,LR_bound=0.8)
-    # NN_Policy_Trainer.plotPolicy(df_raw,PlotRegion=True,LR_bound=0.75)
-    # NN_Policy_Trainer.plotPolicy(df_raw,PlotRegion=False,LR_bound=0.75)
+    print(NN_Policy_Trainer.modelPredict(np.array([[0.259,-7.754,0.298]])))
+    # NN_Policy_Trainer.evalModel(X,y,LR_bound=LR_bound)
+    # NN_Policy_Trainer.plotClassification(df_raw,LR_bound=0.8)
+    # NN_Policy_Trainer.plotPolicy(df_raw,PlotRegion=True,LR_bound=0.8)
+    # NN_Policy_Trainer.plotPolicy(df_raw,PlotRegion=False,LR_bound=0.8)
 
     # NN_Policy_Trainer.plotLandingRate(df_raw,PlotRegion=True)
 
