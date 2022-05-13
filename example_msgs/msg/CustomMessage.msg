@@ -1,5 +1,8 @@
 string custom_msg
 geometry_msgs/Vector3 custom_vector
+float64 Tau
+float64 OFx
+float64 OFy
 uint8[] Camera_data
 uint8[] Prev_img
 int64[] Xconv
