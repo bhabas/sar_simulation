@@ -7,8 +7,8 @@ from matplotlib.patches import Rectangle
 BASEPATH = "crazyflie_projects/Featureless_TTC/"
 
 ## PLOT BRIGHTNESS PATTERN FROM 2.4.1 HORIZONTAL MOTION
-I_0 = 60   # Brightness value (0-255)
-L = 0.5   # Stripe Period [m]
+I_0 = 255   # Brightness value (0-255)      60
+L = 0.25   # Stripe Period [m]              0.5
 
 
 ## CAMERA PARAMETERS

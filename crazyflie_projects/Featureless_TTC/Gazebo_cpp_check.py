@@ -7,34 +7,9 @@ import cv2 as cv
 from sensor_msgs.msg import Image #import camera data
 from crazyflie_msgs.msg import CF_StateData #import 'true' values
 
-# Pre_init vars
-
 ## CAMERA PARAMETERS
 WIDTH_PIXELS = 160
 HEIGHT_PIXELS = 160
-FPS = 120               # Frame Rate [1/s]
-w = 3.6e-6              # Pixel width [m]
-f = 0.66e-3/2           # Focal Length [m]
-O_up = WIDTH_PIXELS/2    # Pixel X_offset [pixels]
-O_vp = HEIGHT_PIXELS/2   # Pixel Y_offset [pixels]
-
-## PLOT BRIGHTNESS PATTERN FROM 2.4.1 HORIZONTAL MOTION
-I_0 = 255   # Brightness value (0-255)
-L = 0.25    # [m]
-
-d_0 = 0.6   # Initial Camera height [m]
-vz = 0.7    # Camera velocity [m/s]
-vx = 0.3
-vy = 0.3
-
-Tau_act_List = [0]
-Tau_est_List = [0]
-Tau_cpp_est_List = [0]
-OFy_act_List = [0]
-OFy_ext_List = [0]
-OFx_act_List = [0]
-OFx_ext_List = [0]
-t_List = [0]
 
 
 class CameraClass:
@@ -42,6 +17,16 @@ class CameraClass:
     def __init__(self):
 
         rospy.init_node('Camera_alg', anonymous = True)#start nodes
+
+        # Pre_init vars
+        self.Tau_act_List = [0]
+        self.Tau_est_List = [0]
+        self.Tau_cpp_est_List = [0]
+        self.OFy_act_List = [0]
+        self.OFy_ext_List = [0]
+        self.OFx_act_List = [0]
+        self.OFx_ext_List = [0]
+        self.t_List = [0]
 
         self.Cur_img = np.array([])
         self.Prev_img = np.zeros([WIDTH_PIXELS,HEIGHT_PIXELS])
@@ -54,25 +39,18 @@ class CameraClass:
         self.prev_time = 0
 
         self.cam_sub = rospy.Subscriber("/CF_Internal/camera/image_raw",Image,self.Camera_cb,queue_size = 1)
-        self.state_sub = rospy.Subscriber("/CF_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size = 1)
-        
-
-    def Subscriber(self):
-        while (self.LoggingFlag):
-            Cam_msg = rospy.wait_for_message("/CF_Internal/camera/image_raw",Image,timeout = None)
-            self.Camera_cb(Cam_msg)
-
-            if (self.d_ceil < 0.1):
-                self.LoggingFlag = False
-                self.plotter()
+        # self.state_sub = rospy.Subscriber("/CF_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size = 1)
             
 
     def Camera_cb(self,Cam_msg):
 
-        self.t = np.round(Cam_msg.header.stamp.to_sec(),4)
-        self.Cur_img = np.frombuffer(Cam_msg.data,np.uint8).reshape(WIDTH_PIXELS,HEIGHT_PIXELS)
-        if(self.t != self.prev_time):
-            self.cam_alg(self.Cur_img,self.Prev_img)
+        self.time = np.round(Cam_msg.header.stamp.to_sec(),6) #grabbing timestamp
+        self.Cur_img = np.frombuffer(Cam_msg.data,np.uint8).reshape(WIDTH_PIXELS,HEIGHT_PIXELS) #pulling in image to process
+
+        self.cam_alg() #once the images are updated time to process them
+
+        # if(self.t != self.prev_time):
+        #     self.cam_alg(self)
        
 
     def CF_StateDataCallback(self,StateData_msg):
@@ -84,8 +62,12 @@ class CameraClass:
         self.d_ceil = np.round(StateData_msg.D_ceil,3)
 
 
-    def cam_alg(self,Cur_img,Prev_img):
+    def cam_alg(self):
 
+        O_up = WIDTH_PIXELS/2    # Pixel X_offset [pixels]
+        O_vp = HEIGHT_PIXELS/2   # Pixel Y_offset [pixels]
+        w = 3.6e-6              # Pixel width [m]
+        f = 0.66e-3/2           # Focal Length [m]
 
         ## PRE-ALLOCATE IMAGE ARRAY [pixels]
         u_p = np.arange(0,WIDTH_PIXELS,1)
@@ -109,16 +91,16 @@ class CameraClass:
         U_grid = (U_p - O_up)*w + w/2 
         V_grid = (V_p - O_vp)*w + w/2
 
-        # Cur_img = cv.GaussianBlur(Cur_img,(5,5),0)
-        # Prev_img = cv.GaussianBlur(Prev_img,(5,5),0)
-
         ## FIND IMAGE GRADIENTS
         for i in range(1,HEIGHT_PIXELS - 1): 
             for j in range(1,WIDTH_PIXELS - 1):
-                Iu[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Kx)/w
-                Iv[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Ky)/w
+                Iu[i,j] = np.sum(self.Cur_img[i-1:i+2,j-1:j+2] * Kx)/w
+                Iv[i,j] = np.sum(self.Cur_img[i-1:i+2,j-1:j+2] * Ky)/w
 
-        It = (Cur_img - Prev_img)/(self.t - self.prev_time) # Time Gradient
+        It = (self.Cur_img - self.Prev_img)/(self.time - self.prev_time) # Time Gradient
+
+        print(f"Change in time: {(self.time - self.prev_time):.4f}") #checking to make sure dt is 1/120
+
         G = U_grid*Iu + V_grid*Iv # Radial Gradient
 
         ## SOLVE LEAST SQUARES PROBLEM
@@ -129,21 +111,21 @@ class CameraClass:
         ])
 
         y = np.array([
-                    [-np.sum(Iu*It)],
-                    [-np.sum(Iv*It)],
-                    [-np.sum(G*It)]
+            [-np.sum(Iu*It)],
+            [-np.sum(Iv*It)],
+            [-np.sum(G*It)]
                 ])
 
         ## SOLVE b VIA PSEUDO-INVERSE
         self.b = np.linalg.pinv(X)@y
         self.b = self.b.flatten()
 
-        self.Prev_img = Cur_img #set Previous image to Current one before reiterating 
-        self.animate_func()
-        self.prev_time = self.t
+        self.Prev_img = self.Cur_img #set Previous image to Current one before reiterating 
+        self.prev_time = self.time
+        self.logs()
 
     
-    def animate_func(self):
+    def logs(self):
 
 
         Tau_act = self.Tau
@@ -157,26 +139,25 @@ class CameraClass:
 
 
         ## APPEN OPTICAL FLOW ESTIMATES TO LIST FOR PLOTTING
-        Tau_est_List.append(1/self.b[2])
-        Tau_act_List.append(Tau_act)
-        Tau_cpp_est_List.append(self.Tau_est_cpp)
-        OFy_act_List.append(OFy_act)
-        OFy_ext_List.append(self.b[0])
-        OFx_act_List.append(OFx_act)
-        OFx_ext_List.append(self.b[1])
+        self.Tau_est_List.append(1/self.b[2])
+        self.Tau_act_List.append(Tau_act)
+        self.Tau_cpp_est_List.append(self.Tau_est_cpp)
+        self.OFy_act_List.append(OFy_act)
+        self.OFy_ext_List.append(self.b[0])
+        self.OFx_act_List.append(OFx_act)
+        self.OFx_ext_List.append(self.b[1])
+        self.t_List.append(self.t)
 
-        t_List.append(self.t)
-
-        if (self.d_ceil < 0.1):
-                self.LoggingFlag = False
-                self.plotter()
+        # if (self.d_ceil < 0.1):
+        #         self.LoggingFlag = False
+        #         self.plotter()
 
     def plotter(self):
         
         ## TAU PLOT
-        # plt.plot(t_List,Tau_est_List,'rx',label="Tau_estimate")
-        plt.plot(t_List,Tau_act_List,label="Tau_actual")
-        plt.plot(t_List,Tau_cpp_est_List,label = "Tau_cpp_estimate")
+        plt.plot(self.t_List,self.Tau_est_List,'rx',label="Tau_estimate")
+        plt.plot(self.t_List,self.Tau_act_List,label="Tau_actual")
+        plt.plot(self.t_List,self.Tau_cpp_est_List,label = "Tau_cpp_estimate")
         plt.title('Tau Estimation')
         plt.xlabel('Time [s]')
         plt.ylabel('Tau [s]')

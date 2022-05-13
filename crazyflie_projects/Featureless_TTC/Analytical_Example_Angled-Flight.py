@@ -14,14 +14,14 @@ WIDTH_PIXELS = 160
 HEIGHT_PIXELS = 160
 FPS = 120               # Frame Rate [1/s]
 w = 3.6e-6              # Pixel width [m]
-f = 0.66e-3/2           # Focal Length [m]
+f = 0.66e-3          # Focal Length [m]
 # f_effective = f/2 # halve focal length if half the pixels
 O_up = WIDTH_PIXELS/2    # Pixel X_offset [pixels]
 O_vp = HEIGHT_PIXELS/2   # Pixel Y_offset [pixels]
 
 
-d_0 = 0.6   # Initial Camera height [m]
-vz = 0.7    # Camera velocity [m/s]
+d_0 = 1.7   # Initial Camera height [m]
+vz = 1   # Camera velocity [m/s]
 vx = 0.0
 vy = 0.0
 
@@ -53,7 +53,7 @@ def I_pixel(u_p,v_p,d_0,t):
     ## RETURN AVERAGE BRIGHTNESS VALUE OVER PIXEL
     I_x = I_0/2*(np.sin(2*np.pi*(d*u/(f*L) + vx*t/L) ) + 1)
     I_y = I_0/2*(np.sin(2*np.pi*(d*v/(f*L) + vy*t/L) ) + 1)
-    I = I_x     #(I_x+I_y)/2
+    I = (I_x+I_y)/2
 
 
     ## CLIP VALUES TO BE HIGH/LOW
@@ -176,7 +176,7 @@ def animate_func(i):
     t_List.append(t)
 
     ## UPDATE IMAGE
-    # im.set_array(I_pixel(U_p,V_p,d_0,t))
+    im.set_array(I_pixel(U_p,V_p,d_0,t))
     
 anim = animation.FuncAnimation(fig, 
                                animate_func, 

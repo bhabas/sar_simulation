@@ -15,7 +15,7 @@
 #define WIDTH_PIXELS 160 //Picture dimensions
 #define HEIGHT_PIXELS 160
 float w = 3.6e-6; //Pixel width in meters
-float f = 0.33e-3;//Focal length in meters
+float f = 0.66e-3/2 ;//Focal length in meters
 float O_up = WIDTH_PIXELS/2; //Pixel x,y offsets
 float V_up = HEIGHT_PIXELS/2;
 float U; //defining image coords
