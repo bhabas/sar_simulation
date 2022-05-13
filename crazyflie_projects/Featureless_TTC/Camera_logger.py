@@ -33,12 +33,11 @@ class CameraParser:
         
         self.t = 0.0
         self.t_prev = 0.0
-        self.n = 0
 
         self.Camera_raw = np.array([])
 
         #INIT PARAMETERS
-        self.ceiling_h = rospy.get_param("/CEILING_HEIGHT")
+        self.h_ceiling = rospy.get_param("/CEILING_HEIGHT")
 
         self.Username = getpass.getuser()
         self.Path = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Featureless_TTC/logs' #store the logs in a folder for organization
@@ -48,11 +47,7 @@ class CameraParser:
         np.set_printoptions(threshold = sys.maxsize) #allows it to print the full string without truncation
 
         #COLLECT MISC. DATA
-
-        # while(self.Log_Flag):
         rospy.Subscriber("/CF_Internal/camera/image_raw",Image,self.Camera_cb,queue_size = 1)
-        # msg = rospy.wait_for_message("/CF_Internal/camera/image_raw",Image,timeout = None)
-        # self.Camera_cb(msg)
         rospy.Subscriber("/CF_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size = 1)
 
     def Create_csv(self):
@@ -97,13 +92,11 @@ class CameraParser:
 
     def Camera_cb(self,Cam_msg):
         
-        self.t = rospy.get_time() # sim time
+        self.t = np.round(Cam_msg.header.stamp.to_sec(),4) # sim time
         self.Camera_raw = np.frombuffer(Cam_msg.data,np.uint8) # 1D array to package into CSV
         self.Append_data()
 
     def CF_StateDataCallback(self,StateData_msg):
-
-        self.t = np.round(StateData_msg.header.stamp.to_sec(),4)
 
         self.posCF = np.round([ StateData_msg.Pose.position.x,
                                 StateData_msg.Pose.position.y,
