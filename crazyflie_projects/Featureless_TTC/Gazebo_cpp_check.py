@@ -15,13 +15,17 @@ class CameraClass:
 
     def __init__(self):
 
-        rospy.init_node('Camera_Data', anonymous = True)#start nodes
+        rospy.init_node('Camera_Data',anonymous=True)
 
-        rospy.Subscriber("/MyPub_cpp",CustomMessage,self.cpp_callback,queue_size = 1)
+        rospy.Subscriber("/MyPub_cpp",CustomMessage,self.cpp_callback,queue_size=1)
         
 
     def cpp_callback(self,msg):
-        print(msg.Tau)
+
+        # self.t = np.round(msg.header.stamp.to_sec(),4)
+        self.Cur_img = np.frombuffer(msg.Camera_data, np.uint8,).reshape(WIDTH_PIXELS,HEIGHT_PIXELS)
+        self.Prev_img = np.frombuffer(msg.Prev_img, np.uint8,).reshape(WIDTH_PIXELS,HEIGHT_PIXELS)
+        
         
 if __name__ == '__main__':
 
