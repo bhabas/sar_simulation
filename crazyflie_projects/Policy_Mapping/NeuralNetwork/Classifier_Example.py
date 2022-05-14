@@ -1,4 +1,5 @@
 ## STANDARD IMPORTS
+from importlib_metadata import requires
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -15,7 +16,7 @@ from sklearn.metrics import *
 from sklearn import preprocessing
 
 np.set_printoptions(suppress=True)
-BASEPATH = "crazyflie_projects/Policy_Mapping/NeuralNetwork"
+BASEPATH = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Policy_Mapping/NeuralNetwork"
 
 
 ## DEFINE NN MODEL
@@ -39,6 +40,7 @@ class Model(nn.Module):
 
 def train_model(model,X_train,y_train,X_test,y_test,epochs=500):
 
+    
     
 
     class_weight = [1, 5] # Weights as binary classes [0,1]
@@ -69,15 +71,41 @@ def train_model(model,X_train,y_train,X_test,y_test,epochs=500):
         ## CALC TRAINING LOSS
         y_pred_train = model.forward(X_train)
 
+        
+
+
+        ## INITIATE POINTS
+        x = np.linspace(-1,3,20)
+        y = np.linspace(-1,3,20)
+        XX,YY = np.meshgrid(x,y)
+        vals = np.stack((XX.flatten(),YY.flatten()),axis=1)
+        X_vol = torch.FloatTensor(vals)
+
+        y_pred_vol = model.forward(X_vol)
+
+
+        ## FIND OPTIMAL THRESHOLD VALUE
+        precision,recall,thresholds = precision_recall_curve(y_test,model.forward(X_test).detach().numpy())
+        fscore = (2*precision*recall)/(precision+recall)
+        idx = np.argmax(fscore)
+        threshold = thresholds[idx]
+
+
+        ## CALC NUMBER OF POINTS IN OPTIMAL THRESHOLD
+        loss_vol = np.sum(np.where(y_pred_vol>=threshold,1,0))/500
+
+
+
         loss_train_class = criterion_train_class(y_pred_train,y_train_class)
         loss = loss_train_class
-        losses_train.append(loss_train_class.item())
+        losses_train.append(loss.item())
 
         ## CALC VALIDATION LOSS
         with torch.no_grad():
             y_pred_test = model.forward(X_test)
             loss_test_class = criterion_test_class(y_pred_test,y_test_class)
             losses_test.append(loss_test_class.item())
+
 
 
 
@@ -150,6 +178,16 @@ if __name__ == '__main__':
     X2 = X[:,1]
 
 
+    theta = np.linspace(0,2*np.pi,5000)
+    radius = np.ones_like(theta)*6
+
+    X1_bound = radius*np.cos(theta)
+    X2_bound = radius*np.sin(theta)
+
+    X1 = np.hstack((X1,X1_bound))
+    X2 = np.hstack((X2,X2_bound))
+    y = np.hstack((y,np.zeros_like(X1_bound)))
+
     ## CONVERT DATA TO PANDAS DATAFRAME
     data_array = np.stack((X1,X2,y),axis=1)
     df = pd.DataFrame(data_array,columns=['X1','X2','y'])
@@ -207,7 +245,7 @@ if __name__ == '__main__':
     print(f'Best Threshold: {threshold_arr[ix]:.3f} \tF-Score: {scores[ix]:.3f}')
 
 
-
+    ## PLOT PRECISION-RECALL CURVE
     no_skill = len(y_test[y_test==1])/len(y_test)
 
     fig = plt.figure()
@@ -236,7 +274,10 @@ if __name__ == '__main__':
         # contours = measure.find_contours(y_contour.numpy(), 0.75)
 
         
-
+    x = np.linspace(-1,3,20)
+    y = np.linspace(-1,3,20)
+    XX,YY = np.meshgrid(x,y)
+    vals = np.stack((XX.flatten(),YY.flatten()),axis=1)
 
 
 
@@ -249,19 +290,16 @@ if __name__ == '__main__':
     ax1.contour(X1_test,X2_test,y_contour,levels=[thresholds[idx]],cmap='jet')
     ax1.contour(X1_test,X2_test,y_contour,levels=[threshold_arr[ix]],cmap='jet')
 
-    ax1.scatter(
-        test_df['X1'],
-        test_df['X2'],
-        c = test_df['y'],
-        cmap='jet',linewidth=0.2,antialiased=True)
+    ax1.scatter(test_df['X1'],test_df['X2'],c=test_df['y'],cmap='jet',linewidth=0.2,antialiased=True)
+    # ax1.scatter(vals[:,0],vals[:,1],alpha=0.5)
+
+
 
     
 
     ax1.grid()
     ax1.set_xlabel('X1')
     ax1.set_ylabel('X2')
-    # ax1.set_xlim(-10,10)
-    # ax1.set_ylim(-10,10)
     ax1.legend()
   
 
