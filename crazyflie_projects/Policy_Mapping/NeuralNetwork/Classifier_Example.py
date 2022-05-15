@@ -18,6 +18,9 @@ from sklearn import preprocessing
 np.set_printoptions(suppress=True)
 BASEPATH = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Policy_Mapping/NeuralNetwork"
 
+def to_labels(pos_probs, threshold):
+    return (pos_probs >= threshold).astype('int')
+
 
 ## DEFINE NN MODEL
 class Model(nn.Module):
@@ -40,10 +43,8 @@ class Model(nn.Module):
 
 def train_model(model,X_train,y_train,X_test,y_test,epochs=500):
 
-    
-    
-
-    class_weight = [1, 5] # Weights as binary classes [0,1]
+    ## IMPLEMENT CLASS WEIGHTS
+    class_weight = [1, 1] # Weights as binary classes [0,1]
 
     y_train_class = y_train
     weights_train = np.where(y_train_class==1,class_weight[1],class_weight[0]) # Classify and weight values
@@ -65,37 +66,15 @@ def train_model(model,X_train,y_train,X_test,y_test,epochs=500):
 
     optimizer = torch.optim.Adam(model.parameters(),lr=0.01) #  Model parameters are the layers of model
 
+    jj=0
+
     for ii in range(epochs):
 
 
-        ## CALC TRAINING LOSS
+        ## MODEL PREDICTION
         y_pred_train = model.forward(X_train)
 
-        
-
-
-        ## INITIATE POINTS
-        x = np.linspace(-1,3,20)
-        y = np.linspace(-1,3,20)
-        XX,YY = np.meshgrid(x,y)
-        vals = np.stack((XX.flatten(),YY.flatten()),axis=1)
-        X_vol = torch.FloatTensor(vals)
-
-        y_pred_vol = model.forward(X_vol)
-
-
-        ## FIND OPTIMAL THRESHOLD VALUE
-        precision,recall,thresholds = precision_recall_curve(y_test,model.forward(X_test).detach().numpy())
-        fscore = (2*precision*recall)/(precision+recall)
-        idx = np.argmax(fscore)
-        threshold = thresholds[idx]
-
-
-        ## CALC NUMBER OF POINTS IN OPTIMAL THRESHOLD
-        loss_vol = np.sum(np.where(y_pred_vol>=threshold,1,0))/500
-
-
-
+        ## CALC TRAINING LOSS
         loss_train_class = criterion_train_class(y_pred_train,y_train_class)
         loss = loss_train_class
         losses_train.append(loss.item())
@@ -108,19 +87,52 @@ def train_model(model,X_train,y_train,X_test,y_test,epochs=500):
 
 
 
-
-        # ## CALC TRAINING ACCURACY
-        # y_pred_train_class = np.where(y_pred_train[:,0].detach().numpy() > LR_bound,1,0)
-        # accuracy_train = balanced_accuracy_score(np.where(y_train[:,0] > LR_bound,1,0),y_pred_train_class)
-        # accuracies_train.append(accuracy_train)
-
-        # ## CALC TESTING ACCURACY
-        # y_pred_test_class = np.where(y_pred_test[:,0].detach().numpy() < LR_bound,0,1)
-        # accuracy_test = balanced_accuracy_score(np.where(y_test[:,0] < LR_bound,0,1),y_pred_test_class)
-        # accuracies_test.append(accuracy_test)
-
-        if ii%10 == 1:
+        if ii%10 == 0:
             print(f"epoch {ii} and loss is: {losses_train[-1]}")
+
+
+            # ## FIND OPTIMAL THRESHOLD
+            # threshold_arr = np.arange(0, 1, 0.001)
+            # scores = [f1_score(y_train, to_labels(y_pred_train.numpy(), threshold)) for threshold in threshold_arr]
+            # idx = np.argmax(scores)
+            # threshold = threshold_arr[idx]
+
+
+            with torch.no_grad():
+                x1_cgrid = np.linspace(-5,5,100)    # x1 contour grid
+                x2_cgrid = np.linspace(-5,5,100)    # x2 contour grid
+
+                X1_cgrid,X2_cgrid = np.meshgrid(x1_cgrid,x2_cgrid)
+                X_cgrid = np.stack((X1_cgrid.flatten(),X2_cgrid.flatten()),axis=1)
+                X_cgrid = torch.FloatTensor(X_cgrid)
+
+                y_contour = model.forward(X_cgrid).reshape(100,100).numpy()
+
+
+            ## PLOT DATA/NETWORK OUTPUT
+            fig = plt.figure()
+
+            ax = fig.add_subplot(111)
+            ax.contour(X1_cgrid,X2_cgrid,y_contour,cmap='jet')
+            # ax1.contour(X1_test,X2_test,y_contour,levels=[threshold_arr[ix]],cmap='jet')
+            ax.scatter(train_df['X1'],train_df['X2'],c=train_df['y'],cmap='jet')
+            
+
+            ax.grid()
+            ax.set_title(f'Epoch: {ii:04d}')
+            ax.set_xlabel('X1')
+            ax.set_ylabel('X2')
+            ax.set_xlim(-2,2)
+            ax.set_ylim(-2,2)
+            # ax.set_aspect('equal')
+            # ax1.legend()
+        
+
+            fig.tight_layout()
+            fig.savefig(f'/tmp/images/Image_{jj:04d}.png')
+            plt.close(fig)
+
+            jj+=1
 
         ## BACKPROPAGATION
         optimizer.zero_grad()
@@ -135,13 +147,12 @@ def train_model(model,X_train,y_train,X_test,y_test,epochs=500):
     ax1.plot(losses_test,label="Validation Loss")
     ax1.set_ylabel("Loss")
     ax1.set_title("Losses")
-    # ax1.set_ylim(0)
     ax1.set_yscale('log')
     ax1.legend()
     ax1.grid()
 
     ax2 = fig.add_subplot(2,1,2)
-    ax2.plot(accuracies_train,label="Training Accuracry")
+    ax2.plot(accuracies_train,label="Training Accuracy")
     ax2.plot(accuracies_test,label="Validation Accuracy")
     ax2.set_ylim(0,1.1)
     ax2.set_ylabel("Classification Accuracy")
@@ -164,29 +175,26 @@ if __name__ == '__main__':
     model = Model()
 
     ## GENERATE DATA
-    X, y = make_classification(
-            n_samples=10_000, 
-            n_features=2, 
-            n_redundant=0,
-            n_clusters_per_class=1, 
-            weights=[0.98], 
-            flip_y=0, 
-            random_state=2,
-            class_sep=1.1)
+    # X, y = make_classification(
+    #         n_samples=10_000, 
+    #         n_features=2, 
+    #         n_redundant=0,
+    #         n_clusters_per_class=1, 
+    #         weights=[0.98], 
+    #         flip_y=0, 
+    #         random_state=2,
+    #         class_sep=1.1)
+
+    X, y = make_circles(
+        n_samples=1000,
+        noise=0.05,
+        random_state=0,
+        shuffle=False,
+        factor=0.1
+    )
 
     X1 = X[:,0]
     X2 = X[:,1]
-
-
-    theta = np.linspace(0,2*np.pi,5000)
-    radius = np.ones_like(theta)*6
-
-    X1_bound = radius*np.cos(theta)
-    X2_bound = radius*np.sin(theta)
-
-    X1 = np.hstack((X1,X1_bound))
-    X2 = np.hstack((X2,X2_bound))
-    y = np.hstack((y,np.zeros_like(X1_bound)))
 
     ## CONVERT DATA TO PANDAS DATAFRAME
     data_array = np.stack((X1,X2,y),axis=1)
@@ -218,89 +226,51 @@ if __name__ == '__main__':
 
 
     ## TRAIN NN MODEL
-    train_model(model,X_train,y_train,X_test,y_test,epochs=1500)
+    train_model(model,X_train,y_train,X_test,y_test,epochs=500)
 
     ## EVALUATE NN MODEL
     model = torch.load(f'{BASEPATH}/Classifier_2D.pt')
 
-    ## PLOT PRECISION-RECALL CURVE
+    # with torch.no_grad():
+    #     y_pred = model.forward(X_test)
+
+    # ## FIND OPTIMAL THRESHOLD
+    # def to_labels(pos_probs, threshold):
+    #     return (pos_probs >= threshold).astype('int')
+
+    # threshold_arr = np.arange(0, 1, 0.001)
+    # scores = [f1_score(y_test, to_labels(y_pred.numpy(), threshold)) for threshold in threshold_arr]
+    # ix = np.argmax(scores)
+    # print(f'Best Threshold: {threshold_arr[ix]:.3f} \tF-Score: {scores[ix]:.3f}')
+
+    ## FIND DECISION CONTOUR
     with torch.no_grad():
-        y_pred = model.forward(X_test)
+        x1_cgrid = np.linspace(-5,5,100)    # x1 contour grid
+        x2_cgrid = np.linspace(-5,5,100)    # x2 contour grid
 
-    ## FIND OPTIMAL THRESHOLD
-    precision,recall,thresholds = precision_recall_curve(y_test,y_pred)
-    fscore = (2*precision*recall)/(precision+recall)
-    idx = np.argmax(fscore)
-    print(f'Best Threshold: {thresholds[idx]:.3f} \tF-Score: {fscore[idx]:.3f}')
+        X1_cgrid,X2_cgrid = np.meshgrid(x1_cgrid,x2_cgrid)
+        X_cgrid = np.stack((X1_cgrid.flatten(),X2_cgrid.flatten()),axis=1)
+        X_cgrid = torch.FloatTensor(X_cgrid)
 
-    
-
-    ## FIND OPTIMAL THRESHOLD
-    def to_labels(pos_probs, threshold):
-        return (pos_probs >= threshold).astype('int')
-
-    threshold_arr = np.arange(0, 1, 0.001)
-    scores = [f1_score(y_test, to_labels(y_pred.numpy(), threshold)) for threshold in threshold_arr]
-    ix = np.argmax(scores)
-    print(f'Best Threshold: {threshold_arr[ix]:.3f} \tF-Score: {scores[ix]:.3f}')
+        y_contour = model.forward(X_cgrid).reshape(100,100).numpy()
 
 
-    ## PLOT PRECISION-RECALL CURVE
-    no_skill = len(y_test[y_test==1])/len(y_test)
-
+    ## PLOT DATA/NETWORK OUTPUT
     fig = plt.figure()
+
     ax = fig.add_subplot(111)
-
-    ax.plot([0,1],[no_skill,no_skill],linestyle='--',label='No Skill')
-    ax.plot(recall,precision,marker='.',label='NN')
-    ax.scatter(recall[idx],precision[idx],marker='o',color='black',label='Optimal Threshold')
-
-    ax.set_xlabel('Recall')
-    ax.set_ylabel('Precision')
-    ax.legend()
-
-    plt.show()
-
-    with torch.no_grad():
-        x1 = np.linspace(-5,5,100)
-        x2 = np.linspace(-5,5,100)
-
-        X1_test,X2_test = np.meshgrid(x1,x2)
-        X_contour = np.stack((X1_test.flatten(),X2_test.flatten()),axis=1)
-        X_contour = torch.FloatTensor(X_contour)
-
-
-        y_contour = model.forward(X_contour).reshape(100,100)
-        # contours = measure.find_contours(y_contour.numpy(), 0.75)
-
-        
-    x = np.linspace(-1,3,20)
-    y = np.linspace(-1,3,20)
-    XX,YY = np.meshgrid(x,y)
-    vals = np.stack((XX.flatten(),YY.flatten()),axis=1)
-
-
-
-
-    ## PLOT NETWORK OUTPUTS
-    fig = plt.figure(1,figsize=(12,6))
-
-    ax1 = fig.add_subplot(1,2,1)
-
-    ax1.contour(X1_test,X2_test,y_contour,levels=[thresholds[idx]],cmap='jet')
-    ax1.contour(X1_test,X2_test,y_contour,levels=[threshold_arr[ix]],cmap='jet')
-
-    ax1.scatter(test_df['X1'],test_df['X2'],c=test_df['y'],cmap='jet',linewidth=0.2,antialiased=True)
-    # ax1.scatter(vals[:,0],vals[:,1],alpha=0.5)
-
-
-
+    ax.contour(X1_cgrid,X2_cgrid,y_contour,cmap='jet')
+    # ax1.contour(X1_test,X2_test,y_contour,levels=[threshold_arr[ix]],cmap='jet')
+    ax.scatter(train_df['X1'],train_df['X2'],c=train_df['y'],cmap='jet')
     
 
-    ax1.grid()
-    ax1.set_xlabel('X1')
-    ax1.set_ylabel('X2')
-    ax1.legend()
+    ax.grid()
+    ax.set_xlabel('X1')
+    ax.set_ylabel('X2')
+    ax.set_xlim(-2,2)
+    ax.set_ylim(-2,2)
+    # ax.set_aspect('equal')
+    # ax1.legend()
   
 
     fig.tight_layout()
