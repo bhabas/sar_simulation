@@ -17,6 +17,8 @@ class PPOMemory:
         self.batch_size = batch_size
 
     def generate_batches(self):
+
+        ## DIVIDE DATA INTO RANDOMIZED MINI-BATCHES
         n_states = len(self.states)
         batch_start = np.arange(0, n_states, self.batch_size)
         indices = np.arange(n_states, dtype=np.int64)
@@ -135,63 +137,72 @@ class Agent:
     def choose_action(self, observation):
         state = T.tensor([observation], dtype=T.float).to(self.actor.device)
 
+        ## SAMPLE ACTION FROM POLICY NETWORK
         dist = self.actor(state)
-        value = self.critic(state)
         action = dist.sample()
 
-        probs = T.squeeze(dist.log_prob(action)).item()
+        log_prob = T.squeeze(dist.log_prob(action)).item()
         action = T.squeeze(action).item()
+
+        ## CALC STATE VALUE FROM CRITIC NETWORK
+        value = self.critic(state)
         value = T.squeeze(value).item()
 
-        return action, probs, value
+        return action, log_prob, value
 
     def learn(self):
+
+        ## TRAIN FOR N EPOCHS TO START CONVERING
         for _ in range(self.n_epochs):
-            state_arr, action_arr, old_prob_arr, vals_arr,\
-            reward_arr, dones_arr, batches = \
-                    self.memory.generate_batches()
 
-            values = vals_arr
+            ## PARSE BATCHED DATA
+            state_arr,action_arr,old_prob_arr,vals_arr,\
+                reward_arr,dones_arr,batches = self.memory.generate_batches()
+            
+            ## ESTIMATE STATE VALUES THROUGH CRITIC
+            values = T.tensor(vals_arr).to(self.actor.device)
+
+            ## CALCULATE ADVANTAGE FOR BATCH STATES
             advantage = np.zeros(len(reward_arr), dtype=np.float32)
-
             for t in range(len(reward_arr)-1):
                 discount = 1
                 a_t = 0
                 for k in range(t, len(reward_arr)-1):
-                    a_t += discount*(reward_arr[k] + self.gamma*values[k+1]*\
-                            (1-int(dones_arr[k])) - values[k])
+                    a_t += discount*(reward_arr[k] + self.gamma*values[k+1]*(1-int(dones_arr[k])) - values[k])
                     discount *= self.gamma*self.gae_lambda
                 advantage[t] = a_t
             advantage = T.tensor(advantage).to(self.actor.device)
 
-            values = T.tensor(values).to(self.actor.device)
             for batch in batches:
+
+                ## COLLECT VALUES FROM BATCH
                 states = T.tensor(state_arr[batch], dtype=T.float).to(self.actor.device)
                 old_probs = T.tensor(old_prob_arr[batch]).to(self.actor.device)
                 actions = T.tensor(action_arr[batch]).to(self.actor.device)
 
+                ## CALC POLICY DIST AND STATE VALUE FROM CURRENT NETWORKS
                 dist = self.actor(states)
-                critic_value = self.critic(states)
-
-                critic_value = T.squeeze(critic_value)
-
                 new_probs = dist.log_prob(actions)
+                critic_value = T.squeeze(self.critic(states))
+
+                ## CALC CLIPPED SURROGATE OBJECTIVE
                 prob_ratio = new_probs.exp() / old_probs.exp()
-                #prob_ratio = (new_probs - old_probs).exp()
                 weighted_probs = advantage[batch] * prob_ratio
-                weighted_clipped_probs = T.clamp(prob_ratio, 1-self.policy_clip,
-                        1+self.policy_clip)*advantage[batch]
+                weighted_clipped_probs = T.clamp(prob_ratio, 1-self.policy_clip,1+self.policy_clip)*advantage[batch]
                 actor_loss = -T.min(weighted_probs, weighted_clipped_probs).mean()
 
+                ## CALC CRITIC LOSS
                 returns = advantage[batch] + values[batch]
                 critic_loss = (returns-critic_value)**2
-                critic_loss = critic_loss.mean()
+                critic_loss = 0.5*critic_loss.mean()
 
-                total_loss = actor_loss + 0.5*critic_loss
+                ## TRAIN ACTOR AND CRITIC NETWORKS
+                total_loss = actor_loss + critic_loss
                 self.actor.optimizer.zero_grad()
                 self.critic.optimizer.zero_grad()
                 total_loss.backward()
                 self.actor.optimizer.step()
                 self.critic.optimizer.step()
 
+        ## AFTER TRAINING CLEAR MEMORY
         self.memory.clear_memory()               
