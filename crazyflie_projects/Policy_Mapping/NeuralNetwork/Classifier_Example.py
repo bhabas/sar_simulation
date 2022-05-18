@@ -92,51 +92,51 @@ def train_model(model,X_train,y_train,X_test,y_test,epochs=500):
             print(f"epoch {ii} and loss is: {losses_train[-1]}")
 
 
-            ## FIND OPTIMAL THRESHOLD
-            threshold_arr = np.arange(0, 1, 0.001)
-            scores = [f1_score(y_train.numpy(), to_labels(y_pred_train.detach().numpy(), threshold)) for threshold in threshold_arr]
-            idx = np.argmax(scores)
-            threshold = threshold_arr[idx]
+            # ## FIND OPTIMAL THRESHOLD
+            # threshold_arr = np.arange(0, 1, 0.001)
+            # scores = [f1_score(y_train.numpy(), to_labels(y_pred_train.detach().numpy(), threshold)) for threshold in threshold_arr]
+            # idx = np.argmax(scores)
+            # threshold = threshold_arr[idx]
 
 
-            with torch.no_grad():
-                x1_cgrid = np.linspace(-7,7,200)    # x1 contour grid
-                x2_cgrid = np.linspace(-7,7,200)    # x2 contour grid
+            # with torch.no_grad():
+            #     x1_cgrid = np.linspace(-7,7,200)    # x1 contour grid
+            #     x2_cgrid = np.linspace(-7,7,200)    # x2 contour grid
 
-                X1_cgrid,X2_cgrid = np.meshgrid(x1_cgrid,x2_cgrid)
-                X_cgrid = np.stack((X1_cgrid.flatten(),X2_cgrid.flatten()),axis=1)
-                X_cgrid = torch.FloatTensor(X_cgrid)
+            #     X1_cgrid,X2_cgrid = np.meshgrid(x1_cgrid,x2_cgrid)
+            #     X_cgrid = np.stack((X1_cgrid.flatten(),X2_cgrid.flatten()),axis=1)
+            #     X_cgrid = torch.FloatTensor(X_cgrid)
 
-                y_contour = model.forward(X_cgrid).reshape(200,200).numpy()
+            #     y_contour = model.forward(X_cgrid).reshape(200,200).numpy()
 
 
-            ## PLOT DATA/NETWORK OUTPUT
-            fig = plt.figure()
+            # ## PLOT DATA/NETWORK OUTPUT
+            # fig = plt.figure()
 
-            ax = fig.add_subplot(111)
-            ax.contour(X1_cgrid,X2_cgrid,y_contour,levels=20,cmap='jet',vmin=0,vmax=1)
-            ax.contour(X1_cgrid,X2_cgrid,y_contour,levels=[threshold],colors='k',linestyles='dashed')
-            ax.scatter(train_df['X1'],train_df['X2'],c=train_df['y'],cmap='jet')
+            # ax = fig.add_subplot(111)
+            # ax.contour(X1_cgrid,X2_cgrid,y_contour,levels=20,cmap='jet',vmin=0,vmax=1)
+            # ax.contour(X1_cgrid,X2_cgrid,y_contour,levels=[threshold],colors='k',linestyles='dashed')
+            # ax.scatter(train_df['X1'],train_df['X2'],c=train_df['y'],cmap='jet')
 
-            # ax = fig.add_subplot(111,projection='3d')
-            # ax.contour(X1_cgrid,X2_cgrid,y_contour,100,cmap='jet')
-            # ax.set_zlim(0,1)
+            # # ax = fig.add_subplot(111,projection='3d')
+            # # ax.contour(X1_cgrid,X2_cgrid,y_contour,100,cmap='jet')
+            # # ax.set_zlim(0,1)
             
 
-            ax.grid()
-            ax.set_title(f'Epoch: {ii:04d}')
-            ax.set_xlabel('X1')
-            ax.set_ylabel('X2')
-            ax.set_xlim(-7,7)
-            ax.set_ylim(-7,7)
+            # ax.grid()
+            # ax.set_title(f'Epoch: {ii:04d}')
+            # ax.set_xlabel('X1')
+            # ax.set_ylabel('X2')
+            # ax.set_xlim(-7,7)
+            # ax.set_ylim(-7,7)
 
 
 
-            # fig.tight_layout()
-            fig.savefig(f'/tmp/images/Image_{jj:04d}.png')
-            plt.close(fig)
+            # # fig.tight_layout()
+            # fig.savefig(f'/tmp/images/Image_{jj:04d}.png')
+            # plt.close(fig)
 
-            plt.show()
+            # plt.show()
 
             jj+=1
 
@@ -181,23 +181,23 @@ if __name__ == '__main__':
     model = Model()
 
     ## GENERATE DATA
-    X, y = make_classification(
-            n_samples=10_000, 
-            n_features=2, 
-            n_redundant=0,
-            n_clusters_per_class=1, 
-            weights=[0.98], 
-            flip_y=0, 
-            random_state=2,
-            class_sep=1.1)
+    # X, y = make_classification(
+    #         n_samples=10_000, 
+    #         n_features=2, 
+    #         n_redundant=0,
+    #         n_clusters_per_class=1, 
+    #         weights=[0.98], 
+    #         flip_y=0, 
+    #         random_state=2,
+    #         class_sep=1.1)
 
-    # X, y = make_circles(
-    #     n_samples=1000,
-    #     noise=0.05,
-    #     random_state=0,
-    #     shuffle=False,
-    #     factor=0.1
-    # )
+    X, y = make_circles(
+        n_samples=1000,
+        noise=0.05,
+        random_state=0,
+        shuffle=False,
+        factor=0.1
+    )
 
     X1 = X[:,0]
     X2 = X[:,1]
@@ -275,7 +275,7 @@ if __name__ == '__main__':
     fig = plt.figure()
 
     ax = fig.add_subplot(111)
-    ax.contour(X1_cgrid,X2_cgrid,y_contour,cmap='jet')
+    a = ax.contour(X1_cgrid,X2_cgrid,y_contour,levels=20,cmap='jet')
     # ax1.contour(X1_test,X2_test,y_contour,levels=[threshold_arr[ix]],cmap='jet')
     ax.scatter(train_df['X1'],train_df['X2'],c=train_df['y'],cmap='jet')
     
@@ -287,7 +287,7 @@ if __name__ == '__main__':
     ax.set_ylim(-2,2)
     # ax.set_aspect('equal')
     # ax1.legend()
-  
+    fig.colorbar(a,ax=ax)
 
     fig.tight_layout()
     plt.show()
