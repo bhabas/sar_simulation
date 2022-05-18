@@ -8,7 +8,7 @@ BASEPATH = "crazyflie_projects/Featureless_TTC/"
 
 ## PLOT BRIGHTNESS PATTERN FROM 2.4.1 HORIZONTAL MOTION
 I_0 = 255   # Brightness value (0-255)
-L = 0.35   # Stripe Period [m]
+L = 0.45   # Stripe Period [m]
 
 
 ## CAMERA PARAMETERS

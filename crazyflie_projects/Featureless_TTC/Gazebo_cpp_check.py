@@ -5,6 +5,7 @@ import matplotlib.cm as cm
 import matplotlib.animation as animation
 from sensor_msgs.msg import Image #import camera data
 from crazyflie_msgs.msg import CF_StateData #import 'true' values
+from scipy import signal
 
 ## CAMERA PARAMETERS
 WIDTH_PIXELS = 160
@@ -34,7 +35,7 @@ class CameraClass:
         self.Tau_est_cpp = 0
         self.OFy_est = 0
         self.OFx_est = 0
-        self.d_ceil = 0
+        self.d_ceil = rospy.get_param("/CEILING_HEIGHT") #init above 0,1 to prevent plot from popping up on startup
         self.prev_time = 0
 
         self.cam_sub = rospy.Subscriber("/CF_Internal/camera/image_raw",Image,self.Camera_cb,queue_size = 1)
@@ -87,40 +88,41 @@ class CameraClass:
 
     def plotter(self):
         
+        #Generate arrays to format plots better
+        Time_arr = np.array(self.t_List)
+        Tau_act = np.array(self.Tau_act_List)
+        Tau_est = np.array(self.Tau_cpp_est_List)
+        
+
         fig = plt.figure(1)
         
         ## PLOT TAU VALUES
         ax1 = fig.add_subplot(211)
-        ax1.plot(self.t_List,self.Tau_act_List,color = 'tab:blue',label = 'Tau')
-        ax1.plot(self.t_List,self.Tau_cpp_est_List,color = 'r',linestyle = '--',label = 'Tau_est')
+        ax1.plot(Time_arr[1:],Tau_act[1:],color = 'tab:blue',label = 'Tau')
+        ax1.plot(Time_arr[1:],Tau_est[1:],color = 'r',linestyle = '--',label = 'Tau_est')
         ax1.grid()
         ax1.legend(loc='upper right')
         ax1.set_ylabel("Tau [s]")
         ax1.set_xlabel("Time [s]")
 
         ## PLOT ERROR
-        Tau_act = np.array(self.Tau_act_List) #make lists into arrays to do math on them
-        Tau_est = np.array(self.Tau_cpp_est_List)
         ax2 = fig.add_subplot(212,sharex = ax1)
-        ax2.plot(self.t_List,(Tau_est - Tau_act),color = 'r',label = "Error in Tau")
-        ax2.hlines(y =  0.05, xmin = 0, xmax = self.t_List[-1],linestyle = "--", linewidth = 2, color = 'k') #plot desired error bounds
-        ax2.hlines(y = -0.05, xmin = 0, xmax = self.t_List[-1],linestyle = "--", linewidth = 2, color = 'k')
-        ax2.vlines(x = (self.t_List[-1] - 1), ymin = -0.05, ymax = 0.05, linestyle = "--", linewidth = 2, color = "k")
-        ax2.vlines(x = (self.t_List[-1]), ymin = -0.05, ymax = 0.05, linestyle = "--", linewidth = 2, color = "k")
+        ax2.plot(Time_arr[1:],(Tau_est[1:] - Tau_act[1:]),color = 'r',label = "Error in Tau")
+        ax2.hlines(y =  0.05, xmin = Time_arr[1], xmax = Time_arr[-1],linestyle = "--", linewidth = 2, color = 'k') #plot desired error bounds
+        ax2.hlines(y = -0.05, xmin = Time_arr[1], xmax = Time_arr[-1],linestyle = "--", linewidth = 2, color = 'k')
+        ax2.vlines(x = (Time_arr[-1] - 1), ymin = -0.05, ymax = 0.05, linestyle = "--", linewidth = 2, color = "k")
+        ax2.vlines(x = (Time_arr[-1]), ymin = -0.05, ymax = 0.05, linestyle = "--", linewidth = 2, color = "k")
         ax2.grid()
         ax2.legend(loc='upper right')
         ax2.set_ylabel("Error")
         ax2.set_xlabel("Time [s]")
 
-        plt.show()
-
-
         ## OFX_Y PLOTS
         fig2 = plt.figure(2)
         #OFy Plots
         ax1 = fig2.add_subplot(221)
-        ax1.plot(self.t_List,self.OFy_act_List, color = "tab:blue", label = "OFy")
-        ax1.plot(self.t_List,self.OFy_est_List, color = "r", linestyle = "--", label = "OFy_est")
+        ax1.plot(Time_arr,self.OFy_act_List, color = "tab:blue", label = "OFy")
+        ax1.plot(Time_arr,self.OFy_est_List, color = "r", linestyle = "--", label = "OFy_est")
         ax1.grid()
         ax1.legend(loc='upper right')
         ax1.set_ylabel("OFy [rad/s]")
@@ -129,7 +131,7 @@ class CameraClass:
         ax2 = fig2.add_subplot(222,sharex = ax1)
         OFy_act = np.array(self.OFy_act_List) #make lists into arrays to do math on them
         OFy_est = np.array(self.OFy_est_List)
-        ax2.plot(self.t_List,(OFy_est - OFy_act),color = "r",label = "Error in OFy")
+        ax2.plot(Time_arr,(OFy_est - OFy_act),color = "r",label = "Error in OFy")
         ax2.grid()
         ax2.legend(loc='upper right')
         ax2.set_ylabel("Error")
@@ -137,8 +139,8 @@ class CameraClass:
 
         #OFx Plots
         ax3 = fig2.add_subplot(223)
-        ax3.plot(self.t_List,self.OFx_act_List, color = "tab:blue", label = "OFx")
-        ax3.plot(self.t_List,self.OFx_est_List, color = "r", linestyle = "--", label = "OFx_est")
+        ax3.plot(Time_arr,self.OFx_act_List, color = "tab:blue", label = "OFx")
+        ax3.plot(Time_arr,self.OFx_est_List, color = "r", linestyle = "--", label = "OFx_est")
         ax3.grid()
         ax3.legend(loc='upper right')
         ax3.set_ylabel("OFx [rad/s]")
@@ -147,11 +149,47 @@ class CameraClass:
         ax4 = fig2.add_subplot(224,sharex = ax3)
         OFy_act = np.array(self.OFy_act_List) #make lists into arrays to do math on them
         OFy_est = np.array(self.OFy_est_List)
-        ax4.plot(self.t_List,(OFy_est - OFy_act),color = "r",label = "Error in OFy")
+        ax4.plot(Time_arr,(OFy_est - OFy_act),color = "r",label = "Error in OFy")
         ax4.grid()
         ax4.legend(loc='upper right')
         ax4.set_ylabel("Error")
         ax4.set_xlabel("Time [s]")
+
+        self.butter() #call filter experiments
+
+    def butter(self):
+
+        fs = 50 # FPS
+        Time_arr = np.array(self.t_List)
+        Tau_act = np.array(self.Tau_act_List) #make lists into arrays to do math on them
+        Tau_est = np.array(self.Tau_cpp_est_List)
+        fc = 15 #cutoff frequency 30HZ
+        w = fc/(fs/2)
+        b,a = signal.butter(4,w,"low",analog = False)
+        output = signal.filtfilt(b,a,Tau_est)
+        fig = plt.figure(3)        
+
+        ax1 = fig.add_subplot(211)
+        ax1.plot(Time_arr[1:],output[1:], label = "filtered",color = "g",linestyle = "--")
+        ax1.plot(Time_arr[1:],Tau_est[1:], label = "Tau_est",color = "r",linestyle = "--")
+        ax1.plot(Time_arr[1:],Tau_act[1:],color = 'tab:blue',label = 'Tau')
+        ax1.legend()
+
+
+        ax2 = fig.add_subplot(212,sharex = ax1)
+        ax2.plot(Time_arr[1:], Tau_est[1:] - Tau_act[1:], color = "r",label = "Estimate Error")
+        ax2.plot(Time_arr[1:], output[1:] - Tau_act[1:], color = "g", linestyle = "--", label = "Filter Error")
+        ax2.hlines(y =  0.05, xmin = Time_arr[1], xmax = Time_arr[-1],linestyle = "--", linewidth = 2, color = 'k') #plot desired error bounds
+        ax2.hlines(y = -0.05, xmin = Time_arr[1], xmax = Time_arr[-1],linestyle = "--", linewidth = 2, color = 'k')
+        ax2.vlines(x = (Time_arr[-1] - 1), ymin = -0.05, ymax = 0.05, linestyle = "--", linewidth = 2, color = "k")
+        ax2.vlines(x = (Time_arr[-1]), ymin = -0.05, ymax = 0.05, linestyle = "--", linewidth = 2, color = "k")
+        ax2.grid()
+        ax2.legend()
+        plt.show()
+
+        print("a coef: {a:.4f}\n")
+        print("b coef: {b:.4f}\n")
+
 
 
 if __name__ == '__main__':
