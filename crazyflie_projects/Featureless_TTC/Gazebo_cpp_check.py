@@ -51,10 +51,10 @@ class CameraClass:
 
     def CF_StateDataCallback(self,StateData_msg):
         
-        self.Tau = np.round(StateData_msg.Tau,3)
+        self.Tau = np.round(StateData_msg.Tau,4)
         self.OFx = np.round(StateData_msg.OFx,3)
         self.OFy = np.round(StateData_msg.OFy,3)
-        self.Tau_est_cpp = np.round(StateData_msg.Tau_est,3)
+        self.Tau_est_cpp = np.round(StateData_msg.Tau_est,4)
         self.OFy_est = np.round(StateData_msg.OFy_est,3)
         self.OFx_est = np.round(StateData_msg.OFx_est,3)
         self.d_ceil = np.round(StateData_msg.D_ceil,3)
@@ -92,6 +92,10 @@ class CameraClass:
         Time_arr = np.array(self.t_List)
         Tau_act = np.array(self.Tau_act_List)
         Tau_est = np.array(self.Tau_cpp_est_List)
+        OFy_act = np.array(self.OFy_act_List)
+        OFx_act = np.array(self.OFx_act_List)
+        OFy_est = np.array(self.OFy_est_List)
+        OFx_est = np.array(self.OFx_est_List)
         
 
         fig = plt.figure(1)
@@ -121,17 +125,15 @@ class CameraClass:
         fig2 = plt.figure(2)
         #OFy Plots
         ax1 = fig2.add_subplot(221)
-        ax1.plot(Time_arr,self.OFy_act_List, color = "tab:blue", label = "OFy")
-        ax1.plot(Time_arr,self.OFy_est_List, color = "r", linestyle = "--", label = "OFy_est")
+        ax1.plot(Time_arr[1:],OFy_act[1:], color = "tab:blue", label = "OFy")
+        ax1.plot(Time_arr[1:],OFy_est[1:], color = "r", linestyle = "--", label = "OFy_est")
         ax1.grid()
         ax1.legend(loc='upper right')
         ax1.set_ylabel("OFy [rad/s]")
         ax1.set_xlabel("Time [s]")
         #OFy error plots
         ax2 = fig2.add_subplot(222,sharex = ax1)
-        OFy_act = np.array(self.OFy_act_List) #make lists into arrays to do math on them
-        OFy_est = np.array(self.OFy_est_List)
-        ax2.plot(Time_arr,(OFy_est - OFy_act),color = "r",label = "Error in OFy")
+        ax2.plot(Time_arr[1:],(OFy_est[1:] - OFy_act[1:]),color = "r",label = "Error in OFy")
         ax2.grid()
         ax2.legend(loc='upper right')
         ax2.set_ylabel("Error")
@@ -139,17 +141,15 @@ class CameraClass:
 
         #OFx Plots
         ax3 = fig2.add_subplot(223)
-        ax3.plot(Time_arr,self.OFx_act_List, color = "tab:blue", label = "OFx")
-        ax3.plot(Time_arr,self.OFx_est_List, color = "r", linestyle = "--", label = "OFx_est")
+        ax3.plot(Time_arr[1:],OFx_act[1:], color = "tab:blue", label = "OFx")
+        ax3.plot(Time_arr[1:],OFx_est[1:], color = "r", linestyle = "--", label = "OFx_est")
         ax3.grid()
         ax3.legend(loc='upper right')
         ax3.set_ylabel("OFx [rad/s]")
         ax3.set_xlabel("Time [s]")
         #OFx error plots
         ax4 = fig2.add_subplot(224,sharex = ax3)
-        OFy_act = np.array(self.OFy_act_List) #make lists into arrays to do math on them
-        OFy_est = np.array(self.OFy_est_List)
-        ax4.plot(Time_arr,(OFy_est - OFy_act),color = "r",label = "Error in OFy")
+        ax4.plot(Time_arr[1:],(OFy_est[1:] - OFy_act[1:]),color = "r",label = "Error in OFy")
         ax4.grid()
         ax4.legend(loc='upper right')
         ax4.set_ylabel("Error")
@@ -163,9 +163,11 @@ class CameraClass:
         Time_arr = np.array(self.t_List)
         Tau_act = np.array(self.Tau_act_List) #make lists into arrays to do math on them
         Tau_est = np.array(self.Tau_cpp_est_List)
-        fc = 15 #cutoff frequency 30HZ
+        fc = 10 #cutoff frequency 30HZ
         w = fc/(fs/2)
-        b,a = signal.butter(4,w,"low",analog = False)
+        b,a = signal.butter(5,w,"low",analog = False)
+        print(f"a coef: {a}\n") 
+        print(f"b coef: {b}\n") 
         output = signal.filtfilt(b,a,Tau_est)
         fig = plt.figure(3)        
 
@@ -173,6 +175,7 @@ class CameraClass:
         ax1.plot(Time_arr[1:],output[1:], label = "filtered",color = "g",linestyle = "--")
         ax1.plot(Time_arr[1:],Tau_est[1:], label = "Tau_est",color = "r",linestyle = "--")
         ax1.plot(Time_arr[1:],Tau_act[1:],color = 'tab:blue',label = 'Tau')
+        ax1.grid()
         ax1.legend()
 
 
@@ -186,9 +189,6 @@ class CameraClass:
         ax2.grid()
         ax2.legend()
         plt.show()
-
-        print("a coef: {a:.4f}\n")
-        print("b coef: {b:.4f}\n")
 
 
 
