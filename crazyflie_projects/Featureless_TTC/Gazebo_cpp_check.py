@@ -112,8 +112,8 @@ class CameraClass:
         ## PLOT ERROR
         ax2 = fig.add_subplot(212,sharex = ax1)
         ax2.plot(Time_arr[1:],(Tau_est[1:] - Tau_act[1:]),color = 'r',label = "Error in Tau")
-        ax2.hlines(y =  0.05, xmin = Time_arr[1], xmax = Time_arr[-1],linestyle = "--", linewidth = 2, color = 'k') #plot desired error bounds
-        ax2.hlines(y = -0.05, xmin = Time_arr[1], xmax = Time_arr[-1],linestyle = "--", linewidth = 2, color = 'k')
+        ax2.hlines(y =  0.05, xmin = Time_arr[-1] - 1, xmax = Time_arr[-1],linestyle = "--", linewidth = 2, color = 'k') #plot desired error bounds
+        ax2.hlines(y = -0.05, xmin = Time_arr[-1] - 1, xmax = Time_arr[-1],linestyle = "--", linewidth = 2, color = 'k')
         ax2.vlines(x = (Time_arr[-1] - 1), ymin = -0.05, ymax = 0.05, linestyle = "--", linewidth = 2, color = "k")
         ax2.vlines(x = (Time_arr[-1]), ymin = -0.05, ymax = 0.05, linestyle = "--", linewidth = 2, color = "k")
         ax2.grid()
@@ -198,8 +198,8 @@ class CameraClass:
         ax2.plot(Time_arr[1:], output[1:] - Tau_act[1:], color = "g", linestyle = "--", label = "LPF Error")
         ax2.plot(Time_arr[1:], EMA[1:] - Tau_act[1:], color = "b", linestyle = "--", label = "EMA Error")
         ax2.plot(Time_arr[1:], DEMA[1:] - Tau_act[1:], color = "k", linestyle = "--", label = "DEMA Error")
-        ax2.hlines(y =  0.05, xmin = Time_arr[1], xmax = Time_arr[-1],linestyle = "--", linewidth = 2, color = 'k') #plot desired error bounds
-        ax2.hlines(y = -0.05, xmin = Time_arr[1], xmax = Time_arr[-1],linestyle = "--", linewidth = 2, color = 'k')
+        ax2.hlines(y =  0.05, xmin = Time_arr[-1] - 1, xmax = Time_arr[-1],linestyle = "--", linewidth = 2, color = 'k') #plot desired error bounds
+        ax2.hlines(y = -0.05, xmin = Time_arr[-1] - 1, xmax = Time_arr[-1],linestyle = "--", linewidth = 2, color = 'k')
         ax2.vlines(x = (Time_arr[-1] - 1), ymin = -0.05, ymax = 0.05, linestyle = "--", linewidth = 2, color = "k")
         ax2.vlines(x = (Time_arr[-1]), ymin = -0.05, ymax = 0.05, linestyle = "--", linewidth = 2, color = "k")
         ax2.grid()
