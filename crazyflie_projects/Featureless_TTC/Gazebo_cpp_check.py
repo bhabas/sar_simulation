@@ -155,33 +155,49 @@ class CameraClass:
         ax4.set_ylabel("Error")
         ax4.set_xlabel("Time [s]")
 
-        self.butter() #call filter experiments
+        self.filters() #call filter experiments
 
-    def butter(self):
+    def filters(self):
 
-        fs = 50 # FPS
         Time_arr = np.array(self.t_List)
         Tau_act = np.array(self.Tau_act_List) #make lists into arrays to do math on them
         Tau_est = np.array(self.Tau_cpp_est_List)
-        fc = 10 #cutoff frequency 30HZ
+
+        ## EXPONENTIAL MOVING AVERAGE FILTER y[n] = a*x[n] + (1-a)*y[n-1]
+        EMA = np.zeros_like(Tau_est)
+        DEMA = np.zeros_like(Tau_est)
+        a = 0.9 #
+        EMA[0] = Tau_est[0]
+
+        for n in range(1,EMA.shape[0]):
+            EMA[n] = a*Tau_est[n-1] + (1-a)*EMA[n-1]
+            DEMA[n] = 2*EMA[n-1] - (a*Tau_est[n-1] + (1-a)*EMA[n-1])
+
+        ## BUTTERWORTH LOW PASS FILTER
+        fs = 50 # FPS
+        fc = 10 #cutoff frequency HZ
         w = fc/(fs/2)
-        b,a = signal.butter(5,w,"low",analog = False)
+        b,a = signal.butter(1,w,"low",analog = False)
         print(f"a coef: {a}\n") 
         print(f"b coef: {b}\n") 
         output = signal.filtfilt(b,a,Tau_est)
         fig = plt.figure(3)        
 
+        ## TAU PLOT
         ax1 = fig.add_subplot(211)
         ax1.plot(Time_arr[1:],output[1:], label = "filtered",color = "g",linestyle = "--")
         ax1.plot(Time_arr[1:],Tau_est[1:], label = "Tau_est",color = "r",linestyle = "--")
+        ax1.plot(Time_arr[1:],EMA[1:], label = "EMA",color = "m",linestyle = "--")
         ax1.plot(Time_arr[1:],Tau_act[1:],color = 'tab:blue',label = 'Tau')
         ax1.grid()
         ax1.legend()
 
-
+        # ERROR PLOT
         ax2 = fig.add_subplot(212,sharex = ax1)
         ax2.plot(Time_arr[1:], Tau_est[1:] - Tau_act[1:], color = "r",label = "Estimate Error")
-        ax2.plot(Time_arr[1:], output[1:] - Tau_act[1:], color = "g", linestyle = "--", label = "Filter Error")
+        ax2.plot(Time_arr[1:], output[1:] - Tau_act[1:], color = "g", linestyle = "--", label = "LPF Error")
+        ax2.plot(Time_arr[1:], EMA[1:] - Tau_act[1:], color = "b", linestyle = "--", label = "EMA Error")
+        ax2.plot(Time_arr[1:], DEMA[1:] - Tau_act[1:], color = "k", linestyle = "--", label = "DEMA Error")
         ax2.hlines(y =  0.05, xmin = Time_arr[1], xmax = Time_arr[-1],linestyle = "--", linewidth = 2, color = 'k') #plot desired error bounds
         ax2.hlines(y = -0.05, xmin = Time_arr[1], xmax = Time_arr[-1],linestyle = "--", linewidth = 2, color = 'k')
         ax2.vlines(x = (Time_arr[-1] - 1), ymin = -0.05, ymax = 0.05, linestyle = "--", linewidth = 2, color = "k")

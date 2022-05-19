@@ -129,6 +129,29 @@ class Controller
         int ky0[3] = {-1,-2,-1};
         int ky2[3] = {1,2,1};
         float Prev_time = 1; //init as 1 to prevent divide by zero for first image
+        // values from butterworth filter data in Gazebo_cpp_check.py
+        float a1 = -0.15838444; // -0.15838444
+        float a2 = 0; 
+        float a3 = 0;
+        float a4 = 0; 
+        float a5 = 0;
+        float b0 = 0.42080778; // 0.42080778 0.42080778
+        float b1 = 0.42080778;
+        float b2 = 0;
+        float b3 = 0;
+        float b4 = 0;  
+        float b5 = 0;
+        float Tau_est_filt   = 0;
+        float Tau_est_filt_1 = 0;
+        float Tau_est_filt_2 = 0;
+        float Tau_est_filt_3 = 0;
+        float Tau_est_filt_4 = 0;
+        float Tau_est_filt_5 = 0;
+        float Tau_est_prev_1 = 0;
+        float Tau_est_prev_2 = 0;
+        float Tau_est_prev_3 = 0;
+        float Tau_est_prev_4 = 0;
+        float Tau_est_prev_5 = 0;
 
         const uint8_t* Cur_img = NULL;  // Ptr to current image memory
         uint8_t* Prev_img = NULL;       // Ptr to prev image memory
@@ -269,7 +292,20 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
         sensorData.OFx_est = x_QR->data[0][0];
         sensorData.OFy_est = x_QR->data[1][0];
         float Tau_est = clamp((1/x_QR->data[2][0]), 0,30); //restricting Tau_est to be between -10:30
-        sensorData.Tau_est = Tau_est;
+
+
+        // APPLY 5TH ORDER LOW PASS FILTER
+        // Tau_est_filt = (b0*Tau_est + b1*Tau_est_prev_1 + b2*Tau_est_prev_2 + b3*Tau_est_prev_3
+        //                  + b4*Tau_est_prev_4 +b5*Tau_est_prev_5 - a1*Tau_est_filt_1- a2*Tau_est_filt_2
+        //                  - a3*Tau_est_filt_3- a4*Tau_est_filt_4- a5*Tau_est_filt_5);
+
+        // APPLY EMA FILTER y[n] = a*x[n] + (1-a)*y[n-1]
+        float a = 0.99;
+        Tau_est_filt = (a * Tau_est + (a-1) * Tau_est_filt_1);
+
+
+        Tau_est_filt = clamp(Tau_est_filt, 0,30);
+        sensorData.Tau_est = Tau_est_filt;
 
 
         nml_mat_free(m_A);
@@ -277,9 +313,21 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
         nml_mat_qr_free(QR);
         nml_mat_free(x_QR);
 
-
+        // SET PREVIOUS DATA
         memcpy(Prev_img,Cur_img,WIDTH_PIXELS*HEIGHT_PIXELS*sizeof(uint8_t)); // Copy memory to Prev_img address
         Prev_time = Cur_time; // Setup previous time for next calculation
+        
+        Tau_est_filt_5 = Tau_est_filt_4; //Have to start at the last value in the list when rolling down
+        Tau_est_filt_4 = Tau_est_filt_3;
+        Tau_est_filt_3 = Tau_est_filt_2;
+        Tau_est_filt_2 = Tau_est_filt_1;
+        Tau_est_filt_1 = Tau_est_filt;
+        Tau_est_prev_5 = Tau_est_prev_4;
+        Tau_est_prev_4 = Tau_est_prev_3;
+        Tau_est_prev_3 = Tau_est_prev_2;
+        Tau_est_prev_2 = Tau_est_prev_1;
+        Tau_est_prev_1 = Tau_est;
+        
     }
 
 } // End of Camera_Sensor_Callback
