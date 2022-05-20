@@ -13,7 +13,6 @@ import torch.nn.functional as F
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import *
 from sklearn import preprocessing
-from imblearn.over_sampling import RandomOverSampler
 
 import plotly.graph_objects as go
 
@@ -367,27 +366,27 @@ class NN_Trainer():
                     size=3,
                     color=df_custom["LR_4leg"],
                     colorscale='Viridis',   # choose a colorscale
-                    opacity=0.3)
+                    opacity=0.8)
             )
         )
 
-        ## PLOT DATA POINTS
-        fig.add_trace(
-            go.Scatter3d(
-                ## DATA
-                x=[-7.754],
-                y=[0.259],
-                z=[0.298],
+        # ## PLOT DATA POINTS
+        # fig.add_trace(
+        #     go.Scatter3d(
+        #         ## DATA
+        #         x=[-7.754],
+        #         y=[0.259],
+        #         z=[0.298],
 
-                ## MARKER
-                mode='markers',
-                marker=dict(
-                    size=3,
-                    color=[1.0],
-                    colorscale='Viridis',   # choose a colorscale
-                    opacity=1.0)
-            )
-        )
+        #         ## MARKER
+        #         mode='markers',
+        #         marker=dict(
+        #             size=3,
+        #             color=[1.0],
+        #             colorscale='Viridis',   # choose a colorscale
+        #             opacity=1.0)
+        #     )
+        # )
 
         fig.update_layout(
             scene=dict(
@@ -637,8 +636,9 @@ if __name__ == "__main__":
     model = NN_Model()
     NN_Policy_Trainer = NN_Trainer(model,model_initials,learning_rate=learning_rate,LR_bound=LR_bound)
 
-    ## LOAD DATAmodelPredict
+    ## LOAD DATA
     df_raw = pd.read_csv(f"{BASEPATH}/Data_Logs/NL_DR/NL_LR_Trials_DR.csv").dropna() # Collected data
+    df_raw = df_raw.query("phi_IC >= 86")
     df_bounds = pd.read_csv(f"{BASEPATH}/Data_Logs/NL_Raw/Boundary.csv") # Manufactured data to mold policy region
     df_all = pd.concat([df_raw,df_bounds])
 
@@ -672,9 +672,9 @@ if __name__ == "__main__":
     # NN_Policy_Trainer.evalModel(X,y)
 
     NN_Policy_Trainer.loadModelFromParams(Param_Path)
-    print(NN_Policy_Trainer.modelPredict(np.array([[0.259,-7.754,0.298]])))
+    # print(NN_Policy_Trainer.modelPredict(np.array([[0.259,-7.754,0.298]])))
     # NN_Policy_Trainer.evalModel(X,y,LR_bound=LR_bound)
-    # NN_Policy_Trainer.plotClassification(df_raw,LR_bound=0.8)
+    NN_Policy_Trainer.plotClassification(df_raw,LR_bound=0.8)
     # NN_Policy_Trainer.plotPolicy(df_raw,PlotRegion=True,LR_bound=0.8)
     # NN_Policy_Trainer.plotPolicy(df_raw,PlotRegion=False,LR_bound=0.8)
 
