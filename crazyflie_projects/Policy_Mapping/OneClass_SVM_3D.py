@@ -27,54 +27,36 @@ d_ceil = df_raw["D_ceil_flip_mean"]
 landing_rate = df_raw["LR_4leg"]
 
 X2 = np.stack((Tau,OF_y,d_ceil),axis=1)
-
-
-
-
-# ## LOAD TRAINING DATA
-# r = np.linspace(0,1,5)
-# theta = np.linspace(0,2*np.pi,15)
-# ZZ = np.linspace(-1,1,15)
-
-# R,THETA,ZZ = np.meshgrid(r,theta,ZZ)
-
-# XX = R*np.cos(THETA)
-# YY = R*np.sin(THETA)
-# ZZ = ZZ
-
-# X2 = np.stack((XX.flatten(),YY.flatten(),ZZ.flatten()),axis=1)
 scaler = preprocessing.StandardScaler().fit(X2)
 X2 = scaler.transform(X2)
 
+clf = OneClassSVM(nu=0.2,gamma=2)
+clf.fit(X2)
 
 # Learn a frontier for outlier detection with several classifiers
-xx2, yy2, zz2 = np.meshgrid(np.linspace(-4, 4, 20), np.linspace(-4, 4, 20),np.linspace(-4, 4, 20))
-clf = OneClassSVM(nu=0.1,gamma=0.4)
-plt.figure(2)
-clf.fit(X2)
-Z2 = clf.decision_function(np.c_[xx2.ravel(), yy2.ravel(), zz2.ravel()])
-Z2 = Z2.reshape(xx2.shape)
-# plt.contour(xx2, yy2, Z2, levels=[0], linewidths=2, colors='k')
+xx2, yy2, zz2 = np.meshgrid(np.linspace(-4, 4, 30), np.linspace(-4, 4, 30),np.linspace(-4, 4, 30))
+X_grid = np.stack((xx2.flatten(), yy2.flatten(), zz2.flatten()),axis=1)
 
-
+Z2 = clf.decision_function(X_grid)
+X_grid = scaler.inverse_transform(X_grid)
 
 
 fig = go.Figure()
 
 fig.add_trace(
     go.Volume(
-        x=xx2.flatten(),
-        y=yy2.flatten(),
-        z=zz2.flatten(),
+        x=X_grid[:, 0],
+        y=X_grid[:, 1],
+        z=X_grid[:, 2],
         value = Z2.flatten(),
         isomin=-0.1,
-        isomax=0.1,
-        surface_count=3,
+        isomax=0.0,
+        surface_count=1,
         colorscale='Viridis',
-        opacity=0.1
+        opacity=0.3
         )
 )
-
+X2 = scaler.inverse_transform(X2)
 
 fig.add_trace(
     go.Scatter3d(
@@ -89,7 +71,7 @@ fig.add_trace(
         cmin=0,
         cmax=1,
         colorscale='Viridis',   # choose a colorscale
-        opacity=0.5
+        opacity=0.6
     )
     )
 )
@@ -98,22 +80,12 @@ fig.add_trace(
 
 fig.update_layout(
     scene=dict(
-        xaxis_title='X',
-        yaxis_title='Y',
-        xaxis_range=[xx2.min(), xx2.max()],
-        yaxis_range=[yy2.min(), yy2.max()],
+        xaxis_title='Tau [s]',
+        yaxis_title='OFy [rad/s]',
+        zaxis_title='D_ceil [m]',
+        xaxis_range=[0.35,0.2],
+        yaxis_range=[0,-20],
+        zaxis_range=[0,1.2]
     ),
 )
 fig.show()
-
-# # Plot the results (= shape of the data points cloud)
-# plt.figure(2)  # "banana" shape
-# plt.title("Outlier detection on a real data set (wine recognition)")
-# plt.scatter(X2[:, 0], X2[:, 1], color="tab:blue")
-# plt.xlim((xx2.min(), xx2.max()))
-# plt.ylim((yy2.min(), yy2.max()))
-
-# plt.ylabel("color_intensity")
-# plt.xlabel("flavanoids")
-
-# plt.show()
