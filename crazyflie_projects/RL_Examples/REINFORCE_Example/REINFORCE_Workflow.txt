@@ -1,0 +1,18 @@
+1.  Gather training data for an episode
+
+2.  Input training data to Policy Networt to get probability of action taken
+    PNN(s,a) = Prob(a|s)
+
+3.  Discounted return is calculated from reward from data sample
+
+4.  Discounted return and action probability are used to compute the Loss to train PNN
+    The Policy Network learns to predict better actions until it finds the Optimal Policy.
+
+Value based solutions like Q-value are purely deterministic 
+Policy based solutions like policy-gradient learns a policy function that outputs a probability distribution 
+of actions, and therefore, learn deterministic policies as well as stochastic policies, 
+where there isn’t always a single best action
+
+In contrast to value-based solutions which use an implicit ε-greedy policy, the Policy Gradient learns its policy as it goes.
+
+At each step, it picks an action by sampling the predicted probability distribution. As a result it ends up taking a variety of different actions.

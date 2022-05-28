@@ -15,7 +15,7 @@ env = gym.make("CartPole-v1")
 observation_space = env.observation_space.shape[0]
 action_space = env.action_space.n
 
-EPISODES = 100
+EPISODES = 300
 LR = 0.0001
 MEM_SIZE = 10_000
 BATCH_SIZE = 64
@@ -100,7 +100,7 @@ class DQN_Agent():
             action.append(minibatch[ii][1])
             reward.append(minibatch[ii][2])
             next_state[ii] = minibatch[ii][3]
-            done.append(1-minibatch[ii][4])
+            done.append(minibatch[ii][4])
 
         states = torch.tensor(state,dtype=torch.float).to(DEVICE)
         actions = torch.tensor(action,dtype=torch.long).to(DEVICE)
@@ -110,22 +110,20 @@ class DQN_Agent():
         batch_indices = np.arange(BATCH_SIZE, dtype=np.int64)
 
 
-        q_values = self.Q_NN(states)
-        next_q_values = self.Q_NN(next_states)
-        
-        predicted_value_of_now = q_values[batch_indices, actions]
-        predicted_value_of_future = torch.max(next_q_values, dim=1)[0]
-        
-        q_target = rewards + GAMMA * predicted_value_of_future * dones
+        Q_vals = self.Q_NN(states)
+        Q_vals_pred = Q_vals[batch_indices, actions]
 
-        loss = self.Q_NN.loss(q_target, predicted_value_of_now)
+
+        Target_vals = self.Q_target_NN(next_states)
+        Target_vals_pred = torch.max(Target_vals, dim=1)[0]
+        
+        Q_target = rewards + GAMMA * Target_vals_pred * torch.logical_not(dones)
+
+        loss = self.Q_NN.loss(Q_target, Q_vals_pred)
         self.Q_NN.optimizer.zero_grad()
         loss.backward()
         self.Q_NN.optimizer.step()
 
-
-        predicted_value_of_now = q_values[batch_indices, actions]
-        predicted_value_of_future = torch.max(next_q_values, dim=1)[0]
 
         ## EPSILON DECAY
         if self.epsilon > self.epsilon_min:
@@ -163,10 +161,14 @@ if __name__ == '__main__':
 
                 average_reward += score
                 print(f"Episode: {i} | Average Reward: {average_reward/i:.3f} | Best Reward: {best_reward} | Last Reward: {score} | Epsilon: {agent.epsilon:.3f}")
+                agent.update_Q_target()
+
+                episode_number.append(i)
+                average_reward_number.append(score)
+
                 break
 
-            episode_number.append(i)
-            average_reward_number.append(average_reward/i)
+                
 
 
     plt.plot(episode_number, average_reward_number)
