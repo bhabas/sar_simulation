@@ -301,7 +301,7 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
 
         // APPLY EMA FILTER y[n] = a*x[n] + (1-a)*y[n-1]
         float a = 0.99;
-        Tau_est_filt = (a * Tau_est + (a-1) * Tau_est_filt_1);
+        Tau_est_filt = (a * Tau_est + (1-a) * Tau_est_filt_1);
 
 
         Tau_est_filt = clamp(Tau_est_filt, 0,30);
@@ -316,16 +316,9 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
         // SET PREVIOUS DATA
         memcpy(Prev_img,Cur_img,WIDTH_PIXELS*HEIGHT_PIXELS*sizeof(uint8_t)); // Copy memory to Prev_img address
         Prev_time = Cur_time; // Setup previous time for next calculation
-        
-        Tau_est_filt_5 = Tau_est_filt_4; //Have to start at the last value in the list when rolling down
-        Tau_est_filt_4 = Tau_est_filt_3;
-        Tau_est_filt_3 = Tau_est_filt_2;
-        Tau_est_filt_2 = Tau_est_filt_1;
+    
+        //FILTER DATA
         Tau_est_filt_1 = Tau_est_filt;
-        Tau_est_prev_5 = Tau_est_prev_4;
-        Tau_est_prev_4 = Tau_est_prev_3;
-        Tau_est_prev_3 = Tau_est_prev_2;
-        Tau_est_prev_2 = Tau_est_prev_1;
         Tau_est_prev_1 = Tau_est;
         
     }
