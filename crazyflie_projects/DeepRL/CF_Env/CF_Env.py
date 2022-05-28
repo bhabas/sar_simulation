@@ -24,6 +24,8 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
         self.params = (self.L,e,self.gamma,M_G,M_L,G,PD,I_G)
 
         self.impact_leg = None
+        self.My = 0.0
+        self.tau_c = 0.24
         self.h_ceiling = 2.1
 
         # INTIIALIZE MODEL POSE
@@ -355,7 +357,7 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
         return beta
 
     
-    def ODE_FlightTraj(self,t,y,tau_c):
+    def ODE_FlightTraj(self,t,y):
         """Function that represents the system of 1st order ODEs for the system during
         constant velocity flight
 
@@ -453,7 +455,7 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
 
         return dX_1,dX_2,dZ_1,dZ_2,dtheta_1,dtheta_2
 
-    def ODE_swing(self,t,y,impact_leg):   
+    def ODE_swing(self,t,y):   
         """Function that represents the system of 1st order ODEs for the system
 
         Args:
@@ -473,11 +475,11 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
 
         B1,B2 = y # Beta1,Beta2
 
-        if impact_leg == 1:
+        if self.impact_leg == 1:
             dB1 = B2
             dB2 = M_G*G/I_C*(2*l*np.cos(B1) - e*np.sin(B1-gamma))
 
-        if impact_leg == 2:
+        if self.impact_leg == 2:
             dB1 = B2
             dB2 = M_G*G/I_C*(2*l*np.cos(B1) + e*np.sin(B1+gamma))
 
@@ -523,7 +525,7 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
         return R_total
 
 
-    def solveODE(self,My=9e-3,tau_c=0.2,IC=[0,0,0,0,0,0],t_span=(0,4)):
+    def solveODE(self,IC=[0,0,0,0,0,0],t_span=(0,4)):
         """
         Solves a sequence of ODEs for the flip stage, projectile motion stage, and contact stage of the landing sequence
 
@@ -548,7 +550,7 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
             return np.deg2rad(90)-np.abs(theta)    # When angle greater than 90 deg activate cutoff
         motor_cutoff.terminal = True
 
-        def policy_output(t,y,tau_c):
+        def policy_output(t,y,):
             x,vx,z,vz,theta,dtheta = y
 
             d_ceil = (self.h_ceiling-z)
@@ -556,9 +558,10 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
             OFy = -vx/d_ceil
 
             ## PASS STATE TO POLICY NETWORK
-            My = -4e-3
+            self.My = -4e-3
+            self.tau_c = 0.25
 
-            return tau_c-tau    # When angle greater than 90 deg activate cutoff
+            return self.tau_c-tau    
         policy_output.terminal = True
 
         def ceiling_impact_body(t,y,*argv):
@@ -636,7 +639,7 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
         sol_FlightTraj = integrate.solve_ivp(
             self.ODE_FlightTraj,
             y0=IC,
-            args=(tau_c,),
+            args=(),
             events=(policy_output,
                 ceiling_impact_body,ceiling_impact_leg1,ceiling_impact_leg2),
             t_span=[t_span[0],t_span[1]],
@@ -669,7 +672,7 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
             sol_Flip = integrate.solve_ivp(
                 self.ODE_flip,
                 y0=state_cutoff,
-                args=(My,),
+                args=(self.My,),
                 events=(motor_cutoff,
                     ceiling_impact_body,ceiling_impact_leg1,ceiling_impact_leg2),
                 t_span=[t_cutoff,t_span[1]],
@@ -872,7 +875,7 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
         
         return sol_t,sol_y
 
-    def animateTraj(self,My=-9e-3,tau_c=0.2,IC=[0,0,1,0,0,0],t_span=[0,2]):
+    def animateTraj(self,IC=[0,0,1,0,0,0],t_span=[0,2]):
         """Create animation of model trajectory
 
         Args:
@@ -916,7 +919,7 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
 
 
         ## SOLVE ODE
-        sol_t,sol_y = self.solveODE(My=My,IC=IC,tau_c=tau_c,t_span=t_span)
+        sol_t,sol_y = self.solveODE(IC=IC,t_span=t_span)
         model_states = np.array([sol_y[0],sol_y[2],sol_y[4]])
         
 
@@ -970,7 +973,7 @@ if __name__ == '__main__':
 
     IC = [0, vx, z_0, vz, 0, 0]
 
-    sol_t,sol_y = CF.animateTraj(My=My,IC=IC,tau_c=tau_c,t_span=[0,1.5])
+    sol_t,sol_y = CF.animateTraj(IC=IC,t_span=[0,1.5])
     plt.show()
     pass
 
