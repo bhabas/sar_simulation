@@ -355,7 +355,7 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
         return beta
 
     
-    def ODE_FlightTraj(self,t,y,params,tau_c):
+    def ODE_FlightTraj(self,t,y,tau_c):
         """Function that represents the system of 1st order ODEs for the system during
         constant velocity flight
 
@@ -368,7 +368,7 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
             [dX_1,dX_2,dZ_1,dZ_2,dtheta_1,dtheta_2]: System of 1st order ODE equations
         """     
 
-        (L,e,gamma,M_G,M_L,G,PD,I_G) = params
+        (L,e,gamma,M_G,M_L,G,PD,I_G) = self.params
 
 
         X_1,X_2,Z_1,Z_2,theta_1,theta_2 = y
@@ -384,7 +384,7 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
 
         return dX_1,dX_2,dZ_1,dZ_2,dtheta_1,dtheta_2
 
-    def ODE_flip(self,t,y,params,My):
+    def ODE_flip(self,t,y,My):
         """Function that represents the system of 1st order ODEs for the system during applied Moment
 
         Args:
@@ -396,7 +396,7 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
             [dX_1,dX_2,dZ_1,dZ_2,dtheta_1,dtheta_2]: System of 1st order ODE equations
         """     
 
-        (L,e,gamma,M_G,M_L,G,PD,I_G) = params
+        (L,e,gamma,M_G,M_L,G,PD,I_G) = self.params
 
 
         X_1,X_2,Z_1,Z_2,theta_1,theta_2 = y
@@ -425,7 +425,7 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
 
         return dX_1,dX_2,dZ_1,dZ_2,dtheta_1,dtheta_2
 
-    def ODE_proj(self,t,y,params):
+    def ODE_proj(self,t,y):
         """Function that represents the system of 1st order ODEs for the system
 
         Args:
@@ -437,7 +437,7 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
             [dX_1,dX_2,dZ_1,dZ_2,dtheta_1,dtheta_2]: System of 1st order ODE equations
         """     
 
-        (L,e,gamma,M_G,M_L,G,PD,I_G) = params
+        (L,e,gamma,M_G,M_L,G,PD,I_G) = self.params
 
 
         X_1,X_2,Z_1,Z_2,theta_1,theta_2 = y
@@ -453,7 +453,7 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
 
         return dX_1,dX_2,dZ_1,dZ_2,dtheta_1,dtheta_2
 
-    def ODE_swing(self,t,y,params,impact_leg):   
+    def ODE_swing(self,t,y,impact_leg):   
         """Function that represents the system of 1st order ODEs for the system
 
         Args:
@@ -464,7 +464,7 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
         Returns:
             [dB1,dB2]: System of 1st order ODE equations
         """             
-        (L,e,gamma,M_G,M_L,G,PD,I_G) = params
+        (L,e,gamma,M_G,M_L,G,PD,I_G) = self.params
     
         l = L/2             # Half leg length [m]
         I_G = 1.65717e-5    # Moment of Intertia [kg*m^2]
@@ -548,13 +548,18 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
             return np.deg2rad(90)-np.abs(theta)    # When angle greater than 90 deg activate cutoff
         motor_cutoff.terminal = True
 
-
-        def tau_threshold(t,y,params,tau_c):        # *argv collects all arguments pass since we aren't using them 
-
+        def policy_output(t,y,tau_c):
             x,vx,z,vz,theta,dtheta = y
-            tau = (self.h_ceiling-z)/vz
+
+            d_ceil = (self.h_ceiling-z)
+            tau = d_ceil/vz
+            OFy = -vx/d_ceil
+
+            ## PASS STATE TO POLICY NETWORK
+            My = -4e-3
+
             return tau_c-tau    # When angle greater than 90 deg activate cutoff
-        tau_threshold.terminal = True
+        policy_output.terminal = True
 
         def ceiling_impact_body(t,y,*argv):
 
@@ -593,24 +598,19 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
                 return 1
         ceiling_impact_leg2.terminal = True
 
-        def landing_contact(t,y,params,impact_leg):
+        def landing_contact(t,y):
             beta=y[0]
-            beta_landing = self.beta_landing(impact_leg=impact_leg)
+            beta_landing = self.beta_landing(impact_leg=self.impact_leg)
             return beta-beta_landing # Trigger when this equals zero [Placeholder]
         landing_contact.terminal = True
 
-        def prop_contact(t,y,params,impact_leg):
+        def prop_contact(t,y):
             beta=y[0]
-            beta_prop = self.beta_prop(impact_leg=impact_leg)
+            beta_prop = self.beta_prop(impact_leg=self.impact_leg)
             return beta-beta_prop
         prop_contact.terminal = True
 
-        def d_min_calc(t,y,params,*argv):        # *argv collects all arguments pass since we aren't using them 
-
-            x,vx,z,vz,theta,dtheta = y
-            # d_ceil = 
-            return 5   
-
+        
 
         def impact_conditions(events):
 
@@ -625,6 +625,8 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
 
             return impact_leg
 
+        
+
 
 
         ##############################
@@ -634,8 +636,8 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
         sol_FlightTraj = integrate.solve_ivp(
             self.ODE_FlightTraj,
             y0=IC,
-            args=(self.params,tau_c),
-            events=(tau_threshold,d_min_calc,
+            args=(tau_c,),
+            events=(policy_output,
                 ceiling_impact_body,ceiling_impact_leg1,ceiling_impact_leg2),
             t_span=[t_span[0],t_span[1]],
             max_step=0.001
@@ -667,7 +669,7 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
             sol_Flip = integrate.solve_ivp(
                 self.ODE_flip,
                 y0=state_cutoff,
-                args=(self.params,My),
+                args=(My,),
                 events=(motor_cutoff,
                     ceiling_impact_body,ceiling_impact_leg1,ceiling_impact_leg2),
                 t_span=[t_cutoff,t_span[1]],
@@ -697,7 +699,7 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
             sol_proj = integrate.solve_ivp(
                 self.ODE_proj,
                 y0=state_cutoff,
-                args=(self.params,),
+                args=(),
                 events=(ceiling_impact_body,ceiling_impact_leg1,ceiling_impact_leg2),
                 t_span=[t_cutoff,t_span[1]],
                 max_step=0.001
@@ -743,7 +745,7 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
             sol_Swing = integrate.solve_ivp(
                 self.ODE_swing,
                 y0=[beta_0,dbeta_0],
-                args=(self.params,self.impact_leg,),
+                args=(),
                 events=(landing_contact,prop_contact),
                 t_span=[t_cutoff,t_span[1]],
                 max_step=0.001)
@@ -802,7 +804,7 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
             sol_swing = integrate.solve_ivp(
                 self.ODE_swing,
                 y0=[beta_0,dbeta_0],
-                args=(self.params,self.impact_leg,),
+                args=(),
                 events=(landing_contact,prop_contact),
                 t_span=[t_cutoff,t_span[1]],
                 max_step=0.001)
