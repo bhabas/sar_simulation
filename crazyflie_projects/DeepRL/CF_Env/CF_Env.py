@@ -5,28 +5,43 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
+STEP_SIZE = 0.0005
 
-    def __init__(self,
-            L = 0.050,
-            gamma = np.deg2rad(30),
-            M_G = 0.035,
-            M_L = 0.002,
-            e = 0.018,
-            origin=(0,0)):
-            
+class Agent:
+    def __init__(self):
+        self.My = -4e-3
+        self.tau_c = 0.24
+        
+        self.Actor = None
+        self.Critic = None
+
+    def remember(self):
+        pass
+
+    def get_action(self):
+        pass
+
+class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
+
+    def __init__(self):
+        
+        super().__init__()
         ## SET DIMENSIONAL CONSTRAINTS 
         G = 9.81        # Gravity [m/s^2]
         PD = 0.115/2    # Prop Distance from COM [m]
         I_G = 16.5717e-6    # Moment of Intertia [kg*m^2]
-        self.L = L
-        self.gamma = gamma
+        self.L = 0.1
+        self.gamma = np.deg2rad(30)
+        M_G = 0.035 
+        M_L = 0.002
+        e = 0.018
         self.params = (self.L,e,self.gamma,M_G,M_L,G,PD,I_G)
 
         self.impact_leg = None
-        self.My = 0.0
-        self.tau_c = 0.24
         self.h_ceiling = 2.1
+
+        self.My = -4e-3
+        self.tau_c = 0.12
 
         # INTIIALIZE MODEL POSE
         self.model_pose = self.get_pose(model_state=(0,0,0))
@@ -558,8 +573,8 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
             OFy = -vx/d_ceil
 
             ## PASS STATE TO POLICY NETWORK
-            self.My = -4e-3
-            self.tau_c = 0.25
+            # self.My = -4e-3
+            # self.tau_c = 0.25
 
             return self.tau_c-tau    
         policy_output.terminal = True
@@ -728,7 +743,7 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
         ########################
 
         if self.impact_leg == 0: ## BODY CONTACT
-            print("Failed Landing (No Contact)")
+            print("Failed Landing (Body Contact)")
             pad_contacts = 0
             body_contact = True
     
@@ -751,7 +766,7 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
                 args=(),
                 events=(landing_contact,prop_contact),
                 t_span=[t_cutoff,t_span[1]],
-                max_step=0.001)
+                max_step=STEP_SIZE)
 
             
             beta,dbeta = sol_Swing.y
@@ -804,16 +819,16 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
             r_O_C2 = r_O_G - r_G_C2_0
             
             ## SOLVE SWING ODE
-            sol_swing = integrate.solve_ivp(
+            sol_Swing = integrate.solve_ivp(
                 self.ODE_swing,
                 y0=[beta_0,dbeta_0],
                 args=(),
                 events=(landing_contact,prop_contact),
                 t_span=[t_cutoff,t_span[1]],
-                max_step=0.001)
+                max_step=STEP_SIZE)
 
             
-            beta,dbeta = sol_swing.y
+            beta,dbeta = sol_Swing.y
 
 
             ## SOLVE FOR SWING BEHAVIOR IN GLOBAL COORDINATES
@@ -830,7 +845,7 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
             sol_swing_y[4,:] = theta                    # theta
 
             ## COMBINE SOLUTION ARRAYS
-            sol_t = np.concatenate((sol_t,sol_swing.t))
+            sol_t = np.concatenate((sol_t,sol_Swing.t))
             sol_y = np.concatenate((sol_y,sol_swing_y),axis=1)
 
 
@@ -953,27 +968,31 @@ class CF_SDOF: # Model class for Single Degree of Freedom Crazyflie
 
 if __name__ == '__main__':
 
-    CF = CF_SDOF(L=0.1,gamma=np.radians(30))
+    agent = Agent()
+    env = CF_Env()
 
     ## VELOCITY CONDITIONS
-    vel = 1.5
-    phi = np.radians(10)
+    vel = 3.0
+    phi = np.radians(60)
     vz = vel*np.sin(phi)
     vx = vel*np.cos(phi)
 
     ## INITIALIZE STARTING CONDITIONS
     tau_0 = 0.6
     d_0 = vz*tau_0
-    z_0 = (CF.h_ceiling - d_0)
+    z_0 = (env.h_ceiling - d_0)
 
     ## POLICY CONDITIONS
-    My = -4e-3
-    tau_c = 0.3
+    agent.My = -4e-3
+    agent.tau_c = 0.4
+
+    env.My = -4e-3
+    env.tau_c = 0.155
 
 
     IC = [0, vx, z_0, vz, 0, 0]
 
-    sol_t,sol_y = CF.animateTraj(IC=IC,t_span=[0,1.5])
+    sol_t,sol_y = env.animateTraj(IC=IC,t_span=[0,1.5])
     plt.show()
     pass
 
