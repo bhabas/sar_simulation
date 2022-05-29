@@ -9,7 +9,7 @@ import matplotlib.animation as animation
 
 class Agent:
     def __init__(self):
-        self.My = -0.0e-3
+        self.My = -6.7e-3
         self.tau_c = 0.24
         
         self.Actor = None
@@ -963,33 +963,18 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
                                     frames=len(sol_t),
                                     interval=1000/100,
                                     blit=True,
-                                    repeat=True)
+                                    repeat=False)
 
-        plt.show()
-
-        return sol_t,sol_y
 
 if __name__ == '__main__':
 
     agent = Agent()
     env = CF_Env()
 
-    ## VELOCITY CONDITIONS
-    vel = 3.0
-    phi = np.radians(60)
-    vz = vel*np.sin(phi)
-    vx = vel*np.cos(phi)
-
-    ## INITIALIZE STARTING CONDITIONS
-    tau_0 = 0.6
-    d_0 = vz*tau_0
-    z_0 = (env.h_ceiling - d_0)
+    
 
     ## POLICY CONDITIONS
-    agent.My = -4e-3
-    agent.tau_c = 0.16
-
-
+    
     N = 20
     batch_size = 5
     n_epochs = 4
@@ -1002,6 +987,23 @@ if __name__ == '__main__':
 
         ## RESET ENVIRONMENT
         score = 0
+
+        ## VELOCITY CONDITIONS
+        vel = np.random.uniform(1.5,3.5)
+        phi = np.random.uniform(20,90)
+
+        vel = 3.0
+        phi = 60
+
+        phi_rad = np.radians(phi)
+        vz = vel*np.sin(phi_rad)
+        vx = vel*np.cos(phi_rad)
+
+        ## INITIALIZE STARTING CONDITIONS
+        tau_0 = 0.6
+        d_0 = vz*tau_0
+        z_0 = (env.h_ceiling - d_0)
+
         IC = [0, vx, z_0, vz, 0, 0]
 
         
@@ -1010,6 +1012,7 @@ if __name__ == '__main__':
 
         if RENDER:
             env.animateTraj(sol_t,sol_y)
+            plt.show()
 
         ## TRAIN AGENT
         # agent.remember(observation, action, prob, val, reward, done)
