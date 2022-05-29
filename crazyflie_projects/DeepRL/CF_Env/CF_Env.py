@@ -5,11 +5,11 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-STEP_SIZE = 0.0005
+
 
 class Agent:
     def __init__(self):
-        self.My = -4e-3
+        self.My = -0.0e-3
         self.tau_c = 0.24
         
         self.Actor = None
@@ -18,8 +18,9 @@ class Agent:
     def remember(self):
         pass
 
-    def get_action(self):
-        pass
+    def get_action(self,tau,OFy,d_ceil):
+        
+        return self.tau_c,self.My
 
 class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
 
@@ -40,8 +41,8 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
         self.impact_leg = None
         self.h_ceiling = 2.1
 
-        self.My = -4e-3
-        self.tau_c = 0.12
+        self.My = 0.0
+        self.tau_c = 0.5
 
         # INTIIALIZE MODEL POSE
         self.model_pose = self.get_pose(model_state=(0,0,0))
@@ -540,7 +541,7 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
         return R_total
 
 
-    def solveODE(self,IC=[0,0,0,0,0,0],t_span=(0,4)):
+    def solveODE(self,agent,IC=[0,0,0,0,0,0],t_span=(0,4)):
         """
         Solves a sequence of ODEs for the flip stage, projectile motion stage, and contact stage of the landing sequence
 
@@ -573,8 +574,7 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
             OFy = -vx/d_ceil
 
             ## PASS STATE TO POLICY NETWORK
-            # self.My = -4e-3
-            # self.tau_c = 0.25
+            self.tau_c,self.My = agent.get_action(tau,OFy,d_ceil)
 
             return self.tau_c-tau    
         policy_output.terminal = True
@@ -766,7 +766,7 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
                 args=(),
                 events=(landing_contact,prop_contact),
                 t_span=[t_cutoff,t_span[1]],
-                max_step=STEP_SIZE)
+                max_step=0.001)
 
             
             beta,dbeta = sol_Swing.y
@@ -825,7 +825,7 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
                 args=(),
                 events=(landing_contact,prop_contact),
                 t_span=[t_cutoff,t_span[1]],
-                max_step=STEP_SIZE)
+                max_step=0.001)
 
             
             beta,dbeta = sol_Swing.y
@@ -884,13 +884,14 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
 
         impact_angle = impact_angle
 
-        reward = self.calcReward(d_ceil_min,body_contact,pad_contacts,impact_angle)
+        rewards = np.zeros_like(sol_t)
+        rewards[-1] = self.calcReward(d_ceil_min,body_contact,pad_contacts,impact_angle)
 
 
         
-        return sol_t,sol_y
+        return sol_t,sol_y,rewards
 
-    def animateTraj(self,IC=[0,0,1,0,0,0],t_span=[0,2]):
+    def animateTraj(self,sol_t,sol_y):
         """Create animation of model trajectory
 
         Args:
@@ -933,8 +934,7 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
             return Line_P1,Line_P2,Line_L1,Line_L2,Line_Prop1,Line_Prop2,Line_CG,title  
 
 
-        ## SOLVE ODE
-        sol_t,sol_y = self.solveODE(IC=IC,t_span=t_span)
+        ## CONVERT GLOBAL STATES TO MODEL STATES
         model_states = np.array([sol_y[0],sol_y[2],sol_y[4]])
         
 
@@ -962,7 +962,10 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
                                     init_func=init_lines,
                                     frames=len(sol_t),
                                     interval=1000/100,
-                                    blit=True)
+                                    blit=True,
+                                    repeat=True)
+
+        plt.show()
 
         return sol_t,sol_y
 
@@ -984,15 +987,32 @@ if __name__ == '__main__':
 
     ## POLICY CONDITIONS
     agent.My = -4e-3
-    agent.tau_c = 0.4
-
-    env.My = -4e-3
-    env.tau_c = 0.155
+    agent.tau_c = 0.16
 
 
-    IC = [0, vx, z_0, vz, 0, 0]
+    N = 20
+    batch_size = 5
+    n_epochs = 4
+    alpha = 0.0003
+    n_games = 3
+    RENDER = True
 
-    sol_t,sol_y = env.animateTraj(IC=IC,t_span=[0,1.5])
-    plt.show()
-    pass
+
+    for i in range(n_games):
+
+        ## RESET ENVIRONMENT
+        score = 0
+        IC = [0, vx, z_0, vz, 0, 0]
+
+        
+        ## EXECUTE ENVIRONMENT/AGENT
+        sol_t,sol_y,rewards = env.solveODE(agent,IC=IC,t_span=[0,1.5])
+
+        if RENDER:
+            env.animateTraj(sol_t,sol_y)
+
+        ## TRAIN AGENT
+        # agent.remember(observation, action, prob, val, reward, done)
+        # agent.learn()
+
 
