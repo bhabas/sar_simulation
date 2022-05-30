@@ -129,14 +129,14 @@ class Controller
         int ky0[3] = {-1,-2,-1};
         int ky2[3] = {1,2,1};
         float Prev_time = 1; //init as 1 to prevent divide by zero for first image
-        // values from butterworth filter data in Gazebo_cpp_check.py
-        float a1 = -0.15838444; // -0.15838444
+        // values from butterworth filter data in Gazebo_cpp_check.py a coef: [1.         0.88161859] b coef: [0.9408093 0.9408093]
+        float a1 = 0.88161859; // -0.15838444
         float a2 = 0; 
         float a3 = 0;
         float a4 = 0; 
         float a5 = 0;
-        float b0 = 0.42080778; // 0.42080778 0.42080778
-        float b1 = 0.42080778;
+        float b0 = 0.9408093; // 0.42080778 0.42080778
+        float b1 = 0.9408093;
         float b2 = 0;
         float b3 = 0;
         float b4 = 0;  
@@ -289,21 +289,21 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
         nml_mat* y = nml_mat_dot(nml_mat_transp(QR->Q),m_b); // y = Q^T*b
         nml_mat* x_QR = nml_ls_solvebck(QR->R,y); // Solve R*x = y via back substitution
 
-        sensorData.OFx_est = x_QR->data[0][0];
-        sensorData.OFy_est = x_QR->data[1][0];
+        sensorData.OFy_est = x_QR->data[0][0];
+        sensorData.OFx_est = x_QR->data[1][0];
         float Tau_est = clamp((1/x_QR->data[2][0]), 0,30); //restricting Tau_est to be between -10:30
 
 
-        // APPLY 5TH ORDER LOW PASS FILTER
+        // APPLY nTH ORDER LOW PASS FILTER
         // Tau_est_filt = (b0*Tau_est + b1*Tau_est_prev_1 + b2*Tau_est_prev_2 + b3*Tau_est_prev_3
         //                  + b4*Tau_est_prev_4 +b5*Tau_est_prev_5 - a1*Tau_est_filt_1- a2*Tau_est_filt_2
         //                  - a3*Tau_est_filt_3- a4*Tau_est_filt_4- a5*Tau_est_filt_5);
 
         // APPLY EMA FILTER y[n] = a*x[n] + (1-a)*y[n-1]
-        float a = 0.99;
+        float a = 0.98;
         Tau_est_filt = (a * Tau_est + (1-a) * Tau_est_filt_1);
 
-
+        //Clamp filtered value and Assign 
         Tau_est_filt = clamp(Tau_est_filt, 0,30);
         sensorData.Tau_est = Tau_est_filt;
 
@@ -318,8 +318,18 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
         Prev_time = Cur_time; // Setup previous time for next calculation
     
         //FILTER DATA
+        Tau_est_filt_5 = Tau_est_filt_4; //Have to start at the last value in the list when rolling down
+        Tau_est_filt_4 = Tau_est_filt_3;
+        Tau_est_filt_3 = Tau_est_filt_2;
+        Tau_est_filt_2 = Tau_est_filt_1;
         Tau_est_filt_1 = Tau_est_filt;
+
+        Tau_est_prev_5 = Tau_est_prev_4;
+        Tau_est_prev_4 = Tau_est_prev_3;
+        Tau_est_prev_3 = Tau_est_prev_2;
+        Tau_est_prev_2 = Tau_est_prev_1;
         Tau_est_prev_1 = Tau_est;
+        
         
     }
 
