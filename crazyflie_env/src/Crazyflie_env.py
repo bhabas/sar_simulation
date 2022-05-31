@@ -499,23 +499,42 @@ class CrazyflieEnv:
 
         cmd_msg = RLCmd()   # Create message object
         cmd_dict = {
-            'home':0,       # Resets controller values to defaults
-            'pos':1,        # Set desired position values (Also on/off for position control)
-            'vel':2,        # Set desired vel values (Also on/off for vel control)
-            'acc':3,        # --- Unused ---
-            'tumble':4,     # Turns tumble detection on/off (Uneeded?)
-            'stop':5,       # Cutoff motor values
-            'params':6,     # Reloads ROS params and updates params in controller
-            'moment':7,     # Execute the desired moment in terms of [Mx,My,Mz] in [N*mm]
-            'policy':8,     # Activate policy triggering and policy values [tau_thr,My,G2]
-            'sticky':11,    # Turns on/off sticky legs via cmd_flag
+            'Ctrl_Reset':0,
+            'Pos':1,
+            'Vel':2,
+            'Stop':5,
+            'Policy':8,
 
-            'thrusts':10,   # Controls individual motor thrusts [M1,M2,M3,M4]
-            'M_PWM':12,     # Control individual motor pwm values (bypasses thrust values)
+            'P2P_traj':10,
+            'Vel_traj':11,
+            'Impact_traj':12,
 
-            'vel_traj':9,   # Execute constant velocity trajectory cmd_val=[s_0,v_0,a_0] | cmd_flag=[x:0,y:1,z:2]
-            'P2P_traj':13   # Execute point-to-point trajectory cmd_vals=[s_0,s_f,a_0] | cmd_flag=[x:0,y:1,z:2]
+            'Tumble':20,
+            'Load_Params':21,
+            'Cap_Logging':22,
+
+            'GZ_traj':90,
+            'GZ_reset':91,
+            'StickyPads':92,
         }
+        # cmd_dict = {
+        #     'home':0,       # Resets controller values to defaults
+        #     'pos':1,        # Set desired position values (Also on/off for position control)
+        #     'vel':2,        # Set desired vel values (Also on/off for vel control)
+        #     'acc':3,        # --- Unused ---
+        #     'tumble':4,     # Turns tumble detection on/off (Uneeded?)
+        #     'stop':5,       # Cutoff motor values
+        #     'params':6,     # Reloads ROS params and updates params in controller
+        #     'moment':7,     # Execute the desired moment in terms of [Mx,My,Mz] in [N*mm]
+        #     'policy':8,     # Activate policy triggering and policy values [tau_thr,My,G2]
+        #     'sticky':11,    # Turns on/off sticky legs via cmd_flag
+
+        #     'thrusts':10,   # Controls individual motor thrusts [M1,M2,M3,M4]
+        #     'M_PWM':12,     # Control individual motor pwm values (bypasses thrust values)
+
+        #     'vel_traj':9,   # Execute constant velocity trajectory cmd_val=[s_0,v_0,a_0] | cmd_flag=[x:0,y:1,z:2]
+        #     'P2P_traj':13   # Execute point-to-point trajectory cmd_vals=[s_0,s_f,a_0] | cmd_flag=[x:0,y:1,z:2]
+        # }
         
 
         ## INSERT VALUES TO ROS MSG
@@ -722,8 +741,8 @@ class CrazyflieEnv:
         """        
 
         ## SET DESIRED VEL IN CONTROLLER
-        self.step('pos',cmd_flag=0)
-        self.step('vel',cmd_vals=vel_d,cmd_flag=1)
+        self.step('Pos',cmd_flag=0)
+        self.step('Vel',cmd_vals=vel_d,cmd_flag=1)
 
         ## CREATE SERVICE MESSAGE
         state_msg = ModelState()
@@ -762,7 +781,7 @@ class CrazyflieEnv:
             z_0 (float, optional): Starting height of crazyflie. Defaults to 0.379.
         """        
         ## DISABLE STICKY LEGS (ALSO BREAKS CURRENT CONNECTION JOINTS)
-        self.step('sticky',cmd_flag=0)
+        self.step('StickyPads',cmd_flag=0)
         time.sleep(0.05)
         
         ## RESET POSITION AND VELOCITY
@@ -791,7 +810,7 @@ class CrazyflieEnv:
 
         ## RESET HOME/TUMBLE DETECTION AND STICKY
         # self.step('tumble',cmd_flag=1) # Tumble Detection On
-        self.step('home')
+        self.step('Ctrl_Reset')
 
     def updateInertia(self):
 

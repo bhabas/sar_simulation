@@ -290,12 +290,12 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
                 
     }
 
-    if(msg->cmd_type == 6)
+    if(msg->cmd_type == 21)
     {
         CF_DataConverter::LoadParams();
     }
 
-    if(msg->cmd_type == 11)
+    if(msg->cmd_type == 92)
     {
         if(msg->cmd_flag == 0)
         {

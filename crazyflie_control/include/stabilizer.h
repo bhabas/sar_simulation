@@ -380,7 +380,7 @@ void Controller::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
 
     setpoint.GTC_cmd_rec = true;
 
-    if(msg->cmd_type == 6) // RESET ROS PARAM VALUES
+    if(msg->cmd_type == 21) // RESET ROS PARAM VALUES
     {
         Controller::loadParams();
 
