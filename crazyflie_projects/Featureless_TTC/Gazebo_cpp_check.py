@@ -149,7 +149,7 @@ class CameraClass:
         ax3.set_xlabel("Time [s]")
         #OFx error plots
         ax4 = fig2.add_subplot(224,sharex = ax3)
-        ax4.plot(Time_arr[2:],(OFy_est[2:] - OFy_act[2:]),color = "r",label = "Error in OFy")
+        ax4.plot(Time_arr[2:],(OFx_est[2:] - OFx_act[2:]),color = "r",label = "Error in OFy")
         ax4.grid()
         ax4.legend(loc='upper right')
         ax4.set_ylabel("Error")
