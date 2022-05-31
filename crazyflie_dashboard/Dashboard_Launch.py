@@ -17,9 +17,8 @@ from nav_msgs.msg import Odometry
 
 ## CHECK IF SIM OR EXPERIMENT IS RUNNING
 DATA_TYPE = rospy.get_param("DATA_TYPE")
-if DATA_TYPE == "EXP":
-    from crazyflie_msgs_exp.msg import Vicon_Filtered,CF_StateData,GenericLogData
-    from geometry_msgs.msg import TransformStamped
+from crazyflie_msgs.msg import Vicon_Filtered,CF_StateData,GenericLogData
+from geometry_msgs.msg import TransformStamped
     
 from threading import Thread, Timer
 import time
