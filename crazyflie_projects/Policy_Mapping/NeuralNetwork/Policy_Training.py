@@ -355,6 +355,61 @@ class Policy_Trainer():
         f.write("};")
         f.close()
 
+    def load_SVM_Params(self,path):
+        """Parse model params from C header file into SVM model
+
+        Args:
+            path (string): string to C header file
+        """        
+        
+        ## READ PARAMS FROM FILE AS STRING
+        f = open(path,"r")
+        f.readline() # Skip first line
+        file_string = f.read()
+
+        ## CLEAN STRING FROM EXTRA CHARACTERS
+        char_remove = ['"','\n','\t']
+        for char in char_remove:
+            file_string = file_string.replace(char,'')
+
+        ## CREATE LIST OF MATRIX STRINGS
+        matrix_list = file_string.split("*")
+
+
+        ## SPLIT STRINGS INTO PROPER SCALERS AND MATRICES
+        for ii,matrix_str in enumerate(matrix_list[:-1]):
+            
+            val_list = matrix_str[:-1].split(",")   # Break string up into components
+            num_rows = int(val_list[0])             # Extract number of rows
+            num_cols = int(val_list[1])             # Extract number of columns
+            arr = np.array(val_list[2:]).astype(np.float64).reshape(num_rows,num_cols) # Extract matrix
+
+            ## EXTRACT SCALER FOR MEAN
+            if ii == 0:
+                self.scaler.mean_ = arr[:,0]
+
+            ## EXTRACT SCALER FOR VARIANCE
+            elif ii == 1:
+                self.scaler.scale_ = arr[:,0]
+            
+            ## EXTRACT GAMMA
+            elif ii == 2:
+                self.SVM_model._gamma = arr[0,0]
+            
+            ## EXTRACT INTERCEPT
+            elif ii == 3:
+                self.SVM_model._intercept_ = arr[:,0]
+
+            ## EXTRACT DUAL COEFFS
+            elif ii == 4:
+                self.SVM_model._dual_coef_ = arr.reshape(1,-1)
+
+            ## EXTRACT SUPPORT VECTORS
+            elif ii == 5:
+                self.SVM_model.support_vectors_ = arr
+
+        
+
     def evalModel(self,X,y,LR_bound=0.9):
         """Evaluate the model
 
@@ -744,8 +799,9 @@ if __name__ == "__main__":
     # Policy.train_NN_Model(X_train,y_train,X_test,y_test,epochs=1000)
     # Policy.save_NN_Params(Param_Path)
 
-    Policy.train_OC_SVM(X_train)
-    Policy.save_SVM_Params(SVM_Param_Path)
+    # Policy.train_OC_SVM(X_train)
+    # Policy.save_SVM_Params(SVM_Param_Path)
+    Policy.load_SVM_Params(SVM_Param_Path)
     # NN_Policy_Trainer.evalModel(X,y)
 
     # NN_Policy_Trainer.loadModelFromParams(Param_Path)
