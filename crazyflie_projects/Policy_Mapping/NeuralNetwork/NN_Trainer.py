@@ -19,16 +19,16 @@ import plotly.graph_objects as go
 np.set_printoptions(suppress=True)
 BASEPATH = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Policy_Mapping"
 
-class NN_Trainer():
-    def __init__(self,model,model_initials,learning_rate=0.001,LR_bound=0.9):
+class Policy_Trainer():
+    def __init__(self,NN_model,model_initials,learning_rate=0.001,LR_bound=0.9):
 
-        self.model = model
+        self.NN_model = NN_model
         self.model_initials = model_initials
         self.LR_bound = LR_bound # Landing Rate bound
         self.learning_rate = learning_rate # Learning Rate
 
         self.scaler = preprocessing.StandardScaler()
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
+        self.optimizer = torch.optim.Adam(self.NN_model.parameters(), lr=self.learning_rate)
 
     def createScaler(self,X):
         """Determine scalers to scale training data to mean = 0 and std = 1 before passing through NN
@@ -74,15 +74,15 @@ class NN_Trainer():
 
         return self.scaler.inverse_transform(X_scaled)
 
-    def modelPredict(self,X):
+    def NN_Predict(self,X):
         X_scaled = torch.FloatTensor(self.scaleData(X))
 
         with torch.no_grad():
-            y_pred = self.model.forward(X_scaled)
+            y_pred = self.NN_model.forward(X_scaled)
 
         return y_pred
 
-    def saveParams(self,path):
+    def save_NN_Params(self,path):
         f = open(path,'a')
         f.truncate(0) ## Clears contents of file
         f.write("static char NN_Params_Flip[] = {\n")
@@ -110,7 +110,7 @@ class NN_Trainer():
         ## SAVE NN LAYER VALUES
         with torch.no_grad():
             ii = 0
-            for name, layer in self.model.named_modules():
+            for name, layer in self.NN_model.named_modules():
                 if ii > 0: # Skip initialization layer
 
                     W = layer.weight.numpy()
@@ -135,7 +135,7 @@ class NN_Trainer():
         f.write("};")
         f.close()
 
-    def loadModelFromParams(self,path):
+    def load_NN_Params(self,path):
         """Parse model params from C header file into Pytorch model
 
         Args:
@@ -176,7 +176,7 @@ class NN_Trainer():
                 arr_list.append(arr)
 
         ## EXTRACT LAYERS FROM PYTORCH MODEL
-        layer_list = list(dict(self.model.named_modules()).values())[1:]
+        layer_list = list(dict(self.NN_model.named_modules()).values())[1:]
 
         ## FILL MATRICES INTO PYTORCH MODEL
         for ii in range(len(arr_list)):
@@ -186,7 +186,7 @@ class NN_Trainer():
                 layer_list[ii//2].bias.data = torch.FloatTensor(arr_list[ii].flatten())
 
 
-    def trainModel(self,X_train,y_train,X_test,y_test,LR_bound=0.8,epochs=500):
+    def train_NN_Model(self,X_train,y_train,X_test,y_test,epochs=500):
 
         ## CONVERT DATA ARRAYS TO TENSORS
         X_train = torch.FloatTensor(self.scaleData(X_train))
@@ -215,7 +215,7 @@ class NN_Trainer():
 
 
             ## CALC TRAINING LOSS
-            y_pred_train = self.model.forward(X_train)
+            y_pred_train = self.NN_model.forward(X_train)
 
             loss_train_My = criterion_train_My(y_pred_train,y_train_My)
             loss = loss_train_My
@@ -223,7 +223,7 @@ class NN_Trainer():
 
             ## CALC VALIDATION LOSS
             with torch.no_grad():
-                y_pred_test = self.model.forward(X_test)
+                y_pred_test = self.NN_model.forward(X_test)
                 loss_test_My = criterion_test_My(y_pred_test,y_test_My)
                 losses_test.append(loss_test_My.item())
 
@@ -282,7 +282,7 @@ class NN_Trainer():
         """        
 
         ## PREDICT VALUES FROM EVALUATION DATASET
-        y_pred = self.modelPredict(X)
+        y_pred = self.NN_Predict(X)
         y_pred = np.where(y_pred[:,0].detach().numpy() < LR_bound,0,1)
         y_class = np.where(y[:,0] < LR_bound,0,1)
 
@@ -309,7 +309,7 @@ class NN_Trainer():
             OF_y_grid.flatten(),
             d_ceil_grid.flatten()),axis=1)
 
-        y_pred_grid = self.modelPredict(X_grid)
+        y_pred_grid = self.NN_Predict(X_grid)
 
         fig = go.Figure()
 
@@ -408,7 +408,7 @@ class NN_Trainer():
                 OF_y_grid.flatten(),
                 d_ceil_grid.flatten()),axis=1)
 
-            y_pred_grid = self.modelPredict(X_grid).numpy()
+            y_pred_grid = self.NN_Predict(X_grid).numpy()
             valid_idx = np.where(y_pred_grid[:,0] >= LR_bound)
             X_grid = X_grid[valid_idx]
             y_pred_grid = y_pred_grid[valid_idx]
@@ -439,7 +439,7 @@ class NN_Trainer():
                 df_custom["Tau_flip_mean"],
                 df_custom["OFy_flip_mean"],
                 df_custom["D_ceil_flip_mean"]),axis=1)
-            y_pred = self.modelPredict(X_grid)[:,1].numpy().flatten()
+            y_pred = self.NN_Predict(X_grid)[:,1].numpy().flatten()
             error = df_custom["My_mean"].to_numpy().flatten() - y_pred
         
             ## PLOT DATA POINTS
@@ -505,7 +505,7 @@ class NN_Trainer():
                 OF_y_grid.flatten(),
                 d_ceil_grid.flatten()),axis=1)
 
-            y_pred_grid = self.modelPredict(X_grid).numpy()
+            y_pred_grid = self.NN_Predict(X_grid).numpy()
             valid_idx = np.where(y_pred_grid[:,0] > 0.2)
             X_grid = X_grid[valid_idx]
             y_pred_grid = y_pred_grid[valid_idx]
@@ -536,7 +536,7 @@ class NN_Trainer():
                 df_custom["Tau_flip_mean"],
                 df_custom["OFy_flip_mean"],
                 df_custom["D_ceil_flip_mean"]),axis=1)
-            y_pred = self.modelPredict(X_grid)[:,0].numpy().flatten()
+            y_pred = self.NN_Predict(X_grid)[:,0].numpy().flatten()
             error = df_custom["LR_4leg"].to_numpy().flatten() - y_pred
         
             ## PLOT DATA POINTS
@@ -622,7 +622,7 @@ if __name__ == "__main__":
     model_initials = "NL_DR"
     learning_rate = 0.01
     model = NN_Model()
-    NN_Policy_Trainer = NN_Trainer(model,model_initials,learning_rate=learning_rate,LR_bound=LR_bound)
+    NN_Policy_Trainer = Policy_Trainer(model,model_initials,learning_rate=learning_rate,LR_bound=LR_bound)
 
     ## LOAD DATA
     df_raw = pd.read_csv(f"{BASEPATH}/Data_Logs/NL_DR/NL_LR_Trials_DR.csv").dropna() # Collected data
@@ -654,8 +654,8 @@ if __name__ == "__main__":
 
     Param_Path = f'{BASEPATH}/NeuralNetwork/Info/NN_Layers_{model_initials}.h'
     NN_Policy_Trainer.createScaler(X)
-    NN_Policy_Trainer.trainModel(X_train,y_train,X_test,y_test,LR_bound=LR_bound,epochs=1000)
-    # NN_Policy_Trainer.saveParams(Param_Path)
+    NN_Policy_Trainer.train_NN_Model(X_train,y_train,X_test,y_test,epochs=1000)
+    NN_Policy_Trainer.save_NN_Params(Param_Path)
     # NN_Policy_Trainer.evalModel(X,y)
 
     # NN_Policy_Trainer.loadModelFromParams(Param_Path)
