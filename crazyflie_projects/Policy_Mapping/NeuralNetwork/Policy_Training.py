@@ -282,18 +282,23 @@ class Policy_Trainer():
 
         X = self.scaleData(X)
 
-        def kernel(x,xi,gamma):
-            return np.exp(-gamma*np.sum((x-xi)**2))
-
         support_vecs = self.SVM_model.support_vectors_
         dual_coeffs = self.SVM_model.dual_coef_
         gamma = self.SVM_model._gamma
         intercept = self.SVM_model.intercept_
 
+        # https://scikit-learn.org/stable/modules/svm.html
+        # Eq: decision_val = sum(dual_coeff[ii]*K(supp_vec[ii],X)) + b
+
+        ## PASS STATE VALUE THROUGH OC_SVM
         val = 0
         for ii in range(len(support_vecs)):
-            val += dual_coeffs[0,ii]*kernel(support_vecs[ii],X,gamma)
+            val += dual_coeffs[0,ii]*np.exp(-gamma*np.sum((X-support_vecs[ii])**2))
         val += intercept
+
+        ## CHECK IF MANUAL CALC DOESN'T MATCH PACKAGE
+        if not np.isclose(val,self.SVM_model.decision_function(X))[0]:
+            raise Exception
 
         return val
 
@@ -724,8 +729,10 @@ if __name__ == "__main__":
     Policy.save_SVM_Params(SVM_Param_Path)
     Policy.load_SVM_Params(SVM_Param_Path)
 
-    Policy.plotClassification(df_raw)
-    Policy.plotPolicy(df_raw,PlotRegion=True)
+    Policy.OC_SVM_Predict(np.array([[5,2,1]]))
+
+    # Policy.plotClassification(df_raw)
+    # Policy.plotPolicy(df_raw,PlotRegion=True)
     # Policy.plotPolicy(df_raw,PlotRegion=False)
 
     # Policy.evalModel(X,y)
