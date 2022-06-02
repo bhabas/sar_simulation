@@ -42,7 +42,7 @@ class Policy_Trainer():
         self.scaler = preprocessing.StandardScaler().fit(X)
 
         ## SAVE SCALER TO FILE 
-        np.savetxt(f"{BASEPATH}/NeuralNetwork/Info/Scaler_{self.model_initials}.csv",
+        np.savetxt(f"{BASEPATH}/Policy_Training/Info/Scaler_{self.model_initials}.csv",
             np.stack((self.scaler.mean_,self.scaler.scale_),axis=1),
             fmt='%.6f',
             delimiter=',',
@@ -508,26 +508,26 @@ class Policy_Trainer():
             )
         )
 
-        fig.add_trace(
-            go.Volume(
-                ## ISO SURFACE
-                x=X_grid[:,1].flatten(),
-                y=X_grid[:,0].flatten(),
-                z=X_grid[:,2].flatten(),
-                value=y_pred_grid.flatten(),
+        # fig.add_trace(
+        #     go.Volume(
+        #         ## ISO SURFACE
+        #         x=X_grid[:,1].flatten(),
+        #         y=X_grid[:,0].flatten(),
+        #         z=X_grid[:,2].flatten(),
+        #         value=y_pred_grid.flatten(),
                 
-                surface_count=1,
-                opacity=0.3,
-                isomin=-0.05,
-                isomax=0.1,
-                # colorscale='Viridis',  
-                cmin=0,
-                cmax=1,     
-                caps=dict(x_show=False, y_show=False),
-                colorbar=dict(title='Title',) , 
-                hoverinfo='skip'
-            )
-        )
+        #         surface_count=1,
+        #         opacity=0.3,
+        #         isomin=-0.05,
+        #         isomax=0.1,
+        #         # colorscale='Viridis',  
+        #         cmin=0,
+        #         cmax=1,     
+        #         caps=dict(x_show=False, y_show=False),
+        #         colorbar=dict(title='Title',) , 
+        #         hoverinfo='skip'
+        #     )
+        # )
 
         
 
@@ -716,8 +716,8 @@ if __name__ == "__main__":
     y_test = test_df[['My_mean']].to_numpy()
 
 
-    NN_Param_Path = f'{BASEPATH}/NeuralNetwork/Info/NN_Layers_{model_initials}.h'
-    SVM_Param_Path = f'{BASEPATH}/NeuralNetwork/Info/SVM_Params_{model_initials}.h'
+    NN_Param_Path = f'{BASEPATH}/Policy_Training/Info/NN_Layers_{model_initials}.h'
+    SVM_Param_Path = f'{BASEPATH}/Policy_Training/Info/SVM_Params_{model_initials}.h'
 
     Policy.createScaler(X)
 
@@ -731,7 +731,7 @@ if __name__ == "__main__":
 
     Policy.OC_SVM_Predict(np.array([[5,2,1]]))
 
-    # Policy.plotClassification(df_raw)
+    Policy.plotClassification(df_raw)
     # Policy.plotPolicy(df_raw,PlotRegion=True)
     # Policy.plotPolicy(df_raw,PlotRegion=False)
 
