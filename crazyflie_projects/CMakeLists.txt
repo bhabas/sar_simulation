@@ -19,6 +19,6 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(example_test Policy_Mapping/Test_Script/example.cpp Policy_Mapping/Test_Script/nml.c Policy_Mapping/Test_Script/nml_util.c)
-add_dependencies(example_test ${catkin_EXPORTED_TARGETS})
-target_link_libraries(example_test ${catkin_LIBRARIES})
+# add_executable(example_test Policy_Mapping/Test_Script/example.cpp Policy_Mapping/Test_Script/nml.c Policy_Mapping/Test_Script/nml_util.c)
+# add_dependencies(example_test ${catkin_EXPORTED_TARGETS})
+# target_link_libraries(example_test ${catkin_LIBRARIES})
