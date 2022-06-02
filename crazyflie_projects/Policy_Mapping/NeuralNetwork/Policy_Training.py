@@ -280,8 +280,80 @@ class Policy_Trainer():
         X_train = self.scaler.transform(X_train)
 
         ## FIT OC_SVM MODEL
+        self.SVM_model.fit(X_train)
+
+
+    def save_SVM_Params(self,path):
+
+        f = open(path,'a')
+        f.truncate(0) ## Clears contents of file
+        f.write("static char SVM_Params[] = {\n")
         
-        # clf.fit(X_train)
+
+        ## EXTEND SCALER ARRAY DIMENSIONS
+        scaler_means = self.scaler.mean_.reshape(-1,1)
+        scaler_stds = self.scaler.scale_.reshape(-1,1)
+        
+        ## SAVE SCALER ARRAY VALUES
+        np.savetxt(f,scaler_means,
+                    fmt='"%.6f,"',
+                    delimiter='\t',
+                    comments='',
+                    header=f'"{scaler_means.shape[0]},"\t"{scaler_means.shape[1]},"',
+                    footer='"*"\n')
+
+        np.savetxt(f,scaler_stds,
+                    fmt='"%.6f,"',
+                    delimiter='\t',
+                    comments='',
+                    header=f'"{scaler_stds.shape[0]},"\t"{scaler_stds.shape[1]},"',
+                    footer='"*"\n')
+
+        gamma = np.array(self.SVM_model._gamma).reshape(-1,1)
+        intercept = self.SVM_model._intercept_.reshape(-1,1)
+        dual_coeffs = self.SVM_model._dual_coef_.reshape(-1,1)
+        support_vecs = self.SVM_model.support_vectors_
+        
+
+        ## SAVE GAMMA
+        np.savetxt(f,gamma,
+                    fmt='"%.6f,"',
+                    delimiter='\t',
+                    comments='',
+                    header=f'"{gamma.shape[0]},"\t"{gamma.shape[1]},"',
+                    footer='"*"\n')
+
+        ## SAVE INTERCEPT
+        np.savetxt(f,intercept,
+                    fmt='"%.6f,"',
+                    delimiter='\t',
+                    comments='',
+                    header=f'"{intercept.shape[0]},"\t"{intercept.shape[1]},"',
+                    footer='"*"\n')
+
+        
+        ## SAVE DUAL COEFFS
+        np.savetxt(f,dual_coeffs,
+                    fmt='"%.6f,"',
+                    delimiter='\t',
+                    comments='',
+                    header=f'"{dual_coeffs.shape[0]},"\t"{dual_coeffs.shape[1]},"',
+                    footer='"*"\n')
+
+        ## SAVE SUPPORT VECTORS
+        np.savetxt(f,support_vecs,
+                    fmt='"%.6f,"',
+                    delimiter='\t',
+                    comments='',
+                    header=f'"{support_vecs.shape[0]},"\t"{support_vecs.shape[1]},"',
+                    footer='"*"\n')
+
+        
+
+        
+
+        f.write("};")
+        f.close()
 
     def evalModel(self,X,y,LR_bound=0.9):
         """Evaluate the model
@@ -665,12 +737,15 @@ if __name__ == "__main__":
     y_test = test_df[['My_mean']].to_numpy()
 
 
-    Param_Path = f'{BASEPATH}/NeuralNetwork/Info/NN_Layers_{model_initials}.h'
+    NN_Param_Path = f'{BASEPATH}/NeuralNetwork/Info/NN_Layers_{model_initials}.h'
+    SVM_Param_Path = f'{BASEPATH}/NeuralNetwork/Info/SVM_Params_{model_initials}.h'
+
     Policy.createScaler(X)
     # Policy.train_NN_Model(X_train,y_train,X_test,y_test,epochs=1000)
     # Policy.save_NN_Params(Param_Path)
 
     Policy.train_OC_SVM(X_train)
+    Policy.save_SVM_Params(SVM_Param_Path)
     # NN_Policy_Trainer.evalModel(X,y)
 
     # NN_Policy_Trainer.loadModelFromParams(Param_Path)
