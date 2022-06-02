@@ -10,6 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 ## SKLEARN IMPORTS
+from sklearn.svm import OneClassSVM
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import *
 from sklearn import preprocessing
@@ -20,11 +21,11 @@ np.set_printoptions(suppress=True)
 BASEPATH = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Policy_Mapping"
 
 class Policy_Trainer():
-    def __init__(self,NN_model,model_initials,learning_rate=0.001,LR_bound=0.9):
+    def __init__(self,NN_model,SVM_model,model_initials,learning_rate=0.001):
 
         self.NN_model = NN_model
+        self.SVM_model = SVM_model
         self.model_initials = model_initials
-        self.LR_bound = LR_bound # Landing Rate bound
         self.learning_rate = learning_rate # Learning Rate
 
         self.scaler = preprocessing.StandardScaler()
@@ -272,6 +273,15 @@ class Policy_Trainer():
 
         plt.tight_layout()
         plt.show()
+
+    def train_OC_SVM(self,X_train):
+
+        ## SCALE TRAINING DATA
+        X_train = self.scaler.transform(X_train)
+
+        ## FIT OC_SVM MODEL
+        
+        # clf.fit(X_train)
 
     def evalModel(self,X,y,LR_bound=0.9):
         """Evaluate the model
@@ -621,8 +631,11 @@ if __name__ == "__main__":
     LR_bound = 0.8 # Classify states with LR higher than this value as valid
     model_initials = "NL_DR"
     learning_rate = 0.01
-    model = NN_Model()
-    NN_Policy_Trainer = Policy_Trainer(model,model_initials,learning_rate=learning_rate,LR_bound=LR_bound)
+
+    NN_model = NN_Model()
+    SVM_model = OneClassSVM(nu=0.2,gamma=2)
+
+    Policy = Policy_Trainer(NN_model,SVM_model,model_initials,learning_rate=learning_rate)
 
     ## LOAD DATA
     df_raw = pd.read_csv(f"{BASEPATH}/Data_Logs/NL_DR/NL_LR_Trials_DR.csv").dropna() # Collected data
@@ -653,9 +666,11 @@ if __name__ == "__main__":
 
 
     Param_Path = f'{BASEPATH}/NeuralNetwork/Info/NN_Layers_{model_initials}.h'
-    NN_Policy_Trainer.createScaler(X)
-    NN_Policy_Trainer.train_NN_Model(X_train,y_train,X_test,y_test,epochs=1000)
-    NN_Policy_Trainer.save_NN_Params(Param_Path)
+    Policy.createScaler(X)
+    # Policy.train_NN_Model(X_train,y_train,X_test,y_test,epochs=1000)
+    # Policy.save_NN_Params(Param_Path)
+
+    Policy.train_OC_SVM(X_train)
     # NN_Policy_Trainer.evalModel(X,y)
 
     # NN_Policy_Trainer.loadModelFromParams(Param_Path)
