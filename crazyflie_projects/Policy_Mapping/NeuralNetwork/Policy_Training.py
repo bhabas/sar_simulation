@@ -300,7 +300,7 @@ class Policy_Trainer():
     def train_OC_SVM(self,X_train):
 
         ## SCALE TRAINING DATA
-        X_train = self.scaler.transform(X_train)
+        X_train = self.scaleData(X_train)
 
         ## FIT OC_SVM MODEL
         self.SVM_model.fit(X_train)
@@ -383,7 +383,7 @@ class Policy_Trainer():
         Args:
             path (string): string to C header file
         """        
-        
+
         ## READ PARAMS FROM FILE AS STRING
         f = open(path,"r")
         f.readline() # Skip first line
@@ -455,16 +455,22 @@ class Policy_Trainer():
 
     def plotClassification(self,df_custom):
         
-        ## CREATE CONTOUR VOLUME
-        tmp = np.linspace(-4,4,30)
-        XX, YY, ZZ = np.meshgrid(tmp,tmp,tmp)
-        X_grid = np.stack((XX.flatten(), YY.flatten(), ZZ.flatten()),axis=1)
+
+        Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
+            np.linspace(0.15, 0.35, 45),
+            np.linspace(-15, 1, 45),
+            np.linspace(0.0, 1.0, 45)
+        )
+
+        ## CONCATENATE DATA TO MATCH INPUT
+        X_grid = np.stack((
+            Tau_grid.flatten(),
+            OF_y_grid.flatten(),
+            d_ceil_grid.flatten()),axis=1)
+        
 
         # y_pred_grid = self.OC_SVM_Predict(X_grid)
-        y_pred_grid = self.SVM_model.decision_function(X_grid)
-
-        ## SCALE CONTOUR VOLUME BACK TO NORMAL COORDINATES
-        X_grid = self.scaler.inverse_transform(X_grid)
+        y_pred_grid = self.SVM_model.decision_function(self.scaleData(X_grid))
 
 
         fig = go.Figure()
@@ -518,24 +524,6 @@ class Policy_Trainer():
             )
         )
 
-        # ## PLOT DATA POINTS
-        # fig.add_trace(
-        #     go.Scatter3d(
-        #         ## DATA
-        #         x=[-7.754],
-        #         y=[0.259],
-        #         z=[0.298],
-
-        #         ## MARKER
-        #         mode='markers',
-        #         marker=dict(
-        #             size=3,
-        #             color=[1.0],
-        #             colorscale='Viridis',   # choose a colorscale
-        #             opacity=1.0)
-        #     )
-        # )
-
         fig.update_layout(
             scene=dict(
                 xaxis_title='OFy [rad/s]',
@@ -548,11 +536,12 @@ class Policy_Trainer():
         )
         fig.show()
 
-    def plotPolicy(self,df_custom,LR_bound=0.9,PlotRegion=False):
+    def plotPolicy(self,df_custom,PlotRegion=False):
 
         fig = go.Figure()
 
         if PlotRegion:
+
             ## CREATE GRID
             Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
                 np.linspace(0.15, 0.35, 45),
@@ -566,10 +555,12 @@ class Policy_Trainer():
                 OF_y_grid.flatten(),
                 d_ceil_grid.flatten()),axis=1)
 
-            y_pred_grid = self.NN_Predict(X_grid).numpy()
-            valid_idx = np.where(y_pred_grid[:,0] >= LR_bound)
+            ## PREDICT VALID POINTS
+            y_pred_grid = self.SVM_model.decision_function(self.scaleData(X_grid))
+            valid_idx = np.where(y_pred_grid >= 0.0)
+
             X_grid = X_grid[valid_idx]
-            y_pred_grid = y_pred_grid[valid_idx]
+            y_pred_My = self.NN_Predict(X_grid).numpy()
 
             ## PLOT DATA POINTS
             fig.add_trace(
@@ -583,7 +574,7 @@ class Policy_Trainer():
                     mode='markers',
                     marker=dict(
                         size=3,
-                        color=np.abs(y_pred_grid[:,1].flatten()),                # set color to an array/list of desired values
+                        color=np.abs(y_pred_My.flatten()),                # set color to an array/list of desired values
                         cmin=0,
                         cmax=10,
                         showscale=True,
@@ -592,46 +583,46 @@ class Policy_Trainer():
                     )
                 )
             )
-        else:
-            X_grid = np.stack((
-                df_custom["Tau_flip_mean"],
-                df_custom["OFy_flip_mean"],
-                df_custom["D_ceil_flip_mean"]),axis=1)
-            y_pred = self.NN_Predict(X_grid)[:,1].numpy().flatten()
-            error = df_custom["My_mean"].to_numpy().flatten() - y_pred
+        # else:
+        #     X_grid = np.stack((
+        #         df_custom["Tau_flip_mean"],
+        #         df_custom["OFy_flip_mean"],
+        #         df_custom["D_ceil_flip_mean"]),axis=1)
+        #     y_pred = self.NN_Predict(X_grid)[:,1].numpy().flatten()
+        #     error = df_custom["My_mean"].to_numpy().flatten() - y_pred
         
-            ## PLOT DATA POINTS
-            fig.add_trace(
-                go.Scatter3d(
-                    ## DATA
-                    x=X_grid[:,1].flatten(),
-                    y=X_grid[:,0].flatten(),
-                    z=X_grid[:,2].flatten(),
+        #     ## PLOT DATA POINTS
+        #     fig.add_trace(
+        #         go.Scatter3d(
+        #             ## DATA
+        #             x=X_grid[:,1].flatten(),
+        #             y=X_grid[:,0].flatten(),
+        #             z=X_grid[:,2].flatten(),
 
-                    ## HOVER DATA
-                    customdata=np.stack((error,df_custom["My_mean"].to_numpy().flatten(),y_pred),axis=1),
-                    hovertemplate=
-                    "<br>My: %{customdata[1]:.3f}</br> \
-                     <br>Error: %{customdata[0]:.3f}</br> \
-                     <br>Pred: %{customdata[2]:.3f}</br>",
+        #             ## HOVER DATA
+        #             customdata=np.stack((error,df_custom["My_mean"].to_numpy().flatten(),y_pred),axis=1),
+        #             hovertemplate=
+        #             "<br>My: %{customdata[1]:.3f}</br> \
+        #              <br>Error: %{customdata[0]:.3f}</br> \
+        #              <br>Pred: %{customdata[2]:.3f}</br>",
                     
                         
 
-                    ## MARKER
-                    mode='markers',
-                    marker=dict(
-                        size=3,
-                        # color=np.abs(df_custom["My_mean"].to_numpy().flatten()),
-                        color=np.abs(y_pred),
-                        # color = np.abs(error),
-                        cmin=0,
-                        cmax=10,
-                        showscale=True,
-                        colorscale='Viridis',   # choose a colorscale
-                        opacity=1.0
-                    )
-                )
-            )
+        #             ## MARKER
+        #             mode='markers',
+        #             marker=dict(
+        #                 size=3,
+        #                 # color=np.abs(df_custom["My_mean"].to_numpy().flatten()),
+        #                 color=np.abs(y_pred),
+        #                 # color = np.abs(error),
+        #                 cmin=0,
+        #                 cmax=10,
+        #                 showscale=True,
+        #                 colorscale='Viridis',   # choose a colorscale
+        #                 opacity=1.0
+        #             )
+        #         )
+        #       )
 
         fig.update_layout(
             scene=dict(
@@ -781,7 +772,7 @@ if __name__ == "__main__":
     learning_rate = 0.01
 
     NN_model = NN_Model()
-    SVM_model = OneClassSVM(nu=0.2,gamma=2)
+    SVM_model = OneClassSVM(nu=0.2,gamma=5)
 
     Policy = Policy_Trainer(NN_model,SVM_model,model_initials,learning_rate=learning_rate)
 
@@ -821,25 +812,20 @@ if __name__ == "__main__":
 
     # Policy.train_NN_Model(X_train,y_train,X_test,y_test,epochs=1000)
     # Policy.save_NN_Params(NN_Param_Path)
-    # Policy.load_NN_Params(NN_Param_Path)
+    Policy.load_NN_Params(NN_Param_Path)
 
     Policy.train_OC_SVM(X)
-
-
-
-    X_vals = np.array([[0,0,0]])
     # Policy.save_SVM_Params(SVM_Param_Path)
     # Policy.load_SVM_Params(SVM_Param_Path)
 
     Policy.plotClassification(df_raw)
-
-
-
     # Policy.evalModel(X,y)
 
-    # print(NN_Policy_Trainer.modelPredict(np.array([[0.259,-7.754,0.298]])))
+    Policy.plotPolicy(df_raw,PlotRegion=True)
+
+
+
     # NN_Policy_Trainer.evalModel(X,y,LR_bound=LR_bound)
-    # NN_Policy_Trainer.plotPolicy(df_raw,PlotRegion=True,LR_bound=0.8)
     # NN_Policy_Trainer.plotPolicy(df_raw,PlotRegion=False,LR_bound=0.8)
 
     # NN_Policy_Trainer.plotLandingRate(df_raw,PlotRegion=True)
