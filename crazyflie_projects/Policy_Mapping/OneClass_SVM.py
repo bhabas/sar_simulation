@@ -5,8 +5,9 @@ import matplotlib.font_manager
 from sklearn.datasets import load_wine
 
 def kernel(x,xi,gamma):
-    return np.exp(-gamma*np.linalg.norm(x-xi)**2)
+    # return np.exp(-gamma*np.linalg.norm(x-xi)**2)
     # np.sum(np.power((actual_value-predicted_value),2))
+    return np.exp(-gamma*np.sum((x-xi)**2))
 
 def dec_func(clf,X_test):
     val = 0
@@ -27,6 +28,7 @@ clf.fit(X_train)
 Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
 Z = Z.reshape(xx.shape)
 
+X_test = np.array([[7.65,0.83]])
 
 fig = plt.figure()
 ax = fig.add_subplot(111)
