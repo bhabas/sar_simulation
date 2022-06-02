@@ -75,6 +75,10 @@ class Policy_Trainer():
 
         return self.scaler.inverse_transform(X_scaled)
 
+
+
+
+
     def NN_Predict(self,X):
         X_scaled = torch.FloatTensor(self.scaleData(X))
 
@@ -186,7 +190,6 @@ class Policy_Trainer():
             else:
                 layer_list[ii//2].bias.data = torch.FloatTensor(arr_list[ii].flatten())
 
-
     def train_NN_Model(self,X_train,y_train,X_test,y_test,epochs=500):
 
         ## CONVERT DATA ARRAYS TO TENSORS
@@ -274,6 +277,26 @@ class Policy_Trainer():
         plt.tight_layout()
         plt.show()
 
+
+    def OC_SVM_Predict(self,X):
+
+        X = self.scaleData(X)
+
+        def kernel(x,xi,gamma):
+            return np.exp(-gamma*np.sum((x-xi)**2))
+
+        support_vecs = self.SVM_model.support_vectors_
+        dual_coeffs = self.SVM_model.dual_coef_
+        gamma = self.SVM_model._gamma
+        intercept = self.SVM_model.intercept_
+
+        val = 0
+        for ii in range(len(support_vecs)):
+            val += dual_coeffs[0,ii]*kernel(support_vecs[ii],X,gamma)
+        val += intercept
+
+        return val
+
     def train_OC_SVM(self,X_train):
 
         ## SCALE TRAINING DATA
@@ -281,7 +304,6 @@ class Policy_Trainer():
 
         ## FIT OC_SVM MODEL
         self.SVM_model.fit(X_train)
-
 
     def save_SVM_Params(self,path):
 
@@ -431,47 +453,44 @@ class Policy_Trainer():
         print(f"False Negatives: {cfnMatrix[1,0]}")
         print(f"Classification Report: {classification_report(y_class,y_pred)}")
 
-    def plotClassification(self,df_custom,LR_bound=0.9):
+    def plotClassification(self,df_custom):
+        
+        ## CREATE CONTOUR VOLUME
+        tmp = np.linspace(-4,4,30)
+        XX, YY, ZZ = np.meshgrid(tmp,tmp,tmp)
+        X_grid = np.stack((XX.flatten(), YY.flatten(), ZZ.flatten()),axis=1)
 
-        ## CREATE GRID
-        Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
-            np.linspace(0, 0.5, 30),
-            np.linspace(-15, 0, 30),
-            np.linspace(0, 1.5, 30)
-        )
+        # y_pred_grid = self.OC_SVM_Predict(X_grid)
+        y_pred_grid = self.SVM_model.decision_function(X_grid)
 
-        ## CONCATENATE DATA TO MATCH INPUT
-        X_grid = np.stack((
-            Tau_grid.flatten(),
-            OF_y_grid.flatten(),
-            d_ceil_grid.flatten()),axis=1)
+        ## SCALE CONTOUR VOLUME BACK TO NORMAL COORDINATES
+        X_grid = self.scaler.inverse_transform(X_grid)
 
-        y_pred_grid = self.NN_Predict(X_grid)
 
         fig = go.Figure()
 
-        # fig.add_trace(
-        #     go.Volume(
-        #         ## ISO SURFACE
-        #         x=X_grid[:,1].flatten(),
-        #         y=X_grid[:,0].flatten(),
-        #         z=X_grid[:,2].flatten(),
-        #         value=y_pred_grid[:,0].flatten(),
+        fig.add_trace(
+            go.Volume(
+                ## ISO SURFACE
+                x=X_grid[:,1].flatten(),
+                y=X_grid[:,0].flatten(),
+                z=X_grid[:,2].flatten(),
+                value=y_pred_grid.flatten(),
                 
-        #         surface_count=10,
-        #         opacity=0.1,
-        #         isomin=LR_bound-0.05,
-        #         isomax=LR_bound,
-        #         # colorscale='Viridis',  
-        #         cmin=0,
-        #         cmax=1,     
-        #         caps=dict(x_show=False, y_show=False),
-        #         colorbar=dict(title='Title',) , 
-        #         hoverinfo='skip'
-        #     )
-        # )
+                surface_count=1,
+                opacity=0.1,
+                isomin=-0.05,
+                isomax=0.1,
+                # colorscale='Viridis',  
+                cmin=0,
+                cmax=1,     
+                caps=dict(x_show=False, y_show=False),
+                colorbar=dict(title='Title',) , 
+                hoverinfo='skip'
+            )
+        )
 
-        ## PLOT DATA POINTS
+        # PLOT DATA POINTS
         fig.add_trace(
             go.Scatter3d(
                 ## DATA
@@ -493,6 +512,8 @@ class Policy_Trainer():
                     size=3,
                     color=df_custom["LR_4leg"],
                     colorscale='Viridis',   # choose a colorscale
+                    cmin=0,
+                    cmax=1, 
                     opacity=0.8)
             )
         )
@@ -767,8 +788,9 @@ if __name__ == "__main__":
     ## LOAD DATA
     df_raw = pd.read_csv(f"{BASEPATH}/Data_Logs/NL_DR/NL_LR_Trials_DR.csv").dropna() # Collected data
     # df_raw = df_raw.query("phi_IC >= 86")
+    df_raw = df_raw.query("LR_4leg >= 0.8")
     df_bounds = pd.read_csv(f"{BASEPATH}/Data_Logs/NL_Raw/Boundary.csv") # Manufactured data to mold policy region
-    df_all = pd.concat([df_raw,df_bounds])
+    df_all = pd.concat([df_raw])
 
     ## ORGANIZE DATA
     Tau = df_all["Tau_flip_mean"]
@@ -796,18 +818,27 @@ if __name__ == "__main__":
     SVM_Param_Path = f'{BASEPATH}/NeuralNetwork/Info/SVM_Params_{model_initials}.h'
 
     Policy.createScaler(X)
+
     # Policy.train_NN_Model(X_train,y_train,X_test,y_test,epochs=1000)
-    # Policy.save_NN_Params(Param_Path)
+    # Policy.save_NN_Params(NN_Param_Path)
+    # Policy.load_NN_Params(NN_Param_Path)
 
-    # Policy.train_OC_SVM(X_train)
+    Policy.train_OC_SVM(X)
+
+
+
+    X_vals = np.array([[0,0,0]])
     # Policy.save_SVM_Params(SVM_Param_Path)
-    Policy.load_SVM_Params(SVM_Param_Path)
-    # NN_Policy_Trainer.evalModel(X,y)
+    # Policy.load_SVM_Params(SVM_Param_Path)
 
-    # NN_Policy_Trainer.loadModelFromParams(Param_Path)
+    Policy.plotClassification(df_raw)
+
+
+
+    # Policy.evalModel(X,y)
+
     # print(NN_Policy_Trainer.modelPredict(np.array([[0.259,-7.754,0.298]])))
     # NN_Policy_Trainer.evalModel(X,y,LR_bound=LR_bound)
-    # NN_Policy_Trainer.plotClassification(df_raw,LR_bound=0.8)
     # NN_Policy_Trainer.plotPolicy(df_raw,PlotRegion=True,LR_bound=0.8)
     # NN_Policy_Trainer.plotPolicy(df_raw,PlotRegion=False,LR_bound=0.8)
 
