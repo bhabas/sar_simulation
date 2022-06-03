@@ -18,9 +18,6 @@ static nml_mat* supp_vecs;
 
 int main()
 {
-    printf("hello\n");
-    nml_mat* mat = nml_mat_rnd(4,4,0,1);
-    nml_mat_print(mat);
 
     init_OC_SVM(&Scaler_Flip,SVM_Params,dual_coeffs,supp_vecs,intercept,gamma_);
 

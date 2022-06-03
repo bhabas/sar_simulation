@@ -18,12 +18,13 @@ float Sigmoid(float x);
 float Elu(float x);
 void NN_Forward_Flip(nml_mat* X, nml_mat* y_output, Scaler* scaler, nml_mat* W[], nml_mat* b[]);
 
-void init_OC_SVM(Scaler* scaler,char str[],nml_mat* dual_coeffs, nml_mat* supp_vecs, float intercept, float gamma_);
+void init_OC_SVM(Scaler* scaler,char str[],nml_mat* dual_coeffs,nml_mat* supp_vecs,float intercept,float gamma_);
 
 void init_OC_SVM(Scaler* scaler,char str[],nml_mat* dual_coeffs,nml_mat* supp_vecs,float intercept,float gamma_)
 {
     char* array_str;
     char* save_ptr;
+    nml_mat* tmp;
 
     // PARSE HEADER FILE FOR SCALER VALUES
     array_str = strtok_r(str,"*",&save_ptr);
@@ -32,9 +33,24 @@ void init_OC_SVM(Scaler* scaler,char str[],nml_mat* dual_coeffs,nml_mat* supp_ve
     array_str = strtok_r(NULL,"*",&save_ptr);
     scaler->std = nml_mat_fromstr(array_str);
 
-    array_str = strtok_r(NULL,"*",&save_ptr); // Load next array string
+    // GAMMA
+    array_str = strtok_r(NULL,"*",&save_ptr); 
+    tmp = nml_mat_fromstr(array_str);
+    gamma_ = tmp->data[0][0];
 
+    // INTERCEPT
+    array_str = strtok_r(NULL,"*",&save_ptr); 
+    tmp = nml_mat_fromstr(array_str);
+    intercept = tmp->data[0][0];
 
+    // DUAL COEFFS
+    array_str = strtok_r(NULL,"*",&save_ptr); 
+    dual_coeffs = nml_mat_fromstr(array_str);
+
+    // SUPPORT VECTORS
+    array_str = strtok_r(NULL,"*",&save_ptr); 
+    supp_vecs = nml_mat_fromstr(array_str);
+    
 }
 
 void initNN_Layers(Scaler* scaler,nml_mat* W[], nml_mat* b[], char str[],int numLayers)
