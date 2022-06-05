@@ -30,7 +30,7 @@ def executeFlight(env,agent):
         #     continue
 
     ## RESET TO INITIAL STATE
-    env.step("home") # Reset control vals and functionality to default vals
+    env.SendCmd("Ctrl_Reset") # Reset control vals and functionality to default vals
     time.sleep(0.5) # Time for CF to settle [Real-Time seconds]
     # input("here")
     env.RL_Publish()
@@ -55,14 +55,13 @@ def executeFlight(env,agent):
     # ============================
     ##          Rollout 
     # ============================
-    env.step("policy",env.policy,cmd_flag=1) # Arm policy inside controller
-    env.step('sticky',cmd_flag=1)              # Enable sticky pads
+    env.SendCmd('StickyPads',cmd_flag=1)              # Enable sticky pads
 
-    z_0 = env.h_ceiling - 1.0*env.vel_d[2]
+    tau_0 = 0.5
+    z_0 = env.h_ceiling - tau_0*env.vel_d[2]
     env.Vel_Launch([0,0,z_0],env.vel_d)
-    # env.step('traj',cmd_vals=[env.posCF_0[0],env.vel_d[0],env.accCF_max[0]],cmd_flag=0)
-    # env.step('traj',cmd_vals=[env.posCF_0[1],env.vel_d[1],env.accCF_max[1]],cmd_flag=1)
-    # env.step('traj',cmd_vals=[env.posCF_0[2],env.vel_d[2],env.accCF_max[2]],cmd_flag=2)
+    time.sleep(0.1)
+    env.SendCmd("Policy",env.policy,cmd_flag=1) # Arm policy inside controller
 
 
     while True: 
@@ -193,7 +192,7 @@ if __name__ == '__main__':
     env.Logging_Flag = True
     env.createCSV(env.filepath)
 
-    V_d = 1.0
+    V_d = 2.5
     phi = 90
     phi_rad = np.radians(phi)
     env.vel_d = [V_d*np.cos(phi_rad), 0.0, V_d*np.sin(phi_rad)] # [m/s]
