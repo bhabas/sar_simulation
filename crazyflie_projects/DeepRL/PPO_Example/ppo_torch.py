@@ -51,7 +51,7 @@ class PPOMemory:
 
 class ActorNetwork(nn.Module):
     def __init__(self, n_actions, input_dims, alpha,
-            fc1_dims=256, fc2_dims=256, chkpt_dir='/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/RL_Examples/PPO_Example'):
+            fc1_dims=256, fc2_dims=256, chkpt_dir='/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/PPO_Example'):
         super(ActorNetwork, self).__init__()
 
         self.checkpoint_file = os.path.join(chkpt_dir, 'actor_torch_ppo')
@@ -82,7 +82,7 @@ class ActorNetwork(nn.Module):
 
 class CriticNetwork(nn.Module):
     def __init__(self, input_dims, alpha, fc1_dims=256, fc2_dims=256,
-            chkpt_dir='/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/RL_Examples/PPO_Example'):
+            chkpt_dir='/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/PPO_Example'):
         super(CriticNetwork, self).__init__()
 
         self.checkpoint_file = os.path.join(chkpt_dir, 'critic_torch_ppo')
