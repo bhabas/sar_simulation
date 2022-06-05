@@ -187,7 +187,7 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
         int32_t X = 1;
         int32_t Y = 1;
         float w = 3.6e-6; //Pixel width in meters
-        float f = 0.66e-3/2 ;//Focal length in meters
+        float f = 0.66e-3/2; //Focal length in meters
         float U;
         float V;
         float O_up = WIDTH_PIXELS/2;
@@ -288,7 +288,6 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
         nml_mat_qr *QR = nml_mat_qr_solve(m_A); // A = Q*R
         nml_mat* y = nml_mat_dot(nml_mat_transp(QR->Q),m_b); // y = Q^T*b
         nml_mat* x_QR = nml_ls_solvebck(QR->R,y); // Solve R*x = y via back substitution
-        nml_mat_print(x_QR);
 
         sensorData.OFx_est = x_QR->data[0][0];
         sensorData.OFy_est = x_QR->data[1][0];
