@@ -38,6 +38,18 @@ def executeFlight(env,agent):
     env.startLogging()
 
 
+    
+
+    # ============================
+    ##          Rollout 
+    # ============================
+    env.SendCmd('StickyPads',cmd_flag=1)              # Enable sticky pads
+
+    tau_0 = 0.5
+    z_0 = env.h_ceiling - tau_0*env.vel_d[2]
+    env.Vel_Launch([0,0,z_0],env.vel_d)
+    env.SendCmd("Policy",env.policy,cmd_flag=1) # Arm policy inside controller
+
     ## RESET/UPDATE RUN CONDITIONS
     repeat_run= False
 
@@ -53,20 +65,6 @@ def executeFlight(env,agent):
     print(f"Vx_d: {env.vel_d[0]:.3f} \t Vy_d: {env.vel_d[1]:.3f} \t Vz_d: {env.vel_d[2]:.3f}")
     print("\n")
 
-    # ============================
-    ##          Rollout 
-    # ============================
-    env.SendCmd('StickyPads',cmd_flag=1)              # Enable sticky pads
-
-    tau_0 = 0.5
-    z_0 = env.h_ceiling - tau_0*env.vel_d[2]
-    # env.Vel_Launch([0,0,z_0],env.vel_d)
-
-    env.SendCmd('Vel_traj',cmd_vals=[env.posCF[0],env.vel_d[0],env.accCF_max[0]],cmd_flag=0)
-    env.SendCmd('Vel_traj',cmd_vals=[env.posCF[2],env.vel_d[2],env.accCF_max[2]],cmd_flag=2)
-
-    time.sleep(0.5)
-    env.SendCmd("Policy",env.policy,cmd_flag=1) # Arm policy inside controller
 
 
     while True: 

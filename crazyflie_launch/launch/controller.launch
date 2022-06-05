@@ -1,5 +1,5 @@
 <launch>
-    <node name="CF_DC_Node" pkg="crazyflie_data_converter" type="CF_DataConverter" launch-prefix="gnome-terminal --disable-factory --geometry 70x47+950+0 --"/>
-    <node name="controller_node" pkg="crazyflie_control" type="controller" />
+    <node name="controller_node" pkg="crazyflie_control" type="controller" launch-prefix="gnome-terminal --disable-factory --geometry 70x47+950+0 --"/>
+    <node name="CF_DC_Node" pkg="crazyflie_data_converter" type="CF_DataConverter" />
 
 </launch>

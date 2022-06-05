@@ -288,10 +288,12 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
         nml_mat_qr *QR = nml_mat_qr_solve(m_A); // A = Q*R
         nml_mat* y = nml_mat_dot(nml_mat_transp(QR->Q),m_b); // y = Q^T*b
         nml_mat* x_QR = nml_ls_solvebck(QR->R,y); // Solve R*x = y via back substitution
+        nml_mat_print(x_QR);
 
         sensorData.OFx_est = x_QR->data[0][0];
         sensorData.OFy_est = x_QR->data[1][0];
         float Tau_est = clamp((1/x_QR->data[2][0]), 0,30); //restricting Tau_est to be between -10:30
+
 
 
         // APPLY 5TH ORDER LOW PASS FILTER
