@@ -170,20 +170,18 @@ def cmd_send(env):
             elif action=='GZ_traj':
 
 
-                # ## GET INPUT VALUES
-                # V_d,phi,alpha = env.userInput("Flight Velocity (V_d,phi,alpha):",float)
+                ## GET INPUT VALUES
+                V_d,phi,alpha = env.userInput("Flight Velocity (V_d,phi,alpha):",float)
 
-                # ## DEFINE CARTESIAN VELOCITIES
-                # phi_rad = np.radians(phi)
-                # alpha_rad = np.radians(alpha)
-                # Vx_d = V_d*np.cos(phi_rad)*np.cos(alpha_rad)
-                # Vy_d = V_d*np.cos(phi_rad)*np.sin(alpha_rad)
-                # Vz_d = V_d*np.sin(phi_rad)
+                ## DEFINE CARTESIAN VELOCITIES
+                phi_rad = np.radians(phi)
+                alpha_rad = np.radians(alpha)
+                Vx_d = V_d*np.cos(phi_rad)*np.cos(alpha_rad)
+                Vy_d = V_d*np.cos(phi_rad)*np.sin(alpha_rad)
+                Vz_d = V_d*np.sin(phi_rad)
 
-                # ## ESTIMATE IMPACT POINT
-                # P_impact = env.impactEstimate(env.posCF,[Vx_d,Vy_d,Vz_d])
-                # env.traj_launch(env.posCF,[Vx_d,Vy_d,Vz_d])
-                pass
+                ## ESTIMATE IMPACT POINT
+                env.Vel_Launch(env.posCF,[Vx_d,Vy_d,Vz_d])
                 
                     
             elif action == 'GZ_reset':

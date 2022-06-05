@@ -643,7 +643,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
             {
                 case 0: // RL
                 {
-                    if(Tau <= Tau_thr && onceFlag == false){
+                    if(Tau <= Tau_thr && onceFlag == false && state->velocity.z > 0.5){
                         onceFlag = true;
                         flip_flag = true;  
 
