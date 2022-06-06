@@ -42,7 +42,4 @@
         <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
         args="-file $(arg model_sdf_path) -sdf -model $(arg model_name) -z 0.3" />
         
-        <node name="spawn_ground_bottom" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
-            args="-file $(find crazyflie_gazebo)/models/Landing_Surfaces/GroundPlane_Desert_Physical/model.sdf -sdf -model backup_ground -z -3" />
-
 </launch>
