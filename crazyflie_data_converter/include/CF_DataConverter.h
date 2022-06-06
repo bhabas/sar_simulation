@@ -26,6 +26,7 @@ is easy to use.
 #include "crazyflie_msgs/CtrlData.h"
 #include "crazyflie_msgs/CtrlDebug.h"
 #include "crazyflie_msgs/RLCmd.h"
+#include "crazyflie_msgs/RLCmd2.h"
 #include "crazyflie_msgs/RLData.h"
 #include "crazyflie_msgs/PadConnect.h"
 
@@ -70,6 +71,7 @@ class CF_DataConverter
             // GAZEBO SERVICES
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
             Logging_Service = nh->advertiseService("/CF_DC/DataLogging", &CF_DataConverter::DataLogging_Callback, this);
+            RL_CMD_Service = nh->advertiseService("/RL/Cmd2",&CF_DataConverter::RL_CMD2_Callback,this);
             
 
             
@@ -99,6 +101,9 @@ class CF_DataConverter
         void SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStamped::ConstPtr &msg);
         void Surface_Contact_Callback(const gazebo_msgs::ContactsState &msg);
         void Pad_Connections_Callback(const crazyflie_msgs::PadConnect &msg);
+
+
+        bool RL_CMD2_Callback(crazyflie_msgs::RLCmd2::Request &req, crazyflie_msgs::RLCmd2::Response &res);
 
 
         // EXPERIMENT DATA CALLBACKS
@@ -162,6 +167,7 @@ class CF_DataConverter
         // SERVICES
         ros::ServiceClient GZ_SimSpeed_Client;
         ros::ServiceServer Logging_Service;
+        ros::ServiceServer RL_CMD_Service;
 
         // MESSAGES
         crazyflie_msgs::CF_StateData StateData_msg;
@@ -838,6 +844,12 @@ bool CF_DataConverter::DataLogging_Callback(crazyflie_msgs::loggingCMD::Request 
         append_CSV_impact();
         append_CSV_blank();
     }
+
+    return 1;
+}
+
+bool CF_DataConverter::RL_CMD2_Callback(crazyflie_msgs::RLCmd2::Request &req, crazyflie_msgs::RLCmd2::Response &res)
+{
 
     return 1;
 }

@@ -16,6 +16,8 @@ from crazyflie_msgs.msg import RLData,RLCmd,RLConvg
 from crazyflie_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
 from crazyflie_msgs.srv import loggingCMD,loggingCMDRequest
 from crazyflie_msgs.srv import domainRand,domainRandRequest
+from crazyflie_msgs.srv import RLCmd2,RLCmd2Request
+
 
 
 from rosgraph_msgs.msg import Clock
@@ -497,6 +499,8 @@ class CrazyflieEnv:
             cmd_flag (float, optional): Used as either a on/off flag for command or an extra float value if needed. Defaults to 1.
         """        
 
+        
+        
         cmd_msg = RLCmd()   # Create message object
         cmd_dict = {
             'Ctrl_Reset':0,
@@ -528,7 +532,20 @@ class CrazyflieEnv:
         ## PUBLISH MESSAGE
         self.RL_CMD_Publisher.publish(cmd_msg) 
         time.sleep(0.02) # Give time for controller to process message
+
+        ## CREATE SERVICE REQUEST MSG
+        srv = RLCmd2Request() 
         
+        srv.cmd_type = cmd_dict[action]
+        srv.cmd_vals.x = cmd_vals[0]
+        srv.cmd_vals.y = cmd_vals[1]
+        srv.cmd_vals.z = cmd_vals[2]
+        srv.cmd_flag = cmd_flag
+
+        ## SEND LOGGING REQUEST VIA SERVICE
+        rospy.wait_for_service('/RL/Cmd2',timeout=1.0)
+        RL_Cmd_service = rospy.ServiceProxy('/RL/Cmd2', RLCmd2)
+        RL_Cmd_service(srv)
 
     def VelTraj_StartPos(self,x_impact,V_d,accel_d=None,d_vz=0.6):
         """Returns the required start position (x_0,z_0) to intercept the ceiling 
