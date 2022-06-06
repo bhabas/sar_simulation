@@ -234,47 +234,28 @@ void CF_DataConverter::CtrlDebug_Callback(const crazyflie_msgs::CtrlDebug &ctrl_
 bool CF_DataConverter::RL_CMD2_Callback(crazyflie_msgs::RLCmd2::Request &req, crazyflie_msgs::RLCmd2::Response &res)
 {
     // RECEIVE COMMAND VALUES
-    cmd_type = req.cmd_type;
-    cmd_vals.x = req.cmd_vals.x;
-    cmd_vals.y = req.cmd_vals.y;
-    cmd_vals.z = req.cmd_vals.z;
-    cmd_flag = req.cmd_flag;
-
-
     res.srv_Success = true;
 
     // PASS COMMAND VALUES TO CONTROLLER AND PASS LOCAL ACTIONS
-    CF_DataConverter::Send_Cmd();
+    CF_DataConverter::Send_Cmd(req);
     
     return true;
 }
 
 bool CF_DataConverter::RL_CMD_Dashboard_Callback(crazyflie_msgs::RLCmd2::Request &req, crazyflie_msgs::RLCmd2::Response &res)
 {
-    // RECEIVE COMMAND VALUES
-    cmd_type = req.cmd_type;
-    cmd_vals.x = req.cmd_vals.x;
-    cmd_vals.y = req.cmd_vals.y;
-    cmd_vals.z = req.cmd_vals.z;
-    cmd_flag = req.cmd_flag;
-
-    CF_DataConverter::Send_Cmd();
 
     return true;
 }
 
-bool CF_DataConverter::Send_Cmd()
+bool CF_DataConverter::Send_Cmd(crazyflie_msgs::RLCmd2::Request &req)
 {
     // SEND COMMAND VALUES TO CONTROLLER
     crazyflie_msgs::RLCmd2 srv;
-    srv.request.cmd_type = cmd_type;
-    srv.request.cmd_vals.x = cmd_vals.x;
-    srv.request.cmd_vals.y = cmd_vals.y;
-    srv.request.cmd_vals.z = cmd_vals.z;
-    srv.request.cmd_flag = cmd_flag;
+    srv.request = req;
     RL_CMD_Client.call(srv);
 
-    if(cmd_type == 0)
+    if(req.cmd_type == 0)
     {
         // RESET FLIP TIME
         OnceFlag_flip = false;
@@ -329,19 +310,19 @@ bool CF_DataConverter::Send_Cmd()
 
     }
 
-    if(cmd_type == 21)
+    if(req.cmd_type == 21)
     {
         CF_DataConverter::LoadParams();
     }
 
-    if(cmd_type == 92)
+    if(req.cmd_type == 92)
     {
-        if(cmd_flag == 0)
+        if(req.cmd_flag == 0)
         {
             Sticky_Flag = false;
         }
 
-        if(cmd_flag == 1)
+        if(req.cmd_flag == 1)
         {
             Sticky_Flag = true;
         }

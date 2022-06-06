@@ -108,7 +108,7 @@ class CF_DataConverter
 
         bool RL_CMD2_Callback(crazyflie_msgs::RLCmd2::Request &req, crazyflie_msgs::RLCmd2::Response &res);
         bool RL_CMD_Dashboard_Callback(crazyflie_msgs::RLCmd2::Request &req, crazyflie_msgs::RLCmd2::Response &res);
-        bool Send_Cmd();
+        bool Send_Cmd(crazyflie_msgs::RLCmd2::Request &req);
 
 
 
@@ -352,11 +352,6 @@ class CF_DataConverter
         boost::array<float,3> vel_d{0,0,0};
 
         bool runComplete_flag = false;
-
-        uint16_t cmd_type = 0;
-        geometry_msgs::Point cmd_vals; 
-        float cmd_flag = 0.0f;
-
 
 };
 
