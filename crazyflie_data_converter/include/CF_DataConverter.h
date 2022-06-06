@@ -27,7 +27,7 @@ is easy to use.
 
 #include "crazyflie_msgs/CtrlData.h"
 #include "crazyflie_msgs/CtrlDebug.h"
-#include "crazyflie_msgs/RLCmd2.h"
+#include "crazyflie_msgs/RLCmd.h"
 #include "crazyflie_msgs/RLData.h"
 #include "crazyflie_msgs/PadConnect.h"
 
@@ -72,9 +72,9 @@ class CF_DataConverter
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
             Logging_Service = nh->advertiseService("/CF_DC/DataLogging", &CF_DataConverter::DataLogging_Callback, this);
 
-            RL_CMD_Service = nh->advertiseService("/RL/Cmd2",&CF_DataConverter::RL_CMD2_Callback,this);
-            CMD_Service_Dashboard = nh->advertiseService("/RL/Cmd_Dashboard",&CF_DataConverter::RL_CMD_Dashboard_Callback,this);
-            RL_CMD_Client = nh->serviceClient<crazyflie_msgs::RLCmd2>("/RL/Cmd_ctrl");
+            CMD_Service_CF_DC = nh->advertiseService("/CF_DC/Cmd_CF_DC",&CF_DataConverter::CMD_CF_DC_Callback,this);
+            CMD_Service_Dashboard = nh->advertiseService("/CF_DC/Cmd_Dashboard",&CF_DataConverter::CMD_Dashboard_Callback,this);
+            CMD_Client = nh->serviceClient<crazyflie_msgs::RLCmd>("/CTRL/Cmd_ctrl");
             
 
             
@@ -105,9 +105,9 @@ class CF_DataConverter
         void Pad_Connections_Callback(const crazyflie_msgs::PadConnect &msg);
 
 
-        bool RL_CMD2_Callback(crazyflie_msgs::RLCmd2::Request &req, crazyflie_msgs::RLCmd2::Response &res);
-        bool RL_CMD_Dashboard_Callback(crazyflie_msgs::RLCmd2::Request &req, crazyflie_msgs::RLCmd2::Response &res);
-        bool Send_Cmd(crazyflie_msgs::RLCmd2::Request &req);
+        bool CMD_CF_DC_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res);
+        bool CMD_Dashboard_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res);
+        bool Send_Cmd2Ctrl(crazyflie_msgs::RLCmd::Request &req);
 
 
 
@@ -147,7 +147,7 @@ class CF_DataConverter
 
     private:
 
-        // SUBSCRIBERSRL_CMD_Service
+        // SUBSCRIBERSCMD_Service_CF_DC
         ros::Subscriber CTRL_Data_Sub;
         ros::Subscriber CTRL_Debug_Sub;
         ros::Subscriber RL_CMD_Sub;
@@ -172,9 +172,10 @@ class CF_DataConverter
         // SERVICES
         ros::ServiceClient GZ_SimSpeed_Client;
         ros::ServiceServer Logging_Service;
-        ros::ServiceServer RL_CMD_Service;
+
+        ros::ServiceServer CMD_Service_CF_DC;
         ros::ServiceServer CMD_Service_Dashboard;
-        ros::ServiceClient RL_CMD_Client;
+        ros::ServiceClient CMD_Client;
 
         // MESSAGES
         crazyflie_msgs::CF_StateData StateData_msg;

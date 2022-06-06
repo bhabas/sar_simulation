@@ -16,7 +16,7 @@ from crazyflie_msgs.msg import RLData,RLConvg
 from crazyflie_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
 from crazyflie_msgs.srv import loggingCMD,loggingCMDRequest
 from crazyflie_msgs.srv import domainRand,domainRandRequest
-from crazyflie_msgs.srv import RLCmd2,RLCmd2Request
+from crazyflie_msgs.srv import RLCmd,RLCmdRequest
 
 
 
@@ -520,7 +520,7 @@ class CrazyflieEnv:
 
 
         ## CREATE SERVICE REQUEST MSG
-        srv = RLCmd2Request() 
+        srv = RLCmdRequest() 
         
         srv.cmd_type = cmd_dict[action]
         srv.cmd_vals.x = cmd_vals[0]
@@ -529,8 +529,8 @@ class CrazyflieEnv:
         srv.cmd_flag = cmd_flag
 
         ## SEND LOGGING REQUEST VIA SERVICE
-        rospy.wait_for_service('/RL/Cmd2',timeout=1.0)
-        RL_Cmd_service = rospy.ServiceProxy('/RL/Cmd2', RLCmd2)
+        rospy.wait_for_service('/CF_DC/Cmd_CF_DC',timeout=1.0)
+        RL_Cmd_service = rospy.ServiceProxy('/CF_DC/Cmd_CF_DC', RLCmd)
         RL_Cmd_service(srv)
 
     def VelTraj_StartPos(self,x_impact,V_d,accel_d=None,d_vz=0.6):

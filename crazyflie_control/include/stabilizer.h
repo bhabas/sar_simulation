@@ -36,7 +36,7 @@ be transferred to the Crazyflie Firmware.
 #include "crazyflie_msgs/CtrlData.h"
 #include "crazyflie_msgs/CtrlDebug.h"
 
-#include "crazyflie_msgs/RLCmd2.h"
+#include "crazyflie_msgs/RLCmd.h"
 #include "crazyflie_msgs/RLData.h"
 
 
@@ -60,7 +60,7 @@ class Controller
             // CONTROLLER TOPICS
             CTRL_Data_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/CTRL/data",1);
             CTRL_Debug_Publisher = nh->advertise<crazyflie_msgs::CtrlDebug>("CTRL/debug",1);
-            CMD_Service = nh->advertiseService("/RL/Cmd_ctrl",&Controller::CMD_Callback,this);
+            CMD_Service = nh->advertiseService("/CTRL/Cmd_ctrl",&Controller::CMD_Callback,this);
 
             // RL TOPICS
 
@@ -164,7 +164,7 @@ class Controller
         void IMU_Sensor_Callback(const sensor_msgs::Imu::ConstPtr &msg);
         void OF_Sensor_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg);
         void Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg);
-        bool CMD_Callback(crazyflie_msgs::RLCmd2::Request &req, crazyflie_msgs::RLCmd2::Response &res);
+        bool CMD_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res);
 
 
         void stabilizerLoop();
@@ -179,7 +179,7 @@ class Controller
 
 };
 
-bool Controller::CMD_Callback(crazyflie_msgs::RLCmd2::Request &req, crazyflie_msgs::RLCmd2::Response &res)
+bool Controller::CMD_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res)
 {
     res.srv_Success = true;
 

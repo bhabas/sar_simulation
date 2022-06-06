@@ -231,25 +231,23 @@ void CF_DataConverter::CtrlDebug_Callback(const crazyflie_msgs::CtrlDebug &ctrl_
     Camera_Sensor_Active = ctrl_msg.Camera_Sensor_Active;
 }
 
-bool CF_DataConverter::RL_CMD2_Callback(crazyflie_msgs::RLCmd2::Request &req, crazyflie_msgs::RLCmd2::Response &res)
+bool CF_DataConverter::CMD_CF_DC_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res)
 {
-
     // PASS COMMAND VALUES TO CONTROLLER AND PASS LOCAL ACTIONS
-    res.srv_Success = CF_DataConverter::Send_Cmd(req);
+    res.srv_Success = CF_DataConverter::Send_Cmd2Ctrl(req);
     
     return res.srv_Success;
 }
 
-bool CF_DataConverter::RL_CMD_Dashboard_Callback(crazyflie_msgs::RLCmd2::Request &req, crazyflie_msgs::RLCmd2::Response &res)
+bool CF_DataConverter::CMD_Dashboard_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res)
 {
-
     // PASS COMMAND VALUES TO CONTROLLER AND PASS LOCAL ACTIONS
-    res.srv_Success = CF_DataConverter::Send_Cmd(req);
+    res.srv_Success = CF_DataConverter::Send_Cmd2Ctrl(req);
     
     return res.srv_Success;
 }
 
-bool CF_DataConverter::Send_Cmd(crazyflie_msgs::RLCmd2::Request &req)
+bool CF_DataConverter::Send_Cmd2Ctrl(crazyflie_msgs::RLCmd::Request &req)
 {
     if(req.cmd_type == 0)
     {
@@ -328,9 +326,9 @@ bool CF_DataConverter::Send_Cmd(crazyflie_msgs::RLCmd2::Request &req)
     }
 
     // SEND COMMAND VALUES TO CONTROLLER
-    crazyflie_msgs::RLCmd2 srv;
+    crazyflie_msgs::RLCmd srv;
     srv.request = req;
-    RL_CMD_Client.call(srv);
+    CMD_Client.call(srv);
 
     return srv.response.srv_Success; // Return if service request successful (true/false)
 }
