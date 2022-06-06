@@ -14,6 +14,8 @@ is easy to use.
 // ROS INCLUDES
 #include <ros/ros.h>
 #include <geometry_msgs/WrenchStamped.h>
+#include <geometry_msgs/Point.h>
+
 #include <gazebo_msgs/ContactsState.h>
 #include <gazebo_msgs/SetPhysicsProperties.h>
 
@@ -70,8 +72,9 @@ class CF_DataConverter
             // GAZEBO SERVICES
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
             Logging_Service = nh->advertiseService("/CF_DC/DataLogging", &CF_DataConverter::DataLogging_Callback, this);
-            RL_CMD_Service = nh->advertiseService("/RL/Cmd2",&CF_DataConverter::RL_CMD2_Callback,this);
 
+            RL_CMD_Service = nh->advertiseService("/RL/Cmd2",&CF_DataConverter::RL_CMD2_Callback,this);
+            CMD_Service_Dashboard = nh->advertiseService("/RL/Cmd_Dashboard",&CF_DataConverter::RL_CMD_Dashboard_Callback,this);
             RL_CMD_Client = nh->serviceClient<crazyflie_msgs::RLCmd2>("/RL/Cmd_ctrl");
             
 
@@ -104,6 +107,9 @@ class CF_DataConverter
 
 
         bool RL_CMD2_Callback(crazyflie_msgs::RLCmd2::Request &req, crazyflie_msgs::RLCmd2::Response &res);
+        bool RL_CMD_Dashboard_Callback(crazyflie_msgs::RLCmd2::Request &req, crazyflie_msgs::RLCmd2::Response &res);
+        bool Send_Cmd();
+
 
 
         // EXPERIMENT DATA CALLBACKS
@@ -142,7 +148,7 @@ class CF_DataConverter
 
     private:
 
-        // SUBSCRIBERS
+        // SUBSCRIBERSRL_CMD_Service
         ros::Subscriber CTRL_Data_Sub;
         ros::Subscriber CTRL_Debug_Sub;
         ros::Subscriber RL_CMD_Sub;
@@ -168,6 +174,7 @@ class CF_DataConverter
         ros::ServiceClient GZ_SimSpeed_Client;
         ros::ServiceServer Logging_Service;
         ros::ServiceServer RL_CMD_Service;
+        ros::ServiceServer CMD_Service_Dashboard;
         ros::ServiceClient RL_CMD_Client;
 
         // MESSAGES
@@ -345,6 +352,10 @@ class CF_DataConverter
         boost::array<float,3> vel_d{0,0,0};
 
         bool runComplete_flag = false;
+
+        uint16_t cmd_type = 0;
+        geometry_msgs::Point cmd_vals; 
+        float cmd_flag = 0.0f;
 
 
 };
