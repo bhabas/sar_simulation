@@ -282,6 +282,7 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
 
         double RHS[3] = {-Iut/(8*w*dt), -Ivt/(8*w*dt), -IGt/(8*w*dt)}; //added change in time to final step
 
+        // SOLVE LEAST-SQUARES EQUATION FOR OPTICAL FLOW VALUES
         nml_mat* m_A = nml_mat_from(3,3,9,LHS);
         nml_mat* m_b = nml_mat_from(3,1,3,RHS);
 
@@ -289,9 +290,21 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
         nml_mat* y = nml_mat_dot(nml_mat_transp(QR->Q),m_b); // y = Q^T*b
         nml_mat* x_QR = nml_ls_solvebck(QR->R,y); // Solve R*x = y via back substitution
 
-        sensorData.OFx_est = x_QR->data[0][0];
-        sensorData.OFy_est = x_QR->data[1][0];
-        float Tau_est = clamp((1/x_QR->data[2][0]), 0,30); //restricting Tau_est to be between -10:30
+        float OFx_est = x_QR->data[0][0];
+        float OFy_est = x_QR->data[1][0];
+        float Tau_est = 1/x_QR->data[2][0];
+
+        // FREE MATRICES FROM HEAP
+        nml_mat_free(m_A);
+        nml_mat_free(m_b);
+        nml_mat_qr_free(QR);
+        nml_mat_free(x_QR);
+
+        // IF INVALID VALUE THEN EXIT FUNCTION
+        if (isnan(Tau_est))
+        {
+            return;
+        }       
 
 
 
@@ -300,28 +313,22 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
         //                  + b4*Tau_est_prev_4 +b5*Tau_est_prev_5 - a1*Tau_est_filt_1- a2*Tau_est_filt_2
         //                  - a3*Tau_est_filt_3- a4*Tau_est_filt_4- a5*Tau_est_filt_5);
 
-        // APPLY EMA FILTER y[n] = a*x[n] + (1-a)*y[n-1]
-        float a = 0.99;
-        Tau_est_filt = (a * Tau_est + (1-a) * Tau_est_filt_1);
-
-
-        Tau_est_filt = clamp(Tau_est_filt, 0,30);
-        sensorData.Tau_est = Tau_est_filt;
-
-
-        nml_mat_free(m_A);
-        nml_mat_free(m_b);
-        nml_mat_qr_free(QR);
-        nml_mat_free(x_QR);
-
-        // SET PREVIOUS DATA
-        memcpy(Prev_img,Cur_img,WIDTH_PIXELS*HEIGHT_PIXELS*sizeof(uint8_t)); // Copy memory to Prev_img address
-        Prev_time = Cur_time; // Setup previous time for next calculation
-    
-        //FILTER DATA
-        Tau_est_filt_1 = Tau_est_filt;
-        Tau_est_prev_1 = Tau_est;
+        // APPLY EMA FILTER y[n] = alpha*x[n] + (1-alpha)*y[n-1]
+        float alpha = 0.99;
+        Tau_est_filt = (alpha * Tau_est + (1-alpha) * Tau_est_filt_1);
+        Tau_est_filt = clamp(Tau_est_filt, 0,10); // Restrict Tau values to range [0,10]
         
+        // UPDATE SENSOR DATA STRUCT WITH FILTERED OPTICAL FLOW VALUES
+        sensorData.OFx_est = OFx_est;
+        sensorData.OFy_est = OFy_est;
+        sensorData.Tau_est = Tau_est_filt;
+        
+        // SET PREVIOUS DATA FOR NEXT CALCULATION
+        Prev_time = Cur_time; 
+        Tau_est_prev_1 = Tau_est;
+        Tau_est_filt_1 = Tau_est_filt;
+        memcpy(Prev_img,Cur_img, WIDTH_PIXELS*HEIGHT_PIXELS*sizeof(uint8_t)); // Copy memory of Cur_img data to Prev_img address
+
     }
 
 } // End of Camera_Sensor_Callback
