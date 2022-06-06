@@ -50,7 +50,6 @@ class CF_DataConverter
             // INITIALIZE SUBSCRIBERS
             CTRL_Data_Sub = nh->subscribe("/CTRL/data", 1, &CF_DataConverter::CtrlData_Callback, this, ros::TransportHints().tcpNoDelay());
             CTRL_Debug_Sub = nh->subscribe("/CTRL/debug", 1, &CF_DataConverter::CtrlDebug_Callback, this, ros::TransportHints().tcpNoDelay());
-            RL_CMD_Sub = nh->subscribe("/RL/cmd",5,&CF_DataConverter::RL_CMD_Callback,this,ros::TransportHints().tcpNoDelay());
             RL_Data_Sub = nh->subscribe("/RL/data",5,&CF_DataConverter::RL_Data_Callback,this,ros::TransportHints().tcpNoDelay());
             Surface_FT_Sub = nh->subscribe("/ENV/Surface_FT_sensor",5,&CF_DataConverter::SurfaceFT_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
             Surface_Contact_Sub = nh->subscribe("/ENV/BodyContact",5,&CF_DataConverter::Surface_Contact_Callback,this,ros::TransportHints().tcpNoDelay());
@@ -96,7 +95,6 @@ class CF_DataConverter
         void CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_msg);
         void CtrlDebug_Callback(const crazyflie_msgs::CtrlDebug &ctrl_msg);
 
-        void RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
         void RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &msg);
         void SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStamped::ConstPtr &msg);
         void Surface_Contact_Callback(const gazebo_msgs::ContactsState &msg);
@@ -848,8 +846,3 @@ bool CF_DataConverter::DataLogging_Callback(crazyflie_msgs::loggingCMD::Request 
     return 1;
 }
 
-bool CF_DataConverter::RL_CMD2_Callback(crazyflie_msgs::RLCmd2::Request &req, crazyflie_msgs::RLCmd2::Response &res)
-{
-
-    return 1;
-}

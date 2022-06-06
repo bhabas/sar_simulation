@@ -231,9 +231,9 @@ void CF_DataConverter::CtrlDebug_Callback(const crazyflie_msgs::CtrlDebug &ctrl_
     Camera_Sensor_Active = ctrl_msg.Camera_Sensor_Active;
 }
 
-void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
+bool CF_DataConverter::RL_CMD2_Callback(crazyflie_msgs::RLCmd2::Request &req, crazyflie_msgs::RLCmd2::Response &res)
 {
-    if(msg->cmd_type == 0)
+    if(req.cmd_type == 0)
     {
         // RESET FLIP TIME
         OnceFlag_flip = false;
@@ -286,23 +286,21 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
         CF_DataConverter::adjustSimSpeed(SIM_SPEED);
         SLOWDOWN_TYPE = 0;
 
-        
-                
     }
 
-    if(msg->cmd_type == 21)
+    if(req.cmd_type == 21)
     {
         CF_DataConverter::LoadParams();
     }
 
-    if(msg->cmd_type == 92)
+    if(req.cmd_type == 92)
     {
-        if(msg->cmd_flag == 0)
+        if(req.cmd_flag == 0)
         {
             Sticky_Flag = false;
         }
 
-        if(msg->cmd_flag == 1)
+        if(req.cmd_flag == 1)
         {
             Sticky_Flag = true;
         }
@@ -311,12 +309,7 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
 
     }
 
-    if(msg->cmd_type == 101)
-    {
-
-    }
-
-
+    return 1;
 }
 
 void CF_DataConverter::RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &msg)
