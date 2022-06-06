@@ -713,6 +713,15 @@ class CrazyflieEnv:
             "roslaunch crazyflie_launch controller.launch",
             close_fds=True, preexec_fn=os.setsid, shell=True)
 
+    def sleep(self,time_s):
+        """Sleep in terms of Gazebo sim seconds not real time seconds
+
+        Args:
+            time_s (_type_): _description_
+        """        
+        t_start = self.t
+        while self.t - t_start <= time_s:
+            pass # Do Nothing
 
     def Vel_Launch(self,pos_0,vel_d,quat_0=[0,0,0,1]): 
         """Launch crazyflie from the specified position/orientation with an imparted velocity.
@@ -726,6 +735,7 @@ class CrazyflieEnv:
 
         ## SET DESIRED VEL IN CONTROLLER
         self.SendCmd('Pos',cmd_flag=0)
+        self.sleep(0.05)
         self.SendCmd('Vel',cmd_vals=vel_d,cmd_flag=1)
 
         ## CREATE SERVICE MESSAGE
@@ -858,7 +868,7 @@ class CrazyflieEnv:
 
 
 if __name__ == "__main__":
-    env = CrazyflieEnv()
+    env = CrazyflieEnv(gazeboTimeout=False)
     rospy.on_shutdown(env.close_proc)
 
     rospy.spin()
