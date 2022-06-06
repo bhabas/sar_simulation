@@ -20,7 +20,6 @@ add_message_files(
   CF_ImpactData.msg
   CF_MiscData.msg
   CF_StateData.msg
-  RLCmd.msg
   RLData.msg
   RLConvg.msg
   CtrlData.msg

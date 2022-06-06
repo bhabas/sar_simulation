@@ -12,7 +12,7 @@ import getpass
 
 
 from std_srvs.srv import Empty
-from crazyflie_msgs.msg import RLData,RLCmd,RLConvg
+from crazyflie_msgs.msg import RLData,RLConvg
 from crazyflie_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
 from crazyflie_msgs.srv import loggingCMD,loggingCMDRequest
 from crazyflie_msgs.srv import domainRand,domainRandRequest
@@ -202,7 +202,6 @@ class CrazyflieEnv:
 
         ## RL TOPICS 
         self.RL_Data_Publisher = rospy.Publisher('/RL/data',RLData,queue_size=10)
-        self.RL_CMD_Publisher = rospy.Publisher('/RL/cmd',RLCmd,queue_size=10)
         self.RL_Convg_Publisher = rospy.Publisher('/RL/convg_data',RLConvg,queue_size=10)
 
         print("[COMPLETED] Environment done")
@@ -499,9 +498,6 @@ class CrazyflieEnv:
             cmd_flag (float, optional): Used as either a on/off flag for command or an extra float value if needed. Defaults to 1.
         """        
 
-        
-        
-        cmd_msg = RLCmd()   # Create message object
         cmd_dict = {
             'Ctrl_Reset':0,
             'Pos':1,
@@ -522,16 +518,6 @@ class CrazyflieEnv:
             'StickyPads':92,
         }
 
-        ## INSERT VALUES TO ROS MSG
-        cmd_msg.cmd_type = cmd_dict[action]
-        cmd_msg.cmd_vals.x = cmd_vals[0]
-        cmd_msg.cmd_vals.y = cmd_vals[1]
-        cmd_msg.cmd_vals.z = cmd_vals[2]
-        cmd_msg.cmd_flag = cmd_flag
-        
-        ## PUBLISH MESSAGE
-        self.RL_CMD_Publisher.publish(cmd_msg) 
-        time.sleep(0.02) # Give time for controller to process message
 
         ## CREATE SERVICE REQUEST MSG
         srv = RLCmd2Request() 

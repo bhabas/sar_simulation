@@ -233,28 +233,24 @@ void CF_DataConverter::CtrlDebug_Callback(const crazyflie_msgs::CtrlDebug &ctrl_
 
 bool CF_DataConverter::RL_CMD2_Callback(crazyflie_msgs::RLCmd2::Request &req, crazyflie_msgs::RLCmd2::Response &res)
 {
-    // RECEIVE COMMAND VALUES
-    res.srv_Success = true;
 
     // PASS COMMAND VALUES TO CONTROLLER AND PASS LOCAL ACTIONS
-    CF_DataConverter::Send_Cmd(req);
+    res.srv_Success = CF_DataConverter::Send_Cmd(req);
     
-    return true;
+    return res.srv_Success;
 }
 
 bool CF_DataConverter::RL_CMD_Dashboard_Callback(crazyflie_msgs::RLCmd2::Request &req, crazyflie_msgs::RLCmd2::Response &res)
 {
 
-    return true;
+    // PASS COMMAND VALUES TO CONTROLLER AND PASS LOCAL ACTIONS
+    res.srv_Success = CF_DataConverter::Send_Cmd(req);
+    
+    return res.srv_Success;
 }
 
 bool CF_DataConverter::Send_Cmd(crazyflie_msgs::RLCmd2::Request &req)
 {
-    // SEND COMMAND VALUES TO CONTROLLER
-    crazyflie_msgs::RLCmd2 srv;
-    srv.request = req;
-    RL_CMD_Client.call(srv);
-
     if(req.cmd_type == 0)
     {
         // RESET FLIP TIME
@@ -331,7 +327,12 @@ bool CF_DataConverter::Send_Cmd(crazyflie_msgs::RLCmd2::Request &req)
 
     }
 
-    return true;
+    // SEND COMMAND VALUES TO CONTROLLER
+    crazyflie_msgs::RLCmd2 srv;
+    srv.request = req;
+    RL_CMD_Client.call(srv);
+
+    return srv.response.srv_Success; // Return if service request successful (true/false)
 }
 
 void CF_DataConverter::RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &msg)

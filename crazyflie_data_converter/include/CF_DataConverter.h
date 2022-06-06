@@ -27,7 +27,6 @@ is easy to use.
 
 #include "crazyflie_msgs/CtrlData.h"
 #include "crazyflie_msgs/CtrlDebug.h"
-#include "crazyflie_msgs/RLCmd.h"
 #include "crazyflie_msgs/RLCmd2.h"
 #include "crazyflie_msgs/RLData.h"
 #include "crazyflie_msgs/PadConnect.h"
