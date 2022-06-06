@@ -394,7 +394,7 @@ class Tau_Widget(QWidget):
         ## UPDATE PLOT 1
         self.PW.setBackground('w')
         self.PW.setXRange(buffer_length*0.0,buffer_length)
-        self.PW.setYRange(0,5)
+        self.PW.setYRange(0,1)
         self.PW.showGrid(x=True, y=True, alpha=0.2)
 
 
@@ -423,7 +423,7 @@ class Tau_Widget(QWidget):
         self.curve_Tau_est.setData(self.Tau_est_arr)
 
     def reset_axes(self):
-        self.PW.setYRange(0,5)
+        self.PW.setYRange(0,1)
         self.PW.setXRange(buffer_length*0.0,buffer_length)
 
     def pause(self,pause_flag):
