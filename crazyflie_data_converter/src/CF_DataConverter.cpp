@@ -233,6 +233,13 @@ void CF_DataConverter::CtrlDebug_Callback(const crazyflie_msgs::CtrlDebug &ctrl_
 
 bool CF_DataConverter::RL_CMD2_Callback(crazyflie_msgs::RLCmd2::Request &req, crazyflie_msgs::RLCmd2::Response &res)
 {
+
+    crazyflie_msgs::RLCmd2 srv;
+    srv.request.cmd_type = 0.001;
+
+
+    RL_CMD_Client.call(srv);
+
     if(req.cmd_type == 0)
     {
         // RESET FLIP TIME

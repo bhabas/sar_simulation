@@ -37,6 +37,7 @@ be transferred to the Crazyflie Firmware.
 #include "crazyflie_msgs/CtrlDebug.h"
 
 #include "crazyflie_msgs/RLCmd.h"
+#include "crazyflie_msgs/RLCmd2.h"
 #include "crazyflie_msgs/RLData.h"
 
 
@@ -75,6 +76,10 @@ class Controller
             // DYNAMICALLY ALLOCATE MEMORY TO STORE PREVIOUS IMAGE
             Prev_img = (uint8_t*)calloc(WIDTH_PIXELS*HEIGHT_PIXELS,sizeof(uint8_t));
 
+            RL_CMD_Service = nh->advertiseService("/RL/Cmd_ctrl",&Controller::RL_CMD2_Callback,this);
+
+
+
 
 
             Controller::loadParams();
@@ -102,7 +107,7 @@ class Controller
         ros::Publisher CTRL_Debug_Publisher;
 
         // SERVICES
-        ros::ServiceClient GZ_SimSpeed_Client;
+        ros::ServiceServer RL_CMD_Service;
 
         // DEFINE THREAD OBJECTS
         std::thread controllerThread;
@@ -163,6 +168,8 @@ class Controller
         void OF_Sensor_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg);
         void Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg);
         void RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
+        bool RL_CMD2_Callback(crazyflie_msgs::RLCmd2::Request &req, crazyflie_msgs::RLCmd2::Response &res);
+
 
         void stabilizerLoop();
         void loadParams();
@@ -175,6 +182,12 @@ class Controller
         crazyflie_msgs::CtrlDebug CtrlDebug_msg;
 
 };
+
+bool Controller::RL_CMD2_Callback(crazyflie_msgs::RLCmd2::Request &req, crazyflie_msgs::RLCmd2::Response &res)
+{
+    printf("Hello\n");
+    return 1;
+}
 
 void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
 {

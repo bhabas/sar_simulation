@@ -71,6 +71,8 @@ class CF_DataConverter
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
             Logging_Service = nh->advertiseService("/CF_DC/DataLogging", &CF_DataConverter::DataLogging_Callback, this);
             RL_CMD_Service = nh->advertiseService("/RL/Cmd2",&CF_DataConverter::RL_CMD2_Callback,this);
+
+            RL_CMD_Client = nh->serviceClient<crazyflie_msgs::RLCmd2>("/RL/Cmd_ctrl");
             
 
             
@@ -166,6 +168,7 @@ class CF_DataConverter
         ros::ServiceClient GZ_SimSpeed_Client;
         ros::ServiceServer Logging_Service;
         ros::ServiceServer RL_CMD_Service;
+        ros::ServiceClient RL_CMD_Client;
 
         // MESSAGES
         crazyflie_msgs::CF_StateData StateData_msg;
