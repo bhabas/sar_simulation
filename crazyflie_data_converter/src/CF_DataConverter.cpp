@@ -235,8 +235,11 @@ bool CF_DataConverter::RL_CMD2_Callback(crazyflie_msgs::RLCmd2::Request &req, cr
 {
 
     crazyflie_msgs::RLCmd2 srv;
-    srv.request.cmd_type = 0.001;
-
+    srv.request.cmd_type = req.cmd_type;
+    srv.request.cmd_vals.x = req.cmd_vals.x;
+    srv.request.cmd_vals.y = req.cmd_vals.y;
+    srv.request.cmd_vals.z = req.cmd_vals.z;
+    srv.request.cmd_flag = req.cmd_flag;
 
     RL_CMD_Client.call(srv);
 

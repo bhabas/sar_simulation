@@ -63,7 +63,6 @@ class Controller
             CTRL_Debug_Publisher = nh->advertise<crazyflie_msgs::CtrlDebug>("CTRL/debug",1);
 
             // RL TOPICS
-            RL_CMD_Subscriber = nh->subscribe("/RL/cmd",5,&Controller::RL_CMD_Callback,this,ros::TransportHints().tcpNoDelay());
 
             // INTERNAL TOPICS
             CF_IMU_Subscriber = nh->subscribe("/CF_Internal/IMU",1,&Controller::IMU_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
@@ -95,7 +94,6 @@ class Controller
         ros::Subscriber CF_OF_Subscriber;
         ros::Subscriber CF_Camera_Subscriber;
 
-        ros::Subscriber RL_CMD_Subscriber;
         ros::Subscriber RL_Data_Subscriber;
 
         ros::Subscriber ENV_Vicon_Subscriber;
@@ -185,7 +183,20 @@ class Controller
 
 bool Controller::RL_CMD2_Callback(crazyflie_msgs::RLCmd2::Request &req, crazyflie_msgs::RLCmd2::Response &res)
 {
-    printf("Hello\n");
+
+    setpoint.cmd_type = req.cmd_type;
+    setpoint.cmd_val1 = req.cmd_vals.x;
+    setpoint.cmd_val2 = req.cmd_vals.y;
+    setpoint.cmd_val3 = req.cmd_vals.z;
+    setpoint.cmd_flag = req.cmd_flag;
+
+    setpoint.GTC_cmd_rec = true;
+
+    if(req.cmd_type == 21) // RESET ROS PARAM VALUES
+    {
+        Controller::loadParams();
+
+    }
     return 1;
 }
 
@@ -389,26 +400,6 @@ void Controller::viconState_Callback(const nav_msgs::Odometry::ConstPtr &msg)
     sensorData.gyro.z = msg->twist.twist.angular.z*180.0/M_PI;
 
 }
-
-// RECEIVE COMMANDS FROM RL SCRIPTS
-void Controller::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
-{
-    setpoint.cmd_type = msg->cmd_type;
-    setpoint.cmd_val1 = msg->cmd_vals.x;
-    setpoint.cmd_val2 = msg->cmd_vals.y;
-    setpoint.cmd_val3 = msg->cmd_vals.z;
-    setpoint.cmd_flag = msg->cmd_flag;
-
-    setpoint.GTC_cmd_rec = true;
-
-    if(msg->cmd_type == 21) // RESET ROS PARAM VALUES
-    {
-        Controller::loadParams();
-
-    }
-
-}
-
 
 // LOAD VALUES FROM ROSPARAM SERVER INTO CONTROLLER
 void Controller::loadParams()

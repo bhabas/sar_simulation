@@ -76,7 +76,7 @@ def cmd_send(env):
             if action=='Stop': # Execute Ctrl_Reset or Stop action
                 cmd_vals = [0,0,0]
                 cmd_flag = 1
-                print("Rotors turned of\n")
+                print("Rotors turned off\n")
 
                 env.SendCmd(action,cmd_vals,cmd_flag)
 
