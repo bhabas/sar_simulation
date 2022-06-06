@@ -7,7 +7,7 @@ import matplotlib.animation as animation
 
 ## PLOT BRIGHTNESS PATTERN FROM 2.4.1 HORIZONTAL MOTION
 I_0 = 255   # Brightness value (0-255)
-L = 0.25    # [m]
+L = 0.45    # [m]
 
 ## CAMERA PARAMETERS
 WIDTH_PIXELS = 160
@@ -22,7 +22,7 @@ O_vp = HEIGHT_PIXELS/2   # Pixel Y_offset [pixels]
 
 d_0 = 1.7   # Initial Camera height [m]
 vz = 2.5   # Camera velocity [m/s]
-vx = 0.0
+vx = 0.75
 vy = 0.0
 
 ## PRE-ALLOCATE IMAGE ARRAY [pixels]
@@ -173,7 +173,7 @@ def animate_func(i):
     t_List.append(t)
 
     ## UPDATE IMAGE
-    # im.set_array(I_pixel(U_p,V_p,d_0,t))
+    im.set_array(I_pixel(U_p,V_p,d_0,t))
     
 anim = animation.FuncAnimation(fig, 
                                animate_func, 

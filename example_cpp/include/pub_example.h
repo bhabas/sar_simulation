@@ -231,11 +231,13 @@ void MyClass::Convolution_X_Y(const unsigned char* input, int ImgX, int ImgY)
     nml_mat* x_QR = nml_ls_solvebck(QR->R,y); // Solve R*x = y via back substitution
     nml_mat_print(x_QR);
 
-    std::cout <<"\nTTC: " << 1/x_QR->data[2][0] << "\n";
-
-    OFx = x_QR->data[0][0];
-    OFy = x_QR->data[1][0];
+    OFy = x_QR->data[0][0];
+    OFx = x_QR->data[1][0];
     Tau = 1/(x_QR->data[2][0]);
+
+    std::cout <<"\nTTC: " << Tau << "\n";
+    std::cout <<"\nOFy: " << OFy << "\n";
+    std::cout <<"\nOFx: " << OFx << "\n";
 
     nml_mat_free(m_A);
     nml_mat_free(m_b);

@@ -131,14 +131,14 @@ class Controller
         int ky0[3] = {-1,-2,-1};
         int ky2[3] = {1,2,1};
         float Prev_time = 1; //init as 1 to prevent divide by zero for first image
-        // values from butterworth filter data in Gazebo_cpp_check.py
-        float a1 = -0.15838444; // -0.15838444
+        // values from butterworth filter data in Gazebo_cpp_check.py a coef: [1.         0.88161859] b coef: [0.9408093 0.9408093]
+        float a1 = 0.88161859; // -0.15838444
         float a2 = 0; 
         float a3 = 0;
         float a4 = 0; 
         float a5 = 0;
-        float b0 = 0.42080778; // 0.42080778 0.42080778
-        float b1 = 0.42080778;
+        float b0 = 0.9408093; // 0.42080778 0.42080778
+        float b1 = 0.9408093;
         float b2 = 0;
         float b3 = 0;
         float b4 = 0;  
@@ -331,7 +331,7 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
 
 
 
-        // APPLY 5TH ORDER LOW PASS FILTER
+        // APPLY nTH ORDER LOW PASS FILTER
         // Tau_est_filt = (b0*Tau_est + b1*Tau_est_prev_1 + b2*Tau_est_prev_2 + b3*Tau_est_prev_3
         //                  + b4*Tau_est_prev_4 +b5*Tau_est_prev_5 - a1*Tau_est_filt_1- a2*Tau_est_filt_2
         //                  - a3*Tau_est_filt_3- a4*Tau_est_filt_4- a5*Tau_est_filt_5);

@@ -87,7 +87,10 @@ class CameraParser:
     def Camera_cb(self,Cam_msg):
         
         self.t = np.round(Cam_msg.header.stamp.to_sec(),4) # sim time
-        self.Camera_raw = np.frombuffer(Cam_msg.data,np.uint8) # 1D array to package into CSV
+        self.Camera_raw = np.frombuffer(Cam_msg.data,np.uint8) # 1D array to package into CSV 
+        
+        ## In order to filter need to reshape and filter then go back to 1D
+        
         self.Append_data()
 
     def CF_StateDataCallback(self,StateData_msg):
