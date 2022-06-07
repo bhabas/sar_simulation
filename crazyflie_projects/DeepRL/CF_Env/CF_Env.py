@@ -562,9 +562,9 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
             observation = [tau,OFy,d_ceil]
 
             ## PASS STATE TO POLICY NETWORK
-            self.tau_c,self.My = agent.choose_action(observation)
+            # agent.choose_action(observation)
 
-            return self.tau_c-tau    
+            return agent.tau_c-tau    
         policy_output.terminal = True
 
         def ceiling_impact_body(t,y,*argv):
@@ -675,7 +675,7 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
             sol_Flip = integrate.solve_ivp(
                 self.ODE_flip,
                 y0=state_cutoff,
-                args=(self.My,),
+                args=(agent.My,),
                 events=(motor_cutoff,
                     ceiling_impact_body,ceiling_impact_leg1,ceiling_impact_leg2),
                 t_span=[t_cutoff,t_span[1]],
@@ -876,19 +876,22 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
         rewards = np.zeros_like(sol_t)
         rewards[-1] = self.calcReward(d_ceil_min,body_contact,pad_contacts,impact_angle)
 
+        dones = np.zeros_like(sol_t)
+        dones[-1] = 1
 
+        state = [sol_t,sol_y]
+        actions = []
+        probs = []
+        vals = []
         
-        return sol_t,sol_y,rewards
+        return state,actions,probs,vals,rewards,dones
 
-    def animateTraj(self,sol_t,sol_y):
+    def animateTraj(self,states):
         """Create animation of model trajectory
 
-        Args:
-            My (float,optional): The applied body moment [N*m]. Defaults to -9e-3 [N*m]
-            IC (list, optional): Initial conditions [X,Vx,Z,Vz,theta,dtheta]. Defaults to [0,0,Z_0=1,0,0,0].
-            
-
         """        
+
+        sol_t,sol_y = states
         ## ANIMATION FUNCTIONS
         def init_lines(): ## INITIALIZE ANIMATED LINES
 
