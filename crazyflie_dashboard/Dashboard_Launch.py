@@ -18,6 +18,7 @@ from nav_msgs.msg import Odometry
 ## CHECK IF SIM OR EXPERIMENT IS RUNNING
 DATA_TYPE = rospy.get_param("DATA_TYPE")
 from crazyflie_msgs.msg import Vicon_Filtered,CF_StateData,GenericLogData
+from crazyflie_msgs.srv import RLCmd,RLCmdRequest
 from geometry_msgs.msg import TransformStamped
     
 from threading import Thread, Timer
@@ -102,12 +103,20 @@ class Dashboard(QMainWindow,DashboardNode):
         self.Battery_Percentage.setValue(int((self.V_Battery-3.6)/(4.2-3.6)*100))
 
     def Emergency_Stop(self):       
-        self.cmd_msg.cmd_type = 5
-        self.RL_CMD_Publisher.publish(self.cmd_msg) 
+        ## INSERT VALS INTO COMMAND MSG
+        self.srv.cmd_type = 5
+        ## SEND COMMAND
+        rospy.wait_for_service('/CF_DC/Cmd_CF_DC',timeout=1.0)
+        RL_Cmd_service = rospy.ServiceProxy('/CF_DC/Cmd_CF_DC', RLCmd)
+        RL_Cmd_service(self.srv)
 
     def HomeCmd(self):       
-        self.cmd_msg.cmd_type = 0
-        self.RL_CMD_Publisher.publish(self.cmd_msg)
+        ## INSERT VALS INTO COMMAND MSG
+        self.srv.cmd_type = 0
+        ## SEND COMMAND
+        rospy.wait_for_service('/CF_DC/Cmd_CF_DC',timeout=1.0)
+        RL_Cmd_service = rospy.ServiceProxy('/CF_DC/Cmd_CF_DC', RLCmd)
+        RL_Cmd_service(self.srv)
 
     def SendCmd(self):
 
@@ -125,14 +134,16 @@ class Dashboard(QMainWindow,DashboardNode):
                 cmd.setText('0')
 
         ## INSERT VALS INTO COMMAND MSG
-        self.cmd_msg.cmd_type = int(cmd_list[0].text())
-        self.cmd_msg.cmd_vals.x = float(cmd_list[1].text())
-        self.cmd_msg.cmd_vals.y = float(cmd_list[2].text())
-        self.cmd_msg.cmd_vals.z = float(cmd_list[3].text())
-        self.cmd_msg.cmd_flag = float(cmd_list[4].text())
+        self.srv.cmd_type = int(cmd_list[0].text())
+        self.srv.cmd_vals.x = float(cmd_list[1].text())
+        self.srv.cmd_vals.y = float(cmd_list[2].text())
+        self.srv.cmd_vals.z = float(cmd_list[3].text())
+        self.srv.cmd_flag = float(cmd_list[4].text())
 
-        ## PUBLISH COMMAND
-        self.RL_CMD_Publisher.publish(self.cmd_msg)
+        ## SEND COMMAND
+        rospy.wait_for_service('/CF_DC/Cmd_CF_DC',timeout=1.0)
+        RL_Cmd_service = rospy.ServiceProxy('/CF_DC/Cmd_CF_DC', RLCmd)
+        RL_Cmd_service(self.srv)
 
         ## CLEAR LINE EDIT BOXES
         for cmd_val in cmd_list:

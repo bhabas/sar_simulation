@@ -60,9 +60,9 @@ class Controller
             // CONTROLLER TOPICS
             CTRL_Data_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/CTRL/data",1);
             CTRL_Debug_Publisher = nh->advertise<crazyflie_msgs::CtrlDebug>("CTRL/debug",1);
+            CMD_Service = nh->advertiseService("/CTRL/Cmd_ctrl",&Controller::CMD_Callback,this);
 
             // RL TOPICS
-            RL_CMD_Subscriber = nh->subscribe("/RL/cmd",5,&Controller::RL_CMD_Callback,this,ros::TransportHints().tcpNoDelay());
 
             // INTERNAL TOPICS
             CF_IMU_Subscriber = nh->subscribe("/CF_Internal/IMU",1,&Controller::IMU_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
@@ -74,6 +74,9 @@ class Controller
             
             // DYNAMICALLY ALLOCATE MEMORY TO STORE PREVIOUS IMAGE
             Prev_img = (uint8_t*)calloc(WIDTH_PIXELS*HEIGHT_PIXELS,sizeof(uint8_t));
+
+
+
 
 
 
@@ -90,7 +93,6 @@ class Controller
         ros::Subscriber CF_OF_Subscriber;
         ros::Subscriber CF_Camera_Subscriber;
 
-        ros::Subscriber RL_CMD_Subscriber;
         ros::Subscriber RL_Data_Subscriber;
 
         ros::Subscriber ENV_Vicon_Subscriber;
@@ -102,7 +104,7 @@ class Controller
         ros::Publisher CTRL_Debug_Publisher;
 
         // SERVICES
-        ros::ServiceClient GZ_SimSpeed_Client;
+        ros::ServiceServer CMD_Service;
 
         // DEFINE THREAD OBJECTS
         std::thread controllerThread;
@@ -162,7 +164,8 @@ class Controller
         void IMU_Sensor_Callback(const sensor_msgs::Imu::ConstPtr &msg);
         void OF_Sensor_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg);
         void Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg);
-        void RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
+        bool CMD_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res);
+
 
         void stabilizerLoop();
         void loadParams();
@@ -176,6 +179,26 @@ class Controller
 
 };
 
+bool Controller::CMD_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res)
+{
+    res.srv_Success = true;
+
+    setpoint.cmd_type = req.cmd_type;
+    setpoint.cmd_val1 = req.cmd_vals.x;
+    setpoint.cmd_val2 = req.cmd_vals.y;
+    setpoint.cmd_val3 = req.cmd_vals.z;
+    setpoint.cmd_flag = req.cmd_flag;
+
+    setpoint.GTC_cmd_rec = true;
+
+    if(req.cmd_type == 21) // RESET ROS PARAM VALUES
+    {
+        Controller::loadParams();
+
+    }
+    return 1;
+}
+
 void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
 {
     if(camera_sensor_active == true)
@@ -187,7 +210,7 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
         int32_t X = 1;
         int32_t Y = 1;
         float w = 3.6e-6; //Pixel width in meters
-        float f = 0.66e-3/2 ;//Focal length in meters
+        float f = 0.66e-3/2; //Focal length in meters
         float U;
         float V;
         float O_up = WIDTH_PIXELS/2;
@@ -282,6 +305,7 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
 
         double RHS[3] = {-Iut/(8*w*dt), -Ivt/(8*w*dt), -IGt/(8*w*dt)}; //added change in time to final step
 
+        // SOLVE LEAST-SQUARES EQUATION FOR OPTICAL FLOW VALUES
         nml_mat* m_A = nml_mat_from(3,3,9,LHS);
         nml_mat* m_b = nml_mat_from(3,1,3,RHS);
 
@@ -289,9 +313,22 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
         nml_mat* y = nml_mat_dot(nml_mat_transp(QR->Q),m_b); // y = Q^T*b
         nml_mat* x_QR = nml_ls_solvebck(QR->R,y); // Solve R*x = y via back substitution
 
-        sensorData.OFy_est = x_QR->data[0][0];
-        sensorData.OFx_est = x_QR->data[1][0];
-        float Tau_est = clamp((1/x_QR->data[2][0]), 0,30); //restricting Tau_est to be between -10:30
+        float OFy_est = x_QR->data[0][0];
+        float OFx_est = x_QR->data[1][0];
+        float Tau_est = 1/x_QR->data[2][0];
+
+        // FREE MATRICES FROM HEAP
+        nml_mat_free(m_A);
+        nml_mat_free(m_b);
+        nml_mat_qr_free(QR);
+        nml_mat_free(x_QR);
+
+        // IF INVALID VALUE THEN EXIT FUNCTION
+        if (isnan(Tau_est))
+        {
+            return;
+        }       
+
 
 
         // APPLY nTH ORDER LOW PASS FILTER
@@ -299,38 +336,22 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
         //                  + b4*Tau_est_prev_4 +b5*Tau_est_prev_5 - a1*Tau_est_filt_1- a2*Tau_est_filt_2
         //                  - a3*Tau_est_filt_3- a4*Tau_est_filt_4- a5*Tau_est_filt_5);
 
-        // APPLY EMA FILTER y[n] = a*x[n] + (1-a)*y[n-1]
-        float a = 0.98;
-        Tau_est_filt = (a * Tau_est + (1-a) * Tau_est_filt_1);
-
-        //Clamp filtered value and Assign 
-        Tau_est_filt = clamp(Tau_est_filt, 0,30);
+        // APPLY EMA FILTER y[n] = alpha*x[n] + (1-alpha)*y[n-1]
+        float alpha = 0.99;
+        Tau_est_filt = (alpha * Tau_est + (1-alpha) * Tau_est_filt_1);
+        Tau_est_filt = clamp(Tau_est_filt, 0,10); // Restrict Tau values to range [0,10]
+        
+        // UPDATE SENSOR DATA STRUCT WITH FILTERED OPTICAL FLOW VALUES
+        sensorData.OFx_est = OFx_est;
+        sensorData.OFy_est = OFy_est;
         sensorData.Tau_est = Tau_est_filt;
-
-
-        nml_mat_free(m_A);
-        nml_mat_free(m_b);
-        nml_mat_qr_free(QR);
-        nml_mat_free(x_QR);
-
-        // SET PREVIOUS DATA
-        memcpy(Prev_img,Cur_img,WIDTH_PIXELS*HEIGHT_PIXELS*sizeof(uint8_t)); // Copy memory to Prev_img address
-        Prev_time = Cur_time; // Setup previous time for next calculation
-    
-        //FILTER DATA
-        Tau_est_filt_5 = Tau_est_filt_4; //Have to start at the last value in the list when rolling down
-        Tau_est_filt_4 = Tau_est_filt_3;
-        Tau_est_filt_3 = Tau_est_filt_2;
-        Tau_est_filt_2 = Tau_est_filt_1;
-        Tau_est_filt_1 = Tau_est_filt;
-
-        Tau_est_prev_5 = Tau_est_prev_4;
-        Tau_est_prev_4 = Tau_est_prev_3;
-        Tau_est_prev_3 = Tau_est_prev_2;
-        Tau_est_prev_2 = Tau_est_prev_1;
+        
+        // SET PREVIOUS DATA FOR NEXT CALCULATION
+        Prev_time = Cur_time; 
         Tau_est_prev_1 = Tau_est;
-        
-        
+        Tau_est_filt_1 = Tau_est_filt;
+        memcpy(Prev_img,Cur_img, WIDTH_PIXELS*HEIGHT_PIXELS*sizeof(uint8_t)); // Copy memory of Cur_img data to Prev_img address
+
     }
 
 } // End of Camera_Sensor_Callback
@@ -378,26 +399,6 @@ void Controller::viconState_Callback(const nav_msgs::Odometry::ConstPtr &msg)
     sensorData.gyro.z = msg->twist.twist.angular.z*180.0/M_PI;
 
 }
-
-// RECEIVE COMMANDS FROM RL SCRIPTS
-void Controller::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
-{
-    setpoint.cmd_type = msg->cmd_type;
-    setpoint.cmd_val1 = msg->cmd_vals.x;
-    setpoint.cmd_val2 = msg->cmd_vals.y;
-    setpoint.cmd_val3 = msg->cmd_vals.z;
-    setpoint.cmd_flag = msg->cmd_flag;
-
-    setpoint.GTC_cmd_rec = true;
-
-    if(msg->cmd_type == 21) // RESET ROS PARAM VALUES
-    {
-        Controller::loadParams();
-
-    }
-
-}
-
 
 // LOAD VALUES FROM ROSPARAM SERVER INTO CONTROLLER
 void Controller::loadParams()
