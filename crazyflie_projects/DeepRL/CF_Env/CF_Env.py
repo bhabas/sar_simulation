@@ -491,39 +491,41 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
         
         R_1 = np.clip(1/d_min,0,10)
 
-        if -180 <= impact_angle <= -90:
-            R_2 = 1.0
-        elif -90 < impact_angle <= 0:
-            R_2 = -1/90*impact_angle
-        elif 0 < impact_angle <= 90:
-            R_2 = 1/90*impact_angle
-        elif 90 < impact_angle <= 180:
-            R_2 = 1.0
-        else:
-            R_2 = 0
+        # if -180 <= impact_angle <= -90:
+        #     R_2 = 1.0
+        # elif -90 < impact_angle <= 0:
+        #     R_2 = -1/90*impact_angle
+        # elif 0 < impact_angle <= 90:
+        #     R_2 = 1/90*impact_angle
+        # elif 90 < impact_angle <= 180:
+        #     R_2 = 1.0
+        # else:
+        #     R_2 = 0
 
-        ## CALC R_4 FROM NUMBER OF LEGS CONNECT
+        # ## CALC R_4 FROM NUMBER OF LEGS CONNECT
 
-        if pad_contacts >= 3: 
-            if body_contact == False:
-                R_4 = 150
-            else:
-                R_4 = 100
+        # if pad_contacts >= 3: 
+        #     if body_contact == False:
+        #         R_4 = 150
+        #     else:
+        #         R_4 = 100
             
-        elif pad_contacts == 2: 
-            if body_contact == False:
-                R_4 = 50
-            else:
-                R_4 = 25
+        # elif pad_contacts == 2: 
+        #     if body_contact == False:
+        #         R_4 = 50
+        #     else:
+        #         R_4 = 25
                 
-        elif pad_contacts == 1:
-            R_4 = 10
+        # elif pad_contacts == 1:
+        #     R_4 = 10
         
-        else:
-            R_4 = 0.0
+        # else:
+        #     R_4 = 0.0
 
 
-        R_total = R_1*10 + R_2*10 + R_4 + 0.001
+        # R_total = R_1*10 + R_2*10 + R_4 + 0.001
+
+        R_total = R_1*10
         return R_total
 
 
@@ -545,27 +547,16 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
         impact_flag = False
         impact_angle = 0.0
 
+        actions = []
+        log_probs = []
+        vals = []
+
         ## DEFINE TERMINAL EVENTS FOR ODE SOLVER
         def motor_cutoff(t,y,*argv):        # *argv collects all arguments pass since we aren't using them 
             # theta = y[4]                    # this way same func can be used w/ or w/o My terms
             x,vx,z,vz,theta,dtheta = y
             return np.deg2rad(90)-np.abs(theta)    # When angle greater than 90 deg activate cutoff
         motor_cutoff.terminal = True
-
-        def policy_output(t,y,):
-            x,vx,z,vz,theta,dtheta = y
-
-            d_ceil = (self.h_ceiling-z)
-            tau = d_ceil/vz
-            OFy = -vx/d_ceil
-
-            observation = [tau,OFy,d_ceil]
-
-            ## PASS STATE TO POLICY NETWORK
-            # agent.choose_action(observation)
-
-            return agent.tau_c-tau    
-        policy_output.terminal = True
 
         def ceiling_impact_body(t,y,*argv):
 
@@ -578,7 +569,6 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
             else: 
                 return 1
         ceiling_impact_body.terminal = True
-
 
         def ceiling_impact_leg1(t,y,*argv):
 
@@ -604,19 +594,36 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
                 return 1
         ceiling_impact_leg2.terminal = True
 
-        def landing_contact(t,y):
+        def landing_contact(t,y,*argv):
             beta=y[0]
             beta_landing = self.beta_landing(impact_leg=self.impact_leg)
             return beta-beta_landing # Trigger when this equals zero [Placeholder]
         landing_contact.terminal = True
 
-        def prop_contact(t,y):
+        def prop_contact(t,y,*argv):
             beta=y[0]
             beta_prop = self.beta_prop(impact_leg=self.impact_leg)
             return beta-beta_prop
         prop_contact.terminal = True
 
-        
+        def policy_output(t,y,):
+            x,vx,z,vz,theta,dtheta = y
+
+            d_ceil = (self.h_ceiling-z)
+            tau = d_ceil/vz
+            OFy = -vx/d_ceil
+
+            observation = [tau,OFy,d_ceil]
+
+            ## PASS STATE TO POLICY NETWORK
+            action,log_prob,val = agent.choose_action(observation)
+
+            actions.append(action)
+            log_probs.append(log_prob)
+            vals.append(val)
+
+            return agent.tau_c-tau    
+        policy_output.terminal = True
 
         def impact_conditions(events):
 
@@ -658,7 +665,7 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
         t_cutoff = sol_FlightTraj.t[-1]
 
         ## CHECK FOR EPISODE TERMINAL EVENTS
-        if np.size(sol_FlightTraj.t_events[1:]) > 0:
+        if np.asarray(sol_FlightTraj.t_events[1:],dtype=object).size > 0:
             impact_flag = True
             self.impact_leg = impact_conditions(sol_FlightTraj.t_events[1:])
 
@@ -691,7 +698,7 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
             t_cutoff = sol_Flip.t[-1]
 
             ## CHECK FOR EPISODE TERMINAL EVENTS
-            if np.size(sol_Flip.t_events[1:]) > 0:
+            if np.asarray(sol_Flip.t_events[1:],dtype=object).size > 0:
                 impact_flag = True
                 self.impact_leg = impact_conditions(sol_Flip.t_events[1:])
 
@@ -721,7 +728,7 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
             t_cutoff = sol_proj.t[-1]
 
             ## CHECK FOR EPISODE TERMINAL EVENTS
-            if np.size(sol_proj.t_events[:]) > 0:
+            if np.asarray(sol_proj.t_events[:],dtype=object).size > 0:
                 impact_flag = True
                 impact_angle = np.degrees(state_cutoff[4]) # [deg]
                 self.impact_leg = impact_conditions(sol_proj.t_events[:])
@@ -731,7 +738,7 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
         ########################
 
         if self.impact_leg == 0: ## BODY CONTACT
-            print("Failed Landing (Body Contact)")
+            # print("Failed Landing (Body Contact)")
             pad_contacts = 0
             body_contact = True
     
@@ -778,18 +785,18 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
 
 
             ## CHECK TERMINAL STATES
-            if np.size(sol_Swing.t_events[0]) > 0:  # SUCCESSFUL LANDING CONTACT
-                print("Successful Landing")
+            if np.asarray(sol_Swing.t_events[0],dtype=object).size > 0:  # SUCCESSFUL LANDING CONTACT
+                # print("Successful Landing")
                 pad_contacts = 4
                 body_contact = False
 
-            elif np.size(sol_Swing.t_events[1]) > 0:  # BODY CONTACT
-                print("Failed Landing (Prop Contact)")
+            elif np.asarray(sol_Swing.t_events[1],dtype=object).size > 0:  # BODY CONTACT
+                # print("Failed Landing (Prop Contact)")
                 pad_contacts = 2
                 body_contact = True
 
             else: # ONLY IMPACT LEG CONTACT (FREE SWING)
-                print("Failed Landing (No Swing Contact)")
+                # print("Failed Landing (No Swing Contact)")
                 pad_contacts = 2
                 body_contact = False
 
@@ -838,34 +845,27 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
 
 
             ## CHECK TERMINAL STATES
-            if np.size(sol_Swing.t_events[0]) > 0:  # SUCCESSFUL LANDING CONTACT
-                print("Successful Landing")
+            if np.asarray(sol_Swing.t_events[0],dtype=object).size > 0:  # SUCCESSFUL LANDING CONTACT
+                # print("Successful Landing")
                 pad_contacts = 4
                 body_contact = False
 
-            elif np.size(sol_Swing.t_events[1]) > 0:  # BODY CONTACT
-                print("Failed Landing (Prop Contact)")
+            elif np.asarray(sol_Swing.t_events[1],dtype=object).size > 0:  # BODY CONTACT
+                # print("Failed Landing (Prop Contact)")
                 pad_contacts = 2
                 body_contact = True
 
             else: # ONLY IMPACT LEG CONTACT (FREE SWING)
-                print("Failed Landing (No Swing Contact)")
+                # print("Failed Landing (No Swing Contact)")
                 pad_contacts = 2
                 body_contact = False
 
         else:
-            print("Failed Landing (No Contact)")
+            # print("Failed Landing (No Contact)")
             pad_contacts = 0
             body_contact = False
 
             
-        
-        ## RESHAPE/INTERPOLATE DATA TO FIXED TIME STEP
-        step_size = 0.005 # [s]
-        interp = interp1d(sol_t,sol_y,axis=1)
-        sol_t = np.arange(sol_t[0],sol_t[-1],step_size)
-        sol_y = interp(sol_t)
-
         ## CALCULATE REWARD
         x,dx,z,dz,theta,dthetea = sol_y
         d_ceil = (self.h_ceiling - z)
@@ -873,25 +873,29 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
 
         impact_angle = impact_angle
 
-        rewards = np.zeros_like(sol_t)
+        rewards = np.zeros(len(actions))
         rewards[-1] = self.calcReward(d_ceil_min,body_contact,pad_contacts,impact_angle)
 
-        dones = np.zeros_like(sol_t)
+        dones = np.zeros(len(actions))
         dones[-1] = 1
 
         state = [sol_t,sol_y]
-        actions = []
-        probs = []
-        vals = []
         
-        return state,actions,probs,vals,rewards,dones
+        
+        return state,actions,log_probs,vals,rewards,dones
 
     def animateTraj(self,states):
         """Create animation of model trajectory
 
         """        
 
+        ## RESHAPE/INTERPOLATE DATA TO FIXED TIME STEP
+        step_size = 0.005 # [s]
         sol_t,sol_y = states
+        interp = interp1d(sol_t,sol_y,axis=1)
+        sol_t = np.arange(sol_t[0],sol_t[-1],step_size)
+        sol_y = interp(sol_t)
+
         ## ANIMATION FUNCTIONS
         def init_lines(): ## INITIALIZE ANIMATED LINES
 

@@ -3,10 +3,17 @@ import numpy as np
 import torch as T
 import torch.nn as nn
 import torch.optim as optim
+from torch.distributions.categorical import Categorical
 
 import os
 
 from CF_Env import CF_Env
+
+DEVICE="cuda:0"
+EPISODES = 15_000
+GAMMA=0.999
+LR = 0.001
+RENDER=True
 
 
 class ActorNetwork(nn.Module):
@@ -20,7 +27,8 @@ class ActorNetwork(nn.Module):
                 nn.ReLU(),
                 nn.Linear(fc1_dims, fc2_dims),
                 nn.ReLU(),
-                nn.Linear(fc2_dims, 1)
+                nn.Linear(fc2_dims, 2),
+                nn.Softmax(dim=-1)
         )
 
         self.optimizer = optim.Adam(self.parameters(), lr=alpha)
@@ -29,7 +37,10 @@ class ActorNetwork(nn.Module):
 
     def forward(self, state):
 
-        return self.actor(state)
+        dist = self.actor(state)
+        dist = Categorical(dist)
+        
+        return dist
 
     def save_checkpoint(self):
         T.save(self.state_dict(), self.checkpoint_file)
@@ -57,29 +68,33 @@ class Agent:
     def choose_action(self, observation):
         state = T.tensor([observation], dtype=T.float).to(self.actor.device)
 
-        # ## SAMPLE ACTION FROM POLICY NETWORK
-        # dist = self.actor(state)
-        # action = dist.sample()
+        ## SAMPLE ACTION FROM POLICY NETWORK
+        dist = self.actor(state)
+        action = dist.sample()
 
-        # log_prob = T.squeeze(dist.log_prob(action)).item()
-        # action = T.squeeze(action).item()
-
-        ## CALC STATE VALUE FROM CRITIC NETWORK
-        value = self.critic(state)
-        value = T.squeeze(value).item()
-
-        # return action, log_prob, value
-
-        action = self.actor(state)
+        log_prob = T.squeeze(dist.log_prob(action)).item()
         action = T.squeeze(action).item()
 
-        # print(action)
+        return action,log_prob,None
 
-        return self.tau_c,self.My
+    def train(self,rewards,log_probs):
 
-    def remember(self):
-        pass
-       
+        ## CALCULATE DISCOUNTED RETURN FOR EACH TIME-STEP
+        Discounted_Returns = []
+        for ii in range(len(rewards)):
+            G = 0.0
+            for k,r in enumerate(rewards[ii:]):
+                G += (GAMMA**k)*r
+            Discounted_Returns.append(G)
+
+        Discounted_Returns = T.tensor(Discounted_Returns, dtype=T.float,requires_grad=True).to(DEVICE)
+        log_prob = T.tensor(log_probs,dtype=T.float,requires_grad=True).to(DEVICE)
+        policy_gradient = -log_prob*(Discounted_Returns)
+
+        self.actor.optimizer.zero_grad()
+        policy_gradient.sum().backward()
+        self.actor.optimizer.step()
+
 
 if __name__ == '__main__':
 
@@ -92,16 +107,14 @@ if __name__ == '__main__':
 
     ## POLICY CONDITIONS
     alpha = 0.0003
-    EPISODES = 3
+    EPISODES = 200
     RENDER = True
+    ep_score = []
 
 
-    for i in range(EPISODES):
+    for episode in range(EPISODES):
 
         ## RESET ENVIRONMENT
-        score = 0
-
-        ## VELOCITY CONDITIONS
         vel = 3.0
         phi = 60
 
@@ -118,15 +131,18 @@ if __name__ == '__main__':
 
         
         ## EXECUTE ENVIRONMENT/AGENT
-        states,actions,probs,vals,rewards,dones = env.solveODE(agent,IC=IC,t_span=[0,1.5])
+        states,actions,log_probs,vals,rewards,dones = env.solveODE(agent,IC=IC,t_span=[0,1.5])
+        ep_score.append(np.sum(rewards))
 
-        if RENDER:
+        if episode%10 == 0:
             env.animateTraj(states)
+            print(f"EPISODE: {episode} Score: {np.sum(rewards):2f} MA_Reward: {np.nanmean(ep_score[-20:]):.2f}")
+           
             
 
 
         ## TRAIN AGENT
         # agent.remember(observation, action, prob, val, reward, done)
-        # agent.learn()
+        # agent.train(rewards,log_probs)
 
 
