@@ -805,7 +805,7 @@ void CF_DataConverter::append_CSV_impact()
     // MISC INTERNAL STATE ESTIMATES
     fprintf(fPtr,"--,--,--,"); // Tau_est,OF_x_est,OF_y_est
     fprintf(fPtr,"%u,%u,%u,%u,%u,",Pad_Connections,Pad1_Contact,Pad2_Contact,Pad3_Contact,Pad4_Contact);
-    fprintf(fPtr,"--,%.3f,%.3f,%.3f,",impact_force_x,impact_force_y,impact_force_z);
+    fprintf(fPtr,"%.3f,%.3f,%.3f,",impact_force_x,impact_force_y,impact_force_z);
     fprintf(fPtr,"--,--,--,--,");
     fprintf(fPtr,"--,--,--,--,");
 

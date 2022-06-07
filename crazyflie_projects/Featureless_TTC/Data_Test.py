@@ -15,7 +15,7 @@ from crazyflie_logging.data_analysis.Data_Analysis import DataFile
 # os.system("clear")
 
 dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
-fileName = "EM_PEPG--Vd_3.00--phi_60.00--trial_24--NL.csv"
+fileName = "EM_PEPG--Vd_2.50--phi_90.00--trial_24--NL--NL.csv"
 trial = DataFile(dataPath,fileName,dataType='SIM')
 
 k_ep = 0
