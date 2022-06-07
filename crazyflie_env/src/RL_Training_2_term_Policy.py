@@ -34,7 +34,7 @@ if __name__ == '__main__':
     # ============================
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
-    V_d = 2.0 # [m/s]
+    V_d = 2.5 # [m/s]
     phi = 90   # [deg]
     phi_rad = np.radians(phi)
     env.vel_d = [V_d*np.cos(phi_rad), 0.0, V_d*np.sin(phi_rad)] # [m/s]

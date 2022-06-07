@@ -45,9 +45,10 @@ def executeFlight(env,agent):
     # ============================
     env.SendCmd('StickyPads',cmd_flag=1)              # Enable sticky pads
 
-    tau_0 = 0.5
+    tau_0 = 0.6
     z_0 = env.h_ceiling - tau_0*env.vel_d[2]
     env.Vel_Launch([0,0,z_0],env.vel_d)
+    env.sleep(0.1)
     env.SendCmd("Policy",env.policy,cmd_flag=1) # Arm policy inside controller
 
     ## RESET/UPDATE RUN CONDITIONS
@@ -115,7 +116,7 @@ def executeFlight(env,agent):
             env.runComplete_flag = True
 
         # IF POSITION FALLS BELOW FLOOR HEIGHT
-        elif env.posCF[2] <= -8.0: # Note: there is a lag with this at high RTF
+        elif env.velCF[2] <= -0.5 and env.posCF[2] <= 1.5: # Note: there is a lag with this at high RTF
             env.error_str = "Rollout Completed: Falling Drone"
             print(env.error_str)
 
@@ -199,7 +200,7 @@ if __name__ == '__main__':
     phi = 90
     phi_rad = np.radians(phi)
     env.vel_d = [V_d*np.cos(phi_rad), 0.0, V_d*np.sin(phi_rad)] # [m/s]
-    env.policy = [0.28,7.0,0] # NN policy
+    env.policy = [0.27,7.0,0] # NN policy
 
 
     ## RUN TRIAL
