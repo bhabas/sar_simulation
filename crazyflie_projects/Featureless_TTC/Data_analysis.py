@@ -4,6 +4,7 @@ import getpass
 import os
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import cv2 as cv
 
 # import cv2 as cv
 
@@ -108,20 +109,31 @@ class DataParser:
         Iu = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
         Iv = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
 
+        Iu_s = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+        Iv_s = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+
         ## INITIALIZE PREVIOUS IMAGE
         Prev_img = np.reshape(self.Camera_array[0],(HEIGHT_PIXELS,WIDTH_PIXELS)) 
+        Prev_img_smooth = np.reshape(self.Camera_array[0],(HEIGHT_PIXELS,WIDTH_PIXELS))
+        Prev_img_smooth = cv.GaussianBlur(Prev_img_smooth,(5,5),0)
+
 
         ## PRE-INITIALIZE ARRAYS FOR LOGGING ESTIMATES
         self.Tau_est = np.zeros_like(self.Time)
         self.OFx_est = np.zeros_like(self.Time)
         self.OFy_est = np.zeros_like(self.Time)
 
+        self.Tau_est_s = np.zeros_like(self.Time)
+        self.OFx_est_s = np.zeros_like(self.Time)
+        self.OFy_est_s = np.zeros_like(self.Time)
+
         for n in range(1,self.Camera_array.shape[0]): # Start at second data point to grab the previous image
             
             Cur_img = np.reshape(self.Camera_array[n],(HEIGHT_PIXELS,WIDTH_PIXELS)) #reshape the array back into the image
+            Cur_img_smooth = cv.GaussianBlur(Cur_img,(5,5),0)
 
 
-            ## FIND IMAGE GRADIENTS
+            ## FIND IMAGE GRADIENTS FOR UNFILT IMG
             for i in range(1,HEIGHT_PIXELS - 1): 
                 for j in range(1,WIDTH_PIXELS - 1):
                     Iu[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Kx)/w
@@ -155,12 +167,52 @@ class DataParser:
 
             Prev_img = Cur_img
 
+            ################ SMOOTHED IMAGE ################
+
+
+            ## FIND IMAGE GRADIENTS FOR UNFILT IMG
+            for i in range(1,HEIGHT_PIXELS - 1): 
+                for j in range(1,WIDTH_PIXELS - 1):
+                    Iu_s[i,j] = np.sum(Cur_img_smooth[i-1:i+2,j-1:j+2] * Kx)/w
+                    Iv_s[i,j] = np.sum(Cur_img_smooth[i-1:i+2,j-1:j+2] * Ky)/w
+
+            ## CALCULATE TIME GRADIENT AND RADIAL GRADIENT
+            It_s = (Cur_img_smooth - Prev_img_smooth)/(self.Time[n] - self.Time[n-1]) # Time gradient
+            G_s = U_grid*Iu_s + V_grid*Iv_s # Radial Gradient
+
+            ## SOLVE LEAST SQUARES PROBLEM
+            X_s = np.array([
+                [f*np.sum(Iu_s**2), f*np.sum(Iu_s*Iv_s), np.sum(G_s*Iu_s)],
+                [f*np.sum(Iu_s*Iv_s), f*np.sum(Iv_s**2), np.sum(G_s*Iv_s)],
+                [f*np.sum(G_s*Iu_s),  f*np.sum(G_s*Iv_s),  np.sum(G_s**2)]
+            ])
+
+            y_s = np.array([
+                [-np.sum(Iu_s*It_s)],
+                [-np.sum(Iv_s*It_s)],
+                [-np.sum(G_s*It_s)]
+            ])
+
+            ## SOLVE b VIA PSEUDO-INVERSE
+            b_s = np.linalg.pinv(X_s)@y_s
+            b_s = b_s.flatten()
+
+
+            self.OFy_est_s[n] = b_s[0]
+            self.OFx_est_s[n] = b_s[1]
+            self.Tau_est_s[n] = 1/(b_s[2])
+
+            Prev_img_smooth = Cur_img_smooth
+
             print(f"Current Image: {n}/{self.Camera_array.shape[0]}")
                 
     def Plotter(self): #plot results
 
 
-        fig = plt.figure()
+        plt.rc('xtick', labelsize=16)    # fontsize of the tick labels
+        plt.rc('ytick', labelsize=16)    # fontsize of the tick labels
+
+        fig = plt.figure(1)
         
 
         ## PLOT TAU VALUES
@@ -192,10 +244,35 @@ class DataParser:
         ax3.set_xlabel("Time [s]")
         ax3.set_ylim(-10,10)
 
+        
+        fig2 = plt.figure(2)
+
+        ## PLOT TAU VALUES
+        fig2.suptitle("Smooth Gradient Ceiling", fontsize=26)
+        ax1 = fig2.add_subplot(211)
+        ax1.plot(self.Time[1:],self.Tau[1:],color = 'tab:blue',label = 'Tau',linewidth=2)
+        ax1.plot(self.Time[1:],self.Tau_est[1:],color = 'r',linestyle = '--',label = 'Tau_est', dashes=(5, 4))
+        ax1.plot(self.Time[1:],self.Tau_est_s[1:],color = 'g',linestyle = '--',label = 'Tau_est_smoothed', dashes=(5, 3))
+        
+        ax1.grid()
+        ax1.legend(loc='upper right',fontsize=16)
+        ax1.set_ylabel("Tau [s]",fontsize=16)
+        ax1.set_xlabel("Time [s]",fontsize=16)
+
+        ## PLOT ERROR
+        ax2 = fig2.add_subplot(212,sharex = ax1)
+        ax2.plot(self.Time[1:],(self.Tau_est[1:] - self.Tau[1:]),color = 'r',label = "Error in Unsmoothed Tau")
+        ax2.plot(self.Time[1:],(self.Tau_est_s[1:] - self.Tau[1:]),color = 'g',label = "Error in Smoothed Tau")
+        # ax2.hlines(y =  0.05, xmin = Time_arr[-1] - 1, xmax = Time_arr[-1],linestyle = "--", linewidth = 2, color = 'k') #plot desired error bounds
+        # ax2.hlines(y = -0.05, xmin = Time_arr[-1] - 1, xmax = Time_arr[-1],linestyle = "--", linewidth = 2, color = 'k')
+        # ax2.vlines(x = (Time_arr[-1] - 1), ymin = -0.05, ymax = 0.05, linestyle = "--", linewidth = 2, color = "k")
+        # ax2.vlines(x = (Time_arr[-1]), ymin = -0.05, ymax = 0.05, linestyle = "--", linewidth = 2, color = "k")
+        ax2.grid()
+        ax2.legend(loc='lower right',fontsize=16)
+        ax2.set_ylabel("Error",fontsize=16)
+        ax2.set_xlabel("Time [s]",fontsize=16)
+
         plt.show()
-
-
-
         
         # fig, ax = plt.subplots(3,1, sharex = True)
         # ax[0].set_title("TTC Comparison")
