@@ -606,6 +606,15 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
             return beta-beta_prop
         prop_contact.terminal = True
 
+        def falling_drone(t,y,*argv):
+            x,vx,z,vz,theta,dtheta = y
+
+            if vz <= -0.5 and z <= 1.5:
+                return 0
+            else:
+                return 1
+        falling_drone.terminal = True
+
         def policy_output(t,y,):
             x,vx,z,vz,theta,dtheta = y
 
@@ -665,7 +674,7 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
         t_cutoff = sol_FlightTraj.t[-1]
 
         ## CHECK FOR EPISODE TERMINAL EVENTS
-        if np.asarray(sol_FlightTraj.t_events[1:],dtype=object).size > 0:
+        if np.asarray(sol_FlightTraj.t_events[2:],dtype=object).size > 0:
             impact_flag = True
             self.impact_leg = impact_conditions(sol_FlightTraj.t_events[1:])
 
@@ -698,7 +707,7 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
             t_cutoff = sol_Flip.t[-1]
 
             ## CHECK FOR EPISODE TERMINAL EVENTS
-            if np.asarray(sol_Flip.t_events[1:],dtype=object).size > 0:
+            if np.asarray(sol_Flip.t_events[2:],dtype=object).size > 0:
                 impact_flag = True
                 self.impact_leg = impact_conditions(sol_Flip.t_events[1:])
 
@@ -713,7 +722,8 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
                 self.ODE_proj,
                 y0=state_cutoff,
                 args=(),
-                events=(ceiling_impact_body,ceiling_impact_leg1,ceiling_impact_leg2),
+                events=(falling_drone,
+                        ceiling_impact_body,ceiling_impact_leg1,ceiling_impact_leg2),
                 t_span=[t_cutoff,t_span[1]],
                 max_step=0.001
             )
@@ -728,7 +738,7 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
             t_cutoff = sol_proj.t[-1]
 
             ## CHECK FOR EPISODE TERMINAL EVENTS
-            if np.asarray(sol_proj.t_events[:],dtype=object).size > 0:
+            if np.asarray(sol_proj.t_events[1:],dtype=object).size > 0:
                 impact_flag = True
                 impact_angle = np.degrees(state_cutoff[4]) # [deg]
                 self.impact_leg = impact_conditions(sol_proj.t_events[:])
