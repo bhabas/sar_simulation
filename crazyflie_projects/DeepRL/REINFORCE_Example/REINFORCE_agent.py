@@ -11,7 +11,7 @@ from torch.distributions import Categorical
 
 DEVICE="cuda:0"
 EPISODES = 15_000
-GAMMA=0.99
+GAMMA=0.999
 LR = 0.001
 RENDER=True
 
@@ -51,6 +51,10 @@ class Agent():
         return action.item(),dist.log_prob(action).squeeze(0)
 
     def train(self,rewards,log_probs):
+        ## CONVERT TO FULLY MONTE-CARLO REWARD 
+        r = np.sum(rewards)
+        rewards = np.zeros_like(rewards)
+        rewards[-1] = r
 
         ## CALCULATE DISCOUNTED RETURN FOR EACH TIME-STEP
         Discounted_Returns = []
@@ -62,7 +66,7 @@ class Agent():
 
         Discounted_Returns = T.tensor(Discounted_Returns, dtype=T.float).to(DEVICE)
         log_prob = T.stack(log_probs)
-        policy_gradient = -log_prob*(Discounted_Returns-T.mean(Discounted_Returns))
+        policy_gradient = -log_prob*(Discounted_Returns)
 
         self.Policy_NN.optimizer.zero_grad()
         policy_gradient.sum().backward()
