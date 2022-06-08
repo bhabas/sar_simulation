@@ -382,7 +382,7 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
 
         event_flags = np.zeros_like(events)
 
-        while t <= t_span[1]:
+        while z <= 1.5:
             az = 0
             z += vz*dt
             vz += az*dt
@@ -692,213 +692,213 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
         t_cutoff = sol_t[-1]
 
         ## CHECK FOR EPISODE TERMINAL EVENTS
-        if np.asarray(event_flags[:],dtype=object).size > 0:
+        if any(event_flags) == 1:
             impact_flag = True
             self.impact_leg = impact_conditions(event_flags)
 
 
 
-        # # ##############################
-        # # #     EXECUTE BODY MOMENT
-        # # ##############################
+        # ##############################
+        # #     EXECUTE BODY MOMENT
+        # ##############################
 
-        # ## CHECK FOR EPISODE TERMINAL EVENTS
-        # if impact_flag == False:
+        ## CHECK FOR EPISODE TERMINAL EVENTS
+        if impact_flag == False:
 
-        #     ## SOLVE ODE FOR FLIP MANUEVER STATE UNTIL CONTACT OR MOTOR CUTOFF
-        #     sol_Flip = integrate.solve_ivp(
-        #         self.ODE_flip,
-        #         y0=state_cutoff,
-        #         args=(agent.My,),
-        #         events=(motor_cutoff,
-        #             ceiling_impact_body,ceiling_impact_leg1,ceiling_impact_leg2),
-        #         t_span=[t_cutoff,t_span[1]],
-        #         max_step=0.001
-        #     )
+            ## SOLVE ODE FOR FLIP MANUEVER STATE UNTIL CONTACT OR MOTOR CUTOFF
+            sol_Flip = integrate.solve_ivp(
+                self.ODE_flip,
+                y0=state_cutoff,
+                args=(agent.My,),
+                events=(motor_cutoff,
+                    ceiling_impact_body,ceiling_impact_leg1,ceiling_impact_leg2),
+                t_span=[t_cutoff,t_span[1]],
+                max_step=0.001
+            )
         
-        #     ## EXTEND SOLUTION ARRAYS
-        #     sol_t = np.concatenate((sol_t,sol_Flip.t))
-        #     sol_y = np.concatenate((sol_y,sol_Flip.y),axis=1)
+            ## EXTEND SOLUTION ARRAYS
+            sol_t = np.concatenate((sol_t,sol_Flip.t))
+            sol_y = np.concatenate((sol_y,sol_Flip.y),axis=1)
 
-        #     ## SAVE ENDING STATE AND TIME 
-        #     state_cutoff = sol_Flip.y[:,-1]
-        #     t_cutoff = sol_Flip.t[-1]
+            ## SAVE ENDING STATE AND TIME 
+            state_cutoff = sol_Flip.y[:,-1]
+            t_cutoff = sol_Flip.t[-1]
 
-        #     ## CHECK FOR EPISODE TERMINAL EVENTS
-        #     if np.asarray(sol_Flip.t_events[2:],dtype=object).size > 0:
-        #         impact_flag = True
-        #         self.impact_leg = impact_conditions(sol_Flip.t_events[1:])
+            ## CHECK FOR EPISODE TERMINAL EVENTS
+            if np.asarray(sol_Flip.t_events[2:],dtype=object).size > 0:
+                impact_flag = True
+                self.impact_leg = impact_conditions(sol_Flip.t_events[1:])
 
-        # # ######################################
-        # # #   PROJECTILE MOTION AND ROTATION
-        # # ######################################
+        # ######################################
+        # #   PROJECTILE MOTION AND ROTATION
+        # ######################################
 
-        # if impact_flag == False:
+        if impact_flag == False:
 
-        #     ## SOLVE ODE FOR PROJECTILE MOTION UNTIL CONTACT OR MOTOR CUTOFF
-        #     sol_proj = integrate.solve_ivp(
-        #         self.ODE_proj,
-        #         y0=state_cutoff,
-        #         args=(),
-        #         events=(ceiling_impact_body,ceiling_impact_leg1,ceiling_impact_leg2),
-        #         t_span=[t_cutoff,t_span[1]],
-        #         max_step=0.001
-        #     )
+            ## SOLVE ODE FOR PROJECTILE MOTION UNTIL CONTACT OR MOTOR CUTOFF
+            sol_proj = integrate.solve_ivp(
+                self.ODE_proj,
+                y0=state_cutoff,
+                args=(),
+                events=(ceiling_impact_body,ceiling_impact_leg1,ceiling_impact_leg2),
+                t_span=[t_cutoff,t_span[1]],
+                max_step=0.001
+            )
 
-        #     ## EXTEND SOLUTION ARRAYS
-        #     sol_t = np.concatenate((sol_t,sol_proj.t))
-        #     sol_y = np.concatenate((sol_y,sol_proj.y),axis=1)
+            ## EXTEND SOLUTION ARRAYS
+            sol_t = np.concatenate((sol_t,sol_proj.t))
+            sol_y = np.concatenate((sol_y,sol_proj.y),axis=1)
 
 
-        #     ## SAVE ENDING STATE AND TIME
-        #     state_cutoff = sol_proj.y[:,-1]
-        #     t_cutoff = sol_proj.t[-1]
+            ## SAVE ENDING STATE AND TIME
+            state_cutoff = sol_proj.y[:,-1]
+            t_cutoff = sol_proj.t[-1]
 
-        #     ## CHECK FOR EPISODE TERMINAL EVENTS
-        #     if np.asarray(sol_proj.t_events[:],dtype=object).size > 0:
-        #         impact_flag = True
-        #         impact_angle = np.degrees(state_cutoff[4]) # [deg]
-        #         self.impact_leg = impact_conditions(sol_proj.t_events[:])
+            ## CHECK FOR EPISODE TERMINAL EVENTS
+            if np.asarray(sol_proj.t_events[:],dtype=object).size > 0:
+                impact_flag = True
+                impact_angle = np.degrees(state_cutoff[4]) # [deg]
+                self.impact_leg = impact_conditions(sol_proj.t_events[:])
 
-        # ########################
-        # #   IMPACT DYNAMICS
-        # ########################
+        ########################
+        #   IMPACT DYNAMICS
+        ########################
 
-        # if self.impact_leg == 0: ## BODY CONTACT
-        #     # print("Failed Landing (Body Contact)")
-        #     pad_contacts = 0
-        #     body_contact = True
+        if self.impact_leg == 0: ## BODY CONTACT
+            # print("Failed Landing (Body Contact)")
+            pad_contacts = 0
+            body_contact = True
     
-        # elif self.impact_leg == 1:
+        elif self.impact_leg == 1:
 
-        #     beta_0,dbeta_0 = self.impact_Conversion(state_cutoff,self.impact_leg)
+            beta_0,dbeta_0 = self.impact_Conversion(state_cutoff,self.impact_leg)
 
-        #     ## FIND IMPACT COORDS
-        #     r_G_C1_0 = np.array(
-        #                 [[-(L+e*np.sin(gamma))*np.cos(beta_0)+e*np.cos(gamma)*np.sin(beta_0)],
-        #                 [-(L+e*np.sin(gamma))*np.sin(beta_0)-e*np.cos(gamma)*np.cos(beta_0)]])
+            ## FIND IMPACT COORDS
+            r_G_C1_0 = np.array(
+                        [[-(L+e*np.sin(gamma))*np.cos(beta_0)+e*np.cos(gamma)*np.sin(beta_0)],
+                        [-(L+e*np.sin(gamma))*np.sin(beta_0)-e*np.cos(gamma)*np.cos(beta_0)]])
 
-        #     r_O_G = np.array([[state_cutoff[0]],[state_cutoff[2]]])
-        #     r_O_C1 = r_O_G - r_G_C1_0
+            r_O_G = np.array([[state_cutoff[0]],[state_cutoff[2]]])
+            r_O_C1 = r_O_G - r_G_C1_0
             
-        #     ## SOLVE SWING ODE
-        #     sol_Swing = integrate.solve_ivp(
-        #         self.ODE_swing,
-        #         y0=[beta_0,dbeta_0],
-        #         args=(),
-        #         events=(landing_contact,prop_contact),
-        #         t_span=[t_cutoff,t_span[1]],
-        #         max_step=0.001)
-
-            
-        #     beta,dbeta = sol_Swing.y
-
-        #     ## SOLVE FOR SWING BEHAVIOR IN GLOBAL COORDINATES
-        #     r_G_C1 = np.array(
-        #                 [[-(L+e*np.sin(gamma))*np.cos(beta)+e*np.cos(gamma)*np.sin(beta)],
-        #                 [-(L+e*np.sin(gamma))*np.sin(beta)-e*np.cos(gamma)*np.cos(beta)]])
-
-        #     theta = -((np.pi/2-gamma) + beta) # Convert beta in (e^) to theta in (G^)
-
-        #     sol_swing_y = np.zeros((6,len(beta)))
-
-        #     sol_swing_y[0,:] = r_O_C1[0] + r_G_C1[0,:]  # x
-        #     sol_swing_y[2,:] = r_O_C1[1] + r_G_C1[1,:]  # z
-        #     sol_swing_y[4,:] = theta                    # theta
-
-        #     ## COMBINE SOLUTION ARRAYS
-        #     sol_t = np.concatenate((sol_t,sol_Swing.t))
-        #     sol_y = np.concatenate((sol_y,sol_swing_y),axis=1)
-
-
-        #     ## CHECK TERMINAL STATES
-        #     if np.asarray(sol_Swing.t_events[0],dtype=object).size > 0:  # SUCCESSFUL LANDING CONTACT
-        #         # print("Successful Landing")
-        #         pad_contacts = 4
-        #         body_contact = False
-
-        #     elif np.asarray(sol_Swing.t_events[1],dtype=object).size > 0:  # BODY CONTACT
-        #         # print("Failed Landing (Prop Contact)")
-        #         pad_contacts = 2
-        #         body_contact = True
-
-        #     else: # ONLY IMPACT LEG CONTACT (FREE SWING)
-        #         # print("Failed Landing (No Swing Contact)")
-        #         pad_contacts = 2
-        #         body_contact = False
-
-
-        # elif self.impact_leg == 2:
-
-        #     beta_0,dbeta_0 = self.impact_Conversion(state_cutoff,self.impact_leg)
-
-        #     ## FIND IMPACT POINT
-        #     r_G_C2_0 = np.array(
-        #                 [[-(L+e*np.sin(gamma))*np.cos(beta_0)-e*np.cos(gamma)*np.sin(beta_0)],
-        #                 [-(L+e*np.sin(gamma))*np.sin(beta_0)+e*np.cos(gamma)*np.cos(beta_0)]])
-
-        #     r_O_G = np.array([[state_cutoff[0]],[state_cutoff[2]]])
-        #     r_O_C2 = r_O_G - r_G_C2_0
-            
-        #     ## SOLVE SWING ODE
-        #     sol_Swing = integrate.solve_ivp(
-        #         self.ODE_swing,
-        #         y0=[beta_0,dbeta_0],
-        #         args=(),
-        #         events=(landing_contact,prop_contact),
-        #         t_span=[t_cutoff,t_span[1]],
-        #         max_step=0.001)
+            ## SOLVE SWING ODE
+            sol_Swing = integrate.solve_ivp(
+                self.ODE_swing,
+                y0=[beta_0,dbeta_0],
+                args=(),
+                events=(landing_contact,prop_contact),
+                t_span=[t_cutoff,t_span[1]],
+                max_step=0.001)
 
             
-        #     beta,dbeta = sol_Swing.y
+            beta,dbeta = sol_Swing.y
+
+            ## SOLVE FOR SWING BEHAVIOR IN GLOBAL COORDINATES
+            r_G_C1 = np.array(
+                        [[-(L+e*np.sin(gamma))*np.cos(beta)+e*np.cos(gamma)*np.sin(beta)],
+                        [-(L+e*np.sin(gamma))*np.sin(beta)-e*np.cos(gamma)*np.cos(beta)]])
+
+            theta = -((np.pi/2-gamma) + beta) # Convert beta in (e^) to theta in (G^)
+
+            sol_swing_y = np.zeros((6,len(beta)))
+
+            sol_swing_y[0,:] = r_O_C1[0] + r_G_C1[0,:]  # x
+            sol_swing_y[2,:] = r_O_C1[1] + r_G_C1[1,:]  # z
+            sol_swing_y[4,:] = theta                    # theta
+
+            ## COMBINE SOLUTION ARRAYS
+            sol_t = np.concatenate((sol_t,sol_Swing.t))
+            sol_y = np.concatenate((sol_y,sol_swing_y),axis=1)
 
 
-        #     ## SOLVE FOR SWING BEHAVIOR IN GLOBAL COORDINATES
-        #     r_G_C2 = np.array(
-        #                 [[-(L+e*np.sin(gamma))*np.cos(beta)-e*np.cos(gamma)*np.sin(beta)],
-        #                 [-(L+e*np.sin(gamma))*np.sin(beta)+e*np.cos(gamma)*np.cos(beta)]])
+            ## CHECK TERMINAL STATES
+            if np.asarray(sol_Swing.t_events[0],dtype=object).size > 0:  # SUCCESSFUL LANDING CONTACT
+                # print("Successful Landing")
+                pad_contacts = 4
+                body_contact = False
 
-        #     theta = -((np.pi/2+gamma) + beta) # Convert beta in (e^) to theta in (G^)
+            elif np.asarray(sol_Swing.t_events[1],dtype=object).size > 0:  # BODY CONTACT
+                # print("Failed Landing (Prop Contact)")
+                pad_contacts = 2
+                body_contact = True
 
-        #     sol_swing_y = np.zeros((6,len(beta)))
-
-        #     sol_swing_y[0,:] = r_O_C2[0] + r_G_C2[0,:]  # x
-        #     sol_swing_y[2,:] = r_O_C2[1] + r_G_C2[1,:]  # z
-        #     sol_swing_y[4,:] = theta                    # theta
-
-        #     ## COMBINE SOLUTION ARRAYS
-        #     sol_t = np.concatenate((sol_t,sol_Swing.t))
-        #     sol_y = np.concatenate((sol_y,sol_swing_y),axis=1)
+            else: # ONLY IMPACT LEG CONTACT (FREE SWING)
+                # print("Failed Landing (No Swing Contact)")
+                pad_contacts = 2
+                body_contact = False
 
 
-        #     ## CHECK TERMINAL STATES
-        #     if np.asarray(sol_Swing.t_events[0],dtype=object).size > 0:  # SUCCESSFUL LANDING CONTACT
-        #         # print("Successful Landing")
-        #         pad_contacts = 4
-        #         body_contact = False
+        elif self.impact_leg == 2:
 
-        #     elif np.asarray(sol_Swing.t_events[1],dtype=object).size > 0:  # BODY CONTACT
-        #         # print("Failed Landing (Prop Contact)")
-        #         pad_contacts = 2
-        #         body_contact = True
+            beta_0,dbeta_0 = self.impact_Conversion(state_cutoff,self.impact_leg)
 
-        #     else: # ONLY IMPACT LEG CONTACT (FREE SWING)
-        #         # print("Failed Landing (No Swing Contact)")
-        #         pad_contacts = 2
-        #         body_contact = False
+            ## FIND IMPACT POINT
+            r_G_C2_0 = np.array(
+                        [[-(L+e*np.sin(gamma))*np.cos(beta_0)-e*np.cos(gamma)*np.sin(beta_0)],
+                        [-(L+e*np.sin(gamma))*np.sin(beta_0)+e*np.cos(gamma)*np.cos(beta_0)]])
 
-        # else:
-        #     # print("Failed Landing (No Contact)")
-        #     pad_contacts = 0
-        #     body_contact = False
+            r_O_G = np.array([[state_cutoff[0]],[state_cutoff[2]]])
+            r_O_C2 = r_O_G - r_G_C2_0
+            
+            ## SOLVE SWING ODE
+            sol_Swing = integrate.solve_ivp(
+                self.ODE_swing,
+                y0=[beta_0,dbeta_0],
+                args=(),
+                events=(landing_contact,prop_contact),
+                t_span=[t_cutoff,t_span[1]],
+                max_step=0.001)
 
             
-        # ## CALCULATE REWARD
-        # x,dx,z,dz,theta,dthetea = sol_y
-        # d_ceil = (self.h_ceiling+0.05 - z)
-        # d_ceil_min = np.min(d_ceil)
+            beta,dbeta = sol_Swing.y
 
-        # impact_angle = impact_angle
+
+            ## SOLVE FOR SWING BEHAVIOR IN GLOBAL COORDINATES
+            r_G_C2 = np.array(
+                        [[-(L+e*np.sin(gamma))*np.cos(beta)-e*np.cos(gamma)*np.sin(beta)],
+                        [-(L+e*np.sin(gamma))*np.sin(beta)+e*np.cos(gamma)*np.cos(beta)]])
+
+            theta = -((np.pi/2+gamma) + beta) # Convert beta in (e^) to theta in (G^)
+
+            sol_swing_y = np.zeros((6,len(beta)))
+
+            sol_swing_y[0,:] = r_O_C2[0] + r_G_C2[0,:]  # x
+            sol_swing_y[2,:] = r_O_C2[1] + r_G_C2[1,:]  # z
+            sol_swing_y[4,:] = theta                    # theta
+
+            ## COMBINE SOLUTION ARRAYS
+            sol_t = np.concatenate((sol_t,sol_Swing.t))
+            sol_y = np.concatenate((sol_y,sol_swing_y),axis=1)
+
+
+            ## CHECK TERMINAL STATES
+            if np.asarray(sol_Swing.t_events[0],dtype=object).size > 0:  # SUCCESSFUL LANDING CONTACT
+                # print("Successful Landing")
+                pad_contacts = 4
+                body_contact = False
+
+            elif np.asarray(sol_Swing.t_events[1],dtype=object).size > 0:  # BODY CONTACT
+                # print("Failed Landing (Prop Contact)")
+                pad_contacts = 2
+                body_contact = True
+
+            else: # ONLY IMPACT LEG CONTACT (FREE SWING)
+                # print("Failed Landing (No Swing Contact)")
+                pad_contacts = 2
+                body_contact = False
+
+        else:
+            # print("Failed Landing (No Contact)")
+            pad_contacts = 0
+            body_contact = False
+
+            
+        ## CALCULATE REWARD
+        x,dx,z,dz,theta,dthetea = sol_y
+        d_ceil = (self.h_ceiling+0.05 - z)
+        d_ceil_min = np.min(d_ceil)
+
+        impact_angle = impact_angle
 
         rewards = []
         dones = []
