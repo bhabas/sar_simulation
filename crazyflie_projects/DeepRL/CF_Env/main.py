@@ -126,7 +126,7 @@ if __name__ == '__main__':
     d_0 = vz*tau_0
     z_0 = (env.h_ceiling - d_0)
 
-    IC = [0, vx, z_0, vz, 0, 0]
+    IC = [0, vx, z_0, vz, -0.5, 0]
 
     
     ## EXECUTE ENVIRONMENT/AGENT
