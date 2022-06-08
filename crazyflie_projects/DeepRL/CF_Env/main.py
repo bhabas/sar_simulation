@@ -112,33 +112,32 @@ if __name__ == '__main__':
     ep_score = []
 
 
-    for episode in range(EPISODES):
+    episode = 0
+    ## RESET ENVIRONMENT
+    vel = 3.0
+    phi = 60
 
-        ## RESET ENVIRONMENT
-        vel = 3.0
-        phi = 60
+    phi_rad = np.radians(phi)
+    vz = vel*np.sin(phi_rad)
+    vx = vel*np.cos(phi_rad)
 
-        phi_rad = np.radians(phi)
-        vz = vel*np.sin(phi_rad)
-        vx = vel*np.cos(phi_rad)
+    ## INITIALIZE STARTING CONDITIONS
+    tau_0 = 0.6
+    d_0 = vz*tau_0
+    z_0 = (env.h_ceiling - d_0)
 
-        ## INITIALIZE STARTING CONDITIONS
-        tau_0 = 0.6
-        d_0 = vz*tau_0
-        z_0 = (env.h_ceiling - d_0)
+    IC = [0, vx, z_0, vz, 0, 0]
 
-        IC = [0, vx, z_0, vz, 0, 0]
+    
+    ## EXECUTE ENVIRONMENT/AGENT
+    print(f"ep: {episode}")
+    states,actions,log_probs,vals,rewards,dones = env.solveODE(agent,IC=IC,t_span=[0,1.5])
+    ep_score.append(np.sum(rewards))
 
+    if episode%10 == 0:
+        env.animateTraj(states)
+        print(f"EPISODE: {episode} Score: {np.sum(rewards):2f} MA_Reward: {np.nanmean(ep_score[-20:]):.2f}")
         
-        ## EXECUTE ENVIRONMENT/AGENT
-        print(f"ep: {episode}")
-        states,actions,log_probs,vals,rewards,dones = env.solveODE(agent,IC=IC,t_span=[0,1.5])
-        ep_score.append(np.sum(rewards))
-
-        if episode%10 == 0:
-            env.animateTraj(states)
-            print(f"EPISODE: {episode} Score: {np.sum(rewards):2f} MA_Reward: {np.nanmean(ep_score[-20:]):.2f}")
-           
             
 
 
