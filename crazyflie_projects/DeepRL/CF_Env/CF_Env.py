@@ -359,7 +359,7 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
         return beta
 
     
-    def ODE_FlightTraj(self,y,events,t_span,dt):
+    def ODE_FlightTraj(self,y,agent,events,t_span,dt):
         """Function that represents the system of 1st order ODEs for the system during
         constant velocity flight
 
@@ -379,10 +379,11 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
 
         t_list = [t]
         y_list = [[x,vx,z,vz,theta,dtheta]]
+        agent_list = []
 
         event_flags = np.zeros_like(events)
 
-        while z <= 1.5:
+        while t<=t_span[1]:
             az = 0
             z += vz*dt
             vz += az*dt
@@ -406,12 +407,26 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
 
             if any(event_flags) == 1:
                 break
+
+            d_ceil = (self.h_ceiling - z)
+            tau = d_ceil/vz
+            OFy = -vx/d_ceil
+            state = [tau,OFy,d_ceil]
+
+            action,log_prob,val = agent.choose_action(state)
+
             t_list.append(t)
             y_list.append([x,vx,z,vz,theta,dtheta])
+            agent_list.append([action,log_prob,val])
+
+            if tau < agent.tau_c:
+                break
+
 
         t_list = np.array(t_list)
         y_list = np.array(y_list).T
-        return t_list,y_list,event_flags
+        agent_list = np.array(agent_list).T
+        return t_list,y_list,agent_list,event_flags
 
     def ODE_flip(self,t,y,My):
         """Function that represents the system of 1st order ODEs for the system during applied Moment
@@ -680,11 +695,12 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
         #     CONSTANT VEL TRAJ.
         ##############################
         # # SOLVE ODE FOR CONSTANT VELOCITY FLIGHT UNTIL TERMINAL STATE OR TAU_TRIGGER
-        sol_t,sol_y,event_flags = self.ODE_FlightTraj(
+        sol_t,sol_y,agent_list,event_flags = self.ODE_FlightTraj(
             IC,
+            agent,
             events=(ceiling_impact_body,ceiling_impact_leg1,ceiling_impact_leg2),
             t_span=[t_span[0],t_span[1]],
-            dt=0.001
+            dt=0.001,
         )
 
         # SAVE ENDING STATE AND TIME 
@@ -900,12 +916,16 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
 
         impact_angle = impact_angle
 
-        rewards = []
-        dones = []
+        actions,log_probs,vals = agent_list
+        
+        rewards = np.zeros(len(actions))
+        rewards[-1] = self.calcReward(d_ceil_min,pad_contacts,body_contact,impact_angle)
+
+        dones = np.zeros(len(actions))
+        dones[-1] = 1
         
 
         state = [sol_t,sol_y]
-        
         
         return state,actions,log_probs,vals,rewards,dones
 

@@ -103,7 +103,7 @@ if __name__ == '__main__':
     env = CF_Env()
 
     agent.My = -7e-3
-    agent.tau_c = 0.14
+    agent.tau_c = 0.13
 
     ## POLICY CONDITIONS
     alpha = 0.0003
