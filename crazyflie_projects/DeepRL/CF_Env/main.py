@@ -131,6 +131,7 @@ if __name__ == '__main__':
 
         
         ## EXECUTE ENVIRONMENT/AGENT
+        print(f"ep: {episode}")
         states,actions,log_probs,vals,rewards,dones = env.solveODE(agent,IC=IC,t_span=[0,1.5])
         ep_score.append(np.sum(rewards))
 

@@ -631,7 +631,13 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
             log_probs.append(log_prob)
             vals.append(val)
 
-            return agent.tau_c-tau    
+            if action == 1:
+                agent.tau_c = tau
+
+            if tau >= agent.tau_c:
+                return tau >= agent.tau_c
+            else:
+                return False
         policy_output.terminal = True
 
         def impact_conditions(events):
@@ -722,8 +728,7 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
                 self.ODE_proj,
                 y0=state_cutoff,
                 args=(),
-                events=(falling_drone,
-                        ceiling_impact_body,ceiling_impact_leg1,ceiling_impact_leg2),
+                events=(ceiling_impact_body,ceiling_impact_leg1,ceiling_impact_leg2),
                 t_span=[t_cutoff,t_span[1]],
                 max_step=0.001
             )
@@ -738,7 +743,7 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
             t_cutoff = sol_proj.t[-1]
 
             ## CHECK FOR EPISODE TERMINAL EVENTS
-            if np.asarray(sol_proj.t_events[1:],dtype=object).size > 0:
+            if np.asarray(sol_proj.t_events[:],dtype=object).size > 0:
                 impact_flag = True
                 impact_angle = np.degrees(state_cutoff[4]) # [deg]
                 self.impact_leg = impact_conditions(sol_proj.t_events[:])
@@ -878,8 +883,8 @@ class CF_Env(): # Model class for Single Degree of Freedom Crazyflie
             
         ## CALCULATE REWARD
         x,dx,z,dz,theta,dthetea = sol_y
-        d_ceil = (self.h_ceiling - z)
-        d_ceil_min = np.min((self.h_ceiling - z))
+        d_ceil = (self.h_ceiling+0.05 - z)
+        d_ceil_min = np.min(d_ceil)
 
         impact_angle = impact_angle
 
