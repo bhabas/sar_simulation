@@ -18,17 +18,24 @@ def simulate(dt,c):
     z_list = []
     t_list = []
 
-    while z > 0:
-        z_list.append(z)
-        t_list.append(t)
-
-        az = -g - np.sign(vz)*c/m*np.abs(vz)**2
-        z += vz*dt
-        vz += az*dt
-
-        t += dt
     z_list.append(z)
     t_list.append(t)
+
+    while z > 0:
+        
+        
+        az = -g - np.sign(vz)*c/m*np.abs(vz)**2
+        z_mid = z + vz*(0.5*dt)
+        vz_mid = vz + az*(0.5*dt)
+        az_mid = -g - np.sign(vz_mid)*c/m*np.abs(vz_mid)**2
+
+        z += vz_mid*dt
+        vz += az_mid*dt
+
+        t += dt
+
+        z_list.append(z)
+        t_list.append(t)
 
         
     return t_list,z_list
