@@ -101,7 +101,7 @@ class CameraClass:
         fig = plt.figure(1)
         
         ## PLOT TAU VALUES
-        fig.suptitle("Tau Estimates for Natural Ceiling", fontsize=26)
+        fig.suptitle("Tau Estimates FPS = 100", fontsize=26)
         ax1 = fig.add_subplot(211)
         ax1.plot(Time_arr[2:],Tau_act[2:],color = 'tab:blue',label = 'Tau')
         ax1.plot(Time_arr[2:],Tau_est[2:],color = 'r',linestyle = '--',label = 'Tau_est')
@@ -109,6 +109,8 @@ class CameraClass:
         ax1.legend(loc='upper right',fontsize=16)
         ax1.set_ylabel("Tau [s]",fontsize=16)
         ax1.set_xlabel("Time [s]",fontsize=16)
+        ax1.tick_params(axis='both', which='major', labelsize=14)
+        ax1.tick_params(axis='both', which='minor', labelsize=14)
 
         ## PLOT ERROR
         ax2 = fig.add_subplot(212,sharex = ax1)
@@ -116,9 +118,13 @@ class CameraClass:
 
         ax2.hlines(y = 0, xmin = Time_arr[-1] - 5, xmax = Time_arr[-1] + 5, linestyle = "-", linewidth = 1, color = 'k')
         ax2.grid()
-        ax2.legend(loc='lower right',fontsize=16)
+        ax2.legend(loc='upper right',fontsize=16)
         ax2.set_ylabel("Error",fontsize=16)
         ax2.set_xlabel("Time [s]",fontsize=16)
+        ax2.tick_params(axis='both', which='major', labelsize=14)
+        ax2.tick_params(axis='both', which='minor', labelsize=14)
+
+
 
         ## OFX_Y PLOTS
         fig2 = plt.figure(2)
@@ -127,32 +133,32 @@ class CameraClass:
         ax1.plot(Time_arr[1:],OFy_act[1:], color = "tab:blue", label = "OFy")
         ax1.plot(Time_arr[1:],OFy_est[1:], color = "r", linestyle = "--", label = "OFy_est")
         ax1.grid()
-        ax1.legend(loc='upper right')
-        ax1.set_ylabel("OFy [rad/s]")
-        ax1.set_xlabel("Time [s]")
+        ax1.legend(loc='upper left',fontsize=16)
+        ax1.set_ylabel("OFy [rad/s]",fontsize=16)
+        ax1.set_xlabel("Time [s]",fontsize=16)
         #OFy error plots
         ax2 = fig2.add_subplot(222,sharex = ax1)
         ax2.plot(Time_arr[1:],(OFy_est[1:] - OFy_act[1:]),color = "r",label = "Error in OFy")
         ax2.grid()
-        ax2.legend(loc='upper right')
-        ax2.set_ylabel("Error")
-        ax2.set_xlabel("Time [s]")
+        ax2.legend(loc='upper left',fontsize=16)
+        ax2.set_ylabel("Error",fontsize=16)
+        ax2.set_xlabel("Time [s]",fontsize=16)
 
         #OFx Plots
         ax3 = fig2.add_subplot(223)
         ax3.plot(Time_arr[1:],OFx_act[1:], color = "tab:blue", label = "OFx")
         ax3.plot(Time_arr[1:],OFx_est[1:], color = "r", linestyle = "--", label = "OFx_est")
         ax3.grid()
-        ax3.legend(loc='upper right')
-        ax3.set_ylabel("OFx [rad/s]")
-        ax3.set_xlabel("Time [s]")
+        ax3.legend(loc='upper left',fontsize=16)
+        ax3.set_ylabel("OFx [rad/s]",fontsize=16)
+        ax3.set_xlabel("Time [s]",fontsize=16)
         #OFx error plots
         ax4 = fig2.add_subplot(224,sharex = ax3)
-        ax4.plot(Time_arr[1:],(OFy_est[1:] - OFy_act[1:]),color = "r",label = "Error in OFy")
+        ax4.plot(Time_arr[1:],(OFx_est[1:] - OFx_act[1:]),color = "r",label = "Error in OFx")
         ax4.grid()
-        ax4.legend(loc='upper right')
-        ax4.set_ylabel("Error")
-        ax4.set_xlabel("Time [s]")
+        ax4.legend(loc='upper left',fontsize=16)
+        ax4.set_ylabel("Error",fontsize=16)
+        ax4.set_xlabel("Time [s]",fontsize=16)
 
         plt.show()
 

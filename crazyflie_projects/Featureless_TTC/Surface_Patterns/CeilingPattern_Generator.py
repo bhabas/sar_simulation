@@ -8,7 +8,7 @@ BASEPATH = "crazyflie_projects/Featureless_TTC/"
 
 ## PLOT BRIGHTNESS PATTERN FROM 2.4.1 HORIZONTAL MOTION
 I_0 = 255   # Brightness value (0-255)
-L = 0.45   # Stripe Period [m]
+L = 0.25   # Stripe Period [m] 0.45
 
 
 ## CAMERA PARAMETERS
@@ -49,11 +49,11 @@ im = ax.imshow(Intensity(X), interpolation='none',
 )
 
 ## PLOT CAMERA BOUNDS
-ax.add_patch(Rectangle((-Xi_Width/2,-Yi_Width/2),Xi_Width,Yi_Width,lw=2,fill=False,color="tab:blue"))
+# ax.add_patch(Rectangle((-Xi_Width/2,-Yi_Width/2),Xi_Width,Yi_Width,lw=2,fill=False,color="tab:blue"))
 
-ax.set_title("Floor Pattern")
-ax.set_xlabel("x [m]")
-ax.set_ylabel("y [m]")
+ax.set_title("L = 0.25", fontsize=24)
+ax.set_xlabel("x [m]", fontsize=16)
+ax.set_ylabel("y [m]", fontsize=16)
 fig.tight_layout()
 
 plt.imsave(
