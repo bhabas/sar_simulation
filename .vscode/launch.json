@@ -8,7 +8,7 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/crazyflie_projects/Compile_Example/output",
+            "program": "${workspaceFolder}/crazyflie_projects/Policy_Mapping/SVM_Work/bin/output",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
