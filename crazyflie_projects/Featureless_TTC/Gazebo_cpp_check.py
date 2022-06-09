@@ -96,67 +96,88 @@ class CameraClass:
         OFx_act = np.array(self.OFx_act_List)
         OFy_est = np.array(self.OFy_est_List)
         OFx_est = np.array(self.OFx_est_List)
+
+        ## NORMALIZE X AXIS
+        Time = np.zeros_like(Time_arr)
+        # self.Time[0] = 0
+        for n in range(2,Time_arr.size):
+            dt = Time_arr[n] - Time_arr[n-1]
+            Time[n] = Time[n-1] + dt
+
+
+        ## Y AXIS SCALING SET
         
 
         fig = plt.figure(1)
         
         ## PLOT TAU VALUES
-        fig.suptitle("Tau Estimates FPS = 100", fontsize=26)
+        fig.suptitle("Tau Estimates (L = 0.4)", fontsize=26)
         ax1 = fig.add_subplot(211)
-        ax1.plot(Time_arr[2:],Tau_act[2:],color = 'tab:blue',label = 'Tau')
-        ax1.plot(Time_arr[2:],Tau_est[2:],color = 'r',linestyle = '--',label = 'Tau_est')
+        ax1.plot(Time[3:],Tau_act[3:],color = 'tab:blue',label = 'Tau')
+        ax1.plot(Time[3:],Tau_est[3:],color = 'r',linestyle = '--',label = 'Tau Estimate')
+        ax1.hlines(y = 0, xmin = Time[-1] - 5, xmax = Time[-1] + 5, linestyle = "-", linewidth = 1, color = 'k')
         ax1.grid()
-        ax1.legend(loc='upper right',fontsize=16)
+        ax1.legend(loc='best',fontsize=16)
         ax1.set_ylabel("Tau [s]",fontsize=16)
         ax1.set_xlabel("Time [s]",fontsize=16)
         ax1.tick_params(axis='both', which='major', labelsize=14)
         ax1.tick_params(axis='both', which='minor', labelsize=14)
+        ax1.set_xlim([0,Time[-1] + 0.1])
+        
 
         ## PLOT ERROR
         ax2 = fig.add_subplot(212,sharex = ax1)
-        ax2.plot(Time_arr[1:],(Tau_est[1:] - Tau_act[1:]),color = 'r',label = "Error in Tau")
+        ax2.plot(Time[3:],(Tau_est[3:] - Tau_act[3:]),color = 'r',label = "Error in Tau")
 
-        ax2.hlines(y = 0, xmin = Time_arr[-1] - 5, xmax = Time_arr[-1] + 5, linestyle = "-", linewidth = 1, color = 'k')
+        #plot desired error bounds
+        ax2.hlines(y = 0, xmin = Time[1:] - 5, xmax = Time[-1] + 5, linestyle = "-", linewidth = 1, color = 'k')
+        ax2.hlines(y =  0.05, xmin = Time[-1] - 1, xmax = Time[-1],linestyle = "--", linewidth = 2, color = 'k') 
+        ax2.hlines(y = -0.05, xmin = Time[-1] - 1, xmax = Time[-1],linestyle = "--", linewidth = 2, color = 'k')
+        ax2.vlines(x = (Time[-1] - 1), ymin = -0.05, ymax = 0.05, linestyle = "--", linewidth = 2, color = "k")
+        ax2.vlines(x = (Time[-1]), ymin = -0.05, ymax = 0.05, linestyle = "--", linewidth = 2, color = "k")
+
+        ax2.hlines(y = 0, xmin = Time[-1] - 5, xmax = Time[-1] + 5, linestyle = "-", linewidth = 1, color = 'k')
         ax2.grid()
-        ax2.legend(loc='upper right',fontsize=16)
+        ax2.legend(loc='best',fontsize=16)
         ax2.set_ylabel("Error",fontsize=16)
         ax2.set_xlabel("Time [s]",fontsize=16)
         ax2.tick_params(axis='both', which='major', labelsize=14)
         ax2.tick_params(axis='both', which='minor', labelsize=14)
-
+        ax2.set_xlim([0,Time[-1] + 0.1])
+        ax2.set_ylim([-0.45,0.45])
 
 
         ## OFX_Y PLOTS
         fig2 = plt.figure(2)
         #OFy Plots
         ax1 = fig2.add_subplot(221)
-        ax1.plot(Time_arr[1:],OFy_act[1:], color = "tab:blue", label = "OFy")
-        ax1.plot(Time_arr[1:],OFy_est[1:], color = "r", linestyle = "--", label = "OFy_est")
+        ax1.plot(Time[1:],OFy_act[1:], color = "tab:blue", label = "OFy")
+        ax1.plot(Time[1:],OFy_est[1:], color = "r", linestyle = "--", label = "OFy Estimate")
         ax1.grid()
-        ax1.legend(loc='upper left',fontsize=16)
+        ax1.legend(loc='best',fontsize=16)
         ax1.set_ylabel("OFy [rad/s]",fontsize=16)
         ax1.set_xlabel("Time [s]",fontsize=16)
         #OFy error plots
         ax2 = fig2.add_subplot(222,sharex = ax1)
-        ax2.plot(Time_arr[1:],(OFy_est[1:] - OFy_act[1:]),color = "r",label = "Error in OFy")
+        ax2.plot(Time[1:],(OFy_est[1:] - OFy_act[1:]),color = "r",label = "Error in OFy")
         ax2.grid()
-        ax2.legend(loc='upper left',fontsize=16)
+        ax2.legend(loc='best',fontsize=16)
         ax2.set_ylabel("Error",fontsize=16)
         ax2.set_xlabel("Time [s]",fontsize=16)
 
         #OFx Plots
         ax3 = fig2.add_subplot(223)
-        ax3.plot(Time_arr[1:],OFx_act[1:], color = "tab:blue", label = "OFx")
-        ax3.plot(Time_arr[1:],OFx_est[1:], color = "r", linestyle = "--", label = "OFx_est")
+        ax3.plot(Time[1:],OFx_act[1:], color = "tab:blue", label = "OFx")
+        ax3.plot(Time[1:],OFx_est[1:], color = "r", linestyle = "--", label = "OFx Estimate")
         ax3.grid()
-        ax3.legend(loc='upper left',fontsize=16)
+        ax3.legend(loc='best',fontsize=16)
         ax3.set_ylabel("OFx [rad/s]",fontsize=16)
         ax3.set_xlabel("Time [s]",fontsize=16)
         #OFx error plots
         ax4 = fig2.add_subplot(224,sharex = ax3)
-        ax4.plot(Time_arr[1:],(OFx_est[1:] - OFx_act[1:]),color = "r",label = "Error in OFx")
+        ax4.plot(Time[1:],(OFx_est[1:] - OFx_act[1:]),color = "r",label = "Error in OFx")
         ax4.grid()
-        ax4.legend(loc='upper left',fontsize=16)
+        ax4.legend(loc='best',fontsize=16)
         ax4.set_ylabel("Error",fontsize=16)
         ax4.set_xlabel("Time [s]",fontsize=16)
 
@@ -169,6 +190,13 @@ class CameraClass:
         Time_arr = np.array(self.t_List)
         Tau_act = np.array(self.Tau_act_List) #make lists into arrays to do math on them
         Tau_est = np.array(self.Tau_cpp_est_List)
+
+        ## NORMALIZE X AXIS
+        Time = np.zeros_like(Time_arr)
+        # self.Time[0] = 0
+        for n in range(2,Time_arr.size):
+            dt = Time_arr[n] - Time_arr[n-1]
+            Time[n] = Time[n-1] + dt
 
         ## EXPONENTIAL MOVING AVERAGE FILTER y[n] = a*x[n] + (1-a)*y[n-1]
         EMA = np.zeros_like(Tau_est)
@@ -192,23 +220,23 @@ class CameraClass:
 
         ## TAU PLOT
         ax1 = fig.add_subplot(211)
-        ax1.plot(Time_arr[1:],output[1:], label = "filtered",color = "g",linestyle = "--")
-        ax1.plot(Time_arr[1:],Tau_est[1:], label = "Tau_est",color = "r",linestyle = "--")
-        ax1.plot(Time_arr[1:],EMA[1:], label = "EMA",color = "m",linestyle = "--")
-        ax1.plot(Time_arr[1:],Tau_act[1:],color = 'tab:blue',label = 'Tau')
+        ax1.plot(Time[1:],output[1:], label = "filtered",color = "g",linestyle = "--")
+        ax1.plot(Time[1:],Tau_est[1:], label = "Tau_est",color = "r",linestyle = "--")
+        ax1.plot(Time[1:],EMA[1:], label = "EMA",color = "m",linestyle = "--")
+        ax1.plot(Time[1:],Tau_act[1:],color = 'tab:blue',label = 'Tau')
         ax1.grid()
         ax1.legend()
 
         # ERROR PLOT
         ax2 = fig.add_subplot(212,sharex = ax1)
-        ax2.plot(Time_arr[1:], Tau_est[1:] - Tau_act[1:], color = "r",label = "Estimate Error")
-        ax2.plot(Time_arr[1:], output[1:] - Tau_act[1:], color = "g", linestyle = "--", label = "LPF Error")
-        ax2.plot(Time_arr[1:], EMA[1:] - Tau_act[1:], color = "b", linestyle = "--", label = "EMA Error")
-        ax2.plot(Time_arr[1:], DEMA[1:] - Tau_act[1:], color = "k", linestyle = "--", label = "DEMA Error")
-        ax2.hlines(y =  0.05, xmin = Time_arr[-1] - 1, xmax = Time_arr[-1],linestyle = "--", linewidth = 2, color = 'k') #plot desired error bounds
-        ax2.hlines(y = -0.05, xmin = Time_arr[-1] - 1, xmax = Time_arr[-1],linestyle = "--", linewidth = 2, color = 'k')
-        ax2.vlines(x = (Time_arr[-1] - 1), ymin = -0.05, ymax = 0.05, linestyle = "--", linewidth = 2, color = "k")
-        ax2.vlines(x = (Time_arr[-1]), ymin = -0.05, ymax = 0.05, linestyle = "--", linewidth = 2, color = "k")
+        ax2.plot(Time[1:], Tau_est[1:] - Tau_act[1:], color = "r",label = "Estimate Error")
+        ax2.plot(Time[1:], output[1:] - Tau_act[1:], color = "g", linestyle = "--", label = "LPF Error")
+        ax2.plot(Time[1:], EMA[1:] - Tau_act[1:], color = "b", linestyle = "--", label = "EMA Error")
+        ax2.plot(Time[1:], DEMA[1:] - Tau_act[1:], color = "k", linestyle = "--", label = "DEMA Error")
+        ax2.hlines(y =  0.05, xmin = Time[-1] - 1, xmax = Time[-1],linestyle = "--", linewidth = 2, color = 'k') #plot desired error bounds
+        ax2.hlines(y = -0.05, xmin = Time[-1] - 1, xmax = Time[-1],linestyle = "--", linewidth = 2, color = 'k')
+        ax2.vlines(x = (Time[-1] - 1), ymin = -0.05, ymax = 0.05, linestyle = "--", linewidth = 2, color = "k")
+        ax2.vlines(x = (Time[-1]), ymin = -0.05, ymax = 0.05, linestyle = "--", linewidth = 2, color = "k")
         ax2.grid()
         ax2.legend()
         plt.show()
