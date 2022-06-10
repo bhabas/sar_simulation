@@ -29,6 +29,47 @@ float Elu(float x);
 void NN_Forward_Flip(nml_mat* X, nml_mat* y_output, Scaler* scaler, nml_mat* W[], nml_mat* b[]);
 
 void init_OC_SVM(SVM_object* SVM,char str[]);
+float SVM_predict(SVM_object* SVM,nml_mat* X);
+
+float SVM_predict(SVM_object* SVM,nml_mat* X)
+{
+    // SCALE INPUT DATA
+    nml_mat* X_input = nml_mat_cp(X);
+    for(int i=0;i<3;i++)
+    {
+        X_input->data[i][0] = (X->data[i][0] - SVM->scaler_mean->data[i][0])/SVM->scaler_std->data[i][0];
+    }
+
+    nml_mat* tmp;
+    nml_mat* tmp2;
+
+    tmp = nml_mat_col_get(SVM->support_vecs, 0);
+    nml_mat_print(tmp);
+    nml_mat_print(X_input);
+    tmp2 = nml_mat_sub(X_input,tmp);
+    nml_mat_print(tmp2);
+    double val = 0.0f;
+
+    // for (int i = 0; i < SVM->support_vecs->num_rows; i++)
+    // {
+    //     val += SVM->dual_coeffs->data[i][0]*exp(SVM->gamma);
+    // }
+    
+    /*
+
+    ## PASS STATE VALUE THROUGH OC_SVM
+        val = 0
+        for ii in range(len(support_vecs)):
+            val += dual_coeffs[0,ii]*np.exp(-gamma*np.sum((X-support_vecs[ii])**2))
+        val += intercept
+
+    */
+    nml_mat_free(X_input);
+    nml_mat_free(tmp);
+    nml_mat_free(tmp2);
+
+    return val;
+}
 
 void init_OC_SVM(SVM_object* SVM,char str[])
 {
@@ -59,7 +100,7 @@ void init_OC_SVM(SVM_object* SVM,char str[])
 
     // SUPPORT VECTORS
     array_str = strtok_r(NULL,"*",&save_ptr); 
-    SVM->support_vecs = nml_mat_fromstr(array_str);
+    SVM->support_vecs = nml_mat_transp(nml_mat_fromstr(array_str));
 
     nml_mat_free(tmp);
 }
