@@ -682,7 +682,7 @@ int nml_mat_add_r(nml_mat *m1, nml_mat *m2) {
 }
 
 nml_mat *nml_mat_sub(nml_mat *m1, nml_mat *m2) {
-  nml_mat *r = nml_mat_cp(m2);
+  nml_mat *r = nml_mat_cp(m1);
   if (!nml_mat_sub_r(r, m2)) {
     nml_mat_free(r);
     return NULL;
@@ -756,6 +756,28 @@ double nml_mat_trace(nml_mat* m) {
     trace += m->data[i][i];
   }
   return trace;
+}
+
+// *****************************************************************************
+//
+// Element Operations
+//
+// *****************************************************************************
+//
+// Operations performed on matrix elements
+//
+
+double nml_mat_sum_elements(nml_mat *m)
+{
+  double val_sum = 0;
+
+  int i, j;
+  for(i = 0; i < m->num_rows; i++) {
+    for(j = 0; j < m->num_cols; j++) {
+      val_sum += m->data[i][j];
+    }
+  }
+  return val_sum;
 }
 
 // *****************************************************************************

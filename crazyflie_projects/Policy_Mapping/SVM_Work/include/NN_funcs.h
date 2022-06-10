@@ -48,7 +48,8 @@ float SVM_predict(SVM_object* SVM,nml_mat* X)
     nml_mat_print(X_input);
     tmp2 = nml_mat_sub(X_input,tmp);
     nml_mat_print(tmp2);
-    double val = 0.0f;
+    double val = nml_mat_sum_elements(tmp2);
+    // double val = 0.0f;
 
     // for (int i = 0; i < SVM->support_vecs->num_rows; i++)
     // {
