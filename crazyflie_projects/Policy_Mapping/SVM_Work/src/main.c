@@ -13,9 +13,10 @@ int main()
 {
     printf("Hello World!\n");
     X = nml_mat_new(3,1);
-    X->data[0][0] = 5;
-    X->data[1][0] = 2;
-    X->data[2][0] = 1; 
+    X->data[0][0] = 0.258;
+    X->data[1][0] = -5.638;
+    X->data[2][0] = 0.396; 
+
 
     init_OC_SVM(&SVM,SVM_Params);
     float valx = SVM_predict(&SVM,X);

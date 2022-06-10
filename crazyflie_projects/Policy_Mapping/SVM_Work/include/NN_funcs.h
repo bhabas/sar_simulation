@@ -40,21 +40,19 @@ float SVM_predict(SVM_object* SVM,nml_mat* X)
         X_input->data[i][0] = (X->data[i][0] - SVM->scaler_mean->data[i][0])/SVM->scaler_std->data[i][0];
     }
 
+
+    // PASS INPUT THROUGH SVM
     nml_mat* tmp;
-    nml_mat* tmp2;
+    double val = 0.0;
+    double tmp_val = 0.0;
 
-    tmp = nml_mat_col_get(SVM->support_vecs, 0);
-    nml_mat_print(tmp);
-    nml_mat_print(X_input);
-    tmp2 = nml_mat_sub(X_input,tmp);
-    nml_mat_print(tmp2);
-    double val = nml_mat_sum_elements(tmp2);
-    // double val = 0.0f;
-
-    // for (int i = 0; i < SVM->support_vecs->num_rows; i++)
-    // {
-    //     val += SVM->dual_coeffs->data[i][0]*exp(SVM->gamma);
-    // }
+    for (int i = 0; i < SVM->support_vecs->num_rows; i++)
+    {
+        tmp = nml_mat_sub(X_input,nml_mat_col_get(SVM->support_vecs, i));
+        tmp_val = pow(nml_mat_sum_elem(tmp),2);
+        val += SVM->dual_coeffs->data[i][0]*exp(-SVM->gamma*tmp_val);
+    }
+    val += SVM->intercept;
     
     /*
 
@@ -67,7 +65,6 @@ float SVM_predict(SVM_object* SVM,nml_mat* X)
     */
     nml_mat_free(X_input);
     nml_mat_free(tmp);
-    nml_mat_free(tmp2);
 
     return val;
 }

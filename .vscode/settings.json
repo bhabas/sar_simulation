@@ -18,6 +18,8 @@
         "nn_funcs.h": "c",
         "svm_params_nl_dr.h": "c",
         "stdio.h": "c",
-        "random": "c"
+        "random": "c",
+        "cmath": "cpp",
+        "complex": "cpp"
     }
 }

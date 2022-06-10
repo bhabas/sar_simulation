@@ -135,7 +135,7 @@ double nml_mat_trace(nml_mat* m);
 //
 // *****************************************************************************
 nml_mat *nml_mat_funcElement(nml_mat *m,float (*Function)(float x));
-double nml_mat_sum_elements(nml_mat *m);
+double nml_mat_sum_elem(nml_mat *m);
 
 // *****************************************************************************
 //

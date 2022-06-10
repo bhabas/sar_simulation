@@ -767,7 +767,7 @@ double nml_mat_trace(nml_mat* m) {
 // Operations performed on matrix elements
 //
 
-double nml_mat_sum_elements(nml_mat *m)
+double nml_mat_sum_elem(nml_mat *m)
 {
   double val_sum = 0;
 

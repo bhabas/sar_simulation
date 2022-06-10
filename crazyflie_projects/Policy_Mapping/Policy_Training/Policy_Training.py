@@ -729,9 +729,9 @@ if __name__ == "__main__":
     Policy.save_SVM_Params(SVM_Param_Path)
     Policy.load_SVM_Params(SVM_Param_Path)
 
-    Policy.OC_SVM_Predict(np.array([[5,2,1]]))
+    print(Policy.OC_SVM_Predict(np.array([[0.258,-5.638,0.396]])))
 
-    Policy.plotClassification(df_raw)
+    # Policy.plotClassification(df_raw)
     # Policy.plotPolicy(df_raw,PlotRegion=True)
     # Policy.plotPolicy(df_raw,PlotRegion=False)
 
