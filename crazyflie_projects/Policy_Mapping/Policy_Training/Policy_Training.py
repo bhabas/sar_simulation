@@ -296,10 +296,11 @@ class Policy_Trainer():
             val += dual_coeffs[0,ii]*np.exp(-gamma*np.sum((X-support_vecs[ii])**2))
         val += intercept
 
-        ## CHECK IF MANUAL CALC DOESN'T MATCH PACKAGE
-        if not np.isclose(val,self.SVM_model.decision_function(X))[0]:
-            raise Exception
+        # ## CHECK IF MANUAL CALC DOESN'T MATCH PACKAGE
+        # if not np.isclose(val[0],self.SVM_model.decision_function(X))[0]:
+        #     raise Exception
 
+        print(f"Func Val: {self.SVM_model.decision_function(X)[0]:.4f} || Custom Val: {val[0]:.4f}")
         return val
 
     def train_OC_SVM(self,X_train):
@@ -729,7 +730,7 @@ if __name__ == "__main__":
     Policy.save_SVM_Params(SVM_Param_Path)
     Policy.load_SVM_Params(SVM_Param_Path)
 
-    print(Policy.OC_SVM_Predict(np.array([[0.258,-5.638,0.396]])))
+    Policy.OC_SVM_Predict(np.array([[0.29,-0.673,0.952]]))
 
     # Policy.plotClassification(df_raw)
     # Policy.plotPolicy(df_raw,PlotRegion=True)

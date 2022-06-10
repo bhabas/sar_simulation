@@ -19,49 +19,24 @@ typedef struct{
     nml_mat* support_vecs;
     float gamma;
     float intercept;
-}SVM_object;
+}SVM;
 
 
 // NEURAL NETWORK PRIMITIVES
 void initNN_Layers(Scaler* scaler,nml_mat* W[], nml_mat* b[], char str[],int numLayers);
+void NN_Forward_Flip(nml_mat* X, nml_mat* y_output, Scaler* scaler, nml_mat* W[], nml_mat* b[]);
+
+// OC_SVM PRIMITIVES
+void OC_SVM_init(SVM* SVM, char str[]); 
+float OC_SVM_predict(SVM* SVM, nml_mat* X);
+
+// CUSTOM ELEMENT FUNCTIONS
 float Sigmoid(float x);
 float Elu(float x);
 float Pow2(float x);
-void NN_Forward_Flip(nml_mat* X, nml_mat* y_output, Scaler* scaler, nml_mat* W[], nml_mat* b[]);
-
-void init_OC_SVM(SVM_object* SVM,char str[]);
-float SVM_predict(SVM_object* SVM,nml_mat* X);
-
-float SVM_predict(SVM_object* SVM,nml_mat* X)
-{
-    // SCALE INPUT DATA
-    nml_mat* X_input = nml_mat_cp(X);
-    for(int i=0;i<3;i++)
-    {
-        X_input->data[i][0] = (X->data[i][0] - SVM->scaler_mean->data[i][0])/SVM->scaler_std->data[i][0];
-    }
 
 
-    // PASS INPUT THROUGH SVM
-    nml_mat* tmp;
-    double val = 0.0;
-    double tmp_val = 0.0;
-
-    for (int i = 0; i < SVM->support_vecs->num_cols; i++)
-    {
-        tmp = nml_mat_sub(X_input,nml_mat_col_get(SVM->support_vecs, i));
-        tmp_val = nml_mat_sum_elem(nml_mat_funcElement(tmp,Pow2));
-        val += SVM->dual_coeffs->data[i][0]*exp(-SVM->gamma*tmp_val);
-    }
-    val += SVM->intercept;
-    
-    nml_mat_free(X_input);
-    nml_mat_free(tmp);
-
-    return val;
-}
-
-void init_OC_SVM(SVM_object* SVM,char str[])
+void OC_SVM_init(SVM* SVM,char str[]) 
 {
     char* array_str;
     char* save_ptr;
@@ -93,6 +68,39 @@ void init_OC_SVM(SVM_object* SVM,char str[])
     SVM->support_vecs = nml_mat_transp(nml_mat_fromstr(array_str));
 
     nml_mat_free(tmp);
+}
+
+float OC_SVM_predict(SVM* SVM, nml_mat* X)
+{
+    // SCALE INPUT DATA
+    nml_mat* X_input = nml_mat_cp(X);
+    for(int i=0;i<3;i++)
+    {
+        // Scale data to zero-mean and unit variance
+        X_input->data[i][0] = (X->data[i][0] - SVM->scaler_mean->data[i][0]) / SVM->scaler_std->data[i][0];
+    }
+
+    // PASS INPUT DATA THROUGH SVM
+    nml_mat* tmp_mat;
+    double tmp_val = 0.0;
+    double SVM_pred = 0.0;
+
+    // https://scikit-learn.org/stable/modules/svm.html
+    // Eq: Decision_Value = sum(dual_coeff[ii]*K(supp_vec[ii],X)) + b
+    // Kernel: K(x,x') = exp(-gamma*||x-x'||**2)
+    for (int i = 0; i < SVM->support_vecs->num_cols; i++)
+    {
+        tmp_mat = nml_mat_sub(X_input,nml_mat_col_get(SVM->support_vecs, i));
+        tmp_val = nml_mat_sum_elem(nml_mat_funcElement(tmp_mat,Pow2));
+        SVM_pred += SVM->dual_coeffs->data[i][0]*exp(-SVM->gamma*tmp_val);
+    }
+    SVM_pred += SVM->intercept;
+    
+    // FREE MATRIX POINTERS
+    nml_mat_free(X_input);
+    nml_mat_free(tmp_mat);
+
+    return SVM_pred;
 }
 
 void initNN_Layers(Scaler* scaler,nml_mat* W[], nml_mat* b[], char str[],int numLayers)
@@ -159,11 +167,6 @@ void NN_Forward_Flip(nml_mat* X, nml_mat* y_output, Scaler* scaler, nml_mat* W[]
     nml_mat *WX4 = nml_mat_dot(W[3],a3); 
     nml_mat_add_r(WX4,b[3]);
     
-
-    // nml_mat_print(a4);
-
-
-
 
     // SAVE OUTPUT VALUE
     y_output->data[0][0] = Sigmoid(WX4->data[0][0]);
