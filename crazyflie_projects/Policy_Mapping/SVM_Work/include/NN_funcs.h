@@ -24,7 +24,7 @@ typedef struct{
 
 // NEURAL NETWORK PRIMITIVES
 void initNN_Layers(Scaler* scaler,nml_mat* W[], nml_mat* b[], char str[],int numLayers);
-void NN_Forward_Flip(nml_mat* X, nml_mat* y_output, Scaler* scaler, nml_mat* W[], nml_mat* b[]);
+float NN_Forward_Flip(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[]);
 
 // OC_SVM PRIMITIVES
 void OC_SVM_init(SVM* SVM, char str[]); 
@@ -131,7 +131,7 @@ void initNN_Layers(Scaler* scaler,nml_mat* W[], nml_mat* b[], char str[],int num
 }
 
 
-void NN_Forward_Flip(nml_mat* X, nml_mat* y_output, Scaler* scaler, nml_mat* W[], nml_mat* b[])
+float NN_Forward_Flip(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[])
 {
     // SCALE INPUT DATA
     nml_mat* X_input = nml_mat_cp(X);
@@ -169,8 +169,7 @@ void NN_Forward_Flip(nml_mat* X, nml_mat* y_output, Scaler* scaler, nml_mat* W[]
     
 
     // SAVE OUTPUT VALUE
-    y_output->data[0][0] = Sigmoid(WX4->data[0][0]);
-    y_output->data[1][0] = WX4->data[1][0];
+    float y_output = WX4->data[0][0];
 
 
 
@@ -186,6 +185,7 @@ void NN_Forward_Flip(nml_mat* X, nml_mat* y_output, Scaler* scaler, nml_mat* W[]
     nml_mat_free(a2);
     nml_mat_free(a3);
 
+    return y_output;
 }
 
 float Sigmoid(float x)

@@ -725,12 +725,13 @@ if __name__ == "__main__":
     # Policy.train_NN_Model(X_train,y_train,X_test,y_test,epochs=1000)
     # Policy.save_NN_Params(NN_Param_Path)
     Policy.load_NN_Params(NN_Param_Path)
+    print(Policy.NN_Predict(np.array([[0.29,-0.673,0.952]])))
 
-    Policy.train_OC_SVM(X)
-    Policy.save_SVM_Params(SVM_Param_Path)
-    Policy.load_SVM_Params(SVM_Param_Path)
+    # Policy.train_OC_SVM(X)
+    # Policy.save_SVM_Params(SVM_Param_Path)
+    # Policy.load_SVM_Params(SVM_Param_Path)
 
-    Policy.OC_SVM_Predict(np.array([[0.29,-0.673,0.952]]))
+    # Policy.OC_SVM_Predict(np.array([[0.29,-0.673,0.952]]))
 
     # Policy.plotClassification(df_raw)
     # Policy.plotPolicy(df_raw,PlotRegion=True)

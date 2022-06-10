@@ -20,6 +20,8 @@
         "stdio.h": "c",
         "random": "c",
         "cmath": "cpp",
-        "complex": "cpp"
+        "complex": "cpp",
+        "nn_layers_nl_dr.h": "c",
+        "compressedstates.h": "c"
     }
 }
