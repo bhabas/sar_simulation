@@ -26,6 +26,7 @@ typedef struct{
 void initNN_Layers(Scaler* scaler,nml_mat* W[], nml_mat* b[], char str[],int numLayers);
 float Sigmoid(float x);
 float Elu(float x);
+float Pow2(float x);
 void NN_Forward_Flip(nml_mat* X, nml_mat* y_output, Scaler* scaler, nml_mat* W[], nml_mat* b[]);
 
 void init_OC_SVM(SVM_object* SVM,char str[]);
@@ -46,23 +47,14 @@ float SVM_predict(SVM_object* SVM,nml_mat* X)
     double val = 0.0;
     double tmp_val = 0.0;
 
-    for (int i = 0; i < SVM->support_vecs->num_rows; i++)
+    for (int i = 0; i < SVM->support_vecs->num_cols; i++)
     {
         tmp = nml_mat_sub(X_input,nml_mat_col_get(SVM->support_vecs, i));
-        tmp_val = pow(nml_mat_sum_elem(tmp),2);
+        tmp_val = nml_mat_sum_elem(nml_mat_funcElement(tmp,Pow2));
         val += SVM->dual_coeffs->data[i][0]*exp(-SVM->gamma*tmp_val);
     }
     val += SVM->intercept;
     
-    /*
-
-    ## PASS STATE VALUE THROUGH OC_SVM
-        val = 0
-        for ii in range(len(support_vecs)):
-            val += dual_coeffs[0,ii]*np.exp(-gamma*np.sum((X-support_vecs[ii])**2))
-        val += intercept
-
-    */
     nml_mat_free(X_input);
     nml_mat_free(tmp);
 
@@ -203,5 +195,11 @@ float Elu(float x)
     if(x>0) return x;
 
     else return exp(x)-1.0f;
+ 
+}
+
+float Pow2(float x)
+{
+    return pow(x,2);
  
 }
