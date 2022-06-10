@@ -259,7 +259,10 @@ class DataParser:
         fig2 = plt.figure(2)
 
         ## PLOT TAU VALUES
-        fig2.suptitle("Tau Estimates (L = 0.4)", fontsize=26)
+        
+        # TITLE
+        fig2.suptitle("Tau Estimates (FPS = 100)", fontsize=26)
+
         ax1 = fig2.add_subplot(211)
         ax1.plot(Time[1:],self.Tau[1:],color = 'tab:blue',label = 'Tau',linewidth=2)
         ax1.plot(Time[1:],self.Tau_est[1:],color = 'r',linestyle = '--',label = 'Tau Estimate', dashes=(5, 4))
@@ -277,10 +280,13 @@ class DataParser:
 
         ## PLOT ERROR
         ax2 = fig2.add_subplot(212,sharex = ax1)
-        ax2.plot(Time[1:],(self.Tau_est[1:] - self.Tau[1:]),color = 'r',label = "Error in Unfiltered Tau")
+        
 
         if FILTER_FLAG:
             ax2.plot(Time[1:],(self.Tau_est_s[1:] - self.Tau[1:]),color = 'g',label = "Error in Filtered Tau")
+            ax2.plot(Time[1:],(self.Tau_est[1:] - self.Tau[1:]),color = 'r',label = "Error in Unfiltered Tau")
+        else:
+            ax2.plot(Time[1:],(self.Tau_est[1:] - self.Tau[1:]),color = 'r',label = "Error in Tau")
 
         ax2.hlines(y = 0, xmin = Time[1:] - 5, xmax = Time[-1] + 5, linestyle = "-", linewidth = 1, color = 'k')
         ax2.hlines(y =  0.05, xmin = Time[-1] - 1, xmax = Time[-1],linestyle = "--", linewidth = 2, color = 'k') #plot desired error bounds
@@ -292,7 +298,7 @@ class DataParser:
         ax2.set_ylabel("Error",fontsize=16)
         ax2.set_xlabel("Time [s]",fontsize=16)
         ax2.set_xlim([0,Time[-1] + 0.1])
-        ax2.set_ylim([-0.45,0.45])
+        ax2.set_ylim([-0.45,2])
 
         plt.show()
         
