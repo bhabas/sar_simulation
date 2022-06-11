@@ -111,7 +111,7 @@ class CameraClass:
         fig = plt.figure(1)
         
         ## PLOT TAU VALUES
-        fig.suptitle("Tau Estimates (Percent of Data Used = 75%)", fontsize=26)
+        fig.suptitle("Tau Estimates (Percent of Data Used = 0.1%)", fontsize=26)
         ax1 = fig.add_subplot(211)
         ax1.plot(Time[3:],Tau_act[3:],color = 'tab:blue',label = 'Tau')
         ax1.plot(Time[3:],Tau_est[3:],color = 'r',linestyle = '--',label = 'Tau Estimate')

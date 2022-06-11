@@ -261,7 +261,7 @@ class DataParser:
         ## PLOT TAU VALUES
         
         # TITLE
-        fig2.suptitle("Tau Estimates (FPS = 100)", fontsize=26)
+        fig2.suptitle("Tau Estimates (Percent of Data Used = 10%)", fontsize=26)
 
         ax1 = fig2.add_subplot(211)
         ax1.plot(Time[1:],self.Tau[1:],color = 'tab:blue',label = 'Tau',linewidth=2)

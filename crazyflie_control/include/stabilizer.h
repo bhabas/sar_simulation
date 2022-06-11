@@ -145,15 +145,7 @@ class Controller
         float b5 = 0;
         float Tau_est_filt   = 0;
         float Tau_est_filt_1 = 0;
-        float Tau_est_filt_2 = 0;
-        float Tau_est_filt_3 = 0;
-        float Tau_est_filt_4 = 0;
-        float Tau_est_filt_5 = 0;
         float Tau_est_prev_1 = 0;
-        float Tau_est_prev_2 = 0;
-        float Tau_est_prev_3 = 0;
-        float Tau_est_prev_4 = 0;
-        float Tau_est_prev_5 = 0;
 
         const uint8_t* Cur_img = NULL;  // Ptr to current image memory
         uint8_t* Prev_img = NULL;       // Ptr to prev image memory
@@ -228,16 +220,19 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
         float dt;
         int32_t Ittemp;
         float Cur_time = ros::Time::now().toSec();
+
+        int itr = 3;
         
-        for(int j = 0; j < (WIDTH_PIXELS - 2)*(HEIGHT_PIXELS - 2); j++) // How many times the kernel center moves around the image
+        // for(int j = 0; j < (WIDTH_PIXELS - 2)*(HEIGHT_PIXELS - 2); j++) // How many times the kernel center moves around the image
+        for(int16_t j = 0; j < 2500; j++) // 10% of image data used
         {
 
             //GENERALIZE FOR CHANGE IN KERNEL SIZE
-            if(X >= WIDTH_PIXELS - 1) //if the edge of the kernel hits the edge of the image
+            if(X >= WIDTH_PIXELS - 1) //if the edge of the kernel crosses the edge of the image
             { 
             
                 X = 1; //move the kernel back to the left edge of the image
-                Y++; //and slide the kernel down the image
+                Y = Y + itr; //and slide the kernel down the image
 
             }
 
@@ -292,7 +287,17 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
             Ivt += Ysum*Ittemp; 
             IGt += Gtemp*Ittemp;
 
-            X++; // move center of kernel over
+            // DETERMINE IF J IS ODD
+            // if((j + 1) % 2 == 0){ //need + 1 in order to prevent divide by zero
+            //     itr = 2; // if j is even increment by 2
+            // }
+            // else {
+            //     itr = 1; 
+            // }
+
+
+            X = X + itr; //move center of kernel over by increment
+            // X++; // move center of kernel over
             
         } // END OF CONVOLUTION
 
@@ -328,13 +333,6 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
         {
             return;
         }       
-
-
-
-        // APPLY nTH ORDER LOW PASS FILTER
-        // Tau_est_filt = (b0*Tau_est + b1*Tau_est_prev_1 + b2*Tau_est_prev_2 + b3*Tau_est_prev_3
-        //                  + b4*Tau_est_prev_4 +b5*Tau_est_prev_5 - a1*Tau_est_filt_1- a2*Tau_est_filt_2
-        //                  - a3*Tau_est_filt_3- a4*Tau_est_filt_4- a5*Tau_est_filt_5);
 
         // APPLY EMA FILTER y[n] = alpha*x[n] + (1-alpha)*y[n-1]
         float alpha = 0.99;
