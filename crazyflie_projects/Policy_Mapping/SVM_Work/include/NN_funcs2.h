@@ -137,60 +137,43 @@ void NN_init(NN* NN, char str[])
 
 }
 
-float NN_predict(nml_mat* X, NN* NN)
+float NN_predict(nml_mat* X_input, NN* NN)
 {
     // SCALE INPUT DATA
-    nml_mat* X_input = nml_mat_cp(X);
+    nml_mat* X = nml_mat_cp(X_input);
     for(int i=0;i<3;i++)
     {
         // Scale data to zero-mean and unit variance
-        X_input->data[i][0] = (X->data[i][0] - NN->scaler_mean->data[i][0]) / NN->scaler_std->data[i][0];
+        X->data[i][0] = (X_input->data[i][0] - NN->scaler_mean->data[i][0]) / NN->scaler_std->data[i][0];
     }
 
     // PASS DATA THROUGH NETWORK
-    // LAYER 1
-    // Elu(W*X+b)
-    nml_mat *WX1 = nml_mat_dot(NN->W[0],X_input); 
-    nml_mat_add_r(WX1,NN->b[0]);
-    nml_mat *a1 = nml_mat_funcElement(WX1,Elu);
+    nml_mat* WX;
+    for (int i = 0; i < NN->num_layers; i++)
+    {
+        WX = nml_mat_dot(NN->W[i],X);
+        nml_mat_add_r(WX,NN->b[i]);
 
+        if (i == NN->num_layers-1) // Last Layer
+        {
+            X = nml_mat_cp(WX);
+        }
+        else 
+        {
+            X = nml_mat_funcElement(WX,Elu);
+        }      
+        
 
-    // LAYER 2
-    // Elu(W*X+b)
-    nml_mat *WX2 = nml_mat_dot(NN->W[1],a1); 
-    nml_mat_add_r(WX2,NN->b[1]);
-    nml_mat *a2 = nml_mat_funcElement(WX2,Elu);
-
-
-    // LAYER 3
-    // Sigmoid(W*X+b)
-    nml_mat *WX3 = nml_mat_dot(NN->W[2],a2); 
-    nml_mat_add_r(WX3,NN->b[2]);
-    nml_mat *a3 = nml_mat_funcElement(WX3,Elu);
-
-
-    // LAYER 4
-    // Sigmoid(W*X+b)
-    nml_mat *WX4 = nml_mat_dot(NN->W[3],a3); 
-    nml_mat_add_r(WX4,NN->b[3]);
+    }
     
 
     // SAVE OUTPUT VALUE
-    float y_output = WX4->data[0][0];
-
+    float y_output = X->data[0][0];
 
 
     // FREE MATRICES FROM STACK
-    nml_mat_free(X_input);
-    nml_mat_free(WX1);
-    nml_mat_free(WX2);
-    nml_mat_free(WX3);
-    nml_mat_free(WX4);
-
-
-    nml_mat_free(a1);
-    nml_mat_free(a2);
-    nml_mat_free(a3);
+    nml_mat_free(X);
+    nml_mat_free(WX);
 
     return y_output;
 }
