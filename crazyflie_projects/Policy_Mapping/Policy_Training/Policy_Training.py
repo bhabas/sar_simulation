@@ -197,7 +197,7 @@ class Policy_Trainer():
         layer_list = list(dict(self.NN_model.named_modules()).values())[1:]
 
         ## FILL MATRICES INTO PYTORCH MODEL
-        for ii in range(num_layers):
+        for ii in range(num_layers*2):
             if ii%2 == 0:
                 layer_list[ii//2].weight.data = torch.FloatTensor(arr_list[ii])
             else:
@@ -730,7 +730,7 @@ if __name__ == "__main__":
     y_test = test_df[['My_mean']].to_numpy()
 
 
-    NN_Param_Path = f'{BASEPATH}/Policy_Training/Info/NN_Layers_{model_initials}.h'
+    NN_Param_Path = f'{BASEPATH}/SVM_Work/include/NN_Params/NN_Layers_{model_initials}.h'
     SVM_Param_Path = f'{BASEPATH}/Policy_Training/Info/SVM_Params_{model_initials}.h'
 
     Policy.createScaler(X)
