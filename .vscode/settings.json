@@ -22,6 +22,8 @@
         "cmath": "cpp",
         "complex": "cpp",
         "nn_layers_nl_dr.h": "c",
-        "compressedstates.h": "c"
+        "compressedstates.h": "c",
+        "nml.h": "c",
+        "ratio": "c"
     }
 }

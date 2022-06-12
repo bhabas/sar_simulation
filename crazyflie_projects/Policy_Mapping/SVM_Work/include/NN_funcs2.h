@@ -12,6 +12,15 @@ typedef struct{
     nml_mat* std;
 }Scaler;
 
+uint8_t NN_LAYERS_NUM = 4;
+typedef struct{
+    uint8_t num_layers;
+    nml_mat* scaler_mean;
+    nml_mat* scaler_std;
+    nml_mat* W[4];  // Weights
+    nml_mat* b[4];  // biases
+}NN;
+
 typedef struct{
     nml_mat* scaler_mean;
     nml_mat* scaler_std;
@@ -23,7 +32,7 @@ typedef struct{
 
 
 // NEURAL NETWORK PRIMITIVES
-void initNN_Layers(Scaler* scaler,nml_mat* W[], nml_mat* b[], char str[],int numLayers);
+void initNN_Layers(NN* NN_Policy, char str[]);
 float NN_Forward_Flip(nml_mat* X, Scaler* scaler, nml_mat* W[], nml_mat* b[]);
 
 // OC_SVM PRIMITIVES
@@ -103,30 +112,34 @@ float OC_SVM_predict(SVM* SVM, nml_mat* X)
     return SVM_pred;
 }
 
-void initNN_Layers(Scaler* scaler,nml_mat* W[], nml_mat* b[], char str[],int numLayers)
+void initNN_Layers(NN* NN_Policy, char str[])
 {
+    NN_Policy->num_layers = NN_LAYERS_NUM;
+
     char* array_str;
     char* save_ptr;
 
     // PARSE HEADER FILE FOR SCALER VALUES
     array_str = strtok_r(str,"*",&save_ptr);
-    scaler->mean = nml_mat_fromstr(array_str);
+    NN_Policy->scaler_mean = nml_mat_fromstr(array_str);
 
     array_str = strtok_r(NULL,"*",&save_ptr);
-    scaler->std = nml_mat_fromstr(array_str);
+    NN_Policy->scaler_mean = nml_mat_fromstr(array_str);
 
     array_str = strtok_r(NULL,"*",&save_ptr); // Load next array string
 
+
     // INITIALIZE NETWORK WEIGHTS AND BIASES FROM HEADER FILE VALUES
-    for (int i = 0; i < numLayers; i++)
+    for (int i = 0; i < NN_Policy->num_layers; i++)
     {
-        W[i] = nml_mat_fromstr(array_str); // Weights
+        NN_Policy->W[i] = nml_mat_fromstr(array_str); // Weights
         array_str = strtok_r(NULL,"*",&save_ptr);
 
-        b[i] = nml_mat_fromstr(array_str); // Biases
+        NN_Policy->b[i] = nml_mat_fromstr(array_str); // Biases
         array_str = strtok_r(NULL,"*",&save_ptr);
+
+        nml_mat_print(NN_Policy->b[i]);
     }
-
 
 }
 
