@@ -33,8 +33,9 @@ int main()
 
     y_output = nml_mat_new(2,1);
 
-    initNN_Layers(&NN_Policy,NN_Params_Flip);
-    // printf("NN_Predict: %.4f\n",NN_Forward_Flip(X,&Scaler_Flip,W_flip,b_flip));
+    NN_init(&NN_Policy,NN_Params_Flip);
+    NN_predict(X,&NN_Policy);
+    printf("NN_Predict: %.4f\n",NN_predict(X,&NN_Policy));
 
 
     OC_SVM_init(&SVM_PolicyFlip,SVM_Params);
