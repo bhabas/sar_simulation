@@ -92,6 +92,15 @@ class Policy_Trainer():
         f.truncate(0) ## Clears contents of file
         f.write("static char NN_Params_Flip[] = {\n")
         
+        NN_size = np.array([4]).reshape(-1,1)
+
+        ## SAVE SCALER ARRAY VALUES
+        np.savetxt(f,NN_size,
+                    fmt='"%.0f,"',
+                    delimiter='\t',
+                    comments='',
+                    header=f'"{NN_size.shape[0]},"\t"{NN_size.shape[1]},"',
+                    footer='"*"\n')
 
         ## EXTEND SCALER ARRAY DIMENSIONS
         scaler_means = self.scaler.mean_.reshape(-1,1)
@@ -167,13 +176,17 @@ class Policy_Trainer():
             num_rows = int(val_list[0])             # Extract number of rows
             num_cols = int(val_list[1])             # Extract number of columns
             arr = np.array(val_list[2:]).astype(np.float64).reshape(num_rows,num_cols) # Extract matrix
+            
+            ## EXTRACT NUM OF LAYERS
+            if ii == 0:
+                num_layers = int(arr[0,0])
 
             ## EXTRACT SCALER FOR MEAN
-            if ii == 0:
+            elif ii == 1:
                 self.scaler.mean_ = arr[:,0]
 
             ## EXTRACT SCALER FOR VARIANCE
-            elif ii == 1:
+            elif ii == 2:
                 self.scaler.scale_ = arr[:,0]
 
             ## ADD MATRIX TO ARRAY LIST
@@ -184,7 +197,7 @@ class Policy_Trainer():
         layer_list = list(dict(self.NN_model.named_modules()).values())[1:]
 
         ## FILL MATRICES INTO PYTORCH MODEL
-        for ii in range(len(arr_list)):
+        for ii in range(num_layers):
             if ii%2 == 0:
                 layer_list[ii//2].weight.data = torch.FloatTensor(arr_list[ii])
             else:

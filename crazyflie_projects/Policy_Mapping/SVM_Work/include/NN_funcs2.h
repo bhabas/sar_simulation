@@ -7,13 +7,12 @@
 #include "nml.h"
 
 
-uint8_t NN_LAYERS_NUM = 4;
 typedef struct{
     uint8_t num_layers;
     nml_mat* scaler_mean;
     nml_mat* scaler_std;
-    nml_mat* W[4];  // Weights
-    nml_mat* b[4];  // biases
+    nml_mat* W[6];  // Weights
+    nml_mat* b[6];  // biases
 }NN;
 
 typedef struct{
@@ -109,13 +108,15 @@ float OC_SVM_predict(SVM* SVM, nml_mat* X)
 
 void NN_init(NN* NN, char str[])
 {
-    NN->num_layers = NN_LAYERS_NUM;
-
     char* array_str;
     char* save_ptr;
 
     // PARSE HEADER FILE FOR SCALER VALUES
     array_str = strtok_r(str,"*",&save_ptr);
+    NN->num_layers = nml_mat_fromstr(array_str)->data[0][0];
+
+    // PARSE HEADER FILE FOR SCALER VALUES
+    array_str = strtok_r(NULL,"*",&save_ptr);
     NN->scaler_mean = nml_mat_fromstr(array_str);
 
     array_str = strtok_r(NULL,"*",&save_ptr);

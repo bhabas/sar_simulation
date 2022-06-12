@@ -24,8 +24,8 @@ int main()
 {
    
     
-
-    printf("Hello World!\n");
+    
+    printf("size: %ld\n",sizeof(NN_Policy));
     X = nml_mat_new(3,1);
     X->data[0][0] = 0.29;
     X->data[1][0] = -0.673;
