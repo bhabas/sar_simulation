@@ -545,7 +545,6 @@ void CF_DataConverter::consoleOuput()
     printf("Sticky_flag:\t%u  Cam_Est:\t  %u\n",Sticky_Flag,Camera_Sensor_Active);
     printf("\n");
 
-
     printf("==== System States ====\n");
     printf("Pos [m]:\t %.3f  %.3f  %.3f\n",Pose.position.x,Pose.position.y,Pose.position.z);
     printf("Vel [m/s]:\t %.3f  %.3f  %.3f\n",Twist.linear.x,Twist.linear.y,Twist.linear.z);
@@ -558,27 +557,25 @@ void CF_DataConverter::consoleOuput()
     printf("D_ceil: %.3f\n",D_ceil);
     printf("\n");
 
+    printf("==== Policy Values ====\n");
+    printf("Parameter Optimization: \n");
+    printf("Tau_thr: %.3f \tMy: %.3f \tG2: %.3f\n",Tau_thr,G1,0.0);
+    printf("\n");
+
+    printf("Deep RL Policy: \n");
+    printf("Policy_Flip: %.3f \tPolicy_Action: %.3f \n",Policy_Flip,Policy_Action);
+    printf("\n");
+
+    printf("==== Flip Trigger Values ====\n");
+    printf("Tau_tr:     %.3f \tPolicy_Flip_tr:    %.3f \n",Tau_tr,Policy_Flip_tr);
+    printf("OFy_tr:     %.3f \tPolicy_Action_tr:  %.3f \n",OFy_tr,Policy_Action_tr);
+    printf("D_ceil_tr:  %.3f \n",D_ceil_tr);
+    printf("\n");
 
     printf("==== Setpoints ====\n");
     printf("x_d: %.3f  %.3f  %.3f\n",x_d.x,x_d.y,x_d.z);
     printf("v_d: %.3f  %.3f  %.3f\n",v_d.x,v_d.y,v_d.z);
     printf("a_d: %.3f  %.3f  %.3f\n",a_d.x,a_d.y,a_d.z);
-    printf("\n");
-
-    
-    printf("==== Policy Values ====\n");
-    printf("RL: \n");
-    printf("Tau_thr: %.3f \tG1: %.3f \tG2: %.3f\n",Tau_thr,G1,0.0);
-    printf("\n");
-
-    printf("NN_Outputs: \n");
-    printf("NN_Flip: %.3f \tNN_Policy: %.3f \n",Policy_Flip,Policy_Action);
-    printf("\n");
-
-    printf("==== Flip Trigger Values ====\n");
-    printf("Tau_tr:     %.3f \tNN_tr_Flip:    %.3f \n",Tau_tr,Policy_Flip_tr);
-    printf("OFy_tr:     %.3f \tNN_tr_Policy:  %.3f \n",OFy_tr,Policy_Action_tr);
-    printf("D_ceil_tr:  %.3f \n",D_ceil_tr);
     printf("\n");
 
     printf("==== Controller Actions ====\n");

@@ -439,10 +439,10 @@ void CF_DataConverter::log2_Callback(const crazyflie_msgs::GenericLogData::Const
     decompressXY(log2_msg->values[5],MS_PWM34);
 
     MS_PWM = {
-        round(MS_PWM12[0]*2.0e3),
-        round(MS_PWM12[1]*2.0e3), 
-        round(MS_PWM34[0]*2.0e3),
-        round(MS_PWM34[1]*2.0e3)
+        (uint16_t)round(MS_PWM12[0]*2.0e3),
+        (uint16_t)round(MS_PWM12[1]*2.0e3), 
+        (uint16_t)round(MS_PWM34[0]*2.0e3),
+        (uint16_t)round(MS_PWM34[1]*2.0e3)
     };
     
     // NEURAL NETWORK VALUES
