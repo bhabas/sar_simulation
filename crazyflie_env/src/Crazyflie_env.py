@@ -103,8 +103,8 @@ class CrazyflieEnv:
         self.MotorThrusts = [0,0,0,0] # Controller Motor Thrusts [M1,M2,M3,M4][g]
         self.FM = [0,0,0,0]     # Controller Force/Moments (F_thrust,Mx,My,Mz) [N,N*mm]
         
-        self.NN_flip = 0.0
-        self.NN_policy = 0.0
+        self.Policy_Flip = 0.0
+        self.Policy_Action = 0.0
         
         self.x_d = [0,0,0]
         self.v_d = [0,0,0]
@@ -127,8 +127,8 @@ class CrazyflieEnv:
 
         self.FM_tr = [0,0,0,0]      # [N,N*mm]
 
-        self.NN_tr_flip = 0.0
-        self.NN_tr_policy = 0.0     # [N*mm]
+        self.Policy_Flip_tr = 0.0
+        self.Policy_Action_tr = 0.0     # [N*mm]
 
         ## INITIALIZE IMPACT VALUES
         self.impact_flag = False
@@ -262,8 +262,8 @@ class CrazyflieEnv:
                                 StateData_msg.MS_PWM[2],
                                 StateData_msg.MS_PWM[3]],0)
 
-        self.NN_flip = np.round(StateData_msg.NN_flip,3)
-        self.NN_policy = np.round(StateData_msg.NN_policy,3)
+        self.Policy_Flip = np.round(StateData_msg.Policy_Flip,3)
+        self.Policy_Action = np.round(StateData_msg.Policy_Action,3)
 
         self.x_d = np.round([StateData_msg.x_d.x,
                              StateData_msg.x_d.y,
@@ -337,8 +337,8 @@ class CrazyflieEnv:
                                FlipData_msg.FM_tr[3]],3)
 
 
-        self.NN_tr_flip = np.round(FlipData_msg.NN_tr_flip,3)
-        self.NN_tr_policy = np.round(FlipData_msg.NN_tr_policy,3)
+        self.Policy_Flip_tr = np.round(FlipData_msg.Policy_Flip_tr,3)
+        self.Policy_Action_tr = np.round(FlipData_msg.Policy_Action_tr,3)
 
     def CF_ImpactDataCallback(self,ImpactData_msg):
 
@@ -533,7 +533,7 @@ class CrazyflieEnv:
         RL_Cmd_service = rospy.ServiceProxy('/CF_DC/Cmd_CF_DC', RLCmd)
         RL_Cmd_service(srv)
 
-    def VelTraj_StartPos(self,x_impact,V_d,accel_d=None,d_vz=0.6):
+    def VelTraj_StartPos(self,x_impact,V_d,accel_d=None,d_vel=0.6):
         """Returns the required start position (x_0,z_0) to intercept the ceiling 
         at a specific x-location; while also achieving the desired velocity conditions 
         at by a certain distance from the ceiling.
@@ -563,11 +563,11 @@ class CrazyflieEnv:
         t_x = Vx/a_x    # Time required to reach Vx
         t_z = Vz/a_z    # Time required to reach Vz
 
-        z_vz = 0.5*a_z*(t_z)**2                 # Height Vz reached
-        z_0 = (self.h_ceiling - d_vz) - z_vz    # Offset to move z_vz to d_vz
+        z_vz = 1/2*a_z*t_z**2                   # Height Vz reached
+        z_0 = (self.h_ceiling - d_vel) - z_vz    # Offset to move z_vz to d_vz
         
         x_vz = Vx*(t_x+t_z) - Vx**2/(2*a_x)     # X-position Vz reached
-        x_0 = x_impact - x_vz - d_vz*Vx/Vz      # Account for shift up and shift left
+        x_0 = x_impact - x_vz - d_vel*Vx/Vz      # Account for shift up and shift left
 
         return x_0,z_0
 
@@ -798,7 +798,7 @@ class CrazyflieEnv:
         state_msg.twist.angular.y = 0.0
         state_msg.twist.angular.z = 0.0
 
-        rospy.wait_for_service('/gazebo/set_model_state')
+        rospy.wait_for_service('/gazebo/set_model_state',timeout=5)
         set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         set_state_srv(state_msg)
 
@@ -816,9 +816,13 @@ class CrazyflieEnv:
         srv.Inertia.z = self.Izz
 
         ## SEND LOGGING REQUEST VIA SERVICE
-        rospy.wait_for_service('/CF_Internal/DomainRand',timeout=1.0)
-        domainRand_service = rospy.ServiceProxy('/CF_Internal/DomainRand', domainRand)
-        domainRand_service(srv)
+        try:
+            rospy.wait_for_service('/CF_Internal/DomainRand',timeout=1.0)
+            domainRand_service = rospy.ServiceProxy('/CF_Internal/DomainRand', domainRand)
+            domainRand_service(srv)
+        except rospy.exceptions.ROSException:
+            
+            pass
        
    
 

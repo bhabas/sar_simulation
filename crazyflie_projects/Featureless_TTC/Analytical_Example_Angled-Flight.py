@@ -20,9 +20,11 @@ O_up = WIDTH_PIXELS/2    # Pixel X_offset [pixels]
 O_vp = HEIGHT_PIXELS/2   # Pixel Y_offset [pixels]
 
 
-d_0 = 1.7   # Initial Camera height [m]
-vz = 2.5   # Camera velocity [m/s]
-vx = 0.75
+vel = 3.0
+phi = 90
+d_0 = 1.5   # Initial Camera height [m]
+vz = vel*np.sin(np.radians(phi))    # Camera velocity [m/s]
+vx = vel*np.cos(np.radians(phi))
 vy = 0.0
 
 ## PRE-ALLOCATE IMAGE ARRAY [pixels]
@@ -190,7 +192,7 @@ ax = fig2.add_subplot(111)
 
 ax.plot(t_List,Tau_est_List,'rx',label="Tau_estimate")
 ax.plot(t_List,Tau_act_List,label="Tau_actual")
-ax.set_title('Tau Estimation')
+ax.set_title(f'Tau Estimation - V: {vel:.2f} | Phi: {phi:.2f} | L: {L:.3f}')
 ax.set_xlabel('Time [s]')
 ax.set_ylabel('Tau [s]')
 ax.grid()

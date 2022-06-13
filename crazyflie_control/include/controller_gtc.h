@@ -16,8 +16,8 @@ extern "C" {
 #ifndef __CONTROLLER_GTC_H__
 #define __CONTROLLER_GTC_H__
 
-#include "NN_Params/NN_Layers_Policy_WL.h"
-#include "NN_Params/NN_Layers_Flip_WL.h"
+#include "NN_Params/NN_Layers_NL_DR.h"
+#include "NN_Params/SVM_Params_NL_DR.h"
 
 // STANDARD LIBRARIES
 #include <math.h>
@@ -212,25 +212,19 @@ extern float M_x_flip;      // [N*m]
 extern float M_y_flip;      // [N*m]
 extern float M_z_flip;      // [N*m]
 
-// ==========================
-//  RL POLICY INITIALIZATION
-// ==========================
+// ==============================================
+//  PARAMETER OPTIMIZATION POLICY INITIALIZATION
+// ==============================================
 extern float Tau_thr;   // Tau threshold
 extern float G1;        // Body moment value
-extern float G2;        // Deprecated state value
+extern float G2;        // Deprecated gain value
 
-// ===============================
-//  NEURAL NETWORK INITIALIZATION
-// ===============================
-
-// NN OUTPUTS
-extern float NN_flip;           // NN output value for flip classification
-extern float NN_policy;         // NN output value for policy My
-
-// NN OUTPUTS AT FLIP TRIGGER
-extern float NN_tr_flip;        // NN value at flip trigger
-extern float NN_tr_policy;      // NN policy value at flip trigger
-
+// =====================================
+//  SUPERVISED NN/OC_SVM INITIALIZATION
+// =====================================
+extern float Policy_Flip;    
+extern float Policy_Flip_tr;
+extern float Policy_Action_tr;
 
 extern uint8_t PolicyType;
 

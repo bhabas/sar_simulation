@@ -1,3 +1,8 @@
+"""
+This script runs through all of the data logs in a folder and compile the data by their
+individual landing parameters to extract the flip state/moment action combination
+"""
+
 import numpy as np
 import pandas as pd
 import os
@@ -10,7 +15,7 @@ BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
 sys.path.insert(0,BASE_PATH)
 from crazyflie_logging.data_analysis.Data_Analysis import DataFile
 dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/NL_Raw_Trials/"
-compiledPath = f"{BASE_PATH}/crazyflie_projects/Policy_Mapping/Data_Logs"
+compiledPath = f"{BASE_PATH}/crazyflie_projects/Policy_Mapping/Data_Logs/NL_Raw"
 df_list = []
 num_files = len(os.listdir(dataPath))
 
@@ -28,7 +33,7 @@ df = pd.DataFrame(columns=(
     'vx','vz',
     'Tau','d_ceil','OF_y',
     'My_d'))
-df.to_csv(f'{compiledPath}/NL_PolicyVal_Trials_Raw_{file_index}.csv',index=False,mode='a',header=True)
+df.to_csv(f'{compiledPath}/NL_PolicyVal_Trials_Raw_{file_index}.csv',index=False,mode='w',header=True)
 
 
 ## ITER OVER ALL FILES IN DIR
@@ -64,17 +69,18 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
 
                 if num_contacts >= 3 and body_contact == False:
                     success_flag = True
-                else:
-                    success_flag = False
-
-                df_list.append((
+                    df_list.append((
                     k_ep,k_run,
                     vel_IC, phi_IC, trial_num,
                     success_flag,num_contacts,body_contact,
                     vx,vz,
                     Tau,d_ceil,OF_y,
                     My_d,
-                ))
+                    ))
+                else:
+                    success_flag = False
+
+                
             except:
                 print(f"[EXCEPTION] FileName: {fileName} K_ep: {k_ep} K_run: {k_run} | Skipping Line")
 
@@ -86,6 +92,7 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
     if ii%75 == 0:
 
         file_index += 1
+        df.to_csv(f'{compiledPath}/NL_PolicyVal_Trials_DR_{file_index}.csv',index=False,mode='w',header=True)
 
     master_df = pd.DataFrame(df_list).to_csv(f'{compiledPath}/NL_PolicyVal_Trials_Raw_{file_index}.csv',index=False,mode='a',header=False)
     end_time = time.time()

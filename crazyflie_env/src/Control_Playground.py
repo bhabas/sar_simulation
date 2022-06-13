@@ -121,8 +121,8 @@ def cmd_send(env):
             elif action=='Impact_traj':
 
                 ## GET VEL CONDITIONS 
-                V_d,phi,d_vz = env.userInput("Flight Velocity (V_d,phi,d_vz):",float)
-
+                V_d,phi,d_vel = env.userInput("Flight Velocity (V_d,phi,d_vel):",float)
+                
                 ## DEFINE CARTESIAN VELOCITIES
                 phi_rad = np.radians(phi)
 
@@ -131,7 +131,7 @@ def cmd_send(env):
 
                 x_impact,y_0 = env.userInput("Desired impact position (x,y):",float)
 
-                x_0,z_0 = env.VelTraj_StartPos(x_impact,[Vx_d,0,Vz_d],d_vz=d_vz)
+                x_0,z_0 = env.VelTraj_StartPos(x_impact,[Vx_d,0,Vz_d],d_vel=d_vel)
 
                 print(f"Desired start position x_0: {x_0:.2f} y_0: {y_0:.2f} z_0: {z_0:.2f}")
                 str_input = env.userInput("Approve start position (y/n): ",str)
@@ -188,7 +188,7 @@ def cmd_send(env):
                 print("Reset Pos/Vel -- Sticky off -- Controller Reset\n")
                 env.reset_pos()
 
-        except rospy.ROSInternalException:
+        except ValueError:
             print('\033[93m' + "INVALID INPUT: Try again" + '\x1b[0m')
             continue
 
@@ -208,7 +208,7 @@ if __name__ == '__main__':
     env.trial_name = f"Control_Playground--trial_{int(trial_num):02d}--{env.modelInitials()}"
     env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
 
-    env.accCF_max = [1.0, 1.0, 1.0]
+    env.accCF_max = [1.0, 1.0, 3.1]
 
     env.createCSV(env.filepath)
     env.startLogging()

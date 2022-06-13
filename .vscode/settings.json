@@ -12,6 +12,18 @@
     ],
     "cmake.configureOnOpen": false,
     "files.associations": {
-        "controller_gtc.h": "c"
+        "controller_gtc.h": "c",
+        "*.tcc": "c",
+        "optional": "c",
+        "nn_funcs.h": "c",
+        "svm_params_nl_dr.h": "c",
+        "stdio.h": "c",
+        "random": "c",
+        "cmath": "cpp",
+        "complex": "cpp",
+        "nn_layers_nl_dr.h": "c",
+        "compressedstates.h": "c",
+        "nml.h": "c",
+        "ratio": "c"
     }
 }

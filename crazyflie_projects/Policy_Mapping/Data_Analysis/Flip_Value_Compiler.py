@@ -1,19 +1,28 @@
+"""
+This script runs through all of the data logs in a folder and compile the data by their
+converged/average landing parameters to extract the average flip values
+"""
+
 import numpy as np
 import pandas as pd
 import os
 import time
-import warnings
+import rospy
 
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
 sys.path.insert(0,BASE_PATH)
 from crazyflie_logging.data_analysis.Data_Analysis import DataFile
+
+
 dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/NL_Raw_Trials/"
-compiledPath = f"{BASE_PATH}/crazyflie_projects/Policy_Mapping/Data_Logs"
+compiledPath = f"{BASE_PATH}/crazyflie_projects/Policy_Mapping/Data_Logs/NL_Raw"
+
 df_list = []
 num_files = len(os.listdir(dataPath))
 
+## COMPILING UPDATES
 start_time = time.time()
 end_time = time.time()
 time_delta = 20 # Analysis time per file [s]
@@ -35,7 +44,7 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
         ## RECORD DATA FROM LOG FILE    
         print(f"Current File: {fileName} \t Index: {ii}/{num_files-1} \t Percentage: {100*ii/num_files:.2f}% \t Minutes to Completion: {time_delta/60*(num_files-ii):.1f}")
 
-        trial = DataFile(dataPath,fileName,dataType='SIM')
+        trial = DataFile(dataPath,fileName,dataType='EXP')
         
         ## TRIAL CONDITIONS
         vel_IC,phi_IC = trial.grab_vel_IC_2D_angle()

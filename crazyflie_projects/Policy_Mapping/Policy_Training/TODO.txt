@@ -1,0 +1,2 @@
+Add data analysis function to plot logged trajectory data through OF space and mark when flip trigger
+Remake polar plot for landing rates
