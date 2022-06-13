@@ -17,6 +17,7 @@ extern "C" {
 #define __CONTROLLER_GTC_H__
 
 #include "NN_Params/NN_Layers_NL_DR.h"
+#include "NN_Params/SVM_Params_NL_DR.h"
 
 // STANDARD LIBRARIES
 #include <math.h>

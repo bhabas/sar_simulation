@@ -241,11 +241,17 @@ float G2 = 0.0f;        // Deprecated state value
 //  NEURAL NETWORK INITIALIZATION
 // ===============================
 static nml_mat* X;  // STATE MATRIX TO BE INPUT INTO NN
+SVM SVM_PolicyFlip;     
+NN NN_Policy;
+
+
+
+
 static nml_mat* y_output;  // STATE MATRIX TO BE INPUT INTO NN
 
-// NN INPUT SCALERS
-static Scaler Scaler_Flip;      // Scale input vector for NN
-static Scaler Scaler_Policy;
+// // NN INPUT SCALERS
+// static Scaler Scaler_Flip;      // Scale input vector for NN
+// static Scaler Scaler_Policy;
 
 // NN WEIGHTS
 static nml_mat* W_flip[4];  
@@ -268,10 +274,15 @@ void controllerGTCInit(void)
     controllerGTCReset();
     controllerGTCTest();
     X = nml_mat_new(3,1);
-    y_output = nml_mat_new(2,1);
     J = mdiag(Ixx,Iyy,Izz);
 
-    initNN_Layers(&Scaler_Flip,W_flip,b_flip,NN_Params_Flip,4);
+    NN_init(&NN_Policy,NN_Params_Flip);
+    OC_SVM_init(&SVM_PolicyFlip,SVM_Params);
+
+    X->data[0][0] = 0.29;
+    X->data[1][0] = -0.673;
+    X->data[2][0] = 0.952; 
+
     consolePrintf("GTC Initiated\n");
 }
 
@@ -633,14 +644,20 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         
         d_ceil = sensors->d_ceil;
 
-        X->data[0][0] = Tau;
-        X->data[1][0] = OFy;
-        X->data[2][0] = d_ceil; // d_ceiling [m]
+        // X->data[0][0] = Tau;
+        // X->data[1][0] = OFy;
+        // X->data[2][0] = d_ceil; // d_ceiling [m]
+
+        X->data[0][0] = 0.29;
+        X->data[1][0] = -0.673;
+        X->data[2][0] = 0.952; 
 
         
         controlOutput(state,sensors);
+        printf("NN_Predict: %.4f\n",NN_predict(X,&NN_Policy));
+        printf("OC_SVM Predict: %.4f\n",OC_SVM_predict(&SVM_PolicyFlip,X));
         
-
+        /*
         if(policy_armed_flag == true){ 
                 
             switch(PolicyType)
@@ -715,7 +732,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                 }
 
             }
-
+        
             
             if(flip_flag == true)
             {
@@ -726,6 +743,8 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                 F_thrust = 0.0f;
             }
         }
+        */
+
         if(moment_flag == true)
         {
             F_thrust = 0.0f;

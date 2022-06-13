@@ -313,7 +313,7 @@ class Policy_Trainer():
         # if not np.isclose(val[0],self.SVM_model.decision_function(X))[0]:
         #     raise Exception
 
-        # print(f"Func Val: {self.SVM_model.decision_function(X)[0]:.4f} || Custom Val: {val[0]:.4f}")
+        print(f"Func Val: {self.SVM_model.decision_function(X)[0]:.4f} || Custom Val: {val[0]:.4f}")
         # self.SVM_model.decision_function(X)
         return val
 
