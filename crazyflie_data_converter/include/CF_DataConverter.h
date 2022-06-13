@@ -261,8 +261,8 @@ class CF_DataConverter
 
         boost::array<double,4> FM_tr{0,0,0,0};
 
-        double NN_tr_flip = 0.0;
-        double NN_tr_policy = 0.0;
+        double Policy_Flip_tr = 0.0;
+        double Policy_Action_tr = 0.0;
 
 
         // ===================
@@ -736,7 +736,7 @@ void CF_DataConverter::append_CSV_flip()
 {
     fprintf(fPtr,"%u,%u,",k_ep,k_run);
     fprintf(fPtr,"%.3f,",(Time_tr-Time_start).toSec());
-    fprintf(fPtr,"%.3f,%.3f,",NN_tr_flip,NN_tr_policy);
+    fprintf(fPtr,"%.3f,%.3f,",Policy_Flip_tr,Policy_Action_tr);
     fprintf(fPtr,"--,--,--,");
 
     // // INTERNAL STATE ESTIMATES (CF)

@@ -487,8 +487,8 @@ void Controller::publishCtrlData()
     CtrlData_msg.D_ceil_tr = d_ceil_tr;
 
     // NEURAL NETWORK DATA (FLIP)
-    CtrlData_msg.NN_tr_flip = Policy_Flip_tr;
-    CtrlData_msg.NN_tr_policy = Policy_Action_tr;
+    CtrlData_msg.Policy_Flip_tr = Policy_Flip_tr;
+    CtrlData_msg.Policy_Action_tr = Policy_Action_tr;
 
     // CONTROL ACTIONS (FLIP)
     CtrlData_msg.FM_flip = {F_thrust_flip,M_x_flip,M_y_flip,M_z_flip};

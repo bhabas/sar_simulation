@@ -12,5 +12,5 @@ float64 D_ceil_tr
 
 float64[4] FM_tr
 
-float64 NN_tr_flip
-float64 NN_tr_policy
+float64 Policy_Flip_tr
+float64 Policy_Action_tr

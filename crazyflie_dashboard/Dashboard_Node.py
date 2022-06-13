@@ -80,8 +80,8 @@ class DashboardNode:
 
         self.FM_tr = [0,0,0,0]      # [N,N*mm]
 
-        self.NN_tr_flip = 0.0
-        self.NN_tr_policy = 0.0     # [N*mm]
+        self.Policy_Flip_tr = 0.0
+        self.Policy_Action_tr = 0.0     # [N*mm]
 
         ## INITIALIZE IMPACT VALUES
         self.impact_flag = False
@@ -248,8 +248,8 @@ class DashboardNode:
                                FlipData_msg.FM_tr[3]],3)
 
 
-        self.NN_tr_flip = np.round(FlipData_msg.NN_tr_flip,3)
-        self.NN_tr_policy = np.round(FlipData_msg.NN_tr_policy,3)
+        self.Policy_Flip_tr = np.round(FlipData_msg.Policy_Flip_tr,3)
+        self.Policy_Action_tr = np.round(FlipData_msg.Policy_Action_tr,3)
 
     def CF_ImpactDataCallback(self,ImpactData_msg):
         ## IMPACT FLAGS
