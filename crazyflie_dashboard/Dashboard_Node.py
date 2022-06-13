@@ -3,7 +3,8 @@ import rospy
 import numpy as np
 
 from crazyflie_msgs.msg import CF_StateData,CF_MiscData,CF_FlipData,CF_ImpactData
-from crazyflie_msgs.msg import RLData,RLConvg,RLCmd
+from crazyflie_msgs.msg import RLData,RLConvg
+from crazyflie_msgs.srv import RLCmd,RLCmdRequest
 from nav_msgs.msg import Odometry
 
 
@@ -119,8 +120,7 @@ class DashboardNode:
         rospy.Subscriber('/RL/data',RLData,self.rewardCallback,queue_size=10)
         rospy.Subscriber('/RL/convg_data',RLConvg,self.rlConvgCallback,queue_size=10)
 
-        self.RL_CMD_Publisher = rospy.Publisher('/RL/cmd',RLCmd,queue_size=10)
-        self.cmd_msg = RLCmd()
+        self.srv = RLCmdRequest() 
 
    
         print("[COMPLETED] Dashboard node is running...")

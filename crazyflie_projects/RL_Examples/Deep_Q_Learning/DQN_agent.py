@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import gym
 import random
+import copy 
 
 import torch
 import torch.nn as nn
@@ -58,7 +59,8 @@ class DQN_Agent():
         self.epsilon_min = 0.001
         self.epsilon = self.epsilon_max
 
-        self.network = Network(input_size=4,output_size=2)
+        self.Q_NN = Network(input_size=4,output_size=2)
+        self.Q_target_NN = copy.deepcopy(self.Q_NN)
         self.memory = deque(maxlen=MEM_SIZE)
 
     def choose_action(self,state):
@@ -69,14 +71,15 @@ class DQN_Agent():
         state = torch.tensor(state,dtype=torch.float)
         state = state.to(DEVICE)
 
-        q_vals = self.network.forward(state)
+        q_vals = self.Q_NN.forward(state)
 
         return torch.argmax(q_vals).item()
 
     def remember(self,state,action,reward,next_state,done):
         self.memory.append((state,action,reward,next_state,done))
 
-        
+    def update_Q_target(self):
+        self.Q_target_NN = copy.deepcopy(self.Q_NN)
 
     def train(self):
 
@@ -101,24 +104,24 @@ class DQN_Agent():
 
         states = torch.tensor(state,dtype=torch.float).to(DEVICE)
         actions = torch.tensor(action,dtype=torch.long).to(DEVICE)
-        states_ = torch.tensor(next_state,dtype=torch.float).to(DEVICE)
+        next_states = torch.tensor(next_state,dtype=torch.float).to(DEVICE)
         rewards = torch.tensor(reward,dtype=torch.float).to(DEVICE)
         dones = torch.tensor(done, dtype=torch.bool).to(DEVICE)
         batch_indices = np.arange(BATCH_SIZE, dtype=np.int64)
 
 
-        q_values = self.network(states)
-        next_q_values = self.network(states_)
+        q_values = self.Q_NN(states)
+        next_q_values = self.Q_NN(next_states)
         
         predicted_value_of_now = q_values[batch_indices, actions]
         predicted_value_of_future = torch.max(next_q_values, dim=1)[0]
         
         q_target = rewards + GAMMA * predicted_value_of_future * dones
 
-        loss = self.network.loss(q_target, predicted_value_of_now)
-        self.network.optimizer.zero_grad()
+        loss = self.Q_NN.loss(q_target, predicted_value_of_now)
+        self.Q_NN.optimizer.zero_grad()
         loss.backward()
-        self.network.optimizer.step()
+        self.Q_NN.optimizer.step()
 
 
         predicted_value_of_now = q_values[batch_indices, actions]

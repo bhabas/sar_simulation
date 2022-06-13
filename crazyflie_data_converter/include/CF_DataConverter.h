@@ -14,6 +14,8 @@ is easy to use.
 // ROS INCLUDES
 #include <ros/ros.h>
 #include <geometry_msgs/WrenchStamped.h>
+#include <geometry_msgs/Point.h>
+
 #include <gazebo_msgs/ContactsState.h>
 #include <gazebo_msgs/SetPhysicsProperties.h>
 
@@ -49,7 +51,6 @@ class CF_DataConverter
             // INITIALIZE SUBSCRIBERS
             CTRL_Data_Sub = nh->subscribe("/CTRL/data", 1, &CF_DataConverter::CtrlData_Callback, this, ros::TransportHints().tcpNoDelay());
             CTRL_Debug_Sub = nh->subscribe("/CTRL/debug", 1, &CF_DataConverter::CtrlDebug_Callback, this, ros::TransportHints().tcpNoDelay());
-            RL_CMD_Sub = nh->subscribe("/RL/cmd",5,&CF_DataConverter::RL_CMD_Callback,this,ros::TransportHints().tcpNoDelay());
             RL_Data_Sub = nh->subscribe("/RL/data",5,&CF_DataConverter::RL_Data_Callback,this,ros::TransportHints().tcpNoDelay());
             Surface_FT_Sub = nh->subscribe("/ENV/Surface_FT_sensor",5,&CF_DataConverter::SurfaceFT_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
             Surface_Contact_Sub = nh->subscribe("/ENV/BodyContact",5,&CF_DataConverter::Surface_Contact_Callback,this,ros::TransportHints().tcpNoDelay());
@@ -70,6 +71,10 @@ class CF_DataConverter
             // GAZEBO SERVICES
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
             Logging_Service = nh->advertiseService("/CF_DC/DataLogging", &CF_DataConverter::DataLogging_Callback, this);
+
+            CMD_Service_CF_DC = nh->advertiseService("/CF_DC/Cmd_CF_DC",&CF_DataConverter::CMD_CF_DC_Callback,this);
+            CMD_Service_Dashboard = nh->advertiseService("/CF_DC/Cmd_Dashboard",&CF_DataConverter::CMD_Dashboard_Callback,this);
+            CMD_Client = nh->serviceClient<crazyflie_msgs::RLCmd>("/CTRL/Cmd_ctrl");
             
 
             
@@ -94,11 +99,16 @@ class CF_DataConverter
         void CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_msg);
         void CtrlDebug_Callback(const crazyflie_msgs::CtrlDebug &ctrl_msg);
 
-        void RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
         void RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &msg);
         void SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStamped::ConstPtr &msg);
         void Surface_Contact_Callback(const gazebo_msgs::ContactsState &msg);
         void Pad_Connections_Callback(const crazyflie_msgs::PadConnect &msg);
+
+
+        bool CMD_CF_DC_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res);
+        bool CMD_Dashboard_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res);
+        bool Send_Cmd2Ctrl(crazyflie_msgs::RLCmd::Request &req);
+
 
 
         // EXPERIMENT DATA CALLBACKS
@@ -137,7 +147,7 @@ class CF_DataConverter
 
     private:
 
-        // SUBSCRIBERS
+        // SUBSCRIBERSCMD_Service_CF_DC
         ros::Subscriber CTRL_Data_Sub;
         ros::Subscriber CTRL_Debug_Sub;
         ros::Subscriber RL_CMD_Sub;
@@ -162,6 +172,10 @@ class CF_DataConverter
         // SERVICES
         ros::ServiceClient GZ_SimSpeed_Client;
         ros::ServiceServer Logging_Service;
+
+        ros::ServiceServer CMD_Service_CF_DC;
+        ros::ServiceServer CMD_Service_Dashboard;
+        ros::ServiceClient CMD_Client;
 
         // MESSAGES
         crazyflie_msgs::CF_StateData StateData_msg;
@@ -338,7 +352,6 @@ class CF_DataConverter
         boost::array<float,3> vel_d{0,0,0};
 
         bool runComplete_flag = false;
-
 
 };
 
@@ -670,7 +683,7 @@ void CF_DataConverter::append_CSV_states()
     fprintf(fPtr,"%s,%s,",formatBool(flip_flag),formatBool(impact_flag));   // flip_flag,impact_flag
 
     // MISC INTERNAL STATE ESTIMATES
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",Tau_est,OFx_est,OFy_est);      // Tau,OF_x,OF_y,d_ceil
+    fprintf(fPtr,"%.3f,%.3f,%.3f,",Tau_est,OFx_est,OFy_est);      // Tau,OF_x,OF_y
     fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Tau,OFx,OFy,D_ceil);      // Tau,OF_x,OF_y,d_ceil
     fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",FM[0],FM[1],FM[2],FM[3]);           // F_thrust,Mx,My,Mz
     fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",MotorThrusts[0],MotorThrusts[1],MotorThrusts[2],MotorThrusts[3]); // M1_thrust,M2_thrust,M3_thrust,M4_thrust
@@ -841,3 +854,4 @@ bool CF_DataConverter::DataLogging_Callback(crazyflie_msgs::loggingCMD::Request 
 
     return 1;
 }
+

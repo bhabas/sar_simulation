@@ -20,7 +20,6 @@ add_message_files(
   CF_ImpactData.msg
   CF_MiscData.msg
   CF_StateData.msg
-  RLCmd.msg
   RLData.msg
   RLConvg.msg
   CtrlData.msg
@@ -38,6 +37,7 @@ add_service_files(
   activateSticky.srv
   loggingCMD.srv
   domainRand.srv
+  RLCmd.srv
 )
 
 ## Generate added messages and services with any dependencies listed here

@@ -15,27 +15,41 @@ np.set_printoptions(precision=2, suppress=True)
 
 def executeFlight(env,agent):
 
-    ## MAKE SURE CONTROLLER IS WORKING
-    # while True:
-        # try:
-        #     rospy.wait_for_message("/clock",Clock,timeout=20)
-        #     rospy.wait_for_message("/CF_DC/StateData",CF_StateData,timeout=5.0)
-        #     break
+    # MAKE SURE CONTROLLER IS WORKING
+    while True:
+        try:
+            rospy.wait_for_message("/clock",Clock,timeout=20)
+            rospy.wait_for_message("/CF_DC/StateData",CF_StateData,timeout=5.0)
+            break
 
-        # except rospy.exceptions.ROSException:
-        #     print("Restarting Controller")
-        #     env.launch_controller()
-        #     time.sleep(2)
-        #     env.reset_pos()
-        #     continue
+        except rospy.exceptions.ROSException:
+            print("Restarting Controller")
+            env.launch_controller()
+            time.sleep(2)
+            env.reset_pos()
+            continue
 
     ## RESET TO INITIAL STATE
-    env.step("home") # Reset control vals and functionality to default vals
+    env.SendCmd("GZ_reset")
+    env.SendCmd("Ctrl_Reset") # Reset control vals and functionality to default vals
     time.sleep(0.5) # Time for CF to settle [Real-Time seconds]
     # input("here")
     env.RL_Publish()
     env.startLogging()
 
+
+    
+
+    # ============================
+    ##          Rollout 
+    # ============================
+    env.SendCmd('StickyPads',cmd_flag=1)              # Enable sticky pads
+
+    tau_0 = 0.6
+    z_0 = env.h_ceiling - tau_0*env.vel_d[2]
+    env.Vel_Launch([0,0,z_0],env.vel_d)
+    env.sleep(0.1)
+    env.SendCmd("Policy",env.policy,cmd_flag=1) # Arm policy inside controller
 
     ## RESET/UPDATE RUN CONDITIONS
     repeat_run= False
@@ -52,17 +66,6 @@ def executeFlight(env,agent):
     print(f"Vx_d: {env.vel_d[0]:.3f} \t Vy_d: {env.vel_d[1]:.3f} \t Vz_d: {env.vel_d[2]:.3f}")
     print("\n")
 
-    # ============================
-    ##          Rollout 
-    # ============================
-    env.step("policy",env.policy,cmd_flag=1) # Arm policy inside controller
-    env.step('sticky',cmd_flag=1)              # Enable sticky pads
-
-    z_0 = env.h_ceiling - 1.0*env.vel_d[2]
-    env.Vel_Launch([0,0,z_0],env.vel_d)
-    # env.step('traj',cmd_vals=[env.posCF_0[0],env.vel_d[0],env.accCF_max[0]],cmd_flag=0)
-    # env.step('traj',cmd_vals=[env.posCF_0[1],env.vel_d[1],env.accCF_max[1]],cmd_flag=1)
-    # env.step('traj',cmd_vals=[env.posCF_0[2],env.vel_d[2],env.accCF_max[2]],cmd_flag=2)
 
 
     while True: 
@@ -113,7 +116,7 @@ def executeFlight(env,agent):
             env.runComplete_flag = True
 
         # IF POSITION FALLS BELOW FLOOR HEIGHT
-        elif env.posCF[2] <= -8.0: # Note: there is a lag with this at high RTF
+        elif env.velCF[2] <= -0.5 and env.posCF[2] <= 1.5: # Note: there is a lag with this at high RTF
             env.error_str = "Rollout Completed: Falling Drone"
             print(env.error_str)
 
@@ -193,11 +196,11 @@ if __name__ == '__main__':
     env.Logging_Flag = True
     env.createCSV(env.filepath)
 
-    V_d = 1.0
+    V_d = 2.5
     phi = 90
     phi_rad = np.radians(phi)
     env.vel_d = [V_d*np.cos(phi_rad), 0.0, V_d*np.sin(phi_rad)] # [m/s]
-    env.policy = [0.28,7.0,0] # NN policy
+    env.policy = [0.27,7.0,0] # NN policy
 
 
     ## RUN TRIAL
