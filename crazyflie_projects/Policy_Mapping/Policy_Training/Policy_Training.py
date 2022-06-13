@@ -44,7 +44,7 @@ class Policy_Trainer():
         ## SAVE SCALER TO FILE 
         np.savetxt(f"{BASEPATH}/Policy_Training/Info/Scaler_{self.model_initials}.csv",
             np.stack((self.scaler.mean_,self.scaler.scale_),axis=1),
-            fmt='%.6f',
+            fmt='%.5f',
             delimiter=',',
             comments='',
             header=f'mean,std',
@@ -108,14 +108,14 @@ class Policy_Trainer():
         
         ## SAVE SCALER ARRAY VALUES
         np.savetxt(f,scaler_means,
-                    fmt='"%.6f,"',
+                    fmt='"%.5f,"',
                     delimiter='\t',
                     comments='',
                     header=f'"{scaler_means.shape[0]},"\t"{scaler_means.shape[1]},"',
                     footer='"*"\n')
 
         np.savetxt(f,scaler_stds,
-                    fmt='"%.6f,"',
+                    fmt='"%.5f,"',
                     delimiter='\t',
                     comments='',
                     header=f'"{scaler_stds.shape[0]},"\t"{scaler_stds.shape[1]},"',
@@ -129,7 +129,7 @@ class Policy_Trainer():
 
                     W = layer.weight.numpy()
                     np.savetxt(f,W,
-                        fmt='"%.6f,"',
+                        fmt='"%.5f,"',
                         delimiter='\t',
                         comments='',
                         header=f'"{W.shape[0]},"\t"{W.shape[1]},"',
@@ -138,7 +138,7 @@ class Policy_Trainer():
 
                     b = layer.bias.numpy().reshape(-1,1)
                     np.savetxt(f,b,
-                        fmt='"%.6f,"',
+                        fmt='"%.5f,"',
                         delimiter='\t',
                         comments='',
                         header=f'"{b.shape[0]},"\t"{b.shape[1]},"',
@@ -338,14 +338,14 @@ class Policy_Trainer():
         
         ## SAVE SCALER ARRAY VALUES
         np.savetxt(f,scaler_means,
-                    fmt='"%.6f,"',
+                    fmt='"%.5f,"',
                     delimiter='\t',
                     comments='',
                     header=f'"{scaler_means.shape[0]},"\t"{scaler_means.shape[1]},"',
                     footer='"*"\n')
 
         np.savetxt(f,scaler_stds,
-                    fmt='"%.6f,"',
+                    fmt='"%.5f,"',
                     delimiter='\t',
                     comments='',
                     header=f'"{scaler_stds.shape[0]},"\t"{scaler_stds.shape[1]},"',
@@ -359,7 +359,7 @@ class Policy_Trainer():
 
         ## SAVE GAMMA
         np.savetxt(f,gamma,
-                    fmt='"%.6f,"',
+                    fmt='"%.5f,"',
                     delimiter='\t',
                     comments='',
                     header=f'"{gamma.shape[0]},"\t"{gamma.shape[1]},"',
@@ -367,7 +367,7 @@ class Policy_Trainer():
 
         ## SAVE INTERCEPT
         np.savetxt(f,intercept,
-                    fmt='"%.6f,"',
+                    fmt='"%.5f,"',
                     delimiter='\t',
                     comments='',
                     header=f'"{intercept.shape[0]},"\t"{intercept.shape[1]},"',
@@ -376,7 +376,7 @@ class Policy_Trainer():
         
         ## SAVE DUAL COEFFS
         np.savetxt(f,dual_coeffs,
-                    fmt='"%.6f,"',
+                    fmt='"%.5f,"',
                     delimiter='\t',
                     comments='',
                     header=f'"{dual_coeffs.shape[0]},"\t"{dual_coeffs.shape[1]},"',
@@ -384,7 +384,7 @@ class Policy_Trainer():
 
         ## SAVE SUPPORT VECTORS
         np.savetxt(f,support_vecs,
-                    fmt='"%.6f,"',
+                    fmt='"%.5f,"',
                     delimiter='\t',
                     comments='',
                     header=f'"{support_vecs.shape[0]},"\t"{support_vecs.shape[1]},"',
@@ -737,8 +737,8 @@ if __name__ == "__main__":
     Policy.createScaler(X)
 
     Policy.train_NN_Model(X_train,y_train,X_test,y_test,epochs=1000)
-    # Policy.save_NN_Params(NN_Param_Path)
-    Policy.load_NN_Params(NN_Param_Path)
+    Policy.save_NN_Params(NN_Param_Path)
+    # Policy.load_NN_Params(NN_Param_Path)
     print(Policy.NN_Predict(np.array([[0.29,-0.673,0.952]])))
 
     Policy.train_OC_SVM(X)
