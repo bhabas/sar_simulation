@@ -297,7 +297,7 @@ class Policy_Trainer():
 
         support_vecs = self.SVM_model.support_vectors_
         dual_coeffs = self.SVM_model.dual_coef_
-        gamma = self.SVM_model._gamma
+        gamma = self.SVM_model.gamma
         intercept = self.SVM_model.intercept_
 
         # https://scikit-learn.org/stable/modules/svm.html
@@ -313,7 +313,8 @@ class Policy_Trainer():
         # if not np.isclose(val[0],self.SVM_model.decision_function(X))[0]:
         #     raise Exception
 
-        print(f"Func Val: {self.SVM_model.decision_function(X)[0]:.4f} || Custom Val: {val[0]:.4f}")
+        # print(f"Func Val: {self.SVM_model.decision_function(X)[0]:.4f} || Custom Val: {val[0]:.4f}")
+        # self.SVM_model.decision_function(X)
         return val
 
     def train_OC_SVM(self,X_train):
@@ -435,15 +436,15 @@ class Policy_Trainer():
             
             ## EXTRACT GAMMA
             elif ii == 2:
-                self.SVM_model._gamma = arr[0,0]
+                self.SVM_model.gamma = arr[0,0]
             
             ## EXTRACT INTERCEPT
             elif ii == 3:
-                self.SVM_model._intercept_ = arr[:,0]
+                self.SVM_model.intercept_ = arr[:,0]
 
             ## EXTRACT DUAL COEFFS
             elif ii == 4:
-                self.SVM_model._dual_coef_ = arr.reshape(1,-1)
+                self.SVM_model.dual_coef_ = arr.reshape(1,-1)
 
             ## EXTRACT SUPPORT VECTORS
             elif ii == 5:
@@ -740,11 +741,11 @@ if __name__ == "__main__":
     Policy.load_NN_Params(NN_Param_Path)
     print(Policy.NN_Predict(np.array([[0.29,-0.673,0.952]])))
 
-    # Policy.train_OC_SVM(X)
+    Policy.train_OC_SVM(X)
     # Policy.save_SVM_Params(SVM_Param_Path)
-    # Policy.load_SVM_Params(SVM_Param_Path)
+    Policy.load_SVM_Params(SVM_Param_Path)
 
-    # Policy.OC_SVM_Predict(np.array([[0.29,-0.673,0.952]]))
+    print(Policy.OC_SVM_Predict(np.array([[0.29,-0.673,0.952]])))
 
     # Policy.plotClassification(df_raw)
     # Policy.plotPolicy(df_raw,PlotRegion=True)

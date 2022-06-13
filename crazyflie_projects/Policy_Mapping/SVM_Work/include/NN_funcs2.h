@@ -150,19 +150,17 @@ float NN_predict(nml_mat* X_input, NN* NN)
     // PASS DATA THROUGH NETWORK
     nml_mat* WX;
     for (int i = 0; i < NN->num_layers; i++)
-    {
-        WX = nml_mat_dot(NN->W[i],X);
-        nml_mat_add_r(WX,NN->b[i]);
+    { 
+        WX = nml_mat_add(nml_mat_dot(NN->W[i],X),NN->b[i]); // WX+b
 
         if (i == NN->num_layers-1) // Last Layer
         {
-            X = nml_mat_cp(WX);
+            X = nml_mat_cp(WX); // X = WX+b
         }
         else 
         {
-            X = nml_mat_funcElement(WX,Elu);
+            X = nml_mat_funcElement(WX,Elu); // X = f(WX+b)
         }      
-        
 
     }
     
