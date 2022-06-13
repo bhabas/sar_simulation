@@ -18,8 +18,8 @@ float64[4] FM
 float64[4] MotorThrusts
 float64[4] MS_PWM
 
-float64 NN_flip
-float64 NN_policy
+float64 Policy_Flip
+float64 Policy_Action
 
 ## CONTROLLER SETPOINTS
 geometry_msgs/Vector3 x_d

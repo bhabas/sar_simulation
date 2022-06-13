@@ -39,8 +39,8 @@ void CF_DataConverter::Publish_StateData()
     StateData_msg.MS_PWM = MS_PWM;
 
     // NEURAL NETWORK DATA
-    StateData_msg.NN_flip = NN_flip;
-    StateData_msg.NN_policy = NN_policy;
+    StateData_msg.Policy_Flip = Policy_Flip;
+    StateData_msg.Policy_Action = Policy_Action;
 
 
     // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE CONTROLLER
@@ -73,8 +73,8 @@ void CF_DataConverter::Publish_FlipData()
     FlipData_msg.FM_tr = FM_tr;
 
     // NEURAL NETWORK DATA
-    FlipData_msg.NN_tr_flip = NN_tr_flip;
-    FlipData_msg.NN_tr_policy = NN_tr_policy;
+    FlipData_msg.Policy_Flip_tr = Policy_Flip_tr;
+    FlipData_msg.Policy_Action_tr = Policy_Action_tr;
 
 
     // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE CONTROLLER
@@ -166,8 +166,8 @@ void CF_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
     G1 = ctrl_msg.G1;
 
     // NEURAL NETWORK DATA
-    NN_flip = ctrl_msg.NN_flip;
-    NN_policy = ctrl_msg.NN_policy;
+    Policy_Flip = ctrl_msg.Policy_Flip;
+    Policy_Action = ctrl_msg.Policy_Action;
 
     Pose_impact_buff.push_back(Pose);
     Twist_impact_buff.push_back(Twist);
@@ -213,8 +213,8 @@ void CF_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
     FM_tr = ctrl_msg.FM_flip;
 
     // NEURAL NETWORK DATA
-    NN_tr_flip = ctrl_msg.NN_tr_flip;
-    NN_tr_policy = ctrl_msg.NN_tr_policy;
+    Policy_Flip_tr = ctrl_msg.Policy_Flip_tr;
+    Policy_Action_tr = ctrl_msg.Policy_Action_tr;
 
 }
 
@@ -558,12 +558,12 @@ void CF_DataConverter::consoleOuput()
     printf("\n");
 
     printf("NN_Outputs: \n");
-    printf("NN_Flip: %.3f \tNN_Policy: %.3f \n",NN_flip,NN_policy);
+    printf("NN_Flip: %.3f \tNN_Policy: %.3f \n",Policy_Flip,Policy_Action);
     printf("\n");
 
     printf("==== Flip Trigger Values ====\n");
-    printf("Tau_tr:     %.3f \tNN_tr_Flip:    %.3f \n",Tau_tr,NN_tr_flip);
-    printf("OFy_tr:     %.3f \tNN_tr_Policy:  %.3f \n",OFy_tr,NN_tr_policy);
+    printf("Tau_tr:     %.3f \tNN_tr_Flip:    %.3f \n",Tau_tr,Policy_Flip_tr);
+    printf("OFy_tr:     %.3f \tNN_tr_Policy:  %.3f \n",OFy_tr,Policy_Action_tr);
     printf("D_ceil_tr:  %.3f \n",D_ceil_tr);
     printf("\n");
 

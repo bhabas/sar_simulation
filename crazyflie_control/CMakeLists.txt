@@ -23,4 +23,3 @@ add_executable(controller src/stabilizer.cpp src/controller_gtc.c src/estimator.
 add_dependencies(controller ${catkin_EXPORTED_TARGETS})
 target_link_libraries(controller ${catkin_LIBRARIES})
 
-

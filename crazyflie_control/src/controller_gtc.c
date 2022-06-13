@@ -238,40 +238,27 @@ float G2 = 0.0f;        // Deprecated state value
 
 
 // ===============================
-//  NEURAL NETWORK INITIALIZATION
+//  NN/SVM POLICY INITIALIZATION
 // ===============================
 static nml_mat* X;  // STATE MATRIX TO BE INPUT INTO NN
-static nml_mat* y_output;  // STATE MATRIX TO BE INPUT INTO NN
+SVM SVM_Policy_Flip;     
+NN NN_Policy_Action;
 
-// NN INPUT SCALERS
-static Scaler Scaler_Flip;      // Scale input vector for NN
-static Scaler Scaler_Policy;
-
-// NN WEIGHTS
-static nml_mat* W_flip[4];  
-static nml_mat* W_policy[4];
-
-// NN BIASES
-static nml_mat* b_flip[4];  
-static nml_mat* b_policy[4];
-
-// NN OUTPUTS
-float NN_flip = 0.0f;           // NN output value for flip classification
-float NN_policy = 0.0f;         // NN output value for policy My
-
-// NN OUTPUTS AT FLIP TRIGGER
-float NN_tr_flip = 0.0f;        // NN value at flip trigger
-float NN_tr_policy = 0.0f;      // NN policy value at flip trigger
+float Policy_Flip = 0.0f;  
+float Policy_Flip_tr = 0.0f;    // Output from OC_SVM
+float Policy_Action_tr = 0.0f;  // Output from NN
 
 void controllerGTCInit(void)
 {
     controllerGTCReset();
     controllerGTCTest();
     X = nml_mat_new(3,1);
-    y_output = nml_mat_new(2,1);
     J = mdiag(Ixx,Iyy,Izz);
 
-    initNN_Layers(&Scaler_Flip,W_flip,b_flip,NN_Params_Flip,4);
+    // INIT NN/OC_SVM POLICY
+    NN_init(&NN_Policy_Action,NN_Params_Flip);
+    OC_SVM_init(&SVM_Policy_Flip,SVM_Params);
+
     consolePrintf("GTC Initiated\n");
 }
 
@@ -325,11 +312,20 @@ void controllerGTCReset(void)
     OFy_tr = 0.0f;
     d_ceil_tr = 0.0f;
     
-    NN_tr_flip = 0.0f;
-    NN_tr_policy = 0.0f;
-
+    // RL - PARAMETER ESTIMATION
     Tau_thr = 0.0f;
     G1 = 0.0f;
+
+
+    // SUPERVISED NN/OC_SVM COMBINATION
+    Policy_Flip = 0.0f;
+    Policy_Flip_tr = 0.0f;
+    Policy_Action_tr = 0.0f;
+
+    // RL - DEEP RL
+    //
+    // 
+
 
 }
 
@@ -639,13 +635,16 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
         
         controlOutput(state,sensors);
+        // printf("NN_Predict: %.4f\n",NN_predict(X,&NN_Policy_Action));
+        // printf("OC_SVM Predict: %.4f\n",OC_SVM_predict(&SVM_Policy_Flip,X));
+        Policy_Flip = OC_SVM_predict(&SVM_Policy_Flip,X);
         
-
+        
         if(policy_armed_flag == true){ 
                 
             switch(PolicyType)
             {
-                case 0: // RL
+                case 0: // PARAMETER ESTIMATION
                 {
                     if(Tau <= Tau_thr && onceFlag == false){
                         onceFlag = true;
@@ -675,13 +674,11 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                     break;
                 }
 
-                case 1: // NN
+                case 1: // SUPERVISED-NN/OC_SVM
                 {   
-                    NN_Forward_Flip(X,y_output,&Scaler_Flip,W_flip,b_flip);
-                    NN_flip = y_output->data[0][0];
-                    NN_policy = y_output->data[1][0];
+                    Policy_Flip = OC_SVM_predict(&SVM_Policy_Flip,X);
 
-                    if(NN_flip >= 0.75 && onceFlag == false)
+                    if(Policy_Flip >= 0.0 && onceFlag == false)
                     {   
                         onceFlag = true;
                         flip_flag = true;
@@ -697,12 +694,12 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                         OFy_tr = OFy;
                         d_ceil_tr = d_ceil;
 
-                        NN_tr_flip = y_output->data[0][0];
-                        NN_tr_policy = y_output->data[1][0];
+                        Policy_Flip_tr = Policy_Flip;
+                        Policy_Action_tr = NN_predict(X,&NN_Policy_Action);
 
 
                         M_d.x = 0.0f;
-                        M_d.y = NN_tr_policy*1e-3f;
+                        M_d.y = Policy_Action_tr*1e-3f;
                         M_d.z = 0.0f;
 
                         F_thrust_flip = 0.0;
@@ -713,9 +710,14 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
                     break;
                 }
+                case 2: // Deep RL
+                {
+
+                    break;
+                }
 
             }
-
+        
             
             if(flip_flag == true)
             {
@@ -726,6 +728,8 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                 F_thrust = 0.0f;
             }
         }
+
+
         if(moment_flag == true)
         {
             F_thrust = 0.0f;
@@ -977,7 +981,7 @@ void compressStates(){
     StatesZ_GTC.MS_PWM12 = compressXY(M1_pwm*0.5e-3f,M2_pwm*0.5e-3f);
     StatesZ_GTC.MS_PWM34 = compressXY(M3_pwm*0.5e-3f,M4_pwm*0.5e-3f);
 
-    StatesZ_GTC.NN_FP = compressXY(NN_flip,NN_policy);
+    StatesZ_GTC.NN_FP = compressXY(Policy_Flip,0.0); // Flip value (OC_SVM) and Flip action (NN)
 
 }
 
@@ -1018,6 +1022,7 @@ void compressFlipStates(){
    FlipStatesZ_GTC.Tau = (int16_t)(Tau_tr * 1000.0f); 
    FlipStatesZ_GTC.d_ceil = (int16_t)(d_ceil_tr * 1000.0f);
 
-   FlipStatesZ_GTC.NN_FP = compressXY(NN_tr_flip,NN_tr_policy);
+   FlipStatesZ_GTC.NN_FP = compressXY(Policy_Flip_tr,Policy_Action_tr); // Flip value (OC_SVM) and Flip action (NN)
+
 
 }

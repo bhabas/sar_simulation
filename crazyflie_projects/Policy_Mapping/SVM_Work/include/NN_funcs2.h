@@ -73,14 +73,14 @@ void OC_SVM_init(SVM* SVM,char str[])
     nml_mat_free(tmp);
 }
 
-float OC_SVM_predict(SVM* SVM, nml_mat* X_input)
+float OC_SVM_predict(SVM* SVM, nml_mat* X)
 {
     // SCALE INPUT DATA
-    nml_mat* X = nml_mat_cp(X_input);
+    nml_mat* X_input = nml_mat_cp(X);
     for(int i=0;i<3;i++)
     {
         // Scale data to zero-mean and unit variance
-        X->data[i][0] = (X_input->data[i][0] - SVM->scaler_mean->data[i][0]) / SVM->scaler_std->data[i][0];
+        X_input->data[i][0] = (X->data[i][0] - SVM->scaler_mean->data[i][0]) / SVM->scaler_std->data[i][0];
     }
 
     // PASS INPUT DATA THROUGH SVM
@@ -93,14 +93,14 @@ float OC_SVM_predict(SVM* SVM, nml_mat* X_input)
     // Kernel: K(x,x') = exp(-gamma*||x-x'||**2)
     for (int i = 0; i < SVM->support_vecs->num_cols; i++)
     {
-        tmp_mat = nml_mat_sub(X,nml_mat_col_get(SVM->support_vecs, i));
+        tmp_mat = nml_mat_sub(X_input,nml_mat_col_get(SVM->support_vecs, i));
         tmp_val = nml_mat_sum_elem(nml_mat_funcElement(tmp_mat,Pow2));
         SVM_pred += SVM->dual_coeffs->data[i][0]*exp(-SVM->gamma*tmp_val);
     }
     SVM_pred += SVM->intercept;
     
     // FREE MATRIX POINTERS
-    nml_mat_free(X);
+    nml_mat_free(X_input);
     nml_mat_free(tmp_mat);
 
     return SVM_pred;
