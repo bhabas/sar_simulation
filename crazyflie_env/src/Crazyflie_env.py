@@ -101,8 +101,8 @@ class CrazyflieEnv:
         self.MotorThrusts = [0,0,0,0] # Controller Motor Thrusts [M1,M2,M3,M4][g]
         self.FM = [0,0,0,0]     # Controller Force/Moments (F_thrust,Mx,My,Mz) [N,N*mm]
         
-        self.NN_flip = 0.0
-        self.NN_policy = 0.0
+        self.Policy_Flip = 0.0
+        self.Policy_Action = 0.0
         
         self.x_d = [0,0,0]
         self.v_d = [0,0,0]
@@ -261,8 +261,8 @@ class CrazyflieEnv:
                                 StateData_msg.MS_PWM[2],
                                 StateData_msg.MS_PWM[3]],0)
 
-        self.NN_flip = np.round(StateData_msg.NN_flip,3)
-        self.NN_policy = np.round(StateData_msg.NN_policy,3)
+        self.Policy_Flip = np.round(StateData_msg.Policy_Flip,3)
+        self.Policy_Action = np.round(StateData_msg.Policy_Action,3)
 
         self.x_d = np.round([StateData_msg.x_d.x,
                              StateData_msg.x_d.y,

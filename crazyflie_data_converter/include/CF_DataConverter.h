@@ -233,8 +233,8 @@ class CF_DataConverter
         double Tau_thr = 0.0;
         double G1 = 0.0;
 
-        double NN_flip = 0.0;
-        double NN_policy = 0.0;
+        double Policy_Flip = 0.0;
+        double Policy_Action = 0.0;
 
         geometry_msgs::Vector3 x_d;
         geometry_msgs::Vector3 v_d;
@@ -435,8 +435,8 @@ void CF_DataConverter::log2_Callback(const crazyflie_msgs::GenericLogData::Const
     // NEURAL NETWORK VALUES
     float NN_FP[2];
     decompressXY(log2_msg->values[6],NN_FP);
-    NN_flip = NN_FP[0];
-    NN_policy = NN_FP[1];
+    Policy_Flip = NN_FP[0];
+    Policy_Action = NN_FP[1];
 
     // OTHER MISC INFO
     flip_flag = log2_msg->values[7];
@@ -617,7 +617,7 @@ void CF_DataConverter::create_CSV()
 {
     fprintf(fPtr,"k_ep,k_run,");
     fprintf(fPtr,"t,");
-    fprintf(fPtr,"NN_flip,NN_policy,");
+    fprintf(fPtr,"Policy_Flip,Policy_Action,");
     fprintf(fPtr,"mu,sigma,policy,");
 
     // INTERNAL STATE ESTIMATES (CF)
@@ -655,7 +655,7 @@ void CF_DataConverter::append_CSV_states()
 {
     fprintf(fPtr,"%u,%u,",k_ep,k_run);              // k_ep,k_run
     fprintf(fPtr,"%.3f,",(Time-Time_start).toSec());             // t
-    fprintf(fPtr,"%.3f,%.3f,",NN_flip,NN_policy);   // NN_flip,NN_policy
+    fprintf(fPtr,"%.3f,%.3f,",Policy_Flip,Policy_Action);   // Policy_Flip,Policy_Action
     fprintf(fPtr,"--,--,--,");                      // mu,sigma,policy
 
     // // INTERNAL STATE ESTIMATES (CF)

@@ -39,8 +39,8 @@ void CF_DataConverter::Publish_StateData()
     StateData_msg.MS_PWM = MS_PWM;
 
     // NEURAL NETWORK DATA
-    StateData_msg.NN_flip = NN_flip;
-    StateData_msg.NN_policy = NN_policy;
+    StateData_msg.Policy_Flip = Policy_Flip;
+    StateData_msg.Policy_Action = Policy_Action;
 
 
     // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE CONTROLLER
@@ -166,8 +166,8 @@ void CF_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
     G1 = ctrl_msg.G1;
 
     // NEURAL NETWORK DATA
-    NN_flip = ctrl_msg.NN_flip;
-    NN_policy = ctrl_msg.NN_policy;
+    Policy_Flip = ctrl_msg.Policy_Flip;
+    Policy_Action = ctrl_msg.Policy_Action;
 
     Pose_impact_buff.push_back(Pose);
     Twist_impact_buff.push_back(Twist);
@@ -558,7 +558,7 @@ void CF_DataConverter::consoleOuput()
     printf("\n");
 
     printf("NN_Outputs: \n");
-    printf("NN_Flip: %.3f \tNN_Policy: %.3f \n",NN_flip,NN_policy);
+    printf("NN_Flip: %.3f \tNN_Policy: %.3f \n",Policy_Flip,Policy_Action);
     printf("\n");
 
     printf("==== Flip Trigger Values ====\n");

@@ -16,8 +16,8 @@ uint32[4] MS_PWM
 float64 Tau_thr
 float64 G1
 
-float64 NN_flip
-float64 NN_policy
+float64 Policy_Flip
+float64 Policy_Action
 
 geometry_msgs/Vector3 x_d
 geometry_msgs/Vector3 v_d

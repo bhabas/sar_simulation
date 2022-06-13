@@ -437,8 +437,8 @@ void Controller::publishCtrlData()
     CtrlData_msg.G1 = G1;
 
     // NEURAL NETWORK DATA
-    CtrlData_msg.NN_flip = Policy_Flip;
-    // CtrlData_msg.NN_policy = Policy_Flip;
+    CtrlData_msg.Policy_Flip = Policy_Flip;
+    CtrlData_msg.Policy_Action = NAN;
 
     // CONTROL ACTIONS
     CtrlData_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
