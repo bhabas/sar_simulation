@@ -361,32 +361,26 @@ void GTC_Command(setpoint_t *setpoint)
             break;
 
 
-        case 3: // Acceleration
-            a_d.x = setpoint->cmd_val1;
-            a_d.y = setpoint->cmd_val2;
-            a_d.z = setpoint->cmd_val3;
-            break;
+        // case 3: // Acceleration
+        //     a_d.x = setpoint->cmd_val1;
+        //     a_d.y = setpoint->cmd_val2;
+        //     a_d.z = setpoint->cmd_val3;
+        //     break;
 
-        case 4: // Tumble-Detection
-            tumble_detection = setpoint->cmd_flag;
-            break;
+        
 
         case 5: // Hard Set All Motorspeeds to Zero
             motorstop_flag = true;
             break;
         
-        case 6: // Reset ROS Parameters
-            
-            break;
+        // case 7: // Execute Moment-Based Flip
 
-        case 7: // Execute Moment-Based Flip
+        //     M_d.x = setpoint->cmd_val1*1e-3;
+        //     M_d.y = setpoint->cmd_val2*1e-3;
+        //     M_d.z = setpoint->cmd_val3*1e-3;
 
-            M_d.x = setpoint->cmd_val1*1e-3;
-            M_d.y = setpoint->cmd_val2*1e-3;
-            M_d.z = setpoint->cmd_val3*1e-3;
-
-            moment_flag = (bool)setpoint->cmd_flag;
-            break;
+        //     moment_flag = (bool)setpoint->cmd_flag;
+        //     break;
 
         case 8: // Arm Policy Maneuver
             Tau_thr = setpoint->cmd_val1;
@@ -395,71 +389,8 @@ void GTC_Command(setpoint_t *setpoint)
 
             policy_armed_flag = setpoint->cmd_flag;
             break;
-            
-        case 9: // Velocity Trajectory
-            traj_type = (axis_direction)setpoint->cmd_flag;
 
-            switch(traj_type){
-
-                case x:
-
-                    s_0_t.x = setpoint->cmd_val1;               // Starting position [m]
-                    v_t.x = setpoint->cmd_val2;                 // Desired velocity [m/s]
-                    a_t.x = setpoint->cmd_val3;                 // Acceleration [m/s^2]
-
-                    t_traj.x = 0.0f; // Reset timer
-                    execute_vel_traj = true;
-                    break;
-
-                case y:
-
-                    s_0_t.y = setpoint->cmd_val1;
-                    v_t.y = setpoint->cmd_val2;
-                    a_t.y = setpoint->cmd_val3;
-
-                    t_traj.y = 0.0f;
-                    execute_vel_traj = true;
-                    break;
-
-                case z:
-
-                    s_0_t.z = setpoint->cmd_val1;
-                    v_t.z = setpoint->cmd_val2;
-                    a_t.z = setpoint->cmd_val3;
-
-                    t_traj.z = 0.0f;
-                    execute_vel_traj = true;
-                    break;
-                    
-            }
-
-            break;
-
-        case 10: // Custom Thrust Values
-
-            customThrust_flag = true;
-            thrust_override[0] = setpoint->cmd_val1;
-            thrust_override[1] = setpoint->cmd_val2;
-            thrust_override[2] = setpoint->cmd_val3;
-            thrust_override[3] = setpoint->cmd_flag;
-
-            break;
-
-        case 11: // Activate Sticky Pads
-
-            break;
-
-        case 12: // Custom PWM Values
-
-            customPWM_flag = true;
-            PWM_override[0] = setpoint->cmd_val1;
-            PWM_override[1] = setpoint->cmd_val2;
-            PWM_override[2] = setpoint->cmd_val3;
-            PWM_override[3] = setpoint->cmd_flag;
-
-            break;
-
-        case 13: // Point-to-Point Trajectory
+        case 10: // Point-to-Point Trajectory
 
             traj_type = (axis_direction)setpoint->cmd_flag;
             execute_P2P_traj = true;
@@ -503,6 +434,73 @@ void GTC_Command(setpoint_t *setpoint)
             }
 
             break;
+
+        case 11: // Velocity Trajectory
+            traj_type = (axis_direction)setpoint->cmd_flag;
+
+            switch(traj_type){
+
+                case x:
+
+                    s_0_t.x = setpoint->cmd_val1;               // Starting position [m]
+                    v_t.x = setpoint->cmd_val2;                 // Desired velocity [m/s]
+                    a_t.x = setpoint->cmd_val3;                 // Acceleration [m/s^2]
+
+                    t_traj.x = 0.0f; // Reset timer
+                    execute_vel_traj = true;
+                    break;
+
+                case y:
+
+                    s_0_t.y = setpoint->cmd_val1;
+                    v_t.y = setpoint->cmd_val2;
+                    a_t.y = setpoint->cmd_val3;
+
+                    t_traj.y = 0.0f;
+                    execute_vel_traj = true;
+                    break;
+
+                case z:
+
+                    s_0_t.z = setpoint->cmd_val1;
+                    v_t.z = setpoint->cmd_val2;
+                    a_t.z = setpoint->cmd_val3;
+
+                    t_traj.z = 0.0f;
+                    execute_vel_traj = true;
+                    break;
+                    
+            }
+
+            break;
+
+        case 20: // Tumble-Detection
+            tumble_detection = setpoint->cmd_flag;
+            break;
+            
+        
+
+        // case 10: // Custom Thrust Values
+
+        //     customThrust_flag = true;
+        //     thrust_override[0] = setpoint->cmd_val1;
+        //     thrust_override[1] = setpoint->cmd_val2;
+        //     thrust_override[2] = setpoint->cmd_val3;
+        //     thrust_override[3] = setpoint->cmd_flag;
+
+        //     break;
+
+        // case 12: // Custom PWM Values
+
+        //     customPWM_flag = true;
+        //     PWM_override[0] = setpoint->cmd_val1;
+        //     PWM_override[1] = setpoint->cmd_val2;
+        //     PWM_override[2] = setpoint->cmd_val3;
+        //     PWM_override[3] = setpoint->cmd_flag;
+
+        //     break;
+
+        
 
     }
     
@@ -645,7 +643,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
             {
                 case 0: // RL
                 {
-                    if(Tau <= Tau_thr && onceFlag == false){
+                    if(Tau <= Tau_thr && onceFlag == false && state->velocity.z > 0.5){
                         onceFlag = true;
                         flip_flag = true;  
 

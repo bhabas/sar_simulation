@@ -231,9 +231,25 @@ void CF_DataConverter::CtrlDebug_Callback(const crazyflie_msgs::CtrlDebug &ctrl_
     Camera_Sensor_Active = ctrl_msg.Camera_Sensor_Active;
 }
 
-void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
+bool CF_DataConverter::CMD_CF_DC_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res)
 {
-    if(msg->cmd_type == 0)
+    // PASS COMMAND VALUES TO CONTROLLER AND PASS LOCAL ACTIONS
+    res.srv_Success = CF_DataConverter::Send_Cmd2Ctrl(req);
+    
+    return res.srv_Success;
+}
+
+bool CF_DataConverter::CMD_Dashboard_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res)
+{
+    // PASS COMMAND VALUES TO CONTROLLER AND PASS LOCAL ACTIONS
+    res.srv_Success = CF_DataConverter::Send_Cmd2Ctrl(req);
+    
+    return res.srv_Success;
+}
+
+bool CF_DataConverter::Send_Cmd2Ctrl(crazyflie_msgs::RLCmd::Request &req)
+{
+    if(req.cmd_type == 0)
     {
         // RESET FLIP TIME
         OnceFlag_flip = false;
@@ -286,23 +302,21 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
         CF_DataConverter::adjustSimSpeed(SIM_SPEED);
         SLOWDOWN_TYPE = 0;
 
-        
-                
     }
 
-    if(msg->cmd_type == 6)
+    if(req.cmd_type == 21)
     {
         CF_DataConverter::LoadParams();
     }
 
-    if(msg->cmd_type == 11)
+    if(req.cmd_type == 92)
     {
-        if(msg->cmd_flag == 0)
+        if(req.cmd_flag == 0)
         {
             Sticky_Flag = false;
         }
 
-        if(msg->cmd_flag == 1)
+        if(req.cmd_flag == 1)
         {
             Sticky_Flag = true;
         }
@@ -311,12 +325,12 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
 
     }
 
-    if(msg->cmd_type == 101)
-    {
+    // SEND COMMAND VALUES TO CONTROLLER
+    crazyflie_msgs::RLCmd srv;
+    srv.request = req;
+    CMD_Client.call(srv);
 
-    }
-
-
+    return srv.response.srv_Success; // Return if service request successful (true/false)
 }
 
 void CF_DataConverter::RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &msg)

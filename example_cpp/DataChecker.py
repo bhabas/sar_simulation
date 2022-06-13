@@ -38,6 +38,7 @@ class DataCheck:
         self.Iu = np.zeros((Pixel_Height,Pixel_Width))
         self.Iv = np.zeros_like(self.Iu)
         self.It = np.zeros_like(self.Iu)
+        self.prev_time = 0
 
         # self.Iu = np.zeros((5,5))
         # self.Iv = np.zeros_like(self.Iu)
@@ -46,103 +47,25 @@ class DataCheck:
         
         np.set_printoptions(threshold = sys.maxsize) #allows it to print the full string without truncation
 
-        msg = rospy.wait_for_message("/MyPub_cpp",CustomMessage,timeout = None)
-        self.DataCheck_cb(msg)
-
-    def QuickCheck(self): #For custom images created above
-
-        # self.Image = np.frombuffer(Data.Camera_data, np.uint8).reshape(5,5)
-        # self.Convy = np.array(Data.Yconv).reshape(5,5)
-        # self.Convx = np.array(Data.Xconv).reshape(5,5)
-
-        w = 3.6e-6
-        f = 3.3e-4
-        O_up = Pixel_Width/2    # Pixel X_offset [pixels]
-        O_vp = Pixel_Height/2   # Pixel Y_offset [pixels]
-
-        ## DEFINE PIXEL GRID
-        up_grid = np.arange(0,Pixel_Width,1)
-        vp_grid = np.arange(0,Pixel_Height,1)
-        Up_grid,Vp_grid = np.meshgrid(up_grid,vp_grid)
-
-        ## DEFINE IMAGE SENSOR COORDS
-        U_grid = (Up_grid - O_up)*self.w + self.w/2 #GENERALIZE THE VGRID AND UGRID IN C++
-        V_grid = (Vp_grid - O_vp)*self.w + self.w/2
-        # print(f"U_grid:\n{U_grid}")
-        # print(f"V_grid:\n{V_grid}")
+        rospy.Subscriber("/MyPup_cpp",CustomMessage,self.Convolution_XY, queue_size = 1)
+        # msg = rospy.wait_for_message("/MyPub_cpp",CustomMessage,timeout = None)
+        # self.DataCheck_cb(msg)
 
 
-        for i in range(1,Pixel_Height - 1):
-            for j in range(1,Pixel_Width - 1):
-                self.Iu[i,j] = np.sum(self.img[i-1:i+2,j-1:j+2] * self.Ku)/self.w
-                self.Iv[i,j] = np.sum(self.img[i-1:i+2,j-1:j+2] * self.Kv)/self.w
-                self.It[i,j] = self.img[i,j] - self.prev_img[i,j] #assuming dt = 1
-                # print(np.sum(self.img[i-1:i+2,j-1:j+2] * self.Ku)/w)
+    def Convolution_XY(self,Cam_msg):
 
-        # It = self.img - self.prev_img #assuming dt is 1
-        # print(f"\nIu:\n{Iu}")
-
-        G = U_grid*self.Iu + V_grid*self.Iv # Radial Gradient
-        print(f"\nIG:\n{(G)}")
-
-        ## SOLVE LEAST SQUARES PROBLEM
-        X = np.array([
-                [f*np.sum(self.Iu**2), f*np.sum(self.Iu*self.Iv), np.sum(G*self.Iu)],
-                [f*np.sum(self.Iu*self.Iv), f*np.sum(self.Iv**2), np.sum(G*self.Iv)],
-                [f*np.sum(G*self.Iu),  f*np.sum(G*self.Iv),  np.sum(G**2)]
-            ])
-
-        y = np.array([
-                [-np.sum(self.Iu*self.It)],
-                [-np.sum(self.Iv*self.It)],
-                [-np.sum(G*self.It)]
-            ])
-
-        print(f"\nLHS:\n{X}")
-        print(f"\nRHS:\n{y}")
-
-        ## SOLVE b VIA PSEUDO-INVERSE
-        b = np.linalg.pinv(X)@y
-        print(f"\nX:\n{b}")
-        b = b.flatten()
-
-        self.OFy_est = b[0]
-        self.OFx_est = b[1]
-        self.TTC_est = 1/(b[2])
-
-        print(f"\nOFy estimate: {self.OFy_est}\n")
-        print(f"\nOFx estimate: {self.OFx_est}\n")
-        print(f"\nTTC estimate: {self.TTC_est}\n")
-
-        # ====== DEBUGGING ======
-
-        # print(self.Image)
-        # print("Iu:")
-        # print(self.Iu)
-        # print("\nIv:")
-        # print(self.Iv)
-        # print("Ix:")
-        # print(self.Convx)
-        # print("\nIy:")
-        # print(self.Convy)
-
-
-    def Convolution_XY(self):
+        self.t = np.round(Cam_msg.header.stamp.to_sec(),4)
+        self.Cur_img = np.frombuffer(Cam_msg.data, np.uint8,).reshape(Pixel_Width,Pixel_Height)
+        self.Prev_img = np.frombuffer(Cam_msg.data, np.uint8,).reshape(Pixel_Width,Pixel_Height)
 
         # NP CONVOLUTION WE HAVE BEEN USING
-        for i in range(1,Pixel_Width - 1):
+        for i in range(1,Pixel_Height - 1):
             for j in range(1,Pixel_Width - 1):
-                self.Iu[i,j] = np.sum(self.Cur_Img[i-1:i+2,j-1:j+2] * self.Ku)/self.w
-                self.Iv[i,j] = np.sum(self.Cur_Img[i-1:i+2,j-1:j+2] * self.Kv)/self.w
-                self.It[i,j] = self.Cur_Img[i,j] - self.Prev_Img[i,j]
+                self.Iu[i,j] = np.sum(self.Cur_img[i-1:i+2,j-1:j+2] * self.Ku)/self.w
+                self.Iv[i,j] = np.sum(self.Cur_img[i-1:i+2,j-1:j+2] * self.Kv)/self.w
+                self.It[i,j] = (self.Cur_img[i,j] - self.Prev_img[i,j])/(self.t - self.prev_time)
 
-        # TESTING OPEN CV FUNCTIONS
-
-        # img = cv.cvtColor(self.Image, cv.COLOR_BGR2GRAY)
-        # self.grad_x = cv.Sobel(self.Cur_Img,cv.CV_16S,1,0,ksize = 3,delta = 0)
-        # self.grad_y = cv.Sobel(self.Cur_Img,cv.CV_16S,0,1,ksize = 3,delta = 0)
-
-        # self.Comparator()
+        self.prev_time = self.t
         self.Math()
 
     def Math(self): #Checking the final matrices to make sure they match
@@ -176,20 +99,16 @@ class DataCheck:
                 [-np.sum(G*self.It)]
         ])
 
+        print(f"\nLHS:\n{X}")
+        print(f"\nRHS:\n{y}\n")        
+
         ## SOLVE b VIA PSEUDO-INVERSE
         b = np.linalg.pinv(X)@y
         print(b)
 
+        self.TTC_est = 1/(b[2])
 
-    def DataCheck_cb(self,Data): #Parsing the vectors sent over ROS
-
-        self.Cur_Img = np.frombuffer(Data.Camera_data, np.uint8).reshape(160,160)#create as 120rows x 160col
-        self.Prev_Img = np.frombuffer(Data.Prev_img, np.uint8).reshape(160,160)
-        # self.Convy = np.array(Data.Yconv).reshape(160,160) #np.frombuffer(Data.Yconv,np.int8).reshape(120,160)
-        # self.Convx = np.array(Data.Xconv).reshape(160,160)#np.frombuffer(Data.Xconv,np.int8).reshape(120,160)
-        
-        self.Convolution_XY()
-
+        print(f"\nTTC estimate: {self.TTC_est}\n")
 
 
     def Comparator(self):
@@ -230,4 +149,4 @@ class DataCheck:
 if __name__=='__main__':
 
     DataCheck()
-    # rospy.spin()
+    rospy.spin()

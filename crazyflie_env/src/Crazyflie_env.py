@@ -12,10 +12,12 @@ import getpass
 
 
 from std_srvs.srv import Empty
-from crazyflie_msgs.msg import RLData,RLCmd,RLConvg
+from crazyflie_msgs.msg import RLData,RLConvg
 from crazyflie_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
 from crazyflie_msgs.srv import loggingCMD,loggingCMDRequest
 from crazyflie_msgs.srv import domainRand,domainRandRequest
+from crazyflie_msgs.srv import RLCmd,RLCmdRequest
+
 
 
 from rosgraph_msgs.msg import Clock
@@ -200,7 +202,6 @@ class CrazyflieEnv:
 
         ## RL TOPICS 
         self.RL_Data_Publisher = rospy.Publisher('/RL/data',RLData,queue_size=10)
-        self.RL_CMD_Publisher = rospy.Publisher('/RL/cmd',RLCmd,queue_size=10)
         self.RL_Convg_Publisher = rospy.Publisher('/RL/convg_data',RLConvg,queue_size=10)
 
         print("[COMPLETED] Environment done")
@@ -488,7 +489,7 @@ class CrazyflieEnv:
         self.pitch_sum = 0.0    # Reset recorded pitch amount [deg]
         self.pitch_max = 0.0    # Reset max pitch angle [deg]
 
-    def step(self,action,cmd_vals=[0,0,0],cmd_flag=1):
+    def SendCmd(self,action,cmd_vals=[0,0,0],cmd_flag=1):
         """Sends commands to Crazyflie controller via rostopic
 
         Args:
@@ -497,38 +498,40 @@ class CrazyflieEnv:
             cmd_flag (float, optional): Used as either a on/off flag for command or an extra float value if needed. Defaults to 1.
         """        
 
-        cmd_msg = RLCmd()   # Create message object
         cmd_dict = {
-            'home':0,       # Resets controller values to defaults
-            'pos':1,        # Set desired position values (Also on/off for position control)
-            'vel':2,        # Set desired vel values (Also on/off for vel control)
-            'acc':3,        # --- Unused ---
-            'tumble':4,     # Turns tumble detection on/off (Uneeded?)
-            'stop':5,       # Cutoff motor values
-            'params':6,     # Reloads ROS params and updates params in controller
-            'moment':7,     # Execute the desired moment in terms of [Mx,My,Mz] in [N*mm]
-            'policy':8,     # Activate policy triggering and policy values [tau_thr,My,G2]
-            'sticky':11,    # Turns on/off sticky legs via cmd_flag
+            'Ctrl_Reset':0,
+            'Pos':1,
+            'Vel':2,
+            'Stop':5,
+            'Policy':8,
 
-            'thrusts':10,   # Controls individual motor thrusts [M1,M2,M3,M4]
-            'M_PWM':12,     # Control individual motor pwm values (bypasses thrust values)
+            'P2P_traj':10,
+            'Vel_traj':11,
+            'Impact_traj':12,
 
-            'vel_traj':9,   # Execute constant velocity trajectory cmd_val=[s_0,v_0,a_0] | cmd_flag=[x:0,y:1,z:2]
-            'P2P_traj':13   # Execute point-to-point trajectory cmd_vals=[s_0,s_f,a_0] | cmd_flag=[x:0,y:1,z:2]
+            'Tumble':20,
+            'Load_Params':21,
+            'Cap_Logging':22,
+
+            'GZ_traj':90,
+            'GZ_reset':91,
+            'StickyPads':92,
         }
-        
 
-        ## INSERT VALUES TO ROS MSG
-        cmd_msg.cmd_type = cmd_dict[action]
-        cmd_msg.cmd_vals.x = cmd_vals[0]
-        cmd_msg.cmd_vals.y = cmd_vals[1]
-        cmd_msg.cmd_vals.z = cmd_vals[2]
-        cmd_msg.cmd_flag = cmd_flag
+
+        ## CREATE SERVICE REQUEST MSG
+        srv = RLCmdRequest() 
         
-        ## PUBLISH MESSAGE
-        self.RL_CMD_Publisher.publish(cmd_msg) 
-        time.sleep(0.02) # Give time for controller to process message
-        
+        srv.cmd_type = cmd_dict[action]
+        srv.cmd_vals.x = cmd_vals[0]
+        srv.cmd_vals.y = cmd_vals[1]
+        srv.cmd_vals.z = cmd_vals[2]
+        srv.cmd_flag = cmd_flag
+
+        ## SEND LOGGING REQUEST VIA SERVICE
+        rospy.wait_for_service('/CF_DC/Cmd_CF_DC',timeout=1.0)
+        RL_Cmd_service = rospy.ServiceProxy('/CF_DC/Cmd_CF_DC', RLCmd)
+        RL_Cmd_service(srv)
 
     def VelTraj_StartPos(self,x_impact,V_d,accel_d=None,d_vz=0.6):
         """Returns the required start position (x_0,z_0) to intercept the ceiling 
@@ -710,6 +713,15 @@ class CrazyflieEnv:
             "roslaunch crazyflie_launch controller.launch",
             close_fds=True, preexec_fn=os.setsid, shell=True)
 
+    def sleep(self,time_s):
+        """Sleep in terms of Gazebo sim seconds not real time seconds
+
+        Args:
+            time_s (_type_): _description_
+        """        
+        t_start = self.t
+        while self.t - t_start <= time_s:
+            pass # Do Nothing
 
     def Vel_Launch(self,pos_0,vel_d,quat_0=[0,0,0,1]): 
         """Launch crazyflie from the specified position/orientation with an imparted velocity.
@@ -722,8 +734,9 @@ class CrazyflieEnv:
         """        
 
         ## SET DESIRED VEL IN CONTROLLER
-        self.step('pos',cmd_flag=0)
-        self.step('vel',cmd_vals=vel_d,cmd_flag=1)
+        self.SendCmd('Pos',cmd_flag=0)
+        self.sleep(0.05)
+        self.SendCmd('Vel',cmd_vals=vel_d,cmd_flag=1)
 
         ## CREATE SERVICE MESSAGE
         state_msg = ModelState()
@@ -762,7 +775,7 @@ class CrazyflieEnv:
             z_0 (float, optional): Starting height of crazyflie. Defaults to 0.379.
         """        
         ## DISABLE STICKY LEGS (ALSO BREAKS CURRENT CONNECTION JOINTS)
-        self.step('sticky',cmd_flag=0)
+        self.SendCmd('StickyPads',cmd_flag=0)
         time.sleep(0.05)
         
         ## RESET POSITION AND VELOCITY
@@ -791,7 +804,7 @@ class CrazyflieEnv:
 
         ## RESET HOME/TUMBLE DETECTION AND STICKY
         # self.step('tumble',cmd_flag=1) # Tumble Detection On
-        self.step('home')
+        self.SendCmd('Ctrl_Reset')
 
     def updateInertia(self):
 
@@ -855,7 +868,7 @@ class CrazyflieEnv:
 
 
 if __name__ == "__main__":
-    env = CrazyflieEnv()
+    env = CrazyflieEnv(gazeboTimeout=False)
     rospy.on_shutdown(env.close_proc)
 
     rospy.spin()
