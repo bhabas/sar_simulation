@@ -477,7 +477,7 @@ class Policy_Trainer():
         
 
         Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
-            np.linspace(0.15, 0.35, 45),
+            np.linspace(0.15, 0.35, 60),
             np.linspace(-15, 1, 45),
             np.linspace(0.0, 1.0, 45)
         )
@@ -523,26 +523,26 @@ class Policy_Trainer():
             )
         )
 
-        # fig.add_trace(
-        #     go.Volume(
-        #         ## ISO SURFACE
-        #         x=X_grid[:,1].flatten(),
-        #         y=X_grid[:,0].flatten(),
-        #         z=X_grid[:,2].flatten(),
-        #         value=y_pred_grid.flatten(),
+        fig.add_trace(
+            go.Volume(
+                ## ISO SURFACE
+                x=X_grid[:,1].flatten(),
+                y=X_grid[:,0].flatten(),
+                z=X_grid[:,2].flatten(),
+                value=y_pred_grid.flatten(),
                 
-        #         surface_count=1,
-        #         opacity=0.3,
-        #         isomin=-0.05,
-        #         isomax=0.1,
-        #         # colorscale='Viridis',  
-        #         cmin=0,
-        #         cmax=1,     
-        #         caps=dict(x_show=False, y_show=False),
-        #         colorbar=dict(title='Title',) , 
-        #         hoverinfo='skip'
-        #     )
-        # )
+                surface_count=1,
+                opacity=0.3,
+                isomin=-0.05,
+                isomax=0.1,
+                # colorscale='Viridis',  
+                cmin=0,
+                cmax=1,     
+                caps=dict(x_show=False, y_show=False),
+                colorbar=dict(title='Title',) , 
+                hoverinfo='skip'
+            )
+        )
 
         
 
@@ -701,7 +701,7 @@ if __name__ == "__main__":
     learning_rate = 0.01
 
     NN_model = NN_Model()
-    SVM_model = OneClassSVM(nu=0.1,gamma=10)
+    SVM_model = OneClassSVM(nu=0.1,gamma=1.7)
 
     Policy = Policy_Trainer(NN_model,SVM_model,model_initials,learning_rate=learning_rate)
 
@@ -736,19 +736,19 @@ if __name__ == "__main__":
 
     Policy.createScaler(X)
 
-    # Policy.train_NN_Model(X_train,y_train,X_test,y_test,epochs=1000)
+    Policy.train_NN_Model(X_train,y_train,X_test,y_test,epochs=1000)
     # Policy.save_NN_Params(NN_Param_Path)
     Policy.load_NN_Params(NN_Param_Path)
     print(Policy.NN_Predict(np.array([[0.29,-0.673,0.952]])))
 
     Policy.train_OC_SVM(X)
-    # Policy.save_SVM_Params(SVM_Param_Path)
-    Policy.load_SVM_Params(SVM_Param_Path)
+    Policy.save_SVM_Params(SVM_Param_Path)
+    # Policy.load_SVM_Params(SVM_Param_Path)
 
     print(Policy.OC_SVM_Predict(np.array([[0.29,-0.673,0.952]])))
 
-    # Policy.plotClassification(df_raw)
-    # Policy.plotPolicy(df_raw,PlotRegion=True)
+    Policy.plotClassification(df_raw)
+    Policy.plotPolicy(df_raw,PlotRegion=True)
     # Policy.plotPolicy(df_raw,PlotRegion=False)
 
     # Policy.evalModel(X,y)
