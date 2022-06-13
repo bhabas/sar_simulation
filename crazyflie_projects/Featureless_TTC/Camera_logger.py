@@ -40,7 +40,7 @@ class CameraParser:
         self.h_ceiling = rospy.get_param("/CEILING_HEIGHT")
 
         self.Username = getpass.getuser()
-        self.Path = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Featureless_TTC/logs' #store the logs in a folder for organization
+        self.Path = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Featureless_TTC/local_logs' #store the logs in a folder for organization
         self.Filename = input("\ninput the name of the log file:\n") #wait for user input then create CSV with the given Filename
         self.Path = self.Path + '/' + self.Filename + '.csv'
         self.Create_csv()

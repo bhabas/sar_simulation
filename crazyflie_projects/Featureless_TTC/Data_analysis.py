@@ -4,6 +4,7 @@ import getpass
 import os
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import cv2 as cv
 
 # import cv2 as cv
 
@@ -16,6 +17,8 @@ f = 0.66e-3/2          # Focal Length [m]
 O_up = WIDTH_PIXELS/2    # Pixel X_offset [pixels]
 O_vp = HEIGHT_PIXELS/2   # Pixel Y_offset [pixels]
 
+FILTER_FLAG = False
+
 
 class DataParser:
 
@@ -24,7 +27,7 @@ class DataParser:
         ## FILEPATH PROPERTIES
         filename = input('\nInput the name of the file to be parsed:\n')
         self.Username = getpass.getuser()
-        self.Path = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Featureless_TTC/logs/'
+        self.Path = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Featureless_TTC/local_logs/'
         filepath = self.Path + filename
 
         ## CHECK IF FILE EXISTS
@@ -57,7 +60,7 @@ class DataParser:
 
         if pre_compiled_Flag == 'y':
 
-            self.TTC_est = self.Data_df['Tau_est'].to_numpy()
+            self.Tau_est = self.Data_df['Tau_est'].to_numpy()
             self.OFx_est = self.Data_df['OFx_est'].to_numpy()
             self.OFy_est = self.Data_df['OFy_est'].to_numpy()
 
@@ -108,20 +111,31 @@ class DataParser:
         Iu = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
         Iv = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
 
+        Iu_s = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+        Iv_s = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+
         ## INITIALIZE PREVIOUS IMAGE
         Prev_img = np.reshape(self.Camera_array[0],(HEIGHT_PIXELS,WIDTH_PIXELS)) 
+        Prev_img_smooth = np.reshape(self.Camera_array[0],(HEIGHT_PIXELS,WIDTH_PIXELS))
+        Prev_img_smooth = cv.GaussianBlur(Prev_img_smooth,(5,5),0)
+
 
         ## PRE-INITIALIZE ARRAYS FOR LOGGING ESTIMATES
         self.Tau_est = np.zeros_like(self.Time)
         self.OFx_est = np.zeros_like(self.Time)
         self.OFy_est = np.zeros_like(self.Time)
 
+        self.Tau_est_s = np.zeros_like(self.Time)
+        self.OFx_est_s = np.zeros_like(self.Time)
+        self.OFy_est_s = np.zeros_like(self.Time)
+
         for n in range(1,self.Camera_array.shape[0]): # Start at second data point to grab the previous image
             
             Cur_img = np.reshape(self.Camera_array[n],(HEIGHT_PIXELS,WIDTH_PIXELS)) #reshape the array back into the image
+            Cur_img_smooth = cv.GaussianBlur(Cur_img,(5,5),0)
 
 
-            ## FIND IMAGE GRADIENTS
+            ## FIND IMAGE GRADIENTS FOR UNFILT IMG
             for i in range(1,HEIGHT_PIXELS - 1): 
                 for j in range(1,WIDTH_PIXELS - 1):
                     Iu[i,j] = np.sum(Cur_img[i-1:i+2,j-1:j+2] * Kx)/w
@@ -155,18 +169,67 @@ class DataParser:
 
             Prev_img = Cur_img
 
+            ################ SMOOTHED IMAGE ################
+
+
+            if FILTER_FLAG:
+
+                ## FIND IMAGE GRADIENTS FOR UNFILT IMG
+                for i in range(1,HEIGHT_PIXELS - 1): 
+                    for j in range(1,WIDTH_PIXELS - 1):
+                        Iu_s[i,j] = np.sum(Cur_img_smooth[i-1:i+2,j-1:j+2] * Kx)/w
+                        Iv_s[i,j] = np.sum(Cur_img_smooth[i-1:i+2,j-1:j+2] * Ky)/w
+
+                ## CALCULATE TIME GRADIENT AND RADIAL GRADIENT
+                It_s = (Cur_img_smooth - Prev_img_smooth)/(self.Time[n] - self.Time[n-1]) # Time gradient
+                G_s = U_grid*Iu_s + V_grid*Iv_s # Radial Gradient
+
+                ## SOLVE LEAST SQUARES PROBLEM
+                X_s = np.array([
+                    [f*np.sum(Iu_s**2), f*np.sum(Iu_s*Iv_s), np.sum(G_s*Iu_s)],
+                    [f*np.sum(Iu_s*Iv_s), f*np.sum(Iv_s**2), np.sum(G_s*Iv_s)],
+                    [f*np.sum(G_s*Iu_s),  f*np.sum(G_s*Iv_s),  np.sum(G_s**2)]
+                ])
+
+                y_s = np.array([
+                    [-np.sum(Iu_s*It_s)],
+                    [-np.sum(Iv_s*It_s)],
+                    [-np.sum(G_s*It_s)]
+                ])
+
+                ## SOLVE b VIA PSEUDO-INVERSE
+                b_s = np.linalg.pinv(X_s)@y_s
+                b_s = b_s.flatten()
+
+
+                self.OFy_est_s[n] = b_s[0]
+                self.OFx_est_s[n] = b_s[1]
+                self.Tau_est_s[n] = 1/(b_s[2])
+
+                Prev_img_smooth = Cur_img_smooth
+
             print(f"Current Image: {n}/{self.Camera_array.shape[0]}")
                 
     def Plotter(self): #plot results
 
+        ## NORMALIZE X AXIS
+        Time = np.zeros_like(self.Time)
+        # self.Time[0] = 0
+        for n in range(2,self.Time.size):
+            dt = self.Time[n] - self.Time[n-1]
+            Time[n] = Time[n-1] + dt
 
-        fig = plt.figure()
+
+        plt.rc('xtick', labelsize=16)    # fontsize of the tick labels
+        plt.rc('ytick', labelsize=16)    # fontsize of the tick labels
+
+        fig = plt.figure(1)
         
 
         ## PLOT TAU VALUES
         ax1 = fig.add_subplot(311)
-        ax1.plot(self.Time,self.Tau,color='tab:blue',label='Tau')
-        ax1.plot(self.Time,self.Tau_est,color='r',linestyle='--',label='Tau_est')
+        ax1.plot(Time,self.Tau,color='tab:blue',label='Tau')
+        ax1.plot(Time,self.Tau_est,color='r',linestyle='--',label='Tau_est')
         ax1.grid()
         ax1.legend(loc='upper right')
         ax1.set_ylabel("Tau [s]")
@@ -174,8 +237,8 @@ class DataParser:
 
         ## PLOT OFx VALUES
         ax2 = fig.add_subplot(312,sharex = ax1)
-        ax2.plot(self.Time,self.OFx,color='tab:blue',label='OFx')
-        ax2.plot(self.Time,self.OFx_est,color='g',linestyle='--',label='OFx_est')
+        ax2.plot(Time,self.OFx,color='tab:blue',label='OFx')
+        ax2.plot(Time,self.OFx_est,color='g',linestyle='--',label='OFx_est')
         ax2.grid()
         ax2.legend(loc='upper right')
         ax2.set_ylabel("OFx [rad/s]")
@@ -184,38 +247,80 @@ class DataParser:
 
         ## PLOT OFy VALUES
         ax3 = fig.add_subplot(313,sharex = ax1)
-        ax3.plot(self.Time,self.OFy,color='tab:blue',label='OFy')
-        ax3.plot(self.Time,self.OFy_est,color='tab:orange',linestyle='--',label='OFy_est')
+        ax3.plot(Time,self.OFy,color='tab:blue',label='OFy')
+        ax3.plot(Time,self.OFy_est,color='tab:orange',linestyle='--',label='OFy_est')
         ax3.grid()
         ax3.legend(loc='upper right')
         ax3.set_ylabel("OFy [rad/s]")
         ax3.set_xlabel("Time [s]")
         ax3.set_ylim(-10,10)
 
+        
+        fig2 = plt.figure(2)
+
+        ## PLOT TAU VALUES
+        
+        # TITLE
+        fig2.suptitle("Tau Estimates (Percent of Data Used = 10%)", fontsize=26)
+
+        ax1 = fig2.add_subplot(211)
+        ax1.plot(Time[1:],self.Tau[1:],color = 'tab:blue',label = 'Tau',linewidth=2)
+        ax1.plot(Time[1:],self.Tau_est[1:],color = 'r',linestyle = '--',label = 'Tau Estimate', dashes=(5, 4))
+
+        if FILTER_FLAG:
+            ax1.plot(Time[1:],self.Tau_est_s[1:],color = 'g',linestyle = '--',label = 'Tau Estimate Filtered', dashes=(5, 3))
+
+        ax1.hlines(y = 0, xmin = Time[1:] - 5, xmax = Time[-1] + 5, linestyle = "-", linewidth = 1, color = 'k')
+        
+        ax1.grid()
+        ax1.legend(loc='best',fontsize=16)
+        ax1.set_ylabel("Tau [s]",fontsize=16)
+        ax1.set_xlabel("Time [s]",fontsize=16)
+        ax1.set_xlim([0,Time[-1] + 0.1])
+
+        ## PLOT ERROR
+        ax2 = fig2.add_subplot(212,sharex = ax1)
+        
+
+        if FILTER_FLAG:
+            ax2.plot(Time[1:],(self.Tau_est_s[1:] - self.Tau[1:]),color = 'g',label = "Error in Filtered Tau")
+            ax2.plot(Time[1:],(self.Tau_est[1:] - self.Tau[1:]),color = 'r',label = "Error in Unfiltered Tau")
+        else:
+            ax2.plot(Time[1:],(self.Tau_est[1:] - self.Tau[1:]),color = 'r',label = "Error in Tau")
+
+        ax2.hlines(y = 0, xmin = Time[1:] - 5, xmax = Time[-1] + 5, linestyle = "-", linewidth = 1, color = 'k')
+        ax2.hlines(y =  0.05, xmin = Time[-1] - 1, xmax = Time[-1],linestyle = "--", linewidth = 2, color = 'k') #plot desired error bounds
+        ax2.hlines(y = -0.05, xmin = Time[-1] - 1, xmax = Time[-1],linestyle = "--", linewidth = 2, color = 'k')
+        ax2.vlines(x = (Time[-1] - 1), ymin = -0.05, ymax = 0.05, linestyle = "--", linewidth = 2, color = "k")
+        ax2.vlines(x = (Time[-1]), ymin = -0.05, ymax = 0.05, linestyle = "--", linewidth = 2, color = "k")
+        ax2.grid()
+        ax2.legend(loc='best',fontsize=16)
+        ax2.set_ylabel("Error",fontsize=16)
+        ax2.set_xlabel("Time [s]",fontsize=16)
+        ax2.set_xlim([0,Time[-1] + 0.1])
+        ax2.set_ylim([-0.45,2])
+
         plt.show()
-
-
-
         
         # fig, ax = plt.subplots(3,1, sharex = True)
         # ax[0].set_title("TTC Comparison")
-        # # ax[0].plot(self.Time,self.TTC_est1,'r', label = 'TTC_est1')
-        # ax[0].plot(self.Time,self.Tau,'b',label = 'TTC')
-        # ax[0].plot(self.Time,self.TTC_est2,'g',label = 'TTC_est2')
+        # # ax[0].plot(Time,self.TTC_est1,'r', label = 'TTC_est1')
+        # ax[0].plot(Time,self.Tau,'b',label = 'TTC')
+        # ax[0].plot(Time,self.TTC_est2,'g',label = 'TTC_est2')
         # ax[0].set_ylabel("TTC (seconds)")
         # ax[0].set_ylim(-1,6)
         # ax[0].grid()
         # ax[0].legend(loc='upper right')
 
-        # ax[1].plot(self.Time,self.Z_pos,'g', label = 'Z position')
+        # ax[1].plot(Time,self.Z_pos,'g', label = 'Z position')
         # ax[1].set_ylim(-1,2.5)
         # ax[1].axhline(2.10,color='k',linestyle='dashed',label='Ceiling Height')
         # ax[1].set_ylabel("Position (m)")
         # ax[1].grid()
         # ax[1].legend(loc='lower right')
 
-        # ax[2].plot(self.Time,self.Z_vel,color = 'black', label = 'Z velocity')
-        # ax[2].plot(self.Time,self.X_vel,color = 'r', label = 'X velocity')
+        # ax[2].plot(Time,self.Z_vel,color = 'black', label = 'Z velocity')
+        # ax[2].plot(Time,self.X_vel,color = 'r', label = 'X velocity')
         # ax[2].set_ylim(-1,4.0)
         # ax[2].set_ylabel("Velocity (m)")
         # ax[2].set_xlabel("Time") 
@@ -226,14 +331,14 @@ class DataParser:
         # #plt.figure(2)
         # fig2 , ax2 = plt.subplots(2,1, sharex = True)
         # ax2[0].set_title('Optical Flow Comparison')
-        # ax2[0].plot(self.Time,self.OFy, color = 'black', label = 'OFy')
-        # ax2[0].plot(self.Time,self.OFy_est, color = 'r',label = 'OFy_est')
+        # ax2[0].plot(Time,self.OFy, color = 'black', label = 'OFy')
+        # ax2[0].plot(Time,self.OFy_est, color = 'r',label = 'OFy_est')
         # ax2[0].set_ylim(-1,10.0)
         # ax2[0].grid()
         # ax2[0].legend()
 
-        # ax2[1].plot(self.Time,self.OFx, color = 'black',label = 'OFx')
-        # ax2[1].plot(self.Time,self.OFx_est, color = 'b',label = 'OFx_est')
+        # ax2[1].plot(Time,self.OFx, color = 'black',label = 'OFx')
+        # ax2[1].plot(Time,self.OFx_est, color = 'b',label = 'OFx_est')
         # ax2[1].set_xlabel("Time")
         # ax2[1].set_ylabel('Optical Flow')
         # ax2[1].set_ylim(-1,10.0)
