@@ -244,6 +244,9 @@ static nml_mat* X;  // STATE MATRIX TO BE INPUT INTO NN
 SVM SVM_Policy_Flip;     
 NN NN_Policy_Action;
 
+float Policy_Flip = 0.0f;  
+float Policy_Flip_tr = 0.0f;    // Output from OC_SVM
+float Policy_Action_tr = 0.0f;  // Output from NN
 
 void controllerGTCInit(void)
 {
@@ -315,8 +318,9 @@ void controllerGTCReset(void)
 
 
     // SUPERVISED NN/OC_SVM COMBINATION
-    //
-
+    Policy_Flip = 0.0f;
+    Policy_Flip_tr = 0.0f;
+    Policy_Action_tr = 0.0f;
 
     // RL - DEEP RL
     //
@@ -625,25 +629,22 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         
         d_ceil = sensors->d_ceil;
 
-        // X->data[0][0] = Tau;
-        // X->data[1][0] = OFy;
-        // X->data[2][0] = d_ceil; // d_ceiling [m]
-
-        X->data[0][0] = 0.29;
-        X->data[1][0] = -0.673;
-        X->data[2][0] = 0.952; 
+        X->data[0][0] = Tau;
+        X->data[1][0] = OFy;
+        X->data[2][0] = d_ceil; // d_ceiling [m]
 
         
         controlOutput(state,sensors);
-        printf("NN_Predict: %.4f\n",NN_predict(X,&NN_Policy_Action));
-        printf("OC_SVM Predict: %.4f\n",OC_SVM_predict(&SVM_Policy_Flip,X));
+        // printf("NN_Predict: %.4f\n",NN_predict(X,&NN_Policy_Action));
+        // printf("OC_SVM Predict: %.4f\n",OC_SVM_predict(&SVM_Policy_Flip,X));
+        Policy_Flip = OC_SVM_predict(&SVM_Policy_Flip,X);
         
-        /*
+        
         if(policy_armed_flag == true){ 
                 
             switch(PolicyType)
             {
-                case 0: // RL
+                case 0: // PARAMETER ESTIMATION
                 {
                     if(Tau <= Tau_thr && onceFlag == false){
                         onceFlag = true;
@@ -673,13 +674,11 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                     break;
                 }
 
-                case 1: // NN
+                case 1: // SUPERVISED-NN/OC_SVM
                 {   
-                    NN_Forward_Flip(X,y_output,&Scaler_Flip,W_flip,b_flip);
-                    NN_flip = y_output->data[0][0];
-                    NN_policy = y_output->data[1][0];
+                    Policy_Flip = OC_SVM_predict(&SVM_Policy_Flip,X);
 
-                    if(NN_flip >= 0.75 && onceFlag == false)
+                    if(Policy_Flip >= 0.0 && onceFlag == false)
                     {   
                         onceFlag = true;
                         flip_flag = true;
@@ -695,12 +694,12 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                         OFy_tr = OFy;
                         d_ceil_tr = d_ceil;
 
-                        NN_tr_flip = y_output->data[0][0];
-                        NN_tr_policy = y_output->data[1][0];
+                        Policy_Flip_tr = Policy_Flip;
+                        Policy_Action_tr = NN_predict(X,&NN_Policy_Action);
 
 
                         M_d.x = 0.0f;
-                        M_d.y = NN_tr_policy*1e-3f;
+                        M_d.y = Policy_Action_tr*1e-3f;
                         M_d.z = 0.0f;
 
                         F_thrust_flip = 0.0;
@@ -708,6 +707,11 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                         M_y_flip = M_d.y*1e3f;
                         M_z_flip = M_d.z*1e3f;
                     }
+
+                    break;
+                }
+                case 2: // Deep RL
+                {
 
                     break;
                 }
@@ -724,7 +728,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                 F_thrust = 0.0f;
             }
         }
-        */
+
 
         if(moment_flag == true)
         {
@@ -977,7 +981,7 @@ void compressStates(){
     StatesZ_GTC.MS_PWM12 = compressXY(M1_pwm*0.5e-3f,M2_pwm*0.5e-3f);
     StatesZ_GTC.MS_PWM34 = compressXY(M3_pwm*0.5e-3f,M4_pwm*0.5e-3f);
 
-    StatesZ_GTC.NN_FP = compressXY(0.0,0.0); // Flip value (OC_SVM) and Flip action (NN)
+    StatesZ_GTC.NN_FP = compressXY(Policy_Flip,0.0); // Flip value (OC_SVM) and Flip action (NN)
 
 }
 
@@ -1018,7 +1022,7 @@ void compressFlipStates(){
    FlipStatesZ_GTC.Tau = (int16_t)(Tau_tr * 1000.0f); 
    FlipStatesZ_GTC.d_ceil = (int16_t)(d_ceil_tr * 1000.0f);
 
-   FlipStatesZ_GTC.NN_FP = compressXY(0.0f,0.0f); // Flip value (OC_SVM) and Flip action (NN)
+   FlipStatesZ_GTC.NN_FP = compressXY(Policy_Flip_tr,Policy_Action_tr); // Flip value (OC_SVM) and Flip action (NN)
 
 
 }

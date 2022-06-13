@@ -212,17 +212,19 @@ extern float M_x_flip;      // [N*m]
 extern float M_y_flip;      // [N*m]
 extern float M_z_flip;      // [N*m]
 
-// ==========================
-//  RL POLICY INITIALIZATION
-// ==========================
+// ==============================================
+//  PARAMETER OPTIMIZATION POLICY INITIALIZATION
+// ==============================================
 extern float Tau_thr;   // Tau threshold
 extern float G1;        // Body moment value
-extern float G2;        // Deprecated state value
+extern float G2;        // Deprecated gain value
 
-// ===============================
-//  NEURAL NETWORK INITIALIZATION
-// ===============================
-
+// =====================================
+//  SUPERVISED NN/OC_SVM INITIALIZATION
+// =====================================
+extern float Policy_Flip;    
+extern float Policy_Flip_tr;
+extern float Policy_Action_tr;
 
 extern uint8_t PolicyType;
 
