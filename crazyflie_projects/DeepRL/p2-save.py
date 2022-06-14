@@ -1,8 +1,10 @@
 import gym
 from stable_baselines3 import A2C,PPO
+
+from Env_Example import CustomEnv
 import os
 
-models_dir = "crazyflie_projects/DeepRL/models/PPO2"
+models_dir = "crazyflie_projects/DeepRL/models/PPO4"
 log_dir = "crazyflie_projects/DeepRL/logs"
 
 if not os.path.exists(models_dir):
@@ -11,7 +13,8 @@ if not os.path.exists(models_dir):
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
 
-env = gym.make("CartPole-v1")
+# env = gym.make("CartPole-v1")
+env = CustomEnv()
 env.reset()
 
 
@@ -20,7 +23,7 @@ model = PPO("MlpPolicy",env,verbose=1,tensorboard_log=log_dir)
 
 TIMESTEPS = 10_000
 for i in range(1,30):
-    model.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False, tb_log_name="PPO2")
+    model.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False, tb_log_name="PPO4")
     model.save(f"{models_dir}/{TIMESTEPS*i}")
 
 

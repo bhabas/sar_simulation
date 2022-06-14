@@ -1,5 +1,6 @@
 import gym
 from gym import logger,spaces
+from stable_baselines3.common.env_checker import check_env
 import math
 
 import numpy as np
@@ -145,12 +146,12 @@ class CustomEnv(gym.Env):
 if __name__ == '__main__':
 
     env = CustomEnv()
-    env.reset()
+    # env.reset()
 
-    done = False
-    while not done:
-        env.render()
-        obs,reward,done,info = env.step(env.action_space.sample())
+    # done = False
+    # while not done:
+    #     env.render()
+    #     obs,reward,done,info = env.step(env.action_space.sample())
 
 
-    env.close()
+    # env.close()
