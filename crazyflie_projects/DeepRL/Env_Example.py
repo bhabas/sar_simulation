@@ -1,5 +1,6 @@
 import gym
-from gym import spaces
+from gym import logger,spaces
+import math
 
 import numpy as np
 
@@ -41,9 +42,48 @@ class CustomEnv(gym.Env):
 
         self.steps_beyond_done = None
 
-    # def step(self, action):
-    #     ...
-    #     return observation, reward, done, info
+    def step(self, action):
+        err_msg = f"{action!r} ({type(action)}) invalid"
+        assert self.action_space.contains(action), err_msg
+        assert self.state is not None, "Call reset before using step method."
+        x,x_dot = self.state
+
+        if action == 1:
+            force = self.force_mag
+        else:
+            force = -self.force_mag
+
+        x_acc = force/self.masscart
+        x = x + self.tau*x_dot
+        x_dot = x_dot + self.tau*x_acc
+
+        self.state = (x, x_dot)
+
+
+        done = bool(
+            x < -self.x_threshold
+            or x > self.x_threshold
+        )
+
+        if not done:
+            reward = np.clip(1/np.abs(x-1),0,10)
+        elif self.steps_beyond_done is None:
+            self.steps_beyond_done = 0
+            reward = np.clip(1/np.abs(x-1),0,10)
+        else:
+            if self.steps_beyond_done == 0:
+                logger.warn(
+                    "You are calling 'step()' even though this "
+                    "environment has already returned done = True. You "
+                    "should always call 'reset()' once you receive 'done = "
+                    "True' -- any further steps are undefined behavior."
+                )
+            self.steps_beyond_done += 1
+            reward = 0.0
+
+
+        return np.array(self.state,dtype=np.float32), reward, done, {}
+
     def reset(self):
         self.state = self.np_random.uniform(low=-0.05,high=0.05,size=(2,))
         return np.array(self.state,dtype=np.float32)
@@ -61,19 +101,32 @@ class CustomEnv(gym.Env):
 
         world_width = self.x_threshold * 2
         scale = self.screen_width / world_width
-        cart_width = 50.0
-        cart_height = 30.0
+        cartwidth = 50.0
+        cartheight = 30.0
 
-        # if self.state is None:
-        #     return None
+        if self.state is None:
+            return None
 
         x = self.state
         
-        self.surf = pygame.Surface((self.screen_width,self.screen_height))
-        self.surf.fill((255,255,255))
+        self.surf = pygame.Surface((self.screen_width, self.screen_height))
+        self.surf.fill((255, 255, 255))
 
-        self.surf = pygame.transform.flip(self.surf,False,True)
-        self.screen.blit(self.surf,(0,0))
+        l, r, t, b = -cartwidth / 2, cartwidth / 2, cartheight / 2, -cartheight / 2
+        axleoffset = cartheight / 4.0
+        cartx = x[0] * scale + self.screen_width / 2.0  # MIDDLE OF CART
+        carty = 100  # TOP OF CART
+        cart_coords = [(l, b), (l, t), (r, t), (r, b)]
+        cart_coords = [(c[0] + cartx, c[1] + carty) for c in cart_coords]
+        gfxdraw.aapolygon(self.surf, cart_coords, (0, 0, 0))
+        gfxdraw.filled_polygon(self.surf, cart_coords, (0, 0, 0))
+
+       
+        gfxdraw.hline(self.surf, 0, self.screen_width, carty, (0, 0, 0))
+
+        self.surf = pygame.transform.flip(self.surf, False, True)
+        self.screen.blit(self.surf, (0, 0))
+
 
         pygame.event.pump()
         self.clock.tick(50)
@@ -92,16 +145,12 @@ class CustomEnv(gym.Env):
 if __name__ == '__main__':
 
     env = CustomEnv()
-    env.action_space.sample()
-    env.render()
-    # env.reset()
+    env.reset()
 
-    # episodes = 10
-    # for ep in range(episodes):
-    #     obs = env.reset()
-    #     done = False
-    #     while not done:
-    #         env.render()
-    #         obs, reward,done,info, = env.step(env.action_space.sample())
+    done = False
+    while not done:
+        env.render()
+        obs,reward,done,info = env.step(env.action_space.sample())
+
 
     env.close()
