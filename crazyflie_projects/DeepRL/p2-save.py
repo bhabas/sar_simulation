@@ -2,7 +2,6 @@ import gym
 from stable_baselines3 import A2C,PPO
 import os
 
-
 models_dir = "crazyflie_projects/DeepRL/models/PPO2"
 log_dir = "crazyflie_projects/DeepRL/logs"
 
@@ -12,7 +11,7 @@ if not os.path.exists(models_dir):
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
 
-env = gym.make("LunarLander-v2")
+env = gym.make("CartPole-v1")
 env.reset()
 
 
