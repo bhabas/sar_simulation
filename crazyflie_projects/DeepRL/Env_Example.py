@@ -17,10 +17,12 @@ class CustomEnv():
         self.masscart = 1.0
         self.force_mag = 10.0
         self.tau = 0.02  # seconds between state updates
+        self.x_d = 1.0
         self.t_step = 0
 
         # Angle at which to fail the episode
         self.x_threshold = 2.4
+        self.t_threshold = 500
 
         # Angle limit set to 2 * theta_threshold_radians so failing observation
         # is still within bounds.
@@ -54,9 +56,10 @@ class CustomEnv():
         if action == 1:
             force = self.force_mag
         else:
-            force = -self.force_mag
+            force = 0
 
-        x_acc = force/self.masscart
+        C = 1.0
+        x_acc = (force-C*x_dot)/self.masscart
         x = x + self.tau*x_dot
         x_dot = x_dot + self.tau*x_acc
 
@@ -66,14 +69,14 @@ class CustomEnv():
         done = bool(
             x < -self.x_threshold
             or x > self.x_threshold
-            or self.t_step >= 250
+            or self.t_step >= self.t_threshold
         )
 
         if not done:
-            reward = np.clip(1/np.abs(x-1),0,100)
+            reward = np.clip(1/np.abs(self.x_d-x),-10,10)
         elif self.steps_beyond_done is None:
             self.steps_beyond_done = 0
-            reward = np.clip(1/np.abs(x-1),0,100)
+            reward = np.clip(1/np.abs(self.x_d-x),-10,10)
         else:
             if self.steps_beyond_done == 0:
                 logger.warn(
@@ -127,7 +130,6 @@ class CustomEnv():
         self.surf.fill(white)
 
         l, r, t, b = -cartwidth / 2, cartwidth / 2, cartheight / 2, -cartheight / 2
-        axleoffset = cartheight / 4.0
         cartx = x[0] * scale + self.screen_width / 2.0  # MIDDLE OF CART
         carty = 100  # TOP OF CART
         cart_coords = [(l, b), (l, t), (r, t), (r, b)]
@@ -135,8 +137,12 @@ class CustomEnv():
         gfxdraw.aapolygon(self.surf, cart_coords, black)
         gfxdraw.filled_polygon(self.surf, cart_coords, black)
 
-       
+
+
+        
         gfxdraw.hline(self.surf, 0, self.screen_width, carty,black)
+        gfxdraw.vline(self.surf, int(self.x_d*scale + self.screen_width / 2.0), 0, self.screen_height,black)
+
 
         self.surf = pygame.transform.flip(self.surf, False, True)
         self.screen.blit(self.surf, (0, 0))
