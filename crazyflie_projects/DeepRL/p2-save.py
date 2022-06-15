@@ -4,7 +4,7 @@ from stable_baselines3 import A2C,PPO
 from Env_Example import CustomEnv
 import os
 
-models_dir = "crazyflie_projects/DeepRL/models/PPO4"
+models_dir = "crazyflie_projects/DeepRL/models/PPO6"
 log_dir = "crazyflie_projects/DeepRL/logs"
 
 if not os.path.exists(models_dir):
@@ -23,7 +23,7 @@ model = PPO("MlpPolicy",env,verbose=1,tensorboard_log=log_dir)
 
 TIMESTEPS = 10_000
 for i in range(1,30):
-    model.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False, tb_log_name="PPO4")
+    model.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False, tb_log_name="PPO6")
     model.save(f"{models_dir}/{TIMESTEPS*i}")
 
 

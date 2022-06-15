@@ -6,7 +6,7 @@ import math
 import numpy as np
 
 
-class CustomEnv(gym.Env):
+class CustomEnv():
     """Custom Environment that follows gym interface"""
     metadata = {'render.modes': ['human']}
 
@@ -17,6 +17,7 @@ class CustomEnv(gym.Env):
         self.masscart = 1.0
         self.force_mag = 10.0
         self.tau = 0.02  # seconds between state updates
+        self.t_step = 0.0
 
         # Angle at which to fail the episode
         self.x_threshold = 2.4
@@ -47,6 +48,7 @@ class CustomEnv(gym.Env):
         err_msg = f"{action!r} ({type(action)}) invalid"
         assert self.action_space.contains(action), err_msg
         assert self.state is not None, "Call reset before using step method."
+        self.t_step += 1
         x,x_dot = self.state
 
         if action == 1:
@@ -64,13 +66,14 @@ class CustomEnv(gym.Env):
         done = bool(
             x < -self.x_threshold
             or x > self.x_threshold
+            or self.t_step >= 250
         )
 
         if not done:
-            reward = np.clip(1/np.abs(x-1),0,10)
+            reward = np.clip(1/np.abs(x-1),0,100)
         elif self.steps_beyond_done is None:
             self.steps_beyond_done = 0
-            reward = np.clip(1/np.abs(x-1),0,10)
+            reward = np.clip(1/np.abs(x-1),0,100)
         else:
             if self.steps_beyond_done == 0:
                 logger.warn(
@@ -86,7 +89,10 @@ class CustomEnv(gym.Env):
         return np.array(self.state,dtype=np.float32), reward, done, {}
 
     def reset(self):
-        self.state = self.np_random.uniform(low=-0.05,high=0.05,size=(2,))
+        self.t_step = 0.0
+        self.state = np.random.uniform(low=-0.1,high=0.1,size=(2,))
+        self.state = [-1,0]
+
         return np.array(self.state,dtype=np.float32)
 
     def render(self):

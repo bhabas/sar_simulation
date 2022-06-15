@@ -6,8 +6,8 @@ from Env_Example import CustomEnv
 env = CustomEnv()
 env.reset()
 
-models_dir = "crazyflie_projects/DeepRL/models/PPO4"
-model_path = f"{models_dir}/50000.zip"
+models_dir = "crazyflie_projects/DeepRL/models/PPO6"
+model_path = f"{models_dir}/160000.zip"
 
 model = PPO.load(model_path,env=env)
 
