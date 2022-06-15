@@ -17,7 +17,7 @@ class CustomEnv():
         self.masscart = 1.0
         self.force_mag = 10.0
         self.tau = 0.02  # seconds between state updates
-        self.t_step = 0.0
+        self.t_step = 0
 
         # Angle at which to fail the episode
         self.x_threshold = 2.4
@@ -89,7 +89,7 @@ class CustomEnv():
         return np.array(self.state,dtype=np.float32), reward, done, {}
 
     def reset(self):
-        self.t_step = 0.0
+        self.t_step = 0
         self.state = np.random.uniform(low=-0.1,high=0.1,size=(2,))
         self.state = [-1,0]
 
@@ -99,12 +99,19 @@ class CustomEnv():
         import pygame
         from pygame import gfxdraw
 
+        white = (255,255,255)
+        black = (0,0,0)
+
         if self.screen is None:
             pygame.init()
             self.screen = pygame.display.set_mode((self.screen_width,self.screen_height))
         
         if self.clock is None:
             self.clock = pygame.time.Clock()
+
+        
+        my_font = pygame.font.SysFont(None, 30)
+        text_surface = my_font.render(f'Time Step: {self.t_step:03d}', True, black)
 
         world_width = self.x_threshold * 2
         scale = self.screen_width / world_width
@@ -117,7 +124,7 @@ class CustomEnv():
         x = self.state
         
         self.surf = pygame.Surface((self.screen_width, self.screen_height))
-        self.surf.fill((255, 255, 255))
+        self.surf.fill(white)
 
         l, r, t, b = -cartwidth / 2, cartwidth / 2, cartheight / 2, -cartheight / 2
         axleoffset = cartheight / 4.0
@@ -125,14 +132,15 @@ class CustomEnv():
         carty = 100  # TOP OF CART
         cart_coords = [(l, b), (l, t), (r, t), (r, b)]
         cart_coords = [(c[0] + cartx, c[1] + carty) for c in cart_coords]
-        gfxdraw.aapolygon(self.surf, cart_coords, (0, 0, 0))
-        gfxdraw.filled_polygon(self.surf, cart_coords, (0, 0, 0))
+        gfxdraw.aapolygon(self.surf, cart_coords, black)
+        gfxdraw.filled_polygon(self.surf, cart_coords, black)
 
        
-        gfxdraw.hline(self.surf, 0, self.screen_width, carty, (0, 0, 0))
+        gfxdraw.hline(self.surf, 0, self.screen_width, carty,black)
 
         self.surf = pygame.transform.flip(self.surf, False, True)
         self.screen.blit(self.surf, (0, 0))
+        self.screen.blit(text_surface, (5,5))
 
 
         pygame.event.pump()
@@ -152,12 +160,12 @@ class CustomEnv():
 if __name__ == '__main__':
 
     env = CustomEnv()
-    # env.reset()
+    env.reset()
 
-    # done = False
-    # while not done:
-    #     env.render()
-    #     obs,reward,done,info = env.step(env.action_space.sample())
+    done = False
+    while not done:
+        env.render()
+        obs,reward,done,info = env.step(env.action_space.sample())
 
 
-    # env.close()
+    env.close()
