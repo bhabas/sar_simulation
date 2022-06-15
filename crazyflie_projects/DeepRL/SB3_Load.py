@@ -1,18 +1,18 @@
-import gym
 from stable_baselines3 import PPO
 from Env_Example import CustomEnv
 
-# env = gym.make("CartPole-v1")
+
+## SELECT MODEL FROM DIRECTORY
+models_dir = "crazyflie_projects/DeepRL/models/PPO-14_34"
+model_path = f"{models_dir}/190_000.zip"
+
+## INITIATE ENVIRONMENT AND TRAINED MODEL
 env = CustomEnv()
 env.reset()
-
-models_dir = "crazyflie_projects/DeepRL/models/PPO-11:48"
-model_path = f"{models_dir}/260000.zip"
-
 model = PPO.load(model_path,env=env)
 
+## RENDER TRAINED MODEL FOR N EPISODES
 episodes = 10
-
 for ep in range(episodes):
     obs = env.reset()
     done = False
