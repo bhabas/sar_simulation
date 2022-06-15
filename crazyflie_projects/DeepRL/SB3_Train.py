@@ -3,6 +3,8 @@ from datetime import datetime
 from stable_baselines3 import A2C,PPO
 
 from Env_Example import CustomEnv
+from Tau_Coast_Env import Tau_Coast_Env
+
 
 ## COLLECT CURRENT TIME
 now = datetime.now()
@@ -20,7 +22,7 @@ if not os.path.exists(log_dir):
 
 
 ## INITIATE SB3 ALGORITHM AND ENVIRONMENT
-env = CustomEnv()
+env = Tau_Coast_Env()
 env.reset()
 model = PPO("MlpPolicy",env,verbose=1,tensorboard_log=log_dir) 
 
@@ -28,7 +30,7 @@ model = PPO("MlpPolicy",env,verbose=1,tensorboard_log=log_dir)
 TIMESTEPS = 10_000
 for i in range(1,30):
     model.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False, tb_log_name=f"PPO-{current_time}")
-    model.save(f"{models_dir}/{TIMESTEPS*i:_}")
+    model.save(f"{models_dir}/{TIMESTEPS*i/1000}.zip")
 
 
 ## RENDER TRAINED MODEL FOR N EPISODES

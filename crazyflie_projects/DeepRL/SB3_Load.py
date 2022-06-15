@@ -1,13 +1,13 @@
 from stable_baselines3 import PPO
 from Env_Example import CustomEnv
-
+from Tau_Coast_Env import Tau_Coast_Env
 
 ## SELECT MODEL FROM DIRECTORY
-models_dir = "crazyflie_projects/DeepRL/models/PPO-14_34"
-model_path = f"{models_dir}/190_000.zip"
+models_dir = "crazyflie_projects/DeepRL/models/PPO-15_43"
+model_path = f"{models_dir}/140.zip"
 
 ## INITIATE ENVIRONMENT AND TRAINED MODEL
-env = CustomEnv()
+env = Tau_Coast_Env()
 env.reset()
 model = PPO.load(model_path,env=env)
 
