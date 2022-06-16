@@ -67,25 +67,13 @@ class Tau_Coast_Env():
         done = bool(
             x > self.x_threshold
             or self.t_step >= self.t_threshold
+            or x_dot <= 0.05
         )
 
         if not done:
-            reward = np.clip(1/np.abs(self.x_d-x+1e-3),0,10)
-            
-        elif self.steps_beyond_done is None:
-            self.steps_beyond_done = 0
-            reward = np.clip(1/np.abs(self.x_d-x+1e-3),0,10)
-
+            reward = 0
         else:
-            if self.steps_beyond_done == 0:
-                logger.warn(
-                    "You are calling 'step()' even though this "
-                    "environment has already returned done = True. You "
-                    "should always call 'reset()' once you receive 'done = "
-                    "True' -- any further steps are undefined behavior."
-                )
-            self.steps_beyond_done += 1
-            reward = 0.0
+            reward = 2/np.abs(self.x_d-x+1e-3)
 
 
         return np.array(self.state,dtype=np.float32), reward, done, {}
