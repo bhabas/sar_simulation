@@ -3,16 +3,16 @@ from Env_Example import CustomEnv
 from Tau_Coast_Env import Tau_Coast_Env
 
 ## SELECT MODEL FROM DIRECTORY
-models_dir = "crazyflie_projects/DeepRL/models/PPO-15_43"
-model_path = f"{models_dir}/140.zip"
+models_dir = "crazyflie_projects/DeepRL/models/PPO-22_17"
+model_path = f"{models_dir}/520.zip"
 
-## INITIATE ENVIRONMENT AND TRAINED MODEL
+## INITIATE ENVIRONMENT AND TRAINED MODEL5
 env = Tau_Coast_Env()
 env.reset()
 model = PPO.load(model_path,env=env)
 
 ## RENDER TRAINED MODEL FOR N EPISODES
-episodes = 10
+episodes = 25
 for ep in range(episodes):
     obs = env.reset()
     done = False

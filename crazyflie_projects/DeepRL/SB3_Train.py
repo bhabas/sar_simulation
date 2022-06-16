@@ -28,9 +28,9 @@ model = PPO("MlpPolicy",env,verbose=1,tensorboard_log=log_dir)
 
 ## TRAIN MODEL AND SAVE MODEL EVERY N TIMESTEPS
 TIMESTEPS = 10_000
-for i in range(1,30):
+for i in range(1,60):
     model.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False, tb_log_name=f"PPO-{current_time}")
-    model.save(f"{models_dir}/{TIMESTEPS*i/1000}.zip")
+    model.save(f"{models_dir}/{TIMESTEPS*i//1000:d}.zip")
 
 
 ## RENDER TRAINED MODEL FOR N EPISODES

@@ -75,10 +75,17 @@ class Tau_Coast_Env():
         )
 
         if not done:
-            reward = np.clip(1/np.abs(self.x_d-x)**2,0,10)
+            if (self.x_d - x) >= 0:
+                reward = np.clip(1/(self.x_d-x),0,10)
+            else:
+                reward = (self.x_d-x)
+
         elif self.steps_beyond_done is None:
             self.steps_beyond_done = 0
-            reward = np.clip(1/np.abs(self.x_d-x)**2,0,10)
+            if (self.x_d - x) >= 0:
+                reward = np.clip(1/(self.x_d-x),0,10)
+            else:
+                reward = (self.x_d-x)
         else:
             if self.steps_beyond_done == 0:
                 logger.warn(
@@ -96,7 +103,8 @@ class Tau_Coast_Env():
     def reset(self):
         self.t_step = 0
         self.Once_flag = False
-        self.state = np.array([-1.0,1.0])
+        
+        self.state = np.random.uniform(low=[-2,0],high=[-1,2])
 
         return np.array(self.state,dtype=np.float32)
 
