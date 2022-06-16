@@ -13,20 +13,15 @@ class Tau_Coast_Env():
     def __init__(self):
         super(Tau_Coast_Env, self).__init__()
 
-        self.gravity = 9.8
         self.masscart = 1.0
-        self.force_mag = 10.0
         self.dt = 0.02  # seconds between state updates
         self.x_d = 1.0
         self.t_step = 0
         self.Once_flag = False
 
-        # Angle at which to fail the episode
         self.x_threshold = 2.4
-        self.t_threshold = 500
+        self.t_threshold = 250
 
-        # Angle limit set to 2 * theta_threshold_radians so failing observation
-        # is still within bounds.
         high = np.array(
             [
                 self.x_threshold * 2,
@@ -35,7 +30,7 @@ class Tau_Coast_Env():
             dtype=np.float32,
         )
 
-        self.action_space = spaces.Discrete(3)
+        self.action_space = spaces.Discrete(2)
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
 
         self.screen_width = 600
@@ -57,8 +52,8 @@ class Tau_Coast_Env():
 
         ## IF ACTION TRIGGERED THEN KEEP THESE DYNAMICS
         if action == 1 or self.Once_flag == True:
-            C_drag = 1.0
             self.Once_flag = True
+            C_drag = 2.0
             x_acc = (-C_drag*x_dot)/self.masscart
         else:
             x_acc = 0
@@ -75,17 +70,12 @@ class Tau_Coast_Env():
         )
 
         if not done:
-            if (self.x_d - x) >= 0:
-                reward = np.clip(1/(self.x_d-x),0,10)
-            else:
-                reward = (self.x_d-x)
-
+            reward = np.clip(1/np.abs(self.x_d-x+1e-3),0,10)
+            
         elif self.steps_beyond_done is None:
             self.steps_beyond_done = 0
-            if (self.x_d - x) >= 0:
-                reward = np.clip(1/(self.x_d-x),0,10)
-            else:
-                reward = (self.x_d-x)
+            reward = np.clip(1/np.abs(self.x_d-x+1e-3),0,10)
+
         else:
             if self.steps_beyond_done == 0:
                 logger.warn(
@@ -104,7 +94,10 @@ class Tau_Coast_Env():
         self.t_step = 0
         self.Once_flag = False
         
-        self.state = np.random.uniform(low=[-2,0],high=[-1,2])
+        vel_0 = np.random.uniform(low=0.5,high=2.5)
+        tau = 1.5
+        pos = self.x_d - tau*vel_0
+        self.state = [pos,vel_0]
 
         return np.array(self.state,dtype=np.float32)
 

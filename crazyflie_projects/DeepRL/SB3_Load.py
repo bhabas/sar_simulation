@@ -3,8 +3,8 @@ from Env_Example import CustomEnv
 from Tau_Coast_Env import Tau_Coast_Env
 
 ## SELECT MODEL FROM DIRECTORY
-models_dir = "crazyflie_projects/DeepRL/models/PPO-22_17"
-model_path = f"{models_dir}/520.zip"
+models_dir = "crazyflie_projects/DeepRL/models/PPO-09_02"
+model_path = f"{models_dir}/230.zip"
 
 ## INITIATE ENVIRONMENT AND TRAINED MODEL5
 env = Tau_Coast_Env()
