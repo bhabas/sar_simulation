@@ -18,6 +18,7 @@ class Tau_Coast_Env():
         self.x_d = 1.0
         self.t_step = 0
         self.Once_flag = False
+        self.tau_thr = 0
 
         self.x_threshold = 2.4
         self.t_threshold = 250
@@ -55,6 +56,7 @@ class Tau_Coast_Env():
             self.Once_flag = True
             C_drag = 2.0
             x_acc = (-C_drag*x_dot)/self.masscart
+            self.tau_thr = self.obs[0]
         else:
             x_acc = 0
         
@@ -77,7 +79,7 @@ class Tau_Coast_Env():
         if not done:
             reward = 0
         else:
-            reward = 2/np.abs(self.x_d-x+1e-3)
+            reward = np.clip(2/np.abs(self.x_d-x+1e-3),0,40)
 
 
         return np.array(self.obs,dtype=np.float32), reward, done, {}

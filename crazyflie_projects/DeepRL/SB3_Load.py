@@ -2,8 +2,8 @@ from stable_baselines3 import PPO
 from Tau_Coast_Env import Tau_Coast_Env
 
 ## SELECT MODEL FROM DIRECTORY
-models_dir = "crazyflie_projects/DeepRL/models/PPO-20_12"
-model_path = f"{models_dir}/110.zip"
+models_dir = "crazyflie_projects/DeepRL/models/PPO-21_08"
+model_path = f"{models_dir}/360.zip"
 
 ## INITIATE ENVIRONMENT AND TRAINED MODEL5
 env = Tau_Coast_Env()
