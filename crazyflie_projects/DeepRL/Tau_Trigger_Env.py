@@ -6,26 +6,27 @@ import math
 import numpy as np
 
 
-class CustomEnv():
-    """Custom Environment that follows gym interface"""
+class Tau_Trigger_Env():
     metadata = {'render.modes': ['human']}
-
     def __init__(self):
-        super(CustomEnv, self).__init__()
+        super(Tau_Trigger_Env, self).__init__()
+        self.env_name = "Tau_Trigger_Discrete"
 
-        self.gravity = 9.8
+        ## PHYSICS PARAMETERS
+        self.dt = 0.02  # seconds between state updates
         self.masscart = 1.0
-        self.force_mag = 10.0
-        self.tau = 0.02  # seconds between state updates
-        self.x_d = 1.0
         self.t_step = 0
 
-        # Angle at which to fail the episode
-        self.x_threshold = 2.4
-        self.t_threshold = 500
+        ## POLICY PARAMETERS
+        self.x_d = 1.0
+        self.Once_flag = False
+        self.state = None
+        self.tau_thr = 0
 
-        # Angle limit set to 2 * theta_threshold_radians so failing observation
-        # is still within bounds.
+        ## ENV LIMITS
+        self.x_threshold = 2.4
+        self.t_threshold = 250
+
         high = np.array(
             [
                 self.x_threshold * 2,
@@ -34,17 +35,16 @@ class CustomEnv():
             dtype=np.float32,
         )
 
-        self.action_space = spaces.Discrete(3)
+        self.action_space = spaces.Discrete(2)
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
 
+        ## RENDERING PARAMETERS
         self.screen_width = 600
         self.screen_height = 400
         self.screen = None
         self.clock = None
         self.isopen = True
-        self.state = None
 
-        self.steps_beyond_done = None
 
     def step(self, action):
         err_msg = f"{action!r} ({type(action)}) invalid"
@@ -53,50 +53,58 @@ class CustomEnv():
         self.t_step += 1
         x,x_dot = self.state
 
-        if action == 1:
-            force = self.force_mag
-        elif action == 0:
-            force = 0
+
+        ## IF ACTION TRIGGERED THEN KEEP THESE DYNAMICS
+        if action == 1 or self.Once_flag == True:
+            self.Once_flag = True
+            C_drag = 2.0
+            x_acc = (-C_drag*x_dot)/self.masscart
+            self.tau_thr = self.obs[0]
         else:
-            force = -self.force_mag
-
-        x_acc = (force)/self.masscart
-        x = x + self.tau*x_dot
-        x_dot = x_dot + self.tau*x_acc
-
+            x_acc = 0
+        
+        ## UPDATE STATE
+        x = x + self.dt*x_dot
+        x_dot = x_dot + self.dt*x_acc
         self.state = (x, x_dot)
 
+        ## UPDATE OBSERVATION
+        d_ceil = self.x_d - x
+        tau = d_ceil/x_dot
+        self.obs = (tau,d_ceil)
 
+        ## CHECK FOR DONE
         done = bool(
-            x < -self.x_threshold
-            or x > self.x_threshold
+            x > self.x_threshold
             or self.t_step >= self.t_threshold
+            or x_dot <= 0.05
         )
 
+        ## CALCULATE REWARD
         if not done:
-            reward = np.clip(1/np.abs(self.x_d-x),-10,10)
-        elif self.steps_beyond_done is None:
-            self.steps_beyond_done = 0
-            reward = np.clip(1/np.abs(self.x_d-x),-10,10)
+            reward = 0
         else:
-            if self.steps_beyond_done == 0:
-                logger.warn(
-                    "You are calling 'step()' even though this "
-                    "environment has already returned done = True. You "
-                    "should always call 'reset()' once you receive 'done = "
-                    "True' -- any further steps are undefined behavior."
-                )
-            self.steps_beyond_done += 1
-            reward = 0.0
+            reward = np.clip(2/np.abs(self.x_d-x+1e-3),0,40)
 
 
-        return np.array(self.state,dtype=np.float32), reward, done, {}
+        return np.array(self.obs,dtype=np.float32), reward, done, {}
 
     def reset(self):
+        ## RESET PHYSICS PARAMS
         self.t_step = 0
-        self.state = np.random.uniform(low=-0.5,high=0.5,size=(2,))
+        self.Once_flag = False
+        
+        ## RESET STATE
+        tau_0 = 1.5
+        vel_0 = np.random.uniform(low=0.5,high=2.5)
+        d_ceil_0 = tau_0*vel_0
+        pos_0 = self.x_d - d_ceil_0
+        self.state = (pos_0,vel_0)
 
-        return np.array(self.state,dtype=np.float32)
+        ## RESET OBSERVATION
+        self.obs = (tau_0,d_ceil_0)
+
+        return np.array(self.obs,dtype=np.float32)
 
     def render(self):
         import pygame
@@ -106,6 +114,7 @@ class CustomEnv():
         white = (255,255,255)
         black = (0,0,0)
         blue = (29,123,243)
+        red = (255,0,0)
 
         ## INITIATE SCREEN AND CLOCK ON FIRST LOADING
         if self.screen is None:
@@ -148,9 +157,12 @@ class CustomEnv():
         cart_coords = [(c[0] + cartx, c[1] + carty) for c in cart_coords]
         gfxdraw.filled_polygon(self.surf, cart_coords, black)
 
-        
-        gfxdraw.aacircle(self.surf,int(cartx),int(carty),5,blue)
-        gfxdraw.filled_circle(self.surf,int(cartx),int(carty),5,blue)
+        if self.Once_flag == True:
+            gfxdraw.aacircle(self.surf,int(cartx),int(carty),5,red)
+            gfxdraw.filled_circle(self.surf,int(cartx),int(carty),5,red)
+        else:
+            gfxdraw.aacircle(self.surf,int(cartx),int(carty),5,blue)
+            gfxdraw.filled_circle(self.surf,int(cartx),int(carty),5,blue)
 
 
 
@@ -164,8 +176,7 @@ class CustomEnv():
 
 
 
-        pygame.event.pump()
-        self.clock.tick(50)
+        self.clock.tick(45)
         pygame.display.flip()
 
         
@@ -180,13 +191,13 @@ class CustomEnv():
 
 if __name__ == '__main__':
 
-    env = CustomEnv()
-    env.reset()
-
-    done = False
-    while not done:
-        env.render()
-        # obs,reward,done,info = env.step(env.action_space.sample())
+    env = Tau_Trigger_Env()
+    for _ in range(5):
+        env.reset()
+        done = False
+        while not done:
+            env.render()
+            obs,reward,done,info = env.step(env.action_space.sample())
 
 
     env.close()
