@@ -61,7 +61,11 @@ class Tau_Coast_Env():
         x = x + self.dt*x_dot
         x_dot = x_dot + self.dt*x_acc
 
+        d_ceil = self.x_d - x
+        tau = d_ceil/x_dot
+
         self.state = (x, x_dot)
+        self.obs = (tau,d_ceil)
 
 
         done = bool(
@@ -76,18 +80,22 @@ class Tau_Coast_Env():
             reward = 2/np.abs(self.x_d-x+1e-3)
 
 
-        return np.array(self.state,dtype=np.float32), reward, done, {}
+        return np.array(self.obs,dtype=np.float32), reward, done, {}
 
     def reset(self):
         self.t_step = 0
         self.Once_flag = False
         
+        tau_0 = 1.5
         vel_0 = np.random.uniform(low=0.5,high=2.5)
-        tau = 1.5
-        pos = self.x_d - tau*vel_0
-        self.state = [pos,vel_0]
+        d_ceil = tau_0*vel_0
 
-        return np.array(self.state,dtype=np.float32)
+        pos_0 = self.x_d - d_ceil
+
+        self.state = [pos_0,vel_0]
+        self.obs = [tau_0,d_ceil]
+
+        return np.array(self.obs,dtype=np.float32)
 
     def render(self):
         import pygame
