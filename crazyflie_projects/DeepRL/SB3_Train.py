@@ -1,16 +1,19 @@
 import os
 from datetime import datetime
 from stable_baselines3 import A2C,PPO
+import gym
 
 from Tau_Trigger_Env import Tau_Trigger_Env
-
+from Brake_Val_Env import Brake_Val_Env
 
 ## COLLECT CURRENT TIME
 now = datetime.now()
-current_time = now.strftime("%H_%M")
+current_time = now.strftime("%H-%M")
 
 ## INITIATE ENVIRONMENT
-env = Tau_Trigger_Env()
+# env = Brake_Val_Env()
+env = gym.make("Pendulum-v1")
+env.env_name = "Pendulum"
 env.reset()
 
 ## CREATE MODEL AND LOG DIRECTORY
@@ -25,7 +28,16 @@ if not os.path.exists(log_dir):
 
 
 
-model = PPO("MlpPolicy",env,verbose=1,tensorboard_log=log_dir) 
+model = PPO(
+    "MlpPolicy",
+    env,
+    gamma=0.98,
+    learning_rate=1e-3,
+    use_sde=False,
+    sde_sample_freq=4,
+    verbose=1,
+    tensorboard_log=log_dir
+) 
 
 ## TRAIN MODEL AND SAVE MODEL EVERY N TIMESTEPS
 TIMESTEPS = 10_000
@@ -43,6 +55,11 @@ for i in range(1,60):
     )
     model.save(f"{models_dir}/{TIMESTEPS*i//1000:d}.zip")
 
+# model.learn(
+#     total_timesteps=1000, 
+#     reset_num_timesteps=False, 
+#     tb_log_name=f"{env.env_name}-PPO-{current_time}"
+# )
 
 ## RENDER TRAINED MODEL FOR N EPISODES
 episodes = 10

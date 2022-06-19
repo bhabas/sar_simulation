@@ -1,13 +1,21 @@
 from stable_baselines3 import PPO
-from crazyflie_projects.DeepRL.Tau_Trigger_Env import Tau_Trigger_Env
+from Tau_Trigger_Env import Tau_Trigger_Env
+from Brake_Val_Env import Brake_Val_Env
+import gym
+
+# ## INITIATE ENVIRONMENT AND TRAINED MODEL5
+# env = Brake_Val_Env()
+# env.reset()
+
+env = gym.make("Pendulum-v1")
+env.reset()
+env.env_name = "Pendulum"
 
 ## SELECT MODEL FROM DIRECTORY
-models_dir = "crazyflie_projects/DeepRL/models/PPO-10_27"
-model_path = f"{models_dir}/180.zip"
+models_dir = f"crazyflie_projects/DeepRL/models/{env.env_name}/PPO-08-24"
+model_path = f"{models_dir}/120.zip"
 
-## INITIATE ENVIRONMENT AND TRAINED MODEL5
-env = Tau_Trigger_Env()
-env.reset()
+
 model = PPO.load(model_path,env=env)
 
 ## RENDER TRAINED MODEL FOR N EPISODES
