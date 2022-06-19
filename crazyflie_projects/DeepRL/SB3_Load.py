@@ -3,6 +3,8 @@ from Tau_Trigger_Env import Tau_Trigger_Env
 from Brake_Val_Env import Brake_Val_Env
 from Discrete_Pos_Env import Discrete_Pos_Env
 from Cont_Pos_Env import Cont_Pos_Env
+from Cont_Value_Pred_Env import Cont_Value_Pred_Env
+
 
 import gym
 
@@ -11,13 +13,13 @@ import gym
 # env.reset()
 
 # env = gym.make("Pendulum-v1")
-env = Cont_Pos_Env()
+env = Cont_Value_Pred_Env()
 env.reset()
 env.env_name = "Pendulum"
 
 ## SELECT MODEL FROM DIRECTORY
-models_dir = f"crazyflie_projects/DeepRL/models/{env.env_name}/PPO-17-21"
-model_path = f"{models_dir}/100.zip"
+models_dir = f"crazyflie_projects/DeepRL/models/{env.env_name}/PPO-18-07"
+model_path = f"{models_dir}/150.zip"
 
 
 model = PPO.load(model_path,env=env)

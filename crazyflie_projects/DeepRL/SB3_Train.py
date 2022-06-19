@@ -7,6 +7,7 @@ from Tau_Trigger_Env import Tau_Trigger_Env
 from Brake_Val_Env import Brake_Val_Env
 from Discrete_Pos_Env import Discrete_Pos_Env
 from Cont_Pos_Env import Cont_Pos_Env
+from Cont_Value_Pred_Env import Cont_Value_Pred_Env
 
 ## COLLECT CURRENT TIME
 now = datetime.now()
@@ -14,7 +15,7 @@ current_time = now.strftime("%H-%M")
 
 ## INITIATE ENVIRONMENT
 # env = Brake_Val_Env()
-env = Cont_Pos_Env()
+env = Cont_Value_Pred_Env()
 # env = gym.make("Pendulum-v1")
 env.env_name = "Pendulum"
 env.reset()
