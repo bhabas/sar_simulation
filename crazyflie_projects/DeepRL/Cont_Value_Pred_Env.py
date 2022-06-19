@@ -20,6 +20,7 @@ class Cont_Value_Pred_Env():
         self.x_d = 1.0
         self.t_step = 0
         self.action = 0
+        self.x = 0
 
         # Angle at which to fail the episode
         self.x_threshold = 2.4
@@ -59,12 +60,15 @@ class Cont_Value_Pred_Env():
         
         self.action = action[0]
         force = 0.0
+        self.x = x
         
 
         C = 0.0
-        x_acc = (force-C*x_dot)/self.masscart
-        x = x + self.tau*x_dot
-        x_dot = x_dot + self.tau*x_acc
+
+        T = 100
+        w = 2*np.pi/T
+        x = np.sin(w*self.t_step)
+        x_dot = np.cos(w*self.t_step)
 
         self.state = (x, x_dot)
 
@@ -76,7 +80,7 @@ class Cont_Value_Pred_Env():
         )
 
         if not done:
-            reward = np.clip(1/np.abs(0.5-self.action+1e-3),-10,10)
+            reward = np.clip(1/np.abs(x-self.action+1e-3),-10,10)
 
         else:
             reward = 0.0
@@ -149,7 +153,7 @@ class Cont_Value_Pred_Env():
 
 
         text_t_step = my_font.render(f'Time Step: {self.t_step:03d}', True, black)
-        text_action = my_font.render(f'Val: {self.action:.03f}', True, black)
+        text_action = my_font.render(f'Val: {self.x-self.action:.03f}', True, black)
 
         
 
@@ -162,7 +166,7 @@ class Cont_Value_Pred_Env():
 
 
 
-        self.clock.tick(50)
+        self.clock.tick(60)
         pygame.display.flip()
 
         

@@ -37,7 +37,7 @@ model = PPO(
     env,
     gamma=0.98,
     learning_rate=1e-3,
-    use_sde=False,
+    use_sde=True,
     sde_sample_freq=4,
     verbose=1,
     tensorboard_log=log_dir
