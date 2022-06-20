@@ -210,8 +210,8 @@ class CF_DataConverter
         bool LANDING_SLOWDOWN_FLAG;
         float SIM_SPEED; 
         float SIM_SLOWDOWN_SPEED;
-        int LOGGING_RATE = 20;
-        int CONSOLE_RATE = 50;
+        int LOGGING_RATE = 25; // Default Logging Rate
+        int CONSOLE_RATE = 50; // Default Console Rate
         int POLICY_TYPE = 0;
         
         float P_kp_xy,P_kd_xy,P_ki_xy;

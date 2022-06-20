@@ -48,7 +48,7 @@ class DataFile:
             self.remove_FailedRuns()
 
         ## COLLECT BASIC TRIAL INFO
-        self.n_rollouts = int(self.trial_df.iloc[-3]['NN_flip'])
+        self.n_rollouts = int(self.trial_df.iloc[-3]['Policy_Flip'])
         self.k_epMax = int(self.trial_df.iloc[-3]['k_ep'])
         self.k_runMax = int(self.trial_df.iloc[-3]['k_run'])
 
