@@ -35,7 +35,9 @@ class Brake_Val_Env():
             dtype=np.float32,
         )
 
-        self.action_space = spaces.Box(-1,1,shape=(1,), dtype=np.float32)
+        self.action_space = spaces.Box(
+            low=-1, high=1, shape=(1,), dtype=np.float32
+        )
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
 
         ## RENDERING PARAMETERS
@@ -55,13 +57,17 @@ class Brake_Val_Env():
         tau,d_ceil = self.obs
 
 
-        ## IF ACTION TRIGGERED THEN KEEP THESE DYNAMICS
-        if tau >= 1.0 and self.Once_flag == False:
-            self.C_drag = 0
 
-        elif tau <= 1.0 and self.Once_flag == False:
+        if tau <= 1.0 and self.Once_flag == False:
             self.Once_flag = True
             self.C_drag = action[0]+2
+            
+
+        if self.Once_flag != True:
+            self.C_drag = 0
+        else:
+            pass
+
 
             
 
@@ -89,7 +95,7 @@ class Brake_Val_Env():
         if not done:
             reward = 0
         else:
-            reward = np.clip(2/np.abs(self.x_d-x+1e-3),0,40)
+            reward = np.clip(1/np.abs(self.x_d-x+1e-3),0,40)
 
 
         return np.array(self.obs,dtype=np.float32), reward, done, {}

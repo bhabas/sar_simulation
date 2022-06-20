@@ -14,10 +14,10 @@ now = datetime.now()
 current_time = now.strftime("%H-%M")
 
 ## INITIATE ENVIRONMENT
-# env = Brake_Val_Env()
-env = Cont_Value_Pred_Env()
+env = Brake_Val_Env()
+# env = Cont_Value_Pred_Env()
 # env = gym.make("Pendulum-v1")
-env.env_name = "Pendulum"
+# env.env_name = "Pendulum"
 env.reset()
 
 ## CREATE MODEL AND LOG DIRECTORY
@@ -35,9 +35,9 @@ if not os.path.exists(log_dir):
 model = PPO(
     "MlpPolicy",
     env,
-    gamma=0.98,
+    gamma=0.99,
     learning_rate=1e-3,
-    use_sde=True,
+    use_sde=False,
     sde_sample_freq=4,
     verbose=1,
     tensorboard_log=log_dir
