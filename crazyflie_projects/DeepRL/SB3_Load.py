@@ -13,19 +13,20 @@ import gym
 # env.reset()
 
 # env = gym.make("Pendulum-v1")
-env = Cont_Value_Pred_Env()
+env = Brake_Val_Env()
 env.reset()
-env.env_name = "Pendulum"
+# env.env_name = "Brake_Val_Cont"
 
 ## SELECT MODEL FROM DIRECTORY
-models_dir = f"crazyflie_projects/DeepRL/models/{env.env_name}/PPO-18-46"
-model_path = f"{models_dir}/330.zip"
+models_dir = f"crazyflie_projects/DeepRL/models/{env.env_name}/PPO-09-20"
+model_path = f"{models_dir}/150.zip"
 
 
 model = PPO.load(model_path,env=env)
 
 ## RENDER TRAINED MODEL FOR N EPISODES
 episodes = 25
+env.RENDER = True
 for ep in range(episodes):
     obs = env.reset()
     done = False

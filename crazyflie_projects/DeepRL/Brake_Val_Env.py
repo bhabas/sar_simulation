@@ -16,6 +16,7 @@ class Brake_Val_Env():
         self.dt = 0.02  # seconds between state updates
         self.masscart = 1.0
         self.t_step = 0
+        self.RENDER = False
 
         ## POLICY PARAMETERS
         self.x_d = 1.0
@@ -52,53 +53,80 @@ class Brake_Val_Env():
         err_msg = f"{action!r} ({type(action)}) invalid"
         assert self.action_space.contains(action), err_msg
         assert self.state is not None, "Call reset before using step method."
-        self.t_step += 1
+        
         x,x_dot = self.state
         tau,d_ceil = self.obs
 
 
-
+        ## ONCE ACTIVATED SAMPLE ACTION
         if tau <= 1.0 and self.Once_flag == False:
             self.Once_flag = True
-            self.C_drag = action[0]+2
-            
-
-        if self.Once_flag != True:
-            self.C_drag = 0
-        else:
-            pass
-
-
-            
-
+            self.C_drag = action[0]+1
+            reward,done = self.finish_sim()
         
-        x_acc = (-self.C_drag*x_dot)/self.masscart
-        
-        ## UPDATE STATE
-        x = x + self.dt*x_dot
-        x_dot = x_dot + self.dt*x_acc
-        self.state = (x, x_dot)
+        if self.Once_flag == False:
 
-        ## UPDATE OBSERVATION
-        d_ceil = self.x_d - x
-        tau = d_ceil/x_dot
-        self.obs = (tau,d_ceil)
+            ## UPDATE STATE
+            self.t_step += 1
+            x_acc = (-self.C_drag*x_dot)/self.masscart
+            x = x + self.dt*x_dot
+            x_dot = x_dot + self.dt*x_acc
+            self.state = (x, x_dot)
 
-        ## CHECK FOR DONE
-        done = bool(
-            x > self.x_threshold
-            or self.t_step >= self.t_threshold
-            or x_dot <= 0.01
-        )
+            ## UPDATE OBSERVATION
+            d_ceil = self.x_d - x
+            tau = d_ceil/x_dot
+            self.obs = (tau,d_ceil)
 
-        ## CALCULATE REWARD
-        if not done:
-            reward = 0
-        else:
-            reward = np.clip(1/np.abs(self.x_d-x+1e-3),0,40)
+            ## CHECK FOR DONE
+            done = bool(
+                x > self.x_threshold
+                or self.t_step >= self.t_threshold
+                or x_dot <= 0.01
+            )
+
+            ## CALCULATE REWARD
+            if not done:
+                reward = 0
+            else:
+                reward = np.clip(1/np.abs(d_ceil+1e-3),0,10)
+
 
 
         return np.array(self.obs,dtype=np.float32), reward, done, {}
+
+    def finish_sim(self):
+
+        
+        done = False
+
+        while not done:
+
+            ## UPDATE STATE
+            self.t_step += 1
+            x,x_dot = self.state
+            x_acc = (-self.C_drag*x_dot)/self.masscart
+            x = x + self.dt*x_dot
+            x_dot = x_dot + self.dt*x_acc
+            self.state = (x, x_dot)
+
+            ## UPDATE OBSERVATION
+            d_ceil = self.x_d - x
+            tau = d_ceil/x_dot
+
+            ## CHECK FOR DONE
+            done = bool(
+                x > self.x_threshold
+                or self.t_step >= self.t_threshold
+                or x_dot <= 0.01
+            )
+
+            if self.RENDER:
+                self.render()
+        
+        reward = np.clip(1/np.abs(d_ceil+1e-3),0,10)
+        done = True
+        return reward,done
 
     def reset(self):
         ## RESET PHYSICS PARAMS
@@ -207,6 +235,7 @@ class Brake_Val_Env():
 
 if __name__ == '__main__':
     env = Brake_Val_Env()
+    env.RENDER = True
     for _ in range(5):
         env.reset()
         done = False

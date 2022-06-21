@@ -36,7 +36,7 @@ model = PPO(
     "MlpPolicy",
     env,
     gamma=0.99,
-    learning_rate=1e-3,
+    learning_rate=0.005,
     use_sde=False,
     sde_sample_freq=4,
     verbose=1,
