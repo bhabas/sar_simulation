@@ -23,6 +23,7 @@ from crazyflie_msgs.srv import RLCmd,RLCmdRequest
 from rosgraph_msgs.msg import Clock
 from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState
+from std_srvs.srv import Empty
 
 
 
@@ -518,7 +519,6 @@ class CrazyflieEnv:
             'StickyPads':92,
         }
 
-
         ## CREATE SERVICE REQUEST MSG
         srv = RLCmdRequest() 
         
@@ -690,9 +690,11 @@ class CrazyflieEnv:
         """        
 
         if pause_flag:
-            rospy.ServiceProxy('/gazebo/pause_physics', Empty)
+            # rospy.ServiceProxy('/gazebo/pause_physics', Empty)
+            os.system("rosservice call gazebo/pause_physics")
         else:
-            rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
+            # rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
+            os.system("rosservice call gazebo/unpause_physics")
 
 
     def launch_dashboard(self):
@@ -776,7 +778,6 @@ class CrazyflieEnv:
         """        
         ## DISABLE STICKY LEGS (ALSO BREAKS CURRENT CONNECTION JOINTS)
         self.SendCmd('StickyPads',cmd_flag=0)
-        time.sleep(0.05)
         
         ## RESET POSITION AND VELOCITY
         state_msg = ModelState()
@@ -801,10 +802,10 @@ class CrazyflieEnv:
         rospy.wait_for_service('/gazebo/set_model_state',timeout=5)
         set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         set_state_srv(state_msg)
+        self.SendCmd('Ctrl_Reset')
+        self.sleep(0.5)
 
         ## RESET HOME/TUMBLE DETECTION AND STICKY
-        # self.step('tumble',cmd_flag=1) # Tumble Detection On
-        self.SendCmd('Ctrl_Reset')
 
     def updateInertia(self):
 
