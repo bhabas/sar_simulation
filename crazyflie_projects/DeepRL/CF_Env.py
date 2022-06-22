@@ -12,25 +12,26 @@ class CF_Env():
 
         ## PHYSICS PARAMETERS
         self.dt = 0.01  # seconds between state updates
-        self.masscart = 1.0
         self.t_step = 0
         self.RENDER = False
 
+        self.Flip_flag = False
+        self.Impact_flag = False
+        self.Moment_flag = False
+
         ## SET DIMENSIONAL CONSTRAINTS 
-        G = 9.81        # Gravity [m/s^2]
+        self.h_ceil = 2.1
+        g = 9.81        # Gravity [m/s^2]
         PD = 0.115/2    # Prop Distance from COM [m]
         I_G = 16.5717e-6    # Moment of Intertia [kg*m^2]
-        self.L = 0.1
-        self.gamma = np.deg2rad(30)
+        L = 0.1
+        gamma = np.deg2rad(30)
         M_G = 0.035 
         M_L = 0.002
         e = 0.018
-        self.params = (self.L,e,self.gamma,M_G,M_L,G,PD,I_G)
+        self.params = (L,e,gamma,M_G,M_L,g,PD,I_G)
 
-        self.impact_leg = None
-        self.h_ceiling = 2.1
 
-        # INTIIALIZE MODEL POSE
 
 
         self.state = None
@@ -60,40 +61,99 @@ class CF_Env():
         # assert self.action_space.contains(action), err_msg
         # assert self.state is not None, "Call reset before using step method."
         
-        x,x_dot,z,z_dot,theta,dtheta = self.state
-        # tau,d_ceil = self.obs
-
-        ## UPDATE STATE
         self.t_step += 1
+        x,x_dot,z,z_dot,theta,dtheta = self.state
+        Tau,d_ceil = self.obs
+        (L,e,gamma,M_G,M_L,g,PD,I_G) = self.params
+    
+        if Tau > 0.5 and self.Flip_flag == False:
 
-        x_acc = 0
-        x = x + self.dt*x_dot
-        x_dot = x_dot + self.dt*x_acc
+            ##############################
+            #     CONSTANT VEL TRAJ.
+            ##############################
+            x_acc = 0
+            x = x + self.dt*x_dot
+            x_dot = x_dot + self.dt*x_acc
 
-        z_acc = 0
-        z = z + self.dt*z_dot
-        z_dot = z_dot + self.dt*z_acc
-        
-        theta_acc = 0
-        theta = theta + self.dt*dtheta
-        dtheta = dtheta + self.dt*theta_acc
+            z_acc = 0
+            z = z + self.dt*z_dot
+            z_dot = z_dot + self.dt*z_acc
+            
+            theta_acc = 0
+            theta = theta + self.dt*dtheta
+            dtheta = dtheta + self.dt*theta_acc
 
+            impact_flag,impact_events = self.impact_conditions(x,z,theta)
+
+        if Tau <= 1.0 or self.Flip_flag == True:
+            self.Flip_flag = True
+            self.Tau_thr = Tau
+            My = 1e-3
+
+            if np.deg2rad(90)-np.abs(theta) < 0:
+                self.Moment_flag = True
+            
+            ##############################
+            #     EXECUTE BODY MOMENT
+            ##############################
+            if self.Moment_flag == False:
+                x_acc = -My/(M_G*PD)*np.cos(np.pi/2-theta)
+                x = x + self.dt*x_dot
+                x_dot = x_dot + self.dt*x_acc
+
+                z_acc = -My/(M_G*PD)*np.sin(np.pi/2-theta) - g
+                z = z + self.dt*z_dot
+                z_dot = z_dot + self.dt*z_acc
+                
+                theta_acc = My/I_G
+                theta = theta + self.dt*dtheta
+                dtheta = dtheta + self.dt*theta_acc
+            
+            else:
+                x_acc = 0
+                x = x + self.dt*x_dot
+                x_dot = x_dot + self.dt*x_acc
+
+                z_acc = -g
+                z = z + self.dt*z_dot
+                z_dot = z_dot + self.dt*z_acc
+                
+                theta_acc = 0
+                theta = theta + self.dt*dtheta
+                dtheta = dtheta + self.dt*theta_acc
+            
+
+
+
+
+        d_ceil = self.h_ceil - x
+        Tau = d_ceil/z_dot
+
+        self.obs = (Tau,d_ceil)
         self.state = (x,x_dot,z,z_dot,theta,dtheta)
 
+    
 
 
     def reset(self):
-        x, x_dot = 0.0, 0.2
-        z, z_dot = 0.2, 0.2
-        theta,dtheta = 0.0, -10
+        self.Flip_flag = False
+
+
+        x, x_dot = 0.0, 1.0
+        z, z_dot = 0.2, 1.0
+        theta,dtheta = 0.0, 0.0
         self.state = (x,x_dot,z,z_dot,theta,dtheta)
+
+        d_ceil = (self.h_ceil - z)
+        tau = d_ceil/z_dot
+        self.obs = (tau,d_ceil)
 
     def render(self,mode=None):
         
 
         def c2p(Pos): ## CONVERTS COORDINATES TO PIXEL LOCATION      
 
-            x_offset = self.world_width/2
+            x_offset = 1
             y_offset = 0.3
 
             scale_x = self.screen_width/self.world_width
@@ -125,6 +185,10 @@ class CF_Env():
         self.surf = pygame.Surface((self.screen_width, self.screen_height))
         self.surf.fill(WHITE)
 
+        ## CREATE TIMESTEP LABEL
+        my_font = pygame.font.SysFont(None, 30)
+        text_t_step = my_font.render(f'Time Step: {self.t_step:03d}', True, BLACK)
+
         x,x_dot,z,z_dot,theta,dtheta = self.state
 
         Pose = self.get_pose(x,z,theta)
@@ -144,7 +208,7 @@ class CF_Env():
         pygame.draw.line(self.surf,BLACK,c2p((-5,0)),c2p((5,0)),width=2)
 
         ## DRAW CEILING LINE
-        pygame.draw.line(self.surf,BLACK,c2p((-5,self.h_ceiling)),c2p((5,self.h_ceiling)),width=2)
+        pygame.draw.line(self.surf,BLACK,c2p((-5,self.h_ceil)),c2p((5,self.h_ceil)),width=2)
 
         
 
@@ -153,12 +217,37 @@ class CF_Env():
 
         ## FLIP IMAGE SO X->RIGHT AND Y->UP
         self.surf = pygame.transform.flip(self.surf, False, True)
-        self.screen.blit(self.surf,     (0, 0))
+        self.screen.blit(self.surf,     (0,0))
+        self.screen.blit(text_t_step,   (5,5))
+
 
 
 
         self.clock.tick(60)
         pygame.display.flip()
+
+    def impact_conditions(self,x_pos,z_pos,theta):
+        
+        impact_flag  = False
+        Body_contact = False
+        Leg1_contact = False
+        Leg2_contact = False
+
+        MO_z,_,_,Leg1_z,Leg2_z,Prop1_z,Prop2_z = self.get_pose(x_pos,z_pos,theta)[:,1]
+
+        if any(x >= self.h_ceil for x in [MO_z,Prop1_z,Prop2_z]):
+            impact_flag = True
+            Body_contact = True
+            
+        if Leg1_z >= self.h_ceil:
+            impact_flag = True
+            Leg1_contact = True
+
+        if Leg2_z >= self.h_ceil:
+            impact_flag = True
+            Leg2_contact = True
+
+        return impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
 
     def get_pose(self,x_pos,z_pos,theta):           
         """Returns position data of all model lines for a given state
@@ -170,7 +259,7 @@ class CF_Env():
             model_pose (tuple): Returns a tuple of all line endpoint coordinates
         """        
 
-        (L,e,gamma,M_G,M_L,G,PD,I_G) = self.params
+        (L,e,gamma,M_G,M_L,g,PD,I_G) = self.params
 
 
         ## DEFINE LOCATION OF MODEL ORIGIN
@@ -202,7 +291,7 @@ class CF_Env():
         Prop1 = CG + R.dot(Prop1)
         Prop2 = CG + R.dot(Prop2)
 
-        return (CG,P1,P2,L1,L2,Prop1,Prop2)
+        return np.array([CG,P1,P2,L1,L2,Prop1,Prop2])
 
         
     def close(self):
@@ -222,7 +311,7 @@ if __name__ == '__main__':
         env.reset()
         while not done:
             env.render()
-            env.step(0.0)
+            env.step(np.array([1.0,2.0]))
 
 
     env.close()
