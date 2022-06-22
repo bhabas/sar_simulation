@@ -150,7 +150,7 @@ class Brake_Trigger_Env():
 
         return np.array(self.obs,dtype=np.float32)
 
-    def render(self):
+    def render(self,mode=None):
         import pygame
         from pygame import gfxdraw
 

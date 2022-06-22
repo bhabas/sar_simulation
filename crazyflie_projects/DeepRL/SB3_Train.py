@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 from stable_baselines3 import PPO,SAC
-from stable_baselines3.common.callbacks import CheckpointCallback
+from stable_baselines3.common.callbacks import *
 import gym
 
 
@@ -13,19 +13,18 @@ current_time = now.strftime("%H-%M")
 
 ## INITIATE ENVIRONMENT
 env = Brake_Trigger_Env()
-# env = Cont_Value_Pred_Env()
-# env = gym.make("Pendulum-v1")
-# env.env_name = "Pendulum"
 env.reset()
+
 
 ## CREATE MODEL AND LOG DIRECTORY
 models_dir = f"crazyflie_projects/DeepRL/models/{env.env_name}/SAC-{current_time}"
 log_dir = "/tmp/logs"
 
-if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
-
 checkpoint_callback = CheckpointCallback(save_freq=1000, save_path=models_dir,name_prefix=env.env_name)
+eval_callback = EvalCallback(env, best_model_save_path=models_dir,
+                             log_path=log_dir, eval_freq=100,
+                             deterministic=True, render=False)
+
 
 model = SAC(
     "MlpPolicy",
@@ -39,7 +38,7 @@ model = SAC(
     tensorboard_log=log_dir
 ) 
 
-model.learn(30e3, callback=checkpoint_callback)
+model.learn(total_timesteps=30e3,callback=checkpoint_callback)
 
 
 ## RENDER TRAINED MODEL FOR N EPISODES
