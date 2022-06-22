@@ -1,31 +1,32 @@
 import gym
 from gym import logger,spaces
-from stable_baselines3.common.env_checker import check_env
+import stable_baselines3
 import math
 
 import numpy as np
 
 
-class Tau_Trigger_Env():
+class Tau_Trigger_Cont_Env():
     metadata = {'render.modes': ['human']}
     def __init__(self):
-        super(Tau_Trigger_Env, self).__init__()
-        self.env_name = "Tau_Trigger_Discrete"
+        super(Tau_Trigger_Cont_Env, self).__init__()
+        self.env_name = "Tau_Trigger_Cont_Env"
 
         ## PHYSICS PARAMETERS
         self.dt = 0.02  # seconds between state updates
         self.masscart = 1.0
         self.t_step = 0
+        self.RENDER = False
 
         ## POLICY PARAMETERS
         self.x_d = 1.0
         self.Once_flag = False
         self.state = None
-        self.tau_thr = 0
+        self.C_drag = 0.0
 
         ## ENV LIMITS
         self.x_threshold = 2.4
-        self.t_threshold = 250
+        self.t_threshold = 400
 
         high = np.array(
             [
@@ -35,7 +36,9 @@ class Tau_Trigger_Env():
             dtype=np.float32,
         )
 
-        self.action_space = spaces.Discrete(2)
+        self.action_space = spaces.Box(
+            low=-1, high=1, shape=(1,), dtype=np.float32
+        )
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
 
         ## RENDERING PARAMETERS
@@ -50,53 +53,90 @@ class Tau_Trigger_Env():
         err_msg = f"{action!r} ({type(action)}) invalid"
         assert self.action_space.contains(action), err_msg
         assert self.state is not None, "Call reset before using step method."
-        self.t_step += 1
-        x,x_dot = self.state
-
-
-        ## IF ACTION TRIGGERED THEN KEEP THESE DYNAMICS
-        if action == 1 or self.Once_flag == True:
-            self.Once_flag = True
-            C_drag = 2.0
-            x_acc = (-C_drag*x_dot)/self.masscart
-            self.tau_thr = self.obs[0]
-        else:
-            x_acc = 0
         
-        ## UPDATE STATE
-        x = x + self.dt*x_dot
-        x_dot = x_dot + self.dt*x_acc
-        self.state = (x, x_dot)
+        x,x_dot = self.state
+        tau,d_ceil = self.obs
 
-        ## UPDATE OBSERVATION
-        d_ceil = self.x_d - x
-        tau = d_ceil/x_dot
-        self.obs = (tau,d_ceil)
 
-        ## CHECK FOR DONE
-        done = bool(
-            x > self.x_threshold
-            or self.t_step >= self.t_threshold
-            or x_dot <= 0.05
-        )
+        ## ONCE ACTIVATED SAMPLE ACTION
+        if action[0] <= 0 and self.Once_flag == False:
+            self.Once_flag = True
+            self.C_drag = 2.0
+            reward,done = self.finish_sim()
+        
+        elif action[0] > 0 and self.Once_flag == False:
 
-        ## CALCULATE REWARD
-        if not done:
-            reward = 0
-        else:
-            reward = np.clip(2/np.abs(self.x_d-x+1e-3),0,40)
+            ## UPDATE STATE
+            self.t_step += 1
+            x_acc = (-self.C_drag*x_dot)/self.masscart
+            x = x + self.dt*x_dot
+            x_dot = x_dot + self.dt*x_acc
+            self.state = (x, x_dot)
+
+            ## UPDATE OBSERVATION
+            d_ceil = self.x_d - x
+            tau = d_ceil/x_dot
+            self.obs = (tau,d_ceil)
+
+            ## CHECK FOR DONE
+            done = bool(
+                x > self.x_threshold
+                or self.t_step >= self.t_threshold
+                or x_dot <= 0.01
+            )
+
+            ## CALCULATE REWARD
+            if not done:
+                reward = 0
+            else:
+                reward = np.clip(1/np.abs(d_ceil+1e-3),0,10)
+
 
 
         return np.array(self.obs,dtype=np.float32), reward, done, {}
+
+    def finish_sim(self):
+
+        
+        done = False
+
+        while not done:
+
+            ## UPDATE STATE
+            self.t_step += 1
+            x,x_dot = self.state
+            x_acc = (-self.C_drag*x_dot)/self.masscart
+            x = x + self.dt*x_dot
+            x_dot = x_dot + self.dt*x_acc
+            self.state = (x, x_dot)
+
+            ## UPDATE OBSERVATION
+            d_ceil = self.x_d - x
+            tau = d_ceil/x_dot
+
+            ## CHECK FOR DONE
+            done = bool(
+                x > self.x_threshold
+                or self.t_step >= self.t_threshold
+                or x_dot <= 0.01
+            )
+
+            if self.RENDER:
+                self.render()
+        
+        reward = np.clip(1/np.abs(d_ceil+1e-3),0,10)
+        done = True
+        return reward,done
 
     def reset(self):
         ## RESET PHYSICS PARAMS
         self.t_step = 0
         self.Once_flag = False
+        self.C_drag = 0.0
         
         ## RESET STATE
         tau_0 = 1.5
-        vel_0 = np.random.uniform(low=0.5,high=2.5)
+        vel_0 = 1.5
         d_ceil_0 = tau_0*vel_0
         pos_0 = self.x_d - d_ceil_0
         self.state = (pos_0,vel_0)
@@ -134,7 +174,7 @@ class Tau_Trigger_Env():
 
         ## CREATE TIMESTEP LABEL
         my_font = pygame.font.SysFont(None, 30)
-        text_surface = my_font.render(f'Time Step: {self.t_step:03d}', True, black)
+        
 
         world_width = self.x_threshold * 2
         scale = self.screen_width / world_width
@@ -166,13 +206,17 @@ class Tau_Trigger_Env():
 
 
 
-        
+        text_t_step = my_font.render(f'Time Step: {self.t_step:03d}', True, black)
+        text_action = my_font.render(f'C_drag: {self.C_drag:.03f}', True, black)
+
         
 
         ## FLIP IMAGE SO X->RIGHT AND Y->UP
         self.surf = pygame.transform.flip(self.surf, False, True)
         self.screen.blit(self.surf, (0, 0))
-        self.screen.blit(text_surface, (5,5))
+        self.screen.blit(text_t_step, (5,5))
+        self.screen.blit(text_action, (5,30))
+
 
 
 
@@ -190,8 +234,8 @@ class Tau_Trigger_Env():
 
 
 if __name__ == '__main__':
-
-    env = Tau_Trigger_Env()
+    env = Tau_Trigger_Cont_Env()
+    env.RENDER = True
     for _ in range(5):
         env.reset()
         done = False

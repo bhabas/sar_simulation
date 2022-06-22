@@ -1,25 +1,19 @@
 from stable_baselines3 import PPO
 from Tau_Trigger_Env import Tau_Trigger_Env
 from Brake_Val_Env import Brake_Val_Env
-from Discrete_Pos_Env import Discrete_Pos_Env
-from Cont_Pos_Env import Cont_Pos_Env
-from Cont_Value_Pred_Env import Cont_Value_Pred_Env
-
+from Tau_Trigger_Cont_Env import Tau_Trigger_Cont_Env
 
 import gym
 
 # ## INITIATE ENVIRONMENT AND TRAINED MODEL5
-# env = Brake_Val_Env()
-# env.reset()
-
 # env = gym.make("Pendulum-v1")
-env = Brake_Val_Env()
+env = Tau_Trigger_Cont_Env()
 env.reset()
 # env.env_name = "Brake_Val_Cont"
 
 ## SELECT MODEL FROM DIRECTORY
-models_dir = f"crazyflie_projects/DeepRL/models/{env.env_name}/PPO-09-20"
-model_path = f"{models_dir}/150.zip"
+models_dir = f"crazyflie_projects/DeepRL/models/{env.env_name}/PPO-08-58"
+model_path = f"{models_dir}/140.zip"
 
 
 model = PPO.load(model_path,env=env)
