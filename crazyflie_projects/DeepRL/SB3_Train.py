@@ -1,10 +1,10 @@
 import os
 from datetime import datetime
-from stable_baselines3 import A2C,PPO,SAC
+from stable_baselines3 import PPO,SAC
+from stable_baselines3.common.callbacks import CheckpointCallback
 import gym
 
-from Brake_Val_Env import Brake_Val_Env
-from Tau_Trigger_Cont_Env import Tau_Trigger_Cont_Env
+
 from Brake_Trigger_Env import Brake_Trigger_Env
 
 ## COLLECT CURRENT TIME
@@ -22,13 +22,10 @@ env.reset()
 models_dir = f"crazyflie_projects/DeepRL/models/{env.env_name}/SAC-{current_time}"
 log_dir = "/tmp/logs"
 
-if not os.path.exists(models_dir):
-    os.makedirs(models_dir)
-
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
 
-
+checkpoint_callback = CheckpointCallback(save_freq=1000, save_path=models_dir,name_prefix=env.env_name)
 
 model = SAC(
     "MlpPolicy",
@@ -38,30 +35,12 @@ model = SAC(
     use_sde=False,
     sde_sample_freq=4,
     verbose=1,
+    create_eval_env=True,
     tensorboard_log=log_dir
 ) 
 
-## TRAIN MODEL AND SAVE MODEL EVERY N TIMESTEPS
-TIMESTEPS = 10_000
-for i in range(1,60):
+model.learn(30e3, callback=checkpoint_callback)
 
-    if i == 1:
-        reset_timesteps = True
-    else:
-        reset_timesteps = False
-
-    model.learn(
-        total_timesteps=TIMESTEPS, 
-        reset_num_timesteps=reset_timesteps, 
-        tb_log_name=f"{env.env_name}-SAC-{current_time}"
-    )
-    model.save(f"{models_dir}/{TIMESTEPS*i//1000:d}.zip")
-
-# model.learn(
-#     total_timesteps=1000, 
-#     reset_num_timesteps=False, 
-#     tb_log_name=f"{env.env_name}-SAC-{current_time}"
-# )
 
 ## RENDER TRAINED MODEL FOR N EPISODES
 episodes = 10
