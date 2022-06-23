@@ -103,10 +103,10 @@ class CF_Env():
             self.obs = (Tau,d_ceil)
 
         
-        if Tau <= 0.17 or self.Flip_flag == True:
+        if Tau <= 0.14 or self.Flip_flag == True:
             self.Flip_flag = True
             self.Tau_thr = Tau
-            My = -1e-3
+            My = -4e-3
 
             self.reward,done = self.finish_sim(My)
 
@@ -162,12 +162,14 @@ class CF_Env():
                 self.t_step += 1
                 x,x_dot,z,z_dot,theta,dtheta = self.state
 
+                ## BODY CONTACT
                 if self.Impact_events[0] == True:
                     body_contact = True
                     pad_contacts = 0
                     done = True
 
-                if self.Impact_events[1] == True:
+                ## LEG 1 CONTACT
+                elif self.Impact_events[1] == True:
                     
                     beta_0,dbeta_0 = self.impact_Conversion(self.state,self.Impact_events)
                     beta = beta_0
@@ -215,6 +217,55 @@ class CF_Env():
                         if self.RENDER:
                             self.render()
 
+                ## LEG 2 CONTACT
+                elif self.Impact_events[2] == True:
+
+                    beta_0,dbeta_0 = self.impact_Conversion(self.state,self.Impact_events)
+                    beta = beta_0
+                    dbeta = dbeta_0
+
+                    l = L/2 # Half leg length [m]
+                    I_C = M_G*(4*l**2 + e**2 + 4*l*e*np.sin(gamma)) + I_G   # Inertia about contact point
+
+                    ## FIND IMPACT COORDS
+                    r_G_C2_0 = np.array(
+                                [[-(L+e*np.sin(gamma))*np.cos(beta_0)-e*np.cos(gamma)*np.sin(beta_0)],
+                                [-(L+e*np.sin(gamma))*np.sin(beta_0)+e*np.cos(gamma)*np.cos(beta_0)]])
+
+                    r_O_G = np.array([[x],[z]])
+                    r_O_C2 = r_O_G - r_G_C2_0
+
+                    ## SOLVE SWING ODE
+                    while not done:
+
+                        beta_acc = M_G*g/I_C*(2*l*np.cos(beta) + e*np.sin(beta+gamma))
+                        beta = beta + self.dt*dbeta
+                        dbeta = dbeta + self.dt*beta_acc
+
+                        if beta < self.beta_landing(impact_leg=2):
+                            body_contact = False
+                            pad_contacts = 4
+                            done = True
+
+                        elif beta > self.beta_prop(impact_leg=2):
+                            body_contact = True
+                            pad_contacts = 2
+                            done = True
+
+                        ## SOLVE FOR SWING BEHAVIOR IN GLOBAL COORDINATES
+                        r_G_C2 = np.array(
+                        [[-(L+e*np.sin(gamma))*np.cos(beta)-e*np.cos(gamma)*np.sin(beta)],
+                        [-(L+e*np.sin(gamma))*np.sin(beta)+e*np.cos(gamma)*np.cos(beta)]])
+
+                        theta = -((np.pi/2+gamma) + beta) # Convert beta in (e^) to theta in (G^)
+                        x = r_O_C2[0,0] + r_G_C2[0,0]  # x
+                        z = r_O_C2[1,0] + r_G_C2[1,0]  # z
+
+
+                        self.state = (x,_,z,_,theta,_)
+                        if self.RENDER:
+                            self.render()
+
 
 
 
@@ -234,7 +285,7 @@ class CF_Env():
 
 
 
-        x, x_dot = 0.0, -1.5
+        x, x_dot = 0.0, 1.5
         z, z_dot = 0.7, 2.5
         theta,dtheta = 0.0, 0.0
         self.state = (x,x_dot,z,z_dot,theta,dtheta)
