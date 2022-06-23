@@ -1,20 +1,17 @@
 from stable_baselines3 import PPO,SAC
-from Brake_Val_Env import Brake_Val_Env
-from Tau_Trigger_Cont_Env import Tau_Trigger_Cont_Env
-from Brake_Trigger_Env import Brake_Trigger_Env
+from CF_Env import CF_Env
+
 
 
 import gym
 
 # ## INITIATE ENVIRONMENT AND TRAINED MODEL5
-# env = gym.make("Pendulum-v1")
-env = Brake_Trigger_Env()
+env = CF_Env()
 env.reset()
-# env.env_name = "Brake_Val_Cont"
 
 ## SELECT MODEL FROM DIRECTORY
-models_dir = f"crazyflie_projects/DeepRL/models/{env.env_name}/SAC-10-31"
-model_path = f"{models_dir}/40.zip"
+models_dir = f"crazyflie_projects/DeepRL/models/{env.env_name}/SAC-13-29"
+model_path = f"{models_dir}/{env.env_name}_4000_steps.zip"
 
 
 model = SAC.load(model_path,env=env)

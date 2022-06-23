@@ -6,13 +6,14 @@ import gym
 
 
 from Brake_Trigger_Env import Brake_Trigger_Env
+from CF_Env import CF_Env
 
 ## COLLECT CURRENT TIME
 now = datetime.now()
 current_time = now.strftime("%H-%M")
 
 ## INITIATE ENVIRONMENT
-env = Brake_Trigger_Env()
+env = CF_Env()
 env.reset()
 
 
