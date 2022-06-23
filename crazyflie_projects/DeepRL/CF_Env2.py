@@ -21,7 +21,7 @@ class CF_Env2():
         self.RENDER = False
 
         ## POLICY PARAMETERS
-        self.z_d = 1.0
+        self.z_d = 2.0
         self.Once_flag = False
         self.state = None
         self.Tau_thr = 0.0
@@ -132,7 +132,7 @@ class CF_Env2():
             if self.RENDER:
                 self.render()
         
-        self.reward = np.clip(1/np.abs(d_ceil+1e-3),0,50)
+        self.reward = np.clip(1/np.abs(d_ceil+1e-3),0,50) + self.C_drag*5
         done = True
         return self.reward,done
 
@@ -145,7 +145,7 @@ class CF_Env2():
         
         ## RESET STATE
         vel_0 = np.random.uniform(low=0.5,high=3.0)
-        d_ceil_0 = np.random.uniform(low=0.5,high=3.0)
+        d_ceil_0 = np.random.uniform(low=0.5,high=1.5)
 
         tau_0 = d_ceil_0/vel_0
         pos_0 = self.z_d - d_ceil_0
@@ -204,16 +204,20 @@ class CF_Env2():
         
 
         ## CREATE QUADROTOR
-        pygame.draw.circle(self.surf,BLACK,c2p((z,0)),radius=10,width=3)
+        pygame.draw.circle(self.surf,BLACK,c2p((0,z)),radius=10,width=3)
+        pygame.draw.line(self.surf,BLACK,c2p((0,-5)),c2p((0,5)),width=1)
+
+
+        pygame.draw.line(self.surf,BLACK,c2p((-5,self.z_d)),c2p((5,self.z_d)),width=2)
         pygame.draw.line(self.surf,BLACK,c2p((-5,0)),c2p((5,0)),width=2)
-        pygame.draw.line(self.surf,BLACK,c2p((self.z_d,-5)),c2p((self.z_d,5)),width=2)
+
 
         
 
         if self.Once_flag == True:
-            pygame.draw.circle(self.surf,RED,c2p((z,0)),radius=7,width=0)
+            pygame.draw.circle(self.surf,RED,c2p((0,z)),radius=7,width=0)
         else:
-            pygame.draw.circle(self.surf,BLUE,c2p((z,0)),radius=7,width=0)
+            pygame.draw.circle(self.surf,BLUE,c2p((0,z)),radius=7,width=0)
 
 
 
@@ -236,7 +240,7 @@ class CF_Env2():
 
 
 
-        self.clock.tick(45)
+        self.clock.tick(60)
         pygame.display.flip()
 
         
@@ -252,7 +256,7 @@ class CF_Env2():
 if __name__ == '__main__':
     env = CF_Env2()
     env.RENDER = True
-    for _ in range(5):
+    for _ in range(25):
         env.reset()
         done = False
         while not done:
