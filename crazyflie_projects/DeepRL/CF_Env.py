@@ -2,6 +2,8 @@ import numpy as np
 import pygame
 from pygame import gfxdraw
 
+from gym import spaces
+
 
 
 class CF_Env():
@@ -13,11 +15,7 @@ class CF_Env():
         ## PHYSICS PARAMETERS
         self.dt = 0.01  # seconds between state updates
         self.t_step = 0
-        self.RENDER = False
-
-        self.Flip_flag = False
-        self.Impact_flag = False
-        self.Moment_flag = False
+    
 
         ## SET DIMENSIONAL CONSTRAINTS 
         self.h_ceil = 2.1
@@ -37,6 +35,13 @@ class CF_Env():
         self.state = None
         self.obs = None
 
+        self.RENDER = False
+
+        self.Flip_flag = False
+        self.Impact_flag = False
+        self.Moment_flag = False
+        self.Impact_events = []
+        self.Stages = [0,0,0,0,0,0]
 
 
         ## ENV LIMITS
@@ -44,9 +49,9 @@ class CF_Env():
         self.world_height = 3.0 # [m]
         self.t_threshold = 400
 
-        # high = np.finfo(np.float32).max
-        # self.observation_space = spaces.Box(-high, high, shape=(3,),dtype=np.float32)
-        # self.action_space = spaces.Box(low=np.array([-1,0]), high=np.array([1,4]), shape=(2,), dtype=np.float32)
+        high = np.finfo(np.float32).max
+        self.observation_space = spaces.Box(-high, high, shape=(2,),dtype=np.float32)
+        self.action_space = spaces.Box(low=np.array([-1,0]), high=np.array([1,4]), shape=(2,), dtype=np.float32)
 
         ## RENDERING PARAMETERS
         self.screen_width = 1000 # [pixels]
@@ -65,12 +70,17 @@ class CF_Env():
         x,x_dot,z,z_dot,theta,dtheta = self.state
         Tau,d_ceil = self.obs
         (L,e,gamma,M_G,M_L,g,PD,I_G) = self.params
+
+        done = False
+        reward = np.nan
     
-        if Tau > 0.5 and self.Flip_flag == False:
+        if self.Flip_flag == False:
 
             ##############################
             #     CONSTANT VEL TRAJ.
             ##############################
+
+            ## UPDATE STATE
             x_acc = 0
             x = x + self.dt*x_dot
             x_dot = x_dot + self.dt*x_acc
@@ -83,20 +93,47 @@ class CF_Env():
             theta = theta + self.dt*dtheta
             dtheta = dtheta + self.dt*theta_acc
 
-            impact_flag,impact_events = self.impact_conditions(x,z,theta)
+            self.state = (x,x_dot,z,z_dot,theta,dtheta)
 
-        if Tau <= 1.0 or self.Flip_flag == True:
+            ## UDPATE OBSERVATION
+            d_ceil = self.h_ceil - x
+            Tau = d_ceil/z_dot
+
+            self.obs = (Tau,d_ceil)
+
+        
+        if Tau <= 0.32 or self.Flip_flag == True:
             self.Flip_flag = True
             self.Tau_thr = Tau
-            My = 1e-3
+            My = -2e-3
 
-            if np.deg2rad(90)-np.abs(theta) < 0:
-                self.Moment_flag = True
+            self.reward,done = self.finish_sim(My)
+
             
-            ##############################
-            #     EXECUTE BODY MOMENT
-            ##############################
-            if self.Moment_flag == False:
+
+        
+
+        return np.array(self.obs,dtype=np.float32),reward,done,{}
+
+    def finish_sim(self,My):
+        
+        x,x_dot,z,z_dot,theta,dtheta = self.state
+        (L,e,gamma,M_G,M_L,g,PD,I_G) = self.params
+        done = False
+
+        while not done:
+
+            if self.Impact_flag == False:
+                ##############################
+                #     EXECUTE BODY MOMENT
+                ##############################
+
+                ## CHECK IF PAST 90 DEG
+                if np.abs(theta) < np.deg2rad(90):
+                    My = My
+                else:
+                    My = 0
+                
                 x_acc = -My/(M_G*PD)*np.cos(np.pi/2-theta)
                 x = x + self.dt*x_dot
                 x_dot = x_dot + self.dt*x_acc
@@ -108,35 +145,40 @@ class CF_Env():
                 theta_acc = My/I_G
                 theta = theta + self.dt*dtheta
                 dtheta = dtheta + self.dt*theta_acc
-            
-            else:
-                x_acc = 0
-                x = x + self.dt*x_dot
-                x_dot = x_dot + self.dt*x_acc
 
-                z_acc = -g
-                z = z + self.dt*z_dot
-                z_dot = z_dot + self.dt*z_acc
+                self.Impact_flag,self.Impact_events = self.impact_conditions(x,z,theta)
+
+            elif self.Impact_flag == True:
                 
-                theta_acc = 0
-                theta = theta + self.dt*dtheta
-                dtheta = dtheta + self.dt*theta_acc
+                if self.Impact_events[0] == True:
+                    pad_contacts = 0
+                    body_contact = True
+                    done = True
+
+                if self.Impact_events[1] == True:
+
+                    beta_0,dbeta_0 = self.impact_Conversion(self.state,self.Impact_events)
+
+
+
+
+            self.state = (x,x_dot,z,z_dot,theta,dtheta)
+
+
+            if self.RENDER:
+                self.render()
+
+
+            return 0.0,done
             
-
-
-
-
-        d_ceil = self.h_ceil - x
-        Tau = d_ceil/z_dot
-
-        self.obs = (Tau,d_ceil)
-        self.state = (x,x_dot,z,z_dot,theta,dtheta)
-
-    
+            
 
 
     def reset(self):
         self.Flip_flag = False
+        self.Impact_flag = False
+        self.Impact_events = []
+
 
 
         x, x_dot = 0.0, 1.0
@@ -202,6 +244,13 @@ class CF_Env():
         pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[6]),width=3)
 
         pygame.draw.circle(self.surf,RED,c2p(Pose[0]),5)
+
+        if self.Flip_flag == True:
+            pygame.draw.circle(self.surf,RED,c2p(Pose[0]),5)
+        else:
+            pygame.draw.circle(self.surf,BLUE,c2p(Pose[0]),5)
+
+
 
 
         ## DRAW FLOOR LINE
@@ -293,7 +342,52 @@ class CF_Env():
 
         return np.array([CG,P1,P2,L1,L2,Prop1,Prop2])
 
-        
+    def impact_Conversion(self,Impact_state,Impact_events):
+        """Converts impact conditions to rotational initial conditions
+
+        Args:
+            impact_cond (list, optional): Impact conditions [x,Vx,z,Vz,theta,dtheta]. Defaults to [0,0,0,0].
+            gamma (float, optional): Leg angle. Defaults to None.
+            L (float, optional): Leg angle. Defaults to None.
+
+        Returns:
+            beta,dbeta: Rotational initial conditions
+        """        
+
+        (L,e,gamma,M_G,M_L,G,PD,I_G) = self.params
+
+        l = L/2
+        I_c = M_G*(4*l**2 + e**2 + 4*l*e*np.sin(gamma)) + I_G
+
+        x,vx,z,vz,theta,dtheta = Impact_state
+
+        ## SWAP THETA SIGNS TO PRESERVE MATH WORK (SDOF_Analytical_Model.pdf)
+        # Convert from G_y^ to e_y^ coordinate system
+        theta = -theta
+        dtheta = -dtheta
+
+        if Impact_events[1] == True:
+
+            beta_0 = theta - (np.pi/2 - gamma)
+
+            H_dtheta = I_G*dtheta                                       # Angular Momentum from dtheta
+            H_vx = -M_G*vx*(2*l*np.cos(gamma+theta)-e*np.sin(theta))    # Angular momentum from vel_x
+            H_vy =  M_G*vz*(2*l*np.sin(gamma+theta)+e*np.cos(theta))    # Angular momentum from vel_y
+
+        elif Impact_events[2] == True:
+
+            beta_0 = theta - (np.pi/2 + gamma)
+
+            H_dtheta = I_G*dtheta                                       # Angular Momentum from dtheta
+            H_vx = -M_G*vx*(2*l*np.cos(gamma-theta)+e*np.sin(theta))    # Angular momentum from vel_x
+            H_vy = M_G*vz*(2*l*np.sin(gamma-theta)+e*np.cos(theta))     # Angular momentum from vel_y
+
+
+        dbeta_0 = 1/I_c*(H_dtheta + H_vx + H_vy)
+
+
+        return beta_0,dbeta_0
+
     def close(self):
         if self.screen is not None:
             import pygame
@@ -311,7 +405,7 @@ if __name__ == '__main__':
         env.reset()
         while not done:
             env.render()
-            env.step(np.array([1.0,2.0]))
+            obs,reward,done,info = env.step(np.array([1.0,2.0]))
 
 
     env.close()
