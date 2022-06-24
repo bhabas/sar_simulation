@@ -30,6 +30,7 @@ class CF_Env3():
         self.state = None
         self.Tau_thr = 0.0
         self.reward = 0.0
+        self.theta_impact = 0.0
 
         ## SET DIMENSIONAL CONSTRAINTS 
         self.h_ceil = 2.1
@@ -52,7 +53,7 @@ class CF_Env3():
         )
 
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
-        self.action_space = spaces.Box(low=np.array([0]), high=np.array([1]), shape=(1,), dtype=np.float32)
+        self.action_space = spaces.Box(low=np.array([-5]), high=np.array([5]), shape=(1,), dtype=np.float32)
 
         ## ENV LIMITS
         self.world_width = 4.0  # [m]
@@ -75,10 +76,9 @@ class CF_Env3():
         
         x,vx,z,vz,theta,dtheta = self.state
         Tau,d_ceil = self.obs
-        Tau_trg = 0.14
-
+        Tau_trg = 2.0
         ## ONCE ACTIVATED SAMPLE ACTION       
-        if Tau >= Tau_trg:
+        if action[0] < Tau_trg:
 
             ## UPDATE STATE
             self.t_step += 1
@@ -120,9 +120,9 @@ class CF_Env3():
 
             else:
                 ## CALC REWARD
-                reward = self.CalcReward()
+                reward = self.CalcReward()/2
 
-        elif Tau_trg:
+        elif action[0] > Tau_trg:
             self.Once_flag = True
             self.Tau_thr = Tau
             reward = self.finish_sim(action)
@@ -144,7 +144,7 @@ class CF_Env3():
 
             ## CHECK IF PAST 90 DEG
             if np.abs(theta) < np.deg2rad(90) and self.MomentCutoff == False:
-                My = -action[0]*7e-3
+                My = -5e-3
             else:
                 self.MomentCutoff= True
                 My = 0
@@ -186,6 +186,8 @@ class CF_Env3():
                     
 
             elif self.Impact_flag == True:
+
+                self.theta_impact = theta
 
                 ## BODY CONTACT
                 if self.Impact_events[0] == True:
@@ -328,7 +330,7 @@ class CF_Env3():
         else:
             R1 = 0.0
 
-        return R1
+        return R1 + np.clip(1/np.abs(self.d_min+1e-3),0,10)
 
 
     def render(self,mode=None):
@@ -607,20 +609,24 @@ class CF_Env3():
         self.Impact_events = [False,False,False]
         self.body_contact = False
         self.pad_contacts = 0
+        self.theta_impact = 0.0
 
         self.Tau_thr = 0.0
         self.d_min = 500
         
         ## RESET STATE
+        x_0 = 0.0
         z_0 = 0.4
-        vz_0 = np.random.uniform(low=2.0,high=4.0)
-        # vz_0 = 2.5
 
-        x = 0.0
-        vx = 0.0
+        vel = np.random.uniform(low=2.0,high=3.0)
+        phi = np.random.uniform(low=40,high=90)
+        # phi = 90
+        vx_0 = vel*np.cos(np.deg2rad(phi))
+        vz_0 = vel*np.sin(np.deg2rad(phi))
+
         theta = 0.0
         dtheta = 0.0
-        self.state = (x,vx,z_0,vz_0,theta,dtheta)
+        self.state = (x_0,vx_0,z_0,vz_0,theta,dtheta)
 
 
 
@@ -643,6 +649,7 @@ if __name__ == '__main__':
         while not done:
             env.render()
             obs,reward,done,info = env.step(env.action_space.sample())
+            env.action_space.sample()
 
 
     env.close()

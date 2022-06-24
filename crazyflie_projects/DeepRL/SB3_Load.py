@@ -14,13 +14,13 @@ env = CF_Env3()
 env.reset()
 
 ## SELECT MODEL FROM DIRECTORY
-models_dir = f"crazyflie_projects/DeepRL/models/{env.env_name}/SAC-13-35"
-model_path = f"{models_dir}/{env.env_name}_{4}000_steps.zip"
+models_dir = f"crazyflie_projects/DeepRL/models/{env.env_name}/PPO-17-58"
+model_path = f"{models_dir}/{env.env_name}_{254}000_steps.zip"
 
 
-model = SAC.load(model_path,env=env)
+model = PPO.load(model_path,env=env)
 
-## RENDER TRAINED MODEL FOR N EPISODES
+## RENDER TRAINED MODEL FOR N EPISODES-
 episodes = 25
 env.RENDER = True
 for ep in range(episodes):

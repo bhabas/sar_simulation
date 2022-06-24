@@ -22,7 +22,7 @@ env.reset()
 
 
 ## CREATE MODEL AND LOG DIRECTORY
-models_dir = f"crazyflie_projects/DeepRL/models/{env.env_name}/SAC-{current_time}"
+models_dir = f"crazyflie_projects/DeepRL/models/{env.env_name}/PPO-{current_time}"
 log_dir = "/tmp/logs"
 
 checkpoint_callback = CheckpointCallback(save_freq=2000, save_path=models_dir,name_prefix=env.env_name)
@@ -31,7 +31,7 @@ checkpoint_callback = CheckpointCallback(save_freq=2000, save_path=models_dir,na
 #                              deterministic=True, render=False)
 
 
-model = SAC(
+model = PPO(
     "MlpPolicy",
     env,
     gamma=0.999,
