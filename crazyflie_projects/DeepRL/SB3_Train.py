@@ -23,10 +23,10 @@ env.reset()
 models_dir = f"crazyflie_projects/DeepRL/models/{env.env_name}/SAC-{current_time}"
 log_dir = "/tmp/logs"
 
-checkpoint_callback = CheckpointCallback(save_freq=1000, save_path=models_dir,name_prefix=env.env_name)
-eval_callback = EvalCallback(env, best_model_save_path=models_dir,
-                             log_path=log_dir, eval_freq=100,
-                             deterministic=True, render=False)
+checkpoint_callback = CheckpointCallback(save_freq=2000, save_path=models_dir,name_prefix=env.env_name)
+# eval_callback = EvalCallback(env, best_model_save_path=models_dir,
+#                              log_path=log_dir, eval_freq=100,
+#                              deterministic=True, render=False)
 
 
 model = SAC(
@@ -41,7 +41,7 @@ model = SAC(
     tensorboard_log=log_dir
 ) 
 
-model.learn(total_timesteps=30e3,callback=checkpoint_callback)
+model.learn(total_timesteps=100e3,callback=checkpoint_callback)
 
 
 ## RENDER TRAINED MODEL FOR N EPISODES

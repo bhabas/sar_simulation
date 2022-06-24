@@ -25,8 +25,9 @@ class CF_Env2():
         self.Once_flag = False
         self.state = None
         self.Tau_thr = 0.0
-        self.C_drag = 0.0
         self.reward = 0.0
+
+        self.h_ceil = 2.1
 
 
         self.z_threshold = 2.4
@@ -40,7 +41,7 @@ class CF_Env2():
         )
 
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
-        self.action_space = spaces.Box(low=np.array([-1,0]), high=np.array([1,4]), shape=(2,), dtype=np.float32)
+        self.action_space = spaces.Box(low=np.array([-1]), high=np.array([1]), shape=(1,), dtype=np.float32)
 
         ## ENV LIMITS
         self.world_width = 4.0  # [m]
@@ -61,36 +62,33 @@ class CF_Env2():
         assert self.action_space.contains(action), err_msg
         assert self.state is not None, "Call reset before using step method."
         
-        z,z_dot = self.state
-        tau,d_ceil = self.obs
+        z,vz = self.state
+        Tau,d_ceil = self.obs
 
 
-        ## ONCE ACTIVATED SAMPLE ACTION
-        if action[0] <= 0 and self.Once_flag == False:
-            self.Once_flag = True
-            self.C_drag = action[1]+1
-            self.Tau_thr = tau
-            reward,done = self.finish_sim()
-        
-        elif action[0] > 0 and self.Once_flag == False:
+        ## ONCE ACTIVATED SAMPLE ACTION       
+        if action[0] >= 0:
 
             ## UPDATE STATE
             self.t_step += 1
-            x_acc = (-self.C_drag*z_dot)/self.masscart
-            z = z + self.dt*z_dot
-            z_dot = z_dot + self.dt*x_acc
-            self.state = (z, z_dot)
+            z_acc = 0.0
+            z = z + self.dt*vz
+            vz = vz + self.dt*z_acc
+            self.state = (z, vz)
 
             ## UPDATE OBSERVATION
             d_ceil = self.z_d - z
-            tau = d_ceil/z_dot
-            self.obs = (tau,d_ceil)
+            Tau = d_ceil/vz
+            self.obs = (Tau,d_ceil)
+
+            if d_ceil <= self.d_min:
+                self.d_min = d_ceil
 
             ## CHECK FOR DONE
             done = bool(
-                z > self.z_threshold
-                or self.t_step >= self.t_threshold
-                or z_dot <= 0.01
+                self.t_step >= self.t_threshold
+                or z > 2.4
+                or z < 0.2
             )
 
             ## CALCULATE REWARD
@@ -98,6 +96,12 @@ class CF_Env2():
                 reward = 0
             else:
                 reward = np.clip(1/np.abs(d_ceil+1e-3),0,10)
+
+        elif action[0] < 0:
+            self.Once_flag = True
+            self.Tau_thr = Tau
+            done = True
+            reward = self.finish_sim()
 
 
 
@@ -113,46 +117,52 @@ class CF_Env2():
             ## UPDATE STATE
             self.t_step += 1
             z,z_dot = self.state
-            z_acc = (-self.C_drag*z_dot)/self.masscart
+            z_acc = -9.81
             z = z + self.dt*z_dot
             z_dot = z_dot + self.dt*z_acc
             self.state = (z, z_dot)
 
             ## UPDATE OBSERVATION
             d_ceil = self.z_d - z
-            tau = d_ceil/z_dot
+            Tau = d_ceil/z_dot
+
+            if d_ceil <= self.d_min:
+                self.d_min = d_ceil
 
             ## CHECK FOR DONE
             done = bool(
-                z > self.z_threshold
-                or self.t_step >= self.t_threshold
-                or z_dot <= 0.01
+                self.t_step >= self.t_threshold
+                or z > 2.4
+                or z < 0.2
             )
 
             if self.RENDER:
                 self.render()
         
-        self.reward = np.clip(1/np.abs(d_ceil+1e-3),0,50) + self.C_drag*5
-        done = True
-        return self.reward,done
+        self.reward = np.clip(1/np.abs(self.d_min+1e-3),0,50)
+        return self.reward
 
     def reset(self):
         ## RESET PHYSICS PARAMS
         self.t_step = 0
         self.Once_flag = False
-        self.C_drag = 0.0
         self.Tau_thr = 0.0
+        self.d_min = 500
         
         ## RESET STATE
-        vel_0 = np.random.uniform(low=0.5,high=3.0)
-        d_ceil_0 = np.random.uniform(low=0.5,high=1.5)
+        z_0 = 0.4
+        vz_0 = np.random.uniform(low=0.5,high=3.0)
+        self.state = (z_0,vz_0)
 
-        tau_0 = d_ceil_0/vel_0
-        pos_0 = self.z_d - d_ceil_0
-        self.state = (pos_0,vel_0)
+
+
 
         ## RESET OBSERVATION
-        self.obs = (tau_0,d_ceil_0)
+        d_ceil_0 = self.h_ceil - z_0
+        Tau_0 = d_ceil_0/vz_0
+        self.obs = (Tau_0,d_ceil_0)
+
+        self.start_vals = (vz_0,Tau_0)
 
         return np.array(self.obs,dtype=np.float32)
 
@@ -222,20 +232,25 @@ class CF_Env2():
 
 
         text_t_step = my_font.render(f'Time Step: {self.t_step:03d}', True, BLACK)
+        text_Vz = my_font.render(f'Vz_0: {self.start_vals[0]:.02f}', True, BLACK)
+        text_Tau_0 = my_font.render(f'Tau_0: {self.start_vals[1]:.03f}', True, BLACK)
+        text_Tau_trg = my_font.render(f'Tau_trg: {self.Tau_thr:.03f}', True, BLACK)
+        text_d_min = my_font.render(f'd_min: {self.d_min:.03f}', True, BLACK)
         text_reward = my_font.render(f'Prev Reward: {self.reward:.01f}',True, BLACK)
-        text_action = my_font.render(f'C_drag: {self.C_drag:.03f}', True, BLACK)
-        text_Tau = my_font.render(f'Tau_trg: {self.Tau_thr:.03f}', True, BLACK)
+
 
         
         
 
         ## FLIP IMAGE SO X->RIGHT AND Y->UP
         self.surf = pygame.transform.flip(self.surf, False, True)
-        self.screen.blit(self.surf,     (0, 0))
+        self.screen.blit(self.surf,     (0,0))
         self.screen.blit(text_t_step,   (5,5))
-        self.screen.blit(text_reward,   (5,30))
-        self.screen.blit(text_Tau,      (5,55))
-        self.screen.blit(text_action,   (5,80))
+        self.screen.blit(text_Vz,       (5,30))
+        self.screen.blit(text_Tau_0,    (5,55))
+        self.screen.blit(text_Tau_trg,  (5,80))
+        self.screen.blit(text_d_min,    (5,105))
+        self.screen.blit(text_reward,   (5,130))
 
 
 

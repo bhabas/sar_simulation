@@ -13,8 +13,8 @@ env = CF_Env2()
 env.reset()
 
 ## SELECT MODEL FROM DIRECTORY
-models_dir = f"crazyflie_projects/DeepRL/models/{env.env_name}/SAC-17-18"
-model_path = f"{models_dir}/{env.env_name}_12000_steps.zip"
+models_dir = f"crazyflie_projects/DeepRL/models/{env.env_name}/SAC-21-50"
+model_path = f"{models_dir}/{env.env_name}_100000_steps.zip"
 
 
 model = SAC.load(model_path,env=env)
