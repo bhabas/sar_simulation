@@ -32,7 +32,7 @@ class CF_Env3():
         I_G = 16.5717e-6    # Moment of Intertia [kg*m^2]
         L = 0.1
         gamma = np.deg2rad(30)
-        M_G = 1.00 #0.035 
+        M_G = 0.035 
         M_L = 0.002
         e = 0.018
         self.params = (L,e,gamma,M_G,M_L,g,PD,I_G)
@@ -70,7 +70,7 @@ class CF_Env3():
         z,vz,x,vx,theta,dtheta = self.state
         Tau,d_ceil = self.obs
 
-        # if Tau <= 0.5:
+        # if Tau <= 0.14:
         #     action[0] = -1
         # else:
         #     action[0] = 1

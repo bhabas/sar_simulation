@@ -8,33 +8,38 @@ import os
 import numpy as np
 
 
-class CF_Env2():
+class CF_Env3():
     metadata = {'render.modes': ['human']}
     def __init__(self):
-        super(CF_Env2, self).__init__()
-        self.env_name = "CF_Env2"
+        super(CF_Env3, self).__init__()
+        self.env_name = "CF_Env3"
 
         ## PHYSICS PARAMETERS
         self.dt = 0.01  # seconds between state updates
-        self.masscart = 1.0
         self.t_step = 0
         self.RENDER = False
 
         ## POLICY PARAMETERS
-        self.z_d = 2.0
         self.Once_flag = False
         self.state = None
         self.Tau_thr = 0.0
         self.reward = 0.0
 
+        ## SET DIMENSIONAL CONSTRAINTS 
         self.h_ceil = 2.1
-
-
-        self.z_threshold = 2.4
+        g = 9.81        # Gravity [m/s^2]
+        PD = 0.115/2    # Prop Distance from COM [m]
+        I_G = 16.5717e-6    # Moment of Intertia [kg*m^2]
+        L = 0.1
+        gamma = np.deg2rad(30)
+        M_G = 0.035 
+        M_L = 0.002
+        e = 0.018
+        self.params = (L,e,gamma,M_G,M_L,g,PD,I_G)
 
         high = np.array(
             [
-                self.z_threshold * 2,
+                2.4*2,
                 np.finfo(np.float32).max,
             ],
             dtype=np.float32,
@@ -62,22 +67,36 @@ class CF_Env2():
         assert self.action_space.contains(action), err_msg
         assert self.state is not None, "Call reset before using step method."
         
-        z,vz = self.state
+        z,vz,x,vx,theta,dtheta = self.state
         Tau,d_ceil = self.obs
 
+        # if Tau <= 0.14:
+        #     action[0] = -1
+        # else:
+        #     action[0] = 1
 
         ## ONCE ACTIVATED SAMPLE ACTION       
         if action[0] >= 0:
 
             ## UPDATE STATE
             self.t_step += 1
+
             z_acc = 0.0
             z = z + self.dt*vz
             vz = vz + self.dt*z_acc
-            self.state = (z, vz)
+
+            x_acc = 0.0
+            x = x + self.dt*vx
+            vx = vx + self.dt*x_acc
+
+            theta_acc = 0.0
+            theta = theta + self.dt*dtheta
+            dtheta = dtheta + self.dt*theta_acc
+
+            self.state = (z,vz,x,vx,theta,dtheta)
 
             ## UPDATE OBSERVATION
-            d_ceil = self.z_d - z
+            d_ceil = self.h_ceil - z
             Tau = d_ceil/vz
             self.obs = (Tau,d_ceil)
 
@@ -116,15 +135,25 @@ class CF_Env2():
 
             ## UPDATE STATE
             self.t_step += 1
-            z,z_dot = self.state
+            z,vz,x,vx,theta,dtheta = self.state
+
             z_acc = -9.81
-            z = z + self.dt*z_dot
-            z_dot = z_dot + self.dt*z_acc
-            self.state = (z, z_dot)
+            z = z + self.dt*vz
+            vz = vz + self.dt*z_acc
+
+            x_acc = 0.0
+            x = x + self.dt*vx
+            vx = vx + self.dt*x_acc
+
+            theta_acc = 0.0
+            theta = theta + self.dt*dtheta
+            dtheta = dtheta + self.dt*theta_acc
+
+            self.state = (z,vz,x,vx,theta,dtheta)
 
             ## UPDATE OBSERVATION
-            d_ceil = self.z_d - z
-            Tau = d_ceil/z_dot
+            d_ceil = self.h_ceil - z
+            Tau = d_ceil/vz
 
             if d_ceil <= self.d_min:
                 self.d_min = d_ceil
@@ -152,7 +181,14 @@ class CF_Env2():
         ## RESET STATE
         z_0 = 0.4
         vz_0 = np.random.uniform(low=0.5,high=3.0)
-        self.state = (z_0,vz_0)
+        # vz_0 = 2.0
+
+        x = 0.0
+        vx = 1.0
+
+        theta = 0.0
+        dtheta = -2.0
+        self.state = (z_0,vz_0,x,vx,theta,dtheta)
 
 
 
@@ -202,7 +238,7 @@ class CF_Env2():
 
         if self.state is None:
             return None
-        z,vz = self.state
+        z,vz,x,vx,theta,dtheta = self.state
 
         ## CREATE BACKGROUND SURFACE
         self.surf = pygame.Surface((self.screen_width, self.screen_height))
@@ -210,24 +246,34 @@ class CF_Env2():
 
         ## CREATE TIMESTEP LABEL
         my_font = pygame.font.SysFont(None, 30)
+
+
+        Pose = self.get_pose(x,z,theta)
+
+        ## CREATE QUADROTOR
+        pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[1]),width=3)
+        pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[2]),width=3)
+        pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[3]),width=3)
+        pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[4]),width=3)
+        pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[5]),width=3)
+        pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[6]),width=3)
     
         
 
-        ## CREATE QUADROTOR
-        pygame.draw.circle(self.surf,BLACK,c2p((0,z)),radius=10,width=3)
         pygame.draw.line(self.surf,BLACK,c2p((0,-5)),c2p((0,5)),width=1)
 
 
-        pygame.draw.line(self.surf,BLACK,c2p((-5,self.z_d)),c2p((5,self.z_d)),width=2)
+        pygame.draw.line(self.surf,BLACK,c2p((-5,self.h_ceil)),c2p((5,self.h_ceil)),width=2)
         pygame.draw.line(self.surf,BLACK,c2p((-5,0)),c2p((5,0)),width=2)
 
 
         
 
+        pygame.draw.circle(self.surf,BLACK,c2p((x,z)),radius=7,width=3)
         if self.Once_flag == True:
-            pygame.draw.circle(self.surf,RED,c2p((0,z)),radius=7,width=0)
+            pygame.draw.circle(self.surf,RED,c2p((x,z)),radius=4,width=0)
         else:
-            pygame.draw.circle(self.surf,BLUE,c2p((0,z)),radius=7,width=0)
+            pygame.draw.circle(self.surf,BLUE,c2p((x,z)),radius=4,width=0)
 
 
 
@@ -258,6 +304,49 @@ class CF_Env2():
         self.clock.tick(60)
         pygame.display.flip()
 
+    def get_pose(self,x_pos,z_pos,theta):           
+        """Returns position data of all model lines for a given state
+
+        Args:
+            model_state (list): [x,z,theta]
+
+        Returns:
+            model_pose (tuple): Returns a tuple of all line endpoint coordinates
+        """        
+
+        (L,e,gamma,M_G,M_L,g,PD,I_G) = self.params
+
+
+        ## DEFINE LOCATION OF MODEL ORIGIN
+        CG = np.array([x_pos,z_pos])
+
+
+        ## UPDATE LINE COORDINATES ( These are in body (bx^,bz^) coordinates from MO)
+        P1 = np.array([ e,0]) # Hinge_1 Location
+        P2 = np.array([-e,0])
+        
+        L1 = np.array([e + L*np.sin(gamma), # Leg_1 location
+                          -L*np.cos(gamma)])
+        L2 = np.array([-e - L*np.sin(gamma),
+                           -L*np.cos(gamma)])
+
+        Prop1 = np.array([ PD, 0]) # Prop_1 Location
+        Prop2 = np.array([-PD, 0])
+
+            
+        ## CREATE ROTATION MATRIX FROM THETA VALUE
+        R = np.array([[np.cos(-theta),-np.sin(-theta)],
+                        [np.sin(-theta), np.cos(-theta)]])
+
+        ## TRANSLATE AND ROTATE BODY COORDS INTO GLOBAL (bx^ -> ex^)
+        P1 = CG + R.dot(P1)
+        P2 = CG + R.dot(P2)
+        L1 = CG + R.dot(L1)
+        L2 = CG + R.dot(L2)
+        Prop1 = CG + R.dot(Prop1)
+        Prop2 = CG + R.dot(Prop2)
+
+        return np.array([CG,P1,P2,L1,L2,Prop1,Prop2])
         
     def close(self):
         if self.screen is not None:
@@ -269,7 +358,7 @@ class CF_Env2():
 
 
 if __name__ == '__main__':
-    env = CF_Env2()
+    env = CF_Env3()
     env.RENDER = True
     for _ in range(25):
         env.reset()
