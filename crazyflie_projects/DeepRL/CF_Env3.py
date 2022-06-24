@@ -15,12 +15,15 @@ class CF_Env3():
         self.env_name = "CF_Env3"
 
         ## PHYSICS PARAMETERS
-        self.dt = 0.01  # seconds between state updates
+        self.dt = 0.005  # seconds between state updates
         self.t_step = 0
         self.RENDER = False
 
+        self.MomentCutoff = False
         self.Impact_flag = False
         self.Impact_events = [False,False,False]
+        self.body_contact = False
+        self.pad_contacts = 0
 
         ## POLICY PARAMETERS
         self.Once_flag = False
@@ -49,12 +52,12 @@ class CF_Env3():
         )
 
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
-        self.action_space = spaces.Box(low=np.array([-1]), high=np.array([1]), shape=(1,), dtype=np.float32)
+        self.action_space = spaces.Box(low=np.array([0]), high=np.array([1]), shape=(1,), dtype=np.float32)
 
         ## ENV LIMITS
         self.world_width = 4.0  # [m]
         self.world_height = 3.0 # [m]
-        self.t_threshold = 1000
+        self.t_threshold = 600
 
 
         ## RENDERING PARAMETERS
@@ -72,14 +75,10 @@ class CF_Env3():
         
         x,vx,z,vz,theta,dtheta = self.state
         Tau,d_ceil = self.obs
-
-        if Tau <= 0.14:
-            action[0] = -1
-        else:
-            action[0] = 1
+        Tau_trg = 0.14
 
         ## ONCE ACTIVATED SAMPLE ACTION       
-        if action[0] >= 0:
+        if Tau >= Tau_trg:
 
             ## UPDATE STATE
             self.t_step += 1
@@ -96,40 +95,44 @@ class CF_Env3():
             theta = theta + self.dt*dtheta
             dtheta = dtheta + self.dt*theta_acc
 
-            self.state = (x,vx,z,vz,theta,dtheta)
-
             ## UPDATE OBSERVATION
             d_ceil = self.h_ceil - z
             Tau = d_ceil/vz
-            self.obs = (Tau,d_ceil)
 
-            if d_ceil <= self.d_min:
-                self.d_min = d_ceil
+            ## CHECK FOR IMPACT
+            self.Impact_flag,self.Impact_events = self.impact_conditions(x,z,theta)
 
             ## CHECK FOR DONE
             done = bool(
                 self.t_step >= self.t_threshold
-                or z > 2.4
                 or z < 0.2
+                or self.Impact_flag
             )
 
-            ## CALCULATE REWARD
             if not done:
-                reward = 0
-            else:
-                reward = np.clip(1/np.abs(d_ceil+1e-3),0,10)
 
-        elif action[0] < 0:
+                if d_ceil <= self.d_min:
+                    self.d_min = d_ceil
+
+                self.state = (x,vx,z,vz,theta,dtheta)
+                self.obs = (Tau,d_ceil)
+                reward = 0
+
+            else:
+                ## CALC REWARD
+                reward = self.CalcReward()
+
+        elif Tau_trg:
             self.Once_flag = True
             self.Tau_thr = Tau
+            reward = self.finish_sim(action)
             done = True
-            reward = self.finish_sim()
 
 
 
         return np.array(self.obs,dtype=np.float32), reward, done, {}
 
-    def finish_sim(self):
+    def finish_sim(self,action):
 
         done = False
         (L,e,gamma,M_G,M_L,g,PD,I_G) = self.params
@@ -139,36 +142,55 @@ class CF_Env3():
             self.t_step += 1
             x,vx,z,vz,theta,dtheta = self.state
 
+            ## CHECK IF PAST 90 DEG
+            if np.abs(theta) < np.deg2rad(90) and self.MomentCutoff == False:
+                My = -action[0]*7e-3
+            else:
+                self.MomentCutoff= True
+                My = 0
+
+            ## BODY MOMENT/PROJECTILE FLIGHT
             if self.Impact_flag == False:
 
-                z_acc = -g
+                ## UPDATE STATE
+                z_acc = -My/(M_G*PD)*np.sin(np.pi/2-theta) - g
                 z = z + self.dt*vz
                 vz = vz + self.dt*z_acc
 
-                x_acc = 0
+                x_acc = -My/(M_G*PD)*np.cos(np.pi/2-theta)
                 x = x + self.dt*vx
                 vx = vx + self.dt*x_acc
 
-                theta_acc = 0
+                theta_acc = My/I_G
                 theta = theta + self.dt*dtheta
                 dtheta = dtheta + self.dt*theta_acc
-
-                self.Impact_flag,self.Impact_events = self.impact_conditions(x,z,theta)
-                self.state = (x,vx,z,vz,theta,dtheta)
 
                 ## UPDATE OBSERVATION
                 d_ceil = self.h_ceil - z
                 Tau = d_ceil/vz
 
-                if d_ceil <= self.d_min:
-                    self.d_min = d_ceil
+                ## CHECK FOR IMPACT
+                self.Impact_flag,self.Impact_events = self.impact_conditions(x,z,theta)
+
+                ## CHECK FOR DONE
+                done = bool(
+                    self.t_step >= self.t_threshold
+                    or z < 0.2
+                )
+                
+                if not done:
+                    self.state = (x,vx,z,vz,theta,dtheta)
+
+                    if d_ceil <= self.d_min:
+                        self.d_min = d_ceil
+                    
 
             elif self.Impact_flag == True:
 
                 ## BODY CONTACT
                 if self.Impact_events[0] == True:
-                    body_contact = True
-                    pad_contacts = 0
+                    self.body_contact = True
+                    self.pad_contacts = 0
                     done = True
 
                 ## LEG 1 CONTACT
@@ -199,13 +221,17 @@ class CF_Env3():
                         dbeta = dbeta + self.dt*beta_acc
 
                         if beta > self.beta_landing(impact_leg=1):
-                            body_contact = False
-                            pad_contacts = 4
+                            self.body_contact = False
+                            self.pad_contacts = 4
                             done = True
 
                         elif beta < self.beta_prop(impact_leg=1):
-                            body_contact = True
-                            pad_contacts = 2
+                            self.body_contact = True
+                            self.pad_contacts = 2
+                            done = True
+                        elif self.t_step >= self.t_threshold:
+                            self.body_contact = False
+                            self.pad_contacts = 2
                             done = True
 
                         ## SOLVE FOR SWING BEHAVIOR IN GLOBAL COORDINATES
@@ -218,57 +244,92 @@ class CF_Env3():
                         z = r_O_C1[1,0] + r_G_C1[1,0]  # z
 
 
-                        self.state = (x,_,z,_,theta,_)
+                        self.state = (x,0,z,0,theta,0)
+                        if self.RENDER:
+                            self.render()
+
+                ## LEG 2 CONTACT
+                elif self.Impact_events[2] == True:
+
+                    beta_0,dbeta_0 = self.impact_conversion(self.state,self.Impact_events)
+                    beta = beta_0
+                    dbeta = dbeta_0
+
+                    l = L/2 # Half leg length [m]
+                    I_C = M_G*(4*l**2 + e**2 + 4*l*e*np.sin(gamma)) + I_G   # Inertia about contact point
+
+                    ## FIND IMPACT COORDS
+                    r_G_C2_0 = np.array(
+                                [[-(L+e*np.sin(gamma))*np.cos(beta_0)-e*np.cos(gamma)*np.sin(beta_0)],
+                                [-(L+e*np.sin(gamma))*np.sin(beta_0)+e*np.cos(gamma)*np.cos(beta_0)]])
+
+                    r_O_G = np.array([[x],[z]])
+                    r_O_C2 = r_O_G - r_G_C2_0
+
+                    ## SOLVE SWING ODE
+                    while not done:
+
+                        self.t_step += 1
+
+                        beta_acc = M_G*g/I_C*(2*l*np.cos(beta) + e*np.sin(beta+gamma))
+                        beta = beta + self.dt*dbeta
+                        dbeta = dbeta + self.dt*beta_acc
+
+                        if beta < self.beta_landing(impact_leg=2):
+                            self.body_contact = False
+                            self.pad_contacts = 4
+                            done = True
+
+                        elif beta > self.beta_prop(impact_leg=2):
+                            self.body_contact = True
+                            self.pad_contacts = 2
+                            done = True
+
+                        elif self.t_step >= self.t_threshold:
+                            self.body_contact = False
+                            self.pad_contacts = 2
+                            done = True
+
+                        ## SOLVE FOR SWING BEHAVIOR IN GLOBAL COORDINATES
+                        r_G_C2 = np.array(
+                        [[-(L+e*np.sin(gamma))*np.cos(beta)-e*np.cos(gamma)*np.sin(beta)],
+                        [-(L+e*np.sin(gamma))*np.sin(beta)+e*np.cos(gamma)*np.cos(beta)]])
+
+                        theta = -((np.pi/2+gamma) + beta) # Convert beta in (e^) to theta in (G^)
+                        x = r_O_C2[0,0] + r_G_C2[0,0]  # x
+                        z = r_O_C2[1,0] + r_G_C2[1,0]  # z
+
+
+                        self.state = (x,0,z,0,theta,0)
                         if self.RENDER:
                             self.render()
 
 
-            ## CHECK FOR DONE
-            done = bool(
-                self.t_step >= self.t_threshold
-                or z > 2.4
-                or z < 0.2
-            )
-
             if self.RENDER:
                 self.render()
         
-        self.reward = np.clip(1/np.abs(self.d_min+1e-3),0,50)
+        self.reward = self.CalcReward()
         return self.reward
 
-    def reset(self):
-        ## RESET PHYSICS PARAMS
-        self.t_step = 0
-        self.Once_flag = False
-        self.Impact_flag = False
-        self.Impact_events = [False,False,False]
+    def CalcReward(self):
 
-        self.Tau_thr = 0.0
-        self.d_min = 500
+        if self.pad_contacts == 4: 
+            if self.body_contact == False:
+                R1 = 150
+            else:
+                R1 = 100
+            
+        elif self.pad_contacts == 2: 
+            if self.body_contact == False:
+                R1 = 50
+            else:
+                R1 = 25
         
-        ## RESET STATE
-        z_0 = 0.4
-        vz_0 = np.random.uniform(low=0.5,high=3.0)
-        vz_0 = 2.0
+        else:
+            R1 = 0.0
 
-        x = 0.0
-        vx = 1.0
+        return R1
 
-        theta = -2.7
-        dtheta = 0.0
-        self.state = (x,vx,z_0,vz_0,theta,dtheta)
-
-
-
-
-        ## RESET OBSERVATION
-        d_ceil_0 = self.h_ceil - z_0
-        Tau_0 = d_ceil_0/vz_0
-        self.obs = (Tau_0,d_ceil_0)
-
-        self.start_vals = (vz_0,Tau_0)
-
-        return np.array(self.obs,dtype=np.float32)
 
     def render(self,mode=None):
 
@@ -278,7 +339,7 @@ class CF_Env3():
         
         def c2p(Pos): ## CONVERTS COORDINATES TO PIXEL LOCATION      
 
-            x_offset = 2
+            x_offset = 1
             y_offset = 0.3
 
             scale_x = self.screen_width/self.world_width
@@ -369,7 +430,7 @@ class CF_Env3():
 
 
 
-        self.clock.tick(60)
+        self.clock.tick(120)
         pygame.display.flip()
 
     def impact_conditions(self,x_pos,z_pos,theta):
@@ -537,6 +598,41 @@ class CF_Env3():
             pygame.quit()
             self.isopen = False
 
+    def reset(self):
+        ## RESET PHYSICS PARAMS
+        self.t_step = 0
+        self.Once_flag = False
+        self.MomentCutoff = False
+        self.Impact_flag = False
+        self.Impact_events = [False,False,False]
+        self.body_contact = False
+        self.pad_contacts = 0
+
+        self.Tau_thr = 0.0
+        self.d_min = 500
+        
+        ## RESET STATE
+        z_0 = 0.4
+        vz_0 = np.random.uniform(low=2.0,high=4.0)
+        # vz_0 = 2.5
+
+        x = 0.0
+        vx = 0.0
+        theta = 0.0
+        dtheta = 0.0
+        self.state = (x,vx,z_0,vz_0,theta,dtheta)
+
+
+
+
+        ## RESET OBSERVATION
+        d_ceil_0 = self.h_ceil - z_0
+        Tau_0 = d_ceil_0/vz_0
+        self.obs = (Tau_0,d_ceil_0)
+
+        self.start_vals = (vz_0,Tau_0)
+
+        return np.array(self.obs,dtype=np.float32)
 
 if __name__ == '__main__':
     env = CF_Env3()
@@ -550,3 +646,7 @@ if __name__ == '__main__':
 
 
     env.close()
+
+
+
+                

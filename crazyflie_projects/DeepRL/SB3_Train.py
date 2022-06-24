@@ -7,7 +7,9 @@ import gym
 
 from Brake_Trigger_Env import Brake_Trigger_Env
 from CF_Env import CF_Env
-from CF_Env2 import CF_Env2
+# from CF_Env2 import CF_Env2
+from CF_Env3 import CF_Env3
+
 
 
 ## COLLECT CURRENT TIME
@@ -15,7 +17,7 @@ now = datetime.now()
 current_time = now.strftime("%H-%M")
 
 ## INITIATE ENVIRONMENT
-env = CF_Env2()
+env = CF_Env3()
 env.reset()
 
 
@@ -32,8 +34,8 @@ checkpoint_callback = CheckpointCallback(save_freq=2000, save_path=models_dir,na
 model = SAC(
     "MlpPolicy",
     env,
-    gamma=0.99,
-    learning_rate=0.001,
+    gamma=0.999,
+    learning_rate=0.002,
     use_sde=False,
     sde_sample_freq=4,
     verbose=1,
@@ -41,7 +43,7 @@ model = SAC(
     tensorboard_log=log_dir
 ) 
 
-model.learn(total_timesteps=100e3,callback=checkpoint_callback)
+model.learn(total_timesteps=300e3,callback=checkpoint_callback)
 
 
 ## RENDER TRAINED MODEL FOR N EPISODES
