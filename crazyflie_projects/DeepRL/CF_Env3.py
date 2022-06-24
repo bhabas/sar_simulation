@@ -19,6 +19,9 @@ class CF_Env3():
         self.t_step = 0
         self.RENDER = False
 
+        self.Impact_flag = False
+        self.Impact_events = [False,False,False]
+
         ## POLICY PARAMETERS
         self.Once_flag = False
         self.state = None
@@ -51,7 +54,7 @@ class CF_Env3():
         ## ENV LIMITS
         self.world_width = 4.0  # [m]
         self.world_height = 3.0 # [m]
-        self.t_threshold = 400
+        self.t_threshold = 1000
 
 
         ## RENDERING PARAMETERS
@@ -67,13 +70,13 @@ class CF_Env3():
         assert self.action_space.contains(action), err_msg
         assert self.state is not None, "Call reset before using step method."
         
-        z,vz,x,vx,theta,dtheta = self.state
+        x,vx,z,vz,theta,dtheta = self.state
         Tau,d_ceil = self.obs
 
-        # if Tau <= 0.14:
-        #     action[0] = -1
-        # else:
-        #     action[0] = 1
+        if Tau <= 0.14:
+            action[0] = -1
+        else:
+            action[0] = 1
 
         ## ONCE ACTIVATED SAMPLE ACTION       
         if action[0] >= 0:
@@ -93,7 +96,7 @@ class CF_Env3():
             theta = theta + self.dt*dtheta
             dtheta = dtheta + self.dt*theta_acc
 
-            self.state = (z,vz,x,vx,theta,dtheta)
+            self.state = (x,vx,z,vz,theta,dtheta)
 
             ## UPDATE OBSERVATION
             d_ceil = self.h_ceil - z
@@ -128,35 +131,97 @@ class CF_Env3():
 
     def finish_sim(self):
 
-        
         done = False
+        (L,e,gamma,M_G,M_L,g,PD,I_G) = self.params
 
         while not done:
 
-            ## UPDATE STATE
             self.t_step += 1
-            z,vz,x,vx,theta,dtheta = self.state
+            x,vx,z,vz,theta,dtheta = self.state
 
-            z_acc = -9.81
-            z = z + self.dt*vz
-            vz = vz + self.dt*z_acc
+            if self.Impact_flag == False:
 
-            x_acc = 0.0
-            x = x + self.dt*vx
-            vx = vx + self.dt*x_acc
+                z_acc = -g
+                z = z + self.dt*vz
+                vz = vz + self.dt*z_acc
 
-            theta_acc = 0.0
-            theta = theta + self.dt*dtheta
-            dtheta = dtheta + self.dt*theta_acc
+                x_acc = 0
+                x = x + self.dt*vx
+                vx = vx + self.dt*x_acc
 
-            self.state = (z,vz,x,vx,theta,dtheta)
+                theta_acc = 0
+                theta = theta + self.dt*dtheta
+                dtheta = dtheta + self.dt*theta_acc
 
-            ## UPDATE OBSERVATION
-            d_ceil = self.h_ceil - z
-            Tau = d_ceil/vz
+                self.Impact_flag,self.Impact_events = self.impact_conditions(x,z,theta)
+                self.state = (x,vx,z,vz,theta,dtheta)
 
-            if d_ceil <= self.d_min:
-                self.d_min = d_ceil
+                ## UPDATE OBSERVATION
+                d_ceil = self.h_ceil - z
+                Tau = d_ceil/vz
+
+                if d_ceil <= self.d_min:
+                    self.d_min = d_ceil
+
+            elif self.Impact_flag == True:
+
+                ## BODY CONTACT
+                if self.Impact_events[0] == True:
+                    body_contact = True
+                    pad_contacts = 0
+                    done = True
+
+                ## LEG 1 CONTACT
+                elif self.Impact_events[1] == True:
+                    
+                    beta_0,dbeta_0 = self.impact_conversion(self.state,self.Impact_events)
+                    beta = beta_0
+                    dbeta = dbeta_0
+
+                    l = L/2 # Half leg length [m]
+                    I_C = M_G*(4*l**2 + e**2 + 4*l*e*np.sin(gamma)) + I_G   # Inertia about contact point
+
+                    ## FIND IMPACT COORDS
+                    r_G_C1_0 = np.array([
+                        [-(L+e*np.sin(gamma))*np.cos(beta_0)+e*np.cos(gamma)*np.sin(beta_0)],
+                        [-(L+e*np.sin(gamma))*np.sin(beta_0)-e*np.cos(gamma)*np.cos(beta_0)]])
+
+                    r_O_G = np.array([[x],[z]])
+                    r_O_C1 = r_O_G - r_G_C1_0
+
+                    ## SOLVE SWING ODE
+                    while not done:
+                        
+                        self.t_step += 1
+
+                        beta_acc = M_G*g/I_C*(2*l*np.cos(beta) - e*np.sin(beta-gamma))
+                        beta = beta + self.dt*dbeta
+                        dbeta = dbeta + self.dt*beta_acc
+
+                        if beta > self.beta_landing(impact_leg=1):
+                            body_contact = False
+                            pad_contacts = 4
+                            done = True
+
+                        elif beta < self.beta_prop(impact_leg=1):
+                            body_contact = True
+                            pad_contacts = 2
+                            done = True
+
+                        ## SOLVE FOR SWING BEHAVIOR IN GLOBAL COORDINATES
+                        r_G_C1 = np.array([
+                            [-(L+e*np.sin(gamma))*np.cos(beta)+e*np.cos(gamma)*np.sin(beta)],
+                            [-(L+e*np.sin(gamma))*np.sin(beta)-e*np.cos(gamma)*np.cos(beta)]])
+
+                        theta = -((np.pi/2-gamma) + beta) # Convert beta in (e^) to theta in (G^)
+                        x = r_O_C1[0,0] + r_G_C1[0,0]  # x
+                        z = r_O_C1[1,0] + r_G_C1[1,0]  # z
+
+
+                        self.state = (x,_,z,_,theta,_)
+                        if self.RENDER:
+                            self.render()
+
 
             ## CHECK FOR DONE
             done = bool(
@@ -175,20 +240,23 @@ class CF_Env3():
         ## RESET PHYSICS PARAMS
         self.t_step = 0
         self.Once_flag = False
+        self.Impact_flag = False
+        self.Impact_events = [False,False,False]
+
         self.Tau_thr = 0.0
         self.d_min = 500
         
         ## RESET STATE
         z_0 = 0.4
         vz_0 = np.random.uniform(low=0.5,high=3.0)
-        # vz_0 = 2.0
+        vz_0 = 2.0
 
         x = 0.0
         vx = 1.0
 
-        theta = 0.0
-        dtheta = -2.0
-        self.state = (z_0,vz_0,x,vx,theta,dtheta)
+        theta = -2.7
+        dtheta = 0.0
+        self.state = (x,vx,z_0,vz_0,theta,dtheta)
 
 
 
@@ -238,7 +306,7 @@ class CF_Env3():
 
         if self.state is None:
             return None
-        z,vz,x,vx,theta,dtheta = self.state
+        x,vx,z,vz,theta,dtheta = self.state
 
         ## CREATE BACKGROUND SURFACE
         self.surf = pygame.Surface((self.screen_width, self.screen_height))
@@ -304,6 +372,29 @@ class CF_Env3():
         self.clock.tick(60)
         pygame.display.flip()
 
+    def impact_conditions(self,x_pos,z_pos,theta):
+        
+        impact_flag  = False
+        Body_contact = False
+        Leg1_contact = False
+        Leg2_contact = False
+
+        MO_z,_,_,Leg1_z,Leg2_z,Prop1_z,Prop2_z = self.get_pose(x_pos,z_pos,theta)[:,1]
+
+        if any(x >= self.h_ceil for x in [MO_z,Prop1_z,Prop2_z]):
+            impact_flag = True
+            Body_contact = True
+            
+        if Leg1_z >= self.h_ceil:
+            impact_flag = True
+            Leg1_contact = True
+
+        if Leg2_z >= self.h_ceil:
+            impact_flag = True
+            Leg2_contact = True
+
+        return impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
+
     def get_pose(self,x_pos,z_pos,theta):           
         """Returns position data of all model lines for a given state
 
@@ -347,6 +438,96 @@ class CF_Env3():
         Prop2 = CG + R.dot(Prop2)
 
         return np.array([CG,P1,P2,L1,L2,Prop1,Prop2])
+
+    def impact_conversion(self,Impact_state,Impact_events):
+        """Converts impact conditions to rotational initial conditions
+
+        Args:
+            impact_cond (list, optional): Impact conditions [x,Vx,z,Vz,theta,dtheta]. Defaults to [0,0,0,0].
+            gamma (float, optional): Leg angle. Defaults to None.
+            L (float, optional): Leg angle. Defaults to None.
+
+        Returns:
+            beta,dbeta: Rotational initial conditions
+        """        
+
+        (L,e,gamma,M_G,M_L,G,PD,I_G) = self.params
+
+        l = L/2
+        I_c = M_G*(4*l**2 + e**2 + 4*l*e*np.sin(gamma)) + I_G
+
+        x,vx,z,vz,theta,dtheta = Impact_state
+
+        ## SWAP THETA SIGNS TO PRESERVE MATH WORK (SDOF_Analytical_Model.pdf)
+        # Convert from G_y^ to e_y^ coordinate system
+        theta = -theta
+        dtheta = -dtheta
+
+        if Impact_events[1] == True:
+
+            beta_0 = theta - (np.pi/2 - gamma)
+
+            H_dtheta = I_G*dtheta                                       # Angular Momentum from dtheta
+            H_vx = -M_G*vx*(2*l*np.cos(gamma+theta)-e*np.sin(theta))    # Angular momentum from vel_x
+            H_vy =  M_G*vz*(2*l*np.sin(gamma+theta)+e*np.cos(theta))    # Angular momentum from vel_y
+
+        elif Impact_events[2] == True:
+
+            beta_0 = theta - (np.pi/2 + gamma)
+
+            H_dtheta = I_G*dtheta                                       # Angular Momentum from dtheta
+            H_vx = -M_G*vx*(2*l*np.cos(gamma-theta)+e*np.sin(theta))    # Angular momentum from vel_x
+            H_vy =  M_G*vz*(2*l*np.sin(gamma-theta)+e*np.cos(theta))    # Angular momentum from vel_y
+
+
+        dbeta_0 = 1/I_c*(H_dtheta + H_vx + H_vy)
+
+
+        return beta_0,dbeta_0
+
+    def beta_prop(self,impact_leg=1):
+        """Returns minimum beta angle for when propellar contact occurs
+
+        Args:
+            gamma (float, optional): Optional argument for specific leg angle. Defaults to class value.
+            L (float, optional): Optional argument for specific leg length. Defaults to class value.
+
+        Returns:
+            beta_prop (float): Minimum valid beta angle at which propellars hit ceiling
+        """        
+
+        (L,e,gamma,M_G,M_L,g,PD,I_G) = self.params
+
+        a = np.sqrt((PD-e)**2+L**2-2*(PD-e)*L*np.cos(np.pi/2-gamma))
+        beta_prop = np.arccos((a**2+L**2-(PD-e)**2)/(2*a*L))
+
+        if impact_leg == 1:
+            return beta_prop
+
+        elif impact_leg == 2:
+            return np.pi - beta_prop
+
+    def beta_landing(self,impact_leg=1):
+        """Returns the max beta value for a given gamma and model parameters
+
+        Args:
+            gamma (float, optional): Optional argument for specific leg angle. Defaults to class value.
+            L (float, optional): Optional argument for specific leg length. Defaults to class value.
+
+        Returns:
+            beta_contact: Max beta angle
+        """        
+
+        (L,e,gamma,M_G,M_L,g,PD,I_G) = self.params
+
+
+        beta_contact = np.pi/2 + gamma
+
+        if impact_leg == 1:
+            return beta_contact
+
+        elif impact_leg == 2:
+            return np.pi - beta_contact
         
     def close(self):
         if self.screen is not None:
