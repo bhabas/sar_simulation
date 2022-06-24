@@ -2,6 +2,7 @@ from stable_baselines3 import PPO,SAC
 from Brake_Trigger_Env import Brake_Trigger_Env
 from CF_Env import CF_Env
 from CF_Env2 import CF_Env2
+from CF_Env3 import CF_Env3
 
 
 
@@ -9,12 +10,12 @@ from CF_Env2 import CF_Env2
 import gym
 
 # ## INITIATE ENVIRONMENT AND TRAINED MODEL5
-env = CF_Env2()
+env = CF_Env3()
 env.reset()
 
 ## SELECT MODEL FROM DIRECTORY
-models_dir = f"crazyflie_projects/DeepRL/models/{env.env_name}/SAC-21-50"
-model_path = f"{models_dir}/{env.env_name}_100000_steps.zip"
+models_dir = f"crazyflie_projects/DeepRL/models/CF_Env2/SAC-21-50"
+model_path = f"{models_dir}/CF_Env2_100000_steps.zip"
 
 
 model = SAC.load(model_path,env=env)
