@@ -22,10 +22,11 @@ env.reset()
 
 
 ## CREATE MODEL AND LOG DIRECTORY
-models_dir = f"crazyflie_projects/DeepRL/models/{env.env_name}/PPO-{current_time}"
-log_dir = "/tmp/logs"
+BASEPATH = f"/home/bhabas/catkin_ws/src/crazyflie_simulation"
+models_dir = f"{BASEPATH}/crazyflie_projects/DeepRL/models/{env.env_name}/PPO-{current_time}"
+log_dir = "/home/bhabas/Downloads/logs"
 
-checkpoint_callback = CheckpointCallback(save_freq=2000, save_path=models_dir,name_prefix=env.env_name)
+checkpoint_callback = CheckpointCallback(save_freq=5000, save_path=models_dir,name_prefix=env.env_name)
 # eval_callback = EvalCallback(env, best_model_save_path=models_dir,
 #                              log_path=log_dir, eval_freq=100,
 #                              deterministic=True, render=False)
@@ -43,7 +44,7 @@ model = PPO(
     tensorboard_log=log_dir
 ) 
 
-model.learn(total_timesteps=300e3,callback=checkpoint_callback)
+model.learn(total_timesteps=600e3,callback=checkpoint_callback)
 
 
 ## RENDER TRAINED MODEL FOR N EPISODES

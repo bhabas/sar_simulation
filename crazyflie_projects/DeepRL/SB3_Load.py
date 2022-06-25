@@ -14,8 +14,9 @@ env = CF_Env3()
 env.reset()
 
 ## SELECT MODEL FROM DIRECTORY
-models_dir = f"crazyflie_projects/DeepRL/models/{env.env_name}/PPO-17-58"
-model_path = f"{models_dir}/{env.env_name}_{254}000_steps.zip"
+BASEPATH = f"/home/bhabas/catkin_ws/src/crazyflie_simulation"
+models_dir = f"{BASEPATH}/crazyflie_projects/DeepRL/models/{env.env_name}/PPO-10-21"
+model_path = f"{models_dir}/{env.env_name}_{210}000_steps.zip"
 
 
 model = PPO.load(model_path,env=env)

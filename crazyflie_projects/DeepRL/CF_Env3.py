@@ -48,12 +48,13 @@ class CF_Env3():
             [
                 2.4*2,
                 np.finfo(np.float32).max,
+                np.finfo(np.float32).max,
             ],
             dtype=np.float32,
         )
 
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
-        self.action_space = spaces.Box(low=np.array([-5]), high=np.array([5]), shape=(1,), dtype=np.float32)
+        self.action_space = spaces.Box(low=np.array([-5,2]), high=np.array([5,8]), shape=(2,), dtype=np.float32)
 
         ## ENV LIMITS
         self.world_width = 4.0  # [m]
@@ -75,7 +76,7 @@ class CF_Env3():
         assert self.state is not None, "Call reset before using step method."
         
         x,vx,z,vz,theta,dtheta = self.state
-        Tau,d_ceil = self.obs
+        Tau,OFy,d_ceil = self.obs
         Tau_trg = 2.0
         ## ONCE ACTIVATED SAMPLE ACTION       
         if action[0] < Tau_trg:
@@ -96,8 +97,9 @@ class CF_Env3():
             dtheta = dtheta + self.dt*theta_acc
 
             ## UPDATE OBSERVATION
-            d_ceil = self.h_ceil - z
+            d_ceil = self.h_ceil - z + 1e-3
             Tau = d_ceil/vz
+            OFy = -vx/d_ceil
 
             ## CHECK FOR IMPACT
             self.Impact_flag,self.Impact_events = self.impact_conditions(x,z,theta)
@@ -115,7 +117,7 @@ class CF_Env3():
                     self.d_min = d_ceil
 
                 self.state = (x,vx,z,vz,theta,dtheta)
-                self.obs = (Tau,d_ceil)
+                self.obs = (Tau,OFy,d_ceil)
                 reward = 0
 
             else:
@@ -144,7 +146,7 @@ class CF_Env3():
 
             ## CHECK IF PAST 90 DEG
             if np.abs(theta) < np.deg2rad(90) and self.MomentCutoff == False:
-                My = -5e-3
+                My = -action[1]*1e-3
             else:
                 self.MomentCutoff= True
                 My = 0
@@ -166,8 +168,9 @@ class CF_Env3():
                 dtheta = dtheta + self.dt*theta_acc
 
                 ## UPDATE OBSERVATION
-                d_ceil = self.h_ceil - z
+                d_ceil = self.h_ceil - z + 1e-3
                 Tau = d_ceil/vz
+                OFy = -vx/d_ceil
 
                 ## CHECK FOR IMPACT
                 self.Impact_flag,self.Impact_events = self.impact_conditions(x,z,theta)
@@ -187,7 +190,7 @@ class CF_Env3():
 
             elif self.Impact_flag == True:
 
-                self.theta_impact = theta
+                self.theta_impact = np.rad2deg(theta)
 
                 ## BODY CONTACT
                 if self.Impact_events[0] == True:
@@ -315,6 +318,7 @@ class CF_Env3():
 
     def CalcReward(self):
 
+        ## PAD CONTACT REWARD
         if self.pad_contacts == 4: 
             if self.body_contact == False:
                 R1 = 150
@@ -330,7 +334,22 @@ class CF_Env3():
         else:
             R1 = 0.0
 
-        return R1 + np.clip(1/np.abs(self.d_min+1e-3),0,10)
+        ## IMPACT ANGLE REWARD
+        if -180 <= self.theta_impact <= -90:
+            R2 = 1.0
+        elif -90 < self.theta_impact <= 0:
+            R2 = -1/90*self.theta_impact
+        elif 0 < self.theta_impact <= 90:
+            R2 = 1/90*self.theta_impact
+        elif 90 < self.theta_impact <= 180:
+            R2 = 1.0
+        else:
+            R2 = 0
+
+        ## DISTANCE REWARD
+        R3 = np.clip(1/np.abs(self.d_min+1e-3),0,10)
+
+        return R1 + R2*10 + R3
 
 
     def render(self,mode=None):
@@ -615,26 +634,26 @@ class CF_Env3():
         self.d_min = 500
         
         ## RESET STATE
-        x_0 = 0.0
-        z_0 = 0.4
-
         vel = np.random.uniform(low=2.0,high=3.0)
-        phi = np.random.uniform(low=40,high=90)
-        # phi = 90
+        phi = np.random.uniform(low=40,high=70)
+        phi = 60
+
         vx_0 = vel*np.cos(np.deg2rad(phi))
         vz_0 = vel*np.sin(np.deg2rad(phi))
+
+        ## RESET OBSERVATION
+        Tau_0 = 0.5
+        d_ceil_0 = Tau_0*vz_0+1e-3
+        OFy = -vx_0/d_ceil_0
+        self.obs = (Tau_0,OFy,d_ceil_0)
+
+
+        z_0 = self.h_ceil - d_ceil_0
+        x_0 = 0.0
 
         theta = 0.0
         dtheta = 0.0
         self.state = (x_0,vx_0,z_0,vz_0,theta,dtheta)
-
-
-
-
-        ## RESET OBSERVATION
-        d_ceil_0 = self.h_ceil - z_0
-        Tau_0 = d_ceil_0/vz_0
-        self.obs = (Tau_0,d_ceil_0)
 
         self.start_vals = (vz_0,Tau_0)
 
