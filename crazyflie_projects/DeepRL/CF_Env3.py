@@ -13,6 +13,7 @@ class CF_Env3():
     def __init__(self):
         super(CF_Env3, self).__init__()
         self.env_name = "CF_Env3"
+        self.k_ep = 0
 
         ## PHYSICS PARAMETERS
         self.dt = 0.005  # seconds between state updates
@@ -30,6 +31,9 @@ class CF_Env3():
         self.state = None
         self.Tau_thr = 0.0
         self.reward = 0.0
+        self.R1 = 0.0
+        self.R2 = 0.0
+        self.R3 = 0.0
         self.theta_impact = 0.0
 
         ## SET DIMENSIONAL CONSTRAINTS 
@@ -321,35 +325,37 @@ class CF_Env3():
         ## PAD CONTACT REWARD
         if self.pad_contacts == 4: 
             if self.body_contact == False:
-                R1 = 150
+                self.R1 = 150
             else:
-                R1 = 100
+                self.R1 = 100
             
         elif self.pad_contacts == 2: 
             if self.body_contact == False:
-                R1 = 50
+                self.R1 = 50
             else:
-                R1 = 25
+                self.R1 = 25
         
         else:
-            R1 = 0.0
+            self.R1 = 0.0
 
         ## IMPACT ANGLE REWARD
         if -180 <= self.theta_impact <= -90:
-            R2 = 1.0
+            self.R2 = 1.0
         elif -90 < self.theta_impact <= 0:
-            R2 = -1/90*self.theta_impact
+            self.R2 = -1/90*self.theta_impact
         elif 0 < self.theta_impact <= 90:
-            R2 = 1/90*self.theta_impact
+            self.R2 = 1/90*self.theta_impact
         elif 90 < self.theta_impact <= 180:
-            R2 = 1.0
+            self.R2 = 1.0
         else:
-            R2 = 0
+            self.R2 = 0
+
+        self.R2 *= 20
 
         ## DISTANCE REWARD
-        R3 = np.clip(1/np.abs(self.d_min+1e-3),0,10)
+        self.R3 = np.clip(1/np.abs(self.d_min+1e-3),0,5)
 
-        return R1 + R2*10 + R3
+        return self.R1 + self.R2 + self.R3
 
 
     def render(self,mode=None):
@@ -620,6 +626,9 @@ class CF_Env3():
             self.isopen = False
 
     def reset(self):
+
+        self.k_ep += 1
+
         ## RESET PHYSICS PARAMS
         self.t_step = 0
         self.Once_flag = False
@@ -632,11 +641,14 @@ class CF_Env3():
 
         self.Tau_thr = 0.0
         self.d_min = 500
+        self.R1 = 0.0
+        self.R2 = 0.0
+        self.R3 = 0.0
         
         ## RESET STATE
-        vel = np.random.uniform(low=2.0,high=3.0)
-        phi = np.random.uniform(low=40,high=70)
-        phi = 60
+        vel = np.random.uniform(low=1.5,high=3.5)
+        phi = np.random.uniform(low=30,high=70)
+        # phi = 70
 
         vx_0 = vel*np.cos(np.deg2rad(phi))
         vz_0 = vel*np.sin(np.deg2rad(phi))
