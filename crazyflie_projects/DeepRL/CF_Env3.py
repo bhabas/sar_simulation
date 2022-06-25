@@ -647,7 +647,7 @@ class CF_Env3():
         
         ## RESET STATE
         vel = np.random.uniform(low=1.5,high=3.5)
-        phi = np.random.uniform(low=30,high=70)
+        phi = np.random.uniform(low=30,high=90)
         # phi = 70
 
         vx_0 = vel*np.cos(np.deg2rad(phi))

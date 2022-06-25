@@ -69,7 +69,7 @@ model = SAC(
 ) 
 
 model.learn(
-    total_timesteps=600e3,
+    total_timesteps=100e3,
     tb_log_name=f"SAC-{current_time}",
     callback=callback
 )
