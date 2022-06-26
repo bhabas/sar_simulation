@@ -58,7 +58,7 @@ callback = CallbackList([checkpoint_callback,TensorboardCallback()])
 model = SAC(
     "MlpPolicy",
     env,
-    gamma=0.99,
+    gamma=0.999,
     learning_rate=0.001,
     use_sde=False,
     sde_sample_freq=4,

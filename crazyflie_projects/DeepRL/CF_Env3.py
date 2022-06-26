@@ -58,7 +58,9 @@ class CF_Env3():
         )
 
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
-        self.action_space = spaces.Box(low=np.array([-5,2]), high=np.array([5,8]), shape=(2,), dtype=np.float32)
+        self.action_space = spaces.Box(low=np.array([-5,-1]), high=np.array([5,1]), shape=(2,), dtype=np.float32)
+
+        self.My_space = spaces.Box(low=np.array([-0e-3]), high=np.array([-8e-3]), shape=(1,), dtype=np.float32)
 
         ## ENV LIMITS
         self.world_width = 4.0  # [m]
@@ -150,7 +152,10 @@ class CF_Env3():
 
             ## CHECK IF PAST 90 DEG
             if np.abs(theta) < np.deg2rad(90) and self.MomentCutoff == False:
-                My = -action[1]*1e-3
+
+                ## CONVERT ACTION RANGE TO MOMENT RANGE
+                action_scale = (self.My_space.high[0]-self.My_space.low[0])/(self.action_space.high[1]-self.action_space.low[1])
+                My = (action[1]-self.action_space.low[1])*action_scale + self.My_space.low[0]
             else:
                 self.MomentCutoff= True
                 My = 0
@@ -457,7 +462,7 @@ class CF_Env3():
 
 
 
-        self.clock.tick(120)
+        self.clock.tick(60)
         pygame.display.flip()
 
     def impact_conditions(self,x_pos,z_pos,theta):
