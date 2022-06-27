@@ -92,13 +92,13 @@ def runTraining(env,agent):
             ## ADD VALID REWARD TO TRAINING ARRAY
             training_arr[k_run] = env.reward
 
-            env.reward_list.append(int(env.reward))
+            env.reward_list.append(np.round(env.reward,3))
             env.reward_avg = training_arr[np.nonzero(training_arr)].mean()
 
             ## PUBLISH UPDATED REWARD VARIABLES
             env.RL_Publish()
 
-        env.reward_avg_list.append(int(env.reward_avg))
+        env.reward_avg_list.append(env.reward_avg)
         env.RL_Publish()
 
         ## =======  EPISODE COMPLETED  ======= ##
@@ -108,7 +108,7 @@ def runTraining(env,agent):
 if __name__ == '__main__':
     
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=True)
+    env = CrazyflieEnv(gazeboTimeout=False)
 
     ## Home Test List
     df = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/Policy_Mapping/Data_Collection/MasterTestList.csv")

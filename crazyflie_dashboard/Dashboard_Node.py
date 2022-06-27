@@ -318,7 +318,7 @@ class DashboardNode:
         self.sigma_2_list = np.array(msg.sigma_2_list)
 
         ## REWARD ARRAYS
-        self.r_list = np.array(msg.reward_list).astype(int)
+        self.r_list = np.array(msg.reward_list)
 
         k_ep = len(self.r_list)//self.n_rollouts
         k_run = len(self.r_list)%self.n_rollouts
@@ -329,7 +329,7 @@ class DashboardNode:
             self.K_ep_list1 = np.concatenate((np.repeat(range(k_ep),self.n_rollouts),np.repeat(k_ep,k_run)))
 
         ## AVERAGE REWARD ARRAYS
-        self.r_avg_list = np.array(msg.reward_avg_list).astype(int)
+        self.r_avg_list = np.array(msg.reward_avg_list)
         self.K_ep_list2 = np.array(range(0,len(self.r_avg_list)))
 
 

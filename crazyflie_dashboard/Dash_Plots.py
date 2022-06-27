@@ -829,8 +829,7 @@ class Reward_Widget(QWidget):
 
         ## UPDATE PLOT 1
         self.PW.setBackground('w')
-        self.PW.setXRange(0,25)
-        self.PW.setYRange(0,300)
+        self.reset_axes()
         self.PW.showGrid(x=True, y=True, alpha=0.2)
 
 
@@ -850,11 +849,9 @@ class Reward_Widget(QWidget):
         self.curve_reward.setData(DashNode.K_ep_list1,DashNode.r_list)
         self.curve_reward_avg.setData(DashNode.K_ep_list2,DashNode.r_avg_list)
 
-
-
     def reset_axes(self):
-        self.PW.setYRange(0,300)
         self.PW.setXRange(0,25)
+        self.PW.setYRange(0,1.1)
 
 
 class Mu_Widget(QWidget):

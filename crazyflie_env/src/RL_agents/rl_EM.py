@@ -67,6 +67,12 @@ class rlEM_PEPGAgent():
         ## CALC R_1 FROM MAXIMUM HEIGHT ACHIEVED
         R_1 = 1/env.d_ceil_max
 
+        ## DISTANCE REWARD (Gaussian Function)
+        A = 0.1
+        mu = 0
+        sig = 1
+        R_1 = A*np.exp(-1/2*np.power((env.d_ceil_max-mu)/sig,2))
+
         ## CALC R2 FROM THE IMPACT ANGLE
         eul_y_impact = env.eulCF_impact[1]
         # Center axis [theta_2] is limited to +- 90deg while [theta_1 & theta_3] can rotate to 180deg 
@@ -85,30 +91,32 @@ class rlEM_PEPGAgent():
         else:
             R_2 = 0
 
+        R_2 *= 0.2
+
 
         ## CALC R_4 FROM NUMBER OF LEGS CONNECT
 
         if env.pad_connections >= 3: 
             if env.BodyContact_flag == False:
-                R_4 = 150
+                R_4 = 0.7
             else:
-                R_4 = 100
+                R_4 = 0.4
             
         elif env.pad_connections == 2: 
             if env.BodyContact_flag == False:
-                R_4 = 50
+                R_4 = 0.3
             else:
-                R_4 = 25
+                R_4 = 0.2
                 
         elif env.pad_connections == 1:
-            R_4 = 10
+            R_4 = 0.1
         
         else:
             R_4 = 0.0
                 
 
 
-        R_total = R_1*10 + R_2*10 + R_4 + 0.001
+        R_total = R_1 + R_2 + R_4 + 0.001
         return R_total
 
 class rlEM_AdaptiveAgent(rlEM_PEPGAgent):
