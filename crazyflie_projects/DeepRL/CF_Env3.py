@@ -35,6 +35,7 @@ class CF_Env3():
         self.R2 = 0.0
         self.R3 = 0.0
         self.theta_impact = 0.0
+        self.R_Scale = 1
 
         ## SET DIMENSIONAL CONSTRAINTS 
         self.h_ceil = 2.1
@@ -128,7 +129,7 @@ class CF_Env3():
 
             else:
                 ## CALC REWARD
-                reward = self.CalcReward()/2
+                reward = self.CalcReward()/2*self.R_Scale
 
         elif action[0] > Tau_trg:
             self.Once_flag = True
@@ -322,7 +323,7 @@ class CF_Env3():
             if self.RENDER:
                 self.render()
         
-        self.reward = self.CalcReward()
+        self.reward = self.CalcReward()*self.R_Scale
         return self.reward
 
     def CalcReward(self):
@@ -330,15 +331,15 @@ class CF_Env3():
         ## PAD CONTACT REWARD
         if self.pad_contacts == 4: 
             if self.body_contact == False:
-                self.R1 = 150
-            else:
-                self.R1 = 100
-            
-        elif self.pad_contacts == 2: 
-            if self.body_contact == False:
                 self.R1 = 50
             else:
                 self.R1 = 25
+            
+        elif self.pad_contacts == 2: 
+            if self.body_contact == False:
+                self.R1 = 30
+            else:
+                self.R1 = 15
         
         else:
             self.R1 = 0.0
@@ -355,10 +356,13 @@ class CF_Env3():
         else:
             self.R2 = 0
 
-        self.R2 *= 20
+        self.R2 *= 10
 
-        ## DISTANCE REWARD
-        self.R3 = np.clip(1/np.abs(self.d_min+1e-3),0,5)
+        ## DISTANCE REWARD (Gaussian Function)
+        A = 5
+        mu = 0
+        sig = 1
+        self.R3 = A*np.exp(-1/2*np.power((self.d_min-mu)/sig,2))
 
         return self.R1 + self.R2 + self.R3
 
