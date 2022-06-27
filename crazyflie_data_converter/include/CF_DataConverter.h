@@ -212,7 +212,7 @@ class CF_DataConverter
         float SIM_SLOWDOWN_SPEED;
         int LOGGING_RATE = 25; // Default Logging Rate
         int CONSOLE_RATE = 50; // Default Console Rate
-        int POLICY_TYPE = 0;
+        std::string POLICY_TYPE;
         
         float P_kp_xy,P_kd_xy,P_ki_xy;
         float P_kp_z,P_kd_z,P_ki_z;
