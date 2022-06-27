@@ -165,6 +165,9 @@ class CrazyflieEnv:
         self.sigma = [0.0,0.0]         # Gaussian standard deviation policies are sampled from
         self.policy = [0.0,0.0,0.0]    # Policy sampled from Gaussian distribution
 
+        self.K_ep_list = []
+        self.K_run_list = []
+
         self.mu_1_list = []         # List of mu values over course of convergence
         self.mu_2_list = [] 
 
@@ -422,6 +425,9 @@ class CrazyflieEnv:
 
         ## CONVERGENCE HISTORY
         RL_convg_msg = RLConvg()
+        RL_convg_msg.K_ep_list = self.K_ep_list
+        RL_convg_msg.K_run_list = self.K_run_list
+
 
         RL_convg_msg.mu_1_list = self.mu_1_list
         RL_convg_msg.mu_2_list = self.mu_2_list
@@ -529,7 +535,7 @@ class CrazyflieEnv:
         srv.cmd_flag = cmd_flag
 
         ## SEND LOGGING REQUEST VIA SERVICE
-        rospy.wait_for_service('/CF_DC/Cmd_CF_DC',timeout=1.0)
+        rospy.wait_for_service('/CF_DC/Cmd_CF_DC')
         RL_Cmd_service = rospy.ServiceProxy('/CF_DC/Cmd_CF_DC', RLCmd)
         RL_Cmd_service(srv)
 
@@ -799,7 +805,7 @@ class CrazyflieEnv:
         state_msg.twist.angular.y = 0.0
         state_msg.twist.angular.z = 0.0
 
-        rospy.wait_for_service('/gazebo/set_model_state',timeout=5)
+        rospy.wait_for_service('/gazebo/set_model_state')
         set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         set_state_srv(state_msg)
         self.SendCmd('Ctrl_Reset')

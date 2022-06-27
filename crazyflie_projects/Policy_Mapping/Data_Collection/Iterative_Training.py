@@ -38,6 +38,8 @@ def runTraining(env,agent):
         env.sigma_1_list.append(env.sigma[0])
         env.sigma_2_list.append(env.sigma[1])
 
+        env.K_ep_list.append(k_ep)
+
         
         ## PRE-ALLOCATE REWARD VEC AND OBTAIN THETA VALS
         training_arr = np.zeros(shape=(agent.n_rollouts,1)) # Array of reward values for training
@@ -62,11 +64,10 @@ def runTraining(env,agent):
         ##          Run 
         # ============================
         for env.k_run in range(0,env.n_rollouts):
-            # input("press enter")
-
 
             ## UPDATE RUN NUMBER
             k_run = env.k_run # Local variables are faster to access then class variables
+            env.K_run_list.append(k_ep)
 
 
             ## INITIALIZE POLICY PARAMETERS: 
@@ -108,7 +109,7 @@ def runTraining(env,agent):
 if __name__ == '__main__':
     
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=False)
+    env = CrazyflieEnv(gazeboTimeout=True)
 
     ## Home Test List
     df = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/Policy_Mapping/Data_Collection/MasterTestList.csv")
@@ -142,6 +143,8 @@ if __name__ == '__main__':
         env.mu_2_list = []
         env.sigma_1_list = []
         env.sigma_2_list = []
+        env.K_ep_list = []
+        env.K_run_list = []
         env.reward_list = []
         env.reward_avg_list = []
 
