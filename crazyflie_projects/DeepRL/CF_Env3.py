@@ -331,15 +331,15 @@ class CF_Env3():
         ## PAD CONTACT REWARD
         if self.pad_contacts == 4: 
             if self.body_contact == False:
-                self.R1 = 50
+                self.R1 = 0.7
             else:
-                self.R1 = 25
+                self.R1 = 0.4
             
         elif self.pad_contacts == 2: 
             if self.body_contact == False:
-                self.R1 = 30
+                self.R1 = 0.3
             else:
-                self.R1 = 15
+                self.R1 = 0.2
         
         else:
             self.R1 = 0.0
@@ -356,10 +356,10 @@ class CF_Env3():
         else:
             self.R2 = 0
 
-        self.R2 *= 10
+        self.R2 *= 0.2
 
         ## DISTANCE REWARD (Gaussian Function)
-        A = 5
+        A = 0.1
         mu = 0
         sig = 1
         self.R3 = A*np.exp(-1/2*np.power((self.d_min-mu)/sig,2))
