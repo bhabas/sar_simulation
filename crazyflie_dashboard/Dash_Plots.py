@@ -486,6 +486,21 @@ class OFy_Widget(QWidget):
         self.OFy_est_arr[-1] = DashNode.OFy_est
         self.curve_OFy_est.setData(self.OFy_est_arr)
 
+    def reset_axes(self):
+        # self.p1.enableAutoRange(enable=True)
+        self.PW.setYRange(0,5)
+        self.PW.setXRange(buffer_length*0.0,buffer_length)
+
+    def pause(self,pause_flag):
+        if pause_flag == True:
+            self.timer.stop()
+        else: 
+            self.timer.start()
+    
+    def clear_data(self):
+        self.x_arr = np.zeros(buffer_length)
+
+
 class OFx_Widget(QWidget):
     def __init__(self,parent=None):
         super().__init__()
