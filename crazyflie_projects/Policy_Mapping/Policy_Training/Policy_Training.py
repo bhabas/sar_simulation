@@ -542,9 +542,9 @@ class Policy_Trainer():
                 
                 surface_count=1,
                 opacity=0.3,
-                isomin=-0.05,
-                isomax=0.1,
-                # colorscale='Viridis',  
+                isomin=0.07,
+                isomax=0.07,
+                colorscale='Viridis',  
                 cmin=0,
                 cmax=1,     
                 caps=dict(x_show=False, y_show=False),
@@ -723,25 +723,25 @@ class Policy_Trainer():
             )
         )
 
-        fig.add_trace(
-            go.Volume(
-                ## ISO SURFACE
-                x=X_grid[:,1].flatten(),
-                y=X_grid[:,0].flatten(),
-                z=X_grid[:,2].flatten(),
-                value=y_pred_grid.flatten(),
+        # fig.add_trace(
+        #     go.Volume(
+        #         ## ISO SURFACE
+        #         x=X_grid[:,1].flatten(),
+        #         y=X_grid[:,0].flatten(),
+        #         z=X_grid[:,2].flatten(),
+        #         value=y_pred_grid.flatten(),
                 
-                surface_count=1,
-                opacity=0.3,
-                isomin=0.01,
-                isomax=0.01,
-                cmin=0,
-                cmax=1,     
-                caps=dict(x_show=False, y_show=False),
-                colorbar=dict(title='Title',) , 
-                hoverinfo='skip'
-            )
-        )
+        #         surface_count=1,
+        #         opacity=0.3,
+        #         isomin=0.07,
+        #         isomax=0.07,
+        #         cmin=0,
+        #         cmax=1,     
+        #         caps=dict(x_show=False, y_show=False),
+        #         colorbar=dict(title='Title',) , 
+        #         hoverinfo='skip'
+        #     )
+        # )
 
         fig.add_trace(
             go.Scatter3d(
@@ -829,13 +829,13 @@ if __name__ == "__main__":
     learning_rate = 0.01
 
     NN_model = NN_Model()
-    SVM_model = OneClassSVM(nu=0.1,gamma=1.7)
+    SVM_model = OneClassSVM(nu=0.1,gamma=1.1)
 
     Policy = Policy_Trainer(NN_model,SVM_model,model_initials,learning_rate=learning_rate)
 
     ## LOAD DATA
     df_raw = pd.read_csv(f"{BASEPATH}/Data_Logs/NL_DR/NL_LR_Trials_DR.csv").dropna() # Collected data
-    df_train = df_raw.query("LR_4leg >= 0.8")
+    df_train = df_raw.query("LR_4leg >= 0.85")
 
     ## ORGANIZE DATA
     Tau = df_train["Tau_flip_mean"]
@@ -873,9 +873,9 @@ if __name__ == "__main__":
     Policy.save_SVM_Params(SVM_Param_Path)
     # Policy.load_SVM_Params(SVM_Param_Path)
 
-    # print(Policy.OC_SVM_Predict(np.array([[0.29,-0.673,0.952]])))
+    print(Policy.OC_SVM_Predict(np.array([[0.256,-4.589,0.441]])))
 
-    # Policy.plotClassification(df_raw)
+    # Policy.plotClassification(df_train)
     # Policy.plotPolicy(df_raw,PlotRegion=True)
 
     dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
