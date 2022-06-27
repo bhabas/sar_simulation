@@ -535,15 +535,13 @@ void CF_DataConverter::consoleOuput()
     system("clear");
     printf("t: %.4f V: %.3f\n",(Time-Time_start).toSec(),V_battery);
     printf("DataType: %s \t Model: %s\n",DATA_TYPE.c_str(),MODEL_NAME.c_str());
-    printf("Policy_Type: %s\n",POLICY_TYPE.c_str());
     printf("\n");
 
     printf("==== Flags ====\n");
-    printf("Motorstop:\t%u  Flip_flag:\t  %u  Pos Ctrl:\t    %u \n",Motorstop_Flag, flip_flag, Pos_Ctrl_Flag);
+    printf("Motorstop:\t%u  Flip_flag:\t  %u  Pos Ctrl:\t    %u  Cam_Est:\t  %u\n",Motorstop_Flag, flip_flag, Pos_Ctrl_Flag,Camera_Sensor_Active);
     printf("Traj Active:\t%u  Impact_flag:\t  %u  Vel Ctrl:\t    %u \n",Traj_Active_Flag,impact_flag,Vel_Ctrl_Flag);
-    printf("Policy_type:\t%u  Tumble Detect: %u  Moment_Flag:   %u \n",88,Tumble_Detection,Moment_Flag);
-    printf("Policy_armed:\t%u  Tumbled:\t  %u  Slowdown_type: %u\n",Policy_Armed_Flag,Tumbled_Flag,SLOWDOWN_TYPE);
-    printf("Sticky_flag:\t%u  Cam_Est:\t  %u\n",Sticky_Flag,Camera_Sensor_Active);
+    printf("Policy_armed:\t%u  Tumble Detect: %u  Moment_Flag:   %u \n",Policy_Armed_Flag,Tumble_Detection,Moment_Flag);
+    printf("Sticky_flag:\t%u  Tumbled:\t  %u  Slowdown_type: %u\n",Sticky_Flag,Tumbled_Flag,SLOWDOWN_TYPE);
     printf("\n");
 
     printf("==== System States ====\n");
@@ -558,14 +556,23 @@ void CF_DataConverter::consoleOuput()
     printf("D_ceil: %.3f\n",D_ceil);
     printf("\n");
 
-    printf("==== Policy Values ====\n");
-    printf("Parameter Optimization: \n");
-    printf("Tau_thr: %.3f \tMy: %.3f \tG2: %.3f\n",Tau_thr,G1,0.0);
-    printf("\n");
+    printf("==== Policy: %s ====\n",POLICY_TYPE.c_str());
+    if (strcmp(POLICY_TYPE.c_str(),"PARAM_CONVG") == 0)
+    {
+        printf("Tau_thr: %.3f \tMy: %.3f\n",Tau_thr,G1);
+        printf("\n");
+    }
+    else if (strcmp(POLICY_TYPE.c_str(),"SVL_POLICY") == 0)
+    {
+        printf("Policy_Flip: %.3f \tPolicy_Action: %.3f \n",Policy_Flip,Policy_Action);
+        printf("\n");
+    }
+    else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL") == 0)
+    {
+        printf("Stuff: %.3f \tStuff: %.3f \n",404.0,404.0);
+        printf("\n");
+    }
 
-    printf("Deep RL Policy: \n");
-    printf("Policy_Flip: %.3f \tPolicy_Action: %.3f \n",Policy_Flip,Policy_Action);
-    printf("\n");
 
     printf("==== Flip Trigger Values ====\n");
     printf("Tau_tr:     %.3f \tPolicy_Flip_tr:    %.3f \n",Tau_tr,Policy_Flip_tr);
