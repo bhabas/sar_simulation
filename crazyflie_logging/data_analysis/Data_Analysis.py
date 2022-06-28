@@ -587,7 +587,7 @@ class DataFile:
 
         return leg_contacts,contact_list,body_impact
 
-    def landing_rate(self,N:int=3,reward_cutoff:float=3.00):
+    def landing_rate(self,N:int=3,reward_cutoff:float=0.01):
         """Returns the landing rate for the final [N] episodes
 
         Args:
@@ -635,7 +635,7 @@ class DataFile:
 
         return landing_rate_4leg,landing_rate_2leg,contact_rate,np.array(contact_list)
 
-    def grab_trial_data(self,func,*args,N:int=3,reward_cutoff:float=3.00,landing_cutoff:int=3,**kwargs):
+    def grab_trial_data(self,func,*args,N:int=3,reward_cutoff:float=0.05,landing_cutoff:int=3,**kwargs):
 
         ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
         # Use reward to extract only the valid attempts and not simulation mishaps
