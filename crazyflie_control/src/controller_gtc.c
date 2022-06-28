@@ -636,7 +636,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         
         if(policy_armed_flag == true){ 
 
-            if (strcmp(PolicyType,"PARAM_CONVG")==0)
+            if (strcmp(PolicyType,"PARAM_OPTIM")==0)
             {
                 if(Tau <= Tau_thr && onceFlag == false && state->velocity.z > 0.5){
                     onceFlag = true;

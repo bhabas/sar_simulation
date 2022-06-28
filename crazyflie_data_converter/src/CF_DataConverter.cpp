@@ -557,7 +557,7 @@ void CF_DataConverter::consoleOuput()
     printf("\n");
 
     printf("==== Policy: %s ====\n",POLICY_TYPE.c_str());
-    if (strcmp(POLICY_TYPE.c_str(),"PARAM_CONVG") == 0)
+    if (strcmp(POLICY_TYPE.c_str(),"PARAM_OPTIM") == 0)
     {
         printf("Tau_thr: %.3f \tMy: %.3f\n",Tau_thr,G1);
         printf("\n");
