@@ -80,10 +80,9 @@ class CrazyflieEnv():
         rospy.Subscriber("/CF_DC/MiscData",CF_MiscData,self.CF_MiscDataCallback,queue_size=1)
 
 
-    def PO_Step(self,Tau,My,vel,phi):
+    def ParamOptim_Flight(self,Tau,My,vel,phi):
 
         done = False
-        info = {}
 
         ## RESET/UPDATE RUN CONDITIONS
         start_time_rollout = self.getTime()
@@ -114,10 +113,7 @@ class CrazyflieEnv():
 
             t_now = self.getTime()
 
-            # ============================
-            ##      Pitch Recording 
-            # ============================
-
+            ## START FLIP AND IMPACT TERMINATION TIMERS
             if (self.flip_flag == True and onceFlag_flip == False):
                 start_time_pitch = t_now # Starts countdown for when to reset run
                 onceFlag_flip = True # Turns on to make sure this only runs once per rollout
@@ -129,41 +125,52 @@ class CrazyflieEnv():
             # ============================
             ##    Termination Criteria 
             # ============================
-            if (self.impact_flag or self.BodyContact_flag) and ((t_now-start_time_impact) > 0.5):
-                self.error_str = "Rollout Completed: Impact Timeout"
-                print(self.error_str)
 
-                done = True
-
-            # IF TIME SINCE TRIGGERED PITCH EXCEEDS [1.5s]  
-            elif self.flip_flag and ((t_now-start_time_pitch) > (2.25)):
+            ## PITCH TIMEOUT  
+            if (t_now-start_time_pitch) > 2.25:
                 self.error_str = "Rollout Completed: Pitch Timeout"
                 print(self.error_str)
 
                 done = True
 
-            # IF POSITION FALLS BELOW FLOOR HEIGHT
-            elif self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5: 
-                self.error_str = "Rollout Completed: Falling Drone"
+            ## IMPACT TIMEOUT
+            elif (t_now-start_time_impact) > 0.5:
+                self.error_str = "Rollout Completed: Impact Timeout"
                 print(self.error_str)
 
                 done = True
 
-            # IF TIME SINCE RUN START EXCEEDS 
+
+            ## ROLLOUT TIMEOUT
             elif (t_now - start_time_rollout) > (5.0):
                 self.error_str = "Rollout Completed: Time Exceeded"
                 print(self.error_str)
 
                 done = True
 
-            if any(np.isnan(env.velCF)): 
-            
+            ## FREE FALL TERMINATION
+            elif self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5: 
+                self.error_str = "Rollout Completed: Falling Drone"
+                print(self.error_str)
+
                 done = True
-                self.restart_flag = True
+
+
+            if any(np.isnan(self.velCF)): 
+            
+                self.close_Gazebo()
+                time.sleep(0.5)
+                self.launch_Gazebo() 
+                rospy.wait_for_service('/gazebo/pause_physics')
+                time.sleep(0.5)
+                self.gazebo_unpause_physics()
+
+                done = True
+
 
         reward = self.CalcReward()
 
-        return None,reward,done,info
+        return None,reward,done,None
 
         
     def step(self,action):
@@ -176,18 +183,12 @@ class CrazyflieEnv():
 
     def reset(self):
 
-        if self.restart_flag == True:
-            self.close_Gazebo()
-            time.sleep(0.5)
-            self.launch_Gazebo()
-
         self.reset_pos()
-        self.SendCmd("Ctrl_Reset")
+        self.sleep(0.25)
 
         ## RESET REWARD CALC VALUES
         self.d_min = 50.0  # Reset max from ceiling [m]
 
-        self.restart_flag = False
         obs = None
         return obs
 
@@ -471,8 +472,8 @@ class CrazyflieEnv():
         rospy.wait_for_service('/gazebo/set_model_state')
         set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         set_state_srv(state_msg)
+        self.sleep(0.01)
         self.SendCmd('Ctrl_Reset')
-        self.sleep(0.5)
 
         ## RESET HOME/TUMBLE DETECTION AND STICKY
 
@@ -505,8 +506,6 @@ class CrazyflieEnv():
         subprocess.Popen( # Gazebo Process
             "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_launch launch_gazebo.bash", 
             start_new_session=True, shell=True)
-
-        
 
     def launch_Node_Controller(self):
         """ 
@@ -665,8 +664,8 @@ class CrazyflieEnv():
     # Subscriber thread listens to /clock for any message
     def timeoutSub(self):
         ## START INITIAL TIMERS
-        self.timer_unpause = Timer(5,self.timeout_unpause)
-        self.timer_relaunch = Timer(10,self.timeout_relaunch)
+        self.timer_unpause = Timer(4,self.timeout_unpause)
+        self.timer_relaunch = Timer(7,self.timeout_relaunch)
         ## START ROS CREATED THREAD FOR SUBSCRIBER
         rospy.Subscriber("/clock",Clock,self.timeoutCallback)
         ## END FUNCTION, THIS MIGHT NOT NEED TO BE THREADED?
@@ -698,10 +697,13 @@ class CrazyflieEnv():
 
 if __name__ == "__main__":
 
-    env = CrazyflieEnv(gazeboTimeout=True)
-    for _ in range(25):
+    env = CrazyflieEnv(gazeboTimeout=False)
+    for ii in range(1000):
+        tau = np.random.uniform(low=0.15,high=0.27)
+
         env.reset()
-        obs,reward,done,info = env.PO_Step(0.23,7,2.5,60)
+        obs,reward,done,info = env.ParamOptim_Flight(tau,7,2.5,60)
+        print(ii)
 
 
     env.close()
