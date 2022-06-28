@@ -31,32 +31,139 @@ from std_srvs.srv import Empty
 
 class CrazyflieEnv():
     metadata = {'render.modes': ['human']}
-    def __init__(self,gazeboTimeout=True,DataType='SIM'):
+    def __init__(self,gazeboTimeout=False,DataType='SIM'):
         super(CrazyflieEnv, self).__init__()
 
         rospy.init_node("crazyflie_env_node")
         os.system("roslaunch crazyflie_launch params.launch")
 
         self.modelName = rospy.get_param('/MODEL_NAME')
-        self.mass = rospy.get_param("/CF_Mass")
-        self.Ixx = rospy.get_param("/Ixx")
-        self.Iyy = rospy.get_param("/Iyy")
-        self.Izz = rospy.get_param("/Izz")
+        self.h_ceiling = rospy.get_param("/CEILING_HEIGHT") # [m]
 
         ## TRAJECTORY VALUES
         self.posCF_0 = [0.0, 0.0, 0.4]        # Default hover position [m]
         self.accCF_max = [1.0, 1.0, 3.1]  # Max 5acceleration values for trajectory generation [m/s^2]
 
-        ## GAZEBO SIMULATION INITIALIZATION
-        if DataType == 'SIM': 
-            self.launch_sim() 
-            rospy.wait_for_service('/gazebo/pause_physics')
-            self.launch_controller()
+        self.username = getpass.getuser()
+        self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/crazyflie_logging/local_logs"
+        self.DataType = DataType
+        self.filepath = ""
 
-        self.launch_CF_DC()
+        self.d_min = 50.0
+        self.t = 0.0
+        self.restart_flag = False
+
+        ## GAZEBO SIMULATION INITIALIZATION
+        if self.DataType == 'SIM': 
+            self.launch_Gazebo() 
+            rospy.wait_for_service('/gazebo/pause_physics')
+            self.launch_Node_Controller()
+            time.sleep(1.0)
+            self.gazebo_unpause_physics()
+            print("[INITIATING] Gazebo simulation started")
+
+            ## INIT GAZEBO TIMEOUT THREAD
+            if gazeboTimeout==True:
+                self.timeoutThread = Thread(target=self.timeoutSub)
+                self.timeoutThread.start()
+            
+
+        self.launch_Node_CF_DC()
             # print("[INITIATING] Gazebo simulation started")
 
+        ## INIT ROS SUBSCRIBERS [Pub/Sampling Frequencies]
+        # NOTE: Queue sizes=1 so that we are always looking at the most current data and 
+        #       not data at back of a queue waiting to be processed by callbacks
+        rospy.Subscriber("/CF_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size=1)
+        rospy.Subscriber("/CF_DC/FlipData",CF_FlipData,self.CF_FlipDataCallback,queue_size=1)
+        rospy.Subscriber("/CF_DC/ImpactData",CF_ImpactData,self.CF_ImpactDataCallback,queue_size=1)
+        rospy.Subscriber("/CF_DC/MiscData",CF_MiscData,self.CF_MiscDataCallback,queue_size=1)
 
+
+    def PO_Step(self,Tau,My,vel,phi):
+
+        done = False
+        info = {}
+
+        ## RESET/UPDATE RUN CONDITIONS
+        start_time_rollout = self.getTime()
+        start_time_pitch = np.nan
+        start_time_impact = np.nan
+
+        ## RESET LOGGING CONDITIONS 
+        onceFlag_flip = False    # Ensures flip data recorded only once
+        onceFlag_impact = False   # Ensures impact data recorded only once 
+
+
+        self.SendCmd('StickyPads',cmd_flag=1)
+
+        vz = vel*np.sin(np.deg2rad(phi))
+        vx = vel*np.cos(np.deg2rad(phi))
+
+        tau_0 = 0.6
+        z_0 = self.h_ceiling - tau_0*vz
+
+        self.Vel_Launch([0,0,z_0],[vx,0,vz])
+        self.sleep(0.1)
+        self.SendCmd("Policy",cmd_vals=[Tau,My,0.0],cmd_flag=1)
+
+
+        
+
+        while not done: 
+
+            t_now = self.getTime()
+
+            # ============================
+            ##      Pitch Recording 
+            # ============================
+
+            if (self.flip_flag == True and onceFlag_flip == False):
+                start_time_pitch = t_now # Starts countdown for when to reset run
+                onceFlag_flip = True # Turns on to make sure this only runs once per rollout
+
+            if ((self.impact_flag or self.BodyContact_flag) and onceFlag_impact == False):
+                start_time_impact = t_now
+                onceFlag_impact = True
+
+            # ============================
+            ##    Termination Criteria 
+            # ============================
+            if (self.impact_flag or self.BodyContact_flag) and ((t_now-start_time_impact) > 0.5):
+                self.error_str = "Rollout Completed: Impact Timeout"
+                print(self.error_str)
+
+                done = True
+
+            # IF TIME SINCE TRIGGERED PITCH EXCEEDS [1.5s]  
+            elif self.flip_flag and ((t_now-start_time_pitch) > (2.25)):
+                self.error_str = "Rollout Completed: Pitch Timeout"
+                print(self.error_str)
+
+                done = True
+
+            # IF POSITION FALLS BELOW FLOOR HEIGHT
+            elif self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5: 
+                self.error_str = "Rollout Completed: Falling Drone"
+                print(self.error_str)
+
+                done = True
+
+            # IF TIME SINCE RUN START EXCEEDS 
+            elif (t_now - start_time_rollout) > (5.0):
+                self.error_str = "Rollout Completed: Time Exceeded"
+                print(self.error_str)
+
+                done = True
+
+            if any(np.isnan(env.velCF)): 
+            
+                done = True
+                self.restart_flag = True
+
+        reward = self.CalcReward()
+
+        return None,reward,done,info
 
         
     def step(self,action):
@@ -69,16 +176,72 @@ class CrazyflieEnv():
 
     def reset(self):
 
-        ## RESET REWARD CALC VALUES
-        self.d_ceil_min = 50.0  # Reset max from ceiling [m]
-        self.pitch_sum = 0.0    # Reset recorded pitch amount [deg]
-        self.pitch_max = 0.0    # Reset max pitch angle [deg]
+        if self.restart_flag == True:
+            self.close_Gazebo()
+            time.sleep(0.5)
+            self.launch_Gazebo()
 
+        self.reset_pos()
+        self.SendCmd("Ctrl_Reset")
+
+        ## RESET REWARD CALC VALUES
+        self.d_min = 50.0  # Reset max from ceiling [m]
+
+        self.restart_flag = False
         obs = None
         return obs
 
     def close(self):
-        pass
+        self.close_Gazebo()
+
+    def CalcReward(self):
+
+        ## PAD CONTACT REWARD
+        if self.pad_connections >= 3: 
+            if self.BodyContact_flag == False:
+                R1 = 0.7
+            else:
+                R1 = 0.4
+            
+        elif self.pad_connections == 2: 
+            if self.BodyContact_flag == False:
+                R1 = 0.3
+            else:
+                R1 = 0.2
+        
+        else:
+            R1 = 0.0
+
+        ## IMPACT ANGLE REWARD
+        if -180 <= self.eulCF_impact[1] <= -90:
+            R2 = 1.0
+        elif -90 < self.eulCF_impact[1] <= 0:
+            R2 = -1/90*self.eulCF_impact[1]
+        elif 0 < self.eulCF_impact[1] <= 90:
+            R2 = 1/90*self.eulCF_impact[1]
+        elif 90 < self.eulCF_impact[1] <= 180:
+            R2 = 1.0
+        else:
+            R2 = 0
+
+        R2 *= 0.2
+
+        ## DISTANCE REWARD (Gaussian Function)
+        A = 0.1
+        mu = 0
+        sig = 1
+        R3 = A*np.exp(-1/2*np.power((self.d_min-mu)/sig,2))
+
+        return R1 + R2 + R3
+
+    def getTime(self):
+        """Returns current known time.
+
+        Returns:
+            float: Current known time.
+        """        
+        
+        return self.t
 
     def SendCmd(self,action,cmd_vals=[0,0,0],cmd_flag=1):
         """Sends commands to Crazyflie controller via rostopic
@@ -122,7 +285,6 @@ class CrazyflieEnv():
         rospy.wait_for_service('/CF_DC/Cmd_CF_DC')
         RL_Cmd_service = rospy.ServiceProxy('/CF_DC/Cmd_CF_DC', RLCmd)
         RL_Cmd_service(srv)
-
 
     def modelInitials(self):
         """Returns initials for the model
@@ -221,57 +383,8 @@ class CrazyflieEnv():
         logging_service = rospy.ServiceProxy('/CF_DC/DataLogging', loggingCMD)
         logging_service(srv)
 
-    # ============================
-    ##       GAZEBO OPERATION
-    # ============================
-    def launch_sim(self):
-        """ Launches Gazebo environment with crazyflie drone
-        """        
-        
-        print("[STARTING] Starting Gazebo Process...")
-        subprocess.Popen( # Gazebo Process
-            "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_launch launch_gazebo.bash", 
-            start_new_session=True, shell=True)
+    
 
-    def launch_controller(self):
-        """ 
-        Kill previous controller node if active and launch controller node
-        """        
-        
-        print("[STARTING] Starting Controller Process...")
-        os.system("rosnode kill /Controller_Node")
-        time.sleep(0.5)
-        subprocess.Popen( # Controller Process
-            "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_control controller",
-            close_fds=True, preexec_fn=os.setsid, shell=True)
-
-    def launch_CF_DC(self):
-        """ 
-        Kill previous CF_DC node if active and launch CF_DC node
-        """        
-        
-        print("[STARTING] Starting CF_DC Process...")
-        os.system("rosnode kill /CF_DataConverter_Node")
-        time.sleep(0.5)
-        subprocess.Popen( # CF_DC Process
-            "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_data_converter CF_DataConverter",
-            close_fds=True, preexec_fn=os.setsid, shell=True)
-
-    def close_Gazebo(self) -> bool:
-        """
-        Function to close gazebo if its running.
-        :return: True if gazebo was closed, False otherwise.
-        :rtype: bool
-        """
-
-        term_command = "rosnode kill /gazebo /gazebo_gui"
-        os.system(term_command)
-        time.sleep(0.5)
-
-        term_command = "killall -9 gzserver gzclient"
-        os.system(term_command)
-
-        return True
     def sleep(self,time_s):
         """Sleep in terms of Gazebo sim seconds not real time seconds
 
@@ -382,6 +495,102 @@ class CrazyflieEnv():
             pass
 
     # ============================
+    ##      GAZEBO TECHNICAL
+    # ============================
+    def launch_Gazebo(self):
+        """ Launches Gazebo environment with crazyflie drone
+        """        
+        
+        print("[STARTING] Starting Gazebo Process...")
+        subprocess.Popen( # Gazebo Process
+            "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_launch launch_gazebo.bash", 
+            start_new_session=True, shell=True)
+
+        
+
+    def launch_Node_Controller(self):
+        """ 
+        Kill previous controller node if active and launch controller node
+        """        
+        
+        print("[STARTING] Starting Controller Process...")
+        os.system("rosnode kill /Controller_Node")
+        time.sleep(0.5)
+        subprocess.Popen( # Controller Process
+            "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_control controller",
+            close_fds=True, preexec_fn=os.setsid, shell=True)
+
+    def launch_Node_CF_DC(self):
+        """ 
+        Kill previous CF_DC node if active and launch CF_DC node
+        """        
+        
+        print("[STARTING] Starting CF_DC Process...")
+        os.system("rosnode kill /CF_DataConverter_Node")
+        time.sleep(0.5)
+        subprocess.Popen( # CF_DC Process
+            "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_data_converter CF_DataConverter",
+            close_fds=True, preexec_fn=os.setsid, shell=True)
+
+    def close_Gazebo(self) -> bool:
+        """
+        Function to close gazebo if its running.
+        :return: True if gazebo was closed, False otherwise.
+        :rtype: bool
+        """
+
+        term_command = "rosnode kill /gazebo /gazebo_gui"
+        os.system(term_command)
+        time.sleep(0.5)
+
+        term_command = "killall -9 gzserver gzclient"
+        os.system(term_command)
+
+        return True
+
+    def gazebo_pause_physics(self,retries=5) -> bool:
+        """
+        Function to pause the physics in the simulation.
+        :param retries: The number of times to retry the service call.
+        :type retries: int
+        :return: True if the command was sent and False otherwise.
+        :rtype: bool
+        """
+
+        rospy.wait_for_service("/gazebo/pause_physics")
+        client_srv = rospy.ServiceProxy("/gazebo/pause_physics", Empty)
+
+        for retry in range(retries):
+            try:
+                client_srv()
+                return True
+            except rospy.ServiceException as e:
+                print ("/gazebo/pause_physics service call failed")
+            
+        return False
+
+    def gazebo_unpause_physics(self,retries=5) -> bool:
+        """
+        Function to unpause the physics in the simulation.
+        :param retries: The number of times to retry the service call.
+        :type retries: int
+        :return: True if the command was sent and False otherwise.
+        :rtype: bool
+        """
+
+        rospy.wait_for_service("/gazebo/unpause_physics")
+        client_srv = rospy.ServiceProxy("/gazebo/unpause_physics", Empty)
+        
+        for retry in range(retries):
+            try:
+                client_srv()
+                return True
+            except rospy.ServiceException as e:
+                print ("/gazebo/pause_physics service call failed")
+            
+        return False
+
+    # ============================
     ##   Publishers/Subscribers 
     # ============================
 
@@ -393,13 +602,6 @@ class CrazyflieEnv():
                                 StateData_msg.Pose.position.y,
                                 StateData_msg.Pose.position.z],3)
 
-        
-
-        self.quatCF = np.round([StateData_msg.Pose.orientation.x,
-                                StateData_msg.Pose.orientation.y,
-                                StateData_msg.Pose.orientation.z,
-                                StateData_msg.Pose.orientation.w],3)
-
         self.eulCF = np.round([ StateData_msg.Eul.x,
                                 StateData_msg.Eul.y,
                                 StateData_msg.Eul.z],3)
@@ -409,61 +611,17 @@ class CrazyflieEnv():
                                 StateData_msg.Twist.linear.y,
                                 StateData_msg.Twist.linear.z],3)
 
-        self.omegaCF = np.round([StateData_msg.Twist.angular.x,
-                                 StateData_msg.Twist.angular.y,
-                                 StateData_msg.Twist.angular.z],3)
-
         ## CF_VISUAL STATES
         self.Tau = np.round(StateData_msg.Tau,3)
         self.OFx = np.round(StateData_msg.OFx,3)
         self.OFy = np.round(StateData_msg.OFy,3)
         self.d_ceil = np.round(StateData_msg.D_ceil,3)
-
-        ## CONTROLLER ACTIONS
-        self.FM = np.round([StateData_msg.FM[0],
-                            StateData_msg.FM[1],
-                            StateData_msg.FM[2],
-                            StateData_msg.FM[3]],3)
-
-        self.MotorThrusts = np.round([StateData_msg.MotorThrusts[0],
-                                      StateData_msg.MotorThrusts[1],
-                                      StateData_msg.MotorThrusts[2],
-                                      StateData_msg.MotorThrusts[3]],3)
-
-        self.MS_pwm = np.round([StateData_msg.MS_PWM[0],
-                                StateData_msg.MS_PWM[1],
-                                StateData_msg.MS_PWM[2],
-                                StateData_msg.MS_PWM[3]],0)
-
-        self.Policy_Flip = np.round(StateData_msg.Policy_Flip,3)
-        self.Policy_Action = np.round(StateData_msg.Policy_Action,3)
-
-        self.x_d = np.round([StateData_msg.x_d.x,
-                             StateData_msg.x_d.y,
-                             StateData_msg.x_d.z],3)
-
-        self.v_d = np.round([StateData_msg.v_d.x,
-                             StateData_msg.v_d.y,
-                             StateData_msg.v_d.z],3)
-
-        self.a_d = np.round([StateData_msg.a_d.x,
-                             StateData_msg.a_d.y,
-                             StateData_msg.a_d.z],3)
-
        
         ## ======== REWARD INPUT CALCS ======== ##
 
         ## MIN D_CEIL CALC
-        if self.d_ceil < self.d_ceil_min:
-            self.d_ceil_min = np.round(self.d_ceil,3) # Min distance achieved, used for reward calc
-
-        ## MAX PITCH CALC
-        # Integrate omega_y over time to get full rotation estimate
-        # This accounts for multiple revolutions that euler angles/quaternions can't
-        self.pitch_sum = self.pitch_sum + self.omegaCF[1]*(180/np.pi)*(self.t - self.t_prev) # [deg]
-        
-        if self.pitch_sum < self.pitch_max:     # Recording the most negative value
-            self.pitch_max = np.round(self.pitch_sum,3)
+        if self.d_ceil < self.d_min:
+            self.d_min = np.round(self.d_ceil,3) # Min distance achieved, used for reward calc
 
         self.t_prev = self.t # Save t value for next callback iteration
 
@@ -472,66 +630,12 @@ class CrazyflieEnv():
         ## FLIP FLAGS
         self.flip_flag = FlipData_msg.flip_flag
 
-        self.t_tr = np.round(FlipData_msg.header.stamp.to_sec(),4)
-
-        ## CF_POSE (FLIP)
-        self.posCF_tr = np.round([FlipData_msg.Pose_tr.position.x,
-                                  FlipData_msg.Pose_tr.position.y,
-                                  FlipData_msg.Pose_tr.position.z],3)
-
-        self.quatCF_tr = np.round([FlipData_msg.Pose_tr.orientation.x,
-                                   FlipData_msg.Pose_tr.orientation.y,
-                                   FlipData_msg.Pose_tr.orientation.z,
-                                   FlipData_msg.Pose_tr.orientation.w],3)
-
-        self.eulCF_tr = np.round([FlipData_msg.Eul_tr.x,
-                                  FlipData_msg.Eul_tr.y,
-                                  FlipData_msg.Eul_tr.z],3)
-
-        ## CF_TWIST (FLIP)
-        self.velCF_tr = np.round([FlipData_msg.Twist_tr.linear.x,
-                                  FlipData_msg.Twist_tr.linear.y,
-                                  FlipData_msg.Twist_tr.linear.z],3)
-
-        self.omegaCF_tr = np.round([FlipData_msg.Twist_tr.angular.x,
-                                    FlipData_msg.Twist_tr.angular.y,
-                                    FlipData_msg.Twist_tr.angular.z],3)
-
-        ## CF_VISUAL STATES (FLIP)
-        self.Tau_tr = np.round(FlipData_msg.Tau_tr,3)
-        self.OFx_tr = np.round(FlipData_msg.OFx_tr,3)
-        self.OFy_tr = np.round(FlipData_msg.OFy_tr,3)
-        self.d_ceil_tr = np.round(FlipData_msg.D_ceil_tr,3)
-
-        ## CONTROLLER ACTIONS
-        self.FM_tr = np.round([FlipData_msg.FM_tr[0],
-                               FlipData_msg.FM_tr[1],
-                               FlipData_msg.FM_tr[2],
-                               FlipData_msg.FM_tr[3]],3)
-
-
-        self.Policy_Flip_tr = np.round(FlipData_msg.Policy_Flip_tr,3)
-        self.Policy_Action_tr = np.round(FlipData_msg.Policy_Action_tr,3)
 
     def CF_ImpactDataCallback(self,ImpactData_msg):
 
         ## IMPACT FLAGS
         self.impact_flag = ImpactData_msg.impact_flag
         self.BodyContact_flag = ImpactData_msg.BodyContact_flag
-
-        self.t_impact = np.round(ImpactData_msg.header.stamp.to_sec(),4)
-
-        ## CF_POSE (IMPACT)
-        self.posCF_impact = np.round([ImpactData_msg.Pose_impact.position.x,
-                                      ImpactData_msg.Pose_impact.position.y,
-                                      ImpactData_msg.Pose_impact.position.z],3)
-
-        
-
-        self.quatCF_impact = np.round([ImpactData_msg.Pose_impact.orientation.x,
-                                       ImpactData_msg.Pose_impact.orientation.y,
-                                       ImpactData_msg.Pose_impact.orientation.z,
-                                       ImpactData_msg.Pose_impact.orientation.w],3)
 
         self.eulCF_impact = np.round([ImpactData_msg.Eul_impact.x,
                                       ImpactData_msg.Eul_impact.y,
@@ -541,17 +645,6 @@ class CrazyflieEnv():
         self.velCF_impact = np.round([ImpactData_msg.Twist_impact.linear.x,
                                       ImpactData_msg.Twist_impact.linear.y,
                                       ImpactData_msg.Twist_impact.linear.z],3)
-
-        self.omegaCF_impact = np.round([ImpactData_msg.Twist_impact.angular.x,
-                                        ImpactData_msg.Twist_impact.angular.y,
-                                        ImpactData_msg.Twist_impact.angular.z],3)
-
-        ## IMPACT FORCES
-        self.Force_impact = np.round([ImpactData_msg.Force_impact.x,
-                                      ImpactData_msg.Force_impact.y,
-                                      ImpactData_msg.Force_impact.z],3)
-
-        self.impact_magnitude = np.round(ImpactData_msg.Impact_Magnitude,3)
 
         ## STICKY PAD CONNECTIONS
         if self.DataType == 'SIM':
@@ -565,13 +658,50 @@ class CrazyflieEnv():
 
         self.V_Battery = np.round(MiscData_msg.battery_voltage,4)
 
+    # ============================
+    ##      Timeout Functions 
+    # ============================
+
+    # Subscriber thread listens to /clock for any message
+    def timeoutSub(self):
+        ## START INITIAL TIMERS
+        self.timer_unpause = Timer(5,self.timeout_unpause)
+        self.timer_relaunch = Timer(10,self.timeout_relaunch)
+        ## START ROS CREATED THREAD FOR SUBSCRIBER
+        rospy.Subscriber("/clock",Clock,self.timeoutCallback)
+        ## END FUNCTION, THIS MIGHT NOT NEED TO BE THREADED?
+
+    
+    # If message is received reset the threading.Timer threads
+    def timeoutCallback(self,msg):
+        ## RESET TIMER THAT ATTEMPTS TO UNPAUSE SIM
+        self.timer_unpause.cancel()
+        self.timer_unpause = Timer(4.0,self.timeout_unpause)
+        self.timer_unpause.start()
+
+        ## RESET TIMER THAT RELAUNCHES SIM
+        self.timer_relaunch.cancel()
+        self.timer_relaunch = Timer(7.0,self.timeout_relaunch)
+        self.timer_relaunch.start()
+    
+
+    def timeout_unpause(self):
+        print("[UNPAUSING] No Gazebo communication in 5 seconds")
+        os.system("rosservice call gazebo/unpause_physics")
+
+    def timeout_relaunch(self):
+        print("[RELAUNCHING] No Gazebo communication in 10 seconds")
+        self.close_Gazebo()
+        time.sleep(1)
+        self.launch_Gazebo()
+        time.sleep(1)
 
 if __name__ == "__main__":
 
-    env = CrazyflieEnv()
-    input("hello")
-    env.close_Gazebo()
-    
-    sys.exit(0)
-    # while True:
-    #     a = 5
+    env = CrazyflieEnv(gazeboTimeout=True)
+    for _ in range(25):
+        env.reset()
+        obs,reward,done,info = env.PO_Step(0.23,7,2.5,60)
+
+
+    env.close()
