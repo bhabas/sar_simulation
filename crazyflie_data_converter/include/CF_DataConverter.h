@@ -347,11 +347,9 @@ class CF_DataConverter
         boost::array<float,3> policy{0,0,0};
 
         float reward = 0.0;
-        boost::array<double,3> reward_inputs{0,0,0};
 
         boost::array<float,3> vel_d{0,0,0};
 
-        bool runComplete_flag = false;
 
 };
 
@@ -721,7 +719,7 @@ void CF_DataConverter::append_CSV_misc()
 
 
     // MISC RL LABELS
-    fprintf(fPtr,"%.2f,[%.3f %.3f %.3f],",reward,reward_inputs[0],reward_inputs[1],reward_inputs[2]);
+    fprintf(fPtr,"%.2f,--,--,--,",reward);
 
     // MISC INTERNAL STATE ESTIMATES
     fprintf(fPtr,"--,--,--,"); // Tau_est,OF_x_est,OF_y_est

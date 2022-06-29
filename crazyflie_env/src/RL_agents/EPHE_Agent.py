@@ -19,21 +19,59 @@ class EPHE_Agent():
         self.RL_Data_Publisher = rospy.Publisher('/RL/data',RLData,queue_size=10)
         self.RL_Convg_Publisher = rospy.Publisher('/RL/convg_data',RLConvg,queue_size=10)
 
-
+        ## CONVERGENCE HISTORY
         self.K_ep_list = []
         self.K_run_list = []
 
-        self.mu_1_list = []
-        self.mu_2_list = []
+        self.mu_1_list = []         # List of mu values over course of convergence
+        self.mu_2_list = [] 
 
-        self.sigma_1_list = []
+        self.sigma_1_list = []      # List of sigma values over course of convergence
         self.sigma_2_list = []
 
-        self.reward_list = []
+        self.reward_list = []       # List of reward values over course of convergence
+        self.reward_avg_list = []   # List of reward averages ""
         self.Kep_list_reward_avg = []
-        self.reward_avg_list = []
+
+        ## PARAM OPTIM DATA
+        self.n_rollouts = 6             # Rollouts per episode
+        self.k_ep = 0                   # Episode number
+        self.k_run = 0                  # Run number
+        self.error_str = ""
+        
+        self.policy = [0.0,0.0,0.0]     # Policy sampled from Gaussian distribution
+
+        self.vel_d = [0.0,0.0,0.0]      # Desired velocity for trial
+
+        self.reward = 0.0               # Calculated reward from run
+        self.reward_avg = 0.0           # Averaged rewards over episode
+
+        self.trialComplete_flag = False
+
+
 
     def RL_Publish(self):
+
+        ## RL DATA
+        RL_msg = RLData() ## Initialize RLData message
+        
+        RL_msg.n_rollouts = self.n_rollouts
+
+        RL_msg.k_ep = self.k_ep
+        RL_msg.k_run = self.k_run
+        RL_msg.error_string = self.error_str
+
+        RL_msg.mu = list(self.mu.flatten())
+        RL_msg.sigma = list(self.sigma.flatten())
+        RL_msg.policy = self.policy
+
+        RL_msg.reward = self.reward
+        RL_msg.reward_avg = self.reward_avg
+
+        RL_msg.vel_d = self.vel_d
+
+        RL_msg.trialComplete_flag = self.trialComplete_flag
+        self.RL_Data_Publisher.publish(RL_msg) ## Publish RLData message
         
         ## CONVERGENCE HISTORY
         RL_convg_msg = RLConvg()

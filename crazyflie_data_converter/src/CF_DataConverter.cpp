@@ -345,11 +345,9 @@ void CF_DataConverter::RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &
     policy = msg->policy;
 
     reward = msg->reward;
-    reward_inputs = msg->reward_inputs;
 
     vel_d = msg->vel_d;
 
-    runComplete_flag = msg->runComplete_flag;
 
     if(msg->trialComplete_flag == true)
     {

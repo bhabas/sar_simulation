@@ -41,6 +41,8 @@ if __name__ == '__main__':
     env.filepath = f"{env.loggingPath}/{trial_name}.csv"
     env.createCSV(env.filepath)
 
+    agent.vel_d = [V_d,phi,0.0]
+
     
 
 
@@ -58,7 +60,7 @@ if __name__ == '__main__':
         ## CONVERT AGENT ARRAYS TO LISTS FOR PUBLISHING
 
         agent.K_ep_list.append(k_ep)
-
+        
 
         agent.mu_1_list.append(agent.mu[0,0])
         agent.mu_2_list.append(agent.mu[1,0])
@@ -81,14 +83,20 @@ if __name__ == '__main__':
         print(theta[0,:], "--> Tau")
         print(theta[1,:], "--> My")
 
+
         # ============================
         ##          Run 
         # ============================
         for k_run in range(0,agent.n_rollouts):
 
+            agent.k_ep = k_ep
+            agent.k_run = k_run
+
             ## INITIALIZE POLICY PARAMETERS: 
             Tau_thr = theta[0, k_run]    # Tau threshold 10*[s]
             My = theta[1, k_run]         # Policy Moment Action [N*mm]
+
+
 
             env.reset()
             env.startLogging()
@@ -98,6 +106,11 @@ if __name__ == '__main__':
             ## ADD VALID REWARD TO TRAINING ARRAY
             reward_arr[k_run] = reward
 
+
+            agent.policy = [Tau_thr,My,0]
+            agent.reward = reward
+            agent.error_str = env.error_str
+            
             agent.K_run_list.append(k_ep)
             agent.reward_list.append(reward)
 
@@ -110,6 +123,8 @@ if __name__ == '__main__':
 
         agent.Kep_list_reward_avg.append(k_ep)
         agent.reward_avg_list.append(np.mean(reward_arr))
+        agent.reward_avg = np.mean(reward_arr)
+
         agent.RL_Publish()
 
         agent.train(theta,reward_arr)
