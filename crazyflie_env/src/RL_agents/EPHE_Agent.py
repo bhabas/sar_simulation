@@ -1,5 +1,7 @@
 import numpy as np
 import scipy.stats 
+import rospy
+from crazyflie_msgs.msg import RLData,RLConvg
 
 class EPHE_Agent():
     ## EM‑based policy hyper parameter exploration
@@ -13,6 +15,44 @@ class EPHE_Agent():
 
         self.n_rollouts = n_rollouts
         self.dim = len(self.mu)
+
+        self.RL_Data_Publisher = rospy.Publisher('/RL/data',RLData,queue_size=10)
+        self.RL_Convg_Publisher = rospy.Publisher('/RL/convg_data',RLConvg,queue_size=10)
+
+
+        self.K_ep_list = []
+        self.K_run_list = []
+
+        self.mu_1_list = []
+        self.mu_2_list = []
+
+        self.sigma_1_list = []
+        self.sigma_2_list = []
+
+        self.reward_list = []
+        self.Kep_list_reward_avg = []
+        self.reward_avg_list = []
+
+    def RL_Publish(self):
+        
+        ## CONVERGENCE HISTORY
+        RL_convg_msg = RLConvg()
+        RL_convg_msg.K_ep_list = self.K_ep_list
+        RL_convg_msg.K_run_list = self.K_run_list
+
+
+        RL_convg_msg.mu_1_list = self.mu_1_list
+        RL_convg_msg.mu_2_list = self.mu_2_list
+
+        RL_convg_msg.sigma_1_list = self.sigma_1_list
+        RL_convg_msg.sigma_2_list = self.sigma_2_list
+
+        RL_convg_msg.reward_list = self.reward_list
+
+        RL_convg_msg.Kep_list_reward_avg = self.Kep_list_reward_avg
+        RL_convg_msg.reward_avg_list = self.reward_avg_list
+
+        self.RL_Convg_Publisher.publish(RL_convg_msg) ## Publish RLData message
 
 
     def get_theta(self):

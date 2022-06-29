@@ -30,6 +30,7 @@ class DashboardNode:
 
         self.K_ep_list = []
         self.K_run_list = []
+        self.Kep_list_reward_avg = []
 
 
         self.mu_1_list = [] # I can generalize this if needed
@@ -337,6 +338,7 @@ class DashboardNode:
 
         ## AVERAGE REWARD ARRAYS
         self.r_avg_list = np.array(msg.reward_avg_list)
+        self.Kep_list_reward_avg = np.array(msg.Kep_list_reward_avg)
         # self.K_ep_list2 = np.array(range(0,len(self.r_avg_list)))
 
 

@@ -71,6 +71,8 @@ class CrazyflieEnv():
         self.launch_Node_CF_DC()
             # print("[INITIATING] Gazebo simulation started")
 
+        self.preInit_Values()
+
         ## INIT ROS SUBSCRIBERS [Pub/Sampling Frequencies]
         # NOTE: Queue sizes=1 so that we are always looking at the most current data and 
         #       not data at back of a queue waiting to be processed by callbacks
@@ -79,6 +81,7 @@ class CrazyflieEnv():
         rospy.Subscriber("/CF_DC/ImpactData",CF_ImpactData,self.CF_ImpactDataCallback,queue_size=1)
         rospy.Subscriber("/CF_DC/MiscData",CF_MiscData,self.CF_MiscDataCallback,queue_size=1)
 
+    
 
     def ParamOptim_Flight(self,Tau,My,vel,phi):
 
@@ -202,13 +205,13 @@ class CrazyflieEnv():
             if self.BodyContact_flag == False:
                 R1 = 0.7
             else:
-                R1 = 0.4
+                R1 = 0.3
             
         elif self.pad_connections == 2: 
             if self.BodyContact_flag == False:
-                R1 = 0.3
+                R1 = 0.5
             else:
-                R1 = 0.2
+                R1 = 0.1
         
         else:
             R1 = 0.0
@@ -494,6 +497,87 @@ class CrazyflieEnv():
         except rospy.exceptions.ROSException:
             
             pass
+
+    def preInit_Values(self):
+        ## RAW VICON VALUES
+        self.posViconRaw = [0,0,0]
+        self.quatViconRaw = [0,0,0,1]
+
+        ## FILTERED VICON STATES
+        self.posVicon = [0,0,0]
+        self.velVicon = [0,0,0]
+
+        self.quatVicon = [0,0,0,1]
+        self.eulVicon = [0,0,0]
+        self.omegaVicon = [0,0,0]
+
+
+        ## INITIALIZE STATE VALUES
+        self.t = 0.0
+        self.posCF = [0,0,0]
+        self.velCF = [0,0,0]
+
+        self.quatCF = [0,0,0,1]
+        self.eulCF = [0,0,0]
+        self.omegaCF = [0,0,0]
+        self.eulCF = [0,0,0]
+
+        self.Tau = 0.0
+        self.OFx = 0.0
+        self.OFy = 0.0
+        self.d_ceil = 0.0 
+
+        self.MS_pwm = [0,0,0,0] # Controller Motor Speeds (MS1,MS2,MS3,MS4) [PWM]
+        self.MotorThrusts = [0,0,0,0] # Controller Motor Thrusts [M1,M2,M3,M4][g]
+        self.FM = [0,0,0,0]     # Controller Force/Moments (F_thrust,Mx,My,Mz) [N,N*mm]
+        
+        self.Policy_Flip = 0.0
+        self.Policy_Action = 0.0
+        
+        self.x_d = [0,0,0]
+        self.v_d = [0,0,0]
+        self.a_d = [0,0,0]
+
+        ## INITIALIZE FLIP VALUES
+        self.flip_flag = False      # Flag if model has started flip maneuver
+
+        self.t_tr = 0.0             # [s]
+        self.posCF_tr = [0,0,0]     # [m]
+        self.velCF_tr = [0,0,0]     # [m/s]
+        self.quatCF_tr = [0,0,0,1]  # [quat]
+        self.omegaCF_tr = [0,0,0]   # [rad/s]
+        self.eulCF_tr = [0,0,0]
+
+        self.Tau_tr = 0.0
+        self.OFx_tr = 0.0           # [rad/s]
+        self.OFy_tr = 0.0           # [rad/s]
+        self.d_ceil_tr = 0.0        # [m]
+
+        self.FM_tr = [0,0,0,0]      # [N,N*mm]
+
+        self.Policy_Flip_tr = 0.0
+        self.Policy_Action_tr = 0.0     # [N*mm]
+
+        ## INITIALIZE IMPACT VALUES
+        self.impact_flag = False
+        self.BodyContact_flag = False   # Flag if model body impacts ceiling plane
+
+        self.t_impact = 0.0
+        self.posCF_impact = [0,0,0]
+        self.velCF_impact = [0,0,0]
+        self.quatCF_impact = [0,0,0,1]
+        self.omegaCF_impact = [0,0,0]
+        self.eulCF_impact = [0,0,0]
+
+        self.impact_force_x = 0.0     # Ceiling impact force, X-dir [N]
+        self.impact_force_y = 0.0     # Ceiling impact force, Y-dir [N]
+        self.impact_force_z = 0.0     # Ceiling impact force, Z-dir [N]
+        self.impact_magnitude = 0.0
+
+        self.pad_connections = 0 # Number of pad connections
+
+        ## INITIALIZE MISC VALUES
+        self.V_Battery = 0.0
 
     # ============================
     ##      GAZEBO TECHNICAL

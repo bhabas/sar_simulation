@@ -9,6 +9,7 @@ from Crazyflie_env2 import CrazyflieEnv
 from RL_agents.EPHE_Agent import EPHE_Agent
 
 
+
 os.system("clear")
 np.set_printoptions(precision=2, suppress=True)
 
@@ -22,7 +23,7 @@ if __name__ == '__main__':
     mu_0 = np.array([2.5, 5])       # Initial mu starting point
     sig_0 = np.array([0.5, 1.5])   # Initial sigma starting point
 
-    agent = EPHE_Agent(mu_0,sig_0,n_rollouts=8)
+    agent = EPHE_Agent(mu_0,sig_0,n_rollouts=6)
 
 
     # ============================
@@ -31,7 +32,7 @@ if __name__ == '__main__':
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
     V_d = 2.5 # [m/s]
-    phi = 60   # [deg]
+    phi = 30   # [deg]
     phi_rad = np.radians(phi)
 
     ## INITIALIALIZE LOGGING DATA
@@ -40,28 +41,30 @@ if __name__ == '__main__':
     env.filepath = f"{env.loggingPath}/{trial_name}.csv"
     env.createCSV(env.filepath)
 
+    
+
 
     # ============================
     ##          Episode         
     # ============================
 
-    for k_ep in range(0,15):
+    for k_ep in range(0,100):
 
-        
-        # ## CONVERT AGENT ARRAYS TO LISTS FOR PUBLISHING
-        # env.mu = agent.mu.flatten().tolist()                # Mean for Gaussian distribution
-        # env.sigma = agent.sigma.flatten().tolist()          # Standard Deviation for Gaussian distribution
-
-        # env.mu_1_list.append(env.mu[0])
-        # env.mu_2_list.append(env.mu[1])
-
-        # env.sigma_1_list.append(env.sigma[0])
-        # env.sigma_2_list.append(env.sigma[1])
-
-        
+    
         ## PRE-ALLOCATE REWARD VEC AND OBTAIN THETA VALS
         reward_arr = np.zeros(shape=(agent.n_rollouts)) # Array of reward values for training
         theta = agent.get_theta()             # Generate sample policies from distribution
+
+        ## CONVERT AGENT ARRAYS TO LISTS FOR PUBLISHING
+
+        agent.K_ep_list.append(k_ep)
+
+
+        agent.mu_1_list.append(agent.mu[0,0])
+        agent.mu_2_list.append(agent.mu[1,0])
+
+        agent.sigma_1_list.append(agent.sigma[0,0])
+        agent.sigma_2_list.append(agent.sigma[1,0])
 
         ## PRINT EPISODE DATA
         print("=============================================")
@@ -83,22 +86,32 @@ if __name__ == '__main__':
         # ============================
         for k_run in range(0,agent.n_rollouts):
 
-
             ## INITIALIZE POLICY PARAMETERS: 
             Tau_thr = theta[0, k_run]    # Tau threshold 10*[s]
             My = theta[1, k_run]         # Policy Moment Action [N*mm]
-            G2 = 0.0                        # Deprecated policy term
 
             env.reset()
+            env.startLogging()
             obs,reward,done,info = env.ParamOptim_Flight(Tau_thr/10,My,V_d,phi)
+            env.capLogging()
 
             ## ADD VALID REWARD TO TRAINING ARRAY
             reward_arr[k_run] = reward
+
+            agent.K_run_list.append(k_ep)
+            agent.reward_list.append(reward)
+
+            agent.RL_Publish()
             
      
 
         ## =======  EPISODE COMPLETED  ======= ##
         print(f"Episode # {k_ep:d} training, average reward {np.mean(reward_arr):.3f}")
+
+        agent.Kep_list_reward_avg.append(k_ep)
+        agent.reward_avg_list.append(np.mean(reward_arr))
+        agent.RL_Publish()
+
         agent.train(theta,reward_arr)
 
 
