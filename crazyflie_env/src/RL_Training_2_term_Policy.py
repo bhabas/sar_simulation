@@ -22,7 +22,6 @@ if __name__ == '__main__':
     # Mu_Tau value is multiplied by 10 so complete policy is more normalized
     mu_0 = np.array([2.5, 5])       # Initial mu starting point
     sig_0 = np.array([0.5, 1.5])   # Initial sigma starting point
-
     agent = EPHE_Agent(mu_0,sig_0,n_rollouts=6)
 
 
@@ -33,17 +32,13 @@ if __name__ == '__main__':
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
     V_d = 2.5 # [m/s]
     phi = 30   # [deg]
-    phi_rad = np.radians(phi)
+    agent.vel_d = [V_d,phi,0.0]
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 24
     trial_name = f"{agent.agent_type}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--{env.modelInitials()}"
     env.filepath = f"{env.loggingPath}/{trial_name}.csv"
     env.createCSV(env.filepath)
-
-    agent.vel_d = [V_d,phi,0.0]
-
-    
 
 
     # ============================
@@ -58,9 +53,7 @@ if __name__ == '__main__':
         theta = agent.get_theta()             # Generate sample policies from distribution
 
         ## CONVERT AGENT ARRAYS TO LISTS FOR PUBLISHING
-
         agent.K_ep_list.append(k_ep)
-        
 
         agent.mu_1_list.append(agent.mu[0,0])
         agent.mu_2_list.append(agent.mu[1,0])
@@ -89,14 +82,14 @@ if __name__ == '__main__':
         # ============================
         for k_run in range(0,agent.n_rollouts):
 
+            ## UPDATE EPISODE/ROLLOUT NUMBER
             agent.k_ep = k_ep
             agent.k_run = k_run
+            agent.RL_Publish()
 
             ## INITIALIZE POLICY PARAMETERS: 
             Tau_thr = theta[0, k_run]    # Tau threshold 10*[s]
             My = theta[1, k_run]         # Policy Moment Action [N*mm]
-
-
 
             env.reset()
             env.startLogging()
@@ -106,11 +99,11 @@ if __name__ == '__main__':
             ## ADD VALID REWARD TO TRAINING ARRAY
             reward_arr[k_run] = reward
 
-
+            ## PUBLISH ROLLOUT DATA
             agent.policy = [Tau_thr,My,0]
             agent.reward = reward
             agent.error_str = env.error_str
-            
+
             agent.K_run_list.append(k_ep)
             agent.reward_list.append(reward)
 
@@ -120,13 +113,13 @@ if __name__ == '__main__':
 
         ## =======  EPISODE COMPLETED  ======= ##
         print(f"Episode # {k_ep:d} training, average reward {np.mean(reward_arr):.3f}")
+        agent.train(theta,reward_arr)
 
+        ## PUBLISH AVERAGE REWARD DATA
         agent.Kep_list_reward_avg.append(k_ep)
         agent.reward_avg_list.append(np.mean(reward_arr))
         agent.reward_avg = np.mean(reward_arr)
-
         agent.RL_Publish()
 
-        agent.train(theta,reward_arr)
 
 

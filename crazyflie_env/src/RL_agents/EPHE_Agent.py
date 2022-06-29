@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.stats 
+import time
 import rospy
 from crazyflie_msgs.msg import RLData,RLConvg
 
@@ -38,10 +39,9 @@ class EPHE_Agent():
         self.k_ep = 0                   # Episode number
         self.k_run = 0                  # Run number
         self.error_str = ""
-        
-        self.policy = [0.0,0.0,0.0]     # Policy sampled from Gaussian distribution
 
         self.vel_d = [0.0,0.0,0.0]      # Desired velocity for trial
+        self.policy = [0.0,0.0,0.0]     # Policy sampled from Gaussian distribution
 
         self.reward = 0.0               # Calculated reward from run
         self.reward_avg = 0.0           # Averaged rewards over episode
@@ -91,6 +91,8 @@ class EPHE_Agent():
         RL_convg_msg.reward_avg_list = self.reward_avg_list
 
         self.RL_Convg_Publisher.publish(RL_convg_msg) ## Publish RLData message
+
+        time.sleep(0.1)
 
 
     def get_theta(self):
