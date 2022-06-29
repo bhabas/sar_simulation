@@ -6,8 +6,7 @@ import time
 
 
 from Crazyflie_env2 import CrazyflieEnv
-from RL_agents.rl_EM import EPHE_Agent
-from ExecuteFlight import executeFlight
+from RL_agents.EPHE_Agent import EPHE_Agent
 
 
 os.system("clear")
@@ -20,10 +19,10 @@ if __name__ == '__main__':
 
     ## INIT LEARNING AGENT
     # Mu_Tau value is multiplied by 10 so complete policy is more normalized
-    mu = np.array([[2.5], [5]])       # Initial mu starting point
-    sigma = np.array([[0.5],[1.5]])   # Initial sigma starting point
+    mu_0 = np.array([2.5, 5])       # Initial mu starting point
+    sig_0 = np.array([0.5, 1.5])   # Initial sigma starting point
 
-    agent = EPHE_Agent(mu,sigma,n_rollouts=8)
+    agent = EPHE_Agent(mu_0,sig_0,n_rollouts=8)
 
 
     # ============================
@@ -32,7 +31,7 @@ if __name__ == '__main__':
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
     V_d = 2.5 # [m/s]
-    phi = 90   # [deg]
+    phi = 60   # [deg]
     phi_rad = np.radians(phi)
 
     ## INITIALIALIZE LOGGING DATA
@@ -46,7 +45,7 @@ if __name__ == '__main__':
     ##          Episode         
     # ============================
 
-    for k_ep in range(0,5):
+    for k_ep in range(0,15):
 
         
         # ## CONVERT AGENT ARRAYS TO LISTS FOR PUBLISHING
@@ -61,8 +60,8 @@ if __name__ == '__main__':
 
         
         ## PRE-ALLOCATE REWARD VEC AND OBTAIN THETA VALS
-        training_arr = np.zeros(shape=(agent.n_rollouts,1)) # Array of reward values for training
-        theta_i,epsilon_i = agent.get_theta()             # Generate sample policies from distribution
+        reward_arr = np.zeros(shape=(agent.n_rollouts)) # Array of reward values for training
+        theta = agent.get_theta()             # Generate sample policies from distribution
 
         ## PRINT EPISODE DATA
         print("=============================================")
@@ -76,8 +75,8 @@ if __name__ == '__main__':
         
 
         print("theta_i = ")
-        print(theta_i[0,:], "--> Tau")
-        print(theta_i[1,:], "--> My")
+        print(theta[0,:], "--> Tau")
+        print(theta[1,:], "--> My")
 
         # ============================
         ##          Run 
@@ -86,20 +85,20 @@ if __name__ == '__main__':
 
 
             ## INITIALIZE POLICY PARAMETERS: 
-            Tau_thr = theta_i[0, k_run]    # Tau threshold 10*[s]
-            My = theta_i[1, k_run]         # Policy Moment Action [N*mm]
+            Tau_thr = theta[0, k_run]    # Tau threshold 10*[s]
+            My = theta[1, k_run]         # Policy Moment Action [N*mm]
             G2 = 0.0                        # Deprecated policy term
 
             env.reset()
             obs,reward,done,info = env.ParamOptim_Flight(Tau_thr/10,My,V_d,phi)
 
             ## ADD VALID REWARD TO TRAINING ARRAY
-            training_arr[k_run] = reward
+            reward_arr[k_run] = reward
             
      
 
         ## =======  EPISODE COMPLETED  ======= ##
-        # print(f"Episode # {k_ep:d} training, average reward {reward_avg:.3f}")
-        agent.train(theta_i,training_arr,epsilon_i)
+        print(f"Episode # {k_ep:d} training, average reward {np.mean(reward_arr):.3f}")
+        agent.train(theta,reward_arr)
 
 
