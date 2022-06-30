@@ -5,47 +5,23 @@ import rospy
 import time
 
 
-from Crazyflie_env2 import CrazyflieEnv
-from RL_agents.EPHE_Agent import EPHE_Agent
+
 
 
 
 os.system("clear")
 np.set_printoptions(precision=2, suppress=True)
 
+def runTraining(env,agent,V_d,phi,loggingPath):
 
-if __name__ == '__main__':
-    ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=False)
-
-    ## INIT LEARNING AGENT
-    # Mu_Tau value is multiplied by 10 so complete policy is more normalized
-    mu_0 = np.array([2.5, 5])       # Initial mu starting point
-    sig_0 = np.array([0.5, 1.5])   # Initial sigma starting point
-    agent = EPHE_Agent(mu_0,sig_0,n_rollouts=6)
-
-
-    # ============================
-    ##     FLIGHT CONDITIONS  
-    # ============================
-
-    ## CONSTANT VELOCITY LAUNCH CONDITIONS
-    V_d = 2.5 # [m/s]
-    phi = 30   # [deg]
     agent.vel_d = [V_d,phi,0.0]
-
-    ## INITIALIALIZE LOGGING DATA
-    trial_num = 24
-    trial_name = f"{agent.agent_type}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--{env.modelInitials()}"
-    env.filepath = f"{env.loggingPath}/{trial_name}.csv"
-    env.createCSV(env.filepath)
-
+    env.createCSV(loggingPath)
 
     # ============================
     ##          Episode         
     # ============================
 
-    for k_ep in range(0,100):
+    for k_ep in range(0,20):
 
     
         ## PRE-ALLOCATE REWARD VEC AND OBTAIN THETA VALS
@@ -94,8 +70,7 @@ if __name__ == '__main__':
             env.reset()
             env.startLogging()
             obs,reward,done,info = env.ParamOptim_Flight(Tau_thr/10,My,V_d,phi)
-            env.capLogging()
-
+            
             ## ADD VALID REWARD TO TRAINING ARRAY
             reward_arr[k_run] = reward
 
@@ -108,6 +83,9 @@ if __name__ == '__main__':
             agent.reward_list.append(reward)
 
             agent.RL_Publish()
+
+
+            env.capLogging()
             
      
 
@@ -120,6 +98,45 @@ if __name__ == '__main__':
         agent.reward_avg_list.append(np.mean(reward_arr))
         agent.reward_avg = np.mean(reward_arr)
         agent.RL_Publish()
+
+        if all(agent.sigma < 0.05):
+            break
+
+
+
+
+if __name__ == '__main__':
+    from Crazyflie_env2 import CrazyflieEnv
+    from RL_agents.EPHE_Agent import EPHE_Agent
+
+    ## INIT GAZEBO ENVIRONMENT
+    env = CrazyflieEnv(gazeboTimeout=True)
+
+    ## INIT LEARNING AGENT
+    # Mu_Tau value is multiplied by 10 so complete policy is more normalized
+    mu_0 = np.array([2.5, 5])       # Initial mu starting point
+    sig_0 = np.array([0.5, 1.5])   # Initial sigma starting point
+    agent = EPHE_Agent(mu_0,sig_0,n_rollouts=6)
+
+
+    # ============================
+    ##     FLIGHT CONDITIONS  
+    # ============================
+
+    ## CONSTANT VELOCITY LAUNCH CONDITIONS
+    V_d = 2.5 # [m/s]
+    phi = 30   # [deg]
+
+    ## INITIALIALIZE LOGGING DATA
+    trial_num = 24
+    trial_name = f"{agent.agent_type}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--{env.modelInitials()}"
+    logging_path = f"{env.loggingPath}/{trial_name}.csv"
+    
+
+    runTraining(env,agent,V_d,phi,logging_path)
+
+
+    
 
 
 

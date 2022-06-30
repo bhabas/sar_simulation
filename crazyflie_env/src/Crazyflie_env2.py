@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import numpy as np
-from threading import Thread, Timer
+import warnings
 
 import gym
 from gym import logger,spaces
@@ -9,13 +9,12 @@ import os
 import time
 import sys
 import subprocess
-import signal
 import rospy
 import getpass
 
 ## ROS MESSAGES AND SERVICES
 from std_srvs.srv import Empty
-from crazyflie_msgs.msg import RLData,RLConvg
+from crazyflie_msgs.msg import CtrlData
 from crazyflie_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
 from crazyflie_msgs.srv import loggingCMD,loggingCMDRequest
 from crazyflie_msgs.srv import domainRand,domainRandRequest
@@ -37,6 +36,7 @@ class CrazyflieEnv():
         rospy.init_node("crazyflie_env_node")
         os.system("roslaunch crazyflie_launch params.launch")
 
+        
         self.modelName = rospy.get_param('/MODEL_NAME')
         self.h_ceiling = rospy.get_param("/CEILING_HEIGHT") # [m]
 
@@ -48,28 +48,18 @@ class CrazyflieEnv():
         self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/crazyflie_logging/local_logs"
         self.DataType = DataType
         self.filepath = ""
+        self.SimReset_Flag = False
 
         self.d_min = 50.0
-        self.t = 0.0
-        self.restart_flag = False
 
         ## GAZEBO SIMULATION INITIALIZATION
         if self.DataType == 'SIM': 
-            self.launch_Gazebo() 
-            rospy.wait_for_service('/gazebo/pause_physics')
-            self.launch_Node_Controller()
-            time.sleep(1.0)
-            self.gazebo_unpause_physics()
-            print("[INITIATING] Gazebo simulation started")
-
-            ## INIT GAZEBO TIMEOUT THREAD
-            if gazeboTimeout==True:
-                self.timeoutThread = Thread(target=self.timeoutSub)
-                self.timeoutThread.start()
             
-
-        self.launch_Node_CF_DC()
-            # print("[INITIATING] Gazebo simulation started")
+            self.gazeboTimeout = gazeboTimeout
+            
+            self.restart_Sim()
+            print("[INITIATING] Gazebo simulation started")
+            
 
         self.preInit_Values()
 
@@ -92,6 +82,8 @@ class CrazyflieEnv():
         start_time_pitch = np.nan
         start_time_impact = np.nan
 
+        start_time_ep = time.time()
+
         ## RESET LOGGING CONDITIONS 
         onceFlag_flip = False    # Ensures flip data recorded only once
         onceFlag_impact = False   # Ensures impact data recorded only once 
@@ -106,7 +98,7 @@ class CrazyflieEnv():
         z_0 = self.h_ceiling - tau_0*vz
 
         self.Vel_Launch([0,0,z_0],[vx,0,vz])
-        self.sleep(0.1)
+        self.sleep(0.05)
         self.SendCmd("Policy",cmd_vals=[Tau,My,0.0],cmd_flag=1)
 
 
@@ -132,43 +124,52 @@ class CrazyflieEnv():
             ## PITCH TIMEOUT  
             if (t_now-start_time_pitch) > 2.25:
                 self.error_str = "Rollout Completed: Pitch Timeout"
-                print(self.error_str)
-
                 done = True
 
             ## IMPACT TIMEOUT
             elif (t_now-start_time_impact) > 0.5:
                 self.error_str = "Rollout Completed: Impact Timeout"
-                print(self.error_str)
-
                 done = True
 
 
             ## ROLLOUT TIMEOUT
-            elif (t_now - start_time_rollout) > (5.0):
+            elif (t_now - start_time_rollout) > 5.0:
                 self.error_str = "Rollout Completed: Time Exceeded"
-                print(self.error_str)
-
                 done = True
 
             ## FREE FALL TERMINATION
             elif self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5: 
                 self.error_str = "Rollout Completed: Falling Drone"
-                print(self.error_str)
-
                 done = True
 
 
-            if any(np.isnan(self.velCF)): 
-            
-                self.close_Gazebo()
-                time.sleep(0.5)
-                self.launch_Gazebo() 
-                rospy.wait_for_service('/gazebo/pause_physics')
-                time.sleep(0.5)
-                self.gazebo_unpause_physics()
+            if (time.time() - start_time_ep) > 10.0 and self.gazeboTimeout == True:
+                print('\033[93m' + "[WARNING] Real Time Exceeded" + '\x1b[0m')
 
+                self.restart_Sim()
                 done = True
+
+
+            # if any(np.isnan(self.velCF)): 
+            #     print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
+            #     self.restart_Sim()
+            #     print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
+            #     done = True
+
+            # if self.gazeboTimeout == True:
+            #     try:
+            #         rospy.wait_for_message("/clock",Clock,timeout=5)
+            #     except rospy.ROSException:
+            #         print('\033[93m' + "[WARNING] Stalling at flight" + '\x1b[0m')
+            #         self.restart_Sim()
+            #         done = True
+
+            # if self.SimReset_Flag == True:
+            #     print('\033[93m' + "[WARNING] Something broke, Restarting Simulation" + '\x1b[0m')
+            #     self.restart_Sim()
+            #     done = True
+
+
 
 
         reward = self.CalcReward()
@@ -187,16 +188,13 @@ class CrazyflieEnv():
     def reset(self):
 
         self.reset_pos()
-        self.sleep(0.25)
 
         ## RESET REWARD CALC VALUES
         self.d_min = 50.0  # Reset max from ceiling [m]
 
         obs = None
+        print("Position Reset")
         return obs
-
-    def close(self):
-        self.close_Gazebo()
 
     def CalcReward(self):
 
@@ -205,14 +203,12 @@ class CrazyflieEnv():
             if self.BodyContact_flag == False:
                 R1 = 0.7
             else:
-                R1 = 0.3
-            
+                R1 = 0.4
         elif self.pad_connections == 2: 
             if self.BodyContact_flag == False:
-                R1 = 0.5
+                R1 = 0.2
             else:
                 R1 = 0.1
-        
         else:
             R1 = 0.0
 
@@ -247,7 +243,7 @@ class CrazyflieEnv():
         
         return self.t
 
-    def SendCmd(self,action,cmd_vals=[0,0,0],cmd_flag=1):
+    def SendCmd(self,action,cmd_vals=[0,0,0],cmd_flag=1,retries=5):
         """Sends commands to Crazyflie controller via rostopic
 
         Args:
@@ -286,44 +282,31 @@ class CrazyflieEnv():
         srv.cmd_flag = cmd_flag
 
         ## SEND LOGGING REQUEST VIA SERVICE
-        rospy.wait_for_service('/CF_DC/Cmd_CF_DC')
-        RL_Cmd_service = rospy.ServiceProxy('/CF_DC/Cmd_CF_DC', RLCmd)
-        RL_Cmd_service(srv)
-
-    def modelInitials(self):
-        """Returns initials for the model
-
-        Returns:
-            string: Model name initials
-        """        
-        str = self.modelName
-        charA = str[self.modelName.find("_")+1] # [W]ide
-        charB = str[self.modelName.find("-")+1] # [L]ong
-
-        return charA+charB  # [WL]
-
-    def userInput(self,input_string,dataType=float):
-        """Processes user input and return values as either indiviual value or list
-
-        Args:
-            input_string (string): String received from user
-            dataType (dataType, optional): Datatype to parse string to. Defaults to float.
-
-        Returns:
-            vals: Values parsed by ','. If multiple values then return list
-        """        
-
-        while True:
+        for retry in range(retries):
             try:
-                vals = [dataType(i) for i in input(input_string).split(',')]
-            except:
-                continue
-        
-            ## RETURN MULTIPLE VALUES IF MORE THAN ONE
-            if len(vals) == 1:
-                return vals[0]
-            else:
-                return vals
+                rospy.wait_for_service('/CF_DC/Cmd_CF_DC',timeout=1)
+                RL_Cmd_service = rospy.ServiceProxy('/CF_DC/Cmd_CF_DC', RLCmd)
+                RL_Cmd_service(srv)
+                rospy.wait_for_message("/clock",Clock,timeout=1)
+                self.sleep(0.05)
+                return True
+
+            except rospy.ROSException as e:
+                print('\033[93m' + "[WARNING] /CF_DC/Cmd_CF_DC wait for service failed" + '\x1b[0m')
+                print('\033[93m' + f"[WARNING] {e}" + '\x1b[0m')
+                self.restart_Sim()
+
+                
+            except rospy.ServiceException as e:
+                print('\033[93m' + "[WARNING] /CF_DC/Cmd_CF_DC service call failed" + '\x1b[0m')
+                print('\033[93m' + f"[WARNING] {e}" + '\x1b[0m')
+                self.restart_Sim()
+
+        return False
+
+
+
+    
 
     # ========================
     ##    Logging Services 
@@ -388,18 +371,18 @@ class CrazyflieEnv():
         logging_service(srv)
 
     
-
     def sleep(self,time_s):
         """Sleep in terms of Gazebo sim seconds not real time seconds
 
         Args:
             time_s (_type_): _description_
         """        
+
         t_start = self.t
         while self.t - t_start <= time_s:
             pass # Do Nothing
 
-    def Vel_Launch(self,pos_0,vel_d,quat_0=[0,0,0,1]): 
+    def Vel_Launch(self,pos_0,vel_d,quat_0=[0,0,0,1],retries=5): 
         """Launch crazyflie from the specified position/orientation with an imparted velocity.
         NOTE: Due to controller dynamics, the actual velocity will NOT be exactly the desired velocity
 
@@ -411,7 +394,6 @@ class CrazyflieEnv():
 
         ## SET DESIRED VEL IN CONTROLLER
         self.SendCmd('Pos',cmd_flag=0)
-        self.sleep(0.05)
         self.SendCmd('Vel',cmd_vals=vel_d,cmd_flag=1)
 
         ## CREATE SERVICE MESSAGE
@@ -438,11 +420,25 @@ class CrazyflieEnv():
         state_msg.twist.angular.z = 0
 
         ## PUBLISH MODEL STATE SERVICE REQUEST
-        rospy.wait_for_service('/gazebo/set_model_state')
-        set_state_service = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
-        set_state_service(state_msg)
+        for retry in range(retries):
+            try:
+                rospy.wait_for_service('/gazebo/set_model_state',timeout=1)
+                set_state_service = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
+                set_state_service(state_msg)
+                return True
+
+            except rospy.ROSException as e:
+                print('\033[93m' + "[WARNING] /gazebo/set_model_state wait for service failed" + '\x1b[0m')
+                print(e)
                 
-    def reset_pos(self,z_0=0.379): # Disable sticky then places spawn_model at origin
+            except rospy.ServiceException as e:
+                print('\033[93m' + "[WARNING] /gazebo/set_model_state service call failed" + '\x1b[0m')
+                print(e)
+
+        self.SimReset_Flag = True
+        return False
+                
+    def reset_pos(self,z_0=0.379,retries=5): # Disable sticky then places spawn_model at origin
         """Reset pose/twist of simulated drone back to home position. 
         As well as turning off stickyfeet
 
@@ -472,11 +468,26 @@ class CrazyflieEnv():
         state_msg.twist.angular.y = 0.0
         state_msg.twist.angular.z = 0.0
 
-        rospy.wait_for_service('/gazebo/set_model_state')
-        set_state_srv = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
-        set_state_srv(state_msg)
-        self.sleep(0.01)
-        self.SendCmd('Ctrl_Reset')
+        for retry in range(retries):
+            try:
+                rospy.wait_for_service('/gazebo/set_model_state',timeout=1)
+                set_state_service = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
+                set_state_service(state_msg)
+
+                self.SendCmd('Ctrl_Reset')
+                self.sleep(0.5)
+                return True
+
+            except rospy.ROSException as e:
+                print('\033[93m' + "[WARNING] /gazebo/set_model_state wait for service failed" + '\x1b[0m')
+                print(e)
+                
+            except rospy.ServiceException as e:
+                print('\033[93m' + "[WARNING] /gazebo/set_model_state service call failed" + '\x1b[0m')
+                print(e)
+
+        self.SimReset_Flag = True
+        return False
 
         ## RESET HOME/TUMBLE DETECTION AND STICKY
 
@@ -498,6 +509,126 @@ class CrazyflieEnv():
             
             pass
 
+
+
+    
+
+    # ============================
+    ##      GAZEBO TECHNICAL
+    # ============================
+    def launch_Gazebo(self):
+        """ Launches Gazebo environment with crazyflie drone
+        """        
+
+        print("[STARTING] Starting Gazebo Process...")
+        term_command = "rosnode kill /gazebo /gazebo_gui"
+        os.system(term_command)
+        time.sleep(0.5)
+
+        term_command = "killall -9 gzserver gzclient"
+        os.system(term_command)
+        time.sleep(1.0)
+        
+        subprocess.Popen( # Gazebo Process
+            "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_launch launch_gazebo.bash", 
+            start_new_session=True, shell=True)
+
+    def launch_Node_Controller(self):
+        """ 
+        Kill previous controller node if active and launch controller node
+        """        
+        
+        print("[STARTING] Starting Controller Process...")
+        os.system("rosnode kill /Controller_Node")
+        time.sleep(0.5)
+        subprocess.Popen( # Controller Process
+            "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_control controller",
+            close_fds=True, preexec_fn=os.setsid, shell=True)
+
+    def launch_Node_CF_DC(self):
+        """ 
+        Kill previous CF_DC node if active and launch CF_DC node
+        """        
+        
+        print("[STARTING] Starting CF_DC Process...")
+        os.system("rosnode kill /CF_DataConverter_Node")
+        time.sleep(0.5)
+        subprocess.Popen( # CF_DC Process
+            "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_data_converter CF_DataConverter",
+            close_fds=True, preexec_fn=os.setsid, shell=True)
+
+
+    def restart_Sim(self) -> bool:
+        for retry in range(5):
+            try:
+                print('\033[93m' + f"[WARNING] Full Simulation Restart. Attempt: {retry}/5" + '\x1b[0m')
+
+                ## RELAUNCH GAZEBO
+                self.launch_Gazebo() 
+
+                ## UNPAUSE GAZEBO
+                self.gazebo_unpause_physics()
+                rospy.wait_for_message("/clock",Clock,timeout=2)
+
+                ## RELAUNCH CONTROLLER
+                self.launch_Node_Controller()
+                rospy.wait_for_message("/CTRL/data",CtrlData,timeout=2)
+
+                ## RELAUNCH CF_DC
+                self.launch_Node_CF_DC()
+                rospy.wait_for_message("/CF_DC/StateData",CF_StateData,timeout=2)
+
+                return True
+
+            except (rospy.ROSException,rospy.ServiceException) as e:
+                continue
+
+        return False
+
+        
+
+    def gazebo_pause_physics(self,retries=5) -> bool:
+        """
+        Function to pause the physics in the simulation.
+        :param retries: The number of times to retry the service call.
+        :type retries: int
+        :return: True if the command was sent and False otherwise.
+        :rtype: bool
+        """
+
+        rospy.wait_for_service("/gazebo/pause_physics",timeout=5)
+        client_srv = rospy.ServiceProxy("/gazebo/pause_physics", Empty)
+
+        for retry in range(retries):
+            try:
+                client_srv()
+                return True
+            except rospy.ServiceException as e:
+                print ("/gazebo/pause_physics service call failed")
+            
+        return False
+
+    def gazebo_unpause_physics(self,retries=5) -> bool:
+        """
+        Function to unpause the physics in the simulation.
+        :param retries: The number of times to retry the service call.
+        :type retries: int
+        :return: True if the command was sent and False otherwise.
+        :rtype: bool
+        """
+
+        rospy.wait_for_service("/gazebo/unpause_physics",timeout=5)
+        client_srv = rospy.ServiceProxy("/gazebo/unpause_physics", Empty)
+        
+        for retry in range(retries):
+            try:
+                client_srv()
+                return True
+            except rospy.ServiceException as e:
+                print ("/gazebo/pause_physics service call failed")
+            
+        return False
+        
     def preInit_Values(self):
         ## RAW VICON VALUES
         self.posViconRaw = [0,0,0]
@@ -580,100 +711,6 @@ class CrazyflieEnv():
         self.V_Battery = 0.0
 
     # ============================
-    ##      GAZEBO TECHNICAL
-    # ============================
-    def launch_Gazebo(self):
-        """ Launches Gazebo environment with crazyflie drone
-        """        
-        
-        print("[STARTING] Starting Gazebo Process...")
-        subprocess.Popen( # Gazebo Process
-            "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_launch launch_gazebo.bash", 
-            start_new_session=True, shell=True)
-
-    def launch_Node_Controller(self):
-        """ 
-        Kill previous controller node if active and launch controller node
-        """        
-        
-        print("[STARTING] Starting Controller Process...")
-        os.system("rosnode kill /Controller_Node")
-        time.sleep(0.5)
-        subprocess.Popen( # Controller Process
-            "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_control controller",
-            close_fds=True, preexec_fn=os.setsid, shell=True)
-
-    def launch_Node_CF_DC(self):
-        """ 
-        Kill previous CF_DC node if active and launch CF_DC node
-        """        
-        
-        print("[STARTING] Starting CF_DC Process...")
-        os.system("rosnode kill /CF_DataConverter_Node")
-        time.sleep(0.5)
-        subprocess.Popen( # CF_DC Process
-            "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_data_converter CF_DataConverter",
-            close_fds=True, preexec_fn=os.setsid, shell=True)
-
-    def close_Gazebo(self) -> bool:
-        """
-        Function to close gazebo if its running.
-        :return: True if gazebo was closed, False otherwise.
-        :rtype: bool
-        """
-
-        term_command = "rosnode kill /gazebo /gazebo_gui"
-        os.system(term_command)
-        time.sleep(0.5)
-
-        term_command = "killall -9 gzserver gzclient"
-        os.system(term_command)
-
-        return True
-
-    def gazebo_pause_physics(self,retries=5) -> bool:
-        """
-        Function to pause the physics in the simulation.
-        :param retries: The number of times to retry the service call.
-        :type retries: int
-        :return: True if the command was sent and False otherwise.
-        :rtype: bool
-        """
-
-        rospy.wait_for_service("/gazebo/pause_physics")
-        client_srv = rospy.ServiceProxy("/gazebo/pause_physics", Empty)
-
-        for retry in range(retries):
-            try:
-                client_srv()
-                return True
-            except rospy.ServiceException as e:
-                print ("/gazebo/pause_physics service call failed")
-            
-        return False
-
-    def gazebo_unpause_physics(self,retries=5) -> bool:
-        """
-        Function to unpause the physics in the simulation.
-        :param retries: The number of times to retry the service call.
-        :type retries: int
-        :return: True if the command was sent and False otherwise.
-        :rtype: bool
-        """
-
-        rospy.wait_for_service("/gazebo/unpause_physics")
-        client_srv = rospy.ServiceProxy("/gazebo/unpause_physics", Empty)
-        
-        for retry in range(retries):
-            try:
-                client_srv()
-                return True
-            except rospy.ServiceException as e:
-                print ("/gazebo/pause_physics service call failed")
-            
-        return False
-
-    # ============================
     ##   Publishers/Subscribers 
     # ============================
 
@@ -741,47 +778,44 @@ class CrazyflieEnv():
 
         self.V_Battery = np.round(MiscData_msg.battery_voltage,4)
 
-    # ============================
-    ##      Timeout Functions 
-    # ============================
+    def modelInitials(self):
+        """Returns initials for the model
 
-    # Subscriber thread listens to /clock for any message
-    def timeoutSub(self):
-        ## START INITIAL TIMERS
-        self.timer_unpause = Timer(4,self.timeout_unpause)
-        self.timer_relaunch = Timer(7,self.timeout_relaunch)
-        ## START ROS CREATED THREAD FOR SUBSCRIBER
-        rospy.Subscriber("/clock",Clock,self.timeoutCallback)
-        ## END FUNCTION, THIS MIGHT NOT NEED TO BE THREADED?
+        Returns:
+            string: Model name initials
+        """        
+        str = self.modelName
+        charA = str[self.modelName.find("_")+1] # [W]ide
+        charB = str[self.modelName.find("-")+1] # [L]ong
 
-    
-    # If message is received reset the threading.Timer threads
-    def timeoutCallback(self,msg):
-        ## RESET TIMER THAT ATTEMPTS TO UNPAUSE SIM
-        self.timer_unpause.cancel()
-        self.timer_unpause = Timer(4.0,self.timeout_unpause)
-        self.timer_unpause.start()
+        return charA+charB  # [WL]
 
-        ## RESET TIMER THAT RELAUNCHES SIM
-        self.timer_relaunch.cancel()
-        self.timer_relaunch = Timer(7.0,self.timeout_relaunch)
-        self.timer_relaunch.start()
-    
+    def userInput(self,input_string,dataType=float):
+        """Processes user input and return values as either indiviual value or list
 
-    def timeout_unpause(self):
-        print("[UNPAUSING] No Gazebo communication in 5 seconds")
-        os.system("rosservice call gazebo/unpause_physics")
+        Args:
+            input_string (string): String received from user
+            dataType (dataType, optional): Datatype to parse string to. Defaults to float.
 
-    def timeout_relaunch(self):
-        print("[RELAUNCHING] No Gazebo communication in 10 seconds")
-        self.close_Gazebo()
-        time.sleep(1)
-        self.launch_Gazebo()
-        time.sleep(1)
+        Returns:
+            vals: Values parsed by ','. If multiple values then return list
+        """        
+
+        while True:
+            try:
+                vals = [dataType(i) for i in input(input_string).split(',')]
+            except:
+                continue
+        
+            ## RETURN MULTIPLE VALUES IF MORE THAN ONE
+            if len(vals) == 1:
+                return vals[0]
+            else:
+                return vals
 
 if __name__ == "__main__":
 
-    env = CrazyflieEnv(gazeboTimeout=False)
+    env = CrazyflieEnv(gazeboTimeout=True)
     for ii in range(1000):
         tau = np.random.uniform(low=0.15,high=0.27)
 
@@ -790,4 +824,4 @@ if __name__ == "__main__":
         print(ii)
 
 
-    env.close()
+    # env.close()
