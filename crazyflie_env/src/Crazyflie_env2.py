@@ -27,6 +27,10 @@ from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState
 from std_srvs.srv import Empty
 
+YELLOW = '\033[93m'
+RED = '\033[91m'
+GREEN = '\033[92m'
+ENDC = '\033[m'
 
 class CrazyflieEnv():
     metadata = {'render.modes': ['human']}
@@ -197,6 +201,7 @@ class CrazyflieEnv():
         ## DISABLE STICKY LEGS (ALSO BREAKS CURRENT CONNECTION JOINTS)
         self.SendCmd('StickyPads',cmd_flag=0)
         self.reset_pos()
+        self.sleep(1.0)
 
         ## RESET REWARD CALC VALUES
         self.d_min = 50.0  # Reset max from ceiling [m]
@@ -297,65 +302,70 @@ class CrazyflieEnv():
         
     def callService(self,addr,srv,srv_type):
 
-        FailureModes = [True,True,True]
-        print('\033[93m')
+        FailureModes = self.diagnosticTest()
+
+        if any(FailureModes):
+            self.Restart(FailureModes)
+            self.done = True
+            return False
+
+
+        try:
+            service = rospy.ServiceProxy(addr, srv_type)
+            service(srv)
+            return True
+
+        except rospy.ServiceException as e:
+            print(f"[WARNING] {addr} service call failed (callService)")
+            print(f"[WARNING] {e}")
+            FailureModes[2] = False
+
+            self.Restart(FailureModes)
+            self.done = True
+            return False
+
+    def diagnosticTest(self):
+        FailureModes = [False,False,False]
+        sys.stdout.write(YELLOW)
         
         ## CHECK THAT GAZEBO IS FUNCTIONING
         try:
             rospy.wait_for_service("/gazebo/pause_physics",timeout=1)
         except rospy.ROSException as e:
-            print("[WARNING] /gazebo/pause_physics wait for service failed (callService)")
+            print(f"[WARNING] /gazebo/pause_physics wait for service failed (callService)")
             print(f"[WARNING] {e}")
-            FailureModes[0] = False
+            FailureModes[0] = True
 
         ## CHECK THAT CONTROLLER IS FUNCTIONING
         try:
             rospy.wait_for_service("/CTRL/Cmd_ctrl",timeout=1)
         except rospy.ROSException as e:
-            print("[WARNING] /CTRL/Cmd_ctrl wait for service failed (callService)")
+            print(f"[WARNING] /CTRL/Cmd_ctrl wait for service failed (callService)")
             print(f"[WARNING] {e}")
-            FailureModes[1] = False
+            FailureModes[1] = True
 
         ## CHECK THAT CF_DC IS FUNCTIONING
         try:
             rospy.wait_for_service('/CF_DC/Cmd_CF_DC',timeout=1)
         except rospy.ROSException as e:
-            print("[WARNING] /CF_DC/Cmd_CF_DC wait for service failed (callService)")
+            print(f"[WARNING] /CF_DC/Cmd_CF_DC wait for service failed (callService)")
             print(f"[WARNING] {e}")
-            FailureModes[2] = False
+            FailureModes[2] = True
 
-
-        ## CALL SERVICE
-        if all(FailureModes):
-            try:
-                service = rospy.ServiceProxy(addr, srv_type)
-                service(srv)
-                print('\x1b[0m')
-                return True
-
-            except rospy.ServiceException as e:
-                print(f"[WARNING] {addr} service call failed (callService)")
-                print(f"[WARNING] {e}")
-                FailureModes[2] = True
- 
-        print('\x1b[0m')
-        self.Restart(FailureModes)
-        self.done = True
-        return False
-
-        
+        sys.stdout.write(ENDC)
+        return FailureModes
 
 
     def Restart(self,FailureModes):
-        print('\033[93m')
+        sys.stdout.write(YELLOW)
 
-        if FailureModes == [False,True,True]:
+        if FailureModes == [True,False,False]:
             for retry in range(5):
                 try:
                     print(f"[WARNING] Gazebo Restart. Attempt: {retry}/5 (restart_Gazebo)")
                     self.launch_Gazebo()
                     rospy.wait_for_service("/gazebo/pause_physics",timeout=10)
-                    print('\033[92m'+ f"[WARNING] Gazebo restart successful. (restart_Gazebo) + '\x1b[0m'")
+                    print(GREEN+ f"[WARNING] Gazebo restart successful. (restart_Gazebo)" + ENDC)
                     return True
 
                 except rospy.ROSException as e:
@@ -363,7 +373,7 @@ class CrazyflieEnv():
                     print(f"[WARNING] {e}")
 
         else:
-            print('\033[91m')
+            sys.stdout.write(RED)
             for retry in range(5):
                 try:
                     print(f"[WARNING] Full Simulation Restart. Attempt: {retry}/5 (Restart Sim)")
@@ -393,7 +403,7 @@ class CrazyflieEnv():
 
                     ## UNPAUSE GAZEBO
                     rospy.wait_for_service("/gazebo/pause_physics",timeout=10)
-                    print('\033[92m' + f"[WARNING] Gazebo restart successful. (Restart Sim)" + '\x1b[0m')
+                    print(GREEN + f"[WARNING] Gazebo restart successful. (Restart Sim)" + ENDC)
 
                     return True
 
@@ -411,9 +421,19 @@ class CrazyflieEnv():
         """
 
         t_start = self.t
-        rospy.wait_for_message("/clock",Clock,timeout=1)
         while self.t - t_start <= time_s:
-            rospy.wait_for_message("/clock",Clock,timeout=1)
+
+            FailureModes = self.diagnosticTest()
+            if any(FailureModes):
+                self.Restart(FailureModes)
+                self.done = True
+                return False
+
+        return True
+        
+
+
+        
 
     def Vel_Launch(self,pos_0,vel_d,quat_0=[0,0,0,1],retries=5): 
         """Launch crazyflie from the specified position/orientation with an imparted velocity.
@@ -832,7 +852,6 @@ if __name__ == "__main__":
     for ii in range(1000):
         tau = np.random.uniform(low=0.15,high=0.27)
         env.ParamOptim_reset()
-        print("hello")
         # obs,reward,done,info = env.ParamOptim_Flight(tau,7,2.5,60)
         # print(ii)
 
