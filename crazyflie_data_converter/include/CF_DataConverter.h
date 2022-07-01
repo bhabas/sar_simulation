@@ -39,7 +39,7 @@ is easy to use.
 
 
 #define formatBool(b) ((b) ? "True" : "False")
-#define RATE_DO_EXECUTE(RATE_HZ, TICK) ((TICK % (100 / RATE_HZ)) == 0)
+#define RATE_DO_EXECUTE(RATE_HZ, TICK) ((TICK % (1000 / RATE_HZ)) == 0)
 
 class CF_DataConverter
 {

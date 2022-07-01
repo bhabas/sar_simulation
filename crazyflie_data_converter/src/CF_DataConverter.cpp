@@ -606,7 +606,7 @@ void CF_DataConverter::consoleOuput()
 
 void CF_DataConverter::MainLoop()
 {
-    int loopRate = 100;     // [Hz]
+    int loopRate = 1000;     // [Hz]
     ros::Rate rate(loopRate);
 
 
