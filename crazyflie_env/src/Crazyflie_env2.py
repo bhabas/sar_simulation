@@ -33,7 +33,7 @@ class CrazyflieEnv():
     def __init__(self,gazeboTimeout=False,DataType='SIM'):
         super(CrazyflieEnv, self).__init__()
 
-        rospy.init_node("crazyflie_env_node")
+        
         os.system("roslaunch crazyflie_launch params.launch")
 
         
@@ -66,6 +66,7 @@ class CrazyflieEnv():
         ## INIT ROS SUBSCRIBERS [Pub/Sampling Frequencies]
         # NOTE: Queue sizes=1 so that we are always looking at the most current data and 
         #       not data at back of a queue waiting to be processed by callbacks
+        rospy.Subscriber("/clock",Clock,self.clockCallback,queue_size=1)
         rospy.Subscriber("/CF_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size=1)
         rospy.Subscriber("/CF_DC/FlipData",CF_FlipData,self.CF_FlipDataCallback,queue_size=1)
         rospy.Subscriber("/CF_DC/ImpactData",CF_ImpactData,self.CF_ImpactDataCallback,queue_size=1)
@@ -98,7 +99,6 @@ class CrazyflieEnv():
         z_0 = self.h_ceiling - tau_0*vz
 
         self.Vel_Launch([0,0,z_0],[vx,0,vz])
-        self.sleep(0.05)
         self.SendCmd("Policy",cmd_vals=[Tau,My,0.0],cmd_flag=1)
 
 
@@ -150,11 +150,11 @@ class CrazyflieEnv():
                 done = True
 
 
-            # if any(np.isnan(self.velCF)): 
-            #     print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
-            #     self.restart_Sim()
-            #     print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
-            #     done = True
+            if any(np.isnan(self.velCF)): 
+                print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
+                self.restart_Sim()
+                print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
+                done = True
 
             # if self.gazeboTimeout == True:
             #     try:
@@ -287,7 +287,6 @@ class CrazyflieEnv():
                 rospy.wait_for_service('/CF_DC/Cmd_CF_DC',timeout=1)
                 RL_Cmd_service = rospy.ServiceProxy('/CF_DC/Cmd_CF_DC', RLCmd)
                 RL_Cmd_service(srv)
-                rospy.wait_for_message("/clock",Clock,timeout=1)
                 self.sleep(0.05)
                 return True
 
@@ -372,22 +371,20 @@ class CrazyflieEnv():
 
     
     def sleep(self,time_s):
-        """Sleep in terms of Gazebo sim seconds not real time seconds
-
-        Args:
-            time_s (_type_): _description_
-        """        
+        """
+        Sleep in terms of Gazebo sim seconds not real time seconds
+        """
 
         t_start = self.t
         while self.t - t_start <= time_s:
-            pass # Do Nothing
+            rospy.wait_for_message("/clock",Clock,timeout=1)
 
     def Vel_Launch(self,pos_0,vel_d,quat_0=[0,0,0,1],retries=5): 
         """Launch crazyflie from the specified position/orientation with an imparted velocity.
         NOTE: Due to controller dynamics, the actual velocity will NOT be exactly the desired velocity
 
         Args:
-            pos_0 (list): Launch position [m] | [x,y,z]
+            pos_0 (list): Launch position [m]   | [x,y,z]
             vel_d (list): Launch velocity [m/s] | [Vx,Vy,Vz]
             quat_0 (list, optional): Orientation at launch. Defaults to [0,0,0,1].
         """        
@@ -521,7 +518,7 @@ class CrazyflieEnv():
         """        
 
         print("[STARTING] Starting Gazebo Process...")
-        term_command = "rosnode kill /gazebo /gazebo_gui"
+        term_command = "rosnode kill /gazebo /gazebo_gui /crazyflie_env_node"
         os.system(term_command)
         time.sleep(0.5)
 
@@ -529,6 +526,7 @@ class CrazyflieEnv():
         os.system(term_command)
         time.sleep(1.0)
         
+        rospy.init_node("crazyflie_env_node")
         subprocess.Popen( # Gazebo Process
             "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_launch launch_gazebo.bash", 
             start_new_session=True, shell=True)
@@ -559,7 +557,7 @@ class CrazyflieEnv():
 
 
     def restart_Sim(self) -> bool:
-        for retry in range(5):
+        for retry in range(10):
             try:
                 print('\033[93m' + f"[WARNING] Full Simulation Restart. Attempt: {retry}/5" + '\x1b[0m')
 
@@ -580,8 +578,11 @@ class CrazyflieEnv():
 
                 return True
 
-            except (rospy.ROSException,rospy.ServiceException) as e:
-                continue
+            except rospy.ROSException as e:
+                print('\033[93m' + f"[WARNING] {e}" + '\x1b[0m')
+
+            except rospy.ServiceException as e:
+                print('\033[93m' + f"[WARNING] {e}" + '\x1b[0m')
 
         return False
 
@@ -713,10 +714,10 @@ class CrazyflieEnv():
     # ============================
     ##   Publishers/Subscribers 
     # ============================
+    def clockCallback(self,msg):
+        self.t = msg.clock.to_sec()
 
     def CF_StateDataCallback(self,StateData_msg):
-
-        self.t = np.round(StateData_msg.header.stamp.to_sec(),4)
 
         self.posCF = np.round([ StateData_msg.Pose.position.x,
                                 StateData_msg.Pose.position.y,
