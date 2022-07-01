@@ -434,7 +434,7 @@ void CF_DataConverter::Pad_Connections_Callback(const crazyflie_msgs::PadConnect
 void CF_DataConverter::checkSlowdown()
 {   
     // SIMULATION SLOWDOWN
-    if(LANDING_SLOWDOWN_FLAG==true && tick >= 500){
+    if(LANDING_SLOWDOWN_FLAG==true){
 
         // WHEN CLOSE TO THE CEILING REDUCE SIM SPEED
         if(D_ceil<=0.5 && SLOWDOWN_TYPE == 0){

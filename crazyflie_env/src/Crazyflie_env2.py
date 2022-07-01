@@ -51,6 +51,7 @@ class CrazyflieEnv():
         self.filepath = ""
 
         self.d_min = 50.0
+        self.done = False
 
         ## GAZEBO SIMULATION INITIALIZATION
         if self.DataType == 'SIM': 
@@ -88,8 +89,6 @@ class CrazyflieEnv():
 
     def ParamOptim_Flight(self,Tau,My,vel,phi):
 
-        done = False
-
         ## RESET/UPDATE RUN CONDITIONS
         start_time_rollout = self.getTime()
         start_time_pitch = np.nan
@@ -116,7 +115,7 @@ class CrazyflieEnv():
 
         
 
-        while not done: 
+        while not self.done: 
 
             t_now = self.getTime()
 
@@ -136,56 +135,54 @@ class CrazyflieEnv():
             ## PITCH TIMEOUT  
             if (t_now-start_time_pitch) > 2.25:
                 self.error_str = "Rollout Completed: Pitch Timeout"
-                done = True
+                self.done = True
+                # print(self.error_str)
+
 
             ## IMPACT TIMEOUT
             elif (t_now-start_time_impact) > 0.5:
                 self.error_str = "Rollout Completed: Impact Timeout"
-                done = True
+                self.done = True
+                # print(self.error_str)
+
 
 
             ## ROLLOUT TIMEOUT
             elif (t_now - start_time_rollout) > 5.0:
                 self.error_str = "Rollout Completed: Time Exceeded"
-                done = True
+                self.done = True
+                # print(self.error_str)
 
             ## FREE FALL TERMINATION
             elif self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5: 
                 self.error_str = "Rollout Completed: Falling Drone"
-                done = True
+                self.done = True
+                # print(self.error_str)
 
 
-            if (time.time() - start_time_ep) > 10.0 and self.gazeboTimeout == True:
+
+            if (time.time() - start_time_ep) > 15.0 and self.gazeboTimeout == True:
                 print('\033[93m' + "[WARNING] Real Time Exceeded" + '\x1b[0m')
-
-                self.restart_Gazebo()
-                done = True
+                self.Restart()
+                self.done = True
 
 
             if any(np.isnan(self.velCF)): 
+                self.error_str = "Rollout Completed: NaN in State Vector"
+
                 print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
-                self.restart_Gazebo()
+                self.Restart([True,False,False])
                 print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
-                done = True
+                self.done = True
+                # print(self.error_str)
 
-            # if self.gazeboTimeout == True:
-            #     try:
-            #         rospy.wait_for_message("/clock",Clock,timeout=5)
-            #     except rospy.ROSException:
-            #         print('\033[93m' + "[WARNING] Stalling at flight" + '\x1b[0m')
-            #         self.restart_Sim()
-            #         done = True
-
-            #     print('\033[93m' + "[WARNING] Something broke, Restarting Simulation" + '\x1b[0m')
-            #     self.restart_Sim()
-            #     done = True
 
 
 
 
         reward = self.CalcReward()
 
-        return None,reward,done,None
+        return None,reward,self.done,None
 
         
     def step(self,action):
@@ -198,13 +195,18 @@ class CrazyflieEnv():
 
     def ParamOptim_reset(self):
 
+        ## RESET REWARD CALC VALUES
+        self.done = False
+        self.d_min = 50.0  # Reset max from ceiling [m]
+
         ## DISABLE STICKY LEGS (ALSO BREAKS CURRENT CONNECTION JOINTS)
+        self.SendCmd('Tumble',cmd_flag=0)
         self.SendCmd('StickyPads',cmd_flag=0)
+        self.SendCmd('Ctrl_Reset')
         self.reset_pos()
+        self.SendCmd('Tumble',cmd_flag=1)
         self.sleep(1.0)
 
-        ## RESET REWARD CALC VALUES
-        self.d_min = 50.0  # Reset max from ceiling [m]
 
         obs = None
         print("Position Reset")
@@ -356,13 +358,13 @@ class CrazyflieEnv():
         return FailureModes
 
 
-    def Restart(self,FailureModes):
+    def Restart(self,FailureModes=[True,False,False]):
         sys.stdout.write(YELLOW)
 
         if FailureModes == [True,False,False]:
-            for retry in range(5):
+            for retry in range(3):
                 try:
-                    print(f"[WARNING] Gazebo Restart. Attempt: {retry}/5 (restart_Gazebo)")
+                    print(f"[WARNING] Gazebo Restart. Attempt: {retry+1}/3 (restart_Gazebo)")
                     self.launch_Gazebo()
                     rospy.wait_for_service("/gazebo/pause_physics",timeout=10)
                     print(GREEN+ f"[WARNING] Gazebo restart successful. (restart_Gazebo)" + ENDC)
@@ -371,45 +373,44 @@ class CrazyflieEnv():
                 except rospy.ROSException as e:
                     print(f"[WARNING] Gazebo restart Failed. (restart_Gazebo)")
                     print(f"[WARNING] {e}")
-
-        else:
-            sys.stdout.write(RED)
-            for retry in range(5):
-                try:
-                    print(f"[WARNING] Full Simulation Restart. Attempt: {retry}/5 (Restart Sim)")
-
-                    ## KILL EVERYTHING
-
-                    os.system("killall -9 gzserver gzclient")
-                    os.system("rosnode kill /gazebo /gazebo_gui /Controller_Node /CF_DataConverter_Node")
-                    time.sleep(2.0)
-                    
-                    subprocess.Popen( # Gazebo Process
-                        "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_launch launch_gazebo.bash", 
-                        start_new_session=True, shell=True)
-                    rospy.wait_for_service("/gazebo/pause_physics",timeout=10)
             
-                    ## LAUNCH CONTROLLER
-                    subprocess.Popen( # Controller Process
-                        "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_control controller",
-                        close_fds=True, preexec_fn=os.setsid, shell=True)
-                    rospy.wait_for_service("/CTRL/Cmd_ctrl",timeout=5)
+        sys.stdout.write(RED)
+        for retry in range(5):
+            try:
+                print(f"[WARNING] Full Simulation Restart. Attempt: {retry+1}/5 (Restart Sim)")
 
-                    ## LAUNCH CF_DC
-                    subprocess.Popen( # CF_DC Process
-                        "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_data_converter CF_DataConverter",
-                        close_fds=True, preexec_fn=os.setsid, shell=True)
-                    rospy.wait_for_service("/CF_DC/Cmd_CF_DC",timeout=5)
+                ## KILL EVERYTHING
 
-                    ## UNPAUSE GAZEBO
-                    rospy.wait_for_service("/gazebo/pause_physics",timeout=10)
-                    print(GREEN + f"[WARNING] Gazebo restart successful. (Restart Sim)" + ENDC)
+                os.system("killall -9 gzserver gzclient")
+                os.system("rosnode kill /gazebo /gazebo_gui /Controller_Node /CF_DataConverter_Node")
+                time.sleep(2.0)
+                
+                subprocess.Popen( # Gazebo Process
+                    "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_launch launch_gazebo.bash", 
+                    start_new_session=True, shell=True)
+                rospy.wait_for_service("/gazebo/pause_physics",timeout=10)
+        
+                ## LAUNCH CONTROLLER
+                subprocess.Popen( # Controller Process
+                    "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_control controller",
+                    close_fds=True, preexec_fn=os.setsid, shell=True)
+                rospy.wait_for_service("/CTRL/Cmd_ctrl",timeout=5)
 
-                    return True
+                ## LAUNCH CF_DC
+                subprocess.Popen( # CF_DC Process
+                    "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_data_converter CF_DataConverter",
+                    close_fds=True, preexec_fn=os.setsid, shell=True)
+                rospy.wait_for_service("/CF_DC/Cmd_CF_DC",timeout=5)
 
-                except rospy.ROSException as e:
-                    print(f"[WARNING] Gazebo restart Failed. (Restart Sim)")
-                    print(f"[WARNING] {e}")
+                ## UNPAUSE GAZEBO
+                rospy.wait_for_service("/gazebo/pause_physics",timeout=10)
+                print(GREEN + f"[WARNING] Gazebo restart successful. (Restart Sim)" + ENDC)
+
+                return True
+
+            except rospy.ROSException as e:
+                print(f"[WARNING] Gazebo restart Failed. (Restart Sim)")
+                print(f"[WARNING] {e}")
 
             print('\x1b[0m')
 
@@ -422,10 +423,15 @@ class CrazyflieEnv():
 
         t_start = self.t
         while self.t - t_start <= time_s:
-
+            # print("Sleeping....")
             FailureModes = self.diagnosticTest()
             if any(FailureModes):
                 self.Restart(FailureModes)
+                self.done = True
+                return False
+
+            ## NEGATIVE TIME DELTA
+            if self.t < t_start:
                 self.done = True
                 return False
 
@@ -435,7 +441,7 @@ class CrazyflieEnv():
 
         
 
-    def Vel_Launch(self,pos_0,vel_d,quat_0=[0,0,0,1],retries=5): 
+    def Vel_Launch(self,pos_0,vel_d,quat_0=[0,0,0,1]): 
         """Launch crazyflie from the specified position/orientation with an imparted velocity.
         NOTE: Due to controller dynamics, the actual velocity will NOT be exactly the desired velocity
 
@@ -450,45 +456,31 @@ class CrazyflieEnv():
         self.SendCmd('Vel',cmd_vals=vel_d,cmd_flag=1)
 
         ## CREATE SERVICE MESSAGE
-        state_msg = ModelState()
-        state_msg.model_name = self.modelName
+        state_srv = ModelState()
+        state_srv.model_name = self.modelName
 
         ## INPUT POSITION AND ORIENTATION
-        state_msg.pose.position.x = pos_0[0]
-        state_msg.pose.position.y = pos_0[1]
-        state_msg.pose.position.z = pos_0[2]
+        state_srv.pose.position.x = pos_0[0]
+        state_srv.pose.position.y = pos_0[1]
+        state_srv.pose.position.z = pos_0[2]
 
-        state_msg.pose.orientation.x = quat_0[0]
-        state_msg.pose.orientation.y = quat_0[1]
-        state_msg.pose.orientation.z = quat_0[2]
-        state_msg.pose.orientation.w = quat_0[3]
+        state_srv.pose.orientation.x = quat_0[0]
+        state_srv.pose.orientation.y = quat_0[1]
+        state_srv.pose.orientation.z = quat_0[2]
+        state_srv.pose.orientation.w = quat_0[3]
 
         ## INPUT LINEAR AND ANGULAR VELOCITY
-        state_msg.twist.linear.x = vel_d[0]
-        state_msg.twist.linear.y = vel_d[1]
-        state_msg.twist.linear.z = vel_d[2]
+        state_srv.twist.linear.x = vel_d[0]
+        state_srv.twist.linear.y = vel_d[1]
+        state_srv.twist.linear.z = vel_d[2]
 
-        state_msg.twist.angular.x = 0
-        state_msg.twist.angular.y = 0
-        state_msg.twist.angular.z = 0
+        state_srv.twist.angular.x = 0
+        state_srv.twist.angular.y = 0
+        state_srv.twist.angular.z = 0
 
         ## PUBLISH MODEL STATE SERVICE REQUEST
-        for retry in range(retries):
-            try:
-                rospy.wait_for_service('/gazebo/set_model_state',timeout=1)
-                set_state_service = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
-                set_state_service(state_msg)
-                return True
+        self.callService('/gazebo/set_model_state',state_srv,SetModelState)
 
-            except rospy.ROSException as e:
-                print('\033[93m' + "[WARNING] /gazebo/set_model_state wait for service failed" + '\x1b[0m')
-                print(e)
-                
-            except rospy.ServiceException as e:
-                print('\033[93m' + "[WARNING] /gazebo/set_model_state service call failed" + '\x1b[0m')
-                print(e)
-
-        return False
                 
     def reset_pos(self,z_0=0.379): # Disable sticky then places spawn_model at origin
         """Reset pose/twist of simulated drone back to home position. 
@@ -852,8 +844,8 @@ if __name__ == "__main__":
     for ii in range(1000):
         tau = np.random.uniform(low=0.15,high=0.27)
         env.ParamOptim_reset()
-        # obs,reward,done,info = env.ParamOptim_Flight(tau,7,2.5,60)
-        # print(ii)
+        obs,reward,done,info = env.ParamOptim_Flight(tau,7,2.5,60)
+        print(f"Ep: {ii} \t Reward: {reward:.02f}")
 
 
     # env.close()
