@@ -194,6 +194,8 @@ class CrazyflieEnv():
 
     def ParamOptim_reset(self):
 
+        ## DISABLE STICKY LEGS (ALSO BREAKS CURRENT CONNECTION JOINTS)
+        self.SendCmd('StickyPads',cmd_flag=0)
         self.reset_pos()
 
         ## RESET REWARD CALC VALUES
@@ -288,79 +290,88 @@ class CrazyflieEnv():
         srv.cmd_vals.z = cmd_vals[2]
         srv.cmd_flag = cmd_flag
 
-        FailureModes = [False,False,False]
+        self.callService('/CF_DC/Cmd_CF_DC',srv,RLCmd)
+
+
+        
+        
+    def callService(self,addr,srv,srv_type):
+
+        FailureModes = [True,True,True]
+        print('\033[93m')
         
         ## CHECK THAT GAZEBO IS FUNCTIONING
         try:
-            rospy.wait_for_service("/gazebo/pause_physics",timeout=2)
+            rospy.wait_for_service("/gazebo/pause_physics",timeout=1)
         except rospy.ROSException as e:
-            print('\033[93m' + "[WARNING] /gazebo/pause_physics wait for service failed (SendCmd)" + '\x1b[0m')
-            print('\033[93m' + f"[WARNING] {e}" + '\x1b[0m')
-            FailureModes[0] = True
-
+            print("[WARNING] /gazebo/pause_physics wait for service failed (callService)")
+            print(f"[WARNING] {e}")
+            FailureModes[0] = False
 
         ## CHECK THAT CONTROLLER IS FUNCTIONING
         try:
-            rospy.wait_for_service("/CTRL/Cmd_ctrl",timeout=2)
+            rospy.wait_for_service("/CTRL/Cmd_ctrl",timeout=1)
         except rospy.ROSException as e:
-            print('\033[93m' + "[WARNING] /CTRL/Cmd_ctrl wait for service failed (SendCmd)" + '\x1b[0m')
-            print('\033[93m' + f"[WARNING] {e}" + '\x1b[0m')
-            FailureModes[1] = True
+            print("[WARNING] /CTRL/Cmd_ctrl wait for service failed (callService)")
+            print(f"[WARNING] {e}")
+            FailureModes[1] = False
 
         ## CHECK THAT CF_DC IS FUNCTIONING
         try:
-            rospy.wait_for_service('/CF_DC/Cmd_CF_DC',timeout=2)
-            RL_Cmd_service = rospy.ServiceProxy('/CF_DC/Cmd_CF_DC', RLCmd)
-            RL_Cmd_service(srv)
-
+            rospy.wait_for_service('/CF_DC/Cmd_CF_DC',timeout=1)
         except rospy.ROSException as e:
-            print('\033[93m' + "[WARNING] /CF_DC/Cmd_CF_DC wait for service failed (SendCmd)" + '\x1b[0m')
-            print('\033[93m' + f"[WARNING] {e}" + '\x1b[0m')
-            FailureModes[2] = True
+            print("[WARNING] /CF_DC/Cmd_CF_DC wait for service failed (callService)")
+            print(f"[WARNING] {e}")
+            FailureModes[2] = False
 
-        except rospy.ServiceException as e:
-            print('\033[93m' + "[WARNING] /CF_DC/Cmd_CF_DC service call failed (SendCmd)" + '\x1b[0m')
-            print('\033[93m' + f"[WARNING] {e}" + '\x1b[0m')
-            FailureModes[2] = True
 
-        if any(FailureModes) == True:
-            self.Restart(FailureModes)
-            self.done = True
-            return False
-        
+        ## CALL SERVICE
+        if all(FailureModes):
+            try:
+                service = rospy.ServiceProxy(addr, srv_type)
+                service(srv)
+                print('\x1b[0m')
+                return True
+
+            except rospy.ServiceException as e:
+                print(f"[WARNING] {addr} service call failed (callService)")
+                print(f"[WARNING] {e}")
+                FailureModes[2] = True
+ 
+        print('\x1b[0m')
+        self.Restart(FailureModes)
+        self.done = True
+        return False
 
         
 
 
     def Restart(self,FailureModes):
+        print('\033[93m')
 
-        if FailureModes == [True,False,False]:
+        if FailureModes == [False,True,True]:
             for retry in range(5):
                 try:
-                    print('\033[93m' + f"[WARNING] Gazebo Restart. Attempt: {retry}/5 (restart_Gazebo)" + '\x1b[0m')
+                    print(f"[WARNING] Gazebo Restart. Attempt: {retry}/5 (restart_Gazebo)")
                     self.launch_Gazebo()
-
-                    ## UNPAUSE GAZEBO
                     rospy.wait_for_service("/gazebo/pause_physics",timeout=10)
-                    print('\033[92m' + f"[WARNING] Gazebo restart successful. (restart_Gazebo)" + '\x1b[0m')
-
+                    print('\033[92m'+ f"[WARNING] Gazebo restart successful. (restart_Gazebo) + '\x1b[0m'")
                     return True
 
                 except rospy.ROSException as e:
-                    print('\033[93m' + f"[WARNING] Gazebo restart Failed. (restart_Gazebo)" + '\x1b[0m')
-                    print('\033[93m' + f"[WARNING] {e}" + '\x1b[0m')
+                    print(f"[WARNING] Gazebo restart Failed. (restart_Gazebo)")
+                    print(f"[WARNING] {e}")
 
         else:
+            print('\033[91m')
             for retry in range(5):
                 try:
-                    print('\033[91m' + f"[WARNING] Full Simulation Restart. Attempt: {retry}/5 (Restart)" + '\x1b[0m')
+                    print(f"[WARNING] Full Simulation Restart. Attempt: {retry}/5 (Restart Sim)")
 
                     ## KILL EVERYTHING
 
-                    os.system("rosnode kill /gazebo /gazebo_gui")
                     os.system("killall -9 gzserver gzclient")
-                    os.system("rosnode kill /Controller_Node")
-                    os.system("rosnode kill /CF_DataConverter_Node")
+                    os.system("rosnode kill /gazebo /gazebo_gui /Controller_Node /CF_DataConverter_Node")
                     time.sleep(2.0)
                     
                     subprocess.Popen( # Gazebo Process
@@ -382,13 +393,15 @@ class CrazyflieEnv():
 
                     ## UNPAUSE GAZEBO
                     rospy.wait_for_service("/gazebo/pause_physics",timeout=10)
-                    print('\033[92m' + f"[WARNING] Gazebo restart successful. (Restart)" + '\x1b[0m')
+                    print('\033[92m' + f"[WARNING] Gazebo restart successful. (Restart Sim)" + '\x1b[0m')
 
                     return True
 
                 except rospy.ROSException as e:
-                    print('\033[93m' + f"[WARNING] Gazebo restart Failed. (restart_Gazebo)" + '\x1b[0m')
-                    print('\033[93m' + f"[WARNING] {e}" + '\x1b[0m')
+                    print(f"[WARNING] Gazebo restart Failed. (Restart Sim)")
+                    print(f"[WARNING] {e}")
+
+            print('\x1b[0m')
 
 
     
@@ -457,54 +470,36 @@ class CrazyflieEnv():
 
         return False
                 
-    def reset_pos(self,z_0=0.379,retries=5): # Disable sticky then places spawn_model at origin
+    def reset_pos(self,z_0=0.379): # Disable sticky then places spawn_model at origin
         """Reset pose/twist of simulated drone back to home position. 
         As well as turning off stickyfeet
 
         Args:
             z_0 (float, optional): Starting height of crazyflie. Defaults to 0.379.
         """        
-        ## DISABLE STICKY LEGS (ALSO BREAKS CURRENT CONNECTION JOINTS)
-        self.SendCmd('StickyPads',cmd_flag=0)
         
         ## RESET POSITION AND VELOCITY
-        state_msg = ModelState()
-        state_msg.model_name = self.modelName
-        state_msg.pose.position.x = 0.0
-        state_msg.pose.position.y = 0.0
-        state_msg.pose.position.z = z_0
+        state_srv = ModelState()
+        state_srv.model_name = self.modelName
+        state_srv.pose.position.x = 0.0
+        state_srv.pose.position.y = 0.0
+        state_srv.pose.position.z = z_0
 
-        state_msg.pose.orientation.w = 1.0
-        state_msg.pose.orientation.x = 0.0
-        state_msg.pose.orientation.y = 0.0
-        state_msg.pose.orientation.z = 0.0
+        state_srv.pose.orientation.w = 1.0
+        state_srv.pose.orientation.x = 0.0
+        state_srv.pose.orientation.y = 0.0
+        state_srv.pose.orientation.z = 0.0
         
-        state_msg.twist.linear.x = 0.0
-        state_msg.twist.linear.y = 0.0
-        state_msg.twist.linear.z = 0.0
+        state_srv.twist.linear.x = 0.0
+        state_srv.twist.linear.y = 0.0
+        state_srv.twist.linear.z = 0.0
 
-        state_msg.twist.angular.x = 0.0
-        state_msg.twist.angular.y = 0.0
-        state_msg.twist.angular.z = 0.0
+        state_srv.twist.angular.x = 0.0
+        state_srv.twist.angular.y = 0.0
+        state_srv.twist.angular.z = 0.0
 
-        for retry in range(retries):
-            try:
-                rospy.wait_for_service('/gazebo/set_model_state',timeout=1)
-                set_state_service = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
-                set_state_service(state_msg)
-                return True
+        self.callService('/gazebo/set_model_state',state_srv,SetModelState)
 
-            except rospy.ROSException as e:
-                print('\033[93m' + "[WARNING] /gazebo/set_model_state wait for service failed" + '\x1b[0m')
-                print(e)
-                
-            except rospy.ServiceException as e:
-                print('\033[93m' + "[WARNING] /gazebo/set_model_state service call failed" + '\x1b[0m')
-                print(e)
-
-        return False
-
-        ## RESET HOME/TUMBLE DETECTION AND STICKY
 
     def updateInertia(self):
 
@@ -836,10 +831,8 @@ if __name__ == "__main__":
 
     for ii in range(1000):
         tau = np.random.uniform(low=0.15,high=0.27)
-
-        env.SendCmd('StickyPads',cmd_flag=0)
+        env.ParamOptim_reset()
         print("hello")
-        # env.ParamOptim_reset()
         # obs,reward,done,info = env.ParamOptim_Flight(tau,7,2.5,60)
         # print(ii)
 
