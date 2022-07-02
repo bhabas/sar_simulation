@@ -49,6 +49,7 @@ class CrazyflieEnv():
         self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/crazyflie_logging/local_logs"
         self.DataType = DataType
         self.filepath = ""
+        self.error_str = ""
 
         self.d_min = 50.0
         self.done = False
@@ -202,14 +203,18 @@ class CrazyflieEnv():
         ## DISABLE STICKY LEGS (ALSO BREAKS CURRENT CONNECTION JOINTS)
         self.SendCmd('Tumble',cmd_flag=0)
         self.SendCmd('StickyPads',cmd_flag=0)
+
         self.SendCmd('Ctrl_Reset')
         self.reset_pos()
+        self.sleep(0.01)
+
         self.SendCmd('Tumble',cmd_flag=1)
+        self.SendCmd('Ctrl_Reset')
+        self.reset_pos()
         self.sleep(1.0)
 
 
         obs = None
-        print("Position Reset")
         return obs
 
     def CalcReward(self):
@@ -836,6 +841,41 @@ class CrazyflieEnv():
 
         self.V_Battery = np.round(MiscData_msg.battery_voltage,4)
 
+    def modelInitials(self):
+        """Returns initials for the model
+
+        Returns:
+            string: Model name initials
+        """        
+        str = self.modelName
+        charA = str[self.modelName.find("_")+1] # [W]ide
+        charB = str[self.modelName.find("-")+1] # [L]ong
+
+        return charA+charB  # [WL]
+
+    def userInput(self,input_string,dataType=float):
+        """Processes user input and return values as either indiviual value or list
+
+        Args:
+            input_string (string): String received from user
+            dataType (dataType, optional): Datatype to parse string to. Defaults to float.
+
+        Returns:
+            vals: Values parsed by ','. If multiple values then return list
+        """        
+
+        while True:
+            try:
+                vals = [dataType(i) for i in input(input_string).split(',')]
+            except:
+                continue
+        
+            ## RETURN MULTIPLE VALUES IF MORE THAN ONE
+            if len(vals) == 1:
+                return vals[0]
+            else:
+                return vals
+
 
 if __name__ == "__main__":
 
@@ -844,8 +884,5 @@ if __name__ == "__main__":
     for ii in range(1000):
         tau = np.random.uniform(low=0.15,high=0.27)
         env.ParamOptim_reset()
-        obs,reward,done,info = env.ParamOptim_Flight(tau,7,2.5,60)
+        obs,reward,done,info = env.ParamOptim_Flight(0.23,7,2.5,60)
         print(f"Ep: {ii} \t Reward: {reward:.02f}")
-
-
-    # env.close()

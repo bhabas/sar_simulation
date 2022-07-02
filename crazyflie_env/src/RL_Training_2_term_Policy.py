@@ -21,7 +21,7 @@ def runTraining(env,agent,V_d,phi,loggingPath):
     ##          Episode         
     # ============================
 
-    for k_ep in range(0,20):
+    for k_ep in range(0,30):
 
     
         ## PRE-ALLOCATE REWARD VEC AND OBTAIN THETA VALS
@@ -67,7 +67,7 @@ def runTraining(env,agent,V_d,phi,loggingPath):
             Tau_thr = theta[0, k_run]    # Tau threshold 10*[s]
             My = theta[1, k_run]         # Policy Moment Action [N*mm]
 
-            env.reset()
+            env.ParamOptim_reset()
             env.startLogging()
             obs,reward,done,info = env.ParamOptim_Flight(Tau_thr/10,My,V_d,phi)
             
@@ -99,8 +99,8 @@ def runTraining(env,agent,V_d,phi,loggingPath):
         agent.reward_avg = np.mean(reward_arr)
         agent.RL_Publish()
 
-        if all(agent.sigma < 0.05):
-            break
+        # if all(agent.sigma < 0.05):
+        #     break
 
 
 
@@ -125,7 +125,7 @@ if __name__ == '__main__':
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
     V_d = 2.5 # [m/s]
-    phi = 30   # [deg]
+    phi = 60   # [deg]
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 24
