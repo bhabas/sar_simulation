@@ -15,8 +15,7 @@ np.set_printoptions(precision=2, suppress=True)
 def runTraining(env,agent,V_d,phi,logName):
 
     agent.vel_d = [V_d,phi,0.0]
-    env.logName = logName
-    env.createCSV()
+    env.createCSV(logName)
 
     # ============================
     ##          Episode         
@@ -69,7 +68,7 @@ def runTraining(env,agent,V_d,phi,logName):
             My = theta[1, k_run]         # Policy Moment Action [N*mm]
 
             env.ParamOptim_reset()
-            env.startLogging()
+            env.startLogging(logName)
             obs,reward,done,info = env.ParamOptim_Flight(Tau_thr/10,My,V_d,phi)
             
             ## ADD VALID REWARD TO TRAINING ARRAY
@@ -86,7 +85,7 @@ def runTraining(env,agent,V_d,phi,logName):
             agent.RL_Publish()
 
 
-            env.capLogging()
+            env.capLogging(logName)
             
      
 

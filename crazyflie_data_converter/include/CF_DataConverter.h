@@ -829,26 +829,34 @@ void CF_DataConverter::append_CSV_blank()
 
 bool CF_DataConverter::DataLogging_Callback(crazyflie_msgs::loggingCMD::Request &req, crazyflie_msgs::loggingCMD::Response &res)
 {
-    // TURN ON/OFF LOGGING
-    Logging_Flag = req.Logging_Flag;
-    fPtr = fopen(req.filePath.c_str(), "a");
+    switch(req.Logging_CMD){
+        case 0: // CREATE CSV WHEN ACTIVATED
+            Logging_Flag = false;
+            fPtr = fopen(req.filePath.c_str(), "w");
+            create_CSV();
+            break;
 
-    // CREATE CSV WHEN ACTIVATED
-    if(req.createCSV == true)
-    {   
-        fPtr = fopen(req.filePath.c_str(), "w");
-        create_CSV();
+
+        case 1: // TURN ON/OFF LOGGING
+            Logging_Flag = true;
+            fPtr = fopen(req.filePath.c_str(), "a");
+            break;
+
+        case 2: // CAP CSV W/ FLIP,IMPACT,MISC DATA
+            Logging_Flag = false;
+
+            fPtr = fopen(req.filePath.c_str(), "a");
+            error_string = req.error_string;
+            append_CSV_blank();
+            append_CSV_misc();
+            append_CSV_flip();
+            append_CSV_impact();
+            append_CSV_blank();
+            break;
+
     }
-    // CAP CSV W/ FLIP,IMPACT,MISC DATA
-    else if(req.capLogging == true)
-    {
-        error_string = req.error_string;
-        append_CSV_blank();
-        append_CSV_misc();
-        append_CSV_flip();
-        append_CSV_impact();
-        append_CSV_blank();
-    }
+
+
 
     return 1;
 }

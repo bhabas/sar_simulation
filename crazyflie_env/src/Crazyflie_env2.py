@@ -715,7 +715,7 @@ class CrazyflieEnv():
     ##    Logging Services 
     # ========================
 
-    def createCSV(self):
+    def createCSV(self,logName):
         """Sends service to CF_DataConverter to create CSV file to write logs to
 
         Args:
@@ -724,48 +724,33 @@ class CrazyflieEnv():
 
         ## CREATE SERVICE REQUEST MSG
         srv = loggingCMDRequest() 
-        srv.filePath = f"{self.logDir}/{self.logName}"
+        srv.filePath = f"{self.logDir}/{logName}"
+        srv.Logging_CMD = 0
 
-        ## CREATE CSV COMMANDS
-        srv.createCSV = True
-
-        ## MAKE SURE LOGGING IS TURNED OFF
-        srv.Logging_Flag = False
-        self.Logging_Flag = srv.Logging_Flag
-        
         ## SEND LOGGING REQUEST VIA SERVICE
         self.callService('/CF_DC/DataLogging',srv,loggingCMD)
 
-    def startLogging(self):
+    def startLogging(self,logName):
         """Start logging values to the current CSV file
         """        
 
         ## CREATE SERVICE REQUEST MSG
         srv = loggingCMDRequest()
-        srv.filePath = f"{self.logDir}/{self.logName}"
-
-        ## CREATE CSV COMMANDS
-        srv.Logging_Flag = True
-        self.Logging_Flag = srv.Logging_Flag
+        srv.filePath = f"{self.logDir}/{logName}"
+        srv.Logging_CMD = 1
 
         ## SEND LOGGING REQUEST VIA SERVICE
         self.callService('/CF_DC/DataLogging',srv,loggingCMD)
 
 
-    def capLogging(self):
+    def capLogging(self,logName):
         """Cap logging values with IC,Flip, and Impact conditions and stop logging
         """        
 
         ## CREATE SERVICE REQUEST MSG
         srv = loggingCMDRequest()
-        srv.filePath = f"{self.logDir}/{self.logName}"
-
-        ## TURN OFF LOGGING
-        srv.Logging_Flag = False
-        self.Logging_Flag = srv.Logging_Flag
-
-        ## ACTIVATE FUNCTION TO CAP LOGGING
-        srv.capLogging = True
+        srv.filePath = f"{self.logDir}/{logName}"
+        srv.Logging_CMD = 2
         srv.error_string = self.error_str # String for why logging was capped
         
         ## SEND LOGGING REQUEST VIA SERVICE
