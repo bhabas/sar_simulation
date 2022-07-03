@@ -21,7 +21,7 @@ def runTraining(env,agent,V_d,phi,logName):
     ##          Episode         
     # ============================
 
-    for k_ep in range(0,30):
+    for k_ep in range(0,20):
 
     
         ## PRE-ALLOCATE REWARD VEC AND OBTAIN THETA VALS

@@ -39,9 +39,8 @@ if __name__ == '__main__':
 
         ## INITIALIALIZE LOGGING DATA
         trial_name = f"{agent.agent_type}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--{env.modelInitials()}--DR"
-        logging_path = f"{env.loggingPath}/{trial_name}.csv"
         
         ## PARAMTER OPTIMIZATION
-        runTraining(env,agent,V_d,phi,logging_path)
+        runTraining(env,agent,V_d,phi,trial_name)
 
         
