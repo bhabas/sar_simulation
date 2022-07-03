@@ -831,6 +831,7 @@ bool CF_DataConverter::DataLogging_Callback(crazyflie_msgs::loggingCMD::Request 
 {
     // TURN ON/OFF LOGGING
     Logging_Flag = req.Logging_Flag;
+    fPtr = fopen(req.filePath.c_str(), "a");
 
     // CREATE CSV WHEN ACTIVATED
     if(req.createCSV == true)
@@ -841,7 +842,6 @@ bool CF_DataConverter::DataLogging_Callback(crazyflie_msgs::loggingCMD::Request 
     // CAP CSV W/ FLIP,IMPACT,MISC DATA
     else if(req.capLogging == true)
     {
-
         error_string = req.error_string;
         append_CSV_blank();
         append_CSV_misc();

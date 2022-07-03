@@ -12,10 +12,11 @@ import time
 os.system("clear")
 np.set_printoptions(precision=2, suppress=True)
 
-def runTraining(env,agent,V_d,phi,loggingPath):
+def runTraining(env,agent,V_d,phi,logName):
 
     agent.vel_d = [V_d,phi,0.0]
-    env.createCSV(loggingPath)
+    env.logName = logName
+    env.createCSV()
 
     # ============================
     ##          Episode         
@@ -129,11 +130,9 @@ if __name__ == '__main__':
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 24
-    trial_name = f"{agent.agent_type}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--{env.modelInitials()}"
-    logging_path = f"{env.loggingPath}/{trial_name}.csv"
-    
+    logName = f"{agent.agent_type}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--{env.modelInitials()}.csv"
 
-    runTraining(env,agent,V_d,phi,logging_path)
+    runTraining(env,agent,V_d,phi,logName)
 
 
     

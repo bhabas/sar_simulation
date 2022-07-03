@@ -46,9 +46,10 @@ class CrazyflieEnv():
         self.accCF_max = [1.0, 1.0, 3.1]  # Max 5acceleration values for trajectory generation [m/s^2]
 
         self.username = getpass.getuser()
-        self.loggingPath =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/crazyflie_logging/local_logs"
+        self.logDir =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/crazyflie_logging/local_logs"
+        self.logName = "TestLog.csv"
+
         self.DataType = DataType
-        self.filepath = ""
         self.error_str = ""
 
         self.d_min = 50.0
@@ -307,29 +308,29 @@ class CrazyflieEnv():
 
         
         
-    def callService(self,addr,srv,srv_type):
+    def callService(self,addr,srv,srv_type,retries=5):
 
         FailureModes = self.diagnosticTest()
 
         if any(FailureModes):
             self.Restart(FailureModes)
             self.done = True
-            return False
 
+        for retry in range(retries):
+            try:
+                service = rospy.ServiceProxy(addr, srv_type)
+                service(srv)
+                return True
 
-        try:
-            service = rospy.ServiceProxy(addr, srv_type)
-            service(srv)
-            return True
+            except rospy.ServiceException as e:
+                print(f"[WARNING] {addr} service call failed (callService)")
+                print(f"[WARNING] {e}")
+                FailureModes[2] = False
 
-        except rospy.ServiceException as e:
-            print(f"[WARNING] {addr} service call failed (callService)")
-            print(f"[WARNING] {e}")
-            FailureModes[2] = False
-
-            self.Restart(FailureModes)
-            self.done = True
-            return False
+                self.Restart(FailureModes)
+                self.done = True
+        
+        return False
 
     def diagnosticTest(self):
         FailureModes = [False,False,False]
@@ -714,7 +715,7 @@ class CrazyflieEnv():
     ##    Logging Services 
     # ========================
 
-    def createCSV(self,filePath):
+    def createCSV(self):
         """Sends service to CF_DataConverter to create CSV file to write logs to
 
         Args:
@@ -723,19 +724,17 @@ class CrazyflieEnv():
 
         ## CREATE SERVICE REQUEST MSG
         srv = loggingCMDRequest() 
+        srv.filePath = f"{self.logDir}/{self.logName}"
 
         ## CREATE CSV COMMANDS
         srv.createCSV = True
-        srv.filePath = filePath
 
         ## MAKE SURE LOGGING IS TURNED OFF
         srv.Logging_Flag = False
         self.Logging_Flag = srv.Logging_Flag
         
         ## SEND LOGGING REQUEST VIA SERVICE
-        rospy.wait_for_service('/CF_DC/DataLogging')
-        logging_service = rospy.ServiceProxy('/CF_DC/DataLogging', loggingCMD)
-        logging_service(srv)
+        self.callService('/CF_DC/DataLogging',srv,loggingCMD)
 
     def startLogging(self):
         """Start logging values to the current CSV file
@@ -743,15 +742,15 @@ class CrazyflieEnv():
 
         ## CREATE SERVICE REQUEST MSG
         srv = loggingCMDRequest()
+        srv.filePath = f"{self.logDir}/{self.logName}"
 
         ## CREATE CSV COMMANDS
         srv.Logging_Flag = True
         self.Logging_Flag = srv.Logging_Flag
 
         ## SEND LOGGING REQUEST VIA SERVICE
-        rospy.wait_for_service('/CF_DC/DataLogging')
-        logging_service = rospy.ServiceProxy('/CF_DC/DataLogging', loggingCMD)
-        logging_service(srv)
+        self.callService('/CF_DC/DataLogging',srv,loggingCMD)
+
 
     def capLogging(self):
         """Cap logging values with IC,Flip, and Impact conditions and stop logging
@@ -759,18 +758,18 @@ class CrazyflieEnv():
 
         ## CREATE SERVICE REQUEST MSG
         srv = loggingCMDRequest()
+        srv.filePath = f"{self.logDir}/{self.logName}"
 
-        ## STOP LOGGING
+        ## TURN OFF LOGGING
         srv.Logging_Flag = False
         self.Logging_Flag = srv.Logging_Flag
 
+        ## ACTIVATE FUNCTION TO CAP LOGGING
         srv.capLogging = True
         srv.error_string = self.error_str # String for why logging was capped
         
         ## SEND LOGGING REQUEST VIA SERVICE
-        rospy.wait_for_service('/CF_DC/DataLogging')
-        logging_service = rospy.ServiceProxy('/CF_DC/DataLogging', loggingCMD)
-        logging_service(srv)
+        self.callService('/CF_DC/DataLogging',srv,loggingCMD)
 
 
     # ============================
