@@ -54,7 +54,6 @@ class CrazyflieEnv():
 
         self.d_min = 50.0
         self.done = False
-        self.t_step = 0
 
         high = np.array(
             [
@@ -101,23 +100,38 @@ class CrazyflieEnv():
         rospy.Subscriber("/CF_DC/ImpactData",CF_ImpactData,self.CF_ImpactDataCallback,queue_size=1)
         rospy.Subscriber("/CF_DC/MiscData",CF_MiscData,self.CF_MiscDataCallback,queue_size=1)
 
-    
 
-    
-
-        
     def step(self,action):
 
         self.iter_step()
         Tau,OFy,d_ceil  = (self.Tau,self.OFy,self.d_ceil)
+        Tau_thr = 0.23
 
-        if Tau > 0.25:
-             ## CHECK FOR DONE
+        ## START IMPACT TERMINATION TIMERS
+        if ((self.impact_flag or self.BodyContact_flag) and self.onceFlag_impact == False):
+            self.start_time_impact = self.getTime()
+            self.onceFlag_impact = True
+
+        if Tau > Tau_thr or Tau == 0.0:
+            
+            ## CHECK FOR DONE
             self.done = bool(
-                self.t - self.t_start >= 5
-                # or z < 0.2
-                # or self.Impact_flag
+                self.t - self.start_time_rollout > 5                # EPISODE TIMEOUT
+                or self.t - self.start_time_impact > 0.5            # IMPACT TIMEOUT
+                or (self.velCF[2] <= -0.5 and self.posCF[2] <= 0.5) # FREE-FALL TERMINATION
             )
+
+            ## ERROR TERMINATIONS
+            if (time.time() - self.start_time_ep) > 30.0 and self.gazeboTimeout == True:
+                print('\033[93m' + "[WARNING] Real Time Exceeded" + '\x1b[0m')
+                self.Restart()
+                self.done = True
+
+            if any(np.isnan(self.velCF)): 
+                print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
+                self.Restart([True,False,False])
+                print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
+                self.done = True
 
             if not self.done:
                 if d_ceil <= self.d_min:
@@ -128,8 +142,7 @@ class CrazyflieEnv():
             else:
                 reward = 1/2*self.CalcReward()
 
-        elif Tau <= 0.25:
-            self.Once_flag = True
+        elif Tau <= Tau_thr:
             reward = self.finish_sim(action)
             self.done = True
         
@@ -142,18 +155,34 @@ class CrazyflieEnv():
         ## CONVERT ACTION RANGE TO MOMENT RANGE
         action_scale = (self.My_space.high[0]-self.My_space.low[0])/(self.action_space.high[0]-self.action_space.low[0])
         My = (action-self.action_space.low[0])*action_scale + self.My_space.low[0]
+        My = -4
 
         self.SendCmd("Moment",[0,My,0],cmd_flag=1)
         self.gazebo_unpause_physics()
 
         while not self.done:
-            self.t_step += 1
+            ## START IMPACT TERMINATION TIMERS
+            if ((self.impact_flag or self.BodyContact_flag) and self.onceFlag_impact == False):
+                self.start_time_impact = self.getTime()
+                self.onceFlag_impact = True
 
             self.done = bool(
-                self.t - self.t_start >= 3
-                # or z < 0.2
-                # or self.Impact_flag
+                self.t - self.start_time_rollout > 5                # EPISODE TIMEOUT
+                or self.t - self.start_time_impact > 0.5            # IMPACT TIMEOUT
+                or (self.velCF[2] <= -0.5 and self.posCF[2] <= 0.5) # FREE-FALL TERMINATION
             )
+
+            ## ERROR TERMINATIONS
+            if (time.time() - self.start_time_ep) > 20.0 and self.gazeboTimeout == True:
+                print('\033[93m' + "[WARNING] Real Time Exceeded" + '\x1b[0m')
+                self.Restart()
+                self.done = True
+
+            if any(np.isnan(self.velCF)): 
+                print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
+                self.Restart([True,False,False])
+                print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
+                self.done = True
         
         return self.CalcReward()
 
@@ -161,10 +190,6 @@ class CrazyflieEnv():
         os.system(f'gz world --multi-step={n_steps}')
 
     def reset(self):
-
-        ## RESET REWARD CALC VALUES
-        self.done = False
-        self.d_min = 50.0  # Reset max from ceiling [m]
 
         ## DISABLE STICKY LEGS (ALSO BREAKS CURRENT CONNECTION JOINTS)
         self.SendCmd('Tumble',cmd_flag=0)
@@ -181,18 +206,33 @@ class CrazyflieEnv():
         self.SendCmd('StickyPads',cmd_flag=1)
 
         self.gazebo_pause_physics()
-        self.t_start = self.t
+
+        ## RESET REWARD CALC VALUES
+        self.done = False
+        self.d_min = 50.0  # Reset max from ceiling [m]
+
+        ## RESET/UPDATE RUN CONDITIONS
+        self.start_time_rollout = self.getTime()
+        self.start_time_pitch = np.nan
+        self.start_time_impact = np.nan
+
+        self.start_time_ep = time.time()
+
+        ## RESET LOGGING CONDITIONS 
+        self.onceFlag_flip = False    # Ensures flip data recorded only once
+        self.onceFlag_impact = False   # Ensures impact data recorded only once 
 
         ## RESET STATE
         vel = np.random.uniform(low=1.5,high=3.5)
         phi = np.random.uniform(low=30,high=90)
-        phi = 70
+        vel = 3.0
+        phi = 40
 
         vx_0 = vel*np.cos(np.deg2rad(phi))
         vz_0 = vel*np.sin(np.deg2rad(phi))
 
         ## RESET OBSERVATION
-        Tau_0 = 0.3
+        Tau_0 = 0.4
         d_ceil_0 = Tau_0*vz_0 + 1e-3
         OFy = -vx_0/d_ceil_0
         self.obs = (Tau_0,OFy,d_ceil_0)
@@ -580,8 +620,7 @@ class CrazyflieEnv():
 
         ## PUBLISH MODEL STATE SERVICE REQUEST
         self.callService('/gazebo/set_model_state',state_srv,SetModelState)
-
-                
+      
     def reset_pos(self,z_0=0.379): # Disable sticky then places spawn_model at origin
         """Reset pose/twist of simulated drone back to home position. 
         As well as turning off stickyfeet
@@ -611,7 +650,6 @@ class CrazyflieEnv():
         state_srv.twist.angular.z = 0.0
 
         self.callService('/gazebo/set_model_state',state_srv,SetModelState)
-
 
     def updateInertia(self):
 
@@ -678,8 +716,6 @@ class CrazyflieEnv():
         subprocess.Popen( # CF_DC Process
             "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_data_converter CF_DataConverter",
             close_fds=True, preexec_fn=os.setsid, shell=True)
-
-       
 
     def gazebo_pause_physics(self):
         srv = EmptyRequest()
@@ -802,7 +838,6 @@ class CrazyflieEnv():
         ## SEND LOGGING REQUEST VIA SERVICE
         self.callService('/CF_DC/DataLogging',srv,loggingCMD)
 
-
     def capLogging(self,logName):
         """Cap logging values with IC,Flip, and Impact conditions and stop logging
         """        
@@ -856,7 +891,6 @@ class CrazyflieEnv():
 
         ## FLIP FLAGS
         self.flip_flag = FlipData_msg.flip_flag
-
 
     def CF_ImpactDataCallback(self,ImpactData_msg):
 
@@ -931,11 +965,11 @@ if __name__ == "__main__":
     #     obs,reward,done,info = env.ParamOptim_Flight(0.23,7,2.5,60)
     #     print(f"Ep: {ii} \t Reward: {reward:.02f}")
 
-    env = CrazyflieEnv(gazeboTimeout=True)
-    for _ in range(25):
+    env = CrazyflieEnv(gazeboTimeout=False)
+    for ep in range(25):
         env.reset()
         done = False
-        # env.SendCmd("Policy",[0.25,7,0],cmd_flag=1)
         while not done:
             obs,reward,done,info = env.step(env.action_space.sample())
+        print(f"Episode: {ep} \t Reward: {reward:.3f}")
 
