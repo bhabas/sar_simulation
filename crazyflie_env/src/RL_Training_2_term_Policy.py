@@ -106,7 +106,7 @@ def runTraining(env,agent,V_d,phi,logName):
 
 
 if __name__ == '__main__':
-    from Crazyflie_env2 import CrazyflieEnv
+    from Crazyflie_env import CrazyflieEnv
     from RL_agents.EPHE_Agent import EPHE_Agent
 
     ## INIT GAZEBO ENVIRONMENT
