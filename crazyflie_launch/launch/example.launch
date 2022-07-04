@@ -1,4 +1,0 @@
-<launch>
-    <node name="example_node" pkg="example_cpp" type="conv_example" />
-
-</launch>

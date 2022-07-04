@@ -39,8 +39,8 @@ void CF_DataConverter::Publish_StateData()
     StateData_msg.MS_PWM = MS_PWM;
 
     // NEURAL NETWORK DATA
-    StateData_msg.NN_flip = NN_flip;
-    StateData_msg.NN_policy = NN_policy;
+    StateData_msg.Policy_Flip = Policy_Flip;
+    StateData_msg.Policy_Action = Policy_Action;
 
 
     // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE CONTROLLER
@@ -73,8 +73,8 @@ void CF_DataConverter::Publish_FlipData()
     FlipData_msg.FM_tr = FM_tr;
 
     // NEURAL NETWORK DATA
-    FlipData_msg.NN_tr_flip = NN_tr_flip;
-    FlipData_msg.NN_tr_policy = NN_tr_policy;
+    FlipData_msg.Policy_Flip_tr = Policy_Flip_tr;
+    FlipData_msg.Policy_Action_tr = Policy_Action_tr;
 
 
     // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE CONTROLLER
@@ -166,8 +166,8 @@ void CF_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
     G1 = ctrl_msg.G1;
 
     // NEURAL NETWORK DATA
-    NN_flip = ctrl_msg.NN_flip;
-    NN_policy = ctrl_msg.NN_policy;
+    Policy_Flip = ctrl_msg.Policy_Flip;
+    Policy_Action = ctrl_msg.Policy_Action;
 
     Pose_impact_buff.push_back(Pose);
     Twist_impact_buff.push_back(Twist);
@@ -213,8 +213,8 @@ void CF_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
     FM_tr = ctrl_msg.FM_flip;
 
     // NEURAL NETWORK DATA
-    NN_tr_flip = ctrl_msg.NN_tr_flip;
-    NN_tr_policy = ctrl_msg.NN_tr_policy;
+    Policy_Flip_tr = ctrl_msg.Policy_Flip_tr;
+    Policy_Action_tr = ctrl_msg.Policy_Action_tr;
 
 }
 
@@ -231,9 +231,25 @@ void CF_DataConverter::CtrlDebug_Callback(const crazyflie_msgs::CtrlDebug &ctrl_
     Camera_Sensor_Active = ctrl_msg.Camera_Sensor_Active;
 }
 
-void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
+bool CF_DataConverter::CMD_CF_DC_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res)
 {
-    if(msg->cmd_type == 0)
+    // PASS COMMAND VALUES TO CONTROLLER AND PASS LOCAL ACTIONS
+    res.srv_Success = CF_DataConverter::Send_Cmd2Ctrl(req);
+    
+    return res.srv_Success;
+}
+
+bool CF_DataConverter::CMD_Dashboard_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res)
+{
+    // PASS COMMAND VALUES TO CONTROLLER AND PASS LOCAL ACTIONS
+    res.srv_Success = CF_DataConverter::Send_Cmd2Ctrl(req);
+    
+    return res.srv_Success;
+}
+
+bool CF_DataConverter::Send_Cmd2Ctrl(crazyflie_msgs::RLCmd::Request &req)
+{
+    if(req.cmd_type == 0)
     {
         // RESET FLIP TIME
         OnceFlag_flip = false;
@@ -286,23 +302,21 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
         CF_DataConverter::adjustSimSpeed(SIM_SPEED);
         SLOWDOWN_TYPE = 0;
 
-        
-                
     }
 
-    if(msg->cmd_type == 6)
+    if(req.cmd_type == 21)
     {
         CF_DataConverter::LoadParams();
     }
 
-    if(msg->cmd_type == 11)
+    if(req.cmd_type == 92)
     {
-        if(msg->cmd_flag == 0)
+        if(req.cmd_flag == 0)
         {
             Sticky_Flag = false;
         }
 
-        if(msg->cmd_flag == 1)
+        if(req.cmd_flag == 1)
         {
             Sticky_Flag = true;
         }
@@ -311,12 +325,12 @@ void CF_DataConverter::RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &ms
 
     }
 
-    if(msg->cmd_type == 101)
-    {
+    // SEND COMMAND VALUES TO CONTROLLER
+    crazyflie_msgs::RLCmd srv;
+    srv.request = req;
+    CMD_Client.call(srv);
 
-    }
-
-
+    return srv.response.srv_Success; // Return if service request successful (true/false)
 }
 
 void CF_DataConverter::RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &msg)
@@ -331,11 +345,9 @@ void CF_DataConverter::RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &
     policy = msg->policy;
 
     reward = msg->reward;
-    reward_inputs = msg->reward_inputs;
 
     vel_d = msg->vel_d;
 
-    runComplete_flag = msg->runComplete_flag;
 
     if(msg->trialComplete_flag == true)
     {
@@ -422,7 +434,7 @@ void CF_DataConverter::Pad_Connections_Callback(const crazyflie_msgs::PadConnect
 void CF_DataConverter::checkSlowdown()
 {   
     // SIMULATION SLOWDOWN
-    if(LANDING_SLOWDOWN_FLAG==true && tick >= 500){
+    if(LANDING_SLOWDOWN_FLAG==true){
 
         // WHEN CLOSE TO THE CEILING REDUCE SIM SPEED
         if(D_ceil<=0.5 && SLOWDOWN_TYPE == 0){
@@ -524,13 +536,11 @@ void CF_DataConverter::consoleOuput()
     printf("\n");
 
     printf("==== Flags ====\n");
-    printf("Motorstop:\t%u  Flip_flag:\t  %u  Pos Ctrl:\t    %u \n",Motorstop_Flag, flip_flag, Pos_Ctrl_Flag);
+    printf("Motorstop:\t%u  Flip_flag:\t  %u  Pos Ctrl:\t    %u  Cam_Est:\t  %u\n",Motorstop_Flag, flip_flag, Pos_Ctrl_Flag,Camera_Sensor_Active);
     printf("Traj Active:\t%u  Impact_flag:\t  %u  Vel Ctrl:\t    %u \n",Traj_Active_Flag,impact_flag,Vel_Ctrl_Flag);
-    printf("Policy_type:\t%u  Tumble Detect: %u  Moment_Flag:   %u \n",POLICY_TYPE,Tumble_Detection,Moment_Flag);
-    printf("Policy_armed:\t%u  Tumbled:\t  %u  Slowdown_type: %u\n",Policy_Armed_Flag,Tumbled_Flag,SLOWDOWN_TYPE);
-    printf("Sticky_flag:\t%u  Cam_Est:\t  %u\n",Sticky_Flag,Camera_Sensor_Active);
+    printf("Policy_armed:\t%u  Tumble Detect: %u  Moment_Flag:   %u \n",Policy_Armed_Flag,Tumble_Detection,Moment_Flag);
+    printf("Sticky_flag:\t%u  Tumbled:\t  %u  Slowdown_type: %u\n",Sticky_Flag,Tumbled_Flag,SLOWDOWN_TYPE);
     printf("\n");
-
 
     printf("==== System States ====\n");
     printf("Pos [m]:\t %.3f  %.3f  %.3f\n",Pose.position.x,Pose.position.y,Pose.position.z);
@@ -544,27 +554,34 @@ void CF_DataConverter::consoleOuput()
     printf("D_ceil: %.3f\n",D_ceil);
     printf("\n");
 
+    printf("==== Policy: %s ====\n",POLICY_TYPE.c_str());
+    if (strcmp(POLICY_TYPE.c_str(),"PARAM_OPTIM") == 0)
+    {
+        printf("Tau_thr: %.3f \tMy: %.3f\n",Tau_thr,G1);
+        printf("\n");
+    }
+    else if (strcmp(POLICY_TYPE.c_str(),"SVL_POLICY") == 0)
+    {
+        printf("Policy_Flip: %.3f \tPolicy_Action: %.3f \n",Policy_Flip,Policy_Action);
+        printf("\n");
+    }
+    else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL") == 0)
+    {
+        printf("Stuff: %.3f \tStuff: %.3f \n",404.0,404.0);
+        printf("\n");
+    }
+
+
+    printf("==== Flip Trigger Values ====\n");
+    printf("Tau_tr:     %.3f \tPolicy_Flip_tr:    %.3f \n",Tau_tr,Policy_Flip_tr);
+    printf("OFy_tr:     %.3f \tPolicy_Action_tr:  %.3f \n",OFy_tr,Policy_Action_tr);
+    printf("D_ceil_tr:  %.3f \n",D_ceil_tr);
+    printf("\n");
 
     printf("==== Setpoints ====\n");
     printf("x_d: %.3f  %.3f  %.3f\n",x_d.x,x_d.y,x_d.z);
     printf("v_d: %.3f  %.3f  %.3f\n",v_d.x,v_d.y,v_d.z);
     printf("a_d: %.3f  %.3f  %.3f\n",a_d.x,a_d.y,a_d.z);
-    printf("\n");
-
-    
-    printf("==== Policy Values ====\n");
-    printf("RL: \n");
-    printf("Tau_thr: %.3f \tG1: %.3f \tG2: %.3f\n",Tau_thr,G1,0.0);
-    printf("\n");
-
-    printf("NN_Outputs: \n");
-    printf("NN_Flip: %.3f \tNN_Policy: %.3f \n",NN_flip,NN_policy);
-    printf("\n");
-
-    printf("==== Flip Trigger Values ====\n");
-    printf("Tau_tr:     %.3f \tNN_tr_Flip:    %.3f \n",Tau_tr,NN_tr_flip);
-    printf("OFy_tr:     %.3f \tNN_tr_Policy:  %.3f \n",OFy_tr,NN_tr_policy);
-    printf("D_ceil_tr:  %.3f \n",D_ceil_tr);
     printf("\n");
 
     printf("==== Controller Actions ====\n");
@@ -589,7 +606,7 @@ void CF_DataConverter::consoleOuput()
 
 void CF_DataConverter::MainLoop()
 {
-    int loopRate = 100;     // [Hz]
+    int loopRate = 1000;     // [Hz]
     ros::Rate rate(loopRate);
 
 

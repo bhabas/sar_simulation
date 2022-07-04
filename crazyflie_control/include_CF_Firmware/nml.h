@@ -128,7 +128,14 @@ int nml_mat_sub_r(nml_mat *m1, nml_mat *m2);
 nml_mat *nml_mat_dot(nml_mat *m1, nml_mat *m2);
 nml_mat *nml_mat_transp(nml_mat *m);
 double nml_mat_trace(nml_mat* m);
+
+// *****************************************************************************
+//
+// Element Operations
+//
+// *****************************************************************************
 nml_mat *nml_mat_funcElement(nml_mat *m,float (*Function)(float x));
+double nml_mat_sum_elem(nml_mat *m);
 
 // *****************************************************************************
 //

@@ -3,7 +3,8 @@ import rospy
 import numpy as np
 
 from crazyflie_msgs.msg import CF_StateData,CF_MiscData,CF_FlipData,CF_ImpactData
-from crazyflie_msgs.msg import RLData,RLConvg,RLCmd
+from crazyflie_msgs.msg import RLData,RLConvg
+from crazyflie_msgs.srv import RLCmd,RLCmdRequest
 from nav_msgs.msg import Odometry
 
 
@@ -27,11 +28,15 @@ class DashboardNode:
         self.r_list = []
         self.r_avg_list = []
 
+        self.K_ep_list = []
+        self.K_run_list = []
+        self.Kep_list_reward_avg = []
 
-        self.mu_1_list = [0] # I can generalize this if needed
-        self.mu_2_list = [0]
-        self.sigma_1_list = [0]
-        self.sigma_2_list = [0]
+
+        self.mu_1_list = [] # I can generalize this if needed
+        self.mu_2_list = []
+        self.sigma_1_list = []
+        self.sigma_2_list = []
 
         ## INITIALIZE STATE VALUES
         self.t = 0.0
@@ -56,8 +61,8 @@ class DashboardNode:
         self.MotorThrusts = [0,0,0,0] # Controller Motor Thrusts [M1,M2,M3,M4][g]
         self.FM = [0,0,0,0]     # Controller Force/Moments (F_thrust,Mx,My,Mz) [N,N*mm]
         
-        self.NN_flip = 0.0
-        self.NN_policy = 0.0
+        self.Policy_Flip = 0.0
+        self.Policy_Action = 0.0
         
         self.x_d = [0,0,0]
         self.v_d = [0,0,0]
@@ -80,8 +85,8 @@ class DashboardNode:
 
         self.FM_tr = [0,0,0,0]      # [N,N*mm]
 
-        self.NN_tr_flip = 0.0
-        self.NN_tr_policy = 0.0     # [N*mm]
+        self.Policy_Flip_tr = 0.0
+        self.Policy_Action_tr = 0.0     # [N*mm]
 
         ## INITIALIZE IMPACT VALUES
         self.impact_flag = False
@@ -119,8 +124,7 @@ class DashboardNode:
         rospy.Subscriber('/RL/data',RLData,self.rewardCallback,queue_size=10)
         rospy.Subscriber('/RL/convg_data',RLConvg,self.rlConvgCallback,queue_size=10)
 
-        self.RL_CMD_Publisher = rospy.Publisher('/RL/cmd',RLCmd,queue_size=10)
-        self.cmd_msg = RLCmd()
+        self.srv = RLCmdRequest() 
 
    
         print("[COMPLETED] Dashboard node is running...")
@@ -190,8 +194,8 @@ class DashboardNode:
                                 StateData_msg.MS_PWM[2],
                                 StateData_msg.MS_PWM[3]],0)
 
-        self.NN_flip = np.round(StateData_msg.NN_flip,3)
-        self.NN_policy = np.round(StateData_msg.NN_policy,3)
+        self.Policy_Flip = np.round(StateData_msg.Policy_Flip,3)
+        self.Policy_Action = np.round(StateData_msg.Policy_Action,3)
 
         self.x_d = np.round([StateData_msg.x_d.x,
                              StateData_msg.x_d.y,
@@ -248,8 +252,8 @@ class DashboardNode:
                                FlipData_msg.FM_tr[3]],3)
 
 
-        self.NN_tr_flip = np.round(FlipData_msg.NN_tr_flip,3)
-        self.NN_tr_policy = np.round(FlipData_msg.NN_tr_policy,3)
+        self.Policy_Flip_tr = np.round(FlipData_msg.Policy_Flip_tr,3)
+        self.Policy_Action_tr = np.round(FlipData_msg.Policy_Action_tr,3)
 
     def CF_ImpactDataCallback(self,ImpactData_msg):
         ## IMPACT FLAGS
@@ -312,25 +316,30 @@ class DashboardNode:
         self.k_ep = reward_msg.k_ep
             
     def rlConvgCallback(self,msg):
+
+        self.K_ep_list = np.array(msg.K_ep_list)
+        self.K_run_list = np.array(msg.K_run_list)
+
         self.mu_1_list = np.array(msg.mu_1_list)
         self.mu_2_list = np.array(msg.mu_2_list)
         self.sigma_1_list = np.array(msg.sigma_1_list)
         self.sigma_2_list = np.array(msg.sigma_2_list)
 
         ## REWARD ARRAYS
-        self.r_list = np.array(msg.reward_list).astype(int)
+        self.r_list = np.array(msg.reward_list)
 
-        k_ep = len(self.r_list)//self.n_rollouts
-        k_run = len(self.r_list)%self.n_rollouts
+        # k_ep = len(self.r_list)//self.n_rollouts
+        # k_run = len(self.r_list)%self.n_rollouts
 
-        if k_ep == 0:
-            self.K_ep_list1 = np.repeat(0,k_run)
-        else:
-            self.K_ep_list1 = np.concatenate((np.repeat(range(k_ep),self.n_rollouts),np.repeat(k_ep,k_run)))
+        # if k_ep == 0:
+        #     self.K_ep_list1 = np.repeat(0,k_run)
+        # else:
+        #     self.K_ep_list1 = np.concatenate((np.repeat(range(k_ep),self.n_rollouts),np.repeat(k_ep,k_run)))
 
         ## AVERAGE REWARD ARRAYS
-        self.r_avg_list = np.array(msg.reward_avg_list).astype(int)
-        self.K_ep_list2 = np.array(range(0,len(self.r_avg_list)))
+        self.r_avg_list = np.array(msg.reward_avg_list)
+        self.Kep_list_reward_avg = np.array(msg.Kep_list_reward_avg)
+        # self.K_ep_list2 = np.array(range(0,len(self.r_avg_list)))
 
 
 

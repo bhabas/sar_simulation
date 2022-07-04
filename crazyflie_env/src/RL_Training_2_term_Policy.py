@@ -5,73 +5,37 @@ import rospy
 import time
 
 
-from Crazyflie_env import CrazyflieEnv
-from RL_agents.rl_EM import rlEM_PEPGAgent
-from ExecuteFlight import executeFlight
+
+
 
 
 os.system("clear")
 np.set_printoptions(precision=2, suppress=True)
 
+def runTraining(env,agent,V_d,phi,logName):
 
-if __name__ == '__main__':
-    ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=False)
-    # env.launch_dashboard()
-    
-
-    ## INIT LEARNING AGENT
-    # Mu_Tau value is multiplied by 10 so complete policy is more normalized
-    mu = np.array([[2.5], [5]])       # Initial mu starting point
-    sigma = np.array([[0.5],[1.5]])   # Initial sigma starting point
-
-    env.n_rollouts = 8
-    agent = rlEM_PEPGAgent(mu,sigma,env.n_rollouts)
-
-
-    # ============================
-    ##     FLIGHT CONDITIONS  
-    # ============================
-
-    ## CONSTANT VELOCITY LAUNCH CONDITIONS
-    V_d = 2.5 # [m/s]
-    phi = 60   # [deg]
-    phi_rad = np.radians(phi)
-    env.vel_d = [V_d*np.cos(phi_rad), 0.0, V_d*np.sin(phi_rad)] # [m/s]
-
-
-    ## INITIALIALIZE LOGGING DATA
-    trial_num = 24
-    env.agent_name = agent.agent_type
-    env.trial_name = f"{env.agent_name}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--{env.modelInitials()}"
-    env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
-    env.Logging_Flag = True
-    env.createCSV(env.filepath)
-
+    agent.vel_d = [V_d,phi,0.0]
+    env.createCSV(logName)
 
     # ============================
     ##          Episode         
     # ============================
 
-    for k_ep in range(0,rospy.get_param("K_EP_MAX")):
+    for k_ep in range(0,20):
 
-        ## UPDATE EPISODE NUMBER
-        env.k_ep = k_ep
+    
+        ## PRE-ALLOCATE REWARD VEC AND OBTAIN THETA VALS
+        reward_arr = np.zeros(shape=(agent.n_rollouts)) # Array of reward values for training
+        theta = agent.get_theta()             # Generate sample policies from distribution
 
         ## CONVERT AGENT ARRAYS TO LISTS FOR PUBLISHING
-        env.mu = agent.mu.flatten().tolist()                # Mean for Gaussian distribution
-        env.sigma = agent.sigma.flatten().tolist()          # Standard Deviation for Gaussian distribution
+        agent.K_ep_list.append(k_ep)
 
-        env.mu_1_list.append(env.mu[0])
-        env.mu_2_list.append(env.mu[1])
+        agent.mu_1_list.append(agent.mu[0,0])
+        agent.mu_2_list.append(agent.mu[1,0])
 
-        env.sigma_1_list.append(env.sigma[0])
-        env.sigma_2_list.append(env.sigma[1])
-
-        
-        ## PRE-ALLOCATE REWARD VEC AND OBTAIN THETA VALS
-        training_arr = np.zeros(shape=(agent.n_rollouts,1)) # Array of reward values for training
-        theta_rl,epsilon_rl = agent.get_theta()             # Generate sample policies from distribution
+        agent.sigma_1_list.append(agent.sigma[0,0])
+        agent.sigma_2_list.append(agent.sigma[1,0])
 
         ## PRINT EPISODE DATA
         print("=============================================")
@@ -84,56 +48,93 @@ if __name__ == '__main__':
         print('\n')
         
 
-        print("theta_rl = ")
-        print(theta_rl[0,:], "--> Tau")
-        print(theta_rl[1,:], "--> My")
+        print("theta_i = ")
+        print(theta[0,:], "--> Tau")
+        print(theta[1,:], "--> My")
+
 
         # ============================
         ##          Run 
         # ============================
-        for env.k_run in range(0,env.n_rollouts):
-            # input("press enter")
+        for k_run in range(0,agent.n_rollouts):
 
-
-            ## UPDATE RUN NUMBER
-            k_run = env.k_run # Local variables are faster to access then class variables
-            
-
+            ## UPDATE EPISODE/ROLLOUT NUMBER
+            agent.k_ep = k_ep
+            agent.k_run = k_run
+            agent.RL_Publish()
 
             ## INITIALIZE POLICY PARAMETERS: 
-            Tau_thr = theta_rl[0, k_run]    # Tau threshold 10*[s]
-            My = theta_rl[1, k_run]         # Policy Moment Action [N*mm]
-            G2 = 0.0                        # Deprecated policy term
+            Tau_thr = theta[0, k_run]    # Tau threshold 10*[s]
+            My = theta[1, k_run]         # Policy Moment Action [N*mm]
+
+            env.ParamOptim_reset()
+            env.startLogging(logName)
+            obs,reward,done,info = env.ParamOptim_Flight(Tau_thr/10,My,V_d,phi)
             
-            env.policy = [Tau_thr/10,np.abs(My),G2]
-
-            env.RL_Publish()
-
-            try: # Use try block to catch raised exceptions and attempt rollout again
-                
-                executeFlight(env,agent)
-
-                if env.repeat_run == True: # Runs when error detected
-                    env.relaunch_sim()
-                    continue
-
-            except rospy.service.ServiceException:
-                continue
-
             ## ADD VALID REWARD TO TRAINING ARRAY
-            training_arr[k_run] = env.reward
+            reward_arr[k_run] = reward
 
-            env.reward_list.append(int(env.reward))
-            env.reward_avg = training_arr[np.nonzero(training_arr)].mean()
+            ## PUBLISH ROLLOUT DATA
+            agent.policy = [Tau_thr,My,0]
+            agent.reward = reward
+            agent.error_str = env.error_str
 
-            ## PUBLISH UPDATED REWARD VARIABLES
-            env.RL_Publish()
+            agent.K_run_list.append(k_ep)
+            agent.reward_list.append(reward)
 
-        env.reward_avg_list.append(int(env.reward_avg))
-        env.RL_Publish()
+            agent.RL_Publish()
+
+
+            env.capLogging(logName)
+            
+     
 
         ## =======  EPISODE COMPLETED  ======= ##
-        print(f"Episode # {k_ep:d} training, average reward {env.reward_avg:.3f}")
-        agent.train(theta_rl,training_arr,epsilon_rl)
+        print(f"Episode # {k_ep:d} training, average reward {np.mean(reward_arr):.3f}")
+        agent.train(theta,reward_arr)
+
+        ## PUBLISH AVERAGE REWARD DATA
+        agent.Kep_list_reward_avg.append(k_ep)
+        agent.reward_avg_list.append(np.mean(reward_arr))
+        agent.reward_avg = np.mean(reward_arr)
+        agent.RL_Publish()
+
+        # if all(agent.sigma < 0.05):
+        #     break
+
+
+
+
+if __name__ == '__main__':
+    from Crazyflie_env import CrazyflieEnv
+    from RL_agents.EPHE_Agent import EPHE_Agent
+
+    ## INIT GAZEBO ENVIRONMENT
+    env = CrazyflieEnv(gazeboTimeout=True)
+
+    ## INIT LEARNING AGENT
+    # Mu_Tau value is multiplied by 10 so complete policy is more normalized
+    mu_0 = np.array([2.5, 5])       # Initial mu starting point
+    sig_0 = np.array([0.5, 1.5])   # Initial sigma starting point
+    agent = EPHE_Agent(mu_0,sig_0,n_rollouts=6)
+
+
+    # ============================
+    ##     FLIGHT CONDITIONS  
+    # ============================
+
+    ## CONSTANT VELOCITY LAUNCH CONDITIONS
+    V_d = 2.5 # [m/s]
+    phi = 60   # [deg]
+
+    ## INITIALIALIZE LOGGING DATA
+    trial_num = 24
+    logName = f"{agent.agent_type}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--{env.modelInitials()}.csv"
+
+    runTraining(env,agent,V_d,phi,logName)
+
+
+    
+
 
 

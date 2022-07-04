@@ -9,7 +9,6 @@
 
 // CUSTOM IMPORTS
 #include "crazyflie_msgs/PadConnect.h"
-#include "crazyflie_msgs/RLCmd.h"
 #include "crazyflie_msgs/activateSticky.h"
 
 

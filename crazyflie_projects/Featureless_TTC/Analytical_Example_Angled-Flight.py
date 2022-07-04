@@ -2,28 +2,30 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.animation as animation
-import cv2 as cv
+# import cv2 as cv
 
 
 ## PLOT BRIGHTNESS PATTERN FROM 2.4.1 HORIZONTAL MOTION
 I_0 = 255   # Brightness value (0-255)
-L = 0.05    # [m]
+L = 0.45    # [m]
 
 ## CAMERA PARAMETERS
 WIDTH_PIXELS = 160
 HEIGHT_PIXELS = 160
-FPS = 100               # Frame Rate [1/s]
+FPS = 60               # Frame Rate [1/s]
 w = 3.6e-6              # Pixel width [m]
-f = 0.66e-3/2           # Focal Length [m]
+f = 0.66e-3/2          # Focal Length [m]
 # f_effective = f/2 # halve focal length if half the pixels
 O_up = WIDTH_PIXELS/2    # Pixel X_offset [pixels]
 O_vp = HEIGHT_PIXELS/2   # Pixel Y_offset [pixels]
 
 
-d_0 = 0.6   # Initial Camera height [m]
-vz = 0.7    # Camera velocity [m/s]
-vx = 0.3
-vy = 0.3
+vel = 3.0
+phi = 90
+d_0 = 1.5   # Initial Camera height [m]
+vz = vel*np.sin(np.radians(phi))    # Camera velocity [m/s]
+vx = vel*np.cos(np.radians(phi))
+vy = 0.0
 
 ## PRE-ALLOCATE IMAGE ARRAY [pixels]
 u_p = np.arange(0,WIDTH_PIXELS,1)
@@ -53,7 +55,7 @@ def I_pixel(u_p,v_p,d_0,t):
     ## RETURN AVERAGE BRIGHTNESS VALUE OVER PIXEL
     I_x = I_0/2*(np.sin(2*np.pi*(d*u/(f*L) + vx*t/L) ) + 1)
     I_y = I_0/2*(np.sin(2*np.pi*(d*v/(f*L) + vy*t/L) ) + 1)
-    I = (I_x+I_y)/2
+    I = I_x
 
 
     ## CLIP VALUES TO BE HIGH/LOW
@@ -94,9 +96,6 @@ def cam_alg(Cur_img,Prev_img):
 
     U_grid = (U_p - O_up)*w + w/2 
     V_grid = (V_p - O_vp)*w + w/2
-
-    # Cur_img = cv.GaussianBlur(Cur_img,(5,5),0)
-    # Prev_img = cv.GaussianBlur(Prev_img,(5,5),0)
 
     ## FIND IMAGE GRADIENTS
     for i in range(1,HEIGHT_PIXELS - 1): 
@@ -176,7 +175,7 @@ def animate_func(i):
     t_List.append(t)
 
     ## UPDATE IMAGE
-    # im.set_array(I_pixel(U_p,V_p,d_0,t))
+    im.set_array(I_pixel(U_p,V_p,d_0,t))
     
 anim = animation.FuncAnimation(fig, 
                                animate_func, 
@@ -193,7 +192,7 @@ ax = fig2.add_subplot(111)
 
 ax.plot(t_List,Tau_est_List,'rx',label="Tau_estimate")
 ax.plot(t_List,Tau_act_List,label="Tau_actual")
-ax.set_title('Tau Estimation')
+ax.set_title(f'Tau Estimation - V: {vel:.2f} | Phi: {phi:.2f} | L: {L:.3f}')
 ax.set_xlabel('Time [s]')
 ax.set_ylabel('Tau [s]')
 ax.grid()

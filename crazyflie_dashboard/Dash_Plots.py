@@ -394,17 +394,17 @@ class Tau_Widget(QWidget):
         ## UPDATE PLOT 1
         self.PW.setBackground('w')
         self.PW.setXRange(buffer_length*0.0,buffer_length)
-        self.PW.setYRange(0,5)
+        self.PW.setYRange(0,1)
         self.PW.showGrid(x=True, y=True, alpha=0.2)
 
 
         # ## INIT DATA CURVES
-        self.x_arr = np.zeros(buffer_length)
-        self.curve_x = self.PW.plot(self.x_arr, pen=pg.mkPen(color=colors["blue"], width=width))
+        self.Tau_arr = np.zeros(buffer_length)
+        self.curve_Tau = self.PW.plot(self.Tau_arr, pen=pg.mkPen(color=colors["blue"], width=width))
 
         ## INIT ESTIMATE CURVES
-        self.x_est_arr = np.zeros(buffer_length)
-        self.curve_x_est = self.PW.plot(self.x_est_arr, pen=pg.mkPen(color=colors["blue"], width=1.2,style=QtCore.Qt.DotLine))
+        self.Tau_est_arr = np.zeros(buffer_length)
+        self.curve_Tau_est = self.PW.plot(self.Tau_est_arr, pen=pg.mkPen(color=colors["blue"], width=1.2,style=QtCore.Qt.DotLine))
 
         ## INIT UPDATE TIMER
         self.timer = pg.QtCore.QTimer(self)
@@ -413,18 +413,17 @@ class Tau_Widget(QWidget):
 
     def update(self):
                         
-        self.x_arr = np.roll(self.x_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
-        self.x_arr[-1] = DashNode.Tau
-        self.curve_x.setData(self.x_arr)
+        self.Tau_arr = np.roll(self.Tau_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
+        self.Tau_arr[-1] = DashNode.Tau
+        self.curve_Tau.setData(self.Tau_arr)
 
         ## UPDATE ESTIMATE CURVES
-        self.x_est_arr = np.roll(self.x_est_arr,-1) 
-        self.x_est_arr[-1] = DashNode.Tau_est
-        self.curve_x_est.setData(self.x_est_arr)
+        self.Tau_est_arr = np.roll(self.Tau_est_arr,-1) 
+        self.Tau_est_arr[-1] = DashNode.Tau_est
+        self.curve_Tau_est.setData(self.Tau_est_arr)
 
     def reset_axes(self):
-        # self.p1.enableAutoRange(enable=True)
-        self.PW.setYRange(0,5)
+        self.PW.setYRange(0,1)
         self.PW.setXRange(buffer_length*0.0,buffer_length)
 
     def pause(self,pause_flag):
@@ -434,11 +433,11 @@ class Tau_Widget(QWidget):
             self.timer.start()
     
     def clear_data(self):
-        self.x_arr = np.zeros(buffer_length)
-        self.x_est_arr = np.zeros(buffer_length)
+        self.Tau_arr = np.zeros(buffer_length)
+        self.Tau_est_arr = np.zeros(buffer_length)
 
 
-class OF_Widget(QWidget):
+class OFy_Widget(QWidget):
     def __init__(self,parent=None):
         super().__init__()
 
@@ -463,18 +462,13 @@ class OF_Widget(QWidget):
 
 
         # ## INIT DATA CURVES
-        self.x_arr = np.zeros(buffer_length)
-        self.curve_x = self.PW.plot(self.x_arr, pen=pg.mkPen(color=colors["red"], width=width))
-
-        self.y_arr = np.zeros(buffer_length)
-        self.curve_y = self.PW.plot(self.y_arr, pen=pg.mkPen(color=colors["green"], width=width))
+        self.OFy_arr = np.zeros(buffer_length)
+        self.curve_OFy = self.PW.plot(self.OFy_arr, pen=pg.mkPen(color=colors["green"], width=width))
 
         ## INIT ESTIMATE CURVES
-        self.x_est_arr = np.zeros(buffer_length)
-        self.curve_x_est = self.PW.plot(self.x_est_arr, pen=pg.mkPen(color=colors["red"], width=1.2,style=QtCore.Qt.DotLine))
+        self.OFy_est_arr = np.zeros(buffer_length)
+        self.curve_OFy_est = self.PW.plot(self.OFy_est_arr, pen=pg.mkPen(color=colors["green"], width=1.2,style=QtCore.Qt.DotLine))
 
-        self.y_est_arr = np.zeros(buffer_length)
-        self.curve_y_est = self.PW.plot(self.y_est_arr, pen=pg.mkPen(color=colors["green"], width=1.2,style=QtCore.Qt.DotLine))
 
         ## INIT UPDATE TIMER
         self.timer = pg.QtCore.QTimer(self)
@@ -483,23 +477,77 @@ class OF_Widget(QWidget):
 
     def update(self):
                         
-        self.x_arr = np.roll(self.x_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
-        self.x_arr[-1] = DashNode.OFx
-        self.curve_x.setData(self.x_arr)
-
-        self.y_arr = np.roll(self.y_arr,-1)
-        self.y_arr[-1] = DashNode.OFy
-        self.curve_y.setData(self.y_arr)
+        self.OFy_arr = np.roll(self.OFy_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
+        self.OFy_arr[-1] = DashNode.OFy
+        self.curve_OFy.setData(self.OFy_arr)
 
         ## UPDATE ESTIMATE CURVES
-        self.x_est_arr = np.roll(self.x_est_arr,-1) 
-        self.x_est_arr[-1] = DashNode.OFx_est
-        self.curve_x_est.setData(self.x_est_arr)
+        self.OFy_est_arr = np.roll(self.OFy_est_arr,-1) 
+        self.OFy_est_arr[-1] = DashNode.OFy_est
+        self.curve_OFy_est.setData(self.OFy_est_arr)
 
-        self.y_est_arr = np.roll(self.y_est_arr,-1) 
-        self.y_est_arr[-1] = DashNode.OFy_est
-        self.curve_y_est.setData(self.y_est_arr)
+    def reset_axes(self):
+        # self.p1.enableAutoRange(enable=True)
+        self.PW.setYRange(0,5)
+        self.PW.setXRange(buffer_length*0.0,buffer_length)
 
+    def pause(self,pause_flag):
+        if pause_flag == True:
+            self.timer.stop()
+        else: 
+            self.timer.start()
+    
+    def clear_data(self):
+        self.x_arr = np.zeros(buffer_length)
+
+
+class OFx_Widget(QWidget):
+    def __init__(self,parent=None):
+        super().__init__()
+
+        ## INIT LAYOUT
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+        ## CREATE AXIS ITEM TO CREATE CUSTOM TICK LABELS
+        ax = pg.AxisItem(orientation='bottom')
+        ax.setTicks([tick_labels.items()])
+
+
+        self.PW = pg.PlotWidget(name='Plot1',labels =  {'left':'OF [rad/s]', 'bottom':'Time [s]'},axisItems={'bottom': ax}) # Plot window 1
+        self.layout.addWidget(self.PW)
+        
+
+        ## UPDATE PLOT 1
+        self.PW.setBackground('w')
+        self.PW.setXRange(buffer_length*0.0,buffer_length)
+        self.PW.setYRange(-10,10)
+        self.PW.showGrid(x=True, y=True, alpha=0.2)
+
+
+        # ## INIT DATA CURVES
+        self.OFx_arr = np.zeros(buffer_length)
+        self.curve_OFx = self.PW.plot(self.OFx_arr, pen=pg.mkPen(color=colors["red"], width=width))
+
+        ## INIT ESTIMATE CURVES
+        self.OFx_est_arr = np.zeros(buffer_length)
+        self.curve_OFx_est = self.PW.plot(self.OFx_est_arr, pen=pg.mkPen(color=colors["red"], width=1.2,style=QtCore.Qt.DotLine))
+
+        ## INIT UPDATE TIMER
+        self.timer = pg.QtCore.QTimer(self)
+        self.timer.timeout.connect(self.update)
+        self.timer.start(update_interval) # number of milliseconds for next update
+
+    def update(self):
+                        
+        self.OFx_arr = np.roll(self.OFx_arr,-1) # shift data in the array one sample left  # (see also: np.roll)
+        self.OFx_arr[-1] = DashNode.OFx
+        self.curve_OFx.setData(self.OFx_arr)
+        
+        ## UPDATE ESTIMATE CURVES
+        self.OFx_est_arr = np.roll(self.OFx_est_arr,-1) 
+        self.OFx_est_arr[-1] = DashNode.OFx_est
+        self.curve_OFx_est.setData(self.OFx_est_arr)
 
 
     def reset_axes(self):
@@ -514,7 +562,7 @@ class OF_Widget(QWidget):
             self.timer.start()
     
     def clear_data(self):
-        self.x_arr = np.zeros(buffer_length)
+        self.OFx_arr = np.zeros(buffer_length)
         self.y_arr = np.zeros(buffer_length)
 
 class Dist_Widget(QWidget):
@@ -781,8 +829,7 @@ class Reward_Widget(QWidget):
 
         ## UPDATE PLOT 1
         self.PW.setBackground('w')
-        self.PW.setXRange(0,25)
-        self.PW.setYRange(0,300)
+        self.reset_axes()
         self.PW.showGrid(x=True, y=True, alpha=0.2)
 
 
@@ -799,14 +846,12 @@ class Reward_Widget(QWidget):
 
     def update(self):
                         
-        self.curve_reward.setData(DashNode.K_ep_list1,DashNode.r_list)
-        self.curve_reward_avg.setData(DashNode.K_ep_list2,DashNode.r_avg_list)
-
-
+        self.curve_reward.setData(DashNode.K_run_list,DashNode.r_list)
+        self.curve_reward_avg.setData(DashNode.Kep_list_reward_avg,DashNode.r_avg_list)
 
     def reset_axes(self):
-        self.PW.setYRange(0,300)
         self.PW.setXRange(0,25)
+        self.PW.setYRange(0,1.1)
 
 
 class Mu_Widget(QWidget):
@@ -854,13 +899,13 @@ class Mu_Widget(QWidget):
 
     def update(self):
                         
-        self.curve_1_mu.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_1_list)
-        self.curve_1_SD1.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_1_list + 2*np.array(DashNode.sigma_1_list))
-        self.curve_1_SD2.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_1_list + -2*np.array(DashNode.sigma_1_list))
+        self.curve_1_mu.setData(DashNode.K_ep_list,DashNode.mu_1_list)
+        self.curve_1_SD1.setData(DashNode.K_ep_list,DashNode.mu_1_list + 2*DashNode.sigma_1_list)
+        self.curve_1_SD2.setData(DashNode.K_ep_list,DashNode.mu_1_list + -2*DashNode.sigma_1_list)
 
-        self.curve_2_mu.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_2_list)
-        self.curve_2_SD1.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_2_list + 2*np.array(DashNode.sigma_2_list))
-        self.curve_2_SD2.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_2_list + -2*np.array(DashNode.sigma_2_list))
+        self.curve_2_mu.setData(DashNode.K_ep_list,DashNode.mu_2_list)
+        self.curve_2_SD1.setData(DashNode.K_ep_list,DashNode.mu_2_list + 2*np.array(DashNode.sigma_2_list))
+        self.curve_2_SD2.setData(DashNode.K_ep_list,DashNode.mu_2_list + -2*np.array(DashNode.sigma_2_list))
 
     def reset_axes(self):
         # self.p1.enableAutoRange(enable=True)
@@ -900,8 +945,8 @@ class Sigma_Widget(QWidget):
 
     def update(self):
                         
-        self.curve_sig1.setData(np.arange(0,DashNode.k_ep+1),np.array(DashNode.sigma_1_list)*10)
-        self.curve_sig2.setData(np.arange(0,DashNode.k_ep+1),np.array(DashNode.sigma_2_list))
+        self.curve_sig1.setData(DashNode.K_ep_list,DashNode.sigma_1_list*10)
+        self.curve_sig2.setData(DashNode.K_ep_list,DashNode.sigma_2_list)
 
     def reset_axes(self):
         self.PW.setXRange(0,20)
@@ -914,7 +959,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     ## INITIALIZE DASHBOARD WINDOW
-    myApp = OF_Widget()
+    myApp = Reward_Widget()
     myApp.show()
 
     sys.exit(app.exec_())

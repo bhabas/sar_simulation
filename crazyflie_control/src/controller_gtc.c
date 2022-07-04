@@ -187,7 +187,7 @@ bool customPWM_flag = false;
 
 // DEFINE POLICY TYPE ACTIVATED
 
-uint8_t PolicyType = 0; // Default to RL
+char PolicyType[] = "PARAM_CONVG"; // Default to RL
 
 // ======================================
 //  RECORD SYSTEM STATES AT FLIP TRIGGER
@@ -215,9 +215,9 @@ float M_z_flip = 0.0f;      // [N*m]
 //  CONSTANT VEL TRAJECTORY GENERATION
 // ====================================
 typedef enum {
-    x = 0, 
-    y = 1,
-    z = 2
+    x_axis = 0, 
+    y_axis = 1,
+    z_axis = 2
 } axis_direction;
 axis_direction traj_type;
 
@@ -238,29 +238,15 @@ float G2 = 0.0f;        // Deprecated state value
 
 
 // ===============================
-//  NEURAL NETWORK INITIALIZATION
+//  NN/SVM POLICY INITIALIZATION
 // ===============================
 static nml_mat* X;  // STATE MATRIX TO BE INPUT INTO NN
+SVM SVM_Policy_Flip;     
+NN NN_Policy_Action;
 
-// NN INPUT SCALERS
-static Scaler Scaler_Flip;      // Scale input vector for NN
-static Scaler Scaler_Policy;
-
-// NN WEIGHTS
-static nml_mat* W_flip[3];  
-static nml_mat* W_policy[3];
-
-// NN BIASES
-static nml_mat* b_flip[3];  
-static nml_mat* b_policy[3];
-
-// NN OUTPUTS
-float NN_flip = 0.0f;           // NN output value for flip classification
-float NN_policy = 0.0f;         // NN output value for policy My
-
-// NN OUTPUTS AT FLIP TRIGGER
-float NN_tr_flip = 0.0f;        // NN value at flip trigger
-float NN_tr_policy = 0.0f;      // NN policy value at flip trigger
+float Policy_Flip = 0.0f;  
+float Policy_Flip_tr = 0.0f;    // Output from OC_SVM
+float Policy_Action_tr = 0.0f;  // Output from NN
 
 void controllerGTCInit(void)
 {
@@ -269,8 +255,10 @@ void controllerGTCInit(void)
     X = nml_mat_new(3,1);
     J = mdiag(Ixx,Iyy,Izz);
 
-    initNN_Layers(&Scaler_Flip,W_flip,b_flip,NN_Params_Flip,3);
-    initNN_Layers(&Scaler_Policy,W_policy,b_policy,NN_Params_Policy,3);
+    // INIT NN/OC_SVM POLICY
+    NN_init(&NN_Policy_Action,NN_Params_Flip);
+    OC_SVM_init(&SVM_Policy_Flip,SVM_Params);
+
     consolePrintf("GTC Initiated\n");
 }
 
@@ -324,11 +312,20 @@ void controllerGTCReset(void)
     OFy_tr = 0.0f;
     d_ceil_tr = 0.0f;
     
-    NN_tr_flip = 0.0f;
-    NN_tr_policy = 0.0f;
-
+    // RL - PARAMETER ESTIMATION
     Tau_thr = 0.0f;
     G1 = 0.0f;
+
+
+    // SUPERVISED NN/OC_SVM COMBINATION
+    Policy_Flip = 0.0f;
+    Policy_Flip_tr = 0.0f;
+    Policy_Action_tr = 0.0f;
+
+    // RL - DEEP RL
+    //
+    // 
+
 
 }
 
@@ -361,32 +358,26 @@ void GTC_Command(setpoint_t *setpoint)
             break;
 
 
-        case 3: // Acceleration
-            a_d.x = setpoint->cmd_val1;
-            a_d.y = setpoint->cmd_val2;
-            a_d.z = setpoint->cmd_val3;
-            break;
+        // case 3: // Acceleration
+        //     a_d.x = setpoint->cmd_val1;
+        //     a_d.y = setpoint->cmd_val2;
+        //     a_d.z = setpoint->cmd_val3;
+        //     break;
 
-        case 4: // Tumble-Detection
-            tumble_detection = setpoint->cmd_flag;
-            break;
+        
 
         case 5: // Hard Set All Motorspeeds to Zero
             motorstop_flag = true;
             break;
         
-        case 6: // Reset ROS Parameters
-            
-            break;
+        // case 7: // Execute Moment-Based Flip
 
-        case 7: // Execute Moment-Based Flip
+        //     M_d.x = setpoint->cmd_val1*1e-3;
+        //     M_d.y = setpoint->cmd_val2*1e-3;
+        //     M_d.z = setpoint->cmd_val3*1e-3;
 
-            M_d.x = setpoint->cmd_val1*1e-3;
-            M_d.y = setpoint->cmd_val2*1e-3;
-            M_d.z = setpoint->cmd_val3*1e-3;
-
-            moment_flag = (bool)setpoint->cmd_flag;
-            break;
+        //     moment_flag = (bool)setpoint->cmd_flag;
+        //     break;
 
         case 8: // Arm Policy Maneuver
             Tau_thr = setpoint->cmd_val1;
@@ -395,71 +386,8 @@ void GTC_Command(setpoint_t *setpoint)
 
             policy_armed_flag = setpoint->cmd_flag;
             break;
-            
-        case 9: // Velocity Trajectory
-            traj_type = (axis_direction)setpoint->cmd_flag;
 
-            switch(traj_type){
-
-                case x:
-
-                    s_0_t.x = setpoint->cmd_val1;               // Starting position [m]
-                    v_t.x = setpoint->cmd_val2;                 // Desired velocity [m/s]
-                    a_t.x = setpoint->cmd_val3;                 // Acceleration [m/s^2]
-
-                    t_traj.x = 0.0f; // Reset timer
-                    execute_vel_traj = true;
-                    break;
-
-                case y:
-
-                    s_0_t.y = setpoint->cmd_val1;
-                    v_t.y = setpoint->cmd_val2;
-                    a_t.y = setpoint->cmd_val3;
-
-                    t_traj.y = 0.0f;
-                    execute_vel_traj = true;
-                    break;
-
-                case z:
-
-                    s_0_t.z = setpoint->cmd_val1;
-                    v_t.z = setpoint->cmd_val2;
-                    a_t.z = setpoint->cmd_val3;
-
-                    t_traj.z = 0.0f;
-                    execute_vel_traj = true;
-                    break;
-                    
-            }
-
-            break;
-
-        case 10: // Custom Thrust Values
-
-            customThrust_flag = true;
-            thrust_override[0] = setpoint->cmd_val1;
-            thrust_override[1] = setpoint->cmd_val2;
-            thrust_override[2] = setpoint->cmd_val3;
-            thrust_override[3] = setpoint->cmd_flag;
-
-            break;
-
-        case 11: // Activate Sticky Pads
-
-            break;
-
-        case 12: // Custom PWM Values
-
-            customPWM_flag = true;
-            PWM_override[0] = setpoint->cmd_val1;
-            PWM_override[1] = setpoint->cmd_val2;
-            PWM_override[2] = setpoint->cmd_val3;
-            PWM_override[3] = setpoint->cmd_flag;
-
-            break;
-
-        case 13: // Point-to-Point Trajectory
+        case 10: // Point-to-Point Trajectory
 
             traj_type = (axis_direction)setpoint->cmd_flag;
             execute_P2P_traj = true;
@@ -467,7 +395,7 @@ void GTC_Command(setpoint_t *setpoint)
 
             switch(traj_type){
 
-                case x:
+                case x_axis:
 
                     P2P_traj_flag.x = 1.0f;
                     s_0_t.x = setpoint->cmd_val1;  // Starting position [m]
@@ -478,7 +406,7 @@ void GTC_Command(setpoint_t *setpoint)
                     t_traj.x = 0.0f; // Reset timer
                     break;
 
-                case y:
+                case y_axis:
 
                     P2P_traj_flag.y = 1.0f;
                     s_0_t.y = setpoint->cmd_val1;  // Starting position [m]
@@ -489,7 +417,7 @@ void GTC_Command(setpoint_t *setpoint)
                     t_traj.y = 0.0f; // Reset timer
                     break;
 
-                case z:
+                case z_axis:
 
                     P2P_traj_flag.z = 1.0f;
                     s_0_t.z = setpoint->cmd_val1;  // Starting position [m]
@@ -503,6 +431,73 @@ void GTC_Command(setpoint_t *setpoint)
             }
 
             break;
+
+        case 11: // Velocity Trajectory
+            traj_type = (axis_direction)setpoint->cmd_flag;
+
+            switch(traj_type){
+
+                case x_axis:
+
+                    s_0_t.x = setpoint->cmd_val1;               // Starting position [m]
+                    v_t.x = setpoint->cmd_val2;                 // Desired velocity [m/s]
+                    a_t.x = setpoint->cmd_val3;                 // Acceleration [m/s^2]
+
+                    t_traj.x = 0.0f; // Reset timer
+                    execute_vel_traj = true;
+                    break;
+
+                case y_axis:
+
+                    s_0_t.y = setpoint->cmd_val1;
+                    v_t.y = setpoint->cmd_val2;
+                    a_t.y = setpoint->cmd_val3;
+
+                    t_traj.y = 0.0f;
+                    execute_vel_traj = true;
+                    break;
+
+                case z_axis:
+
+                    s_0_t.z = setpoint->cmd_val1;
+                    v_t.z = setpoint->cmd_val2;
+                    a_t.z = setpoint->cmd_val3;
+
+                    t_traj.z = 0.0f;
+                    execute_vel_traj = true;
+                    break;
+                    
+            }
+
+            break;
+
+        case 20: // Tumble-Detection
+            tumble_detection = setpoint->cmd_flag;
+            break;
+            
+        
+
+        // case 10: // Custom Thrust Values
+
+        //     customThrust_flag = true;
+        //     thrust_override[0] = setpoint->cmd_val1;
+        //     thrust_override[1] = setpoint->cmd_val2;
+        //     thrust_override[2] = setpoint->cmd_val3;
+        //     thrust_override[3] = setpoint->cmd_flag;
+
+        //     break;
+
+        // case 12: // Custom PWM Values
+
+        //     customPWM_flag = true;
+        //     PWM_override[0] = setpoint->cmd_val1;
+        //     PWM_override[1] = setpoint->cmd_val2;
+        //     PWM_override[2] = setpoint->cmd_val3;
+        //     PWM_override[3] = setpoint->cmd_flag;
+
+        //     break;
+
+        
 
     }
     
@@ -638,81 +633,78 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
         
         controlOutput(state,sensors);
-
+        
         if(policy_armed_flag == true){ 
-                
-            switch(PolicyType)
+
+            if (strcmp(PolicyType,"PARAM_OPTIM")==0)
             {
-                case 0: // RL
-                {
-                    if(Tau <= Tau_thr && onceFlag == false){
-                        onceFlag = true;
-                        flip_flag = true;  
+                if(Tau <= Tau_thr && onceFlag == false && state->velocity.z > 0.5){
+                    onceFlag = true;
+                    flip_flag = true;  
 
-                        // UPDATE AND RECORD FLIP VALUES
-                        statePos_tr = statePos;
-                        stateVel_tr = stateVel;
-                        stateQuat_tr = stateQuat;
-                        stateOmega_tr = stateOmega;
+                    // UPDATE AND RECORD FLIP VALUES
+                    statePos_tr = statePos;
+                    stateVel_tr = stateVel;
+                    stateQuat_tr = stateQuat;
+                    stateOmega_tr = stateOmega;
 
-                        Tau_tr = Tau;
-                        OFx_tr = OFx;
-                        OFy_tr = OFy;
-                        d_ceil_tr = d_ceil;
+                    Tau_tr = Tau;
+                    OFx_tr = OFx;
+                    OFy_tr = OFy;
+                    d_ceil_tr = d_ceil;
 
-                    
-                        M_d.x = 0.0f;
-                        M_d.y = -G1*1e-3f;
-                        M_d.z = 0.0f;
+                
+                    M_d.x = 0.0f;
+                    M_d.y = -G1*1e-3f;
+                    M_d.z = 0.0f;
 
-                        F_thrust_flip = 0.0;
-                        M_x_flip = M_d.x*1e3f;
-                        M_y_flip = M_d.y*1e3f;
-                        M_z_flip = M_d.z*1e3f;
-                    }
-                    break;
+                    F_thrust_flip = 0.0;
+                    M_x_flip = M_d.x*1e3f;
+                    M_y_flip = M_d.y*1e3f;
+                    M_z_flip = M_d.z*1e3f;
                 }
+            }
+            else if(strcmp(PolicyType,"SVL_POLICY")==0)
+            {
+                Policy_Flip = OC_SVM_predict(&SVM_Policy_Flip,X);
 
-                case 1: // NN
+                if(Policy_Flip >= 0.07f && onceFlag == false)
                 {   
-                    NN_flip = NN_Forward_Flip(X,&Scaler_Flip,W_flip,b_flip);
-                    NN_policy = -NN_Forward_Policy(X,&Scaler_Policy,W_policy,b_policy);
+                    onceFlag = true;
+                    flip_flag = true;
 
-                    if(NN_flip >= 0.9 && onceFlag == false)
-                    {   
-                        onceFlag = true;
-                        flip_flag = true;
+                    // UPDATE AND RECORD FLIP VALUES
+                    statePos_tr = statePos;
+                    stateVel_tr = stateVel;
+                    stateQuat_tr = stateQuat;
+                    stateOmega_tr = stateOmega;
 
-                        // UPDATE AND RECORD FLIP VALUES
-                        statePos_tr = statePos;
-                        stateVel_tr = stateVel;
-                        stateQuat_tr = stateQuat;
-                        stateOmega_tr = stateOmega;
+                    Tau_tr = Tau;
+                    OFx_tr = OFx;
+                    OFy_tr = OFy;
+                    d_ceil_tr = d_ceil;
 
-                        Tau_tr = Tau;
-                        OFx_tr = OFx;
-                        OFy_tr = OFy;
-                        d_ceil_tr = d_ceil;
-
-                        NN_tr_flip = NN_Forward_Flip(X,&Scaler_Flip,W_flip,b_flip);
-                        NN_tr_policy = NN_Forward_Policy(X,&Scaler_Policy,W_policy,b_policy);
+                    Policy_Flip_tr = Policy_Flip;
+                    Policy_Action_tr = NN_predict(X,&NN_Policy_Action);
 
 
-                        M_d.x = 0.0f;
-                        M_d.y = -NN_tr_policy*1e-3f;
-                        M_d.z = 0.0f;
+                    M_d.x = 0.0f;
+                    M_d.y = Policy_Action_tr*1e-3f;
+                    M_d.z = 0.0f;
 
-                        F_thrust_flip = 0.0;
-                        M_x_flip = M_d.x*1e3f;
-                        M_y_flip = M_d.y*1e3f;
-                        M_z_flip = M_d.z*1e3f;
-                    }
-
-                    break;
+                    F_thrust_flip = 0.0;
+                    M_x_flip = M_d.x*1e3f;
+                    M_y_flip = M_d.y*1e3f;
+                    M_z_flip = M_d.z*1e3f;
                 }
 
             }
+            else if(strcmp(PolicyType,"DEEP_RL")==0)
+            {
+                // printf("three\n");
 
+            }
+        
             
             if(flip_flag == true)
             {
@@ -723,6 +715,8 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                 F_thrust = 0.0f;
             }
         }
+
+
         if(moment_flag == true)
         {
             F_thrust = 0.0f;
@@ -974,7 +968,7 @@ void compressStates(){
     StatesZ_GTC.MS_PWM12 = compressXY(M1_pwm*0.5e-3f,M2_pwm*0.5e-3f);
     StatesZ_GTC.MS_PWM34 = compressXY(M3_pwm*0.5e-3f,M4_pwm*0.5e-3f);
 
-    StatesZ_GTC.NN_FP = compressXY(NN_flip,NN_policy);
+    StatesZ_GTC.NN_FP = compressXY(Policy_Flip,0.0); // Flip value (OC_SVM) and Flip action (NN)
 
 }
 
@@ -1015,6 +1009,7 @@ void compressFlipStates(){
    FlipStatesZ_GTC.Tau = (int16_t)(Tau_tr * 1000.0f); 
    FlipStatesZ_GTC.d_ceil = (int16_t)(d_ceil_tr * 1000.0f);
 
-   FlipStatesZ_GTC.NN_FP = compressXY(NN_tr_flip,NN_tr_policy);
+   FlipStatesZ_GTC.NN_FP = compressXY(Policy_Flip_tr,Policy_Action_tr); // Flip value (OC_SVM) and Flip action (NN)
+
 
 }

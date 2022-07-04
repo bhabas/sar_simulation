@@ -7,7 +7,7 @@
     <arg name="surface_name" default="CeilingPlane_Large"/>
     <arg name="surface_sdf_path" default="$(find crazyflie_gazebo)/models/Landing_Surfaces/$(arg surface_name)/model.sdf"/>
 
-    <arg name="model_name" default="crazyflie_Wide-Short"/>
+    <arg name="model_name" default="crazyflie_Narrow-Long"/>
     <arg name="model_sdf_path" default="$(find crazyflie_gazebo)/models/Crazyflie_Models/$(arg model_name)/model.sdf"/>
 
     <!-- READ FLAGS FROM BASH FILE -> ROSPARAM -->
@@ -34,12 +34,12 @@
     <!-- SPAWN GROUND PLANE/LANDING SURFACE/CRAZYFLIE MODELS -->
     <node name="spawn_ground" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
         args="-file $(arg ground_sdf_path) -sdf -model $(arg ground_name)" />
-
+        
+    
     <node name="spawn_surface" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
-        args="-file $(arg surface_sdf_path) -sdf -model $(arg surface_name)" />
-
+    args="-file $(arg surface_sdf_path) -sdf -model $(arg surface_name)" />
+    
     <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
-        args="-file $(arg model_sdf_path) -sdf -model $(arg model_name) -z 0.3" />
-
-
+    args="-file $(arg model_sdf_path) -sdf -model $(arg model_name) -z 0.3" />
+        
 </launch>

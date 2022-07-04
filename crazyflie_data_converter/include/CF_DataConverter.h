@@ -14,6 +14,8 @@ is easy to use.
 // ROS INCLUDES
 #include <ros/ros.h>
 #include <geometry_msgs/WrenchStamped.h>
+#include <geometry_msgs/Point.h>
+
 #include <gazebo_msgs/ContactsState.h>
 #include <gazebo_msgs/SetPhysicsProperties.h>
 
@@ -37,7 +39,7 @@ is easy to use.
 
 
 #define formatBool(b) ((b) ? "True" : "False")
-#define RATE_DO_EXECUTE(RATE_HZ, TICK) ((TICK % (100 / RATE_HZ)) == 0)
+#define RATE_DO_EXECUTE(RATE_HZ, TICK) ((TICK % (1000 / RATE_HZ)) == 0)
 
 class CF_DataConverter
 {
@@ -49,7 +51,6 @@ class CF_DataConverter
             // INITIALIZE SUBSCRIBERS
             CTRL_Data_Sub = nh->subscribe("/CTRL/data", 1, &CF_DataConverter::CtrlData_Callback, this, ros::TransportHints().tcpNoDelay());
             CTRL_Debug_Sub = nh->subscribe("/CTRL/debug", 1, &CF_DataConverter::CtrlDebug_Callback, this, ros::TransportHints().tcpNoDelay());
-            RL_CMD_Sub = nh->subscribe("/RL/cmd",5,&CF_DataConverter::RL_CMD_Callback,this,ros::TransportHints().tcpNoDelay());
             RL_Data_Sub = nh->subscribe("/RL/data",5,&CF_DataConverter::RL_Data_Callback,this,ros::TransportHints().tcpNoDelay());
             Surface_FT_Sub = nh->subscribe("/ENV/Surface_FT_sensor",5,&CF_DataConverter::SurfaceFT_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
             Surface_Contact_Sub = nh->subscribe("/ENV/BodyContact",5,&CF_DataConverter::Surface_Contact_Callback,this,ros::TransportHints().tcpNoDelay());
@@ -70,6 +71,10 @@ class CF_DataConverter
             // GAZEBO SERVICES
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
             Logging_Service = nh->advertiseService("/CF_DC/DataLogging", &CF_DataConverter::DataLogging_Callback, this);
+
+            CMD_Service_CF_DC = nh->advertiseService("/CF_DC/Cmd_CF_DC",&CF_DataConverter::CMD_CF_DC_Callback,this);
+            CMD_Service_Dashboard = nh->advertiseService("/CF_DC/Cmd_Dashboard",&CF_DataConverter::CMD_Dashboard_Callback,this);
+            CMD_Client = nh->serviceClient<crazyflie_msgs::RLCmd>("/CTRL/Cmd_ctrl");
             
 
             
@@ -94,11 +99,16 @@ class CF_DataConverter
         void CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_msg);
         void CtrlDebug_Callback(const crazyflie_msgs::CtrlDebug &ctrl_msg);
 
-        void RL_CMD_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg);
         void RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &msg);
         void SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStamped::ConstPtr &msg);
         void Surface_Contact_Callback(const gazebo_msgs::ContactsState &msg);
         void Pad_Connections_Callback(const crazyflie_msgs::PadConnect &msg);
+
+
+        bool CMD_CF_DC_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res);
+        bool CMD_Dashboard_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res);
+        bool Send_Cmd2Ctrl(crazyflie_msgs::RLCmd::Request &req);
+
 
 
         // EXPERIMENT DATA CALLBACKS
@@ -137,7 +147,7 @@ class CF_DataConverter
 
     private:
 
-        // SUBSCRIBERS
+        // SUBSCRIBERSCMD_Service_CF_DC
         ros::Subscriber CTRL_Data_Sub;
         ros::Subscriber CTRL_Debug_Sub;
         ros::Subscriber RL_CMD_Sub;
@@ -162,6 +172,10 @@ class CF_DataConverter
         // SERVICES
         ros::ServiceClient GZ_SimSpeed_Client;
         ros::ServiceServer Logging_Service;
+
+        ros::ServiceServer CMD_Service_CF_DC;
+        ros::ServiceServer CMD_Service_Dashboard;
+        ros::ServiceClient CMD_Client;
 
         // MESSAGES
         crazyflie_msgs::CF_StateData StateData_msg;
@@ -196,9 +210,9 @@ class CF_DataConverter
         bool LANDING_SLOWDOWN_FLAG;
         float SIM_SPEED; 
         float SIM_SLOWDOWN_SPEED;
-        int LOGGING_RATE = 20;
-        int CONSOLE_RATE = 50;
-        int POLICY_TYPE = 0;
+        int LOGGING_RATE = 25; // Default Logging Rate
+        int CONSOLE_RATE = 50; // Default Console Rate
+        std::string POLICY_TYPE;
         
         float P_kp_xy,P_kd_xy,P_ki_xy;
         float P_kp_z,P_kd_z,P_ki_z;
@@ -233,8 +247,8 @@ class CF_DataConverter
         double Tau_thr = 0.0;
         double G1 = 0.0;
 
-        double NN_flip = 0.0;
-        double NN_policy = 0.0;
+        double Policy_Flip = 0.0;
+        double Policy_Action = 0.0;
 
         geometry_msgs::Vector3 x_d;
         geometry_msgs::Vector3 v_d;
@@ -261,8 +275,8 @@ class CF_DataConverter
 
         boost::array<double,4> FM_tr{0,0,0,0};
 
-        double NN_tr_flip = 0.0;
-        double NN_tr_policy = 0.0;
+        double Policy_Flip_tr = 0.0;
+        double Policy_Action_tr = 0.0;
 
 
         // ===================
@@ -333,11 +347,8 @@ class CF_DataConverter
         boost::array<float,3> policy{0,0,0};
 
         float reward = 0.0;
-        boost::array<double,3> reward_inputs{0,0,0};
 
         boost::array<float,3> vel_d{0,0,0};
-
-        bool runComplete_flag = false;
 
 
 };
@@ -426,17 +437,17 @@ void CF_DataConverter::log2_Callback(const crazyflie_msgs::GenericLogData::Const
     decompressXY(log2_msg->values[5],MS_PWM34);
 
     MS_PWM = {
-        round(MS_PWM12[0]*2.0e3),
-        round(MS_PWM12[1]*2.0e3), 
-        round(MS_PWM34[0]*2.0e3),
-        round(MS_PWM34[1]*2.0e3)
+        (uint16_t)round(MS_PWM12[0]*2.0e3),
+        (uint16_t)round(MS_PWM12[1]*2.0e3), 
+        (uint16_t)round(MS_PWM34[0]*2.0e3),
+        (uint16_t)round(MS_PWM34[1]*2.0e3)
     };
     
     // NEURAL NETWORK VALUES
     float NN_FP[2];
     decompressXY(log2_msg->values[6],NN_FP);
-    NN_flip = NN_FP[0];
-    NN_policy = NN_FP[1];
+    Policy_Flip = NN_FP[0];
+    Policy_Action = NN_FP[1];
 
     // OTHER MISC INFO
     flip_flag = log2_msg->values[7];
@@ -617,7 +628,7 @@ void CF_DataConverter::create_CSV()
 {
     fprintf(fPtr,"k_ep,k_run,");
     fprintf(fPtr,"t,");
-    fprintf(fPtr,"NN_flip,NN_policy,");
+    fprintf(fPtr,"Policy_Flip,Policy_Action,");
     fprintf(fPtr,"mu,sigma,policy,");
 
     // INTERNAL STATE ESTIMATES (CF)
@@ -655,7 +666,7 @@ void CF_DataConverter::append_CSV_states()
 {
     fprintf(fPtr,"%u,%u,",k_ep,k_run);              // k_ep,k_run
     fprintf(fPtr,"%.3f,",(Time-Time_start).toSec());             // t
-    fprintf(fPtr,"%.3f,%.3f,",NN_flip,NN_policy);   // NN_flip,NN_policy
+    fprintf(fPtr,"%.3f,%.3f,",Policy_Flip,Policy_Action);   // Policy_Flip,Policy_Action
     fprintf(fPtr,"--,--,--,");                      // mu,sigma,policy
 
     // // INTERNAL STATE ESTIMATES (CF)
@@ -670,7 +681,7 @@ void CF_DataConverter::append_CSV_states()
     fprintf(fPtr,"%s,%s,",formatBool(flip_flag),formatBool(impact_flag));   // flip_flag,impact_flag
 
     // MISC INTERNAL STATE ESTIMATES
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",Tau_est,OFx_est,OFy_est);      // Tau,OF_x,OF_y,d_ceil
+    fprintf(fPtr,"%.3f,%.3f,%.3f,",Tau_est,OFx_est,OFy_est);      // Tau,OF_x,OF_y
     fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Tau,OFx,OFy,D_ceil);      // Tau,OF_x,OF_y,d_ceil
     fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",FM[0],FM[1],FM[2],FM[3]);           // F_thrust,Mx,My,Mz
     fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",MotorThrusts[0],MotorThrusts[1],MotorThrusts[2],MotorThrusts[3]); // M1_thrust,M2_thrust,M3_thrust,M4_thrust
@@ -708,7 +719,7 @@ void CF_DataConverter::append_CSV_misc()
 
 
     // MISC RL LABELS
-    fprintf(fPtr,"%.2f,[%.3f %.3f %.3f],",reward,reward_inputs[0],reward_inputs[1],reward_inputs[2]);
+    fprintf(fPtr,"%.2f,--,--,--,",reward);
 
     // MISC INTERNAL STATE ESTIMATES
     fprintf(fPtr,"--,--,--,"); // Tau_est,OF_x_est,OF_y_est
@@ -736,7 +747,7 @@ void CF_DataConverter::append_CSV_flip()
 {
     fprintf(fPtr,"%u,%u,",k_ep,k_run);
     fprintf(fPtr,"%.3f,",(Time_tr-Time_start).toSec());
-    fprintf(fPtr,"%.3f,%.3f,",NN_tr_flip,NN_tr_policy);
+    fprintf(fPtr,"%.3f,%.3f,",Policy_Flip_tr,Policy_Action_tr);
     fprintf(fPtr,"--,--,--,");
 
     // // INTERNAL STATE ESTIMATES (CF)
@@ -792,7 +803,7 @@ void CF_DataConverter::append_CSV_impact()
     // MISC INTERNAL STATE ESTIMATES
     fprintf(fPtr,"--,--,--,"); // Tau_est,OF_x_est,OF_y_est
     fprintf(fPtr,"%u,%u,%u,%u,%u,",Pad_Connections,Pad1_Contact,Pad2_Contact,Pad3_Contact,Pad4_Contact);
-    fprintf(fPtr,"--,%.3f,%.3f,%.3f,",impact_force_x,impact_force_y,impact_force_z);
+    fprintf(fPtr,"%.3f,%.3f,%.3f,",impact_force_x,impact_force_y,impact_force_z);
     fprintf(fPtr,"--,--,--,--,");
     fprintf(fPtr,"--,--,--,--,");
 
@@ -818,26 +829,35 @@ void CF_DataConverter::append_CSV_blank()
 
 bool CF_DataConverter::DataLogging_Callback(crazyflie_msgs::loggingCMD::Request &req, crazyflie_msgs::loggingCMD::Response &res)
 {
-    // TURN ON/OFF LOGGING
-    Logging_Flag = req.Logging_Flag;
+    switch(req.Logging_CMD){
+        case 0: // CREATE CSV WHEN ACTIVATED
+            Logging_Flag = false;
+            fPtr = fopen(req.filePath.c_str(), "w");
+            create_CSV();
+            break;
 
-    // CREATE CSV WHEN ACTIVATED
-    if(req.createCSV == true)
-    {   
-        fPtr = fopen(req.filePath.c_str(), "w");
-        create_CSV();
-    }
-    // CAP CSV W/ FLIP,IMPACT,MISC DATA
-    else if(req.capLogging == true)
-    {
 
-        error_string = req.error_string;
-        append_CSV_blank();
-        append_CSV_misc();
-        append_CSV_flip();
-        append_CSV_impact();
-        append_CSV_blank();
+        case 1: // TURN ON/OFF LOGGING
+            Logging_Flag = true;
+            fPtr = fopen(req.filePath.c_str(), "a");
+            break;
+
+        case 2: // CAP CSV W/ FLIP,IMPACT,MISC DATA
+            Logging_Flag = false;
+
+            fPtr = fopen(req.filePath.c_str(), "a");
+            error_string = req.error_string;
+            append_CSV_blank();
+            append_CSV_misc();
+            append_CSV_flip();
+            append_CSV_impact();
+            append_CSV_blank();
+            break;
+
     }
+
+
 
     return 1;
 }
+

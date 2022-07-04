@@ -9,7 +9,6 @@
 
 
 #include <ros/ros.h>
-#include "crazyflie_msgs/RLCmd.h"
 #include "crazyflie_msgs/CtrlData.h"
 #include "crazyflie_msgs/MS.h"
 

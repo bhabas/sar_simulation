@@ -15,29 +15,30 @@
 #define WIDTH_PIXELS 160 //Picture dimensions
 #define HEIGHT_PIXELS 160
 float w = 3.6e-6; //Pixel width in meters
-float f = 0.33e-3;//Focal length in meters
+float f = 0.66e-3/2 ;//Focal length in meters
 float O_up = WIDTH_PIXELS/2; //Pixel x,y offsets
 float V_up = HEIGHT_PIXELS/2;
 float U; //defining image coords
 float V;
 
 //Init outputs
-int Ix[HEIGHT_PIXELS*WIDTH_PIXELS] = {0}; //zero init Ix Iy
-int Iy[HEIGHT_PIXELS*WIDTH_PIXELS] = {0};
-int It[HEIGHT_PIXELS*WIDTH_PIXELS] = {0};
-float Gtemp = 0;
-float Iuu = 0;
-float Ivv = 0;
-float Iuv = 0;
-float IGu = 0;
-float IGv = 0;
-float IGG = 0;
-float Iut = 0;
-float Ivt = 0;
-float IGt = 0;
-float dt = 1;
-float Prev_time = 1; //init as 1 to prevent divide by zero for first image
+int16_t It[HEIGHT_PIXELS*WIDTH_PIXELS] = {0};
+double Gtemp = 0;
+double Iuu = 0;
+double Ivv = 0;
+double Iuv = 0;
+double IGu = 0;
+double IGv = 0;
+double IGG = 0;
+double Iut = 0;
+double Ivt = 0;
+double IGt = 0;
+double dt = 1;
+double Prev_time = 1; //init as 1 to prevent divide by zero for first image
 
+float Tau = 0;
+float OFx = 0;
+float OFy = 0;
 
 // Init Sub-kernels
 int kx0[3] = {-1, 0, 1};
@@ -45,6 +46,9 @@ int kx1[3] = {-2, 0, 2};
 int kx2[3] = {-1, 0, 1};
 int ky0[3] = {-1,-2,-1};
 int ky2[3] = {1,2,1};
+
+//Creting ROS Time object
+ros::Time Cur_Time; 
 
 
 class MyClass // DEFINE CLASS
@@ -69,9 +73,6 @@ class MyClass // DEFINE CLASS
         void Convolution_X_Y(const unsigned char* input, int ImgX,int ImgY);
         void Convolution_T(const unsigned char* CurImg,unsigned char* PrevImg);
 
-        // IMAGE PROCESSING VARIABLES
-        // uint8_t WIDTH_PIXELS = 160;
-        // uint8_t HEIGHT_PIXELS = 160;
 
         const uint8_t* Cur_img = NULL;  // Ptr to current image memory
         uint8_t* Prev_img = NULL;       // Ptr to prev image memory
@@ -90,12 +91,14 @@ void MyClass::Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg){
 
     //CREATE VECTOR TO STORE DATA FROM ROS MSG
     std::vector<uint8_t> Cam_Vec = Camera_msg->data;
-    // std::vector<uint8_t> Cam_Vec_prev(Prev_img, Prev_img + sizeof(Camera_msg->data)/sizeof(Prev_img[0]));
     std::vector<uint8_t> Cam_Vec_prev;
     Cam_Vec_prev.assign(Prev_img,Prev_img+WIDTH_PIXELS*HEIGHT_PIXELS);
 
     // IMAGE PROCESSING WORK GOES HERE
     Cur_img = &(Camera_msg->data)[0]; // Point to current image data address
+
+    Cur_Time = Camera_msg->header.stamp;
+    
 
 
     // Calling Convolutions
@@ -105,26 +108,14 @@ void MyClass::Camera_Callback(const sensor_msgs::Image::ConstPtr &Camera_msg){
     example_msgs::CustomMessage new_msg;
     new_msg.Camera_data = Cam_Vec;
     new_msg.Prev_img = Cam_Vec_prev;
+    new_msg.Tau = Tau;
+    new_msg.OFx = OFx;
+    new_msg.OFy = OFy;
+    new_msg.header.stamp = Cur_Time;
 
     pub.publish(new_msg);
 
-    // std::vector<uint8_t> Prev_img_Vec;
-    // std::copy(std::begin(Prev_img),std::end(Prev_img),std::back_inserter(Prev_img_Vec));
-
-    // sensorData.Tau = 0.0f;
-    // sensorData.OFx = 0.0f;
-    // sensorData.OFy = 0.0f;
-
-    // printf("Prev_Val: %u\n",Prev_img[0]);
-    // printf("Cur_Val: %u\n",Cur_img[0]);
-    // printf("\n");
-
-    memcpy(Prev_img,Cur_img,sizeof(Camera_msg->data)); // Copy memory to Prev_img address
-
-    // Copying and Writing to Output Message
-    // std::vector<int64_t> ConvX_Vec;
-    // std::copy(st// std::vector<uint8_t> Prev_img_Vec;
-    // std::copy(std::begin(Prev_img),std::end(Prev_img),std::back_inserter(Prev_img_Vec));
+    memcpy(Prev_img,Cur_img,WIDTH_PIXELS*HEIGHT_PIXELS*sizeof(uint8_t)); // Copy memory to Prev_img address
 
 
 } // ============ END OF MAIN LOOP ============ //
@@ -133,8 +124,7 @@ void MyClass::Convolution_T(const unsigned char* CurImg,unsigned char* PrevImg) 
 {
 
     for(int i = 0; i < WIDTH_PIXELS*HEIGHT_PIXELS; i++){
-        It[i] = CurImg[i] - PrevImg[i]; //assumes dt = 1
-        //std::cout << (It[i]) << "\n";
+        It[i] = CurImg[i] - PrevImg[i]; 
     }
 
 }
@@ -142,11 +132,22 @@ void MyClass::Convolution_T(const unsigned char* CurImg,unsigned char* PrevImg) 
 void MyClass::Convolution_X_Y(const unsigned char* input, int ImgX, int ImgY) 
 {
 
+    Gtemp = 0;
+    Iuu = 0;
+    Ivv = 0;
+    Iuv = 0;
+    IGu = 0;
+    IGv = 0;
+    IGG = 0;
+    Iut = 0;
+    Ivt = 0;
+    IGt = 0;
+
     //Where the convolution starts
     int X = 1;
     int Y = 1;
 
-    float Cur_time = ros::Time::now().toSec();
+    // float Cur_time = ros::Time::now().toSec();
     
     for(int j = 0; j < (ImgX - 2)*(ImgY - 2); j++) // How many times the kernel center moves around the image
     {
@@ -161,22 +162,16 @@ void MyClass::Convolution_X_Y(const unsigned char* input, int ImgX, int ImgY)
         }
 
         //Sub Kernel Indexing 
-        int i0 = (X - 1) + (Y - 1) * ImgX; //First grab top left location of whole kernel
-        int i1 = i0 + ImgX; //then each following row is separated by the image width
-        int i2 = i1 + ImgX;
+        uint32_t i0 = (X - 1) + (Y - 1) * ImgX; //First grab top left location of whole kernel
+        uint32_t i1 = i0 + ImgX; //then each following row is separated by the image width
+        uint32_t i2 = i1 + ImgX;
 
         U = (X - O_up)*w + (w/2); // Using current location of the Kernel center
         V = (Y - V_up)*w + (w/2); //calculate the current pixel grid locations (u,v)
 
-        // ######  DEBUGGING  ######
-        /*//
-        std::cout << "i0: " << i0 << "\n";
-        std::cout << "i1: " << i1 << "\n";
-        std::cout << "i2: " << i2 << "\n";
-        *///
 
-        int Xsum = 0; //reset rolling sum to 0
-        int Ysum = 0;
+        int32_t Xsum = 0; //reset rolling sum to 0
+        int32_t Ysum = 0;
 
         //GENERALIZE FOR CHANGE IN KERNEL SIZE
         for(int k = 0; k < 3; k++){
@@ -195,7 +190,7 @@ void MyClass::Convolution_X_Y(const unsigned char* input, int ImgX, int ImgY)
         }
 
         //Sum assigned to middle value
-        int Ittemp = It[i1 + 1];
+        int16_t Ittemp = It[i1 + 1];
         Gtemp = (Xsum*U + Ysum*V);
 
         //LHS Matrix values (rolling sums)
@@ -215,7 +210,7 @@ void MyClass::Convolution_X_Y(const unsigned char* input, int ImgX, int ImgY)
         
     } // END OF CONVOLUTION
 
-    dt = Cur_time - Prev_time;
+    dt = Cur_Time.toSec() - Prev_time;
     printf("\ndt: %f\n",dt);
 
 
@@ -228,20 +223,28 @@ void MyClass::Convolution_X_Y(const unsigned char* input, int ImgX, int ImgY)
 
     nml_mat* m_A = nml_mat_from(3,3,9,LHS);
     nml_mat* m_b = nml_mat_from(3,1,3,RHS);
+    nml_mat_print(m_A);
+    nml_mat_print(m_b);
 
     nml_mat_qr *QR = nml_mat_qr_solve(m_A); // A = Q*R
     nml_mat* y = nml_mat_dot(nml_mat_transp(QR->Q),m_b); // y = Q^T*b
     nml_mat* x_QR = nml_ls_solvebck(QR->R,y); // Solve R*x = y via back substitution
     nml_mat_print(x_QR);
 
-    std::cout <<"\nTTC: " << 1/x_QR->data[2][0] << "\n";
+    OFy = x_QR->data[0][0];
+    OFx = x_QR->data[1][0];
+    Tau = 1/(x_QR->data[2][0]);
+
+    std::cout <<"\nTTC: " << Tau << "\n";
+    std::cout <<"\nOFy: " << OFy << "\n";
+    std::cout <<"\nOFx: " << OFx << "\n";
 
     nml_mat_free(m_A);
     nml_mat_free(m_b);
     nml_mat_qr_free(QR);
     nml_mat_free(x_QR);
 
-    Prev_time = Cur_time; //reset Prev_time to Current iteration time
+    Prev_time = Cur_Time.toSec(); //reset Prev_time to Current iteration time
 
 
 } // ========= END OF CONVOLUTION X Y =========

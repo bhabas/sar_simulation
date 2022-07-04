@@ -15,6 +15,7 @@ Introduction
 - Onboard sensory values are sufficient
 - Short covering of Tau-theory (Shift away from RREV)
 - EPHE use to estimate parameters
+- Solve for general solution using supervised learning
 
 
 Methodology
