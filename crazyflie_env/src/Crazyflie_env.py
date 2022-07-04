@@ -55,6 +55,18 @@ class CrazyflieEnv():
         self.d_min = 50.0
         self.done = False
 
+        high = np.array(
+            [
+                np.finfo(np.float32).max,
+                np.finfo(np.float32).max,
+                np.finfo(np.float32).max,
+            ],
+            dtype=np.float32,
+        )
+
+        self.observation_space = spaces.Box(-high, high, dtype=np.float32)
+        self.action_space = spaces.Box(low=np.array([-5]), high=np.array([5]), shape=(1,), dtype=np.float32)
+
         ## GAZEBO SIMULATION INITIALIZATION
         if self.DataType == 'SIM': 
             
@@ -188,12 +200,60 @@ class CrazyflieEnv():
 
         
     def step(self,action):
+        
+        self.iter_step(10)
+        
         obs = None
         reward = None
         done = None
         info = None
         
         return obs,reward,done,info
+
+    def iter_step(self,n_steps:int):
+        os.system(f'gz world --multi-step={n_steps}')
+
+    def reset(self):
+
+        ## RESET REWARD CALC VALUES
+        self.done = False
+        self.d_min = 50.0  # Reset max from ceiling [m]
+
+        ## DISABLE STICKY LEGS (ALSO BREAKS CURRENT CONNECTION JOINTS)
+        self.SendCmd('Tumble',cmd_flag=0)
+        self.SendCmd('StickyPads',cmd_flag=0)
+
+        self.SendCmd('Ctrl_Reset')
+        self.reset_pos()
+        self.sleep(0.01)
+
+        self.SendCmd('Tumble',cmd_flag=1)
+        self.SendCmd('Ctrl_Reset')
+        self.reset_pos()
+        self.sleep(1.0)
+
+        self.gazebo_pause_physics()
+
+        ## RESET STATE
+        vel = np.random.uniform(low=1.5,high=3.5)
+        phi = np.random.uniform(low=30,high=90)
+        phi = 70
+
+        vx_0 = vel*np.cos(np.deg2rad(phi))
+        vz_0 = vel*np.sin(np.deg2rad(phi))
+
+        ## RESET OBSERVATION
+        Tau_0 = 0.5
+        d_ceil_0 = Tau_0*vz_0 + 1e-3
+        OFy = -vx_0/d_ceil_0
+        self.obs = (Tau_0,OFy,d_ceil_0)
+
+        z_0 = self.h_ceiling - d_ceil_0
+        x_0 = 0.0
+        self.Vel_Launch([x_0,0.0,z_0],[vx_0,0,vz_0])
+
+        return np.array(self.obs,dtype=np.float32)
+
 
     def ParamOptim_reset(self):
 
@@ -304,9 +364,6 @@ class CrazyflieEnv():
         srv.cmd_flag = cmd_flag
 
         self.callService('/CF_DC/Cmd_CF_DC',srv,RLCmd)
-
-
-        
         
     def callService(self,addr,srv,srv_type,retries=5):
 
@@ -362,7 +419,6 @@ class CrazyflieEnv():
 
         sys.stdout.write(ENDC)
         return FailureModes
-
 
     def Restart(self,FailureModes=[True,False,False]):
         sys.stdout.write(YELLOW)
@@ -420,8 +476,6 @@ class CrazyflieEnv():
 
             print('\x1b[0m')
 
-
-    
     def sleep(self,time_s):
         """
         Sleep in terms of Gazebo sim seconds not real time seconds
@@ -443,10 +497,6 @@ class CrazyflieEnv():
 
         return True
         
-
-
-        
-
     def Vel_Launch(self,pos_0,vel_d,quat_0=[0,0,0,1]): 
         """Launch crazyflie from the specified position/orientation with an imparted velocity.
         NOTE: Due to controller dynamics, the actual velocity will NOT be exactly the desired velocity
@@ -459,7 +509,9 @@ class CrazyflieEnv():
 
         ## SET DESIRED VEL IN CONTROLLER
         self.SendCmd('Pos',cmd_flag=0)
+        self.iter_step(4)
         self.SendCmd('Vel',cmd_vals=vel_d,cmd_flag=1)
+        self.iter_step(4)
 
         ## CREATE SERVICE MESSAGE
         state_srv = ModelState()
@@ -863,10 +915,19 @@ class CrazyflieEnv():
 
 if __name__ == "__main__":
 
-    env = CrazyflieEnv(gazeboTimeout=True)
+    # env = CrazyflieEnv(gazeboTimeout=True)
 
-    for ii in range(1000):
-        tau = np.random.uniform(low=0.15,high=0.27)
-        env.ParamOptim_reset()
-        obs,reward,done,info = env.ParamOptim_Flight(0.23,7,2.5,60)
-        print(f"Ep: {ii} \t Reward: {reward:.02f}")
+    # for ii in range(1000):
+    #     tau = np.random.uniform(low=0.15,high=0.27)
+    #     env.ParamOptim_reset()
+    #     obs,reward,done,info = env.ParamOptim_Flight(0.23,7,2.5,60)
+    #     print(f"Ep: {ii} \t Reward: {reward:.02f}")
+
+    env = CrazyflieEnv(gazeboTimeout=True)
+    for _ in range(25):
+        env.reset()
+        done = False
+        env.SendCmd("Policy",[0.25,7,0],cmd_flag=1)
+        while not done:
+            obs,reward,done,info = env.step(1)
+
