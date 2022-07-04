@@ -486,6 +486,21 @@ class OFy_Widget(QWidget):
         self.OFy_est_arr[-1] = DashNode.OFy_est
         self.curve_OFy_est.setData(self.OFy_est_arr)
 
+    def reset_axes(self):
+        # self.p1.enableAutoRange(enable=True)
+        self.PW.setYRange(0,5)
+        self.PW.setXRange(buffer_length*0.0,buffer_length)
+
+    def pause(self,pause_flag):
+        if pause_flag == True:
+            self.timer.stop()
+        else: 
+            self.timer.start()
+    
+    def clear_data(self):
+        self.x_arr = np.zeros(buffer_length)
+
+
 class OFx_Widget(QWidget):
     def __init__(self,parent=None):
         super().__init__()
@@ -814,8 +829,7 @@ class Reward_Widget(QWidget):
 
         ## UPDATE PLOT 1
         self.PW.setBackground('w')
-        self.PW.setXRange(0,25)
-        self.PW.setYRange(0,300)
+        self.reset_axes()
         self.PW.showGrid(x=True, y=True, alpha=0.2)
 
 
@@ -832,14 +846,12 @@ class Reward_Widget(QWidget):
 
     def update(self):
                         
-        self.curve_reward.setData(DashNode.K_ep_list1,DashNode.r_list)
-        self.curve_reward_avg.setData(DashNode.K_ep_list2,DashNode.r_avg_list)
-
-
+        self.curve_reward.setData(DashNode.K_run_list,DashNode.r_list)
+        self.curve_reward_avg.setData(DashNode.Kep_list_reward_avg,DashNode.r_avg_list)
 
     def reset_axes(self):
-        self.PW.setYRange(0,300)
         self.PW.setXRange(0,25)
+        self.PW.setYRange(0,1.1)
 
 
 class Mu_Widget(QWidget):
@@ -887,13 +899,13 @@ class Mu_Widget(QWidget):
 
     def update(self):
                         
-        self.curve_1_mu.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_1_list)
-        self.curve_1_SD1.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_1_list + 2*np.array(DashNode.sigma_1_list))
-        self.curve_1_SD2.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_1_list + -2*np.array(DashNode.sigma_1_list))
+        self.curve_1_mu.setData(DashNode.K_ep_list,DashNode.mu_1_list)
+        self.curve_1_SD1.setData(DashNode.K_ep_list,DashNode.mu_1_list + 2*DashNode.sigma_1_list)
+        self.curve_1_SD2.setData(DashNode.K_ep_list,DashNode.mu_1_list + -2*DashNode.sigma_1_list)
 
-        self.curve_2_mu.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_2_list)
-        self.curve_2_SD1.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_2_list + 2*np.array(DashNode.sigma_2_list))
-        self.curve_2_SD2.setData(np.arange(0,DashNode.k_ep+1),DashNode.mu_2_list + -2*np.array(DashNode.sigma_2_list))
+        self.curve_2_mu.setData(DashNode.K_ep_list,DashNode.mu_2_list)
+        self.curve_2_SD1.setData(DashNode.K_ep_list,DashNode.mu_2_list + 2*np.array(DashNode.sigma_2_list))
+        self.curve_2_SD2.setData(DashNode.K_ep_list,DashNode.mu_2_list + -2*np.array(DashNode.sigma_2_list))
 
     def reset_axes(self):
         # self.p1.enableAutoRange(enable=True)
@@ -933,8 +945,8 @@ class Sigma_Widget(QWidget):
 
     def update(self):
                         
-        self.curve_sig1.setData(np.arange(0,DashNode.k_ep+1),np.array(DashNode.sigma_1_list)*10)
-        self.curve_sig2.setData(np.arange(0,DashNode.k_ep+1),np.array(DashNode.sigma_2_list))
+        self.curve_sig1.setData(DashNode.K_ep_list,DashNode.sigma_1_list*10)
+        self.curve_sig2.setData(DashNode.K_ep_list,DashNode.sigma_2_list)
 
     def reset_axes(self):
         self.PW.setXRange(0,20)
@@ -947,7 +959,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     ## INITIALIZE DASHBOARD WINDOW
-    myApp = Tau_Widget()
+    myApp = Reward_Widget()
     myApp.show()
 
     sys.exit(app.exec_())

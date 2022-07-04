@@ -345,11 +345,9 @@ void CF_DataConverter::RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &
     policy = msg->policy;
 
     reward = msg->reward;
-    reward_inputs = msg->reward_inputs;
 
     vel_d = msg->vel_d;
 
-    runComplete_flag = msg->runComplete_flag;
 
     if(msg->trialComplete_flag == true)
     {
@@ -436,7 +434,7 @@ void CF_DataConverter::Pad_Connections_Callback(const crazyflie_msgs::PadConnect
 void CF_DataConverter::checkSlowdown()
 {   
     // SIMULATION SLOWDOWN
-    if(LANDING_SLOWDOWN_FLAG==true && tick >= 500){
+    if(LANDING_SLOWDOWN_FLAG==true){
 
         // WHEN CLOSE TO THE CEILING REDUCE SIM SPEED
         if(D_ceil<=0.5 && SLOWDOWN_TYPE == 0){
@@ -538,13 +536,11 @@ void CF_DataConverter::consoleOuput()
     printf("\n");
 
     printf("==== Flags ====\n");
-    printf("Motorstop:\t%u  Flip_flag:\t  %u  Pos Ctrl:\t    %u \n",Motorstop_Flag, flip_flag, Pos_Ctrl_Flag);
+    printf("Motorstop:\t%u  Flip_flag:\t  %u  Pos Ctrl:\t    %u  Cam_Est:\t  %u\n",Motorstop_Flag, flip_flag, Pos_Ctrl_Flag,Camera_Sensor_Active);
     printf("Traj Active:\t%u  Impact_flag:\t  %u  Vel Ctrl:\t    %u \n",Traj_Active_Flag,impact_flag,Vel_Ctrl_Flag);
-    printf("Policy_type:\t%u  Tumble Detect: %u  Moment_Flag:   %u \n",POLICY_TYPE,Tumble_Detection,Moment_Flag);
-    printf("Policy_armed:\t%u  Tumbled:\t  %u  Slowdown_type: %u\n",Policy_Armed_Flag,Tumbled_Flag,SLOWDOWN_TYPE);
-    printf("Sticky_flag:\t%u  Cam_Est:\t  %u\n",Sticky_Flag,Camera_Sensor_Active);
+    printf("Policy_armed:\t%u  Tumble Detect: %u  Moment_Flag:   %u \n",Policy_Armed_Flag,Tumble_Detection,Moment_Flag);
+    printf("Sticky_flag:\t%u  Tumbled:\t  %u  Slowdown_type: %u\n",Sticky_Flag,Tumbled_Flag,SLOWDOWN_TYPE);
     printf("\n");
-
 
     printf("==== System States ====\n");
     printf("Pos [m]:\t %.3f  %.3f  %.3f\n",Pose.position.x,Pose.position.y,Pose.position.z);
@@ -558,27 +554,34 @@ void CF_DataConverter::consoleOuput()
     printf("D_ceil: %.3f\n",D_ceil);
     printf("\n");
 
+    printf("==== Policy: %s ====\n",POLICY_TYPE.c_str());
+    if (strcmp(POLICY_TYPE.c_str(),"PARAM_OPTIM") == 0)
+    {
+        printf("Tau_thr: %.3f \tMy: %.3f\n",Tau_thr,G1);
+        printf("\n");
+    }
+    else if (strcmp(POLICY_TYPE.c_str(),"SVL_POLICY") == 0)
+    {
+        printf("Policy_Flip: %.3f \tPolicy_Action: %.3f \n",Policy_Flip,Policy_Action);
+        printf("\n");
+    }
+    else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL") == 0)
+    {
+        printf("Stuff: %.3f \tStuff: %.3f \n",404.0,404.0);
+        printf("\n");
+    }
+
+
+    printf("==== Flip Trigger Values ====\n");
+    printf("Tau_tr:     %.3f \tPolicy_Flip_tr:    %.3f \n",Tau_tr,Policy_Flip_tr);
+    printf("OFy_tr:     %.3f \tPolicy_Action_tr:  %.3f \n",OFy_tr,Policy_Action_tr);
+    printf("D_ceil_tr:  %.3f \n",D_ceil_tr);
+    printf("\n");
 
     printf("==== Setpoints ====\n");
     printf("x_d: %.3f  %.3f  %.3f\n",x_d.x,x_d.y,x_d.z);
     printf("v_d: %.3f  %.3f  %.3f\n",v_d.x,v_d.y,v_d.z);
     printf("a_d: %.3f  %.3f  %.3f\n",a_d.x,a_d.y,a_d.z);
-    printf("\n");
-
-    
-    printf("==== Policy Values ====\n");
-    printf("RL: \n");
-    printf("Tau_thr: %.3f \tG1: %.3f \tG2: %.3f\n",Tau_thr,G1,0.0);
-    printf("\n");
-
-    printf("NN_Outputs: \n");
-    printf("NN_Flip: %.3f \tNN_Policy: %.3f \n",Policy_Flip,Policy_Action);
-    printf("\n");
-
-    printf("==== Flip Trigger Values ====\n");
-    printf("Tau_tr:     %.3f \tNN_tr_Flip:    %.3f \n",Tau_tr,Policy_Flip_tr);
-    printf("OFy_tr:     %.3f \tNN_tr_Policy:  %.3f \n",OFy_tr,Policy_Action_tr);
-    printf("D_ceil_tr:  %.3f \n",D_ceil_tr);
     printf("\n");
 
     printf("==== Controller Actions ====\n");
@@ -603,7 +606,7 @@ void CF_DataConverter::consoleOuput()
 
 void CF_DataConverter::MainLoop()
 {
-    int loopRate = 100;     // [Hz]
+    int loopRate = 1000;     // [Hz]
     ros::Rate rate(loopRate);
 
 

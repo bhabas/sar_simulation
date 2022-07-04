@@ -1,3 +1,0 @@
-Deep Deterministic Policy Gradient
-Proximal Policy Optimization
-Soft Actor Critic (Best one?)

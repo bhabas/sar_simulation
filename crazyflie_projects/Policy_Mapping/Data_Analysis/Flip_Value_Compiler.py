@@ -1,6 +1,6 @@
 """
-This script runs through all of the data logs in a folder and compile the data by their
-converged/average landing parameters to extract the average flip values
+This script runs through all of the data logs in a folder and for 
+each file compiles the data down to the converged upon data 
 """
 
 import numpy as np
@@ -16,16 +16,18 @@ sys.path.insert(0,BASE_PATH)
 from crazyflie_logging.data_analysis.Data_Analysis import DataFile
 
 
-dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/NL_Raw_Trials/"
-compiledPath = f"{BASE_PATH}/crazyflie_projects/Policy_Mapping/Data_Logs/NL_Raw"
+dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/NL_DR_Subset/"
+compiledPath = f"{BASE_PATH}/crazyflie_projects/Policy_Mapping/Data_Logs/NL_DR_Subset"
 
 df_list = []
+file_index = 0
 num_files = len(os.listdir(dataPath))
 
-## COMPILING UPDATES
+
+## TIME ESTIMATION FILTER INITIALIZATION
 start_time = time.time()
 end_time = time.time()
-time_delta = 20 # Analysis time per file [s]
+time_delta = 20 # Estimated analysis time per file [s]
 alpha = 0.15 # Filter parameter to smooth out time estimate
 
 ## ITER OVER ALL FILES IN DIR
@@ -48,7 +50,7 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
         
         ## TRIAL CONDITIONS
         vel_IC,phi_IC = trial.grab_vel_IC_2D_angle()
-        trial_num = int(fileName[-10:-8])
+        trial_num = int(fileName[-14:-12])
 
 
         vz_flip_mean,vz_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,'vz')
@@ -82,6 +84,7 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
 
     end_time = time.time()
     
+## WRITE FILE HEADER
 master_df = pd.DataFrame(df_list,columns=(
     "vel_IC", "phi_IC", "trial_num",
     "LR_4leg",

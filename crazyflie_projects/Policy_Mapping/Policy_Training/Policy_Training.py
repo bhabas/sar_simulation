@@ -3,6 +3,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import pandas as pd
+import os
+
+
+## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
+import sys,rospkg
+BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
+sys.path.insert(0,BASE_PATH)
+
+from crazyflie_logging.data_analysis.Data_Analysis import DataFile
 
 ## PYTORCH IMPROTS
 import torch
@@ -533,9 +542,9 @@ class Policy_Trainer():
                 
                 surface_count=1,
                 opacity=0.3,
-                isomin=-0.05,
-                isomax=0.1,
-                # colorscale='Viridis',  
+                isomin=0.07,
+                isomax=0.07,
+                colorscale='Viridis',  
                 cmin=0,
                 cmax=1,     
                 caps=dict(x_show=False, y_show=False),
@@ -661,13 +670,132 @@ class Policy_Trainer():
         )
         fig.show()
 
+    def plotTraj(self,df_custom,dataFile):
 
+        Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
+            np.linspace(0.15, 0.35, 60),
+            np.linspace(-15, 1, 45),
+            np.linspace(0.0, 1.0, 45)
+        )
 
+        ## CONCATENATE DATA TO MATCH INPUT
+        X_grid = np.stack((
+            Tau_grid.flatten(),
+            OF_y_grid.flatten(),
+            d_ceil_grid.flatten()),axis=1)
+        
 
+        # y_pred_grid = self.OC_SVM_Predict(X_grid)
+        y_pred_grid = self.SVM_model.decision_function(self.scaleData(X_grid))
 
+        arr = dataFile.grab_stateData(0,0,['Tau','OF_y','d_ceil'])
+        Tau,OFy,d_ceil = np.split(arr,3,axis=1)
 
-np.set_printoptions(suppress=True)
-BASEPATH = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Policy_Mapping"
+        Tau_tr,OFy_tr,d_ceil_tr = dataFile.grab_flip_state(0,0,['Tau','OF_y','d_ceil'])
+
+        fig = go.Figure()
+
+        # PLOT DATA POINTS
+        fig.add_trace(
+            go.Scatter3d(
+                ## DATA
+                x=df_custom["OFy_flip_mean"],
+                y=df_custom["Tau_flip_mean"],
+                z=df_custom["D_ceil_flip_mean"],
+
+                ## HOVER DATA
+                customdata=df_custom,
+                hovertemplate=" \
+                    <b>LR: %{customdata[3]:.3f}</b> \
+                    <br>OFy: %{customdata[10]:.3f} Vel: %{customdata[0]:.2f} </br> \
+                    <br>Tau: %{customdata[8]:.3f} Phi: %{customdata[1]:.0f}</br> \
+                    <br>D_ceil: %{customdata[12]:.3f}</br>",
+
+                ## MARKER
+                mode='markers',
+                marker=dict(
+                    size=3,
+                    color=df_custom["LR_4leg"],
+                    colorscale='Viridis',   # choose a colorscale
+                    cmin=0,
+                    cmax=1, 
+                    opacity=0.8)
+            )
+        )
+
+        # fig.add_trace(
+        #     go.Volume(
+        #         ## ISO SURFACE
+        #         x=X_grid[:,1].flatten(),
+        #         y=X_grid[:,0].flatten(),
+        #         z=X_grid[:,2].flatten(),
+        #         value=y_pred_grid.flatten(),
+                
+        #         surface_count=1,
+        #         opacity=0.3,
+        #         isomin=0.07,
+        #         isomax=0.07,
+        #         cmin=0,
+        #         cmax=1,     
+        #         caps=dict(x_show=False, y_show=False),
+        #         colorbar=dict(title='Title',) , 
+        #         hoverinfo='skip'
+        #     )
+        # )
+
+        fig.add_trace(
+            go.Scatter3d(
+                ## DATA
+                x=OFy.flatten(),
+                y=Tau.flatten(),
+                z=d_ceil.flatten(),
+
+                ## MARKER
+                mode='lines',
+                marker=dict(
+                    color='darkblue',
+                    size=0,
+                )
+            )
+        )
+
+        fig.add_trace(
+            go.Scatter3d(
+                ## DATA
+                x=[OFy_tr],
+                y=[Tau_tr],
+                z=[d_ceil_tr],
+
+                # ## HOVER DATA
+                # customdata=df_custom,
+                # hovertemplate=" \
+                #     <b>LR: %{customdata[3]:.3f}</b> \
+                #     <br>OFy: %{customdata[10]:.3f} Vel: %{customdata[0]:.2f} </br> \
+                #     <br>Tau: %{customdata[8]:.3f} Phi: %{customdata[1]:.0f}</br> \
+                #     <br>D_ceil: %{customdata[12]:.3f}</br>",
+
+                ## MARKER
+                mode='markers',
+                marker=dict(
+                    size=3,
+                    color='darkblue',
+                )
+            )
+        )
+
+        
+
+        fig.update_layout(
+            scene=dict(
+                xaxis_title='OFy [rad/s]',
+                yaxis_title='Tau [s]',
+                zaxis_title='D_ceiling [m]',
+                xaxis_range=[-20,1],
+                yaxis_range=[0.4,0.1],
+                zaxis_range=[0,1.2],
+            ),
+        )
+        fig.show()
 
 ## DEFINE NN MODEL
 class NN_Model(nn.Module):
@@ -701,13 +829,13 @@ if __name__ == "__main__":
     learning_rate = 0.01
 
     NN_model = NN_Model()
-    SVM_model = OneClassSVM(nu=0.1,gamma=1.7)
+    SVM_model = OneClassSVM(nu=0.1,gamma=1.1)
 
     Policy = Policy_Trainer(NN_model,SVM_model,model_initials,learning_rate=learning_rate)
 
     ## LOAD DATA
     df_raw = pd.read_csv(f"{BASEPATH}/Data_Logs/NL_DR/NL_LR_Trials_DR.csv").dropna() # Collected data
-    df_train = df_raw.query("LR_4leg >= 0.8")
+    df_train = df_raw.query("LR_4leg >= 0.85")
 
     ## ORGANIZE DATA
     Tau = df_train["Tau_flip_mean"]
@@ -736,20 +864,22 @@ if __name__ == "__main__":
 
     Policy.createScaler(X)
 
-    Policy.train_NN_Model(X_train,y_train,X_test,y_test,epochs=1000)
-    Policy.save_NN_Params(NN_Param_Path)
-    # Policy.load_NN_Params(NN_Param_Path)
-    print(Policy.NN_Predict(np.array([[0.29,-0.673,0.952]])))
+    # Policy.train_NN_Model(X_train,y_train,X_test,y_test,epochs=1000)
+    # Policy.save_NN_Params(NN_Param_Path)
+    # # Policy.load_NN_Params(NN_Param_Path)
+    # print(Policy.NN_Predict(np.array([[0.29,-0.673,0.952]])))
 
     Policy.train_OC_SVM(X)
     Policy.save_SVM_Params(SVM_Param_Path)
     # Policy.load_SVM_Params(SVM_Param_Path)
 
-    print(Policy.OC_SVM_Predict(np.array([[0.29,-0.673,0.952]])))
+    print(Policy.OC_SVM_Predict(np.array([[0.256,-4.589,0.441]])))
 
-    Policy.plotClassification(df_raw)
-    Policy.plotPolicy(df_raw,PlotRegion=True)
-    # Policy.plotPolicy(df_raw,PlotRegion=False)
+    # Policy.plotClassification(df_train)
+    # Policy.plotPolicy(df_raw,PlotRegion=True)
 
-    # Policy.evalModel(X,y)
-
+    dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
+    fileName = "Control_Playground--trial_24--NL.csv"
+    trial = DataFile(dataPath,fileName,dataType='SIM')
+    
+    Policy.plotTraj(df_raw,trial)

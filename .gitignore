@@ -22,7 +22,7 @@ local_files/
 *.zip
 browse.vc.db*
 c_cpp_properities.json
-
+events*
 
 # Installer logs
 pip-log.txt

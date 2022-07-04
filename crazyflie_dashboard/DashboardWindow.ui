@@ -657,7 +657,7 @@ font: 14pt &quot;Ubuntu&quot;;
          <enum>QTabWidget::Rounded</enum>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>3</number>
         </property>
         <property name="tabsClosable">
          <bool>false</bool>
@@ -1396,7 +1396,7 @@ font: 14pt &quot;Ubuntu&quot;;
                     </widget>
                    </item>
                    <item>
-                    <widget class="OFy_Widget" name="OF_Graph" native="true">
+                    <widget class="OFy_Widget" name="OFy_Graph" native="true">
                      <property name="styleSheet">
                       <string notr="true">background-color: rgb(136, 138, 133);</string>
                      </property>
@@ -1549,7 +1549,7 @@ font: 14pt &quot;Ubuntu&quot;;
                     </widget>
                    </item>
                    <item>
-                    <widget class="OFx_Widget" name="ExtraPlot_3" native="true">
+                    <widget class="OFx_Widget" name="OFx_Graph" native="true">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
                        <horstretch>0</horstretch>
@@ -2105,9 +2105,9 @@ font: 14pt &quot;Ubuntu&quot;;
           </item>
          </layout>
         </widget>
-        <widget class="QWidget" name="Tab_RL">
+        <widget class="QWidget" name="Tab_Param_Convg">
          <attribute name="title">
-          <string>RL Data</string>
+          <string>Param Convg.</string>
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout_20">
           <item>

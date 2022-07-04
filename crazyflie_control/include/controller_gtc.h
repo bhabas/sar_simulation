@@ -226,7 +226,7 @@ extern float Policy_Flip;
 extern float Policy_Flip_tr;
 extern float Policy_Action_tr;
 
-extern uint8_t PolicyType;
+extern char PolicyType[];
 
 
 // Converts thrust in grams to their respective PWM values

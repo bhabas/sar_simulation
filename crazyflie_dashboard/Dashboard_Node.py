@@ -28,11 +28,15 @@ class DashboardNode:
         self.r_list = []
         self.r_avg_list = []
 
+        self.K_ep_list = []
+        self.K_run_list = []
+        self.Kep_list_reward_avg = []
 
-        self.mu_1_list = [0] # I can generalize this if needed
-        self.mu_2_list = [0]
-        self.sigma_1_list = [0]
-        self.sigma_2_list = [0]
+
+        self.mu_1_list = [] # I can generalize this if needed
+        self.mu_2_list = []
+        self.sigma_1_list = []
+        self.sigma_2_list = []
 
         ## INITIALIZE STATE VALUES
         self.t = 0.0
@@ -312,25 +316,30 @@ class DashboardNode:
         self.k_ep = reward_msg.k_ep
             
     def rlConvgCallback(self,msg):
+
+        self.K_ep_list = np.array(msg.K_ep_list)
+        self.K_run_list = np.array(msg.K_run_list)
+
         self.mu_1_list = np.array(msg.mu_1_list)
         self.mu_2_list = np.array(msg.mu_2_list)
         self.sigma_1_list = np.array(msg.sigma_1_list)
         self.sigma_2_list = np.array(msg.sigma_2_list)
 
         ## REWARD ARRAYS
-        self.r_list = np.array(msg.reward_list).astype(int)
+        self.r_list = np.array(msg.reward_list)
 
-        k_ep = len(self.r_list)//self.n_rollouts
-        k_run = len(self.r_list)%self.n_rollouts
+        # k_ep = len(self.r_list)//self.n_rollouts
+        # k_run = len(self.r_list)%self.n_rollouts
 
-        if k_ep == 0:
-            self.K_ep_list1 = np.repeat(0,k_run)
-        else:
-            self.K_ep_list1 = np.concatenate((np.repeat(range(k_ep),self.n_rollouts),np.repeat(k_ep,k_run)))
+        # if k_ep == 0:
+        #     self.K_ep_list1 = np.repeat(0,k_run)
+        # else:
+        #     self.K_ep_list1 = np.concatenate((np.repeat(range(k_ep),self.n_rollouts),np.repeat(k_ep,k_run)))
 
         ## AVERAGE REWARD ARRAYS
-        self.r_avg_list = np.array(msg.reward_avg_list).astype(int)
-        self.K_ep_list2 = np.array(range(0,len(self.r_avg_list)))
+        self.r_avg_list = np.array(msg.reward_avg_list)
+        self.Kep_list_reward_avg = np.array(msg.Kep_list_reward_avg)
+        # self.K_ep_list2 = np.array(range(0,len(self.r_avg_list)))
 
 
 

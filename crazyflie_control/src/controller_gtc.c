@@ -187,7 +187,7 @@ bool customPWM_flag = false;
 
 // DEFINE POLICY TYPE ACTIVATED
 
-uint8_t PolicyType = 0; // Default to RL
+char PolicyType[] = "PARAM_CONVG"; // Default to RL
 
 // ======================================
 //  RECORD SYSTEM STATES AT FLIP TRIGGER
@@ -633,86 +633,75 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
         
         controlOutput(state,sensors);
-        // printf("NN_Predict: %.4f\n",NN_predict(X,&NN_Policy_Action));
-        // printf("OC_SVM Predict: %.4f\n",OC_SVM_predict(&SVM_Policy_Flip,X));
-        Policy_Flip = OC_SVM_predict(&SVM_Policy_Flip,X);
-        
         
         if(policy_armed_flag == true){ 
-                
-            switch(PolicyType)
+
+            if (strcmp(PolicyType,"PARAM_OPTIM")==0)
             {
-                case 0: // PARAMETER ESTIMATION
-                {
-                    if(Tau <= Tau_thr && onceFlag == false && state->velocity.z > 0.5){
-                        onceFlag = true;
-                        flip_flag = true;  
+                if(Tau <= Tau_thr && onceFlag == false && state->velocity.z > 0.5){
+                    onceFlag = true;
+                    flip_flag = true;  
 
-                        // UPDATE AND RECORD FLIP VALUES
-                        statePos_tr = statePos;
-                        stateVel_tr = stateVel;
-                        stateQuat_tr = stateQuat;
-                        stateOmega_tr = stateOmega;
+                    // UPDATE AND RECORD FLIP VALUES
+                    statePos_tr = statePos;
+                    stateVel_tr = stateVel;
+                    stateQuat_tr = stateQuat;
+                    stateOmega_tr = stateOmega;
 
-                        Tau_tr = Tau;
-                        OFx_tr = OFx;
-                        OFy_tr = OFy;
-                        d_ceil_tr = d_ceil;
+                    Tau_tr = Tau;
+                    OFx_tr = OFx;
+                    OFy_tr = OFy;
+                    d_ceil_tr = d_ceil;
 
-                    
-                        M_d.x = 0.0f;
-                        M_d.y = -G1*1e-3f;
-                        M_d.z = 0.0f;
+                
+                    M_d.x = 0.0f;
+                    M_d.y = -G1*1e-3f;
+                    M_d.z = 0.0f;
 
-                        F_thrust_flip = 0.0;
-                        M_x_flip = M_d.x*1e3f;
-                        M_y_flip = M_d.y*1e3f;
-                        M_z_flip = M_d.z*1e3f;
-                    }
-                    break;
+                    F_thrust_flip = 0.0;
+                    M_x_flip = M_d.x*1e3f;
+                    M_y_flip = M_d.y*1e3f;
+                    M_z_flip = M_d.z*1e3f;
                 }
+            }
+            else if(strcmp(PolicyType,"SVL_POLICY")==0)
+            {
+                Policy_Flip = OC_SVM_predict(&SVM_Policy_Flip,X);
 
-                case 1: // SUPERVISED-NN/OC_SVM
+                if(Policy_Flip >= 0.07f && onceFlag == false)
                 {   
-                    Policy_Flip = OC_SVM_predict(&SVM_Policy_Flip,X);
+                    onceFlag = true;
+                    flip_flag = true;
 
-                    if(Policy_Flip >= 0.0 && onceFlag == false)
-                    {   
-                        onceFlag = true;
-                        flip_flag = true;
+                    // UPDATE AND RECORD FLIP VALUES
+                    statePos_tr = statePos;
+                    stateVel_tr = stateVel;
+                    stateQuat_tr = stateQuat;
+                    stateOmega_tr = stateOmega;
 
-                        // UPDATE AND RECORD FLIP VALUES
-                        statePos_tr = statePos;
-                        stateVel_tr = stateVel;
-                        stateQuat_tr = stateQuat;
-                        stateOmega_tr = stateOmega;
+                    Tau_tr = Tau;
+                    OFx_tr = OFx;
+                    OFy_tr = OFy;
+                    d_ceil_tr = d_ceil;
 
-                        Tau_tr = Tau;
-                        OFx_tr = OFx;
-                        OFy_tr = OFy;
-                        d_ceil_tr = d_ceil;
-
-                        Policy_Flip_tr = Policy_Flip;
-                        Policy_Action_tr = NN_predict(X,&NN_Policy_Action);
+                    Policy_Flip_tr = Policy_Flip;
+                    Policy_Action_tr = NN_predict(X,&NN_Policy_Action);
 
 
-                        M_d.x = 0.0f;
-                        M_d.y = Policy_Action_tr*1e-3f;
-                        M_d.z = 0.0f;
+                    M_d.x = 0.0f;
+                    M_d.y = Policy_Action_tr*1e-3f;
+                    M_d.z = 0.0f;
 
-                        F_thrust_flip = 0.0;
-                        M_x_flip = M_d.x*1e3f;
-                        M_y_flip = M_d.y*1e3f;
-                        M_z_flip = M_d.z*1e3f;
-                    }
-
-                    break;
+                    F_thrust_flip = 0.0;
+                    M_x_flip = M_d.x*1e3f;
+                    M_y_flip = M_d.y*1e3f;
+                    M_z_flip = M_d.z*1e3f;
                 }
-                case 2: // Deep RL
-                {
 
-                    break;
-                }
+            }
+            else if(strcmp(PolicyType,"DEEP_RL")==0)
+            {
+                // printf("three\n");
 
             }
         

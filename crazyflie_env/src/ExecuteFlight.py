@@ -15,26 +15,24 @@ np.set_printoptions(precision=2, suppress=True)
 
 def executeFlight(env,agent):
 
-    # MAKE SURE CONTROLLER IS WORKING
-    while True:
-        try:
-            rospy.wait_for_message("/clock",Clock,timeout=20)
-            rospy.wait_for_message("/CF_DC/StateData",CF_StateData,timeout=5.0)
-            break
+    # # MAKE SURE CONTROLLER IS WORKING
+    # while True:
+    #     try:
+    #         rospy.wait_for_message("/clock",Clock,timeout=20)
+    #         rospy.wait_for_message("/CF_DC/StateData",CF_StateData,timeout=5.0)
+    #         break
 
-        except rospy.exceptions.ROSException:
-            print("Restarting Controller")
-            env.launch_controller()
-            time.sleep(2)
-            env.reset_pos()
-            continue
+    #     except rospy.exceptions.ROSException:
+    #         print("Restarting Controller")
+    #         env.launch_controller()
+    #         time.sleep(2)
+    #         env.reset_pos()
+    #         continue
 
     ## RESET TO INITIAL STATE
     env.SendCmd("GZ_reset")
     env.SendCmd("Ctrl_Reset") # Reset control vals and functionality to default vals
-    time.sleep(0.5) # Time for CF to settle [Real-Time seconds]
-    # input("here")
-    env.RL_Publish()
+    env.sleep(0.5) # Time for CF to settle [Real-Time seconds]
     env.startLogging()
 
 
@@ -52,8 +50,6 @@ def executeFlight(env,agent):
     env.SendCmd("Policy",env.policy,cmd_flag=1) # Arm policy inside controller
 
     ## RESET/UPDATE RUN CONDITIONS
-    repeat_run= False
-
     start_time_rollout = env.getTime()
     start_time_pitch = np.nan
     start_time_impact = np.nan
@@ -70,9 +66,6 @@ def executeFlight(env,agent):
 
     while True: 
 
-        ## DEFINE CURRENT STATE
-        
-        
 
         # ============================
         ##      Pitch Recording 
