@@ -14,6 +14,7 @@ def cmd_send(env):
             1:'Pos',
             2:'Vel',
             5:'Stop',
+            7:'Moment',
             8:'Policy',
 
             10:'P2P_traj',
@@ -78,6 +79,11 @@ def cmd_send(env):
                 cmd_flag = 1
                 print("Rotors turned off\n")
 
+                env.SendCmd(action,cmd_vals,cmd_flag)
+
+            elif action=='Moment':
+                cmd_vals = env.userInput("Set desired Moment values (x,y,z) N*mm: ",float)
+                cmd_flag = env.userInput("Moment control On/Off (1,0): ",int)
                 env.SendCmd(action,cmd_vals,cmd_flag)
 
 

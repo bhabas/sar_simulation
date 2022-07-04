@@ -25,7 +25,7 @@ from crazyflie_msgs.srv import RLCmd,RLCmdRequest
 from rosgraph_msgs.msg import Clock
 from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState
-from std_srvs.srv import Empty
+from std_srvs.srv import Empty,EmptyRequest
 
 YELLOW = '\033[93m'
 RED = '\033[91m'
@@ -54,6 +54,7 @@ class CrazyflieEnv():
 
         self.d_min = 50.0
         self.done = False
+        self.t_step = 0
 
         high = np.array(
             [
@@ -65,7 +66,8 @@ class CrazyflieEnv():
         )
 
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
-        self.action_space = spaces.Box(low=np.array([-5]), high=np.array([5]), shape=(1,), dtype=np.float32)
+        self.action_space = spaces.Box(low=np.array([-1]), high=np.array([1]), shape=(1,), dtype=np.float32)
+        self.My_space = spaces.Box(low=np.array([-0]), high=np.array([-8]), shape=(1,), dtype=np.float32)
 
         ## GAZEBO SIMULATION INITIALIZATION
         if self.DataType == 'SIM': 
@@ -100,6 +102,129 @@ class CrazyflieEnv():
         rospy.Subscriber("/CF_DC/MiscData",CF_MiscData,self.CF_MiscDataCallback,queue_size=1)
 
     
+
+    
+
+        
+    def step(self,action):
+
+        self.iter_step()
+        Tau,OFy,d_ceil  = (self.Tau,self.OFy,self.d_ceil)
+
+        if Tau > 0.25:
+             ## CHECK FOR DONE
+            self.done = bool(
+                self.t - self.t_start >= 5
+                # or z < 0.2
+                # or self.Impact_flag
+            )
+
+            if not self.done:
+                if d_ceil <= self.d_min:
+                    self.d_min = d_ceil
+
+                self.obs = (Tau,OFy,d_ceil)
+                reward = 0
+            else:
+                reward = 1/2*self.CalcReward()
+
+        elif Tau <= 0.25:
+            self.Once_flag = True
+            reward = self.finish_sim(action)
+            self.done = True
+        
+        self.obs = (self.Tau,self.OFy,self.d_ceil)
+        
+        return np.array(self.obs,dtype=np.float32), reward, self.done, {}
+
+    def finish_sim(self,action):
+
+        ## CONVERT ACTION RANGE TO MOMENT RANGE
+        action_scale = (self.My_space.high[0]-self.My_space.low[0])/(self.action_space.high[0]-self.action_space.low[0])
+        My = (action-self.action_space.low[0])*action_scale + self.My_space.low[0]
+
+        self.SendCmd("Moment",[0,My,0],cmd_flag=1)
+        self.gazebo_unpause_physics()
+
+        while not self.done:
+            self.t_step += 1
+
+            self.done = bool(
+                self.t - self.t_start >= 3
+                # or z < 0.2
+                # or self.Impact_flag
+            )
+        
+        return self.CalcReward()
+
+    def iter_step(self,n_steps:int = 10):
+        os.system(f'gz world --multi-step={n_steps}')
+
+    def reset(self):
+
+        ## RESET REWARD CALC VALUES
+        self.done = False
+        self.d_min = 50.0  # Reset max from ceiling [m]
+
+        ## DISABLE STICKY LEGS (ALSO BREAKS CURRENT CONNECTION JOINTS)
+        self.SendCmd('Tumble',cmd_flag=0)
+        self.SendCmd('StickyPads',cmd_flag=0)
+
+        self.SendCmd('Ctrl_Reset')
+        self.reset_pos()
+        self.sleep(0.01)
+
+        self.SendCmd('Tumble',cmd_flag=1)
+        self.SendCmd('Ctrl_Reset')
+        self.reset_pos()
+        self.sleep(1.0)
+        self.SendCmd('StickyPads',cmd_flag=1)
+
+        self.gazebo_pause_physics()
+        self.t_start = self.t
+
+        ## RESET STATE
+        vel = np.random.uniform(low=1.5,high=3.5)
+        phi = np.random.uniform(low=30,high=90)
+        phi = 70
+
+        vx_0 = vel*np.cos(np.deg2rad(phi))
+        vz_0 = vel*np.sin(np.deg2rad(phi))
+
+        ## RESET OBSERVATION
+        Tau_0 = 0.3
+        d_ceil_0 = Tau_0*vz_0 + 1e-3
+        OFy = -vx_0/d_ceil_0
+        self.obs = (Tau_0,OFy,d_ceil_0)
+
+        z_0 = self.h_ceiling - d_ceil_0
+        x_0 = 0.0
+        self.Vel_Launch([x_0,0.0,z_0],[vx_0,0,vz_0])
+
+        return np.array(self.obs,dtype=np.float32)
+
+
+    def ParamOptim_reset(self):
+
+        ## RESET REWARD CALC VALUES
+        self.done = False
+        self.d_min = 50.0  # Reset max from ceiling [m]
+
+        ## DISABLE STICKY LEGS (ALSO BREAKS CURRENT CONNECTION JOINTS)
+        self.SendCmd('Tumble',cmd_flag=0)
+        self.SendCmd('StickyPads',cmd_flag=0)
+
+        self.SendCmd('Ctrl_Reset')
+        self.reset_pos()
+        self.sleep(0.01)
+
+        self.SendCmd('Tumble',cmd_flag=1)
+        self.SendCmd('Ctrl_Reset')
+        self.reset_pos()
+        self.sleep(1.0)
+
+        obs = None
+        return obs
 
     def ParamOptim_Flight(self,Tau,My,vel,phi):
 
@@ -190,93 +315,9 @@ class CrazyflieEnv():
                 self.done = True
                 # print(self.error_str)
 
-
-
-
-
         reward = self.CalcReward()
 
         return None,reward,self.done,None
-
-        
-    def step(self,action):
-        
-        self.iter_step(10)
-        
-        obs = None
-        reward = None
-        done = None
-        info = None
-        
-        return obs,reward,done,info
-
-    def iter_step(self,n_steps:int):
-        os.system(f'gz world --multi-step={n_steps}')
-
-    def reset(self):
-
-        ## RESET REWARD CALC VALUES
-        self.done = False
-        self.d_min = 50.0  # Reset max from ceiling [m]
-
-        ## DISABLE STICKY LEGS (ALSO BREAKS CURRENT CONNECTION JOINTS)
-        self.SendCmd('Tumble',cmd_flag=0)
-        self.SendCmd('StickyPads',cmd_flag=0)
-
-        self.SendCmd('Ctrl_Reset')
-        self.reset_pos()
-        self.sleep(0.01)
-
-        self.SendCmd('Tumble',cmd_flag=1)
-        self.SendCmd('Ctrl_Reset')
-        self.reset_pos()
-        self.sleep(1.0)
-
-        self.gazebo_pause_physics()
-
-        ## RESET STATE
-        vel = np.random.uniform(low=1.5,high=3.5)
-        phi = np.random.uniform(low=30,high=90)
-        phi = 70
-
-        vx_0 = vel*np.cos(np.deg2rad(phi))
-        vz_0 = vel*np.sin(np.deg2rad(phi))
-
-        ## RESET OBSERVATION
-        Tau_0 = 0.5
-        d_ceil_0 = Tau_0*vz_0 + 1e-3
-        OFy = -vx_0/d_ceil_0
-        self.obs = (Tau_0,OFy,d_ceil_0)
-
-        z_0 = self.h_ceiling - d_ceil_0
-        x_0 = 0.0
-        self.Vel_Launch([x_0,0.0,z_0],[vx_0,0,vz_0])
-
-        return np.array(self.obs,dtype=np.float32)
-
-
-    def ParamOptim_reset(self):
-
-        ## RESET REWARD CALC VALUES
-        self.done = False
-        self.d_min = 50.0  # Reset max from ceiling [m]
-
-        ## DISABLE STICKY LEGS (ALSO BREAKS CURRENT CONNECTION JOINTS)
-        self.SendCmd('Tumble',cmd_flag=0)
-        self.SendCmd('StickyPads',cmd_flag=0)
-
-        self.SendCmd('Ctrl_Reset')
-        self.reset_pos()
-        self.sleep(0.01)
-
-        self.SendCmd('Tumble',cmd_flag=1)
-        self.SendCmd('Ctrl_Reset')
-        self.reset_pos()
-        self.sleep(1.0)
-
-
-        obs = None
-        return obs
 
     def CalcReward(self):
 
@@ -339,6 +380,7 @@ class CrazyflieEnv():
             'Pos':1,
             'Vel':2,
             'Stop':5,
+            'Moment':7,
             'Policy':8,
 
             'P2P_traj':10,
@@ -639,47 +681,13 @@ class CrazyflieEnv():
 
        
 
-    def gazebo_pause_physics(self,retries=5) -> bool:
-        """
-        Function to pause the physics in the simulation.
-        :param retries: The number of times to retry the service call.
-        :type retries: int
-        :return: True if the command was sent and False otherwise.
-        :rtype: bool
-        """
+    def gazebo_pause_physics(self):
+        srv = EmptyRequest()
+        self.callService("/gazebo/pause_physics",srv,Empty)
 
-        rospy.wait_for_service("/gazebo/pause_physics",timeout=5)
-        client_srv = rospy.ServiceProxy("/gazebo/pause_physics", Empty)
-
-        for retry in range(retries):
-            try:
-                client_srv()
-                return True
-            except rospy.ServiceException as e:
-                print ("/gazebo/pause_physics service call failed")
-            
-        return False
-
-    def gazebo_unpause_physics(self,retries=5) -> bool:
-        """
-        Function to unpause the physics in the simulation.
-        :param retries: The number of times to retry the service call.
-        :type retries: int
-        :return: True if the command was sent and False otherwise.
-        :rtype: bool
-        """
-
-        rospy.wait_for_service("/gazebo/unpause_physics",timeout=5)
-        client_srv = rospy.ServiceProxy("/gazebo/unpause_physics", Empty)
-        
-        for retry in range(retries):
-            try:
-                client_srv()
-                return True
-            except rospy.ServiceException as e:
-                print ("/gazebo/pause_physics service call failed")
-            
-        return False
+    def gazebo_unpause_physics(self):
+        srv = EmptyRequest()
+        self.callService("/gazebo/unpause_physics",srv,Empty)
         
     def preInit_Values(self):
         ## RAW VICON VALUES
@@ -927,7 +935,7 @@ if __name__ == "__main__":
     for _ in range(25):
         env.reset()
         done = False
-        env.SendCmd("Policy",[0.25,7,0],cmd_flag=1)
+        # env.SendCmd("Policy",[0.25,7,0],cmd_flag=1)
         while not done:
-            obs,reward,done,info = env.step(1)
+            obs,reward,done,info = env.step(env.action_space.sample())
 

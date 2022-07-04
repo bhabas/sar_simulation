@@ -370,14 +370,14 @@ void GTC_Command(setpoint_t *setpoint)
             motorstop_flag = true;
             break;
         
-        // case 7: // Execute Moment-Based Flip
+        case 7: // Execute Moment-Based Flip
 
-        //     M_d.x = setpoint->cmd_val1*1e-3;
-        //     M_d.y = setpoint->cmd_val2*1e-3;
-        //     M_d.z = setpoint->cmd_val3*1e-3;
+            M_d.x = setpoint->cmd_val1*1e-3;
+            M_d.y = setpoint->cmd_val2*1e-3;
+            M_d.z = setpoint->cmd_val3*1e-3;
 
-        //     moment_flag = (bool)setpoint->cmd_flag;
-        //     break;
+            moment_flag = (bool)setpoint->cmd_flag;
+            break;
 
         case 8: // Arm Policy Maneuver
             Tau_thr = setpoint->cmd_val1;
