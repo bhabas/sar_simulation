@@ -49,7 +49,7 @@ def cmd_send(env):
                 env.SendCmd(action,cmd_vals,cmd_flag)
 
             elif action=='Cap_Logging':
-                env.capLogging()
+                env.capLogging(logName)
 
             elif action=='Pos':
                 cmd_vals = env.userInput("Set desired position values (x,y,z): ",float)
@@ -196,20 +196,20 @@ def cmd_send(env):
 if __name__ == '__main__':
 
     # from Crazyflie_env import CrazyflieEnv
-    from Crazyflie_env2 import CrazyflieEnv
+    from Crazyflie_env import CrazyflieEnv
     
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv(gazeboTimeout=False)
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 24
-    env.trial_name = f"Control_Playground--trial_{int(trial_num):02d}--{env.modelInitials()}"
-    env.filepath = f"{env.loggingPath}/{env.trial_name}.csv"
+    logName = f"Control_Playground--trial_{int(trial_num):02d}--{env.modelInitials()}.csv"
+
 
     env.accCF_max = [1.0, 1.0, 3.1]
 
-    env.createCSV(env.filepath)
-    env.startLogging()
+    env.createCSV(logName)
+    env.startLogging(logName)
 
     # time.sleep(5)
     cmd_thread = threading.Thread(target=cmd_send,args=(env,))
