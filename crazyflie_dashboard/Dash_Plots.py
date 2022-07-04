@@ -847,7 +847,7 @@ class Reward_Widget(QWidget):
     def update(self):
                         
         self.curve_reward.setData(DashNode.K_run_list,DashNode.r_list)
-        # self.curve_reward_avg.setData(DashNode.K_ep_list2,DashNode.r_avg_list)
+        self.curve_reward_avg.setData(DashNode.Kep_list_reward_avg,DashNode.r_avg_list)
 
     def reset_axes(self):
         self.PW.setXRange(0,25)

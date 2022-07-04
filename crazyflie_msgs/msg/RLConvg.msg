@@ -1,5 +1,6 @@
 uint16[] K_ep_list
 uint16[] K_run_list
+uint16[] Kep_list_reward_avg
 
 float32[] mu_1_list
 float32[] mu_2_list

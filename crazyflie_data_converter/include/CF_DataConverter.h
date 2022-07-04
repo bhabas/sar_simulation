@@ -39,7 +39,7 @@ is easy to use.
 
 
 #define formatBool(b) ((b) ? "True" : "False")
-#define RATE_DO_EXECUTE(RATE_HZ, TICK) ((TICK % (100 / RATE_HZ)) == 0)
+#define RATE_DO_EXECUTE(RATE_HZ, TICK) ((TICK % (1000 / RATE_HZ)) == 0)
 
 class CF_DataConverter
 {
@@ -347,11 +347,9 @@ class CF_DataConverter
         boost::array<float,3> policy{0,0,0};
 
         float reward = 0.0;
-        boost::array<double,3> reward_inputs{0,0,0};
 
         boost::array<float,3> vel_d{0,0,0};
 
-        bool runComplete_flag = false;
 
 };
 
@@ -721,7 +719,7 @@ void CF_DataConverter::append_CSV_misc()
 
 
     // MISC RL LABELS
-    fprintf(fPtr,"%.2f,[%.3f %.3f %.3f],",reward,reward_inputs[0],reward_inputs[1],reward_inputs[2]);
+    fprintf(fPtr,"%.2f,--,--,--,",reward);
 
     // MISC INTERNAL STATE ESTIMATES
     fprintf(fPtr,"--,--,--,"); // Tau_est,OF_x_est,OF_y_est
@@ -831,26 +829,34 @@ void CF_DataConverter::append_CSV_blank()
 
 bool CF_DataConverter::DataLogging_Callback(crazyflie_msgs::loggingCMD::Request &req, crazyflie_msgs::loggingCMD::Response &res)
 {
-    // TURN ON/OFF LOGGING
-    Logging_Flag = req.Logging_Flag;
+    switch(req.Logging_CMD){
+        case 0: // CREATE CSV WHEN ACTIVATED
+            Logging_Flag = false;
+            fPtr = fopen(req.filePath.c_str(), "w");
+            create_CSV();
+            break;
 
-    // CREATE CSV WHEN ACTIVATED
-    if(req.createCSV == true)
-    {   
-        fPtr = fopen(req.filePath.c_str(), "w");
-        create_CSV();
-    }
-    // CAP CSV W/ FLIP,IMPACT,MISC DATA
-    else if(req.capLogging == true)
-    {
 
-        error_string = req.error_string;
-        append_CSV_blank();
-        append_CSV_misc();
-        append_CSV_flip();
-        append_CSV_impact();
-        append_CSV_blank();
+        case 1: // TURN ON/OFF LOGGING
+            Logging_Flag = true;
+            fPtr = fopen(req.filePath.c_str(), "a");
+            break;
+
+        case 2: // CAP CSV W/ FLIP,IMPACT,MISC DATA
+            Logging_Flag = false;
+
+            fPtr = fopen(req.filePath.c_str(), "a");
+            error_string = req.error_string;
+            append_CSV_blank();
+            append_CSV_misc();
+            append_CSV_flip();
+            append_CSV_impact();
+            append_CSV_blank();
+            break;
+
     }
+
+
 
     return 1;
 }

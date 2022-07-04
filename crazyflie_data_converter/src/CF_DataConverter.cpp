@@ -345,11 +345,9 @@ void CF_DataConverter::RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &
     policy = msg->policy;
 
     reward = msg->reward;
-    reward_inputs = msg->reward_inputs;
 
     vel_d = msg->vel_d;
 
-    runComplete_flag = msg->runComplete_flag;
 
     if(msg->trialComplete_flag == true)
     {
@@ -436,7 +434,7 @@ void CF_DataConverter::Pad_Connections_Callback(const crazyflie_msgs::PadConnect
 void CF_DataConverter::checkSlowdown()
 {   
     // SIMULATION SLOWDOWN
-    if(LANDING_SLOWDOWN_FLAG==true && tick >= 500){
+    if(LANDING_SLOWDOWN_FLAG==true){
 
         // WHEN CLOSE TO THE CEILING REDUCE SIM SPEED
         if(D_ceil<=0.5 && SLOWDOWN_TYPE == 0){
@@ -557,7 +555,7 @@ void CF_DataConverter::consoleOuput()
     printf("\n");
 
     printf("==== Policy: %s ====\n",POLICY_TYPE.c_str());
-    if (strcmp(POLICY_TYPE.c_str(),"PARAM_CONVG") == 0)
+    if (strcmp(POLICY_TYPE.c_str(),"PARAM_OPTIM") == 0)
     {
         printf("Tau_thr: %.3f \tMy: %.3f\n",Tau_thr,G1);
         printf("\n");
@@ -608,7 +606,7 @@ void CF_DataConverter::consoleOuput()
 
 void CF_DataConverter::MainLoop()
 {
-    int loopRate = 100;     // [Hz]
+    int loopRate = 1000;     // [Hz]
     ros::Rate rate(loopRate);
 
 
