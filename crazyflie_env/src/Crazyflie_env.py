@@ -40,6 +40,7 @@ class CrazyflieEnv():
 
         self.modelName = rospy.get_param('/MODEL_NAME')
         self.h_ceiling = rospy.get_param("/CEILING_HEIGHT") # [m]
+        self.env_name = "CF_Gazebo"
 
         ## TRAJECTORY VALUES
         self.posCF_0 = [0.0, 0.0, 0.4]        # Default hover position [m]
@@ -65,7 +66,7 @@ class CrazyflieEnv():
         )
 
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
-        self.action_space = spaces.Box(low=np.array([-1]), high=np.array([1]), shape=(1,), dtype=np.float32)
+        self.action_space = spaces.Box(low=np.array([-5]), high=np.array([5]), shape=(1,), dtype=np.float32)
         self.My_space = spaces.Box(low=np.array([-0]), high=np.array([-8]), shape=(1,), dtype=np.float32)
 
         ## GAZEBO SIMULATION INITIALIZATION
@@ -105,14 +106,14 @@ class CrazyflieEnv():
 
         self.iter_step()
         Tau,OFy,d_ceil  = (self.Tau,self.OFy,self.d_ceil)
-        Tau_thr = 0.23
+        Tau_thr = 2.0
 
         ## START IMPACT TERMINATION TIMERS
         if ((self.impact_flag or self.BodyContact_flag) and self.onceFlag_impact == False):
             self.start_time_impact = self.getTime()
             self.onceFlag_impact = True
 
-        if Tau > Tau_thr or Tau == 0.0:
+        if action[0] < Tau_thr or Tau == 0.0:
             
             ## CHECK FOR DONE
             self.done = bool(
@@ -142,7 +143,7 @@ class CrazyflieEnv():
             else:
                 reward = 1/2*self.CalcReward()
 
-        elif Tau <= Tau_thr:
+        elif action[0] >= Tau_thr:
             reward = self.finish_sim(action)
             self.done = True
         
@@ -155,7 +156,7 @@ class CrazyflieEnv():
         ## CONVERT ACTION RANGE TO MOMENT RANGE
         action_scale = (self.My_space.high[0]-self.My_space.low[0])/(self.action_space.high[0]-self.action_space.low[0])
         My = (action-self.action_space.low[0])*action_scale + self.My_space.low[0]
-        My = -4
+        My = -7.26
 
         self.SendCmd("Moment",[0,My,0],cmd_flag=1)
         self.gazebo_unpause_physics()
@@ -191,6 +192,7 @@ class CrazyflieEnv():
 
     def reset(self):
 
+        self.gazebo_unpause_physics()
         ## DISABLE STICKY LEGS (ALSO BREAKS CURRENT CONNECTION JOINTS)
         self.SendCmd('Tumble',cmd_flag=0)
         self.SendCmd('StickyPads',cmd_flag=0)
@@ -392,7 +394,7 @@ class CrazyflieEnv():
         ## DISTANCE REWARD (Gaussian Function)
         A = 0.1
         mu = 0
-        sig = 1
+        sig = 0.5
         R3 = A*np.exp(-1/2*np.power((self.d_min-mu)/sig,2))
 
         return R1 + R2 + R3
