@@ -829,13 +829,13 @@ if __name__ == "__main__":
     learning_rate = 0.01
 
     NN_model = NN_Model()
-    SVM_model = OneClassSVM(nu=0.1,gamma=1.1)
+    SVM_model = OneClassSVM(nu=0.1,gamma=0.5)
 
     Policy = Policy_Trainer(NN_model,SVM_model,model_initials,learning_rate=learning_rate)
 
     ## LOAD DATA
-    df_raw = pd.read_csv(f"{BASEPATH}/Data_Logs/NL_DR/NL_LR_Trials_DR.csv").dropna() # Collected data
-    df_train = df_raw.query("LR_4leg >= 0.85")
+    df_raw = pd.read_csv(f"{BASEPATH}/Data_Logs/NL_DR_Subset/NL_LR_Trials_Subset.csv").dropna() # Collected data
+    df_train = df_raw.query("LR_4leg >= 0.8")
 
     ## ORGANIZE DATA
     Tau = df_train["Tau_flip_mean"]
@@ -859,15 +859,15 @@ if __name__ == "__main__":
     y_test = test_df[['My_mean']].to_numpy()
 
 
-    NN_Param_Path = f'{BASEPATH}/SVM_Work/include/NN_Params/NN_Layers_{model_initials}.h'
+    NN_Param_Path = f'{BASEPATH}/Policy_Training/Info/NN_Layers_{model_initials}.h'
     SVM_Param_Path = f'{BASEPATH}/Policy_Training/Info/SVM_Params_{model_initials}.h'
 
     Policy.createScaler(X)
 
-    # Policy.train_NN_Model(X_train,y_train,X_test,y_test,epochs=1000)
+    # Policy.train_NN_Model(X_train,y_train,X_test,y_test,epochs=400)
     # Policy.save_NN_Params(NN_Param_Path)
-    # # Policy.load_NN_Params(NN_Param_Path)
-    # print(Policy.NN_Predict(np.array([[0.29,-0.673,0.952]])))
+    Policy.load_NN_Params(NN_Param_Path)
+    print(Policy.NN_Predict(np.array([[0.29,-0.673,0.952]])))
 
     Policy.train_OC_SVM(X)
     Policy.save_SVM_Params(SVM_Param_Path)
@@ -875,11 +875,11 @@ if __name__ == "__main__":
 
     print(Policy.OC_SVM_Predict(np.array([[0.256,-4.589,0.441]])))
 
-    # Policy.plotClassification(df_train)
+    Policy.plotClassification(df_train)
     # Policy.plotPolicy(df_raw,PlotRegion=True)
 
-    dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
-    fileName = "Control_Playground--trial_24--NL.csv"
-    trial = DataFile(dataPath,fileName,dataType='SIM')
+    # dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
+    # fileName = "Control_Playground--trial_24--NL.csv"
+    # trial = DataFile(dataPath,fileName,dataType='SIM')
     
-    Policy.plotTraj(df_raw,trial)
+    # Policy.plotTraj(df_raw,trial)
