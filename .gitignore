@@ -13,7 +13,6 @@ __pycache__/
 # Custom gitignore
 crazyflie_logging/local_logs/*
 crazyflie_projects/Policy_Mapping/Data_Analysis/Data/*
-crazyflie_projects/Policy_Mapping/Data_Logs/*
 
 crazyflie_projects/Featureless_TTC/local_logs/*
 
