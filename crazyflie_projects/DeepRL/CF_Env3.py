@@ -129,8 +129,8 @@ class CF_Env3():
 
             else:
                 ## CALC REWARD
-                reward = self.CalcReward()/2*self.R_Scale
-
+                reward = 0.0
+                
         elif action[0] > Tau_trg:
             self.Once_flag = True
             self.Tau_thr = Tau

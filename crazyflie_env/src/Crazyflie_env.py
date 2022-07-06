@@ -66,8 +66,8 @@ class CrazyflieEnv():
         )
 
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
-        self.action_space = spaces.Box(low=np.array([-5]), high=np.array([5]), shape=(1,), dtype=np.float32)
-        self.My_space = spaces.Box(low=np.array([-0]), high=np.array([-8]), shape=(1,), dtype=np.float32)
+        self.action_space = spaces.Box(low=np.array([-5,-1]), high=np.array([5,1]), shape=(2,), dtype=np.float32)
+        self.My_space = spaces.Box(low=np.array([-4]), high=np.array([-8]), shape=(1,), dtype=np.float32)
 
         ## GAZEBO SIMULATION INITIALIZATION
         if self.DataType == 'SIM': 
@@ -119,8 +119,14 @@ class CrazyflieEnv():
             self.done = bool(
                 self.t - self.start_time_rollout > 5                # EPISODE TIMEOUT
                 or self.t - self.start_time_impact > 0.5            # IMPACT TIMEOUT
-                or (self.velCF[2] <= -0.5 and self.posCF[2] <= 0.5) # FREE-FALL TERMINATION
+                or (self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5) # FREE-FALL TERMINATION
             )
+
+            if not self.done:
+                if d_ceil <= self.d_min:
+                    self.d_min = d_ceil
+            
+            reward = 0
 
             ## ERROR TERMINATIONS
             if (time.time() - self.start_time_ep) > 30.0 and self.gazeboTimeout == True:
@@ -134,14 +140,6 @@ class CrazyflieEnv():
                 print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
                 self.done = True
 
-            if not self.done:
-                if d_ceil <= self.d_min:
-                    self.d_min = d_ceil
-
-                self.obs = (Tau,OFy,d_ceil)
-                reward = 0
-            else:
-                reward = 1/2*self.CalcReward()
 
         elif action[0] >= Tau_thr:
             reward = self.finish_sim(action)
@@ -154,9 +152,9 @@ class CrazyflieEnv():
     def finish_sim(self,action):
 
         ## CONVERT ACTION RANGE TO MOMENT RANGE
-        action_scale = (self.My_space.high[0]-self.My_space.low[0])/(self.action_space.high[0]-self.action_space.low[0])
-        My = (action-self.action_space.low[0])*action_scale + self.My_space.low[0]
-        My = -7.26
+        action_scale = (self.My_space.high[0]-self.My_space.low[0])/(self.action_space.high[1]-self.action_space.low[1])
+        My = (action[1]-self.action_space.low[1])*action_scale + self.My_space.low[0]
+        # My = -7.26
 
         self.SendCmd("Moment",[0,My,0],cmd_flag=1)
         self.gazebo_unpause_physics()
@@ -170,7 +168,7 @@ class CrazyflieEnv():
             self.done = bool(
                 self.t - self.start_time_rollout > 5                # EPISODE TIMEOUT
                 or self.t - self.start_time_impact > 0.5            # IMPACT TIMEOUT
-                or (self.velCF[2] <= -0.5 and self.posCF[2] <= 0.5) # FREE-FALL TERMINATION
+                or (self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5) # FREE-FALL TERMINATION
             )
 
             ## ERROR TERMINATIONS
@@ -227,7 +225,6 @@ class CrazyflieEnv():
         ## RESET STATE
         vel = np.random.uniform(low=1.5,high=3.5)
         phi = np.random.uniform(low=30,high=90)
-        vel = 3.0
         phi = 40
 
         vx_0 = vel*np.cos(np.deg2rad(phi))
@@ -363,25 +360,16 @@ class CrazyflieEnv():
 
     def CalcReward(self):
 
-        ## PAD CONTACT REWARD
-        if self.pad_connections >= 3: 
-            if self.BodyContact_flag == False:
-                R1 = 0.7
-            else:
-                R1 = 0.4
-        elif self.pad_connections == 2: 
-            if self.BodyContact_flag == False:
-                R1 = 0.2
-            else:
-                R1 = 0.1
-        else:
-            R1 = 0.0
+        ## DISTANCE REWARD (Gaussian Function)
+        R1 = np.clip(1/np.abs(self.d_min+1e-3),0,10)/10
+        R1 *= 0.1
 
         ## IMPACT ANGLE REWARD
         if -180 <= self.eulCF_impact[1] <= -90:
             R2 = 1.0
         elif -90 < self.eulCF_impact[1] <= 0:
             R2 = -1/90*self.eulCF_impact[1]
+            
         elif 0 < self.eulCF_impact[1] <= 90:
             R2 = 1/90*self.eulCF_impact[1]
         elif 90 < self.eulCF_impact[1] <= 180:
@@ -391,13 +379,25 @@ class CrazyflieEnv():
 
         R2 *= 0.2
 
-        ## DISTANCE REWARD (Gaussian Function)
-        A = 0.1
-        mu = 0
-        sig = 0.5
-        R3 = A*np.exp(-1/2*np.power((self.d_min-mu)/sig,2))
+        ## PAD CONTACT REWARD
+        if self.pad_connections >= 3: 
+            if self.BodyContact_flag == False:
+                R3 = 0.7
+            else:
+                R3 = 0.4
+        elif self.pad_connections == 2: 
+            if self.BodyContact_flag == False:
+                R3 = 0.2
+            else:
+                R3 = 0.1
+        else:
+            R3 = 0.0
 
-        return R1 + R2 + R3
+        
+
+        
+
+        return R3 + R2 + R1
 
     def getTime(self):
         """Returns current known time.

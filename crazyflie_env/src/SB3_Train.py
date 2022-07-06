@@ -23,7 +23,7 @@ BASEPATH = f"/home/bhabas/catkin_ws/src/crazyflie_simulation"
 models_dir = f"{BASEPATH}/crazyflie_projects/DeepRL/models/{env.env_name}/SAC-{current_time}"
 log_dir = "/home/bhabas/Downloads/logs"
 
-checkpoint_callback = CheckpointCallback(save_freq=1000, save_path=models_dir,name_prefix=env.env_name)
+checkpoint_callback = CheckpointCallback(save_freq=500, save_path=models_dir,name_prefix=env.env_name)
 
 
 class TensorboardCallback(BaseCallback):

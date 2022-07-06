@@ -12,8 +12,8 @@ env.reset()
 
 ## SELECT MODEL FROM DIRECTORY
 BASEPATH = f"/home/bhabas/catkin_ws/src/crazyflie_simulation"
-models_dir = f"{BASEPATH}/crazyflie_projects/DeepRL/models/{env.env_name}/SAC-11-36"
-model_path = f"{models_dir}/{env.env_name}_{7}000_steps.zip"
+models_dir = f"{BASEPATH}/crazyflie_projects/DeepRL/models/{env.env_name}/SAC-22-37"
+model_path = f"{models_dir}/{env.env_name}_{16}000_steps.zip"
 
 
 model = SAC.load(model_path,env=env)
