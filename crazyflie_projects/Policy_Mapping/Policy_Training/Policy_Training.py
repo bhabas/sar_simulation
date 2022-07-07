@@ -304,10 +304,13 @@ class Policy_Trainer():
         ## FIT OC_SVM MODEL
         self.SVM_model.fit(X_train)
 
-    def save_SVM_Params(self,path):
+    def save_SVM_Params(self,SavePath,FileName):
 
-        f = open(path,'a')
+        f = open(SavePath,'a')
         f.truncate(0) ## Clears contents of file
+
+        date_time = datetime.now().strftime('%m/%d-%H:%M')
+        f.write(f"// Filename: {FileName} Time: {date_time}\n")
         f.write("static char SVM_Params[] = {\n")
         
 
@@ -452,16 +455,16 @@ class Policy_Trainer():
         print(f"False Negatives: {cfnMatrix[1,0]}")
         print(f"Classification Report: {classification_report(y_class,y_pred)}")
 
-    def plotClassification(self,df_custom):
+    def plotClassification(self,df_custom,iso_level=0.0):
         
-
+        ## MESHGRID OF DATA POINTS
         Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
             np.linspace(0.15, 0.35, 60),
             np.linspace(-15, 1, 45),
             np.linspace(0.0, 1.0, 45)
         )
 
-        ## CONCATENATE DATA TO MATCH INPUT
+        ## CONCATENATE DATA TO MATCH INPUT SHAPE
         X_grid = np.stack((
             Tau_grid.flatten(),
             OF_y_grid.flatten(),
@@ -512,8 +515,8 @@ class Policy_Trainer():
                 
                 surface_count=1,
                 opacity=0.3,
-                isomin=0.07,
-                isomax=0.07,
+                isomin=iso_level,
+                isomax=iso_level,
                 colorscale='Viridis',  
                 cmin=0,
                 cmax=1,     
@@ -537,7 +540,7 @@ class Policy_Trainer():
         )
         fig.show()
 
-    def plotPolicy(self,df_custom,PlotRegion=False):
+    def plotPolicy(self,df_custom,PlotRegion=False,iso_level=0.0):
 
         fig = go.Figure()
 
@@ -558,7 +561,7 @@ class Policy_Trainer():
 
             ## PREDICT VALID POINTS
             y_pred_grid = self.SVM_model.decision_function(self.scaleData(X_grid))
-            valid_idx = np.where(y_pred_grid >= 0.0)
+            valid_idx = np.where(y_pred_grid >= iso_level)
 
             X_grid = X_grid[valid_idx]
             y_pred_My = self.NN_Predict(X_grid).numpy()
@@ -836,20 +839,18 @@ if __name__ == "__main__":
 
 
     ## TRAIN NEURAL NETWORK My POLICY
-    Policy.train_NN_Model(X_train,y_train,X_test,y_test,epochs=350)
-    Policy.save_NN_Params(NN_Param_Path,FileName)
+    # Policy.train_NN_Model(X_train,y_train,X_test,y_test,epochs=350)
+    # Policy.save_NN_Params(NN_Param_Path,FileName)
     Policy.load_NN_Params(NN_Param_Path)
     print(Policy.NN_Predict(np.array([[0.29,-0.673,0.952]])))
 
     ## TRAIN OC_SVM FLIP_CLASSIFICATION POLICY
-    # Policy.train_OC_SVM(X)
-    # Policy.save_SVM_Params(SVM_Param_Path)
-    # # Policy.load_SVM_Params(SVM_Param_Path)
+    Policy.train_OC_SVM(X)
+    Policy.save_SVM_Params(SVM_Param_Path,FileName)
+    print(Policy.OC_SVM_Predict(np.array([[0.256,-4.589,0.441]])))
 
-    # print(Policy.OC_SVM_Predict(np.array([[0.256,-4.589,0.441]])))
-
-    # Policy.plotClassification(df_train)
-    # # Policy.plotPolicy(df_raw,PlotRegion=True)
+    Policy.plotClassification(df_train,iso_level=0.0)
+    Policy.plotPolicy(df_raw,PlotRegion=True,iso_level=0.0)
 
     # dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
     # fileName = "Control_Playground--trial_24--NL.csv"
