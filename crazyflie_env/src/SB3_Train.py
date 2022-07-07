@@ -15,6 +15,7 @@ current_time = now.strftime("%H-%M")
 
 ## INITIATE ENVIRONMENT
 env = CrazyflieEnv()
+env.env_name = "CF_Env"
 env.reset()
 
 
@@ -45,18 +46,24 @@ class TensorboardCallback(BaseCallback):
 
 callback = CallbackList([checkpoint_callback,TensorboardCallback()])
 
-model = SAC(
-    "MlpPolicy",
-    env,
-    gamma=0.999,
-    learning_rate=0.001,
-    use_sde=False,
-    sde_sample_freq=4,
-    verbose=1,
-    device='cpu',
-    create_eval_env=True,
-    tensorboard_log=log_dir
-) 
+# model = SAC(
+#     "MlpPolicy",
+#     env,
+#     gamma=0.999,
+#     learning_rate=0.001,
+#     use_sde=False,
+#     sde_sample_freq=4,
+#     verbose=1,
+#     device='cpu',
+#     create_eval_env=True,
+#     tensorboard_log=log_dir
+# ) 
+
+## SELECT MODEL FROM DIRECTORY
+BASEPATH = f"/home/bhabas/catkin_ws/src/crazyflie_simulation"
+models_dir = f"{BASEPATH}/crazyflie_projects/DeepRL/models/{env.env_name}/SAC-{env.env_name}-16-10"
+model_path = f"{models_dir}/{env.env_name}_{35}000_steps.zip"
+model = SAC.load(model_path,env=env)
 
 model.learn(
     total_timesteps=100e3,
@@ -65,4 +72,4 @@ model.learn(
 )
 
 
-env.close()
+# env.close()

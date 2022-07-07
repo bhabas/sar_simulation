@@ -58,16 +58,16 @@ class CrazyflieEnv():
 
         high = np.array(
             [
-                np.finfo(np.float32).max,
-                np.finfo(np.float32).max,
-                np.finfo(np.float32).max,
+                np.finfo(np.float64).max,
+                np.finfo(np.float64).max,
+                np.finfo(np.float64).max,
             ],
             dtype=np.float32,
         )
 
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
         self.action_space = spaces.Box(low=np.array([-5,-1]), high=np.array([5,1]), shape=(2,), dtype=np.float32)
-        self.My_space = spaces.Box(low=np.array([-4]), high=np.array([-8]), shape=(1,), dtype=np.float32)
+        self.My_space = spaces.Box(low=np.array([-0e-3]), high=np.array([-8e-3]), shape=(1,), dtype=np.float32)
 
         ## GAZEBO SIMULATION INITIALIZATION
         if self.DataType == 'SIM': 
@@ -156,7 +156,7 @@ class CrazyflieEnv():
         My = (action[1]-self.action_space.low[1])*action_scale + self.My_space.low[0]
         # My = -7.26
 
-        self.SendCmd("Moment",[0,My,0],cmd_flag=1)
+        self.SendCmd("Moment",[0,My*1e3,0],cmd_flag=1)
         self.gazebo_unpause_physics()
 
         while not self.done:
@@ -225,7 +225,7 @@ class CrazyflieEnv():
         ## RESET STATE
         vel = np.random.uniform(low=1.5,high=3.5)
         phi = np.random.uniform(low=30,high=90)
-        phi = 40
+        # phi = 40
 
         vx_0 = vel*np.cos(np.deg2rad(phi))
         vz_0 = vel*np.sin(np.deg2rad(phi))
@@ -360,24 +360,13 @@ class CrazyflieEnv():
 
     def CalcReward(self):
 
-        ## DISTANCE REWARD (Gaussian Function)
+        ## DISTANCE REWARD 
         R1 = np.clip(1/np.abs(self.d_min+1e-3),0,10)/10
         R1 *= 0.1
 
         ## IMPACT ANGLE REWARD
-        if -180 <= self.eulCF_impact[1] <= -90:
-            R2 = 1.0
-        elif -90 < self.eulCF_impact[1] <= 0:
-            R2 = -1/90*self.eulCF_impact[1]
-            
-        elif 0 < self.eulCF_impact[1] <= 90:
-            R2 = 1/90*self.eulCF_impact[1]
-        elif 90 < self.eulCF_impact[1] <= 180:
-            R2 = 1.0
-        else:
-            R2 = 0
-
-        R2 *= 0.2
+        R2 = np.clip(np.abs(self.eulCF_impact[1])/120,0,1)
+        R2 *= 0.3
 
         ## PAD CONTACT REWARD
         if self.pad_connections >= 3: 
@@ -393,11 +382,7 @@ class CrazyflieEnv():
         else:
             R3 = 0.0
 
-        
-
-        
-
-        return R3 + R2 + R1
+        return R1 + R2 + R3
 
     def getTime(self):
         """Returns current known time.
