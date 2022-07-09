@@ -13,7 +13,7 @@ BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
 sys.path.insert(1,'/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_env')
 sys.path.insert(1,BASE_PATH)
 
-from crazyflie_env.src.Crazyflie_env import CrazyflieEnv
+from crazyflie_env.src.Crazyflie_env2 import CrazyflieEnv
 from crazyflie_env.src.RL_Training_2_term_Policy import runTraining
 from crazyflie_env.src.RL_agents.EPHE_Agent import EPHE_Agent
 

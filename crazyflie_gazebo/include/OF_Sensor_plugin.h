@@ -3,6 +3,7 @@
 #include <thread>
 #include <random>
 #include <math.h>
+#include <boost/algorithm/clamp.hpp>
 
 // GAZEBO IMPORTS
 #include <gazebo/gazebo.hh>

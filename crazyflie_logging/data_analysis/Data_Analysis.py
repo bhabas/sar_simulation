@@ -449,14 +449,7 @@ class DataFile:
             phi_IC (float): Desired flight angle
         """        
         ## SELECT X,Y,Z LAUNCH VELOCITIES
-        vx_IC,vy_IC,vz_IC = self.trial_df.iloc[-3][['vx','vy','vz']].astype('float').tolist()
-
-        ## CONVERT CARTESIAN VELOCITIES TO POLAR
-        Vel_IC = np.sqrt(vx_IC**2 + vz_IC**2)
-        phi_IC = np.rad2deg(np.arctan2(vz_IC,vx_IC))
-
-        Vel_IC = np.round(Vel_IC,3)
-        phi_IC = np.round(phi_IC,3)
+        Vel_IC,phi_IC = self.trial_df.iloc[-3][['vx','vy']].astype('float').tolist()
         
         return Vel_IC,phi_IC
         
@@ -581,7 +574,7 @@ class DataFile:
         body_impact = impact_df.iloc[0]['flip_flag']
         impact_flag = impact_df.iloc[0]['impact_flag']
         leg_contacts = int(impact_df.iloc[0]['Tau'])
-        contact_list = impact_df.iloc[0][['OF_x','OF_y','RREV','d_ceil']].to_numpy(dtype=np.int8)
+        contact_list = impact_df.iloc[0][['OF_x','OF_y','d_ceil','F_thrust']].to_numpy(dtype=np.int8)
 
         
 
