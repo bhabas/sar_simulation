@@ -488,9 +488,9 @@ class Policy_Trainer():
                 ## HOVER DATA
                 customdata=df_custom,
                 hovertemplate=" \
-                    <b>LR: %{customdata[3]:.3f}</b> \
-                    <br>OFy: %{customdata[10]:.3f} Vel: %{customdata[0]:.2f} </br> \
-                    <br>Tau: %{customdata[8]:.3f} Phi: %{customdata[1]:.0f}</br> \
+                    <b>LR: %{customdata[3]:.3f} \tMy: %{customdata[14]:.3f}</b> \
+                    <br>Vel: %{customdata[0]:.2f} \tPhi: %{customdata[1]:.0f}</br> \
+                    <br>Tau: %{customdata[8]:.3f} \tOFy: %{customdata[10]:.3f} </br> \
                     <br>D_ceil: %{customdata[12]:.3f}</br>",
 
                 ## MARKER
@@ -605,13 +605,13 @@ class Policy_Trainer():
 
                     ## HOVER DATA
                     customdata=np.stack((error,df_custom["My_mean"].to_numpy().flatten(),y_pred),axis=1),
-                    hovertemplate=
-                    "<br>My: %{customdata[1]:.3f}</br> \
-                     <br>Error: %{customdata[0]:.3f}</br> \
-                     <br>Pred: %{customdata[2]:.3f}</br>",
+                    hovertemplate=" \
+                    <b>LR: %{customdata[3]:.3f} | My: %{customdata[14]:.3f}</b> \
+                    <br>Vel: %{customdata[0]:.2f} | Phi: %{customdata[1]:.0f}</br> \
+                    <br>Tau: %{customdata[8]:.3f} | OFy: %{customdata[10]:.3f} </br> \
+                    <br>D_ceil: %{customdata[12]:.3f}</br>",
                     
                         
-
                     ## MARKER
                     mode='markers',
                     marker=dict(
@@ -643,7 +643,7 @@ class Policy_Trainer():
         )
         fig.show()
 
-    def plotTraj(self,df_custom,dataFile):
+    def plotTraj(self,df_custom,dataFile,iso_level=0.0):
 
         Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
             np.linspace(0.15, 0.35, 60),
@@ -664,9 +664,29 @@ class Policy_Trainer():
         arr = dataFile.grab_stateData(0,0,['Tau','OF_y','d_ceil'])
         Tau,OFy,d_ceil = np.split(arr,3,axis=1)
 
-        Tau_tr,OFy_tr,d_ceil_tr = dataFile.grab_flip_state(0,0,['Tau','OF_y','d_ceil'])
+        Tau_tr,OFy_tr,d_ceil_tr,My_tr = dataFile.grab_flip_state(0,0,['Tau','OF_y','d_ceil','My'])
 
         fig = go.Figure()
+
+        fig.add_trace(
+            go.Volume(
+                ## ISO SURFACE
+                x=X_grid[:,1].flatten(),
+                y=X_grid[:,0].flatten(),
+                z=X_grid[:,2].flatten(),
+                value=y_pred_grid.flatten(),
+                
+                surface_count=1,
+                opacity=0.3,
+                isomin=iso_level,
+                isomax=iso_level,
+                cmin=0,
+                cmax=1,     
+                caps=dict(x_show=False, y_show=False),
+                colorbar=dict(title='Title',) , 
+                hoverinfo='skip',
+            )
+        )
 
         # PLOT DATA POINTS
         fig.add_trace(
@@ -679,9 +699,9 @@ class Policy_Trainer():
                 ## HOVER DATA
                 customdata=df_custom,
                 hovertemplate=" \
-                    <b>LR: %{customdata[3]:.3f}</b> \
-                    <br>OFy: %{customdata[10]:.3f} Vel: %{customdata[0]:.2f} </br> \
-                    <br>Tau: %{customdata[8]:.3f} Phi: %{customdata[1]:.0f}</br> \
+                    <b>LR: %{customdata[3]:.3f} | My: %{customdata[14]:.3f}</b> \
+                    <br>Vel: %{customdata[0]:.2f} | Phi: %{customdata[1]:.0f}</br> \
+                    <br>Tau: %{customdata[8]:.3f} | OFy: %{customdata[10]:.3f} </br> \
                     <br>D_ceil: %{customdata[12]:.3f}</br>",
 
                 ## MARKER
@@ -696,25 +716,7 @@ class Policy_Trainer():
             )
         )
 
-        # fig.add_trace(
-        #     go.Volume(
-        #         ## ISO SURFACE
-        #         x=X_grid[:,1].flatten(),
-        #         y=X_grid[:,0].flatten(),
-        #         z=X_grid[:,2].flatten(),
-        #         value=y_pred_grid.flatten(),
-                
-        #         surface_count=1,
-        #         opacity=0.3,
-        #         isomin=0.07,
-        #         isomax=0.07,
-        #         cmin=0,
-        #         cmax=1,     
-        #         caps=dict(x_show=False, y_show=False),
-        #         colorbar=dict(title='Title',) , 
-        #         hoverinfo='skip'
-        #     )
-        # )
+        
 
         fig.add_trace(
             go.Scatter3d(
@@ -739,13 +741,11 @@ class Policy_Trainer():
                 y=[Tau_tr],
                 z=[d_ceil_tr],
 
-                # ## HOVER DATA
-                # customdata=df_custom,
-                # hovertemplate=" \
-                #     <b>LR: %{customdata[3]:.3f}</b> \
-                #     <br>OFy: %{customdata[10]:.3f} Vel: %{customdata[0]:.2f} </br> \
-                #     <br>Tau: %{customdata[8]:.3f} Phi: %{customdata[1]:.0f}</br> \
-                #     <br>D_ceil: %{customdata[12]:.3f}</br>",
+                ## HOVER DATA
+                hovertemplate=
+                    f"<b>My: {My_tr:.3f} N*mm</b> \
+                    <br>Tau: {Tau_tr:.3f} | OFy: {OFy_tr:.3f} </br> \
+                    <br>D_ceil: {d_ceil_tr:.3f}</br>",
 
                 ## MARKER
                 mode='markers',
@@ -842,18 +842,18 @@ if __name__ == "__main__":
     # Policy.train_NN_Model(X_train,y_train,X_test,y_test,epochs=350)
     # Policy.save_NN_Params(NN_Param_Path,FileName)
     Policy.load_NN_Params(NN_Param_Path)
-    print(Policy.NN_Predict(np.array([[0.29,-0.673,0.952]])))
+    print(Policy.NN_Predict(np.array([[0.233,-2.778,0.518]])))
 
     ## TRAIN OC_SVM FLIP_CLASSIFICATION POLICY
     Policy.train_OC_SVM(X)
     Policy.save_SVM_Params(SVM_Param_Path,FileName)
-    print(Policy.OC_SVM_Predict(np.array([[0.256,-4.589,0.441]])))
+    print(Policy.OC_SVM_Predict(np.array([[0.233,-2.778,0.518]])))
 
-    Policy.plotClassification(df_train,iso_level=0.0)
-    Policy.plotPolicy(df_raw,PlotRegion=True,iso_level=0.0)
+    # Policy.plotClassification(df_train,iso_level=0.0)
+    # Policy.plotPolicy(df_raw,PlotRegion=True,iso_level=0.0)
 
-    # dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
-    # fileName = "Control_Playground--trial_24--NL.csv"
-    # trial = DataFile(dataPath,fileName,dataType='SIM')
+    dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
+    fileName = "Control_Playground--trial_24--NL.csv"
+    trial = DataFile(dataPath,fileName,dataType='SIM')
     
-    # Policy.plotTraj(df_raw,trial)
+    Policy.plotTraj(df_raw,trial,iso_level=0.0)

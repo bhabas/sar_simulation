@@ -668,7 +668,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
             {
                 Policy_Flip = OC_SVM_predict(&SVM_Policy_Flip,X);
 
-                if(Policy_Flip >= 0.07f && onceFlag == false)
+                if(Policy_Flip >= 0.00f && onceFlag == false)
                 {   
                     onceFlag = true;
                     flip_flag = true;

@@ -186,7 +186,7 @@ def cmd_send(env):
                     
             elif action == 'GZ_reset':
                 print("Reset Pos/Vel -- Sticky off -- Controller Reset\n")
-                env.reset_pos()
+                env.ParamOptim_reset()
 
         except ValueError:
             print('\033[93m' + "INVALID INPUT: Try again" + '\x1b[0m')
