@@ -5,10 +5,7 @@ from stable_baselines3.common.callbacks import *
 import gym
 
 
-from Brake_Trigger_Env import Brake_Trigger_Env
 from CF_Env import CF_Env
-# from CF_Env2 import CF_Env2
-from CF_Env3 import CF_Env3
 
 
 
@@ -17,13 +14,13 @@ now = datetime.now()
 current_time = now.strftime("%H-%M")
 
 ## INITIATE ENVIRONMENT
-env = CF_Env3()
+env = CF_Env()
 env.reset()
 
 
 ## CREATE MODEL AND LOG DIRECTORY
 BASEPATH = f"/home/bhabas/catkin_ws/src/crazyflie_simulation"
-models_dir = f"{BASEPATH}/crazyflie_projects/DeepRL/models/{env.env_name}/SAC-{current_time}"
+models_dir = f"{BASEPATH}/crazyflie_projects/DeepRL/models/{env.env_name}/SAC-{env.env_name}-{current_time}"
 log_dir = "/home/bhabas/Downloads/logs"
 
 checkpoint_callback = CheckpointCallback(save_freq=5000, save_path=models_dir,name_prefix=env.env_name)
@@ -38,16 +35,9 @@ class TensorboardCallback(BaseCallback):
         super(TensorboardCallback, self).__init__(verbose)
 
     def _on_step(self) -> bool:
-        # Log scalar value (here a random variable)
-        # self.model.policy.action_dist.distribution.mean
-        # self.model.policy.action_dist.distribution.scale
         return True
 
     def _on_rollout_end(self) -> None:
-        # self.logger.record('rollout/Theta_Impact',self.training_env.envs[0].env.theta_impact)
-        # self.logger.record('rollout/R1',self.training_env.envs[0].env.R1)
-        # self.logger.record('rollout/R2',self.training_env.envs[0].env.R2)
-        # self.logger.record('rollout/R3',self.training_env.envs[0].env.R3)
         self.logger.record('time/K_ep',self.training_env.envs[0].env.k_ep)
 
 
@@ -70,7 +60,7 @@ model = SAC(
 
 model.learn(
     total_timesteps=100e3,
-    tb_log_name=f"SAC-{current_time}",
+    tb_log_name=f"SAC-{env.env_name}-{current_time}",
     callback=callback
 )
 
