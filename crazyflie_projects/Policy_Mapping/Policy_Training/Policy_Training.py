@@ -856,4 +856,4 @@ if __name__ == "__main__":
     fileName = "Control_Playground--trial_24--NL.csv"
     trial = DataFile(dataPath,fileName,dataType='SIM')
     
-    Policy.plotTraj(df_raw,trial,iso_level=0.0)
+    Policy.plotTraj(df_train,trial,iso_level=0.0)

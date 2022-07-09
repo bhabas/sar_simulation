@@ -239,6 +239,7 @@ class CrazyflieEnv():
         z_0 = self.h_ceiling - d_ceil_0
         x_0 = 0.0
         self.Vel_Launch([x_0,0.0,z_0],[vx_0,0,vz_0])
+        self.gazebo_pause_physics()
 
         return np.array(self.obs,dtype=np.float32)
 
@@ -607,7 +608,8 @@ class CrazyflieEnv():
 
         ## PUBLISH MODEL STATE SERVICE REQUEST
         self.callService('/gazebo/set_model_state',state_srv,SetModelState)
-      
+        self.gazebo_unpause_physics()
+
     def reset_pos(self,z_0=0.379): # Disable sticky then places spawn_model at origin
         """Reset pose/twist of simulated drone back to home position. 
         As well as turning off stickyfeet
