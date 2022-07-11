@@ -323,12 +323,12 @@ class CF_Env():
 
     def CalcReward(self):
 
-        ## DISTANCE REWARD (Gaussian Function)
+        ## DISTANCE REWARD 
         R1 = np.clip(1/np.abs(self.d_min+1e-3),0,10)/10
         R1 *= 0.1
 
         ## IMPACT ANGLE REWARD
-        R2 = np.clip(np.abs(self.theta_impact)/90 - 0.2,0,1)
+        R2 = np.clip(np.abs(self.theta_impact)/120,0,1)
         R2 *= 0.3
 
         ## PAD CONTACT REWARD
@@ -346,7 +346,6 @@ class CF_Env():
             R3 = 0.0
 
         return R1 + R2 + R3
-
 
     def render(self,mode=None):
 

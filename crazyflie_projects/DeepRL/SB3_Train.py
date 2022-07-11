@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from stable_baselines3 import PPO,SAC
+from stable_baselines3 import PPO,SAC,TD3
 from stable_baselines3.common.callbacks import *
 import gym
 
@@ -20,7 +20,7 @@ env.reset()
 
 ## CREATE MODEL AND LOG DIRECTORY
 BASEPATH = f"/home/bhabas/catkin_ws/src/crazyflie_simulation"
-models_dir = f"{BASEPATH}/crazyflie_projects/DeepRL/models/{env.env_name}/SAC-{env.env_name}-{current_time}"
+models_dir = f"{BASEPATH}/crazyflie_projects/DeepRL/models/{env.env_name}/TD3-{env.env_name}-{current_time}"
 log_dir = "/home/bhabas/Downloads/logs"
 
 checkpoint_callback = CheckpointCallback(save_freq=5000, save_path=models_dir,name_prefix=env.env_name)
@@ -45,13 +45,11 @@ class TensorboardCallback(BaseCallback):
 
 callback = CallbackList([checkpoint_callback,TensorboardCallback()])
 
-model = SAC(
+model = TD3(
     "MlpPolicy",
     env,
     gamma=0.999,
     learning_rate=0.001,
-    use_sde=False,
-    sde_sample_freq=4,
     verbose=1,
     device='cpu',
     create_eval_env=True,
@@ -59,8 +57,8 @@ model = SAC(
 ) 
 
 model.learn(
-    total_timesteps=100e3,
-    tb_log_name=f"SAC-{env.env_name}-{current_time}",
+    total_timesteps=1e6,
+    tb_log_name=f"TD3-{env.env_name}-{current_time}",
     callback=callback
 )
 

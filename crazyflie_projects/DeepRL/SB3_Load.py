@@ -12,11 +12,11 @@ env.reset()
 
 ## SELECT MODEL FROM DIRECTORY
 BASEPATH = f"/home/bhabas/catkin_ws/src/crazyflie_simulation"
-models_dir = f"{BASEPATH}/crazyflie_projects/DeepRL/models/{env.env_name}/SAC-{env.env_name}-15-50"
-model_path = f"{models_dir}/{env.env_name}_{40}000_steps.zip"
+models_dir = f"{BASEPATH}/crazyflie_projects/DeepRL/models/{env.env_name}/PPO-{env.env_name}-14-28"
+model_path = f"{models_dir}/{env.env_name}_{620}000_steps.zip"
 
 
-model = SAC.load(model_path,env=env)
+model = PPO.load(model_path,env=env)
 
 ## RENDER TRAINED MODEL FOR N EPISODES-
 episodes = 50
