@@ -288,10 +288,11 @@ class CrazyflieEnv():
         vz = vel*np.sin(np.deg2rad(phi))
         vx = vel*np.cos(np.deg2rad(phi))
 
-        tau_0 = 0.6
+        tau_0 = 0.5
         z_0 = self.h_ceiling - tau_0*vz
 
         self.Vel_Launch([0,0,z_0],[vx,0,vz])
+        self.sleep(0.05)
         self.SendCmd("Policy",cmd_vals=[Tau,My,0.0],cmd_flag=1)
 
 

@@ -638,7 +638,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
             if (strcmp(PolicyType,"PARAM_OPTIM")==0)
             {
-                if(Tau <= Tau_thr && onceFlag == false && state->velocity.z > 0.5){
+                if(Tau <= Tau_thr && onceFlag == false && state->velocity.z > 0.1){
                     onceFlag = true;
                     flip_flag = true;  
 
