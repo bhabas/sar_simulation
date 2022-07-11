@@ -16,6 +16,7 @@ def runTraining(env,agent,V_d,phi,logName):
 
     agent.vel_d = [V_d,phi,0.0]
     env.createCSV(logName)
+    FinalRun_Counter = 0
 
     # ============================
     ##          Episode         
@@ -67,6 +68,11 @@ def runTraining(env,agent,V_d,phi,logName):
             Tau_thr = theta[0, k_run]    # Tau threshold 10*[s]
             My = theta[1, k_run]         # Policy Moment Action [N*mm]
 
+            ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
+            env.Iyy = rospy.get_param("Iyy") + np.random.normal(0,1.5e-6)
+            env.mass = rospy.get_param("/CF_Mass") + np.random.normal(0,0.0005)
+            env.updateInertia()
+
             env.ParamOptim_reset()
             env.startLogging(logName)
             obs,reward,done,info = env.ParamOptim_Flight(Tau_thr/10,My,V_d,phi)
@@ -99,8 +105,10 @@ def runTraining(env,agent,V_d,phi,logName):
         agent.reward_avg = np.mean(reward_arr)
         agent.RL_Publish()
 
-        # if all(agent.sigma < 0.05):
-        #     break
+        if all(agent.sigma < 0.05):
+            FinalRun_Counter += 1
+            if FinalRun_Counter >=3:
+                break
 
 
 

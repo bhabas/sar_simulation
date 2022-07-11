@@ -41,6 +41,9 @@ class CrazyflieEnv():
         self.modelName = rospy.get_param('/MODEL_NAME')
         self.h_ceiling = rospy.get_param("/CEILING_HEIGHT") # [m]
         self.env_name = "CF_Gazebo"
+        
+        
+        
 
         ## TRAJECTORY VALUES
         self.posCF_0 = [0.0, 0.0, 0.4]        # Default hover position [m]
@@ -715,6 +718,12 @@ class CrazyflieEnv():
         self.callService("/gazebo/unpause_physics",srv,Empty)
         
     def preInit_Values(self):
+
+        self.Ixx = rospy.get_param("/Ixx")
+        self.Iyy = rospy.get_param("/Iyy")
+        self.Izz = rospy.get_param("/Izz")
+        self.mass = rospy.get_param("/CF_Mass")
+        
         ## RAW VICON VALUES
         self.posViconRaw = [0,0,0]
         self.quatViconRaw = [0,0,0,1]

@@ -13,7 +13,7 @@ BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
 sys.path.insert(1,'/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_env')
 sys.path.insert(1,BASE_PATH)
 
-from crazyflie_env.src.Crazyflie_env2 import CrazyflieEnv
+from crazyflie_env.src.Crazyflie_env import CrazyflieEnv
 from crazyflie_env.src.RL_Training_2_term_Policy import runTraining
 from crazyflie_env.src.RL_agents.EPHE_Agent import EPHE_Agent
 
@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
 
         ## INITIALIALIZE LOGGING DATA
-        trial_name = f"{agent.agent_type}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--{env.modelInitials()}--DR"
+        trial_name = f"{agent.agent_type}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--{env.modelInitials()}--DR.csv"
         
         ## PARAMTER OPTIMIZATION
         runTraining(env,agent,V_d,phi,trial_name)
