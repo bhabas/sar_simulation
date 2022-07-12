@@ -8,11 +8,11 @@ import os
 import numpy as np
 
 
-class CF_Env():
+class CF_Env_2D():
     metadata = {'render.modes': ['human']}
     def __init__(self):
-        super(CF_Env, self).__init__()
-        self.env_name = "CF_Env"
+        super(CF_Env_2D, self).__init__()
+        self.env_name = "CF_Env_2D"
         self.k_ep = 0
 
         ## PHYSICS PARAMETERS
@@ -119,7 +119,7 @@ class CF_Env():
                     self.d_min = d_ceil
 
                 self.state = (x,vx,z,vz,theta,dtheta)
-                self.obs = (Tau,OFy,d_ceil)
+                self.obs = (Tau,OFy,d_ceil*0)
                 reward = 0
 
             else:
@@ -329,7 +329,7 @@ class CF_Env():
 
         ## IMPACT ANGLE REWARD
         R2 = np.clip(np.abs(self.theta_impact)/120,0,1)
-        R2 *= 0.3
+        R2 *= 0.2
 
         ## PAD CONTACT REWARD
         if self.pad_connections >= 3: 
@@ -634,6 +634,8 @@ class CF_Env():
         ## RESET STATE
         vel = np.random.uniform(low=1.5,high=3.5)
         phi = np.random.uniform(low=30,high=90)
+
+        # vel = 3.0
         # phi = 70
 
         vx_0 = vel*np.cos(np.deg2rad(phi))
@@ -643,7 +645,7 @@ class CF_Env():
         Tau_0 = 0.5
         d_ceil_0 = Tau_0*vz_0+1e-3
         OFy = -vx_0/d_ceil_0
-        self.obs = (Tau_0,OFy,d_ceil_0)
+        self.obs = (Tau_0,OFy,d_ceil_0*0)
 
 
         z_0 = self.h_ceil - d_ceil_0
@@ -658,7 +660,7 @@ class CF_Env():
         return np.array(self.obs,dtype=np.float32)
 
 if __name__ == '__main__':
-    env = CF_Env()
+    env = CF_Env_2D()
     env.RENDER = True
     for _ in range(25):
         env.reset()
