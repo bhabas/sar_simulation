@@ -41,6 +41,9 @@ class CrazyflieEnv():
         self.modelName = rospy.get_param('/MODEL_NAME')
         self.h_ceiling = rospy.get_param("/CEILING_HEIGHT") # [m]
         self.env_name = "CF_Gazebo"
+        
+        
+        
 
         ## TRAJECTORY VALUES
         self.posCF_0 = [0.0, 0.0, 0.4]        # Default hover position [m]
@@ -239,6 +242,7 @@ class CrazyflieEnv():
         z_0 = self.h_ceiling - d_ceil_0
         x_0 = 0.0
         self.Vel_Launch([x_0,0.0,z_0],[vx_0,0,vz_0])
+        self.gazebo_pause_physics()
 
         return np.array(self.obs,dtype=np.float32)
 
@@ -255,12 +259,11 @@ class CrazyflieEnv():
 
         self.SendCmd('Ctrl_Reset')
         self.reset_pos()
-        self.sleep(0.01)
-
-        self.SendCmd('Tumble',cmd_flag=1)
         self.SendCmd('Ctrl_Reset')
         self.reset_pos()
-        self.sleep(1.0)
+
+        self.SendCmd('Tumble',cmd_flag=1)
+        self.sleep(0.25)
 
         obs = None
         return obs
@@ -284,10 +287,11 @@ class CrazyflieEnv():
         vz = vel*np.sin(np.deg2rad(phi))
         vx = vel*np.cos(np.deg2rad(phi))
 
-        tau_0 = 0.6
+        tau_0 = 0.5
         z_0 = self.h_ceiling - tau_0*vz
 
         self.Vel_Launch([0,0,z_0],[vx,0,vz])
+        self.sleep(0.05)
         self.SendCmd("Policy",cmd_vals=[Tau,My,0.0],cmd_flag=1)
 
 
@@ -349,7 +353,7 @@ class CrazyflieEnv():
                 self.error_str = "Rollout Completed: NaN in State Vector"
 
                 print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
-                self.Restart([True,False,False])
+                self.Restart([True,True,True])
                 print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
                 self.done = True
                 # print(self.error_str)
@@ -366,7 +370,7 @@ class CrazyflieEnv():
 
         ## IMPACT ANGLE REWARD
         R2 = np.clip(np.abs(self.eulCF_impact[1])/120,0,1)
-        R2 *= 0.3
+        R2 *= 0.2
 
         ## PAD CONTACT REWARD
         if self.pad_connections >= 3: 
@@ -577,10 +581,12 @@ class CrazyflieEnv():
         """        
 
         ## SET DESIRED VEL IN CONTROLLER
+        self.gazebo_pause_physics()
         self.SendCmd('Pos',cmd_flag=0)
-        self.iter_step(4)
+        self.iter_step(2)
         self.SendCmd('Vel',cmd_vals=vel_d,cmd_flag=1)
-        self.iter_step(4)
+        self.iter_step(2)
+        
 
         ## CREATE SERVICE MESSAGE
         state_srv = ModelState()
@@ -607,8 +613,9 @@ class CrazyflieEnv():
 
         ## PUBLISH MODEL STATE SERVICE REQUEST
         self.callService('/gazebo/set_model_state',state_srv,SetModelState)
-      
-    def reset_pos(self,z_0=0.379): # Disable sticky then places spawn_model at origin
+        self.gazebo_unpause_physics()
+
+    def reset_pos(self,z_0=0.358): # Disable sticky then places spawn_model at origin
         """Reset pose/twist of simulated drone back to home position. 
         As well as turning off stickyfeet
 
@@ -648,13 +655,7 @@ class CrazyflieEnv():
         srv.Inertia.z = self.Izz
 
         ## SEND LOGGING REQUEST VIA SERVICE
-        try:
-            rospy.wait_for_service('/CF_Internal/DomainRand',timeout=1.0)
-            domainRand_service = rospy.ServiceProxy('/CF_Internal/DomainRand', domainRand)
-            domainRand_service(srv)
-        except rospy.exceptions.ROSException:
-            
-            pass
+        self.callService('/CF_Internal/DomainRand',srv,domainRand)
 
 
 
@@ -713,6 +714,12 @@ class CrazyflieEnv():
         self.callService("/gazebo/unpause_physics",srv,Empty)
         
     def preInit_Values(self):
+
+        self.Ixx = rospy.get_param("/Ixx")
+        self.Iyy = rospy.get_param("/Iyy")
+        self.Izz = rospy.get_param("/Izz")
+        self.mass = rospy.get_param("/CF_Mass")
+        
         ## RAW VICON VALUES
         self.posViconRaw = [0,0,0]
         self.quatViconRaw = [0,0,0,1]

@@ -719,7 +719,7 @@ void CF_DataConverter::append_CSV_misc()
 
 
     // MISC RL LABELS
-    fprintf(fPtr,"%.2f,--,--,--,",reward);
+    fprintf(fPtr,"%.2f,--,",reward);
 
     // MISC INTERNAL STATE ESTIMATES
     fprintf(fPtr,"--,--,--,"); // Tau_est,OF_x_est,OF_y_est
