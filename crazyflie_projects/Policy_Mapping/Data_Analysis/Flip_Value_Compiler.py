@@ -16,7 +16,7 @@ sys.path.insert(0,BASE_PATH)
 from crazyflie_logging.data_analysis.Data_Analysis import DataFile
 
 
-dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/NL_DR_Subset/"
+dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
 compiledPath = f"{BASE_PATH}/crazyflie_projects/Policy_Mapping/Data_Logs/NL_DR_Subset"
 
 df_list = []
@@ -29,6 +29,7 @@ start_time = time.time()
 end_time = time.time()
 time_delta = 20 # Estimated analysis time per file [s]
 alpha = 0.15 # Filter parameter to smooth out time estimate
+import fileinput
 
 ## ITER OVER ALL FILES IN DIR
 for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
@@ -46,6 +47,9 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
         ## RECORD DATA FROM LOG FILE    
         print(f"Current File: {fileName} \t Index: {ii}/{num_files-1} \t Percentage: {100*ii/num_files:.2f}% \t Minutes to Completion: {time_delta/60*(num_files-ii):.1f}")
 
+        # with fileinput.FileInput(dataPath+fileName, inplace=True, backup='.bak') as file:
+        #     for line in file:
+        #         print(line.replace("--,--,Rollout Completed", "Rollout Completed"), end='')
         trial = DataFile(dataPath,fileName,dataType='EXP')
         
         ## TRIAL CONDITIONS

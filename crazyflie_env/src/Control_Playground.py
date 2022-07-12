@@ -14,6 +14,7 @@ def cmd_send(env):
             1:'Pos',
             2:'Vel',
             5:'Stop',
+            7:'Moment',
             8:'Policy',
 
             10:'P2P_traj',
@@ -22,7 +23,8 @@ def cmd_send(env):
 
             20:'Tumble',
             21:'Load_Params',
-            22:'Cap_Logging',
+            22:'Start_Logging',
+            23:'Cap_Logging',
 
             90:'GZ_traj',
             91:'GZ_reset',
@@ -33,7 +35,7 @@ def cmd_send(env):
             print("========== Command Types ==========")
             print("0:Ctrl_Reset, \t1:Pos, \t\t2:Vel, \t\t5:Stop, \t8:Policy")
             print("10:P2P_traj, \t11:Vel_traj, \t12:Impact_traj,")
-            print("20:Tumble, \t21:Load_Params, 22:Cap_Logging,")
+            print("20:Tumble, \t21:Load_Params, 22:Start_Logging, 23:Cap_Logging,")
             print("90:GZ_traj, \t91:GZ_reset, \t92:StickyPads")
             val = env.userInput("\nCmd: ",int)
             print()
@@ -47,6 +49,9 @@ def cmd_send(env):
 
                 env.SendCmd('StickyPads',cmd_vals,0)
                 env.SendCmd(action,cmd_vals,cmd_flag)
+            
+            elif action=='Start_Logging':
+                env.startLogging(logName)
 
             elif action=='Cap_Logging':
                 env.capLogging(logName)
@@ -80,6 +85,11 @@ def cmd_send(env):
 
                 env.SendCmd(action,cmd_vals,cmd_flag)
 
+            elif action=='Moment':
+                cmd_vals = env.userInput("Set desired Moment values (x,y,z) N*mm: ",float)
+                cmd_flag = env.userInput("Moment control On/Off (1,0): ",int)
+                env.SendCmd(action,cmd_vals,cmd_flag)
+
 
             elif action=='Load_Params': # Updates gain values from config file
                 cmd_vals = [0,0,0]
@@ -89,7 +99,7 @@ def cmd_send(env):
                 env.setParams()
                 env.SendCmd(action,cmd_vals,cmd_flag)
 
-            elif action=='moment':
+            elif action=='Moment':
                 cmd_vals = env.userInput("Set desired moment values (x,y,z): ",float)
                 cmd_flag = 1
                 print()
@@ -186,7 +196,7 @@ def cmd_send(env):
                     
             elif action == 'GZ_reset':
                 print("Reset Pos/Vel -- Sticky off -- Controller Reset\n")
-                env.reset_pos()
+                env.ParamOptim_reset()
 
         except ValueError:
             print('\033[93m' + "INVALID INPUT: Try again" + '\x1b[0m')
@@ -195,7 +205,6 @@ def cmd_send(env):
 
 if __name__ == '__main__':
 
-    # from Crazyflie_env import CrazyflieEnv
     from Crazyflie_env import CrazyflieEnv
     
     ## INIT GAZEBO ENVIRONMENT
@@ -205,15 +214,8 @@ if __name__ == '__main__':
     trial_num = 24
     logName = f"Control_Playground--trial_{int(trial_num):02d}--{env.modelInitials()}.csv"
 
-
-    env.accCF_max = [1.0, 1.0, 3.1]
-
     env.createCSV(logName)
-    env.startLogging(logName)
-
-    # time.sleep(5)
     cmd_thread = threading.Thread(target=cmd_send,args=(env,))
     cmd_thread.start()   
-
 
     rospy.spin()

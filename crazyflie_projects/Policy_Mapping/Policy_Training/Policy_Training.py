@@ -2,16 +2,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import plotly.graph_objects as go
 import pandas as pd
 import os
-
-
-## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
-import sys,rospkg
-BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
-sys.path.insert(0,BASE_PATH)
-
-from crazyflie_logging.data_analysis.Data_Analysis import DataFile
+from datetime import datetime
 
 ## PYTORCH IMPROTS
 import torch
@@ -24,10 +18,16 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import *
 from sklearn import preprocessing
 
-import plotly.graph_objects as go
+
+## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
+import sys,rospkg
+BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
+sys.path.insert(0,BASE_PATH)
+from crazyflie_logging.data_analysis.Data_Analysis import DataFile
+
 
 np.set_printoptions(suppress=True)
-BASEPATH = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Policy_Mapping"
+BASEPATH = "/home/bhabas/catkin_ws/src/crazyflie_simulation"
 
 class Policy_Trainer():
     def __init__(self,NN_model,SVM_model,model_initials,learning_rate=0.001):
@@ -51,7 +51,7 @@ class Policy_Trainer():
         self.scaler = preprocessing.StandardScaler().fit(X)
 
         ## SAVE SCALER TO FILE 
-        np.savetxt(f"{BASEPATH}/Policy_Training/Info/Scaler_{self.model_initials}.csv",
+        np.savetxt(f"{BASEPATH}/crazyflie_projects/Policy_Mapping/Policy_Training/Info/Scaler_{self.model_initials}.csv",
             np.stack((self.scaler.mean_,self.scaler.scale_),axis=1),
             fmt='%.5f',
             delimiter=',',
@@ -64,7 +64,7 @@ class Policy_Trainer():
         """        
         
         arr = np.loadtxt(
-            open(f"{BASEPATH}/Info/Scaler_Flip_{self.model_initials}.csv", "rb"),
+            open(f"{BASEPATH}/crazyflie_projects/Policy_Mapping/Policy_Training/Info/Scaler_{self.model_initials}.csv", "rb"),
             delimiter=",",
             skiprows=1)
 
@@ -84,10 +84,6 @@ class Policy_Trainer():
 
         return self.scaler.inverse_transform(X_scaled)
 
-
-
-
-
     def NN_Predict(self,X):
         X_scaled = torch.FloatTensor(self.scaleData(X))
 
@@ -96,9 +92,12 @@ class Policy_Trainer():
 
         return y_pred
 
-    def save_NN_Params(self,path):
-        f = open(path,'a')
+    def save_NN_Params(self,SavePath,FileName):
+        f = open(SavePath,'a')
         f.truncate(0) ## Clears contents of file
+
+        date_time = datetime.now().strftime('%m/%d-%H:%M')
+        f.write(f"// Filename: {FileName} Time: {date_time}\n")
         f.write("static char NN_Params_Flip[] = {\n")
         
         NN_size = np.array([4]).reshape(-1,1)
@@ -167,6 +166,7 @@ class Policy_Trainer():
         
         ## READ PARAMS FROM FILE AS STRING
         f = open(path,"r")
+        f.readline() # Metadata line
         f.readline() # Skip first line
         file_string = f.read()
 
@@ -221,49 +221,29 @@ class Policy_Trainer():
         y_train = torch.FloatTensor(y_train)
         y_test = torch.FloatTensor(y_test)
 
-
-        y_train_My = y_train
-        y_test_My = y_test
-
     
         ## DEFINE TRAINING LOSS
         criterion_train_My = nn.MSELoss()
         losses_train = []
-        accuracies_train = []
-
 
         ## DEFINE VALIDATION LOSS
         criterion_test_My = nn.MSELoss()
         losses_test = []
-        accuracies_test = []
 
         for ii in range(epochs):
-
 
             ## CALC TRAINING LOSS
             y_pred_train = self.NN_model.forward(X_train)
 
-            loss_train_My = criterion_train_My(y_pred_train,y_train_My)
+            loss_train_My = criterion_train_My(y_pred_train,y_train)
             loss = loss_train_My
             losses_train.append(loss_train_My.item())
 
             ## CALC VALIDATION LOSS
             with torch.no_grad():
                 y_pred_test = self.NN_model.forward(X_test)
-                loss_test_My = criterion_test_My(y_pred_test,y_test_My)
+                loss_test_My = criterion_test_My(y_pred_test,y_test)
                 losses_test.append(loss_test_My.item())
-
-
-
-            # ## CALC TRAINING ACCURACY
-            # y_pred_train_class = np.where(y_pred_train[:,0].detach().numpy() > LR_bound,1,0)
-            # accuracy_train = balanced_accuracy_score(np.where(y_train[:,0] > LR_bound,1,0),y_pred_train_class)
-            # accuracies_train.append(accuracy_train)
-
-            # ## CALC TESTING ACCURACY
-            # y_pred_test_class = np.where(y_pred_test[:,0].detach().numpy() < LR_bound,0,1)
-            # accuracy_test = balanced_accuracy_score(np.where(y_test[:,0] < LR_bound,0,1),y_pred_test_class)
-            # accuracies_test.append(accuracy_test)
 
             if ii%10 == 1:
                 print(f"epoch {ii} and loss is: {losses_train[-1]}")
@@ -275,25 +255,15 @@ class Policy_Trainer():
 
 
         ## PLOT LOSSES AND ACCURACIES
-        fig = plt.figure(1,figsize=(12,8))
-        ax1 = fig.add_subplot(2,1,1)
-        ax1.plot(losses_train,label="Training Loss")
-        ax1.plot(losses_test,label="Validation Loss")
-        ax1.set_ylabel("Loss")
-        ax1.set_title("Losses")
-        # ax1.set_ylim(0)
-        ax1.set_yscale('log')
-        ax1.legend()
-        ax1.grid()
-
-        ax2 = fig.add_subplot(2,1,2)
-        ax2.plot(accuracies_train,label="Training Accuracry")
-        ax2.plot(accuracies_test,label="Validation Accuracy")
-        ax2.set_ylim(0,1.1)
-        ax2.set_ylabel("Classification Accuracy")
-        ax2.set_title("Balanced Accuracy")
-        ax2.grid()
-        ax2.legend(loc="lower right")
+        fig = plt.figure(1,figsize=(6,4))
+        ax = fig.add_subplot()
+        ax.plot(losses_train,label="Training Loss")
+        ax.plot(losses_test,label="Validation Loss")
+        ax.set_ylabel("Loss")
+        ax.set_title("My Prediction Loss")
+        ax.set_yscale('log')
+        ax.legend()
+        ax.grid()
 
 
         plt.tight_layout()
@@ -334,10 +304,13 @@ class Policy_Trainer():
         ## FIT OC_SVM MODEL
         self.SVM_model.fit(X_train)
 
-    def save_SVM_Params(self,path):
+    def save_SVM_Params(self,SavePath,FileName):
 
-        f = open(path,'a')
+        f = open(SavePath,'a')
         f.truncate(0) ## Clears contents of file
+
+        date_time = datetime.now().strftime('%m/%d-%H:%M')
+        f.write(f"// Filename: {FileName} Time: {date_time}\n")
         f.write("static char SVM_Params[] = {\n")
         
 
@@ -482,16 +455,16 @@ class Policy_Trainer():
         print(f"False Negatives: {cfnMatrix[1,0]}")
         print(f"Classification Report: {classification_report(y_class,y_pred)}")
 
-    def plotClassification(self,df_custom):
+    def plotClassification(self,df_custom,iso_level=0.0):
         
-
+        ## MESHGRID OF DATA POINTS
         Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
             np.linspace(0.15, 0.35, 60),
             np.linspace(-15, 1, 45),
             np.linspace(0.0, 1.0, 45)
         )
 
-        ## CONCATENATE DATA TO MATCH INPUT
+        ## CONCATENATE DATA TO MATCH INPUT SHAPE
         X_grid = np.stack((
             Tau_grid.flatten(),
             OF_y_grid.flatten(),
@@ -515,9 +488,9 @@ class Policy_Trainer():
                 ## HOVER DATA
                 customdata=df_custom,
                 hovertemplate=" \
-                    <b>LR: %{customdata[3]:.3f}</b> \
-                    <br>OFy: %{customdata[10]:.3f} Vel: %{customdata[0]:.2f} </br> \
-                    <br>Tau: %{customdata[8]:.3f} Phi: %{customdata[1]:.0f}</br> \
+                    <b>LR: %{customdata[3]:.3f} \tMy: %{customdata[14]:.3f}</b> \
+                    <br>Vel: %{customdata[0]:.2f} \tPhi: %{customdata[1]:.0f}</br> \
+                    <br>Tau: %{customdata[8]:.3f} \tOFy: %{customdata[10]:.3f} </br> \
                     <br>D_ceil: %{customdata[12]:.3f}</br>",
 
                 ## MARKER
@@ -542,8 +515,8 @@ class Policy_Trainer():
                 
                 surface_count=1,
                 opacity=0.3,
-                isomin=0.07,
-                isomax=0.07,
+                isomin=iso_level,
+                isomax=iso_level,
                 colorscale='Viridis',  
                 cmin=0,
                 cmax=1,     
@@ -567,7 +540,7 @@ class Policy_Trainer():
         )
         fig.show()
 
-    def plotPolicy(self,df_custom,PlotRegion=False):
+    def plotPolicy(self,df_custom,PlotRegion=False,iso_level=0.0):
 
         fig = go.Figure()
 
@@ -588,7 +561,7 @@ class Policy_Trainer():
 
             ## PREDICT VALID POINTS
             y_pred_grid = self.SVM_model.decision_function(self.scaleData(X_grid))
-            valid_idx = np.where(y_pred_grid >= 0.0)
+            valid_idx = np.where(y_pred_grid >= iso_level)
 
             X_grid = X_grid[valid_idx]
             y_pred_My = self.NN_Predict(X_grid).numpy()
@@ -632,13 +605,13 @@ class Policy_Trainer():
 
                     ## HOVER DATA
                     customdata=np.stack((error,df_custom["My_mean"].to_numpy().flatten(),y_pred),axis=1),
-                    hovertemplate=
-                    "<br>My: %{customdata[1]:.3f}</br> \
-                     <br>Error: %{customdata[0]:.3f}</br> \
-                     <br>Pred: %{customdata[2]:.3f}</br>",
+                    hovertemplate=" \
+                    <b>LR: %{customdata[3]:.3f} | My: %{customdata[14]:.3f}</b> \
+                    <br>Vel: %{customdata[0]:.2f} | Phi: %{customdata[1]:.0f}</br> \
+                    <br>Tau: %{customdata[8]:.3f} | OFy: %{customdata[10]:.3f} </br> \
+                    <br>D_ceil: %{customdata[12]:.3f}</br>",
                     
                         
-
                     ## MARKER
                     mode='markers',
                     marker=dict(
@@ -670,7 +643,7 @@ class Policy_Trainer():
         )
         fig.show()
 
-    def plotTraj(self,df_custom,dataFile):
+    def plotTraj(self,df_custom,dataFile,iso_level=0.0):
 
         Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
             np.linspace(0.15, 0.35, 60),
@@ -691,9 +664,29 @@ class Policy_Trainer():
         arr = dataFile.grab_stateData(0,0,['Tau','OF_y','d_ceil'])
         Tau,OFy,d_ceil = np.split(arr,3,axis=1)
 
-        Tau_tr,OFy_tr,d_ceil_tr = dataFile.grab_flip_state(0,0,['Tau','OF_y','d_ceil'])
+        Tau_tr,OFy_tr,d_ceil_tr,My_tr = dataFile.grab_flip_state(0,0,['Tau','OF_y','d_ceil','My'])
 
         fig = go.Figure()
+
+        fig.add_trace(
+            go.Volume(
+                ## ISO SURFACE
+                x=X_grid[:,1].flatten(),
+                y=X_grid[:,0].flatten(),
+                z=X_grid[:,2].flatten(),
+                value=y_pred_grid.flatten(),
+                
+                surface_count=1,
+                opacity=0.3,
+                isomin=iso_level,
+                isomax=iso_level,
+                cmin=0,
+                cmax=1,     
+                caps=dict(x_show=False, y_show=False),
+                colorbar=dict(title='Title',) , 
+                hoverinfo='skip',
+            )
+        )
 
         # PLOT DATA POINTS
         fig.add_trace(
@@ -706,9 +699,9 @@ class Policy_Trainer():
                 ## HOVER DATA
                 customdata=df_custom,
                 hovertemplate=" \
-                    <b>LR: %{customdata[3]:.3f}</b> \
-                    <br>OFy: %{customdata[10]:.3f} Vel: %{customdata[0]:.2f} </br> \
-                    <br>Tau: %{customdata[8]:.3f} Phi: %{customdata[1]:.0f}</br> \
+                    <b>LR: %{customdata[3]:.3f} | My: %{customdata[14]:.3f}</b> \
+                    <br>Vel: %{customdata[0]:.2f} | Phi: %{customdata[1]:.0f}</br> \
+                    <br>Tau: %{customdata[8]:.3f} | OFy: %{customdata[10]:.3f} </br> \
                     <br>D_ceil: %{customdata[12]:.3f}</br>",
 
                 ## MARKER
@@ -723,25 +716,7 @@ class Policy_Trainer():
             )
         )
 
-        # fig.add_trace(
-        #     go.Volume(
-        #         ## ISO SURFACE
-        #         x=X_grid[:,1].flatten(),
-        #         y=X_grid[:,0].flatten(),
-        #         z=X_grid[:,2].flatten(),
-        #         value=y_pred_grid.flatten(),
-                
-        #         surface_count=1,
-        #         opacity=0.3,
-        #         isomin=0.07,
-        #         isomax=0.07,
-        #         cmin=0,
-        #         cmax=1,     
-        #         caps=dict(x_show=False, y_show=False),
-        #         colorbar=dict(title='Title',) , 
-        #         hoverinfo='skip'
-        #     )
-        # )
+        
 
         fig.add_trace(
             go.Scatter3d(
@@ -766,13 +741,11 @@ class Policy_Trainer():
                 y=[Tau_tr],
                 z=[d_ceil_tr],
 
-                # ## HOVER DATA
-                # customdata=df_custom,
-                # hovertemplate=" \
-                #     <b>LR: %{customdata[3]:.3f}</b> \
-                #     <br>OFy: %{customdata[10]:.3f} Vel: %{customdata[0]:.2f} </br> \
-                #     <br>Tau: %{customdata[8]:.3f} Phi: %{customdata[1]:.0f}</br> \
-                #     <br>D_ceil: %{customdata[12]:.3f}</br>",
+                ## HOVER DATA
+                hovertemplate=
+                    f"<b>My: {My_tr:.3f} N*mm</b> \
+                    <br>Tau: {Tau_tr:.3f} | OFy: {OFy_tr:.3f} </br> \
+                    <br>D_ceil: {d_ceil_tr:.3f}</br>",
 
                 ## MARKER
                 mode='markers',
@@ -824,28 +797,32 @@ if __name__ == "__main__":
     torch.manual_seed(0)
     np.random.seed(0)
 
-    LR_bound = 0.8 # Classify states with LR higher than this value as valid
+    ## DESIGNATE FILE PATHS
     model_initials = "NL_DR"
-    learning_rate = 0.01
+    NN_Param_Path = f'{BASEPATH}/crazyflie_projects/Policy_Mapping/Policy_Training/Info/NN_Layers_{model_initials}.h'
+    SVM_Param_Path = f'{BASEPATH}/crazyflie_projects/Policy_Mapping/Policy_Training/Info/SVM_Params_{model_initials}.h'
 
+    FilePath = f"{BASEPATH}/crazyflie_projects/Policy_Mapping/Data_Logs/"
+    FileName = "NL_LR_Trials_Subset.csv"
+
+    ## PRE-INITIALIZE MODELS
     NN_model = NN_Model()
-    SVM_model = OneClassSVM(nu=0.1,gamma=1.1)
-
-    Policy = Policy_Trainer(NN_model,SVM_model,model_initials,learning_rate=learning_rate)
+    SVM_model = OneClassSVM(nu=0.1,gamma=0.5)
+    Policy = Policy_Trainer(NN_model,SVM_model,model_initials)
 
     ## LOAD DATA
-    df_raw = pd.read_csv(f"{BASEPATH}/Data_Logs/NL_DR/NL_LR_Trials_DR.csv").dropna() # Collected data
-    df_train = df_raw.query("LR_4leg >= 0.85")
+    df_raw = pd.read_csv(FilePath+FileName).dropna() # Collected data
+    df_train = df_raw.query("LR_4leg >= 0.8")
 
     ## ORGANIZE DATA
     Tau = df_train["Tau_flip_mean"]
     OF_y = df_train["OFy_flip_mean"]
     d_ceil = df_train["D_ceil_flip_mean"]
-    learning_rate = df_train["LR_4leg"]
     My = df_train["My_mean"]
 
+    ## CREATE SCALER
     X = np.stack((Tau,OF_y,d_ceil),axis=1)
-    y = np.stack((learning_rate,My),axis=1)
+    Policy.createScaler(X)
 
     ## SPLIT DATA FEATURES INTO TRAINING AND TESTING SETS
     data_array = np.stack((Tau,OF_y,d_ceil,My),axis=1)
@@ -858,28 +835,25 @@ if __name__ == "__main__":
     X_test = test_df[['Tau','OFy','d_ceil']].to_numpy()
     y_test = test_df[['My_mean']].to_numpy()
 
+    
 
-    NN_Param_Path = f'{BASEPATH}/SVM_Work/include/NN_Params/NN_Layers_{model_initials}.h'
-    SVM_Param_Path = f'{BASEPATH}/Policy_Training/Info/SVM_Params_{model_initials}.h'
 
-    Policy.createScaler(X)
+    ## TRAIN NEURAL NETWORK My POLICY
+    # Policy.train_NN_Model(X_train,y_train,X_test,y_test,epochs=350)
+    # Policy.save_NN_Params(NN_Param_Path,FileName)
+    Policy.load_NN_Params(NN_Param_Path)
+    print(Policy.NN_Predict(np.array([[0.233,-2.778,0.518]])))
 
-    # Policy.train_NN_Model(X_train,y_train,X_test,y_test,epochs=1000)
-    # Policy.save_NN_Params(NN_Param_Path)
-    # # Policy.load_NN_Params(NN_Param_Path)
-    # print(Policy.NN_Predict(np.array([[0.29,-0.673,0.952]])))
-
+    ## TRAIN OC_SVM FLIP_CLASSIFICATION POLICY
     Policy.train_OC_SVM(X)
-    Policy.save_SVM_Params(SVM_Param_Path)
-    # Policy.load_SVM_Params(SVM_Param_Path)
+    Policy.save_SVM_Params(SVM_Param_Path,FileName)
+    print(Policy.OC_SVM_Predict(np.array([[0.233,-2.778,0.518]])))
 
-    print(Policy.OC_SVM_Predict(np.array([[0.256,-4.589,0.441]])))
-
-    # Policy.plotClassification(df_train)
-    # Policy.plotPolicy(df_raw,PlotRegion=True)
+    # Policy.plotClassification(df_train,iso_level=0.0)
+    # Policy.plotPolicy(df_raw,PlotRegion=True,iso_level=0.0)
 
     dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
     fileName = "Control_Playground--trial_24--NL.csv"
     trial = DataFile(dataPath,fileName,dataType='SIM')
     
-    Policy.plotTraj(df_raw,trial)
+    Policy.plotTraj(df_train,trial,iso_level=0.0)
