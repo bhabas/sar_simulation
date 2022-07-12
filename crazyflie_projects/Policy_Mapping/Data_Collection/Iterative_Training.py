@@ -19,13 +19,14 @@ from crazyflie_env.src.RL_agents.EPHE_Agent import EPHE_Agent
 
 
 if __name__ == '__main__':
-    
-    ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=True)
 
     ## Home Test List
     df = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/Policy_Mapping/Data_Collection/MasterTestList.csv")
     arr = df.to_numpy()
+    arr = np.flip(arr,axis=0)
+    
+    ## INIT GAZEBO ENVIRONMENT
+    env = CrazyflieEnv(gazeboTimeout=True)
 
     for V_d,phi,tau_0,trial_num in arr:
         
