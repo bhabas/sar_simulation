@@ -259,12 +259,11 @@ class CrazyflieEnv():
 
         self.SendCmd('Ctrl_Reset')
         self.reset_pos()
-        self.sleep(0.01)
-
-        self.SendCmd('Tumble',cmd_flag=1)
         self.SendCmd('Ctrl_Reset')
         self.reset_pos()
-        self.sleep(1.0)
+
+        self.SendCmd('Tumble',cmd_flag=1)
+        self.sleep(0.25)
 
         obs = None
         return obs
@@ -354,7 +353,7 @@ class CrazyflieEnv():
                 self.error_str = "Rollout Completed: NaN in State Vector"
 
                 print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
-                self.Restart([True,False,False])
+                self.Restart([True,True,True])
                 print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
                 self.done = True
                 # print(self.error_str)
@@ -371,7 +370,7 @@ class CrazyflieEnv():
 
         ## IMPACT ANGLE REWARD
         R2 = np.clip(np.abs(self.eulCF_impact[1])/120,0,1)
-        R2 *= 0.3
+        R2 *= 0.2
 
         ## PAD CONTACT REWARD
         if self.pad_connections >= 3: 
@@ -582,10 +581,12 @@ class CrazyflieEnv():
         """        
 
         ## SET DESIRED VEL IN CONTROLLER
+        self.gazebo_pause_physics()
         self.SendCmd('Pos',cmd_flag=0)
-        self.iter_step(4)
+        self.iter_step(2)
         self.SendCmd('Vel',cmd_vals=vel_d,cmd_flag=1)
-        self.iter_step(4)
+        self.iter_step(2)
+        
 
         ## CREATE SERVICE MESSAGE
         state_srv = ModelState()
@@ -614,7 +615,7 @@ class CrazyflieEnv():
         self.callService('/gazebo/set_model_state',state_srv,SetModelState)
         self.gazebo_unpause_physics()
 
-    def reset_pos(self,z_0=0.379): # Disable sticky then places spawn_model at origin
+    def reset_pos(self,z_0=0.358): # Disable sticky then places spawn_model at origin
         """Reset pose/twist of simulated drone back to home position. 
         As well as turning off stickyfeet
 
@@ -654,13 +655,7 @@ class CrazyflieEnv():
         srv.Inertia.z = self.Izz
 
         ## SEND LOGGING REQUEST VIA SERVICE
-        try:
-            rospy.wait_for_service('/CF_Internal/DomainRand',timeout=1.0)
-            domainRand_service = rospy.ServiceProxy('/CF_Internal/DomainRand', domainRand)
-            domainRand_service(srv)
-        except rospy.exceptions.ROSException:
-            
-            pass
+        self.callService('/CF_Internal/DomainRand',srv,domainRand)
 
 
 
