@@ -2,7 +2,9 @@ import os
 from datetime import datetime
 from stable_baselines3 import PPO,SAC
 from stable_baselines3.common.callbacks import *
-import gym
+from stable_baselines3.common.evaluation import evaluate_policy
+from stable_baselines3.sac.policies import MlpPolicy
+
 
 
 from CF_Env_2D import CF_Env_2D
@@ -41,8 +43,11 @@ class TensorboardCallback(BaseCallback):
         self.logger.record('time/K_ep',self.training_env.envs[0].env.k_ep)
         return True
 
-checkpoint_callback = CheckpointCallback(save_freq=5000, save_path=models_dir,name_prefix=env.env_name)
-callback = CallbackList([checkpoint_callback,TensorboardCallback()])
+eval_callback = EvalCallback(env, best_model_save_path=models_dir,
+                             eval_freq=100,
+                             deterministic=False, render=False,
+                             callback_on_new_best=TensorboardCallback())
+callback = CallbackList([eval_callback])
 
 model = SAC(
     "MlpPolicy",
@@ -56,10 +61,12 @@ model = SAC(
 ) 
 
 model.learn(
-    total_timesteps=1e6,
+    total_timesteps=5000,
     tb_log_name=f"SAC-{env.env_name}-{current_time}",
     callback=callback
 )
 
-
-env.close()
+# model.save("Test_Model")
+# model.save_replay_buffer("Test_Model_Replay_Buffer")
+# model.policy.save("Test_Model_Policy")
+# print(f"The loaded_model has {model.replay_buffer.size()} transitions in its buffer")

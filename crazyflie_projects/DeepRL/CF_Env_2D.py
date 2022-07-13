@@ -119,7 +119,7 @@ class CF_Env_2D():
                     self.d_min = d_ceil
 
                 self.state = (x,vx,z,vz,theta,dtheta)
-                self.obs = (Tau,OFy,d_ceil*0)
+                self.obs = (Tau,OFy,d_ceil)
                 reward = 0
 
             else:
@@ -645,7 +645,7 @@ class CF_Env_2D():
         Tau_0 = 0.5
         d_ceil_0 = Tau_0*vz_0+1e-3
         OFy = -vx_0/d_ceil_0
-        self.obs = (Tau_0,OFy,d_ceil_0*0)
+        self.obs = (Tau_0,OFy,d_ceil_0)
 
 
         z_0 = self.h_ceil - d_ceil_0

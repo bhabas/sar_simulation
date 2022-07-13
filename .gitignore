@@ -13,7 +13,6 @@ __pycache__/
 # Custom gitignore
 crazyflie_logging/local_logs/*
 crazyflie_projects/Policy_Mapping/Data_Analysis/Data/*
-
 crazyflie_projects/Featureless_TTC/local_logs/*
 
 !.gitkeep
@@ -21,7 +20,7 @@ local_files/
 *.zip
 browse.vc.db*
 c_cpp_properities.json
-events*
+# events*
 
 # Installer logs
 pip-log.txt
