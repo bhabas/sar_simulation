@@ -126,6 +126,9 @@ void CF_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
     Time = ros::Time::now();
     Pose = ctrl_msg.Pose;
     Twist = ctrl_msg.Twist;
+    Vel_mag = sqrt(pow(Twist.linear.x,2)+pow(Twist.linear.y,2)+pow(Twist.linear.z,2));
+    Phi = atan2(Twist.linear.z,Twist.linear.x)*180/M_PI;
+    Alpha = atan2(Twist.linear.y,Twist.linear.x)*180/M_PI;
 
     // PROCESS EULER ANGLES
     float quat[4] = {
@@ -547,6 +550,7 @@ void CF_DataConverter::consoleOuput()
     printf("Vel [m/s]:\t %.3f  %.3f  %.3f\n",Twist.linear.x,Twist.linear.y,Twist.linear.z);
     printf("Omega [rad/s]:\t %.3f  %.3f  %.3f\n",Twist.angular.x,Twist.angular.y,Twist.angular.z);
     printf("Eul [deg]:\t %.3f  %.3f  %.3f\n",Eul.x,Eul.y,Eul.z);
+    printf("Vel: %.2f [m/s] \tPhi [deg]: %.2f \tAlpha [deg]: %.2f\n",Vel_mag,Phi,Alpha);
     printf("\n");
 
     printf("Tau: %.3f \tOFx: %.3f \tOFy: %.3f\n",Tau,OFx,OFy);

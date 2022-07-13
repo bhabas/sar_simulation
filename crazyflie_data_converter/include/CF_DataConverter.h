@@ -231,6 +231,10 @@ class CF_DataConverter
         geometry_msgs::Twist Twist;
         geometry_msgs::Vector3 Eul;
 
+        float Vel_mag = 0.0;
+        float Phi = 0.0;
+        float Alpha = 0.0;
+
         double Tau = 0.0;
         double OFx = 0.0;
         double OFy = 0.0;
@@ -375,6 +379,9 @@ void CF_DataConverter::log1_Callback(const crazyflie_msgs::GenericLogData::Const
     Twist.linear.x = vxy_arr[0];
     Twist.linear.y = vxy_arr[1];
     Twist.linear.z = log1_msg->values[3]*1e-3;
+    Vel_mag = sqrt(pow(Twist.linear.x,2)+pow(Twist.linear.y,2)+pow(Twist.linear.z,2));
+    Phi = atan2(Twist.linear.z,Twist.linear.x)*180/M_PI;
+    Alpha = atan2(Twist.linear.y,Twist.linear.x)*180/M_PI;
 
     // ORIENTATION
     float quat[4];
