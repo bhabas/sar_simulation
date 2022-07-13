@@ -1,16 +1,9 @@
-import os
 from datetime import datetime
-from stable_baselines3 import PPO,SAC
+from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import *
-from stable_baselines3.common.evaluation import evaluate_policy
-from stable_baselines3.sac.policies import MlpPolicy
-
-
 
 from CF_Env_2D import CF_Env_2D
 from CF_Env_2D_dTau import CF_Env_2D_dTau
-
-
 
 ## COLLECT CURRENT TIME
 now = datetime.now()
@@ -18,55 +11,68 @@ current_time = now.strftime("%H-%M")
 
 ## INITIATE ENVIRONMENT
 env = CF_Env_2D()
-env.reset()
 
+class CheckpointSaveCallback(BaseCallback):
 
-## CREATE MODEL AND LOG DIRECTORY
-BASEPATH = f"/home/bhabas/catkin_ws/src/crazyflie_simulation"
-models_dir = f"{BASEPATH}/crazyflie_projects/DeepRL/models/{env.env_name}/SAC-{env.env_name}-{current_time}"
-log_dir = "/home/bhabas/Downloads/logs"
+    def __init__(self, save_freq: int, log_dir: str, log_name: str, verbose: int = 0):
+        super(CheckpointSaveCallback, self).__init__(verbose)
+        self.save_freq = save_freq
+        self.log_dir = os.path.join(log_dir,log_name+"_0")
+        self.model_dir = os.path.join(self.log_dir,"models")
+        self.replay_dir = self.log_dir
 
+    def _init_callback(self) -> None:
+        # Create folder if needed
+        if self.log_dir is not None:
+            os.makedirs(self.log_dir, exist_ok=True)
+            os.makedirs(self.model_dir,exist_ok=True)
 
-
-
-class TensorboardCallback(BaseCallback):
-    """
-    Custom callback for plotting additional values in tensorboard.
-    """
-    def __init__(self, verbose=0):
-        super(TensorboardCallback, self).__init__(verbose)
 
     def _on_step(self) -> bool:
+        if self.n_calls % self.save_freq == 0:
+            model_path = os.path.join(self.model_dir, f"{self.num_timesteps}_steps")
+            self.model.save(model_path)
+
+            replay_buff_path = os.path.join(self.model_dir, f"replay_buff")
+            # self.model.save_replay_buffer(replay_buff_path)
+
+            if self.verbose > 1:
+                print(f"Saving model checkpoint to {model_path}")
         return True
 
     def _on_rollout_end(self) -> None:
         self.logger.record('time/K_ep',self.training_env.envs[0].env.k_ep)
         return True
 
-eval_callback = EvalCallback(env, best_model_save_path=models_dir,
-                             eval_freq=100,
-                             deterministic=False, render=False,
-                             callback_on_new_best=TensorboardCallback())
-callback = CallbackList([eval_callback])
+## CREATE MODEL AND LOG DIRECTORY
+log_dir = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/{env.env_name}"
+log_name = f"SAC-{current_time}"
+checkpoint_callback = CheckpointSaveCallback(save_freq=500,log_dir=log_dir,log_name=log_name)
+    
 
 model = SAC(
     "MlpPolicy",
-    env,
+    env=env,
     gamma=0.999,
     learning_rate=0.001,
     verbose=1,
     device='cpu',
-    create_eval_env=True,
     tensorboard_log=log_dir
 ) 
 
-model.learn(
-    total_timesteps=5000,
-    tb_log_name=f"SAC-{env.env_name}-{current_time}",
-    callback=callback
+model.set_parameters(
+    load_path_or_dict=f"{log_dir}/SAC-13-29_1/models/117500_steps.zip",
+    device='cpu'
 )
+# model = SAC.load("/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/CF_Env_2D/SAC-12-44_1/models/22000_steps.zip",
+#     env=env,
+#     device='cpu'
+#     )
+# model.load_replay_buffer("/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/CF_Env_2D/SAC-12-44_1/models/replay_buff.pkl")
 
-# model.save("Test_Model")
-# model.save_replay_buffer("Test_Model_Replay_Buffer")
-# model.policy.save("Test_Model_Policy")
-# print(f"The loaded_model has {model.replay_buffer.size()} transitions in its buffer")
+model.learn(
+    total_timesteps=1e6,
+    tb_log_name=log_name,
+    callback=checkpoint_callback,
+    reset_num_timesteps=False
+)

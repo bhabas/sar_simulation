@@ -1,22 +1,22 @@
-from stable_baselines3 import PPO,SAC
+from datetime import datetime
+from stable_baselines3 import SAC
+from stable_baselines3.common.callbacks import *
+
 from CF_Env_2D import CF_Env_2D
 from CF_Env_2D_dTau import CF_Env_2D_dTau
 
+## COLLECT CURRENT TIME
+now = datetime.now()
+current_time = now.strftime("%H-%M")
 
-
-
-import gym
-
-# ## INITIATE ENVIRONMENT AND TRAINED MODEL5
+## INITIATE ENVIRONMENT
 env = CF_Env_2D()
-env.reset()
-
-## SELECT MODEL FROM DIRECTORY
-BASEPATH = f"/home/bhabas/catkin_ws/src/crazyflie_simulation"
-models_dir = f"{BASEPATH}/crazyflie_projects/DeepRL/models/{env.env_name}/SAC-{env.env_name}-16-16"
-model_path = f"{models_dir}/{env.env_name}_{45}000_steps.zip"
 
 
+## CREATE MODEL AND LOG DIRECTORY
+log_dir = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/{env.env_name}"
+log_name = f"SAC-13-29_0"
+model_path = os.path.join(log_dir,log_name,"models/117500_steps.zip")
 model = SAC.load(model_path,env=env)
 
 ## RENDER TRAINED MODEL FOR N EPISODES-
