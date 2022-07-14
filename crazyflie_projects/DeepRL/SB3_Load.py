@@ -15,8 +15,8 @@ env = CF_Env_2D()
 
 ## CREATE MODEL AND LOG DIRECTORY
 log_dir = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/{env.env_name}"
-log_name = f"SAC-15-23_0"
-model_path = os.path.join(log_dir,log_name,f"models/{130}000_steps.zip")
+log_name = f"SAC-{13}-{59}_0"
+model_path = os.path.join(log_dir,log_name,f"models/{160}000_steps.zip")
 model = SAC.load(model_path,env=env)
 
 ## RENDER TRAINED MODEL FOR N EPISODES-

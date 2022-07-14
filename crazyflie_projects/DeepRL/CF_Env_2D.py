@@ -13,37 +13,29 @@ class CF_Env_2D():
     def __init__(self):
         super(CF_Env_2D, self).__init__()
         self.env_name = "CF_Env_2D"
-        self.k_ep = 0
 
         ## PHYSICS PARAMETERS
         self.dt = 0.005  # seconds between state updates
         self.t_step = 0
-        self.RENDER = False
+        self.state = None
+        self.obs = None
+        self.start_vals = (0,0)
 
+        ## ENV PARAMETERS
+        self.k_ep = 0
+        self.h_ceil = 2.1       # Ceiling Height [m]
+        self.Flip_thr = 2.0     # Threshold to execute flip action
         self.MomentCutoff = False
         self.Impact_flag = False
         self.Impact_events = [False,False,False]
         self.BodyContact_flag = False
         self.pad_connections = 0
+        self.theta_impact = 0.0
 
         ## POLICY PARAMETERS
         self.Once_flag = False
-        self.state = None
-        self.Tau_thr = 0.0
+        self.Tau_trg = 0.0
         self.reward = 0.0
-        self.theta_impact = 0.0
-
-        ## SET DIMENSIONAL CONSTRAINTS 
-        self.h_ceil = 2.1
-        g = 9.81        # Gravity [m/s^2]
-        PD = 0.115/2    # Prop Distance from COM [m]
-        I_G = 30.46e-6    # Moment of Intertia [kg*m^2]
-        L = 0.1
-        gamma = np.deg2rad(30)
-        M_G = 0.015 
-        M_L = 0.002
-        e = 0.018
-        self.params = (L,e,gamma,M_G,M_L,g,PD,I_G)
 
         high = np.array(
             [
@@ -58,6 +50,17 @@ class CF_Env_2D():
         self.action_space = spaces.Box(low=np.array([-5,-1]), high=np.array([5,1]), shape=(2,), dtype=np.float32)
         self.My_space = spaces.Box(low=np.array([-0e-3]), high=np.array([-8e-3]), shape=(1,), dtype=np.float32)
 
+        ## SET DIMENSIONAL CONSTRAINTS 
+        g = 9.81                # Gravity [m/s^2]
+        I_G = 30.46e-6          # Body Moment of Intertia [kg*m^2]
+        PD = 0.115/2            # Prop Distance from COM [m]
+        e = 0.018               # Distance of leg joint from COM [m]
+        L = 0.1                 # Leg Length [m]
+        gamma = np.deg2rad(30)  # Leg Angle [m]
+        M_G = 0.035             # Body Mass [kg]
+        M_L = 0.002             # Leg Mass [kg]
+        self.params = (L,e,gamma,M_G,M_L,g,PD,I_G)
+
         ## ENV LIMITS
         self.world_width = 4.0  # [m]
         self.world_height = 3.0 # [m]
@@ -65,6 +68,7 @@ class CF_Env_2D():
 
 
         ## RENDERING PARAMETERS
+        self.RENDER = False
         self.screen_width = 1000
         self.screen_height = self.screen_width*self.world_height/self.world_width
         self.screen = None
@@ -73,15 +77,12 @@ class CF_Env_2D():
 
 
     def step(self, action):
-        err_msg = f"{action!r} ({type(action)}) invalid"
-        assert self.action_space.contains(action), err_msg
-        assert self.state is not None, "Call reset before using step method."
         
         x,vx,z,vz,theta,dtheta = self.state
         Tau,OFy,d_ceil = self.obs
-        Tau_trg = 2.0
-        ## ONCE ACTIVATED SAMPLE ACTION       
-        if action[0] < Tau_trg:
+
+        ## BASIC FLIGHT   
+        if action[0] < self.Flip_thr:
 
             ## UPDATE STATE
             self.t_step += 1
@@ -98,10 +99,14 @@ class CF_Env_2D():
             theta = theta + self.dt*dtheta
             dtheta = dtheta + self.dt*theta_acc
 
+            self.state = (x,vx,z,vz,theta,dtheta)
+
             ## UPDATE OBSERVATION
-            d_ceil = self.h_ceil - z + 1e-3
+            d_ceil = self.h_ceil - z
             Tau = d_ceil/vz
-            OFy = -vx/d_ceil
+            OFy = -vx/(d_ceil+1e-3)
+
+            self.obs = (Tau,OFy,d_ceil)
 
             ## CHECK FOR IMPACT
             self.Impact_flag,self.Impact_events = self.impact_conditions(x,z,theta)
@@ -114,25 +119,18 @@ class CF_Env_2D():
             )
 
             if not done:
-
-                if d_ceil <= self.d_min:
-                    self.d_min = d_ceil
-
-                self.state = (x,vx,z,vz,theta,dtheta)
-                self.obs = (Tau,OFy,d_ceil)
-                reward = 0
+                reward = 0.0    # Only reward end of episode
 
             else:
-                ## CALC REWARD
-                reward = 0.0
+                reward = 0.0    # No reward when no flip maneuver
                 
-        elif action[0] > Tau_trg:
+        ## EXECUTE FLIP MANEUVER
+        elif action[0] > self.Flip_thr:
+
             self.Once_flag = True
-            self.Tau_thr = Tau
-            reward = self.finish_sim(action)
+            self.Tau_trg = Tau
+            reward = self.finish_sim(action) # Reward corresponds directly to this (State,Action) pair not future ones
             done = True
-
-
 
         return np.array(self.obs,dtype=np.float32), reward, done, {}
 
@@ -152,7 +150,9 @@ class CF_Env_2D():
                 ## CONVERT ACTION RANGE TO MOMENT RANGE
                 action_scale = (self.My_space.high[0]-self.My_space.low[0])/(self.action_space.high[1]-self.action_space.low[1])
                 My = (action[1]-self.action_space.low[1])*action_scale + self.My_space.low[0]
-            else:
+
+            ## TURN OFF BODY MOMENT IF PAST 90 DEG
+            else: 
                 self.MomentCutoff= True
                 My = 0
 
@@ -172,10 +172,12 @@ class CF_Env_2D():
                 theta = theta + self.dt*dtheta
                 dtheta = dtheta + self.dt*theta_acc
 
+                self.state = (x,vx,z,vz,theta,dtheta)
+
                 ## UPDATE OBSERVATION
-                d_ceil = self.h_ceil - z + 1e-3
+                d_ceil = self.h_ceil - z 
                 Tau = d_ceil/vz
-                OFy = -vx/d_ceil
+                OFy = -vx/(d_ceil + 1e-3)
 
                 ## CHECK FOR IMPACT
                 self.Impact_flag,self.Impact_events = self.impact_conditions(x,z,theta)
@@ -186,13 +188,6 @@ class CF_Env_2D():
                     or z < 0.2
                 )
                 
-                if not done:
-                    self.state = (x,vx,z,vz,theta,dtheta)
-
-                    if d_ceil <= self.d_min:
-                        self.d_min = d_ceil
-                    
-
             elif self.Impact_flag == True:
 
                 self.theta_impact = np.rad2deg(theta)
@@ -324,7 +319,7 @@ class CF_Env_2D():
     def CalcReward(self):
 
         ## DISTANCE REWARD 
-        R1 = np.clip(1/np.abs(self.d_min+1e-3),0,10)/10
+        R1 = np.clip(1/np.abs(self.Tau_trg-0.2),0,20)/20
         R1 *= 0.1
 
         ## IMPACT ANGLE REWARD
@@ -336,10 +331,10 @@ class CF_Env_2D():
             if self.BodyContact_flag == False:
                 R3 = 0.7
             else:
-                R3 = 0.4
+                R3 = 0.3
         elif self.pad_connections == 2: 
             if self.BodyContact_flag == False:
-                R3 = 0.2
+                R3 = 0.4
             else:
                 R3 = 0.1
         else:
@@ -349,20 +344,22 @@ class CF_Env_2D():
 
     def render(self,mode=None):
 
+        ## SET DEFAULT WINDOW POSITION
         z = 500
         y = 700
         os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (z,y)
         
-        def c2p(Pos): ## CONVERTS COORDINATES TO PIXEL LOCATION      
+        ## CONVERT COORDINATES TO PIXEL LOCATION
+        def c2p(Pos):
 
-            x_offset = 1
-            y_offset = 0.3
+            x_offset = 1    # [m]
+            y_offset = 0.3  # [m]
 
             scale_x = self.screen_width/self.world_width
             scale_y = self.screen_height/self.world_height
             
-            x_p = (x_offset+Pos[0])*scale_x
-            y_p = (y_offset+Pos[1])*scale_y
+            x_p = (x_offset+Pos[0])*scale_x # [pixels]
+            y_p = (y_offset+Pos[1])*scale_y # [pixels]
             
             return (x_p,y_p)
 
@@ -389,64 +386,61 @@ class CF_Env_2D():
         self.surf = pygame.Surface((self.screen_width, self.screen_height))
         self.surf.fill(WHITE)
 
-        ## CREATE TIMESTEP LABEL
-        my_font = pygame.font.SysFont(None, 30)
+        ## ENVIRONMENT LINES
+        pygame.draw.line(self.surf,BLACK,c2p((0,-5)),c2p((0,5)),width=1) # Z-axis       
+        pygame.draw.line(self.surf,BLACK,c2p((-5,self.h_ceil)),c2p((5,self.h_ceil)),width=2) # Ceiling Line
+        pygame.draw.line(self.surf,BLACK,c2p((-5,0)),c2p((5,0)),width=2) #  Ground Line
 
-
-        Pose = self.get_pose(x,z,theta)
+        
 
         ## CREATE QUADROTOR
+        Pose = self.get_pose(x,z,theta)
         pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[1]),width=3)
         pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[2]),width=3)
         pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[3]),width=3)
         pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[4]),width=3)
         pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[5]),width=3)
         pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[6]),width=3)
-    
-        
 
-        pygame.draw.line(self.surf,BLACK,c2p((0,-5)),c2p((0,5)),width=1)
-
-
-        pygame.draw.line(self.surf,BLACK,c2p((-5,self.h_ceil)),c2p((5,self.h_ceil)),width=2)
-        pygame.draw.line(self.surf,BLACK,c2p((-5,0)),c2p((5,0)),width=2)
-
-
-        
-
-        pygame.draw.circle(self.surf,BLACK,c2p((x,z)),radius=7,width=3)
+        ## FLIP TRIGGER INDICATOR
         if self.Once_flag == True:
+            pygame.draw.circle(self.surf,BLACK,c2p((x,z)),radius=7,width=3)
             pygame.draw.circle(self.surf,RED,c2p((x,z)),radius=4,width=0)
         else:
+            pygame.draw.circle(self.surf,BLACK,c2p((x,z)),radius=7,width=3)
             pygame.draw.circle(self.surf,BLUE,c2p((x,z)),radius=4,width=0)
-
-
-
-        text_t_step = my_font.render(f'Time Step: {self.t_step:03d}', True, BLACK)
-        text_Vz = my_font.render(f'Vz_0: {self.start_vals[0]:.02f}', True, BLACK)
-        text_Tau_0 = my_font.render(f'Tau_0: {self.start_vals[1]:.03f}', True, BLACK)
-        text_Tau_trg = my_font.render(f'Tau_trg: {self.Tau_thr:.03f}', True, BLACK)
-        text_d_min = my_font.render(f'd_min: {self.d_min:.03f}', True, BLACK)
-        text_reward = my_font.render(f'Prev Reward: {self.reward:.01f}',True, BLACK)
-
-
-        
+    
         
 
         ## FLIP IMAGE SO X->RIGHT AND Y->UP
         self.surf = pygame.transform.flip(self.surf, False, True)
+
+        Vel = self.start_vals[0]
+        phi = self.start_vals[1]
+
+        ## WINDOW TEXT
+        my_font = pygame.font.SysFont(None, 30)
+        text_t_step = my_font.render(f'Time Step: {self.t_step:03d}', True, BLACK)
+        text_Vz = my_font.render(f'Vz: {vz:.2f}', True, BLACK)
+        text_Vel = my_font.render(f'Vel: {Vel:.2f}  Phi: {phi:.2f}', True, BLACK)
+        text_Tau = my_font.render(f'Tau: {self.obs[0]:.3f}', True, BLACK)
+        text_dTau = my_font.render(f'dTau: {0.0:.3f}', True, BLACK)
+        text_z_acc = my_font.render(f'z_acc: {0.0:.3f}', True, BLACK)
+        text_reward = my_font.render(f'Prev Reward: {self.reward:.3f}',True, BLACK)
+
+        ## WINDOW TEXT LOCATIONS
         self.screen.blit(self.surf,     (0,0))
         self.screen.blit(text_t_step,   (5,5))
-        self.screen.blit(text_Vz,       (5,30))
-        self.screen.blit(text_Tau_0,    (5,55))
-        self.screen.blit(text_Tau_trg,  (5,80))
-        self.screen.blit(text_d_min,    (5,105))
-        self.screen.blit(text_reward,   (5,130))
+        self.screen.blit(text_Vel,      (5,30))
+        self.screen.blit(text_Vz,       (5,55))
+        self.screen.blit(text_Tau,      (5,80))
+        self.screen.blit(text_dTau,     (5,105))
+        self.screen.blit(text_z_acc,    (5,130))
+        self.screen.blit(text_reward,   (5,155))
 
 
-
-
-        self.clock.tick(60)
+        ## WINDOW/SIM UPDATE RATE
+        self.clock.tick(60) # [Hz]
         pygame.display.flip()
 
     def impact_conditions(self,x_pos,z_pos,theta):
@@ -627,9 +621,7 @@ class CF_Env_2D():
         self.BodyContact_flag = False
         self.pad_connections = 0
         self.theta_impact = 0.0
-
-        self.Tau_thr = 0.0
-        self.d_min = 500
+        self.Tau_trg = 500
         
         ## RESET STATE
         vel = np.random.uniform(low=1.5,high=3.5)
@@ -654,8 +646,7 @@ class CF_Env_2D():
         theta = 0.0
         dtheta = 0.0
         self.state = (x_0,vx_0,z_0,vz_0,theta,dtheta)
-
-        self.start_vals = (vz_0,Tau_0)
+        self.start_vals = (vel,phi)
 
         return np.array(self.obs,dtype=np.float32)
 
@@ -668,8 +659,6 @@ if __name__ == '__main__':
         while not done:
             env.render()
             obs,reward,done,info = env.step(env.action_space.sample())
-            env.action_space.sample()
-
 
     env.close()
 
