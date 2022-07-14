@@ -41,6 +41,7 @@ class CrazyflieEnv():
         self.modelName = rospy.get_param('/MODEL_NAME')
         self.h_ceiling = rospy.get_param("/CEILING_HEIGHT") # [m]
         self.env_name = "CF_Gazebo"
+        self.k_ep = 0
         
         
         
@@ -244,6 +245,7 @@ class CrazyflieEnv():
 
         ## RESET OBSERVATION
         self.obs = (self.Tau,self.OFy,self.d_ceil)
+        self.k_ep += 1
 
         return np.array(self.obs,dtype=np.float32)
 

@@ -1,6 +1,7 @@
 from datetime import datetime
 from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import *
+import torch as th
 
 from CF_Env_2D import CF_Env_2D
 from CF_Env_2D_dTau import CF_Env_2D_dTau
@@ -34,7 +35,7 @@ class CheckpointSaveCallback(BaseCallback):
             self.model.save(model_path)
 
             replay_buff_path = os.path.join(self.model_dir, f"replay_buff")
-            # self.model.save_replay_buffer(replay_buff_path)
+            self.model.save_replay_buffer(replay_buff_path)
 
             if self.verbose > 1:
                 print(f"Saving model checkpoint to {model_path}")
@@ -45,30 +46,35 @@ class CheckpointSaveCallback(BaseCallback):
         return True
 
 ## CREATE MODEL AND LOG DIRECTORY
-log_dir = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/{env.env_name}"
-log_name = f"SAC-{current_time}"
-checkpoint_callback = CheckpointSaveCallback(save_freq=500,log_dir=log_dir,log_name=log_name)
+log_dir = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/"
+log_name = f"{env.env_name}/SAC-{current_time}"
+checkpoint_callback = CheckpointSaveCallback(save_freq=1000,log_dir=log_dir,log_name=log_name)
     
-
+policy_kwargs = dict(activation_fn=th.nn.ReLU,
+                     net_arch=[16, 16])
 model = SAC(
     "MlpPolicy",
     env=env,
     gamma=0.999,
     learning_rate=0.001,
+    policy_kwargs=policy_kwargs,
     verbose=1,
     device='cpu',
     tensorboard_log=log_dir
 ) 
 
-model.set_parameters(
-    load_path_or_dict=f"{log_dir}/SAC-13-29_1/models/117500_steps.zip",
-    device='cpu'
-)
-# model = SAC.load("/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/CF_Env_2D/SAC-12-44_1/models/22000_steps.zip",
+# model.set_parameters(
+#     load_path_or_dict=f"{log_dir}/CF_Env_2D/SAC-15-23_0/models/117500_steps.zip",
+#     device='cpu'
+# )
+
+# model = SAC.load(
+#     path=f"{log_dir}/SAC-14-43_0/models/10000_steps.zip",
 #     env=env,
 #     device='cpu'
 #     )
-# model.load_replay_buffer("/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/CF_Env_2D/SAC-12-44_1/models/replay_buff.pkl")
+# model.load_replay_buffer(
+#     path=f"{log_dir}/SAC-14-43_0/models/replay_buff.pkl")
 
 model.learn(
     total_timesteps=1e6,
