@@ -8,11 +8,11 @@ import os
 import numpy as np
 
 
-class CF_Env():
+class CF_Env_2D_dTau():
     metadata = {'render.modes': ['human']}
     def __init__(self):
-        super(CF_Env, self).__init__()
-        self.env_name = "CF_Env"
+        super(CF_Env_2D_dTau, self).__init__()
+        self.env_name = "CF_Env_2D_dTau"
         self.k_ep = 0
 
         ## PHYSICS PARAMETERS
@@ -50,6 +50,7 @@ class CF_Env():
                 np.finfo(np.float64).max,
                 np.finfo(np.float64).max,
                 np.finfo(np.float64).max,
+                np.finfo(np.float64).max,
             ],
             dtype=np.float32,
         )
@@ -78,7 +79,7 @@ class CF_Env():
         assert self.state is not None, "Call reset before using step method."
         
         x,vx,z,vz,theta,dtheta = self.state
-        Tau,OFy,d_ceil = self.obs
+        Tau,OFy,dTau,z_acc = self.obs
         Tau_trg = 2.0
         ## ONCE ACTIVATED SAMPLE ACTION       
         if action[0] < Tau_trg:
@@ -86,7 +87,7 @@ class CF_Env():
             ## UPDATE STATE
             self.t_step += 1
 
-            z_acc = 0.0
+            z_acc = z_acc
             z = z + self.dt*vz
             vz = vz + self.dt*z_acc
 
@@ -100,6 +101,7 @@ class CF_Env():
 
             ## UPDATE OBSERVATION
             d_ceil = self.h_ceil - z + 1e-3
+            dTau = (d_ceil/vz - Tau)/self.dt*0
             Tau = d_ceil/vz
             OFy = -vx/d_ceil
 
@@ -119,14 +121,14 @@ class CF_Env():
                     self.d_min = d_ceil
 
                 self.state = (x,vx,z,vz,theta,dtheta)
-                self.obs = (Tau,OFy,d_ceil)
+                self.obs = (Tau,OFy,dTau,z_acc)
                 reward = 0
 
             else:
                 ## CALC REWARD
                 reward = 0.0
                 
-        elif action[0] > Tau_trg:
+        elif action[0] >= Tau_trg:
             self.Once_flag = True
             self.Tau_thr = Tau
             reward = self.finish_sim(action)
@@ -174,8 +176,6 @@ class CF_Env():
 
                 ## UPDATE OBSERVATION
                 d_ceil = self.h_ceil - z + 1e-3
-                Tau = d_ceil/vz
-                OFy = -vx/d_ceil
 
                 ## CHECK FOR IMPACT
                 self.Impact_flag,self.Impact_events = self.impact_conditions(x,z,theta)
@@ -323,13 +323,13 @@ class CF_Env():
 
     def CalcReward(self):
 
-        ## DISTANCE REWARD (Gaussian Function)
+        ## DISTANCE REWARD 
         R1 = np.clip(1/np.abs(self.d_min+1e-3),0,10)/10
         R1 *= 0.1
 
         ## IMPACT ANGLE REWARD
-        R2 = np.clip(np.abs(self.theta_impact)/90 - 0.2,0,1)
-        R2 *= 0.3
+        R2 = np.clip(np.abs(self.theta_impact)/120,0,1)
+        R2 *= 0.2
 
         ## PAD CONTACT REWARD
         if self.pad_connections >= 3: 
@@ -346,7 +346,6 @@ class CF_Env():
             R3 = 0.0
 
         return R1 + R2 + R3
-
 
     def render(self,mode=None):
 
@@ -424,11 +423,12 @@ class CF_Env():
 
 
         text_t_step = my_font.render(f'Time Step: {self.t_step:03d}', True, BLACK)
-        text_Vz = my_font.render(f'Vz_0: {self.start_vals[0]:.02f}', True, BLACK)
-        text_Tau_0 = my_font.render(f'Tau_0: {self.start_vals[1]:.03f}', True, BLACK)
-        text_Tau_trg = my_font.render(f'Tau_trg: {self.Tau_thr:.03f}', True, BLACK)
-        text_d_min = my_font.render(f'd_min: {self.d_min:.03f}', True, BLACK)
-        text_reward = my_font.render(f'Prev Reward: {self.reward:.01f}',True, BLACK)
+        text_Vz = my_font.render(f'Vz: {self.state[3]:.2f}', True, BLACK)
+        text_Tau = my_font.render(f'Tau: {self.obs[0]:.3f}', True, BLACK)
+        text_dTau = my_font.render(f'dTau: {self.obs[2]:.3f}', True, BLACK)
+        text_OFy = my_font.render(f'OFy: {self.obs[1]:.3f}', True, BLACK)
+        text_z_acc = my_font.render(f'z_acc: {self.obs[3]:.3f}', True, BLACK)
+        text_reward = my_font.render(f'Prev Reward: {self.reward:.2f}',True, BLACK)
 
 
         
@@ -439,10 +439,11 @@ class CF_Env():
         self.screen.blit(self.surf,     (0,0))
         self.screen.blit(text_t_step,   (5,5))
         self.screen.blit(text_Vz,       (5,30))
-        self.screen.blit(text_Tau_0,    (5,55))
-        self.screen.blit(text_Tau_trg,  (5,80))
-        self.screen.blit(text_d_min,    (5,105))
-        self.screen.blit(text_reward,   (5,130))
+        self.screen.blit(text_Tau,      (5,55))
+        self.screen.blit(text_dTau,     (5,80))
+        self.screen.blit(text_OFy,      (5,105))
+        self.screen.blit(text_z_acc,    (5,130))
+        self.screen.blit(text_reward,   (5,155))
 
 
 
@@ -635,16 +636,21 @@ class CF_Env():
         ## RESET STATE
         vel = np.random.uniform(low=1.5,high=3.5)
         phi = np.random.uniform(low=30,high=90)
+
+        # vel = 1.5
         # phi = 70
 
         vx_0 = vel*np.cos(np.deg2rad(phi))
         vz_0 = vel*np.sin(np.deg2rad(phi))
 
+
         ## RESET OBSERVATION
-        Tau_0 = 0.5
-        d_ceil_0 = Tau_0*vz_0+1e-3
+        d_ceil_0 = 1.5
+        z_acc = 0.0
+        Tau_0 = d_ceil_0/vz_0
+        dTau_0 = 0.0
         OFy = -vx_0/d_ceil_0
-        self.obs = (Tau_0,OFy,d_ceil_0)
+        self.obs = (Tau_0,OFy,dTau_0,z_acc)
 
 
         z_0 = self.h_ceil - d_ceil_0
@@ -659,7 +665,7 @@ class CF_Env():
         return np.array(self.obs,dtype=np.float32)
 
 if __name__ == '__main__':
-    env = CF_Env()
+    env = CF_Env_2D_dTau()
     env.RENDER = True
     for _ in range(25):
         env.reset()

@@ -6,12 +6,19 @@ import torch as th
 from CF_Env_2D import CF_Env_2D
 from CF_Env_2D_dTau import CF_Env_2D_dTau
 
+## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
+import sys,rospkg,os
+BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
+sys.path.insert(1,'/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_env')
+sys.path.insert(1,BASE_PATH)
+from crazyflie_env.src.Crazyflie_env import CrazyflieEnv
+
 ## COLLECT CURRENT TIME
 now = datetime.now()
 current_time = now.strftime("%H-%M")
 
 ## INITIATE ENVIRONMENT
-env = CF_Env_2D()
+env = CrazyflieEnv()
 
 class CheckpointSaveCallback(BaseCallback):
 
@@ -27,7 +34,6 @@ class CheckpointSaveCallback(BaseCallback):
         if self.log_dir is not None:
             os.makedirs(self.log_dir, exist_ok=True)
             os.makedirs(self.model_dir,exist_ok=True)
-
 
     def _on_step(self) -> bool:
         if self.n_calls % self.save_freq == 0:
@@ -48,7 +54,7 @@ class CheckpointSaveCallback(BaseCallback):
 ## CREATE MODEL AND LOG DIRECTORY
 log_dir = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/"
 log_name = f"{env.env_name}/SAC-{current_time}"
-checkpoint_callback = CheckpointSaveCallback(save_freq=1000,log_dir=log_dir,log_name=log_name)
+checkpoint_callback = CheckpointSaveCallback(save_freq=500,log_dir=log_dir,log_name=log_name)
     
 policy_kwargs = dict(activation_fn=th.nn.ReLU,
                      net_arch=[16, 16])
@@ -63,22 +69,17 @@ model = SAC(
     tensorboard_log=log_dir
 ) 
 
-# model.set_parameters(
-#     load_path_or_dict=f"{log_dir}/CF_Env_2D/SAC-15-23_0/models/117500_steps.zip",
-#     device='cpu'
-# )
-
-# model = SAC.load(
-#     path=f"{log_dir}/SAC-14-43_0/models/10000_steps.zip",
-#     env=env,
-#     device='cpu'
-#     )
+model = SAC.load(
+    path=f"{log_dir}/CF_Env_2D/SAC-15-33_0/models/{120}000_steps.zip",
+    env=env,
+    device='cpu'
+)
 # model.load_replay_buffer(
-#     path=f"{log_dir}/SAC-14-43_0/models/replay_buff.pkl")
+#     path=f"{log_dir}/CF_Env_2D/SAC-15-33_0/models/replay_buff.pkl")
 
 model.learn(
     total_timesteps=1e6,
     tb_log_name=log_name,
     callback=checkpoint_callback,
-    reset_num_timesteps=False
+    reset_num_timesteps=True
 )

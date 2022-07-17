@@ -41,6 +41,8 @@ class CrazyflieEnv():
         self.modelName = rospy.get_param('/MODEL_NAME')
         self.h_ceiling = rospy.get_param("/CEILING_HEIGHT") # [m]
         self.env_name = "CF_Gazebo"
+        self.k_ep = 0
+        self.Flip_thr = 2.0
         
         
         
@@ -61,9 +63,9 @@ class CrazyflieEnv():
 
         high = np.array(
             [
-                np.finfo(np.float64).max,
-                np.finfo(np.float64).max,
-                np.finfo(np.float64).max,
+                np.finfo(np.float32).max,
+                np.finfo(np.float32).max,
+                np.finfo(np.float32).max,
             ],
             dtype=np.float32,
         )
@@ -107,48 +109,53 @@ class CrazyflieEnv():
 
     def step(self,action):
 
-        self.iter_step()
-        Tau,OFy,d_ceil  = (self.Tau,self.OFy,self.d_ceil)
-        Tau_thr = 2.0
+        Tau,OFy,d_ceil  = self.obs
+        
 
         ## START IMPACT TERMINATION TIMERS
         if ((self.impact_flag or self.BodyContact_flag) and self.onceFlag_impact == False):
             self.start_time_impact = self.getTime()
             self.onceFlag_impact = True
 
-        if action[0] < Tau_thr or Tau == 0.0:
-            
+        if action[0] < self.Flip_thr or Tau == 0.0:
+
+            ## UPDATE STATE
+            self.iter_step()
+
+            ## UPDATE OBSERVATION
+            self.obs = (self.Tau,self.OFy,self.d_ceil)
+
             ## CHECK FOR DONE
             self.done = bool(
                 self.t - self.start_time_rollout > 5                # EPISODE TIMEOUT
                 or self.t - self.start_time_impact > 0.5            # IMPACT TIMEOUT
                 or (self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5) # FREE-FALL TERMINATION
-            )
+            )         
 
             if not self.done:
-                if d_ceil <= self.d_min:
-                    self.d_min = d_ceil
-            
-            reward = 0
+                if self.d_ceil <= self.d_min:
+                    self.d_min = self.d_ceil 
 
             ## ERROR TERMINATIONS
-            if (time.time() - self.start_time_ep) > 30.0 and self.gazeboTimeout == True:
+            if (time.time() - self.start_time_ep) > 120.0 and self.gazeboTimeout == True:
                 print('\033[93m' + "[WARNING] Real Time Exceeded" + '\x1b[0m')
                 self.Restart()
                 self.done = True
 
             if any(np.isnan(self.velCF)): 
                 print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
-                self.Restart([True,False,False])
+                self.Restart([True,True,True])
                 print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
                 self.done = True
 
+            reward = 0
 
-        elif action[0] >= Tau_thr:
+        elif action[0] >= self.Flip_thr:
+
+            # self.Once_flag = True
+            self.Tau_trg = Tau
             reward = self.finish_sim(action)
             self.done = True
-        
-        self.obs = (self.Tau,self.OFy,self.d_ceil)
         
         return np.array(self.obs,dtype=np.float32), reward, self.done, {}
 
@@ -157,7 +164,7 @@ class CrazyflieEnv():
         ## CONVERT ACTION RANGE TO MOMENT RANGE
         action_scale = (self.My_space.high[0]-self.My_space.low[0])/(self.action_space.high[1]-self.action_space.low[1])
         My = (action[1]-self.action_space.low[1])*action_scale + self.My_space.low[0]
-        # My = -7.26
+        # My = -7.3e-3
 
         self.SendCmd("Moment",[0,My*1e3,0],cmd_flag=1)
         self.gazebo_unpause_physics()
@@ -173,6 +180,10 @@ class CrazyflieEnv():
                 or self.t - self.start_time_impact > 0.5            # IMPACT TIMEOUT
                 or (self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5) # FREE-FALL TERMINATION
             )
+
+            if not self.done:
+                if self.d_ceil <= self.d_min:
+                    self.d_min = self.d_ceil 
 
             ## ERROR TERMINATIONS
             if (time.time() - self.start_time_ep) > 20.0 and self.gazeboTimeout == True:
@@ -236,13 +247,15 @@ class CrazyflieEnv():
         ## RESET OBSERVATION
         Tau_0 = 0.4
         d_ceil_0 = Tau_0*vz_0 + 1e-3
-        OFy = -vx_0/d_ceil_0
-        self.obs = (Tau_0,OFy,d_ceil_0)
 
         z_0 = self.h_ceiling - d_ceil_0
         x_0 = 0.0
         self.Vel_Launch([x_0,0.0,z_0],[vx_0,0,vz_0])
         self.gazebo_pause_physics()
+
+        ## RESET OBSERVATION
+        self.obs = (self.Tau,self.OFy,self.d_ceil)
+        self.k_ep += 1
 
         return np.array(self.obs,dtype=np.float32)
 
@@ -873,12 +886,6 @@ class CrazyflieEnv():
         self.OFy = np.round(StateData_msg.OFy,3)
         self.d_ceil = np.round(StateData_msg.D_ceil,3)
        
-        ## ======== REWARD INPUT CALCS ======== ##
-
-        ## MIN D_CEIL CALC
-        if self.d_ceil < self.d_min:
-            self.d_min = np.round(self.d_ceil,3) # Min distance achieved, used for reward calc
-
         self.t_prev = self.t # Save t value for next callback iteration
 
     def CF_FlipDataCallback(self,FlipData_msg):

@@ -2,6 +2,7 @@ from datetime import datetime
 from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import *
 
+import torch as th
 from CF_Env_2D import CF_Env_2D
 from CF_Env_2D_dTau import CF_Env_2D_dTau
 
@@ -16,18 +17,12 @@ env = CF_Env_2D()
 ## CREATE MODEL AND LOG DIRECTORY
 log_dir = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/{env.env_name}"
 log_name = f"SAC-{15}-{33}_0"
-model_path = os.path.join(log_dir,log_name,f"models/{170}000_steps.zip")
+model_path = os.path.join(log_dir,log_name,f"models/{10}000_steps.zip")
 model = SAC.load(model_path,env=env,device='cpu')
 
-## RENDER TRAINED MODEL FOR N EPISODES-
-episodes = 50
-env.RENDER = True
-for ep in range(episodes):
-    obs = env.reset()
-    done = False
-    while not done:
-        env.render()
-        action,_ = model.predict(obs)
-        obs,reward,done,info = env.step(action)
 
-env.close()
+obs = env.reset()
+obs2 = th.Tensor([[0,0,0]])
+# action,_ = model.predict(obs)
+
+mu,log_std,_ = model.actor.get_action_dist_params(obs2)
