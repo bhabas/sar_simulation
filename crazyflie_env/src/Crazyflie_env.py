@@ -42,6 +42,7 @@ class CrazyflieEnv():
         self.h_ceiling = rospy.get_param("/CEILING_HEIGHT") # [m]
         self.env_name = "CF_Gazebo"
         self.k_ep = 0
+        self.Flip_thr = 2.0
         
         
         
@@ -62,9 +63,9 @@ class CrazyflieEnv():
 
         high = np.array(
             [
-                np.finfo(np.float64).max,
-                np.finfo(np.float64).max,
-                np.finfo(np.float64).max,
+                np.finfo(np.float32).max,
+                np.finfo(np.float32).max,
+                np.finfo(np.float32).max,
             ],
             dtype=np.float32,
         )
@@ -109,27 +110,31 @@ class CrazyflieEnv():
     def step(self,action):
 
         Tau,OFy,d_ceil  = self.obs
-        Tau_thr = 2.0
+        
 
         ## START IMPACT TERMINATION TIMERS
         if ((self.impact_flag or self.BodyContact_flag) and self.onceFlag_impact == False):
             self.start_time_impact = self.getTime()
             self.onceFlag_impact = True
 
-        if action[0] < Tau_thr or Tau == 0.0:
+        if action[0] < self.Flip_thr or Tau == 0.0:
+
+            ## UPDATE STATE
             self.iter_step()
-            
+
+            ## UPDATE OBSERVATION
+            self.obs = (self.Tau,self.OFy,self.d_ceil)
+
             ## CHECK FOR DONE
             self.done = bool(
                 self.t - self.start_time_rollout > 5                # EPISODE TIMEOUT
                 or self.t - self.start_time_impact > 0.5            # IMPACT TIMEOUT
                 or (self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5) # FREE-FALL TERMINATION
-            )
+            )         
 
             if not self.done:
                 if self.d_ceil <= self.d_min:
-                    self.d_min = self.d_ceil
-            
+                    self.d_min = self.d_ceil 
 
             ## ERROR TERMINATIONS
             if (time.time() - self.start_time_ep) > 120.0 and self.gazeboTimeout == True:
@@ -143,12 +148,13 @@ class CrazyflieEnv():
                 print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
                 self.done = True
 
-            self.obs = (self.Tau,self.OFy,self.d_ceil)
             reward = 0
 
-        elif action[0] >= Tau_thr:
+        elif action[0] >= self.Flip_thr:
+
+            # self.Once_flag = True
+            self.Tau_trg = Tau
             reward = self.finish_sim(action)
-            self.obs = (self.Tau,self.OFy,self.d_ceil)
             self.done = True
         
         return np.array(self.obs,dtype=np.float32), reward, self.done, {}
@@ -174,6 +180,10 @@ class CrazyflieEnv():
                 or self.t - self.start_time_impact > 0.5            # IMPACT TIMEOUT
                 or (self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5) # FREE-FALL TERMINATION
             )
+
+            if not self.done:
+                if self.d_ceil <= self.d_min:
+                    self.d_min = self.d_ceil 
 
             ## ERROR TERMINATIONS
             if (time.time() - self.start_time_ep) > 20.0 and self.gazeboTimeout == True:

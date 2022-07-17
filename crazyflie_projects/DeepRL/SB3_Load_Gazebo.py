@@ -75,7 +75,7 @@ policy_kwargs = dict(activation_fn=th.nn.ReLU,
 
 
 model = SAC.load(
-    path=f"{log_dir}/CF_Env_2D/SAC-15-23_0/models/135000_steps.zip",
+    path=f"{log_dir}/CF_Env_2D/SAC-15-33_0/models/{140}000_steps.zip",
     env=env,
     device='cpu'
 )

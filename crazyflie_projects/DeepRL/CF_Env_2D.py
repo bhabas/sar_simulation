@@ -39,9 +39,9 @@ class CF_Env_2D():
 
         high = np.array(
             [
-                np.finfo(np.float64).max,
-                np.finfo(np.float64).max,
-                np.finfo(np.float64).max,
+                np.finfo(np.float32).max,
+                np.finfo(np.float32).max,
+                np.finfo(np.float32).max,
             ],
             dtype=np.float32,
         )
@@ -118,11 +118,7 @@ class CF_Env_2D():
                 or self.Impact_flag
             )
 
-            if not done:
-                reward = 0.0    # Only reward end of episode
-
-            else:
-                reward = 0.0    # No reward when no flip maneuver
+            reward = 0
                 
         ## EXECUTE FLIP MANEUVER
         elif action[0] > self.Flip_thr:
