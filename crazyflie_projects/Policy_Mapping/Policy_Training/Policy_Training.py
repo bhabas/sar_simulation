@@ -2,6 +2,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import matplotlib as mpl
+from scipy.interpolate import griddata
 import plotly.graph_objects as go
 import pandas as pd
 import os
@@ -455,25 +457,7 @@ class Policy_Trainer():
         print(f"False Negatives: {cfnMatrix[1,0]}")
         print(f"Classification Report: {classification_report(y_class,y_pred)}")
 
-    def plotClassification(self,df_custom,iso_level=0.0):
-        
-        ## MESHGRID OF DATA POINTS
-        Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
-            np.linspace(0.15, 0.35, 60),
-            np.linspace(-15, 1, 45),
-            np.linspace(0.0, 1.0, 45)
-        )
-
-        ## CONCATENATE DATA TO MATCH INPUT SHAPE
-        X_grid = np.stack((
-            Tau_grid.flatten(),
-            OF_y_grid.flatten(),
-            d_ceil_grid.flatten()),axis=1)
-        
-
-        # y_pred_grid = self.OC_SVM_Predict(X_grid)
-        y_pred_grid = self.SVM_model.decision_function(self.scaleData(X_grid))
-
+    def plotPolicyRegion(self,df,PlotBoundry=True,PlotTraj=(None,0,0),iso_level=0.0):
 
         fig = go.Figure()
 
@@ -481,23 +465,24 @@ class Policy_Trainer():
         fig.add_trace(
             go.Scatter3d(
                 ## DATA
-                x=df_custom["OFy_flip_mean"],
-                y=df_custom["Tau_flip_mean"],
-                z=df_custom["D_ceil_flip_mean"],
+                x=df["OFy_flip_mean"],
+                y=df["Tau_flip_mean"],
+                z=df["D_ceil_flip_mean"],
+                
 
                 ## HOVER DATA
-                customdata=df_custom,
+                customdata=df,
                 hovertemplate=" \
-                    <b>LR: %{customdata[3]:.3f} \tMy: %{customdata[14]:.3f}</b> \
-                    <br>Vel: %{customdata[0]:.2f} \tPhi: %{customdata[1]:.0f}</br> \
-                    <br>Tau: %{customdata[8]:.3f} \tOFy: %{customdata[10]:.3f} </br> \
+                    <b>LR: %{customdata[3]:.3f} | My: %{customdata[14]:.3f}</b> \
+                    <br>Vel: %{customdata[0]:.2f} | Phi: %{customdata[1]:.2f}</br> \
+                    <br>Tau: %{customdata[8]:.3f} | OFy: %{customdata[10]:.3f} </br> \
                     <br>D_ceil: %{customdata[12]:.3f}</br>",
 
                 ## MARKER
                 mode='markers',
                 marker=dict(
                     size=3,
-                    color=df_custom["LR_4leg"],
+                    color=df["LR_4Leg"],
                     colorscale='Viridis',   # choose a colorscale
                     cmin=0,
                     cmax=1, 
@@ -505,256 +490,86 @@ class Policy_Trainer():
             )
         )
 
-        fig.add_trace(
-            go.Volume(
-                ## ISO SURFACE
-                x=X_grid[:,1].flatten(),
-                y=X_grid[:,0].flatten(),
-                z=X_grid[:,2].flatten(),
-                value=y_pred_grid.flatten(),
-                
-                surface_count=1,
-                opacity=0.3,
-                isomin=iso_level,
-                isomax=iso_level,
-                colorscale='Viridis',  
-                cmin=0,
-                cmax=1,     
-                caps=dict(x_show=False, y_show=False),
-                colorbar=dict(title='Title',) , 
-                hoverinfo='skip'
-            )
-        )
-
-        
-
-        fig.update_layout(
-            scene=dict(
-                xaxis_title='OFy [rad/s]',
-                yaxis_title='Tau [s]',
-                zaxis_title='D_ceiling [m]',
-                xaxis_range=[-20,1],
-                yaxis_range=[0.4,0.1],
-                zaxis_range=[0,1.2],
-            ),
-        )
-        fig.show()
-
-    def plotPolicy(self,df_custom,PlotRegion=False,iso_level=0.0):
-
-        fig = go.Figure()
-
-        if PlotRegion:
-
-            ## CREATE GRID
+        if PlotBoundry:
+            ## MESHGRID OF DATA POINTS
             Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
-                np.linspace(0.15, 0.35, 45),
+                np.linspace(0.15, 0.35, 60),
                 np.linspace(-15, 1, 45),
                 np.linspace(0.0, 1.0, 45)
             )
 
-            ## CONCATENATE DATA TO MATCH INPUT
+            ## CONCATENATE DATA TO MATCH INPUT SHAPE
             X_grid = np.stack((
                 Tau_grid.flatten(),
                 OF_y_grid.flatten(),
                 d_ceil_grid.flatten()),axis=1)
-
-            ## PREDICT VALID POINTS
+            
             y_pred_grid = self.SVM_model.decision_function(self.scaleData(X_grid))
-            valid_idx = np.where(y_pred_grid >= iso_level)
 
-            X_grid = X_grid[valid_idx]
-            y_pred_My = self.NN_Predict(X_grid).numpy()
-
-            ## PLOT DATA POINTS
             fig.add_trace(
-                go.Scatter3d(
-                    ## DATA
+                go.Volume(
+                    ## ISO SURFACE
                     x=X_grid[:,1].flatten(),
                     y=X_grid[:,0].flatten(),
                     z=X_grid[:,2].flatten(),
+                    value=y_pred_grid.flatten(),
+                    
+                    surface_count=1,
+                    opacity=0.3,
+                    isomin=iso_level,
+                    isomax=iso_level,
+                    colorscale='Viridis',  
+                    cmin=0,
+                    cmax=1,     
+                    caps=dict(x_show=False, y_show=False),
+                    colorbar=dict(title='Title',) , 
+                    hoverinfo='skip'
+                )
+            )
+
+        if PlotTraj[0] != None:
+            dataFile,k_ep,k_run = PlotTraj
+            arr = dataFile.grab_stateData(k_ep,k_run,['Tau','OF_y','d_ceil'])
+            Tau,OFy,d_ceil = np.split(arr,3,axis=1)
+            Tau_tr,OFy_tr,d_ceil_tr,My_tr = dataFile.grab_flip_state(k_ep,k_run,['Tau','OF_y','d_ceil','My'])
+
+            fig.add_trace(
+                go.Scatter3d(
+                    ## DATA
+                    x=OFy.flatten(),
+                    y=Tau.flatten(),
+                    z=d_ceil.flatten(),
 
                     ## MARKER
-                    mode='markers',
+                    mode='lines',
                     marker=dict(
-                        size=3,
-                        color=np.abs(y_pred_My.flatten()),# set color to an array/list of desired values
-                        cmin=0,
-                        cmax=10,
-                        showscale=True,
-                        colorscale='Viridis',   # choose a colorscale
-                        opacity=1.0
+                        color='darkblue',
+                        size=0,
                     )
                 )
             )
-        else:
-            X_grid = np.stack((
-                df_custom["Tau_flip_mean"],
-                df_custom["OFy_flip_mean"],
-                df_custom["D_ceil_flip_mean"]),axis=1)
-            y_pred = self.NN_Predict(X_grid).numpy().flatten()
-            error = df_custom["My_mean"].to_numpy().flatten() - y_pred
-        
-            ## PLOT DATA POINTS
+
             fig.add_trace(
                 go.Scatter3d(
                     ## DATA
-                    x=X_grid[:,1].flatten(),
-                    y=X_grid[:,0].flatten(),
-                    z=X_grid[:,2].flatten(),
+                    x=[OFy_tr],
+                    y=[Tau_tr],
+                    z=[d_ceil_tr],
 
                     ## HOVER DATA
-                    customdata=np.stack((error,df_custom["My_mean"].to_numpy().flatten(),y_pred),axis=1),
-                    hovertemplate=" \
-                    <b>LR: %{customdata[3]:.3f} | My: %{customdata[14]:.3f}</b> \
-                    <br>Vel: %{customdata[0]:.2f} | Phi: %{customdata[1]:.0f}</br> \
-                    <br>Tau: %{customdata[8]:.3f} | OFy: %{customdata[10]:.3f} </br> \
-                    <br>D_ceil: %{customdata[12]:.3f}</br>",
-                    
-                        
+                    hovertemplate=
+                        f"<b>My: {My_tr:.3f} N*mm</b> \
+                        <br>Tau: {Tau_tr:.3f} | OFy: {OFy_tr:.3f} </br> \
+                        <br>D_ceil: {d_ceil_tr:.3f}</br>",
+
                     ## MARKER
                     mode='markers',
                     marker=dict(
                         size=3,
-                        # # color=np.abs(df_custom["My_mean"].to_numpy().flatten()),
-                        # color = np.abs(y_pred),
-                        # cmin=0,
-                        # cmax=10,
-
-                        color = error,
-                        cmin = -3,
-                        cmax =  3,
-                        showscale=True,
-                        colorscale='Viridis',   # choose a colorscale
-                        opacity=1.0
+                        color='darkblue',
                     )
                 )
-              )
-
-        fig.update_layout(
-            scene=dict(
-                xaxis_title='OFy [rad/s]',
-                yaxis_title='Tau [s]',
-                zaxis_title='D_ceiling [m]',
-                xaxis_range=[-20,1],
-                yaxis_range=[0.4,0.1],
-                zaxis_range=[0,1.2],
-            ),
-        )
-        fig.show()
-
-    def plotTraj(self,df_custom,dataFile,iso_level=0.0):
-
-        Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
-            np.linspace(0.15, 0.35, 60),
-            np.linspace(-15, 1, 45),
-            np.linspace(0.0, 1.0, 45)
-        )
-
-        ## CONCATENATE DATA TO MATCH INPUT
-        X_grid = np.stack((
-            Tau_grid.flatten(),
-            OF_y_grid.flatten(),
-            d_ceil_grid.flatten()),axis=1)
-        
-
-        # y_pred_grid = self.OC_SVM_Predict(X_grid)
-        y_pred_grid = self.SVM_model.decision_function(self.scaleData(X_grid))
-
-        arr = dataFile.grab_stateData(0,0,['Tau','OF_y','d_ceil'])
-        Tau,OFy,d_ceil = np.split(arr,3,axis=1)
-
-        Tau_tr,OFy_tr,d_ceil_tr,My_tr = dataFile.grab_flip_state(0,0,['Tau','OF_y','d_ceil','My'])
-
-        fig = go.Figure()
-
-        fig.add_trace(
-            go.Volume(
-                ## ISO SURFACE
-                x=X_grid[:,1].flatten(),
-                y=X_grid[:,0].flatten(),
-                z=X_grid[:,2].flatten(),
-                value=y_pred_grid.flatten(),
-                
-                surface_count=1,
-                opacity=0.3,
-                isomin=iso_level,
-                isomax=iso_level,
-                cmin=0,
-                cmax=1,     
-                caps=dict(x_show=False, y_show=False),
-                colorbar=dict(title='Title',) , 
-                hoverinfo='skip',
             )
-        )
-
-        # PLOT DATA POINTS
-        fig.add_trace(
-            go.Scatter3d(
-                ## DATA
-                x=df_custom["OFy_flip_mean"],
-                y=df_custom["Tau_flip_mean"],
-                z=df_custom["D_ceil_flip_mean"],
-
-                ## HOVER DATA
-                customdata=df_custom,
-                hovertemplate=" \
-                    <b>LR: %{customdata[3]:.3f} | My: %{customdata[14]:.3f}</b> \
-                    <br>Vel: %{customdata[0]:.2f} | Phi: %{customdata[1]:.0f}</br> \
-                    <br>Tau: %{customdata[8]:.3f} | OFy: %{customdata[10]:.3f} </br> \
-                    <br>D_ceil: %{customdata[12]:.3f}</br>",
-
-                ## MARKER
-                mode='markers',
-                marker=dict(
-                    size=3,
-                    color=df_custom["LR_4leg"],
-                    colorscale='Viridis',   # choose a colorscale
-                    cmin=0,
-                    cmax=1, 
-                    opacity=0.8)
-            )
-        )
-
-        
-
-        fig.add_trace(
-            go.Scatter3d(
-                ## DATA
-                x=OFy.flatten(),
-                y=Tau.flatten(),
-                z=d_ceil.flatten(),
-
-                ## MARKER
-                mode='lines',
-                marker=dict(
-                    color='darkblue',
-                    size=0,
-                )
-            )
-        )
-
-        fig.add_trace(
-            go.Scatter3d(
-                ## DATA
-                x=[OFy_tr],
-                y=[Tau_tr],
-                z=[d_ceil_tr],
-
-                ## HOVER DATA
-                hovertemplate=
-                    f"<b>My: {My_tr:.3f} N*mm</b> \
-                    <br>Tau: {Tau_tr:.3f} | OFy: {OFy_tr:.3f} </br> \
-                    <br>D_ceil: {d_ceil_tr:.3f}</br>",
-
-                ## MARKER
-                mode='markers',
-                marker=dict(
-                    size=3,
-                    color='darkblue',
-                )
-            )
-        )
 
         
 
@@ -769,6 +584,50 @@ class Policy_Trainer():
             ),
         )
         fig.show()
+
+    def plot_polar_smoothed(self,df,saveFig=False):
+
+        ## COLLECT DATA
+        R = df.iloc[:]['vel_d']
+        Theta = df.iloc[:]['phi_d']
+        C = df.iloc[:]['LR_4Leg']
+
+        # SOMETHING ABOUT DEFINING A GRID
+        interp_factor = 20
+        ri = np.linspace(R.min(),R.max(),(len(C)//interp_factor))
+        thetai = np.linspace(Theta.min(),Theta.max(),(len(C)//interp_factor))
+        r_ig, theta_ig = np.meshgrid(ri, thetai)
+        zi = griddata((R, Theta), C, (ri[None,:], thetai[:,None]), method='linear')
+        zi = zi + 0.0001
+        
+
+        ## INIT PLOT INFO
+        fig = plt.figure()
+        ax = fig.add_subplot(projection='polar')
+        
+
+        cmap = mpl.cm.jet
+        norm = mpl.colors.Normalize(vmin=0.0,vmax=1)
+        
+        ax.contourf(np.radians(theta_ig),r_ig,zi,cmap=cmap,norm=norm,levels=25)
+        ax.set_thetamin(30)
+        ax.set_thetamax(90)
+        ax.set_rmin(0)
+        ax.set_rmax(3.5)
+        
+
+
+        ## AXIS LABELS    
+        ax.text(np.radians(7.5),2,'Flight Velocity (m/s)',
+            rotation=18,ha='center',va='center')
+
+        ax.text(np.radians(60),4.5,'Flight Angle (deg)',
+            rotation=0,ha='left',va='center')
+
+        if saveFig==True:
+            plt.savefig(f'{"NL"}_Polar_LR.pdf',dpi=300)
+
+        plt.show()
 
 ## DEFINE NN MODEL
 class NN_Model(nn.Module):
@@ -803,7 +662,7 @@ if __name__ == "__main__":
     SVM_Param_Path = f'{BASEPATH}/crazyflie_projects/Policy_Mapping/Policy_Training/Info/SVM_Params_{model_initials}.h'
 
     FilePath = f"{BASEPATH}/crazyflie_projects/Policy_Mapping/Data_Logs/"
-    FileName = "NL_LR_Trials_Subset.csv"
+    FileName = "NL_LR_Trials.csv"
 
     ## PRE-INITIALIZE MODELS
     NN_model = NN_Model()
@@ -812,7 +671,11 @@ if __name__ == "__main__":
 
     ## LOAD DATA
     df_raw = pd.read_csv(FilePath+FileName).dropna() # Collected data
-    df_train = df_raw.query("LR_4leg >= 0.8")
+    df_train = df_raw.query("LR_4Leg >= 0.8")
+
+    ## MAX LANDING RATE DATAFRAME
+    idx = df_raw.groupby(['vel_d','phi_d'])['LR_4Leg'].transform(max) == df_raw['LR_4Leg']
+    df_max = df_raw[idx].reset_index()
 
     ## ORGANIZE DATA
     Tau = df_train["Tau_flip_mean"]
@@ -849,11 +712,15 @@ if __name__ == "__main__":
     Policy.save_SVM_Params(SVM_Param_Path,FileName)
     print(Policy.OC_SVM_Predict(np.array([[0.233,-2.778,0.518]])))
 
-    # Policy.plotClassification(df_train,iso_level=0.0)
-    # Policy.plotPolicy(df_raw,PlotRegion=True,iso_level=0.0)
+    Policy.plot_polar_smoothed(df_max)
 
-    dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
-    fileName = "Control_Playground--trial_24--NL.csv"
-    trial = DataFile(dataPath,fileName,dataType='SIM')
+    # Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.0)
+    # Policy.plotPolicyRegion(df_raw,PlotBoundry=False,iso_level=0.0)
     
-    Policy.plotTraj(df_train,trial,iso_level=0.0)
+    
+    # dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
+    # fileName = "EPHE--Vd_3.50--phi_60.00--trial_02--NL--DR.csv"
+    # trial = DataFile(dataPath,fileName,dataType='SIM')
+    # Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.0,PlotTraj=(trial,0,0))
+
+
