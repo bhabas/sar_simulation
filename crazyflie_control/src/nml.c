@@ -237,7 +237,7 @@ nml_mat *nml_mat_fromfilef(FILE *f) {
 nml_mat* nml_mat_fromstr(char* str)
 {
     // CREATE COPY OF STRING TO WORK WITH
-    char array_str[4096];
+    char array_str[9000];
     strcpy(array_str,str);
 
     // INIT STRING TOKENS AND SAVE POINTER LOCATIONs

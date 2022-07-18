@@ -360,7 +360,7 @@ class Policy_Trainer():
         
         ## SAVE DUAL COEFFS
         np.savetxt(f,dual_coeffs,
-                    fmt='"%.5f,"',
+                    fmt='"%.4f,"',
                     delimiter='\t',
                     comments='',
                     header=f'"{dual_coeffs.shape[0]},"\t"{dual_coeffs.shape[1]},"',
@@ -368,7 +368,7 @@ class Policy_Trainer():
 
         ## SAVE SUPPORT VECTORS
         np.savetxt(f,support_vecs,
-                    fmt='"%.5f,"',
+                    fmt='"%.4f,"',
                     delimiter='\t',
                     comments='',
                     header=f'"{support_vecs.shape[0]},"\t"{support_vecs.shape[1]},"',
@@ -666,7 +666,10 @@ if __name__ == "__main__":
 
     ## PRE-INITIALIZE MODELS
     NN_model = NN_Model()
-    SVM_model = OneClassSVM(nu=0.1,gamma=0.5)
+    SVM_model = OneClassSVM(nu=0.5,gamma=1.0)
+    # nu: Controls size of enclosed volume (smaller -> larger volume)
+    # gamma: Controls how much the volume matches shape of data (smaller -> less definition)
+    #           Increases number of support vectors making calculations longer
     Policy = Policy_Trainer(NN_model,SVM_model,model_initials)
 
     ## LOAD DATA
@@ -702,7 +705,7 @@ if __name__ == "__main__":
 
 
     ## TRAIN NEURAL NETWORK My POLICY
-    # Policy.train_NN_Model(X_train,y_train,X_test,y_test,epochs=350)
+    # Policy.train_NN_Model(X_train,y_train,X_test,y_test,epochs=3200)
     # Policy.save_NN_Params(NN_Param_Path,FileName)
     Policy.load_NN_Params(NN_Param_Path)
     print(Policy.NN_Predict(np.array([[0.233,-2.778,0.518]])))
@@ -712,15 +715,16 @@ if __name__ == "__main__":
     Policy.save_SVM_Params(SVM_Param_Path,FileName)
     print(Policy.OC_SVM_Predict(np.array([[0.233,-2.778,0.518]])))
 
-    Policy.plot_polar_smoothed(df_max)
 
     # Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.0)
+    # Policy.plotPolicyRegion(df_raw,PlotBoundry=True,iso_level=0.0)
     # Policy.plotPolicyRegion(df_raw,PlotBoundry=False,iso_level=0.0)
+    # Policy.plot_polar_smoothed(df_max)
     
     
-    # dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
-    # fileName = "EPHE--Vd_3.50--phi_60.00--trial_02--NL--DR.csv"
-    # trial = DataFile(dataPath,fileName,dataType='SIM')
-    # Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.0,PlotTraj=(trial,0,0))
+    dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
+    fileName = "Control_Playground--trial_24--NL.csv"
+    trial = DataFile(dataPath,fileName,dataType='SIM')
+    Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.00,PlotTraj=(trial,0,0))
 
 
