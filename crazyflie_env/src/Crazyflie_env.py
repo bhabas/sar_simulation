@@ -59,6 +59,7 @@ class CrazyflieEnv():
         self.error_str = ""
 
         self.d_min = 50.0
+        self.Tau_trg = 50.0
         self.done = False
 
         high = np.array(
@@ -224,6 +225,7 @@ class CrazyflieEnv():
         ## RESET REWARD CALC VALUES
         self.done = False
         self.d_min = 50.0  # Reset max from ceiling [m]
+        self.Tau_trg = 50.0
 
         ## RESET/UPDATE RUN CONDITIONS
         self.start_time_rollout = self.getTime()
@@ -377,6 +379,9 @@ class CrazyflieEnv():
 
     def CalcReward(self):
 
+        R0 = np.clip(1/np.abs(self.Tau_trg-0.2),0,20)/20
+        R0 *= 0.05
+
         ## DISTANCE REWARD 
         R1 = np.clip(1/np.abs(self.d_min+1e-3),0,10)/10
         R1 *= 0.1
@@ -388,7 +393,7 @@ class CrazyflieEnv():
         ## PAD CONTACT REWARD
         if self.pad_connections >= 3: 
             if self.BodyContact_flag == False:
-                R3 = 0.7
+                R3 = 0.65
             else:
                 R3 = 0.4
         elif self.pad_connections == 2: 
@@ -399,7 +404,7 @@ class CrazyflieEnv():
         else:
             R3 = 0.0
 
-        return R1 + R2 + R3
+        return R0 + R1 + R2 + R3
 
     def getTime(self):
         """Returns current known time.

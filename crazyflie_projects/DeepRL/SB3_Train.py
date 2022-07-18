@@ -46,8 +46,8 @@ class CheckpointSaveCallback(BaseCallback):
         return True
 
 ## CREATE MODEL AND LOG DIRECTORY
-log_dir = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/"
-log_name = f"{env.env_name}/SAC-{current_time}"
+log_dir = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/{env.env_name}/"
+log_name = f"SAC-{current_time}"
 checkpoint_callback = CheckpointSaveCallback(save_freq=1000,log_dir=log_dir,log_name=log_name)
     
 policy_kwargs = dict(activation_fn=th.nn.ReLU,

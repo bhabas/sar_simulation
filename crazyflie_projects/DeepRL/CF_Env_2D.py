@@ -35,6 +35,7 @@ class CF_Env_2D():
         ## POLICY PARAMETERS
         self.Once_flag = False
         self.Tau_trg = 0.0
+        self.d_min = 500
         self.reward = 0.0
 
         high = np.array(
@@ -118,6 +119,11 @@ class CF_Env_2D():
                 or self.Impact_flag
             )
 
+            if not done:
+
+                if d_ceil <= self.d_min:
+                    self.d_min = d_ceil
+
             reward = 0
                 
         ## EXECUTE FLIP MANEUVER
@@ -183,6 +189,11 @@ class CF_Env_2D():
                     self.t_step >= self.t_threshold
                     or z < 0.2
                 )
+
+                if not done:
+
+                    if d_ceil <= self.d_min:
+                        self.d_min = d_ceil
                 
             elif self.Impact_flag == True:
 
@@ -314,8 +325,11 @@ class CF_Env_2D():
 
     def CalcReward(self):
 
+        R0 = np.clip(1/np.abs(self.Tau_trg-0.2),0,20)/20
+        R0 *= 0.05
+
         ## DISTANCE REWARD 
-        R1 = np.clip(1/np.abs(self.Tau_trg-0.2),0,20)/20
+        R1 = np.clip(1/np.abs(self.d_min),0,10)/10
         R1 *= 0.1
 
         ## IMPACT ANGLE REWARD
@@ -325,18 +339,18 @@ class CF_Env_2D():
         ## PAD CONTACT REWARD
         if self.pad_connections >= 3: 
             if self.BodyContact_flag == False:
-                R3 = 0.7
+                R3 = 0.65
             else:
-                R3 = 0.3
+                R3 = 0.4
         elif self.pad_connections == 2: 
             if self.BodyContact_flag == False:
-                R3 = 0.4
+                R3 = 0.2
             else:
                 R3 = 0.1
         else:
             R3 = 0.0
 
-        return R1 + R2 + R3
+        return R0 + R1 + R2 + R3
 
     def render(self,mode=None):
 
@@ -618,6 +632,7 @@ class CF_Env_2D():
         self.pad_connections = 0
         self.theta_impact = 0.0
         self.Tau_trg = 500
+        self.d_min = 500
         
         ## RESET STATE
         vel = np.random.uniform(low=1.5,high=3.5)
