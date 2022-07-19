@@ -1,10 +1,6 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 import os
-import time
-import rospy
-import threading
 
 
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
@@ -13,9 +9,9 @@ BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
 sys.path.insert(1,'/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_env')
 sys.path.insert(1,BASE_PATH)
 
-from crazyflie_env.src.Crazyflie_env import CrazyflieEnv
-from crazyflie_env.src.RL_Training_2_term_Policy import runTraining
-from crazyflie_env.src.RL_agents.EPHE_Agent import EPHE_Agent
+from crazyflie_env.CrazyflieEnv_ParamOpt import CrazyflieEnv_ParamOpt
+from crazyflie_env.RL_Training_2_term_Policy import runTraining
+from crazyflie_env.RL_agents.EPHE_Agent import EPHE_Agent
 
 
 if __name__ == '__main__':
@@ -23,10 +19,10 @@ if __name__ == '__main__':
     ## Home Test List
     df = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/Policy_Mapping/Data_Collection/MasterTestList.csv")
     arr = df.to_numpy()
-    arr = np.flip(arr,axis=0)
+    # arr = np.flip(arr,axis=0)
     
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=True)
+    env = CrazyflieEnv_ParamOpt(GZ_Timeout=True)
 
     for V_d,phi,tau_0,trial_num in arr:
         

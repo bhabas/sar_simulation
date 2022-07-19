@@ -1,23 +1,15 @@
 #!/usr/bin/env python3
 import numpy as np
-import warnings
-
 import os
-import time
-import sys
-import subprocess
 import rospy
 import getpass
 
 ## ROS MESSAGES AND SERVICES
-from std_srvs.srv import Empty
 from crazyflie_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
 from crazyflie_msgs.srv import loggingCMD,loggingCMDRequest
 from crazyflie_msgs.srv import RLCmd,RLCmdRequest
 
 from rosgraph_msgs.msg import Clock
-
-from std_srvs.srv import Empty,EmptyRequest
 
 YELLOW = '\033[93m'
 RED = '\033[91m'
@@ -27,7 +19,6 @@ ENDC = '\033[m'
 class CrazyflieEnv_Base():
     metadata = {'render.modes': ['human']}
     def __init__(self):
-        super(CrazyflieEnv_Base, self).__init__()        
         os.system("roslaunch crazyflie_launch params.launch")
 
         self.modelName = rospy.get_param('/MODEL_NAME')
@@ -262,6 +253,8 @@ class CrazyflieEnv_Base():
 
     def CF_StateDataCallback(self,StateData_msg):
 
+        # self.t = msg.clock.to_sec()
+
         self.posCF = np.round([ StateData_msg.Pose.position.x,
                                 StateData_msg.Pose.position.y,
                                 StateData_msg.Pose.position.z],3)
@@ -305,10 +298,7 @@ class CrazyflieEnv_Base():
 
         ## STICKY PAD CONNECTIONS
         self.pad_connections = ImpactData_msg.Pad_Connections
-        self.Pad1_Contact = ImpactData_msg.Pad1_Contact
-        self.Pad2_Contact = ImpactData_msg.Pad2_Contact
-        self.Pad3_Contact = ImpactData_msg.Pad3_Contact
-        self.Pad4_Contact = ImpactData_msg.Pad4_Contact
+
 
     def CF_MiscDataCallback(self,MiscData_msg):        
 

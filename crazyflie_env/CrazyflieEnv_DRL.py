@@ -272,6 +272,7 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base):
         z_0 = self.h_ceiling - tau_0*vz
 
         self.Vel_Launch([0,0,z_0],[vx,0,vz])
+        self.gazebo_unpause_physics()
         self.sleep(0.05)
         self.SendCmd("Policy",cmd_vals=[Tau,My,0.0],cmd_flag=1)
 
@@ -547,7 +548,7 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base):
 
         ## PUBLISH MODEL STATE SERVICE REQUEST
         self.callService('/gazebo/set_model_state',state_srv,SetModelState)
-        # self.gazebo_unpause_physics()
+        
 
     def reset_pos(self,z_0=0.358): # Disable sticky then places spawn_model at origin
         """Reset pose/twist of simulated drone back to home position. 
