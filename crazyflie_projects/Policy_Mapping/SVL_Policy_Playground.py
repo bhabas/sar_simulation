@@ -43,6 +43,10 @@ if __name__ == '__main__':
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv(gazeboTimeout=False)
     agent = EPHE_Agent()
+
+    ## CHECK THAT POLICY IS IN RL MODE
+    if rospy.get_param('/POLICY_TYPE') != "SVL_POLICY":
+        raise Exception("Policy is not set to SVL_Policy, change policy setting in Sim_Settings.yaml")
     
     ## INITIALIALIZE LOGGING DATA
     trial_num = 25
