@@ -4,7 +4,6 @@ import time
 
 ## ROS MESSAGES AND SERVICES
 from Core_Envs.CrazyflieEnv_Sim import CrazyflieEnv_Sim
-from crazyflie_msgs.srv import domainRand,domainRandRequest
 
 
 class CrazyflieEnv_ParamOpt(CrazyflieEnv_Sim):
@@ -167,18 +166,6 @@ class CrazyflieEnv_ParamOpt(CrazyflieEnv_Sim):
 
         return R1 + R2 + R3
 
-    def updateInertia(self):
-
-        ## CREATE SERVICE REQUEST MSG
-        srv = domainRandRequest() 
-        srv.mass = self.mass
-        srv.Inertia.x = self.Ixx
-        srv.Inertia.y = self.Iyy
-        srv.Inertia.z = self.Izz
-
-        ## SEND LOGGING REQUEST VIA SERVICE
-        self.callService('/CF_Internal/DomainRand',srv,domainRand)
- 
 
 
 if __name__ == "__main__":

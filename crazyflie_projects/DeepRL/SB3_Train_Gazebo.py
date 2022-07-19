@@ -11,14 +11,14 @@ import sys,rospkg,os
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
 sys.path.insert(1,'/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_env')
 sys.path.insert(1,BASE_PATH)
-from crazyflie_env.src.Crazyflie_env import CrazyflieEnv
+from crazyflie_env.CrazyflieEnv_DeepRL import CrazyflieEnv_DeepRL
 
 ## COLLECT CURRENT TIME
 now = datetime.now()
 current_time = now.strftime("%H-%M")
 
 ## INITIATE ENVIRONMENT
-env = CrazyflieEnv()
+env = CrazyflieEnv_DeepRL()
 
 class CheckpointSaveCallback(BaseCallback):
 

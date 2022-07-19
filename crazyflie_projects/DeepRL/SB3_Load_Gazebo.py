@@ -11,14 +11,14 @@ import sys,rospkg,os
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
 sys.path.insert(1,'/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_env')
 sys.path.insert(1,BASE_PATH)
-from crazyflie_env.src.Crazyflie_env import CrazyflieEnv
+from crazyflie_env.CrazyflieEnv_DeepRL import CrazyflieEnv_DeepRL
 
 ## COLLECT CURRENT TIME
 now = datetime.now()
 current_time = now.strftime("%H-%M")
 
 ## INITIATE ENVIRONMENT
-env = CrazyflieEnv()
+env = CrazyflieEnv_DeepRL()
 
 
 ## CREATE MODEL AND LOG DIRECTORY
@@ -43,14 +43,10 @@ policy_kwargs = dict(activation_fn=th.nn.ReLU,
 
 
 model = SAC.load(
-    path=f"{log_dir}/CF_Gazebo/SAC-22-20_0/models/{37}000_steps.zip",
+    path=f"{log_dir}/CF_Gazebo/SAC-07-32_0/models/{71}000_steps.zip",
     env=env,
     device='cpu'
 )
-model.load_replay_buffer(
-    path=f"{log_dir}/CF_Gazebo/SAC-22-20_0/models/replay_buff.pkl")
-
-
 
 ## RENDER TRAINED MODEL FOR N EPISODES-
 episodes = 50
