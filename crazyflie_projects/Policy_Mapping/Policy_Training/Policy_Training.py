@@ -669,7 +669,7 @@ if __name__ == "__main__":
     SVM_model = OneClassSVM(nu=0.5,gamma=1.0)
     # nu: Controls size of enclosed volume (smaller -> larger volume)
     # gamma: Controls how much the volume matches shape of data (smaller -> less definition)
-    #           Increases number of support vectors making calculations longer
+    #           Increases number of support vectors making calculations longer?
     Policy = Policy_Trainer(NN_model,SVM_model,model_initials)
 
     ## LOAD DATA
@@ -723,8 +723,9 @@ if __name__ == "__main__":
     
     
     dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
-    fileName = "Control_Playground--trial_24--NL.csv"
+    fileName = "SVL_Playground--trial_24--NL.csv"
     trial = DataFile(dataPath,fileName,dataType='SIM')
-    Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.00,PlotTraj=(trial,0,0))
+    k_ep = 2
+    Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.00,PlotTraj=(trial,k_ep,0))
 
 

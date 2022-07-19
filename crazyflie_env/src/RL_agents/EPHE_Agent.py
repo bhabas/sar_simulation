@@ -7,7 +7,7 @@ from crazyflie_msgs.msg import RLData,RLConvg
 class EPHE_Agent():
     ## EM‑based policy hyper parameter exploration
     ## CITED HERE: DOI 10.1007/s10015-015-0260-7
-    def __init__(self,mu=[0,0,0],sigma=[0,0,0], n_rollouts = 6):
+    def __init__(self,mu=[0,0],sigma=[0,0], n_rollouts = 6):
         
         self.agent_type = 'EPHE'
         self.n_rollouts = n_rollouts
@@ -55,7 +55,7 @@ class EPHE_Agent():
         ## RL DATA
         RL_msg = RLData() ## Initialize RLData message
         
-        RL_msg.n_rollouts = self.n_rollouts
+        # RL_msg.n_rollouts = self.n_rollouts
 
         RL_msg.k_ep = self.k_ep
         RL_msg.k_run = self.k_run
