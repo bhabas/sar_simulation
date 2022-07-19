@@ -70,16 +70,16 @@ model = SAC(
 ) 
 
 model = SAC.load(
-    path=f"{log_dir}/CF_Env_2D/SAC-15-33_0/models/{120}000_steps.zip",
+    path=f"{log_dir}/CF_Gazebo/SAC-09-47_0/models/{72}000_steps.zip",
     env=env,
     device='cpu'
 )
-# model.load_replay_buffer(
-#     path=f"{log_dir}/CF_Env_2D/SAC-15-33_0/models/replay_buff.pkl")
+model.load_replay_buffer(
+    path=f"{log_dir}/CF_Gazebo/SAC-09-47_0/models/replay_buff.pkl")
 
 model.learn(
     total_timesteps=1e6,
     tb_log_name=log_name,
     callback=checkpoint_callback,
-    reset_num_timesteps=True
+    reset_num_timesteps=False
 )

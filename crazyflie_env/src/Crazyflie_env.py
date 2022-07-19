@@ -118,7 +118,7 @@ class CrazyflieEnv():
             self.start_time_impact = self.getTime()
             self.onceFlag_impact = True
 
-        if action[0] < self.Flip_thr or Tau == 0.0:
+        if action[0] < self.Flip_thr:
 
             ## UPDATE STATE
             self.iter_step()
@@ -128,7 +128,7 @@ class CrazyflieEnv():
 
             ## CHECK FOR DONE
             self.done = bool(
-                self.t - self.start_time_rollout > 5                # EPISODE TIMEOUT
+                self.t - self.start_time_rollout > 2.0                # EPISODE TIMEOUT
                 or self.t - self.start_time_impact > 0.5            # IMPACT TIMEOUT
                 or (self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5) # FREE-FALL TERMINATION
             )         
@@ -177,7 +177,7 @@ class CrazyflieEnv():
                 self.onceFlag_impact = True
 
             self.done = bool(
-                self.t - self.start_time_rollout > 5                # EPISODE TIMEOUT
+                self.t - self.start_time_rollout > 2.0                # EPISODE TIMEOUT
                 or self.t - self.start_time_impact > 0.5            # IMPACT TIMEOUT
                 or (self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5) # FREE-FALL TERMINATION
             )
@@ -217,6 +217,7 @@ class CrazyflieEnv():
         self.SendCmd('Tumble',cmd_flag=1)
         self.SendCmd('Ctrl_Reset')
         self.reset_pos()
+        self.SendCmd('Tumble',cmd_flag=1)
         self.sleep(1.0)
         self.SendCmd('StickyPads',cmd_flag=1)
 
@@ -241,7 +242,6 @@ class CrazyflieEnv():
         ## RESET STATE
         vel = np.random.uniform(low=1.5,high=3.5)
         phi = np.random.uniform(low=30,high=90)
-        # phi = 40
 
         vx_0 = vel*np.cos(np.deg2rad(phi))
         vz_0 = vel*np.sin(np.deg2rad(phi))
@@ -253,7 +253,8 @@ class CrazyflieEnv():
         z_0 = self.h_ceiling - d_ceil_0
         x_0 = 0.0
         self.Vel_Launch([x_0,0.0,z_0],[vx_0,0,vz_0])
-        self.gazebo_pause_physics()
+        self.iter_step(10)
+
 
         ## RESET OBSERVATION
         self.obs = (self.Tau,self.OFy,self.d_ceil)
@@ -380,11 +381,11 @@ class CrazyflieEnv():
     def CalcReward(self):
 
         R0 = np.clip(1/np.abs(self.Tau_trg-0.2),0,20)/20
-        R0 *= 0.05
+        R0 *= 0.1
 
         ## DISTANCE REWARD 
         R1 = np.clip(1/np.abs(self.d_min+1e-3),0,10)/10
-        R1 *= 0.1
+        R1 *= 0.05
 
         ## IMPACT ANGLE REWARD
         R2 = np.clip(np.abs(self.eulCF_impact[1])/120,0,1)
@@ -631,7 +632,7 @@ class CrazyflieEnv():
 
         ## PUBLISH MODEL STATE SERVICE REQUEST
         self.callService('/gazebo/set_model_state',state_srv,SetModelState)
-        self.gazebo_unpause_physics()
+        # self.gazebo_unpause_physics()
 
     def reset_pos(self,z_0=0.358): # Disable sticky then places spawn_model at origin
         """Reset pose/twist of simulated drone back to home position. 
