@@ -550,7 +550,8 @@ void CF_DataConverter::consoleOuput()
     printf("Vel [m/s]:\t %.3f  %.3f  %.3f\n",Twist.linear.x,Twist.linear.y,Twist.linear.z);
     printf("Omega [rad/s]:\t %.3f  %.3f  %.3f\n",Twist.angular.x,Twist.angular.y,Twist.angular.z);
     printf("Eul [deg]:\t %.3f  %.3f  %.3f\n",Eul.x,Eul.y,Eul.z);
-    printf("Vel: %.2f [m/s] \tPhi [deg]: %.2f \tAlpha [deg]: %.2f\n",Vel_mag,Phi,Alpha);
+    printf("\n");
+    printf("Vel [mag,phi,alph]: %.2f %.2f %.2f\n",Vel_mag,Phi,Alpha);
     printf("\n");
 
     printf("Tau: %.3f \tOFx: %.3f \tOFy: %.3f\n",Tau,OFx,OFy);

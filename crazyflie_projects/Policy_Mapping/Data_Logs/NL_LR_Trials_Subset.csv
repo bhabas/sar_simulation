@@ -1,4 +1,4 @@
-vel_IC,phi_IC,trial_num,LR_4leg,vz_flip_mean,vz_flip_std,vx_flip_mean,vx_flip_std,Tau_flip_mean,Tau_flip_std,OFy_flip_mean,OFy_flip_std,D_ceil_flip_mean,D_ceil_flip_std,My_mean,My_std
+vel_IC,phi_IC,trial_num,LR_4Leg,vz_flip_mean,vz_flip_std,vx_flip_mean,vx_flip_std,Tau_flip_mean,Tau_flip_std,OFy_flip_mean,OFy_flip_std,D_ceil_flip_mean,D_ceil_flip_std,My_mean,My_std
 2.5,55.0,0,1.0,1.8999,0.0046,1.4857,0.0062,0.2284,0.0025,-3.5736,0.039,0.4261,0.005,-4.0327,0.1968
 2.5,55.0,2,1.0,1.8938,0.0058,1.4797,0.0096,0.2207,0.0024,-3.6847,0.058,0.4109,0.0049,-5.6867,0.0255
 2.5,57.5,0,0.0,1.9504,0.0068,1.3858,0.0104,0.2094,0.0023,-3.5388,0.0614,0.4018,0.0041,-4.2912,0.0161

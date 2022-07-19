@@ -17,7 +17,8 @@ from crazyflie_logging.data_analysis.Data_Analysis import DataFile
 
 
 dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
-compiledPath = f"{BASE_PATH}/crazyflie_projects/Policy_Mapping/Data_Logs/NL_DR_Subset"
+compiledPath = f"{BASE_PATH}/crazyflie_projects/Policy_Mapping/Data_Logs"
+compiledName = "NL_LR_Trials.csv"
 
 df_list = []
 file_index = 0
@@ -64,6 +65,7 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
         D_ceil_flip_mean,D_ceil_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,'d_ceil')
         My_mean,My_std,_ = trial.grab_trial_data(trial.grab_flip_state,'My')
         landing_rate_4leg,_,_,_ = trial.landing_rate()
+        mu,sigma = trial.grab_finalPolicy()
 
 
 
@@ -71,12 +73,23 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
         df_list.append((
             vel_IC, phi_IC, trial_num,
             landing_rate_4leg,
-            vz_flip_mean,vz_flip_std,
-            vx_flip_mean,vx_flip_std,
-            Tau_flip_mean,Tau_flip_std,
-            OFy_flip_mean,OFy_flip_std,
-            D_ceil_flip_mean,D_ceil_flip_std,
-            My_mean,My_std,
+
+            Tau_flip_mean,
+            OFy_flip_mean,
+            D_ceil_flip_mean,
+            My_mean,
+
+            vz_flip_mean,
+            vx_flip_mean,
+
+            Tau_flip_std,
+            OFy_flip_std,
+            D_ceil_flip_std,
+            My_std,
+
+            vz_flip_std,
+            vx_flip_std,
+            mu,sigma,
         ))
 
 
@@ -90,19 +103,30 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
     
 ## WRITE FILE HEADER
 master_df = pd.DataFrame(df_list,columns=(
-    "vel_IC", "phi_IC", "trial_num",
-    "LR_4leg",
-    "vz_flip_mean","vz_flip_std",
-    "vx_flip_mean","vx_flip_std",
-    "Tau_flip_mean","Tau_flip_std",
-    "OFy_flip_mean","OFy_flip_std",
-    "D_ceil_flip_mean","D_ceil_flip_std",
-    "My_mean","My_std"
+    "vel_d", "phi_d", "trial_num",
+    "LR_4Leg",
+
+    "Tau_flip_mean",
+    "OFy_flip_mean",
+    "D_ceil_flip_mean",
+    "My_mean",
+
+    "vz_flip_mean",
+    "vx_flip_mean",
+
+    "Tau_flip_std",
+    "OFy_flip_std",
+    "D_ceil_flip_std",
+    "My_std",
+
+    "vz_flip_std",
+    "vx_flip_std",
+    "mu","sigma",
 ))
 master_df = master_df.round(4)
 master_df[['vel_IC','phi_IC','trial_num']] = master_df[['vel_IC','phi_IC','trial_num']].round(2)
 master_df.sort_values(['vel_IC','phi_IC','trial_num'],ascending=[1,1,1],inplace=True)
-master_df.to_csv(f'{compiledPath}/NL_LR_Trials_Raw.csv',index=False,mode='w',header=True)
+master_df.to_csv(f'{compiledPath}/{compiledName}',index=False,mode='w',header=True)
 
 
 
