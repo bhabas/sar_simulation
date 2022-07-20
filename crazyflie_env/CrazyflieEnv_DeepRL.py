@@ -114,7 +114,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
                     self.d_min = self.d_ceil 
 
             ## ERROR TERMINATIONS
-            if (time.time() - self.start_time_ep) > 20.0 and self.gazeboTimeout == True:
+            if (time.time() - self.start_time_ep) > 20.0 and self.GZ_Timeout == True:
                 print('\033[93m' + "[WARNING] Real Time Exceeded" + '\x1b[0m')
                 self.Restart()
                 self.done = True
@@ -196,11 +196,11 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
     def CalcReward(self):
 
-        R0 = np.clip(1/np.abs(self.Tau_trg-0.2),0,20)/20
+        R0 = np.clip(1/np.abs(self.Tau_trg-0.2),0,15)/15
         R0 *= 0.1
 
         ## DISTANCE REWARD 
-        R1 = np.clip(1/np.abs(self.d_min+1e-3),0,10)/10
+        R1 = np.clip(1/np.abs(self.d_min+1e-3),0,15)/15
         R1 *= 0.05
 
         ## IMPACT ANGLE REWARD

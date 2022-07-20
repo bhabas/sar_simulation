@@ -69,17 +69,17 @@ model = SAC(
     tensorboard_log=log_dir
 ) 
 
-model = SAC.load(
-    path=f"{log_dir}/CF_Gazebo/SAC-09-47_0/models/{72}000_steps.zip",
-    env=env,
-    device='cpu'
-)
-model.load_replay_buffer(
-    path=f"{log_dir}/CF_Gazebo/SAC-09-47_0/models/replay_buff.pkl")
+# model = SAC.load(
+#     path=f"{log_dir}/CF_Env_2D/SAC-22-19_0/models/{90}000_steps.zip",
+#     env=env,
+#     device='cpu'
+# )
+# model.load_replay_buffer(
+#     path=f"{log_dir}/CF_Env_2D/SAC-22-19_0/models/replay_buff.pkl")
 
 model.learn(
     total_timesteps=1e6,
     tb_log_name=log_name,
     callback=checkpoint_callback,
-    reset_num_timesteps=False
+    reset_num_timesteps=True
 )
