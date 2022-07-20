@@ -4,7 +4,7 @@ import rospy
 import numpy as np
 
 
-from Core_Envs.CrazyflieEnv_Sim import CrazyflieEnv_Sim
+
        
 def cmd_send(env):
     while True:
@@ -210,6 +210,7 @@ def cmd_send(env):
 if __name__ == '__main__':
     
     ## INIT GAZEBO ENVIRONMENT
+    from Core_Envs.CrazyflieEnv_Sim import CrazyflieEnv_Sim
     env = CrazyflieEnv_Sim()
 
     ## INITIALIALIZE LOGGING DATA
