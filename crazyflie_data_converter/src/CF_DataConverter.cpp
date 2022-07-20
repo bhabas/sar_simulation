@@ -301,9 +301,12 @@ bool CF_DataConverter::Send_Cmd2Ctrl(crazyflie_msgs::RLCmd::Request &req)
 
         Pad_Connections = 0;
 
-        // RESET SIM SPEED
-        CF_DataConverter::adjustSimSpeed(SIM_SPEED);
-        SLOWDOWN_TYPE = 0;
+        if (DATA_TYPE.compare("SIM") == 0)
+        {
+            // RESET SIM SPEED
+            CF_DataConverter::adjustSimSpeed(SIM_SPEED);
+            SLOWDOWN_TYPE = 0;
+        }
 
     }
 

@@ -187,7 +187,7 @@ bool customPWM_flag = false;
 
 // DEFINE POLICY TYPE ACTIVATED
 
-char PolicyType[] = "PARAM_CONVG"; // Default to RL
+char PolicyType[] = "PARAM_OPTIM"; // Default to RL
 
 // ======================================
 //  RECORD SYSTEM STATES AT FLIP TRIGGER
@@ -477,25 +477,25 @@ void GTC_Command(setpoint_t *setpoint)
             
         
 
-        // case 10: // Custom Thrust Values
+        case 30: // Custom Thrust Values
 
-        //     customThrust_flag = true;
-        //     thrust_override[0] = setpoint->cmd_val1;
-        //     thrust_override[1] = setpoint->cmd_val2;
-        //     thrust_override[2] = setpoint->cmd_val3;
-        //     thrust_override[3] = setpoint->cmd_flag;
+            customThrust_flag = true;
+            thrust_override[0] = setpoint->cmd_val1;
+            thrust_override[1] = setpoint->cmd_val2;
+            thrust_override[2] = setpoint->cmd_val3;
+            thrust_override[3] = setpoint->cmd_flag;
 
-        //     break;
+            break;
 
-        // case 12: // Custom PWM Values
+        case 31: // Custom PWM Values
 
-        //     customPWM_flag = true;
-        //     PWM_override[0] = setpoint->cmd_val1;
-        //     PWM_override[1] = setpoint->cmd_val2;
-        //     PWM_override[2] = setpoint->cmd_val3;
-        //     PWM_override[3] = setpoint->cmd_flag;
+            customPWM_flag = true;
+            PWM_override[0] = setpoint->cmd_val1;
+            PWM_override[1] = setpoint->cmd_val2;
+            PWM_override[2] = setpoint->cmd_val3;
+            PWM_override[3] = setpoint->cmd_flag;
 
-        //     break;
+            break;
 
         
 

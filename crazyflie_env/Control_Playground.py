@@ -23,12 +23,9 @@ def cmd_send(env):
 
             20:'Tumble',
             21:'Load_Params',
-            22:'Start_Logging',
-            23:'Cap_Logging',
 
-            90:'GZ_traj',
-            91:'GZ_reset',
-            92:'StickyPads',
+            30:'Thrust',
+            31:'PWM',
         }
 
         try:
@@ -36,6 +33,7 @@ def cmd_send(env):
             print("0:Ctrl_Reset, \t1:Pos, \t\t2:Vel, \t\t5:Stop, \t8:Policy")
             print("10:P2P_traj, \t11:Vel_traj, \t12:Impact_traj,")
             print("20:Tumble, \t21:Load_Params, 22:Start_Logging, 23:Cap_Logging,")
+            print("30:Thrust, \t31:PWM,")
             print("90:GZ_traj, \t91:GZ_reset, \t92:StickyPads")
             val = env.userInput("\nCmd: ",int)
             print()
@@ -47,14 +45,8 @@ def cmd_send(env):
                 cmd_flag = 1
                 print("Reset controller to default values\n")
 
-                env.SendCmd('StickyPads',cmd_vals,0)
                 env.SendCmd(action,cmd_vals,cmd_flag)
             
-            elif action=='Start_Logging':
-                env.startLogging(logName)
-
-            elif action=='Cap_Logging':
-                env.capLogging(logName)
 
             elif action=='Pos':
                 cmd_vals = env.userInput("Set desired position values (x,y,z): ",float)
@@ -88,6 +80,18 @@ def cmd_send(env):
             elif action=='Moment':
                 cmd_vals = env.userInput("Set desired Moment values (x,y,z) N*mm: ",float)
                 cmd_flag = env.userInput("Moment control On/Off (1,0): ",int)
+                env.SendCmd(action,cmd_vals,cmd_flag)
+
+            elif action=='Thrust':
+                vals = env.userInput("Set desired thrust values (M1,M2,M3,M4) [g]: ",float)
+                cmd_vals = vals[0:3]
+                cmd_flag = vals[3]
+                env.SendCmd(action,cmd_vals,cmd_flag)
+
+            elif action=='PWM':
+                vals = env.userInput("Set desired PWM values (M1,M2,M3,M4) [g]: ",float)
+                cmd_vals = vals[0:3]
+                cmd_flag = vals[3]
                 env.SendCmd(action,cmd_vals,cmd_flag)
 
 
