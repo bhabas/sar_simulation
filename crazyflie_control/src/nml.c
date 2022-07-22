@@ -24,6 +24,7 @@ limitations under the License.
 #include <string.h>
 
 #include "nml.h"
+#include "debug.h"
 
 #define DEFAULT_VALUE 0.0
 
@@ -236,9 +237,6 @@ nml_mat *nml_mat_fromfilef(FILE *f) {
 
 nml_mat* nml_mat_fromstr(char* str)
 {
-    // CREATE COPY OF STRING TO WORK WITH
-    char array_str[9000];
-    strcpy(array_str,str);
 
     // INIT STRING TOKENS AND SAVE POINTER LOCATIONs
     unsigned int num_rows = 0, num_cols = 0;
@@ -247,7 +245,7 @@ nml_mat* nml_mat_fromstr(char* str)
 
 
     // INIT MATRIX
-    value_token = strtok_r(array_str,",",&save_ptrLoc); 
+    value_token = strtok_r(str,",",&save_ptrLoc); 
     num_rows = atoi(value_token);
 
     value_token = strtok_r(NULL,",",&save_ptrLoc);      // Pickup at last ptr location
@@ -261,7 +259,6 @@ nml_mat* nml_mat_fromstr(char* str)
        for (int j = 0; j < num_cols; j++)
         {
             value_token = strtok_r(NULL,",",&save_ptrLoc);
-            // printf("%s\n",value_token);
             r->data[i][j] = atof(value_token);
         }
     }
@@ -331,6 +328,19 @@ void nml_mat_printf(nml_mat *matrix, const char *d_fmt) {
     fprintf(stdout, "\n");
   }
   fprintf(stdout, "\n");
+}
+
+void nml_mat_print_CF(nml_mat *matrix) {
+    // consolePrintf("\n=========================\n\n");
+    // for (int i = 0; i < matrix->num_rows; i++)
+    // {
+    //     for (int j = 0; j < matrix->num_cols; j++)
+    //     {
+    //         consolePrintf("%.5f ",matrix->data[i][j]);
+    //     }
+    //     consolePrintf("\n");
+    // }
+    // consolePrintf("\n=========================\n\n");
 }
 
 // *****************************************************************************

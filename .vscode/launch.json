@@ -16,7 +16,7 @@
             "name": "ROS: Launch",
             "type": "ros",
             "request": "launch",
-            "target": "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_launch/launch/controller.launch"
+            "target": "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_launch/launch/debug.launch"
         },
         {
             "name": "ROS: Attach",
@@ -55,12 +55,7 @@
             "console": "integratedTerminal",
             "justMyCode": true
         },
-        {
-            "name": "ROS: Launch",
-            "type": "ros",
-            "request": "launch",
-            "target": "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_launch/launch/debug.launch"
-        },
+
 
         
     ]
