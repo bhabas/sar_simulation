@@ -81,6 +81,7 @@ int nml_mat_eq(nml_mat *m1, nml_mat *m2, double tolerance);
 // *****************************************************************************
 void nml_mat_print(nml_mat *matrix);
 void nml_mat_printf(nml_mat *matrix, const char *d_fmt);
+void nml_mat_print_CF(nml_mat *matrix);
 
 // *****************************************************************************
 //

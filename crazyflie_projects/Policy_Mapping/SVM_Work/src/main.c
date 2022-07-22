@@ -17,7 +17,6 @@ NN NN_Policy;
 //  NEURAL NETWORK INITIALIZATION
 // ===============================
 static nml_mat* X;  // STATE MATRIX TO BE INPUT INTO NN
-static nml_mat* y_output;  // STATE MATRIX TO BE INPUT INTO NN
 
 
 int main()
@@ -27,20 +26,16 @@ int main()
     
     printf("size: %ld\n",sizeof(NN_Policy));
     X = nml_mat_new(3,1);
-    X->data[0][0] = 0.29;
-    X->data[1][0] = -0.673;
-    X->data[2][0] = 0.952; 
+    X->data[0][0] = 0.0;
+    X->data[1][0] = 1.0;
+    X->data[2][0] = 2.0; 
 
-    y_output = nml_mat_new(2,1);
 
     NN_init(&NN_Policy,NN_Params_Flip);
-    NN_predict(X,&NN_Policy);
-    printf("NN_Predict: %.4f\n",NN_predict(X,&NN_Policy));
-
-
     OC_SVM_init(&SVM_PolicyFlip,SVM_Params);
 
-    printf("OC_SVM Predict: %.4f\n",OC_SVM_predict(&SVM_PolicyFlip,X));
+    printf("NN_Predict: %.4f\n",NN_predict(X,&NN_Policy));
+    printf("OC_SVM Predict: %.4f\n",OC_SVM_predict(X,&SVM_PolicyFlip));
 
     return 0;
 }
