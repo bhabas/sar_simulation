@@ -596,22 +596,8 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                                         state_t *state,
                                         const uint32_t tick)
 {
-
-    if (RATE_DO_EXECUTE(RATE_500_HZ, tick)) {
-
-        if (setpoint->GTC_cmd_rec == true)
-        {
-            GTC_Command(setpoint);
-            setpoint->GTC_cmd_rec = false;
-        }
-
-        if(execute_vel_traj){
-            velocity_Traj();
-        }
-        else if(execute_P2P_traj){
-            point2point_Traj();
-        }
-
+    if (RATE_DO_EXECUTE(RATE_100_HZ,tick))
+    {
         if(camera_sensor_active == true)
         {
             Tau = sensors->Tau_est;
@@ -624,16 +610,12 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
             OFx = sensors->OFx;
             OFy = sensors->OFy;
         }
-        
-        d_ceil = sensors->d_ceil;
 
+        d_ceil = sensors->d_ceil;
         X->data[0][0] = Tau;
         X->data[1][0] = OFy;
         X->data[2][0] = d_ceil; // d_ceiling [m]
 
-        
-        controlOutput(state,sensors);
-        
         if(policy_armed_flag == true){ 
 
             switch(Policy){
@@ -708,19 +690,33 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                     break;
             }
             
-            if(flip_flag == true)
-            {
-                // Controller defaults to increase front motor & decrease back motors to flip
-                // Instead double front motors and set back motors to zero for desired body moment
-                // This gives same moment but avoids negative motor speeds
-                M = vscl(2.0f,M_d); 
-                F_thrust = 0.0f;
-            }
+            
+        }
+    }
+
+    if (RATE_DO_EXECUTE(RATE_500_HZ, tick)) {
+
+        if (setpoint->GTC_cmd_rec == true)
+        {
+            GTC_Command(setpoint);
+            setpoint->GTC_cmd_rec = false;
         }
 
+        if(execute_vel_traj){
+            velocity_Traj();
+        }
+        else if(execute_P2P_traj){
+            point2point_Traj();
+        }
 
-        if(moment_flag == true)
+        
+        controlOutput(state,sensors);
+
+        if(moment_flag == true || flip_flag == true)
         {
+            // Controller defaults to increase front motor & decrease back motors to flip
+            // Instead double front motors and set back motors to zero for desired body moment
+            // This gives same moment but avoids negative motor speeds
             F_thrust = 0.0f;
             M = vscl(2.0f,M_d);
         }
@@ -785,28 +781,31 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
             M3_pwm = thrust2PWM(M3_thrust);
             M4_pwm = thrust2PWM(M4_thrust);
         }
-  
+
 
         compressStates();
         compressSetpoints();
         compressFlipStates();
+
+        if(safeModeEnable)
+        {
+            motorsSetRatio(MOTOR_M1, 0);
+            motorsSetRatio(MOTOR_M2, 0);
+            motorsSetRatio(MOTOR_M3, 0);
+            motorsSetRatio(MOTOR_M4, 0);
+        }
+        else{
+            // SEND PWM VALUES TO MOTORS
+            motorsSetRatio(MOTOR_M1, M4_pwm);
+            motorsSetRatio(MOTOR_M2, M3_pwm);
+            motorsSetRatio(MOTOR_M3, M2_pwm);
+            motorsSetRatio(MOTOR_M4, M1_pwm);
+
+        }
+
     }
 
-    if(safeModeEnable)
-    {
-        motorsSetRatio(MOTOR_M1, 0);
-        motorsSetRatio(MOTOR_M2, 0);
-        motorsSetRatio(MOTOR_M3, 0);
-        motorsSetRatio(MOTOR_M4, 0);
-    }
-    else{
-        // SEND PWM VALUES TO MOTORS
-        motorsSetRatio(MOTOR_M1, M4_pwm);
-        motorsSetRatio(MOTOR_M2, M3_pwm);
-        motorsSetRatio(MOTOR_M3, M2_pwm);
-        motorsSetRatio(MOTOR_M4, M1_pwm);
-
-    }
+    
     
 
     
