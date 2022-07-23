@@ -16,8 +16,8 @@ extern "C" {
 #ifndef __CONTROLLER_GTC_H__
 #define __CONTROLLER_GTC_H__
 
-#include "NN_Params/NN_Layers_NL_DR.h"
-#include "NN_Params/SVM_Params_NL_DR.h"
+#include "ML_Params/NN_Layers_NL_DR.h"
+#include "ML_Params/SVM_Params_NL_DR.h"
 
 // STANDARD LIBRARIES
 #include <math.h>
@@ -265,7 +265,7 @@ static int32_t thrust2PWM(float f)
     float PWM = percentage * (float)UINT16_MAX; // Remap percentage back to PWM range
 
     // IF MINIMAL THRUST ENSURE PWM = 0
-    if(f <= 0.25)
+    if(f <= 0.25f)
     {
         PWM = 0.0f;
     }
