@@ -192,6 +192,7 @@ def cmd_send(env):
 
                 ## ESTIMATE IMPACT POINT
                 env.Vel_Launch(env.posCF,[Vx_d,Vy_d,Vz_d])
+                env.gazebo_unpause_physics()
                 
                     
             elif action == 'GZ_reset':

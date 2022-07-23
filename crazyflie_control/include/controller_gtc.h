@@ -226,8 +226,12 @@ extern float Policy_Flip;
 extern float Policy_Flip_tr;
 extern float Policy_Action_tr;
 
-extern char PolicyType[];
-
+typedef enum {
+    PARAM_OPTIM = 0,
+    SVL_POLICY = 1,
+    DEEP_RL = 2
+}PolicyType;
+extern PolicyType Policy;
 
 // Converts thrust in grams to their respective PWM values
 static int32_t thrust2PWM(float f) 

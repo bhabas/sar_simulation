@@ -186,8 +186,8 @@ bool customPWM_flag = false;
 
 
 // DEFINE POLICY TYPE ACTIVATED
+PolicyType Policy = PARAM_OPTIM;
 
-char PolicyType[] = "PARAM_OPTIM"; // Default to RL
 
 // ======================================
 //  RECORD SYSTEM STATES AT FLIP TRIGGER
@@ -591,31 +591,11 @@ void point2point_Traj()
 
 }
 
-int ii = 0;
 void controllerGTC(control_t *control, setpoint_t *setpoint,
                                         sensorData_t *sensors,
                                         state_t *state,
                                         const uint32_t tick)
 {
-    // if (RATE_DO_EXECUTE(5,tick))
-    // {
-    //     ii += 1;
-    //     X->data[0][0] = 0.233;
-    //     X->data[1][0] = -2.778;
-    //     X->data[2][0] = 0.518; 
-
-    //     consolePrintf("It: %d \tVal: %.5f\n",ii,NN_predict(X,&NN_Policy_Action));
-    //     consolePrintf("It: %d \tVal2: %.5f\n",ii,OC_SVM_predict(X,&SVM_Policy_Flip));
-    // }
-
-    // if (RATE_DO_EXECUTE(50,tick))
-    // {
-    //     X->data[0][0] = 0.233;
-    //     X->data[1][0] = -2.778;
-    //     X->data[2][0] = 0.518; 
-    //     OC_SVM_predict(X,&SVM_Policy_Flip);
-
-    // }
 
     if (RATE_DO_EXECUTE(RATE_500_HZ, tick)) {
 
@@ -656,9 +636,10 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         
         if(policy_armed_flag == true){ 
 
-            if (strcmp(PolicyType,"PARAM_OPTIM")==0)
-            {
-                if(Tau <= Tau_thr && onceFlag == false && state->velocity.z > 0.1){
+            switch(Policy){
+
+                case PARAM_OPTIM:
+                    if(Tau <= Tau_thr && onceFlag == false && state->velocity.z > 0.1){
                     onceFlag = true;
                     flip_flag = true;  
 
@@ -682,55 +663,56 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                     M_x_flip = M_d.x*1e3f;
                     M_y_flip = M_d.y*1e3f;
                     M_z_flip = M_d.z*1e3f;
-                }
+                    }
+                    
+                    break;
+
+                case SVL_POLICY:
+
+                    Policy_Flip = OC_SVM_predict(X,&SVM_Policy_Flip);
+                    if(Policy_Flip >= 0.00f && onceFlag == false)
+                    {   
+                        onceFlag = true;
+                        flip_flag = true;
+
+                        // UPDATE AND RECORD FLIP VALUES
+                        statePos_tr = statePos;
+                        stateVel_tr = stateVel;
+                        stateQuat_tr = stateQuat;
+                        stateOmega_tr = stateOmega;
+
+                        Tau_tr = Tau;
+                        OFx_tr = OFx;
+                        OFy_tr = OFy;
+                        d_ceil_tr = d_ceil;
+
+                        Policy_Flip_tr = Policy_Flip;
+                        Policy_Action_tr = NN_predict(X,&NN_Policy_Action);
+
+
+                        M_d.x = 0.0f;
+                        M_d.y = Policy_Action_tr*1e-3f;
+                        M_d.z = 0.0f;
+
+                        F_thrust_flip = 0.0;
+                        M_x_flip = M_d.x*1e3f;
+                        M_y_flip = M_d.y*1e3f;
+                        M_z_flip = M_d.z*1e3f;
+                    }
+
+                    break;
+
+                case DEEP_RL:
+
+
+                    break;
             }
-            else if(strcmp(PolicyType,"SVL_POLICY")==0)
-            {
-                Policy_Flip = OC_SVM_predict(X,&SVM_Policy_Flip);
-
-                if(Policy_Flip >= 0.00f && onceFlag == false)
-                {   
-                    onceFlag = true;
-                    flip_flag = true;
-
-                    // UPDATE AND RECORD FLIP VALUES
-                    statePos_tr = statePos;
-                    stateVel_tr = stateVel;
-                    stateQuat_tr = stateQuat;
-                    stateOmega_tr = stateOmega;
-
-                    Tau_tr = Tau;
-                    OFx_tr = OFx;
-                    OFy_tr = OFy;
-                    d_ceil_tr = d_ceil;
-
-                    Policy_Flip_tr = Policy_Flip;
-                    Policy_Action_tr = NN_predict(X,&NN_Policy_Action);
-
-
-                    M_d.x = 0.0f;
-                    M_d.y = Policy_Action_tr*1e-3f;
-                    M_d.z = 0.0f;
-
-                    F_thrust_flip = 0.0;
-                    M_x_flip = M_d.x*1e3f;
-                    M_y_flip = M_d.y*1e3f;
-                    M_z_flip = M_d.z*1e3f;
-                }
-
-            }
-            else if(strcmp(PolicyType,"DEEP_RL")==0)
-            {
-                // printf("three\n");
-
-            }
-        
             
             if(flip_flag == true)
             {
-                // Doubling front motor values and zeroing back motors is
-                // equal to increasing front motors and decreasing back motors.
-                // This gives us the highest possible moment and avoids PWM cutoff issue
+                // Controller defaults to increase front motor & decrease back motors to flip
+                // Instead double front motors and set back motors to zero for desired body moment
+                // This gives same moment but avoids negative motor speeds
                 M = vscl(2.0f,M_d); 
                 F_thrust = 0.0f;
             }
