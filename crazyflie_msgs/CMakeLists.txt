@@ -29,6 +29,7 @@ add_message_files(
   OF_SensorData.msg
   GenericLogData.msg
   Vicon_Filtered.msg
+  GTC_Cmd.msg
 )
 
 # Generate services in the 'srv' folder
