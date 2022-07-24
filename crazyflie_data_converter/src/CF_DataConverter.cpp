@@ -237,16 +237,16 @@ void CF_DataConverter::CtrlDebug_Callback(const crazyflie_msgs::CtrlDebug &ctrl_
 bool CF_DataConverter::CMD_CF_DC_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res)
 {
     // PASS COMMAND VALUES TO CONTROLLER AND PASS LOCAL ACTIONS
-    res.srv_Success = CF_DataConverter::Send_Cmd2Ctrl(req);
-    
+    CF_DataConverter::Send_Cmd2Ctrl(req);
+    res.srv_Success = true;
     return res.srv_Success;
 }
 
 bool CF_DataConverter::CMD_Dashboard_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res)
 {
     // PASS COMMAND VALUES TO CONTROLLER AND PASS LOCAL ACTIONS
-    res.srv_Success = CF_DataConverter::Send_Cmd2Ctrl(req);
-    
+    CF_DataConverter::Send_Cmd2Ctrl(req);
+    res.srv_Success = true;
     return res.srv_Success;
 }
 
