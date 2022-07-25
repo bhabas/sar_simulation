@@ -4,7 +4,7 @@ import rospy
 import numpy as np
 
 
-from Core_Envs.CrazyflieEnv_Sim import CrazyflieEnv_Sim
+from CrazyflieEnv_ParamOpt import CrazyflieEnv_ParamOpt
        
 def cmd_send(env):
     while True:
@@ -192,6 +192,7 @@ def cmd_send(env):
 
                 ## ESTIMATE IMPACT POINT
                 env.Vel_Launch(env.posCF,[Vx_d,Vy_d,Vz_d])
+                env.gazebo_unpause_physics()
                 
                     
             elif action == 'GZ_reset':
@@ -206,7 +207,7 @@ def cmd_send(env):
 if __name__ == '__main__':
     
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv_Sim()
+    env = CrazyflieEnv_ParamOpt()
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 24

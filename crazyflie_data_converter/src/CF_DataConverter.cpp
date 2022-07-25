@@ -237,16 +237,16 @@ void CF_DataConverter::CtrlDebug_Callback(const crazyflie_msgs::CtrlDebug &ctrl_
 bool CF_DataConverter::CMD_CF_DC_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res)
 {
     // PASS COMMAND VALUES TO CONTROLLER AND PASS LOCAL ACTIONS
-    res.srv_Success = CF_DataConverter::Send_Cmd2Ctrl(req);
-    
+    CF_DataConverter::Send_Cmd2Ctrl(req);
+    res.srv_Success = true;
     return res.srv_Success;
 }
 
 bool CF_DataConverter::CMD_Dashboard_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res)
 {
     // PASS COMMAND VALUES TO CONTROLLER AND PASS LOCAL ACTIONS
-    res.srv_Success = CF_DataConverter::Send_Cmd2Ctrl(req);
-    
+    CF_DataConverter::Send_Cmd2Ctrl(req);
+    res.srv_Success = true;
     return res.srv_Success;
 }
 
@@ -301,37 +301,52 @@ bool CF_DataConverter::Send_Cmd2Ctrl(crazyflie_msgs::RLCmd::Request &req)
 
         Pad_Connections = 0;
 
-        // RESET SIM SPEED
-        CF_DataConverter::adjustSimSpeed(SIM_SPEED);
-        SLOWDOWN_TYPE = 0;
+        if (DATA_TYPE.compare("SIM") == 0)
+        {
+            // RESET SIM SPEED
+            CF_DataConverter::adjustSimSpeed(SIM_SPEED);
+            SLOWDOWN_TYPE = 0;
+        }
 
     }
 
-    if(req.cmd_type == 21)
+    if(req.cmd_type == 21) // UPDATE PARAMS IN CF_DC 
     {
         CF_DataConverter::LoadParams();
     }
 
-    if(req.cmd_type == 92)
+    if(req.cmd_type == 92) // STICKY FEET
     {
-        if(req.cmd_flag == 0)
+        if (DATA_TYPE.compare("SIM") == 0)
         {
-            Sticky_Flag = false;
+            if(req.cmd_flag == 0)
+            {
+                Sticky_Flag = false;
+            }
+            else
+            {
+                Sticky_Flag = true;
+            }
+            
+            CF_DataConverter::activateStickyFeet();
         }
-
-        if(req.cmd_flag == 1)
-        {
-            Sticky_Flag = true;
-        }
-
-        CF_DataConverter::activateStickyFeet();
-
     }
 
+    // SIMULATION:
     // SEND COMMAND VALUES TO CONTROLLER
     crazyflie_msgs::RLCmd srv;
     srv.request = req;
     CMD_Client.call(srv);
+
+
+    // EXPERIMENT: 
+    // BROADCAST CMD VALUES AS ROS MESSAGE
+    // (SO CRAZYSWARM CAN PASS MSGS FROM BOTH DASHBOARD AND ENV FILE)
+    crazyflie_msgs::GTC_Cmd cmd_msg;
+    cmd_msg.cmd_type = req.cmd_type;
+    cmd_msg.cmd_vals = req.cmd_vals;
+    cmd_msg.cmd_flag = req.cmd_flag;
+    CMD_Pub.publish(cmd_msg);
 
     return srv.response.srv_Success; // Return if service request successful (true/false)
 }

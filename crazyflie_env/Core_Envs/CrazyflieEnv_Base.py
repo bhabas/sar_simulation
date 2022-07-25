@@ -81,6 +81,9 @@ class CrazyflieEnv_Base():
             'Load_Params':21,
             'Cap_Logging':22,
 
+            'Thrust':30,
+            'PWM':31,
+
             'GZ_traj':90,
             'GZ_reset':91,
             'StickyPads':92,

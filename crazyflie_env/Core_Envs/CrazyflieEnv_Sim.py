@@ -332,7 +332,3 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base):
 
             print('\x1b[0m')
 
-
-if __name__ == "__main__":
-
-    env = CrazyflieEnv_Sim(GZ_Timeout=True)

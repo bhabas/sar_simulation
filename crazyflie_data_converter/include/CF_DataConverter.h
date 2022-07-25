@@ -34,6 +34,7 @@ is easy to use.
 #include "crazyflie_msgs/activateSticky.h"
 #include "crazyflie_msgs/loggingCMD.h"
 #include "crazyflie_msgs/GenericLogData.h"
+#include "crazyflie_msgs/GTC_Cmd.h"
 
 #include "quatcompress.h"
 
@@ -68,13 +69,16 @@ class CF_DataConverter
             FlipData_Pub =  nh->advertise<crazyflie_msgs::CF_FlipData>("/CF_DC/FlipData",1);
             ImpactData_Pub = nh->advertise<crazyflie_msgs::CF_ImpactData>("/CF_DC/ImpactData",1);   
 
+
+
             // GAZEBO SERVICES
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
             Logging_Service = nh->advertiseService("/CF_DC/DataLogging", &CF_DataConverter::DataLogging_Callback, this);
 
-            CMD_Service_CF_DC = nh->advertiseService("/CF_DC/Cmd_CF_DC",&CF_DataConverter::CMD_CF_DC_Callback,this);
+            CMD_Service_CF_DC = nh->advertiseService("/CF_DC/Cmd_CF_DC",&CF_DataConverter::CMD_CF_DC_Callback,this); // Change to AGENT or ENV
             CMD_Service_Dashboard = nh->advertiseService("/CF_DC/Cmd_Dashboard",&CF_DataConverter::CMD_Dashboard_Callback,this);
             CMD_Client = nh->serviceClient<crazyflie_msgs::RLCmd>("/CTRL/Cmd_ctrl");
+            CMD_Pub = nh->advertise<crazyflie_msgs::GTC_Cmd>("/CF_DC/Cmd_CF_DC",1);
             
 
             
@@ -176,6 +180,7 @@ class CF_DataConverter
         ros::ServiceServer CMD_Service_CF_DC;
         ros::ServiceServer CMD_Service_Dashboard;
         ros::ServiceClient CMD_Client;
+        ros::Publisher CMD_Pub;
 
         // MESSAGES
         crazyflie_msgs::CF_StateData StateData_msg;
