@@ -12,7 +12,7 @@ now = datetime.now()
 current_time = now.strftime("%H-%M")
 
 ## INITIATE ENVIRONMENT
-env = CF_Env_2D_Simple()
+env = CF_Env_2D()
 
 class CheckpointSaveCallback(BaseCallback):
 

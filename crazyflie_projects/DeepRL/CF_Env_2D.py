@@ -24,7 +24,7 @@ class CF_Env_2D():
         ## ENV PARAMETERS
         self.k_ep = 0
         self.h_ceil = 2.1       # Ceiling Height [m]
-        self.Flip_thr = 2.0     # Threshold to execute flip action
+        self.Flip_thr = 1.5     # Threshold to execute flip action
         self.MomentCutoff = False
         self.Impact_flag = False
         self.Impact_events = [False,False,False]
@@ -48,8 +48,7 @@ class CF_Env_2D():
         )
 
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
-        self.action_space = spaces.Box(low=np.array([-5,-1]), high=np.array([5,1]), shape=(2,), dtype=np.float32)
-        self.My_space = spaces.Box(low=np.array([-0e-3]), high=np.array([-8e-3]), shape=(1,), dtype=np.float32)
+        self.action_space = spaces.Box(low=np.array([-1,0]), high=np.array([1,8]), shape=(2,), dtype=np.float32)
 
         ## SET DIMENSIONAL CONSTRAINTS 
         g = 9.81                # Gravity [m/s^2]
@@ -81,6 +80,7 @@ class CF_Env_2D():
         
         x,vx,z,vz,theta,dtheta = self.state
         Tau,OFy,d_ceil = self.obs
+        action[0] = np.arctanh(action[0])
 
         ## BASIC FLIGHT   
         if action[0] < self.Flip_thr:
@@ -150,8 +150,7 @@ class CF_Env_2D():
             if np.abs(theta) < np.deg2rad(90) and self.MomentCutoff == False:
 
                 ## CONVERT ACTION RANGE TO MOMENT RANGE
-                action_scale = (self.My_space.high[0]-self.My_space.low[0])/(self.action_space.high[1]-self.action_space.low[1])
-                My = (action[1]-self.action_space.low[1])*action_scale + self.My_space.low[0]
+                My = -action[1]*1e-3
 
             ## TURN OFF BODY MOMENT IF PAST 90 DEG
             else: 
@@ -325,7 +324,7 @@ class CF_Env_2D():
 
     def CalcReward(self):
 
-        R0 = np.clip(1/np.abs(self.Tau_trg-0.2),0,20)/20
+        R0 = np.clip(1/np.abs(self.Tau_trg-0.18),0,20)/20
         R0 *= 0.05
 
         ## DISTANCE REWARD 
@@ -669,7 +668,8 @@ if __name__ == '__main__':
         done = False
         while not done:
             env.render()
-            obs,reward,done,info = env.step(env.action_space.sample())
+            action = env.action_space.sample()
+            obs,reward,done,info = env.step(action)
 
     env.close()
 
