@@ -114,6 +114,52 @@ class CrazyflieEnv_Base():
 
         return False
 
+    def VelTraj_StartPos(self,x_impact,V_d,accel_d=None,d_vz=None,Tau_0=0.5):
+        """Returns the required start position (x_0,z_0) to intercept the ceiling 
+        at a specific x-location; while also achieving the desired velocity conditions 
+        at by a certain distance from the ceiling.
+
+        Args:
+            x_impact (float): X-location to impact the ceiling
+            V_d (list): List of desired velocity components [Vx,Vy,Vz]
+            accel_d (list, optional): List of acceleration components [ax,ay,az]. Defaults to env values if (None).
+            d_vz (float, optional): Distance from ceiling at which velocity conditions are met. Defaults to 0.6 m.
+
+        Returns:
+            x_0: Start x-location for trajectory
+            z_0: Start z-location for trajectory
+        """        
+
+        ## DESIRED VELOCITY VALUES
+        Vx = V_d[0]
+        Vz = V_d[2]
+
+
+        ## DEFAULT TO CLASS VALUES
+        if accel_d == None:
+            accel_d = self.accCF_max
+    
+        a_x = accel_d[0]
+        a_z = accel_d[2]
+
+        ## DEFAULT TO TAU BASED MIN DISTANCE
+        if d_vz == None:
+            d_vz = Tau_0*Vz
+        else:
+            d_vz = d_vz
+
+        ## CALC OFFSET POSITIONS
+        t_x = Vx/a_x    # Time required to reach Vx
+        t_z = Vz/a_z    # Time required to reach Vz
+
+        z_vz = 0.5*a_z*(t_z)**2                 # Height Vz reached
+        z_0 = (self.h_ceiling - d_vz) - z_vz    # Offset to move z_vz to d_vz
+        
+        x_vz = Vx*(t_x+t_z) - Vx**2/(2*a_x)     # X-position Vz reached
+        x_0 = x_impact - x_vz - d_vz*Vx/Vz      # Account for shift up and shift left
+
+        return x_0,z_0
+
                 
     def preInit_Values(self):
 
