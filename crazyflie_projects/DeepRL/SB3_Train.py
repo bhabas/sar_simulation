@@ -5,13 +5,15 @@ import torch as th
 
 from CF_Env_2D import CF_Env_2D
 from CF_Env_2D_dTau import CF_Env_2D_dTau
+from CF_Env_2D_Simple import CF_Env_2D_Simple
+# tensor([[ 0.1754, -2.0714,  0.4943]])
 
 ## COLLECT CURRENT TIME
 now = datetime.now()
 current_time = now.strftime("%H-%M")
 
 ## INITIATE ENVIRONMENT
-env = CF_Env_2D()
+env = CF_Env_2D_Simple()
 
 class CheckpointSaveCallback(BaseCallback):
 
@@ -51,7 +53,7 @@ log_name = f"SAC-{current_time}"
 checkpoint_callback = CheckpointSaveCallback(save_freq=1000,log_dir=log_dir,log_name=log_name)
     
 policy_kwargs = dict(activation_fn=th.nn.ReLU,
-                     net_arch=[16, 16])
+                     net_arch=[12, 12])
 model = SAC(
     "MlpPolicy",
     env=env,
