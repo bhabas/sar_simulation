@@ -6,7 +6,6 @@ import torch as th
 from CF_Env_2D import CF_Env_2D
 from CF_Env_2D_dTau import CF_Env_2D_dTau
 from CF_Env_2D_Simple import CF_Env_2D_Simple
-# tensor([[ 0.1754, -2.0714,  0.4943]])
 
 ## COLLECT CURRENT TIME
 now = datetime.now()

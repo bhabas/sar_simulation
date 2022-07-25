@@ -24,7 +24,7 @@ class CF_Env_2D_Simple():
         ## ENV PARAMETERS
         self.k_ep = 0
         self.h_ceil = 2.1       # Ceiling Height [m]
-        self.Flip_thr = 0.17     # Threshold to execute flip action
+        self.Flip_thr = 2.0     # Threshold to execute flip action
         self.MomentCutoff = False
         self.Impact_flag = False
         self.Impact_events = [False,False,False]
@@ -48,7 +48,7 @@ class CF_Env_2D_Simple():
         )
 
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
-        self.action_space = spaces.Box(low=np.array([-1]), high=np.array([1]), shape=(1,), dtype=np.float32)
+        self.action_space = spaces.Box(low=np.array([-5]), high=np.array([5]), shape=(1,), dtype=np.float32)
         self.My_space = spaces.Box(low=np.array([-0e-3]), high=np.array([-8e-3]), shape=(1,), dtype=np.float32)
 
         ## SET DIMENSIONAL CONSTRAINTS 
@@ -83,7 +83,7 @@ class CF_Env_2D_Simple():
         Tau,OFy,d_ceil = self.obs
 
         ## BASIC FLIGHT   
-        if Tau > self.Flip_thr:
+        if action[0] < self.Flip_thr:
 
             ## UPDATE STATE
             self.t_step += 1
@@ -127,7 +127,7 @@ class CF_Env_2D_Simple():
             reward = 0
                 
         ## EXECUTE FLIP MANEUVER
-        elif Tau <= self.Flip_thr:
+        elif action[0] > self.Flip_thr:
 
             self.Once_flag = True
             self.Tau_trg = Tau
@@ -150,8 +150,8 @@ class CF_Env_2D_Simple():
             if np.abs(theta) < np.deg2rad(90) and self.MomentCutoff == False:
 
                 ## CONVERT ACTION RANGE TO MOMENT RANGE
-                action_scale = (self.My_space.high[0]-self.My_space.low[0])/(self.action_space.high[0]-self.action_space.low[0])
-                My = (action[0]-self.action_space.low[0])*action_scale + self.My_space.low[0]
+                # action_scale = (self.My_space.high[0]-self.My_space.low[0])/(self.action_space.high[0]-self.action_space.low[0])
+                My = -6e-3
 
             ## TURN OFF BODY MOMENT IF PAST 90 DEG
             else: 
@@ -662,7 +662,7 @@ class CF_Env_2D_Simple():
         return np.array(self.obs,dtype=np.float32)
 
 if __name__ == '__main__':
-    env = CF_Env_2D()
+    env = CF_Env_2D_Simple()
     env.RENDER = True
     for _ in range(25):
         env.reset()
