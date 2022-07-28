@@ -20,7 +20,7 @@ def save_NN_Params(SavePath,FileName,model):
     f.write(f"// Filename: {FileName} Time: {date_time}\n")
     f.write("static char NN_Params_DeepRL[] = {\n")
     
-    NN_size = np.array([4]).reshape(-1,1)
+    NN_size = np.array([3]).reshape(-1,1)
 
     ## SAVE SCALER ARRAY VALUES
     np.savetxt(f,NN_size,
@@ -111,8 +111,6 @@ def custom_predict(obs):
     ## CONVERT MU/LOG_STD TO NORMAL DISTRIBUTION AND SAMPLE
     action_std = th.ones_like(mean_actions) * log_std.exp()
     action_mean = mean_actions
-    # samples = th.normal(action_mean,action_std)
-    # scaled_action = th.tanh(samples).detach().numpy()
 
     ## CENTRAL LIMIT THEOREM SAMPLE
     normal_sample = np.sum(np.random.uniform(size=(12,2)),axis=0)-6
@@ -152,7 +150,9 @@ if __name__ == '__main__':
     # ) 
 
 
-    save_NN_Params(NN_path,NN_FileName,model)
+    # save_NN_Params(NN_path,NN_FileName,model)
+    obs=np.array([0,1,2],dtype=np.float32)
+    action = custom_predict(obs)[0]
 
     # ## RENDER TRAINED MODEL FOR N EPISODES-
     # episodes = 50

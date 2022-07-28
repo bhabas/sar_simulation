@@ -24,6 +24,7 @@ limitations under the License.
 #include <string.h>
 
 #include "nml.h"
+#include "debug.h"
 
 #define DEFAULT_VALUE 0.0
 
@@ -329,18 +330,6 @@ void nml_mat_printf(nml_mat *matrix, const char *d_fmt) {
   fprintf(stdout, "\n");
 }
 
-void nml_mat_print_CF(nml_mat *matrix) {
-    // consolePrintf("\n=========================\n\n");
-    // for (int i = 0; i < matrix->num_rows; i++)
-    // {
-    //     for (int j = 0; j < matrix->num_cols; j++)
-    //     {
-    //         consolePrintf("%.5f ",matrix->data[i][j]);
-    //     }
-    //     consolePrintf("\n");
-    // }
-    // consolePrintf("\n=========================\n\n");
-}
 
 // *****************************************************************************
 //
@@ -730,18 +719,6 @@ nml_mat *nml_mat_dot(nml_mat *m1, nml_mat *m2) {
   return r;
 }
 
-nml_mat *nml_mat_funcElement(nml_mat *m,float (*Function)(float x)) {
-  nml_mat *r = nml_mat_cp(m);
-
-  int i, j;
-  for(i = 0; i < r->num_rows; i++) {
-    for(j = 0; j < r->num_cols; j++) {
-      r->data[i][j] = Function(r->data[i][j]);
-    }
-  }
-
-  return r;
-}
 
 
 nml_mat *nml_mat_transp(nml_mat *m) {
@@ -767,27 +744,6 @@ double nml_mat_trace(nml_mat* m) {
   return trace;
 }
 
-// *****************************************************************************
-//
-// Element Operations
-//
-// *****************************************************************************
-//
-// Operations performed on matrix elements
-//
-
-double nml_mat_sum_elem(nml_mat *m)
-{
-  double val_sum = 0;
-
-  int i, j;
-  for(i = 0; i < m->num_rows; i++) {
-    for(j = 0; j < m->num_cols; j++) {
-      val_sum += m->data[i][j];
-    }
-  }
-  return val_sum;
-}
 
 // *****************************************************************************
 //
@@ -1259,4 +1215,73 @@ nml_mat_qr *nml_mat_qr_solve(nml_mat *m) {
   qr->Q = Q;
   qr->R = R;
   return qr;
+}
+
+
+// *****************************************************************************
+//
+// Custom Funcs
+//
+// *****************************************************************************
+nml_mat* extend_row_vec(nml_mat* vec, int num_rows)
+{
+  nml_mat* m = nml_mat_new(num_rows,vec->num_cols);
+  int i, j;
+  for(i = 0; i < m->num_rows; i++) {
+      for(j = 0; j < m->num_cols; j++) {
+          m->data[i][j] = vec->data[0][j];
+      }
+  }
+  return m;
+}
+
+nml_mat *nml_mat_funcElement(nml_mat *m,float (*Function)(float x)) {
+  nml_mat *r = nml_mat_cp(m);
+
+  int i, j;
+  for(i = 0; i < r->num_rows; i++) {
+    for(j = 0; j < r->num_cols; j++) {
+      r->data[i][j] = Function(r->data[i][j]);
+    }
+  }
+
+  return r;
+}
+
+double nml_mat_sum_elem(nml_mat *m)
+{
+  double val_sum = 0;
+
+  int i, j;
+  for(i = 0; i < m->num_rows; i++) {
+    for(j = 0; j < m->num_cols; j++) {
+      val_sum += m->data[i][j];
+    }
+  }
+  return val_sum;
+}
+
+void nml_mat_print_CF(nml_mat *matrix) {
+    // consolePrintf("\n=========================\n\n");
+    // for (int i = 0; i < matrix->num_rows; i++)
+    // {
+    //     for (int j = 0; j < matrix->num_cols; j++)
+    //     {
+    //         consolePrintf("%.5f ",matrix->data[i][j]);
+    //     }
+    //     consolePrintf("\n");
+    // }
+    // consolePrintf("\n=========================\n\n");
+}
+
+// Dynamically allocates a new Matrix
+// Initialise the matrix by copying another one
+void nml_mat_cp_r(nml_mat* m_dest, nml_mat *m)
+{    
+  // COPY VALUES MATRIX ARRAY
+  for(int i = 0; i < m->num_rows; i++) {
+    for(int j = 0; j < m->num_cols; j++) {
+      m_dest->data[i][j] = m->data[i][j];
+    }
+  }
 }

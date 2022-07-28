@@ -27,7 +27,7 @@
             "name": "gcc-9 - Build and debug active file",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/crazyflie_projects/Policy_Mapping/SVM_Work/bin/output",
+            "program": "${workspaceFolder}/crazyflie_projects/DeepRL/DeepRL_NN_C/bin/output",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
