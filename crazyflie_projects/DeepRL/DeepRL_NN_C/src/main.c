@@ -23,7 +23,7 @@ int main()
     X->data[1][0] = 1.0;
     X->data[2][0] = 2.0; 
 
-    y_output = nml_mat_new(2,1);
+    y_output = nml_mat_new(4,1);
 
 
     NN_init(&NN_DeepRL,NN_Params_DeepRL);

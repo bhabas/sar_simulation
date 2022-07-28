@@ -49,7 +49,7 @@ def save_NN_Params(SavePath,FileName,model):
                 header=f'"{scaler_stds.shape[0]},"\t"{scaler_stds.shape[1]},"',
                 footer='"*"\n')
 
-    ## SAVE NN LAYER VALUES
+    ## SAVE PARAMETERS OF LATENT_PI LAYERS
     for module in model.actor.latent_pi.modules():
         if isinstance(module, th.nn.modules.linear.Linear):
             W = module.weight.detach().numpy()
@@ -69,24 +69,33 @@ def save_NN_Params(SavePath,FileName,model):
                 header=f'"{b.shape[0]},"\t"{b.shape[1]},"',
                 footer='"*"\n')
 
+    ## SAVE PARAMETERS FOR MU/LOG_STD LAYER
     for module in model.actor.mu.modules():
-        if isinstance(module, th.nn.modules.linear.Linear):
-            W = module.weight.detach().numpy()
-            np.savetxt(f,W,
-                fmt='"%.5f,"',
-                delimiter='\t',
-                comments='',
-                header=f'"{W.shape[0]},"\t"{W.shape[1]},"',
-                footer='"*"\n')
+        W_mu = module.weight.detach().numpy()
+        b_mu = module.bias.detach().numpy().reshape(-1,1)
+
+    for module in model.actor.log_std.modules():
+        W_log_std = module.weight.detach().numpy()
+        b_log_std = module.bias.detach().numpy().reshape(-1,1)
+
+    ## STACK WEIGHTS AND BIASES TO MAKE ONE COHESIVE LAYER INSTEAD OF SB3 DEFAULT SPLIT
+    W = np.vstack((W_mu,W_log_std))
+    b = np.vstack((b_mu,b_log_std))
 
 
-            b = module.bias.detach().numpy().reshape(-1,1)
-            np.savetxt(f,b,
-                fmt='"%.5f,"',
-                delimiter='\t',
-                comments='',
-                header=f'"{b.shape[0]},"\t"{b.shape[1]},"',
-                footer='"*"\n')
+    np.savetxt(f,W,
+        fmt='"%.5f,"',
+        delimiter='\t',
+        comments='',
+        header=f'"{W.shape[0]},"\t"{W.shape[1]},"',
+        footer='"*"\n')
+
+    np.savetxt(f,b,
+        fmt='"%.5f,"',
+        delimiter='\t',
+        comments='',
+        header=f'"{b.shape[0]},"\t"{b.shape[1]},"',
+        footer='"*"\n')
 
 
     f.write("};")
@@ -150,7 +159,7 @@ if __name__ == '__main__':
     # ) 
 
 
-    # save_NN_Params(NN_path,NN_FileName,model)
+    save_NN_Params(NN_path,NN_FileName,model)
     obs=np.array([0,1,2],dtype=np.float32)
     action = custom_predict(obs)[0]
 
