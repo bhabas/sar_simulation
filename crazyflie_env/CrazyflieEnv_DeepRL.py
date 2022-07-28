@@ -65,7 +65,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
                     self.d_min = self.d_ceil 
 
             ## ERROR TERMINATIONS
-            if (time.time() - self.start_time_ep) > 120.0 and self.GZ_Timeout == True:
+            if (time.time() - self.start_time_ep) > 300.0 and self.GZ_Timeout == True:
                 print('\033[93m' + "[WARNING] Real Time Exceeded" + '\x1b[0m')
                 self.Restart()
                 self.done = True

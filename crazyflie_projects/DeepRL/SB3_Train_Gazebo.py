@@ -18,7 +18,7 @@ now = datetime.now()
 current_time = now.strftime("%H-%M")
 
 ## INITIATE ENVIRONMENT
-env = CrazyflieEnv_DeepRL()
+env = CrazyflieEnv_DeepRL(GZ_Timeout=True)
 
 class CheckpointSaveCallback(BaseCallback):
 
@@ -77,12 +77,12 @@ policy_kwargs = dict(activation_fn=th.nn.ReLU,
 # )
 
 model = SAC.load(
-    path=f"{log_dir}/CF_Gazebo/SAC-07-17_0/models/{95}000_steps.zip",
+    path=f"{log_dir}/CF_Gazebo/SAC-11-49_0/models/{80}000_steps.zip",
     env=env,
     device='cpu'
 )
 model.load_replay_buffer(
-    path=f"{log_dir}/CF_Gazebo/SAC-07-17_0/models/replay_buff.pkl")
+    path=f"{log_dir}/CF_Gazebo/SAC-11-49_0/models/replay_buff.pkl")
 
 model.learn(
     total_timesteps=1e6,
