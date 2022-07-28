@@ -23,7 +23,7 @@ void __init__()
     X->data[1][0] = -2.3880;
     X->data[2][0] = 0.3551; 
 
-    y_output = nml_mat_new(4,1);
+    y_output = nml_mat_new(2,1);
     srand(time(NULL));
 }
 
@@ -33,13 +33,12 @@ int main()
     
     NN_init(&NN_DeepRL,NN_Params_DeepRL);
     
-    // nml_mat_print(y_output);
-    // printf("NN_Predict: %.4f\n",NN_predict(X,&NN_Policy));
 
     while(1)
     {
         NN_predict_DeepRL(X,y_output,&NN_DeepRL);
-        // printf("Val: %.5f\n",GaussianSample(3,0.1));
+        nml_mat_print(y_output);
+
     }
 
     return 0;

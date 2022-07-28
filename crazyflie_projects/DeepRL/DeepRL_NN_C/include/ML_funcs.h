@@ -229,7 +229,7 @@ void NN_predict_DeepRL(nml_mat* X_input, nml_mat* y_output, NN* NN)
     }
 
     //LAYER 1
-    //Relu(W*X+b)
+    // Relu(W*X+b)
     nml_mat *WX1 = nml_mat_dot(NN->W[0],X); 
     nml_mat_add_r(WX1,NN->b[0]);
     nml_mat *a1 = nml_mat_funcElement(WX1,Relu);
@@ -241,6 +241,7 @@ void NN_predict_DeepRL(nml_mat* X_input, nml_mat* y_output, NN* NN)
     nml_mat *a2 = nml_mat_funcElement(WX2,Relu);
 
     // LAYER 3
+    // W*X+b
     nml_mat *WX3 = nml_mat_dot(NN->W[2],a2); 
     nml_mat_add_r(WX3,NN->b[2]);
 
@@ -258,7 +259,8 @@ void NN_predict_DeepRL(nml_mat* X_input, nml_mat* y_output, NN* NN)
     action_1 = action_1;
     action_2 = scale_tanhAction(action_2,0.0f,8.0f);
 
-    printf("A1: %.5f \t A2: %.5f\n",action_1,action_2);
+    y_output->data[0][0] = action_1;
+    y_output->data[1][0] = action_2;
 
     // FREE MATRICES FROM STACK
     nml_mat_free(X);
@@ -278,6 +280,7 @@ float uniform_sample()
 
 float GaussianSample(float mu, float std)
 {
+    // Calc standard Gaussian sample via Central Limit Theorem
     float val = 0.0f;
     for (int i = 0; i < 12; i++)
     {
