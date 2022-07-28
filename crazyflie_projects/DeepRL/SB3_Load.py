@@ -109,7 +109,7 @@ def custom_predict(obs):
     LOG_STD_MIN = -20
     actor = model.policy.actor
     obs = th.tensor([obs])
-    model.policy.actor.forward(obs)
+    sub_action = model.policy.actor.forward(obs)
 
     ## PASS OBS THROUGH NN
     latent_pi = actor.latent_pi(obs)
@@ -159,11 +159,15 @@ if __name__ == '__main__':
     # ) 
 
 
-    save_NN_Params(NN_path,NN_FileName,model)
-    obs=np.array([0,1,2],dtype=np.float32)
-    action = custom_predict(obs)[0]
+    # save_NN_Params(NN_path,NN_FileName,model)
+    obs = np.array([ 0.1655, -2.3880,  0.3551],dtype=np.float32)
 
-    # ## RENDER TRAINED MODEL FOR N EPISODES-
+    while True:
+        action = custom_predict(obs)[0]
+        action[0] = np.arctanh(action[0])
+        print(action)
+
+    ## RENDER TRAINED MODEL FOR N EPISODES-
     # episodes = 50
     # env.RENDER = True
     # for ep in range(episodes):

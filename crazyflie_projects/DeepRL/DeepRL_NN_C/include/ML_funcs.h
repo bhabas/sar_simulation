@@ -25,15 +25,20 @@ typedef struct{
 }SVM;
 
 
-// NEURAL NETWORK PRIMITIVES
+// NEURAL NETWORK FUNCTIONS
 void NN_init(NN* NN_Policy, char str[]);
 float NN_predict(nml_mat* X_input, NN* NN);
 void NN_predict_DeepRL(nml_mat* X_input, nml_mat* y_output, NN* NN);
+float scale_tanhAction(float action, float low, float high);
 
-// OC_SVM PRIMITIVES
+// OC_SVM FUNCTIONS
 void OC_SVM_init(SVM* SVM, char str[]); 
 float OC_SVM_predict(nml_mat* X_input, SVM* SVM);
 nml_mat* RBF_Kernel(nml_mat* X, SVM* SVM);
+
+// SAMPLING FUNCTIONS
+float uniform_sample();
+float GaussianSample(float mu, float std);
 
 // CUSTOM ELEMENT FUNCTIONS
 float Sigmoid(float x);
@@ -240,10 +245,22 @@ void NN_predict_DeepRL(nml_mat* X_input, nml_mat* y_output, NN* NN)
     nml_mat_add_r(WX3,NN->b[2]);
 
 
-    nml_mat_cp_r(y_output,WX3);
+    // SAMPLE ACTIONS FROM DISTRIBUTIONS
+    float mu_1 = WX3->data[0][0];
+    float mu_2 = WX3->data[1][0];
+    float std_1 = exp(WX3->data[2][0]);
+    float std_2 = exp(WX3->data[3][0]);
 
+    float action_1 = GaussianSample(mu_1,std_1);
+    float action_2 = GaussianSample(mu_2,std_2);
 
-    // // FREE MATRICES FROM STACK
+    // SCALE ACTIONS
+    action_1 = action_1;
+    action_2 = scale_tanhAction(action_2,0.0f,8.0f);
+
+    printf("A1: %.5f \t A2: %.5f\n",action_1,action_2);
+
+    // FREE MATRICES FROM STACK
     nml_mat_free(X);
     nml_mat_free(WX1);
     nml_mat_free(WX2);
@@ -252,6 +269,24 @@ void NN_predict_DeepRL(nml_mat* X_input, nml_mat* y_output, NN* NN)
     nml_mat_free(a1);
     nml_mat_free(a2);
 
+}
+
+float uniform_sample()
+{
+    return (double)rand()/(double)RAND_MAX;
+}
+
+float GaussianSample(float mu, float std)
+{
+    float val = 0.0f;
+    for (int i = 0; i < 12; i++)
+    {
+        val += uniform_sample();
+    }
+    val = val - 6;
+
+    return val*std+mu;
+    
 }
 
 
@@ -284,4 +319,11 @@ float Relu(float x)
     {
         return 0.0f;
     }
+}
+
+// SCALES VALUE CLAMPED BY TANH TO SPECIFIED RANGE
+float scale_tanhAction(float action, float low, float high)
+{
+    action = tanhf(action);
+    return low + (0.5 * (action + 1.0) * (high - low));
 }
