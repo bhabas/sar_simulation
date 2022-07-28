@@ -587,7 +587,7 @@ void CF_DataConverter::consoleOuput()
     }
     else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL") == 0)
     {
-        printf("Stuff: %.3f \tStuff: %.3f \n",404.0,404.0);
+        printf("Stuff: %.3f \tStuff: %.3f \n",Policy_Flip,Policy_Action);
         printf("\n");
     }
 

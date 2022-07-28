@@ -18,6 +18,7 @@ extern "C" {
 
 #include "ML_Params/NN_Layers_NL_DR.h"
 #include "ML_Params/SVM_Params_NL_DR.h"
+#include "ML_Params/NN_Layers_NL_DeepRL.h"
 
 // STANDARD LIBRARIES
 #include <math.h>
@@ -223,6 +224,7 @@ extern float G2;        // Deprecated gain value
 //  SUPERVISED NN/OC_SVM INITIALIZATION
 // =====================================
 extern float Policy_Flip;    
+extern float Policy_Action;
 extern float Policy_Flip_tr;
 extern float Policy_Action_tr;
 

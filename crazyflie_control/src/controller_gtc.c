@@ -245,8 +245,16 @@ SVM SVM_Policy_Flip;
 NN NN_Policy_Action;
 
 float Policy_Flip = 0.0f;  
+float Policy_Action = 0.0f;
 float Policy_Flip_tr = 0.0f;    // Output from OC_SVM
 float Policy_Action_tr = 0.0f;  // Output from NN
+
+// ===============================
+//  DEEP RL POLICY INITIALIZATION
+// ===============================
+static nml_mat* X;  // STATE MATRIX TO BE INPUT INTO NN
+NN NN_DeepRL;
+nml_mat* DeepRL_Output;
 
 void controllerGTCInit(void)
 {
@@ -258,6 +266,10 @@ void controllerGTCInit(void)
     // INIT NN/OC_SVM POLICY
     NN_init(&NN_Policy_Action,NN_Params_Flip);
     OC_SVM_init(&SVM_Policy_Flip,SVM_Params);
+
+    // INIT DEEP RL NN POLICY
+    NN_init(&NN_DeepRL,NN_Params_DeepRL);
+    DeepRL_Output = nml_mat_new(2,1);
 
     consolePrintf("GTC Initiated\n");
 }
@@ -673,7 +685,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
 
                         M_d.x = 0.0f;
-                        M_d.y = Policy_Action_tr*1e-3f;
+                        M_d.y = -Policy_Action_tr*1e-3f;
                         M_d.z = 0.0f;
 
                         F_thrust_flip = 0.0;
@@ -686,8 +698,43 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
                 case DEEP_RL:
 
+                    NN_predict_DeepRL(X,DeepRL_Output,&NN_DeepRL);
+                    Policy_Flip = clamp(DeepRL_Output->data[0][0],-2,2);
+                    Policy_Action = DeepRL_Output->data[1][0];
+
+                    if(Policy_Flip >= 1.50f && Tau <= 0.4 && onceFlag == false)
+                    {
+                        onceFlag = true;
+                        flip_flag = true;
+
+                        // UPDATE AND RECORD FLIP VALUES
+                        statePos_tr = statePos;
+                        stateVel_tr = stateVel;
+                        stateQuat_tr = stateQuat;
+                        stateOmega_tr = stateOmega;
+
+                        Tau_tr = Tau;
+                        OFx_tr = OFx;
+                        OFy_tr = OFy;
+                        d_ceil_tr = d_ceil;
+
+                        Policy_Flip_tr = Policy_Flip;
+                        Policy_Action_tr = Policy_Action;
+
+
+                        M_d.x = 0.0f;
+                        M_d.y = -Policy_Action*1e-3f;
+                        M_d.z = 0.0f;
+
+                        F_thrust_flip = 0.0;
+                        M_x_flip = M_d.x*1e3f;
+                        M_y_flip = M_d.y*1e3f;
+                        M_z_flip = M_d.z*1e3f;
+
+                    }
 
                     break;
+
             }
             
             
