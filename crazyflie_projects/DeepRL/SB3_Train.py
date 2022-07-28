@@ -9,7 +9,7 @@ from CF_Env_2D_Simple import CF_Env_2D_Simple
 
 ## COLLECT CURRENT TIME
 now = datetime.now()
-current_time = now.strftime("%H-%M")
+current_time = now.strftime("%m_%d-%H:%M")
 
 ## INITIATE ENVIRONMENT
 env = CF_Env_2D()
