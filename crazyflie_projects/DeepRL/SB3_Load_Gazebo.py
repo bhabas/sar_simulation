@@ -24,29 +24,42 @@ env = CrazyflieEnv_DeepRL()
 ## CREATE MODEL AND LOG DIRECTORY
 log_dir = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/"
     
-policy_kwargs = dict(activation_fn=th.nn.ReLU,
-                     net_arch=[16, 16])
-# model = SAC(
-#     "MlpPolicy",
-#     env=env,
-#     gamma=0.999,
-#     learning_rate=0.001,
-#     policy_kwargs=policy_kwargs,
-#     verbose=1,
-#     device='cpu',
-#     tensorboard_log=log_dir
-# ) 
-# model.set_parameters(
-#     load_path_or_dict=f"{log_dir}/CF_Env_2D/SAC-15-23_0/models/135000_steps.zip",
-#     device='cpu'
-# )
-
 
 model = SAC.load(
-    path=f"{log_dir}/CF_Gazebo/SAC-22-19_0/models/{53}000_steps.zip",
+    path=f"{log_dir}/CF_Gazebo/SAC-19-23_0/models/{92}000_steps.zip",
     env=env,
     device='cpu'
 )
+
+def custom_predict(obs):
+
+    # CAP the standard deviation of the actor
+    LOG_STD_MAX = 2
+    LOG_STD_MIN = -20
+    actor = model.policy.actor
+    obs = th.tensor([obs])
+    model.policy.actor.forward(obs)
+
+    ## PASS OBS THROUGH NN
+    latent_pi = actor.latent_pi(obs)
+    mean_actions = actor.mu(latent_pi)
+    log_std = actor.log_std(latent_pi)
+    log_std = th.clamp(log_std, LOG_STD_MIN, LOG_STD_MAX)
+
+    ## CONVERT MU/LOG_STD TO NORMAL DISTRIBUTION AND SAMPLE
+    action_std = th.ones_like(mean_actions) * log_std.exp()
+    action_mean = mean_actions
+    # samples = th.normal(action_mean,action_std)
+    # scaled_action = th.tanh(samples).detach().numpy()
+
+    ## CENTRAL LIMIT THEOREM SAMPLE
+    normal_sample = np.sum(np.random.uniform(size=(12,2)),axis=0)-6
+    samples = normal_sample*action_std.detach().numpy()+action_mean.detach().numpy()
+    scaled_action = np.tanh(samples)
+
+    ## SQUISH SAMPLES TO [-1,1] RANGE AND RESCALE
+    low, high = env.action_space.low, env.action_space.high
+    return low + (0.5 * (scaled_action + 1.0) * (high - low))
 
 ## RENDER TRAINED MODEL FOR N EPISODES-
 episodes = 50
@@ -54,5 +67,7 @@ for ep in range(episodes):
     obs = env.reset()
     done = False
     while not done:
-        action,_ = model.predict(obs)
+
+        action = custom_predict(obs)[0]
+        # action,_ = model.predict(obs)
         obs,reward,done,info = env.step(action)

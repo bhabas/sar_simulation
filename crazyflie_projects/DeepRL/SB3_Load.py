@@ -28,7 +28,6 @@ def custom_predict(obs):
     LOG_STD_MAX = 2
     LOG_STD_MIN = -20
     actor = model.policy.actor
-    # obs = th.tensor([[ 0.1654, -2.1964,  0.4661]])
     obs = th.tensor([obs])
     model.policy.actor.forward(obs)
 
@@ -41,10 +40,15 @@ def custom_predict(obs):
     ## CONVERT MU/LOG_STD TO NORMAL DISTRIBUTION AND SAMPLE
     action_std = th.ones_like(mean_actions) * log_std.exp()
     action_mean = mean_actions
-    samples = th.normal(action_mean,action_std)
+    # samples = th.normal(action_mean,action_std)
+    # scaled_action = th.tanh(samples).detach().numpy()
+
+    ## CENTRAL LIMIT THEOREM SAMPLE
+    normal_sample = np.sum(np.random.uniform(size=(12,2)),axis=0)-6
+    samples = normal_sample*action_std.detach().numpy()+action_mean.detach().numpy()
+    scaled_action = np.tanh(samples)
 
     ## SQUISH SAMPLES TO [-1,1] RANGE AND RESCALE
-    scaled_action = th.tanh(samples).detach().numpy()
     low, high = env.action_space.low, env.action_space.high
     return low + (0.5 * (scaled_action + 1.0) * (high - low))
 
