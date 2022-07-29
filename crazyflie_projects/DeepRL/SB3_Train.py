@@ -5,10 +5,11 @@ import torch as th
 
 from CF_Env_2D import CF_Env_2D
 from CF_Env_2D_dTau import CF_Env_2D_dTau
+from CF_Env_2D_Simple import CF_Env_2D_Simple
 
 ## COLLECT CURRENT TIME
 now = datetime.now()
-current_time = now.strftime("%H-%M")
+current_time = now.strftime("%m_%d-%H:%M")
 
 ## INITIATE ENVIRONMENT
 env = CF_Env_2D()
@@ -46,12 +47,12 @@ class CheckpointSaveCallback(BaseCallback):
         return True
 
 ## CREATE MODEL AND LOG DIRECTORY
-log_dir = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/"
-log_name = f"{env.env_name}/SAC-{current_time}"
+log_dir = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/{env.env_name}/"
+log_name = f"SAC-{current_time}"
 checkpoint_callback = CheckpointSaveCallback(save_freq=1000,log_dir=log_dir,log_name=log_name)
     
 policy_kwargs = dict(activation_fn=th.nn.ReLU,
-                     net_arch=[16, 16])
+                     net_arch=[12, 12])
 model = SAC(
     "MlpPolicy",
     env=env,

@@ -129,13 +129,7 @@ nml_mat *nml_mat_dot(nml_mat *m1, nml_mat *m2);
 nml_mat *nml_mat_transp(nml_mat *m);
 double nml_mat_trace(nml_mat* m);
 
-// *****************************************************************************
-//
-// Element Operations
-//
-// *****************************************************************************
-nml_mat *nml_mat_funcElement(nml_mat *m,float (*Function)(float x));
-double nml_mat_sum_elem(nml_mat *m);
+
 
 // *****************************************************************************
 //
@@ -184,6 +178,18 @@ int nml_mat_normalize_r(nml_mat *m);
 nml_mat_qr *nml_mat_qr_new();
 void nml_mat_qr_free(nml_mat_qr *qr);
 nml_mat_qr * nml_mat_qr_solve(nml_mat *m);
+
+
+// *****************************************************************************
+//
+// Custom Funcs
+//
+// *****************************************************************************
+nml_mat *nml_mat_funcElement(nml_mat *m,float (*Function)(float x));
+double nml_mat_sum_elem(nml_mat *m);
+nml_mat* extend_row_vec(nml_mat* vec, int num_rows);
+void nml_mat_print_CF(nml_mat *matrix);
+
 
 #endif
 

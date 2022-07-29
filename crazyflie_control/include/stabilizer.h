@@ -118,7 +118,7 @@ class Controller
         float _SIM_SPEED; 
         float _SIM_SLOWDOWN_SPEED;
         float _CF_MASS;
-        std::string POLICY_TYPE;
+        std::string POLICY_TYPE_STR;
         std::string _MODEL_NAME;
         bool STICKY_FLAG = false;
 
@@ -404,12 +404,23 @@ void Controller::loadParams()
     // COLLECT MODEL PARAMETERS
     ros::param::get("/CF_MASS",m);
     ros::param::get("/Ixx",Ixx);
-    ros::param::get("/Iyy",Iyy);
+    ros::param::get("/Iyy",Iyy); 
     ros::param::get("/Izz",Izz);
 
     // SIMULATION SETTINGS FROM CONFIG FILE
-    ros::param::get("/POLICY_TYPE",POLICY_TYPE);
-    strcpy(PolicyType,POLICY_TYPE.c_str()); // Set string from params file into controller
+    ros::param::get("/POLICY_TYPE",POLICY_TYPE_STR); // Set string from params file into controller
+    if (strcmp(POLICY_TYPE_STR.c_str(),"PARAM_OPTIM")==0)
+    {
+        Policy = PARAM_OPTIM;
+    }
+    else if (strcmp(POLICY_TYPE_STR.c_str(),"SVL_POLICY")==0)
+    {
+        Policy = SVL_POLICY;
+    }
+    else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL")==0)
+    {
+        Policy = DEEP_RL;
+    }    
     ros::param::get("/CAM_SENSOR",camera_sensor_active);
 
 
@@ -489,7 +500,7 @@ void Controller::publishCtrlData()
 
     // NEURAL NETWORK DATA
     CtrlData_msg.Policy_Flip = Policy_Flip;
-    CtrlData_msg.Policy_Action = NAN;
+    CtrlData_msg.Policy_Action = Policy_Action;
 
     // CONTROL ACTIONS
     CtrlData_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};

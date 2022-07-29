@@ -16,8 +16,9 @@ extern "C" {
 #ifndef __CONTROLLER_GTC_H__
 #define __CONTROLLER_GTC_H__
 
-#include "NN_Params/NN_Layers_NL_DR.h"
-#include "NN_Params/SVM_Params_NL_DR.h"
+#include "ML_Params/NN_Layers_NL_DR.h"
+#include "ML_Params/SVM_Params_NL_DR.h"
+#include "ML_Params/NN_Layers_NL_DeepRL.h"
 
 // STANDARD LIBRARIES
 #include <math.h>
@@ -223,11 +224,16 @@ extern float G2;        // Deprecated gain value
 //  SUPERVISED NN/OC_SVM INITIALIZATION
 // =====================================
 extern float Policy_Flip;    
+extern float Policy_Action;
 extern float Policy_Flip_tr;
 extern float Policy_Action_tr;
 
-extern char PolicyType[];
-
+typedef enum {
+    PARAM_OPTIM = 0,
+    SVL_POLICY = 1,
+    DEEP_RL = 2
+}PolicyType;
+extern PolicyType Policy;
 
 // Converts thrust in grams to their respective PWM values
 static int32_t thrust2PWM(float f) 
@@ -265,7 +271,7 @@ static int32_t thrust2PWM(float f)
     float PWM = percentage * (float)UINT16_MAX; // Remap percentage back to PWM range
 
     // IF MINIMAL THRUST ENSURE PWM = 0
-    if(f <= 0.25)
+    if(f <= 0.25f)
     {
         PWM = 0.0f;
     }

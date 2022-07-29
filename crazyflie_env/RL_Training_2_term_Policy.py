@@ -5,8 +5,6 @@ import rospy
 import time
 
 
-
-
 os.system("clear")
 np.set_printoptions(precision=2, suppress=True)
 
@@ -188,11 +186,11 @@ def runTraining(env,agent,V_d,phi,logName,K_ep_max=15):
 
 
 if __name__ == '__main__':
-    from Crazyflie_env import CrazyflieEnv
+    from CrazyflieEnv_ParamOpt import CrazyflieEnv_ParamOpt
     from RL_agents.EPHE_Agent import EPHE_Agent
 
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv(gazeboTimeout=False)
+    env = CrazyflieEnv_ParamOpt(GZ_Timeout=False)
 
     ## INIT LEARNING AGENT
     # Mu_Tau value is multiplied by 10 so complete policy is more normalized

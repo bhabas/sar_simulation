@@ -24,7 +24,7 @@ class CF_Env_2D():
         ## ENV PARAMETERS
         self.k_ep = 0
         self.h_ceil = 2.1       # Ceiling Height [m]
-        self.Flip_thr = 2.0     # Threshold to execute flip action
+        self.Flip_thr = 1.5     # Threshold to execute flip action
         self.MomentCutoff = False
         self.Impact_flag = False
         self.Impact_events = [False,False,False]
@@ -35,6 +35,7 @@ class CF_Env_2D():
         ## POLICY PARAMETERS
         self.Once_flag = False
         self.Tau_trg = 0.0
+        self.d_min = 500
         self.reward = 0.0
 
         high = np.array(
@@ -47,8 +48,7 @@ class CF_Env_2D():
         )
 
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
-        self.action_space = spaces.Box(low=np.array([-5,-1]), high=np.array([5,1]), shape=(2,), dtype=np.float32)
-        self.My_space = spaces.Box(low=np.array([-0e-3]), high=np.array([-8e-3]), shape=(1,), dtype=np.float32)
+        self.action_space = spaces.Box(low=np.array([-1,0]), high=np.array([1,8]), shape=(2,), dtype=np.float32)
 
         ## SET DIMENSIONAL CONSTRAINTS 
         g = 9.81                # Gravity [m/s^2]
@@ -80,6 +80,7 @@ class CF_Env_2D():
         
         x,vx,z,vz,theta,dtheta = self.state
         Tau,OFy,d_ceil = self.obs
+        action[0] = np.arctanh(action[0])
 
         ## BASIC FLIGHT   
         if action[0] < self.Flip_thr:
@@ -118,6 +119,11 @@ class CF_Env_2D():
                 or self.Impact_flag
             )
 
+            if not done:
+
+                if d_ceil <= self.d_min:
+                    self.d_min = d_ceil
+
             reward = 0
                 
         ## EXECUTE FLIP MANEUVER
@@ -144,8 +150,7 @@ class CF_Env_2D():
             if np.abs(theta) < np.deg2rad(90) and self.MomentCutoff == False:
 
                 ## CONVERT ACTION RANGE TO MOMENT RANGE
-                action_scale = (self.My_space.high[0]-self.My_space.low[0])/(self.action_space.high[1]-self.action_space.low[1])
-                My = (action[1]-self.action_space.low[1])*action_scale + self.My_space.low[0]
+                My = -action[1]*1e-3
 
             ## TURN OFF BODY MOMENT IF PAST 90 DEG
             else: 
@@ -183,6 +188,11 @@ class CF_Env_2D():
                     self.t_step >= self.t_threshold
                     or z < 0.2
                 )
+
+                if not done:
+
+                    if d_ceil <= self.d_min:
+                        self.d_min = d_ceil
                 
             elif self.Impact_flag == True:
 
@@ -314,8 +324,11 @@ class CF_Env_2D():
 
     def CalcReward(self):
 
+        R0 = np.clip(1/np.abs(self.Tau_trg-0.18),0,20)/20
+        R0 *= 0.05
+
         ## DISTANCE REWARD 
-        R1 = np.clip(1/np.abs(self.Tau_trg-0.2),0,20)/20
+        R1 = np.clip(1/np.abs(self.d_min),0,10)/10
         R1 *= 0.1
 
         ## IMPACT ANGLE REWARD
@@ -325,18 +338,18 @@ class CF_Env_2D():
         ## PAD CONTACT REWARD
         if self.pad_connections >= 3: 
             if self.BodyContact_flag == False:
-                R3 = 0.7
+                R3 = 0.65
             else:
-                R3 = 0.3
+                R3 = 0.4
         elif self.pad_connections == 2: 
             if self.BodyContact_flag == False:
-                R3 = 0.4
+                R3 = 0.2
             else:
                 R3 = 0.1
         else:
             R3 = 0.0
 
-        return R1 + R2 + R3
+        return R0 + R1 + R2 + R3
 
     def render(self,mode=None):
 
@@ -618,6 +631,7 @@ class CF_Env_2D():
         self.pad_connections = 0
         self.theta_impact = 0.0
         self.Tau_trg = 500
+        self.d_min = 500
         
         ## RESET STATE
         vel = np.random.uniform(low=1.5,high=3.5)
@@ -654,7 +668,8 @@ if __name__ == '__main__':
         done = False
         while not done:
             env.render()
-            obs,reward,done,info = env.step(env.action_space.sample())
+            action = env.action_space.sample()
+            obs,reward,done,info = env.step(action)
 
     env.close()
 
