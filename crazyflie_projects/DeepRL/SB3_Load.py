@@ -3,6 +3,15 @@ from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import *
 import torch as th
 import numpy as np
+
+
+## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
+import sys,rospkg,os
+BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
+sys.path.insert(1,'/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_env')
+sys.path.insert(1,BASE_PATH)
+
+from crazyflie_env.CrazyflieEnv_DeepRL import CrazyflieEnv_DeepRL
 from CF_Env_2D import CF_Env_2D
 from CF_Env_2D_dTau import CF_Env_2D_dTau
 from CF_Env_2D_Simple import CF_Env_2D_Simple
@@ -134,15 +143,15 @@ def custom_predict(obs):
 if __name__ == '__main__':
 
     ## INITIATE ENVIRONMENT
-    env = CF_Env_2D()
+    env = CrazyflieEnv_DeepRL()
 
 
     ## CREATE MODEL AND LOG DIRECTORY
     log_dir = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/{env.env_name}"
-    log_name = f"SAC-11-09_0"
+    log_name = f"SAC-07_28-19:32_0"
     NN_path = os.path.join(log_dir,log_name)
     NN_FileName = "NN_Layers_NL_DeepRL.h"
-    model_path = os.path.join(log_dir,log_name,f"models/{999}000_steps.zip")
+    model_path = os.path.join(log_dir,log_name,f"models/{53}000_steps.zip")
     model = SAC.load(model_path,env=env,device='cpu')
 
     # policy_kwargs = dict(activation_fn=th.nn.ReLU,
@@ -159,13 +168,13 @@ if __name__ == '__main__':
     # ) 
 
 
-    # save_NN_Params(NN_path,NN_FileName,model)
-    obs = np.array([ 0.1655, -2.3880,  0.3551],dtype=np.float32)
+    save_NN_Params(NN_path,NN_FileName,model)
+    # obs = np.array([ 0.1655, -2.3880,  0.3551],dtype=np.float32)
 
-    while True:
-        action = custom_predict(obs)[0]
-        action[0] = np.arctanh(action[0])
-        print(action)
+    # while True:
+    #     action = custom_predict(obs)[0]
+    #     action[0] = np.arctanh(action[0])
+    #     print(action)
 
     ## RENDER TRAINED MODEL FOR N EPISODES-
     # episodes = 50

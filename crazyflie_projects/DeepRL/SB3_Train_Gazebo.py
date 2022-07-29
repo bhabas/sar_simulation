@@ -15,7 +15,7 @@ from crazyflie_env.CrazyflieEnv_DeepRL import CrazyflieEnv_DeepRL
 
 ## COLLECT CURRENT TIME
 now = datetime.now()
-current_time = now.strftime("%H-%M")
+current_time = now.strftime("%m_%d-%H:%M")
 
 ## INITIATE ENVIRONMENT
 env = CrazyflieEnv_DeepRL(GZ_Timeout=True)
@@ -57,36 +57,36 @@ log_name = f"{env.env_name}/SAC-{current_time}"
 checkpoint_callback = CheckpointSaveCallback(save_freq=500,log_dir=log_dir,log_name=log_name)
     
 policy_kwargs = dict(activation_fn=th.nn.ReLU,
-                     net_arch=[12,12])
-# model = SAC(
-#     "MlpPolicy",
-#     env=env,
-#     gamma=0.999,
-#     learning_rate=0.001,
-#     policy_kwargs=policy_kwargs,
-#     verbose=1,
-#     device='cpu',
-#     tensorboard_log=log_dir
-# ) 
-
-# model.learn(
-#     total_timesteps=1e6,
-#     tb_log_name=log_name,
-#     callback=checkpoint_callback,
-#     reset_num_timesteps=True
-# )
-
-model = SAC.load(
-    path=f"{log_dir}/CF_Gazebo/SAC-11-49_0/models/{80}000_steps.zip",
+                     net_arch=[16,16])
+model = SAC(
+    "MlpPolicy",
     env=env,
-    device='cpu'
-)
-model.load_replay_buffer(
-    path=f"{log_dir}/CF_Gazebo/SAC-11-49_0/models/replay_buff.pkl")
+    gamma=0.999,
+    learning_rate=0.005,
+    policy_kwargs=policy_kwargs,
+    verbose=1,
+    device='cpu',
+    tensorboard_log=log_dir
+) 
 
 model.learn(
     total_timesteps=1e6,
     tb_log_name=log_name,
     callback=checkpoint_callback,
-    reset_num_timesteps=False
+    reset_num_timesteps=True
 )
+
+# model = SAC.load(
+#     path=f"{log_dir}/CF_Gazebo/SAC-11-49_0/models/{80}000_steps.zip",
+#     env=env,
+#     device='cpu'
+# )
+# model.load_replay_buffer(
+#     path=f"{log_dir}/CF_Gazebo/SAC-11-49_0/models/replay_buff.pkl")
+
+# model.learn(
+#     total_timesteps=1e6,
+#     tb_log_name=log_name,
+#     callback=checkpoint_callback,
+#     reset_num_timesteps=False
+# )
