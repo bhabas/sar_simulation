@@ -4,6 +4,12 @@ from stable_baselines3.common.callbacks import *
 import torch as th
 import numpy as np
 
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib as mpl
+from scipy.interpolate import griddata
+import plotly.graph_objects as go
+
 
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg,os
@@ -111,7 +117,7 @@ def save_NN_Params(SavePath,FileName,model):
     f.close()
 
 
-def custom_predict(obs):
+def action_predict(obs):
 
     # CAP the standard deviation of the actor
     LOG_STD_MAX = 2
@@ -139,6 +145,89 @@ def custom_predict(obs):
     low, high = env.action_space.low, env.action_space.high
     return low + (0.5 * (scaled_action + 1.0) * (high - low))
 
+def policy_dist(obs):
+
+    # CAP the standard deviation of the actor
+    LOG_STD_MAX = 2
+    LOG_STD_MIN = -20
+    actor = model.policy.actor
+    obs = th.FloatTensor([obs])
+
+    ## PASS OBS THROUGH NN
+    latent_pi = actor.latent_pi(obs)
+    mean_actions = actor.mu(latent_pi)
+    log_std = actor.log_std(latent_pi)
+    log_std = th.clamp(log_std, LOG_STD_MIN, LOG_STD_MAX)
+
+    ## CONVERT MU/LOG_STD TO NORMAL DISTRIBUTION AND SAMPLE
+    action_std = th.ones_like(mean_actions) * log_std.exp()
+    action_mean = mean_actions
+
+    action_std = action_std.detach().numpy()[0]
+    action_mean = action_mean.detach().numpy()[0]
+
+
+    return action_mean,action_std
+
+def plotPolicyRegion(iso_level=0.0):
+
+        fig = go.Figure()
+
+        # PLOT DATA POINTS
+        
+
+        ## MESHGRID OF DATA POINTS
+        Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
+            np.linspace(0.15, 0.35, 60),
+            np.linspace(-15, 1, 45),
+            np.linspace(0.0, 1.0, 45)
+        )
+
+        ## CONCATENATE DATA TO MATCH INPUT SHAPE
+        X_grid = np.stack((
+            Tau_grid.flatten(),
+            OF_y_grid.flatten(),
+            d_ceil_grid.flatten()),axis=1)
+
+        action_means,_ = policy_dist(X_grid)
+            
+        fig.add_trace(
+            go.Scatter3d(
+                ## DATA
+                x=Tau_grid.flatten(),
+                y=OF_y_grid.flatten(),
+                z=d_ceil_grid.flatten(),
+                
+
+
+                ## MARKER
+                mode='markers',
+                marker=dict(
+                    size=3,
+                    color=action_means[:,0].flatten(),
+                    colorscale='Viridis',   # choose a colorscale
+                    cmin=0,
+                    cmax=1, 
+                    opacity=0.8)
+            )
+        )
+
+           
+      
+
+        
+
+        fig.update_layout(
+            scene=dict(
+                xaxis_title='OFy [rad/s]',
+                yaxis_title='Tau [s]',
+                zaxis_title='D_ceiling [m]',
+                xaxis_range=[-20,1],
+                yaxis_range=[0.4,0.1],
+                zaxis_range=[0,1.2],
+            ),
+        )
+        fig.show()
 
 if __name__ == '__main__':
 
@@ -154,27 +243,15 @@ if __name__ == '__main__':
     model_path = os.path.join(log_dir,log_name,f"models/{53}000_steps.zip")
     model = SAC.load(model_path,env=env,device='cpu')
 
-    # policy_kwargs = dict(activation_fn=th.nn.ReLU,
-    #                  net_arch=[4, 4])
-    # model = SAC(
-    #     "MlpPolicy",
-    #     env=env,
-    #     gamma=0.999,
-    #     learning_rate=0.001,
-    #     policy_kwargs=policy_kwargs,
-    #     verbose=1,
-    #     device='cpu',
-    #     tensorboard_log=log_dir
-    # ) 
+    # # save_NN_Params(NN_path,NN_FileName,model)
 
+    # obs = np.array([0,1,2],dtype=np.float32)
+    # print(policy_dist(obs))
 
-    save_NN_Params(NN_path,NN_FileName,model)
-    # obs = np.array([ 0.1655, -2.3880,  0.3551],dtype=np.float32)
+    # means,std = policy_dist(obs)
+    plotPolicyRegion()
 
-    # while True:
-    #     action = custom_predict(obs)[0]
-    #     action[0] = np.arctanh(action[0])
-    #     print(action)
+    ## Cycle through values and plot means
 
     ## RENDER TRAINED MODEL FOR N EPISODES-
     # episodes = 50
