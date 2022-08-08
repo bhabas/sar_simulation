@@ -685,7 +685,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
 
                         M_d.x = 0.0f;
-                        M_d.y = -Policy_Action_tr*1e-3f;
+                        M_d.y = Policy_Action_tr*1e-3f;
                         M_d.z = 0.0f;
 
                         F_thrust_flip = 0.0;
