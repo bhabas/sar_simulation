@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import numpy as np
 import time
+import rospy
 
 ## ROS MESSAGES AND SERVICES
 from Core_Envs.CrazyflieEnv_Sim import CrazyflieEnv_Sim
@@ -37,6 +38,11 @@ class CrazyflieEnv_ParamOpt(CrazyflieEnv_Sim):
 
         self.SendCmd('Tumble',cmd_flag=1)
         self.sleep(0.25)
+
+        ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
+        self.Iyy = rospy.get_param("Iyy") + np.random.normal(0,1.5e-6)
+        self.mass = rospy.get_param("/CF_Mass") + np.random.normal(0,0.0005)
+        self.updateInertia()
 
         obs = None
         return obs

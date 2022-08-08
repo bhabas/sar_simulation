@@ -351,7 +351,8 @@ class Policy_Trainer_DeepRL():
 if __name__ == '__main__':
 
     ## INITIATE ENVIRONMENT
-    # env = CrazyflieEnv_DeepRL()
+    env = CrazyflieEnv_DeepRL()
+    # env = None
     model_initials = "NL"
     log_dir = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/CF_Gazebo"
 
@@ -377,17 +378,17 @@ if __name__ == '__main__':
     # ) 
 
     
-    Policy = Policy_Trainer_DeepRL(None,model,model_initials)
+    Policy = Policy_Trainer_DeepRL(env,model,model_initials)
     # Policy.train_model(log_name)
     # Policy.test_policy()
     # Policy.save_NN_Params(policy_path)
     Policy.plotPolicyRegion(iso_level=2.0)
 
 
-    dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
-    fileName = "Control_Playground--trial_24--NL.csv"
-    trial = DataFile(dataPath,fileName,dataType='SIM')
-    k_ep = 0
-    Policy.plotPolicyRegion(PlotTraj=(trial,k_ep,0))
+    # dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
+    # fileName = "Control_Playground--trial_24--NL.csv"
+    # trial = DataFile(dataPath,fileName,dataType='SIM')
+    # k_ep = 0
+    # Policy.plotPolicyRegion(PlotTraj=(trial,k_ep,0))
 
     
