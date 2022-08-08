@@ -217,6 +217,9 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
             R3 = 0.0
 
         return R0 + R1 + R2 + R3
+
+    def render(self):
+        pass
         
     
 
