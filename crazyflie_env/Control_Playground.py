@@ -4,9 +4,9 @@ import rospy
 import numpy as np
 
 
-from CrazyflieEnv_ParamOpt import CrazyflieEnv_ParamOpt
+
        
-def cmd_send(env):
+def cmd_send(env,logName):
     while True:
         # Converts input number into action name
         cmd_dict = {
@@ -131,7 +131,7 @@ def cmd_send(env):
             elif action=='Impact_traj':
 
                 ## GET VEL CONDITIONS 
-                V_d,phi,d_vel = env.userInput("Flight Velocity (V_d,phi,d_vel):",float)
+                V_d,phi = env.userInput("Flight Velocity (V_d,phi):",float)
                 
                 ## DEFINE CARTESIAN VELOCITIES
                 phi_rad = np.radians(phi)
@@ -141,7 +141,7 @@ def cmd_send(env):
 
                 x_impact,y_0 = env.userInput("Desired impact position (x,y):",float)
 
-                x_0,z_0 = env.VelTraj_StartPos(x_impact,[Vx_d,0,Vz_d],d_vel=d_vel)
+                x_0,z_0 = env.VelTraj_StartPos(x_impact,[Vx_d,0,Vz_d])
 
                 print(f"Desired start position x_0: {x_0:.2f} y_0: {y_0:.2f} z_0: {z_0:.2f}")
                 str_input = env.userInput("Approve start position (y/n): ",str)
@@ -205,7 +205,7 @@ def cmd_send(env):
 
 
 if __name__ == '__main__':
-    
+    from CrazyflieEnv_ParamOpt import CrazyflieEnv_ParamOpt
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv_ParamOpt()
 
@@ -214,7 +214,7 @@ if __name__ == '__main__':
     logName = f"Control_Playground--trial_{int(trial_num):02d}--{env.modelInitials()}.csv"
 
     env.createCSV(logName)
-    cmd_thread = threading.Thread(target=cmd_send,args=(env,))
+    cmd_thread = threading.Thread(target=cmd_send,args=(env,logName))
     cmd_thread.start()   
 
     rospy.spin()
