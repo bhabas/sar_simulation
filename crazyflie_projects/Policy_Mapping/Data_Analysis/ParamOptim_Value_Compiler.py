@@ -16,9 +16,9 @@ sys.path.insert(0,BASE_PATH)
 from crazyflie_logging.data_analysis.Data_Analysis import DataFile
 
 
-dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
+dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/NS_DR_Trials"
 compiledPath = f"{BASE_PATH}/crazyflie_projects/Policy_Mapping/Data_Logs"
-compiledName = "NL_LR_Trials.csv"
+compiledName = "NS_LR_Trials.csv"
 
 df_list = []
 file_index = 0
@@ -51,7 +51,8 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
         # with fileinput.FileInput(dataPath+fileName, inplace=True, backup='.bak') as file:
         #     for line in file:
         #         print(line.replace("--,--,Rollout Completed", "Rollout Completed"), end='')
-        trial = DataFile(dataPath,fileName,dataType='EXP')
+        trial = DataFile(dataPath,fileName,dataType='Sim')
+        trial.n_rollouts = 6
         
         ## TRIAL CONDITIONS
         vel_IC,phi_IC = trial.grab_vel_IC_2D_angle()
@@ -124,8 +125,8 @@ master_df = pd.DataFrame(df_list,columns=(
     "mu","sigma",
 ))
 master_df = master_df.round(4)
-master_df[['vel_IC','phi_IC','trial_num']] = master_df[['vel_IC','phi_IC','trial_num']].round(2)
-master_df.sort_values(['vel_IC','phi_IC','trial_num'],ascending=[1,1,1],inplace=True)
+master_df[['vel_d','phi_d','trial_num']] = master_df[['vel_d','phi_d','trial_num']].round(2)
+master_df.sort_values(['vel_d','phi_d','trial_num'],ascending=[1,1,1],inplace=True)
 master_df.to_csv(f'{compiledPath}/{compiledName}',index=False,mode='w',header=True)
 
 

@@ -657,12 +657,12 @@ if __name__ == "__main__":
     np.random.seed(0)
 
     ## DESIGNATE FILE PATHS
-    model_initials = "NL_DR"
+    model_initials = "NS_DR"
     NN_Param_Path = f'{BASEPATH}/crazyflie_projects/Policy_Mapping/Policy_Training/Info/NN_Layers_{model_initials}.h'
     SVM_Param_Path = f'{BASEPATH}/crazyflie_projects/Policy_Mapping/Policy_Training/Info/SVM_Params_{model_initials}.h'
 
     FilePath = f"{BASEPATH}/crazyflie_projects/Policy_Mapping/Data_Logs/"
-    FileName = "NL_LR_Trials.csv"
+    FileName = "NS_LR_Trials.csv"
 
     ## PRE-INITIALIZE MODELS
     NN_model = NN_Model()
@@ -707,25 +707,25 @@ if __name__ == "__main__":
     ## TRAIN NEURAL NETWORK My POLICY
     # Policy.train_NN_Model(X_train,y_train,X_test,y_test,epochs=3200)
     # Policy.save_NN_Params(NN_Param_Path,FileName)
-    Policy.load_NN_Params(NN_Param_Path)
-    print(Policy.NN_Predict(np.array([[0.233,-2.778,0.518]])))
+    # Policy.load_NN_Params(NN_Param_Path)
+    # print(Policy.NN_Predict(np.array([[0.233,-2.778,0.518]])))
 
-    ## TRAIN OC_SVM FLIP_CLASSIFICATION POLICY
-    Policy.train_OC_SVM(X)
-    Policy.save_SVM_Params(SVM_Param_Path,FileName)
-    print(Policy.OC_SVM_Predict(np.array([[0.233,-2.778,0.518]])))
+    # ## TRAIN OC_SVM FLIP_CLASSIFICATION POLICY
+    # Policy.train_OC_SVM(X)
+    # Policy.save_SVM_Params(SVM_Param_Path,FileName)
+    # print(Policy.OC_SVM_Predict(np.array([[0.233,-2.778,0.518]])))
 
 
     # Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.0)
     # Policy.plotPolicyRegion(df_raw,PlotBoundry=True,iso_level=0.0)
     # Policy.plotPolicyRegion(df_raw,PlotBoundry=False,iso_level=0.0)
-    # Policy.plot_polar_smoothed(df_max)
+    Policy.plot_polar_smoothed(df_max)
     
     
-    dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
-    fileName = "Control_Playground--trial_24--NL.csv"
-    trial = DataFile(dataPath,fileName,dataType='SIM')
-    k_ep = 0
-    Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.00,PlotTraj=(trial,k_ep,0))
+    # dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
+    # fileName = "Control_Playground--trial_24--NL.csv"
+    # trial = DataFile(dataPath,fileName,dataType='SIM')
+    # k_ep = 0
+    # Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.00,PlotTraj=(trial,k_ep,0))
 
 

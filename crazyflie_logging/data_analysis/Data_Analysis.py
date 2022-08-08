@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from mpl_toolkits.mplot3d import Axes3D
+import os
 
 ## MISC IMPORTS
 from scipy.spatial.transform import Rotation
@@ -20,7 +21,7 @@ class DataFile:
         ## ORGANIZE FILEPATH AND CREATE TRIAL DATAFRAME
         self.fileName = fileName
         self.dataPath = dataPath
-        filepath = self.dataPath + self.fileName
+        filepath = os.path.join(dataPath,fileName)
 
         self.trial_df = pd.read_csv(filepath,low_memory=False)
 
