@@ -14,7 +14,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         self.env_name = "CF_Gazebo"
         self.GZ_Timeout = GZ_Timeout
         self.k_ep = 0
-        self.Flip_thr = 2.0
+        self.Flip_thr = 1.5
 
         self.d_min = 50.0
         self.Tau_trg = 50.0
@@ -30,14 +30,12 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         )
 
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
-        self.action_space = spaces.Box(low=np.array([-5,-1]), high=np.array([5,1]), shape=(2,), dtype=np.float32)
-        self.My_space = spaces.Box(low=np.array([-0e-3]), high=np.array([-8e-3]), shape=(1,), dtype=np.float32)
-
-        
+        self.action_space = spaces.Box(low=np.array([-1,0]), high=np.array([1,8]), shape=(2,), dtype=np.float32)
 
     def step(self,action):
 
         Tau,OFy,d_ceil  = self.obs
+        action[0] = np.arctanh(action[0])
         
 
         ## START IMPACT TERMINATION TIMERS
@@ -55,7 +53,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
             ## CHECK FOR DONE
             self.done = bool(
-                self.t - self.start_time_rollout > 2.0                # EPISODE TIMEOUT
+                self.t - self.start_time_rollout > 1.0                # EPISODE TIMEOUT
                 or self.t - self.start_time_impact > 0.5            # IMPACT TIMEOUT
                 or (self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5) # FREE-FALL TERMINATION
             )         
@@ -65,7 +63,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
                     self.d_min = self.d_ceil 
 
             ## ERROR TERMINATIONS
-            if (time.time() - self.start_time_ep) > 120.0 and self.GZ_Timeout == True:
+            if (time.time() - self.start_time_ep) > 300.0 and self.GZ_Timeout == True:
                 print('\033[93m' + "[WARNING] Real Time Exceeded" + '\x1b[0m')
                 self.Restart()
                 self.done = True
@@ -89,12 +87,9 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
     def finish_sim(self,action):
 
-        ## CONVERT ACTION RANGE TO MOMENT RANGE
-        action_scale = (self.My_space.high[0]-self.My_space.low[0])/(self.action_space.high[1]-self.action_space.low[1])
-        My = (action[1]-self.action_space.low[1])*action_scale + self.My_space.low[0]
-        # My = -7.3e-3
+        My = -action[1]
 
-        self.SendCmd("Moment",[0,My*1e3,0],cmd_flag=1)
+        self.SendCmd("Moment",[0,My,0],cmd_flag=1)
         self.gazebo_unpause_physics()
 
         while not self.done:
@@ -104,7 +99,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
                 self.onceFlag_impact = True
 
             self.done = bool(
-                self.t - self.start_time_rollout > 2.0                # EPISODE TIMEOUT
+                self.t - self.start_time_rollout > 1.0              # EPISODE TIMEOUT
                 or self.t - self.start_time_impact > 0.5            # IMPACT TIMEOUT
                 or (self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5) # FREE-FALL TERMINATION
             )
@@ -114,7 +109,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
                     self.d_min = self.d_ceil 
 
             ## ERROR TERMINATIONS
-            if (time.time() - self.start_time_ep) > 20.0 and self.GZ_Timeout == True:
+            if (time.time() - self.start_time_ep) > 300.0 and self.GZ_Timeout == True:
                 print('\033[93m' + "[WARNING] Real Time Exceeded" + '\x1b[0m')
                 self.Restart()
                 self.done = True

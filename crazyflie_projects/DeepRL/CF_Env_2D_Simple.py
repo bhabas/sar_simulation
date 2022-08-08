@@ -8,11 +8,11 @@ import os
 import numpy as np
 
 
-class CF_Env_2D():
+class CF_Env_2D_Simple():
     metadata = {'render.modes': ['human']}
     def __init__(self):
-        super(CF_Env_2D, self).__init__()
-        self.env_name = "CF_Env_2D"
+        super(CF_Env_2D_Simple, self).__init__()
+        self.env_name = "CF_Env_2D_Simple"
 
         ## PHYSICS PARAMETERS
         self.dt = 0.005  # seconds between state updates
@@ -24,7 +24,7 @@ class CF_Env_2D():
         ## ENV PARAMETERS
         self.k_ep = 0
         self.h_ceil = 2.1       # Ceiling Height [m]
-        self.Flip_thr = 1.5     # Threshold to execute flip action
+        self.Flip_thr = 2.0     # Threshold to execute flip action
         self.MomentCutoff = False
         self.Impact_flag = False
         self.Impact_events = [False,False,False]
@@ -48,7 +48,8 @@ class CF_Env_2D():
         )
 
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
-        self.action_space = spaces.Box(low=np.array([-1,0]), high=np.array([1,8]), shape=(2,), dtype=np.float32)
+        self.action_space = spaces.Box(low=np.array([-5]), high=np.array([5]), shape=(1,), dtype=np.float32)
+        self.My_space = spaces.Box(low=np.array([-0e-3]), high=np.array([-8e-3]), shape=(1,), dtype=np.float32)
 
         ## SET DIMENSIONAL CONSTRAINTS 
         g = 9.81                # Gravity [m/s^2]
@@ -80,7 +81,6 @@ class CF_Env_2D():
         
         x,vx,z,vz,theta,dtheta = self.state
         Tau,OFy,d_ceil = self.obs
-        action[0] = np.arctanh(action[0])
 
         ## BASIC FLIGHT   
         if action[0] < self.Flip_thr:
@@ -150,7 +150,8 @@ class CF_Env_2D():
             if np.abs(theta) < np.deg2rad(90) and self.MomentCutoff == False:
 
                 ## CONVERT ACTION RANGE TO MOMENT RANGE
-                My = -action[1]*1e-3
+                # action_scale = (self.My_space.high[0]-self.My_space.low[0])/(self.action_space.high[0]-self.action_space.low[0])
+                My = -6e-3
 
             ## TURN OFF BODY MOMENT IF PAST 90 DEG
             else: 
@@ -324,7 +325,7 @@ class CF_Env_2D():
 
     def CalcReward(self):
 
-        R0 = np.clip(1/np.abs(self.Tau_trg-0.18),0,20)/20
+        R0 = np.clip(1/np.abs(self.Tau_trg-0.2),0,20)/20
         R0 *= 0.05
 
         ## DISTANCE REWARD 
@@ -637,8 +638,8 @@ class CF_Env_2D():
         vel = np.random.uniform(low=1.5,high=3.5)
         phi = np.random.uniform(low=30,high=90)
 
-        # vel = 3.0
-        # phi = 70
+        vel = 3.0
+        phi = 70
 
         vx_0 = vel*np.cos(np.deg2rad(phi))
         vz_0 = vel*np.sin(np.deg2rad(phi))
@@ -661,15 +662,14 @@ class CF_Env_2D():
         return np.array(self.obs,dtype=np.float32)
 
 if __name__ == '__main__':
-    env = CF_Env_2D()
+    env = CF_Env_2D_Simple()
     env.RENDER = True
     for _ in range(25):
         env.reset()
         done = False
         while not done:
             env.render()
-            action = env.action_space.sample()
-            obs,reward,done,info = env.step(action)
+            obs,reward,done,info = env.step(env.action_space.sample())
 
     env.close()
 

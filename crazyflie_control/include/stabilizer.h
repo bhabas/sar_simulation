@@ -417,7 +417,7 @@ void Controller::loadParams()
     {
         Policy = SVL_POLICY;
     }
-    else if (strcmp(POLICY_TYPE_STR.c_str(),"SVL_POLICY")==0)
+    else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL")==0)
     {
         Policy = DEEP_RL;
     }    
@@ -500,7 +500,7 @@ void Controller::publishCtrlData()
 
     // NEURAL NETWORK DATA
     CtrlData_msg.Policy_Flip = Policy_Flip;
-    CtrlData_msg.Policy_Action = NAN;
+    CtrlData_msg.Policy_Action = Policy_Action;
 
     // CONTROL ACTIONS
     CtrlData_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
