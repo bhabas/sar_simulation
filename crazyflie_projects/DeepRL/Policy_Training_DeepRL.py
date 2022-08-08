@@ -5,7 +5,6 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib as mpl
 from scipy.interpolate import griddata
 import plotly.graph_objects as go
-import pandas as pd
 import os
 from datetime import datetime
 
@@ -21,6 +20,8 @@ import sys,rospkg,os
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
 sys.path.insert(1,'/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_env')
 sys.path.insert(1,BASE_PATH)
+
+from crazyflie_logging.data_analysis.Data_Analysis import DataFile
 
 from crazyflie_env.CrazyflieEnv_DeepRL import CrazyflieEnv_DeepRL
 from CF_Env_2D import CF_Env_2D
@@ -241,23 +242,125 @@ class Policy_Trainer_DeepRL():
             reset_num_timesteps=True
         )
 
+    def plotPolicyRegion(self,PlotTraj=(None,0,0),iso_level=2.0):
 
+        fig = go.Figure()
+
+        ## MESHGRID OF DATA POINTS
+        Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
+            np.linspace(0.15, 0.30, 15),
+            np.linspace(-15, 1, 15),
+            np.linspace(0.0, 1.0, 15)
+        )
+
+        ## CONCATENATE DATA TO MATCH INPUT SHAPE
+        X_grid = np.stack((
+            Tau_grid.flatten(),
+            OF_y_grid.flatten(),
+            d_ceil_grid.flatten()),axis=1)
+
+
+        ## CALC INDEX FOR WHERE FLIP MEAN GREATER THAN FLIP REQUIREMENT
+        action_mean,_ = self.policy_dist(X_grid)
+        valid_idx = np.where(action_mean[:,0] >= iso_level)
+
+
+        # PLOT DATA POINTS
+        fig.add_trace(
+            go.Scatter3d(
+                ## DATA
+                x=OF_y_grid.flatten()[valid_idx],
+                y=Tau_grid.flatten()[valid_idx],
+                z=d_ceil_grid.flatten()[valid_idx],
+                
+
+                ## MARKER
+                mode='markers',
+                marker=dict(
+                    size=3,
+                    color=action_mean[:,0].flatten()[valid_idx],
+                    colorscale='Jet',   # choose a colorscale
+                    colorbar=dict(title='Flip Dist Mean',),
+                    cmin=1,
+                    cmax=3, 
+                    opacity=0.8)
+            )
+        )
+        
+
+        if PlotTraj[0] != None:
+            dataFile,k_ep,k_run = PlotTraj
+            arr = dataFile.grab_stateData(k_ep,k_run,['Tau','OF_y','d_ceil'])
+            Tau,OFy,d_ceil = np.split(arr,3,axis=1)
+            Tau_tr,OFy_tr,d_ceil_tr,My_tr = dataFile.grab_flip_state(k_ep,k_run,['Tau','OF_y','d_ceil','My'])
+
+            fig.add_trace(
+                go.Scatter3d(
+                    ## DATA
+                    x=OFy.flatten(),
+                    y=Tau.flatten(),
+                    z=d_ceil.flatten(),
+
+                    ## MARKER
+                    mode='lines',
+                    marker=dict(
+                        color='darkblue',
+                        size=0,
+                    )
+                )
+            )
+
+            fig.add_trace(
+                go.Scatter3d(
+                    ## DATA
+                    x=[OFy_tr],
+                    y=[Tau_tr],
+                    z=[d_ceil_tr],
+
+                    ## HOVER DATA
+                    hovertemplate=
+                        f"<b>My: {My_tr:.3f} N*mm</b> \
+                        <br>Tau: {Tau_tr:.3f} | OFy: {OFy_tr:.3f} </br> \
+                        <br>D_ceil: {d_ceil_tr:.3f}</br>",
+
+                    ## MARKER
+                    mode='markers',
+                    marker=dict(
+                        size=3,
+                        color='darkblue',
+                    )
+                )
+            )
+
+        
+
+        fig.update_layout(
+            scene=dict(
+                xaxis_title='OFy [rad/s]',
+                yaxis_title='Tau [s]',
+                zaxis_title='D_ceiling [m]',
+                xaxis_range=[-20,1],
+                yaxis_range=[0.4,0.1],
+                zaxis_range=[0,1.2],
+            ),
+        )
+        fig.show()
 
 
 
 if __name__ == '__main__':
 
     ## INITIATE ENVIRONMENT
-    env = CF_Env_2D()
+    # env = CrazyflieEnv_DeepRL()
     model_initials = "NL"
-    log_dir = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/{env.env_name}"
+    log_dir = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/CF_Gazebo"
 
 
     ## LOAD MODEL
-    log_name = f"SAC-08_08-11:35_1"
+    log_name = f"SAC-07_28-19:32_1"
     policy_path = os.path.join(log_dir,log_name)
-    model_path = os.path.join(log_dir,log_name,f"models/{25}000_steps.zip")
-    model = SAC.load(model_path,env=env,device='cpu')
+    model_path = os.path.join(log_dir,log_name,f"models/{53}000_steps.zip")
+    model = SAC.load(model_path,env=None,device='cpu')
 
 
     # ## CREATE NEW MODEL 
@@ -274,10 +377,17 @@ if __name__ == '__main__':
     # ) 
 
     
-    Policy = Policy_Trainer_DeepRL(env,model,model_initials)
+    Policy = Policy_Trainer_DeepRL(None,model,model_initials)
     # Policy.train_model(log_name)
     # Policy.test_policy()
-    Policy.save_NN_Params(policy_path)
+    # Policy.save_NN_Params(policy_path)
+    Policy.plotPolicyRegion(iso_level=2.0)
 
+
+    dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
+    fileName = "Control_Playground--trial_24--NL.csv"
+    trial = DataFile(dataPath,fileName,dataType='SIM')
+    k_ep = 0
+    Policy.plotPolicyRegion(PlotTraj=(trial,k_ep,0))
 
     
