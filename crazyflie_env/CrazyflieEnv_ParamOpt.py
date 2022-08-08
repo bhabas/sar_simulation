@@ -147,15 +147,15 @@ class CrazyflieEnv_ParamOpt(CrazyflieEnv_Sim):
         R1 *= 0.1
 
         ## IMPACT ANGLE REWARD
-        R2 = np.clip(np.abs(self.eulCF_impact[1])/120,0,1)
-        R2 *= 0.2
+        R2 = np.clip(np.abs(self.eulCF_impact[1])/90,0,1)
+        R2 *= 0.3
 
         ## PAD CONTACT REWARD
         if self.pad_connections >= 3: 
             if self.BodyContact_flag == False:
-                R3 = 0.7
+                R3 = 0.6
             else:
-                R3 = 0.4
+                R3 = 0.3
         elif self.pad_connections == 2: 
             if self.BodyContact_flag == False:
                 R3 = 0.2

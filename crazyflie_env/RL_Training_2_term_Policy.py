@@ -190,7 +190,7 @@ if __name__ == '__main__':
     from RL_agents.EPHE_Agent import EPHE_Agent
 
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv_ParamOpt(GZ_Timeout=False)
+    env = CrazyflieEnv_ParamOpt(GZ_Timeout=True)
 
     ## INIT LEARNING AGENT
     # Mu_Tau value is multiplied by 10 so complete policy is more normalized

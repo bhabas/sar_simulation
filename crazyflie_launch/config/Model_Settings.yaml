@@ -10,6 +10,12 @@ Ixx: 27.93e-6     # [kg*m^2]
 Iyy: 30.46e-6     # [kg*m^2]
 Izz: 47.12e-6     # [kg*m^2] 
 
+# MODEL_NAME: "crazyflie_Narrow-Short"
+# CF_Mass: 38.1e-3  # [kg]
+# Ixx: 27.93e-6     # [kg*m^2]
+# Iyy: 30.46e-6     # [kg*m^2]
+# Izz: 47.12e-6     # [kg*m^2] 
+
 # MODEL_NAME: "crazyflie_BigQuad"
 # CF_Mass: 38.1e-3  # [kg]
 # Ixx: 27.93e-6     # [kg*m^2]

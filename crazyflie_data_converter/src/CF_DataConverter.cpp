@@ -310,6 +310,14 @@ bool CF_DataConverter::Send_Cmd2Ctrl(crazyflie_msgs::RLCmd::Request &req)
 
     }
 
+    if(req.cmd_type == 8)
+    {
+        // RL POLICY DATA
+        Tau_thr = req.cmd_vals.x;
+        G1 = req.cmd_vals.y;
+
+    }
+
     if(req.cmd_type == 21) // UPDATE PARAMS IN CF_DC 
     {
         CF_DataConverter::LoadParams();
