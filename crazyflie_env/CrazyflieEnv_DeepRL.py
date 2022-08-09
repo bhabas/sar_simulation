@@ -37,24 +37,16 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         Tau,OFy,d_ceil  = self.obs
         action[0] = np.arctanh(action[0])
         
-
-        ## START IMPACT TERMINATION TIMERS
-        if ((self.impact_flag or self.BodyContact_flag) and self.onceFlag_impact == False):
-            self.start_time_impact = self.getTime()
-            self.onceFlag_impact = True
-
         if action[0] < self.Flip_thr:
 
-            ## UPDATE STATE
+            ## UPDATE STATE AND OBSERVATION
             self.iter_step()
-
-            ## UPDATE OBSERVATION
             self.obs = (self.Tau,self.OFy,self.d_ceil)
 
             ## CHECK FOR DONE
             self.done = bool(
-                self.t - self.start_time_rollout > 1.0                # EPISODE TIMEOUT
-                or self.t - self.start_time_impact > 0.5            # IMPACT TIMEOUT
+                self.t - self.start_time_rollout > 0.7                # EPISODE TIMEOUT
+                or (self.impact_flag or self.BodyContact_flag)
                 or (self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5) # FREE-FALL TERMINATION
             )         
 
@@ -78,7 +70,6 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
         elif action[0] >= self.Flip_thr:
 
-            # self.Once_flag = True
             self.Tau_trg = Tau
             reward = self.finish_sim(action)
             self.done = True
