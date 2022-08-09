@@ -346,7 +346,8 @@ class CrazyflieEnv_Base():
                                       ImpactData_msg.Twist_impact.linear.z],3)
 
         ## STICKY PAD CONNECTIONS
-        self.pad_connections = ImpactData_msg.Pad_Connections
+        if rospy.get_param('/DATA_TYPE') == "SIM":
+            self.pad_connections = ImpactData_msg.Pad_Connections
 
 
     def CF_MiscDataCallback(self,MiscData_msg):        
