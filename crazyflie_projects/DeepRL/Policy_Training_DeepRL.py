@@ -197,7 +197,7 @@ class Policy_Trainer_DeepRL():
 
         self.env.close()
 
-    def train_model(self,log_name):
+    def train_model(self,log_name,reset_timesteps=True):
 
         class CheckpointSaveCallback(BaseCallback):
 
@@ -239,7 +239,7 @@ class Policy_Trainer_DeepRL():
             total_timesteps=1e6,
             tb_log_name=log_name,
             callback=checkpoint_callback,
-            reset_num_timesteps=True
+            reset_num_timesteps=reset_timesteps
         )
 
     def plotPolicyRegion(self,PlotTraj=(None,0,0),iso_level=2.0):
@@ -351,35 +351,38 @@ class Policy_Trainer_DeepRL():
 if __name__ == '__main__':
 
     ## INITIATE ENVIRONMENT
-    env = CrazyflieEnv_DeepRL()
+    env = CrazyflieEnv_DeepRL(GZ_Timeout=True)
     # env = None
     model_initials = "NL"
     log_dir = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/CF_Gazebo"
 
 
-    # ## LOAD MODEL
-    # log_name = f"SAC-07_28-19:32_1"
-    # policy_path = os.path.join(log_dir,log_name)
-    # model_path = os.path.join(log_dir,log_name,f"models/{53}000_steps.zip")
-    # model = SAC.load(model_path,env=None,device='cpu')
+    ## LOAD MODEL
+    log_name = f"SAC-08_09-18:18_1"
+    policy_path = os.path.join(log_dir,log_name)
+    model_path = os.path.join(log_dir,log_name,f"models/{33}500_steps.zip")
+    model = SAC.load(model_path,env=env,device='cpu')
+    model.load_replay_buffer(f"{log_dir}/{log_name}/models/replay_buff.pkl")
+    
+    
 
 
-    ## CREATE NEW MODEL 
-    log_name = f"SAC-{current_time}"
-    model = SAC(
-        "MlpPolicy",
-        env=env,
-        gamma=0.999,
-        learning_rate=0.001,
-        policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[12,12]),
-        verbose=1,
-        device='cpu',
-        tensorboard_log=log_dir
-    ) 
+    # ## CREATE NEW MODEL 
+    # log_name = f"SAC-{current_time}"
+    # model = SAC(
+    #     "MlpPolicy",
+    #     env=env,
+    #     gamma=0.999,
+    #     learning_rate=0.001,
+    #     policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[12,12]),
+    #     verbose=1,
+    #     device='cpu',
+    #     tensorboard_log=log_dir
+    # ) 
 
     
     Policy = Policy_Trainer_DeepRL(env,model,model_initials)
-    Policy.train_model(log_name)
+    Policy.train_model(log_name,reset_timesteps=False)
     # Policy.test_policy()
     # Policy.save_NN_Params(policy_path)
     # Policy.plotPolicyRegion(iso_level=2.0)
