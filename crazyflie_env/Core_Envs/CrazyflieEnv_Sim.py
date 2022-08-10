@@ -161,8 +161,9 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base):
         ## SEND LOGGING REQUEST VIA SERVICE
         self.callService('/CF_Internal/DomainRand',srv,domainRand)
 
+    def setParams(self):
 
-
+        os.system("roslaunch crazyflie_launch params.launch")
     
 
     # ============================

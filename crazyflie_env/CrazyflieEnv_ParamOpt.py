@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import numpy as np
 import time
+import rospy
 
 ## ROS MESSAGES AND SERVICES
 from Core_Envs.CrazyflieEnv_Sim import CrazyflieEnv_Sim
@@ -37,6 +38,11 @@ class CrazyflieEnv_ParamOpt(CrazyflieEnv_Sim):
 
         self.SendCmd('Tumble',cmd_flag=1)
         self.sleep(0.25)
+
+        ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
+        self.Iyy = rospy.get_param("Iyy") + np.random.normal(0,1.5e-6)
+        self.mass = rospy.get_param("/CF_Mass") + np.random.normal(0,0.0005)
+        self.updateInertia()
 
         obs = None
         return obs
@@ -147,15 +153,15 @@ class CrazyflieEnv_ParamOpt(CrazyflieEnv_Sim):
         R1 *= 0.1
 
         ## IMPACT ANGLE REWARD
-        R2 = np.clip(np.abs(self.eulCF_impact[1])/120,0,1)
-        R2 *= 0.2
+        R2 = np.clip(np.abs(self.eulCF_impact[1])/90,0,1)
+        R2 *= 0.3
 
         ## PAD CONTACT REWARD
         if self.pad_connections >= 3: 
             if self.BodyContact_flag == False:
-                R3 = 0.7
+                R3 = 0.6
             else:
-                R3 = 0.4
+                R3 = 0.3
         elif self.pad_connections == 2: 
             if self.BodyContact_flag == False:
                 R3 = 0.2
