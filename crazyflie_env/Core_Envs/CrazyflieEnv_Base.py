@@ -298,11 +298,14 @@ class CrazyflieEnv_Base():
     ##   Publishers/Subscribers 
     # ============================
     def clockCallback(self,msg):
-        self.t = msg.clock.to_sec()
+        
+        if rospy.get_param('/DATA_TYPE') == "SIM":
+            self.t = msg.clock.to_sec()
 
     def CF_StateDataCallback(self,StateData_msg):
 
-        # self.t = msg.clock.to_sec()
+        if rospy.get_param('/DATA_TYPE') == "EXP":
+            self.t = StateData_msg.header.stamp.to_sec()
 
         self.posCF = np.round([ StateData_msg.Pose.position.x,
                                 StateData_msg.Pose.position.y,
@@ -332,21 +335,23 @@ class CrazyflieEnv_Base():
 
     def CF_ImpactDataCallback(self,ImpactData_msg):
 
-        ## IMPACT FLAGS
-        self.impact_flag = ImpactData_msg.impact_flag
-        self.BodyContact_flag = ImpactData_msg.BodyContact_flag
+        if rospy.get_param('/DATA_TYPE') == "SIM":
 
-        self.eulCF_impact = np.round([ImpactData_msg.Eul_impact.x,
-                                      ImpactData_msg.Eul_impact.y,
-                                      ImpactData_msg.Eul_impact.z],3)
+            ## IMPACT FLAGS
+            self.impact_flag = ImpactData_msg.impact_flag
+            self.BodyContact_flag = ImpactData_msg.BodyContact_flag
 
-        ## CF_TWIST (IMPACT)
-        self.velCF_impact = np.round([ImpactData_msg.Twist_impact.linear.x,
-                                      ImpactData_msg.Twist_impact.linear.y,
-                                      ImpactData_msg.Twist_impact.linear.z],3)
+            self.eulCF_impact = np.round([ImpactData_msg.Eul_impact.x,
+                                        ImpactData_msg.Eul_impact.y,
+                                        ImpactData_msg.Eul_impact.z],3)
 
-        ## STICKY PAD CONNECTIONS
-        self.pad_connections = ImpactData_msg.Pad_Connections
+            ## CF_TWIST (IMPACT)
+            self.velCF_impact = np.round([ImpactData_msg.Twist_impact.linear.x,
+                                        ImpactData_msg.Twist_impact.linear.y,
+                                        ImpactData_msg.Twist_impact.linear.z],3)
+
+            
+            self.pad_connections = ImpactData_msg.Pad_Connections
 
 
     def CF_MiscDataCallback(self,MiscData_msg):        
