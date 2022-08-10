@@ -298,11 +298,14 @@ class CrazyflieEnv_Base():
     ##   Publishers/Subscribers 
     # ============================
     def clockCallback(self,msg):
-        self.t = msg.clock.to_sec()
+        
+        if rospy.get_param('/DATA_TYPE') == "SIM":
+            self.t = msg.clock.to_sec()
 
     def CF_StateDataCallback(self,StateData_msg):
 
-        # self.t = msg.clock.to_sec()
+        if rospy.get_param('/DATA_TYPE') == "EXP":
+            self.t = StateData_msg.header.stamp.to_sec()
 
         self.posCF = np.round([ StateData_msg.Pose.position.x,
                                 StateData_msg.Pose.position.y,
@@ -332,7 +335,6 @@ class CrazyflieEnv_Base():
 
     def CF_ImpactDataCallback(self,ImpactData_msg):
 
-        ## STICKY PAD CONNECTIONS
         if rospy.get_param('/DATA_TYPE') == "SIM":
 
             ## IMPACT FLAGS
