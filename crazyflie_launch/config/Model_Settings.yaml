@@ -21,3 +21,11 @@ Izz: 47.12e-6     # [kg*m^2]
 # Ixx: 27.93e-6     # [kg*m^2]
 # Iyy: 30.46e-6     # [kg*m^2]
 # Izz: 47.12e-6     # [kg*m^2] 
+
+modelTypes:
+  crazyflie_NL:
+    Mass: 38.1e-3
+
+  crazyflie_NS:
+    Mass: 34.1e-3
+
