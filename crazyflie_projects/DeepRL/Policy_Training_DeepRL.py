@@ -357,28 +357,28 @@ if __name__ == '__main__':
     log_dir = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/CF_Gazebo"
 
 
-    ## LOAD MODEL
-    log_name = f"SAC-08_09-18:18_1"
-    policy_path = os.path.join(log_dir,log_name)
-    model_path = os.path.join(log_dir,log_name,f"models/{33}500_steps.zip")
-    model = SAC.load(model_path,env=env,device='cpu')
-    model.load_replay_buffer(f"{log_dir}/{log_name}/models/replay_buff.pkl")
+    # ## LOAD MODEL
+    # log_name = f"SAC-08_09-18:18_1"
+    # policy_path = os.path.join(log_dir,log_name)
+    # model_path = os.path.join(log_dir,log_name,f"models/{33}500_steps.zip")
+    # model = SAC.load(model_path,env=env,device='cpu')
+    # model.load_replay_buffer(f"{log_dir}/{log_name}/models/replay_buff.pkl")
     
     
 
 
-    # ## CREATE NEW MODEL 
-    # log_name = f"SAC-{current_time}"
-    # model = SAC(
-    #     "MlpPolicy",
-    #     env=env,
-    #     gamma=0.999,
-    #     learning_rate=0.001,
-    #     policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[12,12]),
-    #     verbose=1,
-    #     device='cpu',
-    #     tensorboard_log=log_dir
-    # ) 
+    ## CREATE NEW MODEL 
+    log_name = f"SAC-{current_time}"
+    model = SAC(
+        "MlpPolicy",
+        env=env,
+        gamma=0.999,
+        learning_rate=0.001,
+        policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[8,8]),
+        verbose=1,
+        device='cpu',
+        tensorboard_log=log_dir
+    ) 
 
     
     Policy = Policy_Trainer_DeepRL(env,model,model_initials)
