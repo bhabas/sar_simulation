@@ -35,7 +35,6 @@ class EPHE_Agent():
         self.Kep_list_reward_avg = []
 
         ## PARAM OPTIM DATA
-        self.n_rollouts = 6             # Rollouts per episode
         self.k_ep = 0                   # Episode number
         self.k_run = 0                  # Run number
         self.error_str = ""

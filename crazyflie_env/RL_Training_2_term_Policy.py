@@ -153,6 +153,10 @@ def runTraining(env,agent,V_d,phi,logName,K_ep_max=15):
             Tau_thr = theta[0, k_run]    # Tau threshold 10*[s]
             My = theta[1, k_run]         # Policy Moment Action [N*mm]
 
+            ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
+            env.Iyy = rospy.get_param("Iyy") + np.random.normal(0,1.5e-6)
+            env.mass = rospy.get_param("/CF_Mass") + np.random.normal(0,0.0005)
+            env.updateInertia()
 
             env.ParamOptim_reset()
             env.startLogging(logName)
