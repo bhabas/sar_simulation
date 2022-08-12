@@ -69,6 +69,7 @@ class CrazyflieEnv_Base():
             'Ctrl_Reset':0,
             'Pos':1,
             'Vel':2,
+            'Yaw':3,
             'Stop':5,
             'Moment':7,
             'Policy':8,

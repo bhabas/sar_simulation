@@ -13,6 +13,7 @@ def cmd_send(env,logName):
             0:'Ctrl_Reset',
             1:'Pos',
             2:'Vel',
+            3:'Yaw',
             5:'Stop',
             7:'Moment',
             8:'Policy',
@@ -33,7 +34,7 @@ def cmd_send(env,logName):
 
         try:
             print("========== Command Types ==========")
-            print("0:Ctrl_Reset, \t1:Pos, \t\t2:Vel, \t\t5:Stop, \t8:Policy")
+            print("0:Ctrl_Reset, \t1:Pos, \t\t2:Vel, \t3:Yaw, \t5:Stop, \t8:Policy")
             print("10:P2P_traj, \t11:Vel_traj, \t12:Impact_traj,")
             print("20:Tumble, \t21:Load_Params, 22:Start_Logging, 23:Cap_Logging,")
             print("90:GZ_traj, \t91:GZ_reset, \t92:StickyPads")
@@ -69,6 +70,13 @@ def cmd_send(env,logName):
                 print()
 
                 env.SendCmd(action,cmd_vals,cmd_flag)
+
+            elif action=='Yaw':
+                yaw = env.userInput("Set desired yaw value: ",float)
+                cmd_vals = [yaw,0,0]
+                print()
+
+                env.SendCmd(action,cmd_vals)
 
             elif action=='Tumble': # Turn on Tumble detection
 
@@ -139,16 +147,16 @@ def cmd_send(env,logName):
                 Vx_d = V_d*np.cos(phi_rad)
                 Vz_d = V_d*np.sin(phi_rad)
 
-                x_impact,y_0 = env.userInput("Desired impact position (x,y):",float)
+                x_impact = env.userInput("Desired impact position (x):",float)
 
                 x_0,z_0 = env.VelTraj_StartPos(x_impact,[Vx_d,0,Vz_d])
 
-                print(f"Desired start position x_0: {x_0:.2f} y_0: {y_0:.2f} z_0: {z_0:.2f}")
+                print(f"Desired start position x_0: {x_0:.2f} y_0: {0.0:.2f} z_0: {z_0:.2f}")
                 str_input = env.userInput("Approve start position (y/n): ",str)
 
                 if str_input == 'y':
                     env.SendCmd('P2P_traj',cmd_vals=[env.posCF[0],x_0,env.accCF_max[0]],cmd_flag=0)
-                    env.SendCmd('P2P_traj',cmd_vals=[env.posCF[1],y_0,env.accCF_max[1]],cmd_flag=1)
+                    env.SendCmd('P2P_traj',cmd_vals=[env.posCF[1],0.0,env.accCF_max[1]],cmd_flag=1)
                     env.SendCmd('P2P_traj',cmd_vals=[env.posCF[2],z_0,env.accCF_max[2]],cmd_flag=2)
 
                     str_input = env.userInput("Approve flight (y/n): ",str)
