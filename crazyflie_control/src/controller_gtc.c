@@ -87,9 +87,11 @@ struct vec stateEul = {0.0f,0.0f,0.0f}; // Pose in Euler Angles [YZX Notation]
 
 
 // INIT DESIRED STATES
-struct vec x_d = {0.0f,0.0f,0.4f}; // Pos-desired [m]
-struct vec v_d = {0.0f,0.0f,0.0f}; // Vel-desired [m/s]
-struct vec a_d = {0.0f,0.0f,0.0f}; // Acc-desired [m/s^2]
+struct vec x_d = {0.0f,0.0f,0.4f};      // Pos-desired [m]
+struct vec v_d = {0.0f,0.0f,0.0f};      // Vel-desired [m/s]
+struct vec a_d = {0.0f,0.0f,0.0f};      // Acc-desired [m/s^2]
+float yaw_d = 0.0f;
+struct vec b1_d = {1.0f,0.0f,0.0f};     // Desired body x-axis in global coord. [x,y,z]
 
 struct quat quat_d = {0.0f,0.0f,0.0f,1.0f}; // Orientation-desired [qx,qy,qz,qw]
 struct vec eul_d = {0.0f,0.0f,0.0f};        // Euler Angle-desired [rad? deg? TBD]
@@ -98,7 +100,6 @@ struct vec domega_d = {0.0f,0.0f,0.0f};     // Ang. Acc-desired [rad/s^2]
 
 struct vec M_d = {0.0f,0.0f,0.0f};   // Desired moment [N*m]
 
-static struct vec b1_d = {1.0f,0.0f,0.0f};    // Desired body x-axis in global coord. [x,y,z]
 static struct vec b2_d;    // Desired body y-axis in global coord.
 static struct vec b3_d;    // Desired body z-axis in global coord.
 static struct vec b3;      // Current body z-axis in global coord.
@@ -277,6 +278,7 @@ void controllerGTCInit(void)
 void controllerGTCReset(void)
 {
     consolePrintf("GTC Reset\n");
+    consolePrintf("Policy_Type: %d\n",Policy);
 
     // RESET ERRORS
     e_PI = vzero();
@@ -290,6 +292,7 @@ void controllerGTCReset(void)
     x_d = mkvec(0.0f,0.0f,0.4f);
     v_d = mkvec(0.0f,0.0f,0.0f);
     a_d = mkvec(0.0f,0.0f,0.0f);
+    b1_d = mkvec(1.0f,0.0f,0.0f);
 
     // RESET SYSTEM FLAGS
     tumbled = false;
@@ -348,6 +351,7 @@ bool controllerGTCTest(void)
 
 void GTC_Command(setpoint_t *setpoint)
 {   
+    
     switch(setpoint->cmd_type){
         case 0: // Reset
             controllerGTCReset();
@@ -370,11 +374,14 @@ void GTC_Command(setpoint_t *setpoint)
             break;
 
 
-        // case 3: // Acceleration
-        //     a_d.x = setpoint->cmd_val1;
-        //     a_d.y = setpoint->cmd_val2;
-        //     a_d.z = setpoint->cmd_val3;
-        //     break;
+        case 3: // Yaw Angle
+
+            yaw_d = setpoint->cmd_val1*M_PI/180.0f;
+            b1_d.x = cosf(yaw_d); // Body x-axis
+            b1_d.y = sinf(yaw_d); // Body y-axis
+            b1_d.z = 0.0f;
+            
+            break;
 
         
 
