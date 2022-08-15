@@ -205,7 +205,7 @@ if __name__ == '__main__':
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
     V_d = 2.5 # [m/s]
-    phi = 60   # [deg]
+    phi = 90   # [deg]
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 24

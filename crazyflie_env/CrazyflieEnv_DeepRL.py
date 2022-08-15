@@ -114,7 +114,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         return self.CalcReward()
 
 
-    def reset(self):
+    def reset(self,vel=None,phi=None):
 
         self.gazebo_unpause_physics()
         ## DISABLE STICKY LEGS (ALSO BREAKS CURRENT CONNECTION JOINTS)
@@ -156,8 +156,11 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         self.onceFlag_impact = False   # Ensures impact data recorded only once 
 
         ## RESET STATE
-        vel = np.random.uniform(low=1.5,high=3.5)
-        phi = np.random.uniform(low=30,high=90)
+        if vel == None:
+            vel = np.random.uniform(low=1.5,high=3.5)
+            
+        if phi == None:
+            phi = np.random.uniform(low=30,high=90)
 
         vx_0 = vel*np.cos(np.deg2rad(phi))
         vz_0 = vel*np.sin(np.deg2rad(phi))
@@ -182,6 +185,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
     def CalcReward(self):
 
+        ## TAU TRIGGER REWARD
         R0 = np.clip(1/np.abs(self.Tau_trg-0.2),0,15)/15
         R0 *= 0.1
 
@@ -198,10 +202,10 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
             if self.BodyContact_flag == False:
                 R3 = 0.65
             else:
-                R3 = 0.4
+                R3 = 0.2
         elif self.pad_connections == 2: 
             if self.BodyContact_flag == False:
-                R3 = 0.2
+                R3 = 0.4
             else:
                 R3 = 0.1
         else:

@@ -7,6 +7,7 @@ from scipy.interpolate import griddata
 import plotly.graph_objects as go
 import os
 from datetime import datetime
+import pandas as pd
 
 ## PYTORCH IMPROTS
 import torch as th
@@ -183,11 +184,10 @@ class Policy_Trainer_DeepRL():
 
         return action_mean,action_std
 
-    def test_policy(self):
+    def test_policy(self,vel=None,phi=None):
         episodes = 50
-        self.env.RENDER = True
         for ep in range(episodes):
-            obs = self.env.reset()
+            obs = self.env.reset(vel=vel,phi=phi)
             done = False
             while not done:
                 self.env.render()
@@ -346,6 +346,51 @@ class Policy_Trainer_DeepRL():
         )
         fig.show()
 
+    def plot_polar(self,df,saveFig=False):
+
+        ## COLLECT DATA
+        R = df.iloc[:]['vel_d']
+        Theta = df.iloc[:]['phi_d']
+        C = df.iloc[:]['LR_4Leg']
+
+        # SOMETHING ABOUT DEFINING A GRID
+        interp_factor = 20
+        ri = np.linspace(R.min(),R.max(),(len(C)//interp_factor))
+        thetai = np.linspace(Theta.min(),Theta.max(),(len(C)//interp_factor))
+        r_ig, theta_ig = np.meshgrid(ri, thetai)
+        zi = griddata((R, Theta), C, (ri[None,:], thetai[:,None]), method='linear')
+        zi = zi + 0.0001
+        
+
+        ## INIT PLOT INFO
+        fig = plt.figure()
+        ax = fig.add_subplot(projection='polar')
+        
+
+        cmap = mpl.cm.jet
+        norm = mpl.colors.Normalize(vmin=0.0,vmax=1)
+        
+        # ax.contourf(np.radians(theta_ig),r_ig,zi,cmap=cmap,norm=norm,levels=25)
+        ax.scatter(np.radians(Theta),R,c=C,cmap=cmap,norm=norm)
+        ax.set_thetamin(30)
+        ax.set_thetamax(90)
+        ax.set_rmin(0)
+        ax.set_rmax(3.5)
+        
+
+
+        ## AXIS LABELS    
+        ax.text(np.radians(7.5),2,'Flight Velocity (m/s)',
+            rotation=18,ha='center',va='center')
+
+        ax.text(np.radians(60),4.5,'Flight Angle (deg)',
+            rotation=0,ha='left',va='center')
+
+        if saveFig==True:
+            plt.savefig(f'{"NL"}_Polar_LR.pdf',dpi=300)
+
+        plt.show()
+
 
 
 if __name__ == '__main__':
@@ -357,35 +402,45 @@ if __name__ == '__main__':
     log_dir = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/CF_Gazebo"
 
 
-    # ## LOAD MODEL
-    # log_name = f"SAC-08_09-18:18_1"
-    # policy_path = os.path.join(log_dir,log_name)
-    # model_path = os.path.join(log_dir,log_name,f"models/{33}500_steps.zip")
-    # model = SAC.load(model_path,env=env,device='cpu')
-    # model.load_replay_buffer(f"{log_dir}/{log_name}/models/replay_buff.pkl")
+    ## LOAD MODEL
+    log_name = f"SAC-08_09-18:18_1"
+    policy_path = os.path.join(log_dir,log_name)
+    model_path = os.path.join(log_dir,log_name,f"models/{33}500_steps.zip")
+    model = SAC.load(model_path,env=env,device='cpu')
+    model.load_replay_buffer(f"{log_dir}/{log_name}/models/replay_buff.pkl")
     
     
 
 
-    ## CREATE NEW MODEL 
-    log_name = f"SAC-{current_time}"
-    model = SAC(
-        "MlpPolicy",
-        env=env,
-        gamma=0.999,
-        learning_rate=0.001,
-        policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[8,8]),
-        verbose=1,
-        device='cpu',
-        tensorboard_log=log_dir
-    ) 
+    # ## CREATE NEW MODEL 
+    # log_name = f"SAC-{current_time}"
+    # model = SAC(
+    #     "MlpPolicy",
+    #     env=env,
+    #     gamma=0.999,
+    #     learning_rate=0.002,
+    #     policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[12,12]),
+    #     verbose=1,
+    #     device='cpu',
+    #     tensorboard_log=log_dir
+    # ) 
 
     
     Policy = Policy_Trainer_DeepRL(env,model,model_initials)
     Policy.train_model(log_name,reset_timesteps=False)
-    # Policy.test_policy()
+    # Policy.test_policy(vel=3.0,phi=90)
     # Policy.save_NN_Params(policy_path)
     # Policy.plotPolicyRegion(iso_level=2.0)
+
+    ## LOAD DATA
+    # df_raw = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/DeepRL/Data_Logs/DeepRL_NL_LR.csv").dropna() # Collected data
+
+    # ## MAX LANDING RATE DATAFRAME
+    # idx = df_raw.groupby(['vel_d','phi_d'])['LR_4Leg'].transform(max) == df_raw['LR_4Leg']
+    # df_max = df_raw[idx].reset_index()
+
+    # Policy.plot_polar(df_max)
+
 
 
     # dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
