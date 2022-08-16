@@ -370,8 +370,8 @@ class Policy_Trainer_DeepRL():
         cmap = mpl.cm.jet
         norm = mpl.colors.Normalize(vmin=0.0,vmax=1)
         
-        # ax.contourf(np.radians(theta_ig),r_ig,zi,cmap=cmap,norm=norm,levels=25)
-        ax.scatter(np.radians(Theta),R,c=C,cmap=cmap,norm=norm)
+        ax.contourf(np.radians(theta_ig),r_ig,zi,cmap=cmap,norm=norm,levels=25)
+        # ax.scatter(np.radians(Theta),R,c=C,cmap=cmap,norm=norm)
         ax.set_thetamin(30)
         ax.set_thetamax(90)
         ax.set_rmin(0)
@@ -396,16 +396,16 @@ class Policy_Trainer_DeepRL():
 if __name__ == '__main__':
 
     ## INITIATE ENVIRONMENT
-    env = CrazyflieEnv_DeepRL(GZ_Timeout=True)
-    # env = None
+    # env = CrazyflieEnv_DeepRL(GZ_Timeout=True)
+    env = None
     model_initials = "NL"
     log_dir = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/CF_Gazebo"
 
 
     ## LOAD MODEL
-    log_name = f"SAC-08_09-18:18_1"
+    log_name = f"SAC-08_09-18:18_2"
     policy_path = os.path.join(log_dir,log_name)
-    model_path = os.path.join(log_dir,log_name,f"models/{33}500_steps.zip")
+    model_path = os.path.join(log_dir,log_name,f"models/{68}500_steps.zip")
     model = SAC.load(model_path,env=env,device='cpu')
     model.load_replay_buffer(f"{log_dir}/{log_name}/models/replay_buff.pkl")
     
@@ -427,19 +427,19 @@ if __name__ == '__main__':
 
     
     Policy = Policy_Trainer_DeepRL(env,model,model_initials)
-    Policy.train_model(log_name,reset_timesteps=False)
+    # Policy.train_model(log_name,reset_timesteps=False)
     # Policy.test_policy(vel=3.0,phi=90)
-    # Policy.save_NN_Params(policy_path)
-    # Policy.plotPolicyRegion(iso_level=2.0)
+    Policy.save_NN_Params(policy_path)
+    # Policy.plotPolicyRegion(iso_level=1.5)
 
-    ## LOAD DATA
-    # df_raw = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/DeepRL/Data_Logs/DeepRL_NL_LR.csv").dropna() # Collected data
+    # LOAD DATA
+    df_raw = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/DeepRL/Data_Logs/DeepRL_NL_LR.csv").dropna() # Collected data
 
-    # ## MAX LANDING RATE DATAFRAME
-    # idx = df_raw.groupby(['vel_d','phi_d'])['LR_4Leg'].transform(max) == df_raw['LR_4Leg']
-    # df_max = df_raw[idx].reset_index()
+    ## MAX LANDING RATE DATAFRAME
+    idx = df_raw.groupby(['vel_d','phi_d'])['LR_4Leg'].transform(max) == df_raw['LR_4Leg']
+    df_max = df_raw[idx].reset_index()
 
-    # Policy.plot_polar(df_max)
+    Policy.plot_polar(df_max)
 
 
 
