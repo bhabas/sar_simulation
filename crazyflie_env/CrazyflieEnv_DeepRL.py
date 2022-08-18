@@ -37,24 +37,16 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         Tau,OFy,d_ceil  = self.obs
         action[0] = np.arctanh(action[0])
         
-
-        ## START IMPACT TERMINATION TIMERS
-        if ((self.impact_flag or self.BodyContact_flag) and self.onceFlag_impact == False):
-            self.start_time_impact = self.getTime()
-            self.onceFlag_impact = True
-
         if action[0] < self.Flip_thr:
 
-            ## UPDATE STATE
+            ## UPDATE STATE AND OBSERVATION
             self.iter_step()
-
-            ## UPDATE OBSERVATION
             self.obs = (self.Tau,self.OFy,self.d_ceil)
 
             ## CHECK FOR DONE
             self.done = bool(
-                self.t - self.start_time_rollout > 1.0                # EPISODE TIMEOUT
-                or self.t - self.start_time_impact > 0.5            # IMPACT TIMEOUT
+                self.t - self.start_time_rollout > 0.7                # EPISODE TIMEOUT
+                or (self.impact_flag or self.BodyContact_flag)
                 or (self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5) # FREE-FALL TERMINATION
             )         
 
@@ -78,7 +70,6 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
         elif action[0] >= self.Flip_thr:
 
-            # self.Once_flag = True
             self.Tau_trg = Tau
             reward = self.finish_sim(action)
             self.done = True
@@ -123,7 +114,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         return self.CalcReward()
 
 
-    def reset(self):
+    def reset(self,vel=None,phi=None):
 
         self.gazebo_unpause_physics()
         ## DISABLE STICKY LEGS (ALSO BREAKS CURRENT CONNECTION JOINTS)
@@ -143,7 +134,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         self.gazebo_pause_physics()
 
         ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
-        self.Iyy = rospy.get_param("Iyy") + np.random.normal(0,1.5e-6)
+        self.Iyy = rospy.get_param("/Iyy") + np.random.normal(0,1.5e-6)
         self.mass = rospy.get_param("/CF_Mass") + np.random.normal(0,0.0005)
         self.updateInertia()
 
@@ -165,8 +156,11 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         self.onceFlag_impact = False   # Ensures impact data recorded only once 
 
         ## RESET STATE
-        vel = np.random.uniform(low=1.5,high=3.5)
-        phi = np.random.uniform(low=30,high=90)
+        if vel == None:
+            vel = np.random.uniform(low=1.5,high=3.5)
+            
+        if phi == None:
+            phi = np.random.uniform(low=30,high=90)
 
         vx_0 = vel*np.cos(np.deg2rad(phi))
         vz_0 = vel*np.sin(np.deg2rad(phi))
@@ -191,6 +185,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
     def CalcReward(self):
 
+        ## TAU TRIGGER REWARD
         R0 = np.clip(1/np.abs(self.Tau_trg-0.2),0,15)/15
         R0 *= 0.1
 
@@ -207,16 +202,19 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
             if self.BodyContact_flag == False:
                 R3 = 0.65
             else:
-                R3 = 0.4
+                R3 = 0.2
         elif self.pad_connections == 2: 
             if self.BodyContact_flag == False:
-                R3 = 0.2
+                R3 = 0.4
             else:
                 R3 = 0.1
         else:
             R3 = 0.0
 
         return R0 + R1 + R2 + R3
+
+    def render(self):
+        pass
         
     
 

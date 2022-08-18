@@ -1,4 +1,4 @@
-// Filename: NN_Layers_NL_DeepRL.h Time: 08/16-07:33
+// Filename: NN_Layers_NL_DeepRL.h Time: 08/17-10:26
 static char NN_Params_DeepRL[] = {
 "1,"	"1,"
 "3,"

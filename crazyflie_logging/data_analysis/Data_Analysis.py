@@ -7,7 +7,6 @@ from mpl_toolkits.mplot3d import Axes3D
 import os
 
 ## MISC IMPORTS
-from scipy.spatial.transform import Rotation
 import re
 
 # os.system("clear")
@@ -21,7 +20,7 @@ class DataFile:
         ## ORGANIZE FILEPATH AND CREATE TRIAL DATAFRAME
         self.fileName = fileName
         self.dataPath = dataPath
-        filepath = os.path.join(dataPath,fileName)
+        filepath = os.path.join(self.dataPath, self.fileName)
 
         self.trial_df = pd.read_csv(filepath,low_memory=False)
 
@@ -613,10 +612,10 @@ class DataFile:
             ## RECORD LANDING CONDITIONS
             leg_contacts,_,body_impact = self.landing_conditions(k_ep, k_run)
 
-            if leg_contacts >= 3 and body_impact == False: 
+            if leg_contacts >= 3: 
                 four_leg_landing += 1
 
-            elif leg_contacts == 2 and body_impact == False:
+            elif leg_contacts == 2:
                 two_leg_landing += 1
 
             contact_list.append(leg_contacts)

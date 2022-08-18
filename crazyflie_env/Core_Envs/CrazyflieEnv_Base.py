@@ -69,6 +69,7 @@ class CrazyflieEnv_Base():
             'Ctrl_Reset':0,
             'Pos':1,
             'Vel':2,
+            'Yaw':3,
             'Stop':5,
             'Moment':7,
             'Policy':8,
@@ -114,7 +115,7 @@ class CrazyflieEnv_Base():
 
         return False
 
-    def VelTraj_StartPos(self,x_impact,V_d,accel_d=None,d_vz=None,Tau_0=0.5):
+    def VelTraj_StartPos(self,x_impact,V_d,accel_d=None,Tau_0=0.5):
         """Returns the required start position (x_0,z_0) to intercept the ceiling 
         at a specific x-location; while also achieving the desired velocity conditions 
         at by a certain distance from the ceiling.
@@ -134,6 +135,8 @@ class CrazyflieEnv_Base():
         Vx = V_d[0]
         Vz = V_d[2]
 
+        ## DEFAULT TO TAU BASED MIN DISTANCE
+        d_vz = Tau_0*Vz
 
         ## DEFAULT TO CLASS VALUES
         if accel_d == None:
@@ -142,11 +145,6 @@ class CrazyflieEnv_Base():
         a_x = accel_d[0]
         a_z = accel_d[2]
 
-        ## DEFAULT TO TAU BASED MIN DISTANCE
-        if d_vz == None:
-            d_vz = Tau_0*Vz
-        else:
-            d_vz = d_vz
 
         ## CALC OFFSET POSITIONS
         t_x = Vx/a_x    # Time required to reach Vx
@@ -298,11 +296,14 @@ class CrazyflieEnv_Base():
     ##   Publishers/Subscribers 
     # ============================
     def clockCallback(self,msg):
-        self.t = msg.clock.to_sec()
+        
+        if rospy.get_param('/DATA_TYPE') == "SIM":
+            self.t = msg.clock.to_sec()
 
     def CF_StateDataCallback(self,StateData_msg):
 
-        # self.t = msg.clock.to_sec()
+        if rospy.get_param('/DATA_TYPE') == "EXP":
+            self.t = StateData_msg.header.stamp.to_sec()
 
         self.posCF = np.round([ StateData_msg.Pose.position.x,
                                 StateData_msg.Pose.position.y,
@@ -332,21 +333,23 @@ class CrazyflieEnv_Base():
 
     def CF_ImpactDataCallback(self,ImpactData_msg):
 
-        ## IMPACT FLAGS
-        self.impact_flag = ImpactData_msg.impact_flag
-        self.BodyContact_flag = ImpactData_msg.BodyContact_flag
+        if rospy.get_param('/DATA_TYPE') == "SIM":
 
-        self.eulCF_impact = np.round([ImpactData_msg.Eul_impact.x,
-                                      ImpactData_msg.Eul_impact.y,
-                                      ImpactData_msg.Eul_impact.z],3)
+            ## IMPACT FLAGS
+            self.impact_flag = ImpactData_msg.impact_flag
+            self.BodyContact_flag = ImpactData_msg.BodyContact_flag
 
-        ## CF_TWIST (IMPACT)
-        self.velCF_impact = np.round([ImpactData_msg.Twist_impact.linear.x,
-                                      ImpactData_msg.Twist_impact.linear.y,
-                                      ImpactData_msg.Twist_impact.linear.z],3)
+            self.eulCF_impact = np.round([ImpactData_msg.Eul_impact.x,
+                                        ImpactData_msg.Eul_impact.y,
+                                        ImpactData_msg.Eul_impact.z],3)
 
-        ## STICKY PAD CONNECTIONS
-        self.pad_connections = ImpactData_msg.Pad_Connections
+            ## CF_TWIST (IMPACT)
+            self.velCF_impact = np.round([ImpactData_msg.Twist_impact.linear.x,
+                                        ImpactData_msg.Twist_impact.linear.y,
+                                        ImpactData_msg.Twist_impact.linear.z],3)
+
+            
+            self.pad_connections = ImpactData_msg.Pad_Connections
 
 
     def CF_MiscDataCallback(self,MiscData_msg):        
