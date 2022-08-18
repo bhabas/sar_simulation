@@ -115,7 +115,7 @@ class CrazyflieEnv_Base():
 
         return False
 
-    def VelTraj_StartPos(self,x_impact,V_d,accel_d=None,d_vz=None,Tau_0=0.5):
+    def VelTraj_StartPos(self,x_impact,V_d,accel_d=None,Tau_0=0.5):
         """Returns the required start position (x_0,z_0) to intercept the ceiling 
         at a specific x-location; while also achieving the desired velocity conditions 
         at by a certain distance from the ceiling.
@@ -135,6 +135,8 @@ class CrazyflieEnv_Base():
         Vx = V_d[0]
         Vz = V_d[2]
 
+        ## DEFAULT TO TAU BASED MIN DISTANCE
+        d_vz = Tau_0*Vz
 
         ## DEFAULT TO CLASS VALUES
         if accel_d == None:
@@ -143,11 +145,6 @@ class CrazyflieEnv_Base():
         a_x = accel_d[0]
         a_z = accel_d[2]
 
-        ## DEFAULT TO TAU BASED MIN DISTANCE
-        if d_vz == None:
-            d_vz = Tau_0*Vz
-        else:
-            d_vz = d_vz
 
         ## CALC OFFSET POSITIONS
         t_x = Vx/a_x    # Time required to reach Vx
