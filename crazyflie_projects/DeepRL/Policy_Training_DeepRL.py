@@ -349,8 +349,11 @@ class Policy_Trainer_DeepRL():
     def plot_polar(self,df,saveFig=False):
 
         ## COLLECT DATA
-        R = df.iloc[:]['vel_d']
-        Theta = df.iloc[:]['phi_d']
+        Vx = df.iloc[:]['vx_flip_mean']
+        Vz = df.iloc[:]['vz_flip_mean']
+
+        R = np.sqrt(Vx**2 + Vz**2)
+        Theta = np.degrees(np.arctan2(Vz,Vx))
         C = df.iloc[:]['LR_4Leg']
 
         # SOMETHING ABOUT DEFINING A GRID
@@ -370,9 +373,9 @@ class Policy_Trainer_DeepRL():
         cmap = mpl.cm.jet
         norm = mpl.colors.Normalize(vmin=0.0,vmax=1)
         
-        ax.contourf(np.radians(theta_ig),r_ig,zi,cmap=cmap,norm=norm,levels=25)
-        # ax.scatter(np.radians(Theta),R,c=C,cmap=cmap,norm=norm)
-        ax.set_thetamin(30)
+        # ax.contourf(np.radians(theta_ig),r_ig,zi,cmap=cmap,norm=norm,levels=10)
+        ax.scatter(np.radians(Theta),R,c=C,cmap=cmap,norm=norm)
+        ax.set_thetamin(15)
         ax.set_thetamax(90)
         ax.set_rmin(0)
         ax.set_rmax(3.5)
