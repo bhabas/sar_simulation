@@ -357,11 +357,11 @@ class Policy_Trainer_DeepRL():
         C = df.iloc[:]['LR_4Leg']
 
         # SOMETHING ABOUT DEFINING A GRID
-        interp_factor = 20
-        ri = np.linspace(R.min(),R.max(),(len(C)//interp_factor))
-        thetai = np.linspace(Theta.min(),Theta.max(),(len(C)//interp_factor))
+        interp_factor = 12
+        ri = np.linspace(1.5,3.5,(len(C)//interp_factor))
+        thetai = np.linspace(25,90,(len(C)//interp_factor))
         r_ig, theta_ig = np.meshgrid(ri, thetai)
-        zi = griddata((R, Theta), C, (ri[None,:], thetai[:,None]), method='linear')
+        zi = griddata((R, Theta), C, (ri[None,:], thetai[:,None]), method='linear',fill_value=0.85)
         zi = zi + 0.0001
         
 
@@ -373,9 +373,9 @@ class Policy_Trainer_DeepRL():
         cmap = mpl.cm.jet
         norm = mpl.colors.Normalize(vmin=0.0,vmax=1)
         
-        # ax.contourf(np.radians(theta_ig),r_ig,zi,cmap=cmap,norm=norm,levels=10)
-        ax.scatter(np.radians(Theta),R,c=C,cmap=cmap,norm=norm)
-        ax.set_thetamin(15)
+        ax.contourf(np.radians(theta_ig),r_ig,zi,cmap=cmap,norm=norm,levels=30)
+        # ax.scatter(np.radians(Theta),R,c=C,cmap=cmap,norm=norm)
+        ax.set_thetamin(20)
         ax.set_thetamax(90)
         ax.set_rmin(0)
         ax.set_rmax(3.5)
@@ -383,14 +383,14 @@ class Policy_Trainer_DeepRL():
 
 
         ## AXIS LABELS    
-        ax.text(np.radians(7.5),2,'Flight Velocity (m/s)',
-            rotation=18,ha='center',va='center')
+        ax.text(np.radians(7),2,'Flight Velocity (m/s)',
+            rotation=15,ha='center',va='center')
 
-        ax.text(np.radians(60),4.5,'Flight Angle (deg)',
+        ax.text(np.radians(60),4.0,'Flight Angle (deg)',
             rotation=0,ha='left',va='center')
 
         if saveFig==True:
-            plt.savefig(f'{"NL"}_Polar_LR.pdf',dpi=300)
+            plt.savefig(f'NL_Polar_DeepRL_LR.pdf',dpi=300)
 
         plt.show()
 
@@ -442,7 +442,7 @@ if __name__ == '__main__':
     idx = df_raw.groupby(['vel_d','phi_d'])['LR_4Leg'].transform(max) == df_raw['LR_4Leg']
     df_max = df_raw[idx].reset_index()
 
-    Policy.plot_polar(df_max)
+    Policy.plot_polar(df_max,saveFig=False)
 
 
 
