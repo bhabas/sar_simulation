@@ -13,7 +13,7 @@ def Reward_Plot(saveFig=False):
 
     df = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/DeepRL/Data_Analysis/DeepRL_Training_SAC_08_09-18_18_RewardData.csv")
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(6, 3))
     ax = fig.add_subplot(111)
     ax.plot(df["Episode"].to_numpy(),df["Value"].to_numpy(),color="tab:orange")
 
@@ -23,7 +23,6 @@ def Reward_Plot(saveFig=False):
     ax.set_title("Reward vs Training Episode")
 
     ax.set_ylim(0,1)
-    ax.set_xticks([0,1000,2000,3000,4000])
     ax.grid()
 
     plt.tight_layout()
