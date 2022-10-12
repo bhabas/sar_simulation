@@ -24,8 +24,8 @@ sys.path.insert(1,BASE_PATH)
 
 
 ## IMPORT ENVIRONMENTS
-from envs import CrazyflieEnv_DeepRL
-from envs import CF_Env_2D
+from envs.CrazyflieEnv_DeepRL import CrazyflieEnv_DeepRL
+from envs.CF_Env_2D import CF_Env_2D
 
 
 ## COLLECT CURRENT TIME
@@ -238,7 +238,7 @@ class Policy_Trainer_DeepRL():
                 self.save_freq = save_freq
 
                 ## DIRECTORIES
-                self.log_dir = os.path.join(log_dir,log_name+"_1")
+                self.log_dir = os.path.join(log_dir,log_name+"_0")
                 self.model_dir = os.path.join(self.log_dir,"models")
                 self.replay_dir = self.log_dir
 
@@ -266,7 +266,7 @@ class Policy_Trainer_DeepRL():
                 self.logger.record('time/K_ep',self.training_env.envs[0].env.k_ep)
                 return True
         
-        checkpoint_callback = CheckpointSaveCallback(save_freq=500,log_dir=log_dir,log_name=log_name)
+        checkpoint_callback = CheckpointSaveCallback(save_freq=1000,log_dir=log_dir,log_name=log_name)
         self.model.learn(
             total_timesteps=2e6,
             tb_log_name=log_name,
@@ -431,37 +431,41 @@ class Policy_Trainer_DeepRL():
 if __name__ == '__main__':
 
     ## INITIATE ENVIRONMENT
-    env = CrazyflieEnv_DeepRL(GZ_Timeout=True)
+    # env = CrazyflieEnv_DeepRL(GZ_Timeout=True)
+    env = CF_Env_2D()
     # env = None
     model_initials = "NL"
 
 
-    ## LOAD MODEL
-    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/Training_Logs/CF_Gazebo"
-    # log_name = f"SAC-09_01-06:14_1"
-    # policy_path = os.path.join(log_dir,log_name)
-    # model_path = os.path.join(log_dir,log_name,f"models/{135}000_steps.zip")
-    # model = SAC.load(model_path,env=env,device='cpu')
-    # model.load_replay_buffer(f"{log_dir}/{log_name}/models/replay_buff.pkl")
+    # LOAD MODEL
+    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/Training_Logs/CF_Env_2D"
+    load_model_name = f"SAC-10_12-11:10_0"
+
+    log_name = f"SAC-{current_time}"
+    policy_path = os.path.join(log_dir,log_name)
+    model_path = os.path.join(log_dir,load_model_name,f"models/{4}000_steps.zip")
+    model = SAC.load(model_path,env=env,device='cpu')
+    model.load_replay_buffer(f"{log_dir}/{load_model_name}/models/replay_buff.pkl")
+    # model.tensorboard_log = log_name
     
 
-    ## CREATE NEW MODEL 
-    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/Training_Logs/CF_Gazebo"
-    log_name = f"SAC-{current_time}"
-    model = SAC(
-        "MlpPolicy",
-        env=env,
-        gamma=0.999,
-        learning_rate=0.002,
-        policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[12,12]),
-        verbose=1,
-        device='cpu',
-        tensorboard_log=log_dir
-    ) 
+    # ## CREATE NEW MODEL 
+    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/Training_Logs/CF_Env_2D"
+    # log_name = f"SAC-{current_time}"
+    # model = SAC(
+    #     "MlpPolicy",
+    #     env=env,
+    #     gamma=0.999,
+    #     learning_rate=0.002,
+    #     policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[12,12]),
+    #     verbose=1,
+    #     device='cpu',
+    #     tensorboard_log=log_dir
+    # ) 
 
     
     Policy = Policy_Trainer_DeepRL(env,model,model_initials)
-    # Policy.train_model(log_name,reset_timesteps=False)
+    Policy.train_model(log_name,reset_timesteps=False)
 
     # Policy.test_policy(vel=3.5,phi=87)
     # Policy.test_policy(vel=2.77,phi=78)
