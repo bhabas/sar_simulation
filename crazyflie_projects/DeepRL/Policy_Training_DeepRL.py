@@ -185,7 +185,7 @@ class Policy_Trainer_DeepRL():
         return action_mean,action_std
 
     def test_policy(self,vel=None,phi=None):
-        episodes = 50
+        episodes = 1
         for ep in range(episodes):
             obs = self.env.reset(vel=vel,phi=phi)
             done = False
@@ -195,7 +195,7 @@ class Policy_Trainer_DeepRL():
                 action,_ = self.model.predict(obs)
                 obs,reward,done,info = self.env.step(action)
 
-        self.env.close()
+        # self.env.close()
 
     def train_model(self,log_name,reset_timesteps=True):
 
@@ -399,18 +399,18 @@ class Policy_Trainer_DeepRL():
 if __name__ == '__main__':
 
     ## INITIATE ENVIRONMENT
-    # env = CrazyflieEnv_DeepRL(GZ_Timeout=True)
-    env = None
+    env = CrazyflieEnv_DeepRL(GZ_Timeout=True)
+    # env = None
     model_initials = "NL"
     log_dir = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/CF_Gazebo"
 
 
     ## LOAD MODEL
-    log_name = f"SAC-08_09-18:18_2"
+    log_name = f"SAC-09_01-06:14_1"
     policy_path = os.path.join(log_dir,log_name)
-    model_path = os.path.join(log_dir,log_name,f"models/{68}500_steps.zip")
+    model_path = os.path.join(log_dir,log_name,f"models/{135}000_steps.zip")
     model = SAC.load(model_path,env=env,device='cpu')
-    model.load_replay_buffer(f"{log_dir}/{log_name}/models/replay_buff.pkl")
+    # model.load_replay_buffer(f"{log_dir}/{log_name}/models/replay_buff.pkl")
     
     
 
@@ -431,25 +431,42 @@ if __name__ == '__main__':
     
     Policy = Policy_Trainer_DeepRL(env,model,model_initials)
     # Policy.train_model(log_name,reset_timesteps=False)
-    # Policy.test_policy(vel=3.0,phi=90)
+
+    # Policy.test_policy(vel=3.5,phi=87)
+    # Policy.test_policy(vel=2.77,phi=78)
+    # Policy.test_policy(vel=2.44,phi=68)
+    # Policy.test_policy(vel=2.59,phi=57)
+    # env.close()
+
+
+    Policy.test_policy(vel=1.95,phi=30)
+    Policy.test_policy(vel=2.25,phi=70)
+    Policy.test_policy(vel=3.00,phi=56)
+    Policy.test_policy(vel=2.75,phi=40)
+    # env.close()
+
+
+    # 2.25,70
+    # 2.75,40
+    # 2.50,40
     # Policy.save_NN_Params(policy_path)
     # Policy.plotPolicyRegion(iso_level=1.5)
 
-    # LOAD DATA
-    df_raw = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/DeepRL/Data_Logs/DeepRL_NL_LR.csv").dropna() # Collected data
+    # # LOAD DATA
+    # df_raw = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/DeepRL/Data_Logs/DeepRL_NL_LR.csv").dropna() # Collected data
 
-    ## MAX LANDING RATE DATAFRAME
-    idx = df_raw.groupby(['vel_d','phi_d'])['LR_4Leg'].transform(max) == df_raw['LR_4Leg']
-    df_max = df_raw[idx].reset_index()
+    # ## MAX LANDING RATE DATAFRAME
+    # idx = df_raw.groupby(['vel_d','phi_d'])['LR_4Leg'].transform(max) == df_raw['LR_4Leg']
+    # df_max = df_raw[idx].reset_index()
 
-    # Policy.plot_polar(df_max,saveFig=False)
+    # # Policy.plot_polar(df_max,saveFig=False)
 
 
 
-    dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
-    fileName = "DeepRL--NL_2.75_30.00_1.csv"
-    trial = DataFile(dataPath,fileName,dataType='SIM')
-    k_ep = 0
-    Policy.plotPolicyRegion(PlotTraj=(trial,k_ep,0))
+    # dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
+    # fileName = "DeepRL--NL_2.75_30.00_1.csv"
+    # trial = DataFile(dataPath,fileName,dataType='SIM')
+    # k_ep = 0
+    # Policy.plotPolicyRegion(PlotTraj=(trial,k_ep,0))
 
     
