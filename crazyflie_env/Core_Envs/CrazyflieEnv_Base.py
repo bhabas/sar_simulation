@@ -21,9 +21,12 @@ class CrazyflieEnv_Base():
     def __init__(self):
         os.system("roslaunch crazyflie_launch params.launch")
 
-        self.modelName = rospy.get_param('/MODEL_NAME')
+        self.CF_Type = rospy.get_param('/QUAD_SETTINGS/CF_Type')
+        self.configName = rospy.get_param('/QUAD_SETTINGS/Config')
+        self.modelName = f"crazyflie_{self.configName}"
+
         self.h_ceiling = rospy.get_param("/CEILING_HEIGHT") # [m]
-        self.env_name = "CF_Base"
+        self.env_name = "CF_BaseEnv"
      
         ## TRAJECTORY VALUES
         self.posCF_0 = [0.0, 0.0, 0.4]      # Default hover position [m]
@@ -161,10 +164,10 @@ class CrazyflieEnv_Base():
                 
     def preInit_Values(self):
 
-        self.Ixx = rospy.get_param("/Ixx")
-        self.Iyy = rospy.get_param("/Iyy")
-        self.Izz = rospy.get_param("/Izz")
-        self.mass = rospy.get_param("/CF_Mass")
+        self.Ixx = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Ixx")
+        self.Iyy = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Iyy")
+        self.Izz = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Izz")
+        self.mass = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Mass")
         
         ## RAW VICON VALUES
         self.posViconRaw = [0,0,0]

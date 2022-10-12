@@ -2,6 +2,15 @@ DATA_TYPE: "SIM"
 SURFACE_NAME: "CeilingPlane_Large"
 GROUND_NAME: "GroundPlane_Desert_Physical"
 
+# ENV_SETTINGS:
+#  Ceiling_Height: 2.1
+#  Surface_Name: "CeilingPlane_Large"
+#  Ground_Name: "GroundPlane_Desert_Physical"
+
+QUAD_SETTINGS:
+  CF_Type: "Standard"
+  Config: "Narrow-Long"
+
 GUI_FLAG: True
 PAUSE_FLAG: False
 CONSOLE_RATE: 50 # [Hz]
