@@ -2,7 +2,7 @@
     <rosparam file="$(find crazyflie_launch)/config/Sim_Settings.yaml" />
     <rosparam file="$(find crazyflie_launch)/config/Model_Settings.yaml" />
     <rosparam file="$(find crazyflie_launch)/config/Ctrl_Gains.yaml" />
-    <rosparam file="$(find crazyflie_launch)/config/crazyflieTypes.yaml" />
+    <rosparam file="$(find crazyflie_launch)/config/Model_Types.yaml" />
 
 
 </launch>

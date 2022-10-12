@@ -10,21 +10,4 @@ Ixx: 27.93e-6     # [kg*m^2]
 Iyy: 30.46e-6     # [kg*m^2]
 Izz: 47.12e-6     # [kg*m^2] 
 
-modelTypes:
-  crazyflie_BM: # Crazyflie Base-Model
-    Mass: 34.3e-3   # [kg]
-    Ixx: 15.83e-6   # [kg*m^2]
-    Iyy: 17.00e-6   # [kg*m^2]
-    Izz: 31.19e-6   # [kg*m^2] 
 
-  crazyflie_NL: # Crazyflie Narrow-Long
-    Mass: 38.1e-3   # [kg]
-    Ixx: 27.93e-6   # [kg*m^2]
-    Iyy: 30.46e-6   # [kg*m^2]
-    Izz: 47.12e-6   # [kg*m^2] 
-
-  crazyflie_BQ: # Crazyflie Big-Quad [TBD]
-    Mass: 80.0e-3   # [kg]
-    Ixx: 15.83e-6   # [kg*m^2]
-    Iyy: 17.00e-6   # [kg*m^2]
-    Izz: 31.19e-6   # [kg*m^2] 

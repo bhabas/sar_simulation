@@ -1,20 +1,19 @@
-crazyflieSize:
-
-  small:
-    modelTypes:
-      crazyflie_BM: # Crazyflie Base-Model
+CF_Size:
+  Standard:
+    Config:
+      Base-Model: # Crazyflie Base-Model
         Mass: 34.3e-3   # [kg]
         Ixx: 15.83e-6   # [kg*m^2]
         Iyy: 17.00e-6   # [kg*m^2]
         Izz: 31.19e-6   # [kg*m^2] 
 
-      crazyflie_NL: # Crazyflie Narrow-Long
+      Narrow-Long: # Crazyflie Narrow-Long
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
-    ctrlGains:
+    CtrlGains:
       ## POSITION XY
       P_kp_xy: 0.4
       P_kd_xy: 0.35
@@ -39,15 +38,15 @@ crazyflieSize:
       R_ki_z: 0.0
       i_range_R_z: 0.5
 
-  large:
-    modelTypes:
-      crazyflie_BQ: # Crazyflie Big-Quad [TBD]
-      Mass: 80.0e-3   # [kg]
-      Ixx: 15.83e-6   # [kg*m^2]
-      Iyy: 17.00e-6   # [kg*m^2]
-      Izz: 31.19e-6   # [kg*m^2] 
+  Big-Quad:
+    Config:
+      Big-Quad: # Crazyflie Big-Quad
+        Mass: 80.0e-3   # [kg]
+        Ixx: 15.83e-6   # [kg*m^2]
+        Iyy: 17.00e-6   # [kg*m^2]
+        Izz: 31.19e-6   # [kg*m^2] 
 
-    ctrlGains:
+    CtrlGains:
       ## POSITION XY
       P_kp_xy: 0.4
       P_kd_xy: 0.35
@@ -71,4 +70,4 @@ crazyflieSize:
       R_kd_z: 0.001
       R_ki_z: 0.0
       i_range_R_z: 0.5
-  
+
