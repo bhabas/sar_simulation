@@ -1,0 +1,74 @@
+crazyflieSize:
+
+  small:
+    modelTypes:
+      crazyflie_BM: # Crazyflie Base-Model
+        Mass: 34.3e-3   # [kg]
+        Ixx: 15.83e-6   # [kg*m^2]
+        Iyy: 17.00e-6   # [kg*m^2]
+        Izz: 31.19e-6   # [kg*m^2] 
+
+      crazyflie_NL: # Crazyflie Narrow-Long
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
+    ctrlGains:
+      ## POSITION XY
+      P_kp_xy: 0.4
+      P_kd_xy: 0.35
+      P_ki_xy: 0.07
+      i_range_xy: 0.3 
+
+      ## POSITION Z
+      P_kp_z: 1.20
+      P_kd_z: 0.35
+      P_ki_z: 0.1
+      i_range_z: 0.25
+
+      ## ORIENTATION XY
+      R_kp_xy: 0.004
+      R_kd_xy: 0.0017
+      R_ki_xy: 0.0
+      i_range_R_xy: 1.0
+
+      ## ORIENTATION Z
+      R_kp_z: 0.003
+      R_kd_z: 0.001
+      R_ki_z: 0.0
+      i_range_R_z: 0.5
+
+  large:
+    modelTypes:
+      crazyflie_BQ: # Crazyflie Big-Quad [TBD]
+      Mass: 80.0e-3   # [kg]
+      Ixx: 15.83e-6   # [kg*m^2]
+      Iyy: 17.00e-6   # [kg*m^2]
+      Izz: 31.19e-6   # [kg*m^2] 
+
+    ctrlGains:
+      ## POSITION XY
+      P_kp_xy: 0.4
+      P_kd_xy: 0.35
+      P_ki_xy: 0.07
+      i_range_xy: 0.3 
+
+      ## POSITION Z
+      P_kp_z: 1.20
+      P_kd_z: 0.35
+      P_ki_z: 0.1
+      i_range_z: 0.25
+
+      ## ORIENTATION XY
+      R_kp_xy: 0.004
+      R_kd_xy: 0.0017
+      R_ki_xy: 0.0
+      i_range_R_xy: 1.0
+
+      ## ORIENTATION Z
+      R_kp_z: 0.003
+      R_kd_z: 0.001
+      R_ki_z: 0.0
+      i_range_R_z: 0.5
+  
