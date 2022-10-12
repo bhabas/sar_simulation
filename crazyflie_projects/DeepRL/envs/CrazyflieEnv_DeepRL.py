@@ -3,7 +3,15 @@ import numpy as np
 from gym import spaces
 import rospy
 import time
-from Core_Envs.CrazyflieEnv_Sim import CrazyflieEnv_Sim
+
+
+## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
+import sys,rospkg,os
+BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
+sys.path.insert(1,'/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_env')
+sys.path.insert(1,BASE_PATH)
+
+from crazyflie_env.Core_Envs.CrazyflieEnv_Sim import CrazyflieEnv_Sim
 
 
 class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
@@ -152,8 +160,8 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         self.start_time_ep = time.time()
 
         ## RESET LOGGING CONDITIONS 
-        self.onceFlag_flip = False    # Ensures flip data recorded only once
-        self.onceFlag_impact = False   # Ensures impact data recorded only once 
+        self.onceFlag_flip = False      # Ensures flip data recorded only once
+        self.onceFlag_impact = False    # Ensures impact data recorded only once 
 
         ## RESET STATE
         if vel == None:

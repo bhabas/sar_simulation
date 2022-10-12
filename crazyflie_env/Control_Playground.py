@@ -213,9 +213,9 @@ def cmd_send(env,logName):
 
 
 if __name__ == '__main__':
-    from CrazyflieEnv_ParamOpt import CrazyflieEnv_ParamOpt
+    from Core_Envs.CrazyflieEnv_Sim import CrazyflieEnv_Sim
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv_ParamOpt()
+    env = CrazyflieEnv_Sim()
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 24

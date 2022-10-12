@@ -1,16 +1,16 @@
 ## STANDARD IMPORTS
+import os
+from datetime import datetime
 import numpy as np
+import pandas as pd
+import torch as th
+
+## PLOTTING IMPORTS
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib as mpl
-from scipy.interpolate import griddata
 import plotly.graph_objects as go
-import os
-from datetime import datetime
-import pandas as pd
-
-## PYTORCH IMPROTS
-import torch as th
+from scipy.interpolate import griddata
 
 ## SB3 Imports
 from stable_baselines3 import SAC
@@ -22,12 +22,11 @@ BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
 sys.path.insert(1,'/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_env')
 sys.path.insert(1,BASE_PATH)
 
-from crazyflie_logging.data_analysis.Data_Analysis import DataFile
 
-from crazyflie_env.CrazyflieEnv_DeepRL import CrazyflieEnv_DeepRL
-from CF_Env_2D import CF_Env_2D
-from CF_Env_2D_dTau import CF_Env_2D_dTau
-from CF_Env_2D_Simple import CF_Env_2D_Simple
+## IMPORT ENVIRONMENTS
+from envs import CrazyflieEnv_DeepRL
+from envs import CF_Env_2D
+
 
 ## COLLECT CURRENT TIME
 now = datetime.now()
@@ -42,6 +41,11 @@ class Policy_Trainer_DeepRL():
         self.model_initials = model_initials
 
     def save_NN_Params(self,SavePath):
+        """Save NN parameters to C header file for upload to crazyflie
+
+        Args:
+            SavePath (str): Path to save header file
+        """        
 
         FileName = f"NN_Layers_{model_initials}_DeepRL.h"
         f = open(os.path.join(SavePath,FileName),'a')
@@ -132,37 +136,53 @@ class Policy_Trainer_DeepRL():
         f.write("};")
         f.close()
 
-    def action_predict(self,obs):
+    def action_predict(self,obs): 
+        """Calculate action distribution parameters through NN and then sample distributions
+        for specific actions taken
 
-        # CAP the standard deviation of the actor
+        Args:
+            obs (_type_): Observation vector returned by then environment
+
+        Returns:
+            _type_: Action vector
+        """        
+
+        # CAP THE STANDARD DEVIATION OF THE ACTOR
         LOG_STD_MAX = 2
         LOG_STD_MIN = -20
         actor = self.model.policy.actor
         obs = th.FloatTensor([obs])
         sub_action = self.model.policy.actor.forward(obs)
 
-        ## PASS OBS THROUGH NN
+        ## PASS OBS THROUGH NN FOR DISTRIBUTION PARAMETERS (MEAN/STD DEV)
         latent_pi = actor.latent_pi(obs)
-        mean_actions = actor.mu(latent_pi)
+        action_means = actor.mu(latent_pi) # Values for action dist. means
+
         log_std = actor.log_std(latent_pi)
         log_std = th.clamp(log_std, LOG_STD_MIN, LOG_STD_MAX)
+        action_std = log_std.exp() * th.ones_like(action_means) # Values for action dist. std dev
 
-        ## CONVERT MU/LOG_STD TO NORMAL DISTRIBUTION AND SAMPLE
-        action_std = th.ones_like(mean_actions) * log_std.exp()
-        action_mean = mean_actions
-
-        ## CENTRAL LIMIT THEOREM SAMPLE
-        normal_sample = np.sum(np.random.uniform(size=(12,2)),axis=0)-6
-        samples = normal_sample*action_std.detach().numpy()+action_mean.detach().numpy()
-        scaled_action = np.tanh(samples)
+        ## SAMPLE FROM DISTRIBUTIONS VIA CENTRAL LIMIT THEOREM
+        normal_sample = np.sum(np.random.uniform(size=(12,len(action_means))),axis=0) - 6       # Sample from standard normal dist
+        samples = normal_sample * action_std.detach().numpy() + action_means.detach().numpy()   # Scale sample to action dist
 
         ## SQUISH SAMPLES TO [-1,1] RANGE AND RESCALE
+        scaled_action = np.tanh(samples)
         low, high = self.env.action_space.low, self.env.action_space.high
         return low + (0.5 * (scaled_action + 1.0) * (high - low))
 
     def policy_dist(self,obs):
+        """Returns action distribution parameters for a given observation
 
-        # CAP the standard deviation of the actor
+        Args:
+            obs (_type_): Observation vector returned by then environment
+
+        Returns:
+            action_mean: Vector for means of action distributions
+            action_std: Vector for standard deviations of action distributions
+        """        
+
+        # CAP THE STANDARD DEVIATION OF THE ACTOR
         LOG_STD_MAX = 2
         LOG_STD_MIN = -20
         actor = self.model.policy.actor
@@ -184,8 +204,15 @@ class Policy_Trainer_DeepRL():
 
         return action_mean,action_std
 
-    def test_policy(self,vel=None,phi=None):
-        episodes = 1
+    def test_policy(self,vel,phi,episodes=1):
+        """Test the currently loaded policy for a given set of velocity and launch angle conditions
+
+        Args:
+            vel (float, optional): Flight velocity [m/s]. 
+            phi (float, optional): Flight angle [deg]. 
+            episodes (int, optional): Number of landing tests. Defaults to 1.
+        """        
+
         for ep in range(episodes):
             obs = self.env.reset(vel=vel,phi=phi)
             done = False
@@ -195,9 +222,14 @@ class Policy_Trainer_DeepRL():
                 action,_ = self.model.predict(obs)
                 obs,reward,done,info = self.env.step(action)
 
-        # self.env.close()
-
     def train_model(self,log_name,reset_timesteps=True):
+        """Script to train model via Deep RL method
+
+        Args:
+            log_name (str): _description_
+            reset_timesteps (bool, optional): Reset starting timestep to zero. Defaults to True. 
+            Set to False to resume training from previous model.
+        """        
 
         class CheckpointSaveCallback(BaseCallback):
 
@@ -236,7 +268,7 @@ class Policy_Trainer_DeepRL():
         
         checkpoint_callback = CheckpointSaveCallback(save_freq=500,log_dir=log_dir,log_name=log_name)
         self.model.learn(
-            total_timesteps=1e6,
+            total_timesteps=2e6,
             tb_log_name=log_name,
             callback=checkpoint_callback,
             reset_num_timesteps=reset_timesteps
@@ -402,31 +434,30 @@ if __name__ == '__main__':
     env = CrazyflieEnv_DeepRL(GZ_Timeout=True)
     # env = None
     model_initials = "NL"
-    log_dir = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/CF_Gazebo"
 
 
     ## LOAD MODEL
-    log_name = f"SAC-09_01-06:14_1"
-    policy_path = os.path.join(log_dir,log_name)
-    model_path = os.path.join(log_dir,log_name,f"models/{135}000_steps.zip")
-    model = SAC.load(model_path,env=env,device='cpu')
+    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/Training_Logs/CF_Gazebo"
+    # log_name = f"SAC-09_01-06:14_1"
+    # policy_path = os.path.join(log_dir,log_name)
+    # model_path = os.path.join(log_dir,log_name,f"models/{135}000_steps.zip")
+    # model = SAC.load(model_path,env=env,device='cpu')
     # model.load_replay_buffer(f"{log_dir}/{log_name}/models/replay_buff.pkl")
     
-    
 
-
-    # ## CREATE NEW MODEL 
-    # log_name = f"SAC-{current_time}"
-    # model = SAC(
-    #     "MlpPolicy",
-    #     env=env,
-    #     gamma=0.999,
-    #     learning_rate=0.002,
-    #     policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[12,12]),
-    #     verbose=1,
-    #     device='cpu',
-    #     tensorboard_log=log_dir
-    # ) 
+    ## CREATE NEW MODEL 
+    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/Training_Logs/CF_Gazebo"
+    log_name = f"SAC-{current_time}"
+    model = SAC(
+        "MlpPolicy",
+        env=env,
+        gamma=0.999,
+        learning_rate=0.002,
+        policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[12,12]),
+        verbose=1,
+        device='cpu',
+        tensorboard_log=log_dir
+    ) 
 
     
     Policy = Policy_Trainer_DeepRL(env,model,model_initials)
@@ -439,16 +470,13 @@ if __name__ == '__main__':
     # env.close()
 
 
-    Policy.test_policy(vel=1.95,phi=30)
-    Policy.test_policy(vel=2.25,phi=70)
-    Policy.test_policy(vel=3.00,phi=56)
-    Policy.test_policy(vel=2.75,phi=40)
+    # Policy.test_policy(vel=1.95,phi=30)
+    # Policy.test_policy(vel=2.25,phi=70)
+    # Policy.test_policy(vel=3.00,phi=56)
+    # Policy.test_policy(vel=2.75,phi=40)
     # env.close()
 
 
-    # 2.25,70
-    # 2.75,40
-    # 2.50,40
     # Policy.save_NN_Params(policy_path)
     # Policy.plotPolicyRegion(iso_level=1.5)
 

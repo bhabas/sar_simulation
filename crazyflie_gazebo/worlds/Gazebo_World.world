@@ -6,11 +6,6 @@
       <uri>model://sun</uri>
     </include>
 
-    <!-- <include>
-      <uri>model://GroundPlane_Desert_Visual</uri>
-    </include> -->
-
-
     <light name='user_directional_light_0' type='directional'>
       <pose>0 0 0 0 -0 0</pose>
       <diffuse>0.5 0.5 0.5 1</diffuse>
@@ -63,7 +58,7 @@
 
 
     <!-- Camera for recording video inside of Gazebo environment -->
-  <model name='camera'>
+  <!-- <model name='camera'>
       <static>true</static>
       <pose>0.6 -2.2 2 0 0.19 1.57</pose>
       <link name='link'>
@@ -93,7 +88,7 @@
           <update_rate>90</update_rate>
         </sensor>
       </link>
-    </model>
+    </model> -->
     
   </world>
 </sdf>
