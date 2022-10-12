@@ -431,38 +431,38 @@ class Policy_Trainer_DeepRL():
 if __name__ == '__main__':
 
     ## INITIATE ENVIRONMENT
-    # env = CrazyflieEnv_DeepRL(GZ_Timeout=True)
-    env = CF_Env_2D()
+    env = CrazyflieEnv_DeepRL(GZ_Timeout=True)
+    # env = CF_Env_2D()
     # env = None
     
 
 
     # # LOAD DEEP RL MODEL
-    # load_model_name = f"SAC-10_12-11:10_0"
+    load_model_name = f"SAC--10_12-11:40--NL_0"
 
-    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/Training_Logs/CF_Env_2D"
-    # leg_config = "NL"
-    # log_name = f"SAC-{current_time}-{leg_config}"
-
-    # policy_path = os.path.join(log_dir,log_name)
-    # model_path = os.path.join(log_dir,load_model_name,f"models/{4}000_steps.zip")
-    # model = SAC.load(model_path,env=env,device='cpu')
-    # model.load_replay_buffer(f"{log_dir}/{load_model_name}/models/replay_buff.pkl")
-
-    ## CREATE NEW DEEP RL MODEL 
     log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/Training_Logs/CF_Env_2D"
     leg_config = "NL"
     log_name = f"SAC--{current_time}--{leg_config}"
-    model = SAC(
-        "MlpPolicy",
-        env=env,
-        gamma=0.999,
-        learning_rate=0.002,
-        policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[12,12]),
-        verbose=1,
-        device='cpu',
-        tensorboard_log=log_dir
-    ) 
+
+    policy_path = os.path.join(log_dir,load_model_name)
+    model_path = os.path.join(log_dir,load_model_name,f"models/{2}000_steps.zip")
+    model = SAC.load(model_path,env=env,device='cpu')
+    model.load_replay_buffer(f"{log_dir}/{load_model_name}/models/replay_buff.pkl")
+
+    # ## CREATE NEW DEEP RL MODEL 
+    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/Training_Logs/CF_Env_2D"
+    # leg_config = "NL"
+    # log_name = f"SAC--{current_time}--{leg_config}"
+    # model = SAC(
+    #     "MlpPolicy",
+    #     env=env,
+    #     gamma=0.999,
+    #     learning_rate=0.002,
+    #     policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[12,12]),
+    #     verbose=1,
+    #     device='cpu',
+    #     tensorboard_log=log_dir
+    # ) 
 
     
     Policy = Policy_Trainer_DeepRL(env,model,leg_config)
