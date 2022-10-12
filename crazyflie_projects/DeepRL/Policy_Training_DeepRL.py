@@ -35,10 +35,10 @@ current_time = now.strftime("%m_%d-%H:%M")
 
 
 class Policy_Trainer_DeepRL():
-    def __init__(self,env,model,model_initials):
+    def __init__(self,env,model,leg_config):
         self.env = env
         self.model = model
-        self.model_initials = model_initials
+        self.leg_config = leg_config
 
     def save_NN_Params(self,SavePath):
         """Save NN parameters to C header file for upload to crazyflie
@@ -47,7 +47,7 @@ class Policy_Trainer_DeepRL():
             SavePath (str): Path to save header file
         """        
 
-        FileName = f"NN_Layers_{model_initials}_DeepRL.h"
+        FileName = f"NN_Layers_{leg_config}_DeepRL.h"
         f = open(os.path.join(SavePath,FileName),'a')
         f.truncate(0) ## Clears contents of file
 
@@ -434,51 +434,39 @@ if __name__ == '__main__':
     # env = CrazyflieEnv_DeepRL(GZ_Timeout=True)
     env = CF_Env_2D()
     # env = None
-    model_initials = "NL"
-
-
-    # LOAD MODEL
-    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/Training_Logs/CF_Env_2D"
-    load_model_name = f"SAC-10_12-11:10_0"
-
-    log_name = f"SAC-{current_time}"
-    policy_path = os.path.join(log_dir,log_name)
-    model_path = os.path.join(log_dir,load_model_name,f"models/{4}000_steps.zip")
-    model = SAC.load(model_path,env=env,device='cpu')
-    model.load_replay_buffer(f"{log_dir}/{load_model_name}/models/replay_buff.pkl")
-    # model.tensorboard_log = log_name
     
 
-    # ## CREATE NEW MODEL 
+
+    # # LOAD DEEP RL MODEL
+    # load_model_name = f"SAC-10_12-11:10_0"
+
     # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/Training_Logs/CF_Env_2D"
-    # log_name = f"SAC-{current_time}"
-    # model = SAC(
-    #     "MlpPolicy",
-    #     env=env,
-    #     gamma=0.999,
-    #     learning_rate=0.002,
-    #     policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[12,12]),
-    #     verbose=1,
-    #     device='cpu',
-    #     tensorboard_log=log_dir
-    # ) 
+    # leg_config = "NL"
+    # log_name = f"SAC-{current_time}-{leg_config}"
+
+    # policy_path = os.path.join(log_dir,log_name)
+    # model_path = os.path.join(log_dir,load_model_name,f"models/{4}000_steps.zip")
+    # model = SAC.load(model_path,env=env,device='cpu')
+    # model.load_replay_buffer(f"{log_dir}/{load_model_name}/models/replay_buff.pkl")
+
+    ## CREATE NEW DEEP RL MODEL 
+    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/Training_Logs/CF_Env_2D"
+    leg_config = "NL"
+    log_name = f"SAC--{current_time}--{leg_config}"
+    model = SAC(
+        "MlpPolicy",
+        env=env,
+        gamma=0.999,
+        learning_rate=0.002,
+        policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[12,12]),
+        verbose=1,
+        device='cpu',
+        tensorboard_log=log_dir
+    ) 
 
     
-    Policy = Policy_Trainer_DeepRL(env,model,model_initials)
+    Policy = Policy_Trainer_DeepRL(env,model,leg_config)
     Policy.train_model(log_name,reset_timesteps=False)
-
-    # Policy.test_policy(vel=3.5,phi=87)
-    # Policy.test_policy(vel=2.77,phi=78)
-    # Policy.test_policy(vel=2.44,phi=68)
-    # Policy.test_policy(vel=2.59,phi=57)
-    # env.close()
-
-
-    # Policy.test_policy(vel=1.95,phi=30)
-    # Policy.test_policy(vel=2.25,phi=70)
-    # Policy.test_policy(vel=3.00,phi=56)
-    # Policy.test_policy(vel=2.75,phi=40)
-    # env.close()
 
 
     # Policy.save_NN_Params(policy_path)

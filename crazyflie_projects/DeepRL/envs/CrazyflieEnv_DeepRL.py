@@ -53,7 +53,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
             ## CHECK FOR DONE
             self.done = bool(
-                self.t - self.start_time_rollout > 0.7                # EPISODE TIMEOUT
+                self.t - self.start_time_rollout > 0.7              # EPISODE TIMEOUT
                 or (self.impact_flag or self.BodyContact_flag)
                 or (self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5) # FREE-FALL TERMINATION
             )         
