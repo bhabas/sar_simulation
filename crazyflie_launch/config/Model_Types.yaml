@@ -38,9 +38,9 @@ CF_Type:
       R_ki_z: 0.0
       i_range_R_z: 0.5
 
-  BigQuad:
+  Big_Quad:
     Config:
-      BigQuad: # Crazyflie Big-Quad
+      Big_Quad: # Crazyflie Big-Quad
         Mass: 80.0e-3   # [kg]
         Ixx: 15.83e-6   # [kg*m^2]
         Iyy: 17.00e-6   # [kg*m^2]
