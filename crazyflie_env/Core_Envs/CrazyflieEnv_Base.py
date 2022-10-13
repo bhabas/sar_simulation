@@ -360,14 +360,14 @@ class CrazyflieEnv_Base():
         self.V_Battery = np.round(MiscData_msg.battery_voltage,4)
 
     def modelInitials(self):
-        """Returns initials for the model
+        """Returns initials for the model. Should be done with REGEX but this'll work for now
 
         Returns:
             string: Model name initials
         """        
         str = self.modelName
-        charA = str[self.modelName.find("_")+1] # [W]ide
-        charB = str[self.modelName.find("-")+1] # [L]ong
+        charA = str[self.modelName.find("_")+1]     # [W]ide
+        charB = str[self.modelName.find("_",-8)+1]  # [L]ong
 
         return charA+charB  # [WL]
 
