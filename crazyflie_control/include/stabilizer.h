@@ -409,6 +409,7 @@ void Controller::loadParams()
     
     ros::param::get("/QUAD_SETTINGS/CF_Type",CF_Type);
     ros::param::get("/QUAD_SETTINGS/Config",CF_Config);
+    ros::param::get("/QUAD_SETTINGS/Cam_Sensor",camera_sensor_active);
     CF_Type = "/CF_Type/" + CF_Type;
     CF_Config = "/Config/" + CF_Config;
     
@@ -440,7 +441,7 @@ void Controller::loadParams()
     ros::param::get(CF_Type + "/CtrlGains/i_range_R_z",i_range_R_z);
 
     // SIMULATION SETTINGS FROM CONFIG FILE
-    ros::param::get("/POLICY_TYPE",POLICY_TYPE_STR); // Set string from params file into controller
+    ros::param::get("QUAD_SETTINGS/Policy_Type",POLICY_TYPE_STR); // Set string from params file into controller
     if (strcmp(POLICY_TYPE_STR.c_str(),"PARAM_OPTIM")==0)
     {
         Policy = PARAM_OPTIM;
@@ -453,7 +454,6 @@ void Controller::loadParams()
     {
         Policy = DEEP_RL;
     }    
-    ros::param::get("/CAM_SENSOR",camera_sensor_active);
 
 }
 
