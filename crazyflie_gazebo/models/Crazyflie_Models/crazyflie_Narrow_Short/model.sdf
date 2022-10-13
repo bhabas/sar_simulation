@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='crazyflie_ExtraNarrow-Short'>
+  <model name='crazyflie_Narrow_Short'>
     <include>
       <uri>model://crazyflie_Base_Model</uri>
       <pose>0 0 0 0 0 0</pose>
@@ -18,7 +18,7 @@
         </inertia>
         <pose>0 0 -0.025 0 -0 0</pose>
       </inertial>
-      <pose>0.017 0.017 -0.005 0 -0 0.785</pose>
+      <pose>0.017 0.017 -0.005 -0 -0.524 0.785</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -117,7 +117,7 @@
         </inertia>
         <pose>0 0 -0.025 0 -0 0</pose>
       </inertial>
-      <pose>-0.017 0.017 -0.005 0 -0 2.356</pose>
+      <pose>-0.017 0.017 -0.005 0 -0.524 2.356</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -217,7 +217,7 @@
         </inertia>
         <pose>0 0 -0.025 0 -0 0</pose>
       </inertial>
-      <pose>-0.017 -0.017 -0.005 0 0 -2.356</pose>
+      <pose>-0.017 -0.017 -0.005 0 -0.524 -2.356</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -317,7 +317,7 @@
         </inertia>
         <pose>0 0 -0.025 0 -0 0</pose>
       </inertial>
-      <pose>0.017 -0.017 -0.005 0 0 -0.785</pose>
+      <pose>0.017 -0.017 -0.005 0 -0.524 -0.785</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -416,7 +416,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>0.017 0.017 -0.055 0 -0 0.785</pose>
+      <pose>0.034697 0.034683 -0.048291 0 -0 0.785</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -513,7 +513,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>-0.017 0.017 -0.055 0 -0 2.356</pose>
+      <pose>-0.034687 0.034693 -0.048291 0 -0 2.356</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -607,7 +607,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>-0.017 -0.017 -0.055 0 -0 -2.356</pose>
+      <pose>-0.034687 -0.034693 -0.048291 -0 -0 -2.356</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -701,7 +701,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>0.017 -0.017 -0.055 0 0 -0.785</pose>
+      <pose>0.034697 -0.034683 -0.048291 0 0 -0.785</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -1037,7 +1037,7 @@
           </suspension>
         </ode>
       </physics>
-    </joint>    
+    </joint>   
     <plugin name='pad_1_sticky' filename='libgazebo_sticky_foot.so'>
       <robotNamespace/>
       <linkName>pad_1</linkName>

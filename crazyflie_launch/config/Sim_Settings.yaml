@@ -9,7 +9,9 @@ GROUND_NAME: "GroundPlane_Desert_Physical"
 
 QUAD_SETTINGS:
   CF_Type: "Standard"
-  Config: "Narrow_Long"
+  Config: "ExtraNarrow_Long"
+  # Policy_Type: "PARAM_OPTIM"
+  Cam_Sensor: False
 
 GUI_FLAG: True
 PAUSE_FLAG: False
