@@ -25,7 +25,7 @@ class CrazyflieEnv_Base():
         self.configName = rospy.get_param('/QUAD_SETTINGS/Config')
         self.modelName = f"crazyflie_{self.configName}"
 
-        self.h_ceiling = rospy.get_param("/CEILING_HEIGHT") # [m]
+        self.h_ceiling = rospy.get_param("/ENV_SETTINGS/Ceiling_Height") # [m]
         self.env_name = "CF_BaseEnv"
      
         ## TRAJECTORY VALUES

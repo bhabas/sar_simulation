@@ -5,8 +5,8 @@ source ~/catkin_ws/devel/setup.bash
 ## UPLOAD ROS PARAMS
 roslaunch crazyflie_launch params.launch
 CONFIG_NAME=$(rosparam get /QUAD_SETTINGS/Config)
-SURFACE_NAME=$(rosparam get /SURFACE_NAME)
-GROUND_NAME=$(rosparam get /GROUND_NAME)
+SURFACE_NAME=$(rosparam get /ENV_SETTINGS/Surface_Name)
+GROUND_NAME=$(rosparam get /ENV_SETTINGS/Ground_Name)
 GUI_FLAG=$(rosparam get /GUI_FLAG)
 PAUSE_FLAG=$(rosparam get /PAUSE_FLAG)
 
