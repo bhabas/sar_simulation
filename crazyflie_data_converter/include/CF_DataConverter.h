@@ -579,7 +579,7 @@ void CF_DataConverter::LoadParams()
 
     ros::param::get("/QUAD_SETTINGS/CF_Type",CF_Type);
     ros::param::get("/QUAD_SETTINGS/Config",CF_Config);
-    ros::param::get("/QUAD_SETTING/Policy_Type",POLICY_TYPE);
+    ros::param::get("/QUAD_SETTINGS/Policy_Type",POLICY_TYPE);
 
     MODEL_NAME = "crazyflie_" + CF_Config;
     CF_Type = "/CF_Type/" + CF_Type;
@@ -596,7 +596,7 @@ void CF_DataConverter::LoadParams()
     ros::param::get("/SIM_SETTINGS/Sim_Speed",SIM_SPEED);
     ros::param::get("/SIM_SETTINGS/Sim_Slowdown_Speed",SIM_SLOWDOWN_SPEED);
     ros::param::get("/SIM_SETTINGS/Landing_Slowdown_Flag",LANDING_SLOWDOWN_FLAG);
-    
+
     ros::param::get("/CF_DC_SETTINGS/Logging_Rate",LOGGING_RATE);
     ros::param::get("/CF_DC_SETTINGS/Console_Rate",CONSOLE_RATE);
 
