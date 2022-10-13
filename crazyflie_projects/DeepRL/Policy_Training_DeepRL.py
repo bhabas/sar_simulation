@@ -222,7 +222,7 @@ class Policy_Trainer_DeepRL():
                 action,_ = self.model.predict(obs)
                 obs,reward,done,info = self.env.step(action)
 
-    def train_model(self,log_name,reset_timesteps=True):
+    def train_model(self,log_name,log_dir,reset_timesteps=True):
         """Script to train model via Deep RL method
 
         Args:
@@ -466,7 +466,7 @@ if __name__ == '__main__':
 
     
     Policy = Policy_Trainer_DeepRL(env,model,leg_config)
-    Policy.train_model(log_name,reset_timesteps=False)
+    Policy.train_model(log_name,log_dir,reset_timesteps=False)
 
 
     # Policy.save_NN_Params(policy_path)
