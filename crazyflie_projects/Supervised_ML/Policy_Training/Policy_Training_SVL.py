@@ -53,7 +53,7 @@ class Policy_Trainer():
         self.scaler = preprocessing.StandardScaler().fit(X)
 
         ## SAVE SCALER TO FILE 
-        np.savetxt(f"{BASEPATH}/crazyflie_projects/Policy_Mapping/Policy_Training/Info/Scaler_{self.model_initials}.csv",
+        np.savetxt(f"{BASEPATH}/crazyflie_projects/Supervised_ML/Policy_Training/Info/Scaler_{self.model_initials}.csv",
             np.stack((self.scaler.mean_,self.scaler.scale_),axis=1),
             fmt='%.5f',
             delimiter=',',
@@ -66,7 +66,7 @@ class Policy_Trainer():
         """        
         
         arr = np.loadtxt(
-            open(f"{BASEPATH}/crazyflie_projects/Policy_Mapping/Policy_Training/Info/Scaler_{self.model_initials}.csv", "rb"),
+            open(f"{BASEPATH}/crazyflie_projects/Supervised_ML/Policy_Training/Info/Scaler_{self.model_initials}.csv", "rb"),
             delimiter=",",
             skiprows=1)
 
@@ -657,16 +657,16 @@ if __name__ == "__main__":
     np.random.seed(0)
 
     ## DESIGNATE FILE PATHS
-    model_initials = "NS_DR"
-    NN_Param_Path = f'{BASEPATH}/crazyflie_projects/Policy_Mapping/Policy_Training/Info/NN_Layers_{model_initials}.h'
-    SVM_Param_Path = f'{BASEPATH}/crazyflie_projects/Policy_Mapping/Policy_Training/Info/SVM_Params_{model_initials}.h'
+    model_initials = "NL_DR"
+    NN_Param_Path = f'{BASEPATH}/crazyflie_projects/Supervised_ML/Policy_Training/Info/NN_Layers_{model_initials}.h'
+    SVM_Param_Path = f'{BASEPATH}/crazyflie_projects/Supervised_ML/Policy_Training/Info/SVM_Params_{model_initials}.h'
 
-    FilePath = f"{BASEPATH}/crazyflie_projects/Policy_Mapping/Data_Logs/"
-    FileName = "NS_LR_Trials.csv"
+    FilePath = f"{BASEPATH}/crazyflie_projects/Supervised_ML/Data_Logs/"
+    FileName = "NL_LR_Trials.csv"
 
     ## PRE-INITIALIZE MODELS
     NN_model = NN_Model()
-    SVM_model = OneClassSVM(nu=0.5,gamma=1.0)
+    SVM_model = OneClassSVM(nu=0.1,gamma=2.0)
     # nu: Controls size of enclosed volume (smaller -> larger volume)
     # gamma: Controls how much the volume matches shape of data (smaller -> less definition)
     #           Increases number of support vectors making calculations longer?
@@ -711,15 +711,15 @@ if __name__ == "__main__":
     # print(Policy.NN_Predict(np.array([[0.233,-2.778,0.518]])))
 
     # ## TRAIN OC_SVM FLIP_CLASSIFICATION POLICY
-    # Policy.train_OC_SVM(X)
-    # Policy.save_SVM_Params(SVM_Param_Path,FileName)
+    Policy.train_OC_SVM(X)
+    Policy.save_SVM_Params(SVM_Param_Path,FileName)
     # print(Policy.OC_SVM_Predict(np.array([[0.233,-2.778,0.518]])))
 
 
-    # Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.0)
+    Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.0)
     # Policy.plotPolicyRegion(df_raw,PlotBoundry=True,iso_level=0.0)
     # Policy.plotPolicyRegion(df_raw,PlotBoundry=False,iso_level=0.0)
-    Policy.plot_polar_smoothed(df_max)
+    # Policy.plot_polar_smoothed(df_max)
     
     
     # dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
