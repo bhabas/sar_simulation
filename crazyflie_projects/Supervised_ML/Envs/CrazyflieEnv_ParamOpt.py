@@ -3,8 +3,14 @@ import numpy as np
 import time
 import rospy
 
-## ROS MESSAGES AND SERVICES
-from Core_Envs.CrazyflieEnv_Sim import CrazyflieEnv_Sim
+
+## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
+import sys,rospkg,os
+BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
+sys.path.insert(1,'/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_env')
+sys.path.insert(1,BASE_PATH)
+
+from crazyflie_env.Core_Envs.CrazyflieEnv_Sim import CrazyflieEnv_Sim
 
 
 class CrazyflieEnv_ParamOpt(CrazyflieEnv_Sim):
@@ -40,9 +46,11 @@ class CrazyflieEnv_ParamOpt(CrazyflieEnv_Sim):
         self.sleep(0.25)
 
         ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
-        self.Iyy = rospy.get_param("Iyy") + np.random.normal(0,1.5e-6)
-        self.mass = rospy.get_param("/CF_Mass") + np.random.normal(0,0.0005)
+        self.Iyy = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Iyy") + np.random.normal(0,1.5e-6)
+        self.mass = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Mass") + np.random.normal(0,0.0005)
         self.updateInertia()
+
+        
 
         obs = None
         return obs
@@ -181,5 +189,5 @@ if __name__ == "__main__":
     for ii in range(1000):
         tau = np.random.uniform(low=0.15,high=0.27)
         env.ParamOptim_reset()
-        obs,reward,done,info = env.ParamOptim_Flight(0.23,7,2.5,60)
+        obs,reward,done,info = env.ParamOptim_Flight(0.1,7,2.5,60)
         print(f"Ep: {ii} \t Reward: {reward:.02f}")

@@ -63,11 +63,6 @@ def runTraining(env,agent,V_d,phi,logName,K_ep_max=15):
             Tau_thr = theta[0, k_run]    # Tau threshold 10*[s]
             My = theta[1, k_run]         # Policy Moment Action [N*mm]
 
-            ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
-            env.Iyy = rospy.get_param("Iyy") + np.random.normal(0,1.5e-6)
-            env.mass = rospy.get_param("/CF_Mass") + np.random.normal(0,0.0005)
-            env.updateInertia()
-
             env.ParamOptim_reset()
             env.startLogging(logName)
             obs,reward,done,info = env.ParamOptim_Flight(Tau_thr/10,My,V_d,phi)
@@ -186,8 +181,8 @@ def runTraining(env,agent,V_d,phi,logName,K_ep_max=15):
 
 
 if __name__ == '__main__':
-    from CrazyflieEnv_ParamOpt import CrazyflieEnv_ParamOpt
-    from RL_agents.EPHE_Agent import EPHE_Agent
+    from Envs.CrazyflieEnv_ParamOpt import CrazyflieEnv_ParamOpt
+    from Agents.EPHE_Agent import EPHE_Agent
 
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv_ParamOpt(GZ_Timeout=True)

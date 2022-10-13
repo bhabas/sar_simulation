@@ -1,23 +1,32 @@
 DATA_TYPE: "SIM"
-SURFACE_NAME: "CeilingPlane_Large"
-GROUND_NAME: "GroundPlane_Desert_Physical"
 
-GUI_FLAG: True
-PAUSE_FLAG: False
-CONSOLE_RATE: 50 # [Hz]
-LOGGING_RATE: 50 # [Hz]
+ENV_SETTINGS:
+ Ceiling_Height: 2.1
+ Surface_Name: "CeilingPlane_Large"
+ Ground_Name: "GroundPlane_Desert_Physical"
 
-SIM_SPEED: 1.0
-SIM_SLOWDOWN_SPEED: 0.3
-LANDING_SLOWDOWN_FLAG: True
+QUAD_SETTINGS:
+  CF_Type: "Standard"
+  Config: "Narrow_Long"
+  Cam_Sensor: False
 
-CEILING_HEIGHT: 2.1
+  # Policy_Type: "PARAM_OPTIM"
+  Policy_Type: "SVL_POLICY" 
+  # Policy_Type: "DEEP_RL" 
 
-# POLICY_TYPE: "PARAM_OPTIM" 
-# POLICY_TYPE: "SVL_POLICY" 
-POLICY_TYPE: "DEEP_RL" 
+SIM_SETTINGS:
+  GUI_Flag: True
+  Pause_Flag: False
+  Sim_Speed: 2.0
+  Sim_Slowdown_Speed: 0.4
+  Landing_Slowdown_Flag: True
 
-CAM_SENSOR: False
+CF_DC_SETTINGS:
+  Console_Rate: 50 # [Hz]
+  Logging_Rate: 50 # [Hz]
+
+
+
 
 
 

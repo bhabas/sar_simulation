@@ -24,8 +24,8 @@ sys.path.insert(1,BASE_PATH)
 
 
 ## IMPORT ENVIRONMENTS
-from envs.CrazyflieEnv_DeepRL import CrazyflieEnv_DeepRL
-from envs.CF_Env_2D import CF_Env_2D
+from Envs.CrazyflieEnv_DeepRL import CrazyflieEnv_DeepRL
+from Envs.CF_Env_2D import CF_Env_2D
 
 
 ## COLLECT CURRENT TIME
@@ -440,7 +440,7 @@ if __name__ == '__main__':
     # # LOAD DEEP RL MODEL
     load_model_name = f"SAC--10_12-11:40--NL_0"
 
-    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/Training_Logs/CF_Env_2D"
+    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Env_2D"
     leg_config = "NL"
     log_name = f"SAC--{current_time}--{leg_config}"
 
@@ -450,7 +450,7 @@ if __name__ == '__main__':
     model.load_replay_buffer(f"{log_dir}/{load_model_name}/models/replay_buff.pkl")
 
     # ## CREATE NEW DEEP RL MODEL 
-    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/Training_Logs/CF_Env_2D"
+    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Env_2D"
     # leg_config = "NL"
     # log_name = f"SAC--{current_time}--{leg_config}"
     # model = SAC(

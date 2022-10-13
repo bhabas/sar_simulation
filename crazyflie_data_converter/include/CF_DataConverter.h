@@ -89,7 +89,7 @@ class CF_DataConverter
             Time_start = ros::Time::now();
 
 
-            BodyCollision_str = MODEL_NAME + "::crazyflie_BaseModel::crazyflie_body::body_collision";
+            BodyCollision_str = MODEL_NAME + "::crazyflie_Base_Model::crazyflie_body::body_collision";
 
             CF_DCThread = std::thread(&CF_DataConverter::MainLoop, this);
 
@@ -201,8 +201,11 @@ class CF_DataConverter
         // ===================
         //     ROS PARAMS
         // ===================
-
+        // ROS PARAMS
+        std::string CF_Type;
+        std::string CF_Config;
         std::string MODEL_NAME;
+
         std::string DATA_TYPE;
 
         // DEFAULT INERTIA VALUES FOR BASE CRAZYFLIE
@@ -574,37 +577,45 @@ void CF_DataConverter::log5_Callback(const crazyflie_msgs::GenericLogData::Const
 void CF_DataConverter::LoadParams()
 {
 
+    ros::param::get("/QUAD_SETTINGS/CF_Type",CF_Type);
+    ros::param::get("/QUAD_SETTINGS/Config",CF_Config);
+    ros::param::get("/QUAD_SETTINGS/Policy_Type",POLICY_TYPE);
+
+    MODEL_NAME = "crazyflie_" + CF_Config;
+    CF_Type = "/CF_Type/" + CF_Type;
+    CF_Config = "/Config/" + CF_Config;
+    
     // COLLECT MODEL PARAMETERS
-    ros::param::get("/MODEL_NAME",MODEL_NAME);
-    ros::param::get("/CF_MASS",CF_MASS);
-    ros::param::get("/Ixx",Ixx);
-    ros::param::get("/Iyy",Iyy);
-    ros::param::get("/Izz",Izz);
-    ros::param::get("/POLICY_TYPE",POLICY_TYPE);
+    ros::param::get(CF_Type + CF_Config + "/Mass",CF_MASS);
+    ros::param::get(CF_Type + CF_Config + "/Ixx",Ixx);
+    ros::param::get(CF_Type + CF_Config + "/Iyy",Iyy);
+    ros::param::get(CF_Type + CF_Config + "/Izz",Izz);
 
     // DEBUG SETTINGS
     ros::param::get("/DATA_TYPE",DATA_TYPE);
-    ros::param::get("/SIM_SPEED",SIM_SPEED);
-    ros::param::get("/SIM_SLOWDOWN_SPEED",SIM_SLOWDOWN_SPEED);
-    ros::param::get("/LANDING_SLOWDOWN_FLAG",LANDING_SLOWDOWN_FLAG);
-    ros::param::get("/LOGGING_RATE",LOGGING_RATE);
-    ros::param::get("/CONSOLE_RATE",CONSOLE_RATE);
+    ros::param::get("/SIM_SETTINGS/Sim_Speed",SIM_SPEED);
+    ros::param::get("/SIM_SETTINGS/Sim_Slowdown_Speed",SIM_SLOWDOWN_SPEED);
+    ros::param::get("/SIM_SETTINGS/Landing_Slowdown_Flag",LANDING_SLOWDOWN_FLAG);
 
-    ros::param::get("P_kp_xy",P_kp_xy);
-    ros::param::get("P_kd_xy",P_kd_xy);
-    ros::param::get("P_ki_xy",P_ki_xy);
+    ros::param::get("/CF_DC_SETTINGS/Logging_Rate",LOGGING_RATE);
+    ros::param::get("/CF_DC_SETTINGS/Console_Rate",CONSOLE_RATE);
 
-    ros::param::get("P_kp_z",P_kp_z);
-    ros::param::get("P_kd_z",P_kd_z);
-    ros::param::get("P_ki_z",P_ki_z);
+    // COLLECT CTRL GAINS
+    ros::param::get(CF_Type + "/CtrlGains/P_kp_xy",P_kp_xy);
+    ros::param::get(CF_Type + "/CtrlGains/P_kd_xy",P_kd_xy);
+    ros::param::get(CF_Type + "/CtrlGains/P_ki_xy",P_ki_xy);
 
-    ros::param::get("R_kp_xy",R_kp_xy);
-    ros::param::get("R_kd_xy",R_kd_xy);
-    ros::param::get("R_ki_xy",R_ki_xy);
+    ros::param::get(CF_Type + "/CtrlGains/P_kp_z",P_kp_z);
+    ros::param::get(CF_Type + "/CtrlGains/P_kd_z",P_kd_z);
+    ros::param::get(CF_Type + "/CtrlGains/P_ki_z",P_ki_z);
+
+    ros::param::get(CF_Type + "/CtrlGains/R_kp_xy",R_kp_xy);
+    ros::param::get(CF_Type + "/CtrlGains/R_kd_xy",R_kd_xy);
+    ros::param::get(CF_Type + "/CtrlGains/R_ki_xy",R_ki_xy);
     
-    ros::param::get("R_kp_z",R_kp_z);
-    ros::param::get("R_kd_z",R_kd_z);
-    ros::param::get("R_ki_z",R_ki_z);
+    ros::param::get(CF_Type + "/CtrlGains/R_kp_z",R_kp_z);
+    ros::param::get(CF_Type + "/CtrlGains/R_kd_z",R_kd_z);
+    ros::param::get(CF_Type + "/CtrlGains/R_ki_z",R_ki_z);
 
     if(DATA_TYPE.compare("SIM") == 0)
     {

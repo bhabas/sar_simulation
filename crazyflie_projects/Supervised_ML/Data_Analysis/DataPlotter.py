@@ -447,7 +447,7 @@ def plot_all_eul():
 if __name__ == '__main__':
 
     ## FULL DATAFRAME
-    model_config = "ExtraNarrow-Long"
+    model_config = "ExtraNarrow_Long"
     df_raw = pd.read_csv(f"Projects/ICRA_DataAnalysis/{model_config}_2-Policy/{model_config}_2-Policy_Summary.csv")
     df_raw = df_raw.query(f"landing_rate_4_leg >= {0.0}")
 

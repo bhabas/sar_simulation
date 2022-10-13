@@ -142,9 +142,10 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         self.gazebo_pause_physics()
 
         ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
-        self.Iyy = rospy.get_param("/Iyy") + np.random.normal(0,1.5e-6)
-        self.mass = rospy.get_param("/CF_Mass") + np.random.normal(0,0.0005)
+        self.Iyy = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Iyy") + np.random.normal(0,1.5e-6)
+        self.mass = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Mass") + np.random.normal(0,0.0005)
         self.updateInertia()
+
 
 
         ## RESET REWARD CALC VALUES

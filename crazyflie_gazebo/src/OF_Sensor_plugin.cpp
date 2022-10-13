@@ -24,7 +24,7 @@ namespace gazebo
         OFy_gaussianNoise = _sdf->GetElement("OFy_gaussianNoise")->Get<double>();
 
         // GET CEILING HEIGHT FROM ROS PARAM
-        ros::param::get("/CEILING_HEIGHT",_H_CEILING);
+        ros::param::get("/ENV_SETTINGS/Ceiling_Height",_H_CEILING);
 
         // INIT PUBLISHER AND PUBLISHING THREAD
         OF_Publisher = nh.advertise<crazyflie_msgs::OF_SensorData>(topicName,1);
