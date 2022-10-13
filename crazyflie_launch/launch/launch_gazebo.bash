@@ -7,8 +7,8 @@ roslaunch crazyflie_launch params.launch
 CONFIG_NAME=$(rosparam get /QUAD_SETTINGS/Config)
 SURFACE_NAME=$(rosparam get /ENV_SETTINGS/Surface_Name)
 GROUND_NAME=$(rosparam get /ENV_SETTINGS/Ground_Name)
-GUI_FLAG=$(rosparam get /GUI_FLAG)
-PAUSE_FLAG=$(rosparam get /PAUSE_FLAG)
+GUI_FLAG=$(rosparam get /SIM_SETTINGS/GUI_Flag)
+PAUSE_FLAG=$(rosparam get /SIM_SETTINGS/Pause_Flag)
 
 ## START GAZEBO 
 roslaunch crazyflie_launch crazyflie_gazebo.launch \
