@@ -1,16 +1,16 @@
 ## STANDARD IMPORTS
+import os
+from datetime import datetime
 import numpy as np
+import pandas as pd
+import torch as th
+
+## PLOTTING IMPORTS
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib as mpl
-from scipy.interpolate import griddata
 import plotly.graph_objects as go
-import os
-from datetime import datetime
-import pandas as pd
-
-## PYTORCH IMPROTS
-import torch as th
+from scipy.interpolate import griddata
 
 ## SB3 Imports
 from stable_baselines3 import SAC
@@ -22,12 +22,11 @@ BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
 sys.path.insert(1,'/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_env')
 sys.path.insert(1,BASE_PATH)
 
-from crazyflie_logging.data_analysis.Data_Analysis import DataFile
 
-from crazyflie_env.CrazyflieEnv_DeepRL import CrazyflieEnv_DeepRL
-from CF_Env_2D import CF_Env_2D
-from CF_Env_2D_dTau import CF_Env_2D_dTau
-from CF_Env_2D_Simple import CF_Env_2D_Simple
+## IMPORT ENVIRONMENTS
+from Envs.CrazyflieEnv_DeepRL import CrazyflieEnv_DeepRL
+from Envs.CF_Env_2D import CF_Env_2D
+
 
 ## COLLECT CURRENT TIME
 now = datetime.now()
@@ -36,14 +35,19 @@ current_time = now.strftime("%m_%d-%H:%M")
 
 
 class Policy_Trainer_DeepRL():
-    def __init__(self,env,model,model_initials):
+    def __init__(self,env,model,leg_config):
         self.env = env
         self.model = model
-        self.model_initials = model_initials
+        self.leg_config = leg_config
 
     def save_NN_Params(self,SavePath):
+        """Save NN parameters to C header file for upload to crazyflie
 
-        FileName = f"NN_Layers_{model_initials}_DeepRL.h"
+        Args:
+            SavePath (str): Path to save header file
+        """        
+
+        FileName = f"NN_Layers_{leg_config}_DeepRL.h"
         f = open(os.path.join(SavePath,FileName),'a')
         f.truncate(0) ## Clears contents of file
 
@@ -132,37 +136,53 @@ class Policy_Trainer_DeepRL():
         f.write("};")
         f.close()
 
-    def action_predict(self,obs):
+    def action_predict(self,obs): 
+        """Calculate action distribution parameters through NN and then sample distributions
+        for specific actions taken
 
-        # CAP the standard deviation of the actor
+        Args:
+            obs (_type_): Observation vector returned by then environment
+
+        Returns:
+            _type_: Action vector
+        """        
+
+        # CAP THE STANDARD DEVIATION OF THE ACTOR
         LOG_STD_MAX = 2
         LOG_STD_MIN = -20
         actor = self.model.policy.actor
         obs = th.FloatTensor([obs])
         sub_action = self.model.policy.actor.forward(obs)
 
-        ## PASS OBS THROUGH NN
+        ## PASS OBS THROUGH NN FOR DISTRIBUTION PARAMETERS (MEAN/STD DEV)
         latent_pi = actor.latent_pi(obs)
-        mean_actions = actor.mu(latent_pi)
+        action_means = actor.mu(latent_pi) # Values for action dist. means
+
         log_std = actor.log_std(latent_pi)
         log_std = th.clamp(log_std, LOG_STD_MIN, LOG_STD_MAX)
+        action_std = log_std.exp() * th.ones_like(action_means) # Values for action dist. std dev
 
-        ## CONVERT MU/LOG_STD TO NORMAL DISTRIBUTION AND SAMPLE
-        action_std = th.ones_like(mean_actions) * log_std.exp()
-        action_mean = mean_actions
-
-        ## CENTRAL LIMIT THEOREM SAMPLE
-        normal_sample = np.sum(np.random.uniform(size=(12,2)),axis=0)-6
-        samples = normal_sample*action_std.detach().numpy()+action_mean.detach().numpy()
-        scaled_action = np.tanh(samples)
+        ## SAMPLE FROM DISTRIBUTIONS VIA CENTRAL LIMIT THEOREM
+        normal_sample = np.sum(np.random.uniform(size=(12,len(action_means))),axis=0) - 6       # Sample from standard normal dist
+        samples = normal_sample * action_std.detach().numpy() + action_means.detach().numpy()   # Scale sample to action dist
 
         ## SQUISH SAMPLES TO [-1,1] RANGE AND RESCALE
+        scaled_action = np.tanh(samples)
         low, high = self.env.action_space.low, self.env.action_space.high
         return low + (0.5 * (scaled_action + 1.0) * (high - low))
 
     def policy_dist(self,obs):
+        """Returns action distribution parameters for a given observation
 
-        # CAP the standard deviation of the actor
+        Args:
+            obs (_type_): Observation vector returned by then environment
+
+        Returns:
+            action_mean: Vector for means of action distributions
+            action_std: Vector for standard deviations of action distributions
+        """        
+
+        # CAP THE STANDARD DEVIATION OF THE ACTOR
         LOG_STD_MAX = 2
         LOG_STD_MIN = -20
         actor = self.model.policy.actor
@@ -184,8 +204,15 @@ class Policy_Trainer_DeepRL():
 
         return action_mean,action_std
 
-    def test_policy(self,vel=None,phi=None):
-        episodes = 50
+    def test_policy(self,vel,phi,episodes=1):
+        """Test the currently loaded policy for a given set of velocity and launch angle conditions
+
+        Args:
+            vel (float, optional): Flight velocity [m/s]. 
+            phi (float, optional): Flight angle [deg]. 
+            episodes (int, optional): Number of landing tests. Defaults to 1.
+        """        
+
         for ep in range(episodes):
             obs = self.env.reset(vel=vel,phi=phi)
             done = False
@@ -195,9 +222,14 @@ class Policy_Trainer_DeepRL():
                 action,_ = self.model.predict(obs)
                 obs,reward,done,info = self.env.step(action)
 
-        self.env.close()
+    def train_model(self,log_name,log_dir,reset_timesteps=True):
+        """Script to train model via Deep RL method
 
-    def train_model(self,log_name,reset_timesteps=True):
+        Args:
+            log_name (str): _description_
+            reset_timesteps (bool, optional): Reset starting timestep to zero. Defaults to True. 
+            Set to False to resume training from previous model.
+        """        
 
         class CheckpointSaveCallback(BaseCallback):
 
@@ -206,7 +238,7 @@ class Policy_Trainer_DeepRL():
                 self.save_freq = save_freq
 
                 ## DIRECTORIES
-                self.log_dir = os.path.join(log_dir,log_name+"_1")
+                self.log_dir = os.path.join(log_dir,log_name+"_0")
                 self.model_dir = os.path.join(self.log_dir,"models")
                 self.replay_dir = self.log_dir
 
@@ -234,9 +266,9 @@ class Policy_Trainer_DeepRL():
                 self.logger.record('time/K_ep',self.training_env.envs[0].env.k_ep)
                 return True
         
-        checkpoint_callback = CheckpointSaveCallback(save_freq=500,log_dir=log_dir,log_name=log_name)
+        checkpoint_callback = CheckpointSaveCallback(save_freq=1000,log_dir=log_dir,log_name=log_name)
         self.model.learn(
-            total_timesteps=1e6,
+            total_timesteps=2e6,
             tb_log_name=log_name,
             callback=checkpoint_callback,
             reset_num_timesteps=reset_timesteps
@@ -357,11 +389,11 @@ class Policy_Trainer_DeepRL():
         C = df.iloc[:]['LR_4Leg']
 
         # SOMETHING ABOUT DEFINING A GRID
-        interp_factor = 20
-        ri = np.linspace(R.min(),R.max(),(len(C)//interp_factor))
-        thetai = np.linspace(Theta.min(),Theta.max(),(len(C)//interp_factor))
+        interp_factor = 12
+        ri = np.linspace(1.5,3.5,(len(C)//interp_factor))
+        thetai = np.linspace(25,90,(len(C)//interp_factor))
         r_ig, theta_ig = np.meshgrid(ri, thetai)
-        zi = griddata((R, Theta), C, (ri[None,:], thetai[:,None]), method='linear')
+        zi = griddata((R, Theta), C, (ri[None,:], thetai[:,None]), method='linear',fill_value=0.85)
         zi = zi + 0.0001
         
 
@@ -373,9 +405,9 @@ class Policy_Trainer_DeepRL():
         cmap = mpl.cm.jet
         norm = mpl.colors.Normalize(vmin=0.0,vmax=1)
         
-        # ax.contourf(np.radians(theta_ig),r_ig,zi,cmap=cmap,norm=norm,levels=10)
-        ax.scatter(np.radians(Theta),R,c=C,cmap=cmap,norm=norm)
-        ax.set_thetamin(15)
+        ax.contourf(np.radians(theta_ig),r_ig,zi,cmap=cmap,norm=norm,levels=30)
+        # ax.scatter(np.radians(Theta),R,c=C,cmap=cmap,norm=norm)
+        ax.set_thetamin(20)
         ax.set_thetamax(90)
         ax.set_rmin(0)
         ax.set_rmax(3.5)
@@ -383,14 +415,14 @@ class Policy_Trainer_DeepRL():
 
 
         ## AXIS LABELS    
-        ax.text(np.radians(7.5),2,'Flight Velocity (m/s)',
-            rotation=18,ha='center',va='center')
+        ax.text(np.radians(7),2,'Flight Velocity (m/s)',
+            rotation=15,ha='center',va='center')
 
-        ax.text(np.radians(60),4.5,'Flight Angle (deg)',
+        ax.text(np.radians(60),4.0,'Flight Angle (deg)',
             rotation=0,ha='left',va='center')
 
         if saveFig==True:
-            plt.savefig(f'{"NL"}_Polar_LR.pdf',dpi=300)
+            plt.savefig(f'NL_Polar_DeepRL_LR.pdf',dpi=300)
 
         plt.show()
 
@@ -400,40 +432,45 @@ if __name__ == '__main__':
 
     ## INITIATE ENVIRONMENT
     env = CrazyflieEnv_DeepRL(GZ_Timeout=True)
+    # env = CF_Env_2D()
     # env = None
-    model_initials = "NL"
-    log_dir = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/DeepRL/logs/CF_Gazebo"
-
-
-    # ## LOAD MODEL
-    # log_name = f"SAC-08_09-18:18_2"
-    # policy_path = os.path.join(log_dir,log_name)
-    # model_path = os.path.join(log_dir,log_name,f"models/{68}500_steps.zip")
-    # model = SAC.load(model_path,env=env,device='cpu')
-    # model.load_replay_buffer(f"{log_dir}/{log_name}/models/replay_buff.pkl")
-    
     
 
 
-    ## CREATE NEW MODEL 
-    log_name = f"SAC-{current_time}"
-    model = SAC(
-        "MlpPolicy",
-        env=env,
-        gamma=0.999,
-        learning_rate=0.002,
-        policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[12,12]),
-        verbose=1,
-        device='cpu',
-        tensorboard_log=log_dir
-    ) 
+    # # LOAD DEEP RL MODEL
+    load_model_name = f"SAC--10_12-11:40--NL_0"
+
+    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Env_2D"
+    leg_config = "NL"
+    log_name = f"SAC--{current_time}--{leg_config}"
+
+    policy_path = os.path.join(log_dir,load_model_name)
+    model_path = os.path.join(log_dir,load_model_name,f"models/{2}000_steps.zip")
+    model = SAC.load(model_path,env=env,device='cpu')
+    model.load_replay_buffer(f"{log_dir}/{load_model_name}/models/replay_buff.pkl")
+
+    # ## CREATE NEW DEEP RL MODEL 
+    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Env_2D"
+    # leg_config = "NL"
+    # log_name = f"SAC--{current_time}--{leg_config}"
+    # model = SAC(
+    #     "MlpPolicy",
+    #     env=env,
+    #     gamma=0.999,
+    #     learning_rate=0.002,
+    #     policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[12,12]),
+    #     verbose=1,
+    #     device='cpu',
+    #     tensorboard_log=log_dir
+    # ) 
 
     
-    Policy = Policy_Trainer_DeepRL(env,model,model_initials)
-    Policy.train_model(log_name,reset_timesteps=False)
-    # Policy.test_policy(vel=3.0,phi=90)
+    Policy = Policy_Trainer_DeepRL(env,model,leg_config)
+    Policy.train_model(log_name,log_dir,reset_timesteps=False)
+
+
     # Policy.save_NN_Params(policy_path)
-    # # Policy.plotPolicyRegion(iso_level=1.5)
+    # Policy.plotPolicyRegion(iso_level=1.5)
 
     # # LOAD DATA
     # df_raw = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/DeepRL/Data_Logs/DeepRL_NL_LR.csv").dropna() # Collected data
@@ -442,6 +479,7 @@ if __name__ == '__main__':
     # idx = df_raw.groupby(['vel_d','phi_d'])['LR_4Leg'].transform(max) == df_raw['LR_4Leg']
     # df_max = df_raw[idx].reset_index()
 
+<<<<<<< HEAD
     # Policy.plot_polar(df_max)
 
 
@@ -451,5 +489,16 @@ if __name__ == '__main__':
     # # trial = DataFile(dataPath,fileName,dataType='SIM')
     # # k_ep = 0
     # # Policy.plotPolicyRegion(PlotTraj=(trial,k_ep,0))
+=======
+    # # Policy.plot_polar(df_max,saveFig=False)
+
+
+
+    # dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
+    # fileName = "DeepRL--NL_2.75_30.00_1.csv"
+    # trial = DataFile(dataPath,fileName,dataType='SIM')
+    # k_ep = 0
+    # Policy.plotPolicyRegion(PlotTraj=(trial,k_ep,0))
+>>>>>>> master
 
     

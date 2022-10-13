@@ -1,8 +1,8 @@
-Wide-Short: 0.05m, 60 deg
-Narrow-Short: 0.05m, 30 deg
-Extra_Narrow-Short: 0.05m, 0 deg
+Wide_Short: 0.05m, 60 deg
+Narrow_Short: 0.05m, 30 deg
+Extra_Narrow_Short: 0.05m, 0 deg
 
-Wide-Long: 0.10m, 60 deg
+Wide_Long: 0.10m, 60 deg
 Narrow-Long: 0.10m, 30 deg
 Extra_Narrow-Long: 0.10m, 0 deg
 

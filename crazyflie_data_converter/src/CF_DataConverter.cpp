@@ -517,7 +517,7 @@ void CF_DataConverter::adjustSimSpeed(float speed_mult)
 
 void CF_DataConverter::activateStickyFeet()
 {
-    if(MODEL_NAME != "crazyflie_BaseModel")
+    if(MODEL_NAME != "crazyflie_Base_Model")
     {
         crazyflie_msgs::activateSticky srv;
         srv.request.stickyFlag = Sticky_Flag;

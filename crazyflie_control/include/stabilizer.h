@@ -122,6 +122,11 @@ class Controller
         std::string _MODEL_NAME;
         bool STICKY_FLAG = false;
 
+        // ROS PARAMS
+        std::string CF_Type;
+        std::string CF_Config;
+
+
         // IMAGE PROCESSING VARIABLES
         uint8_t WIDTH_PIXELS = 160;
         uint8_t HEIGHT_PIXELS = 160;
@@ -401,14 +406,42 @@ void Controller::viconState_Callback(const nav_msgs::Odometry::ConstPtr &msg)
 // LOAD VALUES FROM ROSPARAM SERVER INTO CONTROLLER
 void Controller::loadParams()
 {
+    
+    ros::param::get("/QUAD_SETTINGS/CF_Type",CF_Type);
+    ros::param::get("/QUAD_SETTINGS/Config",CF_Config);
+    ros::param::get("/QUAD_SETTINGS/Cam_Sensor",camera_sensor_active);
+    CF_Type = "/CF_Type/" + CF_Type;
+    CF_Config = "/Config/" + CF_Config;
+    
     // COLLECT MODEL PARAMETERS
-    ros::param::get("/CF_MASS",m);
-    ros::param::get("/Ixx",Ixx);
-    ros::param::get("/Iyy",Iyy); 
-    ros::param::get("/Izz",Izz);
+    ros::param::get(CF_Type + CF_Config + "/Mass",m);
+    ros::param::get(CF_Type + CF_Config + "/Ixx",Ixx);
+    ros::param::get(CF_Type + CF_Config + "/Iyy",Iyy);
+    ros::param::get(CF_Type + CF_Config + "/Izz",Izz);
+
+    // COLLECT CTRL GAINS
+    ros::param::get(CF_Type + "/CtrlGains/P_kp_xy",P_kp_xy);
+    ros::param::get(CF_Type + "/CtrlGains/P_kd_xy",P_kd_xy);
+    ros::param::get(CF_Type + "/CtrlGains/P_ki_xy",P_ki_xy);
+    ros::param::get(CF_Type + "/CtrlGains/i_range_xy",i_range_xy);
+
+    ros::param::get(CF_Type + "/CtrlGains/P_kp_z",P_kp_z);
+    ros::param::get(CF_Type + "/CtrlGains/P_kd_z",P_kd_z);
+    ros::param::get(CF_Type + "/CtrlGains/P_ki_z",P_ki_z);
+    ros::param::get(CF_Type + "/CtrlGains/i_range_z",i_range_z);
+
+    ros::param::get(CF_Type + "/CtrlGains/R_kp_xy",R_kp_xy);
+    ros::param::get(CF_Type + "/CtrlGains/R_kd_xy",R_kd_xy);
+    ros::param::get(CF_Type + "/CtrlGains/R_ki_xy",R_ki_xy);
+    ros::param::get(CF_Type + "/CtrlGains/i_range_R_xy",i_range_R_xy);
+    
+    ros::param::get(CF_Type + "/CtrlGains/R_kp_z",R_kp_z);
+    ros::param::get(CF_Type + "/CtrlGains/R_kd_z",R_kd_z);
+    ros::param::get(CF_Type + "/CtrlGains/R_ki_z",R_ki_z);
+    ros::param::get(CF_Type + "/CtrlGains/i_range_R_z",i_range_R_z);
 
     // SIMULATION SETTINGS FROM CONFIG FILE
-    ros::param::get("/POLICY_TYPE",POLICY_TYPE_STR); // Set string from params file into controller
+    ros::param::get("QUAD_SETTINGS/Policy_Type",POLICY_TYPE_STR); // Set string from params file into controller
     if (strcmp(POLICY_TYPE_STR.c_str(),"PARAM_OPTIM")==0)
     {
         Policy = PARAM_OPTIM;
@@ -421,29 +454,6 @@ void Controller::loadParams()
     {
         Policy = DEEP_RL;
     }    
-    ros::param::get("/CAM_SENSOR",camera_sensor_active);
-
-
-    // COLLECT CTRL GAINS FROM CONFIG FILE
-    ros::param::get("P_kp_xy",P_kp_xy);
-    ros::param::get("P_kd_xy",P_kd_xy);
-    ros::param::get("P_ki_xy",P_ki_xy);
-    ros::param::get("i_range_xy",i_range_xy);
-
-    ros::param::get("P_kp_z",P_kp_z);
-    ros::param::get("P_kd_z",P_kd_z);
-    ros::param::get("P_ki_z",P_ki_z);
-    ros::param::get("i_range_z",i_range_z);
-
-    ros::param::get("R_kp_xy",R_kp_xy);
-    ros::param::get("R_kd_xy",R_kd_xy);
-    ros::param::get("R_ki_xy",R_ki_xy);
-    ros::param::get("i_range_R_xy",i_range_R_xy);
-    
-    ros::param::get("R_kp_z",R_kp_z);
-    ros::param::get("R_kd_z",R_kd_z);
-    ros::param::get("R_ki_z",R_ki_z);
-    ros::param::get("i_range_R_z",i_range_R_z);
 
 }
 
