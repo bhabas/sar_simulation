@@ -40,7 +40,7 @@ CF_Type:
 
   BigQuad:
     Config:
-      Big_Quad: # Crazyflie Big-Quad
+      BigQuad: # Crazyflie Big-Quad
         Mass: 80.0e-3   # [kg]
         Ixx: 15.83e-6   # [kg*m^2]
         Iyy: 17.00e-6   # [kg*m^2]

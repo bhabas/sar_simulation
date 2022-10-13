@@ -9,7 +9,7 @@ GROUND_NAME: "GroundPlane_Desert_Physical"
 
 QUAD_SETTINGS:
   CF_Type: "Standard"
-  Config: "Narrow_Long"
+  Config: "Base_Model"
 
 GUI_FLAG: True
 PAUSE_FLAG: True

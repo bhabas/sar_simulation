@@ -89,7 +89,7 @@ class CF_DataConverter
             Time_start = ros::Time::now();
 
 
-            BodyCollision_str = MODEL_NAME + "::crazyflie_BaseModel::crazyflie_body::body_collision";
+            BodyCollision_str = MODEL_NAME + "::crazyflie_Base_Model::crazyflie_body::body_collision";
 
             CF_DCThread = std::thread(&CF_DataConverter::MainLoop, this);
 
