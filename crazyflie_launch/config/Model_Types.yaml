@@ -1,13 +1,13 @@
 CF_Type:
   Standard:
     Config:
-      Base-Model: # Crazyflie Base-Model
+      Base_Model: # Crazyflie Base_Model
         Mass: 34.3e-3   # [kg]
         Ixx: 15.83e-6   # [kg*m^2]
         Iyy: 17.00e-6   # [kg*m^2]
         Izz: 31.19e-6   # [kg*m^2] 
 
-      Narrow-Long: # Crazyflie Narrow-Long
+      Narrow_Long: # Crazyflie Narrow_Long
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
@@ -38,9 +38,9 @@ CF_Type:
       R_ki_z: 0.0
       i_range_R_z: 0.5
 
-  Big-Quad:
+  BigQuad:
     Config:
-      Big-Quad: # Crazyflie Big-Quad
+      Big_Quad: # Crazyflie Big-Quad
         Mass: 80.0e-3   # [kg]
         Ixx: 15.83e-6   # [kg*m^2]
         Iyy: 17.00e-6   # [kg*m^2]

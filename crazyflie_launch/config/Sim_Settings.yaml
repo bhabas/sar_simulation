@@ -9,10 +9,10 @@ GROUND_NAME: "GroundPlane_Desert_Physical"
 
 QUAD_SETTINGS:
   CF_Type: "Standard"
-  Config: "Narrow-Long"
+  Config: "Narrow_Long"
 
 GUI_FLAG: True
-PAUSE_FLAG: False
+PAUSE_FLAG: True
 CONSOLE_RATE: 50 # [Hz]
 LOGGING_RATE: 50 # [Hz]
 

@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='crazyflie_Narrow-Long'>
+  <model name='crazyflie_Narrow_Long'>
     <include>
       <uri>model://crazyflie_BaseModel</uri>
       <pose>0 0 0 0 0 0</pose>

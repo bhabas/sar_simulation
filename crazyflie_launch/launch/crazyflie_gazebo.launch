@@ -7,7 +7,7 @@
     <arg name="surface_name" default="CeilingPlane_Large"/>
     <arg name="surface_sdf_path" default="$(find crazyflie_gazebo)/models/Landing_Surfaces/$(arg surface_name)/model.sdf"/>
 
-    <arg name="config_name" default="Narrow-Long"/>
+    <arg name="config_name" default="Narrow_Long"/>
     <arg name="model_sdf_path" default="$(find crazyflie_gazebo)/models/Crazyflie_Models/crazyflie_$(arg config_name)/model.sdf"/>
 
     <!-- READ FLAGS FROM BASH FILE -> ROSPARAM -->
