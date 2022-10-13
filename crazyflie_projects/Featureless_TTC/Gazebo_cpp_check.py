@@ -35,7 +35,7 @@ class CameraClass:
         self.Tau_est_cpp = 0
         self.OFy_est = 0
         self.OFx_est = 0
-        self.d_ceil = rospy.get_param("/CEILING_HEIGHT") #init above 0,1 to prevent plot from popping up on startup
+        self.d_ceil = rospy.get_param("/ENV_SETTINGS/Ceiling_Height") #init above 0,1 to prevent plot from popping up on startup
         self.prev_time = 0
 
         self.cam_sub = rospy.Subscriber("/CF_Internal/camera/image_raw",Image,self.Camera_cb,queue_size = 1)

@@ -126,6 +126,9 @@ void CF_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
     Time = ros::Time::now();
     Pose = ctrl_msg.Pose;
     Twist = ctrl_msg.Twist;
+    Vel_mag = sqrt(pow(Twist.linear.x,2)+pow(Twist.linear.y,2)+pow(Twist.linear.z,2));
+    Phi = atan2(Twist.linear.z,Twist.linear.x)*180/M_PI;
+    Alpha = atan2(Twist.linear.y,Twist.linear.x)*180/M_PI;
 
     // PROCESS EULER ANGLES
     float quat[4] = {
@@ -234,16 +237,16 @@ void CF_DataConverter::CtrlDebug_Callback(const crazyflie_msgs::CtrlDebug &ctrl_
 bool CF_DataConverter::CMD_CF_DC_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res)
 {
     // PASS COMMAND VALUES TO CONTROLLER AND PASS LOCAL ACTIONS
-    res.srv_Success = CF_DataConverter::Send_Cmd2Ctrl(req);
-    
+    CF_DataConverter::Send_Cmd2Ctrl(req);
+    res.srv_Success = true;
     return res.srv_Success;
 }
 
 bool CF_DataConverter::CMD_Dashboard_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res)
 {
     // PASS COMMAND VALUES TO CONTROLLER AND PASS LOCAL ACTIONS
-    res.srv_Success = CF_DataConverter::Send_Cmd2Ctrl(req);
-    
+    CF_DataConverter::Send_Cmd2Ctrl(req);
+    res.srv_Success = true;
     return res.srv_Success;
 }
 
@@ -298,37 +301,60 @@ bool CF_DataConverter::Send_Cmd2Ctrl(crazyflie_msgs::RLCmd::Request &req)
 
         Pad_Connections = 0;
 
-        // RESET SIM SPEED
-        CF_DataConverter::adjustSimSpeed(SIM_SPEED);
-        SLOWDOWN_TYPE = 0;
+        if (DATA_TYPE.compare("SIM") == 0)
+        {
+            // RESET SIM SPEED
+            CF_DataConverter::adjustSimSpeed(SIM_SPEED);
+            SLOWDOWN_TYPE = 0;
+        }
 
     }
 
-    if(req.cmd_type == 21)
+    if(req.cmd_type == 8)
+    {
+        // RL POLICY DATA
+        Tau_thr = req.cmd_vals.x;
+        G1 = req.cmd_vals.y;
+
+    }
+
+    if(req.cmd_type == 21) // UPDATE PARAMS IN CF_DC 
     {
         CF_DataConverter::LoadParams();
     }
 
-    if(req.cmd_type == 92)
+    if(req.cmd_type == 92) // STICKY FEET
     {
-        if(req.cmd_flag == 0)
+        if (DATA_TYPE.compare("SIM") == 0)
         {
-            Sticky_Flag = false;
+            if(req.cmd_flag == 0)
+            {
+                Sticky_Flag = false;
+            }
+            else
+            {
+                Sticky_Flag = true;
+            }
+            
+            CF_DataConverter::activateStickyFeet();
         }
-
-        if(req.cmd_flag == 1)
-        {
-            Sticky_Flag = true;
-        }
-
-        CF_DataConverter::activateStickyFeet();
-
     }
 
+    // SIMULATION:
     // SEND COMMAND VALUES TO CONTROLLER
     crazyflie_msgs::RLCmd srv;
     srv.request = req;
     CMD_Client.call(srv);
+
+
+    // EXPERIMENT: 
+    // BROADCAST CMD VALUES AS ROS MESSAGE
+    // (SO CRAZYSWARM CAN PASS MSGS FROM BOTH DASHBOARD AND ENV FILE)
+    crazyflie_msgs::GTC_Cmd cmd_msg;
+    cmd_msg.cmd_type = req.cmd_type;
+    cmd_msg.cmd_vals = req.cmd_vals;
+    cmd_msg.cmd_flag = req.cmd_flag;
+    CMD_Pub.publish(cmd_msg);
 
     return srv.response.srv_Success; // Return if service request successful (true/false)
 }
@@ -491,7 +517,7 @@ void CF_DataConverter::adjustSimSpeed(float speed_mult)
 
 void CF_DataConverter::activateStickyFeet()
 {
-    if(MODEL_NAME != "crazyflie_BaseModel")
+    if(MODEL_NAME != "crazyflie_Base_Model")
     {
         crazyflie_msgs::activateSticky srv;
         srv.request.stickyFlag = Sticky_Flag;
@@ -548,6 +574,8 @@ void CF_DataConverter::consoleOuput()
     printf("Omega [rad/s]:\t %.3f  %.3f  %.3f\n",Twist.angular.x,Twist.angular.y,Twist.angular.z);
     printf("Eul [deg]:\t %.3f  %.3f  %.3f\n",Eul.x,Eul.y,Eul.z);
     printf("\n");
+    printf("Vel [mag,phi,alph]: %.2f %.2f %.2f\n",Vel_mag,Phi,Alpha);
+    printf("\n");
 
     printf("Tau: %.3f \tOFx: %.3f \tOFy: %.3f\n",Tau,OFx,OFy);
     printf("Tau_est: %.3f\tOFx_est: %.3f \tOFy_est: %.3f\n",Tau_est,OFx_est,OFy_est);
@@ -567,7 +595,7 @@ void CF_DataConverter::consoleOuput()
     }
     else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL") == 0)
     {
-        printf("Stuff: %.3f \tStuff: %.3f \n",404.0,404.0);
+        printf("Stuff: %.3f \tStuff: %.3f \n",Policy_Flip,Policy_Action);
         printf("\n");
     }
 

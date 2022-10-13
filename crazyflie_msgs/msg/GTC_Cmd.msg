@@ -1,0 +1,3 @@
+uint16 cmd_type
+geometry_msgs/Point cmd_vals
+float32 cmd_flag

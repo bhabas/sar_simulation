@@ -4,7 +4,7 @@ import numpy as np
 ## GOAL: FIND TRAJECTORY STARTING POSITIONS THAT ALLOW FOR DESIRED VELOCITIES TO BE REACHED
 
 ## SYSTEM CONSTRAINTS
-H_CEIL = 2.1    # Height of ceiling [m]
+H_CEIL = 2.08    # Height of ceiling [m]
 a_x = 1.0       # X-acceleration [m/s^2]
 a_z = 2.0       # Z-acceleration [m/s^2]
 
@@ -13,7 +13,7 @@ x_impact = 2.0
 
 ## FLIGHT CONDITIONS
 V = 3.0     # Flight vel [m/s]
-phi = 30    # Flight angle [deg]
+phi = 60    # Flight angle [deg]
 phi_rad = np.radians(phi) # [rad]
 d_vel = 0.7     # Distance where (Vx,Vz) are reached [m]
 

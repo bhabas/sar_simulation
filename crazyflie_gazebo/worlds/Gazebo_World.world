@@ -6,11 +6,6 @@
       <uri>model://sun</uri>
     </include>
 
-    <!-- <include>
-      <uri>model://GroundPlane_Desert_Visual</uri>
-    </include> -->
-
-
     <light name='user_directional_light_0' type='directional'>
       <pose>0 0 0 0 -0 0</pose>
       <diffuse>0.5 0.5 0.5 1</diffuse>
@@ -65,7 +60,7 @@
     <!-- Camera for recording video inside of Gazebo environment -->
   <!-- <model name='camera'>
       <static>true</static>
-      <pose>-0.46 -0.55 1.92 0 0.064 0.786</pose>
+      <pose>0.6 -2.2 2 0 0.19 1.57</pose>
       <link name='link'>
         <visual name='visual'>
           <geometry>
@@ -74,15 +69,15 @@
             </box>
           </geometry>
         </visual>
-        <sensor name='camera_link' type='camera'>
+        <sensor name='camera' type='camera'>
           <camera>
-            <save enabled="false">
-              <path>/tmp/camera_save_tutorial</path>
+            <save enabled="true">
+              <path>/tmp/Gazebo_Videos</path>
             </save>
             <horizontal_fov>1.047</horizontal_fov>
             <image>
-              <width>1920</width>
-              <height>1080</height>
+              <width>640</width>
+              <height>540</height>
             </image>
             <clip>
               <near>0.1</near>
@@ -90,7 +85,7 @@
             </clip>
           </camera>
           <always_on>1</always_on>
-          <update_rate>1000</update_rate>
+          <update_rate>90</update_rate>
         </sensor>
       </link>
     </model> -->

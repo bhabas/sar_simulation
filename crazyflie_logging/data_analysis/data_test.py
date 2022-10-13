@@ -13,21 +13,30 @@ Vel = 2.5
 phi = 90
 trial = 2
 
-
-# fileName = "EM_PEPG--Vd_3.50--phi_60.00--trial_03.csv"
-# fileName = f"EM_PEPG--Vd_{Vel:.2f}--phi_{phi:.2f}--trial_{int(trial):02d}.csv"
-# fileName = "My_6.00_Calibration_Test-3.csv"
-fileName = "Control_Playground--trial_24--NL2.csv"
-trial = DataFile(dataPath,fileName,dataType='Sim')
-
 k_ep = 0
 k_run = 0
 
-x_d = trial.grab_stateData(k_ep,k_run,['x_d.x'])
-z_d = trial.grab_stateData(k_ep,k_run,['x_d.z'])
+fig = plt.figure()
+ax = fig.add_subplot(111)
+for ii in range(24,29):
 
-plt.figure()
-plt.plot(x_d,z_d)
+    fileName = f"Control_Playground--trial_{ii}--NL.csv"
+    trial = DataFile(dataPath,fileName,dataType='Exp')
+
+
+    if ii == 24:
+        x_d = trial.grab_stateData(k_ep,k_run,['x_d.x'])
+        z_d = trial.grab_stateData(k_ep,k_run,['x_d.z'])
+        ax.plot(x_d,z_d)
+
+    pos_x = trial.grab_stateData(k_ep,k_run,['x'])
+    pos_z = trial.grab_stateData(k_ep,k_run,['z'])
+
+
+    ax.plot(pos_x,pos_z)
+
+
+ax.grid()
 plt.show()
 
 # trial.plot_convg(saveFig=True)

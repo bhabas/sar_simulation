@@ -34,6 +34,7 @@ is easy to use.
 #include "crazyflie_msgs/activateSticky.h"
 #include "crazyflie_msgs/loggingCMD.h"
 #include "crazyflie_msgs/GenericLogData.h"
+#include "crazyflie_msgs/GTC_Cmd.h"
 
 #include "quatcompress.h"
 
@@ -68,13 +69,16 @@ class CF_DataConverter
             FlipData_Pub =  nh->advertise<crazyflie_msgs::CF_FlipData>("/CF_DC/FlipData",1);
             ImpactData_Pub = nh->advertise<crazyflie_msgs::CF_ImpactData>("/CF_DC/ImpactData",1);   
 
+
+
             // GAZEBO SERVICES
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
             Logging_Service = nh->advertiseService("/CF_DC/DataLogging", &CF_DataConverter::DataLogging_Callback, this);
 
-            CMD_Service_CF_DC = nh->advertiseService("/CF_DC/Cmd_CF_DC",&CF_DataConverter::CMD_CF_DC_Callback,this);
+            CMD_Service_CF_DC = nh->advertiseService("/CF_DC/Cmd_CF_DC",&CF_DataConverter::CMD_CF_DC_Callback,this); // Change to AGENT or ENV
             CMD_Service_Dashboard = nh->advertiseService("/CF_DC/Cmd_Dashboard",&CF_DataConverter::CMD_Dashboard_Callback,this);
             CMD_Client = nh->serviceClient<crazyflie_msgs::RLCmd>("/CTRL/Cmd_ctrl");
+            CMD_Pub = nh->advertise<crazyflie_msgs::GTC_Cmd>("/CF_DC/Cmd_CF_DC",1);
             
 
             
@@ -85,7 +89,7 @@ class CF_DataConverter
             Time_start = ros::Time::now();
 
 
-            BodyCollision_str = MODEL_NAME + "::crazyflie_BaseModel::crazyflie_body::body_collision";
+            BodyCollision_str = MODEL_NAME + "::crazyflie_Base_Model::crazyflie_body::body_collision";
 
             CF_DCThread = std::thread(&CF_DataConverter::MainLoop, this);
 
@@ -176,6 +180,7 @@ class CF_DataConverter
         ros::ServiceServer CMD_Service_CF_DC;
         ros::ServiceServer CMD_Service_Dashboard;
         ros::ServiceClient CMD_Client;
+        ros::Publisher CMD_Pub;
 
         // MESSAGES
         crazyflie_msgs::CF_StateData StateData_msg;
@@ -196,8 +201,11 @@ class CF_DataConverter
         // ===================
         //     ROS PARAMS
         // ===================
-
+        // ROS PARAMS
+        std::string CF_Type;
+        std::string CF_Config;
         std::string MODEL_NAME;
+
         std::string DATA_TYPE;
 
         // DEFAULT INERTIA VALUES FOR BASE CRAZYFLIE
@@ -230,6 +238,10 @@ class CF_DataConverter
         geometry_msgs::Pose Pose;
         geometry_msgs::Twist Twist;
         geometry_msgs::Vector3 Eul;
+
+        float Vel_mag = 0.0;
+        float Phi = 0.0;
+        float Alpha = 0.0;
 
         double Tau = 0.0;
         double OFx = 0.0;
@@ -375,6 +387,9 @@ void CF_DataConverter::log1_Callback(const crazyflie_msgs::GenericLogData::Const
     Twist.linear.x = vxy_arr[0];
     Twist.linear.y = vxy_arr[1];
     Twist.linear.z = log1_msg->values[3]*1e-3;
+    Vel_mag = sqrt(pow(Twist.linear.x,2)+pow(Twist.linear.y,2)+pow(Twist.linear.z,2));
+    Phi = atan2(Twist.linear.z,Twist.linear.x)*180/M_PI;
+    Alpha = atan2(Twist.linear.y,Twist.linear.x)*180/M_PI;
 
     // ORIENTATION
     float quat[4];
@@ -562,37 +577,45 @@ void CF_DataConverter::log5_Callback(const crazyflie_msgs::GenericLogData::Const
 void CF_DataConverter::LoadParams()
 {
 
+    ros::param::get("/QUAD_SETTINGS/CF_Type",CF_Type);
+    ros::param::get("/QUAD_SETTINGS/Config",CF_Config);
+    ros::param::get("/QUAD_SETTINGS/Policy_Type",POLICY_TYPE);
+
+    MODEL_NAME = "crazyflie_" + CF_Config;
+    CF_Type = "/CF_Type/" + CF_Type;
+    CF_Config = "/Config/" + CF_Config;
+    
     // COLLECT MODEL PARAMETERS
-    ros::param::get("/MODEL_NAME",MODEL_NAME);
-    ros::param::get("/CF_MASS",CF_MASS);
-    ros::param::get("/Ixx",Ixx);
-    ros::param::get("/Iyy",Iyy);
-    ros::param::get("/Izz",Izz);
-    ros::param::get("/POLICY_TYPE",POLICY_TYPE);
+    ros::param::get(CF_Type + CF_Config + "/Mass",CF_MASS);
+    ros::param::get(CF_Type + CF_Config + "/Ixx",Ixx);
+    ros::param::get(CF_Type + CF_Config + "/Iyy",Iyy);
+    ros::param::get(CF_Type + CF_Config + "/Izz",Izz);
 
     // DEBUG SETTINGS
     ros::param::get("/DATA_TYPE",DATA_TYPE);
-    ros::param::get("/SIM_SPEED",SIM_SPEED);
-    ros::param::get("/SIM_SLOWDOWN_SPEED",SIM_SLOWDOWN_SPEED);
-    ros::param::get("/LANDING_SLOWDOWN_FLAG",LANDING_SLOWDOWN_FLAG);
-    ros::param::get("/LOGGING_RATE",LOGGING_RATE);
-    ros::param::get("/CONSOLE_RATE",CONSOLE_RATE);
+    ros::param::get("/SIM_SETTINGS/Sim_Speed",SIM_SPEED);
+    ros::param::get("/SIM_SETTINGS/Sim_Slowdown_Speed",SIM_SLOWDOWN_SPEED);
+    ros::param::get("/SIM_SETTINGS/Landing_Slowdown_Flag",LANDING_SLOWDOWN_FLAG);
 
-    ros::param::get("P_kp_xy",P_kp_xy);
-    ros::param::get("P_kd_xy",P_kd_xy);
-    ros::param::get("P_ki_xy",P_ki_xy);
+    ros::param::get("/CF_DC_SETTINGS/Logging_Rate",LOGGING_RATE);
+    ros::param::get("/CF_DC_SETTINGS/Console_Rate",CONSOLE_RATE);
 
-    ros::param::get("P_kp_z",P_kp_z);
-    ros::param::get("P_kd_z",P_kd_z);
-    ros::param::get("P_ki_z",P_ki_z);
+    // COLLECT CTRL GAINS
+    ros::param::get(CF_Type + "/CtrlGains/P_kp_xy",P_kp_xy);
+    ros::param::get(CF_Type + "/CtrlGains/P_kd_xy",P_kd_xy);
+    ros::param::get(CF_Type + "/CtrlGains/P_ki_xy",P_ki_xy);
 
-    ros::param::get("R_kp_xy",R_kp_xy);
-    ros::param::get("R_kd_xy",R_kd_xy);
-    ros::param::get("R_ki_xy",R_ki_xy);
+    ros::param::get(CF_Type + "/CtrlGains/P_kp_z",P_kp_z);
+    ros::param::get(CF_Type + "/CtrlGains/P_kd_z",P_kd_z);
+    ros::param::get(CF_Type + "/CtrlGains/P_ki_z",P_ki_z);
+
+    ros::param::get(CF_Type + "/CtrlGains/R_kp_xy",R_kp_xy);
+    ros::param::get(CF_Type + "/CtrlGains/R_kd_xy",R_kd_xy);
+    ros::param::get(CF_Type + "/CtrlGains/R_ki_xy",R_ki_xy);
     
-    ros::param::get("R_kp_z",R_kp_z);
-    ros::param::get("R_kd_z",R_kd_z);
-    ros::param::get("R_ki_z",R_ki_z);
+    ros::param::get(CF_Type + "/CtrlGains/R_kp_z",R_kp_z);
+    ros::param::get(CF_Type + "/CtrlGains/R_kd_z",R_kd_z);
+    ros::param::get(CF_Type + "/CtrlGains/R_ki_z",R_ki_z);
 
     if(DATA_TYPE.compare("SIM") == 0)
     {

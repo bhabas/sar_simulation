@@ -1,6 +1,6 @@
 // CF HEADERS
 #include "controller_gtc.h"
-#include "NN_funcs.h"
+#include "ML_funcs.h"
 #include "CompressedStates.h"
 
 // =================================
@@ -87,9 +87,11 @@ struct vec stateEul = {0.0f,0.0f,0.0f}; // Pose in Euler Angles [YZX Notation]
 
 
 // INIT DESIRED STATES
-struct vec x_d = {0.0f,0.0f,0.4f}; // Pos-desired [m]
-struct vec v_d = {0.0f,0.0f,0.0f}; // Vel-desired [m/s]
-struct vec a_d = {0.0f,0.0f,0.0f}; // Acc-desired [m/s^2]
+struct vec x_d = {0.0f,0.0f,0.4f};      // Pos-desired [m]
+struct vec v_d = {0.0f,0.0f,0.0f};      // Vel-desired [m/s]
+struct vec a_d = {0.0f,0.0f,0.0f};      // Acc-desired [m/s^2]
+float yaw_d = 0.0f;
+struct vec b1_d = {1.0f,0.0f,0.0f};     // Desired body x-axis in global coord. [x,y,z]
 
 struct quat quat_d = {0.0f,0.0f,0.0f,1.0f}; // Orientation-desired [qx,qy,qz,qw]
 struct vec eul_d = {0.0f,0.0f,0.0f};        // Euler Angle-desired [rad? deg? TBD]
@@ -98,7 +100,6 @@ struct vec domega_d = {0.0f,0.0f,0.0f};     // Ang. Acc-desired [rad/s^2]
 
 struct vec M_d = {0.0f,0.0f,0.0f};   // Desired moment [N*m]
 
-static struct vec b1_d = {1.0f,0.0f,0.0f};    // Desired body x-axis in global coord. [x,y,z]
 static struct vec b2_d;    // Desired body y-axis in global coord.
 static struct vec b3_d;    // Desired body z-axis in global coord.
 static struct vec b3;      // Current body z-axis in global coord.
@@ -186,8 +187,8 @@ bool customPWM_flag = false;
 
 
 // DEFINE POLICY TYPE ACTIVATED
+PolicyType Policy = PARAM_OPTIM;
 
-char PolicyType[] = "PARAM_CONVG"; // Default to RL
 
 // ======================================
 //  RECORD SYSTEM STATES AT FLIP TRIGGER
@@ -245,8 +246,16 @@ SVM SVM_Policy_Flip;
 NN NN_Policy_Action;
 
 float Policy_Flip = 0.0f;  
+float Policy_Action = 0.0f;
 float Policy_Flip_tr = 0.0f;    // Output from OC_SVM
 float Policy_Action_tr = 0.0f;  // Output from NN
+
+// ===============================
+//  DEEP RL POLICY INITIALIZATION
+// ===============================
+static nml_mat* X;  // STATE MATRIX TO BE INPUT INTO NN
+NN NN_DeepRL;
+nml_mat* DeepRL_Output;
 
 void controllerGTCInit(void)
 {
@@ -259,12 +268,17 @@ void controllerGTCInit(void)
     NN_init(&NN_Policy_Action,NN_Params_Flip);
     OC_SVM_init(&SVM_Policy_Flip,SVM_Params);
 
+    // INIT DEEP RL NN POLICY
+    NN_init(&NN_DeepRL,NN_Params_DeepRL);
+    DeepRL_Output = nml_mat_new(2,1);
+
     consolePrintf("GTC Initiated\n");
 }
 
 void controllerGTCReset(void)
 {
     consolePrintf("GTC Reset\n");
+    consolePrintf("Policy_Type: %d\n",Policy);
 
     // RESET ERRORS
     e_PI = vzero();
@@ -278,6 +292,7 @@ void controllerGTCReset(void)
     x_d = mkvec(0.0f,0.0f,0.4f);
     v_d = mkvec(0.0f,0.0f,0.0f);
     a_d = mkvec(0.0f,0.0f,0.0f);
+    b1_d = mkvec(1.0f,0.0f,0.0f);
 
     // RESET SYSTEM FLAGS
     tumbled = false;
@@ -336,6 +351,7 @@ bool controllerGTCTest(void)
 
 void GTC_Command(setpoint_t *setpoint)
 {   
+    
     switch(setpoint->cmd_type){
         case 0: // Reset
             controllerGTCReset();
@@ -358,11 +374,14 @@ void GTC_Command(setpoint_t *setpoint)
             break;
 
 
-        // case 3: // Acceleration
-        //     a_d.x = setpoint->cmd_val1;
-        //     a_d.y = setpoint->cmd_val2;
-        //     a_d.z = setpoint->cmd_val3;
-        //     break;
+        case 3: // Yaw Angle
+
+            yaw_d = setpoint->cmd_val1*M_PI/180.0f;
+            b1_d.x = cosf(yaw_d); // Body x-axis
+            b1_d.y = sinf(yaw_d); // Body y-axis
+            b1_d.z = 0.0f;
+            
+            break;
 
         
 
@@ -477,25 +496,25 @@ void GTC_Command(setpoint_t *setpoint)
             
         
 
-        // case 10: // Custom Thrust Values
+        case 30: // Custom Thrust Values
 
-        //     customThrust_flag = true;
-        //     thrust_override[0] = setpoint->cmd_val1;
-        //     thrust_override[1] = setpoint->cmd_val2;
-        //     thrust_override[2] = setpoint->cmd_val3;
-        //     thrust_override[3] = setpoint->cmd_flag;
+            customThrust_flag = true;
+            thrust_override[0] = setpoint->cmd_val1;
+            thrust_override[1] = setpoint->cmd_val2;
+            thrust_override[2] = setpoint->cmd_val3;
+            thrust_override[3] = setpoint->cmd_flag;
 
-        //     break;
+            break;
 
-        // case 12: // Custom PWM Values
+        case 31: // Custom PWM Values
 
-        //     customPWM_flag = true;
-        //     PWM_override[0] = setpoint->cmd_val1;
-        //     PWM_override[1] = setpoint->cmd_val2;
-        //     PWM_override[2] = setpoint->cmd_val3;
-        //     PWM_override[3] = setpoint->cmd_flag;
+            customPWM_flag = true;
+            PWM_override[0] = setpoint->cmd_val1;
+            PWM_override[1] = setpoint->cmd_val2;
+            PWM_override[2] = setpoint->cmd_val3;
+            PWM_override[3] = setpoint->cmd_flag;
 
-        //     break;
+            break;
 
         
 
@@ -563,7 +582,7 @@ void point2point_Traj()
             float t = t_traj.idx[i];
 
     
-            if(t_traj.idx[i] <= T.idx[i] && T.idx[i] != 0.0) // SKIP CALC IF ALREADY AT END POSITION
+            if(t_traj.idx[i] <= T.idx[i] && T.idx[i] != 0.0f) // SKIP CALC IF ALREADY AT END POSITION
             {
                 // CALCULATE TIME SCALING VALUE S(t)
                 float s_t = (3*powf(t,2)/powf(T.idx[i],2) - 2*powf(t,3)/powf(T.idx[i],3));
@@ -596,22 +615,8 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                                         state_t *state,
                                         const uint32_t tick)
 {
-
-    if (RATE_DO_EXECUTE(RATE_500_HZ, tick)) {
-
-        if (setpoint->GTC_cmd_rec == true)
-        {
-            GTC_Command(setpoint);
-            setpoint->GTC_cmd_rec = false;
-        }
-
-        if(execute_vel_traj){
-            velocity_Traj();
-        }
-        else if(execute_P2P_traj){
-            point2point_Traj();
-        }
-
+    if (RATE_DO_EXECUTE(RATE_100_HZ,tick))
+    {
         if(camera_sensor_active == true)
         {
             Tau = sensors->Tau_est;
@@ -624,21 +629,18 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
             OFx = sensors->OFx;
             OFy = sensors->OFy;
         }
-        
-        d_ceil = sensors->d_ceil;
 
+        d_ceil = sensors->d_ceil;
         X->data[0][0] = Tau;
         X->data[1][0] = OFy;
         X->data[2][0] = d_ceil; // d_ceiling [m]
 
-        
-        controlOutput(state,sensors);
-        
         if(policy_armed_flag == true){ 
 
-            if (strcmp(PolicyType,"PARAM_OPTIM")==0)
-            {
-                if(Tau <= Tau_thr && onceFlag == false && state->velocity.z > 0.1){
+            switch(Policy){
+
+                case PARAM_OPTIM:
+                    if(Tau <= Tau_thr && onceFlag == false && state->velocity.z > 0.1){
                     onceFlag = true;
                     flip_flag = true;  
 
@@ -662,63 +664,113 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                     M_x_flip = M_d.x*1e3f;
                     M_y_flip = M_d.y*1e3f;
                     M_z_flip = M_d.z*1e3f;
-                }
+                    }
+                    
+                    break;
+
+                case SVL_POLICY:
+
+                    Policy_Flip = OC_SVM_predict(X,&SVM_Policy_Flip);
+                    if(Policy_Flip >= 0.00f && onceFlag == false)
+                    {   
+                        onceFlag = true;
+                        flip_flag = true;
+
+                        // UPDATE AND RECORD FLIP VALUES
+                        statePos_tr = statePos;
+                        stateVel_tr = stateVel;
+                        stateQuat_tr = stateQuat;
+                        stateOmega_tr = stateOmega;
+
+                        Tau_tr = Tau;
+                        OFx_tr = OFx;
+                        OFy_tr = OFy;
+                        d_ceil_tr = d_ceil;
+
+                        Policy_Flip_tr = Policy_Flip;
+                        Policy_Action_tr = NN_predict(X,&NN_Policy_Action);
+
+
+                        M_d.x = 0.0f;
+                        M_d.y = Policy_Action_tr*1e-3f;
+                        M_d.z = 0.0f;
+
+                        F_thrust_flip = 0.0;
+                        M_x_flip = M_d.x*1e3f;
+                        M_y_flip = M_d.y*1e3f;
+                        M_z_flip = M_d.z*1e3f;
+                    }
+
+                    break;
+
+                case DEEP_RL:
+
+                    NN_predict_DeepRL(X,DeepRL_Output,&NN_DeepRL);
+                    Policy_Flip = clamp(DeepRL_Output->data[0][0],-2,2);
+                    Policy_Action = DeepRL_Output->data[1][0];
+
+                    if(Policy_Flip >= 1.50f && Tau <= 0.4 && onceFlag == false)
+                    {
+                        onceFlag = true;
+                        flip_flag = true;
+
+                        // UPDATE AND RECORD FLIP VALUES
+                        statePos_tr = statePos;
+                        stateVel_tr = stateVel;
+                        stateQuat_tr = stateQuat;
+                        stateOmega_tr = stateOmega;
+
+                        Tau_tr = Tau;
+                        OFx_tr = OFx;
+                        OFy_tr = OFy;
+                        d_ceil_tr = d_ceil;
+
+                        Policy_Flip_tr = Policy_Flip;
+                        Policy_Action_tr = Policy_Action;
+
+
+                        M_d.x = 0.0f;
+                        M_d.y = -Policy_Action*1e-3f;
+                        M_d.z = 0.0f;
+
+                        F_thrust_flip = 0.0;
+                        M_x_flip = M_d.x*1e3f;
+                        M_y_flip = M_d.y*1e3f;
+                        M_z_flip = M_d.z*1e3f;
+
+                    }
+
+                    break;
+
             }
-            else if(strcmp(PolicyType,"SVL_POLICY")==0)
-            {
-                Policy_Flip = OC_SVM_predict(&SVM_Policy_Flip,X);
-
-                if(Policy_Flip >= 0.00f && onceFlag == false)
-                {   
-                    onceFlag = true;
-                    flip_flag = true;
-
-                    // UPDATE AND RECORD FLIP VALUES
-                    statePos_tr = statePos;
-                    stateVel_tr = stateVel;
-                    stateQuat_tr = stateQuat;
-                    stateOmega_tr = stateOmega;
-
-                    Tau_tr = Tau;
-                    OFx_tr = OFx;
-                    OFy_tr = OFy;
-                    d_ceil_tr = d_ceil;
-
-                    Policy_Flip_tr = Policy_Flip;
-                    Policy_Action_tr = NN_predict(X,&NN_Policy_Action);
-
-
-                    M_d.x = 0.0f;
-                    M_d.y = Policy_Action_tr*1e-3f;
-                    M_d.z = 0.0f;
-
-                    F_thrust_flip = 0.0;
-                    M_x_flip = M_d.x*1e3f;
-                    M_y_flip = M_d.y*1e3f;
-                    M_z_flip = M_d.z*1e3f;
-                }
-
-            }
-            else if(strcmp(PolicyType,"DEEP_RL")==0)
-            {
-                // printf("three\n");
-
-            }
-        
             
-            if(flip_flag == true)
-            {
-                // Doubling front motor values and zeroing back motors is
-                // equal to increasing front motors and decreasing back motors.
-                // This gives us the highest possible moment and avoids PWM cutoff issue
-                M = vscl(2.0f,M_d); 
-                F_thrust = 0.0f;
-            }
+            
+        }
+    }
+
+    if (RATE_DO_EXECUTE(RATE_500_HZ, tick)) {
+
+        if (setpoint->GTC_cmd_rec == true)
+        {
+            GTC_Command(setpoint);
+            setpoint->GTC_cmd_rec = false;
         }
 
+        if(execute_vel_traj){
+            velocity_Traj();
+        }
+        else if(execute_P2P_traj){
+            point2point_Traj();
+        }
 
-        if(moment_flag == true)
+        
+        controlOutput(state,sensors);
+
+        if(moment_flag == true || flip_flag == true)
         {
+            // Controller defaults to increase front motor & decrease back motors to flip
+            // Instead double front motors and set back motors to zero for desired body moment
+            // This gives same moment but avoids negative motor speeds
             F_thrust = 0.0f;
             M = vscl(2.0f,M_d);
         }
@@ -783,28 +835,31 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
             M3_pwm = thrust2PWM(M3_thrust);
             M4_pwm = thrust2PWM(M4_thrust);
         }
-  
+
 
         compressStates();
         compressSetpoints();
         compressFlipStates();
+
+        if(safeModeEnable)
+        {
+            motorsSetRatio(MOTOR_M1, 0);
+            motorsSetRatio(MOTOR_M2, 0);
+            motorsSetRatio(MOTOR_M3, 0);
+            motorsSetRatio(MOTOR_M4, 0);
+        }
+        else{
+            // SEND PWM VALUES TO MOTORS
+            motorsSetRatio(MOTOR_M1, M4_pwm);
+            motorsSetRatio(MOTOR_M2, M3_pwm);
+            motorsSetRatio(MOTOR_M3, M2_pwm);
+            motorsSetRatio(MOTOR_M4, M1_pwm);
+
+        }
+
     }
 
-    if(safeModeEnable)
-    {
-        motorsSetRatio(MOTOR_M1, 0);
-        motorsSetRatio(MOTOR_M2, 0);
-        motorsSetRatio(MOTOR_M3, 0);
-        motorsSetRatio(MOTOR_M4, 0);
-    }
-    else{
-        // SEND PWM VALUES TO MOTORS
-        motorsSetRatio(MOTOR_M1, M4_pwm);
-        motorsSetRatio(MOTOR_M2, M3_pwm);
-        motorsSetRatio(MOTOR_M3, M2_pwm);
-        motorsSetRatio(MOTOR_M4, M1_pwm);
-
-    }
+    
     
 
     
