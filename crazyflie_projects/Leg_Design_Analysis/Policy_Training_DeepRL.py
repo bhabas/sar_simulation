@@ -37,7 +37,7 @@ if __name__ == '__main__':
     # # LOAD DEEP RL MODEL
     # load_model_name = f"SAC--10_12-11:40--NL_0"
 
-    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Gazebo"
+    # log_dir = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/CF_Gazebo"
     # leg_config = "NL"
     # log_name = f"SAC--{current_time}--{leg_config}"
 
@@ -48,7 +48,7 @@ if __name__ == '__main__':
 
 
     ## CREATE NEW DEEP RL MODEL 
-    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Gazebo"
+    log_dir = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/CF_Gazebo"
     leg_config = "NL"
     log_name = f"SAC--{current_time}--{leg_config}"
     model = SAC(
