@@ -7,23 +7,23 @@ ENV_SETTINGS:
 
 QUAD_SETTINGS:
   CF_Type: "Standard"
-  Config: "Narrow_Long"
+  Config: "ExtraNarrow_Short"
   Cam_Sensor: False
 
-  # Policy_Type: "PARAM_OPTIM"
-  Policy_Type: "SVL_POLICY" 
+  Policy_Type: "PARAM_OPTIM"
+  # Policy_Type: "SVL_POLICY" 
   # Policy_Type: "DEEP_RL" 
 
 SIM_SETTINGS:
-  GUI_Flag: True
+  GUI_Flag: False
   Pause_Flag: False
-  Sim_Speed: 2.0
+  Sim_Speed: 2.5
   Sim_Slowdown_Speed: 0.4
   Landing_Slowdown_Flag: True
 
 CF_DC_SETTINGS:
   Console_Rate: 50 # [Hz]
-  Logging_Rate: 50 # [Hz]
+  Logging_Rate: 10 # [Hz]
 
 
 
