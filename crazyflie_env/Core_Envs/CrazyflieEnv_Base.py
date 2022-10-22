@@ -104,17 +104,8 @@ class CrazyflieEnv_Base():
 
         self.callService('/CF_DC/Cmd_CF_DC',srv,RLCmd)        
 
-    def callService(self,addr,srv,srv_type,retries=5):
-  
-        for retry in range(retries):
-            try:
-                service = rospy.ServiceProxy(addr, srv_type)
-                service(srv)
-                return True
-
-            except rospy.ServiceException as e:
-                print(f"[WARNING] {addr} service call failed (callService)")
-                print(f"[WARNING] {e}")
+    def callService(self,addr,srv,srv_type,retries=5): ## PLACEHOLDER CALL SERVICE FUNCTION
+        
 
         return False
 
