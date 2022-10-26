@@ -657,12 +657,12 @@ if __name__ == "__main__":
     np.random.seed(0)
 
     ## DESIGNATE FILE PATHS
-    model_initials = "NL_DR"
+    model_initials = "ES_DR"
     NN_Param_Path = f'{BASEPATH}/crazyflie_projects/Supervised_ML/Policy_Training/Info/NN_Layers_{model_initials}.h'
     SVM_Param_Path = f'{BASEPATH}/crazyflie_projects/Supervised_ML/Policy_Training/Info/SVM_Params_{model_initials}.h'
 
     FilePath = f"{BASEPATH}/crazyflie_projects/Supervised_ML/Data_Logs/"
-    FileName = "NL_LR_Trials.csv"
+    FileName = "ES_LR_Trials.csv"
 
     ## PRE-INITIALIZE MODELS
     NN_model = NN_Model()
@@ -719,7 +719,7 @@ if __name__ == "__main__":
     Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.0)
     # Policy.plotPolicyRegion(df_raw,PlotBoundry=True,iso_level=0.0)
     # Policy.plotPolicyRegion(df_raw,PlotBoundry=False,iso_level=0.0)
-    # Policy.plot_polar_smoothed(df_max)
+    Policy.plot_polar_smoothed(df_max)
     
     
     # dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"

@@ -7,7 +7,7 @@ ENV_SETTINGS:
 
 QUAD_SETTINGS:
   CF_Type: "Standard"
-  Config: "ExtraNarrow_Short"
+  Config: "Wide_Short"
   Cam_Sensor: False
 
   Policy_Type: "PARAM_OPTIM"
