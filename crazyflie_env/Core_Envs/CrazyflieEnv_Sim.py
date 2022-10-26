@@ -242,7 +242,15 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base):
 
                 return True
 
-            except rospy.ServiceException or rospy.ROSException as e:
+            except rospy.ServiceException as e:
+                print(f"[WARNING] {addr} service call failed (callService)")
+                print(f"[WARNING] {e}")
+                FailureModes[2] = False
+
+                self.Restart(FailureModes)
+                self.done = True
+
+            except rospy.exceptions.ROSException as e:
                 print(f"[WARNING] {addr} service call failed (callService)")
                 print(f"[WARNING] {e}")
                 FailureModes[2] = False
