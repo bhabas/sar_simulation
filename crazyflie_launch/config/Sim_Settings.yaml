@@ -1,9 +1,9 @@
 DATA_TYPE: "SIM"
 
 ENV_SETTINGS:
- Ceiling_Height: 2.1
- Surface_Name: "CeilingPlane_Large"
- Ground_Name: "GroundPlane_Desert_Physical"
+  Ceiling_Height: 2.1
+  Surface_Name: "CeilingPlane_Large"
+  Ground_Name: "GroundPlane_Desert_Physical"
 
 QUAD_SETTINGS:
   CF_Type: "Standard"

@@ -40,7 +40,7 @@ class CrazyflieEnv_Base():
 
 
         self.preInit_Values()
-        self.CMD_msg_Publisher = rospy.Publisher("/CF_DC/Cmd_CF_DC",GTC_Cmd)
+        # self.CMD_msg_Publisher = rospy.Publisher("/CF_DC/Cmd_CF_DC",GTC_Cmd)
 
         ## INIT ROS SUBSCRIBERS [Pub/Sampling Frequencies]
         # NOTE: Queue sizes=1 so that we are always looking at the most current data and 
@@ -105,14 +105,6 @@ class CrazyflieEnv_Base():
         srv.cmd_flag = cmd_flag
 
         self.callService('/CF_DC/Cmd_CF_DC',srv,RLCmd)    
-
-        msg = GTC_Cmd()
-        msg.cmd_type = cmd_dict[action]
-        msg.cmd_vals.x = cmd_vals[0]
-        msg.cmd_vals.y = cmd_vals[1]
-        msg.cmd_vals.z = cmd_vals[2]
-        msg.cmd_flag = cmd_flag
-        self.CMD_msg_Publisher.publish(msg)
 
     def callService(self,addr,srv,srv_type,retries=5): ## PLACEHOLDER CALL SERVICE FUNCTION
         
@@ -334,6 +326,9 @@ class CrazyflieEnv_Base():
 
         ## FLIP FLAGS
         self.flip_flag = FlipData_msg.flip_flag
+
+        self.Vx_flip = FlipData_msg.Twist_tr.linear.x
+        self.Vz_flip = FlipData_msg.Twist_tr.linear.z
 
     def CF_ImpactDataCallback(self,ImpactData_msg):
 

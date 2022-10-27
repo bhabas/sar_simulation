@@ -657,12 +657,12 @@ if __name__ == "__main__":
     np.random.seed(0)
 
     ## DESIGNATE FILE PATHS
-    model_initials = "ES_DR"
+    model_initials = "NL_DR"
     NN_Param_Path = f'{BASEPATH}/crazyflie_projects/Supervised_ML/Policy_Training/Info/NN_Layers_{model_initials}.h'
     SVM_Param_Path = f'{BASEPATH}/crazyflie_projects/Supervised_ML/Policy_Training/Info/SVM_Params_{model_initials}.h'
 
     FilePath = f"{BASEPATH}/crazyflie_projects/Supervised_ML/Data_Logs/"
-    FileName = "ES_LR_Trials.csv"
+    FileName = "NL_LR_Trials.csv"
 
     ## PRE-INITIALIZE MODELS
     NN_model = NN_Model()
@@ -712,20 +712,21 @@ if __name__ == "__main__":
 
     # ## TRAIN OC_SVM FLIP_CLASSIFICATION POLICY
     Policy.train_OC_SVM(X)
-    Policy.save_SVM_Params(SVM_Param_Path,FileName)
+    # Policy.save_SVM_Params(SVM_Param_Path,FileName)
     # print(Policy.OC_SVM_Predict(np.array([[0.233,-2.778,0.518]])))
 
 
-    Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.0)
+    # Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.0)
     # Policy.plotPolicyRegion(df_raw,PlotBoundry=True,iso_level=0.0)
     # Policy.plotPolicyRegion(df_raw,PlotBoundry=False,iso_level=0.0)
-    Policy.plot_polar_smoothed(df_max)
+    # Policy.plot_polar_smoothed(df_max)
     
-    
-    # dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
-    # fileName = "Control_Playground--trial_24--NL.csv"
-    # trial = DataFile(dataPath,fileName,dataType='SIM')
-    # k_ep = 0
-    # Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.00,PlotTraj=(trial,k_ep,0))
+    EXP_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging_exp'))
+
+    dataPath = f"{EXP_PATH}/crazyflie_logging_exp/local_logs/"
+    fileName = "SVL--NL_2.50_90.00_10-27_10:57" + ".csv"
+    trial = DataFile(dataPath,fileName,dataType='EXP')
+    k_ep = 0
+    Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.00,PlotTraj=(trial,k_ep,0))
 
 
