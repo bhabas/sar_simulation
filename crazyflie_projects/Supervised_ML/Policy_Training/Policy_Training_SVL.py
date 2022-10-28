@@ -724,7 +724,9 @@ if __name__ == "__main__":
     EXP_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging_exp'))
 
     dataPath = f"{EXP_PATH}/crazyflie_logging_exp/local_logs/"
-    fileName = "SVL--NL_2.50_90.00_10-27_10:57" + ".csv"
+    dataPath = f"{BASE_PATH}/crazyflie_projects/Supervised_ML/Data_Logs/SVL_Experimental_Data/"
+
+    fileName = "SVL--NL_2.50_40.00" + ".csv"
     trial = DataFile(dataPath,fileName,dataType='EXP')
     k_ep = 0
     Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.00,PlotTraj=(trial,k_ep,0))
