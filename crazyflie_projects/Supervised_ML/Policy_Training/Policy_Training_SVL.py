@@ -726,7 +726,7 @@ if __name__ == "__main__":
     dataPath = f"{EXP_PATH}/crazyflie_logging_exp/local_logs/"
     dataPath = f"{BASE_PATH}/crazyflie_projects/Supervised_ML/Data_Logs/SVL_Experimental_Data/"
 
-    fileName = "SVL--NL_2.50_90.00_10-27_10:57" + ".csv"
+    fileName = "SVL--NL_3.00_45.00_10-27_11:06" + ".csv"
     trial = DataFile(dataPath,fileName,dataType='EXP')
     k_ep = 0
     Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.00,PlotTraj=(trial,k_ep,0))
