@@ -9,15 +9,15 @@ BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
 sys.path.insert(1,'/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_env')
 sys.path.insert(1,BASE_PATH)
 
-from crazyflie_projects.Supervised_ML.Envs.CrazyflieEnv_ParamOpt import CrazyflieEnv_ParamOpt
-from crazyflie_projects.Supervised_ML.RL_Training_2_term_Policy import runTraining
-from crazyflie_projects.Supervised_ML.Agents.EPHE_Agent import EPHE_Agent
+from crazyflie_projects.SVL_Policy.Envs.CrazyflieEnv_ParamOpt import CrazyflieEnv_ParamOpt
+from crazyflie_projects.SVL_Policy.RL_Training_2_term_Policy import runTraining
+from crazyflie_projects.SVL_Policy.Agents.EPHE_Agent import EPHE_Agent
 
 
 if __name__ == '__main__':
 
     ## Home Test List
-    df = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/Supervised_ML/Data_Collection/MasterTestList.csv")
+    df = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/SVL_Policy/Data_Collection/MasterTestList.csv")
     arr = df.to_numpy()
     # arr = np.flip(arr,axis=0)
     

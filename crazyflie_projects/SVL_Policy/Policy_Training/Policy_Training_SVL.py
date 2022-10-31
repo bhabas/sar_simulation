@@ -53,7 +53,7 @@ class Policy_Trainer():
         self.scaler = preprocessing.StandardScaler().fit(X)
 
         ## SAVE SCALER TO FILE 
-        np.savetxt(f"{BASEPATH}/crazyflie_projects/Supervised_ML/Policy_Training/Info/Scaler_{self.model_initials}.csv",
+        np.savetxt(f"{BASEPATH}/crazyflie_projects/SVL_Policy/Policy_Training/Info/Scaler_{self.model_initials}.csv",
             np.stack((self.scaler.mean_,self.scaler.scale_),axis=1),
             fmt='%.5f',
             delimiter=',',
@@ -66,7 +66,7 @@ class Policy_Trainer():
         """        
         
         arr = np.loadtxt(
-            open(f"{BASEPATH}/crazyflie_projects/Supervised_ML/Policy_Training/Info/Scaler_{self.model_initials}.csv", "rb"),
+            open(f"{BASEPATH}/crazyflie_projects/SVL_Policy/Policy_Training/Info/Scaler_{self.model_initials}.csv", "rb"),
             delimiter=",",
             skiprows=1)
 
@@ -658,10 +658,10 @@ if __name__ == "__main__":
 
     ## DESIGNATE FILE PATHS
     model_initials = "NL_DR"
-    NN_Param_Path = f'{BASEPATH}/crazyflie_projects/Supervised_ML/Policy_Training/Info/NN_Layers_{model_initials}.h'
-    SVM_Param_Path = f'{BASEPATH}/crazyflie_projects/Supervised_ML/Policy_Training/Info/SVM_Params_{model_initials}.h'
+    NN_Param_Path = f'{BASEPATH}/crazyflie_projects/SVL_Policy/Policy_Training/Info/NN_Layers_{model_initials}.h'
+    SVM_Param_Path = f'{BASEPATH}/crazyflie_projects/SVL_Policy/Policy_Training/Info/SVM_Params_{model_initials}.h'
 
-    FilePath = f"{BASEPATH}/crazyflie_projects/Supervised_ML/Data_Logs/"
+    FilePath = f"{BASEPATH}/crazyflie_projects/SVL_Policy/Data_Logs/"
     FileName = "NL_LR_Trials.csv"
 
     ## PRE-INITIALIZE MODELS
@@ -724,7 +724,7 @@ if __name__ == "__main__":
     EXP_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging_exp'))
 
     dataPath = f"{EXP_PATH}/crazyflie_logging_exp/local_logs/"
-    dataPath = f"{BASE_PATH}/crazyflie_projects/Supervised_ML/Data_Logs/SVL_Experimental_Data/"
+    dataPath = f"{BASE_PATH}/crazyflie_projects/SVL_Policy/Data_Logs/SVL_Experimental_Data/"
 
     fileName = "SVL--NL_3.00_45.00_10-27_11:06" + ".csv"
     trial = DataFile(dataPath,fileName,dataType='EXP')

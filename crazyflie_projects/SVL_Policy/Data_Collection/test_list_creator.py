@@ -14,7 +14,7 @@ for V_d in np.linspace(1.5,3.5,21):    # [m/s]
 
 test_list = np.array(test_list)
 np.set_printoptions(suppress=True)
-np.savetxt(f"{BASE_PATH}/crazyflie_projects/Supervised_ML/Data_Collection/MasterTestList.csv", 
+np.savetxt(f"{BASE_PATH}/crazyflie_projects/SVL_Policy/Data_Collection/MasterTestList.csv", 
             np.asarray(test_list), 
             delimiter=",",
             fmt="%.2f",

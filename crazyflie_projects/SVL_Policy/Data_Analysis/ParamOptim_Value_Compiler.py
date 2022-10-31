@@ -17,7 +17,7 @@ from crazyflie_logging.data_analysis.Data_Analysis import DataFile
 
 
 dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/ES_Data"
-compiledPath = f"{BASE_PATH}/crazyflie_projects/Supervised_ML/Data_Logs"
+compiledPath = f"{BASE_PATH}/crazyflie_projects/SVL_Policy/Data_Logs"
 compiledName = "ES_LR_Trials.csv"
 
 df_list = []
