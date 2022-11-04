@@ -592,25 +592,25 @@ class Policy_Trainer():
         Theta = df.iloc[:]['phi_d']
         C = df.iloc[:]['LR_4Leg']
 
-        # SOMETHING ABOUT DEFINING A GRID
-        interp_factor = 20
-        ri = np.linspace(R.min(),R.max(),(len(C)//interp_factor))
-        thetai = np.linspace(Theta.min(),Theta.max(),(len(C)//interp_factor))
-        r_ig, theta_ig = np.meshgrid(ri, thetai)
-        zi = griddata((R, Theta), C, (ri[None,:], thetai[:,None]), method='linear')
-        zi = zi + 0.0001
+        ## DEFINE INTERPOLATION GRID
+        R_list = np.linspace(R.min(),R.max(),num=25,endpoint=True).reshape(1,-1)
+        Theta_list = np.linspace(Theta.min(),Theta.max(),num=25,endpoint=True).reshape(1,-1)
+        R_grid, Theta_grid = np.meshgrid(R_list, Theta_list)
+        
+        ## INTERPOLATE DATA
+        LR_interp = griddata((R, Theta), C, (R_list, Theta_list.T), method='linear',fill_value=1e-6)
         
 
         ## INIT PLOT INFO
         fig = plt.figure()
         ax = fig.add_subplot(projection='polar')
-        
-
         cmap = mpl.cm.jet
         norm = mpl.colors.Normalize(vmin=0,vmax=1)
         
-        ax.contourf(np.radians(theta_ig),r_ig,zi,cmap=cmap,norm=norm,levels=25)
-        ax.scatter(np.radians(Theta),R,c=C,cmap=cmap,norm=norm)
+        ax.contourf(np.radians(Theta_grid),R_grid,LR_interp,cmap=cmap,norm=norm,levels=30)
+        # ax.scatter(np.radians(Theta),R,c=C,cmap=cmap,norm=norm)
+        # ax.scatter(np.radians(Theta_grid).flatten(),R_grid.flatten(),c=LR_interp.flatten(),cmap=cmap,norm=norm)
+
         ax.set_thetamin(30)
         ax.set_thetamax(90)
         ax.set_rmin(0)
@@ -663,7 +663,7 @@ if __name__ == "__main__":
     SVM_Param_Path = f'{BASEPATH}/crazyflie_projects/SVL_Policy/Policy_Training/Info/SVM_Params_{model_initials}.h'
 
     FilePath = f"{BASEPATH}/crazyflie_projects/SVL_Policy/Data_Logs/"
-    FileName = "EL_LR_Trials.csv"
+    FileName = "NL_LR_Trials.csv"
 
     ## PRE-INITIALIZE MODELS
     NN_model = NN_Model()
