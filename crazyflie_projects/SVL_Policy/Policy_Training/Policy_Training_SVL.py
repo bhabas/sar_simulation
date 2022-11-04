@@ -607,9 +607,10 @@ class Policy_Trainer():
         
 
         cmap = mpl.cm.jet
-        norm = mpl.colors.Normalize(vmin=0.0,vmax=1)
+        norm = mpl.colors.Normalize(vmin=0,vmax=1)
         
         ax.contourf(np.radians(theta_ig),r_ig,zi,cmap=cmap,norm=norm,levels=25)
+        ax.scatter(np.radians(Theta),R,c=C,cmap=cmap,norm=norm)
         ax.set_thetamin(30)
         ax.set_thetamax(90)
         ax.set_rmin(0)
@@ -662,7 +663,7 @@ if __name__ == "__main__":
     SVM_Param_Path = f'{BASEPATH}/crazyflie_projects/SVL_Policy/Policy_Training/Info/SVM_Params_{model_initials}.h'
 
     FilePath = f"{BASEPATH}/crazyflie_projects/SVL_Policy/Data_Logs/"
-    FileName = "NL_LR_Trials.csv"
+    FileName = "EL_LR_Trials.csv"
 
     ## PRE-INITIALIZE MODELS
     NN_model = NN_Model()
@@ -711,7 +712,7 @@ if __name__ == "__main__":
     # print(Policy.NN_Predict(np.array([[0.233,-2.778,0.518]])))
 
     # ## TRAIN OC_SVM FLIP_CLASSIFICATION POLICY
-    Policy.train_OC_SVM(X)
+    # Policy.train_OC_SVM(X)
     # Policy.save_SVM_Params(SVM_Param_Path,FileName)
     # print(Policy.OC_SVM_Predict(np.array([[0.233,-2.778,0.518]])))
 
@@ -719,16 +720,16 @@ if __name__ == "__main__":
     # Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.0)
     # Policy.plotPolicyRegion(df_raw,PlotBoundry=True,iso_level=0.0)
     # Policy.plotPolicyRegion(df_raw,PlotBoundry=False,iso_level=0.0)
-    # Policy.plot_polar_smoothed(df_max)
+    Policy.plot_polar_smoothed(df_max)
     
     EXP_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging_exp'))
 
-    dataPath = f"{EXP_PATH}/crazyflie_logging_exp/local_logs/"
-    dataPath = f"{BASE_PATH}/crazyflie_projects/SVL_Policy/Data_Logs/SVL_Experimental_Data/"
+    # dataPath = f"{EXP_PATH}/crazyflie_logging_exp/local_logs/"
+    # dataPath = f"{BASE_PATH}/crazyflie_projects/SVL_Policy/Data_Logs/SVL_Experimental_Data/"
 
-    fileName = "SVL--NL_3.00_45.00_10-27_11:06" + ".csv"
-    trial = DataFile(dataPath,fileName,dataType='EXP')
-    k_ep = 0
-    Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.00,PlotTraj=(trial,k_ep,0))
+    # fileName = "SVL--NL_3.00_45.00_10-27_11:06" + ".csv"
+    # trial = DataFile(dataPath,fileName,dataType='EXP')
+    # k_ep = 0
+    # Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.00,PlotTraj=(trial,k_ep,0))
 
 

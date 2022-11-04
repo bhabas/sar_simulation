@@ -8,6 +8,7 @@ import pandas as pd
 import os
 import time
 import rospy
+import re
 
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg
@@ -16,9 +17,9 @@ sys.path.insert(0,BASE_PATH)
 from crazyflie_logging.data_analysis.Data_Analysis import DataFile
 
 
-dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/ES_Data"
+dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs"
 compiledPath = f"{BASE_PATH}/crazyflie_projects/SVL_Policy/Data_Logs"
-compiledName = "ES_LR_Trials.csv"
+compiledName = "NL_SVL_Policy_Trials.csv"
 
 df_list = []
 file_index = 0
@@ -56,7 +57,7 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
         
         ## TRIAL CONDITIONS
         vel_IC,phi_IC = trial.grab_vel_IC_2D_angle()
-        trial_num = int(fileName[-14:-12])
+        trial_num = int(re.split("trial_",fileName)[1][:2])
 
 
         vz_flip_mean,vz_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,'vz')
