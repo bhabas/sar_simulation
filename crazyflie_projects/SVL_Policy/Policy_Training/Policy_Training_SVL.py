@@ -585,48 +585,70 @@ class Policy_Trainer():
         )
         fig.show()
 
-    def plot_polar_smoothed(self,df,saveFig=False):
+    def plot_Landing_Rate(self,df,saveFig=False):
 
         ## COLLECT DATA
-        R = df.iloc[:]['vel_d']
-        Theta = df.iloc[:]['phi_d']
-        C = df.iloc[:]['LR_4Leg']
+        Vx = df.iloc[:]['Vx_flip_mean'].to_numpy()
+        Vz = df.iloc[:]['Vz_flip_mean'].to_numpy()
+        LR = df.iloc[:]['LR_4Leg'].to_numpy()
 
-        ## DEFINE INTERPOLATION GRID
-        R_list = np.linspace(R.min(),R.max(),num=25,endpoint=True).reshape(1,-1)
-        Theta_list = np.linspace(Theta.min(),Theta.max(),num=25,endpoint=True).reshape(1,-1)
-        R_grid, Theta_grid = np.meshgrid(R_list, Theta_list)
-        
-        ## INTERPOLATE DATA
-        LR_interp = griddata((R, Theta), C, (R_list, Theta_list.T), method='linear',fill_value=1e-6)
+        Vel_d = df.iloc[:]['Vel_d'].to_numpy()
+        Phi_d = df.iloc[:]['Phi_d'].to_numpy()
+
+        Vel_flip = df.iloc[:]['Vel_flip'].to_numpy()
+        Phi_flip = df.iloc[:]['Phi_flip'].to_numpy()
+
+
+        ## GENERATE INTERPOLATION GRID
+        Phi_list = np.linspace(20,90,50)
+        Vel_list = np.linspace(1.0,3.5,50)        
+        Phi_grid,Vel_grid = np.meshgrid(Phi_list,Vel_list)
+
+
+        ## NORMALIZE DATA BEFORE INTERPOLATION (ALWAYS NORMALIZE!!!)
+        def normalize(data,xmin,xmax):
+            data = data.astype(np.float64)
+            return (data-xmin)/(xmax-xmin)
+
+        Phi_min,Phi_max = Phi_flip.min(),Phi_flip.max()
+        Vel_min,Vel_max = Vel_flip.min(),Vel_flip.max()
+
+        Phi_norm = normalize(Phi_flip,Phi_min,Phi_max)
+        Vel_norm = normalize(Vel_flip,Vel_min,Vel_max)
+
+        Phi_grid_norm = normalize(Phi_grid,Phi_min,Phi_max)
+        Vel_grid_norm = normalize(Vel_grid,Vel_min,Vel_max)
         
 
-        ## INIT PLOT INFO
-        fig = plt.figure()
-        ax = fig.add_subplot(projection='polar')
+        ## INTERPOLATE VALUES
+        interp_grid = (Phi_grid_norm, Vel_grid_norm)    # Interpolation grid
+        points = np.array((Phi_norm,Vel_norm)).T        # Known data points
+        values = LR                                     # Known data values
+        LR_interp = griddata(points, values, interp_grid, method='linear')
+
+
+        ## PLOT DATA
+        fig = plt.figure(figsize=(4,4))
+
         cmap = mpl.cm.jet
         norm = mpl.colors.Normalize(vmin=0,vmax=1)
-        
-        ax.contourf(np.radians(Theta_grid),R_grid,LR_interp,cmap=cmap,norm=norm,levels=30)
-        # ax.scatter(np.radians(Theta),R,c=C,cmap=cmap,norm=norm)
-        # ax.scatter(np.radians(Theta_grid).flatten(),R_grid.flatten(),c=LR_interp.flatten(),cmap=cmap,norm=norm)
 
+        ax = fig.add_subplot(projection='polar')
+        ax.contourf(np.radians(Phi_grid),Vel_grid,LR_interp,levels=30,cmap=cmap,norm=norm)
+        # ax.scatter(np.radians(Phi_grid.flatten()),Vel_grid.flatten(),c=grid_z0.flatten(),cmap=cmap,norm=norm)
+        # ax.scatter(np.radians(Phi_flip),Vel_flip,c=C,cmap=cmap,norm=norm)
         ax.set_thetamin(30)
         ax.set_thetamax(90)
         ax.set_rmin(0)
         ax.set_rmax(3.5)
-        
 
+        ax.set_xticks(np.radians([30,45,60,75,90]))
+        ax.set_yticks([0,1.0,2.0,3.0,3.5])
 
-        ## AXIS LABELS    
-        ax.text(np.radians(7.5),2,'Flight Velocity (m/s)',
-            rotation=18,ha='center',va='center')
-
-        ax.text(np.radians(60),4.5,'Flight Angle (deg)',
-            rotation=0,ha='left',va='center')
-
-        if saveFig==True:
-            plt.savefig(f'{"NL"}_Polar_LR.pdf',dpi=300)
+        plt.show()
+ 
+        # if saveFig==True:
+        #     plt.savefig(f'{self.model_initials}_Polar_LR.pdf',dpi=300)
 
         plt.show()
 
@@ -657,13 +679,17 @@ if __name__ == "__main__":
     torch.manual_seed(0)
     np.random.seed(0)
 
+
+
     ## DESIGNATE FILE PATHS
-    model_initials = "NL_DR"
+    FileName = "NL_LR_Trials3.csv"
+    # FileName = "NL_SVL_Policy_Trials.csv"
+    model_initials = FileName[:2]
     NN_Param_Path = f'{BASEPATH}/crazyflie_projects/SVL_Policy/Policy_Training/Info/NN_Layers_{model_initials}.h'
     SVM_Param_Path = f'{BASEPATH}/crazyflie_projects/SVL_Policy/Policy_Training/Info/SVM_Params_{model_initials}.h'
 
     FilePath = f"{BASEPATH}/crazyflie_projects/SVL_Policy/Data_Logs/"
-    FileName = "NL_LR_Trials.csv"
+    
 
     ## PRE-INITIALIZE MODELS
     NN_model = NN_Model()
@@ -678,7 +704,7 @@ if __name__ == "__main__":
     df_train = df_raw.query("LR_4Leg >= 0.8")
 
     ## MAX LANDING RATE DATAFRAME
-    idx = df_raw.groupby(['vel_d','phi_d'])['LR_4Leg'].transform(max) == df_raw['LR_4Leg']
+    idx = df_raw.groupby(['Vel_d','Phi_d'])['LR_4Leg'].transform(max) == df_raw['LR_4Leg']
     df_max = df_raw[idx].reset_index()
 
     ## ORGANIZE DATA
@@ -720,7 +746,7 @@ if __name__ == "__main__":
     # Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.0)
     # Policy.plotPolicyRegion(df_raw,PlotBoundry=True,iso_level=0.0)
     # Policy.plotPolicyRegion(df_raw,PlotBoundry=False,iso_level=0.0)
-    Policy.plot_polar_smoothed(df_max)
+    Policy.plot_Landing_Rate(df_max,saveFig=True)
     
     EXP_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging_exp'))
 
