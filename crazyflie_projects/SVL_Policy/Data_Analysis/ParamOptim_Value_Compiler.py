@@ -16,10 +16,10 @@ BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
 sys.path.insert(0,BASE_PATH)
 from crazyflie_logging.data_analysis.Data_Analysis import DataFile
 
-
-dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs"
+Initials = "NL"
+dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/NL_SVL_Policy_Trials"
 compiledPath = f"{BASE_PATH}/crazyflie_projects/SVL_Policy/Data_Logs"
-compiledName = "NL_LR_Trials3.csv"
+compiledName = f"{Initials}_SVL_LR_Trials.csv"
 
 filePath = os.path.join(compiledPath,compiledName)
 
@@ -109,38 +109,10 @@ for ii,fileName in enumerate(sorted(os.listdir(dataPath))): # Iter over all file
                 mu,sigma,
             ])
 
-        # df_list.append((
-        #     Vel_IC, Phi_IC, Trial_num,
-        #     landing_rate_4leg,
-
-        #     Vel_flip,Phi_flip,
-
-        #     Tau_flip_mean,
-        #     OFy_flip_mean,
-        #     D_ceil_flip_mean,
-        #     My_mean,
-
-        #     Vz_flip_mean,
-        #     Vx_flip_mean,
-
-        #     mu,sigma,
-        # ))
-
-
-
-
     except:
         print(f"[EXCEPTION] FileName: {fileName} Skipping File")
         continue
 
     end_time = time.time()
     
-
-
-# # master_df = master_df.round(4)
-# # master_df[['Vel_d','Phi_d','Trial_num']] = master_df[['Vel_d','Phi_d','Trial_num']].round(2)
-# # master_df.sort_values(['Vel_d','Phi_d','Trial_num'],ascending=[1,1,1],inplace=True)
-# # master_df.to_csv(f'{compiledPath}/{compiledName}',index=False,mode='w',header=True)
-
-
 

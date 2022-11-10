@@ -588,20 +588,14 @@ class Policy_Trainer():
     def plot_Landing_Rate(self,df,saveFig=False):
 
         ## COLLECT DATA
-        Vx = df.iloc[:]['Vx_flip_mean'].to_numpy()
-        Vz = df.iloc[:]['Vz_flip_mean'].to_numpy()
-        LR = df.iloc[:]['LR_4Leg'].to_numpy()
-
-        Vel_d = df.iloc[:]['Vel_d'].to_numpy()
-        Phi_d = df.iloc[:]['Phi_d'].to_numpy()
-
         Vel_flip = df.iloc[:]['Vel_flip'].to_numpy()
         Phi_flip = df.iloc[:]['Phi_flip'].to_numpy()
+        LR = df.iloc[:]['LR_4Leg'].to_numpy()
 
 
         ## GENERATE INTERPOLATION GRID
-        Phi_list = np.linspace(20,90,50)
-        Vel_list = np.linspace(1.0,3.5,50)        
+        Phi_list = np.linspace(30,90,50)
+        Vel_list = np.linspace(1.5,3.5,50)        
         Phi_grid,Vel_grid = np.meshgrid(Phi_list,Vel_list)
 
 
@@ -624,7 +618,7 @@ class Policy_Trainer():
         interp_grid = (Phi_grid_norm, Vel_grid_norm)    # Interpolation grid
         points = np.array((Phi_norm,Vel_norm)).T        # Known data points
         values = LR                                     # Known data values
-        LR_interp = griddata(points, values, interp_grid, method='linear')
+        LR_interp = griddata(points, values, interp_grid, method='linear',fill_value=0.0)
 
 
         ## PLOT DATA
@@ -635,8 +629,9 @@ class Policy_Trainer():
 
         ax = fig.add_subplot(projection='polar')
         ax.contourf(np.radians(Phi_grid),Vel_grid,LR_interp,levels=30,cmap=cmap,norm=norm)
-        # ax.scatter(np.radians(Phi_grid.flatten()),Vel_grid.flatten(),c=grid_z0.flatten(),cmap=cmap,norm=norm)
-        # ax.scatter(np.radians(Phi_flip),Vel_flip,c=C,cmap=cmap,norm=norm)
+        # ax.scatter(np.radians(Phi_grid.flatten()),Vel_grid.flatten(),c=LR_interp.flatten(),cmap=cmap,norm=norm)
+        # ax.scatter(np.radians(Phi_flip),Vel_flip,c=LR,cmap=cmap,norm=norm)
+
         ax.set_thetamin(30)
         ax.set_thetamax(90)
         ax.set_rmin(0)
@@ -644,13 +639,11 @@ class Policy_Trainer():
 
         ax.set_xticks(np.radians([30,45,60,75,90]))
         ax.set_yticks([0,1.0,2.0,3.0,3.5])
-
-        plt.show()
  
-        # if saveFig==True:
-        #     plt.savefig(f'{self.model_initials}_Polar_LR.pdf',dpi=300)
+        if saveFig==True:
+            plt.savefig(f'{self.model_initials}_Polar_LR.pdf',dpi=300)
 
-        plt.show()
+        # plt.show()
 
 ## DEFINE NN MODEL
 class NN_Model(nn.Module):
@@ -682,8 +675,8 @@ if __name__ == "__main__":
 
 
     ## DESIGNATE FILE PATHS
-    FileName = "NL_LR_Trials3.csv"
-    # FileName = "NL_SVL_Policy_Trials.csv"
+    FileName = "NL_LR_Trials.csv"
+    FileName = "NL_SVL_LR_Trials.csv"
     model_initials = FileName[:2]
     NN_Param_Path = f'{BASEPATH}/crazyflie_projects/SVL_Policy/Policy_Training/Info/NN_Layers_{model_initials}.h'
     SVM_Param_Path = f'{BASEPATH}/crazyflie_projects/SVL_Policy/Policy_Training/Info/SVM_Params_{model_initials}.h'
