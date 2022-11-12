@@ -612,18 +612,18 @@ class DataFile:
             ## RECORD LANDING CONDITIONS
             leg_contacts,_,body_impact = self.landing_conditions(k_ep, k_run)
 
-            if leg_contacts >= 3: 
+            if leg_contacts >= 3 and not body_impact: 
                 four_leg_landing += 1
 
-            elif leg_contacts == 2:
+            elif leg_contacts == 2 and not body_impact:
                 two_leg_landing += 1
 
             contact_list.append(leg_contacts)
 
         ## CALC LANDING PERCENTAGE
-        landing_rate_4leg = four_leg_landing/(N*self.n_rollouts)
-        landing_rate_2leg = two_leg_landing/(N*self.n_rollouts)
-        contact_rate = (four_leg_landing + two_leg_landing)/(N*self.n_rollouts)
+        landing_rate_4leg = np.round(four_leg_landing/(N*self.n_rollouts),2)
+        landing_rate_2leg = np.round(two_leg_landing/(N*self.n_rollouts),2)
+        contact_rate = np.round((four_leg_landing + two_leg_landing)/(N*self.n_rollouts),2)
         
 
         return landing_rate_4leg,landing_rate_2leg,contact_rate,np.array(contact_list)
@@ -649,7 +649,7 @@ class DataFile:
         trial_std = np.nanstd(var_list)
         trial_arr = var_list
 
-        return trial_mean,trial_std,trial_arr
+        return np.round(trial_mean,3),trial_std,trial_arr
     
             
 

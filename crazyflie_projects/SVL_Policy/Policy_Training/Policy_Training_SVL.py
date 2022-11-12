@@ -585,49 +585,65 @@ class Policy_Trainer():
         )
         fig.show()
 
-    def plot_polar_smoothed(self,df,saveFig=False):
+    def plot_Landing_Rate(self,df,saveFig=False):
 
         ## COLLECT DATA
-        R = df.iloc[:]['vel_d']
-        Theta = df.iloc[:]['phi_d']
-        C = df.iloc[:]['LR_4Leg']
+        Vel_flip = df.iloc[:]['Vel_flip'].to_numpy()
+        Phi_flip = df.iloc[:]['Phi_flip'].to_numpy()
+        LR = df.iloc[:]['LR_4Leg'].to_numpy()
 
-        # SOMETHING ABOUT DEFINING A GRID
-        interp_factor = 20
-        ri = np.linspace(R.min(),R.max(),(len(C)//interp_factor))
-        thetai = np.linspace(Theta.min(),Theta.max(),(len(C)//interp_factor))
-        r_ig, theta_ig = np.meshgrid(ri, thetai)
-        zi = griddata((R, Theta), C, (ri[None,:], thetai[:,None]), method='linear')
-        zi = zi + 0.0001
+
+        ## GENERATE INTERPOLATION GRID
+        Phi_list = np.linspace(20,90,50)
+        Vel_list = np.linspace(1.5,4.0,50)        
+        Phi_grid,Vel_grid = np.meshgrid(Phi_list,Vel_list)
+
+
+        ## NORMALIZE DATA BEFORE INTERPOLATION (ALWAYS NORMALIZE!!!)
+        def normalize(data,xmin,xmax):
+            data = data.astype(np.float64)
+            return (data-xmin)/(xmax-xmin)
+
+        Phi_min,Phi_max = Phi_flip.min(),Phi_flip.max()
+        Vel_min,Vel_max = Vel_flip.min(),Vel_flip.max()
+
+        Phi_norm = normalize(Phi_flip,Phi_min,Phi_max)
+        Vel_norm = normalize(Vel_flip,Vel_min,Vel_max)
+
+        Phi_grid_norm = normalize(Phi_grid,Phi_min,Phi_max)
+        Vel_grid_norm = normalize(Vel_grid,Vel_min,Vel_max)
         
 
-        ## INIT PLOT INFO
-        fig = plt.figure()
-        ax = fig.add_subplot(projection='polar')
-        
+        ## INTERPOLATE VALUES
+        interp_grid = (Phi_grid_norm, Vel_grid_norm)    # Interpolation grid
+        points = np.array((Phi_norm,Vel_norm)).T        # Known data points
+        values = LR                                     # Known data values
+        LR_interp = griddata(points, values, interp_grid, method='linear')
+
+
+        ## PLOT DATA
+        fig = plt.figure(figsize=(4,4))
 
         cmap = mpl.cm.jet
-        norm = mpl.colors.Normalize(vmin=0.0,vmax=1)
-        
-        ax.contourf(np.radians(theta_ig),r_ig,zi,cmap=cmap,norm=norm,levels=25)
-        ax.set_thetamin(30)
+        norm = mpl.colors.Normalize(vmin=0,vmax=1)
+
+        ax = fig.add_subplot(projection='polar')
+        ax.contourf(np.radians(Phi_grid),Vel_grid,LR_interp,levels=30,cmap=cmap,norm=norm)
+        # ax.scatter(np.radians(Phi_grid.flatten()),Vel_grid.flatten(),c=LR_interp.flatten(),cmap=cmap,norm=norm)
+        # ax.scatter(np.radians(Phi_flip),Vel_flip,c=LR,cmap=cmap,norm=norm)
+
+        ax.set_thetamin(20)
         ax.set_thetamax(90)
         ax.set_rmin(0)
         ax.set_rmax(3.5)
-        
 
-
-        ## AXIS LABELS    
-        ax.text(np.radians(7.5),2,'Flight Velocity (m/s)',
-            rotation=18,ha='center',va='center')
-
-        ax.text(np.radians(60),4.5,'Flight Angle (deg)',
-            rotation=0,ha='left',va='center')
-
+        ax.set_xticks(np.radians([20,30,45,60,75,90]))
+        ax.set_yticks([0,1.0,2.0,3.0,3.5])
+        # plt.show()
+ 
         if saveFig==True:
-            plt.savefig(f'{"NL"}_Polar_LR.pdf',dpi=300)
+            plt.savefig(f'{self.model_initials}_Polar_LR.png',dpi=300)
 
-        plt.show()
 
 ## DEFINE NN MODEL
 class NN_Model(nn.Module):
@@ -656,13 +672,18 @@ if __name__ == "__main__":
     torch.manual_seed(0)
     np.random.seed(0)
 
+
+
     ## DESIGNATE FILE PATHS
-    model_initials = "NL_DR"
+    FileName = "NL_LR_Trials.csv"
+    FileName = "NL_SVL_LR_Trials.csv"
+    FileName = "DeepRL_NL_LR.csv"
+    model_initials = FileName[:2]
     NN_Param_Path = f'{BASEPATH}/crazyflie_projects/SVL_Policy/Policy_Training/Info/NN_Layers_{model_initials}.h'
     SVM_Param_Path = f'{BASEPATH}/crazyflie_projects/SVL_Policy/Policy_Training/Info/SVM_Params_{model_initials}.h'
 
     FilePath = f"{BASEPATH}/crazyflie_projects/SVL_Policy/Data_Logs/"
-    FileName = "NL_LR_Trials.csv"
+    
 
     ## PRE-INITIALIZE MODELS
     NN_model = NN_Model()
@@ -677,7 +698,7 @@ if __name__ == "__main__":
     df_train = df_raw.query("LR_4Leg >= 0.8")
 
     ## MAX LANDING RATE DATAFRAME
-    idx = df_raw.groupby(['vel_d','phi_d'])['LR_4Leg'].transform(max) == df_raw['LR_4Leg']
+    idx = df_raw.groupby(['Vel_d','Phi_d'])['LR_4Leg'].transform(max) == df_raw['LR_4Leg']
     df_max = df_raw[idx].reset_index()
 
     ## ORGANIZE DATA
@@ -711,7 +732,7 @@ if __name__ == "__main__":
     # print(Policy.NN_Predict(np.array([[0.233,-2.778,0.518]])))
 
     # ## TRAIN OC_SVM FLIP_CLASSIFICATION POLICY
-    Policy.train_OC_SVM(X)
+    # Policy.train_OC_SVM(X)
     # Policy.save_SVM_Params(SVM_Param_Path,FileName)
     # print(Policy.OC_SVM_Predict(np.array([[0.233,-2.778,0.518]])))
 
@@ -719,16 +740,16 @@ if __name__ == "__main__":
     # Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.0)
     # Policy.plotPolicyRegion(df_raw,PlotBoundry=True,iso_level=0.0)
     # Policy.plotPolicyRegion(df_raw,PlotBoundry=False,iso_level=0.0)
-    # Policy.plot_polar_smoothed(df_max)
+    Policy.plot_Landing_Rate(df_max,saveFig=True)
     
     EXP_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging_exp'))
 
-    dataPath = f"{EXP_PATH}/crazyflie_logging_exp/local_logs/"
-    dataPath = f"{BASE_PATH}/crazyflie_projects/SVL_Policy/Data_Logs/SVL_Experimental_Data/"
+    # dataPath = f"{EXP_PATH}/crazyflie_logging_exp/local_logs/"
+    # dataPath = f"{BASE_PATH}/crazyflie_projects/SVL_Policy/Data_Logs/SVL_Experimental_Data/"
 
-    fileName = "SVL--NL_3.00_45.00_10-27_11:06" + ".csv"
-    trial = DataFile(dataPath,fileName,dataType='EXP')
-    k_ep = 0
-    Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.00,PlotTraj=(trial,k_ep,0))
+    # fileName = "SVL--NL_3.00_45.00_10-27_11:06" + ".csv"
+    # trial = DataFile(dataPath,fileName,dataType='EXP')
+    # k_ep = 0
+    # Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.00,PlotTraj=(trial,k_ep,0))
 
 
