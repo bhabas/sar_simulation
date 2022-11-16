@@ -16,10 +16,10 @@ BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
 sys.path.insert(0,BASE_PATH)
 from crazyflie_logging.data_analysis.Data_Analysis import DataFile
 
-Initials = "NL"
-dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/NL_SVL_Policy_Trials"
+Initials = "ES"
+dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/{Initials}_Data"
 compiledPath = f"{BASE_PATH}/crazyflie_projects/SVL_Policy/Data_Logs"
-compiledName = f"{Initials}_SVL_LR_Trials.csv"
+compiledName = f"{Initials}_LR_Trials2.csv"
 
 filePath = os.path.join(compiledPath,compiledName)
 

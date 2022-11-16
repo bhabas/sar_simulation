@@ -618,7 +618,7 @@ class Policy_Trainer():
         interp_grid = (Phi_grid_norm, Vel_grid_norm)    # Interpolation grid
         points = np.array((Phi_norm,Vel_norm)).T        # Known data points
         values = LR                                     # Known data values
-        LR_interp = griddata(points, values, interp_grid, method='linear')
+        LR_interp = griddata(points, values, interp_grid, method='linear',fill_value=0.0)
 
 
         ## PLOT DATA
@@ -632,17 +632,17 @@ class Policy_Trainer():
         # ax.scatter(np.radians(Phi_grid.flatten()),Vel_grid.flatten(),c=LR_interp.flatten(),cmap=cmap,norm=norm)
         # ax.scatter(np.radians(Phi_flip),Vel_flip,c=LR,cmap=cmap,norm=norm)
 
-        ax.set_thetamin(20)
+        ax.set_thetamin(30)
         ax.set_thetamax(90)
         ax.set_rmin(0)
         ax.set_rmax(3.5)
 
-        ax.set_xticks(np.radians([20,30,45,60,75,90]))
+        ax.set_xticks(np.radians([30,45,60,75,90]))
         ax.set_yticks([0,1.0,2.0,3.0,3.5])
         # plt.show()
  
         if saveFig==True:
-            plt.savefig(f'{self.model_initials}_Polar_LR.png',dpi=300)
+            plt.savefig(f'{self.model_initials}_Polar_LR.pdf',dpi=300)
 
 
 ## DEFINE NN MODEL
@@ -675,9 +675,9 @@ if __name__ == "__main__":
 
 
     ## DESIGNATE FILE PATHS
-    FileName = "NL_LR_Trials.csv"
-    FileName = "NL_SVL_LR_Trials.csv"
-    FileName = "DeepRL_NL_LR.csv"
+    FileName = "ES_LR_Trials.csv"
+    # FileName = "NL_SVL_LR_Trials.csv"
+    # FileName = "DeepRL_NL_LR.csv"
     model_initials = FileName[:2]
     NN_Param_Path = f'{BASEPATH}/crazyflie_projects/SVL_Policy/Policy_Training/Info/NN_Layers_{model_initials}.h'
     SVM_Param_Path = f'{BASEPATH}/crazyflie_projects/SVL_Policy/Policy_Training/Info/SVM_Params_{model_initials}.h'
