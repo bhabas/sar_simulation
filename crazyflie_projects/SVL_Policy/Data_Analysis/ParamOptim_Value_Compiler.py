@@ -17,9 +17,9 @@ sys.path.insert(0,BASE_PATH)
 from crazyflie_logging.data_analysis.Data_Analysis import DataFile
 
 Initials = "NL"
-dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/{Initials}_SVL_Data"
+dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/NL_NDR_Data"
 compiledPath = f"{BASE_PATH}/crazyflie_projects/SVL_Policy/Data_Logs"
-compiledName = f"{Initials}_LR_Trials2_SVL.csv"
+compiledName = f"{Initials}_LR_Trials_NDR.csv"
 
 filePath = os.path.join(compiledPath,compiledName)
 

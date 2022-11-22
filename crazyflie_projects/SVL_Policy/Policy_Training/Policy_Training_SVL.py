@@ -639,7 +639,7 @@ class Policy_Trainer():
 
         ax.set_xticks(np.radians([30,45,60,75,90]))
         ax.set_yticks([0,1.0,2.0,3.0,3.5])
-        # plt.show()
+        plt.show()
  
         if saveFig==True:
             plt.savefig(f'{self.model_initials}_Polar_LR.pdf',dpi=300)
@@ -675,7 +675,7 @@ if __name__ == "__main__":
 
 
     ## DESIGNATE FILE PATHS
-    FileName = "ES_LR_Trials.csv"
+    FileName = "NL_LR_Trials_NDR.csv"
     # FileName = "NL_SVL_LR_Trials.csv"
     # FileName = "DeepRL_NL_LR.csv"
     model_initials = FileName[:2]
@@ -731,16 +731,16 @@ if __name__ == "__main__":
     # Policy.load_NN_Params(NN_Param_Path)
     # print(Policy.NN_Predict(np.array([[0.233,-2.778,0.518]])))
 
-    # ## TRAIN OC_SVM FLIP_CLASSIFICATION POLICY
-    # Policy.train_OC_SVM(X)
-    # Policy.save_SVM_Params(SVM_Param_Path,FileName)
-    # print(Policy.OC_SVM_Predict(np.array([[0.233,-2.778,0.518]])))
+    ## TRAIN OC_SVM FLIP_CLASSIFICATION POLICY
+    Policy.train_OC_SVM(X)
+    Policy.save_SVM_Params(SVM_Param_Path,FileName)
+    print(Policy.OC_SVM_Predict(np.array([[0.233,-2.778,0.518]])))
 
 
     # Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.0)
     # Policy.plotPolicyRegion(df_raw,PlotBoundry=True,iso_level=0.0)
-    # Policy.plotPolicyRegion(df_raw,PlotBoundry=False,iso_level=0.0)
-    Policy.plot_Landing_Rate(df_max,saveFig=True)
+    Policy.plotPolicyRegion(df_raw,PlotBoundry=False,iso_level=0.0)
+    # Policy.plot_Landing_Rate(df_max,saveFig=False)
     
     EXP_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging_exp'))
 
