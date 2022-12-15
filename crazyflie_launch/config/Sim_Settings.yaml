@@ -7,7 +7,7 @@ ENV_SETTINGS:
 
 QUAD_SETTINGS:
   CF_Type: "Standard"
-  Config: "Wide_Long"
+  Config: "Narrow_Long"
   Cam_Sensor: False
 
   Policy_Type: "PARAM_OPTIM"
@@ -15,9 +15,9 @@ QUAD_SETTINGS:
   # Policy_Type: "DEEP_RL" 
 
 SIM_SETTINGS:
-  GUI_Flag: False
+  GUI_Flag: True
   Pause_Flag: False
-  Sim_Speed: 2.5
+  Sim_Speed: 0.5
   Sim_Slowdown_Speed: 0.4
   Landing_Slowdown_Flag: True
 
