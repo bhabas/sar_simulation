@@ -5,7 +5,7 @@ import numpy as np
 
 L = 75e-3                   # Leg length [m]
 Psi = np.radians(30)        # Leg angle [deg]
-theta = np.radians(45+90)   # Yaw rotation [deg]
+theta = np.radians(-45)   # Yaw rotation [deg]
 
 X_offset = 29.29e-3         # Attachment x_offset [m]
 Z_offset = -3.25e-3         # Attachment z_offset [m]
