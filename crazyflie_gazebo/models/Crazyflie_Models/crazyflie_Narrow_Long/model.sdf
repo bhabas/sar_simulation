@@ -418,9 +418,9 @@
           <iyz>0</iyz>
           <izz>2.313e-9</izz>
         </inertia>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 -0.0375 0 0 0</pose>
       </inertial>
-      <pose>20.6e-3 20.6e-3 -3.25e-3 1.57 0 0.785</pose>
+      <pose>20.6e-3 20.6e-3 -3.25e-3 0 -0.524 0.785</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -443,111 +443,42 @@
       </visual>
     </link>
 
-    <link name='test_leg2'>
+    <link name='test_pad_1'>
       <inertial>
-        <mass>0.74e-3</mass>
+        <mass>0.159e-3</mass>
         <inertia>
-          <ixx>3.48e-7</ixx>
+          <ixx>4.777e-09</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>3.48e-7</iyy>
+          <iyy>4.777e-09</iyy>
           <iyz>0</iyz>
-          <izz>2.313e-9</izz>
+          <izz>4.777e-09</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>-20.6e-3 20.6e-3 -3.25e-3 1.57 0 2.355</pose>
+      <pose>47.2e-3 47.2e-3 -68.2e-3 0 -0 0.785</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
-      <visual name='CF_Leg'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://crazyflie_Narrow_Long/meshes/CF_Leg_NL.STL</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/DarkGrey </name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-          <lighting>1</lighting>
-        </material>
-      </visual>
-    </link>
-
-    <link name='test_leg3'>
-      <inertial>
-        <mass>0.74e-3</mass>
-        <inertia>
-          <ixx>3.48e-7</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>3.48e-7</iyy>
-          <iyz>0</iyz>
-          <izz>2.313e-9</izz>
-        </inertia>
+      <visual name='visual'>
         <pose>0 0 0 0 -0 0</pose>
-      </inertial>
-      <pose>-20.6e-3 -20.6e-3 -3.25e-3 1.57 0 -2.355</pose>
-      <gravity>1</gravity>
-      <self_collide>0</self_collide>
-      <kinematic>0</kinematic>
-      <enable_wind>0</enable_wind>
-      <visual name='CF_Leg'>
-        <pose>0 0 0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://crazyflie_Narrow_Long/meshes/CF_Leg_NL.STL</uri>
-            <scale>1 1 1</scale>
-          </mesh>
+          <sphere>
+            <radius>0.002</radius>
+          </sphere>
         </geometry>
         <material>
           <script>
-            <name>Gazebo/DarkGrey </name>
+            <name>Gazebo/Blue</name>
             <uri>file://media/materials/scripts/gazebo.material</uri>
           </script>
-          <lighting>1</lighting>
+          <shader type='pixel'>
+            <normal_map>__default__</normal_map>
+          </shader>
         </material>
-      </visual>
-    </link>
-
-    <link name='test_leg4'>
-      <inertial>
-        <mass>0.74e-3</mass>
-        <inertia>
-          <ixx>3.48e-7</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>3.48e-7</iyy>
-          <iyz>0</iyz>
-          <izz>2.313e-9</izz>
-        </inertia>
-        <pose>0 0 0 0 -0 0</pose>
-      </inertial>
-      <pose>20.6e-3 -20.6e-3 -3.25e-3 1.57 0 -0.785</pose>
-      <gravity>1</gravity>
-      <self_collide>0</self_collide>
-      <kinematic>0</kinematic>
-      <enable_wind>0</enable_wind>
-      <visual name='CF_Leg'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://crazyflie_Narrow_Long/meshes/CF_Leg_NL.STL</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/Red</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-          <lighting>1</lighting>
-        </material>
+        <transparency>0</transparency>
+        <cast_shadows>1</cast_shadows>
       </visual>
     </link>
 
