@@ -461,6 +461,8 @@ class Policy_Trainer():
 
         fig = go.Figure()
 
+        df["LR_4Leg"] = np.where(df["LR_4Leg"] >= 0.8, 1.0, 0)
+
         # PLOT DATA POINTS
         fig.add_trace(
             go.Scatter3d(
@@ -468,7 +470,6 @@ class Policy_Trainer():
                 x=df["OFy_flip_mean"],
                 y=df["Tau_flip_mean"],
                 z=df["D_ceil_flip_mean"],
-                
 
                 ## HOVER DATA
                 customdata=df,
@@ -485,7 +486,7 @@ class Policy_Trainer():
                     color=df["LR_4Leg"],
                     colorscale='Viridis',   # choose a colorscale
                     cmin=0,
-                    cmax=1, 
+                    cmax=1.6, 
                     opacity=0.8)
             )
         )
@@ -515,12 +516,12 @@ class Policy_Trainer():
                     value=y_pred_grid.flatten(),
                     
                     surface_count=1,
-                    opacity=0.3,
+                    opacity=0.25,
                     isomin=iso_level,
                     isomax=iso_level,
                     colorscale='Viridis',  
                     cmin=0,
-                    cmax=1,     
+                    cmax=0.1,     
                     caps=dict(x_show=False, y_show=False),
                     colorbar=dict(title='Title',) , 
                     hoverinfo='skip'
@@ -578,10 +579,12 @@ class Policy_Trainer():
                 xaxis_title='OFy [rad/s]',
                 yaxis_title='Tau [s]',
                 zaxis_title='D_ceiling [m]',
-                xaxis_range=[-20,1],
+                xaxis_range=[-16,1],
                 yaxis_range=[0.4,0.1],
                 zaxis_range=[0,1.2],
+                xaxis = dict(nticks=4, range=[-15,0],),
             ),
+
         )
         fig.show()
 
@@ -675,7 +678,7 @@ if __name__ == "__main__":
 
 
     ## DESIGNATE FILE PATHS
-    FileName = "NL_LR_Trials_NDR.csv"
+    FileName = "NL_LR_Trials.csv"
     # FileName = "NL_SVL_LR_Trials.csv"
     # FileName = "DeepRL_NL_LR.csv"
     model_initials = FileName[:2]
@@ -737,9 +740,9 @@ if __name__ == "__main__":
     print(Policy.OC_SVM_Predict(np.array([[0.233,-2.778,0.518]])))
 
 
-    # Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.0)
+    Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.0)
     # Policy.plotPolicyRegion(df_raw,PlotBoundry=True,iso_level=0.0)
-    Policy.plotPolicyRegion(df_raw,PlotBoundry=False,iso_level=0.0)
+    # Policy.plotPolicyRegion(df_raw,PlotBoundry=False,iso_level=0.0)
     # Policy.plot_Landing_Rate(df_max,saveFig=False)
     
     EXP_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging_exp'))
