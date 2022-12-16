@@ -407,7 +407,7 @@
       </collision>
     </link>
 
-    <link name='test_leg1'>
+    <link name='test_leg2'>
       <inertial>
         <mass>0.74e-3</mass>
         <inertia>
@@ -420,7 +420,7 @@
         </inertia>
         <pose>0 0 -0.0375 0 0 0</pose>
       </inertial>
-      <pose>20.6e-3 20.6e-3 -3.25e-3 0 -0.524 0.785</pose>
+      <pose>-2.07E-02 2.07E-02 -3.25E-03 0 -0.524 2.356</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -443,20 +443,20 @@
       </visual>
     </link>
 
-    <link name='test_pad_1'>
+    <link name='test_pad2'>
       <inertial>
         <mass>0.159e-3</mass>
         <inertia>
-          <ixx>4.777e-09</ixx>
+          <ixx>4.777e-10</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>4.777e-09</iyy>
+          <iyy>4.777e-10</iyy>
           <iyz>0</iyz>
-          <izz>4.777e-09</izz>
+          <izz>4.777e-10</izz>
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>47.2e-3 47.2e-3 -68.2e-3 0 -0 0.785</pose>
+      <pose>-4.72E-02 4.72E-02 -6.82E-02 0 0 2.356</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
