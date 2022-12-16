@@ -12,7 +12,7 @@
 
     <!-- READ FLAGS FROM BASH FILE -> ROSPARAM -->
     <arg name="gui_flag" default="true"/>
-    <arg name="pause_flag" default="false"/>
+    <arg name="pause_flag" default="true"/>
     <arg name="verbose" default="true"/>
 
     <!-- LAUNCH GAZEBO WITH SPECIFIED WORLD FILE -->
