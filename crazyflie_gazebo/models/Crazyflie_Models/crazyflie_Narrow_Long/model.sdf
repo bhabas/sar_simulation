@@ -28,7 +28,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Narrow_Long/meshes/CF_Leg_NL.STL</uri>
+            <uri>model://crazyflie_Narrow_Long/meshes/Narrow_Long.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -63,7 +63,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Narrow_Long/meshes/CF_Leg_NL.STL</uri>
+            <uri>model://crazyflie_Narrow_Long/meshes/Narrow_Long.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -98,7 +98,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Narrow_Long/meshes/CF_Leg_NL.STL</uri>
+            <uri>model://crazyflie_Narrow_Long/meshes/Narrow_Long.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -133,7 +133,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Narrow_Long/meshes/CF_Leg_NL.STL</uri>
+            <uri>model://crazyflie_Narrow_Long/meshes/Narrow_Long.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -162,7 +162,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>4.72E-02 4.72E-02 -6.82E-02 0 0 0.785</pose>
+      <pose>5.04E-02 5.04E-02 -6.82E-02 0 0 0.785</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -255,7 +255,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>-4.72E-02 4.72E-02 -6.82E-02 0 0 2.356</pose>
+      <pose>-5.04E-02 5.04E-02 -6.82E-02 0 0 2.356</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -348,7 +348,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>-4.72E-02 -4.72E-02 -6.82E-02 0 0 -2.356</pose>
+      <pose>-5.04E-02 -5.04E-02 -6.82E-02 0 0 -2.356</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -441,7 +441,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>4.72E-02 -4.72E-02 -6.82E-02 0 0 -0.785</pose>
+      <pose>5.04E-02 -5.04E-02 -6.82E-02 0 0 -0.785</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
