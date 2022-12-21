@@ -384,42 +384,46 @@ class Policy_Trainer_DeepRL():
         Vx = df.iloc[:]['vx_flip_mean']
         Vz = df.iloc[:]['vz_flip_mean']
 
-        R = np.sqrt(Vx**2 + Vz**2)
-        Theta = np.degrees(np.arctan2(Vz,Vx))
+        ## COLLECT DATA
+        R = df.iloc[:]['vel_d']
+        Theta = df.iloc[:]['phi_d']
         C = df.iloc[:]['LR_4Leg']
 
-        # SOMETHING ABOUT DEFINING A GRID
-        interp_factor = 12
-        ri = np.linspace(1.5,3.5,(len(C)//interp_factor))
-        thetai = np.linspace(25,90,(len(C)//interp_factor))
-        r_ig, theta_ig = np.meshgrid(ri, thetai)
-        zi = griddata((R, Theta), C, (ri[None,:], thetai[:,None]), method='linear',fill_value=0.85)
-        zi = zi + 0.0001
+        ## DEFINE INTERPOLATION GRID
+        R_list = np.linspace(R.min(),R.max(),num=25,endpoint=True).reshape(1,-1)
+        Theta_list = np.linspace(Theta.min(),Theta.max(),num=25,endpoint=True).reshape(1,-1)
+        R_grid, Theta_grid = np.meshgrid(R_list, Theta_list)
+        
+        ## INTERPOLATE DATA
+        LR_interp = griddata((R, Theta), C, (R_list, Theta_list.T), method='linear',fill_value=0.0)
+        LR_interp += 0.001
         
 
         ## INIT PLOT INFO
-        fig = plt.figure()
+        fig = plt.figure(figsize=(4,4))
         ax = fig.add_subplot(projection='polar')
-        
-
         cmap = mpl.cm.jet
-        norm = mpl.colors.Normalize(vmin=0.0,vmax=1)
+        norm = mpl.colors.Normalize(vmin=0,vmax=1)
         
-        ax.contourf(np.radians(theta_ig),r_ig,zi,cmap=cmap,norm=norm,levels=30)
+        ax.contourf(np.radians(Theta_grid),R_grid,LR_interp,cmap=cmap,norm=norm,levels=30)
         # ax.scatter(np.radians(Theta),R,c=C,cmap=cmap,norm=norm)
-        ax.set_thetamin(20)
+        # ax.scatter(np.radians(Theta_grid).flatten(),R_grid.flatten(),c=LR_interp.flatten(),cmap=cmap,norm=norm)
+
+        ax.set_thetamin(30)
         ax.set_thetamax(90)
+        ax.set_xticks(np.radians([30,45,60,75,90]))
         ax.set_rmin(0)
         ax.set_rmax(3.5)
+        ax.set_rticks([0.0,1.0,2.0,3.0,3.5])
         
 
 
         ## AXIS LABELS    
-        ax.text(np.radians(7),2,'Flight Velocity (m/s)',
-            rotation=15,ha='center',va='center')
+        # ax.text(np.radians(7.5),2,'Flight Velocity (m/s)',
+        #     rotation=18,ha='center',va='center')
 
-        ax.text(np.radians(60),4.0,'Flight Angle (deg)',
-            rotation=0,ha='left',va='center')
+        # ax.text(np.radians(60),4.5,'Flight Angle (deg)',
+        #     rotation=0,ha='left',va='center')
 
         if saveFig==True:
             plt.savefig(f'NL_Polar_DeepRL_LR.pdf',dpi=300)
@@ -431,9 +435,9 @@ class Policy_Trainer_DeepRL():
 if __name__ == '__main__':
 
     ## INITIATE ENVIRONMENT
-    env = CrazyflieEnv_DeepRL(GZ_Timeout=True)
+    # env = CrazyflieEnv_DeepRL(GZ_Timeout=True)
     # env = CF_Env_2D()
-    # env = None
+    env = None
     
 
 
@@ -466,27 +470,27 @@ if __name__ == '__main__':
 
     
     Policy = Policy_Trainer_DeepRL(env,model,leg_config)
-    Policy.train_model(log_name,log_dir,reset_timesteps=False)
+    # Policy.train_model(log_name,log_dir,reset_timesteps=False)
 
 
     # Policy.save_NN_Params(policy_path)
     # Policy.plotPolicyRegion(iso_level=1.5)
 
-    # # LOAD DATA
-    # df_raw = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/DeepRL/Data_Logs/DeepRL_NL_LR.csv").dropna() # Collected data
+    # LOAD DATA
+    df_raw = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/DeepRL/Data_Logs/DeepRL_NL_LR.csv").dropna() # Collected data
 
-    # ## MAX LANDING RATE DATAFRAME
-    # idx = df_raw.groupby(['vel_d','phi_d'])['LR_4Leg'].transform(max) == df_raw['LR_4Leg']
-    # df_max = df_raw[idx].reset_index()
+    ## MAX LANDING RATE DATAFRAME
+    idx = df_raw.groupby(['vel_d','phi_d'])['LR_4Leg'].transform(max) == df_raw['LR_4Leg']
+    df_max = df_raw[idx].reset_index()
 
-    # # Policy.plot_polar(df_max,saveFig=False)
+    Policy.plot_polar(df_max)
 
 
 
-    # dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
-    # fileName = "DeepRL--NL_2.75_30.00_1.csv"
-    # trial = DataFile(dataPath,fileName,dataType='SIM')
-    # k_ep = 0
-    # Policy.plotPolicyRegion(PlotTraj=(trial,k_ep,0))
+    # # dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
+    # # fileName = "Control_Playground--trial_24--NL.csv"
+    # # trial = DataFile(dataPath,fileName,dataType='SIM')
+    # # k_ep = 0
+    # # Policy.plotPolicyRegion(PlotTraj=(trial,k_ep,0))
 
     

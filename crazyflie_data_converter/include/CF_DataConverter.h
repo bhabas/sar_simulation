@@ -62,6 +62,8 @@ class CF_DataConverter
             log3_Sub = nh->subscribe("/cf1/log3", 1, &CF_DataConverter::log3_Callback, this, ros::TransportHints().tcpNoDelay());
             log4_Sub = nh->subscribe("/cf1/log4", 1, &CF_DataConverter::log4_Callback, this, ros::TransportHints().tcpNoDelay());
             log5_Sub = nh->subscribe("/cf1/log5", 1, &CF_DataConverter::log5_Callback, this, ros::TransportHints().tcpNoDelay());
+            log6_Sub = nh->subscribe("/cf1/log6", 1, &CF_DataConverter::log6_Callback, this, ros::TransportHints().tcpNoDelay());
+
 
             // INITIALIZE MAIN PUBLISHERS
             StateData_Pub = nh->advertise<crazyflie_msgs::CF_StateData>("/CF_DC/StateData",1);
@@ -121,6 +123,8 @@ class CF_DataConverter
         void log3_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log3_msg);
         void log4_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log4_msg);
         void log5_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log5_msg);
+        void log6_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log6_msg);
+
 
         // ORGANIZED DATA PUBLISHERS
         void Publish_StateData();
@@ -166,6 +170,8 @@ class CF_DataConverter
         ros::Subscriber log3_Sub;
         ros::Subscriber log4_Sub;
         ros::Subscriber log5_Sub;
+        ros::Subscriber log6_Sub;
+
 
         // PUBLISHERS
         ros::Publisher StateData_Pub;
@@ -472,7 +478,7 @@ void CF_DataConverter::log2_Callback(const crazyflie_msgs::GenericLogData::Const
         OnceFlag_flip = true;
     }
 
-    V_battery = 3.5 + (log2_msg->values[8]/256)*(4.2-3.5);
+    // V_battery = 3.5 + (log2_msg->values[8]/256)*(4.2-3.5);
 
 
 }
@@ -571,6 +577,13 @@ void CF_DataConverter::log5_Callback(const crazyflie_msgs::GenericLogData::Const
     Tumbled_Flag = log5_msg->values[4];
     Moment_Flag = log5_msg->values[5];
     Policy_Armed_Flag =log5_msg->values[6];
+
+}
+
+void CF_DataConverter::log6_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log6_msg)
+{
+    V_battery = log6_msg->values[0];
+
 
 }
 

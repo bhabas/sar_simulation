@@ -8,6 +8,7 @@ import getpass
 from crazyflie_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
 from crazyflie_msgs.srv import loggingCMD,loggingCMDRequest
 from crazyflie_msgs.srv import RLCmd,RLCmdRequest
+from crazyflie_msgs.msg import GTC_Cmd
 
 from rosgraph_msgs.msg import Clock
 
@@ -39,6 +40,7 @@ class CrazyflieEnv_Base():
 
 
         self.preInit_Values()
+        # self.CMD_msg_Publisher = rospy.Publisher("/CF_DC/Cmd_CF_DC",GTC_Cmd)
 
         ## INIT ROS SUBSCRIBERS [Pub/Sampling Frequencies]
         # NOTE: Queue sizes=1 so that we are always looking at the most current data and 
@@ -102,19 +104,10 @@ class CrazyflieEnv_Base():
         srv.cmd_vals.z = cmd_vals[2]
         srv.cmd_flag = cmd_flag
 
-        self.callService('/CF_DC/Cmd_CF_DC',srv,RLCmd)        
+        self.callService('/CF_DC/Cmd_CF_DC',srv,RLCmd)    
 
-    def callService(self,addr,srv,srv_type,retries=5):
-  
-        for retry in range(retries):
-            try:
-                service = rospy.ServiceProxy(addr, srv_type)
-                service(srv)
-                return True
-
-            except rospy.ServiceException as e:
-                print(f"[WARNING] {addr} service call failed (callService)")
-                print(f"[WARNING] {e}")
+    def callService(self,addr,srv,srv_type,retries=5): ## PLACEHOLDER CALL SERVICE FUNCTION
+        
 
         return False
 
@@ -333,6 +326,9 @@ class CrazyflieEnv_Base():
 
         ## FLIP FLAGS
         self.flip_flag = FlipData_msg.flip_flag
+
+        self.Vx_flip = FlipData_msg.Twist_tr.linear.x
+        self.Vz_flip = FlipData_msg.Twist_tr.linear.z
 
     def CF_ImpactDataCallback(self,ImpactData_msg):
 
