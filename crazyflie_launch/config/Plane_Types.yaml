@@ -1,13 +1,13 @@
 Plane_Config:
 
   Flight_Cage:
-    Theta: 180  # [deg]
+    Plane_Angle: 180  # [deg]
     Pos_X: 0    # [m]
     Pos_Y: 0    # [m]
     Pos_Z: 2.1  # [m]
 
   180_deg: # Ceiling
-    Theta: 180  # [deg]
+    Plane_Angle: 180  # [deg]
     Pos_X: 0    # [m]
     Pos_Y: 0    # [m]
     Pos_Z: 1.5  # [m]
@@ -15,28 +15,28 @@ Plane_Config:
 
 
 
-    
+
 
   135_deg:
-    Theta: 135  # [deg]
+    Plane_Angle: 135  # [deg]
     Pos_X: 2.0  # [m]
     Pos_Y: 0.0  # [m]
     Pos_Z: 0.5  # [m]
 
   90_deg:
-    Theta: 90   # [deg]
+    Plane_Angle: 90   # [deg]
     Pos_X: 2.0  # [m]
     Pos_Y: 0.0  # [m]
     Pos_Z: 0.5  # [m]
 
   45_deg:
-    Theta: 45   # [deg]
+    Plane_Angle: 45   # [deg]
     Pos_X: 2.0  # [m]
     Pos_Y: 0.0  # [m]
     Pos_Z: 0.5  # [m]
 
   0_deg:  # Ground
-    Theta: 0   # [deg]
+    Plane_Angle: 0   # [deg]
     Pos_X: 2.0  # [m]
     Pos_Y: 0.0  # [m]
     Pos_Z: 0.1  # [m]

@@ -31,6 +31,9 @@ target_link_libraries(motor_plugin ${GAZEBO_LIBRARIES})
 add_library(OF_Sensor_plugin SHARED src/OF_Sensor_plugin.cpp)
 target_link_libraries(OF_Sensor_plugin ${GAZEBO_LIBRARIES})
 
+add_library(OpticalFlow_plugin SHARED src/OpticalFlow_plugin.cpp)
+target_link_libraries(OpticalFlow_plugin ${GAZEBO_LIBRARIES})
+
 add_library(Moment_plugin SHARED src/model_Moment.cpp)
 target_link_libraries(Moment_plugin ${GAZEBO_LIBRARIES})
 
