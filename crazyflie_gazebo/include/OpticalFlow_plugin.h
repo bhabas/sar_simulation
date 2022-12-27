@@ -43,22 +43,18 @@ namespace gazebo {
             std::string linkName;
             std::string topicName;
             int updateRate;     // [hz]
-            float _H_CEILING;   // [m]
-
 
             // INITIALIZE VARIABLES
-            float Vx_rel = 0.0; // [m/s]
-            float Vy_rel = 0.0; // [m/s]
-            float Vz_rel = 0.0; // [m/s]
-            float d_ceil = 0.0; // [m]
+            float Vx = 0.0; // [m/s]
+            float Vy = 0.0; // [m/s]
+            float Vz = 0.0; // [m/s]
+            float d_perp = 0.0; // [m]
 
             float Tau = 0.0;   // [s]
             float OFx = 0.0;   // [rad/s]
-            float OFy = 0.0;   // [rad/s]
 
             float Tau_gaussianNoise;
             float OFx_gaussianNoise;
-            float OFy_gaussianNoise;
 
             // INIT ROS OBJECTS
             ros::NodeHandle nh;

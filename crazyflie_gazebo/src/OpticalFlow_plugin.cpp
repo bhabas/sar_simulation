@@ -8,7 +8,31 @@ namespace gazebo
     // This gets called when model is loaded and pulls values from sdf file
     void OpticalFlow_plugin::Load(physics::ModelPtr parent, sdf::ElementPtr _sdf)
     {
+        gzmsg << "Loading OpticalFlow_plugin\n";
+        model_ptr = parent;
+
+        // COLLECT PARAMS FROM SDF
+        linkName = _sdf->GetElement("bodyName")->Get<std::string>();
+        gzmsg << "\t Link Name:\t" << linkName << std::endl;
+        link_ptr = model_ptr->GetLink(linkName);
+
+        topicName = _sdf->GetElement("topicName")->Get<std::string>();
+        updateRate = _sdf->GetElement("updateRate")->Get<int>();
+
+        Tau_gaussianNoise = _sdf->GetElement("Tau_gaussianNoise")->Get<double>();
+        OFy_gaussianNoise = _sdf->GetElement("OFy_gaussianNoise")->Get<double>();
+
+        // GET CEILING HEIGHT FROM ROS PARAM
+        // ros::param::get("/ENV_SETTINGS/Ceiling_Height",_H_CEILING);
+
+        // INIT PUBLISHER AND PUBLISHING THREAD
+        OF_Publisher = nh.advertise<crazyflie_msgs::OF_SensorData>(topicName,1);
+        publisherThread = std::thread(&OpticalFlow_plugin::Publish_OF_Data, this);
+
         
+        gzmsg << "\t Loading Completed" << std::endl;
+        std::cout << "\n\n";
+
     }
 
 
@@ -19,7 +43,8 @@ namespace gazebo
         while(ros::ok)
         {
         
-            
+            std::cout << "hello world" << std::endl;
+            rate.sleep();
         }
     }
 

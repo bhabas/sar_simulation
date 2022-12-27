@@ -6,7 +6,7 @@ ENV_SETTINGS:
   Ground_Name: "GroundPlane_Desert_Physical"
 
 PLANE_SETTINGS:
-  Plane_Model: "Test_Plane2"
+  Plane_Model: "Test_Plane"
   Plane_Config: "45_deg"
 
 QUAD_SETTINGS:
@@ -20,8 +20,8 @@ QUAD_SETTINGS:
 
 SIM_SETTINGS:
   GUI_Flag: True
-  Pause_Flag: True
-  Sim_Speed: 0.5
+  Pause_Flag: False
+  Sim_Speed: 0.1
   Sim_Slowdown_Speed: 0.4
   Landing_Slowdown_Flag: True
 
