@@ -10,6 +10,11 @@ GROUND_NAME=$(rosparam get /ENV_SETTINGS/Ground_Name)
 GUI_FLAG=$(rosparam get /SIM_SETTINGS/GUI_Flag)
 PAUSE_FLAG=$(rosparam get /SIM_SETTINGS/Pause_Flag)
 
+Plane_Pos_x=$(rosparam get /ENV_SETTINGS/Plane_Position/X)
+Plane_Pos_y=$(rosparam get /ENV_SETTINGS/Plane_Position/Y)
+Plane_Pos_z=$(rosparam get /ENV_SETTINGS/Plane_Position/Z)
+
+
 ## START GAZEBO 
 roslaunch crazyflie_launch crazyflie_gazebo.launch \
     surface_name:=$SURFACE_NAME \
@@ -17,3 +22,7 @@ roslaunch crazyflie_launch crazyflie_gazebo.launch \
     ground_name:=$GROUND_NAME \
     gui_flag:=$GUI_FLAG \
     pause_flag:=$PAUSE_FLAG \
+    Plane_Pos_x:=$Plane_Pos_x \
+    Plane_Pos_y:=$Plane_Pos_y \
+    Plane_Pos_z:=$Plane_Pos_z \
+
