@@ -13,7 +13,10 @@ PAUSE_FLAG=$(rosparam get /SIM_SETTINGS/Pause_Flag)
 Plane_Pos_x=$(rosparam get /ENV_SETTINGS/Plane_Position/X)
 Plane_Pos_y=$(rosparam get /ENV_SETTINGS/Plane_Position/Y)
 Plane_Pos_z=$(rosparam get /ENV_SETTINGS/Plane_Position/Z)
+Plane_Theta=$(rosparam get /ENV_SETTINGS/Plane_Theta)
 
+## CONVERT THETA ANGLE TO RADIANS
+Plane_Theta_rad=$(echo "(180-$Plane_Theta)*3.14159/180" | bc -l)
 
 ## START GAZEBO 
 roslaunch crazyflie_launch crazyflie_gazebo.launch \
@@ -25,4 +28,5 @@ roslaunch crazyflie_launch crazyflie_gazebo.launch \
     Plane_Pos_x:=$Plane_Pos_x \
     Plane_Pos_y:=$Plane_Pos_y \
     Plane_Pos_z:=$Plane_Pos_z \
+    Plane_Theta:=$Plane_Theta_rad \
 

@@ -5,10 +5,10 @@ ENV_SETTINGS:
   Surface_Name: "CeilingPlane_Large"
   Ground_Name: "GroundPlane_Desert_Physical"
 
-  Plane_Theta: 90   # [deg]
+  Plane_Theta: 0   # [deg]
   Plane_Position: 
     X:  2.0     # [m]
-    Y:  1.5     # [m]
+    Y:  0.0     # [m]
     Z:  0.5     # [m]
 
 QUAD_SETTINGS:
