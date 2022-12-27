@@ -6,11 +6,16 @@ Plane_Config:
     Pos_Y: 0    # [m]
     Pos_Z: 2.1  # [m]
 
-  180_deg:
+  180_deg: # Ceiling
     Theta: 180  # [deg]
     Pos_X: 0    # [m]
     Pos_Y: 0    # [m]
     Pos_Z: 1.5  # [m]
+
+
+
+
+    
 
   135_deg:
     Theta: 135  # [deg]
@@ -30,9 +35,9 @@ Plane_Config:
     Pos_Y: 0.0  # [m]
     Pos_Z: 0.5  # [m]
 
-  0_deg:
-    Theta: 45   # [deg]
+  0_deg:  # Ground
+    Theta: 0   # [deg]
     Pos_X: 2.0  # [m]
     Pos_Y: 0.0  # [m]
-    Pos_Z: 0.5  # [m]
+    Pos_Z: 0.1  # [m]
 

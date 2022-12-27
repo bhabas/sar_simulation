@@ -13,7 +13,9 @@ CONFIG_NAME=$(rosparam get /QUAD_SETTINGS/Config)
 
 ## LOAD PLANE CONFIG PARAMS
 SURFACE_NAME=$(rosparam get /ENV_SETTINGS/Surface_Name)
+
 Plane_Config=$(rosparam get /PLANE_SETTINGS/Plane_Config)
+Plane_Model=$(rosparam get /PLANE_SETTINGS/Plane_Model)
 Plane_Pos_X=$(rosparam get /Plane_Config/$Plane_Config/Pos_X)
 Plane_Pos_Y=$(rosparam get /Plane_Config/$Plane_Config/Pos_Y)
 Plane_Pos_Z=$(rosparam get /Plane_Config/$Plane_Config/Pos_Z)
@@ -29,6 +31,7 @@ roslaunch crazyflie_launch crazyflie_gazebo.launch \
     ground_name:=$GROUND_NAME \
     gui_flag:=$GUI_FLAG \
     pause_flag:=$PAUSE_FLAG \
+    Plane_Model:=$Plane_Model \
     Plane_Pos_x:=$Plane_Pos_X \
     Plane_Pos_y:=$Plane_Pos_Y \
     Plane_Pos_z:=$Plane_Pos_Z \

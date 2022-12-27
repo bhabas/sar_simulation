@@ -15,8 +15,8 @@
     <arg name="Plane_Theta" default="1.57"/>
 
 
-    <arg name="Plane_Name" default="Test_Plane"/>
-    <arg name="Plane_SDF_Path" default="$(find crazyflie_gazebo)/models/Landing_Surfaces/$(arg Plane_Name)/model.sdf"/>
+    <arg name="Plane_Model" default="Test_Plane"/>
+    <arg name="Plane_SDF_Path" default="$(find crazyflie_gazebo)/models/Landing_Surfaces/$(arg Plane_Model)/model.sdf"/>
 
 
     <!-- CRAZYFLIE MODEL ARGS -->
@@ -56,6 +56,6 @@
     args="-file $(arg surface_sdf_path) -sdf -model $(arg surface_name)" />
 
     <node name="Spawn_Plane" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
-    args="-file $(arg Plane_SDF_Path) -sdf -model $(arg Plane_Name) -z $(arg Plane_Pos_z) -x $(arg Plane_Pos_x) -y $(arg Plane_Pos_y) -P $(arg Plane_Theta)" />
+    args="-file $(arg Plane_SDF_Path) -sdf -model $(arg Plane_Model) -z $(arg Plane_Pos_z) -x $(arg Plane_Pos_x) -y $(arg Plane_Pos_y) -P $(arg Plane_Theta)" />
         
 </launch>
