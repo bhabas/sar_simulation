@@ -13,10 +13,6 @@ Plane_Config:
     Pos_Z: 1.5  # [m]
 
 
-
-
-
-
   135_deg:
     Plane_Angle: 135  # [deg]
     Pos_X: 2.0  # [m]

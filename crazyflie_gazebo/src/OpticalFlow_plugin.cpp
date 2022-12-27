@@ -20,10 +20,32 @@ namespace gazebo
         updateRate = _sdf->GetElement("updateRate")->Get<int>();
 
         Tau_gaussianNoise = _sdf->GetElement("Tau_gaussianNoise")->Get<double>();
-        OFy_gaussianNoise = _sdf->GetElement("OFy_gaussianNoise")->Get<double>();
+        OFx_gaussianNoise = _sdf->GetElement("OFx_gaussianNoise")->Get<double>();
 
-        // GET CEILING HEIGHT FROM ROS PARAM
-        // ros::param::get("/ENV_SETTINGS/Ceiling_Height",_H_CEILING);
+
+
+        // LOAD PLANE LOCATION
+        ros::param::get("/PLANE_SETTINGS/Plane_Config",Plane_Config);
+        ros::param::get("/Plane_Config/" + Plane_Config + "/Pos_X",r_PO.X());
+        ros::param::get("/Plane_Config/" + Plane_Config + "/Pos_Y",r_PO.Y());
+        ros::param::get("/Plane_Config/" + Plane_Config + "/Pos_Z",r_PO.Z());
+        ros::param::get("/Plane_Config/" + Plane_Config + "/Plane_Angle",Plane_Angle);
+        Plane_Angle = Plane_Angle*M_PI/180; // Convert to radians
+
+        // DEFINE PLANE NORMAL UNIT-VECTOR
+        n_hat.X() = sin(Plane_Angle);
+        n_hat.Y() = 0;
+        n_hat.Z() = -cos(Plane_Angle);
+
+        // DEFINE PLANE TANGENT UNIT-VECTOR
+        t_x.X() = -cos(Plane_Angle);
+        t_x.Y() = 0;
+        t_x.Z() = -sin(Plane_Angle);
+
+
+
+
+
 
         // INIT PUBLISHER AND PUBLISHING THREAD
         OF_Publisher = nh.advertise<crazyflie_msgs::OF_SensorData>(topicName,1);
@@ -42,8 +64,41 @@ namespace gazebo
         ros::Rate rate(updateRate);
         while(ros::ok)
         {
-        
-            std::cout << "hello world" << std::endl;
+            // UPDATE POS AND VEL
+            r_BO = link_ptr->WorldPose().Pos();
+            V_BO = link_ptr->WorldLinearVel();
+
+            // CALC DISPLACEMENT FROM PLANE CENTER
+            r_PB = r_PO - r_BO; 
+
+            // CALC RELATIVE DISTANCE AND VEL
+            D_perp = r_PB.Dot(n_hat);
+            V_perp = V_BO.Dot(n_hat) + 1e-3;
+            V_tx = V_BO.Dot(t_x) + 1e-3;
+
+            if (abs(D_perp) < 0.02)
+            {
+                D_perp = 0.0;
+            }
+
+            // CALC OPTICAL FLOW VALUES
+            Tau = D_perp/V_perp;
+            OFx = -V_tx/D_perp;
+
+            // PUBLISH OPTICAL FLOW VALUES
+            Tau = boost::algorithm::clamp(Tau,0.0,5.0);
+            OFx = boost::algorithm::clamp(OFx,-50,50);
+
+
+            // OF_Data_msg.Tau = Tau + GaussianKernel(0,Tau_gaussianNoise);
+            // OF_Data_msg.OFx = OFx + GaussianKernel(0,OFx_gaussianNoise);
+            OF_Data_msg.d_ceil = D_perp; // Change value to d_perp
+
+            // OF_Publisher.publish(OF_Data_msg);
+
+            printf("D_perp: %.3f \t Tau: %.3f \t OFx: %.3f",D_perp,Tau,OFx);
+            std::cout << std::endl;
+
             rate.sleep();
         }
     }

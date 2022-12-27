@@ -357,7 +357,7 @@
     <link name='body_sensors'>
       <pose>0 0 0.012 0 0 0</pose>
       <inertial>
-        <mass>0.0001</mass>
+        <mass>0.000001</mass>
         <inertia>
           <ixx>4.3354e-10</ixx>
           <ixy>0</ixy>
@@ -908,10 +908,9 @@
     <plugin name='OpticalFlow_plugin' filename='libOpticalFlow_plugin.so'>
       <updateRate>100</updateRate>
       <bodyName>body_sensors</bodyName>
-      <topicName>/CF_Internal/OpticalFlow_Sensor</topicName>
+      <topicName>/CF_Internal/OpticalFlow_Values</topicName>
       <Tau_gaussianNoise>0.0</Tau_gaussianNoise>
       <OFx_gaussianNoise>0.0</OFx_gaussianNoise>
-      <OFy_gaussianNoise>0.0</OFy_gaussianNoise>
     </plugin>
 
     <!-- <plugin name='MomentPlugin' filename='libMoment_plugin.so'>
@@ -922,7 +921,7 @@
         <bodyName>crazyflie_body</bodyName>
     </plugin>
 
-    <joint name="FixedJoint" type="fixed">
+    <!-- <joint name="FixedJoint" type="fixed">
         <parent>world</parent>
         <child>crazyflie_body</child>
         <pose>0 0 0 0 0 0</pose>    
@@ -931,7 +930,7 @@
           </ode>
           <provide_feedback>true</provide_feedback>
         </physics>
-      </joint>
+      </joint> -->
   
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>

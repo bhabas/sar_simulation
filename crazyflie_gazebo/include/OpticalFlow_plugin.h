@@ -44,11 +44,24 @@ namespace gazebo {
             std::string topicName;
             int updateRate;     // [hz]
 
-            // INITIALIZE VARIABLES
-            float Vx = 0.0; // [m/s]
-            float Vy = 0.0; // [m/s]
-            float Vz = 0.0; // [m/s]
-            float d_perp = 0.0; // [m]
+
+            // PLANE CONFIG
+            std::string Plane_Config;
+            float Plane_Angle = 0.0;    // [rad]
+
+
+            ignition::math::Vector3d r_PO;  // Plane Position Vector        [m]
+            ignition::math::Vector3d r_BO;  // Quad Position Vector         [m]
+            ignition::math::Vector3d r_PB;  // Quad-Plane Distance Vector   [m]
+            ignition::math::Vector3d V_BO;  // Quad Velocity Vector         [m/s]
+
+
+            ignition::math::Vector3d n_hat; // Plane Unit Normal Vector
+            ignition::math::Vector3d t_x;   // Plane Unit Tangent Vector
+
+            float D_perp = 0.0; // [m]
+            float V_perp = 0.0; // [m/s]
+            float V_tx = 0.0;   // [m/s]
 
             float Tau = 0.0;   // [s]
             float OFx = 0.0;   // [rad/s]

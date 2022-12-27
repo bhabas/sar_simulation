@@ -7,7 +7,7 @@ ENV_SETTINGS:
 
 PLANE_SETTINGS:
   Plane_Model: "Test_Plane"
-  Plane_Config: "45_deg"
+  Plane_Config: "135_deg"
 
 QUAD_SETTINGS:
   CF_Type: "Standard"
