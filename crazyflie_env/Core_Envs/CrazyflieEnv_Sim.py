@@ -234,11 +234,11 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base):
         for retry in range(retries):
 
             try:
-                print(CYAN + f"[CALL_SERVICE] Calling: {addr}" + ENDC)
+                # print(CYAN + f"[CALL_SERVICE] Calling: {addr}" + ENDC)
                 rospy.wait_for_service(addr,timeout=1)
                 service = rospy.ServiceProxy(addr, srv_type)
                 service(srv)
-                print(CYAN + f"[CALL_SERVICE] Called: {addr}" + ENDC)
+                # print(CYAN + f"[CALL_SERVICE] Called: {addr}" + ENDC)
 
                 return True
 
@@ -266,9 +266,9 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base):
         
         ## CHECK THAT GAZEBO IS FUNCTIONING
         try:
-            print(CYAN + f"[DIAGNOSTIC] Calling: /gazebo/pause_physics" + ENDC)
+            # print(CYAN + f"[DIAGNOSTIC] Calling: /gazebo/pause_physics" + ENDC)
             rospy.wait_for_service("/gazebo/pause_physics",timeout=1)
-            print(CYAN + f"[DIAGNOSTIC] Called: /gazebo/pause_physics" + ENDC)
+            # print(CYAN + f"[DIAGNOSTIC] Called: /gazebo/pause_physics" + ENDC)
 
         except rospy.ROSException as e:
             print(f"[WARNING] /gazebo/pause_physics wait for service failed (callService)")
@@ -277,9 +277,9 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base):
 
         ## CHECK THAT CONTROLLER IS FUNCTIONING
         try:
-            print(CYAN + f"[DIAGNOSTIC] Calling: /CTRL/Cmd_ctrl" + ENDC)
+            # print(CYAN + f"[DIAGNOSTIC] Calling: /CTRL/Cmd_ctrl" + ENDC)
             rospy.wait_for_service("/CTRL/Cmd_ctrl",timeout=1)
-            print(CYAN + f"[DIAGNOSTIC] Called: /CTRL/Cmd_ctrl" + ENDC)
+            # print(CYAN + f"[DIAGNOSTIC] Called: /CTRL/Cmd_ctrl" + ENDC)
         except rospy.ROSException as e:
             print(f"[WARNING] /CTRL/Cmd_ctrl wait for service failed (callService)")
             print(f"[WARNING] {e}")
@@ -287,9 +287,9 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base):
 
         ## CHECK THAT CF_DC IS FUNCTIONING
         try:
-            print(CYAN + f"[DIAGNOSTIC] Calling: /CF_DC/Cmd_CF_DC" + ENDC)
+            # print(CYAN + f"[DIAGNOSTIC] Calling: /CF_DC/Cmd_CF_DC" + ENDC)
             rospy.wait_for_service('/CF_DC/Cmd_CF_DC',timeout=1)
-            print(CYAN + f"[DIAGNOSTIC] Called: /CF_DC/Cmd_CF_DC" + ENDC)
+            # print(CYAN + f"[DIAGNOSTIC] Called: /CF_DC/Cmd_CF_DC" + ENDC)
 
         except rospy.ROSException as e:
             print(f"[WARNING] /CF_DC/Cmd_CF_DC wait for service failed (callService)")

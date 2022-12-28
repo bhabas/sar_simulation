@@ -572,9 +572,8 @@ class DataFile:
         """        
         _,_,_,impact_df = self.select_run(k_ep,k_run)
         body_impact = impact_df.iloc[0]['flip_flag']
-        impact_flag = impact_df.iloc[0]['impact_flag']
-        leg_contacts = int(impact_df.iloc[0]['Tau'])
-        contact_list = impact_df.iloc[0][['OF_x','OF_y','d_ceil','F_thrust']].to_numpy(dtype=np.int8)
+        leg_contacts = int(impact_df.iloc[0]['F_thrust'])
+        contact_list = impact_df.iloc[0][['Theta_x','Theta_x_est','Theta_y','Theta_y_est']].to_numpy(dtype=np.int8)
 
         
 
@@ -640,8 +639,8 @@ class DataFile:
         var_list = []
         for k_ep,k_run in ep_arr[:,:2]:
 
-            leg_contacts,_,_ = self.landing_conditions(k_ep, k_run)
-            if leg_contacts >= landing_cutoff: # IGNORE FAILED LANDINGS
+            leg_contacts,_,body_contact = self.landing_conditions(k_ep, k_run)
+            if leg_contacts >= landing_cutoff and body_contact == False: # IGNORE FAILED LANDINGS
                 var_list.append(func(k_ep,k_run,*args,**kwargs))
 
         ## RETURN MEAN AND STD OF STATE
@@ -657,7 +656,7 @@ if __name__ == "__main__":
 
     dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_logging/local_logs/"
 
-    fileName = "EM_PEPG--Vd_3.50--phi_90.00--trial_00--NL.csv"
+    fileName = "EPHE--Vd_2.50--phi_60.00--trial_25--NL.csv"
     trial = DataFile(dataPath,fileName,dataType='Sim')
 
     print(trial.grab_trial_data(trial.grab_impact_state,'vz'))

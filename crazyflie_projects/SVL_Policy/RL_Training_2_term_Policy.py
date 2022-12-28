@@ -203,10 +203,10 @@ if __name__ == '__main__':
     phi = 60   # [deg]
 
     ## INITIALIALIZE LOGGING DATA
-    trial_num = 24
+    trial_num = 25
     logName = f"{agent.agent_type}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--{env.modelInitials()}.csv"
 
-    runTraining(env,agent,V_d,phi,logName)
+    runTraining(env,agent,V_d,phi,logName,K_ep_max=3)
 
 
     

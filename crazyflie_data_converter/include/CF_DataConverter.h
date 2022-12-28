@@ -821,7 +821,7 @@ void CF_DataConverter::append_CSV_impact()
     fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist_impact.linear.x,Twist_impact.linear.y,Twist_impact.linear.z);      // vx,vy,vz
     fprintf(fPtr,"--,--,--,");                                                                              // D_perp,Tau,Tau_est,
     fprintf(fPtr,"%u,%u,%u,%u,",Pad1_Contact,Pad2_Contact,Pad3_Contact,Pad4_Contact);   // Theta_x,Theta_x_est,Theta_y,Theta_y_est,
-    fprintf(fPtr,"%s,%s,",formatBool(impact_flag),formatBool(BodyContact_flag));        // flip_flag,impact_flag
+    fprintf(fPtr,"%s,%s,",formatBool(BodyContact_flag),formatBool(impact_flag));        // flip_flag,impact_flag
 
 
     // MISC STATE DATA
