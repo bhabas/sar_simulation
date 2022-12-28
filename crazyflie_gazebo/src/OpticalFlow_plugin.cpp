@@ -98,9 +98,9 @@ namespace gazebo
 
             // PUBLISH OPTICAL FLOW VALUES
             OF_Data_msg.Tau = Tau;
-            OF_Data_msg.OFx = Theta_x;
-            OF_Data_msg.OFy = Theta_y;
-            OF_Data_msg.d_ceil = D_perp; 
+            OF_Data_msg.Theta_y = Theta_x;
+            OF_Data_msg.Theta_x = Theta_y;
+            OF_Data_msg.D_perp = D_perp; 
             
             OF_Data_msg.Theta_x = Theta_x;
             OF_Data_msg.Theta_y = Theta_y;

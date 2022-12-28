@@ -1,13 +1,15 @@
 geometry_msgs/Pose Pose
 geometry_msgs/Twist Twist
 float64 Tau
-float64 OFx
-float64 OFy
-float64 D_ceil
+float64 Theta_x
+float64 Theta_y
+float64 Theta_z
+float64 D_perp
 
 float64 Tau_est
-float64 OFx_est
-float64 OFy_est
+float64 Theta_x_est
+float64 Theta_y_est
+float64 Theta_z_est
 
 float64[4] FM
 float64[4] MotorThrusts
@@ -29,9 +31,11 @@ bool flip_flag
 geometry_msgs/Pose Pose_tr
 geometry_msgs/Twist Twist_tr
 float64 Tau_tr
-float64 OFx_tr
-float64 OFy_tr
-float64 D_ceil_tr
+float64 Theta_x_tr
+float64 Theta_y_tr
+float64 Theta_z_tr
+
+float64 D_perp_tr
 
 float64[4] FM_flip
 

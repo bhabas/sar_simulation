@@ -253,13 +253,13 @@ class CF_DataConverter
         float Alpha = 0.0;
 
         double Tau = 0.0;
-        double OFx = 0.0;
-        double OFy = 0.0;
-        double D_ceil = 0.0;
+        double Theta_x = 0.0;
+        double Theta_y = 0.0;
+        double D_perp = 0.0;
 
         double Tau_est = 0.0;
-        double OFx_est = 0.0;
-        double OFy_est = 0.0;
+        double Theta_x_est = 0.0;
+        double Theta_y_est = 0.0;
 
         boost::array<double,4> FM{0,0,0,0};
         boost::array<double,4> MotorThrusts{0,0,0,0};
@@ -290,9 +290,9 @@ class CF_DataConverter
 
 
         double Tau_tr = 0.0;
-        double OFx_tr = 0.0;
-        double OFy_tr = 0.0;
-        double D_ceil_tr = 0.0;
+        double Theta_x_tr = 0.0;
+        double Theta_y_tr = 0.0;
+        double D_perp_tr = 0.0;
 
         boost::array<double,4> FM_tr{0,0,0,0};
 
@@ -429,8 +429,8 @@ void CF_DataConverter::log1_Callback(const crazyflie_msgs::GenericLogData::Const
     float OF_xy_arr[2];
     decompressXY(log1_msg->values[6],OF_xy_arr);
     
-    OFx = OF_xy_arr[0];
-    OFy = OF_xy_arr[1];
+    Theta_x = OF_xy_arr[0];
+    Theta_y = OF_xy_arr[1];
     Tau = log1_msg->values[7]*1e-3;
 
 }
@@ -441,7 +441,7 @@ void CF_DataConverter::log2_Callback(const crazyflie_msgs::GenericLogData::Const
     Twist.angular.z = log2_msg->values[0]*1e-3;
 
     // CEILING DISTANCE
-    D_ceil = log2_msg->values[1]*1e-3;
+    D_perp = log2_msg->values[1]*1e-3;
 
     // DECOMPRESS THRUST/MOMENT MOTOR VALUES [g]
     float FM_z[2];
@@ -532,7 +532,7 @@ void CF_DataConverter::log4_Callback(const crazyflie_msgs::GenericLogData::Const
     Pose_tr.position.z = log4_msg->values[0]*1e-3;
 
     // FLIP TRIGGER - CEILING DISTANCE
-    D_ceil_tr = log4_msg->values[1]*1e-3;
+    D_perp_tr = log4_msg->values[1]*1e-3;
 
     // FLIP TRIGGER - VELOCITY
     float vxy_arr[2];
@@ -565,8 +565,8 @@ void CF_DataConverter::log4_Callback(const crazyflie_msgs::GenericLogData::Const
     float OF_xy_arr[2];
     decompressXY(log4_msg->values[6],OF_xy_arr);
     
-    OFx_tr = OF_xy_arr[0];
-    OFy_tr = OF_xy_arr[1];
+    Theta_x_tr = OF_xy_arr[0];
+    Theta_y_tr = OF_xy_arr[1];
     Tau_tr = log4_msg->values[7]*1e-3;
 
 }
@@ -681,8 +681,8 @@ void CF_DataConverter::create_CSV()
     fprintf(fPtr,"flip_flag,impact_flag,");
 
     //  MISC INTERNAL STATE ESTIMATES
-    fprintf(fPtr,"Tau_est,OF_x_est,OF_y_est,");
-    fprintf(fPtr,"Tau,OF_x,OF_y,d_ceil,");
+    fprintf(fPtr,"Tau_est,Theta_x_est,Theta_y_est,");
+    fprintf(fPtr,"Tau,Theta_x,Theta_y,D_perp,");
     fprintf(fPtr,"F_thrust,Mx,My,Mz,");
     fprintf(fPtr,"M1_thrust,M2_thrust,M3_thrust,M4_thrust,");
     fprintf(fPtr,"M1_pwm,M2_pwm,M3_pwm,M4_pwm,");
@@ -720,8 +720,8 @@ void CF_DataConverter::append_CSV_states()
     fprintf(fPtr,"%s,%s,",formatBool(flip_flag),formatBool(impact_flag));   // flip_flag,impact_flag
 
     // MISC INTERNAL STATE ESTIMATES
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",Tau_est,OFx_est,OFy_est);      // Tau,OF_x,OF_y
-    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Tau,OFx,OFy,D_ceil);      // Tau,OF_x,OF_y,d_ceil
+    fprintf(fPtr,"%.3f,%.3f,%.3f,",Tau_est,Theta_x_est,Theta_y_est);      // Tau,Theta_x,Theta_y
+    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Tau,Theta_x,Theta_y,D_perp);      // Tau,Theta_x,Theta_y,D_perp
     fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",FM[0],FM[1],FM[2],FM[3]);           // F_thrust,Mx,My,Mz
     fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",MotorThrusts[0],MotorThrusts[1],MotorThrusts[2],MotorThrusts[3]); // M1_thrust,M2_thrust,M3_thrust,M4_thrust
     fprintf(fPtr,"%u,%u,%u,%u,",MS_PWM[0],MS_PWM[1],MS_PWM[2],MS_PWM[3]);   // M1_pwm,M2_pwm,M3_pwm,M4_pwm
@@ -761,8 +761,8 @@ void CF_DataConverter::append_CSV_misc()
     fprintf(fPtr,"%.2f,--,",reward);
 
     // MISC INTERNAL STATE ESTIMATES
-    fprintf(fPtr,"--,--,--,"); // Tau_est,OF_x_est,OF_y_est
-    fprintf(fPtr,"--,--,--,--,"); // Tau,OF_x,OF_y,d_ceil
+    fprintf(fPtr,"--,--,--,"); // Tau_est,Theta_x_est,Theta_y_est
+    fprintf(fPtr,"--,--,--,--,"); // Tau,Theta_x,Theta_y,D_perp
     fprintf(fPtr,"--,--,--,--,"); // F_thrust,Mx,My,Mz
     fprintf(fPtr,"--,--,--,--,"); // M1_thrust,M2_thrust,M3_thrust,M4_thrust
     fprintf(fPtr,"--,--,--,--,"); // M1_pwm,M2_pwm,M3_pwm,M4_pwm
@@ -801,8 +801,8 @@ void CF_DataConverter::append_CSV_flip()
     fprintf(fPtr,"%s,--,",formatBool(flip_flag));
 
     // MISC INTERNAL STATE ESTIMATES
-    fprintf(fPtr,"--,--,--,"); // Tau_est,OF_x_est,OF_y_est
-    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Tau_tr,OFx_tr,OFy_tr,D_ceil_tr);
+    fprintf(fPtr,"--,--,--,"); // Tau_est,Theta_x_est,Theta_y_est
+    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Tau_tr,Theta_x_tr,Theta_y_tr,D_perp_tr);
     fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",FM_tr[0],FM_tr[1],FM_tr[2],FM_tr[3]);
     fprintf(fPtr,"--,--,--,--,");
     fprintf(fPtr,"--,--,--,--,");
@@ -840,7 +840,7 @@ void CF_DataConverter::append_CSV_impact()
     fprintf(fPtr,"%s,%s,",formatBool(BodyContact_flag),formatBool(impact_flag));
 
     // MISC INTERNAL STATE ESTIMATES
-    fprintf(fPtr,"--,--,--,"); // Tau_est,OF_x_est,OF_y_est
+    fprintf(fPtr,"--,--,--,"); // Tau_est,Theta_x_est,Theta_y_est
     fprintf(fPtr,"%u,%u,%u,%u,%u,",Pad_Connections,Pad1_Contact,Pad2_Contact,Pad3_Contact,Pad4_Contact);
     fprintf(fPtr,"%.3f,%.3f,%.3f,",impact_force_x,impact_force_y,impact_force_z);
     fprintf(fPtr,"--,--,--,--,");

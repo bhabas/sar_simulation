@@ -115,14 +115,14 @@ extern struct vec stateEul;
 
 // OPTICAL FLOW STATES
 extern float Tau;   // [s]
-extern float OFx;   // [rad/s]
-extern float OFy;   // [rad/s] 
-extern float d_ceil;
+extern float Theta_x;   // [rad/s] 
+extern float Theta_y;   // [rad/s]
+extern float D_perp;
 
 // ESTIMATED OPTICAL FLOW STATES
 extern float Tau_est; // [s]
-extern float OFx_est; // [rad/s]
-extern float OFy_est; // [rad/s]
+extern float Theta_x_est; // [rad/s]
+extern float Theta_y_est; // [rad/s]
 
 // INIT DESIRED STATES
 extern struct vec x_d;      // Pos-desired [m]
@@ -203,9 +203,9 @@ extern struct vec stateOmega_tr;    // Angular Rate [rad/s]
 
 // OPTICAL FLOW STATES
 extern float Tau_tr;        // [rad/s]
-extern float OFx_tr;        // [rad/s]
-extern float OFy_tr;        // [rad/s]
-extern float d_ceil_tr;     // [m/s]
+extern float Theta_x_tr;        // [rad/s]
+extern float Theta_y_tr;        // [rad/s]
+extern float D_perp_tr;     // [m/s]
 
 // CONTROLLER STATES
 extern float F_thrust_flip; // [N]

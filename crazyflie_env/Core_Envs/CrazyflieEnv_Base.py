@@ -186,9 +186,9 @@ class CrazyflieEnv_Base():
         self.eulCF = [0,0,0]
 
         self.Tau = 0.0
-        self.OFx = 0.0
-        self.OFy = 0.0
-        self.d_ceil = 0.0 
+        self.Theta_x = 0.0
+        self.Theta_y = 0.0
+        self.D_perp = 0.0 
 
         self.MS_pwm = [0,0,0,0]         # Controller Motor Speeds (MS1,MS2,MS3,MS4) [PWM]
         self.MotorThrusts = [0,0,0,0]   # Controller Motor Thrusts [M1,M2,M3,M4][g]
@@ -212,9 +212,9 @@ class CrazyflieEnv_Base():
         self.eulCF_tr = [0,0,0]
 
         self.Tau_tr = 0.0
-        self.OFx_tr = 0.0           # [rad/s]
-        self.OFy_tr = 0.0           # [rad/s]
-        self.d_ceil_tr = 0.0        # [m]
+        self.Theta_x_tr = 0.0           # [rad/s]
+        self.Theta_y_tr = 0.0           # [rad/s]
+        self.D_perp_tr = 0.0        # [m]
 
         self.FM_tr = [0,0,0,0]      # [N,N*mm]
 
@@ -316,9 +316,9 @@ class CrazyflieEnv_Base():
 
         ## CF_VISUAL STATES
         self.Tau = np.round(StateData_msg.Tau,3)
-        self.OFx = np.round(StateData_msg.OFx,3)
-        self.OFy = np.round(StateData_msg.OFy,3)
-        self.d_ceil = np.round(StateData_msg.D_ceil,3)
+        self.Theta_x = np.round(StateData_msg.Theta_x,3)
+        self.Theta_y = np.round(StateData_msg.Theta_y,3)
+        self.D_perp = np.round(StateData_msg.D_perp,3)
        
         self.t_prev = self.t # Save t value for next callback iteration
 
