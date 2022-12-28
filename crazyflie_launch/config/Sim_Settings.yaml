@@ -7,7 +7,7 @@ ENV_SETTINGS:
 
 PLANE_SETTINGS:
   Plane_Model: "Standard_Plane"
-  Plane_Config: "Flight_Cage"
+  Plane_Config: "135_deg"
 
 QUAD_SETTINGS:
   CF_Type: "Standard"

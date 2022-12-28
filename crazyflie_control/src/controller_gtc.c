@@ -69,6 +69,7 @@ struct vec statePos = {0.0,0.0f,0.0f};          // Pos [m]
 struct vec stateVel = {0.0f,0.0f,0.0f};         // Vel [m/s]
 struct quat stateQuat = {0.0f,0.0f,0.0f,1.0f};  // Orientation
 struct vec stateOmega = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
+float V_mag = 0.0f;
 
 // OPTICAL FLOW STATES
 float Tau = 0.0f;       // [s]
@@ -617,6 +618,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 {
     if (RATE_DO_EXECUTE(RATE_100_HZ,tick))
     {
+
         if(camera_sensor_active == true)
         {
             Tau = sensors->Tau_est;
@@ -637,10 +639,12 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
         if(policy_armed_flag == true){ 
 
+            V_mag = sqrtf(powf(state->velocity.x,2) + powf(state->velocity.y,2) + powf(state->velocity.z,2));
+
             switch(Policy){
 
                 case PARAM_OPTIM:
-                    if(Tau <= Tau_thr && onceFlag == false && state->velocity.z > 0.1){
+                    if(Tau <= Tau_thr && onceFlag == false && V_mag > 0.2){
                     onceFlag = true;
                     flip_flag = true;  
 
