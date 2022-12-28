@@ -75,7 +75,7 @@ class CrazyflieEnv_ParamOpt(CrazyflieEnv_Sim):
         vx = vel*np.cos(np.deg2rad(phi))
 
         tau_0 = 0.5
-        z_0 = self.h_ceiling - tau_0*vz
+        z_0 = 2.10 - tau_0*vz
 
         self.Vel_Launch([0,0,z_0],[vx,0,vz])
         self.gazebo_unpause_physics()

@@ -178,7 +178,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         Tau_0 = 0.4
         d_ceil_0 = Tau_0*vz_0 + 1e-3
 
-        z_0 = self.h_ceiling - d_ceil_0
+        z_0 = 2.10 - d_ceil_0
         x_0 = 0.0
         self.Vel_Launch([x_0,0.0,z_0],[vx_0,0,vz_0])
         self.iter_step(10)

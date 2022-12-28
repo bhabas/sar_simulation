@@ -26,7 +26,6 @@ class CrazyflieEnv_Base():
         self.configName = rospy.get_param('/QUAD_SETTINGS/Config')
         self.modelName = f"crazyflie_{self.configName}"
 
-        self.h_ceiling = rospy.get_param("/ENV_SETTINGS/Ceiling_Height") # [m]
         self.env_name = "CF_BaseEnv"
      
         ## TRAJECTORY VALUES
@@ -147,7 +146,7 @@ class CrazyflieEnv_Base():
         t_z = Vz/a_z    # Time required to reach Vz
 
         z_vz = 0.5*a_z*(t_z)**2                 # Height Vz reached
-        z_0 = (self.h_ceiling - d_vz) - z_vz    # Offset to move z_vz to d_vz
+        z_0 = (2.10 - d_vz) - z_vz    # Offset to move z_vz to d_vz
         
         x_vz = Vx*(t_x+t_z) - Vx**2/(2*a_x)     # X-position Vz reached
         x_0 = x_impact - x_vz - d_vz*Vx/Vz      # Account for shift up and shift left

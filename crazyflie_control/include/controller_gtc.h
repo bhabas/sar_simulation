@@ -104,7 +104,6 @@ extern float m;
 extern float Ixx;
 extern float Iyy;
 extern float Izz;
-extern float h_ceiling;
 
 // INIT STATE VALUES
 extern struct vec statePos;

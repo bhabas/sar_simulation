@@ -52,7 +52,6 @@ float m = 34.3e-3f;         // [kg]
 float Ixx = 15.83e-6f;      // [kg*m^2]
 float Iyy = 17.00e-6f;      // [kg*m^2]
 float Izz = 31.19e-6f;      // [kg*m^2]
-float h_ceiling = 2.10f;    // [m]
 
 float g = 9.81f;        // [m/s^2]
 static struct mat33 J; // Rotational Inertia Matrix [kg*m^2]

@@ -113,7 +113,6 @@ class Controller
 
         // ROS SPECIFIC VALUES
         int _slowdown_type = 0;
-        float _H_CEILING = 2.10;
         bool _LANDING_SLOWDOWN_FLAG;
         float _SIM_SPEED; 
         float _SIM_SLOWDOWN_SPEED;
