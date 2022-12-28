@@ -204,7 +204,7 @@ class CF_DataConverter
         // LOGGING VALS
         FILE* fPtr; // File Pointer to logging file
         bool Logging_Flag = false;
-        std::string error_string;
+        std::string error_string = "No_Data";
 
         
         // ===================
@@ -665,28 +665,26 @@ void CF_DataConverter::decompressXY(uint32_t xy, float xy_arr[])
 
 void CF_DataConverter::create_CSV()
 {
+    // POLICY DATA
     fprintf(fPtr,"k_ep,k_run,");
     fprintf(fPtr,"t,");
     fprintf(fPtr,"Policy_Flip,Policy_Action,");
     fprintf(fPtr,"mu,sigma,policy,");
 
-    // INTERNAL STATE ESTIMATES (CF)
+
+    // STATE DATA
     fprintf(fPtr,"x,y,z,");
     fprintf(fPtr,"vx,vy,vz,");
-    fprintf(fPtr,"qx,qy,qz,qw,");
-    fprintf(fPtr,"wx,wy,wz,");
-    fprintf(fPtr,"eul_x,eul_y,eul_z,");
-
-    // MISC RL LABELS
+    fprintf(fPtr,"D_perp,Tau,Tau_est,");
+    fprintf(fPtr,"Theta_x,Theta_x_est,Theta_y,Theta_y_est,");
     fprintf(fPtr,"flip_flag,impact_flag,");
 
-    //  MISC INTERNAL STATE ESTIMATES
-    fprintf(fPtr,"Tau_est,Theta_x_est,Theta_y_est,");
-    fprintf(fPtr,"Tau,Theta_x,Theta_y,D_perp,");
-    fprintf(fPtr,"F_thrust,Mx,My,Mz,");
-    fprintf(fPtr,"M1_thrust,M2_thrust,M3_thrust,M4_thrust,");
-    fprintf(fPtr,"M1_pwm,M2_pwm,M3_pwm,M4_pwm,");
 
+    //  MISC STATE DATA
+    fprintf(fPtr,"eul_x,eul_y,eul_z,");
+    fprintf(fPtr,"wx,wy,wz,");
+    fprintf(fPtr,"qx,qy,qz,qw,");
+    fprintf(fPtr,"F_thrust,Mx,My,Mz,");
 
     // SETPOINT VALUES
     fprintf(fPtr,"x_d.x,x_d.y,x_d.z,");
@@ -694,7 +692,7 @@ void CF_DataConverter::create_CSV()
     fprintf(fPtr,"a_d.x,a_d.y,a_d.z,");
 
     // MISC VALUES
-    fprintf(fPtr,"Volts,Error");
+    fprintf(fPtr,"Error");
 
     fprintf(fPtr,"\n");
     fflush(fPtr);
@@ -703,28 +701,26 @@ void CF_DataConverter::create_CSV()
 
 void CF_DataConverter::append_CSV_states()
 {
-    fprintf(fPtr,"%u,%u,",k_ep,k_run);              // k_ep,k_run
-    fprintf(fPtr,"%.3f,",(Time-Time_start).toSec());             // t
-    fprintf(fPtr,"%.3f,%.3f,",Policy_Flip,Policy_Action);   // Policy_Flip,Policy_Action
-    fprintf(fPtr,"--,--,--,");                      // mu,sigma,policy
+    // POLICY DATA
+    fprintf(fPtr,"%u,%u,",k_ep,k_run);                          // k_ep,k_run
+    fprintf(fPtr,"%.3f,",(Time-Time_start).toSec());            // t
+    fprintf(fPtr,"%.3f,%.3f,",Policy_Flip,Policy_Action);       // Policy_Flip,Policy_Action
+    fprintf(fPtr,"--,--,--,");                                  // mu,sigma,policy
 
-    // // INTERNAL STATE ESTIMATES (CF)
+
+    // STATE DATA
     fprintf(fPtr,"%.3f,%.3f,%.3f,",Pose.position.x,Pose.position.y,Pose.position.z);    // x,y,z
     fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist.linear.x,Twist.linear.y,Twist.linear.z);       // vx,vy,vz
-    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Pose.orientation.x,Pose.orientation.y,Pose.orientation.z,Pose.orientation.w); // qx,qy,qz,qw
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist.angular.x,Twist.angular.y,Twist.angular.z);    // wx,wy,wz
+    fprintf(fPtr,"%.3f,%.3f,%.3f,",D_perp,Tau,Tau_est);                    // Tau,Theta_x,Theta_y,D_perp
+    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Theta_x,Theta_x_est,Theta_y,Theta_y_est);                    // Tau_est,Theta_x_est,Theta_y_est
+    fprintf(fPtr,"%s,%s,",formatBool(flip_flag),formatBool(impact_flag));               // flip_flag,impact_flag
+
+
+    // MISC STATE DATA
     fprintf(fPtr,"%.3f,%.3f,%.3f,",Eul.x,Eul.y,Eul.z);                                  // eul_x,eul_y,eul_z
-
-
-    // MISC RL LABELS
-    fprintf(fPtr,"%s,%s,",formatBool(flip_flag),formatBool(impact_flag));   // flip_flag,impact_flag
-
-    // MISC INTERNAL STATE ESTIMATES
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",Tau_est,Theta_x_est,Theta_y_est);      // Tau,Theta_x,Theta_y
-    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Tau,Theta_x,Theta_y,D_perp);      // Tau,Theta_x,Theta_y,D_perp
-    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",FM[0],FM[1],FM[2],FM[3]);           // F_thrust,Mx,My,Mz
-    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",MotorThrusts[0],MotorThrusts[1],MotorThrusts[2],MotorThrusts[3]); // M1_thrust,M2_thrust,M3_thrust,M4_thrust
-    fprintf(fPtr,"%u,%u,%u,%u,",MS_PWM[0],MS_PWM[1],MS_PWM[2],MS_PWM[3]);   // M1_pwm,M2_pwm,M3_pwm,M4_pwm
+    fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist.angular.x,Twist.angular.y,Twist.angular.z);    // wx,wy,wz
+    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Pose.orientation.x,Pose.orientation.y,Pose.orientation.z,Pose.orientation.w); // qx,qy,qz,qw
+    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",FM[0],FM[1],FM[2],FM[3]);                       // F_thrust,Mx,My,Mz
 
 
     // SETPOINT VALUES
@@ -734,7 +730,7 @@ void CF_DataConverter::append_CSV_states()
 
 
     // MISC VALUES
-    fprintf(fPtr,"%.3f,%s",V_battery,"--"); // Volts,Error
+    fprintf(fPtr,"--"); // Error
     fprintf(fPtr,"\n");
     fflush(fPtr);
 
@@ -742,31 +738,27 @@ void CF_DataConverter::append_CSV_states()
 
 void CF_DataConverter::append_CSV_misc()
 {
+    // POLICY DATA
     fprintf(fPtr,"%u,%u,",k_ep,k_run);  // k_ep,k_run
     fprintf(fPtr,"--,");                // --
     fprintf(fPtr,"%u,--,",n_rollouts);  // n_rollouts,--
     fprintf(fPtr,"[%.3f %.3f],[%.3f %.3f],[%.3f %.3f],",mu[0],mu[1],sigma[0],sigma[1],policy[0],policy[1]); // mu,sigma,policy
 
-    // // INTERNAL STATE ESTIMATES (CF)
-    fprintf(fPtr,"--,--,--,");      // x,y,z
+
+    // STATE DATA
+    fprintf(fPtr,"--,--,--,");                                  // x,y,z
     fprintf(fPtr,"%.3f,%.3f,%.3f,",vel_d[0],vel_d[1],vel_d[2]); // vel_d.x,vel_d.y,vel_d.z
-    fprintf(fPtr,"--,--,--,--,");   // qx,qy,qz,qw
-    fprintf(fPtr,"--,--,--,");      // wx,wy,wz
+    fprintf(fPtr,"--,--,--,");                                  // D_perp, Tau, Tau_est
+    fprintf(fPtr,"--,--,--,--,");                               // Theta_x,Theta_x_est,Theta_y,Theta_y_est,
+    fprintf(fPtr,"%.2f,--,",reward);                            // flip_flag,impact_flag
+
+
+    // MISC STATE DATA
     fprintf(fPtr,"--,--,--,");      // eul_x,eul_y,eul_z
+    fprintf(fPtr,"--,--,--,");      // wx,wy,wz
+    fprintf(fPtr,"--,--,--,--,");   // qx,qy,qz,qw
+    fprintf(fPtr,"--,--,--,--,");   // F_thrust,Mx,My,Mz
 
-
-
-
-    // MISC RL LABELS
-    fprintf(fPtr,"%.2f,--,",reward);
-
-    // MISC INTERNAL STATE ESTIMATES
-    fprintf(fPtr,"--,--,--,"); // Tau_est,Theta_x_est,Theta_y_est
-    fprintf(fPtr,"--,--,--,--,"); // Tau,Theta_x,Theta_y,D_perp
-    fprintf(fPtr,"--,--,--,--,"); // F_thrust,Mx,My,Mz
-    fprintf(fPtr,"--,--,--,--,"); // M1_thrust,M2_thrust,M3_thrust,M4_thrust
-    fprintf(fPtr,"--,--,--,--,"); // M1_pwm,M2_pwm,M3_pwm,M4_pwm
-    
 
     // SETPOINT VALUES
     fprintf(fPtr,"--,--,--,");  // x_d.x,x_d.y,x_d.z
@@ -774,9 +766,8 @@ void CF_DataConverter::append_CSV_misc()
     fprintf(fPtr,"--,--,--,");  // a_d.x,a_d.y,a_d.z
 
 
-
     // MISC VALUES
-    fprintf(fPtr,"--,%s",error_string.c_str()); // Volts,Error
+    fprintf(fPtr,"%s",error_string.c_str()); // Error
     fprintf(fPtr,"\n");
     fflush(fPtr);
 
@@ -784,38 +775,33 @@ void CF_DataConverter::append_CSV_misc()
 
 void CF_DataConverter::append_CSV_flip()
 {
-    fprintf(fPtr,"%u,%u,",k_ep,k_run);
-    fprintf(fPtr,"%.3f,",(Time_tr-Time_start).toSec());
-    fprintf(fPtr,"%.3f,%.3f,",Policy_Flip_tr,Policy_Action_tr);
-    fprintf(fPtr,"--,--,--,");
+    fprintf(fPtr,"%u,%u,",k_ep,k_run);                          // k_ep,k_run
+    fprintf(fPtr,"%.3f,",(Time_tr-Time_start).toSec());         // t
+    fprintf(fPtr,"%.3f,%.3f,",Policy_Flip_tr,Policy_Action_tr); // Policy_Flip,Policy_Action
+    fprintf(fPtr,"--,--,--,");                                  // mu,sigma,policy
 
     // // INTERNAL STATE ESTIMATES (CF)
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",Pose_tr.position.x,Pose_tr.position.y,Pose_tr.position.z);
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist_tr.linear.x,Twist_tr.linear.y,Twist_tr.linear.z);
-    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Pose_tr.orientation.x,Pose_tr.orientation.y,Pose_tr.orientation.z,Pose_tr.orientation.w);
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist_tr.angular.x,Twist_tr.angular.y,Twist_tr.angular.z);
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",Eul_tr.x,Eul_tr.y,Eul_tr.z);
+    fprintf(fPtr,"%.3f,%.3f,%.3f,",Pose_tr.position.x,Pose_tr.position.y,Pose_tr.position.z);   // x,y,z
+    fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist_tr.linear.x,Twist_tr.linear.y,Twist_tr.linear.z);      // vx,vy,vz
+    fprintf(fPtr,"%.3f,%.3f,--,",D_perp_tr,Tau_tr);                                             // D_perp,Tau,Tau_est
+    fprintf(fPtr,"%.3f,--,%.3f,--,",Theta_x_tr,Theta_y_tr);                                     // Tau_est,Theta_x_est,Theta_y_est
+    fprintf(fPtr,"%s,--,",formatBool(flip_flag));                                               // flip_flag,impact_flag
 
 
-    // MISC RL LABELS
-    fprintf(fPtr,"%s,--,",formatBool(flip_flag));
 
-    // MISC INTERNAL STATE ESTIMATES
-    fprintf(fPtr,"--,--,--,"); // Tau_est,Theta_x_est,Theta_y_est
-    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Tau_tr,Theta_x_tr,Theta_y_tr,D_perp_tr);
-    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",FM_tr[0],FM_tr[1],FM_tr[2],FM_tr[3]);
-    fprintf(fPtr,"--,--,--,--,");
-    fprintf(fPtr,"--,--,--,--,");
-
+    fprintf(fPtr,"%.3f,%.3f,%.3f,",Eul_tr.x,Eul_tr.y,Eul_tr.z);                                 // eul_x,eul_y,eul_z
+    fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist_tr.angular.x,Twist_tr.angular.y,Twist_tr.angular.z);   // wx,wy,wz
+    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Pose_tr.orientation.x,Pose_tr.orientation.y,Pose_tr.orientation.z,Pose_tr.orientation.w); // qx,qy,qz,qw
+    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",FM_tr[0],FM_tr[1],FM_tr[2],FM_tr[3]);                   // F_thrust,Mx,My,Mz
 
     // SETPOINT VALUES
-    fprintf(fPtr,"--,--,--,");
-    fprintf(fPtr,"--,--,--,");
-    fprintf(fPtr,"--,--,--,");
+    fprintf(fPtr,"--,--,--,"); // x_d.x,x_d.y,x_d.z
+    fprintf(fPtr,"--,--,--,"); // v_d.x,v_d.y,v_d.z
+    fprintf(fPtr,"--,--,--,"); // a_d.x,a_d.y,a_d.z
 
 
     // MISC VALUES
-    fprintf(fPtr,"--,%s","Flip Data");
+    fprintf(fPtr,"%s","Flip Data"); // Error
     fprintf(fPtr,"\n");
     fflush(fPtr);
 
@@ -823,28 +809,26 @@ void CF_DataConverter::append_CSV_flip()
 
 void CF_DataConverter::append_CSV_impact()
 {
-    fprintf(fPtr,"%u,%u,",k_ep,k_run);
-    fprintf(fPtr,"%.3f,",(Time_impact-Time_start).toSec());
-    fprintf(fPtr,"--,--,");
-    fprintf(fPtr,"--,--,--,");
-
-    // // INTERNAL STATE ESTIMATES (CF)
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",Pose_impact.position.x,Pose_impact.position.y,Pose_impact.position.z);
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist_impact.linear.x,Twist_impact.linear.y,Twist_impact.linear.z);
-    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Pose_impact.orientation.x,Pose_impact.orientation.y,Pose_impact.orientation.z,Pose_impact.orientation.w);
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist_impact.angular.x,Twist_impact.angular.y,Twist_impact.angular.z);
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",Eul_impact.x,Eul_impact.y,Eul_impact.z);
+    // POLICY DATA
+    fprintf(fPtr,"%u,%u,",k_ep,k_run);                      // k_ep,k_run
+    fprintf(fPtr,"%.3f,",(Time_impact-Time_start).toSec()); // t
+    fprintf(fPtr,"--,--,");                                 // Policy_Flip,Policy_Action
+    fprintf(fPtr,"--,--,--,");                              // mu,sigma,policy
 
 
-    // MISC RL LABELS
-    fprintf(fPtr,"%s,%s,",formatBool(BodyContact_flag),formatBool(impact_flag));
+    // STATE DATA
+    fprintf(fPtr,"%.3f,%.3f,%.3f,",Pose_impact.position.x,Pose_impact.position.y,Pose_impact.position.z);   // x,y,z
+    fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist_impact.linear.x,Twist_impact.linear.y,Twist_impact.linear.z);      // vx,vy,vz
+    fprintf(fPtr,"--,--,--,");                                                                              // D_perp,Tau,Tau_est,
+    fprintf(fPtr,"%u,%u,%u,%u,",Pad1_Contact,Pad2_Contact,Pad3_Contact,Pad4_Contact);   // Theta_x,Theta_x_est,Theta_y,Theta_y_est,
+    fprintf(fPtr,"%s,%s,",formatBool(impact_flag),formatBool(BodyContact_flag));        // flip_flag,impact_flag
 
-    // MISC INTERNAL STATE ESTIMATES
-    fprintf(fPtr,"--,--,--,"); // Tau_est,Theta_x_est,Theta_y_est
-    fprintf(fPtr,"%u,%u,%u,%u,%u,",Pad_Connections,Pad1_Contact,Pad2_Contact,Pad3_Contact,Pad4_Contact);
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",impact_force_x,impact_force_y,impact_force_z);
-    fprintf(fPtr,"--,--,--,--,");
-    fprintf(fPtr,"--,--,--,--,");
+
+    // MISC STATE DATA
+    fprintf(fPtr,"%.3f,%.3f,%.3f,",Eul_impact.x,Eul_impact.y,Eul_impact.z);                                 // eul_x,eul_y,eul_z
+    fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist_impact.angular.x,Twist_impact.angular.y,Twist_impact.angular.z);   // wx,wy,wz
+    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Pose_impact.orientation.x,Pose_impact.orientation.y,Pose_impact.orientation.z,Pose_impact.orientation.w); // qx,qy,qz,qw
+    fprintf(fPtr,"%u,--,--,--,",Pad_Connections); // F_thrust,Mx,My,Mz
 
 
     // SETPOINT VALUES
@@ -854,7 +838,7 @@ void CF_DataConverter::append_CSV_impact()
 
 
     // MISC VALUES
-    fprintf(fPtr,"--,%s","Impact Data");
+    fprintf(fPtr,"%s","Impact Data");
     fprintf(fPtr,"\n");
     fflush(fPtr);
 

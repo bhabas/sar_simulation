@@ -496,8 +496,8 @@ void Controller::publishCtrlData()
 
     // OPTICAL FLOW DATA
     CtrlData_msg.Tau = sensorData.Tau;
-    CtrlData_msg.Theta_y = sensorData.Theta_x;
-    CtrlData_msg.Theta_x = sensorData.Theta_y;
+    CtrlData_msg.Theta_x = sensorData.Theta_x;
+    CtrlData_msg.Theta_y = sensorData.Theta_y;
     CtrlData_msg.D_perp = sensorData.D_perp;
 
     // ESTIMATED OPTICAL FLOW DATA

@@ -36,7 +36,7 @@ class CrazyflieEnv_Base():
         self.username = getpass.getuser()
         self.logDir =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/crazyflie_logging/local_logs"
         self.logName = "TestLog.csv"
-        self.error_str = ""
+        self.error_str = "No_Debug_Data"
 
 
         self.preInit_Values()
