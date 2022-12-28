@@ -42,6 +42,9 @@ is easy to use.
 #define formatBool(b) ((b) ? "True" : "False")
 #define RATE_DO_EXECUTE(RATE_HZ, TICK) ((TICK % (1000 / RATE_HZ)) == 0)
 
+const char* vartheta = "\U000003D1"; 
+
+
 class CF_DataConverter
 {
     public:

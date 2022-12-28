@@ -90,15 +90,11 @@ namespace gazebo
             OFx = boost::algorithm::clamp(OFx,-50,50);
 
 
-            // OF_Data_msg.Tau = Tau + GaussianKernel(0,Tau_gaussianNoise);
-            // OF_Data_msg.OFx = OFx + GaussianKernel(0,OFx_gaussianNoise);
+            OF_Data_msg.Tau = Tau + GaussianKernel(0,Tau_gaussianNoise);
+            OF_Data_msg.OFx = OFx + GaussianKernel(0,OFx_gaussianNoise);
             OF_Data_msg.d_ceil = D_perp; // Change value to d_perp
 
-            // OF_Publisher.publish(OF_Data_msg);
-
-            printf("D_perp: %.3f \t Tau: %.3f \t OFx: %.3f",D_perp,Tau,OFx);
-            std::cout << std::endl;
-
+            OF_Publisher.publish(OF_Data_msg);
             rate.sleep();
         }
     }
