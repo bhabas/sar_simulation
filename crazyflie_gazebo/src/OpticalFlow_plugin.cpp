@@ -19,9 +19,9 @@ namespace gazebo
         topicName = _sdf->GetElement("topicName")->Get<std::string>();
         updateRate = _sdf->GetElement("updateRate")->Get<int>();
 
-        Tau_gaussianNoise = _sdf->GetElement("Tau_gaussianNoise")->Get<double>();
-        OFx_gaussianNoise = _sdf->GetElement("OFx_gaussianNoise")->Get<double>();
-
+        Theta_x_gaussianNoise = _sdf->GetElement("Theta_x_gaussianNoise")->Get<double>();
+        Theta_y_gaussianNoise = _sdf->GetElement("Theta_y_gaussianNoise")->Get<double>();
+        Theta_z_gaussianNoise = _sdf->GetElement("Theta_z_gaussianNoise")->Get<double>();
 
 
         // LOAD PLANE LOCATION
@@ -42,8 +42,10 @@ namespace gazebo
         t_x.Y() = 0;
         t_x.Z() = -sin(Plane_Angle);
 
-
-
+        // DEFINE PLANE TANGENT UNIT-VECTOR
+        t_y.X() = 0;
+        t_y.Y() = 1;
+        t_y.Z() = 0;
 
 
 
@@ -72,9 +74,10 @@ namespace gazebo
             r_PB = r_PO - r_BO; 
 
             // CALC RELATIVE DISTANCE AND VEL
-            D_perp = r_PB.Dot(n_hat);
-            V_perp = V_BO.Dot(n_hat) + 1e-3;
-            V_tx = V_BO.Dot(t_x) + 1e-3;
+            D_perp = r_PB.Dot(n_hat) + 1e-6;
+            V_perp = V_BO.Dot(n_hat);
+            V_tx = V_BO.Dot(t_x);
+            V_ty = V_BO.Dot(t_y);
 
             if (abs(D_perp) < 0.02)
             {
@@ -82,17 +85,29 @@ namespace gazebo
             }
 
             // CALC OPTICAL FLOW VALUES
-            Tau = D_perp/V_perp;
-            OFx = -V_tx/D_perp;
+            Theta_z = V_perp/D_perp + GaussianKernel(0,Theta_z_gaussianNoise);
+            Theta_x = V_tx/D_perp + GaussianKernel(0,Theta_x_gaussianNoise);
+            Theta_y = V_ty/D_perp + GaussianKernel(0,Theta_y_gaussianNoise);
+
+
+            // CLAMP OPTICAL FLOW VALUES
+            Theta_x = boost::algorithm::clamp(Theta_x,-50,50);
+            Theta_y = boost::algorithm::clamp(Theta_y,-50,50);
+            Theta_z = boost::algorithm::clamp(Theta_z,0,50);
+            Tau = boost::algorithm::clamp(1/Theta_z,0,5);;
 
             // PUBLISH OPTICAL FLOW VALUES
-            Tau = boost::algorithm::clamp(Tau,0.0,5.0);
-            OFx = boost::algorithm::clamp(OFx,-50,50);
+            OF_Data_msg.Tau = Tau;
+            OF_Data_msg.OFx = Theta_x;
+            OF_Data_msg.OFy = Theta_y;
+            OF_Data_msg.d_ceil = D_perp; 
+            
+            OF_Data_msg.Theta_x = Theta_x;
+            OF_Data_msg.Theta_y = Theta_y;
+            OF_Data_msg.Theta_z = Theta_z;
+            OF_Data_msg.D_perp = D_perp;
 
 
-            OF_Data_msg.Tau = Tau + GaussianKernel(0,Tau_gaussianNoise);
-            OF_Data_msg.OFx = OFx + GaussianKernel(0,OFx_gaussianNoise);
-            OF_Data_msg.d_ceil = D_perp; // Change value to d_perp
 
             OF_Publisher.publish(OF_Data_msg);
             rate.sleep();

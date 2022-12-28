@@ -900,8 +900,9 @@
       <updateRate>100</updateRate>
       <bodyName>body_sensors</bodyName>
       <topicName>/CF_Internal/OpticalFlow_Values</topicName>
-      <Tau_gaussianNoise>0.0</Tau_gaussianNoise>
-      <OFx_gaussianNoise>0.0</OFx_gaussianNoise>
+      <Theta_x_gaussianNoise>0.0</Theta_x_gaussianNoise>
+      <Theta_y_gaussianNoise>0.0</Theta_y_gaussianNoise>
+      <Theta_z_gaussianNoise>0.0</Theta_z_gaussianNoise>
     </plugin>
 
     <!-- <plugin name='MomentPlugin' filename='libMoment_plugin.so'>

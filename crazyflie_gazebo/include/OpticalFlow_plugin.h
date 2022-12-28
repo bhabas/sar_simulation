@@ -1,3 +1,10 @@
+/*
+This script reads the current quadrotor position relative to the generated plane and returns
+the absolute optical flow values based off of velocity and relative position. 
+
+Derivation of equations can be found in Research_Notes_Book_2.pdf (December 2022)
+*/
+
 // STANDARD IMPORTS
 #include <iostream>
 #include <thread>
@@ -58,16 +65,24 @@ namespace gazebo {
 
             ignition::math::Vector3d n_hat; // Plane Unit Normal Vector
             ignition::math::Vector3d t_x;   // Plane Unit Tangent Vector
+            ignition::math::Vector3d t_y;   // Plane Unit Tangent Vector
 
-            float D_perp = 0.0; // [m]
-            float V_perp = 0.0; // [m/s]
-            float V_tx = 0.0;   // [m/s]
 
-            float Tau = 0.0;   // [s]
-            float OFx = 0.0;   // [rad/s]
+            float D_perp = 0.0;     // Distance to plane [m]
+            float V_perp = 0.0;     // Perp velocity [m/s]
+            float V_tx = 0.0;       // Tangent_x velocity [m/s]
+            float V_ty = 0.0;       // Tangent_y velocity [m/s]
 
-            float Tau_gaussianNoise;
-            float OFx_gaussianNoise;
+            float Theta_x = 0.0;    // Optical Flow (x-vel) [rad/s]
+            float Theta_y = 0.0;    // Optical Flow (y-vel) [rad/s]
+            float Theta_z = 0.0;    // Optical Flow (z-vel) [rad/s]
+            float Tau = 0.0;        // Time-to-Contact [s]
+
+
+            float Theta_x_gaussianNoise;
+            float Theta_y_gaussianNoise;
+            float Theta_z_gaussianNoise;
+
 
             // INIT ROS OBJECTS
             ros::NodeHandle nh;

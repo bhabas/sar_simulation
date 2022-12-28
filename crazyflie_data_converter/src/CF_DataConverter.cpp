@@ -577,8 +577,8 @@ void CF_DataConverter::consoleOuput()
     printf("Vel [mag,phi,alph]: %.2f %.2f %.2f\n",Vel_mag,Phi,Alpha);
     printf("\n");
 
-    printf("Tau: %.3f \t%sx: %.3f \tOFy: %.3f\n",Tau,vartheta,OFx,OFy);
-    printf("Tau_est: %.3f \t%sx_est: %.3f \tOFy_est: %.3f\n",Tau_est,vartheta,OFx_est,OFy_est);
+    printf("Tau: %.3f \t%sx: %.3f \t%sy: %.3f\n",Tau,theta,OFx,theta,OFy);
+    printf("Tau_est: %.3f \t%sx_est: %.3f \t%sy_est: %.3f\n",Tau_est,theta,OFx_est,theta,OFy_est);
     printf("D_perp: %.3f\n",D_ceil);
     printf("\n");
 
