@@ -6,8 +6,8 @@ ENV_SETTINGS:
   Ground_Name: "GroundPlane_Desert_Physical"
 
 PLANE_SETTINGS:
-  Plane_Model: "Test_Plane"
-  Plane_Config: "135_deg"
+  Plane_Model: "Standard_Plane"
+  Plane_Config: "Flight_Cage"
 
 QUAD_SETTINGS:
   CF_Type: "Standard"

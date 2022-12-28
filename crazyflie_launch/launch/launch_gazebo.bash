@@ -12,8 +12,6 @@ PAUSE_FLAG=$(rosparam get /SIM_SETTINGS/Pause_Flag)
 CONFIG_NAME=$(rosparam get /QUAD_SETTINGS/Config)
 
 ## LOAD PLANE CONFIG PARAMS
-SURFACE_NAME=$(rosparam get /ENV_SETTINGS/Surface_Name)
-
 Plane_Config=$(rosparam get /PLANE_SETTINGS/Plane_Config)
 Plane_Model=$(rosparam get /PLANE_SETTINGS/Plane_Model)
 Plane_Pos_X=$(rosparam get /Plane_Config/$Plane_Config/Pos_X)
@@ -26,7 +24,6 @@ Plane_Angle_rad=$(echo "(180-$Plane_Angle)*3.14159/180" | bc -l)
 
 ## START GAZEBO 
 roslaunch crazyflie_launch crazyflie_gazebo.launch \
-    surface_name:=$SURFACE_NAME \
     config_name:=$CONFIG_NAME \
     ground_name:=$GROUND_NAME \
     gui_flag:=$GUI_FLAG \

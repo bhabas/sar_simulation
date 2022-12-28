@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='Test_Plane2'>
+  <model name='Standard_Plane'>
     <static>0</static>
     <link name='plane'>
       <pose>0 0 0.0 0 -0 0</pose>
@@ -25,17 +25,19 @@
         <pose>0 0 0.0 0 0 0</pose>
         <geometry>
           <box>
-            <size>1 1 0.01</size>
+            <size>4 4 0.01</size>
           </box>
         </geometry>
         <material>
           <script>
-            <name>Gazebo/Red</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <uri>model://Standard_Plane/materials/scripts</uri>
+            <uri>model://Standard_Plane/materials/textures</uri>
+            <name>ceilingMat/Checkerboard</name>
           </script>
           <shader type='pixel'>
             <normal_map>__default__</normal_map>
           </shader>
+          <emissive>0 0 0 1</emissive>
         </material>
       </visual>
       <visual name='plane_center'>
@@ -43,7 +45,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <sphere>
-            <radius>0.025</radius>
+            <radius>0.02</radius>
           </sphere>
         </geometry>
         <material>
@@ -62,7 +64,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <box>
-            <size>1 1 0.01</size>
+            <size>4 4 0.01</size>
           </box>
         </geometry>
         <surface>
