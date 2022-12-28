@@ -634,7 +634,7 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         D_perp = sensors->D_perp;
         X->data[0][0] = Tau;
         X->data[1][0] = Theta_x;
-        X->data[2][0] = D_perp; // d_ceiling [m]
+        X->data[2][0] = D_perp; 
 
         if(policy_armed_flag == true){ 
 
