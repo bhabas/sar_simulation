@@ -387,44 +387,7 @@ class DataFile:
 
         return t,t_normalized
 
-    def plot_traj_3D_SensorySpace(self,k_ep,k_run):
-        """Plot flight trajectory through Sensory-Space until flip execution
-
-        Args:
-            k_ep (int): Episode Number
-            k_run (int): Run Number
-        """   
-
-        run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
-
-        ## GRAB/MODIFY DATA AND CONVERT TO NUMPY ARRAY
-        RREV_traj = run_df.query(f"flip_flag==False and RREV <= 8").iloc[:]['RREV'].to_numpy()
-        OF_y_traj = run_df.query(f"flip_flag==False and RREV <= 8").iloc[:]['OF_y'].to_numpy()
-        d_ceil_traj = run_df.query(f"flip_flag==False and RREV <= 8").iloc[:]['d_ceil'].to_numpy()
-
-
-        ## PLOT DATA
-        fig = plt.figure()
-        ax = fig.add_subplot(111,projection="3d")
-        
-        ax.plot(OF_y_traj,RREV_traj,d_ceil_traj,'k--')
-        ax.scatter(OF_y_traj[0],RREV_traj[0],d_ceil_traj[0],marker='o',color='k',label='Velocity Imparted')
-        # ax.scatter(OF_y_traj[-1],RREV_traj[-1],marker='x',color='k',label='Flip Executed')
-
-        ax.set_xlim(-20,0)
-        ax.set_ylim(0,8)
-        ax.set_zlim(0,2)
-       
-        ax.set_xlabel("OF_y [rad/s]")
-        ax.set_ylabel("RREV [rad/s]")
-        ax.set_zlabel("D_ceil [m]")
-        ax.set_title("Flight Trajectory - Sensory Space")
-        ax.legend()
-        ax.grid()
-
-        plt.show()
-
-
+    
 
     ## DESIRED IC FUNCTIONS
     def grab_vel_IC(self):
@@ -469,11 +432,15 @@ class DataFile:
         """        
 
         run_df,_,flip_df,_ = self.select_run(k_ep,k_run)
-        t_flip = float(flip_df.iloc[0]['t'])
-        t_flip_norm = t_flip - float(run_df.iloc[0]['t']) # Normalize flip time
-
+        if flip_df.iloc[0]['flip_flag'] == True: # If Impact Detected
+            t_flip = float(flip_df.iloc[0]['t'])
+            t_flip_norm = t_flip - float(run_df.iloc[0]['t']) # Normalize flip time
+        else:
+            t_flip = np.nan
+            t_flip_norm = np.nan
 
         return t_flip,t_flip_norm
+
 
     def grab_flip_state(self,k_ep,k_run,stateName: list):
         """Returns desired state at time of flip
@@ -490,8 +457,12 @@ class DataFile:
         """        
 
         _,_,flip_df,_ = self.select_run(k_ep,k_run)
-        state_flip = flip_df[stateName]
-        state_flip = state_flip.to_numpy(dtype=np.float64).flatten()
+        if flip_df.iloc[0]['flip_flag'] == True: # If Impact Detected
+
+            state_flip = float(flip_df.iloc[0][stateName])
+        else:
+            state_flip = np.nan
+
 
 
         return state_flip
@@ -659,4 +630,4 @@ if __name__ == "__main__":
     fileName = "EPHE--Vd_2.50--phi_60.00--trial_25--NL.csv"
     trial = DataFile(dataPath,fileName,dataType='Sim')
 
-    print(trial.grab_trial_data(trial.grab_impact_state,'vz'))
+    trial.plot_policy_convg()

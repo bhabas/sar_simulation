@@ -602,7 +602,7 @@ void CF_DataConverter::consoleOuput()
 
     printf("==== Flip Trigger Values ====\n");
     printf("Tau_tr:     %.3f \tPolicy_Flip_tr:    %.3f \n",Tau_tr,Policy_Flip_tr);
-    printf("Theta_x_tr:     %.3f \tPolicy_Action_tr:  %.3f \n",Theta_x_tr,Policy_Action_tr);
+    printf("%sx_tr:     %.3f \tPolicy_Action_tr:  %.3f \n",theta,Theta_x_tr,Policy_Action_tr);
     printf("D_perp_tr:  %.3f \n",D_perp_tr);
     printf("\n");
 
