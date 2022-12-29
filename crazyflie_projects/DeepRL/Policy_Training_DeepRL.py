@@ -22,9 +22,6 @@ BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
 sys.path.insert(1,BASE_PATH)
 
 
-## IMPORT ENVIRONMENTS
-from Envs.CrazyflieEnv_DeepRL import CrazyflieEnv_DeepRL
-from Envs.CF_Env_2D import CF_Env_2D
 
 
 ## COLLECT CURRENT TIME
@@ -432,6 +429,11 @@ class Policy_Trainer_DeepRL():
 
 
 if __name__ == '__main__':
+
+
+    ## IMPORT ENVIRONMENTS
+    from Envs.CrazyflieEnv_DeepRL import CrazyflieEnv_DeepRL
+    from Envs.CF_Env_2D import CF_Env_2D
 
     ## INITIATE ENVIRONMENT
     env = CrazyflieEnv_DeepRL(GZ_Timeout=True)

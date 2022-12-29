@@ -12,13 +12,12 @@ from stable_baselines3.common.callbacks import *
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg,os
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
-sys.path.insert(1,'/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_env')
 sys.path.insert(1,BASE_PATH)
-from crazyflie_projects.DeepRL.Policy_Training_DeepRL import Policy_Trainer_DeepRL
 
 
 ## IMPORT ENVIRONMENTS
-from Envs.CrazyflieEnv_DeepRL import CrazyflieEnv_DeepRL
+from crazyflie_projects.DeepRL.Policy_Training_DeepRL import Policy_Trainer_DeepRL
+from crazyflie_projects.Leg_Design_Analysis.Envs.CrazyflieEnv_DeepRL_LDA import CrazyflieEnv_DeepRL_LDA
 
 
 ## COLLECT CURRENT TIME
@@ -30,16 +29,14 @@ current_time = now.strftime("%m_%d-%H:%M")
 if __name__ == '__main__':
 
     ## INITIATE ENVIRONMENT
-    env = CrazyflieEnv_DeepRL(GZ_Timeout=True)
-    # env = None
+    env = CrazyflieEnv_DeepRL_LDA(GZ_Timeout=True)
 
 
     # # LOAD DEEP RL MODEL
     # load_model_name = f"SAC--10_12-11:40--NL_0"
 
-    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Gazebo"
-    # leg_config = "NL"
-    # log_name = f"SAC--{current_time}--{leg_config}"
+    # log_dir = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/"
+    # log_name = f"SAC--{current_time}--{env.modelInitials}"
 
     # policy_path = os.path.join(log_dir,load_model_name)
     # model_path = os.path.join(log_dir,load_model_name,f"models/{2}000_steps.zip")
@@ -48,9 +45,8 @@ if __name__ == '__main__':
 
 
     ## CREATE NEW DEEP RL MODEL 
-    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Gazebo"
-    leg_config = "NL"
-    log_name = f"SAC--{current_time}--{leg_config}"
+    log_dir = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/"
+    log_name = f"SAC--{current_time}--{env.modelInitials}"
     model = SAC(
         "MlpPolicy",
         env=env,
@@ -63,7 +59,7 @@ if __name__ == '__main__':
     ) 
 
     
-    Policy = Policy_Trainer_DeepRL(env,model,leg_config)
+    Policy = Policy_Trainer_DeepRL(env,model)
     Policy.train_model(log_name,log_dir,reset_timesteps=True)
 
     # Policy.save_NN_Params(policy_path)
