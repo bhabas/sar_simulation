@@ -9,8 +9,7 @@ PLANE_SETTINGS:
 
 QUAD_SETTINGS:
   CF_Type: "Standard"
-  Config: "Narrow_Long"
-  Model_Config: "Narrow_Long"
+  CF_Config: "Narrow_Long"
   Cam_Sensor: False
 
   Policy_Type: "PARAM_OPTIM"

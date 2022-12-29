@@ -9,7 +9,7 @@ GUI_FLAG=$(rosparam get /SIM_SETTINGS/GUI_Flag)
 PAUSE_FLAG=$(rosparam get /SIM_SETTINGS/Pause_Flag)
 
 ## LOAD QUADROTOR PARAMS
-CONFIG_NAME=$(rosparam get /QUAD_SETTINGS/Config)
+CONFIG_NAME=$(rosparam get /QUAD_SETTINGS/CF_Config)
 
 ## LOAD PLANE CONFIG PARAMS
 Plane_Config=$(rosparam get /PLANE_SETTINGS/Plane_Config)

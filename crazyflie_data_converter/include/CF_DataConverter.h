@@ -594,7 +594,7 @@ void CF_DataConverter::LoadParams()
 {
 
     ros::param::get("/QUAD_SETTINGS/CF_Type",CF_Type);
-    ros::param::get("/QUAD_SETTINGS/Config",CF_Config);
+    ros::param::get("/QUAD_SETTINGS/CF_Config",CF_Config);
     ros::param::get("/QUAD_SETTINGS/Policy_Type",POLICY_TYPE);
 
     MODEL_NAME = "crazyflie_" + CF_Config;

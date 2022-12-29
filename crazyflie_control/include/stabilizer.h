@@ -407,7 +407,7 @@ void Controller::loadParams()
 {
     
     ros::param::get("/QUAD_SETTINGS/CF_Type",CF_Type);
-    ros::param::get("/QUAD_SETTINGS/Config",CF_Config);
+    ros::param::get("/QUAD_SETTINGS/CF_Config",CF_Config);
     ros::param::get("/QUAD_SETTINGS/Cam_Sensor",camera_sensor_active);
     CF_Type = "/CF_Type/" + CF_Type;
     CF_Config = "/Config/" + CF_Config;

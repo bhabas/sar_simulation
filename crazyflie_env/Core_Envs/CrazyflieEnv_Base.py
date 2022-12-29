@@ -23,7 +23,7 @@ class CrazyflieEnv_Base():
         os.system("roslaunch crazyflie_launch params.launch")
 
         self.CF_Type = rospy.get_param('/QUAD_SETTINGS/CF_Type')
-        self.configName = rospy.get_param('/QUAD_SETTINGS/Config')
+        self.configName = rospy.get_param('/QUAD_SETTINGS/CF_Config')
         self.modelInitials = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Initials")
         self.modelName = f"crazyflie_{self.configName}"
 
