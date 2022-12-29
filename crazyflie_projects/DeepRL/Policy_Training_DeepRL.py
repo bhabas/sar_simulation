@@ -456,7 +456,6 @@ if __name__ == '__main__':
 
     ## CREATE NEW DEEP RL MODEL 
     log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Gazebo"
-    leg_config = "NL"
     log_name = f"SAC--{current_time}--{env.modelInitials}"
     model = SAC(
         "MlpPolicy",
