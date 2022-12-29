@@ -24,6 +24,7 @@ class CrazyflieEnv_Base():
 
         self.CF_Type = rospy.get_param('/QUAD_SETTINGS/CF_Type')
         self.configName = rospy.get_param('/QUAD_SETTINGS/Config')
+        self.modelInitials = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Initials")
         self.modelName = f"crazyflie_{self.configName}"
 
         self.env_name = "CF_BaseEnv"
@@ -354,17 +355,6 @@ class CrazyflieEnv_Base():
 
         self.V_Battery = np.round(MiscData_msg.battery_voltage,4)
 
-    def modelInitials(self):
-        """Returns initials for the model. Should be done with REGEX but this'll work for now
-
-        Returns:
-            string: Model name initials
-        """        
-        str = self.modelName
-        charA = str[self.modelName.find("_")+1]     # [W]ide
-        charB = str[self.modelName.find("_",-8)+1]  # [L]ong
-
-        return charA+charB  # [WL]
 
     def userInput(self,input_string,dataType=float):
         """Processes user input and return values as either indiviual value or list

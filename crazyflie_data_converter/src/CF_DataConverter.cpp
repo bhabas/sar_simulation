@@ -577,7 +577,7 @@ void CF_DataConverter::consoleOuput()
     printf("Vel [mag,phi,alph]: %.2f %.2f %.2f\n",Vel_mag,Phi,Alpha);
     printf("\n");
 
-    printf("Tau: %.3f \t%sx: %.3f \t%sy: %.3f\n",Tau,theta,Theta_y,theta,Theta_x);
+    printf("Tau: %.3f \t%sx: %.3f \t%sy: %.3f\n",Tau,theta,Theta_x,theta,Theta_y);
     printf("Tau_est: %.3f \t%sx_est: %.3f \t%sy_est: %.3f\n",Tau_est,theta,Theta_x_est,theta,Theta_y_est);
     printf("D_perp: %.3f\n",D_perp);
     printf("\n");
@@ -619,7 +619,7 @@ void CF_DataConverter::consoleOuput()
     printf("\n");
 
 
-    printf("=== Parameters ====\n");
+    printf("=== Controller Gains ====\n");
     printf("Kp_P: %.3f  %.3f  %.3f \t",P_kp_xy,P_kp_xy,P_kp_z);
     printf("Kp_R: %.3f  %.3f  %.3f \n",R_kp_xy,R_kp_xy,R_kp_z);
 

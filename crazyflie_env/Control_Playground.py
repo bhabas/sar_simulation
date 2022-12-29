@@ -219,7 +219,7 @@ if __name__ == '__main__':
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 24
-    logName = f"Control_Playground--trial_{int(trial_num):02d}--{env.modelInitials()}.csv"
+    logName = f"Control_Playground--trial_{int(trial_num):02d}--{env.modelInitials}.csv"
 
     env.createCSV(logName)
     cmd_thread = threading.Thread(target=cmd_send,args=(env,logName))

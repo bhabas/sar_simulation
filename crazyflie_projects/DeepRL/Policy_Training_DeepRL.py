@@ -19,7 +19,6 @@ from stable_baselines3.common.callbacks import *
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg,os
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
-sys.path.insert(1,'/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_env')
 sys.path.insert(1,BASE_PATH)
 
 
@@ -35,10 +34,10 @@ current_time = now.strftime("%m_%d-%H:%M")
 
 
 class Policy_Trainer_DeepRL():
-    def __init__(self,env,model,leg_config):
+    def __init__(self,env,model):
         self.env = env
         self.model = model
-        self.leg_config = leg_config
+        
 
     def save_NN_Params(self,SavePath):
         """Save NN parameters to C header file for upload to crazyflie
@@ -47,7 +46,7 @@ class Policy_Trainer_DeepRL():
             SavePath (str): Path to save header file
         """        
 
-        FileName = f"NN_Layers_{leg_config}_DeepRL.h"
+        FileName = f"NN_Layers_{self.env.modelInitials}_DeepRL.h"
         f = open(os.path.join(SavePath,FileName),'a')
         f.truncate(0) ## Clears contents of file
 
@@ -279,17 +278,17 @@ class Policy_Trainer_DeepRL():
         fig = go.Figure()
 
         ## MESHGRID OF DATA POINTS
-        Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
+        Tau_grid, Theta_x_grid, D_perp_grid = np.meshgrid(
             np.linspace(0.15, 0.30, 15),
-            np.linspace(-15, 1, 15),
+            np.linspace(0, 15, 15),
             np.linspace(0.0, 1.0, 15)
         )
 
         ## CONCATENATE DATA TO MATCH INPUT SHAPE
         X_grid = np.stack((
             Tau_grid.flatten(),
-            OF_y_grid.flatten(),
-            d_ceil_grid.flatten()),axis=1)
+            Theta_x_grid.flatten(),
+            D_perp_grid.flatten()),axis=1)
 
 
         ## CALC INDEX FOR WHERE FLIP MEAN GREATER THAN FLIP REQUIREMENT
@@ -301,9 +300,9 @@ class Policy_Trainer_DeepRL():
         fig.add_trace(
             go.Scatter3d(
                 ## DATA
-                x=OF_y_grid.flatten()[valid_idx],
+                x=Theta_x_grid.flatten()[valid_idx],
                 y=Tau_grid.flatten()[valid_idx],
-                z=d_ceil_grid.flatten()[valid_idx],
+                z=D_perp_grid.flatten()[valid_idx],
                 
 
                 ## MARKER
@@ -322,16 +321,16 @@ class Policy_Trainer_DeepRL():
 
         if PlotTraj[0] != None:
             dataFile,k_ep,k_run = PlotTraj
-            arr = dataFile.grab_stateData(k_ep,k_run,['Tau','OF_y','d_ceil'])
-            Tau,OFy,d_ceil = np.split(arr,3,axis=1)
-            Tau_tr,OFy_tr,d_ceil_tr,My_tr = dataFile.grab_flip_state(k_ep,k_run,['Tau','OF_y','d_ceil','My'])
+            arr = dataFile.grab_stateData(k_ep,k_run,['Tau','Theta_x','D_perp'])
+            Tau,Theta_x,D_perp = np.split(arr,3,axis=1)
+            Tau_tr,Theta_x_tr,D_perp_tr,My_tr = dataFile.grab_flip_state(k_ep,k_run,['Tau','Theta_x','D_perp','My'])
 
             fig.add_trace(
                 go.Scatter3d(
                     ## DATA
-                    x=OFy.flatten(),
+                    x=Theta_x.flatten(),
                     y=Tau.flatten(),
-                    z=d_ceil.flatten(),
+                    z=D_perp.flatten(),
 
                     ## MARKER
                     mode='lines',
@@ -345,15 +344,15 @@ class Policy_Trainer_DeepRL():
             fig.add_trace(
                 go.Scatter3d(
                     ## DATA
-                    x=[OFy_tr],
+                    x=[Theta_x_tr],
                     y=[Tau_tr],
-                    z=[d_ceil_tr],
+                    z=[D_perp_tr],
 
                     ## HOVER DATA
                     hovertemplate=
                         f"<b>My: {My_tr:.3f} N*mm</b> \
-                        <br>Tau: {Tau_tr:.3f} | OFy: {OFy_tr:.3f} </br> \
-                        <br>D_ceil: {d_ceil_tr:.3f}</br>",
+                        <br>Tau: {Tau_tr:.3f} | Theta_x: {Theta_x_tr:.3f} </br> \
+                        <br>D_perp: {D_perp_tr:.3f}</br>",
 
                     ## MARKER
                     mode='markers',
@@ -368,9 +367,9 @@ class Policy_Trainer_DeepRL():
 
         fig.update_layout(
             scene=dict(
-                xaxis_title='OFy [rad/s]',
+                xaxis_title='Theta_x [rad/s]',
                 yaxis_title='Tau [s]',
-                zaxis_title='D_ceiling [m]',
+                zaxis_title='D_perp [m]',
                 xaxis_range=[-20,1],
                 yaxis_range=[0.4,0.1],
                 zaxis_range=[0,1.2],
@@ -435,55 +434,55 @@ class Policy_Trainer_DeepRL():
 if __name__ == '__main__':
 
     ## INITIATE ENVIRONMENT
-    # env = CrazyflieEnv_DeepRL(GZ_Timeout=True)
+    env = CrazyflieEnv_DeepRL(GZ_Timeout=True)
     # env = CF_Env_2D()
-    env = None
+    # env = None
     
 
 
     # # LOAD DEEP RL MODEL
-    load_model_name = f"SAC--10_12-11:40--NL_0"
+    # load_model_name = f"SAC--10_12-11:40--NL_0"
 
-    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Env_2D"
-    leg_config = "NL"
-    log_name = f"SAC--{current_time}--{leg_config}"
-
-    policy_path = os.path.join(log_dir,load_model_name)
-    model_path = os.path.join(log_dir,load_model_name,f"models/{2}000_steps.zip")
-    model = SAC.load(model_path,env=env,device='cpu')
-    model.load_replay_buffer(f"{log_dir}/{load_model_name}/models/replay_buff.pkl")
-
-    # ## CREATE NEW DEEP RL MODEL 
     # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Env_2D"
     # leg_config = "NL"
     # log_name = f"SAC--{current_time}--{leg_config}"
-    # model = SAC(
-    #     "MlpPolicy",
-    #     env=env,
-    #     gamma=0.999,
-    #     learning_rate=0.002,
-    #     policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[12,12]),
-    #     verbose=1,
-    #     device='cpu',
-    #     tensorboard_log=log_dir
-    # ) 
+
+    # policy_path = os.path.join(log_dir,load_model_name)
+    # model_path = os.path.join(log_dir,load_model_name,f"models/{2}000_steps.zip")
+    # model = SAC.load(model_path,env=env,device='cpu')
+    # model.load_replay_buffer(f"{log_dir}/{load_model_name}/models/replay_buff.pkl")
+
+    ## CREATE NEW DEEP RL MODEL 
+    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Gazebo"
+    leg_config = "NL"
+    log_name = f"SAC--{current_time}--{env.modelInitials}"
+    model = SAC(
+        "MlpPolicy",
+        env=env,
+        gamma=0.999,
+        learning_rate=0.002,
+        policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[12,12]),
+        verbose=1,
+        device='cpu',
+        tensorboard_log=log_dir
+    ) 
 
     
-    Policy = Policy_Trainer_DeepRL(env,model,leg_config)
-    # Policy.train_model(log_name,log_dir,reset_timesteps=False)
+    Policy = Policy_Trainer_DeepRL(env,model)
+    Policy.train_model(log_name,log_dir,reset_timesteps=False)
 
 
     # Policy.save_NN_Params(policy_path)
     # Policy.plotPolicyRegion(iso_level=1.5)
 
-    # LOAD DATA
-    df_raw = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/DeepRL/Data_Logs/DeepRL_NL_LR.csv").dropna() # Collected data
+    # # LOAD DATA
+    # df_raw = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/DeepRL/Data_Logs/DeepRL_NL_LR.csv").dropna() # Collected data
 
-    ## MAX LANDING RATE DATAFRAME
-    idx = df_raw.groupby(['vel_d','phi_d'])['LR_4Leg'].transform(max) == df_raw['LR_4Leg']
-    df_max = df_raw[idx].reset_index()
+    # ## MAX LANDING RATE DATAFRAME
+    # idx = df_raw.groupby(['vel_d','phi_d'])['LR_4Leg'].transform(max) == df_raw['LR_4Leg']
+    # df_max = df_raw[idx].reset_index()
 
-    Policy.plot_polar(df_max)
+    # Policy.plot_polar(df_max)
 
 
 

@@ -52,11 +52,10 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
         #     for line in file:
         #         print(line.replace("--,--,Rollout Completed", "Rollout Completed"), end='')
         trial = DataFile(dataPath,fileName,dataType='SIM')
-        trial.n_rollouts = 5
+        
         
         ## TRIAL CONDITIONS
         vel_IC,phi_IC = trial.grab_vel_IC_2D_angle()
-
 
         vz_flip_mean,vz_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,'vz',N=4)
         vx_flip_mean,vx_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,'vx',N=4)
