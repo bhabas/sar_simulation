@@ -8,7 +8,6 @@ import time
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg,os
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
-sys.path.insert(1,'/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_env')
 sys.path.insert(1,BASE_PATH)
 
 from crazyflie_env.Core_Envs.CrazyflieEnv_Sim import CrazyflieEnv_Sim
@@ -24,7 +23,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         self.k_ep = 0
         self.Flip_thr = 1.5
 
-        self.d_min = 50.0
+        self.D_min = 50.0
         self.Tau_trg = 50.0
         self.done = False
 
@@ -42,14 +41,14 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
     def step(self,action):
 
-        Tau,OFy,d_ceil  = self.obs
+        Tau,Theta_x,D_perp  = self.obs
         action[0] = np.arctanh(action[0])
         
         if action[0] < self.Flip_thr:
 
             ## UPDATE STATE AND OBSERVATION
             self.iter_step()
-            self.obs = (self.Tau,self.OFy,self.d_ceil)
+            self.obs = (self.Tau,self.Theta_x,self.D_perp)
 
             ## CHECK FOR DONE
             self.done = bool(
@@ -59,8 +58,8 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
             )         
 
             if not self.done:
-                if self.d_ceil <= self.d_min:
-                    self.d_min = self.d_ceil 
+                if self.D_perp <= self.D_min:
+                    self.D_min = self.D_perp 
 
             ## ERROR TERMINATIONS
             if (time.time() - self.start_time_ep) > 300.0 and self.GZ_Timeout == True:
@@ -104,8 +103,8 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
             )
 
             if not self.done:
-                if self.d_ceil <= self.d_min:
-                    self.d_min = self.d_ceil 
+                if self.D_perp <= self.D_min:
+                    self.D_min = self.D_perp 
 
             ## ERROR TERMINATIONS
             if (time.time() - self.start_time_ep) > 300.0 and self.GZ_Timeout == True:
@@ -150,7 +149,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
         ## RESET REWARD CALC VALUES
         self.done = False
-        self.d_min = 50.0  # Reset max from ceiling [m]
+        self.D_min = 50.0  # Reset max from ceiling [m]
         self.Tau_trg = 50.0
 
         ## RESET/UPDATE RUN CONDITIONS
@@ -175,17 +174,14 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         vz_0 = vel*np.sin(np.deg2rad(phi))
 
         ## RESET OBSERVATION
-        Tau_0 = 0.4
-        d_ceil_0 = Tau_0*vz_0 + 1e-3
-
-        z_0 = 2.10 - d_ceil_0
+        z_0 = 0.5
         x_0 = 0.0
         self.Vel_Launch([x_0,0.0,z_0],[vx_0,0,vz_0])
         self.iter_step(10)
 
 
         ## RESET OBSERVATION
-        self.obs = (self.Tau,self.OFy,self.d_ceil)
+        self.obs = (self.Tau,self.Theta_x,self.D_perp)
         self.k_ep += 1
 
         return np.array(self.obs,dtype=np.float32)
@@ -199,7 +195,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         R0 *= 0.1
 
         ## DISTANCE REWARD 
-        R1 = np.clip(1/np.abs(self.d_min+1e-3),0,15)/15
+        R1 = np.clip(1/np.abs(self.D_min+1e-3),0,15)/15
         R1 *= 0.05
 
         ## IMPACT ANGLE REWARD

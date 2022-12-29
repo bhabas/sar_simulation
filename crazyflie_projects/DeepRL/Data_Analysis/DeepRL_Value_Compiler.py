@@ -61,8 +61,8 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
         vz_flip_mean,vz_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,'vz',N=4)
         vx_flip_mean,vx_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,'vx',N=4)
         Tau_flip_mean,Tau_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,'Tau',N=4)
-        OFy_flip_mean,OFy_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,'OF_y',N=4)
-        D_ceil_flip_mean,D_ceil_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,'d_ceil',N=4)
+        Theta_x_flip_mean,Theta_x_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,'Theta_x',N=4)
+        D_perp_flip_mean,D_perp_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,'D_perp',N=4)
         My_mean,My_std,_ = trial.grab_trial_data(trial.grab_flip_state,'My',N=4)
         landing_rate_4leg,landing_rate_2leg,_,_ = trial.landing_rate(N=4)
         mu,sigma = trial.grab_finalPolicy()
@@ -75,16 +75,16 @@ for ii,fileName in enumerate(os.listdir(dataPath)): # Iter over all files in dir
             landing_rate_4leg,landing_rate_2leg,
 
             Tau_flip_mean,
-            OFy_flip_mean,
-            D_ceil_flip_mean,
+            Theta_x_flip_mean,
+            D_perp_flip_mean,
             My_mean,
 
             vz_flip_mean,
             vx_flip_mean,
 
             Tau_flip_std,
-            OFy_flip_std,
-            D_ceil_flip_std,
+            Theta_x_flip_std,
+            D_perp_flip_std,
             My_std,
 
             vz_flip_std,
@@ -107,16 +107,16 @@ master_df = pd.DataFrame(df_list,columns=(
     "LR_4Leg","LR_2Leg",
 
     "Tau_flip_mean",
-    "OFy_flip_mean",
-    "D_ceil_flip_mean",
+    "Theta_x_flip_mean",
+    "D_perp_flip_mean",
     "My_mean",
 
     "vz_flip_mean",
     "vx_flip_mean",
 
     "Tau_flip_std",
-    "OFy_flip_std",
-    "D_ceil_flip_std",
+    "Theta_x_flip_std",
+    "D_perp_flip_std",
     "My_std",
 
     "vz_flip_std",
