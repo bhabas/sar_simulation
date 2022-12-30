@@ -220,6 +220,11 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base):
         self.callService("/gazebo/unpause_physics",srv,Empty)
         
     def iter_step(self,n_steps:int = 10):
+        """Update simulation by n timesteps
+
+        Args:
+            n_steps (int, optional): _description_. Defaults to 10.
+        """        
         os.system(f'gz world --multi-step={n_steps}')
 
         

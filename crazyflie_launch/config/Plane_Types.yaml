@@ -17,7 +17,7 @@ Plane_Config:
     Plane_Angle: 135  # [deg]
     Pos_X: 2.0  # [m]
     Pos_Y: 0.0  # [m]
-    Pos_Z: 0.5  # [m]
+    Pos_Z: 2.0  # [m]
 
   90_deg:
     Plane_Angle: 90   # [deg]
@@ -35,5 +35,5 @@ Plane_Config:
     Plane_Angle: 0   # [deg]
     Pos_X: 2.0  # [m]
     Pos_Y: 0.0  # [m]
-    Pos_Z: 0.1  # [m]
+    Pos_Z: 0.0  # [m]
 

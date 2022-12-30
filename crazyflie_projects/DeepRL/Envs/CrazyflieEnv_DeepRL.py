@@ -141,8 +141,8 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         self.gazebo_pause_physics()
 
         ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
-        self.Iyy = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Iyy") + np.random.normal(0,1.5e-6)
-        self.mass = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Mass") + np.random.normal(0,0.0005)
+        self.Iyy = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Iyy") + np.random.normal(0,1.5e-6)
+        self.mass = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Mass") + np.random.normal(0,0.0005)
         self.updateInertia()
 
 
@@ -163,24 +163,28 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         self.onceFlag_flip = False      # Ensures flip data recorded only once
         self.onceFlag_impact = False    # Ensures impact data recorded only once 
 
-        ## RESET STATE
+        ## SAMPLE VELOCITY VECTOR
         if vel == None:
             vel = np.random.uniform(low=1.5,high=3.5)
             
         if phi == None:
-            phi = np.random.uniform(low=-45,high=45)
+            phi = np.random.uniform(low=0,high=90)
 
         vx_0 = vel*np.cos(np.deg2rad(phi))
         vz_0 = vel*np.sin(np.deg2rad(phi))
+        Vel_0 = np.array([vx_0,0,vz_0])  # Flight Velocity vector
 
         
-        ## RESET OBSERVATION
-        Tau_0 = 0.4
-        D_perp_0 = Tau_0*vx_0 + 1e-3
+        ## RESET POSITION (Derivation: Research_Notes_Book_2.pdf (12/30/22))
+        Tau_0 = 0.5 # Starting tau-value
+        r_p = np.array(self.Plane_Pos)                              # Plane Position
+        theta_rad = np.radians(self.Plane_Angle)                    # Plane angle
+        n_hat = np.array([np.sin(theta_rad),0,-np.cos(theta_rad)])  # Plane normal vector
 
-        x_0 = 2.0 - D_perp_0
-        z_0 = 1.0
-        self.Vel_Launch([x_0,0.0,z_0],[vx_0,0,vz_0])
+        D_perp_0 = Tau_0*(Vel_0.dot(n_hat)) # Initial distance
+        r_0 = r_p - D_perp_0*n_hat          # Initial quad position (World coords)
+
+        self.Vel_Launch(r_0,Vel_0)
         self.iter_step(10)
 
 
@@ -229,11 +233,16 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
 if __name__ == "__main__":
 
+    # vel = 2
+    # phi = 45
+
     env = CrazyflieEnv_DeepRL(GZ_Timeout=False)
     for ep in range(25):
         env.reset()
         done = False
         while not done:
-            obs,reward,done,info = env.step(env.action_space.sample())
+            action = env.action_space.sample()
+            action = np.array([0,0])
+            obs,reward,done,info = env.step(action)
         print(f"Episode: {ep} \t Reward: {reward:.3f}")
 

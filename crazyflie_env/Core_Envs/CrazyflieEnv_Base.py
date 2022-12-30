@@ -21,13 +21,25 @@ class CrazyflieEnv_Base():
     metadata = {'render.modes': ['human']}
     def __init__(self):
         os.system("roslaunch crazyflie_launch params.launch")
-
-        self.CF_Type = rospy.get_param('/QUAD_SETTINGS/CF_Type')
-        self.configName = rospy.get_param('/QUAD_SETTINGS/CF_Config')
-        self.modelInitials = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Initials")
-        self.modelName = f"crazyflie_{self.configName}"
-
         self.env_name = "CF_BaseEnv"
+
+        ## CRAZYFLIE PARAMETERS
+        self.CF_Type = rospy.get_param('/QUAD_SETTINGS/CF_Type')
+        self.CF_Config = rospy.get_param('/QUAD_SETTINGS/CF_Config')
+        self.modelInitials = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Initials")
+        self.modelName = f"crazyflie_{self.CF_Config}"
+
+
+        ## PLANE PARAMETERS
+        self.Plane_Model = rospy.get_param('/PLANE_SETTINGS/Plane_Model')
+        self.Plane_Config = rospy.get_param('/PLANE_SETTINGS/Plane_Config')
+        self.Plane_Angle = rospy.get_param(f'/Plane_Config/{self.Plane_Config}/Plane_Angle')
+        self.Plane_Pos = [
+            rospy.get_param(f'/Plane_Config/{self.Plane_Config}/Pos_X'),
+            rospy.get_param(f'/Plane_Config/{self.Plane_Config}/Pos_Y'),
+            rospy.get_param(f'/Plane_Config/{self.Plane_Config}/Pos_Z'),
+        ]
+        
      
         ## TRAJECTORY VALUES
         self.posCF_0 = [0.0, 0.0, 0.4]      # Default hover position [m]
@@ -157,10 +169,10 @@ class CrazyflieEnv_Base():
                 
     def preInit_Values(self):
 
-        self.Ixx = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Ixx")
-        self.Iyy = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Iyy")
-        self.Izz = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Izz")
-        self.mass = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Mass")
+        self.Ixx = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Ixx")
+        self.Iyy = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Iyy")
+        self.Izz = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Izz")
+        self.mass = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Mass")
         
         ## RAW VICON VALUES
         self.posViconRaw = [0,0,0]
