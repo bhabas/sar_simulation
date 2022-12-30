@@ -54,7 +54,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
             self.done = bool(
                 self.t - self.start_time_rollout > 0.7              # EPISODE TIMEOUT
                 or (self.impact_flag or self.BodyContact_flag)
-                or (self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5) # FREE-FALL TERMINATION
+                # or (self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5) # FREE-FALL TERMINATION
             )         
 
             if not self.done:
@@ -99,7 +99,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
             self.done = bool(
                 self.t - self.start_time_rollout > 1.0              # EPISODE TIMEOUT
                 or self.t - self.start_time_impact > 0.5            # IMPACT TIMEOUT
-                or (self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5) # FREE-FALL TERMINATION
+                # or (self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5) # FREE-FALL TERMINATION
             )
 
             if not self.done:
@@ -168,14 +168,18 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
             vel = np.random.uniform(low=1.5,high=3.5)
             
         if phi == None:
-            phi = np.random.uniform(low=30,high=90)
+            phi = np.random.uniform(low=-45,high=45)
 
         vx_0 = vel*np.cos(np.deg2rad(phi))
         vz_0 = vel*np.sin(np.deg2rad(phi))
 
+        
         ## RESET OBSERVATION
-        z_0 = 0.5
-        x_0 = 0.0
+        Tau_0 = 0.4
+        D_perp_0 = Tau_0*vx_0 + 1e-3
+
+        x_0 = 2.0 - D_perp_0
+        z_0 = 1.0
         self.Vel_Launch([x_0,0.0,z_0],[vx_0,0,vz_0])
         self.iter_step(10)
 
