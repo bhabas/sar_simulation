@@ -34,6 +34,7 @@ class CrazyflieEnv_Base():
         self.Plane_Model = rospy.get_param('/PLANE_SETTINGS/Plane_Model')
         self.Plane_Config = rospy.get_param('/PLANE_SETTINGS/Plane_Config')
         self.Plane_Angle = rospy.get_param(f'/Plane_Config/{self.Plane_Config}/Plane_Angle')
+        self.Plane_Angle_rad = np.deg2rad(self.Plane_Angle)
         self.Plane_Pos = [
             rospy.get_param(f'/Plane_Config/{self.Plane_Config}/Pos_X'),
             rospy.get_param(f'/Plane_Config/{self.Plane_Config}/Pos_Y'),

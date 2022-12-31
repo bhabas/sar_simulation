@@ -207,8 +207,13 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         R1 *= 0.05
 
         ## IMPACT ANGLE REWARD
-        R2 = np.clip(np.abs(self.eulCF_impact[1])/120,0,1)
+        # R2 = np.clip(np.abs(self.eulCF_impact[1])/120,0,1)
+        # R2 *= 0.2
+
+        R2 = 0.5*np.cos(self.eulCF_impact[1]-self.Plane_Angle_rad*np.sign(np.cos(self.Plane_Angle_rad)))+0.5
+        # R2 = 0.5*np.cos(self.eulCF_impact[1]-self.Plane_Angle_rad)+0.5
         R2 *= 0.2
+
 
         ## PAD CONTACT REWARD
         if self.pad_connections >= 3: 
