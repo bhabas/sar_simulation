@@ -243,33 +243,23 @@ class Policy_Trainer_DeepRL():
             log_name (str): _description_
             reset_timesteps (bool, optional): Reset starting timestep to zero. Defaults to True. 
             Set to False to resume training from previous model.
-        """        
+        """       
 
         class CheckpointSaveCallback(BaseCallback):
 
-            def __init__(self, save_freq: int, log_dir: str, log_name: str, verbose: int = 0):
+            def __init__(self, save_freq: int, PT, verbose: int = 0):
                 super(CheckpointSaveCallback, self).__init__(verbose)
                 self.save_freq = save_freq
+                self.PT = PT
 
-                ## DIRECTORIES
-                self.log_dir = os.path.join(log_dir,log_name+"_0")
-                self.model_dir = os.path.join(self.log_dir,"models")
-                self.replay_dir = self.log_dir
-
-            def _init_callback(self) -> None:
                 
-                ## CREATE FOLDER IF NEEDED
-                if self.log_dir is not None:
-                    os.makedirs(self.log_dir, exist_ok=True)
-                    os.makedirs(self.model_dir,exist_ok=True)
-
             def _on_step(self) -> bool:
                 ## SAVE MODEL AND REPLAY BUFFER ON SAVE_FREQ
                 if self.n_calls % self.save_freq == 0:
-                    model_path = os.path.join(self.model_dir, f"{self.num_timesteps}_steps")
+                    model_path = os.path.join(self.PT.model_dir, f"{self.num_timesteps}_steps")
                     self.model.save(model_path)
 
-                    replay_buff_path = os.path.join(self.model_dir, f"replay_buff")
+                    replay_buff_path = os.path.join(self.PT.replay_dir, f"replay_buff")
                     self.model.save_replay_buffer(replay_buff_path)
 
                     if self.verbose > 1:
@@ -280,11 +270,11 @@ class Policy_Trainer_DeepRL():
                 self.logger.record('time/K_ep',self.training_env.envs[0].env.k_ep)
                 return True
         
-        # checkpoint_callback = CheckpointSaveCallback(save_freq=1000,log_dir=log_dir,log_name=log_name)
+        checkpoint_callback = CheckpointSaveCallback(save_freq=10,PT=self)
         self.model.learn(
             total_timesteps=2e6,
             tb_log_name=log_name,
-            # callback=checkpoint_callback,
+            callback=checkpoint_callback,
             reset_num_timesteps=reset_timesteps
         )
 
@@ -527,8 +517,6 @@ if __name__ == '__main__':
 
     
     Policy = Policy_Trainer_DeepRL(env,model,log_dir,log_name)
-    
-    
     Policy.train_model()
 
     
