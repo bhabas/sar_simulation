@@ -29,6 +29,53 @@ sys.path.insert(1,BASE_PATH)
 now = datetime.now()
 current_time = now.strftime("%m_%d-%H:%M")
 
+class CheckpointSaveCallback(BaseCallback):
+
+    def __init__(self, save_freq: int, PolicyTrainer, verbose: int = 0):
+        super(CheckpointSaveCallback, self).__init__(verbose)
+        self.save_freq = save_freq
+        self.PT = PolicyTrainer
+
+        self.t_step_CircBuff = [0,0,0,0,0] # Circular buffer of recent timesteps
+
+        
+    def _on_step(self) -> bool:
+
+        ## SAVE MODEL AND REPLAY BUFFER ON SAVE_FREQ
+        if self.num_timesteps % self.save_freq == 0:
+
+            ## APPEND NEWEST TIMESTEP
+            self.t_step_CircBuff.append(self.num_timesteps)
+
+            ## SAVE NEWEST MODEL AND REPLAY BUFFER
+            newest_model = os.path.join(self.PT.model_dir, f"{self.num_timesteps}_step_model")
+            newest_replay_buff = os.path.join(self.PT.model_dir, f"{self.num_timesteps}_step_replay_buff")
+
+            self.model.save(newest_model)
+            self.model.save_replay_buffer(newest_replay_buff)
+
+
+            ## DELETE OLDEST MODEL AND REPLAY BUFFER
+            oldest_model = os.path.join(self.PT.model_dir,f"{self.t_step_CircBuff[0]}_step_model.zip")
+            oldest_replay_buff = os.path.join(self.PT.model_dir,f"{self.t_step_CircBuff[0]}_step_replay_buff.pkl")
+
+            if os.path.exists(oldest_model):
+                os.remove(oldest_model)
+
+            if os.path.exists(oldest_replay_buff):
+                os.remove(oldest_replay_buff)
+
+            ## REMOVE OLDEST TIMESTEP
+            self.t_step_CircBuff.pop(0)
+
+
+            if self.verbose > 1:
+                print(f"Saving model checkpoint to {newest_model}")
+        return True
+
+    def _on_rollout_end(self) -> None:
+        self.logger.record('time/K_ep',self.training_env.envs[0].env.k_ep)
+        return True
 
 
 class Policy_Trainer_DeepRL():
@@ -241,55 +288,7 @@ class Policy_Trainer_DeepRL():
             Set to False to resume training from previous model.
         """       
 
-        class CheckpointSaveCallback(BaseCallback):
-
-            def __init__(self, save_freq: int, PT, verbose: int = 0):
-                super(CheckpointSaveCallback, self).__init__(verbose)
-                self.save_freq = save_freq
-                self.PT = PT
-
-                self.t_step_CircBuff = [0,0,0,0,0] # Circular buffer of recent timesteps
-
-                
-            def _on_step(self) -> bool:
-
-                ## SAVE MODEL AND REPLAY BUFFER ON SAVE_FREQ
-                if self.num_timesteps % self.save_freq == 0:
-
-                    ## APPEND NEWEST TIMESTEP
-                    self.t_step_CircBuff.append(self.num_timesteps)
-
-                    ## SAVE NEWEST MODEL AND REPLAY BUFFER
-                    newest_model = os.path.join(self.PT.model_dir, f"{self.num_timesteps}_steps_model")
-                    newest_replay_buff = os.path.join(self.PT.model_dir, f"{self.num_timesteps}_steps_replay_buff")
-
-                    self.model.save(newest_model)
-                    self.model.save_replay_buffer(newest_replay_buff)
-
-
-                    ## DELETE OLDEST MODEL AND REPLAY BUFFER
-                    oldest_model = os.path.join(self.PT.model_dir,f"{self.t_step_CircBuff[0]}_steps_model.zip")
-                    oldest_replay_buff = os.path.join(self.PT.model_dir,f"{self.t_step_CircBuff[0]}_steps_replay_buff.pkl")
-
-                    if os.path.exists(oldest_model):
-                        os.remove(oldest_model)
-
-                    if os.path.exists(oldest_replay_buff):
-                        os.remove(oldest_replay_buff)
-
-                    ## REMOVE OLDEST TIMESTEP
-                    self.t_step_CircBuff.pop(0)
-
-
-                    if self.verbose > 1:
-                        print(f"Saving model checkpoint to {newest_model}")
-                return True
-
-            def _on_rollout_end(self) -> None:
-                self.logger.record('time/K_ep',self.training_env.envs[0].env.k_ep)
-                return True
-        
-        checkpoint_callback = CheckpointSaveCallback(save_freq=2,PT=self)
+        checkpoint_callback = CheckpointSaveCallback(save_freq=100,PolicyTrainer=self)
         self.model.learn(
             total_timesteps=2e6,
             tb_log_name=log_name,
@@ -535,7 +534,7 @@ if __name__ == '__main__':
     ) 
 
     
-    Policy = Policy_Trainer_DeepRL(env,model,log_dir,log_name)
-    Policy.train_model()
+    PolicyTrainer = Policy_Trainer_DeepRL(env,model,log_dir,log_name)
+    PolicyTrainer.train_model()
 
     
