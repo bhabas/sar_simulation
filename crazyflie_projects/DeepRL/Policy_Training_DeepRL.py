@@ -4,6 +4,7 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 import torch as th
+import yaml
 
 ## PLOTTING IMPORTS
 import matplotlib.pyplot as plt
@@ -31,9 +32,26 @@ current_time = now.strftime("%m_%d-%H:%M")
 
 
 class Policy_Trainer_DeepRL():
-    def __init__(self,env,model):
+    def __init__(self,env,model,log_dir,log_name):
         self.env = env
         self.model = model
+        self.log_dir = log_dir
+        self.log_name = log_name
+
+
+        self.log_dir = os.path.join(log_dir,log_name+"_0")
+        self.model_dir = os.path.join(self.log_dir,"models")
+        self.replay_dir = os.path.join(self.log_dir)
+
+        if not os.path.exists(self.log_dir):
+            os.makedirs(self.log_dir,exist_ok=True)
+            self.save_Config_File()
+
+        if not os.path.exists(self.model_dir):
+            os.makedirs(self.model_dir,exist_ok=True)
+
+        if not os.path.exists(self.replay_dir):
+            os.makedirs(self.replay_dir,exist_ok=True)
         
 
     def save_NN_Params(self,SavePath):
@@ -218,7 +236,7 @@ class Policy_Trainer_DeepRL():
                 action,_ = self.model.predict(obs)
                 obs,reward,done,info = self.env.step(action)
 
-    def train_model(self,log_name,log_dir,reset_timesteps=True):
+    def train_model(self,reset_timesteps=False):
         """Script to train model via Deep RL method
 
         Args:
@@ -262,11 +280,11 @@ class Policy_Trainer_DeepRL():
                 self.logger.record('time/K_ep',self.training_env.envs[0].env.k_ep)
                 return True
         
-        checkpoint_callback = CheckpointSaveCallback(save_freq=1000,log_dir=log_dir,log_name=log_name)
+        # checkpoint_callback = CheckpointSaveCallback(save_freq=1000,log_dir=log_dir,log_name=log_name)
         self.model.learn(
             total_timesteps=2e6,
             tb_log_name=log_name,
-            callback=checkpoint_callback,
+            # callback=checkpoint_callback,
             reset_num_timesteps=reset_timesteps
         )
 
@@ -426,6 +444,44 @@ class Policy_Trainer_DeepRL():
 
         plt.show()
 
+    def save_Config_File(self):
+
+        config_path = os.path.join(self.log_dir,"Config.yaml")
+
+        data = dict(
+            PLANE_SETTINGS = dict(
+                Plane_Model = env.Plane_Model,
+                Plane_Angle = env.Plane_Angle,
+                Plane_Pos = dict(
+                    X = env.Plane_Pos[0],
+                    Y = env.Plane_Pos[1],
+                    Z = env.Plane_Pos[2]
+                ),
+            ),
+
+            QUAD_SETTINGS = dict(
+                CF_Type = env.CF_Type,
+                CF_Config = env.CF_Config,
+            ),
+
+            TEST_SETTINGS = dict(
+                Vel_Limts = 'c',
+                Phi_Limits = 'd',
+            ),
+
+            LEARNING_MODEL = dict(
+                Network_Dimensions = "",
+                Gamma = "",
+                Learning_Rate = "",
+                Activation_Function = "",
+            )
+
+
+        )
+
+        with open(config_path, 'w') as outfile:
+            yaml.dump(data,outfile,default_flow_style=False,sort_keys=False)
+
 
 
 if __name__ == '__main__':
@@ -469,28 +525,9 @@ if __name__ == '__main__':
     ) 
 
     
-    Policy = Policy_Trainer_DeepRL(env,model)
-    Policy.train_model(log_name,log_dir,reset_timesteps=False)
-
-
-    # Policy.save_NN_Params(policy_path)
-    # Policy.plotPolicyRegion(iso_level=1.5)
-
-    # # LOAD DATA
-    # df_raw = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/DeepRL/Data_Logs/DeepRL_NL_LR.csv").dropna() # Collected data
-
-    # ## MAX LANDING RATE DATAFRAME
-    # idx = df_raw.groupby(['vel_d','phi_d'])['LR_4Leg'].transform(max) == df_raw['LR_4Leg']
-    # df_max = df_raw[idx].reset_index()
-
-    # Policy.plot_polar(df_max)
-
-
-
-    # # dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
-    # # fileName = "Control_Playground--trial_24--NL.csv"
-    # # trial = DataFile(dataPath,fileName,dataType='SIM')
-    # # k_ep = 0
-    # # Policy.plotPolicyRegion(PlotTraj=(trial,k_ep,0))
+    Policy = Policy_Trainer_DeepRL(env,model,log_dir,log_name)
+    
+    
+    Policy.train_model()
 
     

@@ -17,7 +17,7 @@ QUAD_SETTINGS:
   # Policy_Type: "DEEP_RL" 
 
 SIM_SETTINGS:
-  GUI_Flag: True
+  GUI_Flag: False
   Pause_Flag: False
   Sim_Speed: 2.0
   Sim_Slowdown_Speed: 0.4
