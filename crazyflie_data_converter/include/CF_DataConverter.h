@@ -215,6 +215,9 @@ class CF_DataConverter
         std::string CF_Config;
         std::string MODEL_NAME;
 
+        std::string Plane_Model;
+        std::string Plane_Config;
+
         std::string DATA_TYPE;
 
         // DEFAULT INERTIA VALUES FOR BASE CRAZYFLIE
@@ -592,20 +595,24 @@ void CF_DataConverter::log6_Callback(const crazyflie_msgs::GenericLogData::Const
 
 void CF_DataConverter::LoadParams()
 {
-
+    // QUAD SETTINGS
     ros::param::get("/QUAD_SETTINGS/CF_Type",CF_Type);
     ros::param::get("/QUAD_SETTINGS/CF_Config",CF_Config);
     ros::param::get("/QUAD_SETTINGS/Policy_Type",POLICY_TYPE);
 
     MODEL_NAME = "crazyflie_" + CF_Config;
-    CF_Type = "/CF_Type/" + CF_Type;
-    CF_Config = "/Config/" + CF_Config;
+    std::string CF_Type_str = "/CF_Type/" + CF_Type;
+    std::string CF_Config_str = "/Config/" + CF_Config;
+
+    // PLANE SETTINGS
+    ros::param::get("/PLANE_SETTINGS/Plane_Model",Plane_Model);
+    ros::param::get("/PLANE_SETTINGS/Plane_Config",Plane_Config);
     
     // COLLECT MODEL PARAMETERS
-    ros::param::get(CF_Type + CF_Config + "/Mass",CF_MASS);
-    ros::param::get(CF_Type + CF_Config + "/Ixx",Ixx);
-    ros::param::get(CF_Type + CF_Config + "/Iyy",Iyy);
-    ros::param::get(CF_Type + CF_Config + "/Izz",Izz);
+    ros::param::get(CF_Type_str + CF_Config_str + "/Mass",CF_MASS);
+    ros::param::get(CF_Type_str + CF_Config_str + "/Ixx",Ixx);
+    ros::param::get(CF_Type_str + CF_Config_str + "/Iyy",Iyy);
+    ros::param::get(CF_Type_str + CF_Config_str + "/Izz",Izz);
 
     // DEBUG SETTINGS
     ros::param::get("/DATA_TYPE",DATA_TYPE);
@@ -617,21 +624,21 @@ void CF_DataConverter::LoadParams()
     ros::param::get("/CF_DC_SETTINGS/Console_Rate",CONSOLE_RATE);
 
     // COLLECT CTRL GAINS
-    ros::param::get(CF_Type + "/CtrlGains/P_kp_xy",P_kp_xy);
-    ros::param::get(CF_Type + "/CtrlGains/P_kd_xy",P_kd_xy);
-    ros::param::get(CF_Type + "/CtrlGains/P_ki_xy",P_ki_xy);
+    ros::param::get(CF_Type_str + "/CtrlGains/P_kp_xy",P_kp_xy);
+    ros::param::get(CF_Type_str + "/CtrlGains/P_kd_xy",P_kd_xy);
+    ros::param::get(CF_Type_str + "/CtrlGains/P_ki_xy",P_ki_xy);
 
-    ros::param::get(CF_Type + "/CtrlGains/P_kp_z",P_kp_z);
-    ros::param::get(CF_Type + "/CtrlGains/P_kd_z",P_kd_z);
-    ros::param::get(CF_Type + "/CtrlGains/P_ki_z",P_ki_z);
+    ros::param::get(CF_Type_str + "/CtrlGains/P_kp_z",P_kp_z);
+    ros::param::get(CF_Type_str + "/CtrlGains/P_kd_z",P_kd_z);
+    ros::param::get(CF_Type_str + "/CtrlGains/P_ki_z",P_ki_z);
 
-    ros::param::get(CF_Type + "/CtrlGains/R_kp_xy",R_kp_xy);
-    ros::param::get(CF_Type + "/CtrlGains/R_kd_xy",R_kd_xy);
-    ros::param::get(CF_Type + "/CtrlGains/R_ki_xy",R_ki_xy);
+    ros::param::get(CF_Type_str + "/CtrlGains/R_kp_xy",R_kp_xy);
+    ros::param::get(CF_Type_str + "/CtrlGains/R_kd_xy",R_kd_xy);
+    ros::param::get(CF_Type_str + "/CtrlGains/R_ki_xy",R_ki_xy);
     
-    ros::param::get(CF_Type + "/CtrlGains/R_kp_z",R_kp_z);
-    ros::param::get(CF_Type + "/CtrlGains/R_kd_z",R_kd_z);
-    ros::param::get(CF_Type + "/CtrlGains/R_ki_z",R_ki_z);
+    ros::param::get(CF_Type_str + "/CtrlGains/R_kp_z",R_kp_z);
+    ros::param::get(CF_Type_str + "/CtrlGains/R_kd_z",R_kd_z);
+    ros::param::get(CF_Type_str + "/CtrlGains/R_ki_z",R_ki_z);
 
     if(DATA_TYPE.compare("SIM") == 0)
     {
@@ -665,6 +672,12 @@ void CF_DataConverter::decompressXY(uint32_t xy, float xy_arr[])
 
 void CF_DataConverter::create_CSV()
 {
+    fprintf(fPtr,"## DATA_TYPE: %s, ",DATA_TYPE.c_str());
+    fprintf(fPtr,"QUAD_SETTINGS: {Policy_Type: %s, CF_Type: %s, CF_Config: %s}, ",POLICY_TYPE.c_str(),CF_Type.c_str(),CF_Config.c_str());
+    fprintf(fPtr,"PLANE_SETTINGS: {Plane_Model: %s, Plane_Config: %s}, ",Plane_Model.c_str(),Plane_Config.c_str());
+    fprintf(fPtr,"\n");
+
+
     // POLICY DATA
     fprintf(fPtr,"k_ep,k_run,");
     fprintf(fPtr,"t,");

@@ -22,7 +22,7 @@ class DataFile:
         self.dataPath = dataPath
         filepath = os.path.join(self.dataPath, self.fileName)
 
-        self.trial_df = pd.read_csv(filepath,low_memory=False)
+        self.trial_df = pd.read_csv(filepath,low_memory=False,comment="##")
 
         ## CLEAN UP TRIAL DATAFRAME
         # Drop row with "Note: ____________"
@@ -627,7 +627,7 @@ if __name__ == "__main__":
 
     dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_logging/local_logs/"
 
-    fileName = "EPHE--Vd_2.50--phi_60.00--trial_25--NL.csv"
-    trial = DataFile(dataPath,fileName,dataType='Sim')
+    fileName = "Control_Playground--trial_24--NL.csv"
+    trial = DataFile(dataPath,fileName)
 
     trial.plot_policy_convg()
