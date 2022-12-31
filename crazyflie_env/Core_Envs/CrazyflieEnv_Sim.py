@@ -6,6 +6,7 @@ import time
 import sys
 import subprocess
 import rospy
+import gym
 from .CrazyflieEnv_Base import CrazyflieEnv_Base
 
 ## ROS MESSAGES AND SERVICES
@@ -24,10 +25,9 @@ GREEN = '\033[92m'
 CYAN = '\033[96m'
 ENDC = '\033[m'
 
-class CrazyflieEnv_Sim(CrazyflieEnv_Base):
+class CrazyflieEnv_Sim(CrazyflieEnv_Base,gym.Env):
     metadata = {'render.modes': ['human']}
     def __init__(self):
-        # super().__init__()        
         CrazyflieEnv_Base.__init__(self)
         self.env_name = "CF_Gazebo"
 
@@ -48,10 +48,6 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base):
         rospy.wait_for_service("/CF_DC/Cmd_CF_DC",timeout=5)
 
         print("[INITIATING] Gazebo simulation started")
-        
-
-
-
     
 
     def sleep(self,time_s):

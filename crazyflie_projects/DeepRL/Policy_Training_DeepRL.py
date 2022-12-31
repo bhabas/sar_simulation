@@ -41,7 +41,6 @@ class Policy_Trainer_DeepRL():
 
         self.log_dir = os.path.join(log_dir,log_name+"_0")
         self.model_dir = os.path.join(self.log_dir,"models")
-        self.replay_dir = os.path.join(self.log_dir)
 
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir,exist_ok=True)
@@ -50,9 +49,6 @@ class Policy_Trainer_DeepRL():
         if not os.path.exists(self.model_dir):
             os.makedirs(self.model_dir,exist_ok=True)
 
-        if not os.path.exists(self.replay_dir):
-            os.makedirs(self.replay_dir,exist_ok=True)
-        
 
     def save_NN_Params(self,SavePath):
         """Save NN parameters to C header file for upload to crazyflie
@@ -252,25 +248,48 @@ class Policy_Trainer_DeepRL():
                 self.save_freq = save_freq
                 self.PT = PT
 
+                self.t_step_CircBuff = [0,0,0,0,0] # Circular buffer of recent timesteps
+
                 
             def _on_step(self) -> bool:
-                ## SAVE MODEL AND REPLAY BUFFER ON SAVE_FREQ
-                if self.n_calls % self.save_freq == 0:
-                    model_path = os.path.join(self.PT.model_dir, f"{self.num_timesteps}_steps")
-                    self.model.save(model_path)
 
-                    replay_buff_path = os.path.join(self.PT.replay_dir, f"replay_buff")
-                    self.model.save_replay_buffer(replay_buff_path)
+                ## SAVE MODEL AND REPLAY BUFFER ON SAVE_FREQ
+                if self.num_timesteps % self.save_freq == 0:
+
+                    ## APPEND NEWEST TIMESTEP
+                    self.t_step_CircBuff.append(self.num_timesteps)
+
+                    ## SAVE NEWEST MODEL AND REPLAY BUFFER
+                    newest_model = os.path.join(self.PT.model_dir, f"{self.num_timesteps}_steps_model")
+                    newest_replay_buff = os.path.join(self.PT.model_dir, f"{self.num_timesteps}_steps_replay_buff")
+
+                    self.model.save(newest_model)
+                    self.model.save_replay_buffer(newest_replay_buff)
+
+
+                    ## DELETE OLDEST MODEL AND REPLAY BUFFER
+                    oldest_model = os.path.join(self.PT.model_dir,f"{self.t_step_CircBuff[0]}_steps_model.zip")
+                    oldest_replay_buff = os.path.join(self.PT.model_dir,f"{self.t_step_CircBuff[0]}_steps_replay_buff.pkl")
+
+                    if os.path.exists(oldest_model):
+                        os.remove(oldest_model)
+
+                    if os.path.exists(oldest_replay_buff):
+                        os.remove(oldest_replay_buff)
+
+                    ## REMOVE OLDEST TIMESTEP
+                    self.t_step_CircBuff.pop(0)
+
 
                     if self.verbose > 1:
-                        print(f"Saving model checkpoint to {model_path}")
+                        print(f"Saving model checkpoint to {newest_model}")
                 return True
 
             def _on_rollout_end(self) -> None:
                 self.logger.record('time/K_ep',self.training_env.envs[0].env.k_ep)
                 return True
         
-        checkpoint_callback = CheckpointSaveCallback(save_freq=10,PT=self)
+        checkpoint_callback = CheckpointSaveCallback(save_freq=2,PT=self)
         self.model.learn(
             total_timesteps=2e6,
             tb_log_name=log_name,
