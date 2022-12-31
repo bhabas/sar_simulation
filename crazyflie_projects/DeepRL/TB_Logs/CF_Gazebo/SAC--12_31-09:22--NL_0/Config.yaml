@@ -1,0 +1,25 @@
+PLANE_SETTINGS:
+  Plane_Model: Standard_Plane
+  Plane_Angle: 135
+  Plane_Pos:
+    X: 2.0
+    Y: 0.0
+    Z: 2.0
+QUAD_SETTINGS:
+  CF_Type: Standard
+  CF_Config: Narrow_Long
+TEST_SETTINGS:
+  Vel_Limts:
+  - 1.5
+  - 3.5
+  Phi_Limits:
+  - 0
+  - 90
+LEARNING_MODEL:
+  Policy: SACPolicy
+  Network_Layers:
+  - 12
+  - 12
+  Gamma: 0.999
+  Learning_Rate: 0.002
+  Activation_Function: ''

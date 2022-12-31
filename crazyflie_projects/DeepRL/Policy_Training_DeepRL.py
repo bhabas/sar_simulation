@@ -465,14 +465,15 @@ class Policy_Trainer_DeepRL():
             ),
 
             TEST_SETTINGS = dict(
-                Vel_Limts = 'c',
-                Phi_Limits = 'd',
+                Vel_Limts = env.Vel_range,
+                Phi_Limits = env.Phi_range,
             ),
 
             LEARNING_MODEL = dict(
-                Network_Dimensions = "",
-                Gamma = "",
-                Learning_Rate = "",
+                Policy = self.model.policy.__class__.__name__,
+                Network_Layers = self.model.policy.net_arch,
+                Gamma = self.model.gamma,
+                Learning_Rate = self.model.learning_rate,
                 Activation_Function = "",
             )
 

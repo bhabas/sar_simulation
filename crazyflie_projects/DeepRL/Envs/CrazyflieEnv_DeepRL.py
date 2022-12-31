@@ -15,19 +15,36 @@ from crazyflie_env.Core_Envs.CrazyflieEnv_Sim import CrazyflieEnv_Sim
 
 class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
     metadata = {'render.modes': ['human']}
-    def __init__(self,GZ_Timeout=False):
+    def __init__(self,GZ_Timeout=True,Vel_range=[1.5,3.5],Phi_range=[0,90],Tau_0=0.4):
+        """_summary_
+
+        Args:
+            GZ_Timeout (bool, optional): Determines if Gazebo will restart if it freezed. Defaults to False.
+            Vel_range (list, optional): Range of flight velocities. Defaults to [1.5,3.5].
+            Phi_range (list, optional): Range of flight angles. Defaults to [0,90].
+            Tau_0 (float, optional): Flight position will start at this Tau value. Defaults to 0.4.
+        """        
         CrazyflieEnv_Sim.__init__(self)          
 
+        ## ENV CONFIG SETTINGS
         self.env_name = "CF_Gazebo"
         self.GZ_Timeout = GZ_Timeout
+
+        ## TESTING CONDITIONS
+        self.Tau_0 = Tau_0          
+        self.Vel_range = Vel_range  
+        self.Phi_range = Phi_range  
+
+        ## RESET INITIAL VALUES
         self.k_ep = 0
         self.Flip_thr = 1.5
-
         self.D_min = 50.0
         self.Tau_trg = 50.0
+
         self.done = False
 
-        high = np.array(
+        ## DEFINE OBSERVATION SPACE
+        obs_lim = np.array( 
             [
                 np.finfo(np.float32).max,
                 np.finfo(np.float32).max,
@@ -35,8 +52,9 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
             ],
             dtype=np.float32,
         )
+        self.observation_space = spaces.Box(low=-obs_lim, high=obs_lim, dtype=np.float32)
 
-        self.observation_space = spaces.Box(-high, high, dtype=np.float32)
+        ## DEFINE ACTION SPACE
         self.action_space = spaces.Box(low=np.array([-1,0]), high=np.array([1,8]), shape=(2,), dtype=np.float32)
 
     def step(self,action):
@@ -121,10 +139,9 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         return self.CalcReward()
 
 
-    def reset(self,vel=None,phi=None):
+    def reset(self):
 
         self.gazebo_unpause_physics()
-        ## DISABLE STICKY LEGS (ALSO BREAKS CURRENT CONNECTION JOINTS)
         self.SendCmd('Tumble',cmd_flag=0)
         self.SendCmd('StickyPads',cmd_flag=0)
 
@@ -164,11 +181,8 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         self.onceFlag_impact = False    # Ensures impact data recorded only once 
 
         ## SAMPLE VELOCITY VECTOR
-        if vel == None:
-            vel = np.random.uniform(low=1.5,high=3.5)
-            
-        if phi == None:
-            phi = np.random.uniform(low=0,high=90)
+        vel = np.random.uniform(low=self.Vel_range[0],high=self.Vel_range[1])
+        phi = np.random.uniform(low=self.Phi_range[0],high=self.Phi_range[1])
 
         vx_0 = vel*np.cos(np.deg2rad(phi))
         vz_0 = vel*np.sin(np.deg2rad(phi))
@@ -176,12 +190,11 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
         
         ## RESET POSITION (Derivation: Research_Notes_Book_2.pdf (12/30/22))
-        Tau_0 = 0.5 # Starting tau-value
         r_p = np.array(self.Plane_Pos)                              # Plane Position
         theta_rad = np.radians(self.Plane_Angle)                    # Plane angle
         n_hat = np.array([np.sin(theta_rad),0,-np.cos(theta_rad)])  # Plane normal vector
 
-        D_perp_0 = Tau_0*(Vel_0.dot(n_hat)) # Initial distance
+        D_perp_0 = self.Tau_0*(Vel_0.dot(n_hat)) # Initial distance
         r_0 = r_p - D_perp_0*n_hat          # Initial quad position (World coords)
 
         self.Vel_Launch(r_0,Vel_0)
