@@ -472,7 +472,8 @@ class Policy_Trainer_DeepRL():
                 CF_Config = self.env.CF_Config,
             ),
 
-            TEST_SETTINGS = dict(
+            ENV_SETTINGS = dict(
+                Environment = self.env.env_name,
                 Vel_Limts = self.env.Vel_range,
                 Phi_Limits = self.env.Phi_range,
             ),
