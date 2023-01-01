@@ -5,14 +5,14 @@ geometry_msgs/Vector3 Eul
 
 ## OPTICAL FLOW GROUND TRUTH
 float64 Tau
-float64 OFx
-float64 OFy
-float64 D_ceil
+float64 Theta_x
+float64 Theta_y
+float64 D_perp
 
 ## OPTICAL FLOW ESTIMATES
 float64 Tau_est
-float64 OFx_est
-float64 OFy_est
+float64 Theta_x_est
+float64 Theta_y_est
 
 float64[4] FM
 float64[4] MotorThrusts

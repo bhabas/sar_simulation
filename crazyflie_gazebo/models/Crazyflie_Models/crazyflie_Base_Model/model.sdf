@@ -357,7 +357,7 @@
     <link name='body_sensors'>
       <pose>0 0 0.012 0 0 0</pose>
       <inertial>
-        <mass>0.0001</mass>
+        <mass>0.000001</mass>
         <inertia>
           <ixx>4.3354e-10</ixx>
           <ixy>0</ixy>
@@ -896,13 +896,13 @@
       <updateRate>100.0</updateRate>
     </plugin>
 
-    <plugin name='OF_sensor' filename='libOF_Sensor_plugin.so'>
+    <plugin name='OpticalFlow_plugin' filename='libOpticalFlow_plugin.so'>
       <updateRate>100</updateRate>
       <bodyName>body_sensors</bodyName>
-      <topicName>/CF_Internal/OF_Sensor</topicName>
-      <Tau_gaussianNoise>0.0</Tau_gaussianNoise>
-      <OFx_gaussianNoise>0.0</OFx_gaussianNoise>
-      <OFy_gaussianNoise>0.0</OFy_gaussianNoise>
+      <topicName>/CF_Internal/OpticalFlow_Values</topicName>
+      <Theta_x_gaussianNoise>0.0</Theta_x_gaussianNoise>
+      <Theta_y_gaussianNoise>0.0</Theta_y_gaussianNoise>
+      <Theta_z_gaussianNoise>0.0</Theta_z_gaussianNoise>
     </plugin>
 
     <!-- <plugin name='MomentPlugin' filename='libMoment_plugin.so'>

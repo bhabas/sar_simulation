@@ -28,12 +28,14 @@ CF_Type:
     Config:
 
       Base_Model:       # Crazyflie Base_Model
+        Initials: BM
         Mass: 34.3e-3   # [kg]
         Ixx: 15.83e-6   # [kg*m^2]
         Iyy: 17.00e-6   # [kg*m^2]
         Izz: 31.19e-6   # [kg*m^2] 
       
       Narrow_Long:      # Crazyflie Narrow_Long
+        Initials: NL
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
@@ -45,30 +47,35 @@ CF_Type:
       ####################################
 
       Wide_Long:        # Crazyflie Wide_Long 
+        Initials: WL
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       ExtraNarrow_Long: # Crazyflie ExtraNarrow_Long
+        Initials: XNL
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       Wide_Short:       # Crazyflie Wide_Short
+        Initials: WS
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       Narrow_Short:     # Crazyflie Narrow_Short
+        Initials: NS
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       ExtraNarrow_Short: # Crazyflie ExtraNarrow_Short
+        Initials: XNS
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
@@ -109,6 +116,7 @@ CF_Type:
       ####################################
       
       Big_Quad: # Crazyflie Big-Quad
+        Initials: BQ
         Mass: 80.0e-3   # [kg]
         Ixx: 15.83e-6   # [kg*m^2]
         Iyy: 17.00e-6   # [kg*m^2]

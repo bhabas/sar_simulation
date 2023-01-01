@@ -21,13 +21,26 @@ class CrazyflieEnv_Base():
     metadata = {'render.modes': ['human']}
     def __init__(self):
         os.system("roslaunch crazyflie_launch params.launch")
-
-        self.CF_Type = rospy.get_param('/QUAD_SETTINGS/CF_Type')
-        self.configName = rospy.get_param('/QUAD_SETTINGS/Config')
-        self.modelName = f"crazyflie_{self.configName}"
-
-        self.h_ceiling = rospy.get_param("/ENV_SETTINGS/Ceiling_Height") # [m]
         self.env_name = "CF_BaseEnv"
+
+        ## CRAZYFLIE PARAMETERS
+        self.CF_Type = rospy.get_param('/QUAD_SETTINGS/CF_Type')
+        self.CF_Config = rospy.get_param('/QUAD_SETTINGS/CF_Config')
+        self.modelInitials = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Initials")
+        self.modelName = f"crazyflie_{self.CF_Config}"
+
+
+        ## PLANE PARAMETERS
+        self.Plane_Model = rospy.get_param('/PLANE_SETTINGS/Plane_Model')
+        self.Plane_Config = rospy.get_param('/PLANE_SETTINGS/Plane_Config')
+        self.Plane_Angle = rospy.get_param(f'/Plane_Config/{self.Plane_Config}/Plane_Angle')
+        self.Plane_Angle_rad = np.deg2rad(self.Plane_Angle)
+        self.Plane_Pos = [
+            rospy.get_param(f'/Plane_Config/{self.Plane_Config}/Pos_X'),
+            rospy.get_param(f'/Plane_Config/{self.Plane_Config}/Pos_Y'),
+            rospy.get_param(f'/Plane_Config/{self.Plane_Config}/Pos_Z'),
+        ]
+        
      
         ## TRAJECTORY VALUES
         self.posCF_0 = [0.0, 0.0, 0.4]      # Default hover position [m]
@@ -36,7 +49,7 @@ class CrazyflieEnv_Base():
         self.username = getpass.getuser()
         self.logDir =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/crazyflie_logging/local_logs"
         self.logName = "TestLog.csv"
-        self.error_str = ""
+        self.error_str = "No_Debug_Data"
 
 
         self.preInit_Values()
@@ -147,7 +160,7 @@ class CrazyflieEnv_Base():
         t_z = Vz/a_z    # Time required to reach Vz
 
         z_vz = 0.5*a_z*(t_z)**2                 # Height Vz reached
-        z_0 = (self.h_ceiling - d_vz) - z_vz    # Offset to move z_vz to d_vz
+        z_0 = (2.10 - d_vz) - z_vz    # Offset to move z_vz to d_vz
         
         x_vz = Vx*(t_x+t_z) - Vx**2/(2*a_x)     # X-position Vz reached
         x_0 = x_impact - x_vz - d_vz*Vx/Vz      # Account for shift up and shift left
@@ -157,10 +170,10 @@ class CrazyflieEnv_Base():
                 
     def preInit_Values(self):
 
-        self.Ixx = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Ixx")
-        self.Iyy = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Iyy")
-        self.Izz = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Izz")
-        self.mass = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Mass")
+        self.Ixx = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Ixx")
+        self.Iyy = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Iyy")
+        self.Izz = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Izz")
+        self.mass = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Mass")
         
         ## RAW VICON VALUES
         self.posViconRaw = [0,0,0]
@@ -186,9 +199,9 @@ class CrazyflieEnv_Base():
         self.eulCF = [0,0,0]
 
         self.Tau = 0.0
-        self.OFx = 0.0
-        self.OFy = 0.0
-        self.d_ceil = 0.0 
+        self.Theta_x = 0.0
+        self.Theta_y = 0.0
+        self.D_perp = 0.0 
 
         self.MS_pwm = [0,0,0,0]         # Controller Motor Speeds (MS1,MS2,MS3,MS4) [PWM]
         self.MotorThrusts = [0,0,0,0]   # Controller Motor Thrusts [M1,M2,M3,M4][g]
@@ -212,9 +225,9 @@ class CrazyflieEnv_Base():
         self.eulCF_tr = [0,0,0]
 
         self.Tau_tr = 0.0
-        self.OFx_tr = 0.0           # [rad/s]
-        self.OFy_tr = 0.0           # [rad/s]
-        self.d_ceil_tr = 0.0        # [m]
+        self.Theta_x_tr = 0.0           # [rad/s]
+        self.Theta_y_tr = 0.0           # [rad/s]
+        self.D_perp_tr = 0.0        # [m]
 
         self.FM_tr = [0,0,0,0]      # [N,N*mm]
 
@@ -316,9 +329,9 @@ class CrazyflieEnv_Base():
 
         ## CF_VISUAL STATES
         self.Tau = np.round(StateData_msg.Tau,3)
-        self.OFx = np.round(StateData_msg.OFx,3)
-        self.OFy = np.round(StateData_msg.OFy,3)
-        self.d_ceil = np.round(StateData_msg.D_ceil,3)
+        self.Theta_x = np.round(StateData_msg.Theta_x,3)
+        self.Theta_y = np.round(StateData_msg.Theta_y,3)
+        self.D_perp = np.round(StateData_msg.D_perp,3)
        
         self.t_prev = self.t # Save t value for next callback iteration
 
@@ -355,17 +368,6 @@ class CrazyflieEnv_Base():
 
         self.V_Battery = np.round(MiscData_msg.battery_voltage,4)
 
-    def modelInitials(self):
-        """Returns initials for the model. Should be done with REGEX but this'll work for now
-
-        Returns:
-            string: Model name initials
-        """        
-        str = self.modelName
-        charA = str[self.modelName.find("_")+1]     # [W]ide
-        charB = str[self.modelName.find("_",-8)+1]  # [L]ong
-
-        return charA+charB  # [WL]
 
     def userInput(self,input_string,dataType=float):
         """Processes user input and return values as either indiviual value or list

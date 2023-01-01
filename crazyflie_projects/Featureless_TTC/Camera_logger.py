@@ -37,7 +37,7 @@ class CameraParser:
         self.Camera_raw = np.array([])
 
         #INIT PARAMETERS
-        self.h_ceiling = rospy.get_param("/ENV_SETTINGS/Ceiling_Height")
+        # self.h_ceiling = rospy.get_param("/ENV_SETTINGS/Ceiling_Height")
 
         self.Username = getpass.getuser()
         self.Path = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Featureless_TTC/local_logs' #store the logs in a folder for organization
