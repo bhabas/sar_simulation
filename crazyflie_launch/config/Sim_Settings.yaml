@@ -1,17 +1,19 @@
 DATA_TYPE: "SIM"
 
 ENV_SETTINGS:
- Ceiling_Height: 2.1
- Surface_Name: "CeilingPlane_Large"
- Ground_Name: "GroundPlane_Desert_Physical"
+  Ground_Name: "GroundPlane_Desert_Physical"
+
+PLANE_SETTINGS:
+  Plane_Model: "Standard_Plane"
+  Plane_Config: "180_deg"
 
 QUAD_SETTINGS:
   CF_Type: "Standard"
-  Config: "Narrow_Long"
+  CF_Config: "Narrow_Long"
   Cam_Sensor: False
 
-  # Policy_Type: "PARAM_OPTIM"
-  Policy_Type: "SVL_POLICY" 
+  Policy_Type: "PARAM_OPTIM"
+  # Policy_Type: "SVL_POLICY" 
   # Policy_Type: "DEEP_RL" 
 
 SIM_SETTINGS:
@@ -23,7 +25,7 @@ SIM_SETTINGS:
 
 CF_DC_SETTINGS:
   Console_Rate: 50 # [Hz]
-  Logging_Rate: 50 # [Hz]
+  Logging_Rate: 10 # [Hz]
 
 
 

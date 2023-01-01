@@ -146,15 +146,19 @@ typedef struct sensorData_s {
   baro_t baro;
 
   // CAMERA SENSOR VALUES
-  float Tau_est;    // [s]
-  float OFx_est;    // [rad/s]
-  float OFy_est;    // [rad/s]
+  float Tau_est;      // [s]
+  float Theta_x_est;  // [rad/s]
+  float Theta_y_est;  // [rad/s]
+  float Theta_z_est;  // [rad/s]
+
 
   // GROUND TRUTH VALUES
-  float Tau;    // [s]
-  float OFx;    // [rad/s]
-  float OFy;    // [rad/s]
-  float d_ceil; // [m]
+  float Tau;      // [s]
+  float Theta_x;  // [rad/s]
+  float Theta_y;  // [rad/s]
+  float Theta_z;  // [rad/s]
+  float D_perp;   // [m]
+
 
 #ifdef LOG_SEC_IMU
   Axis3f accSec;            // Gs
