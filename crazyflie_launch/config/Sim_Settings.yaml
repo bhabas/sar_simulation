@@ -5,7 +5,7 @@ ENV_SETTINGS:
 
 PLANE_SETTINGS:
   Plane_Model: "Standard_Plane"
-  Plane_Config: "135_deg"
+  Plane_Config: "180_deg"
 
 QUAD_SETTINGS:
   CF_Type: "Standard"
@@ -17,7 +17,7 @@ QUAD_SETTINGS:
   # Policy_Type: "DEEP_RL" 
 
 SIM_SETTINGS:
-  GUI_Flag: False
+  GUI_Flag: True
   Pause_Flag: False
   Sim_Speed: 2.0
   Sim_Slowdown_Speed: 0.4

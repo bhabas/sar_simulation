@@ -291,7 +291,7 @@ class Policy_Trainer_DeepRL():
         checkpoint_callback = CheckpointSaveCallback(save_freq=100,PolicyTrainer=self)
         self.model.learn(
             total_timesteps=2e6,
-            tb_log_name=log_name,
+            tb_log_name=self.log_name,
             callback=checkpoint_callback,
             reset_num_timesteps=reset_timesteps
         )
@@ -458,23 +458,23 @@ class Policy_Trainer_DeepRL():
 
         data = dict(
             PLANE_SETTINGS = dict(
-                Plane_Model = env.Plane_Model,
-                Plane_Angle = env.Plane_Angle,
+                Plane_Model = self.env.Plane_Model,
+                Plane_Angle = self.env.Plane_Angle,
                 Plane_Pos = dict(
-                    X = env.Plane_Pos[0],
-                    Y = env.Plane_Pos[1],
-                    Z = env.Plane_Pos[2]
+                    X = self.env.Plane_Pos[0],
+                    Y = self.env.Plane_Pos[1],
+                    Z = self.env.Plane_Pos[2]
                 ),
             ),
 
             QUAD_SETTINGS = dict(
-                CF_Type = env.CF_Type,
-                CF_Config = env.CF_Config,
+                CF_Type = self.env.CF_Type,
+                CF_Config = self.env.CF_Config,
             ),
 
             TEST_SETTINGS = dict(
-                Vel_Limts = env.Vel_range,
-                Phi_Limits = env.Phi_range,
+                Vel_Limts = self.env.Vel_range,
+                Phi_Limits = self.env.Phi_range,
             ),
 
             LEARNING_MODEL = dict(
