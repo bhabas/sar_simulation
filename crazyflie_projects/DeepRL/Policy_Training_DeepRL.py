@@ -81,9 +81,8 @@ class CheckpointSaveCallback(BaseCallback):
 
 
 class Policy_Trainer_DeepRL():
-    def __init__(self,log_dir,log_name,env=None,model=None):
+    def __init__(self,env,log_dir,log_name):
         self.env = env
-        self.model = model
         self.log_dir = log_dir
 
         ## LOADED MODEL
@@ -104,20 +103,41 @@ class Policy_Trainer_DeepRL():
         if not os.path.exists(self.TB_log_path):
             os.makedirs(self.TB_log_path,exist_ok=True)
 
-            if model is not None:
-                self.save_Config_File()
-
         if not os.path.exists(self.model_dir):
             os.makedirs(self.model_dir,exist_ok=True)
 
-    def load_model(self,t_step):
+    def create_model(self):
+        """Creates SAC agent used in DeepRL trainingg process
+        """        
 
+        self.model = SAC(
+            "MlpPolicy",
+            env=self.env,
+            gamma=0.999,
+            learning_rate=0.002,
+            policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[12,12]),
+            verbose=1,
+            device='cpu',
+            tensorboard_log=self.log_dir
+        ) 
+
+        self.save_Config_File()
+
+    def load_model(self,t_step):
+        """Loads current model and replay buffer from the selected time step
+
+        Args:
+            t_step (int): Timestep of the selected model
+        """        
+
+        ## MODEL PATHS
         model_path = os.path.join(self.model_dir,f"{t_step}_step_model")
         replay_buff_path = os.path.join(self.model_dir,f"{t_step}_step_replay_buff")
 
+        ## LOAD MODEL AND REPLAY BUFFER
         self.model = SAC.load(
             model_path,
-            env=env,
+            env=self.env,
             device='cpu',
             tensorboard_log=self.log_dir
         )
@@ -532,27 +552,17 @@ if __name__ == '__main__':
     env = CrazyflieEnv_DeepRL(GZ_Timeout=True)
     log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
 
-    ## CREATE NEW DEEP RL MODEL 
-    log_name = f"SAC--{current_time}--{env.modelInitials}"
-
-    model = SAC(
-        "MlpPolicy",
-        env=env,
-        gamma=0.999,
-        learning_rate=0.002,
-        policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[12,12]),
-        verbose=1,
-        device='cpu',
-        tensorboard_log=log_dir
-    ) 
-    PolicyTrainer = Policy_Trainer_DeepRL(log_dir,log_name,env,model)
-    PolicyTrainer.train_model(save_freq=10)
+    # ## CREATE NEW DEEP RL MODEL 
+    # log_name = f"SAC--{current_time}--{env.modelInitials}"    
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.create_model()
+    # PolicyTrainer.train_model(save_freq=10)
     
     # # LOAD DEEP RL MODEL
-    # log_name = "SAC--01_02-07:39--NL_0"
-    # t_step_load = 60
+    # log_name = "SAC--01_02-16:17--NL_0"
+    # t_step_load = 20
 
-    # PolicyTrainer = Policy_Trainer_DeepRL(log_dir,log_name,env)
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     # PolicyTrainer.load_model(t_step_load)
     # PolicyTrainer.train_model(save_freq=10)
 
