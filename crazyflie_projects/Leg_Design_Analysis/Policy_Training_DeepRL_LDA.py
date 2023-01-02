@@ -30,22 +30,19 @@ if __name__ == '__main__':
 
     ## INITIATE ENVIRONMENT
     env = CrazyflieEnv_DeepRL_LDA(GZ_Timeout=True)
+    log_dir = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/{env.env_name}"
 
-
-    # ## CREATE NEW DEEP RL MODEL 
-    log_dir = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/"
-    log_name = f"SAC--{current_time}--{env.modelInitials}"
-    model = SAC(
-        "MlpPolicy",
-        env=env,
-        gamma=0.999,
-        learning_rate=0.002,
-        policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[12,12]),
-        verbose=1,
-        device='cpu',
-        tensorboard_log=log_dir
-    ) 
-
-    
-    PolicyTrainer = Policy_Trainer_DeepRL(env,model,log_dir,log_name)
+    ## CREATE NEW DEEP RL MODEL 
+    log_name = f"SAC--{current_time}--{env.modelInitials}"    
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.create_model()
     PolicyTrainer.train_model()
+    
+    # # LOAD DEEP RL MODEL
+    # log_name = "SAC--01_02-16:22--NL_0"
+    # t_step_load = 10
+
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.load_model(t_step_load)
+    # PolicyTrainer.train_model()
+
