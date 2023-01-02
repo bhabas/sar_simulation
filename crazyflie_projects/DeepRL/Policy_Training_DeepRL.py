@@ -16,6 +16,8 @@ from scipy.interpolate import griddata
 ## SB3 Imports
 from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import *
+from stable_baselines3.common.vec_env import VecCheckNan
+from stable_baselines3.common import utils
 
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg,os
@@ -31,10 +33,10 @@ current_time = now.strftime("%m_%d-%H:%M")
 
 class CheckpointSaveCallback(BaseCallback):
 
-    def __init__(self, save_freq: int, PolicyTrainer, verbose: int = 0):
+    def __init__(self, save_freq: int, model_dir, verbose: int = 0):
         super(CheckpointSaveCallback, self).__init__(verbose)
         self.save_freq = save_freq
-        self.PT = PolicyTrainer
+        self.model_dir = model_dir
 
         self.t_step_CircBuff = [0,0,0,0,0] # Circular buffer of recent timesteps
 
@@ -48,16 +50,16 @@ class CheckpointSaveCallback(BaseCallback):
             self.t_step_CircBuff.append(self.num_timesteps)
 
             ## SAVE NEWEST MODEL AND REPLAY BUFFER
-            newest_model = os.path.join(self.PT.model_dir, f"{self.num_timesteps}_step_model")
-            newest_replay_buff = os.path.join(self.PT.model_dir, f"{self.num_timesteps}_step_replay_buff")
+            newest_model = os.path.join(self.model_dir, f"{self.num_timesteps}_step_model")
+            newest_replay_buff = os.path.join(self.model_dir, f"{self.num_timesteps}_step_replay_buff")
 
             self.model.save(newest_model)
             self.model.save_replay_buffer(newest_replay_buff)
 
 
             ## DELETE OLDEST MODEL AND REPLAY BUFFER
-            oldest_model = os.path.join(self.PT.model_dir,f"{self.t_step_CircBuff[0]}_step_model.zip")
-            oldest_replay_buff = os.path.join(self.PT.model_dir,f"{self.t_step_CircBuff[0]}_step_replay_buff.pkl")
+            oldest_model = os.path.join(self.model_dir,f"{self.t_step_CircBuff[0]}_step_model.zip")
+            oldest_replay_buff = os.path.join(self.model_dir,f"{self.t_step_CircBuff[0]}_step_replay_buff.pkl")
 
             if os.path.exists(oldest_model):
                 os.remove(oldest_model)
@@ -79,22 +81,47 @@ class CheckpointSaveCallback(BaseCallback):
 
 
 class Policy_Trainer_DeepRL():
-    def __init__(self,env,model,log_dir,log_name):
+    def __init__(self,log_dir,log_name,env=None,model=None):
         self.env = env
         self.model = model
         self.log_dir = log_dir
-        self.log_name = log_name
 
+        ## LOADED MODEL
+        if log_name[-2] == "_": 
+            self.log_name = log_name[:-2]
+            latest_run_id = utils.get_latest_run_id(log_dir,log_name)
+            self.TB_log_path = os.path.join(log_dir,f"{self.log_name}_{latest_run_id}")
+            self.model_dir = os.path.join(self.TB_log_path,"models")
 
-        self.log_dir = os.path.join(log_dir,log_name+"_0")
-        self.model_dir = os.path.join(self.log_dir,"models")
+        ## NEW MODEL
+        else: 
+            self.log_name = log_name
+            latest_run_id = utils.get_latest_run_id(log_dir,log_name)
+            self.TB_log_path = os.path.join(log_dir,f"{self.log_name}_{latest_run_id}")
+            self.model_dir = os.path.join(self.TB_log_path,"models")
 
-        if not os.path.exists(self.log_dir):
-            os.makedirs(self.log_dir,exist_ok=True)
-            self.save_Config_File()
+        ## GENERATE LOG/MODEL DIRECTORY
+        if not os.path.exists(self.TB_log_path):
+            os.makedirs(self.TB_log_path,exist_ok=True)
+
+            if model is not None:
+                self.save_Config_File()
 
         if not os.path.exists(self.model_dir):
             os.makedirs(self.model_dir,exist_ok=True)
+
+    def load_model(self,t_step):
+
+        model_path = os.path.join(self.model_dir,f"{t_step}_step_model")
+        replay_buff_path = os.path.join(self.model_dir,f"{t_step}_step_replay_buff")
+
+        self.model = SAC.load(
+            model_path,
+            env=env,
+            device='cpu',
+            tensorboard_log=self.log_dir
+        )
+        self.model.load_replay_buffer(replay_buff_path)
 
 
     def save_NN_Params(self,SavePath):
@@ -279,7 +306,7 @@ class Policy_Trainer_DeepRL():
                 action,_ = self.model.predict(obs)
                 obs,reward,done,info = self.env.step(action)
 
-    def train_model(self,reset_timesteps=False):
+    def train_model(self,total_timesteps=2e6,save_freq=500,reset_timesteps=False):
         """Script to train model via Deep RL method
 
         Args:
@@ -288,9 +315,9 @@ class Policy_Trainer_DeepRL():
             Set to False to resume training from previous model.
         """       
 
-        checkpoint_callback = CheckpointSaveCallback(save_freq=100,PolicyTrainer=self)
+        checkpoint_callback = CheckpointSaveCallback(save_freq=save_freq,model_dir=self.model_dir)
         self.model.learn(
-            total_timesteps=2e6,
+            total_timesteps=total_timesteps,
             tb_log_name=self.log_name,
             callback=checkpoint_callback,
             reset_num_timesteps=reset_timesteps
@@ -454,7 +481,7 @@ class Policy_Trainer_DeepRL():
 
     def save_Config_File(self):
 
-        config_path = os.path.join(self.log_dir,"Config.yaml")
+        config_path = os.path.join(self.TB_log_path,"Config.yaml")
 
         data = dict(
             PLANE_SETTINGS = dict(
@@ -503,26 +530,11 @@ if __name__ == '__main__':
 
     ## INITIATE ENVIRONMENT
     env = CrazyflieEnv_DeepRL(GZ_Timeout=True)
-    # env = CF_Env_2D()
-    # env = None
-    
-
-
-    # # LOAD DEEP RL MODEL
-    # load_model_name = f"SAC--10_12-11:40--NL_0"
-
-    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Env_2D"
-    # leg_config = "NL"
-    # log_name = f"SAC--{current_time}--{leg_config}"
-
-    # policy_path = os.path.join(log_dir,load_model_name)
-    # model_path = os.path.join(log_dir,load_model_name,f"models/{2}000_steps.zip")
-    # model = SAC.load(model_path,env=env,device='cpu')
-    # model.load_replay_buffer(f"{log_dir}/{load_model_name}/models/replay_buff.pkl")
+    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
 
     ## CREATE NEW DEEP RL MODEL 
-    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Gazebo"
     log_name = f"SAC--{current_time}--{env.modelInitials}"
+
     model = SAC(
         "MlpPolicy",
         env=env,
@@ -533,9 +545,14 @@ if __name__ == '__main__':
         device='cpu',
         tensorboard_log=log_dir
     ) 
-
+    PolicyTrainer = Policy_Trainer_DeepRL(log_dir,log_name,env,model)
+    PolicyTrainer.train_model(save_freq=10)
     
-    PolicyTrainer = Policy_Trainer_DeepRL(env,model,log_dir,log_name)
-    PolicyTrainer.train_model()
+    # # LOAD DEEP RL MODEL
+    # log_name = "SAC--01_02-07:39--NL_0"
+    # t_step_load = 60
 
-    
+    # PolicyTrainer = Policy_Trainer_DeepRL(log_dir,log_name,env)
+    # PolicyTrainer.load_model(t_step_load)
+    # PolicyTrainer.train_model(save_freq=10)
+
