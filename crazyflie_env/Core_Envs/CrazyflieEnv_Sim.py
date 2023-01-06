@@ -6,6 +6,7 @@ import time
 import sys
 import subprocess
 import rospy
+import gym
 from .CrazyflieEnv_Base import CrazyflieEnv_Base
 
 ## ROS MESSAGES AND SERVICES
@@ -21,12 +22,12 @@ from std_srvs.srv import Empty,EmptyRequest
 YELLOW = '\033[93m'
 RED = '\033[91m'
 GREEN = '\033[92m'
+CYAN = '\033[96m'
 ENDC = '\033[m'
 
-class CrazyflieEnv_Sim(CrazyflieEnv_Base):
+class CrazyflieEnv_Sim(CrazyflieEnv_Base,gym.Env):
     metadata = {'render.modes': ['human']}
     def __init__(self):
-        # super().__init__()        
         CrazyflieEnv_Base.__init__(self)
         self.env_name = "CF_Gazebo"
 
@@ -47,10 +48,6 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base):
         rospy.wait_for_service("/CF_DC/Cmd_CF_DC",timeout=5)
 
         print("[INITIATING] Gazebo simulation started")
-        
-
-
-
     
 
     def sleep(self,time_s):
@@ -219,6 +216,11 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base):
         self.callService("/gazebo/unpause_physics",srv,Empty)
         
     def iter_step(self,n_steps:int = 10):
+        """Update simulation by n timesteps
+
+        Args:
+            n_steps (int, optional): _description_. Defaults to 10.
+        """        
         os.system(f'gz world --multi-step={n_steps}')
 
         
@@ -231,12 +233,25 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base):
             self.done = True
 
         for retry in range(retries):
+
             try:
+                # print(CYAN + f"[CALL_SERVICE] Calling: {addr}" + ENDC)
+                rospy.wait_for_service(addr,timeout=1)
                 service = rospy.ServiceProxy(addr, srv_type)
                 service(srv)
+                # print(CYAN + f"[CALL_SERVICE] Called: {addr}" + ENDC)
+
                 return True
 
             except rospy.ServiceException as e:
+                print(f"[WARNING] {addr} service call failed (callService)")
+                print(f"[WARNING] {e}")
+                FailureModes[2] = False
+
+                self.Restart(FailureModes)
+                self.done = True
+
+            except rospy.exceptions.ROSException as e:
                 print(f"[WARNING] {addr} service call failed (callService)")
                 print(f"[WARNING] {e}")
                 FailureModes[2] = False
@@ -252,7 +267,10 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base):
         
         ## CHECK THAT GAZEBO IS FUNCTIONING
         try:
+            # print(CYAN + f"[DIAGNOSTIC] Calling: /gazebo/pause_physics" + ENDC)
             rospy.wait_for_service("/gazebo/pause_physics",timeout=1)
+            # print(CYAN + f"[DIAGNOSTIC] Called: /gazebo/pause_physics" + ENDC)
+
         except rospy.ROSException as e:
             print(f"[WARNING] /gazebo/pause_physics wait for service failed (callService)")
             print(f"[WARNING] {e}")
@@ -260,7 +278,9 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base):
 
         ## CHECK THAT CONTROLLER IS FUNCTIONING
         try:
+            # print(CYAN + f"[DIAGNOSTIC] Calling: /CTRL/Cmd_ctrl" + ENDC)
             rospy.wait_for_service("/CTRL/Cmd_ctrl",timeout=1)
+            # print(CYAN + f"[DIAGNOSTIC] Called: /CTRL/Cmd_ctrl" + ENDC)
         except rospy.ROSException as e:
             print(f"[WARNING] /CTRL/Cmd_ctrl wait for service failed (callService)")
             print(f"[WARNING] {e}")
@@ -268,7 +288,10 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base):
 
         ## CHECK THAT CF_DC IS FUNCTIONING
         try:
+            # print(CYAN + f"[DIAGNOSTIC] Calling: /CF_DC/Cmd_CF_DC" + ENDC)
             rospy.wait_for_service('/CF_DC/Cmd_CF_DC',timeout=1)
+            # print(CYAN + f"[DIAGNOSTIC] Called: /CF_DC/Cmd_CF_DC" + ENDC)
+
         except rospy.ROSException as e:
             print(f"[WARNING] /CF_DC/Cmd_CF_DC wait for service failed (callService)")
             print(f"[WARNING] {e}")

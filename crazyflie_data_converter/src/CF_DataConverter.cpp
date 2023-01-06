@@ -19,14 +19,14 @@ void CF_DataConverter::Publish_StateData()
 
     // OPTICAL FLOW STATES
     StateData_msg.Tau = Tau;
-    StateData_msg.OFx = OFx;
-    StateData_msg.OFy = OFy;
-    StateData_msg.D_ceil = D_ceil;
+    StateData_msg.Theta_x = Theta_x;
+    StateData_msg.Theta_y = Theta_y;
+    StateData_msg.D_perp = D_perp;
 
     // OPTICAL FLOW STATE ESTIMATES
     StateData_msg.Tau_est = Tau_est;
-    StateData_msg.OFx_est = OFx_est;
-    StateData_msg.OFy_est = OFy_est;
+    StateData_msg.Theta_x_est = Theta_x_est;
+    StateData_msg.Theta_y_est = Theta_y_est;
 
     // STATE SETPOINTS
     StateData_msg.x_d = x_d;
@@ -65,9 +65,9 @@ void CF_DataConverter::Publish_FlipData()
 
     // OPTICAL FLOW
     FlipData_msg.Tau_tr = Tau_tr;
-    FlipData_msg.OFx_tr = OFx_tr;
-    FlipData_msg.OFy_tr = OFy_tr;
-    FlipData_msg.D_ceil_tr = D_ceil_tr;
+    FlipData_msg.Theta_x_tr = Theta_x_tr;
+    FlipData_msg.Theta_y_tr = Theta_y_tr;
+    FlipData_msg.D_perp_tr = D_perp_tr;
 
     // CONTROL ACTIONS
     FlipData_msg.FM_tr = FM_tr;
@@ -145,14 +145,14 @@ void CF_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
 
     // OPTICAL FLOW STATES
     Tau = ctrl_msg.Tau;
-    OFx = ctrl_msg.OFx;
-    OFy = ctrl_msg.OFy;
-    D_ceil = ctrl_msg.D_ceil;
+    Theta_x = ctrl_msg.Theta_x;
+    Theta_y = ctrl_msg.Theta_y;
+    D_perp = ctrl_msg.D_perp;
 
     // ESTIMATED OPTICAL FLOW STATES
     Tau_est = ctrl_msg.Tau_est;
-    OFx_est = ctrl_msg.OFx_est;
-    OFy_est = ctrl_msg.OFy_est;    
+    Theta_x_est = ctrl_msg.Theta_x_est;
+    Theta_y_est = ctrl_msg.Theta_y_est;    
 
     // STATE SETPOINTS
     x_d = ctrl_msg.x_d;
@@ -208,9 +208,9 @@ void CF_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_ms
 
     // OPTICAL FLOW
     Tau_tr = ctrl_msg.Tau_tr;
-    OFx_tr = ctrl_msg.OFx_tr;
-    OFy_tr = ctrl_msg.OFy_tr;
-    D_ceil_tr = ctrl_msg.D_ceil_tr;
+    Theta_x_tr = ctrl_msg.Theta_x_tr;
+    Theta_y_tr = ctrl_msg.Theta_y_tr;
+    D_perp_tr = ctrl_msg.D_perp_tr;
 
     // CONTROLLER ACTIONS
     FM_tr = ctrl_msg.FM_flip;
@@ -463,7 +463,7 @@ void CF_DataConverter::checkSlowdown()
     if(LANDING_SLOWDOWN_FLAG==true){
 
         // WHEN CLOSE TO THE CEILING REDUCE SIM SPEED
-        if(D_ceil<=0.5 && SLOWDOWN_TYPE == 0){
+        if(D_perp<=0.5 && SLOWDOWN_TYPE == 0){
             
             CF_DataConverter::adjustSimSpeed(SIM_SLOWDOWN_SPEED);
             SLOWDOWN_TYPE = 1;
@@ -577,9 +577,9 @@ void CF_DataConverter::consoleOuput()
     printf("Vel [mag,phi,alph]: %.2f %.2f %.2f\n",Vel_mag,Phi,Alpha);
     printf("\n");
 
-    printf("Tau: %.3f \tOFx: %.3f \tOFy: %.3f\n",Tau,OFx,OFy);
-    printf("Tau_est: %.3f\tOFx_est: %.3f \tOFy_est: %.3f\n",Tau_est,OFx_est,OFy_est);
-    printf("D_ceil: %.3f\n",D_ceil);
+    printf("Tau: %.3f \t%sx: %.3f \t%sy: %.3f\n",Tau,theta,Theta_x,theta,Theta_y);
+    printf("Tau_est: %.3f \t%sx_est: %.3f \t%sy_est: %.3f\n",Tau_est,theta,Theta_x_est,theta,Theta_y_est);
+    printf("D_perp: %.3f\n",D_perp);
     printf("\n");
 
     printf("==== Policy: %s ====\n",POLICY_TYPE.c_str());
@@ -602,8 +602,8 @@ void CF_DataConverter::consoleOuput()
 
     printf("==== Flip Trigger Values ====\n");
     printf("Tau_tr:     %.3f \tPolicy_Flip_tr:    %.3f \n",Tau_tr,Policy_Flip_tr);
-    printf("OFy_tr:     %.3f \tPolicy_Action_tr:  %.3f \n",OFy_tr,Policy_Action_tr);
-    printf("D_ceil_tr:  %.3f \n",D_ceil_tr);
+    printf("%sx_tr:     %.3f \tPolicy_Action_tr:  %.3f \n",theta,Theta_x_tr,Policy_Action_tr);
+    printf("D_perp_tr:  %.3f \n",D_perp_tr);
     printf("\n");
 
     printf("==== Setpoints ====\n");
@@ -619,7 +619,7 @@ void CF_DataConverter::consoleOuput()
     printf("\n");
 
 
-    printf("=== Parameters ====\n");
+    printf("=== Controller Gains ====\n");
     printf("Kp_P: %.3f  %.3f  %.3f \t",P_kp_xy,P_kp_xy,P_kp_z);
     printf("Kp_R: %.3f  %.3f  %.3f \n",R_kp_xy,R_kp_xy,R_kp_z);
 

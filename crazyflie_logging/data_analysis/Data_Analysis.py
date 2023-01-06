@@ -22,7 +22,7 @@ class DataFile:
         self.dataPath = dataPath
         filepath = os.path.join(self.dataPath, self.fileName)
 
-        self.trial_df = pd.read_csv(filepath,low_memory=False)
+        self.trial_df = pd.read_csv(filepath,low_memory=False,comment="##")
 
         ## CLEAN UP TRIAL DATAFRAME
         # Drop row with "Note: ____________"
@@ -387,44 +387,7 @@ class DataFile:
 
         return t,t_normalized
 
-    def plot_traj_3D_SensorySpace(self,k_ep,k_run):
-        """Plot flight trajectory through Sensory-Space until flip execution
-
-        Args:
-            k_ep (int): Episode Number
-            k_run (int): Run Number
-        """   
-
-        run_df,IC_df,_,_ = self.select_run(k_ep,k_run)
-
-        ## GRAB/MODIFY DATA AND CONVERT TO NUMPY ARRAY
-        RREV_traj = run_df.query(f"flip_flag==False and RREV <= 8").iloc[:]['RREV'].to_numpy()
-        OF_y_traj = run_df.query(f"flip_flag==False and RREV <= 8").iloc[:]['OF_y'].to_numpy()
-        d_ceil_traj = run_df.query(f"flip_flag==False and RREV <= 8").iloc[:]['d_ceil'].to_numpy()
-
-
-        ## PLOT DATA
-        fig = plt.figure()
-        ax = fig.add_subplot(111,projection="3d")
-        
-        ax.plot(OF_y_traj,RREV_traj,d_ceil_traj,'k--')
-        ax.scatter(OF_y_traj[0],RREV_traj[0],d_ceil_traj[0],marker='o',color='k',label='Velocity Imparted')
-        # ax.scatter(OF_y_traj[-1],RREV_traj[-1],marker='x',color='k',label='Flip Executed')
-
-        ax.set_xlim(-20,0)
-        ax.set_ylim(0,8)
-        ax.set_zlim(0,2)
-       
-        ax.set_xlabel("OF_y [rad/s]")
-        ax.set_ylabel("RREV [rad/s]")
-        ax.set_zlabel("D_ceil [m]")
-        ax.set_title("Flight Trajectory - Sensory Space")
-        ax.legend()
-        ax.grid()
-
-        plt.show()
-
-
+    
 
     ## DESIRED IC FUNCTIONS
     def grab_vel_IC(self):
@@ -469,11 +432,15 @@ class DataFile:
         """        
 
         run_df,_,flip_df,_ = self.select_run(k_ep,k_run)
-        t_flip = float(flip_df.iloc[0]['t'])
-        t_flip_norm = t_flip - float(run_df.iloc[0]['t']) # Normalize flip time
-
+        if flip_df.iloc[0]['flip_flag'] == True: # If Impact Detected
+            t_flip = float(flip_df.iloc[0]['t'])
+            t_flip_norm = t_flip - float(run_df.iloc[0]['t']) # Normalize flip time
+        else:
+            t_flip = np.nan
+            t_flip_norm = np.nan
 
         return t_flip,t_flip_norm
+
 
     def grab_flip_state(self,k_ep,k_run,stateName: list):
         """Returns desired state at time of flip
@@ -490,8 +457,12 @@ class DataFile:
         """        
 
         _,_,flip_df,_ = self.select_run(k_ep,k_run)
-        state_flip = flip_df[stateName]
-        state_flip = state_flip.to_numpy(dtype=np.float64).flatten()
+        if flip_df.iloc[0]['flip_flag'] == True: # If Impact Detected
+
+            state_flip = float(flip_df.iloc[0][stateName])
+        else:
+            state_flip = np.nan
+
 
 
         return state_flip
@@ -572,9 +543,8 @@ class DataFile:
         """        
         _,_,_,impact_df = self.select_run(k_ep,k_run)
         body_impact = impact_df.iloc[0]['flip_flag']
-        impact_flag = impact_df.iloc[0]['impact_flag']
-        leg_contacts = int(impact_df.iloc[0]['Tau'])
-        contact_list = impact_df.iloc[0][['OF_x','OF_y','d_ceil','F_thrust']].to_numpy(dtype=np.int8)
+        leg_contacts = int(impact_df.iloc[0]['F_thrust'])
+        contact_list = impact_df.iloc[0][['Theta_x','Theta_x_est','Theta_y','Theta_y_est']].to_numpy(dtype=np.int8)
 
         
 
@@ -612,18 +582,18 @@ class DataFile:
             ## RECORD LANDING CONDITIONS
             leg_contacts,_,body_impact = self.landing_conditions(k_ep, k_run)
 
-            if leg_contacts >= 3: 
+            if leg_contacts >= 3 and not body_impact: 
                 four_leg_landing += 1
 
-            elif leg_contacts == 2:
+            elif leg_contacts == 2 and not body_impact:
                 two_leg_landing += 1
 
             contact_list.append(leg_contacts)
 
         ## CALC LANDING PERCENTAGE
-        landing_rate_4leg = four_leg_landing/(N*self.n_rollouts)
-        landing_rate_2leg = two_leg_landing/(N*self.n_rollouts)
-        contact_rate = (four_leg_landing + two_leg_landing)/(N*self.n_rollouts)
+        landing_rate_4leg = np.round(four_leg_landing/(N*self.n_rollouts),2)
+        landing_rate_2leg = np.round(two_leg_landing/(N*self.n_rollouts),2)
+        contact_rate = np.round((four_leg_landing + two_leg_landing)/(N*self.n_rollouts),2)
         
 
         return landing_rate_4leg,landing_rate_2leg,contact_rate,np.array(contact_list)
@@ -640,8 +610,8 @@ class DataFile:
         var_list = []
         for k_ep,k_run in ep_arr[:,:2]:
 
-            leg_contacts,_,_ = self.landing_conditions(k_ep, k_run)
-            if leg_contacts >= landing_cutoff: # IGNORE FAILED LANDINGS
+            leg_contacts,_,body_contact = self.landing_conditions(k_ep, k_run)
+            if leg_contacts >= landing_cutoff and body_contact == False: # IGNORE FAILED LANDINGS
                 var_list.append(func(k_ep,k_run,*args,**kwargs))
 
         ## RETURN MEAN AND STD OF STATE
@@ -649,7 +619,7 @@ class DataFile:
         trial_std = np.nanstd(var_list)
         trial_arr = var_list
 
-        return trial_mean,trial_std,trial_arr
+        return np.round(trial_mean,3),trial_std,trial_arr
     
             
 
@@ -657,7 +627,7 @@ if __name__ == "__main__":
 
     dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_logging/local_logs/"
 
-    fileName = "EM_PEPG--Vd_3.50--phi_90.00--trial_00--NL.csv"
-    trial = DataFile(dataPath,fileName,dataType='Sim')
+    fileName = "Control_Playground--trial_24--NL.csv"
+    trial = DataFile(dataPath,fileName)
 
-    print(trial.grab_trial_data(trial.grab_impact_state,'vz'))
+    trial.plot_policy_convg()

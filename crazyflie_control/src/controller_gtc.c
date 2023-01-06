@@ -52,7 +52,6 @@ float m = 34.3e-3f;         // [kg]
 float Ixx = 15.83e-6f;      // [kg*m^2]
 float Iyy = 17.00e-6f;      // [kg*m^2]
 float Izz = 31.19e-6f;      // [kg*m^2]
-float h_ceiling = 2.10f;    // [m]
 
 float g = 9.81f;        // [m/s^2]
 static struct mat33 J; // Rotational Inertia Matrix [kg*m^2]
@@ -69,17 +68,18 @@ struct vec statePos = {0.0,0.0f,0.0f};          // Pos [m]
 struct vec stateVel = {0.0f,0.0f,0.0f};         // Vel [m/s]
 struct quat stateQuat = {0.0f,0.0f,0.0f,1.0f};  // Orientation
 struct vec stateOmega = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
+float V_mag = 0.0f;
 
 // OPTICAL FLOW STATES
 float Tau = 0.0f;       // [s]
-float OFx = 0.0f;       // [rad/s]
-float OFy = 0.0f;       // [rad/s] 
-float d_ceil = 0.0f;    // [m]
+float Theta_x = 0.0f;   // [rad/s] 
+float Theta_y = 0.0f;   // [rad/s]
+float D_perp = 0.0f;    // [m]
 
 // ESTIMATED OPTICAL FLOW STATES
-float Tau_est = 0.0f; // [s]
-float OFx_est = 0.0f; // [rad/s]
-float OFy_est = 0.0f; // [rad/s]
+float Tau_est = 0.0f;       // [s]
+float Theta_x_est = 0.0f;   // [rad/s]
+float Theta_y_est = 0.0f;   // [rad/s]
 
 
 static struct mat33 R; // Orientation as rotation matrix
@@ -201,10 +201,10 @@ struct quat stateQuat_tr = {0.0f,0.0f,0.0f,1.0f};  // Orientation
 struct vec stateOmega_tr = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
 
 // OPTICAL FLOW STATES
-float Tau_tr = 0.0f;    // [rad/s]
-float OFx_tr = 0.0f;    // [rad/s]
-float OFy_tr = 0.0f;    // [rad/s]
-float d_ceil_tr = 0.0f; // [m/s]
+float Tau_tr = 0.0f;        // [rad/s]
+float Theta_x_tr = 0.0f;    // [rad/s]
+float Theta_y_tr = 0.0f;    // [rad/s]
+float D_perp_tr = 0.0f;     // [m/s]
 
 // CONTROLLER STATES
 float F_thrust_flip = 0.0f; // [N]
@@ -323,9 +323,9 @@ void controllerGTCReset(void)
     stateOmega_tr = vzero();
 
     Tau_tr = 0.0f;
-    OFx_tr = 0.0f;
-    OFy_tr = 0.0f;
-    d_ceil_tr = 0.0f;
+    Theta_x_tr = 0.0f;
+    Theta_y_tr = 0.0f;
+    D_perp_tr = 0.0f;
     
     // RL - PARAMETER ESTIMATION
     Tau_thr = 0.0f;
@@ -617,30 +617,33 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 {
     if (RATE_DO_EXECUTE(RATE_100_HZ,tick))
     {
+
         if(camera_sensor_active == true)
         {
             Tau = sensors->Tau_est;
-            OFx = sensors->OFx_est;
-            OFy = sensors->OFy_est;
+            Theta_x = sensors->Theta_x_est;
+            Theta_y = sensors->Theta_y_est;
         }
         else
         {
             Tau = sensors->Tau;
-            OFx = sensors->OFx;
-            OFy = sensors->OFy;
+            Theta_x = sensors->Theta_x;
+            Theta_y = sensors->Theta_y;
         }
 
-        d_ceil = sensors->d_ceil;
+        D_perp = sensors->D_perp;
         X->data[0][0] = Tau;
-        X->data[1][0] = OFy;
-        X->data[2][0] = d_ceil; // d_ceiling [m]
+        X->data[1][0] = Theta_x;
+        X->data[2][0] = D_perp; 
 
         if(policy_armed_flag == true){ 
+
+            V_mag = sqrtf(powf(state->velocity.x,2) + powf(state->velocity.y,2) + powf(state->velocity.z,2));
 
             switch(Policy){
 
                 case PARAM_OPTIM:
-                    if(Tau <= Tau_thr && onceFlag == false && state->velocity.z > 0.1){
+                    if(Tau <= Tau_thr && onceFlag == false && V_mag > 0.2){
                     onceFlag = true;
                     flip_flag = true;  
 
@@ -651,9 +654,9 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                     stateOmega_tr = stateOmega;
 
                     Tau_tr = Tau;
-                    OFx_tr = OFx;
-                    OFy_tr = OFy;
-                    d_ceil_tr = d_ceil;
+                    Theta_x_tr = Theta_x;
+                    Theta_y_tr = Theta_y;
+                    D_perp_tr = D_perp;
 
                 
                     M_d.x = 0.0f;
@@ -683,9 +686,9 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                         stateOmega_tr = stateOmega;
 
                         Tau_tr = Tau;
-                        OFx_tr = OFx;
-                        OFy_tr = OFy;
-                        d_ceil_tr = d_ceil;
+                        Theta_x_tr = Theta_x;
+                        Theta_y_tr = Theta_y;
+                        D_perp_tr = D_perp;
 
                         Policy_Flip_tr = Policy_Flip;
                         Policy_Action_tr = NN_predict(X,&NN_Policy_Action);
@@ -721,9 +724,9 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                         stateOmega_tr = stateOmega;
 
                         Tau_tr = Tau;
-                        OFx_tr = OFx;
-                        OFy_tr = OFy;
-                        d_ceil_tr = d_ceil;
+                        Theta_x_tr = Theta_x;
+                        Theta_y_tr = Theta_y;
+                        D_perp_tr = D_perp;
 
                         Policy_Flip_tr = Policy_Flip;
                         Policy_Action_tr = Policy_Action;
@@ -1006,9 +1009,9 @@ void compressStates(){
     StatesZ_GTC.quat = quatcompress(q);
 
     // COMPRESS SENSORY VALUES
-    StatesZ_GTC.OF_xy = compressXY(OFx,OFy);
+    StatesZ_GTC.OF_xy = compressXY(Theta_x,Theta_y);
     StatesZ_GTC.Tau = (int16_t)(Tau * 1000.0f); 
-    StatesZ_GTC.d_ceil = (int16_t)(d_ceil * 1000.0f);
+    StatesZ_GTC.D_perp = (int16_t)(D_perp * 1000.0f);
 
     // COMPRESS THRUST/MOMENT VALUES
     StatesZ_GTC.FMz = compressXY(F_thrust,M.z*1000.0f);
@@ -1060,9 +1063,9 @@ void compressFlipStates(){
         stateQuat_tr.w};
     FlipStatesZ_GTC.quat = quatcompress(q);
 
-   FlipStatesZ_GTC.OF_xy = compressXY(OFx_tr,OFy_tr);
+   FlipStatesZ_GTC.OF_xy = compressXY(Theta_x_tr,Theta_y_tr);
    FlipStatesZ_GTC.Tau = (int16_t)(Tau_tr * 1000.0f); 
-   FlipStatesZ_GTC.d_ceil = (int16_t)(d_ceil_tr * 1000.0f);
+   FlipStatesZ_GTC.D_perp = (int16_t)(D_perp_tr * 1000.0f);
 
    FlipStatesZ_GTC.NN_FP = compressXY(Policy_Flip_tr,Policy_Action_tr); // Flip value (OC_SVM) and Flip action (NN)
 

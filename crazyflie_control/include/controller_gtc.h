@@ -104,7 +104,6 @@ extern float m;
 extern float Ixx;
 extern float Iyy;
 extern float Izz;
-extern float h_ceiling;
 
 // INIT STATE VALUES
 extern struct vec statePos;
@@ -115,14 +114,14 @@ extern struct vec stateEul;
 
 // OPTICAL FLOW STATES
 extern float Tau;   // [s]
-extern float OFx;   // [rad/s]
-extern float OFy;   // [rad/s] 
-extern float d_ceil;
+extern float Theta_x;   // [rad/s] 
+extern float Theta_y;   // [rad/s]
+extern float D_perp;
 
 // ESTIMATED OPTICAL FLOW STATES
 extern float Tau_est; // [s]
-extern float OFx_est; // [rad/s]
-extern float OFy_est; // [rad/s]
+extern float Theta_x_est; // [rad/s]
+extern float Theta_y_est; // [rad/s]
 
 // INIT DESIRED STATES
 extern struct vec x_d;      // Pos-desired [m]
@@ -203,9 +202,9 @@ extern struct vec stateOmega_tr;    // Angular Rate [rad/s]
 
 // OPTICAL FLOW STATES
 extern float Tau_tr;        // [rad/s]
-extern float OFx_tr;        // [rad/s]
-extern float OFy_tr;        // [rad/s]
-extern float d_ceil_tr;     // [m/s]
+extern float Theta_x_tr;        // [rad/s]
+extern float Theta_y_tr;        // [rad/s]
+extern float D_perp_tr;     // [m/s]
 
 // CONTROLLER STATES
 extern float F_thrust_flip; // [N]
@@ -244,17 +243,17 @@ static int32_t thrust2PWM(float f)
 
     float a,b,c;
 
-    if(f<=5)
+    if(f<=5.2f)
     {
-        a = 1.01039f;
-        b = 1.90040f;
+        a = 1.28533f;
+        b = 1.51239;
         c = 0.0f;
     }
     else
     {
-        a = 2.85606f;
-        b = -4.55862f;
-        c = 5.42844f;
+        a = 3.23052f;
+        b = -5.46911f;
+        c = 5.97889f;
     }
     
 
