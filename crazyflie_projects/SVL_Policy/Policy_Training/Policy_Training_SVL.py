@@ -467,7 +467,7 @@ class Policy_Trainer():
         fig.add_trace(
             go.Scatter3d(
                 ## DATA
-                x=df["OFy_flip_mean"],
+                x=-df["OFy_flip_mean"],
                 y=df["Tau_flip_mean"],
                 z=df["D_ceil_flip_mean"],
 
@@ -495,7 +495,7 @@ class Policy_Trainer():
             ## MESHGRID OF DATA POINTS
             Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
                 np.linspace(0.15, 0.35, 60),
-                np.linspace(-15, 1, 45),
+                np.linspace(-15, 0, 45),
                 np.linspace(0.0, 1.0, 45)
             )
 
@@ -510,7 +510,7 @@ class Policy_Trainer():
             fig.add_trace(
                 go.Volume(
                     ## ISO SURFACE
-                    x=X_grid[:,1].flatten(),
+                    x=-X_grid[:,1].flatten(),
                     y=X_grid[:,0].flatten(),
                     z=X_grid[:,2].flatten(),
                     value=y_pred_grid.flatten(),
@@ -579,14 +579,21 @@ class Policy_Trainer():
                 xaxis_title='OFy [rad/s]',
                 yaxis_title='Tau [s]',
                 zaxis_title='D_ceiling [m]',
-                xaxis_range=[-16,1],
+                xaxis_range=[0,16],
                 yaxis_range=[0.4,0.1],
                 zaxis_range=[0,1.2],
-                xaxis = dict(nticks=4, range=[-15,0],),
+                xaxis = dict(nticks=4, range=[0,15],),
             ),
+            scene_camera= dict(
+                eye=dict(x=1.7, y=-1.4, z=0.8)
+            )
 
         )
         fig.show()
+
+        # import plotly.io as pio
+        # #save a figure of 300dpi, with 1.5 inches, and  height 0.75inches
+        # pio.write_image(fig, "test.svg", width=1.5*300, height=0.75*300, scale=1)
 
     def plot_Landing_Rate(self,df,saveFig=False):
 
