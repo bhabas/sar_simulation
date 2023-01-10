@@ -72,7 +72,6 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
             self.done = bool(
                 self.t - self.start_time_rollout > 0.7              # EPISODE TIMEOUT
                 or (self.impact_flag or self.BodyContact_flag)
-                # or (self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5) # FREE-FALL TERMINATION
             )         
 
             if not self.done:
@@ -117,7 +116,6 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
             self.done = bool(
                 self.t - self.start_time_rollout > 1.0              # EPISODE TIMEOUT
                 or self.t - self.start_time_impact > 0.5            # IMPACT TIMEOUT
-                # or (self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5) # FREE-FALL TERMINATION
             )
 
             if not self.done:
@@ -194,8 +192,9 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         theta_rad = np.radians(self.Plane_Angle)                    # Plane angle
         n_hat = np.array([np.sin(theta_rad),0,-np.cos(theta_rad)])  # Plane normal vector
 
-        D_perp_0 = self.Tau_0*(Vel_0.dot(n_hat)) # Initial distance
-        r_0 = r_p - D_perp_0*n_hat          # Initial quad position (World coords)
+        D_perp_0 = self.Tau_0*(Vel_0.dot(n_hat))    # Initial distance
+        D_perp_0 = max(D_perp_0,0.2)             # Ensure a minimum distance of at least 0.3 [m]
+        r_0 = r_p - D_perp_0*n_hat                  # Initial quad position (World coords)
 
         self.Vel_Launch(r_0,Vel_0)
         self.iter_step(10)

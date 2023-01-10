@@ -1,0 +1,26 @@
+PLANE_SETTINGS:
+  Plane_Model: Standard_Plane
+  Plane_Angle: 45
+  Plane_Pos:
+    X: 2.0
+    Y: 0.0
+    Z: 0.5
+QUAD_SETTINGS:
+  CF_Type: Standard
+  CF_Config: Narrow_Long
+ENV_SETTINGS:
+  Environment: CF_Gazebo
+  Vel_Limts:
+  - 1.5
+  - 3.5
+  Phi_Limits:
+  - -90
+  - 0
+LEARNING_MODEL:
+  Policy: SACPolicy
+  Network_Layers:
+  - 12
+  - 12
+  Gamma: 0.999
+  Learning_Rate: 0.002
+  Activation_Function: ''
