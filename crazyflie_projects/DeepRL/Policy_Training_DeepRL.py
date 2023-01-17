@@ -546,28 +546,30 @@ if __name__ == '__main__':
 
     ## IMPORT ENVIRONMENTS
     from Envs.CrazyflieEnv_DeepRL import CrazyflieEnv_DeepRL
+    from Envs.CrazyflieEnv_DeepRL_Tau import CrazyflieEnv_DeepRL_Tau
+
     from Envs.CF_Env_2D import CF_Env_2D
 
     ## INITIATE ENVIRONMENT
-    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[-30,90])
+    env = CrazyflieEnv_DeepRL_Tau(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[30,90])
     log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
 
 
 
 
-    ## CREATE NEW DEEP RL MODEL 
-    log_name = f"SAC--{current_time}--{env.modelInitials}"    
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.create_model()
-    PolicyTrainer.train_model()
+    # ## CREATE NEW DEEP RL MODEL 
+    # log_name = f"SAC--{current_time}--{env.modelInitials}"    
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.create_model()
+    # PolicyTrainer.train_model()
 
 
     
-    # # LOAD DEEP RL MODEL
-    # log_name = "SAC--01_05-16:13--NL_0"
-    # t_step_load = 52000
+    # LOAD DEEP RL MODEL
+    log_name = "SAC--01_10-07:31--NL_0"
+    t_step_load = 11000
 
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.load_model(t_step_load)
-    # PolicyTrainer.train_model(reset_timesteps=False)
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.load_model(t_step_load)
+    PolicyTrainer.train_model(reset_timesteps=False)
 
