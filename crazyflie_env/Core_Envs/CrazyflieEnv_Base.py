@@ -3,11 +3,13 @@ import numpy as np
 import os
 import rospy
 import getpass
+import time
 
 ## ROS MESSAGES AND SERVICES
 from crazyflie_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
 from crazyflie_msgs.srv import loggingCMD,loggingCMDRequest
 from crazyflie_msgs.srv import RLCmd,RLCmdRequest
+from crazyflie_msgs.msg import RLData,RLConvg
 from crazyflie_msgs.msg import GTC_Cmd
 
 from rosgraph_msgs.msg import Clock
@@ -28,6 +30,10 @@ class CrazyflieEnv_Base():
         self.CF_Config = rospy.get_param('/QUAD_SETTINGS/CF_Config')
         self.modelInitials = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Initials")
         self.modelName = f"crazyflie_{self.CF_Config}"
+        self.preInit_Values()
+
+        self.posCF_0 = [0.0, 0.0, 0.4]      # Default hover position [m]
+        self.accCF_max = [1.0, 1.0, 3.1]    # Max acceleration values for trajectory generation [m/s^2]
 
 
         ## PLANE PARAMETERS
@@ -40,22 +46,17 @@ class CrazyflieEnv_Base():
             rospy.get_param(f'/Plane_Config/{self.Plane_Config}/Pos_Y'),
             rospy.get_param(f'/Plane_Config/{self.Plane_Config}/Pos_Z'),
         ]
-        
-     
-        ## TRAJECTORY VALUES
-        self.posCF_0 = [0.0, 0.0, 0.4]      # Default hover position [m]
-        self.accCF_max = [1.0, 1.0, 3.1]    # Max acceleration values for trajectory generation [m/s^2]
+               
 
+        ## INIT LOGGING VALUES
         self.username = getpass.getuser()
         self.logDir =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/crazyflie_logging/local_logs"
         self.logName = "TestLog.csv"
         self.error_str = "No_Debug_Data"
 
 
-        self.preInit_Values()
-        # self.CMD_msg_Publisher = rospy.Publisher("/CF_DC/Cmd_CF_DC",GTC_Cmd)
 
-        ## INIT ROS SUBSCRIBERS [Pub/Sampling Frequencies]
+        ## CRAZYFLIE DATA SUBSCRIBERS 
         # NOTE: Queue sizes=1 so that we are always looking at the most current data and 
         #       not data at back of a queue waiting to be processed by callbacks
         rospy.Subscriber("/clock",Clock,self.clockCallback,queue_size=1)
@@ -63,6 +64,10 @@ class CrazyflieEnv_Base():
         rospy.Subscriber("/CF_DC/FlipData",CF_FlipData,self.CF_FlipDataCallback,queue_size=1)
         rospy.Subscriber("/CF_DC/ImpactData",CF_ImpactData,self.CF_ImpactDataCallback,queue_size=1)
         rospy.Subscriber("/CF_DC/MiscData",CF_MiscData,self.CF_MiscDataCallback,queue_size=1)
+
+        ## RL DATA PUBLISHERS
+        self.RL_Data_Publisher = rospy.Publisher('/RL/data',RLData,queue_size=10)
+        self.RL_Convg_Publisher = rospy.Publisher('/RL/convg_data',RLConvg,queue_size=10)
 
 
     def getTime(self):
@@ -167,7 +172,49 @@ class CrazyflieEnv_Base():
 
         return x_0,z_0
 
-                
+    def RL_Publish(self):
+
+        ## RL DATA
+        RL_msg = RLData() ## Initialize RLData message
+        
+        RL_msg.k_ep = self.k_ep
+        RL_msg.k_run = self.k_run
+        RL_msg.error_string = self.error_str
+        RL_msg.n_rollouts = self.n_rollouts
+
+
+        RL_msg.policy = self.policy
+
+        RL_msg.reward = self.reward
+        RL_msg.reward_avg = self.reward_avg
+        RL_msg.reward_vals = self.reward_vals
+
+        RL_msg.vel_d = self.vel_d
+
+        RL_msg.trialComplete_flag = self.trialComplete_flag
+        self.RL_Data_Publisher.publish(RL_msg) ## Publish RLData message
+        
+        ## CONVERGENCE HISTORY
+        RL_convg_msg = RLConvg()
+        RL_convg_msg.K_ep_list = self.K_ep_list
+        RL_convg_msg.K_run_list = self.K_run_list
+
+
+        RL_convg_msg.mu_1_list = self.mu_1_list
+        RL_convg_msg.mu_2_list = self.mu_2_list
+
+        RL_convg_msg.sigma_1_list = self.sigma_1_list
+        RL_convg_msg.sigma_2_list = self.sigma_2_list
+
+        RL_convg_msg.reward_list = self.reward_list
+
+        RL_convg_msg.Kep_list_reward_avg = self.Kep_list_reward_avg
+        RL_convg_msg.reward_avg_list = self.reward_avg_list
+
+        self.RL_Convg_Publisher.publish(RL_convg_msg) ## Publish RLData message
+
+        time.sleep(0.1)
+
     def preInit_Values(self):
 
         self.Ixx = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Ixx")
@@ -254,6 +301,38 @@ class CrazyflieEnv_Base():
 
         ## INITIALIZE MISC VALUES
         self.V_Battery = 0.0
+
+        ## INITIALIZE RL VALUES
+
+        ## CONVERGENCE HISTORY
+        self.K_ep_list = []
+        self.K_run_list = []
+
+        self.mu_1_list = []         # List of mu values over course of convergence
+        self.mu_2_list = [] 
+
+        self.sigma_1_list = []      # List of sigma values over course of convergence
+        self.sigma_2_list = []
+
+        self.reward_list = []       # List of reward values over course of convergence
+        self.reward_avg_list = []   # List of reward averages ""
+        self.Kep_list_reward_avg = []
+
+        ## PARAM OPTIM DATA
+        self.k_ep = 0                   # Episode number
+        self.k_run = 0                  # Run number
+        self.error_str = ""
+        self.n_rollouts = 0
+
+        self.vel_d = [0.0,0.0,0.0]      # Desired velocity for trial
+        self.policy = [0.0,0.0,0.0]     # Policy sampled from Gaussian distribution
+
+        self.reward = 0.0               # Calculated reward from run
+        self.reward_avg = 0.0           # Averaged rewards over episode
+        self.reward_vals = np.zeros(5)
+
+        self.trialComplete_flag = False
+
 
 
     # ========================

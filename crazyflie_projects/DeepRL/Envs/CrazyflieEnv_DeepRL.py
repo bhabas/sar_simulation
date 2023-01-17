@@ -211,37 +211,39 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
     def CalcReward(self):
 
         ## TAU TRIGGER REWARD
-        R0 = np.clip(1/np.abs(self.Tau_trg-0.2),0,15)/15
-        R0 *= 0.1
+        R_tau = np.clip(1/np.abs(self.Tau_trg-0.2),0,15)/15
+        R_tau *= 0.1
 
         ## DISTANCE REWARD 
-        R1 = np.clip(1/np.abs(self.D_min+1e-3),0,15)/15
-        R1 *= 0.05
+        R_dist = np.clip(1/np.abs(self.D_min+1e-3),0,15)/15
+        R_dist *= 0.05
 
         ## IMPACT ANGLE REWARD
         # R2 = np.clip(np.abs(self.eulCF_impact[1])/120,0,1)
         # R2 *= 0.2
 
-        R2 = 0.5*np.cos(self.eulCF_impact[1]-self.Plane_Angle_rad*np.sign(np.cos(self.Plane_Angle_rad)))+0.5
-        # R2 = 0.5*np.cos(self.eulCF_impact[1]-self.Plane_Angle_rad)+0.5
-        R2 *= 0.2
+        R_angle = 0.5*np.cos(self.eulCF_impact[1]-self.Plane_Angle_rad*np.sign(np.cos(self.Plane_Angle_rad)))+0.5
+        R_angle *= 0.2
 
 
         ## PAD CONTACT REWARD
         if self.pad_connections >= 3: 
             if self.BodyContact_flag == False:
-                R3 = 0.65
+                R_legs = 0.65
             else:
-                R3 = 0.2
+                R_legs = 0.2
         elif self.pad_connections == 2: 
             if self.BodyContact_flag == False:
-                R3 = 0.4
+                R_legs = 0.4
             else:
-                R3 = 0.1
+                R_legs = 0.1
         else:
-            R3 = 0.0
+            R_legs = 0.0
 
-        return R0 + R1 + R2 + R3
+        self.reward_vals = [R_tau,R_dist,R_angle,R_legs,0]
+        self.reward = R_tau + R_dist + R_angle + R_legs
+
+        return self.reward
 
     def render(self):
         pass
@@ -259,7 +261,7 @@ if __name__ == "__main__":
         done = False
         while not done:
             action = env.action_space.sample()
-            action = np.array([0,0])
             obs,reward,done,info = env.step(action)
+        env.RL_Publish()
         print(f"Episode: {ep} \t Reward: {reward:.3f}")
 
