@@ -371,6 +371,7 @@ void CF_DataConverter::RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &
     policy = msg->policy;
 
     reward = msg->reward;
+    reward_vals = msg->reward_vals;
 
     vel_d = msg->vel_d;
 

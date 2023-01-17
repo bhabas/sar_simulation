@@ -371,6 +371,8 @@ class CF_DataConverter
         boost::array<float,3> policy{0,0,0};
 
         float reward = 0.0;
+        boost::array<float,5> reward_vals{0,0,0,0,0};
+
 
         boost::array<float,3> vel_d{0,0,0};
 
@@ -671,13 +673,7 @@ void CF_DataConverter::decompressXY(uint32_t xy, float xy_arr[])
 // =========================
 
 void CF_DataConverter::create_CSV()
-{
-    fprintf(fPtr,"## DATA_TYPE: %s, ",DATA_TYPE.c_str());
-    fprintf(fPtr,"QUAD_SETTINGS: {Policy_Type: %s, CF_Type: %s, CF_Config: %s}, ",POLICY_TYPE.c_str(),CF_Type.c_str(),CF_Config.c_str());
-    fprintf(fPtr,"PLANE_SETTINGS: {Plane_Model: %s, Plane_Config: %s}, ",Plane_Model.c_str(),Plane_Config.c_str());
-    fprintf(fPtr,"\n");
-
-
+{  
     // POLICY DATA
     fprintf(fPtr,"k_ep,k_run,");
     fprintf(fPtr,"t,");
@@ -706,8 +702,14 @@ void CF_DataConverter::create_CSV()
 
     // MISC VALUES
     fprintf(fPtr,"Error");
-
     fprintf(fPtr,"\n");
+
+
+    fprintf(fPtr,"## DATA_TYPE: %s, ",DATA_TYPE.c_str());
+    fprintf(fPtr,"QUAD_SETTINGS: {Policy_Type: %s, CF_Type: %s, CF_Config: %s}, ",POLICY_TYPE.c_str(),CF_Type.c_str(),CF_Config.c_str());
+    fprintf(fPtr,"PLANE_SETTINGS: {Plane_Model: %s, Plane_Config: %s}, ",Plane_Model.c_str(),Plane_Config.c_str());
+    fprintf(fPtr,"\n");
+
     fflush(fPtr);
 
 }
@@ -763,7 +765,7 @@ void CF_DataConverter::append_CSV_misc()
     fprintf(fPtr,"%.3f,%.3f,%.3f,",vel_d[0],vel_d[1],vel_d[2]); // vel_d.x,vel_d.y,vel_d.z
     fprintf(fPtr,"--,--,--,");                                  // D_perp, Tau, Tau_est
     fprintf(fPtr,"--,--,--,--,");                               // Theta_x,Theta_x_est,Theta_y,Theta_y_est,
-    fprintf(fPtr,"%.2f,--,",reward);                            // flip_flag,impact_flag
+    fprintf(fPtr,"%.2f,[%.3f %.3f %.3f %.3f %.3f],",reward,reward_vals[0],reward_vals[1],reward_vals[2],reward_vals[3],reward_vals[4]); // flip_flag,impact_flag
 
 
     // MISC STATE DATA
