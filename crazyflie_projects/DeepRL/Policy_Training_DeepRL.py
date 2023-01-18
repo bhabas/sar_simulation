@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import torch as th
 import yaml
+import csv
 
 ## PLOTTING IMPORTS
 import matplotlib.pyplot as plt
@@ -539,6 +540,57 @@ class Policy_Trainer_DeepRL():
         with open(config_path, 'w') as outfile:
             yaml.dump(data,outfile,default_flow_style=False,sort_keys=False)
 
+    def test_landing_performance(self,vel_range=[2.0,3.0],phi_range=[45,50],vel_inc=0.25,phi_inc=5,n_episodes=3):
+
+        # self.log_dir
+        # self.log_name
+        fileName = "example.csv"
+        filePath = os.path.join(self.TB_log_path,fileName)
+
+        ## WRITE FILE HEADER
+        with open(filePath,'w') as file:
+            writer = csv.writer(file,delimiter=',')
+            writer.writerow([
+                "Vel_d", "Phi_d", "Trial_num",
+                "Pad_Connections","Body_Contact",
+
+                # "Vel_flip","Phi_flip", ADD FLIP INFORMATION
+
+                "Tau_tr_mean",
+                "Theta_x_tr_mean",
+                "D_perp_tr_mean",
+                "My_mean",
+
+                "Vz_tr_mean",
+                "Vx_tr_mean",
+                "reward","reward_vals",
+
+            ])
+
+        vel_arr = np.arange(vel_range[0], vel_range[1] + vel_inc, vel_inc)
+        phi_arr = np.arange(phi_range[0], phi_range[1] + phi_inc, phi_inc)
+
+        for vel in vel_arr:
+            for phi in phi_arr:
+                for K_ep in range(n_episodes):
+                    obs = self.env.reset(vel=vel,phi=phi)
+                    done = False
+                    while not done:
+                        self.env.render()
+                        # action = custom_predict(obs)[0]
+                        action,_ = self.model.predict(obs)
+                        obs,reward,done,info = self.env.step(action)
+                            
+                    ## WRITE FILE HEADER
+                    with open(filePath,'a') as file:
+                        writer = csv.writer(file,delimiter=',')
+                        writer.writerow([
+                            np.round(vel,2),np.round(vel,2),K_ep,
+                            self.env.pad_connections,self.env.BodyContact_flag,
+                            self.env.Tau_trg,self.env.D_perp
+
+
+                        ])
 
 
 if __name__ == '__main__':
@@ -551,7 +603,7 @@ if __name__ == '__main__':
     from Envs.CF_Env_2D import CF_Env_2D
 
     ## INITIATE ENVIRONMENT
-    env = CrazyflieEnv_DeepRL_Tau(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[30,90])
+    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[30,90])
     log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
 
 
@@ -566,10 +618,11 @@ if __name__ == '__main__':
 
     
     # LOAD DEEP RL MODEL
-    log_name = "SAC--01_10-07:31--NL_0"
-    t_step_load = 11000
+    log_name = "SAC--01_08-16:22--NL_0"
+    t_step_load = 62000
 
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.load_model(t_step_load)
-    PolicyTrainer.train_model(reset_timesteps=False)
+    # PolicyTrainer.train_model(reset_timesteps=False)
+    PolicyTrainer.test_landing_performance()
 

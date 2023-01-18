@@ -237,13 +237,13 @@ class CrazyflieEnv_Base():
 
         ## INITIALIZE STATE VALUES
         self.t = 0.0
-        self.posCF = [0,0,0]
-        self.velCF = [0,0,0]
+        self.pos = [0,0,0]
+        self.vel = [0,0,0]
 
-        self.quatCF = [0,0,0,1]
-        self.eulCF = [0,0,0]
-        self.omegaCF = [0,0,0]
-        self.eulCF = [0,0,0]
+        self.quat = [0,0,0,1]
+        self.eul = [0,0,0]
+        self.omega = [0,0,0]
+        self.eul = [0,0,0]
 
         self.Tau = 0.0
         self.Theta_x = 0.0
@@ -265,11 +265,11 @@ class CrazyflieEnv_Base():
         self.flip_flag = False      # Flag if model has started flip maneuver
 
         self.t_tr = 0.0             # [s]
-        self.posCF_tr = [0,0,0]     # [m]
-        self.velCF_tr = [0,0,0]     # [m/s]
-        self.quatCF_tr = [0,0,0,1]  # [quat]
-        self.omegaCF_tr = [0,0,0]   # [rad/s]
-        self.eulCF_tr = [0,0,0]
+        self.pos_tr = [0,0,0]     # [m]
+        self.vel_tr = [0,0,0]     # [m/s]
+        self.quat_tr = [0,0,0,1]  # [quat]
+        self.omega_tr = [0,0,0]   # [rad/s]
+        self.eul_tr = [0,0,0]
 
         self.Tau_tr = 0.0
         self.Theta_x_tr = 0.0           # [rad/s]
@@ -286,11 +286,11 @@ class CrazyflieEnv_Base():
         self.BodyContact_flag = False   # Flag if model body impacts ceiling plane
 
         self.t_impact = 0.0
-        self.posCF_impact = [0,0,0]
-        self.velCF_impact = [0,0,0]
-        self.quatCF_impact = [0,0,0,1]
-        self.omegaCF_impact = [0,0,0]
-        self.eulCF_impact = [0,0,0]
+        self.pos_impact = [0,0,0]
+        self.vel_impact = [0,0,0]
+        self.quat_impact = [0,0,0,1]
+        self.omega_impact = [0,0,0]
+        self.eul_impact = [0,0,0]
 
         self.impact_force_x = 0.0     # Ceiling impact force, X-dir [N]
         self.impact_force_y = 0.0     # Ceiling impact force, Y-dir [N]
@@ -393,16 +393,16 @@ class CrazyflieEnv_Base():
         if rospy.get_param('/DATA_TYPE') == "EXP":
             self.t = StateData_msg.header.stamp.to_sec()
 
-        self.posCF = np.round([ StateData_msg.Pose.position.x,
+        self.pos = np.round([ StateData_msg.Pose.position.x,
                                 StateData_msg.Pose.position.y,
                                 StateData_msg.Pose.position.z],3)
 
-        self.eulCF = np.round([ StateData_msg.Eul.x,
+        self.eul = np.round([ StateData_msg.Eul.x,
                                 StateData_msg.Eul.y,
                                 StateData_msg.Eul.z],3)
 
         ## CF_TWIST
-        self.velCF = np.round([ StateData_msg.Twist.linear.x,
+        self.vel = np.round([ StateData_msg.Twist.linear.x,
                                 StateData_msg.Twist.linear.y,
                                 StateData_msg.Twist.linear.z],3)
 
@@ -419,8 +419,21 @@ class CrazyflieEnv_Base():
         ## FLIP FLAGS
         self.flip_flag = FlipData_msg.flip_flag
 
-        self.Vx_flip = FlipData_msg.Twist_tr.linear.x
-        self.Vz_flip = FlipData_msg.Twist_tr.linear.z
+        self.pos_tr = FlipData_msg.Pose_tr.position
+        self.vel_tr = FlipData_msg.Twist_tr.linear
+        self.eul_tr = FlipData_msg.Eul_tr
+        self.omega_tr = FlipData_msg.Twist_tr.angular
+
+        self.Tau_tr = FlipData_msg.Tau_tr
+        self.Theta_x_tr = FlipData_msg.Theta_x_tr
+        self.Theta_y_tr = FlipData_msg.Theta_y_tr
+        self.D_perp_tr = FlipData_msg.D_perp_tr
+
+        self.Policy_Flip_tr = FlipData_msg.Policy_Flip_tr
+        self.Policy_Action_tr = FlipData_msg.Policy_Action_tr
+
+        self.vel_tr_mag = np.sqrt(self.vel_tr.x**2 + self.vel_tr.z**2)
+        self.phi_tr = np.arctan2(self.vel_tr.z,self.vel_tr.x)
 
     def CF_ImpactDataCallback(self,ImpactData_msg):
 
@@ -429,18 +442,16 @@ class CrazyflieEnv_Base():
             ## IMPACT FLAGS
             self.impact_flag = ImpactData_msg.impact_flag
             self.BodyContact_flag = ImpactData_msg.BodyContact_flag
+            self.pad_connections = ImpactData_msg.Pad_Connections
 
-            self.eulCF_impact = np.round([ImpactData_msg.Eul_impact.x,
-                                        ImpactData_msg.Eul_impact.y,
-                                        ImpactData_msg.Eul_impact.z],3)
 
             ## CF_TWIST (IMPACT)
-            self.velCF_impact = np.round([ImpactData_msg.Twist_impact.linear.x,
-                                        ImpactData_msg.Twist_impact.linear.y,
-                                        ImpactData_msg.Twist_impact.linear.z],3)
+            self.pos_impact = ImpactData_msg.Pose_impact.position
+            self.vel_impact = ImpactData_msg.Twist_impact.linear
 
-            
-            self.pad_connections = ImpactData_msg.Pad_Connections
+            self.eul_impact = ImpactData_msg.Eul_impact
+            self.omega_impact = ImpactData_msg.Twist_impact.angular
+
 
 
     def CF_MiscDataCallback(self,MiscData_msg):        

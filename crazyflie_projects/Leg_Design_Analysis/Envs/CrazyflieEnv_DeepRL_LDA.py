@@ -72,7 +72,7 @@ class CrazyflieEnv_DeepRL_LDA(CrazyflieEnv_Sim):
             self.done = bool(
                 self.t - self.start_time_rollout > 0.7              # EPISODE TIMEOUT
                 or (self.impact_flag or self.BodyContact_flag)
-                or (self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5) # FREE-FALL TERMINATION
+                or (self.vel[2] <= -0.5 and self.pos[2] <= 1.5) # FREE-FALL TERMINATION
             )         
 
             if not self.done:
@@ -85,7 +85,7 @@ class CrazyflieEnv_DeepRL_LDA(CrazyflieEnv_Sim):
                 self.Restart()
                 self.done = True
 
-            if any(np.isnan(self.velCF)): 
+            if any(np.isnan(self.vel)): 
                 print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
                 self.Restart([True,True,True])
                 print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
@@ -117,7 +117,7 @@ class CrazyflieEnv_DeepRL_LDA(CrazyflieEnv_Sim):
             self.done = bool(
                 self.t - self.start_time_rollout > 1.0              # EPISODE TIMEOUT
                 or self.t - self.start_time_impact > 0.5            # IMPACT TIMEOUT
-                or (self.velCF[2] <= -0.5 and self.posCF[2] <= 1.5) # FREE-FALL TERMINATION
+                or (self.vel[2] <= -0.5 and self.pos[2] <= 1.5) # FREE-FALL TERMINATION
             )
 
             if not self.done:
@@ -130,7 +130,7 @@ class CrazyflieEnv_DeepRL_LDA(CrazyflieEnv_Sim):
                 self.Restart()
                 self.done = True
 
-            if any(np.isnan(self.velCF)): 
+            if any(np.isnan(self.vel)): 
                 print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
                 self.Restart([True,False,False])
                 print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
@@ -223,7 +223,7 @@ class CrazyflieEnv_DeepRL_LDA(CrazyflieEnv_Sim):
         # R2 = np.clip(np.abs(self.eulCF_impact[1])/120,0,1)
         # R2 *= 0.2
 
-        R2 = 0.5*np.cos(self.eulCF_impact[1]-self.Plane_Angle_rad*np.sign(np.cos(self.Plane_Angle_rad)))+0.5
+        R2 = 0.5*np.cos(self.eul_impact[1]-self.Plane_Angle_rad*np.sign(np.cos(self.Plane_Angle_rad)))+0.5
         # R2 = 0.5*np.cos(self.eulCF_impact[1]-self.Plane_Angle_rad)+0.5
         R2 *= 0.2
 

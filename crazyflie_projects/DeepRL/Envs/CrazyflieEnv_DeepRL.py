@@ -70,7 +70,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
             ## CHECK FOR DONE
             self.done = bool(
-                self.t - self.start_time_rollout > 0.7              # EPISODE TIMEOUT
+                self.t - self.start_time_rollout > 1.0              # EPISODE TIMEOUT
                 or (self.impact_flag or self.BodyContact_flag)
             )         
 
@@ -84,7 +84,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
                 self.Restart()
                 self.done = True
 
-            if any(np.isnan(self.velCF)): 
+            if any(np.isnan(self.vel)): 
                 print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
                 self.Restart([True,True,True])
                 print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
@@ -128,7 +128,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
                 self.Restart()
                 self.done = True
 
-            if any(np.isnan(self.velCF)): 
+            if any(np.isnan(self.vel)): 
                 print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
                 self.Restart([True,False,False])
                 print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
@@ -137,7 +137,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         return self.CalcReward()
 
 
-    def reset(self):
+    def reset(self,vel=None,phi=None):
 
         self.gazebo_unpause_physics()
         self.SendCmd('Tumble',cmd_flag=0)
@@ -179,8 +179,13 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         self.onceFlag_impact = False    # Ensures impact data recorded only once 
 
         ## SAMPLE VELOCITY VECTOR
-        vel = np.random.uniform(low=self.Vel_range[0],high=self.Vel_range[1])
-        phi = np.random.uniform(low=self.Phi_range[0],high=self.Phi_range[1])
+        if vel == None or phi == None:
+            vel = np.random.uniform(low=self.Vel_range[0],high=self.Vel_range[1])
+            phi = np.random.uniform(low=self.Phi_range[0],high=self.Phi_range[1])
+
+        else:
+            vel = vel
+            phi = phi
 
         vx_0 = vel*np.cos(np.deg2rad(phi))
         vz_0 = vel*np.sin(np.deg2rad(phi))
@@ -193,7 +198,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         n_hat = np.array([np.sin(theta_rad),0,-np.cos(theta_rad)])  # Plane normal vector
 
         D_perp_0 = self.Tau_0*(Vel_0.dot(n_hat))    # Initial distance
-        D_perp_0 = max(D_perp_0,0.2)             # Ensure a minimum distance of at least 0.3 [m]
+        D_perp_0 = max(D_perp_0,0.1)             # Ensure a minimum distance of at least 0.3 [m]
         r_0 = r_p - D_perp_0*n_hat                  # Initial quad position (World coords)
 
         self.Vel_Launch(r_0,Vel_0)
@@ -222,7 +227,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         # R2 = np.clip(np.abs(self.eulCF_impact[1])/120,0,1)
         # R2 *= 0.2
 
-        R_angle = 0.5*np.cos(self.eulCF_impact[1]-self.Plane_Angle_rad*np.sign(np.cos(self.Plane_Angle_rad)))+0.5
+        R_angle = 0.5*np.cos(self.eul_impact.y-self.Plane_Angle_rad*np.sign(np.cos(self.Plane_Angle_rad)))+0.5
         R_angle *= 0.2
 
 

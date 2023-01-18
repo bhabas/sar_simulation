@@ -82,7 +82,7 @@ class CrazyflieEnv_DeepRL_Tau(CrazyflieEnv_Sim):
                 self.Restart()
                 self.done = True
 
-            if any(np.isnan(self.velCF)): 
+            if any(np.isnan(self.vel)): 
                 print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
                 self.Restart([True,True,True])
                 print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
@@ -126,7 +126,7 @@ class CrazyflieEnv_DeepRL_Tau(CrazyflieEnv_Sim):
                 self.Restart()
                 self.done = True
 
-            if any(np.isnan(self.velCF)): 
+            if any(np.isnan(self.vel)): 
                 print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
                 self.Restart([True,False,False])
                 print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
@@ -217,7 +217,7 @@ class CrazyflieEnv_DeepRL_Tau(CrazyflieEnv_Sim):
         R1 *= 0.05
 
         ## IMPACT ANGLE REWARD
-        R2 = 0.5*np.cos(self.eulCF_impact[1]-self.Plane_Angle_rad*np.sign(np.cos(self.Plane_Angle_rad)))+0.5
+        R2 = 0.5*np.cos(self.eul_impact[1]-self.Plane_Angle_rad*np.sign(np.cos(self.Plane_Angle_rad)))+0.5
         # R2 = 0.5*np.cos(self.eulCF_impact[1]-self.Plane_Angle_rad)+0.5
         R2 *= 0.2
 
