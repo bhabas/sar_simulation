@@ -383,7 +383,11 @@ void GTC_Command(setpoint_t *setpoint)
             
             break;
 
-        
+        case 4: // Euler Angle
+
+            // TODO: ADD ANGLE SETPOINT OPTION INTO CONTROLLER FOR ANGLE BASED POLICY
+
+            break;        
 
         case 5: // Hard Set All Motorspeeds to Zero
             motorstop_flag = true;
@@ -644,29 +648,29 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
                 case PARAM_OPTIM:
                     if(Tau <= Tau_thr && onceFlag == false && V_mag > 0.2){
-                    onceFlag = true;
-                    flip_flag = true;  
+                        onceFlag = true;
+                        flip_flag = true;  
 
-                    // UPDATE AND RECORD FLIP VALUES
-                    statePos_tr = statePos;
-                    stateVel_tr = stateVel;
-                    stateQuat_tr = stateQuat;
-                    stateOmega_tr = stateOmega;
+                        // UPDATE AND RECORD FLIP VALUES
+                        statePos_tr = statePos;
+                        stateVel_tr = stateVel;
+                        stateQuat_tr = stateQuat;
+                        stateOmega_tr = stateOmega;
 
-                    Tau_tr = Tau;
-                    Theta_x_tr = Theta_x;
-                    Theta_y_tr = Theta_y;
-                    D_perp_tr = D_perp;
+                        Tau_tr = Tau;
+                        Theta_x_tr = Theta_x;
+                        Theta_y_tr = Theta_y;
+                        D_perp_tr = D_perp;
 
-                
-                    M_d.x = 0.0f;
-                    M_d.y = -G1*1e-3f;
-                    M_d.z = 0.0f;
+                    
+                        M_d.x = 0.0f;
+                        M_d.y = -G1*1e-3f;
+                        M_d.z = 0.0f;
 
-                    F_thrust_flip = 0.0;
-                    M_x_flip = M_d.x*1e3f;
-                    M_y_flip = M_d.y*1e3f;
-                    M_z_flip = M_d.z*1e3f;
+                        F_thrust_flip = 0.0;
+                        M_x_flip = M_d.x*1e3f;
+                        M_y_flip = M_d.y*1e3f;
+                        M_z_flip = M_d.z*1e3f;
                     }
                     
                     break;
@@ -747,6 +751,36 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
                 case DEEP_RL_SB3:
 
+                    if(onceFlag == false){
+
+                        onceFlag = true;
+                        flip_flag = true;
+
+                        // UPDATE AND RECORD FLIP VALUES
+                        statePos_tr = statePos;
+                        stateVel_tr = stateVel;
+                        stateQuat_tr = stateQuat;
+                        stateOmega_tr = stateOmega;
+
+                        Tau_tr = Tau;
+                        Theta_x_tr = Theta_x;
+                        Theta_y_tr = Theta_y;
+                        D_perp_tr = D_perp;
+
+                        Policy_Flip_tr = 0.0f;
+                        Policy_Action_tr = 0.0f;
+
+
+                        M_d.x = 0.0f;
+                        M_d.y = G1*1e-3f;
+                        M_d.z = 0.0f;
+
+                        F_thrust_flip = 0.0;
+                        M_x_flip = M_d.x*1e3f;
+                        M_y_flip = M_d.y*1e3f;
+                        M_z_flip = M_d.z*1e3f;
+
+                    }
 
                     break;
 

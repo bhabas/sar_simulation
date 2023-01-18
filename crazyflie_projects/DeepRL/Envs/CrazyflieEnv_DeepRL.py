@@ -104,7 +104,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
         My = -action[1]
 
-        self.SendCmd("Moment",[0,My,0],cmd_flag=1)
+        self.SendCmd("Policy",[0,My,0],cmd_flag=1)
         self.gazebo_unpause_physics()
 
         while not self.done:
