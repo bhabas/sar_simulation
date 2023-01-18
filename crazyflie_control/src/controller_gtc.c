@@ -767,8 +767,8 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                         Theta_y_tr = Theta_y;
                         D_perp_tr = D_perp;
 
-                        Policy_Flip_tr = 0.0f;
-                        Policy_Action_tr = 0.0f;
+                        Policy_Flip_tr = NAN;
+                        Policy_Action_tr = G1;
 
 
                         M_d.x = 0.0f;

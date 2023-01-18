@@ -39,7 +39,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         self.k_ep = 0
         self.Flip_thr = 1.5
         self.D_min = 50.0
-        self.Tau_trg = 50.0
+        self.Tau_tr = 50.0
 
         self.done = False
 
@@ -94,7 +94,8 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
         elif action[0] >= self.Flip_thr:
 
-            self.Tau_trg = Tau
+            self.obs_tr = self.obs
+            self.action_tr = action
             reward = self.finish_sim(action)
             self.done = True
         
@@ -165,7 +166,10 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         ## RESET REWARD CALC VALUES
         self.done = False
         self.D_min = 50.0  # Reset max from ceiling [m]
-        self.Tau_trg = 50.0
+        self.Tau_tr = 50.0
+
+        self.obs_tr = np.zeros_like(self.observation_space)
+        self.action_tr = np.zeros_like(self.action_space)
 
         ## RESET/UPDATE RUN CONDITIONS
         self.start_time_rollout = self.getTime()
@@ -216,7 +220,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
     def CalcReward(self):
 
         ## TAU TRIGGER REWARD
-        R_tau = np.clip(1/np.abs(self.Tau_trg-0.2),0,15)/15
+        R_tau = np.clip(1/np.abs(self.Tau_tr-0.2),0,15)/15
         R_tau *= 0.1
 
         ## DISTANCE REWARD 

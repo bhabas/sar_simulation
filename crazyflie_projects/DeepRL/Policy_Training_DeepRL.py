@@ -540,11 +540,10 @@ class Policy_Trainer_DeepRL():
         with open(config_path, 'w') as outfile:
             yaml.dump(data,outfile,default_flow_style=False,sort_keys=False)
 
-    def test_landing_performance(self,vel_range=[2.0,3.0],phi_range=[45,50],vel_inc=0.25,phi_inc=5,n_episodes=3):
+    def test_landing_performance(self,fileName=None,vel_range=[0.5,3.0],phi_range=[10,90],vel_inc=0.25,phi_inc=5,n_episodes=5):
 
-        # self.log_dir
-        # self.log_name
-        fileName = "example.csv"
+        if fileName == None:
+            fileName = "PolicyPerformance_Data.csv"
         filePath = os.path.join(self.TB_log_path,fileName)
 
         ## WRITE FILE HEADER
@@ -554,15 +553,17 @@ class Policy_Trainer_DeepRL():
                 "Vel_d", "Phi_d", "Trial_num",
                 "Pad_Connections","Body_Contact",
 
-                # "Vel_flip","Phi_flip", ADD FLIP INFORMATION
+                "Vel_flip","Phi_flip",
 
-                "Tau_tr_mean",
-                "Theta_x_tr_mean",
-                "D_perp_tr_mean",
-                "My_mean",
+                "Tau_tr",
+                "Theta_x_tr",
+                "D_perp_tr",
+                
+                "Policy_tr",
+                "Policy_action",
 
-                "Vz_tr_mean",
-                "Vx_tr_mean",
+                "Vx_tr",
+                "Vz_tr",
                 "reward","reward_vals",
 
             ])
@@ -577,7 +578,6 @@ class Policy_Trainer_DeepRL():
                     done = False
                     while not done:
                         self.env.render()
-                        # action = custom_predict(obs)[0]
                         action,_ = self.model.predict(obs)
                         obs,reward,done,info = self.env.step(action)
                             
@@ -585,10 +585,24 @@ class Policy_Trainer_DeepRL():
                     with open(filePath,'a') as file:
                         writer = csv.writer(file,delimiter=',')
                         writer.writerow([
-                            np.round(vel,2),np.round(vel,2),K_ep,
+                            np.round(vel,2),np.round(phi,2),K_ep,
                             self.env.pad_connections,self.env.BodyContact_flag,
-                            self.env.Tau_trg,self.env.D_perp
 
+                            np.round(self.env.vel_tr_mag,2),np.round(self.env.phi_tr,2),
+
+                            np.round(self.env.obs_tr[0],3),
+                            np.round(self.env.obs_tr[1],3),
+                            np.round(self.env.obs_tr[2],3),
+
+                            np.round(self.env.action_tr[0],3),
+                            np.round(self.env.action_tr[1],3),
+
+                            np.round(self.env.vel_tr.x,3),
+                            np.round(self.env.vel_tr.z,3),
+
+                            np.round(reward,3),
+                            np.round(self.env.reward_vals,3),
+                            
 
                         ])
 

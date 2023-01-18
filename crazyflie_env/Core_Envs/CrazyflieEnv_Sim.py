@@ -180,7 +180,7 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base,gym.Env):
         time.sleep(1.0)
         
         subprocess.Popen( # Gazebo Process
-            "gnome-terminal --disable-factory  --geometry 70x50+1870+0 -- rosrun crazyflie_launch launch_gazebo.bash", 
+            "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_launch launch_gazebo.bash", 
             start_new_session=True, shell=True)
 
     def launch_Node_Controller(self):
@@ -192,7 +192,7 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base,gym.Env):
         os.system("rosnode kill /Controller_Node")
         time.sleep(0.5)
         subprocess.Popen( # Controller Process
-            "gnome-terminal --disable-factory  --geometry 70x50+1870+0 -- rosrun crazyflie_control controller",
+            "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_control controller",
             close_fds=True, preexec_fn=os.setsid, shell=True)
 
     def launch_Node_CF_DC(self):
@@ -204,7 +204,7 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base,gym.Env):
         os.system("rosnode kill /CF_DataConverter_Node")
         time.sleep(0.5)
         subprocess.Popen( # CF_DC Process
-            "gnome-terminal --disable-factory  --geometry 70x50+1870+0 -- rosrun crazyflie_data_converter CF_DataConverter",
+            "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_data_converter CF_DataConverter",
             close_fds=True, preexec_fn=os.setsid, shell=True)
 
     def gazebo_pause_physics(self):
