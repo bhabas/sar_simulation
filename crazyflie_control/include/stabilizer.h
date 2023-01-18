@@ -453,6 +453,10 @@ void Controller::loadParams()
     {
         Policy = DEEP_RL;
     }    
+    else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL_SB3")==0)
+    {
+        Policy = DEEP_RL_SB3;
+    }    
 
 }
 

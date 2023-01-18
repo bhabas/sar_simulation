@@ -599,6 +599,11 @@ void CF_DataConverter::consoleOuput()
         printf("Stuff: %.3f \tStuff: %.3f \n",Policy_Flip,Policy_Action);
         printf("\n");
     }
+    else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL_SB3") == 0)
+    {
+        printf("SB3");
+        printf("\n");
+    }
 
 
     printf("==== Flip Trigger Values ====\n");

@@ -745,6 +745,11 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
                     break;
 
+                case DEEP_RL_SB3:
+
+
+                    break;
+
             }
             
             

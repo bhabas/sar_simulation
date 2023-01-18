@@ -230,7 +230,8 @@ extern float Policy_Action_tr;
 typedef enum {
     PARAM_OPTIM = 0,
     SVL_POLICY = 1,
-    DEEP_RL = 2
+    DEEP_RL = 2,
+    DEEP_RL_SB3 = 3
 }PolicyType;
 extern PolicyType Policy;
 
