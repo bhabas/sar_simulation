@@ -144,6 +144,20 @@ CF_Type:
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
+      A05_L50_K16: 
+        Initials: LDA_A05_L50_K16
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
+      A05_L50_K32: 
+        Initials: LDA_A05_L50_K32
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
       A05_L75_K08: 
         Initials: LDA_A05_L75_K08
         Mass: 38.1e-3   # [kg]
