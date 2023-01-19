@@ -32,7 +32,7 @@ class CrazyflieEnv_Base():
         self.modelName = f"crazyflie_{self.CF_Config}"
         self.preInit_Values()
 
-        self.posCF_0 = [0.0, 0.0, 0.4]      # Default hover position [m]
+        self.pos_0 = [0.0, 0.0, 0.4]      # Default hover position [m]
         self.accCF_max = [1.0, 1.0, 3.1]    # Max acceleration values for trajectory generation [m/s^2]
 
 

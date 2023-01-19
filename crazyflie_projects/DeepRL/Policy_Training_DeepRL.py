@@ -541,14 +541,14 @@ class Policy_Trainer_DeepRL():
         with open(config_path, 'w') as outfile:
             yaml.dump(data,outfile,default_flow_style=False,sort_keys=False)
 
-    def test_landing_performance(self,fileName=None,vel_range=[1.75,3.0],phi_range=[10,90],vel_inc=0.25,phi_inc=5,n_episodes=5):
+    def test_landing_performance(self,fileName=None,Vel_range=[1.75,3.0],Phi_range=[10,90],Vel_inc=0.25,Phi_inc=5,n_episodes=5):
 
         if fileName == None:
             fileName = "PolicyPerformance_Data.csv"
         filePath = os.path.join(self.TB_log_path,fileName)
 
-        vel_arr = np.arange(vel_range[0], vel_range[1] + vel_inc, vel_inc)
-        phi_arr = np.arange(phi_range[0], phi_range[1] + phi_inc, phi_inc)
+        Vel_arr = np.arange(Vel_range[0], Vel_range[1] + Vel_inc, Vel_inc)
+        Phi_arr = np.arange(Phi_range[0], Phi_range[1] + Phi_inc, Phi_inc)
 
         
 
@@ -569,7 +569,7 @@ class Policy_Trainer_DeepRL():
 
 
         ## TIME ESTIMATION FILTER INITIALIZATION
-        num_trials = len(vel_arr)*len(phi_arr)*n_episodes
+        num_trials = len(Vel_arr)*len(Phi_arr)*n_episodes
         idx = 0
         t_delta = 0
         t_delta_prev = 0
@@ -600,25 +600,26 @@ class Policy_Trainer_DeepRL():
         else:
             pass
 
-        for vel in vel_arr:
-            for phi in phi_arr:
+        for Vel in Vel_arr:
+            for Phi in Phi_arr:
                 for K_ep in range(n_episodes):
 
                     start_time = time.time()
 
                     ## TEST POLICY FOR GIVEN FLIGHT CONDITIONS
-                    obs = self.env.reset(vel=vel,phi=phi)
+                    obs = self.env.reset(vel=Vel,phi=Phi)
                     done = False
                     while not done:
                         self.env.render()
                         action,_ = self.model.predict(obs)
+                        action = np.zeros_like(action)
                         obs,reward,done,info = self.env.step(action)
                             
                     ## APPEND RECORDED VALUES TO FILE
                     with open(filePath,'a') as file:
                         writer = csv.writer(file,delimiter=',')
                         writer.writerow([
-                            np.round(vel,2),np.round(phi,2),K_ep,
+                            np.round(Vel,2),np.round(Phi,2),K_ep,
                             "--",
                             self.env.pad_connections,self.env.BodyContact_flag,
 
@@ -645,7 +646,7 @@ class Policy_Trainer_DeepRL():
                         idx += 1
 
                         TTC = round(t_delta_avg*(num_trials-idx)) # Time to completion
-                        print(f"Flight Conditions: ({vel} m/s,{phi} deg) \t Index: {idx}/{num_trials} \t Percentage: {100*idx/num_trials:.2f}% \t Time to Completion: {str(timedelta(seconds=TTC))}")
+                        print(f"Flight Conditions: ({Vel} m/s,{Phi} deg) \t Index: {idx}/{num_trials} \t Percentage: {100*idx/num_trials:.2f}% \t Time to Completion: {str(timedelta(seconds=TTC))}")
 
 
 if __name__ == '__main__':
@@ -658,7 +659,7 @@ if __name__ == '__main__':
     from Envs.CF_Env_2D import CF_Env_2D
 
     ## INITIATE ENVIRONMENT
-    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[30,90])
+    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[10,20])
     log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
 
 
@@ -679,5 +680,5 @@ if __name__ == '__main__':
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.load_model(t_step_load)
     # PolicyTrainer.train_model(reset_timesteps=False)
-    PolicyTrainer.test_landing_performance()
+    PolicyTrainer.test_landing_performance(Vel_range=[0.5,1.0],Phi_range=[10,20])
 
