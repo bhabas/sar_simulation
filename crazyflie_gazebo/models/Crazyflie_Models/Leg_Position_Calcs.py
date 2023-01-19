@@ -3,7 +3,7 @@ import numpy as np
 """This script calculates the pose values for the leg design and pad to be placed in the model.sdf file for the leg design.
 """
 
-L = 50      # Leg length [mm]
+L = 100      # Leg length [mm]
 Psi = 5     # Leg angle [deg]
 
 
