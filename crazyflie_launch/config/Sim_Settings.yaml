@@ -1,15 +1,15 @@
 DATA_TYPE: "SIM"
 
 ENV_SETTINGS:
-  Ground_Name: "GroundPlane_Desert_Physical"
+  Ground_Name: "GroundPlane_Desert_Visual"
 
 PLANE_SETTINGS:
   Plane_Model: "Standard_Plane"
-  Plane_Config: "180_deg"
+  Plane_Config: "135_deg"
 
 QUAD_SETTINGS:
   CF_Type: "Standard"
-  CF_Config: "Narrow_Long"
+  CF_Config: "A30_L75_K08"
   Cam_Sensor: False
 
   # Policy_Type: "PARAM_OPTIM"

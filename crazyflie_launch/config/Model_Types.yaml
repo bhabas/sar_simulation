@@ -81,6 +81,19 @@ CF_Type:
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
+
+      ####################################
+      #    Leg Design Analysis Models
+      ####################################
+
+      A30_L75_K08: 
+        Initials: LDA_A30_L75_K08
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+      
+
     
 
   Big_Quad:
@@ -121,6 +134,9 @@ CF_Type:
         Ixx: 15.83e-6   # [kg*m^2]
         Iyy: 17.00e-6   # [kg*m^2]
         Izz: 31.19e-6   # [kg*m^2] 
+
+
+      
 
     
 
