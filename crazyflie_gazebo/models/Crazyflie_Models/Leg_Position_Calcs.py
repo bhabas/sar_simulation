@@ -3,9 +3,11 @@ import numpy as np
 """This script calculates the pose values for the leg design and pad to be placed in the model.sdf file for the leg design.
 """
 
-L = 50e-3           # Leg length [m]
-Psi = 5            # Leg angle [deg]
+L = 50      # Leg length [mm]
+Psi = 5     # Leg angle [deg]
 
+
+L=L*1e-3            # Convert to meters
 X_offset = 29.29e-3 # Attachment x_offset [m]
 Z_offset = -3.25e-3 # Attachment z_offset [m]
 
