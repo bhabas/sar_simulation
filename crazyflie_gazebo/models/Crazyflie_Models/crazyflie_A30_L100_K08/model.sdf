@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='crazyflie_A30_L75_K08'>
+  <model name='crazyflie_A30_L100_K08'>
     <include>
       <uri>model://crazyflie_Base_Model</uri>
       <pose>0 0 0 0 0 0</pose>
@@ -17,7 +17,7 @@
           <iyz>0</iyz>
           <izz>2.313e-9</izz>
         </inertia>
-        <pose>0 0 -0.0375 0 0 0 </pose>
+        <pose>0 0 -0.05 0 0 0 </pose>
       </inertial>
       <pose>2.07E-02 2.07E-02 -3.25E-03 0 -0.524 0.785</pose>
       <gravity>1</gravity>
@@ -28,7 +28,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_A30_L75_K08/meshes/LegConfig_A30_L75.STL</uri>
+            <uri>model://crazyflie_A30_L100_K08/meshes/LegConfig_A30_L100.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -52,7 +52,7 @@
           <iyz>0</iyz>
           <izz>2.313e-9</izz>
         </inertia>
-        <pose>0 0 -0.0375 0 0 0 </pose>
+        <pose>0 0 -0.05 0 0 0 </pose>
       </inertial>
       <pose>-2.07E-02 2.07E-02 -3.25E-03 0 -0.524 2.356</pose>
       <gravity>1</gravity>
@@ -63,7 +63,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_A30_L75_K08/meshes/LegConfig_A30_L75.STL</uri>
+            <uri>model://crazyflie_A30_L100_K08/meshes/LegConfig_A30_L100.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -87,7 +87,7 @@
           <iyz>0</iyz>
           <izz>2.313e-9</izz>
         </inertia>
-        <pose>0 0 -0.0375 0 0 0 </pose>
+        <pose>0 0 -0.05 0 0 0 </pose>
       </inertial>
       <pose>-2.07E-02 -2.07E-02 -3.25E-03 0 -0.524 -2.356</pose>
       <gravity>1</gravity>
@@ -98,7 +98,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_A30_L75_K08/meshes/LegConfig_A30_L75.STL</uri>
+            <uri>model://crazyflie_A30_L100_K08/meshes/LegConfig_A30_L100.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -122,7 +122,7 @@
           <iyz>0</iyz>
           <izz>2.313e-9</izz>
         </inertia>
-        <pose>0 0 -0.0375 0 0 0 </pose>
+        <pose>0 0 -0.05 0 0 0 </pose>
       </inertial>
       <pose>2.07E-02 -2.07E-02 -3.25E-03 0 -0.524 -0.785</pose>
       <gravity>1</gravity>
@@ -133,7 +133,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_A30_L75_K08/meshes/LegConfig_A30_L75.STL</uri>
+            <uri>model://crazyflie_A30_L100_K08/meshes/LegConfig_A30_L100.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -162,7 +162,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>5.04E-02 5.04E-02 -6.82E-02 0 0 0.785</pose>
+      <pose>5.92E-02 5.92E-02 -8.99E-02 0 0 0.785</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -255,7 +255,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>-5.04E-02 5.04E-02 -6.82E-02 0 0 2.356</pose>
+      <pose>-5.92E-02 5.92E-02 -8.99E-02 0 0 2.356</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -348,7 +348,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>-5.04E-02 -5.04E-02 -6.82E-02 0 0 -2.356</pose>
+      <pose>-5.92E-02 -5.92E-02 -8.99E-02 0 0 -2.356</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -441,7 +441,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>5.04E-02 -5.04E-02 -6.82E-02 0 0 -0.785</pose>
+      <pose>5.92E-02 -5.92E-02 -8.99E-02 0 0 -0.785</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
