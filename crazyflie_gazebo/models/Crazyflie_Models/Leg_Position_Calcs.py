@@ -4,7 +4,7 @@ import numpy as np
 """
 
 L = 100      # Leg length [mm]
-Psi = 30     # Leg angle [deg]
+Psi = 60     # Leg angle [deg]
 
 
 L=L*1e-3            # Convert to meters

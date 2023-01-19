@@ -133,8 +133,8 @@ def cmd_send(env,logName):
                 Vx_d = V_d*np.cos(phi_rad)
                 Vz_d = V_d*np.sin(phi_rad)
 
-                env.SendCmd('Vel_traj',cmd_vals=[env.posCF[0],Vx_d,env.accCF_max[0]],cmd_flag=0)
-                env.SendCmd('Vel_traj',cmd_vals=[env.posCF[2],Vz_d,env.accCF_max[2]],cmd_flag=2)
+                env.SendCmd('Vel_traj',cmd_vals=[env.pos[0],Vx_d,env.accCF_max[0]],cmd_flag=0)
+                env.SendCmd('Vel_traj',cmd_vals=[env.pos[2],Vz_d,env.accCF_max[2]],cmd_flag=2)
 
             elif action=='Impact_traj':
 
@@ -161,8 +161,8 @@ def cmd_send(env,logName):
 
                     str_input = env.userInput("Approve flight (y/n): ",str)
                     if str_input == 'y':
-                        env.SendCmd('Vel_traj',cmd_vals=[env.posCF[0],Vx_d,env.accCF_max[0]],cmd_flag=0)
-                        env.SendCmd('Vel_traj',cmd_vals=[env.posCF[2],Vz_d,env.accCF_max[2]],cmd_flag=2)
+                        env.SendCmd('Vel_traj',cmd_vals=[env.pos[0],Vx_d,env.accCF_max[0]],cmd_flag=0)
+                        env.SendCmd('Vel_traj',cmd_vals=[env.pos[2],Vz_d,env.accCF_max[2]],cmd_flag=2)
 
                 else:
                     print(f"Try again")
@@ -180,9 +180,9 @@ def cmd_send(env,logName):
             elif action=='P2P_traj':
                 ## GET INPUT VALUES
                 x_d = env.userInput("Desired position (x,y,z):",float)
-                env.SendCmd('P2P_traj',cmd_vals=[env.posCF[0],x_d[0],env.accCF_max[0]],cmd_flag=0)
-                env.SendCmd('P2P_traj',cmd_vals=[env.posCF[1],x_d[1],env.accCF_max[1]],cmd_flag=1)
-                env.SendCmd('P2P_traj',cmd_vals=[env.posCF[2],x_d[2],env.accCF_max[2]],cmd_flag=2)
+                env.SendCmd('P2P_traj',cmd_vals=[env.pos[0],x_d[0],env.accCF_max[0]],cmd_flag=0)
+                env.SendCmd('P2P_traj',cmd_vals=[env.pos[1],x_d[1],env.accCF_max[1]],cmd_flag=1)
+                env.SendCmd('P2P_traj',cmd_vals=[env.pos[2],x_d[2],env.accCF_max[2]],cmd_flag=2)
 
 
             elif action=='GZ_traj':
