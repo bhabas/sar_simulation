@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='crazyflie_A05_L50_K16'>
+  <model name='crazyflie_A05_L75_K32'>
     <include>
       <uri>model://crazyflie_Base_Model</uri>
       <pose>0 0 0 0 0 0</pose>
@@ -17,7 +17,7 @@
           <iyz>0</iyz>
           <izz>2.313e-9</izz>
         </inertia>
-        <pose>0 0 -0.025 0 0 0 </pose>
+        <pose>0 0 -0.0375 0 0 0 </pose>
       </inertial>
       <pose>2.07E-02 2.07E-02 -3.25E-03 0 -0.087 0.785</pose>
       <gravity>1</gravity>
@@ -28,7 +28,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_A05_L50_K08/meshes/LegConfig_A05_L50.STL</uri>
+            <uri>model://crazyflie_A05_L75_K08/meshes/LegConfig_A05_L75.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -52,7 +52,7 @@
           <iyz>0</iyz>
           <izz>2.313e-9</izz>
         </inertia>
-        <pose>0 0 -0.025 0 0 0 </pose>
+        <pose>0 0 -0.0375 0 0 0 </pose>
       </inertial>
       <pose>-2.07E-02 2.07E-02 -3.25E-03 0 -0.087 2.356</pose>
       <gravity>1</gravity>
@@ -63,7 +63,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_A05_L50_K08/meshes/LegConfig_A05_L50.STL</uri>
+            <uri>model://crazyflie_A05_L75_K08/meshes/LegConfig_A05_L75.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -87,7 +87,7 @@
           <iyz>0</iyz>
           <izz>2.313e-9</izz>
         </inertia>
-        <pose>0 0 -0.025 0 0 0 </pose>
+        <pose>0 0 -0.0375 0 0 0 </pose>
       </inertial>
       <pose>-2.07E-02 -2.07E-02 -3.25E-03 0 -0.087 -2.356</pose>
       <gravity>1</gravity>
@@ -98,7 +98,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_A05_L50_K08/meshes/LegConfig_A05_L50.STL</uri>
+            <uri>model://crazyflie_A05_L75_K08/meshes/LegConfig_A05_L75.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -122,7 +122,7 @@
           <iyz>0</iyz>
           <izz>2.313e-9</izz>
         </inertia>
-        <pose>0 0 -0.025 0 0 0 </pose>
+        <pose>0 0 -0.0375 0 0 0 </pose>
       </inertial>
       <pose>2.07E-02 -2.07E-02 -3.25E-03 0 -0.087 -0.785</pose>
       <gravity>1</gravity>
@@ -133,7 +133,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_A05_L50_K08/meshes/LegConfig_A05_L50.STL</uri>
+            <uri>model://crazyflie_A05_L75_K08/meshes/LegConfig_A05_L75.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -162,7 +162,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>2.70E-02 2.70E-02 -5.31E-02 0 0 0.785</pose>
+      <pose>2.85E-02 2.85E-02 -7.80E-02 0 0 0.785</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -255,7 +255,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>-2.70E-02 2.70E-02 -5.31E-02 0 0 2.356</pose>
+      <pose>-2.85E-02 2.85E-02 -7.80E-02 0 0 2.356</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -348,7 +348,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>-2.70E-02 -2.70E-02 -5.31E-02 0 0 -2.356</pose>
+      <pose>-2.85E-02 -2.85E-02 -7.80E-02 0 0 -2.356</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -441,7 +441,7 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
-      <pose>2.70E-02 -2.70E-02 -5.31E-02 0 0 -0.785</pose>
+      <pose>2.85E-02 -2.85E-02 -7.80E-02 0 0 -0.785</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
@@ -538,7 +538,7 @@
         </limit>
         <dynamics>
           <spring_reference>0</spring_reference>
-          <spring_stiffness>0.16</spring_stiffness>
+          <spring_stiffness>0.32</spring_stiffness>
           <damping>6.788e-05</damping>
           <friction>0</friction>
         </dynamics>
@@ -553,7 +553,7 @@
         </limit>
         <dynamics>
           <spring_reference>0</spring_reference>
-          <spring_stiffness>0.16</spring_stiffness>
+          <spring_stiffness>0.32</spring_stiffness>
           <damping>6.788e-05</damping>
           <friction>0</friction>
         </dynamics>
@@ -585,7 +585,7 @@
         </limit>
         <dynamics>
           <spring_reference>0</spring_reference>
-          <spring_stiffness>0.16</spring_stiffness>
+          <spring_stiffness>0.32</spring_stiffness>
           <damping>6.788e-05</damping>
           <friction>0</friction>
         </dynamics>
@@ -600,7 +600,7 @@
         </limit>
         <dynamics>
           <spring_reference>0</spring_reference>
-          <spring_stiffness>0.16</spring_stiffness>
+          <spring_stiffness>0.32</spring_stiffness>
           <damping>6.788e-05</damping>
           <friction>0</friction>
         </dynamics>
@@ -632,7 +632,7 @@
         </limit>
         <dynamics>
           <spring_reference>0</spring_reference>
-          <spring_stiffness>0.16</spring_stiffness>
+          <spring_stiffness>0.32</spring_stiffness>
           <damping>6.788e-05</damping>
           <friction>0</friction>
         </dynamics>
@@ -647,7 +647,7 @@
         </limit>
         <dynamics>
           <spring_reference>0</spring_reference>
-          <spring_stiffness>0.16</spring_stiffness>
+          <spring_stiffness>0.32</spring_stiffness>
           <damping>6.788e-05</damping>
           <friction>0</friction>
         </dynamics>
@@ -679,7 +679,7 @@
         </limit>
         <dynamics>
           <spring_reference>0</spring_reference>
-          <spring_stiffness>0.16</spring_stiffness>
+          <spring_stiffness>0.32</spring_stiffness>
           <damping>6.788e-05</damping>
           <friction>0</friction>
         </dynamics>
@@ -694,7 +694,7 @@
         </limit>
         <dynamics>
           <spring_reference>0</spring_reference>
-          <spring_stiffness>0.16</spring_stiffness>
+          <spring_stiffness>0.32</spring_stiffness>
           <damping>6.788e-05</damping>
           <friction>0</friction>
         </dynamics>

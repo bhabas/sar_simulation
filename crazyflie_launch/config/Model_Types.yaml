@@ -151,12 +151,14 @@ CF_Type:
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
-      A05_L50_K32: 
-        Initials: LDA_A05_L50_K32
+      A05_L50_KR: 
+        Initials: LDA_A05_L50_KR
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
+
+      # =============================  
 
       A05_L75_K08: 
         Initials: LDA_A05_L75_K08
@@ -165,8 +167,38 @@ CF_Type:
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
+      A05_L75_K32: 
+        Initials: LDA_A05_L75_K32
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
+      A05_L75_KR: 
+        Initials: LDA_A05_L75_KR
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
+      # ============================= 
+
       A05_L100_K08: 
         Initials: LDA_A05_L100_K08
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
+      A05_L100_K32: 
+        Initials: LDA_A05_L100_K32
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
+      A05_L100_KR: 
+        Initials: LDA_A05_L100_KR
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
@@ -184,6 +216,22 @@ CF_Type:
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
+      A20_L50_K32: 
+        Initials: LDA_A20_L50_K32
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
+      A20_L50_KR: 
+        Initials: LDA_A20_L50_KR
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
+      # ============================= 
+
       A20_L75_K08: 
         Initials: LDA_A20_L75_K08
         Mass: 38.1e-3   # [kg]
@@ -191,8 +239,38 @@ CF_Type:
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
+      A20_L75_K32: 
+        Initials: LDA_A20_L75_K32
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
+      A20_L75_KR: 
+        Initials: LDA_A20_L75_KR
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
+      # ============================= 
+
       A20_L100_K08: 
         Initials: LDA_A20_L100_K08
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
+      A20_L100_K32: 
+        Initials: LDA_A20_L100_K32
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
+      A20_L100_KR: 
+        Initials: LDA_A20_L100_KR
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
@@ -209,6 +287,22 @@ CF_Type:
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
+      A30_L50_K32: 
+        Initials: LDA_A30_L50_K32
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
+      A30_L50_KR: 
+        Initials: LDA_A30_L50_KR
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
+      # ============================= 
+
       A30_L75_K08: 
         Initials: LDA_A30_L75_K08
         Mass: 38.1e-3   # [kg]
@@ -216,8 +310,38 @@ CF_Type:
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
+      A30_L75_K32: 
+        Initials: LDA_A30_L75_K32
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
+      A30_L75_KR: 
+        Initials: LDA_A30_L75_KR
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
+      # ============================= 
+
       A30_L100_K08: 
         Initials: LDA_A30_L100_K08
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
+      A30_L100_K32: 
+        Initials: LDA_A30_L100_K32
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
+      A30_L100_KR: 
+        Initials: LDA_A30_L100_KR
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
@@ -234,6 +358,22 @@ CF_Type:
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
+      A60_L50_K32: 
+        Initials: LDA_A60_L50_K32
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
+      A60_L50_KR: 
+        Initials: LDA_A60_L50_KR
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
+      # ============================= 
+
       A60_L75_K08: 
         Initials: LDA_A60_L75_K08
         Mass: 38.1e-3   # [kg]
@@ -241,8 +381,38 @@ CF_Type:
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
+      A60_L75_K32: 
+        Initials: LDA_A60_L75_K32
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
+      A60_L75_KR: 
+        Initials: LDA_A60_L75_KR
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
+      # ============================= 
+
       A60_L100_K08: 
         Initials: LDA_A60_L100_K08
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
+      A60_L100_K32: 
+        Initials: LDA_A60_L100_K32
+        Mass: 38.1e-3   # [kg]
+        Ixx: 27.93e-6   # [kg*m^2]
+        Iyy: 30.46e-6   # [kg*m^2]
+        Izz: 47.12e-6   # [kg*m^2] 
+
+      A60_L100_KR: 
+        Initials: LDA_A60_L100_KR
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
