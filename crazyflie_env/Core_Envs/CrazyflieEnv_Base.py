@@ -433,7 +433,7 @@ class CrazyflieEnv_Base():
         self.Policy_Action_tr = FlipData_msg.Policy_Action_tr
 
         self.vel_tr_mag = np.sqrt(self.vel_tr.x**2 + self.vel_tr.z**2)
-        self.phi_tr = np.arctan2(self.vel_tr.z,self.vel_tr.x)
+        self.phi_tr = np.rad2deg(np.arctan2(self.vel_tr.z,self.vel_tr.x))
 
     def CF_ImpactDataCallback(self,ImpactData_msg):
 

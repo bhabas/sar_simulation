@@ -1,11 +1,12 @@
 ## STANDARD IMPORTS
 import os
-from datetime import datetime
+from datetime import datetime,timedelta
 import numpy as np
 import pandas as pd
 import torch as th
 import yaml
 import csv
+import time 
 
 ## PLOTTING IMPORTS
 import matplotlib.pyplot as plt
@@ -540,40 +541,72 @@ class Policy_Trainer_DeepRL():
         with open(config_path, 'w') as outfile:
             yaml.dump(data,outfile,default_flow_style=False,sort_keys=False)
 
-    def test_landing_performance(self,fileName=None,vel_range=[0.5,3.0],phi_range=[10,90],vel_inc=0.25,phi_inc=5,n_episodes=5):
+    def test_landing_performance(self,fileName=None,vel_range=[1.75,3.0],phi_range=[10,90],vel_inc=0.25,phi_inc=5,n_episodes=5):
 
         if fileName == None:
             fileName = "PolicyPerformance_Data.csv"
         filePath = os.path.join(self.TB_log_path,fileName)
 
-        ## WRITE FILE HEADER
-        with open(filePath,'w') as file:
-            writer = csv.writer(file,delimiter=',')
-            writer.writerow([
-                "Vel_d", "Phi_d", "Trial_num",
-                "Pad_Connections","Body_Contact",
-
-                "Vel_flip","Phi_flip",
-
-                "Tau_tr",
-                "Theta_x_tr",
-                "D_perp_tr",
-                
-                "Policy_tr",
-                "Policy_action",
-
-                "Vx_tr",
-                "Vz_tr",
-                "reward","reward_vals",
-
-            ])
-
         vel_arr = np.arange(vel_range[0], vel_range[1] + vel_inc, vel_inc)
         phi_arr = np.arange(phi_range[0], phi_range[1] + phi_inc, phi_inc)
+
+        
+
+        def EMA(cur_val,prev_val,alpha = 0.15):
+            """Exponential Moving Average Filter
+
+            Args:
+                cur_val (float): Current Value
+                prev_val (float): Previous Value
+                alpha (float, optional): Smoothing factor. Similar to moving average window (k), 
+                by alpha = 2/(k+1). Defaults to 0.15.
+
+            Returns:
+                float: Current average value
+            """            
+            
+            return alpha*cur_val + (1-alpha)*(prev_val)
+
+
+        ## TIME ESTIMATION FILTER INITIALIZATION
+        num_trials = len(vel_arr)*len(phi_arr)*n_episodes
+        idx = 0
+        t_delta = 0
+        t_delta_prev = 0
+
+        ## WRITE FILE HEADER IF NO FILE EXISTS
+        if not os.path.exists(filePath):
+            with open(filePath,'w') as file:
+                writer = csv.writer(file,delimiter=',')
+                writer.writerow([
+                    "Vel_d", "Phi_d", "Trial_num",
+                    "--",
+                    "Pad_Connections","Body_Contact",
+
+                    "Vel_flip","Phi_flip",
+
+                    "Tau_tr",
+                    "Theta_x_tr",
+                    "D_perp_tr",
+                    
+                    "Policy_tr",
+                    "Policy_action",
+
+                    "Vx_tr",
+                    "Vz_tr",
+                    "reward","reward_vals",
+
+                ])
+        else:
+            pass
 
         for vel in vel_arr:
             for phi in phi_arr:
                 for K_ep in range(n_episodes):
+
+                    start_time = time.time()
+
+                    ## TEST POLICY FOR GIVEN FLIGHT CONDITIONS
                     obs = self.env.reset(vel=vel,phi=phi)
                     done = False
                     while not done:
@@ -581,11 +614,12 @@ class Policy_Trainer_DeepRL():
                         action,_ = self.model.predict(obs)
                         obs,reward,done,info = self.env.step(action)
                             
-                    ## WRITE FILE HEADER
+                    ## APPEND RECORDED VALUES TO FILE
                     with open(filePath,'a') as file:
                         writer = csv.writer(file,delimiter=',')
                         writer.writerow([
                             np.round(vel,2),np.round(phi,2),K_ep,
+                            "--",
                             self.env.pad_connections,self.env.BodyContact_flag,
 
                             np.round(self.env.vel_tr_mag,2),np.round(self.env.phi_tr,2),
@@ -602,9 +636,16 @@ class Policy_Trainer_DeepRL():
 
                             np.round(reward,3),
                             np.round(self.env.reward_vals,3),
-                            
-
                         ])
+
+                        ## CALCULATE AVERAGE TIME PER EPISODE
+                        t_delta = time.time() - start_time
+                        t_delta_avg = EMA(t_delta,t_delta_prev,alpha=0.1)
+                        t_delta_prev = t_delta_avg
+                        idx += 1
+
+                        TTC = round(t_delta_avg*(num_trials-idx)) # Time to completion
+                        print(f"Flight Conditions: ({vel} m/s,{phi} deg) \t Index: {idx}/{num_trials} \t Percentage: {100*idx/num_trials:.2f}% \t Time to Completion: {str(timedelta(seconds=TTC))}")
 
 
 if __name__ == '__main__':
