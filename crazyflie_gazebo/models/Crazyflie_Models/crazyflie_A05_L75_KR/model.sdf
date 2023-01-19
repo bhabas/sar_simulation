@@ -28,7 +28,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_A05_L75_K08/meshes/LegConfig_A05_L75.STL</uri>
+            <uri>model://crazyflie_A05_L75_KR/meshes/LegConfig_A05_L75.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -63,7 +63,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_A05_L75_K08/meshes/LegConfig_A05_L75.STL</uri>
+            <uri>model://crazyflie_A05_L75_KR/meshes/LegConfig_A05_L75.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -98,7 +98,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_A05_L75_K08/meshes/LegConfig_A05_L75.STL</uri>
+            <uri>model://crazyflie_A05_L75_KR/meshes/LegConfig_A05_L75.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -133,7 +133,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_A05_L75_K08/meshes/LegConfig_A05_L75.STL</uri>
+            <uri>model://crazyflie_A05_L75_KR/meshes/LegConfig_A05_L75.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
