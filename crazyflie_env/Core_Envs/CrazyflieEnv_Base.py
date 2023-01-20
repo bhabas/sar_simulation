@@ -281,6 +281,9 @@ class CrazyflieEnv_Base():
         self.Policy_Flip_tr = 0.0
         self.Policy_Action_tr = 0.0 # [N*mm]
 
+        self.vel_tr_mag = 0.0       # [m/s]
+        self.phi_tr = 0.0           # [deg]
+
         ## INITIALIZE IMPACT VALUES
         self.impact_flag = False
         self.BodyContact_flag = False   # Flag if model body impacts ceiling plane

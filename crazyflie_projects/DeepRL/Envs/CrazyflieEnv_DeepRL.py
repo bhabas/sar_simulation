@@ -209,7 +209,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
         t_settle = 1.5 # Give time for system to settle on desired velocity
         D_perp_0 = (self.Tau_0 + t_settle)*(Vel_0.dot(n_hat))    # Initial distance
-        D_perp_0 = max(D_perp_0,0.15)               # Ensure a reasonable minimum distance [m]
+        D_perp_0 = max(D_perp_0,0.2)               # Ensure a reasonable minimum distance [m]
         r_0 = r_p - D_perp_0*n_hat                  # Initial quad position (World coords)
 
         self.Vel_Launch(r_0,Vel_0)
@@ -268,8 +268,8 @@ if __name__ == "__main__":
     env = CrazyflieEnv_DeepRL(GZ_Timeout=False)
     for ep in range(25):
 
-        vel = 2.0
-        phi = 10
+        vel = 0.5
+        phi = 80
         env.reset(vel=vel,phi=phi)
 
         done = False
