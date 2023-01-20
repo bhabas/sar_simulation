@@ -51,6 +51,7 @@ bool controllerGTCTest(void);
 void controllerGTCReset(void);
 void controllerGTCTraj(void);
 void velocity_Traj(void);
+void GZ_velocity_Traj(void);
 void point2point_Traj(void);
 void controllerGTC(control_t *control, setpoint_t *setpoint,
                                          sensorData_t *sensors,
@@ -179,6 +180,7 @@ extern bool safeModeFlag;
 
 extern bool execute_P2P_traj;
 extern bool execute_vel_traj;
+extern bool execute_GZ_vel_traj;
 extern bool policy_armed_flag;
 extern bool camera_sensor_active;
 

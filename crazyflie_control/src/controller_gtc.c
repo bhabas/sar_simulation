@@ -173,6 +173,7 @@ bool safeModeFlag = false;
 
 bool execute_P2P_traj = false;
 bool execute_vel_traj = false;
+bool execute_GZ_vel_traj = false;
 bool policy_armed_flag = false;
 bool camera_sensor_active = false;
 
@@ -308,6 +309,7 @@ void controllerGTCReset(void)
     // RESET TRAJECTORY VALUES
     execute_vel_traj = false;
     execute_P2P_traj = false;
+    execute_GZ_vel_traj = false;
     P2P_traj_flag = vzero();
     s_0_t = vzero();
     s_f_t = vzero();
@@ -520,6 +522,47 @@ void GTC_Command(setpoint_t *setpoint)
 
             break;
 
+
+        case 90: // Gazebo Velocity Trajectory (Instantaneous Acceleration)
+
+            traj_type = (axis_direction)setpoint->cmd_flag;
+
+            switch(traj_type){
+
+                case x_axis:
+
+                    s_0_t.x = setpoint->cmd_val1;   // Starting position [m]
+                    v_t.x = setpoint->cmd_val2;     // Desired velocity [m/s]
+                    a_t.x = 0.0f;                   // Acceleration [m/s^2]
+
+                    t_traj.x = 0.0f; // Reset timer
+                    execute_GZ_vel_traj = true;
+                    break;
+
+                case y_axis:
+
+                    s_0_t.y = setpoint->cmd_val1;
+                    v_t.y = setpoint->cmd_val2;
+                    a_t.y = 0.0f;
+
+                    t_traj.y = 0.0f;
+                    execute_GZ_vel_traj = true;
+                    break;
+
+                case z_axis:
+
+                    s_0_t.z = setpoint->cmd_val1;
+                    v_t.z = setpoint->cmd_val2;
+                    a_t.z = 0.0f;
+
+                    t_traj.z = 0.0f;
+                    execute_GZ_vel_traj = true;
+                    break;
+                    
+            }
+
+            break;
+
         
 
     }
@@ -570,6 +613,31 @@ void velocity_Traj()
         v_d.idx[2] = v_t.idx[2]; // vz
         a_d.idx[2] = 0.0f;
     }
+
+    t_traj.idx[0] += dt;
+    
+}
+
+void GZ_velocity_Traj() // Gazebo Velocity Trajectory (Instantaneous Acceleration)
+{
+
+    float t = t_traj.idx[0];
+
+    // CONSTANT X-VELOCITY TRAJECTORY
+    x_d.idx[0] = v_t.idx[0]*t + s_0_t.idx[0]; // vx*t + x_0
+    v_d.idx[0] = v_t.idx[0]; // vx
+    a_d.idx[0] = 0.0;
+
+    // CONSTANT Y-VELOCITY TRAJECTORY
+    x_d.idx[1] = v_t.idx[1]*t + s_0_t.idx[1]; // vy*t + x_0
+    v_d.idx[1] = v_t.idx[1]; // vy
+    a_d.idx[1] = 0.0f;
+
+    // CONSTANT Z-VELOCITY TRAJECTORY
+    x_d.idx[2] = v_t.idx[2]*t + s_0_t.idx[2]; // vz*t + z_0
+    v_d.idx[2] = v_t.idx[2]; // vz
+    a_d.idx[2] = 0.0f;
+    
 
     t_traj.idx[0] += dt;
     
@@ -803,6 +871,9 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         }
         else if(execute_P2P_traj){
             point2point_Traj();
+        }
+        else if(execute_GZ_vel_traj){
+            GZ_velocity_Traj();
         }
 
         
