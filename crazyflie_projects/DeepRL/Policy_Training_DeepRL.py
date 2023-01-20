@@ -607,12 +607,6 @@ class Policy_Trainer_DeepRL():
                     start_time = time.time()
 
                     ## TEST POLICY FOR GIVEN FLIGHT CONDITIONS
-                    r_0 = [0,0,1.85]
-                    Vel_0 = [0.492,0,0.087]
-                    self.env.SendCmd('Ctrl_Reset')
-                    self.env.reset_pos()
-                    self.env.sleep(0.01)
-                    self.env.Vel_Launch(r_0,Vel_0)
                     obs = self.env.reset(vel=Vel,phi=Phi)
                     done = False
                     while not done:

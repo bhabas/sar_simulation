@@ -15,7 +15,7 @@ from crazyflie_env.Core_Envs.CrazyflieEnv_Sim import CrazyflieEnv_Sim
 
 class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
     metadata = {'render.modes': ['human']}
-    def __init__(self,GZ_Timeout=True,Vel_range=[1.5,3.5],Phi_range=[0,90],Tau_0=0.4):
+    def __init__(self,GZ_Timeout=True,Vel_range=[1.5,3.5],Phi_range=[0,90],Tau_0=0.5):
         """_summary_
 
         Args:
@@ -144,27 +144,28 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
     def reset(self,vel=None,phi=None):
 
-        self.gazebo_unpause_physics()
-        self.SendCmd('Tumble',cmd_flag=0)
+        ## DETACH PADS AND TURN OFF TUMBLE DETECTION
         self.SendCmd('StickyPads',cmd_flag=0)
+        self.iter_step(2)
+
+        self.SendCmd('Tumble',cmd_flag=0)
+        self.iter_step(2)
+
+        self.reset_pos()
+        self.iter_step(2)
 
         self.SendCmd('Ctrl_Reset')
-        self.reset_pos()
-        self.sleep(0.01)
+        self.iter_step(2)
 
-        self.SendCmd('Tumble',cmd_flag=1)
-        self.SendCmd('Ctrl_Reset')
-        self.reset_pos()
-        self.SendCmd('Tumble',cmd_flag=1)
-        self.sleep(1.0)
         self.SendCmd('StickyPads',cmd_flag=1)
-        self.gazebo_pause_physics()
+        self.iter_step(2) 
+
 
         ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
         self.Iyy = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Iyy") + np.random.normal(0,1.5e-6)
         self.mass = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Mass") + np.random.normal(0,0.0005)
         self.updateInertia()
-
+        # self.iter_step(2500) # Ensure propper settling time at home position
 
 
         ## RESET REWARD CALC VALUES
@@ -206,12 +207,13 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         theta_rad = np.radians(self.Plane_Angle)                    # Plane angle
         n_hat = np.array([np.sin(theta_rad),0,-np.cos(theta_rad)])  # Plane normal vector
 
-        D_perp_0 = self.Tau_0*(Vel_0.dot(n_hat))    # Initial distance
+        t_settle = 1.5 # Give time for system to settle on desired velocity
+        D_perp_0 = (self.Tau_0 + t_settle)*(Vel_0.dot(n_hat))    # Initial distance
         D_perp_0 = max(D_perp_0,0.15)               # Ensure a reasonable minimum distance [m]
         r_0 = r_p - D_perp_0*n_hat                  # Initial quad position (World coords)
 
         self.Vel_Launch(r_0,Vel_0)
-        self.iter_step(10)
+        self.iter_step(t_settle*1e3)
 
 
         ## RESET OBSERVATION
@@ -263,15 +265,17 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
 if __name__ == "__main__":
 
-    # vel = 2
-    # phi = 45
-
     env = CrazyflieEnv_DeepRL(GZ_Timeout=False)
     for ep in range(25):
-        env.reset()
+
+        vel = 2.0
+        phi = 10
+        env.reset(vel=vel,phi=phi)
+
         done = False
         while not done:
             action = env.action_space.sample()
+            action = np.zeros_like(action)
             obs,reward,done,info = env.step(action)
         env.RL_Publish()
         print(f"Episode: {ep} \t Reward: {reward:.3f}")

@@ -81,13 +81,7 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base,gym.Env):
             quat_0 (list, optional): Orientation at launch. Defaults to [0,0,0,1].
         """        
 
-        ## SET DESIRED VEL IN CONTROLLER
-        self.gazebo_pause_physics()
-        self.SendCmd('GZ_traj',cmd_vals=[pos_0[0],vel_d[0],0],cmd_flag=0)
-        self.iter_step(2)
-        self.SendCmd('GZ_traj',cmd_vals=[pos_0[1],vel_d[1],0],cmd_flag=1)
-        self.iter_step(2)
-        self.SendCmd('GZ_traj',cmd_vals=[pos_0[2],vel_d[2],0],cmd_flag=2)
+        
 
 
         ## CREATE SERVICE MESSAGE
@@ -115,6 +109,16 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base,gym.Env):
 
         ## PUBLISH MODEL STATE SERVICE REQUEST
         self.callService('/gazebo/set_model_state',state_srv,SetModelState)
+        self.iter_step(2)
+
+
+        ## SET DESIRED VEL IN CONTROLLER
+        self.SendCmd('GZ_traj',cmd_vals=[pos_0[0],vel_d[0],0],cmd_flag=0)
+        self.iter_step(2)
+        self.SendCmd('GZ_traj',cmd_vals=[pos_0[1],vel_d[1],0],cmd_flag=1)
+        self.iter_step(2)
+        self.SendCmd('GZ_traj',cmd_vals=[pos_0[2],vel_d[2],0],cmd_flag=2)
+        self.iter_step(2)
         
 
     def reset_pos(self,z_0=0.358): # Disable sticky then places spawn_model at origin
@@ -220,9 +224,9 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base,gym.Env):
         """Update simulation by n timesteps
 
         Args:
-            n_steps (int, optional): _description_. Defaults to 10.
+            n_steps (int, optional): Number of timesteps to step through. Defaults to 10.
         """        
-        os.system(f'gz world --multi-step={n_steps}')
+        os.system(f'gz world --multi-step={int(n_steps)}')
 
         
     def callService(self,addr,srv,srv_type,retries=5):
