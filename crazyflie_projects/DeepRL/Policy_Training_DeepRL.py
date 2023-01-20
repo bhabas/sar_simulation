@@ -571,8 +571,8 @@ class Policy_Trainer_DeepRL():
         ## TIME ESTIMATION FILTER INITIALIZATION
         num_trials = len(Vel_arr)*len(Phi_arr)*n_episodes
         idx = 0
-        t_delta = 0
-        t_delta_prev = 0
+        t_delta = 120
+        t_delta_prev = 120
 
         ## WRITE FILE HEADER IF NO FILE EXISTS
         if not os.path.exists(filePath):
@@ -612,7 +612,7 @@ class Policy_Trainer_DeepRL():
                     while not done:
                         self.env.render()
                         action,_ = self.model.predict(obs)
-                        action = np.zeros_like(action)
+                        # action = np.zeros_like(action)
                         obs,reward,done,info = self.env.step(action)
                             
                     ## APPEND RECORDED VALUES TO FILE
@@ -632,8 +632,8 @@ class Policy_Trainer_DeepRL():
                             np.round(self.env.action_tr[0],3),
                             np.round(self.env.action_tr[1],3),
 
-                            np.round(self.env.vel_tr.x,3),
-                            np.round(self.env.vel_tr.z,3),
+                            np.round(self.env.vel_tr[0],3),
+                            np.round(self.env.vel_tr[2],3),
 
                             np.round(reward,3),
                             np.round(self.env.reward_vals,3),
@@ -641,7 +641,7 @@ class Policy_Trainer_DeepRL():
 
                         ## CALCULATE AVERAGE TIME PER EPISODE
                         t_delta = time.time() - start_time
-                        t_delta_avg = EMA(t_delta,t_delta_prev,alpha=0.1)
+                        t_delta_avg = EMA(t_delta,t_delta_prev,alpha=0.2)
                         t_delta_prev = t_delta_avg
                         idx += 1
 

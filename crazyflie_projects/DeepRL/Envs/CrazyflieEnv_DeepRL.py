@@ -57,6 +57,10 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         ## DEFINE ACTION SPACE
         self.action_space = spaces.Box(low=np.array([-1,0]), high=np.array([1,8]), shape=(2,), dtype=np.float32)
 
+
+        self.obs_tr = np.zeros_like(self.observation_space.high)
+        self.action_tr = np.zeros_like(self.action_space.high)
+
     def step(self,action):
 
         Tau,Theta_x,D_perp  = self.obs
@@ -70,8 +74,8 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
             ## CHECK FOR DONE
             self.done = bool(
-                self.t - self.start_time_rollout > 3.0              # EPISODE TIMEOUT
-                or (self.impact_flag or self.BodyContact_flag)
+                self.t - self.start_time_rollout > 3.5          # EPISODE TIMEOUT
+                or (self.impact_flag or self.BodyContact_flag)  # BODY CONTACT W/O FLIP TRIGGER
             )         
 
             if not self.done:
@@ -115,7 +119,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
                 self.onceFlag_impact = True
 
             self.done = bool(
-                self.t - self.start_time_rollout > 3.0              # EPISODE TIMEOUT
+                self.t - self.start_time_rollout > 3.5              # EPISODE TIMEOUT
                 or self.t - self.start_time_impact > 1.0            # IMPACT TIMEOUT
             )
 
@@ -165,11 +169,11 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
         ## RESET REWARD CALC VALUES
         self.done = False
-        self.D_min = 50.0  # Reset max from ceiling [m]
-        self.Tau_tr = 50.0
+        self.D_min = 50.0   # Reset max from landing surface [m]
+        self.Tau_tr = 50.0  # Reset max Tau value
 
-        self.obs_tr = np.zeros_like(self.observation_space)
-        self.action_tr = np.zeros_like(self.action_space)
+        self.obs_tr = np.zeros_like(self.observation_space.high)
+        self.action_tr = np.zeros_like(self.action_space.high)
 
         ## RESET/UPDATE RUN CONDITIONS
         self.start_time_rollout = self.getTime()
@@ -196,13 +200,14 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         Vel_0 = np.array([vx_0,0,vz_0])  # Flight Velocity vector
 
         
-        ## RESET POSITION (Derivation: Research_Notes_Book_2.pdf (12/30/22))
+        ## RESET POSITION BASED ON TAU VALUE RELATIVE TO LANDING SURFACE
+        # (Derivation: Research_Notes_Book_2.pdf (12/30/22))
         r_p = np.array(self.Plane_Pos)                              # Plane Position
         theta_rad = np.radians(self.Plane_Angle)                    # Plane angle
         n_hat = np.array([np.sin(theta_rad),0,-np.cos(theta_rad)])  # Plane normal vector
 
         D_perp_0 = self.Tau_0*(Vel_0.dot(n_hat))    # Initial distance
-        D_perp_0 = max(D_perp_0,0.2)             # Ensure a minimum distance of at least 0.3 [m]
+        D_perp_0 = max(D_perp_0,0.15)               # Ensure a reasonable minimum distance [m]
         r_0 = r_p - D_perp_0*n_hat                  # Initial quad position (World coords)
 
         self.Vel_Launch(r_0,Vel_0)
@@ -228,10 +233,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         R_dist *= 0.05
 
         ## IMPACT ANGLE REWARD
-        # R2 = np.clip(np.abs(self.eulCF_impact[1])/120,0,1)
-        # R2 *= 0.2
-
-        R_angle = 0.5*np.cos(self.eul_impact.y-self.Plane_Angle_rad*np.sign(np.cos(self.Plane_Angle_rad)))+0.5
+        R_angle = 0.5*np.cos(self.eul_impact[1]-self.Plane_Angle_rad*np.sign(np.cos(self.Plane_Angle_rad)))+0.5
         R_angle *= 0.2
 
 
