@@ -226,7 +226,16 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base,gym.Env):
         Args:
             n_steps (int, optional): Number of timesteps to step through. Defaults to 10.
         """        
+
+        ## This might be better to be replaced with a world plugin with step function and a response when complete
+        ## (https://github.com/bhairavmehta95/ros-gazebo-step)
         os.system(f'gz world --multi-step={int(n_steps)}')
+        while True:
+            try:
+                rospy.wait_for_message('/clock', Clock, timeout=0.1)
+            except:
+                break
+
 
         
     def callService(self,addr,srv,srv_type,retries=5):
