@@ -145,20 +145,21 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
     def reset(self,vel=None,phi=None):
 
         ## DETACH PADS AND TURN OFF TUMBLE DETECTION
+        self.gazebo_pause_physics()
         self.SendCmd('StickyPads',cmd_flag=0)
         self.iter_step(2)
-
         self.SendCmd('Tumble',cmd_flag=0)
         self.iter_step(2)
 
         self.reset_pos()
         self.iter_step(2)
-
         self.SendCmd('Ctrl_Reset')
         self.iter_step(2)
 
         self.SendCmd('StickyPads',cmd_flag=1)
         self.iter_step(2) 
+        self.SendCmd('Tumble',cmd_flag=1)
+        self.iter_step(2)
 
 
         ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
@@ -166,6 +167,8 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         self.mass = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Mass") + np.random.normal(0,0.0005)
         self.updateInertia()
         # self.iter_step(2500) # Ensure propper settling time at home position
+        t_settle = 1.5
+        self.iter_step(t_settle*1e3)
 
 
         ## RESET REWARD CALC VALUES

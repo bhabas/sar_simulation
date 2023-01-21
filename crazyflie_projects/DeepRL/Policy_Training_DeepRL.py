@@ -610,9 +610,8 @@ class Policy_Trainer_DeepRL():
                     obs = self.env.reset(vel=Vel,phi=Phi)
                     done = False
                     while not done:
-                        self.env.render()
                         action,_ = self.model.predict(obs)
-                        action = np.zeros_like(action)
+                        # action = np.zeros_like(action)
                         obs,reward,done,info = self.env.step(action)
                             
                     ## APPEND RECORDED VALUES TO FILE
@@ -665,20 +664,20 @@ if __name__ == '__main__':
 
 
 
-    ## CREATE NEW DEEP RL MODEL 
-    log_name = f"SAC--{current_time}--{env.modelInitials}"    
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.create_model()
-    PolicyTrainer.train_model()
+    # ## CREATE NEW DEEP RL MODEL 
+    # log_name = f"SAC--{current_time}--{env.modelInitials}"    
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.create_model()
+    # PolicyTrainer.train_model()
 
 
     
-    # # LOAD DEEP RL MODEL
-    # log_name = "SAC--01_08-16:22--NL_0"
-    # t_step_load = 62000
+    # LOAD DEEP RL MODEL
+    log_name = "SAC--01_08-16:22--NL_0"
+    t_step_load = 62000
 
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.load_model(t_step_load)
-    # # PolicyTrainer.train_model(reset_timesteps=False)
-    # PolicyTrainer.test_landing_performance(Vel_range=[0.5,1.0],Phi_range=[10,20])
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.load_model(t_step_load)
+    # PolicyTrainer.train_model(reset_timesteps=False)
+    PolicyTrainer.test_landing_performance(Vel_range=[2.5,3.0],Phi_range=[45,50])
 

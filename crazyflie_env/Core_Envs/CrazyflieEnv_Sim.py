@@ -230,11 +230,13 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base,gym.Env):
         ## This might be better to be replaced with a world plugin with step function and a response when complete
         ## (https://github.com/bhairavmehta95/ros-gazebo-step)
         os.system(f'gz world --multi-step={int(n_steps)}')
-        while True:
-            try:
-                rospy.wait_for_message('/clock', Clock, timeout=0.1)
-            except:
-                break
+
+        if n_steps >= 50:
+            while True:
+                try:
+                    rospy.wait_for_message('/clock', Clock, timeout=0.1)
+                except:
+                    break
 
 
         
