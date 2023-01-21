@@ -4,6 +4,9 @@ from gym import spaces
 import rospy
 import time
 
+import warnings
+
+
 
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg,os
@@ -64,7 +67,12 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
     def step(self,action):
 
         Tau,Theta_x,D_perp  = self.obs
-        action[0] = np.arctanh(action[0])
+        with warnings.catch_warnings():
+            warnings.filterwarnings('error')
+            try:
+                action[0] = np.arctanh(np.clip(action[0],-0.999,0.999))
+            except RuntimeWarning:
+                print()
         
         if action[0] < self.Flip_thr:
 
@@ -167,8 +175,8 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         self.mass = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Mass") + np.random.normal(0,0.0005)
         self.updateInertia()
         # self.iter_step(2500) # Ensure propper settling time at home position
-        t_settle = 1.5
-        self.iter_step(t_settle*1e3)
+        # t_settle = 1.5
+        # self.iter_step(t_settle*1e3)
 
 
         ## RESET REWARD CALC VALUES
@@ -202,18 +210,25 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         vx_0 = vel*np.cos(np.deg2rad(phi))
         vz_0 = vel*np.sin(np.deg2rad(phi))
         Vel_0 = np.array([vx_0,0,vz_0])  # Flight Velocity vector
+        V_hat = Vel_0/np.linalg.norm(Vel_0)
+
+
+        
 
         
         ## RESET POSITION BASED ON TAU VALUE RELATIVE TO LANDING SURFACE
-        # (Derivation: Research_Notes_Book_2.pdf (12/30/22))
+        # (Derivation: Research_Notes_Book_2.pdf (1/21/23))
         r_p = np.array(self.Plane_Pos)                              # Plane Position
         theta_rad = np.radians(self.Plane_Angle)                    # Plane angle
         n_hat = np.array([np.sin(theta_rad),0,-np.cos(theta_rad)])  # Plane normal vector
 
+        D_0 = self.Tau_0*(Vel_0.dot(n_hat))/(V_hat.dot(n_hat)) # Initial distance
+        D_0 = max(D_0,0.2) # Ensure a reasonable minimum distance [m]
+
         t_settle = 1.5 # Give time for system to settle on desired velocity
-        D_perp_0 = (self.Tau_0 + t_settle)*(Vel_0.dot(n_hat))    # Initial distance
-        D_perp_0 = max(D_perp_0,0.2)               # Ensure a reasonable minimum distance [m]
-        r_0 = r_p - D_perp_0*n_hat                  # Initial quad position (World coords)
+        D_settle = t_settle*(Vel_0.dot(n_hat))/(V_hat.dot(n_hat)) # Flight settling distance
+
+        r_0 = r_p - (D_0 + D_settle)*V_hat # Initial quad position (World coords)
 
         self.Vel_Launch(r_0,Vel_0)
         self.iter_step(t_settle*1e3)
@@ -268,12 +283,12 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
 if __name__ == "__main__":
 
-    env = CrazyflieEnv_DeepRL(GZ_Timeout=False)
+    env = CrazyflieEnv_DeepRL(GZ_Timeout=False,Vel_range=[0.5,1.0],Phi_range=[10,20])
     for ep in range(25):
 
         vel = 0.5
         phi = 80
-        env.reset(vel=vel,phi=phi)
+        env.reset()
 
         done = False
         while not done:
