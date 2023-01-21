@@ -216,6 +216,7 @@ if __name__ == '__main__':
     from Core_Envs.CrazyflieEnv_Sim import CrazyflieEnv_Sim
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv_Sim()
+    env.gazebo_unpause_physics()
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 24
