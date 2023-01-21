@@ -18,7 +18,7 @@ from crazyflie_env.Core_Envs.CrazyflieEnv_Sim import CrazyflieEnv_Sim
 
 class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
     metadata = {'render.modes': ['human']}
-    def __init__(self,GZ_Timeout=True,Vel_range=[1.5,3.5],Phi_range=[0,90],Tau_0=0.5):
+    def __init__(self,GZ_Timeout=True,Vel_range=[1.5,3.5],Phi_range=[0,90],Tau_0=0.4):
         """_summary_
 
         Args:
@@ -167,6 +167,11 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         self.SendCmd('StickyPads',cmd_flag=1)
         self.iter_step(2) 
         self.SendCmd('Tumble',cmd_flag=1)
+        self.iter_step(2)
+
+        self.reset_pos()
+        self.iter_step(2)
+        self.SendCmd('Ctrl_Reset')
         self.iter_step(2)
 
 

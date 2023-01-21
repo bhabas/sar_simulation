@@ -672,12 +672,12 @@ if __name__ == '__main__':
 
 
     
-    # # LOAD DEEP RL MODEL
-    # log_name = "SAC--01_08-16:22--NL_0"
-    # t_step_load = 62000
+    # LOAD DEEP RL MODEL
+    log_name = "SAC--01_21-08:26--NL_0"
+    t_step_load = 1000
 
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.load_model(t_step_load)
-    # # PolicyTrainer.train_model(reset_timesteps=False)
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.load_model(t_step_load)
+    PolicyTrainer.train_model(reset_timesteps=False)
     # PolicyTrainer.test_landing_performance(Vel_range=[0.5,1.0],Phi_range=[10,20])
 
