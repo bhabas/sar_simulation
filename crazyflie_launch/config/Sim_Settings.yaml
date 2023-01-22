@@ -9,7 +9,9 @@ PLANE_SETTINGS:
 
 QUAD_SETTINGS:
   CF_Type: "Standard"
-  CF_Config: "A60_L50_K08" 
+  # CF_Config: "A30_L75_K08"
+
+
   Cam_Sensor: False
 
   # Policy_Type: "PARAM_OPTIM"
