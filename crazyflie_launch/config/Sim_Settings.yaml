@@ -9,7 +9,7 @@ PLANE_SETTINGS:
 
 QUAD_SETTINGS:
   CF_Type: "Standard"
-  CF_Config: "Base_Model"
+  CF_Config: "Narrow_Long"
 
 
   Cam_Sensor: False
