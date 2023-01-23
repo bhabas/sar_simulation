@@ -152,27 +152,43 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
     def reset(self,vel=None,phi=None):
 
-        ## DETACH PADS AND TURN OFF TUMBLE DETECTION
-        self.gazebo_pause_physics()
-        self.SendCmd('StickyPads',cmd_flag=0)
-        self.iter_step(2)
+        # ## DETACH PADS AND TURN OFF TUMBLE DETECTION
+        # self.gazebo_pause_physics()
+        # self.SendCmd('StickyPads',cmd_flag=0)
+        # self.iter_step(2)
+        # self.SendCmd('Tumble',cmd_flag=0)
+        # self.iter_step(2)
+
+        # self.reset_pos()
+        # self.iter_step(2)
+        # self.SendCmd('Ctrl_Reset')
+        # self.iter_step(2)
+
+        # self.SendCmd('StickyPads',cmd_flag=1)
+        # self.iter_step(2) 
+        # self.SendCmd('Tumble',cmd_flag=1)
+        # self.iter_step(2)
+
+        # self.reset_pos()
+        # self.iter_step(2)
+        # self.SendCmd('Ctrl_Reset')
+        # self.iter_step(2)
+
+        self.gazebo_unpause_physics()
         self.SendCmd('Tumble',cmd_flag=0)
-        self.iter_step(2)
+        self.SendCmd('StickyPads',cmd_flag=0)
 
-        self.reset_pos()
-        self.iter_step(2)
         self.SendCmd('Ctrl_Reset')
-        self.iter_step(2)
+        self.reset_pos()
+        self.sleep(0.01)
 
-        self.SendCmd('StickyPads',cmd_flag=1)
-        self.iter_step(2) 
         self.SendCmd('Tumble',cmd_flag=1)
-        self.iter_step(2)
-
-        self.reset_pos()
-        self.iter_step(2)
         self.SendCmd('Ctrl_Reset')
-        self.iter_step(2)
+        self.reset_pos()
+        self.SendCmd('Tumble',cmd_flag=1)
+        self.sleep(1.0)
+        self.SendCmd('StickyPads',cmd_flag=1)
+        self.gazebo_pause_physics()
 
 
         ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
