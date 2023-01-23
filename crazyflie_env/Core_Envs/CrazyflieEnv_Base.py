@@ -32,7 +32,7 @@ class CrazyflieEnv_Base():
         self.modelName = f"crazyflie_{self.CF_Config}"
         self.preInit_Values()
 
-        self.posCF_0 = [0.0, 0.0, 0.4]      # Default hover position [m]
+        self.pos_0 = [0.0, 0.0, 0.4]      # Default hover position [m]
         self.accCF_max = [1.0, 1.0, 3.1]    # Max acceleration values for trajectory generation [m/s^2]
 
 
@@ -265,21 +265,24 @@ class CrazyflieEnv_Base():
         self.flip_flag = False      # Flag if model has started flip maneuver
 
         self.t_tr = 0.0             # [s]
-        self.pos_tr = [0,0,0]     # [m]
-        self.vel_tr = [0,0,0]     # [m/s]
-        self.quat_tr = [0,0,0,1]  # [quat]
-        self.omega_tr = [0,0,0]   # [rad/s]
-        self.eul_tr = [0,0,0]
+        self.pos_tr = [0,0,0]       # [m]
+        self.vel_tr = [0,0,0]       # [m/s]
+        self.quat_tr = [0,0,0,1]    # [quat]
+        self.omega_tr = [0,0,0]     # [rad/s]
+        self.eul_tr = [0,0,0]       # [deg]
 
-        self.Tau_tr = 0.0
-        self.Theta_x_tr = 0.0           # [rad/s]
-        self.Theta_y_tr = 0.0           # [rad/s]
+        self.Tau_tr = 0.0           # [s]
+        self.Theta_x_tr = 0.0       # [rad/s]
+        self.Theta_y_tr = 0.0       # [rad/s]
         self.D_perp_tr = 0.0        # [m]
 
         self.FM_tr = [0,0,0,0]      # [N,N*mm]
 
         self.Policy_Flip_tr = 0.0
-        self.Policy_Action_tr = 0.0     # [N*mm]
+        self.Policy_Action_tr = 0.0 # [N*mm]
+
+        self.vel_tr_mag = 0.0       # [m/s]
+        self.phi_tr = 0.0           # [deg]
 
         ## INITIALIZE IMPACT VALUES
         self.impact_flag = False
@@ -340,7 +343,7 @@ class CrazyflieEnv_Base():
     # ========================
 
     def createCSV(self,logName):
-        """Sends service to CF_DataConverter to create CSV file to write logs to
+        """Sends service to CF_DataConverter to create CSV log file 
 
         Args:
             filePath (string): Send full path and file name to write to
@@ -348,7 +351,7 @@ class CrazyflieEnv_Base():
 
         ## CREATE SERVICE REQUEST MSG
         srv = loggingCMDRequest() 
-        srv.filePath = f"{self.logDir}/{logName}"
+        srv.filePath = os.path.join(self.logDir,logName)
         srv.Logging_CMD = 0
 
         ## SEND LOGGING REQUEST VIA SERVICE
@@ -360,19 +363,19 @@ class CrazyflieEnv_Base():
 
         ## CREATE SERVICE REQUEST MSG
         srv = loggingCMDRequest()
-        srv.filePath = f"{self.logDir}/{logName}"
+        srv.filePath = os.path.join(self.logDir,logName)
         srv.Logging_CMD = 1
 
         ## SEND LOGGING REQUEST VIA SERVICE
         self.callService('/CF_DC/DataLogging',srv,loggingCMD)
 
     def capLogging(self,logName):
-        """Cap logging values with IC,Flip, and Impact conditions and stop logging
+        """Cap logging values with Flight, Flip, and Impact conditions and stop continuous logging
         """        
 
         ## CREATE SERVICE REQUEST MSG
         srv = loggingCMDRequest()
-        srv.filePath = f"{self.logDir}/{logName}"
+        srv.filePath = os.path.join(self.logDir,logName)
         srv.Logging_CMD = 2
         srv.error_string = self.error_str # String for why logging was capped
         
@@ -393,20 +396,24 @@ class CrazyflieEnv_Base():
         if rospy.get_param('/DATA_TYPE') == "EXP":
             self.t = StateData_msg.header.stamp.to_sec()
 
-        self.pos = np.round([ StateData_msg.Pose.position.x,
-                                StateData_msg.Pose.position.y,
-                                StateData_msg.Pose.position.z],3)
+        self.pos = np.round([StateData_msg.Pose.position.x,
+                             StateData_msg.Pose.position.y,
+                             StateData_msg.Pose.position.z],3)
 
-        self.eul = np.round([ StateData_msg.Eul.x,
-                                StateData_msg.Eul.y,
-                                StateData_msg.Eul.z],3)
+        self.vel = np.round([StateData_msg.Twist.linear.x,
+                             StateData_msg.Twist.linear.y,
+                             StateData_msg.Twist.linear.z],3)
 
-        ## CF_TWIST
-        self.vel = np.round([ StateData_msg.Twist.linear.x,
-                                StateData_msg.Twist.linear.y,
-                                StateData_msg.Twist.linear.z],3)
+        self.eul = np.round([StateData_msg.Eul.x,
+                             StateData_msg.Eul.y,
+                             StateData_msg.Eul.z],3)
 
-        ## CF_VISUAL STATES
+        self.omega = np.round([StateData_msg.Twist.angular.x,
+                               StateData_msg.Twist.angular.y,
+                               StateData_msg.Twist.angular.z],3)
+
+
+        ## VISUAL STATES
         self.Tau = np.round(StateData_msg.Tau,3)
         self.Theta_x = np.round(StateData_msg.Theta_x,3)
         self.Theta_y = np.round(StateData_msg.Theta_y,3)
@@ -416,28 +423,45 @@ class CrazyflieEnv_Base():
 
     def CF_FlipDataCallback(self,FlipData_msg):
 
-        ## FLIP FLAGS
+        ## FLIP FLAG
         self.flip_flag = FlipData_msg.flip_flag
 
-        self.pos_tr = FlipData_msg.Pose_tr.position
-        self.vel_tr = FlipData_msg.Twist_tr.linear
-        self.eul_tr = FlipData_msg.Eul_tr
-        self.omega_tr = FlipData_msg.Twist_tr.angular
+        if FlipData_msg.flip_flag == True:
 
-        self.Tau_tr = FlipData_msg.Tau_tr
-        self.Theta_x_tr = FlipData_msg.Theta_x_tr
-        self.Theta_y_tr = FlipData_msg.Theta_y_tr
-        self.D_perp_tr = FlipData_msg.D_perp_tr
+            ## FLIP TRIGGERING CONDITIONS
+            self.pos_tr = np.round([FlipData_msg.Pose_tr.position.x,
+                                    FlipData_msg.Pose_tr.position.y,
+                                    FlipData_msg.Pose_tr.position.z],3)
 
-        self.Policy_Flip_tr = FlipData_msg.Policy_Flip_tr
-        self.Policy_Action_tr = FlipData_msg.Policy_Action_tr
+            self.vel_tr = np.round([FlipData_msg.Twist_tr.linear.x,
+                                    FlipData_msg.Twist_tr.linear.y,
+                                    FlipData_msg.Twist_tr.linear.z],3)
 
-        self.vel_tr_mag = np.sqrt(self.vel_tr.x**2 + self.vel_tr.z**2)
-        self.phi_tr = np.rad2deg(np.arctan2(self.vel_tr.z,self.vel_tr.x))
+            self.eul_tr = np.round([FlipData_msg.Eul_tr.x,
+                                    FlipData_msg.Eul_tr.y,
+                                    FlipData_msg.Eul_tr.z],3)
+
+            self.omega_tr = np.round([FlipData_msg.Twist_tr.angular.x,
+                                    FlipData_msg.Twist_tr.angular.y,
+                                    FlipData_msg.Twist_tr.angular.z],3)
+            
+            self.vel_tr_mag = np.sqrt(self.vel_tr[0]**2 + self.vel_tr[2]**2)
+            self.phi_tr = np.rad2deg(np.arctan2(self.vel_tr[2],self.vel_tr[0]))
+
+            ## POLICY TRIGGERING VALUES
+            self.Tau_tr = FlipData_msg.Tau_tr
+            self.Theta_x_tr = FlipData_msg.Theta_x_tr
+            self.Theta_y_tr = FlipData_msg.Theta_y_tr
+            self.D_perp_tr = FlipData_msg.D_perp_tr
+
+            ## POLICY ACTIONS
+            self.Policy_Flip_tr = FlipData_msg.Policy_Flip_tr
+            self.Policy_Action_tr = FlipData_msg.Policy_Action_tr
+
 
     def CF_ImpactDataCallback(self,ImpactData_msg):
 
-        if rospy.get_param('/DATA_TYPE') == "SIM":
+        if rospy.get_param('/DATA_TYPE') == "SIM": ## Impact values only good in simulation
 
             ## IMPACT FLAGS
             self.impact_flag = ImpactData_msg.impact_flag
@@ -445,13 +469,22 @@ class CrazyflieEnv_Base():
             self.pad_connections = ImpactData_msg.Pad_Connections
 
 
-            ## CF_TWIST (IMPACT)
-            self.pos_impact = ImpactData_msg.Pose_impact.position
-            self.vel_impact = ImpactData_msg.Twist_impact.linear
+            ## IMPACT CONDITIONS
+            self.pos_impact = np.round([ImpactData_msg.Pose_impact.position.x,
+                                        ImpactData_msg.Pose_impact.position.y,
+                                        ImpactData_msg.Pose_impact.position.z],3)
 
-            self.eul_impact = ImpactData_msg.Eul_impact
-            self.omega_impact = ImpactData_msg.Twist_impact.angular
+            self.vel_impact = np.round([ImpactData_msg.Twist_impact.linear.x,
+                                        ImpactData_msg.Twist_impact.linear.y,
+                                        ImpactData_msg.Twist_impact.linear.z],3)
 
+            self.eul_impact = np.round([ImpactData_msg.Eul_impact.x,
+                                        ImpactData_msg.Eul_impact.y,
+                                        ImpactData_msg.Eul_impact.z],3)
+
+            self.omega_impact = np.round([ImpactData_msg.Twist_impact.angular.x,
+                                          ImpactData_msg.Twist_impact.angular.y,
+                                          ImpactData_msg.Twist_impact.angular.z],3)
 
 
     def CF_MiscDataCallback(self,MiscData_msg):        

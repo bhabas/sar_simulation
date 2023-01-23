@@ -1,0 +1,4 @@
+Vel_d,Phi_d,Trial_num,--,Pad_Connections,Body_Contact,Vel_flip,Phi_flip,Tau_tr,Theta_x_tr,D_perp_tr,Policy_tr,Policy_action,Vx_tr,Vz_tr,reward,reward_vals
+2.0,60,0,--,0,True,1.29,61.59,0.0,0.0,0.0,0.0,0.0,0.614,1.135,0,[0. 0. 0. 0. 0.]
+2.0,60,1,--,0,True,1.29,61.59,0.0,0.0,0.0,0.0,0.0,0.614,1.135,0,[0. 0. 0. 0. 0.]
+2.0,60,2,--,0,True,1.29,61.59,0.0,0.0,0.0,0.0,0.0,0.614,1.135,0,[0. 0. 0. 0. 0.]

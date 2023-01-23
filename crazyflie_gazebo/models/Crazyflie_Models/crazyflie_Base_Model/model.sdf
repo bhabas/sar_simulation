@@ -87,11 +87,44 @@
         </material>
       </visual>
 
-      <visual name='CF_Battery_Holder'>
+      <visual name='CF_AI_Deck_PCB'>
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Base_Model/meshes/CF_Assembly - Battery_Holder1-1.STL</uri>
+            <uri>model://crazyflie_Base_Model/meshes/CF_Assembly - AI_Deck-2 AI_Deck_PCB-1.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient> 0.03 0.37 0.014 1.0</ambient>
+          <diffuse> 0.03 0.37 0.014 1.0</diffuse>
+          <specular>0.03 0.37 0.014 1.0</specular>
+          <lighting>1</lighting>
+        </material>
+      </visual>
+
+      <visual name='CF_AI_Deck_Components'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://crazyflie_Base_Model/meshes/CF_Assembly - AI_Deck-2 AI_Deck_Components-1.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+          <lighting>1</lighting>
+        </material>
+      </visual>
+
+      <visual name='CF_AI_Deck_Camera'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://crazyflie_Base_Model/meshes/CF_Assembly - AI_Deck-2 AI_Deck_Camera-2.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -354,8 +387,26 @@
         </surface>
       </collision>
     </link>
-    <link name='body_sensors'>
-      <pose>0 0 0.012 0 0 0</pose>
+    <link name='camera_sensor'>
+      <pose>0.027 0 0.008 0 0 0</pose>
+      <visual name='camera_center'>
+        <cast_shadows>0</cast_shadows>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <sphere>
+            <radius>0.002</radius>
+          </sphere>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Blue</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+          <shader type='pixel'>
+            <normal_map>__default__</normal_map>
+          </shader>
+        </material>
+      </visual>
       <inertial>
         <mass>0.000001</mass>
         <inertia>
@@ -372,41 +423,6 @@
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
-
-      <sensor name='head_hokuyo_sensor' type='ray'>
-        <pose>0 0 0 0 -1.57 0</pose>
-        <visualize>1</visualize>
-        <update_rate>40</update_rate>
-        <ray>
-          <scan>
-            <horizontal>
-              <samples>1</samples>
-              <resolution>1</resolution>
-              <min_angle>0</min_angle>
-              <max_angle>0.1</max_angle>
-            </horizontal>
-            <vertical>
-              <samples>1</samples>
-              <min_angle>0</min_angle>
-              <max_angle>0</max_angle>
-            </vertical>
-          </scan>
-          <range>
-            <min>0.01</min>
-            <max>4</max>
-            <resolution>0.01</resolution>
-          </range>
-          <noise>
-            <type>gaussian</type>
-            <mean>0.0</mean>
-            <stddev>0.0035</stddev>
-          </noise>
-        </ray>
-        <plugin name='gazebo_ros_head_hokuyo_controller' filename='libgazebo_ros_laser.so'>
-          <topicName>/CF_Internal/Laser_sensor</topicName>
-          <frameName>crazyflie_body</frameName>
-        </plugin>
-      </sensor>
 
       <sensor type="camera" name="camera1">
         <pose>0 0 0 0 -1.5708 1.5708</pose>
@@ -446,7 +462,7 @@
           <cameraName>CF_Internal/camera</cameraName>
           <imageTopicName>image_raw</imageTopicName>
           <cameraInfoTopicName>camera_info</cameraInfoTopicName>
-          <frameName>body_sensors</frameName>
+          <frameName>camera_sensor</frameName>
           <hackBaseline>0.0</hackBaseline>
           <distortionK1>0.0</distortionK1>
           <distortionK2>0.0</distortionK2>
@@ -814,7 +830,7 @@
     </joint>
     <joint name='sensor_joint' type='fixed'>
       <parent>crazyflie_body</parent>
-      <child>body_sensors</child>
+      <child>camera_sensor</child>
       <pose>0 0 0.15 0 -0 0</pose>
       <physics>
         <ode>
@@ -898,7 +914,7 @@
 
     <plugin name='OpticalFlow_plugin' filename='libOpticalFlow_plugin.so'>
       <updateRate>100</updateRate>
-      <bodyName>body_sensors</bodyName>
+      <bodyName>camera_sensor</bodyName>
       <topicName>/CF_Internal/OpticalFlow_Values</topicName>
       <Theta_x_gaussianNoise>0.0</Theta_x_gaussianNoise>
       <Theta_y_gaussianNoise>0.0</Theta_y_gaussianNoise>

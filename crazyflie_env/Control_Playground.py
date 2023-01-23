@@ -155,9 +155,9 @@ def cmd_send(env,logName):
                 str_input = env.userInput("Approve start position (y/n): ",str)
 
                 if str_input == 'y':
-                    env.SendCmd('P2P_traj',cmd_vals=[env.posCF[0],x_0,env.accCF_max[0]],cmd_flag=0)
-                    env.SendCmd('P2P_traj',cmd_vals=[env.posCF[1],0.0,env.accCF_max[1]],cmd_flag=1)
-                    env.SendCmd('P2P_traj',cmd_vals=[env.posCF[2],z_0,env.accCF_max[2]],cmd_flag=2)
+                    env.SendCmd('P2P_traj',cmd_vals=[env.pos[0],x_0,env.accCF_max[0]],cmd_flag=0)
+                    env.SendCmd('P2P_traj',cmd_vals=[env.pos[1],0.0,env.accCF_max[1]],cmd_flag=1)
+                    env.SendCmd('P2P_traj',cmd_vals=[env.pos[2],z_0,env.accCF_max[2]],cmd_flag=2)
 
                     str_input = env.userInput("Approve flight (y/n): ",str)
                     if str_input == 'y':
@@ -199,7 +199,7 @@ def cmd_send(env,logName):
                 Vz_d = V_d*np.sin(phi_rad)
 
                 ## ESTIMATE IMPACT POINT
-                env.Vel_Launch(env.posCF,[Vx_d,Vy_d,Vz_d])
+                env.Vel_Launch(env.pos,[Vx_d,Vy_d,Vz_d])
                 env.gazebo_unpause_physics()
                 
                     
