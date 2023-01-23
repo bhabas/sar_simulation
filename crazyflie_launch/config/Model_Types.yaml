@@ -26,7 +26,7 @@ CF_Type:
       i_range_R_z: 0.5
 
     Config:
-
+      ## THESE INERTIAL VALUES ARE ONLY FOR CONTROLLER, NOT SIMULATION PHYSICS
       Base_Model:       # Crazyflie Base_Model
         Initials: BM
         Mass: 34.3e-3   # [kg]

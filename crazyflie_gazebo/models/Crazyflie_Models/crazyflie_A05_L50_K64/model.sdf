@@ -8,14 +8,14 @@
 
     <link name='leg1'>
       <inertial>
-        <mass>570.0E-6</mass>
+        <mass>0.570e-3</mass>
         <inertia>
-          <ixx>155E-9</ixx>
+          <ixx>155e-9</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>155E-9</iyy>
+          <iyy>155e-9</iyy>
           <iyz>0</iyz>
-          <izz>2.5E-9</izz>
+          <izz>2.5e-9</izz>
         </inertia>
         <pose>0 0 -0.025 0 0 0 </pose>
       </inertial>
@@ -43,14 +43,14 @@
     </link>
     <link name='leg2'>
       <inertial>
-        <mass>570.0E-6</mass>
+        <mass>0.570e-3</mass>
         <inertia>
-          <ixx>155E-9</ixx>
+          <ixx>155e-9</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>155E-9</iyy>
+          <iyy>155e-9</iyy>
           <iyz>0</iyz>
-          <izz>2.5E-9</izz>
+          <izz>2.5e-9</izz>
         </inertia>
         <pose>0 0 -0.025 0 0 0 </pose>
       </inertial>
@@ -78,14 +78,14 @@
     </link>
     <link name='leg3'>
       <inertial>
-        <mass>570.0E-6</mass>
+        <mass>0.570e-3</mass>
         <inertia>
-          <ixx>155E-9</ixx>
+          <ixx>155e-9</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>155E-9</iyy>
+          <iyy>155e-9</iyy>
           <iyz>0</iyz>
-          <izz>2.5E-9</izz>
+          <izz>2.5e-9</izz>
         </inertia>
         <pose>0 0 -0.025 0 0 0 </pose>
       </inertial>
@@ -113,14 +113,14 @@
     </link>
     <link name='leg4'>
       <inertial>
-        <mass>570.0E-6</mass>
+        <mass>0.570e-3</mass>
         <inertia>
-          <ixx>155E-9</ixx>
+          <ixx>155e-9</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>155E-9</iyy>
+          <iyy>155e-9</iyy>
           <iyz>0</iyz>
-          <izz>2.5E-9</izz>
+          <izz>2.5e-9</izz>
         </inertia>
         <pose>0 0 -0.025 0 0 0 </pose>
       </inertial>
