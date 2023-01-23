@@ -31,11 +31,11 @@ class DataParser:
         self.FilePath = os.path.join(self.DirPath,self.FileName)
 
  
-        ## CHECK IF DATA HAS ALREADY BEEN COMPILED
-        # pre_compiled_Flag = input('Is the data already compiled? (y/n): ')
+        # CHECK IF DATA HAS ALREADY BEEN COMPILED
+        pre_compiled_Flag = input('Is the data already compiled? (y/n): ')
 
         ## PARSE CSV DATA
-        self.Data_df = pd.read_csv(self.FilePath,quotechar = '"',low_memory = False)
+        self.Data_df = pd.read_csv(self.FilePath,quotechar='"',low_memory=False,comment="#")
         self.t = self.Data_df['t'].to_numpy()
         self.x = self.Data_df['x'].to_numpy()
         self.y = self.Data_df['y'].to_numpy()
@@ -87,8 +87,7 @@ class DataParser:
 
         plt.show()
 
-    def OpticalFlow_Calc(self,cur_img,prev_img,delta_t):
-
+    def OF_Calc_Raw(self,cur_img,prev_img,delta_t):
 
         ## DEFINE KERNALS USED TO CALCULATE INTENSITY GRADIENTS
         Ku = np.array([ # SOBEL KERNAL (U-DIRECTION)
@@ -109,7 +108,7 @@ class DataParser:
         u_p = np.arange(0,HEIGHT_PIXELS,1)
         V_p,U_p = np.meshgrid(v_p,u_p)
 
-        ## DEFINE IMAGE SENSOR COORDS IN [m]
+        ## DEFINE IMAGE SENSOR COORDS [m]
         V_grid = -((V_p - O_vp)*w + w/2)
         U_grid =  ((U_p - O_up)*w + w/2)
 
@@ -146,32 +145,54 @@ class DataParser:
         b = np.linalg.pinv(X)@y
         b = b.flatten()
 
-
-        #     self.OFy_est[n] = b[0]
-        #     self.OFx_est[n] = b[1]
-        #     self.Tau_est[n] = 1/(b[2])
-
-        #     Prev_img = Cur_img
-
         return b
 
+    def OpticalFlow_Writer(self):
 
+        Theta_x_arr = [np.nan]
+        Theta_y_arr = [np.nan]
+        Tau_arr = [np.nan]
+
+        for ii in range(1,len(self.t)):
+            
+            ## COLLECT CURRENT AND PREVIOUS IMAGE
+            prev_img = self.grabImage(ii-1)
+            cur_img = self.grabImage(ii)
+            
+            ## CALCULATE TIME BETWEEN IMAGES
+            t_prev = self.grabState('t',ii-1)
+            t_cur = self.grabState('t',ii)
+            t_delta = t_cur - t_prev
+
+            ## CALCULATE OPTICAL FLOW VALUES
+            Theta_x_est,Theta_y_est,Theta_z_est = self.OF_Calc_Raw(cur_img,prev_img,t_delta)
+
+            Theta_x_est,Theta_y_est,Tau_est = np.round([Theta_x_est,Theta_y_est,1/Theta_z_est],3)
+
+            ## RECORD ESTIMATED OPTICAL FLOW VALUES
+            Theta_x_arr.append(Theta_x_est)
+            Theta_y_arr.append(Theta_y_est)
+            Tau_arr.append(Tau_est)
+
+            print(f"Compiling Data: {ii}/{len(self.t)}")
+
+
+        ## CREATE NEW DATAFRAME
+        self.df = self.Data_df.iloc[:,:-1]
+        self.df['Tau_est'] = Tau_arr
+        self.df['Theta_x_est'] = Theta_x_arr
+        self.df['Theta_y_est'] = Theta_y_arr
+        self.df['Camera_Data'] = self.Data_df.iloc[:,-1]
+
+        FilePath = os.path.join(self.DirPath,f"Compiled_{self.FileName}")
+        self.df.to_csv(FilePath,index=False)
+
+
+
+        
 
 if __name__ == '__main__':
 
-    Parser = DataParser() #init class
-
-    idx = 1
-    prev_img = Parser.grabImage(idx-1)
-    cur_img = Parser.grabImage(idx)
-
-    t_prev = Parser.grabState('t',idx-1)
-    t_cur = Parser.grabState('t',idx)
-
-    delta_t = t_cur-t_prev
-
-
-    # Parser.Plot_Image(img)
-    # Parser.Plot_Image()
-    b = Parser.OpticalFlow_Calc(cur_img,prev_img,delta_t)
-    print(b[2]**-1)
+    Parser = DataParser() 
+    Parser.OpticalFlow_Writer()
+    
