@@ -17,7 +17,7 @@
           <iyz>0</iyz>
           <izz>2.313e-9</izz>
         </inertia>
-        <pose>0 0 -0.0375 0 0 0</pose>
+        <pose>0 0 -0.0375 0 0 0 </pose>
       </inertial>
       <pose>2.07E-02 2.07E-02 -3.25E-03 0 -0.524 0.785</pose>
       <gravity>1</gravity>
@@ -52,7 +52,7 @@
           <iyz>0</iyz>
           <izz>2.313e-9</izz>
         </inertia>
-        <pose>0 0 -0.0375 0 0 0</pose>
+        <pose>0 0 -0.0375 0 0 0 </pose>
       </inertial>
       <pose>-2.07E-02 2.07E-02 -3.25E-03 0 -0.524 2.356</pose>
       <gravity>1</gravity>
@@ -87,7 +87,7 @@
           <iyz>0</iyz>
           <izz>2.313e-9</izz>
         </inertia>
-        <pose>0 0 -0.0375 0 0 0</pose>
+        <pose>0 0 -0.0375 0 0 0 </pose>
       </inertial>
       <pose>-2.07E-02 -2.07E-02 -3.25E-03 0 -0.524 -2.356</pose>
       <gravity>1</gravity>
@@ -122,7 +122,7 @@
           <iyz>0</iyz>
           <izz>2.313e-9</izz>
         </inertia>
-        <pose>0 0 -0.0375 0 0 0</pose>
+        <pose>0 0 -0.0375 0 0 0 </pose>
       </inertial>
       <pose>2.07E-02 -2.07E-02 -3.25E-03 0 -0.524 -0.785</pose>
       <gravity>1</gravity>
