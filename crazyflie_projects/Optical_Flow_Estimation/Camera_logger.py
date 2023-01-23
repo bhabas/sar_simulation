@@ -19,10 +19,10 @@ class CameraLogger:
 
         ## INIT LOGGING PARAMETERS
         self.Username = getpass.getuser()
-        self.Path = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Optical_Flow_Estimation/local_logs' 
+        self.DirPath = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Optical_Flow_Estimation/local_logs' 
         # self.FileName = input("Input the name of the log file:\n")
         self.FileName = "ExampleLog.csv"
-        self.Path = os.path.join(self.Path,self.FileName)
+        self.FilePath = os.path.join(self.DirPath,self.FileName)
         self.Create_csv()
 
         np.set_printoptions(threshold = sys.maxsize) # Print full string without truncation
@@ -52,7 +52,7 @@ class CameraLogger:
 
     def Create_csv(self):
 
-        with open(self.Path,mode = 'w') as logfile:
+        with open(self.FilePath,mode = 'w') as logfile:
             writer = csv.writer(logfile, delimiter = ',',quotechar = '"',quoting = csv.QUOTE_MINIMAL)
             writer.writerow([
                 't',
@@ -87,7 +87,7 @@ class CameraLogger:
             ## CLEAN CAMERA STRING
             Camera_data = np.array2string(self.Camera_raw,separator = ' ').replace('\n','').replace('[','').replace(']','') # Convert array to into string
         
-            with open(self.Path,mode = 'a') as logfile:
+            with open(self.FilePath,mode = 'a') as logfile:
                 writer = csv.writer(logfile, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
                 writer.writerow([
                 self.t,
