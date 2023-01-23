@@ -9,17 +9,21 @@ PLANE_SETTINGS:
 
 QUAD_SETTINGS:
   CF_Type: "Standard"
-  CF_Config: "Narrow_Long"
+  CF_Config: "A30_L75_K08"
+
+
   Cam_Sensor: False
 
-  Policy_Type: "PARAM_OPTIM"
+  # Policy_Type: "PARAM_OPTIM"
   # Policy_Type: "SVL_POLICY" 
   # Policy_Type: "DEEP_RL" 
+  Policy_Type: "DEEP_RL_SB3" 
+
 
 SIM_SETTINGS:
   GUI_Flag: True
-  Pause_Flag: False
-  Sim_Speed: 2.0
+  Pause_Flag: True
+  Sim_Speed: 0.5
   Sim_Slowdown_Speed: 0.4
   Landing_Slowdown_Flag: True
 

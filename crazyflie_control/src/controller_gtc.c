@@ -173,6 +173,7 @@ bool safeModeFlag = false;
 
 bool execute_P2P_traj = false;
 bool execute_vel_traj = false;
+bool execute_GZ_vel_traj = false;
 bool policy_armed_flag = false;
 bool camera_sensor_active = false;
 
@@ -308,6 +309,7 @@ void controllerGTCReset(void)
     // RESET TRAJECTORY VALUES
     execute_vel_traj = false;
     execute_P2P_traj = false;
+    execute_GZ_vel_traj = false;
     P2P_traj_flag = vzero();
     s_0_t = vzero();
     s_f_t = vzero();
@@ -383,7 +385,11 @@ void GTC_Command(setpoint_t *setpoint)
             
             break;
 
-        
+        case 4: // Euler Angle
+
+            // TODO: ADD ANGLE SETPOINT OPTION INTO CONTROLLER FOR ANGLE BASED POLICY
+
+            break;        
 
         case 5: // Hard Set All Motorspeeds to Zero
             motorstop_flag = true;
@@ -516,6 +522,47 @@ void GTC_Command(setpoint_t *setpoint)
 
             break;
 
+
+        case 90: // Gazebo Velocity Trajectory (Instantaneous Acceleration)
+
+            traj_type = (axis_direction)setpoint->cmd_flag;
+
+            switch(traj_type){
+
+                case x_axis:
+
+                    s_0_t.x = setpoint->cmd_val1;   // Starting position [m]
+                    v_t.x = setpoint->cmd_val2;     // Desired velocity [m/s]
+                    a_t.x = 0.0f;                   // Acceleration [m/s^2]
+
+                    t_traj.x = 0.0f; // Reset timer
+                    execute_GZ_vel_traj = true;
+                    break;
+
+                case y_axis:
+
+                    s_0_t.y = setpoint->cmd_val1;
+                    v_t.y = setpoint->cmd_val2;
+                    a_t.y = 0.0f;
+
+                    t_traj.y = 0.0f;
+                    execute_GZ_vel_traj = true;
+                    break;
+
+                case z_axis:
+
+                    s_0_t.z = setpoint->cmd_val1;
+                    v_t.z = setpoint->cmd_val2;
+                    a_t.z = 0.0f;
+
+                    t_traj.z = 0.0f;
+                    execute_GZ_vel_traj = true;
+                    break;
+                    
+            }
+
+            break;
+
         
 
     }
@@ -566,6 +613,31 @@ void velocity_Traj()
         v_d.idx[2] = v_t.idx[2]; // vz
         a_d.idx[2] = 0.0f;
     }
+
+    t_traj.idx[0] += dt;
+    
+}
+
+void GZ_velocity_Traj() // Gazebo Velocity Trajectory (Instantaneous Acceleration)
+{
+
+    float t = t_traj.idx[0];
+
+    // CONSTANT X-VELOCITY TRAJECTORY
+    x_d.idx[0] = v_t.idx[0]*t + s_0_t.idx[0]; // vx*t + x_0
+    v_d.idx[0] = v_t.idx[0]; // vx
+    a_d.idx[0] = 0.0;
+
+    // CONSTANT Y-VELOCITY TRAJECTORY
+    x_d.idx[1] = v_t.idx[1]*t + s_0_t.idx[1]; // vy*t + x_0
+    v_d.idx[1] = v_t.idx[1]; // vy
+    a_d.idx[1] = 0.0f;
+
+    // CONSTANT Z-VELOCITY TRAJECTORY
+    x_d.idx[2] = v_t.idx[2]*t + s_0_t.idx[2]; // vz*t + z_0
+    v_d.idx[2] = v_t.idx[2]; // vz
+    a_d.idx[2] = 0.0f;
+    
 
     t_traj.idx[0] += dt;
     
@@ -644,29 +716,29 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
                 case PARAM_OPTIM:
                     if(Tau <= Tau_thr && onceFlag == false && V_mag > 0.2){
-                    onceFlag = true;
-                    flip_flag = true;  
+                        onceFlag = true;
+                        flip_flag = true;  
 
-                    // UPDATE AND RECORD FLIP VALUES
-                    statePos_tr = statePos;
-                    stateVel_tr = stateVel;
-                    stateQuat_tr = stateQuat;
-                    stateOmega_tr = stateOmega;
+                        // UPDATE AND RECORD FLIP VALUES
+                        statePos_tr = statePos;
+                        stateVel_tr = stateVel;
+                        stateQuat_tr = stateQuat;
+                        stateOmega_tr = stateOmega;
 
-                    Tau_tr = Tau;
-                    Theta_x_tr = Theta_x;
-                    Theta_y_tr = Theta_y;
-                    D_perp_tr = D_perp;
+                        Tau_tr = Tau;
+                        Theta_x_tr = Theta_x;
+                        Theta_y_tr = Theta_y;
+                        D_perp_tr = D_perp;
 
-                
-                    M_d.x = 0.0f;
-                    M_d.y = -G1*1e-3f;
-                    M_d.z = 0.0f;
+                    
+                        M_d.x = 0.0f;
+                        M_d.y = -G1*1e-3f;
+                        M_d.z = 0.0f;
 
-                    F_thrust_flip = 0.0;
-                    M_x_flip = M_d.x*1e3f;
-                    M_y_flip = M_d.y*1e3f;
-                    M_z_flip = M_d.z*1e3f;
+                        F_thrust_flip = 0.0;
+                        M_x_flip = M_d.x*1e3f;
+                        M_y_flip = M_d.y*1e3f;
+                        M_z_flip = M_d.z*1e3f;
                     }
                     
                     break;
@@ -745,6 +817,41 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
                     break;
 
+                case DEEP_RL_SB3:
+
+                    if(onceFlag == false){
+
+                        onceFlag = true;
+                        flip_flag = true;
+
+                        // UPDATE AND RECORD FLIP VALUES
+                        statePos_tr = statePos;
+                        stateVel_tr = stateVel;
+                        stateQuat_tr = stateQuat;
+                        stateOmega_tr = stateOmega;
+
+                        Tau_tr = Tau;
+                        Theta_x_tr = Theta_x;
+                        Theta_y_tr = Theta_y;
+                        D_perp_tr = D_perp;
+
+                        Policy_Flip_tr = NAN;
+                        Policy_Action_tr = G1;
+
+
+                        M_d.x = 0.0f;
+                        M_d.y = G1*1e-3f;
+                        M_d.z = 0.0f;
+
+                        F_thrust_flip = 0.0;
+                        M_x_flip = M_d.x*1e3f;
+                        M_y_flip = M_d.y*1e3f;
+                        M_z_flip = M_d.z*1e3f;
+
+                    }
+
+                    break;
+
             }
             
             
@@ -764,6 +871,9 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         }
         else if(execute_P2P_traj){
             point2point_Traj();
+        }
+        else if(execute_GZ_vel_traj){
+            GZ_velocity_Traj();
         }
 
         

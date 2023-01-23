@@ -1,10 +1,12 @@
 ## STANDARD IMPORTS
 import os
-from datetime import datetime
+from datetime import datetime,timedelta
 import numpy as np
 import pandas as pd
 import torch as th
 import yaml
+import csv
+import time 
 
 ## PLOTTING IMPORTS
 import matplotlib.pyplot as plt
@@ -326,7 +328,7 @@ class Policy_Trainer_DeepRL():
                 action,_ = self.model.predict(obs)
                 obs,reward,done,info = self.env.step(action)
 
-    def train_model(self,total_timesteps=2e6,save_freq=500,reset_timesteps=False):
+    def train_model(self,total_timesteps=2e6,save_freq=1000,reset_timesteps=False):
         """Script to train model via Deep RL method
 
         Args:
@@ -539,6 +541,111 @@ class Policy_Trainer_DeepRL():
         with open(config_path, 'w') as outfile:
             yaml.dump(data,outfile,default_flow_style=False,sort_keys=False)
 
+    def test_landing_performance(self,fileName=None,Vel_range=[1.75,3.0],Phi_range=[10,90],Vel_inc=0.25,Phi_inc=5,n_episodes=5):
+
+        if fileName == None:
+            fileName = "PolicyPerformance_Data.csv"
+        filePath = os.path.join(self.TB_log_path,fileName)
+
+        Vel_arr = np.arange(Vel_range[0], Vel_range[1] + Vel_inc, Vel_inc)
+        Phi_arr = np.arange(Phi_range[0], Phi_range[1] + Phi_inc, Phi_inc)
+
+        
+
+        def EMA(cur_val,prev_val,alpha = 0.15):
+            """Exponential Moving Average Filter
+
+            Args:
+                cur_val (float): Current Value
+                prev_val (float): Previous Value
+                alpha (float, optional): Smoothing factor. Similar to moving average window (k), 
+                by alpha = 2/(k+1). Defaults to 0.15.
+
+            Returns:
+                float: Current average value
+            """            
+            
+            return alpha*cur_val + (1-alpha)*(prev_val)
+
+
+        ## TIME ESTIMATION FILTER INITIALIZATION
+        num_trials = len(Vel_arr)*len(Phi_arr)*n_episodes
+        idx = 0
+        t_delta = 120
+        t_delta_prev = 120
+
+        ## WRITE FILE HEADER IF NO FILE EXISTS
+        if not os.path.exists(filePath):
+            with open(filePath,'w') as file:
+                writer = csv.writer(file,delimiter=',')
+                writer.writerow([
+                    "Vel_d", "Phi_d", "Trial_num",
+                    "--",
+                    "Pad_Connections","Body_Contact",
+
+                    "Vel_flip","Phi_flip",
+
+                    "Tau_tr",
+                    "Theta_x_tr",
+                    "D_perp_tr",
+                    
+                    "Policy_tr",
+                    "Policy_action",
+
+                    "Vx_tr",
+                    "Vz_tr",
+                    "reward","reward_vals",
+
+                ])
+        else:
+            pass
+
+        for Vel in Vel_arr:
+            for Phi in Phi_arr:
+                for K_ep in range(n_episodes):
+
+                    start_time = time.time()
+
+                    ## TEST POLICY FOR GIVEN FLIGHT CONDITIONS
+                    obs = self.env.reset(vel=Vel,phi=Phi)
+                    done = False
+                    while not done:
+                        action,_ = self.model.predict(obs)
+                        action = np.zeros_like(action)
+                        obs,reward,done,info = self.env.step(action)
+                            
+                    ## APPEND RECORDED VALUES TO FILE
+                    with open(filePath,'a') as file:
+                        writer = csv.writer(file,delimiter=',')
+                        writer.writerow([
+                            np.round(Vel,2),np.round(Phi,2),K_ep,
+                            "--",
+                            self.env.pad_connections,self.env.BodyContact_flag,
+
+                            np.round(self.env.vel_tr_mag,2),np.round(self.env.phi_tr,2),
+
+                            np.round(self.env.obs_tr[0],3),
+                            np.round(self.env.obs_tr[1],3),
+                            np.round(self.env.obs_tr[2],3),
+
+                            np.round(self.env.action_tr[0],3),
+                            np.round(self.env.action_tr[1],3),
+
+                            np.round(self.env.vel_tr[0],3),
+                            np.round(self.env.vel_tr[2],3),
+
+                            np.round(reward,3),
+                            np.round(self.env.reward_vals,3),
+                        ])
+
+                        ## CALCULATE AVERAGE TIME PER EPISODE
+                        t_delta = time.time() - start_time
+                        t_delta_avg = EMA(t_delta,t_delta_prev,alpha=0.2)
+                        t_delta_prev = t_delta_avg
+                        idx += 1
+
+                        TTC = round(t_delta_avg*(num_trials-idx)) # Time to completion
+                        print(f"Flight Conditions: ({Vel} m/s,{Phi} deg) \t Index: {idx}/{num_trials} \t Percentage: {100*idx/num_trials:.2f}% \t Time to Completion: {str(timedelta(seconds=TTC))}")
 
 
 if __name__ == '__main__':
@@ -546,23 +653,31 @@ if __name__ == '__main__':
 
     ## IMPORT ENVIRONMENTS
     from Envs.CrazyflieEnv_DeepRL import CrazyflieEnv_DeepRL
+    from Envs.CrazyflieEnv_DeepRL_Tau import CrazyflieEnv_DeepRL_Tau
+
     from Envs.CF_Env_2D import CF_Env_2D
 
     ## INITIATE ENVIRONMENT
-    env = CrazyflieEnv_DeepRL(GZ_Timeout=True)
+    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[1.0,3.0],Phi_range=[30,50])
     log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
+
+
+
 
     # ## CREATE NEW DEEP RL MODEL 
     # log_name = f"SAC--{current_time}--{env.modelInitials}"    
     # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     # PolicyTrainer.create_model()
-    # PolicyTrainer.train_model(save_freq=10)
-    
-    # # LOAD DEEP RL MODEL
-    # log_name = "SAC--01_02-16:17--NL_0"
-    # t_step_load = 20
+    # PolicyTrainer.train_model()
 
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.load_model(t_step_load)
-    # PolicyTrainer.train_model(save_freq=10)
+
+    
+    # LOAD DEEP RL MODEL
+    log_name = "SAC--01_21-16:07--NL_0"
+    t_step_load = 8000
+
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.load_model(t_step_load)
+    PolicyTrainer.train_model(reset_timesteps=False)
+    # PolicyTrainer.test_landing_performance(Vel_range=[2.0,3.0],Phi_range=[60,70])
 

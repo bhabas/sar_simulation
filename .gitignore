@@ -21,6 +21,7 @@ local_files/
 *.zip
 browse.vc.db*
 c_cpp_properities.json
+.vscode/
 # events*
 
 # Installer logs
