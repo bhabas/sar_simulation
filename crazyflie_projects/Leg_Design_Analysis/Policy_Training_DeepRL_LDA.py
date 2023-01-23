@@ -29,7 +29,7 @@ current_time = now.strftime("%m_%d-%H:%M")
 if __name__ == '__main__':
 
     ## INITIATE ENVIRONMENT
-    env = CrazyflieEnv_DeepRL_LDA(GZ_Timeout=True)
+    env = CrazyflieEnv_DeepRL_LDA(GZ_Timeout=True,Vel_range=[0.5,3.5],Phi_range=[30,90])
     log_dir = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/{env.env_name}"
 
     ## CREATE NEW DEEP RL MODEL 
