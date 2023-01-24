@@ -60,7 +60,7 @@ class Controller
             // CONTROLLER TOPICS
             CTRL_Data_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/CTRL/data",1);
             CTRL_Debug_Publisher = nh->advertise<crazyflie_msgs::CtrlDebug>("CTRL/debug",1);
-            CMD_Service = nh->advertiseService("/CTRL/Cmd_ctrl",&Controller::CMD_Callback,this);
+            CMD_Service = nh->advertiseService("/CTRL/Cmd_ctrl",&Controller::CMD_Service_Resp,this);
 
             // RL TOPICS
 
@@ -160,7 +160,7 @@ class Controller
         void IMU_Sensor_Callback(const sensor_msgs::Imu::ConstPtr &msg);
         void OF_Sensor_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg);
         void Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg);
-        bool CMD_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res);
+        bool CMD_Service_Resp(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res);
 
 
         void stabilizerLoop();
@@ -175,7 +175,7 @@ class Controller
 
 };
 
-bool Controller::CMD_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res)
+bool Controller::CMD_Service_Resp(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res)
 {
     res.srv_Success = true;
 
@@ -452,6 +452,10 @@ void Controller::loadParams()
     else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL")==0)
     {
         Policy = DEEP_RL;
+    }    
+    else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL_SB3")==0)
+    {
+        Policy = DEEP_RL_SB3;
     }    
 
 }

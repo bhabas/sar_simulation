@@ -371,6 +371,7 @@ void CF_DataConverter::RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &
     policy = msg->policy;
 
     reward = msg->reward;
+    reward_vals = msg->reward_vals;
 
     vel_d = msg->vel_d;
 
@@ -596,6 +597,11 @@ void CF_DataConverter::consoleOuput()
     else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL") == 0)
     {
         printf("Stuff: %.3f \tStuff: %.3f \n",Policy_Flip,Policy_Action);
+        printf("\n");
+    }
+    else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL_SB3") == 0)
+    {
+        printf("SB3");
         printf("\n");
     }
 
