@@ -611,7 +611,6 @@ class Policy_Trainer_DeepRL():
                     done = False
                     while not done:
                         action,_ = self.model.predict(obs)
-                        action = np.zeros_like(action)
                         obs,reward,done,info = self.env.step(action)
                             
                     ## APPEND RECORDED VALUES TO FILE
@@ -658,7 +657,7 @@ if __name__ == '__main__':
     from Envs.CF_Env_2D import CF_Env_2D
 
     ## INITIATE ENVIRONMENT
-    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[1.0,3.0],Phi_range=[30,50])
+    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[-30,90])
     log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
 
 
@@ -673,11 +672,11 @@ if __name__ == '__main__':
 
     
     # LOAD DEEP RL MODEL
-    log_name = "SAC--01_21-16:07--NL_0"
-    t_step_load = 8000
+    log_name = "SAC--01_23-14:46--LDA_A30_L75_K32_0"
+    t_step_load = 64000
 
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.load_model(t_step_load)
-    PolicyTrainer.train_model(reset_timesteps=False)
-    # PolicyTrainer.test_landing_performance(Vel_range=[2.0,3.0],Phi_range=[60,70])
+    # PolicyTrainer.train_model(reset_timesteps=False)
+    PolicyTrainer.test_landing_performance(Vel_range=[0.5,4.0],Phi_range=[-30,90])
 

@@ -1,15 +1,17 @@
 DATA_TYPE: "SIM"
 
 ENV_SETTINGS:
-  Ground_Name: "GroundPlane_Desert_Physical"
+  # Ground_Name: "GroundPlane_Desert_Physical"
+  Ground_Name: "GroundPlane_Desert_Visual"
+
 
 PLANE_SETTINGS:
   Plane_Model: "Standard_Plane"
-  Plane_Config: "180_deg"
+  Plane_Config: "135_deg"
 
 QUAD_SETTINGS:
   CF_Type: "Standard"
-  CF_Config: "A60_L100_K64"
+  CF_Config: "A30_L75_K32"
 
 
   Cam_Sensor: False
@@ -23,7 +25,7 @@ QUAD_SETTINGS:
 SIM_SETTINGS:
   GUI_Flag: True
   Pause_Flag: True
-  Sim_Speed: 0.5
+  Sim_Speed: 1.0
   Sim_Slowdown_Speed: 0.4
   Landing_Slowdown_Flag: True
 
