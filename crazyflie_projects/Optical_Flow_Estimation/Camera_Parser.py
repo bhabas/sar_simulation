@@ -27,12 +27,9 @@ class DataParser:
         self.Username = getpass.getuser()
         self.DirPath = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Optical_Flow_Estimation/local_logs' 
         # self.FileName = input("Input the name of the log file:\n")
-        self.FileName = "ExampleLog.csv"
+        self.FileName = "Compiled_ExampleLog2.csv"
         self.FilePath = os.path.join(self.DirPath,self.FileName)
 
- 
-        # CHECK IF DATA HAS ALREADY BEEN COMPILED
-        pre_compiled_Flag = input('Is the data already compiled? (y/n): ')
 
         ## PARSE CSV DATA
         self.Data_df = pd.read_csv(self.FilePath,quotechar='"',low_memory=False,comment="#")
@@ -62,6 +59,15 @@ class DataParser:
 
         self.Camera_data = self.Data_df["Camera_Data"].to_numpy()
 
+
+        # CHECK IF DATA HAS ALREADY BEEN COMPILED
+        pre_compiled_Flag = input('Is the data already compiled? (y/n): ')
+        if pre_compiled_Flag == 'y':
+            self.Tau_est = self.Data_df['Tau_est'].to_numpy()
+            self.Theta_x_est = self.Data_df['Theta_x_est'].to_numpy()
+            self.Theta_y_est = self.Data_df['Theta_y_est'].to_numpy()
+
+
         ## CONVERT IMAGE DATA FROM STRING TO INTEGER
         self.Camera_array = np.zeros((len(self.Camera_data), WIDTH_PIXELS*HEIGHT_PIXELS)) # Allocate space for camera data
         for n in range(0,self.Camera_data.size): # Make each row an array of ints
@@ -71,9 +77,12 @@ class DataParser:
 
         return self.Camera_array[idx].reshape(WIDTH_PIXELS,HEIGHT_PIXELS)
 
-    def grabState(self,state_str,idx):
+    def grabState(self,state_str,idx=None):
 
-        return self.Data_df[state_str][idx]
+        if idx == None:
+            return self.Data_df[state_str].to_numpy()
+        else:
+            return self.Data_df[state_str][idx]
 
 
     def Plot_Image(self,image_array):
@@ -194,5 +203,17 @@ class DataParser:
 if __name__ == '__main__':
 
     Parser = DataParser() 
-    Parser.OpticalFlow_Writer()
+    # Parser.OpticalFlow_Writer()
+
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(Parser.grabState('t'),Parser.grabState('Theta_x'))
+    ax.plot(Parser.grabState('t'),Parser.grabState('Theta_x_est'))
+
+
+    ax.grid()
+    ax.set_ylim(0,5)
+
+    plt.show()
     
