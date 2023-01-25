@@ -99,13 +99,13 @@ class DataParser:
     def OF_Calc_Raw(self,cur_img,prev_img,delta_t):
 
         ## DEFINE KERNALS USED TO CALCULATE INTENSITY GRADIENTS
-        Ku = np.array([ # SOBEL KERNAL (U-DIRECTION)
+        Kv = np.array([ # SOBEL KERNAL (U-DIRECTION)
             [-1,-2,-1],
             [ 0, 0, 0],
             [ 1, 2, 1]
         ]) 
 
-        Kv = np.array([ # SOBEL KERNAL (V--DIRECTION)
+        Ku = np.array([ # SOBEL KERNAL (V--DIRECTION)
             [ -1, 0, 1],
             [ -2, 0, 2],
             [ -1, 0, 1]
@@ -113,13 +113,13 @@ class DataParser:
 
         
         ## PRE-ALLOCATE IMAGE ARRAY [pixels]
-        v_p = np.arange(0,WIDTH_PIXELS,1)
-        u_p = np.arange(0,HEIGHT_PIXELS,1)
-        V_p,U_p = np.meshgrid(v_p,u_p)
+        u_p = np.arange(0,WIDTH_PIXELS,1)
+        v_p = np.arange(0,HEIGHT_PIXELS,1)
+        U_p,V_p = np.meshgrid(v_p,u_p)
 
         ## DEFINE IMAGE SENSOR COORDS [m]
-        V_grid = -((V_p - O_vp)*w + w/2)
-        U_grid =  ((U_p - O_up)*w + w/2)
+        U_grid = -((U_p - O_up)*w + w/2)
+        V_grid =  ((V_p - O_vp)*w + w/2)
 
         ## PRE-ALLOCATE INTENSITY GRADIENTS
         Iu = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
@@ -129,8 +129,8 @@ class DataParser:
         ## CALCULATE IMAGE GRADIENTS
         for ii in range(1, HEIGHT_PIXELS-1): 
             for jj in range(1, WIDTH_PIXELS-1):
-                Iu[ii,jj] = 1/(8*w)*np.sum(cur_img[ii-1:ii+2,jj-1:jj+2] * Ku)
-                Iv[ii,jj] = -1/(8*w)*np.sum(cur_img[ii-1:ii+2,jj-1:jj+2] * Kv)
+                Iu[ii,jj] = -1/(8*w)*np.sum(cur_img[ii-1:ii+2,jj-1:jj+2] * Ku)
+                Iv[ii,jj] =  1/(8*w)*np.sum(cur_img[ii-1:ii+2,jj-1:jj+2] * Kv)
 
         ## CALCULATE TIME GRADIENT AND RADIAL GRADIENT
         It = (cur_img - prev_img)/delta_t   # Time gradient
@@ -139,14 +139,14 @@ class DataParser:
 
         ## SOLVE LEAST SQUARES PROBLEM
         X = np.array([
-            [f*np.sum(Iu*Iu), f*np.sum(Iv*Iu), -np.sum(Ir*Iu)],
-            [f*np.sum(Iu*Iv), f*np.sum(Iv*Iv), -np.sum(Ir*Iv)],
-            [f*np.sum(Iu*Ir), f*np.sum(Iv*Ir), -np.sum(Ir*Ir)]
+            [f*np.sum(Iv*Iv), f*np.sum(Iu*Iv), -np.sum(Ir*Iv)],
+            [f*np.sum(Iv*Iu), f*np.sum(Iu*Iu), -np.sum(Ir*Iu)],
+            [f*np.sum(Iv*Ir), f*np.sum(Iu*Ir), -np.sum(Ir*Ir)]
         ])
 
         y = np.array([
-            [np.sum(It*Iu)],
             [np.sum(It*Iv)],
+            [np.sum(It*Iu)],
             [np.sum(It*Ir )]
         ])
 
