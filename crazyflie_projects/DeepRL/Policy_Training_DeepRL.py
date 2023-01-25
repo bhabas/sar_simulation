@@ -678,5 +678,5 @@ if __name__ == '__main__':
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.load_model(t_step_load)
     # PolicyTrainer.train_model(reset_timesteps=False)
-    PolicyTrainer.test_landing_performance(Vel_range=[0.5,4.0],Phi_range=[-30,90])
+    PolicyTrainer.test_landing_performance(Vel_range=[3.75,4.0],Phi_range=[-30,90])
 
