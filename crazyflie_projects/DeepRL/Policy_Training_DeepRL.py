@@ -685,7 +685,7 @@ class Policy_Trainer_DeepRL():
         # ax.scatter(np.radians(Theta_grid).flatten(),R_grid.flatten(),c=LR_interp.flatten(),cmap=cmap,norm=norm)
 
         ax.set_xticks(np.radians(np.arange(-90,90+15,15)))
-        ax.set_thetamin(-45)
+        ax.set_thetamin(Theta.min())
         ax.set_thetamax(Theta.max())
 
         ax.set_rticks([0.0,1.0,2.0,3.0,4.5])
@@ -795,7 +795,7 @@ class Policy_Trainer_DeepRL():
 
         # af.to_csv('example.csv',index=False)
 
-        # 
+        
         # print()
 
 
@@ -812,22 +812,22 @@ if __name__ == '__main__':
 
     from Envs.CF_Env_2D import CF_Env_2D
 
-    # INITIATE ENVIRONMENT
-    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[15,90])
-    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
+    # # INITIATE ENVIRONMENT
+    # env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[15,90])
+    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
 
 
-    # env = None
-    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Gazebo"
+    env = None
+    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Gazebo"
 
 
 
 
-    ## CREATE NEW DEEP RL MODEL 
-    log_name = f"SAC--{current_time}--Deg_{env.Plane_Angle}--{env.modelInitials}"    
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.create_model()
-    PolicyTrainer.train_model()
+    # ## CREATE NEW DEEP RL MODEL 
+    # log_name = f"SAC--{current_time}--Deg_{env.Plane_Angle}--{env.modelInitials}"    
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.create_model()
+    # PolicyTrainer.train_model()
 
 
     
@@ -840,10 +840,10 @@ if __name__ == '__main__':
     # # PolicyTrainer.train_model(reset_timesteps=False)
     # PolicyTrainer.test_landing_performance(Vel_range=[3.75,4.0],Phi_range=[-30,90])
 
-    # # LOAD DEEP RL MODEL
-    # log_name = "SAC--01_23-14:46--LDA_A30_L75_K32_0"
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.Plot_Landing_Performance()
+    # LOAD DEEP RL MODEL
+    log_name = "SAC--01_24-16:00--Deg_90--LDA_A30_L75_K32_0"
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.Plot_Landing_Performance()
 
 
     
