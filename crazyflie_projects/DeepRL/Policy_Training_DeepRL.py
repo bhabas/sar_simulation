@@ -673,15 +673,10 @@ if __name__ == '__main__':
     
     # LOAD DEEP RL MODEL
     log_name = "SAC--01_24-16:00--Deg_90--LDA_A30_L75_K32_0"
-    t_step_load = 10000
+    t_step_load = 26000
 
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.load_model(t_step_load)
-<<<<<<< HEAD
     # PolicyTrainer.train_model(reset_timesteps=False)
-    PolicyTrainer.test_landing_performance(Vel_range=[3.75,4.0],Phi_range=[-30,90])
-=======
-    PolicyTrainer.train_model(reset_timesteps=False)
-    # PolicyTrainer.test_landing_performance(Vel_range=[0.5,4.0],Phi_range=[-30,90])
->>>>>>> Angled_Landing_Surface
+    PolicyTrainer.test_landing_performance(Vel_range=[0.5,4.0],Phi_range=[-75,75])
 
