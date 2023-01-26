@@ -605,8 +605,7 @@ class Policy_Trainer_DeepRL():
 
 
                 ])
-        else:
-            pass
+
 
         for Vel in Vel_arr:
             for Phi in Phi_arr:
@@ -774,7 +773,7 @@ if __name__ == '__main__':
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.load_model(t_step_load)
     # PolicyTrainer.train_model(reset_timesteps=False)
-    PolicyTrainer.test_landing_performance(Vel_range=[3.75,4.0],Phi_range=[45,90])
+    PolicyTrainer.test_landing_performance(Vel_range=[1.0,2.0],Phi_range=[90,100])
 
     # # LOAD DEEP RL MODEL
     # log_name = "SAC--01_24-16:00--Deg_90--LDA_A30_L75_K32_0"

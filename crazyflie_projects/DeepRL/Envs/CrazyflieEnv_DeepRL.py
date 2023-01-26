@@ -67,12 +67,8 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
     def step(self,action):
 
         Tau,Theta_x,D_perp  = self.obs
-        with warnings.catch_warnings():
-            warnings.filterwarnings('error')
-            try:
-                action[0] = np.arctanh(np.clip(action[0],-0.999,0.999))
-            except RuntimeWarning:
-                print()
+        action[0] = np.arctanh(np.clip(action[0],-0.999,0.999))
+
         
         if action[0] < self.Flip_thr:
 
@@ -219,7 +215,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         self.onceFlag_flip = False      # Ensures flip data recorded only once
         self.onceFlag_impact = False    # Ensures impact data recorded only once 
 
-        ## SAMPLE VELOCITY VECTOR
+        ## SAMPLE VELOCITY AND FLIGHT ANGLE
         if vel == None or phi == None:
             vel = np.random.uniform(low=self.Vel_range[0],high=self.Vel_range[1])
             phi = np.random.uniform(low=self.Phi_range[0],high=self.Phi_range[1])
@@ -228,13 +224,12 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
             vel = vel
             phi = phi
 
+
+        ## CALCULATE VELOCITY VECTORS
         vx_0 = vel*np.cos(np.deg2rad(phi))
         vz_0 = vel*np.sin(np.deg2rad(phi))
-        Vel_0 = np.array([vx_0,0,vz_0])  # Flight Velocity vector
-        V_hat = Vel_0/np.linalg.norm(Vel_0)
-
-
-        
+        Vel_0 = np.array([vx_0,0,vz_0])         # Flight Velocity
+        V_hat = Vel_0/np.linalg.norm(Vel_0)     # Flight Velocity unit vector
 
         
         ## RESET POSITION BASED ON TAU VALUE RELATIVE TO LANDING SURFACE
@@ -243,16 +238,37 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         theta_rad = np.radians(self.Plane_Angle)                    # Plane angle
         n_hat = np.array([np.sin(theta_rad),0,-np.cos(theta_rad)])  # Plane normal vector
 
-        D_0 = self.Tau_0*(Vel_0.dot(n_hat))/(V_hat.dot(n_hat)) # Initial distance
-        D_0 = max(D_0,0.2) # Ensure a reasonable minimum distance [m]
+        
+        ## CALC STARTING POSITION (WORLD COORDS)
+        if Vel_0.dot(n_hat) != 0.0: # Vel not parallel to surface
 
-        t_settle = 1.5 # Give time for system to settle on desired velocity
-        D_settle = t_settle*(Vel_0.dot(n_hat))/(V_hat.dot(n_hat)) # Flight settling distance
+            ## CALC DISTANCE WHERE POLICY IS MONITORED
+            D_0 = self.Tau_0*(Vel_0.dot(n_hat))/(V_hat.dot(n_hat))  # Initial distance
+            D_0 = max(D_0,0.2)                                      # Ensure a reasonable minimum distance [m]
 
-        r_0 = r_p - (D_0 + D_settle)*V_hat # Initial quad position (World coords)
 
-        self.Vel_Launch(r_0,Vel_0)
-        self.iter_step(t_settle*1e3)
+            ## CALC DISTANCE REQUIRED TO SETTLE ON DESIRED VELOCITY
+            t_settle = 1.5                                              # Time for system to settle
+            D_settle = t_settle*(Vel_0.dot(n_hat))/(V_hat.dot(n_hat))   # Flight settling distance
+
+
+            ## INITIAL POSITION RELATIVE TO PLANE
+            r_0 = r_p - (D_0 + D_settle)*V_hat # Initial quad position (World coords)
+
+            ## LAUNCH QUAD W/ DESIRED VELOCITY
+            self.Vel_Launch(r_0,Vel_0)
+            self.iter_step(t_settle*1e3)
+           
+        else:  # Place here if vel parallel to plane
+
+            D_0 = 0.4
+            r_0 = r_p - (D_0)*n_hat
+
+            ## LAUNCH QUAD W/ DESIRED VELOCITY
+            self.Vel_Launch(r_0,Vel_0)
+            self.iter_step(10)
+
+        
 
 
         ## RESET OBSERVATION
