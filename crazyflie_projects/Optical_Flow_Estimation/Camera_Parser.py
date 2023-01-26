@@ -27,8 +27,13 @@ class DataParser:
         self.Username = getpass.getuser()
         self.DirPath = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Optical_Flow_Estimation/local_logs' 
         # self.FileName = input("Input the name of the log file:\n")
-        self.FileName = "Compiled_ExampleLog2.csv"
+        self.FileName = "FlightLog_Tau_Only.csv"
         self.FilePath = os.path.join(self.DirPath,self.FileName)
+
+        if self.FileName.find("Compiled") == -1:
+            pre_compiled_Flag = False
+        else:
+            pre_compiled_Flag = True
 
 
         ## PARSE CSV DATA
@@ -61,8 +66,7 @@ class DataParser:
 
 
         # CHECK IF DATA HAS ALREADY BEEN COMPILED
-        pre_compiled_Flag = input('Is the data already compiled? (y/n): ')
-        if pre_compiled_Flag == 'y':
+        if pre_compiled_Flag == True:
             self.Tau_est = self.Data_df['Tau_est'].to_numpy()
             self.Theta_x_est = self.Data_df['Theta_x_est'].to_numpy()
             self.Theta_y_est = self.Data_df['Theta_y_est'].to_numpy()
@@ -99,13 +103,13 @@ class DataParser:
     def OF_Calc_Raw(self,cur_img,prev_img,delta_t):
 
         ## DEFINE KERNALS USED TO CALCULATE INTENSITY GRADIENTS
-        Kv = np.array([ # SOBEL KERNAL (U-DIRECTION)
+        Ku = np.array([ # SOBEL KERNAL (U-DIRECTION)
             [-1,-2,-1],
             [ 0, 0, 0],
             [ 1, 2, 1]
         ]) 
 
-        Ku = np.array([ # SOBEL KERNAL (V--DIRECTION)
+        Kv = np.array([ # SOBEL KERNAL (V--DIRECTION)
             [ -1, 0, 1],
             [ -2, 0, 2],
             [ -1, 0, 1]
@@ -129,12 +133,83 @@ class DataParser:
         ## CALCULATE IMAGE GRADIENTS
         for ii in range(1, HEIGHT_PIXELS-1): 
             for jj in range(1, WIDTH_PIXELS-1):
-                Iu[ii,jj] = -1/(8*w)*np.sum(cur_img[ii-1:ii+2,jj-1:jj+2] * Ku)
-                Iv[ii,jj] =  1/(8*w)*np.sum(cur_img[ii-1:ii+2,jj-1:jj+2] * Kv)
+                Iu[ii,jj] = 1/(8*w)*np.sum(cur_img[ii-1:ii+2,jj-1:jj+2] * Ku)
+                Iv[ii,jj] = 1/(8*w)*np.sum(cur_img[ii-1:ii+2,jj-1:jj+2] * Kv)
+                print()
 
         ## CALCULATE TIME GRADIENT AND RADIAL GRADIENT
         It = (cur_img - prev_img)/delta_t   # Time gradient
         Ir = U_grid*Iu + V_grid*Iv          # Radial Gradient
+
+
+        ## SOLVE LEAST SQUARES PROBLEM
+        X = np.array([
+            [f*np.sum(Iv*Iv), f*np.sum(Iu*Iv), -np.sum(Ir*Iv)],
+            [f*np.sum(Iv*Iu), f*np.sum(Iu*Iu), -np.sum(Ir*Iu)],
+            [f*np.sum(Iv*Ir), f*np.sum(Iu*Ir), -np.sum(Ir*Ir)]
+        ])
+
+        y = np.array([
+            [np.sum(It*Iv)],
+            [np.sum(It*Iu)],
+            [np.sum(It*Ir )]
+        ])
+
+        ## SOLVE b VIA PSEUDO-INVERSE
+        b = np.linalg.pinv(X)@y
+        b = b.flatten()
+
+        return b
+
+    def OF_Calc_Raw2(self,cur_img,prev_img,delta_t):
+
+        ## DEFINE KERNALS USED TO CALCULATE INTENSITY GRADIENTS
+        K_up = np.array([ # SOBEL KERNAL (u--DIRECTION)
+            [ -1, 0, 1],
+            [ -2, 0, 2],
+            [ -1, 0, 1]
+        ])
+
+        K_vp = np.array([ # SOBEL KERNAL (V-DIRECTION)
+            [-1,-2,-1],
+            [ 0, 0, 0],
+            [ 1, 2, 1]
+        ]) 
+
+
+        ## PRE-ALLOCATE INTENSITY GRADIENTS
+        Iu = np.zeros((WIDTH_PIXELS,HEIGHT_PIXELS))
+        Iv = np.zeros((WIDTH_PIXELS,HEIGHT_PIXELS))
+        Ir = np.zeros((WIDTH_PIXELS,HEIGHT_PIXELS))
+
+        u_grid = np.zeros((WIDTH_PIXELS,HEIGHT_PIXELS))
+        v_grid = np.zeros((WIDTH_PIXELS,HEIGHT_PIXELS))
+
+        ## CALCULATE IMAGE GRADIENTS
+        for v_p in range(0, HEIGHT_PIXELS): 
+            for u_p in range(0, WIDTH_PIXELS):
+
+                u_grid[v_p,u_p] = -((u_p - O_up)*w + w/2)
+                v_grid[v_p,u_p] =  ((v_p - O_vp)*w + w/2)
+
+        ## CALCULATE IMAGE GRADIENTS
+        for v_p in range(1, HEIGHT_PIXELS-1): 
+            for u_p in range(1, WIDTH_PIXELS-1):
+
+                Iu[v_p,u_p] = -1/w * 1/8*np.sum(cur_img[v_p-1:v_p+2,u_p-1:u_p+2] * K_up)
+                Iv[v_p,u_p] =  1/w * 1/8*np.sum(cur_img[v_p-1:v_p+2,u_p-1:u_p+2] * K_vp)
+
+                
+                # Ir[v_p,u_p] = u_grid[v_p,u_p]*Iu[v_p,u_p] + v_grid[v_p,u_p]*Iv[v_p,u_p]
+
+
+        Iu = -Iu.T
+        Iv = Iv.T
+
+        Iu,Iv = Iv.T,Iu.T
+        Ir = u_grid*Iu + v_grid*Iv
+        ## CALCULATE TIME GRADIENT AND RADIAL GRADIENT
+        It = (cur_img - prev_img)/delta_t   # Time gradient
 
 
         ## SOLVE LEAST SQUARES PROBLEM
@@ -194,7 +269,7 @@ class DataParser:
         self.df['Camera_Data'] = self.Data_df.iloc[:,-1]
 
         FilePath = os.path.join(self.DirPath,f"Compiled_{self.FileName}")
-        self.df.to_csv(FilePath,index=False)
+        # self.df.to_csv(FilePath,index=False)
 
 
 
@@ -205,15 +280,27 @@ if __name__ == '__main__':
     Parser = DataParser() 
     # Parser.OpticalFlow_Writer()
 
+    t_prev = Parser.grabState('t',0)
+    t_cur = Parser.grabState('t',1)
+    t_delta = t_cur - t_prev
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    ax.plot(Parser.grabState('t'),Parser.grabState('Theta_x'))
-    ax.plot(Parser.grabState('t'),Parser.grabState('Theta_x_est'))
+    img_prev = Parser.grabImage(0)
+    img_cur = Parser.grabImage(1)
+
+    # img_cur = np.array([
+    #     [1,1,0,0],
+    #     [1,1,0,0],
+    #     [1,1,0,0],
+    #     [1,1,0,0]
+    #     ])
+
+    # img_prev = np.array([
+    #     [0,0,1,1],
+    #     [0,0,1,1],
+    #     [0,0,1,1],
+    #     [0,0,1,1]
+    #     ])
 
 
-    ax.grid()
-    ax.set_ylim(0,5)
-
-    plt.show()
-    
+    print(Parser.OF_Calc_Raw(img_cur,img_prev,t_delta))
+    print(Parser.OF_Calc_Raw2(img_cur,img_prev,t_delta))
