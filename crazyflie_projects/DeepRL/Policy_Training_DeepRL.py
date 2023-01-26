@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import torch as th
 import yaml
+import pandas as pd
 import csv
 import time 
 
@@ -13,7 +14,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib as mpl
 import plotly.graph_objects as go
-from scipy.interpolate import griddata
+from scipy.interpolate import griddata, Rbf
 
 ## SB3 Imports
 from stable_baselines3 import SAC
@@ -588,6 +589,8 @@ class Policy_Trainer_DeepRL():
                     "Tau_tr",
                     "Theta_x_tr",
                     "D_perp_tr",
+
+                    "Eul_y_Impact",
                     
                     "Policy_tr",
                     "Policy_action",
@@ -595,10 +598,14 @@ class Policy_Trainer_DeepRL():
                     "Vx_tr",
                     "Vz_tr",
                     "reward","reward_vals",
+                    "--",
+                    "4_Leg_NBC","4_Leg_BC",
+                    "2_Leg_NBC","2_Leg_BC",
+                    "0_Leg_NBC","0_Leg_BC",
+
 
                 ])
-        else:
-            pass
+
 
         for Vel in Vel_arr:
             for Phi in Phi_arr:
@@ -612,10 +619,28 @@ class Policy_Trainer_DeepRL():
                     while not done:
                         action,_ = self.model.predict(obs)
                         obs,reward,done,info = self.env.step(action)
+
+
+                    PC = self.env.pad_connections
+                    BC = self.env.BodyContact_flag
+
+                    if   PC >= 3 and BC == False:       # 4_Leg_NBC
+                        LS = [1,0,0,0,0,0]
+                    elif PC >= 3 and BC == True:        # 4_Leg_BC
+                        LS = [0,1,0,0,0,0]
+                    elif PC == 2 and BC == False:       # 2_Leg_NBC
+                        LS = [0,0,1,0,0,0]
+                    elif PC == 2 and BC == True:        # 2_Leg_BC
+                        LS = [0,0,0,1,0,0]
+                    elif PC <= 1 and BC == False:       # 0_Leg_NBC
+                        LS = [0,0,0,0,1,0]
+                    elif PC <= 1 and BC == True:        # 0_Leg_BC
+                        LS = [0,0,0,0,0,1]                 
+
                             
                     ## APPEND RECORDED VALUES TO FILE
                     with open(filePath,'a') as file:
-                        writer = csv.writer(file,delimiter=',')
+                        writer = csv.writer(file,delimiter=',',quoting=csv.QUOTE_NONE)
                         writer.writerow([
                             np.round(Vel,2),np.round(Phi,2),K_ep,
                             "--",
@@ -627,6 +652,8 @@ class Policy_Trainer_DeepRL():
                             np.round(self.env.obs_tr[1],3),
                             np.round(self.env.obs_tr[2],3),
 
+                            np.round(self.env.eul_impact[1],3),
+
                             np.round(self.env.action_tr[0],3),
                             np.round(self.env.action_tr[1],3),
 
@@ -635,6 +662,10 @@ class Policy_Trainer_DeepRL():
 
                             np.round(reward,3),
                             np.round(self.env.reward_vals,3),
+                            "--",
+                            LS[0],LS[1],
+                            LS[2],LS[3],
+                            LS[4],LS[5],
                         ])
 
                         ## CALCULATE AVERAGE TIME PER EPISODE
@@ -646,6 +677,66 @@ class Policy_Trainer_DeepRL():
                         TTC = round(t_delta_avg*(num_trials-idx)) # Time to completion
                         print(f"Flight Conditions: ({Vel} m/s,{Phi} deg) \t Index: {idx}/{num_trials} \t Percentage: {100*idx/num_trials:.2f}% \t Time to Completion: {str(timedelta(seconds=TTC))}")
 
+    def Plot_Landing_Performance(self,fileName=None):
+
+        if fileName == None:
+            fileName = "PolicyPerformance_Data.csv"
+        filePath = os.path.join(self.TB_log_path,fileName)
+
+        af = pd.read_csv(filePath,sep=',',comment="#")
+
+        af2 = af.groupby(['Vel_d','Phi_d']).mean().round(3).reset_index()
+
+
+
+        ## COLLECT DATA
+        R = af2.iloc[:]['Vel_d']
+        Theta = af2.iloc[:]['Phi_d']
+        C = af2.iloc[:]['Leg_4_NBC']
+
+        ## DEFINE INTERPOLATION GRID
+        R_list = np.linspace(R.min(),R.max(),num=50,endpoint=True).reshape(1,-1)
+        Theta_list = np.linspace(Theta.min(),Theta.max(),num=50,endpoint=True).reshape(1,-1)
+        R_grid, Theta_grid = np.meshgrid(R_list, Theta_list)
+        
+        ## INTERPOLATE DATA
+        LR_interp = griddata((R, Theta), C, (R_list, Theta_list.T), method='linear')
+        LR_interp += 0.001
+        
+
+        ## INIT PLOT INFO
+        fig = plt.figure(figsize=(6,6))
+        ax = fig.add_subplot(projection='polar')
+        cmap = mpl.cm.jet
+        norm = mpl.colors.Normalize(vmin=0,vmax=1)
+        
+        ax.contourf(np.radians(Theta_grid),R_grid,LR_interp,cmap=cmap,norm=norm,levels=30)
+        # ax.scatter(np.radians(Theta),R,c=C,cmap=cmap,norm=norm)
+        # ax.scatter(np.radians(Theta_grid).flatten(),R_grid.flatten(),c=LR_interp.flatten(),cmap=cmap,norm=norm)
+
+        ax.set_xticks(np.radians(np.arange(-90,90+15,15)))
+        ax.set_thetamin(Theta.min())
+        ax.set_thetamax(Theta.max())
+
+        ax.set_rticks([0.0,1.0,2.0,3.0,4.5])
+        ax.set_rmin(0)
+        ax.set_rmax(R.max())
+        
+
+
+        ## AXIS LABELS    
+        # ax.text(np.radians(7.5),2,'Flight Velocity (m/s)',
+        #     rotation=18,ha='center',va='center')
+
+        # ax.text(np.radians(60),4.5,'Flight Angle (deg)',
+        #     rotation=0,ha='left',va='center')
+
+        # if saveFig==True:
+        #     plt.savefig(f'NL_Polar_DeepRL_LR.pdf',dpi=300)
+
+        plt.show()
+
+        
 
 if __name__ == '__main__':
 
@@ -656,9 +747,13 @@ if __name__ == '__main__':
 
     from Envs.CF_Env_2D import CF_Env_2D
 
-    ## INITIATE ENVIRONMENT
-    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[-75,75])
+    # INITIATE ENVIRONMENT
+    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[15,90])
     log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
+
+
+    # env = None
+    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Gazebo"
 
 
 
@@ -673,10 +768,18 @@ if __name__ == '__main__':
     
     # LOAD DEEP RL MODEL
     log_name = "SAC--01_24-16:00--Deg_90--LDA_A30_L75_K32_0"
-    t_step_load = 26000
+    t_step_load = 14000
 
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.load_model(t_step_load)
     # PolicyTrainer.train_model(reset_timesteps=False)
-    PolicyTrainer.test_landing_performance(Vel_range=[0.5,4.0],Phi_range=[-75,75])
+    PolicyTrainer.test_landing_performance(Vel_range=[1.0,2.0],Phi_range=[90,100])
 
+    # # LOAD DEEP RL MODEL
+    # log_name = "SAC--01_24-16:00--Deg_90--LDA_A30_L75_K32_0"
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.Plot_Landing_Performance()
+
+
+    
+    
