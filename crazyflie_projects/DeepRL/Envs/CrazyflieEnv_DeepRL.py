@@ -80,6 +80,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
             self.done = bool(
                 self.t - self.start_time_rollout > 3.5          # EPISODE TIMEOUT
                 or (self.impact_flag or self.BodyContact_flag)  # BODY CONTACT W/O FLIP TRIGGER
+                or self.done
             )         
 
             if not self.done:
@@ -238,13 +239,32 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         theta_rad = np.radians(self.Plane_Angle)                    # Plane angle
         n_hat = np.array([np.sin(theta_rad),0,-np.cos(theta_rad)])  # Plane normal vector
 
-        
+        if V_hat.dot(n_hat) <= 0.01:
+
+            self.done = True
+            
         ## CALC STARTING POSITION (WORLD COORDS)
-        if not math.isclose(Vel_0.dot(n_hat),0.0,abs_tol=0.01): # Vel not parallel to surface
+        elif V_hat.dot(n_hat) <= 0.25: # Place here if vel parallel to plane
+
+            ## CALC DISTANCE REQUIRED TO SETTLE ON DESIRED VELOCITY
+            t_settle = 1.5                                              # Time for system to settle
+            D_settle = t_settle*(Vel_0.dot(n_hat))/(V_hat.dot(n_hat))   # Flight settling distance
+            
+            D_0 = 0.15
+            r_0 = r_p - (D_0)*n_hat - (D_settle)*V_hat
+
+            ## LAUNCH QUAD W/ DESIRED VELOCITY
+            self.Vel_Launch(r_0,Vel_0)
+            self.iter_step(t_settle*1e3)
+
+        
+
+
+        else: # Vel not parallel to surface
 
             ## CALC DISTANCE WHERE POLICY IS MONITORED
             D_0 = self.Tau_0*(Vel_0.dot(n_hat))/(V_hat.dot(n_hat))  # Initial distance
-            D_0 = max(D_0,0.4)                                      # Ensure a reasonable minimum distance [m]
+            D_0 = max(D_0,0.2)                                      # Ensure a reasonable minimum distance [m]
 
 
             ## CALC DISTANCE REQUIRED TO SETTLE ON DESIRED VELOCITY
@@ -258,16 +278,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
             ## LAUNCH QUAD W/ DESIRED VELOCITY
             self.Vel_Launch(r_0,Vel_0)
             self.iter_step(t_settle*1e3)
-           
-        else:  # Place here if vel parallel to plane
-
-            D_0 = 0.4
-            r_0 = r_p - (D_0)*n_hat
-
-            ## LAUNCH QUAD W/ DESIRED VELOCITY
-            self.Vel_Launch(r_0,Vel_0)
-            self.iter_step(10)
-
+                      
         
 
 
