@@ -117,13 +117,13 @@ class DataParser:
 
         
         ## PRE-ALLOCATE IMAGE ARRAY [pixels]
-        u_p = np.arange(0,WIDTH_PIXELS,1)
-        v_p = np.arange(0,HEIGHT_PIXELS,1)
-        U_p,V_p = np.meshgrid(v_p,u_p)
+        v_p = np.arange(0,WIDTH_PIXELS,1)
+        u_p = np.arange(0,HEIGHT_PIXELS,1)
+        V_p,U_p = np.meshgrid(v_p,u_p)
 
         ## DEFINE IMAGE SENSOR COORDS [m]
-        U_grid = -((U_p - O_up)*w + w/2)
-        V_grid =  ((V_p - O_vp)*w + w/2)
+        V_grid = -((V_p - O_vp)*w + w/2)
+        U_grid =  ((U_p - O_up)*w + w/2)
 
         ## PRE-ALLOCATE INTENSITY GRADIENTS
         Iu = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
@@ -134,8 +134,7 @@ class DataParser:
         for ii in range(1, HEIGHT_PIXELS-1): 
             for jj in range(1, WIDTH_PIXELS-1):
                 Iu[ii,jj] = 1/(8*w)*np.sum(cur_img[ii-1:ii+2,jj-1:jj+2] * Ku)
-                Iv[ii,jj] = 1/(8*w)*np.sum(cur_img[ii-1:ii+2,jj-1:jj+2] * Kv)
-                print()
+                Iv[ii,jj] = -1/(8*w)*np.sum(cur_img[ii-1:ii+2,jj-1:jj+2] * Kv)
 
         ## CALCULATE TIME GRADIENT AND RADIAL GRADIENT
         It = (cur_img - prev_img)/delta_t   # Time gradient
@@ -144,14 +143,14 @@ class DataParser:
 
         ## SOLVE LEAST SQUARES PROBLEM
         X = np.array([
-            [f*np.sum(Iv*Iv), f*np.sum(Iu*Iv), -np.sum(Ir*Iv)],
-            [f*np.sum(Iv*Iu), f*np.sum(Iu*Iu), -np.sum(Ir*Iu)],
-            [f*np.sum(Iv*Ir), f*np.sum(Iu*Ir), -np.sum(Ir*Ir)]
+            [f*np.sum(Iu*Iu), f*np.sum(Iv*Iu), -np.sum(Ir*Iu)],
+            [f*np.sum(Iu*Iv), f*np.sum(Iv*Iv), -np.sum(Ir*Iv)],
+            [f*np.sum(Iu*Ir), f*np.sum(Iv*Ir), -np.sum(Ir*Ir)]
         ])
 
         y = np.array([
-            [np.sum(It*Iv)],
             [np.sum(It*Iu)],
+            [np.sum(It*Iv)],
             [np.sum(It*Ir )]
         ])
 
@@ -196,14 +195,13 @@ class DataParser:
         for v_p in range(1, HEIGHT_PIXELS-1): 
             for u_p in range(1, WIDTH_PIXELS-1):
 
-                Iu[v_p,u_p] = -1/w * 1/8*np.sum(cur_img[v_p-1:v_p+2,u_p-1:u_p+2] * K_up)
-                Iv[v_p,u_p] =  1/w * 1/8*np.sum(cur_img[v_p-1:v_p+2,u_p-1:u_p+2] * K_vp)
+                Iu[v_p,u_p] =  1/w * 1/8*np.sum(cur_img[v_p-1:v_p+2,u_p-1:u_p+2] * K_vp)
+                Iv[v_p,u_p] =  1/w * 1/8*np.sum(cur_img[v_p-1:v_p+2,u_p-1:u_p+2] * K_up)
 
                 
                 # Ir[v_p,u_p] = u_grid[v_p,u_p]*Iu[v_p,u_p] + v_grid[v_p,u_p]*Iv[v_p,u_p]
 
 
-        Iu,Iv = Iv,-Iu
         Ir = u_grid*Iu + v_grid*Iv
         ## CALCULATE TIME GRADIENT AND RADIAL GRADIENT
         It = (cur_img - prev_img)/delta_t   # Time gradient
@@ -247,6 +245,7 @@ class DataParser:
 
             ## CALCULATE OPTICAL FLOW VALUES
             Theta_x_est,Theta_y_est,Theta_z_est = self.OF_Calc_Raw(cur_img,prev_img,t_delta)
+            print(Theta_z_est**-1)
 
             Theta_x_est,Theta_y_est,Tau_est = np.round([Theta_x_est,Theta_y_est,1/Theta_z_est],3)
 
@@ -275,7 +274,7 @@ class DataParser:
 if __name__ == '__main__':
 
     Parser = DataParser() 
-    # Parser.OpticalFlow_Writer()
+    Parser.OpticalFlow_Writer()
 
     t_prev = Parser.grabState('t',0)
     t_cur = Parser.grabState('t',1)
@@ -299,5 +298,5 @@ if __name__ == '__main__':
     #     ])
 
 
-    print(Parser.OF_Calc_Raw(img_cur,img_prev,t_delta))
-    print(Parser.OF_Calc_Raw2(img_cur,img_prev,t_delta))
+    # print(Parser.OF_Calc_Raw(img_cur,img_prev,t_delta))
+    # print(Parser.OF_Calc_Raw2(img_cur,img_prev,t_delta))
