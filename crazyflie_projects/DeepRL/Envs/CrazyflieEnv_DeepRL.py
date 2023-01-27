@@ -3,7 +3,7 @@ import numpy as np
 from gym import spaces
 import rospy
 import time
-
+import math
 import warnings
 
 
@@ -240,11 +240,11 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
         
         ## CALC STARTING POSITION (WORLD COORDS)
-        if Vel_0.dot(n_hat) != 0.0: # Vel not parallel to surface
+        if not math.isclose(Vel_0.dot(n_hat),0.0,abs_tol=0.01): # Vel not parallel to surface
 
             ## CALC DISTANCE WHERE POLICY IS MONITORED
             D_0 = self.Tau_0*(Vel_0.dot(n_hat))/(V_hat.dot(n_hat))  # Initial distance
-            D_0 = max(D_0,0.2)                                      # Ensure a reasonable minimum distance [m]
+            D_0 = max(D_0,0.4)                                      # Ensure a reasonable minimum distance [m]
 
 
             ## CALC DISTANCE REQUIRED TO SETTLE ON DESIRED VELOCITY
