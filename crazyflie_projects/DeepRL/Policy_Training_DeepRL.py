@@ -749,7 +749,7 @@ if __name__ == '__main__':
     from Envs.CF_Env_2D import CF_Env_2D
 
     # INITIATE ENVIRONMENT
-    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[3.5,4.0],Phi_range=[-90,90])
+    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[40,90])
     log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
 
 
