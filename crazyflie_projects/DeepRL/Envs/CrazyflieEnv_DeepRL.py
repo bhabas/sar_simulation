@@ -149,27 +149,6 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
     def reset(self,vel=None,phi=None):
 
-        # ## DETACH PADS AND TURN OFF TUMBLE DETECTION
-        # self.gazebo_pause_physics()
-        # self.SendCmd('StickyPads',cmd_flag=0)
-        # self.iter_step(2)
-        # self.SendCmd('Tumble',cmd_flag=0)
-        # self.iter_step(2)
-
-        # self.reset_pos()
-        # self.iter_step(2)
-        # self.SendCmd('Ctrl_Reset')
-        # self.iter_step(2)
-
-        # self.SendCmd('StickyPads',cmd_flag=1)
-        # self.iter_step(2) 
-        # self.SendCmd('Tumble',cmd_flag=1)
-        # self.iter_step(2)
-
-        # self.reset_pos()
-        # self.iter_step(2)
-        # self.SendCmd('Ctrl_Reset')
-        # self.iter_step(2)
 
         self.gazebo_unpause_physics()
         self.SendCmd('Tumble',cmd_flag=0)
@@ -192,10 +171,6 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         self.Iyy = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Iyy") + np.random.normal(0,1.5e-6)
         self.mass = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Mass") + np.random.normal(0,0.0005)
         self.updateInertia()
-        # self.iter_step(2500) # Ensure propper settling time at home position
-        # t_settle = 1.5
-        # self.iter_step(t_settle*1e3)
-
 
         ## RESET REWARD CALC VALUES
         self.done = False
@@ -205,16 +180,8 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         self.obs_tr = np.zeros_like(self.observation_space.high)
         self.action_tr = np.zeros_like(self.action_space.high)
 
-        ## RESET/UPDATE RUN CONDITIONS
-        self.start_time_rollout = self.getTime()
-        self.start_time_pitch = np.nan
-        self.start_time_impact = np.nan
 
-        self.start_time_ep = time.time()
-
-        ## RESET LOGGING CONDITIONS 
-        self.onceFlag_flip = False      # Ensures flip data recorded only once
-        self.onceFlag_impact = False    # Ensures impact data recorded only once 
+        
 
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
         if vel == None or phi == None:
@@ -239,28 +206,29 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         theta_rad = np.radians(self.Plane_Angle)                    # Plane angle
         n_hat = np.array([np.sin(theta_rad),0,-np.cos(theta_rad)])  # Plane normal vector
 
-        if V_hat.dot(n_hat) <= 0.01:
-
-            self.done = True
+        
+        ## CALC STARTING/VELOCITY LAUCH POSITION
+        if V_hat.dot(n_hat) <= 0.01:    # Velocity parallel to landing surface or wrong direction
+            self.done = True            # End episode
             
-        ## CALC STARTING POSITION (WORLD COORDS)
-        elif V_hat.dot(n_hat) <= 0.25: # Place here if vel parallel to plane
+        elif V_hat.dot(n_hat) <= 0.25: # Velocity near parallel to landing surface
 
             ## CALC DISTANCE REQUIRED TO SETTLE ON DESIRED VELOCITY
             t_settle = 1.5                                              # Time for system to settle
             D_settle = t_settle*(Vel_0.dot(n_hat))/(V_hat.dot(n_hat))   # Flight settling distance
             
+            ## MINIMUM DISTANCE TO START POLICY TRAINING
             D_0 = 0.15
+
+
+            ## INITIAL POSITION RELATIVE TO PLANE
             r_0 = r_p - (D_0)*n_hat - (D_settle)*V_hat
 
-            ## LAUNCH QUAD W/ DESIRED VELOCITY
+            ## LAUNCH POSITION
             self.Vel_Launch(r_0,Vel_0)
             self.iter_step(t_settle*1e3)
 
-        
-
-
-        else: # Vel not parallel to surface
+        else: # Velocity not parallel to surface
 
             ## CALC DISTANCE WHERE POLICY IS MONITORED
             D_0 = self.Tau_0*(Vel_0.dot(n_hat))/(V_hat.dot(n_hat))  # Initial distance
@@ -285,6 +253,19 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         ## RESET OBSERVATION
         self.obs = (self.Tau,self.Theta_x,self.D_perp)
         self.k_ep += 1
+
+        
+
+        ## RESET/UPDATE RUN CONDITIONS
+        self.start_time_rollout = self.getTime()
+        self.start_time_pitch = np.nan
+        self.start_time_impact = np.nan
+
+        self.start_time_ep = time.time()
+
+        ## RESET LOGGING CONDITIONS 
+        self.onceFlag_flip = False      # Ensures flip data recorded only once
+        self.onceFlag_impact = False    # Ensures impact data recorded only once 
 
         return np.array(self.obs,dtype=np.float32)
 
