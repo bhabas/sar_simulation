@@ -13,8 +13,8 @@ HEIGHT_PIXELS = 160
 FPS = 60               # Frame Rate [1/s]
 w = 3.6e-6              # Pixel width [m]
 f = 0.66e-3/2          # Focal Length [m]
-O_up = WIDTH_PIXELS/2    # Pixel X_offset [pixels]
-O_vp = HEIGHT_PIXELS/2   # Pixel Y_offset [pixels]
+O_vp = WIDTH_PIXELS/2    # Pixel X_offset [pixels]
+O_up = HEIGHT_PIXELS/2   # Pixel Y_offset [pixels]
 
 FILTER_FLAG = False
 
@@ -122,8 +122,8 @@ class DataParser:
         V_p,U_p = np.meshgrid(v_p,u_p)
 
         ## DEFINE IMAGE SENSOR COORDS [m]
-        V_grid = -((V_p - O_vp)*w + w/2)
-        U_grid =  ((U_p - O_up)*w + w/2)
+        V_grid = -((V_p - O_up)*w + w/2)
+        U_grid =  ((U_p - O_vp)*w + w/2)
 
         ## PRE-ALLOCATE INTENSITY GRADIENTS
         Iu = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
@@ -163,48 +163,42 @@ class DataParser:
     def OF_Calc_Raw2(self,cur_img,prev_img,delta_t):
 
         ## DEFINE KERNALS USED TO CALCULATE INTENSITY GRADIENTS
-        K_up = np.array([ # SOBEL KERNAL (u--DIRECTION)
-            [ -1, 0, 1],
-            [ -2, 0, 2],
-            [ -1, 0, 1]
-        ])
-
-        K_vp = np.array([ # SOBEL KERNAL (V-DIRECTION)
+        Kv = np.array([ # SOBEL KERNAL (U-DIRECTION)
             [-1,-2,-1],
             [ 0, 0, 0],
             [ 1, 2, 1]
         ]) 
 
+        Ku = np.array([ # SOBEL KERNAL (V--DIRECTION)
+            [ -1, 0, 1],
+            [ -2, 0, 2],
+            [ -1, 0, 1]
+        ])
+
+        
+        ## PRE-ALLOCATE IMAGE ARRAY [pixels]
+        u_p = np.arange(0,WIDTH_PIXELS,1)
+        v_p = np.arange(0,HEIGHT_PIXELS,1)
+        U_p,V_p = np.meshgrid(u_p,v_p)
+
+        ## DEFINE IMAGE SENSOR COORDS [m]
+        U_grid = -((U_p - O_up)*w + w/2)
+        V_grid =  ((V_p - O_vp)*w + w/2)
 
         ## PRE-ALLOCATE INTENSITY GRADIENTS
-        Iu = np.zeros((WIDTH_PIXELS,HEIGHT_PIXELS))
-        Iv = np.zeros((WIDTH_PIXELS,HEIGHT_PIXELS))
-        Ir = np.zeros((WIDTH_PIXELS,HEIGHT_PIXELS))
+        Iv = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+        Iu = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
 
-        u_grid = np.zeros((WIDTH_PIXELS,HEIGHT_PIXELS))
-        v_grid = np.zeros((WIDTH_PIXELS,HEIGHT_PIXELS))
 
         ## CALCULATE IMAGE GRADIENTS
-        for v_p in range(0, HEIGHT_PIXELS): 
-            for u_p in range(0, WIDTH_PIXELS):
+        for ii in range(1, HEIGHT_PIXELS-1): 
+            for jj in range(1, WIDTH_PIXELS-1):
+                Iu[ii,jj] = -1/(8*w)*np.sum(cur_img[ii-1:ii+2,jj-1:jj+2] * Ku)
+                Iv[ii,jj] =  1/(8*w)*np.sum(cur_img[ii-1:ii+2,jj-1:jj+2] * Kv)
 
-                u_grid[v_p,u_p] = -((u_p - O_up)*w + w/2)
-                v_grid[v_p,u_p] =  ((v_p - O_vp)*w + w/2)
-
-        ## CALCULATE IMAGE GRADIENTS
-        for v_p in range(1, HEIGHT_PIXELS-1): 
-            for u_p in range(1, WIDTH_PIXELS-1):
-
-                Iu[v_p,u_p] =  1/w * 1/8*np.sum(cur_img[v_p-1:v_p+2,u_p-1:u_p+2] * K_vp)
-                Iv[v_p,u_p] =  1/w * 1/8*np.sum(cur_img[v_p-1:v_p+2,u_p-1:u_p+2] * K_up)
-
-                
-                # Ir[v_p,u_p] = u_grid[v_p,u_p]*Iu[v_p,u_p] + v_grid[v_p,u_p]*Iv[v_p,u_p]
-
-
-        Ir = u_grid*Iu + v_grid*Iv
         ## CALCULATE TIME GRADIENT AND RADIAL GRADIENT
         It = (cur_img - prev_img)/delta_t   # Time gradient
+        Ir = U_grid*Iu + V_grid*Iv          # Radial Gradient
 
 
         ## SOLVE LEAST SQUARES PROBLEM
@@ -244,7 +238,7 @@ class DataParser:
             t_delta = t_cur - t_prev
 
             ## CALCULATE OPTICAL FLOW VALUES
-            Theta_x_est,Theta_y_est,Theta_z_est = self.OF_Calc_Raw(cur_img,prev_img,t_delta)
+            Theta_x_est,Theta_y_est,Theta_z_est = self.OF_Calc_Raw2(cur_img,prev_img,t_delta)
             print(Theta_z_est**-1)
 
             Theta_x_est,Theta_y_est,Tau_est = np.round([Theta_x_est,Theta_y_est,1/Theta_z_est],3)
