@@ -203,10 +203,7 @@ class DataParser:
                 # Ir[v_p,u_p] = u_grid[v_p,u_p]*Iu[v_p,u_p] + v_grid[v_p,u_p]*Iv[v_p,u_p]
 
 
-        Iu = -Iu.T
-        Iv = Iv.T
-
-        Iu,Iv = Iv.T,Iu.T
+        Iu,Iv = Iv,-Iu
         Ir = u_grid*Iu + v_grid*Iv
         ## CALCULATE TIME GRADIENT AND RADIAL GRADIENT
         It = (cur_img - prev_img)/delta_t   # Time gradient
