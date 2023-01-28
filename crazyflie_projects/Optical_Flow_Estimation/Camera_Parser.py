@@ -179,18 +179,12 @@ class DataParser:
         ## PRE-ALLOCATE IMAGE ARRAY [pixels]
         u_p = np.arange(0,WIDTH_PIXELS,1)
         v_p = np.arange(0,HEIGHT_PIXELS,1)
-        U_p,V_p = np.meshgrid(u_p,v_p)
 
         ## PRE-ALLOCATE INTENSITY GRADIENTS
         G_up = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
         G_vp = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
         G_rp = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
-
-
-
-        Iv = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
-        Iu = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
-        Ir = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+        G_tp = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
 
 
 
@@ -200,9 +194,7 @@ class DataParser:
                 G_up[v_p,u_p] = np.sum(cur_img[v_p-1:v_p+2,u_p-1:u_p+2] * Ku)
                 G_vp[v_p,u_p] = np.sum(cur_img[v_p-1:v_p+2,u_p-1:u_p+2] * Kv)
                 G_rp[v_p,u_p] = (2*(u_p - O_up) + 1)*G_up[v_p,u_p] + (2*(v_p - O_vp) + 1)*G_vp[v_p,u_p]
-
-        ## CALCULATE TIME GRADIENT AND RADIAL GRADIENT
-        G_t = (cur_img - prev_img)   # Time gradient
+                G_tp[v_p,u_p] = cur_img[v_p,u_p] - prev_img[v_p,u_p]
 
 
         ## SOLVE LEAST SQUARES PROBLEM
@@ -213,9 +205,9 @@ class DataParser:
         ])
 
         y = 1/delta_t*np.array([
-            [    np.sum(G_t*G_vp)],
-            [    np.sum(G_t*G_up)],
-            [w/2*np.sum(G_t*G_rp)]
+            [    np.sum(G_tp*G_vp)],
+            [    np.sum(G_tp*G_up)],
+            [w/2*np.sum(G_tp*G_rp)]
         ])
 
         ## SOLVE b VIA PSEUDO-INVERSE
