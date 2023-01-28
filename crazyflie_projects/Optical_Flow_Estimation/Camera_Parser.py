@@ -176,10 +176,6 @@ class DataParser:
         ])
 
         
-        ## PRE-ALLOCATE IMAGE ARRAY [pixels]
-        u_p = np.arange(0,WIDTH_PIXELS,1)
-        v_p = np.arange(0,HEIGHT_PIXELS,1)
-
         ## PRE-ALLOCATE INTENSITY GRADIENTS
         G_up = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
         G_vp = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
@@ -198,17 +194,17 @@ class DataParser:
 
 
         ## SOLVE LEAST SQUARES PROBLEM
-        X = 1/(8*w)*np.array([
-            [    f*np.sum(G_vp*G_vp),     -f*np.sum(G_up*G_vp),     -w/2*np.sum(G_rp*G_vp)],
-            [    f*np.sum(G_vp*G_up),     -f*np.sum(G_up*G_up),      w/2*np.sum(G_rp*G_up)],
-            [w/2*f*np.sum(G_vp*G_rp), -w/2*f*np.sum(G_up*G_rp), -w/2*w/2*np.sum(G_rp*G_rp)]
+        X = np.array([
+            [f*np.sum(G_vp*G_vp), -f*np.sum(G_up*G_vp), -w/2*np.sum(G_rp*G_vp)],
+            [f*np.sum(G_vp*G_up), -f*np.sum(G_up*G_up), -w/2*np.sum(G_rp*G_up)],
+            [f*np.sum(G_vp*G_rp), -f*np.sum(G_up*G_rp), -w/2*np.sum(G_rp*G_rp)]
         ])
 
-        y = 1/delta_t*np.array([
-            [    np.sum(G_tp*G_vp)],
-            [    np.sum(G_tp*G_up)],
-            [w/2*np.sum(G_tp*G_rp)]
-        ])
+        y = np.array([
+            [np.sum(G_tp*G_vp)],
+            [np.sum(G_tp*G_up)],
+            [np.sum(G_tp*G_rp)]
+        ])*(8*w/delta_t)
 
         ## SOLVE b VIA PSEUDO-INVERSE
         b = np.linalg.pinv(X)@y
@@ -264,14 +260,14 @@ class DataParser:
 if __name__ == '__main__':
 
     Parser = DataParser() 
-    Parser.OpticalFlow_Writer()
+    # Parser.OpticalFlow_Writer()
 
     t_prev = Parser.grabState('t',0)
     t_cur = Parser.grabState('t',1)
     t_delta = t_cur - t_prev
 
-    # img_prev = Parser.grabImage(0)
-    # img_cur = Parser.grabImage(1)
+    img_prev = Parser.grabImage(74)
+    img_cur = Parser.grabImage(75)
 
     # img_cur = np.array([
     #     [1,1,0,0],
@@ -288,5 +284,5 @@ if __name__ == '__main__':
     #     ])
 
 
-    # print(Parser.OF_Calc_Raw(img_cur,img_prev,t_delta))
-    # print(Parser.OF_Calc_Opt(img_cur,img_prev,t_delta))
+    print(Parser.OF_Calc_Raw(img_cur,img_prev,t_delta))
+    print(Parser.OF_Calc_Opt(img_cur,img_prev,t_delta))
