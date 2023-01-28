@@ -8,8 +8,8 @@ import cv2 as cv
 
 
 ## CAMERA PARAMETERS
-WIDTH_PIXELS = 4
-HEIGHT_PIXELS = 4
+WIDTH_PIXELS = 160
+HEIGHT_PIXELS = 160
 FPS = 60               # Frame Rate [1/s]
 w = 3.6e-6              # Pixel width [m]
 f = 0.66e-3/2          # Focal Length [m]
@@ -72,10 +72,10 @@ class DataParser:
             self.Theta_y_est = self.Data_df['Theta_y_est'].to_numpy()
 
 
-        # ## CONVERT IMAGE DATA FROM STRING TO INTEGER
-        # self.Camera_array = np.zeros((len(self.Camera_data), WIDTH_PIXELS*HEIGHT_PIXELS)) # Allocate space for camera data
-        # for n in range(0,self.Camera_data.size): # Make each row an array of ints
-        #     self.Camera_array[n] = np.fromstring(self.Camera_data[n], dtype=int, sep =' ')
+        ## CONVERT IMAGE DATA FROM STRING TO INTEGER
+        self.Camera_array = np.zeros((len(self.Camera_data), WIDTH_PIXELS*HEIGHT_PIXELS)) # Allocate space for camera data
+        for n in range(0,self.Camera_data.size): # Make each row an array of ints
+            self.Camera_array[n] = np.fromstring(self.Camera_data[n], dtype=int, sep =' ')
 
     def grabImage(self,idx):
 
@@ -199,23 +199,23 @@ class DataParser:
             for u_p in range(1, WIDTH_PIXELS-1):
                 G_up[v_p,u_p] = np.sum(cur_img[v_p-1:v_p+2,u_p-1:u_p+2] * Ku)
                 G_vp[v_p,u_p] = np.sum(cur_img[v_p-1:v_p+2,u_p-1:u_p+2] * Kv)
-                G_rp[v_p,u_p] = (u_p - O_up + 1/2)*G_up[v_p,u_p] + (v_p - O_vp + 1/2)*G_vp[v_p,u_p]
+                G_rp[v_p,u_p] = (2*(u_p - O_up) + 1)*G_up[v_p,u_p] + (2*(v_p - O_vp) + 1)*G_vp[v_p,u_p]
 
         ## CALCULATE TIME GRADIENT AND RADIAL GRADIENT
-        It = (cur_img - prev_img)/delta_t   # Time gradient
+        G_t = (cur_img - prev_img)   # Time gradient
 
 
         ## SOLVE LEAST SQUARES PROBLEM
         X = 1/(8*w)*np.array([
-            [  f*np.sum(G_vp*G_vp),   -f*np.sum(G_up*G_vp),   -w*np.sum(G_rp*G_vp)],
-            [  f*np.sum(G_vp*G_up),   -f*np.sum(G_up*G_up),    w*np.sum(G_rp*G_up)],
-            [w*f*np.sum(G_vp*G_rp), -w*f*np.sum(G_up*G_rp), -w*w*np.sum(G_rp*G_rp)]
+            [    f*np.sum(G_vp*G_vp),     -f*np.sum(G_up*G_vp),     -w/2*np.sum(G_rp*G_vp)],
+            [    f*np.sum(G_vp*G_up),     -f*np.sum(G_up*G_up),      w/2*np.sum(G_rp*G_up)],
+            [w/2*f*np.sum(G_vp*G_rp), -w/2*f*np.sum(G_up*G_rp), -w/2*w/2*np.sum(G_rp*G_rp)]
         ])
 
-        y = np.array([
-            [  np.sum(It*G_vp)],
-            [  np.sum(It*G_up)],
-            [w*np.sum(It*G_rp)]
+        y = 1/delta_t*np.array([
+            [    np.sum(G_t*G_vp)],
+            [    np.sum(G_t*G_up)],
+            [w/2*np.sum(G_t*G_rp)]
         ])
 
         ## SOLVE b VIA PSEUDO-INVERSE
@@ -272,7 +272,7 @@ class DataParser:
 if __name__ == '__main__':
 
     Parser = DataParser() 
-    # Parser.OpticalFlow_Writer()
+    Parser.OpticalFlow_Writer()
 
     t_prev = Parser.grabState('t',0)
     t_cur = Parser.grabState('t',1)
@@ -281,20 +281,20 @@ if __name__ == '__main__':
     # img_prev = Parser.grabImage(0)
     # img_cur = Parser.grabImage(1)
 
-    img_cur = np.array([
-        [1,1,0,0],
-        [1,1,0,0],
-        [1,1,0,0],
-        [1,1,0,0]
-        ])
+    # img_cur = np.array([
+    #     [1,1,0,0],
+    #     [1,1,0,0],
+    #     [1,1,0,0],
+    #     [1,1,0,0]
+    #     ])
 
-    img_prev = np.array([
-        [0,0,1,1],
-        [0,0,1,1],
-        [0,0,1,1],
-        [0,0,1,1]
-        ])
+    # img_prev = np.array([
+    #     [0,0,1,1],
+    #     [0,0,1,1],
+    #     [0,0,1,1],
+    #     [0,0,1,1]
+    #     ])
 
 
-    print(Parser.OF_Calc_Raw(img_cur,img_prev,t_delta))
-    print(Parser.OF_Calc_Opt(img_cur,img_prev,t_delta))
+    # print(Parser.OF_Calc_Raw(img_cur,img_prev,t_delta))
+    # print(Parser.OF_Calc_Opt(img_cur,img_prev,t_delta))
