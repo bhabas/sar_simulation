@@ -201,26 +201,21 @@ class DataParser:
                 G_vp[v_p,u_p] = np.sum(cur_img[v_p-1:v_p+2,u_p-1:u_p+2] * Kv)
                 G_rp[v_p,u_p] = (u_p - O_up + 1/2)*G_up[v_p,u_p] + (v_p - O_vp + 1/2)*G_vp[v_p,u_p]
 
-
-                Iu[v_p,u_p] = -1/(8*w)*G_up[v_p,u_p]
-                Iv[v_p,u_p] =  1/(8*w)*G_vp[v_p,u_p]
-                Ir[v_p,u_p] =  1/(8*w)*G_rp[v_p,u_p]*w
-
         ## CALCULATE TIME GRADIENT AND RADIAL GRADIENT
         It = (cur_img - prev_img)/delta_t   # Time gradient
 
 
         ## SOLVE LEAST SQUARES PROBLEM
-        X = np.array([
-            [f*np.sum(Iv*Iv), f*np.sum(Iu*Iv), -np.sum(Ir*Iv)],
-            [f*np.sum(Iv*Iu), f*np.sum(Iu*Iu), -np.sum(Ir*Iu)],
-            [f*np.sum(Iv*Ir), f*np.sum(Iu*Ir), -np.sum(Ir*Ir)]
+        X = 1/(8*w)*np.array([
+            [  f*np.sum(G_vp*G_vp),   -f*np.sum(G_up*G_vp),   -w*np.sum(G_rp*G_vp)],
+            [  f*np.sum(G_vp*G_up),   -f*np.sum(G_up*G_up),    w*np.sum(G_rp*G_up)],
+            [w*f*np.sum(G_vp*G_rp), -w*f*np.sum(G_up*G_rp), -w*w*np.sum(G_rp*G_rp)]
         ])
 
         y = np.array([
-            [np.sum(It*Iv)],
-            [np.sum(It*Iu)],
-            [np.sum(It*Ir )]
+            [  np.sum(It*G_vp)],
+            [  np.sum(It*G_up)],
+            [w*np.sum(It*G_rp)]
         ])
 
         ## SOLVE b VIA PSEUDO-INVERSE
