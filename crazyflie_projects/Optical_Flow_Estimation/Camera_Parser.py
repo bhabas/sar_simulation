@@ -162,6 +162,28 @@ class DataParser:
 
     def OF_Calc_Opt(self,cur_img,prev_img,delta_t):
 
+        ## SEPERATED SOBEL KERNAL (u--DIRECTION)
+        Ku_1 = np.array([ 
+            [ -1, 0, 1]
+        ]) 
+        
+        Ku_2 = np.array([
+            [1],
+            [2],
+            [1]
+        ])
+
+        ## SEPERATED SOBEL KERNAL (V--DIRECTION)
+        Kv_1 = np.array([ 
+            [ 1, 2, 1]
+        ]) 
+        
+        Kv_2 = np.array([
+            [-1],
+            [ 0],
+            [ 1]
+        ])
+
         ## DEFINE KERNALS USED TO CALCULATE INTENSITY GRADIENTS
         Kv = np.array([ # SOBEL KERNAL (U-DIRECTION)
             [-1,-2,-1],
@@ -175,6 +197,8 @@ class DataParser:
             [ -1, 0, 1]
         ])
 
+
+
         
         ## PRE-ALLOCATE INTENSITY GRADIENTS
         G_up = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
@@ -183,12 +207,11 @@ class DataParser:
         G_tp = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
 
 
-
         ## CALCULATE IMAGE GRADIENTS
         for v_p in range(1, HEIGHT_PIXELS-1): 
             for u_p in range(1, WIDTH_PIXELS-1):
-                G_up[v_p,u_p] = np.sum(cur_img[v_p-1:v_p+2,u_p-1:u_p+2] * Ku)
-                G_vp[v_p,u_p] = np.sum(cur_img[v_p-1:v_p+2,u_p-1:u_p+2] * Kv)
+                G_up[v_p,u_p] = np.sum(Ku_2 * (Ku_1*cur_img[v_p-1:v_p+2,u_p-1:u_p+2]))
+                G_vp[v_p,u_p] = np.sum(Kv_2 * (Kv_1*cur_img[v_p-1:v_p+2,u_p-1:u_p+2]))
                 G_rp[v_p,u_p] = (2*(u_p - O_up) + 1)*G_up[v_p,u_p] + (2*(v_p - O_vp) + 1)*G_vp[v_p,u_p]
                 G_tp[v_p,u_p] = cur_img[v_p,u_p] - prev_img[v_p,u_p]
 
