@@ -317,21 +317,7 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base,gym.Env):
         return FailureModes
 
     def Restart(self,FailureModes=[True,False,False]):
-        sys.stdout.write(YELLOW)
 
-        if FailureModes == [True,False,False]:
-            for retry in range(3):
-                try:
-                    print(f"[WARNING] Gazebo Restart. Attempt: {retry+1}/3 (restart_Gazebo)")
-                    self.launch_Gazebo()
-                    rospy.wait_for_service("/gazebo/pause_physics",timeout=10)
-                    print(GREEN+ f"[WARNING] Gazebo restart successful. (restart_Gazebo)" + ENDC)
-                    return True
-
-                except rospy.ROSException as e:
-                    print(f"[WARNING] Gazebo restart Failed. (restart_Gazebo)")
-                    print(f"[WARNING] {e}")
-            
         sys.stdout.write(RED)
         for retry in range(5):
             try:

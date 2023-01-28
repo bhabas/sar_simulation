@@ -749,7 +749,7 @@ if __name__ == '__main__':
     from Envs.CF_Env_2D import CF_Env_2D
 
     # INITIATE ENVIRONMENT
-    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[40,90])
+    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[-45,90])
     log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
 
 
@@ -762,23 +762,23 @@ if __name__ == '__main__':
 
     ## ================================================================= ##
     
-    # ## RESUME TRAINING DEEP RL MODEL
+    ## RESUME TRAINING DEEP RL MODEL
+    log_name = "SAC--01_27-16:05--Deg_135--LDA_A30_L75_K32_0"
+    t_step_load = 9000
+
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.load_model(t_step_load)
+    PolicyTrainer.train_model(reset_timesteps=False)
+
+    ## ================================================================= ##
+
+    ## COLLECT LANDING PERFORMANCE DATA
     # log_name = "SAC--01_24-16:00--Deg_90--LDA_A30_L75_K32_0"
     # t_step_load = 14000
 
     # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     # PolicyTrainer.load_model(t_step_load)
-    # PolicyTrainer.train_model(reset_timesteps=False)
-
-    ## ================================================================= ##
-
-    ## COLLECT LANDING PERFORMANCE DATA
-    log_name = "SAC--01_24-16:00--Deg_90--LDA_A30_L75_K32_0"
-    t_step_load = 14000
-
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.load_model(t_step_load)
-    PolicyTrainer.test_landing_performance()
+    # PolicyTrainer.test_landing_performance()
 
     ## ================================================================= ##
 
