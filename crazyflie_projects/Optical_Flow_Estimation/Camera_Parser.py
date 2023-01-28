@@ -185,13 +185,13 @@ class DataParser:
         ])
 
         ## DEFINE KERNALS USED TO CALCULATE INTENSITY GRADIENTS
-        Kv = np.array([ # SOBEL KERNAL (U-DIRECTION)
+        Kv_p = np.array([ # SOBEL KERNAL (U-DIRECTION)
             [-1,-2,-1],
             [ 0, 0, 0],
             [ 1, 2, 1]
         ]) 
 
-        Ku = np.array([ # SOBEL KERNAL (V--DIRECTION)
+        Ku_p = np.array([ # SOBEL KERNAL (V--DIRECTION)
             [ -1, 0, 1],
             [ -2, 0, 2],
             [ -1, 0, 1]
@@ -206,12 +206,74 @@ class DataParser:
         G_rp = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
         G_tp = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
 
+        ## CALCULATE IMAGE GRADIENTS
+        for v_p in range(1, HEIGHT_PIXELS-1): 
+            for u_p in range(1, WIDTH_PIXELS-1):
+                G_up[v_p,u_p] = np.sum(Ku_p*cur_img[v_p-1:v_p+2,u_p-1:u_p+2])
+                G_vp[v_p,u_p] = np.sum(Kv_p*cur_img[v_p-1:v_p+2,u_p-1:u_p+2])
+                G_rp[v_p,u_p] = (2*(u_p - O_up) + 1)*G_up[v_p,u_p] + (2*(v_p - O_vp) + 1)*G_vp[v_p,u_p]
+                G_tp[v_p,u_p] = cur_img[v_p,u_p] - prev_img[v_p,u_p]
+
+
+        ## SOLVE LEAST SQUARES PROBLEM
+        X = np.array([
+            [f*np.sum(G_vp*G_vp), -f*np.sum(G_up*G_vp), -w/2*np.sum(G_rp*G_vp)],
+            [f*np.sum(G_vp*G_up), -f*np.sum(G_up*G_up), -w/2*np.sum(G_rp*G_up)],
+            [f*np.sum(G_vp*G_rp), -f*np.sum(G_up*G_rp), -w/2*np.sum(G_rp*G_rp)]
+        ])
+
+        y = np.array([
+            [np.sum(G_tp*G_vp)],
+            [np.sum(G_tp*G_up)],
+            [np.sum(G_tp*G_rp)]
+        ])*(8*w/delta_t)
+
+        ## SOLVE b VIA PSEUDO-INVERSE
+        b = np.linalg.pinv(X)@y
+        b = b.flatten()
+
+        return b
+
+    def OF_Calc_Opt_Sep(self,cur_img,prev_img,delta_t):
+
+        ## SEPERATED SOBEL KERNAL (U--DIRECTION)
+        Ku_1 = np.array([
+            [-1],
+            [ 0],
+            [ 1]
+        ])
+
+        Ku_2 = np.array([ 
+            [1,2,1]
+        ]) 
+        
+
+        ## SEPERATED SOBEL KERNAL (V--DIRECTION)
+        Kv_1 = np.array([
+            [1],
+            [2],
+            [1]
+        ])
+
+        Kv_2 = np.array([ 
+            [-1,0,1]
+        ]) 
+        
+
+
+        ## PRE-ALLOCATE INTENSITY GRADIENTS
+        G_up = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+        G_vp = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+        G_rp = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+        G_tp = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+
+        
 
         ## CALCULATE IMAGE GRADIENTS
         for v_p in range(1, HEIGHT_PIXELS-1): 
             for u_p in range(1, WIDTH_PIXELS-1):
-                G_up[v_p,u_p] = np.sum(Ku_2 * (Ku_1*cur_img[v_p-1:v_p+2,u_p-1:u_p+2]))
-                G_vp[v_p,u_p] = np.sum(Kv_2 * (Kv_1*cur_img[v_p-1:v_p+2,u_p-1:u_p+2]))
+                G_up[v_p,u_p] = (Ku_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Ku_1))))[0,0]
+                G_vp[v_p,u_p] = (Kv_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Kv_1))))[0,0]
                 G_rp[v_p,u_p] = (2*(u_p - O_up) + 1)*G_up[v_p,u_p] + (2*(v_p - O_vp) + 1)*G_vp[v_p,u_p]
                 G_tp[v_p,u_p] = cur_img[v_p,u_p] - prev_img[v_p,u_p]
 
@@ -293,19 +355,25 @@ if __name__ == '__main__':
     img_cur = Parser.grabImage(75)
 
     # img_cur = np.array([
-    #     [1,1,0,0],
-    #     [1,1,0,0],
-    #     [1,1,0,0],
-    #     [1,1,0,0]
+    #     [1,2,3,3,2,1],
+    #     [1,2,3,3,2,1],
+    #     [1,2,3,3,2,1],
+    #     [1,2,3,3,2,1],
+    #     [1,2,3,3,2,1],
+    #     [1,2,3,3,2,1],
     #     ])
 
     # img_prev = np.array([
-    #     [0,0,1,1],
-    #     [0,0,1,1],
-    #     [0,0,1,1],
-    #     [0,0,1,1]
+    #     [2,4,6,6,4,2],
+    #     [2,4,6,6,4,2],
+    #     [2,4,6,6,4,2],
+    #     [2,4,6,6,4,2],
+    #     [2,4,6,6,4,2],
+    #     [2,4,6,6,4,2],
     #     ])
 
 
     print(Parser.OF_Calc_Raw(img_cur,img_prev,t_delta))
     print(Parser.OF_Calc_Opt(img_cur,img_prev,t_delta))
+    print(Parser.OF_Calc_Opt_Sep(img_cur,img_prev,t_delta))
+
