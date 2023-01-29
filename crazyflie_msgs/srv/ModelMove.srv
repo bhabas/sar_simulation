@@ -1,4 +1,6 @@
-
-geometry_msgs/Vector3 Vel
+geometry_msgs/Vector3 Position
+geometry_msgs/Vector3 Eul
+geometry_msgs/Twist Twist
+bool Reset_Pose
 ---
 bool srv_Success

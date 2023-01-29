@@ -7,7 +7,6 @@
 
 
 
-
 #include <ros/ros.h>
 #include "crazyflie_msgs/ModelMove.h"
 
@@ -30,13 +29,23 @@ namespace gazebo {
             physics::ModelPtr model_ptr;
             physics::LinkPtr link_ptr;
 
-            ignition::math::Vector3d vel_vec;
+            ignition::math::Vector3d pos;
+            ignition::math::Vector3d eul;
+
+            ignition::math::Vector3d vel;
+            ignition::math::Vector3d ang_vel;
+
+            ignition::math::Pose3d pose;
+
 
 
             std::string linkName;
 
             event::ConnectionPtr updateConnection;
             ros::ServiceServer CMD_Service;
+
+            double t_0;
+            double t; 
 
 
             ros::NodeHandle nh;

@@ -28,13 +28,24 @@ namespace gazebo
     void ModelMove::OnUpdate()
     {
         
-        link_ptr->SetLinearVel(vel_vec);
+        // model_ptr->SetLinearVel(vel_vec);
     }
 
 
     bool ModelMove::Service_Callback(crazyflie_msgs::ModelMove::Request &req, crazyflie_msgs::ModelMove::Response &res)
     {
-        vel_vec.Set(req.Vel.x,req.Vel.y,req.Vel.z);
+        // vel_vec.Set(req.Vel.x,req.Vel.y,req.Vel.z);
+        t_0 = ros::Time::now().toSec();
+        
+
+        if (req.Reset_Pose == true)
+        {
+            pose.Set(req.Position.x,0,0,0,0,0);
+            model_ptr->SetWorldPose(pose);
+        }
+        
+        
+
         return true;
     }
 
