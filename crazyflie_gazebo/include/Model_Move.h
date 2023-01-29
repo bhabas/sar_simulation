@@ -9,7 +9,7 @@
 
 
 #include <ros/ros.h>
-// #include "crazyflie_msgs/RLCmd.h"
+#include "crazyflie_msgs/ModelMove.h"
 
 
 
@@ -22,6 +22,7 @@ namespace gazebo {
         protected:
             void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
             void OnUpdate();
+            bool Service_Callback(crazyflie_msgs::ModelMove::Request &req, crazyflie_msgs::ModelMove::Response &res);
 
 
         private:
@@ -29,20 +30,14 @@ namespace gazebo {
             physics::ModelPtr model_ptr;
             physics::LinkPtr link_ptr;
 
-            physics::LinkPtr rotor1_ptr;
-            physics::LinkPtr rotor4_ptr;
-            
-
             ignition::math::Vector3d vel_vec;
-            ignition::math::Vector3d thrust_vec;
 
 
             std::string linkName;
 
             event::ConnectionPtr updateConnection;
+            ros::ServiceServer CMD_Service;
 
-
-            bool executeMoment = false;
 
             ros::NodeHandle nh;
     };
