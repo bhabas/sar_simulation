@@ -33,7 +33,7 @@ namespace gazebo {
             physics::LinkPtr rotor4_ptr;
             
 
-            ignition::math::Vector3d torque_vec;
+            ignition::math::Vector3d vel_vec;
             ignition::math::Vector3d thrust_vec;
 
 

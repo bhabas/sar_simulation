@@ -24,7 +24,8 @@ namespace gazebo
 
     void ModelMove::OnUpdate()
     {
-
+        vel_vec.Set(0.5,0,0);
+        link_ptr->SetLinearVel(vel_vec);
     }
 
     // void ModelMove::RLCmd_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)

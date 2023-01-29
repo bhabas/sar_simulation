@@ -520,9 +520,9 @@
       <Theta_z_gaussianNoise>0.0</Theta_z_gaussianNoise>
     </plugin>
 
-    <!-- <plugin name='MomentPlugin' filename='libMoment_plugin.so'>
+    <plugin name='ModelMove_Pluging' filename='libModelMove_plugin.so'>
         <bodyName>crazyflie_body</bodyName>
-    </plugin> -->
+    </plugin>
 
     <plugin name='DomainRandomization_Plugin' filename='libDomainRand_plugin.so'>
         <bodyName>crazyflie_body</bodyName>
