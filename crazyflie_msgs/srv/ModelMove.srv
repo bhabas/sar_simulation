@@ -1,6 +1,7 @@
-geometry_msgs/Vector3 Position
+geometry_msgs/Vector3 Pos
 geometry_msgs/Vector3 Eul
-geometry_msgs/Twist Twist
+geometry_msgs/Vector3 Vel
+geometry_msgs/Vector3 Ang_Vel
 bool Reset_Pose
 ---
 bool srv_Success
