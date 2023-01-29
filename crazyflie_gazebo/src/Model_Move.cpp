@@ -27,8 +27,11 @@ namespace gazebo
 
     void ModelMove::OnUpdate()
     {
-        
-        // model_ptr->SetLinearVel(vel_vec);
+        t_delta = ros::Time::now().toSec() - t_0;
+
+        double val = 0.25 * ang_vel.Y() * cos(ang_vel.Y()*t_delta);
+        model_ptr->SetWorldTwist(vel,ignition::math::Vector3d(0, val, 0));
+
     }
 
 
@@ -38,7 +41,6 @@ namespace gazebo
         t_0 = ros::Time::now().toSec();
         vel.Set(req.Vel.x,req.Vel.y,req.Vel.z);
         ang_vel.Set(req.Ang_Vel.x,req.Ang_Vel.y,req.Ang_Vel.z);
-        model_ptr->SetWorldTwist(vel,ang_vel);
 
 
         if (req.Reset_Pose == true)

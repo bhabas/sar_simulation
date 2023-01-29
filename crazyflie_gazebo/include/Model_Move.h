@@ -45,7 +45,7 @@ namespace gazebo {
             ros::ServiceServer CMD_Service;
 
             double t_0;
-            double t; 
+            double t_delta; 
 
 
             ros::NodeHandle nh;
