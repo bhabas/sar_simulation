@@ -2,7 +2,7 @@
   
     <!-- GROUND SURFACE ARGS -->
     <arg name="ground_name" default="GroundPlane_Desert_Physical"/>
-    <arg name="ground_sdf_path" default="$(find crazyflie_gazebo)/models/Landing_Surfaces/$(arg ground_name)/model.sdf"/>
+    <arg name="ground_sdf_path" default="$(find crazyflie_gazebo)/models/Ground_Surfaces/$(arg ground_name)/model.sdf"/>
 
     <!-- LANDING PLANE ARGS -->
     <arg name="Plane_Pos_x" default="0"/>

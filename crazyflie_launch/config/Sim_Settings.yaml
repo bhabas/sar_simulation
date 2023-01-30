@@ -1,7 +1,7 @@
 DATA_TYPE: "SIM"
 
 ENV_SETTINGS:
-  Ground_Name: "GroundPlane_Desert_Physical"
+  Ground_Name: "GroundPlane_None"
 
 PLANE_SETTINGS:
   Plane_Model: "Standard_Plane"
