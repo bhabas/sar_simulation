@@ -27,31 +27,33 @@ namespace gazebo {
         private:
             physics::WorldPtr world;
             physics::ModelPtr model_ptr;
-            physics::LinkPtr link_ptr;
-
-            ignition::math::Vector3d Pos;
-            ignition::math::Vector3d Vel;
-
-
-            ignition::math::Vector3d Eul_0;
-            ignition::math::Vector3d Eul_Lim;
-            ignition::math::Vector3d Freq;
-
-
-            ignition::math::Pose3d Pose;
-
-
-
-            std::string linkName;
-
             event::ConnectionPtr updateConnection;
+
+            // ROS VALUES
+            ros::NodeHandle nh;
             ros::ServiceServer CMD_Service;
 
-            double t_0;
-            double t_delta; 
+            // TIME VALUES
+            double t_0;     // Starting Time [s]
+            double t_delta; // Time since start [s]
 
+            // INITIAL POSE VALUES
+            ignition::math::Vector3d Pos_0;     // [m]
+            ignition::math::Vector3d Eul_0;     // [deg]
+            ignition::math::Pose3d Pose_0;
 
-            ros::NodeHandle nh;
+            // INITIAL VELOCITY PARAMETERS
+            ignition::math::Vector3d Vel_0;     // [m/s]
+            ignition::math::Vector3d Accel_0;   // [m/s^2]
+
+            // OSCILLATION PARAMETERS
+            ignition::math::Vector3d Eul_Lim;   // [deg]
+            ignition::math::Vector3d Freq;      // [Hz]
+
+            // CURRENT VEL AND ANG VEL CONDITIONS
+            ignition::math::Vector3d Vel;       // [m/s]
+            ignition::math::Vector3d Ang_Vel;   // [rad/s]
+
     };
 
 }
