@@ -27,7 +27,7 @@ class DataParser:
         self.Username = getpass.getuser()
         self.DirPath = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Optical_Flow_Estimation/local_logs' 
         # self.FileName = input("Input the name of the log file:\n")
-        self.FileName = "FlightLog_Tau_Only.csv"
+        self.FileName = "Compiled_FlightLog_Tau_Only_2.csv"
         self.FilePath = os.path.join(self.DirPath,self.FileName)
 
         if self.FileName.find("Compiled") == -1:
@@ -97,6 +97,29 @@ class DataParser:
         ax.imshow(image_array.reshape(WIDTH_PIXELS,HEIGHT_PIXELS), interpolation='none', 
                 vmin=0, vmax=255, cmap=cm.gray,
                 origin='upper',)
+
+        plt.show()
+
+    def Plot_OpticalFlow(self):
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        
+        t = self.grabState('t')
+        t_min = min(t)
+        t = t - t_min
+
+        Tau = self.grabState('Tau')
+        Tau_est = self.grabState('Tau_est')
+
+        ax.plot(t,Tau)
+        ax.plot(t,Tau_est)
+
+        ax.grid()
+
+        ax.set_xlabel('Time [s]')
+        ax.set_ylabel('Tau [s]')
+
+        ax.set_ylim(0,3)
 
         plt.show()
 
@@ -336,7 +359,7 @@ class DataParser:
         self.df['Camera_Data'] = self.Data_df.iloc[:,-1]
 
         FilePath = os.path.join(self.DirPath,f"Compiled_{self.FileName}")
-        # self.df.to_csv(FilePath,index=False)
+        self.df.to_csv(FilePath,index=False)
 
 
 
@@ -346,34 +369,38 @@ if __name__ == '__main__':
 
     Parser = DataParser() 
     # Parser.OpticalFlow_Writer()
+    Parser.Plot_OpticalFlow()
 
-    t_prev = Parser.grabState('t',0)
-    t_cur = Parser.grabState('t',1)
-    t_delta = t_cur - t_prev
+    # img_cur = Parser.grabImage(180)
+    # Parser.Plot_Image(img_cur)
 
-    img_prev = Parser.grabImage(74)
-    img_cur = Parser.grabImage(75)
+    # t_prev = Parser.grabState('t',0)
+    # t_cur = Parser.grabState('t',1)
+    # t_delta = t_cur - t_prev
 
-    # img_cur = np.array([
-    #     [1,2,3,3,2,1],
-    #     [1,2,3,3,2,1],
-    #     [1,2,3,3,2,1],
-    #     [1,2,3,3,2,1],
-    #     [1,2,3,3,2,1],
-    #     [1,2,3,3,2,1],
-    #     ])
+    # img_prev = Parser.grabImage(74)
+    # img_cur = Parser.grabImage(75)
 
-    # img_prev = np.array([
-    #     [2,4,6,6,4,2],
-    #     [2,4,6,6,4,2],
-    #     [2,4,6,6,4,2],
-    #     [2,4,6,6,4,2],
-    #     [2,4,6,6,4,2],
-    #     [2,4,6,6,4,2],
-    #     ])
+    # # img_cur = np.array([
+    # #     [1,2,3,3,2,1],
+    # #     [1,2,3,3,2,1],
+    # #     [1,2,3,3,2,1],
+    # #     [1,2,3,3,2,1],
+    # #     [1,2,3,3,2,1],
+    # #     [1,2,3,3,2,1],
+    # #     ])
+
+    # # img_prev = np.array([
+    # #     [2,4,6,6,4,2],
+    # #     [2,4,6,6,4,2],
+    # #     [2,4,6,6,4,2],
+    # #     [2,4,6,6,4,2],
+    # #     [2,4,6,6,4,2],
+    # #     [2,4,6,6,4,2],
+    # #     ])
 
 
-    print(Parser.OF_Calc_Raw(img_cur,img_prev,t_delta))
-    print(Parser.OF_Calc_Opt(img_cur,img_prev,t_delta))
-    print(Parser.OF_Calc_Opt_Sep(img_cur,img_prev,t_delta))
+    # print(Parser.OF_Calc_Raw(img_cur,img_prev,t_delta))
+    # print(Parser.OF_Calc_Opt(img_cur,img_prev,t_delta))
+    # print(Parser.OF_Calc_Opt_Sep(img_cur,img_prev,t_delta))
 

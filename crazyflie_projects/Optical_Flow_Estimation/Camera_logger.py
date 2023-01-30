@@ -21,7 +21,7 @@ class CameraLogger:
         self.Username = getpass.getuser()
         self.DirPath = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Optical_Flow_Estimation/local_logs' 
         # self.FileName = input("Input the name of the log file:\n")
-        self.FileName = "FlightLog_Tau_Only.csv"
+        self.FileName = "FlightLog_Tau_Only_2.csv"
         self.FilePath = os.path.join(self.DirPath,self.FileName)
         self.Create_csv()
 
