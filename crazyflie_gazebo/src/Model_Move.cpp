@@ -29,8 +29,8 @@ namespace gazebo
     {
         t_delta = ros::Time::now().toSec() - t_0;
 
-        double val = 0.25 * ang_vel.Y() * cos(ang_vel.Y()*t_delta);
-        model_ptr->SetWorldTwist(vel,ignition::math::Vector3d(0, val, 0));
+        double val = Eul_Lim.Y() * 2*M_PI*Freq.Y() * cos(2*M_PI*Freq.Y()*t_delta);
+        model_ptr->SetWorldTwist(Vel,ignition::math::Vector3d(0, val, 0));
 
     }
 
@@ -39,16 +39,23 @@ namespace gazebo
     {
 
         t_0 = ros::Time::now().toSec();
-        vel.Set(req.Vel.x,req.Vel.y,req.Vel.z);
-        ang_vel.Set(req.Ang_Vel.x,req.Ang_Vel.y,req.Ang_Vel.z);
+        Vel.Set(req.Vel.x,req.Vel.y,req.Vel.z);
+
+        Eul_Lim.Set(req.Eul_Lim.x,req.Eul_Lim.y,req.Eul_Lim.z);
+        Eul_Lim *= M_PI/180;
+
+        Freq.Set(req.Freq.x,req.Freq.y,req.Freq.z);
+
 
 
         if (req.Reset_Pose == true)
         {
-            pos.Set(req.Pos.x,req.Pos.y,req.Pos.z);
-            eul.Set(req.Eul.x,req.Eul.y,req.Eul.z);
-            pose.Set(pos,eul);
-            model_ptr->SetWorldPose(pose);
+            Pos.Set(req.Pos.x,req.Pos.y,req.Pos.z);
+            Eul_0.Set(req.Eul_0.x,req.Eul_0.y,req.Eul_0.z);
+            Eul_0 *= M_PI/180;
+
+            Pose.Set(Pos,Eul_0);
+            model_ptr->SetWorldPose(Pose);
         }
         
         

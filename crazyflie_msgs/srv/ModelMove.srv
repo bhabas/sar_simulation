@@ -1,8 +1,9 @@
 geometry_msgs/Vector3 Pos
-geometry_msgs/Vector3 Eul
 geometry_msgs/Vector3 Vel
-geometry_msgs/Vector3 Ang_Vel
-geometry_msgs/Vector3 Eul_Limit
+
+geometry_msgs/Vector3 Eul_0
+geometry_msgs/Vector3 Eul_Lim
+geometry_msgs/Vector3 Freq
 
 bool Reset_Pose
 ---

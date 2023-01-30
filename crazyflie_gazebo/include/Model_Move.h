@@ -29,13 +29,16 @@ namespace gazebo {
             physics::ModelPtr model_ptr;
             physics::LinkPtr link_ptr;
 
-            ignition::math::Vector3d pos;
-            ignition::math::Vector3d eul;
+            ignition::math::Vector3d Pos;
+            ignition::math::Vector3d Vel;
 
-            ignition::math::Vector3d vel;
-            ignition::math::Vector3d ang_vel;
 
-            ignition::math::Pose3d pose;
+            ignition::math::Vector3d Eul_0;
+            ignition::math::Vector3d Eul_Lim;
+            ignition::math::Vector3d Freq;
+
+
+            ignition::math::Pose3d Pose;
 
 
 
