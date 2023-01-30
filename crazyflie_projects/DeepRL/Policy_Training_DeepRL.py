@@ -618,7 +618,7 @@ class Policy_Trainer_DeepRL():
                     done = False
                     while not done:
                         action,_ = self.model.predict(obs)
-                        action = np.zeros_like(action)
+                        # action = np.zeros_like(action)
                         obs,reward,done,info = self.env.step(action)
 
 
@@ -762,23 +762,23 @@ if __name__ == '__main__':
 
     ## ================================================================= ##
     
-    ## RESUME TRAINING DEEP RL MODEL
-    log_name = "SAC--01_27-16:05--Deg_135--LDA_A30_L75_K32_0"
-    t_step_load = 9000
-
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.load_model(t_step_load)
-    PolicyTrainer.train_model(reset_timesteps=False)
-
-    ## ================================================================= ##
-
-    ## COLLECT LANDING PERFORMANCE DATA
-    # log_name = "SAC--01_24-16:00--Deg_90--LDA_A30_L75_K32_0"
-    # t_step_load = 14000
+    # ## RESUME TRAINING DEEP RL MODEL
+    # log_name = "SAC--01_27-16:05--Deg_135--LDA_A30_L75_K32_0"
+    # t_step_load = 9000
 
     # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     # PolicyTrainer.load_model(t_step_load)
-    # PolicyTrainer.test_landing_performance()
+    # PolicyTrainer.train_model(reset_timesteps=False)
+
+    ## ================================================================= ##
+
+    # COLLECT LANDING PERFORMANCE DATA
+    log_name = "SAC--01_28-16:13--Deg_135--LDA_A30_L75_K32_0"
+    t_step_load = 84000
+
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.load_model(t_step_load)
+    PolicyTrainer.test_landing_performance()
 
     ## ================================================================= ##
 
