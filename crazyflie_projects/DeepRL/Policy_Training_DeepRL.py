@@ -572,8 +572,8 @@ class Policy_Trainer_DeepRL():
         ## TIME ESTIMATION FILTER INITIALIZATION
         num_trials = len(Vel_arr)*len(Phi_arr)*n_episodes
         idx = 0
-        t_delta = 120
-        t_delta_prev = 120
+        t_delta = 0
+        t_delta_prev = 0
 
         ## WRITE FILE HEADER IF NO FILE EXISTS
         if not os.path.exists(filePath):
@@ -671,7 +671,7 @@ class Policy_Trainer_DeepRL():
 
                         ## CALCULATE AVERAGE TIME PER EPISODE
                         t_delta = time.time() - start_time
-                        t_delta_avg = EMA(t_delta,t_delta_prev,alpha=0.2)
+                        t_delta_avg = EMA(t_delta,t_delta_prev,alpha=0.01)
                         t_delta_prev = t_delta_avg
                         idx += 1
 
@@ -749,22 +749,22 @@ if __name__ == '__main__':
     from Envs.CF_Env_2D import CF_Env_2D
 
     # INITIATE ENVIRONMENT
-    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[-90,90])
+    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[2.0,4.0],Phi_range=[-90,90])
     log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
 
 
 
-    ## START TRAINING NEW DEEP RL MODEL 
-    log_name = f"SAC--{current_time}--Deg_{env.Plane_Angle}--{env.modelInitials}"    
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.create_model()
-    PolicyTrainer.train_model()
+    # ## START TRAINING NEW DEEP RL MODEL 
+    # log_name = f"SAC--{current_time}--Deg_{env.Plane_Angle}--{env.modelInitials}"    
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.create_model()
+    # PolicyTrainer.train_model()
 
     ## ================================================================= ##
     
     ## RESUME TRAINING DEEP RL MODEL
-    log_name = "SAC--01_29-17:09--Deg_90--LDA_A30_L75_K32_0"
-    t_step_load = 22000
+    # log_name = "SAC--01_29-17:09--Deg_90--LDA_A30_L75_K32_0"
+    # t_step_load = 22000
 
     # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     # PolicyTrainer.load_model(t_step_load)
@@ -772,13 +772,13 @@ if __name__ == '__main__':
 
     ## ================================================================= ##
 
-    # # COLLECT LANDING PERFORMANCE DATA
-    # log_name = "SAC--01_28-16:13--Deg_135--LDA_A30_L75_K32_0"
-    # t_step_load = 84000
+    # COLLECT LANDING PERFORMANCE DATA
+    log_name = "SAC--01_29-17:09--Deg_90--LDA_A30_L75_K32_0"
+    t_step_load = 32000
 
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.load_model(t_step_load)
-    # PolicyTrainer.test_landing_performance()
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.load_model(t_step_load)
+    PolicyTrainer.test_landing_performance()
 
     ## ================================================================= ##
 
