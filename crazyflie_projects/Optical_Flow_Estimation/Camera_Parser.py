@@ -81,7 +81,7 @@ class DataParser:
 
     def grabImage(self,idx):
 
-        return self.Camera_array[idx]
+        return self.Image_array[idx]
 
     def grabState(self,state_str,idx=None):
 
@@ -90,12 +90,15 @@ class DataParser:
         else:
             return self.Data_df[state_str][idx]
 
-    def SaveImage_Gif(self):
+    def SaveCamera_MP4(self):
+        """
+            Saves recorded images from camera into an MP4 file in the log directory
+        """        
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        imgs = []
+        imgs = [] # List of images
 
         for ii in range(len(self.t)):
             im = ax.imshow(self.Image_array[ii], 
@@ -104,27 +107,21 @@ class DataParser:
                 origin='upper',
                 animated=True)
 
-            if ii == 0:
-                ax.imshow(self.Image_array[ii], 
-                interpolation='none', 
-                vmin=0, vmax=255, cmap=cm.gray,
-                origin='upper')
             imgs.append([im])
 
         
-        ani = animation.ArtistAnimation(fig, imgs, interval=50, blit=True,
-                                        repeat_delay=1000)
+        ani = animation.ArtistAnimation(fig, imgs, interval=75, blit=True,repeat_delay=1000)
         ani.save(f"{self.LogDir}/{self.FileName}.mp4")
         
 
 
 
-    def Plot_Image(self,image_array):
+    def Plot_Image(self,image):
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        ax.imshow(image_array, interpolation='none', 
+        ax.imshow(image, interpolation='none', 
                 vmin=0, vmax=255, cmap=cm.gray,
                 origin='upper',)
 
@@ -261,8 +258,8 @@ class DataParser:
         ## CALCULATE IMAGE GRADIENTS
         for v_p in range(1, HEIGHT_PIXELS-1): 
             for u_p in range(1, WIDTH_PIXELS-1):
-                G_up[v_p,u_p] = (Ku_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Ku_1))))[0,0]
-                G_vp[v_p,u_p] = (Kv_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Kv_1))))[0,0]
+                G_up[v_p,u_p] = (Ku_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Ku_1)))).item()
+                G_vp[v_p,u_p] = (Kv_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Kv_1)))).item()
                 G_rp[v_p,u_p] = (2*(u_p - O_up) + 1)*G_up[v_p,u_p] + (2*(v_p - O_vp) + 1)*G_vp[v_p,u_p]
                 G_tp[v_p,u_p] = cur_img[v_p,u_p] - prev_img[v_p,u_p]
 
@@ -293,10 +290,8 @@ class DataParser:
         Theta_x_est_arr = [np.nan]
         Theta_y_est_arr = [np.nan]
         Tau_est_arr = [np.nan]
-
-        num_img = len(self.t)
         
-        with trange(1,num_img) as n:
+        with trange(1,len(self.t)) as n:
             for ii in n:
 
                 ## COLLECT CURRENT AND PREVIOUS IMAGE
@@ -339,38 +334,7 @@ if __name__ == '__main__':
 
     Parser = DataParser() 
     # Parser.OpticalFlow_Writer(Parser.OF_Calc_Opt_Sep)
-    Parser.SaveImage_Gif()
+    Parser.SaveCamera_MP4()
     # Parser.Plot_OpticalFlow()
 
     # Parser.Plot_Image(Parser.grabImage(150))
-
-    # t_prev = Parser.grabState('t',0)
-    # t_cur = Parser.grabState('t',1)
-    # t_delta = t_cur - t_prev
-
-    # img_prev = Parser.grabImage(74)
-    # img_cur = Parser.grabImage(75)
-
-    # # img_cur = np.array([
-    # #     [1,2,3,3,2,1],
-    # #     [1,2,3,3,2,1],
-    # #     [1,2,3,3,2,1],
-    # #     [1,2,3,3,2,1],
-    # #     [1,2,3,3,2,1],
-    # #     [1,2,3,3,2,1],
-    # #     ])
-
-    # # img_prev = np.array([
-    # #     [2,4,6,6,4,2],
-    # #     [2,4,6,6,4,2],
-    # #     [2,4,6,6,4,2],
-    # #     [2,4,6,6,4,2],
-    # #     [2,4,6,6,4,2],
-    # #     [2,4,6,6,4,2],
-    # #     ])
-
-
-    # print(Parser.OF_Calc_Raw(img_cur,img_prev,t_delta))
-    # print(Parser.OF_Calc_Opt(img_cur,img_prev,t_delta))
-    # print(Parser.OF_Calc_Opt_Sep(img_cur,img_prev,t_delta))
-
