@@ -114,26 +114,41 @@ class DataParser:
         ani.save(f"{self.LogDir}/{self.FileName}.mp4")
         
 
-    def Plot_OF_Image(self,image):
+    def Plot_OF_Image(self,image,n=5):
+        """Superimpose optical flow vectors over image
+
+        Args:
+            image (np.array): Array of image data
+            n (int, optional): Stride between vectors. Defaults to 5.
+        """        
 
         Iu,Iv = self.Calc_OF_Grad(image)
+        U_p,V_p = np.meshgrid(np.arange(0,len(Iu),1),np.arange(0,len(Iv),1))
 
-        X,Y = np.meshgrid(np.arange(0,len(Iu),1),np.arange(0,len(Iv),1))
-
-        n = 50
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        ax.imshow(image[:n,:n], interpolation='none', 
+        ax.imshow(image, interpolation='none', 
                 vmin=0, vmax=255, cmap=cm.gray,
                 origin='upper',)
                 
-        ax.quiver(X[:n,:n],Y[:n,:n],Iu[:n,:n],Iv[:n,:n],color='g')
+        ax.quiver(
+            U_p[::n,::n],V_p[::n,::n],
+            Iu[::n,::n],-Iv[::n,::n], # Need negative sign for arrow to match correct direction
+            color='g')
 
         plt.show()
 
     def Calc_OF_Grad(self,image):
+        """Calculate optical flow gradient vectors from image
+
+        Args:
+            image (np.array): Image array
+
+        Returns:
+            np.array: Iu,Iv
+        """        
 
         ## SEPERATED SOBEL KERNAL (U--DIRECTION)
         Ku_1 = np.array([[-1,0,1]]).reshape(3,1)
