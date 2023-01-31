@@ -4,8 +4,7 @@ import getpass
 import os
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-import cv2 as cv
-
+import time
 
 ## CAMERA PARAMETERS
 WIDTH_PIXELS = 160
@@ -27,7 +26,7 @@ class DataParser:
         self.Username = getpass.getuser()
         self.DirPath = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Optical_Flow_Estimation/local_logs' 
         # self.FileName = input("Input the name of the log file:\n")
-        self.FileName = "Compiled_FlightLog_Tau_Only_2.csv"
+        self.FileName = "Compiled_FlightLog_Tau_Only_5.csv"
         self.FilePath = os.path.join(self.DirPath,self.FileName)
 
         if self.FileName.find("Compiled") == -1:
@@ -185,28 +184,6 @@ class DataParser:
 
     def OF_Calc_Opt(self,cur_img,prev_img,delta_t):
 
-        ## SEPERATED SOBEL KERNAL (u--DIRECTION)
-        Ku_1 = np.array([ 
-            [ -1, 0, 1]
-        ]) 
-        
-        Ku_2 = np.array([
-            [1],
-            [2],
-            [1]
-        ])
-
-        ## SEPERATED SOBEL KERNAL (V--DIRECTION)
-        Kv_1 = np.array([ 
-            [ 1, 2, 1]
-        ]) 
-        
-        Kv_2 = np.array([
-            [-1],
-            [ 0],
-            [ 1]
-        ])
-
         ## DEFINE KERNALS USED TO CALCULATE INTENSITY GRADIENTS
         Kv_p = np.array([ # SOBEL KERNAL (U-DIRECTION)
             [-1,-2,-1],
@@ -326,6 +303,7 @@ class DataParser:
         Theta_y_arr = [np.nan]
         Tau_arr = [np.nan]
 
+        t_0 = time.time()
         for ii in range(1,len(self.t)):
             
             ## COLLECT CURRENT AND PREVIOUS IMAGE
@@ -338,7 +316,8 @@ class DataParser:
             t_delta = t_cur - t_prev
 
             ## CALCULATE OPTICAL FLOW VALUES
-            Theta_x_est,Theta_y_est,Theta_z_est = self.OF_Calc_Opt(cur_img,prev_img,t_delta)
+            
+            Theta_x_est,Theta_y_est,Theta_z_est = self.OF_Calc_Opt_Sep(cur_img,prev_img,t_delta)
             print(Theta_z_est**-1)
 
             Theta_x_est,Theta_y_est,Tau_est = np.round([Theta_x_est,Theta_y_est,1/Theta_z_est],3)
@@ -350,7 +329,7 @@ class DataParser:
 
             print(f"Compiling Data: {ii}/{len(self.t)}")
 
-
+        print(f"Time: {time.time() - t_0}")
         ## CREATE NEW DATAFRAME
         self.df = self.Data_df.iloc[:,:-1]
         self.df['Tau_est'] = Tau_arr
@@ -371,8 +350,7 @@ if __name__ == '__main__':
     # Parser.OpticalFlow_Writer()
     Parser.Plot_OpticalFlow()
 
-    # img_cur = Parser.grabImage(180)
-    # Parser.Plot_Image(img_cur)
+    # Parser.Plot_Image(Parser.grabImage(150))
 
     # t_prev = Parser.grabState('t',0)
     # t_cur = Parser.grabState('t',1)
