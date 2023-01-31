@@ -29,7 +29,7 @@ class DataParser:
 
         ## INIT LOGGING PARAMETERS
         # self.FileName = input("Input the name of the log file:\n")
-        self.FileName = "FlightLog_Tau_Only_2"
+        self.FileName = "FlightLog_Tau_Only_1"
         self.LogDir = f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/local_logs/{self.FileName}"
         self.FilePath = os.path.join(self.LogDir,self.FileName) + ".csv"
         
@@ -64,6 +64,7 @@ class DataParser:
 
         ## CONVERT IMAGE DATA FROM STRING TO INTEGER
         self.Image_data = self.Data_df["Camera_Data"].to_numpy()   # Array of camera images
+        self.n_imgs = len(self.t)
         Image_list = []
         for n in range(0,self.Image_data.size): 
             Image_list.append(np.fromstring(self.Image_data[n], dtype=int, sep =' ').reshape(WIDTH_PIXELS,HEIGHT_PIXELS))
@@ -95,24 +96,38 @@ class DataParser:
             Saves recorded images from camera into an MP4 file in the log directory
         """        
 
+        Iu,Iv = self.Calc_OF_Grad(self.Image_array[0])
+        U_p,V_p = np.meshgrid(np.arange(0,len(Iu),1),np.arange(0,len(Iv),1))
+        n = 10
+
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        imgs = [] # List of images
-
-        for ii in range(len(self.t)):
-            im = ax.imshow(self.Image_array[ii], 
+        im = ax.imshow(self.Image_array[0], 
                 interpolation='none', 
                 vmin=0, vmax=255, cmap=cm.gray,
-                origin='upper',
-                animated=True)
+                origin='upper',)
 
-            imgs.append([im])
+        Q = ax.quiver(
+            U_p[::n,::n],V_p[::n,::n],
+            Iu[::n,::n],-Iv[::n,::n], # Need negative sign for arrow to match correct direction
+            color='lime')
+
+
+        def update(i):
+
+            im.set_data(self.Image_array[i])
+
+            Iu,Iv = self.Calc_OF_Grad(self.Image_array[i])
+            Q.set_UVC(Iu[::n,::n],-Iv[::n,::n])
+
+            return im,Q,
 
         
-        ani = animation.ArtistAnimation(fig, imgs, interval=75, blit=True,repeat_delay=1000)
+        ani = animation.FuncAnimation(fig, update, interval=50, blit=False,frames=self.n_imgs-1)
         ani.save(f"{self.LogDir}/{self.FileName}.mp4")
         
+        # plt.show()
 
     def Plot_OF_Image(self,image,n=5):
         """Superimpose optical flow vectors over image
@@ -180,11 +195,12 @@ class DataParser:
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        ax.imshow(image, interpolation='none', 
+        im = ax.imshow(image, interpolation='none', 
                 vmin=0, vmax=255, cmap=cm.gray,
-                origin='upper',)
+                origin='upper',animated=True)
 
         plt.show()
+
 
     def Plot_OpticalFlow(self):
         fig = plt.figure()
@@ -350,7 +366,7 @@ class DataParser:
         Theta_y_est_arr = [np.nan]
         Tau_est_arr = [np.nan]
         
-        with trange(1,len(self.t)) as n:
+        with trange(1,self.n_imgs) as n:
             for ii in n:
 
                 ## COLLECT CURRENT AND PREVIOUS IMAGE
@@ -393,10 +409,10 @@ if __name__ == '__main__':
 
     Parser = DataParser() 
     # Parser.OpticalFlow_Writer(Parser.OF_Calc_Opt_Sep)
-    # Parser.SaveCamera_MP4()
+    Parser.SaveCamera_MP4()
     # Parser.Plot_OpticalFlow()
 
     # Parser.Plot_Image(Parser.grabImage(150))
-    Parser.Plot_OF_Image(Parser.grabImage(150))
+    # Parser.Plot_OF_Image(Parser.grabImage(150))
     # I_u,I_v = Parser.Calc_OF_Grad(Parser.grabImage(150))
 
