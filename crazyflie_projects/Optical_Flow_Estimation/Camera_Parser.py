@@ -3,8 +3,8 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-import time
 from tqdm import tqdm,trange
+import matplotlib.animation as animation
 
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg,os
@@ -29,17 +29,13 @@ class DataParser:
 
         ## INIT LOGGING PARAMETERS
         # self.FileName = input("Input the name of the log file:\n")
-        self.FileName = "FlightLog_Tau_Only"
+        self.FileName = "FlightLog_Tau_Only_5"
         self.LogDir = f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/local_logs/{self.FileName}"
         self.FilePath = os.path.join(self.LogDir,self.FileName) + ".csv"
         
 
         ## LOAD CSV FILE
         self.Data_df = pd.read_csv(self.FilePath,quotechar='"',low_memory=False,comment="#")
-
-
-        
-
 
         ## LOAD STATE AND CAMERA DATA
         self.t = self.Data_df['t'].to_numpy()
@@ -67,10 +63,11 @@ class DataParser:
         self.Theta_y = self.Data_df['Theta_y'].to_numpy()
 
         ## CONVERT IMAGE DATA FROM STRING TO INTEGER
-        self.Camera_data = self.Data_df["Camera_Data"].to_numpy() # Array of camera images
-        self.Camera_array = np.zeros((len(self.Camera_data), WIDTH_PIXELS*HEIGHT_PIXELS)) # Allocate space for camera data
-        for n in range(0,self.Camera_data.size): 
-            self.Camera_array[n] = np.fromstring(self.Camera_data[n], dtype=int, sep =' ')
+        self.Image_data = self.Data_df["Camera_Data"].to_numpy()   # Array of camera images
+        Image_list = []
+        for n in range(0,self.Image_data.size): 
+            Image_list.append(np.fromstring(self.Image_data[n], dtype=int, sep =' ').reshape(WIDTH_PIXELS,HEIGHT_PIXELS))
+        self.Image_array = np.asarray(Image_list)
 
         # CHECK IF DATA HAS ALREADY BEEN COMPILED
         if 'Tau_est' in self.Data_df.columns:
@@ -84,7 +81,7 @@ class DataParser:
 
     def grabImage(self,idx):
 
-        return self.Camera_array[idx].reshape(WIDTH_PIXELS,HEIGHT_PIXELS)
+        return self.Camera_array[idx]
 
     def grabState(self,state_str,idx=None):
 
@@ -93,13 +90,41 @@ class DataParser:
         else:
             return self.Data_df[state_str][idx]
 
+    def SaveImage_Gif(self):
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+        imgs = []
+
+        for ii in range(len(self.t)):
+            im = ax.imshow(self.Image_array[ii], 
+                interpolation='none', 
+                vmin=0, vmax=255, cmap=cm.gray,
+                origin='upper',
+                animated=True)
+
+            if ii == 0:
+                ax.imshow(self.Image_array[ii], 
+                interpolation='none', 
+                vmin=0, vmax=255, cmap=cm.gray,
+                origin='upper')
+            imgs.append([im])
+
+        
+        ani = animation.ArtistAnimation(fig, imgs, interval=50, blit=True,
+                                        repeat_delay=1000)
+        ani.save(f"{self.LogDir}/{self.FileName}.mp4")
+        
+
+
 
     def Plot_Image(self,image_array):
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        ax.imshow(image_array.reshape(WIDTH_PIXELS,HEIGHT_PIXELS), interpolation='none', 
+        ax.imshow(image_array, interpolation='none', 
                 vmin=0, vmax=255, cmap=cm.gray,
                 origin='upper',)
 
@@ -313,7 +338,8 @@ class DataParser:
 if __name__ == '__main__':
 
     Parser = DataParser() 
-    Parser.OpticalFlow_Writer(Parser.OF_Calc_Opt_Sep)
+    # Parser.OpticalFlow_Writer(Parser.OF_Calc_Opt_Sep)
+    Parser.SaveImage_Gif()
     # Parser.Plot_OpticalFlow()
 
     # Parser.Plot_Image(Parser.grabImage(150))
