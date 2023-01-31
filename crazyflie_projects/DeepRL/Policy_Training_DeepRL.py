@@ -693,7 +693,7 @@ class Policy_Trainer_DeepRL():
         ## COLLECT DATA
         R = af2.iloc[:]['Vel_d']
         Theta = af2.iloc[:]['Phi_d']
-        C = af2.iloc[:]['Leg_4_NBC']
+        C = af2.iloc[:]['4_Leg_NBC']
 
         ## DEFINE INTERPOLATION GRID
         R_list = np.linspace(R.min(),R.max(),num=50,endpoint=True).reshape(1,-1)
@@ -749,8 +749,8 @@ if __name__ == '__main__':
     from Envs.CF_Env_2D import CF_Env_2D
 
     # INITIATE ENVIRONMENT
-    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[2.0,4.0],Phi_range=[-90,90])
-    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
+    # env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[2.0,4.0],Phi_range=[-90,90])
+    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
 
 
 
@@ -772,22 +772,22 @@ if __name__ == '__main__':
 
     ## ================================================================= ##
 
-    # COLLECT LANDING PERFORMANCE DATA
-    log_name = "SAC--01_29-17:09--Deg_90--LDA_A30_L75_K32_0"
-    t_step_load = 32000
+    # # COLLECT LANDING PERFORMANCE DATA
+    # log_name = "SAC--01_29-17:09--Deg_90--LDA_A30_L75_K32_0"
+    # t_step_load = 32000
 
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.load_model(t_step_load)
-    PolicyTrainer.test_landing_performance()
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.load_model(t_step_load)
+    # PolicyTrainer.test_landing_performance()
 
     ## ================================================================= ##
 
     # PLOT LANDING PERFORMANCE
-    # env = None
-    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Gazebo"
-    # log_name = "SAC--01_24-16:00--Deg_90--LDA_A30_L75_K32_0"
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.Plot_Landing_Performance()
+    env = None
+    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Gazebo"
+    log_name = "SAC--01_28-16:13--Deg_135--LDA_A30_L75_K32_0"
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.Plot_Landing_Performance()
 
 
     
