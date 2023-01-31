@@ -118,7 +118,7 @@ class Policy_Trainer_DeepRL():
             env=self.env,
             gamma=0.999,
             learning_rate=0.002,
-            policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[12,12]),
+            policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[24,24]),
             verbose=1,
             device='cpu',
             tensorboard_log=self.log_dir
@@ -749,7 +749,7 @@ if __name__ == '__main__':
     from Envs.CF_Env_2D import CF_Env_2D
 
     # INITIATE ENVIRONMENT
-    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[-45,90])
+    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[-90,90])
     log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
 
 
@@ -763,8 +763,8 @@ if __name__ == '__main__':
     ## ================================================================= ##
     
     ## RESUME TRAINING DEEP RL MODEL
-    log_name = "SAC--01_27-16:05--Deg_135--LDA_A30_L75_K32_0"
-    t_step_load = 9000
+    log_name = "SAC--01_29-17:09--Deg_90--LDA_A30_L75_K32_0"
+    t_step_load = 22000
 
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.load_model(t_step_load)
