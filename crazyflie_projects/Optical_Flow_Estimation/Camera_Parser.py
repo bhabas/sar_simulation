@@ -29,7 +29,7 @@ class DataParser:
 
         ## INIT LOGGING PARAMETERS
         # self.FileName = input("Input the name of the log file:\n")
-        self.FileName = "FlightLog_Tau_Only_5"
+        self.FileName = "FlightLog_Tau_Only_2"
         self.LogDir = f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/local_logs/{self.FileName}"
         self.FilePath = os.path.join(self.LogDir,self.FileName) + ".csv"
         
@@ -113,6 +113,50 @@ class DataParser:
         ani = animation.ArtistAnimation(fig, imgs, interval=75, blit=True,repeat_delay=1000)
         ani.save(f"{self.LogDir}/{self.FileName}.mp4")
         
+
+    def Plot_OF_Image(self,image):
+
+        Iu,Iv = self.Calc_OF_Grad(image)
+
+        X,Y = np.meshgrid(np.arange(0,len(Iu),1),np.arange(0,len(Iv),1))
+
+        n = 50
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+        ax.imshow(image[:n,:n], interpolation='none', 
+                vmin=0, vmax=255, cmap=cm.gray,
+                origin='upper',)
+                
+        ax.quiver(X[:n,:n],Y[:n,:n],Iu[:n,:n],Iv[:n,:n],color='g')
+
+        plt.show()
+
+    def Calc_OF_Grad(self,image):
+
+        ## SEPERATED SOBEL KERNAL (U--DIRECTION)
+        Ku_1 = np.array([[-1,0,1]]).reshape(3,1)
+        Ku_2 = np.array([[ 1,2,1]]).reshape(1,3)
+
+
+        ## SEPERATED SOBEL KERNAL (V--DIRECTION)
+        Kv_1 = np.array([[ 1,2,1]]).reshape(3,1)
+        Kv_2 = np.array([[-1,0,1]]).reshape(1,3)
+
+
+        ## PRE-ALLOCATE INTENSITY GRADIENTS
+        I_u = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+        I_v = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+
+
+        ## CALCULATE IMAGE GRADIENTS
+        for v_p in range(1, HEIGHT_PIXELS-1): 
+            for u_p in range(1, WIDTH_PIXELS-1):
+                I_u[v_p,u_p] = -1/(8*w)*(Ku_2.dot((image[v_p-1:v_p+2,u_p-1:u_p+2].dot(Ku_1)))).item()
+                I_v[v_p,u_p] =  1/(8*w)*(Kv_2.dot((image[v_p-1:v_p+2,u_p-1:u_p+2].dot(Kv_1)))).item()
+
+        return I_u,I_v
 
 
 
@@ -334,7 +378,10 @@ if __name__ == '__main__':
 
     Parser = DataParser() 
     # Parser.OpticalFlow_Writer(Parser.OF_Calc_Opt_Sep)
-    Parser.SaveCamera_MP4()
+    # Parser.SaveCamera_MP4()
     # Parser.Plot_OpticalFlow()
 
     # Parser.Plot_Image(Parser.grabImage(150))
+    Parser.Plot_OF_Image(Parser.grabImage(150))
+    # I_u,I_v = Parser.Calc_OF_Grad(Parser.grabImage(150))
+
