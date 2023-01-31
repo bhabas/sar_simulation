@@ -24,7 +24,6 @@ class CameraLogger:
         rospy.init_node('Camera_Data', anonymous = True)
 
         ## INIT LOGGING PARAMETERS
-        self.Username = getpass.getuser()
         self.FileName = input("Input the name of the log file:\n")
         self.LogDir = f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/local_logs/{self.FileName}"
         

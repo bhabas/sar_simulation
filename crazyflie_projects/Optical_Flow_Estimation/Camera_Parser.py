@@ -1,10 +1,15 @@
 import numpy as np
 import pandas as pd
-import getpass
 import os
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import time
+from tqdm import tqdm,trange
+
+## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
+import sys,rospkg,os
+BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_projects'))
+sys.path.insert(1,BASE_PATH)
 
 ## CAMERA PARAMETERS
 WIDTH_PIXELS = 160
@@ -23,20 +28,24 @@ class DataParser:
     def __init__(self):
 
         ## INIT LOGGING PARAMETERS
-        self.Username = getpass.getuser()
-        self.DirPath = f'/home/{self.Username}/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Optical_Flow_Estimation/local_logs' 
         # self.FileName = input("Input the name of the log file:\n")
-        self.FileName = "Compiled_FlightLog_Tau_Only_5.csv"
-        self.FilePath = os.path.join(self.DirPath,self.FileName)
+        self.FileName = "FlightLog_Tau_Only"
+        self.LogDir = f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/local_logs/{self.FileName}"
+        self.FilePath = os.path.join(self.LogDir,self.FileName) + ".csv"
+        
 
-        if self.FileName.find("Compiled") == -1:
-            pre_compiled_Flag = False
-        else:
-            pre_compiled_Flag = True
-
-
-        ## PARSE CSV DATA
+        ## LOAD CSV FILE
         self.Data_df = pd.read_csv(self.FilePath,quotechar='"',low_memory=False,comment="#")
+
+
+        # CHECK IF DATA HAS ALREADY BEEN COMPILED
+        if 'Tau_est' in self.Data_df.columns:
+            pre_compiled_Flag = True
+        else:
+            pre_compiled_Flag = False
+
+
+        ## LOAD STATE AND CAMERA DATA
         self.t = self.Data_df['t'].to_numpy()
         self.x = self.Data_df['x'].to_numpy()
         self.y = self.Data_df['y'].to_numpy()
@@ -61,20 +70,18 @@ class DataParser:
         self.Theta_x = self.Data_df['Theta_x'].to_numpy()
         self.Theta_y = self.Data_df['Theta_y'].to_numpy()
 
-        self.Camera_data = self.Data_df["Camera_Data"].to_numpy()
+        ## CONVERT IMAGE DATA FROM STRING TO INTEGER
+        self.Camera_data = self.Data_df["Camera_Data"].to_numpy() # Array of camera images
+        self.Camera_array = np.zeros((len(self.Camera_data), WIDTH_PIXELS*HEIGHT_PIXELS)) # Allocate space for camera data
+        for n in range(0,self.Camera_data.size): 
+            self.Camera_array[n] = np.fromstring(self.Camera_data[n], dtype=int, sep =' ')
 
-
-        # CHECK IF DATA HAS ALREADY BEEN COMPILED
         if pre_compiled_Flag == True:
             self.Tau_est = self.Data_df['Tau_est'].to_numpy()
             self.Theta_x_est = self.Data_df['Theta_x_est'].to_numpy()
             self.Theta_y_est = self.Data_df['Theta_y_est'].to_numpy()
 
 
-        ## CONVERT IMAGE DATA FROM STRING TO INTEGER
-        self.Camera_array = np.zeros((len(self.Camera_data), WIDTH_PIXELS*HEIGHT_PIXELS)) # Allocate space for camera data
-        for n in range(0,self.Camera_data.size): # Make each row an array of ints
-            self.Camera_array[n] = np.fromstring(self.Camera_data[n], dtype=int, sep =' ')
 
     def grabImage(self,idx):
 
@@ -86,6 +93,21 @@ class DataParser:
             return self.Data_df[state_str].to_numpy()
         else:
             return self.Data_df[state_str][idx]
+
+    def EMA(self,cur_val,prev_val,alpha = 0.15):
+            """Exponential Moving Average Filter
+
+            Args:
+                cur_val (float): Current Value
+                prev_val (float): Previous Value
+                alpha (float, optional): Smoothing factor. Similar to moving average window (k), 
+                by alpha = 2/(k+1). Defaults to 0.15.
+
+            Returns:
+                float: Current average value
+            """            
+            
+            return alpha*cur_val + (1-alpha)*(prev_val)
 
 
     def Plot_Image(self,image_array):
@@ -297,48 +319,50 @@ class DataParser:
 
         return b
 
-    def OpticalFlow_Writer(self):
+    def OpticalFlow_Writer(self,OF_Calc_Func):
+        """Calculates optical flow values for all images in log file and adds them to log file
+        """        
 
-        Theta_x_arr = [np.nan]
-        Theta_y_arr = [np.nan]
-        Tau_arr = [np.nan]
+        Theta_x_est_arr = [np.nan]
+        Theta_y_est_arr = [np.nan]
+        Tau_est_arr = [np.nan]
 
-        t_0 = time.time()
-        for ii in range(1,len(self.t)):
-            
-            ## COLLECT CURRENT AND PREVIOUS IMAGE
-            prev_img = self.grabImage(ii-1)
-            cur_img = self.grabImage(ii)
-            
-            ## CALCULATE TIME BETWEEN IMAGES
-            t_prev = self.grabState('t',ii-1)
-            t_cur = self.grabState('t',ii)
-            t_delta = t_cur - t_prev
+        num_img = len(self.t)
+        
+        with trange(1,num_img) as n:
+            for ii in n:
 
-            ## CALCULATE OPTICAL FLOW VALUES
-            
-            Theta_x_est,Theta_y_est,Theta_z_est = self.OF_Calc_Opt_Sep(cur_img,prev_img,t_delta)
-            print(Theta_z_est**-1)
+                ## COLLECT CURRENT AND PREVIOUS IMAGE
+                prev_img = self.grabImage(ii-1)
+                cur_img = self.grabImage(ii)
+                
+                ## CALCULATE TIME BETWEEN IMAGES
+                t_prev = self.grabState('t',ii-1)
+                t_cur = self.grabState('t',ii)
+                t_delta = t_cur - t_prev
 
-            Theta_x_est,Theta_y_est,Tau_est = np.round([Theta_x_est,Theta_y_est,1/Theta_z_est],3)
+                ## CALCULATE OPTICAL FLOW VALUES
+                Theta_x_est,Theta_y_est,Theta_z_est = OF_Calc_Func(cur_img,prev_img,t_delta)
+                Theta_x_est,Theta_y_est,Tau_est = np.round([Theta_x_est,Theta_y_est,1/Theta_z_est],3)
 
-            ## RECORD ESTIMATED OPTICAL FLOW VALUES
-            Theta_x_arr.append(Theta_x_est)
-            Theta_y_arr.append(Theta_y_est)
-            Tau_arr.append(Tau_est)
+                n.set_description(f"Tau_est: {Tau_est:.3f} \t Theta_x_est: {Theta_x_est:.3f}")
+                n.ncols = 120
 
-            print(f"Compiling Data: {ii}/{len(self.t)}")
 
-        print(f"Time: {time.time() - t_0}")
-        ## CREATE NEW DATAFRAME
+                ## RECORD ESTIMATED OPTICAL FLOW VALUES
+                Theta_x_est_arr.append(Theta_x_est)
+                Theta_y_est_arr.append(Theta_y_est)
+                Tau_est_arr.append(Tau_est)
+
+
+        ## APPEND COMPILED DATA TO DATAFRAME
         self.df = self.Data_df.iloc[:,:-1]
-        self.df['Tau_est'] = Tau_arr
-        self.df['Theta_x_est'] = Theta_x_arr
-        self.df['Theta_y_est'] = Theta_y_arr
+        self.df['Tau_est'] = Tau_est_arr
+        self.df['Theta_x_est'] = Theta_x_est_arr
+        self.df['Theta_y_est'] = Theta_y_est_arr
         self.df['Camera_Data'] = self.Data_df.iloc[:,-1]
 
-        FilePath = os.path.join(self.DirPath,f"Compiled_{self.FileName}")
-        self.df.to_csv(FilePath,index=False)
+        self.df.to_csv(self.FilePath,index=False)
 
 
 
@@ -347,8 +371,8 @@ class DataParser:
 if __name__ == '__main__':
 
     Parser = DataParser() 
-    # Parser.OpticalFlow_Writer()
-    Parser.Plot_OpticalFlow()
+    Parser.OpticalFlow_Writer(Parser.OF_Calc_Opt_Sep)
+    # Parser.Plot_OpticalFlow()
 
     # Parser.Plot_Image(Parser.grabImage(150))
 
