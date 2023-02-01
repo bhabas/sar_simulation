@@ -39,32 +39,65 @@ class Optical_Flow():
         D = D_0-Vz*t
 
         ## RETURN AVERAGE BRIGHTNESS VALUE OVER PIXEL
-        return I_0/2 * np.sin(2/L*np.pi * (u*D/f + Vx*t)) + I_0/2
+        return I_0/2 * np.sin(2*np.pi/self.L * (u*D/f + Vx*t) + 1)
 
-    def Generate_Pattern(self,width=2,height=2,pixel_density=100,save_img=False):
+    def Generate_Pattern(self,Surf_width=2,Surf_Height=2,pixel_density=100,save_img=False,X_cam=0.5,D_cam=0.5):
+        """Save show pattern and save image to file. As well, display camera boundaries for validation
 
-        x = np.linspace(-width,width,pixel_density*width)
-        y = np.linspace(-height,height,pixel_density*height)
+        Args:
+            Surf_width (int, optional): Width of pattern to preserve pixel density. Defaults to 2.
+            Surf_Height (int, optional): Heigt of pattern to preserve pixel density. Defaults to 2.
+            pixel_density (int, optional): Number of pixels per meter. Defaults to 100.
+            save_img (bool, optional): Save image to file. Defaults to False.
+            X_cam (float, optional): X location of camera. Defaults to 0.5.
+            D_cam (float, optional): Distance of camera from pattern surface. Defaults to 0.5.
+        """        
+
+        ## GENERATE PATTERN BOUNDS
+        x = np.linspace(-Surf_width,Surf_width,pixel_density*Surf_width)
+        y = np.linspace(-Surf_Height,Surf_Height,pixel_density*Surf_Height)
         X,Y = np.meshgrid(x,y)
 
+        ## GENERATE PATTERN
         I = I_0/2*(np.sin(2*np.pi/self.L*X) + 1)
 
+        ## GENERATE CAMERA BOUNDS
+        Img_Width = D_cam/f*(WIDTH_PIXELS*w)
+        Img_Height = D_cam/f*(HEIGHT_PIXELS*w) 
+
+        
+        ## CREATE FIGURE OF PATTERN
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.add_patch(Rectangle((-1,-1),2,2,lw=2,fill=False,color="tab:blue"))
-        ax.imshow(I, interpolation='none', 
-                vmin=0, vmax=255, cmap=cm.gray,
-                origin='upper',extent=[x.min(),x.max(),y.min(),y.max()])
 
+        ## PLOT PATTERN AND CAMERA BOUNDARY
+        ax.imshow(I, interpolation='none', 
+            vmin=0, vmax=255, cmap=cm.gray,
+            origin='upper',
+            extent=[x.min(),x.max(),y.min(),y.max()]
+            )
+
+        ax.add_patch(
+            Rectangle(
+                (X_cam-Img_Width/2,-Img_Height/2),
+                Img_Width,
+                Img_Height,
+                lw=1,fill=False,color="tab:blue")
+            )
+
+        ## SHOW PLOT
         plt.show()
 
+        ## SAVE PATTERN TO FILE
         if save_img == True:
             plt.imsave(
-                f'{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/Surface_Patterns/Stripe.png', 
+                f'{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/Surface_Patterns/Strip_Pattern_W_{Surf_width}-H_{Surf_Height}.png', 
                 I, 
                 vmin=0, vmax=255, cmap=cm.gray,
                 origin='upper',
             )
+
+
 
 
 
@@ -142,4 +175,4 @@ if __name__ == '__main__':
 
     OF = Optical_Flow(L=1,FPS=50)
     
-    OF.Generate_Pattern(width=2,height=2,pixel_density=200)
+    OF.Generate_Pattern(Surf_width=2,Surf_Height=2,pixel_density=200)
