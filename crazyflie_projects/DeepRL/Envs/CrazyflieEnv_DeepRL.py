@@ -147,6 +147,36 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         return self.CalcReward()
 
 
+    def sample_flight_conditions(self):
+        """This function samples the flight velocity and angle from the supplied range.
+        Velocity is sampled from a uniform distribution. Phi is sampled from a set of 
+        uniform distributions which are weighted so that edge cases are only sampled 10% of the time.
+        Poor performance on edge cases can cause poor learning convergence.
+
+        Returns:
+            vel,phi: Sampled flight velocity and flight angle
+        """        
+
+        ## SAMPLE VEL FROM UNIFORM DISTRIBUTION IN VELOCITY RANGE
+        Vel_Low = self.Vel_range[0]
+        Vel_High = self.Vel_range[1]
+        vel = np.random.uniform(low=Vel_Low,high=Vel_High)
+
+        ## SAMPLE PHI FROM A WEIGHTED SET OF UNIFORM DISTRIBUTIONS
+        Phi_Low = self.Phi_range[0]
+        Phi_High = self.Phi_range[1]
+
+        Dist_Num = np.random.choice([0,1,2],p=[0.05,0.9,0.05]) # Probability of sampling distribution
+
+        if Dist_Num == 0:
+            phi = np.random.default_rng().uniform(low=Phi_Low, high=Phi_Low + 10)
+        elif Dist_Num == 1:
+            phi = np.random.default_rng().uniform(low=Phi_Low + 10, high=Phi_High - 10)
+        elif Dist_Num == 2:
+            phi = np.random.default_rng().uniform(low=Phi_High - 10, high=Phi_High)
+
+        return vel,phi
+
     def reset(self,vel=None,phi=None):
 
 
@@ -185,8 +215,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
         if vel == None or phi == None:
-            vel = np.random.uniform(low=self.Vel_range[0],high=self.Vel_range[1])
-            phi = np.random.uniform(low=self.Phi_range[0],high=self.Phi_range[1])
+            vel,phi = self.sample_flight_conditions()
 
         else:
             vel = vel
