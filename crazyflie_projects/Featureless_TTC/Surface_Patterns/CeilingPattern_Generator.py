@@ -8,7 +8,7 @@ BASEPATH = "crazyflie_projects/Featureless_TTC/"
 
 ## PLOT BRIGHTNESS PATTERN FROM 2.4.1 HORIZONTAL MOTION
 I_0 = 255   # Brightness value (0-255)
-L = 0.25  # Stripe Period [m] 0.45
+L = 1.0  # Stripe Period [m] 0.45
 
 
 ## CAMERA PARAMETERS
@@ -36,8 +36,8 @@ X, Y = np.meshgrid(x, y)
 def Intensity(X):
     I_x = I_0/2*(np.sin(2*np.pi*X/L)+1)
     I_y = I_0/2*(np.sin(2*np.pi*Y/L)+1)
-    I = (I_x + I_y)/2
-    # I = I_x
+    # I = (I_x + I_y)/2
+    I = I_x
 
     return I
 
@@ -45,11 +45,11 @@ fig, ax = plt.subplots()
 im = ax.imshow(Intensity(X), interpolation='none', 
                 vmin=0, vmax=255, cmap=cm.gray,
                 origin='upper',
-                extent=[-2,2,-2,2]
+                extent=[-4,4,-4,4]
 )
 
 ## PLOT CAMERA BOUNDS
-# ax.add_patch(Rectangle((-Xi_Width/2,-Yi_Width/2),Xi_Width,Yi_Width,lw=2,fill=False,color="tab:blue"))
+ax.add_patch(Rectangle((-Xi_Width/2,-Yi_Width/2),Xi_Width,Yi_Width,lw=2,fill=False,color="tab:blue"))
 
 ax.set_title("L = 0.25", fontsize=24)
 ax.set_xlabel("x [m]", fontsize=16)
