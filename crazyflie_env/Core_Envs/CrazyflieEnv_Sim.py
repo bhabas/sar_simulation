@@ -54,9 +54,8 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base,gym.Env):
         t_start = self.t
         while self.t - t_start <= time_s:
             # print("Sleeping....")
-            FailureModes = self.diagnosticTest()
-            if any(FailureModes):
-                self.Restart(FailureModes)
+            if self.diagnosticTest():
+                self.Restart()
                 self.done = True
                 return False
 
