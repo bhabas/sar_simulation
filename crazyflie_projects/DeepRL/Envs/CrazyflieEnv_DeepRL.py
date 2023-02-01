@@ -313,17 +313,23 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 if __name__ == "__main__":
 
     env = CrazyflieEnv_DeepRL(GZ_Timeout=False,Vel_range=[0.5,1.0],Phi_range=[10,20])
-    for ep in range(25):
 
-        vel = 0.5
-        phi = 80
-        env.reset()
+    while True:
+        
+        if env.diagnosticTest():
+            env.Restart()
 
-        done = False
-        while not done:
-            action = env.action_space.sample()
-            action = np.zeros_like(action)
-            obs,reward,done,info = env.step(action)
-        env.RL_Publish()
-        print(f"Episode: {ep} \t Reward: {reward:.3f}")
+    # for ep in range(25):
+
+    #     vel = 0.5
+    #     phi = 80
+    #     env.reset()
+
+    #     done = False
+    #     while not done:
+    #         action = env.action_space.sample()
+    #         action = np.zeros_like(action)
+    #         obs,reward,done,info = env.step(action)
+    #     env.RL_Publish()
+    #     print(f"Episode: {ep} \t Reward: {reward:.3f}")
 
