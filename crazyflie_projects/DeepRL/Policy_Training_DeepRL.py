@@ -749,8 +749,8 @@ if __name__ == '__main__':
     from Envs.CF_Env_2D import CF_Env_2D
 
     # INITIATE ENVIRONMENT
-    # env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[2.0,4.0],Phi_range=[-90,90])
-    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
+    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[0,90])
+    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
 
 
 
@@ -762,13 +762,13 @@ if __name__ == '__main__':
 
     ## ================================================================= ##
     
-    ## RESUME TRAINING DEEP RL MODEL
-    # log_name = "SAC--01_29-17:09--Deg_90--LDA_A30_L75_K32_0"
-    # t_step_load = 22000
+    # RESUME TRAINING DEEP RL MODEL
+    log_name = "SAC--01_30-15:02--Deg_180--LDA_A30_L75_K32_0"
+    t_step_load = 35000
 
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.load_model(t_step_load)
-    # PolicyTrainer.train_model(reset_timesteps=False)
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.load_model(t_step_load)
+    PolicyTrainer.train_model(reset_timesteps=False)
 
     ## ================================================================= ##
 
