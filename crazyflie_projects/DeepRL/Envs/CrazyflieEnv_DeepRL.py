@@ -91,12 +91,12 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
                 if self.D_perp <= self.D_min:
                     self.D_min = self.D_perp 
 
-            ## ERROR TERMINATIONS
-            if any(np.isnan(self.vel)): 
-                print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
-                self.Restart()
-                print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
-                self.done = True
+            # ## ERROR TERMINATIONS
+            # if any(np.isnan(self.vel)): 
+            #     print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
+            #     self.Restart()
+            #     print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
+            #     self.done = True
 
             ## CALCULATE REWARD
             reward = 0
@@ -147,12 +147,12 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
                 if self.D_perp <= self.D_min:
                     self.D_min = self.D_perp 
 
-            ## ERROR TERMINATIONS
-            if any(np.isnan(self.vel)): 
-                print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
-                self.Restart()
-                print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
-                self.done = True
+            # ## ERROR TERMINATIONS
+            # if any(np.isnan(self.vel)): 
+            #     print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
+            #     self.Restart()
+            #     print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
+            #     self.done = True
 
 
 
@@ -353,7 +353,7 @@ if __name__ == "__main__":
     env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,1.0],Phi_range=[10,20])
     rospy.spin()
 
-    # while True:
+    # while True: 
         
     #     if env.diagnosticTest():
     #         env.Restart()
