@@ -28,7 +28,7 @@ class Optical_Flow():
         self.L = L
         self.FPS = FPS
 
-    def Generate_Camera_Image(self,D_0=1,X_0=0,Vx=0,Vz=0,t=0):
+    def Generate_Camera_Image(self,D_cam=1,X_cam=0):
 
         U_p,V_p = np.meshgrid(np.arange(0,WIDTH_PIXELS,1),np.arange(0,HEIGHT_PIXELS,1))
 
@@ -36,10 +36,8 @@ class Optical_Flow():
         u =  (U_p - O_up)*w + w/2 
         v =  (U_p - O_up)*w + w/2
 
-        d = D_0-Vz*t
-
         ## RETURN AVERAGE BRIGHTNESS VALUE OVER PIXEL
-        I = I_0/2 * (f*self.L/(np.pi*d*w) * (np.sin(np.pi*d*w/(self.L*f))*np.sin(2*np.pi/self.L * (d*u/f + X_0 + Vx*t))) + 1)
+        I = I_0/2 * (f*self.L/(np.pi*D_cam*w) * (np.sin(np.pi*D_cam*w/(self.L*f))*np.sin(2*np.pi/self.L * (D_cam*u/f + X_cam))) + 1)
 
         return I
 
@@ -51,9 +49,7 @@ class Optical_Flow():
         v_min = -HEIGHT_PIXELS*w/2
         v_max =  HEIGHT_PIXELS*w/2
 
-
         U,V = np.meshgrid(np.linspace(u_min,u_max,1000),np.linspace(v_min,v_max,1000))
-
 
         D = D_0-Vz*t
 
@@ -106,7 +102,7 @@ class Optical_Flow():
             )
 
         ## SHOW PLOT
-        # plt.show()
+        plt.show()
 
         ## SAVE PATTERN TO FILE
         if save_img == True:
@@ -118,6 +114,112 @@ class Optical_Flow():
             )
 
 
+    def Optical_Flow_Traj(self,D_0,Vz,X_0,Vx):
+
+        Tau_List = []
+        Tau_est_List = []
+        Theta_x_List = []
+        Theta_x_est_List = []
+        t_List = []
+
+        D_perp_prev = D_0
+        X_cam_prev = X_0
+
+        t_max = 1
+
+        ## IMAGE SENSOR PLOT
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        im = ax.imshow(self.Generate_Camera_Image(D_cam=D_0,X_cam=X_0), interpolation='none', 
+                        vmin=0, vmax=255, cmap=cm.gray,
+                        origin='upper',
+        )
+        ax.set_title("Image Sensor Pattern (Pixels)")
+        ax.set_xlabel("u_p [pixels]")
+        ax.set_ylabel("v_v [pixels]")
+        fig.tight_layout()
+
+        def animate_func(i):
+
+            ## UPDATE CAMERA POSITION
+            t = i/self.FPS   # Time [s]
+
+            D_perp = D_0 - Vz*t    # Distance to Ceiling [m]
+            X_cam = X_0 + Vx*t
+
+            D_perp_prev = D_0 - Vz*(t-1/self.FPS)
+            X_cam = X_0 + Vx*(t-1/self.FPS)
+
+
+            Tau = D_perp/(Vz+1e-6)
+            Theta_x = Vx/D_perp
+
+            ## STOP ANIMATION IF PAST CEILING SURFACE
+            if D_perp <= 0.01:
+                return
+            
+            ## CALCULATE OPTICAL FLOW ESTIMATES
+            Prev_img = self.Generate_Camera_Image(D_cam=D_perp_prev,X_cam=X_cam_prev)
+            Cur_img = self.Generate_Camera_Image(D_cam=D_perp,X_cam=X_cam)
+            b = self.OF_Calc_Opt_Sep(Cur_img,Prev_img,1/self.FPS)
+            Theta_x_est,Theta_y_est,Theta_z_est = b
+            Tau_est = 1/Theta_z_est
+            
+            print(f"Tau: {Tau:.3f} | Tau_est: {Tau_est:.3f}")
+            print(f"Theta_x: {Theta_x:.3f} | Theta_x_est: {Theta_y_est:.3f}\n")
+
+
+            ## APPEN OPTICAL FLOW ESTIMATES TO LIST FOR PLOTTING
+            Tau_List.append(Tau)
+            Theta_x_List.append(Theta_x)
+
+            Tau_est_List.append(Tau_est)
+            Theta_x_est_List.append(-Theta_y_est)
+       
+            t_List.append(t)
+
+            ## UPDATE IMAGE
+            im.set_array(Cur_img)
+            
+        anim = animation.FuncAnimation(fig, 
+                                    animate_func, 
+                                    frames = t_max * self.FPS,
+                                    interval = 1000 / self.FPS, # in ms
+                                    repeat = False
+                                    )
+
+        # plt.show()
+
+        ## TAU PLOT
+        fig2 = plt.figure(1)
+        ax = fig2.add_subplot(111)
+
+        ax.plot(t_List,Tau_est_List,'rx',label="Tau_estimate")
+        ax.plot(t_List,Tau_List,label="Tau_actual")
+        # ax.set_title(f'Tau Estimation - V: {vel:.2f} | Phi: {phi:.2f} | L: {L:.3f}')
+        ax.set_xlabel('Time [s]')
+        ax.set_ylabel('Tau [s]')
+        ax.grid()
+        ax.legend()
+
+        fig2.tight_layout()
+
+
+        # ## OFy PLOT
+        # fig3 = plt.figure(2)
+        # ax = fig3.add_subplot(111)
+
+        # ax.plot(t_List,Theta_x_List,'rx',label="Theta_x")
+        # ax.plot(t_List,Theta_x_est_List,label="Theta_x_est")
+        # ax.set_title('Theta_x Estimation')
+        # ax.set_xlabel('Time [s]')
+        # ax.set_ylabel('Theta_x [rad/s]')
+        # ax.grid()
+        # ax.legend()
+
+        # fig3.tight_layout()
+
+        
 
 
 
@@ -130,7 +232,7 @@ class Optical_Flow():
                 vmin=0, vmax=255, cmap=cm.gray,
                 origin='upper')
 
-        # plt.show()
+        plt.show()
 
     def OF_Calc_Opt_Sep(self,cur_img,prev_img,delta_t):
 
@@ -193,11 +295,6 @@ class Optical_Flow():
 
 if __name__ == '__main__':
 
-    OF = Optical_Flow(L=0.3,FPS=50)
-
-    D = 0.5
-    
-    OF.Generate_Pattern(D_cam=D,X_cam=1.0)
-    OF.Plot_Image(OF.Generate_Camera_Image_Cont(D_0=D,X_0=0.5,Vx=0.5,t=1))
-    OF.Plot_Image(OF.Generate_Camera_Image(D_0=D,X_0=0.5,Vx=0.5,t=1))
-    plt.show()
+    OF = Optical_Flow(L=0.5,FPS=50)
+    # OF.Generate_Pattern(D_cam=0.5)
+    OF.Optical_Flow_Traj(X_0=0,Vx=0.1,D_0=0.5,Vz=0.0)
