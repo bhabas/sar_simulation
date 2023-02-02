@@ -81,6 +81,13 @@ CF_Type:
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
+      Camera_Model:       # Crazyflie Base_Model
+        Initials: Camera_Model
+        Mass: 34.3e-3   # [kg]
+        Ixx: 15.83e-6   # [kg*m^2]
+        Iyy: 17.00e-6   # [kg*m^2]
+        Izz: 31.19e-6   # [kg*m^2] 
+
       ####################################
       #    Leg Design Analysis Models
       ####################################

@@ -25,13 +25,14 @@
         <pose>0 0 0.0 0 0 0</pose>
         <geometry>
           <box>
-            <size>4 2 0.01</size>
+            <size>4 4 0.01</size>
           </box>
         </geometry>
         <material>
           <script>
             <uri>model://Standard_Plane/materials/scripts</uri>
             <uri>model://Standard_Plane/materials/textures</uri>
+            <!-- <name>groundMat/Dirt</name> -->
             <name>ceilingMat/Checkerboard</name>
           </script>
           <shader type='pixel'>
@@ -40,7 +41,7 @@
           <emissive>0 0 0 1</emissive>
         </material>
       </visual>
-      <visual name='plane_center'>
+      <!-- <visual name='plane_center'>
         <cast_shadows>0</cast_shadows>
         <pose>0 0 0 0 0 0</pose>
         <geometry>
@@ -57,7 +58,7 @@
             <normal_map>__default__</normal_map>
           </shader>
         </material>
-      </visual>
+      </visual> -->
       <collision name='plane_collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>

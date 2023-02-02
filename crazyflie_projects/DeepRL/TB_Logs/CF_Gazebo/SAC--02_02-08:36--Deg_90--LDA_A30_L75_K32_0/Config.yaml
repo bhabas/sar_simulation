@@ -1,0 +1,26 @@
+PLANE_SETTINGS:
+  Plane_Model: Standard_Plane
+  Plane_Angle: 90
+  Plane_Pos:
+    X: 2.0
+    Y: 0.0
+    Z: 0.0
+QUAD_SETTINGS:
+  CF_Type: Standard
+  CF_Config: A30_L75_K32
+ENV_SETTINGS:
+  Environment: CF_Gazebo
+  Vel_Limts:
+  - 0.5
+  - 4.0
+  Phi_Limits:
+  - -90
+  - 90
+LEARNING_MODEL:
+  Policy: SACPolicy
+  Network_Layers:
+  - 24
+  - 24
+  Gamma: 0.999
+  Learning_Rate: 0.002
+  Activation_Function: ''

@@ -320,14 +320,13 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base,gym.Env):
     def diagnosticTest(self):
         Failure_Flag = False
         
-        sys.stdout.write(YELLOW)
         ## CHECK THAT GAZEBO IS FUNCTIONING
         try:
             rospy.wait_for_message("/clock", Clock, timeout=20)
 
         except rospy.ROSException as e:
-            print(f"[WARNING] /clock wait for message failed (diagnosticTest)")
-            print(f"[WARNING] {e}")
+            print(f"{YELLOW}[WARNING] /clock wait for message failed (diagnosticTest){ENDC}")
+            print(f"{YELLOW}[WARNING] {e}{ENDC}")
             Failure_Flag = True
 
         ## CHECK THAT CONTROLLER IS FUNCTIONING
@@ -335,8 +334,8 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base,gym.Env):
             rospy.wait_for_service("/CTRL/Cmd_ctrl",timeout=5)
 
         except rospy.ROSException as e:
-            print(f"[WARNING] /CTRL/Cmd_ctrl wait for service failed (diagnosticTest)")
-            print(f"[WARNING] {e}")
+            print(f"{YELLOW}[WARNING] /CTRL/Cmd_ctrl wait for service failed (diagnosticTest){ENDC}")
+            print(f"{YELLOW}[WARNING] {e}{ENDC}")
             Failure_Flag = True
 
         ## CHECK THAT CF_DC IS FUNCTIONING
@@ -344,11 +343,9 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base,gym.Env):
             rospy.wait_for_service('/CF_DC/Cmd_CF_DC',timeout=5)
 
         except rospy.ROSException as e:
-            print(f"[WARNING] /CF_DC/Cmd_CF_DC wait for service failed (diagnosticTest)")
-            print(f"[WARNING] {e}")
+            print(f"{YELLOW}[WARNING] /CF_DC/Cmd_CF_DC wait for service failed (diagnosticTest){ENDC}")
+            print(f"{YELLOW}[WARNING] {e}{ENDC}")
             Failure_Flag = True
-
-        sys.stdout.write(ENDC)
 
         return Failure_Flag
 

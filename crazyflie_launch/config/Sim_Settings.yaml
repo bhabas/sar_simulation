@@ -28,7 +28,7 @@ SIM_SETTINGS:
   GUI_Flag: True
   Pause_Flag: True
   Sim_Speed: 0.6
-  Sim_Slowdown_Speed: 0.3
+  Sim_Slowdown_Speed: 0.4
   Landing_Slowdown_Flag: True
 
 CF_DC_SETTINGS:
