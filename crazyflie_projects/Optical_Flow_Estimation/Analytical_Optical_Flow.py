@@ -17,9 +17,9 @@ I_0 = 255   # Brightness value (0-255)
 WIDTH_PIXELS = 160
 HEIGHT_PIXELS = 160
 w = 3.6e-6              # Pixel width [m]
-f = 0.66e-3/2          # Focal Length [m]
-O_up = WIDTH_PIXELS/2    # Pixel X_offset [pixels]
-O_vp = HEIGHT_PIXELS/2   # Pixel Y_offset [pixels]
+f = 0.66e-3/2           # Focal Length [m]
+O_up = WIDTH_PIXELS/2   # Pixel X_offset [pixels]
+O_vp = HEIGHT_PIXELS/2  # Pixel Y_offset [pixels]
 
 class Optical_Flow():
 
@@ -28,20 +28,40 @@ class Optical_Flow():
         self.L = L
         self.FPS = FPS
 
-    def Generate_Image(self,D_0=1,Vx=0,Vz=0,t=0):
+    def Generate_Camera_Image(self,D_0=1,X_0=0,Vx=0,Vz=0,t=0):
 
         U_p,V_p = np.meshgrid(np.arange(0,WIDTH_PIXELS,1),np.arange(0,HEIGHT_PIXELS,1))
 
         ## CONVERT PIXEL INDEX TO METERS
-        u = -(U_p - O_up)*w + w/2 
+        u =  (U_p - O_up)*w + w/2 
         v =  (U_p - O_up)*w + w/2
+
+        d = D_0-Vz*t
+
+        ## RETURN AVERAGE BRIGHTNESS VALUE OVER PIXEL
+        I = I_0/2 * (f*self.L/(np.pi*d*w) * (np.sin(np.pi*d*w/(self.L*f))*np.sin(2*np.pi/self.L * (d*u/f + X_0 + Vx*t))) + 1)
+
+        return I
+
+    def Generate_Camera_Image_Cont(self,D_0=1,X_0=0,Vx=0,Vz=0,t=0):
+
+        u_min = -WIDTH_PIXELS*w/2
+        u_max =  WIDTH_PIXELS*w/2
+
+        v_min = -HEIGHT_PIXELS*w/2
+        v_max =  HEIGHT_PIXELS*w/2
+
+
+        U,V = np.meshgrid(np.linspace(u_min,u_max,1000),np.linspace(v_min,v_max,1000))
+
 
         D = D_0-Vz*t
 
-        ## RETURN AVERAGE BRIGHTNESS VALUE OVER PIXEL
-        return I_0/2 * np.sin(2*np.pi/self.L * (u*D/f + Vx*t) + 1)
+        I = I_0/2*(np.sin(2*np.pi/self.L * (X_0 + Vx*t + U*D/f)) + 1)
+        
+        return I
 
-    def Generate_Pattern(self,Surf_width=2,Surf_Height=2,pixel_density=100,save_img=False,X_cam=0.5,D_cam=0.5):
+    def Generate_Pattern(self,Surf_width=2,Surf_Height=2,pixel_density=100,save_img=False,X_cam=0.0,D_cam=0.5):
         """Save show pattern and save image to file. As well, display camera boundaries for validation
 
         Args:
@@ -86,7 +106,7 @@ class Optical_Flow():
             )
 
         ## SHOW PLOT
-        plt.show()
+        # plt.show()
 
         ## SAVE PATTERN TO FILE
         if save_img == True:
@@ -108,9 +128,9 @@ class Optical_Flow():
 
         im = ax.imshow(image, interpolation='none', 
                 vmin=0, vmax=255, cmap=cm.gray,
-                origin='upper',extent=[-4,4,-4,4])
+                origin='upper')
 
-        plt.show()
+        # plt.show()
 
     def OF_Calc_Opt_Sep(self,cur_img,prev_img,delta_t):
 
@@ -173,6 +193,11 @@ class Optical_Flow():
 
 if __name__ == '__main__':
 
-    OF = Optical_Flow(L=1,FPS=50)
+    OF = Optical_Flow(L=0.3,FPS=50)
+
+    D = 0.5
     
-    OF.Generate_Pattern(Surf_width=2,Surf_Height=2,pixel_density=200)
+    OF.Generate_Pattern(D_cam=D,X_cam=1.0)
+    OF.Plot_Image(OF.Generate_Camera_Image_Cont(D_0=D,X_0=0.5,Vx=0.5,t=1))
+    OF.Plot_Image(OF.Generate_Camera_Image(D_0=D,X_0=0.5,Vx=0.5,t=1))
+    plt.show()
