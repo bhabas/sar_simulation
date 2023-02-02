@@ -762,13 +762,13 @@ if __name__ == '__main__':
 
     ## ================================================================= ##
     
-    # RESUME TRAINING DEEP RL MODEL
-    log_name = "SAC--01_30-15:02--Deg_180--LDA_A30_L75_K32_0"
-    t_step_load = 35000
+    # # RESUME TRAINING DEEP RL MODEL
+    # log_name = "SAC--01_30-15:02--Deg_180--LDA_A30_L75_K32_0"
+    # t_step_load = 35000
 
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.load_model(t_step_load)
-    PolicyTrainer.train_model(reset_timesteps=False)
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.load_model(t_step_load)
+    # PolicyTrainer.train_model(reset_timesteps=False)
 
     ## ================================================================= ##
 
