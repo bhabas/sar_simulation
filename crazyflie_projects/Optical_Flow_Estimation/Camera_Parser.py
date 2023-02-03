@@ -29,7 +29,7 @@ class DataParser:
 
         ## INIT LOGGING PARAMETERS
         # self.FileName = input("Input the name of the log file:\n")
-        self.FileName = "FlightLog_Tau_Only_1"
+        self.FileName = "FlightLog_Tau_Only_2"
         self.LogDir = f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/local_logs/{self.FileName}"
         self.FilePath = os.path.join(self.LogDir,self.FileName) + ".csv"
         
@@ -89,19 +89,23 @@ class DataParser:
         if idx == None:
             return self.Data_df[state_str].to_numpy()
         else:
-            return self.Data_df[state_str][idx]
+            return self.Data_df[state_str].to_numpy()[idx].item()
 
-    def SaveCamera_MP4(self):
+    def SaveCamera_MP4(self,n=10):
         """
             Saves recorded images from camera into an MP4 file in the log directory
         """        
 
-        Iu,Iv = self.Calc_OF_Grad(self.Image_array[0])
-        U_p,V_p = np.meshgrid(np.arange(0,len(Iu),1),np.arange(0,len(Iv),1))
-        n = 10
+        U_p,V_p = np.meshgrid(np.arange(0,WIDTH_PIXELS,1),np.arange(0,HEIGHT_PIXELS,1))
+        
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
+
+        t_cur = Parser.grabState(['t'],idx=1)
+        t_prev = Parser.grabState(['t'],idx=0)
+        t_delta = t_cur - t_prev
+        du_dt,dv_dt = self.Calc_OF_Grad(self.Image_array[1],self.Image_array[0],t_delta)
 
         im = ax.imshow(self.Image_array[0], 
                 interpolation='none', 
@@ -110,7 +114,7 @@ class DataParser:
 
         Q = ax.quiver(
             U_p[::n,::n],V_p[::n,::n],
-            Iu[::n,::n],-Iv[::n,::n], # Need negative sign for arrow to match correct direction
+            du_dt[::n,::n],-dv_dt[::n,::n], # Need negative sign for arrow to match correct direction
             color='lime')
 
 
@@ -118,18 +122,21 @@ class DataParser:
 
             im.set_data(self.Image_array[i])
 
-            Iu,Iv = self.Calc_OF_Grad(self.Image_array[i])
-            Q.set_UVC(Iu[::n,::n],-Iv[::n,::n])
+            t_cur = Parser.grabState(['t'],idx=i)
+            t_prev = Parser.grabState(['t'],idx=i-1)
+            t_delta = t_cur - t_prev
+            du_dt,dv_dt = self.Calc_OF_Grad(self.Image_array[i],self.Image_array[i-1],t_delta)
+            Q.set_UVC(du_dt[::n,::n],-dv_dt[::n,::n])
 
             return im,Q,
 
         
-        ani = animation.FuncAnimation(fig, update, interval=50, blit=False,frames=self.n_imgs-1)
-        ani.save(f"{self.LogDir}/{self.FileName}.mp4")
+        ani = animation.FuncAnimation(fig, update, interval=50, blit=False,frames=range(1,self.n_imgs-1))
+        # ani.save(f"{self.LogDir}/{self.FileName}.mp4")
         
-        # plt.show()
+        plt.show()
 
-    def Plot_OF_Image(self,image,n=5):
+    def Plot_OF_Image(self,cur_img,prev_img,t_delta,n=5):
         """Superimpose optical flow vectors over image
 
         Args:
@@ -137,25 +144,25 @@ class DataParser:
             n (int, optional): Stride between vectors. Defaults to 5.
         """        
 
-        Iu,Iv = self.Calc_OF_Grad(image)
-        U_p,V_p = np.meshgrid(np.arange(0,len(Iu),1),np.arange(0,len(Iv),1))
+        du_dt,dv_dt = self.Calc_OF_Grad(cur_img,prev_img,t_delta)
+        U_p,V_p = np.meshgrid(np.arange(0,WIDTH_PIXELS,1),np.arange(0,HEIGHT_PIXELS,1))
 
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        ax.imshow(image, interpolation='none', 
+        ax.imshow(cur_img, interpolation='none', 
                 vmin=0, vmax=255, cmap=cm.gray,
                 origin='upper',)
                 
         ax.quiver(
             U_p[::n,::n],V_p[::n,::n],
-            Iu[::n,::n],-Iv[::n,::n], # Need negative sign for arrow to match correct direction
+            du_dt[::n,::n],-dv_dt[::n,::n], # Need negative sign for arrow to match correct direction
             color='g')
 
         plt.show()
 
-    def Calc_OF_Grad(self,image):
+    def Calc_OF_Grad(self,cur_img,prev_img,t_delta):
         """Calculate optical flow gradient vectors from image
 
         Args:
@@ -178,15 +185,32 @@ class DataParser:
         ## PRE-ALLOCATE INTENSITY GRADIENTS
         I_u = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
         I_v = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+        I_t = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+
+        u = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+        v = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
 
 
         ## CALCULATE IMAGE GRADIENTS
         for v_p in range(1, HEIGHT_PIXELS-1): 
             for u_p in range(1, WIDTH_PIXELS-1):
-                I_u[v_p,u_p] = -1/(8*w)*(Ku_2.dot((image[v_p-1:v_p+2,u_p-1:u_p+2].dot(Ku_1)))).item()
-                I_v[v_p,u_p] =  1/(8*w)*(Kv_2.dot((image[v_p-1:v_p+2,u_p-1:u_p+2].dot(Kv_1)))).item()
+                I_u[v_p,u_p] = -1/(8*w)*(Ku_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Ku_1)))).item()
+                I_v[v_p,u_p] =  1/(8*w)*(Kv_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Kv_1)))).item()
+                I_t[v_p,u_p] = (cur_img[v_p,u_p] - prev_img[v_p,u_p])/t_delta   # Time gradient
 
-        return I_u,I_v
+                u[v_p,u_p] = -((u_p - O_up)*w + w/2)
+                v[v_p,u_p] =  ((v_p - O_up)*w + w/2)
+
+
+        with np.errstate(divide='ignore', invalid='ignore'):
+            Theta_x = -I_u/f*-1/I_t
+            Theta_y = -I_v/f*-1/I_t
+            Theta_z = (I_u*u + I_v*v)*-1/I_t
+
+            du_dt = -f*Theta_y + Theta_z*u
+            dv_dt = -f*Theta_x + Theta_z*v
+
+        return du_dt,dv_dt
 
 
 
@@ -413,6 +437,13 @@ if __name__ == '__main__':
     # Parser.Plot_OpticalFlow()
 
     # Parser.Plot_Image(Parser.grabImage(150))
-    # Parser.Plot_OF_Image(Parser.grabImage(150))
+    # cur_img = Parser.grabImage(150)
+    # prev_img = Parser.grabImage(149)
+
+    # t_cur = Parser.grabState(['t'],idx=150)
+    # t_prev = Parser.grabState(['t'],idx=149)
+    # t_delta = t_cur - t_prev
+
+    # Parser.Plot_OF_Image(Parser.grabImage(150),Parser.grabImage(149),t_delta)
     # I_u,I_v = Parser.Calc_OF_Grad(Parser.grabImage(150))
 
