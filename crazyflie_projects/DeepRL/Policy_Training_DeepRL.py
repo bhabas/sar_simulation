@@ -754,7 +754,7 @@ if __name__ == '__main__':
 
 
 
-    ## START TRAINING NEW DEEP RL MODEL 
+    # START TRAINING NEW DEEP RL MODEL 
     log_name = f"SAC--{current_time}--Deg_{env.Plane_Angle}--{env.modelInitials}"    
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.create_model()
@@ -762,19 +762,19 @@ if __name__ == '__main__':
 
     ## ================================================================= ##
     
-    # RESUME TRAINING DEEP RL MODEL
-    log_name = "SAC--01_30-15:02--Deg_180--LDA_A30_L75_K32_0"
-    t_step_load = 35000
+    # # RESUME TRAINING DEEP RL MODEL
+    # log_name = "SAC--01_30-15:02--Deg_180--LDA_A30_L75_K32_0"
+    # t_step_load = 35000
 
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.load_model(t_step_load)
-    PolicyTrainer.train_model(reset_timesteps=False)
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.load_model(t_step_load)
+    # PolicyTrainer.train_model(reset_timesteps=False)
 
     ## ================================================================= ##
 
-    # # COLLECT LANDING PERFORMANCE DATA
-    # log_name = "SAC--01_29-17:09--Deg_90--LDA_A30_L75_K32_0"
-    # t_step_load = 32000
+    # # # COLLECT LANDING PERFORMANCE DATA
+    # log_name = "SAC--02_03-04:14--Deg_45--LDA_A30_L75_K32_0"
+    # t_step_load = 21000
 
     # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     # PolicyTrainer.load_model(t_step_load)
@@ -782,10 +782,11 @@ if __name__ == '__main__':
 
     ## ================================================================= ##
 
-    # # PLOT LANDING PERFORMANCE
+    # # # PLOT LANDING PERFORMANCE
     # env = None
     # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Gazebo"
-    # log_name = "SAC--01_28-16:13--Deg_135--LDA_A30_L75_K32_0"
+    # log_name = "SAC--02_03-04:14--Deg_45--LDA_A30_L75_K32_0"
+
     # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     # PolicyTrainer.Plot_Landing_Performance()
 
