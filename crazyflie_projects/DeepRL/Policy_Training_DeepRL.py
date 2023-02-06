@@ -752,11 +752,11 @@ if __name__ == '__main__':
 
 
 
-    # START TRAINING NEW DEEP RL MODEL 
-    log_name = f"SAC--{current_time}--Deg_{env.Plane_Angle}--{env.modelInitials}"    
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.create_model()
-    PolicyTrainer.train_model()
+    # # START TRAINING NEW DEEP RL MODEL 
+    # log_name = f"SAC--{current_time}--Deg_{env.Plane_Angle}--{env.modelInitials}"    
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.create_model()
+    # PolicyTrainer.train_model()
 
     ## ================================================================= ##
     
