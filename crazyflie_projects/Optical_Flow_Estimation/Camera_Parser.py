@@ -91,7 +91,7 @@ class DataParser:
         else:
             return self.Data_df[state_str].to_numpy()[idx].item()
 
-    def SaveCamera_MP4(self):
+    def SaveCamera_MP4(self,n=10):
         """
             Saves recorded images from camera into an MP4 file in the log directory
         """        
@@ -105,7 +105,7 @@ class DataParser:
         t_cur = Parser.grabState(['t'],idx=1)
         t_prev = Parser.grabState(['t'],idx=0)
         t_delta = t_cur - t_prev
-        du_dt,dv_dt = self.Calc_OF_Grad(self.Image_array[1],self.Image_array[0],t_delta)
+        du_dt,dv_dt = self.Calc_OF_LK(self.Image_array[1],self.Image_array[0],t_delta)
 
         im = ax.imshow(self.Image_array[0], 
                 interpolation='none', 
@@ -113,8 +113,8 @@ class DataParser:
                 origin='upper',)
 
         Q = ax.quiver(
-            U_p[::,::],V_p[::,::],
-            du_dt[::,::],-dv_dt[::,::], # Need negative sign for arrow to match correct direction
+            U_p[::n,::n],V_p[::n,::n],
+            du_dt[::n,::n],-dv_dt[::n,::n], # Need negative sign for arrow to match correct direction
             color='lime')
 
 
@@ -126,14 +126,14 @@ class DataParser:
             t_prev = Parser.grabState(['t'],idx=i-1)
             t_delta = t_cur - t_prev
             du_dt,dv_dt = self.Calc_OF_LK(self.Image_array[i],self.Image_array[i-1],t_delta)
-            Q.set_UVC(-du_dt[::,::],-dv_dt[::,::])
+            Q.set_UVC(-du_dt[::n,::n],-dv_dt[::n,::n])
 
             print(i)
 
             return im,Q,
 
         
-        ani = animation.FuncAnimation(fig, update, interval=50, blit=False,frames=range(1,self.n_imgs-1))
+        ani = animation.FuncAnimation(fig, update, interval=50, blit=False,frames=range(120,self.n_imgs-1))
         ani.save(f"{self.LogDir}/{self.FileName}.mp4")
         
         # plt.show()
@@ -181,9 +181,6 @@ class DataParser:
         I_v = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
         I_t = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
 
-        u = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
-        v = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
-
         du_dt = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
         dv_dt = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
 
@@ -195,12 +192,32 @@ class DataParser:
                 I_v[v_p,u_p] =  1/(8*w)*(Kv_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Kv_1)))).item()
                 I_t[v_p,u_p] = (cur_img[v_p,u_p] - prev_img[v_p,u_p])/t_delta   # Time gradient
 
-                u[v_p,u_p] = -((u_p - O_up)*w + w/2)
-                v[v_p,u_p] =  ((v_p - O_up)*w + w/2)
+        # A_temp = np.zeros((2,2))
+        # b_temp = np.zeros((2,1))
+
+        # ## ITERATE THROUGH PIXELS AND CALCULATE OPTICAL FLOW
+        # for v_p in range(1, HEIGHT_PIXELS-1): 
+        #     for u_p in range(1, WIDTH_PIXELS-1):
+
+        #         A_temp[0,0] = np.sum(I_u[v_p-1:v_p+2,u_p-1:u_p+2]*I_u[v_p-1:v_p+2,u_p-1:u_p+2])
+        #         A_temp[1,1] = np.sum(I_v[v_p-1:v_p+2,u_p-1:u_p+2]*I_v[v_p-1:v_p+2,u_p-1:u_p+2])
+        #         A_temp[1,0] = np.sum(I_u[v_p-1:v_p+2,u_p-1:u_p+2]*I_v[v_p-1:v_p+2,u_p-1:u_p+2])
+        #         A_temp[1,0] = A_temp[0,1]
+
+
+        #         b_temp[0,0] = np.sum(I_t[v_p-1:v_p+2,u_p-1:u_p+2]*I_u[v_p-1:v_p+2,u_p-1:u_p+2])
+        #         b_temp[1,0] = np.sum(I_t[v_p-1:v_p+2,u_p-1:u_p+2]*I_v[v_p-1:v_p+2,u_p-1:u_p+2])
+
+        #         vals = np.linalg.solve(A_temp,b_temp)
+
+        #         du_dt[v_p,u_p] = vals[0,0]
+        #         dv_dt[v_p,u_p] = vals[1,0]
+
+        # return du_dt,dv_dt
 
         ## ITERATE THROUGH PIXELS AND CALCULATE OPTICAL FLOW
-        for v_p in range(1, HEIGHT_PIXELS-1,10): 
-            for u_p in range(1, WIDTH_PIXELS-1,10):
+        for v_p in range(1, HEIGHT_PIXELS-1): 
+            for u_p in range(1, WIDTH_PIXELS-1):
 
                 A = np.zeros((9,2))
                 b = np.zeros((9,1))
@@ -449,6 +466,8 @@ if __name__ == '__main__':
     # Parser.Plot_OpticalFlow()
 
     # Parser.Plot_Image(Parser.grabImage(150))
+
+
     # cur_img = Parser.grabImage(150)
     # prev_img = Parser.grabImage(149)
 
@@ -457,5 +476,4 @@ if __name__ == '__main__':
     # t_delta = t_cur - t_prev
 
     # Parser.Plot_OF_Image(Parser.grabImage(150),Parser.grabImage(149),t_delta)
-    # I_u,I_v = Parser.Calc_OF_Grad(Parser.grabImage(150))
 
