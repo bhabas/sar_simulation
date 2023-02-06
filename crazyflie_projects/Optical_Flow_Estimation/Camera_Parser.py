@@ -91,7 +91,7 @@ class DataParser:
         else:
             return self.Data_df[state_str].to_numpy()[idx].item()
 
-    def SaveCamera_MP4(self,n=10):
+    def SaveCamera_MP4(self):
         """
             Saves recorded images from camera into an MP4 file in the log directory
         """        
@@ -113,8 +113,8 @@ class DataParser:
                 origin='upper',)
 
         Q = ax.quiver(
-            U_p[::n,::n],V_p[::n,::n],
-            du_dt[::n,::n],-dv_dt[::n,::n], # Need negative sign for arrow to match correct direction
+            U_p[::,::],V_p[::,::],
+            du_dt[::,::],-dv_dt[::,::], # Need negative sign for arrow to match correct direction
             color='lime')
 
 
@@ -125,16 +125,18 @@ class DataParser:
             t_cur = Parser.grabState(['t'],idx=i)
             t_prev = Parser.grabState(['t'],idx=i-1)
             t_delta = t_cur - t_prev
-            du_dt,dv_dt = self.Calc_OF_Grad(self.Image_array[i],self.Image_array[i-1],t_delta)
-            Q.set_UVC(du_dt[::n,::n],-dv_dt[::n,::n])
+            du_dt,dv_dt = self.Calc_OF_LK(self.Image_array[i],self.Image_array[i-1],t_delta)
+            Q.set_UVC(-du_dt[::,::],-dv_dt[::,::])
+
+            print(i)
 
             return im,Q,
 
         
         ani = animation.FuncAnimation(fig, update, interval=50, blit=False,frames=range(1,self.n_imgs-1))
-        # ani.save(f"{self.LogDir}/{self.FileName}.mp4")
+        ani.save(f"{self.LogDir}/{self.FileName}.mp4")
         
-        plt.show()
+        # plt.show()
 
     def Plot_OF_Image(self,cur_img,prev_img,t_delta,n=5):
         """Superimpose optical flow vectors over image
@@ -144,7 +146,7 @@ class DataParser:
             n (int, optional): Stride between vectors. Defaults to 5.
         """        
 
-        du_dt,dv_dt = self.Calc_OF_Grad(cur_img,prev_img,t_delta)
+        du_dt,dv_dt = self.Calc_OF_LK(cur_img,prev_img,t_delta)
         U_p,V_p = np.meshgrid(np.arange(0,WIDTH_PIXELS,1),np.arange(0,HEIGHT_PIXELS,1))
 
 
@@ -162,15 +164,7 @@ class DataParser:
 
         plt.show()
 
-    def Calc_OF_Grad(self,cur_img,prev_img,t_delta):
-        """Calculate optical flow gradient vectors from image
-
-        Args:
-            image (np.array): Image array
-
-        Returns:
-            np.array: Iu,Iv
-        """        
+    def Calc_OF_LK(self,cur_img,prev_img,t_delta):
 
         ## SEPERATED SOBEL KERNAL (U--DIRECTION)
         Ku_1 = np.array([[-1,0,1]]).reshape(3,1)
@@ -190,6 +184,9 @@ class DataParser:
         u = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
         v = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
 
+        du_dt = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+        dv_dt = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+
 
         ## CALCULATE IMAGE GRADIENTS
         for v_p in range(1, HEIGHT_PIXELS-1): 
@@ -201,17 +198,32 @@ class DataParser:
                 u[v_p,u_p] = -((u_p - O_up)*w + w/2)
                 v[v_p,u_p] =  ((v_p - O_up)*w + w/2)
 
+        ## ITERATE THROUGH PIXELS AND CALCULATE OPTICAL FLOW
+        for v_p in range(1, HEIGHT_PIXELS-1,10): 
+            for u_p in range(1, WIDTH_PIXELS-1,10):
 
-        with np.errstate(divide='ignore', invalid='ignore'):
-            Theta_x = -I_u/f*-1/I_t
-            Theta_y = -I_v/f*-1/I_t
-            Theta_z = (I_u*u + I_v*v)*-1/I_t
+                A = np.zeros((9,2))
+                b = np.zeros((9,1))
+                idx = 0
 
-            du_dt = -f*Theta_y + Theta_z*u
-            dv_dt = -f*Theta_x + Theta_z*v
+                
+                for ii in range(-1,2):
+                    for jj in range(-1,2):
+                        A[idx,0] = I_u[v_p+ii,u_p+jj]
+                        A[idx,1] = I_v[v_p+ii,u_p+jj]
+
+                        b[idx,0] = -I_t[v_p+ii,u_p+jj]
+
+                        idx += 1
+
+                vals = np.linalg.pinv(A)@b
+
+                du_dt[v_p,u_p] = vals[0,0]
+                dv_dt[v_p,u_p] = vals[1,0]
 
         return du_dt,dv_dt
 
+    
 
 
     def Plot_Image(self,image):
