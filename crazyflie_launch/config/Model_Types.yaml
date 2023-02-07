@@ -96,21 +96,21 @@ CF_Type:
       ##  05 DEG LEG DESIGNS     
       ## ==================== 
       A05_L50_K08: 
-        Initials: LDA_A05_L50_K08
+        Initials: A05_L50_K08
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       A05_L50_K32: 
-        Initials: LDA_A05_L50_K32
+        Initials: A05_L50_K32
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       A05_L50_K64: 
-        Initials: LDA_A05_L50_K64
+        Initials: A05_L50_K64
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
@@ -119,21 +119,21 @@ CF_Type:
       # =============================  
 
       A05_L75_K08: 
-        Initials: LDA_A05_L75_K08
+        Initials: A05_L75_K08
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       A05_L75_K32: 
-        Initials: LDA_A05_L75_K32
+        Initials: A05_L75_K32
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       A05_L75_K64: 
-        Initials: LDA_A05_L75_K64
+        Initials: A05_L75_K64
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
@@ -142,21 +142,21 @@ CF_Type:
       # ============================= 
 
       A05_L100_K08: 
-        Initials: LDA_A05_L100_K08
+        Initials: A05_L100_K08
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       A05_L100_K32: 
-        Initials: LDA_A05_L100_K32
+        Initials: A05_L100_K32
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       A05_L100_K64: 
-        Initials: LDA_A05_L100_K64
+        Initials: A05_L100_K64
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
@@ -168,21 +168,21 @@ CF_Type:
       ##  20 DEG LEG DESIGNS     
       ## ==================== 
       A20_L50_K08: 
-        Initials: LDA_A20_L50_K08
+        Initials: A20_L50_K08
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       A20_L50_K32: 
-        Initials: LDA_A20_L50_K32
+        Initials: A20_L50_K32
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       A20_L50_K64: 
-        Initials: LDA_A20_L50_K64
+        Initials: A20_L50_K64
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
@@ -191,21 +191,21 @@ CF_Type:
       # ============================= 
 
       A20_L75_K08: 
-        Initials: LDA_A20_L75_K08
+        Initials: A20_L75_K08
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       A20_L75_K32: 
-        Initials: LDA_A20_L75_K32
+        Initials: A20_L75_K32
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       A20_L75_K64: 
-        Initials: LDA_A20_L75_K64
+        Initials: A20_L75_K64
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
@@ -214,21 +214,21 @@ CF_Type:
       # ============================= 
 
       A20_L100_K08: 
-        Initials: LDA_A20_L100_K08
+        Initials: A20_L100_K08
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       A20_L100_K32: 
-        Initials: LDA_A20_L100_K32
+        Initials: A20_L100_K32
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       A20_L100_K64: 
-        Initials: LDA_A20_L100_K64
+        Initials: A20_L100_K64
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
@@ -239,21 +239,21 @@ CF_Type:
       ##  30 DEG LEG DESIGNS     
       ## ==================== 
       A30_L50_K08: 
-        Initials: LDA_A30_L50_K08
+        Initials: A30_L50_K08
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       A30_L50_K32: 
-        Initials: LDA_A30_L50_K32
+        Initials: A30_L50_K32
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       A30_L50_K64: 
-        Initials: LDA_A30_L50_K64
+        Initials: A30_L50_K64
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
@@ -262,21 +262,21 @@ CF_Type:
       # ============================= 
 
       A30_L75_K08: 
-        Initials: LDA_A30_L75_K08
+        Initials: A30_L75_K08
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       A30_L75_K32: 
-        Initials: LDA_A30_L75_K32
+        Initials: A30_L75_K32
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       A30_L75_K64: 
-        Initials: LDA_A30_L75_K64
+        Initials: A30_L75_K64
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
@@ -285,21 +285,21 @@ CF_Type:
       # ============================= 
 
       A30_L100_K08: 
-        Initials: LDA_A30_L100_K08
+        Initials: A30_L100_K08
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       A30_L100_K32: 
-        Initials: LDA_A30_L100_K32
+        Initials: A30_L100_K32
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       A30_L100_K64: 
-        Initials: LDA_A30_L100_K64
+        Initials: A30_L100_K64
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
@@ -310,21 +310,21 @@ CF_Type:
       ##  60 DEG LEG DESIGNS     
       ## ==================== 
       A60_L50_K08: 
-        Initials: LDA_A60_L50_K08
+        Initials: A60_L50_K08
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       A60_L50_K32: 
-        Initials: LDA_A60_L50_K32
+        Initials: A60_L50_K32
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       A60_L50_K64: 
-        Initials: LDA_A60_L50_K64
+        Initials: A60_L50_K64
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
@@ -333,21 +333,21 @@ CF_Type:
       # ============================= 
 
       A60_L75_K08: 
-        Initials: LDA_A60_L75_K08
+        Initials: A60_L75_K08
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       A60_L75_K32: 
-        Initials: LDA_A60_L75_K32
+        Initials: A60_L75_K32
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       A60_L75_K64: 
-        Initials: LDA_A60_L75_K64
+        Initials: A60_L75_K64
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
@@ -356,21 +356,21 @@ CF_Type:
       # ============================= 
 
       A60_L100_K08: 
-        Initials: LDA_A60_L100_K08
+        Initials: A60_L100_K08
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       A60_L100_K32: 
-        Initials: LDA_A60_L100_K32
+        Initials: A60_L100_K32
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
       A60_L100_K64: 
-        Initials: LDA_A60_L100_K64
+        Initials: A60_L100_K64
         Mass: 38.1e-3   # [kg]
         Ixx: 27.93e-6   # [kg*m^2]
         Iyy: 30.46e-6   # [kg*m^2]

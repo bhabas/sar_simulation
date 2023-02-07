@@ -7,7 +7,7 @@ material ceilingMat/Checkerboard
         {
             texture_unit
             {
-                texture Grass_Texture.jpg
+                texture Stripe.png
             }
         }
     }

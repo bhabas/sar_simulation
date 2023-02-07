@@ -19,8 +19,8 @@ ENV_SETTINGS:
 LEARNING_MODEL:
   Policy: SACPolicy
   Network_Layers:
-  - 12
-  - 12
+  - 24
+  - 24
   Gamma: 0.999
   Learning_Rate: 0.002
   Activation_Function: ''

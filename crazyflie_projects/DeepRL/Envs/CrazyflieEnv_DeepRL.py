@@ -3,9 +3,6 @@ import numpy as np
 from gym import spaces
 import rospy
 import time
-import math
-import warnings
-
 
 
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
@@ -19,19 +16,17 @@ from crazyflie_env.Core_Envs.CrazyflieEnv_Sim import CrazyflieEnv_Sim
 class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
     metadata = {'render.modes': ['human']}
     def __init__(self,GZ_Timeout=True,Vel_range=[1.5,3.5],Phi_range=[0,90],Tau_0=0.4):
-        """_summary_
-
+        """
         Args:
             GZ_Timeout (bool, optional): Determines if Gazebo will restart if it freezed. Defaults to False.
             Vel_range (list, optional): Range of flight velocities. Defaults to [1.5,3.5].
             Phi_range (list, optional): Range of flight angles. Defaults to [0,90].
             Tau_0 (float, optional): Flight position will start at this Tau value. Defaults to 0.4.
         """        
-        CrazyflieEnv_Sim.__init__(self)          
+        CrazyflieEnv_Sim.__init__(self,GZ_Timeout)          
 
         ## ENV CONFIG SETTINGS
         self.env_name = "CF_Gazebo"
-        self.GZ_Timeout = GZ_Timeout
 
         ## TESTING CONDITIONS
         self.Tau_0 = Tau_0          
@@ -66,10 +61,12 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
     def step(self,action):
 
-        Tau,Theta_x,D_perp  = self.obs
-        action[0] = np.arctanh(np.clip(action[0],-0.999,0.999))
+        ## CLIP ACTION TO VIABLE ARCTANH VALUES AND CONVERT TO PROPER RANGE
+        action[0] = np.clip(action[0],-0.999,0.999)
+        action[0] = np.arctanh(action[0])
 
         
+        ########## PRE-FLIP TRIGGER ##########
         if action[0] < self.Flip_thr:
 
             ## UPDATE STATE AND OBSERVATION
@@ -83,69 +80,105 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
                 or self.done
             )         
 
+            ## UPDATE MINIMUM DISTANCE
             if not self.done:
                 if self.D_perp <= self.D_min:
                     self.D_min = self.D_perp 
 
-            ## ERROR TERMINATIONS
-            if (time.time() - self.start_time_ep) > 300.0 and self.GZ_Timeout == True:
-                print('\033[93m' + "[WARNING] Real Time Exceeded" + '\x1b[0m')
-                self.Restart()
-                self.done = True
+            # ## ERROR TERMINATIONS
+            # if any(np.isnan(self.vel)): 
+            #     print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
+            #     self.Restart()
+            #     print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
+            #     self.done = True
 
-            if any(np.isnan(self.vel)): 
-                print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
-                self.Restart([True,True,True])
-                print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
-                self.done = True
-
+            ## CALCULATE REWARD
             reward = 0
 
+
+
+        ########## POST-FLIP TRIGGER ##########
         elif action[0] >= self.Flip_thr:
 
+            ## SAVE TRIGGERING OBSERVATION AND ACTIONS
             self.obs_tr = self.obs
             self.action_tr = action
-            reward = self.finish_sim(action)
+
+            ## COMPLETE REST OF SIMULATION
+            self.finish_sim(action)
             self.done = True
+            
+            ## CALCULATE REWARD
+            reward = self.CalcReward()
         
         return np.array(self.obs,dtype=np.float32), reward, self.done, {}
 
+
     def finish_sim(self,action):
 
-        My = -action[1]
-
+        ## SEND FLIP ACTION TO CONTROLLER
+        My = -action[1] # Body rotational moment [N*mm]
         self.SendCmd("Policy",[0,My,0],cmd_flag=1)
+
+        ## RUN REMAINING STEPS AT FULL SPEED
         self.gazebo_unpause_physics()
 
         while not self.done:
+
             ## START IMPACT TERMINATION TIMERS
             if ((self.impact_flag or self.BodyContact_flag) and self.onceFlag_impact == False):
                 self.start_time_impact = self.getTime()
                 self.onceFlag_impact = True
 
+            ## CHECK IF TIMERS ARE EXCEEDED
             self.done = bool(
                 self.t - self.start_time_rollout > 3.5              # EPISODE TIMEOUT
                 or self.t - self.start_time_impact > 1.0            # IMPACT TIMEOUT
             )
 
+            ## UPDATE MINIMUM DISTANCE
             if not self.done:
                 if self.D_perp <= self.D_min:
                     self.D_min = self.D_perp 
 
-            ## ERROR TERMINATIONS
-            if (time.time() - self.start_time_ep) > 300.0 and self.GZ_Timeout == True:
-                print('\033[93m' + "[WARNING] Real Time Exceeded" + '\x1b[0m')
-                self.Restart()
-                self.done = True
+            # ## ERROR TERMINATIONS
+            # if any(np.isnan(self.vel)): 
+            #     print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
+            #     self.Restart()
+            #     print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
+            #     self.done = True
 
-            if any(np.isnan(self.vel)): 
-                print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
-                self.Restart([True,False,False])
-                print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
-                self.done = True
-        
-        return self.CalcReward()
 
+
+    def sample_flight_conditions(self):
+        """This function samples the flight velocity and angle from the supplied range.
+        Velocity is sampled from a uniform distribution. Phi is sampled from a set of 
+        uniform distributions which are weighted so that edge cases are only sampled 10% of the time.
+        Poor performance on edge cases can cause poor learning convergence.
+
+        Returns:
+            vel,phi: Sampled flight velocity and flight angle
+        """        
+
+        ## SAMPLE VEL FROM UNIFORM DISTRIBUTION IN VELOCITY RANGE
+        Vel_Low = self.Vel_range[0]
+        Vel_High = self.Vel_range[1]
+        vel = np.random.uniform(low=Vel_Low,high=Vel_High)
+
+        ## SAMPLE PHI FROM A WEIGHTED SET OF UNIFORM DISTRIBUTIONS
+        Phi_Low = self.Phi_range[0]
+        Phi_High = self.Phi_range[1]
+
+        Dist_Num = np.random.choice([0,1,2],p=[0.05,0.9,0.05]) # Probability of sampling distribution
+
+        if Dist_Num == 0:
+            phi = np.random.default_rng().uniform(low=Phi_Low, high=Phi_Low + 10)
+        elif Dist_Num == 1:
+            phi = np.random.default_rng().uniform(low=Phi_Low + 10, high=Phi_High - 10)
+        elif Dist_Num == 2:
+            phi = np.random.default_rng().uniform(low=Phi_High - 10, high=Phi_High)
+
+        return vel,phi
 
     def reset(self,vel=None,phi=None):
 
@@ -185,8 +218,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
         if vel == None or phi == None:
-            vel = np.random.uniform(low=self.Vel_range[0],high=self.Vel_range[1])
-            phi = np.random.uniform(low=self.Phi_range[0],high=self.Phi_range[1])
+            vel,phi = self.sample_flight_conditions()
 
         else:
             vel = vel
@@ -312,18 +344,25 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
 if __name__ == "__main__":
 
-    env = CrazyflieEnv_DeepRL(GZ_Timeout=False,Vel_range=[0.5,1.0],Phi_range=[10,20])
-    for ep in range(25):
+    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,1.0],Phi_range=[10,20])
+    rospy.spin()
 
-        vel = 0.5
-        phi = 80
-        env.reset()
+    # while True: 
+        
+    #     if env.diagnosticTest():
+    #         env.Restart()
 
-        done = False
-        while not done:
-            action = env.action_space.sample()
-            action = np.zeros_like(action)
-            obs,reward,done,info = env.step(action)
-        env.RL_Publish()
-        print(f"Episode: {ep} \t Reward: {reward:.3f}")
+    # for ep in range(25):
+
+    #     vel = 0.5
+    #     phi = 80
+    #     env.reset()
+
+    #     done = False
+    #     while not done:
+    #         action = env.action_space.sample()
+    #         action = np.zeros_like(action)
+    #         obs,reward,done,info = env.step(action)
+    #     env.RL_Publish()
+    #     print(f"Episode: {ep} \t Reward: {reward:.3f}")
 
