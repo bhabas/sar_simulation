@@ -29,7 +29,7 @@ class DataParser:
 
         ## INIT LOGGING PARAMETERS
         # self.FileName = input("Input the name of the log file:\n")
-        self.FileName = "FlightLog_Tau_Only_2"
+        self.FileName = "FlightLog_Tau_Only_5"
         self.LogDir = f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/local_logs/{self.FileName}"
         self.FilePath = os.path.join(self.LogDir,self.FileName) + ".csv"
         
@@ -112,9 +112,11 @@ class DataParser:
                 vmin=0, vmax=255, cmap=cm.gray,
                 origin='upper',)
 
+        ax.set_title(f"Frame: 000 | Tau: {self.Tau}")
+
         Q = ax.quiver(
-            U_p[::n,::n],V_p[::n,::n],
-            du_dt[::n,::n],-dv_dt[::n,::n], # Need negative sign for arrow to match correct direction
+            U_p[1::n,1::n],V_p[1::n,1::n],
+            du_dt[1::n,1::n],-dv_dt[1::n,1::n], # Need negative sign for arrow to match correct direction
             color='lime')
 
 
@@ -125,18 +127,17 @@ class DataParser:
             t_cur = Parser.grabState(['t'],idx=i)
             t_prev = Parser.grabState(['t'],idx=i-1)
             t_delta = t_cur - t_prev
-            du_dt,dv_dt = self.Calc_OF_LK(self.Image_array[i],self.Image_array[i-1],t_delta)
-            Q.set_UVC(-du_dt[::n,::n],-dv_dt[::n,::n])
-
-            print(i)
+            du_dt,dv_dt = self.Calc_OF_LK(self.Image_array[i],self.Image_array[i-1],t_delta,n=n)
+            Q.set_UVC(-du_dt[1::n,1::n],-dv_dt[1::n,1::n])
+            ax.set_title(f"Frame: {i:03d} | Tau: {self.Tau[i]}")
+            print(f"Image: {i:03d}/{self.n_imgs-1:03d}")
 
             return im,Q,
 
         
-        ani = animation.FuncAnimation(fig, update, interval=50, blit=False,frames=range(120,self.n_imgs-1))
+        ani = animation.FuncAnimation(fig, update, interval=50, blit=False,frames=range(1,self.n_imgs-1))
         ani.save(f"{self.LogDir}/{self.FileName}.mp4")
         
-        # plt.show()
 
     def Plot_OF_Image(self,cur_img,prev_img,t_delta,n=5):
         """Superimpose optical flow vectors over image
@@ -164,7 +165,7 @@ class DataParser:
 
         plt.show()
 
-    def Calc_OF_LK(self,cur_img,prev_img,t_delta):
+    def Calc_OF_LK(self,cur_img,prev_img,t_delta,n=10):
 
         ## SEPERATED SOBEL KERNAL (U--DIRECTION)
         Ku_1 = np.array([[-1,0,1]]).reshape(3,1)
@@ -192,53 +193,32 @@ class DataParser:
                 I_v[v_p,u_p] =  1/(8*w)*(Kv_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Kv_1)))).item()
                 I_t[v_p,u_p] = (cur_img[v_p,u_p] - prev_img[v_p,u_p])/t_delta   # Time gradient
 
-        # A_temp = np.zeros((2,2))
-        # b_temp = np.zeros((2,1))
 
-        # ## ITERATE THROUGH PIXELS AND CALCULATE OPTICAL FLOW
-        # for v_p in range(1, HEIGHT_PIXELS-1): 
-        #     for u_p in range(1, WIDTH_PIXELS-1):
-
-        #         A_temp[0,0] = np.sum(I_u[v_p-1:v_p+2,u_p-1:u_p+2]*I_u[v_p-1:v_p+2,u_p-1:u_p+2])
-        #         A_temp[1,1] = np.sum(I_v[v_p-1:v_p+2,u_p-1:u_p+2]*I_v[v_p-1:v_p+2,u_p-1:u_p+2])
-        #         A_temp[1,0] = np.sum(I_u[v_p-1:v_p+2,u_p-1:u_p+2]*I_v[v_p-1:v_p+2,u_p-1:u_p+2])
-        #         A_temp[1,0] = A_temp[0,1]
-
-
-        #         b_temp[0,0] = np.sum(I_t[v_p-1:v_p+2,u_p-1:u_p+2]*I_u[v_p-1:v_p+2,u_p-1:u_p+2])
-        #         b_temp[1,0] = np.sum(I_t[v_p-1:v_p+2,u_p-1:u_p+2]*I_v[v_p-1:v_p+2,u_p-1:u_p+2])
-
-        #         vals = np.linalg.solve(A_temp,b_temp)
-
-        #         du_dt[v_p,u_p] = vals[0,0]
-        #         dv_dt[v_p,u_p] = vals[1,0]
-
-        # return du_dt,dv_dt
+        A_temp = np.zeros((2,2))
+        b_temp = np.zeros((2,1))
 
         ## ITERATE THROUGH PIXELS AND CALCULATE OPTICAL FLOW
-        for v_p in range(1, HEIGHT_PIXELS-1): 
-            for u_p in range(1, WIDTH_PIXELS-1):
+        for v_p in range(1, HEIGHT_PIXELS-1,n): 
+            for u_p in range(1, WIDTH_PIXELS-1,n):
 
-                A = np.zeros((9,2))
-                b = np.zeros((9,1))
-                idx = 0
+                I_u_vec = I_u[v_p-1:v_p+2,u_p-1:u_p+2].flatten()
+                I_v_vec = I_v[v_p-1:v_p+2,u_p-1:u_p+2].flatten()
+                I_t_vec = I_t[v_p-1:v_p+2,u_p-1:u_p+2].flatten()
 
-                
-                for ii in range(-1,2):
-                    for jj in range(-1,2):
-                        A[idx,0] = I_u[v_p+ii,u_p+jj]
-                        A[idx,1] = I_v[v_p+ii,u_p+jj]
+                A_temp[0,0] = np.dot(I_u_vec,I_u_vec)
+                A_temp[1,0] = np.dot(I_u_vec,I_v_vec)
+                A_temp[0,1] = A_temp[1,0]
+                A_temp[1,1] = np.dot(I_v_vec,I_v_vec)
 
-                        b[idx,0] = -I_t[v_p+ii,u_p+jj]
+                b_temp[0,0] = -np.dot(I_t_vec,I_u_vec)
+                b_temp[1,0] = -np.dot(I_t_vec,I_v_vec)
 
-                        idx += 1
-
-                vals = np.linalg.pinv(A)@b
-
-                du_dt[v_p,u_p] = vals[0,0]
-                dv_dt[v_p,u_p] = vals[1,0]
+                vals = np.linalg.pinv(A_temp).dot(b_temp)
+                du_dt[v_p,u_p],dv_dt[v_p,u_p] = vals.flatten()
 
         return du_dt,dv_dt
+
+        
 
     
 
@@ -462,7 +442,7 @@ if __name__ == '__main__':
 
     Parser = DataParser() 
     # Parser.OpticalFlow_Writer(Parser.OF_Calc_Opt_Sep)
-    Parser.SaveCamera_MP4()
+    Parser.SaveCamera_MP4(n=10)
     # Parser.Plot_OpticalFlow()
 
     # Parser.Plot_Image(Parser.grabImage(150))
