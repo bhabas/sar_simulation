@@ -25,13 +25,14 @@
         <pose>0 0 0.0 0 0 0</pose>
         <geometry>
           <box>
-            <size>4 2 0.01</size>
+            <size>4 4 0.01</size>
           </box>
         </geometry>
         <material>
           <script>
             <uri>model://Standard_Plane/materials/scripts</uri>
             <uri>model://Standard_Plane/materials/textures</uri>
+            <!-- <name>groundMat/Dirt</name> -->
             <name>ceilingMat/Checkerboard</name>
           </script>
           <shader type='pixel'>

@@ -1,17 +1,15 @@
 DATA_TYPE: "SIM"
 
 ENV_SETTINGS:
-  # Ground_Name: "GroundPlane_Desert_Physical"
-  Ground_Name: "GroundPlane_Desert_Visual"
-
+  Ground_Name: "GroundPlane_None"
 
 PLANE_SETTINGS:
   Plane_Model: "Standard_Plane"
-  Plane_Config: "180_deg"
+  Plane_Config: "90_deg"
 
 QUAD_SETTINGS:
   CF_Type: "Standard"
-  CF_Config: "A60_L100_K64"
+  CF_Config: "Camera_Model"
 
 
   Cam_Sensor: False

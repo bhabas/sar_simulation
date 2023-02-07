@@ -412,6 +412,12 @@ class CrazyflieEnv_Base():
                                StateData_msg.Twist.angular.y,
                                StateData_msg.Twist.angular.z],3)
 
+        self.quat = np.round([StateData_msg.Pose.orientation.x,
+                              StateData_msg.Pose.orientation.y,
+                              StateData_msg.Pose.orientation.z,
+                              StateData_msg.Pose.orientation.w],3)
+
+
 
         ## VISUAL STATES
         self.Tau = np.round(StateData_msg.Tau,3)

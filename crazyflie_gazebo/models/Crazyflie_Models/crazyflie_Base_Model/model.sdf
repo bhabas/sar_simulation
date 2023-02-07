@@ -388,7 +388,7 @@
       </collision>
     </link>
     <link name='camera_sensor'>
-      <pose>0.027 0 0.008 0 0 0</pose>
+      <pose>0.027 0 0.008 0 1.5708 0</pose>
       <visual name='camera_center'>
         <cast_shadows>0</cast_shadows>
         <pose>0 0 0 0 0 0</pose>
@@ -424,8 +424,8 @@
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
 
-      <sensor type="camera" name="camera1">
-        <pose>0 0 0 0 -1.5708 1.5708</pose>
+      <sensor type="camera" name="AI_Deck_Camera">
+        <pose>0 0 0 0 -1.5708 0</pose>
         <update_rate>100</update_rate> <!--Changed to a nice number for FPS because message didn't contain enough precision -->
         <visualize>false</visualize>
         <camera name="head">
