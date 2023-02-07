@@ -543,6 +543,14 @@ class Policy_Trainer_DeepRL():
             yaml.dump(data,outfile,default_flow_style=False,sort_keys=False)
 
     def test_landing_performance(self,fileName=None,Vel_inc=0.25,Phi_inc=5,n_episodes=5):
+        """Test trained model over varied velocity and flight angle combinations.
+
+        Args:
+            fileName (str, optional): fileName to save logged CSV as. Defaults to None.
+            Vel_inc (float, optional): Flight velocity increment [m/s]. Defaults to 0.25.
+            Phi_inc (int, optional): Flight angle increment [deg]. Defaults to 5.
+            n_episodes (int, optional): Number of episodes to test each velocity over. Defaults to 5.
+        """        
 
         if fileName == None:
             fileName = "PolicyPerformance_Data.csv"
