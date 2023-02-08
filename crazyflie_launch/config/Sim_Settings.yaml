@@ -11,7 +11,7 @@ PLANE_SETTINGS:
 
 QUAD_SETTINGS:
   CF_Type: "Standard"
-  CF_Config: "A60_L100_K64"
+  CF_Config: "A60_L50_K08"
 
 
   Cam_Sensor: False

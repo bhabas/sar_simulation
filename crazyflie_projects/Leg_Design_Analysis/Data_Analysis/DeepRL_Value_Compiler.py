@@ -16,9 +16,9 @@ sys.path.insert(0,BASE_PATH)
 from crazyflie_logging.data_analysis.Data_Analysis import DataFile
 
 
-dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/DeepRL_NL"
-compiledPath = f"{BASE_PATH}/crazyflie_projects/DeepRL/Data_Logs"
-compiledName = "DeepRL_NL_LR.csv"
+dataPath = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/CF_Gazebo"
+compiledPath = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/Data_Collection"
+compiledName = "Leg_Design_A60.csv"
 
 df_list = []
 file_index = 0

@@ -39,8 +39,8 @@ if __name__ == '__main__':
     PolicyTrainer.train_model()
     
     # # LOAD DEEP RL MODEL
-    # log_name = "SAC--01_02-16:22--NL_0"
-    # t_step_load = 10
+    # log_name = "SAC--02_01-17:19--LDA_A60_L75_K08_0"
+    # t_step_load = 14000
 
     # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     # PolicyTrainer.load_model(t_step_load)
