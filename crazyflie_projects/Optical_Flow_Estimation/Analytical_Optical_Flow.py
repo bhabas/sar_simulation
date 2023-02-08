@@ -14,6 +14,9 @@ sys.path.insert(1,BASE_PATH)
 I_0 = 255   # Brightness value (0-255)
 
 ## CAMERA PARAMETERS
+FoV = 82.22 # Field of View [deg]
+FoV_rad = np.radians(FoV) # Field of View [deg]
+
 WIDTH_PIXELS = 160
 HEIGHT_PIXELS = 160
 w = 3.6e-6              # Pixel width [m]
@@ -63,7 +66,7 @@ class Optical_Flow():
         
         return I
 
-    def Generate_Pattern(self,Surf_width=8,Surf_Height=2,pixel_density=200,save_img=False,X_cam=0.0,D_cam=0.5):
+    def Generate_Pattern(self,Surf_width=2,Surf_Height=2,pixel_density=200,save_img=False,X_cam=0.0,D_cam=0.5):
         """Save show pattern and save image to file. As well, display camera boundaries for validation
 
         Args:
@@ -76,16 +79,17 @@ class Optical_Flow():
         """        
 
         ## GENERATE PATTERN BOUNDS
-        x = np.linspace(-Surf_width,Surf_width,pixel_density*Surf_width)
-        y = np.linspace(-Surf_Height,Surf_Height,pixel_density*Surf_Height)
+        x = np.linspace(-0.5*Surf_width, 0.5*Surf_width, pixel_density*Surf_width)
+        y = np.linspace(-0.5*Surf_Height,0.5*Surf_Height,pixel_density*Surf_Height)
         X,Y = np.meshgrid(x,y)
 
         ## GENERATE PATTERN
-        I = I_0/2*(np.cos(2*np.pi/self.L*X) + 1)
+        I = I_0/2*(np.sin(2*np.pi/self.L*X) + 1)
+        I = np.where(I < 128,0,255)
 
         ## GENERATE CAMERA BOUNDS
-        Img_Width = D_cam/f*(WIDTH_PIXELS*w)
-        Img_Height = D_cam/f*(HEIGHT_PIXELS*w) 
+        Img_Width = 2*np.tan(FoV_rad/2)*D_cam
+        Img_Height = 2*np.tan(FoV_rad/2)*D_cam
 
         
         ## CREATE FIGURE OF PATTERN
@@ -211,24 +215,6 @@ class Optical_Flow():
         fig2.tight_layout()
 
 
-        # ## OFy PLOT
-        # fig3 = plt.figure(2)
-        # ax = fig3.add_subplot(111)
-
-        # ax.plot(t_List,Theta_x_List,'rx',label="Theta_x")
-        # ax.plot(t_List,Theta_x_est_List,label="Theta_x_est")
-        # ax.set_title('Theta_x Estimation')
-        # ax.set_xlabel('Time [s]')
-        # ax.set_ylabel('Theta_x [rad/s]')
-        # ax.grid()
-        # ax.legend()
-
-        # fig3.tight_layout()
-
-        
-
-
-
     def Plot_Image(self,image):
 
         fig = plt.figure()
@@ -302,5 +288,5 @@ class Optical_Flow():
 if __name__ == '__main__':
 
     OF = Optical_Flow(L=0.25,FPS=50)
-    OF.Generate_Pattern(D_cam=0.5,save_img=True)
+    OF.Generate_Pattern(D_cam=0.5,Surf_width=4,Surf_Height=4,save_img=True)
     # OF.Optical_Flow_Traj(X_0=0,Vx=0.1,D_0=0.5,Vz=0.0)

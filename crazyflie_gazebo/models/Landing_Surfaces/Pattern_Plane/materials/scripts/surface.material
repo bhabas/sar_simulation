@@ -7,7 +7,7 @@ material surfaceMaterial/Pattern
         {
             texture_unit
             {
-                texture Strip_Pattern_W_8-H_2.png
+                texture Strip_Pattern_W_4-H_4.png
             }
         }
     }
