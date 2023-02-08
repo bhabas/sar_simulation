@@ -24,8 +24,14 @@ O_vp = HEIGHT_PIXELS/2  # Pixel Y_offset [pixels]
 class Optical_Flow():
 
     def __init__(self,L,FPS):
+        """_summary_
 
-        self.L = L
+        Args:
+            L (float):  [m/s]
+            FPS (uint): Frames per second
+        """              
+
+        self.L = L*2 # Double the Feature width for sine period
         self.FPS = FPS
 
     def Generate_Camera_Image(self,D_cam=1,X_cam=0):
@@ -57,7 +63,7 @@ class Optical_Flow():
         
         return I
 
-    def Generate_Pattern(self,Surf_width=2,Surf_Height=2,pixel_density=100,save_img=False,X_cam=0.0,D_cam=0.5):
+    def Generate_Pattern(self,Surf_width=8,Surf_Height=2,pixel_density=200,save_img=False,X_cam=0.0,D_cam=0.5):
         """Save show pattern and save image to file. As well, display camera boundaries for validation
 
         Args:
@@ -75,7 +81,7 @@ class Optical_Flow():
         X,Y = np.meshgrid(x,y)
 
         ## GENERATE PATTERN
-        I = I_0/2*(np.sin(2*np.pi/self.L*X) + 1)
+        I = I_0/2*(np.cos(2*np.pi/self.L*X) + 1)
 
         ## GENERATE CAMERA BOUNDS
         Img_Width = D_cam/f*(WIDTH_PIXELS*w)
@@ -295,6 +301,6 @@ class Optical_Flow():
 
 if __name__ == '__main__':
 
-    OF = Optical_Flow(L=0.5,FPS=50)
-    # OF.Generate_Pattern(D_cam=0.5)
-    OF.Optical_Flow_Traj(X_0=0,Vx=0.1,D_0=0.5,Vz=0.0)
+    OF = Optical_Flow(L=0.25,FPS=50)
+    OF.Generate_Pattern(D_cam=0.5,save_img=True)
+    # OF.Optical_Flow_Traj(X_0=0,Vx=0.1,D_0=0.5,Vz=0.0)

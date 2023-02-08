@@ -1,4 +1,4 @@
-material ceilingMat/Checkerboard
+material surfaceMaterial/Pattern
 {
     receive_shadows off
     technique
@@ -7,7 +7,7 @@ material ceilingMat/Checkerboard
         {
             texture_unit
             {
-                texture Stripe.png
+                texture Strip_Pattern_W_8-H_2.png
             }
         }
     }

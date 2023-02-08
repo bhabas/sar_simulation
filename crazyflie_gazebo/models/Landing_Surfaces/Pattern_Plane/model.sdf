@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='Test_Plane'>
+  <model name='Pattern_Plane'>
     <static>0</static>
     <link name='plane'>
       <pose>0 0 0.0 0 -0 0</pose>
@@ -25,37 +25,19 @@
         <pose>0 0 0.0 0 0 0</pose>
         <geometry>
           <box>
-            <size>1 1 0.01</size>
+            <size>2 8 0.01</size>
           </box>
         </geometry>
         <material>
           <script>
-            <uri>model://Test_Plane/materials/scripts</uri>
-            <uri>model://Test_Plane/materials/textures</uri>
-            <name>ceilingMat/Checkerboard</name>
+            <uri>model://Pattern_Plane/materials/scripts</uri>
+            <uri>model://Pattern_Plane/materials/textures</uri>
+            <name>surfaceMaterial/Pattern</name>
           </script>
           <shader type='pixel'>
             <normal_map>__default__</normal_map>
           </shader>
           <emissive>0 0 0 1</emissive>
-        </material>
-      </visual>
-      <visual name='plane_center'>
-        <cast_shadows>0</cast_shadows>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <sphere>
-            <radius>0.025</radius>
-          </sphere>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/Blue</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
         </material>
       </visual>
       <collision name='plane_collision'>
@@ -64,7 +46,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <box>
-            <size>1 1 0.01</size>
+            <size>20 2 0.01</size>
           </box>
         </geometry>
         <surface>
