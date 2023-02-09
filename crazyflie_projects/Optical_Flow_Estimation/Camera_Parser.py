@@ -1,27 +1,30 @@
 import numpy as np
 import pandas as pd
 import os
+from tqdm import tqdm,trange
+
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-from tqdm import tqdm,trange
 import matplotlib.animation as animation
 import matplotlib.gridspec as gridspec
+from matplotlib.patches import Rectangle
 
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg,os
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_projects'))
 sys.path.insert(1,BASE_PATH)
 
-## CAMERA PARAMETERS
+## PIXEL PARAMETERS
 WIDTH_PIXELS = 160
 HEIGHT_PIXELS = 160
-# FPS = 60                # Frame Rate [1/s]
-w = 3.6e-6              # Pixel width [m]
-f = 0.66e-3/2           # Focal Length [m]
-O_vp = WIDTH_PIXELS/2   # Pixel X_offset [pixels]
-O_up = HEIGHT_PIXELS/2  # Pixel Y_offset [pixels]
+O_up = WIDTH_PIXELS/2                       # Pixel u offset [pixels]
+O_vp = HEIGHT_PIXELS/2                      # Pixel v offset [pixels]
 
-FILTER_FLAG = False
+## CAMERA PARAMETERS
+w = 3.6e-6                                  # Pixel width [m]
+FOV = 82.22                                 # Field of View [deg]
+FOV_rad = np.radians(FOV)                   # Field of View [rad]
+f = w*WIDTH_PIXELS/(2*np.tan(FOV_rad/2))    # Effective Focal Length [m]
 
 
 class DataParser:
@@ -35,8 +38,7 @@ class DataParser:
             self.FileName = FileName
 
         self.LogDir = f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/local_logs/{self.FileName}"
-        self.FilePath = os.path.join(self.LogDir,self.FileName) + ".csv"
-        
+        self.FilePath = os.path.join(self.LogDir,self.FileName) + ".csv"        
 
         ## LOAD CSV FILE
         self.Data_df = pd.read_csv(self.FilePath,quotechar='"',low_memory=False,comment="#")
@@ -85,10 +87,27 @@ class DataParser:
 
 
     def grabImage(self,idx):
+        """Return image array for a the given index position from logfile
+
+        Args:
+            idx (int): Index location of image
+
+        Returns:
+            np.array: Array of image brightness values
+        """        
 
         return self.Image_array[idx]
 
     def grabState(self,state_str,idx=None):
+        """Returns array of values provided in log file
+
+        Args:
+            state_str (str): String matching state name in log file
+            idx (int, optional): Provide index if single value is needed. Defaults to None.
+
+        Returns:
+            np.array: Return array of values or single value if index is provided
+        """        
 
         if idx == None:
             return self.Data_df[state_str].to_numpy()
@@ -185,33 +204,53 @@ class DataParser:
         ani.save(f"{self.LogDir}/{self.FileName}.mp4")
         
 
-    def Plot_OF_Image(self,cur_img,prev_img,t_delta,n=5):
-        """Superimpose optical flow vectors over image
+    def Plot_OF_Image(self,cur_img,prev_img,t_delta,n=10):
+        """Superimpose optical flow vectors over an image
 
         Args:
-            image (np.array): Array of image data
-            n (int, optional): Stride between vectors. Defaults to 5.
+            Args:
+            cur_img (np.array): Numpy array of the current image
+            prev_img (np.array): Numpy array of the previous image
+            t_delta (float): Time between images
+            n (int, optional): Stride to calculate optical flow vectors over. Defaults to 10.
         """        
+            
 
+        ## CALCULATE OPTICAL FLOW VECTORS VIA LUCAS-KANADE ALGORITHM
         du_dt,dv_dt = self.Calc_OF_LK(cur_img,prev_img,t_delta)
         U_p,V_p = np.meshgrid(np.arange(0,WIDTH_PIXELS,1),np.arange(0,HEIGHT_PIXELS,1))
 
 
+        ## GENERATE FIGURE
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
+        ## PLOT IMAGE
         ax.imshow(cur_img, interpolation='none', 
                 vmin=0, vmax=255, cmap=cm.gray,
                 origin='upper',)
-                
+        
+        ## PLOT OPTICAL FLOW VECTORS
         ax.quiver(
             U_p[::n,::n],V_p[::n,::n],
-            du_dt[::n,::n],-dv_dt[::n,::n], # Need negative sign for arrow to match correct direction
+            -du_dt[::n,::n],-dv_dt[::n,::n], # Need negative sign for arrow to match correct direction
             color='g')
 
         plt.show()
 
     def Calc_OF_LK(self,cur_img,prev_img,t_delta,n=10):
+        """Calculates series of optical flow vectors between images via Lucas-Kanade algorithm.
+
+        Args:
+            cur_img (np.array): Numpy array of the current image
+            prev_img (np.array): Numpy array of the previous image
+            t_delta (float): Time between images
+            n (int, optional): Stride to calculate optical flow vectors over. Defaults to 10.
+
+        Returns:
+            (du_dt,dv_dt): A set of numpy arrays matching original image size and 
+            containing the optical flow values in each direction
+        """        
 
         ## SEPERATED SOBEL KERNAL (U--DIRECTION)
         Ku_1 = np.array([[-1,0,1]]).reshape(3,1)
@@ -240,8 +279,8 @@ class DataParser:
                 I_t[v_p,u_p] = (cur_img[v_p,u_p] - prev_img[v_p,u_p])/t_delta   # Time gradient
 
 
-        A_temp = np.zeros((2,2))
-        b_temp = np.zeros((2,1))
+        A = np.zeros((2,2))
+        b = np.zeros((2,1))
 
         ## ITERATE THROUGH PIXELS AND CALCULATE OPTICAL FLOW
         for v_p in range(1, HEIGHT_PIXELS-1,n): 
@@ -251,52 +290,95 @@ class DataParser:
                 I_v_vec = I_v[v_p-1:v_p+2,u_p-1:u_p+2].flatten()
                 I_t_vec = I_t[v_p-1:v_p+2,u_p-1:u_p+2].flatten()
 
-                A_temp[0,0] = np.dot(I_u_vec,I_u_vec)
-                A_temp[1,0] = np.dot(I_u_vec,I_v_vec)
-                A_temp[0,1] = A_temp[1,0]
-                A_temp[1,1] = np.dot(I_v_vec,I_v_vec)
+                A[0,0] = np.dot(I_u_vec,I_u_vec)
+                A[1,0] = np.dot(I_u_vec,I_v_vec)
+                A[0,1] = A[1,0]
+                A[1,1] = np.dot(I_v_vec,I_v_vec)
 
-                b_temp[0,0] = -np.dot(I_t_vec,I_u_vec)
-                b_temp[1,0] = -np.dot(I_t_vec,I_v_vec)
+                b[0,0] = -np.dot(I_t_vec,I_u_vec)
+                b[1,0] = -np.dot(I_t_vec,I_v_vec)
 
-                vals = np.linalg.pinv(A_temp).dot(b_temp)
+                vals = np.linalg.pinv(A).dot(b)
                 du_dt[v_p,u_p],dv_dt[v_p,u_p] = vals.flatten()
 
         return du_dt,dv_dt
 
     def Plot_Image(self,image):
+        """Shows an image plot given by an array of brightness values
+
+        Args:
+            image (np.array): Array of image brightness values
+        """     
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        im = ax.imshow(image, interpolation='none', 
+        ax.imshow(image, interpolation='none', 
                 vmin=0, vmax=255, cmap=cm.gray,
                 origin='upper',animated=True)
 
         plt.show()
 
-    def Plot_OpticalFlow(self):
+    def Generate_Pattern(self,Surf_width=2,Surf_Height=2,L=0.5,pixel_density=200,save_img=False,X_cam=0.0,D_cam=0.5):
+        """Save show pattern and save image to file. As well, display camera boundaries for validation
+
+        Args:
+            Surf_width (int, optional): Width of pattern to preserve pixel density. Defaults to 2.
+            Surf_Height (int, optional): Heigt of pattern to preserve pixel density. Defaults to 2.
+            L (float, optional): Feature width of sin wave. Defaults to 0.5.
+            pixel_density (int, optional): Number of pixels per meter. Defaults to 100.
+            save_img (bool, optional): Save image to file. Defaults to False.
+            X_cam (float, optional): X location of camera. Defaults to 0.5.
+            D_cam (float, optional): Distance of camera from pattern surface. Defaults to 0.5.
+        """        
+
+        ## GENERATE PATTERN BOUNDS
+        x = np.linspace(-0.5*Surf_width, 0.5*Surf_width, pixel_density*Surf_width)
+        y = np.linspace(-0.5*Surf_Height,0.5*Surf_Height,pixel_density*Surf_Height)
+        X,Y = np.meshgrid(x,y)
+
+        I_0 = 255
+
+        ## GENERATE PATTERN
+        I = I_0/2*(np.sin(2*np.pi/L*X) + 1)
+        # I = np.where(I < 128,0,255)
+
+        ## GENERATE CAMERA BOUNDS
+        Img_Width = 2*np.tan(FOV_rad/2)*D_cam
+        Img_Height = 2*np.tan(FOV_rad/2)*D_cam
+
+        
+        ## CREATE FIGURE OF PATTERN
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        
-        t = self.grabState('t')
-        t_min = min(t)
-        t = t - t_min
 
-        Theta_y = self.grabState('Theta_y')
-        Theta_y_est = self.grabState('Theta_y_est')
+        ## PLOT PATTERN AND CAMERA BOUNDARY
+        ax.imshow(I, interpolation='none', 
+            vmin=0, vmax=255, cmap=cm.gray,
+            origin='upper',
+            extent=[x.min(),x.max(),y.min(),y.max()]
+            )
 
-        ax.plot(t,Theta_y)
-        ax.plot(t,Theta_y_est)
+        ax.add_patch(
+            Rectangle(
+                (X_cam-Img_Width/2,-Img_Height/2),
+                Img_Width,
+                Img_Height,
+                lw=1,fill=False,color="tab:blue")
+            )
 
-        ax.grid()
-
-        ax.set_xlabel('Time [s]')
-        ax.set_ylabel('Theta_y [s]')
-
-        # ax.set_ylim(1,1.4)
-
+        ## SHOW PLOT
         plt.show()
+
+        ## SAVE PATTERN TO FILE
+        if save_img == True:
+            plt.imsave(
+                f'{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/Surface_Patterns/Strip_Pattern_W_{Surf_width}-H_{Surf_Height}.png', 
+                I, 
+                vmin=0, vmax=255, cmap=cm.gray,
+                origin='upper',
+            )
+
 
     def OF_Calc_Raw(self,cur_img,prev_img,delta_t):
         """Calculate optical flow values without optimization. 
@@ -480,9 +562,9 @@ if __name__ == '__main__':
 
     Parser = DataParser(FileName="FlightLog_Tau_Only_5") 
     # Parser.OpticalFlow_Writer(Parser.OF_Calc_Opt_Sep)
-    Parser.SaveCamera_MP4(n=10)
-    # Parser.Plot_OpticalFlow()
+    # Parser.SaveCamera_MP4(n=10)
 
+    Parser.Generate_Pattern()
     # Parser.Plot_Image(Parser.grabImage(150))
 
 
