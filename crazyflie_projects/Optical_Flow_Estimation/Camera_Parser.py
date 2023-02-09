@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import os
 from tqdm import tqdm,trange
+from scipy.ndimage import convolve
+
 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -511,6 +513,22 @@ class DataParser:
 
         return b
 
+    def Image_Subsample(self,image,level=1):
+
+        convolve_array = np.array([
+            [0.25,0.25],
+            [0.25,0.25]
+        ])
+        image_downsampled = image
+
+        for _ in range(0,level):
+
+            image_downsampled = convolve(image_downsampled,convolve_array)[:image.shape[0]:2,:image.shape[1]:2]
+
+        return image_downsampled
+
+
+
     def OpticalFlow_Writer(self,OF_Calc_Func):
         """Calculates optical flow values for all images in log file and appends them to log file
         """        
@@ -560,12 +578,12 @@ class DataParser:
 
 if __name__ == '__main__':
 
-    Parser = DataParser(FileName="FlightLog_Tau_Only_5") 
+    Parser = DataParser(FileName="FlightLog_Tau_Only_2") 
     # Parser.OpticalFlow_Writer(Parser.OF_Calc_Opt_Sep)
     # Parser.SaveCamera_MP4(n=10)
 
-    Parser.Generate_Pattern()
-    # Parser.Plot_Image(Parser.grabImage(150))
+    # Parser.Generate_Pattern()
+    Parser.Plot_Image(Parser.Image_Subsample(Parser.grabImage(150),level=1))
 
 
     # cur_img = Parser.grabImage(150)
