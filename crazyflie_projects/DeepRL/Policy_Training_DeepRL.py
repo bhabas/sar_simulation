@@ -793,7 +793,7 @@ if __name__ == '__main__':
     # # PLOT LANDING PERFORMANCE
     env = None
     log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Gazebo"
-    log_name = "A05_L75_K32_0--Deg_90--SAC_02_05-12:32_0"
+    log_name = "A05_L75_K32_0--Deg_180_SAC--02_06-21:23_0"
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.Plot_Landing_Performance(saveFig=True)
 
