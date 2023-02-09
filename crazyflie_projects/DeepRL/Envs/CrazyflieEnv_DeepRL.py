@@ -61,12 +61,6 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
     def step(self,action):
 
-        ## CHECK IF SIM IS PAUSED
-        while self.Pause_Flag == True:
-
-            pass ## DO NOTHING
-            
-
         ## CLIP ACTION TO VIABLE ARCTANH VALUES AND CONVERT TO PROPER RANGE
         action[0] = np.clip(action[0],-0.999,0.999)
         action[0] = np.arctanh(action[0])
