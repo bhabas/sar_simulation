@@ -20,7 +20,7 @@ FoV_rad = np.radians(FoV) # Field of View [deg]
 WIDTH_PIXELS = 160
 HEIGHT_PIXELS = 160
 w = 3.6e-6              # Pixel width [m]
-f = 0.66e-3/2           # Focal Length [m]
+f = 0.33e-3             # Focal Length [m]
 O_up = WIDTH_PIXELS/2   # Pixel X_offset [pixels]
 O_vp = HEIGHT_PIXELS/2  # Pixel Y_offset [pixels]
 
@@ -85,7 +85,7 @@ class Optical_Flow():
 
         ## GENERATE PATTERN
         I = I_0/2*(np.sin(2*np.pi/self.L*X) + 1)
-        I = np.where(I < 128,0,255)
+        # I = np.where(I < 128,0,255)
 
         ## GENERATE CAMERA BOUNDS
         Img_Width = 2*np.tan(FoV_rad/2)*D_cam
@@ -288,5 +288,5 @@ class Optical_Flow():
 if __name__ == '__main__':
 
     OF = Optical_Flow(L=0.25,FPS=50)
-    OF.Generate_Pattern(D_cam=0.5,Surf_width=4,Surf_Height=4,save_img=True)
+    OF.Generate_Pattern(D_cam=1.0,Surf_width=8,Surf_Height=4,save_img=True)
     # OF.Optical_Flow_Traj(X_0=0,Vx=0.1,D_0=0.5,Vz=0.0)

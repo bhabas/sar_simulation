@@ -22,10 +22,10 @@
       <gravity>0</gravity>
       <visual name='plane_visual'>
         <cast_shadows>0</cast_shadows>
-        <pose>0 0 0.0 0 0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
         <geometry>
           <box>
-            <size>4 4 0.01</size>
+            <size>4 8 0.01</size>
           </box>
         </geometry>
         <material>

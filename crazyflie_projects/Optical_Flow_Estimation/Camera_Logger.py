@@ -24,7 +24,8 @@ class CameraLogger:
         rospy.init_node('Camera_Data', anonymous = True)
 
         ## INIT LOGGING PARAMETERS
-        self.FileName = input("Input the name of the log file:\n")
+        # self.FileName = input("Input the name of the log file:\n")
+        self.FileName = "Theta_y--Vy_1.0--D_0.5"
         self.LogDir = f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/local_logs/{self.FileName}"
         
         ## GENERATE LOG DIRECTORY
@@ -84,7 +85,7 @@ class CameraLogger:
 
             print(f'\nLogging file {self.FileName} was successfully created\n')
 
-    def Append_CSV(self,FilePath):
+    def Append_CSV(self):
         """Appends current state data and camera data to CSV file
 
         Args:
@@ -104,13 +105,13 @@ class CameraLogger:
         Theta_y = self.Theta_y
 
         ## LOG IF WITHIN RANGE OF LANDING SURFACE
-        if(0.05 < D_perp < 2.0): 
+        if(0.1 < y < 1.2): 
 
             ## CLEAN CAMERA STRING
             Camera_data = np.array2string(self.Camera_raw,separator = ' ').replace('\n','').replace('[','').replace(']','') # Convert array to into string
         
             ## LOG DATA
-            with open(FilePath,mode = 'a') as logfile:
+            with open(self.FilePath,mode = 'a') as logfile:
                 writer = csv.writer(logfile, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
                 writer.writerow([
                 self.t,

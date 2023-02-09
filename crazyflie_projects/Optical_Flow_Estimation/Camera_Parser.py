@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from tqdm import tqdm,trange
 import matplotlib.animation as animation
+import matplotlib.gridspec as gridspec
 
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg,os
@@ -25,11 +26,14 @@ FILTER_FLAG = False
 
 class DataParser:
 
-    def __init__(self):
+    def __init__(self,FileName=None):
 
         ## INIT LOGGING PARAMETERS
-        # self.FileName = input("Input the name of the log file:\n")
-        self.FileName = "FlightLog_Tau_Only_5"
+        if FileName == None:
+            self.FileName = "Log_File"
+        else:
+            self.FileName = FileName
+
         self.LogDir = f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/local_logs/{self.FileName}"
         self.FilePath = os.path.join(self.LogDir,self.FileName) + ".csv"
         
@@ -96,28 +100,62 @@ class DataParser:
             Saves recorded images from camera into an MP4 file in the log directory
         """        
 
-        U_p,V_p = np.meshgrid(np.arange(0,WIDTH_PIXELS,1),np.arange(0,HEIGHT_PIXELS,1))
-        
+        fig = plt.figure(figsize=(10,6))
+        gs = gridspec.GridSpec(3, 2)
 
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-
+        ax = fig.add_subplot(gs[:,0])
         t_cur = Parser.grabState(['t'],idx=1)
         t_prev = Parser.grabState(['t'],idx=0)
         t_delta = t_cur - t_prev
         du_dt,dv_dt = self.Calc_OF_LK(self.Image_array[1],self.Image_array[0],t_delta)
-
         im = ax.imshow(self.Image_array[0], 
                 interpolation='none', 
                 vmin=0, vmax=255, cmap=cm.gray,
                 origin='upper',)
 
-        ax.set_title(f"Frame: 000 | Tau: {self.Tau}")
+        ax.set_title(f"Frame: {0:03d} | Tau: {self.Tau[0]}")
 
+        U_p,V_p = np.meshgrid(np.arange(0,WIDTH_PIXELS,1),np.arange(0,HEIGHT_PIXELS,1))
         Q = ax.quiver(
             U_p[1::n,1::n],V_p[1::n,1::n],
-            du_dt[1::n,1::n],-dv_dt[1::n,1::n], # Need negative sign for arrow to match correct direction
+            -du_dt[1::n,1::n],-dv_dt[1::n,1::n], # Need negative sign for arrow to match correct direction
             color='lime')
+
+        ax2 = fig.add_subplot(gs[0,1])
+        ax2.plot(self.t-self.t.min(), self.Tau_est)
+        ax2.plot(self.t-self.t.min(),self.Tau)
+        Tau_plot, = ax2.plot([],[],marker='o')
+        ax2.set_ylim(0,2)
+        ax2.set_ylabel("Tau [s]")
+        ax2.tick_params('x', labelbottom=False)
+        ax2.grid()
+
+
+        ax3 = fig.add_subplot(gs[1,1])
+        ax3.plot(self.t-self.t.min(), self.Theta_x_est)
+        ax3.plot(self.t-self.t.min(),self.Theta_x)
+        Theta_x_plot, = ax3.plot([],[],marker='o')
+        ax3.set_ylabel("Theta_x [1/s]")
+        ax3.tick_params('x', labelbottom=False)
+        ax3.grid()
+
+
+        
+        # ax3.set_ylim(0,1.1*self.Theta_x.max())
+
+        ax4 = fig.add_subplot(gs[2,1])
+        ax4.plot(self.t-self.t.min(), self.Theta_y_est)
+        ax4.plot(self.t-self.t.min(),self.Theta_y)
+        Theta_y_plot, = ax4.plot([],[],marker='o')
+        ax4.set_ylabel("Theta_y [1/s]")
+        ax4.get_shared_x_axes().join(ax2, ax3, ax4)
+        ax4.grid()
+
+
+        # ax4.set_ylim(0,1.1*self.Theta_y.max())
+
+        fig.tight_layout()
+        
 
 
         def update(i):
@@ -129,13 +167,21 @@ class DataParser:
             t_delta = t_cur - t_prev
             du_dt,dv_dt = self.Calc_OF_LK(self.Image_array[i],self.Image_array[i-1],t_delta,n=n)
             Q.set_UVC(-du_dt[1::n,1::n],-dv_dt[1::n,1::n])
-            ax.set_title(f"Frame: {i:03d} | Tau: {self.Tau[i]}")
+            
+
+
+            Tau_plot.set_data(self.t[i]-self.t.min(),self.Tau_est[i])
+            Theta_x_plot.set_data(self.t[i]-self.t.min(),self.Theta_x_est[i])
+            Theta_y_plot.set_data(self.t[i]-self.t.min(),self.Theta_y_est[i])
+
+            ax.set_title(f"Frame: {i:03d} | Tau: {self.Tau[i]}") 
             print(f"Image: {i:03d}/{self.n_imgs-1:03d}")
 
-            return im,Q,
+
+            return im,Q,Tau_plot,Theta_x_plot,Theta_y_plot
 
         
-        ani = animation.FuncAnimation(fig, update, interval=50, blit=False,frames=range(1,self.n_imgs-1))
+        ani = animation.FuncAnimation(fig, update, interval=100, blit=False,frames=range(1,self.n_imgs-1))
         ani.save(f"{self.LogDir}/{self.FileName}.mp4")
         
 
@@ -218,11 +264,6 @@ class DataParser:
 
         return du_dt,dv_dt
 
-        
-
-    
-
-
     def Plot_Image(self,image):
 
         fig = plt.figure()
@@ -234,7 +275,6 @@ class DataParser:
 
         plt.show()
 
-
     def Plot_OpticalFlow(self):
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -243,18 +283,18 @@ class DataParser:
         t_min = min(t)
         t = t - t_min
 
-        Tau = self.grabState('Tau')
-        Tau_est = self.grabState('Tau_est')
+        Theta_y = self.grabState('Theta_y')
+        Theta_y_est = self.grabState('Theta_y_est')
 
-        ax.plot(t,Tau)
-        ax.plot(t,Tau_est)
+        ax.plot(t,Theta_y)
+        ax.plot(t,Theta_y_est)
 
         ax.grid()
 
         ax.set_xlabel('Time [s]')
-        ax.set_ylabel('Tau [s]')
+        ax.set_ylabel('Theta_y [s]')
 
-        ax.set_ylim(0,3)
+        # ax.set_ylim(1,1.4)
 
         plt.show()
 
@@ -329,8 +369,6 @@ class DataParser:
         b = b.flatten()
 
         return b
-
-    
 
     def OF_Calc_Opt_Sep(self,cur_img,prev_img,delta_t):
 
@@ -415,7 +453,7 @@ class DataParser:
                 Theta_x_est,Theta_y_est,Theta_z_est = OF_Calc_Func(cur_img,prev_img,t_delta)
                 Theta_x_est,Theta_y_est,Tau_est = np.round([Theta_x_est,Theta_y_est,1/Theta_z_est],3)
 
-                n.set_description(f"Tau_est: {Tau_est:.3f} \t Theta_x_est: {Theta_x_est:.3f}")
+                n.set_description(f"Tau_est: {Tau_est:.3f} \t Theta_y_est: {Theta_y_est:.3f}")
                 n.ncols = 120
 
 
@@ -440,7 +478,7 @@ class DataParser:
 
 if __name__ == '__main__':
 
-    Parser = DataParser() 
+    Parser = DataParser(FileName="FlightLog_Tau_Only_5") 
     # Parser.OpticalFlow_Writer(Parser.OF_Calc_Opt_Sep)
     Parser.SaveCamera_MP4(n=10)
     # Parser.Plot_OpticalFlow()

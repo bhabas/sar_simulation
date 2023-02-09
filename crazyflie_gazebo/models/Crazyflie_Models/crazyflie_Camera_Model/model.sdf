@@ -453,7 +453,6 @@
           </noise>
           <lens>
             <type>sterographic</type>
-
           </lens>
         </camera>
         <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
