@@ -6,7 +6,7 @@ import csv
 import sys
 import os
 
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image,CameraInfo
 from crazyflie_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
 from rosgraph_msgs.msg import Clock
 
@@ -19,13 +19,12 @@ sys.path.insert(1,BASE_PATH)
 
 class CameraLogger:
 
-    def __init__(self):
+    def __init__(self,FileName):
         
         rospy.init_node('Camera_Data', anonymous = True)
 
         ## INIT LOGGING PARAMETERS
-        # self.FileName = input("Input the name of the log file:\n")
-        self.FileName = "Theta_y--Vy_1.0--D_0.5"
+        self.FileName = FileName
         self.LogDir = f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/local_logs/{self.FileName}"
         
         ## GENERATE LOG DIRECTORY
@@ -36,15 +35,13 @@ class CameraLogger:
         self.Create_csv(self.FilePath)
 
 
-
-
-
-        ## INITIALIZE CAMERA VALUES
+        ## PRE-INIT CAMERA VALUES
         self.Camera_raw = np.array([])
         np.set_printoptions(threshold = sys.maxsize) # Print full string without truncation
 
-        ## INITIALIZE STATE VALUES
+        ## PRE-INIT STATE VALUES
         self.t = 0.0
+        self.t_0 = 0.0
 
         self.pos = [0,0,0]
         self.vel = [0,0,0]
@@ -53,16 +50,21 @@ class CameraLogger:
         self.eul = [0,0,0]
         self.omega = [0,0,0]
 
-        ## INITIALIZE GROUND TRUTH VALUES
+        ## PRE-INIT GROUND TRUTH VALUES
         self.Tau = 0.0
         self.Theta_x = 0.0
         self.Theta_y = 0.0
         self.D_perp = 0.0 
+
+        ## PRE-INIT CAMERA VALUES
+        self.N_up = 0
+        self.N_vp = 0
         
     
         ## DATA SUBSCRIBERS
         rospy.Subscriber("/CF_Internal/camera/image_raw",Image,self.CameraCallback,queue_size=500)
-        rospy.Subscriber("/CF_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size=1)
+        rospy.Subscriber("/CF_Internal/camera/camera_info",CameraInfo,self.CameraInfoCallback,queue_size=500)
+        rospy.Subscriber("/CF_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size=500)
 
     def Create_csv(self,FilePath):
         """Create CSV file that log data will be written to
@@ -80,6 +82,7 @@ class CameraLogger:
                 'D_perp','Tau','Theta_x','Theta_y',
                 'wx','wy','wz',
                 'qx','qy','qz','qw',
+                'N_up','N_vp',
                 'Camera_Data'
                 ])
 
@@ -104,8 +107,11 @@ class CameraLogger:
         Theta_x = self.Theta_x
         Theta_y = self.Theta_y
 
+        
+ 
         ## LOG IF WITHIN RANGE OF LANDING SURFACE
-        if(0.1 < y < 1.2): 
+        if (self.t-self.t_0) <= 1.0:
+            
 
             ## CLEAN CAMERA STRING
             Camera_data = np.array2string(self.Camera_raw,separator = ' ').replace('\n','').replace('[','').replace(']','') # Convert array to into string
@@ -120,8 +126,12 @@ class CameraLogger:
                 D_perp,Tau,Theta_x,Theta_y,
                 wx,wy,wz,
                 qx,qy,qz,qw,
+                self.N_up,self.N_vp,
                 Camera_data,
                 ])
+
+        else:
+            print("Done")
 
 
 
@@ -134,10 +144,20 @@ class CameraLogger:
             Cam_msg (_type_): ROS msg of camera data
         """        
         
-        self.t = np.round(Cam_msg.header.stamp.to_sec(),4)      # Sim time
-        self.Camera_raw = np.frombuffer(Cam_msg.data,np.uint8)  # 1D array to package into CSV         
+        self.t = np.round(Cam_msg.header.stamp.to_sec(),4)          # Sim time [s]
+
+        if self.t_0 == 0.0:
+            self.t_0 = self.t
+
+        self.Camera_raw = np.frombuffer(Cam_msg.data,np.uint8)      # 1D array to package into CSV         
         self.Append_CSV()
 
+
+
+    def CameraInfoCallback(self,Cam_msg):
+        self.N_up = Cam_msg.width 
+        self.N_vp = Cam_msg.height
+        
 
 
     def CF_StateDataCallback(self,StateData_msg):
@@ -182,5 +202,6 @@ class CameraLogger:
 
 if __name__ == '__main__':
 
-    CameraLogger()  # Initialize class
-    rospy.spin()    # Run Program until canceled
+    FileName = "Theta_y--Vy_4.0--D_0.5"
+    CameraLogger(FileName)  # Initialize class
+    rospy.spin()            # Run Program until canceled

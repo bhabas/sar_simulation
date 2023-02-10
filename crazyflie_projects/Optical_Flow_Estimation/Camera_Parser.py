@@ -16,17 +16,14 @@ import sys,rospkg,os
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_projects'))
 sys.path.insert(1,BASE_PATH)
 
-## PIXEL PARAMETERS
-WIDTH_PIXELS = 160
-HEIGHT_PIXELS = 160
-O_up = WIDTH_PIXELS/2                       # Pixel u offset [pixels]
-O_vp = HEIGHT_PIXELS/2                      # Pixel v offset [pixels]
 
-## CAMERA PARAMETERS
-w = 3.6e-6                                  # Pixel width [m]
-FOV = 82.22                                 # Field of View [deg]
-FOV_rad = np.radians(FOV)                   # Field of View [rad]
-f = w*WIDTH_PIXELS/(2*np.tan(FOV_rad/2))    # Effective Focal Length [m]
+## CAMERA PROPERTIES
+FOV = 82.22                 # Field of View [deg]
+FOV_rad = np.radians(FOV)   # Field of View [rad]
+f = 0.66e-3                 # Focal Length [m]
+IW = 1.152e-3               # Image Sensor Width [m]
+
+
 
 
 class DataParser:
@@ -69,6 +66,8 @@ class DataParser:
         self.Tau = self.Data_df['Tau'].to_numpy()
         self.Theta_x = self.Data_df['Theta_x'].to_numpy()
         self.Theta_y = self.Data_df['Theta_y'].to_numpy()
+
+        
 
         ## CONVERT IMAGE DATA FROM STRING TO INTEGER
         self.Image_data = self.Data_df["Camera_Data"].to_numpy()   # Array of camera images
@@ -512,6 +511,67 @@ class DataParser:
         b = b.flatten()
 
         return b
+
+    def OF_Calc_Opt_Sep2(self,cur_img,prev_img,delta_t):
+
+        """Calculate optical flow values with seperable convolution and integer optimizations.
+        Derivation in (Research_Notes_Book_2.pdf)
+
+        Args:
+            cur_img (np.array): Array of current image
+            prev_img (np.array): Array of previous image
+            delta_t (float): Time between images
+
+        Returns:
+            np.array: Array of (Theta_x_est,Theta_y_est,Theta_z_est)
+        """        
+
+        ## SEPERATED SOBEL KERNAL (U--DIRECTION)
+        Ku_1 = np.array([[-1,0,1]]).reshape(3,1)
+        Ku_2 = np.array([[ 1,2,1]]).reshape(1,3)
+
+
+        ## SEPERATED SOBEL KERNAL (V--DIRECTION)
+        Kv_1 = np.array([[ 1,2,1]]).reshape(3,1)
+        Kv_2 = np.array([[-1,0,1]]).reshape(1,3)
+
+
+        ## PRE-ALLOCATE INTENSITY GRADIENTS
+        G_up = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+        G_vp = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+        G_rp = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+        G_tp = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+
+
+        ## CALCULATE IMAGE GRADIENTS
+        for v_p in range(1, HEIGHT_PIXELS-1): 
+            for u_p in range(1, WIDTH_PIXELS-1):
+                G_up[v_p,u_p] = (Ku_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Ku_1)))).item()
+                G_vp[v_p,u_p] = (Kv_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Kv_1)))).item()
+                G_rp[v_p,u_p] = (2*(u_p - O_up) + 1)*G_up[v_p,u_p] + (2*(v_p - O_vp) + 1)*G_vp[v_p,u_p]
+                G_tp[v_p,u_p] = cur_img[v_p,u_p] - prev_img[v_p,u_p]
+
+
+        ## SOLVE LEAST SQUARES PROBLEM
+        X = np.array([
+            [f*np.sum(G_vp*G_vp), -f*np.sum(G_up*G_vp), -w/2*np.sum(G_rp*G_vp)],
+            [f*np.sum(G_vp*G_up), -f*np.sum(G_up*G_up), -w/2*np.sum(G_rp*G_up)],
+            [f*np.sum(G_vp*G_rp), -f*np.sum(G_up*G_rp), -w/2*np.sum(G_rp*G_rp)]
+        ])
+
+        y = np.array([
+            [np.sum(G_tp*G_vp)],
+            [np.sum(G_tp*G_up)],
+            [np.sum(G_tp*G_rp)]
+        ])*(8*w/delta_t)
+
+        ## SOLVE b VIA PSEUDO-INVERSE
+        b = np.linalg.pinv(X)@y
+        b = b.flatten()
+
+        return b
+
+    
 
     def Image_Subsample(self,image,level=1):
 
