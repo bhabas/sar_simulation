@@ -74,7 +74,7 @@ class DataParser:
         self.n_imgs = len(self.t)
         Image_list = []
         for n in range(0,self.Image_data.size): 
-            Image_list.append(np.fromstring(self.Image_data[n], dtype=int, sep =' ').reshape(WIDTH_PIXELS,HEIGHT_PIXELS))
+            Image_list.append(np.fromstring(self.Image_data[n], dtype=int, sep =' ').reshape(160,160))
         self.Image_array = np.asarray(Image_list)
 
         # CHECK IF DATA HAS ALREADY BEEN COMPILED
@@ -133,9 +133,12 @@ class DataParser:
                 vmin=0, vmax=255, cmap=cm.gray,
                 origin='upper',)
 
+        N_vp = self.Image_array[1].shape[0]
+        N_up = self.Image_array[1].shape[1]
+
         ax.set_title(f"Frame: {0:03d} | Tau: {self.Tau[0]}")
 
-        U_p,V_p = np.meshgrid(np.arange(0,WIDTH_PIXELS,1),np.arange(0,HEIGHT_PIXELS,1))
+        U_p,V_p = np.meshgrid(np.arange(0,N_up,1),np.arange(0,N_vp,1))
         Q = ax.quiver(
             U_p[1::n,1::n],V_p[1::n,1::n],
             -du_dt[1::n,1::n],-dv_dt[1::n,1::n], # Need negative sign for arrow to match correct direction
@@ -185,7 +188,7 @@ class DataParser:
             t_cur = Parser.grabState(['t'],idx=i)
             t_prev = Parser.grabState(['t'],idx=i-1)
             t_delta = t_cur - t_prev
-            du_dt,dv_dt = self.Calc_OF_LK(self.Image_array[i],self.Image_array[i-1],t_delta,n=n)
+            du_dt,dv_dt = self.Calc_OF_LK(self.Image_array[i],self.Image_array[i-1],t_delta,n=10)
             Q.set_UVC(-du_dt[1::n,1::n],-dv_dt[1::n,1::n])
             
 
@@ -201,7 +204,7 @@ class DataParser:
             return im,Q,Tau_plot,Theta_x_plot,Theta_y_plot
 
         
-        ani = animation.FuncAnimation(fig, update, interval=100, blit=False,frames=range(1,self.n_imgs-1))
+        ani = animation.FuncAnimation(fig, update, interval=100, blit=False,frames=range(2,self.n_imgs-1))
         ani.save(f"{self.LogDir}/{self.FileName}.mp4")
         
 
@@ -215,11 +218,13 @@ class DataParser:
             t_delta (float): Time between images
             n (int, optional): Stride to calculate optical flow vectors over. Defaults to 10.
         """        
-            
+        N_vp = cur_img.shape[0]
+        N_up = cur_img.shape[1]
+        w = IW/N_up
 
         ## CALCULATE OPTICAL FLOW VECTORS VIA LUCAS-KANADE ALGORITHM
-        du_dt,dv_dt = self.Calc_OF_LK(cur_img,prev_img,t_delta)
-        U_p,V_p = np.meshgrid(np.arange(0,WIDTH_PIXELS,1),np.arange(0,HEIGHT_PIXELS,1))
+        du_dt,dv_dt = self.Calc_OF_LK(cur_img,prev_img,t_delta,n)
+        U_p,V_p = np.meshgrid(np.arange(0,N_up,1),np.arange(0,N_vp,1))
 
 
         ## GENERATE FIGURE
@@ -233,13 +238,13 @@ class DataParser:
         
         ## PLOT OPTICAL FLOW VECTORS
         ax.quiver(
-            U_p[::n,::n],V_p[::n,::n],
-            -du_dt[::n,::n],-dv_dt[::n,::n], # Need negative sign for arrow to match correct direction
-            color='g')
+            U_p[1::n,1::n],V_p[1::n,1::n],
+            -du_dt[1::n,1::n],-dv_dt[1::n,1::n], # Need negative sign for arrow to match correct direction
+            color='lime')
 
         plt.show()
 
-    def Calc_OF_LK(self,cur_img,prev_img,t_delta,n=10):
+    def Calc_OF_LK(self,cur_img,prev_img,t_delta,n=1):
         """Calculates series of optical flow vectors between images via Lucas-Kanade algorithm.
 
         Args:
@@ -253,6 +258,10 @@ class DataParser:
             containing the optical flow values in each direction
         """        
 
+        N_vp = cur_img.shape[0]
+        N_up = cur_img.shape[1]
+        w = IW/N_up
+
         ## SEPERATED SOBEL KERNAL (U--DIRECTION)
         Ku_1 = np.array([[-1,0,1]]).reshape(3,1)
         Ku_2 = np.array([[ 1,2,1]]).reshape(1,3)
@@ -264,17 +273,17 @@ class DataParser:
 
 
         ## PRE-ALLOCATE INTENSITY GRADIENTS
-        I_u = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
-        I_v = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
-        I_t = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+        I_u = np.zeros((N_vp,N_up))
+        I_v = np.zeros((N_vp,N_up))
+        I_t = np.zeros((N_vp,N_up))
 
-        du_dt = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
-        dv_dt = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+        du_dt = np.zeros((N_vp,N_up))
+        dv_dt = np.zeros((N_vp,N_up))
 
 
         ## CALCULATE IMAGE GRADIENTS
-        for v_p in range(1, HEIGHT_PIXELS-1): 
-            for u_p in range(1, WIDTH_PIXELS-1):
+        for v_p in range(1, N_vp-1): 
+            for u_p in range(1, N_up-1):
                 I_u[v_p,u_p] = -1/(8*w)*(Ku_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Ku_1)))).item()
                 I_v[v_p,u_p] =  1/(8*w)*(Kv_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Kv_1)))).item()
                 I_t[v_p,u_p] = (cur_img[v_p,u_p] - prev_img[v_p,u_p])/t_delta   # Time gradient
@@ -284,8 +293,8 @@ class DataParser:
         b = np.zeros((2,1))
 
         ## ITERATE THROUGH PIXELS AND CALCULATE OPTICAL FLOW
-        for v_p in range(1, HEIGHT_PIXELS-1,n): 
-            for u_p in range(1, WIDTH_PIXELS-1,n):
+        for v_p in range(1, N_vp-1,n): 
+            for u_p in range(1, N_up-1,n):
 
                 I_u_vec = I_u[v_p-1:v_p+2,u_p-1:u_p+2].flatten()
                 I_v_vec = I_v[v_p-1:v_p+2,u_p-1:u_p+2].flatten()
@@ -467,6 +476,10 @@ class DataParser:
             np.array: Array of (Theta_x_est,Theta_y_est,Theta_z_est)
         """        
 
+        N_vp = cur_img.shape[0]
+        N_up = cur_img.shape[1]
+        w = IW/N_up
+
         ## SEPERATED SOBEL KERNAL (U--DIRECTION)
         Ku_1 = np.array([[-1,0,1]]).reshape(3,1)
         Ku_2 = np.array([[ 1,2,1]]).reshape(1,3)
@@ -478,18 +491,18 @@ class DataParser:
 
 
         ## PRE-ALLOCATE INTENSITY GRADIENTS
-        G_up = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
-        G_vp = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
-        G_rp = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
-        G_tp = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+        G_up = np.zeros((N_vp,N_up))
+        G_vp = np.zeros((N_vp,N_up))
+        G_rp = np.zeros((N_vp,N_up))
+        G_tp = np.zeros((N_vp,N_up))
 
 
         ## CALCULATE IMAGE GRADIENTS
-        for v_p in range(1, HEIGHT_PIXELS-1): 
-            for u_p in range(1, WIDTH_PIXELS-1):
+        for v_p in range(1, N_vp-1): 
+            for u_p in range(1, N_up-1):
                 G_up[v_p,u_p] = (Ku_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Ku_1)))).item()
                 G_vp[v_p,u_p] = (Kv_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Kv_1)))).item()
-                G_rp[v_p,u_p] = (2*(u_p - O_up) + 1)*G_up[v_p,u_p] + (2*(v_p - O_vp) + 1)*G_vp[v_p,u_p]
+                G_rp[v_p,u_p] = (2*(u_p - N_up/2) + 1)*G_up[v_p,u_p] + (2*(v_p - N_vp/2) + 1)*G_vp[v_p,u_p]
                 G_tp[v_p,u_p] = cur_img[v_p,u_p] - prev_img[v_p,u_p]
 
 
@@ -526,6 +539,10 @@ class DataParser:
             np.array: Array of (Theta_x_est,Theta_y_est,Theta_z_est)
         """        
 
+        N_vp = cur_img.shape[0]
+        N_up = cur_img.shape[1]
+        w = IW/N_up
+
         ## SEPERATED SOBEL KERNAL (U--DIRECTION)
         Ku_1 = np.array([[-1,0,1]]).reshape(3,1)
         Ku_2 = np.array([[ 1,2,1]]).reshape(1,3)
@@ -537,18 +554,18 @@ class DataParser:
 
 
         ## PRE-ALLOCATE INTENSITY GRADIENTS
-        G_up = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
-        G_vp = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
-        G_rp = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
-        G_tp = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+        G_up = np.zeros((N_vp,N_up))
+        G_vp = np.zeros((N_vp,N_up))
+        G_rp = np.zeros((N_vp,N_up))
+        G_tp = np.zeros((N_vp,N_up))
 
 
         ## CALCULATE IMAGE GRADIENTS
-        for v_p in range(1, HEIGHT_PIXELS-1): 
-            for u_p in range(1, WIDTH_PIXELS-1):
+        for v_p in range(1, N_vp-1): 
+            for u_p in range(1, N_up-1):
                 G_up[v_p,u_p] = (Ku_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Ku_1)))).item()
                 G_vp[v_p,u_p] = (Kv_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Kv_1)))).item()
-                G_rp[v_p,u_p] = (2*(u_p - O_up) + 1)*G_up[v_p,u_p] + (2*(v_p - O_vp) + 1)*G_vp[v_p,u_p]
+                G_rp[v_p,u_p] = (2*(u_p - N_up/2) + 1)*G_up[v_p,u_p] + (2*(v_p - N_vp/2) + 1)*G_vp[v_p,u_p]
                 G_tp[v_p,u_p] = cur_img[v_p,u_p] - prev_img[v_p,u_p]
 
 
@@ -632,26 +649,28 @@ class DataParser:
 
         self.df.to_csv(self.FilePath,index=False)
 
+        self.Data_df = self.df
+
 
 
         
 
 if __name__ == '__main__':
 
-    Parser = DataParser(FileName="FlightLog_Tau_Only_2") 
+    Parser = DataParser(FileName="Theta_y--Vy_4.0--D_0.5") 
     # Parser.OpticalFlow_Writer(Parser.OF_Calc_Opt_Sep)
-    # Parser.SaveCamera_MP4(n=10)
+    Parser.SaveCamera_MP4(n=10)
 
     # Parser.Generate_Pattern()
-    Parser.Plot_Image(Parser.Image_Subsample(Parser.grabImage(150),level=1))
+    # Parser.Plot_Image(Parser.Image_Subsample(Parser.grabImage(150),level=1))
 
 
-    # cur_img = Parser.grabImage(150)
-    # prev_img = Parser.grabImage(149)
+    # cur_img = Parser.grabImage(50)
+    # prev_img = Parser.grabImage(49)
 
-    # t_cur = Parser.grabState(['t'],idx=150)
-    # t_prev = Parser.grabState(['t'],idx=149)
+    # t_cur = Parser.grabState(['t'],idx=50)
+    # t_prev = Parser.grabState(['t'],idx=49)
     # t_delta = t_cur - t_prev
 
-    # Parser.Plot_OF_Image(Parser.grabImage(150),Parser.grabImage(149),t_delta)
+    # Parser.Plot_OF_Image(cur_img,prev_img,t_delta)
 
