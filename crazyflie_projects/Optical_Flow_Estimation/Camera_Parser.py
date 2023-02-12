@@ -122,13 +122,14 @@ class DataParser:
         else:
             return self.Data_df[state_str].to_numpy()[idx].item()
 
-    def SaveCamera_MP4(self,n=10):
+    def OpticalFlow_MP4(self,n=10):
         """
             Saves recorded images from camera into an MP4 file in the log directory
         """        
 
+        ## GENERATE FIGURE
         fig = plt.figure(figsize=(10,6))
-        gs = gridspec.GridSpec(3, 2)
+        gs = gridspec.GridSpec(3, 2,width_ratios=[0.4,0.6])
 
         ax = fig.add_subplot(gs[:,0])
         t_cur = Parser.grabState(['t'],idx=1)
@@ -143,12 +144,12 @@ class DataParser:
         N_vp = self.Image_array[1].shape[0]
         N_up = self.Image_array[1].shape[1]
 
-        ax.set_title(f"Vel: {self.vy[0]:.2f} | D_perp: {self.D_perp[0]:.2f} | Frame: {0:03d}")
+        ax.set_title(f"Vel: {self.vy[0]:.2f} [m/s] | D_perp: {self.D_perp[0]:.2f} [m] \n Frame: {0:03d} | FPS: {int(1/t_delta):03d} [Hz]")
 
         U_p,V_p = np.meshgrid(np.arange(0,N_up,1),np.arange(0,N_vp,1))
         Q = ax.quiver(
             U_p[1::n,1::n],V_p[1::n,1::n],
-            -du_dt[1::n,1::n],-dv_dt[1::n,1::n], # Need negative sign for arrow to match correct direction
+            -du_dt[1::n,1::n],-dv_dt[1::n,1::n], # Need negative sign for arrows to match correct direction
             color='lime')
 
         ax2 = fig.add_subplot(gs[0,1])
@@ -157,7 +158,7 @@ class DataParser:
         Tau_plot, = ax2.plot([],[],marker='o')
         ax2.set_ylim(0,2)
         ax2.set_ylabel("Tau [s]")
-        ax2.set_title(fr"Tau Error: {np.nanmean(self.Tau_est):.2f} | $\sigma$: {np.nanstd(self.Tau_est):.2f})")
+        ax2.set_title(fr"Tau Error | Bias: {np.nanmean(np.abs(self.Tau - self.Tau_est)):.2f}  $\pm 2\sigma$: {2*np.nanstd(self.Tau_est):.2f})")
         ax2.tick_params('x', labelbottom=False)
         ax2.grid()
 
@@ -167,11 +168,10 @@ class DataParser:
         ax3.plot(self.t-self.t.min(),self.Theta_x)
         Theta_x_plot, = ax3.plot([],[],marker='o')
         ax3.set_ylabel("Theta_x [1/s]")
-        ax3.set_title(fr"Theta_x ($\mu$: {np.nanmean(self.Theta_x_est):.2f} | $\sigma$: {np.nanstd(self.Theta_x_est):.2f})")
-        ax3.set_ylim(-5,20)
+        ax3.set_title(fr"Theta_x Error | Bias: {np.nanmean(np.abs(self.Theta_x - self.Theta_x_est)):.2f}  $\pm 2\sigma$: {2*np.nanstd(self.Theta_x_est):.2f})")
+        ax3.set_ylim(-2,10)
         ax3.tick_params('x', labelbottom=False)
         ax3.grid()
-        # ax3.set_ylim(0,1.1*self.Theta_x.max())
 
 
         
@@ -182,13 +182,12 @@ class DataParser:
         Theta_y_plot, = ax4.plot([],[],marker='o')
         ax4.set_ylabel("Theta_y [1/s]")
         ax4.set_title(fr"Theta_y ($\mu$: {np.nanmean(self.Theta_y_est):.2f} | $\sigma$: {np.nanstd(self.Theta_y_est):.2f})")
-        ax4.set_title(fr"Theta_y Error: {np.nanmean(np.abs(self.Theta_y - self.Theta_y_est)):.2f} | $\sigma$: {np.nanstd(self.Tau_est):.2f})")
-        ax4.set_ylim(-5,20)
+        ax4.set_title(fr"Theta_y Error | Bias: {np.nanmean(np.abs(self.Theta_y - self.Theta_y_est)):.2f}  $\pm 2\sigma$: {2*np.nanstd(self.Theta_y_est):.2f})")
+        ax4.set_ylim(-2,10)
         ax4.get_shared_x_axes().join(ax2, ax3, ax4)
         ax4.grid()
 
 
-        # ax4.set_ylim(0,1.1*self.Theta_y.max())
 
         fig.tight_layout()
         
@@ -210,14 +209,14 @@ class DataParser:
             Theta_x_plot.set_data(self.t[i]-self.t.min(),self.Theta_x_est[i])
             Theta_y_plot.set_data(self.t[i]-self.t.min(),self.Theta_y_est[i])
 
-            ax.set_title(f"Vel: {self.vy[0]:.2f} | D_perp: {self.D_perp[0]:.2f} | Frame: {i:03d}")
+            ax.set_title(f"Vel: {self.vy[0]:.2f} [m/s] | D_perp: {self.D_perp[0]:.2f} [m] \n\n Frame: {i:03d} | FPS: {int(1/t_delta):03d} [Hz]")
             print(f"Image: {i:03d}/{self.n_imgs-1:03d}")
 
 
             return im,Q,Tau_plot,Theta_x_plot,Theta_y_plot
 
         
-        ani = animation.FuncAnimation(fig, update, interval=100, blit=False,frames=range(1,self.n_imgs-1))
+        ani = animation.FuncAnimation(fig, update, interval=100, blit=False,frames=range(2,10))
         ani.save(f"{self.LogDir}/{self.FileName}.mp4")
         
 
@@ -614,7 +613,7 @@ if __name__ == '__main__':
 
     Parser = DataParser(FileName="Theta_y--Vy_0.5--D_0.5") 
     # Parser.OpticalFlow_Writer(Parser.OF_Calc_Opt_Sep)
-    Parser.SaveCamera_MP4(n=10)
+    Parser.OpticalFlow_MP4(n=10)
 
     # Parser.Generate_Pattern(Surf_width=16,Surf_Height=8,save_img=True)
     # Parser.Plot_Image(Parser.grabImage(0))
