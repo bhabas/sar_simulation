@@ -5,11 +5,11 @@ ENV_SETTINGS:
 
 PLANE_SETTINGS:
   Plane_Model: "Standard_Plane"
-  Plane_Config: "90_deg"
+  Plane_Config: "0_deg"
 
 QUAD_SETTINGS:
   CF_Type: "Standard"
-  CF_Config: "Camera_Model"
+  CF_Config: "A60_L75_K32"
 
 
   Cam_Sensor: False
@@ -22,8 +22,8 @@ QUAD_SETTINGS:
 
 SIM_SETTINGS:
   GUI_Flag: True
-  Pause_Flag: True
-  Sim_Speed: 0.1
+  Pause_Flag: False
+  Sim_Speed: 0.6
   Sim_Slowdown_Speed: 0.4
   Landing_Slowdown_Flag: True
 
