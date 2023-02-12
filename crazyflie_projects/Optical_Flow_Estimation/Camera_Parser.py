@@ -131,92 +131,101 @@ class DataParser:
         fig = plt.figure(figsize=(10,6))
         gs = gridspec.GridSpec(3, 2,width_ratios=[0.4,0.6])
 
-        ax = fig.add_subplot(gs[:,0])
+        ## CALCULATE INITIAL OPTICAL FLOW VALUES
         t_cur = Parser.grabState(['t'],idx=1)
         t_prev = Parser.grabState(['t'],idx=0)
         t_delta = t_cur - t_prev
-        du_dt,dv_dt = self.Calc_OF_LK(self.Image_array[1],self.Image_array[0],t_delta)
-        im = ax.imshow(self.Image_array[0], 
+
+        prev_img = self.Image_array[0]
+        cur_img = self.Image_array[1]
+        du_dt,dv_dt = self.Calc_OF_LK(cur_img,prev_img,t_delta)
+        
+        N_vp = cur_img.shape[0]
+        N_up = cur_img.shape[1]
+        U_p,V_p = np.meshgrid(np.arange(0,N_up,1),np.arange(0,N_vp,1))
+
+        ## GENERATE IMAGE AXES
+        Img_ax = fig.add_subplot(gs[:,0])
+        Img_ax.set_title(f"Vel: {self.vy[0]:.2f} [m/s] | D_perp: {self.D_perp[0]:.2f} [m] \n Frame: {0:03d} | FPS: {int(1/t_delta):03d} [Hz]")
+
+        # IMAGE PLOT
+        im = Img_ax.imshow(self.Image_array[0], 
                 interpolation='none', 
                 vmin=0, vmax=255, cmap=cm.gray,
                 origin='upper',)
 
-        N_vp = self.Image_array[1].shape[0]
-        N_up = self.Image_array[1].shape[1]
-
-        ax.set_title(f"Vel: {self.vy[0]:.2f} [m/s] | D_perp: {self.D_perp[0]:.2f} [m] \n Frame: {0:03d} | FPS: {int(1/t_delta):03d} [Hz]")
-
-        U_p,V_p = np.meshgrid(np.arange(0,N_up,1),np.arange(0,N_vp,1))
-        Q = ax.quiver(
+        # OPTICAL FLOW QUIVER PLOT 
+        Q = Img_ax.quiver(
             U_p[1::n,1::n],V_p[1::n,1::n],
             -du_dt[1::n,1::n],-dv_dt[1::n,1::n], # Need negative sign for arrows to match correct direction
             color='lime')
 
-        ax2 = fig.add_subplot(gs[0,1])
-        ax2.plot(self.t-self.t.min(), self.Tau_est)
-        ax2.plot(self.t-self.t.min(),self.Tau)
-        Tau_plot, = ax2.plot([],[],marker='o')
-        ax2.set_ylim(0,2)
-        ax2.set_ylabel("Tau [s]")
-        ax2.set_title(fr"Tau Error | Bias: {np.nanmean(np.abs(self.Tau - self.Tau_est)):.2f}  $\pm 2\sigma$: {2*np.nanstd(self.Tau_est):.2f})")
-        ax2.tick_params('x', labelbottom=False)
-        ax2.grid()
+
+        ## GENERATE TAU_EST PLOT
+        Tau_ax = fig.add_subplot(gs[0,1])
+        Tau_ax.plot(self.t-self.t.min(), self.Tau_est)
+        Tau_ax.plot(self.t-self.t.min(),self.Tau)
+        Tau_marker, = Tau_ax.plot([],[],marker='o')
+
+        Tau_ax.set_ylim(0,2)
+        Tau_ax.set_ylabel("Tau [s]")
+        Tau_ax.set_title(fr"Tau Error | (Bias: {np.nanmean(np.abs(self.Tau - self.Tau_est)):.2f}  $\pm 2\sigma$: {2*np.nanstd(self.Tau_est):.2f})")
+        Tau_ax.tick_params('x', labelbottom=False)
+        Tau_ax.grid()
 
 
-        ax3 = fig.add_subplot(gs[1,1])
-        ax3.plot(self.t-self.t.min(), self.Theta_x_est)
-        ax3.plot(self.t-self.t.min(),self.Theta_x)
-        Theta_x_plot, = ax3.plot([],[],marker='o')
-        ax3.set_ylabel("Theta_x [1/s]")
-        ax3.set_title(fr"Theta_x Error | Bias: {np.nanmean(np.abs(self.Theta_x - self.Theta_x_est)):.2f}  $\pm 2\sigma$: {2*np.nanstd(self.Theta_x_est):.2f})")
-        ax3.set_ylim(-2,10)
-        ax3.tick_params('x', labelbottom=False)
-        ax3.grid()
+        ## GENERATE THETA_X_EST PLOT
+        Theta_x_ax = fig.add_subplot(gs[1,1])
+        Theta_x_ax.plot(self.t-self.t.min(), self.Theta_x_est)
+        Theta_x_ax.plot(self.t-self.t.min(),self.Theta_x)
+        Theta_x_marker, = Theta_x_ax.plot([],[],marker='o')
+
+        Theta_x_ax.set_ylim(-2,10)
+        Theta_x_ax.set_ylabel("Theta_x [1/s]")
+        Theta_x_ax.set_title(fr"Theta_x Error | (Bias: {np.nanmean(np.abs(self.Theta_x - self.Theta_x_est)):.2f}  $\pm 2\sigma$: {2*np.nanstd(self.Theta_x_est):.2f})")
+        Theta_x_ax.tick_params('x', labelbottom=False)
+        Theta_x_ax.grid()
 
 
-        
+        ## GENERATE THETA_Y_EST PLOT
+        Theta_y_ax = fig.add_subplot(gs[2,1])
+        Theta_y_ax.plot(self.t-self.t.min(), self.Theta_y_est)
+        Theta_y_ax.plot(self.t-self.t.min(),self.Theta_y)
+        Theta_y_plot, = Theta_y_ax.plot([],[],marker='o')
 
-        ax4 = fig.add_subplot(gs[2,1])
-        ax4.plot(self.t-self.t.min(), self.Theta_y_est)
-        ax4.plot(self.t-self.t.min(),self.Theta_y)
-        Theta_y_plot, = ax4.plot([],[],marker='o')
-        ax4.set_ylabel("Theta_y [1/s]")
-        ax4.set_title(fr"Theta_y ($\mu$: {np.nanmean(self.Theta_y_est):.2f} | $\sigma$: {np.nanstd(self.Theta_y_est):.2f})")
-        ax4.set_title(fr"Theta_y Error | Bias: {np.nanmean(np.abs(self.Theta_y - self.Theta_y_est)):.2f}  $\pm 2\sigma$: {2*np.nanstd(self.Theta_y_est):.2f})")
-        ax4.set_ylim(-2,10)
-        ax4.get_shared_x_axes().join(ax2, ax3, ax4)
-        ax4.grid()
-
-
+        Theta_y_ax.set_ylim(-2,10)
+        Theta_y_ax.set_ylabel("Theta_y [1/s]")
+        Theta_y_ax.set_title(fr"Theta_y Error | (Bias: {np.nanmean(np.abs(self.Theta_y - self.Theta_y_est)):.2f}  $\pm 2\sigma$: {2*np.nanstd(self.Theta_y_est):.2f})")
+        Theta_y_ax.get_shared_x_axes().join(Tau_ax, Theta_x_ax, Theta_y_ax)
+        Theta_y_ax.grid()
 
         fig.tight_layout()
-        
-
 
         def update(i):
-
-            im.set_data(self.Image_array[i])
-
+            
+            ## UPDATE OPTICAL FLOW
             t_cur = Parser.grabState(['t'],idx=i)
             t_prev = Parser.grabState(['t'],idx=i-1)
             t_delta = t_cur - t_prev
             du_dt,dv_dt = self.Calc_OF_LK(self.Image_array[i],self.Image_array[i-1],t_delta,n=10)
             Q.set_UVC(-du_dt[1::n,1::n],-dv_dt[1::n,1::n])
             
-
-
-            Tau_plot.set_data(self.t[i]-self.t.min(),self.Tau_est[i])
-            Theta_x_plot.set_data(self.t[i]-self.t.min(),self.Theta_x_est[i])
+            ## UPDATE IMAGE
+            Img_ax.set_title(f"Vel: {self.vy[0]:.2f} [m/s] | D_perp: {self.D_perp[0]:.2f} [m] \n\n Frame: {i:03d} | FPS: {int(1/t_delta):03d} [Hz]")
+            im.set_data(self.Image_array[i])
+            
+            ##  UPDATE MARKER LOCATIONS
+            Tau_marker.set_data(self.t[i]-self.t.min(),self.Tau_est[i])
+            Theta_x_marker.set_data(self.t[i]-self.t.min(),self.Theta_x_est[i])
             Theta_y_plot.set_data(self.t[i]-self.t.min(),self.Theta_y_est[i])
 
-            ax.set_title(f"Vel: {self.vy[0]:.2f} [m/s] | D_perp: {self.D_perp[0]:.2f} [m] \n\n Frame: {i:03d} | FPS: {int(1/t_delta):03d} [Hz]")
+            ## PRINT PROGRESS
             print(f"Image: {i:03d}/{self.n_imgs-1:03d}")
 
-
-            return im,Q,Tau_plot,Theta_x_plot,Theta_y_plot
+            return im,Q,Tau_marker,Theta_x_marker,Theta_y_plot
 
         
-        ani = animation.FuncAnimation(fig, update, interval=100, blit=False,frames=range(2,10))
+        ani = animation.FuncAnimation(fig, update, interval=100, blit=False,frames=range(2,self.n_imgs-1))
         ani.save(f"{self.LogDir}/{self.FileName}.mp4")
         
 
