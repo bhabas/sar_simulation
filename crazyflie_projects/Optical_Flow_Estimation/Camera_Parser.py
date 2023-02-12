@@ -40,6 +40,14 @@ class DataParser:
         self.FilePath = os.path.join(self.LogDir,self.FileName) + ".csv"        
 
         ## LOAD CSV FILE
+        
+
+        self.LoadData()
+
+        
+    
+    def LoadData(self):
+
         self.Data_df = pd.read_csv(self.FilePath,quotechar='"',low_memory=False,comment="#")
 
         ## LOAD STATE AND CAMERA DATA
@@ -85,7 +93,6 @@ class DataParser:
             self.Theta_y_est = self.Data_df['Theta_y_est'].to_numpy()
         else:
             pre_compiled_Flag = False
-
 
     def grabImage(self,idx):
         """Return image array for a the given index position from logfile
@@ -136,7 +143,7 @@ class DataParser:
         N_vp = self.Image_array[1].shape[0]
         N_up = self.Image_array[1].shape[1]
 
-        ax.set_title(f"Frame: {0:03d} | Tau: {self.Tau[0]}")
+        ax.set_title(f"Vel: {self.vy[0]:.2f} | D_perp: {self.D_perp[0]:.2f} | Frame: {0:03d}")
 
         U_p,V_p = np.meshgrid(np.arange(0,N_up,1),np.arange(0,N_vp,1))
         Q = ax.quiver(
@@ -150,6 +157,7 @@ class DataParser:
         Tau_plot, = ax2.plot([],[],marker='o')
         ax2.set_ylim(0,2)
         ax2.set_ylabel("Tau [s]")
+        ax2.set_title(fr"Tau Error: {np.nanmean(self.Tau_est):.2f} | $\sigma$: {np.nanstd(self.Tau_est):.2f})")
         ax2.tick_params('x', labelbottom=False)
         ax2.grid()
 
@@ -159,18 +167,23 @@ class DataParser:
         ax3.plot(self.t-self.t.min(),self.Theta_x)
         Theta_x_plot, = ax3.plot([],[],marker='o')
         ax3.set_ylabel("Theta_x [1/s]")
+        ax3.set_title(fr"Theta_x ($\mu$: {np.nanmean(self.Theta_x_est):.2f} | $\sigma$: {np.nanstd(self.Theta_x_est):.2f})")
+        ax3.set_ylim(-5,20)
         ax3.tick_params('x', labelbottom=False)
         ax3.grid()
+        # ax3.set_ylim(0,1.1*self.Theta_x.max())
 
 
         
-        # ax3.set_ylim(0,1.1*self.Theta_x.max())
 
         ax4 = fig.add_subplot(gs[2,1])
         ax4.plot(self.t-self.t.min(), self.Theta_y_est)
         ax4.plot(self.t-self.t.min(),self.Theta_y)
         Theta_y_plot, = ax4.plot([],[],marker='o')
         ax4.set_ylabel("Theta_y [1/s]")
+        ax4.set_title(fr"Theta_y ($\mu$: {np.nanmean(self.Theta_y_est):.2f} | $\sigma$: {np.nanstd(self.Theta_y_est):.2f})")
+        ax4.set_title(fr"Theta_y Error: {np.nanmean(np.abs(self.Theta_y - self.Theta_y_est)):.2f} | $\sigma$: {np.nanstd(self.Tau_est):.2f})")
+        ax4.set_ylim(-5,20)
         ax4.get_shared_x_axes().join(ax2, ax3, ax4)
         ax4.grid()
 
@@ -197,14 +210,14 @@ class DataParser:
             Theta_x_plot.set_data(self.t[i]-self.t.min(),self.Theta_x_est[i])
             Theta_y_plot.set_data(self.t[i]-self.t.min(),self.Theta_y_est[i])
 
-            ax.set_title(f"Frame: {i:03d} | Tau: {self.Tau[i]}") 
+            ax.set_title(f"Vel: {self.vy[0]:.2f} | D_perp: {self.D_perp[0]:.2f} | Frame: {i:03d}")
             print(f"Image: {i:03d}/{self.n_imgs-1:03d}")
 
 
             return im,Q,Tau_plot,Theta_x_plot,Theta_y_plot
 
         
-        ani = animation.FuncAnimation(fig, update, interval=100, blit=False,frames=range(2,self.n_imgs-1))
+        ani = animation.FuncAnimation(fig, update, interval=100, blit=False,frames=range(1,self.n_imgs-1))
         ani.save(f"{self.LogDir}/{self.FileName}.mp4")
         
 
@@ -402,7 +415,12 @@ class DataParser:
 
         Returns:
             np.array: Array of (Theta_x_est,Theta_y_est,Theta_z_est)
-        """        
+        """      
+
+        N_vp = cur_img.shape[0]
+        N_up = cur_img.shape[1]
+        w = IW/N_up
+
 
         ## DEFINE KERNALS USED TO CALCULATE INTENSITY GRADIENTS
         Kv = np.array([ # SOBEL KERNAL (U-DIRECTION)
@@ -419,22 +437,22 @@ class DataParser:
 
         
         ## PRE-ALLOCATE IMAGE ARRAY [pixels]
-        u_p = np.arange(0,WIDTH_PIXELS,1)
-        v_p = np.arange(0,HEIGHT_PIXELS,1)
+        u_p = np.arange(0,N_up,1)
+        v_p = np.arange(0,N_vp,1)
         U_p,V_p = np.meshgrid(u_p,v_p)
 
         ## DEFINE IMAGE SENSOR COORDS [m]
-        U_grid = -((U_p - O_up)*w + w/2)
-        V_grid =  ((V_p - O_vp)*w + w/2)
+        U_grid = -((U_p - N_up/2)*w + w/2)
+        V_grid =  ((V_p - N_vp/2)*w + w/2)
 
         ## PRE-ALLOCATE INTENSITY GRADIENTS
-        Iv = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
-        Iu = np.zeros((HEIGHT_PIXELS,WIDTH_PIXELS))
+        Iv = np.zeros((N_vp,N_up))
+        Iu = np.zeros((N_vp,N_up))
 
 
         ## CALCULATE IMAGE GRADIENTS
-        for ii in range(1, HEIGHT_PIXELS-1): 
-            for jj in range(1, WIDTH_PIXELS-1):
+        for ii in range(1, N_vp-1): 
+            for jj in range(1, N_up-1):
                 Iu[ii,jj] = -1/(8*w)*np.sum(cur_img[ii-1:ii+2,jj-1:jj+2] * Ku)
                 Iv[ii,jj] =  1/(8*w)*np.sum(cur_img[ii-1:ii+2,jj-1:jj+2] * Kv)
 
@@ -458,9 +476,8 @@ class DataParser:
 
         ## SOLVE b VIA PSEUDO-INVERSE
         b = np.linalg.pinv(X)@y
-        b = b.flatten()
 
-        return b
+        return b.flatten()
 
     def OF_Calc_Opt_Sep(self,cur_img,prev_img,delta_t):
 
@@ -502,7 +519,7 @@ class DataParser:
             for u_p in range(1, N_up-1):
                 G_up[v_p,u_p] = (Ku_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Ku_1)))).item()
                 G_vp[v_p,u_p] = (Kv_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Kv_1)))).item()
-                G_rp[v_p,u_p] = (2*(u_p - N_up/2) + 1)*G_up[v_p,u_p] + (2*(v_p - N_vp/2) + 1)*G_vp[v_p,u_p]
+                G_rp[v_p,u_p] = (2*u_p - N_up + 1)*G_up[v_p,u_p] + (2*v_p - N_vp + 1)*G_vp[v_p,u_p]
                 G_tp[v_p,u_p] = cur_img[v_p,u_p] - prev_img[v_p,u_p]
 
 
@@ -521,74 +538,9 @@ class DataParser:
 
         ## SOLVE b VIA PSEUDO-INVERSE
         b = np.linalg.pinv(X)@y
-        b = b.flatten()
 
-        return b
-
-    def OF_Calc_Opt_Sep2(self,cur_img,prev_img,delta_t):
-
-        """Calculate optical flow values with seperable convolution and integer optimizations.
-        Derivation in (Research_Notes_Book_2.pdf)
-
-        Args:
-            cur_img (np.array): Array of current image
-            prev_img (np.array): Array of previous image
-            delta_t (float): Time between images
-
-        Returns:
-            np.array: Array of (Theta_x_est,Theta_y_est,Theta_z_est)
-        """        
-
-        N_vp = cur_img.shape[0]
-        N_up = cur_img.shape[1]
-        w = IW/N_up
-
-        ## SEPERATED SOBEL KERNAL (U--DIRECTION)
-        Ku_1 = np.array([[-1,0,1]]).reshape(3,1)
-        Ku_2 = np.array([[ 1,2,1]]).reshape(1,3)
-
-
-        ## SEPERATED SOBEL KERNAL (V--DIRECTION)
-        Kv_1 = np.array([[ 1,2,1]]).reshape(3,1)
-        Kv_2 = np.array([[-1,0,1]]).reshape(1,3)
-
-
-        ## PRE-ALLOCATE INTENSITY GRADIENTS
-        G_up = np.zeros((N_vp,N_up))
-        G_vp = np.zeros((N_vp,N_up))
-        G_rp = np.zeros((N_vp,N_up))
-        G_tp = np.zeros((N_vp,N_up))
-
-
-        ## CALCULATE IMAGE GRADIENTS
-        for v_p in range(1, N_vp-1): 
-            for u_p in range(1, N_up-1):
-                G_up[v_p,u_p] = (Ku_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Ku_1)))).item()
-                G_vp[v_p,u_p] = (Kv_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Kv_1)))).item()
-                G_rp[v_p,u_p] = (2*(u_p - N_up/2) + 1)*G_up[v_p,u_p] + (2*(v_p - N_vp/2) + 1)*G_vp[v_p,u_p]
-                G_tp[v_p,u_p] = cur_img[v_p,u_p] - prev_img[v_p,u_p]
-
-
-        ## SOLVE LEAST SQUARES PROBLEM
-        X = np.array([
-            [f*np.sum(G_vp*G_vp), -f*np.sum(G_up*G_vp), -w/2*np.sum(G_rp*G_vp)],
-            [f*np.sum(G_vp*G_up), -f*np.sum(G_up*G_up), -w/2*np.sum(G_rp*G_up)],
-            [f*np.sum(G_vp*G_rp), -f*np.sum(G_up*G_rp), -w/2*np.sum(G_rp*G_rp)]
-        ])
-
-        y = np.array([
-            [np.sum(G_tp*G_vp)],
-            [np.sum(G_tp*G_up)],
-            [np.sum(G_tp*G_rp)]
-        ])*(8*w/delta_t)
-
-        ## SOLVE b VIA PSEUDO-INVERSE
-        b = np.linalg.pinv(X)@y
-        b = b.flatten()
-
-        return b
-
-    
+        return b.flatten()
+   
 
     def Image_Subsample(self,image,level=1):
 
@@ -628,13 +580,16 @@ class DataParser:
 
                 ## CALCULATE OPTICAL FLOW VALUES
                 Theta_x_est,Theta_y_est,Theta_z_est = OF_Calc_Func(cur_img,prev_img,t_delta)
-                Theta_x_est,Theta_y_est,Tau_est = np.round([Theta_x_est,Theta_y_est,1/Theta_z_est],3)
 
+                Theta_x_est = np.clip(Theta_x_est,-20,20).round(2)
+                Theta_y_est = np.clip(Theta_y_est,-20,20).round(2)
+                Tau_est = np.clip(1/Theta_z_est,0,10).round(2)
+
+                ## PROGRESS BAR SETTINGS
                 n.set_description(f"Tau_est: {Tau_est:.3f} \t Theta_y_est: {Theta_y_est:.3f}")
                 n.ncols = 120
 
-
-                ## RECORD ESTIMATED OPTICAL FLOW VALUES
+                ## RECORD ESTIMATED VISUAL CUE VALUES
                 Theta_x_est_arr.append(Theta_x_est)
                 Theta_y_est_arr.append(Theta_y_est)
                 Tau_est_arr.append(Tau_est)
@@ -649,7 +604,7 @@ class DataParser:
 
         self.df.to_csv(self.FilePath,index=False)
 
-        self.Data_df = self.df
+        self.LoadData()
 
 
 
@@ -657,12 +612,12 @@ class DataParser:
 
 if __name__ == '__main__':
 
-    Parser = DataParser(FileName="Theta_y--Vy_4.0--D_0.5") 
+    Parser = DataParser(FileName="Theta_y--Vy_0.5--D_0.5") 
     # Parser.OpticalFlow_Writer(Parser.OF_Calc_Opt_Sep)
     Parser.SaveCamera_MP4(n=10)
 
-    # Parser.Generate_Pattern()
-    # Parser.Plot_Image(Parser.Image_Subsample(Parser.grabImage(150),level=1))
+    # Parser.Generate_Pattern(Surf_width=16,Surf_Height=8,save_img=True)
+    # Parser.Plot_Image(Parser.grabImage(0))
 
 
     # cur_img = Parser.grabImage(50)

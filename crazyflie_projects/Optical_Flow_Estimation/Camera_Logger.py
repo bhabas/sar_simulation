@@ -110,7 +110,7 @@ class CameraLogger:
         
  
         ## LOG IF WITHIN RANGE OF LANDING SURFACE
-        if (self.t-self.t_0) <= 1.0:
+        if 0.1 < (self.t-self.t_0) <= 1.1:
             
 
             ## CLEAN CAMERA STRING
@@ -130,8 +130,10 @@ class CameraLogger:
                 Camera_data,
                 ])
 
+            print(f"Recording... Time: {self.t-self.t_0:.2f}")
+
         else:
-            print("Done")
+            print(f"Not Recording... Current Time: {self.t-self.t_0:.2f}")
 
 
 
@@ -202,6 +204,6 @@ class CameraLogger:
 
 if __name__ == '__main__':
 
-    FileName = "Theta_y--Vy_4.0--D_0.5"
+    FileName = "Theta_y--Vy_8.0--D_0.5"
     CameraLogger(FileName)  # Initialize class
     rospy.spin()            # Run Program until canceled
