@@ -204,6 +204,6 @@ class CameraLogger:
 
 if __name__ == '__main__':
 
-    FileName = "Theta_y--Vy_8.0--D_0.5"
+    FileName = "Theta_y--Vy_4.0--D_0.5--L_0.25_2"
     CameraLogger(FileName)  # Initialize class
     rospy.spin()            # Run Program until canceled

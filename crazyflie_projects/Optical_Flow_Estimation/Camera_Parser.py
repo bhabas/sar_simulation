@@ -122,10 +122,13 @@ class DataParser:
         else:
             return self.Data_df[state_str].to_numpy()[idx].item()
 
-    def OpticalFlow_MP4(self,n=10):
+    def DataOverview(self,n=10,frame_limit=None):
         """
             Saves recorded images from camera into an MP4 file in the log directory
         """        
+
+        if frame_limit == None:
+            frame_limit = self.n_imgs-1
 
         ## GENERATE FIGURE
         fig = plt.figure(figsize=(10,6))
@@ -146,8 +149,9 @@ class DataParser:
 
         ## GENERATE IMAGE AXES
         Img_ax = fig.add_subplot(gs[:,0])
-        Img_ax.set_title(f"Vel: {self.vy[0]:.2f} [m/s] | D_perp: {self.D_perp[0]:.2f} [m] \n Frame: {0:03d} | FPS: {int(1/t_delta):03d} [Hz]")
-
+        Img_ax.set_title(fr"$V_\perp$: {self.vx[0]:.2f} [m/s] | $V_\parallel$: {self.vy[0]:.2f} | $D_\perp$: {self.D_perp[0]:.2f} [m]"
+                             f"\n"
+                             f"Frame: {0:03d} | FPS: {int(1/t_delta):03d} [Hz]")
         # IMAGE PLOT
         im = Img_ax.imshow(self.Image_array[0], 
                 interpolation='none', 
@@ -169,7 +173,7 @@ class DataParser:
 
         Tau_ax.set_ylim(0,2)
         Tau_ax.set_ylabel("Tau [s]")
-        Tau_ax.set_title(fr"Tau Error | (Bias: {np.nanmean(np.abs(self.Tau - self.Tau_est)):.2f}  $\pm 2\sigma$: {2*np.nanstd(self.Tau_est):.2f})")
+        Tau_ax.set_title(fr"Tau Error | (Bias: {np.nanmean(np.abs(self.Tau - self.Tau_est)):.2f} $\pm 2\sigma$: {2*np.nanstd(self.Tau_est):.2f})")
         Tau_ax.tick_params('x', labelbottom=False)
         Tau_ax.grid()
 
@@ -211,7 +215,9 @@ class DataParser:
             Q.set_UVC(-du_dt[1::n,1::n],-dv_dt[1::n,1::n])
             
             ## UPDATE IMAGE
-            Img_ax.set_title(f"Vel: {self.vy[0]:.2f} [m/s] | D_perp: {self.D_perp[0]:.2f} [m] \n\n Frame: {i:03d} | FPS: {int(1/t_delta):03d} [Hz]")
+            Img_ax.set_title(fr"$V_\perp$: {self.vx[i]:.2f} [m/s] | $V_\parallel$: {self.vy[i]:.2f} | $D_\perp$: {self.D_perp[i]:.2f} [m]"
+                             f"\n"
+                             f"Frame: {i:03d} | FPS: {int(1/t_delta):03d} [Hz]")
             im.set_data(self.Image_array[i])
             
             ##  UPDATE MARKER LOCATIONS
@@ -220,13 +226,76 @@ class DataParser:
             Theta_y_plot.set_data(self.t[i]-self.t.min(),self.Theta_y_est[i])
 
             ## PRINT PROGRESS
-            print(f"Image: {i:03d}/{self.n_imgs-1:03d}")
+            print(f"Image: {i:03d}/{frame_limit:03d}")
 
             return im,Q,Tau_marker,Theta_x_marker,Theta_y_plot
 
         
-        ani = animation.FuncAnimation(fig, update, interval=100, blit=False,frames=range(2,self.n_imgs-1))
+        ani = animation.FuncAnimation(fig, update, interval=100, blit=False,frames=range(2,frame_limit))
         ani.save(f"{self.LogDir}/{self.FileName}.mp4")
+
+    def OpticalFlow_MP4(self,n=10,frame_limit=None):
+        """
+            Saves recorded images from camera into an MP4 file in the log directory
+        """        
+        if frame_limit == None:
+            frame_limit = self.n_imgs-1
+
+        ## GENERATE FIGURE
+        fig = plt.figure(figsize=(6,6))
+
+        ## CALCULATE INITIAL OPTICAL FLOW VALUES
+        t_cur = Parser.grabState(['t'],idx=1)
+        t_prev = Parser.grabState(['t'],idx=0)
+        t_delta = t_cur - t_prev
+
+        prev_img = self.Image_array[0]
+        cur_img = self.Image_array[1]
+        du_dt,dv_dt = self.Calc_OF_LK(cur_img,prev_img,t_delta)
+        
+        N_vp = cur_img.shape[0]
+        N_up = cur_img.shape[1]
+        U_p,V_p = np.meshgrid(np.arange(0,N_up,1),np.arange(0,N_vp,1))
+
+        ## GENERATE IMAGE AXES
+        Img_ax = fig.add_subplot(111)
+        Img_ax.set_title(fr"$V_\perp$: {self.vx[0]:.2f} [m/s] | $V_\parallel$: {self.vy[0]:.2f} | $D_\perp$: {self.D_perp[0]:.2f} [m]"
+                             f"\n"
+                             f"Frame: {0:03d} | FPS: {int(1/t_delta):03d} [Hz]")
+        # IMAGE PLOT
+        im = Img_ax.imshow(self.Image_array[0], 
+                interpolation='none', 
+                vmin=0, vmax=255, cmap=cm.gray,
+                origin='upper',)
+
+        # OPTICAL FLOW QUIVER PLOT 
+        Q = Img_ax.quiver(
+            U_p[1::n,1::n],V_p[1::n,1::n],
+            -du_dt[1::n,1::n],-dv_dt[1::n,1::n], # Need negative sign for arrows to match correct direction
+            color='lime')
+
+        def update(i):
+            
+            ## UPDATE OPTICAL FLOW
+            t_cur = Parser.grabState(['t'],idx=i)
+            t_prev = Parser.grabState(['t'],idx=i-1)
+            t_delta = t_cur - t_prev
+            du_dt,dv_dt = self.Calc_OF_LK(self.Image_array[i],self.Image_array[i-1],t_delta,n=10)
+            Q.set_UVC(-du_dt[1::n,1::n],-dv_dt[1::n,1::n])
+            
+            ## UPDATE IMAGE
+            Img_ax.set_title(fr"$V_\perp$: {self.vx[i]:.2f} [m/s] | $V_\parallel$: {self.vy[i]:.2f} | $D_\perp$: {self.D_perp[i]:.2f} [m]"
+                             f"\n"
+                             f"Frame: {i:03d} | FPS: {int(1/t_delta):03d} [Hz]")
+            im.set_data(self.Image_array[i])
+           
+            ## PRINT PROGRESS
+            print(f"Image: {i:03d}/{frame_limit:03d}")
+
+            return im,Q,
+        
+        ani = animation.FuncAnimation(fig, update, interval=100, blit=False,frames=range(2,frame_limit))
+        ani.save(f"{self.LogDir}/L-K_{self.FileName}.mp4")
         
 
     def Plot_OF_Image(self,cur_img,prev_img,t_delta,n=10):
@@ -368,10 +437,10 @@ class DataParser:
         y = np.linspace(-0.5*Surf_Height,0.5*Surf_Height,pixel_density*Surf_Height)
         X,Y = np.meshgrid(x,y)
 
-        I_0 = 255
+        I_0 = 125
 
         ## GENERATE PATTERN
-        I = I_0/2*(np.sin(2*np.pi/L*X) + 1)
+        I = I_0/2*np.sin(2*np.pi/L*X) + 255/2
         # I = np.where(I < 128,0,255)
 
         ## GENERATE CAMERA BOUNDS
@@ -620,11 +689,12 @@ class DataParser:
 
 if __name__ == '__main__':
 
-    Parser = DataParser(FileName="Theta_y--Vy_0.5--D_0.5") 
+    Parser = DataParser(FileName="FlightLog_Tau_Only_2") 
     # Parser.OpticalFlow_Writer(Parser.OF_Calc_Opt_Sep)
-    Parser.OpticalFlow_MP4(n=10)
+    Parser.DataOverview(frame_limit=10)
+    # Parser.OpticalFlow_MP4(n=10) 
 
-    # Parser.Generate_Pattern(Surf_width=16,Surf_Height=8,save_img=True)
+    # Parser.Generate_Pattern(L=0.25,Surf_width=16,Surf_Height=8,save_img=True)
     # Parser.Plot_Image(Parser.grabImage(0))
 
 

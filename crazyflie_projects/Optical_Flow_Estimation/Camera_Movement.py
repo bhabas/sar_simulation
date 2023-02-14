@@ -12,7 +12,7 @@ ModelMove_Service = rospy.ServiceProxy('/ModelMovement',ModelMove)
 if __name__ == "__main__":
 
     D = 0.5
-    Vy = 8.0
+    Vy = 4.0
 
 
     ## RESET POSITION AND VELOCITY
