@@ -139,13 +139,16 @@ class DataParser:
         t_prev = Parser.grabState(['t'],idx=0)
         t_delta = t_cur - t_prev
 
-        prev_img = self.Image_array[0]
-        cur_img = self.Image_array[1]
-        du_dt,dv_dt = self.Calc_OF_LK(cur_img,prev_img,t_delta)
+        prev_img = self.Image_Subsample(self.Image_array[0],level=2)
+        cur_img = self.Image_Subsample(self.Image_array[1],level=2)
+
         
         N_vp = cur_img.shape[0]
         N_up = cur_img.shape[1]
         U_p,V_p = np.meshgrid(np.arange(0,N_up,1),np.arange(0,N_vp,1))
+
+        n = int(N_up/n)
+        du_dt,dv_dt = self.Calc_OF_LK(cur_img,prev_img,t_delta,n)
 
         ## GENERATE IMAGE AXES
         Img_ax = fig.add_subplot(gs[:,0])
@@ -153,7 +156,7 @@ class DataParser:
                              f"\n"
                              f"Frame: {0:03d} | FPS: {int(1/t_delta):03d} [Hz]")
         # IMAGE PLOT
-        im = Img_ax.imshow(self.Image_array[0], 
+        im = Img_ax.imshow(cur_img, 
                 interpolation='none', 
                 vmin=0, vmax=255, cmap=cm.gray,
                 origin='upper',)
@@ -211,14 +214,17 @@ class DataParser:
             t_cur = Parser.grabState(['t'],idx=i)
             t_prev = Parser.grabState(['t'],idx=i-1)
             t_delta = t_cur - t_prev
-            du_dt,dv_dt = self.Calc_OF_LK(self.Image_array[i],self.Image_array[i-1],t_delta,n=10)
+
+            prev_img = self.Image_Subsample(self.Image_array[i-1],level=2)
+            cur_img = self.Image_Subsample(self.Image_array[i],level=2)
+            du_dt,dv_dt = self.Calc_OF_LK(cur_img,prev_img,t_delta,n)
             Q.set_UVC(-du_dt[1::n,1::n],-dv_dt[1::n,1::n])
             
             ## UPDATE IMAGE
             Img_ax.set_title(fr"$V_\perp$: {self.vx[i]:.2f} [m/s] | $V_\parallel$: {self.vy[i]:.2f} | $D_\perp$: {self.D_perp[i]:.2f} [m]"
                              f"\n"
                              f"Frame: {i:03d} | FPS: {int(1/t_delta):03d} [Hz]")
-            im.set_data(self.Image_array[i])
+            im.set_data(cur_img)
             
             ##  UPDATE MARKER LOCATIONS
             Tau_marker.set_data(self.t[i]-self.t.min(),self.Tau_est[i])
@@ -691,7 +697,7 @@ if __name__ == '__main__':
 
     Parser = DataParser(FileName="FlightLog_Tau_Only_2") 
     # Parser.OpticalFlow_Writer(Parser.OF_Calc_Opt_Sep)
-    Parser.DataOverview(frame_limit=10)
+    Parser.DataOverview(n=10)
     # Parser.OpticalFlow_MP4(n=10) 
 
     # Parser.Generate_Pattern(L=0.25,Surf_width=16,Surf_Height=8,save_img=True)
