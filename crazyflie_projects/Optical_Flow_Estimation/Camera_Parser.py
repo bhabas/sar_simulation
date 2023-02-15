@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
 import os
-from tqdm import tqdm,trange
+import yaml
+from tqdm import trange
 from scipy.ndimage import convolve
 
 
@@ -14,16 +15,8 @@ from matplotlib.patches import Rectangle
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg,os
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_projects'))
-sys.path.insert(1,BASE_PATH)
-
-
-## CAMERA PROPERTIES
-FOV = 82.22                 # Field of View [deg]
-FOV_rad = np.radians(FOV)   # Field of View [rad]
-f = 0.66e-3                 # Focal Length [m]
-IW = 1.152e-3               # Image Sensor Width [m]
-
-
+sys.path.insert(1,BASE_PATH)        
+np.set_printoptions(threshold = sys.maxsize) # Print full string without truncation
 
 
 class DataParser:
@@ -35,11 +28,12 @@ class DataParser:
         self.LogDir = f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/local_logs/"
         self.FileDir = os.path.join(self.LogDir,self.FileName)   
         self.FilePath = os.path.join(self.FileDir,self.FileName + ".csv")    
+        self.ConfigPath = os.path.join(self.FileDir,"Config.yaml")
 
-
-
-        np.set_printoptions(threshold = sys.maxsize) # Print full string without truncation
+        
+        self.Load_Config_File()
         self.LoadData()
+        self.Write_Config_File()
 
         
     
@@ -79,17 +73,37 @@ class DataParser:
         self.n_imgs = len(self.t)
         Image_list = []
         for n in range(0,self.Image_data.size): 
-            Image_list.append(np.fromstring(self.Image_data[n], dtype=int, sep =' ').reshape(40,40))
+            Image_list.append(np.fromstring(self.Image_data[n], dtype=int, sep =' ').reshape(self.N_up,self.N_vp))
         self.Image_array = np.asarray(Image_list)
 
         # CHECK IF DATA HAS ALREADY BEEN COMPILED
         if 'Tau_est' in self.Data_df.columns:
-            pre_compiled_Flag = True
             self.Tau_est = self.Data_df['Tau_est'].to_numpy()
             self.Theta_x_est = self.Data_df['Theta_x_est'].to_numpy()
             self.Theta_y_est = self.Data_df['Theta_y_est'].to_numpy()
-        else:
-            pre_compiled_Flag = False
+
+    def Load_Config_File(self):
+
+        with open(self.ConfigPath, 'r') as file:
+            self.YAML_data = yaml.safe_load(file)
+
+        self.N_up = self.YAML_data['IMAGE_SETTINGS']['N_up']    # IMAGE WIDTH IN PIXELS
+        self.N_vp = self.YAML_data['IMAGE_SETTINGS']['N_vp']    # IMAGE HEIGHT IN PIXELS
+
+        self.f = self.YAML_data['IMAGE_SETTINGS']['f']          # Focal Length [m]
+        self.FOV = self.YAML_data['IMAGE_SETTINGS']['FOV']      # Field of View [deg]
+        self.FOV_rad = np.radians(self.FOV)                 # Field of View [rad]
+        self.IW = self.YAML_data['IMAGE_SETTINGS']['IW']        # Image Sensor Width [m]
+
+        
+    def Write_Config_File(self):
+
+        self.YAML_data['IMAGE_SETTINGS']['N_up'] = self.N_up
+        self.YAML_data['IMAGE_SETTINGS']['N_vp'] = self.N_vp
+
+        with open(self.ConfigPath, 'w') as outfile:
+            yaml.dump(self.YAML_data,outfile,default_flow_style=False,sort_keys=False) 
+    
 
     def grabImage(self,idx):
         """Return image array for a the given index position from logfile
@@ -235,7 +249,7 @@ class DataParser:
 
         
         ani = animation.FuncAnimation(fig, update, interval=100, blit=False,frames=range(2,frame_limit))
-        ani.save(f"{self.FileDir}.mp4")
+        ani.save(f"{self.FileDir}/{self.FileName}.mp4")
 
     def OpticalFlow_MP4(self,n=10,frame_limit=None):
         """
@@ -313,7 +327,7 @@ class DataParser:
         """        
         N_vp = cur_img.shape[0]
         N_up = cur_img.shape[1]
-        w = IW/N_up
+        w = self.IW/N_up
 
         ## CALCULATE OPTICAL FLOW VECTORS VIA LUCAS-KANADE ALGORITHM
         du_dt,dv_dt = self.Calc_OF_LK(cur_img,prev_img,t_delta,n)
@@ -353,7 +367,7 @@ class DataParser:
 
         N_vp = cur_img.shape[0]
         N_up = cur_img.shape[1]
-        w = IW/N_up
+        w = self.IW/N_up
 
         ## SEPERATED SOBEL KERNAL (U--DIRECTION)
         Ku_1 = np.array([[-1,0,1]]).reshape(3,1)
@@ -447,8 +461,8 @@ class DataParser:
         # I = np.where(I < 128,0,255)
 
         ## GENERATE CAMERA BOUNDS
-        Img_Width = 2*np.tan(FOV_rad/2)*D_cam
-        Img_Height = 2*np.tan(FOV_rad/2)*D_cam
+        Img_Width = 2*np.tan(self.FOV_rad/2)*D_cam
+        Img_Height = 2*np.tan(self.FOV_rad/2)*D_cam
 
         
         ## CREATE FIGURE OF PATTERN
@@ -482,7 +496,6 @@ class DataParser:
                 origin='upper',
             )
 
-
     def OF_Calc_Raw(self,cur_img,prev_img,delta_t):
         """Calculate optical flow values without optimization. 
         Derivation in: (Research_Notes_Book_2.pdf)
@@ -499,7 +512,7 @@ class DataParser:
 
         N_vp = cur_img.shape[0]
         N_up = cur_img.shape[1]
-        w = IW/N_up
+        w = self.IW/N_up
 
 
         ## DEFINE KERNALS USED TO CALCULATE INTENSITY GRADIENTS
@@ -543,9 +556,9 @@ class DataParser:
 
         ## SOLVE LEAST SQUARES PROBLEM
         X = np.array([
-            [f*np.sum(Iv*Iv), f*np.sum(Iu*Iv), -np.sum(Ir*Iv)],
-            [f*np.sum(Iv*Iu), f*np.sum(Iu*Iu), -np.sum(Ir*Iu)],
-            [f*np.sum(Iv*Ir), f*np.sum(Iu*Ir), -np.sum(Ir*Ir)]
+            [self.f*np.sum(Iv*Iv), self.f*np.sum(Iu*Iv), -np.sum(Ir*Iv)],
+            [self.f*np.sum(Iv*Iu), self.f*np.sum(Iu*Iu), -np.sum(Ir*Iu)],
+            [self.f*np.sum(Iv*Ir), self.f*np.sum(Iu*Ir), -np.sum(Ir*Ir)]
         ])
 
         y = np.array([
@@ -575,7 +588,7 @@ class DataParser:
 
         N_vp = cur_img.shape[0]
         N_up = cur_img.shape[1]
-        w = IW/N_up
+        w = self.IW/N_up
 
         ## SEPERATED SOBEL KERNAL (U--DIRECTION)
         Ku_1 = np.array([[-1,0,1]]).reshape(3,1)
@@ -605,9 +618,9 @@ class DataParser:
 
         ## SOLVE LEAST SQUARES PROBLEM
         X = np.array([
-            [f*np.sum(G_vp*G_vp), -f*np.sum(G_up*G_vp), -w/2*np.sum(G_rp*G_vp)],
-            [f*np.sum(G_vp*G_up), -f*np.sum(G_up*G_up), -w/2*np.sum(G_rp*G_up)],
-            [f*np.sum(G_vp*G_rp), -f*np.sum(G_up*G_rp), -w/2*np.sum(G_rp*G_rp)]
+            [self.f*np.sum(G_vp*G_vp), -self.f*np.sum(G_up*G_vp), -w/2*np.sum(G_rp*G_vp)],
+            [self.f*np.sum(G_vp*G_up), -self.f*np.sum(G_up*G_up), -w/2*np.sum(G_rp*G_up)],
+            [self.f*np.sum(G_vp*G_rp), -self.f*np.sum(G_up*G_rp), -w/2*np.sum(G_rp*G_rp)]
         ])
 
         y = np.array([
@@ -621,8 +634,7 @@ class DataParser:
 
         return b.flatten()
    
-
-    def Image_Subsample(self,image,subsample_level=1):
+    def Image_Subsample(self,image,subsample_level=0):
 
         convolve_array = np.array([
             [0.25,0.25],
@@ -636,20 +648,27 @@ class DataParser:
 
         return image_downsampled
 
-
-
-    def OpticalFlow_Writer(self,OF_Calc_Func,subsample_level=0,FileName=None):
-        """Calculates optical flow values for all images in log file and appends them to log file
+    def OpticalFlow_Writer(self,OF_Calc_Func,SubSample_Level=0):
+        """
+        Calculates optical flow values for all images in log file and appends them to log file
         """        
 
-        Theta_x_est_arr = [np.nan]
-        Theta_y_est_arr = [np.nan]
-        Tau_est_arr = [np.nan]
-
-        for ii,image in enumerate(self.Image_array):
-            image = self.Image_Subsample(image,subsample_level=subsample_level)
-            self.Data_df.iloc[ii,-1] = np.array2string(image,separator = ' ').replace('\n','').replace('[','').replace(']','') # Convert array to into string
+        Theta_x_est_arr = [0.0]
+        Theta_y_est_arr = [0.0]
+        Tau_est_arr = [0.0]
         
+        ## SUB-SAMPLE IMAGES
+        if SubSample_Level > 0:
+            self.N_up = self.N_up//(2**SubSample_Level)
+            self.N_vp = self.N_vp//(2**SubSample_Level)
+            
+            Image_list = []
+            for ii,image in enumerate(self.Image_array):
+                image = self.Image_Subsample(image,subsample_level=SubSample_Level)
+                self.Data_df.iloc[ii,-1] = np.array2string(image,separator = ' ').replace('\n','').replace('[','').replace(']','') # Convert array to into string
+                Image_list.append(image)
+            self.Image_array = np.asarray(Image_list)
+            
         with trange(1,self.n_imgs) as n:
             for ii in n:
 
@@ -686,15 +705,23 @@ class DataParser:
         self.df['Theta_y_est'] = Theta_y_est_arr
         self.df['Camera_Data'] = self.Data_df.iloc[:,-1]
 
-        if FileName == None:
-            self.df.to_csv(self.FileDir,index=False)
+        if SubSample_Level == 0:
+            self.df.to_csv(self.FilePath,index=False)
         else:
-            FilePath = os.path.join(self.LogDir,FileName)
-            if not os.path.exists(FilePath):
-                os.mkdir(FilePath)
-            self.df.to_csv(os.path.join(FilePath,FileName + ".csv"),index=False)
+            self.FileName = self.FileName + f"--SSL_{SubSample_Level:0d}"
+            self.FileDir = os.path.join(self.LogDir,self.FileName)   
+            self.FilePath = os.path.join(self.FileDir,self.FileName + ".csv")    
+            self.ConfigPath = os.path.join(self.FileDir,"Config.yaml")
+
+            if not os.path.exists(self.FileDir):
+                os.mkdir(self.FileDir)
+
+            ## WRITE CSV AND CONFIG TO NEW DIRECTORY
+            self.df.to_csv(self.FilePath,index=False)
+            self.Write_Config_File()
 
         self.LoadData()
+        self.Load_Config_File()
 
 
 
@@ -702,8 +729,8 @@ class DataParser:
 
 if __name__ == '__main__':
 
-    Parser = DataParser(FileName="TestFile") 
-    # Parser.OpticalFlow_Writer(Parser.OF_Calc_Opt_Sep,FileName="TestFile",subsample_level=2)
+    Parser = DataParser(FileName="Theta_y--Vy_4.0--D_0.5--L_0.25") 
+    Parser.OpticalFlow_Writer(Parser.OF_Calc_Opt_Sep,SubSample_Level=3)
     Parser.DataOverview(n=10)
     # Parser.OpticalFlow_MP4(n=10) 
 

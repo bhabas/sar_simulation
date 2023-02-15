@@ -31,6 +31,8 @@ class CameraLogger:
         self.LogDir = f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/local_logs/"
         self.FileDir = os.path.join(self.LogDir,self.FileName)   
         self.FilePath = os.path.join(self.FileDir,self.FileName + ".csv")    
+        self.ConfigPath = os.path.join(self.FileDir,"Config.yaml")
+
         self.Logging_Flag = False
         
         ## GENERATE LOG DIRECTORY
@@ -133,8 +135,6 @@ class CameraLogger:
 
     def save_Config_File(self):
 
-        config_path = os.path.join(self.FileDir,"Config.yaml")
-
         data = dict(
             IMAGE_SETTINGS = dict(
                 N_up = self.N_up,
@@ -152,7 +152,7 @@ class CameraLogger:
             )
         )
 
-        with open(config_path, 'w') as outfile:
+        with open(self.ConfigPath, 'w') as outfile:
             yaml.dump(data,outfile,default_flow_style=False,sort_keys=False)
 
     def Model_Move_Command(self,):
@@ -199,7 +199,6 @@ class CameraLogger:
                 'D_perp','Tau','Theta_x','Theta_y',
                 'wx','wy','wz',
                 'qx','qy','qz','qw',
-                'N_up','N_vp',
                 'Camera_Data'
                 ])
 
@@ -238,7 +237,6 @@ class CameraLogger:
             D_perp,Tau,Theta_x,Theta_y,
             wx,wy,wz,
             qx,qy,qz,qw,
-            self.N_up,self.N_vp,
             Camera_data,
             ])
 
@@ -248,6 +246,11 @@ class CameraLogger:
 
 if __name__ == '__main__':
 
-    FileName = "Theta_y--Vy_4.0--D_0.5--L_0.25_2"
+    D_perp = 0.5
+    V_perp = 0.0
+    V_parallel = 4.0
+    y_offset = -4.0
+
+    FileName = f"Theta_y--Vy_{V_parallel:.1f}--D_{D_perp:.1f}--L_0.25"
     CameraLogger(FileName,D_perp=2.0,V_perp=0.0,V_parallel=4.0,y_offset=-4)  # Initialize class
     rospy.spin()            # Run Program until canceled
