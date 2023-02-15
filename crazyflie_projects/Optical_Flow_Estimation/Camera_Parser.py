@@ -28,20 +28,17 @@ IW = 1.152e-3               # Image Sensor Width [m]
 
 class DataParser:
 
-    def __init__(self,FileName=None):
+    def __init__(self,FileName):
 
         ## INIT LOGGING PARAMETERS
-        if FileName == None:
-            self.FileName = "Log_File"
-        else:
-            self.FileName = FileName
+        self.FileName = FileName
+        self.LogDir = f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/local_logs/"
+        self.FileDir = os.path.join(self.LogDir,self.FileName)   
+        self.FilePath = os.path.join(self.FileDir,self.FileName + ".csv")    
 
-        self.LogDir = f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/local_logs/{self.FileName}"
-        self.FilePath = os.path.join(self.LogDir,self.FileName) + ".csv"        
 
-        ## LOAD CSV FILE
-        
 
+        np.set_printoptions(threshold = sys.maxsize) # Print full string without truncation
         self.LoadData()
 
         
@@ -82,7 +79,7 @@ class DataParser:
         self.n_imgs = len(self.t)
         Image_list = []
         for n in range(0,self.Image_data.size): 
-            Image_list.append(np.fromstring(self.Image_data[n], dtype=int, sep =' ').reshape(160,160))
+            Image_list.append(np.fromstring(self.Image_data[n], dtype=int, sep =' ').reshape(40,40))
         self.Image_array = np.asarray(Image_list)
 
         # CHECK IF DATA HAS ALREADY BEEN COMPILED
@@ -139,8 +136,8 @@ class DataParser:
         t_prev = Parser.grabState(['t'],idx=0)
         t_delta = t_cur - t_prev
 
-        prev_img = self.Image_Subsample(self.Image_array[0],level=2)
-        cur_img = self.Image_Subsample(self.Image_array[1],level=2)
+        prev_img = self.Image_array[0]
+        cur_img = self.Image_array[1]
 
         
         N_vp = cur_img.shape[0]
@@ -215,8 +212,8 @@ class DataParser:
             t_prev = Parser.grabState(['t'],idx=i-1)
             t_delta = t_cur - t_prev
 
-            prev_img = self.Image_Subsample(self.Image_array[i-1],level=2)
-            cur_img = self.Image_Subsample(self.Image_array[i],level=2)
+            prev_img = self.Image_array[i-1]
+            cur_img = self.Image_array[i]
             du_dt,dv_dt = self.Calc_OF_LK(cur_img,prev_img,t_delta,n)
             Q.set_UVC(-du_dt[1::n,1::n],-dv_dt[1::n,1::n])
             
@@ -238,7 +235,7 @@ class DataParser:
 
         
         ani = animation.FuncAnimation(fig, update, interval=100, blit=False,frames=range(2,frame_limit))
-        ani.save(f"{self.LogDir}/{self.FileName}.mp4")
+        ani.save(f"{self.FileDir}.mp4")
 
     def OpticalFlow_MP4(self,n=10,frame_limit=None):
         """
@@ -625,7 +622,7 @@ class DataParser:
         return b.flatten()
    
 
-    def Image_Subsample(self,image,level=1):
+    def Image_Subsample(self,image,subsample_level=1):
 
         convolve_array = np.array([
             [0.25,0.25],
@@ -633,7 +630,7 @@ class DataParser:
         ])
         image_downsampled = image
 
-        for _ in range(0,level):
+        for _ in range(0,subsample_level):
 
             image_downsampled = convolve(image_downsampled,convolve_array)[:image.shape[0]:2,:image.shape[1]:2]
 
@@ -641,20 +638,24 @@ class DataParser:
 
 
 
-    def OpticalFlow_Writer(self,OF_Calc_Func):
+    def OpticalFlow_Writer(self,OF_Calc_Func,subsample_level=0,FileName=None):
         """Calculates optical flow values for all images in log file and appends them to log file
         """        
 
         Theta_x_est_arr = [np.nan]
         Theta_y_est_arr = [np.nan]
         Tau_est_arr = [np.nan]
+
+        for ii,image in enumerate(self.Image_array):
+            image = self.Image_Subsample(image,subsample_level=subsample_level)
+            self.Data_df.iloc[ii,-1] = np.array2string(image,separator = ' ').replace('\n','').replace('[','').replace(']','') # Convert array to into string
         
         with trange(1,self.n_imgs) as n:
             for ii in n:
 
                 ## COLLECT CURRENT AND PREVIOUS IMAGE
-                prev_img = self.grabImage(ii-1)
-                cur_img = self.grabImage(ii)
+                prev_img = self.Image_array[ii-1]
+                cur_img = self.Image_array[ii]
                 
                 ## CALCULATE TIME BETWEEN IMAGES
                 t_prev = self.grabState('t',ii-1)
@@ -685,7 +686,13 @@ class DataParser:
         self.df['Theta_y_est'] = Theta_y_est_arr
         self.df['Camera_Data'] = self.Data_df.iloc[:,-1]
 
-        self.df.to_csv(self.FilePath,index=False)
+        if FileName == None:
+            self.df.to_csv(self.FileDir,index=False)
+        else:
+            FilePath = os.path.join(self.LogDir,FileName)
+            if not os.path.exists(FilePath):
+                os.mkdir(FilePath)
+            self.df.to_csv(os.path.join(FilePath,FileName + ".csv"),index=False)
 
         self.LoadData()
 
@@ -695,8 +702,8 @@ class DataParser:
 
 if __name__ == '__main__':
 
-    Parser = DataParser(FileName="FlightLog_Tau_Only_2") 
-    # Parser.OpticalFlow_Writer(Parser.OF_Calc_Opt_Sep)
+    Parser = DataParser(FileName="TestFile") 
+    # Parser.OpticalFlow_Writer(Parser.OF_Calc_Opt_Sep,FileName="TestFile",subsample_level=2)
     Parser.DataOverview(n=10)
     # Parser.OpticalFlow_MP4(n=10) 
 
