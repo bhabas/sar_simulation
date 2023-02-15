@@ -5,6 +5,8 @@ import yaml
 import csv
 import sys
 import os
+import message_filters
+
 
 from sensor_msgs.msg import Image,CameraInfo
 from crazyflie_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
@@ -43,48 +45,90 @@ class CameraLogger:
         self.V_parallel_0 = V_parallel
         self.y_offset_0 = y_offset
 
-        ## PRE-INIT CAMERA VALUES
-        self.Camera_raw = np.array([])
         np.set_printoptions(threshold = sys.maxsize) # Print full string without truncation
 
-        ## PRE-INIT STATE VALUES
+        ## PRE-INIT TIME VALUES
         self.t = 0.0
         self.t_0 = np.nan
+        self.Init_Values_Flag = False
 
-        self.pos = [0,0,0]
-        self.vel = [0,0,0]
-
-        self.quat = [0,0,0,1]
-        self.eul = [0,0,0]
-        self.omega = [0,0,0]
-
-        ## PRE-INIT GROUND TRUTH VALUES
-        self.Tau = 0.0
-        self.Theta_x = 0.0
-        self.Theta_y = 0.0
-        self.D_perp = 0.0
-
-        ## PRE-INIT CAMERA VALUES
-        self.N_up = 0
-        self.N_vp = 0
-        
     
         ## DATA SUBSCRIBERS
-        rospy.Subscriber("/CF_Internal/camera/image_raw",Image,self.Camera_Callback,queue_size=500)
-        rospy.Subscriber("/CF_Internal/camera/camera_info",CameraInfo,self.Camera_Info_Callback,queue_size=500)
-        rospy.Subscriber("/CF_DC/StateData",CF_StateData,self.CF_State_Data_Callback,queue_size=500)
+        Image_Sub = message_filters.Subscriber("/CF_Internal/camera/image_raw",Image)
+        Info_Sub = message_filters.Subscriber("/CF_Internal/camera/camera_info",CameraInfo)
+        State_Sub = message_filters.Subscriber("/CF_DC/StateData",CF_StateData)
         self.ModelMove_Service = rospy.ServiceProxy('/ModelMovement',ModelMove)
 
-
+        ## VERIFY ROS TOPICS
         print("Waiting for messages...")
         rospy.wait_for_message("/CF_Internal/camera/image_raw",Image)
         rospy.wait_for_message("/CF_Internal/camera/camera_info",CameraInfo)
         rospy.wait_for_message("/CF_DC/StateData",CF_StateData)
         print("Messages received")
 
+
+        ## CREATE TIME SYNCHRONIZER FOR ROS TOPICS
+        Approx_Time_Sync = message_filters.ApproximateTimeSynchronizer([Image_Sub,Info_Sub,State_Sub],slop=0.005,queue_size=500)
+        Approx_Time_Sync.registerCallback(self.Data_Callback)
+
+        while self.Init_Values_Flag == False:
+            print("Waiting for callback...")
+
         self.save_Config_File()
         self.Model_Move_Command()
         self.Begin_Logging()
+
+    def Data_Callback(self,Img_msg,Cam_Info_msg,StateData_msg):
+        
+        ## IMAGE DATA
+        self.Camera_raw = np.frombuffer(Img_msg.data,np.uint8)      # 1D array to package into CSV   
+
+        ## CAMERA_DATA
+        self.N_up = Cam_Info_msg.width 
+        self.N_vp = Cam_Info_msg.height
+
+        ## STATE DATA
+        self.t = np.round(StateData_msg.header.stamp.to_sec(),2)          # Sim time [s]
+
+        self.pos = np.round([StateData_msg.Pose.position.x,
+                             StateData_msg.Pose.position.y,
+                             StateData_msg.Pose.position.z],3)
+
+        self.vel = np.round([StateData_msg.Twist.linear.x,
+                             StateData_msg.Twist.linear.y,
+                             StateData_msg.Twist.linear.z],3)
+
+        self.eul = np.round([StateData_msg.Eul.x,
+                             StateData_msg.Eul.y,
+                             StateData_msg.Eul.z],3)
+
+        self.omega = np.round([StateData_msg.Twist.angular.x,
+                               StateData_msg.Twist.angular.y,
+                               StateData_msg.Twist.angular.z],3)
+
+        self.quat = np.round([StateData_msg.Pose.orientation.x,
+                              StateData_msg.Pose.orientation.y,
+                              StateData_msg.Pose.orientation.z,
+                              StateData_msg.Pose.orientation.w],3)
+
+        ## VISUAL STATES
+        self.Tau = np.round(StateData_msg.Tau,3)
+        self.Theta_x = np.round(StateData_msg.Theta_x,3)
+        self.Theta_y = np.round(StateData_msg.Theta_y,3)
+        self.D_perp = np.round(StateData_msg.D_perp,3) 
+
+
+        self.Init_Values_Flag = True
+
+
+    ## LOG IF WITHIN RANGE OF LANDING SURFACE
+        if 0.1 < (self.t-self.t_0) <= 1.1 and self.Logging_Flag == True:
+            self.Append_CSV()
+            print(f"Recording... Time: {self.t-self.t_0:.2f}")
+
+        elif (self.t-self.t_0) >= 1.1:
+            print(f"Finished Recording... Current Time: {self.t-self.t_0:.2f}")
+            sys.exit()
 
 
     def save_Config_File(self):
@@ -110,8 +154,6 @@ class CameraLogger:
 
         with open(config_path, 'w') as outfile:
             yaml.dump(data,outfile,default_flow_style=False,sort_keys=False)
-
-        
 
     def Model_Move_Command(self,):
 
@@ -183,96 +225,26 @@ class CameraLogger:
         Theta_y = self.Theta_y
 
         
- 
-        ## LOG IF WITHIN RANGE OF LANDING SURFACE
-        if 0.1 < (self.t-self.t_0) <= 1.1 and self.Logging_Flag == True:
-            
-
-            ## CLEAN CAMERA STRING
-            Camera_data = np.array2string(self.Camera_raw,separator = ' ').replace('\n','').replace('[','').replace(']','') # Convert array to into string
-        
-            ## LOG DATA
-            with open(self.FilePath,mode = 'a') as logfile:
-                writer = csv.writer(logfile, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
-                writer.writerow([
-                self.t,
-                x,y,z,
-                vx,vy,vz,
-                D_perp,Tau,Theta_x,Theta_y,
-                wx,wy,wz,
-                qx,qy,qz,qw,
-                self.N_up,self.N_vp,
-                Camera_data,
-                ])
-
-            print(f"Recording... Time: {self.t-self.t_0:.2f}")
-
-        elif (self.t-self.t_0) >= 1.1:
-            print(f"Finished Recording... Current Time: {self.t-self.t_0:.2f}")
-            exit()
-
-
-
-
-    def Camera_Callback(self,Cam_msg):
-        """Callback from receiving camera data over ROS topic. This function reads time from the msg
-        and initiates logging to CSV for each message received.
-
-        Args:
-            Cam_msg (_type_): ROS msg of camera data
-        """        
-        
-        self.t = np.round(Cam_msg.header.stamp.to_sec(),4)          # Sim time [s]
-        self.Camera_raw = np.frombuffer(Cam_msg.data,np.uint8)      # 1D array to package into CSV         
-        self.Append_CSV()
-
-
-
-    def Camera_Info_Callback(self,Cam_msg):
-        self.N_up = Cam_msg.width 
-        self.N_vp = Cam_msg.height
-        
-
-
-    def CF_State_Data_Callback(self,StateData_msg):
-        """Callback which receives current state data over ROS topic.
-
-        Args:
-            StateData_msg (_type_): Ros msg of camera data
-        """        
-
-        self.pos = np.round([StateData_msg.Pose.position.x,
-                             StateData_msg.Pose.position.y,
-                             StateData_msg.Pose.position.z],3)
-
-        self.vel = np.round([StateData_msg.Twist.linear.x,
-                             StateData_msg.Twist.linear.y,
-                             StateData_msg.Twist.linear.z],3)
-
-        self.eul = np.round([StateData_msg.Eul.x,
-                             StateData_msg.Eul.y,
-                             StateData_msg.Eul.z],3)
-
-        self.omega = np.round([StateData_msg.Twist.angular.x,
-                               StateData_msg.Twist.angular.y,
-                               StateData_msg.Twist.angular.z],3)
-
-        self.quat = np.round([StateData_msg.Pose.orientation.x,
-                              StateData_msg.Pose.orientation.y,
-                              StateData_msg.Pose.orientation.z,
-                              StateData_msg.Pose.orientation.w],3)
-
-
-
-        ## VISUAL STATES
-        self.Tau = np.round(StateData_msg.Tau,3)
-        self.Theta_x = np.round(StateData_msg.Theta_x,3)
-        self.Theta_y = np.round(StateData_msg.Theta_y,3)
-        self.D_perp = np.round(StateData_msg.D_perp,3)
-       
-
-        
+        ## CLEAN CAMERA STRING
+        Camera_data = np.array2string(self.Camera_raw,separator = ' ').replace('\n','').replace('[','').replace(']','') # Convert array to into string
     
+        ## LOG DATA
+        with open(self.FilePath,mode = 'a') as logfile:
+            writer = csv.writer(logfile, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
+            writer.writerow([
+            self.t,
+            x,y,z,
+            vx,vy,vz,
+            D_perp,Tau,Theta_x,Theta_y,
+            wx,wy,wz,
+            qx,qy,qz,qw,
+            self.N_up,self.N_vp,
+            Camera_data,
+            ])
+
+        
+
+
 
 if __name__ == '__main__':
 
