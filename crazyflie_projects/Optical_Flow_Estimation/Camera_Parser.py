@@ -392,8 +392,8 @@ class DataParser:
             for u_p in range(1, N_up-1):
                 I_u[v_p,u_p] = -1/(8*w)*(Ku_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Ku_1)))).item()
                 I_v[v_p,u_p] =  1/(8*w)*(Kv_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Kv_1)))).item()
-                I_t[v_p,u_p] = (cur_img[v_p,u_p] - prev_img[v_p,u_p])/t_delta   # Time gradient
-
+                
+        I_t = (cur_img - prev_img)/t_delta
 
         A = np.zeros((2,2))
         b = np.zeros((2,1))
@@ -587,7 +587,6 @@ class DataParser:
         N_vp = cur_img.shape[0]
         N_up = cur_img.shape[1]
         w = self.IW/N_up
-
 
         ## DEFINE KERNALS USED TO CALCULATE INTENSITY GRADIENTS
         Kv = np.array([ # SOBEL KERNAL (U-DIRECTION)
@@ -797,7 +796,7 @@ class DataParser:
 
 if __name__ == '__main__':
 
-    Parser = DataParser(FileName="D_1.0--V_perp_0.1--V_||_1.0--L_0.25_2") 
+    Parser = DataParser(FileName="D_1.0--V_perp_0.0--V_||_1.0--L_0.25_2") 
     Parser.OpticalFlow_Writer(Parser.OF_Calc_PyOpt,SubSample_Level=0)
     Parser.DataOverview(n=10,frame_limit=10)
     # Parser.OpticalFlow_MP4(n=10) 

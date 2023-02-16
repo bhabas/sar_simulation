@@ -172,10 +172,10 @@ class CameraLogger:
         Move_srv.Pos_0.z = 0.0
 
         Move_srv.Vel_0.x = self.V_perp_0
-        Move_srv.Vel_0.y = self.V_parallel_0
-        Move_srv.Vel_0.z = 0.0
+        Move_srv.Vel_0.y = 0.0
+        Move_srv.Vel_0.z = -self.V_parallel_0
 
-        Move_srv.Accel_0.x = 0.25
+        Move_srv.Accel_0.x = 0.0
         Move_srv.Accel_0.y = 0.0
         Move_srv.Accel_0.z = 0.0
 
@@ -251,7 +251,7 @@ class CameraLogger:
 if __name__ == '__main__':
 
     D_perp = 1.0
-    V_perp = 0.1
+    V_perp = 0.0
     V_parallel = 1.0
     y_offset = 0.0
 

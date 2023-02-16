@@ -3,7 +3,7 @@
   <model name='Pattern_Plane'>
     <static>0</static>
     <link name='plane'>
-      <pose>0 0 0.0 0 -0 0</pose>
+      <pose>0 0 0.0 0 -0 1.57</pose>
       <inertial>
         <inertia>
           <ixx>500</ixx>
