@@ -181,40 +181,39 @@ class DataParser:
 
         ## GENERATE TAU_EST PLOT
         Tau_ax = fig.add_subplot(gs[0,1])
-        Tau_ax.plot(self.t-self.t.min(), self.Tau_est)
-        Tau_ax.plot(self.t-self.t.min(),self.Tau)
+        Tau_ax.plot(self.t[1:]-self.t.min(), self.Tau_est[1:])
+        Tau_ax.plot(self.t[1:]-self.t.min(),self.Tau[1:])
         Tau_marker, = Tau_ax.plot([],[],marker='o')
 
-        Tau_ax.set_ylim(0,2)
+        Tau_ax.set_ylim(0,1)
         Tau_ax.set_ylabel("Tau [s]")
-        Tau_ax.set_title(fr"Tau Error | (Bias: {np.nanmean(np.abs(self.Tau - self.Tau_est)):.2f} $\pm 2\sigma$: {2*np.nanstd(self.Tau_est):.2f})")
+        Tau_ax.set_title(fr"Tau Error | (Bias: {np.nanmean(np.abs(self.Tau[1:] - self.Tau_est[1:])):.2f} $\pm 2\sigma$: {2*np.nanstd(self.Tau_est[1:]):.2f})")
         Tau_ax.tick_params('x', labelbottom=False)
         Tau_ax.grid()
 
 
         ## GENERATE THETA_X_EST PLOT
         Theta_x_ax = fig.add_subplot(gs[1,1])
-        Theta_x_ax.plot(self.t-self.t.min(), self.Theta_x_est)
-        Theta_x_ax.plot(self.t-self.t.min(),self.Theta_x)
+        Theta_x_ax.plot(self.t[1:]-self.t.min(), self.Theta_x_est[1:])
+        Theta_x_ax.plot(self.t[1:]-self.t.min(),self.Theta_x[1:])
         Theta_x_marker, = Theta_x_ax.plot([],[],marker='o')
 
         Theta_x_ax.set_ylim(-2,10)
         Theta_x_ax.set_ylabel("Theta_x [1/s]")
-        Theta_x_ax.set_title(fr"Theta_x Error | (Bias: {np.nanmean(np.abs(self.Theta_x - self.Theta_x_est)):.2f}  $\pm 2\sigma$: {2*np.nanstd(self.Theta_x_est):.2f})")
+        Theta_x_ax.set_title(fr"Theta_x Error | (Bias: {np.nanmean(np.abs(self.Theta_x[1:] - self.Theta_x_est[1:])):.2f}  $\pm 2\sigma$: {2*np.nanstd(self.Theta_x_est[1:]):.2f})")
         Theta_x_ax.tick_params('x', labelbottom=False)
         Theta_x_ax.grid()
 
 
         ## GENERATE THETA_Y_EST PLOT
         Theta_y_ax = fig.add_subplot(gs[2,1])
-        Theta_y_ax.plot(self.t-self.t.min(), self.Theta_y_est)
-        Theta_y_ax.plot(self.t-self.t.min(),self.Theta_y)
+        Theta_y_ax.plot(self.t[1:]-self.t.min(), self.Theta_y_est[1:])
+        Theta_y_ax.plot(self.t[1:]-self.t.min(),self.Theta_y[1:])
         Theta_y_plot, = Theta_y_ax.plot([],[],marker='o')
 
         Theta_y_ax.set_ylim(-2,10)
         Theta_y_ax.set_ylabel("Theta_y [1/s]")
-        Theta_y_ax.set_title(fr"Theta_y Error | (Bias: {np.nanmean(np.abs(self.Theta_y - self.Theta_y_est)):.2f}  $\pm 2\sigma$: {2*np.nanstd(self.Theta_y_est):.2f})")
-        Theta_y_ax.get_shared_x_axes().join(Tau_ax, Theta_x_ax, Theta_y_ax)
+        Theta_y_ax.set_title(fr"Theta_y Error | (Bias: {np.nanmean(np.abs(self.Theta_y[1:] - self.Theta_y_est[1:])):.2f}  $\pm 2\sigma$: {2*np.nanstd(self.Theta_y_est[1:]):.2f})")
         Theta_y_ax.grid()
 
         fig.tight_layout()
@@ -572,6 +571,79 @@ class DataParser:
 
         return b.flatten()
 
+    def OF_Calc_PyOpt(self,cur_img,prev_img,delta_t):
+        """Calculate optical flow values with python optimization. 
+        Derivation in: (Research_Notes_Book_2.pdf)
+
+        Args:
+            cur_img (np.array): Array of current image
+            prev_img (np.array): Array of previous image
+            delta_t (float): Time between images
+
+        Returns:
+            np.array: Array of (Theta_x_est,Theta_y_est,Theta_z_est)
+        """      
+
+        N_vp = cur_img.shape[0]
+        N_up = cur_img.shape[1]
+        w = self.IW/N_up
+
+
+        ## DEFINE KERNALS USED TO CALCULATE INTENSITY GRADIENTS
+        Kv = np.array([ # SOBEL KERNAL (U-DIRECTION)
+            [-1,-2,-1],
+            [ 0, 0, 0],
+            [ 1, 2, 1]
+        ]) 
+
+        Ku = np.array([ # SOBEL KERNAL (V--DIRECTION)
+            [ -1, 0, 1],
+            [ -2, 0, 2],
+            [ -1, 0, 1]
+        ])
+
+        
+        ## PRE-ALLOCATE IMAGE ARRAY [pixels]
+        u_p = np.arange(0,N_up,1)
+        v_p = np.arange(0,N_vp,1)
+        
+        ## PRE-ALLOCATE INTENSITY GRADIENTS
+        G_up = np.zeros((N_vp,N_up))
+        G_vp = np.zeros((N_vp,N_up))
+        G_rp = np.zeros((N_vp,N_up))
+        G_tp = np.zeros((N_vp,N_up))
+
+
+        ## CALCULATE IMAGE GRADIENTS VIA PYTHON CONVOLUTION
+        G_up = convolve(cur_img,-Ku,mode="constant",cval=0)
+        G_up[0,:] = G_up[-1,:] = G_up[:,0] = G_up[:,-1] = 0
+
+        G_vp = convolve(cur_img,-Kv,mode="constant",cval=0)
+        G_vp[0,:] = G_vp[-1,:] = G_vp[:,0] = G_vp[:,-1] = 0
+
+        G_rp = (2*u_p - N_up + 1)*G_up + (2*v_p - N_vp + 1)*G_vp
+        G_tp = cur_img - prev_img
+
+
+
+        ## SOLVE LEAST SQUARES PROBLEM
+        X = np.array([
+            [self.f*np.sum(G_vp*G_vp), -self.f*np.sum(G_up*G_vp), -w/2*np.sum(G_rp*G_vp)],
+            [self.f*np.sum(G_vp*G_up), -self.f*np.sum(G_up*G_up), -w/2*np.sum(G_rp*G_up)],
+            [self.f*np.sum(G_vp*G_rp), -self.f*np.sum(G_up*G_rp), -w/2*np.sum(G_rp*G_rp)]
+        ])
+
+        y = np.array([
+            [np.sum(G_tp*G_vp)],
+            [np.sum(G_tp*G_up)],
+            [np.sum(G_tp*G_rp)]
+        ])*(8*w/delta_t)
+
+        ## SOLVE b VIA PSEUDO-INVERSE
+        b = np.linalg.pinv(X)@y
+
+        return b.flatten()
+
     def OF_Calc_Opt_Sep(self,cur_img,prev_img,delta_t):
 
         """Calculate optical flow values with seperable convolution and integer optimizations.
@@ -688,10 +760,6 @@ class DataParser:
                 Theta_y_est = np.clip(Theta_y_est,-20,20).round(2)
                 Tau_est = np.clip(1/Theta_z_est,0,10).round(2)
 
-                ## PROGRESS BAR SETTINGS
-                n.set_description(f"Tau_est: {Tau_est:.3f} \t Theta_y_est: {Theta_y_est:.3f}")
-                n.ncols = 120
-
                 ## RECORD ESTIMATED VISUAL CUE VALUES
                 Theta_x_est_arr.append(Theta_x_est)
                 Theta_y_est_arr.append(Theta_y_est)
@@ -729,9 +797,9 @@ class DataParser:
 
 if __name__ == '__main__':
 
-    Parser = DataParser(FileName="Theta_y--Vy_4.0--D_0.5--L_0.25") 
-    Parser.OpticalFlow_Writer(Parser.OF_Calc_Opt_Sep,SubSample_Level=3)
-    Parser.DataOverview(n=10)
+    Parser = DataParser(FileName="D_1.0--V_perp_0.1--V_||_1.0--L_0.25_2") 
+    Parser.OpticalFlow_Writer(Parser.OF_Calc_PyOpt,SubSample_Level=0)
+    Parser.DataOverview(n=10,frame_limit=10)
     # Parser.OpticalFlow_MP4(n=10) 
 
     # Parser.Generate_Pattern(L=0.25,Surf_width=16,Surf_Height=8,save_img=True)

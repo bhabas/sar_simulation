@@ -124,13 +124,17 @@ class CameraLogger:
 
 
     ## LOG IF WITHIN RANGE OF LANDING SURFACE
-        if 0.1 < (self.t-self.t_0) <= 1.1 and self.Logging_Flag == True:
-            self.Append_CSV()
-            print(f"Recording... Time: {self.t-self.t_0:.2f}")
+        if self.Logging_Flag == True:
 
-        elif (self.t-self.t_0) >= 1.1:
-            print(f"Finished Recording... Current Time: {self.t-self.t_0:.2f}")
-            sys.exit()
+            if (0.1 < (self.t-self.t_0) <= 2.1 and self.D_perp >= 0.05):
+
+                self.Append_CSV()
+                print(f"Recording... Time: {self.t-self.t_0:.2f}")
+            
+            elif (self.t-self.t_0) >= 1.1:
+                print(f"Finished Recording... Current Time: {self.t-self.t_0:.2f}")
+                sys.exit()
+               
 
 
     def save_Config_File(self):
@@ -171,7 +175,7 @@ class CameraLogger:
         Move_srv.Vel_0.y = self.V_parallel_0
         Move_srv.Vel_0.z = 0.0
 
-        Move_srv.Accel_0.x = 0.0
+        Move_srv.Accel_0.x = 0.25
         Move_srv.Accel_0.y = 0.0
         Move_srv.Accel_0.z = 0.0
 
@@ -246,11 +250,11 @@ class CameraLogger:
 
 if __name__ == '__main__':
 
-    D_perp = 0.5
-    V_perp = 0.0
-    V_parallel = 4.0
-    y_offset = -4.0
+    D_perp = 1.0
+    V_perp = 0.1
+    V_parallel = 1.0
+    y_offset = 0.0
 
-    FileName = f"Theta_y--Vy_{V_parallel:.1f}--D_{D_perp:.1f}--L_0.25"
-    CameraLogger(FileName,D_perp=2.0,V_perp=0.0,V_parallel=4.0,y_offset=-4)  # Initialize class
+    FileName = f"D_{D_perp:.1f}--V_perp_{V_perp:.1f}--V_||_{V_parallel:.1f}--L_0.25_2"
+    CameraLogger(FileName,D_perp,V_perp,V_parallel,y_offset)  # Initialize class
     rospy.spin()            # Run Program until canceled
