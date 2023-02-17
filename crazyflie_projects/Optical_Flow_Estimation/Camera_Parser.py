@@ -133,7 +133,96 @@ class DataParser:
         else:
             return self.Data_df[state_str].to_numpy()[idx].item()
 
-    def DataOverview(self,n=10,frame_limit=None):
+    def DataOverview(self,n=10,frame_idx=1,save_fig=False):
+
+        ## GENERATE FIGURE
+        fig = plt.figure(figsize=(10,6))
+        gs = gridspec.GridSpec(3, 2,width_ratios=[0.4,0.6])
+
+        ## CALCULATE INITIAL OPTICAL FLOW VALUES
+        t_cur = Parser.grabState(['t'],idx=frame_idx)
+        t_prev = Parser.grabState(['t'],idx=frame_idx-1)
+        t_delta = t_cur - t_prev
+
+        prev_img = self.Image_array[frame_idx-1]
+        cur_img = self.Image_array[frame_idx]
+
+
+        N_vp = cur_img.shape[0]
+        N_up = cur_img.shape[1]
+        U_p,V_p = np.meshgrid(np.arange(0,N_up,1),np.arange(0,N_vp,1))
+
+        n = int(N_up/n)
+        du_dt,dv_dt = self.Calc_OF_LK(cur_img,prev_img,t_delta,n)
+
+
+        ## GENERATE IMAGE AXES
+        Img_ax = fig.add_subplot(gs[:,0])
+        Img_ax.set_title(fr"$V_\perp$: {self.vx[frame_idx]:.2f} [m/s] | $V_\parallel$: {-self.vz[frame_idx]:.2f} | $D_\perp$: {self.D_perp[frame_idx]:.2f} [m]"
+                             f"\n"
+                             f"Frame: {frame_idx:03d} | FPS: {int(1/t_delta):03d} [Hz]")
+        # IMAGE PLOT
+        im = Img_ax.imshow(cur_img, 
+                interpolation='none', 
+                vmin=0, vmax=255, cmap=cm.gray,
+                origin='upper',)
+
+        # OPTICAL FLOW QUIVER PLOT 
+        Q = Img_ax.quiver(
+            U_p[1::n,1::n],V_p[1::n,1::n],
+            -du_dt[1::n,1::n],-dv_dt[1::n,1::n], # Need negative sign for arrows to match correct direction
+            color='lime')
+
+
+        ## GENERATE TAU_EST PLOT
+        Tau_ax = fig.add_subplot(gs[0,1])
+        Tau_ax.plot(self.t[1:]-self.t.min(), self.Tau_est[1:])
+        Tau_ax.plot(self.t[1:]-self.t.min(),self.Tau[1:])
+        Tau_marker, = Tau_ax.plot(self.t[frame_idx]-self.t.min(), self.Tau_est[frame_idx],marker='o')
+
+        Tau_ax.set_ylim(0,1)
+        Tau_ax.set_ylabel("Tau [s]")
+        Tau_ax.set_title(fr"Tau Error | (Bias: {np.nanmean(np.abs(self.Tau[1:] - self.Tau_est[1:])):.2f} $\pm 2\sigma$: {2*np.nanstd(self.Tau_est[1:]):.2f})")
+        Tau_ax.tick_params('x', labelbottom=False)
+        Tau_ax.grid()
+
+
+        ## GENERATE THETA_X_EST PLOT
+        Theta_x_ax = fig.add_subplot(gs[1,1])
+        Theta_x_ax.plot(self.t[1:]-self.t.min(), self.Theta_x_est[1:])
+        Theta_x_ax.plot(self.t[1:]-self.t.min(),self.Theta_x[1:])
+        Theta_x_marker, = Theta_x_ax.plot(self.t[frame_idx]-self.t.min(), self.Theta_x_est[frame_idx],marker='o')
+
+        Theta_x_ax.set_ylim(-2,10)
+        Theta_x_ax.set_ylabel("Theta_x [1/s]")
+        Theta_x_ax.set_title(fr"Theta_x Error | (Bias: {np.nanmean(np.abs(self.Theta_x[1:] - self.Theta_x_est[1:])):.2f}  $\pm 2\sigma$: {2*np.nanstd(self.Theta_x_est[1:]):.2f})")
+        Theta_x_ax.tick_params('x', labelbottom=False)
+        Theta_x_ax.grid()
+
+
+        ## GENERATE THETA_Y_EST PLOT
+        Theta_y_ax = fig.add_subplot(gs[2,1])
+        Theta_y_ax.plot(self.t[1:]-self.t.min(), self.Theta_y_est[1:])
+        Theta_y_ax.plot(self.t[1:]-self.t.min(),self.Theta_y[1:])
+        Theta_y_marker, = Theta_y_ax.plot(self.t[frame_idx]-self.t.min(), self.Theta_y_est[frame_idx],marker='o')
+
+        Theta_y_ax.set_ylim(-2,10)
+        Theta_y_ax.set_ylabel("Theta_y [1/s]")
+        Theta_y_ax.set_title(fr"Theta_y Error | (Bias: {np.nanmean(np.abs(self.Theta_y[1:] - self.Theta_y_est[1:])):.2f}  $\pm 2\sigma$: {2*np.nanstd(self.Theta_y_est[1:]):.2f})")
+        Theta_y_ax.grid()
+
+        fig.tight_layout()
+
+        if save_fig == True:
+            plt.savefig(f"{self.FileDir}/Data_Plot--Frame_{frame_idx:03d}.png")
+        plt.show()
+
+
+        
+      
+        # ani.save(f"{self.FileDir}/{self.FileName}.mp4")
+
+    def DataOverview_MP4(self,n=10,frame_limit=None):
         """
             Saves recorded images from camera into an MP4 file in the log directory
         """        
@@ -163,7 +252,7 @@ class DataParser:
 
         ## GENERATE IMAGE AXES
         Img_ax = fig.add_subplot(gs[:,0])
-        Img_ax.set_title(fr"$V_\perp$: {self.vx[0]:.2f} [m/s] | $V_\parallel$: {self.vy[0]:.2f} | $D_\perp$: {self.D_perp[0]:.2f} [m]"
+        Img_ax.set_title(fr"$V_\perp$: {self.vx[0]:.2f} [m/s] | $V_\parallel$: {-self.vz[0]:.2f} | $D_\perp$: {self.D_perp[0]:.2f} [m]"
                              f"\n"
                              f"Frame: {0:03d} | FPS: {int(1/t_delta):03d} [Hz]")
         # IMAGE PLOT
@@ -231,7 +320,7 @@ class DataParser:
             Q.set_UVC(-du_dt[1::n,1::n],-dv_dt[1::n,1::n])
             
             ## UPDATE IMAGE
-            Img_ax.set_title(fr"$V_\perp$: {self.vx[i]:.2f} [m/s] | $V_\parallel$: {self.vy[i]:.2f} | $D_\perp$: {self.D_perp[i]:.2f} [m]"
+            Img_ax.set_title(fr"$V_\perp$: {self.vx[i]:.2f} [m/s] | $V_\parallel$: {-self.vz[i]:.2f} | $D_\perp$: {self.D_perp[i]:.2f} [m]"
                              f"\n"
                              f"Frame: {i:03d} | FPS: {int(1/t_delta):03d} [Hz]")
             im.set_data(cur_img)
@@ -313,7 +402,6 @@ class DataParser:
         ani = animation.FuncAnimation(fig, update, interval=100, blit=False,frames=range(2,frame_limit))
         ani.save(f"{self.LogDir}/L-K_{self.FileName}.mp4")
         
-
     def Plot_OF_Image(self,cur_img,prev_img,t_delta,n=10):
         """Superimpose optical flow vectors over an image
 
@@ -453,10 +541,11 @@ class DataParser:
         y = np.linspace(-0.5*Surf_Height,0.5*Surf_Height,pixel_density*Surf_Height)
         X,Y = np.meshgrid(x,y)
 
-        I_0 = 125
+        I_0 = 255
+        L *=2
 
         ## GENERATE PATTERN
-        I = I_0/2*np.sin(2*np.pi/L*X) + 255/2
+        I = I_0/2*np.cos(2*np.pi/L*X)*np.cos(2*np.pi/L*Y) + 255/2
         # I = np.where(I < 128,0,255)
 
         ## GENERATE CAMERA BOUNDS
@@ -489,7 +578,7 @@ class DataParser:
         ## SAVE PATTERN TO FILE
         if save_img == True:
             plt.imsave(
-                f'{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/Surface_Patterns/Strip_Pattern_W_{Surf_width}-H_{Surf_Height}.png', 
+                f'{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/Surface_Patterns/Strip_Pattern_W_{Surf_width}-H_{Surf_Height}-L_{L/2}.png', 
                 I, 
                 vmin=0, vmax=255, cmap=cm.gray,
                 origin='upper',
@@ -796,21 +885,11 @@ class DataParser:
 
 if __name__ == '__main__':
 
-    Parser = DataParser(FileName="D_1.0--V_perp_0.0--V_||_1.0--L_0.25_2") 
-    Parser.OpticalFlow_Writer(Parser.OF_Calc_PyOpt,SubSample_Level=0)
-    Parser.DataOverview(n=10,frame_limit=10)
+    Parser = DataParser(FileName="D_1.0--V_perp_0.5--V_||_1.0--L_0.125") 
+    # Parser.OpticalFlow_Writer(Parser.OF_Calc_PyOpt,SubSample_Level=0)
+    Parser.DataOverview(frame_idx=150,save_fig=True)
+    # Parser.DataOverview_MP4(n=10,frame_limit=None)
     # Parser.OpticalFlow_MP4(n=10) 
 
-    # Parser.Generate_Pattern(L=0.25,Surf_width=16,Surf_Height=8,save_img=True)
-    # Parser.Plot_Image(Parser.grabImage(0))
-
-
-    # cur_img = Parser.grabImage(50)
-    # prev_img = Parser.grabImage(49)
-
-    # t_cur = Parser.grabState(['t'],idx=50)
-    # t_prev = Parser.grabState(['t'],idx=49)
-    # t_delta = t_cur - t_prev
-
-    # Parser.Plot_OF_Image(cur_img,prev_img,t_delta)
-
+    # Parser.Generate_Pattern(L=0.125,Surf_width=8,Surf_Height=16,save_img=True)
+   

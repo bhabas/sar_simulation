@@ -251,10 +251,10 @@ class CameraLogger:
 if __name__ == '__main__':
 
     D_perp = 1.0
-    V_perp = 0.0
+    V_perp = 0.5
     V_parallel = 1.0
     y_offset = 0.0
 
-    FileName = f"D_{D_perp:.1f}--V_perp_{V_perp:.1f}--V_||_{V_parallel:.1f}--L_0.25_2"
+    FileName = f"D_{D_perp:.1f}--V_perp_{V_perp:.1f}--V_||_{V_parallel:.1f}--L_0.125"
     CameraLogger(FileName,D_perp,V_perp,V_parallel,y_offset)  # Initialize class
     rospy.spin()            # Run Program until canceled
