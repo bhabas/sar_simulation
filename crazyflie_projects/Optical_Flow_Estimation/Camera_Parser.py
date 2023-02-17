@@ -22,6 +22,11 @@ np.set_printoptions(threshold = sys.maxsize) # Print full string without truncat
 class DataParser:
 
     def __init__(self,FileName):
+        """Main class that handles data analysis and image compilation.
+
+        Args:
+            FileName (str): Filename of logfile to analyze
+        """        
 
         ## INIT LOGGING PARAMETERS
         self.FileName = FileName
@@ -38,6 +43,8 @@ class DataParser:
         
     
     def LoadData(self):
+        """Loads data from the given log file
+        """        
 
         self.Data_df = pd.read_csv(self.FilePath,quotechar='"',low_memory=False,comment="#")
 
@@ -83,6 +90,8 @@ class DataParser:
             self.Theta_y_est = self.Data_df['Theta_y_est'].to_numpy()
 
     def Load_Config_File(self):
+        """Loads camera parameters from camera config file
+        """        
 
         with open(self.ConfigPath, 'r') as file:
             self.YAML_data = yaml.safe_load(file)
@@ -97,6 +106,8 @@ class DataParser:
 
         
     def Write_Config_File(self):
+        """Updates pixel values in camera config file
+        """        
 
         self.YAML_data['IMAGE_SETTINGS']['N_up'] = self.N_up
         self.YAML_data['IMAGE_SETTINGS']['N_vp'] = self.N_vp
@@ -134,6 +145,13 @@ class DataParser:
             return self.Data_df[state_str].to_numpy()[idx].item()
 
     def DataOverview(self,n=10,frame_idx=1,save_fig=False):
+        """Generates a figure including image and optical cue plots.
+
+        Args:
+            n (int, optional): Number of optical flow vectors to show in image. Defaults to 10.
+            frame_idx (int, optional): Frame to be shown. Defaults to 1.
+            save_fig (bool, optional): Saves figure to image if true. Defaults to False.
+        """        
 
         ## GENERATE FIGURE
         fig = plt.figure(figsize=(10,6))
@@ -223,9 +241,15 @@ class DataParser:
         # ani.save(f"{self.FileDir}/{self.FileName}.mp4")
 
     def DataOverview_MP4(self,n=10,frame_limit=None):
+        """Saves recorded images from camera into an MP4 file in the log directory.
+        This includes video of camera recording as well as optical flow vectors calculated 
+        via L-K method. As well as plots showing optical cue estimates and ground truth values.
+
+        Args:
+            n (int, optional): Number of optical flow vectors to be shown. Defaults to 10.
+            frame_limit (int, optional): End frame to stop video on. Defaults to None.
+
         """
-            Saves recorded images from camera into an MP4 file in the log directory
-        """        
 
         if frame_limit == None:
             frame_limit = self.n_imgs-1
@@ -402,42 +426,6 @@ class DataParser:
         ani = animation.FuncAnimation(fig, update, interval=100, blit=False,frames=range(2,frame_limit))
         ani.save(f"{self.LogDir}/L-K_{self.FileName}.mp4")
         
-    def Plot_OF_Image(self,cur_img,prev_img,t_delta,n=10):
-        """Superimpose optical flow vectors over an image
-
-        Args:
-            Args:
-            cur_img (np.array): Numpy array of the current image
-            prev_img (np.array): Numpy array of the previous image
-            t_delta (float): Time between images
-            n (int, optional): Stride to calculate optical flow vectors over. Defaults to 10.
-        """        
-        N_vp = cur_img.shape[0]
-        N_up = cur_img.shape[1]
-        w = self.IW/N_up
-
-        ## CALCULATE OPTICAL FLOW VECTORS VIA LUCAS-KANADE ALGORITHM
-        du_dt,dv_dt = self.Calc_OF_LK(cur_img,prev_img,t_delta,n)
-        U_p,V_p = np.meshgrid(np.arange(0,N_up,1),np.arange(0,N_vp,1))
-
-
-        ## GENERATE FIGURE
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-
-        ## PLOT IMAGE
-        ax.imshow(cur_img, interpolation='none', 
-                vmin=0, vmax=255, cmap=cm.gray,
-                origin='upper',)
-        
-        ## PLOT OPTICAL FLOW VECTORS
-        ax.quiver(
-            U_p[1::n,1::n],V_p[1::n,1::n],
-            -du_dt[1::n,1::n],-dv_dt[1::n,1::n], # Need negative sign for arrow to match correct direction
-            color='lime')
-
-        plt.show()
-
     def Calc_OF_LK(self,cur_img,prev_img,t_delta,n=1):
         """Calculates series of optical flow vectors between images via Lucas-Kanade algorithm.
 
@@ -507,29 +495,14 @@ class DataParser:
 
         return du_dt,dv_dt
 
-    def Plot_Image(self,image):
-        """Shows an image plot given by an array of brightness values
-
-        Args:
-            image (np.array): Array of image brightness values
-        """     
-
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-
-        ax.imshow(image, interpolation='none', 
-                vmin=0, vmax=255, cmap=cm.gray,
-                origin='upper',animated=True)
-
-        plt.show()
-
-    def Generate_Pattern(self,Surf_width=2,Surf_Height=2,L=0.5,pixel_density=200,save_img=False,X_cam=0.0,D_cam=0.5):
+    def Generate_Surface_Pattern(self,Surf_width=2,Surf_Height=2,L_w=0.5,L_h=0.5,pixel_density=200,save_img=False,X_cam=0.0,D_cam=0.5):
         """Save show pattern and save image to file. As well, display camera boundaries for validation
 
         Args:
             Surf_width (int, optional): Width of pattern to preserve pixel density. Defaults to 2.
             Surf_Height (int, optional): Heigt of pattern to preserve pixel density. Defaults to 2.
-            L (float, optional): Feature width of sin wave. Defaults to 0.5.
+            L_w (float, optional): Feature width of sin wave. Defaults to 0.5.
+            L_h (float, optional): Feature height of sin wave. Defaults to 0.5.
             pixel_density (int, optional): Number of pixels per meter. Defaults to 100.
             save_img (bool, optional): Save image to file. Defaults to False.
             X_cam (float, optional): X location of camera. Defaults to 0.5.
@@ -541,15 +514,16 @@ class DataParser:
         y = np.linspace(-0.5*Surf_Height,0.5*Surf_Height,pixel_density*Surf_Height)
         X,Y = np.meshgrid(x,y)
 
-        I_0 = 255
-        L *=2
+        I_0 = 255   # Max image intensity
+        T_w = L_w*2 # Convert feature size to sin period
+        T_h = L_h*2 # Convert feature size to sin period
 
         ## GENERATE PATTERN
-        I = I_0/2*np.cos(2*np.pi/L*X)*np.cos(2*np.pi/L*Y) + 255/2
+        I = I_0/2*np.cos(2*np.pi/T_w*X)*np.cos(2*np.pi/T_h*Y) + 255/2
         # I = np.where(I < 128,0,255)
 
         ## GENERATE CAMERA BOUNDS
-        Img_Width = 2*np.tan(self.FOV_rad/2)*D_cam
+        Img_Width =  2*np.tan(self.FOV_rad/2)*D_cam
         Img_Height = 2*np.tan(self.FOV_rad/2)*D_cam
 
         
@@ -578,7 +552,8 @@ class DataParser:
         ## SAVE PATTERN TO FILE
         if save_img == True:
             plt.imsave(
-                f'{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/Surface_Patterns/Strip_Pattern_W_{Surf_width}-H_{Surf_Height}-L_{L/2}.png', 
+                f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/Surface_Patterns/" + 
+                f"Pattern-W_{Surf_width}-H_{Surf_Height}-Lw_{L_w}-Lh_{L_h}.png",
                 I, 
                 vmin=0, vmax=255, cmap=cm.gray,
                 origin='upper',
@@ -734,7 +709,7 @@ class DataParser:
 
     def OF_Calc_Opt_Sep(self,cur_img,prev_img,delta_t):
 
-        """Calculate optical flow values with seperable convolution and integer optimizations.
+        """Calculate optical flow values with seperable convolution and integer optimizations for C-style.
         Derivation in (Research_Notes_Book_2.pdf)
 
         Args:
@@ -795,8 +770,18 @@ class DataParser:
         return b.flatten()
    
     def Image_Subsample(self,image,subsample_level=0):
+        """Downsamples the image by convolving with a (2x2) averaging kernel then dropping even rows. 
+        This averages and reduces the resolution by half for each subsample level
 
-        convolve_array = np.array([
+        Args:
+            image (np.array): Image to be downsampled
+            subsample_level (int, optional): Number of subsampling passes. Defaults to 0.
+
+        Returns:
+            np.array: Returns downsampled image
+        """        
+
+        Avg_Kernel = np.array([
             [0.25,0.25],
             [0.25,0.25]
         ])
@@ -804,15 +789,21 @@ class DataParser:
 
         for _ in range(0,subsample_level):
 
-            image_downsampled = convolve(image_downsampled,convolve_array)[:image.shape[0]:2,:image.shape[1]:2]
+            image_downsampled = convolve(image_downsampled,Avg_Kernel) # Convolve image with averaging kernal
+            image_downsampled = image_downsampled[:image.shape[0]:2,:image.shape[1]:2] # Drop even columns
 
         return image_downsampled
 
-    def OpticalFlow_Writer(self,OF_Calc_Func,SubSample_Level=0):
-        """
-        Calculates optical flow values for all images in log file and appends them to log file
-        """        
+    def Optical_Cue_Writer(self,OF_Calc_Func,SubSample_Level=0):
+        """Compiles optical cue values for all images in log file and appends them to log file.
+        This function also takes in Subsampling level and will create a new log file.
 
+        Args:
+            OF_Calc_Func (func): Optical cue calculation function
+            SubSample_Level (int, optional): Level of subsampling. Creates new log file and directory if not equal to zero. Defaults to 0.
+        """        
+            
+        ## INITIAL OPTICAL CUE VALUES SINCE FIRST VALUES ARE UNDEFINED
         Theta_x_est_arr = [0.0]
         Theta_y_est_arr = [0.0]
         Tau_est_arr = [0.0]
@@ -829,6 +820,7 @@ class DataParser:
                 Image_list.append(image)
             self.Image_array = np.asarray(Image_list)
             
+        ## CALCULATE OPTICAL CUE ESTIMATES    
         with trange(1,self.n_imgs) as n:
             for ii in n:
 
@@ -861,6 +853,7 @@ class DataParser:
         self.df['Theta_y_est'] = Theta_y_est_arr
         self.df['Camera_Data'] = self.Data_df.iloc[:,-1]
 
+        ## CREATE NEW LOG DIR IF SUBSAMPLING OCCURED
         if SubSample_Level == 0:
             self.df.to_csv(self.FilePath,index=False)
         else:
@@ -876,6 +869,7 @@ class DataParser:
             self.df.to_csv(self.FilePath,index=False)
             self.Write_Config_File()
 
+        ## RELOAD COMPILED DATA AND LOG FILE
         self.LoadData()
         self.Load_Config_File()
 
@@ -887,9 +881,9 @@ if __name__ == '__main__':
 
     Parser = DataParser(FileName="D_1.0--V_perp_0.5--V_||_1.0--L_0.125") 
     # Parser.OpticalFlow_Writer(Parser.OF_Calc_PyOpt,SubSample_Level=0)
-    Parser.DataOverview(frame_idx=150,save_fig=True)
+    # Parser.DataOverview(frame_idx=150,save_fig=True)
     # Parser.DataOverview_MP4(n=10,frame_limit=None)
     # Parser.OpticalFlow_MP4(n=10) 
 
-    # Parser.Generate_Pattern(L=0.125,Surf_width=8,Surf_Height=16,save_img=True)
+    Parser.Generate_Surface_Pattern(L_w=0.25,L_h=32,Surf_width=8,Surf_Height=16,save_img=True)
    
