@@ -21,7 +21,7 @@ np.set_printoptions(threshold = sys.maxsize) # Print full string without truncat
 
 class DataParser:
 
-    def __init__(self,FileName):
+    def __init__(self,FileDir,SubSample_Level=0):
         """Main class that handles data analysis and image compilation.
 
         Args:
@@ -29,24 +29,42 @@ class DataParser:
         """        
 
         ## INIT LOGGING PARAMETERS
-        self.FileName = FileName
         self.LogDir = f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/local_logs/"
-        self.FileDir = os.path.join(self.LogDir,self.FileName)   
-        self.FilePath = os.path.join(self.FileDir,self.FileName + ".csv")    
-        self.ConfigPath = os.path.join(self.FileDir,"Config.yaml")
+        self.FileDir = os.path.join(self.LogDir,FileDir)   
 
+        self.CSV_Path = os.path.join(self.FileDir,f"Cam_Data--SSL_{SubSample_Level:0d}.csv")    
+        self.Config_Path = os.path.join(self.FileDir,f"Config--SSL_{SubSample_Level:0d}.yaml")
+
+        self.SubSample_Level = SubSample_Level
+
+        if not os.path.exists(self.CSV_Path):
+
+            Default_Config_Path = os.path.join(self.FileDir,f"Config.yaml")
+            Default_CSV_Path = os.path.join(self.FileDir,f"Cam_Data.csv")
+
+            self.Load_Config_File(Default_Config_Path)
+            self.LoadData(Default_CSV_Path)
+            
+            self.Optical_Cue_Writer(self.OF_Calc_PyOpt,self.SubSample_Level)
+
+        else:
+            self.Load_Config_File(self.Config_Path)
+            self.LoadData(self.CSV_Path)
+
+
+            
+
+
+         
         
-        self.Load_Config_File()
-        self.LoadData()
-        self.Write_Config_File()
-
+        
         
     
-    def LoadData(self):
+    def LoadData(self,CSV_Path):
         """Loads data from the given log file
         """        
 
-        self.Data_df = pd.read_csv(self.FilePath,quotechar='"',low_memory=False,comment="#")
+        self.Data_df = pd.read_csv(CSV_Path,quotechar='"',low_memory=False,comment="#")
 
         ## LOAD STATE AND CAMERA DATA
         self.t = self.Data_df['t'].to_numpy()
@@ -89,11 +107,11 @@ class DataParser:
             self.Theta_x_est = self.Data_df['Theta_x_est'].to_numpy()
             self.Theta_y_est = self.Data_df['Theta_y_est'].to_numpy()
 
-    def Load_Config_File(self):
+    def Load_Config_File(self,ConfigPath):
         """Loads camera parameters from camera config file
         """        
 
-        with open(self.ConfigPath, 'r') as file:
+        with open(ConfigPath, 'r') as file:
             self.YAML_data = yaml.safe_load(file)
 
         self.N_up = self.YAML_data['IMAGE_SETTINGS']['N_up']    # IMAGE WIDTH IN PIXELS
@@ -112,7 +130,7 @@ class DataParser:
         self.YAML_data['IMAGE_SETTINGS']['N_up'] = self.N_up
         self.YAML_data['IMAGE_SETTINGS']['N_vp'] = self.N_vp
 
-        with open(self.ConfigPath, 'w') as outfile:
+        with open(self.Config_Path, 'w') as outfile:
             yaml.dump(self.YAML_data,outfile,default_flow_style=False,sort_keys=False) 
     
 
@@ -144,7 +162,7 @@ class DataParser:
         else:
             return self.Data_df[state_str].to_numpy()[idx].item()
 
-    def DataOverview(self,n=10,frame_idx=1,save_fig=False):
+    def DataOverview(self,n=10,frame_idx=1,save_fig=False,show_fig=True):
         """Generates a figure including image and optical cue plots.
 
         Args:
@@ -233,12 +251,11 @@ class DataParser:
 
         if save_fig == True:
             plt.savefig(f"{self.FileDir}/Data_Plot--Frame_{frame_idx:03d}.png")
-        plt.show()
+
+        if show_fig == True:
+            plt.show()
 
 
-        
-      
-        # ani.save(f"{self.FileDir}/{self.FileName}.mp4")
 
     def DataOverview_MP4(self,n=10,frame_limit=None):
         """Saves recorded images from camera into an MP4 file in the log directory.
@@ -361,7 +378,7 @@ class DataParser:
 
         
         ani = animation.FuncAnimation(fig, update, interval=100, blit=False,frames=range(2,frame_limit))
-        ani.save(f"{self.FileDir}/{self.FileName}.mp4")
+        ani.save(f"{self.FileDir}/Data_Overview--SSL_{self.SubSample_Level:0d}.mp4")
 
     def OpticalFlow_MP4(self,n=10,frame_limit=None):
         """
@@ -794,7 +811,7 @@ class DataParser:
 
         return image_downsampled
 
-    def Optical_Cue_Writer(self,OF_Calc_Func,SubSample_Level=0):
+    def Optical_Cue_Writer(self,OF_Calc_Func,SubSample_Level):
         """Compiles optical cue values for all images in log file and appends them to log file.
         This function also takes in Subsampling level and will create a new log file.
 
@@ -814,11 +831,13 @@ class DataParser:
             self.N_vp = self.N_vp//(2**SubSample_Level)
             
             Image_list = []
+            print("Subsampling Images...")
             for ii,image in enumerate(self.Image_array):
                 image = self.Image_Subsample(image,subsample_level=SubSample_Level)
                 self.Data_df.iloc[ii,-1] = np.array2string(image,separator = ' ').replace('\n','').replace('[','').replace(']','') # Convert array to into string
                 Image_list.append(image)
             self.Image_array = np.asarray(Image_list)
+            print("Finished Subsampling Images.") 
             
         ## CALCULATE OPTICAL CUE ESTIMATES    
         with trange(1,self.n_imgs) as n:
@@ -853,25 +872,18 @@ class DataParser:
         self.df['Theta_y_est'] = Theta_y_est_arr
         self.df['Camera_Data'] = self.Data_df.iloc[:,-1]
 
-        ## CREATE NEW LOG DIR IF SUBSAMPLING OCCURED
-        if SubSample_Level == 0:
-            self.df.to_csv(self.FilePath,index=False)
-        else:
-            self.FileName = self.FileName + f"--SSL_{SubSample_Level:0d}"
-            self.FileDir = os.path.join(self.LogDir,self.FileName)   
-            self.FilePath = os.path.join(self.FileDir,self.FileName + ".csv")    
-            self.ConfigPath = os.path.join(self.FileDir,"Config.yaml")
 
-            if not os.path.exists(self.FileDir):
-                os.mkdir(self.FileDir)
 
-            ## WRITE CSV AND CONFIG TO NEW DIRECTORY
-            self.df.to_csv(self.FilePath,index=False)
-            self.Write_Config_File()
+        self.CSV_Path = os.path.join(self.FileDir,f"Cam_Data--SSL_{SubSample_Level:0d}.csv")    
+        self.Config_Path = os.path.join(self.FileDir,f"Config--SSL_{SubSample_Level:0d}.yaml")
+
+        ## WRITE CSV AND CONFIG TO NEW DIRECTORY
+        self.df.to_csv(self.CSV_Path,index=False)
+        self.Write_Config_File()
 
         ## RELOAD COMPILED DATA AND LOG FILE
-        self.LoadData()
-        self.Load_Config_File()
+        self.LoadData(self.CSV_Path)
+        self.Load_Config_File(self.Config_Path)
 
 
 
@@ -879,11 +891,11 @@ class DataParser:
 
 if __name__ == '__main__':
 
-    Parser = DataParser(FileName="D_1.0--V_perp_0.5--V_||_1.0--L_0.125") 
-    # Parser.OpticalFlow_Writer(Parser.OF_Calc_PyOpt,SubSample_Level=0)
-    # Parser.DataOverview(frame_idx=150,save_fig=True)
+    Parser = DataParser(FileDir="D_0.5--V_perp_0.0--V_para_1.0--L_2.0",SubSample_Level=0) 
     # Parser.DataOverview_MP4(n=10,frame_limit=None)
+    # Parser.DataOverview(frame_idx=150,save_fig=True,show_fig=False)
     # Parser.OpticalFlow_MP4(n=10) 
 
-    Parser.Generate_Surface_Pattern(L_w=0.25,L_h=32,Surf_width=8,Surf_Height=16,save_img=True)
+    L = 2.0
+    Parser.Generate_Surface_Pattern(L_w=L,L_h=L,Surf_width=8,Surf_Height=16,save_img=True)
    

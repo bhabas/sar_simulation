@@ -30,8 +30,8 @@ class CameraLogger:
         self.FileName = FileName
         self.LogDir = f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/local_logs/"
         self.FileDir = os.path.join(self.LogDir,self.FileName)   
-        self.FilePath = os.path.join(self.FileDir,self.FileName + ".csv")    
-        self.ConfigPath = os.path.join(self.FileDir,"Config.yaml")
+        self.CSV_Path = os.path.join(self.FileDir,"Cam_Data.csv")    
+        self.Config_Path = os.path.join(self.FileDir,"Config.yaml")
 
         self.Logging_Flag = False
         
@@ -39,7 +39,7 @@ class CameraLogger:
         if not os.path.exists(self.FileDir):
             os.makedirs(self.FileDir,exist_ok=True)
 
-        self.Create_CSV(self.FilePath)
+        self.Create_CSV(self.CSV_Path)
 
         ## INIT FLIGHT CONDITION VALUES
         self.D_perp_0 = D_perp
@@ -156,7 +156,7 @@ class CameraLogger:
             )
         )
 
-        with open(self.ConfigPath, 'w') as outfile:
+        with open(self.Config_Path, 'w') as outfile:
             yaml.dump(data,outfile,default_flow_style=False,sort_keys=False)
 
     def Model_Move_Command(self,):
@@ -232,7 +232,7 @@ class CameraLogger:
         Camera_data = np.array2string(self.Camera_raw,separator = ' ').replace('\n','').replace('[','').replace(']','') # Convert array to into string
     
         ## LOG DATA
-        with open(self.FilePath,mode = 'a') as logfile:
+        with open(self.CSV_Path,mode = 'a') as logfile:
             writer = csv.writer(logfile, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
             writer.writerow([
             self.t,
@@ -250,11 +250,11 @@ class CameraLogger:
 
 if __name__ == '__main__':
 
-    D_perp = 1.0
-    V_perp = 0.5
+    D_perp = 0.5
+    V_perp = 0.0
     V_parallel = 1.0
     y_offset = 0.0
 
-    FileName = f"D_{D_perp:.1f}--V_perp_{V_perp:.1f}--V_||_{V_parallel:.1f}--L_0.125"
+    FileName = f"D_{D_perp:.1f}--V_perp_{V_perp:.1f}--V_para_{V_parallel:.1f}--L_0.01"
     CameraLogger(FileName,D_perp,V_perp,V_parallel,y_offset)  # Initialize class
     rospy.spin()            # Run Program until canceled
