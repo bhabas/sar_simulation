@@ -756,7 +756,7 @@ if __name__ == '__main__':
 
 
     # # START TRAINING NEW DEEP RL MODEL 
-    # env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[-90,45])
+    # env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[0,90])
     # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
     # log_name = f"{env.modelInitials}--Deg_{env.Plane_Angle}--SAC_{current_time}"    
 
@@ -779,10 +779,10 @@ if __name__ == '__main__':
     # ================================================================= ##
 
     # # # COLLECT LANDING PERFORMANCE DATA
-    # env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[-90,45])
+    # env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[0,90])
     # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
-    # log_name = "A60_L75_K32--Deg_45--SAC_02_12-16:33_0"
-    # t_step_load = 24000
+    # log_name = "A20_L75_K32--Deg_180--SAC_02_17-08:23_0"
+    # t_step_load = 160000
 
     # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     # PolicyTrainer.load_model(t_step_load)
@@ -793,7 +793,7 @@ if __name__ == '__main__':
     # PLOT LANDING PERFORMANCE
     env = None
     log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Gazebo"
-    log_name = "A60_L75_K32--Deg_0--SAC_02_11-19:25_0"
+    log_name = "A20_L75_K32--Deg_180--SAC_02_17-08:23_0"
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.Plot_Landing_Performance(saveFig=True)
 
