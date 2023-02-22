@@ -53,13 +53,20 @@ class CrazyflieEnv_DeepRL_LDA(CrazyflieEnv_Sim):
             dtype=np.float32,
         )
         self.observation_space = spaces.Box(low=-obs_lim, high=obs_lim, dtype=np.float32)
+        
 
         ## DEFINE ACTION SPACE
         self.action_space = spaces.Box(low=np.array([-1,0]), high=np.array([1,8]), shape=(2,), dtype=np.float32)
 
+        self.obs_tr = np.zeros_like(self.observation_space.high)
+        self.action_tr = np.zeros_like(self.action_space.high)
+
     def step(self,action):
 
         Tau,Theta_x,D_perp  = self.obs
+        
+        ## CLIP ACTION TO VIABLE ARCTANH VALUES AND CONVERT TO PROPER RANGE
+        action[0] = np.clip(action[0],-0.999,0.999)
         action[0] = np.arctanh(action[0])
         
         if action[0] < self.Flip_thr:

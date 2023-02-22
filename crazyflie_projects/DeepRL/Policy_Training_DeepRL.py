@@ -551,7 +551,7 @@ class Policy_Trainer_DeepRL():
         """        
 
         if fileName == None:
-            fileName = "PolicyPerformance_Data.csv"
+            fileName = "PolicyPerformance_Data_Test1.csv"
         filePath = os.path.join(self.TB_log_path,fileName)
 
         Vel_arr = np.arange(self.env.Vel_range[0], self.env.Vel_range[1] + Vel_inc, Vel_inc)
