@@ -21,7 +21,7 @@ np.set_printoptions(threshold = sys.maxsize) # Print full string without truncat
 
 class DataParser:
 
-    def __init__(self,FileDir,SubSample_Level=0):
+    def __init__(self,FolderName,FileDir,SubSample_Level=0):
         """Main class that handles data analysis and image compilation.
 
         Args:
@@ -29,7 +29,7 @@ class DataParser:
         """        
 
         ## INIT LOGGING PARAMETERS
-        self.LogDir = f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/local_logs/"
+        self.LogDir = f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/local_logs/{FolderName}"
         self.FileDir = os.path.join(self.LogDir,FileDir)   
 
         self.CSV_Path = os.path.join(self.FileDir,f"Cam_Data--SSL_{SubSample_Level:0d}.csv")    
@@ -570,7 +570,7 @@ class DataParser:
         if save_img == True:
             plt.imsave(
                 f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/Surface_Patterns/" + 
-                f"Pattern-W_{Surf_width}-H_{Surf_Height}-Lw_{L_w}-Lh_{L_h}.png",
+                f"Pattern-W_{Surf_width}-H_{Surf_Height}-Lw_{L_w:.02f}-Lh_{L_h:.02f}.png",
                 I, 
                 vmin=0, vmax=255, cmap=cm.gray,
                 origin='upper',
@@ -891,11 +891,21 @@ class DataParser:
 
 if __name__ == '__main__':
 
-    Parser = DataParser(FileDir="D_0.5--V_perp_0.0--V_para_1.0--L_2.0",SubSample_Level=0) 
-    # Parser.DataOverview_MP4(n=10,frame_limit=None)
+    FolderName = "Stripe_Pattern_Translation_Flow"
+
+    L_list = [0.05,0.12,0.25,0.50,0.75,1.00,2.00]
+
+    for L in L_list:
+        FileDir=f"D_0.5--V_perp_0.0--V_para_1.0--L_{L:.2f}"
+        Parser = DataParser(FolderName,FileDir,SubSample_Level=0) 
+        Parser.DataOverview_MP4(n=10,frame_limit=None)
+
+
+
+    
     # Parser.DataOverview(frame_idx=150,save_fig=True,show_fig=False)
     # Parser.OpticalFlow_MP4(n=10) 
 
-    L = 2.0
-    Parser.Generate_Surface_Pattern(L_w=L,L_h=L,Surf_width=8,Surf_Height=16,save_img=True)
+    # L = 2.0
+    # Parser.Generate_Surface_Pattern(L_w=32,L_h=L,Surf_width=8,Surf_Height=16,save_img=True)
    

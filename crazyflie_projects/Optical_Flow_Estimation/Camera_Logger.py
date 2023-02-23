@@ -22,14 +22,14 @@ sys.path.insert(1,BASE_PATH)
 
 class CameraLogger:
 
-    def __init__(self,FileName,D_perp,V_perp,V_parallel,y_offset=-2):
+    def __init__(self,FolderName,FileDir,D_perp,V_perp,V_parallel,y_offset=-2):
         
         rospy.init_node('Camera_Logger')
 
         ## INIT LOGGING PARAMETERS
-        self.FileName = FileName
-        self.LogDir = f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/local_logs/"
-        self.FileDir = os.path.join(self.LogDir,self.FileName)   
+        self.FileDir = FileDir
+        self.LogDir = f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/local_logs/{FolderName}"
+        self.FileDir = os.path.join(self.LogDir,self.FileDir)   
         self.CSV_Path = os.path.join(self.FileDir,"Cam_Data.csv")    
         self.Config_Path = os.path.join(self.FileDir,"Config.yaml")
 
@@ -206,7 +206,7 @@ class CameraLogger:
                 'Camera_Data'
                 ])
 
-            print(f'\nLogging file {self.FileName} was successfully created\n')
+            print(f'\nLogging file {self.FileDir} was successfully created\n')
 
     def Append_CSV(self):
         """Appends current state data and camera data to CSV file
@@ -254,7 +254,9 @@ if __name__ == '__main__':
     V_perp = 0.0
     V_parallel = 1.0
     y_offset = 0.0
+    # L = 0.50
 
-    FileName = f"D_{D_perp:.1f}--V_perp_{V_perp:.1f}--V_para_{V_parallel:.1f}--L_0.01"
-    CameraLogger(FileName,D_perp,V_perp,V_parallel,y_offset)  # Initialize class
+    FolderName = "Stripe_Pattern_Translation_Flow"
+    FileName = f"D_{D_perp:.1f}--V_perp_{V_perp:.1f}--V_para_{V_parallel:.1f}--L_2.0"
+    CameraLogger(FolderName,FileName,D_perp,V_perp,V_parallel,y_offset)  # Initialize class
     rospy.spin()            # Run Program until canceled

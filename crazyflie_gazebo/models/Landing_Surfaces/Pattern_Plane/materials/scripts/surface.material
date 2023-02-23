@@ -7,7 +7,7 @@ material surfaceMaterial/Pattern
         {
             texture_unit
             {
-                texture Pattern-W_8-H_16-Lw_32-Lh_0.01.png
+                texture Pattern-W_8-H_16-Lw_32.00-Lh_2.00.png
             }
         }
     }
