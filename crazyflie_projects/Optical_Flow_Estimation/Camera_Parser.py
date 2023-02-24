@@ -4,6 +4,7 @@ import os
 import yaml
 from tqdm import trange
 from scipy.ndimage import convolve
+import re
 
 
 import matplotlib.pyplot as plt
@@ -36,6 +37,7 @@ class DataParser:
         self.Config_Path = os.path.join(self.FileDir,f"Config--SSL_{SubSample_Level:0d}.yaml")
 
         self.SubSample_Level = SubSample_Level
+        self.L = float(re.findall("L_(\d+\.\d+)",FileDir)[0])
 
         if not os.path.exists(self.CSV_Path):
 
@@ -291,11 +293,18 @@ class DataParser:
         n = int(N_up/n)
         du_dt,dv_dt = self.Calc_OF_LK(cur_img,prev_img,t_delta,n)
 
+        Text_ax = fig.add_subplot(gs[0,0])
+        Text_ax.set_axis_off()
+        textbox = Text_ax.text(0.5,0.5,"_",
+            horizontalalignment='center',
+            verticalalignment='center',
+        )
+        textbox.set_fontsize('medium')
+        
+
         ## GENERATE IMAGE AXES
-        Img_ax = fig.add_subplot(gs[:,0])
-        Img_ax.set_title(fr"$V_\perp$: {self.vx[0]:.2f} [m/s] | $V_\parallel$: {-self.vz[0]:.2f} | $D_\perp$: {self.D_perp[0]:.2f} [m]"
-                             f"\n"
-                             f"Frame: {0:03d} | FPS: {int(1/t_delta):03d} [Hz]")
+        Img_ax = fig.add_subplot(gs[1:,0])
+
         # IMAGE PLOT
         im = Img_ax.imshow(cur_img, 
                 interpolation='none', 
@@ -349,6 +358,9 @@ class DataParser:
         fig.tight_layout()
 
         def update(i):
+
+
+            
             
             ## UPDATE OPTICAL FLOW
             t_cur = Parser.grabState(['t'],idx=i)
@@ -359,11 +371,26 @@ class DataParser:
             cur_img = self.Image_array[i]
             du_dt,dv_dt = self.Calc_OF_LK(cur_img,prev_img,t_delta,n)
             Q.set_UVC(-du_dt[1::n,1::n],-dv_dt[1::n,1::n])
+
+            textbox.set_text(
+                f"\n\n"
+                f"Camera Parameters: \n"
+                f"Frame: {i:03d} | FPS: {int(1/t_delta):03d} [Hz]\n\n"
+                f"Surface Parameters: \n"
+                f"L: {self.L:.2f} [m]\n\n"
+
+                f"Movement Parameters: \n"
+                fr"$V_\perp$: {self.vx[i]:.2f} [m/s] | $V_\parallel$: {-self.vz[i]:.2f} | $D_\perp$: {self.D_perp[i]:.2f} [m]"
+                f"\n\n"
+
+                f"Estimates: \n"
+                f"Tau_est: {self.Tau_est[i]:.2f}    Tau: {self.Tau[i]:.2f}\n"
+                f"Theta_x_est: {self.Theta_x_est[i]: .2f}    Theta_x: {self.Theta_x[i]:.2f}\n"
+                f"Theta_y_est: {self.Theta_y_est[i]: .2f}    Theta_y: {self.Theta_y[i]:.2f}\n"
+                )
+                
             
             ## UPDATE IMAGE
-            Img_ax.set_title(fr"$V_\perp$: {self.vx[i]:.2f} [m/s] | $V_\parallel$: {-self.vz[i]:.2f} | $D_\perp$: {self.D_perp[i]:.2f} [m]"
-                             f"\n"
-                             f"Frame: {i:03d} | FPS: {int(1/t_delta):03d} [Hz]")
             im.set_data(cur_img)
             
             ##  UPDATE MARKER LOCATIONS
@@ -373,12 +400,13 @@ class DataParser:
 
             ## PRINT PROGRESS
             print(f"Image: {i:03d}/{frame_limit:03d}")
+            
 
-            return im,Q,Tau_marker,Theta_x_marker,Theta_y_plot
+            return im,Q,Tau_marker,Theta_x_marker,Theta_y_plot,textbox
 
         
         ani = animation.FuncAnimation(fig, update, interval=100, blit=False,frames=range(2,frame_limit))
-        ani.save(f"{self.FileDir}/Data_Overview--SSL_{self.SubSample_Level:0d}.mp4")
+        ani.save(f"{self.FileDir}/Data_Overview--SSL_{self.SubSample_Level:0d}.mp4",dpi=200)
 
     def OpticalFlow_MP4(self,n=10,frame_limit=None):
         """
@@ -537,7 +565,7 @@ class DataParser:
 
         ## GENERATE PATTERN
         I = I_0/2*np.cos(2*np.pi/T_w*X)*np.cos(2*np.pi/T_h*Y) + 255/2
-        # I = np.where(I < 128,0,255)
+        I = np.where(I < 128,0,255)
 
         ## GENERATE CAMERA BOUNDS
         Img_Width =  2*np.tan(self.FOV_rad/2)*D_cam
@@ -891,21 +919,27 @@ class DataParser:
 
 if __name__ == '__main__':
 
-    FolderName = "Stripe_Pattern_Translation_Flow"
+    FolderName = "Translation_Flow_TestSet_2"
+    
+    # Parser = DataParser(FolderName,FileDir,SubSample_Level=0) 
+    # Parser.DataOverview_MP4(n=10,frame_limit=5)
 
-    L_list = [0.05,0.12,0.25,0.50,0.75,1.00,2.00]
+    L_list = [0.02,0.05,0.12,0.25,0.5,0.75,1.00,2.00]
 
     for L in L_list:
-        FileDir=f"D_0.5--V_perp_0.0--V_para_1.0--L_{L:.2f}"
-        Parser = DataParser(FolderName,FileDir,SubSample_Level=0) 
-        Parser.DataOverview_MP4(n=10,frame_limit=None)
+
+        FileDir=f"D_0.5--V_perp_0.0--V_para_2.0--L_{L:.2f}"
+
+        for SSL in  range(4):
+            Parser = DataParser(FolderName,FileDir,SubSample_Level=SSL) 
+            Parser.DataOverview_MP4(n=10,frame_limit=None)
 
 
 
     
-    # Parser.DataOverview(frame_idx=150,save_fig=True,show_fig=False)
-    # Parser.OpticalFlow_MP4(n=10) 
+    # # Parser.DataOverview(frame_idx=150,save_fig=True,show_fig=False)
+    # # Parser.OpticalFlow_MP4(n=10) 
 
-    # L = 2.0
-    # Parser.Generate_Surface_Pattern(L_w=32,L_h=L,Surf_width=8,Surf_Height=16,save_img=True)
+    # L = 0.05
+    # Parser.Generate_Surface_Pattern(L_w=L,L_h=L,Surf_width=8,Surf_Height=16,save_img=True)
    

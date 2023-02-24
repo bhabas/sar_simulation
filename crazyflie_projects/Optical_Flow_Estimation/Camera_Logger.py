@@ -126,7 +126,7 @@ class CameraLogger:
     ## LOG IF WITHIN RANGE OF LANDING SURFACE
         if self.Logging_Flag == True:
 
-            if (0.1 < (self.t-self.t_0) <= 2.1 and self.D_perp >= 0.05):
+            if (0.1 < (self.t-self.t_0) <= 1.1 and self.D_perp >= 0.05):
 
                 self.Append_CSV()
                 print(f"Recording... Time: {self.t-self.t_0:.2f}")
@@ -252,11 +252,11 @@ if __name__ == '__main__':
 
     D_perp = 0.5
     V_perp = 0.0
-    V_parallel = 1.0
+    V_parallel = 2.0
     y_offset = 0.0
-    # L = 0.50
+    L = 2.0
 
-    FolderName = "Stripe_Pattern_Translation_Flow"
-    FileName = f"D_{D_perp:.1f}--V_perp_{V_perp:.1f}--V_para_{V_parallel:.1f}--L_2.0"
+    FolderName = "Translation_Flow_TestSet_2"
+    FileName = f"D_{D_perp:.1f}--V_perp_{V_perp:.1f}--V_para_{V_parallel:.1f}--L_{L:.2f}"
     CameraLogger(FolderName,FileName,D_perp,V_perp,V_parallel,y_offset)  # Initialize class
     rospy.spin()            # Run Program until canceled
