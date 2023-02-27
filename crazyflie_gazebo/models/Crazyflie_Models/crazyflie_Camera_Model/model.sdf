@@ -426,8 +426,8 @@
 
       <sensor type="camera" name="AI_Deck_Camera">
         <pose>0 0 0 0 -1.5708 0</pose>
-        <update_rate>100</update_rate> <!--Changed to a nice number for FPS because message didn't contain enough precision -->
-        <visualize>true</visualize>
+        <update_rate>50</update_rate> 
+        <visualize>false</visualize>
         <camera name="head">
           <save enabled="false">
             <path>/home/bhabas/Downloads/Video_images</path>

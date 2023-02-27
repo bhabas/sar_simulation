@@ -32,7 +32,16 @@
           <script>
             <uri>model://Pattern_Plane/materials/scripts</uri>
             <uri>model://Pattern_Plane/materials/textures</uri>
-            <name>surfaceMaterial/Pattern</name>
+            <!-- <name>SurfacePattern/L_0.02</name> -->
+            <!-- <name>SurfacePattern/L_0.05</name> -->
+            <!-- <name>SurfacePattern/L_0.12</name> -->
+            <!-- <name>SurfacePattern/L_0.25</name> -->
+            <!-- <name>SurfacePattern/L_0.50</name> -->
+            <!-- <name>SurfacePattern/L_0.75</name> -->
+            <!-- <name>SurfacePattern/L_1.00</name> -->
+            <name>SurfacePattern/L_2.00</name>
+
+
           </script>
           <shader type='pixel'>
             <normal_map>__default__</normal_map>

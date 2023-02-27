@@ -22,7 +22,7 @@ sys.path.insert(1,BASE_PATH)
 
 class CameraLogger:
 
-    def __init__(self,FolderName,FileDir,D_perp,V_perp,V_parallel,y_offset=-2):
+    def __init__(self,FolderName,FileDir,D_perp,V_perp,V_parallel,y_offset=0.0,t_delta=1.0):
         
         rospy.init_node('Camera_Logger')
 
@@ -46,6 +46,7 @@ class CameraLogger:
         self.V_perp_0 = V_perp
         self.V_parallel_0 = V_parallel
         self.y_offset_0 = y_offset
+        self.t_delta = t_delta
 
         np.set_printoptions(threshold = sys.maxsize) # Print full string without truncation
 
@@ -126,12 +127,12 @@ class CameraLogger:
     ## LOG IF WITHIN RANGE OF LANDING SURFACE
         if self.Logging_Flag == True:
 
-            if (0.1 < (self.t-self.t_0) <= 1.1 and self.D_perp >= 0.05):
+            if (0.1 < (self.t-self.t_0) <= self.t_delta+0.1 and self.D_perp >= 0.05):
 
                 self.Append_CSV()
                 print(f"Recording... Time: {self.t-self.t_0:.2f}")
             
-            elif (self.t-self.t_0) >= 1.1:
+            elif (self.t-self.t_0) >= self.t_delta + 0.1 or self.D_perp < 0.05:
                 print(f"Finished Recording... Current Time: {self.t-self.t_0:.2f}")
                 sys.exit()
                
@@ -161,15 +162,16 @@ class CameraLogger:
 
     def Model_Move_Command(self,):
 
-        Cam_offset = 0.027  # [m]
-        Plane_pos = 2.0     # [m]
+        Cam_X_Offset = 0.027    # [m]
+        Cam_Z_Offset = 0.008    # [m]
+        Plane_pos = 2.0         # [m]
     
         ## RESET POSITION AND VELOCITY
         Move_srv = ModelMoveRequest()
         
-        Move_srv.Pos_0.x = Plane_pos - self.D_perp_0 - Cam_offset
+        Move_srv.Pos_0.x = Plane_pos - self.D_perp_0 - Cam_X_Offset
         Move_srv.Pos_0.y = self.y_offset_0
-        Move_srv.Pos_0.z = 0.0
+        Move_srv.Pos_0.z = 0.0 - Cam_Z_Offset
 
         Move_srv.Vel_0.x = self.V_perp_0
         Move_srv.Vel_0.y = 0.0
@@ -250,13 +252,18 @@ class CameraLogger:
 
 if __name__ == '__main__':
 
-    D_perp = 0.5
-    V_perp = 0.0
-    V_parallel = 2.0
-    y_offset = 0.0
-    L = 2.0
+    ## TRANSLATION FLOW
+    # D_perp,V_parallel,V_perp = (0.5,2.0,0.0)
+    # D_perp,V_parallel,V_perp = (0.8,1.6,0.0)
 
-    FolderName = "Translation_Flow_TestSet_2"
+    ## DIVERGENT FLOW
+    D_perp,V_parallel,V_perp = (2.0,0.0,2.0)
+    # D_perp,V_parallel,V_perp = (1.0,0.0,1.0)
+    # D_perp,V_parallel,V_perp = (0.5,0.0,0.5)
+
+    L = 2.00
+
+    FolderName = "Check_Pattern_Divergent_Flow"
     FileName = f"D_{D_perp:.1f}--V_perp_{V_perp:.1f}--V_para_{V_parallel:.1f}--L_{L:.2f}"
-    CameraLogger(FolderName,FileName,D_perp,V_perp,V_parallel,y_offset)  # Initialize class
+    CameraLogger(FolderName,FileName,D_perp,V_perp,V_parallel,t_delta=1.5)  # Initialize class
     rospy.spin()            # Run Program until canceled

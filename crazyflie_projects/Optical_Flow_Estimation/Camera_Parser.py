@@ -919,7 +919,7 @@ class DataParser:
 
 if __name__ == '__main__':
 
-    FolderName = "Translation_Flow_TestSet_2"
+    FolderName = "Check_Pattern_Divergent_Flow"
     
     # Parser = DataParser(FolderName,FileDir,SubSample_Level=0) 
     # Parser.DataOverview_MP4(n=10,frame_limit=5)
@@ -928,7 +928,7 @@ if __name__ == '__main__':
 
     for L in L_list:
 
-        FileDir=f"D_0.5--V_perp_0.0--V_para_2.0--L_{L:.2f}"
+        FileDir=f"D_2.0--V_perp_2.0--V_para_0.0--L_{L:.2f}"
 
         for SSL in  range(4):
             Parser = DataParser(FolderName,FileDir,SubSample_Level=SSL) 
