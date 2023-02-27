@@ -3,11 +3,13 @@ import numpy as np
 import os
 import rospy
 import getpass
+import time
 
 ## ROS MESSAGES AND SERVICES
 from crazyflie_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
 from crazyflie_msgs.srv import loggingCMD,loggingCMDRequest
 from crazyflie_msgs.srv import RLCmd,RLCmdRequest
+from crazyflie_msgs.msg import RLData,RLConvg
 from crazyflie_msgs.msg import GTC_Cmd
 
 from rosgraph_msgs.msg import Clock
@@ -21,28 +23,40 @@ class CrazyflieEnv_Base():
     metadata = {'render.modes': ['human']}
     def __init__(self):
         os.system("roslaunch crazyflie_launch params.launch")
-
-        self.CF_Type = rospy.get_param('/QUAD_SETTINGS/CF_Type')
-        self.configName = rospy.get_param('/QUAD_SETTINGS/Config')
-        self.modelName = f"crazyflie_{self.configName}"
-
-        self.h_ceiling = rospy.get_param("/ENV_SETTINGS/Ceiling_Height") # [m]
         self.env_name = "CF_BaseEnv"
-     
-        ## TRAJECTORY VALUES
-        self.posCF_0 = [0.0, 0.0, 0.4]      # Default hover position [m]
+
+        ## CRAZYFLIE PARAMETERS
+        self.CF_Type = rospy.get_param('/QUAD_SETTINGS/CF_Type')
+        self.CF_Config = rospy.get_param('/QUAD_SETTINGS/CF_Config')
+        self.modelInitials = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Initials")
+        self.modelName = f"crazyflie_{self.CF_Config}"
+        self.preInit_Values()
+
+        self.pos_0 = [0.0, 0.0, 0.4]      # Default hover position [m]
         self.accCF_max = [1.0, 1.0, 3.1]    # Max acceleration values for trajectory generation [m/s^2]
 
+
+        ## PLANE PARAMETERS
+        self.Plane_Model = rospy.get_param('/PLANE_SETTINGS/Plane_Model')
+        self.Plane_Config = rospy.get_param('/PLANE_SETTINGS/Plane_Config')
+        self.Plane_Angle = rospy.get_param(f'/Plane_Config/{self.Plane_Config}/Plane_Angle')
+        self.Plane_Angle_rad = np.deg2rad(self.Plane_Angle)
+        self.Plane_Pos = [
+            rospy.get_param(f'/Plane_Config/{self.Plane_Config}/Pos_X'),
+            rospy.get_param(f'/Plane_Config/{self.Plane_Config}/Pos_Y'),
+            rospy.get_param(f'/Plane_Config/{self.Plane_Config}/Pos_Z'),
+        ]
+               
+
+        ## INIT LOGGING VALUES
         self.username = getpass.getuser()
         self.logDir =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/crazyflie_logging/local_logs"
         self.logName = "TestLog.csv"
-        self.error_str = ""
+        self.error_str = "No_Debug_Data"
 
 
-        self.preInit_Values()
-        # self.CMD_msg_Publisher = rospy.Publisher("/CF_DC/Cmd_CF_DC",GTC_Cmd)
 
-        ## INIT ROS SUBSCRIBERS [Pub/Sampling Frequencies]
+        ## CRAZYFLIE DATA SUBSCRIBERS 
         # NOTE: Queue sizes=1 so that we are always looking at the most current data and 
         #       not data at back of a queue waiting to be processed by callbacks
         rospy.Subscriber("/clock",Clock,self.clockCallback,queue_size=1)
@@ -50,6 +64,10 @@ class CrazyflieEnv_Base():
         rospy.Subscriber("/CF_DC/FlipData",CF_FlipData,self.CF_FlipDataCallback,queue_size=1)
         rospy.Subscriber("/CF_DC/ImpactData",CF_ImpactData,self.CF_ImpactDataCallback,queue_size=1)
         rospy.Subscriber("/CF_DC/MiscData",CF_MiscData,self.CF_MiscDataCallback,queue_size=1)
+
+        ## RL DATA PUBLISHERS
+        self.RL_Data_Publisher = rospy.Publisher('/RL/data',RLData,queue_size=10)
+        self.RL_Convg_Publisher = rospy.Publisher('/RL/convg_data',RLConvg,queue_size=10)
 
 
     def getTime(self):
@@ -147,20 +165,62 @@ class CrazyflieEnv_Base():
         t_z = Vz/a_z    # Time required to reach Vz
 
         z_vz = 0.5*a_z*(t_z)**2                 # Height Vz reached
-        z_0 = (self.h_ceiling - d_vz) - z_vz    # Offset to move z_vz to d_vz
+        z_0 = (2.10 - d_vz) - z_vz    # Offset to move z_vz to d_vz
         
         x_vz = Vx*(t_x+t_z) - Vx**2/(2*a_x)     # X-position Vz reached
         x_0 = x_impact - x_vz - d_vz*Vx/Vz      # Account for shift up and shift left
 
         return x_0,z_0
 
-                
+    def RL_Publish(self):
+
+        ## RL DATA
+        RL_msg = RLData() ## Initialize RLData message
+        
+        RL_msg.k_ep = self.k_ep
+        RL_msg.k_run = self.k_run
+        RL_msg.error_string = self.error_str
+        RL_msg.n_rollouts = self.n_rollouts
+
+
+        RL_msg.policy = self.policy
+
+        RL_msg.reward = self.reward
+        RL_msg.reward_avg = self.reward_avg
+        RL_msg.reward_vals = self.reward_vals
+
+        RL_msg.vel_d = self.vel_d
+
+        RL_msg.trialComplete_flag = self.trialComplete_flag
+        self.RL_Data_Publisher.publish(RL_msg) ## Publish RLData message
+        
+        ## CONVERGENCE HISTORY
+        RL_convg_msg = RLConvg()
+        RL_convg_msg.K_ep_list = self.K_ep_list
+        RL_convg_msg.K_run_list = self.K_run_list
+
+
+        RL_convg_msg.mu_1_list = self.mu_1_list
+        RL_convg_msg.mu_2_list = self.mu_2_list
+
+        RL_convg_msg.sigma_1_list = self.sigma_1_list
+        RL_convg_msg.sigma_2_list = self.sigma_2_list
+
+        RL_convg_msg.reward_list = self.reward_list
+
+        RL_convg_msg.Kep_list_reward_avg = self.Kep_list_reward_avg
+        RL_convg_msg.reward_avg_list = self.reward_avg_list
+
+        self.RL_Convg_Publisher.publish(RL_convg_msg) ## Publish RLData message
+
+        time.sleep(0.1)
+
     def preInit_Values(self):
 
-        self.Ixx = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Ixx")
-        self.Iyy = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Iyy")
-        self.Izz = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Izz")
-        self.mass = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.configName}/Mass")
+        self.Ixx = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Ixx")
+        self.Iyy = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Iyy")
+        self.Izz = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Izz")
+        self.mass = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Mass")
         
         ## RAW VICON VALUES
         self.posViconRaw = [0,0,0]
@@ -177,18 +237,18 @@ class CrazyflieEnv_Base():
 
         ## INITIALIZE STATE VALUES
         self.t = 0.0
-        self.posCF = [0,0,0]
-        self.velCF = [0,0,0]
+        self.pos = [0,0,0]
+        self.vel = [0,0,0]
 
-        self.quatCF = [0,0,0,1]
-        self.eulCF = [0,0,0]
-        self.omegaCF = [0,0,0]
-        self.eulCF = [0,0,0]
+        self.quat = [0,0,0,1]
+        self.eul = [0,0,0]
+        self.omega = [0,0,0]
+        self.eul = [0,0,0]
 
         self.Tau = 0.0
-        self.OFx = 0.0
-        self.OFy = 0.0
-        self.d_ceil = 0.0 
+        self.Theta_x = 0.0
+        self.Theta_y = 0.0
+        self.D_perp = 0.0 
 
         self.MS_pwm = [0,0,0,0]         # Controller Motor Speeds (MS1,MS2,MS3,MS4) [PWM]
         self.MotorThrusts = [0,0,0,0]   # Controller Motor Thrusts [M1,M2,M3,M4][g]
@@ -205,32 +265,35 @@ class CrazyflieEnv_Base():
         self.flip_flag = False      # Flag if model has started flip maneuver
 
         self.t_tr = 0.0             # [s]
-        self.posCF_tr = [0,0,0]     # [m]
-        self.velCF_tr = [0,0,0]     # [m/s]
-        self.quatCF_tr = [0,0,0,1]  # [quat]
-        self.omegaCF_tr = [0,0,0]   # [rad/s]
-        self.eulCF_tr = [0,0,0]
+        self.pos_tr = [0,0,0]       # [m]
+        self.vel_tr = [0,0,0]       # [m/s]
+        self.quat_tr = [0,0,0,1]    # [quat]
+        self.omega_tr = [0,0,0]     # [rad/s]
+        self.eul_tr = [0,0,0]       # [deg]
 
-        self.Tau_tr = 0.0
-        self.OFx_tr = 0.0           # [rad/s]
-        self.OFy_tr = 0.0           # [rad/s]
-        self.d_ceil_tr = 0.0        # [m]
+        self.Tau_tr = 0.0           # [s]
+        self.Theta_x_tr = 0.0       # [rad/s]
+        self.Theta_y_tr = 0.0       # [rad/s]
+        self.D_perp_tr = 0.0        # [m]
 
         self.FM_tr = [0,0,0,0]      # [N,N*mm]
 
         self.Policy_Flip_tr = 0.0
-        self.Policy_Action_tr = 0.0     # [N*mm]
+        self.Policy_Action_tr = 0.0 # [N*mm]
+
+        self.vel_tr_mag = 0.0       # [m/s]
+        self.phi_tr = 0.0           # [deg]
 
         ## INITIALIZE IMPACT VALUES
         self.impact_flag = False
         self.BodyContact_flag = False   # Flag if model body impacts ceiling plane
 
         self.t_impact = 0.0
-        self.posCF_impact = [0,0,0]
-        self.velCF_impact = [0,0,0]
-        self.quatCF_impact = [0,0,0,1]
-        self.omegaCF_impact = [0,0,0]
-        self.eulCF_impact = [0,0,0]
+        self.pos_impact = [0,0,0]
+        self.vel_impact = [0,0,0]
+        self.quat_impact = [0,0,0,1]
+        self.omega_impact = [0,0,0]
+        self.eul_impact = [0,0,0]
 
         self.impact_force_x = 0.0     # Ceiling impact force, X-dir [N]
         self.impact_force_y = 0.0     # Ceiling impact force, Y-dir [N]
@@ -242,13 +305,45 @@ class CrazyflieEnv_Base():
         ## INITIALIZE MISC VALUES
         self.V_Battery = 0.0
 
+        ## INITIALIZE RL VALUES
+
+        ## CONVERGENCE HISTORY
+        self.K_ep_list = []
+        self.K_run_list = []
+
+        self.mu_1_list = []         # List of mu values over course of convergence
+        self.mu_2_list = [] 
+
+        self.sigma_1_list = []      # List of sigma values over course of convergence
+        self.sigma_2_list = []
+
+        self.reward_list = []       # List of reward values over course of convergence
+        self.reward_avg_list = []   # List of reward averages ""
+        self.Kep_list_reward_avg = []
+
+        ## PARAM OPTIM DATA
+        self.k_ep = 0                   # Episode number
+        self.k_run = 0                  # Run number
+        self.error_str = ""
+        self.n_rollouts = 0
+
+        self.vel_d = [0.0,0.0,0.0]      # Desired velocity for trial
+        self.policy = [0.0,0.0,0.0]     # Policy sampled from Gaussian distribution
+
+        self.reward = 0.0               # Calculated reward from run
+        self.reward_avg = 0.0           # Averaged rewards over episode
+        self.reward_vals = np.zeros(5)
+
+        self.trialComplete_flag = False
+
+
 
     # ========================
     ##    Logging Services 
     # ========================
 
     def createCSV(self,logName):
-        """Sends service to CF_DataConverter to create CSV file to write logs to
+        """Sends service to CF_DataConverter to create CSV log file 
 
         Args:
             filePath (string): Send full path and file name to write to
@@ -256,7 +351,7 @@ class CrazyflieEnv_Base():
 
         ## CREATE SERVICE REQUEST MSG
         srv = loggingCMDRequest() 
-        srv.filePath = f"{self.logDir}/{logName}"
+        srv.filePath = os.path.join(self.logDir,logName)
         srv.Logging_CMD = 0
 
         ## SEND LOGGING REQUEST VIA SERVICE
@@ -268,19 +363,19 @@ class CrazyflieEnv_Base():
 
         ## CREATE SERVICE REQUEST MSG
         srv = loggingCMDRequest()
-        srv.filePath = f"{self.logDir}/{logName}"
+        srv.filePath = os.path.join(self.logDir,logName)
         srv.Logging_CMD = 1
 
         ## SEND LOGGING REQUEST VIA SERVICE
         self.callService('/CF_DC/DataLogging',srv,loggingCMD)
 
     def capLogging(self,logName):
-        """Cap logging values with IC,Flip, and Impact conditions and stop logging
+        """Cap logging values with Flight, Flip, and Impact conditions and stop continuous logging
         """        
 
         ## CREATE SERVICE REQUEST MSG
         srv = loggingCMDRequest()
-        srv.filePath = f"{self.logDir}/{logName}"
+        srv.filePath = os.path.join(self.logDir,logName)
         srv.Logging_CMD = 2
         srv.error_string = self.error_str # String for why logging was capped
         
@@ -301,71 +396,107 @@ class CrazyflieEnv_Base():
         if rospy.get_param('/DATA_TYPE') == "EXP":
             self.t = StateData_msg.header.stamp.to_sec()
 
-        self.posCF = np.round([ StateData_msg.Pose.position.x,
-                                StateData_msg.Pose.position.y,
-                                StateData_msg.Pose.position.z],3)
+        self.pos = np.round([StateData_msg.Pose.position.x,
+                             StateData_msg.Pose.position.y,
+                             StateData_msg.Pose.position.z],3)
 
-        self.eulCF = np.round([ StateData_msg.Eul.x,
-                                StateData_msg.Eul.y,
-                                StateData_msg.Eul.z],3)
+        self.vel = np.round([StateData_msg.Twist.linear.x,
+                             StateData_msg.Twist.linear.y,
+                             StateData_msg.Twist.linear.z],3)
 
-        ## CF_TWIST
-        self.velCF = np.round([ StateData_msg.Twist.linear.x,
-                                StateData_msg.Twist.linear.y,
-                                StateData_msg.Twist.linear.z],3)
+        self.eul = np.round([StateData_msg.Eul.x,
+                             StateData_msg.Eul.y,
+                             StateData_msg.Eul.z],3)
 
-        ## CF_VISUAL STATES
+        self.omega = np.round([StateData_msg.Twist.angular.x,
+                               StateData_msg.Twist.angular.y,
+                               StateData_msg.Twist.angular.z],3)
+
+        self.quat = np.round([StateData_msg.Pose.orientation.x,
+                              StateData_msg.Pose.orientation.y,
+                              StateData_msg.Pose.orientation.z,
+                              StateData_msg.Pose.orientation.w],3)
+
+
+
+        ## VISUAL STATES
         self.Tau = np.round(StateData_msg.Tau,3)
-        self.OFx = np.round(StateData_msg.OFx,3)
-        self.OFy = np.round(StateData_msg.OFy,3)
-        self.d_ceil = np.round(StateData_msg.D_ceil,3)
+        self.Theta_x = np.round(StateData_msg.Theta_x,3)
+        self.Theta_y = np.round(StateData_msg.Theta_y,3)
+        self.D_perp = np.round(StateData_msg.D_perp,3)
        
         self.t_prev = self.t # Save t value for next callback iteration
 
     def CF_FlipDataCallback(self,FlipData_msg):
 
-        ## FLIP FLAGS
+        ## FLIP FLAG
         self.flip_flag = FlipData_msg.flip_flag
 
-        self.Vx_flip = FlipData_msg.Twist_tr.linear.x
-        self.Vz_flip = FlipData_msg.Twist_tr.linear.z
+        if FlipData_msg.flip_flag == True:
+
+            ## FLIP TRIGGERING CONDITIONS
+            self.pos_tr = np.round([FlipData_msg.Pose_tr.position.x,
+                                    FlipData_msg.Pose_tr.position.y,
+                                    FlipData_msg.Pose_tr.position.z],3)
+
+            self.vel_tr = np.round([FlipData_msg.Twist_tr.linear.x,
+                                    FlipData_msg.Twist_tr.linear.y,
+                                    FlipData_msg.Twist_tr.linear.z],3)
+
+            self.eul_tr = np.round([FlipData_msg.Eul_tr.x,
+                                    FlipData_msg.Eul_tr.y,
+                                    FlipData_msg.Eul_tr.z],3)
+
+            self.omega_tr = np.round([FlipData_msg.Twist_tr.angular.x,
+                                    FlipData_msg.Twist_tr.angular.y,
+                                    FlipData_msg.Twist_tr.angular.z],3)
+            
+            self.vel_tr_mag = np.sqrt(self.vel_tr[0]**2 + self.vel_tr[2]**2)
+            self.phi_tr = np.rad2deg(np.arctan2(self.vel_tr[2],self.vel_tr[0]))
+
+            ## POLICY TRIGGERING VALUES
+            self.Tau_tr = FlipData_msg.Tau_tr
+            self.Theta_x_tr = FlipData_msg.Theta_x_tr
+            self.Theta_y_tr = FlipData_msg.Theta_y_tr
+            self.D_perp_tr = FlipData_msg.D_perp_tr
+
+            ## POLICY ACTIONS
+            self.Policy_Flip_tr = FlipData_msg.Policy_Flip_tr
+            self.Policy_Action_tr = FlipData_msg.Policy_Action_tr
+
 
     def CF_ImpactDataCallback(self,ImpactData_msg):
 
-        if rospy.get_param('/DATA_TYPE') == "SIM":
+        if rospy.get_param('/DATA_TYPE') == "SIM": ## Impact values only good in simulation
 
             ## IMPACT FLAGS
             self.impact_flag = ImpactData_msg.impact_flag
             self.BodyContact_flag = ImpactData_msg.BodyContact_flag
+            self.pad_connections = ImpactData_msg.Pad_Connections
 
-            self.eulCF_impact = np.round([ImpactData_msg.Eul_impact.x,
-                                        ImpactData_msg.Eul_impact.y,
-                                        ImpactData_msg.Eul_impact.z],3)
 
-            ## CF_TWIST (IMPACT)
-            self.velCF_impact = np.round([ImpactData_msg.Twist_impact.linear.x,
+            ## IMPACT CONDITIONS
+            self.pos_impact = np.round([ImpactData_msg.Pose_impact.position.x,
+                                        ImpactData_msg.Pose_impact.position.y,
+                                        ImpactData_msg.Pose_impact.position.z],3)
+
+            self.vel_impact = np.round([ImpactData_msg.Twist_impact.linear.x,
                                         ImpactData_msg.Twist_impact.linear.y,
                                         ImpactData_msg.Twist_impact.linear.z],3)
 
-            
-            self.pad_connections = ImpactData_msg.Pad_Connections
+            self.eul_impact = np.round([ImpactData_msg.Eul_impact.x,
+                                        ImpactData_msg.Eul_impact.y,
+                                        ImpactData_msg.Eul_impact.z],3)
+
+            self.omega_impact = np.round([ImpactData_msg.Twist_impact.angular.x,
+                                          ImpactData_msg.Twist_impact.angular.y,
+                                          ImpactData_msg.Twist_impact.angular.z],3)
 
 
     def CF_MiscDataCallback(self,MiscData_msg):        
 
         self.V_Battery = np.round(MiscData_msg.battery_voltage,4)
 
-    def modelInitials(self):
-        """Returns initials for the model. Should be done with REGEX but this'll work for now
-
-        Returns:
-            string: Model name initials
-        """        
-        str = self.modelName
-        charA = str[self.modelName.find("_")+1]     # [W]ide
-        charB = str[self.modelName.find("_",-8)+1]  # [L]ong
-
-        return charA+charB  # [WL]
 
     def userInput(self,input_string,dataType=float):
         """Processes user input and return values as either indiviual value or list

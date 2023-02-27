@@ -14,7 +14,6 @@ class EPHE_Agent():
         self.mu = np.array(mu).reshape(-1,1)
         self.sigma = np.array(sigma).reshape(-1,1)
 
-        self.n_rollouts = n_rollouts
         self.dim = len(self.mu)
 
         self.RL_Data_Publisher = rospy.Publisher('/RL/data',RLData,queue_size=10)
@@ -59,6 +58,7 @@ class EPHE_Agent():
         RL_msg.k_ep = self.k_ep
         RL_msg.k_run = self.k_run
         RL_msg.error_string = self.error_str
+        RL_msg.n_rollouts = self.n_rollouts
 
         RL_msg.mu = list(self.mu.flatten())
         RL_msg.sigma = list(self.sigma.flatten())

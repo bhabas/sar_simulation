@@ -133,8 +133,8 @@ def cmd_send(env,logName):
                 Vx_d = V_d*np.cos(phi_rad)
                 Vz_d = V_d*np.sin(phi_rad)
 
-                env.SendCmd('Vel_traj',cmd_vals=[env.posCF[0],Vx_d,env.accCF_max[0]],cmd_flag=0)
-                env.SendCmd('Vel_traj',cmd_vals=[env.posCF[2],Vz_d,env.accCF_max[2]],cmd_flag=2)
+                env.SendCmd('Vel_traj',cmd_vals=[env.pos[0],Vx_d,env.accCF_max[0]],cmd_flag=0)
+                env.SendCmd('Vel_traj',cmd_vals=[env.pos[2],Vz_d,env.accCF_max[2]],cmd_flag=2)
 
             elif action=='Impact_traj':
 
@@ -155,14 +155,14 @@ def cmd_send(env,logName):
                 str_input = env.userInput("Approve start position (y/n): ",str)
 
                 if str_input == 'y':
-                    env.SendCmd('P2P_traj',cmd_vals=[env.posCF[0],x_0,env.accCF_max[0]],cmd_flag=0)
-                    env.SendCmd('P2P_traj',cmd_vals=[env.posCF[1],0.0,env.accCF_max[1]],cmd_flag=1)
-                    env.SendCmd('P2P_traj',cmd_vals=[env.posCF[2],z_0,env.accCF_max[2]],cmd_flag=2)
+                    env.SendCmd('P2P_traj',cmd_vals=[env.pos[0],x_0,env.accCF_max[0]],cmd_flag=0)
+                    env.SendCmd('P2P_traj',cmd_vals=[env.pos[1],0.0,env.accCF_max[1]],cmd_flag=1)
+                    env.SendCmd('P2P_traj',cmd_vals=[env.pos[2],z_0,env.accCF_max[2]],cmd_flag=2)
 
                     str_input = env.userInput("Approve flight (y/n): ",str)
                     if str_input == 'y':
-                        env.SendCmd('Vel_traj',cmd_vals=[env.posCF[0],Vx_d,env.accCF_max[0]],cmd_flag=0)
-                        env.SendCmd('Vel_traj',cmd_vals=[env.posCF[2],Vz_d,env.accCF_max[2]],cmd_flag=2)
+                        env.SendCmd('Vel_traj',cmd_vals=[env.pos[0],Vx_d,env.accCF_max[0]],cmd_flag=0)
+                        env.SendCmd('Vel_traj',cmd_vals=[env.pos[2],Vz_d,env.accCF_max[2]],cmd_flag=2)
 
                 else:
                     print(f"Try again")
@@ -180,9 +180,9 @@ def cmd_send(env,logName):
             elif action=='P2P_traj':
                 ## GET INPUT VALUES
                 x_d = env.userInput("Desired position (x,y,z):",float)
-                env.SendCmd('P2P_traj',cmd_vals=[env.posCF[0],x_d[0],env.accCF_max[0]],cmd_flag=0)
-                env.SendCmd('P2P_traj',cmd_vals=[env.posCF[1],x_d[1],env.accCF_max[1]],cmd_flag=1)
-                env.SendCmd('P2P_traj',cmd_vals=[env.posCF[2],x_d[2],env.accCF_max[2]],cmd_flag=2)
+                env.SendCmd('P2P_traj',cmd_vals=[env.pos[0],x_d[0],env.accCF_max[0]],cmd_flag=0)
+                env.SendCmd('P2P_traj',cmd_vals=[env.pos[1],x_d[1],env.accCF_max[1]],cmd_flag=1)
+                env.SendCmd('P2P_traj',cmd_vals=[env.pos[2],x_d[2],env.accCF_max[2]],cmd_flag=2)
 
 
             elif action=='GZ_traj':
@@ -199,7 +199,7 @@ def cmd_send(env,logName):
                 Vz_d = V_d*np.sin(phi_rad)
 
                 ## ESTIMATE IMPACT POINT
-                env.Vel_Launch(env.posCF,[Vx_d,Vy_d,Vz_d])
+                env.Vel_Launch(env.pos,[Vx_d,Vy_d,Vz_d])
                 env.gazebo_unpause_physics()
                 
                     
@@ -216,10 +216,11 @@ if __name__ == '__main__':
     from Core_Envs.CrazyflieEnv_Sim import CrazyflieEnv_Sim
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv_Sim()
+    env.gazebo_unpause_physics()
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 24
-    logName = f"Control_Playground--trial_{int(trial_num):02d}--{env.modelInitials()}.csv"
+    logName = f"Control_Playground--trial_{int(trial_num):02d}--{env.modelInitials}.csv"
 
     env.createCSV(logName)
     cmd_thread = threading.Thread(target=cmd_send,args=(env,logName))

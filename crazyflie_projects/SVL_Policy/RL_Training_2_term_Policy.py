@@ -148,10 +148,10 @@ def runTraining(env,agent,V_d,phi,logName,K_ep_max=15):
             Tau_thr = theta[0, k_run]    # Tau threshold 10*[s]
             My = theta[1, k_run]         # Policy Moment Action [N*mm]
 
-            ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
-            env.Iyy = rospy.get_param(f"/CF_Type/{env.CF_Type}/Config/{env.configName}/Iyy") + np.random.normal(0,1.5e-6)
-            env.mass = rospy.get_param(f"/CF_Type/{env.CF_Type}/Config/{env.configName}/Mass") + np.random.normal(0,0.0005)
-            env.updateInertia()
+            # ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
+            # env.Iyy = rospy.get_param(f"/CF_Type/{env.CF_Type}/Config/{env.CF_Config}/Iyy") + np.random.normal(0,1.5e-6)
+            # env.mass = rospy.get_param(f"/CF_Type/{env.CF_Type}/Config/{env.CF_Config}/Mass") + np.random.normal(0,0.0005)
+            # env.updateInertia()
 
             env.ParamOptim_reset()
             env.startLogging(logName)
@@ -199,14 +199,14 @@ if __name__ == '__main__':
     # ============================
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
-    V_d = 2.1 # [m/s]
+    V_d = 2.5 # [m/s]
     phi = 60   # [deg]
 
     ## INITIALIALIZE LOGGING DATA
-    trial_num = 24
-    logName = f"{agent.agent_type}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--{env.modelInitials()}.csv"
+    trial_num = 25
+    logName = f"{agent.agent_type}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--{env.modelInitials}.csv"
 
-    runTraining(env,agent,V_d,phi,logName)
+    runTraining(env,agent,V_d,phi,logName,K_ep_max=3)
 
 
     

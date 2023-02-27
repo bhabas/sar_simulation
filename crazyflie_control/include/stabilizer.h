@@ -60,13 +60,13 @@ class Controller
             // CONTROLLER TOPICS
             CTRL_Data_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/CTRL/data",1);
             CTRL_Debug_Publisher = nh->advertise<crazyflie_msgs::CtrlDebug>("CTRL/debug",1);
-            CMD_Service = nh->advertiseService("/CTRL/Cmd_ctrl",&Controller::CMD_Callback,this);
+            CMD_Service = nh->advertiseService("/CTRL/Cmd_ctrl",&Controller::CMD_Service_Resp,this);
 
             // RL TOPICS
 
             // INTERNAL TOPICS
             CF_IMU_Subscriber = nh->subscribe("/CF_Internal/IMU",1,&Controller::IMU_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
-            CF_OF_Subscriber = nh->subscribe("/CF_Internal/OF_Sensor",1,&Controller::OF_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
+            CF_OF_Subscriber = nh->subscribe("/CF_Internal/OpticalFlow_Values",1,&Controller::OF_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
             CF_Camera_Subscriber = nh->subscribe("/CF_Internal/camera/image_raw",1,&Controller::Camera_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
 
             // ENVIRONMENT TOPICS
@@ -113,7 +113,6 @@ class Controller
 
         // ROS SPECIFIC VALUES
         int _slowdown_type = 0;
-        float _H_CEILING = 2.10;
         bool _LANDING_SLOWDOWN_FLAG;
         float _SIM_SPEED; 
         float _SIM_SLOWDOWN_SPEED;
@@ -161,7 +160,7 @@ class Controller
         void IMU_Sensor_Callback(const sensor_msgs::Imu::ConstPtr &msg);
         void OF_Sensor_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg);
         void Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg);
-        bool CMD_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res);
+        bool CMD_Service_Resp(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res);
 
 
         void stabilizerLoop();
@@ -176,7 +175,7 @@ class Controller
 
 };
 
-bool Controller::CMD_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res)
+bool Controller::CMD_Service_Resp(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res)
 {
     res.srv_Success = true;
 
@@ -201,159 +200,159 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
     if(camera_sensor_active == true)
     {
     
-        Cur_img = &(msg->data)[0]; // Point to current image data address
+        // Cur_img = &(msg->data)[0]; // Point to current image data address
 
-        //Where the convolution starts
-        int32_t X = 1;
-        int32_t Y = 1;
-        float w = 3.6e-6; //Pixel width in meters
-        float f = 0.66e-3/2; //Focal length in meters
-        float U;
-        float V;
-        float O_up = WIDTH_PIXELS/2;
-        float V_up = WIDTH_PIXELS/2;
-        float Gtemp = 0;
-        float Iuu = 0;
-        float Ivv = 0;
-        float Iuv = 0;
-        float IGu = 0;
-        float IGv = 0;
-        float IGG = 0;
-        float Iut = 0;
-        float Ivt = 0;
-        float IGt = 0;
-        float dt;
-        int32_t Ittemp;
-        float Cur_time = ros::Time::now().toSec();
+        // //Where the convolution starts
+        // int32_t X = 1;
+        // int32_t Y = 1;
+        // float w = 3.6e-6; //Pixel width in meters
+        // float f = 0.66e-3/2; //Focal length in meters
+        // float U;
+        // float V;
+        // float O_up = WIDTH_PIXELS/2;
+        // float V_up = WIDTH_PIXELS/2;
+        // float Gtemp = 0;
+        // float Iuu = 0;
+        // float Ivv = 0;
+        // float Iuv = 0;
+        // float IGu = 0;
+        // float IGv = 0;
+        // float IGG = 0;
+        // float Iut = 0;
+        // float Ivt = 0;
+        // float IGt = 0;
+        // float dt;
+        // int32_t Ittemp;
+        // float Cur_time = ros::Time::now().toSec();
 
-        int itr = 3;
+        // int itr = 3;
         
-        // for(int j = 0; j < (WIDTH_PIXELS - 2)*(HEIGHT_PIXELS - 2); j++) // How many times the kernel center moves around the image
-        for(int16_t j = 0; j < 2500; j++) // 10% of image data used
-        {
+        // // for(int j = 0; j < (WIDTH_PIXELS - 2)*(HEIGHT_PIXELS - 2); j++) // How many times the kernel center moves around the image
+        // for(int16_t j = 0; j < 2500; j++) // 10% of image data used
+        // {
 
-            //GENERALIZE FOR CHANGE IN KERNEL SIZE
-            if(X >= WIDTH_PIXELS - 1) //if the edge of the kernel crosses the edge of the image
-            { 
+        //     //GENERALIZE FOR CHANGE IN KERNEL SIZE
+        //     if(X >= WIDTH_PIXELS - 1) //if the edge of the kernel crosses the edge of the image
+        //     { 
             
-                X = 1; //move the kernel back to the left edge of the image
-                Y = Y + itr; //and slide the kernel down the image
+        //         X = 1; //move the kernel back to the left edge of the image
+        //         Y = Y + itr; //and slide the kernel down the image
 
-            }
+        //     }
 
-            //Sub Kernel Indexing 
-            uint32_t i0 = (X - 1) + (Y - 1) * WIDTH_PIXELS; //First grab top left location of whole kernel
-            uint32_t i1 = i0 + WIDTH_PIXELS; //then each following row is separated by the image width
-            uint32_t i2 = i1 + WIDTH_PIXELS;
+        //     //Sub Kernel Indexing 
+        //     uint32_t i0 = (X - 1) + (Y - 1) * WIDTH_PIXELS; //First grab top left location of whole kernel
+        //     uint32_t i1 = i0 + WIDTH_PIXELS; //then each following row is separated by the image width
+        //     uint32_t i2 = i1 + WIDTH_PIXELS;
 
-            U = (X - O_up)*w + (w/2); // Using current location of the Kernel center
-            V = (Y - V_up)*w + (w/2); //calculate the current pixel grid locations (u,v)
+        //     U = (X - O_up)*w + (w/2); // Using current location of the Kernel center
+        //     V = (Y - V_up)*w + (w/2); //calculate the current pixel grid locations (u,v)
 
-            // ######  DEBUGGING  ######
-            /*//
-            std::cout << "i0: " << i0 << "\n";
-            std::cout << "i1: " << i1 << "\n";
-            std::cout << "i2: " << i2 << "\n";
-            *///
+        //     // ######  DEBUGGING  ######
+        //     /*//
+        //     std::cout << "i0: " << i0 << "\n";
+        //     std::cout << "i1: " << i1 << "\n";
+        //     std::cout << "i2: " << i2 << "\n";
+        //     *///
 
-            int Xsum = 0; //reset rolling sum to 0
-            int Ysum = 0;
+        //     int Xsum = 0; //reset rolling sum to 0
+        //     int Ysum = 0;
 
-            //GENERALIZE FOR CHANGE IN KERNEL SIZE
-            for(int k = 0; k < 3; k++){
+        //     //GENERALIZE FOR CHANGE IN KERNEL SIZE
+        //     for(int k = 0; k < 3; k++){
 
-                //Sub kernel 0
-                Xsum += kx0[k] * Cur_img[i0 + k];
-                Ysum += ky0[k] * Cur_img[i0 + k];
+        //         //Sub kernel 0
+        //         Xsum += kx0[k] * Cur_img[i0 + k];
+        //         Ysum += ky0[k] * Cur_img[i0 + k];
 
-                //Sub kernel 1 (skipping ky1)
-                Xsum += kx1[k] * Cur_img[i1 + k];
+        //         //Sub kernel 1 (skipping ky1)
+        //         Xsum += kx1[k] * Cur_img[i1 + k];
 
-                //Sub kernel 2
-                Xsum += kx2[k] * Cur_img[i2 + k];
-                Ysum += ky2[k] * Cur_img[i2 + k];
+        //         //Sub kernel 2
+        //         Xsum += kx2[k] * Cur_img[i2 + k];
+        //         Ysum += ky2[k] * Cur_img[i2 + k];
 
-            }
+        //     }
 
-            //Sum assigned to middle value: (i1 + 1)
-            Ittemp = (Cur_img[i1 + 1] - Prev_img[i1 + 1]); //moved /dt to last step
-            Gtemp = (Xsum*U + Ysum*V);
+        //     //Sum assigned to middle value: (i1 + 1)
+        //     Ittemp = (Cur_img[i1 + 1] - Prev_img[i1 + 1]); //moved /dt to last step
+        //     Gtemp = (Xsum*U + Ysum*V);
 
-            //LHS Matrix values (rolling sums)
-            Iuu += Xsum*Xsum;
-            Ivv += Ysum*Ysum;
-            Iuv += Xsum*Ysum;
-            IGu += Gtemp*Xsum;
-            IGv += Gtemp*Ysum;
-            IGG += Gtemp*Gtemp;
+        //     //LHS Matrix values (rolling sums)
+        //     Iuu += Xsum*Xsum;
+        //     Ivv += Ysum*Ysum;
+        //     Iuv += Xsum*Ysum;
+        //     IGu += Gtemp*Xsum;
+        //     IGv += Gtemp*Ysum;
+        //     IGG += Gtemp*Gtemp;
 
-            //RHS Matrix Values (rolling sums)
-            Iut += Xsum*Ittemp;
-            Ivt += Ysum*Ittemp; 
-            IGt += Gtemp*Ittemp;
+        //     //RHS Matrix Values (rolling sums)
+        //     Iut += Xsum*Ittemp;
+        //     Ivt += Ysum*Ittemp; 
+        //     IGt += Gtemp*Ittemp;
 
-            // DETERMINE IF J IS ODD
-            // if((j + 1) % 2 == 0){ //need + 1 in order to prevent divide by zero
-            //     itr = 2; // if j is even increment by 2
-            // }
-            // else {
-            //     itr = 1; 
-            // }
+        //     // DETERMINE IF J IS ODD
+        //     // if((j + 1) % 2 == 0){ //need + 1 in order to prevent divide by zero
+        //     //     itr = 2; // if j is even increment by 2
+        //     // }
+        //     // else {
+        //     //     itr = 1; 
+        //     // }
 
 
-            X = X + itr; //move center of kernel over by increment
-            // X++; // move center of kernel over
+        //     X = X + itr; //move center of kernel over by increment
+        //     // X++; // move center of kernel over
             
-        } // END OF CONVOLUTION
+        // } // END OF CONVOLUTION
 
-        dt = Cur_time - Prev_time;
+        // dt = Cur_time - Prev_time;
 
-        // Packing final result into the matrices and applying the floating point math
-        double LHS[9] = {f/powf(8*w,2)*Iuu, f/powf(8*w,2)*Iuv, 1/powf(8*w,2)*IGu,
-                        f/powf(8*w,2)*Iuv, f/powf(8*w,2)*Ivv, 1/powf(8*w,2)*IGv,
-                        f/powf(8*w,2)*IGu, f/powf(8*w,2)*IGv, 1/powf(8*w,2)*IGG};
+        // // Packing final result into the matrices and applying the floating point math
+        // double LHS[9] = {f/powf(8*w,2)*Iuu, f/powf(8*w,2)*Iuv, 1/powf(8*w,2)*IGu,
+        //                 f/powf(8*w,2)*Iuv, f/powf(8*w,2)*Ivv, 1/powf(8*w,2)*IGv,
+        //                 f/powf(8*w,2)*IGu, f/powf(8*w,2)*IGv, 1/powf(8*w,2)*IGG};
 
-        double RHS[3] = {-Iut/(8*w*dt), -Ivt/(8*w*dt), -IGt/(8*w*dt)}; //added change in time to final step
+        // double RHS[3] = {-Iut/(8*w*dt), -Ivt/(8*w*dt), -IGt/(8*w*dt)}; //added change in time to final step
 
-        // SOLVE LEAST-SQUARES EQUATION FOR OPTICAL FLOW VALUES
-        nml_mat* m_A = nml_mat_from(3,3,9,LHS);
-        nml_mat* m_b = nml_mat_from(3,1,3,RHS);
+        // // SOLVE LEAST-SQUARES EQUATION FOR OPTICAL FLOW VALUES
+        // nml_mat* m_A = nml_mat_from(3,3,9,LHS);
+        // nml_mat* m_b = nml_mat_from(3,1,3,RHS);
 
-        nml_mat_qr *QR = nml_mat_qr_solve(m_A); // A = Q*R
-        nml_mat* y = nml_mat_dot(nml_mat_transp(QR->Q),m_b); // y = Q^T*b
-        nml_mat* x_QR = nml_ls_solvebck(QR->R,y); // Solve R*x = y via back substitution
+        // nml_mat_qr *QR = nml_mat_qr_solve(m_A); // A = Q*R
+        // nml_mat* y = nml_mat_dot(nml_mat_transp(QR->Q),m_b); // y = Q^T*b
+        // nml_mat* x_QR = nml_ls_solvebck(QR->R,y); // Solve R*x = y via back substitution
 
-        float OFy_est = x_QR->data[0][0];
-        float OFx_est = x_QR->data[1][0];
-        float Tau_est = 1/x_QR->data[2][0];
+        // float OFy_est = x_QR->data[0][0];
+        // float OFx_est = x_QR->data[1][0];
+        // float Tau_est = 1/x_QR->data[2][0];
 
-        // FREE MATRICES FROM HEAP
-        nml_mat_free(m_A);
-        nml_mat_free(m_b);
-        nml_mat_qr_free(QR);
-        nml_mat_free(x_QR);
+        // // FREE MATRICES FROM HEAP
+        // nml_mat_free(m_A);
+        // nml_mat_free(m_b);
+        // nml_mat_qr_free(QR);
+        // nml_mat_free(x_QR);
 
-        // IF INVALID VALUE THEN EXIT FUNCTION
-        if (isnan(Tau_est))
-        {
-            return;
-        }       
+        // // IF INVALID VALUE THEN EXIT FUNCTION
+        // if (isnan(Tau_est))
+        // {
+        //     return;
+        // }       
 
-        // APPLY EMA FILTER y[n] = alpha*x[n] + (1-alpha)*y[n-1]
-        float alpha = 0.99;
-        Tau_est_filt = (alpha * Tau_est + (1-alpha) * Tau_est_filt_1);
-        Tau_est_filt = clamp(Tau_est_filt, 0,10); // Restrict Tau values to range [0,10]
+        // // APPLY EMA FILTER y[n] = alpha*x[n] + (1-alpha)*y[n-1]
+        // float alpha = 0.99;
+        // Tau_est_filt = (alpha * Tau_est + (1-alpha) * Tau_est_filt_1);
+        // Tau_est_filt = clamp(Tau_est_filt, 0,10); // Restrict Tau values to range [0,10]
         
-        // UPDATE SENSOR DATA STRUCT WITH FILTERED OPTICAL FLOW VALUES
-        sensorData.OFx_est = OFx_est;
-        sensorData.OFy_est = OFy_est;
-        sensorData.Tau_est = Tau_est_filt;
+        // // UPDATE SENSOR DATA STRUCT WITH FILTERED OPTICAL FLOW VALUES
+        // sensorData.OFx_est = OFx_est;
+        // sensorData.OFy_est = OFy_est;
+        // sensorData.Tau_est = Tau_est_filt;
         
-        // SET PREVIOUS DATA FOR NEXT CALCULATION
-        Prev_time = Cur_time; 
-        Tau_est_prev_1 = Tau_est;
-        Tau_est_filt_1 = Tau_est_filt;
-        memcpy(Prev_img,Cur_img, WIDTH_PIXELS*HEIGHT_PIXELS*sizeof(uint8_t)); // Copy memory of Cur_img data to Prev_img address
+        // // SET PREVIOUS DATA FOR NEXT CALCULATION
+        // Prev_time = Cur_time; 
+        // Tau_est_prev_1 = Tau_est;
+        // Tau_est_filt_1 = Tau_est_filt;
+        // memcpy(Prev_img,Cur_img, WIDTH_PIXELS*HEIGHT_PIXELS*sizeof(uint8_t)); // Copy memory of Cur_img data to Prev_img address
 
     }
 
@@ -364,10 +363,10 @@ void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
 void Controller::OF_Sensor_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg)
 {
     sensorData.Tau = msg->Tau;
-    sensorData.OFx = msg->OFx;
-    sensorData.OFy = msg->OFy;
-    sensorData.d_ceil = msg->d_ceil;
-
+    sensorData.Theta_x = msg->Theta_x;
+    sensorData.Theta_y = msg->Theta_y;
+    sensorData.Theta_z = msg->Theta_z;
+    sensorData.D_perp = msg->D_perp;
 }
 
 // IMU VALUES FROM MODEL SENSOR PLUGIN
@@ -408,7 +407,7 @@ void Controller::loadParams()
 {
     
     ros::param::get("/QUAD_SETTINGS/CF_Type",CF_Type);
-    ros::param::get("/QUAD_SETTINGS/Config",CF_Config);
+    ros::param::get("/QUAD_SETTINGS/CF_Config",CF_Config);
     ros::param::get("/QUAD_SETTINGS/Cam_Sensor",camera_sensor_active);
     CF_Type = "/CF_Type/" + CF_Type;
     CF_Config = "/Config/" + CF_Config;
@@ -454,6 +453,10 @@ void Controller::loadParams()
     {
         Policy = DEEP_RL;
     }    
+    else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL_SB3")==0)
+    {
+        Policy = DEEP_RL_SB3;
+    }    
 
 }
 
@@ -496,14 +499,14 @@ void Controller::publishCtrlData()
 
     // OPTICAL FLOW DATA
     CtrlData_msg.Tau = sensorData.Tau;
-    CtrlData_msg.OFx = sensorData.OFx;
-    CtrlData_msg.OFy = sensorData.OFy;
-    CtrlData_msg.D_ceil = sensorData.d_ceil;
+    CtrlData_msg.Theta_x = sensorData.Theta_x;
+    CtrlData_msg.Theta_y = sensorData.Theta_y;
+    CtrlData_msg.D_perp = sensorData.D_perp;
 
     // ESTIMATED OPTICAL FLOW DATA
     CtrlData_msg.Tau_est = sensorData.Tau_est;
-    CtrlData_msg.OFx_est = sensorData.OFx_est;
-    CtrlData_msg.OFy_est = sensorData.OFy_est;
+    CtrlData_msg.Theta_x_est = sensorData.Theta_x_est;
+    CtrlData_msg.Theta_y_est = sensorData.Theta_y_est;
 
     CtrlData_msg.Tau_thr = Tau_thr;
     CtrlData_msg.G1 = G1;
@@ -554,9 +557,9 @@ void Controller::publishCtrlData()
 
     // OPTICAL FLOW DATA (FLIP)
     CtrlData_msg.Tau_tr = Tau_tr;
-    CtrlData_msg.OFx_tr = OFx_tr;
-    CtrlData_msg.OFy_tr = OFy_tr;
-    CtrlData_msg.D_ceil_tr = d_ceil_tr;
+    CtrlData_msg.Theta_x_tr = Theta_x_tr;
+    CtrlData_msg.Theta_y_tr = Theta_y_tr;
+    CtrlData_msg.D_perp_tr = D_perp_tr;
 
     // NEURAL NETWORK DATA (FLIP)
     CtrlData_msg.Policy_Flip_tr = Policy_Flip_tr;

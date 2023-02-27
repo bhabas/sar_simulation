@@ -52,7 +52,6 @@ float m = 34.3e-3f;         // [kg]
 float Ixx = 15.83e-6f;      // [kg*m^2]
 float Iyy = 17.00e-6f;      // [kg*m^2]
 float Izz = 31.19e-6f;      // [kg*m^2]
-float h_ceiling = 2.10f;    // [m]
 
 float g = 9.81f;        // [m/s^2]
 static struct mat33 J; // Rotational Inertia Matrix [kg*m^2]
@@ -69,17 +68,18 @@ struct vec statePos = {0.0,0.0f,0.0f};          // Pos [m]
 struct vec stateVel = {0.0f,0.0f,0.0f};         // Vel [m/s]
 struct quat stateQuat = {0.0f,0.0f,0.0f,1.0f};  // Orientation
 struct vec stateOmega = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
+float V_mag = 0.0f;
 
 // OPTICAL FLOW STATES
 float Tau = 0.0f;       // [s]
-float OFx = 0.0f;       // [rad/s]
-float OFy = 0.0f;       // [rad/s] 
-float d_ceil = 0.0f;    // [m]
+float Theta_x = 0.0f;   // [rad/s] 
+float Theta_y = 0.0f;   // [rad/s]
+float D_perp = 0.0f;    // [m]
 
 // ESTIMATED OPTICAL FLOW STATES
-float Tau_est = 0.0f; // [s]
-float OFx_est = 0.0f; // [rad/s]
-float OFy_est = 0.0f; // [rad/s]
+float Tau_est = 0.0f;       // [s]
+float Theta_x_est = 0.0f;   // [rad/s]
+float Theta_y_est = 0.0f;   // [rad/s]
 
 
 static struct mat33 R; // Orientation as rotation matrix
@@ -173,6 +173,7 @@ bool safeModeFlag = false;
 
 bool execute_P2P_traj = false;
 bool execute_vel_traj = false;
+bool execute_GZ_vel_traj = false;
 bool policy_armed_flag = false;
 bool camera_sensor_active = false;
 
@@ -201,10 +202,10 @@ struct quat stateQuat_tr = {0.0f,0.0f,0.0f,1.0f};  // Orientation
 struct vec stateOmega_tr = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
 
 // OPTICAL FLOW STATES
-float Tau_tr = 0.0f;    // [rad/s]
-float OFx_tr = 0.0f;    // [rad/s]
-float OFy_tr = 0.0f;    // [rad/s]
-float d_ceil_tr = 0.0f; // [m/s]
+float Tau_tr = 0.0f;        // [rad/s]
+float Theta_x_tr = 0.0f;    // [rad/s]
+float Theta_y_tr = 0.0f;    // [rad/s]
+float D_perp_tr = 0.0f;     // [m/s]
 
 // CONTROLLER STATES
 float F_thrust_flip = 0.0f; // [N]
@@ -308,6 +309,7 @@ void controllerGTCReset(void)
     // RESET TRAJECTORY VALUES
     execute_vel_traj = false;
     execute_P2P_traj = false;
+    execute_GZ_vel_traj = false;
     P2P_traj_flag = vzero();
     s_0_t = vzero();
     s_f_t = vzero();
@@ -323,9 +325,9 @@ void controllerGTCReset(void)
     stateOmega_tr = vzero();
 
     Tau_tr = 0.0f;
-    OFx_tr = 0.0f;
-    OFy_tr = 0.0f;
-    d_ceil_tr = 0.0f;
+    Theta_x_tr = 0.0f;
+    Theta_y_tr = 0.0f;
+    D_perp_tr = 0.0f;
     
     // RL - PARAMETER ESTIMATION
     Tau_thr = 0.0f;
@@ -383,7 +385,11 @@ void GTC_Command(setpoint_t *setpoint)
             
             break;
 
-        
+        case 4: // Euler Angle
+
+            // TODO: ADD ANGLE SETPOINT OPTION INTO CONTROLLER FOR ANGLE BASED POLICY
+
+            break;        
 
         case 5: // Hard Set All Motorspeeds to Zero
             motorstop_flag = true;
@@ -516,6 +522,47 @@ void GTC_Command(setpoint_t *setpoint)
 
             break;
 
+
+        case 90: // Gazebo Velocity Trajectory (Instantaneous Acceleration)
+
+            traj_type = (axis_direction)setpoint->cmd_flag;
+
+            switch(traj_type){
+
+                case x_axis:
+
+                    s_0_t.x = setpoint->cmd_val1;   // Starting position [m]
+                    v_t.x = setpoint->cmd_val2;     // Desired velocity [m/s]
+                    a_t.x = 0.0f;                   // Acceleration [m/s^2]
+
+                    t_traj.x = 0.0f; // Reset timer
+                    execute_GZ_vel_traj = true;
+                    break;
+
+                case y_axis:
+
+                    s_0_t.y = setpoint->cmd_val1;
+                    v_t.y = setpoint->cmd_val2;
+                    a_t.y = 0.0f;
+
+                    t_traj.y = 0.0f;
+                    execute_GZ_vel_traj = true;
+                    break;
+
+                case z_axis:
+
+                    s_0_t.z = setpoint->cmd_val1;
+                    v_t.z = setpoint->cmd_val2;
+                    a_t.z = 0.0f;
+
+                    t_traj.z = 0.0f;
+                    execute_GZ_vel_traj = true;
+                    break;
+                    
+            }
+
+            break;
+
         
 
     }
@@ -571,6 +618,31 @@ void velocity_Traj()
     
 }
 
+void GZ_velocity_Traj() // Gazebo Velocity Trajectory (Instantaneous Acceleration)
+{
+
+    float t = t_traj.idx[0];
+
+    // CONSTANT X-VELOCITY TRAJECTORY
+    x_d.idx[0] = v_t.idx[0]*t + s_0_t.idx[0]; // vx*t + x_0
+    v_d.idx[0] = v_t.idx[0]; // vx
+    a_d.idx[0] = 0.0;
+
+    // CONSTANT Y-VELOCITY TRAJECTORY
+    x_d.idx[1] = v_t.idx[1]*t + s_0_t.idx[1]; // vy*t + x_0
+    v_d.idx[1] = v_t.idx[1]; // vy
+    a_d.idx[1] = 0.0f;
+
+    // CONSTANT Z-VELOCITY TRAJECTORY
+    x_d.idx[2] = v_t.idx[2]*t + s_0_t.idx[2]; // vz*t + z_0
+    v_d.idx[2] = v_t.idx[2]; // vz
+    a_d.idx[2] = 0.0f;
+    
+
+    t_traj.idx[0] += dt;
+    
+}
+
 
 void point2point_Traj()
 {
@@ -617,53 +689,56 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 {
     if (RATE_DO_EXECUTE(RATE_100_HZ,tick))
     {
+
         if(camera_sensor_active == true)
         {
             Tau = sensors->Tau_est;
-            OFx = sensors->OFx_est;
-            OFy = sensors->OFy_est;
+            Theta_x = sensors->Theta_x_est;
+            Theta_y = sensors->Theta_y_est;
         }
         else
         {
             Tau = sensors->Tau;
-            OFx = sensors->OFx;
-            OFy = sensors->OFy;
+            Theta_x = sensors->Theta_x;
+            Theta_y = sensors->Theta_y;
         }
 
-        d_ceil = sensors->d_ceil;
+        D_perp = sensors->D_perp;
         X->data[0][0] = Tau;
-        X->data[1][0] = OFy;
-        X->data[2][0] = d_ceil; // d_ceiling [m]
+        X->data[1][0] = Theta_x;
+        X->data[2][0] = D_perp; 
 
         if(policy_armed_flag == true){ 
+
+            V_mag = sqrtf(powf(state->velocity.x,2) + powf(state->velocity.y,2) + powf(state->velocity.z,2));
 
             switch(Policy){
 
                 case PARAM_OPTIM:
-                    if(Tau <= Tau_thr && onceFlag == false && state->velocity.z > 0.1){
-                    onceFlag = true;
-                    flip_flag = true;  
+                    if(Tau <= Tau_thr && onceFlag == false && V_mag > 0.2){
+                        onceFlag = true;
+                        flip_flag = true;  
 
-                    // UPDATE AND RECORD FLIP VALUES
-                    statePos_tr = statePos;
-                    stateVel_tr = stateVel;
-                    stateQuat_tr = stateQuat;
-                    stateOmega_tr = stateOmega;
+                        // UPDATE AND RECORD FLIP VALUES
+                        statePos_tr = statePos;
+                        stateVel_tr = stateVel;
+                        stateQuat_tr = stateQuat;
+                        stateOmega_tr = stateOmega;
 
-                    Tau_tr = Tau;
-                    OFx_tr = OFx;
-                    OFy_tr = OFy;
-                    d_ceil_tr = d_ceil;
+                        Tau_tr = Tau;
+                        Theta_x_tr = Theta_x;
+                        Theta_y_tr = Theta_y;
+                        D_perp_tr = D_perp;
 
-                
-                    M_d.x = 0.0f;
-                    M_d.y = -G1*1e-3f;
-                    M_d.z = 0.0f;
+                    
+                        M_d.x = 0.0f;
+                        M_d.y = -G1*1e-3f;
+                        M_d.z = 0.0f;
 
-                    F_thrust_flip = 0.0;
-                    M_x_flip = M_d.x*1e3f;
-                    M_y_flip = M_d.y*1e3f;
-                    M_z_flip = M_d.z*1e3f;
+                        F_thrust_flip = 0.0;
+                        M_x_flip = M_d.x*1e3f;
+                        M_y_flip = M_d.y*1e3f;
+                        M_z_flip = M_d.z*1e3f;
                     }
                     
                     break;
@@ -683,9 +758,9 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                         stateOmega_tr = stateOmega;
 
                         Tau_tr = Tau;
-                        OFx_tr = OFx;
-                        OFy_tr = OFy;
-                        d_ceil_tr = d_ceil;
+                        Theta_x_tr = Theta_x;
+                        Theta_y_tr = Theta_y;
+                        D_perp_tr = D_perp;
 
                         Policy_Flip_tr = Policy_Flip;
                         Policy_Action_tr = NN_predict(X,&NN_Policy_Action);
@@ -721,9 +796,9 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
                         stateOmega_tr = stateOmega;
 
                         Tau_tr = Tau;
-                        OFx_tr = OFx;
-                        OFy_tr = OFy;
-                        d_ceil_tr = d_ceil;
+                        Theta_x_tr = Theta_x;
+                        Theta_y_tr = Theta_y;
+                        D_perp_tr = D_perp;
 
                         Policy_Flip_tr = Policy_Flip;
                         Policy_Action_tr = Policy_Action;
@@ -731,6 +806,41 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
 
                         M_d.x = 0.0f;
                         M_d.y = -Policy_Action*1e-3f;
+                        M_d.z = 0.0f;
+
+                        F_thrust_flip = 0.0;
+                        M_x_flip = M_d.x*1e3f;
+                        M_y_flip = M_d.y*1e3f;
+                        M_z_flip = M_d.z*1e3f;
+
+                    }
+
+                    break;
+
+                case DEEP_RL_SB3:
+
+                    if(onceFlag == false){
+
+                        onceFlag = true;
+                        flip_flag = true;
+
+                        // UPDATE AND RECORD FLIP VALUES
+                        statePos_tr = statePos;
+                        stateVel_tr = stateVel;
+                        stateQuat_tr = stateQuat;
+                        stateOmega_tr = stateOmega;
+
+                        Tau_tr = Tau;
+                        Theta_x_tr = Theta_x;
+                        Theta_y_tr = Theta_y;
+                        D_perp_tr = D_perp;
+
+                        Policy_Flip_tr = NAN;
+                        Policy_Action_tr = G1;
+
+
+                        M_d.x = 0.0f;
+                        M_d.y = G1*1e-3f;
                         M_d.z = 0.0f;
 
                         F_thrust_flip = 0.0;
@@ -761,6 +871,9 @@ void controllerGTC(control_t *control, setpoint_t *setpoint,
         }
         else if(execute_P2P_traj){
             point2point_Traj();
+        }
+        else if(execute_GZ_vel_traj){
+            GZ_velocity_Traj();
         }
 
         
@@ -1006,9 +1119,9 @@ void compressStates(){
     StatesZ_GTC.quat = quatcompress(q);
 
     // COMPRESS SENSORY VALUES
-    StatesZ_GTC.OF_xy = compressXY(OFx,OFy);
+    StatesZ_GTC.OF_xy = compressXY(Theta_x,Theta_y);
     StatesZ_GTC.Tau = (int16_t)(Tau * 1000.0f); 
-    StatesZ_GTC.d_ceil = (int16_t)(d_ceil * 1000.0f);
+    StatesZ_GTC.D_perp = (int16_t)(D_perp * 1000.0f);
 
     // COMPRESS THRUST/MOMENT VALUES
     StatesZ_GTC.FMz = compressXY(F_thrust,M.z*1000.0f);
@@ -1060,9 +1173,9 @@ void compressFlipStates(){
         stateQuat_tr.w};
     FlipStatesZ_GTC.quat = quatcompress(q);
 
-   FlipStatesZ_GTC.OF_xy = compressXY(OFx_tr,OFy_tr);
+   FlipStatesZ_GTC.OF_xy = compressXY(Theta_x_tr,Theta_y_tr);
    FlipStatesZ_GTC.Tau = (int16_t)(Tau_tr * 1000.0f); 
-   FlipStatesZ_GTC.d_ceil = (int16_t)(d_ceil_tr * 1000.0f);
+   FlipStatesZ_GTC.D_perp = (int16_t)(D_perp_tr * 1000.0f);
 
    FlipStatesZ_GTC.NN_FP = compressXY(Policy_Flip_tr,Policy_Action_tr); // Flip value (OC_SVM) and Flip action (NN)
 

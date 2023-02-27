@@ -10,6 +10,7 @@ float64[3] policy
 
 float32 reward
 float32 reward_avg
+float64[5] reward_vals
 
 float64[3] vel_d
 

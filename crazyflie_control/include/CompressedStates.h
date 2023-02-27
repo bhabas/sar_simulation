@@ -41,7 +41,7 @@ struct {
     // Compressed Optical Flow Values
     int16_t Tau;   // [milli-rad/s]
     uint32_t OF_xy; // [milli-rad/s]
-    int16_t d_ceil; // [mm]
+    int16_t D_perp; // [mm]
 
     uint32_t NN_FP; // NN_flip,NN_policy
 
@@ -82,7 +82,7 @@ struct {
     // Compressed Optical Flow Values
     int16_t Tau;   // [milli-rad/s]
     uint32_t OF_xy; // [milli-rad/s]
-    int16_t d_ceil; // [m]
+    int16_t D_perp; // [m]
 
     uint32_t NN_FP; // NN_flip,NN_policy
 

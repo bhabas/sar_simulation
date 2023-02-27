@@ -6,7 +6,6 @@ import os
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
-sys.path.insert(1,'/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_env')
 sys.path.insert(1,BASE_PATH)
 
 from crazyflie_env.CrazyflieEnv_ParamOpt import CrazyflieEnv_ParamOpt
@@ -34,7 +33,7 @@ if __name__ == '__main__':
 
 
         ## INITIALIALIZE LOGGING DATA
-        trial_name = f"DeepRL--Vd_{V_d:.2f}--phi_{phi:.2f}--{env.modelInitials()}.csv"
+        trial_name = f"DeepRL--Vd_{V_d:.2f}--phi_{phi:.2f}--{env.modelInitials}.csv"
 
         
         ## PARAMTER OPTIMIZATION

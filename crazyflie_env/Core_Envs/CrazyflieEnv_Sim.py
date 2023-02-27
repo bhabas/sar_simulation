@@ -5,7 +5,10 @@ import os
 import time
 import sys
 import subprocess
+import threading
+import signal
 import rospy
+import gym
 from .CrazyflieEnv_Base import CrazyflieEnv_Base
 
 ## ROS MESSAGES AND SERVICES
@@ -24,34 +27,47 @@ GREEN = '\033[92m'
 CYAN = '\033[96m'
 ENDC = '\033[m'
 
-class CrazyflieEnv_Sim(CrazyflieEnv_Base):
+class CrazyflieEnv_Sim(CrazyflieEnv_Base,gym.Env):
     metadata = {'render.modes': ['human']}
-    def __init__(self):
-        # super().__init__()        
+    def __init__(self,GZ_Timeout=True,debug_mode=False):
         CrazyflieEnv_Base.__init__(self)
         self.env_name = "CF_Gazebo"
+        self.debug_mode = debug_mode
 
         ## GAZEBO SIMULATION INITIALIZATION            
-        # self.gazeboTimeout = GZ_Timeout
         rospy.init_node("Crazyflie_Env_Sim_Node")
 
+        ## KILL EVERYTHING
+        os.system("killall -9 gzserver gzclient")
+        os.system("rosnode kill /gazebo /gazebo_gui")
+        time.sleep(2.0)
+        os.system("rosnode kill /Controller_Node")
+        time.sleep(2.0)
+        os.system("rosnode kill /CF_DataConverter_Node")
+        time.sleep(3.0)
+
+
         ## LAUNCH GAZEBO
-        self.launch_Gazebo() 
-        rospy.wait_for_service("/gazebo/pause_physics",timeout=10)
-        
+        self.launch_Gazebo()
+
         ## LAUNCH CONTROLLER
-        self.launch_Node_Controller()
-        rospy.wait_for_service("/CTRL/Cmd_ctrl",timeout=5)
+        self.launch_Controller()
 
         ## LAUNCH CF_DC
-        self.launch_Node_CF_DC()
-        rospy.wait_for_service("/CF_DC/Cmd_CF_DC",timeout=5)
+        self.launch_CF_DC()
+
+
+
+        ## START TIMEOUT/DIAGNOSTIC THREAD
+        if GZ_Timeout == True:
+            Timeout_Thread = threading.Thread(target=self.check_status)
+            Timeout_Thread.name = "GZ_Timeout_Thread"
+            Timeout_Thread.setDaemon(True)  
+            Timeout_Thread.start()
 
         print("[INITIATING] Gazebo simulation started")
-        
 
-
-
+    
     
 
     def sleep(self,time_s):
@@ -61,12 +77,6 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base):
 
         t_start = self.t
         while self.t - t_start <= time_s:
-            # print("Sleeping....")
-            FailureModes = self.diagnosticTest()
-            if any(FailureModes):
-                self.Restart(FailureModes)
-                self.done = True
-                return False
 
             ## NEGATIVE TIME DELTA
             if self.t < t_start:
@@ -84,14 +94,6 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base):
             vel_d (list): Launch velocity [m/s] | [Vx,Vy,Vz]
             quat_0 (list, optional): Orientation at launch. Defaults to [0,0,0,1].
         """        
-
-        ## SET DESIRED VEL IN CONTROLLER
-        self.gazebo_pause_physics()
-        self.SendCmd('Pos',cmd_flag=0)
-        self.iter_step(2)
-        self.SendCmd('Vel',cmd_vals=vel_d,cmd_flag=1)
-        self.iter_step(2)
-        
 
         ## CREATE SERVICE MESSAGE
         state_srv = ModelState()
@@ -118,6 +120,16 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base):
 
         ## PUBLISH MODEL STATE SERVICE REQUEST
         self.callService('/gazebo/set_model_state',state_srv,SetModelState)
+        self.iter_step(2)
+
+
+        ## SET DESIRED VEL IN CONTROLLER
+        self.SendCmd('GZ_traj',cmd_vals=[pos_0[0],vel_d[0],0],cmd_flag=0)
+        self.iter_step(2)
+        self.SendCmd('GZ_traj',cmd_vals=[pos_0[1],vel_d[1],0],cmd_flag=1)
+        self.iter_step(2)
+        self.SendCmd('GZ_traj',cmd_vals=[pos_0[2],vel_d[2],0],cmd_flag=2)
+        self.iter_step(2)
         
 
     def reset_pos(self,z_0=0.358): # Disable sticky then places spawn_model at origin
@@ -171,45 +183,195 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base):
     ##      GAZEBO TECHNICAL
     # ============================
     def launch_Gazebo(self):
-        """ Launches Gazebo environment with crazyflie drone
+        """ Launches Gazebo environment with crazyflie quadrotor
         """        
 
         print("[STARTING] Starting Gazebo Process...")
-        term_command = "rosnode kill /gazebo /gazebo_gui"
-        os.system(term_command)
-        time.sleep(1.0)
 
-        term_command = "killall -9 gzserver gzclient"
-        os.system(term_command)
-        time.sleep(1.0)
-        
-        subprocess.Popen( # Gazebo Process
+        self.GZ_pro = subprocess.Popen( # Gazebo Process
             "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_launch launch_gazebo.bash", 
             start_new_session=True, shell=True)
 
-    def launch_Node_Controller(self):
+        rospy.wait_for_service("/gazebo/pause_physics",timeout=30)
+
+    
+
+    def launch_Controller(self):
         """ 
         Kill previous controller node if active and launch controller node
         """        
-        
+
         print("[STARTING] Starting Controller Process...")
-        os.system("rosnode kill /Controller_Node")
-        time.sleep(0.5)
-        subprocess.Popen( # Controller Process
+       
+        self.ctrl_pro = subprocess.Popen( # Controller Process
             "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_control controller",
             close_fds=True, preexec_fn=os.setsid, shell=True)
 
-    def launch_Node_CF_DC(self):
+        rospy.wait_for_service("/CTRL/Cmd_ctrl",timeout=20)
+
+    
+
+    def launch_CF_DC(self):
         """ 
         Kill previous CF_DC node if active and launch CF_DC node
         """        
-        
+
         print("[STARTING] Starting CF_DC Process...")
-        os.system("rosnode kill /CF_DataConverter_Node")
-        time.sleep(0.5)
-        subprocess.Popen( # CF_DC Process
+        self.CF_DC_pro = subprocess.Popen( # CF_DC Process
             "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_data_converter CF_DataConverter",
             close_fds=True, preexec_fn=os.setsid, shell=True)
+
+        rospy.wait_for_service("/CF_DC/Cmd_CF_DC",timeout=20)
+
+
+    def callService(self,addr,srv,srv_type,retries=5):
+
+        for retry in range(retries):
+
+            try:
+                rospy.wait_for_service(addr,timeout=1)
+                service = rospy.ServiceProxy(addr, srv_type)
+                service(srv)
+
+                return True
+
+            except (rospy.ServiceException,rospy.exceptions.ROSException) as e:
+                print(f"[WARNING] {addr} service call failed (callService)")
+                print(f"[WARNING] {e}")
+
+                self.done = True
+
+        
+        return False
+
+
+    def check_status(self):
+        """
+        This function runs in a seperate thread that continually checks the status of the simulation.
+        If connection to any of the Controller, CF_DC, and Gazebo fails then it will restart the full simulation.
+        """        
+
+        while True:
+
+            if self.diagnosticTest() == False:
+
+                print(f"{YELLOW}[WARNING] Diagnostic Test Failed. Restarting Simulation.{ENDC}")
+                self.done = True
+
+                for retry in range(3):
+
+                    print(f"{YELLOW}[WARNING] Simulation Stalled. Restart Attempt: ({retry+1}/3).{ENDC}")
+
+                    if self.Restart() == True:
+                        if self.debug_mode:
+                            print(f"{YELLOW}[WARNING] Simulation rebooted (diagnosticTest){ENDC}")
+                        break
+
+                    if retry == 2:
+                        ## IF RESTART ATTEMPTS ARE EXCEEDED
+                        print(f"{RED}[ERROR] Simulation Restart Failed. Closing Simulation. {ENDC}")
+                        self.close()
+                        break
+
+            else:
+                pass # DO NOTHING
+
+                
+                
+            
+            
+
+    def diagnosticTest(self):
+        
+        ## CHECK THAT GAZEBO IS FUNCTIONING
+        try:
+            rospy.wait_for_message("/clock", Clock, timeout=10)
+            if self.debug_mode:
+                print(f"{YELLOW}[WARNING] /clock wait for message success (diagnosticTest){ENDC}")
+
+
+        except rospy.ROSException as e:
+            print(f"{YELLOW}[WARNING] /clock wait for message failed (diagnosticTest){ENDC}")
+            print(f"{YELLOW}[WARNING] {e}{ENDC}")
+            return False
+
+
+        ## CHECK THAT CONTROLLER IS FUNCTIONING
+        try:
+            rospy.wait_for_service("/CTRL/Cmd_ctrl",timeout=1)
+            if self.debug_mode:
+                print(f"{YELLOW}[WARNING] /CF_DC/Cmd_ctrl wait for service success (diagnosticTest){ENDC}")
+
+
+        except rospy.ROSException as e:
+            print(f"{YELLOW}[WARNING] /CTRL/Cmd_ctrl wait for service failed (diagnosticTest){ENDC}")
+            print(f"{YELLOW}[WARNING] {e}{ENDC}")
+            return False
+
+        ## CHECK THAT CF_DC IS FUNCTIONING
+        try:
+            rospy.wait_for_service('/CF_DC/Cmd_CF_DC',timeout=1)
+            if self.debug_mode:
+                print(f"{YELLOW}[WARNING] /CF_DC/Cmd_CF_DC wait for service success (diagnosticTest){ENDC}")
+
+
+        except rospy.ROSException as e:
+            print(f"{YELLOW}[WARNING] /CF_DC/Cmd_CF_DC wait for service failed (diagnosticTest){ENDC}")
+            print(f"{YELLOW}[WARNING] {e}{ENDC}")
+            return False
+
+        return True
+
+    def Restart(self):
+
+        ## KILL EVERYTHING
+        os.system("killall -9 gzserver gzclient")
+        os.system("rosnode kill /gazebo /gazebo_gui")
+        time.sleep(2.0)
+        # os.system("rosnode kill /Controller_Node")
+        # time.sleep(2.0)
+        # os.system("rosnode kill /CF_DataConverter_Node")
+        # time.sleep(3.0)
+
+        
+        ## LAUNCH GAZEBO
+        try:
+            os.killpg(os.getpgid(self.GZ_pro.pid), signal.SIGTERM)
+            self.launch_Gazebo()
+
+        except (rospy.ROSException,rospy.ROSInterruptException) as e:
+            print(f"{YELLOW}[WARNING] Gazebo Launch Failed.{ENDC}")
+            return False
+
+        # ## LAUNCH CONTROLLER
+        # try:
+        #     os.killpg(os.getpgid(self.ctrl_pro.pid), signal.SIGTERM)
+        #     self.launch_Controller()
+
+        # except (rospy.ROSException,rospy.ROSInterruptException) as e:
+        #     print(f"{YELLOW}[WARNING] Controller Launch Failed.{ENDC}")
+        #     return False
+
+
+        # ## LAUNCH CF_DC
+        # try:
+        #     os.killpg(os.getpgid(self.CF_DC_pro.pid), signal.SIGTERM)
+        #     self.launch_CF_DC()
+
+        # except (rospy.ROSException,rospy.ROSInterruptException) as e:
+        #     print(f"{YELLOW}[WARNING] CF_DC Launch Failed.{ENDC}")
+        #     return False
+
+
+        return True
+
+            
+
+    def close(self):
+        os.system("killall gzserver gzclient")
+
+
+
 
     def gazebo_pause_physics(self):
         srv = EmptyRequest()
@@ -220,143 +382,24 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base):
         self.callService("/gazebo/unpause_physics",srv,Empty)
         
     def iter_step(self,n_steps:int = 10):
-        os.system(f'gz world --multi-step={n_steps}')
+        """Update simulation by n timesteps
 
-        
-    def callService(self,addr,srv,srv_type,retries=5):
+        Args:
+            n_steps (int, optional): Number of timesteps to step through. Defaults to 10.
+        """        
 
-        FailureModes = self.diagnosticTest()
+        ## This might be better to be replaced with a world plugin with step function and a response when complete
+        ## (https://github.com/bhairavmehta95/ros-gazebo-step)
+        os.system(f'gz world --multi-step={int(n_steps)}')
 
-        if any(FailureModes):
-            self.Restart(FailureModes)
-            self.done = True
-
-        for retry in range(retries):
-
-            try:
-                print(CYAN + f"[CALL_SERVICE] Calling: {addr}" + ENDC)
-                rospy.wait_for_service(addr,timeout=1)
-                service = rospy.ServiceProxy(addr, srv_type)
-                service(srv)
-                print(CYAN + f"[CALL_SERVICE] Called: {addr}" + ENDC)
-
-                return True
-
-            except rospy.ServiceException as e:
-                print(f"[WARNING] {addr} service call failed (callService)")
-                print(f"[WARNING] {e}")
-                FailureModes[2] = False
-
-                self.Restart(FailureModes)
-                self.done = True
-
-            except rospy.exceptions.ROSException as e:
-                print(f"[WARNING] {addr} service call failed (callService)")
-                print(f"[WARNING] {e}")
-                FailureModes[2] = False
-
-                self.Restart(FailureModes)
-                self.done = True
-        
-        return False
-
-    def diagnosticTest(self):
-        FailureModes = [False,False,False]
-        sys.stdout.write(YELLOW)
-        
-        ## CHECK THAT GAZEBO IS FUNCTIONING
-        try:
-            print(CYAN + f"[DIAGNOSTIC] Calling: /gazebo/pause_physics" + ENDC)
-            rospy.wait_for_service("/gazebo/pause_physics",timeout=1)
-            print(CYAN + f"[DIAGNOSTIC] Called: /gazebo/pause_physics" + ENDC)
-
-        except rospy.ROSException as e:
-            print(f"[WARNING] /gazebo/pause_physics wait for service failed (callService)")
-            print(f"[WARNING] {e}")
-            FailureModes[0] = True
-
-        ## CHECK THAT CONTROLLER IS FUNCTIONING
-        try:
-            print(CYAN + f"[DIAGNOSTIC] Calling: /CTRL/Cmd_ctrl" + ENDC)
-            rospy.wait_for_service("/CTRL/Cmd_ctrl",timeout=1)
-            print(CYAN + f"[DIAGNOSTIC] Called: /CTRL/Cmd_ctrl" + ENDC)
-        except rospy.ROSException as e:
-            print(f"[WARNING] /CTRL/Cmd_ctrl wait for service failed (callService)")
-            print(f"[WARNING] {e}")
-            FailureModes[1] = True
-
-        ## CHECK THAT CF_DC IS FUNCTIONING
-        try:
-            print(CYAN + f"[DIAGNOSTIC] Calling: /CF_DC/Cmd_CF_DC" + ENDC)
-            rospy.wait_for_service('/CF_DC/Cmd_CF_DC',timeout=1)
-            print(CYAN + f"[DIAGNOSTIC] Called: /CF_DC/Cmd_CF_DC" + ENDC)
-
-        except rospy.ROSException as e:
-            print(f"[WARNING] /CF_DC/Cmd_CF_DC wait for service failed (callService)")
-            print(f"[WARNING] {e}")
-            FailureModes[2] = True
-
-        sys.stdout.write(ENDC)
-        return FailureModes
-
-    def Restart(self,FailureModes=[True,False,False]):
-        sys.stdout.write(YELLOW)
-
-        if FailureModes == [True,False,False]:
-            for retry in range(3):
+        ## If num steps is large then wait until iteration is fully complete before proceeding
+        if n_steps >= 50: 
+            while True:
                 try:
-                    print(f"[WARNING] Gazebo Restart. Attempt: {retry+1}/3 (restart_Gazebo)")
-                    self.launch_Gazebo()
-                    rospy.wait_for_service("/gazebo/pause_physics",timeout=10)
-                    print(GREEN+ f"[WARNING] Gazebo restart successful. (restart_Gazebo)" + ENDC)
-                    return True
+                    rospy.wait_for_message('/clock', Clock, timeout=0.1)
+                except:
+                    break
 
-                except rospy.ROSException as e:
-                    print(f"[WARNING] Gazebo restart Failed. (restart_Gazebo)")
-                    print(f"[WARNING] {e}")
-            
-        sys.stdout.write(RED)
-        for retry in range(5):
-            try:
-                print(f"[WARNING] Full Simulation Restart. Attempt: {retry+1}/5 (Restart Sim)")
-
-                ## KILL EVERYTHING
-
-                os.system("killall -9 gzserver gzclient")
-                os.system("rosnode kill /gazebo /gazebo_gui /Controller_Node /CF_DataConverter_Node")
-                time.sleep(2.0)
-                
-                subprocess.Popen( # Gazebo Process
-                    "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_launch launch_gazebo.bash", 
-                    start_new_session=True, shell=True)
-                rospy.wait_for_service("/gazebo/pause_physics",timeout=10)
-        
-                ## LAUNCH CONTROLLER
-                subprocess.Popen( # Controller Process
-                    "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_control controller",
-                    close_fds=True, preexec_fn=os.setsid, shell=True)
-                rospy.wait_for_service("/CTRL/Cmd_ctrl",timeout=5)
-
-                ## LAUNCH CF_DC
-                subprocess.Popen( # CF_DC Process
-                    "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_data_converter CF_DataConverter",
-                    close_fds=True, preexec_fn=os.setsid, shell=True)
-                rospy.wait_for_service("/CF_DC/Cmd_CF_DC",timeout=5)
-
-                ## UNPAUSE GAZEBO
-                rospy.wait_for_service("/gazebo/pause_physics",timeout=10)
-                print(GREEN + f"[WARNING] Gazebo restart successful. (Restart Sim)" + ENDC)
-
-                return True
-
-            except rospy.ROSException as e:
-                print(f"[WARNING] Gazebo restart Failed. (Restart Sim)")
-                print(f"[WARNING] {e}")
-
-            print('\x1b[0m')
-
-    def close(self):
-        os.system("killall gzserver gzclient")
 
 if __name__ == '__main__':
     ## INIT GAZEBO ENVIRONMENT

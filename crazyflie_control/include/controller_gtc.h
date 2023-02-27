@@ -51,6 +51,7 @@ bool controllerGTCTest(void);
 void controllerGTCReset(void);
 void controllerGTCTraj(void);
 void velocity_Traj(void);
+void GZ_velocity_Traj(void);
 void point2point_Traj(void);
 void controllerGTC(control_t *control, setpoint_t *setpoint,
                                          sensorData_t *sensors,
@@ -104,7 +105,6 @@ extern float m;
 extern float Ixx;
 extern float Iyy;
 extern float Izz;
-extern float h_ceiling;
 
 // INIT STATE VALUES
 extern struct vec statePos;
@@ -115,14 +115,14 @@ extern struct vec stateEul;
 
 // OPTICAL FLOW STATES
 extern float Tau;   // [s]
-extern float OFx;   // [rad/s]
-extern float OFy;   // [rad/s] 
-extern float d_ceil;
+extern float Theta_x;   // [rad/s] 
+extern float Theta_y;   // [rad/s]
+extern float D_perp;
 
 // ESTIMATED OPTICAL FLOW STATES
 extern float Tau_est; // [s]
-extern float OFx_est; // [rad/s]
-extern float OFy_est; // [rad/s]
+extern float Theta_x_est; // [rad/s]
+extern float Theta_y_est; // [rad/s]
 
 // INIT DESIRED STATES
 extern struct vec x_d;      // Pos-desired [m]
@@ -180,6 +180,7 @@ extern bool safeModeFlag;
 
 extern bool execute_P2P_traj;
 extern bool execute_vel_traj;
+extern bool execute_GZ_vel_traj;
 extern bool policy_armed_flag;
 extern bool camera_sensor_active;
 
@@ -203,9 +204,9 @@ extern struct vec stateOmega_tr;    // Angular Rate [rad/s]
 
 // OPTICAL FLOW STATES
 extern float Tau_tr;        // [rad/s]
-extern float OFx_tr;        // [rad/s]
-extern float OFy_tr;        // [rad/s]
-extern float d_ceil_tr;     // [m/s]
+extern float Theta_x_tr;        // [rad/s]
+extern float Theta_y_tr;        // [rad/s]
+extern float D_perp_tr;     // [m/s]
 
 // CONTROLLER STATES
 extern float F_thrust_flip; // [N]
@@ -231,7 +232,8 @@ extern float Policy_Action_tr;
 typedef enum {
     PARAM_OPTIM = 0,
     SVL_POLICY = 1,
-    DEEP_RL = 2
+    DEEP_RL = 2,
+    DEEP_RL_SB3 = 3
 }PolicyType;
 extern PolicyType Policy;
 

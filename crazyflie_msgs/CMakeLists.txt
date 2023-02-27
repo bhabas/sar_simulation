@@ -39,6 +39,7 @@ add_service_files(
   loggingCMD.srv
   domainRand.srv
   RLCmd.srv
+  ModelMove.srv
 )
 
 ## Generate added messages and services with any dependencies listed here

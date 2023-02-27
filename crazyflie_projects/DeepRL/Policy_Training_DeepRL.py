@@ -1,44 +1,151 @@
 ## STANDARD IMPORTS
 import os
-from datetime import datetime
+from datetime import datetime,timedelta
 import numpy as np
 import pandas as pd
 import torch as th
+import yaml
+import pandas as pd
+import csv
+import time 
 
 ## PLOTTING IMPORTS
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib as mpl
 import plotly.graph_objects as go
-from scipy.interpolate import griddata
+from scipy.interpolate import griddata, Rbf
 
 ## SB3 Imports
 from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import *
+from stable_baselines3.common.vec_env import VecCheckNan
+from stable_baselines3.common import utils
 
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg,os
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
-sys.path.insert(1,'/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_env')
 sys.path.insert(1,BASE_PATH)
 
 
-## IMPORT ENVIRONMENTS
-from Envs.CrazyflieEnv_DeepRL import CrazyflieEnv_DeepRL
-from Envs.CF_Env_2D import CF_Env_2D
 
 
 ## COLLECT CURRENT TIME
 now = datetime.now()
 current_time = now.strftime("%m_%d-%H:%M")
 
+class CheckpointSaveCallback(BaseCallback):
+
+    def __init__(self, save_freq: int, model_dir, verbose: int = 0):
+        super(CheckpointSaveCallback, self).__init__(verbose)
+        self.save_freq = save_freq
+        self.model_dir = model_dir
+
+        self.t_step_CircBuff = [0,0,0,0,0] # Circular buffer of recent timesteps
+
+        
+    def _on_step(self) -> bool:
+
+        ## SAVE MODEL AND REPLAY BUFFER ON SAVE_FREQ
+        if self.num_timesteps % self.save_freq == 0:
+
+            ## APPEND NEWEST TIMESTEP
+            self.t_step_CircBuff.append(self.num_timesteps)
+
+            ## SAVE NEWEST MODEL AND REPLAY BUFFER
+            newest_model = os.path.join(self.model_dir, f"{self.num_timesteps}_step_model")
+            newest_replay_buff = os.path.join(self.model_dir, f"{self.num_timesteps}_step_replay_buff")
+
+            self.model.save(newest_model)
+            self.model.save_replay_buffer(newest_replay_buff)
+
+
+            ## DELETE OLDEST MODEL AND REPLAY BUFFER
+            oldest_model = os.path.join(self.model_dir,f"{self.t_step_CircBuff[0]}_step_model.zip")
+            oldest_replay_buff = os.path.join(self.model_dir,f"{self.t_step_CircBuff[0]}_step_replay_buff.pkl")
+
+            if os.path.exists(oldest_model):
+                os.remove(oldest_model)
+
+            if os.path.exists(oldest_replay_buff):
+                os.remove(oldest_replay_buff)
+
+            ## REMOVE OLDEST TIMESTEP
+            self.t_step_CircBuff.pop(0)
+
+
+            if self.verbose > 1:
+                print(f"Saving model checkpoint to {newest_model}")
+        return True
+
+    def _on_rollout_end(self) -> None:
+        self.logger.record('time/K_ep',self.training_env.envs[0].env.k_ep)
+        return True
 
 
 class Policy_Trainer_DeepRL():
-    def __init__(self,env,model,leg_config):
+    def __init__(self,env,log_dir,log_name):
         self.env = env
-        self.model = model
-        self.leg_config = leg_config
+        self.log_dir = log_dir
+
+        ## LOADED MODEL
+        if log_name[-2] == "_": 
+            self.log_name = log_name[:-2]
+            latest_run_id = utils.get_latest_run_id(log_dir,log_name)
+            self.TB_log_path = os.path.join(log_dir,f"{self.log_name}_{latest_run_id}")
+            self.model_dir = os.path.join(self.TB_log_path,"models")
+
+        ## NEW MODEL
+        else: 
+            self.log_name = log_name
+            latest_run_id = utils.get_latest_run_id(log_dir,log_name)
+            self.TB_log_path = os.path.join(log_dir,f"{self.log_name}_{latest_run_id}")
+            self.model_dir = os.path.join(self.TB_log_path,"models")
+
+        ## GENERATE LOG/MODEL DIRECTORY
+        if not os.path.exists(self.TB_log_path):
+            os.makedirs(self.TB_log_path,exist_ok=True)
+
+        if not os.path.exists(self.model_dir):
+            os.makedirs(self.model_dir,exist_ok=True)
+
+    def create_model(self):
+        """Creates SAC agent used in DeepRL trainingg process
+        """        
+
+        self.model = SAC(
+            "MlpPolicy",
+            env=self.env,
+            gamma=0.999,
+            learning_rate=0.002,
+            policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[12,12]),
+            verbose=1,
+            device='cpu',
+            tensorboard_log=self.log_dir
+        ) 
+
+        self.save_Config_File()
+
+    def load_model(self,t_step):
+        """Loads current model and replay buffer from the selected time step
+
+        Args:
+            t_step (int): Timestep of the selected model
+        """        
+
+        ## MODEL PATHS
+        model_path = os.path.join(self.model_dir,f"{t_step}_step_model")
+        replay_buff_path = os.path.join(self.model_dir,f"{t_step}_step_replay_buff")
+
+        ## LOAD MODEL AND REPLAY BUFFER
+        self.model = SAC.load(
+            model_path,
+            env=self.env,
+            device='cpu',
+            tensorboard_log=self.log_dir
+        )
+        self.model.load_replay_buffer(replay_buff_path)
+
 
     def save_NN_Params(self,SavePath):
         """Save NN parameters to C header file for upload to crazyflie
@@ -47,7 +154,7 @@ class Policy_Trainer_DeepRL():
             SavePath (str): Path to save header file
         """        
 
-        FileName = f"NN_Layers_{leg_config}_DeepRL.h"
+        FileName = f"NN_Layers_{self.env.modelInitials}_DeepRL.h"
         f = open(os.path.join(SavePath,FileName),'a')
         f.truncate(0) ## Clears contents of file
 
@@ -222,54 +329,19 @@ class Policy_Trainer_DeepRL():
                 action,_ = self.model.predict(obs)
                 obs,reward,done,info = self.env.step(action)
 
-    def train_model(self,log_name,log_dir,reset_timesteps=True):
+    def train_model(self,total_timesteps=2e6,save_freq=1000,reset_timesteps=False):
         """Script to train model via Deep RL method
 
         Args:
             log_name (str): _description_
             reset_timesteps (bool, optional): Reset starting timestep to zero. Defaults to True. 
             Set to False to resume training from previous model.
-        """        
+        """       
 
-        class CheckpointSaveCallback(BaseCallback):
-
-            def __init__(self, save_freq: int, log_dir: str, log_name: str, verbose: int = 0):
-                super(CheckpointSaveCallback, self).__init__(verbose)
-                self.save_freq = save_freq
-
-                ## DIRECTORIES
-                self.log_dir = os.path.join(log_dir,log_name+"_0")
-                self.model_dir = os.path.join(self.log_dir,"models")
-                self.replay_dir = self.log_dir
-
-            def _init_callback(self) -> None:
-                
-                ## CREATE FOLDER IF NEEDED
-                if self.log_dir is not None:
-                    os.makedirs(self.log_dir, exist_ok=True)
-                    os.makedirs(self.model_dir,exist_ok=True)
-
-            def _on_step(self) -> bool:
-                ## SAVE MODEL AND REPLAY BUFFER ON SAVE_FREQ
-                if self.n_calls % self.save_freq == 0:
-                    model_path = os.path.join(self.model_dir, f"{self.num_timesteps}_steps")
-                    self.model.save(model_path)
-
-                    replay_buff_path = os.path.join(self.model_dir, f"replay_buff")
-                    self.model.save_replay_buffer(replay_buff_path)
-
-                    if self.verbose > 1:
-                        print(f"Saving model checkpoint to {model_path}")
-                return True
-
-            def _on_rollout_end(self) -> None:
-                self.logger.record('time/K_ep',self.training_env.envs[0].env.k_ep)
-                return True
-        
-        checkpoint_callback = CheckpointSaveCallback(save_freq=1000,log_dir=log_dir,log_name=log_name)
+        checkpoint_callback = CheckpointSaveCallback(save_freq=save_freq,model_dir=self.model_dir)
         self.model.learn(
-            total_timesteps=2e6,
-            tb_log_name=log_name,
+            total_timesteps=total_timesteps,
+            tb_log_name=self.log_name,
             callback=checkpoint_callback,
             reset_num_timesteps=reset_timesteps
         )
@@ -279,17 +351,17 @@ class Policy_Trainer_DeepRL():
         fig = go.Figure()
 
         ## MESHGRID OF DATA POINTS
-        Tau_grid, OF_y_grid, d_ceil_grid = np.meshgrid(
+        Tau_grid, Theta_x_grid, D_perp_grid = np.meshgrid(
             np.linspace(0.15, 0.30, 15),
-            np.linspace(-15, 1, 15),
+            np.linspace(0, 15, 15),
             np.linspace(0.0, 1.0, 15)
         )
 
         ## CONCATENATE DATA TO MATCH INPUT SHAPE
         X_grid = np.stack((
             Tau_grid.flatten(),
-            OF_y_grid.flatten(),
-            d_ceil_grid.flatten()),axis=1)
+            Theta_x_grid.flatten(),
+            D_perp_grid.flatten()),axis=1)
 
 
         ## CALC INDEX FOR WHERE FLIP MEAN GREATER THAN FLIP REQUIREMENT
@@ -301,9 +373,9 @@ class Policy_Trainer_DeepRL():
         fig.add_trace(
             go.Scatter3d(
                 ## DATA
-                x=OF_y_grid.flatten()[valid_idx],
+                x=Theta_x_grid.flatten()[valid_idx],
                 y=Tau_grid.flatten()[valid_idx],
-                z=d_ceil_grid.flatten()[valid_idx],
+                z=D_perp_grid.flatten()[valid_idx],
                 
 
                 ## MARKER
@@ -322,16 +394,16 @@ class Policy_Trainer_DeepRL():
 
         if PlotTraj[0] != None:
             dataFile,k_ep,k_run = PlotTraj
-            arr = dataFile.grab_stateData(k_ep,k_run,['Tau','OF_y','d_ceil'])
-            Tau,OFy,d_ceil = np.split(arr,3,axis=1)
-            Tau_tr,OFy_tr,d_ceil_tr,My_tr = dataFile.grab_flip_state(k_ep,k_run,['Tau','OF_y','d_ceil','My'])
+            arr = dataFile.grab_stateData(k_ep,k_run,['Tau','Theta_x','D_perp'])
+            Tau,Theta_x,D_perp = np.split(arr,3,axis=1)
+            Tau_tr,Theta_x_tr,D_perp_tr,My_tr = dataFile.grab_flip_state(k_ep,k_run,['Tau','Theta_x','D_perp','My'])
 
             fig.add_trace(
                 go.Scatter3d(
                     ## DATA
-                    x=OFy.flatten(),
+                    x=Theta_x.flatten(),
                     y=Tau.flatten(),
-                    z=d_ceil.flatten(),
+                    z=D_perp.flatten(),
 
                     ## MARKER
                     mode='lines',
@@ -345,15 +417,15 @@ class Policy_Trainer_DeepRL():
             fig.add_trace(
                 go.Scatter3d(
                     ## DATA
-                    x=[OFy_tr],
+                    x=[Theta_x_tr],
                     y=[Tau_tr],
-                    z=[d_ceil_tr],
+                    z=[D_perp_tr],
 
                     ## HOVER DATA
                     hovertemplate=
                         f"<b>My: {My_tr:.3f} N*mm</b> \
-                        <br>Tau: {Tau_tr:.3f} | OFy: {OFy_tr:.3f} </br> \
-                        <br>D_ceil: {d_ceil_tr:.3f}</br>",
+                        <br>Tau: {Tau_tr:.3f} | Theta_x: {Theta_x_tr:.3f} </br> \
+                        <br>D_perp: {D_perp_tr:.3f}</br>",
 
                     ## MARKER
                     mode='markers',
@@ -368,9 +440,9 @@ class Policy_Trainer_DeepRL():
 
         fig.update_layout(
             scene=dict(
-                xaxis_title='OFy [rad/s]',
+                xaxis_title='Theta_x [rad/s]',
                 yaxis_title='Tau [s]',
-                zaxis_title='D_ceiling [m]',
+                zaxis_title='D_perp [m]',
                 xaxis_range=[-20,1],
                 yaxis_range=[0.4,0.1],
                 zaxis_range=[0,1.2],
@@ -430,67 +502,301 @@ class Policy_Trainer_DeepRL():
 
         plt.show()
 
+    def save_Config_File(self):
 
+        config_path = os.path.join(self.TB_log_path,"Config.yaml")
+
+        data = dict(
+            PLANE_SETTINGS = dict(
+                Plane_Model = self.env.Plane_Model,
+                Plane_Angle = self.env.Plane_Angle,
+                Plane_Pos = dict(
+                    X = self.env.Plane_Pos[0],
+                    Y = self.env.Plane_Pos[1],
+                    Z = self.env.Plane_Pos[2]
+                ),
+            ),
+
+            QUAD_SETTINGS = dict(
+                CF_Type = self.env.CF_Type,
+                CF_Config = self.env.CF_Config,
+            ),
+
+            ENV_SETTINGS = dict(
+                Environment = self.env.env_name,
+                Vel_Limts = self.env.Vel_range,
+                Phi_Limits = self.env.Phi_range,
+            ),
+
+            LEARNING_MODEL = dict(
+                Policy = self.model.policy.__class__.__name__,
+                Network_Layers = self.model.policy.net_arch,
+                Gamma = self.model.gamma,
+                Learning_Rate = self.model.learning_rate,
+                Activation_Function = "",
+            )
+
+
+        )
+
+        with open(config_path, 'w') as outfile:
+            yaml.dump(data,outfile,default_flow_style=False,sort_keys=False)
+
+    def test_landing_performance(self,fileName=None,Vel_inc=0.25,Phi_inc=5,n_episodes=5):
+        """Test trained model over varied velocity and flight angle combinations.
+
+        Args:
+            fileName (str, optional): fileName to save logged CSV as. Defaults to None.
+            Vel_inc (float, optional): Flight velocity increment [m/s]. Defaults to 0.25.
+            Phi_inc (int, optional): Flight angle increment [deg]. Defaults to 5.
+            n_episodes (int, optional): Number of episodes to test each velocity over. Defaults to 5.
+        """        
+
+        if fileName == None:
+            fileName = "PolicyPerformance_Data.csv"
+        filePath = os.path.join(self.TB_log_path,fileName)
+
+        Vel_arr = np.arange(self.env.Vel_range[0], self.env.Vel_range[1] + Vel_inc, Vel_inc)
+        Phi_arr = np.arange(self.env.Phi_range[0], self.env.Phi_range[1] + Phi_inc, Phi_inc)
+
+        
+
+        def EMA(cur_val,prev_val,alpha = 0.15):
+            """Exponential Moving Average Filter
+
+            Args:
+                cur_val (float): Current Value
+                prev_val (float): Previous Value
+                alpha (float, optional): Smoothing factor. Similar to moving average window (k), 
+                by alpha = 2/(k+1). Defaults to 0.15.
+
+            Returns:
+                float: Current average value
+            """            
+            
+            return alpha*cur_val + (1-alpha)*(prev_val)
+
+
+        ## TIME ESTIMATION FILTER INITIALIZATION
+        num_trials = len(Vel_arr)*len(Phi_arr)*n_episodes
+        idx = 0
+        t_delta = 0
+        t_delta_prev = 0
+
+        ## WRITE FILE HEADER IF NO FILE EXISTS
+        if not os.path.exists(filePath):
+            with open(filePath,'w') as file:
+                writer = csv.writer(file,delimiter=',')
+                writer.writerow([
+                    "Vel_d", "Phi_d", "Trial_num",
+                    "--",
+                    "Pad_Connections","Body_Contact",
+
+                    "Vel_flip","Phi_flip",
+
+                    "Tau_tr",
+                    "Theta_x_tr",
+                    "D_perp_tr",
+
+                    "Eul_y_Impact",
+                    
+                    "Policy_tr",
+                    "Policy_action",
+
+                    "Vx_tr",
+                    "Vz_tr",
+                    "reward","reward_vals",
+                    "--",
+                    "4_Leg_NBC","4_Leg_BC",
+                    "2_Leg_NBC","2_Leg_BC",
+                    "0_Leg_NBC","0_Leg_BC",
+
+
+                ])
+
+
+        for Vel in Vel_arr:
+            for Phi in Phi_arr:
+                for K_ep in range(n_episodes):
+
+                    start_time = time.time()
+
+                    ## TEST POLICY FOR GIVEN FLIGHT CONDITIONS
+                    obs = self.env.reset(vel=Vel,phi=Phi)
+                    done = False
+                    while not done:
+                        action,_ = self.model.predict(obs)
+                        # action = np.zeros_like(action)
+                        obs,reward,done,info = self.env.step(action)
+
+
+                    PC = self.env.pad_connections
+                    BC = self.env.BodyContact_flag
+
+                    if   PC >= 3 and BC == False:       # 4_Leg_NBC
+                        LS = [1,0,0,0,0,0]
+                    elif PC >= 3 and BC == True:        # 4_Leg_BC
+                        LS = [0,1,0,0,0,0]
+                    elif PC == 2 and BC == False:       # 2_Leg_NBC
+                        LS = [0,0,1,0,0,0]
+                    elif PC == 2 and BC == True:        # 2_Leg_BC
+                        LS = [0,0,0,1,0,0]
+                    elif PC <= 1 and BC == False:       # 0_Leg_NBC
+                        LS = [0,0,0,0,1,0]
+                    elif PC <= 1 and BC == True:        # 0_Leg_BC
+                        LS = [0,0,0,0,0,1]                 
+
+                            
+                    ## APPEND RECORDED VALUES TO FILE
+                    with open(filePath,'a') as file:
+                        writer = csv.writer(file,delimiter=',',quoting=csv.QUOTE_NONE)
+                        writer.writerow([
+                            np.round(Vel,2),np.round(Phi,2),K_ep,
+                            "--",
+                            self.env.pad_connections,self.env.BodyContact_flag,
+
+                            np.round(self.env.vel_tr_mag,2),np.round(self.env.phi_tr,2),
+
+                            np.round(self.env.obs_tr[0],3),
+                            np.round(self.env.obs_tr[1],3),
+                            np.round(self.env.obs_tr[2],3),
+
+                            np.round(self.env.eul_impact[1],3),
+
+                            np.round(self.env.action_tr[0],3),
+                            np.round(self.env.action_tr[1],3),
+
+                            np.round(self.env.vel_tr[0],3),
+                            np.round(self.env.vel_tr[2],3),
+
+                            np.round(reward,3),
+                            np.round(self.env.reward_vals,3),
+                            "--",
+                            LS[0],LS[1],
+                            LS[2],LS[3],
+                            LS[4],LS[5],
+                        ])
+
+                        ## CALCULATE AVERAGE TIME PER EPISODE
+                        t_delta = time.time() - start_time
+                        t_delta_avg = EMA(t_delta,t_delta_prev,alpha=0.01)
+                        t_delta_prev = t_delta_avg
+                        idx += 1
+
+                        TTC = round(t_delta_avg*(num_trials-idx)) # Time to completion
+                        print(f"Flight Conditions: ({Vel} m/s,{Phi} deg) \t Index: {idx}/{num_trials} \t Percentage: {100*idx/num_trials:.2f}% \t Time to Completion: {str(timedelta(seconds=TTC))}")
+
+    def Plot_Landing_Performance(self,fileName=None,saveFig=False):
+
+        if fileName == None:
+            fileName = "PolicyPerformance_Data.csv"
+        filePath = os.path.join(self.TB_log_path,fileName)
+
+        af = pd.read_csv(filePath,sep=',',comment="#")
+
+        af2 = af.groupby(['Vel_d','Phi_d']).mean().round(3).reset_index()
+
+
+
+        ## COLLECT DATA
+        R = af2.iloc[:]['Vel_d']
+        Theta = af2.iloc[:]['Phi_d']
+        C = af2.iloc[:]['4_Leg_NBC']
+
+        ## DEFINE INTERPOLATION GRID
+        R_list = np.linspace(R.min(),R.max(),num=50,endpoint=True).reshape(1,-1)
+        Theta_list = np.linspace(Theta.min(),Theta.max(),num=50,endpoint=True).reshape(1,-1)
+        R_grid, Theta_grid = np.meshgrid(R_list, Theta_list)
+        
+        ## INTERPOLATE DATA
+        LR_interp = griddata((R, Theta), C, (R_list, Theta_list.T), method='linear')
+        LR_interp += 0.001
+        
+
+        ## INIT PLOT INFO
+        fig = plt.figure(figsize=(6,6))
+        ax = fig.add_subplot(projection='polar')
+        cmap = mpl.cm.jet
+        norm = mpl.colors.Normalize(vmin=0,vmax=1)
+        
+        ax.contourf(np.radians(Theta_grid),R_grid,LR_interp,cmap=cmap,norm=norm,levels=30)
+        # ax.scatter(np.radians(Theta),R,c=C,cmap=cmap,norm=norm)
+        # ax.scatter(np.radians(Theta_grid).flatten(),R_grid.flatten(),c=LR_interp.flatten(),cmap=cmap,norm=norm)
+
+        ax.set_xticks(np.radians(np.arange(-90,90+15,15)))
+        ax.set_thetamin(Theta.min())
+        ax.set_thetamax(Theta.max())
+
+        ax.set_rticks([0.0,1.0,2.0,3.0,4.0,4.5])
+        ax.set_rmin(0)
+        ax.set_rmax(R.max())
+        
+
+
+        # ## AXIS LABELS    
+        # ax.text(np.radians(7.5),2,'Flight Velocity (m/s)',
+        #     rotation=18,ha='center',va='center')
+
+        # ax.text(np.radians(60),4.5,'Flight Angle (deg)',
+        #     rotation=0,ha='left',va='center')
+
+        if saveFig==True:
+            plt.savefig(f'{self.TB_log_path}/Landing_Rate_Fig.pdf',dpi=300)
+
+        plt.show()
+
+        
 
 if __name__ == '__main__':
 
-    ## INITIATE ENVIRONMENT
-    # env = CrazyflieEnv_DeepRL(GZ_Timeout=True)
-    # env = CF_Env_2D()
+
+    ## IMPORT ENVIRONMENTS
+    from Envs.CrazyflieEnv_DeepRL import CrazyflieEnv_DeepRL
+    from Envs.CrazyflieEnv_DeepRL_Tau import CrazyflieEnv_DeepRL_Tau
+
+
+    # # START TRAINING NEW DEEP RL MODEL 
+    # env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[])
+    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
+    # log_name = f"{env.modelInitials}--Deg_{env.Plane_Angle}--SAC_{current_time}"    
+
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.create_model()
+    # PolicyTrainer.train_model()
+
+    # ================================================================= ##
+    
+    # # RESUME TRAINING DEEP RL MODEL
+    # env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[-45,90])
+    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
+    # log_name = "SAC--02_05-06:23--Deg_135--LDA_A05_L75_K32_0"
+    # t_step_load = 81000
+
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.load_model(t_step_load)
+    # PolicyTrainer.train_model(reset_timesteps=False)
+
+    # ================================================================= ##
+
+    # # COLLECT LANDING PERFORMANCE DATA
+    # env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[-45,90])
+    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
+    # log_name = "SAC--02_05-06:23--Deg_135--LDA_A05_L75_K32_0"
+    # t_step_load = 81000
+
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.load_model(t_step_load)
+    # PolicyTrainer.test_landing_performance()
+
+    # ================================================================= ##
+
+    # # PLOT LANDING PERFORMANCE
     env = None
-    
+    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Gazebo"
+    log_name = "A05_L75_K32_0--Deg_90--SAC_02_05-12:32_0"
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.Plot_Landing_Performance(saveFig=True)
 
-
-    # # LOAD DEEP RL MODEL
-    load_model_name = f"SAC--10_12-11:40--NL_0"
-
-    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Env_2D"
-    leg_config = "NL"
-    log_name = f"SAC--{current_time}--{leg_config}"
-
-    policy_path = os.path.join(log_dir,load_model_name)
-    model_path = os.path.join(log_dir,load_model_name,f"models/{2}000_steps.zip")
-    model = SAC.load(model_path,env=env,device='cpu')
-    model.load_replay_buffer(f"{log_dir}/{load_model_name}/models/replay_buff.pkl")
-
-    # ## CREATE NEW DEEP RL MODEL 
-    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Env_2D"
-    # leg_config = "NL"
-    # log_name = f"SAC--{current_time}--{leg_config}"
-    # model = SAC(
-    #     "MlpPolicy",
-    #     env=env,
-    #     gamma=0.999,
-    #     learning_rate=0.002,
-    #     policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[12,12]),
-    #     verbose=1,
-    #     device='cpu',
-    #     tensorboard_log=log_dir
-    # ) 
 
     
-    Policy = Policy_Trainer_DeepRL(env,model,leg_config)
-    # Policy.train_model(log_name,log_dir,reset_timesteps=False)
-
-
-    # Policy.save_NN_Params(policy_path)
-    # Policy.plotPolicyRegion(iso_level=1.5)
-
-    # LOAD DATA
-    df_raw = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/DeepRL/Data_Logs/DeepRL_NL_LR.csv").dropna() # Collected data
-
-    ## MAX LANDING RATE DATAFRAME
-    idx = df_raw.groupby(['vel_d','phi_d'])['LR_4Leg'].transform(max) == df_raw['LR_4Leg']
-    df_max = df_raw[idx].reset_index()
-
-    Policy.plot_polar(df_max)
-
-
-
-    # # dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
-    # # fileName = "Control_Playground--trial_24--NL.csv"
-    # # trial = DataFile(dataPath,fileName,dataType='SIM')
-    # # k_ep = 0
-    # # Policy.plotPolicyRegion(PlotTraj=(trial,k_ep,0))
-
     
