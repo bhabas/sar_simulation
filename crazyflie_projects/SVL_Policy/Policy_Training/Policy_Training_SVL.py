@@ -457,6 +457,63 @@ class Policy_Trainer():
         print(f"False Negatives: {cfnMatrix[1,0]}")
         print(f"Classification Report: {classification_report(y_class,y_pred)}")
 
+    def plotPolicyData_MPL(self,df):
+
+        LR = np.where(df["LR_4Leg"] >= 0.8, 1.0, 0)
+        Theta_x = -df["OFy_flip_mean"]
+        Tau = df["Tau_flip_mean"]
+        D_ceil = df["D_ceil_flip_mean"]
+
+        X_grid = np.stack((
+                Tau,
+                -Theta_x,
+                D_ceil),axis=1)
+
+        y_pred = self.SVM_model.decision_function(self.scaleData(X_grid))
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111,projection='3d')
+
+        ## PLOT INSIDE SVM
+        vals_1 = np.where(y_pred > 0.0, True, False)
+        ax.scatter(Theta_x[vals_1],Tau[vals_1],D_ceil[vals_1],c=vals_1[vals_1].astype(int),vmin=-0.1,vmax=1.1,cmap=mpl.cm.jet)
+
+        ## PLOT OUTSIDE SVM
+        vals_2 = np.logical_not(vals_1)
+        ax.scatter(Theta_x[vals_2],Tau[vals_2],D_ceil[vals_2],c=vals_2[vals_2].astype(int)*0,vmin=-0.1,vmax=1.1,cmap=mpl.cm.jet)
+
+
+
+        
+        # vals_1 = np.where(LR > 0.0, True, False)
+        # vals_2 = np.where(y_pred > 0.0, True, False)
+        # vals = np.logical_and(vals_1,vals_2).astype(int)
+
+        # vals_not = np.logical_and(np.logical_not(vals_1),np.logical_not(vals_2)).astype(int)
+
+
+        
+
+        # ax.scatter(Theta_x[vals>0],Tau[vals>0],D_ceil[vals>0],c=vals[vals>0],vmin=0,vmax=1)
+
+        # ax.scatter(Theta_x,Tau,D_ceil,c=vals,vmin=0,vmax=1)
+
+        ax.set_ylim(0.1,0.5)
+
+        ax.set_xticks([0,5,10,15])
+        ax.set_yticks([0.1,0.2,0.3,0.4])
+        ax.set_zticks([0,0.4,0.8,1.2])
+
+
+        ax.set_xlabel("Theta_x")
+        ax.set_ylabel("Tau")
+        ax.set_zlabel("D_ceil")
+
+        plt.savefig("Test.pdf")
+
+        plt.show()
+
+
     def plotPolicyRegion(self,df,PlotBoundry=True,PlotTraj=(None,0,0),iso_level=0.0):
 
         fig = go.Figure()
@@ -747,7 +804,9 @@ if __name__ == "__main__":
     print(Policy.OC_SVM_Predict(np.array([[0.233,-2.778,0.518]])))
 
 
-    Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.0)
+    # Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.0)
+    Policy.plotPolicyData_MPL(df_raw)
+
     # Policy.plotPolicyRegion(df_raw,PlotBoundry=True,iso_level=0.0)
     # Policy.plotPolicyRegion(df_raw,PlotBoundry=False,iso_level=0.0)
     # Policy.plot_Landing_Rate(df_max,saveFig=False)
