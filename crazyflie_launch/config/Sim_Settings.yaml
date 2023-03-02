@@ -5,11 +5,11 @@ ENV_SETTINGS:
 
 PLANE_SETTINGS:
   Plane_Model: "Standard_Plane"
-  Plane_Config: "180_deg"
+  Plane_Config: "135_deg"
 
 QUAD_SETTINGS:
   CF_Type: "Standard"
-  CF_Config: "A60_L75_K32"
+  CF_Config: "A20_L75_K32"
 
 
   Cam_Sensor: False
