@@ -729,7 +729,7 @@ class Policy_Trainer_DeepRL():
 
         ax.set_rticks([0.0,1.0,2.0,3.0,4.0,4.5])
         ax.set_rmin(0)
-        ax.set_rmax(R.max())
+        ax.set_rmax(4.0)
         
 
 
@@ -767,10 +767,10 @@ if __name__ == '__main__':
     # ================================================================= ##
     
     # # RESUME TRAINING DEEP RL MODEL
-    # env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[-90,45])
+    # env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[-45,90])
     # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
-    # log_name = "A05_L75_K32--Deg_45--SAC_02_09-08:12_0"
-    # t_step_load = 16000
+    # log_name = "A60_L75_K32--Deg_135--SAC_02_14-19:47_0"
+    # t_step_load = 10000
 
     # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     # PolicyTrainer.load_model(t_step_load)
@@ -790,7 +790,7 @@ if __name__ == '__main__':
 
     # ================================================================= ##
 
-    # PLOT LANDING PERFORMANCE
+    # # PLOT LANDING PERFORMANCE
     env = None
     log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Gazebo"
     log_name = "A20_L75_K32--Deg_180--SAC_02_17-08:23_0"
