@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>crazyflie_env</name>
+  <name>sar_general_scripts</name>
   <version>0.0.0</version>
-  <description>SAR_Perching Environments</description>
+  <description>SAR_Perching General Scripts</description>
 
   <maintainer email="bhabas@todo.todo">bhabas</maintainer>
   <license>TODO</license>

@@ -14,8 +14,7 @@ setuptools.setup(
    packages=setuptools.find_packages(),
    python_requires=">=3.6",
    install_requires=requirements,
-#    scripts=[
-#             'scripts/cool',
-#             'scripts/skype',
-#            ]
+   scripts=[
+            'sar_general_scripts/Control_Playground.py',
+           ]
 )
