@@ -23,11 +23,8 @@ from stable_baselines3.common.vec_env import VecCheckNan
 from stable_baselines3.common import utils
 
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
-import sys,rospkg,os
+import rospkg,os
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
-sys.path.insert(1,BASE_PATH)
-
-
 
 
 ## COLLECT CURRENT TIME
@@ -752,17 +749,17 @@ if __name__ == '__main__':
 
     ## IMPORT ENVIRONMENTS
     from Envs.CrazyflieEnv_DeepRL import CrazyflieEnv_DeepRL
-    from Envs.CrazyflieEnv_DeepRL_Tau import CrazyflieEnv_DeepRL_Tau
+    # from Envs.CrazyflieEnv_DeepRL_Tau import CrazyflieEnv_DeepRL_Tau
 
 
-    # # START TRAINING NEW DEEP RL MODEL 
-    # env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[0,90])
-    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
-    # log_name = f"{env.modelInitials}--Deg_{env.Plane_Angle}--SAC_{current_time}"    
+    # START TRAINING NEW DEEP RL MODEL 
+    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[0,90])
+    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
+    log_name = f"{env.modelInitials}--Deg_{env.Plane_Angle}--SAC_{current_time}"    
 
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.create_model()
-    # PolicyTrainer.train_model()
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.create_model()
+    PolicyTrainer.train_model()
 
     # ================================================================= ##
     
