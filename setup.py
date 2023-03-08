@@ -19,8 +19,8 @@ setuptools.setup(
     python_requires=">=3.6",
     install_requires=requirements,
     scripts=[
-                'sar_general_scripts/Control_Playground.py',
-            ]
+                'sar_general/Scripts/Control_Playground.py',
+            ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

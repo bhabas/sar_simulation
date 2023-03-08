@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(sar_general_scripts)
+project(sar_general)
 
 find_package(catkin REQUIRED COMPONENTS
   rospy
