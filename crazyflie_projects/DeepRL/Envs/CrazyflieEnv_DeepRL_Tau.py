@@ -6,11 +6,11 @@ import time
 
 
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
-import sys,rospkg,os
-BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
-sys.path.insert(1,BASE_PATH)
+import rospkg,os
 
-from crazyflie_env.Core_Envs.CrazyflieEnv_Sim import CrazyflieEnv_Sim
+
+
+from crazyflie_env import CrazyflieEnv_Sim
 
 
 class CrazyflieEnv_DeepRL_Tau(CrazyflieEnv_Sim):
