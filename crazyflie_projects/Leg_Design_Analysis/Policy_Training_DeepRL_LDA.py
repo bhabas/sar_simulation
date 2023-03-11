@@ -1,18 +1,9 @@
 ## STANDARD IMPORTS
 import os
 from datetime import datetime
-import numpy as np
-import pandas as pd
-import torch as th
 
-## SB3 Imports
-from stable_baselines3 import SAC
-from stable_baselines3.common.callbacks import *
-
-## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
-import sys,rospkg,os
+import rospkg
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
-sys.path.insert(1,BASE_PATH)
 
 
 ## IMPORT ENVIRONMENTS

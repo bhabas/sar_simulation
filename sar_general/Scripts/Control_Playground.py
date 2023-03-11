@@ -3,8 +3,6 @@ import threading,os
 import rospy
 import numpy as np
 
-
-
        
 def cmd_send(env,logName):
     while True:
@@ -213,7 +211,7 @@ def cmd_send(env,logName):
 
 
 if __name__ == '__main__':
-    from Core_Envs.CrazyflieEnv_Sim import CrazyflieEnv_Sim
+    from crazyflie_env import CrazyflieEnv_Sim
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv_Sim()
     env.gazebo_unpause_physics()
