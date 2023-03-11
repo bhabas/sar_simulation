@@ -1,3 +1,17 @@
+material SurfacePattern/Image_1
+{
+    receive_shadows off
+    technique
+    {
+        pass
+        {
+            texture_unit
+            {
+                texture Test_Photo_2.jpg
+            }
+        }
+    }
+}
 material SurfacePattern/L_0.02
 {
     receive_shadows off

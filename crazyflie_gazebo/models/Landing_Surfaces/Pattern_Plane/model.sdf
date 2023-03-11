@@ -25,13 +25,14 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <box>
-            <size>16 8 0.01</size>
+            <size>3 4.5 0.01</size>
           </box>
         </geometry>
         <material>
           <script>
             <uri>model://Pattern_Plane/materials/scripts</uri>
             <uri>model://Pattern_Plane/materials/textures</uri>
+            <name>SurfacePattern/Image_1</name>
             <!-- <name>SurfacePattern/L_0.02</name> -->
             <!-- <name>SurfacePattern/L_0.05</name> -->
             <!-- <name>SurfacePattern/L_0.12</name> -->
@@ -39,7 +40,7 @@
             <!-- <name>SurfacePattern/L_0.50</name> -->
             <!-- <name>SurfacePattern/L_0.75</name> -->
             <!-- <name>SurfacePattern/L_1.00</name> -->
-            <name>SurfacePattern/L_2.00</name>
+            <!-- <name>SurfacePattern/L_2.00</name> -->
 
 
           </script>
@@ -65,23 +66,6 @@
         <pose>0 0 0 0 -0 0</pose>
       </sensor>
     </link>
-    <joint name="plane_joint" type="fixed">
-      <parent>world</parent>
-      <child>plane</child>
-      <pose>0 0 0 0 0 0</pose>    
-      <physics>
-        <ode>
-        </ode>
-        <provide_feedback>true</provide_feedback>
-      </physics>
-    </joint>
-    <static>0</static>
-    <allow_auto_disable>1</allow_auto_disable>
-
-    <plugin name="ForceTorque_Sensor" filename="libgazebo_ros_ft_sensor.so">
-      <jointName>plane_joint</jointName>
-      <topicName>/ENV/Surface_FT_sensor</topicName>
-      <updateRate>500</updateRate>
-  </plugin>
+    
   </model>
 </sdf>
