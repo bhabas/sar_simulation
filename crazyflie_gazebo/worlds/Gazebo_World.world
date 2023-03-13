@@ -6,16 +6,16 @@
       <uri>model://sun</uri>
     </include>
 
-    <model name='world_ball'>
+    <model name='World_Origin'>
       <static>1</static>
-      <link name='ball'>
+      <link name='Origin_Link'>
         <pose>0 0 0 0 0 0</pose>
-        <visual name='world_center'>
+        <visual name='Origin_Visual'>
           <cast_shadows>0</cast_shadows>
           <pose>0 0 0 0 0 0</pose>
           <geometry>
             <sphere>
-              <radius>0.02</radius>
+              <radius>0.01</radius>
             </sphere>
           </geometry>
           <material>

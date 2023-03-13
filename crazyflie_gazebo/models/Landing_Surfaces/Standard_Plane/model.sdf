@@ -2,7 +2,7 @@
 <sdf version='1.7'>
   <model name='Standard_Plane'>
     <static>0</static>
-    <link name='plane'>
+    <link name='Surface_Link'>
       <pose>0 0 0 0 0 0</pose>
       <inertial>
         <inertia>
@@ -13,14 +13,14 @@
           <iyz>0</iyz>
           <izz>1000</izz>
         </inertia>
-        <mass>1500</mass>
+        <mass>1000</mass>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
       <self_collide>0</self_collide>
       <enable_wind>0</enable_wind>
       <kinematic>0</kinematic>
       <gravity>0</gravity>
-      <visual name='plane_visual'>
+      <visual name='Surface_Visual'>
         <cast_shadows>0</cast_shadows>
         <pose>0 0 0.0 0 0 0</pose>
         <geometry>
@@ -41,7 +41,7 @@
           <emissive>0 0 0 1</emissive>
         </material>
       </visual>
-      <visual name='plane_center'>
+      <visual name='Surface_Center'>
         <cast_shadows>0</cast_shadows>
         <pose>0 0 0 0 0 0</pose>
         <geometry>
@@ -59,7 +59,7 @@
           </shader>
         </material>
       </visual>
-      <collision name='plane_collision'>
+      <collision name='Surface_Collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
         <pose>0 0 0 0 -0 0</pose>
@@ -114,34 +114,22 @@
           </contact>
         </surface>
       </collision>
-      <sensor name='plane_contact_sensor' type='contact'>
+      <sensor name='Surface_Contact_Sensor' type='contact'>
         <always_on>1</always_on>
         <visualize>1</visualize>
         <contact>
           <collision>plane_collision</collision>
           <topic>__default_topic__</topic>
         </contact>
-        <plugin name='contact_plugin' filename='libgazebo_ros_bumper.so'>
+        <plugin name='Surface_Contact_Plugin' filename='libgazebo_ros_bumper.so'>
           <bumperTopicName>/ENV/BodyContact</bumperTopicName>
-          <frameName>plane</frameName>
+          <frameName>Surface_Link</frameName>
           <alwaysOn>true</alwaysOn>
           <updateRate>500</updateRate>
         </plugin>
         <pose>0 0 0 0 -0 0</pose>
       </sensor>
     </link>
-
-    
-    <!-- <joint name="plane_joint" type="fixed">
-      <parent>model://world_ball::ball</parent>
-      <child>plane</child>
-      <pose>0 0 0 0 0 0</pose>    
-      <physics>
-        <ode>
-        </ode>
-        <provide_feedback>true</provide_feedback>
-      </physics>
-    </joint> -->
 
 
     <!-- <plugin name="ForceTorque_Sensor" filename="libgazebo_ros_ft_sensor.so">

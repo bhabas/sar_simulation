@@ -34,29 +34,24 @@ namespace gazebo
     bool Plane_Pose::Service_Callback(crazyflie_msgs::ModelMove::Request &req, crazyflie_msgs::ModelMove::Response &res)
     {
        
-        gzmsg << "Loading Gazebo Plane Pose Plugin\n";
+        
 
-        physics::LinkPtr plane_ptr;
-        physics::LinkPtr ball_ptr;
+        Origin_Model_Ptr = world_ptr->ModelByIndex(0);
+        Surface_Model_Ptr = world_ptr->ModelByIndex(1);
 
-        physics::ModelPtr plane_model;
-        physics::ModelPtr ball_model;
-
-
-        ball_model = world_ptr->ModelByIndex(0);
-        plane_model = world_ptr->ModelByIndex(1);
-
-        std::cout << world_ptr->ModelByIndex(0)->GetName() << std::endl;
-        std::cout << world_ptr->ModelByIndex(1)->GetName() << std::endl;
+        std::cout << Origin_Model_Ptr->GetName() << std::endl;
+        std::cout << Surface_Model_Ptr->GetName() << std::endl;
 
   
-        if (req.Freq.x == 1)
+        if (req.Freq.x == 0)
         {
-            plane_model->CreateJoint("plane_joint","fixed",ball_model->GetLink("ball"),plane_model->GetLink("plane"));
+            gzmsg << "Creating Surface->World Joint\n";
+            Surface_Model_Ptr->CreateJoint("plane_joint","fixed",Origin_Model_Ptr->GetLink("Origin_Link"),Surface_Model_Ptr->GetLink("Surface_Link"));
         }
         else
         {
-            plane_model->RemoveJoint("plane_joint");
+            gzmsg << "Removing Surface->World Joint\n";
+            Surface_Model_Ptr->RemoveJoint("plane_joint");
         }
         
         

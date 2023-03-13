@@ -27,7 +27,8 @@ namespace gazebo {
 
         private:
             physics::WorldPtr world_ptr;
-            physics::ModelPtr model_ptr;
+            physics::ModelPtr Surface_Model_Ptr;
+            physics::ModelPtr Origin_Model_Ptr;
             physics::JointPtr joint_ptr;
             event::ConnectionPtr updateConnection;
 
