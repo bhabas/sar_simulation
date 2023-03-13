@@ -26,8 +26,9 @@ namespace gazebo {
 
 
         private:
-            physics::WorldPtr world;
+            physics::WorldPtr world_ptr;
             physics::ModelPtr model_ptr;
+            physics::JointPtr joint_ptr;
             event::ConnectionPtr updateConnection;
 
             // ROS VALUES

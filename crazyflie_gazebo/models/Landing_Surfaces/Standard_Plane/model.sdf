@@ -3,7 +3,7 @@
   <model name='Standard_Plane'>
     <static>0</static>
     <link name='plane'>
-      <pose>0 0 0.0 0 -0 0</pose>
+      <pose>0 0 0 0 0 0</pose>
       <inertial>
         <inertia>
           <ixx>500</ixx>
@@ -131,11 +131,9 @@
       </sensor>
     </link>
 
-    <plugin name='Plane_Pose_Plugin' filename='libPlane_Pose_plugin.so'>
-        <linkName>plane</linkName>
-    </plugin>
+    
     <!-- <joint name="plane_joint" type="fixed">
-      <parent>world</parent>
+      <parent>model://world_ball::ball</parent>
       <child>plane</child>
       <pose>0 0 0 0 0 0</pose>    
       <physics>
