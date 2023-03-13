@@ -15,12 +15,12 @@
 
 namespace gazebo {
 
-    class Plane_Pose: public ModelPlugin
+    class Plane_Pose: public WorldPlugin
     {
         public:
             
         protected:
-            void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
+            void Load(physics::WorldPtr _parent, sdf::ElementPtr _sdf);
             void OnUpdate();
             bool Service_Callback(crazyflie_msgs::ModelMove::Request &req, crazyflie_msgs::ModelMove::Response &res);
 

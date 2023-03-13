@@ -33,23 +33,10 @@
           </material>
         </visual>
       </link>
-
-      <!-- <joint name="plane_joint" type="fixed">
-        <parent>ball</parent>
-        <child>Standard_Plane::plane</child>
-        <pose>0 0 0 0 0 0</pose>    
-        <physics>
-          <ode>
-          </ode>
-          <provide_feedback>true</provide_feedback>
-        </physics>
-      </joint> -->
-
-      <plugin name='Plane_Pose_Plugin' filename='libPlane_Pose_plugin.so'>
-        <linkName>ball</linkName>
-      </plugin>
     </model>
-
+    <plugin name='Plane_Pose_Plugin' filename='libPlane_Pose_plugin.so'>
+      </plugin>
+      
     <light name='Horizontal_Light' type='directional'>
       <pose>-5 0 0 0 1.57 0</pose>
       <diffuse>0.5 0.5 0.5 1</diffuse>
