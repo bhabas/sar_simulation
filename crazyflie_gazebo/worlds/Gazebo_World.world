@@ -6,10 +6,6 @@
       <uri>model://sun</uri>
     </include>
 
-    <include>
-      <uri>model://Standard_Plane</uri>
-    </include>
-
     <model name='world_ball'>
       <static>1</static>
       <link name='ball'>
@@ -34,8 +30,9 @@
         </visual>
       </link>
     </model>
-    <plugin name='Plane_Pose_Plugin' filename='libPlane_Pose_plugin.so'>
-      </plugin>
+
+
+    <plugin name='Plane_Pose_Plugin' filename='libPlane_Pose_plugin.so'/>
       
     <light name='Horizontal_Light' type='directional'>
       <pose>-5 0 0 0 1.57 0</pose>

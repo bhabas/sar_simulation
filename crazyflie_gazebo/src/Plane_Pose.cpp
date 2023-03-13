@@ -10,7 +10,9 @@ namespace gazebo
     {
         gzmsg << "Loading Gazebo Plane Pose Plugin\n";
         world_ptr = _parent;
-        // world_ptr = model_ptr->GetWorld();
+
+        _parent->InsertModelFile("model://Standard_Plane");
+
 
         // LINK COMMAND SERVICE TO CALLBACK
         CMD_Service = nh.advertiseService("/Plane_Pose", &Plane_Pose::Service_Callback, this);
@@ -41,15 +43,16 @@ namespace gazebo
         physics::ModelPtr ball_model;
 
 
-        plane_model = world_ptr->ModelByIndex(0);
-        ball_model = world_ptr->ModelByIndex(1);
+        ball_model = world_ptr->ModelByIndex(0);
+        plane_model = world_ptr->ModelByIndex(1);
 
+        std::cout << world_ptr->ModelByIndex(0)->GetName() << std::endl;
         std::cout << world_ptr->ModelByIndex(1)->GetName() << std::endl;
-        plane_model->GetLink("plane");
 
+  
         if (req.Freq.x == 1)
         {
-            plane_model->CreateJoint("plane_joint","fixed",plane_model->GetLink("plane"),ball_model->GetLink("ball"));
+            plane_model->CreateJoint("plane_joint","fixed",ball_model->GetLink("ball"),plane_model->GetLink("plane"));
         }
         else
         {
