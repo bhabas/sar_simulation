@@ -46,9 +46,22 @@ namespace gazebo
         // std::cout << Surface_Model_Ptr->GetName() << std::endl;
 
         
+        
+
+        
         if (req.Create_Joint == true)
         {
             gzmsg << "Creating Surface-to-World Joint\n";
+
+            // UPDATE STARTING POSITION AND ORIENTATION
+            Pos_0.Set(req.Pos_0.x,req.Pos_0.y,req.Pos_0.z);
+            Eul_0.Set(req.Eul_0.x,req.Eul_0.y,req.Eul_0.z);
+            Eul_0 *= M_PI/180; // Convert to radians
+
+            Pose_0.Set(Pos_0,Eul_0);
+            Surface_Model_Ptr->SetWorldPose(Pose_0);
+
+
             Surface_Model_Ptr->CreateJoint("Landing_Surface_Joint","fixed",Origin_Model_Ptr->GetLink("Origin_Link"),Surface_Model_Ptr->GetLink("Surface_Link"));
         }
         else
