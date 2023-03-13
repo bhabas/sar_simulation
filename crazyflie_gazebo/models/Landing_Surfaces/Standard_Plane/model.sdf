@@ -130,7 +130,11 @@
         <pose>0 0 0 0 -0 0</pose>
       </sensor>
     </link>
-    <joint name="plane_joint" type="fixed">
+
+    <plugin name='Plane_Pose_Plugin' filename='libPlane_Pose_plugin.so'>
+        <linkName>plane</linkName>
+    </plugin>
+    <!-- <joint name="plane_joint" type="fixed">
       <parent>world</parent>
       <child>plane</child>
       <pose>0 0 0 0 0 0</pose>    
@@ -139,14 +143,15 @@
         </ode>
         <provide_feedback>true</provide_feedback>
       </physics>
-    </joint>
-    <static>0</static>
-    <allow_auto_disable>1</allow_auto_disable>
+    </joint> -->
 
-    <plugin name="ForceTorque_Sensor" filename="libgazebo_ros_ft_sensor.so">
+
+    <!-- <plugin name="ForceTorque_Sensor" filename="libgazebo_ros_ft_sensor.so">
       <jointName>plane_joint</jointName>
       <topicName>/ENV/Surface_FT_sensor</topicName>
       <updateRate>500</updateRate>
-  </plugin>
+  </plugin> -->
+
+  <allow_auto_disable>1</allow_auto_disable>
   </model>
 </sdf>

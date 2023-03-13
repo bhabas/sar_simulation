@@ -38,5 +38,8 @@ target_link_libraries(DomainRand_plugin ${GAZEBO_LIBRARIES})
 add_library(ModelMove_plugin SHARED src/Model_Move.cpp)
 target_link_libraries(ModelMove_plugin ${GAZEBO_LIBRARIES})
 
+add_library(Plane_Pose_plugin SHARED src/Plane_Pose.cpp)
+target_link_libraries(Plane_Pose_plugin ${GAZEBO_LIBRARIES})
+
 add_library(Moment_plugin SHARED src/model_Moment.cpp)
 target_link_libraries(Moment_plugin ${GAZEBO_LIBRARIES})

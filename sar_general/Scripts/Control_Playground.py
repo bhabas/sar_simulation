@@ -213,7 +213,7 @@ def cmd_send(env,logName):
 if __name__ == '__main__':
     from crazyflie_env import CrazyflieEnv_Sim
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv_Sim()
+    env = CrazyflieEnv_Sim(GZ_Timeout=False)
     env.gazebo_unpause_physics()
 
     ## INITIALIALIZE LOGGING DATA

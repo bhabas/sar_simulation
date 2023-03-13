@@ -45,10 +45,10 @@
     <node name="spawn_ground" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
         args="-file $(arg ground_sdf_path) -sdf -model $(arg ground_name)" />
         
-    <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
-    args="-file $(arg model_sdf_path) -sdf -model crazyflie_$(arg config_name) -z 0.3" />
+    <!-- <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
+    args="-file $(arg model_sdf_path) -sdf -model crazyflie_$(arg config_name) -z 0.3" /> -->
 
     <node name="Spawn_Plane" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
-    args="-file $(arg Plane_SDF_Path) -sdf -model $(arg Plane_Model) -z $(arg Plane_Pos_z) -x $(arg Plane_Pos_x) -y $(arg Plane_Pos_y) -P $(arg Plane_Angle)" />
+    args="-file $(arg Plane_SDF_Path) -sdf -model $(arg Plane_Model)" />
         
 </launch>
