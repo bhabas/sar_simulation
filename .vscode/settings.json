@@ -76,6 +76,7 @@
         "typeinfo": "cpp",
         "variant": "cpp",
         "bit": "cpp",
-        "string.h": "c"
+        "string.h": "c",
+        "thread": "cpp"
     }
 }

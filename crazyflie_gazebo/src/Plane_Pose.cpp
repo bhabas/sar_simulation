@@ -1,7 +1,6 @@
 #include <iostream>
 #include <Plane_Pose.h>
 
-
 namespace gazebo
 {
 
@@ -9,9 +8,15 @@ namespace gazebo
     void Plane_Pose::Load(physics::WorldPtr _parent, sdf::ElementPtr _sdf)
     {
         gzmsg << "Loading Gazebo Plane Pose Plugin\n";
-        world_ptr = _parent;
+        World_Ptr = _parent;
 
-        _parent->InsertModelFile("model://Standard_Plane");
+
+        Origin_Model_Ptr = World_Ptr->ModelByName("World_Origin");
+
+
+        
+        
+
 
 
         // LINK COMMAND SERVICE TO CALLBACK
@@ -33,25 +38,23 @@ namespace gazebo
 
     bool Plane_Pose::Service_Callback(crazyflie_msgs::ModelMove::Request &req, crazyflie_msgs::ModelMove::Response &res)
     {
-       
+
         
+        Surface_Model_Ptr = World_Ptr->ModelByName(req.Model_Name);
+        
+        // std::cout << Origin_Model_Ptr->GetName() << std::endl;
+        // std::cout << Surface_Model_Ptr->GetName() << std::endl;
 
-        Origin_Model_Ptr = world_ptr->ModelByIndex(0);
-        Surface_Model_Ptr = world_ptr->ModelByIndex(1);
-
-        std::cout << Origin_Model_Ptr->GetName() << std::endl;
-        std::cout << Surface_Model_Ptr->GetName() << std::endl;
-
-  
-        if (req.Freq.x == 0)
+        
+        if (req.Create_Joint == true)
         {
-            gzmsg << "Creating Surface->World Joint\n";
-            Surface_Model_Ptr->CreateJoint("plane_joint","fixed",Origin_Model_Ptr->GetLink("Origin_Link"),Surface_Model_Ptr->GetLink("Surface_Link"));
+            gzmsg << "Creating Surface-to-World Joint\n";
+            Surface_Model_Ptr->CreateJoint("Landing_Surface_Joint","fixed",Origin_Model_Ptr->GetLink("Origin_Link"),Surface_Model_Ptr->GetLink("Surface_Link"));
         }
         else
         {
-            gzmsg << "Removing Surface->World Joint\n";
-            Surface_Model_Ptr->RemoveJoint("plane_joint");
+            gzmsg << "Removing Surface-to-World Joint\n";
+            Surface_Model_Ptr->RemoveJoint("Landing_Surface_Joint");
         }
         
         
