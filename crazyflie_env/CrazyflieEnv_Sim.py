@@ -14,6 +14,7 @@ from .CrazyflieEnv_Base import CrazyflieEnv_Base
 ## ROS MESSAGES AND SERVICES
 from std_srvs.srv import Empty
 from crazyflie_msgs.srv import domainRand,domainRandRequest
+from crazyflie_msgs.srv import ModelMove,ModelMoveRequest
 
 
 from rosgraph_msgs.msg import Clock
@@ -68,7 +69,21 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base,gym.Env):
         print("[INITIATING] Gazebo simulation started")
 
     
-    
+    def Set_Plane_Pose(self):
+
+        ## CREATE SERVICE REQUEST MSG
+        srv = ModelMoveRequest()
+        srv.Model_Name = "Standard_Plane"
+        srv.Pos_0.x = 1.5
+        srv.Pos_0.y = 0
+        srv.Pos_0.z = 1.5
+
+        srv.Eul_0.x = 0
+        srv.Eul_0.y = -90
+        srv.Eul_0.z = 0
+
+        ## SEND LOGGING REQUEST VIA SERVICE
+        self.callService('/Landing_Surface_Pose',srv,ModelMove())
 
     def sleep(self,time_s):
         """
@@ -193,6 +208,8 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base,gym.Env):
             start_new_session=True, shell=True)
 
         rospy.wait_for_service("/gazebo/pause_physics",timeout=30)
+
+        self.Set_Plane_Pose()
 
     
 
