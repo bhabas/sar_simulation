@@ -32,7 +32,7 @@
     </model>
 
 
-    <plugin name='Plane_Pose_Plugin' filename='libPlane_Pose_plugin.so'/>
+    <plugin name='Landing_Surface_Pose_plugin' filename='libLanding_Surface_Pose_plugin.so'/>
       
     <light name='Horizontal_Light' type='directional'>
       <pose>-5 0 0 0 1.57 0</pose>

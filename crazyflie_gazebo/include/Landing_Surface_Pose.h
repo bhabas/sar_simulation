@@ -15,7 +15,7 @@
 
 namespace gazebo {
 
-    class Plane_Pose: public WorldPlugin
+    class Landing_Surface_Pose: public WorldPlugin
     {
         public:
             
@@ -26,27 +26,23 @@ namespace gazebo {
 
 
         private:
+
+            // GAZEBO POINTERS
             physics::WorldPtr World_Ptr;
             physics::ModelPtr Surface_Model_Ptr;
             physics::ModelPtr Origin_Model_Ptr;
+            physics::JointPtr Joint_Ptr;
+
             event::ConnectionPtr updateConnection;
 
             // ROS VALUES
             ros::NodeHandle nh;
             ros::ServiceServer CMD_Service;
 
-            // INITIAL POSE VALUES
+            // POSE VALUES
             ignition::math::Vector3d Pos_0;     // [m]
             ignition::math::Vector3d Eul_0;     // [deg]
             ignition::math::Pose3d Pose_0;
-
-            // INITIAL VELOCITY PARAMETERS
-            ignition::math::Vector3d Vel_0;     // [m/s]
-            ignition::math::Vector3d Accel_0;   // [m/s^2]
-
-            // CURRENT VEL AND ANG VEL CONDITIONS
-            ignition::math::Vector3d Vel;       // [m/s]
-            ignition::math::Vector3d Ang_Vel;   // [rad/s]
 
     };
 

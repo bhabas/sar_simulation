@@ -1,5 +1,4 @@
 string Model_Name
-bool Create_Joint
 
 geometry_msgs/Vector3 Pos_0
 geometry_msgs/Vector3 Vel_0
