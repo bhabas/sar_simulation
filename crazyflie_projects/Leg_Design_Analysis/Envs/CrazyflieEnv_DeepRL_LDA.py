@@ -63,7 +63,7 @@ class CrazyflieEnv_DeepRL_LDA(CrazyflieEnv_Sim):
 
     def step(self,action):
 
-        Tau,Theta_x,D_perp  = self.obs
+        #Tau,Theta_x,D_perp  = self.obs
         
         ## CLIP ACTION TO VIABLE ARCTANH VALUES AND CONVERT TO PROPER RANGE
         action[0] = np.clip(action[0],-0.999,0.999)
@@ -100,11 +100,20 @@ class CrazyflieEnv_DeepRL_LDA(CrazyflieEnv_Sim):
 
             reward = 0
 
+        ########## POST-FLIP TRIGGER ##########
         elif action[0] >= self.Flip_thr:
 
-            self.Tau_trg = Tau
-            reward = self.finish_sim(action)
+            ## SAVE TRIGGERING OBSERVATION AND ACTIONS
+            self.obs_tr = self.obs
+            self.action_tr = action
+
+            #self.Tau_trg = Tau
+            ## COMPLETE REST OF SIMULATION
+            self.finish_sim(action)
             self.done = True
+            
+            ## CALCULATE REWARD
+            reward = self.CalcReward()
         
         return np.array(self.obs,dtype=np.float32), reward, self.done, {}
 
@@ -145,6 +154,34 @@ class CrazyflieEnv_DeepRL_LDA(CrazyflieEnv_Sim):
         
         return self.CalcReward()
 
+    def sample_flight_conditions(self):
+        """This function samples the flight velocity and angle from the supplied range.
+        Velocity is sampled from a uniform distribution. Phi is sampled from a set of 
+        uniform distributions which are weighted so that edge cases are only sampled 10% of the time.
+        Poor performance on edge cases can cause poor learning convergence.
+        Returns:
+            vel,phi: Sampled flight velocity and flight angle
+        """        
+
+        ## SAMPLE VEL FROM UNIFORM DISTRIBUTION IN VELOCITY RANGE
+        Vel_Low = self.Vel_range[0]
+        Vel_High = self.Vel_range[1]
+        vel = np.random.uniform(low=Vel_Low,high=Vel_High)
+
+        ## SAMPLE PHI FROM A WEIGHTED SET OF UNIFORM DISTRIBUTIONS
+        Phi_Low = self.Phi_range[0]
+        Phi_High = self.Phi_range[1]
+
+        Dist_Num = np.random.choice([0,1,2],p=[0.05,0.9,0.05]) # Probability of sampling distribution
+
+        if Dist_Num == 0:
+            phi = np.random.default_rng().uniform(low=Phi_Low, high=Phi_Low + 10)
+        elif Dist_Num == 1:
+            phi = np.random.default_rng().uniform(low=Phi_Low + 10, high=Phi_High - 10)
+        elif Dist_Num == 2:
+            phi = np.random.default_rng().uniform(low=Phi_High - 10, high=Phi_High)
+
+        return vel,phi
 
     def reset(self):
 
@@ -218,38 +255,37 @@ class CrazyflieEnv_DeepRL_LDA(CrazyflieEnv_Sim):
 
     def CalcReward(self):
 
-        ## TAU TRIGGER REWARD
-        R0 = np.clip(1/np.abs(self.Tau_trg-0.2),0,15)/15
-        R0 *= 0.1
+       ## TAU TRIGGER REWARD
+        R_tau = np.clip(1/np.abs(self.Tau_tr-0.2),0,15)/15
+        R_tau *= 0.1
 
         ## DISTANCE REWARD 
-        R1 = np.clip(1/np.abs(self.D_min+1e-3),0,15)/15
-        R1 *= 0.05
+        R_dist = np.clip(1/np.abs(self.D_min+1e-3),0,15)/15
+        R_dist *= 0.05
 
         ## IMPACT ANGLE REWARD
-        # R2 = np.clip(np.abs(self.eulCF_impact[1])/120,0,1)
-        # R2 *= 0.2
-
-        R2 = 0.5*np.cos(self.eul_impact[1]-self.Plane_Angle_rad*np.sign(np.cos(self.Plane_Angle_rad)))+0.5
-        #R2 = 0.5*np.cos(self.eulCF_impact[1]-self.Plane_Angle_rad)+0.5
-        R2 *= 0.2
+        R_angle = 0.5*np.cos(self.eul_impact[1]-self.Plane_Angle_rad*np.sign(np.cos(self.Plane_Angle_rad)))+0.5
+        R_angle *= 0.2
 
 
         ## PAD CONTACT REWARD
         if self.pad_connections >= 3: 
             if self.BodyContact_flag == False:
-                R3 = 0.65
+                R_legs = 0.65
             else:
-                R3 = 0.2
+                R_legs = 0.2
         elif self.pad_connections == 2: 
             if self.BodyContact_flag == False:
-                R3 = 0.4
+                R_legs = 0.4
             else:
-                R3 = 0.1
+                R_legs = 0.1
         else:
-            R3 = 0.0
+            R_legs = 0.0
 
-        return R0 + R1 + R2 + R3
+        self.reward_vals = [R_tau,R_dist,R_angle,R_legs,0]
+        self.reward = R_tau + R_dist + R_angle + R_legs
+
+        return self.reward
 
     def render(self):
         pass

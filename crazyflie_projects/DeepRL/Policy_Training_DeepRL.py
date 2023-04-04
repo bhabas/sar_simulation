@@ -541,7 +541,7 @@ class Policy_Trainer_DeepRL():
         with open(config_path, 'w') as outfile:
             yaml.dump(data,outfile,default_flow_style=False,sort_keys=False)
 
-    def test_landing_performance(self,fileName=None,Vel_inc=0.25,Phi_inc=5,n_episodes=5):
+    def test_landing_performance(self,fileName=None,Vel_inc=0.25,Phi_inc=5,n_episodes=20):
         """Test trained model over varied velocity and flight angle combinations.
         Args:
             fileName (str, optional): fileName to save logged CSV as. Defaults to None.
@@ -551,7 +551,7 @@ class Policy_Trainer_DeepRL():
         """        
 
         if fileName == None:
-            fileName = "PolicyPerformance_Data_Test1.csv"
+            fileName = "PolicyPerformance_Data_20ep.csv"
         filePath = os.path.join(self.TB_log_path,fileName)
 
         Vel_arr = np.arange(self.env.Vel_range[0], self.env.Vel_range[1] + Vel_inc, Vel_inc)
