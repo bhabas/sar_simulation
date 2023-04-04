@@ -541,7 +541,7 @@ class Policy_Trainer_DeepRL():
         with open(config_path, 'w') as outfile:
             yaml.dump(data,outfile,default_flow_style=False,sort_keys=False)
 
-    def test_landing_performance(self,fileName=None,Vel_inc=0.25,Phi_inc=5,n_episodes=20):
+    def test_landing_performance(self,fileName=None,Vel_inc=0.25,Phi_inc=5,n_episodes=5):
         """Test trained model over varied velocity and flight angle combinations.
         Args:
             fileName (str, optional): fileName to save logged CSV as. Defaults to None.
@@ -551,7 +551,7 @@ class Policy_Trainer_DeepRL():
         """        
 
         if fileName == None:
-            fileName = "PolicyPerformance_Data_20ep.csv"
+            fileName = "PolicyPerformance_Data.csv"
         filePath = os.path.join(self.TB_log_path,fileName)
 
         Vel_arr = np.arange(self.env.Vel_range[0], self.env.Vel_range[1] + Vel_inc, Vel_inc)
@@ -686,7 +686,7 @@ class Policy_Trainer_DeepRL():
     def Plot_Landing_Performance(self,fileName=None,saveFig=False):
 
         if fileName == None:
-            fileName = "PolicyPerformance_Data.csv"
+            fileName = "PolicyPerformance_Data_20ep.csv"
         filePath = os.path.join(self.TB_log_path,fileName)
 
         af = pd.read_csv(filePath,sep=',',comment="#")
@@ -738,7 +738,7 @@ class Policy_Trainer_DeepRL():
         #     rotation=0,ha='left',va='center')
 
         if saveFig==True:
-            plt.savefig(f'{self.TB_log_path}/Landing_Rate_Fig.pdf',dpi=300)
+            plt.savefig(f'{self.TB_log_path}/Landing_Rate_Fig_20ep.pdf',dpi=300)
 
         plt.show()
 

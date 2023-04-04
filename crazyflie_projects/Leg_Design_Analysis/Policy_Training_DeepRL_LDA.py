@@ -31,9 +31,9 @@ if __name__ == '__main__':
     ## INITIATE ENVIRONMENT
     env = CrazyflieEnv_DeepRL_LDA(GZ_Timeout=True,Vel_range=[0.5,3.5],Phi_range=[30,90])
     
-    log_dir = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/{env.env_name}"
+    # log_dir = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/{env.env_name}"
 
-    # ## CREATE NEW DEEP RL MODEL 
+    ## CREATE NEW DEEP RL MODEL 
     # log_name = f"SAC--{current_time}--{env.modelInitials}"    
     # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     # PolicyTrainer.create_model()
@@ -50,19 +50,22 @@ if __name__ == '__main__':
     # ================================================================= ##
 
     # COLLECT LANDING PERFORMANCE DATA
-    # log_dir = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/{env.env_name}"
-    # log_name = "SAC--01_30-23:17--LDA_A60_L75_K64_0"
-    # t_step_load = 111000
+    log_dir = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/{env.env_name}"
+    log_name = "SAC--02_23-16:06--LDA_A30_L100_K64_0" #### CHANGE MODEL IN SIM SETTINGS TO MATCH
+    ############ DID YOU FORGET TO CHANGE MODEL IN SIM SETTINGS
+    #########
+    ############ I HOPE YOU DIDN'T
+    t_step_load = 140000
 
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.load_model(t_step_load)
-    # PolicyTrainer.test_landing_performance()
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.load_model(t_step_load)
+    PolicyTrainer.test_landing_performance()
 
     # ================================================================= ##
 
     # # PLOT LANDING PERFORMANCE
-    env = None
-    log_dir = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/CF_Gazebo"
-    log_name = "SAC--01_30-23:17--LDA_A60_L75_K64_0"
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.Plot_Landing_Performance(saveFig=True)
+    # env = None
+    # log_dir = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/CF_Gazebo"
+    # log_name = "SAC--02_23-16:06--LDA_A30_L100_K64_0"
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.Plot_Landing_Performance(saveFig=True)
