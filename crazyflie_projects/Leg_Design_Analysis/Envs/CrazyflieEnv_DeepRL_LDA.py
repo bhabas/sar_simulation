@@ -183,8 +183,7 @@ class CrazyflieEnv_DeepRL_LDA(CrazyflieEnv_Sim):
 
         return vel,phi
 
-    def reset(self):
-
+    def reset(self, vel=None, phi=None):
         self.gazebo_unpause_physics()
         self.SendCmd('Tumble',cmd_flag=0)
         self.SendCmd('StickyPads',cmd_flag=0)
@@ -225,9 +224,14 @@ class CrazyflieEnv_DeepRL_LDA(CrazyflieEnv_Sim):
         self.onceFlag_impact = False    # Ensures impact data recorded only once 
 
         ## SAMPLE VELOCITY VECTOR
-        vel = np.random.uniform(low=self.Vel_range[0],high=self.Vel_range[1])
-        phi = np.random.uniform(low=self.Phi_range[0],high=self.Phi_range[1])
+        if vel is None and phi is None:
+            
+            vel = np.random.uniform(low=self.Vel_range[0],high=self.Vel_range[1])
+            phi = np.random.uniform(low=self.Phi_range[0],high=self.Phi_range[1])
 
+        print("Vel Vector")
+        print(vel, phi)
+        
         vx_0 = vel*np.cos(np.deg2rad(phi))
         vz_0 = vel*np.sin(np.deg2rad(phi))
         Vel_0 = np.array([vx_0,0,vz_0])  # Flight Velocity vector

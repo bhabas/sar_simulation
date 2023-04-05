@@ -618,8 +618,9 @@ class Policy_Trainer_DeepRL():
                     start_time = time.time()
 
                     ## TEST POLICY FOR GIVEN FLIGHT CONDITIONS
-                    # original, which errs on vel. obs = self.env.reset(vel=Vel,phi=Phi)
-                    obs = self.env.reset()
+                    # original, which errs on vel. 
+                    obs = self.env.reset(vel=Vel,phi=Phi)
+                    # obs = self.env.reset()
                     done = False
                     while not done:
                         action,_ = self.model.predict(obs)
@@ -686,7 +687,7 @@ class Policy_Trainer_DeepRL():
     def Plot_Landing_Performance(self,fileName=None,saveFig=False):
 
         if fileName == None:
-            fileName = "PolicyPerformance_Data_20ep.csv"
+            fileName = "PolicyPerformance_Data.csv"
         filePath = os.path.join(self.TB_log_path,fileName)
 
         af = pd.read_csv(filePath,sep=',',comment="#")
