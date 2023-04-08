@@ -77,10 +77,16 @@ float Theta_x = 0.0f;   // [rad/s]
 float Theta_y = 0.0f;   // [rad/s]
 float D_perp = 0.0f;    // [m]
 
-// ESTIMATED OPTICAL FLOW STATES
+// ESTIMATED OPTICAL FLOW STATES (CAMERA)
 float Tau_est = 0.0f;       // [s]
 float Theta_x_est = 0.0f;   // [rad/s]
 float Theta_y_est = 0.0f;   // [rad/s]
+
+// CALCULATED OPTICAL FLOW STATES (MATH)
+float Tau_calc = 0.0f;       // [s]
+float Theta_x_calc = 0.0f;   // [rad/s]
+float Theta_y_calc = 0.0f;   // [rad/s]
+
 
 
 static struct mat33 R; // Orientation as rotation matrix
@@ -356,7 +362,7 @@ void controllerOutOfTreeReset(void)
     Theta_y_tr = 0.0f;
     D_perp_tr = 0.0f;
     
-    // RL - PARAMETER ESTIMATION
+    // PARAM_OPTIM - PARAMETER ESTIMATION
     Tau_thr = 0.0f;
     G1 = 0.0f;
 
@@ -375,8 +381,10 @@ bool controllerOutOfTreeTest(void)
 
 void calcOpticalFlow(const state_t* state, const sensorData_t* sensors)
 {
+    Tau_calc = (2.0f - state->position.z)/state->velocity.z;
+    Theta_x_calc = state->velocity.x/(2.0f - state->position.z);
+    Theta_y_calc = state->velocity.y/(2.0f - state->position.z);
 
-    printf("hhelo\n");
 }
 
 void controllerOutOfTree(control_t *control,const setpoint_t *setpoint, 
@@ -384,8 +392,12 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                                             const state_t *state, 
                                             const uint32_t tick) 
 {
-    
-   
+    // UPDATE OPTICAL FLOW VALUES AT 100 HZ
+    if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
+
+        calcOpticalFlow(state,sensors);
+
+    }
     
 
     if (RATE_DO_EXECUTE(RATE_500_HZ, tick)) {
@@ -602,3 +614,13 @@ void compressFlipStates(){
 
 
 }
+
+#ifndef GAZEBO_SIM
+PARAM_GROUP_START(my_PARAM)
+    PARAM_ADD(PARAM_FLOAT | PARAM_PERSISTENT, value_1, &value_1)
+PARAM_GROUP_STOP(my_PARAM)
+
+LOG_GROUP_START(my_LOG)
+    LOG_ADD(LOG_FLOAT, value_2, &value_2)
+LOG_GROUP_STOP(my_LOG)
+#endif
