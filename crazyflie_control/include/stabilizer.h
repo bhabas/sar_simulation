@@ -62,7 +62,6 @@ class Controller
             CTRL_Debug_Publisher = nh->advertise<crazyflie_msgs::CtrlDebug>("CTRL/debug",1);
             CMD_Service = nh->advertiseService("/CTRL/Cmd_ctrl",&Controller::CMD_Service_Resp,this);
 
-            // RL TOPICS
 
             // INTERNAL TOPICS
             SAR_IMU_Subscriber = nh->subscribe("/SAR_Internal/IMU",1,&Controller::IMU_Update_Callback,this,ros::TransportHints().tcpNoDelay());
@@ -70,14 +69,6 @@ class Controller
             // CF_Camera_Subscriber = nh->subscribe("/CF_Internal/camera/image_raw",1,&Controller::Camera_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
 
             // ENVIRONMENT TOPICS
-            
-            // DYNAMICALLY ALLOCATE MEMORY TO STORE PREVIOUS IMAGE
-            Prev_img = (uint8_t*)calloc(WIDTH_PIXELS*HEIGHT_PIXELS,sizeof(uint8_t));
-
-
-
-
-
 
             Controller::loadParams();
 
@@ -125,40 +116,10 @@ class Controller
         std::string CF_Config;
 
 
-        // IMAGE PROCESSING VARIABLES
-        uint8_t WIDTH_PIXELS = 160;
-        uint8_t HEIGHT_PIXELS = 160;
-        int kx0[3] = {-1, 0, 1};
-        int kx1[3] = {-2, 0, 2};
-        int kx2[3] = {-1, 0, 1};
-        int ky0[3] = {-1,-2,-1};
-        int ky2[3] = {1,2,1};
-        float Prev_time = 1; //init as 1 to prevent divide by zero for first image
-        // values from butterworth filter data in Gazebo_cpp_check.py a coef: [1.         0.88161859] b coef: [0.9408093 0.9408093]
-        float a1 = 0.88161859; // -0.15838444
-        float a2 = 0; 
-        float a3 = 0;
-        float a4 = 0; 
-        float a5 = 0;
-        float b0 = 0.9408093; // 0.42080778 0.42080778
-        float b1 = 0.9408093;
-        float b2 = 0;
-        float b3 = 0;
-        float b4 = 0;  
-        float b5 = 0;
-        float Tau_est_filt   = 0;
-        float Tau_est_filt_1 = 0;
-        float Tau_est_prev_1 = 0;
-
-        const uint8_t* Cur_img = NULL;  // Ptr to current image memory
-        uint8_t* Prev_img = NULL;       // Ptr to prev image memory
-
-
         // FUNCTION PRIMITIVES
         void Ext_Pos_Update_Callback(const nav_msgs::Odometry::ConstPtr &msg);
         void IMU_Update_Callback(const sensor_msgs::Imu::ConstPtr &msg);
 
-        void OF_Sensor_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg);
         void Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg);
         bool CMD_Service_Resp(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res);
 
@@ -177,34 +138,24 @@ class Controller
 
 bool Controller::CMD_Service_Resp(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res)
 {
-    res.srv_Success = true;
+    // res.srv_Success = true;
 
-    setpoint.cmd_type = req.cmd_type;
-    setpoint.cmd_val1 = req.cmd_vals.x;
-    setpoint.cmd_val2 = req.cmd_vals.y;
-    setpoint.cmd_val3 = req.cmd_vals.z;
-    setpoint.cmd_flag = req.cmd_flag;
+    // setpoint.cmd_type = req.cmd_type;
+    // setpoint.cmd_val1 = req.cmd_vals.x;
+    // setpoint.cmd_val2 = req.cmd_vals.y;
+    // setpoint.cmd_val3 = req.cmd_vals.z;
+    // setpoint.cmd_flag = req.cmd_flag;
 
-    setpoint.GTC_cmd_rec = true;
+    // setpoint.GTC_cmd_rec = true;
 
-    if(req.cmd_type == 21) // RESET ROS PARAM VALUES
-    {
-        Controller::loadParams();
+    // if(req.cmd_type == 21) // RESET ROS PARAM VALUES
+    // {
+    //     Controller::loadParams();
 
-    }
+    // }
     return 1;
 }
 
-
-// OPTICAL FLOW VALUES (IN BODY FRAME) FROM MODEL SENSOR PLUGIN
-void Controller::OF_Sensor_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg)
-{
-    sensorData.Tau = msg->Tau;
-    sensorData.Theta_x = msg->Theta_x;
-    sensorData.Theta_y = msg->Theta_y;
-    sensorData.Theta_z = msg->Theta_z;
-    sensorData.D_perp = msg->D_perp;
-}
 
 // IMU VALUES FROM MODEL SENSOR PLUGIN
 void Controller::IMU_Update_Callback(const sensor_msgs::Imu::ConstPtr &msg)
@@ -334,16 +285,16 @@ void Controller::publishCtrlData()
     CtrlData_msg.Twist.angular.y = stateOmega.y;
     CtrlData_msg.Twist.angular.z = stateOmega.z;
 
-    // OPTICAL FLOW DATA
-    CtrlData_msg.Tau = sensorData.Tau;
-    CtrlData_msg.Theta_x = sensorData.Theta_x;
-    CtrlData_msg.Theta_y = sensorData.Theta_y;
-    CtrlData_msg.D_perp = sensorData.D_perp;
+    // // OPTICAL FLOW DATA
+    // CtrlData_msg.Tau = sensorData.Tau;
+    // CtrlData_msg.Theta_x = sensorData.Theta_x;
+    // CtrlData_msg.Theta_y = sensorData.Theta_y;
+    // CtrlData_msg.D_perp = sensorData.D_perp;
 
-    // ESTIMATED OPTICAL FLOW DATA
-    CtrlData_msg.Tau_est = sensorData.Tau_est;
-    CtrlData_msg.Theta_x_est = sensorData.Theta_x_est;
-    CtrlData_msg.Theta_y_est = sensorData.Theta_y_est;
+    // // ESTIMATED OPTICAL FLOW DATA
+    // CtrlData_msg.Tau_est = sensorData.Tau_est;
+    // CtrlData_msg.Theta_x_est = sensorData.Theta_x_est;
+    // CtrlData_msg.Theta_y_est = sensorData.Theta_y_est;
 
     CtrlData_msg.Tau_thr = Tau_thr;
     CtrlData_msg.G1 = G1;

@@ -145,21 +145,6 @@ typedef struct sensorData_s {
   Axis3f mag;               // gauss  
   baro_t baro;
 
-  // CAMERA SENSOR VALUES
-  float Tau_est;      // [s]
-  float Theta_x_est;  // [rad/s]
-  float Theta_y_est;  // [rad/s]
-  float Theta_z_est;  // [rad/s]
-
-
-  // GROUND TRUTH VALUES
-  float Tau;      // [s]
-  float Theta_x;  // [rad/s]
-  float Theta_y;  // [rad/s]
-  float Theta_z;  // [rad/s]
-  float D_perp;   // [m]
-
-
 #ifdef LOG_SEC_IMU
   Axis3f accSec;            // Gs
   Axis3f gyroSec;           // deg/s
@@ -199,14 +184,6 @@ typedef struct setpoint_s { // These structs are shared across controllers and e
   velocity_t velocity;      // m/s
   acc_t acceleration;       // m/s^2
   bool velocity_body;       // true if velocity is given in body frame; false if velocity is given in world frame
-
-  // DEFINE COMMAND VALUES RECEIVED FROM CRAZYSWARM
-  uint8_t cmd_type; 
-  float cmd_val1;
-  float cmd_val2;
-  float cmd_val3;
-  float cmd_flag;
-  bool GTC_cmd_rec;
 
   struct {
     stab_mode_t x;
