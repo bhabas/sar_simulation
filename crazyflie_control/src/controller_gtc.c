@@ -301,30 +301,30 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
             break;
 
 
-        // case 1: // Position
-        //     x_d.x = setpoint->cmd_val1;
-        //     x_d.y = setpoint->cmd_val2;
-        //     x_d.z = setpoint->cmd_val3;
-        //     kp_xf = setpoint->cmd_flag;
-        //     break;
+        case 1: // Position
+            x_d.x = GTC_Cmd->cmd_val1;
+            x_d.y = GTC_Cmd->cmd_val2;
+            x_d.z = GTC_Cmd->cmd_val3;
+            kp_xf = GTC_Cmd->cmd_flag;
+            break;
 
 
-        // case 2: // Velocity
-        //     v_d.x = setpoint->cmd_val1;
-        //     v_d.y = setpoint->cmd_val2;
-        //     v_d.z = setpoint->cmd_val3;
-        //     kd_xf = setpoint->cmd_flag;
-        //     break;
+        case 2: // Velocity
+            v_d.x = GTC_Cmd->cmd_val1;
+            v_d.y = GTC_Cmd->cmd_val2;
+            v_d.z = GTC_Cmd->cmd_val3;
+            kd_xf = GTC_Cmd->cmd_flag;
+            break;
 
 
-        // case 3: // Yaw Angle
+        case 3: // Yaw Angle
 
-        //     yaw_d = setpoint->cmd_val1*M_PI/180.0f;
-        //     b1_d.x = cosf(yaw_d); // Body x-axis
-        //     b1_d.y = sinf(yaw_d); // Body y-axis
-        //     b1_d.z = 0.0f;
+            yaw_d = GTC_Cmd->cmd_val1*M_PI/180.0f;
+            b1_d.x = cosf(yaw_d); // Body x-axis
+            b1_d.y = sinf(yaw_d); // Body y-axis
+            b1_d.z = 0.0f;
             
-        //     break;
+            break;
 
         case 4: // Euler Angle
 
@@ -336,22 +336,22 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
             motorstop_flag = true;
             break;
         
-        // case 7: // Execute Moment-Based Flip
+        case 7: // Execute Moment-Based Flip
 
-        //     M_d.x = setpoint->cmd_val1*1e-3;
-        //     M_d.y = setpoint->cmd_val2*1e-3;
-        //     M_d.z = setpoint->cmd_val3*1e-3;
+            M_d.x = GTC_Cmd->cmd_val1*1e-3;
+            M_d.y = GTC_Cmd->cmd_val2*1e-3;
+            M_d.z = GTC_Cmd->cmd_val3*1e-3;
 
-        //     moment_flag = (bool)setpoint->cmd_flag;
-        //     break;
+            moment_flag = (bool)GTC_Cmd->cmd_flag;
+            break;
 
-        // case 8: // Arm Policy Maneuver
-        //     Tau_thr = setpoint->cmd_val1;
-        //     G1 = setpoint->cmd_val2;
-        //     G2 = setpoint->cmd_val3;
+        case 8: // Arm Policy Maneuver
+            Tau_thr = GTC_Cmd->cmd_val1;
+            G1 = GTC_Cmd->cmd_val2;
+            G2 = GTC_Cmd->cmd_val3;
 
-        //     policy_armed_flag = setpoint->cmd_flag;
-        //     break;
+            policy_armed_flag = GTC_Cmd->cmd_flag;
+            break;
 
         // case 10: // Point-to-Point Trajectory
 
@@ -437,29 +437,29 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
 
         //     break;
 
-        // // case 20: // Tumble-Detection
-        // //     tumble_detection = setpoint->cmd_flag;
-        // //     break;
+        case 20: // Tumble-Detection
+            tumble_detection = GTC_Cmd->cmd_flag;
+            break;
             
         
 
-        // // case 30: // Custom Thrust Values
+        case 30: // Custom Thrust Values
 
-        // //     customThrust_flag = true;
-        // //     thrust_override[0] = setpoint->cmd_val1;
-        // //     thrust_override[1] = setpoint->cmd_val2;
-        // //     thrust_override[2] = setpoint->cmd_val3;
-        // //     thrust_override[3] = setpoint->cmd_flag;
+            customThrust_flag = true;
+            thrust_override[0] = GTC_Cmd->cmd_val1;
+            thrust_override[1] = GTC_Cmd->cmd_val2;
+            thrust_override[2] = GTC_Cmd->cmd_val3;
+            thrust_override[3] = GTC_Cmd->cmd_flag;
 
-        // //     break;
+            break;
 
-        // // case 31: // Custom PWM Values
+        case 31: // Custom PWM Values
 
-        // //     customPWM_flag = true;
-        // //     PWM_override[0] = setpoint->cmd_val1;
-        // //     PWM_override[1] = setpoint->cmd_val2;
-        // //     PWM_override[2] = setpoint->cmd_val3;
-        // //     PWM_override[3] = setpoint->cmd_flag;
+            customPWM_flag = true;
+            PWM_override[0] = GTC_Cmd->cmd_val1;
+            PWM_override[1] = GTC_Cmd->cmd_val2;
+            PWM_override[2] = GTC_Cmd->cmd_val3;
+            PWM_override[3] = GTC_Cmd->cmd_flag;
 
             break;
 
