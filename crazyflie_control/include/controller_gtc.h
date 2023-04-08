@@ -2,6 +2,10 @@
 extern "C" {
 #endif
 
+#define consolePrintf printf
+#define DEBUG_PRINT printf
+#define GAZEBO_SIM
+
 
 // CRAZYFLIE FIRMWARE CODE BELOW
 // ===========================================================
@@ -59,7 +63,16 @@ void velocity_Traj(void);
 void GZ_velocity_Traj(void);
 void point2point_Traj(void);
 void controlOutput(state_t *state, sensorData_t *sensors);
-void GTC_Command(setpoint_t *setpoint);
+
+struct GTC_CmdPacket{
+    uint8_t cmd_type; 
+    float cmd_val1;
+    float cmd_val2;
+    float cmd_val3;
+    float cmd_flag;
+} __attribute__((packed));
+
+extern struct GTC_CmdPacket GTC_Cmd;
 
 // =================================
 //    CONTROL GAIN INITIALIZATION
@@ -294,8 +307,6 @@ static int32_t thrust2PWM(float f)
 
 
 
-#define consolePrintf printf
-#define DEBUG_PRINT printf
 
 
 #ifdef __cplusplus

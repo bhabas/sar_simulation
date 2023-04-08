@@ -141,21 +141,22 @@ class Controller
 
 bool Controller::CMD_Service_Resp(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res)
 {
-    // res.srv_Success = true;
 
-    // setpoint.cmd_type = req.cmd_type;
-    // setpoint.cmd_val1 = req.cmd_vals.x;
-    // setpoint.cmd_val2 = req.cmd_vals.y;
-    // setpoint.cmd_val3 = req.cmd_vals.z;
-    // setpoint.cmd_flag = req.cmd_flag;
+    res.srv_Success = true;
+
+    GTC_Cmd.cmd_type = req.cmd_type;
+    GTC_Cmd.cmd_val1 = req.cmd_vals.x;
+    GTC_Cmd.cmd_val2 = req.cmd_vals.y;
+    GTC_Cmd.cmd_val3 = req.cmd_vals.z;
+    GTC_Cmd.cmd_flag = req.cmd_flag;
 
     // setpoint.GTC_cmd_rec = true;
 
-    // if(req.cmd_type == 21) // RESET ROS PARAM VALUES
-    // {
-    //     Controller::loadParams();
+    if(req.cmd_type == 21) // RESET ROS PARAM VALUES
+    {
+        Controller::loadParams();
 
-    // }
+    }
     return 1;
 }
 

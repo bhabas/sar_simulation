@@ -258,20 +258,24 @@ static nml_mat* X;  // STATE MATRIX TO BE INPUT INTO NN
 NN NN_DeepRL;
 nml_mat* DeepRL_Output;
 
+
+struct GTC_CmdPacket GTC_Cmd;
+
 void appMain() {
-    DEBUG_PRINT("Waiting for activation ...\n");
-    // printf("Hello \n");
 
+    while(1) {
 
-    // while(1) {
+        // DEBUG_PRINT("Waiting for activation ...\n");
+        
+        #ifndef GAZEBO_SIM
+        if (appchannelReceiveDataPacket(&GTC_Cmd,sizeof(GTC_Cmd),APPCHANNEL_WAIT_FOREVER))
+        {
 
-    //     if (appchannelReceiveDataPacket(&GTC_Cmd,sizeof(GTC_Cmd),APPCHANNEL_WAIT_FOREVER))
-    //     {
+            // consolePrintf("App channel received x: %.3f\n",(double)GTC_Cmd.cmd_val3);
 
-    //         // consolePrintf("App channel received x: %.3f\n",(double)GTC_Cmd.cmd_val3);
-
-    //     }
-    // }
+        }
+        #endif
+    }
   
 }
 
