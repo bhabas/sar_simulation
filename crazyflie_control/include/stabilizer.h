@@ -74,6 +74,7 @@ class Controller
 
             // Thread main controller loop so other callbacks can work fine
             controllerThread = std::thread(&Controller::stabilizerLoop, this);
+            appThread = std::thread(&Controller::appLoop,this);
         }
 
         
@@ -98,6 +99,7 @@ class Controller
 
         // DEFINE THREAD OBJECTS
         std::thread controllerThread;
+        std::thread appThread;
 
         uint32_t tick = 1;
 
@@ -125,6 +127,7 @@ class Controller
 
 
         void stabilizerLoop();
+        void appLoop();
         void loadParams();
         void consoleOuput();
         void publishCtrlData();

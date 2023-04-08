@@ -258,10 +258,27 @@ static nml_mat* X;  // STATE MATRIX TO BE INPUT INTO NN
 NN NN_DeepRL;
 nml_mat* DeepRL_Output;
 
-void controllerGTCInit(void)
+void appMain() {
+    DEBUG_PRINT("Waiting for activation ...\n");
+    // printf("Hello \n");
+
+
+    // while(1) {
+
+    //     if (appchannelReceiveDataPacket(&GTC_Cmd,sizeof(GTC_Cmd),APPCHANNEL_WAIT_FOREVER))
+    //     {
+
+    //         // consolePrintf("App channel received x: %.3f\n",(double)GTC_Cmd.cmd_val3);
+
+    //     }
+    // }
+  
+}
+
+void controllerOutOfTreeInit(void)
 {
-    controllerGTCReset();
-    controllerGTCTest();
+    controllerOutOfTreeReset();
+    controllerOutOfTreeTest();
     X = nml_mat_new(3,1);
     J = mdiag(Ixx,Iyy,Izz);
 
@@ -276,7 +293,7 @@ void controllerGTCInit(void)
     consolePrintf("GTC Initiated\n");
 }
 
-void controllerGTCReset(void)
+void controllerOutOfTreeReset(void)
 {
     consolePrintf("GTC Reset\n");
     consolePrintf("Policy_Type: %d\n",Policy);
@@ -341,17 +358,17 @@ void controllerGTCReset(void)
 
 }
 
-bool controllerGTCTest(void)
+bool controllerOutOfTreeTest(void)
 {   
     return true;
 }
 
 
 
-void controllerGTC(control_t *control, setpoint_t *setpoint,
-                                        sensorData_t *sensors,
-                                        state_t *state,
-                                        const uint32_t tick)
+void controllerOutOfTree(control_t *control,const setpoint_t *setpoint, 
+                                            const sensorData_t *sensors, 
+                                            const state_t *state, 
+                                            const uint32_t tick) 
 {
     
    
@@ -494,7 +511,6 @@ void controlOutput(state_t *state, sensorData_t *sensors)
 
 }
 
-
 void compressStates(){
     StatesZ_GTC.xy = compressXY(statePos.x,statePos.y);
     StatesZ_GTC.z = (int16_t)(statePos.z * 1000.0f);
@@ -535,9 +551,6 @@ void compressStates(){
 
 }
 
-
-
-
 void compressSetpoints(){
     setpointZ_GTC.xy = compressXY(x_d.x,x_d.y);
     setpointZ_GTC.z = (int16_t)(x_d.z * 1000.0f);
@@ -548,7 +561,6 @@ void compressSetpoints(){
     setpointZ_GTC.axy = compressXY(a_d.x,a_d.y);
     setpointZ_GTC.az = (int16_t)(a_d.z * 1000.0f);
 }
-
 
 void compressFlipStates(){
     FlipStatesZ_GTC.xy = compressXY(statePos_tr.x,statePos_tr.y);

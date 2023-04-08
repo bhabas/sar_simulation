@@ -46,17 +46,18 @@ extern "C" {
 #define Newton2g (1000.0f/9.81f)
 
 // FUNCTION PRIMITIVES
-void controllerGTCInit(void);
-bool controllerGTCTest(void);
-void controllerGTCReset(void);
+void controllerOutOfTreeInit();
+bool controllerOutOfTreeTest();
+void controllerOutOfTreeReset(void);
+void controllerOutOfTree(control_t *control,const setpoint_t *setpoint, 
+                                            const sensorData_t *sensors, 
+                                            const state_t *state, 
+                                            const uint32_t tick) ;
+void appMain();
 void controllerGTCTraj(void);
 void velocity_Traj(void);
 void GZ_velocity_Traj(void);
 void point2point_Traj(void);
-void controllerGTC(control_t *control, setpoint_t *setpoint,
-                                         sensorData_t *sensors,
-                                         state_t *state,
-                                         const uint32_t tick);
 void controlOutput(state_t *state, sensorData_t *sensors);
 void GTC_Command(setpoint_t *setpoint);
 
@@ -294,6 +295,7 @@ static int32_t thrust2PWM(float f)
 
 
 #define consolePrintf printf
+#define DEBUG_PRINT printf
 
 
 #ifdef __cplusplus

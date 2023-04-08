@@ -1,6 +1,19 @@
 #include "stabilizer.h"
 #include "controller_gtc.h"
 
+void Controller::appLoop()
+{
+    ros::Rate rate(50);
+
+    // RUN STABILIZER LOOP
+    while(ros::ok)
+    {
+        appMain();
+        
+        rate.sleep();
+    }
+}
+
 void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
 {
     ros::Rate rate(1000);
@@ -9,7 +22,7 @@ void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
     safeModeEnable = false;
 
     // INITIATE CONTROLLER
-    controllerGTCInit();
+    controllerOutOfTreeInit();
 
     // RUN STABILIZER LOOP
     while(ros::ok)
@@ -20,6 +33,7 @@ void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
 
         Controller::publishCtrlData();
         Controller::publishCtrlDebug();
+
 
         
         tick++;
