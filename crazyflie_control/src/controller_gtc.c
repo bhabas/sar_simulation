@@ -295,6 +295,219 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
     GTC_Cmd->cmd_rx = false;
 
     consolePrintf("Command Recieved: %.3f\n",GTC_Cmd->cmd_val1);
+    switch(GTC_Cmd->cmd_type){
+        case 0: // Reset
+            controllerOutOfTreeReset();
+            break;
+
+
+        // case 1: // Position
+        //     x_d.x = setpoint->cmd_val1;
+        //     x_d.y = setpoint->cmd_val2;
+        //     x_d.z = setpoint->cmd_val3;
+        //     kp_xf = setpoint->cmd_flag;
+        //     break;
+
+
+        // case 2: // Velocity
+        //     v_d.x = setpoint->cmd_val1;
+        //     v_d.y = setpoint->cmd_val2;
+        //     v_d.z = setpoint->cmd_val3;
+        //     kd_xf = setpoint->cmd_flag;
+        //     break;
+
+
+        // case 3: // Yaw Angle
+
+        //     yaw_d = setpoint->cmd_val1*M_PI/180.0f;
+        //     b1_d.x = cosf(yaw_d); // Body x-axis
+        //     b1_d.y = sinf(yaw_d); // Body y-axis
+        //     b1_d.z = 0.0f;
+            
+        //     break;
+
+        case 4: // Euler Angle
+
+            // TODO: ADD ANGLE SETPOINT OPTION INTO CONTROLLER FOR ANGLE BASED POLICY
+
+            break;        
+
+        case 5: // Hard Set All Motorspeeds to Zero
+            motorstop_flag = true;
+            break;
+        
+        // case 7: // Execute Moment-Based Flip
+
+        //     M_d.x = setpoint->cmd_val1*1e-3;
+        //     M_d.y = setpoint->cmd_val2*1e-3;
+        //     M_d.z = setpoint->cmd_val3*1e-3;
+
+        //     moment_flag = (bool)setpoint->cmd_flag;
+        //     break;
+
+        // case 8: // Arm Policy Maneuver
+        //     Tau_thr = setpoint->cmd_val1;
+        //     G1 = setpoint->cmd_val2;
+        //     G2 = setpoint->cmd_val3;
+
+        //     policy_armed_flag = setpoint->cmd_flag;
+        //     break;
+
+        // case 10: // Point-to-Point Trajectory
+
+        //     traj_type = (axis_direction)setpoint->cmd_flag;
+        //     execute_P2P_traj = true;
+
+
+        //     switch(traj_type){
+
+        //         case x_axis:
+
+        //             P2P_traj_flag.x = 1.0f;
+        //             s_0_t.x = setpoint->cmd_val1;  // Starting position [m]
+        //             s_f_t.x = setpoint->cmd_val2;  // Ending position [m]
+        //             a_t.x = setpoint->cmd_val3;    // Acceleration [m/s^2]
+
+        //             T.x = sqrtf(6/a_t.x*fabs(s_f_t.x - s_0_t.x)); // Find trajectory manuever time [s]
+        //             t_traj.x = 0.0f; // Reset timer
+        //             break;
+
+        //         case y_axis:
+
+        //             P2P_traj_flag.y = 1.0f;
+        //             s_0_t.y = setpoint->cmd_val1;  // Starting position [m]
+        //             s_f_t.y = setpoint->cmd_val2;  // Ending position [m]
+        //             a_t.y = setpoint->cmd_val3;    // Acceleration [m/s^2]
+
+        //             T.y = sqrtf(6/a_t.y*fabs(s_f_t.y - s_0_t.y)); // Find trajectory manuever time [s]
+        //             t_traj.y = 0.0f; // Reset timer
+        //             break;
+
+        //         case z_axis:
+
+        //             P2P_traj_flag.z = 1.0f;
+        //             s_0_t.z = setpoint->cmd_val1;  // Starting position [m]
+        //             s_f_t.z = setpoint->cmd_val2;  // Ending position [m]
+        //             a_t.z = setpoint->cmd_val3;    // Acceleration [m/s^2]
+
+        //             T.z = sqrtf(6/a_t.z*fabs(s_f_t.z - s_0_t.z)); // Find trajectory manuever time [s]
+        //             t_traj.z = 0.0f; // Reset timer
+        //             break;
+                    
+        //     }
+
+        //     break;
+
+        // case 11: // Velocity Trajectory
+        //     traj_type = (axis_direction)setpoint->cmd_flag;
+
+        //     switch(traj_type){
+
+        //         case x_axis:
+
+        //             s_0_t.x = setpoint->cmd_val1;               // Starting position [m]
+        //             v_t.x = setpoint->cmd_val2;                 // Desired velocity [m/s]
+        //             a_t.x = setpoint->cmd_val3;                 // Acceleration [m/s^2]
+
+        //             t_traj.x = 0.0f; // Reset timer
+        //             execute_vel_traj = true;
+        //             break;
+
+        //         case y_axis:
+
+        //             s_0_t.y = setpoint->cmd_val1;
+        //             v_t.y = setpoint->cmd_val2;
+        //             a_t.y = setpoint->cmd_val3;
+
+        //             t_traj.y = 0.0f;
+        //             execute_vel_traj = true;
+        //             break;
+
+        //         case z_axis:
+
+        //             s_0_t.z = setpoint->cmd_val1;
+        //             v_t.z = setpoint->cmd_val2;
+        //             a_t.z = setpoint->cmd_val3;
+
+        //             t_traj.z = 0.0f;
+        //             execute_vel_traj = true;
+        //             break;
+                    
+        //     }
+
+        //     break;
+
+        // // case 20: // Tumble-Detection
+        // //     tumble_detection = setpoint->cmd_flag;
+        // //     break;
+            
+        
+
+        // // case 30: // Custom Thrust Values
+
+        // //     customThrust_flag = true;
+        // //     thrust_override[0] = setpoint->cmd_val1;
+        // //     thrust_override[1] = setpoint->cmd_val2;
+        // //     thrust_override[2] = setpoint->cmd_val3;
+        // //     thrust_override[3] = setpoint->cmd_flag;
+
+        // //     break;
+
+        // // case 31: // Custom PWM Values
+
+        // //     customPWM_flag = true;
+        // //     PWM_override[0] = setpoint->cmd_val1;
+        // //     PWM_override[1] = setpoint->cmd_val2;
+        // //     PWM_override[2] = setpoint->cmd_val3;
+        // //     PWM_override[3] = setpoint->cmd_flag;
+
+            break;
+
+
+        // case 90: // Gazebo Velocity Trajectory (Instantaneous Acceleration)
+
+        //     traj_type = (axis_direction)setpoint->cmd_flag;
+
+        //     switch(traj_type){
+
+        //         case x_axis:
+
+        //             s_0_t.x = setpoint->cmd_val1;   // Starting position [m]
+        //             v_t.x = setpoint->cmd_val2;     // Desired velocity [m/s]
+        //             a_t.x = 0.0f;                   // Acceleration [m/s^2]
+
+        //             t_traj.x = 0.0f; // Reset timer
+        //             execute_GZ_vel_traj = true;
+        //             break;
+
+        //         case y_axis:
+
+        //             s_0_t.y = setpoint->cmd_val1;
+        //             v_t.y = setpoint->cmd_val2;
+        //             a_t.y = 0.0f;
+
+        //             t_traj.y = 0.0f;
+        //             execute_GZ_vel_traj = true;
+        //             break;
+
+        //         case z_axis:
+
+        //             s_0_t.z = setpoint->cmd_val1;
+        //             v_t.z = setpoint->cmd_val2;
+        //             a_t.z = 0.0f;
+
+        //             t_traj.z = 0.0f;
+        //             execute_GZ_vel_traj = true;
+        //             break;
+                    
+        //     }
+
+        //     break;
+
+        
+
+    }
+    
 
 }
 
