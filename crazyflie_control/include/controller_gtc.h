@@ -74,7 +74,7 @@ void calcOpticalFlow(const state_t* state, const sensorData_t* sensors);
 void velocity_Traj(void);
 void GZ_velocity_Traj(void);
 void point2point_Traj(void);
-void controlOutput(state_t *state, sensorData_t *sensors);
+void controlOutput(const state_t *state,const sensorData_t *sensors);
 void GTC_Command(struct GTC_CmdPacket *GTC_Cmd);
 
 
