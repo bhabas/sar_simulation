@@ -49,6 +49,17 @@ extern "C" {
 #define g2Newton (9.81f/1000.0f)
 #define Newton2g (1000.0f/9.81f)
 
+struct GTC_CmdPacket{
+    uint8_t cmd_type; 
+    float cmd_val1;
+    float cmd_val2;
+    float cmd_val3;
+    float cmd_flag;
+    bool  cmd_rx;
+} __attribute__((packed));
+
+extern struct GTC_CmdPacket GTC_Cmd;
+
 // FUNCTION PRIMITIVES
 void controllerOutOfTreeInit();
 bool controllerOutOfTreeTest();
@@ -63,16 +74,9 @@ void velocity_Traj(void);
 void GZ_velocity_Traj(void);
 void point2point_Traj(void);
 void controlOutput(state_t *state, sensorData_t *sensors);
+void GTC_Command(struct GTC_CmdPacket *GTC_Cmd);
 
-struct GTC_CmdPacket{
-    uint8_t cmd_type; 
-    float cmd_val1;
-    float cmd_val2;
-    float cmd_val3;
-    float cmd_flag;
-} __attribute__((packed));
 
-extern struct GTC_CmdPacket GTC_Cmd;
 
 // =================================
 //    CONTROL GAIN INITIALIZATION

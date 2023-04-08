@@ -267,16 +267,32 @@ void appMain() {
 
         // DEBUG_PRINT("Waiting for activation ...\n");
         
-        #ifndef GAZEBO_SIM
+        #ifdef GAZEBO_SIM
+        if (GTC_Cmd.cmd_rx)
+        {
+            if (GTC_Cmd.cmd_rx == true)
+            {
+                GTC_Command(&GTC_Cmd);
+            }
+        }
+        #else
         if (appchannelReceiveDataPacket(&GTC_Cmd,sizeof(GTC_Cmd),APPCHANNEL_WAIT_FOREVER))
         {
-
-            // consolePrintf("App channel received x: %.3f\n",(double)GTC_Cmd.cmd_val3);
-
+            if (GTC_Cmd.cmd_rx == true)
+            {
+                GTC_Command(&GTC_Cmd);
+            }
         }
         #endif
+        
     }
   
+}
+
+void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
+{
+    consolePrintf("Command Recieved: %.3f\n",GTC_Cmd->cmd_val1);
+
 }
 
 void controllerOutOfTreeInit(void)

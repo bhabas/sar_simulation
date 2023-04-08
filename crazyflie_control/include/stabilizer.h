@@ -141,17 +141,16 @@ class Controller
 
 bool Controller::CMD_Service_Resp(crazyflie_msgs::GTC_Cmd_srv::Request &req, crazyflie_msgs::GTC_Cmd_srv::Response &res)
 {
-
-    printf("Helloooo\n");
+    // RESPOND THE SRV WAS RECIEVED
     res.srv_Success = true;
 
+    // UPDATE GTC_Cmd STRUCT VALUES
     GTC_Cmd.cmd_type = req.cmd_type;
     GTC_Cmd.cmd_val1 = req.cmd_vals.x;
     GTC_Cmd.cmd_val2 = req.cmd_vals.y;
     GTC_Cmd.cmd_val3 = req.cmd_vals.z;
     GTC_Cmd.cmd_flag = req.cmd_flag;
-
-    // setpoint.GTC_cmd_rec = true;
+    GTC_Cmd.cmd_rx = true;
 
     if(req.cmd_type == 21) // RESET ROS PARAM VALUES
     {
