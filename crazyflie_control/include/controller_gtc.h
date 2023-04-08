@@ -70,6 +70,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                                             const uint32_t tick) ;
 void appMain();
 void controllerGTCTraj(void);
+void calcOpticalFlow(const state_t* state, const sensorData_t* sensors);
 void velocity_Traj(void);
 void GZ_velocity_Traj(void);
 void point2point_Traj(void);

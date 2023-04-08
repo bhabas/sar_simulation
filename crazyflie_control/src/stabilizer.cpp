@@ -28,7 +28,7 @@ void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
     while(ros::ok)
     {
         stateEstimator(&state, &sensorData, &control, tick); // Run state/sensor values through "Kalman filter"
-        // controllerGTC(&control, &setpoint, &sensorData, &state, tick);
+        controllerOutOfTree(&control, &setpoint, &sensorData, &state, tick);
     
 
         Controller::publishCtrlData();

@@ -2,6 +2,7 @@
 #include "controller_gtc.h"
 #include "ML_funcs.h"
 #include "CompressedStates.h"
+#include "led.h"
 
 // =================================
 //    CONTROL GAIN INITIALIZATION
@@ -265,51 +266,40 @@ void appMain() {
 
     while(1) {
 
-        // DEBUG_PRINT("Waiting for activation ...\n");
-        
         #ifdef GAZEBO_SIM
-        if (GTC_Cmd.cmd_rx)
+        // EXECUTE GTC COMMAND WHEN RECEIVED
+        if (GTC_Cmd.cmd_rx == true)
         {
-            if (GTC_Cmd.cmd_rx == true)
-            {
-                GTC_Command(&GTC_Cmd);
-            }
+            GTC_Command(&GTC_Cmd);
         }
         #else
+        // WAIT UNTIL GTC COMMAND IS RECEIVED
         if (appchannelReceiveDataPacket(&GTC_Cmd,sizeof(GTC_Cmd),APPCHANNEL_WAIT_FOREVER))
         {
-            if (GTC_Cmd.cmd_rx == true)
-            {
-                GTC_Command(&GTC_Cmd);
-            }
+            if (GTC_Cmd.cmd_rx == true) GTC_Command(&GTC_Cmd);
         }
         #endif
-        
     }
   
 }
 
 void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
 {
+    // MARK THAT COMMAND IS BEING ENACTED
+    GTC_Cmd->cmd_rx = false;
+
     consolePrintf("Command Recieved: %.3f\n",GTC_Cmd->cmd_val1);
 
 }
 
 void controllerOutOfTreeInit(void)
 {
+    // TURN OFF BLUE LEDS (THEY'RE VERY BRIGHT)
+    ledSet(LED_BLUE_L, 0);
+    ledSet(LED_BLUE_NRF, 0);
+
     controllerOutOfTreeReset();
     controllerOutOfTreeTest();
-    X = nml_mat_new(3,1);
-    J = mdiag(Ixx,Iyy,Izz);
-
-    // INIT NN/OC_SVM POLICY
-    NN_init(&NN_Policy_Action,NN_Params_Flip);
-    OC_SVM_init(&SVM_Policy_Flip,SVM_Params);
-
-    // INIT DEEP RL NN POLICY
-    NN_init(&NN_DeepRL,NN_Params_DeepRL);
-    DeepRL_Output = nml_mat_new(2,1);
-
     consolePrintf("GTC Initiated\n");
 }
 
@@ -383,7 +373,11 @@ bool controllerOutOfTreeTest(void)
     return true;
 }
 
+void calcOpticalFlow(const state_t* state, const sensorData_t* sensors)
+{
 
+    printf("hhelo\n");
+}
 
 void controllerOutOfTree(control_t *control,const setpoint_t *setpoint, 
                                             const sensorData_t *sensors, 
@@ -392,11 +386,11 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 {
     
    
+    
 
     if (RATE_DO_EXECUTE(RATE_500_HZ, tick)) {
 
-        
-
+        calcOpticalFlow(state,sensors);
 
         compressStates();
         compressSetpoints();
