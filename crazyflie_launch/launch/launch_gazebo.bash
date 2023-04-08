@@ -18,10 +18,10 @@ Plane_Model=$(rosparam get /PLANE_SETTINGS/Plane_Model)
 
 ## START GAZEBO 
 roslaunch crazyflie_launch crazyflie_gazebo.launch \
-    config_name:=$CONFIG_NAME \
-    ground_name:=$GROUND_NAME \
+    Quad_Model:=$CONFIG_NAME \
+    Ground_Model:=$GROUND_NAME \
+    Plane_Model:=$Plane_Model \
     gui_flag:=$GUI_FLAG \
     pause_flag:=$PAUSE_FLAG \
-    Plane_Model:=$Plane_Model \
 
 
