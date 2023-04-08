@@ -27,14 +27,14 @@ is easy to use.
 
 #include "crazyflie_msgs/CtrlData.h"
 #include "crazyflie_msgs/CtrlDebug.h"
-#include "crazyflie_msgs/RLCmd.h"
+#include "crazyflie_msgs/GTC_Cmd_srv.h"
 #include "crazyflie_msgs/RLData.h"
 #include "crazyflie_msgs/PadConnect.h"
 
 #include "crazyflie_msgs/activateSticky.h"
 #include "crazyflie_msgs/loggingCMD.h"
 #include "crazyflie_msgs/GenericLogData.h"
-// #include "crazyflie_msgs/GTC_Cmd.h"
+#include "crazyflie_msgs/GTC_Cmd.h"
 
 #include "quatcompress.h"
 
@@ -42,7 +42,7 @@ is easy to use.
 #define formatBool(b) ((b) ? "True" : "False")
 #define RATE_DO_EXECUTE(RATE_HZ, TICK) ((TICK % (1000 / RATE_HZ)) == 0)
 
-const char* theta = "\U000003D1"; 
+const char* theta_str = "\U000003D1"; 
 
 
 class CF_DataConverter
@@ -82,7 +82,7 @@ class CF_DataConverter
 
             CMD_Service_CF_DC = nh->advertiseService("/CF_DC/Cmd_CF_DC",&CF_DataConverter::CMD_CF_DC_Callback,this); // Change to AGENT or ENV
             CMD_Service_Dashboard = nh->advertiseService("/CF_DC/Cmd_Dashboard",&CF_DataConverter::CMD_Dashboard_Callback,this);
-            CMD_Client = nh->serviceClient<crazyflie_msgs::RLCmd>("/CTRL/Cmd_ctrl");
+            CMD_Client = nh->serviceClient<crazyflie_msgs::GTC_Cmd_srv>("/CTRL/Cmd_ctrl");
             CMD_Pub = nh->advertise<crazyflie_msgs::GTC_Cmd>("/CF_DC/Cmd_CF_DC",1);
             
 
@@ -114,9 +114,9 @@ class CF_DataConverter
         void Pad_Connections_Callback(const crazyflie_msgs::PadConnect &msg);
 
 
-        bool CMD_CF_DC_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res);
-        bool CMD_Dashboard_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res);
-        bool Send_Cmd2Ctrl(crazyflie_msgs::RLCmd::Request &req);
+        bool CMD_CF_DC_Callback(crazyflie_msgs::GTC_Cmd_srv::Request &req, crazyflie_msgs::GTC_Cmd_srv::Response &res);
+        bool CMD_Dashboard_Callback(crazyflie_msgs::GTC_Cmd_srv::Request &req, crazyflie_msgs::GTC_Cmd_srv::Response &res);
+        bool Send_Cmd2Ctrl(crazyflie_msgs::GTC_Cmd_srv::Request &req);
 
 
 

@@ -234,7 +234,7 @@ void CF_DataConverter::CtrlDebug_Callback(const crazyflie_msgs::CtrlDebug &ctrl_
     Camera_Sensor_Active = ctrl_msg.Camera_Sensor_Active;
 }
 
-bool CF_DataConverter::CMD_CF_DC_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res)
+bool CF_DataConverter::CMD_CF_DC_Callback(crazyflie_msgs::GTC_Cmd_srv::Request &req, crazyflie_msgs::GTC_Cmd_srv::Response &res)
 {
     // PASS COMMAND VALUES TO CONTROLLER AND PASS LOCAL ACTIONS
     CF_DataConverter::Send_Cmd2Ctrl(req);
@@ -242,7 +242,7 @@ bool CF_DataConverter::CMD_CF_DC_Callback(crazyflie_msgs::RLCmd::Request &req, c
     return res.srv_Success;
 }
 
-bool CF_DataConverter::CMD_Dashboard_Callback(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res)
+bool CF_DataConverter::CMD_Dashboard_Callback(crazyflie_msgs::GTC_Cmd_srv::Request &req, crazyflie_msgs::GTC_Cmd_srv::Response &res)
 {
     // PASS COMMAND VALUES TO CONTROLLER AND PASS LOCAL ACTIONS
     CF_DataConverter::Send_Cmd2Ctrl(req);
@@ -250,7 +250,7 @@ bool CF_DataConverter::CMD_Dashboard_Callback(crazyflie_msgs::RLCmd::Request &re
     return res.srv_Success;
 }
 
-bool CF_DataConverter::Send_Cmd2Ctrl(crazyflie_msgs::RLCmd::Request &req)
+bool CF_DataConverter::Send_Cmd2Ctrl(crazyflie_msgs::GTC_Cmd_srv::Request &req)
 {
     if(req.cmd_type == 0)
     {
@@ -342,7 +342,7 @@ bool CF_DataConverter::Send_Cmd2Ctrl(crazyflie_msgs::RLCmd::Request &req)
 
     // SIMULATION:
     // SEND COMMAND VALUES TO CONTROLLER
-    crazyflie_msgs::RLCmd srv;
+    crazyflie_msgs::GTC_Cmd_srv srv;
     srv.request = req;
     CMD_Client.call(srv);
 
@@ -350,11 +350,11 @@ bool CF_DataConverter::Send_Cmd2Ctrl(crazyflie_msgs::RLCmd::Request &req)
     // EXPERIMENT: 
     // BROADCAST CMD VALUES AS ROS MESSAGE
     // (SO CRAZYSWARM CAN PASS MSGS FROM BOTH DASHBOARD AND ENV FILE)
-    crazyflie_msgs::GTC_Cmd cmd_msg;
-    cmd_msg.cmd_type = req.cmd_type;
-    cmd_msg.cmd_vals = req.cmd_vals;
-    cmd_msg.cmd_flag = req.cmd_flag;
-    CMD_Pub.publish(cmd_msg);
+    // crazyflie_msgs::GTC_Cmd cmd_msg;
+    // cmd_msg.cmd_type = req.cmd_type;
+    // cmd_msg.cmd_vals = req.cmd_vals;
+    // cmd_msg.cmd_flag = req.cmd_flag;
+    // CMD_Pub.publish(cmd_msg);
 
     return srv.response.srv_Success; // Return if service request successful (true/false)
 }
@@ -570,33 +570,33 @@ void CF_DataConverter::consoleOuput()
     printf("\n");
 
     printf("==== System States ====\n");
-    printf("Pos [m]:\t %.3f  %.3f  %.3f\n",Pose.position.x,Pose.position.y,Pose.position.z);
-    printf("Vel [m/s]:\t %.3f  %.3f  %.3f\n",Twist.linear.x,Twist.linear.y,Twist.linear.z);
-    printf("Omega [rad/s]:\t %.3f  %.3f  %.3f\n",Twist.angular.x,Twist.angular.y,Twist.angular.z);
-    printf("Eul [deg]:\t %.3f  %.3f  %.3f\n",Eul.x,Eul.y,Eul.z);
+    printf("Pos [m]:\t % 8.3f  % 8.3f  % 8.3f\n",Pose.position.x,Pose.position.y,Pose.position.z);
+    printf("Vel [m/s]:\t % 8.3f  % 8.3f  % 8.3f\n",Twist.linear.x,Twist.linear.y,Twist.linear.z);
+    printf("Omega [rad/s]:\t % 8.3f  % 8.3f  % 8.3f\n",Twist.angular.x,Twist.angular.y,Twist.angular.z);
+    printf("Eul [deg]:\t % 8.3f  % 8.3f  % 8.3f\n",Eul.x,Eul.y,Eul.z);
     printf("\n");
-    printf("Vel [mag,phi,alph]: %.2f %.2f %.2f\n",Vel_mag,Phi,Alpha);
+    printf("Vel [mag,phi,alph]: % 8.3f % 8.3f % 8.3f\n",Vel_mag,Phi,Alpha);
     printf("\n");
 
-    printf("Tau: %.3f \t%sx: %.3f \t%sy: %.3f\n",Tau,theta,Theta_x,theta,Theta_y);
-    printf("Tau_est: %.3f \t%sx_est: %.3f \t%sy_est: %.3f\n",Tau_est,theta,Theta_x_est,theta,Theta_y_est);
-    printf("D_perp: %.3f\n",D_perp);
+    printf("Tau:\t % 7.3f  %sx: \t  % 7.3f  %sy: \t   % 7.3f\n",Tau,theta_str,Theta_x,theta_str,Theta_y);
+    printf("Tau_est: % 7.3f  %sx_est: % 7.3f  %sy_est: % 7.3f\n",Tau_est,theta_str,Theta_x_est,theta_str,Theta_y_est);
+    printf("D_perp: % 7.3f\n",D_perp);
     printf("\n");
 
     printf("==== Policy: %s ====\n",POLICY_TYPE.c_str());
     if (strcmp(POLICY_TYPE.c_str(),"PARAM_OPTIM") == 0)
     {
-        printf("Tau_thr: %.3f \tMy: %.3f\n",Tau_thr,G1);
+        printf("Tau_thr: % 7.3f \tMy: % 7.3f\n",Tau_thr,G1);
         printf("\n");
     }
     else if (strcmp(POLICY_TYPE.c_str(),"SVL_POLICY") == 0)
     {
-        printf("Policy_Flip: %.3f \tPolicy_Action: %.3f \n",Policy_Flip,Policy_Action);
+        printf("Policy_Flip: % 7.3f \tPolicy_Action: % 7.3f \n",Policy_Flip,Policy_Action);
         printf("\n");
     }
     else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL") == 0)
     {
-        printf("Stuff: %.3f \tStuff: %.3f \n",Policy_Flip,Policy_Action);
+        printf("Stuff: % 7.3f \tStuff: % 7.3f \n",Policy_Flip,Policy_Action);
         printf("\n");
     }
     else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL_SB3") == 0)
@@ -607,33 +607,33 @@ void CF_DataConverter::consoleOuput()
 
 
     printf("==== Flip Trigger Values ====\n");
-    printf("Tau_tr:     %.3f \tPolicy_Flip_tr:    %.3f \n",Tau_tr,Policy_Flip_tr);
-    printf("%sx_tr:     %.3f \tPolicy_Action_tr:  %.3f \n",theta,Theta_x_tr,Policy_Action_tr);
-    printf("D_perp_tr:  %.3f \n",D_perp_tr);
+    printf("Tau_tr:     % 7.3f \tPolicy_Flip_tr:    % 7.3f \n",Tau_tr,Policy_Flip_tr);
+    printf("%sx_tr:     % 7.3f \tPolicy_Action_tr:  % 7.3f \n",theta_str,Theta_x_tr,Policy_Action_tr);
+    printf("D_perp_tr:  % 7.3f \n",D_perp_tr);
     printf("\n");
 
     printf("==== Setpoints ====\n");
-    printf("x_d: %.3f  %.3f  %.3f\n",x_d.x,x_d.y,x_d.z);
-    printf("v_d: %.3f  %.3f  %.3f\n",v_d.x,v_d.y,v_d.z);
-    printf("a_d: %.3f  %.3f  %.3f\n",a_d.x,a_d.y,a_d.z);
+    printf("x_d: % 7.3f  % 7.3f  % 7.3f\n",x_d.x,x_d.y,x_d.z);
+    printf("v_d: % 7.3f  % 7.3f  % 7.3f\n",v_d.x,v_d.y,v_d.z);
+    printf("a_d: % 7.3f  % 7.3f  % 7.3f\n",a_d.x,a_d.y,a_d.z);
     printf("\n");
 
     printf("==== Controller Actions ====\n");
-    printf("FM [N/N*mm]: %.3f  %.3f  %.3f  %.3f\n",FM[0],FM[1],FM[2],FM[3]);
-    printf("Motor Thrusts [g]: %.3f  %.3f  %.3f  %.3f\n",MotorThrusts[0],MotorThrusts[1],MotorThrusts[2],MotorThrusts[3]);
+    printf("FM [N/N*mm]: % 7.3f  % 7.3f  % 7.3f  % 7.3f\n",FM[0],FM[1],FM[2],FM[3]);
+    printf("Motor Thrusts [g]: % 7.3f  % 7.3f  % 7.3f  % 7.3f\n",MotorThrusts[0],MotorThrusts[1],MotorThrusts[2],MotorThrusts[3]);
     printf("MS_PWM: %u  %u  %u  %u\n",MS_PWM[0],MS_PWM[1],MS_PWM[2],MS_PWM[3]);
     printf("\n");
 
 
     printf("=== Controller Gains ====\n");
-    printf("Kp_P: %.3f  %.3f  %.3f \t",P_kp_xy,P_kp_xy,P_kp_z);
-    printf("Kp_R: %.3f  %.3f  %.3f \n",R_kp_xy,R_kp_xy,R_kp_z);
+    printf("Kp_P: % 7.3f  % 7.3f  % 7.3f \t",P_kp_xy,P_kp_xy,P_kp_z);
+    printf("Kp_R: % 7.3f  % 7.3f  % 7.3f \n",R_kp_xy,R_kp_xy,R_kp_z);
 
-    printf("Kd_P: %.3f  %.3f  %.3f \t",P_kd_xy,P_kd_xy,P_kd_z);
-    printf("Kd_R: %.3f  %.3f  %.3f \n",R_kd_xy,R_kd_xy,R_kd_z);
+    printf("Kd_P: % 7.3f  % 7.3f  % 7.3f \t",P_kd_xy,P_kd_xy,P_kd_z);
+    printf("Kd_R: % 7.3f  % 7.3f  % 7.3f \n",R_kd_xy,R_kd_xy,R_kd_z);
 
-    printf("Ki_P: %.3f  %.3f  %.3f \t",P_ki_xy,P_ki_xy,P_ki_z);
-    printf("Ki_R: %.3f  %.3f  %.3f \n",R_ki_xy,R_ki_xy,R_ki_z);
+    printf("Ki_P: % 7.3f  % 7.3f  % 7.3f \t",P_ki_xy,P_ki_xy,P_ki_z);
+    printf("Ki_R: % 7.3f  % 7.3f  % 7.3f \n",R_ki_xy,R_ki_xy,R_ki_z);
     printf("======\n");
 }
 
