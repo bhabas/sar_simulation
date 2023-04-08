@@ -65,12 +65,11 @@ class Controller
             // RL TOPICS
 
             // INTERNAL TOPICS
-            CF_IMU_Subscriber = nh->subscribe("/CF_Internal/IMU",1,&Controller::IMU_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
-            CF_OF_Subscriber = nh->subscribe("/CF_Internal/OpticalFlow_Values",1,&Controller::OF_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
-            CF_Camera_Subscriber = nh->subscribe("/CF_Internal/camera/image_raw",1,&Controller::Camera_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
+            SAR_IMU_Subscriber = nh->subscribe("/SAR_Internal/IMU",1,&Controller::IMU_Update_Callback,this,ros::TransportHints().tcpNoDelay());
+            Ext_Pos_Subscriber = nh->subscribe("/SAR_External/ExtPosition",1,&Controller::Ext_Pos_Update_Callback,this,ros::TransportHints().tcpNoDelay());
+            // CF_Camera_Subscriber = nh->subscribe("/CF_Internal/camera/image_raw",1,&Controller::Camera_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
 
             // ENVIRONMENT TOPICS
-            ENV_Vicon_Subscriber = nh->subscribe("/ENV/viconState_UKF",1,&Controller::viconState_Callback,this,ros::TransportHints().tcpNoDelay());
             
             // DYNAMICALLY ALLOCATE MEMORY TO STORE PREVIOUS IMAGE
             Prev_img = (uint8_t*)calloc(WIDTH_PIXELS*HEIGHT_PIXELS,sizeof(uint8_t));
@@ -89,13 +88,13 @@ class Controller
         
 
         // SUBSCRIBERS
-        ros::Subscriber CF_IMU_Subscriber;
+        ros::Subscriber SAR_IMU_Subscriber;
         ros::Subscriber CF_OF_Subscriber;
         ros::Subscriber CF_Camera_Subscriber;
 
         ros::Subscriber RL_Data_Subscriber;
 
-        ros::Subscriber ENV_Vicon_Subscriber;
+        ros::Subscriber Ext_Pos_Subscriber;
         ros::Subscriber ENV_CeilingFT_Subscriber;
 
         // PUBLISHERS
@@ -156,8 +155,9 @@ class Controller
 
 
         // FUNCTION PRIMITIVES
-        void viconState_Callback(const nav_msgs::Odometry::ConstPtr &msg);
-        void IMU_Sensor_Callback(const sensor_msgs::Imu::ConstPtr &msg);
+        void Ext_Pos_Update_Callback(const nav_msgs::Odometry::ConstPtr &msg);
+        void IMU_Update_Callback(const sensor_msgs::Imu::ConstPtr &msg);
+
         void OF_Sensor_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg);
         void Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg);
         bool CMD_Service_Resp(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res);
@@ -195,169 +195,6 @@ bool Controller::CMD_Service_Resp(crazyflie_msgs::RLCmd::Request &req, crazyflie
     return 1;
 }
 
-void Controller::Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg)
-{
-    if(camera_sensor_active == true)
-    {
-    
-        // Cur_img = &(msg->data)[0]; // Point to current image data address
-
-        // //Where the convolution starts
-        // int32_t X = 1;
-        // int32_t Y = 1;
-        // float w = 3.6e-6; //Pixel width in meters
-        // float f = 0.66e-3/2; //Focal length in meters
-        // float U;
-        // float V;
-        // float O_up = WIDTH_PIXELS/2;
-        // float V_up = WIDTH_PIXELS/2;
-        // float Gtemp = 0;
-        // float Iuu = 0;
-        // float Ivv = 0;
-        // float Iuv = 0;
-        // float IGu = 0;
-        // float IGv = 0;
-        // float IGG = 0;
-        // float Iut = 0;
-        // float Ivt = 0;
-        // float IGt = 0;
-        // float dt;
-        // int32_t Ittemp;
-        // float Cur_time = ros::Time::now().toSec();
-
-        // int itr = 3;
-        
-        // // for(int j = 0; j < (WIDTH_PIXELS - 2)*(HEIGHT_PIXELS - 2); j++) // How many times the kernel center moves around the image
-        // for(int16_t j = 0; j < 2500; j++) // 10% of image data used
-        // {
-
-        //     //GENERALIZE FOR CHANGE IN KERNEL SIZE
-        //     if(X >= WIDTH_PIXELS - 1) //if the edge of the kernel crosses the edge of the image
-        //     { 
-            
-        //         X = 1; //move the kernel back to the left edge of the image
-        //         Y = Y + itr; //and slide the kernel down the image
-
-        //     }
-
-        //     //Sub Kernel Indexing 
-        //     uint32_t i0 = (X - 1) + (Y - 1) * WIDTH_PIXELS; //First grab top left location of whole kernel
-        //     uint32_t i1 = i0 + WIDTH_PIXELS; //then each following row is separated by the image width
-        //     uint32_t i2 = i1 + WIDTH_PIXELS;
-
-        //     U = (X - O_up)*w + (w/2); // Using current location of the Kernel center
-        //     V = (Y - V_up)*w + (w/2); //calculate the current pixel grid locations (u,v)
-
-        //     // ######  DEBUGGING  ######
-        //     /*//
-        //     std::cout << "i0: " << i0 << "\n";
-        //     std::cout << "i1: " << i1 << "\n";
-        //     std::cout << "i2: " << i2 << "\n";
-        //     *///
-
-        //     int Xsum = 0; //reset rolling sum to 0
-        //     int Ysum = 0;
-
-        //     //GENERALIZE FOR CHANGE IN KERNEL SIZE
-        //     for(int k = 0; k < 3; k++){
-
-        //         //Sub kernel 0
-        //         Xsum += kx0[k] * Cur_img[i0 + k];
-        //         Ysum += ky0[k] * Cur_img[i0 + k];
-
-        //         //Sub kernel 1 (skipping ky1)
-        //         Xsum += kx1[k] * Cur_img[i1 + k];
-
-        //         //Sub kernel 2
-        //         Xsum += kx2[k] * Cur_img[i2 + k];
-        //         Ysum += ky2[k] * Cur_img[i2 + k];
-
-        //     }
-
-        //     //Sum assigned to middle value: (i1 + 1)
-        //     Ittemp = (Cur_img[i1 + 1] - Prev_img[i1 + 1]); //moved /dt to last step
-        //     Gtemp = (Xsum*U + Ysum*V);
-
-        //     //LHS Matrix values (rolling sums)
-        //     Iuu += Xsum*Xsum;
-        //     Ivv += Ysum*Ysum;
-        //     Iuv += Xsum*Ysum;
-        //     IGu += Gtemp*Xsum;
-        //     IGv += Gtemp*Ysum;
-        //     IGG += Gtemp*Gtemp;
-
-        //     //RHS Matrix Values (rolling sums)
-        //     Iut += Xsum*Ittemp;
-        //     Ivt += Ysum*Ittemp; 
-        //     IGt += Gtemp*Ittemp;
-
-        //     // DETERMINE IF J IS ODD
-        //     // if((j + 1) % 2 == 0){ //need + 1 in order to prevent divide by zero
-        //     //     itr = 2; // if j is even increment by 2
-        //     // }
-        //     // else {
-        //     //     itr = 1; 
-        //     // }
-
-
-        //     X = X + itr; //move center of kernel over by increment
-        //     // X++; // move center of kernel over
-            
-        // } // END OF CONVOLUTION
-
-        // dt = Cur_time - Prev_time;
-
-        // // Packing final result into the matrices and applying the floating point math
-        // double LHS[9] = {f/powf(8*w,2)*Iuu, f/powf(8*w,2)*Iuv, 1/powf(8*w,2)*IGu,
-        //                 f/powf(8*w,2)*Iuv, f/powf(8*w,2)*Ivv, 1/powf(8*w,2)*IGv,
-        //                 f/powf(8*w,2)*IGu, f/powf(8*w,2)*IGv, 1/powf(8*w,2)*IGG};
-
-        // double RHS[3] = {-Iut/(8*w*dt), -Ivt/(8*w*dt), -IGt/(8*w*dt)}; //added change in time to final step
-
-        // // SOLVE LEAST-SQUARES EQUATION FOR OPTICAL FLOW VALUES
-        // nml_mat* m_A = nml_mat_from(3,3,9,LHS);
-        // nml_mat* m_b = nml_mat_from(3,1,3,RHS);
-
-        // nml_mat_qr *QR = nml_mat_qr_solve(m_A); // A = Q*R
-        // nml_mat* y = nml_mat_dot(nml_mat_transp(QR->Q),m_b); // y = Q^T*b
-        // nml_mat* x_QR = nml_ls_solvebck(QR->R,y); // Solve R*x = y via back substitution
-
-        // float OFy_est = x_QR->data[0][0];
-        // float OFx_est = x_QR->data[1][0];
-        // float Tau_est = 1/x_QR->data[2][0];
-
-        // // FREE MATRICES FROM HEAP
-        // nml_mat_free(m_A);
-        // nml_mat_free(m_b);
-        // nml_mat_qr_free(QR);
-        // nml_mat_free(x_QR);
-
-        // // IF INVALID VALUE THEN EXIT FUNCTION
-        // if (isnan(Tau_est))
-        // {
-        //     return;
-        // }       
-
-        // // APPLY EMA FILTER y[n] = alpha*x[n] + (1-alpha)*y[n-1]
-        // float alpha = 0.99;
-        // Tau_est_filt = (alpha * Tau_est + (1-alpha) * Tau_est_filt_1);
-        // Tau_est_filt = clamp(Tau_est_filt, 0,10); // Restrict Tau values to range [0,10]
-        
-        // // UPDATE SENSOR DATA STRUCT WITH FILTERED OPTICAL FLOW VALUES
-        // sensorData.OFx_est = OFx_est;
-        // sensorData.OFy_est = OFy_est;
-        // sensorData.Tau_est = Tau_est_filt;
-        
-        // // SET PREVIOUS DATA FOR NEXT CALCULATION
-        // Prev_time = Cur_time; 
-        // Tau_est_prev_1 = Tau_est;
-        // Tau_est_filt_1 = Tau_est_filt;
-        // memcpy(Prev_img,Cur_img, WIDTH_PIXELS*HEIGHT_PIXELS*sizeof(uint8_t)); // Copy memory of Cur_img data to Prev_img address
-
-    }
-
-} // End of Camera_Sensor_Callback
-
 
 // OPTICAL FLOW VALUES (IN BODY FRAME) FROM MODEL SENSOR PLUGIN
 void Controller::OF_Sensor_Callback(const crazyflie_msgs::OF_SensorData::ConstPtr &msg)
@@ -370,35 +207,35 @@ void Controller::OF_Sensor_Callback(const crazyflie_msgs::OF_SensorData::ConstPt
 }
 
 // IMU VALUES FROM MODEL SENSOR PLUGIN
-void Controller::IMU_Sensor_Callback(const sensor_msgs::Imu::ConstPtr &msg)
+void Controller::IMU_Update_Callback(const sensor_msgs::Imu::ConstPtr &msg)
 {
     sensorData.acc.x = msg->linear_acceleration.x/9.8066; // Convert to Gs to match crazyflie sensors
     sensorData.acc.y = msg->linear_acceleration.y/9.8066;
     sensorData.acc.z = msg->linear_acceleration.z/9.8066;
 
+    sensorData.gyro.x = msg->angular_velocity.x*180.0/M_PI; // Convert to deg/s to match crazyflie sensors
+    sensorData.gyro.y = msg->angular_velocity.y*180.0/M_PI;
+    sensorData.gyro.z = msg->angular_velocity.z*180.0/M_PI;
+
+    state.attitudeQuaternion.x = msg->orientation.x;
+    state.attitudeQuaternion.y = msg->orientation.y;
+    state.attitudeQuaternion.z = msg->orientation.z;
+    state.attitudeQuaternion.w = msg->orientation.w;
+
 }
 
 // POSE AND TWIST FROM "VICON" SYSTEM (GAZEBO WORLD FRAME)
-void Controller::viconState_Callback(const nav_msgs::Odometry::ConstPtr &msg)
+void Controller::Ext_Pos_Update_Callback(const nav_msgs::Odometry::ConstPtr &msg)
 {
     // UPDATE POSE FROM VICON SYSTEM
     state.position.x = msg->pose.pose.position.x;
     state.position.y = msg->pose.pose.position.y;
     state.position.z = msg->pose.pose.position.z;
 
-    state.attitudeQuaternion.x = msg->pose.pose.orientation.x;
-    state.attitudeQuaternion.y = msg->pose.pose.orientation.y;
-    state.attitudeQuaternion.z = msg->pose.pose.orientation.z;
-    state.attitudeQuaternion.w = msg->pose.pose.orientation.w;
-
     // UPDATE VELOCITIES FROM VICON SYSTEM
     state.velocity.x = msg->twist.twist.linear.x;
     state.velocity.y = msg->twist.twist.linear.y;
     state.velocity.z = msg->twist.twist.linear.z;
-
-    sensorData.gyro.x = msg->twist.twist.angular.x*180.0/M_PI; // Convert to deg/s to match crazyflie sensors
-    sensorData.gyro.y = msg->twist.twist.angular.y*180.0/M_PI;
-    sensorData.gyro.z = msg->twist.twist.angular.z*180.0/M_PI;
 
 }
 
