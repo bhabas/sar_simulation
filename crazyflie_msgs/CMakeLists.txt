@@ -38,7 +38,7 @@ add_service_files(
   activateSticky.srv
   loggingCMD.srv
   domainRand.srv
-  RLCmd.srv
+  GTC_Cmd_srv.srv
   ModelMove.srv
 )
 

@@ -34,7 +34,7 @@ is easy to use.
 #include "crazyflie_msgs/activateSticky.h"
 #include "crazyflie_msgs/loggingCMD.h"
 #include "crazyflie_msgs/GenericLogData.h"
-#include "crazyflie_msgs/GTC_Cmd.h"
+// #include "crazyflie_msgs/GTC_Cmd.h"
 
 #include "quatcompress.h"
 

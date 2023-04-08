@@ -36,7 +36,7 @@ be transferred to the Crazyflie Firmware.
 #include "crazyflie_msgs/CtrlData.h"
 #include "crazyflie_msgs/CtrlDebug.h"
 
-#include "crazyflie_msgs/RLCmd.h"
+#include "crazyflie_msgs/GTC_Cmd_srv.h"
 #include "crazyflie_msgs/RLData.h"
 
 
@@ -123,7 +123,7 @@ class Controller
         void IMU_Update_Callback(const sensor_msgs::Imu::ConstPtr &msg);
 
         void Camera_Sensor_Callback(const sensor_msgs::Image::ConstPtr &msg);
-        bool CMD_Service_Resp(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res);
+        bool CMD_Service_Resp(crazyflie_msgs::GTC_Cmd_srv::Request &req, crazyflie_msgs::GTC_Cmd_srv::Response &res);
 
 
         void stabilizerLoop();
@@ -139,9 +139,10 @@ class Controller
 
 };
 
-bool Controller::CMD_Service_Resp(crazyflie_msgs::RLCmd::Request &req, crazyflie_msgs::RLCmd::Response &res)
+bool Controller::CMD_Service_Resp(crazyflie_msgs::GTC_Cmd_srv::Request &req, crazyflie_msgs::GTC_Cmd_srv::Response &res)
 {
 
+    printf("Helloooo\n");
     res.srv_Success = true;
 
     GTC_Cmd.cmd_type = req.cmd_type;

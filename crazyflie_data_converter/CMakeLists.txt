@@ -21,7 +21,7 @@ catkin_package(
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
-add_executable(CF_DataConverter src/CF_DataConverter.cpp)
-add_dependencies(CF_DataConverter ${catkin_EXPORTED_TARGETS})
-target_link_libraries(CF_DataConverter ${catkin_LIBRARIES})
+# add_executable(CF_DataConverter src/CF_DataConverter.cpp)
+# add_dependencies(CF_DataConverter ${catkin_EXPORTED_TARGETS})
+# target_link_libraries(CF_DataConverter ${catkin_LIBRARIES})
 
