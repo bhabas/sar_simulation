@@ -353,89 +353,89 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
             policy_armed_flag = GTC_Cmd->cmd_flag;
             break;
 
-        // case 10: // Point-to-Point Trajectory
+        case 10: // Point-to-Point Trajectory
 
-        //     traj_type = (axis_direction)setpoint->cmd_flag;
-        //     execute_P2P_traj = true;
+            traj_type = (axis_direction)GTC_Cmd->cmd_flag;
+            execute_P2P_traj = true;
 
 
-        //     switch(traj_type){
+            switch(traj_type){
 
-        //         case x_axis:
+                case x_axis:
 
-        //             P2P_traj_flag.x = 1.0f;
-        //             s_0_t.x = setpoint->cmd_val1;  // Starting position [m]
-        //             s_f_t.x = setpoint->cmd_val2;  // Ending position [m]
-        //             a_t.x = setpoint->cmd_val3;    // Acceleration [m/s^2]
+                    P2P_traj_flag.x = 1.0f;
+                    s_0_t.x = GTC_Cmd->cmd_val1;  // Starting position [m]
+                    s_f_t.x = GTC_Cmd->cmd_val2;  // Ending position [m]
+                    a_t.x = GTC_Cmd->cmd_val3;    // Acceleration [m/s^2]
 
-        //             T.x = sqrtf(6/a_t.x*fabs(s_f_t.x - s_0_t.x)); // Find trajectory manuever time [s]
-        //             t_traj.x = 0.0f; // Reset timer
-        //             break;
+                    T.x = sqrtf(6/a_t.x*fabs(s_f_t.x - s_0_t.x)); // Find trajectory manuever time [s]
+                    t_traj.x = 0.0f; // Reset timer
+                    break;
 
-        //         case y_axis:
+                case y_axis:
 
-        //             P2P_traj_flag.y = 1.0f;
-        //             s_0_t.y = setpoint->cmd_val1;  // Starting position [m]
-        //             s_f_t.y = setpoint->cmd_val2;  // Ending position [m]
-        //             a_t.y = setpoint->cmd_val3;    // Acceleration [m/s^2]
+                    P2P_traj_flag.y = 1.0f;
+                    s_0_t.y = GTC_Cmd->cmd_val1;  // Starting position [m]
+                    s_f_t.y = GTC_Cmd->cmd_val2;  // Ending position [m]
+                    a_t.y = GTC_Cmd->cmd_val3;    // Acceleration [m/s^2]
 
-        //             T.y = sqrtf(6/a_t.y*fabs(s_f_t.y - s_0_t.y)); // Find trajectory manuever time [s]
-        //             t_traj.y = 0.0f; // Reset timer
-        //             break;
+                    T.y = sqrtf(6/a_t.y*fabs(s_f_t.y - s_0_t.y)); // Find trajectory manuever time [s]
+                    t_traj.y = 0.0f; // Reset timer
+                    break;
 
-        //         case z_axis:
+                case z_axis:
 
-        //             P2P_traj_flag.z = 1.0f;
-        //             s_0_t.z = setpoint->cmd_val1;  // Starting position [m]
-        //             s_f_t.z = setpoint->cmd_val2;  // Ending position [m]
-        //             a_t.z = setpoint->cmd_val3;    // Acceleration [m/s^2]
+                    P2P_traj_flag.z = 1.0f;
+                    s_0_t.z = GTC_Cmd->cmd_val1;  // Starting position [m]
+                    s_f_t.z = GTC_Cmd->cmd_val2;  // Ending position [m]
+                    a_t.z = GTC_Cmd->cmd_val3;    // Acceleration [m/s^2]
 
-        //             T.z = sqrtf(6/a_t.z*fabs(s_f_t.z - s_0_t.z)); // Find trajectory manuever time [s]
-        //             t_traj.z = 0.0f; // Reset timer
-        //             break;
+                    T.z = sqrtf(6/a_t.z*fabs(s_f_t.z - s_0_t.z)); // Find trajectory manuever time [s]
+                    t_traj.z = 0.0f; // Reset timer
+                    break;
                     
-        //     }
+            }
 
-        //     break;
+            break;
 
-        // case 11: // Velocity Trajectory
-        //     traj_type = (axis_direction)setpoint->cmd_flag;
+        case 11: // Velocity Trajectory
+            traj_type = (axis_direction)GTC_Cmd->cmd_flag;
 
-        //     switch(traj_type){
+            switch(traj_type){
 
-        //         case x_axis:
+                case x_axis:
 
-        //             s_0_t.x = setpoint->cmd_val1;               // Starting position [m]
-        //             v_t.x = setpoint->cmd_val2;                 // Desired velocity [m/s]
-        //             a_t.x = setpoint->cmd_val3;                 // Acceleration [m/s^2]
+                    s_0_t.x = GTC_Cmd->cmd_val1;               // Starting position [m]
+                    v_t.x = GTC_Cmd->cmd_val2;                 // Desired velocity [m/s]
+                    a_t.x = GTC_Cmd->cmd_val3;                 // Acceleration [m/s^2]
 
-        //             t_traj.x = 0.0f; // Reset timer
-        //             execute_vel_traj = true;
-        //             break;
+                    t_traj.x = 0.0f; // Reset timer
+                    execute_vel_traj = true;
+                    break;
 
-        //         case y_axis:
+                case y_axis:
 
-        //             s_0_t.y = setpoint->cmd_val1;
-        //             v_t.y = setpoint->cmd_val2;
-        //             a_t.y = setpoint->cmd_val3;
+                    s_0_t.y = GTC_Cmd->cmd_val1;
+                    v_t.y = GTC_Cmd->cmd_val2;
+                    a_t.y = GTC_Cmd->cmd_val3;
 
-        //             t_traj.y = 0.0f;
-        //             execute_vel_traj = true;
-        //             break;
+                    t_traj.y = 0.0f;
+                    execute_vel_traj = true;
+                    break;
 
-        //         case z_axis:
+                case z_axis:
 
-        //             s_0_t.z = setpoint->cmd_val1;
-        //             v_t.z = setpoint->cmd_val2;
-        //             a_t.z = setpoint->cmd_val3;
+                    s_0_t.z = GTC_Cmd->cmd_val1;
+                    v_t.z = GTC_Cmd->cmd_val2;
+                    a_t.z = GTC_Cmd->cmd_val3;
 
-        //             t_traj.z = 0.0f;
-        //             execute_vel_traj = true;
-        //             break;
+                    t_traj.z = 0.0f;
+                    execute_vel_traj = true;
+                    break;
                     
-        //     }
+            }
 
-        //     break;
+            break;
 
         case 20: // Tumble-Detection
             tumble_detection = GTC_Cmd->cmd_flag;
@@ -600,6 +600,93 @@ void calcOpticalFlow(const state_t* state, const sensorData_t* sensors)
 
 }
 
+void velocity_Traj()
+{
+   
+    float t_x = v_t.idx[0]/a_t.idx[0];
+    float t_z = v_t.idx[2]/a_t.idx[2];
+    float t = t_traj.idx[0];
+     
+    // X-ACCELERATION
+    if(t < t_x) 
+    {
+        x_d.idx[0] = 0.5f*a_t.idx[0]*t*t + s_0_t.idx[0]; // 0.5*a_x*t^2 + x_0
+        v_d.idx[0] = a_t.idx[0]*t;  // a_x*t
+        a_d.idx[0] = a_t.idx[0];    // a_x
+
+        x_d.idx[2] = s_0_t.idx[2]; // z_0
+        v_d.idx[2] = 0.0f;
+        a_d.idx[2] = 0.0f;
+
+    }
+
+    // Z-ACCELERATION (CONSTANT X-VELOCITY)
+    else if(t_x <= t && t < (t_x+t_z))
+    {
+        x_d.idx[0] = v_t.idx[0]*t - fsqr(v_t.idx[0])/(2.0f*a_t.idx[0]) + s_0_t.idx[0]; // vx*t - (vx/(2*ax))^2 + x_0
+        v_d.idx[0] = v_t.idx[0]; // vx
+        a_d.idx[0] = 0.0f;
+
+        x_d.idx[2] = 0.5f*a_t.idx[2]*fsqr(t-t_x) + s_0_t.idx[2]; // 0.5*az*t^2 + z_0
+        v_d.idx[2] = a_t.idx[2]*(t-t_x); // az*t
+        a_d.idx[2] = a_t.idx[2]; // az
+    }
+
+    // CONSTANT X-VELOCITY AND CONSTANT Z-VELOCITY
+    else if((t_x+t_z) <= t )
+    {
+        x_d.idx[0] = v_t.idx[0]*t - fsqr(v_t.idx[0])/(2.0f*a_t.idx[0]) + s_0_t.idx[0]; // vx*t - (vx/(2*ax))^2 + x_0
+        v_d.idx[0] = v_t.idx[0]; // vx
+        a_d.idx[0] = 0.0;
+
+        x_d.idx[2] = v_t.idx[2]*(t-t_x) - fsqr(v_t.idx[2])/(2.0f*a_t.idx[2]) + s_0_t.idx[2]; // vz*t - (vz/(2*az))^2 + z_0
+        v_d.idx[2] = v_t.idx[2]; // vz
+        a_d.idx[2] = 0.0f;
+    }
+
+    t_traj.idx[0] += dt;
+    
+}
+
+
+void point2point_Traj()
+{
+    for(int i = 0; i<3; i++)
+    {
+        // CALCULATE ONLY DESIRED TRAJECTORIES
+        if(P2P_traj_flag.idx[i] == 1.0f)
+        {
+            float t = t_traj.idx[i];
+
+    
+            if(t_traj.idx[i] <= T.idx[i] && T.idx[i] != 0.0f) // SKIP CALC IF ALREADY AT END POSITION
+            {
+                // CALCULATE TIME SCALING VALUE S(t)
+                float s_t = (3*powf(t,2)/powf(T.idx[i],2) - 2*powf(t,3)/powf(T.idx[i],3));
+                float ds_t = (6*t/powf(T.idx[i],2) - 6*powf(t,2)/powf(T.idx[i],3));
+                float dds_t = (6/powf(T.idx[i],2) - 12*t/powf(T.idx[i],3));
+
+                // CONVERT PATH VALUES X(S) TO TRAJECTORY VALUES X(S(t))
+                x_d.idx[i] = s_0_t.idx[i] +  s_t*(s_f_t.idx[i]-s_0_t.idx[i]);
+                v_d.idx[i] =  ds_t*(s_f_t.idx[i]-s_0_t.idx[i]);
+                a_d.idx[i] =  dds_t*(s_f_t.idx[i]-s_0_t.idx[i]);
+            }
+            else
+            {
+                x_d.idx[i] = s_f_t.idx[i];
+                v_d.idx[i] = 0.0f;
+                a_d.idx[i] = 0.0f;
+            }
+
+            // INCREMENT TIME COUNTER FOR TRAJECTORY CALCULATIONS
+            t_traj.idx[i] += dt;
+        }
+
+    }
+    
+
+}
+
 void controllerOutOfTree(control_t *control,const setpoint_t *setpoint, 
                                             const sensorData_t *sensors, 
                                             const state_t *state, 
@@ -614,6 +701,17 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
     
 
     if (RATE_DO_EXECUTE(RATE_500_HZ, tick)) {
+
+        if(execute_vel_traj){
+            velocity_Traj();
+        }
+        else if(execute_P2P_traj){
+            point2point_Traj();
+        }
+        else if(execute_GZ_vel_traj){
+            // GZ_velocity_Traj();
+        }
+
 
 
         controlOutput(state,sensors);
