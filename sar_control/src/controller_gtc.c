@@ -519,6 +519,7 @@ void controllerOutOfTreeInit(void)
 
     controllerOutOfTreeReset();
     controllerOutOfTreeTest();
+    consolePrintf("val: %u\n",sharedVariable);
     consolePrintf("GTC Initiated\n");
 }
 

@@ -22,6 +22,7 @@ be transferred to the Crazyflie Firmware.
 #include "controller_gtc.h"
 #include "estimator.h"
 #include "nml.h"
+#include "shared_lib.h"
 
 
 #include <ros/ros.h>
@@ -38,6 +39,8 @@ be transferred to the Crazyflie Firmware.
 
 #include "crazyflie_msgs/GTC_Cmd_srv.h"
 #include "crazyflie_msgs/RLData.h"
+
+
 
 
 

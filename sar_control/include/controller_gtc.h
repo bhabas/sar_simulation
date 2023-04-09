@@ -44,6 +44,8 @@ extern "C" {
 #include "quatcompress.h"
 #include "nml.h"
 
+#include "shared_lib.h"
+
 #define PWM_MAX 60000
 #define f_MAX 15.0f 
 #define g2Newton (9.81f/1000.0f)
