@@ -73,7 +73,7 @@ class Controller
 
             // ENVIRONMENT TOPICS
 
-            Controller::loadParams();
+            // Controller::loadParams();
 
             // Thread main controller loop so other callbacks can work fine
             controllerThread = std::thread(&Controller::stabilizerLoop, this);
@@ -155,11 +155,11 @@ bool Controller::CMD_Service_Resp(crazyflie_msgs::GTC_Cmd_srv::Request &req, cra
     GTC_Cmd.cmd_flag = req.cmd_flag;
     GTC_Cmd.cmd_rx = true;
 
-    if(req.cmd_type == 21) // RESET ROS PARAM VALUES
-    {
-        Controller::loadParams();
+    // if(req.cmd_type == 21) // RESET ROS PARAM VALUES
+    // {
+    //     Controller::loadParams();
 
-    }
+    // }
     return 1;
 }
 
@@ -201,96 +201,96 @@ void Controller::Ext_Pos_Update_Callback(const nav_msgs::Odometry::ConstPtr &msg
 void Controller::loadParams()
 {
     
-    ros::param::get("/QUAD_SETTINGS/CF_Type",CF_Type);
-    ros::param::get("/QUAD_SETTINGS/CF_Config",CF_Config);
-    ros::param::get("/QUAD_SETTINGS/Cam_Sensor",camera_sensor_active);
-    CF_Type = "/CF_Type/" + CF_Type;
-    CF_Config = "/Config/" + CF_Config;
+    // ros::param::get("/QUAD_SETTINGS/CF_Type",CF_Type);
+    // ros::param::get("/QUAD_SETTINGS/CF_Config",CF_Config);
+    // // ros::param::get("/QUAD_SETTINGS/Cam_Sensor",camera_sensor_active);
+    // CF_Type = "/CF_Type/" + CF_Type;
+    // CF_Config = "/Config/" + CF_Config;
     
-    // COLLECT MODEL PARAMETERS
-    ros::param::get(CF_Type + CF_Config + "/Mass",m);
-    ros::param::get(CF_Type + CF_Config + "/Ixx",Ixx);
-    ros::param::get(CF_Type + CF_Config + "/Iyy",Iyy);
-    ros::param::get(CF_Type + CF_Config + "/Izz",Izz);
+    // // COLLECT MODEL PARAMETERS
+    // ros::param::get(CF_Type + CF_Config + "/Mass",m);
+    // ros::param::get(CF_Type + CF_Config + "/Ixx",Ixx);
+    // ros::param::get(CF_Type + CF_Config + "/Iyy",Iyy);
+    // ros::param::get(CF_Type + CF_Config + "/Izz",Izz);
 
-    // COLLECT CTRL GAINS
-    ros::param::get(CF_Type + "/CtrlGains/P_kp_xy",P_kp_xy);
-    ros::param::get(CF_Type + "/CtrlGains/P_kd_xy",P_kd_xy);
-    ros::param::get(CF_Type + "/CtrlGains/P_ki_xy",P_ki_xy);
-    ros::param::get(CF_Type + "/CtrlGains/i_range_xy",i_range_xy);
+    // // COLLECT CTRL GAINS
+    // ros::param::get(CF_Type + "/CtrlGains/P_kp_xy",P_kp_xy);
+    // ros::param::get(CF_Type + "/CtrlGains/P_kd_xy",P_kd_xy);
+    // ros::param::get(CF_Type + "/CtrlGains/P_ki_xy",P_ki_xy);
+    // ros::param::get(CF_Type + "/CtrlGains/i_range_xy",i_range_xy);
 
-    ros::param::get(CF_Type + "/CtrlGains/P_kp_z",P_kp_z);
-    ros::param::get(CF_Type + "/CtrlGains/P_kd_z",P_kd_z);
-    ros::param::get(CF_Type + "/CtrlGains/P_ki_z",P_ki_z);
-    ros::param::get(CF_Type + "/CtrlGains/i_range_z",i_range_z);
+    // ros::param::get(CF_Type + "/CtrlGains/P_kp_z",P_kp_z);
+    // ros::param::get(CF_Type + "/CtrlGains/P_kd_z",P_kd_z);
+    // ros::param::get(CF_Type + "/CtrlGains/P_ki_z",P_ki_z);
+    // ros::param::get(CF_Type + "/CtrlGains/i_range_z",i_range_z);
 
-    ros::param::get(CF_Type + "/CtrlGains/R_kp_xy",R_kp_xy);
-    ros::param::get(CF_Type + "/CtrlGains/R_kd_xy",R_kd_xy);
-    ros::param::get(CF_Type + "/CtrlGains/R_ki_xy",R_ki_xy);
-    ros::param::get(CF_Type + "/CtrlGains/i_range_R_xy",i_range_R_xy);
+    // ros::param::get(CF_Type + "/CtrlGains/R_kp_xy",R_kp_xy);
+    // ros::param::get(CF_Type + "/CtrlGains/R_kd_xy",R_kd_xy);
+    // ros::param::get(CF_Type + "/CtrlGains/R_ki_xy",R_ki_xy);
+    // ros::param::get(CF_Type + "/CtrlGains/i_range_R_xy",i_range_R_xy);
     
-    ros::param::get(CF_Type + "/CtrlGains/R_kp_z",R_kp_z);
-    ros::param::get(CF_Type + "/CtrlGains/R_kd_z",R_kd_z);
-    ros::param::get(CF_Type + "/CtrlGains/R_ki_z",R_ki_z);
-    ros::param::get(CF_Type + "/CtrlGains/i_range_R_z",i_range_R_z);
+    // ros::param::get(CF_Type + "/CtrlGains/R_kp_z",R_kp_z);
+    // ros::param::get(CF_Type + "/CtrlGains/R_kd_z",R_kd_z);
+    // ros::param::get(CF_Type + "/CtrlGains/R_ki_z",R_ki_z);
+    // ros::param::get(CF_Type + "/CtrlGains/i_range_R_z",i_range_R_z);
 
-    // SIMULATION SETTINGS FROM CONFIG FILE
-    ros::param::get("QUAD_SETTINGS/Policy_Type",POLICY_TYPE_STR); // Set string from params file into controller
-    if (strcmp(POLICY_TYPE_STR.c_str(),"PARAM_OPTIM")==0)
-    {
-        Policy = PARAM_OPTIM;
-    }
-    else if (strcmp(POLICY_TYPE_STR.c_str(),"SVL_POLICY")==0)
-    {
-        Policy = SVL_POLICY;
-    }
-    else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL")==0)
-    {
-        Policy = DEEP_RL;
-    }    
-    else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL_SB3")==0)
-    {
-        Policy = DEEP_RL_SB3;
-    }    
+    // // SIMULATION SETTINGS FROM CONFIG FILE
+    // ros::param::get("QUAD_SETTINGS/Policy_Type",POLICY_TYPE_STR); // Set string from params file into controller
+    // if (strcmp(POLICY_TYPE_STR.c_str(),"PARAM_OPTIM")==0)
+    // {
+    //     Policy = PARAM_OPTIM;
+    // }
+    // else if (strcmp(POLICY_TYPE_STR.c_str(),"SVL_POLICY")==0)
+    // {
+    //     Policy = SVL_POLICY;
+    // }
+    // else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL")==0)
+    // {
+    //     Policy = DEEP_RL;
+    // }    
+    // else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL_SB3")==0)
+    // {
+    //     Policy = DEEP_RL_SB3;
+    // }    
 
 }
 
 
 void Controller::publishCtrlDebug()
 {
-    CtrlDebug_msg.Motorstop_Flag = motorstop_flag;
-    CtrlDebug_msg.Pos_Ctrl = (bool)kp_xf;
-    CtrlDebug_msg.Vel_Ctrl = (bool)kd_xf;
-    CtrlDebug_msg.Traj_Active = execute_vel_traj;
-    CtrlDebug_msg.Tumble_Detection = tumble_detection;
-    CtrlDebug_msg.Tumbled_Flag = tumbled;
-    CtrlDebug_msg.Moment_Flag = moment_flag; 
-    CtrlDebug_msg.Policy_Armed = policy_armed_flag; 
-    CtrlDebug_msg.Camera_Sensor_Active = camera_sensor_active;
+//     CtrlDebug_msg.Motorstop_Flag = motorstop_flag;
+//     CtrlDebug_msg.Pos_Ctrl = (bool)kp_xf;
+//     CtrlDebug_msg.Vel_Ctrl = (bool)kd_xf;
+//     CtrlDebug_msg.Traj_Active = execute_vel_traj;
+//     CtrlDebug_msg.Tumble_Detection = tumble_detection;
+//     CtrlDebug_msg.Tumbled_Flag = tumbled;
+//     CtrlDebug_msg.Moment_Flag = moment_flag; 
+//     CtrlDebug_msg.Policy_Armed = policy_armed_flag; 
+//     CtrlDebug_msg.Camera_Sensor_Active = camera_sensor_active;
 
-    CTRL_Debug_Publisher.publish(CtrlDebug_msg);
+//     CTRL_Debug_Publisher.publish(CtrlDebug_msg);
 }
 
 // PUBLISH CONTROLLER DATA ON ROS TOPIC
 void Controller::publishCtrlData()
 {
-    // STATE DATA
-    CtrlData_msg.Pose.position.x = statePos.x;
-    CtrlData_msg.Pose.position.y = statePos.y;
-    CtrlData_msg.Pose.position.z = statePos.z;
+    // // STATE DATA
+    // CtrlData_msg.Pose.position.x = statePos.x;
+    // CtrlData_msg.Pose.position.y = statePos.y;
+    // CtrlData_msg.Pose.position.z = statePos.z;
 
-    CtrlData_msg.Pose.orientation.x = stateQuat.x;
-    CtrlData_msg.Pose.orientation.y = stateQuat.y;
-    CtrlData_msg.Pose.orientation.z = stateQuat.z;
-    CtrlData_msg.Pose.orientation.w = stateQuat.w;
+    // CtrlData_msg.Pose.orientation.x = stateQuat.x;
+    // CtrlData_msg.Pose.orientation.y = stateQuat.y;
+    // CtrlData_msg.Pose.orientation.z = stateQuat.z;
+    // CtrlData_msg.Pose.orientation.w = stateQuat.w;
 
-    CtrlData_msg.Twist.linear.x = stateVel.x;
-    CtrlData_msg.Twist.linear.y = stateVel.y;
-    CtrlData_msg.Twist.linear.z = stateVel.z;
+    // CtrlData_msg.Twist.linear.x = stateVel.x;
+    // CtrlData_msg.Twist.linear.y = stateVel.y;
+    // CtrlData_msg.Twist.linear.z = stateVel.z;
 
-    CtrlData_msg.Twist.angular.x = stateOmega.x;
-    CtrlData_msg.Twist.angular.y = stateOmega.y;
-    CtrlData_msg.Twist.angular.z = stateOmega.z;
+    // CtrlData_msg.Twist.angular.x = stateOmega.x;
+    // CtrlData_msg.Twist.angular.y = stateOmega.y;
+    // CtrlData_msg.Twist.angular.z = stateOmega.z;
 
     // // OPTICAL FLOW DATA
     // CtrlData_msg.Tau = sensorData.Tau;
@@ -303,67 +303,67 @@ void Controller::publishCtrlData()
     // CtrlData_msg.Theta_x_est = sensorData.Theta_x_est;
     // CtrlData_msg.Theta_y_est = sensorData.Theta_y_est;
 
-    CtrlData_msg.Tau_thr = Tau_thr;
-    CtrlData_msg.G1 = G1;
+    // CtrlData_msg.Tau_thr = Tau_thr;
+    // CtrlData_msg.G1 = G1;
 
-    // NEURAL NETWORK DATA
-    CtrlData_msg.Policy_Flip = Policy_Flip;
-    CtrlData_msg.Policy_Action = Policy_Action;
+    // // NEURAL NETWORK DATA
+    // CtrlData_msg.Policy_Flip = Policy_Flip;
+    // CtrlData_msg.Policy_Action = Policy_Action;
 
-    // CONTROL ACTIONS
-    CtrlData_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
-    CtrlData_msg.MotorThrusts = {M1_thrust,M2_thrust,M3_thrust,M4_thrust};
-    CtrlData_msg.MS_PWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
+    // // CONTROL ACTIONS
+    // CtrlData_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
+    // CtrlData_msg.MotorThrusts = {M1_thrust,M2_thrust,M3_thrust,M4_thrust};
+    // CtrlData_msg.MS_PWM = {M1_pwm,M2_pwm,M3_pwm,M4_pwm};
 
-    CtrlData_msg.x_d.x = x_d.x;
-    CtrlData_msg.x_d.y = x_d.y;
-    CtrlData_msg.x_d.z = x_d.z;
+    // CtrlData_msg.x_d.x = x_d.x;
+    // CtrlData_msg.x_d.y = x_d.y;
+    // CtrlData_msg.x_d.z = x_d.z;
 
-    CtrlData_msg.v_d.x = v_d.x;
-    CtrlData_msg.v_d.y = v_d.y;
-    CtrlData_msg.v_d.z = v_d.z;
+    // CtrlData_msg.v_d.x = v_d.x;
+    // CtrlData_msg.v_d.y = v_d.y;
+    // CtrlData_msg.v_d.z = v_d.z;
 
-    CtrlData_msg.a_d.x = a_d.x;
-    CtrlData_msg.a_d.y = a_d.y;
-    CtrlData_msg.a_d.z = a_d.z;
+    // CtrlData_msg.a_d.x = a_d.x;
+    // CtrlData_msg.a_d.y = a_d.y;
+    // CtrlData_msg.a_d.z = a_d.z;
 
 
 
-    // STATE DATA (FLIP)
-    CtrlData_msg.flip_flag = flip_flag;
+    // // STATE DATA (FLIP)
+    // CtrlData_msg.flip_flag = flip_flag;
 
-    // CtrlData_msg.Pose_tr.header.stamp = t_flip;             
-    CtrlData_msg.Pose_tr.position.x = statePos_tr.x;
-    CtrlData_msg.Pose_tr.position.y = statePos_tr.y;
-    CtrlData_msg.Pose_tr.position.z = statePos_tr.z;
+    // // CtrlData_msg.Pose_tr.header.stamp = t_flip;             
+    // CtrlData_msg.Pose_tr.position.x = statePos_tr.x;
+    // CtrlData_msg.Pose_tr.position.y = statePos_tr.y;
+    // CtrlData_msg.Pose_tr.position.z = statePos_tr.z;
 
-    CtrlData_msg.Pose_tr.orientation.x = stateQuat_tr.x;
-    CtrlData_msg.Pose_tr.orientation.y = stateQuat_tr.y;
-    CtrlData_msg.Pose_tr.orientation.z = stateQuat_tr.z;
-    CtrlData_msg.Pose_tr.orientation.w = stateQuat_tr.w;
+    // CtrlData_msg.Pose_tr.orientation.x = stateQuat_tr.x;
+    // CtrlData_msg.Pose_tr.orientation.y = stateQuat_tr.y;
+    // CtrlData_msg.Pose_tr.orientation.z = stateQuat_tr.z;
+    // CtrlData_msg.Pose_tr.orientation.w = stateQuat_tr.w;
 
-    CtrlData_msg.Twist_tr.linear.x = stateVel_tr.x;
-    CtrlData_msg.Twist_tr.linear.y = stateVel_tr.y;
-    CtrlData_msg.Twist_tr.linear.z = stateVel_tr.z;
+    // CtrlData_msg.Twist_tr.linear.x = stateVel_tr.x;
+    // CtrlData_msg.Twist_tr.linear.y = stateVel_tr.y;
+    // CtrlData_msg.Twist_tr.linear.z = stateVel_tr.z;
 
-    CtrlData_msg.Twist_tr.angular.x = stateOmega_tr.x;
-    CtrlData_msg.Twist_tr.angular.y = stateOmega_tr.y;
-    CtrlData_msg.Twist_tr.angular.z = stateOmega_tr.z;
+    // CtrlData_msg.Twist_tr.angular.x = stateOmega_tr.x;
+    // CtrlData_msg.Twist_tr.angular.y = stateOmega_tr.y;
+    // CtrlData_msg.Twist_tr.angular.z = stateOmega_tr.z;
 
-    // OPTICAL FLOW DATA (FLIP)
-    CtrlData_msg.Tau_tr = Tau_tr;
-    CtrlData_msg.Theta_x_tr = Theta_x_tr;
-    CtrlData_msg.Theta_y_tr = Theta_y_tr;
-    CtrlData_msg.D_perp_tr = D_perp_tr;
+    // // OPTICAL FLOW DATA (FLIP)
+    // CtrlData_msg.Tau_tr = Tau_tr;
+    // CtrlData_msg.Theta_x_tr = Theta_x_tr;
+    // CtrlData_msg.Theta_y_tr = Theta_y_tr;
+    // CtrlData_msg.D_perp_tr = D_perp_tr;
 
-    // NEURAL NETWORK DATA (FLIP)
-    CtrlData_msg.Policy_Flip_tr = Policy_Flip_tr;
-    CtrlData_msg.Policy_Action_tr = Policy_Action_tr;
+    // // NEURAL NETWORK DATA (FLIP)
+    // CtrlData_msg.Policy_Flip_tr = Policy_Flip_tr;
+    // CtrlData_msg.Policy_Action_tr = Policy_Action_tr;
 
-    // CONTROL ACTIONS (FLIP)
-    CtrlData_msg.FM_flip = {F_thrust_flip,M_x_flip,M_y_flip,M_z_flip};
+    // // CONTROL ACTIONS (FLIP)
+    // CtrlData_msg.FM_flip = {F_thrust_flip,M_x_flip,M_y_flip,M_z_flip};
 
     
-    CTRL_Data_Publisher.publish(CtrlData_msg);
+    // CTRL_Data_Publisher.publish(CtrlData_msg);
 
 }

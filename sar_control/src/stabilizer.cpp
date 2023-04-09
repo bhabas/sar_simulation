@@ -19,7 +19,7 @@ void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
     ros::Rate rate(1000);
     
     // TURN OFF SAFEMODE (EXPERIMENT ONLY SETTING)
-    safeModeEnable = false;
+    // safeModeEnable = false;
 
     // INITIATE CONTROLLER
     controllerOutOfTreeInit();
@@ -31,8 +31,8 @@ void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
         controllerOutOfTree(&control, &setpoint, &sensorData, &state, tick);
     
 
-        Controller::publishCtrlData();
-        Controller::publishCtrlDebug();
+        // Controller::publishCtrlData();
+        // Controller::publishCtrlDebug();
 
 
         
