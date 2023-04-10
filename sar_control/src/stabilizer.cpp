@@ -13,6 +13,32 @@ void Controller::appLoop()
     }
 }
 
+void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
+{
+    ros::Rate rate(100);
+    
+
+    // INITIATE CONTROLLER
+    // controllerOutOfTreeInit();
+
+    // RUN STABILIZER LOOP
+    while(ros::ok)
+    {
+        // stateEstimator(&state, &sensorData, &control, tick); // Run state/sensor values through "Kalman filter"
+        // controllerOutOfTree(&control, &setpoint, &sensorData, &state, tick);
+        printf("Stab loop\n");
+    
+
+        // Controller::publishCtrlData();
+        // Controller::publishCtrlDebug();
+
+
+        
+        tick++;
+        rate.sleep();
+    }
+}
+
 int main(int argc, char **argv)
 {
 
