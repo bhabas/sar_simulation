@@ -38,7 +38,20 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
     if (RATE_DO_EXECUTE(2, tick))
     {
-        consolePrintf("GTC loop value1: %.3f\n",(double)value_1);
+        // consolePrintf("GTC loop value1: %.3f\n",(double)value_1);
+    }
+
+    // UPDATE OPTICAL FLOW VALUES AT 100 HZ
+    if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
+
+    }
+    
+
+    if (RATE_DO_EXECUTE(2, tick)) {
+
+
+        controlOutput(state,sensors);
+
     }
  
 
