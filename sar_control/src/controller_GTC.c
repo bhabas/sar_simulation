@@ -1,16 +1,24 @@
 #include "controller_GTC.h"
 
 
+
 void appMain() {
 
-    printf("Hello app\n");
-
-  
+    while (1)
+    {
+        #ifdef CONFIG_SAR_SIM
+        consolePrintf("Hello app\n");
+        #elif CONFIG_SAR_EXP
+        consolePrintf("Hello app\n");
+        vTaskDelay(M2T(2000));
+        #endif
+    }
+    
 }
 
 
 void controllerOutOfTreeInit() {
-    printf("GTC init\n");
+    consolePrintf("GTC init\n");
 
 }
 
@@ -25,7 +33,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                                             const uint32_t tick) 
 {
 
-    printf("GTC loop\n");
+    // consolePrintf("GTC loop\n");
   
 
 }
