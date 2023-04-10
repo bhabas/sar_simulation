@@ -73,7 +73,7 @@
       </camera>
     </gui>
     <physics name='default_physics' default='0' type='bullet'>
-      <gravity>0 0 -9.8066</gravity>
+      <gravity>0 0 0</gravity>
       <bullet>
         <solver>
           <type>sequential_impulse</type>
