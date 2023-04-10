@@ -18,7 +18,7 @@ catkin_package(
 
 include_directories(include include_CF_Firmware ${catkin_INCLUDE_DIRS})
 
-add_executable(controller src/stabilizer.cpp)
+add_executable(controller src/stabilizer.cpp src/controller_GTC.c)
 add_dependencies(controller ${catkin_EXPORTED_TARGETS})
 target_link_libraries(controller ${catkin_LIBRARIES})
 target_compile_definitions(controller PRIVATE CONFIG_GAZEBO_SIM CONFIG_CONTROLLER_OOT)

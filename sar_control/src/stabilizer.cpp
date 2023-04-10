@@ -1,18 +1,14 @@
 #include "stabilizer.h"
 
-
-void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
+void Controller::appLoop()
 {
     ros::Rate rate(50);
-    
 
     // RUN STABILIZER LOOP
     while(ros::ok)
     {
-        printf("hello\n");
-    
-
-        tick++;
+        appMain();
+        
         rate.sleep();
     }
 }
