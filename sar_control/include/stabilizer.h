@@ -16,6 +16,7 @@
 #include <ros/ros.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
+#include "crazyflie_msgs/GTC_Cmd_srv.h"
 
 
 
@@ -35,6 +36,9 @@ class Controller
             // EXTERNAL SENSOR SUBSCRIBERS
             Ext_Pos_Subscriber = nh->subscribe("/SAR_External/ExtPosition",1,&Controller::Ext_Pos_Update_Callback,this,ros::TransportHints().tcpNoDelay());
             
+            // MISC SERVICES
+            CMD_Service = nh->advertiseService("/CTRL/Cmd_ctrl",&Controller::CMD_Service_Resp,this);
+
 
             // Thread main controller loop so other callbacks can work fine
             appThread = std::thread(&Controller::appLoop, this);
@@ -47,6 +51,9 @@ class Controller
 
         // EXTERNAL SENSOR SUBSCRIBERS
         ros::Subscriber Ext_Pos_Subscriber;
+
+        // SERVICES
+        ros::ServiceServer CMD_Service;
 
 
         // DEFINE THREAD OBJECTS
@@ -63,10 +70,9 @@ class Controller
         uint32_t tick = 1;
 
         // FUNCTION PROTOTYPES
-
-        // INTERNAL SENSOR UDPATES
         void IMU_Update_Callback(const sensor_msgs::Imu::ConstPtr &msg);
         void Ext_Pos_Update_Callback(const nav_msgs::Odometry::ConstPtr &msg);
+        bool CMD_Service_Resp(crazyflie_msgs::GTC_Cmd_srv::Request &req, crazyflie_msgs::GTC_Cmd_srv::Response &res);
 
 
         void appLoop();
@@ -74,6 +80,29 @@ class Controller
 
 
 };
+
+
+bool Controller::CMD_Service_Resp(crazyflie_msgs::GTC_Cmd_srv::Request &req, crazyflie_msgs::GTC_Cmd_srv::Response &res)
+{
+    // RESPOND THE SRV WAS RECIEVED
+    res.srv_Success = true;
+
+    // UPDATE GTC_Cmd STRUCT VALUES
+    GTC_Cmd.cmd_type = req.cmd_type;
+    GTC_Cmd.cmd_val1 = req.cmd_vals.x;
+    GTC_Cmd.cmd_val2 = req.cmd_vals.y;
+    GTC_Cmd.cmd_val3 = req.cmd_vals.z;
+    GTC_Cmd.cmd_flag = req.cmd_flag;
+    GTC_Cmd.cmd_rx = true;
+
+    // if(req.cmd_type == 21) // RESET ROS PARAM VALUES
+    // {
+    //     Controller::loadParams();
+
+    // }
+    return 1;
+}
+
 
 // IMU VALUES FROM MODEL SENSOR PLUGIN
 void Controller::IMU_Update_Callback(const sensor_msgs::Imu::ConstPtr &msg)
