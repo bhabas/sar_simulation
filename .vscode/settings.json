@@ -12,6 +12,7 @@
     ],
     "cmake.configureOnOpen": false,
     "files.associations": {
+        "Kconfig": "makefile",
         "controller_gtc.h": "c",
         "*.tcc": "c",
         "optional": "c",
@@ -77,6 +78,8 @@
         "variant": "cpp",
         "bit": "cpp",
         "string.h": "c",
-        "thread": "cpp"
+        "thread": "cpp",
+        "app.h": "c",
+        "console.h": "c"
     }
 }

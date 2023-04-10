@@ -7,14 +7,28 @@ void appMain() {
     while (1)
     {
         #ifdef CONFIG_SAR_SIM
-        // consolePrintf("Hello app\n");
+
+            if (GTC_Cmd.cmd_rx == true)
+            {
+                consolePrintf("GTC RX value1: %u\n",(uint8_t)GTC_Cmd.cmd_rx);
+                GTC_Cmd.cmd_rx = false;
+            }
+
+
         #elif CONFIG_SAR_EXP
-        consolePrintf("Hello app\n");
-        vTaskDelay(M2T(2000));
+
+            if (appchannelReceiveDataPacket(&GTC_Cmd,sizeof(GTC_Cmd),APPCHANNEL_WAIT_FOREVER))
+            {
+                // if (GTC_Cmd.cmd_rx == true) GTC_Command(&GTC_Cmd);
+                consolePrintf("GTC RX value1: %u\n",(uint8_t)GTC_Cmd.cmd_rx);
+            }
+
         #endif
     }
     
 }
+
+    
 
 
 void controllerOutOfTreeInit() {

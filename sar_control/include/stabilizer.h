@@ -93,13 +93,8 @@ bool Controller::CMD_Service_Resp(crazyflie_msgs::GTC_Cmd_srv::Request &req, cra
     GTC_Cmd.cmd_val2 = req.cmd_vals.y;
     GTC_Cmd.cmd_val3 = req.cmd_vals.z;
     GTC_Cmd.cmd_flag = req.cmd_flag;
-    GTC_Cmd.cmd_rx = true;
+    GTC_Cmd.cmd_rx = req.cmd_rx;
 
-    // if(req.cmd_type == 21) // RESET ROS PARAM VALUES
-    // {
-    //     Controller::loadParams();
-
-    // }
     return 1;
 }
 

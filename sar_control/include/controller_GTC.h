@@ -24,6 +24,7 @@ extern "C" {
 #ifdef CONFIG_SAR_EXP
 #include "FreeRTOS.h"
 #include "task.h"
+#include "app_channel.h"
 #endif
 
 
