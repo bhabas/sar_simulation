@@ -14,7 +14,7 @@ extern "C" {
 // CF LIBARARIES
 #include "app.h"
 #include "stabilizer_types.h"
-#include "led.h"
+
 #include "console.h"
 
 // CUSTOM LIBRARIES
@@ -26,6 +26,9 @@ extern "C" {
 #include "task.h"
 #include "app_channel.h"
 #endif
+
+
+void controllerOutOfTreeReset();
 
 
 #ifdef __cplusplus

@@ -1,5 +1,5 @@
 #include "controller_GTC.h"
-
+#include "led.h"
 
 
 void appMain() {
@@ -46,6 +46,12 @@ bool controllerOutOfTreeTest() {
 
   return true;
 }
+
+void controllerOutOfTreeReset() {
+    consolePrintf("GTC Reset\n");
+
+}
+
 
 void controllerOutOfTree(control_t *control,const setpoint_t *setpoint, 
                                             const sensorData_t *sensors, 

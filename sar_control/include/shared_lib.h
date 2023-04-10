@@ -6,7 +6,7 @@ extern "C" {
 
 #include "stabilizer_types.h"
 #include "console.h"
-
+#include "controller_GTC.h"
 
 extern float value_1;
 extern float value_2;
