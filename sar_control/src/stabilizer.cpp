@@ -2,7 +2,7 @@
 
 void Controller::appLoop()
 {
-    ros::Rate rate(50);
+    ros::Rate rate(100);
 
     // RUN STABILIZER LOOP
     while(ros::ok)
@@ -15,7 +15,7 @@ void Controller::appLoop()
 
 void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
 {
-    ros::Rate rate(100);
+    ros::Rate rate(1000);
     
 
     // INITIATE CONTROLLER
@@ -26,7 +26,7 @@ void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
     {
         // stateEstimator(&state, &sensorData, &control, tick); // Run state/sensor values through "Kalman filter"
         controllerOutOfTree(&control, &setpoint, &sensorData, &state, tick);
-        printf("Stab loop\n");
+        // printf("Stab loop\n");
     
 
         // Controller::publishCtrlData();

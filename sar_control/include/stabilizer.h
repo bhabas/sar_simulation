@@ -9,6 +9,8 @@
 // FIRMWARE INCLUDES
 #include "app.h"
 #include "controller.h"
+#include "shared_lib.h"
+
 
 // ROS INCLUDES
 #include <ros/ros.h>

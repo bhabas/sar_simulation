@@ -1,3 +1,5 @@
+#pragma once
+
 #ifdef __cplusplus // If C++ compiler then compile accordingly
 extern "C" {
 #endif
@@ -18,6 +20,10 @@ extern "C" {
 // CF LIBARARIES
 #include "app.h"
 #include "stabilizer_types.h"
+#include "led.h"
+
+// CUSTOM LIBRARIES
+#include "shared_lib.h"
 
 
 #ifdef CONFIG_SAR_EXP
