@@ -22,6 +22,7 @@ struct GTC_CmdPacket{
 
 extern struct GTC_CmdPacket GTC_Cmd;
 
+void GTC_Command(struct GTC_CmdPacket *GTC_Cmd);
 void controlOutput(const state_t *state, const sensorData_t *sensors);
 
 #ifdef __cplusplus
