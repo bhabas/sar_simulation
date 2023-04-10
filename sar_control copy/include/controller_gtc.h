@@ -4,7 +4,6 @@ extern "C" {
 
 #define consolePrintf printf
 #define DEBUG_PRINT printf
-#define GAZEBO_SIM
 
 
 // CRAZYFLIE FIRMWARE CODE BELOW
