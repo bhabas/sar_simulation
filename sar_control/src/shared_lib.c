@@ -12,14 +12,14 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
 
     switch(GTC_Cmd->cmd_type){
         case 0: // Reset
-            consolePrintf("Command Recieved: %.3f\n",(double)GTC_Cmd->cmd_val1);
+            consolePrintf("Cmd Reset: %.3f\n",(double)GTC_Cmd->cmd_val1);
             controllerOutOfTreeReset();
             break;
 
 
         case 1: // Position
 
-            consolePrintf("Command Recieved: %.3f\n",(double)GTC_Cmd->cmd_val1);
+            consolePrintf("Cmd Pos: %.3f\n",(double)GTC_Cmd->cmd_val1);
             break;
    
     }
