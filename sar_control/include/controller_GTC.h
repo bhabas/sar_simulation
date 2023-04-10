@@ -11,9 +11,11 @@ extern "C" {
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdbool.h>
 
 // CF LIBARARIES
 #include "app.h"
+#include "stabilizer_types.h"
 
 
 

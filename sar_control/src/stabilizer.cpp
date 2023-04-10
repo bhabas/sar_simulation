@@ -19,13 +19,13 @@ void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
     
 
     // INITIATE CONTROLLER
-    // controllerOutOfTreeInit();
+    controllerOutOfTreeInit();
 
     // RUN STABILIZER LOOP
     while(ros::ok)
     {
         // stateEstimator(&state, &sensorData, &control, tick); // Run state/sensor values through "Kalman filter"
-        // controllerOutOfTree(&control, &setpoint, &sensorData, &state, tick);
+        controllerOutOfTree(&control, &setpoint, &sensorData, &state, tick);
         printf("Stab loop\n");
     
 

@@ -8,9 +8,11 @@
 
 // FIRMWARE INCLUDES
 #include "app.h"
+#include "controller.h"
 
 // ROS INCLUDES
 #include <ros/ros.h>
+
 
 
 class Controller
@@ -30,6 +32,12 @@ class Controller
         // DEFINE THREAD OBJECTS
         std::thread appThread;
         std::thread controllerThread;
+
+        // FIRMWARE VARIABLES FOR CONTROLLER
+        setpoint_t setpoint;
+        sensorData_t sensorData;
+        state_t state;
+        control_t control;
 
 
         uint32_t tick = 1;
