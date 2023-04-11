@@ -23,26 +23,26 @@ float dt = (float)(1.0f/RATE_100_HZ);
 // (INITIAL VALUES THAT ARE OVERWRITTEN BY Ctrl_Gains.yaml)
 
 // XY POSITION PID
-float P_kp_xy = 0.5f;
-float P_kd_xy = 0.3f;
-float P_ki_xy = 0.0f;
+float P_kp_xy = 0.4f;
+float P_kd_xy = 0.35f;
+float P_ki_xy = 0.07f;
 float i_range_xy = 0.3f;
 
 // Z POSITION PID
 float P_kp_z = 1.20f;
 float P_kd_z = 0.35f;
-float P_ki_z = 0.0f;
+float P_ki_z = 0.1f;
 float i_range_z = 0.25f;
 
 // XY ATTITUDE PID
-float R_kp_xy = 0.02f;
-float R_kd_xy = 0.008f;
+float R_kp_xy = 0.004f;
+float R_kd_xy = 0.0017f;
 float R_ki_xy = 0.0f;
 float i_range_R_xy = 1.0f;
 
 // Z ATTITUDE PID
-float R_kp_z = 0.003f;
-float R_kd_z = 0.001f;
+float R_kp_z = 0.000f;
+float R_kd_z = 0.000f;
 float R_ki_z = 0.000f;
 float i_range_R_z = 0.5f;
 

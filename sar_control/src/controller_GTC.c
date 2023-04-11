@@ -70,7 +70,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
     }
     
 
-    if (RATE_DO_EXECUTE(2, tick)) {
+    if (RATE_DO_EXECUTE(RATE_500_HZ, tick)) {
 
         controlOutput(state,sensors);
 

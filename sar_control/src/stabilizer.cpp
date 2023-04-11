@@ -26,11 +26,10 @@ void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
     {
         // stateEstimator(&state, &sensorData, &control, tick); // Run state/sensor values through "Kalman filter"
         controllerOutOfTree(&control, &setpoint, &sensorData, &state, tick);
-        // printf("Stab loop\n");
     
 
-        // Controller::publishCtrlData();
-        // Controller::publishCtrlDebug();
+        Controller::publishCtrlData();
+        Controller::publishCtrlDebug();
 
 
         
