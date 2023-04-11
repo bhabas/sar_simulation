@@ -167,8 +167,6 @@ void controlOutput(const state_t *state, const sensorData_t *sensors)
     Kd_R = mkvec(R_kd_xy,R_kd_xy,R_kd_z);
     Ki_R = mkvec(R_ki_xy,R_ki_xy,R_ki_z);
 
-    consolePrintf("Kp_p.x: %.3f\n",(double)P_kp_xy);
-
     // =========== STATE DEFINITIONS =========== //
     statePos = mkvec(state->position.x, state->position.y, state->position.z);                      // [m]
     stateVel = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);                      // [m]
