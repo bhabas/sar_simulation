@@ -184,8 +184,35 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
 
         case 1: // Position
 
-            consolePrintf("Cmd Pos: %.3f\n",(double)GTC_Cmd->cmd_val1);
+            consolePrintf("Pos Val: %.3f\n",(double)GTC_Cmd->cmd_val1);
+            x_d.x = GTC_Cmd->cmd_val1;
+            x_d.y = GTC_Cmd->cmd_val2;
+            x_d.z = GTC_Cmd->cmd_val3;
+            kp_xf = 1.0f;
             break;
+        
+        case 2: // Velocity
+            v_d.x = GTC_Cmd->cmd_val1;
+            v_d.y = GTC_Cmd->cmd_val2;
+            v_d.z = GTC_Cmd->cmd_val3;
+            kd_xf = GTC_Cmd->cmd_flag;
+            break;
+
+        case 3: 
+
+            /* Do Nothing */
+            break;
+
+        case 4: // Euler Angle
+
+            // TODO: ADD ANGLE SETPOINT OPTION INTO CONTROLLER FOR ANGLE BASED POLICY
+
+            break;        
+
+        case 5: // Hard Set All Motorspeeds to Zero
+            motorstop_flag = true;
+            break;
+
    
     }
 

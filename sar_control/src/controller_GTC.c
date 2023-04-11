@@ -48,7 +48,34 @@ bool controllerOutOfTreeTest() {
 }
 
 void controllerOutOfTreeReset() {
+
     consolePrintf("GTC Reset\n");
+
+    // RESET INTEGRATION ERRORS
+    e_PI = vzero();
+    e_RI = vzero();
+
+    // TURN POS/VEL CONTROLLER FLAGS ON
+    kp_xf = 1.0f;
+    kd_xf = 1.0f;
+
+    // RESET SETPOINTS TO HOME POSITION
+    x_d = mkvec(0.0f,0.0f,0.4f);
+    v_d = mkvec(0.0f,0.0f,0.0f);
+    a_d = mkvec(0.0f,0.0f,0.0f);
+    b1_d = mkvec(1.0f,0.0f,0.0f);
+
+    // RESET SYSTEM FLAGS
+    tumbled = false;
+    motorstop_flag = false;
+    customThrust_flag = false;
+    customPWM_flag = false;
+    moment_flag = false;
+
+    // RESET TRAJECTORY FLAGS
+
+
+    // RESET POLICY FLAGS
 
 }
 

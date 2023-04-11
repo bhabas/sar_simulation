@@ -102,6 +102,15 @@ extern struct mat33 R_d;        // Desired rotational matrix from b_d vectors
 extern struct vec omega_d;      // Omega-desired [rad/s]
 extern struct vec domega_d;     // Ang. Acc-desired [rad/s^2]
 
+// STATE ERRORS
+extern struct vec e_x;  // Pos-error [m]
+extern struct vec e_v;  // Vel-error [m/s]
+extern struct vec e_PI; // Pos. Integral-error [m*s]
+
+extern struct vec e_R;  // Rotation-error [rad]
+extern struct vec e_w;  // Omega-error [rad/s]
+extern struct vec e_RI; // Rot. Integral-error [rad*s]
+
 
 // DECLARE CONTROLLER ACTUATIONS
 extern struct vec F_thrust_ideal;   // Ideal thrust vector [N]
