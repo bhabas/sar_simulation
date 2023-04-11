@@ -1,6 +1,6 @@
 #include "shared_lib.h"
 
-struct GTC_CmdPacket GTC_Cmd;
+
 
 // INITIAL SYSTEM PARAMETERS
 float m = 34.3e-3f;         // [kg]
@@ -8,13 +8,14 @@ float Ixx = 15.83e-6f;      // [kg*m^2]
 float Iyy = 17.00e-6f;      // [kg*m^2]
 float Izz = 31.19e-6f;      // [kg*m^2]
 static struct mat33 J;      // Rotational Inertia Matrix [kg*m^2]
+float dp = 0.0325;          // COM to Prop along x-axis [m]
+float c_tf = 0.00618f;      // Moment Coeff [Nm/N]
+float f_max = 15.0f;        // Max thrust per motor [g]
 
 const float g = 9.81f;                        // Gravity [m/s^2]
 const struct vec e_3 = {0.0f, 0.0f, 1.0f};    // Global z-axis
-float dt = (float)(1.0f/RATE_100_HZ);
 
-float dp = 0.0325;           // COM to Prop along x-axis [m]
-float c_tf = 0.00618f; // Moment Coeff [Nm/N]
+float dt = (float)(1.0f/RATE_100_HZ);
 
 // =================================
 //    CONTROL GAIN INITIALIZATION
@@ -125,6 +126,13 @@ float f_roll_g = 0.0f;   // Motor thrust - Roll   [g]
 float f_pitch_g = 0.0f;  // Motor thrust - Pitch  [g]
 float f_yaw_g = 0.0f;    // Motor thrust - Yaw    [g]
 
+// INDIVIDUAL MOTOR THRUSTS
+float M1_thrust = 0.0f;
+float M2_thrust = 0.0f;
+float M3_thrust = 0.0f;
+float M4_thrust = 0.0f;
+
+struct GTC_CmdPacket GTC_Cmd;
 
 
 void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)

@@ -9,26 +9,23 @@ extern "C" {
 #include "controller_GTC.h"
 #include "math3d.h"
 
-struct GTC_CmdPacket{
-    uint8_t cmd_type; 
-    float cmd_val1;
-    float cmd_val2;
-    float cmd_val3;
-    float cmd_flag;
-    bool  cmd_rx;
-} __attribute__((packed));
 
-extern struct GTC_CmdPacket GTC_Cmd;
+
+#define PWM_MAX 60000
+#define g2Newton (9.81f/1000.0f)
+#define Newton2g (1000.0f/9.81f)
+
 
 // DECLARE SYSTEM PARAMETERS
 extern float m;     // [kg]
 extern float Ixx;   // [kg*m^2]
 extern float Iyy;   // [kg*m^2]
 extern float Izz;   // [kg*m^2]
-extern float dt;    // Controller cycle time
-
 extern float dp;    // COM to Prop along x-axis [m]
 extern float c_tf;  // Moment Coeff [Nm/N]
+extern float f_max; // Max thrust per motor [g]
+
+extern float dt;    // Controller cycle time
 
 // =================================
 //    CONTROL GAIN DECLARATIONS
@@ -112,6 +109,23 @@ extern float f_thrust_g;        // Motor thrust - Thrust [g]
 extern float f_roll_g;          // Motor thrust - Roll   [g]
 extern float f_pitch_g;         // Motor thrust - Pitch  [g]
 extern float f_yaw_g;           // Motor thrust - Yaw    [g]
+
+// DECLARE MOTOR THRUSTS
+extern float M1_thrust;
+extern float M2_thrust;
+extern float M3_thrust;
+extern float M4_thrust;
+
+struct GTC_CmdPacket{
+    uint8_t cmd_type; 
+    float cmd_val1;
+    float cmd_val2;
+    float cmd_val3;
+    float cmd_flag;
+    bool  cmd_rx;
+} __attribute__((packed));
+
+extern struct GTC_CmdPacket GTC_Cmd;
 
 
 
