@@ -41,8 +41,8 @@ float R_ki_xy = 0.0f;
 float i_range_R_xy = 1.0f;
 
 // Z ATTITUDE PID
-float R_kp_z = 0.000f;
-float R_kd_z = 0.000f;
+float R_kp_z = 0.003f;
+float R_kd_z = 0.001f;
 float R_ki_z = 0.000f;
 float i_range_R_z = 0.5f;
 
