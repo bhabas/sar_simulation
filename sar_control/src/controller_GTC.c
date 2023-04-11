@@ -73,6 +73,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
     if (RATE_DO_EXECUTE(2, tick)) {
 
         controlOutput(state,sensors);
+        consolePrintf("controlOutput State: %.3f\n",(double)state->position.x);
 
     }
  
