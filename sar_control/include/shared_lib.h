@@ -6,9 +6,10 @@ extern "C" {
 
 #include "stabilizer_types.h"
 #include "console.h"
-#include "controller_GTC.h"
 #include "math3d.h"
+#include "pm.h"
 
+#include "controller_GTC.h"
 
 
 #define PWM_MAX 60000
@@ -26,6 +27,9 @@ extern float c_tf;  // Moment Coeff [Nm/N]
 extern float f_max; // Max thrust per motor [g]
 
 extern float dt;    // Controller cycle time
+
+
+
 
 // =================================
 //    CONTROL GAIN DECLARATIONS
@@ -103,6 +107,7 @@ extern struct vec domega_d;     // Ang. Acc-desired [rad/s^2]
 extern struct vec F_thrust_ideal;   // Ideal thrust vector [N]
 extern float F_thrust;              // Implemented body thrust [N]
 extern struct vec M;                // Implemented body moments [N*m]
+extern struct vec M_d;              // Desired body moment [N*m]
 
 // DECLARE MOTOR THRUST ACTIONS
 extern float f_thrust_g;        // Motor thrust - Thrust [g]
@@ -115,6 +120,45 @@ extern float M1_thrust;
 extern float M2_thrust;
 extern float M3_thrust;
 extern float M4_thrust;
+
+// MOTOR PWM VALUES
+extern uint16_t M1_pwm; 
+extern uint16_t M2_pwm; 
+extern uint16_t M3_pwm; 
+extern uint16_t M4_pwm; 
+
+
+// CONTROL OVERRIDE VALUES
+extern uint16_t PWM_override[4];    // Motor PWM values
+extern float thrust_override[4];    // Motor thrusts [g] 
+
+
+// =================================
+//  FLAGS AND SYSTEM INITIALIZATION
+// =================================
+
+// CONTROLLER FLAGS
+extern bool tumbled;
+extern bool tumble_detection;
+extern bool motorstop_flag;
+extern bool moment_flag;
+extern bool attCtrlEnable;
+extern bool safeModeEnable;
+extern bool customThrust_flag;
+extern bool customPWM_flag;
+
+// POLICY FLAGS
+extern bool policy_armed_flag;
+extern bool flip_flag;
+extern bool onceFlag;
+
+// SENSOR FLAGS
+extern bool camera_sensor_active;
+
+
+
+
+
 
 struct GTC_CmdPacket{
     uint8_t cmd_type; 
@@ -131,6 +175,8 @@ extern struct GTC_CmdPacket GTC_Cmd;
 
 void GTC_Command(struct GTC_CmdPacket *GTC_Cmd);
 void controlOutput(const state_t *state, const sensorData_t *sensors);
+uint16_t thrust2PWM(float f);
+
 
 
 

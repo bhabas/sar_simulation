@@ -119,6 +119,8 @@ static struct vec Gyro_dyn;
 struct vec F_thrust_ideal = {0.0f,0.0f,1.0f};   // Ideal thrust vector [N]
 float F_thrust = 0.0f;                          // Implemented body thrust [N]
 struct vec M = {0.0f,0.0f,0.0f};                // Implemented body moments [N*m]
+struct vec M_d = {0.0f,0.0f,0.0f};              // Desired moment [N*m]
+
 
 // MOTOR THRUST ACTIONS
 float f_thrust_g = 0.0f; // Motor thrust - Thrust [g]
@@ -127,10 +129,44 @@ float f_pitch_g = 0.0f;  // Motor thrust - Pitch  [g]
 float f_yaw_g = 0.0f;    // Motor thrust - Yaw    [g]
 
 // INDIVIDUAL MOTOR THRUSTS
-float M1_thrust = 0.0f;
-float M2_thrust = 0.0f;
-float M3_thrust = 0.0f;
-float M4_thrust = 0.0f;
+float M1_thrust = 0.0f; // Motor 1 [g]
+float M2_thrust = 0.0f; // Motor 2 [g]
+float M3_thrust = 0.0f; // Motor 3 [g]
+float M4_thrust = 0.0f; // Motor 4 [g]
+
+// MOTOR PWM VALUES
+uint16_t M1_pwm = 0; // [0 - 65,535]
+uint16_t M2_pwm = 0; // [0 - 65,535]
+uint16_t M3_pwm = 0; // [0 - 65,535]
+uint16_t M4_pwm = 0; // [0 - 65,535]
+
+// CONTROL OVERRIDE VALUES
+uint16_t PWM_override[4] = {0,0,0,0};               // Motor PWM values
+float thrust_override[4] = {0.0f,0.0f,0.0f,0.0f};   // Motor thrusts [g] 
+
+
+
+// =================================
+//  FLAGS AND SYSTEM INITIALIZATION
+// =================================
+
+// CONTROLLER FLAGS
+bool tumbled = false;
+bool tumble_detection = true;
+bool motorstop_flag = false;
+bool moment_flag = false;
+bool attCtrlEnable = false;
+bool safeModeEnable = true;
+bool customThrust_flag = false;
+bool customPWM_flag = false;
+
+// POLICY FLAGS
+bool policy_armed_flag = false;
+bool flip_flag = false;
+bool onceFlag = false;
+
+// SENSOR FLAGS
+bool camera_sensor_active = false;
 
 struct GTC_CmdPacket GTC_Cmd;
 
@@ -271,4 +307,44 @@ void controlOutput(const state_t *state, const sensorData_t *sensors)
     F_thrust = vdot(F_thrust_ideal, b3);    // Project ideal thrust onto b3 vector [N]
     M = vadd(R_effort,Gyro_dyn);            // Control moments [Nm]
 
+}
+
+// Converts thrust in grams to their respective PWM values
+uint16_t thrust2PWM(float f) 
+{
+    // VOLTAGE IS WHAT DRIVES THE MOTORS, THEREFORE ADJUST PWM TO MEET VOLTAGE NEED
+    // CALCULATE REQUIRED VOLTAGE FOR DESIRED THRUST
+
+    float a,b,c;
+
+    if(f<=5.2f)
+    {
+        a = 1.28533f;
+        b = 1.51239;
+        c = 0.0f;
+    }
+    else
+    {
+        a = 3.23052f;
+        b = -5.46911f;
+        c = 5.97889f;
+    }
+    float voltage_needed = -b/(2*a) + sqrtf(4*a*(f-c) + b*b)/(2*a);
+
+
+    // GET RATIO OF REQUIRED VOLTAGE VS SUPPLY VOLTAGE
+    float supply_voltage = pmGetBatteryVoltage();
+    float percentage = voltage_needed / supply_voltage;
+    percentage = percentage > 1.0f ? 1.0f : percentage; // If % > 100%, then cap at 100% else keep same
+
+    // CONVERT RATIO TO PWM OF PWM_MAX
+    float PWM = percentage * (float)UINT16_MAX; // Remap percentage back to PWM range
+
+    // IF MINIMAL THRUST ENSURE PWM = 0
+    if(f <= 0.25f)
+    {
+        PWM = 0.0f;
+    }
+
+    return PWM;
 }
