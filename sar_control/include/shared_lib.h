@@ -118,6 +118,90 @@ extern float f_yaw_g;           // Motor thrust - Yaw    [g]
 void GTC_Command(struct GTC_CmdPacket *GTC_Cmd);
 void controlOutput(const state_t *state, const sensorData_t *sensors);
 
+
+
+
+
+// =================================
+//    ADDITIONAL MATH FUNCTIONS
+// =================================
+
+// Construct a matrix A from vector v such that Ax = cross(v, x)
+static inline struct mat33 hat(struct vec v) {
+	struct mat33 m;
+	m.m[0][0] = 0;
+	m.m[0][1] = -v.z;
+	m.m[0][2] = v.y;
+	m.m[1][0] = v.z;
+	m.m[1][1] = 0;
+	m.m[1][2] = -v.x;
+	m.m[2][0] = -v.y;
+	m.m[2][1] = v.x;
+	m.m[2][2] = 0;
+	return m;
+}
+
+// Construct a vector v from matrix A such that Ax = cross(v, x)
+static inline struct vec dehat(struct mat33 m) {
+	struct vec v;
+
+	v.x = m.m[2][1];
+	v.y = m.m[0][2];
+	v.z = m.m[1][0];
+	
+	return v;
+}
+
+// Convert quaternion to (roll, pitch, yaw) Euler angles using Tait-Bryan convention [YZX]
+//  - Pitch, then yaw about new pitch axis, then roll about new roll axis
+//  - Notation allows greater than 90 deg pitch and roll angles
+static inline struct vec quat2eul(struct quat q) {
+	// from https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+
+	struct vec eul;
+	float R11,R21,R31,R22,R23;
+
+
+	// CALC NEEDED ROTATION MATRIX COMPONENTS FROM QUATERNION
+    R11 = 1.0f - 2.0f*( fsqr(q.y) + fsqr(q.z) );
+    R21 = 2.0f*(q.x*q.y + q.z*q.w);
+    R31 = 2.0f*(q.x*q.z - q.y*q.w);
+
+    R22 = 1.0f - 2.0f*( fsqr(q.x) + fsqr(q.z) );
+    R23 = 2.0f*(q.y*q.z - q.x*q.w);
+
+
+	// CONVERT ROTATION MATRIX COMPONENTS TO EULER ANGLES (YZX NOTATION)
+	eul.x = atan2f(-R23,R22); 	// Roll
+	eul.y = atan2f(-R31,R11); 	// Pitch
+	eul.z = asinf(R21); 		// Yaw
+
+	return eul;
+}
+
+static inline void printvec(struct vec v){
+	consolePrintf("%.4f, %.4f, %.4f\n", (double)v.x, (double)v.y, (double)v.z);
+	return;
+}
+
+static inline void printquat(struct quat q){
+	consolePrintf("%.4f, %.4f, %.4f %.4f\n", (double)q.x, (double)q.y, (double)q.z, (double)q.w);
+	return;
+}
+
+static inline void printmat(struct mat33 m){
+    struct vec vrow_0 = mrow(m,0);
+    struct vec vrow_1 = mrow(m,1);
+    struct vec vrow_2 = mrow(m,2);
+
+    printvec(vrow_0);
+    printvec(vrow_1);
+    printvec(vrow_2);
+	consolePrintf("\n");
+
+	return;
+}
+
 #ifdef __cplusplus
 }
 #endif

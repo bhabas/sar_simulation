@@ -7,7 +7,7 @@ float m = 34.3e-3f;         // [kg]
 float Ixx = 15.83e-6f;      // [kg*m^2]
 float Iyy = 17.00e-6f;      // [kg*m^2]
 float Izz = 31.19e-6f;      // [kg*m^2]
-// static struct mat33 J;      // Rotational Inertia Matrix [kg*m^2]
+static struct mat33 J;      // Rotational Inertia Matrix [kg*m^2]
 
 const float g = 9.81f;                        // Gravity [m/s^2]
 const struct vec e_3 = {0.0f, 0.0f, 1.0f};    // Global z-axis
@@ -104,15 +104,15 @@ struct vec e_RI; // Rot. Integral-error [rad*s]
 static struct vec temp1_v; 
 static struct vec temp2_v;
 static struct vec temp3_v;
-// static struct vec temp4_v;
-// static struct mat33 temp1_m;  
+static struct vec temp4_v;
+static struct mat33 temp1_m;  
 
 static struct vec P_effort; // Effort by positional PID
-// static struct vec R_effort; // Effor by rotational PID
+static struct vec R_effort; // Effor by rotational PID
 
 static struct mat33 RdT_R;  // Rd' * R
 static struct mat33 RT_Rd;  // R' * Rd
-// static struct vec Gyro_dyn;
+static struct vec Gyro_dyn;
 
 // CONTROLLER ACTUATIONS
 struct vec F_thrust_ideal = {0.0f,0.0f,1.0f};   // Ideal thrust vector [N]
@@ -171,7 +171,7 @@ void controlOutput(const state_t *state, const sensorData_t *sensors)
                     state->attitudeQuaternion.w);
 
     // EULER ANGLES EXPRESSED IN YZX NOTATION
-    stateEul = quat2rpy(stateQuat);
+    stateEul = quat2eul(stateQuat);
     stateEul.x = degrees(stateEul.x);
     stateEul.y = degrees(stateEul.y);
     stateEul.z = degrees(stateEul.z);
@@ -227,42 +227,42 @@ void controlOutput(const state_t *state, const sensorData_t *sensors)
     RdT_R = mmul(mtranspose(R_d), R);       // [R_d'*R]
     RT_Rd = mmul(mtranspose(R), R_d);       // [R'*R_d]
 
-    // temp1_v = dehat(msub(RdT_R, RT_Rd));    // [dehat(R_d'*R - R'*R)]
-    // e_R = vscl(0.5f, temp1_v);              // Rotation error | [eR = 0.5*dehat(R_d'*R - R'*R)]
+    temp1_v = dehat(msub(RdT_R, RT_Rd));    // [dehat(R_d'*R - R'*R)]
+    e_R = vscl(0.5f, temp1_v);              // Rotation error | [eR = 0.5*dehat(R_d'*R - R'*R)]
 
-    // temp1_v = mvmul(RT_Rd, omega_d);        // [R'*R_d*omega_d]
-    // e_w = vsub(stateOmega, temp1_v);        // Ang. vel error | [e_w = omega - R'*R_d*omega_d] 
+    temp1_v = mvmul(RT_Rd, omega_d);        // [R'*R_d*omega_d]
+    e_w = vsub(stateOmega, temp1_v);        // Ang. vel error | [e_w = omega - R'*R_d*omega_d] 
 
-    // // ROT. INTEGRAL ERROR
-    // e_RI.x += (e_R.x)*dt;
-    // e_RI.x = clamp(e_RI.x, -i_range_R_xy, i_range_R_xy);
+    // ROT. INTEGRAL ERROR
+    e_RI.x += (e_R.x)*dt;
+    e_RI.x = clamp(e_RI.x, -i_range_R_xy, i_range_R_xy);
 
-    // e_RI.y += (e_R.y)*dt;
-    // e_RI.y = clamp(e_RI.y, -i_range_R_xy, i_range_R_xy);
+    e_RI.y += (e_R.y)*dt;
+    e_RI.y = clamp(e_RI.y, -i_range_R_xy, i_range_R_xy);
 
-    // e_RI.z += (e_R.z)*dt;
-    // e_RI.z = clamp(e_RI.z, -i_range_R_z, i_range_R_z);
+    e_RI.z += (e_R.z)*dt;
+    e_RI.z = clamp(e_RI.z, -i_range_R_z, i_range_R_z);
 
-    // // =========== CONTROL EQUATIONS =========== // 
-    // /* [M = -kp_R*e_R - kd_R*e_w -ki_R*e_RI + Gyro_dyn] */
+    // =========== CONTROL EQUATIONS =========== // 
+    /* [M = -kp_R*e_R - kd_R*e_w -ki_R*e_RI + Gyro_dyn] */
 
-    // temp1_v = veltmul(vneg(Kp_R), e_R);     // [-kp_R*e_R]
-    // temp2_v = veltmul(vneg(Kd_R), e_w);     // [-kd_R*e_w]
-    // temp3_v = veltmul(vneg(Ki_R), e_RI);    // [-ki_R*e_RI]
-    // R_effort = vadd3(temp1_v,temp2_v,temp3_v);
+    temp1_v = veltmul(vneg(Kp_R), e_R);     // [-kp_R*e_R]
+    temp2_v = veltmul(vneg(Kd_R), e_w);     // [-kd_R*e_w]
+    temp3_v = veltmul(vneg(Ki_R), e_RI);    // [-ki_R*e_RI]
+    R_effort = vadd3(temp1_v,temp2_v,temp3_v);
 
-    // /* Gyro_dyn = [omega x (J*omega)] - [J*( hat(omega)*R'*R_d*omega_d - R'*R_d*domega_d )] */
-    // temp1_v = vcross(stateOmega, mvmul(J, stateOmega)); // [omega x J*omega]
+    /* Gyro_dyn = [omega x (J*omega)] - [J*( hat(omega)*R'*R_d*omega_d - R'*R_d*domega_d )] */
+    temp1_v = vcross(stateOmega, mvmul(J, stateOmega)); // [omega x J*omega]
 
 
-    // temp1_m = mmul(hat(stateOmega), RT_Rd); //  hat(omega)*R'*R_d
-    // temp2_v = mvmul(temp1_m, omega_d);      // (hat(omega)*R'*R_d)*omega_d
-    // temp3_v = mvmul(RT_Rd, domega_d);       // (R'*R_d*domega_d)
+    temp1_m = mmul(hat(stateOmega), RT_Rd); //  hat(omega)*R'*R_d
+    temp2_v = mvmul(temp1_m, omega_d);      // (hat(omega)*R'*R_d)*omega_d
+    temp3_v = mvmul(RT_Rd, domega_d);       // (R'*R_d*domega_d)
 
-    // temp4_v = mvmul(J, vsub(temp2_v, temp3_v)); // J*(hat(omega)*R'*R_d*omega_d - R'*R_d*domega_d)
-    // Gyro_dyn = vsub(temp1_v,temp4_v);
+    temp4_v = mvmul(J, vsub(temp2_v, temp3_v)); // J*(hat(omega)*R'*R_d*omega_d - R'*R_d*domega_d)
+    Gyro_dyn = vsub(temp1_v,temp4_v);
 
-    // F_thrust = vdot(F_thrust_ideal, b3);    // Project ideal thrust onto b3 vector [N]
-    // M = vadd(R_effort,Gyro_dyn);            // Control moments [Nm]
+    F_thrust = vdot(F_thrust_ideal, b3);    // Project ideal thrust onto b3 vector [N]
+    M = vadd(R_effort,Gyro_dyn);            // Control moments [Nm]
 
 }
