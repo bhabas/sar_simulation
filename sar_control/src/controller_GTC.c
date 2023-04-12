@@ -174,6 +174,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
         compressStates();
         compressSetpoints();
+        compressFlipStates();
 
 
     }
@@ -241,20 +242,20 @@ LOG_ADD(LOG_INT16,  Z_wz,   &FlipStatesZ_GTC.wz)
 
 LOG_ADD(LOG_UINT32, Z_Thetaxy, &FlipStatesZ_GTC.Theta_xy)
 LOG_ADD(LOG_INT16,  Z_Tau,  &FlipStatesZ_GTC.Tau)
-LOG_ADD(LOG_INT16,  Z_D_ceil, &FlipStatesZ_GTC.D_perp)
+LOG_ADD(LOG_INT16,  Z_D_perp, &FlipStatesZ_GTC.D_perp)
 
 LOG_ADD(LOG_UINT8, Flip_Flag, &flip_flag)
 LOG_GROUP_STOP(LogFlipData_GTC)
 
 
-// LOG_GROUP_START(valsLog)
-// LOG_ADD(LOG_UINT8, Motorstop_Flag, &motorstop_flag)
-// LOG_ADD(LOG_FLOAT, Pos_Ctrl_Flag, &kp_xf)
-// LOG_ADD(LOG_FLOAT, Vel_Ctrl_Flag, &kd_xf)
+LOG_GROUP_START(valsLog)
+LOG_ADD(LOG_UINT8, Motorstop_Flag, &motorstop_flag)
+LOG_ADD(LOG_FLOAT, Pos_Ctrl_Flag, &kp_xf)
+LOG_ADD(LOG_FLOAT, Vel_Ctrl_Flag, &kd_xf)
 // LOG_ADD(LOG_UINT8, Execute_Traj_Flag, &execute_vel_traj)
-// LOG_ADD(LOG_UINT8, Tumbled_Flag, &tumbled)
-// LOG_ADD(LOG_UINT8, Tumble_Detect, &tumble_detection)
-// LOG_ADD(LOG_UINT8, Moment_Flag, &moment_flag)
-// LOG_ADD(LOG_UINT8, Policy_Armed_Flag, &policy_armed_flag)
-// LOG_GROUP_STOP(valsLog)
+LOG_ADD(LOG_UINT8, Tumbled_Flag, &tumbled)
+LOG_ADD(LOG_UINT8, Tumble_Detect, &tumble_detection)
+LOG_ADD(LOG_UINT8, Moment_Flag, &moment_flag)
+LOG_ADD(LOG_UINT8, Policy_Armed_Flag, &policy_armed_flag)
+LOG_GROUP_STOP(valsLog)
 #endif

@@ -189,6 +189,58 @@ extern bool onceFlag;
 // SENSOR FLAGS
 extern bool camera_sensor_active;
 
+// =================================
+//       POLICY INITIALIZATION
+// =================================
+
+// POLICY SETTING
+typedef enum {
+    PARAM_OPTIM = 0,
+    SVL_POLICY = 1,
+    DEEP_RL = 2,
+    DEEP_RL_SB3 = 3
+}PolicyType;
+extern PolicyType Policy;
+
+// POLICY FLAGS
+extern bool policy_armed_flag;
+extern bool flip_flag;
+extern bool onceFlag;
+
+// POLICY TRIGGER/ACTION VALUES
+extern float Policy_Flip;  
+extern float Policy_Action;
+
+
+
+// ======================================
+//  RECORD SYSTEM STATES AT FLIP TRIGGER
+// ======================================
+
+// CARTESIAN STATES
+extern struct vec statePos_tr;      // Pos [m]
+extern struct vec stateVel_tr;      // Vel [m/s]
+extern struct quat stateQuat_tr;    // Orientation
+extern struct vec stateOmega_tr;    // Angular Rate [rad/s]
+
+// OPTICAL FLOW STATES
+extern float Tau_tr;                // [rad/s]
+extern float Theta_x_tr;            // [rad/s]
+extern float Theta_y_tr;            // [rad/s]
+extern float D_perp_tr;             // [m/s]
+
+// CONTROLLER STATES
+extern float F_thrust_flip;         // [N]
+extern float M_x_flip;              // [N*m]
+extern float M_y_flip;              // [N*m]
+extern float M_z_flip;              // [N*m]
+
+// POLICY TRIGGER/ACTION VALUES
+extern float Policy_Flip_tr;    
+extern float Policy_Action_tr;
+
+
+
 // GTC COMMAND PACKETS
 struct GTC_CmdPacket{
     uint8_t cmd_type; 
@@ -200,14 +252,7 @@ struct GTC_CmdPacket{
 } __attribute__((packed));
 extern struct GTC_CmdPacket GTC_Cmd;
 
-// POLICY SETTING
-typedef enum {
-    PARAM_OPTIM = 0,
-    SVL_POLICY = 1,
-    DEEP_RL = 2,
-    DEEP_RL_SB3 = 3
-}PolicyType;
-extern PolicyType Policy;
+
 
 
 

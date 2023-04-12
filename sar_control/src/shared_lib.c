@@ -204,6 +204,37 @@ bool policy_armed_flag = false;
 bool flip_flag = false;
 bool onceFlag = false;
 
+// POLICY TRIGGER/ACTION VALUES
+float Policy_Flip = 0.0f;  
+float Policy_Action = 0.0f;
+
+
+
+// ======================================
+//  RECORD SYSTEM STATES AT FLIP TRIGGER
+// ======================================
+
+// CARTESIAN STATES
+struct vec statePos_tr = {0.0f,0.0f,0.0f};         // Pos [m]
+struct vec stateVel_tr = {0.0f,0.0f,0.0f};         // Vel [m/s]
+struct quat stateQuat_tr = {0.0f,0.0f,0.0f,1.0f};  // Orientation
+struct vec stateOmega_tr = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
+
+// OPTICAL FLOW STATES
+float Tau_tr = 0.0f;        // [rad/s]
+float Theta_x_tr = 0.0f;    // [rad/s]
+float Theta_y_tr = 0.0f;    // [rad/s]
+float D_perp_tr = 0.0f;     // [m/s]
+
+// CONTROLLER STATES
+float F_thrust_flip = 0.0f; // [N]
+float M_x_flip = 0.0f;      // [N*m]
+float M_y_flip = 0.0f;      // [N*m]
+float M_z_flip = 0.0f;      // [N*m]
+
+// POLICY TRIGGER/ACTION VALUES
+float Policy_Flip_tr = 0.0f;    
+float Policy_Action_tr = 0.0f;
 
 
 void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
@@ -461,29 +492,29 @@ void compressSetpoints(){
 }
 
 
-// void compressFlipStates(){
-//     FlipStatesZ_GTC.xy = compressXY(statePos_tr.x,statePos_tr.y);
-//     FlipStatesZ_GTC.z = (int16_t)(statePos_tr.z * 1000.0f);
+void compressFlipStates(){
+    FlipStatesZ_GTC.xy = compressXY(statePos_tr.x,statePos_tr.y);
+    FlipStatesZ_GTC.z = (int16_t)(statePos_tr.z * 1000.0f);
 
-//     FlipStatesZ_GTC.vxy = compressXY(stateVel_tr.x, stateVel_tr.y);
-//     FlipStatesZ_GTC.vz = (int16_t)(stateVel_tr.z * 1000.0f);
+    FlipStatesZ_GTC.vxy = compressXY(stateVel_tr.x, stateVel_tr.y);
+    FlipStatesZ_GTC.vz = (int16_t)(stateVel_tr.z * 1000.0f);
 
-//     FlipStatesZ_GTC.wxy = compressXY(stateOmega_tr.x,stateOmega_tr.y);
-//     FlipStatesZ_GTC.wz = (int16_t)(stateOmega_tr.z * 1000.0f);
-
-
-//     float const q[4] = {
-//         stateQuat_tr.x,
-//         stateQuat_tr.y,
-//         stateQuat_tr.z,
-//         stateQuat_tr.w};
-//     FlipStatesZ_GTC.quat = quatcompress(q);
-
-//    FlipStatesZ_GTC.OF_xy = compressXY(OFx_tr,OFy_tr);
-//    FlipStatesZ_GTC.Tau = (int16_t)(Tau_tr * 1000.0f); 
-//    FlipStatesZ_GTC.d_ceil = (int16_t)(d_ceil_tr * 1000.0f);
-
-//    FlipStatesZ_GTC.NN_FP = compressXY(Policy_Flip_tr,Policy_Action_tr); // Flip value (OC_SVM) and Flip action (NN)
+    FlipStatesZ_GTC.wxy = compressXY(stateOmega_tr.x,stateOmega_tr.y);
+    FlipStatesZ_GTC.wz = (int16_t)(stateOmega_tr.z * 1000.0f);
 
 
-// }
+    float const q[4] = {
+        stateQuat_tr.x,
+        stateQuat_tr.y,
+        stateQuat_tr.z,
+        stateQuat_tr.w};
+    FlipStatesZ_GTC.quat = quatcompress(q);
+
+   FlipStatesZ_GTC.Theta_xy = compressXY(Theta_x_tr,Theta_y_tr);
+   FlipStatesZ_GTC.Tau = (int16_t)(Tau_tr * 1000.0f); 
+   FlipStatesZ_GTC.D_perp = (int16_t)(D_perp_tr * 1000.0f);
+
+   FlipStatesZ_GTC.NN_FP = compressXY(Policy_Flip_tr,Policy_Action_tr); // Flip value (OC_SVM) and Flip action (NN)
+
+
+}
