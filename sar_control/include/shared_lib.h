@@ -11,6 +11,7 @@ extern "C" {
 #include "quatcompress.h"
 
 #include "controller_GTC.h"
+#include "traj_funcs.h"
 #include "CompressStates.h"
 
 

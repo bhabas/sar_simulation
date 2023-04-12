@@ -240,8 +240,6 @@ float Policy_Action_tr = 0.0f;
 
 void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
 {
-    consolePrintf("Command Recieved:\n");
-
     switch(GTC_Cmd->cmd_type){
         case 0: // Reset
             controllerOutOfTreeReset();
@@ -279,9 +277,9 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
 
         case 7: // Execute Moment-Based Flip
 
-            M_d.x = GTC_Cmd->cmd_val1*1e-3;
-            M_d.y = GTC_Cmd->cmd_val2*1e-3;
-            M_d.z = GTC_Cmd->cmd_val3*1e-3;
+            M_d.x = GTC_Cmd->cmd_val1*1e-3f;
+            M_d.y = GTC_Cmd->cmd_val2*1e-3f;
+            M_d.z = GTC_Cmd->cmd_val3*1e-3f;
 
             moment_flag = (bool)GTC_Cmd->cmd_flag;
             break;
@@ -293,7 +291,18 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
             policy_armed_flag = (bool)GTC_Cmd->cmd_flag;
             break;
 
+        case 10: // Point-to-Point Trajectory
 
+            axis = (axis_direction)GTC_Cmd->cmd_flag;
+            Traj_Type = P2P;
+            break;
+
+
+        case 11: // Constant Velocity Trajectory
+
+            axis = (axis_direction)GTC_Cmd->cmd_flag;
+            Traj_Type = CONST_VEL;
+            break;
 
 
         case 20: // Tumble-Detection

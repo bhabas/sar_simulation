@@ -81,7 +81,7 @@ void controllerOutOfTreeReset() {
     moment_flag = false;
 
     // RESET TRAJECTORY FLAGS
-
+    Traj_Type = NONE;
 
     // RESET POLICY FLAGS
     policy_armed_flag = false;
@@ -112,18 +112,30 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                                             const uint32_t tick) 
 {
 
-    if (RATE_DO_EXECUTE(2, tick))
-    {
-        // consolePrintf("GTC loop value1: %.3f\n",(double)GTC_Cmd.cmd_val1);
-    }
-
     // UPDATE OPTICAL FLOW VALUES AT 100 HZ
-    if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
+    if (RATE_DO_EXECUTE(2, tick)) {
+
+        switch (Traj_Type)
+        {
+            case NONE:
+                consolePrintf("No Traj\n");
+                break;
+
+            case P2P:
+                consolePrintf("P2P Traj\n");
+                break;
+
+            case CONST_VEL:
+                consolePrintf("Constant Vel Traj\n");
+                break;
+        }
+ 
 
     }
     
 
-    if (RATE_DO_EXECUTE(RATE_500_HZ, tick)) {
+    if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
+
 
         controlOutput(state,sensors);
 
