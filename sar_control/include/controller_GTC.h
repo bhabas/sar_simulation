@@ -14,7 +14,7 @@ extern "C" {
 // CF LIBARARIES
 #include "app.h"
 #include "stabilizer_types.h"
-
+#include "controller.h"
 #include "console.h"
 
 // CUSTOM LIBRARIES
@@ -27,6 +27,8 @@ extern "C" {
 #include "app_channel.h"
 #include "log.h"
 #include "param.h"
+#include "motors.h"
+#include "led.h"
 #endif
 
 

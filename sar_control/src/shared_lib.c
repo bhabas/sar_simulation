@@ -9,7 +9,8 @@ float m = 34.3e-3f;         // [kg]
 float Ixx = 15.83e-6f;      // [kg*m^2]
 float Iyy = 17.00e-6f;      // [kg*m^2]
 float Izz = 31.19e-6f;      // [kg*m^2]
-static struct mat33 J;      // Rotational Inertia Matrix [kg*m^2]
+struct mat33 J;             // Rotational Inertia Matrix [kg*m^2]
+
 float Prop_Dist = 0.0325f;          // COM to Prop along x-axis [m]
 float C_tf = 0.00618f;      // Moment Coeff [Nm/N]
 float f_max = 15.0f;        // Max thrust per motor [g]
@@ -276,7 +277,48 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
             motorstop_flag = true;
             break;
 
-   
+        case 7: // Execute Moment-Based Flip
+
+            M_d.x = GTC_Cmd->cmd_val1*1e-3;
+            M_d.y = GTC_Cmd->cmd_val2*1e-3;
+            M_d.z = GTC_Cmd->cmd_val3*1e-3;
+
+            moment_flag = (bool)GTC_Cmd->cmd_flag;
+            break;
+
+        case 8: // Arm Policy Maneuver
+            Policy_Flip = GTC_Cmd->cmd_val1;
+            Policy_Action = GTC_Cmd->cmd_val2;
+
+            policy_armed_flag = (bool)GTC_Cmd->cmd_flag;
+            break;
+
+
+
+
+        case 20: // Tumble-Detection
+            tumble_detection = GTC_Cmd->cmd_flag;
+            break;
+
+        case 30: // Custom Thrust Values
+
+            customThrust_flag = true;
+            thrust_override[0] = GTC_Cmd->cmd_val1;
+            thrust_override[1] = GTC_Cmd->cmd_val2;
+            thrust_override[2] = GTC_Cmd->cmd_val3;
+            thrust_override[3] = GTC_Cmd->cmd_flag;
+
+            break;
+
+        case 31: // Custom PWM Values
+
+            customPWM_flag = true;
+            PWM_override[0] = GTC_Cmd->cmd_val1;
+            PWM_override[1] = GTC_Cmd->cmd_val2;
+            PWM_override[2] = GTC_Cmd->cmd_val3;
+            PWM_override[3] = GTC_Cmd->cmd_flag;
+
+            break;
     }
 
 }

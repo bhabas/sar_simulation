@@ -1,5 +1,5 @@
 #include "controller_GTC.h"
-#include "led.h"
+
 
 uint8_t value1 = 5;
 void appMain() {
@@ -32,20 +32,27 @@ void appMain() {
 }
 
     
-
-
-void controllerOutOfTreeInit() {
-    consolePrintf("GTC init\n");
-
-    ledSet(LED_BLUE_L, 0);
-    ledSet(LED_BLUE_NRF, 0);
-
-}
-
 bool controllerOutOfTreeTest() {
 
   return true;
 }
+
+
+void controllerOutOfTreeInit() {
+
+    #ifdef CONFIG_SAR_EXP
+    ledSet(LED_BLUE_L, 0);
+    ledSet(LED_BLUE_NRF, 0);
+    #endif
+
+    controllerOutOfTreeReset();
+    controllerOutOfTreeTest();
+    J = mdiag(Ixx,Iyy,Izz);
+
+    consolePrintf("GTC Initiated\n");
+
+}
+
 
 void controllerOutOfTreeReset() {
 
@@ -77,6 +84,24 @@ void controllerOutOfTreeReset() {
 
 
     // RESET POLICY FLAGS
+    policy_armed_flag = false;
+    flip_flag = false;
+    onceFlag = false;
+
+
+    // RESET LOGGED FLIP VALUES
+    statePos_tr = vzero();
+    stateVel_tr = vzero();
+    stateQuat_tr = mkquat(0.0f,0.0f,0.0f,1.0f);
+    stateOmega_tr = vzero();
+
+    Tau_tr = 0.0f;
+    Theta_x_tr = 0.0f;
+    Theta_y_tr = 0.0f;
+    D_perp_tr = 0.0f;
+
+    Policy_Flip_tr = 0.0f;
+    Policy_Action_tr = 0.0f;
 
 }
 
@@ -175,6 +200,23 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         compressStates();
         compressSetpoints();
         compressFlipStates();
+
+        #ifdef CONFIG_SAR_EXP
+        if(safeModeEnable)
+        {
+            motorsSetRatio(MOTOR_M1, 0);
+            motorsSetRatio(MOTOR_M2, 0);
+            motorsSetRatio(MOTOR_M3, 0);
+            motorsSetRatio(MOTOR_M4, 0);
+        }
+        else{
+            // SEND PWM VALUES TO MOTORS
+            motorsSetRatio(MOTOR_M1, M4_pwm);
+            motorsSetRatio(MOTOR_M2, M3_pwm);
+            motorsSetRatio(MOTOR_M3, M2_pwm);
+            motorsSetRatio(MOTOR_M4, M1_pwm);
+        }
+        #endif
 
 
     }

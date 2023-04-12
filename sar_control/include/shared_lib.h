@@ -20,10 +20,12 @@ extern "C" {
 
 
 // DECLARE SYSTEM PARAMETERS
-extern float m;     // [kg]
-extern float Ixx;   // [kg*m^2]
-extern float Iyy;   // [kg*m^2]
-extern float Izz;   // [kg*m^2]
+extern float m;         // [kg]
+extern float Ixx;       // [kg*m^2]
+extern float Iyy;       // [kg*m^2]
+extern float Izz;       // [kg*m^2]
+extern struct mat33 J;  // Rotational Inertia Matrix [kg*m^2]
+
 extern float Prop_Dist;    // COM to Prop along x-axis [m]
 extern float C_tf;  // Moment Coeff [Nm/N]
 extern float f_max; // Max thrust per motor [g]
