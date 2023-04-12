@@ -559,84 +559,59 @@ void CF_DataConverter::quat2euler(float quat[], float eul[]){
 
 void CF_DataConverter::consoleOuput()
 {
-    system("clear");
-    printf("t: %.4f V: %.3f\n",(Time-Time_start).toSec(),V_battery);
-    printf("DataType: %s \t Model: %s\n",DATA_TYPE.c_str(),MODEL_NAME.c_str());
-    printf("\n");
-
-    printf("==== Flags ====\n");
-    printf("Motorstop:\t%u  Flip_flag:\t  %u  Pos Ctrl:\t    %u  Cam_Est:\t  %u\n",Motorstop_Flag, flip_flag, Pos_Ctrl_Flag,Camera_Sensor_Active);
-    printf("Traj Active:\t%u  Impact_flag:\t  %u  Vel Ctrl:\t    %u \n",Traj_Active_Flag,impact_flag,Vel_Ctrl_Flag);
-    printf("Policy_armed:\t%u  Tumble Detect: %u  Moment_Flag:   %u \n",Policy_Armed_Flag,Tumble_Detection,Moment_Flag);
-    printf("Sticky_flag:\t%u  Tumbled:\t  %u  Slowdown_type: %u\n",Sticky_Flag,Tumbled_Flag,SLOWDOWN_TYPE);
-    printf("\n");
-
-    printf("==== System States ====\n");
-    printf("Pos [m]:\t % 8.3f  % 8.3f  % 8.3f\n",Pose.position.x,Pose.position.y,Pose.position.z);
-    printf("Vel [m/s]:\t % 8.3f  % 8.3f  % 8.3f\n",Twist.linear.x,Twist.linear.y,Twist.linear.z);
-    printf("Omega [rad/s]:\t % 8.3f  % 8.3f  % 8.3f\n",Twist.angular.x,Twist.angular.y,Twist.angular.z);
-    printf("Eul [deg]:\t % 8.3f  % 8.3f  % 8.3f\n",Eul.x,Eul.y,Eul.z);
-    printf("\n");
-    printf("Vel [mag,phi,alph]: % 8.3f % 8.3f % 8.3f\n",Vel_mag,Phi,Alpha);
-    printf("\n");
-
-    printf("Tau:\t % 7.3f  %sx: \t  % 7.3f  %sy: \t   % 7.3f\n",Tau,theta_str,Theta_x,theta_str,Theta_y);
-    printf("Tau_est: % 7.3f  %sx_est: % 7.3f  %sy_est: % 7.3f\n",Tau_est,theta_str,Theta_x_est,theta_str,Theta_y_est);
-    printf("D_perp: % 7.3f\n",D_perp);
-    printf("\n");
-
-    printf("==== Policy: %s ====\n",POLICY_TYPE.c_str());
-    if (strcmp(POLICY_TYPE.c_str(),"PARAM_OPTIM") == 0)
-    {
-        printf("Tau_thr: % 7.3f \tMy: % 7.3f\n",Tau_thr,G1);
-        printf("\n");
-    }
-    else if (strcmp(POLICY_TYPE.c_str(),"SVL_POLICY") == 0)
-    {
-        printf("Policy_Flip: % 7.3f \tPolicy_Action: % 7.3f \n",Policy_Flip,Policy_Action);
-        printf("\n");
-    }
-    else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL") == 0)
-    {
-        printf("Stuff: % 7.3f \tStuff: % 7.3f \n",Policy_Flip,Policy_Action);
-        printf("\n");
-    }
-    else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL_SB3") == 0)
-    {
-        printf("SB3");
-        printf("\n");
-    }
+    
+    // printf("==== Policy: %s ====\n",POLICY_TYPE.c_str());
+    // if (strcmp(POLICY_TYPE.c_str(),"PARAM_OPTIM") == 0)
+    // {
+    //     printf("Tau_thr: % 7.3f \tMy: % 7.3f\n",Tau_thr,G1);
+    //     printf("\n");
+    // }
+    // else if (strcmp(POLICY_TYPE.c_str(),"SVL_POLICY") == 0)
+    // {
+    //     printf("Policy_Flip: % 7.3f \tPolicy_Action: % 7.3f \n",Policy_Flip,Policy_Action);
+    //     printf("\n");
+    // }
+    // else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL") == 0)
+    // {
+    //     printf("Stuff: % 7.3f \tStuff: % 7.3f \n",Policy_Flip,Policy_Action);
+    //     printf("\n");
+    // }
+    // else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL_SB3") == 0)
+    // {
+    //     printf("SB3");
+    //     printf("\n");
+    // }
 
 
-    printf("==== Flip Trigger Values ====\n");
-    printf("Tau_tr:     % 7.3f \tPolicy_Flip_tr:    % 7.3f \n",Tau_tr,Policy_Flip_tr);
-    printf("%sx_tr:     % 7.3f \tPolicy_Action_tr:  % 7.3f \n",theta_str,Theta_x_tr,Policy_Action_tr);
-    printf("D_perp_tr:  % 7.3f \n",D_perp_tr);
-    printf("\n");
+    // printf("==== Flip Trigger Values ====\n");
+    // printf("Tau_tr:     % 7.3f \tPolicy_Flip_tr:    % 7.3f \n",Tau_tr,Policy_Flip_tr);
+    // printf("%sx_tr:     % 7.3f \tPolicy_Action_tr:  % 7.3f \n",theta_str,Theta_x_tr,Policy_Action_tr);
+    // printf("D_perp_tr:  % 7.3f \n",D_perp_tr);
+    // printf("\n");
 
-    printf("==== Setpoints ====\n");
-    printf("x_d: % 7.3f  % 7.3f  % 7.3f\n",x_d.x,x_d.y,x_d.z);
-    printf("v_d: % 7.3f  % 7.3f  % 7.3f\n",v_d.x,v_d.y,v_d.z);
-    printf("a_d: % 7.3f  % 7.3f  % 7.3f\n",a_d.x,a_d.y,a_d.z);
-    printf("\n");
+    // printf("==== Setpoints ====\n");
+    // printf("x_d: % 7.3f  % 7.3f  % 7.3f\n",x_d.x,x_d.y,x_d.z);
+    // printf("v_d: % 7.3f  % 7.3f  % 7.3f\n",v_d.x,v_d.y,v_d.z);
+    // printf("a_d: % 7.3f  % 7.3f  % 7.3f\n",a_d.x,a_d.y,a_d.z);
+    // printf("\n");
 
-    printf("==== Controller Actions ====\n");
-    printf("FM [N/N*mm]: % 7.3f  % 7.3f  % 7.3f  % 7.3f\n",FM[0],FM[1],FM[2],FM[3]);
-    printf("Motor Thrusts [g]: % 7.3f  % 7.3f  % 7.3f  % 7.3f\n",MotorThrusts[0],MotorThrusts[1],MotorThrusts[2],MotorThrusts[3]);
-    printf("MS_PWM: %u  %u  %u  %u\n",MS_PWM[0],MS_PWM[1],MS_PWM[2],MS_PWM[3]);
-    printf("\n");
+    // printf("==== Controller Actions ====\n");
+    // printf("FM [N/N*mm]: % 7.3f  % 7.3f  % 7.3f  % 7.3f\n",FM[0],FM[1],FM[2],FM[3]);
+    // printf("Motor Thrusts [g]: % 7.3f  % 7.3f  % 7.3f  % 7.3f\n",MotorThrusts[0],MotorThrusts[1],MotorThrusts[2],MotorThrusts[3]);
+    // printf("MS_PWM: %u  %u  %u  %u\n",MS_PWM[0],MS_PWM[1],MS_PWM[2],MS_PWM[3]);
+    // printf("\n");
 
 
-    printf("=== Controller Gains ====\n");
-    printf("Kp_P: % 7.3f  % 7.3f  % 7.3f \t",P_kp_xy,P_kp_xy,P_kp_z);
-    printf("Kp_R: % 7.3f  % 7.3f  % 7.3f \n",R_kp_xy,R_kp_xy,R_kp_z);
+    // printf("=== Controller Gains ====\n");
+    // printf("Kp_P: % 7.3f  % 7.3f  % 7.3f \t",P_kp_xy,P_kp_xy,P_kp_z);
+    // printf("Kp_R: % 7.3f  % 7.3f  % 7.3f \n",R_kp_xy,R_kp_xy,R_kp_z);
 
-    printf("Kd_P: % 7.3f  % 7.3f  % 7.3f \t",P_kd_xy,P_kd_xy,P_kd_z);
-    printf("Kd_R: % 7.3f  % 7.3f  % 7.3f \n",R_kd_xy,R_kd_xy,R_kd_z);
+    // printf("Kd_P: % 7.3f  % 7.3f  % 7.3f \t",P_kd_xy,P_kd_xy,P_kd_z);
+    // printf("Kd_R: % 7.3f  % 7.3f  % 7.3f \n",R_kd_xy,R_kd_xy,R_kd_z);
 
-    printf("Ki_P: % 7.3f  % 7.3f  % 7.3f \t",P_ki_xy,P_ki_xy,P_ki_z);
-    printf("Ki_R: % 7.3f  % 7.3f  % 7.3f \n",R_ki_xy,R_ki_xy,R_ki_z);
-    printf("======\n");
+    // printf("Ki_P: % 7.3f  % 7.3f  % 7.3f \t",P_ki_xy,P_ki_xy,P_ki_z);
+    // printf("Ki_R: % 7.3f  % 7.3f  % 7.3f \n",R_ki_xy,R_ki_xy,R_ki_z);
+    // printf("======\n");
 }
 
 
@@ -684,23 +659,42 @@ void CF_DataConverter::MainLoop()
 
 void CF_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
 {
+    set_escdelay(25);
+    use_extended_names(TRUE);
     initscr();
     timeout(0); // Set getch() to non-blocking mode
-    // curs_set(0); // Hide the cursor
-    printf("Console Loop \n");    
 
-    int count = 0;
     const int refresh_rate = 50; // 50 Hz
     const int delay_time_us = 1000000 / refresh_rate;
 
-    while (true) {
+    while(true) {
         // Clear the screen buffer
-        clear();
+        erase();
 
-        // Print data to the screen buffer
-        mvprintw(0, 0, "Count: %d", count++);
+        mvprintw(0, 0,"t: %.4f V: %.3f\n",(Time-Time_start).toSec(),V_battery);
+        mvprintw(1, 0,"DataType: %s \t Model: %s\n",DATA_TYPE.c_str(),MODEL_NAME.c_str());
 
-        mvprintw(5, 0, "Count: % 3d", count++);
+        mvprintw(3, 0,"==== Flags ====\n");
+        mvprintw(4, 0,"Motorstop:\t%u  Flip_flag:\t  %u  Pos Ctrl:\t    %u  Cam_Est:\t  %u\n",Motorstop_Flag, flip_flag, Pos_Ctrl_Flag,Camera_Sensor_Active);
+        mvprintw(5, 0,"Traj Active:\t%u  Impact_flag:\t  %u  Vel Ctrl:\t    %u \n",Traj_Active_Flag,impact_flag,Vel_Ctrl_Flag);
+        mvprintw(6, 0,"Policy_armed:\t%u  Tumble Detect: %u  Moment_Flag:   %u \n",Policy_Armed_Flag,Tumble_Detection,Moment_Flag);
+        mvprintw(7, 0,"Sticky_flag:\t%u  Tumbled:\t  %u  Slowdown_type: %u\n",Sticky_Flag,Tumbled_Flag,SLOWDOWN_TYPE);
+        
+        mvprintw(8, 0,"==== System States ====\n");
+        mvprintw(9, 0,"Pos [m]:\t % 8.3f  % 8.3f  % 8.3f\n",Pose.position.x,Pose.position.y,Pose.position.z);
+        mvprintw(10, 0,"Vel [m/s]:\t % 8.3f  % 8.3f  % 8.3f\n",Twist.linear.x,Twist.linear.y,Twist.linear.z);
+        mvprintw(11, 0,"Omega [rad/s]:\t % 8.3f  % 8.3f  % 8.3f\n",Twist.angular.x,Twist.angular.y,Twist.angular.z);
+        mvprintw(12, 0,"Eul [deg]:\t % 8.3f  % 8.3f  % 8.3f\n",Eul.x,Eul.y,Eul.z);
+        mvprintw(14, 0,"Vel [mag,phi,alph]: % 8.3f % 8.3f % 8.3f\n",Vel_mag,Phi,Alpha);
+
+
+        mvprintw(16, 0,"Tau:\t % 7.3f  \u03B8x: \t  % 7.3f  \u03B8y: \t   % 7.3f\n",Tau,Theta_x,Theta_y);
+        mvprintw(17, 0,"Tau_est: % 7.3f  \u03B8x_est: % 7.3f  \u03B8y_est: % 7.3f\n",Tau_est,Theta_x_est,Theta_y_est);
+        mvprintw(18, 0,"D_perp: % 7.3f\n",D_perp);
+
+        // printw("Vartheta: %lc\n", L'\u03D1');
+
+
 
 
         // Refresh the screen with the updated buffer
@@ -717,6 +711,7 @@ void CF_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
 
 int main(int argc, char** argv)
 {
+    setlocale(LC_CTYPE,"C-UTF-8");
     ros::init(argc,argv,"CF_DataConverter_Node");
     ros::NodeHandle nh;
     CF_DataConverter CF_DC = CF_DataConverter(&nh);

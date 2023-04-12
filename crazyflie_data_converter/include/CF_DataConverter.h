@@ -10,6 +10,7 @@ is easy to use.
 #include <boost/circular_buffer.hpp>
 #include <math.h>       /* sqrt */
 #include <thread>
+#include <locale.h>
 
 #include <ncurses.h>
 #include <unistd.h>
