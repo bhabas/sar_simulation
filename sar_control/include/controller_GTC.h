@@ -25,6 +25,8 @@ extern "C" {
 #include "FreeRTOS.h"
 #include "task.h"
 #include "app_channel.h"
+#include "log.h"
+#include "param.h"
 #endif
 
 

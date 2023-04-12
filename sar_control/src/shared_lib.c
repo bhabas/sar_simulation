@@ -150,6 +150,30 @@ float thrust_override[4] = {0.0f,0.0f,0.0f,0.0f};   // Motor thrusts [g]
 
 
 // =================================
+//          SENSORY VALUES
+// =================================
+
+// OPTICAL FLOW STATES
+float Tau = 0.0f;       // [s]
+float Theta_x = 0.0f;   // [rad/s] 
+float Theta_y = 0.0f;   // [rad/s]
+float D_perp = 0.0f;    // [m]
+
+// ANALYTICAL OPTICAL FLOW STATES
+float Tau_calc = 0.0f;       // [s]
+float Theta_x_calc = 0.0f;   // [rad/s] 
+float Theta_y_calc = 0.0f;   // [rad/s]
+float D_perp_calc = 0.0f;    // [m]
+
+// ESTIMATED OPTICAL FLOW STATES
+float Tau_est = 0.0f;       // [s]
+float Theta_x_est = 0.0f;   // [rad/s]
+float Theta_y_est = 0.0f;   // [rad/s]
+float D_perp_est = 0.0f;    // [m]
+
+
+
+// =================================
 //  FLAGS AND SYSTEM INITIALIZATION
 // =================================
 
@@ -166,7 +190,6 @@ bool customPWM_flag = false;
 
 // SENSOR FLAGS
 bool camera_sensor_active = false;
-
 
 
 // =================================
@@ -383,4 +406,45 @@ uint16_t thrust2PWM(float f)
     }
 
     return PWM;
+}
+
+
+void compressStates(){
+    StatesZ_GTC.xy = compressXY(statePos.x,statePos.y);
+    StatesZ_GTC.z = (int16_t)(statePos.z * 1000.0f);
+
+    StatesZ_GTC.vxy = compressXY(stateVel.x, stateVel.y);
+    StatesZ_GTC.vz = (int16_t)(stateVel.z * 1000.0f);
+
+    StatesZ_GTC.wxy = compressXY(stateOmega.x/10,stateOmega.y/10);
+    StatesZ_GTC.wz = (int16_t)(stateOmega.z * 1000.0f);
+
+
+    float const q[4] = {
+        stateQuat.x,
+        stateQuat.y,
+        stateQuat.z,
+        stateQuat.w};
+    StatesZ_GTC.quat = quatcompress(q);
+
+    // COMPRESS SENSORY VALUES
+    StatesZ_GTC.Theta_xy = compressXY(Theta_x,Theta_y);
+    StatesZ_GTC.Tau = (int16_t)(Tau * 1000.0f); 
+    StatesZ_GTC.D_perp = (int16_t)(D_perp * 1000.0f);
+
+    // COMPRESS THRUST/MOMENT VALUES
+    StatesZ_GTC.FMz = compressXY(F_thrust,M.z*1000.0f);
+    StatesZ_GTC.Mxy = compressXY(M.x*1000.0f,M.y*1000.0f);
+
+    // COMPRESS MOTOR THRUST VALUES
+    StatesZ_GTC.M_thrust12 = compressXY(M1_thrust,M2_thrust);
+    StatesZ_GTC.M_thrust34 = compressXY(M3_thrust,M4_thrust);
+
+    
+    // COMPRESS PWM VALUES
+    StatesZ_GTC.MS_PWM12 = compressXY(M1_pwm*0.5e-3f,M2_pwm*0.5e-3f);
+    StatesZ_GTC.MS_PWM34 = compressXY(M3_pwm*0.5e-3f,M4_pwm*0.5e-3f);
+
+    StatesZ_GTC.NN_FP = compressXY(3.14f,0.0); // Flip value (OC_SVM) and Flip action (NN)
+
 }

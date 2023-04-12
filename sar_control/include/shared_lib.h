@@ -8,8 +8,10 @@ extern "C" {
 #include "console.h"
 #include "math3d.h"
 #include "pm.h"
+#include "quatcompress.h"
 
 #include "controller_GTC.h"
+#include "CompressStates.h"
 
 
 #define PWM_MAX 60000
@@ -140,6 +142,29 @@ extern uint16_t M4_pwm;
 // CONTROL OVERRIDE VALUES
 extern uint16_t PWM_override[4];    // Motor PWM values
 extern float thrust_override[4];    // Motor thrusts [g] 
+
+
+// =================================
+//          SENSORY VALUES
+// =================================
+
+// OPTICAL FLOW STATES
+extern float Tau;           // [s]
+extern float Theta_x;       // [rad/s] 
+extern float Theta_y;       // [rad/s]
+extern float D_perp;        // [m]
+
+// ANALYTICAL OPTICAL FLOW STATES
+extern float Tau_calc;      // [s]
+extern float Theta_x_calc;  // [rad/s] 
+extern float Theta_y_calc;  // [rad/s]
+extern float D_perp_calc;   // [m]
+
+// ESTIMATED OPTICAL FLOW STATES
+extern float Tau_est;      // [s]
+extern float Theta_x_est;  // [rad/s]
+extern float Theta_y_est;  // [rad/s]
+extern float D_perp_est;   // [m]
 
 
 // =================================
