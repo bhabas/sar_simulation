@@ -204,24 +204,24 @@ void Controller::loadParams()
     // ros::param::get("/QUAD_SETTINGS/Cam_Sensor",camera_sensor_active);
 
 
-    // // SIMULATION SETTINGS FROM CONFIG FILE
-    // ros::param::get("QUAD_SETTINGS/Policy_Type",POLICY_TYPE_STR); // Set string from params file into controller
-    // if (strcmp(POLICY_TYPE_STR.c_str(),"PARAM_OPTIM")==0)
-    // {
-    //     Policy = PARAM_OPTIM;
-    // }
-    // else if (strcmp(POLICY_TYPE_STR.c_str(),"SVL_POLICY")==0)
-    // {
-    //     Policy = SVL_POLICY;
-    // }
-    // else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL")==0)
-    // {
-    //     Policy = DEEP_RL;
-    // }    
-    // else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL_SB3")==0)
-    // {
-    //     Policy = DEEP_RL_SB3;
-    // }    
+    // SIMULATION SETTINGS FROM CONFIG FILE
+    ros::param::get("QUAD_SETTINGS/Policy_Type",POLICY_TYPE_STR); // Set string from params file into controller
+    if (strcmp(POLICY_TYPE_STR.c_str(),"PARAM_OPTIM")==0)
+    {
+        Policy = PARAM_OPTIM;
+    }
+    else if (strcmp(POLICY_TYPE_STR.c_str(),"SVL_POLICY")==0)
+    {
+        Policy = SVL_POLICY;
+    }
+    else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL")==0)
+    {
+        Policy = DEEP_RL;
+    }    
+    else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL_SB3")==0)
+    {
+        Policy = DEEP_RL_SB3;
+    }    
 
 }
 

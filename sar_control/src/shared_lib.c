@@ -2,7 +2,9 @@
 
 
 
-// INITIAL SYSTEM PARAMETERS
+// =================================
+//    INITIAL SYSTEM PARAMETERS
+// =================================
 float m = 34.3e-3f;         // [kg]
 float Ixx = 15.83e-6f;      // [kg*m^2]
 float Iyy = 17.00e-6f;      // [kg*m^2]
@@ -16,6 +18,7 @@ const float g = 9.81f;                        // Gravity [m/s^2]
 const struct vec e_3 = {0.0f, 0.0f, 1.0f};    // Global z-axis
 
 float dt = (float)(1.0f/RATE_100_HZ);
+struct GTC_CmdPacket GTC_Cmd;
 
 // =================================
 //    CONTROL GAIN INITIALIZATION
@@ -160,15 +163,24 @@ bool safeModeEnable = true;
 bool customThrust_flag = false;
 bool customPWM_flag = false;
 
+
+// SENSOR FLAGS
+bool camera_sensor_active = false;
+
+
+
+// =================================
+//       POLICY INITIALIZATION
+// =================================
+
+// DEFINE POLICY TYPE ACTIVATED
+PolicyType Policy = PARAM_OPTIM;
+
 // POLICY FLAGS
 bool policy_armed_flag = false;
 bool flip_flag = false;
 bool onceFlag = false;
 
-// SENSOR FLAGS
-bool camera_sensor_active = false;
-
-struct GTC_CmdPacket GTC_Cmd;
 
 
 void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
@@ -177,18 +189,15 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
 
     switch(GTC_Cmd->cmd_type){
         case 0: // Reset
-            consolePrintf("Cmd Reset: %.3f\n",(double)GTC_Cmd->cmd_val1);
             controllerOutOfTreeReset();
             break;
 
 
         case 1: // Position
-
-            consolePrintf("Pos Val: %.3f\n",(double)GTC_Cmd->cmd_val1);
             x_d.x = GTC_Cmd->cmd_val1;
             x_d.y = GTC_Cmd->cmd_val2;
             x_d.z = GTC_Cmd->cmd_val3;
-            kp_xf = 1.0f;
+            kp_xf = GTC_Cmd->cmd_flag;
             break;
         
         case 2: // Velocity

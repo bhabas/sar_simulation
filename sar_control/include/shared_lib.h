@@ -164,11 +164,7 @@ extern bool onceFlag;
 // SENSOR FLAGS
 extern bool camera_sensor_active;
 
-
-
-
-
-
+// GTC COMMAND PACKETS
 struct GTC_CmdPacket{
     uint8_t cmd_type; 
     float cmd_val1;
@@ -177,8 +173,16 @@ struct GTC_CmdPacket{
     float cmd_flag;
     bool  cmd_rx;
 } __attribute__((packed));
-
 extern struct GTC_CmdPacket GTC_Cmd;
+
+// POLICY SETTING
+typedef enum {
+    PARAM_OPTIM = 0,
+    SVL_POLICY = 1,
+    DEEP_RL = 2,
+    DEEP_RL_SB3 = 3
+}PolicyType;
+extern PolicyType Policy;
 
 
 

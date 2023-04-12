@@ -50,6 +50,7 @@ bool controllerOutOfTreeTest() {
 void controllerOutOfTreeReset() {
 
     consolePrintf("GTC Reset\n");
+    consolePrintf("Policy_Type: %d\n",Policy);
 
     // RESET INTEGRATION ERRORS
     e_PI = vzero();
