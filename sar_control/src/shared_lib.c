@@ -448,3 +448,42 @@ void compressStates(){
     StatesZ_GTC.NN_FP = compressXY(3.14f,0.0); // Flip value (OC_SVM) and Flip action (NN)
 
 }
+
+void compressSetpoints(){
+    setpointZ_GTC.xy = compressXY(x_d.x,x_d.y);
+    setpointZ_GTC.z = (int16_t)(x_d.z * 1000.0f);
+
+    setpointZ_GTC.vxy = compressXY(v_d.x,v_d.y);
+    setpointZ_GTC.vz = (int16_t)(v_d.z * 1000.0f);
+
+    setpointZ_GTC.axy = compressXY(a_d.x,a_d.y);
+    setpointZ_GTC.az = (int16_t)(a_d.z * 1000.0f);
+}
+
+
+// void compressFlipStates(){
+//     FlipStatesZ_GTC.xy = compressXY(statePos_tr.x,statePos_tr.y);
+//     FlipStatesZ_GTC.z = (int16_t)(statePos_tr.z * 1000.0f);
+
+//     FlipStatesZ_GTC.vxy = compressXY(stateVel_tr.x, stateVel_tr.y);
+//     FlipStatesZ_GTC.vz = (int16_t)(stateVel_tr.z * 1000.0f);
+
+//     FlipStatesZ_GTC.wxy = compressXY(stateOmega_tr.x,stateOmega_tr.y);
+//     FlipStatesZ_GTC.wz = (int16_t)(stateOmega_tr.z * 1000.0f);
+
+
+//     float const q[4] = {
+//         stateQuat_tr.x,
+//         stateQuat_tr.y,
+//         stateQuat_tr.z,
+//         stateQuat_tr.w};
+//     FlipStatesZ_GTC.quat = quatcompress(q);
+
+//    FlipStatesZ_GTC.OF_xy = compressXY(OFx_tr,OFy_tr);
+//    FlipStatesZ_GTC.Tau = (int16_t)(Tau_tr * 1000.0f); 
+//    FlipStatesZ_GTC.d_ceil = (int16_t)(d_ceil_tr * 1000.0f);
+
+//    FlipStatesZ_GTC.NN_FP = compressXY(Policy_Flip_tr,Policy_Action_tr); // Flip value (OC_SVM) and Flip action (NN)
+
+
+// }

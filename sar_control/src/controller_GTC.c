@@ -1,7 +1,7 @@
 #include "controller_GTC.h"
 #include "led.h"
 
-
+uint8_t value1 = 5;
 void appMain() {
 
     while (1)
@@ -173,6 +173,8 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         }
 
         compressStates();
+        compressSetpoints();
+
 
     }
  
@@ -207,6 +209,52 @@ LOG_ADD(LOG_UINT32, Z_PWM12, &StatesZ_GTC.MS_PWM12)
 LOG_ADD(LOG_UINT32, Z_PWM34, &StatesZ_GTC.MS_PWM34)
 
 LOG_ADD(LOG_UINT32, Z_NN_FP, &StatesZ_GTC.NN_FP)
+
+LOG_ADD(LOG_UINT8, Z_vbat, &value1)
 LOG_GROUP_STOP(LogStateData_GTC)
 
+
+
+LOG_GROUP_START(LogSetPoints_GTC)
+LOG_ADD(LOG_UINT32, Z_xy,   &setpointZ_GTC.xy)
+LOG_ADD(LOG_INT16,  Z_z,    &setpointZ_GTC.z)
+
+LOG_ADD(LOG_UINT32, Z_vxy,  &setpointZ_GTC.vxy)
+LOG_ADD(LOG_INT16,  Z_vz,   &setpointZ_GTC.vz)
+
+LOG_ADD(LOG_UINT32, Z_axy,  &setpointZ_GTC.axy)
+LOG_ADD(LOG_INT16,  Z_az,   &setpointZ_GTC.az)
+LOG_GROUP_STOP(LogSetPoints_GTC)
+
+
+LOG_GROUP_START(LogFlipData_GTC)
+LOG_ADD(LOG_UINT32, Z_xy,   &FlipStatesZ_GTC.xy)
+LOG_ADD(LOG_INT16,  Z_z,    &FlipStatesZ_GTC.z)
+
+LOG_ADD(LOG_UINT32, Zf_vxy,  &FlipStatesZ_GTC.vxy)
+LOG_ADD(LOG_INT16,  Z_vz,   &FlipStatesZ_GTC.vz)
+
+LOG_ADD(LOG_UINT32, Z_quat, &FlipStatesZ_GTC.quat)
+
+LOG_ADD(LOG_UINT32, Z_wxy,  &FlipStatesZ_GTC.wxy)
+LOG_ADD(LOG_INT16,  Z_wz,   &FlipStatesZ_GTC.wz)
+
+LOG_ADD(LOG_UINT32, Z_Thetaxy, &FlipStatesZ_GTC.Theta_xy)
+LOG_ADD(LOG_INT16,  Z_Tau,  &FlipStatesZ_GTC.Tau)
+LOG_ADD(LOG_INT16,  Z_D_ceil, &FlipStatesZ_GTC.D_perp)
+
+LOG_ADD(LOG_UINT8, Flip_Flag, &flip_flag)
+LOG_GROUP_STOP(LogFlipData_GTC)
+
+
+// LOG_GROUP_START(valsLog)
+// LOG_ADD(LOG_UINT8, Motorstop_Flag, &motorstop_flag)
+// LOG_ADD(LOG_FLOAT, Pos_Ctrl_Flag, &kp_xf)
+// LOG_ADD(LOG_FLOAT, Vel_Ctrl_Flag, &kd_xf)
+// LOG_ADD(LOG_UINT8, Execute_Traj_Flag, &execute_vel_traj)
+// LOG_ADD(LOG_UINT8, Tumbled_Flag, &tumbled)
+// LOG_ADD(LOG_UINT8, Tumble_Detect, &tumble_detection)
+// LOG_ADD(LOG_UINT8, Moment_Flag, &moment_flag)
+// LOG_ADD(LOG_UINT8, Policy_Armed_Flag, &policy_armed_flag)
+// LOG_GROUP_STOP(valsLog)
 #endif
