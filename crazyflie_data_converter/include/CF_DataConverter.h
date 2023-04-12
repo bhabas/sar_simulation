@@ -162,7 +162,6 @@ class CF_DataConverter
         void MainLoop();
         void ConsoleLoop();
         void LoadParams();
-        void consoleOuput();
         void decompressXY(uint32_t xy, float xy_arr[]);
         void quat2euler(float quat[], float eul[]);
 
@@ -242,7 +241,6 @@ class CF_DataConverter
         float SIM_SPEED; 
         float SIM_SLOWDOWN_SPEED;
         int LOGGING_RATE = 25; // Default Logging Rate
-        int CONSOLE_RATE = 50; // Default Console Rate
         std::string POLICY_TYPE;
         
         float P_kp_xy,P_kd_xy,P_ki_xy;
@@ -634,7 +632,6 @@ void CF_DataConverter::LoadParams()
     ros::param::get("/SIM_SETTINGS/Landing_Slowdown_Flag",LANDING_SLOWDOWN_FLAG);
 
     ros::param::get("/CF_DC_SETTINGS/Logging_Rate",LOGGING_RATE);
-    ros::param::get("/CF_DC_SETTINGS/Console_Rate",CONSOLE_RATE);
 
     // COLLECT CTRL GAINS
     ros::param::get(CF_Type_str + "/CtrlGains/P_kp_xy",P_kp_xy);

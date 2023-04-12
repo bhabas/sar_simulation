@@ -141,7 +141,6 @@ SIM_SETTINGS:
   Landing_Slowdown_Flag - Disable Sim_Slowdown_Speed
 
 SAR_DC_SETTINGS:
-  Console_Rate - Refresh rate of console data [Hz]
   Logging_Rate - Recording rate of logging data [Hz]
 
 ```
