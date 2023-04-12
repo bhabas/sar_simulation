@@ -11,6 +11,10 @@ is easy to use.
 #include <math.h>       /* sqrt */
 #include <thread>
 
+#include <ncurses.h>
+#include <unistd.h>
+#include <ctime>
+
 // ROS INCLUDES
 #include <ros/ros.h>
 #include <geometry_msgs/WrenchStamped.h>
@@ -98,7 +102,9 @@ class CF_DataConverter
 
             BodyCollision_str = MODEL_NAME + "::crazyflie_Base_Model::crazyflie_body::body_collision";
 
-            CF_DCThread = std::thread(&CF_DataConverter::MainLoop, this);
+            CF_DC_Thread = std::thread(&CF_DataConverter::MainLoop, this);
+            ConsoleOutput_Thread = std::thread(&CF_DataConverter::ConsoleLoop, this);
+
 
 
         }
@@ -153,6 +159,7 @@ class CF_DataConverter
 
         
         void MainLoop();
+        void ConsoleLoop();
         void LoadParams();
         void consoleOuput();
         void decompressXY(uint32_t xy, float xy_arr[]);
@@ -199,7 +206,8 @@ class CF_DataConverter
         crazyflie_msgs::CF_ImpactData ImpactData_msg;
         crazyflie_msgs::CF_MiscData MiscData_msg;
 
-        std::thread CF_DCThread;
+        std::thread CF_DC_Thread;
+        std::thread ConsoleOutput_Thread;
         uint32_t tick = 1;      // Tick for each loop iteration
         ros::Time Time_start;   // Initial time in UNIX notation
 

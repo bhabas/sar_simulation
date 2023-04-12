@@ -4,6 +4,8 @@ project(crazyflie_data_converter)
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
 
+find_package(Curses REQUIRED)
+include_directories(${CURSES_INCLUDE_DIR})
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -23,5 +25,5 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 
 add_executable(CF_DataConverter src/CF_DataConverter.cpp)
 add_dependencies(CF_DataConverter ${catkin_EXPORTED_TARGETS})
-target_link_libraries(CF_DataConverter ${catkin_LIBRARIES})
+target_link_libraries(CF_DataConverter ${catkin_LIBRARIES} ${CURSES_LIBRARIES})
 

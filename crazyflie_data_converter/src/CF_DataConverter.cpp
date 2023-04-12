@@ -651,12 +651,12 @@ void CF_DataConverter::MainLoop()
     {   
 
 
-        // DISPLAY CONSOLE AT CONSOLE_RATE FREQUENCY
-        if (RATE_DO_EXECUTE(CONSOLE_RATE, tick))
-        {
-            CF_DataConverter::consoleOuput();
+        // // DISPLAY CONSOLE AT CONSOLE_RATE FREQUENCY
+        // if (RATE_DO_EXECUTE(CONSOLE_RATE, tick))
+        // {
+        //     CF_DataConverter::consoleOuput();
 
-        }
+        // }
 
         if (RATE_DO_EXECUTE(LOGGING_RATE, tick))
         {
@@ -680,6 +680,40 @@ void CF_DataConverter::MainLoop()
 
 
 }
+
+
+void CF_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
+{
+    initscr();
+    timeout(0); // Set getch() to non-blocking mode
+    // curs_set(0); // Hide the cursor
+    printf("Console Loop \n");    
+
+    int count = 0;
+    const int refresh_rate = 50; // 50 Hz
+    const int delay_time_us = 1000000 / refresh_rate;
+
+    while (true) {
+        // Clear the screen buffer
+        clear();
+
+        // Print data to the screen buffer
+        mvprintw(0, 0, "Count: %d", count++);
+
+        mvprintw(5, 0, "Count: % 3d", count++);
+
+
+        // Refresh the screen with the updated buffer
+        refresh();
+
+        // Sleep for the desired delay time
+        usleep(delay_time_us);
+    }
+
+    // Clean up and close the ncurses library
+    endwin();
+}
+
 
 int main(int argc, char** argv)
 {
