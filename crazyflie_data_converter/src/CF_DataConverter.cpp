@@ -350,11 +350,13 @@ bool CF_DataConverter::Send_Cmd2Ctrl(crazyflie_msgs::GTC_Cmd_srv::Request &req)
     // EXPERIMENT: 
     // BROADCAST CMD VALUES AS ROS MESSAGE
     // (SO CRAZYSWARM CAN PASS MSGS FROM BOTH DASHBOARD AND ENV FILE)
-    // crazyflie_msgs::GTC_Cmd cmd_msg;
-    // cmd_msg.cmd_type = req.cmd_type;
-    // cmd_msg.cmd_vals = req.cmd_vals;
-    // cmd_msg.cmd_flag = req.cmd_flag;
-    // CMD_Pub.publish(cmd_msg);
+    crazyflie_msgs::GTC_Cmd cmd_msg;
+    cmd_msg.cmd_type = req.cmd_type;
+    cmd_msg.cmd_vals = req.cmd_vals;
+    cmd_msg.cmd_flag = req.cmd_flag;
+    cmd_msg.cmd_rx = req.cmd_rx;
+
+    CMD_Pub.publish(cmd_msg);
 
     return srv.response.srv_Success; // Return if service request successful (true/false)
 }
