@@ -77,9 +77,13 @@ class Controller
         sensorData_t sensorData;
         state_t state;
         control_t control;
-
-
         uint32_t tick = 1;
+
+        // ROS PARAMS
+        std::string CF_Type;
+        std::string CF_Config;
+        std::string POLICY_TYPE_STR;
+
 
         // FUNCTION PROTOTYPES
         void IMU_Update_Callback(const sensor_msgs::Imu::ConstPtr &msg);
@@ -89,6 +93,8 @@ class Controller
 
         void appLoop();
         void stabilizerLoop();
+
+        void loadParams();
         void publishCtrlData();
         void publishCtrlDebug();
 
@@ -108,6 +114,12 @@ bool Controller::CMD_Service_Resp(crazyflie_msgs::GTC_Cmd_srv::Request &req, cra
     GTC_Cmd.cmd_val3 = req.cmd_vals.z;
     GTC_Cmd.cmd_flag = req.cmd_flag;
     GTC_Cmd.cmd_rx = req.cmd_rx;
+
+    if(req.cmd_type == 21) // RESET ROS PARAM VALUES
+    {
+        Controller::loadParams();
+
+    }
 
     return 1;
 }
@@ -146,15 +158,85 @@ void Controller::Ext_Pos_Update_Callback(const nav_msgs::Odometry::ConstPtr &msg
 
 }
 
+// LOAD VALUES FROM ROSPARAM SERVER INTO CONTROLLER
+void Controller::loadParams()
+{
+    printf("Updating Parameters\n");
+
+    ros::param::get("/QUAD_SETTINGS/CF_Type",CF_Type);
+    ros::param::get("/QUAD_SETTINGS/CF_Config",CF_Config);
+    CF_Type = "/CF_Type/" + CF_Type;
+    CF_Config = "/Config/" + CF_Config;
+    
+    // UPDATE MODEL PARAMETERS
+    ros::param::get(CF_Type + CF_Config + "/Mass",m);
+    ros::param::get(CF_Type + CF_Config + "/Ixx",Ixx);
+    ros::param::get(CF_Type + CF_Config + "/Iyy",Iyy);
+    ros::param::get(CF_Type + CF_Config + "/Izz",Izz);
+
+    // UPDATE SYSTEM PARAMETERS
+    ros::param::get(CF_Type + CF_Config + "/System_Params/f_max",f_max);
+    ros::param::get(CF_Type + CF_Config + "/System_Params/C_tf",C_tf);
+    ros::param::get(CF_Type + CF_Config + "/System_Params/Prop_Dist",Prop_Dist);
+
+
+    // UPDATE CTRL GAINS
+    ros::param::get(CF_Type + "/CtrlGains/P_kp_xy",P_kp_xy);
+    ros::param::get(CF_Type + "/CtrlGains/P_kd_xy",P_kd_xy);
+    ros::param::get(CF_Type + "/CtrlGains/P_ki_xy",P_ki_xy);
+    ros::param::get(CF_Type + "/CtrlGains/i_range_xy",i_range_xy);
+
+    ros::param::get(CF_Type + "/CtrlGains/P_kp_z",P_kp_z);
+    ros::param::get(CF_Type + "/CtrlGains/P_kd_z",P_kd_z);
+    ros::param::get(CF_Type + "/CtrlGains/P_ki_z",P_ki_z);
+    ros::param::get(CF_Type + "/CtrlGains/i_range_z",i_range_z);
+
+    ros::param::get(CF_Type + "/CtrlGains/R_kp_xy",R_kp_xy);
+    ros::param::get(CF_Type + "/CtrlGains/R_kd_xy",R_kd_xy);
+    ros::param::get(CF_Type + "/CtrlGains/R_ki_xy",R_ki_xy);
+    ros::param::get(CF_Type + "/CtrlGains/i_range_R_xy",i_range_R_xy);
+    
+    ros::param::get(CF_Type + "/CtrlGains/R_kp_z",R_kp_z);
+    ros::param::get(CF_Type + "/CtrlGains/R_kd_z",R_kd_z);
+    ros::param::get(CF_Type + "/CtrlGains/R_ki_z",R_ki_z);
+    ros::param::get(CF_Type + "/CtrlGains/i_range_R_z",i_range_R_z);
+
+    // ros::param::get("/QUAD_SETTINGS/Cam_Sensor",camera_sensor_active);
+
+
+    // // SIMULATION SETTINGS FROM CONFIG FILE
+    // ros::param::get("QUAD_SETTINGS/Policy_Type",POLICY_TYPE_STR); // Set string from params file into controller
+    // if (strcmp(POLICY_TYPE_STR.c_str(),"PARAM_OPTIM")==0)
+    // {
+    //     Policy = PARAM_OPTIM;
+    // }
+    // else if (strcmp(POLICY_TYPE_STR.c_str(),"SVL_POLICY")==0)
+    // {
+    //     Policy = SVL_POLICY;
+    // }
+    // else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL")==0)
+    // {
+    //     Policy = DEEP_RL;
+    // }    
+    // else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL_SB3")==0)
+    // {
+    //     Policy = DEEP_RL_SB3;
+    // }    
+
+}
+
+
 void Controller::publishCtrlDebug()
 {
-    CtrlDebug_msg.Motorstop_Flag = motorstop_flag;
     CtrlDebug_msg.Pos_Ctrl = (bool)kp_xf;
     CtrlDebug_msg.Vel_Ctrl = (bool)kd_xf;
-    // CtrlDebug_msg.Traj_Active = execute_vel_traj;
     CtrlDebug_msg.Tumble_Detection = tumble_detection;
     CtrlDebug_msg.Tumbled_Flag = tumbled;
     CtrlDebug_msg.Moment_Flag = moment_flag; 
+    CtrlDebug_msg.Motorstop_Flag = motorstop_flag;
+
+
+    // CtrlDebug_msg.Traj_Active = execute_vel_traj;
     // CtrlDebug_msg.Policy_Armed = policy_armed_flag; 
     // CtrlDebug_msg.Camera_Sensor_Active = camera_sensor_active;
 

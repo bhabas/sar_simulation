@@ -112,9 +112,9 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
         // =========== CONVERT THRUSTS [N] AND MOMENTS [N*m] TO PWM =========== // 
         f_thrust_g = clamp(F_thrust/4.0f*Newton2g, 0.0f, f_max*0.9f); // Clamp thrust to prevent control saturation
-        f_roll_g = M.x/(4.0f*dp)*Newton2g;
-        f_pitch_g = M.y/(4.0f*dp)*Newton2g;
-        f_yaw_g = M.z/(4.0f*c_tf)*Newton2g;
+        f_roll_g = M.x/(4.0f*Prop_Dist)*Newton2g;
+        f_pitch_g = M.y/(4.0f*Prop_Dist)*Newton2g;
+        f_yaw_g = M.z/(4.0f*C_tf)*Newton2g;
 
         // THESE CONNECT TO POWER_DISTRIBUTION_STOCK.C
         control->thrust = f_thrust_g;                   // This gets passed to firmware EKF
