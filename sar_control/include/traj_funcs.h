@@ -46,32 +46,16 @@ struct traj_vec{
   };
 };
 
-extern struct traj_vec Traj_Activate;
-extern struct traj_vec s_0_t;           // Traj Start Point [m]
-extern struct traj_vec s_f_t;           // Traj End Point [m]
-extern struct traj_vec v_t;             // Traj Vel [m/s]
-extern struct traj_vec a_t;             // Traj Accel [m/s^2]
-extern struct traj_vec T;               // Traj completion time [s]
-extern struct traj_vec t_traj;          // Traj time counter [s]
+extern float Traj_Activate[3];
+extern float s_0_t[3];              // Traj Start Point [m]
+extern float s_f_t[3];              // Traj End Point [m]
+extern float v_t[3];                // Traj Vel [m/s]
+extern float a_t[3];                // Traj Accel [m/s^2]
+extern float T[3];                  // Traj completion time [s]
+extern float t_traj[3];             // Traj time counter [s]
 
-static void set_vec_element(struct vec *v, int index, float value) {
 
-    switch (index) {
-        case 0:
-            v->x = value;
-            break;
-        case 1:
-            v->y = value;
-            break;
-        case 2:
-            v->z = value;
-            break;
-        default:
-            // Handle invalid index if necessary
-            break;
-    }
-}
-
+void set_vec_element(struct vec *v, int index, float value);
 void point2point_Traj();
 
 
