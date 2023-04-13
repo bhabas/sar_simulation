@@ -293,15 +293,53 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
 
         case 10: // Point-to-Point Trajectory
 
-            axis = (axis_direction)GTC_Cmd->cmd_flag;
             Traj_Type = P2P;
+            axis = (axis_direction)GTC_Cmd->cmd_flag;
+
+            switch(axis){
+
+                case x_axis:
+
+                    Traj_Activate.x = 1.0f;
+                    s_0_t.x = GTC_Cmd->cmd_val1;  // Starting position [m]
+                    s_f_t.x = GTC_Cmd->cmd_val2;  // Ending position [m]
+                    a_t.x = GTC_Cmd->cmd_val3;    // Acceleration [m/s^2]
+
+                    T.x = sqrtf(6/a_t.x*fabs(s_f_t.x - s_0_t.x)); // Find trajectory manuever time [s]
+                    t_traj.x = 0.0f; // Reset timer
+                    break;
+
+                case y_axis:
+
+                    Traj_Activate.y = 1.0f;
+                    s_0_t.y = GTC_Cmd->cmd_val1;  // Starting position [m]
+                    s_f_t.y = GTC_Cmd->cmd_val2;  // Ending position [m]
+                    a_t.y = GTC_Cmd->cmd_val3;    // Acceleration [m/s^2]
+
+                    T.y = sqrtf(6/a_t.y*fabs(s_f_t.y - s_0_t.y)); // Find trajectory manuever time [s]
+                    t_traj.y = 0.0f; // Reset timer
+                    break;
+
+                case z_axis:
+
+                    Traj_Activate.z = 1.0f;
+                    s_0_t.z = GTC_Cmd->cmd_val1;  // Starting position [m]
+                    s_f_t.z = GTC_Cmd->cmd_val2;  // Ending position [m]
+                    a_t.z = GTC_Cmd->cmd_val3;    // Acceleration [m/s^2]
+
+                    T.z = sqrtf(6/a_t.z*fabs(s_f_t.z - s_0_t.z)); // Find trajectory manuever time [s]
+                    t_traj.z = 0.0f; // Reset timer
+                    break;
+                    
+            }
+
             break;
 
 
         case 11: // Constant Velocity Trajectory
 
-            axis = (axis_direction)GTC_Cmd->cmd_flag;
             Traj_Type = CONST_VEL;
+            axis = (axis_direction)GTC_Cmd->cmd_flag;
             break;
 
 
