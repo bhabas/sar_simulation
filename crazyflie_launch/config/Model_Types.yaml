@@ -381,13 +381,8 @@ CF_Type:
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
-    
-      
-
-    
 
   Big_Quad:
-    Config:
       CtrlGains:
         ## POSITION XY
         P_kp_xy: 0.4

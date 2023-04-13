@@ -8,7 +8,7 @@ import time
 ## ROS MESSAGES AND SERVICES
 from crazyflie_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
 from crazyflie_msgs.srv import loggingCMD,loggingCMDRequest
-from crazyflie_msgs.srv import RLCmd,RLCmdRequest
+from crazyflie_msgs.srv import GTC_Cmd_srv,GTC_Cmd_srvRequest
 from crazyflie_msgs.msg import RLData,RLConvg
 from crazyflie_msgs.msg import GTC_Cmd
 
@@ -114,15 +114,16 @@ class CrazyflieEnv_Base():
         }
 
         ## CREATE SERVICE REQUEST MSG
-        srv = RLCmdRequest() 
+        srv = GTC_Cmd_srvRequest() 
         
         srv.cmd_type = cmd_dict[action]
         srv.cmd_vals.x = cmd_vals[0]
         srv.cmd_vals.y = cmd_vals[1]
         srv.cmd_vals.z = cmd_vals[2]
         srv.cmd_flag = cmd_flag
+        srv.cmd_rx = True
 
-        self.callService('/CF_DC/Cmd_CF_DC',srv,RLCmd)    
+        self.callService('/CF_DC/Cmd_CF_DC',srv,GTC_Cmd_srv)    
 
     def callService(self,addr,srv,srv_type,retries=5): ## PLACEHOLDER CALL SERVICE FUNCTION
         
