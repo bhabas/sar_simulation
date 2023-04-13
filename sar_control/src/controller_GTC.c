@@ -128,6 +128,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
             case CONST_VEL:
                 // consolePrintf("Constant Vel Traj\n");
+                const_velocity_Traj();
                 break;
         }
  

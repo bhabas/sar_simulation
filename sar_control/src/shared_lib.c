@@ -340,6 +340,38 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
 
             Traj_Type = CONST_VEL;
             axis = (axis_direction)GTC_Cmd->cmd_flag;
+
+            switch(axis){
+
+                case x_axis:
+
+                    s_0_t[0] = GTC_Cmd->cmd_val1;               // Starting position [m]
+                    v_t[0] = GTC_Cmd->cmd_val2;                 // Desired velocity [m/s]
+                    a_t[0] = GTC_Cmd->cmd_val3;                 // Acceleration [m/s^2]
+
+                    t_traj[0] = 0.0f; // Reset timer
+                    break;
+
+                case y_axis:
+
+                    s_0_t[1] = GTC_Cmd->cmd_val1;
+                    v_t[1] = GTC_Cmd->cmd_val2;
+                    a_t[1] = GTC_Cmd->cmd_val3;
+
+                    t_traj[1] = 0.0f;
+                    break;
+
+                case z_axis:
+
+                    s_0_t[2] = GTC_Cmd->cmd_val1;
+                    v_t[2] = GTC_Cmd->cmd_val2;
+                    a_t[2] = GTC_Cmd->cmd_val3;
+
+                    t_traj[2] = 0.0f;
+                    break;
+                    
+            }
+
             break;
 
 

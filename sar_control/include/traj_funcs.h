@@ -57,6 +57,7 @@ extern float t_traj[3];             // Traj time counter [s]
 
 void set_vec_element(struct vec *v, int index, float value);
 void point2point_Traj();
+void const_velocity_Traj();
 
 
 
