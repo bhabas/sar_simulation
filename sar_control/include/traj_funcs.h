@@ -46,7 +46,7 @@ struct traj_vec{
   };
 };
 
-extern float Traj_Activate[3];
+extern bool Traj_Active[3];
 extern float s_0_t[3];              // Traj Start Point [m]
 extern float s_f_t[3];              // Traj End Point [m]
 extern float v_t[3];                // Traj Vel [m/s]

@@ -5,7 +5,7 @@ Trajectory_Type Traj_Type = NONE;
 axis_direction axis;
 
 
-float Traj_Activate[3] = {0.0f, 0.0f, 0.0f};
+bool Traj_Active[3] = {false,false,false};
 float s_0_t[3] = {0.0f, 0.0f, 0.0f};   // Traj Start Point [m]
 float s_f_t[3] = {0.0f, 0.0f, 0.0f};   // Traj End Point [m]
 float v_t[3] = {0.0f, 0.0f, 0.0f};     // Traj Vel [m/s]
@@ -19,7 +19,7 @@ void point2point_Traj()
     for(int i = 0; i<3; i++)
     {
         // CALCULATE ONLY DESIRED TRAJECTORIES
-        if(Traj_Activate[i] == 1.0f)
+        if(Traj_Active[i] == true)
         {
             float t = t_traj[i];
 
