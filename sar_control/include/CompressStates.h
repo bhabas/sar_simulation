@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "shared_lib.h"
+
 // ==================================
 //         Logging Compression
 // ==================================

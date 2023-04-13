@@ -25,6 +25,7 @@ typedef enum {
     NONE = 0,
     P2P = 1,
     CONST_VEL = 2,
+    CONST_VEL_GZ = 3,
 }Trajectory_Type;
 extern Trajectory_Type Traj_Type;
 

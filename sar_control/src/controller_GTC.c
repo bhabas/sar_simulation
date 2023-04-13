@@ -115,24 +115,30 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
     // UPDATE OPTICAL FLOW VALUES AT 100 HZ
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
 
+        Tau = 5.0f;
+    }
+
+    // EXECUTE COMMANDED TRAJECTORY
+    if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
+
         switch (Traj_Type)
         {
             case NONE:
-                // consolePrintf("No Traj\n");
+                /* DO NOTHING */
                 break;
 
             case P2P:
-                // consolePrintf("P2P Traj\n");
                 point2point_Traj();
                 break;
 
             case CONST_VEL:
-                // consolePrintf("Constant Vel Traj\n");
                 const_velocity_Traj();
                 break;
-        }
- 
 
+            case CONST_VEL_GZ:
+                // const_velocity_Traj();
+                break;
+        }
     }
     
 
