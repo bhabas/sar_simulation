@@ -408,6 +408,11 @@ CF_Type:
         R_ki_z: 0.0
         i_range_R_z: 0.5
 
+      System_Params:
+        Prop_Dist: 0.05
+        C_tf: 0.00618
+        f_max: 30.0
+
 
       ####################################
       #   Not Experimentally Measured

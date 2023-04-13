@@ -168,7 +168,7 @@ void Controller::loadParams()
     CF_Type = "/CF_Type/" + CF_Type;
     CF_Config = "/Config/" + CF_Config;
     
-    // UPDATE MODEL PARAMETERS
+    // UPDATE INERTIAL PARAMETERS
     ros::param::get(CF_Type + CF_Config + "/Mass",m);
     ros::param::get(CF_Type + CF_Config + "/Ixx",Ixx);
     ros::param::get(CF_Type + CF_Config + "/Iyy",Iyy);
