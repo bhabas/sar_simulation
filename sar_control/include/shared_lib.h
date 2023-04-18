@@ -18,6 +18,9 @@ extern "C" {
 #define PWM_MAX 60000
 #define g2Newton (9.81f/1000.0f)
 #define Newton2g (1000.0f/9.81f)
+#define Deg2Rad M_PI/180.0f
+#define Rad2Deg 180.0f/M_PI
+
 
 
 // DECLARE SYSTEM PARAMETERS

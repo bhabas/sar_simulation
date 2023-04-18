@@ -106,14 +106,14 @@ void controllerOutOfTreeReset() {
 
 
     // UPDATE LANDING SURFACE PARAMETERS
-    n_hat.x = sinf(Surface_Angle);
+    n_hat.x = sinf(Surface_Angle*Deg2Rad);
     n_hat.y = 0;
-    n_hat.z = -cosf(Surface_Angle);
+    n_hat.z = -cosf(Surface_Angle*Deg2Rad);
 
     // DEFINE PLANE TANGENT UNIT-VECTOR
-    t_x.x = -cosf(Surface_Angle);
+    t_x.x = -cosf(Surface_Angle*Deg2Rad);
     t_x.y = 0;
-    t_x.z = -sinf(Surface_Angle);
+    t_x.z = -sinf(Surface_Angle*Deg2Rad);
 
     // DEFINE PLANE TANGENT UNIT-VECTOR
     t_y.x = 0;
