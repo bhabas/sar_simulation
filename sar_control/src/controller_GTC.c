@@ -115,7 +115,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
     // UPDATE OPTICAL FLOW VALUES AT 100 HZ
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
 
-        Tau = 5.0f;
+        Tau = state->position.x;
     }
 
     // EXECUTE COMMANDED TRAJECTORY

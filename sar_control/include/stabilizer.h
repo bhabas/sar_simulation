@@ -264,23 +264,23 @@ void Controller::publishCtrlData()
     CtrlData_msg.Twist.angular.y = stateOmega.y;
     CtrlData_msg.Twist.angular.z = stateOmega.z;
 
-    // // OPTICAL FLOW DATA
-    // CtrlData_msg.Tau = sensorData.Tau;
-    // CtrlData_msg.Theta_x = sensorData.Theta_x;
-    // CtrlData_msg.Theta_y = sensorData.Theta_y;
-    // CtrlData_msg.D_perp = sensorData.D_perp;
+    // OPTICAL FLOW DATA
+    CtrlData_msg.Tau = Tau;
+    CtrlData_msg.Theta_x = Theta_x;
+    CtrlData_msg.Theta_y = Theta_y;
+    CtrlData_msg.D_perp = D_perp;
 
-    // // ESTIMATED OPTICAL FLOW DATA
-    // CtrlData_msg.Tau_est = sensorData.Tau_est;
-    // CtrlData_msg.Theta_x_est = sensorData.Theta_x_est;
-    // CtrlData_msg.Theta_y_est = sensorData.Theta_y_est;
+    // ESTIMATED OPTICAL FLOW DATA
+    CtrlData_msg.Tau_est = Tau_est;
+    CtrlData_msg.Theta_x_est = Theta_x_est;
+    CtrlData_msg.Theta_y_est = Theta_y_est;
 
     // CtrlData_msg.Tau_thr = Tau_thr;
     // CtrlData_msg.G1 = G1;
 
-    // // NEURAL NETWORK DATA
-    // CtrlData_msg.Policy_Flip = Policy_Flip;
-    // CtrlData_msg.Policy_Action = Policy_Action;
+    // NEURAL NETWORK DATA
+    CtrlData_msg.Policy_Flip = Policy_Flip;
+    CtrlData_msg.Policy_Action = Policy_Action;
 
     // CONTROL ACTIONS
     CtrlData_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
@@ -304,36 +304,36 @@ void Controller::publishCtrlData()
     // STATE DATA (FLIP)
     CtrlData_msg.flip_flag = flip_flag;
 
-    // // CtrlData_msg.Pose_tr.header.stamp = t_flip;             
-    // CtrlData_msg.Pose_tr.position.x = statePos_tr.x;
-    // CtrlData_msg.Pose_tr.position.y = statePos_tr.y;
-    // CtrlData_msg.Pose_tr.position.z = statePos_tr.z;
+    // CtrlData_msg.Pose_tr.header.stamp = t_flip;             
+    CtrlData_msg.Pose_tr.position.x = statePos_tr.x;
+    CtrlData_msg.Pose_tr.position.y = statePos_tr.y;
+    CtrlData_msg.Pose_tr.position.z = statePos_tr.z;
 
-    // CtrlData_msg.Pose_tr.orientation.x = stateQuat_tr.x;
-    // CtrlData_msg.Pose_tr.orientation.y = stateQuat_tr.y;
-    // CtrlData_msg.Pose_tr.orientation.z = stateQuat_tr.z;
-    // CtrlData_msg.Pose_tr.orientation.w = stateQuat_tr.w;
+    CtrlData_msg.Pose_tr.orientation.x = stateQuat_tr.x;
+    CtrlData_msg.Pose_tr.orientation.y = stateQuat_tr.y;
+    CtrlData_msg.Pose_tr.orientation.z = stateQuat_tr.z;
+    CtrlData_msg.Pose_tr.orientation.w = stateQuat_tr.w;
 
-    // CtrlData_msg.Twist_tr.linear.x = stateVel_tr.x;
-    // CtrlData_msg.Twist_tr.linear.y = stateVel_tr.y;
-    // CtrlData_msg.Twist_tr.linear.z = stateVel_tr.z;
+    CtrlData_msg.Twist_tr.linear.x = stateVel_tr.x;
+    CtrlData_msg.Twist_tr.linear.y = stateVel_tr.y;
+    CtrlData_msg.Twist_tr.linear.z = stateVel_tr.z;
 
-    // CtrlData_msg.Twist_tr.angular.x = stateOmega_tr.x;
-    // CtrlData_msg.Twist_tr.angular.y = stateOmega_tr.y;
-    // CtrlData_msg.Twist_tr.angular.z = stateOmega_tr.z;
+    CtrlData_msg.Twist_tr.angular.x = stateOmega_tr.x;
+    CtrlData_msg.Twist_tr.angular.y = stateOmega_tr.y;
+    CtrlData_msg.Twist_tr.angular.z = stateOmega_tr.z;
 
-    // // OPTICAL FLOW DATA (FLIP)
-    // CtrlData_msg.Tau_tr = Tau_tr;
-    // CtrlData_msg.Theta_x_tr = Theta_x_tr;
-    // CtrlData_msg.Theta_y_tr = Theta_y_tr;
-    // CtrlData_msg.D_perp_tr = D_perp_tr;
+    // OPTICAL FLOW DATA (FLIP)
+    CtrlData_msg.Tau_tr = Tau_tr;
+    CtrlData_msg.Theta_x_tr = Theta_x_tr;
+    CtrlData_msg.Theta_y_tr = Theta_y_tr;
+    CtrlData_msg.D_perp_tr = D_perp_tr;
 
-    // // NEURAL NETWORK DATA (FLIP)
-    // CtrlData_msg.Policy_Flip_tr = Policy_Flip_tr;
-    // CtrlData_msg.Policy_Action_tr = Policy_Action_tr;
+    // NEURAL NETWORK DATA (FLIP)
+    CtrlData_msg.Policy_Flip_tr = Policy_Flip_tr;
+    CtrlData_msg.Policy_Action_tr = Policy_Action_tr;
 
-    // // CONTROL ACTIONS (FLIP)
-    // CtrlData_msg.FM_flip = {F_thrust_flip,M_x_flip,M_y_flip,M_z_flip};
+    // CONTROL ACTIONS (FLIP)
+    CtrlData_msg.FM_flip = {F_thrust_flip,M_x_flip,M_y_flip,M_z_flip};
 
     
     CTRL_Data_Publisher.publish(CtrlData_msg);
