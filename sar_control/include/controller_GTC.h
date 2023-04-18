@@ -16,6 +16,7 @@ extern "C" {
 #include "stabilizer_types.h"
 #include "controller.h"
 #include "console.h"
+#include "math3d.h"
 
 // CUSTOM LIBRARIES
 #include "shared_lib.h"

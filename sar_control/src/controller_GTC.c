@@ -103,6 +103,23 @@ void controllerOutOfTreeReset() {
     Policy_Flip_tr = 0.0f;
     Policy_Action_tr = 0.0f;
 
+
+
+    // UPDATE LANDING SURFACE PARAMETERS
+    n_hat.x = sinf(Surface_Angle);
+    n_hat.y = 0;
+    n_hat.z = -cosf(Surface_Angle);
+
+    // DEFINE PLANE TANGENT UNIT-VECTOR
+    t_x.x = -cosf(Surface_Angle);
+    t_x.y = 0;
+    t_x.z = -sinf(Surface_Angle);
+
+    // DEFINE PLANE TANGENT UNIT-VECTOR
+    t_y.x = 0;
+    t_y.y = 1;
+    t_y.z = 0;
+
 }
 
 
@@ -115,7 +132,31 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
     // UPDATE OPTICAL FLOW VALUES AT 100 HZ
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
 
-        Tau = state->position.x;
+        // UPDATE POS AND VEL
+            r_BO = mkvec(state->position.x, state->position.y, state->position.z);
+            V_BO = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);
+
+            // // CALC DISPLACEMENT FROM PLANE CENTER
+            r_PB = vsub(r_PO,r_BO); 
+
+            // // CALC RELATIVE DISTANCE AND VEL
+            D_perp = vdot(r_PB,n_hat) + 1e-6f;
+
+            V_perp = vdot(V_BO,n_hat);
+            V_tx = vdot(V_BO,t_x);
+            V_ty = vdot(V_BO,t_y);
+
+            if (fabsf(D_perp) < 0.02f)
+            {
+                D_perp = 0.0f;
+            }
+
+            // CALC OPTICAL FLOW VALUES
+            Theta_x = clamp(V_tx/D_perp,-20.0f,20.0f);
+            Theta_y = clamp(V_ty/D_perp,-20.0f,20.0f);
+            Theta_z = clamp(V_perp/D_perp,-20.0f,20.0f);
+            Tau = clamp(1/Theta_z,0.0f,5.0f);
+
     }
 
     // EXECUTE COMMANDED TRAJECTORY

@@ -155,6 +155,7 @@ extern float thrust_override[4];    // Motor thrusts [g]
 extern float Tau;           // [s]
 extern float Theta_x;       // [rad/s] 
 extern float Theta_y;       // [rad/s]
+extern float Theta_z;       // [rad/s]
 extern float D_perp;        // [m]
 
 // ANALYTICAL OPTICAL FLOW STATES
@@ -241,6 +242,25 @@ extern float M_z_flip;              // [N*m]
 // POLICY TRIGGER/ACTION VALUES
 extern float Policy_Flip_tr;    
 extern float Policy_Action_tr;
+
+// =================================
+//    LANDING SURFACE PARAMETERS
+// =================================
+
+// LANDING SURFACE PARAMETERS
+extern float Surface_Angle;
+extern struct vec t_x;          // Plane Unit Tangent Vector
+extern struct vec t_y;          // Plane Unit Tangent Vector
+extern struct vec n_hat;        // Plane Unit Normal Vector
+
+extern struct vec r_PO;         // Plane Position Vector        [m]
+extern struct vec r_BO;         // Quad Position Vector         [m]
+extern struct vec r_PB;         // Quad-Plane Distance Vector   [m]
+extern struct vec V_BO;         // Quad Velocity Vector         [m/s]
+
+extern float V_perp;            // Velocity perp to plane [m/s]
+extern float V_tx;              // Tangent_x velocity [m/s]
+extern float V_ty;              // Tangent_y velocity [m/s]
 
 
 

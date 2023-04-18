@@ -158,6 +158,7 @@ float thrust_override[4] = {0.0f,0.0f,0.0f,0.0f};   // Motor thrusts [g]
 float Tau = 0.0f;       // [s]
 float Theta_x = 0.0f;   // [rad/s] 
 float Theta_y = 0.0f;   // [rad/s]
+float Theta_z = 0.0f;   // [rad/s]
 float D_perp = 0.0f;    // [m]
 
 // ANALYTICAL OPTICAL FLOW STATES
@@ -236,6 +237,29 @@ float M_z_flip = 0.0f;      // [N*m]
 // POLICY TRIGGER/ACTION VALUES
 float Policy_Flip_tr = 0.0f;    
 float Policy_Action_tr = 0.0f;
+
+// =================================
+//    LANDING SURFACE PARAMETERS
+// =================================
+
+// LANDING SURFACE PARAMETERS
+float Surface_Angle = 180.0f;
+struct vec t_x = {1.0f,0.0f,0.0f};      // Plane Unit Tangent Vector
+struct vec t_y = {0.0f,1.0f,0.0f};      // Plane Unit Tangent Vector
+struct vec n_hat = {0.0f,0.0f,1.0f};    // Plane Unit Normal Vector
+
+struct vec r_PO = {0.0f,0.0f,2.0f};     // Plane Position Vector        [m]
+struct vec r_BO = {0.0f,0.0f,0.0f};     // Quad Position Vector         [m]
+struct vec r_PB = {0.0f,0.0f,0.0f};     // Quad-Plane Distance Vector   [m]
+struct vec V_BO = {0.0f,0.0f,0.0f};     // Quad Velocity Vector         [m/s]
+
+
+float V_perp = 0.0;                     // Velocity perp to plane [m/s]
+float V_tx = 0.0;                       // Tangent_x velocity [m/s]
+float V_ty = 0.0;                       // Tangent_y velocity [m/s]
+
+
+
 
 
 void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
