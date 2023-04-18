@@ -179,6 +179,13 @@ void Controller::loadParams()
     ros::param::get(CF_Type + CF_Config + "/System_Params/C_tf",C_tf);
     ros::param::get(CF_Type + CF_Config + "/System_Params/Prop_Dist",Prop_Dist);
 
+    // UPDATE LANDING SURFACE PARAMETERS
+    ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle);
+    ros::param::get("/PLANE_SETTINGS/Pos_X",r_PO.x);
+    ros::param::get("/PLANE_SETTINGS/Pos_Y",r_PO.y);
+    ros::param::get("/PLANE_SETTINGS/Pos_Z",r_PO.z);
+
+
 
     // UPDATE CTRL GAINS
     ros::param::get(CF_Type + "/CtrlGains/P_kp_xy",P_kp_xy);

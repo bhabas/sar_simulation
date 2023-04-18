@@ -251,7 +251,7 @@ extern float Policy_Action_tr;
 // =================================
 
 // LANDING SURFACE PARAMETERS
-extern float Surface_Angle;
+extern float Plane_Angle;
 extern struct vec t_x;          // Plane Unit Tangent Vector
 extern struct vec t_y;          // Plane Unit Tangent Vector
 extern struct vec n_hat;        // Plane Unit Normal Vector

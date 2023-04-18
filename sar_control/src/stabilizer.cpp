@@ -16,6 +16,7 @@ void Controller::appLoop()
 void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
 {
     ros::Rate rate(1000);
+    loadParams();
     
 
     // INITIATE CONTROLLER

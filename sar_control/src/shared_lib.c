@@ -243,7 +243,7 @@ float Policy_Action_tr = 0.0f;
 // =================================
 
 // LANDING SURFACE PARAMETERS
-float Surface_Angle = 180.0f;
+float Plane_Angle = 180.0f;
 struct vec t_x = {1.0f,0.0f,0.0f};      // Plane Unit Tangent Vector
 struct vec t_y = {0.0f,1.0f,0.0f};      // Plane Unit Tangent Vector
 struct vec n_hat = {0.0f,0.0f,1.0f};    // Plane Unit Normal Vector

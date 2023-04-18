@@ -6,6 +6,10 @@ ENV_SETTINGS:
 PLANE_SETTINGS:
   Plane_Model: "Standard_Plane"
   Plane_Config: "180_deg"
+  Plane_Angle: 180  # [deg]
+  Pos_X: 0.0    # [m]
+  Pos_Y: 0.0    # [m]
+  Pos_Z: 0.5    # [m]
 
 QUAD_SETTINGS:
   CF_Type: "Standard"
