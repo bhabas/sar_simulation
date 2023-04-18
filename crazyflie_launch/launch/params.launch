@@ -1,5 +1,4 @@
 <launch>
     <rosparam file="$(find crazyflie_launch)/config/Sim_Settings.yaml" />
     <rosparam file="$(find crazyflie_launch)/config/Model_Types.yaml" />
-    <rosparam file="$(find crazyflie_launch)/config/Plane_Types.yaml" />
 </launch>
