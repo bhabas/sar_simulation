@@ -33,10 +33,10 @@ namespace gazebo
     }
 
 
-    bool Landing_Surface_Pose::Service_Callback(crazyflie_msgs::ModelMove::Request &req, crazyflie_msgs::ModelMove::Response &res)
+    bool Landing_Surface_Pose::Service_Callback(gazebo_msgs::SetModelState::Request &req, gazebo_msgs::SetModelState::Response &res)
     {
         
-        Surface_Model_Ptr = World_Ptr->ModelByName(req.Model_Name);
+        Surface_Model_Ptr = World_Ptr->ModelByName(req.model_state.model_name);
         Joint_Ptr = Surface_Model_Ptr->GetJoint("Landing_Surface_Joint");
 
         if (Joint_Ptr != NULL)
@@ -48,8 +48,8 @@ namespace gazebo
 
 
         // UPDATE PLANE POSITION AND ORIENTATION
-        Pos_0.Set(req.Pos_0.x,req.Pos_0.y,req.Pos_0.z);
-        Eul_0.Set(req.Eul_0.x,req.Eul_0.y,req.Eul_0.z);
+        Pos_0.Set(req.model_state.pose.position.x,req.model_state.pose.position.y,req.model_state.pose.position.z);
+        Eul_0.Set(0.0,0.0,0.0);
         Eul_0 *= M_PI/180; // Convert to radians
 
         Pose_0.Set(Pos_0,Eul_0);

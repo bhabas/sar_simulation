@@ -8,7 +8,8 @@
 
 
 #include <ros/ros.h>
-#include "crazyflie_msgs/ModelMove.h"
+#include "gazebo_msgs/SetModelState.h"
+
 
 
 
@@ -22,7 +23,7 @@ namespace gazebo {
         protected:
             void Load(physics::WorldPtr _parent, sdf::ElementPtr _sdf);
             void OnUpdate();
-            bool Service_Callback(crazyflie_msgs::ModelMove::Request &req, crazyflie_msgs::ModelMove::Response &res);
+            bool Service_Callback(gazebo_msgs::SetModelState::Request &req, gazebo_msgs::SetModelState::Response &res);
 
 
         private:
