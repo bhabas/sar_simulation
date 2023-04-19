@@ -95,17 +95,6 @@ class CF_DataConverter
             CMD_Pub = nh->advertise<crazyflie_msgs::GTC_Cmd>("/CF_DC/Cmd_CF_DC",1);
             
 
-            // CMD_Service_Dashboard = nh->advertiseService("/CF_DC/Cmd_Dashboard",&CF_DataConverter::CMD_Dashboard_Callback,this);
-            
-            
-
-            CF_DataConverter::LoadParams();
-            CF_DataConverter::adjustSimSpeed(SIM_SPEED);
-            Time_start = ros::Time::now();
-
-
-            BodyCollision_str = MODEL_NAME + "::crazyflie_Base_Model::crazyflie_body::body_collision";
-
             CF_DC_Thread = std::thread(&CF_DataConverter::MainLoop, this);
             // ConsoleOutput_Thread = std::thread(&CF_DataConverter::ConsoleLoop, this);
 
@@ -631,10 +620,10 @@ void CF_DataConverter::LoadParams()
 
     // // PLANE SETTINGS
     ros::param::get("/PLANE_SETTINGS/Plane_Model",Plane_Model);
-    // ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle);
-    // ros::param::get("/PLANE_SETTINGS/Pos_X",Plane_Pos.x);
-    // ros::param::get("/PLANE_SETTINGS/Pos_Y",Plane_Pos.y);
-    // ros::param::get("/PLANE_SETTINGS/Pos_Z",Plane_Pos.z);
+    ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle_0);
+    ros::param::get("/PLANE_SETTINGS/Pos_X",Plane_Pos_0.x);
+    ros::param::get("/PLANE_SETTINGS/Pos_Y",Plane_Pos_0.y);
+    ros::param::get("/PLANE_SETTINGS/Pos_Z",Plane_Pos_0.z);
 
 
     // COLLECT MODEL PARAMETERS

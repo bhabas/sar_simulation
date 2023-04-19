@@ -252,93 +252,93 @@ bool CF_DataConverter::CMD_Dashboard_Callback(crazyflie_msgs::GTC_Cmd_srv::Reque
 
 bool CF_DataConverter::Send_Cmd2Ctrl(crazyflie_msgs::GTC_Cmd_srv::Request &req)
 {
-    if(req.cmd_type == 0)
+    switch (req.cmd_type)
     {
-        // RESET FLIP TIME
-        OnceFlag_flip = false;
-        Time_tr.sec = 0.0;
-        Time_tr.nsec = 0.0;
+        case 0:
+            // RESET FLIP TIME
+            OnceFlag_flip = false;
+            Time_tr.sec = 0.0;
+            Time_tr.nsec = 0.0;
 
-        // RESET IMPACT TIME
-        impact_flag = false;
-        BodyContact_flag = false;
-        OnceFlag_impact = false;
-        Time_impact.sec = 0.0;
-        Time_impact.nsec = 0.0;
+            // RESET IMPACT TIME
+            impact_flag = false;
+            BodyContact_flag = false;
+            OnceFlag_impact = false;
+            Time_impact.sec = 0.0;
+            Time_impact.nsec = 0.0;
 
-        // RESET IMPACT VALUES
-        Pose_impact.position.x = 0.0;
-        Pose_impact.position.y = 0.0;
-        Pose_impact.position.z = 0.0;
+            // RESET IMPACT VALUES
+            Pose_impact.position.x = 0.0;
+            Pose_impact.position.y = 0.0;
+            Pose_impact.position.z = 0.0;
 
-        Pose_impact.orientation.x = 0.0;
-        Pose_impact.orientation.y = 0.0;
-        Pose_impact.orientation.z = 0.0;
-        Pose_impact.orientation.w = 0.0;
+            Pose_impact.orientation.x = 0.0;
+            Pose_impact.orientation.y = 0.0;
+            Pose_impact.orientation.z = 0.0;
+            Pose_impact.orientation.w = 0.0;
 
-        Twist_impact.linear.x = 0.0;
-        Twist_impact.linear.y = 0.0;
-        Twist_impact.linear.z = 0.0;
+            Twist_impact.linear.x = 0.0;
+            Twist_impact.linear.y = 0.0;
+            Twist_impact.linear.z = 0.0;
 
-        Twist_impact.angular.x = 0.0;
-        Twist_impact.angular.y = 0.0;
-        Twist_impact.angular.z = 0.0;
+            Twist_impact.angular.x = 0.0;
+            Twist_impact.angular.y = 0.0;
+            Twist_impact.angular.z = 0.0;
 
-        Eul_impact.x = 0.0;
-        Eul_impact.y = 0.0;
-        Eul_impact.z = 0.0;
+            Eul_impact.x = 0.0;
+            Eul_impact.y = 0.0;
+            Eul_impact.z = 0.0;
 
-        // RESET MAX IMPACT FORCE
-        impact_force_x = 0.0;
-        impact_force_y = 0.0;
-        impact_force_z = 0.0;
+            // RESET MAX IMPACT FORCE
+            impact_force_x = 0.0;
+            impact_force_y = 0.0;
+            impact_force_z = 0.0;
 
-        // RESET PAD CONTACTS FLAGS
-        Pad1_Contact = 0;
-        Pad2_Contact = 0;
-        Pad3_Contact = 0;
-        Pad4_Contact = 0;
+            // RESET PAD CONTACTS FLAGS
+            Pad1_Contact = 0;
+            Pad2_Contact = 0;
+            Pad3_Contact = 0;
+            Pad4_Contact = 0;
 
-        Pad_Connections = 0;
+            Pad_Connections = 0;
 
-        if (DATA_TYPE.compare("SIM") == 0)
-        {
-            // RESET SIM SPEED
-            CF_DataConverter::adjustSimSpeed(SIM_SPEED);
-            SLOWDOWN_TYPE = 0;
-        }
-
-    }
-
-    if(req.cmd_type == 8)
-    {
-        // RL POLICY DATA
-        Tau_thr = req.cmd_vals.x;
-        G1 = req.cmd_vals.y;
-
-    }
-
-    if(req.cmd_type == 21) // UPDATE PARAMS IN CF_DC 
-    {
-        CF_DataConverter::LoadParams();
-    }
-
-    if(req.cmd_type == 92) // STICKY FEET
-    {
-        if (DATA_TYPE.compare("SIM") == 0)
-        {
-            if(req.cmd_flag == 0)
+            if (DATA_TYPE.compare("SIM") == 0)
             {
-                Sticky_Flag = false;
+                // RESET SIM SPEED
+                CF_DataConverter::adjustSimSpeed(SIM_SPEED);
+                SLOWDOWN_TYPE = 0;
             }
-            else
+            break;
+
+        case 21:  // UPDATE PARAMS IN CF_DC 
+            CF_DataConverter::LoadParams();
+            break;
+        
+        case 92: // ACTIVATE STICKY FEET
+
+            if (DATA_TYPE.compare("SIM") == 0)
             {
-                Sticky_Flag = true;
+                if(req.cmd_flag == 0)
+                {
+                    Sticky_Flag = false;
+                }
+                else
+                {
+                    Sticky_Flag = true;
+                }
+                
+                CF_DataConverter::activateStickyFeet();
             }
-            
-            CF_DataConverter::activateStickyFeet();
-        }
+            break;
+
+        case 93: // UPDATE PLANE POSITION
+            CF_DataConverter::Update_Landing_Surface_Pose(req.cmd_vals.x,req.cmd_vals.y,req.cmd_vals.z,req.cmd_flag);
+            break;
+
+        default:
+            break;
     }
+
 
     // SIMULATION:
     // SEND COMMAND VALUES TO CONTROLLER
@@ -521,7 +521,7 @@ void CF_DataConverter::adjustSimSpeed(float speed_mult)
 void CF_DataConverter::Update_Landing_Surface_Pose(float Pos_x, float Pos_y, float Pos_z, float Plane_Angle)
 {
 
-    float eul[3] = {0.0,0.0f,Plane_Angle*M_PI/180.0f};
+    // float eul[3] = {0.0,0.0f,Plane_Angle*M_PI/180.0f};
     float quat[4] = {0.0f,0.0f,0.0f,1.0f};
     // euler2quat(eul,quat);
 
@@ -600,7 +600,11 @@ void CF_DataConverter::euler2quat(float quat[],float eul[]) {
 
 void CF_DataConverter::MainInit()
 {
-    Update_Landing_Surface_Pose(0.0,0.0,2.0,180.0);
+    LoadParams();
+    adjustSimSpeed(SIM_SPEED);
+    Time_start = ros::Time::now();
+    BodyCollision_str = MODEL_NAME + "::crazyflie_Base_Model::crazyflie_body::body_collision";
+    Update_Landing_Surface_Pose(Plane_Pos_0.x,Plane_Pos_0.y,Plane_Pos_0.z,Plane_Angle_0);
 
 }
 

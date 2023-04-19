@@ -3,7 +3,7 @@ DATA_TYPE: "SIM"
 ENV_SETTINGS:
   Ground_Name: "GroundPlane_Desert_Physical"
 
-PLANE_SETTINGS:
+PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
   Plane_Model: "Standard_Plane"
   Plane_Angle: 180  # [deg]
   Pos_X: 0.0    # [m]
@@ -13,7 +13,6 @@ PLANE_SETTINGS:
 QUAD_SETTINGS:
   CF_Type: "Standard"
   CF_Config: "A20_L75_K32"
-
 
   Cam_Sensor: False
 
@@ -31,7 +30,6 @@ SIM_SETTINGS:
   Landing_Slowdown_Flag: True
 
 CF_DC_SETTINGS:
-  Console_Rate: 50 # [Hz]
   Logging_Rate: 10 # [Hz]
 
 
