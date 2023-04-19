@@ -42,7 +42,7 @@ namespace gazebo {
 
             // POSE VALUES
             ignition::math::Vector3d Pos_0;     // [m]
-            ignition::math::Vector3d Eul_0;     // [deg]
+            ignition::math::Quaterniond Quat_0;    
             ignition::math::Pose3d Pose_0;
 
     };

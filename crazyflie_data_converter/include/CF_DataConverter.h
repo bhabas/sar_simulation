@@ -23,6 +23,7 @@ is easy to use.
 
 #include <gazebo_msgs/ContactsState.h>
 #include <gazebo_msgs/SetPhysicsProperties.h>
+#include <gazebo_msgs/SetModelState.h>
 
 // CUSTOM INCLUDES
 #include "crazyflie_msgs/CF_StateData.h"
@@ -85,6 +86,8 @@ class CF_DataConverter
 
             // GAZEBO SERVICES
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
+            Landing_Surface_Pose_Service = nh->serviceClient<gazebo_msgs::SetModelState>("/Landing_Surface_Pose");
+
             Logging_Service = nh->advertiseService("/CF_DC/DataLogging", &CF_DataConverter::DataLogging_Callback, this);
 
             CMD_Service_CF_DC = nh->advertiseService("/CF_DC/Cmd_CF_DC",&CF_DataConverter::CMD_CF_DC_Callback,this); // Change to AGENT or ENV
@@ -104,7 +107,7 @@ class CF_DataConverter
             BodyCollision_str = MODEL_NAME + "::crazyflie_Base_Model::crazyflie_body::body_collision";
 
             CF_DC_Thread = std::thread(&CF_DataConverter::MainLoop, this);
-            ConsoleOutput_Thread = std::thread(&CF_DataConverter::ConsoleLoop, this);
+            // ConsoleOutput_Thread = std::thread(&CF_DataConverter::ConsoleLoop, this);
 
 
 
@@ -157,9 +160,11 @@ class CF_DataConverter
         void activateStickyFeet();
         void checkSlowdown();
         void adjustSimSpeed(float speed_mult);
+        void Update_Landing_Surface_Pose();
 
         
         void MainLoop();
+        void MainInit();
         void ConsoleLoop();
         void LoadParams();
         void decompressXY(uint32_t xy, float xy_arr[]);
@@ -194,6 +199,7 @@ class CF_DataConverter
         // SERVICES
         ros::ServiceClient GZ_SimSpeed_Client;
         ros::ServiceServer Logging_Service;
+        ros::ServiceClient Landing_Surface_Pose_Service;
 
         ros::ServiceServer CMD_Service_CF_DC;
         ros::ServiceServer CMD_Service_Dashboard;
@@ -384,6 +390,11 @@ class CF_DataConverter
 
 
         boost::array<float,3> vel_d{0,0,0};
+
+
+        // ============================
+        //     LANDING PLANE PARAMS
+        // ============================
 
 
 };

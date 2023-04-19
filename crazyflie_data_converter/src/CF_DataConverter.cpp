@@ -518,6 +518,25 @@ void CF_DataConverter::adjustSimSpeed(float speed_mult)
     GZ_SimSpeed_Client.call(srv);
 }
 
+void CF_DataConverter::Update_Landing_Surface_Pose()
+{
+    gazebo_msgs::SetModelState srv;
+
+    srv.request.model_state.model_name = "Standard_Plane";
+
+    srv.request.model_state.pose.position.x = 4.0;
+    srv.request.model_state.pose.position.y = 1.0;
+    srv.request.model_state.pose.position.z = 1.0;
+
+    srv.request.model_state.pose.orientation.x = 0.0;
+    srv.request.model_state.pose.orientation.y = -0.3420201;
+    srv.request.model_state.pose.orientation.z = 0.0;
+    srv.request.model_state.pose.orientation.w = 0.9396926;
+
+    Landing_Surface_Pose_Service.call(srv);
+
+}
+
 void CF_DataConverter::activateStickyFeet()
 {
     if(MODEL_NAME != "crazyflie_Base_Model")
@@ -557,8 +576,16 @@ void CF_DataConverter::quat2euler(float quat[], float eul[]){
     eul[2] = psi;   // Z-axis
 }
 
+void CF_DataConverter::MainInit()
+{
+    Update_Landing_Surface_Pose();
+
+}
+
 void CF_DataConverter::MainLoop()
 {
+
+    MainInit();
     int loopRate = 1000;     // [Hz]
     ros::Rate rate(loopRate);
 

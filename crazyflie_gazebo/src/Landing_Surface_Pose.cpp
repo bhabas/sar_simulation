@@ -49,10 +49,12 @@ namespace gazebo
 
         // UPDATE PLANE POSITION AND ORIENTATION
         Pos_0.Set(req.model_state.pose.position.x,req.model_state.pose.position.y,req.model_state.pose.position.z);
-        Eul_0.Set(0.0,0.0,0.0);
-        Eul_0 *= M_PI/180; // Convert to radians
+        Quat_0.Set(req.model_state.pose.orientation.w,
+                    req.model_state.pose.orientation.x,
+                    req.model_state.pose.orientation.y,
+                    req.model_state.pose.orientation.z);
 
-        Pose_0.Set(Pos_0,Eul_0);
+        Pose_0.Set(Pos_0,Quat_0);
         Surface_Model_Ptr->SetWorldPose(Pose_0);
 
         // CREATE JOINT BETWEEN LANDING SURFACE AND WORLD
