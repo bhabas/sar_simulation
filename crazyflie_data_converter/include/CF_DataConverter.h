@@ -160,7 +160,7 @@ class CF_DataConverter
         void activateStickyFeet();
         void checkSlowdown();
         void adjustSimSpeed(float speed_mult);
-        void Update_Landing_Surface_Pose();
+        void Update_Landing_Surface_Pose(float Pos_x, float Pos_y, float Pos_z, float Plane_Angle);
 
         
         void MainLoop();
@@ -169,6 +169,7 @@ class CF_DataConverter
         void LoadParams();
         void decompressXY(uint32_t xy, float xy_arr[]);
         void quat2euler(float quat[], float eul[]);
+        void euler2quat(float quat[],float eul[]);
 
     private:
 
@@ -232,7 +233,9 @@ class CF_DataConverter
         std::string MODEL_NAME;
 
         std::string Plane_Model;
-        std::string Plane_Config;
+        geometry_msgs::Vector3 Plane_Pos_0; // Initial Plane Position
+        float Plane_Angle_0 = 180.0; // Initial Plane Angle [Deg]
+
 
         std::string DATA_TYPE;
 
@@ -626,10 +629,14 @@ void CF_DataConverter::LoadParams()
     std::string CF_Type_str = "/CF_Type/" + CF_Type;
     std::string CF_Config_str = "/Config/" + CF_Config;
 
-    // PLANE SETTINGS
+    // // PLANE SETTINGS
     ros::param::get("/PLANE_SETTINGS/Plane_Model",Plane_Model);
-    ros::param::get("/PLANE_SETTINGS/Plane_Config",Plane_Config);
-    
+    // ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle);
+    // ros::param::get("/PLANE_SETTINGS/Pos_X",Plane_Pos.x);
+    // ros::param::get("/PLANE_SETTINGS/Pos_Y",Plane_Pos.y);
+    // ros::param::get("/PLANE_SETTINGS/Pos_Z",Plane_Pos.z);
+
+
     // COLLECT MODEL PARAMETERS
     ros::param::get(CF_Type_str + CF_Config_str + "/Mass",CF_MASS);
     ros::param::get(CF_Type_str + CF_Config_str + "/Ixx",Ixx);
@@ -726,7 +733,7 @@ void CF_DataConverter::create_CSV()
 
     fprintf(fPtr,"## DATA_TYPE: %s, ",DATA_TYPE.c_str());
     fprintf(fPtr,"QUAD_SETTINGS: {Policy_Type: %s, CF_Type: %s, CF_Config: %s}, ",POLICY_TYPE.c_str(),CF_Type.c_str(),CF_Config.c_str());
-    fprintf(fPtr,"PLANE_SETTINGS: {Plane_Model: %s, Plane_Config: %s}, ",Plane_Model.c_str(),Plane_Config.c_str());
+    fprintf(fPtr,"PLANE_SETTINGS: {Plane_Model: %s, Plane_Config: %s}, ",Plane_Model.c_str(),"Plane_Config.c_str()");
     fprintf(fPtr,"\n");
 
     fflush(fPtr);

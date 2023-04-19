@@ -518,20 +518,25 @@ void CF_DataConverter::adjustSimSpeed(float speed_mult)
     GZ_SimSpeed_Client.call(srv);
 }
 
-void CF_DataConverter::Update_Landing_Surface_Pose()
+void CF_DataConverter::Update_Landing_Surface_Pose(float Pos_x, float Pos_y, float Pos_z, float Plane_Angle)
 {
+
+    float eul[3] = {0.0,0.0f,Plane_Angle*M_PI/180.0f};
+    float quat[4] = {0.0f,0.0f,0.0f,1.0f};
+    // euler2quat(eul,quat);
+
     gazebo_msgs::SetModelState srv;
 
-    srv.request.model_state.model_name = "Standard_Plane";
+    srv.request.model_state.model_name = Plane_Model;
 
-    srv.request.model_state.pose.position.x = 4.0;
-    srv.request.model_state.pose.position.y = 1.0;
-    srv.request.model_state.pose.position.z = 1.0;
+    srv.request.model_state.pose.position.x = Pos_x;
+    srv.request.model_state.pose.position.y = Pos_y;
+    srv.request.model_state.pose.position.z = Pos_z;
 
-    srv.request.model_state.pose.orientation.x = 0.0;
-    srv.request.model_state.pose.orientation.y = -0.3420201;
-    srv.request.model_state.pose.orientation.z = 0.0;
-    srv.request.model_state.pose.orientation.w = 0.9396926;
+    srv.request.model_state.pose.orientation.x = quat[0];
+    srv.request.model_state.pose.orientation.y = quat[1];
+    srv.request.model_state.pose.orientation.z = quat[2];
+    srv.request.model_state.pose.orientation.w = quat[3];
 
     Landing_Surface_Pose_Service.call(srv);
 
@@ -576,9 +581,26 @@ void CF_DataConverter::quat2euler(float quat[], float eul[]){
     eul[2] = psi;   // Z-axis
 }
 
+void CF_DataConverter::euler2quat(float quat[],float eul[]) {
+
+	// Abbreviations for the various angular functions
+
+    double cr = cos(eul[0] * 0.5);
+    double sr = sin(eul[0] * 0.5);
+    double cp = cos(eul[1] * 0.5);
+    double sp = sin(eul[1] * 0.5);
+    double cy = cos(eul[2] * 0.5);
+    double sy = sin(eul[2] * 0.5);
+
+    quat[0] = sr * cp * cy - cr * sp * sy;
+    quat[1] = cr * sp * cy + sr * cp * sy;
+    quat[2] = cr * cp * sy - sr * sp * cy;
+    quat[3] = cr * cp * cy + sr * sp * sy;
+}
+
 void CF_DataConverter::MainInit()
 {
-    Update_Landing_Surface_Pose();
+    Update_Landing_Surface_Pose(0.0,0.0,2.0,180.0);
 
 }
 

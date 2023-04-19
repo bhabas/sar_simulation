@@ -8,7 +8,7 @@ PLANE_SETTINGS:
   Plane_Angle: 180  # [deg]
   Pos_X: 0.0    # [m]
   Pos_Y: 0.0    # [m]
-  Pos_Z: 0.5    # [m]
+  Pos_Z: 2.0    # [m]
 
 QUAD_SETTINGS:
   CF_Type: "Standard"
