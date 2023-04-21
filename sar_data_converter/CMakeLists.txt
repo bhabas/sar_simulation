@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(test_package)
+project(sar_data_converter)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -15,7 +15,6 @@ find_package(catkin REQUIRED COMPONENTS
 
 catkin_package(
  INCLUDE_DIRS include
-#  LIBRARIES cf_data_converter
  CATKIN_DEPENDS roscpp rospy 
 #  DEPENDS system_lib
 )
@@ -23,7 +22,7 @@ catkin_package(
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
-add_executable(CFDC src/CF.cpp src/bar.cpp)
-add_dependencies(CFDC ${catkin_EXPORTED_TARGETS})
-target_link_libraries(CFDC ${catkin_LIBRARIES} ${CURSES_LIBRARIES})
+add_executable(SAR_DC src/SAR_DataConverter.cpp src/bar.cpp)
+add_dependencies(SAR_DC ${catkin_EXPORTED_TARGETS})
+target_link_libraries(SAR_DC ${catkin_LIBRARIES} ${CURSES_LIBRARIES})
 
