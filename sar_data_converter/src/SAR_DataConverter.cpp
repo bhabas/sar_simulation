@@ -8,9 +8,10 @@ void SAR_DC::method_a(int foo1)
 
 int main(int argc, char** argv)
 {
-    SAR_DC SARDC;
-    SARDC.method_a(4);
-    SARDC.method_b(4);
-
+    setlocale(LC_CTYPE,"C-UTF-8");
+    ros::init(argc,argv,"CF_DataConverter_Node");
+    ros::NodeHandle nh;
+    SAR_DC DC = SAR_DC(&nh);
+    ros::spin();
     return 0;
 }
