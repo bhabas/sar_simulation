@@ -25,9 +25,16 @@ class SAR_DC {
 
         SAR_DC(ros::NodeHandle* nh)
         {
-            method_a(4);
+            method_b();
 
         }
-        void method_a(int foo1);
-        void method_b(int foo2);
+
+        void MainInit();
+        void MainLoop();
+        void method_b();
+        
+        void ConsoleLoop();
+
+    
 };
+

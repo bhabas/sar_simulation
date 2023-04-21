@@ -1,10 +1,5 @@
 #include "SAR_DataConverter.h"
 
-void SAR_DC::method_a(int foo1)
-{ 
-    printf("Testing a\n");
-
-}
 
 int main(int argc, char** argv)
 {

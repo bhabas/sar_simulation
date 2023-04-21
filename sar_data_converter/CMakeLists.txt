@@ -22,7 +22,7 @@ catkin_package(
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
-add_executable(SAR_DC src/SAR_DataConverter.cpp src/bar.cpp)
+add_executable(SAR_DC src/SAR_DataConverter.cpp src/Gazebo_Funcs.cpp src/Logging_Funcs.cpp src/Exp_Data_Parsing.cpp)
 add_dependencies(SAR_DC ${catkin_EXPORTED_TARGETS})
 target_link_libraries(SAR_DC ${catkin_LIBRARIES} ${CURSES_LIBRARIES})
 
