@@ -2,7 +2,7 @@
 
 void SAR_DataConverter::MainInit()
 {
-    
+    adjustSimSpeed(0.33);
 
 }
 
