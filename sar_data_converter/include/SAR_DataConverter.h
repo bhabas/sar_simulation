@@ -55,7 +55,7 @@ class SAR_DataConverter {
 
 
             SAR_DC_Thread = std::thread(&SAR_DataConverter::MainLoop, this);
-            ConsoleOutput_Thread = std::thread(&SAR_DataConverter::ConsoleLoop, this);
+            // ConsoleOutput_Thread = std::thread(&SAR_DataConverter::ConsoleLoop, this);
 
 
         }
@@ -95,6 +95,13 @@ class SAR_DataConverter {
         void log5_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log5_msg);
         void log6_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log6_msg);
 
+        // =============================
+        //     GTC COMMAND CALLBACKS
+        // =============================
+        bool CMD_CF_DC_Callback(crazyflie_msgs::GTC_Cmd_srv::Request &req, crazyflie_msgs::GTC_Cmd_srv::Response &res);
+        bool CMD_Dashboard_Callback(crazyflie_msgs::GTC_Cmd_srv::Request &req, crazyflie_msgs::GTC_Cmd_srv::Response &res);
+        bool Send_Cmd2Ctrl(crazyflie_msgs::GTC_Cmd_srv::Request &req);
+
 
         // =======================
         //    LOGGING FUNCTIONS
@@ -129,12 +136,9 @@ class SAR_DataConverter {
         
 
     private:
-
+    
         std::thread SAR_DC_Thread;
         std::thread ConsoleOutput_Thread;
-
-
-        ros::ServiceClient GZ_SimSpeed_Client;
 
         // =====================
         //     SYSTEM PARAMS
@@ -143,16 +147,6 @@ class SAR_DataConverter {
         uint32_t tick = 0;      // Tick for each loop iteration
         ros::Time Time_start;   // Initial time in UNIX notation
         int LOGGING_RATE = 25; // Default Logging Rate
-
-
-        // ====================
-        //     SIM VARIABLES
-        // ====================
-        int SLOWDOWN_TYPE = 0;
-        bool LANDING_SLOWDOWN_FLAG;
-        float SIM_SPEED; 
-        float SIM_SLOWDOWN_SPEED;
-        
 
 
         // ==================
@@ -181,6 +175,62 @@ class SAR_DataConverter {
         std::string Plane_Model;
         geometry_msgs::Vector3 Plane_Pos_0; // Initial Plane Position
         float Plane_Angle_0 = 180.0; // Initial Plane Angle [Deg]
+
+        
+
+
+        // ====================
+        //     SIM VARIABLES
+        // ====================
+        int SLOWDOWN_TYPE = 0;
+        bool LANDING_SLOWDOWN_FLAG;
+        float SIM_SPEED; 
+        float SIM_SLOWDOWN_SPEED;
+
+
+        // =====================
+        //     GAZEBO OBJECTS
+        // =====================
+        ros::Subscriber CTRL_Data_Sub;
+        ros::Subscriber CTRL_Debug_Sub;
+
+        ros::Subscriber Surface_FT_Sub;
+        ros::Subscriber Surface_Contact_Sub;
+        ros::Subscriber PadConnect_Sub;
+
+        ros::ServiceClient Landing_Surface_Pose_Service;
+        ros::ServiceClient GZ_SimSpeed_Client;
+
+        // ===========================
+        //     GTC COMMAND OBJECTS
+        // ===========================
+        ros::ServiceServer CMD_Service_CF_DC;
+        ros::ServiceServer CMD_Service_Dashboard;
+        ros::ServiceClient CMD_Client;
+        ros::Publisher CMD_Pub;
+
+        // ============================
+        //     DATA PUBLISH OBJECTS
+        // ============================
+        ros::Publisher StateData_Pub;
+        ros::Publisher FlipData_Pub;
+        ros::Publisher ImpactData_Pub;
+        ros::Publisher MiscData_Pub;
+
+        // ===================================
+        //     EXP COMPRESSED DATA OBJECTS
+        // ===================================
+        ros::Subscriber log1_Sub;
+        ros::Subscriber log2_Sub;
+        ros::Subscriber log3_Sub;
+        ros::Subscriber log4_Sub;
+        ros::Subscriber log5_Sub;
+        ros::Subscriber log6_Sub;
+
+        
+
+
+        
 
         // ===================
         //     FLIGHT DATA
