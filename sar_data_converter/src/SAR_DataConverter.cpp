@@ -16,7 +16,7 @@ void SAR_DataConverter::MainLoop()
     
     while(ros::ok)
     {   
-        printf("Tick %d\n",tick);
+        // printf("Tick %d\n",tick);
         tick++;
         rate.sleep();
     }

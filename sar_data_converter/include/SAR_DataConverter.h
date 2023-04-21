@@ -55,6 +55,8 @@ class SAR_DataConverter {
 
 
             SAR_DC_Thread = std::thread(&SAR_DataConverter::MainLoop, this);
+            ConsoleOutput_Thread = std::thread(&SAR_DataConverter::ConsoleLoop, this);
+
 
         }
 
