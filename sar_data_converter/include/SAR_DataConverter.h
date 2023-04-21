@@ -19,13 +19,14 @@
 // CUSTOM INCLUDES
 
 
-class SAR_DC {
+class SAR_DataConverter {
 
     public:
 
-        SAR_DC(ros::NodeHandle* nh)
+        SAR_DataConverter(ros::NodeHandle* nh)
         {
             method_b();
+            CF_DC_Thread = std::thread(&SAR_DataConverter::MainLoop, this);
 
         }
 
@@ -35,6 +36,12 @@ class SAR_DC {
         
         void ConsoleLoop();
 
+    private:
+
+        uint32_t tick = 0;      // Tick for each loop iteration
+        std::thread CF_DC_Thread;
+        std::thread ConsoleOutput_Thread;
+        ros::Time Time_start;   // Initial time in UNIX notation
     
 };
 
