@@ -1,5 +1,5 @@
 CF_Type:
-  Standard:
+  Crazyflie_Standard:
     CtrlGains:
       ## POSITION XY
       P_kp_xy: 0.4
