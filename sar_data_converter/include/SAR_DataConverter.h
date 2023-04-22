@@ -56,6 +56,13 @@ class SAR_DataConverter {
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
 
 
+            // INITIALIZE MAIN PUBLISHERS
+            StateData_Pub = nh->advertise<crazyflie_msgs::CF_StateData>("/SAR_DC/StateData",1);
+            MiscData_Pub =  nh->advertise<crazyflie_msgs::CF_MiscData>("/SAR_DC/MiscData",1);
+            FlipData_Pub =  nh->advertise<crazyflie_msgs::CF_FlipData>("/SAR_DC/FlipData",1);
+            ImpactData_Pub = nh->advertise<crazyflie_msgs::CF_ImpactData>("/SAR_DC/ImpactData",1);  
+
+
             SAR_DC_Thread = std::thread(&SAR_DataConverter::MainLoop, this);
             ConsoleOutput_Thread = std::thread(&SAR_DataConverter::ConsoleLoop, this);
 
@@ -121,18 +128,18 @@ class SAR_DataConverter {
         // =================================
         //     ORGANIZED DATA PUBLISHERS
         // =================================
-        void Publish_StateData();
-        void Publish_FlipData();
-        void Publish_ImpactData();
-        void Publish_MiscData();
+        inline void Publish_StateData();
+        inline void Publish_FlipData();
+        inline void Publish_ImpactData();
+        inline void Publish_MiscData();
 
 
         // =======================
         //     MISC. FUNCTIONS
         // =======================
-        void quat2euler(float quat[], float eul[]);
-        void euler2quat(float quat[],float eul[]);
-        void LoadParams();
+        inline void quat2euler(float quat[], float eul[]);
+        inline void euler2quat(float quat[],float eul[]);
+        inline void LoadParams();
 
 
         
@@ -218,6 +225,11 @@ class SAR_DataConverter {
         ros::Publisher FlipData_Pub;
         ros::Publisher ImpactData_Pub;
         ros::Publisher MiscData_Pub;
+
+        crazyflie_msgs::CF_StateData StateData_msg;
+        crazyflie_msgs::CF_FlipData FlipData_msg;
+        crazyflie_msgs::CF_ImpactData ImpactData_msg;
+        crazyflie_msgs::CF_MiscData MiscData_msg;
 
         // ===================================
         //     EXP COMPRESSED DATA OBJECTS
@@ -380,3 +392,206 @@ class SAR_DataConverter {
     
 };
 
+
+inline void SAR_DataConverter::LoadParams()
+{
+    // QUAD SETTINGS
+    ros::param::get("/QUAD_SETTINGS/CF_Type",SAR_Type);
+    ros::param::get("/QUAD_SETTINGS/CF_Config",SAR_Config);
+    ros::param::get("/QUAD_SETTINGS/Policy_Type",POLICY_TYPE);
+
+    GZ_Model_Name = "crazyflie_" + SAR_Config;
+    std::string CF_Type_str = "/CF_Type/" + SAR_Type;
+    std::string CF_Config_str = "/Config/" + SAR_Config;
+
+    // // PLANE SETTINGS
+    ros::param::get("/PLANE_SETTINGS/Plane_Model",Plane_Model);
+    ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle_0);
+    ros::param::get("/PLANE_SETTINGS/Pos_X",Plane_Pos_0.x);
+    ros::param::get("/PLANE_SETTINGS/Pos_Y",Plane_Pos_0.y);
+    ros::param::get("/PLANE_SETTINGS/Pos_Z",Plane_Pos_0.z);
+
+
+    // COLLECT MODEL PARAMETERS
+    ros::param::get(CF_Type_str + CF_Config_str + "/Mass",Mass);
+    ros::param::get(CF_Type_str + CF_Config_str + "/Ixx",Ixx);
+    ros::param::get(CF_Type_str + CF_Config_str + "/Iyy",Iyy);
+    ros::param::get(CF_Type_str + CF_Config_str + "/Izz",Izz);
+
+    // DEBUG SETTINGS
+    ros::param::get("/DATA_TYPE",DATA_TYPE);
+    ros::param::get("/SIM_SETTINGS/Sim_Speed",SIM_SPEED);
+    ros::param::get("/SIM_SETTINGS/Sim_Slowdown_Speed",SIM_SLOWDOWN_SPEED);
+    ros::param::get("/SIM_SETTINGS/Landing_Slowdown_Flag",LANDING_SLOWDOWN_FLAG);
+
+    ros::param::get("/CF_DC_SETTINGS/Logging_Rate",LOGGING_RATE);
+
+    // COLLECT CTRL GAINS
+    ros::param::get(CF_Type_str + "/CtrlGains/P_kp_xy",P_kp_xy);
+    ros::param::get(CF_Type_str + "/CtrlGains/P_kd_xy",P_kd_xy);
+    ros::param::get(CF_Type_str + "/CtrlGains/P_ki_xy",P_ki_xy);
+
+    ros::param::get(CF_Type_str + "/CtrlGains/P_kp_z",P_kp_z);
+    ros::param::get(CF_Type_str + "/CtrlGains/P_kd_z",P_kd_z);
+    ros::param::get(CF_Type_str + "/CtrlGains/P_ki_z",P_ki_z);
+
+    ros::param::get(CF_Type_str + "/CtrlGains/R_kp_xy",R_kp_xy);
+    ros::param::get(CF_Type_str + "/CtrlGains/R_kd_xy",R_kd_xy);
+    ros::param::get(CF_Type_str + "/CtrlGains/R_ki_xy",R_ki_xy);
+    
+    ros::param::get(CF_Type_str + "/CtrlGains/R_kp_z",R_kp_z);
+    ros::param::get(CF_Type_str + "/CtrlGains/R_kd_z",R_kd_z);
+    ros::param::get(CF_Type_str + "/CtrlGains/R_ki_z",R_ki_z);
+
+    if(DATA_TYPE.compare("SIM") == 0)
+    {
+        ros::param::set("/use_sim_time",true);
+    }
+    else
+    {
+        ros::param::set("/use_sim_time",false);
+    }
+
+}
+
+// CONVERT QUATERNION TO EULER ANGLES (YZX NOTATION)
+inline void SAR_DataConverter::quat2euler(float quat[], float eul[]){
+
+    float R11,R21,R31,R22,R23;
+    float phi,theta,psi; // (phi=>x,theta=>y,psi=>z)
+
+    // CALC NEEDED ROTATION MATRIX COMPONENTS FROM QUATERNION
+    R11 = 1.0 - 2.0*(pow(quat[1],2) + pow(quat[2],2) );
+    R21 = 2.0*(quat[0]*quat[1] + quat[2]*quat[3]);
+    R31 = 2.0*(quat[0]*quat[2] - quat[1]*quat[3]);
+
+    R22 = 1.0 - 2.0*( pow(quat[0],2) + pow(quat[2],2) );
+    R23 = 2.0*(quat[1]*quat[2] - quat[0]*quat[3]);
+
+    // CONVERT ROTATION MATRIX COMPONENTS TO EULER ANGLES (YZX NOTATION)
+    phi = atan2(-R23, R22);
+    theta = atan2(-R31, R11);
+    psi = asin(R21);
+
+    eul[0] = phi;   // X-axis
+    eul[1] = theta; // Y-axis
+    eul[2] = psi;   // Z-axis
+}
+
+inline void SAR_DataConverter::Publish_StateData()
+{
+    // ===================
+    //     FLIGHT DATA
+    // ===================
+    ros::Duration Time_delta(Time-Time_start);
+    StateData_msg.header.stamp.sec = Time_delta.sec;
+    StateData_msg.header.stamp.nsec = Time_delta.nsec;
+
+    // CARTESIAN SPACE DATA
+    StateData_msg.Pose = Pose;
+    StateData_msg.Twist = Twist;
+
+    StateData_msg.Eul = Eul;
+
+
+
+    // OPTICAL FLOW STATES
+    StateData_msg.Tau = Tau;
+    StateData_msg.Theta_x = Theta_x;
+    StateData_msg.Theta_y = Theta_y;
+    StateData_msg.D_perp = D_perp;
+
+    // OPTICAL FLOW STATE ESTIMATES
+    StateData_msg.Tau_est = Tau_est;
+    StateData_msg.Theta_x_est = Theta_x_est;
+    StateData_msg.Theta_y_est = Theta_y_est;
+
+    // STATE SETPOINTS
+    StateData_msg.x_d = x_d;
+    StateData_msg.v_d = v_d;
+    StateData_msg.a_d = a_d;
+
+    // CONTROL ACTIONS
+    StateData_msg.FM = FM;
+    StateData_msg.MotorThrusts = MotorThrusts;
+    StateData_msg.MS_PWM = MS_PWM;
+
+    // NEURAL NETWORK DATA
+    StateData_msg.Policy_Flip = Policy_Flip;
+    StateData_msg.Policy_Action = Policy_Action;
+
+
+    // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE CONTROLLER
+    StateData_Pub.publish(StateData_msg);
+}
+
+inline void SAR_DataConverter::Publish_FlipData()
+{
+
+    ros::Duration Time_delta(Time_tr-Time_start);
+    FlipData_msg.header.stamp.sec = Time_delta.sec;
+    FlipData_msg.header.stamp.nsec = Time_delta.nsec;
+    FlipData_msg.flip_flag = flip_flag;
+
+
+    // CARTESIAN SPACE DATA
+    FlipData_msg.Pose_tr = Pose_tr;
+    FlipData_msg.Twist_tr = Twist_tr;
+    FlipData_msg.Eul_tr = Eul_tr;
+
+
+
+    // OPTICAL FLOW
+    FlipData_msg.Tau_tr = Tau_tr;
+    FlipData_msg.Theta_x_tr = Theta_x_tr;
+    FlipData_msg.Theta_y_tr = Theta_y_tr;
+    FlipData_msg.D_perp_tr = D_perp_tr;
+
+    // CONTROL ACTIONS
+    FlipData_msg.FM_tr = FM_tr;
+
+    // NEURAL NETWORK DATA
+    FlipData_msg.Policy_Flip_tr = Policy_Flip_tr;
+    FlipData_msg.Policy_Action_tr = Policy_Action_tr;
+
+
+    // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE CONTROLLER
+    FlipData_Pub.publish(FlipData_msg);
+
+}
+
+inline void SAR_DataConverter::Publish_MiscData()
+{
+    MiscData_msg.header.stamp = ros::Time::now();
+    MiscData_msg.battery_voltage = V_battery;
+    MiscData_Pub.publish(MiscData_msg);
+}
+
+inline void SAR_DataConverter::Publish_ImpactData()
+{
+    ros::Duration Time_delta(Time_impact-Time_start);
+    ImpactData_msg.header.stamp.sec = Time_delta.sec;
+    ImpactData_msg.header.stamp.nsec = Time_delta.nsec;
+
+    ImpactData_msg.impact_flag = impact_flag;
+    ImpactData_msg.BodyContact_flag = BodyContact_flag;
+
+    ImpactData_msg.Force_impact.x = impact_force_x;
+    ImpactData_msg.Force_impact.y = impact_force_y;
+    ImpactData_msg.Force_impact.z = impact_force_z;
+
+    ImpactData_msg.Pose_impact = Pose_impact;
+    ImpactData_msg.Twist_impact = Twist_impact;
+    ImpactData_msg.Eul_impact = Eul_impact;
+
+    ImpactData_msg.Pad_Connections = Pad_Connections;
+
+    ImpactData_msg.Pad1_Contact = Pad1_Contact;
+    ImpactData_msg.Pad2_Contact = Pad2_Contact;
+    ImpactData_msg.Pad3_Contact = Pad3_Contact;
+    ImpactData_msg.Pad4_Contact = Pad4_Contact;
+
+
+
+    ImpactData_Pub.publish(ImpactData_msg);
+}
