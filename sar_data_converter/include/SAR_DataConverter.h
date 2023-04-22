@@ -50,15 +50,23 @@ class SAR_DataConverter {
 
         SAR_DataConverter(ros::NodeHandle* nh)
         {
-            // GAZEBO DATA INPUT PIPELINE
+            // DATA INPUT PIPELINE
             CTRL_Data_Sub = nh->subscribe("/CTRL/data", 1, &SAR_DataConverter::CtrlData_Callback, this, ros::TransportHints().tcpNoDelay());
             CTRL_Debug_Sub = nh->subscribe("/CTRL/debug", 1, &SAR_DataConverter::CtrlDebug_Callback, this, ros::TransportHints().tcpNoDelay());
+            RL_Data_Sub = nh->subscribe("/RL/data",5,&SAR_DataConverter::RL_Data_Callback,this,ros::TransportHints().tcpNoDelay());
             
 
             // GAZEBO PIPELINE
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
             Landing_Surface_Pose_Client = nh->serviceClient<gazebo_msgs::SetModelState>("/Landing_Surface_Pose");
 
+            // CRAZYSWARM PIPELINE
+            log1_Sub = nh->subscribe("/cf1/log1", 1, &SAR_DataConverter::log1_Callback, this, ros::TransportHints().tcpNoDelay());
+            log2_Sub = nh->subscribe("/cf1/log2", 1, &SAR_DataConverter::log2_Callback, this, ros::TransportHints().tcpNoDelay());
+            log3_Sub = nh->subscribe("/cf1/log3", 1, &SAR_DataConverter::log3_Callback, this, ros::TransportHints().tcpNoDelay());
+            log4_Sub = nh->subscribe("/cf1/log4", 1, &SAR_DataConverter::log4_Callback, this, ros::TransportHints().tcpNoDelay());
+            log5_Sub = nh->subscribe("/cf1/log5", 1, &SAR_DataConverter::log5_Callback, this, ros::TransportHints().tcpNoDelay());
+            log6_Sub = nh->subscribe("/cf1/log6", 1, &SAR_DataConverter::log6_Callback, this, ros::TransportHints().tcpNoDelay());
 
 
             // INITIALIZE GTC COMMAND PIPELINE
@@ -72,6 +80,10 @@ class SAR_DataConverter {
             MiscData_Pub =  nh->advertise<crazyflie_msgs::CF_MiscData>("/SAR_DC/MiscData",1);
             FlipData_Pub =  nh->advertise<crazyflie_msgs::CF_FlipData>("/SAR_DC/FlipData",1);
             ImpactData_Pub = nh->advertise<crazyflie_msgs::CF_ImpactData>("/SAR_DC/ImpactData",1);  
+
+            // LOGGING 
+            Logging_Service = nh->advertiseService("/SAR_DC/DataLogging", &SAR_DataConverter::DataLogging_Callback, this);
+
 
 
             // INITIALIZE SAR_DC THREADS
@@ -193,7 +205,7 @@ class SAR_DataConverter {
         // ============================
         //     LANDING PLANE PARAMS
         // ============================
-        std::string Plane_Model_Name;
+        std::string Plane_Model;
         geometry_msgs::Vector3 Plane_Pos_0; // Initial Plane Position
         float Plane_Angle_0 = 180.0; // Initial Plane Angle [Deg]
 
@@ -379,6 +391,7 @@ class SAR_DataConverter {
         // ===================
         //     RL DATA
         // ===================
+        ros::Subscriber RL_Data_Sub;
         uint8_t k_ep = 0;
         uint8_t k_run = 0;
         uint8_t n_rollouts = 8;
@@ -397,6 +410,7 @@ class SAR_DataConverter {
         // =========================
         //     LOGGING VARIABLES
         // =========================
+        ros::ServiceServer Logging_Service;
         FILE* fPtr; // File Pointer to logging file
         bool Logging_Flag = false;
         std::string error_string = "No_Data";
@@ -417,7 +431,7 @@ inline void SAR_DataConverter::LoadParams()
     std::string CF_Config_str = "/Config/" + SAR_Config;
 
     // // PLANE SETTINGS
-    ros::param::get("/PLANE_SETTINGS/Plane_Model",Plane_Model_Name);
+    ros::param::get("/PLANE_SETTINGS/Plane_Model",Plane_Model);
     ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle_0);
     ros::param::get("/PLANE_SETTINGS/Pos_X",Plane_Pos_0.x);
     ros::param::get("/PLANE_SETTINGS/Pos_Y",Plane_Pos_0.y);
@@ -608,3 +622,4 @@ inline void SAR_DataConverter::quat2euler(float quat[], float eul[]){
     eul[1] = theta; // Y-axis
     eul[2] = psi;   // Z-axis
 }
+
