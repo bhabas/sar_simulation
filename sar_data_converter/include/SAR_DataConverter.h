@@ -50,19 +50,29 @@ class SAR_DataConverter {
 
         SAR_DataConverter(ros::NodeHandle* nh)
         {
+            // GAZEBO DATA INPUT PIPELINE
             CTRL_Data_Sub = nh->subscribe("/CTRL/data", 1, &SAR_DataConverter::CtrlData_Callback, this, ros::TransportHints().tcpNoDelay());
             CTRL_Debug_Sub = nh->subscribe("/CTRL/debug", 1, &SAR_DataConverter::CtrlDebug_Callback, this, ros::TransportHints().tcpNoDelay());
             
+
+            // GAZEBO PIPELINE
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
 
 
-            // INITIALIZE MAIN PUBLISHERS
+            // INITIALIZE GTC COMMAND PIPELINE
+            CMD_Input_Service = nh->advertiseService("/SAR_DC/CMD_Input",&SAR_DataConverter::CMD_SAR_DC_Callback,this); // GTC COMMAND
+            CMD_Output_Topic = nh->advertise<crazyflie_msgs::GTC_Cmd>("/SAR_DC/CMD_Output_Topic",1);        // Msg publisher for Crazyswarm->CF->Controller
+            CMD_Output_Service = nh->serviceClient<crazyflie_msgs::GTC_Cmd_srv>("/CTRL/Cmd_ctrl");          // Service client for sim controller
+
+
+            // INITIALIZE STATE DATA PUBLISHERS
             StateData_Pub = nh->advertise<crazyflie_msgs::CF_StateData>("/SAR_DC/StateData",1);
             MiscData_Pub =  nh->advertise<crazyflie_msgs::CF_MiscData>("/SAR_DC/MiscData",1);
             FlipData_Pub =  nh->advertise<crazyflie_msgs::CF_FlipData>("/SAR_DC/FlipData",1);
             ImpactData_Pub = nh->advertise<crazyflie_msgs::CF_ImpactData>("/SAR_DC/ImpactData",1);  
 
 
+            // INITIALIZE SAR_DC THREADS
             SAR_DC_Thread = std::thread(&SAR_DataConverter::MainLoop, this);
             ConsoleOutput_Thread = std::thread(&SAR_DataConverter::ConsoleLoop, this);
 
@@ -107,9 +117,8 @@ class SAR_DataConverter {
         // =============================
         //     GTC COMMAND CALLBACKS
         // =============================
-        bool CMD_CF_DC_Callback(crazyflie_msgs::GTC_Cmd_srv::Request &req, crazyflie_msgs::GTC_Cmd_srv::Response &res);
-        bool CMD_Dashboard_Callback(crazyflie_msgs::GTC_Cmd_srv::Request &req, crazyflie_msgs::GTC_Cmd_srv::Response &res);
-        bool Send_Cmd2Ctrl(crazyflie_msgs::GTC_Cmd_srv::Request &req);
+        inline bool CMD_SAR_DC_Callback(crazyflie_msgs::GTC_Cmd_srv::Request &req, crazyflie_msgs::GTC_Cmd_srv::Response &res);
+        inline bool Send_Cmd2Ctrl(crazyflie_msgs::GTC_Cmd_srv::Request &req);
 
 
         // =======================
@@ -213,10 +222,10 @@ class SAR_DataConverter {
         // ===========================
         //     GTC COMMAND OBJECTS
         // ===========================
-        ros::ServiceServer CMD_Service_CF_DC;
+        ros::ServiceServer CMD_Input_Service;
         ros::ServiceServer CMD_Service_Dashboard;
-        ros::ServiceClient CMD_Client;
-        ros::Publisher CMD_Pub;
+        ros::ServiceClient CMD_Output_Service;
+        ros::Publisher CMD_Output_Topic;
 
         // ============================
         //     DATA PUBLISH OBJECTS
@@ -453,6 +462,125 @@ inline void SAR_DataConverter::LoadParams()
     }
 
 }
+
+inline bool SAR_DataConverter::CMD_SAR_DC_Callback(crazyflie_msgs::GTC_Cmd_srv::Request &req, crazyflie_msgs::GTC_Cmd_srv::Response &res)
+{
+    // PASS COMMAND VALUES TO CONTROLLER AND PASS LOCAL ACTIONS
+    SAR_DataConverter::Send_Cmd2Ctrl(req);
+    res.srv_Success = true;
+    return res.srv_Success;
+}
+
+inline bool SAR_DataConverter::Send_Cmd2Ctrl(crazyflie_msgs::GTC_Cmd_srv::Request &req)
+{
+    switch (req.cmd_type)
+    {
+        case 0:
+            // RESET FLIP TIME
+            OnceFlag_flip = false;
+            Time_tr.sec = 0.0;
+            Time_tr.nsec = 0.0;
+
+            // RESET IMPACT TIME
+            impact_flag = false;
+            BodyContact_flag = false;
+            OnceFlag_impact = false;
+            Time_impact.sec = 0.0;
+            Time_impact.nsec = 0.0;
+
+            // RESET IMPACT VALUES
+            Pose_impact.position.x = 0.0;
+            Pose_impact.position.y = 0.0;
+            Pose_impact.position.z = 0.0;
+
+            Pose_impact.orientation.x = 0.0;
+            Pose_impact.orientation.y = 0.0;
+            Pose_impact.orientation.z = 0.0;
+            Pose_impact.orientation.w = 0.0;
+
+            Twist_impact.linear.x = 0.0;
+            Twist_impact.linear.y = 0.0;
+            Twist_impact.linear.z = 0.0;
+
+            Twist_impact.angular.x = 0.0;
+            Twist_impact.angular.y = 0.0;
+            Twist_impact.angular.z = 0.0;
+
+            Eul_impact.x = 0.0;
+            Eul_impact.y = 0.0;
+            Eul_impact.z = 0.0;
+
+            // RESET MAX IMPACT FORCE
+            impact_force_x = 0.0;
+            impact_force_y = 0.0;
+            impact_force_z = 0.0;
+
+            // RESET PAD CONTACTS FLAGS
+            Pad1_Contact = 0;
+            Pad2_Contact = 0;
+            Pad3_Contact = 0;
+            Pad4_Contact = 0;
+
+            Pad_Connections = 0;
+
+            if (DATA_TYPE.compare("SIM") == 0)
+            {
+                // RESET SIM SPEED
+                SAR_DataConverter::adjustSimSpeed(SIM_SPEED);
+                SLOWDOWN_TYPE = 0;
+            }
+            break;
+
+        case 21:  // UPDATE PARAMS IN CF_DC 
+            SAR_DataConverter::LoadParams();
+            break;
+        
+        case 92: // ACTIVATE STICKY FEET
+
+            if (DATA_TYPE.compare("SIM") == 0)
+            {
+                if(req.cmd_flag == 0)
+                {
+                    Sticky_Flag = false;
+                }
+                else
+                {
+                    Sticky_Flag = true;
+                }
+                
+                // CF_DataConverter::activateStickyFeet();
+            }
+            break;
+
+        case 93: // UPDATE PLANE POSITION
+            // SAR_DataConverter::Update_Landing_Surface_Pose(req.cmd_vals.x,req.cmd_vals.y,req.cmd_vals.z,req.cmd_flag);
+            break;
+
+        default:
+            break;
+    }
+
+
+    // SIMULATION:
+    // SEND COMMAND VALUES TO SIM CONTROLLER
+    crazyflie_msgs::GTC_Cmd_srv srv;
+    srv.request = req;
+    CMD_Output_Service.call(srv);
+
+
+    // EXPERIMENT: 
+    // SEND COMMAND VALUES TO PHYSICAL CONTROLLER
+    // BROADCAST CMD VALUES AS ROS MESSAGE
+    crazyflie_msgs::GTC_Cmd cmd_msg;
+    cmd_msg.cmd_type = req.cmd_type;
+    cmd_msg.cmd_vals = req.cmd_vals;
+    cmd_msg.cmd_flag = req.cmd_flag;
+    cmd_msg.cmd_rx = req.cmd_rx;
+    CMD_Output_Topic.publish(cmd_msg);
+
+    return srv.response.srv_Success; // Return if service request successful (true/false)
+}
+
 
 // CONVERT QUATERNION TO EULER ANGLES (YZX NOTATION)
 inline void SAR_DataConverter::quat2euler(float quat[], float eul[]){
