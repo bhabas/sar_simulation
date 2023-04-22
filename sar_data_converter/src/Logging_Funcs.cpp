@@ -7,6 +7,24 @@
 //     LOGGING FUNCTIONS
 // =========================
 
+void SAR_DataConverter::LoggingLoop()
+{
+
+    ros::Rate rate(LOGGING_RATE);
+
+    
+    while(ros::ok)
+    {   
+        if(Logging_Flag == true)
+        {
+            append_CSV_states();
+        }
+        rate.sleep();
+    }
+
+
+}
+
 void SAR_DataConverter::create_CSV()
 {  
     // POLICY DATA

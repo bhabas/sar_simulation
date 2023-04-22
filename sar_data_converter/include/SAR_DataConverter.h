@@ -89,6 +89,7 @@ class SAR_DataConverter {
             // INITIALIZE SAR_DC THREADS
             SAR_DC_Thread = std::thread(&SAR_DataConverter::MainLoop, this);
             ConsoleOutput_Thread = std::thread(&SAR_DataConverter::ConsoleLoop, this);
+            Logging_Thread = std::thread(&SAR_DataConverter::LoggingLoop, this);
 
 
         }
@@ -96,6 +97,7 @@ class SAR_DataConverter {
         void MainInit();
         void MainLoop();
         void ConsoleLoop();
+        void LoggingLoop();
 
 
         // =======================
@@ -172,14 +174,14 @@ class SAR_DataConverter {
     
         std::thread SAR_DC_Thread;
         std::thread ConsoleOutput_Thread;
+        std::thread Logging_Thread;
 
         // =====================
         //     SYSTEM PARAMS
         // =====================
         std::string DATA_TYPE;  // Sim or Experiment Flag
-        uint32_t tick = 0;      // Tick for each loop iteration
         ros::Time Time_start;   // Initial time in UNIX notation
-        int LOGGING_RATE = 25; // Default Logging Rate
+        int LOGGING_RATE = 10; // Default Logging Rate
 
 
         // ==================
