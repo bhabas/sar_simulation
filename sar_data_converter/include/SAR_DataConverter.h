@@ -625,3 +625,24 @@ inline void SAR_DataConverter::quat2euler(float quat[], float eul[]){
     eul[2] = psi;   // Z-axis
 }
 
+
+// CONVERTS A SET OF EULER ANGLES TO QUATERNION IN (ZYX NOTATION)
+inline void SAR_DataConverter::euler2quat(float quat[],float eul[]) {
+
+	// Abbreviations for the various angular functions
+
+    double cx = cos(eul[0] * 0.5);
+    double cy = cos(eul[1] * 0.5);
+    double cz = cos(eul[2] * 0.5);
+
+    double sx = sin(eul[0] * 0.5);
+    double sy = sin(eul[1] * 0.5);
+    double sz = sin(eul[2] * 0.5);
+
+    quat[0] = sx * cy * cz - cx * sy * sz;
+    quat[1] = cx * sy * cz + sx * cy * sz;
+    quat[2] = cz * cz * sz - sx * sy * cz;
+    quat[3] = cx * cy * cz + sx * sy * sz;
+
+}
+

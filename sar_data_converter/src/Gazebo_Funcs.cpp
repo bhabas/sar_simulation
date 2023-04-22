@@ -30,9 +30,9 @@ void SAR_DataConverter::Pad_Connections_Callback(const crazyflie_msgs::PadConnec
 void SAR_DataConverter::Update_Landing_Surface_Pose(float Pos_x, float Pos_y, float Pos_z, float Plane_Angle)
 {
 
-    // float eul[3] = {0.0,0.0f,Plane_Angle*M_PI/180.0f};
+    float eul[3] = {0.0*M_PI/180.0, -Plane_Angle*M_PI/180.0, 0.0*M_PI/180.0};
     float quat[4] = {0.0f,0.0f,0.0f,1.0f};
-    // euler2quat(eul,quat);
+    euler2quat(quat,eul);
 
     gazebo_msgs::SetModelState srv;
 
