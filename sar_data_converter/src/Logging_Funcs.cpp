@@ -6,6 +6,42 @@
 // =========================
 //     LOGGING FUNCTIONS
 // =========================
+// /home/bhabas/catkin_ws/src/crazyflie_simulation/
+
+bool SAR_DataConverter::DataLogging_Callback(crazyflie_msgs::loggingCMD::Request &req, crazyflie_msgs::loggingCMD::Response &res)
+{
+    switch(req.Logging_CMD){
+        case 0: // CREATE CSV WHEN ACTIVATED
+            Logging_Flag = false;
+            fPtr = fopen(req.filePath.c_str(), "w");
+            create_CSV();
+            break;
+
+
+        case 1: // TURN ON/OFF LOGGING
+            Logging_Flag = true;
+            fPtr = fopen(req.filePath.c_str(), "a");
+            break;
+
+        case 2: // CAP CSV W/ FLIP,IMPACT,MISC DATA
+            Logging_Flag = false;
+
+            fPtr = fopen(req.filePath.c_str(), "a");
+            error_string = req.error_string;
+            append_CSV_blank();
+            append_CSV_misc();
+            append_CSV_flip();
+            append_CSV_impact();
+            append_CSV_blank();
+            break;
+
+    }
+
+
+
+    return 1;
+}
+
 
 void SAR_DataConverter::LoggingLoop()
 {
@@ -216,39 +252,5 @@ void SAR_DataConverter::append_CSV_blank()
 {
     fprintf(fPtr,"\n");
     fflush(fPtr);
-}
-
-bool SAR_DataConverter::DataLogging_Callback(crazyflie_msgs::loggingCMD::Request &req, crazyflie_msgs::loggingCMD::Response &res)
-{
-    switch(req.Logging_CMD){
-        case 0: // CREATE CSV WHEN ACTIVATED
-            Logging_Flag = false;
-            fPtr = fopen(req.filePath.c_str(), "w");
-            create_CSV();
-            break;
-
-
-        case 1: // TURN ON/OFF LOGGING
-            Logging_Flag = true;
-            fPtr = fopen(req.filePath.c_str(), "a");
-            break;
-
-        case 2: // CAP CSV W/ FLIP,IMPACT,MISC DATA
-            Logging_Flag = false;
-
-            fPtr = fopen(req.filePath.c_str(), "a");
-            error_string = req.error_string;
-            append_CSV_blank();
-            append_CSV_misc();
-            append_CSV_flip();
-            append_CSV_impact();
-            append_CSV_blank();
-            break;
-
-    }
-
-
-
-    return 1;
 }
 
