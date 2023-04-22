@@ -50,12 +50,14 @@ class SAR_DataConverter {
 
         SAR_DataConverter(ros::NodeHandle* nh)
         {
-
+            CTRL_Data_Sub = nh->subscribe("/CTRL/data", 1, &SAR_DataConverter::CtrlData_Callback, this, ros::TransportHints().tcpNoDelay());
+            CTRL_Debug_Sub = nh->subscribe("/CTRL/debug", 1, &SAR_DataConverter::CtrlDebug_Callback, this, ros::TransportHints().tcpNoDelay());
+            
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
 
 
             SAR_DC_Thread = std::thread(&SAR_DataConverter::MainLoop, this);
-            // ConsoleOutput_Thread = std::thread(&SAR_DataConverter::ConsoleLoop, this);
+            ConsoleOutput_Thread = std::thread(&SAR_DataConverter::ConsoleLoop, this);
 
 
         }

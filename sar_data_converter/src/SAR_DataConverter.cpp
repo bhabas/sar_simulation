@@ -1,5 +1,29 @@
 #include "SAR_DataConverter.h"
 
+// CONVERT QUATERNION TO EULER ANGLES (YZX NOTATION)
+void SAR_DataConverter::quat2euler(float quat[], float eul[]){
+
+    float R11,R21,R31,R22,R23;
+    float phi,theta,psi; // (phi=>x,theta=>y,psi=>z)
+
+    // CALC NEEDED ROTATION MATRIX COMPONENTS FROM QUATERNION
+    R11 = 1.0 - 2.0*(pow(quat[1],2) + pow(quat[2],2) );
+    R21 = 2.0*(quat[0]*quat[1] + quat[2]*quat[3]);
+    R31 = 2.0*(quat[0]*quat[2] - quat[1]*quat[3]);
+
+    R22 = 1.0 - 2.0*( pow(quat[0],2) + pow(quat[2],2) );
+    R23 = 2.0*(quat[1]*quat[2] - quat[0]*quat[3]);
+
+    // CONVERT ROTATION MATRIX COMPONENTS TO EULER ANGLES (YZX NOTATION)
+    phi = atan2(-R23, R22);
+    theta = atan2(-R31, R11);
+    psi = asin(R21);
+
+    eul[0] = phi;   // X-axis
+    eul[1] = theta; // Y-axis
+    eul[2] = psi;   // Z-axis
+}
+
 
 void SAR_DataConverter::LoadParams()
 {
@@ -65,6 +89,7 @@ void SAR_DataConverter::LoadParams()
 void SAR_DataConverter::MainInit()
 {
     adjustSimSpeed(0.33);
+    LoadParams();
 
 }
 
