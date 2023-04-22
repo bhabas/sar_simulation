@@ -3,6 +3,7 @@
 
 void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
 {
+    setlocale(LC_CTYPE,"C-UTF-8");
     set_escdelay(25);
     use_extended_names(TRUE);
     initscr();

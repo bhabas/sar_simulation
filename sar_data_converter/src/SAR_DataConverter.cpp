@@ -29,8 +29,6 @@ void SAR_DataConverter::MainLoop()
         Publish_ImpactData();
         Publish_MiscData();
 
-
-        tick++;
         rate.sleep();
     }
 
@@ -39,7 +37,7 @@ void SAR_DataConverter::MainLoop()
 
 int main(int argc, char** argv)
 {
-    setlocale(LC_CTYPE,"C-UTF-8");
+    
     ros::init(argc,argv,"CF_DataConverter_Node");
     ros::NodeHandle nh;
     SAR_DataConverter SAR_DC = SAR_DataConverter(&nh);
