@@ -57,6 +57,8 @@ class SAR_DataConverter {
 
             // GAZEBO PIPELINE
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
+            Landing_Surface_Pose_Client = nh->serviceClient<gazebo_msgs::SetModelState>("/Landing_Surface_Pose");
+
 
 
             // INITIALIZE GTC COMMAND PIPELINE
@@ -190,7 +192,7 @@ class SAR_DataConverter {
         // ============================
         //     LANDING PLANE PARAMS
         // ============================
-        std::string Plane_Model;
+        std::string Plane_Model_Name;
         geometry_msgs::Vector3 Plane_Pos_0; // Initial Plane Position
         float Plane_Angle_0 = 180.0; // Initial Plane Angle [Deg]
 
@@ -216,7 +218,7 @@ class SAR_DataConverter {
         ros::Subscriber Surface_Contact_Sub;
         ros::Subscriber PadConnect_Sub;
 
-        ros::ServiceClient Landing_Surface_Pose_Service;
+        ros::ServiceClient Landing_Surface_Pose_Client;
         ros::ServiceClient GZ_SimSpeed_Client;
 
         // ===========================
@@ -414,7 +416,7 @@ inline void SAR_DataConverter::LoadParams()
     std::string CF_Config_str = "/Config/" + SAR_Config;
 
     // // PLANE SETTINGS
-    ros::param::get("/PLANE_SETTINGS/Plane_Model",Plane_Model);
+    ros::param::get("/PLANE_SETTINGS/Plane_Model",Plane_Model_Name);
     ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle_0);
     ros::param::get("/PLANE_SETTINGS/Pos_X",Plane_Pos_0.x);
     ros::param::get("/PLANE_SETTINGS/Pos_Y",Plane_Pos_0.y);
@@ -548,12 +550,12 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(crazyflie_msgs::GTC_Cmd_srv::Reques
                     Sticky_Flag = true;
                 }
                 
-                // CF_DataConverter::activateStickyFeet();
+                SAR_DataConverter::activateStickyFeet();
             }
             break;
 
         case 93: // UPDATE PLANE POSITION
-            // SAR_DataConverter::Update_Landing_Surface_Pose(req.cmd_vals.x,req.cmd_vals.y,req.cmd_vals.z,req.cmd_flag);
+            SAR_DataConverter::Update_Landing_Surface_Pose(req.cmd_vals.x,req.cmd_vals.y,req.cmd_vals.z,req.cmd_flag);
             break;
 
         default:

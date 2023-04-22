@@ -7,6 +7,7 @@ void SAR_DataConverter::MainInit()
 {
     LoadParams();
     adjustSimSpeed(SIM_SPEED);
+    Update_Landing_Surface_Pose(Plane_Pos_0.x,Plane_Pos_0.y,Plane_Pos_0.z,180.0);
 
 }
 
