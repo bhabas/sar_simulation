@@ -95,8 +95,8 @@ void SAR_DataConverter::create_CSV()
 
 
     fprintf(fPtr,"## DATA_TYPE: %s, ",DATA_TYPE.c_str());
-    fprintf(fPtr,"QUAD_SETTINGS: {Policy_Type: %s, CF_Type: %s, CF_Config: %s}, ",POLICY_TYPE.c_str(),SAR_Type.c_str(),SAR_Config.c_str());
-    fprintf(fPtr,"PLANE_SETTINGS: {Plane_Model: %s, Plane_Config: %s}, ",Plane_Model.c_str(),"Plane_Config.c_str()");
+    fprintf(fPtr,"QUAD_SETTINGS: {Policy_Type: %s, SAR_Type: %s, SAR_Config: %s}, ",POLICY_TYPE.c_str(),SAR_Type.c_str(),SAR_Config.c_str());
+    fprintf(fPtr,"PLANE_SETTINGS: {Plane_Model: %s}, ",Plane_Model.c_str());
     fprintf(fPtr,"\n");
 
     fflush(fPtr);
@@ -113,24 +113,24 @@ void SAR_DataConverter::append_CSV_states()
 
 
     // STATE DATA
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",Pose.position.x,Pose.position.y,Pose.position.z);    // x,y,z
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist.linear.x,Twist.linear.y,Twist.linear.z);       // vx,vy,vz
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",D_perp,Tau,Tau_est);                    // Tau,Theta_x,Theta_y,D_perp
-    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Theta_x,Theta_x_est,Theta_y,Theta_y_est);                    // Tau_est,Theta_x_est,Theta_y_est
+    fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,",Pose.position.x,Pose.position.y,Pose.position.z);    // x,y,z
+    fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,",Twist.linear.x,Twist.linear.y,Twist.linear.z);       // vx,vy,vz
+    fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,",D_perp,Tau,Tau_est);                    // Tau,Theta_x,Theta_y,D_perp
+    fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,%.3f,",Theta_x,Theta_x_est,Theta_y,Theta_y_est);                    // Tau_est,Theta_x_est,Theta_y_est
     fprintf(fPtr,"%s,%s,",formatBool(flip_flag),formatBool(impact_flag));               // flip_flag,impact_flag
 
 
     // MISC STATE DATA
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",Eul.x,Eul.y,Eul.z);                                  // eul_x,eul_y,eul_z
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist.angular.x,Twist.angular.y,Twist.angular.z);    // wx,wy,wz
-    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Pose.orientation.x,Pose.orientation.y,Pose.orientation.z,Pose.orientation.w); // qx,qy,qz,qw
-    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",FM[0],FM[1],FM[2],FM[3]);                       // F_thrust,Mx,My,Mz
+    fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,",Eul.x,Eul.y,Eul.z);                                  // eul_x,eul_y,eul_z
+    fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,",Twist.angular.x,Twist.angular.y,Twist.angular.z);    // wx,wy,wz
+    fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,% 6.3f,",Pose.orientation.x,Pose.orientation.y,Pose.orientation.z,Pose.orientation.w); // qx,qy,qz,qw
+    fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,% 6.3f,",FM[0],FM[1],FM[2],FM[3]);                       // F_thrust,Mx,My,Mz
 
 
     // SETPOINT VALUES
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",x_d.x,x_d.y,x_d.z);  // x_d.x,x_d.y,x_d.z
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",v_d.x,v_d.y,v_d.z);  // v_d.x,v_d.y,v_d.z
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",a_d.x,a_d.y,a_d.z);  // a_d.x,a_d.y,a_d.z
+    fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,",x_d.x,x_d.y,x_d.z);  // x_d.x,x_d.y,x_d.z
+    fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,",v_d.x,v_d.y,v_d.z);  // v_d.x,v_d.y,v_d.z
+    fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,",a_d.x,a_d.y,a_d.z);  // a_d.x,a_d.y,a_d.z
 
 
     // MISC VALUES
@@ -144,7 +144,7 @@ void SAR_DataConverter::append_CSV_misc()
 {
     // POLICY DATA
     fprintf(fPtr,"%u,%u,",k_ep,k_run);  // k_ep,k_run
-    fprintf(fPtr,"--,");                // --
+    fprintf(fPtr,"% 6.2f,",Plane_Angle);                // --
     fprintf(fPtr,"%u,--,",n_rollouts);  // n_rollouts,--
     fprintf(fPtr,"[%.3f %.3f],[%.3f %.3f],[%.3f %.3f],",mu[0],mu[1],sigma[0],sigma[1],policy[0],policy[1]); // mu,sigma,policy
 
