@@ -181,7 +181,8 @@ class SAR_DataConverter {
         // =====================
         std::string DATA_TYPE;  // Sim or Experiment Flag
         ros::Time Time_start;   // Initial time in UNIX notation
-        int LOGGING_RATE = 10; // Default Logging Rate
+        int LOGGING_RATE = 10;  // Default Logging Rate
+        bool isInit = false;    // Load these params only on first start of SAR_DC
 
 
         // ==================
@@ -208,10 +209,9 @@ class SAR_DataConverter {
         //     LANDING PLANE PARAMS
         // ============================
         std::string Plane_Model;
-        geometry_msgs::Vector3 Plane_Pos_0; // Initial Plane Position
-        float Plane_Angle_0 = 180.0; // Initial Plane Angle [Deg]
+        geometry_msgs::Vector3 Plane_Pos; // Initial Plane Position
+        float Plane_Angle = 180.0; // Initial Plane Angle [Deg]
 
-        
 
 
         // ====================
@@ -432,12 +432,17 @@ inline void SAR_DataConverter::LoadParams()
     std::string CF_Type_str = "/CF_Type/" + SAR_Type;
     std::string CF_Config_str = "/Config/" + SAR_Config;
 
-    // // PLANE SETTINGS
+    // PLANE SETTINGS
     ros::param::get("/PLANE_SETTINGS/Plane_Model",Plane_Model);
-    ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle_0);
-    ros::param::get("/PLANE_SETTINGS/Pos_X",Plane_Pos_0.x);
-    ros::param::get("/PLANE_SETTINGS/Pos_Y",Plane_Pos_0.y);
-    ros::param::get("/PLANE_SETTINGS/Pos_Z",Plane_Pos_0.z);
+    if (isInit == false)
+    {
+        ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle);
+        ros::param::get("/PLANE_SETTINGS/Pos_X",Plane_Pos.x);
+        ros::param::get("/PLANE_SETTINGS/Pos_Y",Plane_Pos.y);
+        ros::param::get("/PLANE_SETTINGS/Pos_Z",Plane_Pos.z);
+    }
+    
+    
 
 
     // COLLECT MODEL PARAMETERS
@@ -573,6 +578,12 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(crazyflie_msgs::GTC_Cmd_srv::Reques
 
         case 93: // UPDATE PLANE POSITION
             SAR_DataConverter::Update_Landing_Surface_Pose(req.cmd_vals.x,req.cmd_vals.y,req.cmd_vals.z,req.cmd_flag);
+
+            Plane_Pos.x = req.cmd_vals.x;
+            Plane_Pos.y = req.cmd_vals.y;
+            Plane_Pos.z = req.cmd_vals.z;
+            Plane_Angle = req.cmd_flag;
+            
             break;
 
         default:

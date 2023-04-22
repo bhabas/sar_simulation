@@ -16,8 +16,10 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
         // Clear the screen buffer
         erase();
 
-        mvprintw(0, 0,"t: %.4f V: %.3f",(Time-Time_start).toSec(),V_battery);
-        mvprintw(1, 0,"DataType: %s \t Model: %s",DATA_TYPE.c_str(),SAR_Config.c_str());
+        mvprintw(0, 0,"t: %.4f V: %.3f \t DataType: %s",(Time-Time_start).toSec(),V_battery,DATA_TYPE.c_str());
+        mvprintw(1, 0,"SAR Model: %s",SAR_Config.c_str());
+        mvprintw(2, 0,"Plane Model: %s \t Plane Angle: % 7.3f",Plane_Model.c_str(),Plane_Angle);
+
 
         mvprintw(3, 0,"==== Flags ====");
         mvprintw(4, 0,"Motorstop:\t%u  Flip_flag:\t  %u  Pos Ctrl:\t    %u  Cam_Est:\t  %u",Motorstop_Flag, flip_flag, Pos_Ctrl_Flag,Camera_Sensor_Active);

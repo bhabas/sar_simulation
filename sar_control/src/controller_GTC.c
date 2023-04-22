@@ -104,21 +104,7 @@ void controllerOutOfTreeReset() {
     Policy_Action_tr = 0.0f;
 
 
-
-    // UPDATE LANDING SURFACE PARAMETERS
-    n_hat.x = sinf(Plane_Angle*Deg2Rad);
-    n_hat.y = 0;
-    n_hat.z = -cosf(Plane_Angle*Deg2Rad);
-
-    // DEFINE PLANE TANGENT UNIT-VECTOR
-    t_x.x = -cosf(Plane_Angle*Deg2Rad);
-    t_x.y = 0;
-    t_x.z = -sinf(Plane_Angle*Deg2Rad);
-
-    // DEFINE PLANE TANGENT UNIT-VECTOR
-    t_y.x = 0;
-    t_y.y = 1;
-    t_y.z = 0;
+    calcPlaneNormal(Plane_Angle);
 
 }
 
@@ -136,10 +122,10 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
             r_BO = mkvec(state->position.x, state->position.y, state->position.z);
             V_BO = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);
 
-            // // CALC DISPLACEMENT FROM PLANE CENTER
+            // CALC DISPLACEMENT FROM PLANE CENTER
             r_PB = vsub(r_PO,r_BO); 
 
-            // // CALC RELATIVE DISTANCE AND VEL
+            // CALC RELATIVE DISTANCE AND VEL
             D_perp = vdot(r_PB,n_hat) + 1e-6f;
 
             V_perp = vdot(V_BO,n_hat);

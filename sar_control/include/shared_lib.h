@@ -285,6 +285,7 @@ extern struct GTC_CmdPacket GTC_Cmd;
 void GTC_Command(struct GTC_CmdPacket *GTC_Cmd);
 void controlOutput(const state_t *state, const sensorData_t *sensors);
 uint16_t thrust2PWM(float f);
+void calcPlaneNormal(float Plane_Angle);
 
 
 
