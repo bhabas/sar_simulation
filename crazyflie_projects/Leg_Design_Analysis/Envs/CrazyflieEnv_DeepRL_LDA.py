@@ -157,8 +157,8 @@ class CrazyflieEnv_DeepRL_LDA(CrazyflieEnv_Sim):
         self.gazebo_pause_physics()
 
         ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
-        self.Iyy = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Iyy") + np.random.normal(0,1.5e-6)
-        self.mass = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Mass") + np.random.normal(0,0.0005)
+        self.Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Iyy") + np.random.normal(0,1.5e-6)
+        self.mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Mass") + np.random.normal(0,0.0005)
         self.updateInertia()
 
 

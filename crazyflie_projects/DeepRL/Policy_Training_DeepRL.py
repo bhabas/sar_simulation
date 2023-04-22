@@ -515,8 +515,8 @@ class Policy_Trainer_DeepRL():
             ),
 
             QUAD_SETTINGS = dict(
-                CF_Type = self.env.CF_Type,
-                CF_Config = self.env.CF_Config,
+                SAR_Type = self.env.SAR_Type,
+                SAR_Config = self.env.SAR_Config,
             ),
 
             ENV_SETTINGS = dict(

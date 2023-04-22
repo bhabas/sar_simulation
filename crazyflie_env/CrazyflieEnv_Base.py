@@ -26,10 +26,10 @@ class CrazyflieEnv_Base():
         self.env_name = "CF_BaseEnv"
 
         ## CRAZYFLIE PARAMETERS
-        self.CF_Type = rospy.get_param('/QUAD_SETTINGS/CF_Type')
-        self.CF_Config = rospy.get_param('/QUAD_SETTINGS/CF_Config')
-        self.modelInitials = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Initials")
-        self.modelName = f"crazyflie_{self.CF_Config}"
+        self.SAR_Type = rospy.get_param('/QUAD_SETTINGS/SAR_Type')
+        self.SAR_Config = rospy.get_param('/QUAD_SETTINGS/SAR_Config')
+        self.modelInitials = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Initials")
+        self.modelName = f"crazyflie_{self.SAR_Config}"
         self.preInit_Values()
 
         self.pos_0 = [0.0, 0.0, 0.4]      # Default hover position [m]
@@ -218,10 +218,10 @@ class CrazyflieEnv_Base():
 
     def preInit_Values(self):
 
-        self.Ixx = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Ixx")
-        self.Iyy = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Iyy")
-        self.Izz = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Izz")
-        self.mass = rospy.get_param(f"/CF_Type/{self.CF_Type}/Config/{self.CF_Config}/Mass")
+        self.Ixx = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ixx")
+        self.Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Iyy")
+        self.Izz = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Izz")
+        self.mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Mass")
         
         ## RAW VICON VALUES
         self.posViconRaw = [0,0,0]

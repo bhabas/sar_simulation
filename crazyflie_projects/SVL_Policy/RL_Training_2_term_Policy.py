@@ -149,8 +149,8 @@ def runTraining(env,agent,V_d,phi,logName,K_ep_max=15):
             My = theta[1, k_run]         # Policy Moment Action [N*mm]
 
             # ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
-            # env.Iyy = rospy.get_param(f"/CF_Type/{env.CF_Type}/Config/{env.CF_Config}/Iyy") + np.random.normal(0,1.5e-6)
-            # env.mass = rospy.get_param(f"/CF_Type/{env.CF_Type}/Config/{env.CF_Config}/Mass") + np.random.normal(0,0.0005)
+            # env.Iyy = rospy.get_param(f"/SAR_Type/{env.SAR_Type}/Config/{env.SAR_Config}/Iyy") + np.random.normal(0,1.5e-6)
+            # env.mass = rospy.get_param(f"/SAR_Type/{env.SAR_Type}/Config/{env.SAR_Config}/Mass") + np.random.normal(0,0.0005)
             # env.updateInertia()
 
             env.ParamOptim_reset()

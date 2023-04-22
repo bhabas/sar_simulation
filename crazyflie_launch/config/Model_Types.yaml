@@ -1,4 +1,4 @@
-CF_Type:
+SAR_Type:
   Crazyflie_Standard:
     CtrlGains:
       ## POSITION XY
