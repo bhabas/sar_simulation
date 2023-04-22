@@ -5,8 +5,8 @@ ENV_SETTINGS:
 
 PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
   Plane_Model: "Standard_Plane"
-  Plane_Angle: 180  # [deg]
-  Pos_X: 0.0    # [m]
+  Plane_Angle: 90  # [deg]
+  Pos_X: 2.0    # [m]
   Pos_Y: 0.0    # [m]
   Pos_Z: 2.0    # [m]
 
@@ -25,7 +25,7 @@ QUAD_SETTINGS:
 SIM_SETTINGS:
   GUI_Flag: True
   Pause_Flag: True
-  Sim_Speed: 0.1
+  Sim_Speed: 0.5
   Sim_Slowdown_Speed: 0.4
   Landing_Slowdown_Flag: True
 

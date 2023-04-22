@@ -422,6 +422,17 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
             PWM_override[3] = GTC_Cmd->cmd_flag;
 
             break;
+
+        case 93: // UPDATE PLANE POSITION
+
+            r_PO.x = GTC_Cmd->cmd_val1;
+            r_PO.y = GTC_Cmd->cmd_val2;
+            r_PO.z = GTC_Cmd->cmd_val3;
+            Plane_Angle = GTC_Cmd->cmd_flag;
+
+            calcPlaneNormal(Plane_Angle);
+            
+            break;
     }
 
 }
@@ -582,6 +593,24 @@ uint16_t thrust2PWM(float f)
     }
 
     return PWM;
+}
+
+void calcPlaneNormal(float Plane_Angle)
+{
+    // UPDATE LANDING SURFACE PARAMETERS
+    n_hat.x = sinf(Plane_Angle*Deg2Rad);
+    n_hat.y = 0;
+    n_hat.z = -cosf(Plane_Angle*Deg2Rad);
+
+    // DEFINE PLANE TANGENT UNIT-VECTOR
+    t_x.x = -cosf(Plane_Angle*Deg2Rad);
+    t_x.y = 0;
+    t_x.z = -sinf(Plane_Angle*Deg2Rad);
+
+    // DEFINE PLANE TANGENT UNIT-VECTOR
+    t_y.x = 0;
+    t_y.y = 1;
+    t_y.z = 0;
 }
 
 

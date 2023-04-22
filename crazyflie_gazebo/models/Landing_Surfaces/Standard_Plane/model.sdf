@@ -3,7 +3,7 @@
   <model name='Standard_Plane'>
     <static>0</static>
     <link name='Surface_Link'>
-      <pose>0 0 0 0 0 0</pose>
+      <pose>0 0 0 0 3.14 0</pose>
       <inertial>
         <inertia>
           <ixx>500</ixx>
