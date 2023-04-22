@@ -39,7 +39,7 @@ class CameraClass:
         self.prev_time = 0
 
         self.cam_sub = rospy.Subscriber("/CF_Internal/camera/image_raw",Image,self.Camera_cb,queue_size = 1)
-        self.state_sub = rospy.Subscriber("/CF_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size = 1)
+        self.state_sub = rospy.Subscriber("/SAR_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size = 1)
             
 
     def Camera_cb(self,Cam_msg):

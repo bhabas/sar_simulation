@@ -61,7 +61,7 @@ class CameraLogger:
     
         ## DATA SUBSCRIBERS
         rospy.Subscriber("/CF_Internal/camera/image_raw",Image,self.CameraCallback,queue_size=500)
-        rospy.Subscriber("/CF_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size=1)
 
     def Create_csv(self,FilePath):
         """Create CSV file that log data will be written to

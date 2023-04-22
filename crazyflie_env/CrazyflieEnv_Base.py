@@ -60,10 +60,10 @@ class CrazyflieEnv_Base():
         # NOTE: Queue sizes=1 so that we are always looking at the most current data and 
         #       not data at back of a queue waiting to be processed by callbacks
         rospy.Subscriber("/clock",Clock,self.clockCallback,queue_size=1)
-        rospy.Subscriber("/CF_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size=1)
-        rospy.Subscriber("/CF_DC/FlipData",CF_FlipData,self.CF_FlipDataCallback,queue_size=1)
-        rospy.Subscriber("/CF_DC/ImpactData",CF_ImpactData,self.CF_ImpactDataCallback,queue_size=1)
-        rospy.Subscriber("/CF_DC/MiscData",CF_MiscData,self.CF_MiscDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_DC/FlipData",CF_FlipData,self.CF_FlipDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_DC/ImpactData",CF_ImpactData,self.CF_ImpactDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_DC/MiscData",CF_MiscData,self.CF_MiscDataCallback,queue_size=1)
 
         ## RL DATA PUBLISHERS
         self.RL_Data_Publisher = rospy.Publisher('/RL/data',RLData,queue_size=10)
@@ -123,7 +123,7 @@ class CrazyflieEnv_Base():
         srv.cmd_flag = cmd_flag
         srv.cmd_rx = True
 
-        self.callService('/CF_DC/Cmd_CF_DC',srv,GTC_Cmd_srv)    
+        self.callService('/SAR_DC/Cmd_SAR_DC',srv,GTC_Cmd_srv)    
 
     def callService(self,addr,srv,srv_type,retries=5): ## PLACEHOLDER CALL SERVICE FUNCTION
         
@@ -356,7 +356,7 @@ class CrazyflieEnv_Base():
         srv.Logging_CMD = 0
 
         ## SEND LOGGING REQUEST VIA SERVICE
-        self.callService('/CF_DC/DataLogging',srv,loggingCMD)
+        self.callService('/SAR_DC/DataLogging',srv,loggingCMD)
 
     def startLogging(self,logName):
         """Start logging values to the current CSV file
@@ -368,7 +368,7 @@ class CrazyflieEnv_Base():
         srv.Logging_CMD = 1
 
         ## SEND LOGGING REQUEST VIA SERVICE
-        self.callService('/CF_DC/DataLogging',srv,loggingCMD)
+        self.callService('/SAR_DC/DataLogging',srv,loggingCMD)
 
     def capLogging(self,logName):
         """Cap logging values with Flight, Flip, and Impact conditions and stop continuous logging
@@ -381,7 +381,7 @@ class CrazyflieEnv_Base():
         srv.error_string = self.error_str # String for why logging was capped
         
         ## SEND LOGGING REQUEST VIA SERVICE
-        self.callService('/CF_DC/DataLogging',srv,loggingCMD)
+        self.callService('/SAR_DC/DataLogging',srv,loggingCMD)
 
 
     # ============================

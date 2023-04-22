@@ -93,7 +93,7 @@ class SAR_DataConverter {
 
 
         }
-
+        
         void MainInit();
         void MainLoop();
         void ConsoleLoop();
@@ -457,7 +457,7 @@ inline void SAR_DataConverter::LoadParams()
     ros::param::get("/SIM_SETTINGS/Sim_Slowdown_Speed",SIM_SLOWDOWN_SPEED);
     ros::param::get("/SIM_SETTINGS/Landing_Slowdown_Flag",LANDING_SLOWDOWN_FLAG);
 
-    ros::param::get("/CF_DC_SETTINGS/Logging_Rate",LOGGING_RATE);
+    ros::param::get("/SAR_DC_SETTINGS/Logging_Rate",LOGGING_RATE);
 
     // COLLECT CTRL GAINS
     ros::param::get(SAR_Type_str + "/CtrlGains/P_kp_xy",P_kp_xy);
@@ -555,7 +555,7 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(crazyflie_msgs::GTC_Cmd_srv::Reques
             }
             break;
 
-        case 21:  // UPDATE PARAMS IN CF_DC 
+        case 21:  // UPDATE PARAMS IN SAR_DC 
             SAR_DataConverter::LoadParams();
             break;
         

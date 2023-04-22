@@ -48,7 +48,7 @@ class CameraParser:
 
         #COLLECT MISC. DATA
         rospy.Subscriber("/CF_Internal/camera/image_raw",Image,self.Camera_cb,queue_size = 1)
-        rospy.Subscriber("/CF_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size = 1)
+        rospy.Subscriber("/SAR_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size = 1)
 
     def Create_csv(self):
 

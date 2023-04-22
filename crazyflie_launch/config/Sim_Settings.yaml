@@ -29,7 +29,7 @@ SIM_SETTINGS:
   Sim_Slowdown_Speed: 0.4
   Landing_Slowdown_Flag: True
 
-CF_DC_SETTINGS:
+SAR_DC_SETTINGS:
   Logging_Rate: 10 # [Hz]
 
 

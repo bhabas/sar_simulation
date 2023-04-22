@@ -54,8 +54,8 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base,gym.Env):
         ## LAUNCH CONTROLLER
         self.launch_Controller()
 
-        ## LAUNCH CF_DC
-        self.launch_CF_DC()
+        ## LAUNCH SAR_DC
+        self.launch_SAR_DC()
 
 
 
@@ -228,17 +228,17 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base,gym.Env):
 
     
 
-    def launch_CF_DC(self):
+    def launch_SAR_DC(self):
         """ 
-        Kill previous CF_DC node if active and launch CF_DC node
+        Kill previous SAR_DC node if active and launch SAR_DC node
         """        
 
-        print("[STARTING] Starting CF_DC Process...")
-        self.CF_DC_pro = subprocess.Popen( # CF_DC Process
+        print("[STARTING] Starting SAR_DC Process...")
+        self.SAR_DC_pro = subprocess.Popen( # SAR_DC Process
             "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_data_converter CF_DataConverter",
             close_fds=True, preexec_fn=os.setsid, shell=True)
 
-        rospy.wait_for_service("/CF_DC/Cmd_CF_DC",timeout=20)
+        rospy.wait_for_service("/SAR_DC/Cmd_SAR_DC",timeout=20)
 
 
     def callService(self,addr,srv,srv_type,retries=5):
@@ -265,7 +265,7 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base,gym.Env):
     def check_status(self):
         """
         This function runs in a seperate thread that continually checks the status of the simulation.
-        If connection to any of the Controller, CF_DC, and Gazebo fails then it will restart the full simulation.
+        If connection to any of the Controller, SAR_DC, and Gazebo fails then it will restart the full simulation.
         """        
 
         while True:
@@ -317,7 +317,7 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base,gym.Env):
         try:
             rospy.wait_for_service("/CTRL/Cmd_ctrl",timeout=1)
             if self.debug_mode:
-                print(f"{YELLOW}[WARNING] /CF_DC/Cmd_ctrl wait for service success (diagnosticTest){ENDC}")
+                print(f"{YELLOW}[WARNING] /SAR_DC/Cmd_ctrl wait for service success (diagnosticTest){ENDC}")
 
 
         except rospy.ROSException as e:
@@ -325,15 +325,15 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base,gym.Env):
             print(f"{YELLOW}[WARNING] {e}{ENDC}")
             return False
 
-        ## CHECK THAT CF_DC IS FUNCTIONING
+        ## CHECK THAT SAR_DC IS FUNCTIONING
         try:
-            rospy.wait_for_service('/CF_DC/Cmd_CF_DC',timeout=1)
+            rospy.wait_for_service('/SAR_DC/Cmd_SAR_DC',timeout=1)
             if self.debug_mode:
-                print(f"{YELLOW}[WARNING] /CF_DC/Cmd_CF_DC wait for service success (diagnosticTest){ENDC}")
+                print(f"{YELLOW}[WARNING] /SAR_DC/Cmd_SAR_DC wait for service success (diagnosticTest){ENDC}")
 
 
         except rospy.ROSException as e:
-            print(f"{YELLOW}[WARNING] /CF_DC/Cmd_CF_DC wait for service failed (diagnosticTest){ENDC}")
+            print(f"{YELLOW}[WARNING] /SAR_DC/Cmd_SAR_DC wait for service failed (diagnosticTest){ENDC}")
             print(f"{YELLOW}[WARNING] {e}{ENDC}")
             return False
 
@@ -370,13 +370,13 @@ class CrazyflieEnv_Sim(CrazyflieEnv_Base,gym.Env):
         #     return False
 
 
-        # ## LAUNCH CF_DC
+        # ## LAUNCH SAR_DC
         # try:
-        #     os.killpg(os.getpgid(self.CF_DC_pro.pid), signal.SIGTERM)
-        #     self.launch_CF_DC()
+        #     os.killpg(os.getpgid(self.SAR_DC_pro.pid), signal.SIGTERM)
+        #     self.launch_SAR_DC()
 
         # except (rospy.ROSException,rospy.ROSInterruptException) as e:
-        #     print(f"{YELLOW}[WARNING] CF_DC Launch Failed.{ENDC}")
+        #     print(f"{YELLOW}[WARNING] SAR_DC Launch Failed.{ENDC}")
         #     return False
 
 
