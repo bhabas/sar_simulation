@@ -110,6 +110,13 @@ void SAR_DataConverter::Publish_MiscData()
 {
     MiscData_msg.header.stamp = ros::Time::now();
     MiscData_msg.battery_voltage = V_battery;
+    MiscData_msg.Plane_Angle = Plane_Angle;
+    MiscData_msg.Plane_Pos.x = Plane_Pos.x;
+    MiscData_msg.Plane_Pos.y = Plane_Pos.y;
+    MiscData_msg.Plane_Pos.z = Plane_Pos.z;
+
+
+    
     MiscData_Pub.publish(MiscData_msg);
 }
 
