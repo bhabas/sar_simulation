@@ -6,17 +6,28 @@ import time
 import subprocess
 from threading import Thread,Event
 import rospy
-from crazyflie_env import SAR_Env_Base
+from crazyflie_env import SAR_Base_Interface
 
-from std_msgs.msg import Float64
+
 from std_srvs.srv import Empty
 from rosgraph_msgs.msg import Clock
+from crazyflie_msgs.srv import domainRand,domainRandRequest
+from crazyflie_msgs.srv import ModelMove,ModelMoveRequest
+from gazebo_msgs.msg import ModelState
+from gazebo_msgs.srv import SetModelState
 
 
-class SAR_Env_Sim(SAR_Env_Base):
+YELLOW = '\033[93m'
+RED = '\033[91m'
+GREEN = '\033[92m'
+CYAN = '\033[96m'
+ENDC = '\033[m'
+
+
+class SAR_Sim_Interface(SAR_Base_Interface):
 
     def __init__(self,GZ_Timeout=True):
-        SAR_Env_Base.__init__(self)
+        SAR_Base_Interface.__init__(self)
 
         self.GZ_Sim_process = None
         self.SAR_DC_process = None
@@ -39,6 +50,139 @@ class SAR_Env_Sim(SAR_Env_Base):
 
 
         print("[INITIATING] Gazebo simulation started")
+
+
+    # =========================
+    ##     ENV INTERACTION
+    # =========================
+    
+
+    def iter_step(self,n_steps:int = 10):
+        """Update simulation by n timesteps
+
+        Args:
+            n_steps (int, optional): Number of timesteps to step through. Defaults to 10.
+        """        
+
+        ## This might be better to be replaced with a world plugin with step function and a response when complete
+        ## (https://github.com/bhairavmehta95/ros-gazebo-step)
+        os.system(f'gz world --multi-step={int(n_steps)}')
+
+        ## If num steps is large then wait until iteration is fully complete before proceeding
+        if n_steps >= 50: 
+            while True:
+                try:
+                    rospy.wait_for_message('/clock', Clock, timeout=0.1)
+                except:
+                    break
+
+    def sleep(self,time_s):
+        """
+        Sleep in terms of Gazebo sim seconds not real time seconds
+        """
+
+        t_start = self.t
+        while self.t - t_start <= time_s:
+
+            ## NEGATIVE TIME DELTA
+            if self.t < t_start:
+                self.done = True
+                return False
+
+        return True
+        
+    def Vel_Launch(self,pos_0,vel_d,quat_0=[0,0,0,1]): 
+        """Launch crazyflie from the specified position/orientation with an imparted velocity.
+        NOTE: Due to controller dynamics, the actual velocity will NOT be exactly the desired velocity
+
+        Args:
+            pos_0 (list): Launch position [m]   | [x,y,z]
+            vel_d (list): Launch velocity [m/s] | [Vx,Vy,Vz]
+            quat_0 (list, optional): Orientation at launch. Defaults to [0,0,0,1].
+        """        
+
+        ## CREATE SERVICE MESSAGE
+        state_srv = ModelState()
+        state_srv.model_name = self.modelName
+
+        ## INPUT POSITION AND ORIENTATION
+        state_srv.pose.position.x = pos_0[0]
+        state_srv.pose.position.y = pos_0[1]
+        state_srv.pose.position.z = pos_0[2]
+
+        state_srv.pose.orientation.x = quat_0[0]
+        state_srv.pose.orientation.y = quat_0[1]
+        state_srv.pose.orientation.z = quat_0[2]
+        state_srv.pose.orientation.w = quat_0[3]
+
+        ## INPUT LINEAR AND ANGULAR VELOCITY
+        state_srv.twist.linear.x = vel_d[0]
+        state_srv.twist.linear.y = vel_d[1]
+        state_srv.twist.linear.z = vel_d[2]
+
+        state_srv.twist.angular.x = 0
+        state_srv.twist.angular.y = 0
+        state_srv.twist.angular.z = 0
+
+        ## PUBLISH MODEL STATE SERVICE REQUEST
+        self.callService('/gazebo/set_model_state',state_srv,SetModelState)
+        self.iter_step(2)
+
+
+        ## SET DESIRED VEL IN CONTROLLER
+        self.SendCmd('GZ_traj',cmd_vals=[pos_0[0],vel_d[0],0],cmd_flag=0)
+        self.iter_step(2)
+        self.SendCmd('GZ_traj',cmd_vals=[pos_0[1],vel_d[1],0],cmd_flag=1)
+        self.iter_step(2)
+        self.SendCmd('GZ_traj',cmd_vals=[pos_0[2],vel_d[2],0],cmd_flag=2)
+        self.iter_step(2)
+        
+
+    def reset_pos(self,z_0=0.358): # Disable sticky then places spawn_model at origin
+        """Reset pose/twist of simulated drone back to home position. 
+        As well as turning off stickyfeet
+
+        Args:
+            z_0 (float, optional): Starting height of crazyflie. Defaults to 0.379.
+        """        
+        
+        ## RESET POSITION AND VELOCITY
+        state_srv = ModelState()
+        state_srv.model_name = self.modelName
+        state_srv.pose.position.x = 0.0
+        state_srv.pose.position.y = 0.0
+        state_srv.pose.position.z = z_0
+
+        state_srv.pose.orientation.w = 1.0
+        state_srv.pose.orientation.x = 0.0
+        state_srv.pose.orientation.y = 0.0
+        state_srv.pose.orientation.z = 0.0
+        
+        state_srv.twist.linear.x = 0.0
+        state_srv.twist.linear.y = 0.0
+        state_srv.twist.linear.z = 0.0
+
+        state_srv.twist.angular.x = 0.0
+        state_srv.twist.angular.y = 0.0
+        state_srv.twist.angular.z = 0.0
+
+        self.callService('/gazebo/set_model_state',state_srv,SetModelState)
+
+    def updateInertia(self):
+
+        ## CREATE SERVICE REQUEST MSG
+        srv = domainRandRequest() 
+        srv.mass = self.mass
+        srv.Inertia.x = self.Ixx
+        srv.Inertia.y = self.Iyy
+        srv.Inertia.z = self.Izz
+
+        ## SEND LOGGING REQUEST VIA SERVICE
+        self.callService('/CF_Internal/DomainRand',srv,domainRand)
+
+    def setParams(self):
+
+        os.system("roslaunch crazyflie_launch params.launch")
 
     
 
@@ -168,7 +312,7 @@ class SAR_Env_Sim(SAR_Env_Base):
 
 if __name__ == '__main__':
     ## INIT GAZEBO ENVIRONMENT
-    env = SAR_Env_Sim()
+    env = SAR_Sim_Interface()
 
     rospy.spin()
 
