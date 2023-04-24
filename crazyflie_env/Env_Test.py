@@ -9,28 +9,28 @@ from threading import Thread
 import rospy
 from crazyflie_env import SAR_Env_Base
 
+from std_msgs.msg import Float64
+from std_srvs.srv import Empty
+from rosgraph_msgs.msg import Clock
+
 
 class SAR_Env_Sim(SAR_Env_Base):
 
     def __init__(self,GZ_Timeout=True):
         SAR_Env_Base.__init__(self)
 
-        self.gazebo_sim_process = None
-        self.cf_dc_process = None
-        self.controller_process = None
-        
+        self.GZ_Sim_process = None
+        self.SAR_DC_process = None
+        self.SAR_Ctrl_process = None
 
-        ## KILL EVERYTHING
-        os.system("killall -9 gzserver gzclient")
-        os.system("rosnode kill /gazebo /gazebo_gui")
-        time.sleep(1.0)
-        os.system("rosnode kill /SAR_Controller_Node")
-        time.sleep(1.0)
-        os.system("rosnode kill /SAR_DataConverter_Node")
-        time.sleep(1.0)
+        ## START SIMULATION
+        self.restart_subprocesses()
 
-        self.start_all()
-        self.start_monitoring()
+
+        ## START MONITORING NODES
+        self.start_monitoring_subprocesses()
+        if GZ_Timeout == True:
+            self.start_monitoring_clock_topic()
 
 
 
@@ -39,61 +39,115 @@ class SAR_Env_Sim(SAR_Env_Base):
         print("[INITIATING] Gazebo simulation started")
 
     
-    def start_gazebo_sim(self):
+    def launch_GZ_Sim(self):
         cmd = "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_launch launch_gazebo.bash"
-        self.gazebo_sim_process = subprocess.Popen(cmd, shell=True)
+        self.GZ_Sim_process = subprocess.Popen(cmd, shell=True)
 
-    def start_cf_dc(self):
+    def launch_SAR_DC(self):
         cmd = "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun sar_data_converter SAR_DataConverter"
-        self.cf_dc_process = subprocess.Popen(cmd, shell=True)
+        self.SAR_DC_process = subprocess.Popen(cmd, shell=True)
 
-    def start_controller(self):
+    def launch_controller(self):
         cmd = "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun sar_control SAR_Controller"
-        self.controller_process = subprocess.Popen(cmd, shell=True)
+        self.SAR_Ctrl_process = subprocess.Popen(cmd, shell=True)
 
-    def start_all(self):
-        self.start_gazebo_sim()
-        time.sleep(5)
-        self.start_cf_dc()
-        self.start_controller()
+    
+    
 
-    def ping_subprocess(self, service_name):
-        cmd = f"rosservice call {service_name}"
-        try:
-            result = subprocess.run(cmd, shell=True, timeout=5, check=True, stdout=subprocess.PIPE)
-            return result.returncode == 0
-        except (subprocess.TimeoutExpired, subprocess.CalledProcessError):
-            return False
+    
+
+    
+
+    def start_monitoring_subprocesses(self):
+        monitor_thread = Thread(target=self.monitor_subprocesses)
+        monitor_thread.daemon = True
+        monitor_thread.start()
 
     def monitor_subprocesses(self):
 
         while True:
 
-            gazebo_ping_ok = self.ping_subprocess("/gazebo/get_loggers")
-            cf_dc_ping_ok = self.ping_subprocess("/SAR_DataConverter_Node/get_loggers")
-            controller_ping_ok = self.ping_subprocess("/SAR_Controller_Node/get_loggers")
+            GZ_ping_ok = self.ping_subprocesses("/gazebo/get_loggers")
+            SAR_DC_ping_ok = self.ping_subprocesses("/SAR_DataConverter_Node/get_loggers")
+            SAR_Ctrl_ping_ok = self.ping_subprocesses("/SAR_Controller_Node/get_loggers")
 
-            if not (gazebo_ping_ok and cf_dc_ping_ok and controller_ping_ok):
+            if not (GZ_ping_ok and SAR_DC_ping_ok and SAR_Ctrl_ping_ok):
                 print("One or more subprocesses not responding. Restarting all subprocesses...")
-                self.restart_all()
+                self.restart_subprocesses()
 
             time.sleep(1.0)
 
-    def restart_all(self):
+    def ping_subprocesses(self, service_name,silence_errors=False):
+        cmd = f"rosservice call {service_name}"
+        stderr_option = subprocess.DEVNULL if silence_errors else None
+
+        try:
+            result = subprocess.run(cmd, shell=True, timeout=5, check=True, stdout=subprocess.PIPE, stderr=stderr_option)
+            return result.returncode == 0
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError):
+            return False
+        
+        
+    def restart_subprocesses(self):
+
+        ## KILL ALL POTENTIAL NODE/SUBPROCESSES
         os.system("killall -9 gzserver gzclient")
         os.system("rosnode kill /gazebo /gazebo_gui")
-        time.sleep(1.0)
+        time.sleep(2.0)
         os.system("rosnode kill /SAR_Controller_Node")
-        time.sleep(1.0)
+        time.sleep(2.0)
         os.system("rosnode kill /SAR_DataConverter_Node")
-        time.sleep(1.0)
+        time.sleep(2.0)
 
-        self.start_all()
+        ## LAUNCH GAZEBO
+        self.launch_GZ_Sim()
+        self.wait_for_gazebo_launch()
 
-    def start_monitoring(self):
-        monitor_thread = Thread(target=self.monitor_subprocesses)
-        monitor_thread.daemon = True
-        monitor_thread.start()
+        self.launch_controller()
+        self.launch_SAR_DC()
+
+    def wait_for_gazebo_launch(self):
+
+        while not self.ping_subprocesses("/gazebo/get_loggers",silence_errors=True):
+
+            print("Waiting for Gazebo to fully launch...")
+            time.sleep(1)
+
+        print("Gazebo has fully launched.")
+
+
+
+
+    # ===========================
+    ##      MONITOR CLOCK
+    # ===========================
+
+    def start_monitoring_clock_topic(self):
+        monitor_clock_thread = Thread(target=self.monitor_clock_topic)
+        monitor_clock_thread.daemon = True
+        monitor_clock_thread.start()
+
+    def monitor_clock_topic(self):
+        while True:
+            try:
+                rospy.wait_for_message('/clock', Clock, timeout=10)
+            except rospy.ROSException:
+                print("No message received on /clock topic within the timeout. Unpausing physics.")
+                self.pause_physics(False)
+
+    def pause_physics(self,pause_flag=True):
+
+        if pause_flag == True:
+            service = '/gazebo/pause_physics'
+        else:
+            service = '/gazebo/unpause_physics'
+
+        rospy.wait_for_service(service)
+        try:
+            service_call = rospy.ServiceProxy(service, Empty)
+            service_call()
+        except rospy.ServiceException as e:
+            print(f"Service call failed: {e}")
 
 
  
