@@ -39,7 +39,7 @@ void SAR_DataConverter::MainLoop()
 int main(int argc, char** argv)
 {
     
-    ros::init(argc,argv,"CF_DataConverter_Node");
+    ros::init(argc,argv,"SAR_DataConverter_Node");
     ros::NodeHandle nh;
     SAR_DataConverter SAR_DC = SAR_DataConverter(&nh);
     ros::spin();

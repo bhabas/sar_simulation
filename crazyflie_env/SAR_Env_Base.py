@@ -18,7 +18,7 @@ RED = '\033[91m'
 GREEN = '\033[92m'
 ENDC = '\033[m'
 
-class CrazyflieEnv_Base():
+class SAR_Env_Base():
     metadata = {'render.modes': ['human']}
     def __init__(self):
         os.system("roslaunch crazyflie_launch params.launch")         
@@ -515,7 +515,7 @@ class CrazyflieEnv_Base():
 
 if __name__ == "__main__":
 
-    env = CrazyflieEnv_Base()
+    env = SAR_Env_Base()
     rospy.spin()
 
 
