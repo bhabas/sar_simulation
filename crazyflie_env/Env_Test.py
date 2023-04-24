@@ -105,21 +105,28 @@ class SAR_Env_Sim(SAR_Env_Base):
 
         ## LAUNCH GAZEBO
         self.launch_GZ_Sim()
-        self.wait_for_gazebo_launch()
+        self.wait_for_gazebo_launch(timeout=10)
 
         self.launch_controller()
         self.launch_SAR_DC()
 
         self.Clock_Check_Flag.set()
 
-    def wait_for_gazebo_launch(self):
+    def wait_for_gazebo_launch(self,timeout=None):
+
+        start_time = time.time()
 
         while not self.ping_subprocesses("/gazebo/get_loggers",silence_errors=True):
 
+            if timeout is not None and time.time() - start_time > timeout:
+                print("Timeout reached while waiting for Gazebo to launch.")
+                return False
+        
             print("Waiting for Gazebo to fully launch...")
             time.sleep(1)
 
         print("Gazebo has fully launched.")
+        return True
 
 
 
