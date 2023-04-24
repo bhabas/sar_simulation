@@ -5,7 +5,7 @@ import os
 import time
 import sys
 import subprocess
-from threading import Thread
+from threading import Thread,Event
 import rospy
 from crazyflie_env import SAR_Env_Base
 
@@ -23,7 +23,10 @@ class SAR_Env_Sim(SAR_Env_Base):
         self.SAR_DC_process = None
         self.SAR_Ctrl_process = None
 
+        
+
         ## START SIMULATION
+        self.Clock_Check_Flag = Event() # Stops clock monitoring during launch process
         self.restart_subprocesses()
 
 
@@ -39,6 +42,12 @@ class SAR_Env_Sim(SAR_Env_Base):
         print("[INITIATING] Gazebo simulation started")
 
     
+
+    
+    # ================================
+    ##     SIM MONITORING/LAUNCH
+    # ================================
+
     def launch_GZ_Sim(self):
         cmd = "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_launch launch_gazebo.bash"
         self.GZ_Sim_process = subprocess.Popen(cmd, shell=True)
@@ -50,13 +59,6 @@ class SAR_Env_Sim(SAR_Env_Base):
     def launch_controller(self):
         cmd = "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun sar_control SAR_Controller"
         self.SAR_Ctrl_process = subprocess.Popen(cmd, shell=True)
-
-    
-    
-
-    
-
-    
 
     def start_monitoring_subprocesses(self):
         monitor_thread = Thread(target=self.monitor_subprocesses)
@@ -75,7 +77,7 @@ class SAR_Env_Sim(SAR_Env_Base):
                 print("One or more subprocesses not responding. Restarting all subprocesses...")
                 self.restart_subprocesses()
 
-            time.sleep(1.0)
+            time.sleep(0.5)
 
     def ping_subprocesses(self, service_name,silence_errors=False):
         cmd = f"rosservice call {service_name}"
@@ -89,6 +91,8 @@ class SAR_Env_Sim(SAR_Env_Base):
         
         
     def restart_subprocesses(self):
+
+        self.Clock_Check_Flag.clear()
 
         ## KILL ALL POTENTIAL NODE/SUBPROCESSES
         os.system("killall -9 gzserver gzclient")
@@ -105,6 +109,8 @@ class SAR_Env_Sim(SAR_Env_Base):
 
         self.launch_controller()
         self.launch_SAR_DC()
+
+        self.Clock_Check_Flag.set()
 
     def wait_for_gazebo_launch(self):
 
@@ -128,9 +134,11 @@ class SAR_Env_Sim(SAR_Env_Base):
         monitor_clock_thread.start()
 
     def monitor_clock_topic(self):
+
         while True:
+            self.Clock_Check_Flag.wait()
             try:
-                rospy.wait_for_message('/clock', Clock, timeout=10)
+                rospy.wait_for_message('/clock', Clock, timeout=5)
             except rospy.ROSException:
                 print("No message received on /clock topic within the timeout. Unpausing physics.")
                 self.pause_physics(False)
