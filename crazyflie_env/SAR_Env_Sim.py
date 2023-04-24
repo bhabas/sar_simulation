@@ -3,7 +3,6 @@ import numpy as np
 
 import os
 import time
-import sys
 import subprocess
 from threading import Thread,Event
 import rospy
