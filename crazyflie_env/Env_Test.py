@@ -30,6 +30,8 @@ class SAR_Env_Sim(SAR_Env_Base):
         time.sleep(1.0)
 
         self.start_all()
+        self.start_monitoring()
+
 
 
 
@@ -51,13 +53,47 @@ class SAR_Env_Sim(SAR_Env_Base):
 
     def start_all(self):
         self.start_gazebo_sim()
-
-
+        time.sleep(5)
         self.start_cf_dc()
         self.start_controller()
 
-        # self.cf_dc_process.wait()
-        # self.controller_process.wait()
+    def ping_subprocess(self, service_name):
+        cmd = f"rosservice call {service_name}"
+        try:
+            result = subprocess.run(cmd, shell=True, timeout=5, check=True, stdout=subprocess.PIPE)
+            return result.returncode == 0
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError):
+            return False
+
+    def monitor_subprocesses(self):
+
+        while True:
+
+            gazebo_ping_ok = self.ping_subprocess("/gazebo/get_loggers")
+            cf_dc_ping_ok = self.ping_subprocess("/SAR_DataConverter_Node/get_loggers")
+            controller_ping_ok = self.ping_subprocess("/SAR_Controller_Node/get_loggers")
+
+            if not (gazebo_ping_ok and cf_dc_ping_ok and controller_ping_ok):
+                print("One or more subprocesses not responding. Restarting all subprocesses...")
+                self.restart_all()
+
+            time.sleep(1.0)
+
+    def restart_all(self):
+        os.system("killall -9 gzserver gzclient")
+        os.system("rosnode kill /gazebo /gazebo_gui")
+        time.sleep(1.0)
+        os.system("rosnode kill /SAR_Controller_Node")
+        time.sleep(1.0)
+        os.system("rosnode kill /SAR_DataConverter_Node")
+        time.sleep(1.0)
+
+        self.start_all()
+
+    def start_monitoring(self):
+        monitor_thread = Thread(target=self.monitor_subprocesses)
+        monitor_thread.daemon = True
+        monitor_thread.start()
 
 
  
