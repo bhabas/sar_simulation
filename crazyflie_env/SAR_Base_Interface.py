@@ -118,7 +118,7 @@ class SAR_Base_Interface():
         srv.cmd_flag = cmd_flag
         srv.cmd_rx = True
 
-        self.callService('/SAR_DC/Cmd_SAR_DC',srv,GTC_Cmd_srv)    
+        self.callService('/SAR_DC/CMD_Input',srv,GTC_Cmd_srv)    
 
     
     def callService(self,srv_addr,srv_msg,srv_type,num_retries=5):

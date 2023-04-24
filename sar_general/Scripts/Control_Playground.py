@@ -28,6 +28,7 @@ def cmd_send(env,logName):
             90:'GZ_traj',
             91:'GZ_reset',
             92:'StickyPads',
+            93:'Plane_Pose',
         }
 
         try:
@@ -198,12 +199,22 @@ def cmd_send(env,logName):
 
                 ## ESTIMATE IMPACT POINT
                 env.Vel_Launch(env.pos,[Vx_d,Vy_d,Vz_d])
-                env.gazebo_unpause_physics()
+                env.pause_physics()
                 
                     
             elif action == 'GZ_reset':
                 print("Reset Pos/Vel -- Sticky off -- Controller Reset\n")
                 env.reset_pos()
+
+            elif action=='Plane_Pose':
+                cmd_vals = env.userInput("Set desired position values (x,y,z): ",float)
+                cmd_flag = env.userInput("Set desired plane angle [deg]: ",float)
+                print()
+
+                env.SendCmd(action,cmd_vals,cmd_flag)
+
+            else:
+                print("Please try another command")
 
         except ValueError:
             print('\033[93m' + "INVALID INPUT: Try again" + '\x1b[0m')
@@ -211,10 +222,10 @@ def cmd_send(env,logName):
 
 
 if __name__ == '__main__':
-    from crazyflie_env import CrazyflieEnv_Sim
+    from crazyflie_env import SAR_Sim_Interface
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv_Sim(GZ_Timeout=False)
-    env.gazebo_unpause_physics()
+    env = SAR_Sim_Interface()
+    env.pause_physics(False)
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 24
