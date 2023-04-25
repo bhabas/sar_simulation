@@ -167,6 +167,51 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                 break;
         }
     }
+
+    if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
+
+        if(policy_armed_flag == true){
+            
+            switch (Policy)
+            {
+                case PARAM_OPTIM:
+                    if(Tau <= Policy_Flip && onceFlag == false && V_perp > 0.1){
+                        onceFlag = true;
+                        flip_flag = true;  
+
+                        // UPDATE AND RECORD FLIP VALUES
+                        statePos_tr = statePos;
+                        stateVel_tr = stateVel;
+                        stateQuat_tr = stateQuat;
+                        stateOmega_tr = stateOmega;
+
+                        Tau_tr = Tau;
+                        Theta_x_tr = Theta_x_tr;
+                        Theta_y_tr = Theta_y_tr;
+                        D_perp_tr = D_perp;
+
+                    
+                        M_d.x = 0.0f;
+                        M_d.y = -Policy_Action*1e-3f;
+                        M_d.z = 0.0f;
+
+                        F_thrust_flip = 0.0;
+                        M_x_flip = M_d.x*1e3f;
+                        M_y_flip = M_d.y*1e3f;
+                        M_z_flip = M_d.z*1e3f;
+                        }
+                        
+                        break;
+
+                    break;
+            
+            default:
+                break;
+            }
+
+        }
+
+    }
     
 
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {

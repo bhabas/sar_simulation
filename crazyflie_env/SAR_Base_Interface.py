@@ -148,7 +148,7 @@ class SAR_Base_Interface():
                 
 
     def VelTraj_StartPos(self,x_impact,V_d,accel_d=None,Tau_0=0.5):
-        """Returns the required start position (x_0,z_0) to intercept the ceiling 
+        """Returns the required start position (x_0,z_0) to intercept the 180 deg ceiling 
         at a specific x-location; while also achieving the desired velocity conditions 
         at by a certain distance from the ceiling.
 
