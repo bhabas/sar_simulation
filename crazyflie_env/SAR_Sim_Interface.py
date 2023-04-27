@@ -209,6 +209,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         monitor_thread.daemon = True
         monitor_thread.start()
 
+
     def monitor_subprocesses(self):
 
         while True:
@@ -216,9 +217,14 @@ class SAR_Sim_Interface(SAR_Base_Interface):
             GZ_ping_ok = self.ping_subprocesses("/gazebo/get_loggers")
             SAR_DC_ping_ok = self.ping_subprocesses("/SAR_DataConverter_Node/get_loggers")
             SAR_Ctrl_ping_ok = self.ping_subprocesses("/SAR_Controller_Node/get_loggers")
+            NaN_check_ok = not np.isnan(self.pos[0])
 
             if not (GZ_ping_ok and SAR_DC_ping_ok and SAR_Ctrl_ping_ok):
                 print("One or more subprocesses not responding. Restarting all subprocesses...")
+                self.restart_subprocesses()
+
+            if not (NaN_check_ok):
+                print("NaN value detected. Restarting all subprocesses...")
                 self.restart_subprocesses()
 
             time.sleep(0.5)
