@@ -125,6 +125,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         state_srv.twist.angular.z = 0
 
         ## PUBLISH MODEL STATE SERVICE REQUEST
+        self.pause_physics()
         self.callService('/gazebo/set_model_state',state_srv,SetModelState)
         self.iter_step(2)
 

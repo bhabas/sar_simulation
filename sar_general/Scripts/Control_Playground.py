@@ -199,7 +199,7 @@ def cmd_send(env,logName):
 
                 ## ESTIMATE IMPACT POINT
                 env.Vel_Launch(env.pos,[Vx_d,Vy_d,Vz_d])
-                env.pause_physics()
+                env.pause_physics(False)
                 
                     
             elif action == 'GZ_Pose_Reset':
@@ -224,7 +224,7 @@ def cmd_send(env,logName):
 if __name__ == '__main__':
     from crazyflie_env import SAR_Sim_Interface
     ## INIT GAZEBO ENVIRONMENT
-    env = SAR_Sim_Interface()
+    env = SAR_Sim_Interface(GZ_Timeout=False)
     env.pause_physics(False)
 
     ## INITIALIALIZE LOGGING DATA

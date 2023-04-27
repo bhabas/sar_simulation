@@ -163,7 +163,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                 break;
 
             case CONST_VEL_GZ:
-                // const_velocity_Traj();
+                const_velocity_GZ_Traj();
                 break;
         }
     }
