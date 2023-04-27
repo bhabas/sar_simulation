@@ -54,10 +54,10 @@ class SAR_Base_Interface():
         # NOTE: Queue sizes=1 so that we are always looking at the most current data and 
         #       not data at back of a queue waiting to be processed by callbacks
         rospy.Subscriber("/clock",Clock,self.clockCallback,queue_size=1)
-        rospy.Subscriber("/SAR_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size=1)
-        rospy.Subscriber("/SAR_DC/FlipData",CF_FlipData,self.CF_FlipDataCallback,queue_size=1)
-        rospy.Subscriber("/SAR_DC/ImpactData",CF_ImpactData,self.CF_ImpactDataCallback,queue_size=1)
-        rospy.Subscriber("/SAR_DC/MiscData",CF_MiscData,self.CF_MiscDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_DC/StateData",CF_StateData,self.SAR_StateDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_DC/FlipData",CF_FlipData,self.SAR_FlipDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_DC/ImpactData",CF_ImpactData,self.SAR_ImpactDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_DC/MiscData",CF_MiscData,self.SAR_MiscDataCallback,queue_size=1)
 
         ## RL DATA PUBLISHERS
         self.RL_Data_Publisher = rospy.Publisher('/RL/data',RLData,queue_size=10)
@@ -102,10 +102,10 @@ class SAR_Base_Interface():
             'Thrust':30,
             'PWM':31,
 
-            'GZ_traj':90,
-            'GZ_reset':91,
-            'StickyPads':92,
-            'Plane_Pose':93,
+            'GZ_Pose_Reset':90,
+            'GZ_Const_Vel_Traj':91,
+            'GZ_StickyPads':92,
+            'GZ_Plane_Pose':93,
         }
 
         ## CREATE SERVICE REQUEST MSG
@@ -396,7 +396,7 @@ class SAR_Base_Interface():
         if rospy.get_param('/DATA_TYPE') == "SIM":
             self.t = msg.clock.to_sec()
 
-    def CF_StateDataCallback(self,StateData_msg):
+    def SAR_StateDataCallback(self,StateData_msg):
 
         if rospy.get_param('/DATA_TYPE') == "EXP":
             self.t = StateData_msg.header.stamp.to_sec()
@@ -432,7 +432,7 @@ class SAR_Base_Interface():
        
         self.t_prev = self.t # Save t value for next callback iteration
 
-    def CF_FlipDataCallback(self,FlipData_msg):
+    def SAR_FlipDataCallback(self,FlipData_msg):
 
         ## FLIP FLAG
         self.flip_flag = FlipData_msg.flip_flag
@@ -470,7 +470,7 @@ class SAR_Base_Interface():
             self.Policy_Action_tr = FlipData_msg.Policy_Action_tr
 
 
-    def CF_ImpactDataCallback(self,ImpactData_msg):
+    def SAR_ImpactDataCallback(self,ImpactData_msg):
 
         if rospy.get_param('/DATA_TYPE') == "SIM": ## Impact values only good in simulation
 
@@ -498,7 +498,7 @@ class SAR_Base_Interface():
                                           ImpactData_msg.Twist_impact.angular.z],3)
 
 
-    def CF_MiscDataCallback(self,MiscData_msg):        
+    def SAR_MiscDataCallback(self,MiscData_msg):        
 
         self.V_Battery = np.round(MiscData_msg.battery_voltage,4)
 

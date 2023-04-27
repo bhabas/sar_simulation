@@ -130,11 +130,11 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
 
         ## SET DESIRED VEL IN CONTROLLER
-        self.SendCmd('GZ_traj',cmd_vals=[pos_0[0],vel_d[0],0],cmd_flag=0)
+        self.SendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos_0[0],vel_d[0],0],cmd_flag=0)
         self.iter_step(2)
-        self.SendCmd('GZ_traj',cmd_vals=[pos_0[1],vel_d[1],0],cmd_flag=1)
+        self.SendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos_0[1],vel_d[1],0],cmd_flag=1)
         self.iter_step(2)
-        self.SendCmd('GZ_traj',cmd_vals=[pos_0[2],vel_d[2],0],cmd_flag=2)
+        self.SendCmd('GZ_Const_Vel_Traj',cmd_vals=[pos_0[2],vel_d[2],0],cmd_flag=2)
         self.iter_step(2)
         
 
