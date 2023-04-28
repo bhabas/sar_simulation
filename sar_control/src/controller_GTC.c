@@ -176,7 +176,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
             switch (Policy)
             {
                 case PARAM_OPTIM:
-                    if(Tau <= Policy_Flip && onceFlag == false && V_perp > 0.1){
+                    if(Tau <= Policy_Flip && onceFlag == false && V_perp > 0.1f){
                         onceFlag = true;
                         flip_flag = true;  
 
