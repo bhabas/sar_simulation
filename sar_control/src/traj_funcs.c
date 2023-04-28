@@ -110,6 +110,28 @@ void const_velocity_Traj()
     
 }
 
+void const_velocity_GZ_Traj()
+{
+    float t = t_traj[0];
+     
+    // CONSTANT X-VELOCITY AND CONSTANT Z-VELOCITY
+    x_d.x = v_t[0]*t + s_0_t[0]; // vx*t + x_0
+    v_d.x = v_t[0]; // vx
+    a_d.x = 0.0;
+
+    x_d.y = v_t[1]*t + s_0_t[1]; // vy*t + y_0
+    v_d.y = v_t[1]; // vy
+    a_d.y = 0.0;
+
+    x_d.z = v_t[2]*t + s_0_t[2]; // vz*t + z_0
+    v_d.z = v_t[2]; // vz
+    a_d.z = 0.0f;
+    
+
+    t_traj[0] += dt;
+
+}
+
 void set_vec_element(struct vec *v, int index, float value) {
 
     switch (index) {

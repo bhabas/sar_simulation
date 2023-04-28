@@ -243,8 +243,8 @@ void Controller::publishCtrlDebug()
     CtrlDebug_msg.Motorstop_Flag = motorstop_flag;
 
 
-    // CtrlDebug_msg.Traj_Active = execute_vel_traj;
-    // CtrlDebug_msg.Policy_Armed = policy_armed_flag; 
+    // CtrlDebug_msg.Traj_Active = ;
+    CtrlDebug_msg.Policy_Armed = policy_armed_flag; 
     // CtrlDebug_msg.Camera_Sensor_Active = camera_sensor_active;
 
     CTRL_Debug_Publisher.publish(CtrlDebug_msg);
@@ -281,9 +281,6 @@ void Controller::publishCtrlData()
     CtrlData_msg.Tau_est = Tau_est;
     CtrlData_msg.Theta_x_est = Theta_x_est;
     CtrlData_msg.Theta_y_est = Theta_y_est;
-
-    // CtrlData_msg.Tau_thr = Tau_thr;
-    // CtrlData_msg.G1 = G1;
 
     // NEURAL NETWORK DATA
     CtrlData_msg.Policy_Flip = Policy_Flip;

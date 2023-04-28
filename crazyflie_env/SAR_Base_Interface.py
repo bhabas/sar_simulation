@@ -18,19 +18,19 @@ RED = '\033[91m'
 GREEN = '\033[92m'
 ENDC = '\033[m'
 
-class CrazyflieEnv_Base():
-    metadata = {'render.modes': ['human']}
+class SAR_Base_Interface():
+
     def __init__(self):
         os.system("roslaunch crazyflie_launch params.launch")         
         rospy.init_node("SAR_Env_Node")
 
-        self.env_name = "SAR_BaseEnv"
 
-        ## CRAZYFLIE PARAMETERS
+        ## SAR PARAMETERS
         self.SAR_Type = rospy.get_param('/QUAD_SETTINGS/SAR_Type')
         self.SAR_Config = rospy.get_param('/QUAD_SETTINGS/SAR_Config')
         self.modelInitials = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Initials")
         self.modelName = f"crazyflie_{self.SAR_Config}"
+        self.done = False
         self.preInit_Values()
 
         self.pos_0 = [0.0, 0.0, 0.4]      # Default hover position [m]
@@ -44,7 +44,7 @@ class CrazyflieEnv_Base():
 
         ## INIT LOGGING VALUES
         self.username = getpass.getuser()
-        self.logDir =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/crazyflie_logging/local_logs"
+        self.logDir =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/sar_logging/local_logs"
         self.logName = "TestLog.csv"
         self.error_str = "No_Debug_Data"
 
@@ -54,10 +54,10 @@ class CrazyflieEnv_Base():
         # NOTE: Queue sizes=1 so that we are always looking at the most current data and 
         #       not data at back of a queue waiting to be processed by callbacks
         rospy.Subscriber("/clock",Clock,self.clockCallback,queue_size=1)
-        rospy.Subscriber("/SAR_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size=1)
-        rospy.Subscriber("/SAR_DC/FlipData",CF_FlipData,self.CF_FlipDataCallback,queue_size=1)
-        rospy.Subscriber("/SAR_DC/ImpactData",CF_ImpactData,self.CF_ImpactDataCallback,queue_size=1)
-        rospy.Subscriber("/SAR_DC/MiscData",CF_MiscData,self.CF_MiscDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_DC/StateData",CF_StateData,self.SAR_StateDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_DC/FlipData",CF_FlipData,self.SAR_FlipDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_DC/ImpactData",CF_ImpactData,self.SAR_ImpactDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_DC/MiscData",CF_MiscData,self.SAR_MiscDataCallback,queue_size=1)
 
         ## RL DATA PUBLISHERS
         self.RL_Data_Publisher = rospy.Publisher('/RL/data',RLData,queue_size=10)
@@ -102,10 +102,10 @@ class CrazyflieEnv_Base():
             'Thrust':30,
             'PWM':31,
 
-            'GZ_traj':90,
-            'GZ_reset':91,
-            'StickyPads':92,
-            'Plane_Pose':93,
+            'GZ_Pose_Reset':90,
+            'GZ_Const_Vel_Traj':91,
+            'GZ_StickyPads':92,
+            'GZ_Plane_Pose':93,
         }
 
         ## CREATE SERVICE REQUEST MSG
@@ -118,15 +118,37 @@ class CrazyflieEnv_Base():
         srv.cmd_flag = cmd_flag
         srv.cmd_rx = True
 
-        self.callService('/SAR_DC/Cmd_SAR_DC',srv,GTC_Cmd_srv)    
+        self.callService('/SAR_DC/CMD_Input',srv,GTC_Cmd_srv)    
 
-    def callService(self,addr,srv,srv_type,retries=5): ## PLACEHOLDER CALL SERVICE FUNCTION
-        
+    
+    def callService(self,srv_addr,srv_msg,srv_type,num_retries=5):
 
-        return False
+        try:
+            rospy.wait_for_service(srv_addr, 1)
+
+        except rospy.ROSException as e:
+            rospy.logerr(f"[WARNING] Service '{srv_addr}' not available: {e}")
+            return None
+            
+        service_proxy = rospy.ServiceProxy(srv_addr, srv_type)
+
+        for retry in range(num_retries):
+            try:
+                response = service_proxy(srv_msg)
+                return response
+            
+            except (rospy.ServiceException,rospy.exceptions.ROSException) as e:
+                rospy.logwarn(f"[WARNING] Attempt {retry + 1} to call service '{srv_addr}' failed: {e}")
+
+
+        self.done = True
+        rospy.logerr(f"Service '{srv_addr}' call failed after {num_retries} attempts")
+        return None
+
+                
 
     def VelTraj_StartPos(self,x_impact,V_d,accel_d=None,Tau_0=0.5):
-        """Returns the required start position (x_0,z_0) to intercept the ceiling 
+        """Returns the required start position (x_0,z_0) to intercept the 180 deg ceiling 
         at a specific x-location; while also achieving the desired velocity conditions 
         at by a certain distance from the ceiling.
 
@@ -374,7 +396,7 @@ class CrazyflieEnv_Base():
         if rospy.get_param('/DATA_TYPE') == "SIM":
             self.t = msg.clock.to_sec()
 
-    def CF_StateDataCallback(self,StateData_msg):
+    def SAR_StateDataCallback(self,StateData_msg):
 
         if rospy.get_param('/DATA_TYPE') == "EXP":
             self.t = StateData_msg.header.stamp.to_sec()
@@ -410,7 +432,7 @@ class CrazyflieEnv_Base():
        
         self.t_prev = self.t # Save t value for next callback iteration
 
-    def CF_FlipDataCallback(self,FlipData_msg):
+    def SAR_FlipDataCallback(self,FlipData_msg):
 
         ## FLIP FLAG
         self.flip_flag = FlipData_msg.flip_flag
@@ -448,7 +470,7 @@ class CrazyflieEnv_Base():
             self.Policy_Action_tr = FlipData_msg.Policy_Action_tr
 
 
-    def CF_ImpactDataCallback(self,ImpactData_msg):
+    def SAR_ImpactDataCallback(self,ImpactData_msg):
 
         if rospy.get_param('/DATA_TYPE') == "SIM": ## Impact values only good in simulation
 
@@ -476,7 +498,7 @@ class CrazyflieEnv_Base():
                                           ImpactData_msg.Twist_impact.angular.z],3)
 
 
-    def CF_MiscDataCallback(self,MiscData_msg):        
+    def SAR_MiscDataCallback(self,MiscData_msg):        
 
         self.V_Battery = np.round(MiscData_msg.battery_voltage,4)
 
@@ -515,7 +537,7 @@ class CrazyflieEnv_Base():
 
 if __name__ == "__main__":
 
-    env = CrazyflieEnv_Base()
+    env = SAR_Base_Interface()
     rospy.spin()
 
 

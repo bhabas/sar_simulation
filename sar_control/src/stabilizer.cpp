@@ -42,7 +42,7 @@ void Controller::stabilizerLoop() // MAIN CONTROLLER LOOP
 int main(int argc, char **argv)
 {
 
-    ros::init(argc, argv, "Controller_Node");
+    ros::init(argc, argv, "SAR_Controller_Node");
     ros::NodeHandle nh;
 
     Controller CTRL = Controller(&nh);

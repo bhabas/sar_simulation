@@ -360,6 +360,44 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
             break;
 
 
+        case 91: // Gazebo Velocity Trajectory (Instantaneous Acceleration)
+
+            Traj_Type = CONST_VEL_GZ;
+            axis = (axis_direction)GTC_Cmd->cmd_flag;
+
+            switch(axis){
+
+                case x_axis:
+
+                    s_0_t[0] = GTC_Cmd->cmd_val1;   // Starting position [m]
+                    v_t[0] = GTC_Cmd->cmd_val2;     // Desired velocity [m/s]
+                    a_t[0] = 0.0f;                  // Acceleration [m/s^2]
+
+                    t_traj[0] = 0.0f; // Reset timer
+                    break;
+
+                case y_axis:
+
+                    s_0_t[1] = GTC_Cmd->cmd_val1;
+                    v_t[1] = GTC_Cmd->cmd_val2;
+                    a_t[1] = 0.0f;
+
+                    t_traj[1] = 0.0f;
+                    break;
+
+                case z_axis:
+
+                    s_0_t[2] = GTC_Cmd->cmd_val1;
+                    v_t[2] = GTC_Cmd->cmd_val2;
+                    a_t[2] = 0.0f;
+
+                    t_traj[2] = 0.0f;
+                    break;
+                    
+            }
+
+            break;
+
         case 11: // Constant Velocity Trajectory
 
             Traj_Type = CONST_VEL;
@@ -422,6 +460,8 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
             PWM_override[3] = GTC_Cmd->cmd_flag;
 
             break;
+
+        
 
         case 93: // UPDATE PLANE POSITION
 

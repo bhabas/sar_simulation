@@ -25,9 +25,10 @@ def cmd_send(env,logName):
             22:'Start_Logging',
             23:'Cap_Logging',
 
-            90:'GZ_traj',
-            91:'GZ_reset',
-            92:'StickyPads',
+            90:'GZ_Pose_Reset',
+            91:'GZ_Const_Vel_Traj',
+            92:'GZ_StickyPads',
+            93:'GZ_Plane_Pose',
         }
 
         try:
@@ -35,7 +36,7 @@ def cmd_send(env,logName):
             print("0:Ctrl_Reset, \t1:Pos, \t\t2:Vel, \t3:Yaw, \t5:Stop, \t8:Policy")
             print("10:P2P_traj, \t11:Vel_traj, \t12:Impact_traj,")
             print("20:Tumble, \t21:Load_Params, 22:Start_Logging, 23:Cap_Logging,")
-            print("90:GZ_traj, \t91:GZ_reset, \t92:StickyPads")
+            print("90:GZ_Pose_Reset, \t91:GZ_Const_Vel_Traj, \t92:GZ_StickyPads, \t93:GZ_Plane_Pose")
             val = env.userInput("\nCmd: ",int)
             print()
             action = cmd_dict[val]
@@ -46,7 +47,7 @@ def cmd_send(env,logName):
                 cmd_flag = 1
                 print("Reset controller to default values\n")
 
-                env.SendCmd('StickyPads',cmd_vals,0)
+                env.SendCmd('GZ_StickyPads',cmd_vals,0)
                 env.SendCmd(action,cmd_vals,cmd_flag)
             
             elif action=='Start_Logging':
@@ -166,15 +167,6 @@ def cmd_send(env,logName):
                     print(f"Try again")
 
 
-
-
-            elif action=='StickyPads':
-                cmd_vals = [0,0,0]
-                cmd_flag = env.userInput("Turn sticky pads On/Off (1,0): ",int)
-                print()
-
-                env.SendCmd(action,cmd_vals,cmd_flag)
-
             elif action=='P2P_traj':
                 ## GET INPUT VALUES
                 x_d = env.userInput("Desired position (x,y,z):",float)
@@ -183,7 +175,16 @@ def cmd_send(env,logName):
                 env.SendCmd('P2P_traj',cmd_vals=[env.pos[2],x_d[2],env.accCF_max[2]],cmd_flag=2)
 
 
-            elif action=='GZ_traj':
+            elif action=='GZ_StickyPads':
+                cmd_vals = [0,0,0]
+                cmd_flag = env.userInput("Turn sticky pads On/Off (1,0): ",int)
+                print()
+
+                env.SendCmd(action,cmd_vals,cmd_flag)
+
+
+
+            elif action=='GZ_Const_Vel_Traj':
 
 
                 ## GET INPUT VALUES
@@ -198,12 +199,22 @@ def cmd_send(env,logName):
 
                 ## ESTIMATE IMPACT POINT
                 env.Vel_Launch(env.pos,[Vx_d,Vy_d,Vz_d])
-                env.gazebo_unpause_physics()
+                env.pause_physics(False)
                 
                     
-            elif action == 'GZ_reset':
+            elif action == 'GZ_Pose_Reset':
                 print("Reset Pos/Vel -- Sticky off -- Controller Reset\n")
                 env.reset_pos()
+
+            elif action=='GZ_Plane_Pose':
+                cmd_vals = env.userInput("Set desired position values (x,y,z): ",float)
+                cmd_flag = env.userInput("Set desired plane angle [deg]: ",float)
+                print()
+
+                env.SendCmd(action,cmd_vals,cmd_flag)
+
+            else:
+                print("Please try another command")
 
         except ValueError:
             print('\033[93m' + "INVALID INPUT: Try again" + '\x1b[0m')
@@ -211,10 +222,10 @@ def cmd_send(env,logName):
 
 
 if __name__ == '__main__':
-    from crazyflie_env import CrazyflieEnv_Sim
+    from crazyflie_env import SAR_Sim_Interface
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv_Sim(GZ_Timeout=False)
-    env.gazebo_unpause_physics()
+    env = SAR_Sim_Interface(GZ_Timeout=False)
+    env.pause_physics(False)
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 24
