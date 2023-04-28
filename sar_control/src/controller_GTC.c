@@ -115,37 +115,37 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                                             const uint32_t tick) 
 {
 
-    // UPDATE OPTICAL FLOW VALUES AT 100 HZ
+    // OPTICAL FLOW UPDATES
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
 
         // UPDATE POS AND VEL
-            r_BO = mkvec(state->position.x, state->position.y, state->position.z);
-            V_BO = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);
+        r_BO = mkvec(state->position.x, state->position.y, state->position.z);
+        V_BO = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);
 
-            // CALC DISPLACEMENT FROM PLANE CENTER
-            r_PB = vsub(r_PO,r_BO); 
+        // CALC DISPLACEMENT FROM PLANE CENTER
+        r_PB = vsub(r_PO,r_BO); 
 
-            // CALC RELATIVE DISTANCE AND VEL
-            D_perp = vdot(r_PB,n_hat) + 1e-6f;
+        // CALC RELATIVE DISTANCE AND VEL
+        D_perp = vdot(r_PB,n_hat) + 1e-6f;
 
-            V_perp = vdot(V_BO,n_hat);
-            V_tx = vdot(V_BO,t_x);
-            V_ty = vdot(V_BO,t_y);
+        V_perp = vdot(V_BO,n_hat);
+        V_tx = vdot(V_BO,t_x);
+        V_ty = vdot(V_BO,t_y);
 
-            if (fabsf(D_perp) < 0.02f)
-            {
-                D_perp = 0.0f;
-            }
+        if (fabsf(D_perp) < 0.02f)
+        {
+            D_perp = 0.0f;
+        }
 
-            // CALC OPTICAL FLOW VALUES
-            Theta_x = clamp(V_tx/D_perp,-20.0f,20.0f);
-            Theta_y = clamp(V_ty/D_perp,-20.0f,20.0f);
-            Theta_z = clamp(V_perp/D_perp,-20.0f,20.0f);
-            Tau = clamp(1/Theta_z,0.0f,5.0f);
+        // CALC OPTICAL FLOW VALUES
+        Theta_x = clamp(V_tx/D_perp,-20.0f,20.0f);
+        Theta_y = clamp(V_ty/D_perp,-20.0f,20.0f);
+        Theta_z = clamp(V_perp/D_perp,-20.0f,20.0f);
+        Tau = clamp(1/Theta_z,0.0f,5.0f);
 
     }
 
-    // EXECUTE COMMANDED TRAJECTORY
+    // TRAJECTORY UPDATES
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
 
         switch (Traj_Type)
@@ -168,6 +168,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         }
     }
 
+    // POLICY UPDATES
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
 
         if(policy_armed_flag == true){
@@ -213,7 +214,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
     }
     
-
+    // GTC UPDATES
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
 
 
