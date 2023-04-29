@@ -1,0 +1,11 @@
+IMAGE_SETTINGS:
+  N_up: 160
+  N_vp: 160
+  f: 0.00066
+  FOV: 82.22
+  IW: 0.001152
+FLIGHT_CONDITIONS:
+  D_perp: 1.0
+  V_perp: 0.0
+  V_parallel: -1.0
+  y_offset: 0.0
