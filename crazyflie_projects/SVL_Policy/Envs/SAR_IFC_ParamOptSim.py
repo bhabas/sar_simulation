@@ -2,20 +2,17 @@
 import numpy as np
 import time
 
-
-## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import rospkg,os
-BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
 
-from crazyflie_env import CrazyflieEnv_Sim
+from crazyflie_env import SAR_Sim_Interface
 
 
-class CrazyflieEnv_ParamOpt(CrazyflieEnv_Sim):
+class SAR_IFC_ParamOpt_Sim(SAR_Sim_Interface):
     metadata = {'render.modes': ['human']}
     def __init__(self,GZ_Timeout=False):
-        CrazyflieEnv_Sim.__init__(self)        
+        SAR_Sim_Interface.__init__(self)        
 
-        self.env_name = "CF_PO"
+        self.env_name = "SAR_ParamOptim"
         self.k_ep = 0
     
         self.D_min = 50.0
@@ -32,7 +29,7 @@ class CrazyflieEnv_ParamOpt(CrazyflieEnv_Sim):
 
         ## DISABLE STICKY LEGS (ALSO BREAKS CURRENT CONNECTION JOINTS)
         self.SendCmd('Tumble',cmd_flag=0)
-        self.SendCmd('StickyPads',cmd_flag=0)
+        self.SendCmd('GZ_StickyPads',cmd_flag=0)
 
         self.SendCmd('Ctrl_Reset')
         self.reset_pos()
@@ -66,7 +63,7 @@ class CrazyflieEnv_ParamOpt(CrazyflieEnv_Sim):
         onceFlag_impact = False   # Ensures impact data recorded only once 
 
 
-        self.SendCmd('StickyPads',cmd_flag=1)
+        self.SendCmd('GZ_StickyPads',cmd_flag=1)
 
         vz = vel*np.sin(np.deg2rad(phi))
         vx = vel*np.cos(np.deg2rad(phi))
@@ -76,7 +73,7 @@ class CrazyflieEnv_ParamOpt(CrazyflieEnv_Sim):
         z_0 = 1.0
 
         self.Vel_Launch([0,0,z_0],[vx,0,vz])
-        self.gazebo_unpause_physics()
+        self.pause_physics(False)
         self.sleep(0.05)
         self.SendCmd("Policy",cmd_vals=[Tau,My,0.0],cmd_flag=1)
 
@@ -93,8 +90,8 @@ class CrazyflieEnv_ParamOpt(CrazyflieEnv_Sim):
 
             ## START FLIP AND IMPACT TERMINATION TIMERS
             if (self.flip_flag == True and onceFlag_flip == False):
-                start_time_pitch = t_now # Starts countdown for when to reset run
-                onceFlag_flip = True # Turns on to make sure this only runs once per rollout
+                start_time_pitch = t_now    # Starts countdown for when to reset run
+                onceFlag_flip = True        # Turns on to make sure this only runs once per rollout
 
             if ((self.impact_flag or self.BodyContact_flag) and onceFlag_impact == False):
                 start_time_impact = t_now
@@ -182,7 +179,7 @@ class CrazyflieEnv_ParamOpt(CrazyflieEnv_Sim):
 
 if __name__ == "__main__":
 
-    env = CrazyflieEnv_ParamOpt(GZ_Timeout=False)
+    env = SAR_IFC_ParamOpt_Sim(GZ_Timeout=False)
 
     for ii in range(1000):
         Tau_tr = 0.2

@@ -181,11 +181,11 @@ def runTraining(env,agent,V_d,phi,logName,K_ep_max=15):
 
 
 if __name__ == '__main__':
-    from Envs.CrazyflieEnv_ParamOpt import CrazyflieEnv_ParamOpt
+    from crazyflie_projects.SVL_Policy.Envs.SAR_IFC_ParamOptSim import SAR_IFC_ParamOpt_Sim
     from Agents.EPHE_Agent import EPHE_Agent
 
     ## INIT GAZEBO ENVIRONMENT
-    env = CrazyflieEnv_ParamOpt(GZ_Timeout=True)
+    env = SAR_IFC_ParamOpt_Sim(GZ_Timeout=True)
 
     ## INIT LEARNING AGENT
     # Mu_Tau value is multiplied by 10 so complete policy is more normalized
