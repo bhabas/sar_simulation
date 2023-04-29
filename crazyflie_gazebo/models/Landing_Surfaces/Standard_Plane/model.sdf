@@ -132,11 +132,11 @@
     </link>
 
 
-    <!-- <plugin name="ForceTorque_Sensor" filename="libgazebo_ros_ft_sensor.so">
-      <jointName>plane_joint</jointName>
-      <topicName>/ENV/Surface_FT_sensor</topicName>
-      <updateRate>500</updateRate>
-  </plugin> -->
+    <plugin name="ForceTorque_Sensor" filename="libgazebo_ros_ft_sensor.so">
+        <jointName>plane_joint</jointName>
+        <topicName>/ENV/Surface_FT_Sensor</topicName>
+        <updateRate>500</updateRate>
+    </plugin>
 
   <allow_auto_disable>1</allow_auto_disable>
   </model>

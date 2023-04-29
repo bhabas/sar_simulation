@@ -185,7 +185,7 @@ if __name__ == '__main__':
     from Agents.EPHE_Agent import EPHE_Agent
 
     ## INIT GAZEBO ENVIRONMENT
-    env = SAR_IFC_ParamOpt_Sim(GZ_Timeout=True)
+    env = SAR_IFC_ParamOpt_Sim(GZ_Timeout=False)
 
     ## INIT LEARNING AGENT
     # Mu_Tau value is multiplied by 10 so complete policy is more normalized
@@ -206,7 +206,7 @@ if __name__ == '__main__':
     trial_num = 25
     logName = f"{agent.agent_type}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--{env.modelInitials}.csv"
 
-    runTraining(env,agent,V_d,phi,logName,K_ep_max=3)
+    runTraining(env,agent,V_d,phi,logName,K_ep_max=15)
 
 
     

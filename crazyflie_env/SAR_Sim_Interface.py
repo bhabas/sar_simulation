@@ -295,8 +295,9 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         while True:
             self.Clock_Check_Flag.wait()
             try:
-                rospy.wait_for_message('/clock', Clock, timeout=5)
-            except rospy.ROSException:
+                rospy.wait_for_message('/clock', Clock, timeout=10)
+            except (rospy.ROSException, rospy.exceptions.ROSInterruptException):
+                
                 print("No message received on /clock topic within the timeout. Unpausing physics.")
                 self.pause_physics(False)
 

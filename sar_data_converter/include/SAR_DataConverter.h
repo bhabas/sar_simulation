@@ -59,6 +59,10 @@ class SAR_DataConverter {
             // GAZEBO PIPELINE
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
             Landing_Surface_Pose_Client = nh->serviceClient<gazebo_msgs::SetModelState>("/Landing_Surface_Pose");
+            
+            Surface_ForceTorque_Sub = nh->subscribe("/ENV/Surface_FT_Sensor",5,&SAR_DataConverter::SurfaceFT_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
+            Surface_Contact_Sub = nh->subscribe("/ENV/BodyContact",5,&SAR_DataConverter::Surface_Contact_Callback,this,ros::TransportHints().tcpNoDelay());
+            SAR_PadConnect_Sub = nh->subscribe("/ENV/Pad_Connections",5,&SAR_DataConverter::Pad_Connections_Callback,this,ros::TransportHints().tcpNoDelay());
 
             // CRAZYSWARM PIPELINE
             log1_Sub = nh->subscribe("/cf1/log1", 1, &SAR_DataConverter::log1_Callback, this, ros::TransportHints().tcpNoDelay());
@@ -77,9 +81,9 @@ class SAR_DataConverter {
 
             // INITIALIZE STATE DATA PUBLISHERS
             StateData_Pub = nh->advertise<crazyflie_msgs::CF_StateData>("/SAR_DC/StateData",1);
-            MiscData_Pub =  nh->advertise<crazyflie_msgs::CF_MiscData>("/SAR_DC/MiscData",1);
             FlipData_Pub =  nh->advertise<crazyflie_msgs::CF_FlipData>("/SAR_DC/FlipData",1);
             ImpactData_Pub = nh->advertise<crazyflie_msgs::CF_ImpactData>("/SAR_DC/ImpactData",1);  
+            MiscData_Pub =  nh->advertise<crazyflie_msgs::CF_MiscData>("/SAR_DC/MiscData",1);
 
             // LOGGING 
             Logging_Service = nh->advertiseService("/SAR_DC/DataLogging", &SAR_DataConverter::DataLogging_Callback, this);
@@ -229,9 +233,9 @@ class SAR_DataConverter {
         ros::Subscriber CTRL_Data_Sub;
         ros::Subscriber CTRL_Debug_Sub;
 
-        ros::Subscriber Surface_FT_Sub;
+        ros::Subscriber Surface_ForceTorque_Sub;
         ros::Subscriber Surface_Contact_Sub;
-        ros::Subscriber PadConnect_Sub;
+        ros::Subscriber SAR_PadConnect_Sub;
 
         ros::ServiceClient Landing_Surface_Pose_Client;
         ros::ServiceClient GZ_SimSpeed_Client;
