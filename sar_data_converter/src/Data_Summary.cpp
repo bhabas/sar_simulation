@@ -106,20 +106,6 @@ void SAR_DataConverter::Publish_FlipData()
 
 }
 
-void SAR_DataConverter::Publish_MiscData()
-{
-    MiscData_msg.header.stamp = ros::Time::now();
-    MiscData_msg.battery_voltage = V_battery;
-    MiscData_msg.Plane_Angle = Plane_Angle;
-    MiscData_msg.Plane_Pos.x = Plane_Pos.x;
-    MiscData_msg.Plane_Pos.y = Plane_Pos.y;
-    MiscData_msg.Plane_Pos.z = Plane_Pos.z;
-
-
-    
-    MiscData_Pub.publish(MiscData_msg);
-}
-
 void SAR_DataConverter::Publish_ImpactData()
 {
     ros::Duration Time_delta(Time_impact-Time_start);
@@ -144,7 +130,20 @@ void SAR_DataConverter::Publish_ImpactData()
     ImpactData_msg.Pad3_Contact = Pad3_Contact;
     ImpactData_msg.Pad4_Contact = Pad4_Contact;
 
-
-
     ImpactData_Pub.publish(ImpactData_msg);
 }
+
+void SAR_DataConverter::Publish_MiscData()
+{
+    MiscData_msg.header.stamp = ros::Time::now();
+    MiscData_msg.battery_voltage = V_battery;
+    MiscData_msg.Plane_Angle = Plane_Angle;
+    MiscData_msg.Plane_Pos.x = Plane_Pos.x;
+    MiscData_msg.Plane_Pos.y = Plane_Pos.y;
+    MiscData_msg.Plane_Pos.z = Plane_Pos.z;
+
+
+    
+    MiscData_Pub.publish(MiscData_msg);
+}
+

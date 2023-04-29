@@ -3,11 +3,11 @@ import numpy as np
 from gym import spaces
 import rospy
 import time
-from crazyflie_env import CrazyflieEnv_Sim
+from crazyflie_env import SAR_Sim_Interface
 
 
-class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
-    metadata = {'render.modes': ['human']}
+class SAR_Sim_DeepRL(SAR_Sim_Interface):
+    # metadata = {'render.modes': ['human']}
     def __init__(self,GZ_Timeout=True,Vel_range=[1.5,3.5],Phi_range=[0,90],Tau_0=0.4):
         """
         Args:
@@ -16,10 +16,10 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
             Phi_range (list, optional): Range of flight angles. Defaults to [0,90].
             Tau_0 (float, optional): Flight position will start at this Tau value. Defaults to 0.4.
         """        
-        CrazyflieEnv_Sim.__init__(self,GZ_Timeout)          
+        SAR_Sim_Interface.__init__(self,GZ_Timeout)          
 
         ## ENV CONFIG SETTINGS
-        self.env_name = "CF_Gazebo"
+        self.env_name = "SAR_Sim_DeepRL"
 
         ## TESTING CONDITIONS
         self.Tau_0 = Tau_0          
@@ -45,8 +45,11 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         )
         self.observation_space = spaces.Box(low=-obs_lim, high=obs_lim, dtype=np.float32)
 
+
         ## DEFINE ACTION SPACE
-        self.action_space = spaces.Box(low=np.array([-1,0]), high=np.array([1,8]), shape=(2,), dtype=np.float32)
+        My_min = 0 # Min moment [N*mm]
+        My_max = 8 # Max moment [N*mm]
+        self.action_space = spaces.Box(low=np.array([-1,My_min]), high=np.array([1,My_max]), shape=(2,), dtype=np.float32)
 
 
         self.obs_tr = np.zeros_like(self.observation_space.high)
@@ -78,13 +81,6 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
                 if self.D_perp <= self.D_min:
                     self.D_min = self.D_perp 
 
-            # ## ERROR TERMINATIONS
-            # if any(np.isnan(self.vel)): 
-            #     print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
-            #     self.Restart()
-            #     print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
-            #     self.done = True
-
             ## CALCULATE REWARD
             reward = 0
 
@@ -114,14 +110,14 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         self.SendCmd("Policy",[0,My,0],cmd_flag=1)
 
         ## RUN REMAINING STEPS AT FULL SPEED
-        self.gazebo_unpause_physics()
+        self.pause_physics(False)
 
         while not self.done:
 
             ## START IMPACT TERMINATION TIMERS
-            if ((self.impact_flag or self.BodyContact_flag) and self.onceFlag_impact == False):
+            if ((self.impact_flag or self.BodyContact_flag) and self.eventCaptureFlag_impact == False):
                 self.start_time_impact = self.getTime()
-                self.onceFlag_impact = True
+                self.eventCaptureFlag_impact = True
 
             ## CHECK IF TIMERS ARE EXCEEDED
             self.done = bool(
@@ -133,13 +129,6 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
             if not self.done:
                 if self.D_perp <= self.D_min:
                     self.D_min = self.D_perp 
-
-            # ## ERROR TERMINATIONS
-            # if any(np.isnan(self.vel)): 
-            #     print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
-            #     self.Restart()
-            #     print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
-            #     self.done = True
 
 
 
@@ -176,10 +165,10 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
     def reset(self,vel=None,phi=None):
 
 
-        self.gazebo_unpause_physics()
-        self.SendCmd('Tumble',cmd_flag=0)
-        self.SendCmd('StickyPads',cmd_flag=0)
+        self.pause_physics(False)
+        self.SendCmd('GZ_StickyPads',cmd_flag=0)
 
+        self.SendCmd('Tumble',cmd_flag=0)
         self.SendCmd('Ctrl_Reset')
         self.reset_pos()
         self.sleep(0.01)
@@ -187,10 +176,10 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         self.SendCmd('Tumble',cmd_flag=1)
         self.SendCmd('Ctrl_Reset')
         self.reset_pos()
-        self.SendCmd('Tumble',cmd_flag=1)
-        self.sleep(1.0)
-        self.SendCmd('StickyPads',cmd_flag=1)
-        self.gazebo_pause_physics()
+        self.sleep(1.0) # Give time for drone to settle
+
+        self.SendCmd('GZ_StickyPads',cmd_flag=1)
+        self.pause_physics(True)
 
 
         ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
@@ -289,8 +278,8 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
         self.start_time_ep = time.time()
 
         ## RESET LOGGING CONDITIONS 
-        self.onceFlag_flip = False      # Ensures flip data recorded only once
-        self.onceFlag_impact = False    # Ensures impact data recorded only once 
+        self.eventCaptureFlag_flip = False      # Ensures flip data recorded only once
+        self.eventCaptureFlag_impact = False    # Ensures impact data recorded only once 
 
         return np.array(self.obs,dtype=np.float32)
 
@@ -299,11 +288,11 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
     def CalcReward(self):
 
         ## TAU TRIGGER REWARD
-        R_tau = np.clip(1/np.abs(self.Tau_tr-0.2),0,15)/15
+        R_tau = np.clip(1/np.abs(self.Tau_tr - 0.2),0,15)/15
         R_tau *= 0.1
 
         ## DISTANCE REWARD 
-        R_dist = np.clip(1/np.abs(self.D_min+1e-3),0,15)/15
+        R_dist = np.clip(1/np.abs(self.D_min + 1e-3),0,15)/15
         R_dist *= 0.05
 
         ## IMPACT ANGLE REWARD
@@ -317,11 +306,13 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
                 R_legs = 0.65
             else:
                 R_legs = 0.2
+
         elif self.pad_connections == 2: 
             if self.BodyContact_flag == False:
                 R_legs = 0.4
             else:
                 R_legs = 0.1
+                
         else:
             R_legs = 0.0
 
@@ -337,25 +328,19 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
 if __name__ == "__main__":
 
-    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,1.0],Phi_range=[10,20])
-    rospy.spin()
+    env = SAR_Sim_DeepRL(GZ_Timeout=False,Vel_range=[0.5,1.0],Phi_range=[50,80])
 
-    # while True: 
-        
-    #     if env.diagnosticTest():
-    #         env.Restart()
+    for ep in range(25):
 
-    # for ep in range(25):
+        vel = 1.0
+        phi = 90
+        env.reset(vel=vel,phi=phi)
 
-    #     vel = 0.5
-    #     phi = 80
-    #     env.reset()
-
-    #     done = False
-    #     while not done:
-    #         action = env.action_space.sample()
-    #         action = np.zeros_like(action)
-    #         obs,reward,done,info = env.step(action)
-    #     env.RL_Publish()
-    #     print(f"Episode: {ep} \t Reward: {reward:.3f}")
+        done = False
+        while not done:
+            action = env.action_space.sample()
+            action = np.zeros_like(action)
+            obs,reward,done,info = env.step(action)
+        env.RL_Publish()
+        print(f"Episode: {ep} \t Reward: {reward:.3f}")
 

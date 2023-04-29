@@ -139,12 +139,12 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         self.iter_step(2)
         
 
-    def reset_pos(self,z_0=0.358): # Disable sticky then places spawn_model at origin
+    def reset_pos(self,z_0=0.35): # Disable sticky then places spawn_model at origin
         """Reset pose/twist of simulated drone back to home position. 
         As well as turning off stickyfeet
 
         Args:
-            z_0 (float, optional): Starting height of crazyflie. Defaults to 0.379.
+            z_0 (float, optional): Starting height of crazyflie. Defaults to 0.35.
         """        
         
         ## RESET POSITION AND VELOCITY
