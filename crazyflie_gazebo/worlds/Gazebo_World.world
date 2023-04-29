@@ -31,7 +31,6 @@
       </link>
     </model>
 
-
     <plugin name='Landing_Surface_Pose_plugin' filename='libLanding_Surface_Pose_plugin.so'/>
       
     <light name='Horizontal_Light' type='directional'>

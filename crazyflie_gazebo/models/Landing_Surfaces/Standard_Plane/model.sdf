@@ -118,7 +118,7 @@
         <always_on>1</always_on>
         <visualize>1</visualize>
         <contact>
-          <collision>plane_collision</collision>
+          <collision>Surface_Collision</collision>
           <topic>__default_topic__</topic>
         </contact>
         <plugin name='Surface_Contact_Plugin' filename='libgazebo_ros_bumper.so'>
@@ -127,13 +127,13 @@
           <alwaysOn>true</alwaysOn>
           <updateRate>500</updateRate>
         </plugin>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
       </sensor>
     </link>
 
 
     <plugin name="ForceTorque_Sensor" filename="libgazebo_ros_ft_sensor.so">
-        <jointName>plane_joint</jointName>
+        <jointName>Landing_Surface_Joint</jointName>
         <topicName>/ENV/Surface_FT_Sensor</topicName>
         <updateRate>500</updateRate>
     </plugin>
