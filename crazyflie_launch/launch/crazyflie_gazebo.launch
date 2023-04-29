@@ -34,13 +34,13 @@
     
 
     <!-- SPAWN GROUND PLANE/LANDING SURFACE/CRAZYFLIE MODELS -->
-    <node name="Spawn_Ground" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
-        args="-file $(arg Ground_SDF_Path) -sdf -model $(arg Ground_Model)" />
+    <!-- <node name="Spawn_Ground" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
+        args="-file $(arg Ground_SDF_Path) -sdf -model $(arg Ground_Model)" /> -->
         
     <node name="Spawn_Model" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
     args="-file $(arg Quad_SDF_Path) -sdf -model crazyflie_$(arg Quad_Model) -z 0.3" />
 
-    <node name="Spawn_Plane" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
-    args="-file $(arg Plane_SDF_Path) -sdf -model $(arg Plane_Model) -z 2" />
+    <!-- <node name="Spawn_Plane" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
+    args="-file $(arg Plane_SDF_Path) -sdf -model $(arg Plane_Model) -z 2" /> -->
         
 </launch>
