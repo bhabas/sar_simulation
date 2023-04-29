@@ -59,7 +59,7 @@ class SAR_DataConverter {
             // GAZEBO PIPELINE
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
             Landing_Surface_Pose_Client = nh->serviceClient<gazebo_msgs::SetModelState>("/Landing_Surface_Pose");
-            
+
             Surface_ForceTorque_Sub = nh->subscribe("/ENV/Surface_FT_Sensor",5,&SAR_DataConverter::SurfaceFT_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
             Surface_Contact_Sub = nh->subscribe("/ENV/BodyContact",5,&SAR_DataConverter::Surface_Contact_Callback,this,ros::TransportHints().tcpNoDelay());
             SAR_PadConnect_Sub = nh->subscribe("/ENV/Pad_Connections",5,&SAR_DataConverter::Pad_Connections_Callback,this,ros::TransportHints().tcpNoDelay());
@@ -345,7 +345,6 @@ class SAR_DataConverter {
         bool impact_flag = false;
         bool BodyContact_flag = false;
         bool OnceFlag_impact = false;
-        double impact_thr = 0.1;        // Impact threshold [N]
         std::string BodyCollision_str;  // String of Body Name
 
 
@@ -359,7 +358,7 @@ class SAR_DataConverter {
         double impact_force_x = 0.0; // Max impact force in X-direction [N]
         double impact_force_y = 0.0; // Max impact force in Y-direction [N]
         double impact_force_z = 0.0; // Max impact force in Z-direction [N]
-        double impact_force_resultant = 0.0; // Current impact force magnitude
+        double impact_magnitude = 0.0; // Current impact force magnitude
 
         // CIRCULAR BUFFERES TO LAG IMPACT STATE DATA (WE WANT STATE DATA THE INSTANT BEFORE IMPACT)
         boost::circular_buffer<geometry_msgs::Pose> Pose_impact_buff {5};
@@ -376,7 +375,7 @@ class SAR_DataConverter {
         uint8_t Pad3_Contact = 0;
         uint8_t Pad4_Contact = 0;
 
-        uint8_t Pad_Connections = 0;
+        uint8_t Pad_Connect_Sum = 0;
 
         // ====================
         //     DEBUG VALUES
@@ -549,7 +548,7 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(crazyflie_msgs::GTC_Cmd_srv::Reques
             Pad3_Contact = 0;
             Pad4_Contact = 0;
 
-            Pad_Connections = 0;
+            Pad_Connect_Sum = 0;
 
             if (DATA_TYPE.compare("SIM") == 0)
             {

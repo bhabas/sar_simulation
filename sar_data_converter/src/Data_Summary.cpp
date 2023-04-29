@@ -137,7 +137,7 @@ void SAR_DataConverter::Publish_ImpactData()
     ImpactData_msg.Twist_impact = Twist_impact;
     ImpactData_msg.Eul_impact = Eul_impact;
 
-    ImpactData_msg.Pad_Connections = Pad_Connections;
+    ImpactData_msg.Pad_Connections = Pad_Connect_Sum;
 
     ImpactData_msg.Pad1_Contact = Pad1_Contact;
     ImpactData_msg.Pad2_Contact = Pad2_Contact;

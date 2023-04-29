@@ -1,5 +1,10 @@
 #include "Gazebo_Funcs.h"
 
+
+/**
+ * @brief Function called that will service call the sticky foot plugin and join pad to landing surface
+ * 
+ */
 void SAR_DataConverter::activateStickyFeet()
 {
     if(GZ_Model_Name != "crazyflie_Base_Model")
@@ -15,7 +20,12 @@ void SAR_DataConverter::activateStickyFeet()
     
 }
 
-// MARK IF PAD CONTACT HAS OCCURED AND SUM NUMBER OF PAD CONTACTS
+
+/**
+ * @brief Updates if sticky pads attach to landing surface. Also calculates total number of pads attached
+ * 
+ * @param msg sar_msgs::PadConnect
+ */
 void SAR_DataConverter::Pad_Connections_Callback(const crazyflie_msgs::PadConnect &msg)
 {
     
@@ -23,10 +33,19 @@ void SAR_DataConverter::Pad_Connections_Callback(const crazyflie_msgs::PadConnec
     if(msg.Pad2_Contact == 1) Pad2_Contact = 1;
     if(msg.Pad3_Contact == 1) Pad3_Contact = 1;
     if(msg.Pad4_Contact == 1) Pad4_Contact = 1;
-    Pad_Connections = Pad1_Contact + Pad2_Contact + Pad3_Contact + Pad4_Contact;
+    Pad_Connect_Sum = Pad1_Contact + Pad2_Contact + Pad3_Contact + Pad4_Contact;
 
 }
 
+
+/**
+ * @brief Updates the position and orientation of the landing surface in Gazebo.
+ * 
+ * @param Pos_x X-position of surface
+ * @param Pos_y Y-position of surface
+ * @param Pos_z Z-position of surface
+ * @param Plane_Angle 0 deg -> Horizontal Ground Surface | 90 deg -> Vertical Wall | 180 deg -> Ceiling Surface 
+ */
 void SAR_DataConverter::Update_Landing_Surface_Pose(float Pos_x, float Pos_y, float Pos_z, float Plane_Angle)
 {
 
@@ -51,7 +70,12 @@ void SAR_DataConverter::Update_Landing_Surface_Pose(float Pos_x, float Pos_y, fl
 
 }
 
-// MARK IF CF BODY COLLIDES WITH CEILING
+
+/**
+ * @brief Records if body of SAR body collides with landing surface so as to serve as a negative aspect to reward
+ * 
+ * @param msg gazebo_msgs::ContactsState
+ */
 void SAR_DataConverter::Surface_Contact_Callback(const gazebo_msgs::ContactsState &msg)
 {
     // CYCLE THROUGH VECTOR OF CONTACT MESSAGES
@@ -65,6 +89,12 @@ void SAR_DataConverter::Surface_Contact_Callback(const gazebo_msgs::ContactsStat
     }
 }
 
+/**
+ * @brief Records max impact force from SAR colliding with landing surface. It also records
+ * impact states like pose, vel, impact time, and euler angles which are used in reward function.
+ * 
+ * @param msg geometry_msgs::WrenchStamped
+ */
 void SAR_DataConverter::SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStamped::ConstPtr &msg)
 {
     // RECORD MAX FORCE EXPERIENCED
@@ -79,12 +109,10 @@ void SAR_DataConverter::SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchSta
     }
 
     // CHECK IF IMPACT FORCE THRESHOLD HAS BEEN CROSSED
-    impact_force_resultant = sqrt(
-        pow(msg->wrench.force.x,2) + 
-        pow(msg->wrench.force.y,2) + 
-        pow(msg->wrench.force.z,2));
+    double impact_thr = 0.1;        // Impact threshold [N]
+    impact_magnitude = sqrt(pow(msg->wrench.force.x,2) + pow(msg->wrench.force.y,2) + pow(msg->wrench.force.z,2));
 
-    if (impact_force_resultant >= impact_thr && impact_flag == false){ 
+    if (impact_magnitude >= impact_thr && impact_flag == false){ 
 
         // LOCK IN STATE DATA WHEN IMPACT DETECTED
         impact_flag = true;
@@ -94,7 +122,7 @@ void SAR_DataConverter::SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchSta
         Pose_impact = Pose_impact_buff.front();
         Twist_impact = Twist_impact_buff.front();
 
-        // PROCESS EULER ANGLES
+        // PROCESS EULER ANGLES AT TIME OF IMPACT
         float quat_impact[4] = {
             (float)Pose_impact.orientation.x,
             (float)Pose_impact.orientation.y,
@@ -113,12 +141,18 @@ void SAR_DataConverter::SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchSta
 
 }
 
-// CHANGES REAL TIME FACTOR FOR THE SIMULATION (LOWER = SLOWER)
-void SAR_DataConverter::adjustSimSpeed(float speed_mult)
+
+/**
+ * @brief Updates simulation real time factor (RTF) to the provided value
+ * 
+ * @param RTF Simulation speed adjustment. (0.5 = 0.5 x Real Time Speed)
+ */
+void SAR_DataConverter::adjustSimSpeed(float RTF)
 {
     gazebo_msgs::SetPhysicsProperties srv;
-    srv.request.time_step = 0.001;
-    srv.request.max_update_rate = (int)(speed_mult/0.001);
+    float time_step = 0.001;
+    srv.request.time_step = time_step;
+    srv.request.max_update_rate = (int)(RTF/time_step);
 
 
     geometry_msgs::Vector3 gravity_vec;
@@ -144,7 +178,10 @@ void SAR_DataConverter::adjustSimSpeed(float speed_mult)
     GZ_SimSpeed_Client.call(srv);
 }
 
-// CHECK IF SIM SPEED NEEDS TO BE ADJUSTED
+/**
+ * @brief Updates simulation speed based on how close SAR is to landing surface. Sim becomes unstable
+ * and accurate impact data is lost if collision happens too fast.
+ */
 void SAR_DataConverter::checkSlowdown()
 {   
     // SIMULATION SLOWDOWN
