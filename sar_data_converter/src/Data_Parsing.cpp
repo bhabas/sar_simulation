@@ -46,9 +46,6 @@ void SAR_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_m
     MotorThrusts = ctrl_msg.MotorThrusts;
     MS_PWM = ctrl_msg.MS_PWM;
 
-    // RL POLICY DATA
-    Tau_thr = ctrl_msg.Tau_thr;
-    G1 = ctrl_msg.G1;
 
     // NEURAL NETWORK DATA
     Policy_Flip = ctrl_msg.Policy_Flip;

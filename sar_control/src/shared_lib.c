@@ -159,7 +159,6 @@ float Tau = 0.0f;       // [s]
 float Theta_x = 0.0f;   // [rad/s] 
 float Theta_y = 0.0f;   // [rad/s]
 float Theta_z = 0.0f;   // [rad/s]
-float D_perp = 0.0f;    // [m]
 
 // ANALYTICAL OPTICAL FLOW STATES
 float Tau_calc = 0.0f;       // [s]
@@ -253,10 +252,11 @@ struct vec r_BO = {0.0f,0.0f,0.0f};     // Quad Position Vector         [m]
 struct vec r_PB = {0.0f,0.0f,0.0f};     // Quad-Plane Distance Vector   [m]
 struct vec V_BO = {0.0f,0.0f,0.0f};     // Quad Velocity Vector         [m/s]
 
-
-float V_perp = 0.0;                     // Velocity perp to plane [m/s]
-float V_tx = 0.0;                       // Tangent_x velocity [m/s]
-float V_ty = 0.0;                       // Tangent_y velocity [m/s]
+// DECLARE RELATIVE STATES
+float D_perp = 0.0f;                     // Distance perp to plane [m]
+float V_perp = 0.0f;                     // Velocity perp to plane [m/s]
+float V_tx = 0.0f;                       // Tangent_x velocity [m/s]
+float V_ty = 0.0f;                       // Tangent_y velocity [m/s]
 
 
 

@@ -303,9 +303,6 @@ class SAR_DataConverter {
         boost::array<double,4> MotorThrusts{0,0,0,0};
         boost::array<uint16_t,4> MS_PWM{0,0,0,0};
 
-        double Tau_thr = 0.0;
-        double G1 = 0.0;
-
         double Policy_Flip = 0.0;
         double Policy_Action = 0.0;
 

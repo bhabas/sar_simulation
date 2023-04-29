@@ -159,7 +159,6 @@ extern float Tau;           // [s]
 extern float Theta_x;       // [rad/s] 
 extern float Theta_y;       // [rad/s]
 extern float Theta_z;       // [rad/s]
-extern float D_perp;        // [m]
 
 // ANALYTICAL OPTICAL FLOW STATES
 extern float Tau_calc;      // [s]
@@ -261,6 +260,8 @@ extern struct vec r_BO;         // Quad Position Vector         [m]
 extern struct vec r_PB;         // Quad-Plane Distance Vector   [m]
 extern struct vec V_BO;         // Quad Velocity Vector         [m/s]
 
+// DECLARE RELATIVE STATES
+extern float D_perp;            // Distance perp to plane [m]
 extern float V_perp;            // Velocity perp to plane [m/s]
 extern float V_tx;              // Tangent_x velocity [m/s]
 extern float V_ty;              // Tangent_y velocity [m/s]

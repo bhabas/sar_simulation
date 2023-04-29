@@ -271,11 +271,17 @@ void Controller::publishCtrlData()
     CtrlData_msg.Twist.angular.y = stateOmega.y;
     CtrlData_msg.Twist.angular.z = stateOmega.z;
 
+    // PLANE RELATIVE STATES
+    CtrlData_msg.D_perp = D_perp;
+    CtrlData_msg.V_perp = V_perp;
+    CtrlData_msg.V_tx = V_tx;
+    CtrlData_msg.V_ty = V_ty;
+
     // OPTICAL FLOW DATA
     CtrlData_msg.Tau = Tau;
     CtrlData_msg.Theta_x = Theta_x;
     CtrlData_msg.Theta_y = Theta_y;
-    CtrlData_msg.D_perp = D_perp;
+    
 
     // ESTIMATED OPTICAL FLOW DATA
     CtrlData_msg.Tau_est = Tau_est;
