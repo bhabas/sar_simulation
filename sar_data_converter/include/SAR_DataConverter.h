@@ -290,10 +290,15 @@ class SAR_DataConverter {
         float Phi = 0.0;
         float Alpha = 0.0;
 
+        double D_perp = 0.0;
+        double V_perp = 0.0;
+        double V_tx = 0.0;
+        double V_ty = 0.0;
+
+
         double Tau = 0.0;
         double Theta_x = 0.0;
         double Theta_y = 0.0;
-        double D_perp = 0.0;
 
         double Tau_est = 0.0;
         double Theta_x_est = 0.0;

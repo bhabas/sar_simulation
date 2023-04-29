@@ -25,11 +25,16 @@ void SAR_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_m
     Eul.y = eul[1]*180/M_PI;
     Eul.z = eul[2]*180/M_PI;
 
+    // STATES RELATIVE TO LANDING SURFACE
+    D_perp = ctrl_msg.D_perp;
+    V_perp = ctrl_msg.V_perp;
+    V_tx = ctrl_msg.V_tx;
+    V_ty = ctrl_msg.V_ty;
+
     // OPTICAL FLOW STATES
     Tau = ctrl_msg.Tau;
     Theta_x = ctrl_msg.Theta_x;
     Theta_y = ctrl_msg.Theta_y;
-    D_perp = ctrl_msg.D_perp;
 
     // ESTIMATED OPTICAL FLOW STATES
     Tau_est = ctrl_msg.Tau_est;
