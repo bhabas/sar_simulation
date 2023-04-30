@@ -133,7 +133,7 @@
 
     <plugin name='Landing_Surface_Pose_plugin' filename='libLanding_Surface_Pose_plugin.so'>
         <jointName>Landing_Surface_Joint</jointName>
-        <topicName>/ENV/Surface_FT_Sensor</topicName>
+        <topicName>/ENV/Surface_ForceTorque_Sensor</topicName>
     </plugin>
 
   <allow_auto_disable>1</allow_auto_disable>

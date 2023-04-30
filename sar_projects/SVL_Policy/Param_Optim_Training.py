@@ -181,7 +181,7 @@ def runTraining(env,agent,V_d,phi,logName,K_ep_max=15):
 
 
 if __name__ == '__main__':
-    from crazyflie_projects.SVL_Policy.Envs.SAR_IFC_ParamOptSim import SAR_IFC_ParamOpt_Sim
+    from Envs.SAR_IFC_ParamOptSim import SAR_IFC_ParamOpt_Sim
     from Agents.EPHE_Agent import EPHE_Agent
 
     ## INIT GAZEBO ENVIRONMENT
@@ -200,7 +200,7 @@ if __name__ == '__main__':
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
     V_d = 2.5 # [m/s]
-    phi = 60   # [deg]
+    phi = 45   # [deg]
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 25

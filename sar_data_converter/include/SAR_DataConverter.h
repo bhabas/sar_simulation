@@ -60,7 +60,7 @@ class SAR_DataConverter {
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
             Landing_Surface_Pose_Client = nh->serviceClient<gazebo_msgs::SetModelState>("/Landing_Surface_Pose");
 
-            Surface_ForceTorque_Sub = nh->subscribe("/ENV/Surface_FT_Sensor",5,&SAR_DataConverter::SurfaceFT_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
+            Surface_ForceTorque_Sub = nh->subscribe("/ENV/Surface_ForceTorque_Sensor",5,&SAR_DataConverter::SurfaceFT_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
             Surface_Contact_Sub = nh->subscribe("/ENV/BodyContact",5,&SAR_DataConverter::Surface_Contact_Callback,this,ros::TransportHints().tcpNoDelay());
             SAR_PadConnect_Sub = nh->subscribe("/ENV/Pad_Connections",5,&SAR_DataConverter::Pad_Connections_Callback,this,ros::TransportHints().tcpNoDelay());
 
