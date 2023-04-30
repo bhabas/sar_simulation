@@ -19,11 +19,11 @@ namespace gazebo
 
 
         // // LINK COMMAND SERVICE TO CALLBACK
-        // CMD_Service = nh.advertiseService("/Landing_Surface_Pose", &Landing_Surface_Pose::Service_Callback, this);
-        Joint_Name = _sdf->GetElement("jointName")->Get<std::string>();
+        CMD_Service = nh.advertiseService("/Landing_Surface_Pose", &Landing_Surface_Pose::Service_Callback, this);
 
+        Joint_Name = _sdf->GetElement("jointName")->Get<std::string>();
         Surface_Model_Ptr->CreateJoint(Joint_Name,"fixed",Origin_Model_Ptr->GetLink("Origin_Link"),Surface_Model_Ptr->GetLink("Surface_Link"));
-        Joint_Ptr = Surface_Model_Ptr->GetJoint("Landing_Surface_Joint");
+        Joint_Ptr = Surface_Model_Ptr->GetJoint(Joint_Name);
         Joint_Ptr->SetProvideFeedback(true);
 
         
@@ -51,52 +51,49 @@ namespace gazebo
         // The wrench is reported in the CHILD <frame>
         // The <measure_direction> is child_to_parent
         
-
-        if (Joint_Ptr != NULL)
+        // SUPPRESS FORCE OUTPUT WHILE JOINT IS BEING UPDATED
+        if (UpdatingJoint == false)
         {
-            // REMOVE JOINT BETWEEN LANDING SURFACE AND WORLD
 
             wrench = Joint_Ptr->GetForceTorque(0);
             force = wrench.body2Force;
             torque = wrench.body2Torque;
 
-            printf("Vals %.3f\n",force.Z());
+            printf("F_x %.3f \t F_z %.3f\n",force.X(),force.Z());
  
         }
-
-        
-
 
     }
 
 
     bool Landing_Surface_Pose::Service_Callback(gazebo_msgs::SetModelState::Request &req, gazebo_msgs::SetModelState::Response &res)
     {
+        // FLAG THAT JOINT IS BEING UPDATED
+        UpdatingJoint = true;
+
+        // REMOVE JOINT BETWEEN LANDING SURFACE AND WORLD
+        gzmsg << "Removing Surface-to-World Joint\n";
+        Surface_Model_Ptr->RemoveJoint(Joint_Name);
+
+
+        // UPDATE PLANE POSITION AND ORIENTATION
+        Pos_0.Set(req.model_state.pose.position.x,req.model_state.pose.position.y,req.model_state.pose.position.z);
+        Quat_0.Set(req.model_state.pose.orientation.w,
+                    req.model_state.pose.orientation.x,
+                    req.model_state.pose.orientation.y,
+                    req.model_state.pose.orientation.z);
+
+        Pose_0.Set(Pos_0,Quat_0);
+        Surface_Model_Ptr->SetWorldPose(Pose_0);
+
+        // CREATE JOINT BETWEEN LANDING SURFACE AND WORLD
+        gzmsg << "Creating Surface-to-World Joint\n";
+        Surface_Model_Ptr->CreateJoint(Joint_Name,"fixed",Origin_Model_Ptr->GetLink("Origin_Link"),Surface_Model_Ptr->GetLink("Surface_Link"));
+        Joint_Ptr = Surface_Model_Ptr->GetJoint(Joint_Name);
+        Joint_Ptr->SetProvideFeedback(true);
         
-        // Surface_Model_Ptr = World_Ptr->ModelByName(req.model_state.model_name);
-        // Joint_Ptr = Surface_Model_Ptr->GetJoint("Landing_Surface_Joint");
-
-        // if (Joint_Ptr != NULL)
-        // {
-        //     // REMOVE JOINT BETWEEN LANDING SURFACE AND WORLD
-        //     gzmsg << "Removing Surface-to-World Joint\n";
-        //     Surface_Model_Ptr->RemoveJoint("Landing_Surface_Joint");
-        // }
-
-
-        // // UPDATE PLANE POSITION AND ORIENTATION
-        // Pos_0.Set(req.model_state.pose.position.x,req.model_state.pose.position.y,req.model_state.pose.position.z);
-        // Quat_0.Set(req.model_state.pose.orientation.w,
-        //             req.model_state.pose.orientation.x,
-        //             req.model_state.pose.orientation.y,
-        //             req.model_state.pose.orientation.z);
-
-        // Pose_0.Set(Pos_0,Quat_0);
-        // Surface_Model_Ptr->SetWorldPose(Pose_0);
-
-        // // CREATE JOINT BETWEEN LANDING SURFACE AND WORLD
-        // gzmsg << "Creating Surface-to-World Joint\n";
-        // Surface_Model_Ptr->CreateJoint("Landing_Surface_Joint","fixed",Origin_Model_Ptr->GetLink("Origin_Link"),Surface_Model_Ptr->GetLink("Surface_Link"));
+        // TURN OFF UPDATING FLAG
+        UpdatingJoint = false;
 
         return true;
     }

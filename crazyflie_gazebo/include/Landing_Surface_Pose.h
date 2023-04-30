@@ -37,6 +37,8 @@ namespace gazebo {
 
             std::string Joint_Name;
 
+            bool UpdatingJoint = false;
+
             event::ConnectionPtr updateConnection;
 
             // ROS VALUES
