@@ -10,18 +10,19 @@ it will break the joint, move surface to a new location, and then recreate the j
 namespace gazebo
 {
 
-    void Landing_Surface_Pose::Load(physics::WorldPtr _parent, sdf::ElementPtr _sdf)
+    void Landing_Surface_Pose::Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf)
     {
         gzmsg << "Loading Gazebo Plane Pose Plugin\n";
-        World_Ptr = _parent;
+        Surface_Model_Ptr = _parent;
+        World_Ptr = Surface_Model_Ptr->GetWorld();
         Origin_Model_Ptr = World_Ptr->ModelByName("World_Origin");
 
 
-        // LINK COMMAND SERVICE TO CALLBACK
-        CMD_Service = nh.advertiseService("/Landing_Surface_Pose", &Landing_Surface_Pose::Service_Callback, this);
+        // // LINK COMMAND SERVICE TO CALLBACK
+        // CMD_Service = nh.advertiseService("/Landing_Surface_Pose", &Landing_Surface_Pose::Service_Callback, this);
+        Joint_Name = _sdf->GetElement("jointName")->Get<std::string>();
 
-        Surface_Model_Ptr = World_Ptr->ModelByName("Standard_Plane");
-        Surface_Model_Ptr->CreateJoint("Landing_Surface_Joint","fixed",Origin_Model_Ptr->GetLink("Origin_Link"),Surface_Model_Ptr->GetLink("Surface_Link"));
+        Surface_Model_Ptr->CreateJoint(Joint_Name,"fixed",Origin_Model_Ptr->GetLink("Origin_Link"),Surface_Model_Ptr->GetLink("Surface_Link"));
         Joint_Ptr = Surface_Model_Ptr->GetJoint("Landing_Surface_Joint");
         Joint_Ptr->SetProvideFeedback(true);
 
@@ -32,11 +33,17 @@ namespace gazebo
 
     }
 
+    void Landing_Surface_Pose::Init()
+    {
+
+    }
+
     void Landing_Surface_Pose::OnUpdate()
     {
         physics::JointWrench wrench;
         ignition::math::Vector3d torque;
         ignition::math::Vector3d force;
+
 
         // FIXME: Should include options for diferent frames and measure directions
         // E.g: https://bitbucket.org/osrf/gazebo/raw/default/gazebo/sensors/ForceTorqueSensor.hh
@@ -94,5 +101,5 @@ namespace gazebo
         return true;
     }
 
-    GZ_REGISTER_WORLD_PLUGIN(Landing_Surface_Pose);
+    GZ_REGISTER_MODEL_PLUGIN(Landing_Surface_Pose);
 }

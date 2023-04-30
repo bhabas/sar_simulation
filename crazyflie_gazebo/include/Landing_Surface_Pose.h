@@ -16,12 +16,13 @@
 
 namespace gazebo {
 
-    class Landing_Surface_Pose: public WorldPlugin
+    class Landing_Surface_Pose: public ModelPlugin
     {
         public:
             
         protected:
-            void Load(physics::WorldPtr _parent, sdf::ElementPtr _sdf);
+            void Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf);
+            void Init();
             void OnUpdate();
             bool Service_Callback(gazebo_msgs::SetModelState::Request &req, gazebo_msgs::SetModelState::Response &res);
 
@@ -33,6 +34,8 @@ namespace gazebo {
             physics::ModelPtr Surface_Model_Ptr;
             physics::ModelPtr Origin_Model_Ptr;
             physics::JointPtr Joint_Ptr;
+
+            std::string Joint_Name;
 
             event::ConnectionPtr updateConnection;
 

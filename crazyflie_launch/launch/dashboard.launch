@@ -1,3 +1,0 @@
-<launch>
-    <node name = "dashboard_node" pkg = "crazyflie_dashboard" type="Dashboard_Launch.py"/>
-</launch>
