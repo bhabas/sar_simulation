@@ -16,8 +16,8 @@ QUAD_SETTINGS:
 
 PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
   Plane_Model: "Standard_Plane"
-  Plane_Angle: 135  # [deg]
-  Pos_X: 2.0    # [m]
+  Plane_Angle: 180  # [deg]
+  Pos_X: 0.0    # [m]
   Pos_Y: 0.0    # [m]
   Pos_Z: 2.0    # [m]
 

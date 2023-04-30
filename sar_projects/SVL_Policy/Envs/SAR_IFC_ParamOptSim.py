@@ -26,18 +26,22 @@ class SAR_IFC_ParamOpt_Sim(SAR_Sim_Interface):
         ## RESET REWARD CALC VALUES
         self.done = False
         self.D_min = 50.0  # Reset max from ceiling [m]
+        
 
-        ## DISABLE STICKY LEGS (ALSO BREAKS CURRENT CONNECTION JOINTS)
-        self.SendCmd('Tumble',cmd_flag=0)
         self.SendCmd('GZ_StickyPads',cmd_flag=0)
 
+        self.SendCmd('Tumble',cmd_flag=0)
         self.SendCmd('Ctrl_Reset')
         self.reset_pos()
-        self.SendCmd('Ctrl_Reset')
-        self.reset_pos()
+        self.sleep(0.01)
 
         self.SendCmd('Tumble',cmd_flag=1)
-        self.sleep(0.25)
+        self.SendCmd('Ctrl_Reset')
+        self.reset_pos()
+        self.sleep(1.0) # Give time for drone to settle
+
+        self.SendCmd('GZ_StickyPads',cmd_flag=1)
+
 
         # ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
         # self.Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Iyy") + np.random.normal(0,1.5e-6)
@@ -62,8 +66,6 @@ class SAR_IFC_ParamOpt_Sim(SAR_Sim_Interface):
         onceFlag_flip = False    # Ensures flip data recorded only once
         onceFlag_impact = False   # Ensures impact data recorded only once 
 
-
-        self.SendCmd('GZ_StickyPads',cmd_flag=1)
 
         vz = vel*np.sin(np.deg2rad(phi))
         vx = vel*np.cos(np.deg2rad(phi))
