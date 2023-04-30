@@ -24,43 +24,49 @@ namespace gazebo {
             
         protected:
             void Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf);
-            void Init();
             void OnUpdate();
             bool Service_Callback(gazebo_msgs::SetModelState::Request &req, gazebo_msgs::SetModelState::Response &res);
-            void Wrench_Publisher();
+            void ForceTorque_Publisher();
 
 
         private:
 
+            // SDF PARAMS
+            std::string Joint_Name;
+            std::string ForceTorque_Topic;
+
+
             // GAZEBO POINTERS
             physics::WorldPtr World_Ptr;
+            physics::ModelPtr World_Origin_Model_Ptr;
+
             physics::ModelPtr Surface_Model_Ptr;
-            physics::ModelPtr Origin_Model_Ptr;
             physics::JointPtr Joint_Ptr;
-
-            std::string Joint_Name;
-
-            bool UpdatingJoint = false;
 
             event::ConnectionPtr updateConnection;
 
-            // ROS VALUES
+
+            // POSE UPDATES
             ros::NodeHandle nh;
-            ros::ServiceServer CMD_Service;
-            ros::Publisher Wrench_Pub;
-            geometry_msgs::WrenchStamped WrenchData_msg;
-            std::thread Wrench_Thread;
+            ros::ServiceServer Pose_Update_Service;
+            ignition::math::Vector3d Pos;
+            ignition::math::Quaterniond Quat;    
+            ignition::math::Pose3d Pose;
 
-            physics::JointWrench wrench;
-            ignition::math::Vector3d torque;
-            ignition::math::Vector3d force;
+            bool UpdatingJoint = false;
 
+            // ROS VALUES
 
-            // POSE VALUES
-            ignition::math::Vector3d Pos_0;     // [m]
-            ignition::math::Quaterniond Quat_0;    
-            ignition::math::Pose3d Pose_0;
+            // FORCE TORQUE UPDATES
+            std::thread ForceTorque_Publisher_Thread;
+            ros::Publisher ForceTorque_Pub;
+            geometry_msgs::WrenchStamped ForceTorque_msg;
+            
 
+            ignition::math::Vector3d Force_Vec;
+            ignition::math::Vector3d Torque_Vec;
+
+            
     };
 
 }
