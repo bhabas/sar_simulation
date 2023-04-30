@@ -1,4 +1,4 @@
-#include <iostream>
+
 #include <Landing_Surface_Pose.h>
 
 /*
@@ -20,6 +20,8 @@ namespace gazebo
 
         // // LINK COMMAND SERVICE TO CALLBACK
         CMD_Service = nh.advertiseService("/Landing_Surface_Pose", &Landing_Surface_Pose::Service_Callback, this);
+        Wrench_Pub = nh.advertise<geometry_msgs::WrenchStamped>("/ENV/Landing_Surface_Wrench",1);
+
 
         Joint_Name = _sdf->GetElement("jointName")->Get<std::string>();
         Surface_Model_Ptr->CreateJoint(Joint_Name,"fixed",Origin_Model_Ptr->GetLink("Origin_Link"),Surface_Model_Ptr->GetLink("Surface_Link"));
@@ -28,7 +30,9 @@ namespace gazebo
 
         
         // RUN FUNCTION EACH TIME SIMULATION UPDATES
+        Wrench_Thread = std::thread(&Landing_Surface_Pose::Wrench_Publisher, this);
         updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&Landing_Surface_Pose::OnUpdate, this));
+
         printf("\n\n");
 
     }
@@ -38,11 +42,37 @@ namespace gazebo
 
     }
 
+    void Landing_Surface_Pose::Wrench_Publisher()
+    {
+
+        int loopRate = 50;     // [Hz]
+        ros::Rate rate(loopRate);
+
+        
+        while(ros::ok)
+        {   
+            
+
+            WrenchData_msg.wrench.force.x = force.X();
+            WrenchData_msg.wrench.force.y = force.Y();
+            WrenchData_msg.wrench.force.z = force.Z();
+
+
+            WrenchData_msg.wrench.torque.x = torque.X();
+            WrenchData_msg.wrench.torque.y = torque.Y();
+            WrenchData_msg.wrench.torque.z = torque.Z();
+            Wrench_Pub.publish(WrenchData_msg);
+
+            rate.sleep();
+        }
+
+        
+
+    }
+
     void Landing_Surface_Pose::OnUpdate()
     {
-        physics::JointWrench wrench;
-        ignition::math::Vector3d torque;
-        ignition::math::Vector3d force;
+        
 
 
         // FIXME: Should include options for diferent frames and measure directions
@@ -59,7 +89,7 @@ namespace gazebo
             force = wrench.body2Force;
             torque = wrench.body2Torque;
 
-            printf("F_x %.3f \t F_z %.3f\n",force.X(),force.Z());
+            // printf("F_x %.3f \t F_z %.3f\n",force.X(),force.Z());
  
         }
 

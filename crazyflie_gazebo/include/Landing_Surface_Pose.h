@@ -8,7 +8,9 @@
 
 
 #include <ros/ros.h>
+#include <thread>
 #include "gazebo_msgs/SetModelState.h"
+#include "geometry_msgs/WrenchStamped.h"
 
 
 
@@ -25,6 +27,7 @@ namespace gazebo {
             void Init();
             void OnUpdate();
             bool Service_Callback(gazebo_msgs::SetModelState::Request &req, gazebo_msgs::SetModelState::Response &res);
+            void Wrench_Publisher();
 
 
         private:
@@ -44,6 +47,14 @@ namespace gazebo {
             // ROS VALUES
             ros::NodeHandle nh;
             ros::ServiceServer CMD_Service;
+            ros::Publisher Wrench_Pub;
+            geometry_msgs::WrenchStamped WrenchData_msg;
+            std::thread Wrench_Thread;
+
+            physics::JointWrench wrench;
+            ignition::math::Vector3d torque;
+            ignition::math::Vector3d force;
+
 
             // POSE VALUES
             ignition::math::Vector3d Pos_0;     // [m]
