@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import numpy as np
 import os
-import rospy
 import time
 
 
@@ -44,7 +43,7 @@ def runTraining(env,agent,V_d,phi,logName,K_ep_max=15):
         print('\n')
         
 
-        print("theta_i = ")
+        print("Theta_i = ")
         print(theta[0,:], "--> Tau")
         print(theta[1,:], "--> My")
 
@@ -129,7 +128,7 @@ def runTraining(env,agent,V_d,phi,logName,K_ep_max=15):
         print('\n')
         
 
-        print("theta_i = ")
+        print("Theta_i = ")
         print(theta[0,:], "--> Tau")
         print(theta[1,:], "--> My")
 
@@ -181,7 +180,7 @@ def runTraining(env,agent,V_d,phi,logName,K_ep_max=15):
 
 
 if __name__ == '__main__':
-    from Envs.SAR_ParamOptSim import SAR_ParamOpt_Sim
+    from Envs.SAR_ParamOpt_Sim import SAR_ParamOpt_Sim
     from Agents.EPHE_Agent import EPHE_Agent
 
     ## INIT GAZEBO ENVIRONMENT

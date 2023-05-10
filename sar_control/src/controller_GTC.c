@@ -116,7 +116,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 {
 
     // OPTICAL FLOW UPDATES
-    if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
+    if (RATE_DO_EXECUTE(30, tick)) {
 
         // UPDATE POS AND VEL
         r_BO = mkvec(state->position.x, state->position.y, state->position.z);
