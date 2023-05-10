@@ -25,7 +25,7 @@ PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
 SIM_SETTINGS:
   GUI_Flag: True
   Pause_Flag: True
-  Sim_Speed: 0.5
+  Sim_Speed: 1.0
   Sim_Slowdown_Speed: 0.4
   Landing_Slowdown_Flag: True
 

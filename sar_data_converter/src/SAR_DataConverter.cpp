@@ -24,6 +24,8 @@ void SAR_DataConverter::MainLoop()
     
     while(ros::ok)
     {   
+        checkSlowdown();
+        
         // PUBLISH ORGANIZED DATA
         Publish_StateData();
         Publish_FlipData();

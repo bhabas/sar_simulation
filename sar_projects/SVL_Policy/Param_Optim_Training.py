@@ -189,9 +189,9 @@ if __name__ == '__main__':
 
     ## INIT LEARNING AGENT
     # Mu_Tau value is multiplied by 10 so complete policy is more normalized
-    mu_0 = np.array([2.5, 0])       # Initial mu starting point
-    sig_0 = np.array([0.5, 2.5])   # Initial sigma starting point
-    agent = EPHE_Agent(mu_0,sig_0,n_rollouts=6)
+    mu_0 = np.array([2.5, 6])       # Initial mu starting point
+    sig_0 = np.array([0.5, 2.0])   # Initial sigma starting point
+    agent = EPHE_Agent(mu_0,sig_0,n_rollouts=8)
 
 
     # ============================
@@ -200,13 +200,13 @@ if __name__ == '__main__':
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
     V_d = 2.5 # [m/s]
-    phi = 135   # [deg]
+    phi = 40   # [deg]
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 25
     logName = f"{agent.agent_type}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--{env.modelInitials}.csv"
 
-    runTraining(env,agent,V_d,phi,logName,K_ep_max=15)
+    runTraining(env,agent,V_d,phi,logName,K_ep_max=25)
 
 
     
