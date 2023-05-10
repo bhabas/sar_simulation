@@ -21,7 +21,7 @@ ENDC = '\033[m'
 class SAR_Base_Interface():
 
     def __init__(self):
-        os.system("roslaunch crazyflie_launch params.launch")         
+        os.system("roslaunch sar_launch params.launch")         
         rospy.init_node("SAR_Env_Node")
 
 

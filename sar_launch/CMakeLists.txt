@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(crazyflie_launch)
+project(sar_launch)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -100,7 +100,7 @@ find_package(catkin REQUIRED)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES crazyflie_launch
+#  LIBRARIES sar_launch
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -118,7 +118,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/crazyflie_launch.cpp
+#   src/${PROJECT_NAME}/sar_launch.cpp
 # )
 
 ## Add cmake target dependencies of the library

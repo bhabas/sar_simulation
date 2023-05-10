@@ -7,7 +7,7 @@ import rospkg,os
 from crazyflie_env import SAR_Sim_Interface
 
 
-class SAR_IFC_ParamOpt_Sim(SAR_Sim_Interface):
+class SAR_ParamOpt_Sim(SAR_Sim_Interface):
     metadata = {'render.modes': ['human']}
     def __init__(self,GZ_Timeout=False):
         SAR_Sim_Interface.__init__(self)        

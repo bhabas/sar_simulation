@@ -183,7 +183,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
     def setParams(self):
 
-        os.system("roslaunch crazyflie_launch params.launch")
+        os.system("roslaunch sar_launch params.launch")
 
     
 
@@ -193,7 +193,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
     # ================================
 
     def launch_GZ_Sim(self):
-        cmd = "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun crazyflie_launch launch_gazebo.bash"
+        cmd = "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun sar_launch launch_gazebo.bash"
         self.GZ_Sim_process = subprocess.Popen(cmd, shell=True)
 
     def launch_SAR_DC(self):

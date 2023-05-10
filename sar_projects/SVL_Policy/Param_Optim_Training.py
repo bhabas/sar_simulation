@@ -181,11 +181,11 @@ def runTraining(env,agent,V_d,phi,logName,K_ep_max=15):
 
 
 if __name__ == '__main__':
-    from Envs.SAR_IFC_ParamOptSim import SAR_IFC_ParamOpt_Sim
+    from Envs.SAR_ParamOptSim import SAR_ParamOpt_Sim
     from Agents.EPHE_Agent import EPHE_Agent
 
     ## INIT GAZEBO ENVIRONMENT
-    env = SAR_IFC_ParamOpt_Sim(GZ_Timeout=False)
+    env = SAR_ParamOpt_Sim(GZ_Timeout=False)
 
     ## INIT LEARNING AGENT
     # Mu_Tau value is multiplied by 10 so complete policy is more normalized
