@@ -15,7 +15,7 @@ from matplotlib.patches import Rectangle
 
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg,os
-BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_projects'))
+BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('sar_projects'))
 sys.path.insert(1,BASE_PATH)        
 np.set_printoptions(threshold = sys.maxsize) # Print full string without truncation
 
@@ -30,7 +30,7 @@ class DataParser:
         """        
 
         ## INIT LOGGING PARAMETERS
-        self.LogDir = f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/local_logs/{FolderName}"
+        self.LogDir = f"{BASE_PATH}/sar_projects/Optical_Flow_Estimation/local_logs/{FolderName}"
         self.FileDir = os.path.join(self.LogDir,FileDir)   
 
         self.CSV_Path = os.path.join(self.FileDir,f"Cam_Data--SSL_{SubSample_Level:0d}.csv")    
@@ -928,10 +928,38 @@ if __name__ == '__main__':
     FolderName = "Check_Pattern_Divergent_Flow"
     FileDir=f"D_2.0--V_perp_1.0--V_para_0.0--L_0.25"
 
+    img_cur = [
+        5,8,4,6,1,8,7,0,
+        0,0,0,5,0,0,4,2,
+        2,4,8,8,3,1,0,1,
+        0,6,0,8,2,9,8,5,
+        7,1,9,6,1,5,5,3,
+        8,2,0,3,1,3,8,1,
+        3,0,8,8,0,7,6,1,
+        8,0,8,1,9,9,3,5,
+               ]
+    img_cur = np.array(img_cur).reshape(8,8)
     
+    img_prev = [
+            9,2,2,2,9,7,6,8,
+            8,1,3,8,2,2,2,9,
+            2,6,4,4,1,5,8,9,
+            2,6,1,0,5,3,3,4,
+            8,5,4,2,9,3,9,8,
+            8,2,9,3,0,7,3,2,
+            0,4,3,3,8,0,4,6,
+            1,0,8,7,6,8,5,7,
+                ]
+    img_prev = np.array(img_prev).reshape(8,8)
+
     Parser = DataParser(FolderName,FileDir,SubSample_Level=0) 
-    # Parser.DataOverview_MP4(n=10)
-    Parser.OpticalFlow_MP4(n=20) 
+    Parser.OF_Calc_Opt_Sep(img_cur,img_prev,0.01)
+
+    
+
+    
+    # # Parser.DataOverview_MP4(n=10)
+    # Parser.OpticalFlow_MP4(n=20) 
 
 
     # L_list = [0.02,0.05,0.12,0.25,0.5,0.75,1.00,2.00]
