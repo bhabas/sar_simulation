@@ -174,8 +174,8 @@ class CameraLogger:
         Move_srv.Pos_0.z = 0.0 - Cam_Z_Offset
 
         Move_srv.Vel_0.x = self.V_perp_0
-        Move_srv.Vel_0.y = 0.0
-        Move_srv.Vel_0.z = -self.V_parallel_0
+        Move_srv.Vel_0.y = -self.V_parallel_0
+        Move_srv.Vel_0.z = 0.0
 
         Move_srv.Accel_0.x = 0.0
         Move_srv.Accel_0.y = 0.0
@@ -257,11 +257,11 @@ if __name__ == '__main__':
     # D_perp,V_parallel,V_perp = (0.8,1.6,0.0)
 
     ## DIVERGENT FLOW
-    D_perp,V_parallel,V_perp = (2.0,0.0,2.0)
+    D_perp,V_parallel,V_perp = (2.0,0.0,1.0)
     # D_perp,V_parallel,V_perp = (1.0,0.0,1.0)
     # D_perp,V_parallel,V_perp = (0.5,0.0,0.5)
 
-    L = 2.00
+    L = 0.25
 
     FolderName = "Check_Pattern_Divergent_Flow"
     FileName = f"D_{D_perp:.1f}--V_perp_{V_perp:.1f}--V_para_{V_parallel:.1f}--L_{L:.2f}"

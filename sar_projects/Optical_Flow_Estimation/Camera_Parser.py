@@ -419,8 +419,8 @@ class DataParser:
         fig = plt.figure(figsize=(6,6))
 
         ## CALCULATE INITIAL OPTICAL FLOW VALUES
-        t_cur = Parser.grabState(['t'],idx=1)
-        t_prev = Parser.grabState(['t'],idx=0)
+        t_cur = self.grabState(['t'],idx=1)
+        t_prev = self.grabState(['t'],idx=0)
         t_delta = t_cur - t_prev
 
         prev_img = self.Image_array[0]
@@ -433,9 +433,9 @@ class DataParser:
 
         ## GENERATE IMAGE AXES
         Img_ax = fig.add_subplot(111)
-        Img_ax.set_title(fr"$V_\perp$: {self.vx[0]:.2f} [m/s] | $V_\parallel$: {self.vy[0]:.2f} | $D_\perp$: {self.D_perp[0]:.2f} [m]"
-                             f"\n"
-                             f"Frame: {0:03d} | FPS: {int(1/t_delta):03d} [Hz]")
+        # Img_ax.set_title(fr"$V_\perp$: {self.vx[0]:.2f} [m/s] | $V_\parallel$: {self.vy[0]:.2f} | $D_\perp$: {self.D_perp[0]:.2f} [m]"
+        #                      f"\n"
+        #                      f"Frame: {0:03d} | FPS: {int(1/t_delta):03d} [Hz]")
         # IMAGE PLOT
         im = Img_ax.imshow(self.Image_array[0], 
                 interpolation='none', 
@@ -447,20 +447,26 @@ class DataParser:
             U_p[1::n,1::n],V_p[1::n,1::n],
             -du_dt[1::n,1::n],-dv_dt[1::n,1::n], # Need negative sign for arrows to match correct direction
             color='lime')
+        
+        Img_ax.set_xticks([])
+        Img_ax.set_yticks([])
+        Img_ax.set_xticklabels([])
+        Img_ax.set_yticklabels([])
+
 
         def update(i):
             
             ## UPDATE OPTICAL FLOW
-            t_cur = Parser.grabState(['t'],idx=i)
-            t_prev = Parser.grabState(['t'],idx=i-1)
+            t_cur = self.grabState(['t'],idx=i)
+            t_prev = self.grabState(['t'],idx=i-1)
             t_delta = t_cur - t_prev
             du_dt,dv_dt = self.Calc_OF_LK(self.Image_array[i],self.Image_array[i-1],t_delta,n=10)
             Q.set_UVC(-du_dt[1::n,1::n],-dv_dt[1::n,1::n])
             
-            ## UPDATE IMAGE
-            Img_ax.set_title(fr"$V_\perp$: {self.vx[i]:.2f} [m/s] | $V_\parallel$: {self.vy[i]:.2f} | $D_\perp$: {self.D_perp[i]:.2f} [m]"
-                             f"\n"
-                             f"Frame: {i:03d} | FPS: {int(1/t_delta):03d} [Hz]")
+            # ## UPDATE IMAGE
+            # Img_ax.set_title(fr"$V_\perp$: {self.vx[i]:.2f} [m/s] | $V_\parallel$: {self.vy[i]:.2f} | $D_\perp$: {self.D_perp[i]:.2f} [m]"
+            #                  f"\n"
+            #                  f"Frame: {i:03d} | FPS: {int(1/t_delta):03d} [Hz]")
             im.set_data(self.Image_array[i])
            
             ## PRINT PROGRESS
@@ -469,7 +475,7 @@ class DataParser:
             return im,Q,
         
         ani = animation.FuncAnimation(fig, update, interval=100, blit=False,frames=range(2,frame_limit))
-        ani.save(f"{self.LogDir}/L-K_{self.FileName}.mp4")
+        ani.save(f"{self.FileDir}/L-K_Test.mp4")
         
     def Calc_OF_LK(self,cur_img,prev_img,t_delta,n=1):
         """Calculates series of optical flow vectors between images via Lucas-Kanade algorithm.
@@ -920,25 +926,28 @@ class DataParser:
 if __name__ == '__main__':
 
     FolderName = "Check_Pattern_Divergent_Flow"
+    FileDir=f"D_2.0--V_perp_1.0--V_para_0.0--L_0.25"
+
     
-    # Parser = DataParser(FolderName,FileDir,SubSample_Level=0) 
-    # Parser.DataOverview_MP4(n=10,frame_limit=5)
+    Parser = DataParser(FolderName,FileDir,SubSample_Level=0) 
+    # Parser.DataOverview_MP4(n=10)
+    Parser.OpticalFlow_MP4(n=20) 
 
-    L_list = [0.02,0.05,0.12,0.25,0.5,0.75,1.00,2.00]
 
-    for L in L_list:
+    # L_list = [0.02,0.05,0.12,0.25,0.5,0.75,1.00,2.00]
 
-        FileDir=f"D_2.0--V_perp_2.0--V_para_0.0--L_{L:.2f}"
+    # for L in L_list:
 
-        for SSL in  range(4):
-            Parser = DataParser(FolderName,FileDir,SubSample_Level=SSL) 
-            Parser.DataOverview_MP4(n=10,frame_limit=None)
+    #     FileDir=f"D_2.0--V_perp_2.0--V_para_0.0--L_{L:.2f}"
+
+    #     for SSL in  range(4):
+    #         Parser = DataParser(FolderName,FileDir,SubSample_Level=SSL) 
+    #         Parser.DataOverview_MP4(n=10,frame_limit=None)
 
 
 
     
     # # Parser.DataOverview(frame_idx=150,save_fig=True,show_fig=False)
-    # # Parser.OpticalFlow_MP4(n=10) 
 
     # L = 0.05
     # Parser.Generate_Surface_Pattern(L_w=L,L_h=L,Surf_width=8,Surf_Height=16,save_img=True)
