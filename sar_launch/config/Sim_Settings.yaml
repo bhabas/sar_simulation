@@ -1,0 +1,39 @@
+DATA_TYPE: "SIM"
+
+ENV_SETTINGS:
+  Ground_Name: "GroundPlane_Desert_Physical"
+
+QUAD_SETTINGS:
+  SAR_Type: "Crazyflie_Standard"
+  SAR_Config: "A20_L75_K32"
+
+  Cam_Sensor: False
+
+  Policy_Type: "PARAM_OPTIM"
+  # Policy_Type: "SVL_POLICY" 
+  # Policy_Type: "DEEP_RL" 
+  # Policy_Type: "DEEP_RL_SB3" 
+
+PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
+  Plane_Model: "Standard_Plane"
+  Plane_Angle: 180  # [deg]
+  Pos_X: 0.0    # [m]
+  Pos_Y: 0.0    # [m]
+  Pos_Z: 2.0    # [m]
+
+
+SIM_SETTINGS:
+  GUI_Flag: True
+  Pause_Flag: True
+  Sim_Speed: 1.0
+  Sim_Slowdown_Speed: 0.4
+  Landing_Slowdown_Flag: True
+
+SAR_DC_SETTINGS:
+  Logging_Rate: 10 # [Hz]
+
+
+
+
+
+

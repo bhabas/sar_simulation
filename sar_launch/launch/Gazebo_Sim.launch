@@ -1,0 +1,46 @@
+<launch>
+  
+    <!-- GROUND SURFACE ARGS -->
+    <arg name="Ground_Model" default="GroundPlane_Desert_Physical"/>
+    <arg name="Ground_SDF_Path" default="$(find crazyflie_gazebo)/models/Ground_Surfaces/$(arg Ground_Model)/model.sdf"/>
+
+    <!-- LANDING SURFACE ARGS -->
+    <arg name="Plane_Model" default="Standard_Plane"/>
+    <arg name="Plane_SDF_Path" default="$(find crazyflie_gazebo)/models/Landing_Surfaces/$(arg Plane_Model)/model.sdf"/>
+
+    <!-- CRAZYFLIE MODEL ARGS -->
+    <arg name="Quad_Model" default="Narrow_Long"/>
+    <arg name="Quad_SDF_Path" default="$(find crazyflie_gazebo)/models/Crazyflie_Models/crazyflie_$(arg Quad_Model)/model.sdf"/>
+
+    <!-- LOAD SETTINGS FLAGS -->
+    <arg name="Gui_Flag" default="true"/>
+    <arg name="Pause_Flag" default="false"/>
+
+    <!-- LAUNCH GAZEBO WITH SPECIFIED WORLD FILE -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="--lockstep $(find crazyflie_gazebo)/worlds/Gazebo_World.world"/>
+        <!-- lockstep command ensures sim updates and sensor frequency updates are synced together -->
+        <!-- http://gazebosim.org/tutorials?tut=lockstep_physics_sensors&cat=sensors -->
+        <!-- http://gazebosim.org/tutorials?tut=performance_metrics&cat=tools_utilities -->
+    
+        <arg name="gui" value="$(arg Gui_Flag)"/>
+        <arg name="paused" value="$(arg Pause_Flag)"/>
+        <arg name="verbose" value="true"/>
+        <arg name="debug" value="false"/>
+        <arg name="use_sim_time" default="true"/>
+        <arg name="headless" default="false"/>
+
+    </include>
+    
+
+    <!-- SPAWN GROUND PLANE/LANDING SURFACE/CRAZYFLIE MODELS -->
+    <!-- <node name="Spawn_Ground" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
+        args="-file $(arg Ground_SDF_Path) -sdf -model $(arg Ground_Model)" /> -->
+        
+    <node name="Spawn_Model" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
+    args="-file $(arg Quad_SDF_Path) -sdf -model crazyflie_$(arg Quad_Model) -z 0.3" />
+
+    <node name="Spawn_Plane" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
+    args="-file $(arg Plane_SDF_Path) -sdf -model $(arg Plane_Model) -z 2" />
+        
+</launch>

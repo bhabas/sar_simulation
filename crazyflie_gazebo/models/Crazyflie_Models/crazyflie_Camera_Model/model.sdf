@@ -510,15 +510,6 @@
       <updateRate>100.0</updateRate>
     </plugin>
 
-    <plugin name='OpticalFlow_plugin' filename='libOpticalFlow_plugin.so'>
-      <updateRate>100</updateRate>
-      <bodyName>camera_sensor</bodyName>
-      <topicName>/CF_Internal/OpticalFlow_Values</topicName>
-      <Theta_x_gaussianNoise>0.0</Theta_x_gaussianNoise>
-      <Theta_y_gaussianNoise>0.0</Theta_y_gaussianNoise>
-      <Theta_z_gaussianNoise>0.0</Theta_z_gaussianNoise>
-    </plugin>
-
     <plugin name='ModelMove_Plugin' filename='libModelMove_plugin.so'>
         <linkName>camera_sensor</linkName>
     </plugin>

@@ -28,15 +28,15 @@ target_link_libraries(gazebo_sticky_foot ${GAZEBO_LIBRARIES})
 add_library(motor_plugin SHARED src/motor_plugin.cpp)
 target_link_libraries(motor_plugin ${GAZEBO_LIBRARIES})
 
-add_library(OpticalFlow_plugin SHARED src/OpticalFlow_plugin.cpp)
-target_link_libraries(OpticalFlow_plugin ${GAZEBO_LIBRARIES})
-
 add_library(DomainRand_plugin SHARED src/DomainRandomization.cpp)
 target_link_libraries(DomainRand_plugin ${GAZEBO_LIBRARIES})
 
 # EXTRA PLUGINS
 add_library(ModelMove_plugin SHARED src/Model_Move.cpp)
 target_link_libraries(ModelMove_plugin ${GAZEBO_LIBRARIES})
+
+add_library(Landing_Surface_Pose_plugin SHARED src/Landing_Surface_Pose.cpp)
+target_link_libraries(Landing_Surface_Pose_plugin ${GAZEBO_LIBRARIES})
 
 add_library(Moment_plugin SHARED src/model_Moment.cpp)
 target_link_libraries(Moment_plugin ${GAZEBO_LIBRARIES})

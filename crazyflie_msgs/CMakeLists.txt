@@ -26,9 +26,7 @@ add_message_files(
   CtrlDebug.msg
   PadConnect.msg
   MS.msg
-  OF_SensorData.msg
   GenericLogData.msg
-  Vicon_Filtered.msg
   GTC_Cmd.msg
 )
 
@@ -38,7 +36,7 @@ add_service_files(
   activateSticky.srv
   loggingCMD.srv
   domainRand.srv
-  RLCmd.srv
+  GTC_Cmd_srv.srv
   ModelMove.srv
 )
 

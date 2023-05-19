@@ -6,6 +6,32 @@
       <uri>model://sun</uri>
     </include>
 
+    <model name='World_Origin'>
+      <static>1</static>
+      <link name='Origin_Link'>
+        <pose>0 0 0 0 0 0</pose>
+        <visual name='Origin_Visual'>
+          <cast_shadows>0</cast_shadows>
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <sphere>
+              <radius>0.01</radius>
+            </sphere>
+          </geometry>
+          <material>
+            <script>
+              <name>Gazebo/Orange</name>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+            </script>
+            <shader type='pixel'>
+              <normal_map>__default__</normal_map>
+            </shader>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+      
     <light name='Horizontal_Light' type='directional'>
       <pose>-5 0 0 0 1.57 0</pose>
       <diffuse>0.5 0.5 0.5 1</diffuse>
@@ -45,7 +71,7 @@
       </camera>
     </gui>
     <physics name='default_physics' default='0' type='bullet'>
-      <gravity>0 0 -9.8066</gravity>
+      <gravity>0 0 -9.81</gravity>
       <bullet>
         <solver>
           <type>sequential_impulse</type>

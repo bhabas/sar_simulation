@@ -19,28 +19,7 @@
       <enable_wind>0</enable_wind>
       <kinematic>0</kinematic>
       <gravity>0</gravity>
-      <visual name='ground_visual'>
-        <cast_shadows>0</cast_shadows>
-        <pose>0 0 -0.01 0 -0 0</pose>
-        <geometry>
-          <box>
-            <size>10 10 0.02</size>
-          </box>
-        </geometry>
-        <material>
-          <script>
-            <uri>model://GroundPlane_Desert_Physical/materials/scripts</uri>
-            <uri>model://GroundPlane_Desert_Physical/materials/textures</uri>
-            <name>groundMat/Dirt</name>
-          </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-          <emissive>0 0 0 1</emissive>
-        </material>
-        <pose>0 0 0 0 -0 0</pose>
-        <transparency>0</transparency>
-      </visual>
+   
       <collision name='ground_collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
