@@ -188,7 +188,7 @@ if __name__ == '__main__':
 
     ## INIT LEARNING AGENT
     # Mu_Tau value is multiplied by 10 so complete policy is more normalized
-    mu_0 = np.array([2.5, 6])       # Initial mu starting point
+    mu_0 =  np.array([2.5, 6.0])       # Initial mu starting point
     sig_0 = np.array([1.0, 2.0])   # Initial sigma starting point
     agent = EPHE_Agent(mu_0,sig_0,n_rollouts=8)
 

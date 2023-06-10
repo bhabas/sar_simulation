@@ -2,13 +2,11 @@
 import numpy as np
 import time
 
-import rospkg,os
-
 from crazyflie_env import SAR_Sim_Interface
 
 
 class SAR_ParamOpt_Sim(SAR_Sim_Interface):
-    metadata = {'render.modes': ['human']}
+
     def __init__(self,GZ_Timeout=False):
         SAR_Sim_Interface.__init__(self)        
 
@@ -134,18 +132,11 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
             if (time.time() - start_time_ep) > 15.0 and self.GZ_Timeout == True:
                 print('\033[93m' + "[WARNING] Real Time Exceeded" + '\x1b[0m')
-                self.Restart()
+                self.restart_Sim()
                 self.done = True
 
 
-            if any(np.isnan(self.vel)): 
-                self.error_str = "Rollout Completed: NaN in State Vector"
 
-                print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
-                self.Restart([True,True,True])
-                print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
-                self.done = True
-                # print(self.error_str)
 
         reward = self.CalcReward()
 

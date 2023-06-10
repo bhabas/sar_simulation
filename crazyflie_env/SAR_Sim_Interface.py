@@ -37,7 +37,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         ## START SIMULATION
         self.Clock_Check_Flag = Event() # Stops clock monitoring during launch process
-        self.restart_subprocesses()
+        self.restart_Sim()
 
 
         ## START MONITORING NODES
@@ -221,11 +221,11 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
             if not (GZ_ping_ok and SAR_DC_ping_ok and SAR_Ctrl_ping_ok):
                 print("One or more subprocesses not responding. Restarting all subprocesses...")
-                self.restart_subprocesses()
+                self.restart_Sim()
 
             if not (NaN_check_ok):
                 print("NaN value detected. Restarting all subprocesses...")
-                self.restart_subprocesses()
+                self.restart_Sim()
 
             time.sleep(0.5)
 
@@ -239,8 +239,8 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         except (subprocess.TimeoutExpired, subprocess.CalledProcessError):
             return False
         
-        
-    def restart_subprocesses(self):
+    
+    def restart_Sim(self):
 
         self.Clock_Check_Flag.clear()
 
