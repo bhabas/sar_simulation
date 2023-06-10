@@ -2,7 +2,7 @@ import numpy as np
 import scipy.stats 
 import time
 import rospy
-from sar_msgs.msg import RLData,RLConvg
+from sar_msgs.msg import RL_Data,RL_History
 
 class EPHE_Agent():
     ## EM‑based policy hyper parameter exploration
@@ -16,8 +16,8 @@ class EPHE_Agent():
 
         self.dim = len(self.mu)
 
-        self.RL_Data_Publisher = rospy.Publisher('/RL/data',RLData,queue_size=10)
-        self.RL_Convg_Publisher = rospy.Publisher('/RL/convg_data',RLConvg,queue_size=10)
+        self.RL_Data_Publisher = rospy.Publisher('/RL/data',RL_Data,queue_size=10)
+        self.RL_Convg_Publisher = rospy.Publisher('/RL/convg_data',RL_History,queue_size=10)
 
         ## CONVERGENCE HISTORY
         self.K_ep_list = []
@@ -51,7 +51,7 @@ class EPHE_Agent():
     def RL_Publish(self):
 
         ## RL DATA
-        RL_msg = RLData() ## Initialize RLData message
+        RL_msg = RL_Data() ## Initialize RL_Data message
         
         # RL_msg.n_rollouts = self.n_rollouts
 
@@ -70,10 +70,10 @@ class EPHE_Agent():
         RL_msg.vel_d = self.vel_d
 
         RL_msg.trialComplete_flag = self.trialComplete_flag
-        self.RL_Data_Publisher.publish(RL_msg) ## Publish RLData message
+        self.RL_Data_Publisher.publish(RL_msg) ## Publish RL_Data message
         
         ## CONVERGENCE HISTORY
-        RL_convg_msg = RLConvg()
+        RL_convg_msg = RL_History()
         RL_convg_msg.K_ep_list = self.K_ep_list
         RL_convg_msg.K_run_list = self.K_run_list
 
@@ -89,7 +89,7 @@ class EPHE_Agent():
         RL_convg_msg.Kep_list_reward_avg = self.Kep_list_reward_avg
         RL_convg_msg.reward_avg_list = self.reward_avg_list
 
-        self.RL_Convg_Publisher.publish(RL_convg_msg) ## Publish RLData message
+        self.RL_Convg_Publisher.publish(RL_convg_msg) ## Publish RL_Data message
 
         time.sleep(0.1)
 

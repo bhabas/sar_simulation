@@ -1,6 +1,6 @@
 #include "SAR_DataConverter.h"
 
-void SAR_DataConverter::RL_Data_Callback(const sar_msgs::RLData::ConstPtr &msg)
+void SAR_DataConverter::RL_Data_Callback(const sar_msgs::RL_Data::ConstPtr &msg)
 {
 
     k_ep = msg->k_ep;

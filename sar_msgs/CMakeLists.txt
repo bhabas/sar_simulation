@@ -16,14 +16,14 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  CF_FlipData.msg
-  CF_ImpactData.msg
-  CF_MiscData.msg
-  CF_StateData.msg
-  RLData.msg
-  RLConvg.msg
-  CtrlData.msg
-  CtrlDebug.msg
+  SAR_FlipData.msg
+  SAR_ImpactData.msg
+  SAR_MiscData.msg
+  SAR_StateData.msg
+  RL_Data.msg
+  RL_History.msg
+  CTRL_Data.msg
+  CTRL_Debug.msg
   PadConnect.msg
   MS.msg
   GenericLogData.msg

@@ -23,18 +23,18 @@
 #include <gazebo_msgs/SetModelState.h>
 
 // CUSTOM INCLUDES
-#include "sar_msgs/CF_StateData.h"
-#include "sar_msgs/CF_FlipData.h"
-#include "sar_msgs/CF_ImpactData.h"
-#include "sar_msgs/CF_MiscData.h"
+#include "sar_msgs/SAR_StateData.h"
+#include "sar_msgs/SAR_FlipData.h"
+#include "sar_msgs/SAR_ImpactData.h"
+#include "sar_msgs/SAR_MiscData.h"
 
-#include "sar_msgs/CtrlData.h"
-#include "sar_msgs/CtrlDebug.h"
+#include "sar_msgs/CTRL_Data.h"
+#include "sar_msgs/CTRL_Debug.h"
 #include "sar_msgs/GTC_Cmd_srv.h"
 #include "sar_msgs/GTC_Cmd.h"
 
 
-#include "sar_msgs/RLData.h"
+#include "sar_msgs/RL_Data.h"
 #include "sar_msgs/PadConnect.h"
 
 #include "sar_msgs/activateSticky.h"
@@ -80,10 +80,10 @@ class SAR_DataConverter {
 
 
             // INITIALIZE STATE DATA PUBLISHERS
-            StateData_Pub = nh->advertise<sar_msgs::CF_StateData>("/SAR_DC/StateData",1);
-            FlipData_Pub =  nh->advertise<sar_msgs::CF_FlipData>("/SAR_DC/FlipData",1);
-            ImpactData_Pub = nh->advertise<sar_msgs::CF_ImpactData>("/SAR_DC/ImpactData",1);  
-            MiscData_Pub =  nh->advertise<sar_msgs::CF_MiscData>("/SAR_DC/MiscData",1);
+            StateData_Pub = nh->advertise<sar_msgs::SAR_StateData>("/SAR_DC/StateData",1);
+            FlipData_Pub =  nh->advertise<sar_msgs::SAR_FlipData>("/SAR_DC/FlipData",1);
+            ImpactData_Pub = nh->advertise<sar_msgs::SAR_ImpactData>("/SAR_DC/ImpactData",1);  
+            MiscData_Pub =  nh->advertise<sar_msgs::SAR_MiscData>("/SAR_DC/MiscData",1);
 
             // LOGGING 
             Logging_Service = nh->advertiseService("/SAR_DC/DataLogging", &SAR_DataConverter::DataLogging_Callback, this);
@@ -115,8 +115,8 @@ class SAR_DataConverter {
         // =======================
         //     GAZEBO CALLBACKS
         // =======================
-        void CtrlData_Callback(const sar_msgs::CtrlData &ctrl_msg);
-        void CtrlDebug_Callback(const sar_msgs::CtrlDebug &ctrl_msg);
+        void CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg);
+        void CtrlDebug_Callback(const sar_msgs::CTRL_Debug &ctrl_msg);
 
         void SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStamped::ConstPtr &msg);
         void Surface_Contact_Callback(const gazebo_msgs::ContactsState &msg);
@@ -157,7 +157,7 @@ class SAR_DataConverter {
         // =================================
         //     ORGANIZED DATA PUBLISHERS
         // =================================
-        void RL_Data_Callback(const sar_msgs::RLData::ConstPtr &msg);
+        void RL_Data_Callback(const sar_msgs::RL_Data::ConstPtr &msg);
         void Publish_StateData();
         void Publish_FlipData();
         void Publish_ImpactData();
@@ -256,10 +256,10 @@ class SAR_DataConverter {
         ros::Publisher ImpactData_Pub;
         ros::Publisher MiscData_Pub;
 
-        sar_msgs::CF_StateData StateData_msg;
-        sar_msgs::CF_FlipData FlipData_msg;
-        sar_msgs::CF_ImpactData ImpactData_msg;
-        sar_msgs::CF_MiscData MiscData_msg;
+        sar_msgs::SAR_StateData StateData_msg;
+        sar_msgs::SAR_FlipData FlipData_msg;
+        sar_msgs::SAR_ImpactData ImpactData_msg;
+        sar_msgs::SAR_MiscData MiscData_msg;
 
         // ===================================
         //     EXP COMPRESSED DATA OBJECTS

@@ -114,7 +114,7 @@ namespace gazebo
     }
 
 
-    void GazeboMotorPlugin::CtrlData_Callback(const sar_msgs::CtrlData::ConstPtr &msg)
+    void GazeboMotorPlugin::CtrlData_Callback(const sar_msgs::CTRL_Data::ConstPtr &msg)
     {
         MotorThrust_input = msg->MotorThrusts[motor_number-1];
         

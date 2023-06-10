@@ -1,6 +1,6 @@
 #include "SAR_DataConverter.h"
 
-void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CtrlData &ctrl_msg)
+void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 {
     // ===================
     //     FLIGHT DATA
@@ -105,7 +105,7 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CtrlData &ctrl_msg)
 
 }
 
-void SAR_DataConverter::CtrlDebug_Callback(const sar_msgs::CtrlDebug &ctrl_msg)
+void SAR_DataConverter::CtrlDebug_Callback(const sar_msgs::CTRL_Debug &ctrl_msg)
 {
     Motorstop_Flag = ctrl_msg.Motorstop_Flag;
     Pos_Ctrl_Flag = ctrl_msg.Pos_Ctrl;

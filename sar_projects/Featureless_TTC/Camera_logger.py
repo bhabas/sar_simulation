@@ -6,7 +6,7 @@ import csv
 import sys
 
 from sensor_msgs.msg import Image
-from sar_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
+from sar_msgs.msg import SAR_StateData,SAR_FlipData,SAR_ImpactData,SAR_MiscData
 from rosgraph_msgs.msg import Clock
 
 
@@ -48,7 +48,7 @@ class CameraParser:
 
         #COLLECT MISC. DATA
         rospy.Subscriber("/CF_Internal/camera/image_raw",Image,self.Camera_cb,queue_size = 1)
-        rospy.Subscriber("/SAR_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size = 1)
+        rospy.Subscriber("/SAR_DC/StateData",SAR_StateData,self.SAR_StateDataCallback,queue_size = 1)
 
     def Create_csv(self):
 
@@ -93,7 +93,7 @@ class CameraParser:
         
         self.Append_data()
 
-    def CF_StateDataCallback(self,StateData_msg):
+    def SAR_StateDataCallback(self,StateData_msg):
 
         self.posCF = np.round([ StateData_msg.Pose.position.x,
                                 StateData_msg.Pose.position.y,

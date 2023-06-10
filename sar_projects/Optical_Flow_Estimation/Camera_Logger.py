@@ -7,7 +7,7 @@ import sys
 import os
 
 from sensor_msgs.msg import Image
-from sar_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
+from sar_msgs.msg import SAR_StateData,SAR_FlipData,SAR_ImpactData,SAR_MiscData
 from rosgraph_msgs.msg import Clock
 
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
@@ -61,7 +61,7 @@ class CameraLogger:
     
         ## DATA SUBSCRIBERS
         rospy.Subscriber("/CF_Internal/camera/image_raw",Image,self.CameraCallback,queue_size=500)
-        rospy.Subscriber("/SAR_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_DC/StateData",SAR_StateData,self.SAR_StateDataCallback,queue_size=1)
 
     def Create_csv(self,FilePath):
         """Create CSV file that log data will be written to
@@ -139,7 +139,7 @@ class CameraLogger:
 
 
 
-    def CF_StateDataCallback(self,StateData_msg):
+    def SAR_StateDataCallback(self,StateData_msg):
         """Callback which receives current state data over ROS topic.
 
         Args:

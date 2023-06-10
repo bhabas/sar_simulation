@@ -6,10 +6,10 @@ import getpass
 import time
 
 ## ROS MESSAGES AND SERVICES
-from sar_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
+from sar_msgs.msg import SAR_StateData,SAR_FlipData,SAR_ImpactData,SAR_MiscData
 from sar_msgs.srv import loggingCMD,loggingCMDRequest
 from sar_msgs.srv import GTC_Cmd_srv,GTC_Cmd_srvRequest
-from sar_msgs.msg import RLData,RLConvg
+from sar_msgs.msg import RL_Data,RL_History
 
 from rosgraph_msgs.msg import Clock
 
@@ -54,14 +54,14 @@ class SAR_Base_Interface():
         # NOTE: Queue sizes=1 so that we are always looking at the most current data and 
         #       not data at back of a queue waiting to be processed by callbacks
         rospy.Subscriber("/clock",Clock,self.clockCallback,queue_size=1)
-        rospy.Subscriber("/SAR_DC/StateData",CF_StateData,self.SAR_StateDataCallback,queue_size=1)
-        rospy.Subscriber("/SAR_DC/FlipData",CF_FlipData,self.SAR_FlipDataCallback,queue_size=1)
-        rospy.Subscriber("/SAR_DC/ImpactData",CF_ImpactData,self.SAR_ImpactDataCallback,queue_size=1)
-        rospy.Subscriber("/SAR_DC/MiscData",CF_MiscData,self.SAR_MiscDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_DC/StateData",SAR_StateData,self.SAR_StateDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_DC/FlipData",SAR_FlipData,self.SAR_FlipDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_DC/ImpactData",SAR_ImpactData,self.SAR_ImpactDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_DC/MiscData",SAR_MiscData,self.SAR_MiscDataCallback,queue_size=1)
 
         ## RL DATA PUBLISHERS
-        self.RL_Data_Publisher = rospy.Publisher('/RL/data',RLData,queue_size=10)
-        self.RL_Convg_Publisher = rospy.Publisher('/RL/convg_data',RLConvg,queue_size=10)
+        self.RL_Data_Publisher = rospy.Publisher('/RL/data',RL_Data,queue_size=10)
+        self.RL_Convg_Publisher = rospy.Publisher('/RL/convg_data',RL_History,queue_size=10)
 
 
     def getTime(self):
@@ -193,7 +193,7 @@ class SAR_Base_Interface():
     def RL_Publish(self):
 
         ## RL DATA
-        RL_msg = RLData() ## Initialize RLData message
+        RL_msg = RL_Data() ## Initialize RL_Data message
         
         RL_msg.k_ep = self.k_ep
         RL_msg.k_run = self.k_run
@@ -210,10 +210,10 @@ class SAR_Base_Interface():
         RL_msg.vel_d = self.vel_d
 
         RL_msg.trialComplete_flag = self.trialComplete_flag
-        self.RL_Data_Publisher.publish(RL_msg) ## Publish RLData message
+        self.RL_Data_Publisher.publish(RL_msg) ## Publish RL_Data message
         
         ## CONVERGENCE HISTORY
-        RL_convg_msg = RLConvg()
+        RL_convg_msg = RL_History()
         RL_convg_msg.K_ep_list = self.K_ep_list
         RL_convg_msg.K_run_list = self.K_run_list
 
@@ -229,7 +229,7 @@ class SAR_Base_Interface():
         RL_convg_msg.Kep_list_reward_avg = self.Kep_list_reward_avg
         RL_convg_msg.reward_avg_list = self.reward_avg_list
 
-        self.RL_Convg_Publisher.publish(RL_convg_msg) ## Publish RLData message
+        self.RL_Convg_Publisher.publish(RL_convg_msg) ## Publish RL_Data message
 
         time.sleep(0.1)
 

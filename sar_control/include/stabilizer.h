@@ -18,8 +18,8 @@
 #include <sensor_msgs/Imu.h>
 
 #include "sar_msgs/GTC_Cmd_srv.h"
-#include "sar_msgs/CtrlData.h"
-#include "sar_msgs/CtrlDebug.h"
+#include "sar_msgs/CTRL_Data.h"
+#include "sar_msgs/CTRL_Debug.h"
 
 
 
@@ -40,8 +40,8 @@ class Controller
             Ext_Pos_Subscriber = nh->subscribe("/SAR_External/ExtPosition",1,&Controller::Ext_Pos_Update_Callback,this,ros::TransportHints().tcpNoDelay());
             
             // MISC SERVICES/PUBLISHERS
-            CTRL_Data_Publisher = nh->advertise<sar_msgs::CtrlData>("/CTRL/data",1);
-            CTRL_Debug_Publisher = nh->advertise<sar_msgs::CtrlDebug>("CTRL/debug",1);
+            CTRL_Data_Publisher = nh->advertise<sar_msgs::CTRL_Data>("/CTRL/data",1);
+            CTRL_Debug_Publisher = nh->advertise<sar_msgs::CTRL_Debug>("CTRL/debug",1);
             CTRL_CMD_Service = nh->advertiseService("/CTRL/Cmd_ctrl",&Controller::CMD_Service_Resp,this);
 
 
@@ -64,8 +64,8 @@ class Controller
         ros::Publisher CTRL_Debug_Publisher;
 
         // MESSAGES
-        sar_msgs::CtrlData CtrlData_msg;
-        sar_msgs::CtrlDebug CtrlDebug_msg;
+        sar_msgs::CTRL_Data CtrlData_msg;
+        sar_msgs::CTRL_Debug CtrlDebug_msg;
 
 
         // DEFINE THREAD OBJECTS

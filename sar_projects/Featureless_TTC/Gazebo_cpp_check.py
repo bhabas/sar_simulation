@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.animation as animation
 from sensor_msgs.msg import Image #import camera data
-from sar_msgs.msg import CF_StateData #import 'true' values
+from sar_msgs.msg import SAR_StateData #import 'true' values
 from scipy import signal
 
 ## CAMERA PARAMETERS
@@ -39,7 +39,7 @@ class CameraClass:
         self.prev_time = 0
 
         self.cam_sub = rospy.Subscriber("/CF_Internal/camera/image_raw",Image,self.Camera_cb,queue_size = 1)
-        self.state_sub = rospy.Subscriber("/SAR_DC/StateData",CF_StateData,self.CF_StateDataCallback,queue_size = 1)
+        self.state_sub = rospy.Subscriber("/SAR_DC/StateData",SAR_StateData,self.SAR_StateDataCallback,queue_size = 1)
             
 
     def Camera_cb(self,Cam_msg):
@@ -49,7 +49,7 @@ class CameraClass:
         self.logs()
        
 
-    def CF_StateDataCallback(self,StateData_msg):
+    def SAR_StateDataCallback(self,StateData_msg):
         
         self.Tau = np.round(StateData_msg.Tau,4)
         self.OFx = np.round(StateData_msg.OFx,3)
