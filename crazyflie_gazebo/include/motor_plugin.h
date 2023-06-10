@@ -9,8 +9,8 @@
 
 
 #include <ros/ros.h>
-#include "crazyflie_msgs/CtrlData.h"
-#include "crazyflie_msgs/MS.h"
+#include "sar_msgs/CtrlData.h"
+#include "sar_msgs/MS.h"
 
 #define g2Newton (9.81f/1000.0f)
 #define Newton2g (1000.0f/9.81f)
@@ -26,7 +26,7 @@ namespace gazebo {
             void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
             void OnUpdate();
             void UpdateForcesAndMoments();
-            void CtrlData_Callback(const crazyflie_msgs::CtrlData::ConstPtr &msg);
+            void CtrlData_Callback(const sar_msgs::CtrlData::ConstPtr &msg);
 
 
         private:
@@ -67,10 +67,10 @@ namespace gazebo {
             event::ConnectionPtr updateConnection;
 
             ros::NodeHandle nh;
-            ros::Subscriber CTRL_Data_Sub = nh.subscribe<crazyflie_msgs::CtrlData>("/CTRL/data", 1, &GazeboMotorPlugin::CtrlData_Callback, this, ros::TransportHints().tcpNoDelay());
-            ros::Publisher MS_Data_Pub = nh.advertise<crazyflie_msgs::MS>("/CF_Internal/MS",1);
+            ros::Subscriber CTRL_Data_Sub = nh.subscribe<sar_msgs::CtrlData>("/CTRL/data", 1, &GazeboMotorPlugin::CtrlData_Callback, this, ros::TransportHints().tcpNoDelay());
+            ros::Publisher MS_Data_Pub = nh.advertise<sar_msgs::MS>("/CF_Internal/MS",1);
 
-            crazyflie_msgs::MS Thrust_msg;
+            sar_msgs::MS Thrust_msg;
     };
 
 }

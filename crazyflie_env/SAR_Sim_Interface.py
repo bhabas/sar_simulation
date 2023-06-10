@@ -11,8 +11,8 @@ from crazyflie_env import SAR_Base_Interface
 
 from std_srvs.srv import Empty
 from rosgraph_msgs.msg import Clock
-from crazyflie_msgs.srv import domainRand,domainRandRequest
-from crazyflie_msgs.srv import ModelMove,ModelMoveRequest
+from sar_msgs.srv import domainRand,domainRandRequest
+from sar_msgs.srv import ModelMove,ModelMoveRequest
 from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState
 

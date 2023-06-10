@@ -121,7 +121,7 @@ namespace gazebo{
     }
 
     // ROS SERVICE CALLBACK TO ACTIVATE/DEACTIVATE STICKY FOOT BEHAVIOR
-    bool GazeboStickyFoot::activateSticky(crazyflie_msgs::activateSticky::Request &req, crazyflie_msgs::activateSticky::Response &res)
+    bool GazeboStickyFoot::activateSticky(sar_msgs::activateSticky::Request &req, sar_msgs::activateSticky::Response &res)
     {
         if (req.stickyFlag == false && sticky_flag == true) // TURN OFF STICKY FOOT
         {

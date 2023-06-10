@@ -7,7 +7,7 @@ import sys
 import os
 
 from sensor_msgs.msg import Image
-from crazyflie_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
+from sar_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
 from rosgraph_msgs.msg import Clock
 
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED

@@ -6,7 +6,7 @@ project(sar_control)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  crazyflie_msgs
+  sar_msgs
 )
 
 catkin_package(

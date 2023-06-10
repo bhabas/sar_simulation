@@ -7,7 +7,7 @@
 
 
 #include <ros/ros.h>
-#include "crazyflie_msgs/domainRand.h"
+#include "sar_msgs/domainRand.h"
 
 
 namespace gazebo {
@@ -18,7 +18,7 @@ namespace gazebo {
             
         protected:
             void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
-            bool UpdateInertia(crazyflie_msgs::domainRand::Request &req, crazyflie_msgs::domainRand::Response &res);
+            bool UpdateInertia(sar_msgs::domainRand::Request &req, sar_msgs::domainRand::Response &res);
 
 
 

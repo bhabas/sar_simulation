@@ -5,7 +5,7 @@ project(crazyflie_gazebo)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   gazebo_ros
-  crazyflie_msgs
+  sar_msgs
 )
 
 find_package(gazebo REQUIRED)

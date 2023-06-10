@@ -17,9 +17,9 @@
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
 
-#include "crazyflie_msgs/GTC_Cmd_srv.h"
-#include "crazyflie_msgs/CtrlData.h"
-#include "crazyflie_msgs/CtrlDebug.h"
+#include "sar_msgs/GTC_Cmd_srv.h"
+#include "sar_msgs/CtrlData.h"
+#include "sar_msgs/CtrlDebug.h"
 
 
 
@@ -40,8 +40,8 @@ class Controller
             Ext_Pos_Subscriber = nh->subscribe("/SAR_External/ExtPosition",1,&Controller::Ext_Pos_Update_Callback,this,ros::TransportHints().tcpNoDelay());
             
             // MISC SERVICES/PUBLISHERS
-            CTRL_Data_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/CTRL/data",1);
-            CTRL_Debug_Publisher = nh->advertise<crazyflie_msgs::CtrlDebug>("CTRL/debug",1);
+            CTRL_Data_Publisher = nh->advertise<sar_msgs::CtrlData>("/CTRL/data",1);
+            CTRL_Debug_Publisher = nh->advertise<sar_msgs::CtrlDebug>("CTRL/debug",1);
             CTRL_CMD_Service = nh->advertiseService("/CTRL/Cmd_ctrl",&Controller::CMD_Service_Resp,this);
 
 
@@ -64,8 +64,8 @@ class Controller
         ros::Publisher CTRL_Debug_Publisher;
 
         // MESSAGES
-        crazyflie_msgs::CtrlData CtrlData_msg;
-        crazyflie_msgs::CtrlDebug CtrlDebug_msg;
+        sar_msgs::CtrlData CtrlData_msg;
+        sar_msgs::CtrlDebug CtrlDebug_msg;
 
 
         // DEFINE THREAD OBJECTS
@@ -88,7 +88,7 @@ class Controller
         // FUNCTION PROTOTYPES
         void IMU_Update_Callback(const sensor_msgs::Imu::ConstPtr &msg);
         void Ext_Pos_Update_Callback(const nav_msgs::Odometry::ConstPtr &msg);
-        bool CMD_Service_Resp(crazyflie_msgs::GTC_Cmd_srv::Request &req, crazyflie_msgs::GTC_Cmd_srv::Response &res);
+        bool CMD_Service_Resp(sar_msgs::GTC_Cmd_srv::Request &req, sar_msgs::GTC_Cmd_srv::Response &res);
 
 
         void appLoop();
@@ -102,7 +102,7 @@ class Controller
 };
 
 
-bool Controller::CMD_Service_Resp(crazyflie_msgs::GTC_Cmd_srv::Request &req, crazyflie_msgs::GTC_Cmd_srv::Response &res)
+bool Controller::CMD_Service_Resp(sar_msgs::GTC_Cmd_srv::Request &req, sar_msgs::GTC_Cmd_srv::Response &res)
 {
     // RESPOND THE SRV WAS RECIEVED
     res.srv_Success = true;

@@ -21,7 +21,7 @@ namespace gazebo
 
     }
 
-    bool DomainRand_plugin::UpdateInertia(crazyflie_msgs::domainRand::Request &req, crazyflie_msgs::domainRand::Response &res)
+    bool DomainRand_plugin::UpdateInertia(sar_msgs::domainRand::Request &req, sar_msgs::domainRand::Response &res)
     {
         printf("[DOMAIN RAND PLUGIN] Inertia Values Updated\n");
         inertia_ptr->SetMass(req.mass);

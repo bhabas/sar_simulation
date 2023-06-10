@@ -44,7 +44,7 @@ namespace gazebo
     }
 
 
-    bool ModelMove::Service_Callback(crazyflie_msgs::ModelMove::Request &req, crazyflie_msgs::ModelMove::Response &res)
+    bool ModelMove::Service_Callback(sar_msgs::ModelMove::Request &req, sar_msgs::ModelMove::Response &res)
     {
         // RESET TIME
         t_0 = ros::Time::now().toSec();

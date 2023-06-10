@@ -6,10 +6,10 @@ import getpass
 import time
 
 ## ROS MESSAGES AND SERVICES
-from crazyflie_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
-from crazyflie_msgs.srv import loggingCMD,loggingCMDRequest
-from crazyflie_msgs.srv import GTC_Cmd_srv,GTC_Cmd_srvRequest
-from crazyflie_msgs.msg import RLData,RLConvg
+from sar_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
+from sar_msgs.srv import loggingCMD,loggingCMDRequest
+from sar_msgs.srv import GTC_Cmd_srv,GTC_Cmd_srvRequest
+from sar_msgs.msg import RLData,RLConvg
 
 from rosgraph_msgs.msg import Clock
 

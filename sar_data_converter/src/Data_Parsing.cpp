@@ -1,6 +1,6 @@
 #include "SAR_DataConverter.h"
 
-void SAR_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_msg)
+void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CtrlData &ctrl_msg)
 {
     // ===================
     //     FLIGHT DATA
@@ -105,7 +105,7 @@ void SAR_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_m
 
 }
 
-void SAR_DataConverter::CtrlDebug_Callback(const crazyflie_msgs::CtrlDebug &ctrl_msg)
+void SAR_DataConverter::CtrlDebug_Callback(const sar_msgs::CtrlDebug &ctrl_msg)
 {
     Motorstop_Flag = ctrl_msg.Motorstop_Flag;
     Pos_Ctrl_Flag = ctrl_msg.Pos_Ctrl;
@@ -132,7 +132,7 @@ void SAR_DataConverter::decompressXY(uint32_t xy, float xy_arr[])
 
 
 
-void SAR_DataConverter::log1_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log1_msg)
+void SAR_DataConverter::log1_Callback(const sar_msgs::GenericLogData::ConstPtr &log1_msg)
 {
     // ===================
     //     FLIGHT DATA
@@ -193,7 +193,7 @@ void SAR_DataConverter::log1_Callback(const crazyflie_msgs::GenericLogData::Cons
 
 }
 
-void SAR_DataConverter::log2_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log2_msg)
+void SAR_DataConverter::log2_Callback(const sar_msgs::GenericLogData::ConstPtr &log2_msg)
 {
     // ANGULAR VELOCITY (Z)
     Twist.angular.z = log2_msg->values[0]*1e-3;
@@ -244,7 +244,7 @@ void SAR_DataConverter::log2_Callback(const crazyflie_msgs::GenericLogData::Cons
 
 }
 
-void SAR_DataConverter::log3_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log3_msg)
+void SAR_DataConverter::log3_Callback(const sar_msgs::GenericLogData::ConstPtr &log3_msg)
 {
     // POSITION SETPOINTS
     float xd_xy[2];
@@ -282,7 +282,7 @@ void SAR_DataConverter::log3_Callback(const crazyflie_msgs::GenericLogData::Cons
     
 }
 
-void SAR_DataConverter::log4_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log4_msg)
+void SAR_DataConverter::log4_Callback(const sar_msgs::GenericLogData::ConstPtr &log4_msg)
 {
     // FLIP TRIGGER - POSITION
     Pose_tr.position.x = NAN;
@@ -329,7 +329,7 @@ void SAR_DataConverter::log4_Callback(const crazyflie_msgs::GenericLogData::Cons
 
 }
 
-void SAR_DataConverter::log5_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log5_msg)
+void SAR_DataConverter::log5_Callback(const sar_msgs::GenericLogData::ConstPtr &log5_msg)
 {
     Motorstop_Flag = log5_msg->values[0];
     Pos_Ctrl_Flag = log5_msg->values[1];
@@ -341,7 +341,7 @@ void SAR_DataConverter::log5_Callback(const crazyflie_msgs::GenericLogData::Cons
 
 }
 
-void SAR_DataConverter::log6_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log6_msg)
+void SAR_DataConverter::log6_Callback(const sar_msgs::GenericLogData::ConstPtr &log6_msg)
 {
     V_battery = log6_msg->values[0];
 

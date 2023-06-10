@@ -10,7 +10,7 @@ include_directories(${CURSES_INCLUDE_DIR})
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
-  crazyflie_msgs
+  sar_msgs
 )
 
 catkin_package(

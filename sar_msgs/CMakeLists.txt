@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(crazyflie_msgs)
+project(sar_msgs)
 
 
 find_package(catkin REQUIRED COMPONENTS

@@ -38,7 +38,7 @@ namespace gazebo
         }
     }
 
-    // void ModelMoment::RLCmd_Callback(const crazyflie_msgs::RLCmd::ConstPtr &msg)
+    // void ModelMoment::RLCmd_Callback(const sar_msgs::RLCmd::ConstPtr &msg)
     // {
     //     if(msg->cmd_type == 50)
     //     {

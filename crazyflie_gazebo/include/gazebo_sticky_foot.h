@@ -8,8 +8,8 @@
 #include <ros/ros.h>
 
 // CUSTOM IMPORTS
-#include "crazyflie_msgs/PadConnect.h"
-#include "crazyflie_msgs/activateSticky.h"
+#include "sar_msgs/PadConnect.h"
+#include "sar_msgs/activateSticky.h"
 
 
 namespace gazebo {
@@ -21,7 +21,7 @@ namespace gazebo {
         protected:
             void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
             void ContactCallback(ConstContactsPtr &msg);
-            bool activateSticky(crazyflie_msgs::activateSticky::Request &req, crazyflie_msgs::activateSticky::Response &res);
+            bool activateSticky(sar_msgs::activateSticky::Request &req, sar_msgs::activateSticky::Response &res);
 
         private:
             physics::WorldPtr world_;
@@ -37,7 +37,7 @@ namespace gazebo {
 
     
             ros::NodeHandle nh;
-            ros::Publisher PadConnect_Publisher = nh.advertise<crazyflie_msgs::PadConnect>("/ENV/Pad_Connections", 5);
+            ros::Publisher PadConnect_Publisher = nh.advertise<sar_msgs::PadConnect>("/ENV/Pad_Connections", 5);
             ros::ServiceServer stickyService;
 
             std::string namespace_;
@@ -49,7 +49,7 @@ namespace gazebo {
             bool sticky_flag;
             int PAD_NUMBER;
 
-            crazyflie_msgs::PadConnect PadConnect_msg;
+            sar_msgs::PadConnect PadConnect_msg;
     };
 
 }

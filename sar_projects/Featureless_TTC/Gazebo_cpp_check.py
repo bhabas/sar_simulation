@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.animation as animation
 from sensor_msgs.msg import Image #import camera data
-from crazyflie_msgs.msg import CF_StateData #import 'true' values
+from sar_msgs.msg import CF_StateData #import 'true' values
 from scipy import signal
 
 ## CAMERA PARAMETERS
