@@ -172,7 +172,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
 if __name__ == "__main__":
 
-    env = SAR_IFC_ParamOpt_Sim(GZ_Timeout=False)
+    env = SAR_ParamOpt_Sim(GZ_Timeout=False)
 
     for ii in range(1000):
         Tau_tr = 0.2

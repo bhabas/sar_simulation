@@ -185,6 +185,7 @@ if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
     env = SAR_ParamOpt_Sim(GZ_Timeout=False)
+    env.pause_physics(False)
 
     ## INIT LEARNING AGENT
     # Mu_Tau value is multiplied by 10 so complete policy is more normalized
