@@ -12,7 +12,7 @@ class CF_Env_2D():
     metadata = {'render.modes': ['human']}
     def __init__(self):
         super(CF_Env_2D, self).__init__()
-        self.env_name = "CF_Env_2D"
+        self.Env_Name = "CF_Env_2D"
 
         ## PHYSICS PARAMETERS
         self.dt = 0.005  # seconds between state updates

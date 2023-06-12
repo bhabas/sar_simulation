@@ -787,12 +787,12 @@ if __name__ == '__main__':
 
     # ================================================================= ##
 
-    # # PLOT LANDING PERFORMANCE
-    env = None
-    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Gazebo"
-    log_name = "A20_L75_K32--Deg_180--SAC_02_17-08:23_0"
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.Plot_Landing_Performance(saveFig=True)
+    # # # PLOT LANDING PERFORMANCE
+    # env = None
+    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Gazebo"
+    # log_name = "A20_L75_K32--Deg_180--SAC_02_17-08:23_0"
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.Plot_Landing_Performance(saveFig=True)
 
 
     
