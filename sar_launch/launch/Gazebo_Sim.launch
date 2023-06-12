@@ -6,7 +6,7 @@
 
     <!-- CRAZYFLIE MODEL ARGS -->
     <arg name="SAR_Type" default="Crazyflie"/>
-    <arg name="SAR_Model" default="Narrow_Long"/>
+    <arg name="SAR_Model" default="A30_L75_K32"/>
     <arg name="SAR_SDF_Path" default="$(find crazyflie_gazebo)/models/Crazyflie_Models/$(arg SAR_Type)_$(arg SAR_Model)/model.sdf"/>
 
     <!-- LOAD SETTINGS FLAGS -->

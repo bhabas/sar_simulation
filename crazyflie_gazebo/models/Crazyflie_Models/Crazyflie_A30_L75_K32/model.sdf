@@ -1,8 +1,8 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='crazyflie_A30_L75_K32'>
+  <model name='Crazyflie_A30_L75_K32'>
     <include>
-      <uri>model://crazyflie_Base_Model</uri>
+      <uri>model://Crazyflie_Base_Model</uri>
       <pose>0 0 0 0 0 0</pose>
     </include>
 
@@ -28,7 +28,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_A30_L75_K32/meshes/LegConfig_A30_L75.STL</uri>
+            <uri>model://Crazyflie_A30_L75_K32/meshes/LegConfig_A30_L75.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -63,7 +63,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_A30_L75_K32/meshes/LegConfig_A30_L75.STL</uri>
+            <uri>model://Crazyflie_A30_L75_K32/meshes/LegConfig_A30_L75.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -98,7 +98,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_A30_L75_K32/meshes/LegConfig_A30_L75.STL</uri>
+            <uri>model://Crazyflie_A30_L75_K32/meshes/LegConfig_A30_L75.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -133,7 +133,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_A30_L75_K32/meshes/LegConfig_A30_L75.STL</uri>
+            <uri>model://Crazyflie_A30_L75_K32/meshes/LegConfig_A30_L75.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -525,7 +525,7 @@
       
     
     <joint name='leg_joint_1' type='universal'>
-      <parent>crazyflie_Base_Model::crazyflie_body</parent>
+      <parent>Crazyflie_Base_Model::crazyflie_body</parent>
       <child>leg1</child>
       <pose>0 0 0 0 0.786 0</pose>
       <axis>
@@ -572,7 +572,7 @@
       </physics>
     </joint>
     <joint name='leg_joint_2' type='universal'>
-      <parent>crazyflie_Base_Model::crazyflie_body</parent>
+      <parent>Crazyflie_Base_Model::crazyflie_body</parent>
       <child>leg2</child>
       <pose>0 0 0 0 0.786 0</pose>
       <axis>
@@ -619,7 +619,7 @@
       </physics>
     </joint>
     <joint name='leg_joint_3' type='universal'>
-      <parent>crazyflie_Base_Model::crazyflie_body</parent>
+      <parent>Crazyflie_Base_Model::crazyflie_body</parent>
       <child>leg3</child>
       <pose>0 0 0 0 0.786 0</pose>
       <axis>
@@ -666,7 +666,7 @@
       </physics>
     </joint>
     <joint name='leg_joint_4' type='universal'>
-      <parent>crazyflie_Base_Model::crazyflie_body</parent>
+      <parent>Crazyflie_Base_Model::crazyflie_body</parent>
       <child>leg4</child>
       <pose>0 0 0 0 0.786 0</pose>
       <axis>

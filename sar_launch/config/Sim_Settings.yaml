@@ -5,7 +5,7 @@ ENV_SETTINGS:
 
 SAR_SETTINGS:
   SAR_Type: "Crazyflie"
-  SAR_Config: "Base_Model"
+  SAR_Config: "A30_L75_K32"
 
   Cam_Sensor: False
 
