@@ -18,10 +18,10 @@ Plane_Model=$(rosparam get /PLANE_SETTINGS/Plane_Model)
 
 ## START GAZEBO 
 roslaunch sar_launch Gazebo_Sim.launch \
+    Gui_Flag:=$GUI_FLAG \
+    Pause_Flag:=$PAUSE_FLAG \
     Quad_Model:=$CONFIG_NAME \
     Ground_Model:=$GROUND_NAME \
     Plane_Model:=$Plane_Model \
-    gui_flag:=$GUI_FLAG \
-    pause_flag:=$PAUSE_FLAG \
 
 
