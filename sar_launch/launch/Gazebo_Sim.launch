@@ -2,12 +2,12 @@
   
     <!-- LANDING SURFACE ARGS -->
     <arg name="Plane_Model" default="Standard_Plane"/>
-    <arg name="Plane_SDF_Path" default="$(find crazyflie_gazebo)/models/Landing_Surfaces/$(arg Plane_Model)/model.sdf"/>
+    <arg name="Plane_SDF_Path" default="$(find sar_gazebo)/models/Landing_Surfaces/$(arg Plane_Model)/model.sdf"/>
 
     <!-- CRAZYFLIE MODEL ARGS -->
     <arg name="SAR_Type" default="Crazyflie"/>
     <arg name="SAR_Model" default="A30_L75_K32"/>
-    <arg name="SAR_SDF_Path" default="$(find crazyflie_gazebo)/models/Crazyflie_Models/$(arg SAR_Type)_$(arg SAR_Model)/model.sdf"/>
+    <arg name="SAR_SDF_Path" default="$(find sar_gazebo)/models/Crazyflie_Models/$(arg SAR_Type)_$(arg SAR_Model)/model.sdf"/>
 
     <!-- LOAD SETTINGS FLAGS -->
     <arg name="Gui_Flag" default="true"/>
@@ -15,7 +15,7 @@
 
     <!-- LAUNCH GAZEBO WITH SPECIFIED WORLD FILE -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
-        <arg name="world_name" value="--lockstep $(find crazyflie_gazebo)/worlds/Gazebo_World.world"/>
+        <arg name="world_name" value="--lockstep $(find sar_gazebo)/worlds/Gazebo_World.world"/>
         <!-- lockstep command ensures sim updates and sensor frequency updates are synced together -->
         <!-- http://gazebosim.org/tutorials?tut=lockstep_physics_sensors&cat=sensors -->
         <!-- http://gazebosim.org/tutorials?tut=performance_metrics&cat=tools_utilities -->
