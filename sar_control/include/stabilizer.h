@@ -163,8 +163,8 @@ void Controller::loadParams()
 {
     printf("Updating Parameters\n");
 
-    ros::param::get("/QUAD_SETTINGS/SAR_Type",SAR_Type);
-    ros::param::get("/QUAD_SETTINGS/SAR_Config",SAR_Config);
+    ros::param::get("/SAR_SETTINGS/SAR_Type",SAR_Type);
+    ros::param::get("/SAR_SETTINGS/SAR_Config",SAR_Config);
     SAR_Type = "/SAR_Type/" + SAR_Type;
     SAR_Config = "/Config/" + SAR_Config;
     
@@ -208,11 +208,11 @@ void Controller::loadParams()
     ros::param::get(SAR_Type + "/CtrlGains/R_ki_z",R_ki_z);
     ros::param::get(SAR_Type + "/CtrlGains/i_range_R_z",i_range_R_z);
 
-    // ros::param::get("/QUAD_SETTINGS/Cam_Sensor",camera_sensor_active);
+    // ros::param::get("/SAR_SETTINGS/Cam_Sensor",camera_sensor_active);
 
 
     // SIMULATION SETTINGS FROM CONFIG FILE
-    ros::param::get("QUAD_SETTINGS/Policy_Type",POLICY_TYPE_STR); // Set string from params file into controller
+    ros::param::get("SAR_SETTINGS/Policy_Type",POLICY_TYPE_STR); // Set string from params file into controller
     if (strcmp(POLICY_TYPE_STR.c_str(),"PARAM_OPTIM")==0)
     {
         Policy = PARAM_OPTIM;

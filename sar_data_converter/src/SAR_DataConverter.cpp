@@ -8,7 +8,7 @@ void SAR_DataConverter::MainInit()
     LoadParams();
     adjustSimSpeed(SIM_SPEED);
     Time_start = ros::Time::now();
-    BodyCollision_str = GZ_Model_Name + "::crazyflie_Base_Model::crazyflie_body::body_collision"; // TODO: CHANGE TO SAR FORMAT
+    BodyCollision_str = GZ_Model_Name + "::" + SAR_Type + "_Base_Model::" + "SAR_body::body_collision"; 
     Update_Landing_Surface_Pose(Plane_Pos.x,Plane_Pos.y,Plane_Pos.z,Plane_Angle);
     isInit = true;
 

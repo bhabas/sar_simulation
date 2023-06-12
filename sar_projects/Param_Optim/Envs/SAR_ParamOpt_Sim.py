@@ -2,7 +2,7 @@
 import numpy as np
 import time
 
-from crazyflie_env import SAR_Sim_Interface
+from sar_env import SAR_Sim_Interface
 
 
 class SAR_ParamOpt_Sim(SAR_Sim_Interface):
@@ -166,13 +166,15 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         else:
             R3 = 0.0
 
+        self.reward_vals = [R1,R2,R3,0,0]
+
         return R1 + R2 + R3
 
 
 
 if __name__ == "__main__":
 
-    env = SAR_IFC_ParamOpt_Sim(GZ_Timeout=False)
+    env = SAR_ParamOpt_Sim(GZ_Timeout=False)
 
     for ii in range(1000):
         Tau_tr = 0.2

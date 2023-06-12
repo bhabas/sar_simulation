@@ -9,7 +9,7 @@ import time
 import rospkg,os
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
 
-from crazyflie_env import CrazyflieEnv_Sim
+from sar_env import CrazyflieEnv_Sim
 
 
 class CrazyflieEnv_DeepRL_LDA(CrazyflieEnv_Sim):

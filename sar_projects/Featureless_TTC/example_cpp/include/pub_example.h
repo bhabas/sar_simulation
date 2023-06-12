@@ -60,7 +60,7 @@ class MyClass // DEFINE CLASS
         {
 
             pub = nh->advertise<example_msgs::CustomMessage>("/MyPub_cpp",1);
-            Camera_sub = nh->subscribe("/CF_Internal/camera/image_raw",1,&MyClass::Camera_Callback,this);
+            Camera_sub = nh->subscribe("/SAR_Internal/camera/image_raw",1,&MyClass::Camera_Callback,this);
 
             // DYNAMICALLY ALLOCATE MEMORY TO STORE PREVIOUS IMAGE
             Prev_img = (uint8_t*)calloc(WIDTH_PIXELS*HEIGHT_PIXELS,sizeof(uint8_t));

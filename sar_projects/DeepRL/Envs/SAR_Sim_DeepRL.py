@@ -3,7 +3,7 @@ import numpy as np
 from gym import spaces
 import rospy
 import time
-from crazyflie_env import SAR_Sim_Interface
+from sar_env import SAR_Sim_Interface
 
 
 class SAR_Sim_DeepRL(SAR_Sim_Interface):

@@ -53,7 +53,7 @@ class SAR_DataConverter {
             // DATA INPUT PIPELINE
             CTRL_Data_Sub = nh->subscribe("/CTRL/data", 1, &SAR_DataConverter::CtrlData_Callback, this, ros::TransportHints().tcpNoDelay());
             CTRL_Debug_Sub = nh->subscribe("/CTRL/debug", 1, &SAR_DataConverter::CtrlDebug_Callback, this, ros::TransportHints().tcpNoDelay());
-            RL_Data_Sub = nh->subscribe("/RL/data",5,&SAR_DataConverter::RL_Data_Callback,this,ros::TransportHints().tcpNoDelay());
+            RL_Data_Sub = nh->subscribe("/RL/Data",5,&SAR_DataConverter::RL_Data_Callback,this,ros::TransportHints().tcpNoDelay());
             
 
             // GAZEBO PIPELINE
@@ -428,12 +428,13 @@ class SAR_DataConverter {
 
 inline void SAR_DataConverter::LoadParams()
 {
-    // QUAD SETTINGS
-    ros::param::get("/QUAD_SETTINGS/SAR_Type",SAR_Type);
-    ros::param::get("/QUAD_SETTINGS/SAR_Config",SAR_Config);
-    ros::param::get("/QUAD_SETTINGS/Policy_Type",POLICY_TYPE);
+    ros::param::get("/SAR_SETTINGS/Policy_Type",POLICY_TYPE);
 
-    GZ_Model_Name = "crazyflie_" + SAR_Config;
+    // SAR SETTINGS
+    ros::param::get("/SAR_SETTINGS/SAR_Type",SAR_Type);
+    ros::param::get("/SAR_SETTINGS/SAR_Config",SAR_Config);
+
+    GZ_Model_Name = SAR_Type + "_" + SAR_Config;
     std::string SAR_Type_str = "/SAR_Type/" + SAR_Type;
     std::string SAR_Config_str = "/Config/" + SAR_Config;
 
@@ -448,8 +449,6 @@ inline void SAR_DataConverter::LoadParams()
     }
     
     
-
-
     // COLLECT MODEL PARAMETERS
     ros::param::get(SAR_Type_str + SAR_Config_str + "/Mass",Mass);
     ros::param::get(SAR_Type_str + SAR_Config_str + "/Ixx",Ixx);

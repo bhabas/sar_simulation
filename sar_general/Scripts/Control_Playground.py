@@ -222,7 +222,7 @@ def cmd_send(env,logName):
 
 
 if __name__ == '__main__':
-    from crazyflie_env import SAR_Sim_Interface
+    from sar_env import SAR_Sim_Interface
     ## INIT GAZEBO ENVIRONMENT
     env = SAR_Sim_Interface(GZ_Timeout=False)
     env.pause_physics(False)

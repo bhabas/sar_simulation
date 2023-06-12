@@ -72,6 +72,7 @@ def runTraining(env,agent,V_d,phi,logName,K_ep_max=15):
             ## PUBLISH ROLLOUT DATA
             agent.policy = [Tau_thr,My,0]
             agent.reward = reward
+            agent.reward_vals = env.reward_vals
             agent.error_str = env.error_str
 
             agent.K_run_list.append(k_ep)
@@ -162,6 +163,7 @@ def runTraining(env,agent,V_d,phi,logName,K_ep_max=15):
             ## PUBLISH ROLLOUT DATA
             agent.policy = [Tau_thr,My,0]
             agent.reward = reward
+            # agent.reward_vals = env.reward_vals
             agent.error_str = env.error_str
 
             agent.K_run_list.append(k_ep)
@@ -185,6 +187,7 @@ if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
     env = SAR_ParamOpt_Sim(GZ_Timeout=False)
+    env.pause_physics(False)
 
     ## INIT LEARNING AGENT
     # Mu_Tau value is multiplied by 10 so complete policy is more normalized

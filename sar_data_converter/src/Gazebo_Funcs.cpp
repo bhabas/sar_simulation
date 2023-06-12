@@ -7,7 +7,7 @@
  */
 void SAR_DataConverter::activateStickyFeet()
 {
-    if(GZ_Model_Name != "crazyflie_Base_Model")
+    if(GZ_Model_Name != "Crazyflie_Base_Model")
     {
         sar_msgs::activateSticky srv;
         srv.request.stickyFlag = Sticky_Flag;
