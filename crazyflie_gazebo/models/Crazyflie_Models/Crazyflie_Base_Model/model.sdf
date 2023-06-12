@@ -1,7 +1,7 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
   <model name='Crazyflie_Base_Model'>
-    <link name='crazyflie_body'>
+    <link name='SAR_body'>
       <inertial>
         <mass>0.0343</mass>
         <inertia>
@@ -701,7 +701,7 @@
       </visual>
     </link>
     <joint name='rotor_1_joint' type='revolute'>
-      <parent>crazyflie_body</parent>
+      <parent>SAR_body</parent>
       <child>rotor_1</child>
       <pose>0 0 0 0 -0 0</pose>
       <axis>
@@ -733,7 +733,7 @@
       </physics>
     </joint>
     <joint name='rotor_2_joint' type='revolute'>
-      <parent>crazyflie_body</parent>
+      <parent>SAR_body</parent>
       <child>rotor_2</child>
       <pose>0 0 0 0 -0 0</pose>
       <axis>
@@ -765,7 +765,7 @@
       </physics>
     </joint>
     <joint name='rotor_3_joint' type='revolute'>
-      <parent>crazyflie_body</parent>
+      <parent>SAR_body</parent>
       <child>rotor_3</child>
       <pose>0 0 0 0 -0 0</pose>
       <axis>
@@ -797,7 +797,7 @@
       </physics>
     </joint>
     <joint name='rotor_4_joint' type='revolute'>
-      <parent>crazyflie_body</parent>
+      <parent>SAR_body</parent>
       <child>rotor_4</child>
       <pose>0 0 0 0 -0 0</pose>
       <axis>
@@ -829,7 +829,7 @@
       </physics>
     </joint>
     <joint name='sensor_joint' type='fixed'>
-      <parent>crazyflie_body</parent>
+      <parent>SAR_body</parent>
       <child>camera_sensor</child>
       <pose>0 0 0.15 0 -0 0</pose>
       <physics>
@@ -895,7 +895,7 @@
     <plugin name='Vicon_plugin' filename='libgazebo_ros_p3d.so'>
       <alwaysOn>1</alwaysOn>
       <updateRate>100</updateRate>
-      <bodyName>crazyflie_body</bodyName>
+      <bodyName>SAR_body</bodyName>
       <topicName>SAR_External/ExtPosition</topicName>
       <frameName>world</frameName>
       <xyzOffsets>0 0 0</xyzOffsets>
@@ -905,7 +905,7 @@
 
     <plugin name="IMU_plugin" filename="libgazebo_ros_imu.so">
       <alwaysOn>true</alwaysOn>
-      <bodyName>crazyflie_body</bodyName>
+      <bodyName>SAR_body</bodyName>
       <topicName>SAR_Internal/IMU</topicName>
       <serviceName>imu_service</serviceName>
       <gaussianNoise>0.0</gaussianNoise>
@@ -913,16 +913,16 @@
     </plugin>
 
     <!-- <plugin name='MomentPlugin' filename='libMoment_plugin.so'>
-        <bodyName>crazyflie_body</bodyName>
+        <bodyName>SAR_body</bodyName>
     </plugin> -->
 
     <plugin name='DomainRandomization_Plugin' filename='libDomainRand_plugin.so'>
-        <bodyName>crazyflie_body</bodyName>
+        <bodyName>SAR_body</bodyName>
     </plugin>
 
     <!-- <joint name="FixedJoint" type="fixed">
         <parent>world</parent>
-        <child>crazyflie_body</child>
+        <child>SAR_body</child>
         <pose>0 0 0 0 0 0</pose>    
         <physics>
           <ode>

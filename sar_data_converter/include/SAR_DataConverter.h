@@ -428,12 +428,13 @@ class SAR_DataConverter {
 
 inline void SAR_DataConverter::LoadParams()
 {
-    // QUAD SETTINGS
-    ros::param::get("/SAR_SETTINGS/SAR_Type",SAR_Type);
-    ros::param::get("/SAR_SETTINGS/SAR_Config",SAR_Config);
     ros::param::get("/SAR_SETTINGS/Policy_Type",POLICY_TYPE);
 
-    GZ_Model_Name = "crazyflie_" + SAR_Config;
+    // SAR SETTINGS
+    ros::param::get("/SAR_SETTINGS/SAR_Type",SAR_Type);
+    ros::param::get("/SAR_SETTINGS/SAR_Config",SAR_Config);
+
+    GZ_Model_Name = SAR_Type + "_" + SAR_Config;
     std::string SAR_Type_str = "/SAR_Type/" + SAR_Type;
     std::string SAR_Config_str = "/Config/" + SAR_Config;
 
@@ -448,8 +449,6 @@ inline void SAR_DataConverter::LoadParams()
     }
     
     
-
-
     // COLLECT MODEL PARAMETERS
     ros::param::get(SAR_Type_str + SAR_Config_str + "/Mass",Mass);
     ros::param::get(SAR_Type_str + SAR_Config_str + "/Ixx",Ixx);
