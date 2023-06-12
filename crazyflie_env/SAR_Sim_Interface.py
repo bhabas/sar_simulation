@@ -179,7 +179,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         srv.Inertia.z = self.Izz
 
         ## SEND LOGGING REQUEST VIA SERVICE
-        self.callService('/CF_Internal/DomainRand',srv,domainRand)
+        self.callService('/SAR_Internal/DomainRand',srv,domainRand)
 
     def setParams(self):
 

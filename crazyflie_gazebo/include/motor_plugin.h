@@ -68,7 +68,7 @@ namespace gazebo {
 
             ros::NodeHandle nh;
             ros::Subscriber CTRL_Data_Sub = nh.subscribe<sar_msgs::CTRL_Data>("/CTRL/data", 1, &GazeboMotorPlugin::CtrlData_Callback, this, ros::TransportHints().tcpNoDelay());
-            ros::Publisher MS_Data_Pub = nh.advertise<sar_msgs::MS>("/CF_Internal/MS",1);
+            ros::Publisher MS_Data_Pub = nh.advertise<sar_msgs::MS>("/SAR_Internal/MS",1);
 
             sar_msgs::MS Thrust_msg;
     };

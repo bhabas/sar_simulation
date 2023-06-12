@@ -14,7 +14,7 @@ namespace gazebo
         linkName = _sdf->GetElement("bodyName")->Get<std::string>();
         gzmsg << "\t Link Name:\t" << linkName << std::endl;
         link_ptr = model_ptr->GetLink(linkName);
-        DomainRandService = nh.advertiseService("/CF_Internal/DomainRand", &DomainRand_plugin::UpdateInertia, this);
+        DomainRandService = nh.advertiseService("/SAR_Internal/DomainRand", &DomainRand_plugin::UpdateInertia, this);
         inertia_ptr = link_ptr->GetInertial();
         
         printf("\n\n");

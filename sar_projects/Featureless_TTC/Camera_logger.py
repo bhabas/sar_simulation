@@ -47,7 +47,7 @@ class CameraParser:
         np.set_printoptions(threshold = sys.maxsize) #allows it to print the full string without truncation
 
         #COLLECT MISC. DATA
-        rospy.Subscriber("/CF_Internal/camera/image_raw",Image,self.Camera_cb,queue_size = 1)
+        rospy.Subscriber("/SAR_Internal/camera/image_raw",Image,self.Camera_cb,queue_size = 1)
         rospy.Subscriber("/SAR_DC/StateData",SAR_StateData,self.SAR_StateDataCallback,queue_size = 1)
 
     def Create_csv(self):

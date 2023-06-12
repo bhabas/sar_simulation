@@ -459,7 +459,7 @@
         <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
           <alwaysOn>true</alwaysOn>
           <updateRate>0.0</updateRate>
-          <cameraName>CF_Internal/camera</cameraName>
+          <cameraName>SAR_Internal/camera</cameraName>
           <imageTopicName>image_raw</imageTopicName>
           <cameraInfoTopicName>camera_info</cameraInfoTopicName>
           <frameName>camera_sensor</frameName>
@@ -505,7 +505,7 @@
     <plugin name="IMU_plugin" filename="libgazebo_ros_imu.so">
       <alwaysOn>true</alwaysOn>
       <bodyName>SAR_body</bodyName>
-      <topicName>CF_Internal/IMU</topicName>
+      <topicName>SAR_Internal/IMU</topicName>
       <serviceName>imu_service</serviceName>
       <gaussianNoise>0.0</gaussianNoise>
       <updateRate>100.0</updateRate>

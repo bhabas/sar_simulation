@@ -38,7 +38,7 @@ class CameraClass:
         self.d_ceil = rospy.get_param("/ENV_SETTINGS/Ceiling_Height") #init above 0,1 to prevent plot from popping up on startup
         self.prev_time = 0
 
-        self.cam_sub = rospy.Subscriber("/CF_Internal/camera/image_raw",Image,self.Camera_cb,queue_size = 1)
+        self.cam_sub = rospy.Subscriber("/SAR_Internal/camera/image_raw",Image,self.Camera_cb,queue_size = 1)
         self.state_sub = rospy.Subscriber("/SAR_DC/StateData",SAR_StateData,self.SAR_StateDataCallback,queue_size = 1)
             
 

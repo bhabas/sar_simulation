@@ -40,7 +40,7 @@ if __name__ == '__main__':
                 data_writer.writerow([np.round(env.t,3),np.round(msg.MotorThrust,3),np.round(msg.MotorThrust_actual,3)])
 
 
-    rospy.Subscriber("/CF_Internal/MS",MS,logging_Callback,queue_size=1)
+    rospy.Subscriber("/SAR_Internal/MS",MS,logging_Callback,queue_size=1)
     rospy.Publisher('/RL/cmd',RLCmd,queue_size=10)
     input("Start")
 
