@@ -4,8 +4,8 @@ ENV_SETTINGS:
   Ground_Name: "GroundPlane_Desert_Physical"
 
 SAR_SETTINGS:
-  SAR_Type: "Crazyflie_Standard"
-  SAR_Config: "A20_L75_K32"
+  SAR_Type: "Crazyflie"
+  SAR_Config: "Base_Model"
 
   Cam_Sensor: False
 

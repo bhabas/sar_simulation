@@ -1,16 +1,13 @@
 <launch>
   
-    <!-- GROUND SURFACE ARGS -->
-    <arg name="Ground_Model" default="GroundPlane_Desert_Physical"/>
-    <arg name="Ground_SDF_Path" default="$(find crazyflie_gazebo)/models/Ground_Surfaces/$(arg Ground_Model)/model.sdf"/>
-
     <!-- LANDING SURFACE ARGS -->
     <arg name="Plane_Model" default="Standard_Plane"/>
     <arg name="Plane_SDF_Path" default="$(find crazyflie_gazebo)/models/Landing_Surfaces/$(arg Plane_Model)/model.sdf"/>
 
     <!-- CRAZYFLIE MODEL ARGS -->
+    <arg name="SAR_Type" default="Crazyflie"/>
     <arg name="SAR_Model" default="Narrow_Long"/>
-    <arg name="SAR_SDF_Path" default="$(find crazyflie_gazebo)/models/Crazyflie_Models/crazyflie_$(arg SAR_Model)/model.sdf"/>
+    <arg name="SAR_SDF_Path" default="$(find crazyflie_gazebo)/models/Crazyflie_Models/$(arg SAR_Type)_$(arg SAR_Model)/model.sdf"/>
 
     <!-- LOAD SETTINGS FLAGS -->
     <arg name="Gui_Flag" default="true"/>
@@ -33,7 +30,7 @@
     </include>
     
     <node name="Spawn_Model" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
-    args="-file $(arg SAR_SDF_Path) -sdf -model crazyflie_$(arg SAR_Model) -z 0.3" />
+    args="-file $(arg SAR_SDF_Path) -sdf -model $(arg SAR_Type)_$(arg SAR_Model) -z 0.3" />
 
     <node name="Spawn_Plane" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
     args="-file $(arg Plane_SDF_Path) -sdf -model $(arg Plane_Model) -z 2" />

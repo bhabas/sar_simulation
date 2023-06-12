@@ -1,5 +1,5 @@
 SAR_Type:
-  Crazyflie_Standard:
+  Crazyflie:
     CtrlGains:
       ## POSITION XY
       P_kp_xy: 0.4

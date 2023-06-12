@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='crazyflie_Base_Model'>
+  <model name='Crazyflie_Base_Model'>
     <link name='crazyflie_body'>
       <inertial>
         <mass>0.0343</mass>
@@ -24,7 +24,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Base_Model/meshes/CF_Assembly - CF_Body-1.STL</uri>
+            <uri>model://Crazyflie_Base_Model/meshes/CF_Assembly - CF_Body-1.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -40,7 +40,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Base_Model/meshes/CF_Assembly - Battery_Small-1.STL</uri>
+            <uri>model://Crazyflie_Base_Model/meshes/CF_Assembly - Battery_Small-1.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -57,7 +57,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Base_Model/meshes/CF_Assembly - Pin_Headers-1.STL</uri>
+            <uri>model://Crazyflie_Base_Model/meshes/CF_Assembly - Pin_Headers-1.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -74,7 +74,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Base_Model/meshes/CF_Assembly - Pin_Headers-2.STL</uri>
+            <uri>model://Crazyflie_Base_Model/meshes/CF_Assembly - Pin_Headers-2.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -91,7 +91,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Base_Model/meshes/CF_Assembly - AI_Deck-2 AI_Deck_PCB-1.STL</uri>
+            <uri>model://Crazyflie_Base_Model/meshes/CF_Assembly - AI_Deck-2 AI_Deck_PCB-1.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -107,7 +107,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Base_Model/meshes/CF_Assembly - AI_Deck-2 AI_Deck_Components-1.STL</uri>
+            <uri>model://Crazyflie_Base_Model/meshes/CF_Assembly - AI_Deck-2 AI_Deck_Components-1.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -124,7 +124,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Base_Model/meshes/CF_Assembly - AI_Deck-2 AI_Deck_Camera-2.STL</uri>
+            <uri>model://Crazyflie_Base_Model/meshes/CF_Assembly - AI_Deck-2 AI_Deck_Camera-2.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -141,7 +141,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Base_Model/meshes/CF_Assembly - Motor_Mount-1.STL</uri>
+            <uri>model://Crazyflie_Base_Model/meshes/CF_Assembly - Motor_Mount-1.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -159,7 +159,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Base_Model/meshes/CF_Assembly - Motor_Mount-5.STL</uri>
+            <uri>model://Crazyflie_Base_Model/meshes/CF_Assembly - Motor_Mount-5.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -176,7 +176,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Base_Model/meshes/CF_Assembly - Motor_Mount-2.STL</uri>
+            <uri>model://Crazyflie_Base_Model/meshes/CF_Assembly - Motor_Mount-2.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -193,7 +193,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Base_Model/meshes/CF_Assembly - Motor_Mount-6.STL</uri>
+            <uri>model://Crazyflie_Base_Model/meshes/CF_Assembly - Motor_Mount-6.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -211,7 +211,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Base_Model/meshes/CF_Assembly - Motor-2.STL</uri>
+            <uri>model://Crazyflie_Base_Model/meshes/CF_Assembly - Motor-2.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -228,7 +228,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Base_Model/meshes/CF_Assembly - Motor-5.STL</uri>
+            <uri>model://Crazyflie_Base_Model/meshes/CF_Assembly - Motor-5.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -245,7 +245,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Base_Model/meshes/CF_Assembly - Motor-4.STL</uri>
+            <uri>model://Crazyflie_Base_Model/meshes/CF_Assembly - Motor-4.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -262,7 +262,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Base_Model/meshes/CF_Assembly - Motor-3.STL</uri>
+            <uri>model://Crazyflie_Base_Model/meshes/CF_Assembly - Motor-3.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -494,7 +494,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Base_Model/meshes/crazyflie_prop.dae</uri>
+            <uri>model://Crazyflie_Base_Model/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -513,7 +513,7 @@
         <pose>0 0 0 0 -0 3.14</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Base_Model/meshes/crazyflie_prop.dae</uri>
+            <uri>model://Crazyflie_Base_Model/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -551,7 +551,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Base_Model/meshes/crazyflie_prop.dae</uri>
+            <uri>model://Crazyflie_Base_Model/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -570,7 +570,7 @@
         <pose>0 0 0 0 -0 3.14</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Base_Model/meshes/crazyflie_prop.dae</uri>
+            <uri>model://Crazyflie_Base_Model/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -608,7 +608,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Base_Model/meshes/crazyflie_prop.dae</uri>
+            <uri>model://Crazyflie_Base_Model/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -627,7 +627,7 @@
         <pose>0 0 0 0 -0 3.14</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Base_Model/meshes/crazyflie_prop.dae</uri>
+            <uri>model://Crazyflie_Base_Model/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -665,7 +665,7 @@
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Base_Model/meshes/crazyflie_prop.dae</uri>
+            <uri>model://Crazyflie_Base_Model/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -684,7 +684,7 @@
         <pose>0 0 0 0 -0 3.14</pose>
         <geometry>
           <mesh>
-            <uri>model://crazyflie_Base_Model/meshes/crazyflie_prop.dae</uri>
+            <uri>model://Crazyflie_Base_Model/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
