@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(crazyflie_env)
+project(sar_env)
 
 find_package(catkin REQUIRED COMPONENTS
   rospy
@@ -7,7 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES crazyflie_env
+#  LIBRARIES sar_env
 #  CATKIN_DEPENDS rospy
 #  DEPENDS system_lib
 )

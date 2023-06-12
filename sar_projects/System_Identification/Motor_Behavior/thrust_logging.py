@@ -13,7 +13,7 @@ import os
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('sar_msgs'))
 sys.path.insert(1,BASE_PATH)
 
-from Crazyflie_env import CrazyflieEnv
+from sar_env import CrazyflieEnv
 from sar_msgs.msg import MS
 from sar_msgs.msg import RLCmd
 

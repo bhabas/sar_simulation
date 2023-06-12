@@ -8,9 +8,9 @@ import sys,rospkg
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
 sys.path.insert(1,BASE_PATH)
 
-from crazyflie_env.CrazyflieEnv_ParamOpt import CrazyflieEnv_ParamOpt
-from crazyflie_env.RL_Training_2_term_Policy import runTraining
-from crazyflie_env.RL_agents.EPHE_Agent import EPHE_Agent
+from sar_env.CrazyflieEnv_ParamOpt import CrazyflieEnv_ParamOpt
+from sar_env.RL_Training_2_term_Policy import runTraining
+from sar_env.RL_agents.EPHE_Agent import EPHE_Agent
 
 
 if __name__ == '__main__':

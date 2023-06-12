@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>crazyflie_env</name>
+  <name>sar_env</name>
   <version>0.0.0</version>
   <description>SAR_Perching Environments</description>
 

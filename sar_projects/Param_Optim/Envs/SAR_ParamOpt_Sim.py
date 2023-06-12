@@ -2,7 +2,7 @@
 import numpy as np
 import time
 
-from crazyflie_env import SAR_Sim_Interface
+from sar_env import SAR_Sim_Interface
 
 
 class SAR_ParamOpt_Sim(SAR_Sim_Interface):
