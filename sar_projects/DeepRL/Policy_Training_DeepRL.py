@@ -24,7 +24,7 @@ from stable_baselines3.common import utils
 
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import rospkg,os
-BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
+BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('sar_env'))
 
 
 ## COLLECT CURRENT TIME
@@ -106,16 +106,21 @@ class Policy_Trainer_DeepRL():
         if not os.path.exists(self.model_dir):
             os.makedirs(self.model_dir,exist_ok=True)
 
-    def create_model(self):
-        """Creates SAC agent used in DeepRL trainingg process
+    def create_model(self,gamma=0.999,learning_rate=0.002,net_arch=[12,12]):
+        """Create Soft Actor-Critic agent used in training
+
+        Args:
+            gamma (float, optional): Discount factor. Defaults to 0.999.
+            learning_rate (float, optional): Learning Rate. Defaults to 0.002.
+            net_arch (list, optional): Network layer sizes and architechure. Defaults to [12,12].
         """        
 
         self.model = SAC(
             "MlpPolicy",
             env=self.env,
-            gamma=0.999,
-            learning_rate=0.002,
-            policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[12,12]),
+            gamma=gamma,
+            learning_rate=learning_rate,
+            policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=net_arch),
             verbose=1,
             device='cpu',
             tensorboard_log=self.log_dir
@@ -748,13 +753,12 @@ if __name__ == '__main__':
 
 
     ## IMPORT ENVIRONMENTS
-    from Envs.CrazyflieEnv_DeepRL import CrazyflieEnv_DeepRL
-    # from Envs.CrazyflieEnv_DeepRL_Tau import CrazyflieEnv_DeepRL_Tau
+    from Envs.SAR_Sim_DeepRL import SAR_Sim_DeepRL
 
 
     # START TRAINING NEW DEEP RL MODEL 
-    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[0,90])
-    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
+    env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[0,90])
+    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
     log_name = f"{env.modelInitials}--Deg_{env.Plane_Angle}--SAC_{current_time}"    
 
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
