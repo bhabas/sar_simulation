@@ -29,7 +29,7 @@ class SAR_Base_Interface():
         self.SAR_Type = rospy.get_param('/SAR_SETTINGS/SAR_Type')
         self.SAR_Config = rospy.get_param('/SAR_SETTINGS/SAR_Config')
         self.modelInitials = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Initials")
-        self.modelName = f"crazyflie_{self.SAR_Config}"
+        self.modelName = f"{self.SAR_Type}_{self.SAR_Config}"
         self.done = False
         self.preInit_Values()
 
@@ -60,8 +60,8 @@ class SAR_Base_Interface():
         rospy.Subscriber("/SAR_DC/MiscData",SAR_MiscData,self.SAR_MiscDataCallback,queue_size=1)
 
         ## RL DATA PUBLISHERS
-        self.RL_Data_Publisher = rospy.Publisher('/RL/data',RL_Data,queue_size=10)
-        self.RL_Convg_Publisher = rospy.Publisher('/RL/convg_data',RL_History,queue_size=10)
+        self.RL_Data_Publisher = rospy.Publisher('/RL/Data',RL_Data,queue_size=10)
+        self.RL_Convg_Publisher = rospy.Publisher('/RL/History',RL_History,queue_size=10)
 
 
     def getTime(self):

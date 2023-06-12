@@ -16,8 +16,8 @@ class EPHE_Agent():
 
         self.dim = len(self.mu)
 
-        self.RL_Data_Publisher = rospy.Publisher('/RL/data',RL_Data,queue_size=10)
-        self.RL_Convg_Publisher = rospy.Publisher('/RL/convg_data',RL_History,queue_size=10)
+        self.RL_Data_Publisher = rospy.Publisher('/RL/Data',RL_Data,queue_size=10)
+        self.RL_Convg_Publisher = rospy.Publisher('/RL/History',RL_History,queue_size=10)
 
         ## CONVERGENCE HISTORY
         self.K_ep_list = []

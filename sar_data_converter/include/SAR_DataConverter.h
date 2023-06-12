@@ -53,7 +53,7 @@ class SAR_DataConverter {
             // DATA INPUT PIPELINE
             CTRL_Data_Sub = nh->subscribe("/CTRL/data", 1, &SAR_DataConverter::CtrlData_Callback, this, ros::TransportHints().tcpNoDelay());
             CTRL_Debug_Sub = nh->subscribe("/CTRL/debug", 1, &SAR_DataConverter::CtrlDebug_Callback, this, ros::TransportHints().tcpNoDelay());
-            RL_Data_Sub = nh->subscribe("/RL/data",5,&SAR_DataConverter::RL_Data_Callback,this,ros::TransportHints().tcpNoDelay());
+            RL_Data_Sub = nh->subscribe("/RL/Data",5,&SAR_DataConverter::RL_Data_Callback,this,ros::TransportHints().tcpNoDelay());
             
 
             // GAZEBO PIPELINE
