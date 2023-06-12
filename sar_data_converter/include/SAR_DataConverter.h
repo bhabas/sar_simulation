@@ -429,9 +429,9 @@ class SAR_DataConverter {
 inline void SAR_DataConverter::LoadParams()
 {
     // QUAD SETTINGS
-    ros::param::get("/QUAD_SETTINGS/SAR_Type",SAR_Type);
-    ros::param::get("/QUAD_SETTINGS/SAR_Config",SAR_Config);
-    ros::param::get("/QUAD_SETTINGS/Policy_Type",POLICY_TYPE);
+    ros::param::get("/SAR_SETTINGS/SAR_Type",SAR_Type);
+    ros::param::get("/SAR_SETTINGS/SAR_Config",SAR_Config);
+    ros::param::get("/SAR_SETTINGS/Policy_Type",POLICY_TYPE);
 
     GZ_Model_Name = "crazyflie_" + SAR_Config;
     std::string SAR_Type_str = "/SAR_Type/" + SAR_Type;

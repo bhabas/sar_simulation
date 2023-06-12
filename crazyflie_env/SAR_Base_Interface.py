@@ -26,8 +26,8 @@ class SAR_Base_Interface():
 
 
         ## SAR PARAMETERS
-        self.SAR_Type = rospy.get_param('/QUAD_SETTINGS/SAR_Type')
-        self.SAR_Config = rospy.get_param('/QUAD_SETTINGS/SAR_Config')
+        self.SAR_Type = rospy.get_param('/SAR_SETTINGS/SAR_Type')
+        self.SAR_Config = rospy.get_param('/SAR_SETTINGS/SAR_Config')
         self.modelInitials = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Initials")
         self.modelName = f"crazyflie_{self.SAR_Config}"
         self.done = False

@@ -124,7 +124,7 @@ rosrun sar_general Control_Playground.py
 Sim_Settings.yaml
 
 ```
-QUAD_SETTINGS:
+SAR_SETTINGS:
   SAR_Type - Quadrotor Classification
   SAR_Config -  Quadrotor Model/Configuration
   Policy_Type - Policy Types [PARAM_OPTIM,SVL_POLICY,DEEP_RL_SB3,DEEP_RL_ONBD]
