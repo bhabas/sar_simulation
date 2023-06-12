@@ -8,6 +8,7 @@ import yaml
 import pandas as pd
 import csv
 import time 
+import rospy
 
 ## PLOTTING IMPORTS
 import matplotlib.pyplot as plt
@@ -758,6 +759,8 @@ if __name__ == '__main__':
 
     # START TRAINING NEW DEEP RL MODEL 
     env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[0,90])
+    env.pause_physics(False)
+    time.sleep(1)
     log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
     log_name = f"{env.modelInitials}--Deg_{env.Plane_Angle}--SAC_{current_time}"    
 
