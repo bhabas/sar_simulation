@@ -166,6 +166,8 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         else:
             R3 = 0.0
 
+        self.reward_vals = [R1,R2,R3,0,0]
+
         return R1 + R2 + R3
 
 

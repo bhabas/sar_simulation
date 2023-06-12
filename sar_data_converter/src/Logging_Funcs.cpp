@@ -154,7 +154,7 @@ void SAR_DataConverter::append_CSV_misc()
     fprintf(fPtr,"%.3f,%.3f,%.3f,",vel_d[0],vel_d[1],vel_d[2]); // vel_d.x,vel_d.y,vel_d.z
     fprintf(fPtr,"--,--,--,");                                  // D_perp, Tau, Tau_est
     fprintf(fPtr,"--,--,--,--,");                               // Theta_x,Theta_x_est,Theta_y,Theta_y_est,
-    fprintf(fPtr,"%.2f,[%.3f %.3f %.3f %.3f %.3f],",reward,reward_vals[0],reward_vals[1],reward_vals[2],reward_vals[3],reward_vals[4]); // flip_flag,impact_flag
+    fprintf(fPtr,"%.2f,[%.2f %.2f %.2f %.2f %.2f],",reward,reward_vals[0],reward_vals[1],reward_vals[2],reward_vals[3],reward_vals[4]); // flip_flag,impact_flag
 
 
     // MISC STATE DATA

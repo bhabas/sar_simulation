@@ -43,6 +43,8 @@ class EPHE_Agent():
 
         self.reward = 0.0               # Calculated reward from run
         self.reward_avg = 0.0           # Averaged rewards over episode
+        self.reward_vals = np.zeros(5)
+
 
         self.trialComplete_flag = False
 
@@ -66,6 +68,7 @@ class EPHE_Agent():
 
         RL_msg.reward = self.reward
         RL_msg.reward_avg = self.reward_avg
+        RL_msg.reward_vals = self.reward_vals
 
         RL_msg.vel_d = self.vel_d
 
