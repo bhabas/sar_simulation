@@ -236,7 +236,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         ## SEND FLIP ACTION TO CONTROLLER
         My = -action[1] # Body rotational moment [N*mm]
-        self.SendCmd("Policy",[0,My,0],cmd_flag=1)
+        self.SendCmd("Moment",[0,My,0],cmd_flag=1)
 
         ## RUN REMAINING STEPS AT FULL SPEED
         self.pause_physics(False)
@@ -293,13 +293,13 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
     def CalcReward(self):
 
-        ## TAU TRIGGER REWARD
-        R_tau = np.clip(1/np.abs(self.Tau_trg - 0.2),0,15)/15
-        R_tau *= 0.1
-
         ## DISTANCE REWARD 
         R_dist = np.clip(1/np.abs(self.D_min + 1e-3),0,15)/15
         R_dist *= 0.05
+        
+        ## TAU TRIGGER REWARD
+        R_tau = np.clip(1/np.abs(self.Tau_trg - 0.2),0,15)/15
+        R_tau *= 0.1
 
         ## IMPACT ANGLE REWARD
         R_angle = 0.5*np.cos(self.eul_impact[1]-self.Plane_Angle_rad*np.sign(np.cos(self.Plane_Angle_rad)))+0.5
@@ -322,8 +322,8 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         else:
             R_legs = 0.0
 
-        self.reward_vals = [R_tau,R_dist,R_angle,R_legs,0]
-        self.reward = R_tau + R_dist + R_angle + R_legs
+        self.reward_vals = [R_dist,R_tau,R_angle,R_legs,0]
+        self.reward = R_dist + R_tau + R_angle + R_legs
 
         return self.reward
 
@@ -337,20 +337,19 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 if __name__ == "__main__":
 
     env = SAR_Sim_DeepRL(GZ_Timeout=False,Vel_range=[0.5,1.0],Phi_range=[50,80])
-    # check_env(env)
 
+    for ep in range(25):
 
-    # for ep in range(25):
+        vel = 2.5
+        phi = 60
+        env.reset(vel=vel,phi=phi)
 
-    #     vel = 1.0
-    #     phi = 90
-    #     env.reset(vel=vel,phi=phi)
-
-    #     done = False
-    #     while not done:
-    #         action = env.action_space.sample()
-    #         action = np.zeros_like(action)
-    #         obs,reward,done,info = env.step(action)
-    #     env.RL_Publish()
-    #     print(f"Episode: {ep} \t Reward: {reward:.3f}")
+        done = False
+        while not done:
+            action = env.action_space.sample()
+            action[1] = 7
+            # action = np.zeros_like(action)
+            obs,reward,done,info = env.step(action)
+        env.RL_Publish()
+        print(f"Episode: {ep} \t Reward: {reward:.3f}")
 
