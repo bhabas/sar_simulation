@@ -9,22 +9,20 @@ import pandas as pd
 import csv
 import time 
 import rospy
+import rospkg
 
 ## PLOTTING IMPORTS
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import matplotlib as mpl
 import plotly.graph_objects as go
-from scipy.interpolate import griddata, Rbf
+from scipy.interpolate import griddata
 
 ## SB3 Imports
 from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import *
-from stable_baselines3.common.vec_env import VecCheckNan
 from stable_baselines3.common import utils
 
-## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
-import rospkg,os
+## DEFINE BASE PATH
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('sar_env'))
 
 
@@ -127,7 +125,7 @@ class Policy_Trainer_DeepRL():
             tensorboard_log=self.log_dir
         ) 
 
-        self.save_Config_File()
+        self.save_config_file()
 
     def load_model(self,t_step):
         """Loads current model and replay buffer from the selected time step
@@ -149,6 +147,49 @@ class Policy_Trainer_DeepRL():
         )
         self.model.load_replay_buffer(replay_buff_path)
 
+    def save_config_file(self):
+
+        config_path = os.path.join(self.TB_log_path,"Config.yaml")
+
+        data = dict(
+            PLANE_SETTINGS = dict(
+                Plane_Model = self.env.Plane_Model,
+                Plane_Angle = self.env.Plane_Angle,
+                Plane_Pos = dict(
+                    X = self.env.Plane_Pos[0],
+                    Y = self.env.Plane_Pos[1],
+                    Z = self.env.Plane_Pos[2]
+                ),
+            ),
+
+            SAR_SETTINGS = dict(
+                SAR_Type = self.env.SAR_Type,
+                SAR_Config = self.env.SAR_Config,
+            ),
+
+            ENV_SETTINGS = dict(
+                Environment = self.env.Env_Name,
+                Vel_Limts = self.env.Vel_range,
+                Phi_Limits = self.env.Phi_range,
+            ),
+
+            LEARNING_MODEL = dict(
+                Policy = self.model.policy.__class__.__name__,
+                Observation_Layer = self.model.policy.observation_space.shape[0],
+                Network_Layers = self.model.policy.net_arch,
+                Action_Layer = self.model.policy.action_space.shape[0]*2,
+                Action_Space_High = self.model.policy.action_space.high.tolist(),
+                Action_Space_Low = self.model.policy.action_space.low.tolist(),
+                Gamma = self.model.gamma,
+                Learning_Rate = self.model.learning_rate,
+                Activation_Function = "",
+            )
+
+
+        )
+
+        with open(config_path, 'w') as outfile:
+            yaml.dump(data,outfile,default_flow_style=False,sort_keys=False)
 
     def save_NN_Params(self,SavePath):
         """Save NN parameters to C header file for upload to crazyflie
@@ -505,46 +546,7 @@ class Policy_Trainer_DeepRL():
 
         plt.show()
 
-    def save_Config_File(self):
-
-        config_path = os.path.join(self.TB_log_path,"Config.yaml")
-
-        data = dict(
-            PLANE_SETTINGS = dict(
-                Plane_Model = self.env.Plane_Model,
-                Plane_Angle = self.env.Plane_Angle,
-                Plane_Pos = dict(
-                    X = self.env.Plane_Pos[0],
-                    Y = self.env.Plane_Pos[1],
-                    Z = self.env.Plane_Pos[2]
-                ),
-            ),
-
-            QUAD_SETTINGS = dict(
-                SAR_Type = self.env.SAR_Type,
-                SAR_Config = self.env.SAR_Config,
-            ),
-
-            ENV_SETTINGS = dict(
-                Environment = self.env.env_name,
-                Vel_Limts = self.env.Vel_range,
-                Phi_Limits = self.env.Phi_range,
-            ),
-
-            LEARNING_MODEL = dict(
-                Policy = self.model.policy.__class__.__name__,
-                Network_Layers = self.model.policy.net_arch,
-                Gamma = self.model.gamma,
-                Learning_Rate = self.model.learning_rate,
-                Activation_Function = "",
-            )
-
-
-        )
-
-        with open(config_path, 'w') as outfile:
-            yaml.dump(data,outfile,default_flow_style=False,sort_keys=False)
-
+    
     def test_landing_performance(self,fileName=None,Vel_inc=0.25,Phi_inc=5,n_episodes=5):
         """Test trained model over varied velocity and flight angle combinations.
 
@@ -689,7 +691,7 @@ class Policy_Trainer_DeepRL():
                         TTC = round(t_delta_avg*(num_trials-idx)) # Time to completion
                         print(f"Flight Conditions: ({Vel} m/s,{Phi} deg) \t Index: {idx}/{num_trials} \t Percentage: {100*idx/num_trials:.2f}% \t Time to Completion: {str(timedelta(seconds=TTC))}")
 
-    def Plot_Landing_Performance(self,fileName=None,saveFig=False):
+    def plot_landing_performance(self,fileName=None,saveFig=False):
 
         if fileName == None:
             fileName = "PolicyPerformance_Data.csv"

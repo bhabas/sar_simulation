@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 import numpy as np
+import gym
 from gym import spaces
 import rospy
 import time
 from sar_env import SAR_Sim_Interface
+from stable_baselines3.common.env_checker import check_env
 
 
-class SAR_Sim_DeepRL(SAR_Sim_Interface):
+class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
     def __init__(self,GZ_Timeout=True,My_range=[0.0,8.0],Vel_range=[1.5,3.5],Phi_range=[0,90],Tau_0=0.4):        
         """
         Args:
@@ -16,7 +18,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface):
             Phi_range (list, optional): Range of flight angles (Deg). Defaults to [0,90].
             Tau_0 (float, optional): Flight position will start at this Tau value. Defaults to 0.4.
         """        
-        SAR_Sim_Interface.__init__(self,GZ_Timeout)          
+        SAR_Sim_Interface.__init__(self,GZ_Timeout)       
 
         ## ENV CONFIG SETTINGS
         self.Env_Name = "SAR_Sim_DeepRL_Env"
@@ -335,18 +337,20 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface):
 if __name__ == "__main__":
 
     env = SAR_Sim_DeepRL(GZ_Timeout=False,Vel_range=[0.5,1.0],Phi_range=[50,80])
+    # check_env(env)
 
-    for ep in range(25):
 
-        vel = 1.0
-        phi = 90
-        env.reset(vel=vel,phi=phi)
+    # for ep in range(25):
 
-        done = False
-        while not done:
-            action = env.action_space.sample()
-            action = np.zeros_like(action)
-            obs,reward,done,info = env.step(action)
-        env.RL_Publish()
-        print(f"Episode: {ep} \t Reward: {reward:.3f}")
+    #     vel = 1.0
+    #     phi = 90
+    #     env.reset(vel=vel,phi=phi)
+
+    #     done = False
+    #     while not done:
+    #         action = env.action_space.sample()
+    #         action = np.zeros_like(action)
+    #         obs,reward,done,info = env.step(action)
+    #     env.RL_Publish()
+    #     print(f"Episode: {ep} \t Reward: {reward:.3f}")
 
