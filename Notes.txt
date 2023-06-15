@@ -1,1 +1,5 @@
 sudo apt-get install libncurses5-dev libncursesw5-dev
+
+
+If things don't compile correctly try compiling with catkin_make several times and see if it makes incremental progress. 
+Also, try deleting the build and devel folders in catkin_ws and then try recompiling. Sometime ROS gets hung up with files in there when you start playing with message files and such. 

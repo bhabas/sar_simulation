@@ -38,6 +38,10 @@ bool controllerOutOfTreeTest() {
 }
 
 
+
+
+
+
 void controllerOutOfTreeInit() {
 
     #ifdef CONFIG_SAR_EXP
@@ -49,7 +53,12 @@ void controllerOutOfTreeInit() {
     controllerOutOfTreeTest();
     J = mdiag(Ixx,Iyy,Izz);
 
+    nml_mat* X = nml_mat_rnd(3,1,0,1);
+    nml_mat_print_CF(X);
+
     consolePrintf("GTC Initiated\n");
+
+
 
 }
 
