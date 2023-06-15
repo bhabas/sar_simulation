@@ -30,7 +30,7 @@ class SAR_Base_Interface():
         self.SAR_Config = rospy.get_param('/SAR_SETTINGS/SAR_Config')
         self.modelInitials = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Initials")
         self.modelName = f"{self.SAR_Type}_{self.SAR_Config}"
-        self.done = False
+        self.Done = False
         self.preInit_Values()
 
         self.pos_0 = [0.0, 0.0, 0.4]      # Default hover position [m]
@@ -141,7 +141,7 @@ class SAR_Base_Interface():
                 rospy.logwarn(f"[WARNING] Attempt {retry + 1} to call service '{srv_addr}' failed: {e}")
 
 
-        self.done = True
+        self.Done = True
         rospy.logerr(f"Service '{srv_addr}' call failed after {num_retries} attempts")
         return None
 

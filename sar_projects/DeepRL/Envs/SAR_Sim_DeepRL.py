@@ -214,6 +214,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
             ## SAVE TRIGGERING OBSERVATION AND ACTIONS
             self.obs_trg = self.obs
+            self.Tau_trg = self.obs_trg[0]
             self.action_trg = action
 
             ## COMPLETE REST OF SIMULATION
@@ -222,6 +223,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             
             ## CALCULATE REWARD
             reward = self.CalcReward()
+            self.RL_Publish()
         
         return np.array(self.obs,dtype=np.float32), reward, self.Done, {}
 

@@ -759,36 +759,38 @@ if __name__ == '__main__':
     from Envs.SAR_Sim_DeepRL import SAR_Sim_DeepRL
 
 
-    # START TRAINING NEW DEEP RL MODEL 
-    env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[0,90])
-    env.pause_physics(False)
-    time.sleep(1)
-    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
-    log_name = f"{env.modelInitials}--Deg_{env.Plane_Angle}--SAC_{current_time}"    
+    # # START TRAINING NEW DEEP RL MODEL 
+    # env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[2.5,3.0],Phi_range=[30,70])
+    # env.pause_physics(False)
+    # time.sleep(3)
+    # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
+    # log_name = f"{env.modelInitials}--Deg_{env.Plane_Angle}--SAC_{current_time}"    
 
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.create_model()
-    PolicyTrainer.train_model()
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.create_model()
+    # PolicyTrainer.train_model()
 
     # ================================================================= ##
     
-    # # RESUME TRAINING DEEP RL MODEL
-    # env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[-45,90])
-    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
-    # log_name = "A60_L75_K32--Deg_135--SAC_02_14-19:47_0"
-    # t_step_load = 10000
+    # RESUME TRAINING DEEP RL MODEL
+    env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[1.0,4.0],Phi_range=[0,90])
+    env.pause_physics(False)
+    time.sleep(3)
+    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
+    log_name = "Test_2_0"
+    t_step_load = 34000
 
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.load_model(t_step_load)
-    # PolicyTrainer.train_model(reset_timesteps=False)
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.load_model(t_step_load)
+    PolicyTrainer.train_model(reset_timesteps=False)
 
     # ================================================================= ##
 
     # # # COLLECT LANDING PERFORMANCE DATA
-    # env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[0,90])
-    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
-    # log_name = "A20_L75_K32--Deg_180--SAC_02_17-08:23_0"
-    # t_step_load = 160000
+    # env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[1.0,4.0],Phi_range=[0,90])
+    # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
+    # log_name = "A30_L75_K32--Deg_180.0--SAC_06_13-15:36_0"
+    # t_step_load = 3400
 
     # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     # PolicyTrainer.load_model(t_step_load)
