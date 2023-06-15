@@ -297,27 +297,24 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         ## DISTANCE REWARD 
         R_dist = np.clip(1/np.abs(self.D_min + 1e-3),0,15)/15
-        R_dist *= 0.05
         
         ## TAU TRIGGER REWARD
         R_tau = np.clip(1/np.abs(self.Tau_trg - 0.2),0,15)/15
-        R_tau *= 0.1
 
         ## IMPACT ANGLE REWARD
-        R_angle = 0.5*np.cos(self.eul_impact[1]-self.Plane_Angle_rad*np.sign(np.cos(self.Plane_Angle_rad)))+0.5
-        R_angle *= 0.2
-
+        temp = np.deg2rad(-self.eul_impact[1] - self.Plane_Angle - 45*np.sign(np.cos(self.Plane_Angle_rad)))
+        R_angle = 0.5*np.cos(temp) + 0.5
 
         ## PAD CONTACT REWARD
         if self.pad_connections >= 3: 
             if self.BodyContact_flag == False:
-                R_legs = 0.65
+                R_legs = 1.0
             else:
-                R_legs = 0.2
+                R_legs = 0.3
 
         elif self.pad_connections == 2: 
             if self.BodyContact_flag == False:
-                R_legs = 0.4
+                R_legs = 0.6
             else:
                 R_legs = 0.1
                 
@@ -325,7 +322,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             R_legs = 0.0
 
         self.reward_vals = [R_dist,R_tau,R_angle,R_legs,0]
-        self.reward = R_dist + R_tau + R_angle + R_legs
+        self.reward = 0.05*R_dist + 0.1*R_tau + 0.2*R_angle + 0.65*R_legs
 
         return self.reward
 
