@@ -10,14 +10,14 @@ SAR_SETTINGS:
   Cam_Sensor: False
 
   # Policy_Type: "PARAM_OPTIM"
-  # Policy_Type: "DEEP_RL" 
+  Policy_Type: "DEEP_RL" 
 
 PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
   Plane_Model: "Standard_Plane"
   Plane_Angle: 180  # [deg]
-  Pos_X: 2.0    # [m]
+  Pos_X: 0.0    # [m]
   Pos_Y: 0.0    # [m]
-  Pos_Z: 0.0    # [m]
+  Pos_Z: 2.0    # [m]
 
 
 SIM_SETTINGS:

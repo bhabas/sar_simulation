@@ -778,8 +778,8 @@ if __name__ == '__main__':
     env.pause_physics(False)
     time.sleep(3)
     log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
-    log_name = "A20_L75_K32--Deg_180.0--SAC_06_19-09:27_0"
-    t_step_load = 400
+    log_name = "A20_L75_K32--Deg_180.0--SAC_06_16-13:12_0"
+    t_step_load = 170000
 
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.load_model(t_step_load)

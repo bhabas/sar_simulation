@@ -126,7 +126,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 {
 
     // OPTICAL FLOW UPDATES
-    if (RATE_DO_EXECUTE(100, tick-5)) {
+    if (RATE_DO_EXECUTE(100, tick)) {
 
         // UPDATE POS AND VEL
         r_BO = mkvec(state->position.x, state->position.y, state->position.z);
@@ -156,7 +156,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
     }
 
     // TRAJECTORY UPDATES
-    if (RATE_DO_EXECUTE(RATE_100_HZ, tick-10)) {
+    if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
 
         switch (Traj_Type)
         {
@@ -179,7 +179,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
     }
 
     // POLICY UPDATES
-    if (RATE_DO_EXECUTE(1, tick)) {
+    if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
 
         X_input->data[0][0] = Tau;
         X_input->data[1][0] = Theta_x;
