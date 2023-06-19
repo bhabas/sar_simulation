@@ -282,8 +282,8 @@ extern float V_ty;              // Tangent_y velocity [m/s]
 
 
 
-// GTC COMMAND PACKETS
-struct GTC_CmdPacket{
+// CTRL COMMAND PACKETS
+struct CTRL_CmdPacket{
     uint8_t cmd_type; 
     float cmd_val1;
     float cmd_val2;
@@ -291,13 +291,13 @@ struct GTC_CmdPacket{
     float cmd_flag;
     bool  cmd_rx;
 } __attribute__((packed));
-extern struct GTC_CmdPacket GTC_Cmd;
+extern struct CTRL_CmdPacket CTRL_Cmd;
 
 
 
 
 
-void GTC_Command(struct GTC_CmdPacket *GTC_Cmd);
+void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd);
 void controlOutput(const state_t *state, const sensorData_t *sensors);
 uint16_t thrust2PWM(float f);
 void calcPlaneNormal(float Plane_Angle);

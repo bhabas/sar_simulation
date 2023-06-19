@@ -8,7 +8,7 @@ import time
 ## ROS MESSAGES AND SERVICES
 from sar_msgs.msg import SAR_StateData,SAR_FlipData,SAR_ImpactData,SAR_MiscData
 from sar_msgs.srv import loggingCMD,loggingCMDRequest
-from sar_msgs.srv import GTC_Cmd_srv,GTC_Cmd_srvRequest
+from sar_msgs.srv import CTRL_Cmd_srv,CTRL_Cmd_srvRequest
 from sar_msgs.msg import RL_Data,RL_History
 
 from rosgraph_msgs.msg import Clock
@@ -109,7 +109,7 @@ class SAR_Base_Interface():
         }
 
         ## CREATE SERVICE REQUEST MSG
-        srv = GTC_Cmd_srvRequest() 
+        srv = CTRL_Cmd_srvRequest() 
         
         srv.cmd_type = cmd_dict[action]
         srv.cmd_vals.x = cmd_vals[0]
@@ -118,7 +118,7 @@ class SAR_Base_Interface():
         srv.cmd_flag = cmd_flag
         srv.cmd_rx = True
 
-        self.callService('/SAR_DC/CMD_Input',srv,GTC_Cmd_srv)    
+        self.callService('/SAR_DC/CMD_Input',srv,CTRL_Cmd_srv)    
 
     
     def callService(self,srv_addr,srv_msg,srv_type,num_retries=5):

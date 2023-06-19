@@ -30,8 +30,8 @@
 
 #include "sar_msgs/CTRL_Data.h"
 #include "sar_msgs/CTRL_Debug.h"
-#include "sar_msgs/GTC_Cmd_srv.h"
-#include "sar_msgs/GTC_Cmd.h"
+#include "sar_msgs/CTRL_Cmd_srv.h"
+#include "sar_msgs/CTRL_Cmd.h"
 
 
 #include "sar_msgs/RL_Data.h"
@@ -73,10 +73,10 @@ class SAR_DataConverter {
             log6_Sub = nh->subscribe("/cf1/log6", 1, &SAR_DataConverter::log6_Callback, this, ros::TransportHints().tcpNoDelay());
 
 
-            // INITIALIZE GTC COMMAND PIPELINE
-            CMD_Input_Service = nh->advertiseService("/SAR_DC/CMD_Input",&SAR_DataConverter::CMD_SAR_DC_Callback,this); // GTC COMMAND
-            CMD_Output_Topic = nh->advertise<sar_msgs::GTC_Cmd>("/SAR_DC/CMD_Output_Topic",1);        // Msg publisher for Crazyswarm->CF->Controller
-            CMD_Output_Service = nh->serviceClient<sar_msgs::GTC_Cmd_srv>("/CTRL/Cmd_ctrl");          // Service client for sim controller
+            // INITIALIZE CTRL COMMAND PIPELINE
+            CMD_Input_Service = nh->advertiseService("/SAR_DC/CMD_Input",&SAR_DataConverter::CMD_SAR_DC_Callback,this); // CTRL COMMAND
+            CMD_Output_Service = nh->serviceClient<sar_msgs::CTRL_Cmd_srv>("/CTRL/Cmd_ctrl");          // Service client for sim controller
+            CMD_Output_Topic = nh->advertise<sar_msgs::CTRL_Cmd>("/SAR_DC/CMD_Output_Topic",1);        // Msg publisher for Crazyswarm->CF->Controller
 
 
             // INITIALIZE STATE DATA PUBLISHERS
@@ -135,10 +135,10 @@ class SAR_DataConverter {
         void log6_Callback(const sar_msgs::GenericLogData::ConstPtr &log6_msg);
 
         // =============================
-        //     GTC COMMAND CALLBACKS
+        //     CTRL COMMAND CALLBACKS
         // =============================
-        inline bool CMD_SAR_DC_Callback(sar_msgs::GTC_Cmd_srv::Request &req, sar_msgs::GTC_Cmd_srv::Response &res);
-        inline bool Send_Cmd2Ctrl(sar_msgs::GTC_Cmd_srv::Request &req);
+        inline bool CMD_SAR_DC_Callback(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs::CTRL_Cmd_srv::Response &res);
+        inline bool Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &req);
 
 
         // =======================
@@ -241,7 +241,7 @@ class SAR_DataConverter {
         ros::ServiceClient GZ_SimSpeed_Client;
 
         // ===========================
-        //     GTC COMMAND OBJECTS
+        //     CTRL COMMAND OBJECTS
         // ===========================
         ros::ServiceServer CMD_Input_Service;
         ros::ServiceServer CMD_Service_Dashboard;
@@ -491,7 +491,7 @@ inline void SAR_DataConverter::LoadParams()
 
 }
 
-inline bool SAR_DataConverter::CMD_SAR_DC_Callback(sar_msgs::GTC_Cmd_srv::Request &req, sar_msgs::GTC_Cmd_srv::Response &res)
+inline bool SAR_DataConverter::CMD_SAR_DC_Callback(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs::CTRL_Cmd_srv::Response &res)
 {
     // PASS COMMAND VALUES TO CONTROLLER AND PASS LOCAL ACTIONS
     SAR_DataConverter::Send_Cmd2Ctrl(req);
@@ -499,7 +499,7 @@ inline bool SAR_DataConverter::CMD_SAR_DC_Callback(sar_msgs::GTC_Cmd_srv::Reques
     return res.srv_Success;
 }
 
-inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::GTC_Cmd_srv::Request &req)
+inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &req)
 {
     switch (req.cmd_type)
     {
@@ -597,7 +597,7 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::GTC_Cmd_srv::Request &req
 
     // SIMULATION:
     // SEND COMMAND VALUES TO SIM CONTROLLER
-    sar_msgs::GTC_Cmd_srv srv;
+    sar_msgs::CTRL_Cmd_srv srv;
     srv.request = req;
     CMD_Output_Service.call(srv);
 
@@ -605,7 +605,7 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::GTC_Cmd_srv::Request &req
     // EXPERIMENT: 
     // SEND COMMAND VALUES TO PHYSICAL CONTROLLER
     // BROADCAST CMD VALUES AS ROS MESSAGE
-    sar_msgs::GTC_Cmd cmd_msg;
+    sar_msgs::CTRL_Cmd cmd_msg;
     cmd_msg.cmd_type = req.cmd_type;
     cmd_msg.cmd_vals = req.cmd_vals;
     cmd_msg.cmd_flag = req.cmd_flag;

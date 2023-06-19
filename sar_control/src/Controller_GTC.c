@@ -8,21 +8,21 @@ void appMain() {
     {
         #ifdef CONFIG_SAR_SIM
 
-            if (GTC_Cmd.cmd_rx == true)
+            if (CTRL_Cmd.cmd_rx == true)
             {
-                GTC_Command(&GTC_Cmd);
-                GTC_Cmd.cmd_rx = false;
+                CTRL_Command(&CTRL_Cmd);
+                CTRL_Cmd.cmd_rx = false;
             }
 
 
         #elif CONFIG_SAR_EXP
 
-            if (appchannelReceiveDataPacket(&GTC_Cmd,sizeof(GTC_Cmd),APPCHANNEL_WAIT_FOREVER))
+            if (appchannelReceiveDataPacket(&CTRL_Cmd,sizeof(CTRL_Cmd),APPCHANNEL_WAIT_FOREVER))
             {
-                if (GTC_Cmd.cmd_rx == true)
+                if (CTRL_Cmd.cmd_rx == true)
                 {
-                    GTC_Command(&GTC_Cmd);
-                    GTC_Cmd.cmd_rx = false;
+                    CTRL_Command(&CTRL_Cmd);
+                    CTRL_Cmd.cmd_rx = false;
                 }
             }
 
@@ -60,13 +60,13 @@ void controllerOutOfTreeInit() {
     
 
 
-    consolePrintf("GTC Initiated\n");
+    consolePrintf("GTC Controller Initiated\n");
 }
 
 
 void controllerOutOfTreeReset() {
 
-    consolePrintf("GTC Reset\n");
+    consolePrintf("GTC Controller Reset\n");
     consolePrintf("Policy_Type: %d\n",Policy);
 
     // RESET INTEGRATION ERRORS
@@ -272,7 +272,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
     }
     
-    // GTC UPDATES
+    // CTRL UPDATES
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
 
 

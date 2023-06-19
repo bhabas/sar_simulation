@@ -19,7 +19,7 @@ const float g = 9.81f;                        // Gravity [m/s^2]
 const struct vec e_3 = {0.0f, 0.0f, 1.0f};    // Global z-axis
 
 float dt = (float)(1.0f/RATE_100_HZ);
-struct GTC_CmdPacket GTC_Cmd;
+struct CTRL_CmdPacket CTRL_Cmd;
 
 // =================================
 //    CONTROL GAIN INITIALIZATION
@@ -274,26 +274,26 @@ float V_ty = 0.0f;                       // Tangent_y velocity [m/s]
 
 
 
-void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
+void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
 {
-    switch(GTC_Cmd->cmd_type){
+    switch(CTRL_Cmd->cmd_type){
         case 0: // Reset
             controllerOutOfTreeReset();
             break;
 
 
         case 1: // Position
-            x_d.x = GTC_Cmd->cmd_val1;
-            x_d.y = GTC_Cmd->cmd_val2;
-            x_d.z = GTC_Cmd->cmd_val3;
-            kp_xf = GTC_Cmd->cmd_flag;
+            x_d.x = CTRL_Cmd->cmd_val1;
+            x_d.y = CTRL_Cmd->cmd_val2;
+            x_d.z = CTRL_Cmd->cmd_val3;
+            kp_xf = CTRL_Cmd->cmd_flag;
             break;
         
         case 2: // Velocity
-            v_d.x = GTC_Cmd->cmd_val1;
-            v_d.y = GTC_Cmd->cmd_val2;
-            v_d.z = GTC_Cmd->cmd_val3;
-            kd_xf = GTC_Cmd->cmd_flag;
+            v_d.x = CTRL_Cmd->cmd_val1;
+            v_d.y = CTRL_Cmd->cmd_val2;
+            v_d.z = CTRL_Cmd->cmd_val3;
+            kd_xf = CTRL_Cmd->cmd_flag;
             break;
 
         case 3: 
@@ -313,33 +313,33 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
 
         case 7: // Execute Moment-Based Flip
 
-            M_d.x = GTC_Cmd->cmd_val1*1e-3f;
-            M_d.y = GTC_Cmd->cmd_val2*1e-3f;
-            M_d.z = GTC_Cmd->cmd_val3*1e-3f;
+            M_d.x = CTRL_Cmd->cmd_val1*1e-3f;
+            M_d.y = CTRL_Cmd->cmd_val2*1e-3f;
+            M_d.z = CTRL_Cmd->cmd_val3*1e-3f;
 
-            moment_flag = (bool)GTC_Cmd->cmd_flag;
+            moment_flag = (bool)CTRL_Cmd->cmd_flag;
             break;
 
         case 8: // Arm Policy Maneuver
-            Policy_Trg_Action = GTC_Cmd->cmd_val1;
-            Policy_Flip_Action = GTC_Cmd->cmd_val2;
+            Policy_Trg_Action = CTRL_Cmd->cmd_val1;
+            Policy_Flip_Action = CTRL_Cmd->cmd_val2;
 
-            policy_armed_flag = (bool)GTC_Cmd->cmd_flag;
+            policy_armed_flag = (bool)CTRL_Cmd->cmd_flag;
             break;
 
         case 10: // Point-to-Point Trajectory
 
             Traj_Type = P2P;
-            axis = (axis_direction)GTC_Cmd->cmd_flag;
+            axis = (axis_direction)CTRL_Cmd->cmd_flag;
 
             switch(axis){
 
                 case x_axis:
 
                     Traj_Active[0] = true;
-                    s_0_t[0] = GTC_Cmd->cmd_val1;  // Starting position [m]
-                    s_f_t[0] = GTC_Cmd->cmd_val2;  // Ending position [m]
-                    a_t[0] = GTC_Cmd->cmd_val3;    // Peak acceleration [m/s^2]
+                    s_0_t[0] = CTRL_Cmd->cmd_val1;  // Starting position [m]
+                    s_f_t[0] = CTRL_Cmd->cmd_val2;  // Ending position [m]
+                    a_t[0] = CTRL_Cmd->cmd_val3;    // Peak acceleration [m/s^2]
 
                     T[0] = sqrtf(6.0f/a_t[0]*fabsf(s_f_t[0] - s_0_t[0])); // Calc trajectory manuever time [s]
                     t_traj[0] = 0.0f; // Reset timer
@@ -348,9 +348,9 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
                 case y_axis:
 
                     Traj_Active[1] = true;
-                    s_0_t[1] = GTC_Cmd->cmd_val1;  // Starting position [m]
-                    s_f_t[1] = GTC_Cmd->cmd_val2;  // Ending position [m]
-                    a_t[1] = GTC_Cmd->cmd_val3;    // Peak acceleration [m/s^2]
+                    s_0_t[1] = CTRL_Cmd->cmd_val1;  // Starting position [m]
+                    s_f_t[1] = CTRL_Cmd->cmd_val2;  // Ending position [m]
+                    a_t[1] = CTRL_Cmd->cmd_val3;    // Peak acceleration [m/s^2]
 
                     T[1] = sqrtf(6.0f/a_t[1]*fabsf(s_f_t[1] - s_0_t[1])); // Calc trajectory manuever time [s]
                     t_traj[1] = 0.0f; // Reset timer
@@ -359,9 +359,9 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
                 case z_axis:
 
                     Traj_Active[2] = true;
-                    s_0_t[2] = GTC_Cmd->cmd_val1;  // Starting position [m]
-                    s_f_t[2] = GTC_Cmd->cmd_val2;  // Ending position [m]
-                    a_t[2] = GTC_Cmd->cmd_val3;    // Peak acceleration [m/s^2]
+                    s_0_t[2] = CTRL_Cmd->cmd_val1;  // Starting position [m]
+                    s_f_t[2] = CTRL_Cmd->cmd_val2;  // Ending position [m]
+                    a_t[2] = CTRL_Cmd->cmd_val3;    // Peak acceleration [m/s^2]
 
                     T[2] = sqrtf(6.0f/a_t[2]*fabsf(s_f_t[2] - s_0_t[2])); // Calc trajectory manuever time [s]
                     t_traj[2] = 0.0f; // Reset timer
@@ -375,14 +375,14 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
         case 91: // Gazebo Velocity Trajectory (Instantaneous Acceleration)
 
             Traj_Type = CONST_VEL_GZ;
-            axis = (axis_direction)GTC_Cmd->cmd_flag;
+            axis = (axis_direction)CTRL_Cmd->cmd_flag;
 
             switch(axis){
 
                 case x_axis:
 
-                    s_0_t[0] = GTC_Cmd->cmd_val1;   // Starting position [m]
-                    v_t[0] = GTC_Cmd->cmd_val2;     // Desired velocity [m/s]
+                    s_0_t[0] = CTRL_Cmd->cmd_val1;   // Starting position [m]
+                    v_t[0] = CTRL_Cmd->cmd_val2;     // Desired velocity [m/s]
                     a_t[0] = 0.0f;                  // Acceleration [m/s^2]
 
                     t_traj[0] = 0.0f; // Reset timer
@@ -390,8 +390,8 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
 
                 case y_axis:
 
-                    s_0_t[1] = GTC_Cmd->cmd_val1;
-                    v_t[1] = GTC_Cmd->cmd_val2;
+                    s_0_t[1] = CTRL_Cmd->cmd_val1;
+                    v_t[1] = CTRL_Cmd->cmd_val2;
                     a_t[1] = 0.0f;
 
                     t_traj[1] = 0.0f;
@@ -399,8 +399,8 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
 
                 case z_axis:
 
-                    s_0_t[2] = GTC_Cmd->cmd_val1;
-                    v_t[2] = GTC_Cmd->cmd_val2;
+                    s_0_t[2] = CTRL_Cmd->cmd_val1;
+                    v_t[2] = CTRL_Cmd->cmd_val2;
                     a_t[2] = 0.0f;
 
                     t_traj[2] = 0.0f;
@@ -413,33 +413,33 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
         case 11: // Constant Velocity Trajectory
 
             Traj_Type = CONST_VEL;
-            axis = (axis_direction)GTC_Cmd->cmd_flag;
+            axis = (axis_direction)CTRL_Cmd->cmd_flag;
 
             switch(axis){
 
                 case x_axis:
 
-                    s_0_t[0] = GTC_Cmd->cmd_val1;               // Starting position [m]
-                    v_t[0] = GTC_Cmd->cmd_val2;                 // Desired velocity [m/s]
-                    a_t[0] = GTC_Cmd->cmd_val3;                 // Acceleration [m/s^2]
+                    s_0_t[0] = CTRL_Cmd->cmd_val1;               // Starting position [m]
+                    v_t[0] = CTRL_Cmd->cmd_val2;                 // Desired velocity [m/s]
+                    a_t[0] = CTRL_Cmd->cmd_val3;                 // Acceleration [m/s^2]
 
                     t_traj[0] = 0.0f; // Reset timer
                     break;
 
                 case y_axis:
 
-                    s_0_t[1] = GTC_Cmd->cmd_val1;
-                    v_t[1] = GTC_Cmd->cmd_val2;
-                    a_t[1] = GTC_Cmd->cmd_val3;
+                    s_0_t[1] = CTRL_Cmd->cmd_val1;
+                    v_t[1] = CTRL_Cmd->cmd_val2;
+                    a_t[1] = CTRL_Cmd->cmd_val3;
 
                     t_traj[1] = 0.0f;
                     break;
 
                 case z_axis:
 
-                    s_0_t[2] = GTC_Cmd->cmd_val1;
-                    v_t[2] = GTC_Cmd->cmd_val2;
-                    a_t[2] = GTC_Cmd->cmd_val3;
+                    s_0_t[2] = CTRL_Cmd->cmd_val1;
+                    v_t[2] = CTRL_Cmd->cmd_val2;
+                    a_t[2] = CTRL_Cmd->cmd_val3;
 
                     t_traj[2] = 0.0f;
                     break;
@@ -450,26 +450,26 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
 
 
         case 20: // Tumble-Detection
-            tumble_detection = GTC_Cmd->cmd_flag;
+            tumble_detection = CTRL_Cmd->cmd_flag;
             break;
 
         case 30: // Custom Thrust Values
 
             customThrust_flag = true;
-            thrust_override[0] = GTC_Cmd->cmd_val1;
-            thrust_override[1] = GTC_Cmd->cmd_val2;
-            thrust_override[2] = GTC_Cmd->cmd_val3;
-            thrust_override[3] = GTC_Cmd->cmd_flag;
+            thrust_override[0] = CTRL_Cmd->cmd_val1;
+            thrust_override[1] = CTRL_Cmd->cmd_val2;
+            thrust_override[2] = CTRL_Cmd->cmd_val3;
+            thrust_override[3] = CTRL_Cmd->cmd_flag;
 
             break;
 
         case 31: // Custom PWM Values
 
             customPWM_flag = true;
-            PWM_override[0] = GTC_Cmd->cmd_val1;
-            PWM_override[1] = GTC_Cmd->cmd_val2;
-            PWM_override[2] = GTC_Cmd->cmd_val3;
-            PWM_override[3] = GTC_Cmd->cmd_flag;
+            PWM_override[0] = CTRL_Cmd->cmd_val1;
+            PWM_override[1] = CTRL_Cmd->cmd_val2;
+            PWM_override[2] = CTRL_Cmd->cmd_val3;
+            PWM_override[3] = CTRL_Cmd->cmd_flag;
 
             break;
 
@@ -477,10 +477,10 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
 
         case 93: // UPDATE PLANE POSITION
 
-            r_PO.x = GTC_Cmd->cmd_val1;
-            r_PO.y = GTC_Cmd->cmd_val2;
-            r_PO.z = GTC_Cmd->cmd_val3;
-            Plane_Angle = GTC_Cmd->cmd_flag;
+            r_PO.x = CTRL_Cmd->cmd_val1;
+            r_PO.y = CTRL_Cmd->cmd_val2;
+            r_PO.z = CTRL_Cmd->cmd_val3;
+            Plane_Angle = CTRL_Cmd->cmd_flag;
 
             calcPlaneNormal(Plane_Angle);
             

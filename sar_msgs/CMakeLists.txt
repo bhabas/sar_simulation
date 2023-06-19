@@ -24,10 +24,10 @@ add_message_files(
   RL_History.msg
   CTRL_Data.msg
   CTRL_Debug.msg
+  CTRL_Cmd.msg
   PadConnect.msg
   MS.msg
   GenericLogData.msg
-  GTC_Cmd.msg
 )
 
 # Generate services in the 'srv' folder
@@ -36,7 +36,7 @@ add_service_files(
   activateSticky.srv
   loggingCMD.srv
   domainRand.srv
-  GTC_Cmd_srv.srv
+  CTRL_Cmd_srv.srv
   ModelMove.srv
 )
 
