@@ -217,14 +217,10 @@ void Controller::loadParams()
     {
         Policy = PARAM_OPTIM;
     }
-    else if (strcmp(POLICY_TYPE_STR.c_str(),"SVL_POLICY")==0)
+    else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL_ONBOARD")==0)
     {
-        Policy = SVL_POLICY;
+        Policy = DEEP_RL_ONBOARD;
     }
-    else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL")==0)
-    {
-        Policy = DEEP_RL;
-    }    
     else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL_SB3")==0)
     {
         Policy = DEEP_RL_SB3;

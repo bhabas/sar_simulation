@@ -201,9 +201,8 @@ extern bool camera_sensor_active;
 // POLICY SETTING
 typedef enum {
     PARAM_OPTIM = 0,
-    SVL_POLICY = 1,
-    DEEP_RL = 2,
-    DEEP_RL_SB3 = 3
+    DEEP_RL_SB3 = 1,
+    DEEP_RL_ONBOARD = 2,
 }PolicyType;
 extern PolicyType Policy;
 

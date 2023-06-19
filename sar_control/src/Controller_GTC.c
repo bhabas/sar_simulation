@@ -222,7 +222,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         
                     break;
 
-                case DEEP_RL:
+                case DEEP_RL_ONBOARD:
 
                     // PASS OBSERVATION THROUGH POLICY NN
                     NN_forward(X_input,Y_output,&NN_DeepRL);
@@ -262,6 +262,10 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         M_z_flip = M_d.z*1e3f;
                         }
                         
+                    break;
+
+                case DEEP_RL_SB3:
+
                     break;
                     
             default:
