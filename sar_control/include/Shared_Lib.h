@@ -11,10 +11,10 @@ extern "C" {
 #include "quatcompress.h"
 #include "nml.h"
 
-#include "controller_GTC.h"
-#include "traj_funcs.h"
-#include "ML_funcs.h"
-#include "CompressStates.h"
+#include "Controller_GTC.h"
+#include "Traj_Funcs.h"
+#include "ML_Funcs.h"
+#include "Compress_States.h"
 
 #include "ML_Params/NN_Layers_NL_DeepRL.h"
 

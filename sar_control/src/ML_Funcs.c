@@ -1,4 +1,4 @@
-#include "ML_funcs.h"
+#include "ML_Funcs.h"
 
 void NN_init(NN* NN, char str[])
 {

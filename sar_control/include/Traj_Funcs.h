@@ -13,7 +13,7 @@ extern "C" {
 
 // CF LIBARARIES
 #include "math3d.h"
-#include "shared_lib.h"
+#include "Shared_Lib.h"
 
 
 

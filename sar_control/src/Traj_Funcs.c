@@ -1,4 +1,4 @@
-#include "traj_funcs.h"
+#include "Traj_Funcs.h"
 
 
 Trajectory_Type Traj_Type = NONE;

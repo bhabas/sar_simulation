@@ -369,10 +369,8 @@ class Policy_Trainer_DeepRL():
             obs = self.env.reset(vel=vel,phi=phi)
             done = False
             while not done:
-                self.env.render()
-                # action = custom_predict(obs)[0]
                 action,_ = self.model.predict(obs)
-                obs,reward,done,info = self.env.step(action)
+                obs,reward,done,_ = self.env.step(action)
 
     def train_model(self,total_timesteps=2e6,save_freq=200,reset_timesteps=False):
         """Script to train model via Deep RL method
@@ -774,31 +772,29 @@ if __name__ == '__main__':
     # ================================================================= ##
     
     # RESUME TRAINING DEEP RL MODEL
-    env = SAR_Sim_DeepRL(GZ_Timeout=False,Vel_range=[1.0,4.0],Phi_range=[-90,90])
-    env.pause_physics(False)
-    time.sleep(3)
+    # env = SAR_Sim_DeepRL(GZ_Timeout=False,Vel_range=[1.0,4.0],Phi_range=[-90,90])
+    # env.pause_physics(False)
+    # time.sleep(3)
+    # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
+    # log_name = "A20_L75_K32--Deg_180.0--SAC_06_16-13:12_0"
+    # t_step_load = 170000
+
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.load_model(t_step_load)
+    # PolicyTrainer.train_model(reset_timesteps=True)
+
+    # ================================================================= ##
+
+    # # COLLECT LANDING PERFORMANCE DATA
+    env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[1.0,4.0],Phi_range=[0,90])
     log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
     log_name = "A20_L75_K32--Deg_180.0--SAC_06_16-13:12_0"
     t_step_load = 170000
 
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.load_model(t_step_load)
-    PolicyTrainer.save_NN_Params()
-    PolicyTrainer.policy_dist([0,0,0])
-    print()
-    # PolicyTrainer.train_model(reset_timesteps=True)
-
-    # ================================================================= ##
-
-    # # # COLLECT LANDING PERFORMANCE DATA
-    # env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[1.0,4.0],Phi_range=[0,90])
-    # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
-    # log_name = "A30_L75_K32--Deg_180.0--SAC_06_13-15:36_0"
-    # t_step_load = 3400
-
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.load_model(t_step_load)
     # PolicyTrainer.test_landing_performance()
+    PolicyTrainer.test_policy(vel=2.5,phi=60,episodes=10)
 
     # ================================================================= ##
 
