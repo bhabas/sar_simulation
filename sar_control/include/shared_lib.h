@@ -214,8 +214,8 @@ extern bool flip_flag;
 extern bool onceFlag;
 
 // POLICY TRIGGER/ACTION VALUES
-extern float Policy_Flip;  
-extern float Policy_Action;
+extern float Policy_Trg_Action;  
+extern float Policy_Flip_Action;
 
 
 

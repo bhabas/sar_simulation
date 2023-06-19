@@ -53,8 +53,8 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
 
     // NEURAL NETWORK DATA
-    Policy_Flip = ctrl_msg.Policy_Flip;
-    Policy_Action = ctrl_msg.Policy_Action;
+    Policy_Trg_Action = ctrl_msg.Policy_Trg_Action;
+    Policy_Flip_Action = ctrl_msg.Policy_Flip_Action;
 
     Pose_impact_buff.push_back(Pose);
     Twist_impact_buff.push_back(Twist);
@@ -228,8 +228,8 @@ void SAR_DataConverter::log2_Callback(const sar_msgs::GenericLogData::ConstPtr &
     // NEURAL NETWORK VALUES
     float NN_FP[2];
     decompressXY(log2_msg->values[6],NN_FP);
-    Policy_Flip = NN_FP[0];
-    Policy_Action = NN_FP[1];
+    Policy_Trg_Action = NN_FP[0];
+    Policy_Flip_Action = NN_FP[1];
 
     // OTHER MISC INFO
     flip_flag = log2_msg->values[7];

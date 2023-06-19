@@ -289,8 +289,8 @@ void Controller::publishCtrlData()
     CtrlData_msg.Theta_y_est = Theta_y_est;
 
     // NEURAL NETWORK DATA
-    CtrlData_msg.Policy_Flip = Policy_Flip;
-    CtrlData_msg.Policy_Action = Policy_Action;
+    CtrlData_msg.Policy_Trg_Action = Policy_Trg_Action;
+    CtrlData_msg.Policy_Flip_Action = Policy_Flip_Action;
 
     // CONTROL ACTIONS
     CtrlData_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};

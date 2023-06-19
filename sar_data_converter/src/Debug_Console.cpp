@@ -42,15 +42,15 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
         mvprintw(22, 0,"==== Policy: %s ====",POLICY_TYPE.c_str());
         if (strcmp(POLICY_TYPE.c_str(),"PARAM_OPTIM") == 0)
         {
-            mvprintw(23, 0,"Tau_thr: % 7.3f \tMy: % 7.3f",Policy_Flip,Policy_Action);
+            mvprintw(23, 0,"Tau_thr: % 7.3f \tMy: % 7.3f",Policy_Trg_Action,Policy_Flip_Action);
         }
         else if (strcmp(POLICY_TYPE.c_str(),"SVL_POLICY") == 0)
         {
-            mvprintw(23, 0,"Policy_Flip: % 7.3f \tPolicy_Action: % 7.3f ",Policy_Flip,Policy_Action);
+            mvprintw(23, 0,"Policy_Trg_Action: % 7.3f \tPolicy_Action: % 7.3f ",Policy_Trg_Action,Policy_Flip_Action);
         }
         else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL") == 0)
         {
-            mvprintw(23, 0,"Stuff: % 7.3f \tStuff: % 7.3f ",Policy_Flip,Policy_Action);
+            mvprintw(23, 0,"Stuff: % 7.3f \tStuff: % 7.3f ",Policy_Trg_Action,Policy_Flip_Action);
         }
         else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL_SB3") == 0)
         {

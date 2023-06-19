@@ -308,8 +308,8 @@ class SAR_DataConverter {
         boost::array<double,4> MotorThrusts{0,0,0,0};
         boost::array<uint16_t,4> MS_PWM{0,0,0,0};
 
-        double Policy_Flip = 0.0;
-        double Policy_Action = 0.0;
+        double Policy_Trg_Action = 0.0;
+        double Policy_Flip_Action = 0.0;
 
         geometry_msgs::Vector3 x_d;
         geometry_msgs::Vector3 v_d;

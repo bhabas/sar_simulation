@@ -259,8 +259,8 @@ class SAR_Base_Interface():
         self.MotorThrusts = [0,0,0,0]   # Controller Motor Thrusts [M1,M2,M3,M4][g]
         self.FM = [0,0,0,0]             # Controller Force/Moments (F_thrust,Mx,My,Mz) [N,N*mm]
         
-        self.Policy_Flip = 0.0
-        self.Policy_Action = 0.0
+        self.Policy_Trg_Action = 0.0
+        self.Policy_Flip_Action = 0.0
         
         self.x_d = [0,0,0]
         self.v_d = [0,0,0]

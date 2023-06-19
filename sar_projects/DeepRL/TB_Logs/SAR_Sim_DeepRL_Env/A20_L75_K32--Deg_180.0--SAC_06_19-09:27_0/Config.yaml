@@ -1,10 +1,10 @@
 PLANE_SETTINGS:
   Plane_Model: Standard_Plane
-  Plane_Angle: 90.0
+  Plane_Angle: 180.0
   Plane_Pos:
     X: 2.0
     Y: 0.0
-    Z: 2.0
+    Z: 0.0
 SAR_SETTINGS:
   SAR_Type: Crazyflie
   SAR_Config: A20_L75_K32
@@ -20,8 +20,8 @@ LEARNING_MODEL:
   Policy: SACPolicy
   Observation_Layer: 3
   Network_Layers:
-  - 10
-  - 10
+  - 8
+  - 8
   Action_Layer: 4
   Action_Space_High:
   - 1.0

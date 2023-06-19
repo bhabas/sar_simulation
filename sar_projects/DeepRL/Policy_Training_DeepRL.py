@@ -105,7 +105,7 @@ class Policy_Trainer_DeepRL():
         if not os.path.exists(self.model_dir):
             os.makedirs(self.model_dir,exist_ok=True)
 
-    def create_model(self,gamma=0.999,learning_rate=0.002,net_arch=[10,10]):
+    def create_model(self,gamma=0.999,learning_rate=0.002,net_arch=[8,8]):
         """Create Soft Actor-Critic agent used in training
 
         Args:
@@ -323,7 +323,7 @@ class Policy_Trainer_DeepRL():
         return low + (0.5 * (scaled_action + 1.0) * (high - low))
 
     def policy_dist(self,obs):
-        """Returns action distribution parameters for a given observation
+        """Returns action distribution parameters for a given observation. 
 
         Args:
             obs (_type_): Observation vector returned by then environment
@@ -345,11 +345,12 @@ class Policy_Trainer_DeepRL():
         log_std = actor.log_std(latent_pi)
         log_std = th.clamp(log_std, LOG_STD_MIN, LOG_STD_MAX)
 
-        ## CONVERT MU/LOG_STD TO NORMAL DISTRIBUTION AND SAMPLE
+        ## CONVERT LOG_STD TO STD
         action_std = th.ones_like(mean_actions) * log_std.exp()
-        action_mean = mean_actions
-
         action_std = action_std.detach().numpy()[0]
+
+        ## GRAB ACTION DISTRIBUTION MEAN
+        action_mean = mean_actions
         action_mean = action_mean.detach().numpy()[0]
 
 
@@ -373,7 +374,7 @@ class Policy_Trainer_DeepRL():
                 action,_ = self.model.predict(obs)
                 obs,reward,done,info = self.env.step(action)
 
-    def train_model(self,total_timesteps=2e6,save_freq=1000,reset_timesteps=False):
+    def train_model(self,total_timesteps=2e6,save_freq=200,reset_timesteps=False):
         """Script to train model via Deep RL method
 
         Args:
@@ -759,31 +760,32 @@ if __name__ == '__main__':
     from Envs.SAR_Sim_DeepRL import SAR_Sim_DeepRL
 
 
-    # START TRAINING NEW DEEP RL MODEL 
-    env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[1.5,4.0],Phi_range=[0,90])
-    env.pause_physics(False)
-    time.sleep(3)
-    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
-    log_name = f"{env.modelInitials}--Deg_{env.Plane_Angle}--SAC_{current_time}"    
+    # # START TRAINING NEW DEEP RL MODEL 
+    # env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[1.5,4.0],Phi_range=[0,90])
+    # env.pause_physics(False)
+    # time.sleep(3)
+    # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
+    # log_name = f"{env.modelInitials}--Deg_{env.Plane_Angle}--SAC_{current_time}"    
 
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.create_model()
-    PolicyTrainer.save_NN_Params()
-
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.create_model()
     # PolicyTrainer.train_model()
 
     # ================================================================= ##
     
-    # # RESUME TRAINING DEEP RL MODEL
-    # env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[1.0,4.0],Phi_range=[-90,90])
-    # env.pause_physics(False)
-    # time.sleep(3)
-    # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
-    # log_name = "A20_L75_K32--Deg_90.0--SAC_06_18-22:16_0"
-    # t_step_load = 170000
+    # RESUME TRAINING DEEP RL MODEL
+    env = SAR_Sim_DeepRL(GZ_Timeout=False,Vel_range=[1.0,4.0],Phi_range=[-90,90])
+    env.pause_physics(False)
+    time.sleep(3)
+    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
+    log_name = "A20_L75_K32--Deg_180.0--SAC_06_19-09:27_0"
+    t_step_load = 400
 
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.load_model(t_step_load)
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.load_model(t_step_load)
+    PolicyTrainer.save_NN_Params()
+    PolicyTrainer.policy_dist([0,0,0])
+    print()
     # PolicyTrainer.train_model(reset_timesteps=True)
 
     # ================================================================= ##

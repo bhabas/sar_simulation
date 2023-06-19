@@ -185,7 +185,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
             switch (Policy)
             {
                 case PARAM_OPTIM:
-                    if(Tau <= Policy_Flip && onceFlag == false && V_perp > 0.1f){
+                    if(Tau <= Policy_Trg_Action && onceFlag == false && V_perp > 0.1f){
                         onceFlag = true;
                         flip_flag = true;  
 
@@ -202,7 +202,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                     
                         M_d.x = 0.0f;
-                        M_d.y = -Policy_Action*1e-3f;
+                        M_d.y = -Policy_Flip_Action*1e-3f;
                         M_d.z = 0.0f;
 
                         F_thrust_flip = 0.0;

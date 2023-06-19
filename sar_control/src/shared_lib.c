@@ -206,8 +206,8 @@ bool flip_flag = false;
 bool onceFlag = false;
 
 // POLICY TRIGGER/ACTION VALUES
-float Policy_Flip = 0.0f;  
-float Policy_Action = 0.0f;
+float Policy_Trg_Action = 0.0f;  
+float Policy_Flip_Action = 0.0f;
 
 
 
@@ -309,8 +309,8 @@ void GTC_Command(struct GTC_CmdPacket *GTC_Cmd)
             break;
 
         case 8: // Arm Policy Maneuver
-            Policy_Flip = GTC_Cmd->cmd_val1;
-            Policy_Action = GTC_Cmd->cmd_val2;
+            Policy_Trg_Action = GTC_Cmd->cmd_val1;
+            Policy_Flip_Action = GTC_Cmd->cmd_val2;
 
             policy_armed_flag = (bool)GTC_Cmd->cmd_flag;
             break;

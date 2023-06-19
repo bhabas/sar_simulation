@@ -11,8 +11,8 @@ float64[4] FM
 float64[4] MotorThrusts
 uint32[4] MS_PWM
 
-float64 Policy_Flip
-float64 Policy_Action
+float64 Policy_Trg_Action
+float64 Policy_Flip_Action
 
 ## PLANE RELATIVE STATES
 float64 D_perp
