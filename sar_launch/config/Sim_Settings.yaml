@@ -10,9 +10,7 @@ SAR_SETTINGS:
   Cam_Sensor: False
 
   # Policy_Type: "PARAM_OPTIM"
-  # Policy_Type: "SVL_POLICY" 
   # Policy_Type: "DEEP_RL" 
-  Policy_Type: "DEEP_RL_SB3" 
 
 PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
   Plane_Model: "Standard_Plane"

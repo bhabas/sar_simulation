@@ -199,6 +199,8 @@ bool camera_sensor_active = false;
 
 // DEFINE POLICY TYPE ACTIVATED
 PolicyType Policy = PARAM_OPTIM;
+nml_mat* X_input;    // STATE MATRIX TO BE INPUT INTO POLICY
+nml_mat* Y_output;  // POLICY OUTPUT MATRIX
 
 // POLICY FLAGS
 bool policy_armed_flag = false;
@@ -208,6 +210,16 @@ bool onceFlag = false;
 // POLICY TRIGGER/ACTION VALUES
 float Policy_Trg_Action = 0.0f;  
 float Policy_Flip_Action = 0.0f;
+
+float ACTION_MIN = 0.0f;
+float ACTION_MAX = 8.0f;
+
+// ===============================
+//  DEEP RL POLICY INITIALIZATION
+// ===============================
+
+NN NN_DeepRL;
+float Policy_Flip_threshold = 1.50f;
 
 
 

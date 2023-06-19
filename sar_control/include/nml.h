@@ -65,6 +65,7 @@ nml_mat *nml_mat_sqr(int size);
 nml_mat *nml_mat_sqr_rnd(int size, double min, double max);
 nml_mat *nml_mat_eye(int size);
 nml_mat *nml_mat_cp(nml_mat *m);
+int nml_mat_cp_r(nml_mat *m, nml_mat *m_cp);
 nml_mat *nml_mat_from(int num_rows, int num_cols, int n_vals, double *vals);
 nml_mat *nml_mat_fromfile(const char *file);
 nml_mat *nml_mat_fromfilef(FILE *f);
@@ -194,6 +195,7 @@ nml_mat *nml_mat_funcElement(nml_mat *m,float (*Function)(float x));
 double nml_mat_sum_elem(nml_mat *m);
 nml_mat* extend_row_vec(nml_mat* vec, int num_rows);
 void nml_mat_print_CF(nml_mat *matrix);
+double str_to_double(const char *str);
 
 
 #ifdef __cplusplus

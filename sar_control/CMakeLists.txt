@@ -18,7 +18,16 @@ catkin_package(
 
 include_directories(include include_CF_Firmware ${catkin_INCLUDE_DIRS})
 
-add_executable(SAR_Controller src/stabilizer.cpp src/controller_GTC.c src/shared_lib.c src/CompressStates.c src/traj_funcs.c src/nml.c src/nml_util.c)
+add_executable(SAR_Controller 
+    src/stabilizer.cpp 
+    src/controller_GTC.c 
+    src/shared_lib.c 
+    src/CompressStates.c 
+    src/traj_funcs.c 
+    src/ML_funcs.c
+    src/nml.c 
+    src/nml_util.c
+    )
 add_dependencies(SAR_Controller ${catkin_EXPORTED_TARGETS})
 target_link_libraries(SAR_Controller ${catkin_LIBRARIES})
 target_compile_definitions(SAR_Controller PRIVATE CONFIG_SAR_SIM CONFIG_CONTROLLER_OOT)

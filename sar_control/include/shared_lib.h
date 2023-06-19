@@ -9,10 +9,14 @@ extern "C" {
 #include "math3d.h"
 #include "pm.h"
 #include "quatcompress.h"
+#include "nml.h"
 
 #include "controller_GTC.h"
 #include "traj_funcs.h"
+#include "ML_funcs.h"
 #include "CompressStates.h"
+
+#include "ML_Params/NN_Layers_NL_DeepRL.h"
 
 
 #define PWM_MAX 60000
@@ -187,11 +191,6 @@ extern bool safeModeEnable;
 extern bool customThrust_flag;
 extern bool customPWM_flag;
 
-// POLICY FLAGS
-extern bool policy_armed_flag;
-extern bool flip_flag;
-extern bool onceFlag;
-
 // SENSOR FLAGS
 extern bool camera_sensor_active;
 
@@ -208,6 +207,9 @@ typedef enum {
 }PolicyType;
 extern PolicyType Policy;
 
+extern nml_mat* X_input;    // STATE MATRIX TO BE INPUT INTO POLICY
+extern nml_mat* Y_output;   // POLICY OUTPUT MATRIX
+
 // POLICY FLAGS
 extern bool policy_armed_flag;
 extern bool flip_flag;
@@ -216,6 +218,18 @@ extern bool onceFlag;
 // POLICY TRIGGER/ACTION VALUES
 extern float Policy_Trg_Action;  
 extern float Policy_Flip_Action;
+
+extern float ACTION_MIN;
+extern float ACTION_MAX;
+
+
+// ===============================
+//  DEEP RL POLICY INITIALIZATION
+// ===============================
+
+extern NN NN_DeepRL;
+extern float Policy_Flip_threshold;
+
 
 
 

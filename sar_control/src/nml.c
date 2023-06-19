@@ -209,6 +209,17 @@ nml_mat *nml_mat_cp(nml_mat *m) {
   return r;
 }
 
+int nml_mat_cp_r(nml_mat *m, nml_mat *m_cp) {
+
+  int i,j;
+  for(i = 0; i < m->num_rows; i++) {
+    for(j = 0; j < m->num_cols; j++) {
+      m_cp->data[i][j] = m->data[i][j];
+    }
+  }
+  return 1;
+}
+
 nml_mat *nml_mat_fromfile(const char *file) {
   FILE *m_file = fopen(file, "r");
   if (NULL == m_file) {
@@ -242,7 +253,6 @@ nml_mat* nml_mat_fromstr(char* str)
     char* value_token;
     char* save_ptrLoc;  
 
-
     // INIT MATRIX
     value_token = strtok_r(str,",",&save_ptrLoc); 
     num_rows = atoi(value_token);
@@ -258,10 +268,10 @@ nml_mat* nml_mat_fromstr(char* str)
        for (int j = 0; j < num_cols; j++)
         {
             value_token = strtok_r(NULL,",",&save_ptrLoc);
-            r->data[i][j] = atof(value_token);
+            r->data[i][j] = str_to_double(value_token);
         }
     }
-  
+
     return r;
 }
 
@@ -1231,7 +1241,7 @@ nml_mat* extend_row_vec(nml_mat* vec, int num_rows)
   return m;
 }
 
-nml_mat *nml_mat_funcElement(nml_mat *m,float (*Function)(float x)) {
+nml_mat *nml_mat_funcElement(nml_mat *m, float (*Function)(float x)) {
   nml_mat *r = nml_mat_cp(m);
 
   int i, j;
@@ -1260,7 +1270,7 @@ double nml_mat_sum_elem(nml_mat *m)
 
 
 void nml_mat_print_CF(nml_mat *matrix) {
-    DEBUG_PRINT("\n=========================\n\n");
+    DEBUG_PRINT("=========================\n\n");
     for (int i = 0; i < matrix->num_rows; i++)
     {
         for (int j = 0; j < matrix->num_cols; j++)
@@ -1269,5 +1279,31 @@ void nml_mat_print_CF(nml_mat *matrix) {
         }
         DEBUG_PRINT("\n");
     }
-    DEBUG_PRINT("\n=========================\n\n");
+    DEBUG_PRINT("=========================\n\n");
 }
+
+
+double str_to_double(const char *str) {
+    double result = 0, factor = 1;
+
+    if (*str == '-') {
+        str++;
+        factor = -1;
+    }
+
+    for (int decimal_seen = 0; *str; str++) {
+        if (*str == '.') {
+            decimal_seen = 1; 
+            continue;
+        }
+
+        int digit = *str - '0';
+        if (digit >= 0 && digit <= 9) {
+            if (decimal_seen) factor /= 10.0;
+            result = result * 10.0 + (double)digit;
+        }
+    }
+
+    return result * factor;
+}
+
