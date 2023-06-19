@@ -1,0 +1,13 @@
+string Model_Name
+
+geometry_msgs/Vector3 Pos_0
+geometry_msgs/Vector3 Vel_0
+geometry_msgs/Vector3 Accel_0
+
+
+geometry_msgs/Vector3 Eul_0
+geometry_msgs/Vector3 Eul_Lim
+geometry_msgs/Vector3 Freq
+
+---
+bool srv_Success

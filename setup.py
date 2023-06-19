@@ -7,7 +7,7 @@ with open("requirements.txt", "r") as fh:
     requirements = [line.strip() for line in fh]
 
 setuptools.setup(
-    name='crazyflie_env',
+    name='sar_env',
     author='Bryan Habas',
     maintainer='Bryan Habas',
     maintainer_email='BHabas@psu.edu',
