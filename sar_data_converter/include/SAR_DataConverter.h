@@ -610,8 +610,12 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
     cmd_msg.cmd_vals = req.cmd_vals;
     cmd_msg.cmd_flag = req.cmd_flag;
     cmd_msg.cmd_rx = req.cmd_rx;
-    CMD_Output_Topic.publish(cmd_msg);
 
+    for (int i = 0; i < 3; i++)
+    {
+        CMD_Output_Topic.publish(cmd_msg);
+    }
+    
     return srv.response.srv_Success; // Return if service request successful (true/false)
 }
 
