@@ -331,12 +331,12 @@ void SAR_DataConverter::log4_Callback(const sar_msgs::GenericLogData::ConstPtr &
 
 void SAR_DataConverter::log5_Callback(const sar_msgs::GenericLogData::ConstPtr &log5_msg)
 {
-    Motorstop_Flag = log5_msg->values[0];
-    Pos_Ctrl_Flag = log5_msg->values[1];
-    Vel_Ctrl_Flag = log5_msg->values[2];
-    Traj_Active_Flag = log5_msg->values[3];
+    Pos_Ctrl_Flag = log5_msg->values[0];
+    Vel_Ctrl_Flag = log5_msg->values[1];
+    Motorstop_Flag = log5_msg->values[2];
+    Moment_Flag = log5_msg->values[3];
     Tumbled_Flag = log5_msg->values[4];
-    Moment_Flag = log5_msg->values[5];
+    Tumble_Detection = log5_msg->values[5];
     Policy_Armed_Flag =log5_msg->values[6];
 
 }

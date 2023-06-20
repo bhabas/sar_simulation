@@ -20,9 +20,10 @@ ENDC = '\033[m'
 
 class SAR_Base_Interface():
 
-    def __init__(self):
-        os.system("roslaunch sar_launch params.launch")         
-        rospy.init_node("SAR_Env_Node")
+    def __init__(self,Exp_Flag=False):
+        os.system("roslaunch sar_launch params.launch")      
+        if not Exp_Flag:   
+            rospy.init_node("SAR_Env_Node")
 
 
         ## SAR PARAMETERS
