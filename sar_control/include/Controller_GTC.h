@@ -20,7 +20,7 @@ extern "C" {
 #include "math3d.h"
 
 // CUSTOM LIBRARIES
-#include "shared_lib.h"
+#include "Shared_Lib.h"
 #include "nml.h"
 
 #ifdef CONFIG_SAR_EXP

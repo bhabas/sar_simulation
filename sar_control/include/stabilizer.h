@@ -9,7 +9,7 @@
 // FIRMWARE INCLUDES
 #include "app.h"
 #include "controller.h"
-#include "shared_lib.h"
+#include "Shared_Lib.h"
 
 
 // ROS INCLUDES
@@ -17,7 +17,7 @@
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
 
-#include "sar_msgs/GTC_Cmd_srv.h"
+#include "sar_msgs/CTRL_Cmd_srv.h"
 #include "sar_msgs/CTRL_Data.h"
 #include "sar_msgs/CTRL_Debug.h"
 
@@ -88,7 +88,7 @@ class Controller
         // FUNCTION PROTOTYPES
         void IMU_Update_Callback(const sensor_msgs::Imu::ConstPtr &msg);
         void Ext_Pos_Update_Callback(const nav_msgs::Odometry::ConstPtr &msg);
-        bool CMD_Service_Resp(sar_msgs::GTC_Cmd_srv::Request &req, sar_msgs::GTC_Cmd_srv::Response &res);
+        bool CMD_Service_Resp(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs::CTRL_Cmd_srv::Response &res);
 
 
         void appLoop();
@@ -102,18 +102,18 @@ class Controller
 };
 
 
-bool Controller::CMD_Service_Resp(sar_msgs::GTC_Cmd_srv::Request &req, sar_msgs::GTC_Cmd_srv::Response &res)
+bool Controller::CMD_Service_Resp(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs::CTRL_Cmd_srv::Response &res)
 {
     // RESPOND THE SRV WAS RECIEVED
     res.srv_Success = true;
 
-    // UPDATE GTC_Cmd STRUCT VALUES
-    GTC_Cmd.cmd_type = req.cmd_type;
-    GTC_Cmd.cmd_val1 = req.cmd_vals.x;
-    GTC_Cmd.cmd_val2 = req.cmd_vals.y;
-    GTC_Cmd.cmd_val3 = req.cmd_vals.z;
-    GTC_Cmd.cmd_flag = req.cmd_flag;
-    GTC_Cmd.cmd_rx = req.cmd_rx;
+    // UPDATE CTRL_Cmd STRUCT VALUES
+    CTRL_Cmd.cmd_type = req.cmd_type;
+    CTRL_Cmd.cmd_val1 = req.cmd_vals.x;
+    CTRL_Cmd.cmd_val2 = req.cmd_vals.y;
+    CTRL_Cmd.cmd_val3 = req.cmd_vals.z;
+    CTRL_Cmd.cmd_flag = req.cmd_flag;
+    CTRL_Cmd.cmd_rx = req.cmd_rx;
 
     if(req.cmd_type == 21) // RESET ROS PARAM VALUES
     {
@@ -217,14 +217,10 @@ void Controller::loadParams()
     {
         Policy = PARAM_OPTIM;
     }
-    else if (strcmp(POLICY_TYPE_STR.c_str(),"SVL_POLICY")==0)
+    else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL_ONBOARD")==0)
     {
-        Policy = SVL_POLICY;
+        Policy = DEEP_RL_ONBOARD;
     }
-    else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL")==0)
-    {
-        Policy = DEEP_RL;
-    }    
     else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL_SB3")==0)
     {
         Policy = DEEP_RL_SB3;

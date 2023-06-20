@@ -11,10 +11,10 @@ extern "C" {
 #include "quatcompress.h"
 #include "nml.h"
 
-#include "controller_GTC.h"
-#include "traj_funcs.h"
-#include "ML_funcs.h"
-#include "CompressStates.h"
+#include "Controller_GTC.h"
+#include "Traj_Funcs.h"
+#include "ML_Funcs.h"
+#include "Compress_States.h"
 
 #include "ML_Params/NN_Layers_NL_DeepRL.h"
 
@@ -201,9 +201,8 @@ extern bool camera_sensor_active;
 // POLICY SETTING
 typedef enum {
     PARAM_OPTIM = 0,
-    SVL_POLICY = 1,
-    DEEP_RL = 2,
-    DEEP_RL_SB3 = 3
+    DEEP_RL_SB3 = 1,
+    DEEP_RL_ONBOARD = 2,
 }PolicyType;
 extern PolicyType Policy;
 
@@ -282,8 +281,8 @@ extern float V_ty;              // Tangent_y velocity [m/s]
 
 
 
-// GTC COMMAND PACKETS
-struct GTC_CmdPacket{
+// CTRL COMMAND PACKETS
+struct CTRL_CmdPacket{
     uint8_t cmd_type; 
     float cmd_val1;
     float cmd_val2;
@@ -291,13 +290,13 @@ struct GTC_CmdPacket{
     float cmd_flag;
     bool  cmd_rx;
 } __attribute__((packed));
-extern struct GTC_CmdPacket GTC_Cmd;
+extern struct CTRL_CmdPacket CTRL_Cmd;
 
 
 
 
 
-void GTC_Command(struct GTC_CmdPacket *GTC_Cmd);
+void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd);
 void controlOutput(const state_t *state, const sensorData_t *sensors);
 uint16_t thrust2PWM(float f);
 void calcPlaneNormal(float Plane_Angle);

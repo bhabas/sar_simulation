@@ -20,11 +20,11 @@ include_directories(include include_CF_Firmware ${catkin_INCLUDE_DIRS})
 
 add_executable(SAR_Controller 
     src/stabilizer.cpp 
-    src/controller_GTC.c 
-    src/shared_lib.c 
-    src/CompressStates.c 
-    src/traj_funcs.c 
-    src/ML_funcs.c
+    src/Controller_GTC.c 
+    src/Shared_Lib.c 
+    src/Compress_States.c 
+    src/Traj_Funcs.c 
+    src/ML_Funcs.c
     src/nml.c 
     src/nml_util.c
     )
