@@ -356,7 +356,7 @@ class Policy_Trainer_DeepRL():
 
         return action_mean,action_std
 
-    def test_policy(self,vel,phi,episodes=1):
+    def test_policy(self,vel,phi,episodes=1,action_onboard=False):
         """Test the currently loaded policy for a given set of velocity and launch angle conditions
 
         Args:
@@ -370,7 +370,7 @@ class Policy_Trainer_DeepRL():
             done = False
             while not done:
                 action,_ = self.model.predict(obs)
-                obs,reward,done,_ = self.env.step(action)
+                obs,reward,done,_ = self.env.step(action,action_onboard=False)
 
     def train_model(self,total_timesteps=2e6,save_freq=200,reset_timesteps=False):
         """Script to train model via Deep RL method

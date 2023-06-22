@@ -1,7 +1,6 @@
 #include "Controller_GTC.h"
 
 
-uint8_t value1 = 5;
 void appMain() {
 
     while (1)
@@ -38,10 +37,6 @@ bool controllerOutOfTreeTest() {
 }
 
 
-
-
-
-
 void controllerOutOfTreeInit() {
 
     #ifdef CONFIG_SAR_EXP
@@ -51,15 +46,12 @@ void controllerOutOfTreeInit() {
 
     controllerOutOfTreeReset();
     controllerOutOfTreeTest();
-    J = mdiag(Ixx,Iyy,Izz);
-    X_input = nml_mat_new(3,1);
-    Y_output = nml_mat_new(4,1);
 
     // INIT DEEP RL NN POLICY
+    X_input = nml_mat_new(3,1);
+    Y_output = nml_mat_new(4,1);
     NN_init(&NN_DeepRL,NN_Params_DeepRL);
     
-
-
     consolePrintf("GTC Controller Initiated\n");
 }
 
@@ -68,6 +60,7 @@ void controllerOutOfTreeReset() {
 
     consolePrintf("GTC Controller Reset\n");
     consolePrintf("Policy_Type: %d\n",Policy);
+    J = mdiag(Ixx,Iyy,Izz);
 
     // RESET INTEGRATION ERRORS
     e_PI = vzero();
@@ -126,7 +119,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 {
 
     // OPTICAL FLOW UPDATES
-    if (RATE_DO_EXECUTE(100, tick)) {
+    if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
 
         // UPDATE POS AND VEL
         r_BO = mkvec(state->position.x, state->position.y, state->position.z);
@@ -156,7 +149,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
     }
 
     // TRAJECTORY UPDATES
-    if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
+    if (RATE_DO_EXECUTE(RATE_50_HZ, tick)) {
 
         switch (Traj_Type)
         {

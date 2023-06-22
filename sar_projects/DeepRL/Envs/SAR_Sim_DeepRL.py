@@ -90,7 +90,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
         self.Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Iyy") + np.random.normal(0,self.Iyy_std)
         self.mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Mass") + np.random.normal(0,self.Mass_std)
-        self.updateInertia()
+        # self.updateInertia()
 
         
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
@@ -139,13 +139,13 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         else: # Velocity NOT parallel to surface
 
             ## CALC DISTANCE WHERE POLICY IS MONITORED
-            D_0 = self.Tau_0*(Vel_0.dot(n_hat))/(V_hat.dot(n_hat))  # Initial distance
+            D_0 = self.Tau_0*(Vel_0.dot(n_hat))  # Initial distance
             D_0 = max(D_0,0.2)                                      # Ensure a reasonable minimum distance [m]
 
 
             ## CALC DISTANCE REQUIRED TO SETTLE ON DESIRED VELOCITY
             t_settle = 1.5                                              # Time for system to settle
-            D_settle = t_settle*(Vel_0.dot(n_hat))/(V_hat.dot(n_hat))   # Flight settling distance
+            D_settle = t_settle*(Vel_0.dot(n_hat))   # Flight settling distance
 
             ## INITIAL POSITION RELATIVE TO PLANE
             r_0 = r_p - (D_0 + D_settle)*V_hat # Initial quad position (World coords)
@@ -178,7 +178,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         return np.array(self.obs,dtype=np.float32)
 
-    def step(self,action):
+    def step(self,action,action_onboard=False):
 
         ## CLIP ACTION TO VIABLE ARCTANH VALUES AND CONVERT TO PROPER RANGE
         action[0] = np.clip(action[0],-0.999,0.999)
@@ -186,7 +186,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         
         ########## PRE-FLIP TRIGGER ##########
-        if action[0] < self.Flip_threshold:
+        if action[0] < self.Flip_threshold or (self.flip_flag == False and action_onboard):
 
             ## UPDATE STATE AND OBSERVATION
             self.iter_step()
@@ -210,7 +210,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
 
         ########## POST-FLIP TRIGGER ##########
-        elif action[0] >= self.Flip_threshold:
+        elif action[0] >= self.Flip_threshold or (self.flip_flag == True and action_onboard) :
 
             ## SAVE TRIGGERING OBSERVATION AND ACTIONS
             self.obs_trg = self.obs
@@ -343,12 +343,11 @@ if __name__ == "__main__":
         phi = 60
         env.reset(vel=vel,phi=phi)
 
-        done = False
-        while not done:
+        Done = False
+        while not Done:
             action = env.action_space.sample()
-            action[1] = 7
-            # action = np.zeros_like(action)
-            obs,reward,done,info = env.step(action)
+            action = np.zeros_like(action)
+            obs,reward,Done,info = env.step(action)
         env.RL_Publish()
         print(f"Episode: {ep} \t Reward: {reward:.3f}")
 
