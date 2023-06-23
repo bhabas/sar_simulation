@@ -4,6 +4,7 @@ import gym
 from gym import spaces
 import rospy
 import time
+from gazebo_msgs.srv import GetModelState, GetModelStateRequest
 from sar_env import SAR_Sim_Interface
 from stable_baselines3.common.env_checker import check_env
 
@@ -93,31 +94,36 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         # self.updateInertia()
 
         
+        ## RESET POSITION RELATIVE TO LANDING SURFACE (BASED ON STARTING TAU VALUE)
+        # (Derivation: Research_Notes_Book_2.pdf (1/21/23))
+        r_PO = np.array(self.Plane_Pos)         # Plane Position w/r to origin
+        n_hat,t_x,t_y = self.calc_PlaneNormal() # Plane normal vector
+
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
         if vel == None or phi == None:
             vel,phi = self.sample_flight_conditions()
 
         else:
-            vel = vel
-            phi = phi
+            vel = vel   # Flight velocity
+            phi = phi   # Flight angle  
 
 
         ## CALCULATE VELOCITY VECTORS
-        vx_0 = vel*np.cos(np.deg2rad(phi))
-        vz_0 = vel*np.sin(np.deg2rad(phi))
-        Vel_0 = np.array([vx_0,0,vz_0])         # Flight Velocity
+        V_x = vel*np.cos(np.deg2rad(phi))
+        V_y = 0
+        V_z = vel*np.sin(np.deg2rad(phi))
+        Vel_0 = np.array([V_x,V_y,V_z])         # Flight Velocity
         V_hat = Vel_0/np.linalg.norm(Vel_0)     # Flight Velocity unit vector
 
-        
-        ## RESET POSITION RELATIVE TO LANDING SURFACE (BASED ON STARTING TAU VALUE)
-        # (Derivation: Research_Notes_Book_2.pdf (1/21/23))
-        r_p = np.array(self.Plane_Pos)                              # Plane Position
-        theta_rad = np.radians(self.Plane_Angle)                    # Plane angle
-        n_hat = np.array([np.sin(theta_rad),0,-np.cos(theta_rad)])  # Plane normal vector
+        V_perp = Vel_0.dot(n_hat)
+        V_tx = Vel_0.dot(t_x)
+        V_ty = Vel_0.dot(t_y)
 
         
+        
+
         ## CALC STARTING/VELOCITY LAUCH POSITION
-        if V_hat.dot(n_hat) <= 0.01:    # If Velocity parallel to landing surface or wrong direction end episode
+        if V_hat.dot(n_hat) <= 0.01:    # If Velocity parallel to landing surface or wrong direction; flag episode to be done
             self.Done = True
             
         elif V_hat.dot(n_hat) <= 0.25:  # Velocity near parallel to landing surface
@@ -129,29 +135,28 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             ## MINIMUM DISTANCE TO START POLICY TRAINING
             D_0 = 0.2
 
-            ## INITIAL POSITION RELATIVE TO PLANE
-            r_0 = r_p - (D_0)*n_hat - (D_settle)*V_hat
+            ## INITIAL POSITION RELATIVE TO ORIGIN
+            r_BO = r_PO - (D_0)*n_hat - (D_settle)*V_hat
 
             ## LAUNCH POSITION
-            self.Vel_Launch(r_0,Vel_0)
+            self.Vel_Launch(r_BO,Vel_0)
             self.iter_step(t_settle*1e3)
 
         else: # Velocity NOT parallel to surface
 
             ## CALC DISTANCE WHERE POLICY IS MONITORED
-            D_0 = self.Tau_0*(Vel_0.dot(n_hat))  # Initial distance
-            D_0 = max(D_0,0.2)                                      # Ensure a reasonable minimum distance [m]
-
+            D_0 = self.Tau_0*(V_perp)   # Initial distance
+            D_0 = max(D_0,0.2)          # Ensure a reasonable minimum distance [m]
 
             ## CALC DISTANCE REQUIRED TO SETTLE ON DESIRED VELOCITY
             t_settle = 1.5                                              # Time for system to settle
-            D_settle = t_settle*(Vel_0.dot(n_hat))   # Flight settling distance
+            D_settle = t_settle*(V_perp)   # Flight settling distance
 
             ## INITIAL POSITION RELATIVE TO PLANE
-            r_0 = r_p - (D_0 + D_settle)*V_hat # Initial quad position (World coords)
+            r_BO = r_PO - (D_0 + D_settle)*V_hat # Initial quad position (World coords)
 
             ## LAUNCH QUAD W/ DESIRED VELOCITY
-            self.Vel_Launch(r_0,Vel_0)
+            self.Vel_Launch(r_BO,Vel_0)
             self.iter_step(t_settle*1e3)
                       
         
@@ -190,7 +195,8 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
             ## UPDATE STATE AND OBSERVATION
             self.iter_step()
-            self.obs = (self.Tau,self.Theta_x,self.D_perp)
+            self.obs = self.sample_observation()
+            # self.obs = (self.Tau,self.Theta_x,self.D_perp)
 
             ## CHECK FOR DONE
             self.Done = bool(
@@ -201,8 +207,8 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
             ## UPDATE MINIMUM DISTANCE
             if not self.Done:
-                if self.D_perp <= self.D_min:
-                    self.D_min = self.D_perp 
+                if self.obs[2] <= self.D_min:
+                    self.D_min = self.obs[2] 
 
             ## CALCULATE REWARD
             reward = 0
@@ -260,6 +266,72 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             if not self.Done:
                 if self.D_perp <= self.D_min:
                     self.D_min = self.D_perp 
+
+    def calc_PlaneNormal(self):
+
+        ## PRE-INIT ARRAYS
+        t_x =   np.array([1,0,0])
+        t_y =   np.array([0,1,0])
+        n_hat = np.array([0,0,1])
+
+        ## UPDATE LANDING SURFACE PARAMETERS
+        n_hat[0] = np.sin(self.Plane_Angle_rad)
+        n_hat[1] = 0
+        n_hat[2] = -np.cos(self.Plane_Angle_rad)
+
+        ## DEFINE PLANE TANGENT UNIT-VECTOR
+        t_x[0] = -np.cos(self.Plane_Angle_rad)
+        t_x[1] = 0
+        t_x[2] = -np.sin(self.Plane_Angle_rad)
+
+        ## DEFINE PLANE TANGENT UNIT-VECTOR
+        t_y[0] = 0
+        t_y[1] = 1
+        t_y[2] = 0
+
+        return n_hat,t_x,t_y
+
+    def sample_observation(self):
+        """This function samples the policy observation values by directly pinging gazebo for model state
+
+        Returns:
+            List[float]: Tau, Theta_x, and D_perp
+        """        
+
+        ## CREATE SERVICE MESSAGE
+        model_srv = GetModelStateRequest()
+        model_srv.model_name = self.modelName 
+        resp = self.callService('/gazebo/get_model_state',model_srv,GetModelState)
+
+        pos = resp.pose.position
+        vel = resp.twist.linear
+        n_hat,t_x,t_y = self.calc_PlaneNormal()
+
+        ## UPDATE POS AND VEL
+        r_BO = np.array([pos.x,pos.y,pos.z])
+        V_BO = np.array([vel.x,vel.y,vel.z])
+
+        ## CALC DISPLACEMENT FROM PLANE CENTER
+        r_PO = np.array(self.Plane_Pos)
+
+        ## CALC DISPLACEMENT FROM PLANE CENTER
+        r_PO = np.array(self.Plane_Pos)
+        r_PB = r_PO - r_BO
+
+        ## CALC RELATIVE DISTANCE AND VEL
+        D_perp = r_PB.dot(n_hat) + 1e-6
+        V_perp = V_BO.dot(n_hat)
+        V_tx = V_BO.dot(t_x)
+        V_ty = V_BO.dot(t_y)
+
+        ## CALC OPTICAL FLOW VALUES
+        Theta_x = np.clip(V_tx/D_perp,-20,20)
+        Theta_y = np.clip(V_ty/D_perp,-20,20)
+        Theta_z = np.clip(V_perp/D_perp,-20,20)
+        Tau = np.clip(D_perp/V_perp,0.0,5.0)
+
+        return [Tau,Theta_x,D_perp]
+        
 
 
     def sample_flight_conditions(self):
@@ -339,8 +411,8 @@ if __name__ == "__main__":
 
     for ep in range(25):
 
-        vel = 2.5
-        phi = 60
+        vel = 1.0
+        phi = 90
         env.reset(vel=vel,phi=phi)
 
         Done = False

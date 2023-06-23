@@ -12,9 +12,11 @@ from sar_env import SAR_Base_Interface
 from std_srvs.srv import Empty
 from rosgraph_msgs.msg import Clock
 from sar_msgs.srv import domainRand,domainRandRequest
-from sar_msgs.srv import ModelMove,ModelMoveRequest
 from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState
+
+from sar_msgs.msg import SAR_StateData,SAR_FlipData,SAR_ImpactData,SAR_MiscData
+
 
 
 YELLOW = '\033[93m'
@@ -46,7 +48,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
             self.start_monitoring_clock_topic()
 
 
-
+        rospy.wait_for_message("/SAR_DC/MiscData",SAR_MiscData)
 
 
         print("[INITIATING] Gazebo simulation started")

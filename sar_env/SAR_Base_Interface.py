@@ -124,6 +124,7 @@ class SAR_Base_Interface():
     
     def callService(self,srv_addr,srv_msg,srv_type,num_retries=5):
 
+        ## CHECK THAT SERVICE IS AVAILABLE
         try:
             rospy.wait_for_service(srv_addr, 1)
 
@@ -131,8 +132,8 @@ class SAR_Base_Interface():
             rospy.logerr(f"[WARNING] Service '{srv_addr}' not available: {e}")
             return None
             
+        ## CALL SERVICE AND RETURN RESPONSE
         service_proxy = rospy.ServiceProxy(srv_addr, srv_type)
-
         for retry in range(num_retries):
             try:
                 response = service_proxy(srv_msg)
@@ -141,7 +142,7 @@ class SAR_Base_Interface():
             except (rospy.ServiceException,rospy.exceptions.ROSException) as e:
                 rospy.logwarn(f"[WARNING] Attempt {retry + 1} to call service '{srv_addr}' failed: {e}")
 
-
+        ## IF SERVICE CALL FAILS THEN MARK SIM EPISODE AS DONE AND RETURN ERROR
         self.Done = True
         rospy.logerr(f"Service '{srv_addr}' call failed after {num_retries} attempts")
         return None
