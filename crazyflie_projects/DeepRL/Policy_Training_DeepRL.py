@@ -11,6 +11,7 @@ import time
 ## PLOTTING IMPORTS
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
 import matplotlib as mpl
 import plotly.graph_objects as go
 from scipy.interpolate import griddata
@@ -541,7 +542,7 @@ class Policy_Trainer_DeepRL():
         with open(config_path, 'w') as outfile:
             yaml.dump(data,outfile,default_flow_style=False,sort_keys=False)
 
-    def test_landing_performance(self,fileName=None,Vel_inc=0.25,Phi_inc=5,n_episodes=5):
+    def test_landing_performance(self,fileName=None,Vel_inc=0.25,Phi_inc=5,n_episodes=20):
         """Test trained model over varied velocity and flight angle combinations.
         Args:
             fileName (str, optional): fileName to save logged CSV as. Defaults to None.
@@ -551,7 +552,7 @@ class Policy_Trainer_DeepRL():
         """        
 
         if fileName == None:
-            fileName = "PolicyPerformance_Data.csv"
+            fileName = "ThrowAwayValuess.csv"
         filePath = os.path.join(self.TB_log_path,fileName)
 
         Vel_arr = np.arange(self.env.Vel_range[0], self.env.Vel_range[1] + Vel_inc, Vel_inc)
@@ -687,7 +688,7 @@ class Policy_Trainer_DeepRL():
     def Plot_Landing_Performance(self,fileName=None,saveFig=False):
 
         if fileName == None:
-            fileName = "PolicyPerformance_Data.csv"
+            fileName = "PolicyPerformance_Data_20Trials.csv"
         filePath = os.path.join(self.TB_log_path,fileName)
 
         af = pd.read_csv(filePath,sep=',',comment="#")
@@ -699,7 +700,11 @@ class Policy_Trainer_DeepRL():
         ## COLLECT DATA
         R = af2.iloc[:]['Vel_d']
         Theta = af2.iloc[:]['Phi_d']
-        C = af2.iloc[:]['4_Leg_NBC']
+        C = af2.iloc[:]['4_Leg_BC']
+        # C1 = af2.iloc[:]['2_Leg_NBC']
+        # C2 = af2.iloc[:]['2_Leg_BC']
+        # C = np.add(C1,C2)
+
 
         ## DEFINE INTERPOLATION GRID
         R_list = np.linspace(R.min(),R.max(),num=50,endpoint=True).reshape(1,-1)
@@ -739,9 +744,1030 @@ class Policy_Trainer_DeepRL():
         #     rotation=0,ha='left',va='center')
 
         if saveFig==True:
-            plt.savefig(f'{self.TB_log_path}/Landing_Rate_Fig_20ep.pdf',dpi=300)
+            plt.savefig(f'{self.TB_log_path}/Landing_Rate_Fig_20Trials_4BC.pdf',dpi=300)
 
         plt.show()
+
+
+    def Configuration_Comparison(self,fileName=None,saveFig=True):
+        avg = []
+        avgBC4 = []
+        avgLeg2 = []
+        avgNoLeg = []
+
+        secar =[]
+        secavgar =[] #Array for section average
+        secarBC4 =[]
+        secavgarBC4 =[] #Array for section average
+        secarLeg2 =[]
+        secavgarLeg2 =[] #Array for section average
+        secarNoLeg =[]
+        secavgarNoLeg =[] #Array for section average
+
+
+        angle = [60, 60, 60, 60, 60, 60, 60, 60, 60, 30, 30, 30, 30, 30, 30, 30, 30, 30, 5, 5, 5, 5, 5, 5, 5, 5, 5]
+        length = [100, 100, 100, 75, 75, 75, 50, 50, 50, 100, 100, 100, 75, 75, 75, 50, 50, 50, 100, 100, 100, 75, 75, 50, 50, 75, 50]
+        stiffness = [64, 32, 8, 64, 32, 8, 64, 32, 8, 64, 32, 8, 64, 32, 8, 64, 32, 8, 64, 32, 8, 32, 64, 64, 32, 8, 8]
+          
+        # self.log_name = log_name[:-2]
+        # latest_run_id = utils.get_latest_run_id(log_dir,log_name)
+        # self.TB_log_path = os.path.join(log_dir,f"{self.log_name}_{latest_run_id}")
+        # self.model_dir = os.path.join(self.TB_log_path,"models")
+        for filename in sorted(os.listdir(self.log_dir)):
+            f = os.path.join(self.log_dir, filename, self.log_name)
+            if filename == "PolicyPerformance_Data_20Trials.csv_0":
+                os.rmdir(os.path.join(self.log_dir, filename, "models"))
+                os.rmdir(os.path.join(self.log_dir, filename)) 
+            else:
+                af = pd.read_csv(f,sep=',',comment="#")
+
+                af2 = af.groupby(['Vel_d','Phi_d']).mean().round(3).reset_index()
+
+                ## COLLECT DATA
+                # R = af2.iloc[:]['Vel_d']
+                # Theta = af2.iloc[:]['Phi_d']
+                #C = af2.iloc[:]['4_Leg_NBC']
+                C = af2['4_Leg_NBC'].to_numpy()
+                A = np.mean(C)
+                avg.append(A)
+
+                for x in range(0, 16):
+                    secar = []
+                    for y in range(0, 4):
+                        secbit = []
+                        i = round(y*13+(x%4)*3+np.floor(x/4)*39)
+                        secbit = C[i:(i+4)]
+                        secar = np.concatenate([secar, secbit])
+                    secavg = np.mean(secar)
+                    secavgar.append(secavg)
+
+
+
+                BC4 = af2.iloc[:]['4_Leg_BC']
+                ABC4 = np.mean(BC4)
+                avgBC4.append(ABC4)
+
+                for xBC4 in range(0, 16):
+                    secarBC4 = []
+                    for yBC4 in range(0, 4):
+                        secbitBC4 = []
+                        iBC4 = round(yBC4*13+(xBC4%4)*3+np.floor(xBC4/4)*39)
+                        secbitBC4 = BC4[iBC4:(iBC4+4)]
+                        secarBC4 = np.concatenate([secarBC4, secbitBC4])
+                    secavgBC4 = np.mean(secarBC4)
+                    secavgarBC4.append(secavgBC4)
+
+                C1 = af2.iloc[:]['2_Leg_NBC']
+                C2 = af2.iloc[:]['2_Leg_BC']
+                Leg2 = np.add(C1,C2)
+                ALeg2 = np.mean(Leg2)
+                avgLeg2.append(ALeg2)
+
+                for xLeg2 in range(0, 16):
+                    secarLeg2 = []
+                    for yLeg2 in range(0, 4):
+                        secbitLeg2 = []
+                        iLeg2 = round(yLeg2*13+(xLeg2%4)*3+np.floor(xLeg2/4)*39)
+                        secbitLeg2 = Leg2[iLeg2:(iLeg2+4)]
+                        secarLeg2 = np.concatenate([secarLeg2, secbitLeg2])
+                    secavgLeg2 = np.mean(secarLeg2)
+                    secavgarLeg2.append(secavgLeg2)
+
+                N1 = af2.iloc[:]['0_Leg_NBC']
+                N2 = af2.iloc[:]['0_Leg_BC']
+                NoLeg = np.add(N1,N2)
+                ANoLeg = np.mean(NoLeg)
+                avgNoLeg.append(ANoLeg)
+
+                for xNoLeg in range(0, 16):
+                    secarNoLeg = []
+                    for yNoLeg in range(0, 4):
+                        secbitNoLeg = []
+                        iNoLeg = round(yNoLeg*13+(xNoLeg%4)*3+np.floor(xNoLeg/4)*39)
+                        secbitNoLeg = NoLeg[iNoLeg:(iNoLeg+4)]
+                        secarNoLeg = np.concatenate([secarNoLeg, secbitNoLeg])
+                    secavgNoLeg = np.mean(secarNoLeg)
+                    secavgarNoLeg.append(secavgNoLeg)
+        
+        fig, ax = plt.subplots(figsize=(20,15))
+        ax.set_title("Success Trends By Approach Velocity-Angle Sub-Sections", y = -0.1, fontsize = 20)
+        ax.set_xlabel("Approach Angle (deg)", fontsize = 12)
+        
+        ax.tick_params(top=True, labeltop=True, bottom=False, labelbottom=False)
+        major_xticks=np.arange(0,1.01,0.25)
+        plt.xticks(major_xticks, [90,75,60,45,30])
+        ax.xaxis.set_label_coords(0.5, 1.055)
+        ax.set_ylabel("Approach Velocity (m/s)", fontsize = 12)
+        major_yticks=np.arange(0,1.01,0.25)
+        plt.yticks(major_yticks, [0.5,1.25,2.0,2.75,3.5])
+        ax.yaxis.set_label_coords(-0.035, 0.5)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+
+        for saa in range(0,16):
+            samplesaa = []
+
+            for x in range(0,27):
+                samplesaa.append(secavgar[(x*16+15-saa)])
+            size = [round(num*300) for num in samplesaa]
+            
+            ax = fig.add_subplot(4,4,(saa+1), projection='3d')
+            ax.view_init(20, -73)
+
+            # cmap = mpl.cm.jet
+            # norm = mpl.colors.Normalize(vmin=0,vmax=1)
+            # ax.scatter(xs = angle, ys = stiffness, zs = length, s = size, c=samplesaa, cmap = cmap, norm = norm)
+
+            # ax.set_xlim(0,60)
+            # ax.set_zlim(50,100)
+            # ax.set_ylim(0,70)
+            # ax.set_xlabel("Angle (deg)")
+            # ax.set_zlabel("Length (mm)")
+            # ax.set_ylabel("Stiffness (Nm/rad)")
+
+
+            xpoints = [5,30,60]
+            ypoints = [8,32,64]
+            zpoints = [50,75,100]
+            ymin = ypoints[0]-round((ypoints[2]-ypoints[0])/3)
+            xmax = xpoints[2]+round((xpoints[2]-xpoints[0])/5)
+            for i in xpoints:
+                for j in ypoints:  
+                    ax.plot([i,i],[j,j],[zpoints[0],zpoints[2]],color = (0.5, 0.5, 0.5), linewidth = 0.2)
+            for i in xpoints:
+                for k in zpoints:
+                    if k == 50:
+                        ax.plot([i,i],[ymin,ypoints[2]],[k,k], color = (0.5, 0.5, 0.5), linewidth = 0.2)
+                    else:
+                        ax.plot([i,i],[ypoints[0],ypoints[2]],[k,k], color = (0.5, 0.5, 0.5), linewidth = 0.2)
+            for j in ypoints:
+                for k in zpoints:
+                    if j == 64 or k == 50:
+                        ax.plot([xpoints[0],xmax],[j,j],[k,k], color = (0.5, 0.5, 0.5), linewidth = 0.2)
+                    else:
+                        ax.plot([xpoints[0],xpoints[2]],[j,j],[k,k], color = (0.5, 0.5, 0.5), linewidth = 0.2)
+            
+            cmap = mpl.cm.jet
+            norm = mpl.colors.Normalize(vmin=0,vmax=1)
+            ax.scatter(xs = angle, ys = stiffness, zs = length, s = size, c=samplesaa, cmap = cmap, norm = norm)
+            ax.set_xlim(0,60)
+            plt.xticks([5,30,60], ['5\u00b0','30\u00b0','60\u00b0'])
+            ax.set_zlim(50,100)
+            ax.set_zticks([52,77,102])
+            ax.set_zticklabels(['   50mm','   75mm','   100mm'])
+            ax.set_ylim(0,70)
+            plt.yticks([26,54,84], ['   80mJ/r','     320mJ/r','     640mJ/r'])
+            ax.set_xlabel("Angle", fontweight = 'bold')
+            ax.set_zlabel("Length       ", fontweight = 'bold')
+            ax.set_ylabel("             Stiffness", fontweight='bold')
+            ax.yaxis.labelpad=20
+            ax.zaxis.labelpad=15
+            ax.xaxis.labelpad=9
+
+            ax.xaxis.pane.fill = False
+            ax.yaxis.pane.fill = False
+            ax.zaxis.pane.fill = False
+            ax.xaxis.pane.set_edgecolor('white')
+            ax.yaxis.pane.set_edgecolor('white')
+            ax.zaxis.pane.set_edgecolor('white')
+            ax.w_xaxis.line.set_color("white")
+            ax.w_yaxis.line.set_color("white")
+            ax.w_zaxis.line.set_color("white")
+            ax.xaxis._axinfo['tick']['color']='w'
+            ax.yaxis._axinfo['tick']['color']='w'
+            ax.zaxis._axinfo['tick']['color']='w'
+            ax.grid(False)
+
+        if saveFig==True:
+            plt.savefig(f'{os.path.join(self.log_dir, filename)}/BigPlotTest.pdf',dpi=300)
+
+        
+        ##4 Leg Body Contact by Section
+        fig, ax = plt.subplots(figsize=(20,15))
+        ax.set_title("Four Leg Body Contact Failure By Approach Velocity-Angle Sub-Sections", y = -0.1, fontsize = 20)
+        ax.set_xlabel("Approach Angle (deg)", fontsize = 12)
+        
+        ax.tick_params(top=True, labeltop=True, bottom=False, labelbottom=False)
+        major_xticks=np.arange(0,1.01,0.25)
+        plt.xticks(major_xticks, [90,75,60,45,30])
+        ax.xaxis.set_label_coords(0.5, 1.055)
+        ax.set_ylabel("Approach Velocity (m/s)", fontsize = 12)
+        major_yticks=np.arange(0,1.01,0.25)
+        plt.yticks(major_yticks, [0.5,1.25,2.0,2.75,3.5])
+        ax.yaxis.set_label_coords(-0.035, 0.5)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+
+        for saa in range(0,16):
+            samplesaa = []
+
+            for x in range(0,27):
+                samplesaa.append(secavgarBC4[(x*16+15-saa)])
+            size = [round(num*300) for num in samplesaa]
+            
+            ax = fig.add_subplot(4,4,(saa+1), projection='3d')
+            ax.view_init(20, -73)
+
+
+            xpoints = [5,30,60]
+            ypoints = [8,32,64]
+            zpoints = [50,75,100]
+            ymin = ypoints[0]-round((ypoints[2]-ypoints[0])/3)
+            xmax = xpoints[2]+round((xpoints[2]-xpoints[0])/5)
+            for i in xpoints:
+                for j in ypoints:  
+                    ax.plot([i,i],[j,j],[zpoints[0],zpoints[2]],color = (0.5, 0.5, 0.5), linewidth = 0.2)
+            for i in xpoints:
+                for k in zpoints:
+                    if k == 50:
+                        ax.plot([i,i],[ymin,ypoints[2]],[k,k], color = (0.5, 0.5, 0.5), linewidth = 0.2)
+                    else:
+                        ax.plot([i,i],[ypoints[0],ypoints[2]],[k,k], color = (0.5, 0.5, 0.5), linewidth = 0.2)
+            for j in ypoints:
+                for k in zpoints:
+                    if j == 64 or k == 50:
+                        ax.plot([xpoints[0],xmax],[j,j],[k,k], color = (0.5, 0.5, 0.5), linewidth = 0.2)
+                    else:
+                        ax.plot([xpoints[0],xpoints[2]],[j,j],[k,k], color = (0.5, 0.5, 0.5), linewidth = 0.2)
+            
+            cmap = mpl.cm.BuPu
+            norm = mpl.colors.Normalize(vmin=0,vmax=1)
+            ax.scatter(xs = angle, ys = stiffness, zs = length, s = size, c=[item*0.5+0.5 for item in samplesaa], cmap = cmap, norm = norm)
+            ax.set_xlim(0,60)
+            plt.xticks([5,30,60], ['5\u00b0','30\u00b0','60\u00b0'])
+            ax.set_zlim(50,100)
+            ax.set_zticks([52,77,102])
+            ax.set_zticklabels(['   50mm','   75mm','   100mm'])
+            ax.set_ylim(0,70)
+            plt.yticks([26,54,84], ['   80mJ/r','     320mJ/r','     640mJ/r'])
+            ax.set_xlabel("Angle", fontweight = 'bold')
+            ax.set_zlabel("Length       ", fontweight = 'bold')
+            ax.set_ylabel("             Stiffness", fontweight='bold')
+            ax.yaxis.labelpad=20
+            ax.zaxis.labelpad=15
+            ax.xaxis.labelpad=9
+
+            ax.xaxis.pane.fill = False
+            ax.yaxis.pane.fill = False
+            ax.zaxis.pane.fill = False
+            ax.xaxis.pane.set_edgecolor('white')
+            ax.yaxis.pane.set_edgecolor('white')
+            ax.zaxis.pane.set_edgecolor('white')
+            ax.w_xaxis.line.set_color("white")
+            ax.w_yaxis.line.set_color("white")
+            ax.w_zaxis.line.set_color("white")
+            ax.xaxis._axinfo['tick']['color']='w'
+            ax.yaxis._axinfo['tick']['color']='w'
+            ax.zaxis._axinfo['tick']['color']='w'
+            ax.grid(False)
+
+        if saveFig==True:
+            plt.savefig(f'{os.path.join(self.log_dir, filename)}/BigPlotTest2.pdf',dpi=300)
+
+        
+        ##2 Leg Body Failure by Section
+        fig, ax = plt.subplots(figsize=(20,15))
+        ax.set_title("Two Leg Failure By Approach Velocity-Angle Sub-Sections", y = -0.1, fontsize = 20)
+        ax.set_xlabel("Approach Angle (deg)", fontsize = 12)
+        
+        ax.tick_params(top=True, labeltop=True, bottom=False, labelbottom=False)
+        major_xticks=np.arange(0,1.01,0.25)
+        plt.xticks(major_xticks, [90,75,60,45,30])
+        ax.xaxis.set_label_coords(0.5, 1.055)
+        ax.set_ylabel("Approach Velocity (m/s)", fontsize = 12)
+        major_yticks=np.arange(0,1.01,0.25)
+        plt.yticks(major_yticks, [0.5,1.25,2.0,2.75,3.5])
+        ax.yaxis.set_label_coords(-0.035, 0.5)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+
+        for saa in range(0,16):
+            samplesaa = []
+
+            for x in range(0,27):
+                samplesaa.append(secavgarLeg2[(x*16+15-saa)])
+            size = [round(num*300) for num in samplesaa]
+            
+            ax = fig.add_subplot(4,4,(saa+1), projection='3d')
+            ax.view_init(20, -73)
+
+
+            xpoints = [5,30,60]
+            ypoints = [8,32,64]
+            zpoints = [50,75,100]
+            ymin = ypoints[0]-round((ypoints[2]-ypoints[0])/3)
+            xmax = xpoints[2]+round((xpoints[2]-xpoints[0])/5)
+            for i in xpoints:
+                for j in ypoints:  
+                    ax.plot([i,i],[j,j],[zpoints[0],zpoints[2]],color = (0.5, 0.5, 0.5), linewidth = 0.2)
+            for i in xpoints:
+                for k in zpoints:
+                    if k == 50:
+                        ax.plot([i,i],[ymin,ypoints[2]],[k,k], color = (0.5, 0.5, 0.5), linewidth = 0.2)
+                    else:
+                        ax.plot([i,i],[ypoints[0],ypoints[2]],[k,k], color = (0.5, 0.5, 0.5), linewidth = 0.2)
+            for j in ypoints:
+                for k in zpoints:
+                    if j == 64 or k == 50:
+                        ax.plot([xpoints[0],xmax],[j,j],[k,k], color = (0.5, 0.5, 0.5), linewidth = 0.2)
+                    else:
+                        ax.plot([xpoints[0],xpoints[2]],[j,j],[k,k], color = (0.5, 0.5, 0.5), linewidth = 0.2)
+            
+            cmap = mpl.cm.YlOrBr
+            norm = mpl.colors.Normalize(vmin=0,vmax=1)
+            ax.scatter(xs = angle, ys = stiffness, zs = length, s = size, c=[item*0.5+0.5 for item in samplesaa], cmap = cmap, norm = norm)
+            ax.set_xlim(0,60)
+            plt.xticks([5,30,60], ['5\u00b0','30\u00b0','60\u00b0'])
+            ax.set_zlim(50,100)
+            ax.set_zticks([52,77,102])
+            ax.set_zticklabels(['   50mm','   75mm','   100mm'])
+            ax.set_ylim(0,70)
+            plt.yticks([26,54,84], ['   80mJ/r','     320mJ/r','     640mJ/r'])
+            ax.set_xlabel("Angle", fontweight = 'bold')
+            ax.set_zlabel("Length       ", fontweight = 'bold')
+            ax.set_ylabel("             Stiffness", fontweight='bold')
+            ax.yaxis.labelpad=20
+            ax.zaxis.labelpad=15
+            ax.xaxis.labelpad=9
+
+            ax.xaxis.pane.fill = False
+            ax.yaxis.pane.fill = False
+            ax.zaxis.pane.fill = False
+            ax.xaxis.pane.set_edgecolor('white')
+            ax.yaxis.pane.set_edgecolor('white')
+            ax.zaxis.pane.set_edgecolor('white')
+            ax.w_xaxis.line.set_color("white")
+            ax.w_yaxis.line.set_color("white")
+            ax.w_zaxis.line.set_color("white")
+            ax.xaxis._axinfo['tick']['color']='w'
+            ax.yaxis._axinfo['tick']['color']='w'
+            ax.zaxis._axinfo['tick']['color']='w'
+            ax.grid(False)
+
+        if saveFig==True:
+            plt.savefig(f'{os.path.join(self.log_dir, filename)}/BigPlotTest3.pdf',dpi=300)
+
+        ##No Leg Body Failure by Section
+        fig, ax = plt.subplots(figsize=(20,15))
+        ax.set_title("Zero Leg Failure By Approach Velocity-Angle Sub-Sections", y = -0.1, fontsize = 20)
+        ax.set_xlabel("Approach Angle (deg)", fontsize = 12)
+        
+        ax.tick_params(top=True, labeltop=True, bottom=False, labelbottom=False)
+        major_xticks=np.arange(0,1.01,0.25)
+        plt.xticks(major_xticks, [90,75,60,45,30])
+        ax.xaxis.set_label_coords(0.5, 1.055)
+        ax.set_ylabel("Approach Velocity (m/s)", fontsize = 12)
+        major_yticks=np.arange(0,1.01,0.25)
+        plt.yticks(major_yticks, [0.5,1.25,2.0,2.75,3.5])
+        ax.yaxis.set_label_coords(-0.035, 0.5)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+
+        for saa in range(0,16):
+            samplesaa = []
+
+            for x in range(0,27):
+                samplesaa.append(secavgarNoLeg[(x*16+15-saa)])
+            size = [round(num*300) for num in samplesaa]
+            
+            ax = fig.add_subplot(4,4,(saa+1), projection='3d')
+            ax.view_init(20, -73)
+
+
+            xpoints = [5,30,60]
+            ypoints = [8,32,64]
+            zpoints = [50,75,100]
+            ymin = ypoints[0]-round((ypoints[2]-ypoints[0])/3)
+            xmax = xpoints[2]+round((xpoints[2]-xpoints[0])/5)
+            for i in xpoints:
+                for j in ypoints:  
+                    ax.plot([i,i],[j,j],[zpoints[0],zpoints[2]],color = (0.5, 0.5, 0.5), linewidth = 0.2)
+            for i in xpoints:
+                for k in zpoints:
+                    if k == 50:
+                        ax.plot([i,i],[ymin,ypoints[2]],[k,k], color = (0.5, 0.5, 0.5), linewidth = 0.2)
+                    else:
+                        ax.plot([i,i],[ypoints[0],ypoints[2]],[k,k], color = (0.5, 0.5, 0.5), linewidth = 0.2)
+            for j in ypoints:
+                for k in zpoints:
+                    if j == 64 or k == 50:
+                        ax.plot([xpoints[0],xmax],[j,j],[k,k], color = (0.5, 0.5, 0.5), linewidth = 0.2)
+                    else:
+                        ax.plot([xpoints[0],xpoints[2]],[j,j],[k,k], color = (0.5, 0.5, 0.5), linewidth = 0.2)
+            
+            cmap = mpl.cm.gist_yarg
+            norm = mpl.colors.Normalize(vmin=0,vmax=1)
+            ax.scatter(xs = angle, ys = stiffness, zs = length, s = size, c=[item*0.8+0.2 for item in samplesaa], cmap = cmap, norm = norm)
+            ax.set_xlim(0,60)
+            plt.xticks([5,30,60], ['5\u00b0','30\u00b0','60\u00b0'])
+            ax.set_zlim(50,100)
+            ax.set_zticks([52,77,102])
+            ax.set_zticklabels(['   50mm','   75mm','   100mm'])
+            ax.set_ylim(0,70)
+            plt.yticks([26,54,84], ['   80mJ/r','     320mJ/r','     640mJ/r'])
+            ax.set_xlabel("Angle", fontweight = 'bold')
+            ax.set_zlabel("Length       ", fontweight = 'bold')
+            ax.set_ylabel("             Stiffness", fontweight='bold')
+            ax.yaxis.labelpad=20
+            ax.zaxis.labelpad=15
+            ax.xaxis.labelpad=9
+
+            ax.xaxis.pane.fill = False
+            ax.yaxis.pane.fill = False
+            ax.zaxis.pane.fill = False
+            ax.xaxis.pane.set_edgecolor('white')
+            ax.yaxis.pane.set_edgecolor('white')
+            ax.zaxis.pane.set_edgecolor('white')
+            ax.w_xaxis.line.set_color("white")
+            ax.w_yaxis.line.set_color("white")
+            ax.w_zaxis.line.set_color("white")
+            ax.xaxis._axinfo['tick']['color']='w'
+            ax.yaxis._axinfo['tick']['color']='w'
+            ax.zaxis._axinfo['tick']['color']='w'
+            ax.grid(False)
+
+        if saveFig==True:
+            plt.savefig(f'{os.path.join(self.log_dir, filename)}/BigPlotTest4.pdf',dpi=300)
+
+
+        # fig, ax = plt.subplots(figsize=(20,15))
+        # ax.set_title("Four Leg Body Contact Failure By Approach Velocity-Angle Sub-Sections", y = -0.1, fontsize = 20)
+        # ax.set_xlabel("Approach Angle (deg)", fontsize = 12)
+        
+        # ax.tick_params(top=True, labeltop=True, bottom=False, labelbottom=False)
+        # major_xticks=np.arange(0,1.01,0.25)
+        # plt.xticks(major_xticks, [30,45,60,75,90])
+        # ax.xaxis.set_label_coords(0.5, 1.055)
+        # ax.set_ylabel("Approach Velocity (m/s)", fontsize = 12)
+        # major_yticks=np.arange(0,1.01,0.25)
+        # plt.yticks(major_yticks, [0.5,1.25,2.0,2.75,3.5])
+        # ax.yaxis.set_label_coords(-0.035, 0.5)
+        # ax.spines['bottom'].set_visible(False)
+        # ax.spines['right'].set_visible(False)
+
+        # for saa in range(0,16):
+        #     samplesaa = []
+
+        #     for x in range(0,27):
+        #         samplesaa.append(secavgarBC4[(x*16+15-saa)])
+        #     size = [round(num*300) for num in samplesaa]
+            
+        #     ax = fig.add_subplot(4,4,(saa+1), projection='3d')
+        #     ax.view_init(26, -73)
+
+        #     cmap = mpl.cm.copper
+        #     norm = mpl.colors.Normalize(vmin=0,vmax=1)
+        #     ax.scatter(xs = angle, ys = stiffness, zs = length, s = size, c=samplesaa, cmap = cmap, norm = norm)
+
+        #     ax.set_xlim(0,60)
+        #     ax.set_zlim(50,100)
+        #     ax.set_ylim(0,70)
+        #     ax.set_xlabel("Angle (deg)")
+        #     ax.set_zlabel("Length (mm)")
+        #     ax.set_ylabel("Stiffness (Nm/rad)")    
+        
+        # if saveFig==True:
+        #     plt.savefig(f'{os.path.join(self.log_dir, filename)}/BigPlotTest2.pdf',dpi=300)
+
+
+        # fig, ax = plt.subplots(figsize=(20,15))
+        # ax.set_title("Two Leg Failure By Approach Velocity-Angle Sub-Sections", y = -0.1, fontsize = 20)
+        # ax.set_xlabel("Approach Angle (deg)", fontsize = 12)
+        
+        # ax.tick_params(top=True, labeltop=True, bottom=False, labelbottom=False)
+        # major_xticks=np.arange(0,1.01,0.25)
+        # plt.xticks(major_xticks, [30,45,60,75,90])
+        # ax.xaxis.set_label_coords(0.5, 1.055)
+        # ax.set_ylabel("Approach Velocity (m/s)", fontsize = 12)
+        # major_yticks=np.arange(0,1.01,0.25)
+        # plt.yticks(major_yticks, [0.5,1.25,2.0,2.75,3.5])
+        # ax.yaxis.set_label_coords(-0.035, 0.5)
+        # ax.spines['bottom'].set_visible(False)
+        # ax.spines['right'].set_visible(False)
+
+        # for saa in range(0,16):
+        #     samplesaa = []
+
+        #     for x in range(0,27):
+        #         samplesaa.append(secavgarLeg2[(x*16+15-saa)])
+        #     size = [round(num*300) for num in samplesaa]
+            
+        #     ax = fig.add_subplot(4,4,(saa+1), projection='3d')
+        #     ax.view_init(26, -73)
+
+        #     cmap = mpl.cm.Wistia
+        #     norm = mpl.colors.Normalize(vmin=0,vmax=1)
+        #     ax.scatter(xs = angle, ys = stiffness, zs = length, s = size, c=samplesaa, cmap = cmap, norm = norm)
+
+        #     ax.set_xlim(0,60)
+        #     ax.set_zlim(50,100)
+        #     ax.set_ylim(0,70)
+        #     ax.set_xlabel("Angle (deg)")
+        #     ax.set_zlabel("Length (mm)")
+        #     ax.set_ylabel("Stiffness (Nm/rad)") 
+
+        # if saveFig==True:
+        #     plt.savefig(f'{os.path.join(self.log_dir, filename)}/BigPlotTest3.pdf',dpi=300)
+
+
+        # fig, ax = plt.subplots(figsize=(20,15))
+        # ax.set_title("Zero Leg Failure By Approach Velocity-Angle Sub-Sections", y = -0.1, fontsize = 20)
+        # ax.set_xlabel("Approach Angle (deg)", fontsize = 12)
+        
+        # ax.tick_params(top=True, labeltop=True, bottom=False, labelbottom=False)
+        # major_xticks=np.arange(0,1.01,0.25)
+        # plt.xticks(major_xticks, [30,45,60,75,90])
+        # ax.xaxis.set_label_coords(0.5, 1.055)
+        # ax.set_ylabel("Approach Velocity (m/s)", fontsize = 12)
+        # major_yticks=np.arange(0,1.01,0.25)
+        # plt.yticks(major_yticks, [0.5,1.25,2.0,2.75,3.5])
+        # ax.yaxis.set_label_coords(-0.035, 0.5)
+        # ax.spines['bottom'].set_visible(False)
+        # ax.spines['right'].set_visible(False)
+
+        # for saa in range(0,16):
+        #     samplesaa = []
+
+        #     for x in range(0,27):
+        #         samplesaa.append(secavgarNoLeg[(x*16+15-saa)])
+        #     size = [round(num*300) for num in samplesaa]
+            
+        #     ax = fig.add_subplot(4,4,(saa+1), projection='3d')
+        #     ax.view_init(26, -73)
+
+        #     cmap = mpl.cm.gist_yarg
+        #     norm = mpl.colors.Normalize(vmin=0,vmax=1)
+        #     ax.scatter(xs = angle, ys = stiffness, zs = length, s = size, c=samplesaa, cmap = cmap, norm = norm)
+
+        #     ax.set_xlim(0,60)
+        #     ax.set_zlim(50,100)
+        #     ax.set_ylim(0,70)
+        #     ax.set_xlabel("Angle (deg)")
+        #     ax.set_zlabel("Length (mm)")
+        #     ax.set_ylabel("Stiffness (Nm/rad)") 
+
+        # if saveFig==True:
+        #     plt.savefig(f'{os.path.join(self.log_dir, filename)}/BigPlotTest4.pdf',dpi=300)
+                
+        ##Dot Size Calculations for Average Plots
+        size = [round(num*700) for num in avg]
+        sizeBC4 = [round(num*700) for num in avgBC4]
+        sizeLeg2 = [round(num*700) for num in avgLeg2]
+        sizeNoLeg = [round(num*700) for num in avgNoLeg]
+
+
+        ##Average Success Plot
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.view_init(25, -77)
+        
+        xpoints = [5,30,60]
+        ypoints = [8,32,64]
+        zpoints = [50,75,100]
+        ymin = ypoints[0]-round((ypoints[2]-ypoints[0])/3)
+        xmax = xpoints[2]+round((xpoints[2]-xpoints[0])/5)
+        for i in xpoints:
+            for j in ypoints:  
+                ax.plot([i,i],[j,j],[zpoints[0],zpoints[2]],color = 'k', linewidth = 0.5)
+        for i in xpoints:
+            for k in zpoints:
+                if k == 50:
+                    ax.plot([i,i],[ymin,ypoints[2]],[k,k],color = 'k', linewidth = 0.5)
+                else:
+                    ax.plot([i,i],[ypoints[0],ypoints[2]],[k,k],color = 'k', linewidth = 0.5)
+        for j in ypoints:
+            for k in zpoints:
+                if j == 64 or k == 50:
+                    ax.plot([xpoints[0],xmax],[j,j],[k,k],color = 'k', linewidth = 0.5)
+                else:
+                    ax.plot([xpoints[0],xpoints[2]],[j,j],[k,k],color = 'k', linewidth = 0.5)
+        
+        cmap = mpl.cm.jet
+        norm = mpl.colors.Normalize(vmin=0,vmax=1)
+        ax.scatter(xs = angle, ys = stiffness, zs = length, s = size, c=avg, cmap = cmap, norm = norm)
+        ax.set_xlim(0,60)
+        plt.xticks([5,30,60], ['5\u00b0','30\u00b0','60\u00b0'])
+        ax.set_zlim(50,100)
+        ax.set_zticks([52,77,102])
+        ax.set_zticklabels(['   50mm','   75mm','   100mm'])
+        ax.set_ylim(0,70)
+        plt.yticks([14,38,68], ['   80mJ/r','     320mJ/r','     640mJ/r'])
+        ax.set_title("Average Success", fontweight = 'bold')
+        ax.set_xlabel("Angle", fontweight = 'bold')
+        ax.set_zlabel("Length       ", fontweight = 'bold')
+        ax.set_ylabel("             Stiffness", fontweight='bold')
+        ax.yaxis.labelpad=20
+        ax.zaxis.labelpad=15
+        ax.xaxis.labelpad=9
+
+        ax.xaxis.pane.fill = False
+        ax.yaxis.pane.fill = False
+        ax.zaxis.pane.fill = False
+        ax.xaxis.pane.set_edgecolor('white')
+        ax.yaxis.pane.set_edgecolor('white')
+        ax.zaxis.pane.set_edgecolor('white')
+        ax.w_xaxis.line.set_color("white")
+        ax.w_yaxis.line.set_color("white")
+        ax.w_zaxis.line.set_color("white")
+        ax.xaxis._axinfo['tick']['color']='w'
+        ax.yaxis._axinfo['tick']['color']='w'
+        ax.zaxis._axinfo['tick']['color']='w'
+        ax.grid(False)
+
+
+        ##4 Leg Body Contact Average
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.view_init(25, -77)
+        
+        xpoints = [5,30,60]
+        ypoints = [8,32,64]
+        zpoints = [50,75,100]
+        ymin = ypoints[0]-round((ypoints[2]-ypoints[0])/3)
+        xmax = xpoints[2]+round((xpoints[2]-xpoints[0])/5)
+        for i in xpoints:
+            for j in ypoints:  
+                ax.plot([i,i],[j,j],[zpoints[0],zpoints[2]],color = 'k', linewidth = 0.5)
+        for i in xpoints:
+            for k in zpoints:
+                if k == 50:
+                    ax.plot([i,i],[ymin,ypoints[2]],[k,k],color = 'k', linewidth = 0.5)
+                else:
+                    ax.plot([i,i],[ypoints[0],ypoints[2]],[k,k],color = 'k', linewidth = 0.5)
+        for j in ypoints:
+            for k in zpoints:
+                if j == 64 or k == 50:
+                    ax.plot([xpoints[0],xmax],[j,j],[k,k],color = 'k', linewidth = 0.5)
+                else:
+                    ax.plot([xpoints[0],xpoints[2]],[j,j],[k,k],color = 'k', linewidth = 0.5)
+        
+        cmap = mpl.cm.BuPu
+        norm = mpl.colors.Normalize(vmin=0,vmax=1)
+        ax.scatter(xs = angle, ys = stiffness, zs = length, s = sizeBC4, c= [item*0.5+0.5 for item in avgBC4], cmap = cmap, norm = norm)
+        ax.set_xlim(0,60)
+        plt.xticks([5,30,60], ['5\u00b0','30\u00b0','60\u00b0'])
+        ax.set_zlim(50,100)
+        ax.set_zticks([52,77,102])
+        ax.set_zticklabels(['   50mm','   75mm','   100mm'])
+        ax.set_ylim(0,70)
+        plt.yticks([14,38,68], ['   80mJ/r','     320mJ/r','     640mJ/r'])
+        ax.set_title("Average 4-Leg Body Contact Failure", fontweight = 'bold')
+        ax.set_xlabel("Angle", fontweight = 'bold')
+        ax.set_zlabel("Length       ", fontweight = 'bold')
+        ax.set_ylabel("             Stiffness", fontweight='bold')
+        ax.yaxis.labelpad=20
+        ax.zaxis.labelpad=15
+        ax.xaxis.labelpad=9
+
+        ax.xaxis.pane.fill = False
+        ax.yaxis.pane.fill = False
+        ax.zaxis.pane.fill = False
+        ax.xaxis.pane.set_edgecolor('white')
+        ax.yaxis.pane.set_edgecolor('white')
+        ax.zaxis.pane.set_edgecolor('white')
+        ax.w_xaxis.line.set_color("white")
+        ax.w_yaxis.line.set_color("white")
+        ax.w_zaxis.line.set_color("white")
+        ax.xaxis._axinfo['tick']['color']='w'
+        ax.yaxis._axinfo['tick']['color']='w'
+        ax.zaxis._axinfo['tick']['color']='w'
+        ax.grid(False)
+
+        ## 2 Leg Failure Average Plot
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.view_init(25, -77)
+        
+        xpoints = [5,30,60]
+        ypoints = [8,32,64]
+        zpoints = [50,75,100]
+        ymin = ypoints[0]-round((ypoints[2]-ypoints[0])/3)
+        xmax = xpoints[2]+round((xpoints[2]-xpoints[0])/5)
+        for i in xpoints:
+            for j in ypoints:  
+                ax.plot([i,i],[j,j],[zpoints[0],zpoints[2]],color = 'k', linewidth = 0.5)
+        for i in xpoints:
+            for k in zpoints:
+                if k == 50:
+                    ax.plot([i,i],[ymin,ypoints[2]],[k,k],color = 'k', linewidth = 0.5)
+                else:
+                    ax.plot([i,i],[ypoints[0],ypoints[2]],[k,k],color = 'k', linewidth = 0.5)
+        for j in ypoints:
+            for k in zpoints:
+                if j == 64 or k == 50:
+                    ax.plot([xpoints[0],xmax],[j,j],[k,k],color = 'k', linewidth = 0.5)
+                else:
+                    ax.plot([xpoints[0],xpoints[2]],[j,j],[k,k],color = 'k', linewidth = 0.5)
+        
+        cmap = mpl.cm.YlOrBr
+        norm = mpl.colors.Normalize(vmin=0,vmax=1)
+        ax.scatter(xs = angle, ys = stiffness, zs = length, s = sizeLeg2, c= [item*0.5+0.5 for item in avgLeg2], cmap = cmap, norm = norm)
+        ax.set_xlim(0,60)
+        plt.xticks([5,30,60], ['5\u00b0','30\u00b0','60\u00b0'])
+        ax.set_zlim(50,100)
+        ax.set_zticks([52,77,102])
+        ax.set_zticklabels(['   50mm','   75mm','   100mm'])
+        ax.set_ylim(0,70)
+        plt.yticks([14,38,68], ['   80mJ/r','     320mJ/r','     640mJ/r'])
+        ax.set_title("Average 2-Leg Failure", fontweight = 'bold')
+        ax.set_xlabel("Angle", fontweight = 'bold')
+        ax.set_zlabel("Length       ", fontweight = 'bold')
+        ax.set_ylabel("             Stiffness", fontweight='bold')
+        ax.yaxis.labelpad=20
+        ax.zaxis.labelpad=15
+        ax.xaxis.labelpad=9
+
+        ax.xaxis.pane.fill = False
+        ax.yaxis.pane.fill = False
+        ax.zaxis.pane.fill = False
+        ax.xaxis.pane.set_edgecolor('white')
+        ax.yaxis.pane.set_edgecolor('white')
+        ax.zaxis.pane.set_edgecolor('white')
+        ax.w_xaxis.line.set_color("white")
+        ax.w_yaxis.line.set_color("white")
+        ax.w_zaxis.line.set_color("white")
+        ax.xaxis._axinfo['tick']['color']='w'
+        ax.yaxis._axinfo['tick']['color']='w'
+        ax.zaxis._axinfo['tick']['color']='w'
+        ax.grid(False)
+
+
+        ## No Leg Failure Average Plot
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.view_init(25, -77)
+        
+        xpoints = [5,30,60]
+        ypoints = [8,32,64]
+        zpoints = [50,75,100]
+        ymin = ypoints[0]-round((ypoints[2]-ypoints[0])/3)
+        xmax = xpoints[2]+round((xpoints[2]-xpoints[0])/5)
+        for i in xpoints:
+            for j in ypoints:  
+                ax.plot([i,i],[j,j],[zpoints[0],zpoints[2]],color = 'k', linewidth = 0.5)
+        for i in xpoints:
+            for k in zpoints:
+                if k == 50:
+                    ax.plot([i,i],[ymin,ypoints[2]],[k,k],color = 'k', linewidth = 0.5)
+                else:
+                    ax.plot([i,i],[ypoints[0],ypoints[2]],[k,k],color = 'k', linewidth = 0.5)
+        for j in ypoints:
+            for k in zpoints:
+                if j == 64 or k == 50:
+                    ax.plot([xpoints[0],xmax],[j,j],[k,k],color = 'k', linewidth = 0.5)
+                else:
+                    ax.plot([xpoints[0],xpoints[2]],[j,j],[k,k],color = 'k', linewidth = 0.5)
+        
+        cmap = mpl.cm.gist_yarg
+        norm = mpl.colors.Normalize(vmin=0,vmax=1)
+        ax.scatter(xs = angle, ys = stiffness, zs = length, s = sizeNoLeg, c= [item*0.8+0.2 for item in avgNoLeg], cmap = cmap, norm = norm)
+        ax.set_xlim(0,60)
+        plt.xticks([5,30,60], ['5\u00b0','30\u00b0','60\u00b0'])
+        ax.set_zlim(50,100)
+        ax.set_zticks([52,77,102])
+        ax.set_zticklabels(['   50mm','   75mm','   100mm'])
+        ax.set_ylim(0,70)
+        plt.yticks([14,38,68], ['   80mJ/r','     320mJ/r','     640mJ/r'])
+        ax.set_title("Average No-Leg Failure", fontweight = 'bold')
+        ax.set_xlabel("Angle", fontweight = 'bold')
+        ax.set_zlabel("Length       ", fontweight = 'bold')
+        ax.set_ylabel("             Stiffness", fontweight='bold')
+        ax.yaxis.labelpad=20
+        ax.zaxis.labelpad=15
+        ax.xaxis.labelpad=9
+
+        ax.xaxis.pane.fill = False
+        ax.yaxis.pane.fill = False
+        ax.zaxis.pane.fill = False
+        ax.xaxis.pane.set_edgecolor('white')
+        ax.yaxis.pane.set_edgecolor('white')
+        ax.zaxis.pane.set_edgecolor('white')
+        ax.w_xaxis.line.set_color("white")
+        ax.w_yaxis.line.set_color("white")
+        ax.w_zaxis.line.set_color("white")
+        ax.xaxis._axinfo['tick']['color']='w'
+        ax.yaxis._axinfo['tick']['color']='w'
+        ax.zaxis._axinfo['tick']['color']='w'
+        ax.grid(False)
+
+        ##Empty Graph
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.view_init(25, -77)
+        
+        xpoints = [5,30,60]
+        ypoints = [8,32,64]
+        zpoints = [50,75,100]
+        ymin = ypoints[0]-round((ypoints[2]-ypoints[0])/3)
+        xmax = xpoints[2]+round((xpoints[2]-xpoints[0])/5)
+        for i in xpoints:
+            for j in ypoints:  
+                ax.plot([i,i],[j,j],[zpoints[0],zpoints[2]],color = 'k', linewidth = 0.5)
+        for i in xpoints:
+            for k in zpoints:
+                if k == 50:
+                    ax.plot([i,i],[ymin,ypoints[2]],[k,k],color = 'k', linewidth = 0.5)
+                else:
+                    ax.plot([i,i],[ypoints[0],ypoints[2]],[k,k],color = 'k', linewidth = 0.5)
+        for j in ypoints:
+            for k in zpoints:
+                if j == 64 or k == 50:
+                    ax.plot([xpoints[0],xmax],[j,j],[k,k],color = 'k', linewidth = 0.5)
+                else:
+                    ax.plot([xpoints[0],xpoints[2]],[j,j],[k,k],color = 'k', linewidth = 0.5)
+        ax.set_xlim(0,60)
+        plt.xticks([5,30,60], ['5\u00b0','30\u00b0','60\u00b0'])
+        ax.set_zlim(50,100)
+        ax.set_zticks([52,77,102])
+        ax.set_zticklabels(['   50mm','   75mm','   100mm'])
+        ax.set_ylim(0,70)
+        plt.yticks([14,38,68], ['   80mJ/r','     320mJ/r','     640mJ/r'])
+        ax.set_title("Leg Configuration Key", fontweight = 'bold')
+        ax.set_xlabel("Angle", fontweight = 'bold')
+        ax.set_zlabel("Length       ", fontweight = 'bold')
+        ax.set_ylabel("             Stiffness", fontweight='bold')
+        ax.yaxis.labelpad=20
+        ax.zaxis.labelpad=15
+        ax.xaxis.labelpad=9
+
+        ax.xaxis.pane.fill = False
+        ax.yaxis.pane.fill = False
+        ax.zaxis.pane.fill = False
+        ax.xaxis.pane.set_edgecolor('white')
+        ax.yaxis.pane.set_edgecolor('white')
+        ax.zaxis.pane.set_edgecolor('white')
+        ax.w_xaxis.line.set_color("white")
+        ax.w_yaxis.line.set_color("white")
+        ax.w_zaxis.line.set_color("white")
+        ax.xaxis._axinfo['tick']['color']='w'
+        ax.yaxis._axinfo['tick']['color']='w'
+        ax.zaxis._axinfo['tick']['color']='w'
+        ax.grid(False)
+
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111, projection='3d')
+        # ax.view_init(25, -77)
+        
+        # cmap = mpl.cm.copper
+        # norm = mpl.colors.Normalize(vmin=0,vmax=1)
+        # ax.scatter(xs = angle, ys = stiffness, zs = length, s = sizeBC4, c=avgBC4, cmap = cmap, norm = norm)
+
+        # ax.set_xlim(0,60)
+        # ax.set_zlim(50,100)
+        # ax.set_ylim(0,70)
+        # ax.set_title("Average 4-Leg Body Contact Failure")
+        # ax.set_xlabel("Angle (deg)")
+        # ax.set_zlabel("Length (mm)")
+        # ax.set_ylabel("Stiffness (Nm/rad)")
+
+
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111, projection='3d')
+        # ax.view_init(25, -77)
+        
+        # cmap = mpl.cm.Wistia
+        # norm = mpl.colors.Normalize(vmin=0,vmax=1)
+        # ax.scatter(xs = angle, ys = stiffness, zs = length, s = sizeLeg2, c=avgLeg2, cmap = cmap, norm = norm)
+
+        # ax.set_xlim(0,60)
+        # ax.set_zlim(50,100)
+        # ax.set_ylim(0,70)
+        # ax.set_title("Average 2-Leg Failure")
+        # ax.set_xlabel("Angle (deg)")
+        # ax.set_zlabel("Length (mm)")
+        # ax.set_ylabel("Stiffness (Nm/rad)")
+
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111, projection='3d')
+        # ax.view_init(25, -77)
+        
+        # cmap = mpl.cm.gist_yarg
+        # norm = mpl.colors.Normalize(vmin=0,vmax=1)
+        # ax.scatter(xs = angle, ys = stiffness, zs = length, s = sizeNoLeg, c=avgNoLeg, cmap = cmap, norm = norm)
+
+        # ax.set_xlim(0,60)
+        # ax.set_zlim(50,100)
+        # ax.set_ylim(0,70)
+        # ax.set_title("Average No Leg Failure")
+        # ax.set_xlabel("Angle (deg)")
+        # ax.set_zlabel("Length (mm)")
+        # ax.set_ylabel("Stiffness (Nm/rad)")
+
+
+        ##Color and Size Scale
+        fig, ax = plt.subplots(figsize=(5,6))
+        cmap = mpl.cm.gist_yarg
+        norm = mpl.colors.Normalize(vmin=0,vmax=1)
+        scale = [0, 0, 0.2, 0.4, 0.6, 0.8, 1.0]
+        size = [round(num*700) for num in scale]
+        ax.scatter([1, 0, 0, 0, 0, 0, 0], scale, s = size, c = [item*0.8+0.2 for item in scale], cmap = cmap, norm = norm)
+        plt.yticks([0, 0.2, 0.4, 0.6, 0.8, 1.0], ["0%", "20%", "40%", "60%", "80%","100%"])
+        plt.xticks([])
+        ax.spines['top'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+
+        if saveFig==True:
+            plt.savefig(f'{os.path.join(self.log_dir, filename)}/ScalePlotJet.pdf',dpi=300)
+
+        
+        fig = plt.figure(figsize=(14,14))
+        origin = np.array([[0],[0]]) # origin point
+
+        count = 0
+        for UBm in np.linspace(4,10,4):
+            for UBA in np.linspace(45,90,4):
+                count += 1
+                UB = UBm/10
+                LB = UB-0.2
+                LBA = UBA-15
+                ax = fig.add_subplot(4,4,17-count,projection='polar')
+                plt.quiver(*origin, [LBA*np.pi/180], [1], color= 'k', angles='xy', scale_units='xy', scale=1/UB)
+                plt.quiver(*origin, [UBA*np.pi/180], [1], color= 'k', angles='xy', scale_units='xy', scale=1/UB)
+                plt.quiver(*origin, [LBA*np.pi/180], [1], color= 'k', angles='xy', scale_units='xy', scale=1/LB)
+                plt.quiver(*origin, [UBA*np.pi/180], [1], color= 'k', angles='xy', scale_units='xy', scale=1/LB)
+                theta = np.linspace(LBA*np.pi/180, UBA*np.pi/180, 50)
+                r = np.linspace(LB,LB, 50)
+                r2 = np.linspace(UB,UB, 50)
+                plt.polar(theta, r, color = 'k')
+                plt.polar(theta, r2, color = 'k')
+                ax.grid(False)
+                ax.axis("off")
+
+                Ulimit = np.linspace(1,1, 50)
+                Llimit = np.linspace(0.2,0.2, 50)
+                thetarange = np.linspace(30*np.pi/180, 90*np.pi/180, 50)
+                plt.fill_between(thetarange, Llimit, Ulimit, color = [0.5,0.5,0.5], alpha=0.2)
+                plt.fill_between(theta, r, r2, alpha=0.2)
+
+        if saveFig==True:
+            plt.savefig(f'{os.path.join(self.log_dir, filename)}/ApproachGraphs.pdf',dpi=300)
+
+        fig = plt.figure(figsize=(4,4))
+        ax = fig.add_subplot(111,projection='polar')
+        plt.quiver(*origin, [30*np.pi/180], [1], color= 'k', angles='xy', scale_units='xy', scale=1/3.5)
+        plt.quiver(*origin, [90*np.pi/180], [1], color= 'k', angles='xy', scale_units='xy', scale=1/3.5)
+        plt.quiver(*origin, [30*np.pi/180], [1], color= 'k', angles='xy', scale_units='xy', scale=2)
+        plt.quiver(*origin, [90*np.pi/180], [1], color= 'k', angles='xy', scale_units='xy', scale=2)
+        Ulimit = np.linspace(3.5,3.5, 50)
+        Llimit = np.linspace(0.5,0.5, 50)
+        thetarange = np.linspace(30*np.pi/180, 90*np.pi/180, 50)
+        plt.fill_between(thetarange, Llimit, Ulimit, color = [0.5,0.5,0.5], alpha=0.2)
+        plt.xlim(30*np.pi/180, 90*np.pi/180)
+        plt.ylim(0, 3.5)
+        ax.set_ylabel("Approach Speed (m/s)")
+        ax.set_xticks([30*np.pi/180,45*np.pi/180,60*np.pi/180,75*np.pi/180,90*np.pi/180])
+        ax.set_yticks([0.5,1.25,2.0,2.75,3.5])
+        ax.set_xlabel("Approach Angle (deg)")
+        ax.xaxis.set_label_position('top') 
+        ax.xaxis.labelpad=20
+
+        plt.show(block=False)
+        plt.pause(0.001) # Pause for interval seconds.
+        input("hit[enter] to end.")
+        plt.close('all') # all open plots are correctly closed after each run        
+
+        # ## DEFINE INTERPOLATION GRID
+        # R_list = np.linspace(R.min(),R.max(),num=50,endpoint=True).reshape(1,-1)
+        # Theta_list = np.linspace(Theta.min(),Theta.max(),num=50,endpoint=True).reshape(1,-1)
+        # R_grid, Theta_grid = np.meshgrid(R_list, Theta_list)
+        
+        # ## INTERPOLATE DATA
+        # LR_interp = griddata((R, Theta), C, (R_list, Theta_list.T), method='linear')
+        # LR_interp += 0.001
+        
+
+        # ## INIT PLOT INFO
+        # fig = plt.figure(figsize=(6,6))
+        # ax = fig.add_subplot(projection='polar')
+        # cmap = mpl.cm.jet
+        # norm = mpl.colors.Normalize(vmin=0,vmax=1)
+        
+        # ax.contourf(np.radians(Theta_grid),R_grid,LR_interp,cmap=cmap,norm=norm,levels=30)
+        # # ax.scatter(np.radians(Theta),R,c=C,cmap=cmap,norm=norm)
+        # # ax.scatter(np.radians(Theta_grid).flatten(),R_grid.flatten(),c=LR_interp.flatten(),cmap=cmap,norm=norm)
+
+        # ax.set_xticks(np.radians(np.arange(-90,90+15,15)))
+        # ax.set_thetamin(Theta.min())
+        # ax.set_thetamax(Theta.max())
+
+        # ax.set_rticks([0.0,1.0,2.0,3.0,4.0,4.5])
+        # ax.set_rmin(0)
+        # ax.set_rmax(R.max())
+        
+
+
+        # # ## AXIS LABELS    
+        # # ax.text(np.radians(7.5),2,'Flight Velocity (m/s)',
+        # #     rotation=18,ha='center',va='center')
+
+        # # ax.text(np.radians(60),4.5,'Flight Angle (deg)',
+        # #     rotation=0,ha='left',va='center')
+
+        # if saveFig==True:
+        #     plt.savefig(f'{self.TB_log_path}/Landing_Rate_Fig_20Trials.pdf',dpi=300)
+
+        # plt.show()
 
 if __name__ == '__main__':
 
@@ -780,14 +1806,14 @@ if __name__ == '__main__':
      # ================================================================= ##
 
     # # COLLECT LANDING PERFORMANCE DATA
-    env = CrazyflieEnv_DeepRL_LDA(GZ_Timeout=True,Vel_range=[0.5,3.5],Phi_range=[30,90])
-    log_dir = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/{env.env_name}"
-    log_name = "SAC--01_25-20:21--LDA_A60_L100_K64_0"
-    t_step_load = 91000
+    # env = CrazyflieEnv_DeepRL_LDA(GZ_Timeout=True,Vel_range=[0.5,3.5],Phi_range=[30,90])
+    # log_dir = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/{env.env_name}"
+    # log_name = "SAC--01_25-20:21--LDA_A60_L100_K64_0"
+    # t_step_load = 91000
 
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.load_model(t_step_load)
-    PolicyTrainer.test_landing_performance()
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.load_model(t_step_load)
+    # PolicyTrainer.test_landing_performance()
 
     # ================================================================= ##
 
