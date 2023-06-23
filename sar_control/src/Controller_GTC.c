@@ -149,7 +149,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
     }
 
     // TRAJECTORY UPDATES
-    if (RATE_DO_EXECUTE(RATE_50_HZ, tick)) {
+    if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
 
         switch (Traj_Type)
         {
