@@ -192,7 +192,7 @@ class SAR_Base_Interface():
 
         return x_0,z_0
 
-    def RL_Publish(self):
+    def _RL_Publish(self):
 
         ## RL DATA
         RL_msg = RL_Data() ## Initialize RL_Data message

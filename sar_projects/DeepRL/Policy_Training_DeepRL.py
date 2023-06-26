@@ -755,7 +755,8 @@ if __name__ == '__main__':
 
 
     ## IMPORT ENVIRONMENTS
-    from Envs.SAR_Sim_DeepRL import SAR_Sim_DeepRL
+    # from Envs.SAR_Sim_DeepRL import SAR_Sim_DeepRL
+    from Envs.CF_Env_2D import CF_Env_2D
 
 
     # # # START TRAINING NEW DEEP RL MODEL 
@@ -792,11 +793,11 @@ if __name__ == '__main__':
     log_name = "A20_L75_K32--Deg_180.0--SAC_06_23-12:45_0"
     t_step_load = 109400
 
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.load_model(t_step_load)
-    # PolicyTrainer.test_landing_performance()
-    # PolicyTrainer.test_policy(Vel=2.5,Phi=60,episodes=10)
-    PolicyTrainer.plot_landing_performance(saveFig=True)
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # # PolicyTrainer.load_model(t_step_load)
+    # # PolicyTrainer.test_landing_performance()
+    # # PolicyTrainer.test_policy(Vel=2.5,Phi=60,episodes=10)
+    # PolicyTrainer.plot_landing_performance(saveFig=True)
 
     # ================================================================= ##
 
