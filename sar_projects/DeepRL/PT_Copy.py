@@ -68,13 +68,34 @@ class Policy_Trainer_DeepRL():
             env=self.env,
             gamma=gamma,
             learning_rate=learning_rate,
-            policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=net_arch),
+            policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=dict(pi=net_arch, qf=[256,256])),
             verbose=1,
             device='cpu',
             tensorboard_log=self.log_dir
         ) 
 
         self.save_config_file()
+
+        return self.model
+    
+    def train_model(self,total_timesteps=2e6,save_freq=200,reset_timesteps=False):
+        """Script to train model via Deep RL method
+
+        Args:
+            log_name (str): _description_
+            reset_timesteps (bool, optional): Reset starting timestep to zero. Defaults to True. 
+            Set to False to resume training from previous model.
+        """       
+
+        # checkpoint_callback = CheckpointSaveCallback(save_freq=save_freq,model_dir=self.model_dir)
+        self.model.predict(np.array([0.25,0,0.5],dtype=np.float32))
+        # self.model.learn(
+        #     total_timesteps=int(total_timesteps),
+        #     tb_log_name=self.log_name,
+        #     # callback=checkpoint_callback,
+        #     reset_num_timesteps=reset_timesteps,
+        #     progress_bar=True
+        # )
 
     def save_config_file(self):
 
@@ -127,15 +148,14 @@ if __name__ == '__main__':
 
 
     ## IMPORT ENVIRONMENTS
-    from Envs.SAR_Sim_DeepRL import SAR_Sim_DeepRL
-    # from Envs.CF_Env_2D import CF_Env_2D
+    from Envs.SAR_Sim_DeepRL2 import SAR_Sim_DeepRL
 
 
     # # START TRAINING NEW DEEP RL MODEL 
     env = SAR_Sim_DeepRL(GZ_Timeout=False,Vel_range=[1.0,3.0],Phi_range=[0,90])
-    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/CF_2D"
+    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
     log_name = f"Test_Log1"    
 
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.create_model()
-    # PolicyTrainer.train_model()
+    PolicyTrainer.train_model()
