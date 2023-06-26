@@ -105,7 +105,7 @@ class Policy_Trainer_DeepRL():
         if not os.path.exists(self.model_dir):
             os.makedirs(self.model_dir,exist_ok=True)
 
-    def create_model(self,gamma=0.999,learning_rate=0.002,net_arch=[8,8]):
+    def create_model(self,gamma=0.999,learning_rate=0.002,net_arch=[64,64]):
         """Create Soft Actor-Critic agent used in training
 
         Args:
@@ -125,7 +125,7 @@ class Policy_Trainer_DeepRL():
             tensorboard_log=self.log_dir
         ) 
 
-        self.save_config_file()
+        # self.save_config_file()
 
     def load_model(self,t_step):
         """Loads current model and replay buffer from the selected time step
@@ -356,7 +356,7 @@ class Policy_Trainer_DeepRL():
 
         return action_mean,action_std
 
-    def test_policy(self,Vel,Phi,episodes=1,action_onboard=False):
+    def test_policy(self,Vel,Phi,episodes=1):
         """Test the currently loaded policy for a given set of velocity and launch angle conditions
 
         Args:
@@ -366,11 +366,11 @@ class Policy_Trainer_DeepRL():
         """        
 
         for ep in range(episodes):
-            obs = self.env.reset(Vel=Vel,Phi=Phi)
+            obs,_ = self.env.reset()
             done = False
             while not done:
                 action,_ = self.model.predict(obs)
-                obs,reward,done,_ = self.env.step(action,action_onboard=False)
+                obs,reward,done,_,_ = self.env.step(action)
 
     def train_model(self,total_timesteps=2e6,save_freq=200,reset_timesteps=False):
         """Script to train model via Deep RL method
@@ -756,42 +756,39 @@ if __name__ == '__main__':
 
     ## IMPORT ENVIRONMENTS
     # from Envs.SAR_Sim_DeepRL import SAR_Sim_DeepRL
-    from Envs.CF_Env_2D import CF_Env_2D
+    from Envs.CF_Env_2D_2 import CF_Env_2D
 
 
-    # # # START TRAINING NEW DEEP RL MODEL 
-    # env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[1.5,4.0],Phi_range=[0,90])
-    # env.pause_physics(False)
-    # time.sleep(3)
-    # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
-    # log_name = f"{env.modelInitials}--Deg_{env.Plane_Angle}--SAC_{current_time}"    
+    # # START TRAINING NEW DEEP RL MODEL 
+    env = CF_Env_2D()
+    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
+    log_name = f"TestLog_00"    
 
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.create_model()
-    # PolicyTrainer.train_model()
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.create_model()
+    PolicyTrainer.train_model()
 
     # ================================================================= ##
     
     # RESUME TRAINING DEEP RL MODEL
     # env = SAR_Sim_DeepRL(GZ_Timeout=False,Vel_range=[1.0,4.0],Phi_range=[-90,90])
-    # env.pause_physics(False)
-    # time.sleep(3)
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
-    # log_name = "A20_L75_K32--Deg_180.0--SAC_06_16-13:12_0"
-    # t_step_load = 170000
+    # log_name = "TestLog_0"
+    # t_step_load = 23000
 
     # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     # PolicyTrainer.load_model(t_step_load)
-    # PolicyTrainer.train_model(reset_timesteps=True)
+    # PolicyTrainer.test_policy(Vel=3.0,Phi=70,episodes=10)
 
     # ================================================================= ##
 
     # COLLECT LANDING PERFORMANCE DATA
     # env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[1.5,4.0],Phi_range=[0,90])
-    env = None
-    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/SAR_Sim_DeepRL_Env"
-    log_name = "A20_L75_K32--Deg_180.0--SAC_06_23-12:45_0"
-    t_step_load = 109400
+    # env = None
+    # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/SAR_Sim_DeepRL_Env"
+    # log_name = "A20_L75_K32--Deg_180.0--SAC_06_23-12:45_0"
+    # t_step_load = 109400
 
     # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     # # PolicyTrainer.load_model(t_step_load)

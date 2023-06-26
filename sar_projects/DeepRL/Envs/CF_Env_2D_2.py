@@ -30,7 +30,7 @@ class CF_Env_2D(gym.Env):
         ## ENV PARAMETERS
         self.k_ep = 0
         self.h_ceil = 2.1       # Ceiling Height [m]
-        self.Flip_thr = 1.5     # Threshold to execute flip action
+        self.Flip_thr = 0.5     # Threshold to execute flip action
         self.MomentCutoff = False
         self.Impact_flag = False
         self.Impact_events = [False,False,False]
@@ -85,8 +85,8 @@ class CF_Env_2D(gym.Env):
     def step(self, action):
         
         x,vx,z,vz,theta,dtheta = self.state
-        Tau,OFy,d_ceil = self.obs
-        action[0] = np.arctanh(action[0])
+        Tau,Theta_x,D_perp = self.obs
+        # action[0] = np.arctanh(action[0])
 
         ## BASIC FLIGHT   
         if action[0] < self.Flip_thr:
@@ -109,11 +109,11 @@ class CF_Env_2D(gym.Env):
             self.state = (x,vx,z,vz,theta,dtheta)
 
             ## UPDATE OBSERVATION
-            d_ceil = self.h_ceil - z
-            Tau = d_ceil/vz
-            OFy = -vx/(d_ceil+1e-3)
+            D_perp = self.h_ceil - z
+            Tau = D_perp/vz
+            Theta_x = vx/(D_perp+1e-3)
 
-            self.obs = (Tau,OFy,d_ceil)
+            self.obs = (Tau,Theta_x,D_perp)
 
             ## CHECK FOR IMPACT
             self.Impact_flag,self.Impact_events = self.impact_conditions(x,z,theta)
@@ -127,8 +127,8 @@ class CF_Env_2D(gym.Env):
 
             if not terminated:
 
-                if d_ceil <= self.d_min:
-                    self.d_min = d_ceil
+                if D_perp <= self.d_min:
+                    self.d_min = D_perp
 
             reward = 0
                 
@@ -677,17 +677,18 @@ class CF_Env_2D(gym.Env):
 
 if __name__ == '__main__':
     env = CF_Env_2D()
-    check_env(env)
-    # env.RENDER = True
-    # for _ in range(25):
-    #     env.reset()
-    #     done = False
-    #     while not done:
-    #         env.render()
-    #         action = env.action_space.sample()
-    #         obs,reward,done,truncated,info = env.step(action)
 
-    # env.close()
+    env.RENDER = True
+    for _ in range(25):
+        env.reset()
+        done = False
+        while not done:
+            env.render()
+            action = env.action_space.sample()
+            action = np.zeros_like(action)
+            obs,reward,done,truncated,info = env.step(action)
+
+    env.close()
 
 
 
