@@ -356,17 +356,17 @@ class Policy_Trainer_DeepRL():
 
         return action_mean,action_std
 
-    def test_policy(self,vel,phi,episodes=1,action_onboard=False):
+    def test_policy(self,Vel,Phi,episodes=1,action_onboard=False):
         """Test the currently loaded policy for a given set of velocity and launch angle conditions
 
         Args:
-            vel (float, optional): Flight velocity [m/s]. 
-            phi (float, optional): Flight angle [deg]. 
+            Vel (float, optional): Flight velocity [m/s]. 
+            Phi (float, optional): Flight angle [deg]. 
             episodes (int, optional): Number of landing tests. Defaults to 1.
         """        
 
         for ep in range(episodes):
-            obs = self.env.reset(vel=vel,phi=phi)
+            obs = self.env.reset(Vel=Vel,Phi=Phi)
             done = False
             while not done:
                 action,_ = self.model.predict(obs)
@@ -626,7 +626,7 @@ class Policy_Trainer_DeepRL():
                     start_time = time.time()
 
                     ## TEST POLICY FOR GIVEN FLIGHT CONDITIONS
-                    obs = self.env.reset(vel=Vel,phi=Phi)
+                    obs = self.env.reset(Vel=Vel,Phi=Phi)
                     done = False
                     while not done:
                         action,_ = self.model.predict(obs)
@@ -661,14 +661,14 @@ class Policy_Trainer_DeepRL():
 
                             np.round(self.env.vel_tr_mag,2),np.round(self.env.phi_tr,2),
 
-                            np.round(self.env.obs_tr[0],3),
-                            np.round(self.env.obs_tr[1],3),
-                            np.round(self.env.obs_tr[2],3),
+                            np.round(self.env.obs_trg[0],3),
+                            np.round(self.env.obs_trg[1],3),
+                            np.round(self.env.obs_trg[2],3),
 
                             np.round(self.env.eul_impact[1],3),
 
-                            np.round(self.env.action_tr[0],3),
-                            np.round(self.env.action_tr[1],3),
+                            np.round(self.env.action_trg[0],3),
+                            np.round(self.env.action_trg[1],3),
 
                             np.round(self.env.vel_tr[0],3),
                             np.round(self.env.vel_tr[2],3),
@@ -758,7 +758,7 @@ if __name__ == '__main__':
     from Envs.SAR_Sim_DeepRL import SAR_Sim_DeepRL
 
 
-    # # START TRAINING NEW DEEP RL MODEL 
+    # # # START TRAINING NEW DEEP RL MODEL 
     # env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[1.5,4.0],Phi_range=[0,90])
     # env.pause_physics(False)
     # time.sleep(3)
@@ -785,16 +785,18 @@ if __name__ == '__main__':
 
     # ================================================================= ##
 
-    # # COLLECT LANDING PERFORMANCE DATA
-    env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[1.0,4.0],Phi_range=[0,90])
-    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
-    log_name = "A20_L75_K32--Deg_180.0--SAC_06_16-13:12_0"
-    t_step_load = 170000
+    # COLLECT LANDING PERFORMANCE DATA
+    # env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[1.5,4.0],Phi_range=[0,90])
+    env = None
+    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/SAR_Sim_DeepRL_Env"
+    log_name = "A20_L75_K32--Deg_180.0--SAC_06_23-12:45_0"
+    t_step_load = 109400
 
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.load_model(t_step_load)
+    # PolicyTrainer.load_model(t_step_load)
     # PolicyTrainer.test_landing_performance()
-    PolicyTrainer.test_policy(vel=2.5,phi=60,episodes=10)
+    # PolicyTrainer.test_policy(Vel=2.5,Phi=60,episodes=10)
+    PolicyTrainer.plot_landing_performance(saveFig=True)
 
     # ================================================================= ##
 
