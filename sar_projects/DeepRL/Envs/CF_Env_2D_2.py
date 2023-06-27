@@ -15,7 +15,7 @@ class CF_Env_2D(gym.Env):
 
     metadata = {'render.modes': ['human']}
 
-    def __init__(self):
+    def __init__(self,My_range=[0.0,8.0],Vel_range=[1.5,3.5],Phi_range=[0,90],Tau_0=0.4):
         super().__init__()
         self.Env_Name = "CF_Env_2D"
 
@@ -28,7 +28,7 @@ class CF_Env_2D(gym.Env):
 
 
         ## ENV PARAMETERS
-        self.k_ep = 0
+        self.K_ep = 0
         self.h_ceil = 2.1       # Ceiling Height [m]
         self.Flip_thr = 0.5     # Threshold to execute flip action
         self.MomentCutoff = False
@@ -338,7 +338,7 @@ class CF_Env_2D(gym.Env):
 
     def reset(self, seed=None, options=None):
 
-        self.k_ep += 1
+        self.K_ep += 1
 
         ## RESET PHYSICS PARAMS
         self.t_step = 0

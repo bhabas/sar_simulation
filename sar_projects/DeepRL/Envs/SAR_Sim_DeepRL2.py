@@ -42,7 +42,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         ## RESET INITIAL VALUES
         self.K_ep = 0
-        self.Flip_threshold = 1.5
+        self.Flip_threshold = 0.5
         self.D_min = 50.0
         self.Tau_trg = 50.0
         self.Done = False
@@ -228,6 +228,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         return observation, {}
     
     def step(self, action):
+
         ########## PRE-FLIP TRIGGER ##########
         if action[0] < self.Flip_threshold:
 

@@ -127,6 +127,8 @@ class Policy_Trainer_DeepRL():
 
         # self.save_config_file()
 
+
+
     def load_model(self,t_step):
         """Loads current model and replay buffer from the selected time step
 
