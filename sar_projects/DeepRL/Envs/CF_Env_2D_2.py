@@ -57,6 +57,7 @@ class CF_Env_2D(gym.Env):
         self.state = None
         self.obs = None
         self.start_vals = (0,0)
+        self.reward = 0
 
         ## SIM PARAMETERS
         self.h_ceil = 2.1       # Ceiling Height [m]
@@ -132,6 +133,9 @@ class CF_Env_2D(gym.Env):
         
         self._iter_step()
 
+        if self.RENDER:
+            self.render()
+
         ## BASIC FLIGHT   
         if action[0] < self.Flip_threshold:
 
@@ -142,7 +146,7 @@ class CF_Env_2D(gym.Env):
 
 
             ## CHECK FOR IMPACT
-            self.Impact_flag,self.Impact_events = self.impact_conditions(x,z,theta)
+            self.Impact_flag,self.Impact_events = self._impact_conditions(x,z,theta)
 
             ## CHECK FOR DONE
             terminated = bool(
@@ -157,16 +161,18 @@ class CF_Env_2D(gym.Env):
                     self.D_min = D_perp
 
             reward = 0
+            self.reward = reward
                 
         ## EXECUTE FLIP MANEUVER
         elif action[0] > self.Flip_threshold:
 
             self.Flip_Flag = True
             self.Tau_trg = 0.25
-            reward = self.finish_sim(action) # Reward corresponds directly to this (State,Action) pair not future ones
+            reward = self._finish_sim(action) # Reward corresponds directly to this (State,Action) pair not future ones
             terminated = True
 
             reward = self._CalcReward()
+            self.reward = reward
 
         
         truncated = False
@@ -179,7 +185,7 @@ class CF_Env_2D(gym.Env):
 
         )
     
-    def finish_sim(self,action):
+    def _finish_sim(self,action):
 
         Done = False
         (L,e,gamma,M_G,M_L,g,PD,I_G) = self.params
@@ -224,10 +230,10 @@ class CF_Env_2D(gym.Env):
                 ## UPDATE OBSERVATION
                 D_perp = self.h_ceil - z 
                 Tau = D_perp/vz
-                Theta_x = -vx/(D_perp + 1e-3)
+                Theta_x = vx/(D_perp + 1e-3)
 
                 ## CHECK FOR IMPACT
-                self.Impact_flag,self.Impact_events = self.impact_conditions(x,z,theta)
+                self.Impact_flag,self.Impact_events = self._impact_conditions(x,z,theta)
 
                 ## CHECK FOR DONE
                 Done = bool(
@@ -252,7 +258,7 @@ class CF_Env_2D(gym.Env):
                 ## LEG 1 CONTACT
                 elif self.Impact_events[1] == True:
                     
-                    beta_0,dbeta_0 = self.impact_conversion(self.state,self.Impact_events)
+                    beta_0,dbeta_0 = self._impact_conversion(self.state,self.Impact_events)
                     beta = beta_0
                     dbeta = dbeta_0
 
@@ -276,12 +282,12 @@ class CF_Env_2D(gym.Env):
                         beta = beta + self.dt*dbeta
                         dbeta = dbeta + self.dt*beta_acc
 
-                        if beta > self.beta_landing(impact_leg=1):
+                        if beta > self._beta_landing(impact_leg=1):
                             self.BodyContact_flag = False
                             self.pad_connections = 4
                             Done = True
 
-                        elif beta < self.beta_prop(impact_leg=1):
+                        elif beta < self._beta_prop(impact_leg=1):
                             self.BodyContact_flag = True
                             self.pad_connections = 2
                             Done = True
@@ -308,7 +314,7 @@ class CF_Env_2D(gym.Env):
                 ## LEG 2 CONTACT
                 elif self.Impact_events[2] == True:
 
-                    beta_0,dbeta_0 = self.impact_conversion(self.state,self.Impact_events)
+                    beta_0,dbeta_0 = self._impact_conversion(self.state,self.Impact_events)
                     beta = beta_0
                     dbeta = dbeta_0
 
@@ -332,12 +338,12 @@ class CF_Env_2D(gym.Env):
                         beta = beta + self.dt*dbeta
                         dbeta = dbeta + self.dt*beta_acc
 
-                        if beta < self.beta_landing(impact_leg=2):
+                        if beta < self._beta_landing(impact_leg=2):
                             self.BodyContact_flag = False
                             self.pad_connections = 4
                             Done = True
 
-                        elif beta > self.beta_prop(impact_leg=2):
+                        elif beta > self._beta_prop(impact_leg=2):
                             self.BodyContact_flag = True
                             self.pad_connections = 2
                             Done = True
@@ -416,8 +422,12 @@ class CF_Env_2D(gym.Env):
         ## RESET POSITION RELATIVE TO LANDING SURFACE (BASED ON STARTING TAU VALUE)
         # (Derivation: Research_Notes_Book_3.pdf (6/22/23))
 
-        r_PO = np.array([0,0,2.1])          # Plane Position w/r to origin
-        n_hat,t_x,t_y = np.array([0,0,1.0]) # Plane normal vector
+        r_PO = np.array([0,0,2.1])  # Plane Position w/r to origin
+
+        n_hat = np.array([0,0,1])   # Plane normal vector
+        t_x = np.array([1,0,0])     # Plane normal vector
+        t_y = np.array([0,1,0])     # Plane normal vector
+
 
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
         if Vel == None or Phi == None:
@@ -441,27 +451,19 @@ class CF_Env_2D(gym.Env):
         V_ty = V_BO.dot(t_y)
 
         ## CALC STARTING/VELOCITY LAUCH POSITION
-        if V_hat.dot(n_hat) <= 0.01:    # If Velocity parallel to landing surface or wrong direction; flag episode to be done
-            self.Done = True
+        # if V_hat.dot(n_hat) <= 0.01:    # If Velocity parallel to landing surface or wrong direction; flag episode to be done
+        #     self.Done = True
             
-        elif V_hat.dot(n_hat) <= 0.25:  # Velocity near parallel to landing surface
+        if V_hat.dot(n_hat) <= 0.25:  # Velocity near parallel to landing surface
 
             ## ## MINIMUM DISTANCE TO START POLICY TRAINING
             D_perp = 0.2  # Ensure a reasonable minimum perp distance [m]
 
-            ## CALC DISTANCE REQUIRED TO SETTLE ON DESIRED VELOCITY
-            t_settle = 1.5              # Time for system to settle
-            D_settle = t_settle*Vel     # Flight settling distance
-
             ## INITIAL POSITION RELATIVE TO PLANE
-            r_BP = (D_perp/(V_hat.dot(n_hat)) + D_settle)*V_hat
+            r_BP = (D_perp/(V_hat.dot(n_hat)))*V_hat
 
             ## INITIAL POSITION IN GLOBAL COORDS
             r_BO = r_PO - r_BP 
-
-            ## LAUNCH QUAD W/ DESIRED VELOCITY
-            self.Vel_Launch(r_BO,V_BO)
-            self.iter_step(t_settle*1e3)
 
         else: # Velocity NOT parallel to surface
 
@@ -469,45 +471,25 @@ class CF_Env_2D(gym.Env):
             D_perp = (self.Tau_0*V_perp)    # Initial perp distance
             D_perp = max(D_perp,0.2)        # Ensure a reasonable minimum distance [m]
 
-            ## CALC DISTANCE REQUIRED TO SETTLE ON DESIRED VELOCITY
-            t_settle = 1.5              # Time for system to settle
-            D_settle = t_settle*Vel     # Flight settling distance
-
             ## INITIAL POSITION RELATIVE TO PLANE
-            r_BP = (D_perp/(V_hat.dot(n_hat)) + D_settle)*V_hat
+            r_BP = (D_perp/(V_hat.dot(n_hat)))*V_hat
 
             ## INITIAL POSITION IN GLOBAL COORDS
             r_BO = r_PO - r_BP 
 
-            ## LAUNCH QUAD W/ DESIRED VELOCITY
-            self.Vel_Launch(r_BO,V_BO)
-            self.iter_step(t_settle*1e3)
-
             
-        ## RESET STATE
-        vel = np.random.uniform(low=1.5,high=3.5)
-        phi = np.random.uniform(low=30,high=90)
-
-        # vel = 3.0
-        # phi = 70
-
-        vx_0 = vel*np.cos(np.deg2rad(phi))
-        vz_0 = vel*np.sin(np.deg2rad(phi))
-
         ## RESET OBSERVATION
-        Tau_0 = 0.5
-        D_perp_0 = Tau_0*vz_0+1e-3
-        Theta_x = -vx_0/D_perp_0
-        self.obs = (Tau_0,Theta_x,D_perp_0)
+        D_perp = self.Tau_0*V_perp+1e-3
+        Theta_x = V_tx/D_perp
+        self.obs = (self.Tau_0,Theta_x,D_perp)
 
-
-        z_0 = self.h_ceil - D_perp_0
+        z_0 = r_BO[2]
         x_0 = 0.0
 
         theta = 0.0
         dtheta = 0.0
-        self.state = (x_0,vx_0,z_0,vz_0,theta,dtheta)
-        self.start_vals = (vel,phi)
+        self.state = (x_0,V_x,z_0,V_z,theta,dtheta)
+        self.start_vals = (Vel,Phi)
 
         return np.array(self.obs,dtype=np.float32), {}
 
@@ -563,7 +545,7 @@ class CF_Env_2D(gym.Env):
         
 
         ## CREATE QUADROTOR
-        Pose = self.get_pose(x,z,theta)
+        Pose = self._get_pose(x,z,theta)
         pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[1]),width=3)
         pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[2]),width=3)
         pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[3]),width=3)
@@ -590,22 +572,22 @@ class CF_Env_2D(gym.Env):
         ## WINDOW TEXT
         my_font = pygame.font.SysFont(None, 30)
         text_t_step = my_font.render(f'Time Step: {self.t_step:03d}', True, BLACK)
-        # text_Vz = my_font.render(f'Vz: {vz:.2f}', True, BLACK)
-        # text_Vel = my_font.render(f'Vel: {Vel:.2f}  Phi: {phi:.2f}', True, BLACK)
-        # text_Tau = my_font.render(f'Tau: {self.obs[0]:.3f}', True, BLACK)
-        # text_dTau = my_font.render(f'dTau: {0.0:.3f}', True, BLACK)
-        # text_z_acc = my_font.render(f'z_acc: {0.0:.3f}', True, BLACK)
-        # text_reward = my_font.render(f'Prev Reward: {self.reward:.3f}',True, BLACK)
+        text_Vz = my_font.render(f'Vz: {vz:.2f}', True, BLACK)
+        text_Vel = my_font.render(f'Vel: {Vel:.2f}  Phi: {phi:.2f}', True, BLACK)
+        text_Tau = my_font.render(f'Tau: {self.obs[0]:.3f}', True, BLACK)
+        text_dTau = my_font.render(f'dTau: {0.0:.3f}', True, BLACK)
+        text_z_acc = my_font.render(f'z_acc: {0.0:.3f}', True, BLACK)
+        text_reward = my_font.render(f'Prev Reward: {self.reward:.3f}',True, BLACK)
 
         ## WINDOW TEXT LOCATIONS
         self.screen.blit(self.surf,     (0,0))
         self.screen.blit(text_t_step,   (5,5))
-        # self.screen.blit(text_Vel,      (5,30))
-        # self.screen.blit(text_Vz,       (5,55))
-        # self.screen.blit(text_Tau,      (5,80))
-        # self.screen.blit(text_dTau,     (5,105))
-        # self.screen.blit(text_z_acc,    (5,130))
-        # self.screen.blit(text_reward,   (5,155))
+        self.screen.blit(text_Vel,      (5,30))
+        self.screen.blit(text_Vz,       (5,55))
+        self.screen.blit(text_Tau,      (5,80))
+        self.screen.blit(text_dTau,     (5,105))
+        self.screen.blit(text_z_acc,    (5,130))
+        self.screen.blit(text_reward,   (5,155))
 
 
         ## WINDOW/SIM UPDATE RATE
@@ -649,14 +631,14 @@ class CF_Env_2D(gym.Env):
 
         return R0 + R1 + R2 + R3
     
-    def impact_conditions(self,x_pos,z_pos,theta):
+    def _impact_conditions(self,x_pos,z_pos,theta):
         
         impact_flag  = False
         Body_contact = False
         Leg1_contact = False
         Leg2_contact = False
 
-        MO_z,_,_,Leg1_z,Leg2_z,Prop1_z,Prop2_z = self.get_pose(x_pos,z_pos,theta)[:,1]
+        MO_z,_,_,Leg1_z,Leg2_z,Prop1_z,Prop2_z = self._get_pose(x_pos,z_pos,theta)[:,1]
 
         if any(x >= self.h_ceil for x in [MO_z,Prop1_z,Prop2_z]):
             impact_flag = True
@@ -672,7 +654,7 @@ class CF_Env_2D(gym.Env):
 
         return impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
 
-    def get_pose(self,x_pos,z_pos,theta):           
+    def _get_pose(self,x_pos,z_pos,theta):           
         """Returns position data of all model lines for a given state
 
         Args:
@@ -716,7 +698,7 @@ class CF_Env_2D(gym.Env):
 
         return np.array([CG,P1,P2,L1,L2,Prop1,Prop2])
 
-    def impact_conversion(self,Impact_state,Impact_events):
+    def _impact_conversion(self,Impact_state,Impact_events):
         """Converts impact conditions to rotational initial conditions
 
         Args:
@@ -762,7 +744,7 @@ class CF_Env_2D(gym.Env):
 
         return beta_0,dbeta_0
 
-    def beta_prop(self,impact_leg=1):
+    def _beta_prop(self,impact_leg=1):
         """Returns minimum beta angle for when propellar contact occurs
 
         Args:
@@ -784,7 +766,7 @@ class CF_Env_2D(gym.Env):
         elif impact_leg == 2:
             return np.pi - beta_prop
 
-    def beta_landing(self,impact_leg=1):
+    def _beta_landing(self,impact_leg=1):
         """Returns the max beta value for a given gamma and model parameters
 
         Args:
@@ -817,7 +799,7 @@ if __name__ == '__main__':
         while not done:
             env.render()
             action = env.action_space.sample()
-            # action = np.zeros_like(action)
+            action = np.zeros_like(action)
             obs,reward,done,truncated,info = env.step(action)
 
     env.close()
