@@ -38,7 +38,8 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## TESTING CONDITIONS
         self.Tau_0 = Tau_0          
         self.Vel_range = Vel_range  
-        self.Phi_range = Phi_range  
+        self.Phi_range = Phi_range
+        self.My_range = My_range
 
         ## RESET INITIAL VALUES
         self.K_ep = 0
@@ -50,7 +51,6 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## DEFINE OBSERVATION SPACE
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32)
         self.obs_trg = np.zeros(self.observation_space.shape,dtype=np.float32) # Obs values at triggering
-
 
         ## DEFINE ACTION SPACE
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
@@ -299,9 +299,11 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         Args:
             action (np.array): Action to be performed by controller
         """        
+        ## Scale Action
+        scaled_action = 0.5 * (action[1] + 1) * (self.My_range[1] - self.My_range[0]) + self.My_range[0]
 
         ## SEND FLIP ACTION TO CONTROLLER
-        My = -action[1] # Body rotational moment [N*mm]
+        My = -scaled_action # Body rotational moment [N*mm]
         self.SendCmd("Moment",[0,My,0],cmd_flag=1)
 
         ## RUN REMAINING STEPS AT FULL SPEED
