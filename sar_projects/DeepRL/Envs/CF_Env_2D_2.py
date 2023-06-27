@@ -38,8 +38,8 @@ class CF_Env_2D(gym.Env):
         ## RESET INITIAL VALUES
         self.K_ep = 0
         self.Flip_threshold = 0.5
-        self.D_min = 50.0
-        self.Tau_trg = 50.0
+        self.D_min = np.inf
+        self.Tau_trg = np.inf
         self.Flip_Flag = False
         self.Done = False
 
@@ -153,8 +153,8 @@ class CF_Env_2D(gym.Env):
 
             if not terminated:
 
-                if D_perp <= self.d_min:
-                    self.d_min = D_perp
+                if D_perp <= self.D_min:
+                    self.D_min = D_perp
 
             reward = 0
                 
@@ -165,19 +165,29 @@ class CF_Env_2D(gym.Env):
             self.Tau_trg = 0.25
             reward = self.finish_sim(action) # Reward corresponds directly to this (State,Action) pair not future ones
             terminated = True
+
+            reward = self._CalcReward()
+
         
         truncated = False
-        return np.array(self.obs,dtype=np.float32), reward, terminated, truncated, {}
+        return (
+            self.obs,
+            reward,
+            terminated,
+            truncated,
+            {},
+
+        )
     
     def finish_sim(self,action):
 
-        done = False
+        Done = False
         (L,e,gamma,M_G,M_L,g,PD,I_G) = self.params
         
         ## Scale Action
         scaled_action = 0.5 * (action[1] + 1) * (self.My_range[1] - self.My_range[0]) + self.My_range[0]
 
-        while not done:
+        while not Done:
 
             self.t_step += 1
             x,vx,z,vz,theta,dtheta = self._get_state()
@@ -212,23 +222,22 @@ class CF_Env_2D(gym.Env):
                 self.state = (x,vx,z,vz,theta,dtheta)
 
                 ## UPDATE OBSERVATION
-                d_ceil = self.h_ceil - z 
-                Tau = d_ceil/vz
-                Theta_x = -vx/(d_ceil + 1e-3)
+                D_perp = self.h_ceil - z 
+                Tau = D_perp/vz
+                Theta_x = -vx/(D_perp + 1e-3)
 
                 ## CHECK FOR IMPACT
                 self.Impact_flag,self.Impact_events = self.impact_conditions(x,z,theta)
 
                 ## CHECK FOR DONE
-                done = bool(
+                Done = bool(
                     self.t_step >= self.t_threshold
                     or z < 0.2
                 )
 
-                if not done:
-
-                    if d_ceil <= self.d_min:
-                        self.d_min = d_ceil
+                if not Done:
+                    if D_perp <= self.D_min:
+                        self.D_min = D_perp
                 
             elif self.Impact_flag == True:
 
@@ -238,7 +247,7 @@ class CF_Env_2D(gym.Env):
                 if self.Impact_events[0] == True:
                     self.BodyContact_flag = True
                     self.pad_connections = 0
-                    done = True
+                    Done = True
 
                 ## LEG 1 CONTACT
                 elif self.Impact_events[1] == True:
@@ -259,7 +268,7 @@ class CF_Env_2D(gym.Env):
                     r_O_C1 = r_O_G - r_G_C1_0
 
                     ## SOLVE SWING ODE
-                    while not done:
+                    while not Done:
                         
                         self.t_step += 1
 
@@ -270,16 +279,16 @@ class CF_Env_2D(gym.Env):
                         if beta > self.beta_landing(impact_leg=1):
                             self.BodyContact_flag = False
                             self.pad_connections = 4
-                            done = True
+                            Done = True
 
                         elif beta < self.beta_prop(impact_leg=1):
                             self.BodyContact_flag = True
                             self.pad_connections = 2
-                            done = True
+                            Done = True
                         elif self.t_step >= self.t_threshold:
                             self.BodyContact_flag = False
                             self.pad_connections = 2
-                            done = True
+                            Done = True
 
                         ## SOLVE FOR SWING BEHAVIOR IN GLOBAL COORDINATES
                         r_G_C1 = np.array([
@@ -292,6 +301,7 @@ class CF_Env_2D(gym.Env):
 
 
                         self.state = (x,0,z,0,theta,0)
+
                         if self.RENDER:
                             self.render()
 
@@ -314,7 +324,7 @@ class CF_Env_2D(gym.Env):
                     r_O_C2 = r_O_G - r_G_C2_0
 
                     ## SOLVE SWING ODE
-                    while not done:
+                    while not Done:
 
                         self.t_step += 1
 
@@ -325,17 +335,17 @@ class CF_Env_2D(gym.Env):
                         if beta < self.beta_landing(impact_leg=2):
                             self.BodyContact_flag = False
                             self.pad_connections = 4
-                            done = True
+                            Done = True
 
                         elif beta > self.beta_prop(impact_leg=2):
                             self.BodyContact_flag = True
                             self.pad_connections = 2
-                            done = True
+                            Done = True
 
                         elif self.t_step >= self.t_threshold:
                             self.BodyContact_flag = False
                             self.pad_connections = 2
-                            done = True
+                            Done = True
 
                         ## SOLVE FOR SWING BEHAVIOR IN GLOBAL COORDINATES
                         r_G_C2 = np.array(
@@ -348,6 +358,7 @@ class CF_Env_2D(gym.Env):
 
 
                         self.state = (x,0,z,0,theta,0)
+
                         if self.RENDER:
                             self.render()
 
@@ -355,11 +366,38 @@ class CF_Env_2D(gym.Env):
             if self.RENDER:
                 self.render()
         
-        self.reward = self.CalcReward()
-        return self.reward
+    def _sample_flight_conditions(self):
+        """This function samples the flight velocity and angle from the supplied range.
+        Velocity is sampled from a uniform distribution. Phi is sampled from a set of 
+        uniform distributions which are weighted such that edge cases are only sampled 10% of the time.
+        Poor performance on edge cases can cause poor learning convergence.
+
+        Returns:
+            vel,phi: Sampled flight velocity and flight angle
+        """        
+
+        ## SAMPLE VEL FROM UNIFORM DISTRIBUTION IN VELOCITY RANGE
+        Vel_Low = self.Vel_range[0]
+        Vel_High = self.Vel_range[1]
+        Vel = np.random.uniform(low=Vel_Low,high=Vel_High)
+
+        ## SAMPLE PHI FROM A WEIGHTED SET OF UNIFORM DISTRIBUTIONS
+        Phi_Low = self.Phi_range[0]
+        Phi_High = self.Phi_range[1]
+
+        Dist_Num = np.random.choice([0,1,2],p=[0.05,0.9,0.05]) # Probability of sampling distribution
+
+        if Dist_Num == 0:
+            Phi = np.random.default_rng().uniform(low=Phi_Low, high=Phi_Low + 10)
+        elif Dist_Num == 1:
+            Phi = np.random.default_rng().uniform(low=Phi_Low + 10, high=Phi_High - 10)
+        elif Dist_Num == 2:
+            Phi = np.random.default_rng().uniform(low=Phi_High - 10, high=Phi_High)
+
+        return Vel,Phi
 
 
-    def reset(self, seed=None, options=None):
+    def reset(self, seed=None, options=None, Vel=None, Phi=None):
 
         self.K_ep += 1
 
@@ -372,9 +410,80 @@ class CF_Env_2D(gym.Env):
         self.BodyContact_flag = False
         self.pad_connections = 0
         self.theta_impact = 0.0
-        self.Tau_trg = 500
-        self.d_min = 500
+        self.Tau_trg = np.inf
+        self.D_min = np.inf
+
+        ## RESET POSITION RELATIVE TO LANDING SURFACE (BASED ON STARTING TAU VALUE)
+        # (Derivation: Research_Notes_Book_3.pdf (6/22/23))
+
+        r_PO = np.array([0,0,2.1])          # Plane Position w/r to origin
+        n_hat,t_x,t_y = np.array([0,0,1.0]) # Plane normal vector
+
+        ## SAMPLE VELOCITY AND FLIGHT ANGLE
+        if Vel == None or Phi == None:
+            Vel,Phi = self._sample_flight_conditions()
+
+        else:
+            Vel = Vel   # Flight velocity
+            Phi = Phi   # Flight angle  
+
+        ## CALCULATE GLOABAL VEL VECTORS
+        V_x = Vel*np.cos(np.deg2rad(Phi))
+        V_y = 0
+        V_z = Vel*np.sin(np.deg2rad(Phi))
         
+        V_BO = np.array([V_x,V_y,V_z])         # Flight Velocity
+        V_hat = V_BO/np.linalg.norm(V_BO)     # Flight Velocity unit vector
+
+        ## RELATIVE VEL VECTORS
+        V_perp = V_BO.dot(n_hat)
+        V_tx = V_BO.dot(t_x)
+        V_ty = V_BO.dot(t_y)
+
+        ## CALC STARTING/VELOCITY LAUCH POSITION
+        if V_hat.dot(n_hat) <= 0.01:    # If Velocity parallel to landing surface or wrong direction; flag episode to be done
+            self.Done = True
+            
+        elif V_hat.dot(n_hat) <= 0.25:  # Velocity near parallel to landing surface
+
+            ## ## MINIMUM DISTANCE TO START POLICY TRAINING
+            D_perp = 0.2  # Ensure a reasonable minimum perp distance [m]
+
+            ## CALC DISTANCE REQUIRED TO SETTLE ON DESIRED VELOCITY
+            t_settle = 1.5              # Time for system to settle
+            D_settle = t_settle*Vel     # Flight settling distance
+
+            ## INITIAL POSITION RELATIVE TO PLANE
+            r_BP = (D_perp/(V_hat.dot(n_hat)) + D_settle)*V_hat
+
+            ## INITIAL POSITION IN GLOBAL COORDS
+            r_BO = r_PO - r_BP 
+
+            ## LAUNCH QUAD W/ DESIRED VELOCITY
+            self.Vel_Launch(r_BO,V_BO)
+            self.iter_step(t_settle*1e3)
+
+        else: # Velocity NOT parallel to surface
+
+            ## CALC STARTING DISTANCE WHERE POLICY IS MONITORED
+            D_perp = (self.Tau_0*V_perp)    # Initial perp distance
+            D_perp = max(D_perp,0.2)        # Ensure a reasonable minimum distance [m]
+
+            ## CALC DISTANCE REQUIRED TO SETTLE ON DESIRED VELOCITY
+            t_settle = 1.5              # Time for system to settle
+            D_settle = t_settle*Vel     # Flight settling distance
+
+            ## INITIAL POSITION RELATIVE TO PLANE
+            r_BP = (D_perp/(V_hat.dot(n_hat)) + D_settle)*V_hat
+
+            ## INITIAL POSITION IN GLOBAL COORDS
+            r_BO = r_PO - r_BP 
+
+            ## LAUNCH QUAD W/ DESIRED VELOCITY
+            self.Vel_Launch(r_BO,V_BO)
+            self.iter_step(t_settle*1e3)
+
+            
         ## RESET STATE
         vel = np.random.uniform(low=1.5,high=3.5)
         phi = np.random.uniform(low=30,high=90)
@@ -511,13 +620,13 @@ class CF_Env_2D(gym.Env):
             pygame.quit()
             self.isopen = False
 
-    def CalcReward(self):
+    def _CalcReward(self):
 
         R0 = np.clip(1/np.abs(self.Tau_trg-0.18),0,20)/20
         R0 *= 0.05
 
         ## DISTANCE REWARD 
-        R1 = np.clip(1/np.abs(self.d_min),0,10)/10
+        R1 = np.clip(1/np.abs(self.D_min),0,10)/10
         R1 *= 0.1
 
         ## IMPACT ANGLE REWARD

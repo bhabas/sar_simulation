@@ -44,8 +44,8 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## RESET INITIAL VALUES
         self.K_ep = 0
         self.Flip_threshold = 0.5
-        self.D_min = 50.0
-        self.Tau_trg = 50.0
+        self.D_min = np.inf
+        self.Tau_trg = np.inf
         self.Done = False
 
         ## DEFINE OBSERVATION SPACE
@@ -204,8 +204,8 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         ## RESET RECORDED VALUES
         self.Done = False
-        self.D_min = 50.0       # Reset max distance from landing surface [m]
-        self.Tau_trg = 50.0     # Reset Tau triggering value [s]
+        self.D_min = np.inf       # Reset max distance from landing surface [m]
+        self.Tau_trg = np.inf     # Reset Tau triggering value [s]
         self.obs_trg = np.zeros_like(self.observation_space.high)
         self.action_trg = np.zeros_like(self.action_space.high)
 
