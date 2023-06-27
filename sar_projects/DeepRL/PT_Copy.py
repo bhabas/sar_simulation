@@ -32,7 +32,7 @@ current_time = now.strftime("%m_%d-%H:%M")
 
 class CheckpointSaveCallback(BaseCallback):
 
-    def __init__(self, save_freq: int, model_dir, verbose: int = 0):
+    def __init__(self, save_freq: int, model_dir: str, verbose: int = 0):
         super(CheckpointSaveCallback, self).__init__(verbose)
         self.save_freq = save_freq
         self.model_dir = model_dir
@@ -79,32 +79,75 @@ class CheckpointSaveCallback(BaseCallback):
         return True
     
 class RewardCallback(BaseCallback):
-    def __init__(self, check_freq: int, verbose=1):
+    def __init__(self, check_freq: int, save_freq: int, model_dir: str, verbose=1):
+        """ Callback which monitors training progress and saves the model every [save_freq] timesteps
+        and checks for highest mean reward every [check_freq] episodes.
+
+        Args:
+            check_freq (int): Number of episodes to average rewards over
+            save_freq (int): Number of timesteps to save model
+            model_dir (str): Model/replay_buffer save directory
+            verbose (int, optional): Verbose. Defaults to 1.
+        """        
         super(RewardCallback, self).__init__(verbose)
         self.check_freq = check_freq
-        self.rewards = []
+        self.save_freq = save_freq
+        self.model_dir = model_dir
+
+        self.reward_avg = [0]
+        self.reward_std = [0]
+
         self.episode_rewards = []
+        self.highest_reward = -np.inf
 
     def _on_step(self) -> bool:
-        # This method will be called by the model after each call to env.step().
 
-        # We assume the environments are VecEnv, so they are arrays
-        if self.locals["dones"].any():
-            # Get the episodic reward for each environment
-            episode_rewards = self.locals["rewards"]
-            self.episode_rewards.append(episode_rewards)
+        ## SAVE MODEL EVERY N TIMESTEPS
+        if self.num_timesteps % self.save_freq == 0 and self.num_timesteps >= 500:
 
-            if len(self.episode_rewards) > self.check_freq:
-                # Compute and store the mean episodic reward
-                mean_reward = sum(self.episode_rewards) / len(self.episode_rewards)
-                self.rewards.append(mean_reward)
+            ## SAVE NEWEST MODEL AND REPLAY BUFFER
+            model = os.path.join(self.model_dir, f"{self.num_timesteps}_step_model")
+            replay_buff = os.path.join(self.model_dir, f"{self.num_timesteps}_step_replay_buff")
 
-                print(f"Reward Avg: {mean_reward[0]:.3f}")
+            self.model.save(model)
+            self.model.save_replay_buffer(replay_buff)
 
-                # Reset the episodic rewards
+        ## CALC MEAN/STD OF REWARDS EVERY N EPISODES
+        if self.locals["dones"].item():
+            
+            episode_reward = self.locals["rewards"]
+            self.episode_rewards.append(episode_reward)
+
+            if len(self.episode_rewards) >= self.check_freq:
+
+                mean_reward = np.mean(self.episode_rewards)
+                std_reward = np.std(self.episode_rewards)
+
+                self.reward_avg.append(mean_reward)
+                self.reward_std.append(std_reward)
+
+                ## SAVE MODEL IF HIGHEST MEAN REWARD ACHIEVED
+                if mean_reward > self.highest_reward:
+
+                    ## SAVE HIGHEST REWARD
+                    self.highest_reward = mean_reward
+                    print(f"New high score ({self.highest_reward:.3f}), model saved.")
+
+                    ## SAVE NEWEST MODEL AND REPLAY BUFFER
+                    newest_model = os.path.join(self.model_dir, f"{self.num_timesteps}_step_model")
+                    newest_replay_buff = os.path.join(self.model_dir, f"{self.num_timesteps}_step_replay_buff")
+
+                    self.model.save(newest_model)
+                    self.model.save_replay_buffer(newest_replay_buff)
+
+                ## RESET EPISODIC REWARD LIST
                 self.episode_rewards = []
 
-        return True
+        ## TB LOGGING VALUES
+        self.logger.record('custom/K_ep',self.training_env.envs[0].env.K_ep)
+        self.logger.record('custom/Reward_avg',self.reward_avg[-1])
+        self.logger.record('custom/Reward_std',self.reward_std[-1])
+
 
 class Policy_Trainer_DeepRL():
     def __init__(self,env,log_dir,log_name):
@@ -195,23 +238,23 @@ class Policy_Trainer_DeepRL():
         self.model.policy.critic.parameters = prev_model.critic.parameters
 
     
-    def train_model(self,total_timesteps=2e6,save_freq=200,reset_timesteps=False):
-        """Script to train model via Deep RL method
+    def train_model(self,check_freq=10,save_freq=5e3,reset_timesteps=True,total_timesteps=2e6):
+        """Script to train model via DeepRL method
 
         Args:
-            log_name (str): _description_
+            check_freq (int): Number of episodes to average rewards over. Defaults to 10.
+            save_freq (int): Number of timesteps to save model. Defaults to 5e3.
             reset_timesteps (bool, optional): Reset starting timestep to zero. Defaults to True. 
-            Set to False to resume training from previous model.
-        """       
-
-        checkpoint_callback = CheckpointSaveCallback(save_freq=save_freq,model_dir=self.model_dir)
-        reward_callback = RewardCallback(check_freq=20)
-        callback = CallbackList([checkpoint_callback, reward_callback])
+                                              Set to False to resume training from previous model.
+            total_timesteps (int, optional): Timesteps to cutoff model training. Defaults to 2e6.
+        """        
+        
+        reward_callback = RewardCallback(check_freq=check_freq,save_freq=save_freq,model_dir=self.model_dir)
 
         self.model.learn(
             total_timesteps=int(total_timesteps),
             tb_log_name=self.log_name,
-            callback=callback,
+            callback=reward_callback,
             reset_num_timesteps=reset_timesteps,
         )
 
