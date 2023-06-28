@@ -31,7 +31,6 @@ class SAR_Base_Interface():
         self.SAR_Config = rospy.get_param('/SAR_SETTINGS/SAR_Config')
         self.modelInitials = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Initials")
         self.modelName = f"{self.SAR_Type}_{self.SAR_Config}"
-        self.Done = False
         self.preInit_Values()
 
         self.pos_0 = [0.0, 0.0, 0.4]      # Default hover position [m]
@@ -255,7 +254,13 @@ class SAR_Base_Interface():
         self.Tau = 0.0
         self.Theta_x = 0.0
         self.Theta_y = 0.0
+
         self.D_perp = 0.0 
+        self.V_perp = 0.0
+        self.V_tx = 0.0
+        self.V_ty = 0.0
+
+
 
         self.MS_pwm = [0,0,0,0]         # Controller Motor Speeds (MS1,MS2,MS3,MS4) [PWM]
         self.MotorThrusts = [0,0,0,0]   # Controller Motor Thrusts [M1,M2,M3,M4][g]
@@ -430,7 +435,12 @@ class SAR_Base_Interface():
         self.Tau = np.round(StateData_msg.Tau,3)
         self.Theta_x = np.round(StateData_msg.Theta_x,3)
         self.Theta_y = np.round(StateData_msg.Theta_y,3)
+
+        ## PLANE RELATIVE STATES
         self.D_perp = np.round(StateData_msg.D_perp,3)
+        self.V_perp = np.round(StateData_msg.V_perp,3)
+        self.V_tx = np.round(StateData_msg.V_tx,3)
+        self.V_ty = np.round(StateData_msg.V_ty,3)
        
         self.t_prev = self.t # Save t value for next callback iteration
 

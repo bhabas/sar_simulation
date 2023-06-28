@@ -402,7 +402,7 @@ if __name__ == '__main__':
 
 
     ## IMPORT ENVIRONMENTS
-    from Envs.SAR_Sim_DeepRL2 import SAR_Sim_DeepRL
+    from Envs.SAR_Sim_DeepRL import SAR_Sim_DeepRL
     from Envs.CF_Env_2D_2 import CF_Env_2D
     # from Envs.CF_Env_2D_3 import CF_Env_2D
 
@@ -410,14 +410,14 @@ if __name__ == '__main__':
 
 
     # # START TRAINING NEW DEEP RL MODEL 
-    env = SAR_Sim_DeepRL(GZ_Timeout=False,Vel_range=[1.0,3.0],Phi_range=[0,90])
+    env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[1.0,3.0],Phi_range=[0,90])
     # env = CF_Env_2D(Vel_range=[1.0,3.0],Phi_range=[0,90])
     log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
-    log_name = f"Test_Log_Cur"    
+    log_name = f"Test_Log_Cur1"    
 
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.create_model()
-    PolicyTrainer.load_params_from_model(log_dir,"Test_Log_Prev_0",t_step=69000)
+    # PolicyTrainer.load_params_from_model(f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/CF_Env_2D","Test_Log_Prev_0",t_step=69000)
     # PolicyTrainer.load_model(log_dir,"Test_Log_Prev",t_step=80917)
     # env.RENDER = True
     # PolicyTrainer.test_policy(episodes=30)
