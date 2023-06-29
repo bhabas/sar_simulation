@@ -41,24 +41,25 @@ void cml_mat_fill_fromarr(void* m, int m_rows, int m_cols, float arr[], int arr_
     }
 }
 
-void cml_mat_get_column(void* m, int m_rows, int m_cols, int col_get, float output[])
+cml_m31 cml_m31_col_get(cml_m33* m, int col) 
 {
+    cml_m31 v;
+    cml_m31_init(&v);
 
     if (m == NULL) {
         printf("Null matrix pointer!\n");
-        return;
+        return v; // return an empty vector
     }
-    if (col_get < 0 || col_get >= m_cols) {
+    if (col < 0 || col >= m->num_cols) {
         printf("Column index out of bounds!\n");
-        return;
+        return v; // return an empty vector
     }
 
-    // Cast to a float pointer for access
-    float (*data)[m_cols] = m;
-
-    for (int i = 0; i < m_rows; i++) {
-        output[i] = data[i][col_get];
+    for (int i = 0; i < v.num_rows; i++) {
+        v.data[i][0] = m->data[i][col];
     }
+
+    return v; // return the filled vector
 }
 
 

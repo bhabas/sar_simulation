@@ -35,9 +35,7 @@ void cml_m31_init(cml_m31* m);
 
 void cml_mat_print(void* m, int m_rows, int m_cols);
 void cml_mat_fill_fromarr(void* m, int m_rows, int m_cols, float arr[], int arr_size);
-void cml_mat_get_column(void* m, int m_rows, int m_cols, int col_get, float output[]);
-
-
+cml_m31 cml_m31_col_get(cml_m33* m, int col);
 
 
 #ifdef __cplusplus

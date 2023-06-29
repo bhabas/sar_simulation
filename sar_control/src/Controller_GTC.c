@@ -66,13 +66,10 @@ void controllerOutOfTreeInit() {
     cml_mat_print(&matrix,matrix.num_rows,matrix.num_cols);
     // cml_mat_print(&X,X.num_rows,X.num_cols);
 
+    Y = cml_m31_col_get(&matrix,2);
+    cml_mat_print(&Y,Y.num_rows,Y.num_cols);
 
-    float output[3];
-    cml_mat_get_column(matrix.data, matrix.num_rows, matrix.num_cols, 2, output); // Get the second column
 
-    for (int i = 0; i < matrix.num_rows; i++) {
-        printf("%.2f ", output[i]);
-    }
 
     consolePrintf("GTC Controller Initiated\n");
 }
