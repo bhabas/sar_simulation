@@ -88,7 +88,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
             ## NEGATIVE TIME DELTA
             if self.t < t_start:
-                self.done = True
+                self.Done = True
                 return False
 
         return True

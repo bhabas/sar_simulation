@@ -7,12 +7,18 @@ geometry_msgs/Vector3 Eul
 float64 Tau
 float64 Theta_x
 float64 Theta_y
-float64 D_perp
 
 ## OPTICAL FLOW ESTIMATES
 float64 Tau_est
 float64 Theta_x_est
 float64 Theta_y_est
+
+## PLANE RELATIVE STATES
+float64 D_perp
+float64 V_perp
+float64 V_tx
+float64 V_ty
+
 
 float64[4] FM
 float64[4] MotorThrusts
