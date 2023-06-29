@@ -1,21 +1,18 @@
 #include "cml.h"
 
-cml_m33 cml_m33_new()
+void cml_m33_init(cml_m33* m)
 {
-    cml_m33 m;
-    m.num_rows = 3;
-    m.num_cols = 3;
-    memset(m.data, 0, sizeof(m.data));  // Initialize all data to 0
-    return m;
+    m->num_rows = 3;
+    m->num_cols = 3;
+    memset(m->data, 0, sizeof(m->data));
 }
 
-cml_m31 cml_m31_new()
+
+void cml_m31_init(cml_m31* m)
 {
-    cml_m31 m;
-    m.num_rows = 3;
-    m.num_cols = 1;
-    memset(m.data, 0, sizeof(m.data));  // Initialize all data to 0
-    return m;
+    m->num_rows = 3;
+    m->num_cols = 1;
+    memset(m->data, 0, sizeof(m->data));
 }
 
 

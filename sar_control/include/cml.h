@@ -31,8 +31,10 @@ typedef struct{
 
 void cml_mat_print(void* m, int rows, int cols);
 
-cml_m33 cml_m33_new();
-cml_m31 cml_m31_new();
+void cml_m33_init(cml_m33* m);
+void cml_m31_init(cml_m31* m);
+
+
 
 #ifdef __cplusplus
 }

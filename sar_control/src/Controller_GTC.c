@@ -52,8 +52,15 @@ void controllerOutOfTreeInit() {
     Y_output = nml_mat_new(4,1);
     // NN_init(&NN_DeepRL,NN_Params_DeepRL);
 
-    cml_m33 matrix = cml_m33_new();
+    cml_m33 matrix;
+    cml_m31 vec;
+
+    cml_m33_init(&matrix);
+    cml_m31_init(&vec);
+    
     cml_mat_print(&matrix,matrix.num_rows,matrix.num_cols);
+    cml_mat_print(&vec,vec.num_rows,vec.num_cols);
+
     consolePrintf("GTC Controller Initiated\n");
 }
 
