@@ -132,10 +132,10 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         
         ## CALC STARTING/VELOCITY LAUCH POSITION
-        if V_hat.dot(n_hat) <= 0.10:    # If Velocity parallel to landing surface or wrong direction; flag episode to be done
+        if V_hat.dot(n_hat) <= 0.09:    # If Velocity parallel (within 5 deg) to landing surface or wrong direction; flag episode to be done
             self.Done = True
             
-        elif V_hat.dot(n_hat) <= 0.35:  # Velocity near parallel to landing surface
+        elif V_hat.dot(n_hat) <= 0.35:  # Velocity near parallel (within 20 deg) to landing surface
 
             ## ## MINIMUM DISTANCE TO START POLICY TRAINING
             D_perp = 0.2  # Ensure a reasonable minimum perp distance [m]
@@ -428,8 +428,8 @@ if __name__ == "__main__":
 
     for ep in range(20):
 
-        Vel = None
-        Phi = None
+        Vel = 2.5
+        Phi = 40
         obs,_ = env.reset(Vel=Vel,Phi=Phi)
 
         Done = False
