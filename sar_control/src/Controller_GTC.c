@@ -52,40 +52,19 @@ void controllerOutOfTreeInit() {
     Y_output = nml_mat_new(4,1);
     // NN_init(&NN_DeepRL,NN_Params_DeepRL);
 
-    cml_m33 matrix1;
-    cml_m33 matrix2;
-    cml_m33_init(&matrix1);
-    cml_m33_init(&matrix2);
+    cml_m33 L;
+    cml_m33 U;
+    cml_m33 P;
 
+    cml_m33_init(&L);
+    cml_m33_init(&U);
+    cml_m33_init(&P);
 
-    cml_m31 X;
-    cml_m31 Y;
+    cml_m33_lup* LUP;
+    LUP = cml_mat_lup_init(&L,&U,&P,5);
 
-    cml_m31_init(&X);
-
-    matrix1 = cml_m33_eye();
-
-    float arr[9] = {1, 0, 0, 0, 1, 0, 0, 3, 1};
-    cml_mat_fill_fromarr(&matrix1,matrix1.num_rows,matrix1.num_cols,arr,9);
-    // cml_mat_fill_fromarr(&matrix2,matrix2.num_rows,matrix2.num_cols,arr,9);
-
-    int idx = cml_m33_absmaxr(&matrix1, 1);
-    printf("IDX: %d\n",idx);
-
-
-    // cml_m33_row_swap_r(&matrix1,1,2);
-    // cml_m33_col_swap_r(&matrix1,1,2);
-    // cml_m33_row_addrow_r(&matrix1,0,2,3);
-
-
-    cml_mat_print(&matrix1,matrix1.num_rows,matrix1.num_cols);
-
-    // // float val = cml_vec_dot(&matrix1,1,&matrix2,1);
-    // // printf("Val: %.3f\n",val);
-
-
-    // Y = cml_m31_col_get(&matrix1,2);
-    // cml_mat_print(&Y,Y.num_rows,Y.num_cols);
+    printf("Val: %d\n",LUP->num_permutations);
+    cml_mat_print(LUP->L,LUP->L->num_rows,LUP->L->num_cols);
 
 
 

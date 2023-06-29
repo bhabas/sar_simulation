@@ -189,6 +189,19 @@ int cml_m33_absmaxr(cml_m33* m, int k)
     return maxIdx;
 }
 
+// Allocates memory for a new nml_mat_lup structure
+cml_m33_lup* cml_mat_lup_init(cml_m33 *L, cml_m33 *U, cml_m33 *P, int num_permutations)
+{
+  cml_m33_lup* r;
+
+  r->L = L;
+  r->U = U;
+  r->P = P;
+  r->num_permutations = num_permutations;
+
+  return r;
+}
+
 
 void cml_mat_print(void* m, int m_rows, int m_cols)
 {

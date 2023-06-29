@@ -28,6 +28,12 @@ typedef struct{
     int num_cols;
 }cml_m31;
 
+typedef struct{
+  cml_m33 *L;
+  cml_m33 *U;
+  cml_m33 *P;
+  int num_permutations;
+} cml_m33_lup;
 
 
 void cml_m33_init(cml_m33* m);
@@ -47,6 +53,8 @@ int cml_m33_absmaxr(cml_m33* m, int k);
 void cml_mat_print(void* m, int m_rows, int m_cols);
 cml_m31 cml_m31_col_get(cml_m33* m, int col);
 float cml_vec_dot(cml_m33* m1, int m1_col, cml_m33* m2, int m2_col);
+
+cml_m33_lup *cml_mat_lup_init(cml_m33 *L, cml_m33 *U, cml_m33 *P, int num_permutations);
 
 
 
