@@ -17,24 +17,25 @@ extern "C" {
 #define CML_MIN_COEF 0.000000000000001
 
 typedef struct{
+    float data[3][3];
     int num_rows;
     int num_cols;
-    float data[3][3];
 }cml_m33;
 
 typedef struct{
+    float data[3][1];
     int num_rows;
     int num_cols;
-    float data[3][1];
 }cml_m31;
 
 
-void cml_mat_print(void* m, int rows, int cols);
 
 void cml_m33_init(cml_m33* m);
 void cml_m31_init(cml_m31* m);
 
-void cml_mat_fill_fromarr(void* mat_data, int rows, int cols, float arr[], int arr_size);
+void cml_mat_print(void* m, int m_rows, int m_cols);
+void cml_mat_fill_fromarr(void* m, int m_rows, int m_cols, float arr[], int arr_size);
+void cml_mat_get_column(void* m, int m_rows, int m_cols, int col_get, float output[]);
 
 
 

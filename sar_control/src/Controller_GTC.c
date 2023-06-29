@@ -53,17 +53,26 @@ void controllerOutOfTreeInit() {
     // NN_init(&NN_DeepRL,NN_Params_DeepRL);
 
     cml_m33 matrix;
-    cml_m31 vec;
+    cml_m31 X;
+    cml_m31 Y;
 
     cml_m33_init(&matrix);
-    cml_m31_init(&vec);
+    cml_m31_init(&X);
 
     float arr[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
     cml_mat_fill_fromarr(matrix.data,matrix.num_rows,matrix.num_cols,arr,9);
-    printf("val: %d\n",matrix.num_rows);
+    // printf("val: %d\n",matrix.num_rows);
 
     cml_mat_print(&matrix,matrix.num_rows,matrix.num_cols);
-    // cml_mat_print(&vec,vec.num_rows,vec.num_cols);
+    // cml_mat_print(&X,X.num_rows,X.num_cols);
+
+
+    float output[3];
+    cml_mat_get_column(matrix.data, matrix.num_rows, matrix.num_cols, 2, output); // Get the second column
+
+    for (int i = 0; i < matrix.num_rows; i++) {
+        printf("%.2f ", output[i]);
+    }
 
     consolePrintf("GTC Controller Initiated\n");
 }
@@ -390,7 +399,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
 PARAM_GROUP_START(CTRL_Params)
 // NOTE: PARAM GROUP + NAME + 1 CANNOT EXCEED 26 CHARACTERS (WHY? IDK.)
-// NOTE: CANNOT HAVE A LOG AND A PARAM ACCESS THE SAME VALUE
+// NOTE: CANNOT HAVE matrix LOG AND matrix PARAM ACCESS THE SAME VALUE
 
 PARAM_ADD(PARAM_FLOAT, CF_mass, &m)
 PARAM_ADD(PARAM_FLOAT, Ixx, &Ixx)
