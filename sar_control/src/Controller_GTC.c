@@ -50,8 +50,9 @@ void controllerOutOfTreeInit() {
     // INIT DEEP RL NN POLICY
     X_input = nml_mat_new(3,1);
     Y_output = nml_mat_new(4,1);
-    NN_init(&NN_DeepRL,NN_Params_DeepRL);
+    // NN_init(&NN_DeepRL,NN_Params_DeepRL);
     
+    test_func();
     consolePrintf("GTC Controller Initiated\n");
 }
 
