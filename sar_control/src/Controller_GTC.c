@@ -57,9 +57,13 @@ void controllerOutOfTreeInit() {
 
     cml_m33_init(&matrix);
     cml_m31_init(&vec);
-    
+
+    float arr[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+    cml_mat_fill_fromarr(matrix.data,matrix.num_rows,matrix.num_cols,arr,9);
+    printf("val: %d\n",matrix.num_rows);
+
     cml_mat_print(&matrix,matrix.num_rows,matrix.num_cols);
-    cml_mat_print(&vec,vec.num_rows,vec.num_cols);
+    // cml_mat_print(&vec,vec.num_rows,vec.num_cols);
 
     consolePrintf("GTC Controller Initiated\n");
 }

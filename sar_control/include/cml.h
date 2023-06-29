@@ -34,6 +34,9 @@ void cml_mat_print(void* m, int rows, int cols);
 void cml_m33_init(cml_m33* m);
 void cml_m31_init(cml_m31* m);
 
+void cml_mat_fill_fromarr(void* mat_data, int rows, int cols, float arr[], int arr_size);
+
+
 
 
 #ifdef __cplusplus
