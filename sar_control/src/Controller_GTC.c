@@ -63,18 +63,29 @@ void controllerOutOfTreeInit() {
 
     cml_m31_init(&X);
 
-    float arr[9] = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+    matrix1 = cml_m33_eye();
+
+    float arr[9] = {1, 0, 0, 0, 1, 0, 0, 3, 1};
     cml_mat_fill_fromarr(&matrix1,matrix1.num_rows,matrix1.num_cols,arr,9);
-    cml_mat_fill_fromarr(&matrix2,matrix2.num_rows,matrix2.num_cols,arr,9);
+    // cml_mat_fill_fromarr(&matrix2,matrix2.num_rows,matrix2.num_cols,arr,9);
+
+    int idx = cml_m33_absmaxr(&matrix1, 1);
+    printf("IDX: %d\n",idx);
+
+
+    // cml_m33_row_swap_r(&matrix1,1,2);
+    // cml_m33_col_swap_r(&matrix1,1,2);
+    // cml_m33_row_addrow_r(&matrix1,0,2,3);
+
 
     cml_mat_print(&matrix1,matrix1.num_rows,matrix1.num_cols);
 
-    // float val = cml_vec_dot(&matrix1,1,&matrix2,1);
-    // printf("Val: %.3f\n",val);
+    // // float val = cml_vec_dot(&matrix1,1,&matrix2,1);
+    // // printf("Val: %.3f\n",val);
 
 
-    Y = cml_m31_col_get(&matrix1,2);
-    cml_mat_print(&Y,Y.num_rows,Y.num_cols);
+    // Y = cml_m31_col_get(&matrix1,2);
+    // cml_mat_print(&Y,Y.num_rows,Y.num_cols);
 
 
 
