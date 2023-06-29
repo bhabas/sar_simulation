@@ -1,18 +1,3 @@
-/**
-Copyright 20201 Andrei N. Ciobanu
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
 
 #pragma once
 
@@ -24,12 +9,30 @@ extern "C" {
 #include <stdio.h>
 #include <stdarg.h>
 #include <time.h>
+#include <float.h>
+#include <math.h>
+#include <string.h>
 
 
-#define NML_MIN_COEF 0.000000000000001
+#define CML_MIN_COEF 0.000000000000001
+
+typedef struct{
+    int num_rows;
+    int num_cols;
+    float data[3][3];
+}cml_m33;
+
+typedef struct{
+    int num_rows;
+    int num_cols;
+    float data[3][1];
+}cml_m31;
 
 
-void test_func();
+void cml_mat_print(void* m, int rows, int cols);
+
+cml_m33 cml_m33_new();
+cml_m31 cml_m31_new();
 
 #ifdef __cplusplus
 }
