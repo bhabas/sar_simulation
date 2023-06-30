@@ -17,6 +17,16 @@ cml_m33 cml_m33_new()
     return m;
 }
 
+cml_m31 cml_m31_new()
+{
+    cml_m31 m;
+    m.num_rows = 3;
+    m.num_cols = 1;
+    memset(m.data, 0, sizeof(m.data));
+
+    return m;
+}
+
 cml_m33 cml_m33_cp(cml_m33* m)
 {
     cml_m33 r = cml_m33_new();
@@ -210,6 +220,31 @@ float cml_vec_dot(cml_m33* m1, int m1_col, cml_m33* m2, int m2_col)
 
 // *****************************************************************************
 //
+// Matrix Operations
+//
+// *****************************************************************************
+//
+// Matrix Operations
+//
+cml_m31 cml_m33_m31_dot(cml_m33 *mat, cml_m31 *vec) {
+
+  cml_m31 r = cml_m31_new();
+  for(int i = 0; i < r.num_rows; i++) 
+  {
+    for(int j = 0; j < r.num_cols; j++) 
+    {
+      for(int k = 0; k < mat->num_cols; k++) 
+      {
+        r.data[i][j] += mat->data[i][k] * vec->data[k][j];
+      }
+    }
+  }
+  return r;
+}
+
+
+// *****************************************************************************
+//
 // LUP Decomposition
 //
 // *****************************************************************************
@@ -294,5 +329,95 @@ cml_m33_lup cml_m33_lup_solve(cml_m33* m)
 
 
 
+// *****************************************************************************
+//
+// Solving linear systems of equations
+//
+// *****************************************************************************
 
+// Forward substitution algorithm
+// Solves the linear system L * x = b
+//
+// L is lower triangular matrix of size NxN
+// B is column matrix of size Nx1
+// x is the solution column matrix of size Nx1
+//
+// Note: In case L is not a lower triangular matrix, the algorithm will try to
+// select only the lower triangular part of the matrix L and solve the system
+// with it.
+//
+// Note: In case any of the diagonal elements (L[i][i]) are 0 the system cannot
+// be solved
+//
+// Note: This function is usually used with an L matrix from a LU decomposition
+cml_m31 cml_ls_solvefwd(cml_m33 *L, cml_m31 *b) 
+{
+  cml_m31 x = cml_m31_new(L->num_cols, 1);
+  int i,j;
+  double tmp;
+  for(i = 0; i < L->num_cols; i++) {
+    tmp = b->data[i][0];
+    for(j = 0; j < i ; j++) {
+      tmp -= L->data[i][j] * x.data[j][0];
+    }
+    x.data[i][0] = tmp / L->data[i][i];
+  }
+  return x;
+}
+
+
+// Back substition algorithm
+// Solves the linear system U *x = b
+//
+// U is an upper triangular matrix of size NxN
+// B is a column matrix of size Nx1
+// x is the solution column matrix of size Nx1
+//
+// Note in case U is not an upper triangular matrix, the algorithm will try to
+// select only the upper triangular part of the matrix U and solve the system
+// with it
+//
+// Note: In case any of the diagonal elements (U[i][i]) are 0 the system cannot
+// be solved
+cml_m31 cml_ls_solvebck(cml_m33 *U, cml_m31 *b)
+{
+  cml_m31 x = cml_m31_new(U->num_cols, 1);
+  int i = U->num_cols, j;
+  double tmp;
+  while(i-->0) {
+    tmp = b->data[i][0];
+    for(j = i; j < U->num_cols; j++) {
+      tmp -= U->data[i][j] * x.data[j][0];
+    }
+    x.data[i][0] = tmp / U->data[i][i];
+  }
+  return x;
+}
+
+// A[n][n] is a square matrix
+// m contains matrices L, U, P for A[n][n] so that P*A = L*U
+//
+// The linear system is:
+// A*x=b  =>  P*A*x = P*b  =>  L*U*x = P*b  =>
+// (where b is a matrix[n][1], and x is a matrix[n][1])
+//
+// if y = U*x , we solve two systems:
+//    L * y = P b (forward substition)
+//    U * x = y (backward substition)
+//
+// We obtain and return x
+cml_m31 cml_ls_solve(cml_m33_lup *lu, cml_m31* b) 
+{
+
+  cml_m31 Pb = cml_m33_m31_dot(&(lu->P), b);
+
+  // We solve L*y = P*b using forward substition
+  cml_m31 y = cml_ls_solvefwd(&(lu->L), &Pb);
+
+  // We solve U*x=y
+  cml_m31 x = cml_ls_solvebck(&(lu->U), &y);
+
+
+  return x;
+}
     

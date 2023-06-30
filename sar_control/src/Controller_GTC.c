@@ -68,14 +68,21 @@ void controllerOutOfTreeInit() {
 
     // ============ CML ============= //
     // CREATE MATRIX
-    float arr2[9] = {4,-3,1,-2,1,-3,1,-1,2};
+    float arr2[9] = {1,2,2,3,-2,1,2,1,-1};
     cml_m33 M2 = cml_m33_new();
     cml_mat_fill_fromarr(&M2,3,3,arr2,9);
-    // cml_mat_print(&M2,3,3);
+
+    float arr4[3] = {5,-6,-1};
+    cml_m31 b2 = cml_m31_new();
+    cml_mat_fill_fromarr(&b2,3,1,arr4,3);
+    // cml_mat_print(&b2,3,1);
 
     // LUP SOLVE
     cml_m33_lup LUP2 = cml_m33_lup_solve(&M2);
-    cml_m33_lup_print(&LUP2);
+    // cml_m33_lup_print(&LUP2);
+    cml_m31 x2 = cml_ls_solve(&LUP2,&b2);
+    cml_mat_print(&x2,3,1);
+
 
 
 

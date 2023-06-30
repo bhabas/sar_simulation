@@ -35,9 +35,10 @@ typedef struct{
   int num_permutations;
 } cml_m33_lup;
 
+void cml_m31_init(cml_m31* m);
+cml_m31 cml_m31_new();
 
 void cml_m33_init(cml_m33* m);
-void cml_m31_init(cml_m31* m);
 cml_m33 cml_m33_new();
 cml_m33 cml_m33_eye();
 cml_m33 cml_m33_cp(cml_m33* m);
@@ -59,6 +60,11 @@ float cml_vec_dot(cml_m33* m1, int m1_col, cml_m33* m2, int m2_col);
 cml_m33_lup cml_m33_lup_new(cml_m33 L, cml_m33 U, cml_m33 P, int num_permutations);
 void cml_m33_lup_print(cml_m33_lup *lup);
 cml_m33_lup cml_m33_lup_solve(cml_m33* m);
+
+cml_m31 cml_ls_solvefwd(cml_m33 *L, cml_m31 *b);
+cml_m31 cml_ls_solvebck(cml_m33 *U, cml_m31 *b);
+cml_m31 cml_ls_solve(cml_m33_lup *lu, cml_m31* b);
+
 
 
 
