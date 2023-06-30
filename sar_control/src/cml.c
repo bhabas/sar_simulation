@@ -7,12 +7,69 @@ void cml_m33_init(cml_m33* m)
     memset(m->data, 0, sizeof(m->data));
 }
 
+cml_m33 cml_m33_new()
+{
+    cml_m33 m;
+    m.num_rows = 3;
+    m.num_cols = 3;
+    memset(m.data, 0, sizeof(m.data));
+
+    return m;
+}
+
+cml_m33 cml_m33_cp(cml_m33* m)
+{
+    cml_m33 r = cml_m33_new();
+
+    for (int i = 0; i < r.num_rows; i++)
+    {
+        for (int j = 0; j < r.num_cols; j++)
+        {
+            r.data[i][j] = m->data[i][j];
+        }
+        
+    }
+    return r;
+}
+
+cml_m33 cml_m33_eye()
+{
+    cml_m33 m = cml_m33_new();
+
+    for (int i = 0; i < 3; i++)
+    {
+        m.data[i][i] = 1.0f;
+    }
+    return m;
+}
+
 
 void cml_m31_init(cml_m31* m)
 {
     m->num_rows = 3;
     m->num_cols = 1;
     memset(m->data, 0, sizeof(m->data));
+}
+
+void cml_mat_print(void* m, int m_rows, int m_cols)
+{
+    if(m == NULL) {
+        printf("Null matrix pointer!\n");
+        return;
+    }
+    
+    // Cast to a float pointer for access
+    float (*data)[m_cols] = m;
+    
+    for (int i = 0; i < m_rows; i++)
+    {
+        for (int j = 0; j < m_cols; j++)
+        {
+            printf("%.5f ", data[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
 }
 
 void cml_mat_fill_fromarr(void* m, int m_rows, int m_cols, float arr[], int arr_size)
@@ -41,20 +98,10 @@ void cml_mat_fill_fromarr(void* m, int m_rows, int m_cols, float arr[], int arr_
     }
 }
 
-cml_m33 cml_m33_eye()
-{
-    cml_m33 m;
-    cml_m33_init(&m);
 
-    for (int i = 0; i < 3; i++)
-    {
-        m.data[i][i] = 1.0f;
-    }
-    return m;
-}
 
 // Sets all elements of the matrix to given value
-int cml_mat_diag_set(cml_m33 *m, double value)
+int cml_m33_diag_set(cml_m33 *m, double value)
 {
 
   for(int i = 0; i < m->num_rows; i++) {
@@ -189,36 +236,77 @@ int cml_m33_absmaxr(cml_m33* m, int k)
     return maxIdx;
 }
 
-// Allocates memory for a new nml_mat_lup structure
-cml_m33_lup* cml_mat_lup_init(cml_m33 *L, cml_m33 *U, cml_m33 *P, int num_permutations)
+// Creates a new nml_mat_lup structure
+cml_m33_lup cml_m33_lup_new(cml_m33 L, cml_m33 U, cml_m33 P, int num_permutations)
 {
-  cml_m33_lup* r;
+    cml_m33_lup r;
 
-  r->L = L;
-  r->U = U;
-  r->P = P;
-  r->num_permutations = num_permutations;
+    r.L = L;
+    r.U = U;
+    r.P = P;
+    r.num_permutations = num_permutations;
 
   return r;
 }
 
-
-void cml_mat_print(void* m, int m_rows, int m_cols)
+void cml_m33_lup_print(cml_m33_lup *lup) 
 {
-    if(m == NULL) {
-        printf("Null matrix pointer!\n");
-        return;
-    }
-    
-    // Cast to a float pointer for access
-    float (*data)[m_cols] = m;
-    
-    for (int i = 0; i < m_rows; i++)
-    {
-        for (int j = 0; j < m_cols; j++)
-        {
-            printf("%.5f ", data[i][j]);
-        }
-        printf("\n");
-    }
+  cml_mat_print(&(lup->L),3,3);
+  cml_mat_print(&(lup->U),3,3);
+  cml_mat_print(&(lup->P),3,3);
 }
+
+cml_m33_lup cml_m33_lup_solve(cml_m33* m)
+{
+    cml_m33 L = cml_m33_new();
+    cml_m33 U = cml_m33_cp(m);
+    cml_m33 P = cml_m33_eye();
+
+    // cml_mat_print(&P,3,3);
+    int num_permutations = 0;
+
+    int pivot;
+    float mult;
+
+    for (int j = 0; j < U.num_cols; j++)
+    {
+        // Retrieves the row with the biggest element for column (j)
+        pivot = cml_m33_absmaxr(&U,j);
+        if (fabs(U.data[pivot][j]) < CML_MIN_COEF)
+        {
+            printf("CML Error: CANNOT LU MATRIX DEGENERATE");
+        }
+        
+        if (pivot!=j)
+        {
+            // Pivots LU and P accordingly to the rule
+            cml_m33_row_swap_r(&L, j, pivot);
+            cml_m33_row_swap_r(&U, j, pivot);
+            cml_m33_row_swap_r(&P, j, pivot);
+
+            // Keep the number of permutations to easiliy calculate the
+            // determinant sign afterwards
+            num_permutations++;
+        }
+        for (int i = j+1; i < U.num_rows; i++)
+        {
+            mult = U.data[i][j] / U.data[j][j];
+            // Building the U uppper rows
+            cml_m33_row_addrow_r(&U, i, j, -mult);
+            // Store the multiplier in L
+            L.data[i][j] = mult;
+        }
+    }
+    cml_m33_diag_set(&L,1.0);
+
+    cml_m33_lup LUP = cml_m33_lup_new(L,U,P,num_permutations);
+    
+    return LUP;
+}
+
+
+
+
+
+
+    

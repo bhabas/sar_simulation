@@ -52,20 +52,16 @@ void controllerOutOfTreeInit() {
     Y_output = nml_mat_new(4,1);
     // NN_init(&NN_DeepRL,NN_Params_DeepRL);
 
-    cml_m33 L;
-    cml_m33 U;
-    cml_m33 P;
+    cml_m33 matrix;
+    matrix = cml_m33_new();
 
-    cml_m33_init(&L);
-    cml_m33_init(&U);
-    cml_m33_init(&P);
+    float arr[9] = {8,6,4,9,3,1,6,7,9};
+    cml_mat_fill_fromarr(&matrix,3,3,arr,9);
 
-    cml_m33_lup* LUP;
-    LUP = cml_mat_lup_init(&L,&U,&P,5);
-
-    printf("Val: %d\n",LUP->num_permutations);
-    cml_mat_print(LUP->L,LUP->L->num_rows,LUP->L->num_cols);
-
+    cml_m33_lup LUP = cml_m33_lup_solve(&matrix);
+    // cml_mat_print(LUP.P,3,3);
+    // cml_mat_print(&(LUP.P),3,3);
+    cml_m33_lup_print(&LUP);
 
 
     consolePrintf("GTC Controller Initiated\n");
