@@ -151,6 +151,7 @@ nml_mat *nml_mat_rref(nml_mat *m);
 //
 // *****************************************************************************
 
+int _nml_mat_absmaxr(nml_mat *m, int k);
 nml_mat_lup *nml_mat_lup_new(nml_mat *L, nml_mat *U, nml_mat *P, int num_permutations);
 nml_mat_lup *nml_mat_lup_solve(nml_mat *m);
 void nml_mat_lup_free(nml_mat_lup* lu);

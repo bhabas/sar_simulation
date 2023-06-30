@@ -324,7 +324,7 @@ int nml_mat_eq(nml_mat *m1, nml_mat *m2, double tolerance) {
 
 // Prints the matrix on the stdout
 void nml_mat_print(nml_mat *matrix) {
-  nml_mat_printf(matrix, "%lf\t\t");
+  nml_mat_printf(matrix, "% lf\t");
 }
 
 // Prints the matrix on the stdout (with a custom formatting for elements)
@@ -918,9 +918,9 @@ nml_mat_lup *nml_mat_lup_solve(nml_mat *m) {
   nml_mat *L = nml_mat_new(m->num_rows, m->num_rows);
   nml_mat *U = nml_mat_cp(m);
   nml_mat *P = nml_mat_eye(m->num_rows);
+  int num_permutations = 0;
 
   int j,i, pivot;
-  int num_permutations = 0;
   double mult;
 
   for(j = 0; j < U->num_cols; j++) {

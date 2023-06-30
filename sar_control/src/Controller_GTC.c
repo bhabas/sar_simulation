@@ -52,16 +52,33 @@ void controllerOutOfTreeInit() {
     Y_output = nml_mat_new(4,1);
     // NN_init(&NN_DeepRL,NN_Params_DeepRL);
 
-    cml_m33 matrix;
-    matrix = cml_m33_new();
 
-    float arr[9] = {8,6,4,9,3,1,6,7,9};
-    cml_mat_fill_fromarr(&matrix,3,3,arr,9);
+    // ============ NML ============= //
+    // CREATE MATRIX
+    double arr1[9] = {4,-3,1,-2,1,-3,1,-1,2};
+    nml_mat* M1 = nml_mat_from(3,3,9,arr1);
+    // nml_mat_print(M1);
 
-    cml_m33_lup LUP = cml_m33_lup_solve(&matrix);
-    // cml_mat_print(LUP.P,3,3);
-    // cml_mat_print(&(LUP.P),3,3);
-    cml_m33_lup_print(&LUP);
+    // LUP SOLVE
+    nml_mat_lup* LUP1 = nml_mat_lup_solve(M1);
+    nml_mat_lup_print(LUP1);
+    // nml_mat_print(nml_mat_lu_get(LUP1));
+
+    printf("==================================\n");
+
+    // ============ CML ============= //
+    // CREATE MATRIX
+    float arr2[9] = {4,-3,1,-2,1,-3,1,-1,2};
+    cml_m33 M2 = cml_m33_new();
+    cml_mat_fill_fromarr(&M2,3,3,arr2,9);
+    // cml_mat_print(&M2,3,3);
+
+    // LUP SOLVE
+    cml_m33_lup LUP2 = cml_m33_lup_solve(&M2);
+    cml_m33_lup_print(&LUP2);
+
+
+
 
 
     consolePrintf("GTC Controller Initiated\n");

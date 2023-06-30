@@ -65,7 +65,7 @@ void cml_mat_print(void* m, int m_rows, int m_cols)
     {
         for (int j = 0; j < m_cols; j++)
         {
-            printf("%.5f ", data[i][j]);
+            printf("% .6f\t", data[i][j]);
         }
         printf("\n");
     }
@@ -218,21 +218,16 @@ float cml_vec_dot(cml_m33* m1, int m1_col, cml_m33* m2, int m2_col)
 // This method is used for pivoting in LUP decomposition
 int cml_m33_absmaxr(cml_m33* m, int k)
 {
-    if (m == NULL || k < 0 || k >= m->num_cols) {
-        printf("Invalid matrix or column index!\n");
-        return -1; // Return an invalid index as an error indicator
-    }
-
+    // Find max id on the column;
+    int i;
+    double max = m->data[k][k];
     int maxIdx = k;
-    float maxVal = fabs(m->data[k][k]);
-
-    for (int i = k + 1; i < m->num_rows; i++) {
-        if (fabs(m->data[i][k]) > maxVal) {
-            maxVal = fabs(m->data[i][k]);
-            maxIdx = i;
+    for(i = k+1; i < m->num_rows; i++) {
+        if (fabs(m->data[i][k]) > max) {
+        max = fabs(m->data[i][k]);
+        maxIdx = i;
         }
     }
-
     return maxIdx;
 }
 
@@ -261,47 +256,38 @@ cml_m33_lup cml_m33_lup_solve(cml_m33* m)
     cml_m33 L = cml_m33_new();
     cml_m33 U = cml_m33_cp(m);
     cml_m33 P = cml_m33_eye();
-
-    // cml_mat_print(&P,3,3);
     int num_permutations = 0;
 
-    int pivot;
-    float mult;
+    int j,i, pivot;
+    double mult;
 
-    for (int j = 0; j < U.num_cols; j++)
-    {
+    for(j = 0; j < U.num_cols; j++) {
         // Retrieves the row with the biggest element for column (j)
-        pivot = cml_m33_absmaxr(&U,j);
-        if (fabs(U.data[pivot][j]) < CML_MIN_COEF)
-        {
-            printf("CML Error: CANNOT LU MATRIX DEGENERATE");
+        pivot = cml_m33_absmaxr(&U, j);
+        if (fabs(U.data[pivot][j]) < CML_MIN_COEF) {
+            printf("CANNOT_LU_MATRIX_DEGENERATE");
         }
-        
-        if (pivot!=j)
-        {
+        if (pivot!=j) {
             // Pivots LU and P accordingly to the rule
-            cml_m33_row_swap_r(&L, j, pivot);
             cml_m33_row_swap_r(&U, j, pivot);
+            cml_m33_row_swap_r(&L, j, pivot);
             cml_m33_row_swap_r(&P, j, pivot);
-
-            // Keep the number of permutations to easiliy calculate the
+            // Keep the number of permutations to easily calculate the
             // determinant sign afterwards
             num_permutations++;
         }
-        for (int i = j+1; i < U.num_rows; i++)
-        {
+        for(i = j+1; i < U.num_rows; i++) {
             mult = U.data[i][j] / U.data[j][j];
-            // Building the U uppper rows
+            // Building the U upper rows
             cml_m33_row_addrow_r(&U, i, j, -mult);
             // Store the multiplier in L
             L.data[i][j] = mult;
         }
     }
-    cml_m33_diag_set(&L,1.0);
+    cml_m33_diag_set(&L, 1.0);
 
-    cml_m33_lup LUP = cml_m33_lup_new(L,U,P,num_permutations);
     
-    return LUP;
+    return cml_m33_lup_new(L,U,P,num_permutations);
 }
 
 
