@@ -16,7 +16,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
     metadata = {"render_modes": ["human"]}
 
-    def __init__(self,GZ_Timeout=True,My_range=[0.0,8.0],Vel_range=[1.5,3.5],Phi_range=[0,90],Tau_0=0.4):
+    def __init__(self,GZ_Timeout=True,My_range=[-8.0,8.0],Vel_range=[1.5,3.5],Phi_range=[0,90],Tau_0=0.4):
         """
         Args:
             GZ_Timeout (bool, optional): Determines if Gazebo will restart if it freezed. Defaults to False.
@@ -133,7 +133,23 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         
         ## CALC STARTING/VELOCITY LAUCH POSITION
         if V_hat.dot(n_hat) <= 0.09:    # If Velocity parallel (within 5 deg) to landing surface or wrong direction; flag episode to be done
-            self.Done = True
+
+            ## MINIMUM DISTANCE TO START POLICY TRAINING
+            D_perp = 0.17  # Ensure a reasonable minimum perp distance [m]
+
+            ## CALC DISTANCE REQUIRED TO SETTLE ON DESIRED VELOCITY
+            t_settle = 1.5              # Time for system to settle
+            D_settle = t_settle*Vel     # Flight settling distance
+
+            ## INITIAL POSITION RELATIVE TO PLANE
+            r_BP = (D_perp/(V_hat.dot(n_hat)+1e-6) + D_settle)*V_hat
+
+            ## INITIAL POSITION IN GLOBAL COORDS
+            r_BO = r_PO - r_BP 
+
+            ## LAUNCH QUAD W/ DESIRED VELOCITY
+            self.Vel_Launch(r_BO,V_BO)
+            self.iter_step(t_settle*1e3)
             
         elif V_hat.dot(n_hat) <= 0.35:  # Velocity near parallel (within 20 deg) to landing surface
 
@@ -145,7 +161,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             D_settle = t_settle*Vel     # Flight settling distance
 
             ## INITIAL POSITION RELATIVE TO PLANE
-            r_BP = (D_perp/(V_hat.dot(n_hat)) + D_settle)*V_hat
+            r_BP = (D_perp/(V_hat.dot(n_hat)+1e-6) + D_settle)*V_hat
 
             ## INITIAL POSITION IN GLOBAL COORDS
             r_BO = r_PO - r_BP 
@@ -165,7 +181,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             D_settle = t_settle*Vel     # Flight settling distance
 
             ## INITIAL POSITION RELATIVE TO PLANE
-            r_BP = (D_perp/(V_hat.dot(n_hat)) + D_settle)*V_hat
+            r_BP = (D_perp/(V_hat.dot(n_hat)+1e-6) + D_settle)*V_hat
 
             ## INITIAL POSITION IN GLOBAL COORDS
             r_BO = r_PO - r_BP 
@@ -352,15 +368,16 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## SAMPLE PHI FROM A WEIGHTED SET OF UNIFORM DISTRIBUTIONS
         Phi_Low = self.Phi_range[0]
         Phi_High = self.Phi_range[1]
+        Phi_Range = Phi_High-Phi_Low
 
         Dist_Num = np.random.choice([0,1,2],p=[0.05,0.9,0.05]) # Probability of sampling distribution
 
-        if Dist_Num == 0:
-            phi = np.random.default_rng().uniform(low=Phi_Low, high=Phi_Low + 10)
-        elif Dist_Num == 1:
-            phi = np.random.default_rng().uniform(low=Phi_Low + 10, high=Phi_High - 10)
-        elif Dist_Num == 2:
-            phi = np.random.default_rng().uniform(low=Phi_High - 10, high=Phi_High)
+        if Dist_Num == 0: # Low Range
+            phi = np.random.default_rng().uniform(low=Phi_Low, high=Phi_Low + 0.1*Phi_Range)
+        elif Dist_Num == 1: # Medium Range
+            phi = np.random.default_rng().uniform(low=Phi_Low + 0.1*Phi_Range, high=Phi_High - 0.1*Phi_Range)
+        elif Dist_Num == 2: # High Range
+            phi = np.random.default_rng().uniform(low=Phi_High - 0.1*Phi_Range, high=Phi_High)
 
         return vel,phi
 
@@ -423,13 +440,15 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
 if __name__ == "__main__":
 
-    env = SAR_Sim_DeepRL(GZ_Timeout=False,Vel_range=[1.0,3.0],Phi_range=[0,90])
+    env = SAR_Sim_DeepRL(GZ_Timeout=False,Vel_range=[1.0,3.0],Phi_range=[10,30])
     # check_env(env)
 
     for ep in range(20):
 
         Vel = 2.5
         Phi = 40
+        env._sample_flight_conditions()
+
         obs,_ = env.reset(Vel=Vel,Phi=Phi)
 
         Done = False

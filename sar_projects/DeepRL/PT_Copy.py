@@ -608,17 +608,9 @@ if __name__ == '__main__':
     from Envs.CF_Env_2D_2 import CF_Env_2D
     # from Envs.CF_Env_2D_3 import CF_Env_2D
 
-    # # START TRAINING NEW DEEP RL MODEL 
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.create_model()
-    # PolicyTrainer.load_params_from_model(f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/CF_Env_2D","Test_Log_Prev_0",t_step=69000)
-    # PolicyTrainer.load_model(log_dir,"Test_Log_Prev",t_step=80917)
-    # env.RENDER = True
-    # PolicyTrainer.test_policy(episodes=30)
-    # PolicyTrainer.train_model()
 
     # # START TRAINING NEW DEEP RL MODEL 
-    env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[1.5,4.0],Phi_range=[0,90])
+    env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[2.25,4.0],Phi_range=[10,30])
     log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
 
 
@@ -631,32 +623,33 @@ if __name__ == '__main__':
     # ================================================================= ##
     
     # RESUME TRAINING DEEP RL MODEL
-    log_name = "A30_L75_K08--Deg_180.0--SAC_06_28-10:53_0"
-    t_step_load = 36668
+    log_name = "A30_L75_K08--Deg_180.0--SAC_07_01-18:54_0"
+    t_step_load = 55000
 
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.load_model(log_dir,log_name,t_step_load)
+    PolicyTrainer.train_model(save_freq=5000,total_timesteps=60000)
+
     # PolicyTrainer.collect_landing_performance()
-    # PolicyTrainer.plot_landing_performance()
+    # PolicyTrainer.plot_landing_performance(saveFig=True)
+    # PolicyTrainer.test_policy(Vel=3.5,Phi=20,episodes=15)
 
-    # PolicyTrainer.train_model(save_freq=5000,reset_timesteps=False)
 
-    # PolicyTrainer.test_policy(Vel=3.0,Phi=70,episodes=10)
 
     # ================================================================= ##
 
-    # COLLECT LANDING PERFORMANCE DATA
+    # # COLLECT LANDING PERFORMANCE DATA
     # env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[1.5,4.0],Phi_range=[0,90])
-    # env = None
+    # # env = None
     # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/SAR_Sim_DeepRL_Env"
-    # log_name = "A20_L75_K32--Deg_180.0--SAC_06_23-12:45_0"
-    # t_step_load = 109400
+    # log_name = "A30_L75_K08--Deg_180.0--SAC_07_01-18:54_0"
+    # t_step_load = 30393
 
     # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # # PolicyTrainer.load_model(t_step_load)
-    # # PolicyTrainer.test_landing_performance()
+    # PolicyTrainer.load_model(t_step_load)
+    # PolicyTrainer.collect_landing_performance()
     # # PolicyTrainer.test_policy(Vel=2.5,Phi=60,episodes=10)
-    # PolicyTrainer.plot_landing_performance(saveFig=True)
+    # # PolicyTrainer.plot_landing_performance(saveFig=True)
 
     # ================================================================= ##
 
