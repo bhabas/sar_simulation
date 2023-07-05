@@ -229,7 +229,7 @@ class Policy_Trainer_DeepRL():
             ENV_SETTINGS = dict(
                 Environment = self.env.Env_Name,
                 Vel_Limts = self.env.Vel_range,
-                Phi_Limits = self.env.Phi_range,
+                Phi_Limits = self.env.Phi_rel_range,
             ),
 
             LEARNING_MODEL = dict(
@@ -610,7 +610,7 @@ if __name__ == '__main__':
 
 
     # # START TRAINING NEW DEEP RL MODEL 
-    env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[2.25,4.0],Phi_range=[10,30])
+    env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[2.25,4.0],Phi_rel_range=[10,30])
     log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
 
 

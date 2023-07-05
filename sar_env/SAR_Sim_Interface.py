@@ -47,7 +47,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         if GZ_Timeout == True:
             self.start_monitoring_clock_topic()
 
-
+        ## WAIT TILL TOPIC DATA STARTS COMING IN
         rospy.wait_for_message("/SAR_DC/MiscData",SAR_MiscData)
 
 

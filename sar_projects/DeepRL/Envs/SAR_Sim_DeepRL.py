@@ -16,7 +16,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
     metadata = {"render_modes": ["human"]}
 
-    def __init__(self,GZ_Timeout=True,My_range=[-8.0,8.0],Vel_range=[1.5,3.5],Phi_range=[0,90],Tau_0=0.4):
+    def __init__(self,GZ_Timeout=True,My_range=[-8.0,8.0],Vel_range=[1.5,3.5],Phi_rel_range=[0,90],Tau_0=0.4):
         """
         Args:
             GZ_Timeout (bool, optional): Determines if Gazebo will restart if it freezed. Defaults to False.
@@ -38,7 +38,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## TESTING CONDITIONS
         self.Tau_0 = Tau_0          
         self.Vel_range = Vel_range  
-        self.Phi_range = Phi_range
+        self.Phi_range = Phi_rel_range
         self.My_range = My_range
 
         ## RESET INITIAL VALUES
@@ -363,23 +363,26 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## SAMPLE VEL FROM UNIFORM DISTRIBUTION IN VELOCITY RANGE
         Vel_Low = self.Vel_range[0]
         Vel_High = self.Vel_range[1]
-        vel = np.random.uniform(low=Vel_Low,high=Vel_High)
+        Vel = np.random.uniform(low=Vel_Low,high=Vel_High)
 
-        ## SAMPLE PHI FROM A WEIGHTED SET OF UNIFORM DISTRIBUTIONS
-        Phi_Low = self.Phi_range[0]
-        Phi_High = self.Phi_range[1]
-        Phi_Range = Phi_High-Phi_Low
+        ## SAMPLE RELATIVE PHI FROM A WEIGHTED SET OF UNIFORM DISTRIBUTIONS
+        Phi_rel_Low = self.Phi_range[0]
+        Phi_rel_High = self.Phi_range[1]
+        Phi_rel_Range = Phi_rel_High-Phi_rel_Low
 
         Dist_Num = np.random.choice([0,1,2],p=[0.05,0.9,0.05]) # Probability of sampling distribution
 
         if Dist_Num == 0: # Low Range
-            phi = np.random.default_rng().uniform(low=Phi_Low, high=Phi_Low + 0.1*Phi_Range)
+            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_Low, high=Phi_rel_Low + 0.1*Phi_rel_Range)
         elif Dist_Num == 1: # Medium Range
-            phi = np.random.default_rng().uniform(low=Phi_Low + 0.1*Phi_Range, high=Phi_High - 0.1*Phi_Range)
+            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_Low + 0.1*Phi_rel_Range, high=Phi_rel_High - 0.1*Phi_rel_Range)
         elif Dist_Num == 2: # High Range
-            phi = np.random.default_rng().uniform(low=Phi_High - 0.1*Phi_Range, high=Phi_High)
+            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_High - 0.1*Phi_rel_Range, high=Phi_rel_High)
 
-        return vel,phi
+        ## CONVERT RELATIVE PHI TO GLOBAL PHI
+        Phi_global = (self.Plane_Angle + Phi_rel) - 180 # (Derivation: Research_Notes_Book_3.pdf (7/5/23))
+        
+        return Vel,Phi_global
 
     def _calc_PlaneNormal(self):
 
@@ -440,7 +443,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
 if __name__ == "__main__":
 
-    env = SAR_Sim_DeepRL(GZ_Timeout=False,Vel_range=[1.0,3.0],Phi_range=[10,30])
+    env = SAR_Sim_DeepRL(GZ_Timeout=False,Vel_range=[1.0,3.0],Phi_rel_range=[0,180])
     # check_env(env)
 
     for ep in range(20):
