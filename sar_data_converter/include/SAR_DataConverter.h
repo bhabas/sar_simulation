@@ -281,6 +281,7 @@ class SAR_DataConverter {
         // ===================
 
         ros::Time Time;
+        ros::Time Time_prev;
 
         geometry_msgs::Pose Pose;
         geometry_msgs::Twist Twist;

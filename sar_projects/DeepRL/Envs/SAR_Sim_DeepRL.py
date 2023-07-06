@@ -288,7 +288,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         ## SEND FLIP ACTION TO CONTROLLER
         My = scaled_action # Body rotational moment [N*mm]
-        self.SendCmd("Moment",[0,My,0],cmd_flag=1)
+        self.SendCmd("Policy",[0,My,0],cmd_flag=1)
 
         ## RUN REMAINING STEPS AT FULL SPEED
         self.pause_physics(False)
