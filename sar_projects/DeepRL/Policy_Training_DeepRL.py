@@ -615,16 +615,16 @@ if __name__ == '__main__':
     # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
 
 
-    env = CF_Env_2D(Vel_range=[2.0,4.0],Phi_rel_range=[0,90])
-    # env.RENDER = True
-    log_name = "Testing_Log"
-    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
+    # env = CF_Env_2D(Vel_range=[2.0,4.0],Phi_rel_range=[0,90])
+    # # env.RENDER = True
+    # log_name = "Testing_Log"
+    # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
 
 
 
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.create_model()
-    PolicyTrainer.train_model(save_freq=5000)
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.create_model()
+    # PolicyTrainer.train_model(save_freq=5000)
 
 
     # ================================================================= ##
@@ -646,29 +646,15 @@ if __name__ == '__main__':
 
     # ================================================================= ##
 
-    # # COLLECT LANDING PERFORMANCE DATA
-    # env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[1.5,4.0],Phi_range=[0,90])
-    # # env = None
-    # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/SAR_Sim_DeepRL_Env"
-    # log_name = "A30_L75_K08--Deg_180.0--SAC_07_01-18:54_0"
-    # t_step_load = 30393
+    # COLLECT LANDING PERFORMANCE DATA
+    env = SAR_Sim_DeepRL(GZ_Timeout=False,Vel_range=[1.5,4.0],Phi_rel_range=[0,90])
+    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/SAR_Sim_DeepRL_Env"
+    log_name = "A30_L75_K08--Deg_180.0--SAC_07_01-18:54_0"
+    t_step_load = 55488
 
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.load_model(t_step_load)
-    # PolicyTrainer.collect_landing_performance()
-    # # PolicyTrainer.test_policy(Vel=2.5,Phi=60,episodes=10)
-    # # PolicyTrainer.plot_landing_performance(saveFig=True)
-
-    # ================================================================= ##
-
-    # # # PLOT LANDING PERFORMANCE
-    # env = None
-    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Gazebo"
-    # log_name = "A20_L75_K32--Deg_180--SAC_02_17-08:23_0"
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.Plot_Landing_Performance(saveFig=True)
-
-
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.load_model(log_dir,log_name,t_step_load)
+    PolicyTrainer.test_policy(Vel=2.5,Phi=60,episodes=10)
 
 
     

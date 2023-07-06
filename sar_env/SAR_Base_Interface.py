@@ -508,6 +508,8 @@ class SAR_Base_Interface():
             self.omega_impact = np.round([ImpactData_msg.Twist_impact.angular.x,
                                           ImpactData_msg.Twist_impact.angular.y,
                                           ImpactData_msg.Twist_impact.angular.z],3)
+            
+            self.Rot_Sum_impact = ImpactData_msg.Rot_Sum
 
 
     def SAR_MiscDataCallback(self,MiscData_msg):        

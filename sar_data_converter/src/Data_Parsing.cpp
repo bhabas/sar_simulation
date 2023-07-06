@@ -76,7 +76,9 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
     if(ctrl_msg.flip_flag == true && impact_flag == false)
     {
-        printf("Val: %f\n",Time.toSec()-Time_prev.toSec());
+        double Time_delta = Time.toSec()-Time_prev.toSec();
+        Rot_Sum += (Time_delta*Twist.angular.y)*180/M_PI;
+        // printf("Val: %f\n",Rot_Sum);
     }
     
 

@@ -136,6 +136,8 @@ void SAR_DataConverter::Publish_ImpactData()
     ImpactData_msg.Pad3_Contact = Pad3_Contact;
     ImpactData_msg.Pad4_Contact = Pad4_Contact;
 
+    ImpactData_msg.Rot_Sum = Rot_Sum;
+
     ImpactData_Pub.publish(ImpactData_msg);
 }
 

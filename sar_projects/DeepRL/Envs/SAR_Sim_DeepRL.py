@@ -251,6 +251,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             truncated = False
             
             ## CALCULATE REWARD
+            print(self.Rot_Sum_impact)
             reward = self._CalcReward()
 
         if terminated or truncated:

@@ -317,6 +317,8 @@ class SAR_DataConverter {
         geometry_msgs::Vector3 v_d;
         geometry_msgs::Vector3 a_d;
 
+        double Rot_Sum = 0.0;
+
         // ==================
         //     FLIP DATA
         // ==================
@@ -512,6 +514,7 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
             OnceFlag_flip = false;
             Time_tr.sec = 0.0;
             Time_tr.nsec = 0.0;
+            Rot_Sum = 0.0;
 
             // RESET IMPACT TIME
             impact_flag = false;
