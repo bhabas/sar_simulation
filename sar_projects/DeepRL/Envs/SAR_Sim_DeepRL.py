@@ -9,7 +9,6 @@ import time
 from gazebo_msgs.srv import GetModelState, GetModelStateRequest
 
 from sar_env import SAR_Sim_Interface
-from stable_baselines3.common.env_checker import check_env
 
 
 class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
@@ -123,8 +122,8 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         V_y = 0
         V_z = Vel*np.sin(np.deg2rad(Phi))
         
-        V_BO = np.array([V_x,V_y,V_z])         # Flight Velocity
-        V_hat = V_BO/np.linalg.norm(V_BO)     # Flight Velocity unit vector
+        V_BO = np.array([V_x,V_y,V_z])      # Flight Velocity
+        V_hat = V_BO/np.linalg.norm(V_BO)   # Flight Velocity unit vector
 
         ## RELATIVE VEL VECTORS
         V_perp = V_BO.dot(n_hat)
@@ -447,7 +446,6 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 if __name__ == "__main__":
 
     env = SAR_Sim_DeepRL(GZ_Timeout=False,Vel_range=[1.0,3.0],Phi_rel_range=[0,180])
-    # check_env(env)
 
     for ep in range(20):
 
