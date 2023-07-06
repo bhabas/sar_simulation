@@ -146,7 +146,8 @@ class Policy_Trainer_DeepRL():
             tensorboard_log=self.log_dir
         ) 
 
-        # self.save_config_file()
+        if self.env.Env_Name != "CF_Env_2D":
+            self.save_config_file()
 
         return self.model
     
@@ -609,37 +610,37 @@ if __name__ == '__main__':
 
 
     # # START TRAINING NEW DEEP RL MODEL 
-    env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[1.5,4.0],Phi_rel_range=[0,180])
-    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
+    # env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[1.5,4.0],Phi_rel_range=[0,180])
+    # log_name = f"{env.modelInitials}--Deg_{env.Plane_Angle}--SAC_{current_time}" 
+    # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
+
+
+    env = CF_Env_2D(Vel_range=[2.0,4.0],Phi_rel_range=[0,90])
     # env.RENDER = True
+    log_name = "Testing_Log"
+    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
 
 
 
-    log_name = f"{env.modelInitials}--Deg_{env.Plane_Angle}--SAC_{current_time}" 
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.create_model()
     PolicyTrainer.train_model(save_freq=5000)
 
-    # log_name = f"Test_Training3" 
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.create_model()
-    # PolicyTrainer.train_model(save_freq=5000)
-
 
     # ================================================================= ##
     
-    # # RESUME TRAINING DEEP RL MODEL
-    # log_name = "Test_Training2_0"
-    # t_step_load = 35000
+    # # # RESUME TRAINING DEEP RL MODEL
+    # log_name = "Testing_Log_0"
+    # t_step_load = 30000
     # env.RENDER = True
 
     # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     # PolicyTrainer.load_model(log_dir,log_name,t_step_load)
     # # PolicyTrainer.train_model(save_freq=5000,total_timesteps=60000)
+    # PolicyTrainer.test_policy(episodes=30)
 
     # # # PolicyTrainer.collect_landing_performance()
     # # # PolicyTrainer.plot_landing_performance(saveFig=True)
-    # PolicyTrainer.test_policy(episodes=30)
 
 
 

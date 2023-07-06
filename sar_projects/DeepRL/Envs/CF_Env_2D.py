@@ -464,7 +464,7 @@ class CF_Env_2D(gym.Env):
 
 
             ## UPDATE MINIMUM DISTANCE
-            D_perp = obs[2]
+            D_perp = self._get_obs()[2]
             if not self.Done:
                 if D_perp <= self.D_min:
                     self.D_min = D_perp 
