@@ -186,6 +186,7 @@ class SAR_DataConverter {
         std::string DATA_TYPE;  // Sim or Experiment Flag
         ros::Time Time_start;   // Initial time in UNIX notation
         int LOGGING_RATE = 10;  // Default Logging Rate
+        bool SHOW_CONSOLE = true;
         bool isInit = false;    // Load these params only on first start of SAR_DC
 
 
@@ -463,6 +464,8 @@ inline void SAR_DataConverter::LoadParams()
     ros::param::get("/SIM_SETTINGS/Landing_Slowdown_Flag",LANDING_SLOWDOWN_FLAG);
 
     ros::param::get("/SAR_DC_SETTINGS/Logging_Rate",LOGGING_RATE);
+    ros::param::get("/SAR_DC_SETTINGS/Console_Output",SHOW_CONSOLE);
+
 
     // COLLECT CTRL GAINS
     ros::param::get(SAR_Type_str + "/CtrlGains/P_kp_xy",P_kp_xy);

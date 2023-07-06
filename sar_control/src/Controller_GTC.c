@@ -263,7 +263,6 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         
                     if (onceFlag == false && V_perp > 0.1f)
                     {
-                        printf("Stuff: %.3f\n",Policy_Flip_Action);
                         onceFlag = true;
 
                         // UPDATE AND RECORD FLIP VALUES

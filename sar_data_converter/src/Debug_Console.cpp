@@ -12,7 +12,7 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
     const int refresh_rate = 20; // 20 Hz
     const int delay_time_us = 1000000 / refresh_rate;
 
-    while(true) {
+    while(SHOW_CONSOLE == true) {
         // Clear the screen buffer
         erase();
 
