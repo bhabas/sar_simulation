@@ -16,7 +16,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
     metadata = {"render_modes": ["human"]}
 
-    def __init__(self,GZ_Timeout=True,My_range=[-8.0,8.0],Vel_range=[1.5,3.5],Phi_rel_range=[0,90],Tau_0=0.4):
+    def __init__(self,GZ_Timeout=True,My_range=[-8.0,8.0],Vel_range=[1.5,3.5],Phi_rel_range=[0,90],Plane_Angle_range=None,Tau_0=0.4):
         """
         Args:
             GZ_Timeout (bool, optional): Determines if Gazebo will restart if it freezed. Defaults to False.
@@ -39,6 +39,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.Tau_0 = Tau_0          
         self.Vel_range = Vel_range  
         self.Phi_range = Phi_rel_range
+        self.Plane_Angle_range = Plane_Angle_range
         self.My_range = My_range
 
         ## RESET INITIAL VALUES
@@ -287,7 +288,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         scaled_action = 0.5 * (action[1] + 1) * (self.My_range[1] - self.My_range[0]) + self.My_range[0]
 
         ## SEND FLIP ACTION TO CONTROLLER
-        My = -scaled_action # Body rotational moment [N*mm]
+        My = scaled_action # Body rotational moment [N*mm]
         self.SendCmd("Moment",[0,My,0],cmd_flag=1)
 
         ## RUN REMAINING STEPS AT FULL SPEED
@@ -417,8 +418,10 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         R_tau = np.clip(1/np.abs(self.Tau_trg - 0.2),0,15)/15
 
         ## IMPACT ANGLE REWARD
-        temp = np.deg2rad(-self.eul_impact[1] - self.Plane_Angle - 45*np.sign(np.cos(self.Plane_Angle_rad)))
-        R_angle = 0.5*np.cos(temp) + 0.5
+        Beta_global = self.eul_impact[1]
+        Phi_Plane = self.Plane_Angle
+        Beta_rel = -180 + Beta_global + Phi_Plane
+        R_angle = 0.5*(-np.cos(np.deg2rad(Beta_rel)) + 1) # (Derivation: Research_Notes_Book_3.pdf (6/21/23))
 
         ## PAD CONTACT REWARD
         if self.pad_connections >= 3: 
@@ -450,7 +453,7 @@ if __name__ == "__main__":
 
         Vel = 2.5
         Phi = 40
-        env._sample_flight_conditions()
+        # env._sample_flight_conditions()
 
         obs,_ = env.reset(Vel=Vel,Phi=Phi)
 
