@@ -9,7 +9,7 @@
 // FIRMWARE INCLUDES
 #include "app.h"
 #include "controller.h"
-#include "shared_lib.h"
+#include "Shared_Lib.h"
 
 
 // ROS INCLUDES
@@ -17,9 +17,9 @@
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
 
-#include "crazyflie_msgs/GTC_Cmd_srv.h"
-#include "crazyflie_msgs/CtrlData.h"
-#include "crazyflie_msgs/CtrlDebug.h"
+#include "sar_msgs/CTRL_Cmd_srv.h"
+#include "sar_msgs/CTRL_Data.h"
+#include "sar_msgs/CTRL_Debug.h"
 
 
 
@@ -40,8 +40,8 @@ class Controller
             Ext_Pos_Subscriber = nh->subscribe("/SAR_External/ExtPosition",1,&Controller::Ext_Pos_Update_Callback,this,ros::TransportHints().tcpNoDelay());
             
             // MISC SERVICES/PUBLISHERS
-            CTRL_Data_Publisher = nh->advertise<crazyflie_msgs::CtrlData>("/CTRL/data",1);
-            CTRL_Debug_Publisher = nh->advertise<crazyflie_msgs::CtrlDebug>("CTRL/debug",1);
+            CTRL_Data_Publisher = nh->advertise<sar_msgs::CTRL_Data>("/CTRL/data",1);
+            CTRL_Debug_Publisher = nh->advertise<sar_msgs::CTRL_Debug>("CTRL/debug",1);
             CTRL_CMD_Service = nh->advertiseService("/CTRL/Cmd_ctrl",&Controller::CMD_Service_Resp,this);
 
 
@@ -64,8 +64,8 @@ class Controller
         ros::Publisher CTRL_Debug_Publisher;
 
         // MESSAGES
-        crazyflie_msgs::CtrlData CtrlData_msg;
-        crazyflie_msgs::CtrlDebug CtrlDebug_msg;
+        sar_msgs::CTRL_Data CtrlData_msg;
+        sar_msgs::CTRL_Debug CtrlDebug_msg;
 
 
         // DEFINE THREAD OBJECTS
@@ -88,7 +88,7 @@ class Controller
         // FUNCTION PROTOTYPES
         void IMU_Update_Callback(const sensor_msgs::Imu::ConstPtr &msg);
         void Ext_Pos_Update_Callback(const nav_msgs::Odometry::ConstPtr &msg);
-        bool CMD_Service_Resp(crazyflie_msgs::GTC_Cmd_srv::Request &req, crazyflie_msgs::GTC_Cmd_srv::Response &res);
+        bool CMD_Service_Resp(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs::CTRL_Cmd_srv::Response &res);
 
 
         void appLoop();
@@ -102,18 +102,18 @@ class Controller
 };
 
 
-bool Controller::CMD_Service_Resp(crazyflie_msgs::GTC_Cmd_srv::Request &req, crazyflie_msgs::GTC_Cmd_srv::Response &res)
+bool Controller::CMD_Service_Resp(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs::CTRL_Cmd_srv::Response &res)
 {
     // RESPOND THE SRV WAS RECIEVED
     res.srv_Success = true;
 
-    // UPDATE GTC_Cmd STRUCT VALUES
-    GTC_Cmd.cmd_type = req.cmd_type;
-    GTC_Cmd.cmd_val1 = req.cmd_vals.x;
-    GTC_Cmd.cmd_val2 = req.cmd_vals.y;
-    GTC_Cmd.cmd_val3 = req.cmd_vals.z;
-    GTC_Cmd.cmd_flag = req.cmd_flag;
-    GTC_Cmd.cmd_rx = req.cmd_rx;
+    // UPDATE CTRL_Cmd STRUCT VALUES
+    CTRL_Cmd.cmd_type = req.cmd_type;
+    CTRL_Cmd.cmd_val1 = req.cmd_vals.x;
+    CTRL_Cmd.cmd_val2 = req.cmd_vals.y;
+    CTRL_Cmd.cmd_val3 = req.cmd_vals.z;
+    CTRL_Cmd.cmd_flag = req.cmd_flag;
+    CTRL_Cmd.cmd_rx = req.cmd_rx;
 
     if(req.cmd_type == 21) // RESET ROS PARAM VALUES
     {
@@ -163,8 +163,8 @@ void Controller::loadParams()
 {
     printf("Updating Parameters\n");
 
-    ros::param::get("/QUAD_SETTINGS/SAR_Type",SAR_Type);
-    ros::param::get("/QUAD_SETTINGS/SAR_Config",SAR_Config);
+    ros::param::get("/SAR_SETTINGS/SAR_Type",SAR_Type);
+    ros::param::get("/SAR_SETTINGS/SAR_Config",SAR_Config);
     SAR_Type = "/SAR_Type/" + SAR_Type;
     SAR_Config = "/Config/" + SAR_Config;
     
@@ -208,23 +208,19 @@ void Controller::loadParams()
     ros::param::get(SAR_Type + "/CtrlGains/R_ki_z",R_ki_z);
     ros::param::get(SAR_Type + "/CtrlGains/i_range_R_z",i_range_R_z);
 
-    // ros::param::get("/QUAD_SETTINGS/Cam_Sensor",camera_sensor_active);
+    // ros::param::get("/SAR_SETTINGS/Cam_Sensor",camera_sensor_active);
 
 
     // SIMULATION SETTINGS FROM CONFIG FILE
-    ros::param::get("QUAD_SETTINGS/Policy_Type",POLICY_TYPE_STR); // Set string from params file into controller
+    ros::param::get("SAR_SETTINGS/Policy_Type",POLICY_TYPE_STR); // Set string from params file into controller
     if (strcmp(POLICY_TYPE_STR.c_str(),"PARAM_OPTIM")==0)
     {
         Policy = PARAM_OPTIM;
     }
-    else if (strcmp(POLICY_TYPE_STR.c_str(),"SVL_POLICY")==0)
+    else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL_ONBOARD")==0)
     {
-        Policy = SVL_POLICY;
+        Policy = DEEP_RL_ONBOARD;
     }
-    else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL")==0)
-    {
-        Policy = DEEP_RL;
-    }    
     else if (strcmp(POLICY_TYPE_STR.c_str(),"DEEP_RL_SB3")==0)
     {
         Policy = DEEP_RL_SB3;
@@ -289,8 +285,8 @@ void Controller::publishCtrlData()
     CtrlData_msg.Theta_y_est = Theta_y_est;
 
     // NEURAL NETWORK DATA
-    CtrlData_msg.Policy_Flip = Policy_Flip;
-    CtrlData_msg.Policy_Action = Policy_Action;
+    CtrlData_msg.Policy_Trg_Action = Policy_Trg_Action;
+    CtrlData_msg.Policy_Flip_Action = Policy_Flip_Action;
 
     // CONTROL ACTIONS
     CtrlData_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};

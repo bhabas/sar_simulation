@@ -2,17 +2,15 @@
 import numpy as np
 import time
 
-import rospkg,os
-
-from crazyflie_env import SAR_Sim_Interface
+from sar_env import SAR_Sim_Interface
 
 
 class SAR_ParamOpt_Sim(SAR_Sim_Interface):
-    metadata = {'render.modes': ['human']}
+
     def __init__(self,GZ_Timeout=False):
         SAR_Sim_Interface.__init__(self)        
 
-        self.env_name = "SAR_ParamOptim"
+        self.Env_Name = "SAR_ParamOptim_Env"
         self.k_ep = 0
     
         self.D_min = 50.0
@@ -134,18 +132,11 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
             if (time.time() - start_time_ep) > 15.0 and self.GZ_Timeout == True:
                 print('\033[93m' + "[WARNING] Real Time Exceeded" + '\x1b[0m')
-                self.Restart()
+                self.restart_Sim()
                 self.done = True
 
 
-            if any(np.isnan(self.vel)): 
-                self.error_str = "Rollout Completed: NaN in State Vector"
 
-                print('\033[93m' + "[WARNING] NaN in State Vector" + '\x1b[0m')
-                self.Restart([True,True,True])
-                print('\033[93m' + "[WARNING] Resuming Flight" + '\x1b[0m')
-                self.done = True
-                # print(self.error_str)
 
         reward = self.CalcReward()
 
@@ -175,13 +166,15 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         else:
             R3 = 0.0
 
+        self.reward_vals = [R1,R2,R3,0,0]
+
         return R1 + R2 + R3
 
 
 
 if __name__ == "__main__":
 
-    env = SAR_IFC_ParamOpt_Sim(GZ_Timeout=False)
+    env = SAR_ParamOpt_Sim(GZ_Timeout=False)
 
     for ii in range(1000):
         Tau_tr = 0.2

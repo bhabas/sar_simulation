@@ -16,9 +16,9 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
         // Clear the screen buffer
         erase();
 
-        mvprintw(0, 0,"t: %.4f V: %.3f \t DataType: %s",(Time-Time_start).toSec(),V_battery,DATA_TYPE.c_str());
-        mvprintw(1, 0,"SAR Type:   %s \t Plane Model:  %s",SAR_Type.c_str(),Plane_Model.c_str());
-        mvprintw(2, 0,"SAR Config: %s  \t Plane Angle: % 6.2f",SAR_Config.c_str(),Plane_Angle);
+        mvprintw(0, 0,"t: %.4f V: %.3f\t  DataType: %s",(Time-Time_start).toSec(),V_battery,DATA_TYPE.c_str());
+        mvprintw(1, 0,"SAR Type:   %s\t  Plane Model:  %s",SAR_Type.c_str(),Plane_Model.c_str());
+        mvprintw(2, 0,"SAR Config: %s\t  Plane Angle: % 6.2f",SAR_Config.c_str(),Plane_Angle);
 
 
         mvprintw(4, 0,"==== Flags ====");
@@ -32,9 +32,9 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
         mvprintw(12, 0,"Vel [m/s]:\t % 8.3f  % 8.3f  % 8.3f",Twist.linear.x,Twist.linear.y,Twist.linear.z);
         mvprintw(13, 0,"Omega [rad/s]:\t % 8.3f  % 8.3f  % 8.3f",Twist.angular.x,Twist.angular.y,Twist.angular.z);
         mvprintw(14, 0,"Eul [deg]:\t % 8.3f  % 8.3f  % 8.3f",Eul.x,Eul.y,Eul.z);
-        mvprintw(15, 0,"Vel [mag,phi,alph]: % 8.3f % 8.3f % 8.3f",Vel_mag,Phi,Alpha);
+        mvprintw(15, 0,"Vel [mag,phi,alph]: % 8.3f % 8.3f",Vel_mag,Phi);
 
-        mvprintw(17, 0,"==== Relative States ====");
+        mvprintw(17, 0,"==== Policy States ====");
         mvprintw(18, 0,"D_perp:  % 7.3f  V_perp: % 7.3f  V_tx:   % 7.3f",D_perp,V_perp,V_tx);
         mvprintw(19, 0,"Tau:     % 7.3f  \u03B8x:    % 7.3f  \u03B8y:    % 7.3f",Tau,Theta_x,Theta_y);
         mvprintw(20, 0,"Tau_est: % 7.3f  \u03B8x_est: % 7.3f  \u03B8y_est: % 7.3f",Tau_est,Theta_x_est,Theta_y_est);
@@ -42,19 +42,15 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
         mvprintw(22, 0,"==== Policy: %s ====",POLICY_TYPE.c_str());
         if (strcmp(POLICY_TYPE.c_str(),"PARAM_OPTIM") == 0)
         {
-            mvprintw(23, 0,"Tau_thr: % 7.3f \tMy: % 7.3f",Policy_Flip,Policy_Action);
-        }
-        else if (strcmp(POLICY_TYPE.c_str(),"SVL_POLICY") == 0)
-        {
-            mvprintw(23, 0,"Policy_Flip: % 7.3f \tPolicy_Action: % 7.3f ",Policy_Flip,Policy_Action);
-        }
-        else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL") == 0)
-        {
-            mvprintw(23, 0,"Stuff: % 7.3f \tStuff: % 7.3f ",Policy_Flip,Policy_Action);
+            mvprintw(23, 0,"Tau_thr: % 7.3f \tMy: % 7.3f",Policy_Trg_Action,Policy_Flip_Action);
         }
         else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL_SB3") == 0)
         {
-            mvprintw(23, 0,"SB3");
+            mvprintw(23, 0,"Policy_Trg_Action: % 7.3f \tPolicy_Action: % 7.3f ",Policy_Trg_Action,Policy_Flip_Action);
+        }
+        else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL_ONBOARD") == 0)
+        {
+            mvprintw(23, 0,"Policy_Trg_Action: % 7.3f \tPolicy_Action: % 7.3f ",Policy_Trg_Action,Policy_Flip_Action);
         }
 
         mvprintw(25,0,"==== Flip Trigger Values ====");

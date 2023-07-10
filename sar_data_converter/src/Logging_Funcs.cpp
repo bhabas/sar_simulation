@@ -8,7 +8,7 @@
 // =========================
 // /home/bhabas/catkin_ws/src/crazyflie_simulation/
 
-bool SAR_DataConverter::DataLogging_Callback(crazyflie_msgs::loggingCMD::Request &req, crazyflie_msgs::loggingCMD::Response &res)
+bool SAR_DataConverter::DataLogging_Callback(sar_msgs::loggingCMD::Request &req, sar_msgs::loggingCMD::Response &res)
 {
     switch(req.Logging_CMD){
         case 0: // CREATE CSV WHEN ACTIVATED
@@ -66,7 +66,7 @@ void SAR_DataConverter::create_CSV()
     // POLICY DATA
     fprintf(fPtr,"k_ep,k_run,");
     fprintf(fPtr,"t,");
-    fprintf(fPtr,"Policy_Flip,Policy_Action,");
+    fprintf(fPtr,"Policy_Trg_Action,Policy_Flip_Action,");
     fprintf(fPtr,"mu,sigma,policy,");
 
 
@@ -95,7 +95,7 @@ void SAR_DataConverter::create_CSV()
 
 
     fprintf(fPtr,"## DATA_TYPE: %s, ",DATA_TYPE.c_str());
-    fprintf(fPtr,"QUAD_SETTINGS: {Policy_Type: %s, SAR_Type: %s, SAR_Config: %s}, ",POLICY_TYPE.c_str(),SAR_Type.c_str(),SAR_Config.c_str());
+    fprintf(fPtr,"SAR_SETTINGS: {Policy_Type: %s, SAR_Type: %s, SAR_Config: %s}, ",POLICY_TYPE.c_str(),SAR_Type.c_str(),SAR_Config.c_str());
     fprintf(fPtr,"PLANE_SETTINGS: {Plane_Model: %s}, ",Plane_Model.c_str());
     fprintf(fPtr,"\n");
 
@@ -108,7 +108,7 @@ void SAR_DataConverter::append_CSV_states()
     // POLICY DATA
     fprintf(fPtr,"%u,%u,",k_ep,k_run);                          // k_ep,k_run
     fprintf(fPtr,"%.3f,",(Time-Time_start).toSec());            // t
-    fprintf(fPtr,"%.3f,%.3f,",Policy_Flip,Policy_Action);       // Policy_Flip,Policy_Action
+    fprintf(fPtr,"%.3f,%.3f,",Policy_Trg_Action,Policy_Flip_Action);       // Policy_Trg_Action,Policy_Flip_Action
     fprintf(fPtr,"--,--,--,");                                  // mu,sigma,policy
 
 
@@ -154,7 +154,7 @@ void SAR_DataConverter::append_CSV_misc()
     fprintf(fPtr,"%.3f,%.3f,%.3f,",vel_d[0],vel_d[1],vel_d[2]); // vel_d.x,vel_d.y,vel_d.z
     fprintf(fPtr,"--,--,--,");                                  // D_perp, Tau, Tau_est
     fprintf(fPtr,"--,--,--,--,");                               // Theta_x,Theta_x_est,Theta_y,Theta_y_est,
-    fprintf(fPtr,"%.2f,[%.3f %.3f %.3f %.3f %.3f],",reward,reward_vals[0],reward_vals[1],reward_vals[2],reward_vals[3],reward_vals[4]); // flip_flag,impact_flag
+    fprintf(fPtr,"%.2f,[%.2f %.2f %.2f %.2f %.2f],",reward,reward_vals[0],reward_vals[1],reward_vals[2],reward_vals[3],reward_vals[4]); // flip_flag,impact_flag
 
 
     // MISC STATE DATA
@@ -181,7 +181,7 @@ void SAR_DataConverter::append_CSV_flip()
 {
     fprintf(fPtr,"%u,%u,",k_ep,k_run);                          // k_ep,k_run
     fprintf(fPtr,"%.3f,",(Time_tr-Time_start).toSec());         // t
-    fprintf(fPtr,"%.3f,%.3f,",Policy_Flip_tr,Policy_Action_tr); // Policy_Flip,Policy_Action
+    fprintf(fPtr,"%.3f,%.3f,",Policy_Flip_tr,Policy_Action_tr); // Policy_Trg_Action,Policy_Flip_Action
     fprintf(fPtr,"--,--,--,");                                  // mu,sigma,policy
 
     // // INTERNAL STATE ESTIMATES (CF)
@@ -216,7 +216,7 @@ void SAR_DataConverter::append_CSV_impact()
     // POLICY DATA
     fprintf(fPtr,"%u,%u,",k_ep,k_run);                      // k_ep,k_run
     fprintf(fPtr,"%.3f,",(Time_impact-Time_start).toSec()); // t
-    fprintf(fPtr,"--,--,");                                 // Policy_Flip,Policy_Action
+    fprintf(fPtr,"--,--,");                                 // Policy_Trg_Action,Policy_Flip_Action
     fprintf(fPtr,"--,--,--,");                              // mu,sigma,policy
 
 

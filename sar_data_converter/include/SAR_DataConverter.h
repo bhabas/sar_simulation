@@ -23,23 +23,23 @@
 #include <gazebo_msgs/SetModelState.h>
 
 // CUSTOM INCLUDES
-#include "crazyflie_msgs/CF_StateData.h"
-#include "crazyflie_msgs/CF_FlipData.h"
-#include "crazyflie_msgs/CF_ImpactData.h"
-#include "crazyflie_msgs/CF_MiscData.h"
+#include "sar_msgs/SAR_StateData.h"
+#include "sar_msgs/SAR_FlipData.h"
+#include "sar_msgs/SAR_ImpactData.h"
+#include "sar_msgs/SAR_MiscData.h"
 
-#include "crazyflie_msgs/CtrlData.h"
-#include "crazyflie_msgs/CtrlDebug.h"
-#include "crazyflie_msgs/GTC_Cmd_srv.h"
-#include "crazyflie_msgs/GTC_Cmd.h"
+#include "sar_msgs/CTRL_Data.h"
+#include "sar_msgs/CTRL_Debug.h"
+#include "sar_msgs/CTRL_Cmd_srv.h"
+#include "sar_msgs/CTRL_Cmd.h"
 
 
-#include "crazyflie_msgs/RLData.h"
-#include "crazyflie_msgs/PadConnect.h"
+#include "sar_msgs/RL_Data.h"
+#include "sar_msgs/PadConnect.h"
 
-#include "crazyflie_msgs/activateSticky.h"
-#include "crazyflie_msgs/loggingCMD.h"
-#include "crazyflie_msgs/GenericLogData.h"
+#include "sar_msgs/activateSticky.h"
+#include "sar_msgs/loggingCMD.h"
+#include "sar_msgs/GenericLogData.h"
 
 #include "quatcompress.h"
 
@@ -53,7 +53,7 @@ class SAR_DataConverter {
             // DATA INPUT PIPELINE
             CTRL_Data_Sub = nh->subscribe("/CTRL/data", 1, &SAR_DataConverter::CtrlData_Callback, this, ros::TransportHints().tcpNoDelay());
             CTRL_Debug_Sub = nh->subscribe("/CTRL/debug", 1, &SAR_DataConverter::CtrlDebug_Callback, this, ros::TransportHints().tcpNoDelay());
-            RL_Data_Sub = nh->subscribe("/RL/data",5,&SAR_DataConverter::RL_Data_Callback,this,ros::TransportHints().tcpNoDelay());
+            RL_Data_Sub = nh->subscribe("/RL/Data",5,&SAR_DataConverter::RL_Data_Callback,this,ros::TransportHints().tcpNoDelay());
             
 
             // GAZEBO PIPELINE
@@ -73,17 +73,17 @@ class SAR_DataConverter {
             log6_Sub = nh->subscribe("/cf1/log6", 1, &SAR_DataConverter::log6_Callback, this, ros::TransportHints().tcpNoDelay());
 
 
-            // INITIALIZE GTC COMMAND PIPELINE
-            CMD_Input_Service = nh->advertiseService("/SAR_DC/CMD_Input",&SAR_DataConverter::CMD_SAR_DC_Callback,this); // GTC COMMAND
-            CMD_Output_Topic = nh->advertise<crazyflie_msgs::GTC_Cmd>("/SAR_DC/CMD_Output_Topic",1);        // Msg publisher for Crazyswarm->CF->Controller
-            CMD_Output_Service = nh->serviceClient<crazyflie_msgs::GTC_Cmd_srv>("/CTRL/Cmd_ctrl");          // Service client for sim controller
+            // INITIALIZE CTRL COMMAND PIPELINE
+            CMD_Input_Service = nh->advertiseService("/SAR_DC/CMD_Input",&SAR_DataConverter::CMD_SAR_DC_Callback,this); // CTRL COMMAND
+            CMD_Output_Service = nh->serviceClient<sar_msgs::CTRL_Cmd_srv>("/CTRL/Cmd_ctrl");          // Service client for sim controller
+            CMD_Output_Topic = nh->advertise<sar_msgs::CTRL_Cmd>("/SAR_DC/CMD_Output_Topic",1);        // Msg publisher for Crazyswarm->CF->Controller
 
 
             // INITIALIZE STATE DATA PUBLISHERS
-            StateData_Pub = nh->advertise<crazyflie_msgs::CF_StateData>("/SAR_DC/StateData",1);
-            FlipData_Pub =  nh->advertise<crazyflie_msgs::CF_FlipData>("/SAR_DC/FlipData",1);
-            ImpactData_Pub = nh->advertise<crazyflie_msgs::CF_ImpactData>("/SAR_DC/ImpactData",1);  
-            MiscData_Pub =  nh->advertise<crazyflie_msgs::CF_MiscData>("/SAR_DC/MiscData",1);
+            StateData_Pub = nh->advertise<sar_msgs::SAR_StateData>("/SAR_DC/StateData",1);
+            FlipData_Pub =  nh->advertise<sar_msgs::SAR_FlipData>("/SAR_DC/FlipData",1);
+            ImpactData_Pub = nh->advertise<sar_msgs::SAR_ImpactData>("/SAR_DC/ImpactData",1);  
+            MiscData_Pub =  nh->advertise<sar_msgs::SAR_MiscData>("/SAR_DC/MiscData",1);
 
             // LOGGING 
             Logging_Service = nh->advertiseService("/SAR_DC/DataLogging", &SAR_DataConverter::DataLogging_Callback, this);
@@ -115,36 +115,36 @@ class SAR_DataConverter {
         // =======================
         //     GAZEBO CALLBACKS
         // =======================
-        void CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_msg);
-        void CtrlDebug_Callback(const crazyflie_msgs::CtrlDebug &ctrl_msg);
+        void CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg);
+        void CtrlDebug_Callback(const sar_msgs::CTRL_Debug &ctrl_msg);
 
         void SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStamped::ConstPtr &msg);
         void Surface_Contact_Callback(const gazebo_msgs::ContactsState &msg);
-        void Pad_Connections_Callback(const crazyflie_msgs::PadConnect &msg);
+        void Pad_Connections_Callback(const sar_msgs::PadConnect &msg);
 
 
         // =================================
         //     EXPERIMENT DATA CALLBACKS
         // =================================
         void decompressXY(uint32_t xy, float xy_arr[]);
-        void log1_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log1_msg);
-        void log2_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log2_msg);
-        void log3_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log3_msg);
-        void log4_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log4_msg);
-        void log5_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log5_msg);
-        void log6_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log6_msg);
+        void log1_Callback(const sar_msgs::GenericLogData::ConstPtr &log1_msg);
+        void log2_Callback(const sar_msgs::GenericLogData::ConstPtr &log2_msg);
+        void log3_Callback(const sar_msgs::GenericLogData::ConstPtr &log3_msg);
+        void log4_Callback(const sar_msgs::GenericLogData::ConstPtr &log4_msg);
+        void log5_Callback(const sar_msgs::GenericLogData::ConstPtr &log5_msg);
+        void log6_Callback(const sar_msgs::GenericLogData::ConstPtr &log6_msg);
 
         // =============================
-        //     GTC COMMAND CALLBACKS
+        //     CTRL COMMAND CALLBACKS
         // =============================
-        inline bool CMD_SAR_DC_Callback(crazyflie_msgs::GTC_Cmd_srv::Request &req, crazyflie_msgs::GTC_Cmd_srv::Response &res);
-        inline bool Send_Cmd2Ctrl(crazyflie_msgs::GTC_Cmd_srv::Request &req);
+        inline bool CMD_SAR_DC_Callback(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs::CTRL_Cmd_srv::Response &res);
+        inline bool Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &req);
 
 
         // =======================
         //    LOGGING FUNCTIONS
         // =======================
-        bool DataLogging_Callback(crazyflie_msgs::loggingCMD::Request &req, crazyflie_msgs::loggingCMD::Response &res);
+        bool DataLogging_Callback(sar_msgs::loggingCMD::Request &req, sar_msgs::loggingCMD::Response &res);
         void create_CSV();
         void append_CSV_states();
         void append_CSV_misc();
@@ -157,7 +157,7 @@ class SAR_DataConverter {
         // =================================
         //     ORGANIZED DATA PUBLISHERS
         // =================================
-        void RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &msg);
+        void RL_Data_Callback(const sar_msgs::RL_Data::ConstPtr &msg);
         void Publish_StateData();
         void Publish_FlipData();
         void Publish_ImpactData();
@@ -241,7 +241,7 @@ class SAR_DataConverter {
         ros::ServiceClient GZ_SimSpeed_Client;
 
         // ===========================
-        //     GTC COMMAND OBJECTS
+        //     CTRL COMMAND OBJECTS
         // ===========================
         ros::ServiceServer CMD_Input_Service;
         ros::ServiceServer CMD_Service_Dashboard;
@@ -256,10 +256,10 @@ class SAR_DataConverter {
         ros::Publisher ImpactData_Pub;
         ros::Publisher MiscData_Pub;
 
-        crazyflie_msgs::CF_StateData StateData_msg;
-        crazyflie_msgs::CF_FlipData FlipData_msg;
-        crazyflie_msgs::CF_ImpactData ImpactData_msg;
-        crazyflie_msgs::CF_MiscData MiscData_msg;
+        sar_msgs::SAR_StateData StateData_msg;
+        sar_msgs::SAR_FlipData FlipData_msg;
+        sar_msgs::SAR_ImpactData ImpactData_msg;
+        sar_msgs::SAR_MiscData MiscData_msg;
 
         // ===================================
         //     EXP COMPRESSED DATA OBJECTS
@@ -308,8 +308,8 @@ class SAR_DataConverter {
         boost::array<double,4> MotorThrusts{0,0,0,0};
         boost::array<uint16_t,4> MS_PWM{0,0,0,0};
 
-        double Policy_Flip = 0.0;
-        double Policy_Action = 0.0;
+        double Policy_Trg_Action = 0.0;
+        double Policy_Flip_Action = 0.0;
 
         geometry_msgs::Vector3 x_d;
         geometry_msgs::Vector3 v_d;
@@ -428,12 +428,13 @@ class SAR_DataConverter {
 
 inline void SAR_DataConverter::LoadParams()
 {
-    // QUAD SETTINGS
-    ros::param::get("/QUAD_SETTINGS/SAR_Type",SAR_Type);
-    ros::param::get("/QUAD_SETTINGS/SAR_Config",SAR_Config);
-    ros::param::get("/QUAD_SETTINGS/Policy_Type",POLICY_TYPE);
+    ros::param::get("/SAR_SETTINGS/Policy_Type",POLICY_TYPE);
 
-    GZ_Model_Name = "crazyflie_" + SAR_Config;
+    // SAR SETTINGS
+    ros::param::get("/SAR_SETTINGS/SAR_Type",SAR_Type);
+    ros::param::get("/SAR_SETTINGS/SAR_Config",SAR_Config);
+
+    GZ_Model_Name = SAR_Type + "_" + SAR_Config;
     std::string SAR_Type_str = "/SAR_Type/" + SAR_Type;
     std::string SAR_Config_str = "/Config/" + SAR_Config;
 
@@ -448,8 +449,6 @@ inline void SAR_DataConverter::LoadParams()
     }
     
     
-
-
     // COLLECT MODEL PARAMETERS
     ros::param::get(SAR_Type_str + SAR_Config_str + "/Mass",Mass);
     ros::param::get(SAR_Type_str + SAR_Config_str + "/Ixx",Ixx);
@@ -492,7 +491,7 @@ inline void SAR_DataConverter::LoadParams()
 
 }
 
-inline bool SAR_DataConverter::CMD_SAR_DC_Callback(crazyflie_msgs::GTC_Cmd_srv::Request &req, crazyflie_msgs::GTC_Cmd_srv::Response &res)
+inline bool SAR_DataConverter::CMD_SAR_DC_Callback(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs::CTRL_Cmd_srv::Response &res)
 {
     // PASS COMMAND VALUES TO CONTROLLER AND PASS LOCAL ACTIONS
     SAR_DataConverter::Send_Cmd2Ctrl(req);
@@ -500,7 +499,7 @@ inline bool SAR_DataConverter::CMD_SAR_DC_Callback(crazyflie_msgs::GTC_Cmd_srv::
     return res.srv_Success;
 }
 
-inline bool SAR_DataConverter::Send_Cmd2Ctrl(crazyflie_msgs::GTC_Cmd_srv::Request &req)
+inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &req)
 {
     switch (req.cmd_type)
     {
@@ -598,7 +597,7 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(crazyflie_msgs::GTC_Cmd_srv::Reques
 
     // SIMULATION:
     // SEND COMMAND VALUES TO SIM CONTROLLER
-    crazyflie_msgs::GTC_Cmd_srv srv;
+    sar_msgs::CTRL_Cmd_srv srv;
     srv.request = req;
     CMD_Output_Service.call(srv);
 
@@ -606,13 +605,17 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(crazyflie_msgs::GTC_Cmd_srv::Reques
     // EXPERIMENT: 
     // SEND COMMAND VALUES TO PHYSICAL CONTROLLER
     // BROADCAST CMD VALUES AS ROS MESSAGE
-    crazyflie_msgs::GTC_Cmd cmd_msg;
+    sar_msgs::CTRL_Cmd cmd_msg;
     cmd_msg.cmd_type = req.cmd_type;
     cmd_msg.cmd_vals = req.cmd_vals;
     cmd_msg.cmd_flag = req.cmd_flag;
     cmd_msg.cmd_rx = req.cmd_rx;
-    CMD_Output_Topic.publish(cmd_msg);
 
+    for (int i = 0; i < 3; i++)
+    {
+        CMD_Output_Topic.publish(cmd_msg);
+    }
+    
     return srv.response.srv_Success; // Return if service request successful (true/false)
 }
 

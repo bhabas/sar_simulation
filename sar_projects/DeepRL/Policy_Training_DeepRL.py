@@ -8,23 +8,22 @@ import yaml
 import pandas as pd
 import csv
 import time 
+import rospy
+import rospkg
 
 ## PLOTTING IMPORTS
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import matplotlib as mpl
 import plotly.graph_objects as go
-from scipy.interpolate import griddata, Rbf
+from scipy.interpolate import griddata
 
 ## SB3 Imports
 from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import *
-from stable_baselines3.common.vec_env import VecCheckNan
 from stable_baselines3.common import utils
 
-## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
-import rospkg,os
-BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
+## DEFINE BASE PATH
+BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('sar_env'))
 
 
 ## COLLECT CURRENT TIME
@@ -106,22 +105,27 @@ class Policy_Trainer_DeepRL():
         if not os.path.exists(self.model_dir):
             os.makedirs(self.model_dir,exist_ok=True)
 
-    def create_model(self):
-        """Creates SAC agent used in DeepRL trainingg process
+    def create_model(self,gamma=0.999,learning_rate=0.002,net_arch=[8,8]):
+        """Create Soft Actor-Critic agent used in training
+
+        Args:
+            gamma (float, optional): Discount factor. Defaults to 0.999.
+            learning_rate (float, optional): Learning Rate. Defaults to 0.002.
+            net_arch (list, optional): Network layer sizes and architechure. Defaults to [12,12].
         """        
 
         self.model = SAC(
             "MlpPolicy",
             env=self.env,
-            gamma=0.999,
-            learning_rate=0.002,
-            policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=[12,12]),
+            gamma=gamma,
+            learning_rate=learning_rate,
+            policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=net_arch),
             verbose=1,
             device='cpu',
             tensorboard_log=self.log_dir
         ) 
 
-        self.save_Config_File()
+        self.save_config_file()
 
     def load_model(self,t_step):
         """Loads current model and replay buffer from the selected time step
@@ -143,8 +147,51 @@ class Policy_Trainer_DeepRL():
         )
         self.model.load_replay_buffer(replay_buff_path)
 
+    def save_config_file(self):
 
-    def save_NN_Params(self,SavePath):
+        config_path = os.path.join(self.TB_log_path,"Config.yaml")
+
+        data = dict(
+            PLANE_SETTINGS = dict(
+                Plane_Model = self.env.Plane_Model,
+                Plane_Angle = self.env.Plane_Angle,
+                Plane_Pos = dict(
+                    X = self.env.Plane_Pos[0],
+                    Y = self.env.Plane_Pos[1],
+                    Z = self.env.Plane_Pos[2]
+                ),
+            ),
+
+            SAR_SETTINGS = dict(
+                SAR_Type = self.env.SAR_Type,
+                SAR_Config = self.env.SAR_Config,
+            ),
+
+            ENV_SETTINGS = dict(
+                Environment = self.env.Env_Name,
+                Vel_Limts = self.env.Vel_range,
+                Phi_Limits = self.env.Phi_range,
+            ),
+
+            LEARNING_MODEL = dict(
+                Policy = self.model.policy.__class__.__name__,
+                Observation_Layer = self.model.policy.observation_space.shape[0],
+                Network_Layers = self.model.policy.net_arch,
+                Action_Layer = self.model.policy.action_space.shape[0]*2,
+                Action_Space_High = self.model.policy.action_space.high.tolist(),
+                Action_Space_Low = self.model.policy.action_space.low.tolist(),
+                Gamma = self.model.gamma,
+                Learning_Rate = self.model.learning_rate,
+                Activation_Function = "",
+            )
+
+
+        )
+
+        with open(config_path, 'w') as outfile:
+            yaml.dump(data,outfile,default_flow_style=False,sort_keys=False)
+
+    def save_NN_Params(self):
         """Save NN parameters to C header file for upload to crazyflie
 
         Args:
@@ -152,7 +199,7 @@ class Policy_Trainer_DeepRL():
         """        
 
         FileName = f"NN_Layers_{self.env.modelInitials}_DeepRL.h"
-        f = open(os.path.join(SavePath,FileName),'a')
+        f = open(os.path.join(self.TB_log_path,FileName),'a')
         f.truncate(0) ## Clears contents of file
 
         date_time = datetime.now().strftime('%m/%d-%H:%M')
@@ -276,7 +323,7 @@ class Policy_Trainer_DeepRL():
         return low + (0.5 * (scaled_action + 1.0) * (high - low))
 
     def policy_dist(self,obs):
-        """Returns action distribution parameters for a given observation
+        """Returns action distribution parameters for a given observation. 
 
         Args:
             obs (_type_): Observation vector returned by then environment
@@ -298,11 +345,12 @@ class Policy_Trainer_DeepRL():
         log_std = actor.log_std(latent_pi)
         log_std = th.clamp(log_std, LOG_STD_MIN, LOG_STD_MAX)
 
-        ## CONVERT MU/LOG_STD TO NORMAL DISTRIBUTION AND SAMPLE
+        ## CONVERT LOG_STD TO STD
         action_std = th.ones_like(mean_actions) * log_std.exp()
-        action_mean = mean_actions
-
         action_std = action_std.detach().numpy()[0]
+
+        ## GRAB ACTION DISTRIBUTION MEAN
+        action_mean = mean_actions
         action_mean = action_mean.detach().numpy()[0]
 
 
@@ -321,12 +369,10 @@ class Policy_Trainer_DeepRL():
             obs = self.env.reset(vel=vel,phi=phi)
             done = False
             while not done:
-                self.env.render()
-                # action = custom_predict(obs)[0]
                 action,_ = self.model.predict(obs)
-                obs,reward,done,info = self.env.step(action)
+                obs,reward,done,_ = self.env.step(action)
 
-    def train_model(self,total_timesteps=2e6,save_freq=1000,reset_timesteps=False):
+    def train_model(self,total_timesteps=2e6,save_freq=200,reset_timesteps=False):
         """Script to train model via Deep RL method
 
         Args:
@@ -499,46 +545,7 @@ class Policy_Trainer_DeepRL():
 
         plt.show()
 
-    def save_Config_File(self):
-
-        config_path = os.path.join(self.TB_log_path,"Config.yaml")
-
-        data = dict(
-            PLANE_SETTINGS = dict(
-                Plane_Model = self.env.Plane_Model,
-                Plane_Angle = self.env.Plane_Angle,
-                Plane_Pos = dict(
-                    X = self.env.Plane_Pos[0],
-                    Y = self.env.Plane_Pos[1],
-                    Z = self.env.Plane_Pos[2]
-                ),
-            ),
-
-            QUAD_SETTINGS = dict(
-                SAR_Type = self.env.SAR_Type,
-                SAR_Config = self.env.SAR_Config,
-            ),
-
-            ENV_SETTINGS = dict(
-                Environment = self.env.env_name,
-                Vel_Limts = self.env.Vel_range,
-                Phi_Limits = self.env.Phi_range,
-            ),
-
-            LEARNING_MODEL = dict(
-                Policy = self.model.policy.__class__.__name__,
-                Network_Layers = self.model.policy.net_arch,
-                Gamma = self.model.gamma,
-                Learning_Rate = self.model.learning_rate,
-                Activation_Function = "",
-            )
-
-
-        )
-
-        with open(config_path, 'w') as outfile:
-            yaml.dump(data,outfile,default_flow_style=False,sort_keys=False)
-
+    
     def test_landing_performance(self,fileName=None,Vel_inc=0.25,Phi_inc=5,n_episodes=5):
         """Test trained model over varied velocity and flight angle combinations.
 
@@ -683,7 +690,7 @@ class Policy_Trainer_DeepRL():
                         TTC = round(t_delta_avg*(num_trials-idx)) # Time to completion
                         print(f"Flight Conditions: ({Vel} m/s,{Phi} deg) \t Index: {idx}/{num_trials} \t Percentage: {100*idx/num_trials:.2f}% \t Time to Completion: {str(timedelta(seconds=TTC))}")
 
-    def Plot_Landing_Performance(self,fileName=None,saveFig=False):
+    def plot_landing_performance(self,fileName=None,saveFig=False):
 
         if fileName == None:
             fileName = "PolicyPerformance_Data.csv"
@@ -748,51 +755,55 @@ if __name__ == '__main__':
 
 
     ## IMPORT ENVIRONMENTS
-    from Envs.CrazyflieEnv_DeepRL import CrazyflieEnv_DeepRL
-    # from Envs.CrazyflieEnv_DeepRL_Tau import CrazyflieEnv_DeepRL_Tau
+    from Envs.SAR_Sim_DeepRL import SAR_Sim_DeepRL
 
 
-    # START TRAINING NEW DEEP RL MODEL 
-    env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[0,90])
-    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
-    log_name = f"{env.modelInitials}--Deg_{env.Plane_Angle}--SAC_{current_time}"    
+    # # START TRAINING NEW DEEP RL MODEL 
+    # env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[1.5,4.0],Phi_range=[0,90])
+    # env.pause_physics(False)
+    # time.sleep(3)
+    # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
+    # log_name = f"{env.modelInitials}--Deg_{env.Plane_Angle}--SAC_{current_time}"    
 
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.create_model()
-    PolicyTrainer.train_model()
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.create_model()
+    # PolicyTrainer.train_model()
 
     # ================================================================= ##
     
-    # # RESUME TRAINING DEEP RL MODEL
-    # env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[-45,90])
-    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
-    # log_name = "A60_L75_K32--Deg_135--SAC_02_14-19:47_0"
-    # t_step_load = 10000
+    # RESUME TRAINING DEEP RL MODEL
+    # env = SAR_Sim_DeepRL(GZ_Timeout=False,Vel_range=[1.0,4.0],Phi_range=[-90,90])
+    # env.pause_physics(False)
+    # time.sleep(3)
+    # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
+    # log_name = "A20_L75_K32--Deg_180.0--SAC_06_16-13:12_0"
+    # t_step_load = 170000
 
     # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     # PolicyTrainer.load_model(t_step_load)
-    # PolicyTrainer.train_model(reset_timesteps=False)
+    # PolicyTrainer.train_model(reset_timesteps=True)
 
     # ================================================================= ##
 
-    # # # COLLECT LANDING PERFORMANCE DATA
-    # env = CrazyflieEnv_DeepRL(GZ_Timeout=True,Vel_range=[0.5,4.0],Phi_range=[0,90])
-    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/{env.env_name}"
-    # log_name = "A20_L75_K32--Deg_180--SAC_02_17-08:23_0"
-    # t_step_load = 160000
+    # # COLLECT LANDING PERFORMANCE DATA
+    env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[1.0,4.0],Phi_range=[0,90])
+    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
+    log_name = "A20_L75_K32--Deg_180.0--SAC_06_16-13:12_0"
+    t_step_load = 170000
 
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.load_model(t_step_load)
-    # PolicyTrainer.test_landing_performance()
-
-    # ================================================================= ##
-
-    # # PLOT LANDING PERFORMANCE
-    env = None
-    log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Gazebo"
-    log_name = "A20_L75_K32--Deg_180--SAC_02_17-08:23_0"
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.Plot_Landing_Performance(saveFig=True)
+    PolicyTrainer.load_model(t_step_load)
+    # PolicyTrainer.test_landing_performance()
+    PolicyTrainer.test_policy(vel=2.5,phi=60,episodes=10)
+
+    # ================================================================= ##
+
+    # # # PLOT LANDING PERFORMANCE
+    # env = None
+    # log_dir = f"{BASE_PATH}/crazyflie_projects/DeepRL/TB_Logs/CF_Gazebo"
+    # log_name = "A20_L75_K32--Deg_180--SAC_02_17-08:23_0"
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.Plot_Landing_Performance(saveFig=True)
 
 
     

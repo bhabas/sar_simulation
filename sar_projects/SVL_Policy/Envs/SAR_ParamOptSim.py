@@ -4,7 +4,7 @@ import time
 
 import rospkg,os
 
-from crazyflie_env import SAR_Sim_Interface
+from sar_env import SAR_Sim_Interface
 
 
 class SAR_ParamOpt_Sim(SAR_Sim_Interface):
@@ -12,7 +12,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
     def __init__(self,GZ_Timeout=False):
         SAR_Sim_Interface.__init__(self)        
 
-        self.env_name = "SAR_ParamOptim"
+        self.Env_Name = "SAR_ParamOptim"
         self.k_ep = 0
     
         self.D_min = 50.0

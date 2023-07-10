@@ -7,11 +7,9 @@ import sys
 import os
 import message_filters
 
-
-from sensor_msgs.msg import Image,CameraInfo
-from crazyflie_msgs.msg import CF_StateData,CF_FlipData,CF_ImpactData,CF_MiscData
-from crazyflie_msgs.srv import ModelMove,ModelMoveRequest
-
+from sensor_msgs.msg import Image
+from sar_msgs.msg import SAR_StateData,SAR_FlipData,SAR_ImpactData,SAR_MiscData
+from rosgraph_msgs.msg import Clock
 
 ## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg,os
@@ -166,20 +164,9 @@ class CameraLogger:
         Cam_Z_Offset = 0.008    # [m]
         Plane_pos = 2.0         # [m]
     
-        ## RESET POSITION AND VELOCITY
-        Move_srv = ModelMoveRequest()
-        
-        Move_srv.Pos_0.x = Plane_pos - self.D_perp_0 - Cam_X_Offset
-        Move_srv.Pos_0.y = self.y_offset_0
-        Move_srv.Pos_0.z = 0.0 - Cam_Z_Offset
-
-        Move_srv.Vel_0.x = self.V_perp_0
-        Move_srv.Vel_0.y = -self.V_parallel_0
-        Move_srv.Vel_0.z = 0.0
-
-        Move_srv.Accel_0.x = 0.0
-        Move_srv.Accel_0.y = 0.0
-        Move_srv.Accel_0.z = 0.0
+        ## DATA SUBSCRIBERS
+        rospy.Subscriber("/SAR_Internal/camera/image_raw",Image,self.CameraCallback,queue_size=500)
+        rospy.Subscriber("/SAR_DC/StateData",SAR_StateData,self.SAR_StateDataCallback,queue_size=1)
 
         rospy.wait_for_service('/ModelMovement',timeout=1)
         service = rospy.ServiceProxy('/ModelMovement', ModelMove)
@@ -247,6 +234,22 @@ class CameraLogger:
             ])
 
         
+        self.t = np.round(Cam_msg.header.stamp.to_sec(),4)      # Sim time
+        self.Camera_raw = np.frombuffer(Cam_msg.data,np.uint8)  # 1D array to package into CSV         
+        self.Append_CSV()
+
+
+
+    def SAR_StateDataCallback(self,StateData_msg):
+        """Callback which receives current state data over ROS topic.
+
+        Args:
+            StateData_msg (_type_): Ros msg of camera data
+        """        
+
+        self.pos = np.round([StateData_msg.Pose.position.x,
+                             StateData_msg.Pose.position.y,
+                             StateData_msg.Pose.position.z],3)
 
 
 

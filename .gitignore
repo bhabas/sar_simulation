@@ -164,11 +164,11 @@ cython_debug/
 
 
 # Custom gitignore
-crazyflie_logging/local_logs/*
 sar_logging/local_logs/*
-crazyflie_projects/Policy_Mapping/Data_Analysis/Data/*
-crazyflie_projects/Featureless_TTC/local_logs/*
-crazyflie_projects/Optical_Flow_Estimation/local_logs/*
+sar_logging/local_logs/*
+sar_projects/Policy_Mapping/Data_Analysis/Data/*
+sar_projects/Featureless_TTC/local_logs/*
+sar_projects/Optical_Flow_Estimation/local_logs/*
 .vscode/
 *.pkl
 *.zip

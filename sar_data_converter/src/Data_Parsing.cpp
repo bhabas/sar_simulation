@@ -1,6 +1,6 @@
 #include "SAR_DataConverter.h"
 
-void SAR_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_msg)
+void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 {
     // ===================
     //     FLIGHT DATA
@@ -53,8 +53,8 @@ void SAR_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_m
 
 
     // NEURAL NETWORK DATA
-    Policy_Flip = ctrl_msg.Policy_Flip;
-    Policy_Action = ctrl_msg.Policy_Action;
+    Policy_Trg_Action = ctrl_msg.Policy_Trg_Action;
+    Policy_Flip_Action = ctrl_msg.Policy_Flip_Action;
 
     Pose_impact_buff.push_back(Pose);
     Twist_impact_buff.push_back(Twist);
@@ -105,7 +105,7 @@ void SAR_DataConverter::CtrlData_Callback(const crazyflie_msgs::CtrlData &ctrl_m
 
 }
 
-void SAR_DataConverter::CtrlDebug_Callback(const crazyflie_msgs::CtrlDebug &ctrl_msg)
+void SAR_DataConverter::CtrlDebug_Callback(const sar_msgs::CTRL_Debug &ctrl_msg)
 {
     Motorstop_Flag = ctrl_msg.Motorstop_Flag;
     Pos_Ctrl_Flag = ctrl_msg.Pos_Ctrl;
@@ -132,7 +132,7 @@ void SAR_DataConverter::decompressXY(uint32_t xy, float xy_arr[])
 
 
 
-void SAR_DataConverter::log1_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log1_msg)
+void SAR_DataConverter::log1_Callback(const sar_msgs::GenericLogData::ConstPtr &log1_msg)
 {
     // ===================
     //     FLIGHT DATA
@@ -193,7 +193,7 @@ void SAR_DataConverter::log1_Callback(const crazyflie_msgs::GenericLogData::Cons
 
 }
 
-void SAR_DataConverter::log2_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log2_msg)
+void SAR_DataConverter::log2_Callback(const sar_msgs::GenericLogData::ConstPtr &log2_msg)
 {
     // ANGULAR VELOCITY (Z)
     Twist.angular.z = log2_msg->values[0]*1e-3;
@@ -228,8 +228,8 @@ void SAR_DataConverter::log2_Callback(const crazyflie_msgs::GenericLogData::Cons
     // NEURAL NETWORK VALUES
     float NN_FP[2];
     decompressXY(log2_msg->values[6],NN_FP);
-    Policy_Flip = NN_FP[0];
-    Policy_Action = NN_FP[1];
+    Policy_Trg_Action = NN_FP[0];
+    Policy_Flip_Action = NN_FP[1];
 
     // OTHER MISC INFO
     flip_flag = log2_msg->values[7];
@@ -244,7 +244,7 @@ void SAR_DataConverter::log2_Callback(const crazyflie_msgs::GenericLogData::Cons
 
 }
 
-void SAR_DataConverter::log3_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log3_msg)
+void SAR_DataConverter::log3_Callback(const sar_msgs::GenericLogData::ConstPtr &log3_msg)
 {
     // POSITION SETPOINTS
     float xd_xy[2];
@@ -282,7 +282,7 @@ void SAR_DataConverter::log3_Callback(const crazyflie_msgs::GenericLogData::Cons
     
 }
 
-void SAR_DataConverter::log4_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log4_msg)
+void SAR_DataConverter::log4_Callback(const sar_msgs::GenericLogData::ConstPtr &log4_msg)
 {
     // FLIP TRIGGER - POSITION
     Pose_tr.position.x = NAN;
@@ -329,19 +329,19 @@ void SAR_DataConverter::log4_Callback(const crazyflie_msgs::GenericLogData::Cons
 
 }
 
-void SAR_DataConverter::log5_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log5_msg)
+void SAR_DataConverter::log5_Callback(const sar_msgs::GenericLogData::ConstPtr &log5_msg)
 {
-    Motorstop_Flag = log5_msg->values[0];
-    Pos_Ctrl_Flag = log5_msg->values[1];
-    Vel_Ctrl_Flag = log5_msg->values[2];
-    Traj_Active_Flag = log5_msg->values[3];
+    Pos_Ctrl_Flag = log5_msg->values[0];
+    Vel_Ctrl_Flag = log5_msg->values[1];
+    Motorstop_Flag = log5_msg->values[2];
+    Moment_Flag = log5_msg->values[3];
     Tumbled_Flag = log5_msg->values[4];
-    Moment_Flag = log5_msg->values[5];
+    Tumble_Detection = log5_msg->values[5];
     Policy_Armed_Flag =log5_msg->values[6];
 
 }
 
-void SAR_DataConverter::log6_Callback(const crazyflie_msgs::GenericLogData::ConstPtr &log6_msg)
+void SAR_DataConverter::log6_Callback(const sar_msgs::GenericLogData::ConstPtr &log6_msg)
 {
     V_battery = log6_msg->values[0];
 

@@ -7,9 +7,9 @@
  */
 void SAR_DataConverter::activateStickyFeet()
 {
-    if(GZ_Model_Name != "crazyflie_Base_Model")
+    if(GZ_Model_Name != "Crazyflie_Base_Model")
     {
-        crazyflie_msgs::activateSticky srv;
+        sar_msgs::activateSticky srv;
         srv.request.stickyFlag = Sticky_Flag;
 
         ros::service::call("/activate_Sticky_Pad_1", srv);
@@ -26,7 +26,7 @@ void SAR_DataConverter::activateStickyFeet()
  * 
  * @param msg sar_msgs::PadConnect
  */
-void SAR_DataConverter::Pad_Connections_Callback(const crazyflie_msgs::PadConnect &msg)
+void SAR_DataConverter::Pad_Connections_Callback(const sar_msgs::PadConnect &msg)
 {
     
     if(msg.Pad1_Contact == 1) Pad1_Contact = 1;

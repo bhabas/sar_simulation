@@ -1,6 +1,6 @@
 #include "SAR_DataConverter.h"
 
-void SAR_DataConverter::RL_Data_Callback(const crazyflie_msgs::RLData::ConstPtr &msg)
+void SAR_DataConverter::RL_Data_Callback(const sar_msgs::RL_Data::ConstPtr &msg)
 {
 
     k_ep = msg->k_ep;
@@ -63,8 +63,8 @@ void SAR_DataConverter::Publish_StateData()
     StateData_msg.MS_PWM = MS_PWM;
 
     // NEURAL NETWORK DATA
-    StateData_msg.Policy_Flip = Policy_Flip;
-    StateData_msg.Policy_Action = Policy_Action;
+    StateData_msg.Policy_Trg_Action = Policy_Trg_Action;
+    StateData_msg.Policy_Flip_Action = Policy_Flip_Action;
 
 
     // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE CONTROLLER

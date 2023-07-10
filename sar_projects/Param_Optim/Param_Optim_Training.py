@@ -72,6 +72,7 @@ def runTraining(env,agent,V_d,phi,logName,K_ep_max=15):
             ## PUBLISH ROLLOUT DATA
             agent.policy = [Tau_thr,My,0]
             agent.reward = reward
+            agent.reward_vals = env.reward_vals
             agent.error_str = env.error_str
 
             agent.K_run_list.append(k_ep)
@@ -162,6 +163,7 @@ def runTraining(env,agent,V_d,phi,logName,K_ep_max=15):
             ## PUBLISH ROLLOUT DATA
             agent.policy = [Tau_thr,My,0]
             agent.reward = reward
+            # agent.reward_vals = env.reward_vals
             agent.error_str = env.error_str
 
             agent.K_run_list.append(k_ep)
@@ -185,10 +187,11 @@ if __name__ == '__main__':
 
     ## INIT GAZEBO ENVIRONMENT
     env = SAR_ParamOpt_Sim(GZ_Timeout=False)
+    env.pause_physics(False)
 
     ## INIT LEARNING AGENT
     # Mu_Tau value is multiplied by 10 so complete policy is more normalized
-    mu_0 = np.array([2.5, 6])       # Initial mu starting point
+    mu_0 =  np.array([2.5, 6.0])       # Initial mu starting point
     sig_0 = np.array([1.0, 2.0])   # Initial sigma starting point
     agent = EPHE_Agent(mu_0,sig_0,n_rollouts=8)
 
@@ -199,7 +202,7 @@ if __name__ == '__main__':
 
     ## CONSTANT VELOCITY LAUNCH CONDITIONS
     V_d = 2.5 # [m/s]
-    phi = 40   # [deg]
+    phi = 60   # [deg]
 
     ## INITIALIALIZE LOGGING DATA
     trial_num = 25
