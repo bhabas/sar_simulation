@@ -37,7 +37,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## TESTING CONDITIONS
         self.Tau_0 = Tau_0          
         self.Vel_range = Vel_range  
-        self.Phi_range = Phi_rel_range
+        self.Phi_rel_range = Phi_rel_range
         self.Plane_Angle_range = Plane_Angle_range
         self.My_range = My_range
 
@@ -251,7 +251,6 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             truncated = False
             
             ## CALCULATE REWARD
-            print(self.Rot_Sum_impact)
             reward = self._CalcReward()
 
         if terminated or truncated:
@@ -288,7 +287,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         scaled_action = 0.5 * (action[1] + 1) * (self.My_range[1] - self.My_range[0]) + self.My_range[0]
 
         ## SEND FLIP ACTION TO CONTROLLER
-        My = scaled_action # Body rotational moment [N*mm]
+        My = -scaled_action # Body rotational moment [N*mm]
         self.SendCmd("Policy",[0,My,0],cmd_flag=1)
 
         ## RUN REMAINING STEPS AT FULL SPEED
@@ -367,18 +366,18 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         Vel = np.random.uniform(low=Vel_Low,high=Vel_High)
 
         ## SAMPLE RELATIVE PHI FROM A WEIGHTED SET OF UNIFORM DISTRIBUTIONS
-        Phi_rel_Low = self.Phi_range[0]
-        Phi_rel_High = self.Phi_range[1]
+        Phi_rel_Low = self.Phi_rel_range[0]
+        Phi_rel_High = self.Phi_rel_range[1]
         Phi_rel_Range = Phi_rel_High-Phi_rel_Low
 
-        Dist_Num = np.random.choice([0,1,2],p=[0.05,0.9,0.05]) # Probability of sampling distribution
+        Dist_Num = np.random.choice([0,1,2],p=[0.2,0.6,0.2]) # Probability of sampling distribution
 
         if Dist_Num == 0: # Low Range
-            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_Low, high=Phi_rel_Low + 0.1*Phi_rel_Range)
+            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_Low, high=Phi_rel_Low + 0.2*Phi_rel_Range)
         elif Dist_Num == 1: # Medium Range
-            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_Low + 0.1*Phi_rel_Range, high=Phi_rel_High - 0.1*Phi_rel_Range)
+            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_Low + 0.2*Phi_rel_Range, high=Phi_rel_High - 0.2*Phi_rel_Range)
         elif Dist_Num == 2: # High Range
-            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_High - 0.1*Phi_rel_Range, high=Phi_rel_High)
+            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_High - 0.2*Phi_rel_Range, high=Phi_rel_High)
 
         ## CONVERT RELATIVE PHI TO GLOBAL PHI
         Phi_global = (self.Plane_Angle + Phi_rel) - 180 # (Derivation: Research_Notes_Book_3.pdf (7/5/23))
@@ -417,11 +416,17 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## TAU TRIGGER REWARD
         R_tau = np.clip(1/np.abs(self.Tau_trg - 0.2),0,15)/15
 
-        ## IMPACT ANGLE REWARD
-        Beta_global = self.eul_impact[1]
-        Phi_Plane = self.Plane_Angle
-        Beta_rel = -180 + Beta_global + Phi_Plane
-        R_angle = 0.5*(-np.cos(np.deg2rad(Beta_rel)) + 1) # (Derivation: Research_Notes_Book_3.pdf (6/21/23))
+
+        ## IMPACT ANGLE REWARD # (Derivation: Research_Notes_Book_3.pdf (6/21/23))
+        Beta_d = 150 # Desired impact angle [= 180 deg - gamma [deg]] TODO: Change to live value?
+        Beta_rel = -180 + self.Rot_Sum_impact + self.Plane_Angle
+
+        if Beta_rel < -180:
+            R_angle = 0
+        elif -180 <= Beta_rel < 180:
+            R_angle = 0.5*(-np.cos(np.deg2rad(Beta_rel*180/Beta_d))+1)
+        elif Beta_rel > 180:
+            R_angle = 0
 
         ## PAD CONTACT REWARD
         if self.pad_connections >= 3: 
