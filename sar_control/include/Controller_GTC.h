@@ -22,6 +22,7 @@ extern "C" {
 // CUSTOM LIBRARIES
 #include "Shared_Lib.h"
 #include "nml.h"
+#include "cml.h"
 
 #ifdef CONFIG_SAR_EXP
 #include "FreeRTOS.h"

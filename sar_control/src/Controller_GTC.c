@@ -1,7 +1,6 @@
 #include "Controller_GTC.h"
 
 
-uint8_t value1 = 5;
 void appMain() {
 
     while (1)
@@ -38,10 +37,6 @@ bool controllerOutOfTreeTest() {
 }
 
 
-
-
-
-
 void controllerOutOfTreeInit() {
 
     #ifdef CONFIG_SAR_EXP
@@ -51,15 +46,14 @@ void controllerOutOfTreeInit() {
 
     controllerOutOfTreeReset();
     controllerOutOfTreeTest();
-    J = mdiag(Ixx,Iyy,Izz);
-    X_input = nml_mat_new(3,1);
-    Y_output = nml_mat_new(4,1);
 
     // INIT DEEP RL NN POLICY
-    NN_init(&NN_DeepRL,NN_Params_DeepRL);
-    
+    X_input = nml_mat_new(3,1);
+    Y_output = nml_mat_new(4,1);
+    // NN_init(&NN_DeepRL,NN_Params_DeepRL);
 
-
+    cml_m33 matrix = cml_m33_new();
+    cml_mat_print(&matrix,matrix.num_rows,matrix.num_cols);
     consolePrintf("GTC Controller Initiated\n");
 }
 
@@ -68,6 +62,7 @@ void controllerOutOfTreeReset() {
 
     consolePrintf("GTC Controller Reset\n");
     consolePrintf("Policy_Type: %d\n",Policy);
+    J = mdiag(Ixx,Iyy,Izz);
 
     // RESET INTEGRATION ERRORS
     e_PI = vzero();
@@ -126,7 +121,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 {
 
     // OPTICAL FLOW UPDATES
-    if (RATE_DO_EXECUTE(100, tick)) {
+    if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
 
         // UPDATE POS AND VEL
         r_BO = mkvec(state->position.x, state->position.y, state->position.z);
@@ -211,7 +206,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                     
                         M_d.x = 0.0f;
-                        M_d.y = -Policy_Flip_Action*1e-3f;
+                        M_d.y = Policy_Flip_Action*1e-3f;
                         M_d.z = 0.0f;
 
                         F_thrust_flip = 0.0;
@@ -253,7 +248,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                     
                         M_d.x = 0.0f;
-                        M_d.y = -Policy_Flip_Action*1e-3f;
+                        M_d.y = Policy_Flip_Action*1e-3f;
                         M_d.z = 0.0f;
 
                         F_thrust_flip = 0.0;
@@ -265,7 +260,34 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                     break;
 
                 case DEEP_RL_SB3:
+                        
+                    if (onceFlag == false && V_perp > 0.1f)
+                    {
+                        onceFlag = true;
 
+                        // UPDATE AND RECORD FLIP VALUES
+                        flip_flag = true;  
+                        statePos_tr = statePos;
+                        stateVel_tr = stateVel;
+                        stateQuat_tr = stateQuat;
+                        stateOmega_tr = stateOmega;
+
+                        Tau_tr = Tau;
+                        Theta_x_tr = Theta_x_tr;
+                        Theta_y_tr = Theta_y_tr;
+                        D_perp_tr = D_perp;
+
+                    
+                        M_d.x = 0.0f;
+                        M_d.y = Policy_Flip_Action*1e-3f;
+                        M_d.z = 0.0f;
+
+                        F_thrust_flip = 0.0;
+                        M_x_flip = M_d.x*1e3f;
+                        M_y_flip = M_d.y*1e3f;
+                        M_z_flip = M_d.z*1e3f;
+                    }
+                    
                     break;
                     
             default:

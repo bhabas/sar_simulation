@@ -186,6 +186,7 @@ class SAR_DataConverter {
         std::string DATA_TYPE;  // Sim or Experiment Flag
         ros::Time Time_start;   // Initial time in UNIX notation
         int LOGGING_RATE = 10;  // Default Logging Rate
+        bool SHOW_CONSOLE = true;
         bool isInit = false;    // Load these params only on first start of SAR_DC
 
 
@@ -281,6 +282,7 @@ class SAR_DataConverter {
         // ===================
 
         ros::Time Time;
+        ros::Time Time_prev;
 
         geometry_msgs::Pose Pose;
         geometry_msgs::Twist Twist;
@@ -314,6 +316,8 @@ class SAR_DataConverter {
         geometry_msgs::Vector3 x_d;
         geometry_msgs::Vector3 v_d;
         geometry_msgs::Vector3 a_d;
+
+        double Rot_Sum = 0.0;
 
         // ==================
         //     FLIP DATA
@@ -462,6 +466,8 @@ inline void SAR_DataConverter::LoadParams()
     ros::param::get("/SIM_SETTINGS/Landing_Slowdown_Flag",LANDING_SLOWDOWN_FLAG);
 
     ros::param::get("/SAR_DC_SETTINGS/Logging_Rate",LOGGING_RATE);
+    ros::param::get("/SAR_DC_SETTINGS/Console_Output",SHOW_CONSOLE);
+
 
     // COLLECT CTRL GAINS
     ros::param::get(SAR_Type_str + "/CtrlGains/P_kp_xy",P_kp_xy);
@@ -508,6 +514,7 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
             OnceFlag_flip = false;
             Time_tr.sec = 0.0;
             Time_tr.nsec = 0.0;
+            Rot_Sum = 0.0;
 
             // RESET IMPACT TIME
             impact_flag = false;

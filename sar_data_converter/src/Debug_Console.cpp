@@ -12,7 +12,7 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
     const int refresh_rate = 20; // 20 Hz
     const int delay_time_us = 1000000 / refresh_rate;
 
-    while(true) {
+    while(SHOW_CONSOLE == true) {
         // Clear the screen buffer
         erase();
 
@@ -28,8 +28,8 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
         mvprintw(8, 0,"Sticky_flag:\t%u  Tumbled:\t  %u  Slowdown_type: %u",Sticky_Flag,Tumbled_Flag,SLOWDOWN_TYPE);
         
         mvprintw(10, 0,"==== System States ====");
-        mvprintw(11, 0,"Pos [m]:\t % 8.3f  % 8.3f  % 8.3f",Pose.position.x,Pose.position.y,Pose.position.z);
-        mvprintw(12, 0,"Vel [m/s]:\t % 8.3f  % 8.3f  % 8.3f",Twist.linear.x,Twist.linear.y,Twist.linear.z);
+        mvprintw(11, 0,"Pos [m]:\t % 8.5f  % 8.5f  % 8.5f",Pose.position.x,Pose.position.y,Pose.position.z);
+        mvprintw(12, 0,"Vel [m/s]:\t % 8.5f  % 8.5f  % 8.5f",Twist.linear.x,Twist.linear.y,Twist.linear.z);
         mvprintw(13, 0,"Omega [rad/s]:\t % 8.3f  % 8.3f  % 8.3f",Twist.angular.x,Twist.angular.y,Twist.angular.z);
         mvprintw(14, 0,"Eul [deg]:\t % 8.3f  % 8.3f  % 8.3f",Eul.x,Eul.y,Eul.z);
         mvprintw(15, 0,"Vel [mag,phi,alph]: % 8.3f % 8.3f",Vel_mag,Phi);

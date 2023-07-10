@@ -893,8 +893,8 @@
     </plugin>
         
     <plugin name='Vicon_plugin' filename='libgazebo_ros_p3d.so'>
-      <alwaysOn>1</alwaysOn>
-      <updateRate>100</updateRate>
+      <alwaysOn>true</alwaysOn>
+      <updateRate>1000</updateRate>
       <bodyName>SAR_body</bodyName>
       <topicName>SAR_External/ExtPosition</topicName>
       <frameName>world</frameName>
@@ -905,20 +905,22 @@
 
     <plugin name="IMU_plugin" filename="libgazebo_ros_imu.so">
       <alwaysOn>true</alwaysOn>
+      <updateRate>1000</updateRate>
       <bodyName>SAR_body</bodyName>
       <topicName>SAR_Internal/IMU</topicName>
       <serviceName>imu_service</serviceName>
       <gaussianNoise>0.0</gaussianNoise>
-      <updateRate>100.0</updateRate>
     </plugin>
 
-    <!-- <plugin name='MomentPlugin' filename='libMoment_plugin.so'>
-        <bodyName>SAR_body</bodyName>
-    </plugin> -->
 
     <plugin name='DomainRandomization_Plugin' filename='libDomainRand_plugin.so'>
         <bodyName>SAR_body</bodyName>
     </plugin>
+    
+    
+    <!-- <plugin name='MomentPlugin' filename='libMoment_plugin.so'>
+        <bodyName>SAR_body</bodyName>
+    </plugin> -->
 
     <!-- <joint name="FixedJoint" type="fixed">
         <parent>world</parent>

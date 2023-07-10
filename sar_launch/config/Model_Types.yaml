@@ -273,6 +273,10 @@ SAR_Type:
         Iyy: 30.46e-6   # [kg*m^2]
         Izz: 47.12e-6   # [kg*m^2] 
 
+        Gamma: 30       # [deg]
+        Length: 75      # [m]
+        Stiffness: 8    # [N*mm/rad]
+
       A30_L75_K32: 
         Initials: A30_L75_K32
         Mass: 38.1e-3   # [kg]

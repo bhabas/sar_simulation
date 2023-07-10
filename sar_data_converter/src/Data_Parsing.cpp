@@ -5,7 +5,9 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     // ===================
     //     FLIGHT DATA
     // ===================
+    Time_prev = Time;
     Time = ros::Time::now();
+
     Pose = ctrl_msg.Pose;
     Twist = ctrl_msg.Twist;
     Vel_mag = sqrt(pow(Twist.linear.x,2)+pow(Twist.linear.y,2)+pow(Twist.linear.z,2));
@@ -70,6 +72,13 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
         Time_tr = ros::Time::now();
         OnceFlag_flip = true;
 
+    }
+
+    if(ctrl_msg.flip_flag == true && impact_flag == false)
+    {
+        double Time_delta = Time.toSec()-Time_prev.toSec();
+        Rot_Sum += (Time_delta*Twist.angular.y)*180/M_PI;
+        // printf("Val: %f\n",Rot_Sum);
     }
     
 

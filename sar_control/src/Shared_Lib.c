@@ -419,9 +419,9 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
 
                 case x_axis:
 
-                    s_0_t[0] = CTRL_Cmd->cmd_val1;               // Starting position [m]
-                    v_t[0] = CTRL_Cmd->cmd_val2;                 // Desired velocity [m/s]
-                    a_t[0] = CTRL_Cmd->cmd_val3;                 // Acceleration [m/s^2]
+                    s_0_t[0] = CTRL_Cmd->cmd_val1;  // Starting position [m]
+                    v_t[0] = CTRL_Cmd->cmd_val2;    // Desired velocity [m/s]
+                    a_t[0] = CTRL_Cmd->cmd_val3;    // Acceleration [m/s^2]
 
                     t_traj[0] = 0.0f; // Reset timer
                     break;

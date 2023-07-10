@@ -18,7 +18,7 @@ void SAR_DataConverter::MainLoop()
 {
 
     MainInit();
-    int loopRate = 500;     // [Hz]
+    int loopRate = 1000;     // [Hz]
     ros::Rate rate(loopRate);
 
     
