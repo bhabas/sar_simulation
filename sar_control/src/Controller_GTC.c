@@ -126,21 +126,6 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                                             const state_t *state, 
                                             const uint32_t tick) 
 {
-
-    // OPTICAL FLOW UPDATES
-    if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
-        
-        if (isCamActive == true)
-        {
-            updateOpticalFlowEst();
-        }
-        else
-        {
-            updateOpticalFlowAnalytic(state,sensors);
-        }
-
-    }
-
     // TRAJECTORY UPDATES
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
 
@@ -164,6 +149,36 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         }
     }
 
+    // OPTICAL FLOW UPDATES
+    if (RATE_DO_EXECUTE(2, tick))
+    {
+        // UPDATE GROUND TRUTH OPTICAL FLOW
+        updateOpticalFlowAnalytic(state,sensors);
+
+        // POLICY VECTOR UPDATE
+        if (isCamActive == true)
+        {
+            // ONLY UPDATE WITH NEW OPTICAL FLOW DATA
+            isOFUpdated = updateOpticalFlowEst();
+
+            // UPDATE POLICY VECTOR
+            X_input->data[0][0] = Tau_est;
+            X_input->data[1][0] = Theta_x_est;
+            X_input->data[2][0] = D_perp; 
+
+        }
+        else
+        {
+            // UPDATE AT THE ABOVE FREQUENCY
+            isOFUpdated = true;
+
+            // UPDATE POLICY VECTOR
+            X_input->data[0][0] = Tau;
+            X_input->data[1][0] = Theta_x;
+            X_input->data[2][0] = D_perp; 
+        }
+    }
+    
     // POLICY UPDATES
     if (isOFUpdated == true) {
 
@@ -171,12 +186,6 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
         if(policy_armed_flag == true){
 
-            // UPDATE POLICY VECTOR
-            X_input->data[0][0] = Tau;
-            X_input->data[1][0] = Theta_x;
-            X_input->data[2][0] = D_perp; 
-        
-            
             switch (Policy)
             {
                 case PARAM_OPTIM:

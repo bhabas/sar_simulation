@@ -36,8 +36,8 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
 
         mvprintw(17, 0,"==== Policy States ====");
         mvprintw(18, 0,"D_perp:  % 7.3f  V_perp: % 7.3f  V_tx:   % 7.3f",D_perp,V_perp,V_tx);
-        mvprintw(19, 0,"Tau:     % 7.3f  \u03B8x:    % 7.3f  \u03B8y:    % 7.3f",Tau,Theta_x,Theta_y);
-        mvprintw(20, 0,"Tau_est: % 7.3f  \u03B8x_est: % 7.3f  \u03B8y_est: % 7.3f",Tau_est,Theta_x_est,Theta_y_est);
+        mvprintw(19, 0,"Tau:     % 7.3f  Theta_x:     % 7.3f  Theta_y:     % 7.3f",Tau,Theta_x,Theta_y);
+        mvprintw(20, 0,"Tau_est: % 7.3f  Theta_x_est: % 7.3f  Theta_y_est: % 7.3f",Tau_est,Theta_x_est,Theta_y_est);
 
         mvprintw(22, 0,"==== Policy: %s ====",POLICY_TYPE.c_str());
         if (strcmp(POLICY_TYPE.c_str(),"PARAM_OPTIM") == 0)

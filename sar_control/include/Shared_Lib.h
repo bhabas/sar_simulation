@@ -158,23 +158,15 @@ extern float thrust_override[4];    // Motor thrusts [g]
 //     OPTICAL FLOW ESTIMATION
 // =================================
 
-// OPTICAL FLOW STATES
+// OPTICAL FLOW STATES (GROUND TRUTH)
 extern float Tau;           // [s]
 extern float Theta_x;       // [rad/s] 
 extern float Theta_y;       // [rad/s]
-extern float Theta_z;       // [rad/s]
 
-// ANALYTICAL OPTICAL FLOW STATES
-extern float Tau_calc;      // [s]
-extern float Theta_x_calc;  // [rad/s] 
-extern float Theta_y_calc;  // [rad/s]
-extern float D_perp_calc;   // [m]
-
-// ESTIMATED OPTICAL FLOW STATES
+// OPTICAL FLOW STATES (CAMERA ESTIMATE)
 extern float Tau_est;      // [s]
 extern float Theta_x_est;  // [rad/s]
 extern float Theta_y_est;  // [rad/s]
-extern float D_perp_est;   // [m]
 
 extern nml_mat* A_mat;
 extern nml_mat* b_vec;
@@ -306,8 +298,8 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd);
 void controlOutput(const state_t *state, const sensorData_t *sensors);
 uint16_t thrust2PWM(float f);
 void updatePlaneNormal(float Plane_Angle);
-void updateOpticalFlowEst();
-void updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors);
+bool updateOpticalFlowEst();
+bool updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors);
 
 
 

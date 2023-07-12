@@ -156,23 +156,15 @@ float thrust_override[4] = {0.0f,0.0f,0.0f,0.0f};   // Motor thrusts [g]
 //     OPTICAL FLOW ESTIMATION
 // =================================
 
-// OPTICAL FLOW STATES
+// OPTICAL FLOW STATES (GROUND TRUTH)
 float Tau = 0.0f;       // [s]
 float Theta_x = 0.0f;   // [rad/s] 
 float Theta_y = 0.0f;   // [rad/s]
-float Theta_z = 0.0f;   // [rad/s]
 
-// ANALYTICAL OPTICAL FLOW STATES
-float Tau_calc = 0.0f;       // [s]
-float Theta_x_calc = 0.0f;   // [rad/s] 
-float Theta_y_calc = 0.0f;   // [rad/s]
-float D_perp_calc = 0.0f;    // [m]
-
-// ESTIMATED OPTICAL FLOW STATES
+// OPTICAL FLOW STATES (CAMERA ESTIMATE)
 float Tau_est = 0.0f;       // [s]
 float Theta_x_est = 0.0f;   // [rad/s]
 float Theta_y_est = 0.0f;   // [rad/s]
-float D_perp_est = 0.0f;    // [m]
 
 nml_mat* A_mat;
 nml_mat* b_vec;
@@ -201,7 +193,7 @@ bool customPWM_flag = false;
 
 
 // SENSOR FLAGS
-bool isCamActive = false;
+bool isCamActive = true;
 
 
 // =================================
@@ -676,58 +668,71 @@ void updatePlaneNormal(float Plane_Angle)
     t_y.z = 0;
 }
 
-void updateOpticalFlowEst()
+bool updateOpticalFlowEst()
 {
-    consolePrintf("Est\n");
+    bool UpdateOpticalFlow = true;
 
-    // // READ ARRAY
-        // if(xSemaphoreTake(xMutex,(TickType_t)10) == pdTRUE)
-        // {
-        //     if(isArrUpdated)
-        //     {
-        //         for (int i = 0; i < NUM_VALUES; i++) {
-        //             UART_arr[i] = valArr[i];
-        //         }
-        //         isArrUpdated = false;
-        //         isOFUpdated = true;
-        //     }
-        //     xSemaphoreGive(xMutex);
-            
-        // }
+    #ifdef CONFIG_SAR_EXP
+    // REQUEST ACCESS TO UART ARRAY
+    if(xSemaphoreTake(xMutex,(TickType_t)10) == pdTRUE)
+    {
+        // CHECK FOR UPDATE TO ARRAY AND RETURN ACCESS
+        if(isArrUpdated)
+        {
+            // COPY ARRAY CONTENTS
+            for (int i = 0; i < NUM_VALUES; i++) 
+            {
+                UART_arr[i] = valArr[i];
+            }
+            isArrUpdated = false;
+            UpdateOpticalFlow = true;
+        }
+        
+        // RETURN ACCESS
+        xSemaphoreGive(xMutex);
+    }
+    #endif
 
-        // if (isOFUpdated == true)
-        // {
-        //     isOFUpdated = false;
-        // }
+    // CALC OPTICAL FLOW VALUES
+    if (UpdateOpticalFlow)
+    {
+        // UPDATE Ax=b MATRICES FROM UART ARRAY
+        double temp_Grad_vec[3] = {
+             9,
+            -3,
+             7,
+        };
 
+        double spatial_Grad_mat[9] = {
+            3, 1,-1,
+            2,-2, 1,
+            1, 1, 1,
+        };
+        nml_mat_fill_fromarr(b_vec,3,1,3,temp_Grad_vec);
+        nml_mat_fill_fromarr(A_mat,3,3,9,spatial_Grad_mat);
 
-        // double temp_Grad_vec[3] = {
-        //      9,
-        //     -3,
-        //      7,
-        // };
+        // SOLVE Ax=b EQUATION FOR OPTICAL FLOW VECTOR
+        nml_mat_lup* LUP = nml_mat_lup_solve(A_mat);
+        OF_vec = nml_ls_solve(LUP,b_vec);
+        nml_mat_lup_free(LUP);
 
-        // double spatial_Grad_mat[9] = {
-        //     3, 1,-1,
-        //     2,-2, 1,
-        //     1, 1, 1,
-        // };
+        // CLAMP OPTICAL FLOW VALUES
+        Theta_x_est = clamp(OF_vec->data[0][0],-20.0f,20.0f);
+        Theta_y_est = clamp(OF_vec->data[1][0],-20.0f,20.0f);
+        Tau_est = clamp(1/(OF_vec->data[2][0] + 1.0e-6),0.0f,5.0f);
 
-        // nml_mat_fill_fromarr(b_vec,3,1,3,temp_Grad_vec);
-        // nml_mat_fill_fromarr(A_mat,3,3,9,spatial_Grad_mat);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+    
 
-
-        // nml_mat_lup* LUP = nml_mat_lup_solve(A_mat);
-
-        // OF_vec = nml_ls_solve(LUP,b_vec);
-        // nml_mat_lup_free(LUP);
-
-        // nml_mat_print_CF(OF_vec);
 }
 
-void updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors)
+bool updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors)
 {
-
     // UPDATE POS AND VEL
     r_BO = mkvec(state->position.x, state->position.y, state->position.z);
     V_BO = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);
@@ -737,7 +742,6 @@ void updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors
 
     // CALC RELATIVE DISTANCE AND VEL
     D_perp = vdot(r_PB,n_hat) + 1e-6f;
-
     V_perp = vdot(V_BO,n_hat);
     V_tx = vdot(V_BO,t_x);
     V_ty = vdot(V_BO,t_y);
@@ -750,10 +754,9 @@ void updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors
     // CALC OPTICAL FLOW VALUES
     Theta_x = clamp(V_tx/D_perp,-20.0f,20.0f);
     Theta_y = clamp(V_ty/D_perp,-20.0f,20.0f);
-    Theta_z = clamp(V_perp/D_perp,-20.0f,20.0f);
-    Tau = clamp(1/Theta_z,0.0f,5.0f);
+    Tau = clamp(D_perp/(V_perp + 1e-6f),0.0f,5.0f);
 
-    isOFUpdated = true;
+    return true;
 }
 
 
