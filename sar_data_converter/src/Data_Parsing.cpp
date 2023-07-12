@@ -124,7 +124,6 @@ void SAR_DataConverter::CtrlDebug_Callback(const sar_msgs::CTRL_Debug &ctrl_msg)
     Tumbled_Flag = ctrl_msg.Tumbled_Flag;
     Moment_Flag = ctrl_msg.Moment_Flag;
     Policy_Armed_Flag = ctrl_msg.Policy_Armed;
-    Camera_Sensor_Active = ctrl_msg.Camera_Sensor_Active;
 }
 
 

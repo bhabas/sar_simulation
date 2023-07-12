@@ -395,7 +395,7 @@ class SAR_DataConverter {
         bool Tumbled_Flag = false;
         bool Moment_Flag = false;
         bool Policy_Armed_Flag = false;
-        bool Camera_Sensor_Active = false;
+        bool isCamActive = false;
         bool Sticky_Flag = false;
 
 
@@ -432,8 +432,6 @@ class SAR_DataConverter {
 
 inline void SAR_DataConverter::LoadParams()
 {
-    ros::param::get("/SAR_SETTINGS/Policy_Type",POLICY_TYPE);
-
     // SAR SETTINGS
     ros::param::get("/SAR_SETTINGS/SAR_Type",SAR_Type);
     ros::param::get("/SAR_SETTINGS/SAR_Config",SAR_Config);
@@ -441,6 +439,13 @@ inline void SAR_DataConverter::LoadParams()
     GZ_Model_Name = SAR_Type + "_" + SAR_Config;
     std::string SAR_Type_str = "/SAR_Type/" + SAR_Type;
     std::string SAR_Config_str = "/Config/" + SAR_Config;
+
+    // UPDATE INTERTIAL PARAMETERS
+    ros::param::get(SAR_Type_str + SAR_Config_str + "/Mass",Mass);
+    ros::param::get(SAR_Type_str + SAR_Config_str + "/Ixx",Ixx);
+    ros::param::get(SAR_Type_str + SAR_Config_str + "/Iyy",Iyy);
+    ros::param::get(SAR_Type_str + SAR_Config_str + "/Izz",Izz);
+
 
     // PLANE SETTINGS
     ros::param::get("/PLANE_SETTINGS/Plane_Model",Plane_Model);
@@ -451,25 +456,8 @@ inline void SAR_DataConverter::LoadParams()
         ros::param::get("/PLANE_SETTINGS/Pos_Y",Plane_Pos.y);
         ros::param::get("/PLANE_SETTINGS/Pos_Z",Plane_Pos.z);
     }
-    
-    
-    // COLLECT MODEL PARAMETERS
-    ros::param::get(SAR_Type_str + SAR_Config_str + "/Mass",Mass);
-    ros::param::get(SAR_Type_str + SAR_Config_str + "/Ixx",Ixx);
-    ros::param::get(SAR_Type_str + SAR_Config_str + "/Iyy",Iyy);
-    ros::param::get(SAR_Type_str + SAR_Config_str + "/Izz",Izz);
 
-    // DEBUG SETTINGS
-    ros::param::get("/DATA_TYPE",DATA_TYPE);
-    ros::param::get("/SIM_SETTINGS/Sim_Speed",SIM_SPEED);
-    ros::param::get("/SIM_SETTINGS/Sim_Slowdown_Speed",SIM_SLOWDOWN_SPEED);
-    ros::param::get("/SIM_SETTINGS/Landing_Slowdown_Flag",LANDING_SLOWDOWN_FLAG);
-
-    ros::param::get("/SAR_DC_SETTINGS/Logging_Rate",LOGGING_RATE);
-    ros::param::get("/SAR_DC_SETTINGS/Console_Output",SHOW_CONSOLE);
-
-
-    // COLLECT CTRL GAINS
+    // UPDATE CTRL GAINS
     ros::param::get(SAR_Type_str + "/CtrlGains/P_kp_xy",P_kp_xy);
     ros::param::get(SAR_Type_str + "/CtrlGains/P_kd_xy",P_kd_xy);
     ros::param::get(SAR_Type_str + "/CtrlGains/P_ki_xy",P_ki_xy);
@@ -485,6 +473,19 @@ inline void SAR_DataConverter::LoadParams()
     ros::param::get(SAR_Type_str + "/CtrlGains/R_kp_z",R_kp_z);
     ros::param::get(SAR_Type_str + "/CtrlGains/R_kd_z",R_kd_z);
     ros::param::get(SAR_Type_str + "/CtrlGains/R_ki_z",R_ki_z);
+
+    ros::param::get("/SAR_SETTINGS/Policy_Type",POLICY_TYPE);
+    ros::param::get("/SAR_SETTINGS/CamActive",isCamActive);
+
+
+    // DEBUG SETTINGS
+    ros::param::get("/DATA_TYPE",DATA_TYPE);
+    ros::param::get("/SIM_SETTINGS/Sim_Speed",SIM_SPEED);
+    ros::param::get("/SIM_SETTINGS/Sim_Slowdown_Speed",SIM_SLOWDOWN_SPEED);
+    ros::param::get("/SIM_SETTINGS/Landing_Slowdown_Flag",LANDING_SLOWDOWN_FLAG);
+
+    ros::param::get("/SAR_DC_SETTINGS/Logging_Rate",LOGGING_RATE);
+    ros::param::get("/SAR_DC_SETTINGS/Console_Output",SHOW_CONSOLE);
 
     if(DATA_TYPE.compare("SIM") == 0)
     {

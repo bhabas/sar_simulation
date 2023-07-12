@@ -166,9 +166,7 @@ float Tau_est = 0.0f;       // [s]
 float Theta_x_est = 0.0f;   // [rad/s]
 float Theta_y_est = 0.0f;   // [rad/s]
 
-nml_mat* A_mat;
-nml_mat* b_vec;
-nml_mat* OF_vec;
+
 
 
 int32_t UART_arr[10];
@@ -193,7 +191,7 @@ bool customPWM_flag = false;
 
 
 // SENSOR FLAGS
-bool isCamActive = true;
+bool isCamActive = false;
 
 
 // =================================
@@ -708,18 +706,24 @@ bool updateOpticalFlowEst()
             2,-2, 1,
             1, 1, 1,
         };
-        nml_mat_fill_fromarr(b_vec,3,1,3,temp_Grad_vec);
-        nml_mat_fill_fromarr(A_mat,3,3,9,spatial_Grad_mat);
 
         // SOLVE Ax=b EQUATION FOR OPTICAL FLOW VECTOR
+        nml_mat* A_mat = nml_mat_from(3,3,9,spatial_Grad_mat);
+        nml_mat* b_vec = nml_mat_from(3,1,3,temp_Grad_vec);
         nml_mat_lup* LUP = nml_mat_lup_solve(A_mat);
-        OF_vec = nml_ls_solve(LUP,b_vec);
-        nml_mat_lup_free(LUP);
+        nml_mat* OF_vec = nml_ls_solve(LUP,b_vec);
 
         // CLAMP OPTICAL FLOW VALUES
         Theta_x_est = clamp(OF_vec->data[0][0],-20.0f,20.0f);
         Theta_y_est = clamp(OF_vec->data[1][0],-20.0f,20.0f);
         Tau_est = clamp(1/(OF_vec->data[2][0] + 1.0e-6),0.0f,5.0f);
+
+
+        nml_mat_lup_free(LUP);
+        nml_mat_free(A_mat);
+        nml_mat_free(b_vec);
+        nml_mat_free(OF_vec);
+
 
         return true;
     }

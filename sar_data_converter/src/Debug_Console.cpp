@@ -22,7 +22,7 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
 
 
         mvprintw(4, 0,"==== Flags ====");
-        mvprintw(5, 0,"Motorstop:\t%u  Flip_flag:\t  %u  Pos Ctrl:\t    %u  Cam_Est:\t  %u",Motorstop_Flag, flip_flag, Pos_Ctrl_Flag,Camera_Sensor_Active);
+        mvprintw(5, 0,"Motorstop:\t%u  Flip_flag:\t  %u  Pos Ctrl:\t    %u  Cam_Est:\t  %u",Motorstop_Flag, flip_flag, Pos_Ctrl_Flag,isCamActive);
         mvprintw(6, 0,"Traj Active:\t%u  Impact_flag:\t  %u  Vel Ctrl:\t    %u ",Traj_Active_Flag,impact_flag,Vel_Ctrl_Flag);
         mvprintw(7, 0,"Policy_armed:\t%u  Tumble Detect: %u  Moment_Flag:   %u ",Policy_Armed_Flag,Tumble_Detection,Moment_Flag);
         mvprintw(8, 0,"Sticky_flag:\t%u  Tumbled:\t  %u  Slowdown_type: %u",Sticky_Flag,Tumbled_Flag,SLOWDOWN_TYPE);

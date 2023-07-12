@@ -56,11 +56,6 @@ void controllerOutOfTreeInit() {
     // INIT DEEP RL NN POLICY
     // NN_init(&NN_DeepRL,NN_Params_DeepRL);
 
-    // INIT OPTICAL FLOW ESTIMATION MATRICES
-    A_mat = nml_mat_new(3,3);
-    b_vec = nml_mat_new(3,1);
-    OF_vec = nml_mat_new(3,1);
-
     consolePrintf("GTC Controller Initiated\n");
 }
 
@@ -150,7 +145,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
     }
 
     // OPTICAL FLOW UPDATES
-    if (RATE_DO_EXECUTE(2, tick))
+    if (RATE_DO_EXECUTE(RATE_100_HZ, tick))
     {
         // UPDATE GROUND TRUTH OPTICAL FLOW
         updateOpticalFlowAnalytic(state,sensors);

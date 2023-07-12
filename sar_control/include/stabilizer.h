@@ -208,7 +208,7 @@ void Controller::loadParams()
     ros::param::get(SAR_Type + "/CtrlGains/R_ki_z",R_ki_z);
     ros::param::get(SAR_Type + "/CtrlGains/i_range_R_z",i_range_R_z);
 
-    // ros::param::get("/SAR_SETTINGS/Cam_Sensor",camera_sensor_active);
+    ros::param::get("/SAR_SETTINGS/CamActive",isCamActive);
 
 
     // SIMULATION SETTINGS FROM CONFIG FILE
@@ -237,11 +237,7 @@ void Controller::publishCtrlDebug()
     CtrlDebug_msg.Tumbled_Flag = tumbled;
     CtrlDebug_msg.Moment_Flag = moment_flag; 
     CtrlDebug_msg.Motorstop_Flag = motorstop_flag;
-
-
-    // CtrlDebug_msg.Traj_Active = ;
     CtrlDebug_msg.Policy_Armed = policy_armed_flag; 
-    // CtrlDebug_msg.Camera_Sensor_Active = camera_sensor_active;
 
     CTRL_Debug_Publisher.publish(CtrlDebug_msg);
 }
