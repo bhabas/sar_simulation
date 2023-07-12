@@ -1,6 +1,8 @@
 #include "Controller_GTC.h"
 
 
+
+
 void appMain() {
 
     while (1)
@@ -50,10 +52,15 @@ void controllerOutOfTreeInit() {
     // INIT DEEP RL NN POLICY
     X_input = nml_mat_new(3,1);
     Y_output = nml_mat_new(4,1);
+
+    // INIT DEEP RL NN POLICY
     // NN_init(&NN_DeepRL,NN_Params_DeepRL);
 
-    cml_m33 matrix = cml_m33_new();
-    cml_mat_print(&matrix,matrix.num_rows,matrix.num_cols);
+    // INIT OPTICAL FLOW ESTIMATION MATRICES
+    A_mat = nml_mat_new(3,3);
+    b_vec = nml_mat_new(3,1);
+    OF_vec = nml_mat_new(3,1);
+
     consolePrintf("GTC Controller Initiated\n");
 }
 
@@ -109,7 +116,7 @@ void controllerOutOfTreeReset() {
     Policy_Action_tr = 0.0f;
 
 
-    calcPlaneNormal(Plane_Angle);
+    updatePlaneNormal(Plane_Angle);
 
 }
 
@@ -122,31 +129,15 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
     // OPTICAL FLOW UPDATES
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
-
-        // UPDATE POS AND VEL
-        r_BO = mkvec(state->position.x, state->position.y, state->position.z);
-        V_BO = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);
-
-        // CALC DISPLACEMENT FROM PLANE CENTER
-        r_PB = vsub(r_PO,r_BO); 
-
-        // CALC RELATIVE DISTANCE AND VEL
-        D_perp = vdot(r_PB,n_hat) + 1e-6f;
-
-        V_perp = vdot(V_BO,n_hat);
-        V_tx = vdot(V_BO,t_x);
-        V_ty = vdot(V_BO,t_y);
-
-        if (fabsf(D_perp) < 0.02f)
+        
+        if (isCamActive == true)
         {
-            D_perp = 0.0f;
+            updateOpticalFlowEst();
         }
-
-        // CALC OPTICAL FLOW VALUES
-        Theta_x = clamp(V_tx/D_perp,-20.0f,20.0f);
-        Theta_y = clamp(V_ty/D_perp,-20.0f,20.0f);
-        Theta_z = clamp(V_perp/D_perp,-20.0f,20.0f);
-        Tau = clamp(1/Theta_z,0.0f,5.0f);
+        else
+        {
+            updateOpticalFlowAnalytic(state,sensors);
+        }
 
     }
 
@@ -174,14 +165,17 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
     }
 
     // POLICY UPDATES
-    if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
+    if (isOFUpdated == true) {
 
-        X_input->data[0][0] = Tau;
-        X_input->data[1][0] = Theta_x;
-        X_input->data[2][0] = D_perp; 
-        
+        isOFUpdated = false;
 
         if(policy_armed_flag == true){
+
+            // UPDATE POLICY VECTOR
+            X_input->data[0][0] = Tau;
+            X_input->data[1][0] = Theta_x;
+            X_input->data[2][0] = D_perp; 
+        
             
             switch (Policy)
             {
@@ -206,7 +200,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                     
                         M_d.x = 0.0f;
-                        M_d.y = Policy_Flip_Action*1e-3f;
+                        M_d.y = -Policy_Flip_Action*1e-3f;
                         M_d.z = 0.0f;
 
                         F_thrust_flip = 0.0;
@@ -248,7 +242,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                     
                         M_d.x = 0.0f;
-                        M_d.y = Policy_Flip_Action*1e-3f;
+                        M_d.y = -Policy_Flip_Action*1e-3f;
                         M_d.z = 0.0f;
 
                         F_thrust_flip = 0.0;
@@ -260,34 +254,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                     break;
 
                 case DEEP_RL_SB3:
-                        
-                    if (onceFlag == false && V_perp > 0.1f)
-                    {
-                        onceFlag = true;
 
-                        // UPDATE AND RECORD FLIP VALUES
-                        flip_flag = true;  
-                        statePos_tr = statePos;
-                        stateVel_tr = stateVel;
-                        stateQuat_tr = stateQuat;
-                        stateOmega_tr = stateOmega;
-
-                        Tau_tr = Tau;
-                        Theta_x_tr = Theta_x_tr;
-                        Theta_y_tr = Theta_y_tr;
-                        D_perp_tr = D_perp;
-
-                    
-                        M_d.x = 0.0f;
-                        M_d.y = Policy_Flip_Action*1e-3f;
-                        M_d.z = 0.0f;
-
-                        F_thrust_flip = 0.0;
-                        M_x_flip = M_d.x*1e3f;
-                        M_y_flip = M_d.y*1e3f;
-                        M_z_flip = M_d.z*1e3f;
-                    }
-                    
                     break;
                     
             default:
@@ -419,6 +386,7 @@ PARAM_ADD(PARAM_FLOAT, f_max, &f_max)
 
 PARAM_ADD(PARAM_UINT8, SafeMode, &safeModeEnable)
 PARAM_ADD(PARAM_UINT8, PolicyType, &Policy)
+PARAM_ADD(PARAM_UINT8, isCamActive, &isCamActive)
 
 PARAM_ADD(PARAM_FLOAT, P_kp_xy, &P_kp_xy)
 PARAM_ADD(PARAM_FLOAT, P_kd_xy, &P_kd_xy) 
@@ -468,7 +436,6 @@ LOG_ADD(LOG_UINT32, Z_PWM34, &StatesZ_CTRL.MS_PWM34)
 
 LOG_ADD(LOG_UINT32, Z_NN_FP, &StatesZ_CTRL.NN_FP)
 
-LOG_ADD(LOG_UINT8, Z_vbat, &value1)
 LOG_GROUP_STOP(States_CTRL)
 
 
