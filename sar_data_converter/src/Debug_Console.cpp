@@ -22,20 +22,20 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
 
 
         mvprintw(4, 0,"==== Flags ====");
-        mvprintw(5, 0,"Motorstop:\t%u  Flip_flag:\t  %u  Pos Ctrl:\t    %u  Cam_Est:\t  %u",Motorstop_Flag, flip_flag, Pos_Ctrl_Flag,isCamActive);
-        mvprintw(6, 0,"Traj Active:\t%u  Impact_flag:\t  %u  Vel Ctrl:\t    %u ",Traj_Active_Flag,impact_flag,Vel_Ctrl_Flag);
-        mvprintw(7, 0,"Policy_armed:\t%u  Tumble Detect: %u  Moment_Flag:   %u ",Policy_Armed_Flag,Tumble_Detection,Moment_Flag);
-        mvprintw(8, 0,"Sticky_flag:\t%u  Tumbled:\t  %u  Slowdown_type: %u",Sticky_Flag,Tumbled_Flag,SLOWDOWN_TYPE);
+        mvprintw(5, 0,"Motorstop:\t%u  Flip_Flag:\t  %u  Pos Ctrl:\t    %u  Cam_Est:\t  %u",Motorstop_Flag, flip_flag, Pos_Ctrl_Flag,isCamActive);
+        mvprintw(6, 0,"Traj Active:\t%u  Impact_Flag:\t  %u  Vel Ctrl:\t    %u ",Traj_Active_Flag,impact_flag,Vel_Ctrl_Flag);
+        mvprintw(7, 0,"Policy_Armed:\t%u  Tumble Detect: %u  Moment_Flag:   %u ",Policy_Armed_Flag,Tumble_Detection,Moment_Flag);
+        mvprintw(8, 0,"Sticky_Flag:\t%u  Tumbled:\t  %u  Slowdown_Type: %u",Sticky_Flag,Tumbled_Flag,SLOWDOWN_TYPE);
         
         mvprintw(10, 0,"==== System States ====");
-        mvprintw(11, 0,"Pos [m]:\t % 8.5f  % 8.5f  % 8.5f",Pose.position.x,Pose.position.y,Pose.position.z);
-        mvprintw(12, 0,"Vel [m/s]:\t % 8.5f  % 8.5f  % 8.5f",Twist.linear.x,Twist.linear.y,Twist.linear.z);
+        mvprintw(11, 0,"Pos [m]:\t % 8.3f  % 8.3f  % 8.3f",Pose.position.x,Pose.position.y,Pose.position.z);
+        mvprintw(12, 0,"Vel [m/s]:\t % 8.3f  % 8.3f  % 8.3f",Twist.linear.x,Twist.linear.y,Twist.linear.z);
         mvprintw(13, 0,"Omega [rad/s]:\t % 8.3f  % 8.3f  % 8.3f",Twist.angular.x,Twist.angular.y,Twist.angular.z);
         mvprintw(14, 0,"Eul [deg]:\t % 8.3f  % 8.3f  % 8.3f",Eul.x,Eul.y,Eul.z);
-        mvprintw(15, 0,"Vel [mag,phi,alph]: % 8.3f % 8.3f",Vel_mag,Phi);
+        mvprintw(15, 0,"Vel [mag,phi]:\t % 8.3f  % 8.3f",Vel_mag,Phi);
 
         mvprintw(17, 0,"==== Policy States ====");
-        mvprintw(18, 0,"D_perp:  % 7.3f  V_perp: % 7.3f  V_tx:   % 7.3f",D_perp,V_perp,V_tx);
+        mvprintw(18, 0,"D_perp:  % 7.3f  V_perp:      % 7.3f  V_tx:        % 7.3f",D_perp,V_perp,V_tx);
         mvprintw(19, 0,"Tau:     % 7.3f  Theta_x:     % 7.3f  Theta_y:     % 7.3f",Tau,Theta_x,Theta_y);
         mvprintw(20, 0,"Tau_est: % 7.3f  Theta_x_est: % 7.3f  Theta_y_est: % 7.3f",Tau_est,Theta_x_est,Theta_y_est);
 
@@ -46,16 +46,16 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
         }
         else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL_SB3") == 0)
         {
-            mvprintw(23, 0,"Policy_Trg_Action: % 7.3f \tPolicy_Action: % 7.3f ",Policy_Trg_Action,Policy_Flip_Action);
+            mvprintw(23, 0,"Pol_Trg_Act_tr: % 7.3f \tPol_Flip_Act: % 7.3f ",Policy_Trg_Action,Policy_Flip_Action);
         }
         else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL_ONBOARD") == 0)
         {
-            mvprintw(23, 0,"Policy_Trg_Action: % 7.3f \tPolicy_Action: % 7.3f ",Policy_Trg_Action,Policy_Flip_Action);
+            mvprintw(23, 0,"Pol_Trg_Act_tr: % 7.3f \tPol_Flip_Act: % 7.3f ",Policy_Trg_Action,Policy_Flip_Action);
         }
 
         mvprintw(25,0,"==== Flip Trigger Values ====");
-        mvprintw(26,0,"Tau_tr:     % 7.3f \tPolicy_Trg_Action_tr:    % 7.3f ",Tau_tr,Policy_Trg_Action_tr);
-        mvprintw(27,0,"\u03B8x_tr:     % 7.3f \tPolicy_Flip_Action_tr:  % 7.3f ",Theta_x_tr,Policy_Flip_Action_tr);
+        mvprintw(26,0,"Tau_tr:     % 7.3f \tPol_Trg_Act_tr:  % 7.3f ",Tau_tr,Policy_Trg_Action_tr);
+        mvprintw(27,0,"\u03B8x_tr:     % 7.3f \tPol_Flip_Act_tr: % 7.3f ",Theta_x_tr,Policy_Flip_Action_tr);
         mvprintw(28,0,"D_perp_tr:  % 7.3f ",D_perp_tr);
 
         mvprintw(30,0,"==== Setpoints ====");

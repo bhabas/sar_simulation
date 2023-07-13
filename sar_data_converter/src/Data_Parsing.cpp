@@ -140,81 +140,103 @@ void SAR_DataConverter::decompressXY(uint32_t xy, float xy_arr[])
 
 
 
-void SAR_DataConverter::cf1_FullState_Callback(const sar_msgs::GenericLogData::ConstPtr &log1_msg)
+void SAR_DataConverter::cf1_FullState_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
 {
-    // // ===================
-    // //     FLIGHT DATA
-    // // ===================
-    // Time = ros::Time::now();
+    // ===================
+    //     FLIGHT DATA
+    // ===================
+    Time = ros::Time::now();
 
-    // // POSITION
-    // float xy_arr[2];
-    // decompressXY(log1_msg->values[0],xy_arr);
+    // POSITION
+    float xy_arr[2];
+    decompressXY(log_msg->values[0],xy_arr);
 
-    // Pose.position.x = xy_arr[0];
-    // Pose.position.y = xy_arr[1];
-    // Pose.position.z = log1_msg->values[1]*1e-3;
+    Pose.position.x = xy_arr[0];
+    Pose.position.y = xy_arr[1];
+    Pose.position.z = log_msg->values[1]*1e-3;
 
-    // // VELOCITY
-    // float vxy_arr[2];
-    // decompressXY(log1_msg->values[2],vxy_arr);
+    // VELOCITY
+    float vxy_arr[2];
+    decompressXY(log_msg->values[2],vxy_arr);
     
-    // Twist.linear.x = vxy_arr[0];
-    // Twist.linear.y = vxy_arr[1];
-    // Twist.linear.z = log1_msg->values[3]*1e-3;
-    // Vel_mag = sqrt(pow(Twist.linear.x,2)+pow(Twist.linear.y,2)+pow(Twist.linear.z,2));
-    // Phi = atan2(Twist.linear.z,Twist.linear.x)*180/M_PI;
-    // Alpha = atan2(Twist.linear.y,Twist.linear.x)*180/M_PI;
+    Twist.linear.x = vxy_arr[0];
+    Twist.linear.y = vxy_arr[1];
+    Twist.linear.z = log_msg->values[3]*1e-3;
+    Vel_mag = sqrt(pow(Twist.linear.x,2)+pow(Twist.linear.y,2)+pow(Twist.linear.z,2));
+    Phi = atan2(Twist.linear.z,Twist.linear.x)*180/M_PI;
+    Alpha = atan2(Twist.linear.y,Twist.linear.x)*180/M_PI;
 
-    // // ORIENTATION
-    // float quat[4];
-    // uint32_t quatZ = (uint32_t)log1_msg->values[4];
-    // quatdecompress(quatZ,quat);
+    // ORIENTATION
+    float quat[4];
+    uint32_t quatZ = (uint32_t)log_msg->values[4];
+    quatdecompress(quatZ,quat);
 
-    // Pose.orientation.x = quat[0];
-    // Pose.orientation.y = quat[1];
-    // Pose.orientation.z = quat[2];
-    // Pose.orientation.w = quat[3]; 
+    Pose.orientation.x = quat[0];
+    Pose.orientation.y = quat[1];
+    Pose.orientation.z = quat[2];
+    Pose.orientation.w = quat[3]; 
 
-    // // PROCESS EULER ANGLES
-    // float eul[3];
-    // quat2euler(quat,eul);
-    // Eul.x = eul[0]*180/M_PI;
-    // Eul.y = eul[1]*180/M_PI;
-    // Eul.z = eul[2]*180/M_PI;
+    // PROCESS EULER ANGLES
+    float eul[3];
+    quat2euler(quat,eul);
+    Eul.x = eul[0]*180/M_PI;
+    Eul.y = eul[1]*180/M_PI;
+    Eul.z = eul[2]*180/M_PI;
 
-    // // ANGULAR VELOCITY
-    // float wxy_arr[2];
-    // decompressXY(log1_msg->values[5],wxy_arr);
+    // ANGULAR VELOCITY
+    float wxy_arr[2];
+    decompressXY(log_msg->values[5],wxy_arr);
     
-    // Twist.angular.x = wxy_arr[0]*10;
-    // Twist.angular.y = wxy_arr[1]*10;
-
-
-    // // OPTICAL FLOW
-    // float OF_xy_arr[2];
-    // decompressXY(log1_msg->values[6],OF_xy_arr);
-    
-    // Theta_x = OF_xy_arr[0];
-    // Theta_y = OF_xy_arr[1];
-    // Tau = log1_msg->values[7]*1e-3;
+    Twist.angular.x = wxy_arr[0]*10;
+    Twist.angular.y = wxy_arr[1]*10;
+    Twist.angular.z = log_msg->values[6]*1e-3;
 
 }
 
-void SAR_DataConverter::cf1_PolicyState_Callback(const sar_msgs::GenericLogData::ConstPtr &log2_msg)
+void SAR_DataConverter::cf1_PolicyState_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
 {
-    // // ANGULAR VELOCITY (Z)
-    // Twist.angular.z = log2_msg->values[0]*1e-3;
+    // CEILING DISTANCE
+    D_perp = log_msg->values[0]*1e-3;
 
-    // // CEILING DISTANCE
-    // D_perp = log2_msg->values[1]*1e-3;
+    // OPTICAL FLOW VALUES
+    float Theta_xy_arr[2];
+    decompressXY(log_msg->values[1],Theta_xy_arr);
+    
+    Theta_x = Theta_xy_arr[0];
+    Theta_y = Theta_xy_arr[1];
+    Tau = log_msg->values[2]*1e-3;
+
+
+    // OPTICAL FLOW ESTIMATES
+    float Theta_xy_est_arr[2];
+    decompressXY(log_msg->values[3],Theta_xy_est_arr);
+    
+    Theta_x_est = Theta_xy_est_arr[0];
+    Theta_y_est = Theta_xy_est_arr[1];
+    Tau_est = log_msg->values[4]*1e-3;
+
+
+    // POLICY ACTIONS
+    float Policy_Action_arr[2];
+    decompressXY(log_msg->values[5],Policy_Action_arr);
+    Policy_Trg_Action = Policy_Action_arr[0];
+    Policy_Flip_Action = Policy_Action_arr[1];
+
+    // FLIP FLAG
+    flip_flag = log_msg->values[6];
+    if(flip_flag == true && OnceFlag_flip == false)
+    {
+        Time_tr = ros::Time::now();
+        OnceFlag_flip = true;
+    }
+
 
     // // DECOMPRESS THRUST/MOMENT MOTOR VALUES [g]
     // float FM_z[2];
     // float M_xy[2];
 
-    // decompressXY(log2_msg->values[2],FM_z);
-    // decompressXY(log2_msg->values[3],M_xy); 
+    // decompressXY(log_msg->values[2],FM_z);
+    // decompressXY(log_msg->values[3],M_xy); 
 
     // FM = {FM_z[0],M_xy[0],M_xy[1],FM_z[1]}; // [F,Mx,My,Mz]
 
@@ -223,8 +245,8 @@ void SAR_DataConverter::cf1_PolicyState_Callback(const sar_msgs::GenericLogData:
     // float MS_PWM12[2];
     // float MS_PWM34[2];
 
-    // decompressXY(log2_msg->values[4],MS_PWM12);
-    // decompressXY(log2_msg->values[5],MS_PWM34);
+    // decompressXY(log_msg->values[4],MS_PWM12);
+    // decompressXY(log_msg->values[5],MS_PWM34);
 
     // MS_PWM = {
     //     (uint16_t)round(MS_PWM12[0]*2.0e3),
@@ -233,21 +255,11 @@ void SAR_DataConverter::cf1_PolicyState_Callback(const sar_msgs::GenericLogData:
     //     (uint16_t)round(MS_PWM34[1]*2.0e3)
     // };
     
-    // // NEURAL NETWORK VALUES
-    // float NN_FP[2];
-    // decompressXY(log2_msg->values[6],NN_FP);
-    // Policy_Trg_Action = NN_FP[0];
-    // Policy_Flip_Action = NN_FP[1];
+    
 
-    // // OTHER MISC INFO
-    // flip_flag = log2_msg->values[7];
-    // if(flip_flag == true && OnceFlag_flip == false)
-    // {
-    //     Time_tr = ros::Time::now();
-    //     OnceFlag_flip = true;
-    // }
+    
 
-    // V_battery = 3.5 + (log2_msg->values[8]/256)*(4.2-3.5);
+    // V_battery = 3.5 + (log_msg->values[8]/256)*(4.2-3.5);
 
 
 }
