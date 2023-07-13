@@ -298,71 +298,69 @@ void SAR_DataConverter::cf1_SetPoints_Callback(const sar_msgs::GenericLogData::C
 
 void SAR_DataConverter::cf1_TrgState_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
 {
+    // TRIGGER STATE - CEILING DISTANCE
+    D_perp_tr = log_msg->values[0]*1e-3;
 
-    // // FLIP TRIGGER - POSITION
-    // Pose_tr.position.x = NAN;
-    // Pose_tr.position.y = NAN;
-    // Pose_tr.position.z = log_msg->values[0]*1e-3;
+    // TRIGGER STATE - POSITION
+    Pose_tr.position.x = NAN;
+    Pose_tr.position.y = NAN;
+    Pose_tr.position.z = log_msg->values[1]*1e-3;
 
-    // // FLIP TRIGGER - CEILING DISTANCE
-    // D_perp_tr = log_msg->values[1]*1e-3;
 
-    // // FLIP TRIGGER - VELOCITY
-    // float vxy_arr[2];
-    // decompressXY(log_msg->values[2],vxy_arr);
+    // TRIGGER STATE - VELOCITY
+    float vxy_arr[2];
+    decompressXY(log_msg->values[2],vxy_arr);
     
-    // Twist_tr.linear.x = vxy_arr[0];
-    // Twist_tr.linear.y = vxy_arr[1];
-    // Twist_tr.linear.z = log_msg->values[3]*1e-3;
+    Twist_tr.linear.x = vxy_arr[0];
+    Twist_tr.linear.y = vxy_arr[1];
+    Twist_tr.linear.z = log_msg->values[3]*1e-3;
+
+    // TRIGGER STATE - OPTICAL FLOW
+    float Theta_xy_arr[2];
+    decompressXY(log_msg->values[4],Theta_xy_arr);
     
+    Theta_x_tr = Theta_xy_arr[0];
+    Theta_y_tr = Theta_xy_arr[1];
+    Tau_tr = log_msg->values[5]*1e-3;
 
-    // // FLIP TRIGGER - ORIENTATION
-    // float quat_tr[4];
-    // uint32_t quatZ = (uint32_t)log_msg->values[4];
-    // quatdecompress(quatZ,quat_tr);
-
-    // Pose_tr.orientation.x = quat_tr[0];
-    // Pose_tr.orientation.y = quat_tr[1];
-    // Pose_tr.orientation.z = quat_tr[2];
-    // Pose_tr.orientation.w = quat_tr[3]; 
-
-    // // FLIP TRIGGER - ANGULAR VELOCITY
-    // float wxy_arr[2];
-    // decompressXY(log_msg->values[5],wxy_arr);
+    // TRIGGER STATE - OPTICAL FLOW ESTIMATE
+    float Theta_xy_est_arr[2];
+    decompressXY(log_msg->values[6],Theta_xy_est_arr);
     
-    // Twist_tr.angular.x = wxy_arr[0];
-    // Twist_tr.angular.y = wxy_arr[1];
-    // Twist_tr.angular.z = NAN;
+    Theta_x_tr = Theta_xy_est_arr[0];
+    Theta_y_tr = Theta_xy_est_arr[1];
+    Tau_tr = log_msg->values[7]*1e-3;
 
-    // // FLIP TRIGGER - OPTICAL FLOW
-    // float OF_xy_arr[2];
-    // decompressXY(log_msg->values[6],OF_xy_arr);
+    // TRIGGER STATE - POLICY ACTIONS
+    float Policy_Action_arr[2];
+    decompressXY(log_msg->values[8],Policy_Action_arr);
+    Policy_Trg_Action_tr = Policy_Action_arr[0];
+    Policy_Flip_Action_tr = Policy_Action_arr[1];
     
-    // Theta_x_tr = OF_xy_arr[0];
-    // Theta_y_tr = OF_xy_arr[1];
-    // Tau_tr = log_msg->values[7]*1e-3;
-
-
-    // Pos_Ctrl_Flag = log_msg->values[0];
-    // Vel_Ctrl_Flag = log_msg->values[1];
-    // Motorstop_Flag = log_msg->values[2];
-    // Moment_Flag = log_msg->values[3];
-    // Tumbled_Flag = log_msg->values[4];
-    // Tumble_Detection = log_msg->values[5];
-    // Policy_Armed_Flag =log_msg->values[6];
-
+    
 }
 
 void SAR_DataConverter::cf1_Flags_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
 {
+
+    Pos_Ctrl_Flag = (bool)log_msg->values[0];
+    Vel_Ctrl_Flag = (bool)log_msg->values[1];
+    Motorstop_Flag = (bool)log_msg->values[2];
+    Moment_Flag = (bool)log_msg->values[3];
+    Tumbled_Flag = (bool)log_msg->values[4];
+    Tumble_Detection = (bool)log_msg->values[5];
+    Policy_Armed_Flag = (bool)log_msg->values[6];
+    isCamActive = (bool)log_msg->values[7];
+
     // V_battery = log_msg->values[0];
-
-
 }
 
 
 void SAR_DataConverter::cf1_Misc_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
 {
-    // V_battery = log_msg->values[0];
+    CustomThrust_Flag = (bool)log_msg->values[0];
+    CustomPWM_Flag = (bool)log_msg->values[1];
+    SafeModeEnable = (bool)log_msg->values[2];
+    AttCtrl_Flag = (bool)log_msg->values[3];
 
 }

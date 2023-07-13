@@ -20,12 +20,11 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
         mvprintw(1, 0,"SAR Type:   %s\t  Plane Model:  %s",SAR_Type.c_str(),Plane_Model.c_str());
         mvprintw(2, 0,"SAR Config: %s\t  Plane Angle: % 6.2f",SAR_Config.c_str(),Plane_Angle);
 
-
         mvprintw(4, 0,"==== Flags ====");
-        mvprintw(5, 0,"Motorstop:\t%u  Flip_Flag:\t  %u  Pos Ctrl:\t    %u  Cam_Est:\t  %u",Motorstop_Flag, flip_flag, Pos_Ctrl_Flag,isCamActive);
-        mvprintw(6, 0,"Traj Active:\t%u  Impact_Flag:\t  %u  Vel Ctrl:\t    %u ",Traj_Active_Flag,impact_flag,Vel_Ctrl_Flag);
-        mvprintw(7, 0,"Policy_Armed:\t%u  Tumble Detect: %u  Moment_Flag:   %u ",Policy_Armed_Flag,Tumble_Detection,Moment_Flag);
-        mvprintw(8, 0,"Sticky_Flag:\t%u  Tumbled:\t  %u  Slowdown_Type: %u",Sticky_Flag,Tumbled_Flag,SLOWDOWN_TYPE);
+        mvprintw(5, 0,"Motorstop:     %u  Policy_Armed: %u  Pos_Ctrl:      %u  Moment_Flag:   %u",Motorstop_Flag,Policy_Armed_Flag,Pos_Ctrl_Flag,Moment_Flag);
+        mvprintw(6, 0,"SafeMode:      %u  Flip_Flag:    %u  Vel_Ctrl:      %u  AttCtrl_Flag:  %u",SafeModeEnable,flip_flag,Vel_Ctrl_Flag,AttCtrl_Flag);
+        mvprintw(7, 0,"Tumbled:       %u  Impact_Flag:  %u  Sticky_Flag:   %u  Custom_Thrust: %u",Tumbled_Flag,impact_flag,Sticky_Flag,CustomThrust_Flag);
+        mvprintw(8, 0,"Tumble_Detect: %u  Cam_Active:   %u  Slowdown_Type: %u  Custom_PWM:    %u",Tumble_Detection,isCamActive,SLOWDOWN_TYPE,CustomPWM_Flag);
         
         mvprintw(10, 0,"==== System States ====");
         mvprintw(11, 0,"Pos [m]:\t % 8.3f  % 8.3f  % 8.3f",Pose.position.x,Pose.position.y,Pose.position.z);

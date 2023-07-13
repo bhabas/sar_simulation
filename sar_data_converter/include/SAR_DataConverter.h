@@ -396,13 +396,23 @@ class SAR_DataConverter {
         bool Motorstop_Flag = false;
         bool Pos_Ctrl_Flag = false;
         bool Vel_Ctrl_Flag = false;
-        bool Traj_Active_Flag = false;
         bool Tumble_Detection = false;
         bool Tumbled_Flag = false;
+
+        bool AttCtrl_Flag = false;
         bool Moment_Flag = false;
+        bool CustomThrust_Flag = false;
+        bool CustomPWM_Flag = false;
+
+        bool Traj_Active_Flag = false;
         bool Policy_Armed_Flag = false;
         bool isCamActive = false;
+
+        // SIM
         bool Sticky_Flag = false;
+
+        // EXPERIMENT
+        bool SafeModeEnable = false;
 
 
         // ===================
@@ -481,7 +491,6 @@ inline void SAR_DataConverter::LoadParams()
     ros::param::get(SAR_Type_str + "/CtrlGains/R_ki_z",R_ki_z);
 
     ros::param::get("/SAR_SETTINGS/Policy_Type",POLICY_TYPE);
-    ros::param::get("/SAR_SETTINGS/CamActive",isCamActive);
 
 
     // DEBUG SETTINGS
