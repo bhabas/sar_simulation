@@ -230,100 +230,95 @@ void SAR_DataConverter::cf1_PolicyState_Callback(const sar_msgs::GenericLogData:
         OnceFlag_flip = true;
     }
 
-
-    // // DECOMPRESS THRUST/MOMENT MOTOR VALUES [g]
-    // float FM_z[2];
-    // float M_xy[2];
-
-    // decompressXY(log_msg->values[2],FM_z);
-    // decompressXY(log_msg->values[3],M_xy); 
-
-    // FM = {FM_z[0],M_xy[0],M_xy[1],FM_z[1]}; // [F,Mx,My,Mz]
-
-
-    // // MOTOR PWM VALUES
-    // float MS_PWM12[2];
-    // float MS_PWM34[2];
-
-    // decompressXY(log_msg->values[4],MS_PWM12);
-    // decompressXY(log_msg->values[5],MS_PWM34);
-
-    // MS_PWM = {
-    //     (uint16_t)round(MS_PWM12[0]*2.0e3),
-    //     (uint16_t)round(MS_PWM12[1]*2.0e3), 
-    //     (uint16_t)round(MS_PWM34[0]*2.0e3),
-    //     (uint16_t)round(MS_PWM34[1]*2.0e3)
-    // };
-    
-    
-
-    
-
-    // V_battery = 3.5 + (log_msg->values[8]/256)*(4.2-3.5);
-
-
 }
 
-void SAR_DataConverter::cf1_CTRL_Output_Callback(const sar_msgs::GenericLogData::ConstPtr &log3_msg)
+void SAR_DataConverter::cf1_CTRL_Output_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
 {
-    // // POSITION SETPOINTS
-    // float xd_xy[2];
-    // decompressXY(log3_msg->values[0],xd_xy);
+    // DECOMPRESS THRUST/MOMENT MOTOR VALUES [g]
+    float M_xy[2];
+    float FM_z[2];
 
-    // x_d.x = xd_xy[0];
-    // x_d.y = xd_xy[1];
-    // x_d.z = log3_msg->values[1]*1e-3;
+    decompressXY(log_msg->values[0],M_xy); 
+    decompressXY(log_msg->values[1],FM_z);
+
+    FM = {FM_z[0],M_xy[0],M_xy[1],FM_z[1]}; // [F,Mx,My,Mz]
+
+    // MOTOR THRUST VALUES
+    float M_thrust12[2];
+    float M_thrust34[2];
+
+    decompressXY(log_msg->values[2],M_thrust12);
+    decompressXY(log_msg->values[3],M_thrust34);
+
+    MotorThrusts = {M_thrust12[0],M_thrust12[1],M_thrust34[0],M_thrust34[1]};
+
+    // MOTOR PWM VALUES
+    float MS_PWM12[2];
+    float MS_PWM34[2];
+
+    decompressXY(log_msg->values[4],MS_PWM12);
+    decompressXY(log_msg->values[5],MS_PWM34);
+
+    MS_PWM = {
+        (uint16_t)round(MS_PWM12[0]*2.0e3),
+        (uint16_t)round(MS_PWM12[1]*2.0e3), 
+        (uint16_t)round(MS_PWM34[0]*2.0e3),
+        (uint16_t)round(MS_PWM34[1]*2.0e3)
+    };
+    
+}
+
+void SAR_DataConverter::cf1_SetPoints_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
+{
+    // POSITION SETPOINTS
+    float xd_xy[2];
+    decompressXY(log_msg->values[0],xd_xy);
+
+    x_d.x = xd_xy[0];
+    x_d.y = xd_xy[1];
+    x_d.z = log_msg->values[1]*1e-3;
    
-    // // VELOCITY SETPOINTS
-    // float vd_xy[2];
-    // decompressXY(log3_msg->values[2],vd_xy);
+    // VELOCITY SETPOINTS
+    float vd_xy[2];
+    decompressXY(log_msg->values[2],vd_xy);
 
-    // v_d.x = vd_xy[0];
-    // v_d.y = vd_xy[1];
-    // v_d.z = log3_msg->values[3]*1e-3;
+    v_d.x = vd_xy[0];
+    v_d.y = vd_xy[1];
+    v_d.z = log_msg->values[3]*1e-3;
 
-    // // ACCELERATION SETPOINTS
-    // float ad_xy[2];
-    // decompressXY(log3_msg->values[4],ad_xy);
+    // ACCELERATION SETPOINTS
+    float ad_xy[2];
+    decompressXY(log_msg->values[4],ad_xy);
 
-    // a_d.x = ad_xy[0];
-    // a_d.y = ad_xy[1];
-    // a_d.z = log3_msg->values[5]*1e-3;
+    a_d.x = ad_xy[0];
+    a_d.y = ad_xy[1];
+    a_d.z = log_msg->values[5]*1e-3;
 
-    // // MOTOR THRUST VALUES
-    // float M_thrust12[2];
-    // float M_thrust34[2];
-
-    // decompressXY(log3_msg->values[6],M_thrust12);
-    // decompressXY(log3_msg->values[7],M_thrust34);
-
-    // MotorThrusts = {M_thrust12[0],M_thrust12[1],M_thrust34[0],M_thrust34[1]};
-
-    
 }
 
-void SAR_DataConverter::cf1_SetPoints_Callback(const sar_msgs::GenericLogData::ConstPtr &log4_msg)
+void SAR_DataConverter::cf1_TrgState_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
 {
+
     // // FLIP TRIGGER - POSITION
     // Pose_tr.position.x = NAN;
     // Pose_tr.position.y = NAN;
-    // Pose_tr.position.z = log4_msg->values[0]*1e-3;
+    // Pose_tr.position.z = log_msg->values[0]*1e-3;
 
     // // FLIP TRIGGER - CEILING DISTANCE
-    // D_perp_tr = log4_msg->values[1]*1e-3;
+    // D_perp_tr = log_msg->values[1]*1e-3;
 
     // // FLIP TRIGGER - VELOCITY
     // float vxy_arr[2];
-    // decompressXY(log4_msg->values[2],vxy_arr);
+    // decompressXY(log_msg->values[2],vxy_arr);
     
     // Twist_tr.linear.x = vxy_arr[0];
     // Twist_tr.linear.y = vxy_arr[1];
-    // Twist_tr.linear.z = log4_msg->values[3]*1e-3;
+    // Twist_tr.linear.z = log_msg->values[3]*1e-3;
     
 
     // // FLIP TRIGGER - ORIENTATION
     // float quat_tr[4];
-    // uint32_t quatZ = (uint32_t)log4_msg->values[4];
+    // uint32_t quatZ = (uint32_t)log_msg->values[4];
     // quatdecompress(quatZ,quat_tr);
 
     // Pose_tr.orientation.x = quat_tr[0];
@@ -333,7 +328,7 @@ void SAR_DataConverter::cf1_SetPoints_Callback(const sar_msgs::GenericLogData::C
 
     // // FLIP TRIGGER - ANGULAR VELOCITY
     // float wxy_arr[2];
-    // decompressXY(log4_msg->values[5],wxy_arr);
+    // decompressXY(log_msg->values[5],wxy_arr);
     
     // Twist_tr.angular.x = wxy_arr[0];
     // Twist_tr.angular.y = wxy_arr[1];
@@ -341,36 +336,33 @@ void SAR_DataConverter::cf1_SetPoints_Callback(const sar_msgs::GenericLogData::C
 
     // // FLIP TRIGGER - OPTICAL FLOW
     // float OF_xy_arr[2];
-    // decompressXY(log4_msg->values[6],OF_xy_arr);
+    // decompressXY(log_msg->values[6],OF_xy_arr);
     
     // Theta_x_tr = OF_xy_arr[0];
     // Theta_y_tr = OF_xy_arr[1];
-    // Tau_tr = log4_msg->values[7]*1e-3;
+    // Tau_tr = log_msg->values[7]*1e-3;
+
+
+    // Pos_Ctrl_Flag = log_msg->values[0];
+    // Vel_Ctrl_Flag = log_msg->values[1];
+    // Motorstop_Flag = log_msg->values[2];
+    // Moment_Flag = log_msg->values[3];
+    // Tumbled_Flag = log_msg->values[4];
+    // Tumble_Detection = log_msg->values[5];
+    // Policy_Armed_Flag =log_msg->values[6];
 
 }
 
-void SAR_DataConverter::cf1_TrgState_Callback(const sar_msgs::GenericLogData::ConstPtr &log5_msg)
+void SAR_DataConverter::cf1_Flags_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
 {
-    // Pos_Ctrl_Flag = log5_msg->values[0];
-    // Vel_Ctrl_Flag = log5_msg->values[1];
-    // Motorstop_Flag = log5_msg->values[2];
-    // Moment_Flag = log5_msg->values[3];
-    // Tumbled_Flag = log5_msg->values[4];
-    // Tumble_Detection = log5_msg->values[5];
-    // Policy_Armed_Flag =log5_msg->values[6];
-
-}
-
-void SAR_DataConverter::cf1_Flags_Callback(const sar_msgs::GenericLogData::ConstPtr &log6_msg)
-{
-    // V_battery = log6_msg->values[0];
+    // V_battery = log_msg->values[0];
 
 
 }
 
 
-void SAR_DataConverter::cf1_Misc_Callback(const sar_msgs::GenericLogData::ConstPtr &log7_msg)
+void SAR_DataConverter::cf1_Misc_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
 {
-    // V_battery = log6_msg->values[0];
+    // V_battery = log_msg->values[0];
 
 }

@@ -129,13 +129,13 @@ class SAR_DataConverter {
         //     EXPERIMENT DATA CALLBACKS
         // =================================
         void decompressXY(uint32_t xy, float xy_arr[]);
-        void cf1_FullState_Callback(const sar_msgs::GenericLogData::ConstPtr &log1_msg);
-        void cf1_PolicyState_Callback(const sar_msgs::GenericLogData::ConstPtr &log2_msg);
-        void cf1_CTRL_Output_Callback(const sar_msgs::GenericLogData::ConstPtr &log3_msg);
-        void cf1_SetPoints_Callback(const sar_msgs::GenericLogData::ConstPtr &log4_msg);
-        void cf1_TrgState_Callback(const sar_msgs::GenericLogData::ConstPtr &log5_msg);
-        void cf1_Flags_Callback(const sar_msgs::GenericLogData::ConstPtr &log6_msg);
-        void cf1_Misc_Callback(const sar_msgs::GenericLogData::ConstPtr &log7_msg);
+        void cf1_FullState_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
+        void cf1_PolicyState_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
+        void cf1_CTRL_Output_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
+        void cf1_SetPoints_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
+        void cf1_TrgState_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
+        void cf1_Flags_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
+        void cf1_Misc_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
 
 
         // =============================
