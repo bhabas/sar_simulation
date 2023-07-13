@@ -65,12 +65,14 @@ class SAR_DataConverter {
             SAR_PadConnect_Sub = nh->subscribe("/ENV/Pad_Connections",5,&SAR_DataConverter::Pad_Connections_Callback,this,ros::TransportHints().tcpNoDelay());
 
             // CRAZYSWARM PIPELINE
-            log1_Sub = nh->subscribe("/cf1/log1", 1, &SAR_DataConverter::log1_Callback, this, ros::TransportHints().tcpNoDelay());
-            log2_Sub = nh->subscribe("/cf1/log2", 1, &SAR_DataConverter::log2_Callback, this, ros::TransportHints().tcpNoDelay());
-            log3_Sub = nh->subscribe("/cf1/log3", 1, &SAR_DataConverter::log3_Callback, this, ros::TransportHints().tcpNoDelay());
-            log4_Sub = nh->subscribe("/cf1/log4", 1, &SAR_DataConverter::log4_Callback, this, ros::TransportHints().tcpNoDelay());
-            log5_Sub = nh->subscribe("/cf1/log5", 1, &SAR_DataConverter::log5_Callback, this, ros::TransportHints().tcpNoDelay());
-            log6_Sub = nh->subscribe("/cf1/log6", 1, &SAR_DataConverter::log6_Callback, this, ros::TransportHints().tcpNoDelay());
+            cf1_FullState_Sub = nh->subscribe("/cf1/FullState", 1, &SAR_DataConverter::cf1_FullState_Callback, this, ros::TransportHints().tcpNoDelay());
+            cf1_PolicyState_Sub = nh->subscribe("/cf1/PolicyState", 1, &SAR_DataConverter::cf1_PolicyState_Callback, this, ros::TransportHints().tcpNoDelay());
+            cf1_CTRL_Output_Sub = nh->subscribe("/cf1/CTRL_Output", 1, &SAR_DataConverter::cf1_CTRL_Output_Callback, this, ros::TransportHints().tcpNoDelay());
+            cf1_SetPoints_Sub = nh->subscribe("/cf1/SetPoints", 1, &SAR_DataConverter::cf1_SetPoints_Callback, this, ros::TransportHints().tcpNoDelay());
+            cf1_TrgState_Sub = nh->subscribe("/cf1/TrgState", 1, &SAR_DataConverter::cf1_TrgState_Callback, this, ros::TransportHints().tcpNoDelay());
+            cf1_Flags_Sub = nh->subscribe("/cf1/Flags", 1, &SAR_DataConverter::cf1_Flags_Callback, this, ros::TransportHints().tcpNoDelay());
+            cf1_Misc_Sub = nh->subscribe("/cf1/Misc", 1, &SAR_DataConverter::cf1_Misc_Callback, this, ros::TransportHints().tcpNoDelay());
+
 
 
             // INITIALIZE CTRL COMMAND PIPELINE
@@ -127,12 +129,14 @@ class SAR_DataConverter {
         //     EXPERIMENT DATA CALLBACKS
         // =================================
         void decompressXY(uint32_t xy, float xy_arr[]);
-        void log1_Callback(const sar_msgs::GenericLogData::ConstPtr &log1_msg);
-        void log2_Callback(const sar_msgs::GenericLogData::ConstPtr &log2_msg);
-        void log3_Callback(const sar_msgs::GenericLogData::ConstPtr &log3_msg);
-        void log4_Callback(const sar_msgs::GenericLogData::ConstPtr &log4_msg);
-        void log5_Callback(const sar_msgs::GenericLogData::ConstPtr &log5_msg);
-        void log6_Callback(const sar_msgs::GenericLogData::ConstPtr &log6_msg);
+        void cf1_FullState_Callback(const sar_msgs::GenericLogData::ConstPtr &log1_msg);
+        void cf1_PolicyState_Callback(const sar_msgs::GenericLogData::ConstPtr &log2_msg);
+        void cf1_CTRL_Output_Callback(const sar_msgs::GenericLogData::ConstPtr &log3_msg);
+        void cf1_SetPoints_Callback(const sar_msgs::GenericLogData::ConstPtr &log4_msg);
+        void cf1_TrgState_Callback(const sar_msgs::GenericLogData::ConstPtr &log5_msg);
+        void cf1_Flags_Callback(const sar_msgs::GenericLogData::ConstPtr &log6_msg);
+        void cf1_Misc_Callback(const sar_msgs::GenericLogData::ConstPtr &log7_msg);
+
 
         // =============================
         //     CTRL COMMAND CALLBACKS
@@ -265,12 +269,14 @@ class SAR_DataConverter {
         // ===================================
         //     EXP COMPRESSED DATA OBJECTS
         // ===================================
-        ros::Subscriber log1_Sub;
-        ros::Subscriber log2_Sub;
-        ros::Subscriber log3_Sub;
-        ros::Subscriber log4_Sub;
-        ros::Subscriber log5_Sub;
-        ros::Subscriber log6_Sub;
+        ros::Subscriber cf1_FullState_Sub;
+        ros::Subscriber cf1_PolicyState_Sub;
+        ros::Subscriber cf1_CTRL_Output_Sub;
+        ros::Subscriber cf1_SetPoints_Sub;
+        ros::Subscriber cf1_TrgState_Sub;
+        ros::Subscriber cf1_Flags_Sub;
+        ros::Subscriber cf1_Misc_Sub;
+
 
         
 
