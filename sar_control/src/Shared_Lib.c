@@ -233,12 +233,17 @@ struct vec statePos_tr = {0.0f,0.0f,0.0f};         // Pos [m]
 struct vec stateVel_tr = {0.0f,0.0f,0.0f};         // Vel [m/s]
 struct quat stateQuat_tr = {0.0f,0.0f,0.0f,1.0f};  // Orientation
 struct vec stateOmega_tr = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
+float D_perp_tr = 0.0f;     // [m/s]
 
 // OPTICAL FLOW STATES
 float Tau_tr = 0.0f;        // [rad/s]
 float Theta_x_tr = 0.0f;    // [rad/s]
 float Theta_y_tr = 0.0f;    // [rad/s]
-float D_perp_tr = 0.0f;     // [m/s]
+
+// OPTICAL FLOW ESTIMATES
+float Tau_est_tr = 0.0f;        // [rad/s]
+float Theta_x_est_tr = 0.0f;    // [rad/s]
+float Theta_y_est_tr = 0.0f;    // [rad/s]
 
 // CONTROLLER STATES
 float F_thrust_flip = 0.0f; // [N]
@@ -247,8 +252,8 @@ float M_y_flip = 0.0f;      // [N*m]
 float M_z_flip = 0.0f;      // [N*m]
 
 // POLICY TRIGGER/ACTION VALUES
-float Policy_Flip_tr = 0.0f;    
-float Policy_Action_tr = 0.0f;
+float Policy_Trg_Action_tr = 0.0f;    
+float Policy_Flip_Action_tr = 0.0f;
 
 // =================================
 //    LANDING SURFACE PARAMETERS
@@ -668,7 +673,7 @@ void updatePlaneNormal(float Plane_Angle)
 
 bool updateOpticalFlowEst()
 {
-    bool UpdateOpticalFlow = true;
+    bool UpdateOpticalFlow = false;
 
     #ifdef CONFIG_SAR_EXP
     // REQUEST ACCESS TO UART ARRAY

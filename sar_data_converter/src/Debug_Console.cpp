@@ -54,8 +54,8 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
         }
 
         mvprintw(25,0,"==== Flip Trigger Values ====");
-        mvprintw(26,0,"Tau_tr:     % 7.3f \tPolicy_Flip_tr:    % 7.3f ",Tau_tr,Policy_Flip_tr);
-        mvprintw(27,0,"\u03B8x_tr:     % 7.3f \tPolicy_Action_tr:  % 7.3f ",Theta_x_tr,Policy_Action_tr);
+        mvprintw(26,0,"Tau_tr:     % 7.3f \tPolicy_Trg_Action_tr:    % 7.3f ",Tau_tr,Policy_Trg_Action_tr);
+        mvprintw(27,0,"\u03B8x_tr:     % 7.3f \tPolicy_Flip_Action_tr:  % 7.3f ",Theta_x_tr,Policy_Flip_Action_tr);
         mvprintw(28,0,"D_perp_tr:  % 7.3f ",D_perp_tr);
 
         mvprintw(30,0,"==== Setpoints ====");

@@ -109,8 +109,8 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     FM_tr = ctrl_msg.FM_flip;
 
     // NEURAL NETWORK DATA
-    Policy_Flip_tr = ctrl_msg.Policy_Flip_tr;
-    Policy_Action_tr = ctrl_msg.Policy_Action_tr;
+    Policy_Trg_Action_tr = ctrl_msg.Policy_Trg_Action_tr;
+    Policy_Flip_Action_tr = ctrl_msg.Policy_Flip_Action_tr;
 
 }
 

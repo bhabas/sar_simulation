@@ -340,8 +340,8 @@ class SAR_DataConverter {
 
         boost::array<double,4> FM_tr{0,0,0,0};
 
-        double Policy_Flip_tr = 0.0;
-        double Policy_Action_tr = 0.0;
+        double Policy_Trg_Action_tr = 0.0;
+        double Policy_Flip_Action_tr = 0.0;
 
 
         // ===================

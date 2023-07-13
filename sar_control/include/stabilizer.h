@@ -330,9 +330,9 @@ void Controller::publishCtrlData()
     CtrlData_msg.Theta_y_tr = Theta_y_tr;
     CtrlData_msg.D_perp_tr = D_perp_tr;
 
-    // NEURAL NETWORK DATA (FLIP)
-    CtrlData_msg.Policy_Flip_tr = Policy_Flip_tr;
-    CtrlData_msg.Policy_Action_tr = Policy_Action_tr;
+    // POLICY ACTIONS (FLIP)
+    CtrlData_msg.Policy_Trg_Action_tr = Policy_Trg_Action_tr;
+    CtrlData_msg.Policy_Flip_Action_tr = Policy_Flip_Action_tr;
 
     // CONTROL ACTIONS (FLIP)
     CtrlData_msg.FM_flip = {F_thrust_flip,M_x_flip,M_y_flip,M_z_flip};

@@ -235,12 +235,17 @@ extern struct vec statePos_tr;      // Pos [m]
 extern struct vec stateVel_tr;      // Vel [m/s]
 extern struct quat stateQuat_tr;    // Orientation
 extern struct vec stateOmega_tr;    // Angular Rate [rad/s]
+extern float D_perp_tr;             // [m/s]
 
 // OPTICAL FLOW STATES
 extern float Tau_tr;                // [rad/s]
 extern float Theta_x_tr;            // [rad/s]
 extern float Theta_y_tr;            // [rad/s]
-extern float D_perp_tr;             // [m/s]
+
+// OPTICAL FLOW ESTIMATES
+extern float Tau_est_tr;            // [rad/s]
+extern float Theta_x_est_tr;        // [rad/s]
+extern float Theta_y_est_tr;        // [rad/s]
 
 // CONTROLLER STATES
 extern float F_thrust_flip;         // [N]
@@ -249,8 +254,8 @@ extern float M_y_flip;              // [N*m]
 extern float M_z_flip;              // [N*m]
 
 // POLICY TRIGGER/ACTION VALUES
-extern float Policy_Flip_tr;    
-extern float Policy_Action_tr;
+extern float Policy_Trg_Action_tr;    
+extern float Policy_Flip_Action_tr;
 
 // =================================
 //    LANDING SURFACE PARAMETERS

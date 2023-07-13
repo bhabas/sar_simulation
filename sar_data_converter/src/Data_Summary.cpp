@@ -103,8 +103,8 @@ void SAR_DataConverter::Publish_FlipData()
     FlipData_msg.FM_tr = FM_tr;
 
     // NEURAL NETWORK DATA
-    FlipData_msg.Policy_Flip_tr = Policy_Flip_tr;
-    FlipData_msg.Policy_Action_tr = Policy_Action_tr;
+    FlipData_msg.Policy_Trg_Action_tr = Policy_Trg_Action_tr;
+    FlipData_msg.Policy_Flip_Action_tr = Policy_Flip_Action_tr;
 
 
     // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE CONTROLLER
