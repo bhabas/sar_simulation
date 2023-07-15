@@ -1,0 +1,87 @@
+<?xml version='1.0'?>
+<sdf version='1.7'>
+  <model name='Pattern_Plane'>
+    <static>0</static>
+    <link name='plane'>
+      <pose>0 0 0 0 -0 0</pose>
+      <inertial>
+        <inertia>
+          <ixx>500</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>500</iyy>
+          <iyz>0</iyz>
+          <izz>1000</izz>
+        </inertia>
+        <mass>1500</mass>
+        <pose>0 0 0 0 -0 0</pose>
+      </inertial>
+      <self_collide>0</self_collide>
+      <enable_wind>0</enable_wind>
+      <kinematic>0</kinematic>
+      <gravity>0</gravity>
+      <visual name='plane_visual'>
+        <cast_shadows>0</cast_shadows>
+        <pose>2 0 0 1.57 0 1.57</pose>
+        <geometry>
+          <box>
+            <size>16 8 0.01</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://Pattern_Plane/materials/scripts</uri>
+            <uri>model://Pattern_Plane/materials/textures</uri>
+            <!-- <name>SurfacePattern/L_0.02</name> -->
+            <!-- <name>SurfacePattern/L_0.05</name> -->
+            <!-- <name>SurfacePattern/L_0.12</name> -->
+            <name>SurfacePattern/L_0.25</name>
+            <!-- <name>SurfacePattern/L_0.50</name> -->
+            <!-- <name>SurfacePattern/L_0.75</name> -->
+            <!-- <name>SurfacePattern/L_1.00</name> -->
+            <!-- <name>SurfacePattern/L_2.00</name> -->
+
+
+          </script>
+          <shader type='pixel'>
+            <normal_map>__default__</normal_map>
+          </shader>
+          <emissive>0 0 0 1</emissive>
+        </material>
+      </visual>
+      <sensor name='plane_contact_sensor' type='contact'>
+        <always_on>1</always_on>
+        <visualize>1</visualize>
+        <contact>
+          <collision>plane_collision</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <plugin name='contact_plugin' filename='libgazebo_ros_bumper.so'>
+          <bumperTopicName>/ENV/BodyContact</bumperTopicName>
+          <frameName>plane</frameName>
+          <alwaysOn>true</alwaysOn>
+          <updateRate>500</updateRate>
+        </plugin>
+        <pose>0 0 0 0 -0 0</pose>
+      </sensor>
+    </link>
+    <joint name="plane_joint" type="fixed">
+      <parent>world</parent>
+      <child>plane</child>
+      <pose>0 0 0 0 0 0</pose>    
+      <physics>
+        <ode>
+        </ode>
+        <provide_feedback>true</provide_feedback>
+      </physics>
+    </joint>
+    <static>0</static>
+    <allow_auto_disable>1</allow_auto_disable>
+
+    <plugin name="ForceTorque_Sensor" filename="libgazebo_ros_ft_sensor.so">
+      <jointName>plane_joint</jointName>
+      <topicName>/ENV/Surface_FT_sensor</topicName>
+      <updateRate>500</updateRate>
+  </plugin>
+  </model>
+</sdf>
