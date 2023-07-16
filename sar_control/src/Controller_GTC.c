@@ -483,7 +483,7 @@ LOG_ADD(LOG_INT16,  D_perp,         &TrgStates_Z.D_perp)
 LOG_ADD(LOG_UINT32, Thetaxy_est,    &TrgStates_Z.Theta_xy_est)
 LOG_ADD(LOG_INT16,  Tau_est,        &TrgStates_Z.Tau_est)
 
-LOG_ADD(LOG_UINT32, Pol_Actions,    &TrgStates_Z.Policy_Actions)
+LOG_ADD(LOG_UINT32, PolActions,    &TrgStates_Z.Policy_Actions)
 
 LOG_ADD(LOG_UINT8, Flip_Flag, &flip_flag)
 LOG_GROUP_STOP(Z_TrgStates)

@@ -12,6 +12,7 @@ extern "C" {
 #include "nml.h"
 
 #include "Controller_GTC.h"
+#include "aideck_uart_comm.h"
 #include "Traj_Funcs.h"
 #include "ML_Funcs.h"
 #include "Compress_States.h"
@@ -168,7 +169,15 @@ extern float Tau_est;      // [s]
 extern float Theta_x_est;  // [rad/s]
 extern float Theta_y_est;  // [rad/s]
 
-extern int32_t UART_arr[10];
+// CAMERA PARAMETERS
+extern float IW;            // Image Width [m]
+extern float IH;            // Image Height [m]
+extern float f;             // Focal Length [m]
+extern int32_t N_up;        // Pixel Count Horizontal [m]
+extern int32_t N_vp;        // Pixel Count Vertical [m]
+extern int32_t dt_Cam;      // Time Between Images [ms]
+
+extern int32_t UART_arr[NUM_VALUES];
 extern bool isOFUpdated;
 
 // =================================

@@ -166,10 +166,17 @@ float Tau_est = 0.0f;       // [s]
 float Theta_x_est = 0.0f;   // [rad/s]
 float Theta_y_est = 0.0f;   // [rad/s]
 
+// CAMERA PARAMETERS
+float IW = 1.152e-3f;       // Image Width [m]
+float IH = 1.152e-3f;       // Image Height [m]
+float f = 0.66e-3f;         // Focal Length [m]
+int32_t N_up = 160;         // Pixel Count Horizontal [m]
+int32_t N_vp = 160;         // Pixel Count Vertical [m]
+
+int32_t dt_Cam = 100;       // Time Between Images [ms]
 
 
-
-int32_t UART_arr[10];
+int32_t UART_arr[NUM_VALUES] = {0};
 bool isOFUpdated = false;
 
 
@@ -191,7 +198,7 @@ bool customPWM_flag = false;
 
 
 // SENSOR FLAGS
-bool isCamActive = false;
+bool isCamActive = true;
 
 
 // =================================
@@ -685,7 +692,7 @@ bool updateOpticalFlowEst()
             // COPY ARRAY CONTENTS
             for (int i = 0; i < NUM_VALUES; i++) 
             {
-                UART_arr[i] = valArr[i];
+                UART_arr[i] = data_arr[i];
             }
             isArrUpdated = false;
             UpdateOpticalFlow = true;
@@ -699,7 +706,38 @@ bool updateOpticalFlowEst()
     // CALC OPTICAL FLOW VALUES
     if (UpdateOpticalFlow)
     {
-        // UPDATE Ax=b MATRICES FROM UART ARRAY
+        // UART_arr => {G_vp*G_vp, G_vp*G_up, G_vp*G_rp, G_vp*G_tp, G_up*G_up, G_up*G_rp, G_up*G_tp, G_rp*G_rp, G_rp*G_tp}
+
+        int32_t G_vp_vp = UART_arr[0];
+        int32_t G_vp_up = UART_arr[1];
+        int32_t G_vp_rp = UART_arr[2];
+        int32_t G_vp_tp = UART_arr[3];
+
+        int32_t G_up_up = UART_arr[4];
+        int32_t G_up_rp = UART_arr[5];
+        int32_t G_up_tp = UART_arr[6];
+
+        int32_t G_rp_rp = UART_arr[7];
+        int32_t G_rp_tp = UART_arr[8];
+
+        N_up = UART_arr[9];
+        dt_Cam = UART_arr[10];
+
+
+
+        // // UPDATE Ax=b MATRICES FROM UART ARRAY
+        // double temp_Grad_vec[3] = {
+        //     (8*IW*1000)/(f*N_p*dt_Cam)*G_vp_tp,
+        //     (8*IW*1000)/(f*N_p*dt_Cam)*G_up_tp,
+        //     (8*IW*1000)/(f*N_p*dt_Cam)*G_rp_tp,
+        // };
+
+        // double spatial_Grad_mat[9] = {
+        //     G_vp_vp, -G_vp_up, -IW/(2*N_p)*G_vp_rp,
+        //     G_vp_up, -G_up_up, -IW/(2*N_p)*G_up_rp,
+        //     G_vp_rp, -G_up_tp, -IW/(2*N_p)*G_rp_rp,
+        // };
+
         double temp_Grad_vec[3] = {
              9,
             -3,
@@ -719,9 +757,14 @@ bool updateOpticalFlowEst()
         nml_mat* OF_vec = nml_ls_solve(LUP,b_vec);
 
         // CLAMP OPTICAL FLOW VALUES
-        Theta_x_est = clamp(OF_vec->data[0][0],-20.0f,20.0f);
-        Theta_y_est = clamp(OF_vec->data[1][0],-20.0f,20.0f);
-        Tau_est = clamp(1/(OF_vec->data[2][0] + 1.0e-6),0.0f,5.0f);
+        // Theta_x_est = clamp(OF_vec->data[0][0],-20.0f,20.0f);
+        // Theta_y_est = clamp(OF_vec->data[1][0],-20.0f,20.0f);
+        // Tau_est = clamp(1/(OF_vec->data[2][0] + 1.0e-6),0.0f,5.0f);
+
+        Theta_x_est = OF_vec->data[0][0];
+        Theta_y_est = OF_vec->data[1][0];
+        Tau_est = 1/(OF_vec->data[2][0] + 1.0e-6);
+        // Tau_est = (float)UART_arr[0];
 
 
         nml_mat_lup_free(LUP);
