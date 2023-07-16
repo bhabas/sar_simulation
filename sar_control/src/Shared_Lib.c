@@ -703,6 +703,18 @@ bool updateOpticalFlowEst()
     }
     #endif
 
+    #ifdef CONFIG_SAR_SIM
+        // Grab data from sim camera processing plugin
+        // COPY ARRAY CONTENTS
+        // for (int i = 0; i < NUM_VALUES; i++) 
+        // {
+        //     UART_arr[i] = 0;
+        // }
+        // isArrUpdated = false;
+        UpdateOpticalFlow = true;
+
+    #endif
+
     // CALC OPTICAL FLOW VALUES
     if (UpdateOpticalFlow)
     {
