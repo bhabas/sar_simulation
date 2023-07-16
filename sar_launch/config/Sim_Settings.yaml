@@ -7,12 +7,13 @@ SAR_SETTINGS:
   SAR_Type: "Crazyflie"
   SAR_Config: "A30_L75_K08"
 
-  CamActive: True
-
   Policy_Type: "PARAM_OPTIM"
   # Policy_Type: "DEEP_RL_SB3" 
   # Policy_Type: "DEEP_RL_ONBOARD" 
 
+CAM_SETTINGS:
+  Cam_Config: "AI_Deck"
+  Cam_Active: True
 
 PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
   Plane_Model: "Standard_Plane"
