@@ -819,6 +819,80 @@ class DataParser:
         b = np.linalg.pinv(X)@y
 
         return b.flatten()
+    
+    def OF_Calc_Exp(self,cur_img,prev_img,delta_t):
+
+        """Calculate optical flow values with seperable convolution and integer optimizations for C-style.
+        Derivation in (Research_Notes_Book_2.pdf)
+
+        Args:
+            cur_img (np.array): Array of current image
+            prev_img (np.array): Array of previous image
+            delta_t (float): Time between images
+
+        Returns:
+            np.array: Array of (Theta_x_est,Theta_y_est,Theta_z_est)
+        """        
+
+        N_vp = cur_img.shape[0]
+        N_up = cur_img.shape[1]
+
+        ## SEPERATED SOBEL KERNAL (U--DIRECTION)
+        Ku_1 = np.array([[-1,0,1]]).reshape(3,1)
+        Ku_2 = np.array([[ 1,2,1]]).reshape(1,3)
+
+
+        ## SEPERATED SOBEL KERNAL (V--DIRECTION)
+        Kv_1 = np.array([[ 1,2,1]]).reshape(3,1)
+        Kv_2 = np.array([[-1,0,1]]).reshape(1,3)
+
+
+        ## PRE-ALLOCATE INTENSITY GRADIENTS
+        G_up = np.zeros((N_vp,N_up))
+        G_vp = np.zeros((N_vp,N_up))
+        G_rp = np.zeros((N_vp,N_up))
+        G_tp = np.zeros((N_vp,N_up))
+
+
+        ## CALCULATE IMAGE GRADIENTS
+        for v_p in range(1, N_vp-1): 
+            for u_p in range(1, N_up-1):
+                G_up[v_p,u_p] = (Ku_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Ku_1)))).item()
+                G_vp[v_p,u_p] = (Kv_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Kv_1)))).item()
+                G_rp[v_p,u_p] = (2*u_p - N_up + 1)*G_up[v_p,u_p] + (2*v_p - N_vp + 1)*G_vp[v_p,u_p]
+                G_tp[v_p,u_p] = cur_img[v_p,u_p] - prev_img[v_p,u_p]
+
+        ## CALC DOT PRODUCTS
+        G_vp_vp = np.sum(G_vp*G_vp)
+        G_vp_up = np.sum(G_vp*G_up)
+        G_vp_rp = np.sum(G_vp*G_rp)
+        G_vp_tp = np.sum(G_vp*G_tp)
+
+        G_up_up = np.sum(G_up*G_up) 
+        G_up_rp = np.sum(G_up*G_rp)
+        G_up_tp = np.sum(G_up*G_tp)
+
+        G_rp_rp = np.sum(G_rp*G_rp)
+        G_rp_tp = np.sum(G_rp*G_tp)
+
+
+        ## SOLVE LEAST SQUARES PROBLEM
+        X = np.array([
+            [G_vp_vp, -G_vp_up, -self.IW/(2*N_up*self.f)*G_vp_rp],
+            [G_vp_up, -G_up_up, -self.IW/(2*N_up*self.f)*G_up_rp],
+            [G_vp_rp, -G_up_rp, -self.IW/(2*N_up*self.f)*G_rp_rp]
+        ])
+
+        y = np.array([
+            [G_vp_tp],
+            [G_up_tp],
+            [G_rp_tp]
+        ])*(8*self.IW/(self.f*N_up*delta_t))
+
+        ## SOLVE b VIA PSEUDO-INVERSE
+        b = np.linalg.pinv(X)@y
+
+        return b.flatten()
    
     def Image_Subsample(self,image,subsample_level=0):
         """Downsamples the image by convolving with a (2x2) averaging kernel then dropping even rows. 
@@ -953,9 +1027,13 @@ if __name__ == '__main__':
     img_prev = np.array(img_prev).reshape(8,8)
 
     Parser = DataParser(FolderName,FileDir,SubSample_Level=0) 
-    Parser.OF_Calc_Opt_Sep(img_cur,img_prev,0.01)
+    OF_vec = Parser.OF_Calc_Opt_Sep(img_cur,img_prev,0.01)
+    print(OF_vec)
 
-    
+    OF_vec = Parser.OF_Calc_Exp(img_cur,img_prev,0.01)
+    print(OF_vec)
+
+
 
     
     # # Parser.DataOverview_MP4(n=10)
