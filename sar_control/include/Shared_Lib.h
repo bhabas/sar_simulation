@@ -35,14 +35,13 @@ extern float Iyy;       // [kg*m^2]
 extern float Izz;       // [kg*m^2]
 extern struct mat33 J;  // Rotational Inertia Matrix [kg*m^2]
 
-extern float Prop_Dist;    // COM to Prop along x-axis [m]
 extern float C_tf;  // Moment Coeff [Nm/N]
 extern float f_max; // Max thrust per motor [g]
 
-extern float Prop_14_x;
-extern float Prop_14_y;
-extern float Prop_23_x;
-extern float Prop_23_y;
+extern float Prop_14_x; // Front Prop Distance - x-axis [m]
+extern float Prop_14_y; // Front Prop Distance - y-axis [m]
+extern float Prop_23_x; // Rear  Prop Distance - x-axis [m]
+extern float Prop_23_y; // Rear  Prop Distance - y-axis [m]
 
 extern float dt;    // Controller cycle time
 

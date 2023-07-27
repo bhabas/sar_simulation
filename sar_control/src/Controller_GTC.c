@@ -285,7 +285,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         }
 
 
-        // =========== CONVERT THRUSTS [N] AND MOMENTS [N*m] TO PWM =========== // 
+        // MOTOR MIXING (GTC_Derivation_V2.pdf) 
         M1_thrust = F_thrust * Prop_23_x/(Prop_14_x + Prop_23_x) - M.x * 1/(Prop_14_y + Prop_23_y) - M.y * 1/(Prop_14_x + Prop_23_x) - M.z * Prop_23_y/(C_tf*(Prop_14_y + Prop_23_y));
         M2_thrust = F_thrust * Prop_14_x/(Prop_14_x + Prop_23_x) - M.x * 1/(Prop_14_y + Prop_23_y) + M.y * 1/(Prop_14_x + Prop_23_x) + M.z * Prop_14_y/(C_tf*(Prop_14_y + Prop_23_y));
         M3_thrust = F_thrust * Prop_14_x/(Prop_14_x + Prop_23_x) + M.x * 1/(Prop_14_y + Prop_23_y) + M.y * 1/(Prop_14_x + Prop_23_x) - M.z * Prop_14_y/(C_tf*(Prop_14_y + Prop_23_y));
@@ -380,7 +380,6 @@ PARAM_ADD(PARAM_FLOAT, Ixx, &Ixx)
 PARAM_ADD(PARAM_FLOAT, Iyy, &Iyy)
 PARAM_ADD(PARAM_FLOAT, Izz, &Izz)
 
-PARAM_ADD(PARAM_FLOAT, Prop_Dist, &Prop_Dist)
 PARAM_ADD(PARAM_FLOAT, C_tf, &C_tf)
 PARAM_ADD(PARAM_FLOAT, f_max, &f_max)
 

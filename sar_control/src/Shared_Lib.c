@@ -11,14 +11,13 @@ float Iyy = 17.00e-6f;      // [kg*m^2]
 float Izz = 31.19e-6f;      // [kg*m^2]
 struct mat33 J;             // Rotational Inertia Matrix [kg*m^2]
 
-float Prop_Dist = 0.0325f;  // COM to Prop along x-axis [m]
 float C_tf = 0.00618f;      // Moment Coeff [Nm/N]
 float f_max = 15.0f;        // Max thrust per motor [g]
 
-float Prop_14_x = 0.0325f;
-float Prop_14_y = 0.0325f;
-float Prop_23_x = 0.0325f;
-float Prop_23_y = 0.0325f;
+float Prop_14_x = 0.0325f;  // Front Prop Distance - x-axis [m]
+float Prop_14_y = 0.0325f;  // Front Prop Distance - y-axis [m]
+float Prop_23_x = 0.0325f;  // Rear  Prop Distance - x-axis [m]
+float Prop_23_y = 0.0325f;  // Rear  Prop Distance - y-axis [m]
 
 
 const float g = 9.81f;                        // Gravity [m/s^2]
