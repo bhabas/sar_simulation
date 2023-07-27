@@ -26,9 +26,14 @@ SAR_Type:
       i_range_R_z: 0.5
 
     System_Params:
-      Prop_Dist: 0.0325
       C_tf: 0.00618
       f_max: 15.0
+      Prop_Dist: 0.0325
+
+      Prop_1: [ 32.5e-3, -32.5e-3]
+      Prop_2: [-32.5e-3, -32.5e-3]
+      Prop_3: [-32.5e-3,  32.5e-3]
+      Prop_4: [ 32.5e-3,  32.5e-3]
 
     Config:
       ## THESE INERTIAL VALUES ARE ONLY FOR CONTROLLER, NOT SIMULATION PHYSICS

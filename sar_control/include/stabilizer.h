@@ -85,6 +85,14 @@ class Controller
         std::string POLICY_TYPE_STR;
 
 
+        // CONTROLLER VARIABLES
+        std::vector<double> Prop_1_vec;
+        std::vector<double> Prop_2_vec;
+        std::vector<double> Prop_3_vec;
+        std::vector<double> Prop_4_vec;
+
+
+
         // FUNCTION PROTOTYPES
         void IMU_Update_Callback(const sensor_msgs::Imu::ConstPtr &msg);
         void Ext_Pos_Update_Callback(const nav_msgs::Odometry::ConstPtr &msg);
@@ -175,9 +183,24 @@ void Controller::loadParams()
     ros::param::get(SAR_Type + SAR_Config + "/Izz",Izz);
 
     // UPDATE SYSTEM PARAMETERS
-    ros::param::get(SAR_Type + SAR_Config + "/System_Params/f_max",f_max);
-    ros::param::get(SAR_Type + SAR_Config + "/System_Params/C_tf",C_tf);
-    ros::param::get(SAR_Type + SAR_Config + "/System_Params/Prop_Dist",Prop_Dist);
+    ros::param::get(SAR_Type + "/System_Params/f_max",f_max);
+    ros::param::get(SAR_Type + "/System_Params/C_tf",C_tf);
+    ros::param::get(SAR_Type + "/System_Params/Prop_Dist",Prop_Dist);
+
+    // UPDATE PROP DISPLACEMENTS
+    ros::param::get(SAR_Type + "/System_Params/Prop_1",Prop_1_vec);
+    ros::param::get(SAR_Type + "/System_Params/Prop_2",Prop_2_vec);
+    ros::param::get(SAR_Type + "/System_Params/Prop_3",Prop_3_vec);
+    ros::param::get(SAR_Type + "/System_Params/Prop_4",Prop_4_vec);
+
+    Prop_1[0],Prop_1[1] = Prop_1_vec[0],Prop_1_vec[1];
+    Prop_2[0],Prop_2[1] = Prop_2_vec[0],Prop_2_vec[1];
+    Prop_3[0],Prop_3[1] = Prop_3_vec[0],Prop_3_vec[1];
+    Prop_4[0],Prop_4[1] = Prop_4_vec[0],Prop_4_vec[1];
+
+    
+    
+
 
     // UPDATE LANDING SURFACE PARAMETERS
     ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle);

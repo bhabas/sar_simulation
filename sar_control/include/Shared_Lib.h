@@ -39,6 +39,11 @@ extern float Prop_Dist;    // COM to Prop along x-axis [m]
 extern float C_tf;  // Moment Coeff [Nm/N]
 extern float f_max; // Max thrust per motor [g]
 
+extern float Prop_1[2];
+extern float Prop_2[2];
+extern float Prop_3[2];
+extern float Prop_4[2];
+
 extern float dt;    // Controller cycle time
 
 

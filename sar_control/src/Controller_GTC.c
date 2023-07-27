@@ -143,6 +143,10 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                 break;
         }
     }
+    if (RATE_DO_EXECUTE(10, tick)) {
+        printf("Val: %.3f\n",Prop_1[0]);
+
+    }
 
     // OPTICAL FLOW UPDATES
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick))

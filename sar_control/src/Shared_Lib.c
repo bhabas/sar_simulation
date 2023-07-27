@@ -11,9 +11,14 @@ float Iyy = 17.00e-6f;      // [kg*m^2]
 float Izz = 31.19e-6f;      // [kg*m^2]
 struct mat33 J;             // Rotational Inertia Matrix [kg*m^2]
 
-float Prop_Dist = 0.0325f;          // COM to Prop along x-axis [m]
+float Prop_Dist = 0.0325f;  // COM to Prop along x-axis [m]
 float C_tf = 0.00618f;      // Moment Coeff [Nm/N]
 float f_max = 15.0f;        // Max thrust per motor [g]
+
+float Prop_1[2] = { 0.0325f,-0.0325f};
+float Prop_2[2] = {-0.0325f,-0.0325f};
+float Prop_3[2] = {-0.0325f, 0.0325f};
+float Prop_4[2] = { 0.0325f, 0.0325f};
 
 const float g = 9.81f;                        // Gravity [m/s^2]
 const struct vec e_3 = {0.0f, 0.0f, 1.0f};    // Global z-axis
@@ -198,7 +203,7 @@ bool customPWM_flag = false;
 
 
 // SENSOR FLAGS
-bool isCamActive = true;
+bool isCamActive = false;
 
 
 // =================================
