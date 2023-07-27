@@ -30,10 +30,8 @@ SAR_Type:
       f_max: 15.0
       Prop_Dist: 0.0325
 
-      Prop_1: [ 32.5e-3, -32.5e-3]
-      Prop_2: [-32.5e-3, -32.5e-3]
-      Prop_3: [-32.5e-3,  32.5e-3]
-      Prop_4: [ 32.5e-3,  32.5e-3]
+      Prop_Front: [32.5e-3, 32.5e-3]
+      Prop_Rear:  [32.5e-3, 32.5e-3]
 
     Config:
       ## THESE INERTIAL VALUES ARE ONLY FOR CONTROLLER, NOT SIMULATION PHYSICS

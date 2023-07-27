@@ -85,11 +85,9 @@ class Controller
         std::string POLICY_TYPE_STR;
 
 
-        // CONTROLLER VARIABLES
-        std::vector<double> Prop_1_vec;
-        std::vector<double> Prop_2_vec;
-        std::vector<double> Prop_3_vec;
-        std::vector<double> Prop_4_vec;
+        // QUAD GEOMETRY PARAMETERS
+        std::vector<float> Prop_Front_Vec;
+        std::vector<float> Prop_Rear_Vec;
 
 
 
@@ -188,18 +186,12 @@ void Controller::loadParams()
     ros::param::get(SAR_Type + "/System_Params/Prop_Dist",Prop_Dist);
 
     // UPDATE PROP DISPLACEMENTS
-    ros::param::get(SAR_Type + "/System_Params/Prop_1",Prop_1_vec);
-    ros::param::get(SAR_Type + "/System_Params/Prop_2",Prop_2_vec);
-    ros::param::get(SAR_Type + "/System_Params/Prop_3",Prop_3_vec);
-    ros::param::get(SAR_Type + "/System_Params/Prop_4",Prop_4_vec);
+    ros::param::get(SAR_Type + "/System_Params/Prop_Front",Prop_Front_Vec);
+    ros::param::get(SAR_Type + "/System_Params/Prop_Rear",Prop_Rear_Vec);   
 
-    Prop_1[0],Prop_1[1] = Prop_1_vec[0],Prop_1_vec[1];
-    Prop_2[0],Prop_2[1] = Prop_2_vec[0],Prop_2_vec[1];
-    Prop_3[0],Prop_3[1] = Prop_3_vec[0],Prop_3_vec[1];
-    Prop_4[0],Prop_4[1] = Prop_4_vec[0],Prop_4_vec[1];
+    Prop_14_x,Prop_14_y = Prop_Front_Vec[0],Prop_Front_Vec[1];
+    Prop_23_x,Prop_23_y = Prop_Rear_Vec[0],Prop_Rear_Vec[1];
 
-    
-    
 
 
     // UPDATE LANDING SURFACE PARAMETERS

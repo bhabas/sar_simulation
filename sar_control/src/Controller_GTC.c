@@ -144,7 +144,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         }
     }
     if (RATE_DO_EXECUTE(10, tick)) {
-        printf("Val: %.3f\n",Prop_1[0]);
+        printf("Val: %.3f\n",Prop_14_x);
 
     }
 

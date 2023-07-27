@@ -15,10 +15,11 @@ float Prop_Dist = 0.0325f;  // COM to Prop along x-axis [m]
 float C_tf = 0.00618f;      // Moment Coeff [Nm/N]
 float f_max = 15.0f;        // Max thrust per motor [g]
 
-float Prop_1[2] = { 0.0325f,-0.0325f};
-float Prop_2[2] = {-0.0325f,-0.0325f};
-float Prop_3[2] = {-0.0325f, 0.0325f};
-float Prop_4[2] = { 0.0325f, 0.0325f};
+float Prop_14_x = 0.0325f;
+float Prop_14_y = 0.0325f;
+float Prop_23_x = 0.0325f;
+float Prop_23_y = 0.0325f;
+
 
 const float g = 9.81f;                        // Gravity [m/s^2]
 const struct vec e_3 = {0.0f, 0.0f, 1.0f};    // Global z-axis
