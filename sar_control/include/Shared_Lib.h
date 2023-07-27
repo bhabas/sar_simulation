@@ -172,12 +172,12 @@ extern float Theta_y_est;  // [rad/s]
 // CAMERA PARAMETERS
 extern float IW;            // Image Width [m]
 extern float IH;            // Image Height [m]
-extern float f;             // Focal Length [m]
+extern float focal_len;     // Focal Length [m]
 extern int32_t N_up;        // Pixel Count Horizontal [m]
 extern int32_t N_vp;        // Pixel Count Vertical [m]
-extern int32_t dt_Cam;      // Time Between Images [ms]
+extern int32_t Cam_dt;      // Time Between Images [ms]
 
-extern int32_t UART_arr[NUM_VALUES];
+extern int32_t UART_arr[UART_ARR_SIZE];
 extern bool isOFUpdated;
 
 // =================================
