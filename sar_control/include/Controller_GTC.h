@@ -22,6 +22,7 @@ extern "C" {
 // CUSTOM LIBRARIES
 #include "Shared_Lib.h"
 #include "nml.h"
+#include "aideck_uart_comm.h"
 
 #ifdef CONFIG_SAR_EXP
 #include "FreeRTOS.h"

@@ -45,7 +45,13 @@ void SAR_DataConverter::Publish_StateData()
     StateData_msg.Tau = Tau;
     StateData_msg.Theta_x = Theta_x;
     StateData_msg.Theta_y = Theta_y;
+
+    // PLANE RELATIVE STATES
     StateData_msg.D_perp = D_perp;
+    StateData_msg.V_perp = V_perp;
+    StateData_msg.V_tx = V_tx;
+    StateData_msg.V_ty = V_ty;
+
 
     // OPTICAL FLOW STATE ESTIMATES
     StateData_msg.Tau_est = Tau_est;
@@ -97,8 +103,8 @@ void SAR_DataConverter::Publish_FlipData()
     FlipData_msg.FM_tr = FM_tr;
 
     // NEURAL NETWORK DATA
-    FlipData_msg.Policy_Flip_tr = Policy_Flip_tr;
-    FlipData_msg.Policy_Action_tr = Policy_Action_tr;
+    FlipData_msg.Policy_Trg_Action_tr = Policy_Trg_Action_tr;
+    FlipData_msg.Policy_Flip_Action_tr = Policy_Flip_Action_tr;
 
 
     // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE CONTROLLER
@@ -129,6 +135,8 @@ void SAR_DataConverter::Publish_ImpactData()
     ImpactData_msg.Pad2_Contact = Pad2_Contact;
     ImpactData_msg.Pad3_Contact = Pad3_Contact;
     ImpactData_msg.Pad4_Contact = Pad4_Contact;
+
+    ImpactData_msg.Rot_Sum = Rot_Sum;
 
     ImpactData_Pub.publish(ImpactData_msg);
 }

@@ -1,0 +1,126 @@
+material SurfacePattern/Image_1
+{
+    receive_shadows off
+    technique
+    {
+        pass
+        {
+            texture_unit
+            {
+                texture Test_Photo_2.jpg
+            }
+        }
+    }
+}
+material SurfacePattern/L_0.02
+{
+    receive_shadows off
+    technique
+    {
+        pass
+        {
+            texture_unit
+            {
+                texture Checker_Pattern-W_8-H_16-L_0.02.png
+            }
+        }
+    }
+}
+material SurfacePattern/L_0.05
+{
+    receive_shadows off
+    technique
+    {
+        pass
+        {
+            texture_unit
+            {
+                texture Checker_Pattern-W_8-H_16-L_0.05.png
+            }
+        }
+    }
+}
+material SurfacePattern/L_0.12
+{
+    receive_shadows off
+    technique
+    {
+        pass
+        {
+            texture_unit
+            {
+                texture Checker_Pattern-W_8-H_16-L_0.12.png
+            }
+        }
+    }
+}
+material SurfacePattern/L_0.25
+{
+    receive_shadows off
+    technique
+    {
+        pass
+        {
+            texture_unit
+            {
+                texture Checker_Pattern-W_8-H_16-L_0.25.png
+            }
+        }
+    }
+}
+material SurfacePattern/L_0.50
+{
+    receive_shadows off
+    technique
+    {
+        pass
+        {
+            texture_unit
+            {
+                texture Checker_Pattern-W_8-H_16-L_0.50.png
+            }
+        }
+    }
+}
+material SurfacePattern/L_0.75
+{
+    receive_shadows off
+    technique
+    {
+        pass
+        {
+            texture_unit
+            {
+                texture Checker_Pattern-W_8-H_16-L_0.75.png
+            }
+        }
+    }
+}
+material SurfacePattern/L_1.00
+{
+    receive_shadows off
+    technique
+    {
+        pass
+        {
+            texture_unit
+            {
+                texture Checker_Pattern-W_8-H_16-L_1.00.png
+            }
+        }
+    }
+}
+material SurfacePattern/L_2.00
+{
+    receive_shadows off
+    technique
+    {
+        pass
+        {
+            texture_unit
+            {
+                texture Checker_Pattern-W_8-H_16-L_2.00.png
+            }
+        }
+    }
+}

@@ -181,7 +181,7 @@ void SAR_DataConverter::append_CSV_flip()
 {
     fprintf(fPtr,"%u,%u,",k_ep,k_run);                          // k_ep,k_run
     fprintf(fPtr,"%.3f,",(Time_tr-Time_start).toSec());         // t
-    fprintf(fPtr,"%.3f,%.3f,",Policy_Flip_tr,Policy_Action_tr); // Policy_Trg_Action,Policy_Flip_Action
+    fprintf(fPtr,"%.3f,%.3f,",Policy_Trg_Action_tr,Policy_Flip_Action_tr); // Policy_Trg_Action,Policy_Flip_Action
     fprintf(fPtr,"--,--,--,");                                  // mu,sigma,policy
 
     // // INTERNAL STATE ESTIMATES (CF)

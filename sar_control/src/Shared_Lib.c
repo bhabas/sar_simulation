@@ -66,6 +66,10 @@ float kp_xf = 1; // Pos. Gain Flag
 float kd_xf = 1; // Pos. Derivative Gain Flag
 
 
+// =================================
+//     GTC CONTROLLER VARIABLES
+// =================================
+
 // INIT STATE VALUES
 struct vec statePos = {0.0,0.0f,0.0f};          // Pos [m]
 struct vec stateVel = {0.0f,0.0f,0.0f};         // Vel [m/s]
@@ -77,13 +81,10 @@ struct vec stateOmega = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
 struct mat33 R;                                 // Orientation as rotation matrix
 struct vec b3 = {0.0f,0.0f,1.0f};               // Current body z-axis in global coord.
 
-
-
-
 // INIT DESIRED STATES
-struct vec x_d = {0.0f,0.0f,0.4f};      // Pos-desired [m]
-struct vec v_d = {0.0f,0.0f,0.0f};      // Vel-desired [m/s]
-struct vec a_d = {0.0f,0.0f,0.0f};      // Acc-desired [m/s^2]
+struct vec x_d = {0.0f,0.0f,0.4f};          // Pos-desired [m]
+struct vec v_d = {0.0f,0.0f,0.0f};          // Vel-desired [m/s]
+struct vec a_d = {0.0f,0.0f,0.0f};          // Acc-desired [m/s^2]
 
 struct quat quat_d = {0.0f,0.0f,0.0f,1.0f}; // Orientation-desired [qx,qy,qz,qw]
 struct vec eul_d = {0.0f,0.0f,0.0f};        // Euler Angle-desired [deg]
@@ -125,7 +126,6 @@ float F_thrust = 0.0f;                          // Implemented body thrust [N]
 struct vec M = {0.0f,0.0f,0.0f};                // Implemented body moments [N*m]
 struct vec M_d = {0.0f,0.0f,0.0f};              // Desired moment [N*m]
 
-
 // MOTOR THRUST ACTIONS
 float f_thrust_g = 0.0f; // Motor thrust - Thrust [g]
 float f_roll_g = 0.0f;   // Motor thrust - Roll   [g]
@@ -150,27 +150,35 @@ float thrust_override[4] = {0.0f,0.0f,0.0f,0.0f};   // Motor thrusts [g]
 
 
 
+
+
 // =================================
-//          SENSORY VALUES
+//     OPTICAL FLOW ESTIMATION
 // =================================
 
-// OPTICAL FLOW STATES
+// OPTICAL FLOW STATES (GROUND TRUTH)
 float Tau = 0.0f;       // [s]
 float Theta_x = 0.0f;   // [rad/s] 
 float Theta_y = 0.0f;   // [rad/s]
-float Theta_z = 0.0f;   // [rad/s]
 
-// ANALYTICAL OPTICAL FLOW STATES
-float Tau_calc = 0.0f;       // [s]
-float Theta_x_calc = 0.0f;   // [rad/s] 
-float Theta_y_calc = 0.0f;   // [rad/s]
-float D_perp_calc = 0.0f;    // [m]
-
-// ESTIMATED OPTICAL FLOW STATES
+// OPTICAL FLOW STATES (CAMERA ESTIMATE)
 float Tau_est = 0.0f;       // [s]
 float Theta_x_est = 0.0f;   // [rad/s]
 float Theta_y_est = 0.0f;   // [rad/s]
-float D_perp_est = 0.0f;    // [m]
+
+// CAMERA PARAMETERS
+float IW = 1.152e-3f;       // Image Width [m]
+float IH = 1.152e-3f;       // Image Height [m]
+float focal_len = 0.66e-3f; // Focal Length [m]
+int32_t N_up = 160;         // Pixel Count Horizontal [m]
+int32_t N_vp = 160;         // Pixel Count Vertical [m]
+
+int32_t Cam_dt = 100;       // Time Between Images [ms]
+
+
+int32_t UART_arr[UART_ARR_SIZE] = {0};
+bool isOFUpdated = false;
+
 
 
 
@@ -190,7 +198,7 @@ bool customPWM_flag = false;
 
 
 // SENSOR FLAGS
-bool camera_sensor_active = false;
+bool isCamActive = true;
 
 
 // =================================
@@ -199,7 +207,7 @@ bool camera_sensor_active = false;
 
 // DEFINE POLICY TYPE ACTIVATED
 PolicyType Policy = PARAM_OPTIM;
-nml_mat* X_input;    // STATE MATRIX TO BE INPUT INTO POLICY
+nml_mat* X_input;   // STATE MATRIX TO BE INPUT INTO POLICY
 nml_mat* Y_output;  // POLICY OUTPUT MATRIX
 
 // POLICY FLAGS
@@ -232,12 +240,17 @@ struct vec statePos_tr = {0.0f,0.0f,0.0f};         // Pos [m]
 struct vec stateVel_tr = {0.0f,0.0f,0.0f};         // Vel [m/s]
 struct quat stateQuat_tr = {0.0f,0.0f,0.0f,1.0f};  // Orientation
 struct vec stateOmega_tr = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
+float D_perp_tr = 0.0f;     // [m/s]
 
 // OPTICAL FLOW STATES
 float Tau_tr = 0.0f;        // [rad/s]
 float Theta_x_tr = 0.0f;    // [rad/s]
 float Theta_y_tr = 0.0f;    // [rad/s]
-float D_perp_tr = 0.0f;     // [m/s]
+
+// OPTICAL FLOW ESTIMATES
+float Tau_est_tr = 0.0f;        // [rad/s]
+float Theta_x_est_tr = 0.0f;    // [rad/s]
+float Theta_y_est_tr = 0.0f;    // [rad/s]
 
 // CONTROLLER STATES
 float F_thrust_flip = 0.0f; // [N]
@@ -246,8 +259,8 @@ float M_y_flip = 0.0f;      // [N*m]
 float M_z_flip = 0.0f;      // [N*m]
 
 // POLICY TRIGGER/ACTION VALUES
-float Policy_Flip_tr = 0.0f;    
-float Policy_Action_tr = 0.0f;
+float Policy_Trg_Action_tr = 0.0f;    
+float Policy_Flip_Action_tr = 0.0f;
 
 // =================================
 //    LANDING SURFACE PARAMETERS
@@ -264,7 +277,7 @@ struct vec r_BO = {0.0f,0.0f,0.0f};     // Quad Position Vector         [m]
 struct vec r_PB = {0.0f,0.0f,0.0f};     // Quad-Plane Distance Vector   [m]
 struct vec V_BO = {0.0f,0.0f,0.0f};     // Quad Velocity Vector         [m/s]
 
-// DECLARE RELATIVE STATES
+// RELATIVE STATES
 float D_perp = 0.0f;                     // Distance perp to plane [m]
 float V_perp = 0.0f;                     // Velocity perp to plane [m/s]
 float V_tx = 0.0f;                       // Tangent_x velocity [m/s]
@@ -482,7 +495,7 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
             r_PO.z = CTRL_Cmd->cmd_val3;
             Plane_Angle = CTRL_Cmd->cmd_flag;
 
-            calcPlaneNormal(Plane_Angle);
+            updatePlaneNormal(Plane_Angle);
             
             break;
     }
@@ -647,7 +660,7 @@ uint16_t thrust2PWM(float f)
     return PWM;
 }
 
-void calcPlaneNormal(float Plane_Angle)
+void updatePlaneNormal(float Plane_Angle)
 {
     // UPDATE LANDING SURFACE PARAMETERS
     n_hat.x = sinf(Plane_Angle*Deg2Rad);
@@ -665,6 +678,150 @@ void calcPlaneNormal(float Plane_Angle)
     t_y.z = 0;
 }
 
+bool updateOpticalFlowEst()
+{
+    bool UpdateOpticalFlow = false;
+
+    #ifdef CONFIG_SAR_EXP
+    // REQUEST ACCESS TO UART ARRAY
+    if(xSemaphoreTake(xMutex,(TickType_t)10) == pdTRUE)
+    {
+        // CHECK FOR UPDATE TO ARRAY AND RETURN ACCESS
+        if(isArrUpdated)
+        {
+            // COPY ARRAY CONTENTS
+            for (int i = 0; i < UART_ARR_SIZE; i++) 
+            {
+                UART_arr[i] = data_arr[i];
+            }
+            isArrUpdated = false;
+            UpdateOpticalFlow = true;
+        }
+        
+        // RETURN ACCESS
+        xSemaphoreGive(xMutex);
+    }
+    #endif
+
+    #ifdef CONFIG_SAR_SIM
+        // Grab data from sim camera processing plugin
+        // COPY ARRAY CONTENTS
+        // for (int i = 0; i < UART_ARR_SIZE; i++) 
+        // {
+        //     UART_arr[i] = 0;
+        // }
+        // isArrUpdated = false;
+        UpdateOpticalFlow = true;
+
+    #endif
+
+    // CALC OPTICAL FLOW VALUES
+    if (UpdateOpticalFlow)
+    {
+        // UART_arr => {G_vp*G_vp, G_vp*G_up, G_vp*G_rp, G_vp*G_tp, G_up*G_up, G_up*G_rp, G_up*G_tp, G_rp*G_rp, G_rp*G_tp}
+
+        int32_t G_vp_vp = UART_arr[0];
+        int32_t G_vp_up = UART_arr[1];
+        int32_t G_vp_rp = UART_arr[2];
+        int32_t G_vp_tp = UART_arr[3];
+
+        int32_t G_up_up = UART_arr[4];
+        int32_t G_up_rp = UART_arr[5];
+        int32_t G_up_tp = UART_arr[6];
+
+        int32_t G_rp_rp = UART_arr[7];
+        int32_t G_rp_tp = UART_arr[8];
+
+        Cam_dt = UART_arr[9];
+        N_up = UART_arr[10];
+        N_vp = UART_arr[11];
+
+        // UPDATE Ax=b MATRICES FROM UART ARRAY
+        double spatial_Grad_mat[9] = {
+            G_vp_vp, -G_vp_up, -IW/(2*N_up*focal_len)*G_vp_rp,
+            G_vp_up, -G_up_up, -IW/(2*N_up*focal_len)*G_up_rp,
+            G_vp_rp, -G_up_rp, -IW/(2*N_up*focal_len)*G_rp_rp,
+        };
+
+        double temp_Grad_vec[3] = {
+            (8*IW)/(focal_len*N_up*Cam_dt)*G_vp_tp,
+            (8*IW)/(focal_len*N_up*Cam_dt)*G_up_tp,
+            (8*IW)/(focal_len*N_up*Cam_dt)*G_rp_tp,
+        };
+
+        // double spatial_Grad_mat[9] = {
+        //     3, 1,-1,
+        //     2,-2, 1,
+        //     1, 1, 1,
+        // };
+
+        // double temp_Grad_vec[3] = {
+        //      9,
+        //     -3,
+        //      7,
+        // };
+
+
+        // SOLVE Ax=b EQUATION FOR OPTICAL FLOW VECTOR
+        nml_mat* A_mat = nml_mat_from(3,3,9,spatial_Grad_mat);
+        nml_mat* b_vec = nml_mat_from(3,1,3,temp_Grad_vec);
+        nml_mat_lup* LUP = nml_mat_lup_solve(A_mat);
+        nml_mat* OF_vec = nml_ls_solve(LUP,b_vec);
+
+        // CLAMP OPTICAL FLOW VALUES
+        // Theta_x_est = clamp(OF_vec->data[0][0],-20.0f,20.0f);
+        // Theta_y_est = clamp(OF_vec->data[1][0],-20.0f,20.0f);
+        // Tau_est = clamp(1/(OF_vec->data[2][0] + 1.0e-6),0.0f,5.0f);
+
+        Theta_x_est = OF_vec->data[0][0];
+        Theta_y_est = OF_vec->data[1][0];
+        Tau_est = 1/(OF_vec->data[2][0] + 1.0e-6);
+        // Tau_est = (float)UART_arr[0];
+
+
+        nml_mat_lup_free(LUP);
+        nml_mat_free(A_mat);
+        nml_mat_free(b_vec);
+        nml_mat_free(OF_vec);
+
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+    
+
+}
+
+bool updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors)
+{
+    // UPDATE POS AND VEL
+    r_BO = mkvec(state->position.x, state->position.y, state->position.z);
+    V_BO = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);
+
+    // CALC DISPLACEMENT FROM PLANE CENTER
+    r_PB = vsub(r_PO,r_BO); 
+
+    // CALC RELATIVE DISTANCE AND VEL
+    D_perp = vdot(r_PB,n_hat) + 1e-6f;
+    V_perp = vdot(V_BO,n_hat);
+    V_tx = vdot(V_BO,t_x);
+    V_ty = vdot(V_BO,t_y);
+
+    if (fabsf(D_perp) < 0.02f)
+    {
+        D_perp = 0.0f;
+    }
+
+    // CALC OPTICAL FLOW VALUES
+    Theta_x = clamp(V_tx/D_perp,-20.0f,20.0f);
+    Theta_y = clamp(V_ty/D_perp,-20.0f,20.0f);
+    Tau = clamp(D_perp/(V_perp + 1e-6f),0.0f,5.0f);
+
+    return true;
+}
 
 
 

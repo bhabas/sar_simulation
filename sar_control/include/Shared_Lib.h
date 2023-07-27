@@ -12,11 +12,12 @@ extern "C" {
 #include "nml.h"
 
 #include "Controller_GTC.h"
+#include "aideck_uart_comm.h"
 #include "Traj_Funcs.h"
 #include "ML_Funcs.h"
 #include "Compress_States.h"
 
-#include "ML_Params/NN_Layers_NL_DeepRL.h"
+// #include "ML_Params/NN_Layers_NL_DeepRL.h"
 
 
 #define PWM_MAX 60000
@@ -155,27 +156,29 @@ extern float thrust_override[4];    // Motor thrusts [g]
 
 
 // =================================
-//          SENSORY VALUES
+//     OPTICAL FLOW ESTIMATION
 // =================================
 
-// OPTICAL FLOW STATES
+// OPTICAL FLOW STATES (GROUND TRUTH)
 extern float Tau;           // [s]
 extern float Theta_x;       // [rad/s] 
 extern float Theta_y;       // [rad/s]
-extern float Theta_z;       // [rad/s]
 
-// ANALYTICAL OPTICAL FLOW STATES
-extern float Tau_calc;      // [s]
-extern float Theta_x_calc;  // [rad/s] 
-extern float Theta_y_calc;  // [rad/s]
-extern float D_perp_calc;   // [m]
-
-// ESTIMATED OPTICAL FLOW STATES
+// OPTICAL FLOW STATES (CAMERA ESTIMATE)
 extern float Tau_est;      // [s]
 extern float Theta_x_est;  // [rad/s]
 extern float Theta_y_est;  // [rad/s]
-extern float D_perp_est;   // [m]
 
+// CAMERA PARAMETERS
+extern float IW;            // Image Width [m]
+extern float IH;            // Image Height [m]
+extern float focal_len;     // Focal Length [m]
+extern int32_t N_up;        // Pixel Count Horizontal [m]
+extern int32_t N_vp;        // Pixel Count Vertical [m]
+extern int32_t Cam_dt;      // Time Between Images [ms]
+
+extern int32_t UART_arr[UART_ARR_SIZE];
+extern bool isOFUpdated;
 
 // =================================
 //  FLAGS AND SYSTEM INITIALIZATION
@@ -192,7 +195,7 @@ extern bool customThrust_flag;
 extern bool customPWM_flag;
 
 // SENSOR FLAGS
-extern bool camera_sensor_active;
+extern bool isCamActive;
 
 // =================================
 //       POLICY INITIALIZATION
@@ -241,12 +244,17 @@ extern struct vec statePos_tr;      // Pos [m]
 extern struct vec stateVel_tr;      // Vel [m/s]
 extern struct quat stateQuat_tr;    // Orientation
 extern struct vec stateOmega_tr;    // Angular Rate [rad/s]
+extern float D_perp_tr;             // [m/s]
 
 // OPTICAL FLOW STATES
 extern float Tau_tr;                // [rad/s]
 extern float Theta_x_tr;            // [rad/s]
 extern float Theta_y_tr;            // [rad/s]
-extern float D_perp_tr;             // [m/s]
+
+// OPTICAL FLOW ESTIMATES
+extern float Tau_est_tr;            // [rad/s]
+extern float Theta_x_est_tr;        // [rad/s]
+extern float Theta_y_est_tr;        // [rad/s]
 
 // CONTROLLER STATES
 extern float F_thrust_flip;         // [N]
@@ -255,8 +263,8 @@ extern float M_y_flip;              // [N*m]
 extern float M_z_flip;              // [N*m]
 
 // POLICY TRIGGER/ACTION VALUES
-extern float Policy_Flip_tr;    
-extern float Policy_Action_tr;
+extern float Policy_Trg_Action_tr;    
+extern float Policy_Flip_Action_tr;
 
 // =================================
 //    LANDING SURFACE PARAMETERS
@@ -273,7 +281,7 @@ extern struct vec r_BO;         // Quad Position Vector         [m]
 extern struct vec r_PB;         // Quad-Plane Distance Vector   [m]
 extern struct vec V_BO;         // Quad Velocity Vector         [m/s]
 
-// DECLARE RELATIVE STATES
+// RELATIVE STATES
 extern float D_perp;            // Distance perp to plane [m]
 extern float V_perp;            // Velocity perp to plane [m/s]
 extern float V_tx;              // Tangent_x velocity [m/s]
@@ -299,7 +307,9 @@ extern struct CTRL_CmdPacket CTRL_Cmd;
 void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd);
 void controlOutput(const state_t *state, const sensorData_t *sensors);
 uint16_t thrust2PWM(float f);
-void calcPlaneNormal(float Plane_Angle);
+void updatePlaneNormal(float Plane_Angle);
+bool updateOpticalFlowEst();
+bool updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors);
 
 
 
@@ -307,7 +317,7 @@ void calcPlaneNormal(float Plane_Angle);
 
 
 // =================================
-//    ADDITIONAL MATH FUNCTIONS
+//    ADDITIONAL MATH3D FUNCTIONS
 // =================================
 
 // Construct a matrix A from vector v such that Ax = cross(v, x)
