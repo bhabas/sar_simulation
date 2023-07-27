@@ -143,10 +143,6 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                 break;
         }
     }
-    if (RATE_DO_EXECUTE(10, tick)) {
-        printf("Val: %.3f\n",Prop_14_x);
-
-    }
 
     // OPTICAL FLOW UPDATES
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick))
@@ -288,23 +284,18 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
             M = vscl(2.0f,M_d);
         }
 
+
         // =========== CONVERT THRUSTS [N] AND MOMENTS [N*m] TO PWM =========== // 
-        f_thrust_g = clamp(F_thrust/4.0f*Newton2g, 0.0f, f_max*0.9f); // Clamp thrust to prevent control saturation
-        f_roll_g = M.x/(4.0f*Prop_Dist)*Newton2g;
-        f_pitch_g = M.y/(4.0f*Prop_Dist)*Newton2g;
-        f_yaw_g = M.z/(4.0f*C_tf)*Newton2g;
+        M1_thrust = F_thrust * Prop_23_x/(Prop_14_x + Prop_23_x) - M.x * 1/(Prop_14_y + Prop_23_y) - M.y * 1/(Prop_14_x + Prop_23_x) - M.z * Prop_23_y/(C_tf*(Prop_14_y + Prop_23_y));
+        M2_thrust = F_thrust * Prop_14_x/(Prop_14_x + Prop_23_x) - M.x * 1/(Prop_14_y + Prop_23_y) + M.y * 1/(Prop_14_x + Prop_23_x) + M.z * Prop_14_y/(C_tf*(Prop_14_y + Prop_23_y));
+        M3_thrust = F_thrust * Prop_14_x/(Prop_14_x + Prop_23_x) + M.x * 1/(Prop_14_y + Prop_23_y) + M.y * 1/(Prop_14_x + Prop_23_x) - M.z * Prop_14_y/(C_tf*(Prop_14_y + Prop_23_y));
+        M4_thrust = F_thrust * Prop_23_x/(Prop_14_x + Prop_23_x) + M.x * 1/(Prop_14_y + Prop_23_y) - M.y * 1/(Prop_14_x + Prop_23_x) + M.z * Prop_23_y/(C_tf*(Prop_14_y + Prop_23_y));
 
-        // THESE CONNECT TO POWER_DISTRIBUTION_STOCK.C
-        control->thrust = f_thrust_g;                   // This gets passed to firmware EKF
-        control->roll = (int16_t)(f_roll_g*1e3f);
-        control->pitch = (int16_t)(f_pitch_g*1e3f);
-        control->yaw = (int16_t)(f_yaw_g*1e3f);
-
-        // ADD RESPECTIVE THRUST COMPONENTS
-        M1_thrust = clamp(f_thrust_g + f_roll_g - f_pitch_g + f_yaw_g, 0.0f, f_max);
-        M2_thrust = clamp(f_thrust_g + f_roll_g + f_pitch_g - f_yaw_g, 0.0f, f_max);
-        M3_thrust = clamp(f_thrust_g - f_roll_g + f_pitch_g + f_yaw_g, 0.0f, f_max);
-        M4_thrust = clamp(f_thrust_g - f_roll_g - f_pitch_g - f_yaw_g, 0.0f, f_max);
+        // CLAMP AND CONVER THRUST FROM [N] AND [N*M] TO [g]
+        M1_thrust = clamp((M1_thrust/2.0f)*Newton2g,0.0f,f_max);
+        M2_thrust = clamp((M2_thrust/2.0f)*Newton2g,0.0f,f_max);
+        M3_thrust = clamp((M3_thrust/2.0f)*Newton2g,0.0f,f_max);
+        M4_thrust = clamp((M4_thrust/2.0f)*Newton2g,0.0f,f_max);
 
 
         // TUMBLE DETECTION
