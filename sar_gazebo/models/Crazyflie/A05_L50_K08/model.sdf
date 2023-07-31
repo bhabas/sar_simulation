@@ -525,7 +525,7 @@
       
     
     <joint name='leg_joint_1' type='universal'>
-      <parent>Crazyflie_Base_Model::SAR_body</parent>
+      <parent>Base_Model::SAR_body</parent>
       <child>leg1</child>
       <pose>0 0 0 0 0.786 0</pose>
       <axis>
@@ -572,7 +572,7 @@
       </physics>
     </joint>
     <joint name='leg_joint_2' type='universal'>
-      <parent>Crazyflie_Base_Model::SAR_body</parent>
+      <parent>Base_Model::SAR_body</parent>
       <child>leg2</child>
       <pose>0 0 0 0 0.786 0</pose>
       <axis>
@@ -619,7 +619,7 @@
       </physics>
     </joint>
     <joint name='leg_joint_3' type='universal'>
-      <parent>Crazyflie_Base_Model::SAR_body</parent>
+      <parent>Base_Model::SAR_body</parent>
       <child>leg3</child>
       <pose>0 0 0 0 0.786 0</pose>
       <axis>
@@ -666,7 +666,7 @@
       </physics>
     </joint>
     <joint name='leg_joint_4' type='universal'>
-      <parent>Crazyflie_Base_Model::SAR_body</parent>
+      <parent>Base_Model::SAR_body</parent>
       <child>leg4</child>
       <pose>0 0 0 0 0.786 0</pose>
       <axis>
