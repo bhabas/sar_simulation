@@ -1,7 +1,7 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
   <model name='Base_Model'>
-    <link name='SAR_body'>
+    <link name='SAR_Body'>
       <inertial>
         <mass>0.0343</mass>
         <inertia>
@@ -355,7 +355,7 @@
       </collision>
     </link>
     
-    <link name='camera_sensor'>
+    <link name='Camera'>
       <pose>0 0 0 0 0 0</pose>
       <visual name='camera_center'>
         <cast_shadows>0</cast_shadows>
@@ -658,7 +658,7 @@
     
     
     <joint name='rotor_1_joint' type='revolute'>
-      <parent>SAR_body</parent>
+      <parent>SAR_Body</parent>
       <child>rotor_1</child>
       <pose>0 0 0 0 -0 0</pose>
       <axis>
@@ -690,7 +690,7 @@
       </physics>
     </joint>
     <joint name='rotor_2_joint' type='revolute'>
-      <parent>SAR_body</parent>
+      <parent>SAR_Body</parent>
       <child>rotor_2</child>
       <pose>0 0 0 0 -0 0</pose>
       <axis>
@@ -722,7 +722,7 @@
       </physics>
     </joint>
     <joint name='rotor_3_joint' type='revolute'>
-      <parent>SAR_body</parent>
+      <parent>SAR_Body</parent>
       <child>rotor_3</child>
       <pose>0 0 0 0 -0 0</pose>
       <axis>
@@ -754,7 +754,7 @@
       </physics>
     </joint>
     <joint name='rotor_4_joint' type='revolute'>
-      <parent>SAR_body</parent>
+      <parent>SAR_Body</parent>
       <child>rotor_4</child>
       <pose>0 0 0 0 -0 0</pose>
       <axis>
@@ -786,10 +786,10 @@
       </physics>
     </joint>
 
-    <joint name='sensor_joint' type='fixed'>
-      <parent>SAR_body</parent>
-      <child>camera_sensor</child>
-      <pose>0 0 0.15 0 -0 0</pose>
+    <joint name='Camera_Joint' type='fixed'>
+      <parent>SAR_Body</parent>
+      <child>Camera</child>
+      <pose>0 0 0 0 -0 0</pose>
       <physics>
         <ode>
           <limit>
@@ -855,7 +855,7 @@
     <plugin name='Vicon_plugin' filename='libgazebo_ros_p3d.so'>
       <alwaysOn>true</alwaysOn>
       <updateRate>1000</updateRate>
-      <bodyName>SAR_body</bodyName>
+      <bodyName>SAR_Body</bodyName>
       <topicName>SAR_External/ExtPosition</topicName>
       <frameName>world</frameName>
       <xyzOffsets>0 0 0</xyzOffsets>
@@ -866,32 +866,33 @@
     <plugin name="IMU_plugin" filename="libgazebo_ros_imu.so">
       <alwaysOn>true</alwaysOn>
       <updateRate>1000</updateRate>
-      <bodyName>SAR_body</bodyName>
+      <bodyName>SAR_Body</bodyName>
       <topicName>SAR_Internal/IMU</topicName>
       <serviceName>imu_service</serviceName>
       <gaussianNoise>0.0</gaussianNoise>
       <xyzOffset>0 0 0</xyzOffset>
       <rpyOffset>0 0 0</rpyOffset>
-      <frameName>SAR_body</frameName>
+      <frameName>SAR_Body</frameName>
     </plugin>
 
 
     <plugin name='Domain_Randomization_Plugin' filename='libDomainRand_plugin.so'>
-        <bodyName>SAR_body</bodyName>
+        <bodyName>SAR_Body</bodyName>
     </plugin>
 
     <plugin name='Cam_Update_Plugin' filename='libCam_Update_Plugin.so'>
-        <bodyName>SAR_body</bodyName>
+        <bodyName>SAR_Body</bodyName>
+        <jointName>Camera_Joint</jointName>
     </plugin>
     
     
     <!-- <plugin name='MomentPlugin' filename='libMoment_plugin.so'>
-        <bodyName>SAR_body</bodyName>
+        <bodyName>SAR_Body</bodyName>
     </plugin> -->
 
     <!-- <joint name="FixedJoint" type="fixed">
         <parent>world</parent>
-        <child>SAR_body</child>
+        <child>SAR_Body</child>
         <pose>0 0 0 0 0 0</pose>    
         <physics>
           <ode>
