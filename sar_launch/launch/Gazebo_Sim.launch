@@ -32,12 +32,8 @@
     <node name="Spawn_Model" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
     args="-file $(arg SAR_SDF_Path) -sdf -model $(arg SAR_Model) -z 0.3" />
 
-    <!-- <node name="Spawn_Model" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
-    args="-file /home/bhabas/catkin_ws/src/crazyflie_simulation/sar_gazebo/models/Crazyflie/Base_Model/model.sdf -sdf -model $(arg SAR_Model) -z 0.3" /> -->
-
-
-    <!-- <node name="Spawn_Plane" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
-    args="-file $(arg Plane_SDF_Path) -sdf -model $(arg Plane_Model) -z 2" /> -->
+    <node name="Spawn_Plane" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
+    args="-file $(arg Plane_SDF_Path) -sdf -model $(arg Plane_Model) -z 2" />
         
 </launch>
 

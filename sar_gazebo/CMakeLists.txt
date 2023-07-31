@@ -28,6 +28,9 @@ target_link_libraries(gazebo_sticky_foot ${GAZEBO_LIBRARIES})
 add_library(motor_plugin SHARED src/motor_plugin.cpp)
 target_link_libraries(motor_plugin ${GAZEBO_LIBRARIES})
 
+add_library(Cam_Update_Plugin SHARED src/Cam_Update_Plugin.cpp)
+target_link_libraries(Cam_Update_Plugin ${GAZEBO_LIBRARIES})
+
 add_library(DomainRand_plugin SHARED src/DomainRandomization.cpp)
 target_link_libraries(DomainRand_plugin ${GAZEBO_LIBRARIES})
 
