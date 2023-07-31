@@ -4,6 +4,8 @@
 #include <gazebo/physics/physics.hh>
 #include <gazebo/transport/transport.hh>
 #include <gazebo/common/common.hh>
+#include <gazebo/sensors/sensors.hh>
+
 
 
 
@@ -35,6 +37,9 @@ namespace gazebo {
             std::string Joint_Name;
             std::string ForceTorque_Topic;
 
+            std::string SAR_Type;
+            std::string SAR_Config;
+            std::string Cam_Config;
 
             // GAZEBO POINTERS
             physics::ModelPtr Base_Model_Ptr;
@@ -42,6 +47,9 @@ namespace gazebo {
             physics::LinkPtr SAR_Body_Ptr;
 
             physics::JointPtr Joint_Ptr;
+
+            sensors::SensorPtr Sensor_Ptr;
+            sensors::CameraSensor* Camera_Ptr;
 
             event::ConnectionPtr updateConnection;
 

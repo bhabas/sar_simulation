@@ -185,7 +185,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
     def setParams(self):
 
-        os.system("roslaunch sar_launch params.launch")
+        os.system("roslaunch sar_launch Load_Params.launch")
 
     
 

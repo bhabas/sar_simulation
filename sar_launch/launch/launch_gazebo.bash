@@ -6,7 +6,7 @@ source ~/catkin_ws/devel/setup.bash
 SIMULATION_PATH=$(find ~/catkin_ws/src -name 'crazyflie_simulation' -type d | head -n 1)
 
 ## LOAD GAZEBO PARAMS
-roslaunch sar_launch params.launch
+roslaunch sar_launch Load_Params.launch
 GROUND_NAME=$(rosparam get /ENV_SETTINGS/Ground_Name)
 GUI_FLAG=$(rosparam get /SIM_SETTINGS/GUI_Flag)
 PAUSE_FLAG=$(rosparam get /SIM_SETTINGS/Pause_Flag)

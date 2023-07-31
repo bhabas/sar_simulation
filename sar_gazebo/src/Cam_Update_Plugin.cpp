@@ -23,6 +23,32 @@ namespace gazebo
             return;
         }
 
+        // LOAD MODEL,CONFIG,AND CAM_CONFIG PARAMS
+        ros::param::get("/SAR_SETTINGS/SAR_Type",SAR_Type);
+        ros::param::get("/SAR_SETTINGS/SAR_Config",SAR_Config);
+        ros::param::get("/CAM_SETTINGS/Cam_Config",Cam_Config);
+
+        // Get a pointer to the sensor.
+        Sensor_Ptr = sensors::get_sensor("Camera");
+        Camera_Ptr = dynamic_cast<sensors::CameraSensor*>(Sensor_Ptr.get());
+
+        int val = Camera_Ptr->UpdateRate();
+        printf("Val: %d\n",val);
+
+        Camera_Ptr->SetUpdateRate(50);
+        val = Camera_Ptr->UpdateRate();
+        printf("Val: %d\n",val);
+
+
+        // Camera_Ptr->SetWidth() = 60;
+        // auto cameraSensor = dynamic_cast<gazebo::sensors::CameraSensor*>(sensor);
+        
+
+
+
+        // SAR_Type = "/SAR_Type/" + SAR_Type;
+        // SAR_Config = "/Config/" + SAR_Config;
+
         // LOAD PARAMS FROM SDF
         Joint_Name = _sdf->GetElement("jointName")->Get<std::string>();
 
@@ -39,16 +65,11 @@ namespace gazebo
         ignition::math::Pose3d relativePose(1.0, 0.0, 0.0, 0.0, 0.0, 0.0); // e.g., 1 meter along x-axis
         Camera_Link_Ptr->SetRelativePose(relativePose);
 
-
+        gzmsg << "Creating Camera-to-Model Joint\n";
+        Base_Model_Ptr->CreateJoint(Joint_Name,"fixed",SAR_Body_Ptr,Camera_Link_Ptr);
 
         // // LINK COMMAND SERVICE TO CALLBACK
         // Pose_Update_Service = nh.advertiseService("/Cam_Update_Plugin", &Cam_Update_Plugin::Service_Callback, this);
-
-
-        // CREATE INITIAL JOINT TO WORLD
-        // Base_Model_Ptr->CreateJoint(Joint_Name,"fixed",World_Origin_Model_Ptr->GetLink("Origin_Link"),Base_Model_Ptr->GetLink("Surface_Link"));
-        // Joint_Ptr = Base_Model_Ptr->GetJoint(Joint_Name);
-        // Joint_Ptr->SetProvideFeedback(true);
 
         
         updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&Cam_Update_Plugin::OnUpdate, this));
