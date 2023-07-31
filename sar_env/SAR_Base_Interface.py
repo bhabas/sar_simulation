@@ -290,8 +290,8 @@ class SAR_Base_Interface():
 
         self.FM_tr = [0,0,0,0]      # [N,N*mm]
 
-        self.Policy_Flip_tr = 0.0
-        self.Policy_Action_tr = 0.0 # [N*mm]
+        self.Policy_Trg_Action_tr = 0.0
+        self.Policy_Flip_Action_tr = 0.0 # [N*mm]
 
         self.vel_tr_mag = 0.0       # [m/s]
         self.phi_tr = 0.0           # [deg]
@@ -478,8 +478,8 @@ class SAR_Base_Interface():
             self.D_perp_tr = FlipData_msg.D_perp_tr
 
             ## POLICY ACTIONS
-            self.Policy_Flip_tr = FlipData_msg.Policy_Flip_tr
-            self.Policy_Action_tr = FlipData_msg.Policy_Action_tr
+            self.Policy_Trg_Action_tr = FlipData_msg.Policy_Trg_Action_tr
+            self.Policy_Flip_Action_tr = FlipData_msg.Policy_Flip_Action_tr
 
 
     def SAR_ImpactDataCallback(self,ImpactData_msg):

@@ -345,7 +345,6 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## CALC OPTICAL FLOW VALUES
         Theta_x = np.clip(V_tx/D_perp,-20,20)
         Theta_y = np.clip(V_ty/D_perp,-20,20)
-        Theta_z = np.clip(V_perp/D_perp,-20,20)
         Tau = np.clip(D_perp/V_perp,0.0,5.0)
 
         return np.array([Tau,Theta_x,D_perp],dtype=np.float32)

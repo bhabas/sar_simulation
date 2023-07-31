@@ -1,0 +1,10 @@
+Cam_Config:
+  AI_Deck:
+    Image_Width: 1.152e-3   # Image Sensor Width [m]
+    Image_Height: 1.152e-3  # Image Sensor Height [m]
+    Focal_Length: 0.66e-3   # Focal Length [m]
+
+  Pi_Cam_V2:
+    Image_Width:  3.68e-3 # Image Sensor Width [m]
+    Image_Height: 2.76e-3  # Image Sensor Height [m]
+    Focal_Length: 3.04e-3 # Focal Length [m]

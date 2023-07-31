@@ -38,53 +38,6 @@ SAR_Type:
         Ixx: 15.83e-6   # [kg*m^2]
         Iyy: 17.00e-6   # [kg*m^2]
         Izz: 31.19e-6   # [kg*m^2] 
-      
-      Narrow_Long:      # Crazyflie Narrow_Long
-        Initials: NL
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
-
-
-      ####################################
-      #   Not Experimentally Measured
-      ####################################
-
-      Wide_Long:        # Crazyflie Wide_Long 
-        Initials: WL
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
-
-      ExtraNarrow_Long: # Crazyflie ExtraNarrow_Long
-        Initials: XNL
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
-
-      Wide_Short:       # Crazyflie Wide_Short
-        Initials: WS
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
-
-      Narrow_Short:     # Crazyflie Narrow_Short
-        Initials: NS
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
-
-      ExtraNarrow_Short: # Crazyflie ExtraNarrow_Short
-        Initials: XNS
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
 
       Camera_Model:       # Crazyflie Base_Model
         Initials: Camera_Model
@@ -102,71 +55,110 @@ SAR_Type:
       ## ==================== 
       A05_L50_K08: 
         Initials: A05_L50_K08
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.05  # Leg Length [m]
+        Leg_Stiffness: 8  # Leg Stiffness [N*mm/rad]
 
       A05_L50_K32: 
         Initials: A05_L50_K32
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       A05_L50_K64: 
         Initials: A05_L50_K64
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       # =============================  
 
       A05_L75_K08: 
         Initials: A05_L75_K08
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 8  # Leg Stiffness [N*mm/rad]
 
       A05_L75_K32: 
         Initials: A05_L75_K32
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       A05_L75_K64: 
         Initials: A05_L75_K64
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       # ============================= 
 
       A05_L100_K08: 
         Initials: A05_L100_K08
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 8  # Leg Stiffness [N*mm/rad]
 
       A05_L100_K32: 
         Initials: A05_L100_K32
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       A05_L100_K64: 
         Initials: A05_L100_K64
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
 
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
 
       ## ==================== 
@@ -174,70 +166,106 @@ SAR_Type:
       ## ==================== 
       A20_L50_K08: 
         Initials: A20_L50_K08
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       A20_L50_K32: 
         Initials: A20_L50_K32
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       A20_L50_K64: 
         Initials: A20_L50_K64
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       # ============================= 
 
       A20_L75_K08: 
         Initials: A20_L75_K08
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       A20_L75_K32: 
         Initials: A20_L75_K32
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       A20_L75_K64: 
         Initials: A20_L75_K64
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       # ============================= 
 
       A20_L100_K08: 
         Initials: A20_L100_K08
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       A20_L100_K32: 
         Initials: A20_L100_K32
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       A20_L100_K64: 
         Initials: A20_L100_K64
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
 
       ## ==================== 
@@ -245,33 +273,49 @@ SAR_Type:
       ## ==================== 
       A30_L50_K08: 
         Initials: A30_L50_K08
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       A30_L50_K32: 
         Initials: A30_L50_K32
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       A30_L50_K64: 
         Initials: A30_L50_K64
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       # ============================= 
 
       A30_L75_K08: 
         Initials: A30_L75_K08
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
         Gamma: 30       # [deg]
         Length: 75      # [m]
@@ -279,40 +323,60 @@ SAR_Type:
 
       A30_L75_K32: 
         Initials: A30_L75_K32
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       A30_L75_K64: 
         Initials: A30_L75_K64
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       # ============================= 
 
       A30_L100_K08: 
         Initials: A30_L100_K08
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       A30_L100_K32: 
         Initials: A30_L100_K32
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       A30_L100_K64: 
         Initials: A30_L100_K64
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
 
       ## ==================== 
@@ -320,70 +384,106 @@ SAR_Type:
       ## ==================== 
       A60_L50_K08: 
         Initials: A60_L50_K08
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       A60_L50_K32: 
         Initials: A60_L50_K32
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       A60_L50_K64: 
         Initials: A60_L50_K64
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       # ============================= 
 
       A60_L75_K08: 
         Initials: A60_L75_K08
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       A60_L75_K32: 
         Initials: A60_L75_K32
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       A60_L75_K64: 
         Initials: A60_L75_K64
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       # ============================= 
 
       A60_L100_K08: 
         Initials: A60_L100_K08
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       A60_L100_K32: 
         Initials: A60_L100_K32
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
       A60_L100_K64: 
         Initials: A60_L100_K64
-        Mass: 38.1e-3   # [kg]
-        Ixx: 27.93e-6   # [kg*m^2]
-        Iyy: 30.46e-6   # [kg*m^2]
-        Izz: 47.12e-6   # [kg*m^2] 
+        Mass: 38.1e-3     # [kg]
+        Ixx: 27.93e-6     # [kg*m^2]
+        Iyy: 30.46e-6     # [kg*m^2]
+        Izz: 47.12e-6     # [kg*m^2] 
+
+        Leg_Angle: 5      # Leg Angle [deg]
+        Leg_Length: 0.1   # Leg Length [m]
+        Leg_Stiffness: 64 # Leg Stiffness [N*mm/rad]
 
 
   Big_Quad:

@@ -285,6 +285,18 @@ void nml_mat_free(nml_mat *matrix) {
   free(matrix);
 }
 
+void nml_mat_fill_fromarr(nml_mat *m,int num_rows, int num_cols, int n_vals, double *vals)
+{
+    int i, j, v_idx;
+    for(i = 0; i < m->num_rows; i++) {
+        for(j = 0; j < m->num_cols; j++) {
+        v_idx = i * m->num_cols + j;
+        m->data[i][j] = (v_idx < n_vals) ? vals[v_idx] : 0.0;
+        }
+    }
+
+}
+
 
 // *****************************************************************************
 //
@@ -1270,7 +1282,7 @@ double nml_mat_sum_elem(nml_mat *m)
 
 
 void nml_mat_print_CF(nml_mat *matrix) {
-    DEBUG_PRINT("=========================\n\n");
+    DEBUG_PRINT("=========================\n");
     for (int i = 0; i < matrix->num_rows; i++)
     {
         for (int j = 0; j < matrix->num_cols; j++)

@@ -6,5 +6,4 @@ bool Tumble_Detection
 bool Tumbled_Flag
 bool Moment_Flag
 bool Policy_Armed
-bool Camera_Sensor_Active
 
