@@ -1,0 +1,27 @@
+<?xml version='1.0'?>
+<sdf version='1.7'>
+  <model name='Base_Model'>
+    <link name='SAR_body'>
+      <inertial>
+        <mass>0.0343</mass>
+        <inertia>
+          <ixx>15.83e-6</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>17.00e-6</iyy>
+          <iyz>0</iyz>
+          <izz>31.19e-6</izz>
+        </inertia>
+        <pose>0 0 2e-3 0 -0 0</pose>
+      </inertial>
+      <pose>0 0 0 0 -0 0</pose>
+      <gravity>1</gravity>
+      <self_collide>0</self_collide>
+      <kinematic>0</kinematic>
+      <enable_wind>0</enable_wind>
+
+    </link>
+    <static>0</static>
+    <allow_auto_disable>1</allow_auto_disable>
+  </model>
+</sdf>

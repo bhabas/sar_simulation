@@ -741,30 +741,30 @@ bool updateOpticalFlowEst()
         N_up = UART_arr[10];
         N_vp = UART_arr[11];
 
-        // UPDATE Ax=b MATRICES FROM UART ARRAY
-        double spatial_Grad_mat[9] = {
-            G_vp_vp, -G_vp_up, -IW/(2*N_up*focal_len)*G_vp_rp,
-            G_vp_up, -G_up_up, -IW/(2*N_up*focal_len)*G_up_rp,
-            G_vp_rp, -G_up_rp, -IW/(2*N_up*focal_len)*G_rp_rp,
-        };
-
-        double temp_Grad_vec[3] = {
-            (8*IW)/(focal_len*N_up*Cam_dt)*G_vp_tp,
-            (8*IW)/(focal_len*N_up*Cam_dt)*G_up_tp,
-            (8*IW)/(focal_len*N_up*Cam_dt)*G_rp_tp,
-        };
-
+        // // UPDATE Ax=b MATRICES FROM UART ARRAY
         // double spatial_Grad_mat[9] = {
-        //     3, 1,-1,
-        //     2,-2, 1,
-        //     1, 1, 1,
+        //     G_vp_vp, -G_vp_up, -IW/(2*N_up*focal_len)*G_vp_rp,
+        //     G_vp_up, -G_up_up, -IW/(2*N_up*focal_len)*G_up_rp,
+        //     G_vp_rp, -G_up_rp, -IW/(2*N_up*focal_len)*G_rp_rp,
         // };
 
         // double temp_Grad_vec[3] = {
-        //      9,
-        //     -3,
-        //      7,
+        //     (8*IW)/(focal_len*N_up*Cam_dt)*G_vp_tp,
+        //     (8*IW)/(focal_len*N_up*Cam_dt)*G_up_tp,
+        //     (8*IW)/(focal_len*N_up*Cam_dt)*G_rp_tp,
         // };
+
+        double spatial_Grad_mat[9] = {
+            3, 1,-1,
+            2,-2, 1,
+            1, 1, 1,
+        };
+
+        double temp_Grad_vec[3] = {
+             9,
+            -3,
+             7,
+        };
 
 
         // SOLVE Ax=b EQUATION FOR OPTICAL FLOW VECTOR

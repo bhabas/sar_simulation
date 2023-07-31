@@ -1,0 +1,12 @@
+<?xml version='1.0'?>
+<sdf version='1.7'>
+  <model name='A05_L50_K08'>
+
+    <include>
+      <uri>model://Base_Model</uri>
+    </include>
+
+    <static>0</static>
+    <allow_auto_disable>1</allow_auto_disable>
+  </model>
+</sdf>
