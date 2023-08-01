@@ -216,7 +216,7 @@ class SAR_DataConverter {
         // ============================
         //     LANDING PLANE PARAMS
         // ============================
-        std::string Plane_Model;
+        std::string Plane_Config;
         geometry_msgs::Vector3 Plane_Pos; // Initial Plane Position
         float Plane_Angle = 180.0; // Initial Plane Angle [Deg]
 
@@ -462,7 +462,7 @@ inline void SAR_DataConverter::LoadParams()
 
 
     // PLANE SETTINGS
-    ros::param::get("/PLANE_SETTINGS/Plane_Model",Plane_Model);
+    ros::param::get("/PLANE_SETTINGS/Plane_Config",Plane_Config);
     if (isInit == false)
     {
         ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle);

@@ -55,7 +55,7 @@ void SAR_DataConverter::Update_Landing_Surface_Pose(float Pos_x, float Pos_y, fl
 
     gazebo_msgs::SetModelState srv;
 
-    srv.request.model_state.model_name = Plane_Model;
+    srv.request.model_state.model_name = Plane_Config;
 
     srv.request.model_state.pose.position.x = Pos_x;
     srv.request.model_state.pose.position.y = Pos_y;

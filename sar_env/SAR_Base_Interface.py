@@ -36,7 +36,7 @@ class SAR_Base_Interface():
 
 
         ## PLANE PARAMETERS
-        self.Plane_Model = rospy.get_param('/PLANE_SETTINGS/Plane_Model')
+        self.Plane_Config = rospy.get_param('/PLANE_SETTINGS/Plane_Config')
         
 
         ## INIT LOGGING VALUES

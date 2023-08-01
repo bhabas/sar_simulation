@@ -213,7 +213,7 @@ class Policy_Trainer_DeepRL():
 
         data = dict(
             PLANE_SETTINGS = dict(
-                Plane_Model = self.env.Plane_Model,
+                Plane_Config = self.env.Plane_Config,
                 Plane_Angle = self.env.Plane_Angle,
                 Plane_Pos = dict(
                     X = self.env.Plane_Pos[0],

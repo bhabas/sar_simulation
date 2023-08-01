@@ -1,0 +1,14 @@
+<?xml version='1.0'?>
+<sdf version='1.7'>
+  <model name='Checkerboard_L02'>
+
+    <include>
+      <uri>model://Plane_Base_Model</uri>
+    </include>
+
+    <static>0</static>
+    
+
+  <allow_auto_disable>1</allow_auto_disable>
+  </model>
+</sdf>

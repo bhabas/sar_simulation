@@ -16,7 +16,9 @@ CAM_SETTINGS:
   Cam_Active: False
 
 PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
-  Plane_Model: "Standard_Plane"
+  Plane_Type: "Landing_Surfaces"
+  Plane_Config: "Checkerboard_L02"
+  
   Plane_Angle: 90  # [deg]
   Pos_X: 2.0    # [m]
   Pos_Y: 0.0    # [m]

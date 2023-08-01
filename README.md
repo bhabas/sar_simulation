@@ -130,7 +130,7 @@ SAR_SETTINGS:
   Policy_Type - Policy Types [PARAM_OPTIM,SVL_POLICY,DEEP_RL_SB3,DEEP_RL_ONBD]
 
 PLANE_SETTINGS:
-  Plane_Model - Plane Model
+  Plane_Config - Plane Model
   Plane_Config - Plane Orientation [deg]
 
 SIM_SETTINGS:
