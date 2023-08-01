@@ -15,7 +15,7 @@ import plotly.graph_objects as go
 from Policy_Training.Policy_Training import Policy_Trainer
 
 np.set_printoptions(suppress=True)
-BASEPATH = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Policy_Mapping"
+BASEPATH = "/home/bhabas/catkin_ws/src/sar_simulation/crazyflie_projects/Policy_Mapping"
 
 if __name__ == "__main__":
 

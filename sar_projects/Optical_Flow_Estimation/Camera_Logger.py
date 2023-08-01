@@ -12,7 +12,7 @@ from sar_msgs.msg import SAR_StateData,SAR_FlipData,SAR_ImpactData,SAR_MiscData
 from sar_msgs.srv import ModelMove
 from rosgraph_msgs.msg import Clock
 
-## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
+## ADD SAR_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg,os
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('sar_projects'))
 # sys.path.insert(1,BASE_PATH)

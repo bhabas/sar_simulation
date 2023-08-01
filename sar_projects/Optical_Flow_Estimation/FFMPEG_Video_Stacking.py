@@ -5,7 +5,7 @@ import time
 
 
 
-LogDir = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Optical_Flow_Estimation/local_logs/"
+LogDir = "/home/bhabas/catkin_ws/src/sar_simulation/crazyflie_projects/Optical_Flow_Estimation/local_logs/"
 # FolderName = "Check_Pattern_Divergent_Flow"
 # FileDir = "D_0.5--V_perp_0.0--V_para_1.0--L_0.02"
 
@@ -15,7 +15,7 @@ L_list = [0.02,0.05,0.12,0.25,0.5,0.75,1.00,2.00]
 
 for L in L_list:
 
-    LogDir = "/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Optical_Flow_Estimation/local_logs/"
+    LogDir = "/home/bhabas/catkin_ws/src/sar_simulation/crazyflie_projects/Optical_Flow_Estimation/local_logs/"
     FolderName = "Check_Pattern_Divergent_Flow"
     FileDir=f"D_0.5--V_perp_0.5--V_para_0.0--L_{L:.2f}"
 

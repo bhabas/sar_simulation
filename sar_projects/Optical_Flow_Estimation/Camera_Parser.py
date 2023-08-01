@@ -13,7 +13,7 @@ import matplotlib.animation as animation
 import matplotlib.gridspec as gridspec
 from matplotlib.patches import Rectangle
 
-## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
+## ADD SAR_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg,os
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('sar_projects'))
 sys.path.insert(1,BASE_PATH)        

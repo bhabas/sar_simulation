@@ -625,7 +625,7 @@ class DataFile:
 
 if __name__ == "__main__":
 
-    dataPath = f"/home/bhabas/catkin_ws/src/crazyflie_simulation/crazyflie_logging/local_logs/"
+    dataPath = f"/home/bhabas/catkin_ws/src/sar_simulation/crazyflie_logging/local_logs/"
 
     fileName = "Control_Playground--trial_24--NL.csv"
     trial = DataFile(dataPath,fileName)

@@ -37,4 +37,3 @@
         
 </launch>
 
-<!-- rosrun gazebo_ros spawn_model -file /home/bhabas/catkin_ws/src/crazyflie_simulation/sar_gazebo/models/Crazyflie/Base_Model/model.sdf -sdf -model Base_Model -->

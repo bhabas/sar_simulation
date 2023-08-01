@@ -3,7 +3,7 @@ killall gzserver gzclient # kills all current gazebo processes
 source ~/catkin_ws/devel/setup.bash
 
 ## FIND SIMULATION PATH
-SIMULATION_PATH=$(find ~/catkin_ws/src -name 'crazyflie_simulation' -type d | head -n 1)
+SIMULATION_PATH=$(find ~/catkin_ws/src -name 'sar_simulation' -type d | head -n 1)
 
 ## LOAD GAZEBO PARAMS
 roslaunch sar_launch Load_Params.launch

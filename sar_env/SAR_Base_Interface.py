@@ -44,7 +44,7 @@ class SAR_Base_Interface():
 
         ## INIT LOGGING VALUES
         self.username = getpass.getuser()
-        self.logDir =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/sar_logging/local_logs"
+        self.logDir =  f"/home/{self.username}/catkin_ws/src/sar_simulation/sar_logging/local_logs"
         self.logName = "TestLog.csv"
         self.error_str = "No_Debug_Data"
 

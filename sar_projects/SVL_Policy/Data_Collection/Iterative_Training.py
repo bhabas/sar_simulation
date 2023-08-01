@@ -3,10 +3,10 @@ import pandas as pd
 import os
 
 
-## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
+## ADD SAR_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
-sys.path.insert(1,'/home/bhabas/catkin_ws/src/crazyflie_simulation/sar_env')
+sys.path.insert(1,'/home/bhabas/catkin_ws/src/sar_simulation/sar_env')
 sys.path.insert(1,BASE_PATH)
 
 from crazyflie_projects.SVL_Policy.Envs.CrazyflieEnv_ParamOpt import CrazyflieEnv_ParamOpt
