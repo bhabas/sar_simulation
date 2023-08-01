@@ -1,7 +1,11 @@
 
 #include <Cam_Update_Plugin.h>
 
-
+/**
+ * @brief This script is responsible for updating the camera position, pitch angle, and FPS via ROS service
+ * commands and adjusting these values from the Cam_Settings on simulation startup
+ * 
+ */
 
 namespace gazebo
 {
@@ -12,8 +16,8 @@ namespace gazebo
 
         // LOAD MODEL AND LINK POINTERS
         Base_Model_Ptr = _parent;
-        SAR_Body_Ptr = _parent->GetLink("SAR_Body");
-        Camera_Link_Ptr = _parent->GetLink("Camera");
+        SAR_Body_Ptr = Base_Model_Ptr->GetLink("SAR_Body");
+        Camera_Link_Ptr = Base_Model_Ptr->GetLink("Camera");
 
         // LOAD PARAMS FROM SDF
         Joint_Name = _sdf->GetElement("jointName")->Get<std::string>();
@@ -38,33 +42,36 @@ namespace gazebo
         // UPDATE CAMERA
         Cam_Update_Plugin::Update_Camera();
 
-        
         // LINK COMMAND SERVICE TO CALLBACK
-        // Pose_Update_Service = nh.advertiseService("/Cam_Update_Plugin", &Cam_Update_Plugin::Service_Callback, this);
+        Cam_Update_Service = nh.advertiseService("/SAR_Internal/Camera_Update", &Cam_Update_Plugin::Service_Callback, this);
 
         printf("\n\n");
     }
 
     void Cam_Update_Plugin::Update_Camera()
     {
-        // UPDATE CAMERA POSE
-        gzmsg << "Removing Camera-to-Model Joint\n";
-        Base_Model_Ptr->RemoveJoint(Joint_Name);
+        gzmsg << "Updating Camera Pose and FPS\n";
 
-        gzmsg << "Updating Relative Pose\n";
+        // UPDATE CAMERA POSE
+        Base_Model_Ptr->RemoveJoint(Joint_Name);
         ignition::math::Pose3d relativePose(X_Offset, Y_Offset, Z_Offset, 0.0, (90 - Pitch_Angle)*M_PI/180.0, 0.0);
         Camera_Link_Ptr->SetRelativePose(relativePose);
-
-        gzmsg << "Creating Camera-to-Model Joint\n";
         Base_Model_Ptr->CreateJoint(Joint_Name,"fixed",SAR_Body_Ptr,Camera_Link_Ptr);
 
-        // UPDATE CAMERA SETTINGS
+        // UPDATE CAMERA FPS
         Camera_Ptr->SetUpdateRate(FPS);
 
     }
 
-    bool Cam_Update_Plugin::Service_Callback(gazebo_msgs::SetModelState::Request &req, gazebo_msgs::SetModelState::Response &res)
+    bool Cam_Update_Plugin::Service_Callback(sar_msgs::Cam_Settings::Request &req, sar_msgs::Cam_Settings::Response &res)
     {
+        // UPDATING CAMERA POSE AND FPS
+        X_Offset = req.Pos_Offset.x;
+        Y_Offset = req.Pos_Offset.y;
+        Z_Offset = req.Pos_Offset.z;
+        Pitch_Angle = req.Pitch_Angle;
+        FPS = req.FPS;
+
         Cam_Update_Plugin::Update_Camera();
 
         return true;

@@ -7,15 +7,9 @@
 #include <gazebo/sensors/sensors.hh>
 
 
-
-
 #include <ros/ros.h>
 #include <thread>
-#include "gazebo_msgs/SetModelState.h"
-#include "geometry_msgs/WrenchStamped.h"
-
-
-
+#include "sar_msgs/Cam_Settings.h"
 
 
 namespace gazebo {
@@ -27,7 +21,7 @@ namespace gazebo {
         protected:
             void Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf);
             void Update_Camera();
-            bool Service_Callback(gazebo_msgs::SetModelState::Request &req, gazebo_msgs::SetModelState::Response &res);
+            bool Service_Callback(sar_msgs::Cam_Settings::Request &req, sar_msgs::Cam_Settings::Response &res);
 
 
         private:
@@ -59,7 +53,7 @@ namespace gazebo {
 
             // POSE UPDATES
             ros::NodeHandle nh;
-            ros::ServiceServer Pose_Update_Service;
+            ros::ServiceServer Cam_Update_Service;
     };
 
 }

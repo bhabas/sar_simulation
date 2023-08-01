@@ -38,6 +38,7 @@ add_service_files(
   domainRand.srv
   CTRL_Cmd_srv.srv
   ModelMove.srv
+  Cam_Settings.srv
 )
 
 ## Generate added messages and services with any dependencies listed here
