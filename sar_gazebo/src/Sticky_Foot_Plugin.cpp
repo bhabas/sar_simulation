@@ -24,7 +24,7 @@ namespace gazebo{
         gzmsg << "\t Pad Name:\t" << padName << std::endl;
         padLink_ptr = model_->GetLink(padName); // Returns a ptr to link
         if (padLink_ptr == NULL)
-            gzerr << "[gazebo_sticky_foot] Couldn't find specified link " << padName << std::endl;
+            gzerr << "[Sticky_Foot_Plugin] Couldn't find specified link " << padName << std::endl;
 
 
         // CREATE JOINT NAME
@@ -43,7 +43,7 @@ namespace gazebo{
             namespace_ = _sdf->GetElement("robotNamespace")->Get<std::string>();
         }
         else
-            gzerr << "[gazebo_sticky_foot] Please specify a robotNamespace.\n";
+            gzerr << "[Sticky_Foot_Plugin] Please specify a robotNamespace.\n";
 
         node_handle_ = transport::NodePtr(new transport::Node());
         node_handle_->Init(namespace_);
