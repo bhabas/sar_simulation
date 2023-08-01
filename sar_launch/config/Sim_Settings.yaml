@@ -12,7 +12,7 @@ SAR_SETTINGS:
   # Policy_Type: "DEEP_RL_ONBOARD" 
 
 CAM_SETTINGS:
-  Cam_Config: "AI_Deck"
+  Cam_Config: "A05_L50_K08"
   Cam_Active: False
 
 PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
