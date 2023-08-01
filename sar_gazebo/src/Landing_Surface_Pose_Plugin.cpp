@@ -27,13 +27,12 @@ namespace gazebo
         World_Ptr = Surface_Model_Ptr->GetWorld();
         World_Origin_Model_Ptr = World_Ptr->ModelByName("World_Origin");
 
-
         // LINK COMMAND SERVICE TO CALLBACK
         Pose_Update_Service = nh.advertiseService("/Landing_Surface_Pose", &Landing_Surface_Pose::Service_Callback, this);
 
 
         // CREATE INITIAL JOINT TO WORLD
-        Surface_Model_Ptr->CreateJoint(Joint_Name,"fixed",World_Origin_Model_Ptr->GetLink("Origin_Link"),Surface_Model_Ptr->GetLink("Surface_Link"));
+        Surface_Model_Ptr->CreateJoint(Joint_Name,"fixed",World_Origin_Model_Ptr->GetLink("Origin_Link"),Surface_Model_Ptr->GetLink("Plane_Base_Model::Surface_Link"));
         Joint_Ptr = Surface_Model_Ptr->GetJoint(Joint_Name);
         Joint_Ptr->SetProvideFeedback(true);
 
@@ -111,7 +110,7 @@ namespace gazebo
 
         // CREATE JOINT BETWEEN LANDING SURFACE AND WORLD
         gzmsg << "Creating Surface-to-World Joint\n";
-        Surface_Model_Ptr->CreateJoint(Joint_Name,"fixed",World_Origin_Model_Ptr->GetLink("Origin_Link"),Surface_Model_Ptr->GetLink("Surface_Link"));
+        Surface_Model_Ptr->CreateJoint(Joint_Name,"fixed",World_Origin_Model_Ptr->GetLink("Origin_Link"),Surface_Model_Ptr->GetLink("Plane_Base_Model::Surface_Link"));
         Joint_Ptr = Surface_Model_Ptr->GetJoint(Joint_Name);
         Joint_Ptr->SetProvideFeedback(true);
         
