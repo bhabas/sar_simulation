@@ -31,13 +31,6 @@ namespace gazebo
             return;
         }
 
-        auto joints = Base_Model_Ptr->GetJoints();
-        for (const auto& joint : joints)
-        {
-            std::cout << joint->GetName() << std::endl;
-        }
-
-
         // LOAD PARAMS FROM SDF
         Joint_Name = _sdf->GetElement("jointName")->Get<std::string>();
         std::cout << Joint_Name << std::endl;
@@ -55,8 +48,11 @@ namespace gazebo
         ros::param::get("/Cam_Config/"+Cam_Config+"/FPS",FPS);
 
         // GET POINTER TO CAMERA SENSOR
-        Sensor_Ptr = sensors::get_sensor("Camera");
+        Sensor_Ptr = sensors::get_sensor("Base_Model::Camera");
         Camera_Ptr = dynamic_cast<sensors::CameraSensor*>(Sensor_Ptr.get());
+
+
+
 
         // UPDATE CAMERA
         Cam_Update_Plugin::Update_Camera();
@@ -72,18 +68,18 @@ namespace gazebo
         gzmsg << "Updating Camera Pose and FPS\n";
 
         // UPDATE CAMERA POSE
-        printf("Removing joint\n");
-        Base_Model_Ptr->RemoveJoint("Base_Model::Camera_Joint");
+        // printf("Removing joint\n");
+        Base_Model_Ptr->RemoveJoint(Joint_Name);
 
-        printf("Moving Link\n");
-        ignition::math::Pose3d relativePose(0.5, Y_Offset, Z_Offset, 0.0, (90 - Pitch_Angle)*M_PI/180.0, 0.0);
+        // printf("Moving Link\n");
+        ignition::math::Pose3d relativePose(X_Offset, Y_Offset, Z_Offset, 0.0, (90 - Pitch_Angle)*M_PI/180.0, 0.0);
         Camera_Link_Ptr->SetRelativePose(relativePose);
 
-        printf("Creating joint\n");
-        Base_Model_Ptr->CreateJoint("Camera_Joint","fixed",SAR_Body_Ptr,Camera_Link_Ptr);
+        // printf("Creating joint\n");
+        Base_Model_Ptr->CreateJoint(Joint_Name,"fixed",SAR_Body_Ptr,Camera_Link_Ptr);
 
-        // // UPDATE CAMERA FPS
-        // Camera_Ptr->SetUpdateRate(FPS);
+        Camera_Ptr->SetUpdateRate(FPS);
+
 
     }
 
