@@ -77,38 +77,38 @@ void SAR_DataConverter::Publish_StateData()
     StateData_Pub.publish(StateData_msg);
 }
 
-void SAR_DataConverter::Publish_FlipData()
+void SAR_DataConverter::Publish_TriggerData()
 {
 
     ros::Duration Time_delta(Time_tr-Time_start);
-    FlipData_msg.header.stamp.sec = Time_delta.sec;
-    FlipData_msg.header.stamp.nsec = Time_delta.nsec;
-    FlipData_msg.flip_flag = flip_flag;
+    TriggerData_msg.header.stamp.sec = Time_delta.sec;
+    TriggerData_msg.header.stamp.nsec = Time_delta.nsec;
+    TriggerData_msg.flip_flag = flip_flag;
 
 
     // CARTESIAN SPACE DATA
-    FlipData_msg.Pose_tr = Pose_tr;
-    FlipData_msg.Twist_tr = Twist_tr;
-    FlipData_msg.Eul_tr = Eul_tr;
+    TriggerData_msg.Pose_tr = Pose_tr;
+    TriggerData_msg.Twist_tr = Twist_tr;
+    TriggerData_msg.Eul_tr = Eul_tr;
 
 
 
     // OPTICAL FLOW
-    FlipData_msg.Tau_tr = Tau_tr;
-    FlipData_msg.Theta_x_tr = Theta_x_tr;
-    FlipData_msg.Theta_y_tr = Theta_y_tr;
-    FlipData_msg.D_perp_tr = D_perp_tr;
+    TriggerData_msg.Tau_tr = Tau_tr;
+    TriggerData_msg.Theta_x_tr = Theta_x_tr;
+    TriggerData_msg.Theta_y_tr = Theta_y_tr;
+    TriggerData_msg.D_perp_tr = D_perp_tr;
 
     // CONTROL ACTIONS
-    FlipData_msg.FM_tr = FM_tr;
+    TriggerData_msg.FM_tr = FM_tr;
 
     // NEURAL NETWORK DATA
-    FlipData_msg.Policy_Trg_Action_tr = Policy_Trg_Action_tr;
-    FlipData_msg.Policy_Flip_Action_tr = Policy_Flip_Action_tr;
+    TriggerData_msg.Policy_Trg_Action_tr = Policy_Trg_Action_tr;
+    TriggerData_msg.Policy_Flip_Action_tr = Policy_Flip_Action_tr;
 
 
     // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE CONTROLLER
-    FlipData_Pub.publish(FlipData_msg);
+    TriggerData_Pub.publish(TriggerData_msg);
 
 }
 

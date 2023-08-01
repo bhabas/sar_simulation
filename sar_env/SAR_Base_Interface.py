@@ -6,7 +6,7 @@ import getpass
 import time
 
 ## ROS MESSAGES AND SERVICES
-from sar_msgs.msg import SAR_StateData,SAR_FlipData,SAR_ImpactData,SAR_MiscData
+from sar_msgs.msg import SAR_StateData,SAR_TriggerData,SAR_ImpactData,SAR_MiscData
 from sar_msgs.srv import loggingCMD,loggingCMDRequest
 from sar_msgs.srv import CTRL_Cmd_srv,CTRL_Cmd_srvRequest
 from sar_msgs.msg import RL_Data,RL_History
@@ -55,7 +55,7 @@ class SAR_Base_Interface():
         #       not data at back of a queue waiting to be processed by callbacks
         rospy.Subscriber("/clock",Clock,self.clockCallback,queue_size=1)
         rospy.Subscriber("/SAR_DC/StateData",SAR_StateData,self.SAR_StateDataCallback,queue_size=1)
-        rospy.Subscriber("/SAR_DC/FlipData",SAR_FlipData,self.SAR_FlipDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_DC/TriggerData",SAR_TriggerData,self.SAR_TriggerDataCallback,queue_size=1)
         rospy.Subscriber("/SAR_DC/ImpactData",SAR_ImpactData,self.SAR_ImpactDataCallback,queue_size=1)
         rospy.Subscriber("/SAR_DC/MiscData",SAR_MiscData,self.SAR_MiscDataCallback,queue_size=1)
 
@@ -444,42 +444,42 @@ class SAR_Base_Interface():
        
         self.t_prev = self.t # Save t value for next callback iteration
 
-    def SAR_FlipDataCallback(self,FlipData_msg):
+    def SAR_TriggerDataCallback(self,TriggerData_msg):
 
         ## FLIP FLAG
-        self.flip_flag = FlipData_msg.flip_flag
+        self.flip_flag = TriggerData_msg.flip_flag
 
-        if FlipData_msg.flip_flag == True:
+        if TriggerData_msg.flip_flag == True:
 
             ## FLIP TRIGGERING CONDITIONS
-            self.pos_tr = np.round([FlipData_msg.Pose_tr.position.x,
-                                    FlipData_msg.Pose_tr.position.y,
-                                    FlipData_msg.Pose_tr.position.z],3)
+            self.pos_tr = np.round([TriggerData_msg.Pose_tr.position.x,
+                                    TriggerData_msg.Pose_tr.position.y,
+                                    TriggerData_msg.Pose_tr.position.z],3)
 
-            self.vel_tr = np.round([FlipData_msg.Twist_tr.linear.x,
-                                    FlipData_msg.Twist_tr.linear.y,
-                                    FlipData_msg.Twist_tr.linear.z],3)
+            self.vel_tr = np.round([TriggerData_msg.Twist_tr.linear.x,
+                                    TriggerData_msg.Twist_tr.linear.y,
+                                    TriggerData_msg.Twist_tr.linear.z],3)
 
-            self.eul_tr = np.round([FlipData_msg.Eul_tr.x,
-                                    FlipData_msg.Eul_tr.y,
-                                    FlipData_msg.Eul_tr.z],3)
+            self.eul_tr = np.round([TriggerData_msg.Eul_tr.x,
+                                    TriggerData_msg.Eul_tr.y,
+                                    TriggerData_msg.Eul_tr.z],3)
 
-            self.omega_tr = np.round([FlipData_msg.Twist_tr.angular.x,
-                                    FlipData_msg.Twist_tr.angular.y,
-                                    FlipData_msg.Twist_tr.angular.z],3)
+            self.omega_tr = np.round([TriggerData_msg.Twist_tr.angular.x,
+                                    TriggerData_msg.Twist_tr.angular.y,
+                                    TriggerData_msg.Twist_tr.angular.z],3)
             
             self.vel_tr_mag = np.sqrt(self.vel_tr[0]**2 + self.vel_tr[2]**2)
             self.phi_tr = np.rad2deg(np.arctan2(self.vel_tr[2],self.vel_tr[0]))
 
             ## POLICY TRIGGERING VALUES
-            self.Tau_tr = FlipData_msg.Tau_tr
-            self.Theta_x_tr = FlipData_msg.Theta_x_tr
-            self.Theta_y_tr = FlipData_msg.Theta_y_tr
-            self.D_perp_tr = FlipData_msg.D_perp_tr
+            self.Tau_tr = TriggerData_msg.Tau_tr
+            self.Theta_x_tr = TriggerData_msg.Theta_x_tr
+            self.Theta_y_tr = TriggerData_msg.Theta_y_tr
+            self.D_perp_tr = TriggerData_msg.D_perp_tr
 
             ## POLICY ACTIONS
-            self.Policy_Trg_Action_tr = FlipData_msg.Policy_Trg_Action_tr
-            self.Policy_Flip_Action_tr = FlipData_msg.Policy_Flip_Action_tr
+            self.Policy_Trg_Action_tr = TriggerData_msg.Policy_Trg_Action_tr
+            self.Policy_Flip_Action_tr = TriggerData_msg.Policy_Flip_Action_tr
 
 
     def SAR_ImpactDataCallback(self,ImpactData_msg):

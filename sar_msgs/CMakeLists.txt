@@ -16,7 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  SAR_FlipData.msg
+  SAR_TriggerData.msg
   SAR_ImpactData.msg
   SAR_MiscData.msg
   SAR_StateData.msg

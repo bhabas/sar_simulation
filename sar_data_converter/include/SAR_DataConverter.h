@@ -24,7 +24,7 @@
 
 // CUSTOM INCLUDES
 #include "sar_msgs/SAR_StateData.h"
-#include "sar_msgs/SAR_FlipData.h"
+#include "sar_msgs/SAR_TriggerData.h"
 #include "sar_msgs/SAR_ImpactData.h"
 #include "sar_msgs/SAR_MiscData.h"
 
@@ -83,7 +83,7 @@ class SAR_DataConverter {
 
             // INITIALIZE STATE DATA PUBLISHERS
             StateData_Pub = nh->advertise<sar_msgs::SAR_StateData>("/SAR_DC/StateData",1);
-            FlipData_Pub =  nh->advertise<sar_msgs::SAR_FlipData>("/SAR_DC/FlipData",1);
+            TriggerData_Pub =  nh->advertise<sar_msgs::SAR_TriggerData>("/SAR_DC/TriggerData",1);
             ImpactData_Pub = nh->advertise<sar_msgs::SAR_ImpactData>("/SAR_DC/ImpactData",1);  
             MiscData_Pub =  nh->advertise<sar_msgs::SAR_MiscData>("/SAR_DC/MiscData",1);
 
@@ -163,7 +163,7 @@ class SAR_DataConverter {
         // =================================
         void RL_Data_Callback(const sar_msgs::RL_Data::ConstPtr &msg);
         void Publish_StateData();
-        void Publish_FlipData();
+        void Publish_TriggerData();
         void Publish_ImpactData();
         void Publish_MiscData();
 
@@ -257,12 +257,12 @@ class SAR_DataConverter {
         //     DATA PUBLISH OBJECTS
         // ============================
         ros::Publisher StateData_Pub;
-        ros::Publisher FlipData_Pub;
+        ros::Publisher TriggerData_Pub;
         ros::Publisher ImpactData_Pub;
         ros::Publisher MiscData_Pub;
 
         sar_msgs::SAR_StateData StateData_msg;
-        sar_msgs::SAR_FlipData FlipData_msg;
+        sar_msgs::SAR_TriggerData TriggerData_msg;
         sar_msgs::SAR_ImpactData ImpactData_msg;
         sar_msgs::SAR_MiscData MiscData_msg;
 

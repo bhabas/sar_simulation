@@ -6,7 +6,7 @@ import csv
 import sys
 
 from sensor_msgs.msg import Image
-from sar_msgs.msg import SAR_StateData,SAR_FlipData,SAR_ImpactData,SAR_MiscData
+from sar_msgs.msg import SAR_StateData,SAR_TriggerData,SAR_ImpactData,SAR_MiscData
 from rosgraph_msgs.msg import Clock
 
 

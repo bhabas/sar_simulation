@@ -8,7 +8,7 @@ import os
 import message_filters
 
 from sensor_msgs.msg import Image,CameraInfo
-from sar_msgs.msg import SAR_StateData,SAR_FlipData,SAR_ImpactData,SAR_MiscData
+from sar_msgs.msg import SAR_StateData,SAR_TriggerData,SAR_ImpactData,SAR_MiscData
 from sar_msgs.srv import ModelMove
 from rosgraph_msgs.msg import Clock
 

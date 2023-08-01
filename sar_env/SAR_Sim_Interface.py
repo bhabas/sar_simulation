@@ -15,7 +15,7 @@ from sar_msgs.srv import domainRand,domainRandRequest
 from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState
 
-from sar_msgs.msg import SAR_StateData,SAR_FlipData,SAR_ImpactData,SAR_MiscData
+from sar_msgs.msg import SAR_StateData,SAR_TriggerData,SAR_ImpactData,SAR_MiscData
 
 
 

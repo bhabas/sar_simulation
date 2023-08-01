@@ -28,7 +28,7 @@ void SAR_DataConverter::MainLoop()
         
         // PUBLISH ORGANIZED DATA
         Publish_StateData();
-        Publish_FlipData();
+        Publish_TriggerData();
         Publish_ImpactData();
         Publish_MiscData();
 
