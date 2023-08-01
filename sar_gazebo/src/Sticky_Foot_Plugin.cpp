@@ -49,12 +49,12 @@ namespace gazebo{
         node_handle_->Init(namespace_);
 
         // NUMBER OF COLLISION OBJECTS IN THE LINK (Typically one per object)
-        unsigned int collsion_count = padLink_ptr->GetChildCount();
+        unsigned int collision_count = padLink_ptr->GetChildCount();
 
         // CREATE A MAP OF COLLISION NAMES (KEY) TO COLLISION ENTITIES (VALUES)
         // This is similar to a python dictionary {Key:Value}
         std::map<std::string, physics::CollisionPtr> collisions;
-        for (unsigned int i = 0; i < collsion_count; i++)
+        for (unsigned int i = 0; i < collision_count; i++)
         {
             physics::CollisionPtr collision_entity = padLink_ptr->GetCollision(i); // Create ptr to collision entity in SDF
             gzmsg << "\t Collision Entity: " << collision_entity->GetScopedName().c_str() << std::endl;
@@ -62,10 +62,10 @@ namespace gazebo{
             collisions[collision_entity->GetScopedName()] = collision_entity; // Add ptr to mapped collision name
         }
 
-        // SUBSCRIBE TO COLLSIONS FROM GAZEBO
+        // SUBSCRIBE TO collisionS FROM GAZEBO
         physics_engine_ = world_->Physics();
         contact_manager_ = physics_engine_->GetContactManager();
-        if (!collisions.empty()) // If collsion entities exist in the link
+        if (!collisions.empty()) // If collision entities exist in the link
         {
             // CREATE A GZ-PUBLISHER THAT PUBLISHES CONTACTS ASSOCIATED TO THE INPUTED COLLISION ENTITIES
             contact_pub_topic = contact_manager_->CreateFilter(padName, collisions); // Returns string of publisher topic

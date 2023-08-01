@@ -31,7 +31,7 @@ SIM_SETTINGS:
   Landing_Slowdown_Flag: True
 
 SAR_DC_SETTINGS:
-  Console_Output: True
+  Console_Output: False
   Logging_Rate: 10 # [Hz]
 
 
