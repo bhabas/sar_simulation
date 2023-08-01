@@ -7,7 +7,7 @@
 
 
 #include <ros/ros.h>
-#include "sar_msgs/domainRand.h"
+#include "sar_msgs/Inertia_Params.h"
 
 
 namespace gazebo {
@@ -18,7 +18,7 @@ namespace gazebo {
             
         protected:
             void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
-            bool UpdateInertia(sar_msgs::domainRand::Request &req, sar_msgs::domainRand::Response &res);
+            bool UpdateInertia(sar_msgs::Inertia_Params::Request &req, sar_msgs::Inertia_Params::Response &res);
 
 
 
@@ -28,7 +28,7 @@ namespace gazebo {
             physics::LinkPtr link_ptr;
 
             physics::InertialPtr inertia_ptr;
-            ros::ServiceServer DomainRandService;
+            ros::ServiceServer Inertia_ParamsService;
 
             ros::NodeHandle nh;
             std::string linkName;

@@ -514,7 +514,7 @@
         <linkName>camera_sensor</linkName>
     </plugin>
 
-    <plugin name='DomainRandomization_Plugin' filename='libDomainRand_plugin.so'>
+    <plugin name='Inertia_Paramsomization_Plugin' filename='libInertia_Params_plugin.so'>
         <bodyName>SAR_body</bodyName>
     </plugin>
 

@@ -11,7 +11,7 @@ from sar_env import SAR_Base_Interface
 
 from std_srvs.srv import Empty
 from rosgraph_msgs.msg import Clock
-from sar_msgs.srv import domainRand,domainRandRequest
+from sar_msgs.srv import Inertia_Params,Inertia_ParamsRequest
 from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState
 
@@ -174,14 +174,14 @@ class SAR_Sim_Interface(SAR_Base_Interface):
     def updateInertia(self):
 
         ## CREATE SERVICE REQUEST MSG
-        srv = domainRandRequest() 
+        srv = Inertia_ParamsRequest() 
         srv.mass = self.mass
         srv.Inertia.x = self.Ixx
         srv.Inertia.y = self.Iyy
         srv.Inertia.z = self.Izz
 
         ## SEND LOGGING REQUEST VIA SERVICE
-        self.callService('/SAR_Internal/DomainRand',srv,domainRand)
+        self.callService('/SAR_Internal/Inertia_Params',srv,Inertia_Params)
 
     def setParams(self):
 

@@ -37,7 +37,7 @@
 #include "sar_msgs/RL_Data.h"
 #include "sar_msgs/PadConnect.h"
 
-#include "sar_msgs/activateSticky.h"
+#include "sar_msgs/Activate_Sticky_Pads.h"
 #include "sar_msgs/loggingCMD.h"
 #include "sar_msgs/GenericLogData.h"
 

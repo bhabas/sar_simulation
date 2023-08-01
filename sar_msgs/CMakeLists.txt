@@ -33,9 +33,9 @@ add_message_files(
 # Generate services in the 'srv' folder
 add_service_files(
   FILES
-  activateSticky.srv
+  Activate_Sticky_Pads.srv
   loggingCMD.srv
-  domainRand.srv
+  Inertia_Params.srv
   CTRL_Cmd_srv.srv
   ModelMove.srv
   Cam_Settings.srv

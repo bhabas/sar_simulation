@@ -35,7 +35,7 @@ namespace gazebo{
 
         // INITIALIZE SERVICE TO ACTIVATE STICKY PAD
         serviceName = "/activate_Sticky_Pad_" + std::to_string(PAD_NUMBER);
-        stickyService = nh.advertiseService(serviceName, &GazeboStickyFoot::activateSticky, this);
+        stickyService = nh.advertiseService(serviceName, &GazeboStickyFoot::Activate_Sticky_Pads, this);
 
         // SOMETHING ABOUT CREATING A NAMESPACE ("/"" PREFIX FOR GZTOPICS)
         if (_sdf->HasElement("robotNamespace"))
@@ -121,7 +121,7 @@ namespace gazebo{
     }
 
     // ROS SERVICE CALLBACK TO ACTIVATE/DEACTIVATE STICKY FOOT BEHAVIOR
-    bool GazeboStickyFoot::activateSticky(sar_msgs::activateSticky::Request &req, sar_msgs::activateSticky::Response &res)
+    bool GazeboStickyFoot::Activate_Sticky_Pads(sar_msgs::Activate_Sticky_Pads::Request &req, sar_msgs::Activate_Sticky_Pads::Response &res)
     {
         if (req.stickyFlag == false && sticky_flag == true) // TURN OFF STICKY FOOT
         {

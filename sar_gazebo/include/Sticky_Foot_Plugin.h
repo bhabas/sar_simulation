@@ -9,7 +9,7 @@
 
 // CUSTOM IMPORTS
 #include "sar_msgs/PadConnect.h"
-#include "sar_msgs/activateSticky.h"
+#include "sar_msgs/Activate_Sticky_Pads.h"
 
 
 namespace gazebo {
@@ -21,7 +21,7 @@ namespace gazebo {
         protected:
             void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
             void ContactCallback(ConstContactsPtr &msg);
-            bool activateSticky(sar_msgs::activateSticky::Request &req, sar_msgs::activateSticky::Response &res);
+            bool Activate_Sticky_Pads(sar_msgs::Activate_Sticky_Pads::Request &req, sar_msgs::Activate_Sticky_Pads::Response &res);
 
         private:
             physics::WorldPtr world_;

@@ -21,7 +21,7 @@
       <enable_wind>0</enable_wind>
 
       <visual name='CF_Body'>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
             <uri>model://Base_Model/meshes/CF_Assembly - CF_Body-1.STL</uri>
@@ -357,6 +357,18 @@
     
     <link name='Camera'>
       <pose>0 0 0 0 0 0</pose>
+      <inertial>
+        <mass>0.000001</mass>
+        <inertia>
+          <ixx>1e-9</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1e-9</iyy>
+          <iyz>0</iyz>
+          <izz>1e-9</izz>
+        </inertia>
+        <pose>0 0 0 0 0 0</pose>
+      </inertial>
       <visual name='camera_center'>
         <cast_shadows>0</cast_shadows>
         <pose>0 0 0 0 0 0</pose>
@@ -876,7 +888,7 @@
     </plugin>
 
 
-    <plugin name='Domain_Randomization_Plugin' filename='libDomainRand_plugin.so'>
+    <plugin name='Domain_Randomization_Plugin' filename='libDomain_Randomization_Plugin.so'>
         <bodyName>SAR_Body</bodyName>
     </plugin>
 
