@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
 
         ## INITIALIALIZE LOGGING DATA
-        trial_name = f"DeepRL--Vd_{V_d:.2f}--phi_{phi:.2f}--{env.modelInitials}.csv"
+        trial_name = f"DeepRL--Vd_{V_d:.2f}--phi_{phi:.2f}--{env.SAR_Config}.csv"
 
         
         ## PARAMTER OPTIMIZATION

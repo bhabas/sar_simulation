@@ -512,7 +512,7 @@ class Policy_Trainer_DeepRL():
             SavePath (str): Path to save header file
         """        
 
-        FileName = f"NN_Layers_{self.env.modelInitials}_DeepRL.h"
+        FileName = f"NN_Layers_{self.env.SAR_Config}_DeepRL.h"
         f = open(os.path.join(self.TB_log_path,FileName),'a')
         f.truncate(0) ## Clears contents of file
 
@@ -611,7 +611,7 @@ if __name__ == '__main__':
 
     # START TRAINING NEW DEEP RL MODEL 
     env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[3.0,4.0],Phi_rel_range=[0,180])
-    log_name = f"{env.modelInitials}--Deg_{env.Plane_Angle}--SAC_{current_time}" 
+    log_name = f"{env.SAR_Config}--Deg_{env.Plane_Angle}--SAC_{current_time}" 
     log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
 
 

@@ -29,8 +29,6 @@ class SAR_Base_Interface():
         ## SAR PARAMETERS
         self.SAR_Type = rospy.get_param('/SAR_SETTINGS/SAR_Type')
         self.SAR_Config = rospy.get_param('/SAR_SETTINGS/SAR_Config')
-        self.modelInitials = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Initials")
-        self.modelName = f"{self.SAR_Type}_{self.SAR_Config}"
         self.preInit_Values()
 
         self.pos_0 = [0.0, 0.0, 0.4]      # Default hover position [m]
@@ -40,7 +38,6 @@ class SAR_Base_Interface():
         ## PLANE PARAMETERS
         self.Plane_Model = rospy.get_param('/PLANE_SETTINGS/Plane_Model')
         
-               
 
         ## INIT LOGGING VALUES
         self.username = getpass.getuser()

@@ -105,7 +105,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         ## CREATE SERVICE MESSAGE
         state_srv = ModelState()
-        state_srv.model_name = self.modelName
+        state_srv.model_name = self.SAR_Config
 
         ## INPUT POSITION AND ORIENTATION
         state_srv.pose.position.x = pos_0[0]
@@ -151,7 +151,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         
         ## RESET POSITION AND VELOCITY
         state_srv = ModelState()
-        state_srv.model_name = self.modelName
+        state_srv.model_name = self.SAR_Config
         state_srv.pose.position.x = 0.0
         state_srv.pose.position.y = 0.0
         state_srv.pose.position.z = z_0
