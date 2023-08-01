@@ -31,15 +31,15 @@ target_link_libraries(Motor_Plugin ${GAZEBO_LIBRARIES})
 add_library(Cam_Update_Plugin SHARED src/Cam_Update_Plugin.cpp)
 target_link_libraries(Cam_Update_Plugin ${GAZEBO_LIBRARIES})
 
-add_library(DomainRand_plugin SHARED src/Domain_Randomization_Plugin.cpp)
-target_link_libraries(DomainRand_plugin ${GAZEBO_LIBRARIES})
+add_library(Domain_Randomization_Plugin SHARED src/Domain_Randomization_Plugin.cpp)
+target_link_libraries(Domain_Randomization_Plugin ${GAZEBO_LIBRARIES})
 
 # EXTRA PLUGINS
-add_library(ModelMove_plugin SHARED src/Model_Move_Plugin.cpp)
-target_link_libraries(ModelMove_plugin ${GAZEBO_LIBRARIES})
+add_library(Model_Move_Plugin SHARED src/Model_Move_Plugin.cpp)
+target_link_libraries(Model_Move_Plugin ${GAZEBO_LIBRARIES})
 
-add_library(Landing_Surface_Pose_plugin SHARED src/Landing_Surface_Pose_Plugin.cpp)
-target_link_libraries(Landing_Surface_Pose_plugin ${GAZEBO_LIBRARIES})
+add_library(Landing_Surface_Pose_Plugin SHARED src/Landing_Surface_Pose_Plugin.cpp)
+target_link_libraries(Landing_Surface_Pose_Plugin ${GAZEBO_LIBRARIES})
 
-add_library(Moment_plugin SHARED src/Model_Moment_Plugin.cpp)
-target_link_libraries(Moment_plugin ${GAZEBO_LIBRARIES})
+add_library(Model_Moment_Plugin SHARED src/Model_Moment_Plugin.cpp)
+target_link_libraries(Model_Moment_Plugin ${GAZEBO_LIBRARIES})

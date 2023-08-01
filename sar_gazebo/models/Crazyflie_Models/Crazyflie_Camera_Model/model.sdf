@@ -510,7 +510,7 @@
       <updateRate>100.0</updateRate>
     </plugin>
 
-    <plugin name='ModelMove_Plugin' filename='libModelMove_plugin.so'>
+    <plugin name='Model_Move_Plugin' filename='libModel_Move_Plugin.so'>
         <linkName>camera_sensor</linkName>
     </plugin>
 

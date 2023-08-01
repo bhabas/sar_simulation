@@ -6,7 +6,7 @@ namespace gazebo
 {
 
     // This gets called when model is loaded and pulls values from sdf file
-    void DomainRand_plugin::Load(physics::ModelPtr parent, sdf::ElementPtr _sdf)
+    void Domain_Randomization_Plugin::Load(physics::ModelPtr parent, sdf::ElementPtr _sdf)
     {
         gzmsg << "Loading DomainRand Plugin\n";
         model_ptr = parent;
@@ -14,14 +14,14 @@ namespace gazebo
         linkName = _sdf->GetElement("bodyName")->Get<std::string>();
         gzmsg << "\t Link Name:\t" << linkName << std::endl;
         link_ptr = model_ptr->GetLink(linkName);
-        DomainRandService = nh.advertiseService("/SAR_Internal/DomainRand", &DomainRand_plugin::UpdateInertia, this);
+        DomainRandService = nh.advertiseService("/SAR_Internal/DomainRand", &Domain_Randomization_Plugin::UpdateInertia, this);
         inertia_ptr = link_ptr->GetInertial();
         
         printf("\n\n");
 
     }
 
-    bool DomainRand_plugin::UpdateInertia(sar_msgs::domainRand::Request &req, sar_msgs::domainRand::Response &res)
+    bool Domain_Randomization_Plugin::UpdateInertia(sar_msgs::domainRand::Request &req, sar_msgs::domainRand::Response &res)
     {
         printf("[DOMAIN RAND PLUGIN] Inertia Values Updated\n");
         inertia_ptr->SetMass(req.mass);
@@ -41,5 +41,5 @@ namespace gazebo
     }
 
 
-    GZ_REGISTER_MODEL_PLUGIN(DomainRand_plugin);
+    GZ_REGISTER_MODEL_PLUGIN(Domain_Randomization_Plugin);
 }

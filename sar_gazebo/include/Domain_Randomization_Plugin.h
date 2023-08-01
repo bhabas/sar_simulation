@@ -12,7 +12,7 @@
 
 namespace gazebo {
 
-    class DomainRand_plugin: public ModelPlugin
+    class Domain_Randomization_Plugin: public ModelPlugin
     {
         public:
             

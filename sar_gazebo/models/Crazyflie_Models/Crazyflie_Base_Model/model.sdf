@@ -918,7 +918,7 @@
     </plugin>
     
     
-    <!-- <plugin name='MomentPlugin' filename='libMoment_plugin.so'>
+    <!-- <plugin name='MomentPlugin' filename='libModel_Moment_Plugin.so'>
         <bodyName>SAR_body</bodyName>
     </plugin> -->
 
