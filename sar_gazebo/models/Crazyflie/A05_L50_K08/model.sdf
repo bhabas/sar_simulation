@@ -525,7 +525,7 @@
       
     
     <joint name='leg_joint_1' type='universal'>
-      <parent>Base_Model::SAR_body</parent>
+      <parent>Base_Model::SAR_Body</parent>
       <child>leg1</child>
       <pose>0 0 0 0 0.786 0</pose>
       <axis>
@@ -572,7 +572,7 @@
       </physics>
     </joint>
     <joint name='leg_joint_2' type='universal'>
-      <parent>Base_Model::SAR_body</parent>
+      <parent>Base_Model::SAR_Body</parent>
       <child>leg2</child>
       <pose>0 0 0 0 0.786 0</pose>
       <axis>
@@ -619,7 +619,7 @@
       </physics>
     </joint>
     <joint name='leg_joint_3' type='universal'>
-      <parent>Base_Model::SAR_body</parent>
+      <parent>Base_Model::SAR_Body</parent>
       <child>leg3</child>
       <pose>0 0 0 0 0.786 0</pose>
       <axis>
@@ -666,7 +666,7 @@
       </physics>
     </joint>
     <joint name='leg_joint_4' type='universal'>
-      <parent>Base_Model::SAR_body</parent>
+      <parent>Base_Model::SAR_Body</parent>
       <child>leg4</child>
       <pose>0 0 0 0 0.786 0</pose>
       <axis>
@@ -780,26 +780,26 @@
         </ode>
       </physics>
     </joint>
-    <plugin name='pad_1_sticky' filename='libgazebo_sticky_foot.so'>
+    <!-- <plugin name='pad_1_sticky' filename='libSticky_Foot_Plugin.so'>
       <robotNamespace/>
       <linkName>pad_1</linkName>
       <padNumber>1</padNumber>
     </plugin>
-    <plugin name='pad_2_sticky' filename='libgazebo_sticky_foot.so'>
+    <plugin name='pad_2_sticky' filename='libSticky_Foot_Plugin.so'>
       <robotNamespace/>
       <linkName>pad_2</linkName>
       <padNumber>2</padNumber>
     </plugin>
-    <plugin name='pad_3_sticky' filename='libgazebo_sticky_foot.so'>
+    <plugin name='pad_3_sticky' filename='libSticky_Foot_Plugin.so'>
       <robotNamespace/>
       <linkName>pad_3</linkName>
       <padNumber>3</padNumber>
     </plugin>
-    <plugin name='pad_4_sticky' filename='libgazebo_sticky_foot.so'>
+    <plugin name='pad_4_sticky' filename='libSticky_Foot_Plugin.so'>
       <robotNamespace/>
       <linkName>pad_4</linkName>
       <padNumber>4</padNumber>
-    </plugin>
+    </plugin> -->
 
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>

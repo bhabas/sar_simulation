@@ -199,7 +199,6 @@ class SAR_DataConverter {
         // ==================
         std::string SAR_Type;
         std::string SAR_Config;
-        std::string GZ_Model_Name;
         std::string POLICY_TYPE;
 
         // DEFAULT INERTIA VALUES FOR BASE CRAZYFLIE
@@ -452,7 +451,6 @@ inline void SAR_DataConverter::LoadParams()
     ros::param::get("/SAR_SETTINGS/SAR_Type",SAR_Type);
     ros::param::get("/SAR_SETTINGS/SAR_Config",SAR_Config);
 
-    GZ_Model_Name = SAR_Type + "_" + SAR_Config;
     std::string SAR_Type_str = "/SAR_Type/" + SAR_Type;
     std::string SAR_Config_str = "/Config/" + SAR_Config;
 

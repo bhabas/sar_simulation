@@ -5,14 +5,14 @@ ENV_SETTINGS:
 
 SAR_SETTINGS:
   SAR_Type: "Crazyflie"
-  SAR_Config: "Base_Model"
+  SAR_Config: "A05_L50_K08"
 
   Policy_Type: "PARAM_OPTIM"
   # Policy_Type: "DEEP_RL_SB3" 
   # Policy_Type: "DEEP_RL_ONBOARD" 
 
 CAM_SETTINGS:
-  Cam_Config: "A05_L50_K08"
+  Cam_Config: "AI_Deck"
   Cam_Active: False
 
 PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
@@ -26,7 +26,7 @@ PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
 SIM_SETTINGS:
   GUI_Flag: True
   Pause_Flag: True
-  Sim_Speed: 0.5
+  Sim_Speed: 0.1
   Sim_Slowdown_Speed: 0.2
   Landing_Slowdown_Flag: True
 

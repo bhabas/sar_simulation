@@ -888,15 +888,15 @@
     </plugin>
 
 
-    <plugin name='Domain_Randomization_Plugin' filename='libDomain_Randomization_Plugin.so'>
+    <!-- <plugin name='Domain_Randomization_Plugin' filename='libDomain_Randomization_Plugin.so'>
         <bodyName>SAR_Body</bodyName>
-    </plugin>
+    </plugin> -->
 
-    <plugin name='Cam_Update_Plugin' filename='libCam_Update_Plugin.so'>
+    <!-- <plugin name='Cam_Update_Plugin' filename='libCam_Update_Plugin.so'>
         <bodyName>SAR_Body</bodyName>
         <jointName>Camera_Joint</jointName>
     </plugin>
-    
+     -->
     
     <!-- <plugin name='MomentPlugin' filename='libModel_Moment_Plugin.so'>
         <bodyName>SAR_Body</bodyName>
