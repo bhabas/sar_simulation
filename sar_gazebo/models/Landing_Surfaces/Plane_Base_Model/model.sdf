@@ -20,26 +20,7 @@
       <enable_wind>0</enable_wind>
       <kinematic>0</kinematic>
       <gravity>0</gravity>
-      <!-- <visual name='Surface_Visual'>
-        <cast_shadows>0</cast_shadows>
-        <pose>0 0 0.0 0 0 0</pose>
-        <geometry>
-          <box>
-            <size>4 4 0.01</size>
-          </box>
-        </geometry>
-        <material>
-          <script>
-            <uri>model://Standard_Plane/materials/scripts</uri>
-            <uri>model://Standard_Plane/materials/textures</uri>
-            <name>ceilingMat/Checkerboard</name>
-          </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-          <emissive>0 0 0 1</emissive>
-        </material>
-      </visual> -->
+      
       <visual name='Surface_Center'>
         <cast_shadows>0</cast_shadows>
         <pose>0 0 0 0 0 0</pose>

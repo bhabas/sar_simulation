@@ -6,6 +6,44 @@
       <uri>model://Plane_Base_Model</uri>
     </include>
 
+    <link name='Plane_Pattern'>
+      <pose>0 0 0 0 0 0</pose>
+      <inertial>
+        <inertia>
+          <ixx>500</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>500</iyy>
+          <iyz>0</iyz>
+          <izz>1000</izz>
+        </inertia>
+        <mass>1000</mass>
+        <pose>0 0 0 0 -0 0</pose>
+      </inertial>
+      <self_collide>0</self_collide>
+      <enable_wind>0</enable_wind>
+      <kinematic>0</kinematic>
+      <gravity>0</gravity>
+
+      <visual name='Patern_Visual'>
+        <cast_shadows>0</cast_shadows>
+        <pose>0 0 0.0 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>4 4 0.01</size>
+          </box>
+        </geometry>
+      </visual>
+
+    </link>
+
+    <joint name='Surface_Pattern_Joint' type='fixed'>
+      <parent>Plane_Base_Model::Surface_Link</parent>
+      <child>Plane_Pattern</child>
+    </joint>
+
+    
+
     <static>0</static>
     
 
