@@ -6,8 +6,8 @@
 
     <!-- CRAZYFLIE MODEL ARGS -->
     <arg name="SAR_Type" default="Crazyflie"/>
-    <arg name="SAR_Model" default="Base_Model"/>
-    <arg name="SAR_SDF_Path" default="$(find sar_gazebo)/models/$(arg SAR_Type)/$(arg SAR_Model)/model.sdf"/>
+    <arg name="SAR_Model" default="Camera_Model"/>
+    <arg name="SAR_SDF_Path" default="$(find sar_gazebo)/models/$(arg SAR_Type)/Configs/$(arg SAR_Model)/model.sdf"/>
 
     <!-- LOAD SETTINGS FLAGS -->
     <arg name="Gui_Flag" default="true"/>

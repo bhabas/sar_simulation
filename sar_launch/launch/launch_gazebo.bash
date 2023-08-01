@@ -21,6 +21,7 @@ Plane_Model=$(rosparam get /PLANE_SETTINGS/Plane_Model)
 
 ## CREATE MODEL PATH
 export GAZEBO_MODEL_PATH=${GAZEBO_MODEL_PATH}:${SIMULATION_PATH}/sar_gazebo/models/${SAR_TYPE}
+export GAZEBO_MODEL_PATH=${GAZEBO_MODEL_PATH}:${SIMULATION_PATH}/sar_gazebo/models/${SAR_TYPE}/Configs
 
 
 ## START GAZEBO 

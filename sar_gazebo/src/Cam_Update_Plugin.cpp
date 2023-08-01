@@ -16,12 +16,31 @@ namespace gazebo
 
         // LOAD MODEL AND LINK POINTERS
         Base_Model_Ptr = _parent;
-        SAR_Body_Ptr = Base_Model_Ptr->GetLink("SAR_Body");
-        Camera_Link_Ptr = Base_Model_Ptr->GetLink("Camera");
+
+        SAR_Body_Ptr = Base_Model_Ptr->GetLink("Base_Model::SAR_Body");
+        if (!SAR_Body_Ptr)
+        {
+            gzerr << "SAR_Body link is NULL.\n";
+            return;
+        }
+
+        Camera_Link_Ptr = Base_Model_Ptr->GetLink("Base_Model::Camera");
+        if (!Camera_Link_Ptr)
+        {
+            gzerr << "Camera link is NULL.\n";
+            return;
+        }
+
+        auto joints = Base_Model_Ptr->GetJoints();
+        for (const auto& joint : joints)
+        {
+            std::cout << joint->GetName() << std::endl;
+        }
+
 
         // LOAD PARAMS FROM SDF
         Joint_Name = _sdf->GetElement("jointName")->Get<std::string>();
-
+        std::cout << Joint_Name << std::endl;
 
         // LOAD SAR_Type,SAR_Config,AND CAM_CONFIG PARAMS
         ros::param::get("/SAR_SETTINGS/SAR_Type",SAR_Type);
@@ -53,13 +72,18 @@ namespace gazebo
         gzmsg << "Updating Camera Pose and FPS\n";
 
         // UPDATE CAMERA POSE
-        Base_Model_Ptr->RemoveJoint(Joint_Name);
-        ignition::math::Pose3d relativePose(X_Offset, Y_Offset, Z_Offset, 0.0, (90 - Pitch_Angle)*M_PI/180.0, 0.0);
-        Camera_Link_Ptr->SetRelativePose(relativePose);
-        Base_Model_Ptr->CreateJoint(Joint_Name,"fixed",SAR_Body_Ptr,Camera_Link_Ptr);
+        printf("Removing joint\n");
+        Base_Model_Ptr->RemoveJoint("Base_Model::Camera_Joint");
 
-        // UPDATE CAMERA FPS
-        Camera_Ptr->SetUpdateRate(FPS);
+        printf("Moving Link\n");
+        ignition::math::Pose3d relativePose(0.5, Y_Offset, Z_Offset, 0.0, (90 - Pitch_Angle)*M_PI/180.0, 0.0);
+        Camera_Link_Ptr->SetRelativePose(relativePose);
+
+        printf("Creating joint\n");
+        Base_Model_Ptr->CreateJoint("Camera_Joint","fixed",SAR_Body_Ptr,Camera_Link_Ptr);
+
+        // // UPDATE CAMERA FPS
+        // Camera_Ptr->SetUpdateRate(FPS);
 
     }
 

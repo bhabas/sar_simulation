@@ -780,7 +780,7 @@
         </ode>
       </physics>
     </joint>
-    <!-- <plugin name='pad_1_sticky' filename='libSticky_Foot_Plugin.so'>
+    <plugin name='pad_1_sticky' filename='libSticky_Foot_Plugin.so'>
       <robotNamespace/>
       <linkName>pad_1</linkName>
       <padNumber>1</padNumber>
@@ -799,7 +799,7 @@
       <robotNamespace/>
       <linkName>pad_4</linkName>
       <padNumber>4</padNumber>
-    </plugin> -->
+    </plugin>
 
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>

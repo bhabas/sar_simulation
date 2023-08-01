@@ -892,27 +892,10 @@
         <bodyName>SAR_Body</bodyName>
     </plugin> -->
 
-    <!-- <plugin name='Cam_Update_Plugin' filename='libCam_Update_Plugin.so'>
+    <plugin name='Cam_Update_Plugin' filename='libCam_Update_Plugin.so'>
         <bodyName>SAR_Body</bodyName>
         <jointName>Camera_Joint</jointName>
     </plugin>
-     -->
-    
-    <!-- <plugin name='MomentPlugin' filename='libModel_Moment_Plugin.so'>
-        <bodyName>SAR_Body</bodyName>
-    </plugin> -->
-
-    <!-- <joint name="FixedJoint" type="fixed">
-        <parent>world</parent>
-        <child>SAR_Body</child>
-        <pose>0 0 0 0 0 0</pose>    
-        <physics>
-          <ode>
-          </ode>
-          <provide_feedback>true</provide_feedback>
-        </physics>
-      </joint> -->
-
 
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
