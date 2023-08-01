@@ -8,20 +8,20 @@
 
 
 #include <ros/ros.h>
-#include "sar_msgs/ModelMove.h"
+#include "sar_msgs/Model_Move.h"
 
 
 
 namespace gazebo {
 
-    class ModelMove: public ModelPlugin
+    class Model_Move: public ModelPlugin
     {
         public:
             
         protected:
             void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
             void OnUpdate();
-            bool Service_Callback(sar_msgs::ModelMove::Request &req, sar_msgs::ModelMove::Response &res);
+            bool Service_Callback(sar_msgs::Model_Move::Request &req, sar_msgs::Model_Move::Response &res);
 
 
         private:

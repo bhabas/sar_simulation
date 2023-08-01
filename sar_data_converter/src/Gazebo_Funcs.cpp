@@ -24,9 +24,9 @@ void SAR_DataConverter::activateStickyFeet()
 /**
  * @brief Updates if sticky pads attach to landing surface. Also calculates total number of pads attached
  * 
- * @param msg sar_msgs::PadConnect
+ * @param msg sar_msgs::Sticky_Pad_Connect
  */
-void SAR_DataConverter::Pad_Connections_Callback(const sar_msgs::PadConnect &msg)
+void SAR_DataConverter::Pad_Connections_Callback(const sar_msgs::Sticky_Pad_Connect &msg)
 {
     
     if(msg.Pad1_Contact == 1) Pad1_Contact = 1;

@@ -7,7 +7,7 @@ import time
 
 ## ROS MESSAGES AND SERVICES
 from sar_msgs.msg import SAR_StateData,SAR_TriggerData,SAR_ImpactData,SAR_MiscData
-from sar_msgs.srv import loggingCMD,loggingCMDRequest
+from sar_msgs.srv import Logging_CMD,Logging_CMDRequest
 from sar_msgs.srv import CTRL_Cmd_srv,CTRL_Cmd_srvRequest
 from sar_msgs.msg import RL_Data,RL_History
 
@@ -362,37 +362,37 @@ class SAR_Base_Interface():
         """      
 
         ## CREATE SERVICE REQUEST MSG
-        srv = loggingCMDRequest() 
+        srv = Logging_CMDRequest() 
         srv.filePath = os.path.join(self.logDir,logName)
         srv.Logging_CMD = 0
 
         ## SEND LOGGING REQUEST VIA SERVICE
-        self.callService('/SAR_DC/DataLogging',srv,loggingCMD)
+        self.callService('/SAR_DC/DataLogging',srv,Logging_CMD)
 
     def startLogging(self,logName):
         """Start logging values to the current CSV file
         """        
 
         ## CREATE SERVICE REQUEST MSG
-        srv = loggingCMDRequest()
+        srv = Logging_CMDRequest()
         srv.filePath = os.path.join(self.logDir,logName)
         srv.Logging_CMD = 1
 
         ## SEND LOGGING REQUEST VIA SERVICE
-        self.callService('/SAR_DC/DataLogging',srv,loggingCMD)
+        self.callService('/SAR_DC/DataLogging',srv,Logging_CMD)
 
     def capLogging(self,logName):
         """Cap logging values with Flight, Flip, and Impact conditions and stop continuous logging
         """        
 
         ## CREATE SERVICE REQUEST MSG
-        srv = loggingCMDRequest()
+        srv = Logging_CMDRequest()
         srv.filePath = os.path.join(self.logDir,logName)
         srv.Logging_CMD = 2
         srv.error_string = self.error_str # String for why logging was capped
         
         ## SEND LOGGING REQUEST VIA SERVICE
-        self.callService('/SAR_DC/DataLogging',srv,loggingCMD)
+        self.callService('/SAR_DC/DataLogging',srv,Logging_CMD)
 
 
     # ============================

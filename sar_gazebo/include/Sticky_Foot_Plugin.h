@@ -8,7 +8,7 @@
 #include <ros/ros.h>
 
 // CUSTOM IMPORTS
-#include "sar_msgs/PadConnect.h"
+#include "sar_msgs/Sticky_Pad_Connect.h"
 #include "sar_msgs/Activate_Sticky_Pads.h"
 
 
@@ -37,7 +37,7 @@ namespace gazebo {
 
     
             ros::NodeHandle nh;
-            ros::Publisher PadConnect_Publisher = nh.advertise<sar_msgs::PadConnect>("/ENV/Pad_Connections", 5);
+            ros::Publisher Sticky_Pad_Connect_Publisher = nh.advertise<sar_msgs::Sticky_Pad_Connect>("/ENV/Pad_Connections", 5);
             ros::ServiceServer stickyService;
 
             std::string namespace_;
@@ -49,7 +49,7 @@ namespace gazebo {
             bool sticky_flag;
             int PAD_NUMBER;
 
-            sar_msgs::PadConnect PadConnect_msg;
+            sar_msgs::Sticky_Pad_Connect Sticky_Pad_Connect_msg;
     };
 
 }

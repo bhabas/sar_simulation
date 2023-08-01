@@ -99,20 +99,20 @@ namespace gazebo{
                     switch(PAD_NUMBER)
                     {
                         case 1:
-                            PadConnect_msg.Pad1_Contact = 1;
+                            Sticky_Pad_Connect_msg.Pad1_Contact = 1;
                             break;
                         case 2:
-                            PadConnect_msg.Pad2_Contact = 1;
+                            Sticky_Pad_Connect_msg.Pad2_Contact = 1;
                             break;
                         case 3:
-                            PadConnect_msg.Pad3_Contact = 1;
+                            Sticky_Pad_Connect_msg.Pad3_Contact = 1;
                             break;
                         case 4:
-                            PadConnect_msg.Pad4_Contact = 1;
+                            Sticky_Pad_Connect_msg.Pad4_Contact = 1;
                             break;
                     }
 
-                    PadConnect_Publisher.publish(PadConnect_msg);
+                    Sticky_Pad_Connect_Publisher.publish(Sticky_Pad_Connect_msg);
                 }
 
                 break;

@@ -25,7 +25,7 @@ add_message_files(
   CTRL_Data.msg
   CTRL_Debug.msg
   CTRL_Cmd.msg
-  PadConnect.msg
+  Sticky_Pad_Connect.msg
   MS.msg
   GenericLogData.msg
 )
@@ -34,10 +34,10 @@ add_message_files(
 add_service_files(
   FILES
   Activate_Sticky_Pads.srv
-  loggingCMD.srv
+  Logging_CMD.srv
   Inertia_Params.srv
   CTRL_Cmd_srv.srv
-  ModelMove.srv
+  Model_Move.srv
   Cam_Settings.srv
 )
 

@@ -35,10 +35,10 @@
 
 
 #include "sar_msgs/RL_Data.h"
-#include "sar_msgs/PadConnect.h"
+#include "sar_msgs/Sticky_Pad_Connect.h"
 
 #include "sar_msgs/Activate_Sticky_Pads.h"
-#include "sar_msgs/loggingCMD.h"
+#include "sar_msgs/Logging_CMD.h"
 #include "sar_msgs/GenericLogData.h"
 
 #include "quatcompress.h"
@@ -62,7 +62,7 @@ class SAR_DataConverter {
 
             Surface_ForceTorque_Sub = nh->subscribe("/ENV/Surface_ForceTorque_Sensor",5,&SAR_DataConverter::SurfaceFT_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
             Surface_Contact_Sub = nh->subscribe("/ENV/BodyContact",5,&SAR_DataConverter::Surface_Contact_Callback,this,ros::TransportHints().tcpNoDelay());
-            SAR_PadConnect_Sub = nh->subscribe("/ENV/Pad_Connections",5,&SAR_DataConverter::Pad_Connections_Callback,this,ros::TransportHints().tcpNoDelay());
+            SAR_Sticky_Pad_Connect_Sub = nh->subscribe("/ENV/Pad_Connections",5,&SAR_DataConverter::Pad_Connections_Callback,this,ros::TransportHints().tcpNoDelay());
 
             // CRAZYSWARM PIPELINE
             cf1_FullState_Sub = nh->subscribe("/cf1/FullState", 1, &SAR_DataConverter::cf1_FullState_Callback, this, ros::TransportHints().tcpNoDelay());
@@ -122,7 +122,7 @@ class SAR_DataConverter {
 
         void SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStamped::ConstPtr &msg);
         void Surface_Contact_Callback(const gazebo_msgs::ContactsState &msg);
-        void Pad_Connections_Callback(const sar_msgs::PadConnect &msg);
+        void Pad_Connections_Callback(const sar_msgs::Sticky_Pad_Connect &msg);
 
 
         // =================================
@@ -148,7 +148,7 @@ class SAR_DataConverter {
         // =======================
         //    LOGGING FUNCTIONS
         // =======================
-        bool DataLogging_Callback(sar_msgs::loggingCMD::Request &req, sar_msgs::loggingCMD::Response &res);
+        bool DataLogging_Callback(sar_msgs::Logging_CMD::Request &req, sar_msgs::Logging_CMD::Response &res);
         void create_CSV();
         void append_CSV_states();
         void append_CSV_misc();
@@ -240,7 +240,7 @@ class SAR_DataConverter {
 
         ros::Subscriber Surface_ForceTorque_Sub;
         ros::Subscriber Surface_Contact_Sub;
-        ros::Subscriber SAR_PadConnect_Sub;
+        ros::Subscriber SAR_Sticky_Pad_Connect_Sub;
 
         ros::ServiceClient Landing_Surface_Pose_Client;
         ros::ServiceClient GZ_SimSpeed_Client;

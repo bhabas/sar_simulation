@@ -9,7 +9,7 @@ import message_filters
 
 from sensor_msgs.msg import Image,CameraInfo
 from sar_msgs.msg import SAR_StateData,SAR_TriggerData,SAR_ImpactData,SAR_MiscData
-from sar_msgs.srv import ModelMove
+from sar_msgs.srv import Model_Move
 from rosgraph_msgs.msg import Clock
 
 ## ADD SAR_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
@@ -59,7 +59,7 @@ class CameraLogger:
         Image_Sub = message_filters.Subscriber("/SAR_Internal/camera/image_raw",Image)
         Info_Sub = message_filters.Subscriber("/SAR_Internal/camera/camera_info",CameraInfo)
         State_Sub = message_filters.Subscriber("/SAR_DC/StateData",SAR_StateData)
-        self.ModelMove_Service = rospy.ServiceProxy('/ModelMovement',ModelMove)
+        self.Model_Move_Service = rospy.ServiceProxy('/Model_Movement',Model_Move)
 
         ## VERIFY ROS TOPICS
         print("Waiting for messages...")
@@ -169,8 +169,8 @@ class CameraLogger:
         rospy.Subscriber("/SAR_Internal/camera/image_raw",Image,self.CameraCallback,queue_size=500)
         rospy.Subscriber("/SAR_DC/StateData",SAR_StateData,self.SAR_StateDataCallback,queue_size=1)
 
-        rospy.wait_for_service('/ModelMovement',timeout=1)
-        service = rospy.ServiceProxy('/ModelMovement', ModelMove)
+        rospy.wait_for_service('/Model_Movement',timeout=1)
+        service = rospy.ServiceProxy('/Model_Movement', Model_Move)
         service(Move_srv)
 
     def Begin_Logging(self):

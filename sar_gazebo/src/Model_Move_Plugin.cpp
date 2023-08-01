@@ -6,22 +6,22 @@ namespace gazebo
 {
 
     // This gets called when model is loaded and pulls values from sdf file
-    void ModelMove::Load(physics::ModelPtr parent, sdf::ElementPtr _sdf)
+    void Model_Move::Load(physics::ModelPtr parent, sdf::ElementPtr _sdf)
     {
         gzmsg << "Loading GazeboMomentPlugin\n";
         model_ptr = parent;
 
         // LINK COMMAND SERVICE TO CALLBACK
-        CMD_Service = nh.advertiseService("/ModelMovement", &ModelMove::Service_Callback, this);
+        CMD_Service = nh.advertiseService("/Model_Movement", &Model_Move::Service_Callback, this);
 
         
         // RUN FUNCTION EACH TIME SIMULATION UPDATES
-        updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&ModelMove::OnUpdate, this));
+        updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&Model_Move::OnUpdate, this));
         printf("\n\n");
 
     }
 
-    void ModelMove::OnUpdate()
+    void Model_Move::OnUpdate()
     {
         // CALC TIME SINCE START
         t_delta = ros::Time::now().toSec() - t_0;
@@ -44,7 +44,7 @@ namespace gazebo
     }
 
 
-    bool ModelMove::Service_Callback(sar_msgs::ModelMove::Request &req, sar_msgs::ModelMove::Response &res)
+    bool Model_Move::Service_Callback(sar_msgs::Model_Move::Request &req, sar_msgs::Model_Move::Response &res)
     {
         // RESET TIME
         t_0 = ros::Time::now().toSec();
@@ -73,5 +73,5 @@ namespace gazebo
         return true;
     }
 
-    GZ_REGISTER_MODEL_PLUGIN(ModelMove);
+    GZ_REGISTER_MODEL_PLUGIN(Model_Move);
 }
