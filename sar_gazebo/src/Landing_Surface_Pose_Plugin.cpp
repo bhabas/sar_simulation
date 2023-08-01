@@ -1,5 +1,5 @@
 
-#include <Landing_Surface_Pose.h>
+#include <Landing_Surface_Pose_Plugin.h>
 
 /*
 The purpose of this plugin is to move the landing surface to the desired position and orientation.

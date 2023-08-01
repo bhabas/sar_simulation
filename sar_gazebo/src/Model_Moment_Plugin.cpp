@@ -1,5 +1,5 @@
 #include <iostream>
-#include <model_Moment.h>
+#include <Model_Moment_Plugin.h>
 
 
 namespace gazebo

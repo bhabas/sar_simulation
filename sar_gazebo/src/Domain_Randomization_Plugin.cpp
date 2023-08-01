@@ -1,5 +1,5 @@
 #include <iostream>
-#include <DomainRandomization.h>
+#include <Domain_Randomization_Plugin.h>
 
 
 namespace gazebo

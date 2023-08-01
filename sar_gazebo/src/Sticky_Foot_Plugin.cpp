@@ -1,5 +1,5 @@
 #include <iostream>
-#include <gazebo_sticky_foot.h>
+#include <Sticky_Foot_Plugin.h>
 
 /*
     This plugin is responsible for joining foot pads to whatever entity they collide with (e.g. ground or ceiling).

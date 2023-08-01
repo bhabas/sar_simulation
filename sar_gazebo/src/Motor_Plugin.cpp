@@ -1,5 +1,5 @@
 #include <iostream>
-#include <motor_plugin.h>
+#include <Motor_Plugin.h>
 
 
 namespace gazebo
