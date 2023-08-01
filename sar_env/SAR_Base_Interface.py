@@ -6,8 +6,8 @@ import getpass
 import time
 
 ## ROS MESSAGES AND SERVICES
-from sar_msgs.msg import SAR_StateData,SAR_FlipData,SAR_ImpactData,SAR_MiscData
-from sar_msgs.srv import loggingCMD,loggingCMDRequest
+from sar_msgs.msg import SAR_StateData,SAR_TriggerData,SAR_ImpactData,SAR_MiscData
+from sar_msgs.srv import Logging_CMD,Logging_CMDRequest
 from sar_msgs.srv import CTRL_Cmd_srv,CTRL_Cmd_srvRequest
 from sar_msgs.msg import RL_Data,RL_History
 
@@ -21,7 +21,7 @@ ENDC = '\033[m'
 class SAR_Base_Interface():
 
     def __init__(self,Exp_Flag=False):
-        os.system("roslaunch sar_launch params.launch")      
+        os.system("roslaunch sar_launch Load_Params.launch")      
         if not Exp_Flag:   
             rospy.init_node("SAR_Env_Node")
 
@@ -29,8 +29,6 @@ class SAR_Base_Interface():
         ## SAR PARAMETERS
         self.SAR_Type = rospy.get_param('/SAR_SETTINGS/SAR_Type')
         self.SAR_Config = rospy.get_param('/SAR_SETTINGS/SAR_Config')
-        self.modelInitials = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Initials")
-        self.modelName = f"{self.SAR_Type}_{self.SAR_Config}"
         self.preInit_Values()
 
         self.pos_0 = [0.0, 0.0, 0.4]      # Default hover position [m]
@@ -40,11 +38,10 @@ class SAR_Base_Interface():
         ## PLANE PARAMETERS
         self.Plane_Model = rospy.get_param('/PLANE_SETTINGS/Plane_Model')
         
-               
 
         ## INIT LOGGING VALUES
         self.username = getpass.getuser()
-        self.logDir =  f"/home/{self.username}/catkin_ws/src/crazyflie_simulation/sar_logging/local_logs"
+        self.logDir =  f"/home/{self.username}/catkin_ws/src/sar_simulation/sar_logging/local_logs"
         self.logName = "TestLog.csv"
         self.error_str = "No_Debug_Data"
 
@@ -55,7 +52,7 @@ class SAR_Base_Interface():
         #       not data at back of a queue waiting to be processed by callbacks
         rospy.Subscriber("/clock",Clock,self.clockCallback,queue_size=1)
         rospy.Subscriber("/SAR_DC/StateData",SAR_StateData,self.SAR_StateDataCallback,queue_size=1)
-        rospy.Subscriber("/SAR_DC/FlipData",SAR_FlipData,self.SAR_FlipDataCallback,queue_size=1)
+        rospy.Subscriber("/SAR_DC/TriggerData",SAR_TriggerData,self.SAR_TriggerDataCallback,queue_size=1)
         rospy.Subscriber("/SAR_DC/ImpactData",SAR_ImpactData,self.SAR_ImpactDataCallback,queue_size=1)
         rospy.Subscriber("/SAR_DC/MiscData",SAR_MiscData,self.SAR_MiscDataCallback,queue_size=1)
 
@@ -362,37 +359,37 @@ class SAR_Base_Interface():
         """      
 
         ## CREATE SERVICE REQUEST MSG
-        srv = loggingCMDRequest() 
+        srv = Logging_CMDRequest() 
         srv.filePath = os.path.join(self.logDir,logName)
         srv.Logging_CMD = 0
 
         ## SEND LOGGING REQUEST VIA SERVICE
-        self.callService('/SAR_DC/DataLogging',srv,loggingCMD)
+        self.callService('/SAR_DC/DataLogging',srv,Logging_CMD)
 
     def startLogging(self,logName):
         """Start logging values to the current CSV file
         """        
 
         ## CREATE SERVICE REQUEST MSG
-        srv = loggingCMDRequest()
+        srv = Logging_CMDRequest()
         srv.filePath = os.path.join(self.logDir,logName)
         srv.Logging_CMD = 1
 
         ## SEND LOGGING REQUEST VIA SERVICE
-        self.callService('/SAR_DC/DataLogging',srv,loggingCMD)
+        self.callService('/SAR_DC/DataLogging',srv,Logging_CMD)
 
     def capLogging(self,logName):
         """Cap logging values with Flight, Flip, and Impact conditions and stop continuous logging
         """        
 
         ## CREATE SERVICE REQUEST MSG
-        srv = loggingCMDRequest()
+        srv = Logging_CMDRequest()
         srv.filePath = os.path.join(self.logDir,logName)
         srv.Logging_CMD = 2
         srv.error_string = self.error_str # String for why logging was capped
         
         ## SEND LOGGING REQUEST VIA SERVICE
-        self.callService('/SAR_DC/DataLogging',srv,loggingCMD)
+        self.callService('/SAR_DC/DataLogging',srv,Logging_CMD)
 
 
     # ============================
@@ -444,42 +441,42 @@ class SAR_Base_Interface():
        
         self.t_prev = self.t # Save t value for next callback iteration
 
-    def SAR_FlipDataCallback(self,FlipData_msg):
+    def SAR_TriggerDataCallback(self,TriggerData_msg):
 
         ## FLIP FLAG
-        self.flip_flag = FlipData_msg.flip_flag
+        self.flip_flag = TriggerData_msg.flip_flag
 
-        if FlipData_msg.flip_flag == True:
+        if TriggerData_msg.flip_flag == True:
 
             ## FLIP TRIGGERING CONDITIONS
-            self.pos_tr = np.round([FlipData_msg.Pose_tr.position.x,
-                                    FlipData_msg.Pose_tr.position.y,
-                                    FlipData_msg.Pose_tr.position.z],3)
+            self.pos_tr = np.round([TriggerData_msg.Pose_tr.position.x,
+                                    TriggerData_msg.Pose_tr.position.y,
+                                    TriggerData_msg.Pose_tr.position.z],3)
 
-            self.vel_tr = np.round([FlipData_msg.Twist_tr.linear.x,
-                                    FlipData_msg.Twist_tr.linear.y,
-                                    FlipData_msg.Twist_tr.linear.z],3)
+            self.vel_tr = np.round([TriggerData_msg.Twist_tr.linear.x,
+                                    TriggerData_msg.Twist_tr.linear.y,
+                                    TriggerData_msg.Twist_tr.linear.z],3)
 
-            self.eul_tr = np.round([FlipData_msg.Eul_tr.x,
-                                    FlipData_msg.Eul_tr.y,
-                                    FlipData_msg.Eul_tr.z],3)
+            self.eul_tr = np.round([TriggerData_msg.Eul_tr.x,
+                                    TriggerData_msg.Eul_tr.y,
+                                    TriggerData_msg.Eul_tr.z],3)
 
-            self.omega_tr = np.round([FlipData_msg.Twist_tr.angular.x,
-                                    FlipData_msg.Twist_tr.angular.y,
-                                    FlipData_msg.Twist_tr.angular.z],3)
+            self.omega_tr = np.round([TriggerData_msg.Twist_tr.angular.x,
+                                    TriggerData_msg.Twist_tr.angular.y,
+                                    TriggerData_msg.Twist_tr.angular.z],3)
             
             self.vel_tr_mag = np.sqrt(self.vel_tr[0]**2 + self.vel_tr[2]**2)
             self.phi_tr = np.rad2deg(np.arctan2(self.vel_tr[2],self.vel_tr[0]))
 
             ## POLICY TRIGGERING VALUES
-            self.Tau_tr = FlipData_msg.Tau_tr
-            self.Theta_x_tr = FlipData_msg.Theta_x_tr
-            self.Theta_y_tr = FlipData_msg.Theta_y_tr
-            self.D_perp_tr = FlipData_msg.D_perp_tr
+            self.Tau_tr = TriggerData_msg.Tau_tr
+            self.Theta_x_tr = TriggerData_msg.Theta_x_tr
+            self.Theta_y_tr = TriggerData_msg.Theta_y_tr
+            self.D_perp_tr = TriggerData_msg.D_perp_tr
 
             ## POLICY ACTIONS
-            self.Policy_Trg_Action_tr = FlipData_msg.Policy_Trg_Action_tr
-            self.Policy_Flip_Action_tr = FlipData_msg.Policy_Flip_Action_tr
+            self.Policy_Trg_Action_tr = TriggerData_msg.Policy_Trg_Action_tr
+            self.Policy_Flip_Action_tr = TriggerData_msg.Policy_Flip_Action_tr
 
 
     def SAR_ImpactDataCallback(self,ImpactData_msg):

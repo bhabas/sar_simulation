@@ -3,7 +3,7 @@ import pandas as pd
 import os
 
 
-## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
+## ADD SAR_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
 sys.path.insert(1,BASE_PATH)
@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
 
         ## INITIALIALIZE LOGGING DATA
-        trial_name = f"DeepRL--Vd_{V_d:.2f}--phi_{phi:.2f}--{env.modelInitials}.csv"
+        trial_name = f"DeepRL--Vd_{V_d:.2f}--phi_{phi:.2f}--{env.SAR_Config}.csv"
 
         
         ## PARAMTER OPTIMIZATION

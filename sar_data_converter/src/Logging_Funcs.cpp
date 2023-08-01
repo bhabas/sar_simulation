@@ -6,9 +6,8 @@
 // =========================
 //     LOGGING FUNCTIONS
 // =========================
-// /home/bhabas/catkin_ws/src/crazyflie_simulation/
 
-bool SAR_DataConverter::DataLogging_Callback(sar_msgs::loggingCMD::Request &req, sar_msgs::loggingCMD::Response &res)
+bool SAR_DataConverter::DataLogging_Callback(sar_msgs::Logging_CMD::Request &req, sar_msgs::Logging_CMD::Response &res)
 {
     switch(req.Logging_CMD){
         case 0: // CREATE CSV WHEN ACTIVATED

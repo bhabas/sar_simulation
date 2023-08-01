@@ -7,9 +7,9 @@
  */
 void SAR_DataConverter::activateStickyFeet()
 {
-    if(GZ_Model_Name != "Crazyflie_Base_Model")
+    if(SAR_Config != "Base_Model")
     {
-        sar_msgs::activateSticky srv;
+        sar_msgs::Activate_Sticky_Pads srv;
         srv.request.stickyFlag = Sticky_Flag;
 
         ros::service::call("/activate_Sticky_Pad_1", srv);
@@ -24,9 +24,9 @@ void SAR_DataConverter::activateStickyFeet()
 /**
  * @brief Updates if sticky pads attach to landing surface. Also calculates total number of pads attached
  * 
- * @param msg sar_msgs::PadConnect
+ * @param msg sar_msgs::Sticky_Pad_Connect
  */
-void SAR_DataConverter::Pad_Connections_Callback(const sar_msgs::PadConnect &msg)
+void SAR_DataConverter::Pad_Connections_Callback(const sar_msgs::Sticky_Pad_Connect &msg)
 {
     
     if(msg.Pad1_Contact == 1) Pad1_Contact = 1;
@@ -84,6 +84,7 @@ void SAR_DataConverter::Surface_Contact_Callback(const gazebo_msgs::ContactsStat
         // IF CONTACT MSG MATCHES BODY COLLISION STR THEN TURN ON BODY_CONTACT_FLAG 
         if(BodyContact_flag == false && strcmp(msg.states[i].collision1_name.c_str(),BodyCollision_str.c_str()) == 0)
         {
+            printf("val\n");
             BodyContact_flag = true;
         }  
     }

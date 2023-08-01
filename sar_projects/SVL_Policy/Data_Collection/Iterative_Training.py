@@ -3,10 +3,10 @@ import pandas as pd
 import os
 
 
-## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
+## ADD SAR_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
-sys.path.insert(1,'/home/bhabas/catkin_ws/src/crazyflie_simulation/sar_env')
+sys.path.insert(1,'/home/bhabas/catkin_ws/src/sar_simulation/sar_env')
 sys.path.insert(1,BASE_PATH)
 
 from crazyflie_projects.SVL_Policy.Envs.CrazyflieEnv_ParamOpt import CrazyflieEnv_ParamOpt
@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
 
         ## INITIALIALIZE LOGGING DATA
-        trial_name = f"{agent.agent_type}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--{env.modelInitials}--DR.csv"
+        trial_name = f"{agent.agent_type}--Vd_{V_d:.2f}--phi_{phi:.2f}--trial_{int(trial_num):02d}--{env.SAR_Config}--DR.csv"
         
         ## PARAMTER OPTIMIZATION
         runTraining(env,agent,V_d,phi,trial_name,K_ep_max=15)

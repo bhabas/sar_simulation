@@ -24,7 +24,7 @@
 
 // CUSTOM INCLUDES
 #include "sar_msgs/SAR_StateData.h"
-#include "sar_msgs/SAR_FlipData.h"
+#include "sar_msgs/SAR_TriggerData.h"
 #include "sar_msgs/SAR_ImpactData.h"
 #include "sar_msgs/SAR_MiscData.h"
 
@@ -35,10 +35,10 @@
 
 
 #include "sar_msgs/RL_Data.h"
-#include "sar_msgs/PadConnect.h"
+#include "sar_msgs/Sticky_Pad_Connect.h"
 
-#include "sar_msgs/activateSticky.h"
-#include "sar_msgs/loggingCMD.h"
+#include "sar_msgs/Activate_Sticky_Pads.h"
+#include "sar_msgs/Logging_CMD.h"
 #include "sar_msgs/GenericLogData.h"
 
 #include "quatcompress.h"
@@ -58,11 +58,11 @@ class SAR_DataConverter {
 
             // GAZEBO PIPELINE
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
-            Landing_Surface_Pose_Client = nh->serviceClient<gazebo_msgs::SetModelState>("/Landing_Surface_Pose");
+            Landing_Surface_Pose_Client = nh->serviceClient<gazebo_msgs::SetModelState>("/Landing_Surface_Pose_Plugin");
 
             Surface_ForceTorque_Sub = nh->subscribe("/ENV/Surface_ForceTorque_Sensor",5,&SAR_DataConverter::SurfaceFT_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
             Surface_Contact_Sub = nh->subscribe("/ENV/BodyContact",5,&SAR_DataConverter::Surface_Contact_Callback,this,ros::TransportHints().tcpNoDelay());
-            SAR_PadConnect_Sub = nh->subscribe("/ENV/Pad_Connections",5,&SAR_DataConverter::Pad_Connections_Callback,this,ros::TransportHints().tcpNoDelay());
+            SAR_Sticky_Pad_Connect_Sub = nh->subscribe("/ENV/Pad_Connections",5,&SAR_DataConverter::Pad_Connections_Callback,this,ros::TransportHints().tcpNoDelay());
 
             // CRAZYSWARM PIPELINE
             cf1_FullState_Sub = nh->subscribe("/cf1/FullState", 1, &SAR_DataConverter::cf1_FullState_Callback, this, ros::TransportHints().tcpNoDelay());
@@ -83,7 +83,7 @@ class SAR_DataConverter {
 
             // INITIALIZE STATE DATA PUBLISHERS
             StateData_Pub = nh->advertise<sar_msgs::SAR_StateData>("/SAR_DC/StateData",1);
-            FlipData_Pub =  nh->advertise<sar_msgs::SAR_FlipData>("/SAR_DC/FlipData",1);
+            TriggerData_Pub =  nh->advertise<sar_msgs::SAR_TriggerData>("/SAR_DC/TriggerData",1);
             ImpactData_Pub = nh->advertise<sar_msgs::SAR_ImpactData>("/SAR_DC/ImpactData",1);  
             MiscData_Pub =  nh->advertise<sar_msgs::SAR_MiscData>("/SAR_DC/MiscData",1);
 
@@ -122,7 +122,7 @@ class SAR_DataConverter {
 
         void SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStamped::ConstPtr &msg);
         void Surface_Contact_Callback(const gazebo_msgs::ContactsState &msg);
-        void Pad_Connections_Callback(const sar_msgs::PadConnect &msg);
+        void Pad_Connections_Callback(const sar_msgs::Sticky_Pad_Connect &msg);
 
 
         // =================================
@@ -148,7 +148,7 @@ class SAR_DataConverter {
         // =======================
         //    LOGGING FUNCTIONS
         // =======================
-        bool DataLogging_Callback(sar_msgs::loggingCMD::Request &req, sar_msgs::loggingCMD::Response &res);
+        bool DataLogging_Callback(sar_msgs::Logging_CMD::Request &req, sar_msgs::Logging_CMD::Response &res);
         void create_CSV();
         void append_CSV_states();
         void append_CSV_misc();
@@ -163,7 +163,7 @@ class SAR_DataConverter {
         // =================================
         void RL_Data_Callback(const sar_msgs::RL_Data::ConstPtr &msg);
         void Publish_StateData();
-        void Publish_FlipData();
+        void Publish_TriggerData();
         void Publish_ImpactData();
         void Publish_MiscData();
 
@@ -199,7 +199,6 @@ class SAR_DataConverter {
         // ==================
         std::string SAR_Type;
         std::string SAR_Config;
-        std::string GZ_Model_Name;
         std::string POLICY_TYPE;
 
         // DEFAULT INERTIA VALUES FOR BASE CRAZYFLIE
@@ -240,7 +239,7 @@ class SAR_DataConverter {
 
         ros::Subscriber Surface_ForceTorque_Sub;
         ros::Subscriber Surface_Contact_Sub;
-        ros::Subscriber SAR_PadConnect_Sub;
+        ros::Subscriber SAR_Sticky_Pad_Connect_Sub;
 
         ros::ServiceClient Landing_Surface_Pose_Client;
         ros::ServiceClient GZ_SimSpeed_Client;
@@ -257,12 +256,12 @@ class SAR_DataConverter {
         //     DATA PUBLISH OBJECTS
         // ============================
         ros::Publisher StateData_Pub;
-        ros::Publisher FlipData_Pub;
+        ros::Publisher TriggerData_Pub;
         ros::Publisher ImpactData_Pub;
         ros::Publisher MiscData_Pub;
 
         sar_msgs::SAR_StateData StateData_msg;
-        sar_msgs::SAR_FlipData FlipData_msg;
+        sar_msgs::SAR_TriggerData TriggerData_msg;
         sar_msgs::SAR_ImpactData ImpactData_msg;
         sar_msgs::SAR_MiscData MiscData_msg;
 
@@ -452,7 +451,6 @@ inline void SAR_DataConverter::LoadParams()
     ros::param::get("/SAR_SETTINGS/SAR_Type",SAR_Type);
     ros::param::get("/SAR_SETTINGS/SAR_Config",SAR_Config);
 
-    GZ_Model_Name = SAR_Type + "_" + SAR_Config;
     std::string SAR_Type_str = "/SAR_Type/" + SAR_Type;
     std::string SAR_Config_str = "/Config/" + SAR_Config;
 

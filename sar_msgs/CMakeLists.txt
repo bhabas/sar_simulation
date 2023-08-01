@@ -16,7 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  SAR_FlipData.msg
+  SAR_TriggerData.msg
   SAR_ImpactData.msg
   SAR_MiscData.msg
   SAR_StateData.msg
@@ -25,7 +25,7 @@ add_message_files(
   CTRL_Data.msg
   CTRL_Debug.msg
   CTRL_Cmd.msg
-  PadConnect.msg
+  Sticky_Pad_Connect.msg
   MS.msg
   GenericLogData.msg
 )
@@ -33,11 +33,12 @@ add_message_files(
 # Generate services in the 'srv' folder
 add_service_files(
   FILES
-  activateSticky.srv
-  loggingCMD.srv
-  domainRand.srv
+  Activate_Sticky_Pads.srv
+  Logging_CMD.srv
+  Inertia_Params.srv
   CTRL_Cmd_srv.srv
-  ModelMove.srv
+  Model_Move.srv
+  Cam_Settings.srv
 )
 
 ## Generate added messages and services with any dependencies listed here
