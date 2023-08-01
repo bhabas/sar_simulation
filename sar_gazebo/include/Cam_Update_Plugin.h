@@ -26,17 +26,16 @@ namespace gazebo {
             
         protected:
             void Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf);
-            void OnUpdate();
+            void Update_Camera();
             bool Service_Callback(gazebo_msgs::SetModelState::Request &req, gazebo_msgs::SetModelState::Response &res);
-            void ForceTorque_Publisher();
 
 
         private:
 
             // SDF PARAMS
             std::string Joint_Name;
-            std::string ForceTorque_Topic;
 
+            // CONFIG PARAMS
             std::string SAR_Type;
             std::string SAR_Config;
             std::string Cam_Config;
@@ -45,36 +44,22 @@ namespace gazebo {
             physics::ModelPtr Base_Model_Ptr;
             physics::LinkPtr Camera_Link_Ptr;
             physics::LinkPtr SAR_Body_Ptr;
-
             physics::JointPtr Joint_Ptr;
 
+            // SENSOR POINTERS
             sensors::SensorPtr Sensor_Ptr;
             sensors::CameraSensor* Camera_Ptr;
 
-            event::ConnectionPtr updateConnection;
-
+            // CAMERA CONFIG SETTINGS
+            double X_Offset;    // [m]
+            double Y_Offset;    // [m]
+            double Z_Offset;    // [m]
+            double Pitch_Angle; // [deg]
+            double FPS;         // [1/s]
 
             // POSE UPDATES
             ros::NodeHandle nh;
             ros::ServiceServer Pose_Update_Service;
-            ignition::math::Vector3d Pos;
-            ignition::math::Quaterniond Quat;    
-            ignition::math::Pose3d Pose;
-
-            bool UpdatingJoint = false;
-
-            // ROS VALUES
-
-            // FORCE TORQUE UPDATES
-            std::thread ForceTorque_Publisher_Thread;
-            ros::Publisher ForceTorque_Pub;
-            geometry_msgs::WrenchStamped ForceTorque_msg;
-            
-
-            ignition::math::Vector3d Force_Vec;
-            ignition::math::Vector3d Torque_Vec;
-
-            
     };
 
 }

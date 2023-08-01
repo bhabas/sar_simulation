@@ -12,9 +12,9 @@
           <iyz>0</iyz>
           <izz>31.19e-6</izz>
         </inertia>
-        <pose>0 0 2e-3 0 -0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
       </inertial>
-      <pose>0 0 0 0 -0 0</pose>
+      <pose>0 0 -2.0e-3 0 0 0</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
