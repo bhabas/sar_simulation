@@ -1,46 +1,46 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='GroundPlane_Desert_Visual'>
-    <static>1</static>
-    <link name='ground'>
-      <pose>0 3.5 0 0 -0 0</pose>
+  <model name='Ground_Base_Model'>
+    <static>0</static>
+    <link name='Ground_Link'>
+      <pose>0 0 0 0 0 0</pose>
       <inertial>
         <inertia>
-          <ixx>506.983</ixx>
+          <ixx>500</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>506.983</iyy>
+          <iyy>500</iyy>
           <iyz>0</iyz>
-          <izz>1013.33</izz>
+          <izz>1000</izz>
         </inertia>
-        <mass>1520</mass>
+        <mass>1000</mass>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
       <self_collide>0</self_collide>
       <enable_wind>0</enable_wind>
       <kinematic>0</kinematic>
       <gravity>0</gravity>
-      <visual name='ground_visual'>
+      
+      <visual name='Ground_Center'>
         <cast_shadows>0</cast_shadows>
+        <pose>0 0 0 0 0 0</pose>
         <geometry>
-          <box>
-            <size>10 10 0.01</size>
-          </box>
+          <sphere>
+            <radius>0.02</radius>
+          </sphere>
         </geometry>
         <material>
           <script>
-            <uri>model://GroundPlane_Desert_Visual/materials/scripts</uri>
-            <uri>model://GroundPlane_Desert_Visual/materials/textures</uri>
-            <name>groundMat/Dirt</name>
+            <name>Gazebo/Blue</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
           </script>
           <shader type='pixel'>
             <normal_map>__default__</normal_map>
           </shader>
         </material>
-        <pose>0 0 0 0 -0 0</pose>
       </visual>
     </link>
-    <static>0</static>
-    <allow_auto_disable>1</allow_auto_disable>
+
+  <allow_auto_disable>1</allow_auto_disable>
   </model>
 </sdf>

@@ -24,6 +24,10 @@ PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
   Pos_Y: 0.0    # [m]
   Pos_Z: 0.0    # [m]
 
+GROUND_SETTINGS:
+  Ground_Type: "Ground_Surface"
+  Ground_Config: "Desert_Pattern"
+
 
 SIM_SETTINGS:
   GUI_Flag: True

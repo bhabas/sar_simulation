@@ -1,4 +1,3 @@
-<?xml version='1.0'?>
 <sdf version='1.7'>
   <model name='Plane_Base_Model'>
     <static>0</static>

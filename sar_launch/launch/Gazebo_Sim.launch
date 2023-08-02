@@ -35,6 +35,9 @@
 
     <node name="Spawn_Plane" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
     args="-file $(arg Plane_SDF_Path) -sdf -model $(arg Plane_Model) -z 2" />
+
+    <node name="Spawn_Ground" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
+    args="-file /home/bhabas/catkin_ws/src/sar_simulation/sar_gazebo/models/Ground_Surface/Configs/Desert_Pattern/model.sdf -sdf -model Desert_Pattern -z 0" />
         
 </launch>
 
