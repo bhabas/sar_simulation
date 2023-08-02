@@ -16,7 +16,7 @@ CAM_SETTINGS:
   Cam_Active: False
 
 PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
-  Plane_Type: "Landing_Surfaces"
+  Plane_Type: "Landing_Surface"
   Plane_Config: "Checkerboard_L02"
   
   Plane_Angle: 90  # [deg]
@@ -26,7 +26,7 @@ PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
 
 GROUND_SETTINGS:
   Ground_Type: "Ground_Surface"
-  Ground_Config: "Desert_Pattern"
+  Ground_Config: "Debug"
 
 
 SIM_SETTINGS:

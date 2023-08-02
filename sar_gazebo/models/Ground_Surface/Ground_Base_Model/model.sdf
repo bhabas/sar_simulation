@@ -1,7 +1,7 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
   <model name='Ground_Base_Model'>
-    <static>0</static>
+    <static>1</static>
     <link name='Ground_Link'>
       <pose>0 0 0 0 0 0</pose>
       <inertial>

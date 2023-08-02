@@ -6,7 +6,7 @@
     <arg name="SAR_SDF_Path" default="$(find sar_gazebo)/models/$(arg SAR_Type)/Configs/$(arg SAR_Model)/model.sdf"/>
 
     <!-- LANDING SURFACE ARGS -->
-    <arg name="Plane_Type" default="Landing_Surfaces"/>
+    <arg name="Plane_Type" default="Landing_Surface"/>
     <arg name="Plane_Model" default="Checkerboard_L02"/>
     <arg name="Plane_SDF_Path" default="$(find sar_gazebo)/models/$(arg Plane_Type)/Configs/$(arg Plane_Config)/model.sdf"/>
 
