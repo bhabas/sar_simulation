@@ -6,25 +6,7 @@
     </include>
 
     <link name='Plane_Pattern'>
-      <pose>0 0 0 0 0 0</pose>
-      <inertial>
-        <inertia>
-          <ixx>500</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>500</iyy>
-          <iyz>0</iyz>
-          <izz>1000</izz>
-        </inertia>
-        <mass>1000</mass>
-        <pose>0 0 0 0 -0 0</pose>
-      </inertial>
-      <self_collide>0</self_collide>
-      <enable_wind>0</enable_wind>
-      <kinematic>0</kinematic>
-      <gravity>0</gravity>
-
-      <visual name='Patern_Visual'>
+      <visual name='Pattern_Visual'>
         <cast_shadows>0</cast_shadows>
         <pose>0 0 0.0 0 0 0</pose>
         <geometry>

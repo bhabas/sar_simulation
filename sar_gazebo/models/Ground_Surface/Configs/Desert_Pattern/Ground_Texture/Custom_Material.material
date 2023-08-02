@@ -1,0 +1,13 @@
+material Custom_Material
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture Images/desert_sand.jpg
+      }
+    }
+  }
+}
