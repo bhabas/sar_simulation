@@ -33,7 +33,6 @@ namespace gazebo
 
         // LOAD PARAMS FROM SDF
         Joint_Name = _sdf->GetElement("jointName")->Get<std::string>();
-        std::cout << Joint_Name << std::endl;
 
         // LOAD SAR_Type,SAR_Config,AND CAM_CONFIG PARAMS
         ros::param::get("/SAR_SETTINGS/SAR_Type",SAR_Type);

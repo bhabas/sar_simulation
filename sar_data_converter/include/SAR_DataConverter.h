@@ -563,6 +563,7 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
             impact_force_x = 0.0;
             impact_force_y = 0.0;
             impact_force_z = 0.0;
+            impact_magnitude = 0;
 
             // RESET PAD CONTACTS FLAGS
             Pad1_Contact = 0;

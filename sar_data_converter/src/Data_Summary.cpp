@@ -128,6 +128,7 @@ void SAR_DataConverter::Publish_ImpactData()
     ImpactData_msg.Pose_impact = Pose_impact;
     ImpactData_msg.Twist_impact = Twist_impact;
     ImpactData_msg.Eul_impact = Eul_impact;
+    ImpactData_msg.Impact_Magnitude = impact_magnitude;
 
     ImpactData_msg.Pad_Connections = Pad_Connect_Sum;
 

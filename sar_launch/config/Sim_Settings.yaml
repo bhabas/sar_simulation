@@ -19,10 +19,10 @@ PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
   Plane_Type: "Landing_Surface"
   Plane_Config: "Checkerboard_L02"
   
-  Plane_Angle: 90  # [deg]
-  Pos_X: 2.0    # [m]
+  Plane_Angle: 180  # [deg]
+  Pos_X: 0.0    # [m]
   Pos_Y: 0.0    # [m]
-  Pos_Z: 0.0    # [m]
+  Pos_Z: 2.0    # [m]
 
 GROUND_SETTINGS:
   Ground_Type: "Ground_Surface"
@@ -31,13 +31,13 @@ GROUND_SETTINGS:
 
 SIM_SETTINGS:
   GUI_Flag: True
-  Pause_Flag: True
-  Sim_Speed: 0.1
+  Pause_Flag: False
+  Sim_Speed: 0.5
   Sim_Slowdown_Speed: 0.2
   Landing_Slowdown_Flag: True
 
 SAR_DC_SETTINGS:
-  Console_Output: False
+  Console_Output: True
   Logging_Rate: 10 # [Hz]
 
 
