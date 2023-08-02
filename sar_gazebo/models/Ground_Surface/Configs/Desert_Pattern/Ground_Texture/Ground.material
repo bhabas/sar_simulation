@@ -1,4 +1,4 @@
-material Custom_Material
+material Ground_Mat
 {
   technique
   {
@@ -6,7 +6,7 @@ material Custom_Material
     {
       texture_unit
       {
-        texture Images/Fractal_Pattern.jpg
+        texture Images/desert_sand.jpg
       }
     }
   }

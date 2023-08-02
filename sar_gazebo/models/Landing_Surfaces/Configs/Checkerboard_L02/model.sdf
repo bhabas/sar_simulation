@@ -6,6 +6,7 @@
     </include>
 
     <link name='Plane_Pattern'>
+
       <visual name='Pattern_Visual'>
         <cast_shadows>0</cast_shadows>
         <pose>0 0 0.0 0 0 0</pose>
@@ -16,8 +17,8 @@
         </geometry>
         <material>
         <script>
-            <uri>model://Checkerboard_L02/Surface_Texture/Custom_Material.material</uri>
-            <name>Custom_Material</name>
+            <uri>model://Checkerboard_L02/Surface_Texture/Surface.material</uri>
+            <name>Surface_Mat</name>
         </script>
         </material>
 
@@ -30,11 +31,7 @@
       <child>Plane_Pattern</child>
     </joint>
 
-    
-
     <static>0</static>
-    
-
   <allow_auto_disable>1</allow_auto_disable>
   </model>
 </sdf>

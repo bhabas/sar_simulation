@@ -18,8 +18,8 @@
         </geometry>
         <material>
         <script>
-            <uri>model://Desert_Pattern/Ground_Texture/Custom_Material.material</uri>
-            <name>Custom_Material</name>
+            <uri>model://Desert_Pattern/Ground_Texture/Ground.material</uri>
+            <name>Ground_Mat</name>
         </script>
         </material>
       </visual>

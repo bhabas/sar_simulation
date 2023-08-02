@@ -1,4 +1,4 @@
-material Custom_Material
+material Surface_Mat
 {
   technique
   {

@@ -17,8 +17,8 @@
         </geometry>
         <material>
         <script>
-            <uri>model://Fractal_Pattern/Surface_Texture/Custom_Material.material</uri>
-            <name>Custom_Material</name>
+            <uri>model://Fractal_Pattern/Surface_Texture/Surface.material</uri>
+            <name>Surface_Mat</name>
         </script>
         </material>
 

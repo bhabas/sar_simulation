@@ -17,7 +17,7 @@ CAM_SETTINGS:
 
 PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
   Plane_Type: "Landing_Surfaces"
-  Plane_Config: "Fractal_Pattern"
+  Plane_Config: "Checkerboard_L02"
   
   Plane_Angle: 90  # [deg]
   Pos_X: 2.0    # [m]
