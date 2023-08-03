@@ -55,7 +55,7 @@ namespace gazebo
         // // START UPDATE AND PUBLISHER THREADS
         // ForceTorque_Pub = nh.advertise<geometry_msgs::WrenchStamped>(ForceTorque_Topic,1);
         // ForceTorque_Publisher_Thread = std::thread(&Landing_Surface_Pose::ForceTorque_Publisher, this);
-        // updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&Landing_Surface_Pose::OnUpdate, this));
+        updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&Landing_Surface_Pose::OnUpdate, this));
 
         printf("\n\n");
 
@@ -73,7 +73,7 @@ namespace gazebo
 
 
         // UPDATE PLANE POSITION AND ORIENTATION
-        Pose.Set(Pos_X,Pos_Y,Pos_Z, 0.0, Plane_Angle*M_PI/180.0, 0.0);
+        Pose.Set(Pos_X,Pos_Y,Pos_Z, 0.0,-Plane_Angle*M_PI/180.0, 0.0);
         Surface_Model_Ptr->SetWorldPose(Pose);
 
 
@@ -122,26 +122,39 @@ namespace gazebo
         if (UpdatingJoint == false)
         {
             double mass = Surface_Link_Ptr->GetInertial()->Mass();
-            ignition::math::Vector3d gravity = World_Ptr->Gravity();
+            ignition::math::Vector3d gravity_world_frame = World_Ptr->Gravity();
 
-            ignition::math::Vector3d force_due_to_gravity = mass * gravity;
+            ignition::math::Pose3d pose_difference = Surface_Link_Ptr->WorldCoGPose();
+            ignition::math::Vector3d gravity_link_frame = -pose_difference.Rot().Inverse().RotateVector(gravity_world_frame);
+
+
+
+
+
+            ignition::math::Vector3d force_due_to_gravity = mass * gravity_link_frame;
             ignition::math::Vector3d torque_due_to_gravity = Surface_Link_Ptr->GetInertial()->CoG() * force_due_to_gravity;
 
-            std::cout << force_due_to_gravity << std::endl;
-            std::cout << torque_due_to_gravity << std::endl;
+         
 
             ignition::math::Vector3d net_force = Joint_Ptr->GetForceTorque(0).body2Force;
             ignition::math::Vector3d net_torque = Joint_Ptr->GetForceTorque(0).body2Torque;
 
-            ignition::math::Vector3d force_excluding_gravity = net_force + force_due_to_gravity;
+            
+
+            ignition::math::Vector3d force_excluding_gravity = net_force + gravity_link_frame;
             ignition::math::Vector3d torque_excluding_gravity = net_torque + torque_due_to_gravity;
 
+            
 
+            std::cout << gravity_link_frame << std::endl;
             std::cout << net_force << std::endl;
             std::cout << net_torque << std::endl;
             std::cout << force_excluding_gravity << std::endl;
             std::cout << torque_excluding_gravity << std::endl;
+    
             std::cout << std::endl;
+
+            
 
 
 
