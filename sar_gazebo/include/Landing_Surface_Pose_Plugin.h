@@ -39,8 +39,10 @@ namespace gazebo {
             // GAZEBO POINTERS
             physics::WorldPtr World_Ptr;
             physics::ModelPtr World_Origin_Model_Ptr;
+            physics::LinkPtr  World_Origin_Link_Ptr;
 
             physics::ModelPtr Surface_Model_Ptr;
+            physics::LinkPtr  Surface_Link_Ptr;
             physics::JointPtr Joint_Ptr;
 
             event::ConnectionPtr updateConnection;

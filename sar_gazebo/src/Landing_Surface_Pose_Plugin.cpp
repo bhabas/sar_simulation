@@ -24,15 +24,17 @@ namespace gazebo
 
         // LOAD MODEL AND WORLD POINTERS
         Surface_Model_Ptr = _parent;
+        Surface_Link_Ptr = Surface_Model_Ptr->GetLink("Plane_Base_Model::Surface_Link");
         World_Ptr = Surface_Model_Ptr->GetWorld();
         World_Origin_Model_Ptr = World_Ptr->ModelByName("World_Origin");
+        World_Origin_Link_Ptr = World_Origin_Model_Ptr->GetLink("Origin_Link");
 
         // LINK COMMAND SERVICE TO CALLBACK
         Pose_Update_Service = nh.advertiseService("/Landing_Surface_Pose", &Landing_Surface_Pose::Service_Callback, this);
 
 
         // CREATE INITIAL JOINT TO WORLD
-        Surface_Model_Ptr->CreateJoint(Joint_Name,"fixed",World_Origin_Model_Ptr->GetLink("Origin_Link"),Surface_Model_Ptr->GetLink("Plane_Base_Model::Surface_Link"));
+        Surface_Model_Ptr->CreateJoint(Joint_Name,"fixed",World_Origin_Link_Ptr,Surface_Link_Ptr);
         Joint_Ptr = Surface_Model_Ptr->GetJoint(Joint_Name);
         Joint_Ptr->SetProvideFeedback(true);
 
@@ -79,7 +81,31 @@ namespace gazebo
         // SUPPRESS FORCE OUTPUT WHILE JOINT IS BEING UPDATED
         if (UpdatingJoint == false)
         {
-           
+            double mass = Surface_Link_Ptr->GetInertial()->Mass();
+            ignition::math::Vector3d gravity = World_Ptr->Gravity();
+
+            ignition::math::Vector3d force_due_to_gravity = mass * gravity;
+            ignition::math::Vector3d torque_due_to_gravity = Surface_Link_Ptr->GetInertial()->CoG() * force_due_to_gravity;
+
+            std::cout << force_due_to_gravity << std::endl;
+            std::cout << torque_due_to_gravity << std::endl;
+
+            ignition::math::Vector3d net_force = Joint_Ptr->GetForceTorque(0).body2Force;
+            ignition::math::Vector3d net_torque = Joint_Ptr->GetForceTorque(0).body2Torque;
+
+            ignition::math::Vector3d force_excluding_gravity = net_force + force_due_to_gravity;
+            ignition::math::Vector3d torque_excluding_gravity = net_torque + torque_due_to_gravity;
+
+
+            std::cout << net_force << std::endl;
+            std::cout << net_torque << std::endl;
+            std::cout << force_excluding_gravity << std::endl;
+            std::cout << torque_excluding_gravity << std::endl;
+            std::cout << std::endl;
+
+
+
+
             Force_Vec = Joint_Ptr->GetForceTorque(0).body2Force;
             Torque_Vec = Joint_Ptr->GetForceTorque(0).body2Torque;
 
@@ -110,7 +136,7 @@ namespace gazebo
 
         // CREATE JOINT BETWEEN LANDING SURFACE AND WORLD
         gzmsg << "Creating Surface-to-World Joint\n";
-        Surface_Model_Ptr->CreateJoint(Joint_Name,"fixed",World_Origin_Model_Ptr->GetLink("Origin_Link"),Surface_Model_Ptr->GetLink("Plane_Base_Model::Surface_Link"));
+        Surface_Model_Ptr->CreateJoint(Joint_Name,"fixed",World_Origin_Link_Ptr,Surface_Link_Ptr);
         Joint_Ptr = Surface_Model_Ptr->GetJoint(Joint_Name);
         Joint_Ptr->SetProvideFeedback(true);
         
