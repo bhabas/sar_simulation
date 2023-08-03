@@ -11,6 +11,7 @@
 #include <thread>
 #include "gazebo_msgs/SetModelState.h"
 #include "geometry_msgs/WrenchStamped.h"
+#include "sar_msgs/Surface_Settings.h"
 
 
 
@@ -24,8 +25,9 @@ namespace gazebo {
             
         protected:
             void Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf);
+            void Update_Pose();
             void OnUpdate();
-            bool Service_Callback(gazebo_msgs::SetModelState::Request &req, gazebo_msgs::SetModelState::Response &res);
+            bool Service_Callback(sar_msgs::Surface_Settings::Request &req, sar_msgs::Surface_Settings::Response &res);
             void ForceTorque_Publisher();
 
 
@@ -57,7 +59,11 @@ namespace gazebo {
 
             bool UpdatingJoint = false;
 
-            // ROS VALUES
+            // POSE CONFIG SETTINGS
+            double Pos_X;    // [m]
+            double Pos_Y;    // [m]
+            double Pos_Z;    // [m]
+            double Plane_Angle; // [deg]
 
             // FORCE TORQUE UPDATES
             std::thread ForceTorque_Publisher_Thread;

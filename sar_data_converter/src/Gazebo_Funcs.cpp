@@ -49,22 +49,12 @@ void SAR_DataConverter::Pad_Connections_Callback(const sar_msgs::Sticky_Pad_Conn
 void SAR_DataConverter::Update_Landing_Surface_Pose(float Pos_x, float Pos_y, float Pos_z, float Plane_Angle)
 {
 
-    float eul[3] = {0.0*M_PI/180.0, -(float)(Plane_Angle*M_PI/180.0f), 0.0*M_PI/180.0};
-    float quat[4] = {0.0f,0.0f,0.0f,1.0f};
-    euler2quat(quat,eul);
+    sar_msgs::Surface_Settings srv;
 
-    gazebo_msgs::SetModelState srv;
-
-    srv.request.model_state.model_name = Plane_Config;
-
-    srv.request.model_state.pose.position.x = Pos_x;
-    srv.request.model_state.pose.position.y = Pos_y;
-    srv.request.model_state.pose.position.z = Pos_z;
-
-    srv.request.model_state.pose.orientation.x = quat[0];
-    srv.request.model_state.pose.orientation.y = quat[1];
-    srv.request.model_state.pose.orientation.z = quat[2];
-    srv.request.model_state.pose.orientation.w = quat[3];
+    srv.request.Pos.x = Pos_x;
+    srv.request.Pos.y = Pos_y;
+    srv.request.Pos.z = Pos_z;
+    srv.request.Plane_Angle = Plane_Angle;
 
     Landing_Surface_Pose_Client.call(srv);
 

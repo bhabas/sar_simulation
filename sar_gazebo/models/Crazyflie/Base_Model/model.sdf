@@ -819,7 +819,7 @@
 
     
     
-    <plugin name='front_right_motor_model' filename='libmotor_plugin.so'>
+    <plugin name='front_right_motor_model' filename='libMotor_Plugin.so'>
       <motorNumber>1</motorNumber>
       <jointName>rotor_1_joint</jointName>
       <linkName>rotor_1</linkName>
@@ -830,7 +830,7 @@
       <timeConstantDown>0.15</timeConstantDown>
       <rotorVisualSlowdown>100</rotorVisualSlowdown>
     </plugin>
-    <plugin name='back_right_motor_model' filename='libmotor_plugin.so'>
+    <plugin name='back_right_motor_model' filename='libMotor_Plugin.so'>
       <motorNumber>2</motorNumber>
       <jointName>rotor_2_joint</jointName>
       <linkName>rotor_2</linkName>
@@ -841,7 +841,7 @@
       <timeConstantDown>0.15</timeConstantDown>
       <rotorVisualSlowdown>100</rotorVisualSlowdown>
     </plugin>
-    <plugin name='back_left_motor_model' filename='libmotor_plugin.so'>
+    <plugin name='back_left_motor_model' filename='libMotor_Plugin.so'>
       <motorNumber>3</motorNumber>
       <jointName>rotor_3_joint</jointName>
       <linkName>rotor_3</linkName>
@@ -852,7 +852,7 @@
       <timeConstantDown>0.15</timeConstantDown>
       <rotorVisualSlowdown>100</rotorVisualSlowdown>
     </plugin>
-    <plugin name='front_left_motor_model' filename='libmotor_plugin.so'>
+    <plugin name='front_left_motor_model' filename='libMotor_Plugin.so'>
       <motorNumber>4</motorNumber>
       <jointName>rotor_4_joint</jointName>
       <linkName>rotor_4</linkName>

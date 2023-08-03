@@ -9,8 +9,6 @@ void SAR_DataConverter::MainInit()
     adjustSimSpeed(SIM_SPEED);
     Time_start = ros::Time::now();
     BodyCollision_str = SAR_Config + "::Base_Model::SAR_Body::body_collision"; 
-
-    Update_Landing_Surface_Pose(Plane_Pos.x,Plane_Pos.y,Plane_Pos.z,Plane_Angle);
     isInit = true;
 
 }

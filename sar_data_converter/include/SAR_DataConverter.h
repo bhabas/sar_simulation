@@ -40,6 +40,8 @@
 #include "sar_msgs/Activate_Sticky_Pads.h"
 #include "sar_msgs/Logging_CMD.h"
 #include "sar_msgs/GenericLogData.h"
+#include "sar_msgs/Surface_Settings.h"
+
 
 #include "quatcompress.h"
 
@@ -58,7 +60,7 @@ class SAR_DataConverter {
 
             // GAZEBO PIPELINE
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
-            Landing_Surface_Pose_Client = nh->serviceClient<gazebo_msgs::SetModelState>("/Landing_Surface_Pose");
+            Landing_Surface_Pose_Client = nh->serviceClient<sar_msgs::Surface_Settings>("/ENV/Landing_Surface_Pose");
 
             Surface_ForceTorque_Sub = nh->subscribe("/ENV/Surface_ForceTorque_Sensor",5,&SAR_DataConverter::SurfaceFT_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
             Surface_Contact_Sub = nh->subscribe("/ENV/BodyContact",5,&SAR_DataConverter::Surface_Contact_Callback,this,ros::TransportHints().tcpNoDelay());

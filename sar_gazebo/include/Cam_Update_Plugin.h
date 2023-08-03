@@ -20,7 +20,6 @@ namespace gazebo {
             
         protected:
             void Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf);
-            void Camera_init();
             void Update_Camera();
             bool Service_Callback(sar_msgs::Cam_Settings::Request &req, sar_msgs::Cam_Settings::Response &res);
 
