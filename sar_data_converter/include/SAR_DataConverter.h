@@ -374,8 +374,8 @@ class SAR_DataConverter {
         double impact_magnitude = 0.0; // Current impact force magnitude
 
         // CIRCULAR BUFFERES TO LAG IMPACT STATE DATA (WE WANT STATE DATA THE INSTANT BEFORE IMPACT)
-        boost::circular_buffer<geometry_msgs::Pose> Pose_impact_buff {5};
-        boost::circular_buffer<geometry_msgs::Twist> Twist_impact_buff {5};
+        boost::circular_buffer<geometry_msgs::Pose> Pose_impact_buff {1};
+        boost::circular_buffer<geometry_msgs::Twist> Twist_impact_buff {1};
 
         // ==================
         //     MISC DATA

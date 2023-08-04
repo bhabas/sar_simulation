@@ -68,14 +68,40 @@ void SAR_DataConverter::Update_Landing_Surface_Pose(float Pos_x, float Pos_y, fl
  */
 void SAR_DataConverter::Surface_Contact_Callback(const gazebo_msgs::ContactsState &msg)
 {
-    // CYCLE THROUGH VECTOR OF CONTACT MESSAGES
-    for (int i=0; i<msg.states.size(); i++)
+
+    // CYCLE THROUGH LIST OF CONTACT MESSAGES
+    for (int i=0; i < msg.states.size(); i++)
     {
         // IF CONTACT MSG MATCHES BODY COLLISION STR THEN TURN ON BODY_CONTACT_FLAG 
         if(BodyContact_flag == false && strcmp(msg.states[i].collision1_name.c_str(),BodyCollision_str.c_str()) == 0)
         {
             BodyContact_flag = true;
         }  
+
+        if (impact_flag == false)
+        {
+            // LOCK IN STATE DATA WHEN IMPACT DETECTED
+            impact_flag = true;
+
+            // RECORD IMPACT STATE DATA FROM END OF CIRCULAR BUFFER WHEN IMPACT FLAGGED
+            Time_impact = ros::Time::now();
+            Pose_impact = Pose_impact_buff.front();
+            Twist_impact = Twist_impact_buff.front();
+
+            // PROCESS EULER ANGLES AT TIME OF IMPACT
+            float quat_impact[4] = {
+                (float)Pose_impact.orientation.x,
+                (float)Pose_impact.orientation.y,
+                (float)Pose_impact.orientation.z,
+                (float)Pose_impact.orientation.w
+            };
+            float eul_impact[3];
+            quat2euler(quat_impact,eul_impact);
+            Eul_impact.x = eul_impact[0]*180/M_PI;
+            Eul_impact.y = eul_impact[1]*180/M_PI;
+            Eul_impact.z = eul_impact[2]*180/M_PI;
+        }
+        
     }
 }
 
@@ -98,37 +124,7 @@ void SAR_DataConverter::SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchSta
         impact_force_z = msg->wrench.force.z;
     }
 
-    // CHECK IF IMPACT FORCE THRESHOLD HAS BEEN CROSSED
-    double impact_thr = 0.1;        // Impact threshold [N]
-    // impact_magnitude = sqrt(pow(msg->wrench.force.x,2) + pow(msg->wrench.force.y,2) + pow((msg->wrench.force.z + 9.8066),2));
-    impact_magnitude = (msg->wrench.force.z + 9.8066);
-
-    if (impact_magnitude >= impact_thr && impact_flag == false){ 
-
-        // LOCK IN STATE DATA WHEN IMPACT DETECTED
-        impact_flag = true;
-
-        // RECORD IMPACT STATE DATA FROM END OF CIRCULAR BUFFER WHEN IMPACT FLAGGED
-        Time_impact = ros::Time::now();
-        Pose_impact = Pose_impact_buff.front();
-        Twist_impact = Twist_impact_buff.front();
-
-        // PROCESS EULER ANGLES AT TIME OF IMPACT
-        float quat_impact[4] = {
-            (float)Pose_impact.orientation.x,
-            (float)Pose_impact.orientation.y,
-            (float)Pose_impact.orientation.z,
-            (float)Pose_impact.orientation.w
-        };
-        float eul_impact[3];
-        quat2euler(quat_impact,eul_impact);
-        Eul_impact.x = eul_impact[0]*180/M_PI;
-        Eul_impact.y = eul_impact[1]*180/M_PI;
-        Eul_impact.z = eul_impact[2]*180/M_PI;
-
-    }
-
-
+    impact_magnitude = sqrt(pow(msg->wrench.force.x,2) + pow(msg->wrench.force.y,2) + pow(msg->wrench.force.z,2));
 
 }
 
