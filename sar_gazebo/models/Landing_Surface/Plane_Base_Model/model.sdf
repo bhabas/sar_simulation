@@ -114,11 +114,6 @@
         <topicName>/ENV/Surface_ForceTorque_Sensor</topicName>
     </plugin>
 
-    <plugin name='SAR_Update_Plugin' filename='libSAR_Update_Plugin.so'>
-        <jointName>Landing_Surface_Joint</jointName>
-        <topicName>/ENV/Surface_ForceTorque_Sensor</topicName>
-    </plugin>
-
   <allow_auto_disable>1</allow_auto_disable>
   </model>
 </sdf>

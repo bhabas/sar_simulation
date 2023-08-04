@@ -32,7 +32,7 @@ SAR_Type:
       Prop_Rear:  [32.5e-3, 32.5e-3]
 
     Config:
-      ## THESE INERTIAL VALUES ARE ONLY FOR CONTROLLER, NOT SIMULATION PHYSICS
+
       Base_Model:       # Crazyflie Base_Model
         Mass: 34.3e-3   # [kg]
         Ixx: 15.83e-6   # [kg*m^2]

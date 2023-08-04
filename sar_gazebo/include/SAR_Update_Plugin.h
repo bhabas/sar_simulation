@@ -39,6 +39,8 @@ namespace gazebo {
             physics::LinkPtr Camera_Link_Ptr;
             physics::LinkPtr SAR_Body_Ptr;
             physics::JointPtr Joint_Ptr;
+            physics::InertialPtr Inertial_Ptr;
+
 
             // SENSOR POINTERS
             sensors::SensorPtr Sensor_Ptr;
