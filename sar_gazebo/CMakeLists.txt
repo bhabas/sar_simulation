@@ -31,6 +31,9 @@ target_link_libraries(Motor_Plugin ${GAZEBO_LIBRARIES})
 add_library(Cam_Update_Plugin SHARED src/Cam_Update_Plugin.cpp)
 target_link_libraries(Cam_Update_Plugin ${GAZEBO_LIBRARIES})
 
+add_library(SAR_Update_Plugin SHARED src/SAR_Update_Plugin.cpp)
+target_link_libraries(SAR_Update_Plugin ${GAZEBO_LIBRARIES})
+
 add_library(Domain_Randomization_Plugin SHARED src/Domain_Randomization_Plugin.cpp)
 target_link_libraries(Domain_Randomization_Plugin ${GAZEBO_LIBRARIES})
 

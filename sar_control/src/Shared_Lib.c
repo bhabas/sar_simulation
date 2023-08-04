@@ -803,6 +803,7 @@ bool updateOpticalFlowEst()
 bool updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors)
 {
     // UPDATE POS AND VEL
+    // TODO: ADD CAMERA OFFSETS SO THESE NUMBERS MATCH CAMERA ESTIMATION
     r_BO = mkvec(state->position.x, state->position.y, state->position.z);
     V_BO = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);
 
