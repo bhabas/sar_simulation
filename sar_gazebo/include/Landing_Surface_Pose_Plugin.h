@@ -28,7 +28,6 @@ namespace gazebo {
             void Update_Pose();
             void OnUpdate();
             bool Service_Callback(sar_msgs::Surface_Settings::Request &req, sar_msgs::Surface_Settings::Response &res);
-            void ForceTorque_Publisher();
 
 
         private:
@@ -66,14 +65,8 @@ namespace gazebo {
             double Plane_Angle; // [deg]
 
             // FORCE TORQUE UPDATES
-            std::thread ForceTorque_Publisher_Thread;
             ros::Publisher ForceTorque_Pub;
             geometry_msgs::WrenchStamped ForceTorque_msg;
-            
-
-            ignition::math::Vector3d Force_Vec;
-            ignition::math::Vector3d Torque_Vec;
-
             
     };
 

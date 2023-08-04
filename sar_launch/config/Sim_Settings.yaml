@@ -19,14 +19,14 @@ PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
   Plane_Type: "Landing_Surface"
   Plane_Config: "Checkerboard_L02"
   
-  Plane_Angle: 0  # [deg]
+  Plane_Angle: 180  # [deg]
   Pos_X: 0.0    # [m]
   Pos_Y: 0.0    # [m]
   Pos_Z: 2.0    # [m]
 
 GROUND_SETTINGS:
   Ground_Type: "Ground_Surface"
-  Ground_Config: "Debug"
+  Ground_Config: "None"
 
 
 SIM_SETTINGS:

@@ -50,11 +50,8 @@ namespace gazebo
         Pose_Update_Service = nh.advertiseService("/ENV/Landing_Surface_Pose", &Landing_Surface_Pose::Service_Callback, this);
 
 
-        
-        
-        // // START UPDATE AND PUBLISHER THREADS
-        // ForceTorque_Pub = nh.advertise<geometry_msgs::WrenchStamped>(ForceTorque_Topic,1);
-        // ForceTorque_Publisher_Thread = std::thread(&Landing_Surface_Pose::ForceTorque_Publisher, this);
+        // START UPDATE THREAD
+        ForceTorque_Pub = nh.advertise<geometry_msgs::WrenchStamped>(ForceTorque_Topic,1);
         updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&Landing_Surface_Pose::OnUpdate, this));
 
         printf("\n\n");
@@ -73,7 +70,7 @@ namespace gazebo
 
 
         // UPDATE PLANE POSITION AND ORIENTATION
-        Pose.Set(Pos_X,Pos_Y,Pos_Z, 0.0,-Plane_Angle*M_PI/180.0, 0.0);
+        Pose.Set(Pos_X,Pos_Y,Pos_Z, 0.0,(180-Plane_Angle)*M_PI/180.0, 0.0);
         Surface_Model_Ptr->SetWorldPose(Pose);
 
 
@@ -88,79 +85,32 @@ namespace gazebo
 
     }
 
-    void Landing_Surface_Pose::ForceTorque_Publisher()
-    {
-
-        // PUBLISHING LOOP FREQUENCY
-        int loopRate = 500;     // [Hz]
-        ros::Rate rate(loopRate);
-
-        while(ros::ok)
-        {   
-            // ADD FORCE AND TORQUE DATA TO MSG
-            ForceTorque_msg.wrench.force.x = Force_Vec.X();
-            ForceTorque_msg.wrench.force.y = Force_Vec.Y();
-            ForceTorque_msg.wrench.force.z = Force_Vec.Z();
-
-
-            ForceTorque_msg.wrench.torque.x = Torque_Vec.X();
-            ForceTorque_msg.wrench.torque.y = Torque_Vec.Y();
-            ForceTorque_msg.wrench.torque.z = Torque_Vec.Z();
-            ForceTorque_Pub.publish(ForceTorque_msg);
-
-            rate.sleep();
-        }
-
-        
-
-    }
-
     void Landing_Surface_Pose::OnUpdate()
     {
         
         // SUPPRESS FORCE OUTPUT WHILE JOINT IS BEING UPDATED
         if (UpdatingJoint == false)
         {
+            
+            // CALC SURFACE POSE AND JOINT FORCES
             double mass = Surface_Link_Ptr->GetInertial()->Mass();
-            ignition::math::Vector3d gravity_world_frame = World_Ptr->Gravity();
+            ignition::math::Pose3d Surface_Link_Pose = Surface_Link_Ptr->WorldCoGPose();
+            ignition::math::Vector3d Surface_Link_Force = Joint_Ptr->GetForceTorque(0).body2Force;
 
-            ignition::math::Pose3d pose_difference = Surface_Link_Ptr->WorldCoGPose();
-            ignition::math::Vector3d gravity_link_frame = -pose_difference.Rot().Inverse().RotateVector(gravity_world_frame);
+            // CALC GRAVITY FORCES IN WORLD AND LINK FRAMES
+            ignition::math::Vector3d Gravity_World_Frame = World_Ptr->Gravity();
+            ignition::math::Vector3d Gravity_Link_Frame = Surface_Link_Pose.Rot().Inverse().RotateVector(Gravity_World_Frame);
 
+            // CALC NET FORCE ON SURFACE
+            ignition::math::Vector3d Force_Due_To_Gravity = mass * Gravity_Link_Frame;
+            ignition::math::Vector3d Force_Excluding_Gravity = Surface_Link_Force - Gravity_Link_Frame;
+      
+            // ADD FORCE AND TORQUE DATA TO MSG
+            ForceTorque_msg.wrench.force.x = Force_Excluding_Gravity.X();
+            ForceTorque_msg.wrench.force.y = Force_Excluding_Gravity.Y();
+            ForceTorque_msg.wrench.force.z = Force_Excluding_Gravity.Z();
 
-
-
-
-            ignition::math::Vector3d force_due_to_gravity = mass * gravity_link_frame;
-            ignition::math::Vector3d torque_due_to_gravity = Surface_Link_Ptr->GetInertial()->CoG() * force_due_to_gravity;
-
-         
-
-            ignition::math::Vector3d net_force = Joint_Ptr->GetForceTorque(0).body2Force;
-            ignition::math::Vector3d net_torque = Joint_Ptr->GetForceTorque(0).body2Torque;
-
-            
-
-            ignition::math::Vector3d force_excluding_gravity = net_force + gravity_link_frame;
-            ignition::math::Vector3d torque_excluding_gravity = net_torque + torque_due_to_gravity;
-
-            
-
-            std::cout << gravity_link_frame << std::endl;
-            std::cout << net_force << std::endl;
-            std::cout << net_torque << std::endl;
-            std::cout << force_excluding_gravity << std::endl;
-            std::cout << torque_excluding_gravity << std::endl;
-    
-            std::cout << std::endl;
-
-            
-
-
-
-
-            Force_Vec = Joint_Ptr->GetForceTorque(0).body2Force;
-            Torque_Vec = Joint_Ptr->GetForceTorque(0).body2Torque;
+            ForceTorque_Pub.publish(ForceTorque_msg);
 
         }
 
