@@ -12,6 +12,8 @@
 #include "sar_msgs/Cam_Settings.h"
 
 #define Deg2Rad M_PI/180
+#define Y_AXIS 0    // First index on leg joint
+#define Z_AXIS 1    // Second index on leg joint
 
 
 namespace gazebo {

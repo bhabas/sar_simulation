@@ -9,6 +9,7 @@
     <link name='leg1'>
       <inertial>
         <mass>0.570e-3</mass>
+        <pose>0 0 -0.025 0 0 0 </pose>
         <inertia>
           <ixx>155e-9</ixx>
           <ixy>0</ixy>
@@ -17,7 +18,6 @@
           <iyz>0</iyz>
           <izz>2.5e-9</izz>
         </inertia>
-        <pose>0 0 -0.025 0 0 0 </pose>
       </inertial>
       <pose>2.07E-02 -2.07E-02 -3.25E-03 0 -0.087 -0.785</pose>
       <gravity>1</gravity>

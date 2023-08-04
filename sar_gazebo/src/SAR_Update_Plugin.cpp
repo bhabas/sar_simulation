@@ -52,56 +52,65 @@ namespace gazebo
             gzdbg << "Joint name: " << joint->GetName() << "\n";
         }
         
-        physics::JointPtr Leg_Joint1_Ptr = Config_Model_Ptr->GetJoint("leg_joint_1");
-        physics::JointPtr Leg_Joint2_Ptr = Config_Model_Ptr->GetJoint("leg_joint_2");
-        physics::JointPtr Leg_Joint3_Ptr = Config_Model_Ptr->GetJoint("leg_joint_3");
-        physics::JointPtr Leg_Joint4_Ptr = Config_Model_Ptr->GetJoint("leg_joint_4");
-
-        gzdbg << Leg_Joint1_Ptr->GetStiffness(0) << "\n";
-        gzdbg << Leg_Joint1_Ptr->GetStiffness(1) << "\n";
-        gzdbg << Leg_Joint1_Ptr->GetDamping(0) << "\n";
-        gzdbg << Leg_Joint1_Ptr->GetDamping(1) << "\n";
-
-        gzdbg << Leg_Joint1_Ptr->UpperLimit(0) << "\n";
-        gzdbg << Leg_Joint1_Ptr->LowerLimit(0) << "\n";
-        gzdbg << Leg_Joint1_Ptr->GetStopDissipation(0) << "\n";
-        gzdbg << Leg_Joint1_Ptr->GetStopStiffness(0) << "\n";
-
-
-        gzdbg << Leg_Joint1_Ptr->GetStiffness(0) << "\n";
-        gzdbg << Leg_Joint1_Ptr->GetStiffness(1) << "\n";
-        gzdbg << Leg_Joint1_Ptr->GetDamping(0) << "\n";
-        gzdbg << Leg_Joint1_Ptr->GetDamping(1) << "\n";
-
-        Leg_Joint1_Ptr->SetUpperLimit(0,5*Deg2Rad);
-        Leg_Joint1_Ptr->SetLowerLimit(0,-80*Deg2Rad);
-        Leg_Joint1_Ptr->SetStiffnessDamping(0,0,0,0);
-
-
-        Leg_Joint2_Ptr->SetUpperLimit(0,5*Deg2Rad);
-        Leg_Joint2_Ptr->SetLowerLimit(0,-80*Deg2Rad);
-        Leg_Joint2_Ptr->SetStiffnessDamping(0,0,0,0);
-
-
-        Leg_Joint3_Ptr->SetUpperLimit(0,5*Deg2Rad);
-        Leg_Joint3_Ptr->SetLowerLimit(0,-80*Deg2Rad);
-        Leg_Joint3_Ptr->SetStiffnessDamping(0,0,0,0);
-
-
-        Leg_Joint4_Ptr->SetUpperLimit(0,5*Deg2Rad);
-        Leg_Joint4_Ptr->SetLowerLimit(0,-80*Deg2Rad);
-        Leg_Joint4_Ptr->SetStiffnessDamping(0,0,0,0);
-
-      
-
-
+        physics::LinkPtr Leg_1_LinkPtr = Config_Model_Ptr->GetLink("leg1");
+        physics::LinkPtr Leg_2_LinkPtr = Config_Model_Ptr->GetLink("leg2");
+        physics::LinkPtr Leg_3_LinkPtr = Config_Model_Ptr->GetLink("leg3");
+        physics::LinkPtr Leg_4_LinkPtr = Config_Model_Ptr->GetLink("leg4");
 
         
-        // UPDATE CAMERA
-        // SAR_Update_Plugin::Update_Camera();
+        physics::JointPtr Leg_1_JointPtr = Config_Model_Ptr->GetJoint("leg_joint_1");
+        physics::JointPtr Leg_2_JointPtr = Config_Model_Ptr->GetJoint("leg_joint_2");
+        physics::JointPtr Leg_3_JointPtr = Config_Model_Ptr->GetJoint("leg_joint_3");
+        physics::JointPtr Leg_4_JointPtr = Config_Model_Ptr->GetJoint("leg_joint_4");
 
-        // LINK COMMAND SERVICE TO CALLBACK
-        // Cam_Update_Service = nh.advertiseService("/SAR_Internal/Camera_Update", &SAR_Update_Plugin::Service_Callback, this);
+        // gzdbg << Leg_1_JointPtr->GetStiffness(0) << "\n";
+        // gzdbg << Leg_1_JointPtr->GetStiffness(1) << "\n";
+        // gzdbg << Leg_1_JointPtr->GetDamping(0) << "\n";
+        // gzdbg << Leg_1_JointPtr->GetDamping(1) << "\n";
+
+        // gzdbg << Leg_2_JointPtr->UpperLimit(0) << "\n";
+        // gzdbg << Leg_2_JointPtr->LowerLimit(0) << "\n";
+        // gzdbg << Leg_2_JointPtr->GetStopDissipation(0) << "\n";
+        // gzdbg << Leg_2_JointPtr->GetStopStiffness(0) << "\n";
+
+        // gzdbg << Leg_3_JointPtr->GetStiffness(0) << "\n";
+        // gzdbg << Leg_3_JointPtr->GetStiffness(1) << "\n";
+        // gzdbg << Leg_3_JointPtr->GetDamping(0) << "\n";
+        // gzdbg << Leg_3_JointPtr->GetDamping(1) << "\n";
+
+        // gzdbg << Leg_4_JointPtr->GetStiffness(0) << "\n";
+        // gzdbg << Leg_4_JointPtr->GetStiffness(1) << "\n";
+        // gzdbg << Leg_4_JointPtr->GetDamping(0) << "\n";
+        // gzdbg << Leg_4_JointPtr->GetDamping(1) << "\n";
+
+        double Iyy_Leg = Leg_1_LinkPtr->GetInertial()->IYY();
+        double Ixx_Leg = Leg_1_LinkPtr->GetInertial()->IXX();
+        double Izz_Leg = Leg_1_LinkPtr->GetInertial()->IZZ();
+
+        double K_pitch = Leg_1_JointPtr->GetStiffness(0);
+        double Zeta_pitch = 1;
+        double C_pitch = Zeta_pitch*sqrt(Iyy_Leg*K_pitch);
+        C_pitch = 0.000111355*10; // This is now overdamped. 
+        std::cout << C_pitch << std::endl;;
+
+
+        // Leg_1_JointPtr->SetUpperLimit(Y_AXIS,5*Deg2Rad);
+        // Leg_1_JointPtr->SetLowerLimit(Y_AXIS,-80*Deg2Rad);
+        Leg_1_JointPtr->SetStiffnessDamping(Y_AXIS,K_pitch,C_pitch,0);
+
+
+        // Leg_2_JointPtr->SetUpperLimit(Y_AXIS,5*Deg2Rad);
+        // Leg_2_JointPtr->SetLowerLimit(Y_AXIS,-80*Deg2Rad);
+        Leg_2_JointPtr->SetStiffnessDamping(Y_AXIS,K_pitch,C_pitch,0);
+
+
+        // Leg_3_JointPtr->SetUpperLimit(Y_AXIS,5*Deg2Rad);
+        // Leg_3_JointPtr->SetLowerLimit(Y_AXIS,-80*Deg2Rad);
+        Leg_3_JointPtr->SetStiffnessDamping(Y_AXIS,K_pitch,C_pitch,0);
+
+        // Leg_4_JointPtr->SetUpperLimit(Y_AXIS,5*Deg2Rad);
+        // Leg_4_JointPtr->SetLowerLimit(Y_AXIS,-80*Deg2Rad);
+        Leg_4_JointPtr->SetStiffnessDamping(Y_AXIS,K_pitch,C_pitch,0);
 
         printf("\n\n");
     }
