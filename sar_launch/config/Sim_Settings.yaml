@@ -5,7 +5,7 @@ ENV_SETTINGS:
 
 SAR_SETTINGS:
   SAR_Type: "Crazyflie"
-  SAR_Config: "A30_L100_K64"
+  SAR_Config: "A05_L50_K08"
 
   Policy_Type: "PARAM_OPTIM"
   # Policy_Type: "DEEP_RL_SB3" 

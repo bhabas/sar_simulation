@@ -13,9 +13,8 @@ namespace gazebo
         gzmsg << "Loading SAR_Update_Plugin\n";
 
         // LOAD MODEL AND LINK POINTERS
-        Base_Model_Ptr = _parent;
-
-        SAR_Body_Ptr = Base_Model_Ptr->GetLink("Base_Model::SAR_Body");
+        Config_Model_Ptr = _parent;
+        SAR_Body_Ptr = Config_Model_Ptr->GetLink("Base_Model::SAR_Body");
         if (!SAR_Body_Ptr)
         {
             gzerr << "SAR_Body link is NULL.\n";
@@ -29,11 +28,6 @@ namespace gazebo
         double Iyy;
         double Izz;
         double Mass;
-
-        std::cout << Inertial_Ptr->Mass() << std::endl;
-        std::cout << Inertial_Ptr->IXX() << std::endl;
-        std::cout << Inertial_Ptr->IYY() << std::endl;
-        std::cout << Inertial_Ptr->IZZ() << std::endl;
 
         // LOAD SAR_Type,SAR_Config,AND CAM_CONFIG PARAMS
         ros::param::get("/SAR_SETTINGS/SAR_Type",SAR_Type);
@@ -50,43 +44,59 @@ namespace gazebo
         Inertial_Ptr->SetIYY(Iyy);
         Inertial_Ptr->SetIZZ(Izz);
         Inertial_Ptr->SetMass(Mass);
+
+
+        gazebo::physics::Joint_V joints = Config_Model_Ptr->GetJoints();
+
+        for (auto &joint : joints) {
+            gzdbg << "Joint name: " << joint->GetName() << "\n";
+        }
         
-        std::cout << Inertial_Ptr->Mass() << std::endl;
-        std::cout << Inertial_Ptr->IXX() << std::endl;
-        std::cout << Inertial_Ptr->IYY() << std::endl;
-        std::cout << Inertial_Ptr->IZZ() << std::endl;
+        physics::JointPtr Leg_Joint1_Ptr = Config_Model_Ptr->GetJoint("leg_joint_1");
+        physics::JointPtr Leg_Joint2_Ptr = Config_Model_Ptr->GetJoint("leg_joint_2");
+        physics::JointPtr Leg_Joint3_Ptr = Config_Model_Ptr->GetJoint("leg_joint_3");
+        physics::JointPtr Leg_Joint4_Ptr = Config_Model_Ptr->GetJoint("leg_joint_4");
+
+        gzdbg << Leg_Joint1_Ptr->GetStiffness(0) << "\n";
+        gzdbg << Leg_Joint1_Ptr->GetStiffness(1) << "\n";
+        gzdbg << Leg_Joint1_Ptr->GetDamping(0) << "\n";
+        gzdbg << Leg_Joint1_Ptr->GetDamping(1) << "\n";
+
+        gzdbg << Leg_Joint1_Ptr->UpperLimit(0) << "\n";
+        gzdbg << Leg_Joint1_Ptr->LowerLimit(0) << "\n";
+        gzdbg << Leg_Joint1_Ptr->GetStopDissipation(0) << "\n";
+        gzdbg << Leg_Joint1_Ptr->GetStopStiffness(0) << "\n";
+
+
+        gzdbg << Leg_Joint1_Ptr->GetStiffness(0) << "\n";
+        gzdbg << Leg_Joint1_Ptr->GetStiffness(1) << "\n";
+        gzdbg << Leg_Joint1_Ptr->GetDamping(0) << "\n";
+        gzdbg << Leg_Joint1_Ptr->GetDamping(1) << "\n";
+
+        Leg_Joint1_Ptr->SetUpperLimit(0,5*Deg2Rad);
+        Leg_Joint1_Ptr->SetLowerLimit(0,-80*Deg2Rad);
+        Leg_Joint1_Ptr->SetStiffnessDamping(0,0,0,0);
+
+
+        Leg_Joint2_Ptr->SetUpperLimit(0,5*Deg2Rad);
+        Leg_Joint2_Ptr->SetLowerLimit(0,-80*Deg2Rad);
+        Leg_Joint2_Ptr->SetStiffnessDamping(0,0,0,0);
+
+
+        Leg_Joint3_Ptr->SetUpperLimit(0,5*Deg2Rad);
+        Leg_Joint3_Ptr->SetLowerLimit(0,-80*Deg2Rad);
+        Leg_Joint3_Ptr->SetStiffnessDamping(0,0,0,0);
+
+
+        Leg_Joint4_Ptr->SetUpperLimit(0,5*Deg2Rad);
+        Leg_Joint4_Ptr->SetLowerLimit(0,-80*Deg2Rad);
+        Leg_Joint4_Ptr->SetStiffnessDamping(0,0,0,0);
+
+      
 
 
 
-        // Camera_Link_Ptr = Base_Model_Ptr->GetLink("Base_Model::Camera");
-        // if (!Camera_Link_Ptr)
-        // {
-        //     gzerr << "Camera link is NULL.\n";
-        //     return;
-        // }
-
-        // // // LOAD PARAMS FROM SDF
-        // // Joint_Name = _sdf->GetElement("jointName")->Get<std::string>();
-
-        // // // LOAD SAR_Type,SAR_Config,AND CAM_CONFIG PARAMS
-        // // ros::param::get("/SAR_SETTINGS/SAR_Type",SAR_Type);
-        // // ros::param::get("/SAR_SETTINGS/SAR_Config",SAR_Config);
-        // // ros::param::get("/CAM_SETTINGS/Cam_Config",Cam_Config);
-
-        // // // LOAD CAMERA CONFIG SETTINGS
-        // // ros::param::get("/Cam_Config/"+Cam_Config+"/X_Offset",X_Offset);
-        // // ros::param::get("/Cam_Config/"+Cam_Config+"/Y_Offset",Y_Offset);
-        // // ros::param::get("/Cam_Config/"+Cam_Config+"/Z_Offset",Z_Offset);
-        // // ros::param::get("/Cam_Config/"+Cam_Config+"/Pitch_Angle",Pitch_Angle);
-        // // ros::param::get("/Cam_Config/"+Cam_Config+"/FPS",FPS);
-
-        // // // GET POINTER TO CAMERA SENSOR
-        // // Sensor_Ptr = sensors::get_sensor("Base_Model::Camera");
-        // // Camera_Ptr = dynamic_cast<sensors::CameraSensor*>(Sensor_Ptr.get());
-
-
-
-
+        
         // UPDATE CAMERA
         // SAR_Update_Plugin::Update_Camera();
 

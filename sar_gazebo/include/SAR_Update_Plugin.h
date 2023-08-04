@@ -11,6 +11,8 @@
 #include <thread>
 #include "sar_msgs/Cam_Settings.h"
 
+#define Deg2Rad M_PI/180
+
 
 namespace gazebo {
 
@@ -36,6 +38,7 @@ namespace gazebo {
 
             // GAZEBO POINTERS
             physics::ModelPtr Base_Model_Ptr;
+            physics::ModelPtr Config_Model_Ptr;
             physics::LinkPtr Camera_Link_Ptr;
             physics::LinkPtr SAR_Body_Ptr;
             physics::JointPtr Joint_Ptr;
