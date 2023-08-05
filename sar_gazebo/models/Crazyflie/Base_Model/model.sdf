@@ -816,10 +816,10 @@
       </physics>
     </joint>
     
-    <plugin name='SAR_Update_Plugin' filename='libSAR_Update_Plugin.so'>
+    <!-- <plugin name='SAR_Update_Plugin' filename='libSAR_Update_Plugin.so'>
         <jointName>Landing_Surface_Joint</jointName>
         <topicName>/ENV/Surface_ForceTorque_Sensor</topicName>
-    </plugin>
+    </plugin> -->
     
     
     <plugin name='front_right_motor_model' filename='libMotor_Plugin.so'>
