@@ -7,6 +7,7 @@
 #include <gazebo/sensors/sensors.hh>
 
 
+
 #include <ros/ros.h>
 #include <thread>
 #include "sar_msgs/Cam_Settings.h"
@@ -20,7 +21,7 @@ namespace gazebo {
             
         protected:
             void Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf);
-            void Update_Camera();
+            void OnUpdate();
             bool Service_Callback(sar_msgs::Cam_Settings::Request &req, sar_msgs::Cam_Settings::Response &res);
 
         private:
@@ -32,12 +33,14 @@ namespace gazebo {
             std::string SAR_Type;
             std::string SAR_Config;
             std::string Cam_Config;
+            std::string Collision_Name;
 
             // GAZEBO POINTERS
-            physics::ModelPtr Base_Model_Ptr;
-            physics::LinkPtr Camera_Link_Ptr;
-            physics::LinkPtr SAR_Body_Ptr;
+            physics::WorldPtr World_Ptr;
+            physics::ModelPtr Model_Ptr;
             physics::JointPtr Joint_Ptr;
+
+            event::ConnectionPtr updateConnection;
 
 
             // POSE UPDATES
