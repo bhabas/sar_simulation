@@ -1,0 +1,71 @@
+<sdf version="1.6">
+  <model name="Beam">
+
+
+    <!-- Beam Link -->
+    <link name="beam_link">
+        <inertial>
+            <mass>0.570e-3</mass>
+            <pose>0 0 -0.025 0 0 0 </pose>
+            <inertia>
+            <ixx>155e-9</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>155e-9</iyy>
+            <iyz>0</iyz>
+            <izz>2.5e-9</izz>
+            </inertia>
+        </inertial>
+        <pose>0 0 0 0 -0.087 0</pose>
+        <gravity>0</gravity>
+        <visual name="beam_visual">
+            <pose>0 0 -0.5 0 0 0</pose>
+            <geometry>
+            <box>
+                <size>0.001 0.001 1</size>
+            </box>
+            </geometry>
+            <material>
+            <ambient>0 0 1 1</ambient> <!-- Blue Color -->
+            <diffuse>0 0 1 1</diffuse>
+            </material>
+        </visual>
+        <visual name='CF_Leg'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://A05_L50_K08/meshes/LegConfig_A05_L50.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Red </name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+          <lighting>1</lighting>
+        </material>
+      </visual>
+    </link>
+
+    <!-- Revolute Joint -->
+    <joint name="revolute_joint" type="revolute">
+        <parent>world</parent>
+        <child>beam_link</child>
+        <pose>0 0 0 0 0.786 0</pose> <!-- Position of the joint -->
+        <axis>
+            <xyz>0 1 0</xyz> <!-- Axis of rotation -->
+            <limit>
+                <lower>-100</lower> <!-- Limit in radians (-90 degrees) -->
+                <upper>100</upper>  <!-- Limit in radians (90 degrees) -->
+                </limit>
+            <dynamics>
+                <spring_stiffness>0.09</spring_stiffness>
+                <damping>6.788e-05</damping>
+            </dynamics>
+        </axis>
+    </joint>
+
+    <static>false</static>
+  </model>
+</sdf>
