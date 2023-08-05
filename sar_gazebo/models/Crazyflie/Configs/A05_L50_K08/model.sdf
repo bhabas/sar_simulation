@@ -6,7 +6,7 @@
       <uri>model://Base_Model</uri>
     </include>
 
-    <link name='leg1'>
+    <!-- <link name='leg1'>
       <inertial>
         <mass>0.570e-3</mass>
         <pose>0 0 -0.025 0 0 0 </pose>
@@ -137,14 +137,10 @@
           <lighting>1</lighting>
         </material>
       </visual>
-    </link>
+    </link> -->
 
 
-    <joint name="revolute_joint" type="fixed">
-        <parent>world</parent>
-        <child>Base_Model::SAR_Body</child>
-        <pose>0 0 0 0 0 0</pose> <!-- Position of the joint -->
-    </joint>
+
 
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>

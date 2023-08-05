@@ -1,5 +1,5 @@
 <launch>
-  
+
     <!-- SAR MODEL ARGS -->
     <arg name="SAR_Type" default="Crazyflie"/>
     <arg name="SAR_Model" default="Camera_Model"/>
@@ -14,7 +14,7 @@
     <arg name="Ground_Type" default="Ground_Surface"/>
     <arg name="Ground_Model" default="Desert_Pattern"/>
     <arg name="Ground_SDF_Path" default="$(find sar_gazebo)/models/$(arg Ground_Type)/Configs/$(arg Ground_Config)/model.sdf"/>
-   
+
 
     <!-- LOAD SETTINGS FLAGS -->
     <arg name="Gui_Flag" default="true"/>
@@ -26,7 +26,7 @@
         <!-- lockstep command ensures sim updates and sensor frequency updates are synced together -->
         <!-- http://gazebosim.org/tutorials?tut=lockstep_physics_sensors&cat=sensors -->
         <!-- http://gazebosim.org/tutorials?tut=performance_metrics&cat=tools_utilities -->
-    
+
         <arg name="gui" value="$(arg Gui_Flag)"/>
         <arg name="paused" value="$(arg Pause_Flag)"/>
         <arg name="verbose" value="true"/>
@@ -35,20 +35,16 @@
         <arg name="headless" default="false"/>
 
     </include>
-    
-    <!-- <node name="Spawn_Model" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
-    args="-file $(arg SAR_SDF_Path) -sdf -model $(arg SAR_Model) -z 0.3" /> -->
 
-    <!-- <node name="Spawn_Plane" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
-    args="-file $(arg Plane_SDF_Path) -sdf -model $(arg Plane_Model) -z 2" /> -->
+    <node name="Spawn_Model" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file $(arg SAR_SDF_Path) -sdf -model $(arg SAR_Model) -z 0.3" />
 
-    <!-- <node name="Spawn_Ground" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
-    args="-file $(arg Ground_SDF_Path) -sdf -model $(arg Ground_Model) -z -0.1" /> -->
-    
+    <!-- <node name="Spawn_Plane" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file $(arg Plane_SDF_Path) -sdf -model $(arg Plane_Model) -z 2" /> -->
+
+    <node name="Spawn_Ground" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file $(arg Ground_SDF_Path) -sdf -model $(arg Ground_Model) -z -0.1" />
 
 
-    <!-- <node name="Spawn_Beam" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" 
-    args="-file /home/bhabas/catkin_ws/src/sar_simulation/sar_gazebo/models/Beam/model.sdf -sdf -model Beam" /> -->
-        
+
+    <!-- <node name="Spawn_Beam" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file /home/bhabas/catkin_ws/src/sar_simulation/sar_gazebo/models/Beam/model.sdf -sdf -model Beam" /> -->
+
 </launch>
 
