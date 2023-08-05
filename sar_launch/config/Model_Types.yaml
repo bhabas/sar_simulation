@@ -63,6 +63,7 @@ SAR_Type:
         Leg_Stiffness: 8      # Leg Stiffness [N*mm/rad]
 
         K_Pitch: 0.08         # Pitch-Axis Stiffness [N/rad]
+        C_Pitch: 10.1e-4
         DR_Pitch: 0.5         # Pitch-Axis Damping Ratio
 
         K_Yaw: 0.08           # Yaw-Axis Stiffness [N/rad]

@@ -5,6 +5,7 @@
 // UPDATE COG LOCATION
 // UPDATE LEG STIFFNESS AND DAMPING
 // MOTOR THRUST COEFFICIENTS
+// UPDATE SIM SPEED BASED ON SPEED SETTING ON STARTUP
 
 namespace gazebo
 {
@@ -87,12 +88,15 @@ namespace gazebo
         double Ixx_Leg = Leg_1_LinkPtr->GetInertial()->IXX();
         double Izz_Leg = Leg_1_LinkPtr->GetInertial()->IZZ();
 
-        double K_pitch = Leg_1_JointPtr->GetStiffness(0);
-        double Zeta_pitch = 1;
-        double C_pitch = Zeta_pitch*sqrt(Iyy_Leg*K_pitch);
-        C_pitch = 0.000111355*10; // This is now overdamped. 
-        std::cout << C_pitch << std::endl;;
+        double K_pitch;
+        double Zeta_pitch;
+        double C_pitch;
 
+        ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/K_Pitch",K_pitch);
+        ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/C_Pitch",C_pitch);
+        ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/DR_Pitch",Zeta_pitch);
+
+    
 
         // Leg_1_JointPtr->SetUpperLimit(Y_AXIS,5*Deg2Rad);
         // Leg_1_JointPtr->SetLowerLimit(Y_AXIS,-80*Deg2Rad);
