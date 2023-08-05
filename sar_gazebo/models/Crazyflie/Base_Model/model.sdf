@@ -41,7 +41,7 @@
       <sensor type="camera" name="Camera">
         <pose>0 0 0 0 0 0</pose>
         <update_rate>100</update_rate>        <!--Changed to a nice number for FPS because message didn't contain enough precision -->
-        <visualize>true</visualize>
+        <visualize>false</visualize>
         <camera name="head">
           <save enabled="false">
             <path>/home/bhabas/Downloads/Video_images</path>
@@ -312,7 +312,7 @@
       </visual>
 
 
-      <collision name='body_collision'>
+      <!-- <collision name='body_collision'>
         <max_contacts>1</max_contacts>
         <pose>0 0 0.01 0 0 0</pose>
         <geometry>
@@ -341,8 +341,8 @@
             </bullet>
           </contact>
         </surface>
-      </collision>
-      <collision name='base_collision'>
+      </collision> -->
+      <!-- <collision name='base_collision'>
         <max_contacts>1</max_contacts>
         <pose>0 0 -0.005 0 0 0</pose>
         <geometry>
@@ -371,7 +371,7 @@
             </bullet>
           </contact>
         </surface>
-      </collision>
+      </collision> -->
     </link>
 
 

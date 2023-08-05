@@ -35,6 +35,8 @@ namespace gazebo {
             std::string Cam_Config;
             std::string Collision_Name;
 
+            bool OnceFlag;
+
             // GAZEBO POINTERS
             physics::WorldPtr World_Ptr;
             physics::ModelPtr Model_Ptr;
