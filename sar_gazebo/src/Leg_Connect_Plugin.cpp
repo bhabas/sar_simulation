@@ -14,34 +14,54 @@ namespace gazebo
         // std::cout << Marker_Ptr->GetName() << std::endl;
 
 
+        int max_attempts = 30;
+        int attempt = 0;
 
-        // ignition::math::Pose3d contactPose;
-        // contactPose.Set(0,0,0.5,0,0,0);
+        while (!World_Ptr->ModelByName("Marker") && attempt < max_attempts) {
+            gazebo::common::Time::MSleep(100);  // Sleep for 100ms
+            attempt++;
+        }
+        while (!World_Ptr->ModelByName("Debug") && attempt < max_attempts) {
+            gazebo::common::Time::MSleep(100);  // Sleep for 100ms
+            attempt++;
+        }
 
-        // Marker_Ptr->SetWorldPose(contactPose);
+        physics::ModelPtr Marker_Ptr = World_Ptr->ModelByName("Marker");
+        physics::ModelPtr Surface_Ptr = World_Ptr->ModelByName("Debug");
 
 
-        // physics::LinkPtr Beam_Ptr = Model_Ptr->GetLink("beam_link");
-        // physics::JointPtr joint = World_Ptr->Physics()->CreateJoint("ball",Model_Ptr);
-        // joint->Attach(NULL,Beam_Ptr);
-        // joint->Load(NULL, Beam_Ptr, contactPose);
-        // joint->SetAnchor(0, contactPose.Pos());
-        // joint->Init();
+        if (!Marker_Ptr) {
+            gzerr << "Model 'Marker' not found after waiting!" << std::endl;
+        }
 
-        // updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&Leg_Connect_Plugin::Init, this));
+        if (!Surface_Ptr) {
+            gzerr << "Model 'Debug' not found after waiting!" << std::endl;
+        }
+        
+        ignition::math::Pose3d contactPose;
+        contactPose.Set(0,0,0.5,0,0,0);
+
+        Marker_Ptr->SetWorldPose(contactPose);
+
+
+        physics::LinkPtr Beam_Ptr = Model_Ptr->GetLink("beam_link");
+        physics::JointPtr joint = World_Ptr->Physics()->CreateJoint("ball",Model_Ptr);
+        joint->Attach(NULL,Beam_Ptr);
+        joint->Load(NULL, Beam_Ptr, contactPose);
+        joint->SetAnchor(0, contactPose.Pos());
+        joint->Init();
+
+
+        updateConnection = event::Events::ConnectWorldCreated(std::bind(&Leg_Connect_Plugin::Init, this));
 
         printf("\n\n");
     }
 
     void Leg_Connect_Plugin::Init()
     {
-        // updateConnection->~Connection();
-        physics::ModelPtr Surface_Ptr = World_Ptr->ModelByName("Debug");
-        std::cout << Surface_Ptr->GetName() << std::endl;
 
+        
 
-        physics::ModelPtr Marker_Ptr = World_Ptr->ModelByName("Marker");
-        std::cout << Marker_Ptr->GetName() << std::endl;
 
     }
 
