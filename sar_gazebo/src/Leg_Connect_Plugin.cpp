@@ -74,6 +74,10 @@ namespace gazebo
                     joint->SetAnchor(0, contactPose.Pos());
                     joint->Init();
 
+                    Beam_Ptr->SetCollideMode("none");
+
+
+
                     std::cout << "Finish Joint" << std::endl;
                 }
 
