@@ -20,7 +20,7 @@ namespace gazebo {
             
         protected:
             void Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf);
-            void OnUpdate();
+            void Init();
 
         private:
 

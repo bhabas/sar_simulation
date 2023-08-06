@@ -35,7 +35,7 @@ roslaunch sar_launch Gazebo_Sim.launch \
     Gui_Flag:=$GUI_FLAG \
     Pause_Flag:=$PAUSE_FLAG \
     SAR_Type:=$SAR_TYPE \
-    SAR_Model:=$SAR_CONFIG \
+    SAR_Config:=$SAR_CONFIG \
     Plane_Type:=$PLANE_TYPE \
     Plane_Config:=$PLANE_CONFIG \
     Ground_Type:=$GROUND_TYPE \

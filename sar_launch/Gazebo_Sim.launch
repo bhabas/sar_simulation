@@ -2,17 +2,17 @@
 
     <!-- SAR MODEL ARGS -->
     <arg name="SAR_Type" default="Crazyflie"/>
-    <arg name="SAR_Model" default="Camera_Model"/>
-    <arg name="SAR_SDF_Path" default="$(find sar_gazebo)/models/$(arg SAR_Type)/Configs/$(arg SAR_Model)/model.sdf"/>
+    <arg name="SAR_Config" default="Camera_Model"/>
+    <arg name="SAR_SDF_Path" default="$(find sar_gazebo)/models/$(arg SAR_Type)/Configs/$(arg SAR_Config)/model.sdf"/>
 
     <!-- LANDING SURFACE ARGS -->
     <arg name="Plane_Type" default="Landing_Surface"/>
-    <arg name="Plane_Model" default="Checkerboard_L02"/>
+    <arg name="Plane_Config" default="Checkerboard_L02"/>
     <arg name="Plane_SDF_Path" default="$(find sar_gazebo)/models/$(arg Plane_Type)/Configs/$(arg Plane_Config)/model.sdf"/>
 
     <!-- GROUND SURFACE ARGS -->
     <arg name="Ground_Type" default="Ground_Surface"/>
-    <arg name="Ground_Model" default="Desert_Pattern"/>
+    <arg name="Ground_Config" default="Desert_Pattern"/>
     <arg name="Ground_SDF_Path" default="$(find sar_gazebo)/models/$(arg Ground_Type)/Configs/$(arg Ground_Config)/model.sdf"/>
 
 
@@ -36,14 +36,14 @@
 
     </include>
 
-    <!-- <node name="Spawn_Model" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file $(arg SAR_SDF_Path) -sdf -model $(arg SAR_Model) -z 0.0" /> -->
+    <!-- <node name="Spawn_Model" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file $(arg SAR_SDF_Path) -sdf -model $(arg SAR_Config) -z 0.0" /> -->
 
-    <!-- <node name="Spawn_Plane" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file $(arg Plane_SDF_Path) -sdf -model $(arg Plane_Model) -z 2" /> -->
+    <!-- <node name="Spawn_Plane" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file $(arg Plane_SDF_Path) -sdf -model $(arg Plane_Config) -z 2" /> -->
 
-    <node name="Spawn_Ground" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file $(arg Ground_SDF_Path) -sdf -model $(arg Ground_Model) -z -0.1 -P 0.5" />
+    <node name="Spawn_Marker" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file /home/bhabas/catkin_ws/src/sar_simulation/sar_gazebo/models/Marker/model.sdf -sdf -model Marker -x 1" />
+    <node name="Spawn_Ground" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file $(arg Ground_SDF_Path) -sdf -model $(arg Ground_Config) -z -0.1" />
 
     <node name="Spawn_Beam" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file /home/bhabas/catkin_ws/src/sar_simulation/sar_gazebo/models/Beam/model.sdf -sdf -model Beam -z 1 -P 0.1" />
-    <node name="Spawn_Marker" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file /home/bhabas/catkin_ws/src/sar_simulation/sar_gazebo/models/Marker/model.sdf -sdf -model Marker -x 1" />
 
 </launch>
 
