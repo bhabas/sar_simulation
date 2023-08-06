@@ -40,9 +40,13 @@ namespace gazebo
                     Surface_Ptr = contact->collision2->GetModel();
 
                     ignition::math::Vector3d contactPositionWorld = contact->positions[0];
-                    ignition::math::Vector3d contactPositionSurfaceLocal = Surface_Ptr->GetLink("Surface_Link")->WorldPose().Inverse().CoordPositionAdd(contactPositionWorld);
+                    ignition::math::Vector3d contactPositionSurfaceLocal = contact->collision2->GetLink()->WorldPose().Inverse().CoordPositionAdd(contactPositionWorld);
                     contactPositionSurfaceLocal += ignition::math::Vector3d(0,0,-0.01);
-                    ignition::math::Pose3d contactPose(contactPositionSurfaceLocal, ignition::math::Quaterniond::Identity);
+                    ignition::math::Vector3d contactPositionWorldUpdated = contact->collision2->GetLink()->WorldPose().CoordPositionAdd(contactPositionSurfaceLocal);
+
+
+
+                    ignition::math::Pose3d contactPose(contactPositionWorldUpdated, ignition::math::Quaterniond::Identity);
 
 
                     OnceFlag = true;
@@ -51,13 +55,15 @@ namespace gazebo
 
                     std::cout << contactPositionWorld << std::endl;
                     std::cout << contactPositionSurfaceLocal << std::endl;
+                    std::cout << contactPositionWorldUpdated << std::endl;
+
 
                     
                     physics::LinkPtr Beam_Ptr = Model_Ptr->GetLink("beam_link");
                     physics::JointPtr joint = World_Ptr->Physics()->CreateJoint("ball", Model_Ptr);
                     joint->Attach(Beam_Ptr,Surface_Ptr->GetLink("Surface_Link"));
                     joint->Load(Beam_Ptr,Surface_Ptr->GetLink("Surface_Link"), contactPose);
-                    joint->SetAnchor(0, contactPositionSurfaceLocal);
+                    joint->SetAnchor(0, contactPose.Pos());
                     joint->Init();
 
                     Beam_Ptr->SetCollideMode("none");
