@@ -17,10 +17,10 @@
           </box>
         </geometry>
         <material>
-        <script>
+          <script>
             <uri>model://Desert_Pattern/Ground_Texture/Ground.material</uri>
             <name>Ground_Mat</name>
-        </script>
+          </script>
         </material>
       </visual>
       <collision name='Ground_Collision'>
@@ -35,9 +35,9 @@
       </collision>
     </link>
 
-    <link name='Positive_X_Wall'>
+    <!-- <link name='Positive_X_Wall'>
       <pose>0.5 0 0 0 0 0</pose>
-      <gravity>1</gravity>
+      <gravity>0</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
@@ -51,7 +51,7 @@
     </link>
     <link name='Positive_Y_Wall'>
       <pose>0 0.5 0 0 0 1.57</pose>
-      <gravity>1</gravity>
+      <gravity>0</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
@@ -65,7 +65,7 @@
     </link>
     <link name='Negative_X_Wall'>
       <pose>-0.5 0 0 0 0 0</pose>
-      <gravity>1</gravity>
+      <gravity>0</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
@@ -79,7 +79,7 @@
     </link>
     <link name='Negative_Y_Wall'>
       <pose>0 -0.5 0 0 0 1.57</pose>
-      <gravity>1</gravity>
+      <gravity>0</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
@@ -90,8 +90,8 @@
           </box>
         </geometry>
       </collision>
-    </link>
-    
+    </link> -->
+
 
     <joint name='Surface_Pattern_Joint' type='fixed'>
       <parent>Ground_Base_Model::Ground_Link</parent>
@@ -99,6 +99,6 @@
     </joint>
 
     <static>0</static>
-  <allow_auto_disable>1</allow_auto_disable>
+    <allow_auto_disable>1</allow_auto_disable>
   </model>
 </sdf>

@@ -21,24 +21,6 @@
       <kinematic>0</kinematic>
       <gravity>0</gravity>
       
-      <visual name='Ground_Center'>
-        <cast_shadows>0</cast_shadows>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <sphere>
-            <radius>0.02</radius>
-          </sphere>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/Blue</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-        </material>
-      </visual>
     </link>
 
   <allow_auto_disable>1</allow_auto_disable>
