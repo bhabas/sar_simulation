@@ -10,8 +10,11 @@ namespace gazebo
         Model_Ptr = _parent;
         World_Ptr = Model_Ptr->GetWorld();
 
+        Joint_Name = _sdf->GetElement("JointName")->Get<std::string>();
+        Link_Name = _sdf->GetElement("LinkName")->Get<std::string>();
 
-        
+
+        Leg_Ptr = Model_Ptr->GetLink(Link_Name);
 
 
         updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&Leg_Connect_Plugin::OnUpdate, this));
@@ -37,15 +40,13 @@ namespace gazebo
             {
                 if (!OnceFlag)
                 {
-                    Surface_Ptr = contact->collision2->GetModel();
+                    Surface_Model_Ptr = contact->collision2->GetModel();
+                    Surface_Link_Ptr = Surface_Model_Ptr->GetLink("Surface_Link");
 
                     ignition::math::Vector3d contactPositionWorld = contact->positions[0];
                     ignition::math::Vector3d contactPositionSurfaceLocal = contact->collision2->GetLink()->WorldPose().Inverse().CoordPositionAdd(contactPositionWorld);
-                    contactPositionSurfaceLocal += ignition::math::Vector3d(0,0,-0.01);
+                    contactPositionSurfaceLocal -= ignition::math::Vector3d(0,0,collision_radius);
                     ignition::math::Vector3d contactPositionWorldUpdated = contact->collision2->GetLink()->WorldPose().CoordPositionAdd(contactPositionSurfaceLocal);
-
-
-
                     ignition::math::Pose3d contactPose(contactPositionWorldUpdated, ignition::math::Quaterniond::Identity);
 
 
@@ -59,14 +60,15 @@ namespace gazebo
 
 
                     
-                    physics::LinkPtr Beam_Ptr = Model_Ptr->GetLink("beam_link");
-                    physics::JointPtr joint = World_Ptr->Physics()->CreateJoint("ball", Model_Ptr);
-                    joint->Attach(Beam_Ptr,Surface_Ptr->GetLink("Surface_Link"));
-                    joint->Load(Beam_Ptr,Surface_Ptr->GetLink("Surface_Link"), contactPose);
-                    joint->SetAnchor(0, contactPose.Pos());
-                    joint->Init();
+                    
+                    Joint_Ptr = World_Ptr->Physics()->CreateJoint("ball", Model_Ptr);
+                    Joint_Ptr->Attach(Leg_Ptr,Surface_Link_Ptr);
+                    Joint_Ptr->SetName(Joint_Name);
+                    Joint_Ptr->Load(Leg_Ptr,Surface_Link_Ptr, contactPose);
+                    Joint_Ptr->SetAnchor(0, contactPose.Pos());
+                    Joint_Ptr->Init();
 
-                    Beam_Ptr->SetCollideMode("none");
+                    Leg_Ptr->SetCollideMode("none");
 
 
 

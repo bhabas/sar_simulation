@@ -19,7 +19,7 @@ PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
   Plane_Type: "Landing_Surface"
   Plane_Config: "Checkerboard_L02"
   
-  Plane_Angle: 180 # [deg]
+  Plane_Angle: 45 # [deg]
   Pos_X: 0.0    # [m]
   Pos_Y: 0.0    # [m]
   Pos_Z: 2.0    # [m]

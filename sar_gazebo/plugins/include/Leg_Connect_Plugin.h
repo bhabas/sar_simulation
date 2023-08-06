@@ -26,6 +26,7 @@ namespace gazebo {
 
             // SDF PARAMS
             std::string Joint_Name;
+            std::string Link_Name;
 
             // CONFIG PARAMS
             std::string SAR_Type;
@@ -38,8 +39,14 @@ namespace gazebo {
             physics::ModelPtr Model_Ptr;
             physics::JointPtr Joint_Ptr;
 
-            physics::ModelPtr Marker_Ptr;
-            physics::ModelPtr Surface_Ptr;
+            double collision_radius = 0.01;
+            
+
+            physics::LinkPtr Leg_Ptr;
+
+            physics::ModelPtr Surface_Model_Ptr;
+            physics::LinkPtr Surface_Link_Ptr;
+
             ignition::math::Pose3d contactPose;
 
 

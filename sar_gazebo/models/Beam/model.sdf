@@ -52,9 +52,9 @@
 
     <plugin name='Leg_1_Plugin' filename='libLeg_Connect_Plugin.so'>
       <LegNumber>1</LegNumber>
-      <linkName>beam_link</linkName>
-      <collisionName>beam_collision</collisionName>
-      <jointName>Leg_1_Joint</jointName>
+      <LinkName>beam_link</LinkName>
+      <CollisionName>beam_collision</CollisionName>
+      <JointName>Leg_1_Contact_Joint</JointName>
     </plugin>
 
 
