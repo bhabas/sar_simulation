@@ -63,29 +63,28 @@
 
     <model name='Surface'>
       <static>1</static>
-      <pose>0 0 0 0 0 0</pose>
+      <pose>0 0 0 0 0.786 0</pose>
       <self_collide>0</self_collide>
       <link name='Surface_Link'>
-        <pose>0 0 0 0 0 0</pose>
-        <collision name='Suraface_Collision'>
-          <pose>0 0 0 0 0 0</pose>
+        <pose>0 0 0 0 3.14 0</pose>
+        <collision name='Surface_Collision'>
+          <pose>0 0 0.05 0 0 0</pose>
           <geometry>
             <box>
-              <size>1 1 0.01</size>
-
+              <size>1 1 0.1</size>
             </box>
           </geometry>
         </collision>
         <visual name="Surface_Visual">
-          <pose>0 0 0 0 0 0</pose>
+          <pose>0 0 0.05 0 0 0</pose>
           <geometry>
             <box>
-              <size>1 1 0.01</size>
+              <size>1 1 0.1</size>
             </box>
           </geometry>
           <material>
-            <ambient>0 0 1 1</ambient>
-            <diffuse>0 0 1 1</diffuse>
+            <ambient>0 0 1 0.25</ambient>
+            <diffuse>0 0 1 0.25</diffuse>
           </material>
         </visual>
       </link>
