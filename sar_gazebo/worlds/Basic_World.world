@@ -5,7 +5,7 @@
     <!-- Default camera pose -->
     <gui>
       <camera name="user_camera">
-          <pose frame=''>1.4 -5 1.9 0 0.12 1.57</pose>
+        <pose frame=''>1.4 -5 1.9 0 0.12 1.57</pose>
       </camera>
     </gui>
 
@@ -34,20 +34,75 @@
       </link>
     </model>
 
+    <model name='Marker'>
+      <static>1</static>
+      <pose>1 0 1 0 0 0</pose>
+      <link name='Marker_Link'>
+        <pose>0 0 0 0 0 0</pose>
+        <visual name='Marker_Visual'>
+          <cast_shadows>0</cast_shadows>
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <sphere>
+              <radius>0.01</radius>
+            </sphere>
+          </geometry>
+          <material>
+            <script>
+              <name>Gazebo/Orange</name>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+            </script>
+            <shader type='pixel'>
+              <normal_map>__default__</normal_map>
+            </shader>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name='Surface'>
+      <static>1</static>
+      <pose>0 0 0 0 0 0</pose>
+      <link name='Surface_Link'>
+        <pose>0 0 0 0 0 0</pose>
+        <collision name='Suraface_Collision'>
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1 1 0.01</size>
+
+            </box>
+          </geometry>
+        </collision>
+        <visual name="Surface_Visual">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1 1 0.01</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0 1 1</ambient>
+            <diffuse>0 0 1 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
     <light type="directional" name="sun">
-        <cast_shadows>false</cast_shadows>
-        <pose>0 0 10 0 0 0</pose>
-        <diffuse>0.8 0.8 0.8 1</diffuse>
-        <specular>0.2 0.2 0.2 1</specular>
-        <attenuation>
-            <range>1000</range>
-            <constant>0.9</constant>
-            <linear>0.01</linear>
-            <quadratic>0.001</quadratic>
-        </attenuation>
-        <direction>-0.5 0.1 -0.9</direction>
+      <cast_shadows>false</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.1 -0.9</direction>
     </light>
-      
+
     <light name='Horizontal_Light' type='directional'>
       <pose>-5 0 0 0 1.57 0</pose>
       <diffuse>0.5 0.5 0.5 1</diffuse>
@@ -78,20 +133,20 @@
 
     <!-- Physics engine settings -->
     <physics type="bullet">
-        <real_time_update_rate>1000.0</real_time_update_rate>
-        <max_step_size>0.001</max_step_size>
-        <bullet>
-            <solver>
-                <type>sequential_impulse</type>
-                <iters>100</iters> <!-- Number of solver iterations -->
-            </solver>
-            <constraints>
-                <cfm>0.0</cfm>
-                <erp>0.2</erp>
-                <contact_max_correcting_vel>100.0</contact_max_correcting_vel>
-                <contact_surface_layer>0.001</contact_surface_layer>
-            </constraints>
-        </bullet>
+      <real_time_update_rate>1000.0</real_time_update_rate>
+      <max_step_size>0.001</max_step_size>
+      <bullet>
+        <solver>
+          <type>sequential_impulse</type>
+          <iters>100</iters>          <!-- Number of solver iterations -->
+        </solver>
+        <constraints>
+          <cfm>0.0</cfm>
+          <erp>0.2</erp>
+          <contact_max_correcting_vel>100.0</contact_max_correcting_vel>
+          <contact_surface_layer>0.001</contact_surface_layer>
+        </constraints>
+      </bullet>
     </physics>
 
 
