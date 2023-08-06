@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='Desert_Pattern'>
+  <model name='Debug'>
 
     <include>
       <uri>model://Ground_Base_Model</uri>

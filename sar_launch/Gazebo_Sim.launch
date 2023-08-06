@@ -43,6 +43,7 @@
     <node name="Spawn_Ground" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file $(arg Ground_SDF_Path) -sdf -model $(arg Ground_Model) -z -0.1 -P 0.5" />
 
     <node name="Spawn_Beam" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file /home/bhabas/catkin_ws/src/sar_simulation/sar_gazebo/models/Beam/model.sdf -sdf -model Beam -z 1 -P 0.1" />
+    <node name="Spawn_Marker" pkg="gazebo_ros" type="spawn_model" output="screen" respawn="false" args="-file /home/bhabas/catkin_ws/src/sar_simulation/sar_gazebo/models/Marker/model.sdf -sdf -model Marker -x 1" />
 
 </launch>
 
