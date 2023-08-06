@@ -1,26 +1,29 @@
 
-#include <Leg_Connect_Plugin.h>
+#include <Sticky_Leg_Plugin.h>
 
 namespace gazebo
 {
-    void Leg_Connect_Plugin::Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf)
+    void Sticky_Leg_Plugin::Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf)
     {
-        gzmsg << "Loading Leg_Connect_Plugin\n";
+        gzmsg << "Loading Sticky_Leg_Plugin\n";
 
         Joint_Name = _sdf->GetElement("JointName")->Get<std::string>();
         Link_Name = _sdf->GetElement("LinkName")->Get<std::string>();
+        Leg_Number = _sdf->GetElement("LegNumber")->Get<std::string>();
 
 
         Model_Ptr = _parent;
         World_Ptr = Model_Ptr->GetWorld();
         Leg_Link_Ptr = Model_Ptr->GetLink(Link_Name);
 
-        updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&Leg_Connect_Plugin::OnUpdate, this));
+        updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&Sticky_Leg_Plugin::OnUpdate, this));
+        Leg_Connect_Service = nh.advertiseService("/SAR_Internal/Sticky_Leg_" + Leg_Number, &Sticky_Leg_Plugin::Service_Callback, this);
+
 
         printf("\n\n");
     }
 
-    void Leg_Connect_Plugin::OnUpdate()
+    void Sticky_Leg_Plugin::OnUpdate()
     {
 
         gazebo::physics::ContactManager *contactMgr = World_Ptr->Physics()->GetContactManager();
@@ -69,5 +72,12 @@ namespace gazebo
         }
     }
 
-    GZ_REGISTER_MODEL_PLUGIN(Leg_Connect_Plugin);
+    bool Sticky_Leg_Plugin::Service_Callback(sar_msgs::Activate_Sticky_Pads::Request &req, sar_msgs::Activate_Sticky_Pads::Response &res)
+    {
+        printf("dfdfasd\n\n\n\n");
+
+        return true;
+    }
+
+    GZ_REGISTER_MODEL_PLUGIN(Sticky_Leg_Plugin);
 }

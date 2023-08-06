@@ -6,7 +6,8 @@
 #include <gazebo/common/common.hh>
 #include <gazebo/sensors/sensors.hh>
 
-
+#include "sar_msgs/Sticky_Pad_Connect.h"
+#include "sar_msgs/Activate_Sticky_Pads.h"
 
 #include <ros/ros.h>
 #include <thread>
@@ -14,19 +15,22 @@
 
 namespace gazebo {
 
-    class Leg_Connect_Plugin: public ModelPlugin
+    class Sticky_Leg_Plugin: public ModelPlugin
     {
         public:
             
         protected:
             void Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf);
             void OnUpdate();
+            bool Service_Callback(sar_msgs::Activate_Sticky_Pads::Request &req, sar_msgs::Activate_Sticky_Pads::Response &res);
+
 
         private:
 
             // SDF PARAMS
             std::string Joint_Name;
             std::string Link_Name;
+            std::string Leg_Number;
 
             bool Sticky_Flag = false;
 
@@ -60,7 +64,7 @@ namespace gazebo {
 
             // POSE UPDATES
             ros::NodeHandle nh;
-            ros::ServiceServer Cam_Update_Service;
+            ros::ServiceServer Leg_Connect_Service;
     };
 
 }

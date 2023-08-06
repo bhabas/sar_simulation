@@ -79,7 +79,7 @@
       </axis>
     </joint>
 
-    <plugin name='Leg_1_Plugin' filename='libLeg_Connect_Plugin.so'>
+    <plugin name='Leg_1_Plugin' filename='libSticky_Leg_Plugin.so'>
       <LegNumber>1</LegNumber>
       <linkName>Leg_1</linkName>
       <jointName>Leg_1_Joint</jointName>

@@ -25,8 +25,8 @@ include_directories(plugins/include ${catkin_INCLUDE_DIRS} ${GAZEBO_INCLUDE_DIRS
 add_library(Sticky_Foot_Plugin SHARED plugins/src/Sticky_Foot_Plugin.cpp)
 target_link_libraries(Sticky_Foot_Plugin ${GAZEBO_LIBRARIES})
 
-add_library(Leg_Connect_Plugin SHARED plugins/src/Leg_Connect_Plugin.cpp)
-target_link_libraries(Leg_Connect_Plugin ${GAZEBO_LIBRARIES})
+add_library(Sticky_Leg_Plugin SHARED plugins/src/Sticky_Leg_Plugin.cpp)
+target_link_libraries(Sticky_Leg_Plugin ${GAZEBO_LIBRARIES})
 
 add_library(Motor_Plugin SHARED plugins/src/Motor_Plugin.cpp)
 target_link_libraries(Motor_Plugin ${GAZEBO_LIBRARIES})

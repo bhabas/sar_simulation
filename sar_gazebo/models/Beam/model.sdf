@@ -50,7 +50,7 @@
       </visual>
     </link>
 
-    <plugin name='Leg_1_Plugin' filename='libLeg_Connect_Plugin.so'>
+    <plugin name='Leg_1_Plugin' filename='libSticky_Leg_Plugin.so'>
       <LegNumber>1</LegNumber>
       <LinkName>beam_link</LinkName>
       <CollisionName>beam_collision</CollisionName>
