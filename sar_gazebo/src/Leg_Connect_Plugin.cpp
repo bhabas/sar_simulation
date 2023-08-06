@@ -24,8 +24,7 @@ namespace gazebo
         }
 
         
-        contactPose.Set(0, 0, 0, 0, 0, 0);
-        Marker_Ptr->SetWorldPose(contactPose);
+        // Marker_Ptr->SetWorldPose(contactPose);
 
         // physics::LinkPtr Beam_Ptr = Model_Ptr->GetLink("beam_link");
         // physics::JointPtr joint = World_Ptr->Physics()->CreateJoint("ball", Model_Ptr);
@@ -45,7 +44,7 @@ namespace gazebo
         gazebo::physics::ContactManager *contactMgr = World_Ptr->Physics()->GetContactManager();
         unsigned int collisionCount = contactMgr->GetContactCount();
 
-        std::cout << collisionCount << std::endl;
+        // std::cout << collisionCount << std::endl;
 
         
         
@@ -61,17 +60,28 @@ namespace gazebo
             if (contact->collision1->GetModel() == Model_Ptr || contact->collision2->GetModel() == Model_Ptr)
             {
 
-                if (OnceFlag == false)
+                if (!OnceFlag)
                 {
-                    OnceFlag = true;
 
+                    ignition::math::Vector3d contactPosition = contact->positions[0];
+                    ignition::math::Pose3d surfacePose = Surface_Ptr->GetLink("Surface_Link")->WorldPose();
+                    ignition::math::Vector3d relativeContactPosition = surfacePose.Inverse().CoordPositionAdd(contactPosition);
+
+
+                    OnceFlag = true;
                     std::cout << "Starting Joint" << std::endl;
+                    std::cout << contact->positions[0] << std::endl;
+                    std::cout << contact->positions[1] << std::endl;
+
+
+                    std::cout << relativeContactPosition << std::endl;
+
                     
                     physics::LinkPtr Beam_Ptr = Model_Ptr->GetLink("beam_link");
                     physics::JointPtr joint = World_Ptr->Physics()->CreateJoint("ball", Model_Ptr);
-                    joint->Attach(Surface_Ptr->GetLink("Surface_Link"), Beam_Ptr);
-                    joint->Load(Surface_Ptr->GetLink("Surface_Link"), Beam_Ptr, contactPose);
-                    joint->SetAnchor(0, contactPose.Pos());
+                    joint->Attach(Beam_Ptr,Surface_Ptr->GetLink("Surface_Link"));
+                    joint->Load(Beam_Ptr,Surface_Ptr->GetLink("Surface_Link"), ignition::math::Pose3d(relativeContactPosition, ignition::math::Quaterniond::Identity));
+                    joint->SetAnchor(0, relativeContactPosition);
                     joint->Init();
 
                     Beam_Ptr->SetCollideMode("none");

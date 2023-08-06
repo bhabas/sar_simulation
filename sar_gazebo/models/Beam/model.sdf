@@ -19,14 +19,23 @@
       </inertial>
       <pose>0 0 0 0 0 0</pose>
       <gravity>1</gravity>
+
       <collision name='beam_collision'>
-        <pose>0 0 0.25 0 0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
         <geometry>
-          <box>
-            <size>0.01 0.01 0.5</size>
-          </box>
+          <sphere>
+            <radius>0.01</radius>
+          </sphere>
         </geometry>
       </collision>
+
+      <sensor name="contact_sensor" type="contact">
+        <update_rate>100.0</update_rate>
+        <contact>
+          <collision>beam_collision</collision>
+        </contact>
+      </sensor>
+
       <visual name="beam_visual">
         <pose>0 0 0.25 0 0 0</pose>
         <geometry>
