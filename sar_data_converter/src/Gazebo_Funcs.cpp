@@ -10,7 +10,7 @@ void SAR_DataConverter::activateStickyFeet()
     if(SAR_Config != "Base_Model")
     {
         sar_msgs::Activate_Sticky_Pads srv;
-        srv.request.stickyFlag = Sticky_Flag;
+        srv.request.Sticky_Flag = Sticky_Flag;
 
         ros::service::call("/activate_Sticky_Pad_1", srv);
         ros::service::call("/activate_Sticky_Pad_2", srv);

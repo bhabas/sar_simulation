@@ -21,10 +21,6 @@ catkin_package(
 
 include_directories(plugins/include ${catkin_INCLUDE_DIRS} ${GAZEBO_INCLUDE_DIRS})
 
-
-add_library(Sticky_Foot_Plugin SHARED plugins/src/Sticky_Foot_Plugin.cpp)
-target_link_libraries(Sticky_Foot_Plugin ${GAZEBO_LIBRARIES})
-
 add_library(Sticky_Leg_Plugin SHARED plugins/src/Sticky_Leg_Plugin.cpp)
 target_link_libraries(Sticky_Leg_Plugin ${GAZEBO_LIBRARIES})
 

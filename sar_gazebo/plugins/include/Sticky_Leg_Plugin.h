@@ -30,9 +30,10 @@ namespace gazebo {
             // SDF PARAMS
             std::string Joint_Name;
             std::string Link_Name;
-            std::string Leg_Number;
+            int Leg_Number;
 
-            bool Sticky_Flag = false;
+            bool Sticky_Flag = true;
+            bool Attached_Flag = false;
 
             // CONFIG PARAMS
             std::string SAR_Type;
@@ -49,6 +50,7 @@ namespace gazebo {
 
             ignition::math::Vector3d contactPositionWorld;  //
             ignition::math::Vector3d contactPositionLocal;  // With reference to contact surface link frame 
+            ignition::math::Vector3d contactPositionWorldUpdated;
             ignition::math::Pose3d contactPose;
             
 
