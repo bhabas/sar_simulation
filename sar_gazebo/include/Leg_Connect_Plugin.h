@@ -20,7 +20,7 @@ namespace gazebo {
             
         protected:
             void Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf);
-            void Init();
+            void OnUpdate();
 
         private:
 
@@ -38,7 +38,15 @@ namespace gazebo {
             physics::ModelPtr Model_Ptr;
             physics::JointPtr Joint_Ptr;
 
+            physics::ModelPtr Marker_Ptr;
+            physics::ModelPtr Surface_Ptr;
+            ignition::math::Pose3d contactPose;
+
+
+
             event::ConnectionPtr updateConnection;
+
+            bool OnceFlag = false;
 
 
             // POSE UPDATES
