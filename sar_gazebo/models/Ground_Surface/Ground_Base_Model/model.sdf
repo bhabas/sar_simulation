@@ -20,15 +20,7 @@
       <enable_wind>0</enable_wind>
       <kinematic>0</kinematic>
       <gravity>0</gravity>
-      <collision name='Ground_Collision'>
-        <max_contacts>10</max_contacts>
-        <pose>0 0 0.01 0 0 0</pose>
-        <geometry>
-          <box>
-            <size>1 1 0.01</size>
-          </box>
-        </geometry>
-      </collision>
+      
 
     </link>
 

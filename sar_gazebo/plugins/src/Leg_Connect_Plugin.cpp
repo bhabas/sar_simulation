@@ -7,15 +7,13 @@ namespace gazebo
     {
         gzmsg << "Loading Leg_Connect_Plugin\n";
 
-        Model_Ptr = _parent;
-        World_Ptr = Model_Ptr->GetWorld();
-
         Joint_Name = _sdf->GetElement("JointName")->Get<std::string>();
         Link_Name = _sdf->GetElement("LinkName")->Get<std::string>();
 
 
-        Leg_Ptr = Model_Ptr->GetLink(Link_Name);
-
+        Model_Ptr = _parent;
+        World_Ptr = Model_Ptr->GetWorld();
+        Leg_Link_Ptr = Model_Ptr->GetLink(Link_Name);
 
         updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&Leg_Connect_Plugin::OnUpdate, this));
 
@@ -36,42 +34,34 @@ namespace gazebo
             std::cout << "Collision_2: " + contact->collision2->GetModel()->GetName() << std::endl;
 
             // Check the models involved in the collision
-            if (contact->collision1->GetModel() == Model_Ptr)
+            if (contact->collision1->GetLink() == Leg_Link_Ptr)
             {
-                if (!OnceFlag)
+                if (!Sticky_Flag)
                 {
-                    Surface_Model_Ptr = contact->collision2->GetModel();
-                    Surface_Link_Ptr = Surface_Model_Ptr->GetLink("Surface_Link");
+                    Sticky_Flag = true;
+                    Surface_Link_Ptr = contact->collision2->GetLink();
 
-                    ignition::math::Vector3d contactPositionWorld = contact->positions[0];
-                    ignition::math::Vector3d contactPositionSurfaceLocal = contact->collision2->GetLink()->WorldPose().Inverse().CoordPositionAdd(contactPositionWorld);
-                    contactPositionSurfaceLocal -= ignition::math::Vector3d(0,0,collision_radius);
-                    ignition::math::Vector3d contactPositionWorldUpdated = contact->collision2->GetLink()->WorldPose().CoordPositionAdd(contactPositionSurfaceLocal);
-                    ignition::math::Pose3d contactPose(contactPositionWorldUpdated, ignition::math::Quaterniond::Identity);
+                    std::cout << contact->collision2->GetModel()->GetName() << std::endl;
+                    std::cout << contact->collision2->GetLink()->GetName() << std::endl;
 
 
-                    OnceFlag = true;
+                    contactPositionWorld = contact->positions[0];
+                    contactPositionLocal = contact->collision2->GetLink()->WorldPose().Inverse().CoordPositionAdd(contactPositionWorld);
+                    contactPositionLocal -= ignition::math::Vector3d(0,0,collision_radius); // Offset for collision sphere radius
+                    contactPose.Set(contactPositionLocal, ignition::math::Quaterniond::Identity);
+
                     std::cout << "Starting Joint" << std::endl;
-                    std::cout << contact->positions[0] << std::endl;
-
                     std::cout << contactPositionWorld << std::endl;
-                    std::cout << contactPositionSurfaceLocal << std::endl;
-                    std::cout << contactPositionWorldUpdated << std::endl;
+                    std::cout << contactPositionLocal << std::endl;
 
+                    Contact_Joint_Ptr = World_Ptr->Physics()->CreateJoint("ball", Model_Ptr);
+                    Contact_Joint_Ptr->Attach(Leg_Link_Ptr,Surface_Link_Ptr);
+                    Contact_Joint_Ptr->SetName(Joint_Name);
+                    Contact_Joint_Ptr->Load(Leg_Link_Ptr,Surface_Link_Ptr, contactPose);
+                    Contact_Joint_Ptr->SetAnchor(0, contactPose.Pos());
+                    Contact_Joint_Ptr->Init();
 
-                    
-                    
-                    Joint_Ptr = World_Ptr->Physics()->CreateJoint("ball", Model_Ptr);
-                    Joint_Ptr->Attach(Leg_Ptr,Surface_Link_Ptr);
-                    Joint_Ptr->SetName(Joint_Name);
-                    Joint_Ptr->Load(Leg_Ptr,Surface_Link_Ptr, contactPose);
-                    Joint_Ptr->SetAnchor(0, contactPose.Pos());
-                    Joint_Ptr->Init();
-
-                    Leg_Ptr->SetCollideMode("none");
-
-
-
+                    Leg_Link_Ptr->SetCollideMode("none");
                     std::cout << "Finish Joint" << std::endl;
                 }
 

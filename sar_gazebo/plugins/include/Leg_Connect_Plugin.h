@@ -28,6 +28,8 @@ namespace gazebo {
             std::string Joint_Name;
             std::string Link_Name;
 
+            bool Sticky_Flag = false;
+
             // CONFIG PARAMS
             std::string SAR_Type;
             std::string SAR_Config;
@@ -37,23 +39,23 @@ namespace gazebo {
             // GAZEBO POINTERS
             physics::WorldPtr World_Ptr;
             physics::ModelPtr Model_Ptr;
-            physics::JointPtr Joint_Ptr;
+            physics::JointPtr Contact_Joint_Ptr;
 
             double collision_radius = 0.01;
+
+            ignition::math::Vector3d contactPositionWorld;  //
+            ignition::math::Vector3d contactPositionLocal;  // With reference to contact surface link frame 
+            ignition::math::Pose3d contactPose;
             
 
-            physics::LinkPtr Leg_Ptr;
-
-            physics::ModelPtr Surface_Model_Ptr;
+            physics::LinkPtr Leg_Link_Ptr;
             physics::LinkPtr Surface_Link_Ptr;
 
-            ignition::math::Pose3d contactPose;
 
 
 
             event::ConnectionPtr updateConnection;
 
-            bool OnceFlag = false;
 
 
             // POSE UPDATES
