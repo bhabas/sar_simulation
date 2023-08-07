@@ -61,13 +61,18 @@ namespace gazebo
 
     bool Sticky_Leg_Plugin::Service_Callback(sar_msgs::Activate_Sticky_Pads::Request &req, sar_msgs::Activate_Sticky_Pads::Response &res)
     {
-
-        // TURN OFF AND DETACH STICKY LEG
-        if (req.Sticky_Flag == false && Attached_Flag == true) 
+        if (req.Sticky_Flag == false)
         {
             // TURN OFF STICKY BEHAVIOR
             Sticky_Flag = false;
             printf("[Leg_%d]: Sticky Disabled\n", Leg_Number);
+        }
+        
+
+        // TURN OFF AND DETACH STICKY LEG
+        if (req.Sticky_Flag == false && Attached_Flag == true) 
+        {
+            
 
             // REMOVE CREATED JOINT
             Model_Ptr->RemoveJoint(Joint_Name);
@@ -83,7 +88,7 @@ namespace gazebo
         }
 
         // TURN ON STICKY LEG
-        if (req.Sticky_Flag == true && Sticky_Flag == false)
+        if (req.Sticky_Flag == true)
         {
             Sticky_Flag = true;
             printf("[Leg_%d]: Sticky_Enabled\n", Leg_Number);

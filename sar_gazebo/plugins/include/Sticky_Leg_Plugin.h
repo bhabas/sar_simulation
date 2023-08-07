@@ -46,7 +46,7 @@ namespace gazebo {
             physics::ModelPtr Model_Ptr;
             physics::JointPtr Contact_Joint_Ptr;
 
-            double collision_radius = 0.01;
+            double collision_radius = 0.002;
 
             ignition::math::Vector3d contactPositionWorld;  //
             ignition::math::Vector3d contactPositionLocal;  // With reference to contact surface link frame 
