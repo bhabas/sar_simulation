@@ -161,7 +161,7 @@
           <ixz>0</ixz>
           <iyy>0.155e-6</iyy>
           <iyz>0</iyz>
-          <izz>2.5e-9</izz>
+          <izz>0.04e-6</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -306,7 +306,7 @@
       </axis2>
     </joint> -->
 
-    <joint name='Hinge_4_Joint' type='revolute'>
+    <joint name='Hinge_4_Joint' type='universal'>
       <parent>Base_Model::SAR_Body</parent>
       <child>Leg_4</child>
       <pose>0 0 0 0 0 0</pose>
@@ -319,8 +319,10 @@
           <velocity>-1</velocity>
         </limit>
         <dynamics>
+          <spring_reference>0</spring_reference>
           <spring_stiffness>0.8e-3</spring_stiffness>
           <damping>5e-6</damping>
+          <friction>0</friction>
         </dynamics>
       </axis>
       <axis2>
@@ -333,8 +335,8 @@
         </limit>
         <dynamics>
           <spring_reference>0</spring_reference>
-          <spring_stiffness>0.09</spring_stiffness>
-          <damping>6.788e-05</damping>
+          <spring_stiffness>0.8e-3</spring_stiffness>
+          <damping>5e-6</damping>
           <friction>0</friction>
         </dynamics>
       </axis2>
