@@ -6,18 +6,18 @@
       <uri>model://Base_Model</uri>
     </include>
 
-    <!-- <link name='Leg_1'>
+    <link name='Leg_1'>
       <pose>2.07e-02 -2.07e-02 -3.25e-03 0 -0.087 -0.785</pose>
       <inertial>
         <mass>0.570e-3</mass>
-        <pose>0 0 -0.025 0 0 0 </pose>
+        <pose>0 0 0 0 0 0 </pose>
         <inertia>
-          <ixx>155e-9</ixx>
+          <ixx>0.155e-6</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>155e-9</iyy>
+          <iyy>0.155e-6</iyy>
           <iyz>0</iyz>
-          <izz>2.5e-9</izz>
+          <izz>0.040e-6</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -58,14 +58,14 @@
       <pose>-2.07e-02 -2.07e-02 -3.25e-03 0 -0.087 -2.358</pose>
       <inertial>
         <mass>0.570e-3</mass>
-        <pose>0 0 -0.025 0 0 0 </pose>
+        <pose>0 0 0 0 0 0 </pose>
         <inertia>
-          <ixx>155e-9</ixx>
+          <ixx>0.155e-6</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>155e-9</iyy>
+          <iyy>0.155e-6</iyy>
           <iyz>0</iyz>
-          <izz>2.5e-9</izz>
+          <izz>0.040e-6</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -106,14 +106,14 @@
       <pose>-2.07e-02 2.07e-02 -3.25e-03 0 -0.087 2.358</pose>
       <inertial>
         <mass>0.570e-3</mass>
-        <pose>0 0 -0.025 0 0 0 </pose>
+        <pose>0 0 0 0 0 0 </pose>
         <inertia>
-          <ixx>155e-9</ixx>
+          <ixx>0.155e-6</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>155e-9</iyy>
+          <iyy>0.155e-6</iyy>
           <iyz>0</iyz>
-          <izz>2.5e-9</izz>
+          <izz>0.040e-6</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -148,7 +148,7 @@
           <collision>Leg_3_Collision</collision>
         </contact>
       </sensor>
-    </link> -->
+    </link>
 
     <link name='Leg_4'>
       <pose>2.07e-02 2.07e-02 -3.25e-03 0 -0.087 0.785</pose>
@@ -161,7 +161,7 @@
           <ixz>0</ixz>
           <iyy>0.155e-6</iyy>
           <iyz>0</iyz>
-          <izz>0.04e-6</izz>
+          <izz>0.040e-6</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -198,38 +198,30 @@
       </sensor>
     </link>
 
-    <!-- <joint name='Hinge_1_Joint' type='universal'>
+    <joint name='Hinge_1_Joint' type='universal'>
       <parent>Base_Model::SAR_Body</parent>
       <child>Leg_1</child>
-      <pose>0 0 0 0 0.786 0</pose>
+      <pose>0 0 0 0 0 0</pose>
       <axis>
         <xyz>0 1 0</xyz>
         <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
+          <lower>-1.0</lower>
+          <upper>1.0</upper>
         </limit>
         <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0.08</spring_stiffness>
-          <damping>6.788e-05</damping>
-          <friction>0</friction>
+          <spring_stiffness>800e-6</spring_stiffness>
+          <damping>5e-6</damping>
         </dynamics>
       </axis>
       <axis2>
         <xyz>0 0 1</xyz>
         <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
+          <lower>-0.25</lower>
+          <upper>0.25</upper>
         </limit>
         <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0.09</spring_stiffness>
-          <damping>6.788e-05</damping>
-          <friction>0</friction>
+          <spring_stiffness>800e-6</spring_stiffness>
+          <damping>5e-6</damping>
         </dynamics>
       </axis2>
     </joint>
@@ -237,35 +229,27 @@
     <joint name='Hinge_2_Joint' type='universal'>
       <parent>Base_Model::SAR_Body</parent>
       <child>Leg_2</child>
-      <pose>0 0 0 0 0.786 0</pose>
+      <pose>0 0 0 0 0 0</pose>
       <axis>
         <xyz>0 1 0</xyz>
         <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
+          <lower>-1.0</lower>
+          <upper>1.0</upper>
         </limit>
         <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0.08</spring_stiffness>
-          <damping>6.788e-05</damping>
-          <friction>0</friction>
+          <spring_stiffness>800e-6</spring_stiffness>
+          <damping>5e-6</damping>
         </dynamics>
       </axis>
       <axis2>
         <xyz>0 0 1</xyz>
         <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
+          <lower>-0.25</lower>
+          <upper>0.25</upper>
         </limit>
         <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0.09</spring_stiffness>
-          <damping>6.788e-05</damping>
-          <friction>0</friction>
+          <spring_stiffness>800e-6</spring_stiffness>
+          <damping>5e-6</damping>
         </dynamics>
       </axis2>
     </joint>
@@ -273,38 +257,30 @@
     <joint name='Hinge_3_Joint' type='universal'>
       <parent>Base_Model::SAR_Body</parent>
       <child>Leg_3</child>
-      <pose>0 0 0 0 0.786 0</pose>
+      <pose>0 0 0 0 0 0</pose>
       <axis>
         <xyz>0 1 0</xyz>
         <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
+          <lower>-1.0</lower>
+          <upper>1.0</upper>
         </limit>
         <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0.08</spring_stiffness>
-          <damping>6.788e-05</damping>
-          <friction>0</friction>
+          <spring_stiffness>800e-6</spring_stiffness>
+          <damping>5e-6</damping>
         </dynamics>
       </axis>
       <axis2>
         <xyz>0 0 1</xyz>
         <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
+          <lower>-0.25</lower>
+          <upper>0.25</upper>
         </limit>
         <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0.09</spring_stiffness>
-          <damping>6.788e-05</damping>
-          <friction>0</friction>
+          <spring_stiffness>800e-6</spring_stiffness>
+          <damping>5e-6</damping>
         </dynamics>
       </axis2>
-    </joint> -->
+    </joint>
 
     <joint name='Hinge_4_Joint' type='universal'>
       <parent>Base_Model::SAR_Body</parent>
@@ -313,37 +289,29 @@
       <axis>
         <xyz>0 1 0</xyz>
         <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
+          <lower>-1.0</lower>
+          <upper>1.0</upper>
         </limit>
         <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0.8e-3</spring_stiffness>
+          <spring_stiffness>800e-6</spring_stiffness>
           <damping>5e-6</damping>
-          <friction>0</friction>
         </dynamics>
       </axis>
       <axis2>
         <xyz>0 0 1</xyz>
         <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
+          <lower>-0.25</lower>
+          <upper>0.25</upper>
         </limit>
         <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0.8e-3</spring_stiffness>
+          <spring_stiffness>800e-6</spring_stiffness>
           <damping>5e-6</damping>
-          <friction>0</friction>
         </dynamics>
       </axis2>
     </joint>
 
 
-    <!-- <plugin name='Leg_1_Plugin' filename='libSticky_Leg_Plugin.so'>
+    <plugin name='Leg_1_Plugin' filename='libSticky_Leg_Plugin.so'>
       <LegNumber>1</LegNumber>
       <LinkName>Leg_1</LinkName>
       <CollisionName>Leg_1_Collision</CollisionName>
@@ -362,7 +330,7 @@
       <LinkName>Leg_3</LinkName>
       <CollisionName>Leg_3_Collision</CollisionName>
       <JointName>Leg_3_Contact_Joint</JointName>
-    </plugin> -->
+    </plugin>
 
     <plugin name='Leg_4_Plugin' filename='libSticky_Leg_Plugin.so'>
       <LegNumber>4</LegNumber>

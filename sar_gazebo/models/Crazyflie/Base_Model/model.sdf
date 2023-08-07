@@ -722,11 +722,11 @@
       <rotorVisualSlowdown>100</rotorVisualSlowdown>
     </plugin>
 
-    <joint name='World_Joint' type='fixed'>
+    <!-- <joint name='World_Joint' type='fixed'>
       <parent>world</parent>
       <child>SAR_Body</child>
       <pose>0 0 0 0 0 0</pose>
-    </joint>
+    </joint> -->
     
 
     <!-- <plugin name='SAR_Update_Plugin' filename='libSAR_Update_Plugin.so'>
