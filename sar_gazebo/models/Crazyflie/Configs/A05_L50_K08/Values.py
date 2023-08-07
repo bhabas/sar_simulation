@@ -40,11 +40,13 @@ if __name__ == "__main__":
     I = float(input("Enter Moment of Inertia (I): "))
     K = float(input("Enter Spring Stiffness (K): "))
     C = float(input("Enter Damping Coefficient (C): "))
-    
+
     # Calculate expected values
     omega_n_expected, zeta_expected = calculate_expected_values(I, K, C)
     print(f"Expected Natural Frequency: {omega_n_expected:.3f} rad/s")
+    print(f"Expected Period: {2*np.pi/omega_n_expected:.3f} s")
     print(f"Expected Damping Ratio: {zeta_expected:.3f}")
+
     
     # Get the filename for the data
     filename = input("Enter the path to the CSV data file (or 'skip' to bypass): ")
