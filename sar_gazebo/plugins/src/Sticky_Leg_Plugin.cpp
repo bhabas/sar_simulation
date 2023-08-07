@@ -50,8 +50,6 @@ namespace gazebo
                     Contact_Joint_Ptr = Model_Ptr->CreateJoint(Joint_Name, "ball", Leg_Link_Ptr, Surface_Link_Ptr);
                     Contact_Joint_Ptr->SetAnchor(0, contactPose.Pos()); // Contact point offset by collision radius
 
-                    // DISABLE FUTURE CONTACTS FOR LINK (ALLOWS FREE ROTATION)
-                    Leg_Link_Ptr->SetCollideMode("none");
                     printf("[Leg_%d]: Joint Created\t(%s->%s)\n", Leg_Number, Leg_Link_Ptr->GetName().c_str(), Surface_Link_Ptr->GetName().c_str());
                 
                 }
@@ -82,9 +80,6 @@ namespace gazebo
             Attached_Flag = false;
             Contact_Joint_Ptr = NULL;
             Surface_Link_Ptr = NULL;
-            
-            // REACTIVATE COLLISION IN LINK
-            Leg_Link_Ptr->SetCollideMode("all");
         }
 
         // TURN ON STICKY LEG
