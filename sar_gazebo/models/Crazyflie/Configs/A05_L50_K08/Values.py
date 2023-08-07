@@ -3,12 +3,12 @@ import pandas as pd
 import numpy as np
 from scipy.signal import find_peaks
 
-def calculate_expected_values(I, K, C):
+def calculate_expected_values(I, K, Zeta):
     # Natural Frequency
     omega_n = (K / I)**0.5
     # Damping Ratio
-    zeta = C / (2 * (K * I)**0.5)
-    return omega_n, zeta
+    C = Zeta*(2 * (K * I)**0.5)
+    return omega_n, C
 
 def calculate_from_data(filename):
     # Load the data
@@ -39,13 +39,13 @@ if __name__ == "__main__":
     # Input parameters
     I = float(input("Enter Moment of Inertia (I): "))
     K = float(input("Enter Spring Stiffness (K): "))
-    C = float(input("Enter Damping Coefficient (C): "))
+    Zeta = float(input("Enter Damping Ratio (Zeta): "))
 
     # Calculate expected values
-    omega_n_expected, zeta_expected = calculate_expected_values(I, K, C)
+    omega_n_expected, C_expected = calculate_expected_values(I, K, Zeta)
     print(f"Expected Natural Frequency: {omega_n_expected:.3f} rad/s")
     print(f"Expected Period: {2*np.pi/omega_n_expected:.3f} s")
-    print(f"Expected Damping Ratio: {zeta_expected:.3f}")
+    print(f"Expected Damping Coefficient: {C_expected}")
 
     
     # Get the filename for the data

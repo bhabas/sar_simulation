@@ -45,76 +45,65 @@ namespace gazebo
         Inertial_Ptr->SetIYY(Iyy);
         Inertial_Ptr->SetIZZ(Izz);
         Inertial_Ptr->SetMass(Mass);
-
-
-        gazebo::physics::Joint_V joints = Config_Model_Ptr->GetJoints();
-
-        for (auto &joint : joints) {
-            gzdbg << "Joint name: " << joint->GetName() << "\n";
-        }
-        
-        physics::LinkPtr Leg_1_LinkPtr = Config_Model_Ptr->GetLink("leg1");
-        physics::LinkPtr Leg_2_LinkPtr = Config_Model_Ptr->GetLink("leg2");
-        physics::LinkPtr Leg_3_LinkPtr = Config_Model_Ptr->GetLink("leg3");
-        physics::LinkPtr Leg_4_LinkPtr = Config_Model_Ptr->GetLink("leg4");
+       
+        physics::LinkPtr Leg_1_LinkPtr = Config_Model_Ptr->GetLink("Leg_1");
+        physics::LinkPtr Leg_2_LinkPtr = Config_Model_Ptr->GetLink("Leg_2");
+        physics::LinkPtr Leg_3_LinkPtr = Config_Model_Ptr->GetLink("Leg_3");
+        physics::LinkPtr Leg_4_LinkPtr = Config_Model_Ptr->GetLink("Leg_4");
 
         
-        physics::JointPtr Leg_1_JointPtr = Config_Model_Ptr->GetJoint("leg_joint_1");
-        physics::JointPtr Leg_2_JointPtr = Config_Model_Ptr->GetJoint("leg_joint_2");
-        physics::JointPtr Leg_3_JointPtr = Config_Model_Ptr->GetJoint("leg_joint_3");
-        physics::JointPtr Leg_4_JointPtr = Config_Model_Ptr->GetJoint("leg_joint_4");
-
-        // gzdbg << Leg_1_JointPtr->GetStiffness(0) << "\n";
-        // gzdbg << Leg_1_JointPtr->GetStiffness(1) << "\n";
-        // gzdbg << Leg_1_JointPtr->GetDamping(0) << "\n";
-        // gzdbg << Leg_1_JointPtr->GetDamping(1) << "\n";
-
-        // gzdbg << Leg_2_JointPtr->UpperLimit(0) << "\n";
-        // gzdbg << Leg_2_JointPtr->LowerLimit(0) << "\n";
-        // gzdbg << Leg_2_JointPtr->GetStopDissipation(0) << "\n";
-        // gzdbg << Leg_2_JointPtr->GetStopStiffness(0) << "\n";
-
-        // gzdbg << Leg_3_JointPtr->GetStiffness(0) << "\n";
-        // gzdbg << Leg_3_JointPtr->GetStiffness(1) << "\n";
-        // gzdbg << Leg_3_JointPtr->GetDamping(0) << "\n";
-        // gzdbg << Leg_3_JointPtr->GetDamping(1) << "\n";
-
-        // gzdbg << Leg_4_JointPtr->GetStiffness(0) << "\n";
-        // gzdbg << Leg_4_JointPtr->GetStiffness(1) << "\n";
-        // gzdbg << Leg_4_JointPtr->GetDamping(0) << "\n";
-        // gzdbg << Leg_4_JointPtr->GetDamping(1) << "\n";
+        physics::JointPtr Hinge_1_JointPtr = Config_Model_Ptr->GetJoint("Hinge_1_Joint");
+        physics::JointPtr Hinge_2_JointPtr = Config_Model_Ptr->GetJoint("Hinge_2_Joint");
+        physics::JointPtr Hinge_3_JointPtr = Config_Model_Ptr->GetJoint("Hinge_3_Joint");
+        physics::JointPtr Hinge_4_JointPtr = Config_Model_Ptr->GetJoint("Hinge_4_Joint");
 
         double Iyy_Leg = Leg_1_LinkPtr->GetInertial()->IYY();
         double Ixx_Leg = Leg_1_LinkPtr->GetInertial()->IXX();
         double Izz_Leg = Leg_1_LinkPtr->GetInertial()->IZZ();
 
-        double K_pitch;
-        double Zeta_pitch;
-        double C_pitch;
+        double K_Pitch;
+        double DR_Pitch;
+        double C_Pitch;
 
-        ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/K_Pitch",K_pitch);
-        ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/C_Pitch",C_pitch);
-        ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/DR_Pitch",Zeta_pitch);
+        double K_Yaw;
+        double DR_Yaw;
+        double C_Yaw;
 
-    
+        ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/K_Pitch",K_Pitch);
+        ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/DR_Pitch",DR_Pitch);
+
+        ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/K_Yaw",K_Yaw);
+        ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/DR_Yaw",DR_Yaw);
+
+        C_Pitch = DR_Pitch*2*sqrt(K_Pitch*Iyy_Leg);
+        C_Yaw = DR_Yaw*2*sqrt(K_Yaw*Izz_Leg);
+
 
         // Leg_1_JointPtr->SetUpperLimit(Y_AXIS,5*Deg2Rad);
         // Leg_1_JointPtr->SetLowerLimit(Y_AXIS,-80*Deg2Rad);
-        Leg_1_JointPtr->SetStiffnessDamping(Y_AXIS,K_pitch,C_pitch,0);
+        Hinge_1_JointPtr->SetStiffnessDamping(Y_AXIS,K_Pitch,C_Pitch,0);
+        Hinge_1_JointPtr->SetStiffnessDamping(Z_AXIS,K_Yaw,C_Yaw,0);
+
 
 
         // Leg_2_JointPtr->SetUpperLimit(Y_AXIS,5*Deg2Rad);
         // Leg_2_JointPtr->SetLowerLimit(Y_AXIS,-80*Deg2Rad);
-        Leg_2_JointPtr->SetStiffnessDamping(Y_AXIS,K_pitch,C_pitch,0);
+        Hinge_2_JointPtr->SetStiffnessDamping(Y_AXIS,K_Pitch,C_Pitch,0);
+        Hinge_2_JointPtr->SetStiffnessDamping(Z_AXIS,K_Yaw,C_Yaw,0);
+
 
 
         // Leg_3_JointPtr->SetUpperLimit(Y_AXIS,5*Deg2Rad);
         // Leg_3_JointPtr->SetLowerLimit(Y_AXIS,-80*Deg2Rad);
-        Leg_3_JointPtr->SetStiffnessDamping(Y_AXIS,K_pitch,C_pitch,0);
+        Hinge_3_JointPtr->SetStiffnessDamping(Y_AXIS,K_Pitch,C_Pitch,0);
+        Hinge_3_JointPtr->SetStiffnessDamping(Z_AXIS,K_Yaw,C_Yaw,0);
+
 
         // Leg_4_JointPtr->SetUpperLimit(Y_AXIS,5*Deg2Rad);
         // Leg_4_JointPtr->SetLowerLimit(Y_AXIS,-80*Deg2Rad);
-        Leg_4_JointPtr->SetStiffnessDamping(Y_AXIS,K_pitch,C_pitch,0);
+        Hinge_4_JointPtr->SetStiffnessDamping(Y_AXIS,K_Pitch,C_Pitch,0);
+        Hinge_4_JointPtr->SetStiffnessDamping(Z_AXIS,K_Yaw,C_Yaw,0);
+
 
         printf("\n\n");
     }

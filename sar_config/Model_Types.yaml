@@ -60,14 +60,13 @@ SAR_Type:
 
         Leg_Angle: 5          # Leg Angle [deg]
         Leg_Length: 50.0e-3   # Leg Length [m]
-        Leg_Stiffness: 8      # Leg Stiffness [N*mm/rad]
+        Leg_Stiffness: 8      # Leg Stiffness [N*m/rad]
 
-        K_Pitch: 0.08         # Pitch-Axis Stiffness [N/rad]
-        C_Pitch: 10.1e-4
-        DR_Pitch: 0.5         # Pitch-Axis Damping Ratio
+        K_Pitch: 800.0e-6         # Pitch-Axis Stiffness [N*m/rad]
+        DR_Pitch: 0.3         # Pitch-Axis Damping Ratio
 
-        K_Yaw: 0.08           # Yaw-Axis Stiffness [N/rad]
-        DR_Yaw: 0.5           # Yaw-Axis Damping Ratio
+        K_Yaw: 1600.0e-6           # Yaw-Axis Stiffness [N*m/rad]
+        DR_Yaw: 0.8           # Yaw-Axis Damping Ratio
 
       A05_L50_K32: 
         Mass: 38.1e-3         # [kg]
