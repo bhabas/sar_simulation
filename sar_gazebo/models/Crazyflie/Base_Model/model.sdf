@@ -312,7 +312,7 @@
       </visual>
 
 
-      <!-- <collision name='body_collision'>
+      <collision name='body_collision'>
         <max_contacts>1</max_contacts>
         <pose>0 0 0.01 0 0 0</pose>
         <geometry>
@@ -341,8 +341,8 @@
             </bullet>
           </contact>
         </surface>
-      </collision> -->
-      <!-- <collision name='base_collision'>
+      </collision>
+      <collision name='base_collision'>
         <max_contacts>1</max_contacts>
         <pose>0 0 -0.005 0 0 0</pose>
         <geometry>
@@ -371,7 +371,7 @@
             </bullet>
           </contact>
         </surface>
-      </collision> -->
+      </collision>
     </link>
 
 
@@ -406,10 +406,6 @@
       <frameName>SAR_Body</frameName>
     </plugin>
 
-
-    <!-- <plugin name='Domain_Randomization_Plugin' filename='libDomain_Randomization_Plugin.so'>
-        <bodyName>SAR_Body</bodyName>
-    </plugin> -->
 
     <!-- <plugin name='Cam_Update_Plugin' filename='libCam_Update_Plugin.so'>
         <bodyName>SAR_Body</bodyName>

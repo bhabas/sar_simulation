@@ -77,31 +77,53 @@
     </light>
 
     <physics type="bullet"> <!-- Or "ode", if you want to try with ODE first -->
-        <max_step_size>0.0001</max_step_size>
+        <max_step_size>0.001</max_step_size>
+        <real_time_factor>1</real_time_factor>
+        <real_time_update_rate>500</real_time_update_rate>
+
+
+        <!-- Bullet-specific parameters -->
+        <bullet>
+            <solver>
+                <type>SequentialImpulse</type>
+                <min_step_size>0.0001</min_step_size>
+                <iters>50</iters>
+                <sor>1.3</sor>
+            </solver>
+            <constraints>
+                <cfm>0.00001</cfm>
+                <erp>0.3</erp>
+                <contact_surface_layer>0.001</contact_surface_layer>
+            </constraints>
+        </bullet>
+    </physics>
+
+    <!-- <physics type="dart">
+        <max_step_size>0.001</max_step_size>
         <real_time_factor>1</real_time_factor>
         <real_time_update_rate>1000</real_time_update_rate>
 
         <gravity>0 0 -9.81</gravity>
 
-        <!-- Bullet-specific parameters -->
-        <ode>
+        <dart>
             <solver>
-                <type>quick</type>
-                <iters>500</iters>
-                <precon_iters>50</precon_iters>
-                <sor>1.5</sor>
-                <use_dynamic_moi_rescaling>true</use_dynamic_moi_rescaling>
+                <solver_type>PGS</solver_type>
+                <iterations>500</iterations>
+                <tolerance>1e-5</tolerance>
+                <alpha>1.0</alpha>
+                <threads>0</threads>
             </solver>
             <constraints>
-                <cfm>0.000001</cfm>
-                <erp>0.8</erp>
-                <contact_max_correcting_vel>500.0</contact_max_correcting_vel>
-                <contact_surface_layer>0.0001</contact_surface_layer>
+                <constraint_forces_merging>true</constraint_forces_merging>
+                <joint_position_limit>true</joint_position_limit>
+                <joint_velocity_limit>true</joint_velocity_limit>
+                <joint_coulomb_friction>true</joint_coulomb_friction>
+                <joint_limit_impulse>true</joint_limit_impulse>
+                <link_contact>true</link_contact>
+                <joint_contact>true</joint_contact>
             </constraints>
-        </ode>
-
-    
-    </physics>
+        </dart>
+    </physics> -->
 
 
     <scene>
