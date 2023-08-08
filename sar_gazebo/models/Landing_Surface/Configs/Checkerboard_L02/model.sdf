@@ -5,11 +5,11 @@
       <uri>model://Plane_Base_Model</uri>
     </include>
 
-    <!-- <link name='Plane_Pattern'>
+    <link name='Plane_Pattern'>
 
       <visual name='Pattern_Visual'>
         <cast_shadows>0</cast_shadows>
-        <pose>0 0 0.01 0 0 0</pose>
+        <pose>0 0 0.005 0 0 0</pose>
         <geometry>
           <box>
             <size>4 4 0.01</size>
@@ -29,7 +29,7 @@
     <joint name='Surface_Pattern_Joint' type='fixed'>
       <parent>Plane_Base_Model::Surface_Link</parent>
       <child>Plane_Pattern</child>
-    </joint> -->
+    </joint>
 
     <static>0</static>
   <allow_auto_disable>1</allow_auto_disable>

@@ -79,7 +79,7 @@
     <physics type="bullet"> <!-- Or "ode", if you want to try with ODE first -->
         <max_step_size>0.001</max_step_size>
         <real_time_factor>1</real_time_factor>
-        <real_time_update_rate>500</real_time_update_rate>
+        <real_time_update_rate>200</real_time_update_rate>
 
 
         <!-- Bullet-specific parameters -->

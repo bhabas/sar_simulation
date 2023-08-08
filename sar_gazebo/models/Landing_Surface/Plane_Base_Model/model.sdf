@@ -38,34 +38,12 @@
       </visual>
       <collision name='Surface_Collision'>
         <max_contacts>10</max_contacts>
-        <pose>0 0 0.01 0 0 0</pose>
+        <pose>0 0 0.025 0 0 0</pose>
         <geometry>
           <box>
-            <size>10 2 0.01</size>
+            <size>10 2 0.05</size>
           </box>
         </geometry>
-        <surface>
-          <friction>
-            <ode>
-              <mu>100000</mu>
-              <mu2>100000</mu2>
-              <fdir1>0 0 0</fdir1>
-            </ode>
-          </friction>
-          <bounce>
-            <restitution_coefficient>0</restitution_coefficient>
-          </bounce>
-          <contact>
-            <ode>
-              <soft_cfm>0</soft_cfm>
-              <soft_erp>0.2</soft_erp>
-            </ode>
-            <bullet>
-              <soft_cfm>0</soft_cfm>
-              <soft_erp>0.2</soft_erp>
-            </bullet>
-          </contact>
-        </surface>
       </collision>
     </link>
 
