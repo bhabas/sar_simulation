@@ -25,6 +25,7 @@ namespace gazebo {
         protected:
             void Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf);
             void Update_Camera();
+            void Update_Hinge_Params();
             bool Service_Callback(sar_msgs::Cam_Settings::Request &req, sar_msgs::Cam_Settings::Response &res);
 
 
@@ -45,6 +46,32 @@ namespace gazebo {
             physics::LinkPtr SAR_Body_Ptr;
             physics::JointPtr Joint_Ptr;
             physics::InertialPtr Inertial_Ptr;
+            physics::WorldPtr World_Ptr;
+
+            double K_Pitch;
+            double DR_Pitch;
+            double C_Pitch;
+
+            double K_Yaw;
+            double DR_Yaw;
+            double C_Yaw;
+
+            double Leg_Angle;
+
+            double Iyy_Leg;
+            double Ixx_Leg;
+            double Izz_Leg;
+
+            physics::LinkPtr Leg_1_LinkPtr;
+            physics::LinkPtr Leg_2_LinkPtr;
+            physics::LinkPtr Leg_3_LinkPtr;
+            physics::LinkPtr Leg_4_LinkPtr;
+
+            physics::JointPtr Hinge_1_JointPtr;
+            physics::JointPtr Hinge_2_JointPtr;
+            physics::JointPtr Hinge_3_JointPtr;
+            physics::JointPtr Hinge_4_JointPtr;
+
 
 
             // SENSOR POINTERS

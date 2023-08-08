@@ -4,13 +4,13 @@
 namespace gazebo
 {
     void Sticky_Leg_Plugin::Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf)
-    {
-        gzmsg << "Loading Sticky_Leg_Plugin\n";
-
-        // GRAB VALUES FROM SDF
+    {        
+        // LOAD VALUES FROM SDF
         Joint_Name = _sdf->GetElement("JointName")->Get<std::string>();
         Link_Name = _sdf->GetElement("LinkName")->Get<std::string>();
         Leg_Number = _sdf->GetElement("LegNumber")->Get<int>();
+
+        gzmsg << "Loading Sticky_Leg_Plugin: " + Link_Name + "\n";
 
         // CREATE NECESSARY POINTERS
         Model_Ptr = _parent;
@@ -20,8 +20,6 @@ namespace gazebo
         // INIT SERVICE AND UPDATE CALLBACK
         updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&Sticky_Leg_Plugin::OnUpdate, this));
         Leg_Connect_Service = nh.advertiseService("/SAR_Internal/Sticky_Leg_" + std::to_string(Leg_Number), &Sticky_Leg_Plugin::Service_Callback, this);
-
-        printf("\n\n");
     }
 
     void Sticky_Leg_Plugin::OnUpdate()
