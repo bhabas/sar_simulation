@@ -45,6 +45,21 @@
           </box>
         </geometry>
       </collision>
+
+      <sensor name='Surface_Contact_Sensor' type='contact'>
+        <always_on>1</always_on>
+        <visualize>1</visualize>
+        <contact>
+          <collision>Surface_Collision</collision>
+          <topic>__default_topic__</topic>
+        </contact>
+        <plugin name='Surface_Contact_Plugin' filename='libgazebo_ros_bumper.so'>
+          <bumperTopicName>/ENV/SurfaceContact</bumperTopicName>
+          <frameName>Surface_Link</frameName>
+          <alwaysOn>true</alwaysOn>
+          <updateRate>500</updateRate>
+        </plugin>
+      </sensor>
     </link>
 
     <plugin name='Landing_Surface_Pose_Plugin' filename='libLanding_Surface_Pose_Plugin.so'>

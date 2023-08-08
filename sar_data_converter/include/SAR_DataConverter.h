@@ -63,7 +63,7 @@ class SAR_DataConverter {
             Landing_Surface_Pose_Client = nh->serviceClient<sar_msgs::Surface_Settings>("/ENV/Landing_Surface_Pose");
 
             Surface_ForceTorque_Sub = nh->subscribe("/ENV/Surface_ForceTorque_Sensor",5,&SAR_DataConverter::SurfaceFT_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
-            Surface_Contact_Sub = nh->subscribe("/ENV/BodyContact",5,&SAR_DataConverter::Surface_Contact_Callback,this,ros::TransportHints().tcpNoDelay());
+            Surface_Contact_Sub = nh->subscribe("/ENV/SurfaceContact",5,&SAR_DataConverter::Surface_Contact_Callback,this,ros::TransportHints().tcpNoDelay());
             SAR_Sticky_Pad_Connect_Sub = nh->subscribe("/ENV/Pad_Connections",5,&SAR_DataConverter::Pad_Connections_Callback,this,ros::TransportHints().tcpNoDelay());
 
             // CRAZYSWARM PIPELINE
