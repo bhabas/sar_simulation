@@ -97,18 +97,18 @@ void controllerOutOfTreeReset() {
 
 
     // RESET LOGGED FLIP VALUES
-    statePos_tr = vzero();
-    stateVel_tr = vzero();
-    stateQuat_tr = mkquat(0.0f,0.0f,0.0f,1.0f);
-    stateOmega_tr = vzero();
+    statePos_trg = vzero();
+    stateVel_trg = vzero();
+    stateQuat_trg = mkquat(0.0f,0.0f,0.0f,1.0f);
+    stateOmega_trg = vzero();
 
-    Tau_tr = 0.0f;
-    Theta_x_tr = 0.0f;
-    Theta_y_tr = 0.0f;
-    D_perp_tr = 0.0f;
+    Tau_trg = 0.0f;
+    Theta_x_trg = 0.0f;
+    Theta_y_trg = 0.0f;
+    D_perp_trg = 0.0f;
 
-    Policy_Trg_Action_tr = 0.0f;
-    Policy_Flip_Action_tr = 0.0f;
+    Policy_Trg_Action_trg = 0.0f;
+    Policy_Flip_Action_trg = 0.0f;
 
 
     updatePlaneNormal(Plane_Angle);
@@ -192,15 +192,15 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                         // UPDATE AND RECORD FLIP VALUES
                         flip_flag = true;  
-                        statePos_tr = statePos;
-                        stateVel_tr = stateVel;
-                        stateQuat_tr = stateQuat;
-                        stateOmega_tr = stateOmega;
+                        statePos_trg = statePos;
+                        stateVel_trg = stateVel;
+                        stateQuat_trg = stateQuat;
+                        stateOmega_trg = stateOmega;
 
-                        Tau_tr = Tau;
-                        Theta_x_tr = Theta_x_tr;
-                        Theta_y_tr = Theta_y_tr;
-                        D_perp_tr = D_perp;
+                        Tau_trg = Tau;
+                        Theta_x_trg = Theta_x_trg;
+                        Theta_y_trg = Theta_y_trg;
+                        D_perp_trg = D_perp;
 
                     
                         M_d.x = 0.0f;
@@ -234,15 +234,15 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                         // UPDATE AND RECORD FLIP VALUES
                         flip_flag = true;  
-                        statePos_tr = statePos;
-                        stateVel_tr = stateVel;
-                        stateQuat_tr = stateQuat;
-                        stateOmega_tr = stateOmega;
+                        statePos_trg = statePos;
+                        stateVel_trg = stateVel;
+                        stateQuat_trg = stateQuat;
+                        stateOmega_trg = stateOmega;
 
-                        Tau_tr = Tau;
-                        Theta_x_tr = Theta_x_tr;
-                        Theta_y_tr = Theta_y_tr;
-                        D_perp_tr = D_perp;
+                        Tau_trg = Tau;
+                        Theta_x_trg = Theta_x_trg;
+                        Theta_y_trg = Theta_y_trg;
+                        D_perp_trg = D_perp;
 
                     
                         M_d.x = 0.0f;

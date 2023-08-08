@@ -532,7 +532,7 @@ class Policy_Trainer():
             dataFile,k_ep,k_run = PlotTraj
             arr = dataFile.grab_stateData(k_ep,k_run,['Tau','OF_y','d_ceil'])
             Tau,OFy,d_ceil = np.split(arr,3,axis=1)
-            Tau_tr,OFy_tr,d_ceil_tr,My_tr = dataFile.grab_flip_state(k_ep,k_run,['Tau','OF_y','d_ceil','My'])
+            Tau_trg,OFy_trg,d_ceil_trg,My_trg = dataFile.grab_flip_state(k_ep,k_run,['Tau','OF_y','d_ceil','My'])
 
             fig.add_trace(
                 go.Scatter3d(
@@ -554,13 +554,13 @@ class Policy_Trainer():
                 go.Scatter3d(
                     ## DATA
                     x=[OFy_tr],
-                    y=[Tau_tr],
+                    y=[Tau_trg],
                     z=[d_ceil_tr],
 
                     ## HOVER DATA
                     hovertemplate=
                         f"<b>My: {My_tr:.3f} N*mm</b> \
-                        <br>Tau: {Tau_tr:.3f} | OFy: {OFy_tr:.3f} </br> \
+                        <br>Tau: {Tau_trg:.3f} | OFy: {OFy_tr:.3f} </br> \
                         <br>D_ceil: {d_ceil_tr:.3f}</br>",
 
                     ## MARKER

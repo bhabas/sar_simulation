@@ -45,17 +45,17 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
         }
         else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL_SB3") == 0)
         {
-            mvprintw(23, 0,"Pol_Trg_Act_tr: % 7.3f \tPol_Flip_Act: % 7.3f ",Policy_Trg_Action,Policy_Flip_Action);
+            mvprintw(23, 0,"Pol_Trg_Act_trg: % 7.3f \tPol_Flip_Act: % 7.3f ",Policy_Trg_Action,Policy_Flip_Action);
         }
         else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL_ONBOARD") == 0)
         {
-            mvprintw(23, 0,"Pol_Trg_Act_tr: % 7.3f \tPol_Flip_Act: % 7.3f ",Policy_Trg_Action,Policy_Flip_Action);
+            mvprintw(23, 0,"Pol_Trg_Act_trg: % 7.3f \tPol_Flip_Act: % 7.3f ",Policy_Trg_Action,Policy_Flip_Action);
         }
 
         mvprintw(25,0,"==== Flip Trigger Values ====");
-        mvprintw(26,0,"Tau_tr:     % 7.3f \tPol_Trg_Act_tr:  % 7.3f ",Tau_tr,Policy_Trg_Action_tr);
-        mvprintw(27,0,"\u03B8x_tr:     % 7.3f \tPol_Flip_Act_tr: % 7.3f ",Theta_x_tr,Policy_Flip_Action_tr);
-        mvprintw(28,0,"D_perp_tr:  % 7.3f ",D_perp_tr);
+        mvprintw(26,0,"Tau_trg:     % 7.3f \tPol_Trg_Act_trg:  % 7.3f ",Tau_trg,Policy_Trg_Action_trg);
+        mvprintw(27,0,"\u03B8x_trg:     % 7.3f \tPol_Flip_Act_trg: % 7.3f ",Theta_x_trg,Policy_Flip_Action_trg);
+        mvprintw(28,0,"D_perp_trg:  % 7.3f ",D_perp_trg);
 
         mvprintw(30,0,"==== Setpoints ====");
         mvprintw(31,0,"x_d: % 7.3f  % 7.3f  % 7.3f",x_d.x,x_d.y,x_d.z);

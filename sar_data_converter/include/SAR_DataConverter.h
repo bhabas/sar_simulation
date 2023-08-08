@@ -333,22 +333,22 @@ class SAR_DataConverter {
         bool flip_flag = false;
         bool OnceFlag_flip = false;
 
-        ros::Time Time_tr;
+        ros::Time Time_trg;
 
-        geometry_msgs::Pose Pose_tr;
-        geometry_msgs::Twist Twist_tr;
-        geometry_msgs::Vector3 Eul_tr;
+        geometry_msgs::Pose Pose_trg;
+        geometry_msgs::Twist Twist_trg;
+        geometry_msgs::Vector3 Eul_trg;
 
 
-        double Tau_tr = 0.0;
-        double Theta_x_tr = 0.0;
-        double Theta_y_tr = 0.0;
-        double D_perp_tr = 0.0;
+        double Tau_trg = 0.0;
+        double Theta_x_trg = 0.0;
+        double Theta_y_trg = 0.0;
+        double D_perp_trg = 0.0;
 
-        boost::array<double,4> FM_tr{0,0,0,0};
+        boost::array<double,4> FM_trg{0,0,0,0};
 
-        double Policy_Trg_Action_tr = 0.0;
-        double Policy_Flip_Action_tr = 0.0;
+        double Policy_Trg_Action_trg = 0.0;
+        double Policy_Flip_Action_trg = 0.0;
 
 
         // ===================
@@ -528,8 +528,8 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
         case 0:
             // RESET FLIP TIME
             OnceFlag_flip = false;
-            Time_tr.sec = 0.0;
-            Time_tr.nsec = 0.0;
+            Time_trg.sec = 0.0;
+            Time_trg.nsec = 0.0;
             Rot_Sum = 0.0;
 
             // RESET IMPACT TIME

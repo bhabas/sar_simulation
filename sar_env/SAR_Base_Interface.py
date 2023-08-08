@@ -273,25 +273,25 @@ class SAR_Base_Interface():
         ## INITIALIZE FLIP VALUES
         self.flip_flag = False      # Flag if model has started flip maneuver
 
-        self.t_tr = 0.0             # [s]
-        self.pos_tr = [0,0,0]       # [m]
-        self.vel_tr = [0,0,0]       # [m/s]
-        self.quat_tr = [0,0,0,1]    # [quat]
-        self.omega_tr = [0,0,0]     # [rad/s]
-        self.eul_tr = [0,0,0]       # [deg]
+        self.t_trg = 0.0             # [s]
+        self.pos_trg = [0,0,0]       # [m]
+        self.vel_trg = [0,0,0]       # [m/s]
+        self.quat_trg = [0,0,0,1]    # [quat]
+        self.omega_trg = [0,0,0]     # [rad/s]
+        self.eul_trg = [0,0,0]       # [deg]
 
-        self.Tau_tr = 0.0           # [s]
-        self.Theta_x_tr = 0.0       # [rad/s]
-        self.Theta_y_tr = 0.0       # [rad/s]
-        self.D_perp_tr = 0.0        # [m]
+        self.Tau_trg = 0.0           # [s]
+        self.Theta_x_trg = 0.0       # [rad/s]
+        self.Theta_y_trg = 0.0       # [rad/s]
+        self.D_perp_trg = 0.0        # [m]
 
-        self.FM_tr = [0,0,0,0]      # [N,N*mm]
+        self.FM_trg = [0,0,0,0]      # [N,N*mm]
 
-        self.Policy_Trg_Action_tr = 0.0
-        self.Policy_Flip_Action_tr = 0.0 # [N*mm]
+        self.Policy_Trg_Action_trg = 0.0
+        self.Policy_Flip_Action_trg = 0.0 # [N*mm]
 
-        self.vel_tr_mag = 0.0       # [m/s]
-        self.phi_tr = 0.0           # [deg]
+        self.vel_trg_mag = 0.0       # [m/s]
+        self.phi_trg = 0.0           # [deg]
 
         ## INITIALIZE IMPACT VALUES
         self.impact_flag = False
@@ -449,34 +449,34 @@ class SAR_Base_Interface():
         if TriggerData_msg.flip_flag == True:
 
             ## FLIP TRIGGERING CONDITIONS
-            self.pos_tr = np.round([TriggerData_msg.Pose_tr.position.x,
-                                    TriggerData_msg.Pose_tr.position.y,
-                                    TriggerData_msg.Pose_tr.position.z],3)
+            self.pos_trg = np.round([TriggerData_msg.Pose_trg.position.x,
+                                    TriggerData_msg.Pose_trg.position.y,
+                                    TriggerData_msg.Pose_trg.position.z],3)
 
-            self.vel_tr = np.round([TriggerData_msg.Twist_tr.linear.x,
-                                    TriggerData_msg.Twist_tr.linear.y,
-                                    TriggerData_msg.Twist_tr.linear.z],3)
+            self.vel_trg = np.round([TriggerData_msg.Twist_trg.linear.x,
+                                    TriggerData_msg.Twist_trg.linear.y,
+                                    TriggerData_msg.Twist_trg.linear.z],3)
 
-            self.eul_tr = np.round([TriggerData_msg.Eul_tr.x,
-                                    TriggerData_msg.Eul_tr.y,
-                                    TriggerData_msg.Eul_tr.z],3)
+            self.eul_trg = np.round([TriggerData_msg.Eul_trg.x,
+                                    TriggerData_msg.Eul_trg.y,
+                                    TriggerData_msg.Eul_trg.z],3)
 
-            self.omega_tr = np.round([TriggerData_msg.Twist_tr.angular.x,
-                                    TriggerData_msg.Twist_tr.angular.y,
-                                    TriggerData_msg.Twist_tr.angular.z],3)
+            self.omega_trg = np.round([TriggerData_msg.Twist_trg.angular.x,
+                                    TriggerData_msg.Twist_trg.angular.y,
+                                    TriggerData_msg.Twist_trg.angular.z],3)
             
-            self.vel_tr_mag = np.sqrt(self.vel_tr[0]**2 + self.vel_tr[2]**2)
-            self.phi_tr = np.rad2deg(np.arctan2(self.vel_tr[2],self.vel_tr[0]))
+            self.vel_trg_mag = np.sqrt(self.vel_trg[0]**2 + self.vel_trg[2]**2)
+            self.phi_trg = np.rad2deg(np.arctan2(self.vel_trg[2],self.vel_trg[0]))
 
             ## POLICY TRIGGERING VALUES
-            self.Tau_trg = TriggerData_msg.Tau_tr
-            self.Theta_x_tr = TriggerData_msg.Theta_x_tr
-            self.Theta_y_tr = TriggerData_msg.Theta_y_tr
-            self.D_perp_tr = TriggerData_msg.D_perp_tr
+            self.Tau_trg = TriggerData_msg.Tau_trg
+            self.Theta_x_trg = TriggerData_msg.Theta_x_trg
+            self.Theta_y_trg = TriggerData_msg.Theta_y_trg
+            self.D_perp_trg = TriggerData_msg.D_perp_trg
 
             ## POLICY ACTIONS
-            self.Policy_Trg_Action_tr = TriggerData_msg.Policy_Trg_Action_tr
-            self.Policy_Flip_Action_tr = TriggerData_msg.Policy_Flip_Action_tr
+            self.Policy_Trg_Action_trg = TriggerData_msg.Policy_Trg_Action_trg
+            self.Policy_Flip_Action_trg = TriggerData_msg.Policy_Flip_Action_trg
 
 
     def SAR_ImpactDataCallback(self,ImpactData_msg):

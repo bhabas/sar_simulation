@@ -220,10 +220,10 @@ if __name__ == "__main__":
     env = SAR_ParamOpt_Sim(GZ_Timeout=False)
 
     for ii in range(1000):
-        Tau_tr = 0.23
+        Tau_trg = 0.23
         My = 8
         Vel_d = 2.5
         Phi_d = 30
         env.ParamOptim_reset()
-        obs,reward,done,info = env.ParamOptim_Flight(Tau_tr,My,Vel_d,Phi_d)
+        obs,reward,done,info = env.ParamOptim_Flight(Tau_trg,My,Vel_d,Phi_d)
         print(f"Ep: {ii} \t Reward: {reward:.02f}")
