@@ -41,6 +41,14 @@ namespace gazebo
         ros::param::get("/SAR_SETTINGS/SAR_Config",SAR_Config);
         ros::param::get("/CAM_SETTINGS/Cam_Config",Cam_Config);
 
+        // LOAD INITIAL CAMERA CONFIG PARAMETERS
+        ros::param::get("/Cam_Config/"+Cam_Config+"/X_Offset",X_Offset);
+        ros::param::get("/Cam_Config/"+Cam_Config+"/Y_Offset",Y_Offset);
+        ros::param::get("/Cam_Config/"+Cam_Config+"/Z_Offset",Z_Offset);
+        ros::param::get("/Cam_Config/"+Cam_Config+"/Pitch_Angle",Pitch_Angle);
+        ros::param::get("/Cam_Config/"+Cam_Config+"/FPS",FPS);
+
+
         // LOAD INTIAL BASE_MODEL INERTIAL PARAMETERS
         ros::param::get("/SAR_Type/"+SAR_Type+"/Config/Base_Model/Ixx",Ixx_Body);
         ros::param::get("/SAR_Type/"+SAR_Type+"/Config/Base_Model/Iyy",Iyy_Body);
@@ -56,18 +64,16 @@ namespace gazebo
         ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/Leg_Angle",Leg_Angle);
         ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/K_Pitch",K_Pitch);
         ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/DR_Pitch",DR_Pitch);
-
         ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/K_Yaw",K_Yaw);
         ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/DR_Yaw",DR_Yaw);
 
 
-        // GET LEG LINK POINTERS
+        // GET LEG LINK AND HINGE POINTERS
         Leg_1_LinkPtr = Config_Model_Ptr->GetLink("Leg_1");
         Leg_2_LinkPtr = Config_Model_Ptr->GetLink("Leg_2");
         Leg_3_LinkPtr = Config_Model_Ptr->GetLink("Leg_3");
         Leg_4_LinkPtr = Config_Model_Ptr->GetLink("Leg_4");
 
-        // GET LEG HINGE POINTERS
         Hinge_1_JointPtr = Config_Model_Ptr->GetJoint("Hinge_1_Joint");
         Hinge_2_JointPtr = Config_Model_Ptr->GetJoint("Hinge_2_Joint");
         Hinge_3_JointPtr = Config_Model_Ptr->GetJoint("Hinge_3_Joint");
@@ -110,11 +116,20 @@ namespace gazebo
         Inertial_Ptr->SetIYY(Iyy_Body);
         Inertial_Ptr->SetIZZ(Izz_Body);
         Inertial_Ptr->SetMass(Mass_Body);
+
+        SAR_Body_Ptr->UpdateMass();
+        SAR_Body_Ptr->Update();
         
     }
 
     bool SAR_Update_Plugin::Update_Inertia_Service(sar_msgs::Inertia_Params::Request &req, sar_msgs::Inertia_Params::Response &res)
     {
+        Ixx_Body = req.Inertia.x;
+        Iyy_Body = req.Inertia.y;
+        Izz_Body = req.Inertia.z;
+        Mass_Body = req.Mass;
+
+
         Update_Inertia();
         res.srv_Success = true;
 

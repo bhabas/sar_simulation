@@ -27,14 +27,8 @@ target_link_libraries(Sticky_Leg_Plugin ${GAZEBO_LIBRARIES})
 add_library(Motor_Plugin SHARED plugins/src/Motor_Plugin.cpp)
 target_link_libraries(Motor_Plugin ${GAZEBO_LIBRARIES})
 
-add_library(Cam_Update_Plugin SHARED plugins/src/Cam_Update_Plugin.cpp)
-target_link_libraries(Cam_Update_Plugin ${GAZEBO_LIBRARIES})
-
 add_library(SAR_Update_Plugin SHARED plugins/src/SAR_Update_Plugin.cpp)
 target_link_libraries(SAR_Update_Plugin ${GAZEBO_LIBRARIES})
-
-add_library(Domain_Randomization_Plugin SHARED plugins/src/Domain_Randomization_Plugin.cpp)
-target_link_libraries(Domain_Randomization_Plugin ${GAZEBO_LIBRARIES})
 
 # EXTRA PLUGINS
 add_library(Model_Move_Plugin SHARED plugins/src/Model_Move_Plugin.cpp)
