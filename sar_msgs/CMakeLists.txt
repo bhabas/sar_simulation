@@ -35,7 +35,12 @@ add_service_files(
   FILES
   Activate_Sticky_Pads.srv
   Logging_CMD.srv
+
   Inertia_Params.srv
+  Hinge_Params.srv
+  Camera_Params.srv
+  Surface_Params.srv
+  
   CTRL_Cmd_srv.srv
   Model_Move.srv
   Cam_Settings.srv
