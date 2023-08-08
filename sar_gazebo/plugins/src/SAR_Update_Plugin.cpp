@@ -15,18 +15,11 @@ namespace gazebo
         // LOAD MODEL AND LINK POINTERS
         Config_Model_Ptr = _parent;
         SAR_Body_Ptr = Config_Model_Ptr->GetLink("Base_Model::SAR_Body");
-        if (!SAR_Body_Ptr)
-        {
-            gzerr << "SAR_Body link is NULL.\n";
-            return;
-        }
-
-        // Create a new inertial object
-        Inertial_Ptr = SAR_Body_Ptr->GetInertial();
-
+        Camera_Link_Ptr = Config_Model_Ptr->GetLink("Base_Model::Camera");
         World_Ptr = Config_Model_Ptr->GetWorld();
+
         
-        
+        // UPDATE SIMULATION SPEED
         double Sim_Speed;
         double Step_Size = 0.001;
         ros::param::get("/SIM_SETTINGS/Sim_Speed",Sim_Speed);
@@ -34,12 +27,14 @@ namespace gazebo
 
 
 
-        
-
-        // LOAD SAR_Type,SAR_Config,AND CAM_CONFIG NAMES
+        // LOAD SAR_TYPE,SAR_CONFIG,AND CAM_CONFIG NAMES
         ros::param::get("/SAR_SETTINGS/SAR_Type",SAR_Type);
         ros::param::get("/SAR_SETTINGS/SAR_Config",SAR_Config);
         ros::param::get("/CAM_SETTINGS/Cam_Config",Cam_Config);
+
+        // =======================
+        //      CAMERA UPDATE
+        // =======================
 
         // LOAD INITIAL CAMERA CONFIG PARAMETERS
         ros::param::get("/Cam_Config/"+Cam_Config+"/X_Offset",X_Offset);
@@ -48,17 +43,33 @@ namespace gazebo
         ros::param::get("/Cam_Config/"+Cam_Config+"/Pitch_Angle",Pitch_Angle);
         ros::param::get("/Cam_Config/"+Cam_Config+"/FPS",FPS);
 
+        // GET POINTER TO CAMERA SENSOR
+        Camera_Joint_Name = _sdf->GetElement("CameraJointName")->Get<std::string>();
+        Sensor_Ptr = sensors::get_sensor("Base_Model::Camera");
+        Camera_Ptr = dynamic_cast<sensors::CameraSensor*>(Sensor_Ptr.get());
 
+        // UPDATE CAMERA
+        Update_Camera();
+
+
+        // =======================
+        //      INERTIA UPDATE
+        // =======================
         // LOAD INTIAL BASE_MODEL INERTIAL PARAMETERS
         ros::param::get("/SAR_Type/"+SAR_Type+"/Config/Base_Model/Ixx",Ixx_Body);
         ros::param::get("/SAR_Type/"+SAR_Type+"/Config/Base_Model/Iyy",Iyy_Body);
         ros::param::get("/SAR_Type/"+SAR_Type+"/Config/Base_Model/Izz",Izz_Body);
         ros::param::get("/SAR_Type/"+SAR_Type+"/Config/Base_Model/Mass",Mass_Body);
 
+        // GET BASE_MODEL INERTIA POINTER
+        Inertial_Ptr = SAR_Body_Ptr->GetInertial();
         
+        // UPDATE INERTIA
+        Update_Inertia();
 
-
-        
+        // =======================
+        //   HINGE JOINT UPDATE
+        // =======================
 
         // LOAD INITIAL LEG PARAMETERS
         ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/Leg_Angle",Leg_Angle);
@@ -79,14 +90,8 @@ namespace gazebo
         Hinge_3_JointPtr = Config_Model_Ptr->GetJoint("Hinge_3_Joint");
         Hinge_4_JointPtr = Config_Model_Ptr->GetJoint("Hinge_4_Joint");
 
-        
-
-        // UPDATE HINGE JOINTS/CAMERA/BASE_MODEL INERTIA 
-        Update_Hinge();
-        Update_Camera();
-        Update_Inertia();
-
-        
+        // UPDATE HINGE JOINT
+        Update_Hinge();        
 
         printf("\n\n");
     }
@@ -95,12 +100,27 @@ namespace gazebo
     {
         gzmsg << "Updating Camera Pose and FPS\n";
 
+        // UPDATE CAMERA POSE
+        Config_Model_Ptr->RemoveJoint(Camera_Joint_Name);
+        ignition::math::Pose3d relativePose(X_Offset, Y_Offset, Z_Offset, 0.0, (90 - Pitch_Angle)*Deg2Rad, 0.0);
+        Camera_Link_Ptr->SetRelativePose(relativePose);
+        Config_Model_Ptr->CreateJoint(Camera_Joint_Name,"fixed",SAR_Body_Ptr,Camera_Link_Ptr);
+
+        // UPDATE FPS
+        Camera_Ptr->SetUpdateRate(FPS);
+
     }
 
     bool SAR_Update_Plugin::Update_Camera_Service(sar_msgs::Camera_Params::Request &req, sar_msgs::Camera_Params::Response &res)
     {
+        // UPDATING CAMERA POSE AND FPS PARAMS
+        X_Offset = req.Pos_Offset.x;
+        Y_Offset = req.Pos_Offset.y;
+        Z_Offset = req.Pos_Offset.z;
+        Pitch_Angle = req.Pitch_Angle;
+        FPS = req.FPS;
 
-        // UPDATE PARAMS
+        // UPDATE CAMERA
         Update_Camera();
         res.srv_Success = true;
 
@@ -124,12 +144,13 @@ namespace gazebo
 
     bool SAR_Update_Plugin::Update_Inertia_Service(sar_msgs::Inertia_Params::Request &req, sar_msgs::Inertia_Params::Response &res)
     {
+        // UPDATE BASE_MODEL INERTIA PARAMS
         Ixx_Body = req.Inertia.x;
         Iyy_Body = req.Inertia.y;
         Izz_Body = req.Inertia.z;
         Mass_Body = req.Mass;
 
-
+        // UPDATE BASE_MODEL INERTIA
         Update_Inertia();
         res.srv_Success = true;
 
@@ -174,13 +195,13 @@ namespace gazebo
 
     bool SAR_Update_Plugin::Update_Hinge_Service(sar_msgs::Hinge_Params::Request &req, sar_msgs::Hinge_Params::Response &res)
     {
-        // LOAD NEW STIFFNESS AND DAMPING PARAMS
+        // UPDATE HINGE STIFFNESS AND DAMPING PARAMS
         K_Pitch = req.K_Pitch;
         DR_Pitch = req.DR_Pitch;
         K_Yaw = req.K_Yaw;
         DR_Yaw = req.DR_Yaw;
 
-        // UPDATE PARAMS
+        // UPDATE HINGE
         Update_Hinge();
         res.srv_Success = true;
 

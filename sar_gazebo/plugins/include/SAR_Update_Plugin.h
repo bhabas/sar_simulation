@@ -91,6 +91,7 @@ namespace gazebo {
             sensors::SensorPtr Sensor_Ptr;
             sensors::CameraSensor* Camera_Ptr;
             physics::LinkPtr Camera_Link_Ptr;
+            std::string Camera_Joint_Name;
 
 
             // CAMERA CONFIG SETTINGS
