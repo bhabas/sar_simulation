@@ -53,6 +53,25 @@ namespace gazebo
                     Contact_Joint_Ptr->SetAnchor(0, contactPose.Pos()); // Contact point offset by collision radius
 
                     printf("[Leg_%d]: Joint Created\t(%s->%s)\n", Leg_Number, Leg_Link_Ptr->GetName().c_str(), Surface_Link_Ptr->GetName().c_str());
+                
+                    // PUBLISH EACH TIME A LEG CONNECTS TO A SURFACE
+                    switch(Leg_Number)
+                    {
+                        case 1:
+                            Sticky_Leg_Connect_msg.Pad1_Contact = 1;
+                            break;
+                        case 2:
+                            Sticky_Leg_Connect_msg.Pad2_Contact = 1;
+                            break;
+                        case 3:
+                            Sticky_Leg_Connect_msg.Pad3_Contact = 1;
+                            break;
+                        case 4:
+                            Sticky_Leg_Connect_msg.Pad4_Contact = 1;
+                            break;
+                    }
+
+                    Sticky_Pad_Connect_Publisher.publish(Sticky_Leg_Connect_msg);
                 }
             }
         }

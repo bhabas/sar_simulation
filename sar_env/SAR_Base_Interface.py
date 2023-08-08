@@ -469,7 +469,7 @@ class SAR_Base_Interface():
             self.phi_tr = np.rad2deg(np.arctan2(self.vel_tr[2],self.vel_tr[0]))
 
             ## POLICY TRIGGERING VALUES
-            self.Tau_tr = TriggerData_msg.Tau_tr
+            self.Tau_trg = TriggerData_msg.Tau_tr
             self.Theta_x_tr = TriggerData_msg.Theta_x_tr
             self.Theta_y_tr = TriggerData_msg.Theta_y_tr
             self.D_perp_tr = TriggerData_msg.D_perp_tr

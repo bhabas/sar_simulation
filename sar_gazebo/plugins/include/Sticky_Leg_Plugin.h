@@ -58,7 +58,7 @@ namespace gazebo {
             physics::LinkPtr Surface_Link_Ptr;
 
 
-
+            sar_msgs::Sticky_Pad_Connect Sticky_Leg_Connect_msg;
 
             event::ConnectionPtr updateConnection;
 
@@ -66,6 +66,7 @@ namespace gazebo {
 
             // POSE UPDATES
             ros::NodeHandle nh;
+            ros::Publisher Sticky_Pad_Connect_Publisher = nh.advertise<sar_msgs::Sticky_Pad_Connect>("/SAR_Internal/Leg_Connections", 5);
             ros::ServiceServer Leg_Connect_Service;
     };
 
