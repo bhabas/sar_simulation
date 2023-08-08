@@ -45,16 +45,36 @@ namespace gazebo {
             std::string Cam_Config;
 
             // GAZEBO POINTERS
-            physics::WorldPtr World_Ptr;
             physics::ModelPtr Config_Model_Ptr;
-            physics::LinkPtr SAR_Body_Ptr;
+            physics::LinkPtr SAR_Body_Ptr; // Pointer to Base_Model
+            physics::WorldPtr World_Ptr;
 
 
-            physics::InertialPtr Inertial_Ptr;
+
+            // CAMERA POINTERS
+            sensors::SensorPtr Sensor_Ptr;
+            sensors::CameraSensor* Camera_Ptr;
+            physics::LinkPtr Camera_Link_Ptr;
+            std::string Camera_Joint_Name;
+
+            // CAMERA CONFIG PARAMS
+            double X_Offset;    // [m]
+            double Y_Offset;    // [m]
+            double Z_Offset;    // [m]
+            double Pitch_Angle; // [deg]
+            double FPS;         // [1/s]
+
+
+
+
+            // INERTIA PARAMETERS
             double Ixx_Body;
             double Iyy_Body;
             double Izz_Body;
             double Mass_Body;
+
+            // INERTIA POINTERS
+            physics::InertialPtr Inertial_Ptr;
 
 
 
@@ -86,22 +106,7 @@ namespace gazebo {
             physics::JointPtr Hinge_4_JointPtr;
 
 
-
-            // SENSOR POINTERS
-            sensors::SensorPtr Sensor_Ptr;
-            sensors::CameraSensor* Camera_Ptr;
-            physics::LinkPtr Camera_Link_Ptr;
-            std::string Camera_Joint_Name;
-
-
-            // CAMERA CONFIG SETTINGS
-            double X_Offset;    // [m]
-            double Y_Offset;    // [m]
-            double Z_Offset;    // [m]
-            double Pitch_Angle; // [deg]
-            double FPS;         // [1/s]
-
-            // POSE UPDATES
+            // ROS SERVICES
             ros::NodeHandle nh;
             ros::ServiceServer Cam_Update_Service = nh.advertiseService("/SAR_Internal/Camera_Update", &SAR_Update_Plugin::Update_Camera_Service, this);
             ros::ServiceServer Inertia_Update_Service = nh.advertiseService("/SAR_Internal/Inertia_Update", &SAR_Update_Plugin::Update_Inertia_Service, this);
