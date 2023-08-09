@@ -1,0 +1,13 @@
+material Surface_Mat
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture Images/Fractal_Pattern.jpg
+      }
+    }
+  }
+}

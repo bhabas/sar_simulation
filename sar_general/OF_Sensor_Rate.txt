@@ -1,0 +1,7 @@
+RREV range: [3.5 - 5.0] rad/s
+Tau range: [0.2 - 0.286] s
+
+Need to sample accurately and multiple times while inside this range [0.086s => 86ms]
+
+To sample 5 times in this range: (0.086/5)^-1 = 58 Hz
+We need a sensor rate around 60Hz at least

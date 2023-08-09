@@ -1,3 +1,0 @@
-uint8 Motor_Number
-float64 MotorThrust
-float64 MotorThrust_actual

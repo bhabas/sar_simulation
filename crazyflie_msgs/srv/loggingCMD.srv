@@ -1,5 +1,0 @@
-string filePath
-uint8 Logging_CMD
-string error_string
----
-bool srv_Success
