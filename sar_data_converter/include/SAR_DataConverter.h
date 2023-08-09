@@ -40,6 +40,8 @@
 #include "sar_msgs/Activate_Sticky_Pads.h"
 #include "sar_msgs/Logging_CMD.h"
 #include "sar_msgs/GenericLogData.h"
+#include "sar_msgs/Surface_Settings.h"
+
 
 #include "quatcompress.h"
 
@@ -58,11 +60,11 @@ class SAR_DataConverter {
 
             // GAZEBO PIPELINE
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
-            Landing_Surface_Pose_Client = nh->serviceClient<gazebo_msgs::SetModelState>("/Landing_Surface_Pose_Plugin");
+            Landing_Surface_Pose_Client = nh->serviceClient<sar_msgs::Surface_Settings>("/ENV/Landing_Surface_Pose");
 
             Surface_ForceTorque_Sub = nh->subscribe("/ENV/Surface_ForceTorque_Sensor",5,&SAR_DataConverter::SurfaceFT_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
-            Surface_Contact_Sub = nh->subscribe("/ENV/BodyContact",5,&SAR_DataConverter::Surface_Contact_Callback,this,ros::TransportHints().tcpNoDelay());
-            SAR_Sticky_Pad_Connect_Sub = nh->subscribe("/ENV/Pad_Connections",5,&SAR_DataConverter::Pad_Connections_Callback,this,ros::TransportHints().tcpNoDelay());
+            Surface_Contact_Sub = nh->subscribe("/ENV/SurfaceContact",5,&SAR_DataConverter::Surface_Contact_Callback,this,ros::TransportHints().tcpNoDelay());
+            SAR_Sticky_Pad_Connect_Sub = nh->subscribe("/SAR_Internal/Leg_Connections",5,&SAR_DataConverter::Pad_Connections_Callback,this,ros::TransportHints().tcpNoDelay());
 
             // CRAZYSWARM PIPELINE
             cf1_FullState_Sub = nh->subscribe("/cf1/FullState", 1, &SAR_DataConverter::cf1_FullState_Callback, this, ros::TransportHints().tcpNoDelay());
@@ -216,7 +218,7 @@ class SAR_DataConverter {
         // ============================
         //     LANDING PLANE PARAMS
         // ============================
-        std::string Plane_Model;
+        std::string Plane_Config;
         geometry_msgs::Vector3 Plane_Pos; // Initial Plane Position
         float Plane_Angle = 180.0; // Initial Plane Angle [Deg]
 
@@ -331,22 +333,22 @@ class SAR_DataConverter {
         bool flip_flag = false;
         bool OnceFlag_flip = false;
 
-        ros::Time Time_tr;
+        ros::Time Time_trg;
 
-        geometry_msgs::Pose Pose_tr;
-        geometry_msgs::Twist Twist_tr;
-        geometry_msgs::Vector3 Eul_tr;
+        geometry_msgs::Pose Pose_trg;
+        geometry_msgs::Twist Twist_trg;
+        geometry_msgs::Vector3 Eul_trg;
 
 
-        double Tau_tr = 0.0;
-        double Theta_x_tr = 0.0;
-        double Theta_y_tr = 0.0;
-        double D_perp_tr = 0.0;
+        double Tau_trg = 0.0;
+        double Theta_x_trg = 0.0;
+        double Theta_y_trg = 0.0;
+        double D_perp_trg = 0.0;
 
-        boost::array<double,4> FM_tr{0,0,0,0};
+        boost::array<double,4> FM_trg{0,0,0,0};
 
-        double Policy_Trg_Action_tr = 0.0;
-        double Policy_Flip_Action_tr = 0.0;
+        double Policy_Trg_Action_trg = 0.0;
+        double Policy_Flip_Action_trg = 0.0;
 
 
         // ===================
@@ -372,8 +374,8 @@ class SAR_DataConverter {
         double impact_magnitude = 0.0; // Current impact force magnitude
 
         // CIRCULAR BUFFERES TO LAG IMPACT STATE DATA (WE WANT STATE DATA THE INSTANT BEFORE IMPACT)
-        boost::circular_buffer<geometry_msgs::Pose> Pose_impact_buff {5};
-        boost::circular_buffer<geometry_msgs::Twist> Twist_impact_buff {5};
+        boost::circular_buffer<geometry_msgs::Pose> Pose_impact_buff {1};
+        boost::circular_buffer<geometry_msgs::Twist> Twist_impact_buff {1};
 
         // ==================
         //     MISC DATA
@@ -462,7 +464,7 @@ inline void SAR_DataConverter::LoadParams()
 
 
     // PLANE SETTINGS
-    ros::param::get("/PLANE_SETTINGS/Plane_Model",Plane_Model);
+    ros::param::get("/PLANE_SETTINGS/Plane_Config",Plane_Config);
     if (isInit == false)
     {
         ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle);
@@ -526,8 +528,8 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
         case 0:
             // RESET FLIP TIME
             OnceFlag_flip = false;
-            Time_tr.sec = 0.0;
-            Time_tr.nsec = 0.0;
+            Time_trg.sec = 0.0;
+            Time_trg.nsec = 0.0;
             Rot_Sum = 0.0;
 
             // RESET IMPACT TIME
@@ -563,6 +565,7 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
             impact_force_x = 0.0;
             impact_force_y = 0.0;
             impact_force_z = 0.0;
+            impact_magnitude = 0;
 
             // RESET PAD CONTACTS FLAGS
             Pad1_Contact = 0;

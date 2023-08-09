@@ -36,8 +36,9 @@
           <lighting>1</lighting>
         </material>
       </visual>
+
       <visual name='CF_Battery'>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
             <uri>model://Base_Model/meshes/CF_Assembly - Battery_Small-1.STL</uri>
@@ -71,7 +72,7 @@
       </visual>
 
       <visual name='CF_Pins_1'>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
             <uri>model://Base_Model/meshes/CF_Assembly - Pin_Headers-1.STL</uri>
@@ -88,7 +89,7 @@
       </visual>
 
       <visual name='CF_Pins_2'>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
             <uri>model://Base_Model/meshes/CF_Assembly - Pin_Headers-2.STL</uri>
@@ -105,7 +106,7 @@
       </visual>
 
       <visual name='CF_Motor_Mount_4'>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
             <uri>model://Base_Model/meshes/CF_Assembly - Motor_Mount-1.STL</uri>
@@ -121,9 +122,9 @@
         </material>
       </visual>
 
-    
+
       <visual name='CF_Motor_Mount_3'>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
             <uri>model://Base_Model/meshes/CF_Assembly - Motor_Mount-5.STL</uri>
@@ -140,7 +141,7 @@
       </visual>
 
       <visual name='CF_Motor_Mount_2'>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
             <uri>model://Base_Model/meshes/CF_Assembly - Motor_Mount-2.STL</uri>
@@ -157,7 +158,7 @@
       </visual>
 
       <visual name='CF_Motor_Mount_1'>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
             <uri>model://Base_Model/meshes/CF_Assembly - Motor_Mount-6.STL</uri>
@@ -175,7 +176,7 @@
 
 
       <visual name='CF_Motor_4'>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
             <uri>model://Base_Model/meshes/CF_Assembly - Motor-2.STL</uri>
@@ -192,7 +193,7 @@
       </visual>
 
       <visual name='CF_Motor_3'>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
             <uri>model://Base_Model/meshes/CF_Assembly - Motor-5.STL</uri>
@@ -209,7 +210,7 @@
       </visual>
 
       <visual name='CF_Motor_2'>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
             <uri>model://Base_Model/meshes/CF_Assembly - Motor-4.STL</uri>
@@ -226,7 +227,7 @@
       </visual>
 
       <visual name='CF_Motor_1'>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
             <uri>model://Base_Model/meshes/CF_Assembly - Motor-3.STL</uri>
@@ -241,12 +242,11 @@
           <lighting>1</lighting>
         </material>
       </visual>
-      
+
 
       <collision name='body_collision'>
-        <laser_retro>0</laser_retro>
-        <max_contacts>10</max_contacts>
-        <pose>0 0 0.01 0 -0 0</pose>
+        <max_contacts>1</max_contacts>
+        <pose>0 0 0.01 0 0 0</pose>
         <geometry>
           <box>
             <size>0.12 0.12 0.01</size>
@@ -257,51 +257,26 @@
             <ode>
               <mu>1</mu>
               <mu2>1</mu2>
-              <fdir1>0 0 0</fdir1>
-              <slip1>0</slip1>
-              <slip2>0</slip2>
             </ode>
-            <torsional>
-              <coefficient>1</coefficient>
-              <patch_radius>0</patch_radius>
-              <surface_radius>0</surface_radius>
-              <use_patch_radius>1</use_patch_radius>
-              <ode>
-                <slip>0</slip>
-              </ode>
-            </torsional>
           </friction>
           <bounce>
             <restitution_coefficient>0</restitution_coefficient>
-            <threshold>1e+06</threshold>
           </bounce>
           <contact>
-            <collide_without_contact>0</collide_without_contact>
-            <collide_without_contact_bitmask>1</collide_without_contact_bitmask>
-            <collide_bitmask>1</collide_bitmask>
             <ode>
               <soft_cfm>0</soft_cfm>
               <soft_erp>0.8</soft_erp>
-              <kp>1e+13</kp>
-              <kd>1</kd>
-              <max_vel>0.01</max_vel>
-              <min_depth>0</min_depth>
             </ode>
             <bullet>
-              <split_impulse>1</split_impulse>
-              <split_impulse_penetration_threshold>-0.01</split_impulse_penetration_threshold>
               <soft_cfm>0</soft_cfm>
               <soft_erp>0.8</soft_erp>
-              <kp>1e+13</kp>
-              <kd>1</kd>
             </bullet>
           </contact>
         </surface>
       </collision>
       <collision name='base_collision'>
-        <laser_retro>0</laser_retro>
-        <max_contacts>10</max_contacts>
-        <pose>0 0 -0.005 0 -0 0</pose>
+        <max_contacts>1</max_contacts>
+        <pose>0 0 -0.005 0 0 0</pose>
         <geometry>
           <box>
             <size>0.075 0.075 0.005</size>
@@ -312,53 +287,28 @@
             <ode>
               <mu>1</mu>
               <mu2>1</mu2>
-              <fdir1>0 0 0</fdir1>
-              <slip1>0</slip1>
-              <slip2>0</slip2>
             </ode>
-            <torsional>
-              <coefficient>1</coefficient>
-              <patch_radius>0</patch_radius>
-              <surface_radius>0</surface_radius>
-              <use_patch_radius>1</use_patch_radius>
-              <ode>
-                <slip>0</slip>
-              </ode>
-            </torsional>
           </friction>
           <bounce>
             <restitution_coefficient>0</restitution_coefficient>
-            <threshold>1e+06</threshold>
           </bounce>
           <contact>
-            <collide_without_contact>0</collide_without_contact>
-            <collide_without_contact_bitmask>1</collide_without_contact_bitmask>
-            <collide_bitmask>1</collide_bitmask>
             <ode>
               <soft_cfm>0</soft_cfm>
               <soft_erp>0.2</soft_erp>
-              <kp>1e+13</kp>
-              <kd>1</kd>
-              <max_vel>0.01</max_vel>
-              <min_depth>0</min_depth>
             </ode>
             <bullet>
-              <split_impulse>1</split_impulse>
-              <split_impulse_penetration_threshold>-0.01</split_impulse_penetration_threshold>
               <soft_cfm>0</soft_cfm>
               <soft_erp>0.2</soft_erp>
-              <kp>1e+13</kp>
-              <kd>1</kd>
             </bullet>
           </contact>
         </surface>
       </collision>
     </link>
-    
+
     <link name='Camera'>
-      <pose>0 0 0 0 0 0</pose>
       <inertial>
-        <mass>0.000001</mass>
+        <mass>1e-6</mass>
         <inertia>
           <ixx>1e-9</ixx>
           <ixy>0</ixy>
@@ -369,38 +319,17 @@
         </inertia>
         <pose>0 0 0 0 0 0</pose>
       </inertial>
-      <visual name='camera_center'>
-        <cast_shadows>0</cast_shadows>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <sphere>
-            <radius>0.002</radius>
-          </sphere>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/Blue</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-        </material>
-      </visual>
-      <gravity>1</gravity>
-      <self_collide>0</self_collide>
-      <kinematic>0</kinematic>
 
       <sensor type="camera" name="Camera">
         <pose>0 0 0 0 0 0</pose>
-        <update_rate>100</update_rate> <!--Changed to a nice number for FPS because message didn't contain enough precision -->
-        <visualize>true</visualize>
+        <update_rate>100</update_rate>        <!--Changed to a nice number for FPS because message didn't contain enough precision -->
+        <visualize>false</visualize>
         <camera name="head">
           <save enabled="false">
             <path>/home/bhabas/Downloads/Video_images</path>
             <!--Convert Command: ffmpeg -framerate 60 -pattern_type glob -i '*.jpg' -c:v libx264 -pix_fmt yuv420p out.mp4 -->
           </save>
-          <horizontal_fov>1.435</horizontal_fov> <!-- 82.22 deg FoV to match AI Deck -->
+          <horizontal_fov>1.435</horizontal_fov>          <!-- 82.22 deg FoV to match AI Deck -->
           <image>
             <width>160</width>
             <height>160</height>
@@ -416,7 +345,7 @@
                  That pixel's noise value is added to each of its color
                  channels, which at that point lie in the range [0,1]. -->
             <mean>0.0</mean>
-            <stddev>0.005</stddev> 
+            <stddev>0.005</stddev>
           </noise>
           <lens>
             <type>sterographic</type>
@@ -437,28 +366,45 @@
           <distortionT2>0.0</distortionT2>
         </plugin>
       </sensor>
+
+      <visual name='camera_center'>
+        <cast_shadows>0</cast_shadows>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <sphere>
+            <radius>0.002</radius>
+          </sphere>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Blue</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+          <shader type='pixel'>
+            <normal_map>__default__</normal_map>
+          </shader>
+        </material>
+      </visual>
     </link>
-    
-    <link name='rotor_1'>
+
+    <link name='Rotor_1'>
       <inertial>
-        <mass>0.00001</mass>
+        <mass>1e-6</mass>
         <inertia>
-          <ixx>1.6e-10</ixx>
+          <ixx>1e-9</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>8.86e-10</iyy>
+          <iyy>1e-9</iyy>
           <iyz>0</iyz>
-          <izz>9.02e-10</izz>
+          <izz>1e-9</izz>
         </inertia>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
       </inertial>
-      <pose>0.0325 -0.0325 0.014 0 -0 0</pose>
+      <pose>0.0325 -0.0325 0.014 0 0 0</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
-      <kinematic>0</kinematic>
-      <enable_wind>0</enable_wind>
       <visual name='side_1'>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
             <uri>model://Base_Model/meshes/crazyflie_prop.dae</uri>
@@ -477,7 +423,7 @@
         </material>
       </visual>
       <visual name='side_2'>
-        <pose>0 0 0 0 -0 3.14</pose>
+        <pose>0 0 0 0 0 3.14</pose>
         <geometry>
           <mesh>
             <uri>model://Base_Model/meshes/crazyflie_prop.dae</uri>
@@ -496,26 +442,25 @@
         </material>
       </visual>
     </link>
-    <link name='rotor_2'>
+
+    <link name='Rotor_2'>
       <inertial>
-        <mass>0.00001</mass>
+        <mass>1e-6</mass>
         <inertia>
-          <ixx>1.6e-10</ixx>
+          <ixx>1e-9</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>8.86e-10</iyy>
+          <iyy>1e-9</iyy>
           <iyz>0</iyz>
-          <izz>9.02e-10</izz>
+          <izz>1e-9</izz>
         </inertia>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
       </inertial>
-      <pose>-0.0325 -0.0325 0.014 0 -0 0</pose>
+      <pose>-0.0325 -0.0325 0.014 0 0 0</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
-      <kinematic>0</kinematic>
-      <enable_wind>0</enable_wind>
       <visual name='side_1'>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
             <uri>model://Base_Model/meshes/crazyflie_prop.dae</uri>
@@ -534,7 +479,7 @@
         </material>
       </visual>
       <visual name='side_2'>
-        <pose>0 0 0 0 -0 3.14</pose>
+        <pose>0 0 0 0 0 3.14</pose>
         <geometry>
           <mesh>
             <uri>model://Base_Model/meshes/crazyflie_prop.dae</uri>
@@ -553,26 +498,25 @@
         </material>
       </visual>
     </link>
-    <link name='rotor_3'>
+
+    <link name='Rotor_3'>
       <inertial>
-        <mass>0.00001</mass>
+        <mass>1e-6</mass>
         <inertia>
-          <ixx>1.6e-10</ixx>
+          <ixx>1e-9</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>8.86e-10</iyy>
+          <iyy>1e-9</iyy>
           <iyz>0</iyz>
-          <izz>9.02e-10</izz>
+          <izz>1e-9</izz>
         </inertia>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
       </inertial>
-      <pose>-0.0325 0.0325 0.014 0 -0 0</pose>
+      <pose>-0.0325 0.0325 0.014 0 0 0</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
-      <kinematic>0</kinematic>
-      <enable_wind>0</enable_wind>
       <visual name='side_1'>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
             <uri>model://Base_Model/meshes/crazyflie_prop.dae</uri>
@@ -591,7 +535,7 @@
         </material>
       </visual>
       <visual name='side_2'>
-        <pose>0 0 0 0 -0 3.14</pose>
+        <pose>0 0 0 0 0 3.14</pose>
         <geometry>
           <mesh>
             <uri>model://Base_Model/meshes/crazyflie_prop.dae</uri>
@@ -610,26 +554,25 @@
         </material>
       </visual>
     </link>
-    <link name='rotor_4'>
+
+    <link name='Rotor_4'>
       <inertial>
-        <mass>0.00001</mass>
+        <mass>1e-6</mass>
         <inertia>
-          <ixx>1.6e-10</ixx>
+          <ixx>1e-9</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>8.86e-10</iyy>
+          <iyy>1e-9</iyy>
           <iyz>0</iyz>
-          <izz>9.02e-10</izz>
+          <izz>1e-9</izz>
         </inertia>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
       </inertial>
-      <pose>0.0325 0.0325 0.014 0 -0 0</pose>
+      <pose>0.0325 0.0325 0.014 0 0 0</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
-      <kinematic>0</kinematic>
-      <enable_wind>0</enable_wind>
       <visual name='side_1'>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
             <uri>model://Base_Model/meshes/crazyflie_prop.dae</uri>
@@ -648,7 +591,7 @@
         </material>
       </visual>
       <visual name='side_2'>
-        <pose>0 0 0 0 -0 3.14</pose>
+        <pose>0 0 0 0 0 3.14</pose>
         <geometry>
           <mesh>
             <uri>model://Base_Model/meshes/crazyflie_prop.dae</uri>
@@ -667,12 +610,11 @@
         </material>
       </visual>
     </link>
-    
-    
-    <joint name='rotor_1_joint' type='revolute'>
+
+    <joint name='Rotor_1_joint' type='revolute'>
       <parent>SAR_Body</parent>
-      <child>rotor_1</child>
-      <pose>0 0 0 0 -0 0</pose>
+      <child>Rotor_1</child>
+      <pose>0 0 0 0 0 0</pose>
       <axis>
         <xyz>0 0 1</xyz>
         <limit>
@@ -684,27 +626,14 @@
         <dynamics>
           <spring_reference>0</spring_reference>
           <spring_stiffness>0</spring_stiffness>
-          <damping>0</damping>
-          <friction>0</friction>
         </dynamics>
       </axis>
-      <physics>
-        <ode>
-          <limit>
-            <cfm>0</cfm>
-            <erp>0.8</erp>
-          </limit>
-          <suspension>
-            <cfm>0</cfm>
-            <erp>0.8</erp>
-          </suspension>
-        </ode>
-      </physics>
     </joint>
-    <joint name='rotor_2_joint' type='revolute'>
+
+    <joint name='Rotor_2_joint' type='revolute'>
       <parent>SAR_Body</parent>
-      <child>rotor_2</child>
-      <pose>0 0 0 0 -0 0</pose>
+      <child>Rotor_2</child>
+      <pose>0 0 0 0 0 0</pose>
       <axis>
         <xyz>0 0 1</xyz>
         <limit>
@@ -716,27 +645,14 @@
         <dynamics>
           <spring_reference>0</spring_reference>
           <spring_stiffness>0</spring_stiffness>
-          <damping>0</damping>
-          <friction>0</friction>
         </dynamics>
       </axis>
-      <physics>
-        <ode>
-          <limit>
-            <cfm>0</cfm>
-            <erp>0.8</erp>
-          </limit>
-          <suspension>
-            <cfm>0</cfm>
-            <erp>0.8</erp>
-          </suspension>
-        </ode>
-      </physics>
     </joint>
-    <joint name='rotor_3_joint' type='revolute'>
+
+    <joint name='Rotor_3_joint' type='revolute'>
       <parent>SAR_Body</parent>
-      <child>rotor_3</child>
-      <pose>0 0 0 0 -0 0</pose>
+      <child>Rotor_3</child>
+      <pose>0 0 0 0 0 0</pose>
       <axis>
         <xyz>0 0 1</xyz>
         <limit>
@@ -748,27 +664,14 @@
         <dynamics>
           <spring_reference>0</spring_reference>
           <spring_stiffness>0</spring_stiffness>
-          <damping>0</damping>
-          <friction>0</friction>
         </dynamics>
       </axis>
-      <physics>
-        <ode>
-          <limit>
-            <cfm>0</cfm>
-            <erp>0.8</erp>
-          </limit>
-          <suspension>
-            <cfm>0</cfm>
-            <erp>0.8</erp>
-          </suspension>
-        </ode>
-      </physics>
     </joint>
-    <joint name='rotor_4_joint' type='revolute'>
+
+    <joint name='Rotor_4_joint' type='revolute'>
       <parent>SAR_Body</parent>
-      <child>rotor_4</child>
-      <pose>0 0 0 0 -0 0</pose>
+      <child>Rotor_4</child>
+      <pose>0 0 0 0 0 0</pose>
       <axis>
         <xyz>0 0 1</xyz>
         <limit>
@@ -780,89 +683,68 @@
         <dynamics>
           <spring_reference>0</spring_reference>
           <spring_stiffness>0</spring_stiffness>
-          <damping>0</damping>
-          <friction>0</friction>
         </dynamics>
       </axis>
-      <physics>
-        <ode>
-          <limit>
-            <cfm>0</cfm>
-            <erp>0.8</erp>
-          </limit>
-          <suspension>
-            <cfm>0</cfm>
-            <erp>0.8</erp>
-          </suspension>
-        </ode>
-      </physics>
     </joint>
+
+    <plugin name='Motor_1_Plugin' filename='libMotor_Plugin.so'>
+      <motorNumber>1</motorNumber>
+      <jointName>Rotor_1_joint</jointName>
+      <linkName>Rotor_1</linkName>
+      <turningDirection>ccw</turningDirection>
+      <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
+      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
+      <timeConstantUp>0.05</timeConstantUp>
+      <timeConstantDown>0.15</timeConstantDown>
+      <rotorVisualSlowdown>100</rotorVisualSlowdown>
+    </plugin>
+
+    <plugin name='Motor_2_Plugin' filename='libMotor_Plugin.so'>
+      <motorNumber>2</motorNumber>
+      <jointName>Rotor_2_joint</jointName>
+      <linkName>Rotor_2</linkName>
+      <turningDirection>cw</turningDirection>
+      <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
+      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
+      <timeConstantUp>0.05</timeConstantUp>
+      <timeConstantDown>0.15</timeConstantDown>
+      <rotorVisualSlowdown>100</rotorVisualSlowdown>
+    </plugin>
+
+    <plugin name='Motor_3_Plugin' filename='libMotor_Plugin.so'>
+      <motorNumber>3</motorNumber>
+      <jointName>Rotor_3_joint</jointName>
+      <linkName>Rotor_3</linkName>
+      <turningDirection>ccw</turningDirection>
+      <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
+      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
+      <timeConstantUp>0.05</timeConstantUp>
+      <timeConstantDown>0.15</timeConstantDown>
+      <rotorVisualSlowdown>100</rotorVisualSlowdown>
+    </plugin>
+
+    <plugin name='Motor_4_Plugin' filename='libMotor_Plugin.so'>
+      <motorNumber>4</motorNumber>
+      <jointName>Rotor_4_joint</jointName>
+      <linkName>Rotor_4</linkName>
+      <turningDirection>cw</turningDirection>
+      <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
+      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
+      <timeConstantUp>0.05</timeConstantUp>
+      <timeConstantDown>0.15</timeConstantDown>
+      <rotorVisualSlowdown>100</rotorVisualSlowdown>
+    </plugin>
 
     <joint name='Camera_Joint' type='fixed'>
       <parent>SAR_Body</parent>
       <child>Camera</child>
-      <pose>0 0 0 0 -0 0</pose>
-      <physics>
-        <ode>
-          <limit>
-            <cfm>0</cfm>
-            <erp>0.8</erp>
-          </limit>
-          <suspension>
-            <cfm>0</cfm>
-            <erp>0.8</erp>
-          </suspension>
-        </ode>
-      </physics>
     </joint>
     
 
-    
-    
-    <plugin name='front_right_motor_model' filename='libmotor_plugin.so'>
-      <motorNumber>1</motorNumber>
-      <jointName>rotor_1_joint</jointName>
-      <linkName>rotor_1</linkName>
-      <turningDirection>ccw</turningDirection>
-      <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
-      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
-      <timeConstantUp>0.05</timeConstantUp>
-      <timeConstantDown>0.15</timeConstantDown>
-      <rotorVisualSlowdown>100</rotorVisualSlowdown>
+    <plugin name='SAR_Update_Plugin' filename='libSAR_Update_Plugin.so'>
+      <CameraJointName>Camera_Joint</CameraJointName>
     </plugin>
-    <plugin name='back_right_motor_model' filename='libmotor_plugin.so'>
-      <motorNumber>2</motorNumber>
-      <jointName>rotor_2_joint</jointName>
-      <linkName>rotor_2</linkName>
-      <turningDirection>cw</turningDirection>
-      <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
-      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
-      <timeConstantUp>0.05</timeConstantUp>
-      <timeConstantDown>0.15</timeConstantDown>
-      <rotorVisualSlowdown>100</rotorVisualSlowdown>
-    </plugin>
-    <plugin name='back_left_motor_model' filename='libmotor_plugin.so'>
-      <motorNumber>3</motorNumber>
-      <jointName>rotor_3_joint</jointName>
-      <linkName>rotor_3</linkName>
-      <turningDirection>ccw</turningDirection>
-      <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
-      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
-      <timeConstantUp>0.05</timeConstantUp>
-      <timeConstantDown>0.15</timeConstantDown>
-      <rotorVisualSlowdown>100</rotorVisualSlowdown>
-    </plugin>
-    <plugin name='front_left_motor_model' filename='libmotor_plugin.so'>
-      <motorNumber>4</motorNumber>
-      <jointName>rotor_4_joint</jointName>
-      <linkName>rotor_4</linkName>
-      <turningDirection>cw</turningDirection>
-      <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
-      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
-      <timeConstantUp>0.05</timeConstantUp>
-      <timeConstantDown>0.15</timeConstantDown>
-      <rotorVisualSlowdown>100</rotorVisualSlowdown>
-    </plugin>
+
 
     <plugin name='Vicon_plugin' filename='libgazebo_ros_p3d.so'>
       <alwaysOn>true</alwaysOn>
@@ -888,14 +770,10 @@
     </plugin>
 
 
-    <!-- <plugin name='Domain_Randomization_Plugin' filename='libDomain_Randomization_Plugin.so'>
-        <bodyName>SAR_Body</bodyName>
-    </plugin> -->
-
-    <plugin name='Cam_Update_Plugin' filename='libCam_Update_Plugin.so'>
+    <!-- <plugin name='Cam_Update_Plugin' filename='libCam_Update_Plugin.so'>
         <bodyName>SAR_Body</bodyName>
         <jointName>Camera_Joint</jointName>
-    </plugin>
+    </plugin> -->
 
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>

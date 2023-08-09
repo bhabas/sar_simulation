@@ -13,7 +13,8 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         self.Env_Name = "SAR_ParamOptim_Env"
         self.k_ep = 0
     
-        self.D_min = 50.0
+        self.D_min = np.inf
+        self.Tau_trg = np.inf
         self.done = False
 
         self.GZ_Timeout = GZ_Timeout
@@ -23,7 +24,8 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
         ## RESET REWARD CALC VALUES
         self.done = False
-        self.D_min = 50.0  # Reset max from ceiling [m]
+        self.D_min = np.inf  # Reset max from ceiling [m]
+        self.Tau_trg = np.inf
         
 
         self.SendCmd('GZ_StickyPads',cmd_flag=0)
@@ -138,9 +140,50 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
 
 
-        reward = self.CalcReward()
+        reward = self._CalcReward()
 
         return None,reward,self.done,None
+    
+    def _CalcReward(self):
+
+        ## DISTANCE REWARD 
+        R_dist = np.clip(1/np.abs(self.D_min + 1e-3),0,15)/15
+        
+        ## TAU TRIGGER REWARD
+        R_tau = np.clip(1/np.abs(self.Tau_trg - 0.2),0,15)/15
+
+
+        ## IMPACT ANGLE REWARD # (Derivation: Research_Notes_Book_3.pdf (6/21/23))
+        Beta_d = 150 # Desired impact angle [= 180 deg - gamma [deg]] TODO: Change to live value?
+        Beta_rel = -180 + self.Rot_Sum_impact + self.Plane_Angle
+
+        if Beta_rel < -180:
+            R_angle = 0
+        elif -180 <= Beta_rel < 180:
+            R_angle = 0.5*(-np.cos(np.deg2rad(Beta_rel*180/Beta_d))+1)
+        elif Beta_rel > 180:
+            R_angle = 0
+
+        ## PAD CONTACT REWARD
+        if self.pad_connections >= 3: 
+            if self.BodyContact_flag == False:
+                R_legs = 1.0
+            else:
+                R_legs = 0.3
+
+        elif self.pad_connections == 2: 
+            if self.BodyContact_flag == False:
+                R_legs = 0.6
+            else:
+                R_legs = 0.1
+                
+        else:
+            R_legs = 0.0
+
+        self.reward_vals = [R_dist,R_tau,R_angle,R_legs,0]
+        self.reward = 0.05*R_dist + 0.1*R_tau + 0.2*R_angle + 0.65*R_legs
+
+        return self.reward
 
     def CalcReward(self):
 
@@ -177,10 +220,10 @@ if __name__ == "__main__":
     env = SAR_ParamOpt_Sim(GZ_Timeout=False)
 
     for ii in range(1000):
-        Tau_tr = 0.2
+        Tau_trg = 0.23
         My = 8
         Vel_d = 2.5
-        Phi_d = 60
+        Phi_d = 30
         env.ParamOptim_reset()
-        obs,reward,done,info = env.ParamOptim_Flight(Tau_tr,My,Vel_d,Phi_d)
+        obs,reward,done,info = env.ParamOptim_Flight(Tau_trg,My,Vel_d,Phi_d)
         print(f"Ep: {ii} \t Reward: {reward:.02f}")

@@ -205,6 +205,7 @@ def cmd_send(env,logName):
                 print("Reset Pos/Vel -- Sticky off -- Controller Reset\n")
                 env.reset_pos()
 
+
             elif action=='GZ_Plane_Pose':
                 cmd_vals = env.userInput("Set desired position values (x,y,z): ",float)
                 cmd_flag = env.userInput("Set desired plane angle [deg]: ",float)

@@ -95,7 +95,7 @@ void SAR_DataConverter::create_CSV()
 
     fprintf(fPtr,"## DATA_TYPE: %s, ",DATA_TYPE.c_str());
     fprintf(fPtr,"SAR_SETTINGS: {Policy_Type: %s, SAR_Type: %s, SAR_Config: %s}, ",POLICY_TYPE.c_str(),SAR_Type.c_str(),SAR_Config.c_str());
-    fprintf(fPtr,"PLANE_SETTINGS: {Plane_Model: %s}, ",Plane_Model.c_str());
+    fprintf(fPtr,"PLANE_SETTINGS: {Plane_Config: %s}, ",Plane_Config.c_str());
     fprintf(fPtr,"\n");
 
     fflush(fPtr);
@@ -179,23 +179,23 @@ void SAR_DataConverter::append_CSV_misc()
 void SAR_DataConverter::append_CSV_flip()
 {
     fprintf(fPtr,"%u,%u,",k_ep,k_run);                          // k_ep,k_run
-    fprintf(fPtr,"%.3f,",(Time_tr-Time_start).toSec());         // t
-    fprintf(fPtr,"%.3f,%.3f,",Policy_Trg_Action_tr,Policy_Flip_Action_tr); // Policy_Trg_Action,Policy_Flip_Action
+    fprintf(fPtr,"%.3f,",(Time_trg-Time_start).toSec());         // t
+    fprintf(fPtr,"%.3f,%.3f,",Policy_Trg_Action_trg,Policy_Flip_Action_trg); // Policy_Trg_Action,Policy_Flip_Action
     fprintf(fPtr,"--,--,--,");                                  // mu,sigma,policy
 
     // // INTERNAL STATE ESTIMATES (CF)
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",Pose_tr.position.x,Pose_tr.position.y,Pose_tr.position.z);   // x,y,z
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist_tr.linear.x,Twist_tr.linear.y,Twist_tr.linear.z);      // vx,vy,vz
-    fprintf(fPtr,"%.3f,%.3f,--,",D_perp_tr,Tau_tr);                                             // D_perp,Tau,Tau_est
-    fprintf(fPtr,"%.3f,--,%.3f,--,",Theta_x_tr,Theta_y_tr);                                     // Tau_est,Theta_x_est,Theta_y_est
+    fprintf(fPtr,"%.3f,%.3f,%.3f,",Pose_trg.position.x,Pose_trg.position.y,Pose_trg.position.z);   // x,y,z
+    fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist_trg.linear.x,Twist_trg.linear.y,Twist_trg.linear.z);      // vx,vy,vz
+    fprintf(fPtr,"%.3f,%.3f,--,",D_perp_trg,Tau_trg);                                             // D_perp,Tau,Tau_est
+    fprintf(fPtr,"%.3f,--,%.3f,--,",Theta_x_trg,Theta_y_trg);                                     // Tau_est,Theta_x_est,Theta_y_est
     fprintf(fPtr,"%s,--,",formatBool(flip_flag));                                               // flip_flag,impact_flag
 
 
 
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",Eul_tr.x,Eul_tr.y,Eul_tr.z);                                 // eul_x,eul_y,eul_z
-    fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist_tr.angular.x,Twist_tr.angular.y,Twist_tr.angular.z);   // wx,wy,wz
-    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Pose_tr.orientation.x,Pose_tr.orientation.y,Pose_tr.orientation.z,Pose_tr.orientation.w); // qx,qy,qz,qw
-    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",FM_tr[0],FM_tr[1],FM_tr[2],FM_tr[3]);                   // F_thrust,Mx,My,Mz
+    fprintf(fPtr,"%.3f,%.3f,%.3f,",Eul_trg.x,Eul_trg.y,Eul_trg.z);                                 // eul_x,eul_y,eul_z
+    fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist_trg.angular.x,Twist_trg.angular.y,Twist_trg.angular.z);   // wx,wy,wz
+    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",Pose_trg.orientation.x,Pose_trg.orientation.y,Pose_trg.orientation.z,Pose_trg.orientation.w); // qx,qy,qz,qw
+    fprintf(fPtr,"%.3f,%.3f,%.3f,%.3f,",FM_trg[0],FM_trg[1],FM_trg[2],FM_trg[3]);                   // F_thrust,Mx,My,Mz
 
     // SETPOINT VALUES
     fprintf(fPtr,"--,--,--,"); // x_d.x,x_d.y,x_d.z

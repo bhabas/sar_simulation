@@ -1,0 +1,103 @@
+<?xml version='1.0'?>
+<sdf version='1.7'>
+  <model name='Debug'>
+
+    <include>
+      <uri>model://Ground_Base_Model</uri>
+    </include>
+
+    
+
+    <link name='Ground_Pattern'>
+      <pose>0 0 0 0 3.14 0</pose>
+      <collision name='Ground_Collision'>
+        <pose>0 0 0.05 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1 1 0.1</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name='Pattern_Visual'>
+        <pose>0 0 0.005 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1 1 0.01</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://Desert_Pattern/Ground_Texture/Ground.material</uri>
+            <name>Ground_Mat</name>
+          </script>
+        </material>
+      </visual>
+    </link>
+
+    <!-- <link name='Positive_X_Wall'>
+      <pose>0.5 0 0 0 0 0</pose>
+      <gravity>0</gravity>
+      <self_collide>0</self_collide>
+      <kinematic>0</kinematic>
+      <enable_wind>0</enable_wind>
+      <collision name='collision'>
+        <geometry>
+          <box>
+            <size>0.01 1 0.1</size>
+          </box>
+        </geometry>
+      </collision>
+    </link>
+    <link name='Positive_Y_Wall'>
+      <pose>0 0.5 0 0 0 1.57</pose>
+      <gravity>0</gravity>
+      <self_collide>0</self_collide>
+      <kinematic>0</kinematic>
+      <enable_wind>0</enable_wind>
+      <collision name='collision'>
+        <geometry>
+          <box>
+            <size>0.01 1 0.1</size>
+          </box>
+        </geometry>
+      </collision>
+    </link>
+    <link name='Negative_X_Wall'>
+      <pose>-0.5 0 0 0 0 0</pose>
+      <gravity>0</gravity>
+      <self_collide>0</self_collide>
+      <kinematic>0</kinematic>
+      <enable_wind>0</enable_wind>
+      <collision name='collision'>
+        <geometry>
+          <box>
+            <size>0.01 1 0.1</size>
+          </box>
+        </geometry>
+      </collision>
+    </link>
+    <link name='Negative_Y_Wall'>
+      <pose>0 -0.5 0 0 0 1.57</pose>
+      <gravity>0</gravity>
+      <self_collide>0</self_collide>
+      <kinematic>0</kinematic>
+      <enable_wind>0</enable_wind>
+      <collision name='collision'>
+        <geometry>
+          <box>
+            <size>0.01 1 0.1</size>
+          </box>
+        </geometry>
+      </collision>
+    </link> -->
+
+
+    <!-- <joint name='Surface_Pattern_Joint' type='fixed'>
+      <parent>Ground_Base_Model::Ground_Link</parent>
+      <child>Ground_Pattern</child>
+    </joint> -->
+
+    <static>0</static>
+    <allow_auto_disable>1</allow_auto_disable>
+  </model>
+</sdf>

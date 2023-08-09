@@ -69,7 +69,7 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     // CARTESIAN SPACE DATA
     if(ctrl_msg.flip_flag == true && OnceFlag_flip == false)
     {   
-        Time_tr = ros::Time::now();
+        Time_trg = ros::Time::now();
         OnceFlag_flip = true;
 
     }
@@ -83,34 +83,34 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     
 
     flip_flag = ctrl_msg.flip_flag;
-    Pose_tr = ctrl_msg.Pose_tr;
-    Twist_tr = ctrl_msg.Twist_tr;
+    Pose_trg = ctrl_msg.Pose_trg;
+    Twist_trg = ctrl_msg.Twist_trg;
 
     // PROCESS EULER ANGLES
-    float quat_tr[4] = {
-        (float)ctrl_msg.Pose_tr.orientation.x,
-        (float)ctrl_msg.Pose_tr.orientation.y,
-        (float)ctrl_msg.Pose_tr.orientation.z,
-        (float)ctrl_msg.Pose_tr.orientation.w
+    float quat_trg[4] = {
+        (float)ctrl_msg.Pose_trg.orientation.x,
+        (float)ctrl_msg.Pose_trg.orientation.y,
+        (float)ctrl_msg.Pose_trg.orientation.z,
+        (float)ctrl_msg.Pose_trg.orientation.w
     };
-    float eul_tr[3];
-    quat2euler(quat_tr,eul_tr);
-    Eul_tr.x = eul_tr[0]*180/M_PI;
-    Eul_tr.y = eul_tr[1]*180/M_PI;
-    Eul_tr.z = eul_tr[2]*180/M_PI;
+    float eul_trg[3];
+    quat2euler(quat_trg,eul_trg);
+    Eul_trg.x = eul_trg[0]*180/M_PI;
+    Eul_trg.y = eul_trg[1]*180/M_PI;
+    Eul_trg.z = eul_trg[2]*180/M_PI;
 
     // OPTICAL FLOW
-    Tau_tr = ctrl_msg.Tau_tr;
-    Theta_x_tr = ctrl_msg.Theta_x_tr;
-    Theta_y_tr = ctrl_msg.Theta_y_tr;
-    D_perp_tr = ctrl_msg.D_perp_tr;
+    Tau_trg = ctrl_msg.Tau_trg;
+    Theta_x_trg = ctrl_msg.Theta_x_trg;
+    Theta_y_trg = ctrl_msg.Theta_y_trg;
+    D_perp_trg = ctrl_msg.D_perp_trg;
 
     // CONTROLLER ACTIONS
-    FM_tr = ctrl_msg.FM_flip;
+    FM_trg = ctrl_msg.FM_flip;
 
     // NEURAL NETWORK DATA
-    Policy_Trg_Action_tr = ctrl_msg.Policy_Trg_Action_tr;
-    Policy_Flip_Action_tr = ctrl_msg.Policy_Flip_Action_tr;
+    Policy_Trg_Action_trg = ctrl_msg.Policy_Trg_Action_trg;
+    Policy_Flip_Action_trg = ctrl_msg.Policy_Flip_Action_trg;
 
 }
 
@@ -226,7 +226,7 @@ void SAR_DataConverter::cf1_PolicyState_Callback(const sar_msgs::GenericLogData:
     flip_flag = log_msg->values[6];
     if(flip_flag == true && OnceFlag_flip == false)
     {
-        Time_tr = ros::Time::now();
+        Time_trg = ros::Time::now();
         OnceFlag_flip = true;
     }
 
@@ -299,43 +299,43 @@ void SAR_DataConverter::cf1_SetPoints_Callback(const sar_msgs::GenericLogData::C
 void SAR_DataConverter::cf1_TrgState_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg)
 {
     // TRIGGER STATE - CEILING DISTANCE
-    D_perp_tr = log_msg->values[0]*1e-3;
+    D_perp_trg = log_msg->values[0]*1e-3;
 
     // TRIGGER STATE - POSITION
-    Pose_tr.position.x = NAN;
-    Pose_tr.position.y = NAN;
-    Pose_tr.position.z = log_msg->values[1]*1e-3;
+    Pose_trg.position.x = NAN;
+    Pose_trg.position.y = NAN;
+    Pose_trg.position.z = log_msg->values[1]*1e-3;
 
 
     // TRIGGER STATE - VELOCITY
     float vxy_arr[2];
     decompressXY(log_msg->values[2],vxy_arr);
     
-    Twist_tr.linear.x = vxy_arr[0];
-    Twist_tr.linear.y = vxy_arr[1];
-    Twist_tr.linear.z = log_msg->values[3]*1e-3;
+    Twist_trg.linear.x = vxy_arr[0];
+    Twist_trg.linear.y = vxy_arr[1];
+    Twist_trg.linear.z = log_msg->values[3]*1e-3;
 
     // TRIGGER STATE - OPTICAL FLOW
     float Theta_xy_arr[2];
     decompressXY(log_msg->values[4],Theta_xy_arr);
     
-    Theta_x_tr = Theta_xy_arr[0];
-    Theta_y_tr = Theta_xy_arr[1];
-    Tau_tr = log_msg->values[5]*1e-3;
+    Theta_x_trg = Theta_xy_arr[0];
+    Theta_y_trg = Theta_xy_arr[1];
+    Tau_trg = log_msg->values[5]*1e-3;
 
     // TRIGGER STATE - OPTICAL FLOW ESTIMATE
     float Theta_xy_est_arr[2];
     decompressXY(log_msg->values[6],Theta_xy_est_arr);
     
-    Theta_x_tr = Theta_xy_est_arr[0];
-    Theta_y_tr = Theta_xy_est_arr[1];
-    Tau_tr = log_msg->values[7]*1e-3;
+    Theta_x_trg = Theta_xy_est_arr[0];
+    Theta_y_trg = Theta_xy_est_arr[1];
+    Tau_trg = log_msg->values[7]*1e-3;
 
     // TRIGGER STATE - POLICY ACTIONS
     float Policy_Action_arr[2];
     decompressXY(log_msg->values[8],Policy_Action_arr);
-    Policy_Trg_Action_tr = Policy_Action_arr[0];
-    Policy_Flip_Action_tr = Policy_Action_arr[1];
+    Policy_Trg_Action_trg = Policy_Action_arr[0];
+    Policy_Flip_Action_trg = Policy_Action_arr[1];
     
     
 }
