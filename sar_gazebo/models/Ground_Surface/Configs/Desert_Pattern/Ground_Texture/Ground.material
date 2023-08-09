@@ -1,0 +1,13 @@
+material Ground_Mat
+{
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture Images/desert_sand.jpg
+      }
+    }
+  }
+}

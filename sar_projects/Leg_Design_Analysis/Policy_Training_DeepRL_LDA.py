@@ -24,7 +24,7 @@ if __name__ == '__main__':
     log_dir = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/{env.env_name}"
 
     ## CREATE NEW DEEP RL MODEL 
-    log_name = f"SAC--{current_time}--{env.modelInitials}"    
+    log_name = f"SAC--{current_time}--{env.SAR_Config}"    
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.create_model()
     PolicyTrainer.train_model()

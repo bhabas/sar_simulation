@@ -1,0 +1,29 @@
+<?xml version='1.0'?>
+<sdf version='1.7'>
+  <model name='Ground_Base_Model'>
+    <static>1</static>
+    <link name='Ground_Link'>
+      <pose>0 0 0 0 3.14 0</pose>
+      <inertial>
+        <mass>1000</mass>
+        <pose>0 0 0 0 0 0</pose>
+        <inertia>
+          <ixx>500</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>500</iyy>
+          <iyz>0</iyz>
+          <izz>1000</izz>
+        </inertia>
+      </inertial>
+      <self_collide>0</self_collide>
+      <enable_wind>0</enable_wind>
+      <kinematic>0</kinematic>
+      <gravity>0</gravity>
+      
+
+    </link>
+
+    <allow_auto_disable>1</allow_auto_disable>
+  </model>
+</sdf>

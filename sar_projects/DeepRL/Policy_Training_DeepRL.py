@@ -213,7 +213,7 @@ class Policy_Trainer_DeepRL():
 
         data = dict(
             PLANE_SETTINGS = dict(
-                Plane_Model = self.env.Plane_Model,
+                Plane_Config = self.env.Plane_Config,
                 Plane_Angle = self.env.Plane_Angle,
                 Plane_Pos = dict(
                     X = self.env.Plane_Pos[0],
@@ -321,9 +321,9 @@ class Policy_Trainer_DeepRL():
 
                     "Vel_flip","Phi_flip",
 
-                    "Tau_tr",
-                    "Theta_x_tr",
-                    "D_perp_tr",
+                    "Tau_trg",
+                    "Theta_x_trg",
+                    "D_perp_trg",
 
                     "Eul_y_Impact",
                     
@@ -381,7 +381,7 @@ class Policy_Trainer_DeepRL():
                             "--",
                             self.env.pad_connections,self.env.BodyContact_flag,
 
-                            np.round(self.env.vel_tr_mag,2),np.round(self.env.phi_tr,2),
+                            np.round(self.env.vel_trg_mag,2),np.round(self.env.phi_trg,2),
 
                             np.round(self.env.obs_trg[0],3),
                             np.round(self.env.obs_trg[1],3),
@@ -392,8 +392,8 @@ class Policy_Trainer_DeepRL():
                             np.round(self.env.action_trg[0],3),
                             np.round(self.env.action_trg[1],3),
 
-                            np.round(self.env.vel_tr[0],3),
-                            np.round(self.env.vel_tr[2],3),
+                            np.round(self.env.vel_trg[0],3),
+                            np.round(self.env.vel_trg[2],3),
 
                             np.round(reward,3),
                             np.round(self.env.reward_vals,3),
@@ -512,7 +512,7 @@ class Policy_Trainer_DeepRL():
             SavePath (str): Path to save header file
         """        
 
-        FileName = f"NN_Layers_{self.env.modelInitials}_DeepRL.h"
+        FileName = f"NN_Layers_{self.env.SAR_Config}_DeepRL.h"
         f = open(os.path.join(self.TB_log_path,FileName),'a')
         f.truncate(0) ## Clears contents of file
 
@@ -611,7 +611,7 @@ if __name__ == '__main__':
 
     # START TRAINING NEW DEEP RL MODEL 
     env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[3.0,4.0],Phi_rel_range=[0,180])
-    log_name = f"{env.modelInitials}--Deg_{env.Plane_Angle}--SAC_{current_time}" 
+    log_name = f"{env.SAR_Config}--Deg_{env.Plane_Angle}--SAC_{current_time}" 
     log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
 
 

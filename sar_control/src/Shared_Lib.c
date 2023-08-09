@@ -11,9 +11,14 @@ float Iyy = 17.00e-6f;      // [kg*m^2]
 float Izz = 31.19e-6f;      // [kg*m^2]
 struct mat33 J;             // Rotational Inertia Matrix [kg*m^2]
 
-float Prop_Dist = 0.0325f;          // COM to Prop along x-axis [m]
 float C_tf = 0.00618f;      // Moment Coeff [Nm/N]
 float f_max = 15.0f;        // Max thrust per motor [g]
+
+float Prop_14_x = 0.0325f;  // Front Prop Distance - x-axis [m]
+float Prop_14_y = 0.0325f;  // Front Prop Distance - y-axis [m]
+float Prop_23_x = 0.0325f;  // Rear  Prop Distance - x-axis [m]
+float Prop_23_y = 0.0325f;  // Rear  Prop Distance - y-axis [m]
+
 
 const float g = 9.81f;                        // Gravity [m/s^2]
 const struct vec e_3 = {0.0f, 0.0f, 1.0f};    // Global z-axis
@@ -198,7 +203,7 @@ bool customPWM_flag = false;
 
 
 // SENSOR FLAGS
-bool isCamActive = true;
+bool isCamActive = false;
 
 
 // =================================
@@ -236,21 +241,21 @@ float Policy_Flip_threshold = 1.50f;
 // ======================================
 
 // CARTESIAN STATES
-struct vec statePos_tr = {0.0f,0.0f,0.0f};         // Pos [m]
-struct vec stateVel_tr = {0.0f,0.0f,0.0f};         // Vel [m/s]
-struct quat stateQuat_tr = {0.0f,0.0f,0.0f,1.0f};  // Orientation
-struct vec stateOmega_tr = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
-float D_perp_tr = 0.0f;     // [m/s]
+struct vec statePos_trg = {0.0f,0.0f,0.0f};         // Pos [m]
+struct vec stateVel_trg = {0.0f,0.0f,0.0f};         // Vel [m/s]
+struct quat stateQuat_trg = {0.0f,0.0f,0.0f,1.0f};  // Orientation
+struct vec stateOmega_trg = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
+float D_perp_trg = 0.0f;     // [m/s]
 
 // OPTICAL FLOW STATES
-float Tau_tr = 0.0f;        // [rad/s]
-float Theta_x_tr = 0.0f;    // [rad/s]
-float Theta_y_tr = 0.0f;    // [rad/s]
+float Tau_trg = 0.0f;        // [rad/s]
+float Theta_x_trg = 0.0f;    // [rad/s]
+float Theta_y_trg = 0.0f;    // [rad/s]
 
 // OPTICAL FLOW ESTIMATES
-float Tau_est_tr = 0.0f;        // [rad/s]
-float Theta_x_est_tr = 0.0f;    // [rad/s]
-float Theta_y_est_tr = 0.0f;    // [rad/s]
+float Tau_est_trg = 0.0f;        // [rad/s]
+float Theta_x_est_trg = 0.0f;    // [rad/s]
+float Theta_y_est_trg = 0.0f;    // [rad/s]
 
 // CONTROLLER STATES
 float F_thrust_flip = 0.0f; // [N]
@@ -259,8 +264,8 @@ float M_y_flip = 0.0f;      // [N*m]
 float M_z_flip = 0.0f;      // [N*m]
 
 // POLICY TRIGGER/ACTION VALUES
-float Policy_Trg_Action_tr = 0.0f;    
-float Policy_Flip_Action_tr = 0.0f;
+float Policy_Trg_Action_trg = 0.0f;    
+float Policy_Flip_Action_trg = 0.0f;
 
 // =================================
 //    LANDING SURFACE PARAMETERS
@@ -736,30 +741,30 @@ bool updateOpticalFlowEst()
         N_up = UART_arr[10];
         N_vp = UART_arr[11];
 
-        // UPDATE Ax=b MATRICES FROM UART ARRAY
-        double spatial_Grad_mat[9] = {
-            G_vp_vp, -G_vp_up, -IW/(2*N_up*focal_len)*G_vp_rp,
-            G_vp_up, -G_up_up, -IW/(2*N_up*focal_len)*G_up_rp,
-            G_vp_rp, -G_up_rp, -IW/(2*N_up*focal_len)*G_rp_rp,
-        };
-
-        double temp_Grad_vec[3] = {
-            (8*IW)/(focal_len*N_up*Cam_dt)*G_vp_tp,
-            (8*IW)/(focal_len*N_up*Cam_dt)*G_up_tp,
-            (8*IW)/(focal_len*N_up*Cam_dt)*G_rp_tp,
-        };
-
+        // // UPDATE Ax=b MATRICES FROM UART ARRAY
         // double spatial_Grad_mat[9] = {
-        //     3, 1,-1,
-        //     2,-2, 1,
-        //     1, 1, 1,
+        //     G_vp_vp, -G_vp_up, -IW/(2*N_up*focal_len)*G_vp_rp,
+        //     G_vp_up, -G_up_up, -IW/(2*N_up*focal_len)*G_up_rp,
+        //     G_vp_rp, -G_up_rp, -IW/(2*N_up*focal_len)*G_rp_rp,
         // };
 
         // double temp_Grad_vec[3] = {
-        //      9,
-        //     -3,
-        //      7,
+        //     (8*IW)/(focal_len*N_up*Cam_dt)*G_vp_tp,
+        //     (8*IW)/(focal_len*N_up*Cam_dt)*G_up_tp,
+        //     (8*IW)/(focal_len*N_up*Cam_dt)*G_rp_tp,
         // };
+
+        double spatial_Grad_mat[9] = {
+            3, 1,-1,
+            2,-2, 1,
+            1, 1, 1,
+        };
+
+        double temp_Grad_vec[3] = {
+             9,
+            -3,
+             7,
+        };
 
 
         // SOLVE Ax=b EQUATION FOR OPTICAL FLOW VECTOR
@@ -798,6 +803,7 @@ bool updateOpticalFlowEst()
 bool updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors)
 {
     // UPDATE POS AND VEL
+    // TODO: ADD CAMERA OFFSETS SO THESE NUMBERS MATCH CAMERA ESTIMATION
     r_BO = mkvec(state->position.x, state->position.y, state->position.z);
     V_BO = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);
 

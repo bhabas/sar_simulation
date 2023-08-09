@@ -97,18 +97,18 @@ void controllerOutOfTreeReset() {
 
 
     // RESET LOGGED FLIP VALUES
-    statePos_tr = vzero();
-    stateVel_tr = vzero();
-    stateQuat_tr = mkquat(0.0f,0.0f,0.0f,1.0f);
-    stateOmega_tr = vzero();
+    statePos_trg = vzero();
+    stateVel_trg = vzero();
+    stateQuat_trg = mkquat(0.0f,0.0f,0.0f,1.0f);
+    stateOmega_trg = vzero();
 
-    Tau_tr = 0.0f;
-    Theta_x_tr = 0.0f;
-    Theta_y_tr = 0.0f;
-    D_perp_tr = 0.0f;
+    Tau_trg = 0.0f;
+    Theta_x_trg = 0.0f;
+    Theta_y_trg = 0.0f;
+    D_perp_trg = 0.0f;
 
-    Policy_Trg_Action_tr = 0.0f;
-    Policy_Flip_Action_tr = 0.0f;
+    Policy_Trg_Action_trg = 0.0f;
+    Policy_Flip_Action_trg = 0.0f;
 
 
     updatePlaneNormal(Plane_Angle);
@@ -192,15 +192,15 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                         // UPDATE AND RECORD FLIP VALUES
                         flip_flag = true;  
-                        statePos_tr = statePos;
-                        stateVel_tr = stateVel;
-                        stateQuat_tr = stateQuat;
-                        stateOmega_tr = stateOmega;
+                        statePos_trg = statePos;
+                        stateVel_trg = stateVel;
+                        stateQuat_trg = stateQuat;
+                        stateOmega_trg = stateOmega;
 
-                        Tau_tr = Tau;
-                        Theta_x_tr = Theta_x_tr;
-                        Theta_y_tr = Theta_y_tr;
-                        D_perp_tr = D_perp;
+                        Tau_trg = Tau;
+                        Theta_x_trg = Theta_x_trg;
+                        Theta_y_trg = Theta_y_trg;
+                        D_perp_trg = D_perp;
 
                     
                         M_d.x = 0.0f;
@@ -234,15 +234,15 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                         // UPDATE AND RECORD FLIP VALUES
                         flip_flag = true;  
-                        statePos_tr = statePos;
-                        stateVel_tr = stateVel;
-                        stateQuat_tr = stateQuat;
-                        stateOmega_tr = stateOmega;
+                        statePos_trg = statePos;
+                        stateVel_trg = stateVel;
+                        stateQuat_trg = stateQuat;
+                        stateOmega_trg = stateOmega;
 
-                        Tau_tr = Tau;
-                        Theta_x_tr = Theta_x_tr;
-                        Theta_y_tr = Theta_y_tr;
-                        D_perp_tr = D_perp;
+                        Tau_trg = Tau;
+                        Theta_x_trg = Theta_x_trg;
+                        Theta_y_trg = Theta_y_trg;
+                        D_perp_trg = D_perp;
 
                     
                         M_d.x = 0.0f;
@@ -284,23 +284,18 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
             M = vscl(2.0f,M_d);
         }
 
-        // =========== CONVERT THRUSTS [N] AND MOMENTS [N*m] TO PWM =========== // 
-        f_thrust_g = clamp(F_thrust/4.0f*Newton2g, 0.0f, f_max*0.9f); // Clamp thrust to prevent control saturation
-        f_roll_g = M.x/(4.0f*Prop_Dist)*Newton2g;
-        f_pitch_g = M.y/(4.0f*Prop_Dist)*Newton2g;
-        f_yaw_g = M.z/(4.0f*C_tf)*Newton2g;
 
-        // THESE CONNECT TO POWER_DISTRIBUTION_STOCK.C
-        control->thrust = f_thrust_g;                   // This gets passed to firmware EKF
-        control->roll = (int16_t)(f_roll_g*1e3f);
-        control->pitch = (int16_t)(f_pitch_g*1e3f);
-        control->yaw = (int16_t)(f_yaw_g*1e3f);
+        // MOTOR MIXING (GTC_Derivation_V2.pdf) 
+        M1_thrust = F_thrust * Prop_23_x/(Prop_14_x + Prop_23_x) - M.x * 1/(Prop_14_y + Prop_23_y) - M.y * 1/(Prop_14_x + Prop_23_x) - M.z * Prop_23_y/(C_tf*(Prop_14_y + Prop_23_y));
+        M2_thrust = F_thrust * Prop_14_x/(Prop_14_x + Prop_23_x) - M.x * 1/(Prop_14_y + Prop_23_y) + M.y * 1/(Prop_14_x + Prop_23_x) + M.z * Prop_14_y/(C_tf*(Prop_14_y + Prop_23_y));
+        M3_thrust = F_thrust * Prop_14_x/(Prop_14_x + Prop_23_x) + M.x * 1/(Prop_14_y + Prop_23_y) + M.y * 1/(Prop_14_x + Prop_23_x) - M.z * Prop_14_y/(C_tf*(Prop_14_y + Prop_23_y));
+        M4_thrust = F_thrust * Prop_23_x/(Prop_14_x + Prop_23_x) + M.x * 1/(Prop_14_y + Prop_23_y) - M.y * 1/(Prop_14_x + Prop_23_x) + M.z * Prop_23_y/(C_tf*(Prop_14_y + Prop_23_y));
 
-        // ADD RESPECTIVE THRUST COMPONENTS
-        M1_thrust = clamp(f_thrust_g + f_roll_g - f_pitch_g + f_yaw_g, 0.0f, f_max);
-        M2_thrust = clamp(f_thrust_g + f_roll_g + f_pitch_g - f_yaw_g, 0.0f, f_max);
-        M3_thrust = clamp(f_thrust_g - f_roll_g + f_pitch_g + f_yaw_g, 0.0f, f_max);
-        M4_thrust = clamp(f_thrust_g - f_roll_g - f_pitch_g - f_yaw_g, 0.0f, f_max);
+        // CLAMP AND CONVER THRUST FROM [N] AND [N*M] TO [g]
+        M1_thrust = clamp((M1_thrust/2.0f)*Newton2g,0.0f,f_max);
+        M2_thrust = clamp((M2_thrust/2.0f)*Newton2g,0.0f,f_max);
+        M3_thrust = clamp((M3_thrust/2.0f)*Newton2g,0.0f,f_max);
+        M4_thrust = clamp((M4_thrust/2.0f)*Newton2g,0.0f,f_max);
 
 
         // TUMBLE DETECTION
@@ -385,7 +380,6 @@ PARAM_ADD(PARAM_FLOAT, Ixx, &Ixx)
 PARAM_ADD(PARAM_FLOAT, Iyy, &Iyy)
 PARAM_ADD(PARAM_FLOAT, Izz, &Izz)
 
-PARAM_ADD(PARAM_FLOAT, Prop_Dist, &Prop_Dist)
 PARAM_ADD(PARAM_FLOAT, C_tf, &C_tf)
 PARAM_ADD(PARAM_FLOAT, f_max, &f_max)
 

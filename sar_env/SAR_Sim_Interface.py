@@ -11,11 +11,11 @@ from sar_env import SAR_Base_Interface
 
 from std_srvs.srv import Empty
 from rosgraph_msgs.msg import Clock
-from sar_msgs.srv import domainRand,domainRandRequest
+from sar_msgs.srv import Inertia_Params,Inertia_ParamsRequest
 from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState
 
-from sar_msgs.msg import SAR_StateData,SAR_FlipData,SAR_ImpactData,SAR_MiscData
+from sar_msgs.msg import SAR_StateData,SAR_TriggerData,SAR_ImpactData,SAR_MiscData
 
 
 
@@ -105,7 +105,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         ## CREATE SERVICE MESSAGE
         state_srv = ModelState()
-        state_srv.model_name = self.modelName
+        state_srv.model_name = self.SAR_Config
 
         ## INPUT POSITION AND ORIENTATION
         state_srv.pose.position.x = pos_0[0]
@@ -151,7 +151,7 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         
         ## RESET POSITION AND VELOCITY
         state_srv = ModelState()
-        state_srv.model_name = self.modelName
+        state_srv.model_name = self.SAR_Config
         state_srv.pose.position.x = 0.0
         state_srv.pose.position.y = 0.0
         state_srv.pose.position.z = z_0
@@ -174,18 +174,18 @@ class SAR_Sim_Interface(SAR_Base_Interface):
     def updateInertia(self):
 
         ## CREATE SERVICE REQUEST MSG
-        srv = domainRandRequest() 
+        srv = Inertia_ParamsRequest() 
         srv.mass = self.mass
         srv.Inertia.x = self.Ixx
         srv.Inertia.y = self.Iyy
         srv.Inertia.z = self.Izz
 
         ## SEND LOGGING REQUEST VIA SERVICE
-        self.callService('/SAR_Internal/DomainRand',srv,domainRand)
+        self.callService('/SAR_Internal/Inertia_Params',srv,Inertia_Params)
 
     def setParams(self):
 
-        os.system("roslaunch sar_launch params.launch")
+        os.system("roslaunch sar_launch Load_Params.launch")
 
     
 

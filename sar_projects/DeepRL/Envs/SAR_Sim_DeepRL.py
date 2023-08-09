@@ -318,7 +318,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         ## CREATE SERVICE MESSAGE
         model_srv = GetModelStateRequest()
-        model_srv.model_name = self.modelName 
+        model_srv.model_name = self.SAR_Config 
         resp = self.callService('/gazebo/get_model_state',model_srv,GetModelState)
 
         pos = resp.pose.position

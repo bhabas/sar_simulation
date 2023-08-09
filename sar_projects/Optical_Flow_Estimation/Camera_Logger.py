@@ -7,14 +7,15 @@ import sys
 import os
 import message_filters
 
-from sensor_msgs.msg import Image
-from sar_msgs.msg import SAR_StateData,SAR_FlipData,SAR_ImpactData,SAR_MiscData
+from sensor_msgs.msg import Image,CameraInfo
+from sar_msgs.msg import SAR_StateData,SAR_TriggerData,SAR_ImpactData,SAR_MiscData
+from sar_msgs.srv import Model_Move
 from rosgraph_msgs.msg import Clock
 
-## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
+## ADD SAR_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg,os
-BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_projects'))
-sys.path.insert(1,BASE_PATH)
+BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('sar_projects'))
+# sys.path.insert(1,BASE_PATH)
 
 
 
@@ -26,7 +27,7 @@ class CameraLogger:
 
         ## INIT LOGGING PARAMETERS
         self.FileDir = FileDir
-        self.LogDir = f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/local_logs/{FolderName}"
+        self.LogDir = f"{BASE_PATH}/sar_projects/Optical_Flow_Estimation/local_logs/{FolderName}"
         self.FileDir = os.path.join(self.LogDir,self.FileDir)   
         self.CSV_Path = os.path.join(self.FileDir,"Cam_Data.csv")    
         self.Config_Path = os.path.join(self.FileDir,"Config.yaml")
@@ -55,16 +56,16 @@ class CameraLogger:
 
     
         ## DATA SUBSCRIBERS
-        Image_Sub = message_filters.Subscriber("/CF_Internal/camera/image_raw",Image)
-        Info_Sub = message_filters.Subscriber("/CF_Internal/camera/camera_info",CameraInfo)
-        State_Sub = message_filters.Subscriber("/CF_DC/StateData",CF_StateData)
-        self.ModelMove_Service = rospy.ServiceProxy('/ModelMovement',ModelMove)
+        Image_Sub = message_filters.Subscriber("/SAR_Internal/camera/image_raw",Image)
+        Info_Sub = message_filters.Subscriber("/SAR_Internal/camera/camera_info",CameraInfo)
+        State_Sub = message_filters.Subscriber("/SAR_DC/StateData",SAR_StateData)
+        self.Model_Move_Service = rospy.ServiceProxy('/Model_Movement',Model_Move)
 
         ## VERIFY ROS TOPICS
         print("Waiting for messages...")
-        rospy.wait_for_message("/CF_Internal/camera/image_raw",Image)
-        rospy.wait_for_message("/CF_Internal/camera/camera_info",CameraInfo)
-        rospy.wait_for_message("/CF_DC/StateData",CF_StateData)
+        rospy.wait_for_message("/SAR_Internal/camera/image_raw",Image)
+        rospy.wait_for_message("/SAR_Internal/camera/camera_info",CameraInfo)
+        rospy.wait_for_message("/SAR_DC/StateData",SAR_StateData)
         print("Messages received")
 
 
@@ -168,8 +169,8 @@ class CameraLogger:
         rospy.Subscriber("/SAR_Internal/camera/image_raw",Image,self.CameraCallback,queue_size=500)
         rospy.Subscriber("/SAR_DC/StateData",SAR_StateData,self.SAR_StateDataCallback,queue_size=1)
 
-        rospy.wait_for_service('/ModelMovement',timeout=1)
-        service = rospy.ServiceProxy('/ModelMovement', ModelMove)
+        rospy.wait_for_service('/Model_Movement',timeout=1)
+        service = rospy.ServiceProxy('/Model_Movement', Model_Move)
         service(Move_srv)
 
     def Begin_Logging(self):

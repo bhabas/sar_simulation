@@ -85,6 +85,12 @@ class Controller
         std::string POLICY_TYPE_STR;
 
 
+        // QUAD GEOMETRY PARAMETERS
+        std::vector<float> Prop_Front_Vec;
+        std::vector<float> Prop_Rear_Vec;
+
+
+
         // FUNCTION PROTOTYPES
         void IMU_Update_Callback(const sensor_msgs::Imu::ConstPtr &msg);
         void Ext_Pos_Update_Callback(const nav_msgs::Odometry::ConstPtr &msg);
@@ -175,9 +181,17 @@ void Controller::loadParams()
     ros::param::get(SAR_Type + SAR_Config + "/Izz",Izz);
 
     // UPDATE SYSTEM PARAMETERS
-    ros::param::get(SAR_Type + SAR_Config + "/System_Params/f_max",f_max);
-    ros::param::get(SAR_Type + SAR_Config + "/System_Params/C_tf",C_tf);
-    ros::param::get(SAR_Type + SAR_Config + "/System_Params/Prop_Dist",Prop_Dist);
+    ros::param::get(SAR_Type + "/System_Params/f_max",f_max);
+    ros::param::get(SAR_Type + "/System_Params/C_tf",C_tf);
+
+    // UPDATE PROP DISTANCES
+    ros::param::get(SAR_Type + "/System_Params/Prop_Front",Prop_Front_Vec);
+    Prop_14_x,Prop_14_y = Prop_Front_Vec[0],Prop_Front_Vec[1];
+
+    ros::param::get(SAR_Type + "/System_Params/Prop_Rear",Prop_Rear_Vec);   
+    Prop_23_x,Prop_23_y = Prop_Rear_Vec[0],Prop_Rear_Vec[1];
+
+
 
     // UPDATE LANDING SURFACE PARAMETERS
     ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle);
@@ -306,33 +320,33 @@ void Controller::publishCtrlData()
     // STATE DATA (FLIP)
     CtrlData_msg.flip_flag = flip_flag;
 
-    // CtrlData_msg.Pose_tr.header.stamp = t_flip;             
-    CtrlData_msg.Pose_tr.position.x = statePos_tr.x;
-    CtrlData_msg.Pose_tr.position.y = statePos_tr.y;
-    CtrlData_msg.Pose_tr.position.z = statePos_tr.z;
+    // CtrlData_msg.Pose_trg.header.stamp = t_flip;             
+    CtrlData_msg.Pose_trg.position.x = statePos_trg.x;
+    CtrlData_msg.Pose_trg.position.y = statePos_trg.y;
+    CtrlData_msg.Pose_trg.position.z = statePos_trg.z;
 
-    CtrlData_msg.Pose_tr.orientation.x = stateQuat_tr.x;
-    CtrlData_msg.Pose_tr.orientation.y = stateQuat_tr.y;
-    CtrlData_msg.Pose_tr.orientation.z = stateQuat_tr.z;
-    CtrlData_msg.Pose_tr.orientation.w = stateQuat_tr.w;
+    CtrlData_msg.Pose_trg.orientation.x = stateQuat_trg.x;
+    CtrlData_msg.Pose_trg.orientation.y = stateQuat_trg.y;
+    CtrlData_msg.Pose_trg.orientation.z = stateQuat_trg.z;
+    CtrlData_msg.Pose_trg.orientation.w = stateQuat_trg.w;
 
-    CtrlData_msg.Twist_tr.linear.x = stateVel_tr.x;
-    CtrlData_msg.Twist_tr.linear.y = stateVel_tr.y;
-    CtrlData_msg.Twist_tr.linear.z = stateVel_tr.z;
+    CtrlData_msg.Twist_trg.linear.x = stateVel_trg.x;
+    CtrlData_msg.Twist_trg.linear.y = stateVel_trg.y;
+    CtrlData_msg.Twist_trg.linear.z = stateVel_trg.z;
 
-    CtrlData_msg.Twist_tr.angular.x = stateOmega_tr.x;
-    CtrlData_msg.Twist_tr.angular.y = stateOmega_tr.y;
-    CtrlData_msg.Twist_tr.angular.z = stateOmega_tr.z;
+    CtrlData_msg.Twist_trg.angular.x = stateOmega_trg.x;
+    CtrlData_msg.Twist_trg.angular.y = stateOmega_trg.y;
+    CtrlData_msg.Twist_trg.angular.z = stateOmega_trg.z;
 
     // OPTICAL FLOW DATA (FLIP)
-    CtrlData_msg.Tau_tr = Tau_tr;
-    CtrlData_msg.Theta_x_tr = Theta_x_tr;
-    CtrlData_msg.Theta_y_tr = Theta_y_tr;
-    CtrlData_msg.D_perp_tr = D_perp_tr;
+    CtrlData_msg.Tau_trg = Tau_trg;
+    CtrlData_msg.Theta_x_trg = Theta_x_trg;
+    CtrlData_msg.Theta_y_trg = Theta_y_trg;
+    CtrlData_msg.D_perp_trg = D_perp_trg;
 
     // POLICY ACTIONS (FLIP)
-    CtrlData_msg.Policy_Trg_Action_tr = Policy_Trg_Action_tr;
-    CtrlData_msg.Policy_Flip_Action_tr = Policy_Flip_Action_tr;
+    CtrlData_msg.Policy_Trg_Action_trg = Policy_Trg_Action_trg;
+    CtrlData_msg.Policy_Flip_Action_trg = Policy_Flip_Action_trg;
 
     // CONTROL ACTIONS (FLIP)
     CtrlData_msg.FM_flip = {F_thrust_flip,M_x_flip,M_y_flip,M_z_flip};

@@ -49,34 +49,34 @@ void compressStates(){
 void compressTrgStates(){
 
     // COMPRESS FULL STATE VALUES
-    TrgStates_Z.xy = compressXY(statePos_tr.x,statePos_tr.y);
-    TrgStates_Z.z = (int16_t)(statePos_tr.z * 1000.0f);
+    TrgStates_Z.xy = compressXY(statePos_trg.x,statePos_trg.y);
+    TrgStates_Z.z = (int16_t)(statePos_trg.z * 1000.0f);
 
-    TrgStates_Z.D_perp = (int16_t)(D_perp_tr * 1000.0f);
+    TrgStates_Z.D_perp = (int16_t)(D_perp_trg * 1000.0f);
 
-    TrgStates_Z.vxy = compressXY(stateVel_tr.x, stateVel_tr.y);
-    TrgStates_Z.vz = (int16_t)(stateVel_tr.z * 1000.0f);
+    TrgStates_Z.vxy = compressXY(stateVel_trg.x, stateVel_trg.y);
+    TrgStates_Z.vz = (int16_t)(stateVel_trg.z * 1000.0f);
 
-    TrgStates_Z.wxy = compressXY(stateOmega_tr.x,stateOmega_tr.y);
-    TrgStates_Z.wz = (int16_t)(stateOmega_tr.z * 1000.0f);
+    TrgStates_Z.wxy = compressXY(stateOmega_trg.x,stateOmega_trg.y);
+    TrgStates_Z.wz = (int16_t)(stateOmega_trg.z * 1000.0f);
 
     float const q[4] = {
-        stateQuat_tr.x,
-        stateQuat_tr.y,
-        stateQuat_tr.z,
-        stateQuat_tr.w};
+        stateQuat_trg.x,
+        stateQuat_trg.y,
+        stateQuat_trg.z,
+        stateQuat_trg.w};
     TrgStates_Z.quat = quatcompress(q);
 
     // COMPRESS OPTICAL FLOW VALUES
-    TrgStates_Z.Theta_xy = compressXY(Theta_x_tr,Theta_y_tr);
-    TrgStates_Z.Tau = (int16_t)(Tau_tr * 1000.0f); 
+    TrgStates_Z.Theta_xy = compressXY(Theta_x_trg,Theta_y_trg);
+    TrgStates_Z.Tau = (int16_t)(Tau_trg * 1000.0f); 
 
     // COMPRESS OPTICAL FLOW ESTIMATES
-    TrgStates_Z.Theta_xy_est = compressXY(Theta_x_est_tr,Theta_y_est_tr);
-    TrgStates_Z.Tau_est = (int16_t)(Tau_est_tr * 1000.0f); 
+    TrgStates_Z.Theta_xy_est = compressXY(Theta_x_est_trg,Theta_y_est_trg);
+    TrgStates_Z.Tau_est = (int16_t)(Tau_est_trg * 1000.0f); 
 
     // COMPRESS POLICY ACTIONS
-    TrgStates_Z.Policy_Actions = compressXY(Policy_Trg_Action_tr,Policy_Flip_Action_tr);
+    TrgStates_Z.Policy_Actions = compressXY(Policy_Trg_Action_trg,Policy_Flip_Action_trg);
 
 }
 

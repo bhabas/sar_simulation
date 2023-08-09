@@ -21,7 +21,7 @@ from sklearn.metrics import *
 from sklearn import preprocessing
 
 
-## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
+## ADD SAR_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
 sys.path.insert(0,BASE_PATH)
@@ -29,7 +29,7 @@ from crazyflie_logging.data_analysis.Data_Analysis import DataFile
 
 
 np.set_printoptions(suppress=True)
-BASEPATH = "/home/bhabas/catkin_ws/src/crazyflie_simulation"
+BASEPATH = "/home/bhabas/catkin_ws/src/sar_simulation"
 
 class Policy_Trainer():
     def __init__(self,NN_model,SVM_model,model_initials,learning_rate=0.001):
@@ -532,7 +532,7 @@ class Policy_Trainer():
             dataFile,k_ep,k_run = PlotTraj
             arr = dataFile.grab_stateData(k_ep,k_run,['Tau','OF_y','d_ceil'])
             Tau,OFy,d_ceil = np.split(arr,3,axis=1)
-            Tau_tr,OFy_tr,d_ceil_tr,My_tr = dataFile.grab_flip_state(k_ep,k_run,['Tau','OF_y','d_ceil','My'])
+            Tau_trg,OFy_trg,d_ceil_trg,My_trg = dataFile.grab_flip_state(k_ep,k_run,['Tau','OF_y','d_ceil','My'])
 
             fig.add_trace(
                 go.Scatter3d(
@@ -554,13 +554,13 @@ class Policy_Trainer():
                 go.Scatter3d(
                     ## DATA
                     x=[OFy_tr],
-                    y=[Tau_tr],
+                    y=[Tau_trg],
                     z=[d_ceil_tr],
 
                     ## HOVER DATA
                     hovertemplate=
                         f"<b>My: {My_tr:.3f} N*mm</b> \
-                        <br>Tau: {Tau_tr:.3f} | OFy: {OFy_tr:.3f} </br> \
+                        <br>Tau: {Tau_trg:.3f} | OFy: {OFy_tr:.3f} </br> \
                         <br>D_ceil: {d_ceil_tr:.3f}</br>",
 
                     ## MARKER

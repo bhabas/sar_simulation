@@ -4,9 +4,9 @@ import numpy as np
 import sys
 import os
 
-from crazyflie_msgs.srv import ModelMove,ModelMoveRequest
+from sar_msgs.srv import Model_Move,Model_MoveRequest
 
-ModelMove_Service = rospy.ServiceProxy('/ModelMovement',ModelMove)
+Model_Move_Service = rospy.ServiceProxy('/Model_Movement',Model_Move)
 
 
 if __name__ == "__main__":
@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
 
     ## RESET POSITION AND VELOCITY
-    Move_srv = ModelMoveRequest()
+    Move_srv = Model_MoveRequest()
     
     Move_srv.Pos_0.x = 2.0 - D - 0.027
     Move_srv.Pos_0.y = -6
@@ -30,8 +30,8 @@ if __name__ == "__main__":
     Move_srv.Accel_0.y = 0.0
     Move_srv.Accel_0.z = 0.0
 
-    rospy.wait_for_service('/ModelMovement',timeout=1)
-    service = rospy.ServiceProxy('/ModelMovement', ModelMove)
+    rospy.wait_for_service('/Model_Movement',timeout=1)
+    service = rospy.ServiceProxy('/Model_Movement', Model_Move)
     service(Move_srv)
 
 

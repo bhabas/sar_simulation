@@ -35,9 +35,13 @@ extern float Iyy;       // [kg*m^2]
 extern float Izz;       // [kg*m^2]
 extern struct mat33 J;  // Rotational Inertia Matrix [kg*m^2]
 
-extern float Prop_Dist;    // COM to Prop along x-axis [m]
 extern float C_tf;  // Moment Coeff [Nm/N]
 extern float f_max; // Max thrust per motor [g]
+
+extern float Prop_14_x; // Front Prop Distance - x-axis [m]
+extern float Prop_14_y; // Front Prop Distance - y-axis [m]
+extern float Prop_23_x; // Rear  Prop Distance - x-axis [m]
+extern float Prop_23_y; // Rear  Prop Distance - y-axis [m]
 
 extern float dt;    // Controller cycle time
 
@@ -240,21 +244,21 @@ extern float Policy_Flip_threshold;
 // ======================================
 
 // CARTESIAN STATES
-extern struct vec statePos_tr;      // Pos [m]
-extern struct vec stateVel_tr;      // Vel [m/s]
-extern struct quat stateQuat_tr;    // Orientation
-extern struct vec stateOmega_tr;    // Angular Rate [rad/s]
-extern float D_perp_tr;             // [m/s]
+extern struct vec statePos_trg;      // Pos [m]
+extern struct vec stateVel_trg;      // Vel [m/s]
+extern struct quat stateQuat_trg;    // Orientation
+extern struct vec stateOmega_trg;    // Angular Rate [rad/s]
+extern float D_perp_trg;             // [m/s]
 
 // OPTICAL FLOW STATES
-extern float Tau_tr;                // [rad/s]
-extern float Theta_x_tr;            // [rad/s]
-extern float Theta_y_tr;            // [rad/s]
+extern float Tau_trg;                // [rad/s]
+extern float Theta_x_trg;            // [rad/s]
+extern float Theta_y_trg;            // [rad/s]
 
 // OPTICAL FLOW ESTIMATES
-extern float Tau_est_tr;            // [rad/s]
-extern float Theta_x_est_tr;        // [rad/s]
-extern float Theta_y_est_tr;        // [rad/s]
+extern float Tau_est_trg;            // [rad/s]
+extern float Theta_x_est_trg;        // [rad/s]
+extern float Theta_y_est_trg;        // [rad/s]
 
 // CONTROLLER STATES
 extern float F_thrust_flip;         // [N]
@@ -263,8 +267,8 @@ extern float M_y_flip;              // [N*m]
 extern float M_z_flip;              // [N*m]
 
 // POLICY TRIGGER/ACTION VALUES
-extern float Policy_Trg_Action_tr;    
-extern float Policy_Flip_Action_tr;
+extern float Policy_Trg_Action_trg;    
+extern float Policy_Flip_Action_trg;
 
 // =================================
 //    LANDING SURFACE PARAMETERS

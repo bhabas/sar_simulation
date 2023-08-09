@@ -4,7 +4,7 @@ import matplotlib.cm as cm
 import matplotlib.animation as animation
 from matplotlib.patches import Rectangle
 
-## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
+## ADD SAR_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg,os
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_projects'))
 sys.path.insert(1,BASE_PATH)
