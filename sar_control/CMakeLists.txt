@@ -25,6 +25,7 @@ add_executable(SAR_Controller
     src/Compress_States.c 
     src/Traj_Funcs.c 
     src/ML_Funcs.c
+    src/aideck_uart_comm.c
     src/nml.c 
     src/nml_util.c
     src/cml.c

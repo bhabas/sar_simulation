@@ -1,0 +1,138 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="basic_world">
+
+    <!-- Default camera pose -->
+    <gui>
+      <camera name="user_camera">
+        <pose frame=''>1.4 -5 1.9 0 0.12 1.57</pose>
+      </camera>
+    </gui>
+
+    <model name='World_Origin'>
+      <static>1</static>
+      <link name='Origin_Link'>
+        <pose>0 0 0 0 0 0</pose>
+        <visual name='Origin_Visual'>
+          <cast_shadows>0</cast_shadows>
+          <pose>0 0 0 0 0 0</pose>
+          <geometry>
+            <sphere>
+              <radius>0.01</radius>
+            </sphere>
+          </geometry>
+          <material>
+            <script>
+              <name>Gazebo/Orange</name>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+            </script>
+            <shader type='pixel'>
+              <normal_map>__default__</normal_map>
+            </shader>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <light type="directional" name="sun">
+      <cast_shadows>false</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <light name='Horizontal_Light' type='directional'>
+      <pose>-5 0 0 0 1.57 0</pose>
+      <diffuse>0.5 0.5 0.5 1</diffuse>
+      <specular>0.1 0.1 0.1 1</specular>
+      <direction>0 0 1</direction>
+      <attenuation>
+        <range>20</range>
+        <constant>0.5</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <cast_shadows>false</cast_shadows>
+    </light>
+
+    <light name='Vertical_Light' type='directional'>
+      <pose>0 0 -5 0 0 0</pose>
+      <diffuse>0.5 0.5 0.5 1</diffuse>
+      <specular>0.1 0.1 0.1 1</specular>
+      <direction>0 0 1</direction>
+      <attenuation>
+        <range>20</range>
+        <constant>0.5</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <cast_shadows>false</cast_shadows>
+    </light>
+
+    <physics type="bullet"> <!-- Or "ode", if you want to try with ODE first -->
+        <max_step_size>0.001</max_step_size>
+        <real_time_factor>1</real_time_factor>
+        <real_time_update_rate>200</real_time_update_rate>
+
+
+        <!-- Bullet-specific parameters -->
+        <bullet>
+            <solver>
+                <type>SequentialImpulse</type>
+                <min_step_size>0.0001</min_step_size>
+                <iters>50</iters>
+                <sor>1.3</sor>
+            </solver>
+            <constraints>
+                <cfm>0.00001</cfm>
+                <erp>0.3</erp>
+                <contact_surface_layer>0.001</contact_surface_layer>
+            </constraints>
+        </bullet>
+    </physics>
+
+    <!-- <physics type="dart">
+        <max_step_size>0.001</max_step_size>
+        <real_time_factor>1</real_time_factor>
+        <real_time_update_rate>1000</real_time_update_rate>
+
+        <gravity>0 0 -9.81</gravity>
+
+        <dart>
+            <solver>
+                <solver_type>PGS</solver_type>
+                <iterations>500</iterations>
+                <tolerance>1e-5</tolerance>
+                <alpha>1.0</alpha>
+                <threads>0</threads>
+            </solver>
+            <constraints>
+                <constraint_forces_merging>true</constraint_forces_merging>
+                <joint_position_limit>true</joint_position_limit>
+                <joint_velocity_limit>true</joint_velocity_limit>
+                <joint_coulomb_friction>true</joint_coulomb_friction>
+                <joint_limit_impulse>true</joint_limit_impulse>
+                <link_contact>true</link_contact>
+                <joint_contact>true</joint_contact>
+            </constraints>
+        </dart>
+    </physics> -->
+
+
+    <scene>
+      <sky>
+        <clouds>
+          <speed>0</speed>
+        </clouds>
+      </sky>
+    </scene>
+
+  </world>
+</sdf>

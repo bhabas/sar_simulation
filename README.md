@@ -68,14 +68,14 @@ This research was made possible by the National Science Foundation grants IIS-18
 - Create catkin_ws dir: https://wiki.ros.org/catkin/Tutorials/create_a_workspace
 ```
 cd ~/catkin_ws/src
-git clone git@github.com:bhabas/crazyflie_simulation.git
+git clone git@github.com:bhabas/sar_simulation.git
 ```
 ### 3 - Clone the git repository
 - Install repo:
 ```
 cd ~/catkin_ws/src
-git clone git@github.com:bhabas/crazyflie_simulation.git
-cd crazyflie_simulation
+git clone git@github.com:bhabas/sar_simulation.git
+cd sar_simulation
 ```
 ### 4 - Install the dependencies missing (ardrone_autonomy) package
 ```
@@ -130,7 +130,7 @@ SAR_SETTINGS:
   Policy_Type - Policy Types [PARAM_OPTIM,SVL_POLICY,DEEP_RL_SB3,DEEP_RL_ONBD]
 
 PLANE_SETTINGS:
-  Plane_Model - Plane Model
+  Plane_Config - Plane Model
   Plane_Config - Plane Orientation [deg]
 
 SIM_SETTINGS:
@@ -162,7 +162,7 @@ VSCode C++ setup: https://dev.to/talhabalaj/setup-visual-studio-code-for-multi-f
 
 ```
 roscore # in different terminal tab
-./catkin_ws/src/crazyflie_simulation catkin_make
-tensorboard --logdir /home/sashayaskolko/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Leg_Design_Analysis/TB_Logs/CF_Gazebo
-/bin/python3 /home/sashayaskolko/catkin_ws/src/crazyflie_simulation/crazyflie_projects/Leg_Design_Analysis/Policy_Training_DeepRL.py
+./catkin_ws/src/sar_simulation catkin_make
+tensorboard --logdir /home/sashayaskolko/catkin_ws/src/sar_simulation/crazyflie_projects/Leg_Design_Analysis/TB_Logs/CF_Gazebo
+/bin/python3 /home/sashayaskolko/catkin_ws/src/sar_simulation/crazyflie_projects/Leg_Design_Analysis/Policy_Training_DeepRL.py
 ```

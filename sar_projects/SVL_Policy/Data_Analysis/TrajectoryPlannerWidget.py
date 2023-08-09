@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 
 
-## ADD CRAZYFLIE_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
+## ADD SAR_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_projects'))
 sys.path.insert(0,BASE_PATH)
 

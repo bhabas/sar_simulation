@@ -24,7 +24,7 @@
 
 // CUSTOM INCLUDES
 #include "sar_msgs/SAR_StateData.h"
-#include "sar_msgs/SAR_FlipData.h"
+#include "sar_msgs/SAR_TriggerData.h"
 #include "sar_msgs/SAR_ImpactData.h"
 #include "sar_msgs/SAR_MiscData.h"
 
@@ -35,11 +35,13 @@
 
 
 #include "sar_msgs/RL_Data.h"
-#include "sar_msgs/PadConnect.h"
+#include "sar_msgs/Sticky_Pad_Connect.h"
 
-#include "sar_msgs/activateSticky.h"
-#include "sar_msgs/loggingCMD.h"
+#include "sar_msgs/Activate_Sticky_Pads.h"
+#include "sar_msgs/Logging_CMD.h"
 #include "sar_msgs/GenericLogData.h"
+#include "sar_msgs/Surface_Settings.h"
+
 
 #include "quatcompress.h"
 
@@ -58,19 +60,21 @@ class SAR_DataConverter {
 
             // GAZEBO PIPELINE
             GZ_SimSpeed_Client = nh->serviceClient<gazebo_msgs::SetPhysicsProperties>("/gazebo/set_physics_properties");
-            Landing_Surface_Pose_Client = nh->serviceClient<gazebo_msgs::SetModelState>("/Landing_Surface_Pose");
+            Landing_Surface_Pose_Client = nh->serviceClient<sar_msgs::Surface_Settings>("/ENV/Landing_Surface_Pose");
 
             Surface_ForceTorque_Sub = nh->subscribe("/ENV/Surface_ForceTorque_Sensor",5,&SAR_DataConverter::SurfaceFT_Sensor_Callback,this,ros::TransportHints().tcpNoDelay());
-            Surface_Contact_Sub = nh->subscribe("/ENV/BodyContact",5,&SAR_DataConverter::Surface_Contact_Callback,this,ros::TransportHints().tcpNoDelay());
-            SAR_PadConnect_Sub = nh->subscribe("/ENV/Pad_Connections",5,&SAR_DataConverter::Pad_Connections_Callback,this,ros::TransportHints().tcpNoDelay());
+            Surface_Contact_Sub = nh->subscribe("/ENV/SurfaceContact",5,&SAR_DataConverter::Surface_Contact_Callback,this,ros::TransportHints().tcpNoDelay());
+            SAR_Sticky_Pad_Connect_Sub = nh->subscribe("/SAR_Internal/Leg_Connections",5,&SAR_DataConverter::Pad_Connections_Callback,this,ros::TransportHints().tcpNoDelay());
 
             // CRAZYSWARM PIPELINE
-            log1_Sub = nh->subscribe("/cf1/log1", 1, &SAR_DataConverter::log1_Callback, this, ros::TransportHints().tcpNoDelay());
-            log2_Sub = nh->subscribe("/cf1/log2", 1, &SAR_DataConverter::log2_Callback, this, ros::TransportHints().tcpNoDelay());
-            log3_Sub = nh->subscribe("/cf1/log3", 1, &SAR_DataConverter::log3_Callback, this, ros::TransportHints().tcpNoDelay());
-            log4_Sub = nh->subscribe("/cf1/log4", 1, &SAR_DataConverter::log4_Callback, this, ros::TransportHints().tcpNoDelay());
-            log5_Sub = nh->subscribe("/cf1/log5", 1, &SAR_DataConverter::log5_Callback, this, ros::TransportHints().tcpNoDelay());
-            log6_Sub = nh->subscribe("/cf1/log6", 1, &SAR_DataConverter::log6_Callback, this, ros::TransportHints().tcpNoDelay());
+            cf1_FullState_Sub = nh->subscribe("/cf1/FullState", 1, &SAR_DataConverter::cf1_FullState_Callback, this, ros::TransportHints().tcpNoDelay());
+            cf1_PolicyState_Sub = nh->subscribe("/cf1/PolicyState", 1, &SAR_DataConverter::cf1_PolicyState_Callback, this, ros::TransportHints().tcpNoDelay());
+            cf1_CTRL_Output_Sub = nh->subscribe("/cf1/CTRL_Output", 1, &SAR_DataConverter::cf1_CTRL_Output_Callback, this, ros::TransportHints().tcpNoDelay());
+            cf1_SetPoints_Sub = nh->subscribe("/cf1/SetPoints", 1, &SAR_DataConverter::cf1_SetPoints_Callback, this, ros::TransportHints().tcpNoDelay());
+            cf1_TrgState_Sub = nh->subscribe("/cf1/TrgState", 1, &SAR_DataConverter::cf1_TrgState_Callback, this, ros::TransportHints().tcpNoDelay());
+            cf1_Flags_Sub = nh->subscribe("/cf1/Flags", 1, &SAR_DataConverter::cf1_Flags_Callback, this, ros::TransportHints().tcpNoDelay());
+            cf1_Misc_Sub = nh->subscribe("/cf1/Misc", 1, &SAR_DataConverter::cf1_Misc_Callback, this, ros::TransportHints().tcpNoDelay());
+
 
 
             // INITIALIZE CTRL COMMAND PIPELINE
@@ -81,7 +85,7 @@ class SAR_DataConverter {
 
             // INITIALIZE STATE DATA PUBLISHERS
             StateData_Pub = nh->advertise<sar_msgs::SAR_StateData>("/SAR_DC/StateData",1);
-            FlipData_Pub =  nh->advertise<sar_msgs::SAR_FlipData>("/SAR_DC/FlipData",1);
+            TriggerData_Pub =  nh->advertise<sar_msgs::SAR_TriggerData>("/SAR_DC/TriggerData",1);
             ImpactData_Pub = nh->advertise<sar_msgs::SAR_ImpactData>("/SAR_DC/ImpactData",1);  
             MiscData_Pub =  nh->advertise<sar_msgs::SAR_MiscData>("/SAR_DC/MiscData",1);
 
@@ -120,19 +124,21 @@ class SAR_DataConverter {
 
         void SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchStamped::ConstPtr &msg);
         void Surface_Contact_Callback(const gazebo_msgs::ContactsState &msg);
-        void Pad_Connections_Callback(const sar_msgs::PadConnect &msg);
+        void Pad_Connections_Callback(const sar_msgs::Sticky_Pad_Connect &msg);
 
 
         // =================================
         //     EXPERIMENT DATA CALLBACKS
         // =================================
         void decompressXY(uint32_t xy, float xy_arr[]);
-        void log1_Callback(const sar_msgs::GenericLogData::ConstPtr &log1_msg);
-        void log2_Callback(const sar_msgs::GenericLogData::ConstPtr &log2_msg);
-        void log3_Callback(const sar_msgs::GenericLogData::ConstPtr &log3_msg);
-        void log4_Callback(const sar_msgs::GenericLogData::ConstPtr &log4_msg);
-        void log5_Callback(const sar_msgs::GenericLogData::ConstPtr &log5_msg);
-        void log6_Callback(const sar_msgs::GenericLogData::ConstPtr &log6_msg);
+        void cf1_FullState_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
+        void cf1_PolicyState_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
+        void cf1_CTRL_Output_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
+        void cf1_SetPoints_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
+        void cf1_TrgState_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
+        void cf1_Flags_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
+        void cf1_Misc_Callback(const sar_msgs::GenericLogData::ConstPtr &log_msg);
+
 
         // =============================
         //     CTRL COMMAND CALLBACKS
@@ -144,7 +150,7 @@ class SAR_DataConverter {
         // =======================
         //    LOGGING FUNCTIONS
         // =======================
-        bool DataLogging_Callback(sar_msgs::loggingCMD::Request &req, sar_msgs::loggingCMD::Response &res);
+        bool DataLogging_Callback(sar_msgs::Logging_CMD::Request &req, sar_msgs::Logging_CMD::Response &res);
         void create_CSV();
         void append_CSV_states();
         void append_CSV_misc();
@@ -159,7 +165,7 @@ class SAR_DataConverter {
         // =================================
         void RL_Data_Callback(const sar_msgs::RL_Data::ConstPtr &msg);
         void Publish_StateData();
-        void Publish_FlipData();
+        void Publish_TriggerData();
         void Publish_ImpactData();
         void Publish_MiscData();
 
@@ -195,7 +201,6 @@ class SAR_DataConverter {
         // ==================
         std::string SAR_Type;
         std::string SAR_Config;
-        std::string GZ_Model_Name;
         std::string POLICY_TYPE;
 
         // DEFAULT INERTIA VALUES FOR BASE CRAZYFLIE
@@ -213,7 +218,7 @@ class SAR_DataConverter {
         // ============================
         //     LANDING PLANE PARAMS
         // ============================
-        std::string Plane_Model;
+        std::string Plane_Config;
         geometry_msgs::Vector3 Plane_Pos; // Initial Plane Position
         float Plane_Angle = 180.0; // Initial Plane Angle [Deg]
 
@@ -236,7 +241,7 @@ class SAR_DataConverter {
 
         ros::Subscriber Surface_ForceTorque_Sub;
         ros::Subscriber Surface_Contact_Sub;
-        ros::Subscriber SAR_PadConnect_Sub;
+        ros::Subscriber SAR_Sticky_Pad_Connect_Sub;
 
         ros::ServiceClient Landing_Surface_Pose_Client;
         ros::ServiceClient GZ_SimSpeed_Client;
@@ -253,24 +258,26 @@ class SAR_DataConverter {
         //     DATA PUBLISH OBJECTS
         // ============================
         ros::Publisher StateData_Pub;
-        ros::Publisher FlipData_Pub;
+        ros::Publisher TriggerData_Pub;
         ros::Publisher ImpactData_Pub;
         ros::Publisher MiscData_Pub;
 
         sar_msgs::SAR_StateData StateData_msg;
-        sar_msgs::SAR_FlipData FlipData_msg;
+        sar_msgs::SAR_TriggerData TriggerData_msg;
         sar_msgs::SAR_ImpactData ImpactData_msg;
         sar_msgs::SAR_MiscData MiscData_msg;
 
         // ===================================
         //     EXP COMPRESSED DATA OBJECTS
         // ===================================
-        ros::Subscriber log1_Sub;
-        ros::Subscriber log2_Sub;
-        ros::Subscriber log3_Sub;
-        ros::Subscriber log4_Sub;
-        ros::Subscriber log5_Sub;
-        ros::Subscriber log6_Sub;
+        ros::Subscriber cf1_FullState_Sub;
+        ros::Subscriber cf1_PolicyState_Sub;
+        ros::Subscriber cf1_CTRL_Output_Sub;
+        ros::Subscriber cf1_SetPoints_Sub;
+        ros::Subscriber cf1_TrgState_Sub;
+        ros::Subscriber cf1_Flags_Sub;
+        ros::Subscriber cf1_Misc_Sub;
+
 
         
 
@@ -326,22 +333,22 @@ class SAR_DataConverter {
         bool flip_flag = false;
         bool OnceFlag_flip = false;
 
-        ros::Time Time_tr;
+        ros::Time Time_trg;
 
-        geometry_msgs::Pose Pose_tr;
-        geometry_msgs::Twist Twist_tr;
-        geometry_msgs::Vector3 Eul_tr;
+        geometry_msgs::Pose Pose_trg;
+        geometry_msgs::Twist Twist_trg;
+        geometry_msgs::Vector3 Eul_trg;
 
 
-        double Tau_tr = 0.0;
-        double Theta_x_tr = 0.0;
-        double Theta_y_tr = 0.0;
-        double D_perp_tr = 0.0;
+        double Tau_trg = 0.0;
+        double Theta_x_trg = 0.0;
+        double Theta_y_trg = 0.0;
+        double D_perp_trg = 0.0;
 
-        boost::array<double,4> FM_tr{0,0,0,0};
+        boost::array<double,4> FM_trg{0,0,0,0};
 
-        double Policy_Flip_tr = 0.0;
-        double Policy_Action_tr = 0.0;
+        double Policy_Trg_Action_trg = 0.0;
+        double Policy_Flip_Action_trg = 0.0;
 
 
         // ===================
@@ -367,8 +374,8 @@ class SAR_DataConverter {
         double impact_magnitude = 0.0; // Current impact force magnitude
 
         // CIRCULAR BUFFERES TO LAG IMPACT STATE DATA (WE WANT STATE DATA THE INSTANT BEFORE IMPACT)
-        boost::circular_buffer<geometry_msgs::Pose> Pose_impact_buff {5};
-        boost::circular_buffer<geometry_msgs::Twist> Twist_impact_buff {5};
+        boost::circular_buffer<geometry_msgs::Pose> Pose_impact_buff {1};
+        boost::circular_buffer<geometry_msgs::Twist> Twist_impact_buff {1};
 
         // ==================
         //     MISC DATA
@@ -390,13 +397,23 @@ class SAR_DataConverter {
         bool Motorstop_Flag = false;
         bool Pos_Ctrl_Flag = false;
         bool Vel_Ctrl_Flag = false;
-        bool Traj_Active_Flag = false;
         bool Tumble_Detection = false;
         bool Tumbled_Flag = false;
+
+        bool AttCtrl_Flag = false;
         bool Moment_Flag = false;
+        bool CustomThrust_Flag = false;
+        bool CustomPWM_Flag = false;
+
+        bool Traj_Active_Flag = false;
         bool Policy_Armed_Flag = false;
-        bool Camera_Sensor_Active = false;
+        bool isCamActive = false;
+
+        // SIM
         bool Sticky_Flag = false;
+
+        // EXPERIMENT
+        bool SafeModeEnable = false;
 
 
         // ===================
@@ -432,18 +449,22 @@ class SAR_DataConverter {
 
 inline void SAR_DataConverter::LoadParams()
 {
-    ros::param::get("/SAR_SETTINGS/Policy_Type",POLICY_TYPE);
-
     // SAR SETTINGS
     ros::param::get("/SAR_SETTINGS/SAR_Type",SAR_Type);
     ros::param::get("/SAR_SETTINGS/SAR_Config",SAR_Config);
 
-    GZ_Model_Name = SAR_Type + "_" + SAR_Config;
     std::string SAR_Type_str = "/SAR_Type/" + SAR_Type;
     std::string SAR_Config_str = "/Config/" + SAR_Config;
 
+    // UPDATE INTERTIAL PARAMETERS
+    ros::param::get(SAR_Type_str + SAR_Config_str + "/Mass",Mass);
+    ros::param::get(SAR_Type_str + SAR_Config_str + "/Ixx",Ixx);
+    ros::param::get(SAR_Type_str + SAR_Config_str + "/Iyy",Iyy);
+    ros::param::get(SAR_Type_str + SAR_Config_str + "/Izz",Izz);
+
+
     // PLANE SETTINGS
-    ros::param::get("/PLANE_SETTINGS/Plane_Model",Plane_Model);
+    ros::param::get("/PLANE_SETTINGS/Plane_Config",Plane_Config);
     if (isInit == false)
     {
         ros::param::get("/PLANE_SETTINGS/Plane_Angle",Plane_Angle);
@@ -451,25 +472,8 @@ inline void SAR_DataConverter::LoadParams()
         ros::param::get("/PLANE_SETTINGS/Pos_Y",Plane_Pos.y);
         ros::param::get("/PLANE_SETTINGS/Pos_Z",Plane_Pos.z);
     }
-    
-    
-    // COLLECT MODEL PARAMETERS
-    ros::param::get(SAR_Type_str + SAR_Config_str + "/Mass",Mass);
-    ros::param::get(SAR_Type_str + SAR_Config_str + "/Ixx",Ixx);
-    ros::param::get(SAR_Type_str + SAR_Config_str + "/Iyy",Iyy);
-    ros::param::get(SAR_Type_str + SAR_Config_str + "/Izz",Izz);
 
-    // DEBUG SETTINGS
-    ros::param::get("/DATA_TYPE",DATA_TYPE);
-    ros::param::get("/SIM_SETTINGS/Sim_Speed",SIM_SPEED);
-    ros::param::get("/SIM_SETTINGS/Sim_Slowdown_Speed",SIM_SLOWDOWN_SPEED);
-    ros::param::get("/SIM_SETTINGS/Landing_Slowdown_Flag",LANDING_SLOWDOWN_FLAG);
-
-    ros::param::get("/SAR_DC_SETTINGS/Logging_Rate",LOGGING_RATE);
-    ros::param::get("/SAR_DC_SETTINGS/Console_Output",SHOW_CONSOLE);
-
-
-    // COLLECT CTRL GAINS
+    // UPDATE CTRL GAINS
     ros::param::get(SAR_Type_str + "/CtrlGains/P_kp_xy",P_kp_xy);
     ros::param::get(SAR_Type_str + "/CtrlGains/P_kd_xy",P_kd_xy);
     ros::param::get(SAR_Type_str + "/CtrlGains/P_ki_xy",P_ki_xy);
@@ -485,6 +489,18 @@ inline void SAR_DataConverter::LoadParams()
     ros::param::get(SAR_Type_str + "/CtrlGains/R_kp_z",R_kp_z);
     ros::param::get(SAR_Type_str + "/CtrlGains/R_kd_z",R_kd_z);
     ros::param::get(SAR_Type_str + "/CtrlGains/R_ki_z",R_ki_z);
+
+    ros::param::get("/SAR_SETTINGS/Policy_Type",POLICY_TYPE);
+
+
+    // DEBUG SETTINGS
+    ros::param::get("/DATA_TYPE",DATA_TYPE);
+    ros::param::get("/SIM_SETTINGS/Sim_Speed",SIM_SPEED);
+    ros::param::get("/SIM_SETTINGS/Sim_Slowdown_Speed",SIM_SLOWDOWN_SPEED);
+    ros::param::get("/SIM_SETTINGS/Landing_Slowdown_Flag",LANDING_SLOWDOWN_FLAG);
+
+    ros::param::get("/SAR_DC_SETTINGS/Logging_Rate",LOGGING_RATE);
+    ros::param::get("/SAR_DC_SETTINGS/Console_Output",SHOW_CONSOLE);
 
     if(DATA_TYPE.compare("SIM") == 0)
     {
@@ -512,8 +528,8 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
         case 0:
             // RESET FLIP TIME
             OnceFlag_flip = false;
-            Time_tr.sec = 0.0;
-            Time_tr.nsec = 0.0;
+            Time_trg.sec = 0.0;
+            Time_trg.nsec = 0.0;
             Rot_Sum = 0.0;
 
             // RESET IMPACT TIME
@@ -549,6 +565,7 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
             impact_force_x = 0.0;
             impact_force_y = 0.0;
             impact_force_z = 0.0;
+            impact_magnitude = 0;
 
             // RESET PAD CONTACTS FLAGS
             Pad1_Contact = 0;

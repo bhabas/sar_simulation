@@ -10,6 +10,5 @@ gym>=0.21.0
 rospy>=1.15.15
 rospkg>=1.4.0
 pygame>=2.1.0
-black>=23.1.0
 versioneer>=0.28
 tqdm>=4.63.1

@@ -1,6 +1,8 @@
 #include "Controller_GTC.h"
 
 
+
+
 void appMain() {
 
     while (1)
@@ -50,10 +52,10 @@ void controllerOutOfTreeInit() {
     // INIT DEEP RL NN POLICY
     X_input = nml_mat_new(3,1);
     Y_output = nml_mat_new(4,1);
+
+    // INIT DEEP RL NN POLICY
     // NN_init(&NN_DeepRL,NN_Params_DeepRL);
 
-    cml_m33 matrix = cml_m33_new();
-    cml_mat_print(&matrix,matrix.num_rows,matrix.num_cols);
     consolePrintf("GTC Controller Initiated\n");
 }
 
@@ -95,21 +97,21 @@ void controllerOutOfTreeReset() {
 
 
     // RESET LOGGED FLIP VALUES
-    statePos_tr = vzero();
-    stateVel_tr = vzero();
-    stateQuat_tr = mkquat(0.0f,0.0f,0.0f,1.0f);
-    stateOmega_tr = vzero();
+    statePos_trg = vzero();
+    stateVel_trg = vzero();
+    stateQuat_trg = mkquat(0.0f,0.0f,0.0f,1.0f);
+    stateOmega_trg = vzero();
 
-    Tau_tr = 0.0f;
-    Theta_x_tr = 0.0f;
-    Theta_y_tr = 0.0f;
-    D_perp_tr = 0.0f;
+    Tau_trg = 0.0f;
+    Theta_x_trg = 0.0f;
+    Theta_y_trg = 0.0f;
+    D_perp_trg = 0.0f;
 
-    Policy_Flip_tr = 0.0f;
-    Policy_Action_tr = 0.0f;
+    Policy_Trg_Action_trg = 0.0f;
+    Policy_Flip_Action_trg = 0.0f;
 
 
-    calcPlaneNormal(Plane_Angle);
+    updatePlaneNormal(Plane_Angle);
 
 }
 
@@ -119,37 +121,6 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                                             const state_t *state, 
                                             const uint32_t tick) 
 {
-
-    // OPTICAL FLOW UPDATES
-    if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
-
-        // UPDATE POS AND VEL
-        r_BO = mkvec(state->position.x, state->position.y, state->position.z);
-        V_BO = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);
-
-        // CALC DISPLACEMENT FROM PLANE CENTER
-        r_PB = vsub(r_PO,r_BO); 
-
-        // CALC RELATIVE DISTANCE AND VEL
-        D_perp = vdot(r_PB,n_hat) + 1e-6f;
-
-        V_perp = vdot(V_BO,n_hat);
-        V_tx = vdot(V_BO,t_x);
-        V_ty = vdot(V_BO,t_y);
-
-        if (fabsf(D_perp) < 0.02f)
-        {
-            D_perp = 0.0f;
-        }
-
-        // CALC OPTICAL FLOW VALUES
-        Theta_x = clamp(V_tx/D_perp,-20.0f,20.0f);
-        Theta_y = clamp(V_ty/D_perp,-20.0f,20.0f);
-        Theta_z = clamp(V_perp/D_perp,-20.0f,20.0f);
-        Tau = clamp(1/Theta_z,0.0f,5.0f);
-
-    }
-
     // TRAJECTORY UPDATES
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
 
@@ -173,16 +144,43 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         }
     }
 
-    // POLICY UPDATES
-    if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
+    // OPTICAL FLOW UPDATES
+    if (RATE_DO_EXECUTE(RATE_100_HZ, tick))
+    {
+        // UPDATE GROUND TRUTH OPTICAL FLOW
+        updateOpticalFlowAnalytic(state,sensors);
 
-        X_input->data[0][0] = Tau;
-        X_input->data[1][0] = Theta_x;
-        X_input->data[2][0] = D_perp; 
-        
+        // POLICY VECTOR UPDATE
+        if (isCamActive == true)
+        {
+            // ONLY UPDATE WITH NEW OPTICAL FLOW DATA
+            isOFUpdated = updateOpticalFlowEst();
+
+            // UPDATE POLICY VECTOR
+            X_input->data[0][0] = Tau_est;
+            X_input->data[1][0] = Theta_x_est;
+            X_input->data[2][0] = D_perp; 
+
+        }
+        else
+        {
+            // UPDATE AT THE ABOVE FREQUENCY
+            isOFUpdated = true;
+
+            // UPDATE POLICY VECTOR
+            X_input->data[0][0] = Tau;
+            X_input->data[1][0] = Theta_x;
+            X_input->data[2][0] = D_perp; 
+        }
+    }
+    
+    // POLICY UPDATES
+    if (isOFUpdated == true) {
+
+        isOFUpdated = false;
 
         if(policy_armed_flag == true){
-            
+
             switch (Policy)
             {
                 case PARAM_OPTIM:
@@ -194,19 +192,19 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                         // UPDATE AND RECORD FLIP VALUES
                         flip_flag = true;  
-                        statePos_tr = statePos;
-                        stateVel_tr = stateVel;
-                        stateQuat_tr = stateQuat;
-                        stateOmega_tr = stateOmega;
+                        statePos_trg = statePos;
+                        stateVel_trg = stateVel;
+                        stateQuat_trg = stateQuat;
+                        stateOmega_trg = stateOmega;
 
-                        Tau_tr = Tau;
-                        Theta_x_tr = Theta_x_tr;
-                        Theta_y_tr = Theta_y_tr;
-                        D_perp_tr = D_perp;
+                        Tau_trg = Tau;
+                        Theta_x_trg = Theta_x_trg;
+                        Theta_y_trg = Theta_y_trg;
+                        D_perp_trg = D_perp;
 
                     
                         M_d.x = 0.0f;
-                        M_d.y = Policy_Flip_Action*1e-3f;
+                        M_d.y = -Policy_Flip_Action*1e-3f;
                         M_d.z = 0.0f;
 
                         F_thrust_flip = 0.0;
@@ -236,19 +234,19 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                         // UPDATE AND RECORD FLIP VALUES
                         flip_flag = true;  
-                        statePos_tr = statePos;
-                        stateVel_tr = stateVel;
-                        stateQuat_tr = stateQuat;
-                        stateOmega_tr = stateOmega;
+                        statePos_trg = statePos;
+                        stateVel_trg = stateVel;
+                        stateQuat_trg = stateQuat;
+                        stateOmega_trg = stateOmega;
 
-                        Tau_tr = Tau;
-                        Theta_x_tr = Theta_x_tr;
-                        Theta_y_tr = Theta_y_tr;
-                        D_perp_tr = D_perp;
+                        Tau_trg = Tau;
+                        Theta_x_trg = Theta_x_trg;
+                        Theta_y_trg = Theta_y_trg;
+                        D_perp_trg = D_perp;
 
                     
                         M_d.x = 0.0f;
-                        M_d.y = Policy_Flip_Action*1e-3f;
+                        M_d.y = -Policy_Flip_Action*1e-3f;
                         M_d.z = 0.0f;
 
                         F_thrust_flip = 0.0;
@@ -260,34 +258,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                     break;
 
                 case DEEP_RL_SB3:
-                        
-                    if (onceFlag == false && V_perp > 0.1f)
-                    {
-                        onceFlag = true;
 
-                        // UPDATE AND RECORD FLIP VALUES
-                        flip_flag = true;  
-                        statePos_tr = statePos;
-                        stateVel_tr = stateVel;
-                        stateQuat_tr = stateQuat;
-                        stateOmega_tr = stateOmega;
-
-                        Tau_tr = Tau;
-                        Theta_x_tr = Theta_x_tr;
-                        Theta_y_tr = Theta_y_tr;
-                        D_perp_tr = D_perp;
-
-                    
-                        M_d.x = 0.0f;
-                        M_d.y = Policy_Flip_Action*1e-3f;
-                        M_d.z = 0.0f;
-
-                        F_thrust_flip = 0.0;
-                        M_x_flip = M_d.x*1e3f;
-                        M_y_flip = M_d.y*1e3f;
-                        M_z_flip = M_d.z*1e3f;
-                    }
-                    
                     break;
                     
             default:
@@ -313,23 +284,18 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
             M = vscl(2.0f,M_d);
         }
 
-        // =========== CONVERT THRUSTS [N] AND MOMENTS [N*m] TO PWM =========== // 
-        f_thrust_g = clamp(F_thrust/4.0f*Newton2g, 0.0f, f_max*0.9f); // Clamp thrust to prevent control saturation
-        f_roll_g = M.x/(4.0f*Prop_Dist)*Newton2g;
-        f_pitch_g = M.y/(4.0f*Prop_Dist)*Newton2g;
-        f_yaw_g = M.z/(4.0f*C_tf)*Newton2g;
 
-        // THESE CONNECT TO POWER_DISTRIBUTION_STOCK.C
-        control->thrust = f_thrust_g;                   // This gets passed to firmware EKF
-        control->roll = (int16_t)(f_roll_g*1e3f);
-        control->pitch = (int16_t)(f_pitch_g*1e3f);
-        control->yaw = (int16_t)(f_yaw_g*1e3f);
+        // MOTOR MIXING (GTC_Derivation_V2.pdf) 
+        M1_thrust = F_thrust * Prop_23_x/(Prop_14_x + Prop_23_x) - M.x * 1/(Prop_14_y + Prop_23_y) - M.y * 1/(Prop_14_x + Prop_23_x) - M.z * Prop_23_y/(C_tf*(Prop_14_y + Prop_23_y));
+        M2_thrust = F_thrust * Prop_14_x/(Prop_14_x + Prop_23_x) - M.x * 1/(Prop_14_y + Prop_23_y) + M.y * 1/(Prop_14_x + Prop_23_x) + M.z * Prop_14_y/(C_tf*(Prop_14_y + Prop_23_y));
+        M3_thrust = F_thrust * Prop_14_x/(Prop_14_x + Prop_23_x) + M.x * 1/(Prop_14_y + Prop_23_y) + M.y * 1/(Prop_14_x + Prop_23_x) - M.z * Prop_14_y/(C_tf*(Prop_14_y + Prop_23_y));
+        M4_thrust = F_thrust * Prop_23_x/(Prop_14_x + Prop_23_x) + M.x * 1/(Prop_14_y + Prop_23_y) - M.y * 1/(Prop_14_x + Prop_23_x) + M.z * Prop_23_y/(C_tf*(Prop_14_y + Prop_23_y));
 
-        // ADD RESPECTIVE THRUST COMPONENTS
-        M1_thrust = clamp(f_thrust_g + f_roll_g - f_pitch_g + f_yaw_g, 0.0f, f_max);
-        M2_thrust = clamp(f_thrust_g + f_roll_g + f_pitch_g - f_yaw_g, 0.0f, f_max);
-        M3_thrust = clamp(f_thrust_g - f_roll_g + f_pitch_g + f_yaw_g, 0.0f, f_max);
-        M4_thrust = clamp(f_thrust_g - f_roll_g - f_pitch_g - f_yaw_g, 0.0f, f_max);
+        // CLAMP AND CONVER THRUST FROM [N] AND [N*M] TO [g]
+        M1_thrust = clamp((M1_thrust/2.0f)*Newton2g,0.0f,f_max);
+        M2_thrust = clamp((M2_thrust/2.0f)*Newton2g,0.0f,f_max);
+        M3_thrust = clamp((M3_thrust/2.0f)*Newton2g,0.0f,f_max);
+        M4_thrust = clamp((M4_thrust/2.0f)*Newton2g,0.0f,f_max);
 
 
         // TUMBLE DETECTION
@@ -374,9 +340,10 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
             M4_pwm = (int32_t)thrust2PWM(M4_thrust);
         }
 
+        // COMPRESS STATES
         compressStates();
         compressSetpoints();
-        compressFlipStates();
+        compressTrgStates();
 
         #ifdef CONFIG_SAR_EXP
         if(safeModeEnable)
@@ -413,12 +380,12 @@ PARAM_ADD(PARAM_FLOAT, Ixx, &Ixx)
 PARAM_ADD(PARAM_FLOAT, Iyy, &Iyy)
 PARAM_ADD(PARAM_FLOAT, Izz, &Izz)
 
-PARAM_ADD(PARAM_FLOAT, Prop_Dist, &Prop_Dist)
 PARAM_ADD(PARAM_FLOAT, C_tf, &C_tf)
 PARAM_ADD(PARAM_FLOAT, f_max, &f_max)
 
 PARAM_ADD(PARAM_UINT8, SafeMode, &safeModeEnable)
 PARAM_ADD(PARAM_UINT8, PolicyType, &Policy)
+PARAM_ADD(PARAM_UINT8, isCamActive, &isCamActive)
 
 PARAM_ADD(PARAM_FLOAT, P_kp_xy, &P_kp_xy)
 PARAM_ADD(PARAM_FLOAT, P_kd_xy, &P_kd_xy) 
@@ -441,79 +408,94 @@ PARAM_ADD(PARAM_FLOAT, R_ki_z,  &R_ki_z)
 PARAM_ADD(PARAM_FLOAT, i_range_R_z, &i_range_R_z)
 PARAM_GROUP_STOP(CTRL_Params)
 
-LOG_GROUP_START(States_CTRL)
-LOG_ADD(LOG_UINT32, Z_xy,   &StatesZ_CTRL.xy)
-LOG_ADD(LOG_INT16,  Z_z,    &StatesZ_CTRL.z)
 
-LOG_ADD(LOG_UINT32, Z_vxy,  &StatesZ_CTRL.vxy)
-LOG_ADD(LOG_INT16,  Z_vz,   &StatesZ_CTRL.vz)
 
-LOG_ADD(LOG_UINT32, Z_quat, &StatesZ_CTRL.quat)
+LOG_GROUP_START(Z_States)
+LOG_ADD(LOG_UINT32, xy,         &States_Z.xy)
+LOG_ADD(LOG_INT16,  z,          &States_Z.z)
 
-LOG_ADD(LOG_UINT32, Z_wxy,  &StatesZ_CTRL.wxy)
-LOG_ADD(LOG_INT16,  Z_wz,   &StatesZ_CTRL.wz)
+LOG_ADD(LOG_UINT32, vxy,        &States_Z.vxy)
+LOG_ADD(LOG_INT16,  vz,         &States_Z.vz)
 
-LOG_ADD(LOG_UINT32, Z_Thetaxy, &StatesZ_CTRL.Theta_xy)
-LOG_ADD(LOG_INT16,  Z_Tau,  &StatesZ_CTRL.Tau)
-LOG_ADD(LOG_INT16,  Z_D_perp, &StatesZ_CTRL.D_perp)
+LOG_ADD(LOG_UINT32, quat,       &States_Z.quat)
 
-LOG_ADD(LOG_UINT32, Z_FMz, &StatesZ_CTRL.FMz)
-LOG_ADD(LOG_UINT32, Z_Mxy, &StatesZ_CTRL.Mxy)
+LOG_ADD(LOG_UINT32, wxy,        &States_Z.wxy)
+LOG_ADD(LOG_INT16,  wz,         &States_Z.wz)
 
-LOG_ADD(LOG_UINT32, Z_f_12, &StatesZ_CTRL.M_thrust12)
-LOG_ADD(LOG_UINT32, Z_f_34, &StatesZ_CTRL.M_thrust34)
+LOG_ADD(LOG_UINT32, Thetaxy,    &States_Z.Theta_xy)
+LOG_ADD(LOG_INT16,  Tau,        &States_Z.Tau)
+LOG_ADD(LOG_INT16,  D_perp,     &States_Z.D_perp)
 
-LOG_ADD(LOG_UINT32, Z_PWM12, &StatesZ_CTRL.MS_PWM12)
-LOG_ADD(LOG_UINT32, Z_PWM34, &StatesZ_CTRL.MS_PWM34)
+LOG_ADD(LOG_UINT32, FMz,        &States_Z.FMz)
+LOG_ADD(LOG_UINT32, Mxy,        &States_Z.Mxy)
 
-LOG_ADD(LOG_UINT32, Z_NN_FP, &StatesZ_CTRL.NN_FP)
+LOG_ADD(LOG_UINT32, f_12,       &States_Z.M_thrust12)
+LOG_ADD(LOG_UINT32, f_34,       &States_Z.M_thrust34)
 
-LOG_ADD(LOG_UINT8, Z_vbat, &value1)
-LOG_GROUP_STOP(States_CTRL)
+LOG_ADD(LOG_UINT32, PWM12,      &States_Z.MS_PWM12)
+LOG_ADD(LOG_UINT32, PWM34,      &States_Z.MS_PWM34)
+LOG_GROUP_STOP(Z_States)
 
 
 
-LOG_GROUP_START(SetPoints_CTRL)
-LOG_ADD(LOG_UINT32, Z_xy,   &setpointZ_CTRL.xy)
-LOG_ADD(LOG_INT16,  Z_z,    &setpointZ_CTRL.z)
-
-LOG_ADD(LOG_UINT32, Z_vxy,  &setpointZ_CTRL.vxy)
-LOG_ADD(LOG_INT16,  Z_vz,   &setpointZ_CTRL.vz)
-
-LOG_ADD(LOG_UINT32, Z_axy,  &setpointZ_CTRL.axy)
-LOG_ADD(LOG_INT16,  Z_az,   &setpointZ_CTRL.az)
-LOG_GROUP_STOP(SetPoints_CTRL)
+LOG_GROUP_START(Z_Policy)
+LOG_ADD(LOG_UINT32, Thetaxy_est,    &States_Z.Theta_xy_est)
+LOG_ADD(LOG_INT16,  Tau_est,        &States_Z.Tau_est)
+LOG_ADD(LOG_UINT32, Pol_Actions,    &States_Z.Policy_Actions)
+LOG_GROUP_STOP(Z_Policy)
 
 
-LOG_GROUP_START(FlipData_CTRL)
-LOG_ADD(LOG_UINT32, Z_xy,   &FlipStatesZ_CTRL.xy)
-LOG_ADD(LOG_INT16,  Z_z,    &FlipStatesZ_CTRL.z)
 
-LOG_ADD(LOG_UINT32, Zf_vxy,  &FlipStatesZ_CTRL.vxy)
-LOG_ADD(LOG_INT16,  Z_vz,   &FlipStatesZ_CTRL.vz)
+LOG_GROUP_START(Z_SetPoints)
+LOG_ADD(LOG_UINT32, xy,         &SetPoints_Z.xy)
+LOG_ADD(LOG_INT16,  z,          &SetPoints_Z.z)
 
-LOG_ADD(LOG_UINT32, Z_quat, &FlipStatesZ_CTRL.quat)
+LOG_ADD(LOG_UINT32, vxy,        &SetPoints_Z.vxy)
+LOG_ADD(LOG_INT16,  vz,         &SetPoints_Z.vz)
 
-LOG_ADD(LOG_UINT32, Z_wxy,  &FlipStatesZ_CTRL.wxy)
-LOG_ADD(LOG_INT16,  Z_wz,   &FlipStatesZ_CTRL.wz)
+LOG_ADD(LOG_UINT32, axy,        &SetPoints_Z.axy)
+LOG_ADD(LOG_INT16,  az,         &SetPoints_Z.az)
+LOG_GROUP_STOP(Z_SetPoints)
 
-LOG_ADD(LOG_UINT32, Z_Thetaxy, &FlipStatesZ_CTRL.Theta_xy)
-LOG_ADD(LOG_INT16,  Z_Tau,  &FlipStatesZ_CTRL.Tau)
-LOG_ADD(LOG_INT16,  Z_D_perp, &FlipStatesZ_CTRL.D_perp)
+
+
+LOG_GROUP_START(Z_TrgStates)
+LOG_ADD(LOG_UINT32, xy,             &TrgStates_Z.xy)
+LOG_ADD(LOG_INT16,  z,              &TrgStates_Z.z)
+LOG_ADD(LOG_UINT32, vxy,            &TrgStates_Z.vxy)
+LOG_ADD(LOG_INT16,  vz,             &TrgStates_Z.vz)
+
+LOG_ADD(LOG_UINT32, quat,           &TrgStates_Z.quat)
+
+LOG_ADD(LOG_UINT32, wxy,            &TrgStates_Z.wxy)
+LOG_ADD(LOG_INT16,  wz,             &TrgStates_Z.wz)
+
+LOG_ADD(LOG_UINT32, Thetaxy,        &TrgStates_Z.Theta_xy)
+LOG_ADD(LOG_INT16,  Tau,            &TrgStates_Z.Tau)
+LOG_ADD(LOG_INT16,  D_perp,         &TrgStates_Z.D_perp)
+
+LOG_ADD(LOG_UINT32, Thetaxy_est,    &TrgStates_Z.Theta_xy_est)
+LOG_ADD(LOG_INT16,  Tau_est,        &TrgStates_Z.Tau_est)
+
+LOG_ADD(LOG_UINT32, PolActions,    &TrgStates_Z.Policy_Actions)
 
 LOG_ADD(LOG_UINT8, Flip_Flag, &flip_flag)
-LOG_GROUP_STOP(FlipData_CTRL)
+LOG_GROUP_STOP(Z_TrgStates)
+
 
 
 LOG_GROUP_START(CTRL_Flags)
-LOG_ADD(LOG_FLOAT, Pos_Ctrl, &kp_xf)
-LOG_ADD(LOG_FLOAT, Vel_Ctrl, &kd_xf)
-LOG_ADD(LOG_UINT8, Motorstop, &motorstop_flag)
-LOG_ADD(LOG_UINT8, Tumbled, &tumbled)
-LOG_ADD(LOG_UINT8, Tumble_Detect, &tumble_detection)
-LOG_ADD(LOG_UINT8, Moment, &moment_flag)
-LOG_ADD(LOG_UINT8, Pol_Armed, &policy_armed_flag)
-LOG_ADD(LOG_FLOAT, Pol_Trg_Act, &Policy_Trg_Action)
-LOG_ADD(LOG_FLOAT, Pol_Flip_Act, &Policy_Flip_Action)
+LOG_ADD(LOG_FLOAT, Pos_Ctrl,        &kp_xf)
+LOG_ADD(LOG_FLOAT, Vel_Ctrl,        &kd_xf)
+LOG_ADD(LOG_UINT8, Motorstop,       &motorstop_flag)
+LOG_ADD(LOG_UINT8, Tumbled,         &tumbled)
+LOG_ADD(LOG_UINT8, Tumble_Detect,   &tumble_detection)
+LOG_ADD(LOG_UINT8, Moment_Flag,     &moment_flag)
+LOG_ADD(LOG_UINT8, isCamActive,     &isCamActive)
+LOG_ADD(LOG_UINT8, SafeModeEnable,  &safeModeEnable)
+LOG_ADD(LOG_UINT8, Pol_Armed,       &policy_armed_flag)
+LOG_ADD(LOG_UINT8, CustomThrust,    &customThrust_flag)
+LOG_ADD(LOG_UINT8, CustomPWM,       &customPWM_flag)
+LOG_ADD(LOG_UINT8, AttCtrl_Flag,    &attCtrlEnable)
 LOG_GROUP_STOP(CTRL_Flags)
 #endif

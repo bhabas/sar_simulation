@@ -77,38 +77,38 @@ void SAR_DataConverter::Publish_StateData()
     StateData_Pub.publish(StateData_msg);
 }
 
-void SAR_DataConverter::Publish_FlipData()
+void SAR_DataConverter::Publish_TriggerData()
 {
 
-    ros::Duration Time_delta(Time_tr-Time_start);
-    FlipData_msg.header.stamp.sec = Time_delta.sec;
-    FlipData_msg.header.stamp.nsec = Time_delta.nsec;
-    FlipData_msg.flip_flag = flip_flag;
+    ros::Duration Time_delta(Time_trg-Time_start);
+    TriggerData_msg.header.stamp.sec = Time_delta.sec;
+    TriggerData_msg.header.stamp.nsec = Time_delta.nsec;
+    TriggerData_msg.flip_flag = flip_flag;
 
 
     // CARTESIAN SPACE DATA
-    FlipData_msg.Pose_tr = Pose_tr;
-    FlipData_msg.Twist_tr = Twist_tr;
-    FlipData_msg.Eul_tr = Eul_tr;
+    TriggerData_msg.Pose_trg = Pose_trg;
+    TriggerData_msg.Twist_trg = Twist_trg;
+    TriggerData_msg.Eul_trg = Eul_trg;
 
 
 
     // OPTICAL FLOW
-    FlipData_msg.Tau_tr = Tau_tr;
-    FlipData_msg.Theta_x_tr = Theta_x_tr;
-    FlipData_msg.Theta_y_tr = Theta_y_tr;
-    FlipData_msg.D_perp_tr = D_perp_tr;
+    TriggerData_msg.Tau_trg = Tau_trg;
+    TriggerData_msg.Theta_x_trg = Theta_x_trg;
+    TriggerData_msg.Theta_y_trg = Theta_y_trg;
+    TriggerData_msg.D_perp_trg = D_perp_trg;
 
     // CONTROL ACTIONS
-    FlipData_msg.FM_tr = FM_tr;
+    TriggerData_msg.FM_trg = FM_trg;
 
     // NEURAL NETWORK DATA
-    FlipData_msg.Policy_Flip_tr = Policy_Flip_tr;
-    FlipData_msg.Policy_Action_tr = Policy_Action_tr;
+    TriggerData_msg.Policy_Trg_Action_trg = Policy_Trg_Action_trg;
+    TriggerData_msg.Policy_Flip_Action_trg = Policy_Flip_Action_trg;
 
 
     // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE CONTROLLER
-    FlipData_Pub.publish(FlipData_msg);
+    TriggerData_Pub.publish(TriggerData_msg);
 
 }
 
@@ -128,6 +128,7 @@ void SAR_DataConverter::Publish_ImpactData()
     ImpactData_msg.Pose_impact = Pose_impact;
     ImpactData_msg.Twist_impact = Twist_impact;
     ImpactData_msg.Eul_impact = Eul_impact;
+    ImpactData_msg.Impact_Magnitude = impact_magnitude;
 
     ImpactData_msg.Pad_Connections = Pad_Connect_Sum;
 

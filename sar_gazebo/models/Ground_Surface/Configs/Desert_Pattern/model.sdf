@@ -1,0 +1,36 @@
+<?xml version='1.0'?>
+<sdf version='1.7'>
+  <model name='Desert_Pattern'>
+
+    <include>
+      <uri>model://Ground_Base_Model</uri>
+    </include>
+
+    <link name='Ground_Pattern'>
+      <pose>0 0 0 0 0 0</pose>
+      <visual name='Pattern_Visual'>
+        <cast_shadows>0</cast_shadows>
+        <pose>0 0 0.0 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>4 4 0.01</size>
+          </box>
+        </geometry>
+        <material>
+        <script>
+            <uri>model://Desert_Pattern/Ground_Texture/Ground.material</uri>
+            <name>Ground_Mat</name>
+        </script>
+        </material>
+      </visual>
+    </link>
+
+    <joint name='Surface_Pattern_Joint' type='fixed'>
+      <parent>Ground_Base_Model::Ground_Link</parent>
+      <child>Ground_Pattern</child>
+    </joint>
+
+    <static>0</static>
+  <allow_auto_disable>1</allow_auto_disable>
+  </model>
+</sdf>

@@ -13,30 +13,29 @@ find_package(gazebo REQUIRED)
 link_directories(${GAZEBO_LIBRARY_DIRS})
 
 catkin_package(
-  INCLUDE_DIRS include
+  INCLUDE_DIRS plugins/include
   CATKIN_DEPENDS 
     roscpp 
     gazebo_ros 
 )
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${GAZEBO_INCLUDE_DIRS})
+include_directories(plugins/include ${catkin_INCLUDE_DIRS} ${GAZEBO_INCLUDE_DIRS})
 
+add_library(SAR_Update_Plugin SHARED plugins/src/SAR_Update_Plugin.cpp)
+target_link_libraries(SAR_Update_Plugin ${GAZEBO_LIBRARIES})
 
-add_library(gazebo_sticky_foot SHARED src/gazebo_sticky_foot.cpp)
-target_link_libraries(gazebo_sticky_foot ${GAZEBO_LIBRARIES})
+add_library(Sticky_Leg_Plugin SHARED plugins/src/Sticky_Leg_Plugin.cpp)
+target_link_libraries(Sticky_Leg_Plugin ${GAZEBO_LIBRARIES})
 
-add_library(motor_plugin SHARED src/motor_plugin.cpp)
-target_link_libraries(motor_plugin ${GAZEBO_LIBRARIES})
+add_library(Motor_Plugin SHARED plugins/src/Motor_Plugin.cpp)
+target_link_libraries(Motor_Plugin ${GAZEBO_LIBRARIES})
 
-add_library(DomainRand_plugin SHARED src/DomainRandomization.cpp)
-target_link_libraries(DomainRand_plugin ${GAZEBO_LIBRARIES})
+add_library(Landing_Surface_Pose_Plugin SHARED plugins/src/Landing_Surface_Pose_Plugin.cpp)
+target_link_libraries(Landing_Surface_Pose_Plugin ${GAZEBO_LIBRARIES})
 
 # EXTRA PLUGINS
-add_library(ModelMove_plugin SHARED src/Model_Move.cpp)
-target_link_libraries(ModelMove_plugin ${GAZEBO_LIBRARIES})
+add_library(Model_Move_Plugin SHARED plugins/src/Model_Move_Plugin.cpp)
+target_link_libraries(Model_Move_Plugin ${GAZEBO_LIBRARIES})
 
-add_library(Landing_Surface_Pose_plugin SHARED src/Landing_Surface_Pose.cpp)
-target_link_libraries(Landing_Surface_Pose_plugin ${GAZEBO_LIBRARIES})
-
-add_library(Moment_plugin SHARED src/model_Moment.cpp)
-target_link_libraries(Moment_plugin ${GAZEBO_LIBRARIES})
+add_library(Model_Moment_Plugin SHARED plugins/src/Model_Moment_Plugin.cpp)
+target_link_libraries(Model_Moment_Plugin ${GAZEBO_LIBRARIES})

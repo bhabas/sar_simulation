@@ -1,0 +1,45 @@
+Cam_Config:
+
+  AI_Deck:
+    Image_Width: 1.152e-3   # Image Sensor Width [m]
+    Image_Height: 1.152e-3  # Image Sensor Height [m]
+    Focal_Length: 0.66e-3   # Focal Length [m]
+
+    FPS: 100  # Frames per second 
+    N_up: 64  # Number of pixel columns
+    N_vp: 64  # Number of pixel rows
+
+    X_Offset: 27.0e-3 # Cam sensor x-offset [m]
+    Y_Offset: 0.0e-3  # Cam sensor y-offset [m]
+    Z_Offset: 8.0e-3  # Cam sensor z-offset [m]
+    Pitch_Angle: 180   # Cam sensor rotation [deg]
+
+  None:
+    Image_Width: 1.152e-3   # Image Sensor Width [m]
+    Image_Height: 1.152e-3  # Image Sensor Height [m]
+    Focal_Length: 0.66e-3   # Focal Length [m]
+
+    FPS: 100  # Frames per second 
+    N_up: 64  # Number of pixel columns
+    N_vp: 64  # Number of pixel rows
+
+    X_Offset: 0.0e-3 # Cam sensor x-offset [m]
+    Y_Offset: 0.0e-3  # Cam sensor y-offset [m]
+    Z_Offset: 0.0e-3  # Cam sensor z-offset [m]
+    Pitch_Angle: 180   # Cam sensor rotation [deg]
+ 
+
+  OpenMV_V1:
+    Image_Width:  3.68e-3 # Image Sensor Width [m]
+    Image_Height: 2.76e-3  # Image Sensor Height [m]
+    Focal_Length: 3.04e-3 # Focal Length [m]
+
+    FPS: 100  # Frames per second 
+    N_up: 64  # Number of pixel columns
+    N_vp: 64  # Number of pixel rows
+
+    X_Offset: 0.0e-3 # Cam sensor x-offset [m]
+    Y_Offset: 0.0e-3  # Cam sensor y-offset [m]
+    Z_Offset: 0.0e-3  # Cam sensor z-offset [m]
+    Pitch_Angle: 90   # Cam sensor rotation [deg]
+ 
