@@ -18,14 +18,6 @@ namespace gazebo
         Camera_Link_Ptr = Config_Model_Ptr->GetLink("Base_Model::Camera");
         World_Ptr = Config_Model_Ptr->GetWorld();
 
-        
-        // UPDATE SIMULATION SPEED
-        double Sim_Speed;
-        double Step_Size = 0.001;
-        ros::param::get("/SIM_SETTINGS/Sim_Speed",Sim_Speed);
-        World_Ptr->Physics()->SetRealTimeUpdateRate(Sim_Speed/Step_Size);
-
-
 
         // LOAD SAR_TYPE,SAR_CONFIG,AND CAM_CONFIG NAMES
         ros::param::get("/SAR_SETTINGS/SAR_Type",SAR_Type);

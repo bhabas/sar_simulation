@@ -21,6 +21,9 @@ catkin_package(
 
 include_directories(plugins/include ${catkin_INCLUDE_DIRS} ${GAZEBO_INCLUDE_DIRS})
 
+add_library(World_Update_Plugin SHARED plugins/src/World_Update_Plugin.cpp)
+target_link_libraries(World_Update_Plugin ${GAZEBO_LIBRARIES})
+
 add_library(SAR_Update_Plugin SHARED plugins/src/SAR_Update_Plugin.cpp)
 target_link_libraries(SAR_Update_Plugin ${GAZEBO_LIBRARIES})
 

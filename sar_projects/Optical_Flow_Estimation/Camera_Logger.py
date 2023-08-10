@@ -141,11 +141,11 @@ class CameraLogger:
 
         data = dict(
             IMAGE_SETTINGS = dict(
+                Focal_Length = self.f,
+                Image_Width = self.IW,
+                Image_Height = self.IH,
                 N_up = self.N_up,
                 N_vp = self.N_vp,
-                f = 0.66e-3,
-                FOV = 82.22,
-                IW = 1.152e-3
                 ),
 
             FLIGHT_CONDITIONS = dict(

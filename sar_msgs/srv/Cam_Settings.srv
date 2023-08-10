@@ -1,5 +1,0 @@
-geometry_msgs/Vector3 Pos_Offset
-float64 Pitch_Angle
-float64 FPS
----
-bool srv_Success

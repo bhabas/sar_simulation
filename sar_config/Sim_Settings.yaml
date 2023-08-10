@@ -1,8 +1,5 @@
 DATA_TYPE: "SIM"
 
-ENV_SETTINGS:
-  Ground_Name: "GroundPlane_Desert_Physical"
-
 SAR_SETTINGS:
   SAR_Type: "Crazyflie"
   SAR_Config: "A20_L75_K08"
@@ -12,7 +9,7 @@ SAR_SETTINGS:
   # Policy_Type: "DEEP_RL_ONBOARD" 
 
 CAM_SETTINGS:
-  Cam_Config: "AI_Deck"
+  Cam_Config: "OpenMV_WideAngle"
   Cam_Active: False
 
 PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
@@ -26,10 +23,11 @@ PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
 
 GROUND_SETTINGS:
   Ground_Type: "Ground_Surface"
-  Ground_Config: "Debug"
+  Ground_Config: "None"
 
 
 SIM_SETTINGS:
+  Gravity: False
   GUI_Flag: True
   Pause_Flag: False
   Sim_Speed: 0.8
