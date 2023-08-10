@@ -11,7 +11,7 @@ BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
 sys.path.insert(0,BASE_PATH)
 
 
-from crazyflie_logging.data_analysis.Data_Analysis import DataFile
+from sar_logging.Log_Data_Parser import DataFile
 # os.system("clear")
 
 dataPath = f"{BASE_PATH}/crazyflie_logging/local_logs/"
