@@ -12,7 +12,7 @@ namespace gazebo
         model_ptr = parent;
 
         // LINK COMMAND SERVICE TO CALLBACK
-        CMD_Service = nh.advertiseService("/Model_Movement", &Model_Move::Service_Callback, this);
+        CMD_Service = nh.advertiseService("/SAR_External/Model_Move", &Model_Move::Service_Callback, this);
 
         
         // RUN FUNCTION EACH TIME SIMULATION UPDATES

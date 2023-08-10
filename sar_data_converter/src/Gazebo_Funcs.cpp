@@ -123,40 +123,6 @@ void SAR_DataConverter::SurfaceFT_Sensor_Callback(const geometry_msgs::WrenchSta
     impact_magnitude = sqrt(pow(msg->wrench.force.x, 2) + pow(msg->wrench.force.y, 2) + pow(msg->wrench.force.z, 2));
 }
 
-/**
- * @brief Updates simulation real time factor (RTF) to the provided value
- *
- * @param RTF Simulation speed adjustment. (0.5 = 0.5 x Real Time Speed)
- */
-void SAR_DataConverter::adjustSimSpeed(float RTF)
-{
-    gazebo_msgs::SetPhysicsProperties srv;
-    float time_step = 0.001;
-    srv.request.time_step = time_step;
-    srv.request.max_update_rate = (int)(RTF / time_step);
-
-    geometry_msgs::Vector3 gravity_vec;
-    gravity_vec.x = 0.0;
-    gravity_vec.y = 0.0;
-    gravity_vec.z = -9.8066;
-    srv.request.gravity = gravity_vec;
-
-    gazebo_msgs::ODEPhysics ode_config;
-    ode_config.auto_disable_bodies = false;
-    ode_config.sor_pgs_precon_iters = 0;
-    ode_config.sor_pgs_iters = 50;
-    ode_config.sor_pgs_w = 1.3;
-    ode_config.sor_pgs_rms_error_tol = 0.0;
-    ode_config.contact_surface_layer = 0.001;
-    ode_config.contact_max_correcting_vel = 0.0;
-    ode_config.cfm = 0.0;
-    ode_config.erp = 0.2;
-    ode_config.max_contacts = 20;
-
-    srv.request.ode_config = ode_config;
-
-    GZ_SimSpeed_Client.call(srv);
-}
 
 /**
  * @brief Updates simulation speed based on how close SAR is to landing surface. Sim becomes unstable
@@ -172,19 +138,19 @@ void SAR_DataConverter::checkSlowdown()
         if (D_perp <= 0.5 && SLOWDOWN_TYPE == 0)
         {
 
-            SAR_DataConverter::adjustSimSpeed(SIM_SLOWDOWN_SPEED);
+            // SAR_DataConverter::adjustSimSpeed(SIM_SLOWDOWN_SPEED);
             SLOWDOWN_TYPE = 1;
         }
 
         // IF IMPACTED CEILING OR FALLING AWAY, INCREASE SIM SPEED TO DEFAULT
         if (impact_flag == true && SLOWDOWN_TYPE == 1)
         {
-            SAR_DataConverter::adjustSimSpeed(SIM_SPEED);
+            // SAR_DataConverter::adjustSimSpeed(SIM_SPEED);
             SLOWDOWN_TYPE = 2; // (Don't call adjustSimSpeed more than once)
         }
         else if (Twist.linear.z <= -0.5 && SLOWDOWN_TYPE == 1)
         {
-            SAR_DataConverter::adjustSimSpeed(SIM_SPEED);
+            // SAR_DataConverter::adjustSimSpeed(SIM_SPEED);
             SLOWDOWN_TYPE = 2;
         }
     }

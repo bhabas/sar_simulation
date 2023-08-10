@@ -9,7 +9,7 @@ import message_filters
 
 from sensor_msgs.msg import Image,CameraInfo
 from sar_msgs.msg import SAR_StateData,SAR_TriggerData,SAR_ImpactData,SAR_MiscData
-from sar_msgs.srv import Model_Move
+from sar_msgs.srv import Model_Move,Model_MoveRequest
 from rosgraph_msgs.msg import Clock
 
 ## ADD SAR_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
@@ -17,6 +17,7 @@ import sys,rospkg,os
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('sar_projects'))
 # sys.path.insert(1,BASE_PATH)
 
+np.set_printoptions(threshold = sys.maxsize) # Print full string without truncation
 
 
 class CameraLogger:
@@ -30,7 +31,7 @@ class CameraLogger:
         self.LogDir = f"{BASE_PATH}/sar_projects/Optical_Flow_Estimation/local_logs/{FolderName}"
         self.FileDir = os.path.join(self.LogDir,self.FileDir)   
         self.CSV_Path = os.path.join(self.FileDir,"Cam_Data.csv")    
-        self.Config_Path = os.path.join(self.FileDir,"Config.yaml")
+        self.Config_Path = os.path.join(self.FileDir,"Cam_Config.yaml")
 
         self.Logging_Flag = False
         
@@ -47,7 +48,24 @@ class CameraLogger:
         self.y_offset_0 = y_offset
         self.t_delta = t_delta
 
-        np.set_printoptions(threshold = sys.maxsize) # Print full string without truncation
+        self.Cam_Config = rospy.get_param('/CAM_SETTINGS/Cam_Config')
+        self.Cam_X_Offset = rospy.get_param(f'/Cam_Config/{self.Cam_Config}/X_Offset')
+        self.Cam_Y_Offset = rospy.get_param(f'/Cam_Config/{self.Cam_Config}/Y_Offset')
+        self.Cam_Z_Offset = rospy.get_param(f'/Cam_Config/{self.Cam_Config}/Z_Offset')
+
+        self.Focal_Length = rospy.get_param(f'/Cam_Config/{self.Cam_Config}/Focal_Length')
+        self.IW = rospy.get_param(f'/Cam_Config/{self.Cam_Config}/Image_Width')
+        self.IH = rospy.get_param(f'/Cam_Config/{self.Cam_Config}/Image_Height')
+
+        self.N_up = rospy.get_param(f'/Cam_Config/{self.Cam_Config}/N_up')
+        self.N_vp = rospy.get_param(f'/Cam_Config/{self.Cam_Config}/N_vp')
+
+        
+
+        self.Plane_Pos_X = rospy.get_param('/PLANE_SETTINGS/Pos_X')
+        self.Plane_Pos_Y = rospy.get_param('/PLANE_SETTINGS/Pos_Y')
+        self.Plane_Pos_Z = rospy.get_param('/PLANE_SETTINGS/Pos_Z')
+
 
         ## PRE-INIT TIME VALUES
         self.t = 0.0
@@ -57,37 +75,31 @@ class CameraLogger:
     
         ## DATA SUBSCRIBERS
         Image_Sub = message_filters.Subscriber("/SAR_Internal/camera/image_raw",Image)
-        Info_Sub = message_filters.Subscriber("/SAR_Internal/camera/camera_info",CameraInfo)
         State_Sub = message_filters.Subscriber("/SAR_DC/StateData",SAR_StateData)
-        self.Model_Move_Service = rospy.ServiceProxy('/Model_Movement',Model_Move)
 
         ## VERIFY ROS TOPICS
         print("Waiting for messages...")
         rospy.wait_for_message("/SAR_Internal/camera/image_raw",Image)
-        rospy.wait_for_message("/SAR_Internal/camera/camera_info",CameraInfo)
         rospy.wait_for_message("/SAR_DC/StateData",SAR_StateData)
         print("Messages received")
 
 
         ## CREATE TIME SYNCHRONIZER FOR ROS TOPICS
-        Approx_Time_Sync = message_filters.ApproximateTimeSynchronizer([Image_Sub,Info_Sub,State_Sub],slop=0.005,queue_size=500)
+        Approx_Time_Sync = message_filters.ApproximateTimeSynchronizer([Image_Sub,State_Sub],slop=0.005,queue_size=500)
         Approx_Time_Sync.registerCallback(self.Data_Callback)
-
+        
+        
         while self.Init_Values_Flag == False:
-            print("Waiting for callback...")
+            print("Waiting on data")
 
         self.save_Config_File()
         self.Model_Move_Command()
         self.Begin_Logging()
 
-    def Data_Callback(self,Img_msg,Cam_Info_msg,StateData_msg):
+    def Data_Callback(self,Img_msg,StateData_msg):
         
         ## IMAGE DATA
         self.Camera_raw = np.frombuffer(Img_msg.data,np.uint8)      # 1D array to package into CSV   
-
-        ## CAMERA_DATA
-        self.N_up = Cam_Info_msg.width 
-        self.N_vp = Cam_Info_msg.height
 
         ## STATE DATA
         self.t = np.round(StateData_msg.header.stamp.to_sec(),2)          # Sim time [s]
@@ -119,29 +131,26 @@ class CameraLogger:
         self.Theta_y = np.round(StateData_msg.Theta_y,3)
         self.D_perp = np.round(StateData_msg.D_perp,3) 
 
-
         self.Init_Values_Flag = True
 
 
     ## LOG IF WITHIN RANGE OF LANDING SURFACE
         if self.Logging_Flag == True:
 
-            if (0.1 < (self.t-self.t_0) <= self.t_delta+0.1 and self.D_perp >= 0.05):
-
+            if self.D_perp >= 0.1:
                 self.Append_CSV()
                 print(f"Recording... Time: {self.t-self.t_0:.2f}")
-            
-            elif (self.t-self.t_0) >= self.t_delta + 0.1 or self.D_perp < 0.05:
+            elif self.D_perp <= 0.1:
                 print(f"Finished Recording... Current Time: {self.t-self.t_0:.2f}")
                 sys.exit()
+
+            
                
-
-
     def save_Config_File(self):
 
         data = dict(
             IMAGE_SETTINGS = dict(
-                Focal_Length = self.f,
+                Focal_Length = self.Focal_Length,
                 Image_Width = self.IW,
                 Image_Height = self.IH,
                 N_up = self.N_up,
@@ -159,18 +168,25 @@ class CameraLogger:
         with open(self.Config_Path, 'w') as outfile:
             yaml.dump(data,outfile,default_flow_style=False,sort_keys=False)
 
-    def Model_Move_Command(self,):
+    def Model_Move_Command(self):
 
-        Cam_X_Offset = 0.027    # [m]
-        Cam_Z_Offset = 0.008    # [m]
-        Plane_pos = 2.0         # [m]
-    
-        ## DATA SUBSCRIBERS
-        rospy.Subscriber("/SAR_Internal/camera/image_raw",Image,self.CameraCallback,queue_size=500)
-        rospy.Subscriber("/SAR_DC/StateData",SAR_StateData,self.SAR_StateDataCallback,queue_size=1)
+        ## RESET POSITION AND VELOCITY
+        Move_srv = Model_MoveRequest()
+        
+        Move_srv.Pos_0.x = (self.Plane_Pos_X - self.D_perp_0) - self.Cam_X_Offset
+        Move_srv.Pos_0.y = -self.Cam_Y_Offset
+        Move_srv.Pos_0.z = -self.Cam_Z_Offset
 
-        rospy.wait_for_service('/Model_Movement',timeout=1)
-        service = rospy.ServiceProxy('/Model_Movement', Model_Move)
+        Move_srv.Vel_0.x = V_perp
+        Move_srv.Vel_0.y = 0
+        Move_srv.Vel_0.z = -V_parallel
+
+        Move_srv.Accel_0.x = 0.0
+        Move_srv.Accel_0.y = 0.0
+        Move_srv.Accel_0.z = 0.0
+
+        rospy.wait_for_service('/SAR_External/Model_Move',timeout=1)
+        service = rospy.ServiceProxy('/SAR_External/Model_Move', Model_Move)
         service(Move_srv)
 
     def Begin_Logging(self):
@@ -233,25 +249,6 @@ class CameraLogger:
             qx,qy,qz,qw,
             Camera_data,
             ])
-
-        
-        self.t = np.round(Cam_msg.header.stamp.to_sec(),4)      # Sim time
-        self.Camera_raw = np.frombuffer(Cam_msg.data,np.uint8)  # 1D array to package into CSV         
-        self.Append_CSV()
-
-
-
-    def SAR_StateDataCallback(self,StateData_msg):
-        """Callback which receives current state data over ROS topic.
-
-        Args:
-            StateData_msg (_type_): Ros msg of camera data
-        """        
-
-        self.pos = np.round([StateData_msg.Pose.position.x,
-                             StateData_msg.Pose.position.y,
-                             StateData_msg.Pose.position.z],3)
-
 
 
 if __name__ == '__main__':

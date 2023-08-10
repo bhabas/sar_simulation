@@ -52,8 +52,8 @@ Cam_Config:
     N_up: 64  # Number of pixel columns
     N_vp: 64  # Number of pixel rows
 
-    X_Offset: 0.0e-3  # Cam sensor x-offset [m]
+    X_Offset: 27.0e-3 # Cam sensor x-offset [m]
     Y_Offset: 0.0e-3  # Cam sensor y-offset [m]
-    Z_Offset: 0.0e-3  # Cam sensor z-offset [m]
+    Z_Offset: 8.0e-3  # Cam sensor z-offset [m]
     Pitch_Angle: 90   # Cam sensor rotation [deg]
  

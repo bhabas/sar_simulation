@@ -113,7 +113,6 @@ class SAR_DataConverter {
         // =======================
         void activateStickyFeet();
         void checkSlowdown();
-        void adjustSimSpeed(float speed_mult);
         void Update_Landing_Surface_Pose(float Pos_x, float Pos_y, float Pos_z, float Plane_Angle);
 
         // =======================
@@ -578,7 +577,7 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
             if (DATA_TYPE.compare("SIM") == 0)
             {
                 // RESET SIM SPEED
-                SAR_DataConverter::adjustSimSpeed(SIM_SPEED);
+                // SAR_DataConverter::adjustSimSpeed(SIM_SPEED);
                 SLOWDOWN_TYPE = 0;
             }
             break;

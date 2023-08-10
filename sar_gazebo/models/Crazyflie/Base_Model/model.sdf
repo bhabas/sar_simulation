@@ -769,11 +769,8 @@
       <frameName>SAR_Body</frameName>
     </plugin>
 
-
-    <!-- <plugin name='Cam_Update_Plugin' filename='libCam_Update_Plugin.so'>
-        <bodyName>SAR_Body</bodyName>
-        <jointName>Camera_Joint</jointName>
-    </plugin> -->
+    <plugin name='Model_Move_Plugin' filename='libModel_Move_Plugin.so'>
+    </plugin>
 
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
