@@ -53,14 +53,6 @@ class DataParser:
             self.Load_Config_File(self.Config_Path)
             self.LoadData(self.CSV_Path)
 
-
-            
-
-
-# '/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/Optical_Flow_Estimation/local_logs/Check_Pattern_Divergent_Flow/D_2.0--V_perp_1.0--V_para_0.0--L_0.25/Cam_Config--SSL_0.yaml'
-# '/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/Optical_Flow_Estimation/local_logs/Check_Pattern_Divergent_Flow/D_2.0--V_perp_1.0--V_para_0.0--L_0.25/Config--SSL_0.yaml'
-        
-    
     def LoadData(self,CSV_Path):
         """Loads data from the given log file
         """        
@@ -122,7 +114,6 @@ class DataParser:
         self.N_up = self.YAML_data['IMAGE_SETTINGS']['N_up']    # IMAGE WIDTH IN PIXELS
         self.N_vp = self.YAML_data['IMAGE_SETTINGS']['N_vp']    # IMAGE HEIGHT IN PIXELS
 
-        
     def Write_Config_File(self):
         """Updates pixel values in camera config file
         """        
@@ -133,7 +124,6 @@ class DataParser:
         with open(self.Config_Path, 'w') as outfile:
             yaml.dump(self.YAML_data,outfile,default_flow_style=False,sort_keys=False) 
     
-
     def grabImage(self,idx):
         """Return image array for a the given index position from logfile
 
@@ -254,8 +244,6 @@ class DataParser:
 
         if show_fig == True:
             plt.show()
-
-
 
     def DataOverview_MP4(self,n=10,frame_limit=None):
         """Saves recorded images from camera into an MP4 file in the log directory.
@@ -474,7 +462,218 @@ class DataParser:
         
         ani = animation.FuncAnimation(fig, update, interval=100, blit=False,frames=range(2,frame_limit))
         ani.save(f"{self.FileDir}/L-K_Test.mp4")
+    
+    def Generate_Surface_Pattern(self,Surf_width=2,Surf_Height=2,L_w=0.5,L_h=0.5,pixel_density=200,save_img=False,X_cam=0.0,D_cam=0.5):
+        """Save show pattern and save image to file. As well, display camera boundaries for validation
+
+        Args:
+            Surf_width (int, optional): Width of pattern to preserve pixel density. Defaults to 2.
+            Surf_Height (int, optional): Heigt of pattern to preserve pixel density. Defaults to 2.
+            L_w (float, optional): Feature width of sin wave. Defaults to 0.5.
+            L_h (float, optional): Feature height of sin wave. Defaults to 0.5.
+            pixel_density (int, optional): Number of pixels per meter. Defaults to 100.
+            save_img (bool, optional): Save image to file. Defaults to False.
+            X_cam (float, optional): X location of camera. Defaults to 0.5.
+            D_cam (float, optional): Distance of camera from pattern surface. Defaults to 0.5.
+        """        
+
+        ## GENERATE PATTERN BOUNDS
+        x = np.linspace(-0.5*Surf_width, 0.5*Surf_width, pixel_density*Surf_width)
+        y = np.linspace(-0.5*Surf_Height,0.5*Surf_Height,pixel_density*Surf_Height)
+        X,Y = np.meshgrid(x,y)
+
+        I_0 = 255   # Max image intensity
+        T_w = L_w*2 # Convert feature size to sin period
+        T_h = L_h*2 # Convert feature size to sin period
+
+        ## GENERATE PATTERN
+        I = I_0/2*np.cos(2*np.pi/T_w*X)*np.cos(2*np.pi/T_h*Y) + 255/2
+        I = np.where(I < 128,0,255)
+
+        ## GENERATE CAMERA BOUNDS
+        Img_Width =  2*np.tan(self.FOV_rad/2)*D_cam
+        Img_Height = 2*np.tan(self.FOV_rad/2)*D_cam
+
         
+        ## CREATE FIGURE OF PATTERN
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+        ## PLOT PATTERN AND CAMERA BOUNDARY
+        ax.imshow(I, interpolation='none', 
+            vmin=0, vmax=255, cmap=cm.gray,
+            origin='upper',
+            extent=[x.min(),x.max(),y.min(),y.max()]
+            )
+
+        ax.add_patch(
+            Rectangle(
+                (X_cam-Img_Width/2,-Img_Height/2),
+                Img_Width,
+                Img_Height,
+                lw=1,fill=False,color="tab:blue")
+            )
+
+        ## SHOW PLOT
+        plt.show()
+
+        ## SAVE PATTERN TO FILE
+        if save_img == True:
+            plt.imsave(
+                f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/Surface_Patterns/" + 
+                f"Pattern-W_{Surf_width}-H_{Surf_Height}-Lw_{L_w:.02f}-Lh_{L_h:.02f}.png",
+                I, 
+                vmin=0, vmax=255, cmap=cm.gray,
+                origin='upper',
+            )
+
+    def Image_Subsample(self,image,subsample_level=0):
+        """Downsamples the image by convolving with a (2x2) averaging kernel then dropping even rows. 
+        This averages and reduces the resolution by half for each subsample level
+
+        Args:
+            image (np.array): Image to be downsampled
+            subsample_level (int, optional): Number of subsampling passes. Defaults to 0.
+
+        Returns:
+            np.array: Returns downsampled image
+        """        
+
+        Avg_Kernel = np.array([
+            [0.25,0.25],
+            [0.25,0.25]
+        ])
+        image_downsampled = image
+
+        for _ in range(0,subsample_level):
+
+            image_downsampled = convolve(image_downsampled,Avg_Kernel) # Convolve image with averaging kernal
+            image_downsampled = image_downsampled[:image.shape[0]:2,:image.shape[1]:2] # Drop even columns
+
+        return image_downsampled
+
+    def Optical_Flow_Writer(self,OF_Calc_Func,SubSample_Level):
+        """Compiles optical cue values for all images in log file and appends them to log file.
+        This function also takes in Subsampling level and will create a new log file.
+
+        Args:
+            OF_Calc_Func (func): Optical cue calculation function
+            SubSample_Level (int, optional): Level of subsampling. Creates new log file and directory if not equal to zero. Defaults to 0.
+        """        
+            
+        ## INITIAL OPTICAL CUE VALUES SINCE FIRST VALUES ARE UNDEFINED
+        Theta_x_est_arr = [0.0]
+        Theta_y_est_arr = [0.0]
+        Tau_est_arr = [0.0]
+        
+        ## SUB-SAMPLE IMAGES
+        if SubSample_Level > 0:
+            self.N_up = self.N_up//(2**SubSample_Level)
+            self.N_vp = self.N_vp//(2**SubSample_Level)
+            
+            Image_list = []
+            print("Subsampling Images...")
+            for ii,image in enumerate(self.Image_array):
+                image = self.Image_Subsample(image,subsample_level=SubSample_Level)
+                self.Data_df.iloc[ii,-1] = np.array2string(image,separator = ' ').replace('\n','').replace('[','').replace(']','') # Convert array to into string
+                Image_list.append(image)
+            self.Image_array = np.asarray(Image_list)
+            print("Finished Subsampling Images.") 
+            
+        ## CALCULATE OPTICAL CUE ESTIMATES    
+        with trange(1,self.n_imgs) as n:
+            for ii in n:
+
+                ## COLLECT CURRENT AND PREVIOUS IMAGE
+                prev_img = self.Image_array[ii-1]
+                cur_img = self.Image_array[ii]
+                
+                ## CALCULATE TIME BETWEEN IMAGES
+                t_prev = self.grabState('t',ii-1)
+                t_cur = self.grabState('t',ii)
+                t_delta = t_cur - t_prev
+
+                ## CALCULATE OPTICAL FLOW VALUES
+                Theta_x_est,Theta_y_est,Theta_z_est = OF_Calc_Func(cur_img,prev_img,t_delta)
+
+                Theta_x_est = np.clip(Theta_x_est,-20,20).round(2)
+                Theta_y_est = np.clip(Theta_y_est,-20,20).round(2)
+                Tau_est = np.clip(1/Theta_z_est,0,10).round(2)
+
+                ## RECORD ESTIMATED VISUAL CUE VALUES
+                Theta_x_est_arr.append(Theta_x_est)
+                Theta_y_est_arr.append(Theta_y_est)
+                Tau_est_arr.append(Tau_est)
+
+
+        ## APPEND COMPILED DATA TO DATAFRAME
+        self.df = self.Data_df.iloc[:,:-1]
+        self.df['Tau_est'] = Tau_est_arr
+        self.df['Theta_x_est'] = Theta_x_est_arr
+        self.df['Theta_y_est'] = Theta_y_est_arr
+        self.df['Camera_Data'] = self.Data_df.iloc[:,-1]
+
+
+
+        self.CSV_Path = os.path.join(self.FileDir,f"Cam_Data--SSL_{SubSample_Level:0d}.csv")    
+        self.Config_Path = os.path.join(self.FileDir,f"Cam_Config--SSL_{SubSample_Level:0d}.yaml")
+
+        ## WRITE CSV AND CONFIG TO NEW DIRECTORY
+        self.df.to_csv(self.CSV_Path,index=False)
+        self.Write_Config_File()
+
+        ## RELOAD COMPILED DATA AND LOG FILE
+        self.LoadData(self.CSV_Path)
+        self.Load_Config_File(self.Config_Path)
+
+    def Raw_Video_and_Image_Writer(self,frame_limit=None):
+        """
+            Saves recorded images from camera into an MP4 file and PNG images in the log directory
+        """        
+        if frame_limit == None:
+            frame_limit = self.n_imgs-1
+
+        ## GENERATE FIGURE
+        fig = plt.figure(figsize=(self.N_up/float(100),self.N_vp/float(100)))
+
+        ## GENERATE IMAGE AXES
+        Img_ax = fig.add_subplot(111)
+        Img_ax.axis('off')
+        Img_ax.set_aspect('auto')
+        Img_ax.set_anchor('C')
+        fig.subplots_adjust(left=0, right=1, top=1, bottom=0, wspace=0, hspace=0)
+        fig.tight_layout(pad=0)
+
+        ## ENSURE DIRECTORY FOR IMAGES EXIST
+        if not os.path.exists(f"{self.FileDir}/Raw_Images/"):
+            os.mkdir(f"{self.FileDir}/Raw_Images/")
+
+        ## IMAGE PLOT
+        im = Img_ax.imshow(self.Image_array[0], 
+                interpolation='none', 
+                vmin=0, vmax=255, cmap=cm.gray,
+                origin='upper',
+                animated=True)
+
+        def update(i):
+            
+            ## UPDATE AND SAVE FIG TO IMAGE
+            im.set_data(self.Image_array[i])
+            fig.savefig(f"{self.FileDir}/Raw_Images/img_{i}.png", dpi=100, bbox_inches='tight', pad_inches=0)
+           
+            ## PRINT PROGRESS
+            print(f"Image: {i:03d}/{frame_limit:03d}")
+
+            return im,
+        
+        ani = animation.FuncAnimation(fig, update, interval=100, blit=False,frames=range(2,frame_limit))
+        ani.save(f"{self.FileDir}/Raw_Video.mp4",writer='ffmpeg')
+        
+
+    ## ===========================================
+    ##   LCOAL OPTICAL FLOW ESTIMATION METHODS
+    ## ===========================================
+
     def Calc_OF_LK(self,cur_img,prev_img,t_delta,n=1):
         """Calculates series of optical flow vectors between images via Lucas-Kanade algorithm.
 
@@ -544,69 +743,10 @@ class DataParser:
 
         return du_dt,dv_dt
 
-    def Generate_Surface_Pattern(self,Surf_width=2,Surf_Height=2,L_w=0.5,L_h=0.5,pixel_density=200,save_img=False,X_cam=0.0,D_cam=0.5):
-        """Save show pattern and save image to file. As well, display camera boundaries for validation
 
-        Args:
-            Surf_width (int, optional): Width of pattern to preserve pixel density. Defaults to 2.
-            Surf_Height (int, optional): Heigt of pattern to preserve pixel density. Defaults to 2.
-            L_w (float, optional): Feature width of sin wave. Defaults to 0.5.
-            L_h (float, optional): Feature height of sin wave. Defaults to 0.5.
-            pixel_density (int, optional): Number of pixels per meter. Defaults to 100.
-            save_img (bool, optional): Save image to file. Defaults to False.
-            X_cam (float, optional): X location of camera. Defaults to 0.5.
-            D_cam (float, optional): Distance of camera from pattern surface. Defaults to 0.5.
-        """        
-
-        ## GENERATE PATTERN BOUNDS
-        x = np.linspace(-0.5*Surf_width, 0.5*Surf_width, pixel_density*Surf_width)
-        y = np.linspace(-0.5*Surf_Height,0.5*Surf_Height,pixel_density*Surf_Height)
-        X,Y = np.meshgrid(x,y)
-
-        I_0 = 255   # Max image intensity
-        T_w = L_w*2 # Convert feature size to sin period
-        T_h = L_h*2 # Convert feature size to sin period
-
-        ## GENERATE PATTERN
-        I = I_0/2*np.cos(2*np.pi/T_w*X)*np.cos(2*np.pi/T_h*Y) + 255/2
-        I = np.where(I < 128,0,255)
-
-        ## GENERATE CAMERA BOUNDS
-        Img_Width =  2*np.tan(self.FOV_rad/2)*D_cam
-        Img_Height = 2*np.tan(self.FOV_rad/2)*D_cam
-
-        
-        ## CREATE FIGURE OF PATTERN
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-
-        ## PLOT PATTERN AND CAMERA BOUNDARY
-        ax.imshow(I, interpolation='none', 
-            vmin=0, vmax=255, cmap=cm.gray,
-            origin='upper',
-            extent=[x.min(),x.max(),y.min(),y.max()]
-            )
-
-        ax.add_patch(
-            Rectangle(
-                (X_cam-Img_Width/2,-Img_Height/2),
-                Img_Width,
-                Img_Height,
-                lw=1,fill=False,color="tab:blue")
-            )
-
-        ## SHOW PLOT
-        plt.show()
-
-        ## SAVE PATTERN TO FILE
-        if save_img == True:
-            plt.imsave(
-                f"{BASE_PATH}/crazyflie_projects/Optical_Flow_Estimation/Surface_Patterns/" + 
-                f"Pattern-W_{Surf_width}-H_{Surf_Height}-Lw_{L_w:.02f}-Lh_{L_h:.02f}.png",
-                I, 
-                vmin=0, vmax=255, cmap=cm.gray,
-                origin='upper',
-            )
+    ## ===========================================
+    ##   GLOBAL OPTICAL FLOW ESTIMATION METHODS
+    ## ===========================================
 
     def OF_Calc_Raw(self,cur_img,prev_img,delta_t):
         """Calculate optical flow values without optimization. 
@@ -892,105 +1032,6 @@ class DataParser:
 
         return b.flatten()
    
-    def Image_Subsample(self,image,subsample_level=0):
-        """Downsamples the image by convolving with a (2x2) averaging kernel then dropping even rows. 
-        This averages and reduces the resolution by half for each subsample level
-
-        Args:
-            image (np.array): Image to be downsampled
-            subsample_level (int, optional): Number of subsampling passes. Defaults to 0.
-
-        Returns:
-            np.array: Returns downsampled image
-        """        
-
-        Avg_Kernel = np.array([
-            [0.25,0.25],
-            [0.25,0.25]
-        ])
-        image_downsampled = image
-
-        for _ in range(0,subsample_level):
-
-            image_downsampled = convolve(image_downsampled,Avg_Kernel) # Convolve image with averaging kernal
-            image_downsampled = image_downsampled[:image.shape[0]:2,:image.shape[1]:2] # Drop even columns
-
-        return image_downsampled
-
-    def Optical_Flow_Writer(self,OF_Calc_Func,SubSample_Level):
-        """Compiles optical cue values for all images in log file and appends them to log file.
-        This function also takes in Subsampling level and will create a new log file.
-
-        Args:
-            OF_Calc_Func (func): Optical cue calculation function
-            SubSample_Level (int, optional): Level of subsampling. Creates new log file and directory if not equal to zero. Defaults to 0.
-        """        
-            
-        ## INITIAL OPTICAL CUE VALUES SINCE FIRST VALUES ARE UNDEFINED
-        Theta_x_est_arr = [0.0]
-        Theta_y_est_arr = [0.0]
-        Tau_est_arr = [0.0]
-        
-        ## SUB-SAMPLE IMAGES
-        if SubSample_Level > 0:
-            self.N_up = self.N_up//(2**SubSample_Level)
-            self.N_vp = self.N_vp//(2**SubSample_Level)
-            
-            Image_list = []
-            print("Subsampling Images...")
-            for ii,image in enumerate(self.Image_array):
-                image = self.Image_Subsample(image,subsample_level=SubSample_Level)
-                self.Data_df.iloc[ii,-1] = np.array2string(image,separator = ' ').replace('\n','').replace('[','').replace(']','') # Convert array to into string
-                Image_list.append(image)
-            self.Image_array = np.asarray(Image_list)
-            print("Finished Subsampling Images.") 
-            
-        ## CALCULATE OPTICAL CUE ESTIMATES    
-        with trange(1,self.n_imgs) as n:
-            for ii in n:
-
-                ## COLLECT CURRENT AND PREVIOUS IMAGE
-                prev_img = self.Image_array[ii-1]
-                cur_img = self.Image_array[ii]
-                
-                ## CALCULATE TIME BETWEEN IMAGES
-                t_prev = self.grabState('t',ii-1)
-                t_cur = self.grabState('t',ii)
-                t_delta = t_cur - t_prev
-
-                ## CALCULATE OPTICAL FLOW VALUES
-                Theta_x_est,Theta_y_est,Theta_z_est = OF_Calc_Func(cur_img,prev_img,t_delta)
-
-                Theta_x_est = np.clip(Theta_x_est,-20,20).round(2)
-                Theta_y_est = np.clip(Theta_y_est,-20,20).round(2)
-                Tau_est = np.clip(1/Theta_z_est,0,10).round(2)
-
-                ## RECORD ESTIMATED VISUAL CUE VALUES
-                Theta_x_est_arr.append(Theta_x_est)
-                Theta_y_est_arr.append(Theta_y_est)
-                Tau_est_arr.append(Tau_est)
-
-
-        ## APPEND COMPILED DATA TO DATAFRAME
-        self.df = self.Data_df.iloc[:,:-1]
-        self.df['Tau_est'] = Tau_est_arr
-        self.df['Theta_x_est'] = Theta_x_est_arr
-        self.df['Theta_y_est'] = Theta_y_est_arr
-        self.df['Camera_Data'] = self.Data_df.iloc[:,-1]
-
-
-
-        self.CSV_Path = os.path.join(self.FileDir,f"Cam_Data--SSL_{SubSample_Level:0d}.csv")    
-        self.Config_Path = os.path.join(self.FileDir,f"Cam_Config--SSL_{SubSample_Level:0d}.yaml")
-
-        ## WRITE CSV AND CONFIG TO NEW DIRECTORY
-        self.df.to_csv(self.CSV_Path,index=False)
-        self.Write_Config_File()
-
-        ## RELOAD COMPILED DATA AND LOG FILE
-        self.LoadData(self.CSV_Path)
-        self.Load_Config_File(self.Config_Path)
-
 
 
         
@@ -1001,12 +1042,9 @@ if __name__ == '__main__':
     FileDir=f"D_2.0--V_perp_1.0--V_para_0.0--L_0.25"
     Parser = DataParser(FolderName,FileDir,SubSample_Level=0) 
 
-
-
-
-    
+    Parser.Raw_Video_and_Image_Writer()
     # Parser.DataOverview_MP4(n=8)
-    Parser.OpticalFlow_MP4(n=8) 
+    # Parser.OpticalFlow_MP4(n=8) 
 
 
     # L_list = [0.02,0.05,0.12,0.25,0.5,0.75,1.00,2.00]
