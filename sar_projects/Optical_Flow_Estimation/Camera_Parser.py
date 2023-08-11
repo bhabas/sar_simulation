@@ -34,20 +34,20 @@ class DataParser:
         self.FileDir = os.path.join(self.LogDir,FileDir)   
 
         self.CSV_Path = os.path.join(self.FileDir,f"Cam_Data--SSL_{SubSample_Level:0d}.csv")    
-        self.Config_Path = os.path.join(self.FileDir,f"Config--SSL_{SubSample_Level:0d}.yaml")
+        self.Config_Path = os.path.join(self.FileDir,f"Cam_Config--SSL_{SubSample_Level:0d}.yaml")
 
         self.SubSample_Level = SubSample_Level
         self.L = float(re.findall("L_(\d+\.\d+)",FileDir)[0])
 
         if not os.path.exists(self.CSV_Path):
 
-            Default_Config_Path = os.path.join(self.FileDir,f"Config.yaml")
+            Default_Config_Path = os.path.join(self.FileDir,f"Cam_Config.yaml")
             Default_CSV_Path = os.path.join(self.FileDir,f"Cam_Data.csv")
 
             self.Load_Config_File(Default_Config_Path)
             self.LoadData(Default_CSV_Path)
             
-            self.Optical_Cue_Writer(self.OF_Calc_PyOpt,self.SubSample_Level)
+            self.Optical_Flow_Writer(self.OF_Calc_PyOpt,self.SubSample_Level)
 
         else:
             self.Load_Config_File(self.Config_Path)
@@ -57,9 +57,8 @@ class DataParser:
             
 
 
-         
-        
-        
+# '/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/Optical_Flow_Estimation/local_logs/Check_Pattern_Divergent_Flow/D_2.0--V_perp_1.0--V_para_0.0--L_0.25/Cam_Config--SSL_0.yaml'
+# '/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/Optical_Flow_Estimation/local_logs/Check_Pattern_Divergent_Flow/D_2.0--V_perp_1.0--V_para_0.0--L_0.25/Config--SSL_0.yaml'
         
     
     def LoadData(self,CSV_Path):
@@ -116,13 +115,12 @@ class DataParser:
         with open(ConfigPath, 'r') as file:
             self.YAML_data = yaml.safe_load(file)
 
+        self.f = self.YAML_data['IMAGE_SETTINGS']['Focal_Length']          # Focal Length [m]
+        self.IW = self.YAML_data['IMAGE_SETTINGS']['Image_Width']        # Image Sensor Width [m]
+        self.IW = self.YAML_data['IMAGE_SETTINGS']['Image_Height']        # Image Sensor Width [m]
+
         self.N_up = self.YAML_data['IMAGE_SETTINGS']['N_up']    # IMAGE WIDTH IN PIXELS
         self.N_vp = self.YAML_data['IMAGE_SETTINGS']['N_vp']    # IMAGE HEIGHT IN PIXELS
-
-        self.f = self.YAML_data['IMAGE_SETTINGS']['f']          # Focal Length [m]
-        self.FOV = self.YAML_data['IMAGE_SETTINGS']['FOV']      # Field of View [deg]
-        self.FOV_rad = np.radians(self.FOV)                 # Field of View [rad]
-        self.IW = self.YAML_data['IMAGE_SETTINGS']['IW']        # Image Sensor Width [m]
 
         
     def Write_Config_File(self):
@@ -425,7 +423,7 @@ class DataParser:
 
         prev_img = self.Image_array[0]
         cur_img = self.Image_array[1]
-        du_dt,dv_dt = self.Calc_OF_LK(cur_img,prev_img,t_delta)
+        # du_dt,dv_dt = self.Calc_OF_LK(cur_img,prev_img,t_delta)
         
         N_vp = cur_img.shape[0]
         N_up = cur_img.shape[1]
@@ -443,10 +441,10 @@ class DataParser:
                 origin='upper',)
 
         # OPTICAL FLOW QUIVER PLOT 
-        Q = Img_ax.quiver(
-            U_p[1::n,1::n],V_p[1::n,1::n],
-            -du_dt[1::n,1::n],-dv_dt[1::n,1::n], # Need negative sign for arrows to match correct direction
-            color='lime')
+        # Q = Img_ax.quiver(
+        #     U_p[1::n,1::n],V_p[1::n,1::n],
+        #     -du_dt[1::n,1::n],-dv_dt[1::n,1::n], # Need negative sign for arrows to match correct direction
+        #     color='lime')
         
         Img_ax.set_xticks([])
         Img_ax.set_yticks([])
@@ -460,8 +458,8 @@ class DataParser:
             t_cur = self.grabState(['t'],idx=i)
             t_prev = self.grabState(['t'],idx=i-1)
             t_delta = t_cur - t_prev
-            du_dt,dv_dt = self.Calc_OF_LK(self.Image_array[i],self.Image_array[i-1],t_delta,n=10)
-            Q.set_UVC(-du_dt[1::n,1::n],-dv_dt[1::n,1::n])
+            # du_dt,dv_dt = self.Calc_OF_LK(self.Image_array[i],self.Image_array[i-1],t_delta,n=10)
+            # Q.set_UVC(-du_dt[1::n,1::n],-dv_dt[1::n,1::n])
             
             # ## UPDATE IMAGE
             # Img_ax.set_title(fr"$V_\perp$: {self.vx[i]:.2f} [m/s] | $V_\parallel$: {self.vy[i]:.2f} | $D_\perp$: {self.D_perp[i]:.2f} [m]"
@@ -472,7 +470,7 @@ class DataParser:
             ## PRINT PROGRESS
             print(f"Image: {i:03d}/{frame_limit:03d}")
 
-            return im,Q,
+            return im,
         
         ani = animation.FuncAnimation(fig, update, interval=100, blit=False,frames=range(2,frame_limit))
         ani.save(f"{self.FileDir}/L-K_Test.mp4")
@@ -919,7 +917,7 @@ class DataParser:
 
         return image_downsampled
 
-    def Optical_Cue_Writer(self,OF_Calc_Func,SubSample_Level):
+    def Optical_Flow_Writer(self,OF_Calc_Func,SubSample_Level):
         """Compiles optical cue values for all images in log file and appends them to log file.
         This function also takes in Subsampling level and will create a new log file.
 
@@ -983,7 +981,7 @@ class DataParser:
 
 
         self.CSV_Path = os.path.join(self.FileDir,f"Cam_Data--SSL_{SubSample_Level:0d}.csv")    
-        self.Config_Path = os.path.join(self.FileDir,f"Config--SSL_{SubSample_Level:0d}.yaml")
+        self.Config_Path = os.path.join(self.FileDir,f"Cam_Config--SSL_{SubSample_Level:0d}.yaml")
 
         ## WRITE CSV AND CONFIG TO NEW DIRECTORY
         self.df.to_csv(self.CSV_Path,index=False)
@@ -1001,47 +999,14 @@ if __name__ == '__main__':
 
     FolderName = "Check_Pattern_Divergent_Flow"
     FileDir=f"D_2.0--V_perp_1.0--V_para_0.0--L_0.25"
-
-    img_cur = [
-        5,8,4,6,1,8,7,0,7,0,
-        0,0,0,5,0,0,4,2,4,2,
-        2,4,8,8,3,1,0,1,0,1,
-        0,6,0,8,2,9,8,5,8,5,
-        7,1,9,6,1,5,5,3,5,3,
-        8,2,0,3,1,3,8,1,8,1,
-        3,0,8,8,0,7,6,1,6,1,
-        8,0,8,1,9,9,3,5,3,5,
-        0,6,0,8,2,9,8,5,8,5,
-        7,1,9,6,1,5,5,3,5,3,
-        ]
-    img_cur = np.array(img_cur).reshape(10,10)
-    
-    img_prev = [
-        9,2,2,2,9,7,6,8,6,8,
-        8,1,3,8,2,2,2,9,2,9,
-        2,6,4,4,1,5,8,9,8,9,
-        2,6,1,0,5,3,3,4,3,4,
-        8,5,4,2,9,3,9,8,9,8,
-        8,2,9,3,0,7,3,2,3,2,
-        0,4,3,3,8,0,4,6,4,6,
-        1,0,8,7,6,8,5,7,5,7,
-        2,6,1,0,5,3,3,4,3,4,
-        8,5,4,2,9,3,9,8,9,8,
-        ]
-    img_prev = np.array(img_prev).reshape(10,10)
-
     Parser = DataParser(FolderName,FileDir,SubSample_Level=0) 
-    OF_vec = Parser.OF_Calc_Opt_Sep(img_cur,img_prev,0.01)
-    print(OF_vec)
 
-    OF_vec = Parser.OF_Calc_Exp(img_cur,img_prev,0.01)
-    print(OF_vec)
 
 
 
     
-    # # Parser.DataOverview_MP4(n=10)
-    # Parser.OpticalFlow_MP4(n=20) 
+    # Parser.DataOverview_MP4(n=8)
+    Parser.OpticalFlow_MP4(n=8) 
 
 
     # L_list = [0.02,0.05,0.12,0.25,0.5,0.75,1.00,2.00]
@@ -1061,4 +1026,42 @@ if __name__ == '__main__':
 
     # L = 0.05
     # Parser.Generate_Surface_Pattern(L_w=L,L_h=L,Surf_width=8,Surf_Height=16,save_img=True)
+
+
+
+    # img_cur = [
+    #     5,8,4,6,1,8,7,0,7,0,
+    #     0,0,0,5,0,0,4,2,4,2,
+    #     2,4,8,8,3,1,0,1,0,1,
+    #     0,6,0,8,2,9,8,5,8,5,
+    #     7,1,9,6,1,5,5,3,5,3,
+    #     8,2,0,3,1,3,8,1,8,1,
+    #     3,0,8,8,0,7,6,1,6,1,
+    #     8,0,8,1,9,9,3,5,3,5,
+    #     0,6,0,8,2,9,8,5,8,5,
+    #     7,1,9,6,1,5,5,3,5,3,
+    #     ]
+    # img_cur = np.array(img_cur).reshape(10,10)
+    
+    # img_prev = [
+    #     9,2,2,2,9,7,6,8,6,8,
+    #     8,1,3,8,2,2,2,9,2,9,
+    #     2,6,4,4,1,5,8,9,8,9,
+    #     2,6,1,0,5,3,3,4,3,4,
+    #     8,5,4,2,9,3,9,8,9,8,
+    #     8,2,9,3,0,7,3,2,3,2,
+    #     0,4,3,3,8,0,4,6,4,6,
+    #     1,0,8,7,6,8,5,7,5,7,
+    #     2,6,1,0,5,3,3,4,3,4,
+    #     8,5,4,2,9,3,9,8,9,8,
+    #     ]
+    # img_prev = np.array(img_prev).reshape(10,10)
+
+    # Parser = DataParser(FolderName,FileDir,SubSample_Level=0) 
+    # OF_vec = Parser.OF_Calc_Opt_Sep(img_cur,img_prev,0.01)
+    # print(OF_vec)
+
+    # OF_vec = Parser.OF_Calc_Exp(img_cur,img_prev,0.01)
+    # print(OF_vec)
+
    

@@ -331,8 +331,8 @@
           </save>
           <horizontal_fov>1.435</horizontal_fov>          <!-- 82.22 deg FoV to match AI Deck -->
           <image>
-            <width>160</width>
-            <height>160</height>
+            <width>64</width>
+            <height>64</height>
             <format>L8</format>
           </image>
           <clip>
