@@ -279,6 +279,7 @@ struct vec n_hat = {0.0f,0.0f,1.0f};    // Plane Unit Normal Vector
 
 struct vec r_PO = {0.0f,0.0f,2.0f};     // Plane Position Vector        [m]
 struct vec r_BO = {0.0f,0.0f,0.0f};     // Quad Position Vector         [m]
+struct vec r_CB = {0.0f,0.0f,0.0f};     // Camera Position Vector       [m]
 struct vec r_PB = {0.0f,0.0f,0.0f};     // Quad-Plane Distance Vector   [m]
 struct vec V_BO = {0.0f,0.0f,0.0f};     // Quad Velocity Vector         [m/s]
 
@@ -808,7 +809,7 @@ bool updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors
     V_BO = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);
 
     // CALC DISPLACEMENT FROM PLANE CENTER
-    r_PB = vsub(r_PO,r_BO); 
+    r_PB = vsub(r_PO,vadd(r_CB,r_BO)); 
 
     // CALC RELATIVE DISTANCE AND VEL
     D_perp = vdot(r_PB,n_hat) + 1e-6f;
