@@ -4,8 +4,8 @@ ENV_SETTINGS:
   Ground_Name: "GroundPlane_Desert_Physical"
 
 SAR_SETTINGS:
-  SAR_Type: "Crazyflie"
-  SAR_Config: "A20_L75_K08"
+  SAR_Type: "Source_One_V5"
+  SAR_Config: "Camera_Model"
 
   Policy_Type: "PARAM_OPTIM"
   # Policy_Type: "DEEP_RL_SB3" 

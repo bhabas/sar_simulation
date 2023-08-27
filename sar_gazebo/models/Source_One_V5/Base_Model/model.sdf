@@ -1,0 +1,159 @@
+<?xml version='1.0'?>
+<sdf version='1.7'>
+  <model name='Base_Model'>
+    <link name='SAR_Body'>
+      <inertial>
+        <mass>0.0343</mass>
+        <inertia>
+          <ixx>15.83e-6</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>17.00e-6</iyy>
+          <iyz>0</iyz>
+          <izz>31.19e-6</izz>
+        </inertia>
+        <pose>0 0 0 0 0 0</pose>
+      </inertial>
+      <pose>0 0 0 0 0 0</pose>
+      <gravity>1</gravity>
+      <self_collide>0</self_collide>
+      <kinematic>0</kinematic>
+      <enable_wind>0</enable_wind>
+
+      <visual name='Source_One_Body'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://Base_Model/meshes/Source_One_V5_2.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+          <lighting>1</lighting>
+        </material>
+      </visual>
+    </link>
+
+    <link name='Camera'>
+      <inertial>
+        <mass>1e-6</mass>
+        <inertia>
+          <ixx>1e-9</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1e-9</iyy>
+          <iyz>0</iyz>
+          <izz>1e-9</izz>
+        </inertia>
+        <pose>0 0 0 0 0 0</pose>
+      </inertial>
+
+      <sensor type="camera" name="Camera">
+        <pose>0 0 0 0 0 0</pose>
+        <update_rate>100</update_rate>        <!--Changed to a nice number for FPS because message didn't contain enough precision -->
+        <visualize>false</visualize>
+        <camera name="head">
+          <save enabled="false">
+            <path>/home/bhabas/Downloads/Video_images</path>
+            <!--Convert Command: ffmpeg -framerate 60 -pattern_type glob -i '*.jpg' -c:v libx264 -pix_fmt yuv420p out.mp4 -->
+          </save>
+          <horizontal_fov>1.435</horizontal_fov>          <!-- 82.22 deg FoV to match AI Deck -->
+          <image>
+            <width>64</width>
+            <height>64</height>
+            <format>L8</format>
+          </image>
+          <clip>
+            <near>0.02</near>
+            <far>300</far>
+          </clip>
+          <noise>
+            <type>gaussian</type>
+            <!-- Noise is sampled independently per pixel on each frame.
+                 That pixel's noise value is added to each of its color
+                 channels, which at that point lie in the range [0,1]. -->
+            <mean>0.0</mean>
+            <stddev>0.005</stddev>
+          </noise>
+          <lens>
+            <type>sterographic</type>
+          </lens>
+        </camera>
+        <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+          <alwaysOn>true</alwaysOn>
+          <updateRate>0.0</updateRate>
+          <cameraName>SAR_Internal/camera</cameraName>
+          <imageTopicName>image_raw</imageTopicName>
+          <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+          <frameName>camera_sensor</frameName>
+          <hackBaseline>0.0</hackBaseline>
+          <distortionK1>0.0</distortionK1>
+          <distortionK2>0.0</distortionK2>
+          <distortionK3>0.0</distortionK3>
+          <distortionT1>0.0</distortionT1>
+          <distortionT2>0.0</distortionT2>
+        </plugin>
+      </sensor>
+
+      <visual name='camera_center'>
+        <cast_shadows>0</cast_shadows>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <sphere>
+            <radius>0.002</radius>
+          </sphere>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Blue</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+          <shader type='pixel'>
+            <normal_map>__default__</normal_map>
+          </shader>
+        </material>
+      </visual>
+    </link>
+
+    <joint name='Camera_Joint' type='fixed'>
+      <parent>SAR_Body</parent>
+      <child>Camera</child>
+    </joint>
+    
+
+    <!-- <plugin name='SAR_Update_Plugin' filename='libSAR_Update_Plugin.so'>
+      <CameraJointName>Camera_Joint</CameraJointName>
+    </plugin> -->
+
+
+    <plugin name='Vicon_plugin' filename='libgazebo_ros_p3d.so'>
+      <alwaysOn>true</alwaysOn>
+      <updateRate>1000</updateRate>
+      <bodyName>SAR_Body</bodyName>
+      <topicName>SAR_External/ExtPosition</topicName>
+      <frameName>world</frameName>
+      <xyzOffsets>0 0 0</xyzOffsets>
+      <rpyOffsets>0 0 0</rpyOffsets>
+      <robotNamespace>/</robotNamespace>
+    </plugin>
+
+    <plugin name="IMU_plugin" filename="libgazebo_ros_imu.so">
+      <alwaysOn>true</alwaysOn>
+      <updateRate>1000</updateRate>
+      <bodyName>SAR_Body</bodyName>
+      <topicName>SAR_Internal/IMU</topicName>
+      <serviceName>imu_service</serviceName>
+      <gaussianNoise>0.0</gaussianNoise>
+      <xyzOffset>0 0 0</xyzOffset>
+      <rpyOffset>0 0 0</rpyOffset>
+      <frameName>SAR_Body</frameName>
+    </plugin>
+
+    <static>0</static>
+    <allow_auto_disable>1</allow_auto_disable>
+  </model>
+</sdf>
