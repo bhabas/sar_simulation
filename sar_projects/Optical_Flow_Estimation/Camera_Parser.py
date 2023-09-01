@@ -38,20 +38,22 @@ class DataParser:
 
         self.SubSample_Level = SubSample_Level
         self.L = float(re.findall("L_(\d+\.\d+)",FileDir)[0])
+        self.IW = 1
+        self.f = 1
 
-        if not os.path.exists(self.CSV_Path):
+        # if not os.path.exists(self.CSV_Path):
 
-            Default_Config_Path = os.path.join(self.FileDir,f"Cam_Config.yaml")
-            Default_CSV_Path = os.path.join(self.FileDir,f"Cam_Data.csv")
+        #     Default_Config_Path = os.path.join(self.FileDir,f"Cam_Config.yaml")
+        #     Default_CSV_Path = os.path.join(self.FileDir,f"Cam_Data.csv")
 
-            self.Load_Config_File(Default_Config_Path)
-            self.LoadData(Default_CSV_Path)
+        #     self.Load_Config_File(Default_Config_Path)
+        #     self.LoadData(Default_CSV_Path)
             
-            self.Optical_Flow_Writer(self.OF_Calc_PyOpt,self.SubSample_Level)
+        #     self.Optical_Flow_Writer(self.OF_Calc_PyOpt,self.SubSample_Level)
 
-        else:
-            self.Load_Config_File(self.Config_Path)
-            self.LoadData(self.CSV_Path)
+        # else:
+        #     self.Load_Config_File(self.Config_Path)
+        #     self.LoadData(self.CSV_Path)
 
     def LoadData(self,CSV_Path):
         """Loads data from the given log file
@@ -858,6 +860,11 @@ class DataParser:
         ## PRE-ALLOCATE IMAGE ARRAY [pixels]
         u_p = np.arange(0,N_up,1)
         v_p = np.arange(0,N_vp,1)
+        u_p,v_p = np.meshgrid(u_p,v_p)
+        u_p[0,:] = u_p[-1,:] = u_p[:,0] = u_p[:,-1] = 0
+        v_p[0,:] = v_p[-1,:] = v_p[:,0] = v_p[:,-1] = 0
+
+
         
         ## PRE-ALLOCATE INTENSITY GRADIENTS
         G_up = np.zeros((N_vp,N_up))
@@ -875,7 +882,6 @@ class DataParser:
 
         G_rp = (2*u_p - N_up + 1)*G_up + (2*v_p - N_vp + 1)*G_vp
         G_tp = cur_img - prev_img
-
 
 
         ## SOLVE LEAST SQUARES PROBLEM
@@ -1042,7 +1048,7 @@ if __name__ == '__main__':
     FileDir=f"D_2.0--V_perp_1.0--V_para_0.0--L_0.25"
     Parser = DataParser(FolderName,FileDir,SubSample_Level=0) 
 
-    Parser.Raw_Video_and_Image_Writer()
+    # Parser.Raw_Video_and_Image_Writer()
     # Parser.DataOverview_MP4(n=8)
     # Parser.OpticalFlow_MP4(n=8) 
 
@@ -1067,39 +1073,39 @@ if __name__ == '__main__':
 
 
 
-    # img_cur = [
-    #     5,8,4,6,1,8,7,0,7,0,
-    #     0,0,0,5,0,0,4,2,4,2,
-    #     2,4,8,8,3,1,0,1,0,1,
-    #     0,6,0,8,2,9,8,5,8,5,
-    #     7,1,9,6,1,5,5,3,5,3,
-    #     8,2,0,3,1,3,8,1,8,1,
-    #     3,0,8,8,0,7,6,1,6,1,
-    #     8,0,8,1,9,9,3,5,3,5,
-    #     0,6,0,8,2,9,8,5,8,5,
-    #     7,1,9,6,1,5,5,3,5,3,
-    #     ]
-    # img_cur = np.array(img_cur).reshape(10,10)
+    img_cur = [
+        5,8,4,6,1,8,7,0,7,0,
+        0,0,0,5,0,0,4,2,4,2,
+        2,4,8,8,3,1,0,1,0,1,
+        0,6,0,8,2,9,8,5,8,5,
+        7,1,9,6,1,5,5,3,5,3,
+        8,2,0,3,1,3,8,1,8,1,
+        3,0,8,8,0,7,6,1,6,1,
+        8,0,8,1,9,9,3,5,3,5,
+        0,6,0,8,2,9,8,5,8,5,
+        7,1,9,6,1,5,5,3,5,3,
+        ]
+    img_cur = np.array(img_cur).reshape(10,10)
     
-    # img_prev = [
-    #     9,2,2,2,9,7,6,8,6,8,
-    #     8,1,3,8,2,2,2,9,2,9,
-    #     2,6,4,4,1,5,8,9,8,9,
-    #     2,6,1,0,5,3,3,4,3,4,
-    #     8,5,4,2,9,3,9,8,9,8,
-    #     8,2,9,3,0,7,3,2,3,2,
-    #     0,4,3,3,8,0,4,6,4,6,
-    #     1,0,8,7,6,8,5,7,5,7,
-    #     2,6,1,0,5,3,3,4,3,4,
-    #     8,5,4,2,9,3,9,8,9,8,
-    #     ]
-    # img_prev = np.array(img_prev).reshape(10,10)
+    img_prev = [
+        9,2,2,2,9,7,6,8,6,8,
+        8,1,3,8,2,2,2,9,2,9,
+        2,6,4,4,1,5,8,9,8,9,
+        2,6,1,0,5,3,3,4,3,4,
+        8,5,4,2,9,3,9,8,9,8,
+        8,2,9,3,0,7,3,2,3,2,
+        0,4,3,3,8,0,4,6,4,6,
+        1,0,8,7,6,8,5,7,5,7,
+        2,6,1,0,5,3,3,4,3,4,
+        8,5,4,2,9,3,9,8,9,8,
+        ]
+    img_prev = np.array(img_prev).reshape(10,10)
 
-    # Parser = DataParser(FolderName,FileDir,SubSample_Level=0) 
-    # OF_vec = Parser.OF_Calc_Opt_Sep(img_cur,img_prev,0.01)
-    # print(OF_vec)
+    Parser = DataParser(FolderName,FileDir,SubSample_Level=0) 
+    OF_vec = Parser.OF_Calc_Opt_Sep(img_cur,img_prev,0.01)
+    print(OF_vec)
 
-    # OF_vec = Parser.OF_Calc_Exp(img_cur,img_prev,0.01)
-    # print(OF_vec)
+    OF_vec = Parser.OF_Calc_PyOpt(img_cur,img_prev,0.01)
+    print(OF_vec)
 
    
