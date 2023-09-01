@@ -101,6 +101,23 @@
         </material>
       </visual>
 
+      <collision name='body_collision'>
+        <pose>0 0 32.0e-3 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>275.0e-3 305.0e-3 16.0e-3</size>
+          </box>
+        </geometry>
+      </collision>
+
+      <collision name='base_collision'>
+        <pose>0 0 12.5e-3 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>185.0e-3 215.0e-3 25.0e-3</size>
+          </box>
+        </geometry>
+      </collision>
     </link>
 
     <link name='Camera'>
@@ -209,14 +226,10 @@
           </mesh>
         </geometry>
         <material>
-          <lighting>1</lighting>
           <script>
             <uri>file://media/materials/scripts/gazebo.material</uri>
             <name>Gazebo/BlueTransparent </name>
           </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
         </material>
       </visual>
     </link>
@@ -246,14 +259,10 @@
           </mesh>
         </geometry>
         <material>
-          <lighting>1</lighting>
           <script>
             <uri>file://media/materials/scripts/gazebo.material</uri>
             <name>Gazebo/BlueTransparent </name>
           </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
         </material>
       </visual>
     </link>
@@ -283,14 +292,10 @@
           </mesh>
         </geometry>
         <material>
-          <lighting>1</lighting>
           <script>
             <uri>file://media/materials/scripts/gazebo.material</uri>
             <name>Gazebo/BlueTransparent </name>
           </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
         </material>
       </visual>
     </link>
@@ -320,14 +325,10 @@
           </mesh>
         </geometry>
         <material>
-          <lighting>1</lighting>
           <script>
             <uri>file://media/materials/scripts/gazebo.material</uri>
             <name>Gazebo/BlueTransparent </name>
           </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
         </material>
       </visual>
     </link>
