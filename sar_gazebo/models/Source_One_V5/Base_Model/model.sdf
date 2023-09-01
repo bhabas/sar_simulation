@@ -37,7 +37,7 @@
         </material>
       </visual>
 
-      <visual name='Source_One_M1'>
+      <visual name='2207_Motor_1'>
         <pose>72.64e-3 -86.56e-3 8.0e-3 0 0 0</pose>
         <geometry>
           <mesh>
@@ -47,14 +47,13 @@
         </geometry>
         <material>
           <script>
-            <name>Gazebo/SkyBlue</name>
+            <name>Gazebo/DarkGrey</name>
             <uri>file://media/materials/scripts/gazebo.material</uri>
           </script>
-          <lighting>1</lighting>
         </material>
       </visual>
 
-      <visual name='Source_One_M2'>
+      <visual name='2207_Motor_2'>
         <pose>-72.64e-3 -86.56e-3 8.0e-3 0 0 0</pose>
         <geometry>
           <mesh>
@@ -64,14 +63,13 @@
         </geometry>
         <material>
           <script>
-            <name>Gazebo/SkyBlue</name>
+            <name>Gazebo/DarkGrey</name>
             <uri>file://media/materials/scripts/gazebo.material</uri>
           </script>
-          <lighting>1</lighting>
         </material>
       </visual>
 
-      <visual name='Source_One_M3'>
+      <visual name='2207_Motor_3'>
         <pose>-72.64e-3 86.56e-3 8.0e-3 0 0 0</pose>
         <geometry>
           <mesh>
@@ -81,14 +79,13 @@
         </geometry>
         <material>
           <script>
-            <name>Gazebo/SkyBlue </name>
+            <name>Gazebo/DarkGrey</name>
             <uri>file://media/materials/scripts/gazebo.material</uri>
           </script>
-          <lighting>1</lighting>
         </material>
       </visual>
 
-      <visual name='Source_One_M4'>
+      <visual name='2207_Motor_4'>
         <pose>72.64e-3 86.56e-3 8.0e-3 0 0 0</pose>
         <geometry>
           <mesh>
@@ -98,10 +95,9 @@
         </geometry>
         <material>
           <script>
-            <name>Gazebo/SkyBlue</name>
+            <name>Gazebo/DarkGrey</name>
             <uri>file://media/materials/scripts/gazebo.material</uri>
           </script>
-          <lighting>1</lighting>
         </material>
       </visual>
 
@@ -417,6 +413,54 @@
       <parent>SAR_Body</parent>
       <child>Camera</child>
     </joint>
+
+    <plugin name='Motor_1_Plugin' filename='libMotor_Plugin.so'>
+      <motorNumber>1</motorNumber>
+      <jointName>Prop_1_Joint</jointName>
+      <linkName>Prop_1</linkName>
+      <turningDirection>ccw</turningDirection>
+      <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
+      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
+      <timeConstantUp>0.05</timeConstantUp>
+      <timeConstantDown>0.15</timeConstantDown>
+      <rotorVisualSlowdown>100</rotorVisualSlowdown>
+    </plugin>
+
+    <plugin name='Motor_2_Plugin' filename='libMotor_Plugin.so'>
+      <motorNumber>2</motorNumber>
+      <jointName>Prop_2_Joint</jointName>
+      <linkName>Prop_2</linkName>
+      <turningDirection>cw</turningDirection>
+      <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
+      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
+      <timeConstantUp>0.05</timeConstantUp>
+      <timeConstantDown>0.15</timeConstantDown>
+      <rotorVisualSlowdown>100</rotorVisualSlowdown>
+    </plugin>
+
+    <plugin name='Motor_3_Plugin' filename='libMotor_Plugin.so'>
+      <motorNumber>3</motorNumber>
+      <jointName>Prop_3_Joint</jointName>
+      <linkName>Prop_3</linkName>
+      <turningDirection>ccw</turningDirection>
+      <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
+      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
+      <timeConstantUp>0.05</timeConstantUp>
+      <timeConstantDown>0.15</timeConstantDown>
+      <rotorVisualSlowdown>100</rotorVisualSlowdown>
+    </plugin>
+
+    <plugin name='Motor_4_Plugin' filename='libMotor_Plugin.so'>
+      <motorNumber>4</motorNumber>
+      <jointName>Prop_4_Joint</jointName>
+      <linkName>Prop_4</linkName>
+      <turningDirection>cw</turningDirection>
+      <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
+      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
+      <timeConstantUp>0.05</timeConstantUp>
+      <timeConstantDown>0.15</timeConstantDown>
+      <rotorVisualSlowdown>100</rotorVisualSlowdown>
+    </plugin>
 
 
     <!-- <plugin name='SAR_Update_Plugin' filename='libSAR_Update_Plugin.so'>
