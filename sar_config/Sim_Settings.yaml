@@ -5,7 +5,7 @@ ENV_SETTINGS:
 
 SAR_SETTINGS:
   SAR_Type: "Source_One_V5"
-  SAR_Config: "A20_L150_K08"
+  SAR_Config: "Base_Model"
 
   Policy_Type: "PARAM_OPTIM"
   # Policy_Type: "DEEP_RL_SB3" 

@@ -481,20 +481,19 @@ SAR_Type:
       System_Params:
         C_tf: 0.00618
         f_max: 15.0
-        Prop_Front: [32.5e-3, 32.5e-3]  # [x,y] distances [m]
-        Prop_Rear:  [32.5e-3, 32.5e-3]  # [x,y] distances [m]
+        Prop_Front: [72.64e-3, 86.56e-3]  # [x,y] distances [m]
+        Prop_Rear:  [72.64e-3, 86.56e-3]  # [x,y] distances [m]
       
       Config:
 
-        ## THESE INERTIAL VALUES ARE ONLY FOR CONTROLLER, NOT SIMULATION PHYSICS
         Base_Model:      
-          Mass: 34.3e-3   # [kg]
+          Mass: 590.0e-3   # [kg]
           Ixx: 15.83e-6   # [kg*m^2]
           Iyy: 17.00e-6   # [kg*m^2]
           Izz: 31.19e-6   # [kg*m^2] 
 
         A60_L100_K64: 
-          Mass: 38.1e-3         # [kg]
+          Mass: 590.0e-3         # [kg]
           Ixx: 27.93e-6         # [kg*m^2]
           Iyy: 30.46e-6         # [kg*m^2]
           Izz: 47.12e-6         # [kg*m^2] 

@@ -203,7 +203,7 @@ bool customPWM_flag = false;
 
 
 // SENSOR FLAGS
-bool isCamActive = false;
+bool CamActive = false;
 
 
 // =================================
@@ -724,36 +724,6 @@ bool updateOpticalFlowEst()
     // CALC OPTICAL FLOW VALUES
     if (UpdateOpticalFlow)
     {
-        // UART_arr => {G_vp*G_vp, G_vp*G_up, G_vp*G_rp, G_vp*G_tp, G_up*G_up, G_up*G_rp, G_up*G_tp, G_rp*G_rp, G_rp*G_tp}
-
-        int32_t G_vp_vp = UART_arr[0];
-        int32_t G_vp_up = UART_arr[1];
-        int32_t G_vp_rp = UART_arr[2];
-        int32_t G_vp_tp = UART_arr[3];
-
-        int32_t G_up_up = UART_arr[4];
-        int32_t G_up_rp = UART_arr[5];
-        int32_t G_up_tp = UART_arr[6];
-
-        int32_t G_rp_rp = UART_arr[7];
-        int32_t G_rp_tp = UART_arr[8];
-
-        Cam_dt = UART_arr[9];
-        N_up = UART_arr[10];
-        N_vp = UART_arr[11];
-
-        // // UPDATE Ax=b MATRICES FROM UART ARRAY
-        // double spatial_Grad_mat[9] = {
-        //     G_vp_vp, -G_vp_up, -IW/(2*N_up*focal_len)*G_vp_rp,
-        //     G_vp_up, -G_up_up, -IW/(2*N_up*focal_len)*G_up_rp,
-        //     G_vp_rp, -G_up_rp, -IW/(2*N_up*focal_len)*G_rp_rp,
-        // };
-
-        // double temp_Grad_vec[3] = {
-        //     (8*IW)/(focal_len*N_up*Cam_dt)*G_vp_tp,
-        //     (8*IW)/(focal_len*N_up*Cam_dt)*G_up_tp,
-        //     (8*IW)/(focal_len*N_up*Cam_dt)*G_rp_tp,
-        // };
 
         double spatial_Grad_mat[9] = {
             3, 1,-1,

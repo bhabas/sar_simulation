@@ -199,7 +199,7 @@ extern bool customThrust_flag;
 extern bool customPWM_flag;
 
 // SENSOR FLAGS
-extern bool isCamActive;
+extern bool CamActive;
 
 // =================================
 //       POLICY INITIALIZATION

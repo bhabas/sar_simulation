@@ -232,7 +232,7 @@ void Controller::loadParams()
     ros::param::get("/SAR_Type/" + SAR_Type + "/CtrlGains/R_ki_z",R_ki_z);
     ros::param::get("/SAR_Type/" + SAR_Type + "/CtrlGains/i_range_R_z",i_range_R_z);
 
-    ros::param::get("/SAR_SETTINGS/Cam_Active",isCamActive);
+    ros::param::get("/SAR_SETTINGS/Cam_Active",CamActive);
 
 
     // SIMULATION SETTINGS FROM CONFIG FILE

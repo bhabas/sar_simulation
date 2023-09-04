@@ -151,7 +151,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         updateOpticalFlowAnalytic(state,sensors);
 
         // POLICY VECTOR UPDATE
-        if (isCamActive == true)
+        if (CamActive == true)
         {
             // ONLY UPDATE WITH NEW OPTICAL FLOW DATA
             isOFUpdated = updateOpticalFlowEst();
@@ -371,11 +371,11 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
 #ifdef CONFIG_SAR_EXP
 
-PARAM_GROUP_START(CTRL_Params)
+
 // NOTE: PARAM GROUP + NAME + 1 CANNOT EXCEED 26 CHARACTERS (WHY? IDK.)
 // NOTE: CANNOT HAVE A LOG AND A PARAM ACCESS THE SAME VALUE
-
-PARAM_ADD(PARAM_FLOAT, CF_mass, &m)
+PARAM_GROUP_START(System_Params)
+PARAM_ADD(PARAM_FLOAT, Mass, &m)
 PARAM_ADD(PARAM_FLOAT, Ixx, &Ixx)
 PARAM_ADD(PARAM_FLOAT, Iyy, &Iyy)
 PARAM_ADD(PARAM_FLOAT, Izz, &Izz)
@@ -390,8 +390,11 @@ PARAM_ADD(PARAM_FLOAT, f_max, &f_max)
 
 PARAM_ADD(PARAM_UINT8, SafeMode, &safeModeEnable)
 PARAM_ADD(PARAM_UINT8, PolicyType, &Policy)
-PARAM_ADD(PARAM_UINT8, isCamActive, &isCamActive)
+PARAM_ADD(PARAM_UINT8, CamActive, &CamActive)
+PARAM_GROUP_STOP(System_Params)
 
+
+PARAM_GROUP_START(CTRL_Params)
 PARAM_ADD(PARAM_FLOAT, P_kp_xy, &P_kp_xy)
 PARAM_ADD(PARAM_FLOAT, P_kd_xy, &P_kd_xy) 
 PARAM_ADD(PARAM_FLOAT, P_ki_xy, &P_ki_xy)
@@ -496,7 +499,7 @@ LOG_ADD(LOG_UINT8, Motorstop,       &motorstop_flag)
 LOG_ADD(LOG_UINT8, Tumbled,         &tumbled)
 LOG_ADD(LOG_UINT8, Tumble_Detect,   &tumble_detection)
 LOG_ADD(LOG_UINT8, Moment_Flag,     &moment_flag)
-LOG_ADD(LOG_UINT8, isCamActive,     &isCamActive)
+LOG_ADD(LOG_UINT8, CamActive,     &CamActive)
 LOG_ADD(LOG_UINT8, SafeModeEnable,  &safeModeEnable)
 LOG_ADD(LOG_UINT8, Pol_Armed,       &policy_armed_flag)
 LOG_ADD(LOG_UINT8, CustomThrust,    &customThrust_flag)
