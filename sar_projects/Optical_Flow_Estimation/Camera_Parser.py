@@ -864,7 +864,6 @@ class DataParser:
         u_p[0,:] = u_p[-1,:] = u_p[:,0] = u_p[:,-1] = 0
         v_p[0,:] = v_p[-1,:] = v_p[:,0] = v_p[:,-1] = 0
 
-
         
         ## PRE-ALLOCATE INTENSITY GRADIENTS
         G_up = np.zeros((N_vp,N_up))
@@ -978,19 +977,43 @@ class DataParser:
             np.array: Array of (Theta_x_est,Theta_y_est,Theta_z_est)
         """        
 
+        def f_map(x):
+            val = x//2 + 64
+            val = np.clip(val,0,255)
+            return val
+        
+        def g_map(x):
+            
+            val = (x-64)*2
+            val = np.clip(val,-255,255)
+            return val
+
         N_vp = cur_img.shape[0]
         N_up = cur_img.shape[1]
+        w = self.IW/N_up
 
-        ## SEPERATED SOBEL KERNAL (U--DIRECTION)
-        Ku_1 = np.array([[-1,0,1]]).reshape(3,1)
-        Ku_2 = np.array([[ 1,2,1]]).reshape(1,3)
+        ## DEFINE KERNALS USED TO CALCULATE INTENSITY GRADIENTS
+        Kv = np.array([ # SOBEL KERNAL (U-DIRECTION)
+            [-1,-2,-1],
+            [ 0, 0, 0],
+            [ 1, 2, 1]
+        ]) 
 
+        Ku = np.array([ # SOBEL KERNAL (V--DIRECTION)
+            [ -1, 0, 1],
+            [ -2, 0, 2],
+            [ -1, 0, 1]
+        ])
 
-        ## SEPERATED SOBEL KERNAL (V--DIRECTION)
-        Kv_1 = np.array([[ 1,2,1]]).reshape(3,1)
-        Kv_2 = np.array([[-1,0,1]]).reshape(1,3)
+        
+        ## PRE-ALLOCATE IMAGE ARRAY [pixels]
+        u_p = np.arange(0,N_up,1)
+        v_p = np.arange(0,N_vp,1)
+        u_p,v_p = np.meshgrid(u_p,v_p)
+        u_p[0,:] = u_p[-1,:] = u_p[:,0] = u_p[:,-1] = 0
+        v_p[0,:] = v_p[-1,:] = v_p[:,0] = v_p[:,-1] = 0
 
-
+        
         ## PRE-ALLOCATE INTENSITY GRADIENTS
         G_up = np.zeros((N_vp,N_up))
         G_vp = np.zeros((N_vp,N_up))
@@ -998,40 +1021,29 @@ class DataParser:
         G_tp = np.zeros((N_vp,N_up))
 
 
-        ## CALCULATE IMAGE GRADIENTS
-        for v_p in range(1, N_vp-1): 
-            for u_p in range(1, N_up-1):
-                G_up[v_p,u_p] = (Ku_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Ku_1)))).item()
-                G_vp[v_p,u_p] = (Kv_2.dot((cur_img[v_p-1:v_p+2,u_p-1:u_p+2].dot(Kv_1)))).item()
-                G_rp[v_p,u_p] = (2*u_p - N_up + 1)*G_up[v_p,u_p] + (2*v_p - N_vp + 1)*G_vp[v_p,u_p]
-                G_tp[v_p,u_p] = cur_img[v_p,u_p] - prev_img[v_p,u_p]
+        ## CALCULATE IMAGE GRADIENTS VIA PYTHON CONVOLUTION
+        G_up = convolve(cur_img,-Ku,mode="constant",cval=0)
+        G_up[0,:] = G_up[-1,:] = G_up[:,0] = G_up[:,-1] = 0
 
-        ## CALC DOT PRODUCTS
-        G_vp_vp = np.sum(G_vp*G_vp)
-        G_vp_up = np.sum(G_vp*G_up)
-        G_vp_rp = np.sum(G_vp*G_rp)
-        G_vp_tp = np.sum(G_vp*G_tp)
+        G_vp = convolve(cur_img,-Kv,mode="constant",cval=0)
+        G_vp[0,:] = G_vp[-1,:] = G_vp[:,0] = G_vp[:,-1] = 0
 
-        G_up_up = np.sum(G_up*G_up) 
-        G_up_rp = np.sum(G_up*G_rp)
-        G_up_tp = np.sum(G_up*G_tp)
-
-        G_rp_rp = np.sum(G_rp*G_rp)
-        G_rp_tp = np.sum(G_rp*G_tp)
+        G_rp = (2*u_p - N_up + 1)*G_up + (2*v_p - N_vp + 1)*G_vp
+        G_tp = cur_img - prev_img
 
 
         ## SOLVE LEAST SQUARES PROBLEM
         X = np.array([
-            [G_vp_vp, -G_vp_up, -self.IW/(2*N_up*self.f)*G_vp_rp],
-            [G_vp_up, -G_up_up, -self.IW/(2*N_up*self.f)*G_up_rp],
-            [G_vp_rp, -G_up_rp, -self.IW/(2*N_up*self.f)*G_rp_rp]
+            [self.f*np.sum(G_vp*G_vp), -self.f*np.sum(G_up*G_vp), -w/2*np.sum(G_rp*G_vp)],
+            [self.f*np.sum(G_vp*G_up), -self.f*np.sum(G_up*G_up), -w/2*np.sum(G_rp*G_up)],
+            [self.f*np.sum(G_vp*G_rp), -self.f*np.sum(G_up*G_rp), -w/2*np.sum(G_rp*G_rp)]
         ])
 
         y = np.array([
-            [G_vp_tp],
-            [G_up_tp],
-            [G_rp_tp]
-        ])*(8*self.IW/(self.f*N_up*delta_t))
+            [np.sum(G_tp*G_vp)],
+            [np.sum(G_tp*G_up)],
+            [np.sum(G_tp*G_rp)]
+        ])*(8*w/delta_t)
 
         ## SOLVE b VIA PSEUDO-INVERSE
         b = np.linalg.pinv(X)@y
@@ -1074,38 +1086,28 @@ if __name__ == '__main__':
 
 
     img_cur = [
-        5,8,4,6,1,8,7,0,7,0,
-        0,0,0,5,0,0,4,2,4,2,
-        2,4,8,8,3,1,0,1,0,1,
-        0,6,0,8,2,9,8,5,8,5,
-        7,1,9,6,1,5,5,3,5,3,
-        8,2,0,3,1,3,8,1,8,1,
-        3,0,8,8,0,7,6,1,6,1,
-        8,0,8,1,9,9,3,5,3,5,
-        0,6,0,8,2,9,8,5,8,5,
-        7,1,9,6,1,5,5,3,5,3,
+        0,0,0,0,0,
+        64,64,64,64,64,
+        128,128,128,128,128,
+        192,192,192,192,192,
+        255,255,255,255,255,
         ]
-    img_cur = np.array(img_cur).reshape(10,10)
+    img_cur = np.array(img_cur).reshape(5,5)
     
     img_prev = [
-        9,2,2,2,9,7,6,8,6,8,
-        8,1,3,8,2,2,2,9,2,9,
-        2,6,4,4,1,5,8,9,8,9,
-        2,6,1,0,5,3,3,4,3,4,
-        8,5,4,2,9,3,9,8,9,8,
-        8,2,9,3,0,7,3,2,3,2,
-        0,4,3,3,8,0,4,6,4,6,
-        1,0,8,7,6,8,5,7,5,7,
-        2,6,1,0,5,3,3,4,3,4,
-        8,5,4,2,9,3,9,8,9,8,
+        255,255,255,255,255,
+        192,192,192,192,192,
+        128,128,128,128,128,
+        64,64,64,64,64,
+        0,0,0,0,0,
         ]
-    img_prev = np.array(img_prev).reshape(10,10)
+    img_prev = np.array(img_prev).reshape(5,5)
 
     Parser = DataParser(FolderName,FileDir,SubSample_Level=0) 
     OF_vec = Parser.OF_Calc_Opt_Sep(img_cur,img_prev,0.01)
     print(OF_vec)
 
-    OF_vec = Parser.OF_Calc_PyOpt(img_cur,img_prev,0.01)
+    OF_vec = Parser.OF_Calc_Exp(img_cur,img_prev,0.01)
     print(OF_vec)
 
    
