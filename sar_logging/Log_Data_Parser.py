@@ -22,7 +22,7 @@ class DataFile:
         self.dataPath = dataPath
         filepath = os.path.join(self.dataPath, self.fileName)
 
-        self.trial_df = pd.read_csv(filepath,low_memory=False,comment="##")
+        self.trial_df = pd.read_csv(filepath,low_memory=False,comment="#")
 
         ## CLEAN UP TRIAL DATAFRAME
         # Drop row with "Note: ____________"
