@@ -1,15 +1,18 @@
-#include <iostream>
 
+// STANDARD INCLUDES
+#include <iostream>
+#include <thread>
+
+
+// ROS AND GAZEBO INCLUDES
+#include <ros/ros.h>
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/physics.hh>
 #include <gazebo/transport/transport.hh>
 #include <gazebo/common/common.hh>
 #include <gazebo/sensors/sensors.hh>
 
-
-#include <ros/ros.h>
-#include <thread>
-
+// CUSTOM INCLUDE
 #include "sar_msgs/Camera_Params.h"
 #include "sar_msgs/Inertia_Params.h"
 #include "sar_msgs/Hinge_Params.h"

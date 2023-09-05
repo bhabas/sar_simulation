@@ -1,124 +1,128 @@
-#include <iostream>
 #include <Motor_Plugin.h>
 
 
 namespace gazebo
 {
 
-    // This gets called when model is loaded and pulls values from sdf file
-    void GazeboMotorPlugin::Load(physics::ModelPtr parent, sdf::ElementPtr _sdf)
+    void Motor_Plugin::Load(physics::ModelPtr parent, sdf::ElementPtr _sdf)
     {
-        gzmsg << "Loading GazeboMotorPlugin\n";
-        model_ = parent;
-        world_ = model_->GetWorld();
+        gzmsg << "Loading Motor_Plugin\n";
+        Model_Ptr = parent;
+        World_Ptr = Model_Ptr->GetWorld();
+
+
+        // LOAD SAR_TYPE,SAR_CONFIG,AND CAM_CONFIG NAMES
+        ros::param::get("/SAR_SETTINGS/SAR_Type",SAR_Type);
+        ros::param::get("/SAR_SETTINGS/SAR_Config",SAR_Config);
+        ros::param::get("/CAM_SETTINGS/Cam_Config",Cam_Config);
+
+        // COLLECT MOTOR PARAMS FROM ROS
+        ros::param::get("/SAR_Type/"+SAR_Type+"/System_Params/Thrust_Coeff",Thrust_Coeff);
+        ros::param::get("/SAR_Type/"+SAR_Type+"/System_Params/Torque_Coeff",Torque_Coeff);
+        ros::param::get("/SAR_Type/"+SAR_Type+"/System_Params/C_tf",C_tf);
+        ros::param::get("/SAR_Type/"+SAR_Type+"/System_Params/Tau_up",Tau_up);
+        ros::param::get("/SAR_Type/"+SAR_Type+"/System_Params/Tau_down",Tau_down);
 
 
 
-        // GRAB ROTOR JOINT FROM SDF
-        jointName = _sdf->GetElement("jointName")->Get<std::string>();
-        gzmsg << "\t Joint Name:\t" << jointName << std::endl;
-        joint_ptr = model_->GetJoint(jointName);
-        if (joint_ptr == NULL)
-            gzerr << "[gazebo_motor_model] Couldn't find specified joint \"" << jointName << std::endl;
-
-
+        // GRAB MOTOR JOINT FROM SDF
+        Motor_Joint_Name = _sdf->GetElement("Joint_Name")->Get<std::string>();
+        gzmsg << "\t Joint Name:\t" << Motor_Joint_Name << std::endl;
+        Joint_Ptr = Model_Ptr->GetJoint(Motor_Joint_Name);
+        if (Joint_Ptr == NULL)
+            gzerr << "[gazebo_motor_model] Couldn't find specified joint \"" << Motor_Joint_Name << std::endl;
 
         // GRAB ROTOR LINK FROM SDF
-        linkName = _sdf->GetElement("linkName")->Get<std::string>();
-        gzmsg << "\t Link Name:\t" << linkName << std::endl;
-        link_ptr = model_->GetLink(linkName);
-        if (link_ptr == NULL)
-            gzerr << "[gazebo_motor_model] Couldn't find specified link \"" << linkName << std::endl;
-
+        Prop_Link_Name = _sdf->GetElement("Link_Name")->Get<std::string>();
+        gzmsg << "\t Link Name:\t" << Prop_Link_Name << std::endl;
+        Link_Ptr = Model_Ptr->GetLink(Prop_Link_Name);
+        if (Link_Ptr == NULL)
+            gzerr << "[gazebo_motor_model] Couldn't find specified link \"" << Prop_Link_Name << std::endl;
 
         
+        
         // COLLECT OTHER PARAMS FROM SDF
-        motor_number = _sdf->GetElement("motorNumber")->Get<int>();
-        thrust_coeff = _sdf->GetElement("rotorThrustCoeff")->Get<double>();
-        torque_coeff = _sdf->GetElement("rotorTorqueCoeff")->Get<double>();
-        rot_vel_visual_slowdown = _sdf->GetElement("rotorVisualSlowdown")->Get<double>();
-        timeConstantUp = _sdf->GetElement("timeConstantUp")->Get<double>();
-        timeConstantDown = _sdf->GetElement("timeConstantDown")->Get<double>();
+        Motor_Number = _sdf->GetElement("Motor_Number")->Get<int>();
+        Rot_Vel_Slowdown = _sdf->GetElement("Visual_Slowdown")->Get<double>();
+        
 
-        if (_sdf->GetElement("turningDirection")->Get<std::string>() == "ccw")
+        // COLLECT MOTOR TURNING DIRECTION
+        if (_sdf->GetElement("Turning_Direction")->Get<std::string>() == "ccw")
         {
-            turning_direction = 1;
+            Turn_Direction = 1;
         }
-        else if(_sdf->GetElement("turningDirection")->Get<std::string>() == "cw")
+        else if(_sdf->GetElement("Turning_Direction")->Get<std::string>() == "cw")
         {
-            turning_direction = -1;
+            Turn_Direction = -1;
         }
         else
         {
-            gzerr << "[gazebo_motor_model] Please only use 'cw' or 'ccw' as turningDirection" << std::endl;
+            gzerr << "[gazebo_motor_model] Please only use 'cw' or 'ccw' as Turning_Direction" << std::endl;
         }
 
-        prev_sim_time = world_->SimTime().Double();
+        Prev_Sim_time = World_Ptr->SimTime().Double();
 
-        // RUN FUNCTION EACH TIME SIMULATION UPDATES
-        updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&GazeboMotorPlugin::OnUpdate, this));
+        // // RUN FUNCTION EACH TIME SIMULATION UPDATES
+        updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&Motor_Plugin::OnUpdate, this));
 
         std::cout << "\n\n";
     }
 
-    void GazeboMotorPlugin::OnUpdate()
+    void Motor_Plugin::OnUpdate()
     {
-        sampling_time = world_->SimTime().Double() - prev_sim_time;
-        prev_sim_time = world_->SimTime().Double();
-
+        Sampling_time = World_Ptr->SimTime().Double() - Prev_Sim_time;
+        Prev_Sim_time = World_Ptr->SimTime().Double();
         UpdateForcesAndMoments();
 
-   
-        
         // SET VISUAL VELOCTIY OF ROTOR
-        rot_vel = sqrt(thrust/thrust_coeff);
-        joint_ptr->SetVelocity(0,turning_direction * rot_vel / rot_vel_visual_slowdown);
+        Rot_Vel = sqrt(Thrust/Thrust_Coeff);
+        Joint_Ptr->SetVelocity(0,Turn_Direction * Rot_Vel / Rot_Vel_Slowdown);
     }
 
-    void GazeboMotorPlugin::UpdateForcesAndMoments()
+    void Motor_Plugin::UpdateForcesAndMoments()
     {
         // UPDATE THRUST VIA FIRST ORDER FILTER (INSTANTANEOUS THRUSTS ARE NOT POSSIBLE)
-        if (MotorThrust_input >= prev_thrust)
+        if (Thrust_input >= Prev_Thrust)
         {
             // x(k) = alpha*x(k-1) + (1-alpha)*u(k)
-            double alpha_up = exp(-sampling_time/timeConstantUp);
-            thrust = alpha_up*prev_thrust + (1-alpha_up)*MotorThrust_input;
+            double alpha_up = exp(-Sampling_time/Tau_up);
+            Thrust = alpha_up*Prev_Thrust + (1-alpha_up)*Thrust_input;
         }
-        else // MotorThrust_input < prev_thrust
+        else // Thrust_input < prev_thrust
         {
-            double alpha_down = exp(-sampling_time/timeConstantDown);
-            thrust = alpha_down*prev_thrust + (1-alpha_down)*MotorThrust_input;
+            // x(k) = alpha*x(k-1) + (1-alpha)*u(k)
+            double alpha_down = exp(-Sampling_time/Tau_down);
+            Thrust = alpha_down*Prev_Thrust + (1-alpha_down)*Thrust_input;
         }
         
         
         // APPLY ROTOR THRUST TO LINK
-        link_ptr->AddRelativeForce(ignition::math::Vector3d(0, 0, (thrust*g2Newton)));
+        Link_Ptr->AddRelativeForce(ignition::math::Vector3d(0, 0, (Thrust*g2Newton)));
 
         // APPLY ROTOR TORQUE TO MAIN BODY
-        torque = torque_coeff*(thrust*g2Newton);
-        ignition::math::Vector3d torque_vec(0, 0, -turning_direction * torque); // Torque is opposite direction of rotation
+        Torque = Torque_Coeff*(Thrust*g2Newton);
+        ignition::math::Vector3d Torque_Vec(0, 0, -Turn_Direction * Torque); // Torque is opposite direction of rotation
 
-        physics::Link_V parent_links = link_ptr->GetParentJointsLinks(); // Get <vector> of parent links
-        ignition::math::Pose3d pose_difference = link_ptr->WorldCoGPose() - parent_links.at(0)->WorldCoGPose(); // Find rotor pos relative to body
-        ignition::math::Vector3d torque_parent_frame = pose_difference.Rot().RotateVector(torque_vec); // Rotate torque vector to match body orientation
-        parent_links.at(0)->AddRelativeTorque(torque_parent_frame); // Apply torque vector to body
+        physics::Link_V Parent_Links = Link_Ptr->GetParentJointsLinks(); // Get <vector> of parent links
+        ignition::math::Pose3d Pose_Difference = Link_Ptr->WorldCoGPose() - Parent_Links.at(0)->WorldCoGPose(); // Find rotor pos relative to body
+        ignition::math::Vector3d Torque_Parent_Frame = Pose_Difference.Rot().RotateVector(Torque_Vec); // Rotate Torque vector to match body orientation
+        Parent_Links.at(0)->AddRelativeTorque(Torque_Parent_Frame); // Apply Torque vector to body
     
 
-        prev_thrust = thrust;
+        Prev_Thrust = Thrust;
 
-        Thrust_msg.Motor_Number = motor_number;
-        Thrust_msg.MotorThrust = MotorThrust_input;
-        Thrust_msg.MotorThrust_actual = thrust;
+        Thrust_msg.Motor_Number = Motor_Number;
+        Thrust_msg.MotorThrust = Thrust_input;
+        Thrust_msg.MotorThrust_actual = Thrust;
         MS_Data_Pub.publish(Thrust_msg);
 
     }
 
 
-    void GazeboMotorPlugin::CtrlData_Callback(const sar_msgs::CTRL_Data::ConstPtr &msg)
+    void Motor_Plugin::CtrlData_Callback(const sar_msgs::CTRL_Data::ConstPtr &msg)
     {
-        MotorThrust_input = msg->MotorThrusts[motor_number-1];
-        
+        Thrust_input = msg->MotorThrusts[Motor_Number-1];
     }
 
-    GZ_REGISTER_MODEL_PLUGIN(GazeboMotorPlugin);
+    GZ_REGISTER_MODEL_PLUGIN(Motor_Plugin);
 }

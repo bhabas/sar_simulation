@@ -688,42 +688,38 @@
     </joint>
 
     <plugin name='Motor_1_Plugin' filename='libMotor_Plugin.so'>
-      <motorNumber>1</motorNumber>
-      <jointName>Rotor_1_joint</jointName>
-      <linkName>Rotor_1</linkName>
-      <turningDirection>ccw</turningDirection>
-      <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
-      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
-      <timeConstantUp>0.05</timeConstantUp>
-      <timeConstantDown>0.15</timeConstantDown>
-      <rotorVisualSlowdown>100</rotorVisualSlowdown>
+      <Motor_Number>1</Motor_Number>
+      <Joint_Name>Rotor_1_joint</Joint_Name>
+      <Link_Name>Rotor_1</Link_Name>
+      <Turning_Direction>ccw</Turning_Direction>
+      <Visual_Slowdown>100</Visual_Slowdown>
     </plugin>
 
     <plugin name='Motor_2_Plugin' filename='libMotor_Plugin.so'>
-      <motorNumber>2</motorNumber>
-      <jointName>Rotor_2_joint</jointName>
-      <linkName>Rotor_2</linkName>
-      <turningDirection>cw</turningDirection>
-      <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
-      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
-      <timeConstantUp>0.05</timeConstantUp>
-      <timeConstantDown>0.15</timeConstantDown>
-      <rotorVisualSlowdown>100</rotorVisualSlowdown>
+      <Motor_Number>2</Motor_Number>
+      <Joint_Name>Rotor_2_joint</Joint_Name>
+      <Link_Name>Rotor_2</Link_Name>
+      <Turning_Direction>cw</Turning_Direction>
+      <Visual_Slowdown>100</Visual_Slowdown>
     </plugin>
 
     <plugin name='Motor_3_Plugin' filename='libMotor_Plugin.so'>
-      <motorNumber>3</motorNumber>
-      <jointName>Rotor_3_joint</jointName>
-      <linkName>Rotor_3</linkName>
-      <turningDirection>ccw</turningDirection>
-      <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
-      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
-      <timeConstantUp>0.05</timeConstantUp>
-      <timeConstantDown>0.15</timeConstantDown>
-      <rotorVisualSlowdown>100</rotorVisualSlowdown>
+      <Motor_Number>3</Motor_Number>
+      <Joint_Name>Rotor_3_joint</Joint_Name>
+      <Link_Name>Rotor_3</Link_Name>
+      <Turning_Direction>ccw</Turning_Direction>
+      <Visual_Slowdown>100</Visual_Slowdown>
     </plugin>
 
     <plugin name='Motor_4_Plugin' filename='libMotor_Plugin.so'>
+      <Motor_Number>4</Motor_Number>
+      <Joint_Name>Rotor_4_joint</Joint_Name>
+      <Link_Name>Rotor_4</Link_Name>
+      <Turning_Direction>cw</Turning_Direction>
+      <Visual_Slowdown>100</Visual_Slowdown>
+    </plugin>
+
+    <!-- <plugin name='Motor_4_Plugin' filename='libMotor_Plugin.so'>
       <motorNumber>4</motorNumber>
       <jointName>Rotor_4_joint</jointName>
       <linkName>Rotor_4</linkName>
@@ -733,7 +729,7 @@
       <timeConstantUp>0.05</timeConstantUp>
       <timeConstantDown>0.15</timeConstantDown>
       <rotorVisualSlowdown>100</rotorVisualSlowdown>
-    </plugin>
+    </plugin> -->
 
     <joint name='Camera_Joint' type='fixed'>
       <parent>SAR_Body</parent>
