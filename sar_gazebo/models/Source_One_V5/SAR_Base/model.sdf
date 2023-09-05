@@ -4,14 +4,14 @@
     <link name='SAR_Body'>
       <pose>0 0 -32.0e-3 0 0 0</pose>
       <inertial>
-        <mass>200.0e-3</mass>
+        <mass>590.0e-3</mass>
         <inertia>
-          <ixx>761.9e-6</ixx>
+          <ixx>1.83e-3</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>970.1e-6</iyy>
+          <iyy>1.986e-3</iyy>
           <iyz>0</iyz>
-          <izz>1696.1e-6</izz>
+          <izz>2.87e-3</izz>
         </inertia>
         <pose>0 0 32.0e-3 0 0 0</pose>
       </inertial>
@@ -421,7 +421,7 @@
       <linkName>Prop_1</linkName>
       <turningDirection>ccw</turningDirection>
       <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
-      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
+      <rotorTorqueCoeff>0.02</rotorTorqueCoeff>
       <timeConstantUp>0.05</timeConstantUp>
       <timeConstantDown>0.15</timeConstantDown>
       <rotorVisualSlowdown>100</rotorVisualSlowdown>
@@ -433,7 +433,7 @@
       <linkName>Prop_2</linkName>
       <turningDirection>cw</turningDirection>
       <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
-      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
+      <rotorTorqueCoeff>0.02</rotorTorqueCoeff>
       <timeConstantUp>0.05</timeConstantUp>
       <timeConstantDown>0.15</timeConstantDown>
       <rotorVisualSlowdown>100</rotorVisualSlowdown>
@@ -445,7 +445,7 @@
       <linkName>Prop_3</linkName>
       <turningDirection>ccw</turningDirection>
       <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
-      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
+      <rotorTorqueCoeff>0.02</rotorTorqueCoeff>
       <timeConstantUp>0.05</timeConstantUp>
       <timeConstantDown>0.15</timeConstantDown>
       <rotorVisualSlowdown>100</rotorVisualSlowdown>
@@ -457,16 +457,16 @@
       <linkName>Prop_4</linkName>
       <turningDirection>cw</turningDirection>
       <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
-      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
+      <rotorTorqueCoeff>0.02</rotorTorqueCoeff>
       <timeConstantUp>0.05</timeConstantUp>
       <timeConstantDown>0.15</timeConstantDown>
       <rotorVisualSlowdown>100</rotorVisualSlowdown>
     </plugin>
 
 
-    <!-- <plugin name='SAR_Update_Plugin' filename='libSAR_Update_Plugin.so'>
+    <plugin name='SAR_Update_Plugin' filename='libSAR_Update_Plugin.so'>
       <CameraJointName>Camera_Joint</CameraJointName>
-    </plugin> -->
+    </plugin>
 
 
     <plugin name='Vicon_plugin' filename='libgazebo_ros_p3d.so'>

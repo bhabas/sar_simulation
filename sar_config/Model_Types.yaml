@@ -26,8 +26,14 @@ SAR_Type:
       i_range_R_z: 0.5
 
     System_Params:
-      C_tf: 0.00618 # [N*m/N]
-      f_max: 15.0 # [g]
+
+      C_thrust: 2.2e-8  # [N/rad/s]
+      C_torque: 0.02    # [N*m/rad/s]
+      Tau_up: 0.05      # Motor Time Constant (Up) [s]
+      Tau_down: 0.15    # Motor Time Constant (Down) [s]
+
+      C_tf: 0.00618     # Thrust_Torque Coefficient [N*m/N]
+      f_max: 15.0       # Max thrust [g]
       Prop_Front: [32.5e-3, 32.5e-3]  # [x,y] absolute distances [m]
       Prop_Rear:  [32.5e-3, 32.5e-3]  # [x,y] absolute distances [m]
 
@@ -104,8 +110,14 @@ SAR_Type:
         i_range_R_z: 0.5
 
       System_Params:
-        C_tf: 0.02
-        f_max: 442
+
+        C_thrust: 2.2e-8  # [N/rad/s]
+        C_torque: 0.02    # [N*m/rad/s]
+        Tau_up: 0.05      # Motor Time Constant (Up) [s]
+        Tau_down: 0.15    # Motor Time Constant (Down) [s]
+        C_tf: 0.02        # Thrust_Torque Coefficient [N*m/N]
+        f_max: 450        # Max thrust [g]
+
         Prop_Front: [72.64e-3, 86.56e-3]  # [x,y] absolute distances [m]
         Prop_Rear:  [72.64e-3, 86.56e-3]  # [x,y] absolute distances [m]
       
@@ -113,15 +125,15 @@ SAR_Type:
 
         Base_Model:      
           Mass: 590.0e-3        # [kg]
-          Ixx: 27.93e-6         # [kg*m^2]
-          Iyy: 30.46e-6         # [kg*m^2]
-          Izz: 47.12e-6         # [kg*m^2] 
+          Ixx: 1.83e-3          # [kg*m^2]
+          Iyy: 1.986e-3         # [kg*m^2]
+          Izz: 2.87e-3          # [kg*m^2] 
 
         A20_L150_K08: 
           Mass: 590.0e-3        # [kg]
-          Ixx: 27.93e-6         # [kg*m^2]
-          Iyy: 30.46e-6         # [kg*m^2]
-          Izz: 47.12e-6         # [kg*m^2] 
+          Ixx: 1.83e-3          # [kg*m^2]
+          Iyy: 1.99e-3          # [kg*m^2]
+          Izz: 2.87e-3          # [kg*m^2]
 
           Leg_Angle: 20         # Leg Angle [deg]
           Leg_Length: 150.0e-3  # Leg Length [m]

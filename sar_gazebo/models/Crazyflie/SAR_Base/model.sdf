@@ -741,9 +741,9 @@
     </joint>
     
 
-    <!-- <plugin name='SAR_Update_Plugin' filename='libSAR_Update_Plugin.so'>
+    <plugin name='SAR_Update_Plugin' filename='libSAR_Update_Plugin.so'>
       <CameraJointName>Camera_Joint</CameraJointName>
-    </plugin> -->
+    </plugin>
 
 
     <plugin name='Vicon_plugin' filename='libgazebo_ros_p3d.so'>
