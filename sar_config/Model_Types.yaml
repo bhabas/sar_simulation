@@ -27,13 +27,13 @@ SAR_Type:
 
     System_Params:
 
-      C_thrust: 2.2e-8  # [N/rad/s]
-      C_torque: 0.02    # [N*m/rad/s]
-      Tau_up: 0.05      # Motor Time Constant (Up) [s]
-      Tau_down: 0.15    # Motor Time Constant (Down) [s]
+      Thrust_Coeff: 2.2e-8  # Thrust Coeff [N/(rad/s)]
+      Torque_Coeff: 0.00618    # Torque Coeff [N*m/(rad/s)]
+      C_tf: 0.00618            # Torque-Thrust Coeff [N*m/N]
+      Tau_up: 0.05          # Motor Time Constant (Up) [s]
+      Tau_down: 0.15        # Motor Time Constant (Down) [s]
+      f_max: 15.0           # Max thrust [g]
 
-      C_tf: 0.00618     # Thrust_Torque Coefficient [N*m/N]
-      f_max: 15.0       # Max thrust [g]
       Prop_Front: [32.5e-3, 32.5e-3]  # [x,y] absolute distances [m]
       Prop_Rear:  [32.5e-3, 32.5e-3]  # [x,y] absolute distances [m]
 

@@ -423,7 +423,6 @@
       <Visual_Slowdown>100</Visual_Slowdown>
     </plugin>
 
-
     <plugin name='Motor_2_Plugin' filename='libMotor_Plugin.so'>
       <Motor_Number>2</Motor_Number>
       <Joint_Name>Prop_2_Joint</Joint_Name>

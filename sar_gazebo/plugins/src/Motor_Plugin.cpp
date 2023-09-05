@@ -62,10 +62,10 @@ namespace gazebo
 
         Prev_Sim_time = World_Ptr->SimTime().Double();
 
-        // // RUN FUNCTION EACH TIME SIMULATION UPDATES
+        // // // RUN FUNCTION EACH TIME SIMULATION UPDATES
         updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&Motor_Plugin::OnUpdate, this));
 
-        std::cout << "\n\n";
+        // std::cout << "\n\n";
     }
 
     void Motor_Plugin::OnUpdate()
