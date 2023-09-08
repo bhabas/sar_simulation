@@ -4,7 +4,7 @@ ENV_SETTINGS:
   Ground_Name: "GroundPlane_Desert_Physical"
 
 SAR_SETTINGS:
-  SAR_Type: "Crazyflie"
+  SAR_Type: "Source_One_V5"
   SAR_Config: "Base_Model"
 
   Policy_Type: "PARAM_OPTIM"
@@ -32,7 +32,7 @@ GROUND_SETTINGS:
 SIM_SETTINGS:
   GUI_Flag: True
   Pause_Flag: True
-  Sim_Speed: 0.1
+  Sim_Speed: 1.0
   Sim_Slowdown_Speed: 0.2
   Landing_Slowdown_Flag: True
 

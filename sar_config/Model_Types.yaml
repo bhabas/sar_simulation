@@ -86,27 +86,27 @@ SAR_Type:
   Source_One_V5:
       CtrlGains:
         ## POSITION XY
-        P_kp_xy: 0.4
-        P_kd_xy: 0.35
-        P_ki_xy: 0.07
-        i_range_xy: 0.3 
+        P_kp_xy: 2.0
+        P_kd_xy: 1.5
+        P_ki_xy: 0.0
+        i_range_xy: 0.5
 
         ## POSITION Z
-        P_kp_z: 1.20
-        P_kd_z: 0.35
-        P_ki_z: 0.1
-        i_range_z: 0.25
+        P_kp_z: 8.0
+        P_kd_z: 4.0
+        P_ki_z: 0.0
+        i_range_z: 0.5
 
         ## ORIENTATION XY
-        R_kp_xy: 0.004
-        R_kd_xy: 0.0017
+        R_kp_xy: 0.03
+        R_kd_xy: 0.009
         R_ki_xy: 0.0
         i_range_R_xy: 1.0
 
         ## ORIENTATION Z
-        R_kp_z: 0.003
-        R_kd_z: 0.001
-        R_ki_z: 0.0
+        R_kp_z: 0.04
+        R_kd_z: 0.018
+        R_ki_z: 0.01
         i_range_R_z: 0.5
 
       System_Params:
