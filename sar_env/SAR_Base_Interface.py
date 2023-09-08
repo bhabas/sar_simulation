@@ -187,6 +187,10 @@ class SAR_Base_Interface():
         x_0 = x_impact - x_vz - d_vz*Vx/Vz      # Account for shift up and shift left
 
         return x_0,z_0
+    
+    def updatePlanePos(self,Position=[0,0,2.0],Plane_Angle=180):
+        
+        self.SendCmd("GZ_Plane_Pose",Position,Plane_Angle)
 
     def _RL_Publish(self):
 

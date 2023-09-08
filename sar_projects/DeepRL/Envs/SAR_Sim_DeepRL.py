@@ -15,7 +15,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
     metadata = {"render_modes": ["human"]}
 
-    def __init__(self,GZ_Timeout=True,My_range=[-8.0,8.0],Vel_range=[1.5,3.5],Phi_rel_range=[0,90],Plane_Angle_range=None,Tau_0=0.4):
+    def __init__(self,GZ_Timeout=True,My_range=[-8.0,8.0],Vel_range=[1.5,3.5],Phi_rel_range=[0,90],Plane_Angle_range=[90,180],Tau_0=0.4):
         """
         Args:
             GZ_Timeout (bool, optional): Determines if Gazebo will restart if it freezed. Defaults to False.
@@ -49,7 +49,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.Done = False
 
         ## DEFINE OBSERVATION SPACE
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32)
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)
         self.obs_trg = np.zeros(self.observation_space.shape,dtype=np.float32) # Obs values at triggering
 
         ## DEFINE ACTION SPACE
@@ -102,10 +102,13 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.eventCaptureFlag_flip = False      # Ensures flip data recorded only once
         self.eventCaptureFlag_impact = False    # Ensures impact data recorded only once 
 
+        ## SET PLANE POSE
+        Plane_Angle_Low = self.Plane_Angle_range[0]
+        Plane_Angle_High = self.Plane_Angle_range[1]
+        self.updatePlanePos([2,0,2],np.random.uniform(Plane_Angle_Low,Plane_Angle_High))
 
         ## RESET POSITION RELATIVE TO LANDING SURFACE (BASED ON STARTING TAU VALUE)
         # (Derivation: Research_Notes_Book_3.pdf (6/22/23))
-
         r_PO = np.array(self.Plane_Pos)         # Plane Position w/r to origin
         n_hat,t_x,t_y = self._calc_PlaneNormal() # Plane normal vector
 
@@ -346,8 +349,10 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         Theta_x = np.clip(V_tx/D_perp,-20,20)
         Theta_y = np.clip(V_ty/D_perp,-20,20)
         Tau = np.clip(D_perp/V_perp,0.0,5.0)
+        
+        Plane_Angle = self.Plane_Angle
 
-        return np.array([Tau,Theta_x,D_perp],dtype=np.float32)
+        return np.array([Tau,Theta_x,D_perp,Plane_Angle],dtype=np.float32)
 
     def _sample_flight_conditions(self):
         """This function samples the flight velocity and angle from the supplied range.
@@ -386,9 +391,9 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
     def _calc_PlaneNormal(self):
 
         ## PRE-INIT ARRAYS
-        t_x =   np.array([1,0,0])
-        t_y =   np.array([0,1,0])
-        n_hat = np.array([0,0,1])
+        t_x =   np.array([1,0,0],dtype=np.float64)
+        t_y =   np.array([0,1,0],dtype=np.float64)
+        n_hat = np.array([0,0,1],dtype=np.float64)
 
         ## UPDATE LANDING SURFACE PARAMETERS
         n_hat[0] = np.sin(self.Plane_Angle_rad)
@@ -455,7 +460,7 @@ if __name__ == "__main__":
     for ep in range(20):
 
         Vel = 2.5
-        Phi = 40
+        Phi = 45
         # env._sample_flight_conditions()
 
         obs,_ = env.reset(Vel=Vel,Phi=Phi)
