@@ -4,15 +4,15 @@ ENV_SETTINGS:
   Ground_Name: "GroundPlane_Desert_Physical"
 
 SAR_SETTINGS:
-  SAR_Type: "Crazyflie"
-  SAR_Config: "A20_L75_K08"
+  SAR_Type: "Source_One_V5"
+  SAR_Config: "Base_Model"
 
   Policy_Type: "PARAM_OPTIM"
   # Policy_Type: "DEEP_RL_SB3" 
   # Policy_Type: "DEEP_RL_ONBOARD" 
 
 CAM_SETTINGS:
-  Cam_Config: "AI_Deck"
+  Cam_Config: "None"
   Cam_Active: False
 
 PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
@@ -31,8 +31,8 @@ GROUND_SETTINGS:
 
 SIM_SETTINGS:
   GUI_Flag: True
-  Pause_Flag: False
-  Sim_Speed: 0.8
+  Pause_Flag: True
+  Sim_Speed: 1.0
   Sim_Slowdown_Speed: 0.2
   Landing_Slowdown_Flag: True
 

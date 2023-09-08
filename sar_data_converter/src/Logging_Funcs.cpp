@@ -93,7 +93,7 @@ void SAR_DataConverter::create_CSV()
     fprintf(fPtr,"\n");
 
 
-    fprintf(fPtr,"## DATA_TYPE: %s, ",DATA_TYPE.c_str());
+    fprintf(fPtr,"# DATA_TYPE: %s, ",DATA_TYPE.c_str());
     fprintf(fPtr,"SAR_SETTINGS: {Policy_Type: %s, SAR_Type: %s, SAR_Config: %s}, ",POLICY_TYPE.c_str(),SAR_Type.c_str(),SAR_Config.c_str());
     fprintf(fPtr,"PLANE_SETTINGS: {Plane_Config: %s}, ",Plane_Config.c_str());
     fprintf(fPtr,"\n");

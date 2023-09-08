@@ -1,9 +1,9 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='Camera_Model'>
+  <model name='Base_Model'>
 
     <include>
-      <uri>model://Base_Model</uri>
+      <uri>model://SAR_Base</uri>
     </include>
 
     <static>0</static>
