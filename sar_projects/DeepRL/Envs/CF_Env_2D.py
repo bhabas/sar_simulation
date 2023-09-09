@@ -32,7 +32,7 @@ class CF_Env_2D(gym.Env):
 
         ## RESET INITIAL VALUES
         self.K_ep = 0
-        self.Flip_threshold = 0.5
+        self.Trg_threshold = 0.5
         self.D_min = np.inf
         self.Tau_trg = np.inf
         self.Flip_Flag = False
@@ -219,7 +219,7 @@ class CF_Env_2D(gym.Env):
             self.render()
 
         ########## PRE-FLIP TRIGGER ##########
-        if action[0] < self.Flip_threshold:
+        if action[0] < self.Trg_threshold:
 
             ## GRAB CURRENT OBSERVATION
             obs = self._get_obs()
@@ -256,7 +256,7 @@ class CF_Env_2D(gym.Env):
             obs = self._get_obs()
                 
         ########## POST-FLIP TRIGGER ##########
-        elif action[0] > self.Flip_threshold:
+        elif action[0] > self.Trg_threshold:
 
             ## GRAB CURRENT OBSERVATION
             obs = self._get_obs()   # Return this observation because reward and future 

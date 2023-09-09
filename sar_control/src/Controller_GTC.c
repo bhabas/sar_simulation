@@ -204,7 +204,39 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                     
                         M_d.x = 0.0f;
-                        M_d.y = -Policy_Rot_Action*1e-3f;
+                        M_d.y = Policy_Rot_Action*1e-3f;
+                        M_d.z = 0.0f;
+
+                        F_thrust_flip = 0.0;
+                        M_x_flip = M_d.x*1e3f;
+                        M_y_flip = M_d.y*1e3f;
+                        M_z_flip = M_d.z*1e3f;
+                        }
+                        
+                    break;
+
+                case DEEP_RL_SB3:
+
+                    // EXECUTE POLICY IF TRIGGERED
+                    if(Tau <= Policy_Trg_Action && onceFlag == false && V_perp > 0.1f){
+
+                        onceFlag = true;
+
+                        // UPDATE AND RECORD FLIP VALUES
+                        flip_flag = true;  
+                        statePos_trg = statePos;
+                        stateVel_trg = stateVel;
+                        stateQuat_trg = stateQuat;
+                        stateOmega_trg = stateOmega;
+
+                        Tau_trg = Tau;
+                        Theta_x_trg = Theta_x_trg;
+                        Theta_y_trg = Theta_y_trg;
+                        D_perp_trg = D_perp;
+
+                    
+                        M_d.x = 0.0f;
+                        M_d.y = Policy_Rot_Action*1e-3f;
                         M_d.z = 0.0f;
 
                         F_thrust_flip = 0.0;
@@ -246,7 +278,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                     
                         M_d.x = 0.0f;
-                        M_d.y = -Policy_Rot_Action*1e-3f;
+                        M_d.y = Policy_Rot_Action*1e-3f;
                         M_d.z = 0.0f;
 
                         F_thrust_flip = 0.0;
@@ -255,10 +287,6 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         M_z_flip = M_d.z*1e3f;
                         }
                         
-                    break;
-
-                case DEEP_RL_SB3:
-
                     break;
                     
             default:

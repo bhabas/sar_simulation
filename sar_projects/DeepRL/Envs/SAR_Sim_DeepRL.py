@@ -43,7 +43,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         ## RESET INITIAL VALUES
         self.K_ep = 0
-        self.Flip_threshold = 0.5
+        self.Trg_threshold = 0.5
         self.D_min = np.inf
         self.Tau_trg = np.inf
         self.Done = False
@@ -205,7 +205,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
     def step(self, action):
 
         ########## PRE-FLIP TRIGGER ##########
-        if action[0] < self.Flip_threshold:
+        if action[0] < self.Trg_threshold:
 
             ## GRAB CURRENT OBSERVATION
             obs = self._get_obs()
@@ -236,7 +236,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             obs = self._get_obs()
 
         ########## POST-FLIP TRIGGER ##########
-        elif action[0] >= self.Flip_threshold:
+        elif action[0] >= self.Trg_threshold:
 
             ## GRAB CURRENT OBSERVATION
             obs = self._get_obs()   # Return this observation because reward and future 
@@ -290,8 +290,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         scaled_action = 0.5 * (action[1] + 1) * (self.My_range[1] - self.My_range[0]) + self.My_range[0]
 
         ## SEND FLIP ACTION TO CONTROLLER
-        My = -scaled_action # Body rotational moment [N*mm]
-        self.SendCmd("Policy",[0,My,0],cmd_flag=1)
+        self.SendCmd("Policy",[0.8,scaled_action,0],cmd_flag=1) # Body rotational moment [N*mm]
 
         ## RUN REMAINING STEPS AT FULL SPEED
         self.pause_physics(False)
@@ -455,7 +454,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
 if __name__ == "__main__":
 
-    env = SAR_Sim_DeepRL(GZ_Timeout=False,Vel_range=[1.0,3.0],Phi_rel_range=[0,180])
+    env = SAR_Sim_DeepRL(GZ_Timeout=False,My_range=[-8.0,0],Vel_range=[1.0,3.0],Phi_rel_range=[0,180])
 
     for ep in range(20):
 
@@ -472,4 +471,5 @@ if __name__ == "__main__":
             obs,reward,terminated,truncated,_ = env.step(action)
             Done = terminated or truncated
 
-        print(f"Episode: {ep} \t Reward: {reward:.3f}")
+        print(f"Episode: {ep} \t Reward: {reward:.3f} \t Reward_vec: ",end='')
+        print(' '.join(f"{val:.2f}" for val in env.reward_vals))
