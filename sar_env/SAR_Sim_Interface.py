@@ -251,36 +251,46 @@ class SAR_Sim_Interface(SAR_Base_Interface):
         ## KILL ALL POTENTIAL NODE/SUBPROCESSES
         os.system("killall -9 gzserver gzclient")
         os.system("rosnode kill /gazebo /gazebo_gui")
-        time.sleep(2.0)
+        time.sleep(1.0)
         os.system("rosnode kill /SAR_Controller_Node")
-        time.sleep(2.0)
+        time.sleep(1.0)
         os.system("rosnode kill /SAR_DataConverter_Node")
-        time.sleep(2.0)
+        time.sleep(1.0)
 
         ## LAUNCH GAZEBO
         self.launch_GZ_Sim()
-        self.wait_for_gazebo_launch(timeout=10)
+        self.wait_for_node(node_name="gazebo",timeout=10,interval=1)
 
+        if rospy.get_param(f"/SIM_SETTINGS/GUI_Flag") == True:
+            self.wait_for_node(node_name="gazebo_gui",timeout=5,interval=0.25)
+
+        ## LAUNCH CONTROLLER
         self.launch_controller()
+        self.wait_for_node(node_name="SAR_Controller_Node",timeout=5,interval=0.25)
+
+        ## LAUNCH SAR_DC
         self.launch_SAR_DC()
+        self.wait_for_node(node_name="SAR_DataConverter_Node",timeout=5,interval=0.25)
 
         self.Clock_Check_Flag.set()
-
-    def wait_for_gazebo_launch(self,timeout=None):
+    
+    def wait_for_node(self,node_name,timeout=None,interval=1.0):
 
         start_time = time.time()
 
-        while not self.ping_subprocesses("/gazebo/get_loggers",silence_errors=True):
+        while not self.ping_subprocesses(f"/{node_name}/get_loggers",silence_errors=True):
 
             if timeout is not None and time.time() - start_time > timeout:
-                print("Timeout reached while waiting for Gazebo to launch.")
+                print(f"Timeout reached while waiting for {node_name} to launch.")
                 return False
         
-            print("Waiting for Gazebo to fully launch...")
-            time.sleep(1)
+            print(f"Waiting for {node_name} to fully launch...")
+            time.sleep(interval)
 
-        print("Gazebo has fully launched.")
+        print(f"{node_name} has fully launched.")
         return True
+    
+
 
 
 
