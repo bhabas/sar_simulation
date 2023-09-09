@@ -244,7 +244,7 @@
       </visual>
 
 
-      <collision name='body_collision'>
+      <collision name='Prop_Collision'>
         <max_contacts>1</max_contacts>
         <pose>0 0 0.01 0 0 0</pose>
         <geometry>
@@ -252,29 +252,9 @@
             <size>0.12 0.12 0.01</size>
           </box>
         </geometry>
-        <surface>
-          <friction>
-            <ode>
-              <mu>1</mu>
-              <mu2>1</mu2>
-            </ode>
-          </friction>
-          <bounce>
-            <restitution_coefficient>0</restitution_coefficient>
-          </bounce>
-          <contact>
-            <ode>
-              <soft_cfm>0</soft_cfm>
-              <soft_erp>0.8</soft_erp>
-            </ode>
-            <bullet>
-              <soft_cfm>0</soft_cfm>
-              <soft_erp>0.8</soft_erp>
-            </bullet>
-          </contact>
-        </surface>
       </collision>
-      <collision name='base_collision'>
+      
+      <collision name='Base_Collision'>
         <max_contacts>1</max_contacts>
         <pose>0 0 -0.005 0 0 0</pose>
         <geometry>
@@ -282,27 +262,6 @@
             <size>0.075 0.075 0.005</size>
           </box>
         </geometry>
-        <surface>
-          <friction>
-            <ode>
-              <mu>1</mu>
-              <mu2>1</mu2>
-            </ode>
-          </friction>
-          <bounce>
-            <restitution_coefficient>0</restitution_coefficient>
-          </bounce>
-          <contact>
-            <ode>
-              <soft_cfm>0</soft_cfm>
-              <soft_erp>0.2</soft_erp>
-            </ode>
-            <bullet>
-              <soft_cfm>0</soft_cfm>
-              <soft_erp>0.2</soft_erp>
-            </bullet>
-          </contact>
-        </surface>
       </collision>
     </link>
 

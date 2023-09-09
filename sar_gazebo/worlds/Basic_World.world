@@ -5,7 +5,7 @@
     <!-- Default camera pose -->
     <gui>
       <camera name="user_camera">
-        <pose frame=''>1.4 -5 1.9 0 0.12 1.57</pose>
+        <pose frame=''>0.5 -2.9 1.8 0.0 0.14 1.57</pose>
       </camera>
     </gui>
 

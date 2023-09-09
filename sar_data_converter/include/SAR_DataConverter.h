@@ -358,7 +358,6 @@ class SAR_DataConverter {
         bool impact_flag = false;
         bool BodyContact_flag = false;
         bool OnceFlag_impact = false;
-        std::string BodyCollision_str;  // String of Body Name
 
 
         ros::Time Time_impact;

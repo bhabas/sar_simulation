@@ -68,6 +68,7 @@ void SAR_DataConverter::Surface_Contact_Callback(const gazebo_msgs::ContactsStat
     for (int i = 0; i < msg.states.size(); i++)
     {
         // IF CONTACT MSG MATCHES BODY COLLISION STR THEN TURN ON BODY_CONTACT_FLAG
+        std::string BodyCollision_str = SAR_Config + "::SAR_Base::SAR_Body::Prop_Collision"; 
         if (BodyContact_flag == false && strcmp(msg.states[i].collision1_name.c_str(), BodyCollision_str.c_str()) == 0)
         {
             BodyContact_flag = true;

@@ -101,7 +101,7 @@
         </material>
       </visual>
 
-      <collision name='body_collision'>
+      <collision name='Prop_Collision'>
         <pose>0 0 32.0e-3 0 0 0</pose>
         <geometry>
           <box>
@@ -110,7 +110,7 @@
         </geometry>
       </collision>
 
-      <collision name='base_collision'>
+      <collision name='Base_Collision'>
         <pose>0 0 12.5e-3 0 0 0</pose>
         <geometry>
           <box>
