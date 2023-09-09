@@ -65,7 +65,7 @@ void SAR_DataConverter::create_CSV()
     // POLICY DATA
     fprintf(fPtr,"k_ep,k_run,");
     fprintf(fPtr,"t,");
-    fprintf(fPtr,"Policy_Trg_Action,Policy_Flip_Action,");
+    fprintf(fPtr,"Policy_Trg_Action,Policy_Rot_Action,");
     fprintf(fPtr,"mu,sigma,policy,");
 
 
@@ -107,7 +107,7 @@ void SAR_DataConverter::append_CSV_states()
     // POLICY DATA
     fprintf(fPtr,"%u,%u,",k_ep,k_run);                          // k_ep,k_run
     fprintf(fPtr,"%.3f,",(Time-Time_start).toSec());            // t
-    fprintf(fPtr,"%.3f,%.3f,",Policy_Trg_Action,Policy_Flip_Action);       // Policy_Trg_Action,Policy_Flip_Action
+    fprintf(fPtr,"%.3f,%.3f,",Policy_Trg_Action,Policy_Rot_Action);       // Policy_Trg_Action,Policy_Rot_Action
     fprintf(fPtr,"--,--,--,");                                  // mu,sigma,policy
 
 
@@ -180,7 +180,7 @@ void SAR_DataConverter::append_CSV_flip()
 {
     fprintf(fPtr,"%u,%u,",k_ep,k_run);                          // k_ep,k_run
     fprintf(fPtr,"%.3f,",(Time_trg-Time_start).toSec());         // t
-    fprintf(fPtr,"%.3f,%.3f,",Policy_Trg_Action_trg,Policy_Flip_Action_trg); // Policy_Trg_Action,Policy_Flip_Action
+    fprintf(fPtr,"%.3f,%.3f,",Policy_Trg_Action_trg,Policy_Rot_Action_trg); // Policy_Trg_Action,Policy_Rot_Action
     fprintf(fPtr,"--,--,--,");                                  // mu,sigma,policy
 
     // // INTERNAL STATE ESTIMATES (CF)
@@ -215,7 +215,7 @@ void SAR_DataConverter::append_CSV_impact()
     // POLICY DATA
     fprintf(fPtr,"%u,%u,",k_ep,k_run);                      // k_ep,k_run
     fprintf(fPtr,"%.3f,",(Time_impact-Time_start).toSec()); // t
-    fprintf(fPtr,"--,--,");                                 // Policy_Trg_Action,Policy_Flip_Action
+    fprintf(fPtr,"--,--,");                                 // Policy_Trg_Action,Policy_Rot_Action
     fprintf(fPtr,"--,--,--,");                              // mu,sigma,policy
 
 

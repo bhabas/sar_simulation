@@ -108,7 +108,7 @@ void controllerOutOfTreeReset() {
     D_perp_trg = 0.0f;
 
     Policy_Trg_Action_trg = 0.0f;
-    Policy_Flip_Action_trg = 0.0f;
+    Policy_Rot_Action_trg = 0.0f;
 
 
     updatePlaneNormal(Plane_Angle);
@@ -204,7 +204,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                     
                         M_d.x = 0.0f;
-                        M_d.y = -Policy_Flip_Action*1e-3f;
+                        M_d.y = -Policy_Rot_Action*1e-3f;
                         M_d.z = 0.0f;
 
                         F_thrust_flip = 0.0;
@@ -229,8 +229,8 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         onceFlag = true;
 
                         // SAMPLE AND SCALE BODY FLIP ACTION
-                        Policy_Flip_Action = GaussianSample(Y_output->data[1][0],exp(Y_output->data[3][0]));
-                        Policy_Flip_Action = scale_tanhAction(Policy_Flip_Action,ACTION_MIN,ACTION_MAX);
+                        Policy_Rot_Action = GaussianSample(Y_output->data[1][0],exp(Y_output->data[3][0]));
+                        Policy_Rot_Action = scale_tanhAction(Policy_Rot_Action,ACTION_MIN,ACTION_MAX);
 
                         // UPDATE AND RECORD FLIP VALUES
                         flip_flag = true;  
@@ -246,7 +246,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                     
                         M_d.x = 0.0f;
-                        M_d.y = -Policy_Flip_Action*1e-3f;
+                        M_d.y = -Policy_Rot_Action*1e-3f;
                         M_d.z = 0.0f;
 
                         F_thrust_flip = 0.0;

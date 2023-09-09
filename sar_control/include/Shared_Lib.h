@@ -223,7 +223,7 @@ extern bool onceFlag;
 
 // POLICY TRIGGER/ACTION VALUES
 extern float Policy_Trg_Action;  
-extern float Policy_Flip_Action;
+extern float Policy_Rot_Action;
 
 extern float ACTION_MIN;
 extern float ACTION_MAX;
@@ -268,7 +268,7 @@ extern float M_z_flip;              // [N*m]
 
 // POLICY TRIGGER/ACTION VALUES
 extern float Policy_Trg_Action_trg;    
-extern float Policy_Flip_Action_trg;
+extern float Policy_Rot_Action_trg;
 
 // =================================
 //    LANDING SURFACE PARAMETERS

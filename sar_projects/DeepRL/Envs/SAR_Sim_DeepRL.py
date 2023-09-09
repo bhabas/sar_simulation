@@ -103,9 +103,9 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.eventCaptureFlag_impact = False    # Ensures impact data recorded only once 
 
         ## SET PLANE POSE
-        Plane_Angle_Low = self.Plane_Angle_range[0]
-        Plane_Angle_High = self.Plane_Angle_range[1]
-        self.updatePlanePos([2,0,2],np.random.uniform(Plane_Angle_Low,Plane_Angle_High))
+        # Plane_Angle_Low = self.Plane_Angle_range[0]
+        # Plane_Angle_High = self.Plane_Angle_range[1]
+        # self.updatePlanePos([2,0,2],np.random.uniform(Plane_Angle_Low,Plane_Angle_High))
 
         ## RESET POSITION RELATIVE TO LANDING SURFACE (BASED ON STARTING TAU VALUE)
         # (Derivation: Research_Notes_Book_3.pdf (6/22/23))
@@ -350,7 +350,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         Theta_y = np.clip(V_ty/D_perp,-20,20)
         Tau = np.clip(D_perp/V_perp,0.0,5.0)
         
-        Plane_Angle = self.Plane_Angle
+        Plane_Angle = self.Plane_Angle/180.0
 
         return np.array([Tau,Theta_x,D_perp,Plane_Angle],dtype=np.float32)
 

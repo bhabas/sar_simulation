@@ -12,7 +12,7 @@ float64[4] MotorThrusts
 uint32[4] MS_PWM
 
 float64 Policy_Trg_Action
-float64 Policy_Flip_Action
+float64 Policy_Rot_Action
 
 ## PLANE RELATIVE STATES
 float64 D_perp
@@ -44,6 +44,6 @@ float64 D_perp_trg
 float64[4] FM_flip
 
 float64 Policy_Trg_Action_trg
-float64 Policy_Flip_Action_trg
+float64 Policy_Rot_Action_trg
 
 

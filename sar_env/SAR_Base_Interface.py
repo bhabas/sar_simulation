@@ -268,7 +268,7 @@ class SAR_Base_Interface():
         self.FM = [0,0,0,0]             # Controller Force/Moments (F_thrust,Mx,My,Mz) [N,N*mm]
         
         self.Policy_Trg_Action = 0.0
-        self.Policy_Flip_Action = 0.0
+        self.Policy_Rot_Action = 0.0
         
         self.x_d = [0,0,0]
         self.v_d = [0,0,0]
@@ -292,7 +292,7 @@ class SAR_Base_Interface():
         self.FM_trg = [0,0,0,0]      # [N,N*mm]
 
         self.Policy_Trg_Action_trg = 0.0
-        self.Policy_Flip_Action_trg = 0.0 # [N*mm]
+        self.Policy_Rot_Action_trg = 0.0 # [N*mm]
 
         self.vel_trg_mag = 0.0       # [m/s]
         self.phi_trg = 0.0           # [deg]
@@ -480,7 +480,7 @@ class SAR_Base_Interface():
 
             ## POLICY ACTIONS
             self.Policy_Trg_Action_trg = TriggerData_msg.Policy_Trg_Action_trg
-            self.Policy_Flip_Action_trg = TriggerData_msg.Policy_Flip_Action_trg
+            self.Policy_Rot_Action_trg = TriggerData_msg.Policy_Rot_Action_trg
 
 
     def SAR_ImpactDataCallback(self,ImpactData_msg):

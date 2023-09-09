@@ -70,7 +70,7 @@ void SAR_DataConverter::Publish_StateData()
 
     // NEURAL NETWORK DATA
     StateData_msg.Policy_Trg_Action = Policy_Trg_Action;
-    StateData_msg.Policy_Flip_Action = Policy_Flip_Action;
+    StateData_msg.Policy_Rot_Action = Policy_Rot_Action;
 
 
     // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE CONTROLLER
@@ -104,7 +104,7 @@ void SAR_DataConverter::Publish_TriggerData()
 
     // NEURAL NETWORK DATA
     TriggerData_msg.Policy_Trg_Action_trg = Policy_Trg_Action_trg;
-    TriggerData_msg.Policy_Flip_Action_trg = Policy_Flip_Action_trg;
+    TriggerData_msg.Policy_Rot_Action_trg = Policy_Rot_Action_trg;
 
 
     // PUBLISH STATE DATA RECEIVED FROM CRAZYFLIE CONTROLLER

@@ -47,7 +47,7 @@ void compressStates(){
     States_Z.Tau_est = (int16_t)(Tau_est * 1000.0f); 
 
     // COMPRESS POLICY ACTIONS
-    States_Z.Policy_Actions = compressXY(Policy_Trg_Action,Policy_Flip_Action);
+    States_Z.Policy_Actions = compressXY(Policy_Trg_Action,Policy_Rot_Action);
 }
 
 void compressTrgStates(){
@@ -80,7 +80,7 @@ void compressTrgStates(){
     TrgStates_Z.Tau_est = (int16_t)(Tau_est_trg * 1000.0f); 
 
     // COMPRESS POLICY ACTIONS
-    TrgStates_Z.Policy_Actions = compressXY(Policy_Trg_Action_trg,Policy_Flip_Action_trg);
+    TrgStates_Z.Policy_Actions = compressXY(Policy_Trg_Action_trg,Policy_Rot_Action_trg);
 
 }
 

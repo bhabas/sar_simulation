@@ -185,34 +185,6 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
         return self.reward
 
-    def CalcReward(self):
-
-        ## DISTANCE REWARD 
-        R1 = np.clip(1/np.abs(self.D_min+1e-3),0,10)/10
-        R1 *= 0.1
-
-        ## IMPACT ANGLE REWARD
-        R2 = np.clip(np.abs(self.eul_impact[1])/90,0,1)
-        R2 *= 0.3
-
-        ## PAD CONTACT REWARD
-        if self.pad_connections >= 3: 
-            if self.BodyContact_flag == False:
-                R3 = 0.6
-            else:
-                R3 = 0.3
-        elif self.pad_connections == 2: 
-            if self.BodyContact_flag == False:
-                R3 = 0.2
-            else:
-                R3 = 0.1
-        else:
-            R3 = 0.0
-
-        self.reward_vals = [R1,R2,R3,0,0]
-
-        return R1 + R2 + R3
-
 
 
 if __name__ == "__main__":

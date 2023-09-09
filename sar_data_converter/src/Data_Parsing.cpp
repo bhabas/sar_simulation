@@ -56,7 +56,7 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
     // NEURAL NETWORK DATA
     Policy_Trg_Action = ctrl_msg.Policy_Trg_Action;
-    Policy_Flip_Action = ctrl_msg.Policy_Flip_Action;
+    Policy_Rot_Action = ctrl_msg.Policy_Rot_Action;
 
     Pose_impact_buff.push_back(Pose);
     Twist_impact_buff.push_back(Twist);
@@ -110,7 +110,7 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
     // NEURAL NETWORK DATA
     Policy_Trg_Action_trg = ctrl_msg.Policy_Trg_Action_trg;
-    Policy_Flip_Action_trg = ctrl_msg.Policy_Flip_Action_trg;
+    Policy_Rot_Action_trg = ctrl_msg.Policy_Rot_Action_trg;
 
 }
 
@@ -220,7 +220,7 @@ void SAR_DataConverter::cf1_PolicyState_Callback(const sar_msgs::GenericLogData:
     float Policy_Action_arr[2];
     decompressXY(log_msg->values[5],Policy_Action_arr);
     Policy_Trg_Action = Policy_Action_arr[0];
-    Policy_Flip_Action = Policy_Action_arr[1];
+    Policy_Rot_Action = Policy_Action_arr[1];
 
     // FLIP FLAG
     flip_flag = log_msg->values[6];
@@ -335,7 +335,7 @@ void SAR_DataConverter::cf1_TrgState_Callback(const sar_msgs::GenericLogData::Co
     float Policy_Action_arr[2];
     decompressXY(log_msg->values[8],Policy_Action_arr);
     Policy_Trg_Action_trg = Policy_Action_arr[0];
-    Policy_Flip_Action_trg = Policy_Action_arr[1];
+    Policy_Rot_Action_trg = Policy_Action_arr[1];
     
     
 }
