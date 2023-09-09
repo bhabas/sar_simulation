@@ -609,15 +609,15 @@ if __name__ == '__main__':
 
 
     # START TRAINING NEW DEEP RL MODEL 
-    env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[3.0,4.0],Phi_rel_range=[60,90],Plane_Angle_range=[135,180])
-    log_name = f"{env.SAR_Config}--Deg_{env.Plane_Angle}--SAC_{current_time}" 
+    # env = SAR_Sim_DeepRL(GZ_Timeout=True,My_range=[-8.0,-7.0],Vel_range=[3.0,4.0],Phi_rel_range=[60,90])
+    # log_name = f"{env.SAR_Config}--Deg_{env.Plane_Angle}--SAC_{current_time}" 
+    # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
+
+
+    env = CF_Env_2D(Vel_range=[2.0,4.0],Phi_rel_range=[0,90])
+    # env.RENDER = True
+    log_name = "Testing_Log1"
     log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
-
-
-    # # env = CF_Env_2D(Vel_range=[2.0,4.0],Phi_rel_range=[0,90])
-    # # # env.RENDER = True
-    # # log_name = "Testing_Log"
-    # # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
 
 
 
