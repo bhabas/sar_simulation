@@ -1,0 +1,38 @@
+PLANE_SETTINGS:
+  Plane_Config: Checkerboard_L02
+  Plane_Angle: 180.0
+  Plane_Pos:
+    X: 0.0
+    Y: 0.0
+    Z: 2.0
+SAR_SETTINGS:
+  SAR_Type: Crazyflie
+  SAR_Config: A20_L75_K08
+ENV_SETTINGS:
+  Environment: SAR_Sim_DeepRL_Env
+  Vel_Limts:
+  - 2.0
+  - 3.0
+  Phi_Limits:
+  - 0
+  - 90
+LEARNING_MODEL:
+  Policy: SACPolicy
+  Observation_Layer: 4
+  Network_Layers:
+    pi:
+    - 8
+    - 8
+    qf:
+    - 256
+    - 256
+  Action_Layer: 4
+  Action_Space_High:
+  - 1.0
+  - 1.0
+  Action_Space_Low:
+  - -1.0
+  - -1.0
+  Gamma: 0.999
+  Learning_Rate: 0.002
+  Activation_Function: ''

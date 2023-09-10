@@ -13,9 +13,7 @@ from sar_env import SAR_Sim_Interface
 
 class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
-    metadata = {"render_modes": ["human"]}
-
-    def __init__(self,GZ_Timeout=True,My_range=[-8.0,8.0],Vel_range=[1.5,3.5],Phi_rel_range=[0,90],Plane_Angle_range=None,Tau_0=0.4):
+    def __init__(self,GZ_Timeout=True,My_range=[-8.0,8.0],Vel_range=[1.5,3.5],Phi_rel_range=[0,90],Plane_Angle_range=[180,180],Tau_0=0.4):
         """
         Args:
             GZ_Timeout (bool, optional): Determines if Gazebo will restart if it freezed. Defaults to False.
@@ -71,6 +69,11 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.pause_physics(False)
         self.SendCmd('GZ_StickyPads',cmd_flag=0)
 
+        ## SET PLANE POSE
+        Plane_Angle_Low = self.Plane_Angle_range[0]
+        Plane_Angle_High = self.Plane_Angle_range[1]
+        self.updatePlanePos([2,0,2],np.random.uniform(Plane_Angle_Low,Plane_Angle_High))
+
         self.SendCmd('Tumble',cmd_flag=0)
         self.SendCmd('Ctrl_Reset')
         self.reset_pos()
@@ -102,10 +105,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.eventCaptureFlag_flip = False      # Ensures flip data recorded only once
         self.eventCaptureFlag_impact = False    # Ensures impact data recorded only once 
 
-        ## SET PLANE POSE
-        # Plane_Angle_Low = self.Plane_Angle_range[0]
-        # Plane_Angle_High = self.Plane_Angle_range[1]
-        # self.updatePlanePos([2,0,2],np.random.uniform(Plane_Angle_Low,Plane_Angle_High))
+        
 
         ## RESET POSITION RELATIVE TO LANDING SURFACE (BASED ON STARTING TAU VALUE)
         # (Derivation: Research_Notes_Book_3.pdf (6/22/23))
@@ -454,15 +454,15 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
 if __name__ == "__main__":
 
-    env = SAR_Sim_DeepRL(GZ_Timeout=False,My_range=[-8.0,0],Vel_range=[1.0,3.0],Phi_rel_range=[0,180])
+    env = SAR_Sim_DeepRL(GZ_Timeout=False,My_range=[-8.0,8.0],Vel_range=[3.0,3.0],Phi_rel_range=[45,45],Plane_Angle_range=[90,180])
 
     for ep in range(20):
 
-        Vel = 2.5
-        Phi = 45
+        # Vel = 3.0
+        # Phi = 60
         # env._sample_flight_conditions()
 
-        obs,_ = env.reset(Vel=Vel,Phi=Phi)
+        obs,_ = env.reset(Vel=None,Phi=None)
 
         Done = False
         while not Done:
