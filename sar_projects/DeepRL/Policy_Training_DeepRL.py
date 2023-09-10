@@ -146,7 +146,7 @@ class Policy_Trainer_DeepRL():
         ) 
 
         if self.env.Env_Name != "CF_Env_2D":
-            self.save_config_file()
+            self.write_config_file()
 
         return self.model
     
@@ -206,19 +206,14 @@ class Policy_Trainer_DeepRL():
             reset_num_timesteps=reset_timesteps,
         )
 
-    def save_config_file(self):
+    def write_config_file(self):
 
         config_path = os.path.join(self.TB_log_path,"Config.yaml")
 
         data = dict(
             PLANE_SETTINGS = dict(
+                Plane_Type = self.env.Plane_Type,
                 Plane_Config = self.env.Plane_Config,
-                Plane_Angle = self.env.Plane_Angle,
-                Plane_Pos = dict(
-                    X = self.env.Plane_Pos[0],
-                    Y = self.env.Plane_Pos[1],
-                    Z = self.env.Plane_Pos[2]
-                ),
             ),
 
             SAR_SETTINGS = dict(
@@ -226,10 +221,16 @@ class Policy_Trainer_DeepRL():
                 SAR_Config = self.env.SAR_Config,
             ),
 
+            CAM_SETTINGS = dict(
+                Cam_Config = self.env.Cam_Config,
+                Cam_Active = self.env.Cam_Active,
+            ),
+
             ENV_SETTINGS = dict(
-                Environment = self.env.Env_Name,
+                Env_Name = self.env.Env_Name,
                 Vel_Limts = self.env.Vel_range,
-                Phi_Limits = self.env.Phi_rel_range,
+                Phi_Rel_Limits = self.env.Phi_rel_range,
+                Plane_Angle_Limits = self.env.Plane_Angle_range,
             ),
 
             LEARNING_MODEL = dict(

@@ -31,6 +31,14 @@ class SAR_Base_Interface():
         self.SAR_Config = rospy.get_param('/SAR_SETTINGS/SAR_Config')
         self.preInit_Values()
 
+        ## PLANE PARAMETERS
+        self.Plane_Type = rospy.get_param('/PLANE_SETTINGS/Plane_Type')
+        self.Plane_Config = rospy.get_param('/PLANE_SETTINGS/Plane_Config')
+
+        ## CAM PARAMETERS
+        self.Cam_Config = rospy.get_param('/CAM_SETTINGS/Cam_Config')
+        self.Cam_Active = rospy.get_param('/CAM_SETTINGS/Cam_Active')
+
         self.pos_0 = [0.0, 0.0, 0.4]      # Default hover position [m]
         self.accCF_max = [1.0, 1.0, 3.1]    # Max acceleration values for trajectory generation [m/s^2]
 
