@@ -72,18 +72,18 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## SET PLANE POSE
         Plane_Angle_Low = self.Plane_Angle_range[0]
         Plane_Angle_High = self.Plane_Angle_range[1]
-        self.updatePlanePos([2,2,2],np.random.uniform(Plane_Angle_Low,Plane_Angle_High))
+        self.setPlanePose([2,2,2],np.random.uniform(Plane_Angle_Low,Plane_Angle_High))
 
         ## UPDATE INERTIA VALUES (DOMAIN RANDOMIZATION)
         self.Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Iyy") + np.random.normal(0,self.Iyy_std)
-        self.mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Mass") + np.random.normal(0,self.Mass_std)
-        # self.updateInertia()
+        self.Mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Mass") + np.random.normal(0,self.Mass_std)
+        # self.setModelInertia(Mass=self.Mass,Inertia=[self.Ixx,self.Iyy,self.Izz])
 
         ## RESET ROBOT STATE
         self.SendCmd('Tumble',cmd_flag=0)
         self.SendCmd('Ctrl_Reset')
         self.reset_pos()
-        self.sleep(0.01)
+        self.sleep(0.1)
 
         self.SendCmd('Tumble',cmd_flag=1)
         self.SendCmd('Ctrl_Reset')
@@ -115,7 +115,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## RESET POSITION RELATIVE TO LANDING SURFACE (BASED ON STARTING TAU VALUE)
         # (Derivation: Research_Notes_Book_3.pdf (6/22/23))
         r_PO = np.array(self.Plane_Pos)         # Plane Position w/r to origin
-        n_hat,t_x,t_y = self._calc_PlaneNormal() # Plane normal vector
+        n_hat,t_x,t_y = self._calc_PlaneNormal(self.Plane_Angle) # Plane normal vector
 
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
         if Vel == None or Phi == None:
@@ -125,7 +125,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             Vel = Vel   # Flight velocity
             Phi = Phi   # Flight angle  
 
-        ## CALCULATE GLOABAL VEL VECTORS
+        ## CALCULATE GLOBAL VEL VECTORS
         V_x = Vel*np.cos(np.deg2rad(Phi))
         V_y = 0
         V_z = Vel*np.sin(np.deg2rad(Phi))
@@ -330,7 +330,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         pos = resp.pose.position
         vel = resp.twist.linear
-        n_hat,t_x,t_y = self._calc_PlaneNormal()
+        n_hat,t_x,t_y = self._calc_PlaneNormal(self.Plane_Angle)
 
         ## UPDATE POS AND VEL
         r_BO = np.array([pos.x,pos.y,pos.z])
@@ -402,7 +402,9 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         
         return Vel,Phi_global
 
-    def _calc_PlaneNormal(self):
+    def _calc_PlaneNormal(self,Plane_Angle):
+
+        Plane_Angle_rad = np.deg2rad(Plane_Angle)
 
         ## PRE-INIT ARRAYS
         t_x =   np.array([1,0,0],dtype=np.float64)
@@ -410,14 +412,14 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         n_hat = np.array([0,0,1],dtype=np.float64)
 
         ## UPDATE LANDING SURFACE PARAMETERS
-        n_hat[0] = np.sin(self.Plane_Angle_rad)
+        n_hat[0] = np.sin(Plane_Angle_rad)
         n_hat[1] = 0
-        n_hat[2] = -np.cos(self.Plane_Angle_rad)
+        n_hat[2] = -np.cos(Plane_Angle_rad)
 
         ## DEFINE PLANE TANGENT UNIT-VECTOR
-        t_x[0] = -np.cos(self.Plane_Angle_rad)
+        t_x[0] = -np.cos(Plane_Angle_rad)
         t_x[1] = 0
-        t_x[2] = -np.sin(self.Plane_Angle_rad)
+        t_x[2] = -np.sin(Plane_Angle_rad)
 
         ## DEFINE PLANE TANGENT UNIT-VECTOR
         t_y[0] = 0
@@ -469,7 +471,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
 if __name__ == "__main__":
 
-    env = SAR_Sim_DeepRL(GZ_Timeout=False,My_range=[-8.0,8.0],Vel_range=[3.0,3.0],Phi_rel_range=[45,45],Plane_Angle_range=[135,135])
+    env = SAR_Sim_DeepRL(GZ_Timeout=False,My_range=[-8.0,8.0],Vel_range=[3.0,3.0],Phi_rel_range=[45,45],Plane_Angle_range=[180,180])
 
     for ep in range(20):
 

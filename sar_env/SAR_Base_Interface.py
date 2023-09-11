@@ -196,7 +196,7 @@ class SAR_Base_Interface():
 
         return x_0,z_0
     
-    def updatePlanePos(self,Position=[0,0,2.0],Plane_Angle=180):
+    def setPlanePose(self,Position=[0,0,2.0],Plane_Angle=180):
         
         self.SendCmd("GZ_Plane_Pose",Position,Plane_Angle)
 
@@ -245,7 +245,7 @@ class SAR_Base_Interface():
 
     def preInit_Values(self):
 
-        self.mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Mass")
+        self.Mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Mass")
         self.Ixx = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ixx")
         self.Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Iyy")
         self.Izz = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Izz")

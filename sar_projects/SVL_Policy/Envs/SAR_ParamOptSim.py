@@ -45,8 +45,8 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
         # ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
         # self.Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Iyy") + np.random.normal(0,1.5e-6)
-        # self.mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Mass") + np.random.normal(0,0.0005)
-        # self.updateInertia()
+        # self.Mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Mass") + np.random.normal(0,0.0005)
+        # self.setModelInertia()
 
         
 

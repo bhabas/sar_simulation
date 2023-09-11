@@ -151,7 +151,7 @@ def runTraining(env,agent,V_d,phi,logName,K_ep_max=15):
             # ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
             # env.Iyy = rospy.get_param(f"/SAR_Type/{env.SAR_Type}/Config/{env.SAR_Config}/Iyy") + np.random.normal(0,1.5e-6)
             # env.mass = rospy.get_param(f"/SAR_Type/{env.SAR_Type}/Config/{env.SAR_Config}/Mass") + np.random.normal(0,0.0005)
-            # env.updateInertia()
+            # env.setModelInertia()
 
             env.ParamOptim_reset()
             env.startLogging(logName)

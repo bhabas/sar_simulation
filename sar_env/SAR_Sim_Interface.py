@@ -171,14 +171,14 @@ class SAR_Sim_Interface(SAR_Base_Interface):
 
         self.callService('/gazebo/set_model_state',state_srv,SetModelState)
 
-    def updateInertia(self):
+    def setModelInertia(self,Mass,Inertia):
 
         ## CREATE SERVICE REQUEST MSG
         srv = Inertia_ParamsRequest() 
-        srv.mass = self.mass
-        srv.Inertia.x = self.Ixx
-        srv.Inertia.y = self.Iyy
-        srv.Inertia.z = self.Izz
+        srv.Mass = Mass
+        srv.Inertia.x = Inertia[0]
+        srv.Inertia.y = Inertia[1]
+        srv.Inertia.z = Inertia[2]
 
         ## SEND LOGGING REQUEST VIA SERVICE
         self.callService('/SAR_Internal/Inertia_Params',srv,Inertia_Params)
