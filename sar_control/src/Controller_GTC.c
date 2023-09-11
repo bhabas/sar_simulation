@@ -186,7 +186,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                 case PARAM_OPTIM:
 
                     // EXECUTE POLICY IF TRIGGERED
-                    if(Tau <= Policy_Trg_Action && onceFlag == false && V_perp > 0.1f){
+                    if(Tau <= Policy_Trg_Action && onceFlag == false && Vel_rel > 0.5f){
 
                         onceFlag = true;
 
@@ -218,7 +218,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                 case DEEP_RL_SB3:
 
                     // EXECUTE POLICY IF TRIGGERED
-                    if(Tau <= Policy_Trg_Action && onceFlag == false && V_perp > 0.1f){
+                    if(Tau <= Policy_Trg_Action && onceFlag == false && Vel_rel > 0.5f){
 
                         onceFlag = true;
 

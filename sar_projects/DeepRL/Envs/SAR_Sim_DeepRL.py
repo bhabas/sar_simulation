@@ -56,7 +56,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
         self.action_trg = np.zeros(self.action_space.shape,dtype=np.float32) # Action values at triggering
 
-    def reset(self, seed=None, options=None, Vel=None, Phi_rel=None):
+    def reset(self, seed=None, options=None, V_mag=None, Phi_rel=None):
         """Resets the full pose and twist state of the robot and starts flight with specificed flight conditions.
 
         Args:
@@ -74,7 +74,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## SET PLANE POSE
         Plane_Angle_Low = self.Plane_Angle_range[0]
         Plane_Angle_High = self.Plane_Angle_range[1]
-        self.setPlanePose([2,2,2],np.random.uniform(Plane_Angle_Low,Plane_Angle_High))
+        self.setPlanePose([0,1.5,2],np.random.uniform(Plane_Angle_Low,Plane_Angle_High))
 
         ## UPDATE INERTIA VALUES (DOMAIN RANDOMIZATION)
         self.Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Iyy") + np.random.normal(0,self.Iyy_std)
@@ -120,16 +120,16 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         n_hat,t_x,t_y = self._calc_PlaneNormal(self.Plane_Angle)    # Plane direction vectors
 
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
-        if Vel == None or Phi_rel == None:
-            Vel,Phi_rel = self._sample_flight_conditions()
+        if V_mag == None or Phi_rel == None:
+            V_mag,Phi_rel = self._sample_flight_conditions()
 
         else:
-            Vel = Vel           # Flight velocity
+            V_mag = V_mag           # Flight velocity
             Phi_rel = Phi_rel   # Flight angle  
 
         ## RELATIVE VEL VECTORS
-        V_perp = Vel*np.sin(np.deg2rad(Phi_rel))
-        V_tx = Vel*np.cos(np.deg2rad(Phi_rel))
+        V_perp = V_mag*np.sin(np.deg2rad(Phi_rel))
+        V_tx = V_mag*np.cos(np.deg2rad(Phi_rel))
         V_ty = 0
         V_BP = np.array([V_tx,V_ty,V_perp])
 
@@ -141,56 +141,26 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         V_hat = V_BO/np.linalg.norm(V_BO)   # Flight Velocity unit vector
 
 
-
-        
-        # ## CALC STARTING/VELOCITY LAUCH POSITION
-        # if V_hat.dot(n_hat) <= 0.09:    # If Velocity parallel (within 5 deg) to landing surface or wrong direction; flag episode to be done
-
-        #     ## MINIMUM DISTANCE TO START POLICY TRAINING
-        #     D_perp = 0.17  # Ensure a reasonable minimum perp distance [m]
-
-        #     ## CALC DISTANCE REQUIRED TO SETTLE ON DESIRED VELOCITY
-        #     t_settle = 1.5              # Time for system to settle
-        #     D_settle = t_settle*Vel     # Flight settling distance
-
-        #     ## INITIAL POSITION RELATIVE TO PLANE
-        #     r_BP = (D_perp/(V_hat.dot(n_hat)+1e-6) + D_settle)*V_hat
-
-        #     ## INITIAL POSITION IN GLOBAL COORDS
-        #     r_BO = r_PO - r_BP 
-
-        #     ## LAUNCH QUAD W/ DESIRED VELOCITY
-        #     self.Vel_Launch(r_BO,V_BO)
-        #     self.iter_step(t_settle*1e3)
-            
-        # elif V_hat.dot(n_hat) <= 0.35:  # Velocity near parallel (within 20 deg) to landing surface
-
-        #     ## ## MINIMUM DISTANCE TO START POLICY TRAINING
-        #     D_perp = 0.2  # Ensure a reasonable minimum perp distance [m]
-
-        #     ## CALC DISTANCE REQUIRED TO SETTLE ON DESIRED VELOCITY
-        #     t_settle = 1.5              # Time for system to settle
-        #     D_settle = t_settle*Vel     # Flight settling distance
-
-        #     ## INITIAL POSITION RELATIVE TO PLANE
-        #     r_BP = (D_perp/(V_hat.dot(n_hat)+1e-6) + D_settle)*V_hat
-
-        #     ## INITIAL POSITION IN GLOBAL COORDS
-        #     r_BO = r_PO - r_BP 
-
-        #     ## LAUNCH QUAD W/ DESIRED VELOCITY
-        #     self.Vel_Launch(r_BO,V_BO)
-        #     self.iter_step(t_settle*1e3)
-
-        # else: # Velocity NOT parallel to surface
-
         ## CALC STARTING DISTANCE WHERE POLICY IS MONITORED
-        D_perp = (self.Tau_0*V_perp)    # Initial perp distance
-        D_perp = max(D_perp,0.2)        # Ensure a reasonable minimum distance [m]
+        if ((Phi_rel <= 0) or (Phi_rel >= 180)):
+            D_perp = 0.1
+            self.Done = True
+
+        elif (0 < Phi_rel <= 5) or (160 <= Phi_rel < 180):
+            Tau_0 = 1.5
+            D_perp = max((Tau_0*V_perp),0.1) # Ensure a reasonable minimum perp distance [m]
+            
+        elif (5 < Phi_rel < 20) or (160 < Phi_rel < 175):
+            Tau_0 = self.Tau_0
+            D_perp = (self.Tau_0*V_perp) 
+        else:
+            Tau_0 = self.Tau_0
+            D_perp = (self.Tau_0*V_perp) 
+
 
         ## CALC DISTANCE REQUIRED TO SETTLE ON DESIRED VELOCITY
         t_settle = 1.5              # Time for system to settle on flight conditions
-        D_settle = t_settle*Vel     # Flight settling distance
+        D_settle = t_settle*V_mag     # Flight settling distance
 
         ## INITIAL POSITION RELATIVE TO PLANE
         r_BP = -(D_perp/(V_hat.dot(n_hat)+EPS) + D_settle)*V_hat
@@ -299,7 +269,8 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         scaled_action = 0.5 * (action[1] + 1) * (self.My_range[1] - self.My_range[0]) + self.My_range[0]
 
         ## SEND FLIP ACTION TO CONTROLLER
-        self.SendCmd("Policy",[0.8,scaled_action,0],cmd_flag=1) # Body rotational moment [N*mm]
+        Tau_max = 100 # Automatically trigger policy
+        self.SendCmd("Policy",[Tau_max,scaled_action,0],cmd_flag=1) # Body rotational moment [N*mm]
 
         ## RUN REMAINING STEPS AT FULL SPEED
         self.pause_physics(False)
@@ -379,32 +350,29 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         Poor performance on edge cases can cause poor learning convergence.
 
         Returns:
-            vel,phi: Sampled flight velocity and flight angle
+            V_mag,Phi_rel: Sampled flight velocity and flight angle
         """        
 
         ## SAMPLE VEL FROM UNIFORM DISTRIBUTION IN VELOCITY RANGE
         Vel_Low = self.Vel_range[0]
         Vel_High = self.Vel_range[1]
-        Vel = np.random.uniform(low=Vel_Low,high=Vel_High)
+        V_mag = np.random.uniform(low=Vel_Low,high=Vel_High)
 
         ## SAMPLE RELATIVE PHI FROM A WEIGHTED SET OF UNIFORM DISTRIBUTIONS
         Phi_rel_Low = self.Phi_rel_range[0]
         Phi_rel_High = self.Phi_rel_range[1]
         Phi_rel_Range = Phi_rel_High-Phi_rel_Low
 
-        Dist_Num = np.random.choice([0,1,2],p=[0.2,0.6,0.2]) # Probability of sampling distribution
+        Dist_Num = np.random.choice([0,1,2],p=[0.1,0.8,0.1]) # Probability of sampling distribution
 
         if Dist_Num == 0: # Low Range
-            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_Low, high=Phi_rel_Low + 0.2*Phi_rel_Range)
+            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_Low, high=Phi_rel_Low + 0.1*Phi_rel_Range)
         elif Dist_Num == 1: # Medium Range
-            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_Low + 0.2*Phi_rel_Range, high=Phi_rel_High - 0.2*Phi_rel_Range)
+            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_Low + 0.1*Phi_rel_Range, high=Phi_rel_High - 0.1*Phi_rel_Range)
         elif Dist_Num == 2: # High Range
-            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_High - 0.2*Phi_rel_Range, high=Phi_rel_High)
-
-        # ## CONVERT RELATIVE PHI TO GLOBAL PHI
-        # Phi_global = (self.Plane_Angle + Phi_rel) - 180 # (Derivation: Research_Notes_Book_3.pdf (7/5/23))
-        
-        return Vel,Phi_rel
+            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_High - 0.1*Phi_rel_Range, high=Phi_rel_High)
+       
+        return V_mag,Phi_rel
 
     def _calc_PlaneNormal(self,Plane_Angle):
 
@@ -475,20 +443,20 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
 if __name__ == "__main__":
 
-    env = SAR_Sim_DeepRL(GZ_Timeout=False,My_range=[-8.0,8.0],Vel_range=[3.0,3.0],Phi_rel_range=[45,135],Plane_Angle_range=[90,90])
+    env = SAR_Sim_DeepRL(GZ_Timeout=False,My_range=[-8.0,8.0],Vel_range=[3.0,3.0],Phi_rel_range=[45,135],Plane_Angle_range=[180,180])
 
     for ep in range(20):
 
-        # Vel = 3.0
-        # Phi = 60
-        # env._sample_flight_conditions()
+        V_mag = 1
+        Phi_rel = 179
 
-        obs,_ = env.reset(Vel=None,Phi_rel=None)
+        obs,_ = env.reset(V_mag=V_mag,Phi_rel=Phi_rel)
 
         Done = False
         while not Done:
 
             action = env.action_space.sample() # obs gets passed in here
+            action[0] = 0
             obs,reward,terminated,truncated,_ = env.step(action)
             Done = terminated or truncated
 
