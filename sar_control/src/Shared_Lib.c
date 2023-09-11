@@ -273,21 +273,24 @@ float Policy_Rot_Action_trg = 0.0f;
 
 // LANDING SURFACE PARAMETERS
 float Plane_Angle = 180.0f;
-struct vec t_x = {1.0f,0.0f,0.0f};      // Plane Unit Tangent Vector
-struct vec t_y = {0.0f,1.0f,0.0f};      // Plane Unit Tangent Vector
-struct vec n_hat = {0.0f,0.0f,1.0f};    // Plane Unit Normal Vector
+struct vec t_x = {1.0f,0.0f,0.0f};     // Plane Unit Tangent Vector
+struct vec t_y = {0.0f,1.0f,0.0f};     // Plane Unit Tangent Vector
+struct vec n_hat = {0.0f,0.0f,1.0f};   // Plane Unit Normal Vector
 
-struct vec r_PO = {0.0f,0.0f,2.0f};     // Plane Position Vector        [m]
-struct vec r_BO = {0.0f,0.0f,0.0f};     // Quad Position Vector         [m]
-struct vec r_CB = {0.0f,0.0f,0.0f};     // Camera Position Vector       [m]
-struct vec r_PB = {0.0f,0.0f,0.0f};     // Quad-Plane Distance Vector   [m]
-struct vec V_BO = {0.0f,0.0f,0.0f};     // Quad Velocity Vector         [m/s]
+struct vec r_PO = {0.0f,0.0f,2.0f};    // Plane Position Vector        [m]
+struct vec r_BO = {0.0f,0.0f,0.0f};    // Quad Position Vector         [m]
+struct vec r_CB = {0.0f,0.0f,0.0f};    // Camera Position Vector       [m]
+struct vec r_PB = {0.0f,0.0f,0.0f};    // Quad-Plane Distance Vector   [m]
+struct vec V_BO = {0.0f,0.0f,0.0f};    // Quad Velocity Vector         [m/s]
 
 // RELATIVE STATES
-float D_perp = 0.0f;                     // Distance perp to plane [m]
-float V_perp = 0.0f;                     // Velocity perp to plane [m/s]
-float V_tx = 0.0f;                       // Tangent_x velocity [m/s]
-float V_ty = 0.0f;                       // Tangent_y velocity [m/s]
+float D_perp = 0.0f;                    // Distance perp to plane [m]
+float V_perp = 0.0f;                    // Velocity perp to plane [m/s]
+float V_tx = 0.0f;                      // Tangent_x velocity [m/s]
+float V_ty = 0.0f;                      // Tangent_y velocity [m/s]
+
+float Vel_rel = 0.0f;                   // Velocity magnitude relative [m/s]
+float Phi_rel = 0.0f;                   // Velocity angle relative [deg]
 
 
 
@@ -786,6 +789,9 @@ bool updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors
     V_perp = vdot(V_BO,n_hat);
     V_tx = vdot(V_BO,t_x);
     V_ty = vdot(V_BO,t_y);
+
+    Vel_rel = vmag(mkvec(V_tx,V_ty,V_perp));
+    Phi_rel = atan2f(V_perp,V_tx)*Rad2Deg;
 
     if (fabsf(D_perp) < 0.02f)
     {

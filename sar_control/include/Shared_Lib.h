@@ -292,6 +292,8 @@ extern float V_perp;            // Velocity perp to plane [m/s]
 extern float V_tx;              // Tangent_x velocity [m/s]
 extern float V_ty;              // Tangent_y velocity [m/s]
 
+extern float Vel_rel;           // Velocity magnitude relative [m/s]
+extern float Phi_rel;           // Velocity angle relative [deg]
 
 
 // CTRL COMMAND PACKETS

@@ -33,51 +33,53 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
         mvprintw(14, 0,"Eul [deg]:\t % 8.3f  % 8.3f  % 8.3f",Eul.x,Eul.y,Eul.z);
         mvprintw(15, 0,"Vel [mag,phi]:\t % 8.3f  % 8.3f",Vel_mag,Phi);
 
-        mvprintw(17, 0,"==== Policy States ====");
+        mvprintw(17, 0,"==== Relative States ====");
         mvprintw(18, 0,"D_perp:  % 7.3f  V_perp:      % 7.3f  V_tx:        % 7.3f",D_perp,V_perp,V_tx);
         mvprintw(19, 0,"Tau:     % 7.3f  Theta_x:     % 7.3f  Theta_y:     % 7.3f",Tau,Theta_x,Theta_y);
         mvprintw(20, 0,"Tau_est: % 7.3f  Theta_x_est: % 7.3f  Theta_y_est: % 7.3f",Tau_est,Theta_x_est,Theta_y_est);
+        mvprintw(21, 0,"Vel_rel: % 7.3f  Phi_rel:     % 7.3f",Vel_rel,Phi_rel);
 
-        mvprintw(22, 0,"==== Policy: %s ====",POLICY_TYPE.c_str());
+
+        mvprintw(23, 0,"==== Policy: %s ====",POLICY_TYPE.c_str());
         if (strcmp(POLICY_TYPE.c_str(),"PARAM_OPTIM") == 0)
         {
-            mvprintw(23, 0,"Tau_thr: % 7.3f \tMy: % 7.3f",Policy_Trg_Action,Policy_Rot_Action);
+            mvprintw(24, 0,"Tau_thr: % 7.3f \tMy: % 7.3f",Policy_Trg_Action,Policy_Rot_Action);
         }
         else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL_SB3") == 0)
         {
-            mvprintw(23, 0,"Pol_Trg_Act_trg: % 7.3f \tPol_Rot_Act: % 7.3f ",Policy_Trg_Action,Policy_Rot_Action);
+            mvprintw(24, 0,"Pol_Trg_Act: % 7.3f \tPol_Rot_Act: % 7.3f ",Policy_Trg_Action,Policy_Rot_Action);
         }
         else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL_ONBOARD") == 0)
         {
-            mvprintw(23, 0,"Pol_Trg_Act_trg: % 7.3f \tPol_Rot_Act: % 7.3f ",Policy_Trg_Action,Policy_Rot_Action);
+            mvprintw(24, 0,"Pol_Trg_Act: % 7.3f \tPol_Rot_Act: % 7.3f ",Policy_Trg_Action,Policy_Rot_Action);
         }
 
-        mvprintw(25,0,"==== Flip Trigger Values ====");
-        mvprintw(26,0,"Tau_trg:     % 7.3f \tPol_Trg_Act_trg:  % 7.3f ",Tau_trg,Policy_Trg_Action_trg);
-        mvprintw(27,0,"\u03B8x_trg:     % 7.3f \tPol_Rot_Act_trg: % 7.3f ",Theta_x_trg,Policy_Rot_Action_trg);
-        mvprintw(28,0,"D_perp_trg:  % 7.3f ",D_perp_trg);
+        mvprintw(26,0,"==== Trigger Values ====");
+        mvprintw(27,0,"Tau_trg:     % 7.3f \tPol_Trg_Act_trg:  % 7.3f ",Tau_trg,Policy_Trg_Action_trg);
+        mvprintw(28,0,"\u03B8x_trg:     % 7.3f \tPol_Rot_Act_trg: % 7.3f ",Theta_x_trg,Policy_Rot_Action_trg);
+        mvprintw(29,0,"D_perp_trg:  % 7.3f ",D_perp_trg);
 
-        mvprintw(30,0,"==== Setpoints ====");
-        mvprintw(31,0,"x_d: % 7.3f  % 7.3f  % 7.3f",x_d.x,x_d.y,x_d.z);
-        mvprintw(32,0,"v_d: % 7.3f  % 7.3f  % 7.3f",v_d.x,v_d.y,v_d.z);
-        mvprintw(33,0,"a_d: % 7.3f  % 7.3f  % 7.3f",a_d.x,a_d.y,a_d.z);
+        mvprintw(31,0,"==== Setpoints ====");
+        mvprintw(32,0,"x_d: % 7.3f  % 7.3f  % 7.3f",x_d.x,x_d.y,x_d.z);
+        mvprintw(33,0,"v_d: % 7.3f  % 7.3f  % 7.3f",v_d.x,v_d.y,v_d.z);
+        mvprintw(34,0,"a_d: % 7.3f  % 7.3f  % 7.3f",a_d.x,a_d.y,a_d.z);
 
-        mvprintw(35,0,"==== Controller Actions ====");
-        mvprintw(36,0,"FM [N/N*mm]: % 7.3f  % 7.3f  % 7.3f  % 7.3f",FM[0],FM[1],FM[2],FM[3]);
-        mvprintw(37,0,"Motor Thrusts [g]: % 7.3f  % 7.3f  % 7.3f  % 7.3f",MotorThrusts[0],MotorThrusts[1],MotorThrusts[2],MotorThrusts[3]);
-        mvprintw(38,0,"MS_PWM: %u  %u  %u  %u",MS_PWM[0],MS_PWM[1],MS_PWM[2],MS_PWM[3]);
+        mvprintw(36,0,"==== Controller Actions ====");
+        mvprintw(37,0,"FM [N/N*mm]:       % 7.3f  % 7.3f  % 7.3f  % 7.3f",FM[0],FM[1],FM[2],FM[3]);
+        mvprintw(38,0,"Motor Thrusts [g]: % 7.3f  % 7.3f  % 7.3f  % 7.3f",MotorThrusts[0],MotorThrusts[1],MotorThrusts[2],MotorThrusts[3]);
+        mvprintw(39,0,"MS_PWM: %u  %u  %u  %u",MS_PWM[0],MS_PWM[1],MS_PWM[2],MS_PWM[3]);
 
 
-        mvprintw(40,0,"=== Controller Gains ====");
-        mvprintw(41,0,"Kp_P: % 7.3f  % 7.3f  % 7.3f ",P_kp_xy,P_kp_xy,P_kp_z);
-        mvprintw(41,37,"Kp_R: % 7.3f  % 7.3f  % 7.3f ",R_kp_xy,R_kp_xy,R_kp_z);
+        mvprintw(41,0,"=== Controller Gains ====");
+        mvprintw(42,0,"Kp_P: % 7.3f  % 7.3f  % 7.3f ",P_kp_xy,P_kp_xy,P_kp_z);
+        mvprintw(42,37,"Kp_R: % 7.3f  % 7.3f  % 7.3f ",R_kp_xy,R_kp_xy,R_kp_z);
 
-        mvprintw(42,0,"Kd_P: % 7.3f  % 7.3f  % 7.3f ",P_kd_xy,P_kd_xy,P_kd_z);
-        mvprintw(42,37,"Kd_R: % 7.3f  % 7.3f  % 7.3f ",R_kd_xy,R_kd_xy,R_kd_z);
+        mvprintw(43,0,"Kd_P: % 7.3f  % 7.3f  % 7.3f ",P_kd_xy,P_kd_xy,P_kd_z);
+        mvprintw(43,37,"Kd_R: % 7.3f  % 7.3f  % 7.3f ",R_kd_xy,R_kd_xy,R_kd_z);
 
-        mvprintw(43,0,"Ki_P: % 7.3f  % 7.3f  % 7.3f ",P_ki_xy,P_ki_xy,P_ki_z);
-        mvprintw(43,37,"Ki_R: % 7.3f  % 7.3f  % 7.3f ",R_ki_xy,R_ki_xy,R_ki_z);
-        mvprintw(44,0,"======\n");
+        mvprintw(44,0,"Ki_P: % 7.3f  % 7.3f  % 7.3f ",P_ki_xy,P_ki_xy,P_ki_z);
+        mvprintw(44,37,"Ki_R: % 7.3f  % 7.3f  % 7.3f ",R_ki_xy,R_ki_xy,R_ki_z);
+        mvprintw(45,0,"======\n");
 
 
         // Refresh the screen with the updated buffer

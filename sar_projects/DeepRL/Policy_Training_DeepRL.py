@@ -233,6 +233,12 @@ class Policy_Trainer_DeepRL():
                 Plane_Angle_Limits = self.env.Plane_Angle_range,
             ),
 
+            MODEL_SETTINGS = dict(
+                Mass_Std = self.env.Mass_std,
+                Iyy_Std = self.env.Iyy_std,
+                Mass = "?",
+            ),
+
             LEARNING_MODEL = dict(
                 Policy = self.model.policy.__class__.__name__,
                 Observation_Layer = self.model.policy.observation_space.shape[0],

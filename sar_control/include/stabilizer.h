@@ -293,6 +293,9 @@ void Controller::publishCtrlData()
     CtrlData_msg.V_tx = V_tx;
     CtrlData_msg.V_ty = V_ty;
 
+    CtrlData_msg.Vel_rel = Vel_rel;
+    CtrlData_msg.Phi_rel = Phi_rel;
+
     // OPTICAL FLOW DATA
     CtrlData_msg.Tau = Tau;
     CtrlData_msg.Theta_x = Theta_x;

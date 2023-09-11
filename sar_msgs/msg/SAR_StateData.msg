@@ -19,6 +19,8 @@ float64 V_perp
 float64 V_tx
 float64 V_ty
 
+float64 Vel_rel
+float64 Phi_rel
 
 float64[4] FM
 float64[4] MotorThrusts

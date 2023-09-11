@@ -65,15 +65,21 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             observation array: 
         """        
 
-        ## RESET ROBOT STATE
+        ## DETACH ROBOT AND UNPAUSE PHYSICS
         self.pause_physics(False)
         self.SendCmd('GZ_StickyPads',cmd_flag=0)
 
         ## SET PLANE POSE
         Plane_Angle_Low = self.Plane_Angle_range[0]
         Plane_Angle_High = self.Plane_Angle_range[1]
-        self.updatePlanePos([2,0,2],np.random.uniform(Plane_Angle_Low,Plane_Angle_High))
+        self.updatePlanePos([2,2,2],np.random.uniform(Plane_Angle_Low,Plane_Angle_High))
 
+        ## UPDATE INERTIA VALUES (DOMAIN RANDOMIZATION)
+        self.Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Iyy") + np.random.normal(0,self.Iyy_std)
+        self.mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Mass") + np.random.normal(0,self.Mass_std)
+        # self.updateInertia()
+
+        ## RESET ROBOT STATE
         self.SendCmd('Tumble',cmd_flag=0)
         self.SendCmd('Ctrl_Reset')
         self.reset_pos()
@@ -84,13 +90,12 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.reset_pos()
         self.sleep(1.0) # Give time for drone to settle
 
+
+        ## ACTIVATE STICKY PADS AND PAUSE PHYSICS
         self.SendCmd('GZ_StickyPads',cmd_flag=1)
         self.pause_physics(True)
 
-        ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
-        self.Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Iyy") + np.random.normal(0,self.Iyy_std)
-        self.mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Mass") + np.random.normal(0,self.Mass_std)
-        # self.updateInertia()
+        
 
 
         ## RESET RECORDED VALUES
@@ -347,11 +352,21 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## CALC OPTICAL FLOW VALUES
         Theta_x = np.clip(V_tx/D_perp,-20,20)
         Theta_y = np.clip(V_ty/D_perp,-20,20)
-        Tau = np.clip(D_perp/V_perp,0.0,5.0)
-        
-        Plane_Angle = self.Plane_Angle/180.0
+        Tau = np.clip(D_perp/V_perp,0,3)
 
-        return np.array([Tau,Theta_x,D_perp,Plane_Angle],dtype=np.float32)
+        def normalize(val,min_val,max_val):
+
+            norm_val = (val-min_val)/(max_val-min_val)
+
+            return norm_val
+            
+        Tau_norm = normalize(Tau,0,3)
+        Theta_x_norm = normalize(Theta_x,-20,20)
+        D_perp_norm = normalize(D_perp,0,4)
+        Plane_Angle_norm = normalize(self.Plane_Angle,0,180)
+
+
+        return np.array([Tau_norm,Theta_x_norm,D_perp_norm,Plane_Angle_norm],dtype=np.float32)
 
     def _sample_flight_conditions(self):
         """This function samples the flight velocity and angle from the supplied range.
@@ -454,7 +469,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
 if __name__ == "__main__":
 
-    env = SAR_Sim_DeepRL(GZ_Timeout=False,My_range=[-8.0,8.0],Vel_range=[3.0,3.0],Phi_rel_range=[45,45],Plane_Angle_range=[90,180])
+    env = SAR_Sim_DeepRL(GZ_Timeout=False,My_range=[-8.0,8.0],Vel_range=[3.0,3.0],Phi_rel_range=[45,45],Plane_Angle_range=[135,135])
 
     for ep in range(20):
 
