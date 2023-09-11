@@ -54,7 +54,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
         self.action_trg = np.zeros(self.action_space.shape,dtype=np.float32) # Action values at triggering
 
-    def reset(self, seed=None, options=None, Vel=None, Phi=None):
+    def reset(self, seed=None, options=None, Vel=None, Phi_rel=None):
         """Resets the full pose and twist state of the robot and starts flight with specificed flight conditions.
 
         Args:
@@ -114,89 +114,95 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         ## RESET POSITION RELATIVE TO LANDING SURFACE (BASED ON STARTING TAU VALUE)
         # (Derivation: Research_Notes_Book_3.pdf (6/22/23))
-        r_PO = np.array(self.Plane_Pos)         # Plane Position w/r to origin
-        n_hat,t_x,t_y = self._calc_PlaneNormal(self.Plane_Angle) # Plane normal vector
+        r_PO = np.array(self.Plane_Pos)                             # Plane Position w/r to origin
+        n_hat,t_x,t_y = self._calc_PlaneNormal(self.Plane_Angle)    # Plane direction vectors
 
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
-        if Vel == None or Phi == None:
-            Vel,Phi = self._sample_flight_conditions()
+        if Vel == None or Phi_rel == None:
+            Vel,Phi_rel = self._sample_flight_conditions()
 
         else:
-            Vel = Vel   # Flight velocity
-            Phi = Phi   # Flight angle  
-
-        ## CALCULATE GLOBAL VEL VECTORS
-        V_x = Vel*np.cos(np.deg2rad(Phi))
-        V_y = 0
-        V_z = Vel*np.sin(np.deg2rad(Phi))
-        
-        V_BO = np.array([V_x,V_y,V_z])      # Flight Velocity
-        V_hat = V_BO/np.linalg.norm(V_BO)   # Flight Velocity unit vector
+            Vel = Vel           # Flight velocity
+            Phi_rel = Phi_rel   # Flight angle  
 
         ## RELATIVE VEL VECTORS
-        V_perp = V_BO.dot(n_hat)
-        V_tx = V_BO.dot(t_x)
-        V_ty = V_BO.dot(t_y)
+        V_perp = Vel*np.sin(np.deg2rad(Phi_rel))
+        V_tx = Vel*np.cos(np.deg2rad(Phi_rel))
+        V_ty = 0
+        V_BP = np.array([V_tx,V_ty,V_perp])
+
+        ## ROTATION MATRIX FROM PLANE TO WORLD COORDS
+        R_PO = np.vstack((t_x,t_y,n_hat)).T 
+
+        ## CALCULATE GLOBAL VEL VECTORS
+        V_BO = R_PO.dot(V_BP)
 
         
-        ## CALC STARTING/VELOCITY LAUCH POSITION
-        if V_hat.dot(n_hat) <= 0.09:    # If Velocity parallel (within 5 deg) to landing surface or wrong direction; flag episode to be done
+        # V_BO = np.array([V_x,V_y,V_z])      # Flight Velocity
+        # V_hat = V_BO/np.linalg.norm(V_BO)   # Flight Velocity unit vector
 
-            ## MINIMUM DISTANCE TO START POLICY TRAINING
-            D_perp = 0.17  # Ensure a reasonable minimum perp distance [m]
 
-            ## CALC DISTANCE REQUIRED TO SETTLE ON DESIRED VELOCITY
-            t_settle = 1.5              # Time for system to settle
-            D_settle = t_settle*Vel     # Flight settling distance
+        
 
-            ## INITIAL POSITION RELATIVE TO PLANE
-            r_BP = (D_perp/(V_hat.dot(n_hat)+1e-6) + D_settle)*V_hat
+        
+        # ## CALC STARTING/VELOCITY LAUCH POSITION
+        # if V_hat.dot(n_hat) <= 0.09:    # If Velocity parallel (within 5 deg) to landing surface or wrong direction; flag episode to be done
 
-            ## INITIAL POSITION IN GLOBAL COORDS
-            r_BO = r_PO - r_BP 
+        #     ## MINIMUM DISTANCE TO START POLICY TRAINING
+        #     D_perp = 0.17  # Ensure a reasonable minimum perp distance [m]
 
-            ## LAUNCH QUAD W/ DESIRED VELOCITY
-            self.Vel_Launch(r_BO,V_BO)
-            self.iter_step(t_settle*1e3)
+        #     ## CALC DISTANCE REQUIRED TO SETTLE ON DESIRED VELOCITY
+        #     t_settle = 1.5              # Time for system to settle
+        #     D_settle = t_settle*Vel     # Flight settling distance
+
+        #     ## INITIAL POSITION RELATIVE TO PLANE
+        #     r_BP = (D_perp/(V_hat.dot(n_hat)+1e-6) + D_settle)*V_hat
+
+        #     ## INITIAL POSITION IN GLOBAL COORDS
+        #     r_BO = r_PO - r_BP 
+
+        #     ## LAUNCH QUAD W/ DESIRED VELOCITY
+        #     self.Vel_Launch(r_BO,V_BO)
+        #     self.iter_step(t_settle*1e3)
             
-        elif V_hat.dot(n_hat) <= 0.35:  # Velocity near parallel (within 20 deg) to landing surface
+        # elif V_hat.dot(n_hat) <= 0.35:  # Velocity near parallel (within 20 deg) to landing surface
 
-            ## ## MINIMUM DISTANCE TO START POLICY TRAINING
-            D_perp = 0.2  # Ensure a reasonable minimum perp distance [m]
+        #     ## ## MINIMUM DISTANCE TO START POLICY TRAINING
+        #     D_perp = 0.2  # Ensure a reasonable minimum perp distance [m]
 
-            ## CALC DISTANCE REQUIRED TO SETTLE ON DESIRED VELOCITY
-            t_settle = 1.5              # Time for system to settle
-            D_settle = t_settle*Vel     # Flight settling distance
+        #     ## CALC DISTANCE REQUIRED TO SETTLE ON DESIRED VELOCITY
+        #     t_settle = 1.5              # Time for system to settle
+        #     D_settle = t_settle*Vel     # Flight settling distance
 
-            ## INITIAL POSITION RELATIVE TO PLANE
-            r_BP = (D_perp/(V_hat.dot(n_hat)+1e-6) + D_settle)*V_hat
+        #     ## INITIAL POSITION RELATIVE TO PLANE
+        #     r_BP = (D_perp/(V_hat.dot(n_hat)+1e-6) + D_settle)*V_hat
 
-            ## INITIAL POSITION IN GLOBAL COORDS
-            r_BO = r_PO - r_BP 
+        #     ## INITIAL POSITION IN GLOBAL COORDS
+        #     r_BO = r_PO - r_BP 
 
-            ## LAUNCH QUAD W/ DESIRED VELOCITY
-            self.Vel_Launch(r_BO,V_BO)
-            self.iter_step(t_settle*1e3)
+        #     ## LAUNCH QUAD W/ DESIRED VELOCITY
+        #     self.Vel_Launch(r_BO,V_BO)
+        #     self.iter_step(t_settle*1e3)
 
-        else: # Velocity NOT parallel to surface
+        # else: # Velocity NOT parallel to surface
 
-            ## CALC STARTING DISTANCE WHERE POLICY IS MONITORED
-            D_perp = (self.Tau_0*V_perp)    # Initial perp distance
-            D_perp = max(D_perp,0.2)        # Ensure a reasonable minimum distance [m]
+        #     ## CALC STARTING DISTANCE WHERE POLICY IS MONITORED
+        #     D_perp = (self.Tau_0*V_perp)    # Initial perp distance
+        #     D_perp = max(D_perp,0.2)        # Ensure a reasonable minimum distance [m]
 
-            ## CALC DISTANCE REQUIRED TO SETTLE ON DESIRED VELOCITY
-            t_settle = 1.5              # Time for system to settle
-            D_settle = t_settle*Vel     # Flight settling distance
+        #     ## CALC DISTANCE REQUIRED TO SETTLE ON DESIRED VELOCITY
+        #     t_settle = 1.5              # Time for system to settle
+        #     D_settle = t_settle*Vel     # Flight settling distance
 
-            ## INITIAL POSITION RELATIVE TO PLANE
-            r_BP = (D_perp/(V_hat.dot(n_hat)+1e-6) + D_settle)*V_hat
+        #     ## INITIAL POSITION RELATIVE TO PLANE
+        #     r_BP = (D_perp/(V_hat.dot(n_hat)+1e-6) + D_settle)*V_hat
 
-            ## INITIAL POSITION IN GLOBAL COORDS
-            r_BO = r_PO - r_BP 
+        #     ## INITIAL POSITION IN GLOBAL COORDS
+        #     r_BO = r_PO - r_BP 
 
-            ## LAUNCH QUAD W/ DESIRED VELOCITY
-            self.Vel_Launch(r_BO,V_BO)
-            self.iter_step(t_settle*1e3)
+        #     ## LAUNCH QUAD W/ DESIRED VELOCITY
+        #     self.Vel_Launch(r_BO,V_BO)
+        #     self.iter_step(t_settle*1e3)
         
 
         ## RESET/UPDATE RUN CONDITIONS
@@ -397,10 +403,10 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         elif Dist_Num == 2: # High Range
             Phi_rel = np.random.default_rng().uniform(low=Phi_rel_High - 0.2*Phi_rel_Range, high=Phi_rel_High)
 
-        ## CONVERT RELATIVE PHI TO GLOBAL PHI
-        Phi_global = (self.Plane_Angle + Phi_rel) - 180 # (Derivation: Research_Notes_Book_3.pdf (7/5/23))
+        # ## CONVERT RELATIVE PHI TO GLOBAL PHI
+        # Phi_global = (self.Plane_Angle + Phi_rel) - 180 # (Derivation: Research_Notes_Book_3.pdf (7/5/23))
         
-        return Vel,Phi_global
+        return Vel,Phi_rel
 
     def _calc_PlaneNormal(self,Plane_Angle):
 
@@ -411,11 +417,6 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         t_y =   np.array([0,1,0],dtype=np.float64)
         n_hat = np.array([0,0,1],dtype=np.float64)
 
-        ## UPDATE LANDING SURFACE PARAMETERS
-        n_hat[0] = np.sin(Plane_Angle_rad)
-        n_hat[1] = 0
-        n_hat[2] = -np.cos(Plane_Angle_rad)
-
         ## DEFINE PLANE TANGENT UNIT-VECTOR
         t_x[0] = -np.cos(Plane_Angle_rad)
         t_x[1] = 0
@@ -425,6 +426,11 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         t_y[0] = 0
         t_y[1] = 1
         t_y[2] = 0
+
+        ## DEFINE PLANE NORMAL UNIT-VECTOR
+        n_hat[0] = np.sin(Plane_Angle_rad)
+        n_hat[1] = 0
+        n_hat[2] = -np.cos(Plane_Angle_rad)
 
         return n_hat,t_x,t_y
 
@@ -471,7 +477,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
 if __name__ == "__main__":
 
-    env = SAR_Sim_DeepRL(GZ_Timeout=False,My_range=[-8.0,8.0],Vel_range=[3.0,3.0],Phi_rel_range=[45,45],Plane_Angle_range=[180,180])
+    env = SAR_Sim_DeepRL(GZ_Timeout=False,My_range=[-8.0,8.0],Vel_range=[3.0,3.0],Phi_rel_range=[90,90],Plane_Angle_range=[135,135])
 
     for ep in range(20):
 
@@ -479,7 +485,7 @@ if __name__ == "__main__":
         # Phi = 60
         # env._sample_flight_conditions()
 
-        obs,_ = env.reset(Vel=None,Phi=None)
+        obs,_ = env.reset(Vel=None,Phi_rel=None)
 
         Done = False
         while not Done:
