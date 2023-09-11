@@ -10,6 +10,8 @@ from gazebo_msgs.srv import GetModelState, GetModelStateRequest
 
 from sar_env import SAR_Sim_Interface
 
+EPS = 1e-6 # Epsilon (Prevent division by zero)
+
 
 class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
@@ -136,13 +138,9 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         ## CALCULATE GLOBAL VEL VECTORS
         V_BO = R_PO.dot(V_BP)
-
-        
-        # V_BO = np.array([V_x,V_y,V_z])      # Flight Velocity
-        # V_hat = V_BO/np.linalg.norm(V_BO)   # Flight Velocity unit vector
+        V_hat = V_BO/np.linalg.norm(V_BO)   # Flight Velocity unit vector
 
 
-        
 
         
         # ## CALC STARTING/VELOCITY LAUCH POSITION
@@ -186,23 +184,23 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         # else: # Velocity NOT parallel to surface
 
-        #     ## CALC STARTING DISTANCE WHERE POLICY IS MONITORED
-        #     D_perp = (self.Tau_0*V_perp)    # Initial perp distance
-        #     D_perp = max(D_perp,0.2)        # Ensure a reasonable minimum distance [m]
+        ## CALC STARTING DISTANCE WHERE POLICY IS MONITORED
+        D_perp = (self.Tau_0*V_perp)    # Initial perp distance
+        D_perp = max(D_perp,0.2)        # Ensure a reasonable minimum distance [m]
 
-        #     ## CALC DISTANCE REQUIRED TO SETTLE ON DESIRED VELOCITY
-        #     t_settle = 1.5              # Time for system to settle
-        #     D_settle = t_settle*Vel     # Flight settling distance
+        ## CALC DISTANCE REQUIRED TO SETTLE ON DESIRED VELOCITY
+        t_settle = 1.5              # Time for system to settle on flight conditions
+        D_settle = t_settle*Vel     # Flight settling distance
 
-        #     ## INITIAL POSITION RELATIVE TO PLANE
-        #     r_BP = (D_perp/(V_hat.dot(n_hat)+1e-6) + D_settle)*V_hat
+        ## INITIAL POSITION RELATIVE TO PLANE
+        r_BP = -(D_perp/(V_hat.dot(n_hat)+EPS) + D_settle)*V_hat
 
-        #     ## INITIAL POSITION IN GLOBAL COORDS
-        #     r_BO = r_PO - r_BP 
+        ## INITIAL POSITION IN GLOBAL COORDS
+        r_BO = r_PO + r_BP 
 
-        #     ## LAUNCH QUAD W/ DESIRED VELOCITY
-        #     self.Vel_Launch(r_BO,V_BO)
-        #     self.iter_step(t_settle*1e3)
+        ## LAUNCH QUAD W/ DESIRED VELOCITY
+        self.Vel_Launch(r_BO,V_BO)
+        self.iter_step(t_settle*1e3)
         
 
         ## RESET/UPDATE RUN CONDITIONS
@@ -477,7 +475,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
 if __name__ == "__main__":
 
-    env = SAR_Sim_DeepRL(GZ_Timeout=False,My_range=[-8.0,8.0],Vel_range=[3.0,3.0],Phi_rel_range=[90,90],Plane_Angle_range=[135,135])
+    env = SAR_Sim_DeepRL(GZ_Timeout=False,My_range=[-8.0,8.0],Vel_range=[3.0,3.0],Phi_rel_range=[45,135],Plane_Angle_range=[90,90])
 
     for ep in range(20):
 
