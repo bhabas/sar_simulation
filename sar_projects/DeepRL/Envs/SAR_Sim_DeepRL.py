@@ -439,6 +439,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         self.reward_vals = [R_dist,R_tau,R_angle,R_legs,0]
         self.reward = 0.05*R_dist + 0.1*R_tau + 0.2*R_angle + 0.65*R_legs
 
+
         return self.reward
 
 if __name__ == "__main__":

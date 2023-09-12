@@ -8,8 +8,11 @@ import os
 ## DEFINE COLORS
 WHITE = (255,255,255)
 BLACK = (0,0,0)
+RED = (204,0,0)
 BLUE = (29,123,243)
-RED = (255,0,0)
+GREEN = (0,153,0)
+PURPLE = (76,0,153)
+ORANGE = (255,128,0)
 
 class SAR_Env_2D(gym.Env):
     """Custom Environment that follows gym interface."""
@@ -48,8 +51,8 @@ class SAR_Env_2D(gym.Env):
         self.action_trg = np.zeros(self.action_space.shape,dtype=np.float32) # Action values at triggering
 
         ## PLANE PARAMETERS
-        self.Plane_Pos = [0,0,2.0]
-        self.Plane_Angle = 180
+        self.Plane_Pos = [2.0,-2.0]
+        self.Plane_Angle = 45
 
         ## SAR DIMENSIONS CONSTRAINTS 
         gamma = np.deg2rad(30)  # Leg Angle [m]
@@ -68,8 +71,8 @@ class SAR_Env_2D(gym.Env):
         ## RENDERING PARAMETERS
         self.screen_width = 1000
         self.RENDER = False
-        self.world_width = 4.0  # [m]
-        self.world_height = 3.0 # [m]
+        self.world_width = 8.0  # [m]
+        self.world_height = 8.0 # [m]
 
         self.screen_height = self.screen_width*self.world_height/self.world_width
         self.screen = None
@@ -98,8 +101,8 @@ class SAR_Env_2D(gym.Env):
         ## CONVERT COORDINATES TO PIXEL LOCATION
         def c2p(Pos):
 
-            x_offset = 2    # [m]
-            y_offset = 0.3  # [m]
+            x_offset = 4  # [m]
+            y_offset = 4  # [m]
 
             scale_x = self.screen_width/self.world_width
             scale_y = self.screen_height/self.world_height
@@ -121,9 +124,35 @@ class SAR_Env_2D(gym.Env):
         self.surf = pygame.Surface((self.screen_width, self.screen_height))
         self.surf.fill(WHITE)
 
+        ## ORIGIN
+        pygame.draw.circle(self.surf,BLACK,c2p((0,0)),radius=7,width=3)
+        pygame.draw.line(self.surf,GREEN,c2p((0,0)),c2p((0.2,0)),width=3) # X_w   
+        pygame.draw.line(self.surf,BLUE,c2p((0,0)),c2p((0,0.2)),width=3) # Z_w   
+
+        
+
+        ## LANDING SURFACE
+        pygame.draw.line(self.surf,BLACK,
+                         c2p(self.Plane_Pos + self.P_to_W(np.array([-1,0]))),
+                         c2p(self.Plane_Pos + self.P_to_W(np.array([+1,0]))),width=5)
+        
+        pygame.draw.line(self.surf,GREEN,c2p(self.Plane_Pos),c2p(self.Plane_Pos + self.P_to_W(np.array([0.2,0]))),width=3)  # t_x   
+        pygame.draw.line(self.surf,BLUE, c2p(self.Plane_Pos),c2p(self.Plane_Pos + self.P_to_W(np.array([0,0.2]))),width=3)  # n_p 
+        pygame.draw.circle(self.surf,RED,c2p(self.Plane_Pos),radius=4,width=0)
+
+
+
+
+
+        # pygame.draw.line(self.surf,BLACK,c2p((-5,self.Plane_Pos[2])),c2p((5,self.Plane_Pos[2])),width=2) # Landing Surface Plane
+        # pygame.draw.line(self.surf,BLACK,c2p((0,-5)),c2p((0,5)),width=1) # Z-axis       
+        # pygame.draw.line(self.surf,BLACK,c2p((-5,0)),c2p((5,0)),width=2) #  Ground Line
+
+
         ## FLIP IMAGE SO X->RIGHT AND Y->UP
         self.surf = pygame.transform.flip(self.surf, False, True)
 
+        ## DRAW OBJECTS TO SCREEN
         self.screen.blit(self.surf,     (0,0))
 
         ## WINDOW/SIM UPDATE RATE
@@ -136,6 +165,16 @@ class SAR_Env_2D(gym.Env):
             pygame.display.quit()
             pygame.quit()
             self.isopen = False
+
+    def P_to_W(self,vec):
+
+        theta = np.deg2rad(self.Plane_Angle)
+        R_PW = np.array([
+            [-np.cos(theta), np.sin(theta)],
+            [-np.sin(theta),-np.cos(theta)]
+        ])
+
+        return R_PW.dot(vec)
 
 if __name__ == '__main__':
     env = SAR_Env_2D()
