@@ -146,7 +146,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             D_perp = 0.1
             self.Done = True
 
-        elif (0 < Phi_rel <= 5) or (160 <= Phi_rel < 180):
+        elif (0 < Phi_rel <= 5) or (175 <= Phi_rel < 180):
             Tau_0 = 1.5
             D_perp = max((Tau_0*V_perp),0.1) # Ensure a reasonable minimum perp distance [m]
             
@@ -341,7 +341,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         Plane_Angle_norm = normalize(self.Plane_Angle,0,180)
 
 
-        return np.array([Tau_norm,Theta_x_norm,D_perp_norm,Plane_Angle_norm],dtype=np.float32)
+        return np.array([Tau,Theta_x,D_perp,self.Plane_Angle],dtype=np.float32)
 
     def _sample_flight_conditions(self):
         """This function samples the flight velocity and angle from the supplied range.
@@ -443,7 +443,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
 if __name__ == "__main__":
 
-    env = SAR_Sim_DeepRL(GZ_Timeout=False,My_range=[-8.0,8.0],Vel_range=[3.0,3.0],Phi_rel_range=[45,135],Plane_Angle_range=[180,180])
+    env = SAR_Sim_DeepRL(GZ_Timeout=False,My_range=[-8.0,8.0],Vel_range=[3.0,3.0],Phi_rel_range=[20,160],Plane_Angle_range=[180,180])
 
     for ep in range(20):
 
