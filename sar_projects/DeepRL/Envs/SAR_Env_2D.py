@@ -41,6 +41,7 @@ class SAR_Env_2D(gym.Env):
         self.D_min = np.inf
         self.Tau_trg = np.inf
         self.Done = False
+        self.Pol_Trg_Flag = False
 
         ## DEFINE OBSERVATION SPACE
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)
@@ -51,8 +52,8 @@ class SAR_Env_2D(gym.Env):
         self.action_trg = np.zeros(self.action_space.shape,dtype=np.float32) # Action values at triggering
 
         ## PLANE PARAMETERS
-        self.Plane_Pos = [2.0,-2.0]
-        self.Plane_Angle = 45
+        self.Plane_Pos = [1,1]
+        self.Plane_Angle = 135
 
         ## SAR DIMENSIONS CONSTRAINTS 
         gamma = np.deg2rad(30)  # Leg Angle [m]
@@ -71,8 +72,8 @@ class SAR_Env_2D(gym.Env):
         ## RENDERING PARAMETERS
         self.screen_width = 1000
         self.RENDER = False
-        self.world_width = 8.0  # [m]
-        self.world_height = 8.0 # [m]
+        self.world_width = 4.0  # [m]
+        self.world_height = 4.0 # [m]
 
         self.screen_height = self.screen_width*self.world_height/self.world_width
         self.screen = None
@@ -101,8 +102,8 @@ class SAR_Env_2D(gym.Env):
         ## CONVERT COORDINATES TO PIXEL LOCATION
         def c2p(Pos):
 
-            x_offset = 4  # [m]
-            y_offset = 4  # [m]
+            x_offset = 2  # [m]
+            y_offset = 2  # [m]
 
             scale_x = self.screen_width/self.world_width
             scale_y = self.screen_height/self.world_height
@@ -125,35 +126,43 @@ class SAR_Env_2D(gym.Env):
         self.surf.fill(WHITE)
 
         ## ORIGIN
-        pygame.draw.circle(self.surf,BLACK,c2p((0,0)),radius=7,width=3)
-        pygame.draw.line(self.surf,GREEN,c2p((0,0)),c2p((0.2,0)),width=3) # X_w   
-        pygame.draw.line(self.surf,BLUE,c2p((0,0)),c2p((0,0.2)),width=3) # Z_w   
+        pygame.draw.line(self.surf,GREEN,c2p((0,0)),c2p((0.1,0)),width=5) # X_w   
+        pygame.draw.line(self.surf,BLUE,c2p((0,0)),c2p((0,0.1)),width=5) # Z_w   
+        pygame.draw.circle(self.surf,RED,c2p((0,0)),radius=4,width=0)
 
         
 
         ## LANDING SURFACE
         pygame.draw.line(self.surf,BLACK,
-                         c2p(self.Plane_Pos + self.P_to_W(np.array([-1,0]))),
-                         c2p(self.Plane_Pos + self.P_to_W(np.array([+1,0]))),width=5)
+                         c2p(self.Plane_Pos + self._P_to_W(np.array([-1,0]),self.Plane_Angle)),
+                         c2p(self.Plane_Pos + self._P_to_W(np.array([+1,0]),self.Plane_Angle)),width=5)
         
-        pygame.draw.line(self.surf,GREEN,c2p(self.Plane_Pos),c2p(self.Plane_Pos + self.P_to_W(np.array([0.2,0]))),width=3)  # t_x   
-        pygame.draw.line(self.surf,BLUE, c2p(self.Plane_Pos),c2p(self.Plane_Pos + self.P_to_W(np.array([0,0.2]))),width=3)  # n_p 
+        pygame.draw.line(self.surf,GREEN,c2p(self.Plane_Pos),c2p(self.Plane_Pos + self._P_to_W(np.array([0.1,0]),self.Plane_Angle)),width=7)  # t_x   
+        pygame.draw.line(self.surf,BLUE, c2p(self.Plane_Pos),c2p(self.Plane_Pos + self._P_to_W(np.array([0,0.1]),self.Plane_Angle)),width=7)  # n_p 
         pygame.draw.circle(self.surf,RED,c2p(self.Plane_Pos),radius=4,width=0)
 
 
+        ## DRAW QUADROTOR
+        Pose = self._get_pose(0,1,0)
+        pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[1]),width=3)
+        pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[2]),width=3)
+        pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[3]),width=3)
+        pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[4]),width=3)
 
-
-
-        # pygame.draw.line(self.surf,BLACK,c2p((-5,self.Plane_Pos[2])),c2p((5,self.Plane_Pos[2])),width=2) # Landing Surface Plane
-        # pygame.draw.line(self.surf,BLACK,c2p((0,-5)),c2p((0,5)),width=1) # Z-axis       
-        # pygame.draw.line(self.surf,BLACK,c2p((-5,0)),c2p((5,0)),width=2) #  Ground Line
+        ## TRIGGER INDICATOR
+        if self.Pol_Trg_Flag == True:
+            pygame.draw.circle(self.surf,RED,  c2p(Pose[0]),radius=4,width=0)
+            pygame.draw.circle(self.surf,BLACK,c2p(Pose[0]),radius=5,width=3)
+        else:
+            pygame.draw.circle(self.surf,BLUE, c2p(Pose[0]),radius=4,width=0)
+            pygame.draw.circle(self.surf,BLACK,c2p(Pose[0]),radius=5,width=3)
 
 
         ## FLIP IMAGE SO X->RIGHT AND Y->UP
         self.surf = pygame.transform.flip(self.surf, False, True)
 
         ## DRAW OBJECTS TO SCREEN
-        self.screen.blit(self.surf,     (0,0))
+        self.screen.blit(self.surf,(0,0))
 
         ## WINDOW/SIM UPDATE RATE
         self.clock.tick(60) # [Hz]
@@ -166,9 +175,42 @@ class SAR_Env_2D(gym.Env):
             pygame.quit()
             self.isopen = False
 
-    def P_to_W(self,vec):
+    def _get_pose(self,x_pos,z_pos,phi):
 
-        theta = np.deg2rad(self.Plane_Angle)
+        (L,gamma,M_B,I_B,PD) = self.params
+
+        ## MODEL COG
+        CG = np.array([x_pos,z_pos])
+
+        ## LEG COORDS
+        L1 = np.array([ L*np.sin(gamma),-L*np.cos(gamma)])
+        L2 = np.array([-L*np.sin(gamma),-L*np.cos(gamma)])
+
+        ## PROP COORDS
+        Prop1 = np.array([ PD,0])
+        Prop2 = np.array([-PD,0])
+
+        ## CONVERT BODY COORDS TO WORLD COORDS
+        L1 = CG + self._B_to_W(L1,phi)
+        L2 = CG + self._B_to_W(L2,phi)
+        Prop1 = CG + self._B_to_W(Prop1,phi)
+        Prop2 = CG + self._B_to_W(Prop2,phi)
+
+        return np.array([CG,L1,L2,Prop1,Prop2])
+    
+    def _B_to_W(self,vec,phi):
+
+        phi = np.deg2rad(phi)
+        R_BW = np.array([
+            [ np.cos(phi), np.sin(phi)],
+            [-np.sin(phi), np.cos(phi)]
+        ])
+
+        return R_BW.dot(vec)
+
+    def _P_to_W(self,vec,theta):
+
+        theta = np.deg2rad(theta)
         R_PW = np.array([
             [-np.cos(theta), np.sin(theta)],
             [-np.sin(theta),-np.cos(theta)]
