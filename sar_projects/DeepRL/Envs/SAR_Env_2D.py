@@ -64,9 +64,11 @@ class SAR_Env_2D(gym.Env):
         self.params = (L,gamma,M_B,I_B,PD)
 
         ## PHYSICS PARAMETERS
-        self.dt = 0.005     # [s]
         self.g = 9.81       # Gravity [m/s^2]
-        self.t_max = 600    # [s]
+        self.dt = 0.005     # [s]
+        self.t = 0          # [s]
+        self.t_max = 5      # [s]
+        self.state = (-1.5,0.3,0.5,0.3,np.radians(90),np.radians(120)) # Initial State (X_pos,V_x,Z_pos,V_z,phi,dphi)
 
 
         ## RENDERING PARAMETERS
@@ -95,6 +97,9 @@ class SAR_Env_2D(gym.Env):
         
         if self.RENDER:
             self.render()
+
+        ## UPDATE SIM 
+        self._iter_step()
 
         reward = 0
         terminated = False
@@ -139,16 +144,19 @@ class SAR_Env_2D(gym.Env):
         if self.clock is None:
             self.clock = pygame.time.Clock()
 
+
+        ## GET CURRENT STATE
+        x,vx,z,vz,phi,dphi = self._get_state()
+        
         ## CREATE BACKGROUND SURFACE
         self.surf = pygame.Surface((self.screen_width, self.screen_height))
         self.surf.fill(WHITE)
 
         ## ORIGIN
         pygame.draw.line(self.surf,GREEN,c2p((0,0)),c2p((0.1,0)),width=5) # X_w   
-        pygame.draw.line(self.surf,BLUE,c2p((0,0)),c2p((0,0.1)),width=5) # Z_w   
+        pygame.draw.line(self.surf,BLUE, c2p((0,0)),c2p((0,0.1)),width=5) # Z_w   
         pygame.draw.circle(self.surf,RED,c2p((0,0)),radius=4,width=0)
 
-        
 
         ## LANDING SURFACE
         pygame.draw.line(self.surf,BLACK,
@@ -161,7 +169,7 @@ class SAR_Env_2D(gym.Env):
 
 
         ## DRAW QUADROTOR
-        Pose = self._get_pose(0,1,0)
+        Pose = self._get_pose(x,z,phi)
         pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[1]),width=3)
         pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[2]),width=3)
         pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[3]),width=3)
@@ -192,6 +200,32 @@ class SAR_Env_2D(gym.Env):
             pygame.display.quit()
             pygame.quit()
             self.isopen = False
+
+    def _iter_step(self):
+
+        ## CURRENT STATE
+        x,vx,z,vz,phi,dphi = self._get_state()
+
+        ## STEP UPDATE
+        self.t += self.dt
+
+        z_acc = 0.0
+        z = z + self.dt*vz
+        vz = vz + self.dt*z_acc
+
+        x_acc = 0.0
+        x = x + self.dt*vx
+        vx = vx + self.dt*x_acc
+
+        phi_acc = 0.0
+        phi = phi + self.dt*dphi
+        dphi = dphi + self.dt*phi_acc
+
+        self.state = (x,vx,z,vz,phi,dphi)
+
+    def _get_state(self):
+
+        return self.state
 
     def _get_obs(self):
 
@@ -226,9 +260,11 @@ class SAR_Env_2D(gym.Env):
 
         return np.array([CG,L1,L2,Prop1,Prop2])
     
-    def _B_to_W(self,vec,phi):
+    def _B_to_W(self,vec,phi,degrees=False):
 
-        phi = np.deg2rad(phi)
+        if degrees == True:
+            phi = np.deg2rad(phi)
+
         R_BW = np.array([
             [ np.cos(phi), np.sin(phi)],
             [-np.sin(phi), np.cos(phi)]
@@ -236,9 +272,11 @@ class SAR_Env_2D(gym.Env):
 
         return R_BW.dot(vec)
 
-    def _P_to_W(self,vec,theta):
+    def _P_to_W(self,vec,theta,degrees=False):
 
-        theta = np.deg2rad(theta)
+        if degrees == True:
+            theta = np.deg2rad(theta)
+
         R_PW = np.array([
             [-np.cos(theta), np.sin(theta)],
             [-np.sin(theta),-np.cos(theta)]
@@ -250,8 +288,11 @@ if __name__ == '__main__':
     env = SAR_Env_2D(Plane_Angle_range=[90,180])
     env.RENDER = True
 
-    while True:
+    for ep in range(25):
         
         env.reset()
-        action = env.action_space.sample()
-        obs,reward,Done,truncated,_ = env.step(action)
+        Done = False
+
+        while not Done:
+            action = env.action_space.sample()
+            obs,reward,Done,truncated,_ = env.step(action)
