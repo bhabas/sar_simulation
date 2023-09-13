@@ -60,9 +60,9 @@ class SAR_Env_2D(gym.Env):
         ## SAR DIMENSIONS CONSTRAINTS 
         gamma = np.deg2rad(30)  # Leg Angle [m]
         L = 75.0e-3             # Leg Length [m]
-        M_B = 0.035             # Body Mass [kg]
-        I_B = 30.46e-6          # Body Moment of Inertia [kg*m^2]
-        PD = 60.0e-3            # Prop Distance from COM [m]
+        M_B = 35.0e-3           # Body Mass [kg]
+        I_B = 17.0e-6           # Body Moment of Inertia [kg*m^2]
+        PD = 32.5e-3            # Prop Distance from COM [m]
         self.params = (L,gamma,M_B,I_B,PD)
 
         ## PHYSICS PARAMETERS
@@ -84,9 +84,17 @@ class SAR_Env_2D(gym.Env):
         self.clock = None
         self.isopen = True
 
-
+        ## RESET LOGGING CONDITIONS 
+        self.K_ep += 1
 
     def reset(self, seed=None, options=None, V_mag=None, Phi_rel=None):
+
+        ## RESET RECORDED VALUES
+        self.Done = False
+        self.D_min = np.inf       # Reset max distance from landing surface [m]
+        self.Tau_trg = np.inf     # Reset Tau triggering value [s]
+        self.obs_trg = np.zeros_like(self.observation_space.high)
+        self.action_trg = np.zeros_like(self.action_space.high)
 
         ## SET PLANE POSE
         Plane_Angle_Low = self.Plane_Angle_range[0]
@@ -116,6 +124,7 @@ class SAR_Env_2D(gym.Env):
         V_hat = V_BO/np.linalg.norm(V_BO)   # Flight Velocity unit vector
 
 
+        ## INITIAL DISTANCE
         D_perp = (self.Tau_0*V_perp)
 
         ## INITIAL POSITION RELATIVE TO PLANE
@@ -127,32 +136,89 @@ class SAR_Env_2D(gym.Env):
         ## LAUNCH QUAD W/ DESIRED VELOCITY
         self._set_state(r_BO[0],V_BO[0],r_BO[1],V_BO[1],0,0)
 
+        ## UPDATE RENDER
+        if self.RENDER:
+            self.render()
+
         ## RESET/UPDATE RUN CONDITIONS
         self.start_time_rollout = self.t
         self.start_time_pitch = np.nan
         self.start_time_impact = np.nan
 
+        ## RESET 2D SIM FLAGS
+        self.impact_flag = False
+        self.BodyContact_flag = False
+        self.MomentCutoff = False
+        
+
         return self._get_obs(),{}
 
     def step(self, action):
         
-        if self.RENDER:
-            self.render()
+        action[0] = 2
 
-        ## UPDATE SIM 
-        self._iter_step()
+        ########## PRE-POLICY TRIGGER ##########
+        if action[0] <= self.Trg_threshold:
 
-        reward = 0
-        terminated = False
-        truncated = False
+            ## GRAB CURRENT OBSERVATION
+            obs = self._get_obs()
+
+            ## CHECK FOR DONE
+            self.Done = bool(
+                self.Done
+                or (self.impact_flag or self.BodyContact_flag)  # BODY CONTACT W/O FLIP TRIGGER
+            )
+
+            ## UPDATE MINIMUM DISTANCE
+            D_perp = obs[2]
+            if not self.Done:
+                if D_perp <= self.D_min:
+                    self.D_min = D_perp 
+
+            ## CHECK FOR DONE
+            terminated = self.Done
+            truncated = bool(self.t - self.start_time_rollout > 3.5) # EPISODE TIME-OUT 
+
+            ## CALCULATE REWARD
+            reward = 0
+
+            ## UPDATE SIM AND OBSERVATION
+            self._iter_step()
+            obs = self._get_obs()
+
+            ## UPDATE RENDER
+            if self.RENDER:
+                self.render()
+
+
+        ########## POST-POLICY TRIGGER ##########
+        elif action[0] >= self.Trg_threshold:
+
+            ## GRAB CURRENT OBSERVATION
+            obs = self._get_obs()   # Return this observation because reward and future 
+                                    # are defined by action taken here. Not obs at end of episode.
+
+            ## SAVE TRIGGERING OBSERVATION AND ACTIONS
+            self.obs_trg = obs
+            self.Tau_trg = obs[0]
+            self.action_trg = action       
+
+            ## COMPLETE REST OF SIMULATION
+            self._finish_sim(action)   
+
+            terminated = self.Done = True
+            truncated = False          
+
+            ## CALCULATE REWARD
+            reward = self._CalcReward()    
+
 
         return (
-            self._get_obs(),
+            obs,
             reward,
             terminated,
             truncated,
             {},
-
         )
 
 
@@ -254,7 +320,7 @@ class SAR_Env_2D(gym.Env):
         self.screen.blit(text_Plane_Angle,  (5,155))
 
         ## WINDOW/SIM UPDATE RATE
-        self.clock.tick(30) # [Hz]
+        self.clock.tick(60) # [Hz]
         pygame.display.flip()
 
     def close(self):
@@ -290,11 +356,13 @@ class SAR_Env_2D(gym.Env):
 
         return self.state
     
+    def _get_params(self):
+
+        return self.params
+
     def _set_state(self,x,vx,z,vz,phi,dphi):
 
         self.state = (x,vx,z,vz,phi,dphi)
-
-
 
     def _get_obs(self):
 
@@ -352,6 +420,67 @@ class SAR_Env_2D(gym.Env):
             Phi_rel = np.random.default_rng().uniform(low=Phi_rel_High - 0.1*Phi_rel_Range, high=Phi_rel_High)
        
         return V_mag,Phi_rel
+
+    def _CalcReward(self):
+
+        return 0
+    
+    def _finish_sim(self,action):
+
+        ## SCALE ACTION
+        scaled_action = 0.5 * (action[1] + 1) * (self.My_range[1] - self.My_range[0]) + self.My_range[0]
+
+        ## START PROJECTILE FLIGHT
+        while not self.Done:
+
+            self._iter_step_Rot(scaled_action)
+
+            ## UPDATE RENDER
+            if self.RENDER:
+                self.render()
+
+
+    def _iter_step_Rot(self,Rot_action):
+
+        x,vx,z,vz,phi,dphi = self._get_state()
+        L,gamma,M_B,I_B,PD = self._get_params()
+
+        ## TURN OFF BODY MOMENT IF ROTATED PAST 90 DEG
+        if np.abs(phi) < np.deg2rad(90) and self.MomentCutoff == False:
+
+            My = Rot_action*1e-3
+
+        else: 
+
+            self.MomentCutoff= True
+            My = 0
+
+        ## BODY MOMENT/PROJECTILE FLIGHT
+        if self.impact_flag == False:
+
+            Thrust = np.array([0,np.sign(My)*My/PD]) # Body Coords
+            Thrust_x,Thrust_z = self._B_to_W(Thrust,phi)
+
+            ## UPDATE STATE
+            z_acc = Thrust_z/M_B - self.g
+            z = z + self.dt*vz
+            vz = vz + self.dt*z_acc
+
+            x_acc = Thrust_x/M_B
+            x = x + self.dt*vx
+            vx = vx + self.dt*x_acc
+
+            phi_acc = My/I_B
+            phi = phi + self.dt*dphi
+            dphi = dphi + self.dt*phi_acc
+
+            self.state = (x,vx,z,vz,phi,dphi)
+
+
+
+
+
+
 
 
     def _get_pose(self,x_pos,z_pos,phi):
@@ -420,14 +549,17 @@ class SAR_Env_2D(gym.Env):
         return R_PW.dot(vec)
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(Plane_Angle_range=[0,0],Tau_0=1)
+    env = SAR_Env_2D(Plane_Angle_range=[180,180],Tau_0=0.5)
     env.RENDER = True
 
     for ep in range(25):
         
-        env.reset(V_mag=1,Phi_rel=90)
+        V_mag = 1
+        Phi_rel = 90
+        env.reset(V_mag=V_mag,Phi_rel=Phi_rel)
         Done = False
 
         while not Done:
             action = env.action_space.sample()
+            action[1] = 1
             obs,reward,Done,truncated,_ = env.step(action)
