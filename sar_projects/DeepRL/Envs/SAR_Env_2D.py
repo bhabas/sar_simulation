@@ -14,6 +14,8 @@ GREEN = (0,153,0)
 PURPLE = (76,0,153)
 ORANGE = (255,128,0)
 
+EPS = 1e-6 # Epsilon (Prevent division by zero)
+
 class SAR_Env_2D(gym.Env):
     """Custom Environment that follows gym interface."""
 
@@ -68,7 +70,7 @@ class SAR_Env_2D(gym.Env):
         self.dt = 0.005     # [s]
         self.t = 0          # [s]
         self.t_max = 5      # [s]
-        self.state = (-1.5,0.3,0.5,0.3,np.radians(90),np.radians(120)) # Initial State (X_pos,V_x,Z_pos,V_z,phi,dphi)
+        self.state = (0,0.1,0,0.1,0,0) # Initial State (X_pos,V_x,Z_pos,V_z,phi,dphi)
 
 
         ## RENDERING PARAMETERS
@@ -160,11 +162,11 @@ class SAR_Env_2D(gym.Env):
 
         ## LANDING SURFACE
         pygame.draw.line(self.surf,BLACK,
-                         c2p(self.Plane_Pos + self._P_to_W(np.array([-1,0]),self.Plane_Angle)),
-                         c2p(self.Plane_Pos + self._P_to_W(np.array([+1,0]),self.Plane_Angle)),width=5)
+                         c2p(self.Plane_Pos + self._P_to_W(np.array([-0.5,0]),self.Plane_Angle,deg=True)),
+                         c2p(self.Plane_Pos + self._P_to_W(np.array([+0.5,0]),self.Plane_Angle,deg=True)),width=5)
         
-        pygame.draw.line(self.surf,GREEN,c2p(self.Plane_Pos),c2p(self.Plane_Pos + self._P_to_W(np.array([0.1,0]),self.Plane_Angle)),width=7)  # t_x   
-        pygame.draw.line(self.surf,BLUE, c2p(self.Plane_Pos),c2p(self.Plane_Pos + self._P_to_W(np.array([0,0.1]),self.Plane_Angle)),width=7)  # n_p 
+        pygame.draw.line(self.surf,GREEN,c2p(self.Plane_Pos),c2p(self.Plane_Pos + self._P_to_W(np.array([0.1,0]),self.Plane_Angle,deg=True)),width=7)  # t_x   
+        pygame.draw.line(self.surf,BLUE, c2p(self.Plane_Pos),c2p(self.Plane_Pos + self._P_to_W(np.array([0,0.1]),self.Plane_Angle,deg=True)),width=7)  # n_p 
         pygame.draw.circle(self.surf,RED,c2p(self.Plane_Pos),radius=4,width=0)
 
 
@@ -187,8 +189,30 @@ class SAR_Env_2D(gym.Env):
         ## FLIP IMAGE SO X->RIGHT AND Y->UP
         self.surf = pygame.transform.flip(self.surf, False, True)
 
+        ## WINDOW TEXT
+        my_font = pygame.font.SysFont(None, 30)
+        text_t_step = my_font.render(f'Time Step: {self.t:.03f}', True, BLACK)
+        # text_Vz = my_font.render(f'Vz: {vz:.2f}', True, BLACK)
+        # text_Vel = my_font.render(f'Vel: {Vel:.2f}  Phi: {phi:.2f}', True, BLACK)
+        
+        text_Tau = my_font.render(f'Tau: {self._get_obs()[0]:2.2f}', True, BLACK)
+        text_Theta_x = my_font.render(f'Theta_x: {self._get_obs()[1]:2.2f}', True, BLACK)
+        text_D_perp = my_font.render(f'D_perp: {self._get_obs()[2]:2.2f}', True, BLACK)
+        text_Plane_Angle = my_font.render(f'Plane Angle: {self.Plane_Angle:3.1f}', True, BLACK)
+
+        # text_dTau = my_font.render(f'dTau: {0.0:.3f}', True, BLACK)
+        # text_z_acc = my_font.render(f'z_acc: {0.0:.3f}', True, BLACK)
+        # text_reward = my_font.render(f'Prev Reward: {self.reward:.3f}',True, BLACK)
+
         ## DRAW OBJECTS TO SCREEN
         self.screen.blit(self.surf,(0,0))
+        self.screen.blit(text_t_step,   (5,5))
+        # self.screen.blit(text_Vel,      (5,30))
+        # self.screen.blit(text_Vz,       (5,55))
+        self.screen.blit(text_Tau,          (5,80))
+        self.screen.blit(text_Theta_x,      (5,105))
+        self.screen.blit(text_D_perp,       (5,130))
+        self.screen.blit(text_Plane_Angle,  (5,155))
 
         ## WINDOW/SIM UPDATE RATE
         self.clock.tick(60) # [Hz]
@@ -229,10 +253,27 @@ class SAR_Env_2D(gym.Env):
 
     def _get_obs(self):
 
-        Tau = 0.0
-        Theta_x = 0.0
-        D_perp = 0.0
+        ## UPDATE SAR POS AND VEL
+        x,vx,z,vz,theta,dtheta = self._get_state()
+        r_BO = np.array([x,z])
+        V_BO = np.array([vx,vz])
+
+        ## PLANE POSITION AND UNIT VECTORS
+        r_PO = self.Plane_Pos
         Plane_Angle = self.Plane_Angle
+        n_hat,t_x = self._calc_PlaneNormal(Plane_Angle)
+
+        ## CALC DISPLACEMENT FROM PLANE CENTER
+        r_PB = r_PO - r_BO
+
+        ## CALC RELATIVE DISTANCE AND VEL
+        D_perp = r_PB.dot(n_hat)
+        V_perp = V_BO.dot(n_hat)
+        V_tx = V_BO.dot(t_x)
+
+        ## CALC OPTICAL FLOW VALUES
+        Theta_x = np.clip(V_tx/(D_perp + EPS),-20,20)
+        Tau = np.clip(D_perp/(V_perp + EPS),0,5)
 
         return np.array([Tau,Theta_x,D_perp,Plane_Angle],dtype=np.float32)
 
@@ -260,9 +301,27 @@ class SAR_Env_2D(gym.Env):
 
         return np.array([CG,L1,L2,Prop1,Prop2])
     
-    def _B_to_W(self,vec,phi,degrees=False):
+    def _calc_PlaneNormal(self,Plane_Angle):
 
-        if degrees == True:
+        Plane_Angle_rad = np.deg2rad(Plane_Angle)
+
+        ## PRE-INIT ARRAYS
+        t_x =   np.array([1,0],dtype=np.float64)
+        n_hat = np.array([0,1],dtype=np.float64)
+
+        ## DEFINE PLANE TANGENT UNIT-VECTOR
+        t_x[0] = -np.cos(Plane_Angle_rad)
+        t_x[1] = -np.sin(Plane_Angle_rad)
+
+        ## DEFINE PLANE NORMAL UNIT-VECTOR
+        n_hat[0] = np.sin(Plane_Angle_rad)
+        n_hat[1] = -np.cos(Plane_Angle_rad)
+
+        return n_hat,t_x
+    
+    def _B_to_W(self,vec,phi,deg=False):
+
+        if deg == True:
             phi = np.deg2rad(phi)
 
         R_BW = np.array([
@@ -272,9 +331,9 @@ class SAR_Env_2D(gym.Env):
 
         return R_BW.dot(vec)
 
-    def _P_to_W(self,vec,theta,degrees=False):
+    def _P_to_W(self,vec,theta,deg=False):
 
-        if degrees == True:
+        if deg == True:
             theta = np.deg2rad(theta)
 
         R_PW = np.array([
@@ -285,7 +344,7 @@ class SAR_Env_2D(gym.Env):
         return R_PW.dot(vec)
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(Plane_Angle_range=[90,180])
+    env = SAR_Env_2D(Plane_Angle_range=[135,135])
     env.RENDER = True
 
     for ep in range(25):
