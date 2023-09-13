@@ -54,7 +54,7 @@ class SAR_Env_2D(gym.Env):
         self.action_trg = np.zeros(self.action_space.shape,dtype=np.float32) # Action values at triggering
 
         ## PLANE PARAMETERS
-        self.Plane_Pos = [1,1]
+        self.Plane_Pos = [2,0]
         self.Plane_Angle = 135
 
         ## SAR DIMENSIONS CONSTRAINTS 
@@ -93,6 +93,45 @@ class SAR_Env_2D(gym.Env):
         Plane_Angle_High = self.Plane_Angle_range[1]
         self.Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
 
+        ## RESET POSITION RELATIVE TO LANDING SURFACE (BASED ON STARTING TAU VALUE)
+        # (Derivation: Research_Notes_Book_3.pdf (6/22/23))
+        r_PO = np.array(self.Plane_Pos)                             # Plane Position w/r to origin
+        n_hat,t_x = self._calc_PlaneNormal(self.Plane_Angle)    # Plane direction vectors
+
+        ## SAMPLE VELOCITY AND FLIGHT ANGLE
+        if V_mag == None or Phi_rel == None:
+            V_mag,Phi_rel = self._sample_flight_conditions()
+
+        else:
+            V_mag = V_mag           # Flight velocity
+            Phi_rel = Phi_rel   # Flight angle  
+
+        ## RELATIVE VEL VECTORS
+        V_perp = V_mag*np.sin(np.deg2rad(Phi_rel))
+        V_tx = V_mag*np.cos(np.deg2rad(Phi_rel))
+        V_BP = np.array([V_tx,V_perp])
+
+        ## CONVERT RELATIVE VEL VECTORS TO WORLD COORDS
+        V_BO = self._P_to_W(V_BP,self.Plane_Angle,deg=True)
+        V_hat = V_BO/np.linalg.norm(V_BO)   # Flight Velocity unit vector
+
+
+        D_perp = (self.Tau_0*V_perp)
+
+        ## INITIAL POSITION RELATIVE TO PLANE
+        r_BP = -(D_perp/(V_hat.dot(n_hat)+EPS))*V_hat
+
+        ## INITIAL POSITION IN GLOBAL COORDS
+        r_BO = r_PO + r_BP 
+
+        ## LAUNCH QUAD W/ DESIRED VELOCITY
+        self._set_state(r_BO[0],V_BO[0],r_BO[1],V_BO[1],0,0)
+
+        ## RESET/UPDATE RUN CONDITIONS
+        self.start_time_rollout = self.t
+        self.start_time_pitch = np.nan
+        self.start_time_impact = np.nan
+
         return self._get_obs(),{}
 
     def step(self, action):
@@ -120,14 +159,14 @@ class SAR_Env_2D(gym.Env):
     def render(self):
 
         ## SET DEFAULT WINDOW POSITION
-        z = 500
-        y = 700
-        os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (z,y)
+        Win_Loc_z = 500
+        Win_Loc_y = 700
+        os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (Win_Loc_z,Win_Loc_y)
 
         ## CONVERT COORDINATES TO PIXEL LOCATION
         def c2p(Pos):
 
-            x_offset = 2  # [m]
+            x_offset = 1  # [m]
             y_offset = 2  # [m]
 
             scale_x = self.screen_width/self.world_width
@@ -215,7 +254,7 @@ class SAR_Env_2D(gym.Env):
         self.screen.blit(text_Plane_Angle,  (5,155))
 
         ## WINDOW/SIM UPDATE RATE
-        self.clock.tick(60) # [Hz]
+        self.clock.tick(30) # [Hz]
         pygame.display.flip()
 
     def close(self):
@@ -250,6 +289,12 @@ class SAR_Env_2D(gym.Env):
     def _get_state(self):
 
         return self.state
+    
+    def _set_state(self,x,vx,z,vz,phi,dphi):
+
+        self.state = (x,vx,z,vz,phi,dphi)
+
+
 
     def _get_obs(self):
 
@@ -276,6 +321,37 @@ class SAR_Env_2D(gym.Env):
         Tau = np.clip(D_perp/(V_perp + EPS),0,5)
 
         return np.array([Tau,Theta_x,D_perp,Plane_Angle],dtype=np.float32)
+    
+    def _sample_flight_conditions(self):
+        """This function samples the flight velocity and angle from the supplied range.
+        Velocity is sampled from a uniform distribution. Phi is sampled from a set of 
+        uniform distributions which are weighted such that edge cases are only sampled 10% of the time.
+        Poor performance on edge cases can cause poor learning convergence.
+
+        Returns:
+            V_mag,Phi_rel: Sampled flight velocity and flight angle
+        """        
+
+        ## SAMPLE VEL FROM UNIFORM DISTRIBUTION IN VELOCITY RANGE
+        Vel_Low = self.Vel_range[0]
+        Vel_High = self.Vel_range[1]
+        V_mag = np.random.uniform(low=Vel_Low,high=Vel_High)
+
+        ## SAMPLE RELATIVE PHI FROM A WEIGHTED SET OF UNIFORM DISTRIBUTIONS
+        Phi_rel_Low = self.Phi_rel_range[0]
+        Phi_rel_High = self.Phi_rel_range[1]
+        Phi_rel_Range = Phi_rel_High-Phi_rel_Low
+
+        Dist_Num = np.random.choice([0,1,2],p=[0.1,0.8,0.1]) # Probability of sampling distribution
+
+        if Dist_Num == 0: # Low Range
+            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_Low, high=Phi_rel_Low + 0.1*Phi_rel_Range)
+        elif Dist_Num == 1: # Medium Range
+            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_Low + 0.1*Phi_rel_Range, high=Phi_rel_High - 0.1*Phi_rel_Range)
+        elif Dist_Num == 2: # High Range
+            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_High - 0.1*Phi_rel_Range, high=Phi_rel_High)
+       
+        return V_mag,Phi_rel
 
 
     def _get_pose(self,x_pos,z_pos,phi):
@@ -344,12 +420,12 @@ class SAR_Env_2D(gym.Env):
         return R_PW.dot(vec)
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(Plane_Angle_range=[135,135])
+    env = SAR_Env_2D(Plane_Angle_range=[0,0],Tau_0=1)
     env.RENDER = True
 
     for ep in range(25):
         
-        env.reset()
+        env.reset(V_mag=1,Phi_rel=90)
         Done = False
 
         while not Done:
