@@ -17,7 +17,7 @@ ORANGE = (255,128,0)
 class SAR_Env_2D(gym.Env):
     """Custom Environment that follows gym interface."""
 
-    def __init__(self,GZ_Timeout=True,My_range=[-8.0,8.0],Vel_range=[1.5,3.5],Phi_rel_range=[0,90],Plane_Angle_range=[180,180],Tau_0=0.4):
+    def __init__(self,GZ_Timeout=True,My_range=[-8.0,8.0],Vel_range=[1.5,3.5],Phi_rel_range=[0,90],Plane_Angle_range=[90,180],Tau_0=0.4):
 
         gym.Env.__init__(self)
 
@@ -84,12 +84,30 @@ class SAR_Env_2D(gym.Env):
 
     def reset(self, seed=None, options=None, V_mag=None, Phi_rel=None):
 
-        pass
+        ## SET PLANE POSE
+        Plane_Angle_Low = self.Plane_Angle_range[0]
+        Plane_Angle_High = self.Plane_Angle_range[1]
+        self.Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
+
+        return self._get_obs(),{}
 
     def step(self, action):
         
-        pass
-        # return observation, reward, terminated, truncated, info
+        if self.RENDER:
+            self.render()
+
+        reward = 0
+        terminated = False
+        truncated = False
+
+        return (
+            self._get_obs(),
+            reward,
+            terminated,
+            truncated,
+            {},
+
+        )
 
 
     def render(self):
@@ -175,6 +193,16 @@ class SAR_Env_2D(gym.Env):
             pygame.quit()
             self.isopen = False
 
+    def _get_obs(self):
+
+        Tau = 0.0
+        Theta_x = 0.0
+        D_perp = 0.0
+        Plane_Angle = self.Plane_Angle
+
+        return np.array([Tau,Theta_x,D_perp,Plane_Angle],dtype=np.float32)
+
+
     def _get_pose(self,x_pos,z_pos,phi):
 
         (L,gamma,M_B,I_B,PD) = self.params
@@ -219,7 +247,11 @@ class SAR_Env_2D(gym.Env):
         return R_PW.dot(vec)
 
 if __name__ == '__main__':
-    env = SAR_Env_2D()
+    env = SAR_Env_2D(Plane_Angle_range=[90,180])
+    env.RENDER = True
 
     while True:
-        env.render()
+        
+        env.reset()
+        action = env.action_space.sample()
+        obs,reward,Done,truncated,_ = env.step(action)
