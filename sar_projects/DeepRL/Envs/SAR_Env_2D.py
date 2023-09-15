@@ -54,8 +54,8 @@ class SAR_Env_2D(gym.Env):
         self.action_trg = np.zeros(self.action_space.shape,dtype=np.float32) # Action values at triggering
 
         ## PLANE PARAMETERS
-        self.Plane_Pos = [2,0]
-        self.Plane_Angle = 135
+        self.Plane_Pos = [0,1]
+        self.Plane_Angle = 180
 
         ## SAR DIMENSIONS CONSTRAINTS 
         gamma = np.deg2rad(30)  # Leg Angle [m]
@@ -155,13 +155,16 @@ class SAR_Env_2D(gym.Env):
 
     def step(self, action):
         
-        action[0] = 2
 
         ########## PRE-POLICY TRIGGER ##########
         if action[0] <= self.Trg_threshold:
 
             ## GRAB CURRENT OBSERVATION
             obs = self._get_obs()
+
+            ## CHECK FOR IMPACT
+            x,vx,z,vz,phi,dphi = self._get_state()
+            self.impact_flag,self.impact_conditions = self._get_impact_conditions(x,z,phi)
 
             ## CHECK FOR DONE
             self.Done = bool(
@@ -220,7 +223,6 @@ class SAR_Env_2D(gym.Env):
             truncated,
             {},
         )
-
 
     def render(self):
 
@@ -360,6 +362,44 @@ class SAR_Env_2D(gym.Env):
 
         return self.params
 
+    def _get_impact_conditions(self,x,z,phi):
+
+        impact_flag  = False
+        Body_contact = False
+        Leg1_contact = False
+        Leg2_contact = False
+
+        _,Leg1_Pos,Leg2_Pos,Prop1_Pos,Prop2_Pos = self._get_pose(x,z,phi)
+
+        ## CHECK FOR PROP CONTACT
+        for Prop_Pos in [Prop1_Pos,Prop2_Pos]:
+
+            Prop_wrt_Plane = self._W_to_P(-(self.Plane_Pos - Prop_Pos),self.Plane_Angle,deg=True)
+            if Prop_wrt_Plane[1] >= 0:
+                impact_flag = True
+                Body_contact = True
+
+                return impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
+
+        ## CHECK FOR LEG1 CONTACT
+        Leg1_wrt_Plane = self._W_to_P(-(self.Plane_Pos - Leg1_Pos),self.Plane_Angle,deg=True)
+        if Leg1_wrt_Plane[1] >= 0:
+            impact_flag = True
+            Leg1_contact = True
+
+            return impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
+
+        ## CHECK FOR LEG2 CONTACT
+        Leg2_wrt_Plane = self._W_to_P(-(self.Plane_Pos - Leg2_Pos),self.Plane_Angle,deg=True)
+        if Leg2_wrt_Plane[1] >= 0:
+            impact_flag = True
+            Leg2_contact = True
+
+            return impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
+
+
+        return impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
+
     def _set_state(self,x,vx,z,vz,phi,dphi):
 
         self.state = (x,vx,z,vz,phi,dphi)
@@ -476,13 +516,6 @@ class SAR_Env_2D(gym.Env):
 
             self.state = (x,vx,z,vz,phi,dphi)
 
-
-
-
-
-
-
-
     def _get_pose(self,x_pos,z_pos,phi):
 
         (L,gamma,M_B,I_B,PD) = self.params
@@ -547,9 +580,22 @@ class SAR_Env_2D(gym.Env):
         ])
 
         return R_PW.dot(vec)
+    
+    def _W_to_P(self,vec,theta,deg=False):
+
+        if deg == True:
+            theta = np.deg2rad(theta)
+
+        R_WP = np.array([
+            [-np.cos(theta),-np.sin(theta)],
+            [ np.sin(theta),-np.cos(theta)]
+        ])
+
+        return R_WP.dot(vec)
+
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(Plane_Angle_range=[180,180],Tau_0=0.5)
+    env = SAR_Env_2D(Plane_Angle_range=[135,135],Tau_0=0.5)
     env.RENDER = True
 
     for ep in range(25):
@@ -561,5 +607,5 @@ if __name__ == '__main__':
 
         while not Done:
             action = env.action_space.sample()
-            action[1] = 1
+            action[0] = 0
             obs,reward,Done,truncated,_ = env.step(action)
