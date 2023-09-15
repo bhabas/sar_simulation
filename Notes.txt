@@ -9,3 +9,13 @@ Also, try deleting the build and devel folders in catkin_ws and then try recompi
 
 Follow these instructions to control location Gazebo launches (http://webcache.googleusercontent.com/search?q=cache:svGoLDg6W8wJ:answers.gazebosim.org/question/12804/is-there-a-way-to-start-gazebo-with-a-smaller-window-size/&cd=9&hl=en&ct=clnk&gl=us&client=ubuntu)
 
+
+RCBenchMark
+=======================
+- On linux installations, you need to install "libgconf-2-4" before the installation can run
+    - To do so run: 
+        sudo apt update
+        sudo apt install libgconf-2-4
+    - To run software run:
+        chmod +x ./nw
+        ./nw
