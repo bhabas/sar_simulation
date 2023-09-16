@@ -58,18 +58,21 @@ class SAR_Env_2D(gym.Env):
         self.Plane_Angle = 180
 
         ## SAR DIMENSIONS CONSTRAINTS 
-        gamma = np.deg2rad(45)  # Leg Angle [m]
+        gamma = np.deg2rad(20)  # Leg Angle [m]
         L = 150.0e-3             # Leg Length [m]
         M_B = 35.0e-3           # Body Mass [kg]
         I_B = 17.0e-6           # Body Moment of Inertia [kg*m^2]
-        PD = 32.5e-3            # Prop Distance from COM [m]
+        PD = 75.5e-3            # Prop Distance from COM [m]
         self.params = (L,gamma,M_B,I_B,PD)
 
         ## PHYSICS PARAMETERS
         self.g = 9.81       # Gravity [m/s^2]
         self.dt = 0.005     # [s]
         self.t = 0          # [s]
-        self.t_max = 0.8    # [s]
+
+        self.t_episode_max = 2.0   # [s]
+        self.t_impact_max = 2.0   # [s]
+
         self.state = (0,0.1,0,0,0,0) # Initial State (X_pos,Z_pos,phi,Vx,Vz,dphi)
 
 
@@ -136,15 +139,15 @@ class SAR_Env_2D(gym.Env):
         r_BO = r_PO + r_BP 
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-        self._set_state(r_BO[0],r_BO[1],np.deg2rad(0),V_BO[0],V_BO[1],0)
+        deg = np.random.uniform(0,45)
+        self._set_state(r_BO[0],r_BO[1],np.deg2rad(45),V_BO[0],V_BO[1],0)
 
         ## UPDATE RENDER
         if self.RENDER:
             self.render()
 
         ## RESET/UPDATE RUN CONDITIONS
-        self.start_time_rollout = self.t
-        self.start_time_pitch = np.nan
+        self.start_time_episode = self.t
         self.start_time_impact = np.nan
 
         ## RESET 2D SIM FLAGS
@@ -181,7 +184,7 @@ class SAR_Env_2D(gym.Env):
 
             ## CHECK FOR DONE
             terminated = self.Done
-            truncated = bool(self.t - self.start_time_rollout > self.t_max) # EPISODE TIME-OUT 
+            truncated = bool(self.t - self.start_time_episode > self.t_episode_max) # EPISODE TIME-OUT 
 
             ## CALCULATE REWARD
             reward = 0
@@ -236,11 +239,12 @@ class SAR_Env_2D(gym.Env):
 
         ## START PROJECTILE FLIGHT
         while not self.Done:
-
+            
             ## CHECK FOR IMPACT
             x,z,phi,vx,vz,dphi = self._get_state()
             L,gamma,M_B,I_B,PD = self._get_params()
             self.impact_flag,self.impact_conditions = self._get_impact_conditions(x,z,phi)
+
             
 
             if self.impact_flag == False:
@@ -251,6 +255,9 @@ class SAR_Env_2D(gym.Env):
                 
 
             elif self.impact_flag == True:
+
+                ## START IMPACT TIMER
+                start_time_impact = self.t
 
                 self.phi_impact = np.rad2deg(phi)
                 (BodyContact,Leg1Contact,Leg2Contact) = self.impact_conditions
@@ -281,9 +288,28 @@ class SAR_Env_2D(gym.Env):
                                 + M_B*self.g*L*np.cos(self.Plane_Angle_rad)*np.cos(beta)
                         
                         ## ITER STEP BETA
+                        self.t += self.dt
                         beta_acc = -M_g/I_C
                         beta = beta + self.dt*dbeta
                         dbeta = dbeta + self.dt*beta_acc
+
+                        ## CHECK FOR END CONDITIONS
+
+                        if beta >= self._beta_landing(impact_leg=1):
+                            self.BodyContact_flag = False
+                            self.pad_connections = 4
+                            self.Done = True
+
+                        elif beta <= self._beta_prop(impact_leg=1):
+                            self.BodyContact_flag = True
+                            self.pad_connections = 2
+                            self.Done = True
+
+                        elif self.t - start_time_impact >= self.t_impact_max:
+                            self.BodyContact_flag = False
+                            self.pad_connections = 2
+                            self.Done = True
+
 
                         ## CONVERT BODY BACK TO WORLD COORDS
                         phi = np.deg2rad(90) - beta - self.Plane_Angle_rad + gamma
@@ -317,7 +343,7 @@ class SAR_Env_2D(gym.Env):
                     self.D_min = D_perp 
 
 
-            truncated = bool(self.t - self.start_time_rollout > self.t_max) # EPISODE TIME-OUT 
+            truncated = bool(self.t - self.start_time_episode > self.t_episode_max) # EPISODE TIME-OUT 
 
             ## CHECK FOR DONE
             self.Done = bool(
@@ -332,6 +358,31 @@ class SAR_Env_2D(gym.Env):
 
             return self.Done,truncated
         
+    def _beta_landing(self,impact_leg):
+
+        L,gamma,M_B,I_B,PD = self._get_params()
+
+        if impact_leg == 1:
+            beta_max = np.pi/2 + gamma
+            return beta_max
+
+        elif impact_leg == 2:
+            return None
+        
+    def _beta_prop(self,impact_leg):
+
+        L,gamma,M_B,I_B,PD = self._get_params()
+
+        if impact_leg == 1:
+
+            a = np.sqrt(PD**2 + L**2 - 2*PD*L*np.cos(np.pi/2-gamma))
+            beta_min = np.arccos((L**2 + a**2 - PD**2)/(2*a*L))
+
+            return beta_min
+
+        elif impact_leg == 2:
+            return None
+
     def _impact_conversion(self,impact_state,params,impact_conditions):
 
         x,z,phi,vx,vz,dphi = impact_state
@@ -362,8 +413,6 @@ class SAR_Env_2D(gym.Env):
 
 
         return None,None
-
-
 
     def render(self):
 
@@ -734,7 +783,7 @@ class SAR_Env_2D(gym.Env):
         return R_WP.dot(vec)
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(Plane_Angle_range=[45,45],Tau_0=0.2)
+    env = SAR_Env_2D(Plane_Angle_range=[-90,90],Tau_0=0.5)
     env.RENDER = True
 
     for ep in range(25):
