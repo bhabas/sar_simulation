@@ -54,7 +54,7 @@ class SAR_Env_2D(gym.Env):
         self.action_trg = np.zeros(self.action_space.shape,dtype=np.float32) # Action values at triggering
 
         ## PLANE PARAMETERS
-        self.Plane_Pos = [0,1]
+        self.Plane_Pos = [1,1]
         self.Plane_Angle = 180
 
         ## SAR DIMENSIONS CONSTRAINTS 
@@ -70,7 +70,8 @@ class SAR_Env_2D(gym.Env):
         self.dt = 0.005     # [s]
         self.t = 0          # [s]
         self.t_max = 5      # [s]
-        self.state = (0,0.1,0,0.1,0,0) # Initial State (X_pos,V_x,Z_pos,V_z,phi,dphi)
+        self.state = (0,0.1,0,0,0,0) # Initial State (X_pos,Z_pos,phi,Vx,Vz,dphi)
+
 
 
         ## RENDERING PARAMETERS
@@ -134,7 +135,7 @@ class SAR_Env_2D(gym.Env):
         r_BO = r_PO + r_BP 
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-        self._set_state(r_BO[0],V_BO[0],r_BO[1],V_BO[1],0,0)
+        self._set_state(r_BO[0],r_BO[1],0,V_BO[0],V_BO[1],0)
 
         ## UPDATE RENDER
         if self.RENDER:
@@ -163,7 +164,7 @@ class SAR_Env_2D(gym.Env):
             obs = self._get_obs()
 
             ## CHECK FOR IMPACT
-            x,vx,z,vz,phi,dphi = self._get_state()
+            x,z,phi,vx,vz,dphi = self._get_state()
             self.impact_flag,self.impact_conditions = self._get_impact_conditions(x,z,phi)
 
             ## CHECK FOR DONE
@@ -255,7 +256,7 @@ class SAR_Env_2D(gym.Env):
 
 
         ## GET CURRENT STATE
-        x,vx,z,vz,phi,dphi = self._get_state()
+        x,z,phi,vx,vz,dphi = self._get_state()
         
         ## CREATE BACKGROUND SURFACE
         self.surf = pygame.Surface((self.screen_width, self.screen_height))
@@ -335,7 +336,7 @@ class SAR_Env_2D(gym.Env):
     def _iter_step(self):
 
         ## CURRENT STATE
-        x,vx,z,vz,phi,dphi = self._get_state()
+        x,z,phi,vx,vz,dphi = self._get_state()
 
         ## STEP UPDATE
         self.t += self.dt
@@ -352,7 +353,7 @@ class SAR_Env_2D(gym.Env):
         phi = phi + self.dt*dphi
         dphi = dphi + self.dt*phi_acc
 
-        self.state = (x,vx,z,vz,phi,dphi)
+        self.state = (x,z,phi,vx,vz,dphi)
 
     def _get_state(self):
 
@@ -400,14 +401,14 @@ class SAR_Env_2D(gym.Env):
 
         return impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
 
-    def _set_state(self,x,vx,z,vz,phi,dphi):
+    def _set_state(self,x,z,phi,vx,vz,dphi):
 
-        self.state = (x,vx,z,vz,phi,dphi)
+        self.state = (x,z,phi,vx,vz,dphi)
 
     def _get_obs(self):
 
         ## UPDATE SAR POS AND VEL
-        x,vx,z,vz,theta,dtheta = self._get_state()
+        x,z,phi,vx,vz,dphi = self._get_state()
         r_BO = np.array([x,z])
         V_BO = np.array([vx,vz])
 
@@ -482,7 +483,7 @@ class SAR_Env_2D(gym.Env):
 
     def _iter_step_Rot(self,Rot_action):
 
-        x,vx,z,vz,phi,dphi = self._get_state()
+        x,z,phi,vx,vz,dphi = self._get_state()
         L,gamma,M_B,I_B,PD = self._get_params()
 
         ## TURN OFF BODY MOMENT IF ROTATED PAST 90 DEG
@@ -514,7 +515,7 @@ class SAR_Env_2D(gym.Env):
             phi = phi + self.dt*dphi
             dphi = dphi + self.dt*phi_acc
 
-            self.state = (x,vx,z,vz,phi,dphi)
+            self.state = (x,z,phi,vx,vz,dphi)
 
     def _get_pose(self,x_pos,z_pos,phi):
 
