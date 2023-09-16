@@ -20,8 +20,8 @@ R_BetaP = Matrix([
 ])
 
 R_BBeta = Matrix([
-    [-sin(gamma), cos(gamma)],
-    [-cos(gamma),-sin(gamma)],
+    [ sin(gamma), cos(gamma)],
+    [ -cos(gamma), sin(gamma)],
 ])
 
 # Multiply the matrices
