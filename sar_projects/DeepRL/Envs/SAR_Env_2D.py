@@ -7,6 +7,7 @@ import os
 
 ## DEFINE COLORS
 WHITE = (255,255,255)
+GREY = (200,200,200)
 BLACK = (0,0,0)
 RED = (204,0,0)
 BLUE = (29,123,243)
@@ -509,17 +510,22 @@ class SAR_Env_2D(gym.Env):
         self.surf = pygame.Surface((self.screen_width, self.screen_height))
         self.surf.fill(WHITE)
 
-        ## ORIGIN
+        ## ORIGIN AXES
         pygame.draw.line(self.surf,GREEN,c2p((0,0)),c2p((0.1,0)),width=5) # X_w   
         pygame.draw.line(self.surf,BLUE, c2p((0,0)),c2p((0,0.1)),width=5) # Z_w   
         pygame.draw.circle(self.surf,RED,c2p((0,0)),radius=4,width=0)
 
 
         ## LANDING SURFACE
+        pygame.draw.line(self.surf,GREY,
+                         c2p(self.Plane_Pos + self._P_to_W(np.array([-2,0]),self.Plane_Angle,deg=True)),
+                         c2p(self.Plane_Pos + self._P_to_W(np.array([+2,0]),self.Plane_Angle,deg=True)),width=2)
+        
         pygame.draw.line(self.surf,BLACK,
                          c2p(self.Plane_Pos + self._P_to_W(np.array([-0.5,0]),self.Plane_Angle,deg=True)),
                          c2p(self.Plane_Pos + self._P_to_W(np.array([+0.5,0]),self.Plane_Angle,deg=True)),width=5)
-        
+    
+        ## LANDING SURFACE AXES
         pygame.draw.line(self.surf,GREEN,c2p(self.Plane_Pos),c2p(self.Plane_Pos + self._P_to_W(np.array([0.1,0]),self.Plane_Angle,deg=True)),width=7)  # t_x   
         pygame.draw.line(self.surf,BLUE, c2p(self.Plane_Pos),c2p(self.Plane_Pos + self._P_to_W(np.array([0,0.1]),self.Plane_Angle,deg=True)),width=7)  # n_p 
         pygame.draw.circle(self.surf,RED,c2p(self.Plane_Pos),radius=4,width=0)
@@ -527,10 +533,16 @@ class SAR_Env_2D(gym.Env):
 
         ## DRAW QUADROTOR
         Pose = self._get_pose(x,z,phi)
-        pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[1]),width=3)
-        pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[2]),width=3)
-        pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[3]),width=3)
-        pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[4]),width=3)
+        pygame.draw.line(self.surf,RED,c2p(Pose[0]),c2p(Pose[1]),width=3) # Leg 1
+        pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[2]),width=3) # Leg 2
+        pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[3]),width=3) # Prop 1
+        pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[4]),width=3) # Prop 2
+
+        ## BODY AXES
+        pygame.draw.line(self.surf,GREEN,c2p(Pose[0]),c2p(Pose[0] + self._B_to_W(np.array([0.05,0]),phi)),width=5)  # B_x   
+        pygame.draw.line(self.surf,BLUE,c2p(Pose[0]),c2p(Pose[0] + self._B_to_W(np.array([0,0.05]),phi)),width=5)  # B_z  
+
+
 
         ## TRIGGER INDICATOR
         if self.Pol_Trg_Flag == True:
