@@ -58,7 +58,7 @@ class SAR_Env_2D(gym.Env):
         self.Plane_Angle = 180
 
         ## SAR DIMENSIONS CONSTRAINTS 
-        gamma = np.deg2rad(30)  # Leg Angle [m]
+        gamma = np.deg2rad(45)  # Leg Angle [m]
         L = 150.0e-3             # Leg Length [m]
         M_B = 35.0e-3           # Body Mass [kg]
         I_B = 17.0e-6           # Body Moment of Inertia [kg*m^2]
@@ -101,6 +101,7 @@ class SAR_Env_2D(gym.Env):
         Plane_Angle_Low = self.Plane_Angle_range[0]
         Plane_Angle_High = self.Plane_Angle_range[1]
         self.Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
+        self.Plane_Angle_rad = np.radians(self.Plane_Angle)
 
         ## RESET POSITION RELATIVE TO LANDING SURFACE (BASED ON STARTING TAU VALUE)
         # (Derivation: Research_Notes_Book_3.pdf (6/22/23))
@@ -135,7 +136,7 @@ class SAR_Env_2D(gym.Env):
         r_BO = r_PO + r_BP 
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-        self._set_state(r_BO[0],r_BO[1],np.deg2rad(45),V_BO[0],V_BO[1],0)
+        self._set_state(r_BO[0],r_BO[1],np.deg2rad(0),V_BO[0],V_BO[1],0)
 
         ## UPDATE RENDER
         if self.RENDER:
@@ -238,6 +239,7 @@ class SAR_Env_2D(gym.Env):
 
             ## CHECK FOR IMPACT
             x,z,phi,vx,vz,dphi = self._get_state()
+            L,gamma,M_B,I_B,PD = self._get_params()
             self.impact_flag,self.impact_conditions = self._get_impact_conditions(x,z,phi)
             
 
@@ -262,7 +264,41 @@ class SAR_Env_2D(gym.Env):
                 ## LEG 1 CONTACT
                 elif Leg1Contact == True:
 
-                    beta_0,dbeta_0 = self._impact_conversion(self.state,self.params,self.impact_conditions)
+                    beta,dbeta = self._impact_conversion(self.state,self.params,self.impact_conditions)
+
+                    ## CALC INERTIA ABOUT CONTACT POINT
+                    I_C = M_B*L**2 + I_B
+                    
+                    ## FIND IMPACT COORDS (wrt World-Coords)
+                    r_C1_W = self._get_pose(x,z,phi)[1]
+
+
+                    ## ITERATE THROUGH SWING
+                    while not self.Done:
+
+                        ## GRAVITY MOMENT
+                        M_g = -M_B*self.g*L*np.sin(self.Plane_Angle_rad)*np.sin(beta) \
+                                + M_B*self.g*L*np.cos(self.Plane_Angle_rad)*np.cos(beta)
+                        
+                        ## ITER STEP BETA
+                        beta_acc = -M_g/I_C
+                        beta = beta + self.dt*dbeta
+                        dbeta = dbeta + self.dt*beta_acc
+
+                        ## CONVERT BODY BACK TO WORLD COORDS
+                        phi = np.deg2rad(90) - beta - self.Plane_Angle_rad + gamma
+
+                        temp = self._Beta_to_P(np.array([L,0]),beta)
+                        r_B_C1 = self._P_to_W(temp,self.Plane_Angle_rad)
+                        r_B_W = r_C1_W + r_B_C1
+
+                        self.state = (r_B_W[0],r_B_W[1],phi,0,0,0)
+
+                        if self.RENDER:
+                            self.render()
+
+                        
+
 
                     self.Done = True
 
@@ -309,7 +345,7 @@ class SAR_Env_2D(gym.Env):
         if Leg1Contact:
             
             ## CALC BETA ANGLE
-            Beta = np.deg2rad(90) - phi - np.deg2rad(self.Plane_Angle) + gamma
+            Beta = np.deg2rad(90) - phi - self.Plane_Angle_rad + gamma
 
             ## CALC DBETA FROM MOMENTUM CONVERSION
             H_V_perp = M_B*L*V_perp*np.cos(Beta)
@@ -685,6 +721,17 @@ class SAR_Env_2D(gym.Env):
 
         return R_WP.dot(vec)
 
+    def _Beta_to_P(self,vec,beta,deg=False):
+
+        if deg == True:
+            beta = np.deg2rad(beta)
+
+        R_WP = np.array([
+            [-np.cos(beta), np.sin(beta)],
+            [-np.sin(beta),-np.cos(beta)]
+        ])
+
+        return R_WP.dot(vec)
 
 if __name__ == '__main__':
     env = SAR_Env_2D(Plane_Angle_range=[45,45],Tau_0=0.2)
