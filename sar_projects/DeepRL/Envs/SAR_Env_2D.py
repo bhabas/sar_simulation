@@ -58,7 +58,7 @@ class SAR_Env_2D(gym.Env):
         self.Plane_Angle = 180
 
         ## SAR DIMENSIONS CONSTRAINTS 
-        gamma = np.deg2rad(30)  # Leg Angle [m]
+        gamma = np.deg2rad(45)  # Leg Angle [m]
         L = 75.0e-3             # Leg Length [m]
         M_B = 35.0e-3           # Body Mass [kg]
         I_B = 17.0e-6           # Body Moment of Inertia [kg*m^2]
@@ -69,7 +69,7 @@ class SAR_Env_2D(gym.Env):
         self.g = 9.81       # Gravity [m/s^2]
         self.dt = 0.005     # [s]
         self.t = 0          # [s]
-        self.t_max = 0.02    # [s]
+        self.t_max = 0.8    # [s]
         self.state = (0,0.1,0,0,0,0) # Initial State (X_pos,Z_pos,phi,Vx,Vz,dphi)
 
 
@@ -239,6 +239,7 @@ class SAR_Env_2D(gym.Env):
             ## CHECK FOR IMPACT
             x,z,phi,vx,vz,dphi = self._get_state()
             self.impact_flag,self.impact_conditions = self._get_impact_conditions(x,z,phi)
+            
 
             if self.impact_flag == False:
 
@@ -249,13 +250,36 @@ class SAR_Env_2D(gym.Env):
 
             elif self.impact_flag == True:
 
-                a =5
+                self.phi_impact = np.rad2deg(phi)
+                (BodyContact,Leg1Contact,Leg2Contact) = self.impact_conditions
 
-            # ## CHECK FOR DONE
-                # self.Done = bool(
-                #     self.Done
-                #     or (self.impact_flag or self.BodyContact_flag)  # BODY CONTACT W/O POLICY TRIGGER
-                # )
+                ## BODY CONTACT
+                if BodyContact == True:
+                    self.BodyContact_flag = True
+                    self.pad_connections = 0
+                    self.Done = True
+
+                ## LEG 1 CONTACT
+                elif Leg1Contact == True:
+
+                    beta_0,dbeta_0 = self._impact_conversion(self.state,self.params,self.impact_conditions)
+
+                    self.Done = True
+
+                    
+
+                ## LEG 2 CONTACT
+                elif Leg2Contact == True:
+
+                    self.Done = True
+
+
+            ## UPDATE MINIMUM DISTANCE
+            D_perp = self._get_obs()[2]
+            if not self.Done:
+                if D_perp <= self.D_min:
+                    self.D_min = D_perp 
+
 
             truncated = bool(self.t - self.start_time_rollout > self.t_max) # EPISODE TIME-OUT 
 
@@ -271,9 +295,38 @@ class SAR_Env_2D(gym.Env):
                 self.render()
 
             return self.Done,truncated
-
-
         
+    def _impact_conversion(self,impact_state,params,impact_conditions):
+
+        x,z,phi,vx,vz,dphi = impact_state
+        L,gamma,M_B,I_B,PD = params
+        (BodyContact,Leg1Contact,Leg2Contact) = impact_conditions
+
+        I_C = M_B*L**2 + I_B
+
+        if Leg1Contact:
+            
+            ## CALC BETA ANGLE
+            Beta = np.deg2rad(90) - phi - np.deg2rad(self.Plane_Angle) + gamma
+
+            ## CALC DBETA FROM MOMENTUM CONVERSION
+
+            H_dphi = I_B/I_C*dphi
+            H_vx = -M_B*L*vx/I_C*(np.sin(gamma)*np.sin(phi) + np.cos(gamma)*np.cos(phi))
+            H_vz = -M_B*L*vz/I_C*(np.sin(gamma)*np.cos(phi) - np.cos(gamma)*np.sin(phi))
+            
+            dBeta = H_dphi + H_vx + H_vz
+
+            return Beta,dBeta
+
+        elif Leg2Contact:
+            pass
+
+
+
+        return None,None
+
+
 
     def render(self):
 
@@ -373,7 +426,7 @@ class SAR_Env_2D(gym.Env):
         self.screen.blit(text_Plane_Angle,  (5,155))
 
         ## WINDOW/SIM UPDATE RATE
-        self.clock.tick(60) # [Hz]
+        self.clock.tick(30) # [Hz]
         pygame.display.flip()
 
     def close(self):
@@ -633,13 +686,13 @@ class SAR_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(Plane_Angle_range=[-45,-45],Tau_0=0.5)
+    env = SAR_Env_2D(Plane_Angle_range=[45,45],Tau_0=0.2)
     env.RENDER = True
 
     for ep in range(25):
         
         V_mag = 1
-        Phi_rel = 135
+        Phi_rel = 45
         obs = env.reset(V_mag=V_mag,Phi_rel=Phi_rel)
         Done = False
 
