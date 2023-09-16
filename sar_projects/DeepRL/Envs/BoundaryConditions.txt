@@ -1,0 +1,2 @@
+- Legs contact before rotation trigger
+- Starting position doesn't have clean trajectory and impact happens automatically or too soon

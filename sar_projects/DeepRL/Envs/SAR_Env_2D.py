@@ -54,7 +54,7 @@ class SAR_Env_2D(gym.Env):
         self.action_trg = np.zeros(self.action_space.shape,dtype=np.float32) # Action values at triggering
 
         ## PLANE PARAMETERS
-        self.Plane_Pos = [1,1]
+        self.Plane_Pos = [1,0]
         self.Plane_Angle = 180
 
         ## SAR DIMENSIONS CONSTRAINTS 
@@ -69,7 +69,7 @@ class SAR_Env_2D(gym.Env):
         self.g = 9.81       # Gravity [m/s^2]
         self.dt = 0.005     # [s]
         self.t = 0          # [s]
-        self.t_max = 5      # [s]
+        self.t_max = 0.02    # [s]
         self.state = (0,0.1,0,0,0,0) # Initial State (X_pos,Z_pos,phi,Vx,Vz,dphi)
 
 
@@ -156,7 +156,6 @@ class SAR_Env_2D(gym.Env):
 
     def step(self, action):
         
-
         ########## PRE-POLICY TRIGGER ##########
         if action[0] <= self.Trg_threshold:
 
@@ -170,7 +169,7 @@ class SAR_Env_2D(gym.Env):
             ## CHECK FOR DONE
             self.Done = bool(
                 self.Done
-                or (self.impact_flag or self.BodyContact_flag)  # BODY CONTACT W/O FLIP TRIGGER
+                or (self.impact_flag or self.BodyContact_flag)  # BODY CONTACT W/O POLICY TRIGGER
             )
 
             ## UPDATE MINIMUM DISTANCE
@@ -181,49 +180,100 @@ class SAR_Env_2D(gym.Env):
 
             ## CHECK FOR DONE
             terminated = self.Done
-            truncated = bool(self.t - self.start_time_rollout > 3.5) # EPISODE TIME-OUT 
+            truncated = bool(self.t - self.start_time_rollout > self.t_max) # EPISODE TIME-OUT 
 
             ## CALCULATE REWARD
             reward = 0
 
             ## UPDATE SIM AND OBSERVATION
             self._iter_step()
-            obs = self._get_obs()
+            next_obs = self._get_obs()
 
             ## UPDATE RENDER
             if self.RENDER:
                 self.render()
+
+            return (
+                next_obs,
+                reward,
+                terminated,
+                truncated,
+                {},
+            )
 
 
         ########## POST-POLICY TRIGGER ##########
         elif action[0] >= self.Trg_threshold:
 
             ## GRAB CURRENT OBSERVATION
-            obs = self._get_obs()   # Return this observation because reward and future 
+            terminal_obs = self._get_obs()   # Return this observation because reward and future 
                                     # are defined by action taken here. Not obs at end of episode.
 
             ## SAVE TRIGGERING OBSERVATION AND ACTIONS
-            self.obs_trg = obs
-            self.Tau_trg = obs[0]
+            self.obs_trg = terminal_obs
+            self.Tau_trg = terminal_obs[0]
             self.action_trg = action       
 
             ## COMPLETE REST OF SIMULATION
-            self._finish_sim(action)   
-
-            terminated = self.Done = True
-            truncated = False          
+            terminated,truncated = self._finish_sim(action)       
 
             ## CALCULATE REWARD
             reward = self._CalcReward()    
 
+            return(
+                terminal_obs,
+                reward,
+                terminated,
+                truncated,
+                {},
+            )
 
-        return (
-            obs,
-            reward,
-            terminated,
-            truncated,
-            {},
-        )
+    def _finish_sim(self,action):
+
+        ## SCALE ACTION
+        scaled_action = 0.5 * (action[1] + 1) * (self.My_range[1] - self.My_range[0]) + self.My_range[0]
+
+        ## START PROJECTILE FLIGHT
+        while not self.Done:
+
+            ## CHECK FOR IMPACT
+            x,z,phi,vx,vz,dphi = self._get_state()
+            self.impact_flag,self.impact_conditions = self._get_impact_conditions(x,z,phi)
+
+            if self.impact_flag == False:
+
+                ## UPDATE STEP
+                self._iter_step_Rot(scaled_action)
+
+                
+
+            elif self.impact_flag == True:
+
+                a =5
+
+            # ## CHECK FOR DONE
+                # self.Done = bool(
+                #     self.Done
+                #     or (self.impact_flag or self.BodyContact_flag)  # BODY CONTACT W/O POLICY TRIGGER
+                # )
+
+            truncated = bool(self.t - self.start_time_rollout > self.t_max) # EPISODE TIME-OUT 
+
+            ## CHECK FOR DONE
+            self.Done = bool(
+                self.Done
+                or truncated
+                # or (vz <= -5.0 and self._get_obs()[2] >= 0.5) # IF SAR IS FALLING
+            )
+
+            ## UPDATE RENDER
+            if self.RENDER:
+                self.render()
+
+            return self.Done,truncated
+
+
+        
 
     def render(self):
 
@@ -355,6 +405,44 @@ class SAR_Env_2D(gym.Env):
 
         self.state = (x,z,phi,vx,vz,dphi)
 
+    def _iter_step_Rot(self,Rot_action):
+
+        ## PARAMS
+        L,gamma,M_B,I_B,PD = self._get_params()
+
+        ## CURRENT STATE
+        x,z,phi,vx,vz,dphi = self._get_state()
+
+        ## TURN OFF BODY MOMENT IF ROTATED PAST 90 DEG
+        if np.abs(phi) < np.deg2rad(90) and self.MomentCutoff == False:
+
+            My = Rot_action*1e-3
+
+        else: 
+
+            self.MomentCutoff= True
+            My = 0
+
+        Thrust = np.array([0,np.sign(My)*My/PD]) # Body Coords
+        Thrust_x,Thrust_z = self._B_to_W(Thrust,phi)
+
+        ## STEP UPDATE
+        self.t += self.dt
+
+        z_acc = Thrust_z/M_B - self.g
+        z = z + self.dt*vz
+        vz = vz + self.dt*z_acc
+
+        x_acc = Thrust_x/M_B
+        x = x + self.dt*vx
+        vx = vx + self.dt*x_acc
+
+        phi_acc = My/I_B
+        phi = phi + self.dt*dphi
+        dphi = dphi + self.dt*phi_acc
+
+        self.state = (x,z,phi,vx,vz,dphi)
+
     def _get_state(self):
 
         return self.state
@@ -466,57 +554,6 @@ class SAR_Env_2D(gym.Env):
 
         return 0
     
-    def _finish_sim(self,action):
-
-        ## SCALE ACTION
-        scaled_action = 0.5 * (action[1] + 1) * (self.My_range[1] - self.My_range[0]) + self.My_range[0]
-
-        ## START PROJECTILE FLIGHT
-        while not self.Done:
-
-            self._iter_step_Rot(scaled_action)
-
-            ## UPDATE RENDER
-            if self.RENDER:
-                self.render()
-
-
-    def _iter_step_Rot(self,Rot_action):
-
-        x,z,phi,vx,vz,dphi = self._get_state()
-        L,gamma,M_B,I_B,PD = self._get_params()
-
-        ## TURN OFF BODY MOMENT IF ROTATED PAST 90 DEG
-        if np.abs(phi) < np.deg2rad(90) and self.MomentCutoff == False:
-
-            My = Rot_action*1e-3
-
-        else: 
-
-            self.MomentCutoff= True
-            My = 0
-
-        ## BODY MOMENT/PROJECTILE FLIGHT
-        if self.impact_flag == False:
-
-            Thrust = np.array([0,np.sign(My)*My/PD]) # Body Coords
-            Thrust_x,Thrust_z = self._B_to_W(Thrust,phi)
-
-            ## UPDATE STATE
-            z_acc = Thrust_z/M_B - self.g
-            z = z + self.dt*vz
-            vz = vz + self.dt*z_acc
-
-            x_acc = Thrust_x/M_B
-            x = x + self.dt*vx
-            vx = vx + self.dt*x_acc
-
-            phi_acc = My/I_B
-            phi = phi + self.dt*dphi
-            dphi = dphi + self.dt*phi_acc
-
-            self.state = (x,z,phi,vx,vz,dphi)
-
     def _get_pose(self,x_pos,z_pos,phi):
 
         (L,gamma,M_B,I_B,PD) = self.params
@@ -596,17 +633,23 @@ class SAR_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(Plane_Angle_range=[135,135],Tau_0=0.5)
+    env = SAR_Env_2D(Plane_Angle_range=[-45,-45],Tau_0=0.5)
     env.RENDER = True
 
     for ep in range(25):
         
         V_mag = 1
-        Phi_rel = 90
-        env.reset(V_mag=V_mag,Phi_rel=Phi_rel)
+        Phi_rel = 135
+        obs = env.reset(V_mag=V_mag,Phi_rel=Phi_rel)
         Done = False
 
         while not Done:
+
+            # action = f(obs)
             action = env.action_space.sample()
-            action[0] = 0
-            obs,reward,Done,truncated,_ = env.step(action)
+            action[0] = 0.6
+            action[1] = 0.0
+
+
+            next_obs,reward,Done,truncated,_ = env.step(action)
+            obs = next_obs
