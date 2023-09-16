@@ -58,8 +58,8 @@ class SAR_Env_2D(gym.Env):
         self.Plane_Angle = 180
 
         ## SAR DIMENSIONS CONSTRAINTS 
-        gamma = np.deg2rad(45)  # Leg Angle [m]
-        L = 75.0e-3             # Leg Length [m]
+        gamma = np.deg2rad(30)  # Leg Angle [m]
+        L = 150.0e-3             # Leg Length [m]
         M_B = 35.0e-3           # Body Mass [kg]
         I_B = 17.0e-6           # Body Moment of Inertia [kg*m^2]
         PD = 32.5e-3            # Prop Distance from COM [m]
@@ -135,7 +135,7 @@ class SAR_Env_2D(gym.Env):
         r_BO = r_PO + r_BP 
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-        self._set_state(r_BO[0],r_BO[1],0,V_BO[0],V_BO[1],0)
+        self._set_state(r_BO[0],r_BO[1],np.deg2rad(45),V_BO[0],V_BO[1],0)
 
         ## UPDATE RENDER
         if self.RENDER:
@@ -302,6 +302,8 @@ class SAR_Env_2D(gym.Env):
         L,gamma,M_B,I_B,PD = params
         (BodyContact,Leg1Contact,Leg2Contact) = impact_conditions
 
+        V_tx,V_perp = self._W_to_P(np.array([vx,vz]),self.Plane_Angle,deg=True)
+
         I_C = M_B*L**2 + I_B
 
         if Leg1Contact:
@@ -310,12 +312,11 @@ class SAR_Env_2D(gym.Env):
             Beta = np.deg2rad(90) - phi - np.deg2rad(self.Plane_Angle) + gamma
 
             ## CALC DBETA FROM MOMENTUM CONVERSION
-
-            H_dphi = I_B/I_C*dphi
-            H_vx = -M_B*L*vx/I_C*(np.sin(gamma)*np.sin(phi) + np.cos(gamma)*np.cos(phi))
-            H_vz = -M_B*L*vz/I_C*(np.sin(gamma)*np.cos(phi) - np.cos(gamma)*np.sin(phi))
+            H_V_perp = M_B*L*V_perp*np.cos(Beta)
+            H_V_tx = -M_B*L*V_tx*np.sin(Beta)
+            H_dphi = -I_B*dphi
             
-            dBeta = H_dphi + H_vx + H_vz
+            dBeta = (H_V_perp + H_V_tx + H_dphi)/(-I_C)
 
             return Beta,dBeta
 
