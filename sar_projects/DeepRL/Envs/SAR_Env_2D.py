@@ -246,15 +246,14 @@ class SAR_Env_2D(gym.Env):
             L,gamma,M_B,I_B,PD = self._get_params()
             self.impact_flag,self.impact_conditions = self._get_impact_conditions(x,z,phi)
 
-            
-
+            ## IMPACT FALSE
             if self.impact_flag == False:
 
                 ## UPDATE STEP
                 self._iter_step_Rot(scaled_action)
 
                 
-
+            ## IMPACT TRUE
             elif self.impact_flag == True:
 
                 ## START IMPACT TIMER
@@ -274,25 +273,13 @@ class SAR_Env_2D(gym.Env):
 
                     beta,dbeta = self._impact_conversion(self.state,self.params,self.impact_conditions)
 
-                    ## CALC INERTIA ABOUT CONTACT POINT
-                    I_C = M_B*L**2 + I_B
-                    
                     ## FIND IMPACT COORDS (wrt World-Coords)
                     r_C1_W = self._get_pose(x,z,phi)[1]
 
-
-                    ## ITERATE THROUGH SWING
                     while not self.Done:
 
-                        ## GRAVITY MOMENT
-                        M_g = -M_B*self.g*L*np.sin(self.Plane_Angle_rad)*np.sin(beta) \
-                                + M_B*self.g*L*np.cos(self.Plane_Angle_rad)*np.cos(beta)
-                        
-                        ## ITER STEP BETA
-                        self.t += self.dt
-                        beta_acc = -M_g/I_C
-                        beta = beta + self.dt*dbeta
-                        dbeta = dbeta + self.dt*beta_acc
+                        ## ITERATE THROUGH SWING
+                        beta,dbeta = self._iter_step_Swing(beta,dbeta)
 
                         ## CHECK FOR END CONDITIONS
                         if beta >= self._beta_landing(impact_leg=1):
@@ -312,12 +299,11 @@ class SAR_Env_2D(gym.Env):
 
 
                         ## CONVERT BODY BACK TO WORLD COORDS
-                        phi = np.deg2rad(90) - beta - self.Plane_Angle_rad + gamma
-
                         temp = self._Beta_to_P(np.array([L,0]),beta)
                         r_B_C1 = self._P_to_W(temp,self.Plane_Angle_rad)
                         r_B_W = r_C1_W + r_B_C1
 
+                        phi = np.deg2rad(90) - beta - self.Plane_Angle_rad + gamma
                         self.state = (r_B_W[0],r_B_W[1],phi,0,0,0)
 
                         if self.RENDER:
@@ -330,24 +316,13 @@ class SAR_Env_2D(gym.Env):
 
                     beta,dbeta = self._impact_conversion(self.state,self.params,self.impact_conditions)
 
-                    ## CALC INERTIA ABOUT CONTACT POINT
-                    I_C = M_B*L**2 + I_B
-                    
                     ## FIND IMPACT COORDS (wrt World-Coords)
                     r_C2_W = self._get_pose(x,z,phi)[2]
-
-                    ## ITERATE THROUGH SWING
+                    
                     while not self.Done:
 
-                        ## GRAVITY MOMENT
-                        M_g = -M_B*self.g*L*np.sin(self.Plane_Angle_rad)*np.sin(beta) \
-                                + M_B*self.g*L*np.cos(self.Plane_Angle_rad)*np.cos(beta)
-                        
-                        ## ITER STEP BETA
-                        self.t += self.dt
-                        beta_acc = -M_g/I_C
-                        beta = beta + self.dt*dbeta
-                        dbeta = dbeta + self.dt*beta_acc
+                        ## ITERATE THROUGH SWING
+                        beta,dbeta = self._iter_step_Swing(beta,dbeta)
 
                         ## CHECK FOR END CONDITIONS
                         if beta <= self._beta_landing(impact_leg=2):
@@ -366,12 +341,11 @@ class SAR_Env_2D(gym.Env):
                             self.Done = True
 
                         ## CONVERT BODY BACK TO WORLD COORDS
-                        phi = np.deg2rad(90) - beta - self.Plane_Angle_rad - gamma
-
                         temp = self._Beta_to_P(np.array([L,0]),beta)
                         r_B_C2 = self._P_to_W(temp,self.Plane_Angle_rad)
                         r_B_W = r_C2_W + r_B_C2
 
+                        phi = np.deg2rad(90) - beta - self.Plane_Angle_rad - gamma
                         self.state = (r_B_W[0],r_B_W[1],phi,0,0,0)
 
                         if self.RENDER:
@@ -401,78 +375,6 @@ class SAR_Env_2D(gym.Env):
 
             return self.Done,truncated
         
-    def _beta_landing(self,impact_leg):
-
-        L,gamma,M_B,I_B,PD = self._get_params()
-
-        if impact_leg == 1:
-            beta_max = np.pi/2 + gamma
-            return beta_max
-
-        elif impact_leg == 2:
-            beta_min = np.pi/2 - gamma
-            return beta_min
-        
-    def _beta_prop(self,impact_leg):
-
-        L,gamma,M_B,I_B,PD = self._get_params()
-
-        if impact_leg == 1:
-
-            a = np.sqrt(PD**2 + L**2 - 2*PD*L*np.cos(np.pi/2-gamma))
-            beta_min = np.arccos((L**2 + a**2 - PD**2)/(2*a*L))
-
-            return beta_min
-
-        elif impact_leg == 2:
-            
-            a = np.sqrt(PD**2 + L**2 - 2*PD*L*np.cos(np.pi/2-gamma))
-            beta_max = np.pi - np.arccos((L**2 + a**2 - PD**2)/(2*a*L))
-
-            return beta_max
-
-    def _impact_conversion(self,impact_state,params,impact_conditions):
-
-        x,z,phi,vx,vz,dphi = impact_state
-        L,gamma,M_B,I_B,PD = params
-        (BodyContact,Leg1Contact,Leg2Contact) = impact_conditions
-
-        V_tx,V_perp = self._W_to_P(np.array([vx,vz]),self.Plane_Angle,deg=True)
-
-        I_C = M_B*L**2 + I_B
-
-        if Leg1Contact:
-            
-            ## CALC BETA ANGLE
-            Beta = np.deg2rad(90) - phi - self.Plane_Angle_rad + gamma
-
-            ## CALC DBETA FROM MOMENTUM CONVERSION
-            H_V_perp = M_B*L*V_perp*np.cos(Beta)
-            H_V_tx = -M_B*L*V_tx*np.sin(Beta)
-            H_dphi = -I_B*dphi
-            
-            dBeta = (H_V_perp + H_V_tx + H_dphi)/(-I_C)
-
-            return Beta,dBeta
-
-        elif Leg2Contact:
-            
-            ## CALC BETA ANGLE
-            Beta = np.deg2rad(90) - phi - self.Plane_Angle_rad - gamma
-
-            ## CALC DBETA FROM MOMENTUM CONVERSION
-            H_V_perp = M_B*L*V_perp*np.cos(Beta)
-            H_V_tx = -M_B*L*V_tx*np.sin(Beta)
-            H_dphi = -I_B*dphi
-            
-            dBeta = (H_V_perp + H_V_tx + H_dphi)/(-I_C)
-
-            return Beta,dBeta
-
-
-
-        return None,None
-
     def render(self):
 
         ## SET DEFAULT WINDOW POSITION
@@ -652,6 +554,25 @@ class SAR_Env_2D(gym.Env):
 
         self.state = (x,z,phi,vx,vz,dphi)
 
+    def _iter_step_Swing(self,beta,dbeta):
+
+        L,gamma,M_B,I_B,PD = self._get_params()
+
+        ## INERTIA ABOUT CONTACT POINT
+        I_C = M_B*L**2 + I_B
+
+        ## GRAVITY MOMENT
+        M_g = -M_B*self.g*L*np.sin(self.Plane_Angle_rad)*np.sin(beta) \
+                + M_B*self.g*L*np.cos(self.Plane_Angle_rad)*np.cos(beta)
+        
+        ## ITER STEP BETA
+        self.t += self.dt
+        beta_acc = -M_g/I_C
+        beta = beta + self.dt*dbeta
+        dbeta = dbeta + self.dt*beta_acc
+
+        return beta,dbeta
+
     def _get_state(self):
 
         return self.state
@@ -804,6 +725,78 @@ class SAR_Env_2D(gym.Env):
 
         return n_hat,t_x
     
+    def _beta_landing(self,impact_leg):
+
+        L,gamma,M_B,I_B,PD = self._get_params()
+
+        if impact_leg == 1:
+            beta_max = np.pi/2 + gamma
+            return beta_max
+
+        elif impact_leg == 2:
+            beta_min = np.pi/2 - gamma
+            return beta_min
+        
+    def _beta_prop(self,impact_leg):
+
+        L,gamma,M_B,I_B,PD = self._get_params()
+
+        if impact_leg == 1:
+
+            a = np.sqrt(PD**2 + L**2 - 2*PD*L*np.cos(np.pi/2-gamma))
+            beta_min = np.arccos((L**2 + a**2 - PD**2)/(2*a*L))
+
+            return beta_min
+
+        elif impact_leg == 2:
+            
+            a = np.sqrt(PD**2 + L**2 - 2*PD*L*np.cos(np.pi/2-gamma))
+            beta_max = np.pi - np.arccos((L**2 + a**2 - PD**2)/(2*a*L))
+
+            return beta_max
+
+    def _impact_conversion(self,impact_state,params,impact_conditions):
+
+        x,z,phi,vx,vz,dphi = impact_state
+        L,gamma,M_B,I_B,PD = params
+        (BodyContact,Leg1Contact,Leg2Contact) = impact_conditions
+
+        V_tx,V_perp = self._W_to_P(np.array([vx,vz]),self.Plane_Angle,deg=True)
+
+        I_C = M_B*L**2 + I_B
+
+        if Leg1Contact:
+            
+            ## CALC BETA ANGLE
+            Beta = np.deg2rad(90) - phi - self.Plane_Angle_rad + gamma
+
+            ## CALC DBETA FROM MOMENTUM CONVERSION
+            H_V_perp = M_B*L*V_perp*np.cos(Beta)
+            H_V_tx = -M_B*L*V_tx*np.sin(Beta)
+            H_dphi = -I_B*dphi
+            
+            dBeta = (H_V_perp + H_V_tx + H_dphi)/(-I_C)
+
+            return Beta,dBeta
+
+        elif Leg2Contact:
+            
+            ## CALC BETA ANGLE
+            Beta = np.deg2rad(90) - phi - self.Plane_Angle_rad - gamma
+
+            ## CALC DBETA FROM MOMENTUM CONVERSION
+            H_V_perp = M_B*L*V_perp*np.cos(Beta)
+            H_V_tx = -M_B*L*V_tx*np.sin(Beta)
+            H_dphi = -I_B*dphi
+            
+            dBeta = (H_V_perp + H_V_tx + H_dphi)/(-I_C)
+
+            return Beta,dBeta
+
+
+
+        return None,None
+
     def _B_to_W(self,vec,phi,deg=False):
 
         if deg == True:
