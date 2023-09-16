@@ -68,7 +68,7 @@ class SAR_Env_2D(gym.Env):
 
         ## PHYSICS PARAMETERS
         self.g = 9.81       # Gravity [m/s^2]
-        self.dt = 0.005     # [s]
+        self.dt = 0.002     # [s]
         self.t = 0          # [s]
 
         self.t_episode_max = 2.0   # [s]
@@ -252,7 +252,10 @@ class SAR_Env_2D(gym.Env):
                 ## UPDATE STEP
                 self._iter_step_Rot(scaled_action)
 
-                
+                ## UPDATE RENDER
+                if self.RENDER:
+                    self.render()
+
             ## IMPACT TRUE
             elif self.impact_flag == True:
 
@@ -369,11 +372,8 @@ class SAR_Env_2D(gym.Env):
                 # or (vz <= -5.0 and self._get_obs()[2] >= 0.5) # IF SAR IS FALLING
             )
 
-            ## UPDATE RENDER
-            if self.RENDER:
-                self.render()
-
-            return self.Done,truncated
+            
+        return self.Done,truncated
         
     def render(self):
 
@@ -460,28 +460,54 @@ class SAR_Env_2D(gym.Env):
 
         ## WINDOW TEXT
         my_font = pygame.font.SysFont(None, 30)
+
+        ## STATES TEXT
+        text_States = my_font.render(f'States:', True, GREY)
         text_t_step = my_font.render(f'Time Step: {self.t:.03f}', True, BLACK)
         # text_Vz = my_font.render(f'Vz: {vz:.2f}', True, BLACK)
         # text_Vel = my_font.render(f'Vel: {Vel:.2f}  Phi: {phi:.2f}', True, BLACK)
         
+        ## OBSERVATIONS TEXT
+        text_Obs = my_font.render(f'Observations:', True, GREY)
         text_Tau = my_font.render(f'Tau: {self._get_obs()[0]:2.2f}', True, BLACK)
         text_Theta_x = my_font.render(f'Theta_x: {self._get_obs()[1]:2.2f}', True, BLACK)
         text_D_perp = my_font.render(f'D_perp: {self._get_obs()[2]:2.2f}', True, BLACK)
         text_Plane_Angle = my_font.render(f'Plane Angle: {self.Plane_Angle:3.1f}', True, BLACK)
 
-        # text_dTau = my_font.render(f'dTau: {0.0:.3f}', True, BLACK)
-        # text_z_acc = my_font.render(f'z_acc: {0.0:.3f}', True, BLACK)
-        # text_reward = my_font.render(f'Prev Reward: {self.reward:.3f}',True, BLACK)
+        ## ACTIONS TEXT
+        text_Actions = my_font.render(f'Actions:', True, GREY)
+        text_Trg_Action = my_font.render(f'Trg_Action: {5.0:3.1f}', True, BLACK)
+        text_Rot_Action = my_font.render(f'Rot_Action: {5.0:3.1f}', True, BLACK)
+
+        ## REWARD TEXT
+        text_Other = my_font.render(f'Other:', True, GREY)
+        text_reward = my_font.render(f'Prev Reward: {5.0:.3f}',True, BLACK)
+        text_Tau_trg = my_font.render(f'Tau trg: {5.0:.3f}',True, BLACK)
+
 
         ## DRAW OBJECTS TO SCREEN
         self.screen.blit(self.surf,(0,0))
-        self.screen.blit(text_t_step,   (5,5))
+        self.screen.blit(text_States,       (5,5))
+        self.screen.blit(text_t_step,       (5,5 + 25*1))
+
         # self.screen.blit(text_Vel,      (5,30))
         # self.screen.blit(text_Vz,       (5,55))
-        self.screen.blit(text_Tau,          (5,80))
-        self.screen.blit(text_Theta_x,      (5,105))
-        self.screen.blit(text_D_perp,       (5,130))
-        self.screen.blit(text_Plane_Angle,  (5,155))
+
+        self.screen.blit(text_Obs,          (5,5 + 25*3))
+        self.screen.blit(text_Tau,          (5,5 + 25*4))
+        self.screen.blit(text_Theta_x,      (5,5 + 25*5))
+        self.screen.blit(text_D_perp,       (5,5 + 25*6))
+        self.screen.blit(text_Plane_Angle,  (5,5 + 25*7))
+
+        self.screen.blit(text_Actions,      (5,5 + 25*9))
+        self.screen.blit(text_Rot_Action,   (5,5 + 25*10))
+        self.screen.blit(text_Trg_Action,   (5,5 + 25*11))
+
+        self.screen.blit(text_Other,        (5,5 + 25*13))
+        self.screen.blit(text_reward,       (5,5 + 25*14))
+        self.screen.blit(text_Tau_trg,      (5,5 + 25*15))
+
+
 
         ## WINDOW/SIM UPDATE RATE
         self.clock.tick(60) # [Hz]
@@ -534,23 +560,26 @@ class SAR_Env_2D(gym.Env):
             self.MomentCutoff= True
             My = 0
 
-        Thrust = np.array([0,np.sign(My)*My/PD]) # Body Coords
-        Thrust_x,Thrust_z = self._B_to_W(Thrust,phi)
-
         ## STEP UPDATE
         self.t += self.dt
 
-        z_acc = Thrust_z/M_B - self.g
+        z_acc = -self.g
         z = z + self.dt*vz
         vz = vz + self.dt*z_acc
 
-        x_acc = Thrust_x/M_B
+        x_acc = 0
         x = x + self.dt*vx
         vx = vx + self.dt*x_acc
 
         phi_acc = My/I_B
         phi = phi + self.dt*dphi
         dphi = dphi + self.dt*phi_acc
+
+        ## WRAP THE ANGLE 
+        if phi > np.pi:
+            phi -= 2*np.pi
+        elif phi < -np.pi:
+            phi += 2*np.pi
 
         self.state = (x,z,phi,vx,vz,dphi)
 
@@ -846,10 +875,10 @@ class SAR_Env_2D(gym.Env):
         return R_WP.dot(vec)
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(Plane_Angle_range=[-90,90],Tau_0=0.9)
+    env = SAR_Env_2D(Plane_Angle_range=[-45,45],Tau_0=0.9)
     env.RENDER = True
 
-    for ep in range(25):
+    for ep in range(500):
         
         V_mag = 1
         Phi_rel = 135
@@ -861,8 +890,10 @@ if __name__ == '__main__':
             # action = f(obs)
             action = env.action_space.sample()
             action[0] = 0.6
-            action[1] = 0.0
+            # action[1] = 1.0
 
 
             next_obs,reward,Done,truncated,_ = env.step(action)
             obs = next_obs
+
+            env.reward = reward
