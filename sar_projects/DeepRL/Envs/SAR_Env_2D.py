@@ -263,7 +263,7 @@ class SAR_Env_2D(gym.Env):
                 ## START IMPACT TIMER
                 start_time_impact = self.t
 
-                self.phi_impact = np.rad2deg(phi)
+                self.phi_impact = phi
                 (BodyContact,Leg1Contact,Leg2Contact) = self.impact_conditions
 
                 ## BODY CONTACT
@@ -307,8 +307,8 @@ class SAR_Env_2D(gym.Env):
                         r_B_C1 = self._P_to_W(temp,self.Plane_Angle_rad)
                         r_B_W = r_C1_W + r_B_C1
 
-                        phi = np.deg2rad(90) - beta - self.Plane_Angle_rad + gamma
-                        self.state = (r_B_W[0],r_B_W[1],phi,0,0,0)
+                        phi_temp = np.deg2rad(90) - beta - self.Plane_Angle_rad + gamma
+                        self.state = (r_B_W[0],r_B_W[1],phi_temp,0,0,0)
 
                         if self.RENDER:
                             self.render()
@@ -349,8 +349,8 @@ class SAR_Env_2D(gym.Env):
                         r_B_C2 = self._P_to_W(temp,self.Plane_Angle_rad)
                         r_B_W = r_C2_W + r_B_C2
 
-                        phi = np.deg2rad(90) - beta - self.Plane_Angle_rad - gamma
-                        self.state = (r_B_W[0],r_B_W[1],phi,0,0,0)
+                        phi_temp = np.deg2rad(90) - beta - self.Plane_Angle_rad - gamma
+                        self.state = (r_B_W[0],r_B_W[1],phi_temp,0,0,0)
 
                         if self.RENDER:
                             self.render()
@@ -521,7 +521,7 @@ class SAR_Env_2D(gym.Env):
 
 
         ## WINDOW/SIM UPDATE RATE
-        self.clock.tick(120) # [Hz]
+        self.clock.tick(60) # [Hz]
         pygame.display.flip()
 
     def close(self):
@@ -717,7 +717,48 @@ class SAR_Env_2D(gym.Env):
 
     def _CalcReward(self):
 
-        return 0
+        x,z,phi,vx,vz,dphi = self._get_state()
+
+        ## DISTANCE REWARD 
+        R_dist = np.clip(1/np.abs(self.D_min + 1e-3),0,15)/15
+        
+        ## TAU TRIGGER REWARD
+        R_tau = np.clip(1/np.abs(self.Tau_trg - 0.2),0,15)/15
+
+
+        ## IMPACT ANGLE REWARD # (Derivation: Research_Notes_Book_3.pdf (6/21/23))
+        Beta_d = 150 # Desired impact angle [= 180 deg - gamma [deg]] TODO: Change to live value?
+        Beta_rel = -180 + np.rad2deg(self.phi_impact) + self.Plane_Angle
+
+        if Beta_rel < -180:
+            R_angle = 0
+        elif -180 <= Beta_rel < 180:
+            R_angle = 0.5*(-np.cos(np.deg2rad(Beta_rel*180/Beta_d))+1)
+        elif Beta_rel > 180:
+            R_angle = 0
+
+        ## PAD CONTACT REWARD
+        if self.pad_connections >= 3: 
+            if self.BodyContact_flag == False:
+                R_legs = 1.0
+            else:
+                R_legs = 0.3
+
+        elif self.pad_connections == 2: 
+            if self.BodyContact_flag == False:
+                R_legs = 0.6
+            else:
+                R_legs = 0.1
+                
+        else:
+            R_legs = 0.0
+
+        self.reward_vals = [R_dist,R_tau,R_angle,R_legs,0]
+        self.reward = 0.05*R_dist + 0.1*R_tau + 0.2*R_angle + 0.65*R_legs
+
+
+        return self.reward
+        
     
     def _get_pose(self,x_pos,z_pos,phi):
 
@@ -886,7 +927,7 @@ class SAR_Env_2D(gym.Env):
         return R_WP.dot(vec)
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(Vel_range=[1.0,4.0],Phi_rel_range=[2,178],Plane_Angle_range=[0,180])
+    env = SAR_Env_2D(Vel_range=[1.0,1.0],Phi_rel_range=[2,5],Plane_Angle_range=[0,0])
     env.RENDER = True
     
 
@@ -903,7 +944,7 @@ if __name__ == '__main__':
             # action = f(obs)
             action = env.action_space.sample()
             action[0] = 0.51
-            action[1] = -0.5
+            action[1] = 0.01
 
 
             next_obs,reward,Done,truncated,_ = env.step(action)
