@@ -59,7 +59,7 @@ class SAR_Env_2D(gym.Env):
         self.Plane_Angle = 180
 
         ## SAR DIMENSIONS CONSTRAINTS 
-        gamma = np.deg2rad(60)  # Leg Angle [m]
+        gamma = np.deg2rad(30)  # Leg Angle [m]
         L = 300.0e-3             # Leg Length [m]
         M_B = 35.0e-3           # Body Mass [kg]
         I_B = 17.0e-6           # Body Moment of Inertia [kg*m^2]
@@ -72,7 +72,7 @@ class SAR_Env_2D(gym.Env):
         self.t = 0          # [s]
 
         self.t_episode_max = 2.0   # [s]
-        self.t_impact_max = 2.0   # [s]
+        self.t_impact_max = 1.0   # [s]
 
         self.state = (0,0.1,0,0,0,0) # Initial State (X_pos,Z_pos,phi,Vx,Vz,dphi)
 
@@ -140,7 +140,7 @@ class SAR_Env_2D(gym.Env):
         r_BO = r_PO + r_BP 
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-
+        self.deg = np.random.uniform(-360,360)
         self._set_state(r_BO[0],r_BO[1],np.deg2rad(self.deg),V_BO[0],V_BO[1],0)
 
         ## UPDATE RENDER
@@ -576,12 +576,6 @@ class SAR_Env_2D(gym.Env):
         phi = phi + self.dt*dphi
         dphi = dphi + self.dt*phi_acc
 
-        ## WRAP THE ANGLE 
-        # if phi > np.pi:
-        #     phi -= 2 * np.pi
-        # elif phi < -np.pi:
-        #     phi += 2 * np.pi
-
         self.state = (x,z,phi,vx,vz,dphi)
 
     def _iter_step_Swing(self,beta,dbeta):
@@ -797,13 +791,10 @@ class SAR_Env_2D(gym.Env):
 
         if Leg1Contact:
 
-            if phi > 2*np.pi:
-                phi -= 2 * np.pi
-            elif phi < -2*np.pi:
-                phi += 2 * np.pi
-            
             ## CALC BETA ANGLE
-            Beta = np.deg2rad(90) - phi - self.Plane_Angle_rad + gamma
+            Beta = np.pi/2 - phi - self.Plane_Angle_rad + gamma
+            Beta = Beta % np.pi
+            Beta_deg = np.degrees(Beta)
 
             ## CALC DBETA FROM MOMENTUM CONVERSION
             H_V_perp = M_B*L*V_perp*np.cos(Beta)
@@ -816,13 +807,11 @@ class SAR_Env_2D(gym.Env):
 
         elif Leg2Contact:
 
-            if phi > 2*np.pi:
-                phi -= 2*np.pi
-            elif phi < -2*np.pi:
-                phi += 2*np.pi
-            
             ## CALC BETA ANGLE
-            Beta = np.deg2rad(90) - phi - self.Plane_Angle_rad - gamma
+            Beta = np.pi/2 - phi - self.Plane_Angle_rad - gamma
+            Beta = Beta % np.pi
+            Beta_deg = np.degrees(Beta)
+
 
             ## CALC DBETA FROM MOMENTUM CONVERSION
             H_V_perp = M_B*L*V_perp*np.cos(Beta)
@@ -886,15 +875,17 @@ class SAR_Env_2D(gym.Env):
         return R_WP.dot(vec)
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(Plane_Angle_range=[180,180],Tau_0=0.9)
+    env = SAR_Env_2D(Vel_range=[1.0,5.0],Phi_rel_range=[0,180],Plane_Angle_range=[0,180],Tau_0=0.9)
     env.RENDER = True
+    
 
     for ep in range(500):
         
         V_mag = 1
         Phi_rel = 90
-        env.deg = 360 + 90
-        obs = env.reset(V_mag=V_mag,Phi_rel=Phi_rel)
+        
+        # env.deg = -60 - 360
+        obs = env.reset(V_mag=None,Phi_rel=None)
         Done = False
 
         while not Done:
