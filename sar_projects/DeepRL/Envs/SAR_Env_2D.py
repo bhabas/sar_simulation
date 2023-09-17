@@ -120,6 +120,9 @@ class SAR_Env_2D(gym.Env):
             V_mag = V_mag           # Flight velocity
             Phi_rel = Phi_rel   # Flight angle  
 
+        self.Phi_rel = Phi_rel
+        self.V_mag = V_mag
+
         ## RELATIVE VEL VECTORS
         V_perp = V_mag*np.sin(np.deg2rad(Phi_rel))
         V_tx = V_mag*np.cos(np.deg2rad(Phi_rel))
@@ -131,7 +134,9 @@ class SAR_Env_2D(gym.Env):
 
 
         ## INITIAL DISTANCE
-        D_perp = (self.Tau_0*V_perp)
+        (L,gamma,M_B,I_B,PD) = self._get_params()
+        D_perp = max((self.Tau_0*V_perp),L)
+        
 
         ## INITIAL POSITION RELATIVE TO PLANE
         r_BP = -(D_perp/(V_hat.dot(n_hat)+EPS))*V_hat
@@ -465,7 +470,9 @@ class SAR_Env_2D(gym.Env):
         ## STATES TEXT
         text_States = my_font.render(f'States:', True, GREY)
         text_t_step = my_font.render(f'Time Step: {self.t:.03f}', True, BLACK)
-        # text_Vz = my_font.render(f'Vz: {vz:.2f}', True, BLACK)
+        text_Phi_rel = my_font.render(f'Phi_rel: {self.Phi_rel:.2f}', True, BLACK)
+        text_V_mag = my_font.render(f'V_mag: {self.V_mag:.2f}', True, BLACK)
+
         # text_Vel = my_font.render(f'Vel: {Vel:.2f}  Phi: {phi:.2f}', True, BLACK)
         
         ## OBSERVATIONS TEXT
@@ -490,23 +497,26 @@ class SAR_Env_2D(gym.Env):
         self.screen.blit(self.surf,(0,0))
         self.screen.blit(text_States,       (5,5))
         self.screen.blit(text_t_step,       (5,5 + 25*1))
+        self.screen.blit(text_Phi_rel,      (5,5 + 25*2))
+        self.screen.blit(text_V_mag,        (5,5 + 25*3))
+
 
         # self.screen.blit(text_Vel,      (5,30))
         # self.screen.blit(text_Vz,       (5,55))
 
-        self.screen.blit(text_Obs,          (5,5 + 25*3))
-        self.screen.blit(text_Tau,          (5,5 + 25*4))
-        self.screen.blit(text_Theta_x,      (5,5 + 25*5))
-        self.screen.blit(text_D_perp,       (5,5 + 25*6))
-        self.screen.blit(text_Plane_Angle,  (5,5 + 25*7))
+        self.screen.blit(text_Obs,          (5,5 + 25*5))
+        self.screen.blit(text_Tau,          (5,5 + 25*6))
+        self.screen.blit(text_Theta_x,      (5,5 + 25*7))
+        self.screen.blit(text_D_perp,       (5,5 + 25*8))
+        self.screen.blit(text_Plane_Angle,  (5,5 + 25*9))
 
-        self.screen.blit(text_Actions,      (5,5 + 25*9))
-        self.screen.blit(text_Rot_Action,   (5,5 + 25*10))
-        self.screen.blit(text_Trg_Action,   (5,5 + 25*11))
+        self.screen.blit(text_Actions,      (5,5 + 25*11))
+        self.screen.blit(text_Rot_Action,   (5,5 + 25*12))
+        self.screen.blit(text_Trg_Action,   (5,5 + 25*13))
 
-        self.screen.blit(text_Other,        (5,5 + 25*13))
-        self.screen.blit(text_reward,       (5,5 + 25*14))
-        self.screen.blit(text_Tau_trg,      (5,5 + 25*15))
+        self.screen.blit(text_Other,        (5,5 + 25*15))
+        self.screen.blit(text_reward,       (5,5 + 25*16))
+        self.screen.blit(text_Tau_trg,      (5,5 + 25*17))
 
 
 
@@ -875,7 +885,7 @@ class SAR_Env_2D(gym.Env):
         return R_WP.dot(vec)
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(Vel_range=[1.0,5.0],Phi_rel_range=[0,180],Plane_Angle_range=[0,180],Tau_0=0.9)
+    env = SAR_Env_2D(Vel_range=[1.0,1.0],Phi_rel_range=[178,178],Plane_Angle_range=[46,46],Tau_0=0.9)
     env.RENDER = True
     
 
