@@ -20,7 +20,7 @@ EPS = 1e-6 # Epsilon (Prevent division by zero)
 class SAR_Env_2D(gym.Env):
     """Custom Environment that follows gym interface."""
 
-    def __init__(self,GZ_Timeout=True,My_range=[-8.0,8.0],Vel_range=[1.5,3.5],Phi_rel_range=[0,90],Plane_Angle_range=[90,180],Tau_0=0.4):
+    def __init__(self,GZ_Timeout=True,My_range=[-8.0e-3,8.0e-3],Vel_range=[1.5,3.5],Phi_rel_range=[0,90],Plane_Angle_range=[90,180]):
 
         gym.Env.__init__(self)
 
@@ -31,8 +31,7 @@ class SAR_Env_2D(gym.Env):
         self.Mass_std = 0.5e-3  # [kg]
         self.Iyy_std = 1.5e-6   # [kg*m^2]
 
-        ## TESTING CONDITIONS
-        self.Tau_0 = Tau_0          
+        ## TESTING CONDITIONS     
         self.Vel_range = Vel_range  
         self.Phi_rel_range = Phi_rel_range
         self.Plane_Angle_range = Plane_Angle_range
@@ -60,11 +59,16 @@ class SAR_Env_2D(gym.Env):
 
         ## SAR DIMENSIONS CONSTRAINTS 
         gamma = np.deg2rad(30)  # Leg Angle [m]
-        L = 300.0e-3             # Leg Length [m]
+        L = 75.0e-3             # Leg Length [m]
         M_B = 35.0e-3           # Body Mass [kg]
         I_B = 17.0e-6           # Body Moment of Inertia [kg*m^2]
-        PD = 75.5e-3            # Prop Distance from COM [m]
+        PD = 32.5e-3            # Prop Distance from COM [m]
         self.params = (L,gamma,M_B,I_B,PD)
+
+        ## INITIAL POSITION CONSTRAINTS
+        My_max = abs(max(My_range,key=abs))
+        self.t_rot = np.sqrt((2*I_B*np.radians(360))/(0.5*My_max)) ## Allow enough time for a full rotation
+        self.Tau_c = self.t_rot # TTC min allowing for a full body rotation before any body part impacts
 
         ## PHYSICS PARAMETERS
         self.g = 9.81       # Gravity [m/s^2]
@@ -76,13 +80,11 @@ class SAR_Env_2D(gym.Env):
 
         self.state = (0,0.1,0,0,0,0) # Initial State (X_pos,Z_pos,phi,Vx,Vz,dphi)
 
-
-
         ## RENDERING PARAMETERS
         self.screen_width = 1000
         self.RENDER = False
-        self.world_width = 4.0  # [m]
-        self.world_height = 4.0 # [m]
+        self.world_width = 3.0  # [m]
+        self.world_height = 2.0 # [m]
 
         self.screen_height = self.screen_width*self.world_height/self.world_width
         self.screen = None
@@ -108,9 +110,8 @@ class SAR_Env_2D(gym.Env):
         self.Plane_Angle_rad = np.radians(self.Plane_Angle)
 
         ## RESET POSITION RELATIVE TO LANDING SURFACE (BASED ON STARTING TAU VALUE)
-        # (Derivation: Research_Notes_Book_3.pdf (6/22/23))
-        r_PO = np.array(self.Plane_Pos)                             # Plane Position w/r to origin
-        n_hat,t_x = self._calc_PlaneNormal(self.Plane_Angle)    # Plane direction vectors
+        # (Derivation: Research_Notes_Book_3.pdf (9/17/23))
+        
 
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
         if V_mag == None or Phi_rel == None:
@@ -130,23 +131,17 @@ class SAR_Env_2D(gym.Env):
 
         ## CONVERT RELATIVE VEL VECTORS TO WORLD COORDS
         V_BO = self._P_to_W(V_BP,self.Plane_Angle,deg=True)
-        V_hat = V_BO/np.linalg.norm(V_BO)   # Flight Velocity unit vector
-
-
-        ## INITIAL DISTANCE
-        (L,gamma,M_B,I_B,PD) = self._get_params()
-        D_perp = max((self.Tau_0*V_perp),L)
         
+        L,gamma,M_B,I_B,PD = self.params
+        Tau_B = (L + self.Tau_c*V_perp)/V_perp
+        self.t_episode_max = Tau_B
 
-        ## INITIAL POSITION RELATIVE TO PLANE
-        r_BP = -(D_perp/(V_hat.dot(n_hat)+EPS))*V_hat
-
-        ## INITIAL POSITION IN GLOBAL COORDS
-        r_BO = r_PO + r_BP 
+        r_PO = np.array(self.Plane_Pos)                             # Plane Position wrt to origin
+        r_PB = np.array([self.Tau_c*V_tx, Tau_B*V_perp])            # Plane Position wrt to Body
+        r_BO = r_PO - self._P_to_W(r_PB,self.Plane_Angle,deg=True)  # Body Position wrt to origin
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-        self.deg = np.random.uniform(-360,360)
-        self._set_state(r_BO[0],r_BO[1],np.deg2rad(self.deg),V_BO[0],V_BO[1],0)
+        self._set_state(r_BO[0],r_BO[1],np.radians(0),V_BO[0],V_BO[1],0)
 
         ## UPDATE RENDER
         if self.RENDER:
@@ -392,7 +387,7 @@ class SAR_Env_2D(gym.Env):
         def c2p(Pos):
 
             x_offset = 1  # [m]
-            y_offset = 2  # [m]
+            y_offset = 1  # [m]
 
             scale_x = self.screen_width/self.world_width
             scale_y = self.screen_height/self.world_height
@@ -413,6 +408,9 @@ class SAR_Env_2D(gym.Env):
 
         ## GET CURRENT STATE
         x,z,phi,vx,vz,dphi = self._get_state()
+
+        ## GET CURRENT PARAMS
+        (L,gamma,M_B,I_B,PD) = self._get_params()
         
         ## CREATE BACKGROUND SURFACE
         self.surf = pygame.Surface((self.screen_width, self.screen_height))
@@ -445,6 +443,8 @@ class SAR_Env_2D(gym.Env):
         pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[2]),width=3) # Leg 2
         pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[3]),width=3) # Prop 1
         pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[4]),width=3) # Prop 2
+        pygame.draw.circle(self.surf,GREY,c2p(Pose[0]),radius=L*self.screen_width/self.world_width,width=2)
+
 
         ## BODY AXES
         pygame.draw.line(self.surf,GREEN,c2p(Pose[0]),c2p(Pose[0] + self._B_to_W(np.array([0.05,0]),phi)),width=5)  # B_x   
@@ -553,7 +553,7 @@ class SAR_Env_2D(gym.Env):
 
         self.state = (x,z,phi,vx,vz,dphi)
 
-    def _iter_step_Rot(self,Rot_action):
+    def _iter_step_Rot(self,Rot_action,step=1):
 
         ## PARAMS
         L,gamma,M_B,I_B,PD = self._get_params()
@@ -564,29 +564,30 @@ class SAR_Env_2D(gym.Env):
         ## TURN OFF BODY MOMENT IF ROTATED PAST 90 DEG
         if np.abs(phi) < np.deg2rad(90) and self.MomentCutoff == False:
 
-            My = Rot_action*1e-3
+            My = Rot_action
 
         else: 
 
             self.MomentCutoff= True
             My = 0
 
-        ## STEP UPDATE
-        self.t += self.dt
+        for _ in range(step):
+            ## STEP UPDATE
+            self.t += self.dt
 
-        z_acc = -self.g*0
-        z = z + self.dt*vz
-        vz = vz + self.dt*z_acc
+            z_acc = -self.g*0
+            z = z + self.dt*vz
+            vz = vz + self.dt*z_acc
 
-        x_acc = 0
-        x = x + self.dt*vx
-        vx = vx + self.dt*x_acc
+            x_acc = 0
+            x = x + self.dt*vx
+            vx = vx + self.dt*x_acc
 
-        phi_acc = My/I_B
-        phi = phi + self.dt*dphi
-        dphi = dphi + self.dt*phi_acc
+            phi_acc = My/I_B
+            phi = phi + self.dt*dphi
+            dphi = dphi + self.dt*phi_acc
 
-        self.state = (x,z,phi,vx,vz,dphi)
+            self.state = (x,z,phi,vx,vz,dphi)
 
     def _iter_step_Swing(self,beta,dbeta):
 
@@ -885,16 +886,15 @@ class SAR_Env_2D(gym.Env):
         return R_WP.dot(vec)
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(Vel_range=[1.0,1.0],Phi_rel_range=[178,178],Plane_Angle_range=[46,46],Tau_0=0.9)
+    env = SAR_Env_2D(Vel_range=[1.0,4.0],Phi_rel_range=[2,178],Plane_Angle_range=[0,180])
     env.RENDER = True
     
 
     for ep in range(500):
         
-        V_mag = 1
-        Phi_rel = 90
-        
-        # env.deg = -60 - 360
+        # V_mag = 1
+        # Phi_rel = 90
+
         obs = env.reset(V_mag=None,Phi_rel=None)
         Done = False
 
@@ -903,7 +903,7 @@ if __name__ == '__main__':
             # action = f(obs)
             action = env.action_space.sample()
             action[0] = 0.51
-            action[1] = 0.0
+            action[1] = -0.5
 
 
             next_obs,reward,Done,truncated,_ = env.step(action)
