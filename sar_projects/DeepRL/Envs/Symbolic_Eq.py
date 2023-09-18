@@ -1,7 +1,8 @@
 from sympy import symbols, cos, sin, Matrix, pprint, simplify
+from sympy import *
 
 # Define the angle symbols
-phi, theta, beta, gamma = symbols('phi theta beta gamma')
+phi, theta, beta_1, beta_2, gamma = symbols('phi theta beta_1 beta_2 gamma')
 
 # Define the first rotation matrix (for example, a rotation around the z-axis)
 R_BW = Matrix([
@@ -14,28 +15,33 @@ R_PW = Matrix([
     [-sin(theta),-cos(theta)],
 ])
 
-R_BetaP = Matrix([
-    [-cos(beta), sin(beta)],
-    [-sin(beta),-cos(beta)],
+## BETA 1 CONVERSION
+
+R_Beta1P = Matrix([
+    [-cos(beta_1), sin(beta_1)],
+    [-sin(beta_1),-cos(beta_1)],
 ])
 
-R_BBeta = Matrix([
-    [ sin(gamma), cos(gamma)],
-    [ -cos(gamma), sin(gamma)],
+R_Beta1B = Matrix([
+    [ -sin(gamma),-cos(gamma)],
+    [  cos(gamma),-sin(gamma)],
 ])
 
-# Multiply the matrices
-Result = R_PW*R_BetaP*R_BBeta
-
-# Print the resulting matrix
-pprint(R_BW)
-print()
-pprint(R_PW)
+Result = R_PW*R_Beta1P*R_Beta1B.T
+pprint(simplify(Result))
 print()
 
-pprint(R_BetaP)
-print()
-pprint(R_BBeta)
-print()
-print()
+## BETA 2 CONVERSION
+
+R_Beta2P = Matrix([
+    [-sin(beta_2),-cos(beta_2)],
+    [ cos(beta_2),-sin(beta_2)],
+])
+
+R_Beta2B = Matrix([
+    [ sin(gamma),-cos(gamma)],
+    [ cos(gamma), sin(gamma)],
+])
+
+Result = R_PW*R_Beta2P*R_Beta2B.T
 pprint(simplify(Result))
