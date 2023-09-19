@@ -60,10 +60,11 @@ class SAR_Env_2D(gym.Env):
         ## SAR DIMENSIONS CONSTRAINTS 
         gamma = np.deg2rad(45)  # Leg Angle [m]
         L = 150.0e-3            # Leg Length [m]
-        PD = 150.0e-3           # Prop Distance from COM [m]
+        PD = 75.0e-3           # Prop Distance from COM [m]
         M_B = 35.0e-3           # Body Mass [kg]
         I_B = 17.0e-6           # Body Moment of Inertia [kg*m^2]
         self.params = (L,gamma,M_B,I_B,PD)
+        self.collision_radius = max(L,PD)
 
         ## INITIAL POSITION CONSTRAINTS
         My_max = abs(max(My_range,key=abs))
@@ -131,9 +132,8 @@ class SAR_Env_2D(gym.Env):
         V_BO = self._P_to_W(V_BP,self.Plane_Angle,deg=True)
         
         ## CALCULATE STARTING TAU VALUE
-        L,gamma,M_B,I_B,PD = self.params
         Tau_min = self.t_rot    # TTC allowing for full body rotation before any body part impacts
-        Tau_B = (L + Tau_min*V_perp)/V_perp
+        Tau_B = (self.collision_radius + Tau_min*V_perp)/V_perp
 
         ## CALC STARTING POSITION IN GLOBAL COORDS
         r_PO = np.array(self.Plane_Pos)                             # Plane Position wrt to origin
@@ -141,7 +141,7 @@ class SAR_Env_2D(gym.Env):
         r_BO = r_PO - self._P_to_W(r_PB,self.Plane_Angle,deg=True)  # Body Position wrt to origin
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-        self._set_state(r_BO[0],r_BO[1],np.radians(-60),V_BO[0],V_BO[1],0)
+        self._set_state(r_BO[0],r_BO[1],np.radians(0),V_BO[0],V_BO[1],0)
 
         ## RESET/UPDATE RUN CONDITIONS
         self.t = 0
@@ -306,7 +306,7 @@ class SAR_Env_2D(gym.Env):
         pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[2]),width=3) # Leg 2
         pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[3]),width=3) # Prop 1
         pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[4]),width=3) # Prop 2
-        pygame.draw.circle(self.surf,GREY,c2p(Pose[0]),radius=L*self.screen_width/self.world_width,width=2)
+        pygame.draw.circle(self.surf,GREY,c2p(Pose[0]),radius=self.collision_radius*self.screen_width/self.world_width,width=2)
 
 
         ## BODY AXES
@@ -382,7 +382,7 @@ class SAR_Env_2D(gym.Env):
 
 
         ## WINDOW/SIM UPDATE RATE
-        self.clock.tick(60) # [Hz]
+        self.clock.tick(90) # [Hz]
         pygame.display.flip()
 
     def close(self):
@@ -393,6 +393,8 @@ class SAR_Env_2D(gym.Env):
             self.isopen = False
 
     def _finish_sim(self,action):
+
+        action[1] = np.random.uniform(-0.5,0.5)
 
         ## SCALE ACTION
         scaled_action = 0.5 * (action[1] + 1) * (self.My_range[1] - self.My_range[0]) + self.My_range[0]
@@ -801,7 +803,8 @@ class SAR_Env_2D(gym.Env):
 
         self.reward_vals = [R_dist,R_trg,R_angle,R_legs,0]
         self.reward = 0.05*R_dist + 0.1*R_trg + 0.2*R_angle + 0.65*R_legs
-
+        print(self.reward_vals)
+        
 
         return self.reward
         
@@ -986,7 +989,7 @@ class SAR_Env_2D(gym.Env):
 
 if __name__ == '__main__':
 
-    env = SAR_Env_2D(Vel_range=[3,3],Flight_Angle_range=[90,90],Plane_Angle_range=[90,90])
+    env = SAR_Env_2D(Vel_range=[0.5,0.5],Flight_Angle_range=[4,4],Plane_Angle_range=[180,180])
     env.RENDER = True
     
 
