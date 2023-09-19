@@ -58,9 +58,9 @@ class SAR_Env_2D(gym.Env):
         self.Plane_Angle = 180
 
         ## SAR DIMENSIONS CONSTRAINTS 
-        gamma = np.deg2rad(45)  # Leg Angle [m]
-        L = 150.0e-3            # Leg Length [m]
-        PD = 75.0e-3           # Prop Distance from COM [m]
+        gamma = np.deg2rad(30)  # Leg Angle [m]
+        L = 75.0e-3            # Leg Length [m]
+        PD = 32.5e-3           # Prop Distance from COM [m]
         M_B = 35.0e-3           # Body Mass [kg]
         I_B = 17.0e-6           # Body Moment of Inertia [kg*m^2]
         self.params = (L,gamma,M_B,I_B,PD)
@@ -141,7 +141,7 @@ class SAR_Env_2D(gym.Env):
         r_BO = r_PO - self._P_to_W(r_PB,self.Plane_Angle,deg=True)  # Body Position wrt to origin
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-        self._set_state(r_BO[0],r_BO[1],np.radians(0),V_BO[0],V_BO[1],0)
+        self._set_state(r_BO[0],r_BO[1],np.radians(0.1),V_BO[0],V_BO[1],0)
 
         ## RESET/UPDATE RUN CONDITIONS
         self.t = 0
@@ -989,7 +989,7 @@ class SAR_Env_2D(gym.Env):
 
 if __name__ == '__main__':
 
-    env = SAR_Env_2D(Vel_range=[0.5,0.5],Flight_Angle_range=[4,4],Plane_Angle_range=[180,180])
+    env = SAR_Env_2D(Vel_range=[0.5,0.5],Flight_Angle_range=[4,176],Plane_Angle_range=[180,180])
     env.RENDER = True
     
 
