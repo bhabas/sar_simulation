@@ -20,7 +20,7 @@ EPS = 1e-6 # Epsilon (Prevent division by zero)
 class SAR_Env_2D(gym.Env):
     """Custom Environment that follows gym interface."""
 
-    def __init__(self,GZ_Timeout=True,My_range=[-8.0e-3,8.0e-3],Vel_range=[1.5,3.5],Phi_rel_range=[0,90],Plane_Angle_range=[90,180]):
+    def __init__(self,GZ_Timeout=True,My_range=[-8.0e-3,8.0e-3],Vel_range=[1.5,3.5],Flight_Angle_range=[0,90],Plane_Angle_range=[90,180]):
 
         gym.Env.__init__(self)
 
@@ -33,7 +33,7 @@ class SAR_Env_2D(gym.Env):
 
         ## TESTING CONDITIONS     
         self.Vel_range = Vel_range  
-        self.Phi_rel_range = Phi_rel_range
+        self.Flight_Angle_range = Flight_Angle_range
         self.Plane_Angle_range = Plane_Angle_range
         self.My_range = My_range
 
@@ -68,31 +68,29 @@ class SAR_Env_2D(gym.Env):
         ## INITIAL POSITION CONSTRAINTS
         My_max = abs(max(My_range,key=abs))
         self.t_rot = np.sqrt((2*I_B*np.radians(360))/(0.5*My_max)) ## Allow enough time for a full rotation
-        self.Tau_c = self.t_rot # TTC min allowing for a full body rotation before any body part impacts
 
-        ## PHYSICS PARAMETERS
-        self.g = 9.81       # Gravity [m/s^2]
-        self.dt = 0.002     # [s]
-        self.t = 0          # [s]
-
+        ## TIME CONSTRAINTS
         self.t_episode_max = 2.0   # [s]
         self.t_impact_max = 1.0   # [s]
 
+        ## PHYSICS PARAMETERS
+        self.g = 9.81       # Gravity [m/s^2]
+        self.dt = 0.001     # [s]
+        self.t = 0          # [s]
+
+        ## INITIAL STATE
         self.state = (0,0.1,0,0,0,0) # Initial State (X_pos,Z_pos,phi,Vx,Vz,dphi)
 
         ## RENDERING PARAMETERS
-        self.screen_width = 1000
         self.RENDER = False
-        self.world_width = 3.0  # [m]
-        self.world_height = 2.0 # [m]
-
+        self.world_width = 3.0      # [m]
+        self.world_height = 2.0     # [m]
+        self.screen_width = 1000    # [pixels]
         self.screen_height = self.screen_width*self.world_height/self.world_width
+        
         self.screen = None
         self.clock = None
         self.isopen = True
-
-        ## RESET LOGGING CONDITIONS 
-        self.K_ep += 1
 
     def reset(self, seed=None, options=None, V_mag=None, Phi_rel=None):
 
@@ -109,10 +107,6 @@ class SAR_Env_2D(gym.Env):
         self.Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
         self.Plane_Angle_rad = np.radians(self.Plane_Angle)
 
-        ## RESET POSITION RELATIVE TO LANDING SURFACE (BASED ON STARTING TAU VALUE)
-        # (Derivation: Research_Notes_Book_3.pdf (9/17/23))
-        
-
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
         if V_mag == None or Phi_rel == None:
             V_mag,Phi_rel = self._sample_flight_conditions()
@@ -124,6 +118,10 @@ class SAR_Env_2D(gym.Env):
         self.Phi_rel = Phi_rel
         self.V_mag = V_mag
 
+
+        ## RESET POSITION RELATIVE TO LANDING SURFACE (BASED ON STARTING TAU VALUE)
+        # (Derivation: Research_Notes_Book_3.pdf (9/17/23))
+
         ## RELATIVE VEL VECTORS
         V_perp = V_mag*np.sin(np.deg2rad(Phi_rel))
         V_tx = V_mag*np.cos(np.deg2rad(Phi_rel))
@@ -132,20 +130,18 @@ class SAR_Env_2D(gym.Env):
         ## CONVERT RELATIVE VEL VECTORS TO WORLD COORDS
         V_BO = self._P_to_W(V_BP,self.Plane_Angle,deg=True)
         
+        ## CALCULATE STARTING TAU VALUE
         L,gamma,M_B,I_B,PD = self.params
-        Tau_B = (L + self.Tau_c*V_perp)/V_perp
-        self.t_episode_max = Tau_B
+        Tau_min = self.t_rot    # TTC allowing for full body rotation before any body part impacts
+        Tau_B = (L + Tau_min*V_perp)/V_perp
 
+        ## CALC STARTING POSITION IN GLOBAL COORDS
         r_PO = np.array(self.Plane_Pos)                             # Plane Position wrt to origin
-        r_PB = np.array([self.Tau_c*V_tx, Tau_B*V_perp])            # Plane Position wrt to Body
+        r_PB = np.array([Tau_min*V_tx, Tau_B*V_perp])               # Plane Position wrt to Body
         r_BO = r_PO - self._P_to_W(r_PB,self.Plane_Angle,deg=True)  # Body Position wrt to origin
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
         self._set_state(r_BO[0],r_BO[1],np.radians(0),V_BO[0],V_BO[1],0)
-
-        ## UPDATE RENDER
-        if self.RENDER:
-            self.render()
 
         ## RESET/UPDATE RUN CONDITIONS
         self.t = 0
@@ -156,11 +152,18 @@ class SAR_Env_2D(gym.Env):
         self.impact_flag = False
         self.BodyContact_flag = False
         self.MomentCutoff = False
+
+        ## UPDATE RENDER
+        if self.RENDER:
+            self.render()
         
 
         return self._get_obs(),{}
 
     def step(self, action):
+
+        if self._get_obs()[0] <= 0.25:
+            action[0] = 1.0
         
         ########## PRE-POLICY TRIGGER ##########
         if action[0] <= self.Trg_threshold:
@@ -233,156 +236,6 @@ class SAR_Env_2D(gym.Env):
                 truncated,
                 {},
             )
-
-    def _finish_sim(self,action):
-
-        ## SCALE ACTION
-        scaled_action = 0.5 * (action[1] + 1) * (self.My_range[1] - self.My_range[0]) + self.My_range[0]
-
-        ## START PROJECTILE FLIGHT
-        while not self.Done:
-            
-            ## CHECK FOR IMPACT
-            x,z,phi,vx,vz,dphi = self._get_state()
-            L,gamma,M_B,I_B,PD = self._get_params()
-            self.impact_flag,self.impact_conditions = self._get_impact_conditions(x,z,phi)
-
-            ## IMPACT FALSE
-            if self.impact_flag == False:
-
-                ## UPDATE STEP
-                self._iter_step_Rot(scaled_action)
-
-                ## UPDATE RENDER
-                if self.RENDER:
-                    self.render()
-
-            ## IMPACT TRUE
-            elif self.impact_flag == True:
-
-                ## START IMPACT TIMER
-                start_time_impact = self.t
-
-                self.phi_impact = phi
-                # self.psi_rel = self.phi_impact + self.Plane_Angle_rad - np.pi
-
-                # a = np.sqrt(PD**2 + L**2 - 2*PD*L*np.cos(np.pi/2-gamma))
-                # beta_min = np.arccos((L**2 + a**2 - PD**2)/(2*a*L))
-                # beta_max = np.pi + gamma
-
-                # self.psi_min = np.arcsin(L/PD*np.sin(beta_min))-np.pi
-
-                (BodyContact,Leg1Contact,Leg2Contact) = self.impact_conditions
-
-                ## BODY CONTACT
-                if BodyContact == True:
-                    self.BodyContact_flag = True
-                    self.pad_connections = 0
-                    self.Done = True
-
-                ## LEG 1 CONTACT
-                elif Leg1Contact == True:
-
-                    beta,dbeta = self._impact_conversion(self.state,self.params,self.impact_conditions)
-
-                    ## FIND IMPACT COORDS (wrt World-Coords)
-                    r_C1_W = self._get_pose(x,z,phi)[1]
-
-                    while not self.Done:
-
-                        ## ITERATE THROUGH SWING
-                        beta,dbeta = self._iter_step_Swing(beta,dbeta,impact_leg=1)
-
-                        ## CHECK FOR END CONDITIONS
-                        if beta >= self._beta_landing(impact_leg=1):
-                            self.BodyContact_flag = False
-                            self.pad_connections = 4
-                            self.Done = True
-
-                        elif beta <= self._beta_prop(impact_leg=1):
-                            self.BodyContact_flag = True
-                            self.pad_connections = 2
-                            self.Done = True
-
-                        elif self.t - start_time_impact >= self.t_impact_max:
-                            self.BodyContact_flag = False
-                            self.pad_connections = 2
-                            self.Done = True
-
-
-                        ## CONVERT BODY BACK TO WORLD COORDS
-                        temp = self._Beta1_to_P(np.array([L,0]),beta)
-                        r_B_C1 = self._P_to_W(temp,self.Plane_Angle_rad)
-                        r_B_W = r_C1_W + r_B_C1
-
-                        phi = np.deg2rad(90) - beta - self.Plane_Angle_rad + gamma
-                        self.state = (r_B_W[0],r_B_W[1],phi,0,0,0)
-
-                        if self.RENDER:
-                            self.render()
-
-                    self.Done = True
-
-                ## LEG 2 CONTACT
-                elif Leg2Contact == True:
-
-                    beta_2,dbeta_2 = self._impact_conversion(self.state,self.params,self.impact_conditions)
-
-                    ## FIND IMPACT COORDS (wrt World-Coords)
-                    r_C2_W = self._get_pose(x,z,phi)[2]
-                    
-                    while not self.Done:
-
-                        ## ITERATE THROUGH SWING
-                        beta_2,dbeta_2 = self._iter_step_Swing(beta_2,dbeta_2,impact_leg=2)
-
-                        ## CHECK FOR END CONDITIONS
-                        if beta_2 >= self._beta_landing(impact_leg=2):
-                            self.BodyContact_flag = False
-                            self.pad_connections = 4
-                            self.Done = True
-
-                        elif beta_2 <= self._beta_prop(impact_leg=2):
-                            self.BodyContact_flag = True
-                            self.pad_connections = 2
-                            self.Done = True
-
-                        elif self.t - start_time_impact >= self.t_impact_max:
-                            self.BodyContact_flag = False
-                            self.pad_connections = 2
-                            self.Done = True
-
-                        ## CONVERT BODY BACK TO WORLD COORDS
-                        temp = self._Beta2_to_P(np.array([L,0]),beta_2)
-                        r_B_C2 = self._P_to_W(temp,self.Plane_Angle_rad)
-                        r_B_W = r_C2_W + r_B_C2
-
-                        phi = (-np.deg2rad(90) + beta_2 - self.Plane_Angle_rad - gamma)
-                        self.state = (r_B_W[0],r_B_W[1],phi,0,0,0)
-
-                        if self.RENDER:
-                            self.render()
-
-
-
-            ## UPDATE MINIMUM DISTANCE
-            D_perp = self._get_obs()[2]
-            if not self.Done:
-                if D_perp <= self.D_min:
-                    self.D_min = D_perp 
-
-
-            truncated = bool(self.t - self.start_time_episode > self.t_episode_max) # EPISODE TIME-OUT 
-
-            ## CHECK FOR DONE
-            self.Done = bool(
-                self.Done
-                or truncated
-                # or (vz <= -5.0 and self._get_obs()[2] >= 0.5) # IF SAR IS FALLING
-            )
-
-            
-        return self.Done,truncated
         
     def render(self):
 
@@ -477,18 +330,16 @@ class SAR_Env_2D(gym.Env):
 
         ## STATES TEXT
         text_States = my_font.render(f'States:', True, GREY)
-        text_t_step = my_font.render(f'Time Step: {self.t:.03f}', True, BLACK)
-        text_Phi_rel = my_font.render(f'Phi_rel: {self.Phi_rel:.2f}', True, BLACK)
-        text_V_mag = my_font.render(f'V_mag: {self.V_mag:.2f}', True, BLACK)
+        text_t_step = my_font.render(f'Time Step: {self.t:7.03f} [s]', True, BLACK)
+        text_V_mag = my_font.render(f'V_mag: {self.V_mag:.2f} [m/s]', True, BLACK)
+        text_Phi_rel = my_font.render(f'Alpha_rel: {self.Phi_rel:.2f} [deg]', True, BLACK)
 
-        # text_Vel = my_font.render(f'Vel: {Vel:.2f}  Phi: {phi:.2f}', True, BLACK)
-        
         ## OBSERVATIONS TEXT
         text_Obs = my_font.render(f'Observations:', True, GREY)
-        text_Tau = my_font.render(f'Tau: {self._get_obs()[0]:2.2f}', True, BLACK)
-        text_Theta_x = my_font.render(f'Theta_x: {self._get_obs()[1]:2.2f}', True, BLACK)
-        text_D_perp = my_font.render(f'D_perp: {self._get_obs()[2]:2.2f}', True, BLACK)
-        text_Plane_Angle = my_font.render(f'Plane Angle: {self.Plane_Angle:3.1f}', True, BLACK)
+        text_Tau = my_font.render(f'Tau: {self._get_obs()[0]:2.2f} [s]', True, BLACK)
+        text_Theta_x = my_font.render(f'Theta_x: {self._get_obs()[1]:2.2f} [rad/s]', True, BLACK)
+        text_D_perp = my_font.render(f'D_perp: {self._get_obs()[2]:2.2f} [m]', True, BLACK)
+        text_Plane_Angle = my_font.render(f'Plane Angle: {self.Plane_Angle:3.1f} [deg]', True, BLACK)
 
         ## ACTIONS TEXT
         text_Actions = my_font.render(f'Actions:', True, GREY)
@@ -498,7 +349,7 @@ class SAR_Env_2D(gym.Env):
         ## REWARD TEXT
         text_Other = my_font.render(f'Other:', True, GREY)
         text_reward = my_font.render(f'Prev Reward: {5.0:.3f}',True, BLACK)
-        text_Tau_trg = my_font.render(f'Tau trg: {5.0:.3f}',True, BLACK)
+        text_Tau_trg = my_font.render(f'Tau trg: {5.0:.3f} [s]',True, BLACK)
 
 
         ## DRAW OBJECTS TO SCREEN
@@ -538,6 +389,161 @@ class SAR_Env_2D(gym.Env):
             pygame.display.quit()
             pygame.quit()
             self.isopen = False
+
+    def _finish_sim(self,action):
+
+        ## SCALE ACTION
+        scaled_action = 0.5 * (action[1] + 1) * (self.My_range[1] - self.My_range[0]) + self.My_range[0]
+
+        ## START PROJECTILE FLIGHT
+        while not self.Done:
+            
+            ## CHECK FOR IMPACT
+            x,z,phi,vx,vz,dphi = self._get_state()
+            L,gamma,M_B,I_B,PD = self._get_params()
+            self.impact_flag,self.impact_conditions = self._get_impact_conditions(x,z,phi)
+
+            ## IMPACT FALSE
+            if self.impact_flag == False:
+
+                ## UPDATE STEP
+                self._iter_step_Rot(scaled_action)
+
+                ## UPDATE MINIMUM DISTANCE
+                D_perp = self._get_obs()[2]
+                if not self.Done:
+                    if D_perp <= self.D_min:
+                        self.D_min = D_perp 
+
+                ## UPDATE RENDER
+                if self.RENDER:
+                    self.render()
+
+            ## IMPACT TRUE
+            elif self.impact_flag == True:
+
+                ## START IMPACT TIMER
+                start_time_impact = self.t
+                self.phi_impact = phi
+                (BodyContact,Leg1Contact,Leg2Contact) = self.impact_conditions
+
+                ## BODY CONTACT
+                if BodyContact == True:
+                    self.BodyContact_flag = True
+                    self.pad_connections = 0
+                    self.Done = True
+
+                ## LEG 1 CONTACT
+                elif Leg1Contact == True:
+
+                    beta,dbeta = self._impact_conversion(self.state,self.params,self.impact_conditions)
+
+                    ## FIND IMPACT COORDS (wrt World-Coords)
+                    r_C1_W = self._get_pose(x,z,phi)[1]
+
+                    while not self.Done:
+
+                        ## ITERATE THROUGH SWING
+                        beta,dbeta = self._iter_step_Swing(beta,dbeta,impact_leg=1)
+
+                        ## CHECK FOR END CONDITIONS
+                        if beta >= self._beta_landing(impact_leg=1):
+                            self.BodyContact_flag = False
+                            self.pad_connections = 4
+                            self.Done = True
+
+                        elif beta <= self._beta_prop(impact_leg=1):
+                            self.BodyContact_flag = True
+                            self.pad_connections = 2
+                            self.Done = True
+
+                        elif self.t - start_time_impact >= self.t_impact_max:
+                            self.BodyContact_flag = False
+                            self.pad_connections = 2
+                            self.Done = True
+
+
+                        ## CONVERT BODY BACK TO WORLD COORDS
+                        temp = self._Beta1_to_P(np.array([L,0]),beta)
+                        r_B_C1 = self._P_to_W(temp,self.Plane_Angle_rad)
+                        r_B_W = r_C1_W + r_B_C1
+
+                        phi = np.deg2rad(90) - beta - self.Plane_Angle_rad + gamma
+                        self.state = (r_B_W[0],r_B_W[1],phi,0,0,0)
+
+                        ## UPDATE MINIMUM DISTANCE
+                        D_perp = self._get_obs()[2]
+                        if not self.Done:
+                            if D_perp <= self.D_min:
+                                self.D_min = D_perp 
+
+                        if self.RENDER:
+                            self.render()
+
+                    self.Done = True
+
+                ## LEG 2 CONTACT
+                elif Leg2Contact == True:
+
+                    beta_2,dbeta_2 = self._impact_conversion(self.state,self.params,self.impact_conditions)
+
+                    ## FIND IMPACT COORDS (wrt World-Coords)
+                    r_C2_W = self._get_pose(x,z,phi)[2]
+                    
+                    while not self.Done:
+
+                        ## ITERATE THROUGH SWING
+                        beta_2,dbeta_2 = self._iter_step_Swing(beta_2,dbeta_2,impact_leg=2)
+
+                        ## CHECK FOR END CONDITIONS
+                        if beta_2 >= self._beta_landing(impact_leg=2):
+                            self.BodyContact_flag = False
+                            self.pad_connections = 4
+                            self.Done = True
+
+                        elif beta_2 <= self._beta_prop(impact_leg=2):
+                            self.BodyContact_flag = True
+                            self.pad_connections = 2
+                            self.Done = True
+
+                        elif self.t - start_time_impact >= self.t_impact_max:
+                            self.BodyContact_flag = False
+                            self.pad_connections = 2
+                            self.Done = True
+
+                        ## CONVERT BODY BACK TO WORLD COORDS
+                        temp = self._Beta2_to_P(np.array([L,0]),beta_2)
+                        r_B_C2 = self._P_to_W(temp,self.Plane_Angle_rad)
+                        r_B_W = r_C2_W + r_B_C2
+
+                        phi = (-np.deg2rad(90) + beta_2 - self.Plane_Angle_rad - gamma)
+                        self.state = (r_B_W[0],r_B_W[1],phi,0,0,0)
+
+                        ## UPDATE MINIMUM DISTANCE
+                        D_perp = self._get_obs()[2]
+                        if not self.Done:
+                            if D_perp <= self.D_min:
+                                self.D_min = D_perp 
+
+                        if self.RENDER:
+                            self.render()
+
+
+
+            
+
+
+            truncated = bool(self.t - self.start_time_episode > self.t_episode_max) # EPISODE TIME-OUT 
+
+            ## CHECK FOR DONE
+            self.Done = bool(
+                self.Done
+                or truncated
+                # or (vz <= -5.0 and self._get_obs()[2] >= 0.5) # IF SAR IS FALLING
+            )
+
+            
+        return self.Done,truncated
 
     def _iter_step(self):
 
@@ -716,18 +722,18 @@ class SAR_Env_2D(gym.Env):
         V_mag = np.random.uniform(low=Vel_Low,high=Vel_High)
 
         ## SAMPLE RELATIVE PHI FROM A WEIGHTED SET OF UNIFORM DISTRIBUTIONS
-        Phi_rel_Low = self.Phi_rel_range[0]
-        Phi_rel_High = self.Phi_rel_range[1]
-        Phi_rel_Range = Phi_rel_High-Phi_rel_Low
+        Phi_rel_Low = self.Flight_Angle_range[0]
+        Phi_rel_High = self.Flight_Angle_range[1]
+        Flight_Angle_range = Phi_rel_High-Phi_rel_Low
 
         Dist_Num = np.random.choice([0,1,2],p=[0.1,0.8,0.1]) # Probability of sampling distribution
 
         if Dist_Num == 0: # Low Range
-            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_Low, high=Phi_rel_Low + 0.1*Phi_rel_Range)
+            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_Low, high=Phi_rel_Low + 0.1*Flight_Angle_range)
         elif Dist_Num == 1: # Medium Range
-            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_Low + 0.1*Phi_rel_Range, high=Phi_rel_High - 0.1*Phi_rel_Range)
+            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_Low + 0.1*Flight_Angle_range, high=Phi_rel_High - 0.1*Flight_Angle_range)
         elif Dist_Num == 2: # High Range
-            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_High - 0.1*Phi_rel_Range, high=Phi_rel_High)
+            Phi_rel = np.random.default_rng().uniform(low=Phi_rel_High - 0.1*Flight_Angle_range, high=Phi_rel_High)
        
         return V_mag,Phi_rel
 
@@ -740,6 +746,13 @@ class SAR_Env_2D(gym.Env):
         
         ## TAU TRIGGER REWARD
         R_tau = np.clip(1/np.abs(self.Tau_trg - 0.2),0,15)/15
+
+        self.phi_rel_impact = self.phi_impact + (self.Plane_Angle_rad - np.pi)
+
+        # L,gamma,M_B,I_B,PD = self._get_params()
+        # a = np.sqrt(PD**2 + L**2 - 2*PD*L*np.cos(np.pi/2-gamma))
+        # beta_min = np.arccos((L**2 + a**2 - PD**2)/(2*a*L))
+        # self.phi_rel_min = np.arcsin(L/PD*np.sin(beta_min))-np.pi
 
 
         ## IMPACT ANGLE REWARD # (Derivation: Research_Notes_Book_3.pdf (6/21/23))
@@ -892,6 +905,8 @@ class SAR_Env_2D(gym.Env):
 
         return None,None
 
+
+## COORDINATE TRANSFORMS ##
     def _B_to_W(self,vec,phi,deg=False):
 
         if deg == True:
@@ -954,14 +969,11 @@ class SAR_Env_2D(gym.Env):
 
 if __name__ == '__main__':
 
-    env = SAR_Env_2D(Vel_range=[4,4],Phi_rel_range=[10,170],Plane_Angle_range=[-170,180])
+    env = SAR_Env_2D(Vel_range=[3,3],Flight_Angle_range=[45,45],Plane_Angle_range=[180,180])
     env.RENDER = True
     
 
     for ep in range(500):
-        
-        # V_mag = 1
-        # Phi_rel = 90
 
         obs = env.reset(V_mag=None,Phi_rel=None)
         Done = False
@@ -970,8 +982,8 @@ if __name__ == '__main__':
 
             # action = f(obs)
             action = env.action_space.sample()
-            action[0] = 0.51
-            action[1] = 0.0
+            action[0] = 0.0
+            action[1] = -0.25
 
 
             next_obs,reward,Done,truncated,_ = env.step(action)
