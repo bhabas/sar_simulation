@@ -44,6 +44,7 @@ class SAR_Env_2D(gym.Env):
         self.Tau_trg = np.inf
         self.Done = False
         self.Pol_Trg_Flag = False
+        self.reward = 0
 
         ## DEFINE OBSERVATION SPACE
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)
@@ -59,8 +60,8 @@ class SAR_Env_2D(gym.Env):
 
         ## SAR DIMENSIONS CONSTRAINTS 
         gamma = np.deg2rad(30)  # Leg Angle [m]
-        L = 75.0e-3            # Leg Length [m]
-        PD = 32.5e-3           # Prop Distance from COM [m]
+        L = 150.0e-3            # Leg Length [m]
+        PD = 75e-3           # Prop Distance from COM [m]
         M_B = 35.0e-3           # Body Mass [kg]
         I_B = 17.0e-6           # Body Moment of Inertia [kg*m^2]
         self.params = (L,gamma,M_B,I_B,PD)
@@ -101,6 +102,10 @@ class SAR_Env_2D(gym.Env):
         self.Tau_trg = np.inf     # Reset Tau triggering value [s]
         self.obs_trg = np.zeros_like(self.observation_space.high)
         self.action_trg = np.zeros_like(self.action_space.high)
+        self.phi_impact = np.nan
+        self.pad_connections = 0
+        self.K_ep += 1
+        self.reward = 0
 
         ## SET PLANE POSE
         Plane_Angle_Low = self.Plane_Angle_range[0]
@@ -152,7 +157,7 @@ class SAR_Env_2D(gym.Env):
         self.impact_flag = False
         self.BodyContact_flag = False
         self.MomentCutoff = False
-        self.Pol_Trg_Flag
+        self.Pol_Trg_Flag = False
 
         ## UPDATE RENDER
         if self.RENDER:
@@ -163,10 +168,9 @@ class SAR_Env_2D(gym.Env):
 
     def step(self, action):
 
-        if self._get_obs()[0] <= 0.25:
-            action[0] = 1.0
-            self.Pol_Trg_Flag = True
-        
+        # if self._get_obs()[0] <= 0.16:
+        #     action[0] = 1
+
         ########## PRE-POLICY TRIGGER ##########
         if action[0] <= self.Trg_threshold:
 
@@ -215,6 +219,8 @@ class SAR_Env_2D(gym.Env):
 
         ########## POST-POLICY TRIGGER ##########
         elif action[0] >= self.Trg_threshold:
+
+            self.Pol_Trg_Flag = True
 
             ## GRAB CURRENT OBSERVATION
             terminal_obs = self._get_obs()   # Return this observation because reward and future 
@@ -350,8 +356,8 @@ class SAR_Env_2D(gym.Env):
 
         ## REWARD TEXT
         text_Other = my_font.render(f'Other:', True, GREY)
-        text_reward = my_font.render(f'Prev Reward: {5.0:.3f}',True, BLACK)
-        text_Tau_trg = my_font.render(f'Tau trg: {5.0:.3f} [s]',True, BLACK)
+        text_reward = my_font.render(f'Prev Reward: {self.reward:.3f}',True, BLACK)
+        text_Tau_trg = my_font.render(f'Tau trg: {self.Tau_trg:.3f} [s]',True, BLACK)
 
 
         ## DRAW OBJECTS TO SCREEN
@@ -382,7 +388,7 @@ class SAR_Env_2D(gym.Env):
 
 
         ## WINDOW/SIM UPDATE RATE
-        self.clock.tick(90) # [Hz]
+        self.clock.tick(120) # [Hz]
         pygame.display.flip()
 
     def close(self):
@@ -393,8 +399,6 @@ class SAR_Env_2D(gym.Env):
             self.isopen = False
 
     def _finish_sim(self,action):
-
-        action[1] = np.random.uniform(-0.5,0.5)
 
         ## SCALE ACTION
         scaled_action = 0.5 * (action[1] + 1) * (self.My_range[1] - self.My_range[0]) + self.My_range[0]
@@ -484,8 +488,6 @@ class SAR_Env_2D(gym.Env):
                         if self.RENDER:
                             self.render()
 
-                    self.Done = True
-
                 ## LEG 2 CONTACT
                 elif Leg2Contact == True:
 
@@ -532,18 +534,13 @@ class SAR_Env_2D(gym.Env):
                         if self.RENDER:
                             self.render()
 
-
-
-            
-
-
             truncated = bool(self.t - self.start_time_episode > self.t_episode_max) # EPISODE TIME-OUT 
 
             ## CHECK FOR DONE
             self.Done = bool(
                 self.Done
                 or truncated
-                # or (vz <= -5.0 and self._get_obs()[2] >= 0.5) # IF SAR IS FALLING
+                or (vz <= -5) # IF SAR IS FALLING
             )
 
             
@@ -593,7 +590,7 @@ class SAR_Env_2D(gym.Env):
             ## STEP UPDATE
             self.t += self.dt
 
-            z_acc = -self.g*0
+            z_acc = -self.g
             z = z + self.dt*vz
             vz = vz + self.dt*z_acc
 
@@ -753,11 +750,14 @@ class SAR_Env_2D(gym.Env):
         elif Distance_min < self.D_min:
             R_dist = np.exp(-(self.D_min - Distance_min)/0.5)
         
+        ## POLICY TRIGGER REWARD
+        # if self.Pol_Trg_Flag == True:
+        #     R_trg = 1
+        # else:
+        #     R_trg = 0
+
         ## TAU TRIGGER REWARD
-        if self.Pol_Trg_Flag == True:
-            R_trg = 1
-        else:
-            R_trg = 0
+        R_trg = np.clip(1/np.abs(self.Tau_trg - 0.2),0,15)/15
 
 
         ## SOLVE FOR MINIMUM PHI IMPACT ANGLE VIA GEOMETRIC CONSTRAINTS
@@ -771,8 +771,11 @@ class SAR_Env_2D(gym.Env):
 
 
         ## IMPACT ANGLE REWARD # (Derivation: Research_Notes_Book_3.pdf (6/21/23))
+        OverRotate_flag = False
+
         if self.phi_rel_impact < -200:
             R_angle = 0
+            OverRotate_flag = True
         elif -200 <= self.phi_rel_impact < -self.phi_rel_min:
             R_angle = 1
         elif -self.phi_rel_min <= self.phi_rel_impact < 0:
@@ -782,6 +785,9 @@ class SAR_Env_2D(gym.Env):
         elif self.phi_rel_min <= self.phi_rel_impact < 200:
             R_angle = 1
         elif self.phi_rel_impact >= 200:
+            R_angle = 0
+            OverRotate_flag = True
+        else:
             R_angle = 0
 
 
@@ -797,13 +803,13 @@ class SAR_Env_2D(gym.Env):
                 R_legs = 0.6
             else:
                 R_legs = 0.1
-                
+
         else:
             R_legs = 0.0
 
         self.reward_vals = [R_dist,R_trg,R_angle,R_legs,0]
-        self.reward = 0.05*R_dist + 0.1*R_trg + 0.2*R_angle + 0.65*R_legs
-        print(self.reward_vals)
+        self.reward = 0.7*R_dist + 0.3*R_trg + 0.0*R_angle + 0.0*R_legs*(not OverRotate_flag)
+        # print(self.reward_vals)
         
 
         return self.reward
@@ -989,7 +995,7 @@ class SAR_Env_2D(gym.Env):
 
 if __name__ == '__main__':
 
-    env = SAR_Env_2D(Vel_range=[0.5,0.5],Flight_Angle_range=[4,176],Plane_Angle_range=[180,180])
+    env = SAR_Env_2D(Vel_range=[2.0,2.0],Flight_Angle_range=[60,60],Plane_Angle_range=[180,180],My_range=[-8e-3,-8e-3])
     env.RENDER = True
     
 
@@ -1002,8 +1008,8 @@ if __name__ == '__main__':
 
             # action = f(obs)
             action = env.action_space.sample()
-            action[0] = 0.0
-            action[1] = 0
+            # action[0] = 0
+            # action[1] = 0
 
 
             next_obs,reward,Done,truncated,_ = env.step(action)

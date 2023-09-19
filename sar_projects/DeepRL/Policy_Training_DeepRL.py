@@ -21,6 +21,7 @@ from scipy.interpolate import griddata
 from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import *
 from stable_baselines3.common import utils
+from stable_baselines3.common.env_checker import check_env
 
 ## DEFINE BASE PATH
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('sar_env'))
@@ -145,7 +146,7 @@ class Policy_Trainer_DeepRL():
             tensorboard_log=self.log_dir
         ) 
 
-        if self.env.Env_Name != "CF_Env_2D":
+        if self.env.Env_Name != "SAR_Env_2D":
             self.write_config_file()
 
         return self.model
@@ -612,19 +613,20 @@ if __name__ == '__main__':
 
     ## IMPORT ENVIRONMENTS
     from Envs.SAR_Sim_DeepRL import SAR_Sim_DeepRL
-    from Envs.CF_Env_2D import CF_Env_2D
+    from Envs.SAR_Env_2D import SAR_Env_2D
 
 
     # START TRAINING NEW DEEP RL MODEL 
-    env = SAR_Sim_DeepRL(GZ_Timeout=True,My_range=[-8.0,8.0],Vel_range=[3.0,3.0],Phi_rel_range=[40,40],Plane_Angle_range=[180,180])
-    log_name = f"{env.SAR_Config}--SAC_{current_time}" 
-    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
-
-
-    # env = CF_Env_2D(Vel_range=[2.0,4.0],Phi_rel_range=[60,90])
-    # # env.RENDER = True
-    # log_name = "Log1"
+    # env = SAR_Sim_DeepRL(GZ_Timeout=True,My_range=[-8.0,8.0],Vel_range=[3.0,3.0],Phi_rel_range=[40,40],Plane_Angle_range=[180,180])
+    # log_name = f"{env.SAR_Config}--SAC_{current_time}" 
     # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
+
+
+    env = SAR_Env_2D(Vel_range=[2.0,2.0],Flight_Angle_range=[60,60],Plane_Angle_range=[180,180],My_range=[-8e-3,-8e-3])
+    env.RENDER = False
+
+    log_name = "Log2"
+    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}" 
 
 
 
