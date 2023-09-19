@@ -59,8 +59,8 @@ class SAR_Env_2D(gym.Env):
 
         ## SAR DIMENSIONS CONSTRAINTS 
         gamma = np.deg2rad(45)  # Leg Angle [m]
-        L = 150.0e-3             # Leg Length [m]
-        PD = 30.0e-3            # Prop Distance from COM [m]
+        L = 150.0e-3            # Leg Length [m]
+        PD = 150.0e-3           # Prop Distance from COM [m]
         M_B = 35.0e-3           # Body Mass [kg]
         I_B = 17.0e-6           # Body Moment of Inertia [kg*m^2]
         self.params = (L,gamma,M_B,I_B,PD)
@@ -141,7 +141,7 @@ class SAR_Env_2D(gym.Env):
         r_BO = r_PO - self._P_to_W(r_PB,self.Plane_Angle,deg=True)  # Body Position wrt to origin
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-        self._set_state(r_BO[0],r_BO[1],np.radians(0),V_BO[0],V_BO[1],0)
+        self._set_state(r_BO[0],r_BO[1],np.radians(-60),V_BO[0],V_BO[1],0)
 
         ## RESET/UPDATE RUN CONDITIONS
         self.t = 0
@@ -152,6 +152,7 @@ class SAR_Env_2D(gym.Env):
         self.impact_flag = False
         self.BodyContact_flag = False
         self.MomentCutoff = False
+        self.Pol_Trg_Flag
 
         ## UPDATE RENDER
         if self.RENDER:
@@ -164,6 +165,7 @@ class SAR_Env_2D(gym.Env):
 
         if self._get_obs()[0] <= 0.25:
             action[0] = 1.0
+            self.Pol_Trg_Flag = True
         
         ########## PRE-POLICY TRIGGER ##########
         if action[0] <= self.Trg_threshold:
@@ -740,31 +742,46 @@ class SAR_Env_2D(gym.Env):
     def _CalcReward(self):
 
         x,z,phi,vx,vz,dphi = self._get_state()
+        L,gamma,M_B,I_B,PD = self._get_params()
 
         ## DISTANCE REWARD 
-        R_dist = np.clip(1/np.abs(self.D_min + 1e-3),0,15)/15
+        Distance_min = L*np.cos(gamma)*1.1
+        if self.D_min < Distance_min:
+            R_dist = 1
+        elif Distance_min < self.D_min:
+            R_dist = np.exp(-(self.D_min - Distance_min)/0.5)
         
         ## TAU TRIGGER REWARD
-        R_tau = np.clip(1/np.abs(self.Tau_trg - 0.2),0,15)/15
+        if self.Pol_Trg_Flag == True:
+            R_trg = 1
+        else:
+            R_trg = 0
+
+
+        ## SOLVE FOR MINIMUM PHI IMPACT ANGLE VIA GEOMETRIC CONSTRAINTS
+        a = np.sqrt(PD**2 + L**2 - 2*PD*L*np.cos(np.pi/2-gamma))
+        beta_min = np.arccos((L**2 + a**2 - PD**2)/(2*a*L))
+        self.phi_rel_min = np.abs(np.arcsin(L/PD*np.sin(beta_min))-np.pi)
+        self.phi_rel_min = np.rad2deg(self.phi_rel_min)
 
         self.phi_rel_impact = self.phi_impact + (self.Plane_Angle_rad - np.pi)
-
-        # L,gamma,M_B,I_B,PD = self._get_params()
-        # a = np.sqrt(PD**2 + L**2 - 2*PD*L*np.cos(np.pi/2-gamma))
-        # beta_min = np.arccos((L**2 + a**2 - PD**2)/(2*a*L))
-        # self.phi_rel_min = np.arcsin(L/PD*np.sin(beta_min))-np.pi
+        self.phi_rel_impact = np.rad2deg(self.phi_rel_impact)
 
 
         ## IMPACT ANGLE REWARD # (Derivation: Research_Notes_Book_3.pdf (6/21/23))
-        Beta_d = 150 # Desired impact angle [= 180 deg - gamma [deg]] TODO: Change to live value?
-        Beta_rel = -180 + np.rad2deg(self.phi_impact) + self.Plane_Angle
+        if self.phi_rel_impact < -200:
+            R_angle = 0
+        elif -200 <= self.phi_rel_impact < -self.phi_rel_min:
+            R_angle = 1
+        elif -self.phi_rel_min <= self.phi_rel_impact < 0:
+            R_angle = self.phi_rel_impact/-self.phi_rel_min
+        elif 0 <= self.phi_rel_impact < self.phi_rel_min:
+            R_angle = self.phi_rel_impact/self.phi_rel_min
+        elif self.phi_rel_min <= self.phi_rel_impact < 200:
+            R_angle = 1
+        elif self.phi_rel_impact >= 200:
+            R_angle = 0
 
-        if Beta_rel < -180:
-            R_angle = 0
-        elif -180 <= Beta_rel < 180:
-            R_angle = 0.5*(-np.cos(np.deg2rad(Beta_rel*180/Beta_d))+1)
-        elif Beta_rel > 180:
-            R_angle = 0
 
         ## PAD CONTACT REWARD
         if self.pad_connections >= 3: 
@@ -782,8 +799,8 @@ class SAR_Env_2D(gym.Env):
         else:
             R_legs = 0.0
 
-        self.reward_vals = [R_dist,R_tau,R_angle,R_legs,0]
-        self.reward = 0.05*R_dist + 0.1*R_tau + 0.2*R_angle + 0.65*R_legs
+        self.reward_vals = [R_dist,R_trg,R_angle,R_legs,0]
+        self.reward = 0.05*R_dist + 0.1*R_trg + 0.2*R_angle + 0.65*R_legs
 
 
         return self.reward
@@ -969,7 +986,7 @@ class SAR_Env_2D(gym.Env):
 
 if __name__ == '__main__':
 
-    env = SAR_Env_2D(Vel_range=[3,3],Flight_Angle_range=[45,45],Plane_Angle_range=[180,180])
+    env = SAR_Env_2D(Vel_range=[3,3],Flight_Angle_range=[90,90],Plane_Angle_range=[90,90])
     env.RENDER = True
     
 
@@ -983,7 +1000,7 @@ if __name__ == '__main__':
             # action = f(obs)
             action = env.action_space.sample()
             action[0] = 0.0
-            action[1] = -0.25
+            action[1] = 0
 
 
             next_obs,reward,Done,truncated,_ = env.step(action)
