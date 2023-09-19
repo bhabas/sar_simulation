@@ -15,16 +15,19 @@ R_PW = Matrix([
     [-sin(theta),-cos(theta)],
 ])
 
-## BETA 1 CONVERSION
+pprint(simplify(R_BW))
+print()
 
-R_Beta1P = Matrix([
-    [-cos(beta_1), sin(beta_1)],
-    [-sin(beta_1),-cos(beta_1)],
-])
+## BETA 1 CONVERSION
 
 R_Beta1B = Matrix([
     [ -sin(gamma),-cos(gamma)],
     [  cos(gamma),-sin(gamma)],
+])
+
+R_Beta1P = Matrix([
+    [-cos(beta_1), sin(beta_1)],
+    [-sin(beta_1),-cos(beta_1)],
 ])
 
 Result = R_PW*R_Beta1P*R_Beta1B.T
@@ -33,14 +36,14 @@ print()
 
 ## BETA 2 CONVERSION
 
-R_Beta2P = Matrix([
-    [-sin(beta_2),-cos(beta_2)],
-    [ cos(beta_2),-sin(beta_2)],
+R_Beta2B = Matrix([
+    [ sin(gamma), cos(gamma)],
+    [ cos(gamma),-sin(gamma)],
 ])
 
-R_Beta2B = Matrix([
-    [ sin(gamma),-cos(gamma)],
-    [ cos(gamma), sin(gamma)],
+R_Beta2P = Matrix([
+    [ cos(beta_2),-sin(beta_2)],
+    [-sin(beta_2),-cos(beta_2)],
 ])
 
 Result = R_PW*R_Beta2P*R_Beta2B.T
