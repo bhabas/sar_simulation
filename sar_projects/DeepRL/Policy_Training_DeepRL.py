@@ -21,7 +21,7 @@ from scipy.interpolate import griddata
 from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import *
 from stable_baselines3.common import utils
-from stable_baselines3.common.env_checker import check_env
+# from stable_baselines3.common.env_checker import check_env
 
 ## DEFINE BASE PATH
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('sar_env'))
@@ -613,7 +613,7 @@ if __name__ == '__main__':
 
     ## IMPORT ENVIRONMENTS
     from Envs.SAR_Sim_DeepRL import SAR_Sim_DeepRL
-    from Envs.SAR_Env_2D import SAR_Env_2D
+    from sar_projects.DeepRL.Envs.SAR_Env_2D import SAR_Env_2D
     from Envs.CF_Env_2D import CF_Env_2D
 
 
@@ -624,8 +624,8 @@ if __name__ == '__main__':
     # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
 
 
-    env = SAR_Env_2D(Vel_range=[1.0,1.0],Flight_Angle_range=[90,90],Plane_Angle_range=[180,180],My_range=[0,0])
-    env.RENDER = False
+    env = SAR_Env_2D()
+    # env.RENDER = True
 
 
     # env = CF_Env_2D(Vel_range=[3.0,3.0],Phi_rel_range=[60,60])
