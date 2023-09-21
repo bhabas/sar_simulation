@@ -70,6 +70,7 @@ class SAR_Env_2D(gym.Env):
 
         ## TIME CONSTRAINTS
         self.t_episode_max = 1.5   # [s]
+        self.t_trg_max = 1.0   # [s]
         self.t_impact_max = 1.0   # [s]
 
         ## INITIAL LEARNING/REWARD CONFIGS
@@ -89,6 +90,7 @@ class SAR_Env_2D(gym.Env):
 
         ## SPECIAL CONFIGS
         self.state = (0,0,0,0,0,0)
+        self.MomentCutoff = False
 
         ## PHYSICS PARAMETERS
         self.g = 9.81       # Gravity [m/s^2]
@@ -127,6 +129,7 @@ class SAR_Env_2D(gym.Env):
 
         self.impact_flag = False
         self.BodyContact_flag = False
+        self.MomentCutoff = False
 
         ## RESET/UPDATE TIME CONDITIONS
         self.start_time_episode = self._get_time()
@@ -138,7 +141,7 @@ class SAR_Env_2D(gym.Env):
 
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
         V_mag = 1.0
-        Rel_Angle = 5
+        Rel_Angle = 90
 
         ## RELATIVE VEL VECTORS
         V_perp = V_mag*np.sin(np.deg2rad(Rel_Angle))
@@ -239,10 +242,11 @@ class SAR_Env_2D(gym.Env):
             # GRAB TERMINAL OBS
             terminal_obs = self._get_obs() # Attribute final reward to triggering state
             self.Tau_trg = terminal_obs[0]
+            self.start_time_trg = self._get_time()
 
             # 2) UPDATE STATE
             self.Pol_Trg_Flag = True
-            # self.Finish_Sim()         
+            self.Finish_Sim()         
 
 
             # 3) CALC REWARD
@@ -265,8 +269,44 @@ class SAR_Env_2D(gym.Env):
 
 
         return obs, reward, terminated, truncated, {}
-
     
+    def Finish_Sim(self):
+
+        ## SCALE ACTION
+        scaled_action = 0.5 * (action[1] + 1) * (self.My_range[1] - self.My_range[0]) + self.My_range[0]
+
+        while not self.Done:
+            
+            ## CHECK FOR IMPACT
+            x,z,phi,vx,vz,dphi = self._get_state()
+            gamma,L,PD,M_B,I_B,I_C = self.params
+            self.impact_flag,self.impact_conditions = self._get_impact_conditions(x,z,phi)
+
+            ## NO IMPACT
+            if self.impact_flag == False:
+
+                ## UPDATE ROTATION FLIGHT STEP
+                self._iter_step_Rot(scaled_action,n_step=10)
+
+                # UPDATE MINIMUM DISTANCE
+                D_perp = self._get_obs()[2]
+                if D_perp <= self.D_min:
+                    self.D_min = D_perp 
+
+                # UPDATE RENDER
+                if self.RENDER:
+                    self.render()
+
+
+            # 4) CHECK TERMINATION
+            self.Done = bool(
+                self.Done
+                or (z <= -0.7 and vz <= -1) # IF SAR IS FALLING
+            )
+
+            truncated = bool(self.t - self.start_time_trg > self.t_trg_max) 
+            
+        return self.Done,truncated
     
     def Calc_Reward_PreTrg(self):
 
@@ -315,6 +355,45 @@ class SAR_Env_2D(gym.Env):
             dphi = dphi + self.dt*phi_acc
 
             self.state = (x,z,phi,vx,vz,dphi)
+
+    def _iter_step_Rot(self,Rot_action,n_step=10):
+
+        ## PARAMS
+        gamma,L,PD,M_B,I_B,I_C = self.params
+
+        ## CURRENT STATE
+        x,z,phi,vx,vz,dphi = self._get_state()
+
+        ## TURN OFF BODY MOMENT IF ROTATED PAST 90 DEG
+        if np.abs(phi) < np.deg2rad(90) and self.MomentCutoff == False:
+            My = Rot_action
+
+        else: 
+            self.MomentCutoff= True
+            My = 0
+
+        for _ in range(n_step):
+
+            ## STEP UPDATE
+            self.t += self.dt
+
+            z_acc = -self.g
+            z = z + self.dt*vz
+            vz = vz + self.dt*z_acc
+
+            x_acc = 0
+            x = x + self.dt*vx
+            vx = vx + self.dt*x_acc
+
+            phi_acc = My/I_B
+            phi = phi + self.dt*dphi
+            dphi = dphi + self.dt*phi_acc
+
+            self.state = (x,z,phi,vx,vz,dphi)
+
+
+
+
 
     def _get_state(self):
 
@@ -613,7 +692,7 @@ if __name__ == '__main__':
         while not (Done or truncated):
 
             action = env.action_space.sample()
-            action = np.zeros_like(action)
+            # action = np.zeros_like(action)
             obs,reward,Done,truncated,_ = env.step(action)
 
         print(f"Episode: {ep} \t Obs: {obs[2]:.3f} \t Reward: {reward:.3f}")
