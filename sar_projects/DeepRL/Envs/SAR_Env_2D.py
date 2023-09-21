@@ -246,7 +246,7 @@ class SAR_Env_2D(gym.Env):
 
             # 2) UPDATE STATE
             self.Pol_Trg_Flag = True
-            self.Finish_Sim()         
+            self.Finish_Sim(action)         
 
 
             # 3) CALC REWARD
@@ -270,7 +270,7 @@ class SAR_Env_2D(gym.Env):
 
         return obs, reward, terminated, truncated, {}
     
-    def Finish_Sim(self):
+    def Finish_Sim(self,action):
 
         ## SCALE ACTION
         scaled_action = 0.5 * (action[1] + 1) * (self.My_range[1] - self.My_range[0]) + self.My_range[0]
@@ -296,6 +296,10 @@ class SAR_Env_2D(gym.Env):
                 # UPDATE RENDER
                 if self.RENDER:
                     self.render()
+
+            if self.impact_flag == True:
+
+                self.Done = True
 
 
             # 4) CHECK TERMINATION
@@ -326,7 +330,13 @@ class SAR_Env_2D(gym.Env):
         ## TAU TRIGGER REWARD
         R_tau = np.clip(1/np.abs(self.Tau_trg - 0.2),0,15)/15
 
-        R = R_dist*0.05 + R_tau*0.10
+        if (self.Tau_trg <= 0.2) and (self.D_min <= 0.15):
+            R_legs = 1
+
+        else:
+            R_legs = 0
+
+        R = R_dist*0.05 + R_tau*0.10 + R_legs*0.5
         print(f"Post_Trg: Reward: {R:.3f} \t D: {self.D_min:.3f}")
 
         return R
