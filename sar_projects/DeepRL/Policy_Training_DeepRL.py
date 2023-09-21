@@ -639,22 +639,22 @@ if __name__ == '__main__':
 
 
 
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.create_model()
-    PolicyTrainer.train_model(save_freq=5000)
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.create_model()
+    # PolicyTrainer.train_model(save_freq=3000)
 
 
     # ================================================================= ##
     
     # # RESUME TRAINING DEEP RL MODEL
-    # log_name = "Dist_Only_Reward_13:36:08_0"
-    # t_step_load = 75000
-    # env.RENDER = True
+    log_name = "Dist_Only_Reward_14:48:46_0"
+    t_step_load = 25000
+    env.RENDER = True
 
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.load_model(log_dir,log_name,t_step_load)
-    # # # PolicyTrainer.train_model(save_freq=5000,total_timesteps=60000)
-    # PolicyTrainer.test_policy(episodes=30)
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.load_model(log_dir,log_name,t_step_load)
+    # # PolicyTrainer.train_model(save_freq=5000,total_timesteps=60000)
+    PolicyTrainer.test_policy(episodes=30)
 
     # # PolicyTrainer.collect_landing_performance()
     # # PolicyTrainer.plot_landing_performance(saveFig=True)

@@ -86,7 +86,7 @@ class SAR_Env_2D(gym.Env):
 
         ## PHYSICS PARAMETERS
         self.g = 9.81       # Gravity [m/s^2]
-        self.dt = 0.005     # [s]
+        self.dt = 0.001      # [s]
         self.t = 0          # [s]
 
         ## RENDERING PARAMETERS
@@ -155,7 +155,7 @@ class SAR_Env_2D(gym.Env):
         if action[0] <= self.Trg_threshold:
 
             ## 2) UPDATE STATE
-            self._iter_step()
+            self._iter_step(n_step=10)
 
             # UPDATE RENDER
             if self.RENDER:
@@ -166,7 +166,7 @@ class SAR_Env_2D(gym.Env):
             next_obs = self._get_obs()
 
             # 3) CALCULATE REWARD
-            reward = 0
+            reward = -0.001
 
 
             # 4) CHECK TERMINATION
@@ -199,6 +199,7 @@ class SAR_Env_2D(gym.Env):
 
             # GRAB TERMINAL OBS
             terminal_obs = self._get_obs() # Attribute final reward to triggering state
+            self.Tau_trg = terminal_obs[0]
 
             # EXECUTE REMAINDER OF SIMULATION
             # self.Finish_Sim()
@@ -245,74 +246,79 @@ class SAR_Env_2D(gym.Env):
         D = self._get_obs()[2]
         R_dist = np.clip(1/np.abs(D + EPS),0,15)/15
 
+        ## TAU TRIGGER REWARD
+        R_trg = self.Pol_Trg_Flag
 
-        R = R_dist*0.5
+
+        R = R_dist*0.25 + R_trg*0.75
         print(f"Post_Trg: Reward: {R:.3f} \t D: {D:.3f}")
 
         return R
 
 
     
-    def _iter_step(self):
+    def _iter_step(self,n_step=10):
 
-        ## UPDATE STATE
-        x,z,phi,vx,vz,dphi = self._get_state()
+        for _ in range(n_step):
 
-        self.t += self.dt
+            ## UPDATE STATE
+            x,z,phi,vx,vz,dphi = self._get_state()
 
-        z_acc = 0.0
-        z = z + self.dt*vz
-        vz = vz + self.dt*z_acc
+            self.t += self.dt
 
-        x_acc = 0.0
-        x = x + self.dt*vx
-        vx = vx + self.dt*x_acc
+            z_acc = 0.0
+            z = z + self.dt*vz
+            vz = vz + self.dt*z_acc
 
-        phi_acc = 0.0
-        phi = phi + self.dt*dphi
-        dphi = dphi + self.dt*phi_acc
+            x_acc = 0.0
+            x = x + self.dt*vx
+            vx = vx + self.dt*x_acc
 
-        self.state = (x,z,phi,vx,vz,dphi)
+            phi_acc = 0.0
+            phi = phi + self.dt*dphi
+            dphi = dphi + self.dt*phi_acc
+
+            self.state = (x,z,phi,vx,vz,dphi)
 
     def _get_state(self):
 
         return self.state
     
-    def _get_obs(self):
-        
-        x,z,phi,vx,vz,dphi = self._get_state()
-        
-        D_perp = self.Plane_Pos[0] - x
-    
-        return np.array([0,0,D_perp,0],dtype=np.float32)
-    
     # def _get_obs(self):
         
     #     x,z,phi,vx,vz,dphi = self._get_state()
         
-    #     ## POSITION AND VELOCITY VECTORS
-    #     r_BO = np.array([x,z])
-    #     V_BO = np.array([vx,vz])
+    #     D_perp = self.Plane_Pos[0] - x
+    
+    #     return np.array([0,0,D_perp,0],dtype=np.float32)
+    
+    def _get_obs(self):
+        
+        x,z,phi,vx,vz,dphi = self._get_state()
+        
+        ## POSITION AND VELOCITY VECTORS
+        r_BO = np.array([x,z])
+        V_BO = np.array([vx,vz])
 
-    #     ## PLANE POSITION AND UNIT VECTORS
-    #     r_PO = self.Plane_Pos
-    #     Plane_Angle_rad = self.Plane_Angle_rad
+        ## PLANE POSITION AND UNIT VECTORS
+        r_PO = self.Plane_Pos
+        Plane_Angle_rad = self.Plane_Angle_rad
 
-    #     ## CALC DISPLACEMENT FROM PLANE CENTER
-    #     r_PB = r_PO - r_BO
+        ## CALC DISPLACEMENT FROM PLANE CENTER
+        r_PB = r_PO - r_BO
 
-    #     ## CALC RELATIVE DISTANCE AND VEL
-    #     D_tx,D_perp = self.R_WP(r_PB,Plane_Angle_rad)
-    #     V_tx,V_perp = self.R_WP(V_BO,Plane_Angle_rad)
+        ## CALC RELATIVE DISTANCE AND VEL
+        D_tx,D_perp = self.R_WP(r_PB,Plane_Angle_rad)
+        V_tx,V_perp = self.R_WP(V_BO,Plane_Angle_rad)
 
-    #     ## CALC OPTICAL FLOW VALUES
-    #     Theta_x = np.clip(V_tx/(D_perp + EPS),-20,20)
-    #     Tau = np.clip(D_perp/(V_perp + EPS),0,5)
+        ## CALC OPTICAL FLOW VALUES
+        Theta_x = np.clip(V_tx/(D_perp + EPS),-20,20)
+        Tau = np.clip(D_perp/(V_perp + EPS),0,5)
 
-    #     ## OBSERVATION VECTOR
-    #     obs = np.array([Tau,Theta_x,D_perp,Plane_Angle_rad],dtype=np.float32)
+        ## OBSERVATION VECTOR
+        obs = np.array([Tau,Theta_x,D_perp,Plane_Angle_rad],dtype=np.float32)
 
-    #     return obs
+        return obs
     
     def _get_time(self):
 
@@ -534,13 +540,15 @@ if __name__ == '__main__':
 
         Done = False
         truncated = False
+        R = 0
         while not (Done or truncated):
 
             action = env.action_space.sample()
-            # action = np.zeros_like(action)
+            action = np.zeros_like(action)
             obs,reward,Done,truncated,_ = env.step(action)
+            R += reward
 
-        print(f"Episode: {ep} \t Obs: {obs[2]:.3f} \t Reward: {reward:.3f}")
+        print(f"Episode: {ep} \t Obs: {obs[2]:.3f} \t Return: {R:.3f}")
 
     env.close()
 
