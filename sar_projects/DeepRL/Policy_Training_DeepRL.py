@@ -634,27 +634,27 @@ if __name__ == '__main__':
 
     current_datetime = datetime.now()
     current_time = current_datetime.strftime("%H:%M:%S")
-    log_name = f"Dist_Only_Reward_{current_time}"
+    log_name = f"Dist_and Tau_trg_Reward_{current_time}"
     log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}" 
 
 
 
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.create_model()
-    # PolicyTrainer.train_model(save_freq=3000)
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.create_model()
+    PolicyTrainer.train_model(save_freq=2000)
 
 
     # ================================================================= ##
     
-    # # RESUME TRAINING DEEP RL MODEL
-    log_name = "Dist_Only_Reward_14:48:46_0"
-    t_step_load = 25000
-    env.RENDER = True
+    # # # RESUME TRAINING DEEP RL MODEL
+    # log_name = "Dist_Only_Reward_14:48:46_0"
+    # t_step_load = 25000
+    # env.RENDER = True
 
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.load_model(log_dir,log_name,t_step_load)
-    # # PolicyTrainer.train_model(save_freq=5000,total_timesteps=60000)
-    PolicyTrainer.test_policy(episodes=30)
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.load_model(log_dir,log_name,t_step_load)
+    # # # PolicyTrainer.train_model(save_freq=5000,total_timesteps=60000)
+    # PolicyTrainer.test_policy(episodes=30)
 
     # # PolicyTrainer.collect_landing_performance()
     # # PolicyTrainer.plot_landing_performance(saveFig=True)

@@ -61,7 +61,7 @@ class SAR_Env_2D(gym.Env):
         ## SAR DIMENSIONS CONSTRAINTS 
         gamma = np.deg2rad(30)  # Leg Angle [m]
         L = 150.0e-3            # Leg Length [m]
-        PD = 75e-3           # Prop Distance from COM [m]
+        PD = 32.5e-3           # Prop Distance from COM [m]
         M_B = 35.0e-3           # Body Mass [kg]
         I_B = 17.0e-6           # Body Moment of Inertia [kg*m^2]
         self.params = (L,gamma,M_B,I_B,PD)
@@ -140,10 +140,11 @@ class SAR_Env_2D(gym.Env):
         ## CALCULATE STARTING TAU VALUE
         Tau_min = self.t_rot    # TTC allowing for full body rotation before any body part impacts
         Tau_B = (self.collision_radius + Tau_min*V_perp)/V_perp
+        
 
         ## CALC STARTING POSITION IN GLOBAL COORDS
         r_PO = np.array(self.Plane_Pos)                             # Plane Position wrt to origin
-        r_PB = np.array([Tau_min*V_tx, Tau_B*V_perp])               # Plane Position wrt to Body
+        r_PB = np.array([(0.5*Tau_B + Tau_min)*V_tx, (0.5*Tau_B + Tau_B)*V_perp])               # Plane Position wrt to Body
         r_BO = r_PO - self._P_to_W(r_PB,self.Plane_Angle,deg=True)  # Body Position wrt to origin
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
@@ -392,7 +393,7 @@ class SAR_Env_2D(gym.Env):
 
 
         ## WINDOW/SIM UPDATE RATE
-        self.clock.tick(120) # [Hz]
+        self.clock.tick(60) # [Hz]
         pygame.display.flip()
 
     def close(self):
@@ -1015,7 +1016,7 @@ class SAR_Env_2D(gym.Env):
 
 if __name__ == '__main__':
 
-    env = SAR_Env_2D(Vel_range=[1.0,1.0],Flight_Angle_range=[90,90],Plane_Angle_range=[180,180],My_range=[0,0])
+    env = SAR_Env_2D(Vel_range=[1.0,1.0],Flight_Angle_range=[45,45],Plane_Angle_range=[180,180],My_range=[0,0])
     env.RENDER = True
     
 
@@ -1029,8 +1030,8 @@ if __name__ == '__main__':
             # action = f(obs)
             action = env.action_space.sample()
             print(action)
-            # action[0] = 0
-            # action[1] = 0
+            action[0] = 0
+            action[1] = 0
 
 
             next_obs,reward,Done,truncated,_ = env.step(action)

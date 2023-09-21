@@ -249,14 +249,15 @@ class SAR_Env_2D(gym.Env):
     
     def Calc_Reward_PostTrg(self):
 
-        D = self._get_obs()[2]
-        R_dist = np.clip(1/np.abs(D + EPS),0,15)/15
-
+        ## DISTANCE REWARD 
+        R_dist = np.clip(1/np.abs(self.D_min + 1e-6),0,15)/15
+        
         ## TAU TRIGGER REWARD
         R_tau = np.clip(1/np.abs(self.Tau_trg - 0.2),0,15)/15
+        # R_tau = self.Pol_Trg_Flag
 
-        R = R_dist*0.25 + R_tau*0.75
-        print(f"Post_Trg: Reward: {R:.3f} \t D: {D:.3f}")
+        R = R_dist*0.05 + R_tau*0.05
+        print(f"Post_Trg: Reward: {R:.3f} \t D: {self.D_min:.3f}")
 
         return R
 
@@ -578,7 +579,7 @@ if __name__ == '__main__':
         while not (Done or truncated):
 
             action = env.action_space.sample()
-            action = np.zeros_like(action)
+            # action = np.zeros_like(action)
             obs,reward,Done,truncated,_ = env.step(action)
 
         print(f"Episode: {ep} \t Obs: {obs[2]:.3f} \t Reward: {reward:.3f}")
