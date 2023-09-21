@@ -160,9 +160,13 @@ class SAR_Env_2D(gym.Env):
             # 4) CHECK TERMINATION
             self.Done = bool(
                 self.Done
+                or next_obs[2] <= 0
             )
             terminated = self.Done
             truncated = bool(self._get_time() - self.start_time_episode >= self.t_episode_max) 
+
+            if truncated:
+                print("Truncated")
             
             # 5) RETURN VALUES
             return(
@@ -230,7 +234,7 @@ class SAR_Env_2D(gym.Env):
         R_dist = np.clip(1/np.abs(D + EPS),0,15)/15
 
 
-        R = R_dist*0.5 + 0.5
+        R = R_dist*0.5
         print(f"Post_Trg: Reward: {R:.3f} \t D: {D:.3f}")
 
         return R
@@ -266,7 +270,7 @@ class SAR_Env_2D(gym.Env):
         
         x,z,phi,vx,vz,dphi = self._get_state()
         
-        D_perp = np.abs(self.Plane_Pos[0] - x)
+        D_perp = self.Plane_Pos[0] - x
     
         return np.array([0,0,D_perp,0],dtype=np.float32)
     

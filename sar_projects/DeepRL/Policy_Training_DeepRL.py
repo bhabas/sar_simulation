@@ -140,7 +140,7 @@ class Policy_Trainer_DeepRL():
             env=self.env,
             gamma=gamma,
             learning_rate=learning_rate,
-            policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=dict(pi=net_arch, qf=[256,256])),
+            policy_kwargs=dict(activation_fn=th.nn.ELU,net_arch=dict(pi=net_arch, qf=[256,256])),
             verbose=1,
             device='cpu',
             tensorboard_log=self.log_dir
@@ -268,7 +268,7 @@ class Policy_Trainer_DeepRL():
         """        
 
         for ep in range(episodes):
-            obs,_ = self.env.reset(Vel=Vel,Phi=Phi)
+            obs,_ = self.env.reset()
             done = False
             while not done:
                 action,_ = self.model.predict(obs)
@@ -647,8 +647,8 @@ if __name__ == '__main__':
     # ================================================================= ##
     
     # # # RESUME TRAINING DEEP RL MODEL
-    # log_name = "A30_L75_K08--Deg_180.0--SAC_07_06-12:50_0"
-    # t_step_load = 10000
+    # log_name = "Dist_Only_Reward_10:37:04_0"
+    # t_step_load = 85000
     # env.RENDER = True
 
     # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
@@ -656,8 +656,8 @@ if __name__ == '__main__':
     # # # PolicyTrainer.train_model(save_freq=5000,total_timesteps=60000)
     # PolicyTrainer.test_policy(episodes=30)
 
-    # # # PolicyTrainer.collect_landing_performance()
-    # # # PolicyTrainer.plot_landing_performance(saveFig=True)
+    # # PolicyTrainer.collect_landing_performance()
+    # # PolicyTrainer.plot_landing_performance(saveFig=True)
 
 
 
