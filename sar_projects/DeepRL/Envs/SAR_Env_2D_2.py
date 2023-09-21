@@ -65,6 +65,9 @@ class SAR_Env_2D(gym.Env):
         #   2D ENV CONFIGS
         ######################
 
+        ## SPECIAL CONFIGS
+        self.state = (0,0,0,0,0,0)
+
         ## PHYSICS PARAMETERS
         self.g = 9.81       # Gravity [m/s^2]
         self.dt = 0.005     # [s]
@@ -87,6 +90,10 @@ class SAR_Env_2D(gym.Env):
 
     def reset(self, seed=None, options=None, V_mag=None, Rel_Angle=None):
 
+        ######################
+        #    GENERAL CONFIGS
+        ######################
+
         ## RESET LEARNING/REWARD CONDITIONS
         self.K_ep += 1
         self.Done = False
@@ -95,6 +102,15 @@ class SAR_Env_2D(gym.Env):
 
         self.D_min = np.inf
         self.Tau_trg = np.inf
+
+
+
+        ######################
+        #   2D ENV CONFIGS
+        ######################
+
+        ## RESET STATE
+        self.state = (0,0,0,0.5,0,0)
 
 
         # UPDATE RENDER
@@ -160,7 +176,9 @@ class SAR_Env_2D(gym.Env):
             # EXECUTE REMAINDER OF SIMULATION
             # self.Finish_Sim()
 
-
+            # UPDATE RENDER
+            if self.RENDER:
+                self.render()
 
             # 3) CALC REWARD
             reward = self.Calc_Reward()  
@@ -191,7 +209,24 @@ class SAR_Env_2D(gym.Env):
     
     def _iter_step(self):
 
-        pass
+        ## UPDATE STATE
+        x,z,phi,vx,vz,dphi = self._get_state()
+
+        self.t += self.dt
+
+        z_acc = 0.0
+        z = z + self.dt*vz
+        vz = vz + self.dt*z_acc
+
+        x_acc = 0.0
+        x = x + self.dt*vx
+        vx = vx + self.dt*x_acc
+
+        phi_acc = 0.0
+        phi = phi + self.dt*dphi
+        dphi = dphi + self.dt*phi_acc
+
+        self.state = (x,z,phi,vx,vz,dphi)
 
     def _get_state(self):
 
@@ -201,7 +236,23 @@ class SAR_Env_2D(gym.Env):
     
         return np.array([0,0,0,0],dtype=np.float32)
     
+    def _get_pose(self):
 
+        x,z,phi,_,_,_ = self._get_state()
+
+        ## MODEL CoG
+        CG = np.array([x,z])
+
+        ## LEG COORDS
+        L1 = np.array([0,0])
+        L2 = np.array([0,0])
+
+        ## PROP COORDS
+        Prop1 = np.array([0,0])
+        Prop2 = np.array([0,0])
+
+        return np.array([CG,L1,L2,Prop1,Prop2])
+        
     def render(self):
 
         ## SET DEFAULT WINDOW POSITION
@@ -238,8 +289,8 @@ class SAR_Env_2D(gym.Env):
             self.clock = pygame.time.Clock()
 
 
-        # ## GET CURRENT STATE
-        # x,z,phi,vx,vz,dphi = self._get_state()
+        ## GET CURRENT STATE
+        x,z,phi,vx,vz,dphi = self._get_state()
 
         # ## GET CURRENT PARAMS
         # (L,gamma,M_B,I_B,PD) = self._get_params()
@@ -270,27 +321,24 @@ class SAR_Env_2D(gym.Env):
 
 
         ## DRAW QUADROTOR
-        # Pose = self._get_pose(x,z,phi)
+        Pose = self._get_pose()
         # pygame.draw.line(self.surf,RED,c2p(Pose[0]),c2p(Pose[1]),width=3) # Leg 1
         # pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[2]),width=3) # Leg 2
         # pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[3]),width=3) # Prop 1
         # pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[4]),width=3) # Prop 2
         # pygame.draw.circle(self.surf,GREY,c2p(Pose[0]),radius=self.collision_radius*self.screen_width/self.world_width,width=2)
 
+        ## TRIGGER INDICATOR
+        if self.Pol_Trg_Flag == True:
+            pygame.draw.circle(self.surf,RED,  c2p(Pose[0]),radius=4,width=0)
+            pygame.draw.circle(self.surf,BLACK,c2p(Pose[0]),radius=5,width=3)
+        else:
+            pygame.draw.circle(self.surf,BLUE, c2p(Pose[0]),radius=4,width=0)
+            pygame.draw.circle(self.surf,BLACK,c2p(Pose[0]),radius=5,width=3)
 
         ## BODY AXES
         # pygame.draw.line(self.surf,GREEN,c2p(Pose[0]),c2p(Pose[0] + self._B_to_W(np.array([0.05,0]),phi)),width=5)  # B_x   
         # pygame.draw.line(self.surf,BLUE,c2p(Pose[0]),c2p(Pose[0] + self._B_to_W(np.array([0,0.05]),phi)),width=5)  # B_z  
-
-
-
-        ## TRIGGER INDICATOR
-        # if self.Pol_Trg_Flag == True:
-        #     pygame.draw.circle(self.surf,RED,  c2p(Pose[0]),radius=4,width=0)
-        #     pygame.draw.circle(self.surf,BLACK,c2p(Pose[0]),radius=5,width=3)
-        # else:
-        #     pygame.draw.circle(self.surf,BLUE, c2p(Pose[0]),radius=4,width=0)
-        #     pygame.draw.circle(self.surf,BLACK,c2p(Pose[0]),radius=5,width=3)
 
 
         ## FLIP IMAGE SO X->RIGHT AND Y->UP
@@ -308,7 +356,7 @@ class SAR_Env_2D(gym.Env):
         ## OBSERVATIONS TEXT
         text_Obs = my_font.render(f'Observations:', True, GREY)
         # text_Tau = my_font.render(f'Tau: {self._get_obs()[0]:2.2f} [s]', True, BLACK)
-        # text_Theta_x = my_font.render(f'Theta_x: {self._get_obs()[1]:2.2f} [rad/s]', True, BLACK)
+        # text_phi_x = my_font.render(f'phi_x: {self._get_obs()[1]:2.2f} [rad/s]', True, BLACK)
         # text_D_perp = my_font.render(f'D_perp: {self._get_obs()[2]:2.2f} [m]', True, BLACK)
         # text_Plane_Angle = my_font.render(f'Plane Angle: {self.Plane_Angle:3.1f} [deg]', True, BLACK)
 
@@ -332,7 +380,7 @@ class SAR_Env_2D(gym.Env):
 
         self.screen.blit(text_Obs,          (5,5 + 25*5))
         # self.screen.blit(text_Tau,          (5,5 + 25*6))
-        # self.screen.blit(text_Theta_x,      (5,5 + 25*7))
+        # self.screen.blit(text_phi_x,      (5,5 + 25*7))
         # self.screen.blit(text_D_perp,       (5,5 + 25*8))
         # self.screen.blit(text_Plane_Angle,  (5,5 + 25*9))
 
@@ -347,7 +395,7 @@ class SAR_Env_2D(gym.Env):
 
 
         ## WINDOW/SIM UPDATE RATE
-        self.clock.tick(120) # [Hz]
+        self.clock.tick(60) # [Hz]
         pygame.display.flip()
 
     def close(self):
@@ -367,7 +415,7 @@ if __name__ == '__main__':
         while not Done:
 
             action = env.action_space.sample()
-            # action = np.zeros_like(action)
+            action = np.zeros_like(action)
             obs,reward,Done,truncated,_ = env.step(action)
 
         print(f"Episode: {ep} \t Reward: {reward:.3f}")
