@@ -810,7 +810,7 @@ class CF_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = CF_Env_2D(Vel_range=[1.0,3.0],Phi_rel_range=[120,135])
+    env = CF_Env_2D(Vel_range=[1.0,3.0],Phi_rel_range=[90,90])
     env.RENDER = True
 
     for ep in range(25):

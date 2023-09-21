@@ -39,7 +39,7 @@ class SAR_Env_2D(gym.Env):
 
         ## RESET INITIAL VALUES
         self.K_ep = 0
-        self.Trg_threshold = 0.5
+        self.Trg_threshold = 0.75
         self.D_min = np.inf
         self.Tau_trg = np.inf
         self.Done = False
@@ -69,7 +69,8 @@ class SAR_Env_2D(gym.Env):
 
         ## INITIAL POSITION CONSTRAINTS
         My_max = abs(max(My_range,key=abs))
-        self.t_rot = np.sqrt((2*I_B*np.radians(360))/(0.5*My_max)) ## Allow enough time for a full rotation
+        self.t_rot = np.sqrt((2*I_B*np.radians(360))/(0.5*My_max + EPS)) ## Allow enough time for a full rotation
+        self.t_rot = 0.3
 
         ## TIME CONSTRAINTS
         self.t_episode_max = 2.0   # [s]
@@ -77,7 +78,7 @@ class SAR_Env_2D(gym.Env):
 
         ## PHYSICS PARAMETERS
         self.g = 9.81       # Gravity [m/s^2]
-        self.dt = 0.001     # [s]
+        self.dt = 0.005     # [s]
         self.t = 0          # [s]
 
         ## INITIAL STATE
@@ -232,10 +233,13 @@ class SAR_Env_2D(gym.Env):
             self.action_trg = action       
 
             ## COMPLETE REST OF SIMULATION
-            terminated,truncated = self._finish_sim(action)       
+            # terminated,truncated = self._finish_sim(action)       
+            self.Done = True
+            terminated = self.Done
+            truncated = False
 
             ## CALCULATE REWARD
-            reward = self._CalcReward()    
+            reward = self.CalcReward()    
 
             return(
                 terminal_obs,
@@ -540,7 +544,7 @@ class SAR_Env_2D(gym.Env):
             self.Done = bool(
                 self.Done
                 or truncated
-                or (vz <= -5) # IF SAR IS FALLING
+                or (z <= -0.7 and vz <= -1) # IF SAR IS FALLING
             )
 
             
@@ -738,79 +742,95 @@ class SAR_Env_2D(gym.Env):
        
         return V_mag,Phi_rel
 
-    def _CalcReward(self):
+    # def _CalcReward(self):
+
+    #     x,z,phi,vx,vz,dphi = self._get_state()
+    #     L,gamma,M_B,I_B,PD = self._get_params()
+
+    #     ## DISTANCE REWARD 
+    #     Distance_min = L*np.cos(gamma)*1.1
+    #     if self.D_min < Distance_min:
+    #         R_dist = 1
+    #     elif Distance_min < self.D_min:
+    #         R_dist = np.exp(-(self.D_min - Distance_min)/0.5)
+        
+    #     ## POLICY TRIGGER REWARD
+    #     # if self.Pol_Trg_Flag == True:
+    #     #     R_trg = 1
+    #     # else:
+    #     #     R_trg = 0
+
+    #     ## TAU TRIGGER REWARD
+    #     R_trg = np.clip(1/np.abs(self.Tau_trg - 0.2),0,15)/15
+
+
+    #     ## SOLVE FOR MINIMUM PHI IMPACT ANGLE VIA GEOMETRIC CONSTRAINTS
+    #     a = np.sqrt(PD**2 + L**2 - 2*PD*L*np.cos(np.pi/2-gamma))
+    #     beta_min = np.arccos((L**2 + a**2 - PD**2)/(2*a*L))
+    #     self.phi_rel_min = np.abs(np.arcsin(L/PD*np.sin(beta_min))-np.pi)
+    #     self.phi_rel_min = np.rad2deg(self.phi_rel_min)
+
+    #     self.phi_rel_impact = self.phi_impact + (self.Plane_Angle_rad - np.pi)
+    #     self.phi_rel_impact = np.rad2deg(self.phi_rel_impact)
+
+
+    #     ## IMPACT ANGLE REWARD # (Derivation: Research_Notes_Book_3.pdf (6/21/23))
+    #     OverRotate_flag = False
+
+    #     if self.phi_rel_impact < -200:
+    #         R_angle = 0
+    #         OverRotate_flag = True
+    #     elif -200 <= self.phi_rel_impact < -self.phi_rel_min:
+    #         R_angle = 1
+    #     elif -self.phi_rel_min <= self.phi_rel_impact < 0:
+    #         R_angle = self.phi_rel_impact/-self.phi_rel_min
+    #     elif 0 <= self.phi_rel_impact < self.phi_rel_min:
+    #         R_angle = self.phi_rel_impact/self.phi_rel_min
+    #     elif self.phi_rel_min <= self.phi_rel_impact < 200:
+    #         R_angle = 1
+    #     elif self.phi_rel_impact >= 200:
+    #         R_angle = 0
+    #         OverRotate_flag = True
+    #     else:
+    #         R_angle = 0
+
+
+    #     ## PAD CONTACT REWARD
+    #     if self.pad_connections >= 3: 
+    #         if self.BodyContact_flag == False:
+    #             R_legs = 1.0
+    #         else:
+    #             R_legs = 0.3
+
+    #     elif self.pad_connections == 2: 
+    #         if self.BodyContact_flag == False:
+    #             R_legs = 0.6
+    #         else:
+    #             R_legs = 0.1
+
+    #     else:
+    #         R_legs = 0.0
+
+    #     self.reward_vals = [R_dist,R_trg,R_angle,R_legs,0]
+    #     self.reward = 0.7*R_dist + 0.3*R_trg + 0.0*R_angle + 0.0*R_legs*(not OverRotate_flag)
+    #     # print(self.reward_vals)
+        
+
+    #     return self.reward
+    
+    def CalcReward(self):
 
         x,z,phi,vx,vz,dphi = self._get_state()
         L,gamma,M_B,I_B,PD = self._get_params()
 
         ## DISTANCE REWARD 
-        Distance_min = L*np.cos(gamma)*1.1
-        if self.D_min < Distance_min:
-            R_dist = 1
-        elif Distance_min < self.D_min:
-            R_dist = np.exp(-(self.D_min - Distance_min)/0.5)
+        R_dist = np.clip(1/np.abs(self.D_min + 1e-3),0,15)/15
         
-        ## POLICY TRIGGER REWARD
-        # if self.Pol_Trg_Flag == True:
-        #     R_trg = 1
-        # else:
-        #     R_trg = 0
-
         ## TAU TRIGGER REWARD
-        R_trg = np.clip(1/np.abs(self.Tau_trg - 0.2),0,15)/15
+        R_tau = np.clip(1/np.abs(self.Tau_trg - 0.2),0,15)/15
 
-
-        ## SOLVE FOR MINIMUM PHI IMPACT ANGLE VIA GEOMETRIC CONSTRAINTS
-        a = np.sqrt(PD**2 + L**2 - 2*PD*L*np.cos(np.pi/2-gamma))
-        beta_min = np.arccos((L**2 + a**2 - PD**2)/(2*a*L))
-        self.phi_rel_min = np.abs(np.arcsin(L/PD*np.sin(beta_min))-np.pi)
-        self.phi_rel_min = np.rad2deg(self.phi_rel_min)
-
-        self.phi_rel_impact = self.phi_impact + (self.Plane_Angle_rad - np.pi)
-        self.phi_rel_impact = np.rad2deg(self.phi_rel_impact)
-
-
-        ## IMPACT ANGLE REWARD # (Derivation: Research_Notes_Book_3.pdf (6/21/23))
-        OverRotate_flag = False
-
-        if self.phi_rel_impact < -200:
-            R_angle = 0
-            OverRotate_flag = True
-        elif -200 <= self.phi_rel_impact < -self.phi_rel_min:
-            R_angle = 1
-        elif -self.phi_rel_min <= self.phi_rel_impact < 0:
-            R_angle = self.phi_rel_impact/-self.phi_rel_min
-        elif 0 <= self.phi_rel_impact < self.phi_rel_min:
-            R_angle = self.phi_rel_impact/self.phi_rel_min
-        elif self.phi_rel_min <= self.phi_rel_impact < 200:
-            R_angle = 1
-        elif self.phi_rel_impact >= 200:
-            R_angle = 0
-            OverRotate_flag = True
-        else:
-            R_angle = 0
-
-
-        ## PAD CONTACT REWARD
-        if self.pad_connections >= 3: 
-            if self.BodyContact_flag == False:
-                R_legs = 1.0
-            else:
-                R_legs = 0.3
-
-        elif self.pad_connections == 2: 
-            if self.BodyContact_flag == False:
-                R_legs = 0.6
-            else:
-                R_legs = 0.1
-
-        else:
-            R_legs = 0.0
-
-        self.reward_vals = [R_dist,R_trg,R_angle,R_legs,0]
-        self.reward = 0.7*R_dist + 0.3*R_trg + 0.0*R_angle + 0.0*R_legs*(not OverRotate_flag)
-        # print(self.reward_vals)
-        
+        self.reward_vals = [R_dist,R_tau,0,0,0]
+        self.reward = 0.0*R_dist + 1.0*R_tau
 
         return self.reward
         
@@ -995,7 +1015,7 @@ class SAR_Env_2D(gym.Env):
 
 if __name__ == '__main__':
 
-    env = SAR_Env_2D(Vel_range=[2.0,2.0],Flight_Angle_range=[60,60],Plane_Angle_range=[180,180],My_range=[-8e-3,-8e-3])
+    env = SAR_Env_2D(Vel_range=[1.0,1.0],Flight_Angle_range=[90,90],Plane_Angle_range=[180,180],My_range=[0,0])
     env.RENDER = True
     
 
@@ -1008,10 +1028,13 @@ if __name__ == '__main__':
 
             # action = f(obs)
             action = env.action_space.sample()
+            print(action)
             # action[0] = 0
             # action[1] = 0
 
 
             next_obs,reward,Done,truncated,_ = env.step(action)
             obs = next_obs
+
+        print(f"Reward: {reward:.2f}")
 

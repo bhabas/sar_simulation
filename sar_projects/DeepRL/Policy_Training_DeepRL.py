@@ -146,7 +146,7 @@ class Policy_Trainer_DeepRL():
             tensorboard_log=self.log_dir
         ) 
 
-        if self.env.Env_Name != "SAR_Env_2D":
+        if self.env.Env_Name == "SAR_Sim_DeepRL_Env":
             self.write_config_file()
 
         return self.model
@@ -614,6 +614,8 @@ if __name__ == '__main__':
     ## IMPORT ENVIRONMENTS
     from Envs.SAR_Sim_DeepRL import SAR_Sim_DeepRL
     from Envs.SAR_Env_2D import SAR_Env_2D
+    from Envs.CF_Env_2D import CF_Env_2D
+
 
 
     # START TRAINING NEW DEEP RL MODEL 
@@ -622,17 +624,24 @@ if __name__ == '__main__':
     # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
 
 
-    env = SAR_Env_2D(Vel_range=[2.0,2.0],Flight_Angle_range=[60,60],Plane_Angle_range=[180,180],My_range=[-8e-3,-8e-3])
+    env = SAR_Env_2D(Vel_range=[1.0,1.0],Flight_Angle_range=[90,90],Plane_Angle_range=[180,180],My_range=[0,0])
     env.RENDER = False
 
-    log_name = "Log2"
+
+    # env = CF_Env_2D(Vel_range=[3.0,3.0],Phi_rel_range=[60,60])
+    # env.RENDER = False
+
+
+    current_datetime = datetime.now()
+    current_time = current_datetime.strftime("%H:%M:%S")
+    log_name = f"Dist_Only_Reward_{current_time}"
     log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}" 
 
 
 
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.create_model()
-    PolicyTrainer.train_model(save_freq=5000)
+    PolicyTrainer.train_model(save_freq=1000)
 
 
     # ================================================================= ##
