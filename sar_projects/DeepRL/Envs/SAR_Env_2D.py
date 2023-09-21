@@ -20,7 +20,7 @@ EPS = 1e-6 # Epsilon (Prevent division by zero)
 
 class SAR_Env_2D(gym.Env):
 
-    def __init__(self):
+    def __init__(self,GZ_Timeout=True,My_range=[-8.0e-3,8.0e-3],Vel_range=[1.5,3.5],Flight_Angle_range=[0,90],Plane_Angle_range=[90,180]):
         super().__init__()
         
         ######################
@@ -38,11 +38,11 @@ class SAR_Env_2D(gym.Env):
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
         self.action_trg = np.zeros(self.action_space.shape,dtype=np.float32) # Action values at triggering
 
-        ## TESTING CONFIGS  
-        # self.Vel_range = Vel_range  
-        # self.Flight_Angle_range = Flight_Angle_range
-        # self.Plane_Angle_range = Plane_Angle_range
-        # self.a_Rot_range = a_Rot_range
+        ## TESTING CONDITIONS     
+        self.Vel_range = Vel_range  
+        self.Flight_Angle_range = Flight_Angle_range
+        self.Plane_Angle_range = Plane_Angle_range
+        self.My_range = My_range
 
         ## SAR DIMENSIONAL CONSTRAINTS
         gamma = np.deg2rad(30)  # Leg Angle [m]
@@ -54,9 +54,15 @@ class SAR_Env_2D(gym.Env):
         self.params = (gamma,L,PD,M_B,I_B,I_C)
         self.collision_radius = max(L,PD)
 
+        ## SAR CAPABILITY CONSTRAINTS
+        My_max = abs(max(My_range,key=abs))
+        self.t_rot = np.sqrt((2*I_B*np.radians(360))/(0.5*My_max + EPS)) ## Allow enough time for a full rotation
+        self.t_rot = 0.3
+
+
         ## PLANE PARAMETERS
-        self.Plane_Pos = [0.5,0]
-        self.Plane_Angle = 90
+        self.Plane_Pos = [0,0.5]
+        self.Plane_Angle = 180
         self.Plane_Angle_rad = np.radians(self.Plane_Angle)
 
         ## LEARNING/REWARD CONFIGS
@@ -127,13 +133,38 @@ class SAR_Env_2D(gym.Env):
         self.start_time_trg = np.nan
         self.start_time_impact = np.nan
 
+        ## RESET POSITION RELATIVE TO LANDING SURFACE (BASED ON STARTING TAU VALUE)
+        # (Derivation: Research_Notes_Book_3.pdf (9/17/23))
+
+        ## SAMPLE VELOCITY AND FLIGHT ANGLE
+        V_mag = 1.0
+        Rel_Angle = 5
+
+        ## RELATIVE VEL VECTORS
+        V_perp = V_mag*np.sin(np.deg2rad(Rel_Angle))
+        V_tx = V_mag*np.cos(np.deg2rad(Rel_Angle))
+        V_BP = np.array([V_tx,V_perp])
+
+        ## CONVERT RELATIVE VEL VECTORS TO WORLD COORDS
+        V_BO = self.R_PW(V_BP,self.Plane_Angle_rad)
+
+        ## CALCULATE STARTING TAU VALUE
+        Tau_rot = self.t_rot    # TTC allowing for full body rotation before any body part impacts
+        Tau_Body = (self.collision_radius + Tau_rot*V_perp)/V_perp
+        Tau_extra = 0.25*Tau_Body
+
+        ## CALC STARTING POSITION IN GLOBAL COORDS
+        r_PO = np.array(self.Plane_Pos)                                                 # Plane Position wrt to origin
+        r_PB = np.array([(Tau_rot + Tau_extra)*V_tx, (Tau_Body + Tau_extra)*V_perp])    # Plane Position wrt to Body
+        r_BO = r_PO - self.R_PW(r_PB,self.Plane_Angle_rad)                              # Body Position wrt to origin
+
+        ## LAUNCH QUAD W/ DESIRED VELOCITY
+        self._set_state(r_BO[0],r_BO[1],np.radians(0.1),V_BO[0],V_BO[1],0)
+
+
         ######################
         #   2D ENV CONFIGS
         ######################
-
-        ## RESET STATE
-        self.state = (0,0,0,0.5,0,0)
-
 
         # UPDATE RENDER
         if self.RENDER:
@@ -254,9 +285,8 @@ class SAR_Env_2D(gym.Env):
         
         ## TAU TRIGGER REWARD
         R_tau = np.clip(1/np.abs(self.Tau_trg - 0.2),0,15)/15
-        # R_tau = self.Pol_Trg_Flag
 
-        R = R_dist*0.05 + R_tau*0.05
+        R = R_dist*0.05 + R_tau*0.10
         print(f"Post_Trg: Reward: {R:.3f} \t D: {self.D_min:.3f}")
 
         return R
@@ -383,6 +413,10 @@ class SAR_Env_2D(gym.Env):
 
 
         return impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
+
+    def _set_state(self,x,z,phi,vx,vz,dphi):
+
+        self.state = (x,z,phi,vx,vz,dphi)
 
     def render(self):
 
@@ -579,7 +613,7 @@ if __name__ == '__main__':
         while not (Done or truncated):
 
             action = env.action_space.sample()
-            # action = np.zeros_like(action)
+            action = np.zeros_like(action)
             obs,reward,Done,truncated,_ = env.step(action)
 
         print(f"Episode: {ep} \t Obs: {obs[2]:.3f} \t Reward: {reward:.3f}")
