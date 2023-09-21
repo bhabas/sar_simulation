@@ -119,6 +119,8 @@ class SAR_Env_2D(gym.Env):
         self.D_min = np.inf
         self.Tau_trg = np.inf
 
+        self.impact_flag = False
+        self.BodyContact_flag = False
 
         ## RESET/UPDATE TIME CONDITIONS
         self.start_time_episode = self._get_time()
@@ -160,19 +162,29 @@ class SAR_Env_2D(gym.Env):
             # UPDATE RENDER
             if self.RENDER:
                 self.render()
-
+            
 
             # GRAB NEXT OBS
             next_obs = self._get_obs()
 
+            # CHECK FOR IMPACT
+            x,z,phi,vx,vz,dphi = self._get_state()
+            self.impact_flag,self.impact_conditions = self._get_impact_conditions(x,z,phi)
+
+            # UPDATE MINIMUM DISTANCE
+            D_perp = next_obs[2]
+            if D_perp <= self.D_min:
+                self.D_min = D_perp 
+
+
             # 3) CALCULATE REWARD
-            reward = -0.001
+            reward = 0.0
 
 
             # 4) CHECK TERMINATION
             self.Done = bool(
                 self.Done
-                or next_obs[2] <= 0
+                or (self.impact_flag or self.BodyContact_flag)
             )
             terminated = self.Done
             truncated = bool(self._get_time() - self.start_time_episode >= self.t_episode_max) 
@@ -193,20 +205,14 @@ class SAR_Env_2D(gym.Env):
         ########## POST-POLICY TRIGGER ##########
         elif action[0] >= self.Trg_threshold:
 
-
-            # 2) UPDATE STATE
-            self.Pol_Trg_Flag = True
-
             # GRAB TERMINAL OBS
             terminal_obs = self._get_obs() # Attribute final reward to triggering state
             self.Tau_trg = terminal_obs[0]
 
-            # EXECUTE REMAINDER OF SIMULATION
-            # self.Finish_Sim()
+            # 2) UPDATE STATE
+            self.Pol_Trg_Flag = True
+            # self.Finish_Sim()         
 
-            # UPDATE RENDER
-            if self.RENDER:
-                self.render()
 
             # 3) CALC REWARD
             reward = self.Calc_Reward_PostTrg()  
@@ -247,10 +253,9 @@ class SAR_Env_2D(gym.Env):
         R_dist = np.clip(1/np.abs(D + EPS),0,15)/15
 
         ## TAU TRIGGER REWARD
-        R_trg = self.Pol_Trg_Flag
+        R_tau = np.clip(1/np.abs(self.Tau_trg - 0.2),0,15)/15
 
-
-        R = R_dist*0.25 + R_trg*0.75
+        R = R_dist*0.25 + R_tau*0.75
         print(f"Post_Trg: Reward: {R:.3f} \t D: {D:.3f}")
 
         return R
@@ -283,15 +288,7 @@ class SAR_Env_2D(gym.Env):
     def _get_state(self):
 
         return self.state
-    
-    # def _get_obs(self):
-        
-    #     x,z,phi,vx,vz,dphi = self._get_state()
-        
-    #     D_perp = self.Plane_Pos[0] - x
-    
-    #     return np.array([0,0,D_perp,0],dtype=np.float32)
-    
+      
     def _get_obs(self):
         
         x,z,phi,vx,vz,dphi = self._get_state()
@@ -347,7 +344,45 @@ class SAR_Env_2D(gym.Env):
         Prop2 = CG + self.R_BW(Prop2,phi)
 
         return np.array([CG,L1,L2,Prop1,Prop2])
-        
+
+    def _get_impact_conditions(self,x,z,phi):
+
+        impact_flag  = False
+        Body_contact = False
+        Leg1_contact = False
+        Leg2_contact = False
+
+        _,Leg1_Pos,Leg2_Pos,Prop1_Pos,Prop2_Pos = self._get_pose()
+
+        ## CHECK FOR PROP CONTACT
+        for Prop_Pos in [Prop1_Pos,Prop2_Pos]:
+
+            Prop_wrt_Plane = self.R_WP(-(self.Plane_Pos - Prop_Pos),self.Plane_Angle_rad)
+            if Prop_wrt_Plane[1] >= 0:
+                impact_flag = True
+                Body_contact = True
+
+                return impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
+
+        ## CHECK FOR LEG1 CONTACT
+        Leg1_wrt_Plane = self.R_WP(-(self.Plane_Pos - Leg1_Pos),self.Plane_Angle_rad)
+        if Leg1_wrt_Plane[1] >= 0:
+            impact_flag = True
+            Leg1_contact = True
+
+            return impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
+
+        ## CHECK FOR LEG2 CONTACT
+        Leg2_wrt_Plane = self.R_WP(-(self.Plane_Pos - Leg2_Pos),self.Plane_Angle_rad)
+        if Leg2_wrt_Plane[1] >= 0:
+            impact_flag = True
+            Leg2_contact = True
+
+            return impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
+
+
+        return impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
+
     def render(self):
 
         ## SET DEFAULT WINDOW POSITION
@@ -450,10 +485,10 @@ class SAR_Env_2D(gym.Env):
 
         ## OBSERVATIONS TEXT
         text_Obs = my_font.render(f'Observations:', True, GREY)
-        # text_Tau = my_font.render(f'Tau: {self._get_obs()[0]:2.2f} [s]', True, BLACK)
-        # text_phi_x = my_font.render(f'phi_x: {self._get_obs()[1]:2.2f} [rad/s]', True, BLACK)
-        # text_D_perp = my_font.render(f'D_perp: {self._get_obs()[2]:2.2f} [m]', True, BLACK)
-        # text_Plane_Angle = my_font.render(f'Plane Angle: {self.Plane_Angle:3.1f} [deg]', True, BLACK)
+        text_Tau = my_font.render(f'Tau: {self._get_obs()[0]:2.2f} [s]', True, BLACK)
+        text_theta_x = my_font.render(f'Theta_x: {self._get_obs()[1]:2.2f} [rad/s]', True, BLACK)
+        text_D_perp = my_font.render(f'D_perp: {self._get_obs()[2]:2.2f} [m]', True, BLACK)
+        text_Plane_Angle = my_font.render(f'Plane Angle: {self.Plane_Angle:3.1f} [deg]', True, BLACK)
 
         ## ACTIONS TEXT
         text_Actions = my_font.render(f'Actions:', True, GREY)
@@ -463,7 +498,7 @@ class SAR_Env_2D(gym.Env):
         ## REWARD TEXT
         text_Other = my_font.render(f'Other:', True, GREY)
         # text_reward = my_font.render(f'Prev Reward: {self.reward:.3f}',True, BLACK)
-        # text_Tau_trg = my_font.render(f'Tau trg: {self.Tau_trg:.3f} [s]',True, BLACK)
+        text_Tau_trg = my_font.render(f'Tau trg: {self.Tau_trg:.3f} [s]',True, BLACK)
 
 
         ## DRAW OBJECTS TO SCREEN
@@ -474,10 +509,10 @@ class SAR_Env_2D(gym.Env):
         # self.screen.blit(text_V_mag,        (5,5 + 25*3))
 
         self.screen.blit(text_Obs,          (5,5 + 25*5))
-        # self.screen.blit(text_Tau,          (5,5 + 25*6))
-        # self.screen.blit(text_phi_x,      (5,5 + 25*7))
-        # self.screen.blit(text_D_perp,       (5,5 + 25*8))
-        # self.screen.blit(text_Plane_Angle,  (5,5 + 25*9))
+        self.screen.blit(text_Tau,          (5,5 + 25*6))
+        self.screen.blit(text_theta_x,      (5,5 + 25*7))
+        self.screen.blit(text_D_perp,       (5,5 + 25*8))
+        self.screen.blit(text_Plane_Angle,  (5,5 + 25*9))
 
         self.screen.blit(text_Actions,      (5,5 + 25*11))
         # self.screen.blit(text_Rot_Action,   (5,5 + 25*12))
@@ -485,7 +520,7 @@ class SAR_Env_2D(gym.Env):
 
         self.screen.blit(text_Other,        (5,5 + 25*15))
         # self.screen.blit(text_reward,       (5,5 + 25*16))
-        # self.screen.blit(text_Tau_trg,      (5,5 + 25*17))
+        self.screen.blit(text_Tau_trg,      (5,5 + 25*17))
 
 
 
@@ -540,15 +575,13 @@ if __name__ == '__main__':
 
         Done = False
         truncated = False
-        R = 0
         while not (Done or truncated):
 
             action = env.action_space.sample()
             action = np.zeros_like(action)
             obs,reward,Done,truncated,_ = env.step(action)
-            R += reward
 
-        print(f"Episode: {ep} \t Obs: {obs[2]:.3f} \t Return: {R:.3f}")
+        print(f"Episode: {ep} \t Obs: {obs[2]:.3f} \t Reward: {reward:.3f}")
 
     env.close()
 
