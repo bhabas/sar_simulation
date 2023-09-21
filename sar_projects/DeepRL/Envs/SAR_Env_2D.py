@@ -286,6 +286,34 @@ class SAR_Env_2D(gym.Env):
     
         return np.array([0,0,D_perp,0],dtype=np.float32)
     
+    # def _get_obs(self):
+        
+    #     x,z,phi,vx,vz,dphi = self._get_state()
+        
+    #     ## POSITION AND VELOCITY VECTORS
+    #     r_BO = np.array([x,z])
+    #     V_BO = np.array([vx,vz])
+
+    #     ## PLANE POSITION AND UNIT VECTORS
+    #     r_PO = self.Plane_Pos
+    #     Plane_Angle_rad = self.Plane_Angle_rad
+
+    #     ## CALC DISPLACEMENT FROM PLANE CENTER
+    #     r_PB = r_PO - r_BO
+
+    #     ## CALC RELATIVE DISTANCE AND VEL
+    #     D_tx,D_perp = self.R_WP(r_PB,Plane_Angle_rad)
+    #     V_tx,V_perp = self.R_WP(V_BO,Plane_Angle_rad)
+
+    #     ## CALC OPTICAL FLOW VALUES
+    #     Theta_x = np.clip(V_tx/(D_perp + EPS),-20,20)
+    #     Tau = np.clip(D_perp/(V_perp + EPS),0,5)
+
+    #     ## OBSERVATION VECTOR
+    #     obs = np.array([Tau,Theta_x,D_perp,Plane_Angle_rad],dtype=np.float32)
+
+    #     return obs
+    
     def _get_time(self):
 
         return self.t
@@ -480,6 +508,15 @@ class SAR_Env_2D(gym.Env):
         ])
 
         return R_PW.dot(vec)
+    
+    def R_WP(self,vec,theta):
+
+        R_WP = np.array([
+            [-np.cos(theta),-np.sin(theta)],
+            [ np.sin(theta),-np.cos(theta)]
+        ])
+
+        return R_WP.dot(vec)
 
 
 
