@@ -38,9 +38,28 @@ class SAR_Env_2D(gym.Env):
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
         self.action_trg = np.zeros(self.action_space.shape,dtype=np.float32) # Action values at triggering
 
+        ## TESTING CONFIGS  
+        # self.Vel_range = Vel_range  
+        # self.Flight_Angle_range = Flight_Angle_range
+        # self.Plane_Angle_range = Plane_Angle_range
+        # self.a_Rot_range = a_Rot_range
+
+        ## LEARNING/REWARD CONFIGS
+        self.Trg_threshold = 0.5
+
+
+        ## INITIAL LEARNING/REWARD CONFIGS
+        self.K_ep = 0
+        self.Pol_Trg_Flag = False
+        self.Done = False
+        self.reward = 0
+
+        self.D_min = np.inf
+        self.Tau_trg = np.inf
+
 
         ######################
-        #     2D CONFIGS
+        #   2D ENV CONFIGS
         ######################
 
         ## PHYSICS PARAMETERS
@@ -59,17 +78,90 @@ class SAR_Env_2D(gym.Env):
         self.clock = None
         self.isopen = True
 
+    def reset(self, seed=None, options=None, V_mag=None, Rel_Angle=None):
+
+        ## RESET LEARNING/REWARD CONDITIONS
+        self.K_ep += 1
+        self.Done = False
+        self.Pol_Trg_Flag = False
+        self.reward = 0
+
+        self.D_min = np.inf
+        self.Tau_trg = np.inf
+
+        
+        return self._get_obs(), {}
+
 
 
 
     def step(self, action):
 
+        ########## PRE-POLICY TRIGGER ##########
+        if action[0] <= self.Trg_threshold:
+
+            ## GRAB NEXT OBS
+            next_obs = self._get_obs()
+
+
+            ## MARK IF SIMULATION IS DONE
+            terminated = self.Done = False
+            truncated = False
+            
+
+            ## CACULATE REWARD
+            reward = 0
+            
+            return(
+                next_obs,
+                reward,
+                terminated,
+                truncated,
+                {},
+            )
+
+
+        ########## POST-POLICY TRIGGER ##########
+        elif action[0] >= self.Trg_threshold:
+
+            self.Pol_Trg_Flag = True
+
+            ## GRAB TERMINAL OBS
+            terminal_obs = self._get_obs()
+
+            ## EXECUTE REMAINDER OF SIMULATION
+            # self.Finish_Sim()
+
+            ## MARK IF SIMULATION IS DONE
+            terminated = self.Done = True
+            truncated = False
+
+            ## CALCULATE REWARD
+            reward = self.Calc_Reward()  
+
+            return(
+                terminal_obs,
+                reward,
+                terminated,
+                truncated,
+                {},
+            )
+
 
         return obs, reward, terminated, truncated, {}
 
-    def reset(self, seed=None, options=None, V_mag=None, Phi_rel=None):
-        
-        return obs, {}
+    
+    
+    def Calc_Reward(self):
+
+        return 0
+    
+
+    
+    def _get_obs(self):
+    
+        return np.array([0,0,0,0],dtype=np.float32)
+    
 
     def render(self):
 
@@ -142,8 +234,8 @@ class SAR_Env_2D(gym.Env):
 
 
         ## BODY AXES
-        pygame.draw.line(self.surf,GREEN,c2p(Pose[0]),c2p(Pose[0] + self._B_to_W(np.array([0.05,0]),phi)),width=5)  # B_x   
-        pygame.draw.line(self.surf,BLUE,c2p(Pose[0]),c2p(Pose[0] + self._B_to_W(np.array([0,0.05]),phi)),width=5)  # B_z  
+        # pygame.draw.line(self.surf,GREEN,c2p(Pose[0]),c2p(Pose[0] + self._B_to_W(np.array([0.05,0]),phi)),width=5)  # B_x   
+        # pygame.draw.line(self.surf,BLUE,c2p(Pose[0]),c2p(Pose[0] + self._B_to_W(np.array([0,0.05]),phi)),width=5)  # B_z  
 
 
 
@@ -224,7 +316,7 @@ if __name__ == '__main__':
 
     for ep in range(25):
 
-        obs,_ = env.reset(Vel=Vel,Phi=Phi)
+        obs,_ = env.reset(V_mag=None,Rel_Angle=None)
 
         Done = False
         while not Done:
