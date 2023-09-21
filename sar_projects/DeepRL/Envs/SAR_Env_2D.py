@@ -44,6 +44,21 @@ class SAR_Env_2D(gym.Env):
         # self.Plane_Angle_range = Plane_Angle_range
         # self.a_Rot_range = a_Rot_range
 
+        ## SAR DIMENSIONAL CONSTRAINTS
+        gamma = np.deg2rad(30)  # Leg Angle [m]
+        L = 150.0e-3            # Leg Length [m]
+        PD = 75e-3              # Prop Distance from COM [m]
+        M_B = 35.0e-3           # Body Mass [kg]
+        I_B = 17.0e-6           # Body Moment of Inertia [kg*m^2]
+        I_C = I_B + M_B*L**2
+        self.params = (gamma,L,PD,M_B,I_B,I_C)
+        self.collision_radius = max(L,PD)
+
+        ## PLANE PARAMETERS
+        self.Plane_Pos = [0.5,0]
+        self.Plane_Angle = 90
+        self.Plane_Angle_rad = np.radians(self.Plane_Angle)
+
         ## LEARNING/REWARD CONFIGS
         self.Trg_threshold = 0.5
 
@@ -60,10 +75,7 @@ class SAR_Env_2D(gym.Env):
         self.D_min = np.inf
         self.Tau_trg = np.inf
 
-        ## PLANE PARAMETERS
-        self.Plane_Pos = [0.5,0,0]
-        self.Plane_Angle = 180
-        self.Plane_Angle_rad = np.radians(self.Plane_Angle)
+        
 
         ######################
         #   2D ENV CONFIGS
@@ -280,18 +292,25 @@ class SAR_Env_2D(gym.Env):
     
     def _get_pose(self):
 
+        gamma,L,PD,M_B,I_B,I_C = self.params
         x,z,phi,_,_,_ = self._get_state()
 
         ## MODEL CoG
         CG = np.array([x,z])
 
         ## LEG COORDS
-        L1 = np.array([0,0])
-        L2 = np.array([0,0])
+        L1 = np.array([ L*np.sin(gamma),-L*np.cos(gamma)])
+        L2 = np.array([-L*np.sin(gamma),-L*np.cos(gamma)])
 
         ## PROP COORDS
-        Prop1 = np.array([0,0])
-        Prop2 = np.array([0,0])
+        Prop1 = np.array([ PD,0])
+        Prop2 = np.array([-PD,0])
+
+        ## CONVERT BODY COORDS TO WORLD COORDS
+        L1 = CG + self.R_BW(L1,phi)
+        L2 = CG + self.R_BW(L2,phi)
+        Prop1 = CG + self.R_BW(Prop1,phi)
+        Prop2 = CG + self.R_BW(Prop2,phi)
 
         return np.array([CG,L1,L2,Prop1,Prop2])
         
@@ -334,8 +353,8 @@ class SAR_Env_2D(gym.Env):
         ## GET CURRENT STATE
         x,z,phi,vx,vz,dphi = self._get_state()
 
-        # ## GET CURRENT PARAMS
-        # (L,gamma,M_B,I_B,PD) = self._get_params()
+        ## GET CURRENT PARAMS
+        gamma,L,PD,M_B,I_B,I_C = self.params
         
         ## CREATE BACKGROUND SURFACE
         self.surf = pygame.Surface((self.screen_width, self.screen_height))
@@ -348,27 +367,27 @@ class SAR_Env_2D(gym.Env):
 
 
         ## LANDING SURFACE
-        # pygame.draw.line(self.surf,GREY,
-        #                  c2p(self.Plane_Pos + self._P_to_W(np.array([-2,0]),self.Plane_Angle,deg=True)),
-        #                  c2p(self.Plane_Pos + self._P_to_W(np.array([+2,0]),self.Plane_Angle,deg=True)),width=2)
+        pygame.draw.line(self.surf,GREY,
+                         c2p(self.Plane_Pos + self.R_PW(np.array([-2,0]),self.Plane_Angle_rad)),
+                         c2p(self.Plane_Pos + self.R_PW(np.array([+2,0]),self.Plane_Angle_rad)),width=2)
         
-        # pygame.draw.line(self.surf,BLACK,
-        #                  c2p(self.Plane_Pos + self._P_to_W(np.array([-0.5,0]),self.Plane_Angle,deg=True)),
-        #                  c2p(self.Plane_Pos + self._P_to_W(np.array([+0.5,0]),self.Plane_Angle,deg=True)),width=5)
+        pygame.draw.line(self.surf,BLACK,
+                         c2p(self.Plane_Pos + self.R_PW(np.array([-0.5,0]),self.Plane_Angle_rad)),
+                         c2p(self.Plane_Pos + self.R_PW(np.array([+0.5,0]),self.Plane_Angle_rad)),width=5)
     
         # ## LANDING SURFACE AXES
-        # pygame.draw.line(self.surf,GREEN,c2p(self.Plane_Pos),c2p(self.Plane_Pos + self._P_to_W(np.array([0.1,0]),self.Plane_Angle,deg=True)),width=7)  # t_x   
-        # pygame.draw.line(self.surf,BLUE, c2p(self.Plane_Pos),c2p(self.Plane_Pos + self._P_to_W(np.array([0,0.1]),self.Plane_Angle,deg=True)),width=7)  # n_p 
+        pygame.draw.line(self.surf,GREEN,c2p(self.Plane_Pos),c2p(self.Plane_Pos + self.R_BW(np.array([0.1,0]),self.Plane_Angle_rad)),width=7)  # t_x   
+        pygame.draw.line(self.surf,BLUE, c2p(self.Plane_Pos),c2p(self.Plane_Pos + self.R_BW(np.array([0,0.1]),self.Plane_Angle_rad)),width=7)  # n_p 
         pygame.draw.circle(self.surf,RED,c2p(self.Plane_Pos),radius=4,width=0)
 
 
         ## DRAW QUADROTOR
         Pose = self._get_pose()
-        # pygame.draw.line(self.surf,RED,c2p(Pose[0]),c2p(Pose[1]),width=3) # Leg 1
-        # pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[2]),width=3) # Leg 2
-        # pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[3]),width=3) # Prop 1
-        # pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[4]),width=3) # Prop 2
-        # pygame.draw.circle(self.surf,GREY,c2p(Pose[0]),radius=self.collision_radius*self.screen_width/self.world_width,width=2)
+        pygame.draw.line(self.surf,RED,c2p(Pose[0]),c2p(Pose[1]),width=3) # Leg 1
+        pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[2]),width=3) # Leg 2
+        pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[3]),width=3) # Prop 1
+        pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[4]),width=3) # Prop 2
+        pygame.draw.circle(self.surf,GREY,c2p(Pose[0]),radius=self.collision_radius*self.screen_width/self.world_width,width=2)
 
         ## TRIGGER INDICATOR
         if self.Pol_Trg_Flag == True:
@@ -379,8 +398,8 @@ class SAR_Env_2D(gym.Env):
             pygame.draw.circle(self.surf,BLACK,c2p(Pose[0]),radius=5,width=3)
 
         ## BODY AXES
-        # pygame.draw.line(self.surf,GREEN,c2p(Pose[0]),c2p(Pose[0] + self._B_to_W(np.array([0.05,0]),phi)),width=5)  # B_x   
-        # pygame.draw.line(self.surf,BLUE,c2p(Pose[0]),c2p(Pose[0] + self._B_to_W(np.array([0,0.05]),phi)),width=5)  # B_z  
+        pygame.draw.line(self.surf,GREEN,c2p(Pose[0]),c2p(Pose[0] + self.R_BW(np.array([0.05,0]),phi)),width=5)  # B_x   
+        pygame.draw.line(self.surf,BLUE,c2p(Pose[0]),c2p(Pose[0] + self.R_BW(np.array([0,0.05]),phi)),width=5)  # B_z  
 
 
         ## FLIP IMAGE SO X->RIGHT AND Y->UP
@@ -444,6 +463,29 @@ class SAR_Env_2D(gym.Env):
 
         return
     
+    def R_BW(self,vec,phi):
+
+        R_BW = np.array([
+            [ np.cos(phi), np.sin(phi)],
+            [-np.sin(phi), np.cos(phi)],
+        ])
+
+        return R_BW.dot(vec)
+    
+    def R_PW(self,vec,theta):
+
+        R_PW = np.array([
+            [-np.cos(theta), np.sin(theta)],
+            [-np.sin(theta),-np.cos(theta)]
+        ])
+
+        return R_PW.dot(vec)
+
+
+
+
+
+
 
 if __name__ == '__main__':
     env = SAR_Env_2D()
