@@ -47,7 +47,6 @@ class SAR_Env_2D(gym.Env):
         ## LEARNING/REWARD CONFIGS
         self.Trg_threshold = 0.5
 
-
         ## INITIAL LEARNING/REWARD CONFIGS
         self.K_ep = 0
         self.Pol_Trg_Flag = False
@@ -57,6 +56,10 @@ class SAR_Env_2D(gym.Env):
         self.D_min = np.inf
         self.Tau_trg = np.inf
 
+        ## PLANE PARAMETERS
+        self.Plane_Pos = [1,0,0]
+        self.Plane_Angle = 180
+        self.Plane_Angle_rad = np.radians(self.Plane_Angle)
 
         ######################
         #   2D ENV CONFIGS
@@ -68,12 +71,16 @@ class SAR_Env_2D(gym.Env):
         self.t = 0          # [s]
 
         ## RENDERING PARAMETERS
-        self.RENDER = False
         self.world_width = 3.0      # [m]
         self.world_height = 2.0     # [m]
+        self.x_offset = 1           # [m]
+        self.y_offset = 1           # [m]
+
+
         self.screen_width = 1000    # [pixels]
-        self.screen_height = self.screen_width*self.world_height/self.world_width
+        self.screen_height = self.screen_width*self.world_height/self.world_width # [pixels]
         
+        self.RENDER = False
         self.screen = None
         self.clock = None
         self.isopen = True
@@ -89,6 +96,11 @@ class SAR_Env_2D(gym.Env):
         self.D_min = np.inf
         self.Tau_trg = np.inf
 
+
+        # UPDATE RENDER
+        if self.RENDER:
+            self.render()
+
         
         return self._get_obs(), {}
 
@@ -97,21 +109,35 @@ class SAR_Env_2D(gym.Env):
 
     def step(self, action):
 
+        # 1. TAKE ACTION
+        # 2. UPDATE STATE
+        # 3. CALC REWARD
+        # 4. CHECK TERMINATION
+        # 5. RETURN VALUES
+
         ########## PRE-POLICY TRIGGER ##########
         if action[0] <= self.Trg_threshold:
 
-            ## GRAB NEXT OBS
+            ## 2) UPDATE STATE
+            self._iter_step()
+
+            # UPDATE RENDER
+            if self.RENDER:
+                self.render()
+
+
+            # GRAB NEXT OBS
             next_obs = self._get_obs()
 
+            # 3) CALCULATE REWARD
+            reward = 0
 
-            ## MARK IF SIMULATION IS DONE
+
+            # 4) CHECK TERMINATION
             terminated = self.Done = False
             truncated = False
             
-
-            ## CACULATE REWARD
-            reward = 0
-            
+            # 5) RETURN VALUES
             return(
                 next_obs,
                 reward,
@@ -124,21 +150,28 @@ class SAR_Env_2D(gym.Env):
         ########## POST-POLICY TRIGGER ##########
         elif action[0] >= self.Trg_threshold:
 
+
+            # 2) UPDATE STATE
             self.Pol_Trg_Flag = True
 
-            ## GRAB TERMINAL OBS
-            terminal_obs = self._get_obs()
+            # GRAB TERMINAL OBS
+            terminal_obs = self._get_obs() # Attribute final reward to triggering state
 
-            ## EXECUTE REMAINDER OF SIMULATION
+            # EXECUTE REMAINDER OF SIMULATION
             # self.Finish_Sim()
 
-            ## MARK IF SIMULATION IS DONE
+
+
+            # 3) CALC REWARD
+            reward = self.Calc_Reward()  
+
+
+            # 4) CHECK TERMINATION
             terminated = self.Done = True
             truncated = False
 
-            ## CALCULATE REWARD
-            reward = self.Calc_Reward()  
 
+            # 5) RETURN VALUES
             return(
                 terminal_obs,
                 reward,
@@ -156,7 +189,13 @@ class SAR_Env_2D(gym.Env):
 
         return 0
     
+    def _iter_step(self):
 
+        pass
+
+    def _get_state(self):
+
+        return self.state
     
     def _get_obs(self):
     
@@ -173,14 +212,20 @@ class SAR_Env_2D(gym.Env):
         ## CONVERT COORDINATES TO PIXEL LOCATION
         def c2p(Pos):
 
-            x_offset = 1  # [m]
-            y_offset = 1  # [m]
+            if len(Pos) == 2:
+                x = Pos[0]
+                y = Pos[1]
 
+            elif len(Pos) == 3:
+                x = Pos[0]
+                y = Pos[2]
+
+            
             scale_x = self.screen_width/self.world_width
             scale_y = self.screen_height/self.world_height
             
-            x_p = (x_offset+Pos[0])*scale_x # [pixels]
-            y_p = (y_offset+Pos[1])*scale_y # [pixels]
+            x_p = (self.x_offset+x)*scale_x # [pixels]
+            y_p = (self.y_offset+y)*scale_y # [pixels]
             
             return (x_p,y_p)
         
@@ -204,9 +249,9 @@ class SAR_Env_2D(gym.Env):
         self.surf.fill(WHITE)
 
         ## ORIGIN AXES
-        pygame.draw.line(self.surf,GREEN,c2p((0,0)),c2p((0.1,0)),width=5) # X_w   
-        pygame.draw.line(self.surf,BLUE, c2p((0,0)),c2p((0,0.1)),width=5) # Z_w   
-        pygame.draw.circle(self.surf,RED,c2p((0,0)),radius=4,width=0)
+        pygame.draw.line(self.surf,GREEN,c2p((0,0,0)),c2p((0.1,0)),width=5) # X_w   
+        pygame.draw.line(self.surf,BLUE, c2p((0,0,0)),c2p((0,0.1)),width=5) # Z_w   
+        pygame.draw.circle(self.surf,RED,c2p((0,0,0)),radius=4,width=0)
 
 
         ## LANDING SURFACE
@@ -221,7 +266,7 @@ class SAR_Env_2D(gym.Env):
         # ## LANDING SURFACE AXES
         # pygame.draw.line(self.surf,GREEN,c2p(self.Plane_Pos),c2p(self.Plane_Pos + self._P_to_W(np.array([0.1,0]),self.Plane_Angle,deg=True)),width=7)  # t_x   
         # pygame.draw.line(self.surf,BLUE, c2p(self.Plane_Pos),c2p(self.Plane_Pos + self._P_to_W(np.array([0,0.1]),self.Plane_Angle,deg=True)),width=7)  # n_p 
-        # pygame.draw.circle(self.surf,RED,c2p(self.Plane_Pos),radius=4,width=0)
+        pygame.draw.circle(self.surf,RED,c2p(self.Plane_Pos),radius=4,width=0)
 
 
         ## DRAW QUADROTOR
@@ -314,7 +359,7 @@ if __name__ == '__main__':
     env = SAR_Env_2D()
     env.RENDER = True
 
-    for ep in range(25):
+    for ep in range(500):
 
         obs,_ = env.reset(V_mag=None,Rel_Angle=None)
 
