@@ -20,7 +20,7 @@ EPS = 1e-6 # Epsilon (Prevent division by zero)
 
 class SAR_Env_2D(gym.Env):
 
-    def __init__(self,GZ_Timeout=True,My_range=[-8.0e-3,8.0e-3],Vel_range=[1.5,3.5],Flight_Angle_range=[0,90],Plane_Angle_range=[90,180]):
+    def __init__(self,GZ_Timeout=True,My_range=[-8.0e-3,0],Vel_range=[1.5,3.5],Flight_Angle_range=[0,90],Plane_Angle_range=[90,180]):
         super().__init__()
         
         ######################
@@ -164,7 +164,7 @@ class SAR_Env_2D(gym.Env):
         r_BO = r_PO - self.R_PW(r_PB,self.Plane_Angle_rad)                              # Body Position wrt to origin
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-        self._set_state(r_BO[0],r_BO[1],np.radians(-120),V_BO[0],V_BO[1],0)
+        self._set_state(r_BO[0],r_BO[1],np.radians(-240),V_BO[0],V_BO[1],0)
 
 
         ######################
@@ -276,7 +276,7 @@ class SAR_Env_2D(gym.Env):
 
         ## SCALE ACTION
         scaled_action = 0.5 * (action[1] + 1) * (self.My_range[1] - self.My_range[0]) + self.My_range[0]
-        scaled_action = 0
+        # scaled_action = 0
 
         while not self.Done:
             
@@ -289,7 +289,7 @@ class SAR_Env_2D(gym.Env):
             if self.impact_flag == False:
 
                 ## UPDATE ROTATION FLIGHT STEP
-                self._iter_step_Rot(scaled_action,n_step=10)
+                self._iter_step_Rot(scaled_action,n_step=1)
 
                 # UPDATE MINIMUM DISTANCE
                 D_perp = self._get_obs()[2]
@@ -328,6 +328,20 @@ class SAR_Env_2D(gym.Env):
                         beta,dbeta = self._iter_step_Swing(beta,dbeta,impact_leg=1)
 
                         ## CHECK FOR END CONDITIONS
+                        if beta >= self._beta_landing(impact_leg=1):
+                            self.BodyContact_flag = False
+                            self.pad_connections = 4
+                            self.Done = True
+
+                        elif beta <= self._beta_prop(impact_leg=1):
+                            self.BodyContact_flag = True
+                            self.pad_connections = 2
+                            self.Done = True
+
+                        elif self.t - start_time_impact >= self.t_impact_max:
+                            self.BodyContact_flag = False
+                            self.pad_connections = 2
+                            self.Done = True
 
                         ## CONVERT BODY BACK TO WORLD COORDS
                         temp = self.R_Beta1P(np.array([L,0]),beta)
@@ -342,12 +356,6 @@ class SAR_Env_2D(gym.Env):
                             self.render()
 
 
-
-
-                    self.Done = True
-
-
-
                 ## LEG 2 CONTACT
                 elif Leg2Contact == True:
 
@@ -356,7 +364,43 @@ class SAR_Env_2D(gym.Env):
                     ## FIND IMPACT COORDS (wrt World-Coords)
                     r_C2_W = self._get_pose()[2]
 
-                    self.Done = True
+                    while not self.Done:
+
+                        ## ITERATE THROUGH SWING
+                        beta_2,dbeta_2 = self._iter_step_Swing(beta_2,dbeta_2,impact_leg=2)
+
+                        ## CHECK FOR END CONDITIONS
+                        if beta_2 >= self._beta_landing(impact_leg=2):
+                            self.BodyContact_flag = False
+                            self.pad_connections = 4
+                            self.Done = True
+
+                        elif beta_2 <= self._beta_prop(impact_leg=2):
+                            self.BodyContact_flag = True
+                            self.pad_connections = 2
+                            self.Done = True
+
+                        elif self.t - start_time_impact >= self.t_impact_max:
+                            self.BodyContact_flag = False
+                            self.pad_connections = 2
+                            self.Done = True
+
+                        ## CONVERT BODY BACK TO WORLD COORDS
+                        temp = self.R_Beta2P(np.array([L,0]),beta_2)
+                        r_B_C2 = self.R_PW(temp,self.Plane_Angle_rad)
+                        r_B_W = r_C2_W + r_B_C2
+
+                        phi = (-np.deg2rad(90) + beta_2 - self.Plane_Angle_rad - gamma)
+                        self.state = (r_B_W[0],r_B_W[1],phi,0,0,0)
+
+                        ## UPDATE MINIMUM DISTANCE
+                        D_perp = self._get_obs()[2]
+                        if not self.Done:
+                            if D_perp <= self.D_min:
+                                self.D_min = D_perp 
+
+                        if self.RENDER:
+                            self.render()
 
 
 
@@ -372,13 +416,7 @@ class SAR_Env_2D(gym.Env):
     
     def Calc_Reward_PreTrg(self):
 
-        D = self._get_obs()[2]
-        R_dist = np.clip(1/np.abs(D + EPS),0,15)/15
-
-        R = R_dist*0.5
-        print(f"Pre_Trg: Reward: {R:.3f} \t D: {D:.3f}")
-
-        return R
+        return 0
     
     def Calc_Reward_PostTrg(self):
 
@@ -386,15 +424,27 @@ class SAR_Env_2D(gym.Env):
         R_dist = np.clip(1/np.abs(self.D_min + 1e-6),0,15)/15
         
         ## TAU TRIGGER REWARD
-        R_tau = np.clip(1/np.abs(self.Tau_trg - 0.2),0,15)/15
+        R_tau = np.clip(1/np.abs(self.Tau_trg - 0.1),0,15)/15
 
-        if (self.Tau_trg <= 0.2) and (self.D_min <= 0.15):
-            R_legs = 1
+        (BodyContact,Leg1Contact,Leg2Contact) = self.impact_conditions
+
+        if BodyContact:
+
+            R_legs = 0.7
+
+        elif Leg1Contact or Leg2Contact:
+            R_legs = 1.0
 
         else:
             R_legs = 0
 
-        R = R_dist*0.05 + R_tau*0.10 + R_legs*0.5
+        # if (self.Tau_trg <= 0.2) and (self.D_min <= 0.15):
+        #     R_legs = 1
+
+        # else:
+        #     R_legs = 0
+
+        R = R_dist*0.05 + R_tau*0.10 + R_legs*0.7
         print(f"Post_Trg: Reward: {R:.3f} \t D: {self.D_min:.3f}")
 
         return R
@@ -445,7 +495,7 @@ class SAR_Env_2D(gym.Env):
             ## STEP UPDATE
             self.t += self.dt
 
-            z_acc = -self.g*0
+            z_acc = -self.g
             z = z + self.dt*vz
             vz = vz + self.dt*z_acc
 
@@ -526,6 +576,35 @@ class SAR_Env_2D(gym.Env):
 
             return Beta_2,dBeta_2
 
+    def _beta_landing(self,impact_leg):
+
+        gamma,L,PD,M_B,I_B,I_C = self.params
+
+        if impact_leg == 1:
+            beta_max = np.pi/2 + gamma
+            return beta_max
+
+        elif impact_leg == 2:
+            beta_min = np.pi/2 + gamma
+            return beta_min
+        
+    def _beta_prop(self,impact_leg):
+
+        gamma,L,PD,M_B,I_B,I_C = self.params
+
+        if impact_leg == 1:
+
+            a = np.sqrt(PD**2 + L**2 - 2*PD*L*np.cos(np.pi/2-gamma))
+            beta_min = np.arccos((L**2 + a**2 - PD**2)/(2*a*L))
+
+            return beta_min
+
+        elif impact_leg == 2:
+            
+            a = np.sqrt(PD**2 + L**2 - 2*PD*L*np.cos(np.pi/2-gamma))
+            beta_max = np.arccos((L**2 + a**2 - PD**2)/(2*a*L))
+
+            return beta_max
 
     def _get_state(self):
 
@@ -843,7 +922,7 @@ if __name__ == '__main__':
         while not (Done or truncated):
 
             action = env.action_space.sample()
-            # action = np.zeros_like(action)
+            action = np.zeros_like(action)
             obs,reward,Done,truncated,_ = env.step(action)
 
         print(f"Episode: {ep} \t Obs: {obs[2]:.3f} \t Reward: {reward:.3f}")
