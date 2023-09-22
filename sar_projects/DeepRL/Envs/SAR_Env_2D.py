@@ -128,6 +128,7 @@ class SAR_Env_2D(gym.Env):
 
         self.D_min = np.inf
         self.Tau_trg = np.inf
+        self.phi_impact = 0
 
         self.impact_flag = False
         self.BodyContact_flag = False
@@ -142,8 +143,16 @@ class SAR_Env_2D(gym.Env):
         # (Derivation: Research_Notes_Book_3.pdf (9/17/23))
 
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
-        V_mag = 1.0
-        Rel_Angle = 90
+        if V_mag == None or Rel_Angle == None:
+            V_mag,Rel_Angle = self._sample_flight_conditions()
+
+        else:
+            V_mag = V_mag           # Flight velocity
+            Rel_Angle = Rel_Angle   # Flight angle  
+
+        self.Rel_Angle = Rel_Angle
+        self.V_mag = V_mag
+
 
         ## RELATIVE VEL VECTORS
         V_perp = V_mag*np.sin(np.deg2rad(Rel_Angle))
@@ -155,16 +164,17 @@ class SAR_Env_2D(gym.Env):
 
         ## CALCULATE STARTING TAU VALUE
         Tau_rot = self.t_rot    # TTC allowing for full body rotation before any body part impacts
-        Tau_Body = (self.collision_radius + Tau_rot*V_perp)/V_perp
-        Tau_extra = 0.25*Tau_Body
+        self.Tau_Body = (self.collision_radius + Tau_rot*V_perp)/V_perp
+        print(Tau_rot)
+        Tau_extra = 0.25*self.Tau_Body
 
         ## CALC STARTING POSITION IN GLOBAL COORDS
         r_PO = np.array(self.Plane_Pos)                                                 # Plane Position wrt to origin
-        r_PB = np.array([(Tau_rot + Tau_extra)*V_tx, (Tau_Body + Tau_extra)*V_perp])    # Plane Position wrt to Body
+        r_PB = np.array([(Tau_rot + Tau_extra)*V_tx, (self.Tau_Body + Tau_extra)*V_perp])    # Plane Position wrt to Body
         r_BO = r_PO - self.R_PW(r_PB,self.Plane_Angle_rad)                              # Body Position wrt to origin
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-        self._set_state(r_BO[0],r_BO[1],np.radians(-240),V_BO[0],V_BO[1],0)
+        self._set_state(r_BO[0],r_BO[1],np.radians(0),V_BO[0],V_BO[1],0)
 
 
         ######################
@@ -289,7 +299,7 @@ class SAR_Env_2D(gym.Env):
             if self.impact_flag == False:
 
                 ## UPDATE ROTATION FLIGHT STEP
-                self._iter_step_Rot(scaled_action,n_step=1)
+                self._iter_step_Rot(scaled_action,n_steps=2)
 
                 # UPDATE MINIMUM DISTANCE
                 D_perp = self._get_obs()[2]
@@ -325,7 +335,7 @@ class SAR_Env_2D(gym.Env):
                     while not self.Done:
 
                         ## ITERATE THROUGH SWING
-                        beta,dbeta = self._iter_step_Swing(beta,dbeta,impact_leg=1)
+                        beta,dbeta = self._iter_step_Swing(beta,dbeta,impact_leg=1,n_steps=2)
 
                         ## CHECK FOR END CONDITIONS
                         if beta >= self._beta_landing(impact_leg=1):
@@ -367,7 +377,7 @@ class SAR_Env_2D(gym.Env):
                     while not self.Done:
 
                         ## ITERATE THROUGH SWING
-                        beta_2,dbeta_2 = self._iter_step_Swing(beta_2,dbeta_2,impact_leg=2)
+                        beta_2,dbeta_2 = self._iter_step_Swing(beta_2,dbeta_2,impact_leg=2,n_steps=2)
 
                         ## CHECK FOR END CONDITIONS
                         if beta_2 >= self._beta_landing(impact_leg=2):
@@ -420,36 +430,87 @@ class SAR_Env_2D(gym.Env):
     
     def Calc_Reward_PostTrg(self):
 
+        gamma,L,PD,M_B,I_B,I_C = self.params
+
         ## DISTANCE REWARD 
-        R_dist = np.clip(1/np.abs(self.D_min + 1e-6),0,15)/15
+        R_dist = np.clip(1/np.abs(self.D_min - L),0,15)/15
         
         ## TAU TRIGGER REWARD
-        R_tau = np.clip(1/np.abs(self.Tau_trg - 0.1),0,15)/15
+        R_tau = np.clip(1/np.abs(self.Tau_trg - 0.3),0,15)/15
 
-        (BodyContact,Leg1Contact,Leg2Contact) = self.impact_conditions
 
-        if BodyContact:
+        ## SOLVE FOR MINIMUM PHI IMPACT ANGLE VIA GEOMETRIC CONSTRAINTS
+        a = np.sqrt(PD**2 + L**2 - 2*PD*L*np.cos(np.pi/2-gamma))
+        beta_min = np.arccos((L**2 + a**2 - PD**2)/(2*a*L))
+        self.phi_rel_min = np.abs(np.arcsin(L/PD*np.sin(beta_min))-np.pi)
+        self.phi_rel_min = np.rad2deg(self.phi_rel_min)
 
-            R_legs = 0.7
+        self.phi_rel_impact = self.phi_impact + (self.Plane_Angle_rad - np.pi)
+        self.phi_rel_impact = np.rad2deg(self.phi_rel_impact)
 
-        elif Leg1Contact or Leg2Contact:
-            R_legs = 1.0
+
+
+        if self.phi_rel_impact < -200:
+            R_angle = 0
+            OverRotate_flag = True
+        elif -200 <= self.phi_rel_impact < -self.phi_rel_min:
+            R_angle = 1
+        elif -self.phi_rel_min <= self.phi_rel_impact < 0:
+            R_angle = self.phi_rel_impact/-self.phi_rel_min
+        elif 0 <= self.phi_rel_impact < self.phi_rel_min:
+            R_angle = self.phi_rel_impact/self.phi_rel_min
+        elif self.phi_rel_min <= self.phi_rel_impact < 200:
+            R_angle = 1
+        elif self.phi_rel_impact >= 200:
+            R_angle = 0
+            OverRotate_flag = True
+        else:
+            R_angle = 0
+
+        ## PAD CONTACT REWARD
+        if self.pad_connections >= 3: 
+            if self.BodyContact_flag == False:
+                R_legs = 1.0
+            else:
+                R_legs = 0.3
+
+        elif self.pad_connections == 2: 
+            if self.BodyContact_flag == False:
+                R_legs = 0.6
+            else:
+                R_legs = 0.1
 
         else:
-            R_legs = 0
+            R_legs = 0.0
 
-        # if (self.Tau_trg <= 0.2) and (self.D_min <= 0.15):
-        #     R_legs = 1
 
-        # else:
-        #     R_legs = 0
-
-        R = R_dist*0.05 + R_tau*0.10 + R_legs*0.7
+        R = R_dist*0.05 + R_tau*0.10 + R_angle*0.9 + R_legs*0.5
         print(f"Post_Trg: Reward: {R:.3f} \t D: {self.D_min:.3f}")
 
         return R
 
+    def _sample_flight_conditions(self):
 
+        ## SAMPLE VEL FROM UNIFORM DISTRIBUTION IN VELOCITY RANGE
+        Vel_Low = self.Vel_range[0]
+        Vel_High = self.Vel_range[1]
+        V_mag = np.random.uniform(low=Vel_Low,high=Vel_High)
+
+        ## SAMPLE RELATIVE PHI FROM A WEIGHTED SET OF UNIFORM DISTRIBUTIONS
+        Rel_Angle_Low = self.Flight_Angle_range[0]
+        Rel_Angle_High = self.Flight_Angle_range[1]
+        Flight_Angle_range = Rel_Angle_High-Rel_Angle_Low
+
+        Dist_Num = np.random.choice([0,1,2],p=[0.1,0.8,0.1]) # Probability of sampling distribution
+
+        if Dist_Num == 0: # Low Range
+            Rel_Angle = np.random.default_rng().uniform(low=Rel_Angle_Low, high=Rel_Angle_Low + 0.1*Flight_Angle_range)
+        elif Dist_Num == 1: # Medium Range
+            Rel_Angle = np.random.default_rng().uniform(low=Rel_Angle_Low + 0.1*Flight_Angle_range, high=Rel_Angle_High - 0.1*Flight_Angle_range)
+        elif Dist_Num == 2: # High Range
+            Rel_Angle = np.random.default_rng().uniform(low=Rel_Angle_High - 0.1*Flight_Angle_range, high=Rel_Angle_High)
+       
+        return V_mag,Rel_Angle
     
     def _iter_step(self,n_steps=10):
 
@@ -474,7 +535,7 @@ class SAR_Env_2D(gym.Env):
 
             self.state = (x,z,phi,vx,vz,dphi)
 
-    def _iter_step_Rot(self,Rot_action,n_step=10):
+    def _iter_step_Rot(self,Rot_action,n_steps=10):
 
         ## PARAMS
         gamma,L,PD,M_B,I_B,I_C = self.params
@@ -490,7 +551,7 @@ class SAR_Env_2D(gym.Env):
             self.MomentCutoff= True
             My = 0
 
-        for _ in range(n_step):
+        for _ in range(n_steps):
 
             ## STEP UPDATE
             self.t += self.dt
@@ -805,8 +866,8 @@ class SAR_Env_2D(gym.Env):
         ## STATES TEXT
         text_States = my_font.render(f'States:', True, GREY)
         text_t_step = my_font.render(f'Time Step: {self.t:7.03f} [s]', True, BLACK)
-        # text_V_mag = my_font.render(f'V_mag: {self.V_mag:.2f} [m/s]', True, BLACK)
-        # text_Phi_rel = my_font.render(f'Alpha_rel: {self.Phi_rel:.2f} [deg]', True, BLACK)
+        text_V_mag = my_font.render(f'V_mag: {self.V_mag:.2f} [m/s]', True, BLACK)
+        text_Rel_Angle = my_font.render(f'Alpha_rel: {self.Rel_Angle:.2f} [deg]', True, BLACK)
 
         ## OBSERVATIONS TEXT
         text_Obs = my_font.render(f'Observations:', True, GREY)
@@ -830,8 +891,8 @@ class SAR_Env_2D(gym.Env):
         self.screen.blit(self.surf,(0,0))
         self.screen.blit(text_States,       (5,5))
         self.screen.blit(text_t_step,       (5,5 + 25*1))
-        # self.screen.blit(text_Phi_rel,      (5,5 + 25*2))
-        # self.screen.blit(text_V_mag,        (5,5 + 25*3))
+        self.screen.blit(text_Rel_Angle,    (5,5 + 25*2))
+        self.screen.blit(text_V_mag,        (5,5 + 25*3))
 
         self.screen.blit(text_Obs,          (5,5 + 25*5))
         self.screen.blit(text_Tau,          (5,5 + 25*6))
@@ -850,7 +911,7 @@ class SAR_Env_2D(gym.Env):
 
 
         ## WINDOW/SIM UPDATE RATE
-        self.clock.tick(60) # [Hz]
+        self.clock.tick(120) # [Hz]
         pygame.display.flip()
 
     def close(self):
@@ -910,7 +971,7 @@ class SAR_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D()
+    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Vel_range=[1.0,1.0],Flight_Angle_range=[30,150],Plane_Angle_range=[180,180])
     env.RENDER = True
 
     for ep in range(50):
@@ -922,7 +983,7 @@ if __name__ == '__main__':
         while not (Done or truncated):
 
             action = env.action_space.sample()
-            action = np.zeros_like(action)
+            # action = np.zeros_like(action)
             obs,reward,Done,truncated,_ = env.step(action)
 
         print(f"Episode: {ep} \t Obs: {obs[2]:.3f} \t Reward: {reward:.3f}")
