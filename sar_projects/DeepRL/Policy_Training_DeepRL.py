@@ -146,8 +146,8 @@ class Policy_Trainer_DeepRL():
             tensorboard_log=self.log_dir
         ) 
 
-        if self.env.Env_Name == "SAR_Sim_DeepRL_Env":
-            self.write_config_file()
+        
+        self.write_config_file()
 
         return self.model
     
@@ -211,33 +211,46 @@ class Policy_Trainer_DeepRL():
 
         config_path = os.path.join(self.TB_log_path,"Config.yaml")
 
-        data = dict(
-            PLANE_SETTINGS = dict(
-                Plane_Type = self.env.Plane_Type,
-                Plane_Config = self.env.Plane_Config,
-            ),
+        if self.env.Env_Name == "SAR_Sim_DeepRL_Env":
 
-            SAR_SETTINGS = dict(
-                SAR_Type = self.env.SAR_Type,
-                SAR_Config = self.env.SAR_Config,
-            ),
+            Gazebo_Dict = dict(
 
-            CAM_SETTINGS = dict(
-                Cam_Config = self.env.Cam_Config,
-                Cam_Active = self.env.Cam_Active,
-            ),
+                PLANE_SETTINGS = dict(
+                    Plane_Type = self.env.Plane_Type,
+                    Plane_Config = self.env.Plane_Config,
+                ),
+
+                SAR_SETTINGS = dict(
+                    SAR_Type = self.env.SAR_Type,
+                    SAR_Config = self.env.SAR_Config,
+                ),
+
+                CAM_SETTINGS = dict(
+                    Cam_Config = self.env.Cam_Config,
+                    Cam_Active = self.env.Cam_Active,
+                ),
+
+            )
+
+        General_Dict = dict(
 
             ENV_SETTINGS = dict(
                 Env_Name = self.env.Env_Name,
-                Vel_Limts = self.env.Vel_range,
-                Phi_Rel_Limits = self.env.Phi_rel_range,
+                V_mag_Limts = self.env.Vel_range,
+                Flight_Angle_Limits = self.env.Flight_Angle_range,
                 Plane_Angle_Limits = self.env.Plane_Angle_range,
             ),
 
             MODEL_SETTINGS = dict(
-                Mass_Std = self.env.Mass_std,
-                Iyy_Std = self.env.Iyy_std,
-                Mass = "?",
+                # Mass_Std = self.env.Mass_std,
+                # Iyy_Std = self.env.Iyy_std,
+                Mass = self.env.M,
+                Ixx = self.env.Ixx,
+                Iyy = self.env.Iyy,
+                Izz = self.env.Izz,
+                L = self.env.L,
+                Gamma = float(self.env.gamma),
+                PD = self.env.PD,
             ),
 
             LEARNING_MODEL = dict(
@@ -256,7 +269,7 @@ class Policy_Trainer_DeepRL():
         )
 
         with open(config_path, 'w') as outfile:
-            yaml.dump(data,outfile,default_flow_style=False,sort_keys=False)
+            yaml.dump(General_Dict,outfile,default_flow_style=False,sort_keys=False)
 
     def test_policy(self,Vel=None,Phi=None,episodes=10):
         """Test the currently loaded policy for a given set of velocity and launch angle conditions
@@ -640,9 +653,9 @@ if __name__ == '__main__':
     # ================================================================= ##
 
 
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.create_model()
-    # PolicyTrainer.train_model(save_freq=2000)
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.create_model()
+    PolicyTrainer.train_model(save_freq=2000)
 
 
     # ================================================================= ##
