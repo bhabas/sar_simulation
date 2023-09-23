@@ -54,7 +54,7 @@ class SAR_Env_2D(gym.Env):
         self.Iyy = 17.0e-6          # Body Moment of Inertia [kg*m^2]
         self.Izz = 31.2e-6          # Body Moment of Inertia [kg*m^2]
 
-        I_c = self.Iyy + self.Iyy*self.Iyy**2
+        I_c = self.Iyy + self.M*self.L**2
         self.params = (np.deg2rad(self.gamma),self.L,self.PD,self.M,self.Iyy,I_c)
         self.collision_radius = max(self.L,self.PD)
 
@@ -94,6 +94,8 @@ class SAR_Env_2D(gym.Env):
 
         ## SPECIAL CONFIGS
         self.state = (0,0,0,0,0,0)
+        self.V_mag = np.nan
+        self.Flight_Angle = np.nan
         self.MomentCutoff = False
         self.BodyContact_flag = False
         self.pad_connections = 0
@@ -118,7 +120,7 @@ class SAR_Env_2D(gym.Env):
         self.clock = None
         self.isopen = True
 
-    def reset(self, seed=None, options=None, V_mag=None, Rel_Angle=None):
+    def reset(self, seed=None, options=None, V_mag=None, Flight_Angle=None):
 
         ######################
         #    GENERAL CONFIGS
@@ -146,21 +148,27 @@ class SAR_Env_2D(gym.Env):
         ## RESET POSITION RELATIVE TO LANDING SURFACE (BASED ON STARTING TAU VALUE)
         # (Derivation: Research_Notes_Book_3.pdf (9/17/23))
 
+        ## SET PLANE POSE
+        Plane_Angle_Low = self.Plane_Angle_range[0]
+        Plane_Angle_High = self.Plane_Angle_range[1]
+        self.Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
+        self.Plane_Angle_rad = np.radians(self.Plane_Angle)
+
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
-        if V_mag == None or Rel_Angle == None:
-            V_mag,Rel_Angle = self._sample_flight_conditions()
+        if V_mag == None or Flight_Angle == None:
+            V_mag,Flight_Angle = self._sample_flight_conditions()
 
         else:
             V_mag = V_mag           # Flight velocity
-            Rel_Angle = Rel_Angle   # Flight angle  
+            Flight_Angle = Flight_Angle   # Flight angle  
 
-        self.Rel_Angle = Rel_Angle
         self.V_mag = V_mag
+        self.Flight_Angle = Flight_Angle
 
 
         ## RELATIVE VEL VECTORS
-        V_perp = V_mag*np.sin(np.deg2rad(Rel_Angle))
-        V_tx = V_mag*np.cos(np.deg2rad(Rel_Angle))
+        V_perp = V_mag*np.sin(np.deg2rad(Flight_Angle))
+        V_tx = V_mag*np.cos(np.deg2rad(Flight_Angle))
         V_BP = np.array([V_tx,V_perp])
 
         ## CONVERT RELATIVE VEL VECTORS TO WORLD COORDS
@@ -169,7 +177,6 @@ class SAR_Env_2D(gym.Env):
         ## CALCULATE STARTING TAU VALUE
         Tau_rot = self.t_rot    # TTC allowing for full body rotation before any body part impacts
         self.Tau_Body = (self.collision_radius + Tau_rot*V_perp)/V_perp
-        print(Tau_rot)
         Tau_extra = 0.25*self.Tau_Body
 
         ## CALC STARTING POSITION IN GLOBAL COORDS
@@ -260,6 +267,9 @@ class SAR_Env_2D(gym.Env):
             self.Tau_trg = terminal_obs[0]
             self.start_time_trg = self._get_time()
 
+            # GRAB TERMINAL ACTION
+            self.action_trg = action
+
             # 2) UPDATE STATE
             self.Pol_Trg_Flag = True
             self.Finish_Sim(action)         
@@ -339,7 +349,7 @@ class SAR_Env_2D(gym.Env):
                     while not self.Done:
 
                         ## ITERATE THROUGH SWING
-                        beta,dbeta = self._iter_step_Swing(beta,dbeta,impact_leg=1,n_steps=2)
+                        beta,dbeta = self._iter_step_Swing(beta,dbeta,impact_leg=1,n_steps=1)
 
                         ## CHECK FOR END CONDITIONS
                         if beta >= self._beta_landing(impact_leg=1):
@@ -381,7 +391,7 @@ class SAR_Env_2D(gym.Env):
                     while not self.Done:
 
                         ## ITERATE THROUGH SWING
-                        beta_2,dbeta_2 = self._iter_step_Swing(beta_2,dbeta_2,impact_leg=2,n_steps=2)
+                        beta_2,dbeta_2 = self._iter_step_Swing(beta_2,dbeta_2,impact_leg=2,n_steps=1)
 
                         ## CHECK FOR END CONDITIONS
                         if beta_2 >= self._beta_landing(impact_leg=2):
@@ -508,13 +518,13 @@ class SAR_Env_2D(gym.Env):
         Dist_Num = np.random.choice([0,1,2],p=[0.1,0.8,0.1]) # Probability of sampling distribution
 
         if Dist_Num == 0: # Low Range
-            Rel_Angle = np.random.default_rng().uniform(low=Rel_Angle_Low, high=Rel_Angle_Low + 0.1*Flight_Angle_range)
+            Flight_Angle = np.random.default_rng().uniform(low=Rel_Angle_Low, high=Rel_Angle_Low + 0.1*Flight_Angle_range)
         elif Dist_Num == 1: # Medium Range
-            Rel_Angle = np.random.default_rng().uniform(low=Rel_Angle_Low + 0.1*Flight_Angle_range, high=Rel_Angle_High - 0.1*Flight_Angle_range)
+            Flight_Angle = np.random.default_rng().uniform(low=Rel_Angle_Low + 0.1*Flight_Angle_range, high=Rel_Angle_High - 0.1*Flight_Angle_range)
         elif Dist_Num == 2: # High Range
-            Rel_Angle = np.random.default_rng().uniform(low=Rel_Angle_High - 0.1*Flight_Angle_range, high=Rel_Angle_High)
+            Flight_Angle = np.random.default_rng().uniform(low=Rel_Angle_High - 0.1*Flight_Angle_range, high=Rel_Angle_High)
        
-        return V_mag,Rel_Angle
+        return V_mag,Flight_Angle
     
     def _iter_step(self,n_steps=10):
 
@@ -871,7 +881,7 @@ class SAR_Env_2D(gym.Env):
         text_States = my_font.render(f'States:', True, GREY)
         text_t_step = my_font.render(f'Time Step: {self.t:7.03f} [s]', True, BLACK)
         text_V_mag = my_font.render(f'V_mag: {self.V_mag:.2f} [m/s]', True, BLACK)
-        text_Rel_Angle = my_font.render(f'Alpha_rel: {self.Rel_Angle:.2f} [deg]', True, BLACK)
+        text_Rel_Angle = my_font.render(f'Flight_Angle: {self.Flight_Angle:.2f} [deg]', True, BLACK)
 
         ## OBSERVATIONS TEXT
         text_Obs = my_font.render(f'Observations:', True, GREY)
@@ -882,8 +892,8 @@ class SAR_Env_2D(gym.Env):
 
         ## ACTIONS TEXT
         text_Actions = my_font.render(f'Actions:', True, GREY)
-        # text_Trg_Action = my_font.render(f'Trg_Action: {5.0:3.1f}', True, BLACK)
-        # text_Rot_Action = my_font.render(f'Rot_Action: {5.0:3.1f}', True, BLACK)
+        text_Trg_Action = my_font.render(f'Trg_Action: {self.action_trg[0]:3.1f}', True, BLACK)
+        text_Rot_Action = my_font.render(f'Rot_Action: {self.action_trg[1]:3.1f}', True, BLACK)
 
         ## REWARD TEXT
         text_Other = my_font.render(f'Other:', True, GREY)
@@ -905,8 +915,8 @@ class SAR_Env_2D(gym.Env):
         self.screen.blit(text_Plane_Angle,  (5,5 + 25*9))
 
         self.screen.blit(text_Actions,      (5,5 + 25*11))
-        # self.screen.blit(text_Rot_Action,   (5,5 + 25*12))
-        # self.screen.blit(text_Trg_Action,   (5,5 + 25*13))
+        self.screen.blit(text_Rot_Action,   (5,5 + 25*12))
+        self.screen.blit(text_Trg_Action,   (5,5 + 25*13))
 
         self.screen.blit(text_Other,        (5,5 + 25*15))
         # self.screen.blit(text_reward,       (5,5 + 25*16))
@@ -975,12 +985,12 @@ class SAR_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Vel_range=[1.0,1.0],Flight_Angle_range=[30,150],Plane_Angle_range=[180,180])
+    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Vel_range=[1.0,1.0],Flight_Angle_range=[30,150],Plane_Angle_range=[135,135])
     env.RENDER = True
 
     for ep in range(50):
 
-        obs,_ = env.reset(V_mag=None,Rel_Angle=None)
+        obs,_ = env.reset(V_mag=None,Flight_Angle=None)
 
         Done = False
         truncated = False

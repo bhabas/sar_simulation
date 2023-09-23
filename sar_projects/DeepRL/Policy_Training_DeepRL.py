@@ -96,9 +96,12 @@ class RewardCallback(BaseCallback):
                 self.episode_rewards = []
 
             ## TB LOGGING VALUES
-            self.logger.record('custom/K_ep',self.training_env.envs[0].env.K_ep)
-            self.logger.record('custom/Reward',episode_reward.item())
-            self.logger.record('custom/Reward_avg',self.reward_avg[-1])
+            self.logger.record('s_custom/K_ep',self.training_env.envs[0].env.K_ep)
+            self.logger.record('s_custom/Reward',episode_reward.item())
+            self.logger.record('s_custom/Reward_avg',self.reward_avg[-1])
+            self.logger.record('s_custom/V_mag',self.training_env.envs[0].env.V_mag)
+            self.logger.record('s_custom/Flight_Angle',self.training_env.envs[0].env.Flight_Angle)
+
 
 
 class Policy_Trainer_DeepRL():
@@ -637,7 +640,7 @@ if __name__ == '__main__':
     # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
 
 
-    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Vel_range=[1.0,1.0],Flight_Angle_range=[5,175],Plane_Angle_range=[180,180])
+    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Vel_range=[1.0,1.0],Flight_Angle_range=[30,120],Plane_Angle_range=[180,180])
     # env.RENDER = True
 
 
@@ -653,23 +656,23 @@ if __name__ == '__main__':
     # ================================================================= ##
 
 
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.create_model()
-    PolicyTrainer.train_model(save_freq=2000)
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.create_model()
+    # PolicyTrainer.train_model(save_freq=5000)
 
 
     # ================================================================= ##
     
     # # RESUME TRAINING DEEP RL MODEL
-    log_name = "Body_Contact_Reward_11:44:40_0"
-    t_step_load = 120000
+    log_name = "Body_Contact_Reward_09:12:16_0"
+    t_step_load = 45000
     env.RENDER = True
 
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.load_model(log_dir,log_name,t_step_load)
-    # # PolicyTrainer.train_model(save_freq=5000,total_timesteps=60000)
     PolicyTrainer.test_policy(episodes=30)
 
+    # # PolicyTrainer.train_model(save_freq=5000,total_timesteps=60000)
     # # PolicyTrainer.collect_landing_performance()
     # # PolicyTrainer.plot_landing_performance(saveFig=True)
 
