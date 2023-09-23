@@ -65,7 +65,7 @@ class SAR_Env_2D(gym.Env):
 
 
         ## PLANE PARAMETERS
-        self.Plane_Pos = [0,0.5]
+        self.Plane_Pos = [1,0.5]
         self.Plane_Angle = 180
         self.Plane_Angle_rad = np.radians(self.Plane_Angle)
 
@@ -175,14 +175,14 @@ class SAR_Env_2D(gym.Env):
         V_BO = self.R_PW(V_BP,self.Plane_Angle_rad)
 
         ## CALCULATE STARTING TAU VALUE
-        Tau_rot = self.t_rot    # TTC allowing for full body rotation before any body part impacts
-        self.Tau_Body = (self.collision_radius + Tau_rot*V_perp)/V_perp
-        Tau_extra = 0.25*self.Tau_Body
+        Tau_rot = self.t_rot    # TTC of collision radius allowing for full body rotation before any body part impacts
+        Tau_extra = 0.5*Tau_rot # Buffer time
+        self.Tau_Body = (self.collision_radius + Tau_rot*V_perp)/V_perp # Tau read by body
 
         ## CALC STARTING POSITION IN GLOBAL COORDS
-        r_PO = np.array(self.Plane_Pos)                                                 # Plane Position wrt to origin
-        r_PB = np.array([(Tau_rot + Tau_extra)*V_tx, (self.Tau_Body + Tau_extra)*V_perp])    # Plane Position wrt to Body
-        r_BO = r_PO - self.R_PW(r_PB,self.Plane_Angle_rad)                              # Body Position wrt to origin
+        r_PO = np.array(self.Plane_Pos)                                                     # Plane Position wrt to origin
+        r_PB = np.array([(Tau_rot + Tau_extra)*V_tx, (self.Tau_Body + Tau_extra)*V_perp])   # Plane Position wrt to Body
+        r_BO = r_PO - self.R_PW(r_PB,self.Plane_Angle_rad)                                  # Body Position wrt to origin
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
         self._set_state(r_BO[0],r_BO[1],np.radians(0),V_BO[0],V_BO[1],0)
@@ -498,7 +498,7 @@ class SAR_Env_2D(gym.Env):
             R_legs = 0.0
 
 
-        R = R_dist*0.05 + R_tau*0.10 + R_angle*0.9 + R_legs*0.5
+        R = R_dist*0.05 + R_tau*0.10 + R_angle*0.9 + R_legs*0.9
         print(f"Post_Trg: Reward: {R:.3f} \t D: {self.D_min:.3f}")
 
         return R
@@ -925,7 +925,7 @@ class SAR_Env_2D(gym.Env):
 
 
         ## WINDOW/SIM UPDATE RATE
-        self.clock.tick(120) # [Hz]
+        self.clock.tick(60) # [Hz]
         pygame.display.flip()
 
     def close(self):
@@ -985,7 +985,7 @@ class SAR_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Vel_range=[1.0,1.0],Flight_Angle_range=[30,150],Plane_Angle_range=[135,135])
+    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Vel_range=[4.0,4.0],Flight_Angle_range=[5,5],Plane_Angle_range=[0,0])
     env.RENDER = True
 
     for ep in range(50):
@@ -997,7 +997,7 @@ if __name__ == '__main__':
         while not (Done or truncated):
 
             action = env.action_space.sample()
-            # action = np.zeros_like(action)
+            action = np.zeros_like(action)
             obs,reward,Done,truncated,_ = env.step(action)
 
         print(f"Episode: {ep} \t Obs: {obs[2]:.3f} \t Reward: {reward:.3f}")

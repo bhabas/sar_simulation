@@ -143,7 +143,7 @@ class Policy_Trainer_DeepRL():
             env=self.env,
             gamma=gamma,
             learning_rate=learning_rate,
-            policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=dict(pi=net_arch, qf=[256,256])),
+            policy_kwargs=dict(activation_fn=th.nn.LeakyReLU,net_arch=dict(pi=net_arch, qf=[256,256])),
             verbose=1,
             device='cpu',
             tensorboard_log=self.log_dir
@@ -640,7 +640,7 @@ if __name__ == '__main__':
     # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
 
 
-    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Vel_range=[1.0,1.0],Flight_Angle_range=[30,120],Plane_Angle_range=[180,180])
+    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Vel_range=[1.0,1.0],Flight_Angle_range=[5,175],Plane_Angle_range=[180,180])
     # env.RENDER = True
 
 
@@ -663,9 +663,9 @@ if __name__ == '__main__':
 
     # ================================================================= ##
     
-    # # RESUME TRAINING DEEP RL MODEL
-    log_name = "Body_Contact_Reward_09:12:16_0"
-    t_step_load = 45000
+    # RESUME TRAINING DEEP RL MODEL
+    log_name = "Body_Contact_Reward_10:25:43_0"
+    t_step_load = 135000
     env.RENDER = True
 
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
