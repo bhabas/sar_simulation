@@ -101,6 +101,7 @@ class RewardCallback(BaseCallback):
             self.logger.record('s_custom/Reward_avg',self.reward_avg[-1])
             self.logger.record('s_custom/V_mag',self.training_env.envs[0].env.V_mag)
             self.logger.record('s_custom/Flight_Angle',self.training_env.envs[0].env.Flight_Angle)
+            self.logger.record('s_custom/Plane_Angle',self.training_env.envs[0].env.Plane_Angle)
 
 
 
@@ -162,8 +163,8 @@ class Policy_Trainer_DeepRL():
         """        
 
         ## MODEL PATHS
-        model_path = os.path.join(model_dir,model_name,"models",f"{t_step}_step_model")
-        replay_buff_path = os.path.join(model_dir,model_name,"models",f"{t_step}_step_replay_buff")
+        model_path = os.path.join(model_dir,model_name,"models",f"{int(t_step)}_step_model")
+        replay_buff_path = os.path.join(model_dir,model_name,"models",f"{int(t_step):d}_step_replay_buff")
 
         ## LOAD MODEL AND REPLAY BUFFER
         self.model = SAC.load(
@@ -274,17 +275,10 @@ class Policy_Trainer_DeepRL():
         with open(config_path, 'w') as outfile:
             yaml.dump(General_Dict,outfile,default_flow_style=False,sort_keys=False)
 
-    def test_policy(self,Vel=None,Phi=None,episodes=10):
-        """Test the currently loaded policy for a given set of velocity and launch angle conditions
-
-        Args:
-            Vel (float, optional): Flight velocity [m/s]. 
-            Phi (float, optional): Flight angle [deg]. 
-            episodes (int, optional): Number of landing tests. Defaults to 1.
-        """        
+    def test_policy(self,V_mag=None,Flight_Angle=None,Plane_Angle=None,episodes=10):
 
         for ep in range(episodes):
-            obs,_ = self.env.reset()
+            obs,_ = self.env.reset(V_mag=V_mag, Flight_Angle=Flight_Angle,Plane_Angle=Plane_Angle)
             done = False
             while not done:
                 action,_ = self.model.predict(obs)
@@ -640,7 +634,7 @@ if __name__ == '__main__':
     # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
 
 
-    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Vel_range=[1.0,1.0],Flight_Angle_range=[5,175],Plane_Angle_range=[180,180])
+    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Vel_range=[1.0,4.0],Flight_Angle_range=[30,150],Plane_Angle_range=[180,180])
     # env.RENDER = True
 
 
@@ -656,21 +650,21 @@ if __name__ == '__main__':
     # ================================================================= ##
 
 
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.create_model()
-    # PolicyTrainer.train_model(save_freq=5000)
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.create_model()
+    PolicyTrainer.train_model(save_freq=5000)
 
 
     # ================================================================= ##
     
     # RESUME TRAINING DEEP RL MODEL
-    log_name = "Body_Contact_Reward_10:25:43_0"
-    t_step_load = 135000
-    env.RENDER = True
+    # log_name = "Body_Contact_Reward_11:57:42_0"
+    # t_step_load = 90000
+    # env.RENDER = True
 
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.load_model(log_dir,log_name,t_step_load)
-    PolicyTrainer.test_policy(episodes=30)
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.load_model(log_dir,log_name,t_step_load)
+    # PolicyTrainer.test_policy(episodes=30)
 
     # # PolicyTrainer.train_model(save_freq=5000,total_timesteps=60000)
     # # PolicyTrainer.collect_landing_performance()

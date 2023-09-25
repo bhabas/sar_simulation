@@ -73,7 +73,6 @@ class SAR_Env_2D(gym.Env):
         self.Trg_threshold = 0.5
 
         ## TIME CONSTRAINTS
-        self.t_episode_max = 1.5   # [s]
         self.t_trg_max = 1.0   # [s]
         self.t_impact_max = 1.0   # [s]
 
@@ -120,7 +119,7 @@ class SAR_Env_2D(gym.Env):
         self.clock = None
         self.isopen = True
 
-    def reset(self, seed=None, options=None, V_mag=None, Flight_Angle=None):
+    def reset(self, seed=None, options=None, V_mag=None, Flight_Angle=None, Plane_Angle=None):
 
         ######################
         #    GENERAL CONFIGS
@@ -149,10 +148,16 @@ class SAR_Env_2D(gym.Env):
         # (Derivation: Research_Notes_Book_3.pdf (9/17/23))
 
         ## SET PLANE POSE
-        Plane_Angle_Low = self.Plane_Angle_range[0]
-        Plane_Angle_High = self.Plane_Angle_range[1]
-        self.Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
-        self.Plane_Angle_rad = np.radians(self.Plane_Angle)
+        if Plane_Angle == None:
+
+            Plane_Angle_Low = self.Plane_Angle_range[0]
+            Plane_Angle_High = self.Plane_Angle_range[1]
+            self.Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
+            self.Plane_Angle_rad = np.radians(self.Plane_Angle)
+
+        else:
+            self.Plane_Angle = Plane_Angle
+            self.Plane_Angle_rad = np.radians(Plane_Angle)
 
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
         if V_mag == None or Flight_Angle == None:
@@ -177,7 +182,9 @@ class SAR_Env_2D(gym.Env):
         ## CALCULATE STARTING TAU VALUE
         Tau_rot = self.t_rot    # TTC of collision radius allowing for full body rotation before any body part impacts
         Tau_extra = 0.5*Tau_rot # Buffer time
-        self.Tau_Body = (self.collision_radius + Tau_rot*V_perp)/V_perp # Tau read by body
+        self.Tau_Body = (Tau_rot + self.collision_radius/V_perp) # Tau read by body
+        self.Tau_min = self.collision_radius/V_perp
+        self.t_flight_max = self.Tau_Body*1.25   # [s]
 
         ## CALC STARTING POSITION IN GLOBAL COORDS
         r_PO = np.array(self.Plane_Pos)                                                     # Plane Position wrt to origin
@@ -244,7 +251,7 @@ class SAR_Env_2D(gym.Env):
                 or (self.impact_flag or self.BodyContact_flag)
             )
             terminated = self.Done
-            truncated = bool(self._get_time() - self.start_time_episode >= self.t_episode_max) 
+            truncated = bool(self._get_time() - self.start_time_episode >= self.t_flight_max) 
 
             if truncated:
                 print("Truncated")
@@ -447,10 +454,17 @@ class SAR_Env_2D(gym.Env):
         gamma,L,PD,M,Iyy,I_c = self.params
 
         ## DISTANCE REWARD 
-        R_dist = np.clip(1/np.abs(self.D_min - L),0,15)/15
+        if self.D_min <= L:
+            R_dist = 1
+        else:
+            R_dist = np.exp(-2*(self.D_min - L))
         
         ## TAU TRIGGER REWARD
-        R_tau = np.clip(1/np.abs(self.Tau_trg - 0.3),0,15)/15
+        Tau_B = 0.3
+        if self.Tau_trg <= Tau_B:
+            R_tau = 1
+        else:
+            R_tau = np.exp(-5*(self.Tau_trg - Tau_B))
 
 
         ## SOLVE FOR MINIMUM PHI IMPACT ANGLE VIA GEOMETRIC CONSTRAINTS
@@ -483,16 +497,10 @@ class SAR_Env_2D(gym.Env):
 
         ## PAD CONTACT REWARD
         if self.pad_connections >= 3: 
-            if self.BodyContact_flag == False:
                 R_legs = 1.0
-            else:
-                R_legs = 0.3
 
         elif self.pad_connections == 2: 
-            if self.BodyContact_flag == False:
                 R_legs = 0.6
-            else:
-                R_legs = 0.1
 
         else:
             R_legs = 0.0
@@ -705,8 +713,8 @@ class SAR_Env_2D(gym.Env):
         V_tx,V_perp = self.R_WP(V_BO,Plane_Angle_rad)
 
         ## CALC OPTICAL FLOW VALUES
-        Theta_x = np.clip(V_tx/(D_perp + EPS),-20,20)
-        Tau = np.clip(D_perp/(V_perp + EPS),0,5)
+        Theta_x = V_tx/(D_perp + EPS)
+        Tau = D_perp/(V_perp + EPS)
 
         ## OBSERVATION VECTOR
         obs = np.array([Tau,Theta_x,D_perp,Plane_Angle_rad],dtype=np.float32)
@@ -845,8 +853,8 @@ class SAR_Env_2D(gym.Env):
                          c2p(self.Plane_Pos + self.R_PW(np.array([+0.5,0]),self.Plane_Angle_rad)),width=5)
     
         # ## LANDING SURFACE AXES
-        pygame.draw.line(self.surf,GREEN,c2p(self.Plane_Pos),c2p(self.Plane_Pos + self.R_BW(np.array([0.1,0]),self.Plane_Angle_rad)),width=7)  # t_x   
-        pygame.draw.line(self.surf,BLUE, c2p(self.Plane_Pos),c2p(self.Plane_Pos + self.R_BW(np.array([0,0.1]),self.Plane_Angle_rad)),width=7)  # n_p 
+        pygame.draw.line(self.surf,GREEN,c2p(self.Plane_Pos),c2p(self.Plane_Pos + self.R_PW(np.array([0.1,0]),self.Plane_Angle_rad)),width=7)  # t_x   
+        pygame.draw.line(self.surf,BLUE, c2p(self.Plane_Pos),c2p(self.Plane_Pos + self.R_PW(np.array([0,0.1]),self.Plane_Angle_rad)),width=7)  # n_p 
         pygame.draw.circle(self.surf,RED,c2p(self.Plane_Pos),radius=4,width=0)
 
 
@@ -886,7 +894,7 @@ class SAR_Env_2D(gym.Env):
         ## OBSERVATIONS TEXT
         text_Obs = my_font.render(f'Observations:', True, GREY)
         text_Tau = my_font.render(f'Tau: {self._get_obs()[0]:2.2f} [s]', True, BLACK)
-        text_theta_x = my_font.render(f'Theta_x: {self._get_obs()[1]:2.2f} [rad/s]', True, BLACK)
+        text_theta_x = my_font.render(f'Theta_x: {1/self._get_obs()[1]:2.2f} [rad/s]', True, BLACK)
         text_D_perp = my_font.render(f'D_perp: {self._get_obs()[2]:2.2f} [m]', True, BLACK)
         text_Plane_Angle = my_font.render(f'Plane Angle: {self.Plane_Angle:3.1f} [deg]', True, BLACK)
 
@@ -925,7 +933,7 @@ class SAR_Env_2D(gym.Env):
 
 
         ## WINDOW/SIM UPDATE RATE
-        self.clock.tick(60) # [Hz]
+        self.clock.tick(30) # [Hz]
         pygame.display.flip()
 
     def close(self):
@@ -985,12 +993,12 @@ class SAR_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Vel_range=[4.0,4.0],Flight_Angle_range=[5,5],Plane_Angle_range=[0,0])
+    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Vel_range=[1,1],Flight_Angle_range=[45,45],Plane_Angle_range=[0,0])
     env.RENDER = True
 
     for ep in range(50):
 
-        obs,_ = env.reset(V_mag=None,Flight_Angle=None)
+        obs,_ = env.reset(V_mag=None,Flight_Angle=None,Plane_Angle=None)
 
         Done = False
         truncated = False
