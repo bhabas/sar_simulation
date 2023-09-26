@@ -675,7 +675,7 @@ if __name__ == '__main__':
 
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.load_model(log_dir,log_name,t_step_load)
-    PolicyTrainer.sweep_policy(Plane_Angle_range=[135,180],Flight_Angle_range=[5,175],V_mag_range=[2,2],n=[3,4,2,2])
+    PolicyTrainer.sweep_policy(Plane_Angle_range=[135,135],Flight_Angle_range=[5,175],V_mag_range=[2,2],n=[3,4,1,2])
 
     # # PolicyTrainer.train_model(save_freq=5000,total_timesteps=60000)
     # # PolicyTrainer.collect_landing_performance()

@@ -390,8 +390,11 @@ class SAR_Env_2D(gym.Env):
                         r_B_C1 = self.R_PW(temp,self.Plane_Angle_rad)
                         r_B_W = r_C1_W + r_B_C1
 
+                        temp2 = self.R_Beta1P(np.array([0,L*dbeta]),beta)
+                        v_B_C1 = self.R_PW(temp2,self.Plane_Angle_rad)
+
                         phi = np.deg2rad(90) - beta - self.Plane_Angle_rad + gamma
-                        self.state = (r_B_W[0],r_B_W[1],phi,0,0,0)
+                        self.state = (r_B_W[0],r_B_W[1],phi,v_B_C1[0],v_B_C1[1],0)
                         
 
                         if self.RENDER:
@@ -432,8 +435,12 @@ class SAR_Env_2D(gym.Env):
                         r_B_C2 = self.R_PW(temp,self.Plane_Angle_rad)
                         r_B_W = r_C2_W + r_B_C2
 
+                        temp2 = self.R_Beta2P(np.array([0,L*dbeta]),beta)
+                        v_B_C2 = self.R_PW(temp2,self.Plane_Angle_rad)
+
+
                         phi = (-np.deg2rad(90) + beta_2 - self.Plane_Angle_rad - gamma)
-                        self.state = (r_B_W[0],r_B_W[1],phi,0,0,0)
+                        self.state = (r_B_W[0],r_B_W[1],phi,v_B_C2[0],v_B_C2[1],0)
 
                         ## UPDATE MINIMUM DISTANCE
                         D_perp = self._get_obs()[2]
@@ -896,6 +903,11 @@ class SAR_Env_2D(gym.Env):
         pygame.draw.line(self.surf,GREEN,c2p(Pose[0]),c2p(Pose[0] + self.R_BW(np.array([0.05,0]),phi)),width=5)  # B_x   
         pygame.draw.line(self.surf,BLUE,c2p(Pose[0]),c2p(Pose[0] + self.R_BW(np.array([0,0.05]),phi)),width=5)  # B_z  
 
+        ## VELOCITY VECTOR
+        v = np.array([vx,vz])
+        v_hat = v/np.linalg.norm(v)
+        pygame.draw.line(self.surf,ORANGE,c2p(Pose[0]),c2p(Pose[0]) + v_hat*25,width=3)
+
         ## TRIGGER INDICATOR
         if self.Pol_Trg_Flag == True:
             pygame.draw.circle(self.surf,RED,  c2p(Pose[0]),radius=4,width=0)
@@ -936,7 +948,7 @@ class SAR_Env_2D(gym.Env):
         text_Tau_trg = my_font.render(f'Tau_trg: {self.Tau_trg:.3f} [s]',True, BLACK)
         text_Tau_CR_trg = my_font.render(f'Tau_CR_trg: {self.Tau_CR_trg:.3f} [s]',True, BLACK)
         text_Tau_CR = my_font.render(f'Tau CR: {self.Tau_CR:.3f} [s]',True, BLACK)
-        text_Phi = my_font.render(f'Phi: {np.degrees(phi):.3f} deg',True, BLACK)
+        text_Phi = my_font.render(f'Phi: {np.degrees(phi):.0f} deg',True, BLACK)
 
 
 
@@ -1043,6 +1055,7 @@ class SAR_Env_2D(gym.Env):
 
         return [pygame.draw.line(surface, color, tuple(dash_knots[n]), tuple(dash_knots[n+1]), width)
                 for n in range(int(exclude_corners), dash_amount - int(exclude_corners), 2)]
+
 
 
 
