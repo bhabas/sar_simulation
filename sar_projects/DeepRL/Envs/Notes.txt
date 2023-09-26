@@ -11,32 +11,7 @@
 - Tau_extra is extra flight time
 
 
-- For a given Tau and flight angle, if vel increases then distance increases
-- What kind of activation functions are useful?
-    - ReLu
-    - Leaky ReLu
-    - Tanh
-    - Positive and Negative function?
-        - What are the impacts of just positive function
 
-- How well does learning rate work?
-    - Increase it
-    - Decrease it
-
-- What are impacts of discount factor?
-    - Increase it
-    - Decrease it
-
-- Any impacts for architechture size?
-    - 8x8
-    - 12x12
-    - 24x24
-    - 48x48
-
-- Also, look at normalization of observations
-    - Theta_x should be inverted because much like RREV, the expansion causes inverse scaling
-        - This is very hard for normalization
-        - We can clamp this value at [-5,5]
 
 
 
@@ -124,3 +99,30 @@
 
 ## TO DO ##
 - Sweep parameter space of testing conditions to validate behavior
+
+- For a given Tau and flight angle, if vel increases then distance increases
+- What kind of activation functions are useful?
+    - ReLu
+    - Leaky ReLu
+    - Tanh
+    - Positive and Negative function?
+        - What are the impacts of just positive function
+
+- How well does learning rate work?
+    - Increase it
+    - Decrease it
+
+- What are impacts of discount factor?
+    - Increase it
+    - Decrease it
+
+- Any impacts for architechture size?
+    - 8x8
+    - 12x12
+    - 24x24
+    - 48x48
+
+- Also, look at normalization of observations
+    - Theta_x should be inverted because much like RREV, the expansion causes inverse scaling
+        - This is very hard for normalization
+        - We can clamp this value at [-5,5]

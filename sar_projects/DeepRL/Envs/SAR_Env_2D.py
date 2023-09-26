@@ -70,7 +70,7 @@ class SAR_Env_2D(gym.Env):
         self.Plane_Angle_rad = np.radians(self.Plane_Angle)
 
         ## LEARNING/REWARD CONFIGS
-        self.Trg_threshold = 0.5
+        self.Pol_Trg_threshold = 0.5
 
         ## TIME CONSTRAINTS
         self.t_trg_max = 1.0   # [s]
@@ -84,6 +84,7 @@ class SAR_Env_2D(gym.Env):
 
         self.D_min = np.inf
         self.Tau_trg = np.inf
+        self.Tau_CR_trg = np.inf
 
         
 
@@ -101,7 +102,7 @@ class SAR_Env_2D(gym.Env):
 
         ## PHYSICS PARAMETERS
         self.g = 9.81       # Gravity [m/s^2]
-        self.dt = 0.001      # [s]
+        self.dt = 1e-3      # [s]
         self.t = 0          # [s]
 
         ## RENDERING PARAMETERS
@@ -195,6 +196,12 @@ class SAR_Env_2D(gym.Env):
         self._set_state(r_BO[0],r_BO[1],np.radians(0),V_BO[0],V_BO[1],0)
 
 
+        ## CALC TAU OF COLLISION RADIUS
+        r_CB = self.R_PW(np.array([0,self.collision_radius]),self.Plane_Angle_rad)
+        r_CP = r_PO - (r_CB + r_BO)
+        _,D_perp_C = self.R_WP(r_CP,self.Plane_Angle_rad) # Convert to plane coords
+        self.Tau_CR = D_perp_C/V_perp
+
         ######################
         #   2D ENV CONFIGS
         ######################
@@ -218,7 +225,7 @@ class SAR_Env_2D(gym.Env):
         # 5. RETURN VALUES
 
         ########## PRE-POLICY TRIGGER ##########
-        if action[0] <= self.Trg_threshold:
+        if action[0] <= self.Pol_Trg_threshold:
 
             ## 2) UPDATE STATE
             self._iter_step(n_steps=10)
@@ -267,11 +274,12 @@ class SAR_Env_2D(gym.Env):
 
 
         ########## POST-POLICY TRIGGER ##########
-        elif action[0] >= self.Trg_threshold:
+        elif action[0] >= self.Pol_Trg_threshold:
 
             # GRAB TERMINAL OBS
             terminal_obs = self._get_obs() # Attribute final reward to triggering state
             self.Tau_trg = terminal_obs[0]
+            self.Tau_CR_trg = self.Tau_CR
             self.start_time_trg = self._get_time()
 
             # GRAB TERMINAL ACTION
@@ -466,6 +474,12 @@ class SAR_Env_2D(gym.Env):
         else:
             R_tau = np.exp(-5*(self.Tau_trg - Tau_B))
 
+        # ## TAU TRIGGER REWARD
+        # if self.Tau_CR_trg <= 0:
+        #     R_tau = 1
+        # else:
+        #     R_tau = np.exp(-2.5*(self.Tau_CR_trg))
+
 
         ## SOLVE FOR MINIMUM PHI IMPACT ANGLE VIA GEOMETRIC CONSTRAINTS
         a = np.sqrt(PD**2 + L**2 - 2*PD*L*np.cos(np.pi/2-gamma))
@@ -478,18 +492,18 @@ class SAR_Env_2D(gym.Env):
 
 
 
-        if self.phi_rel_impact < -200:
+        if self.phi_rel_impact < -190:
             R_angle = 0
             OverRotate_flag = True
-        elif -200 <= self.phi_rel_impact < -self.phi_rel_min:
+        elif -190 <= self.phi_rel_impact < -self.phi_rel_min:
             R_angle = 1
         elif -self.phi_rel_min <= self.phi_rel_impact < 0:
             R_angle = self.phi_rel_impact/-self.phi_rel_min
         elif 0 <= self.phi_rel_impact < self.phi_rel_min:
             R_angle = self.phi_rel_impact/self.phi_rel_min
-        elif self.phi_rel_min <= self.phi_rel_impact < 200:
+        elif self.phi_rel_min <= self.phi_rel_impact < 190:
             R_angle = 1
-        elif self.phi_rel_impact >= 200:
+        elif self.phi_rel_impact >= 190:
             R_angle = 0
             OverRotate_flag = True
         else:
@@ -506,7 +520,7 @@ class SAR_Env_2D(gym.Env):
             R_legs = 0.0
 
 
-        R = R_dist*0.05 + R_tau*0.10 + R_angle*0.9 + R_legs*0.9
+        R = R_dist*0.10 + R_tau*0.10 + R_angle*0.9 + R_legs*0.9
         print(f"Post_Trg: Reward: {R:.3f} \t D: {self.D_min:.3f}")
 
         return R
@@ -713,8 +727,15 @@ class SAR_Env_2D(gym.Env):
         V_tx,V_perp = self.R_WP(V_BO,Plane_Angle_rad)
 
         ## CALC OPTICAL FLOW VALUES
-        Theta_x = V_tx/(D_perp + EPS)
-        Tau = D_perp/(V_perp + EPS)
+        Theta_x = np.clip(V_tx/(D_perp + EPS),-20,20)
+        Tau = np.clip(D_perp/(V_perp + EPS),0,5)
+
+
+        r_CB = self.R_PW(np.array([0,self.collision_radius]),self.Plane_Angle_rad)
+        r_CP = r_PO - (r_CB + r_BO)
+        _,D_perp_C = self.R_WP(r_CP,self.Plane_Angle_rad) # Convert to plane coords
+        self.Tau_CR = D_perp_C/V_perp
+
 
         ## OBSERVATION VECTOR
         obs = np.array([Tau,Theta_x,D_perp,Plane_Angle_rad],dtype=np.float32)
@@ -907,6 +928,8 @@ class SAR_Env_2D(gym.Env):
         text_Other = my_font.render(f'Other:', True, GREY)
         # text_reward = my_font.render(f'Prev Reward: {self.reward:.3f}',True, BLACK)
         text_Tau_trg = my_font.render(f'Tau trg: {self.Tau_trg:.3f} [s]',True, BLACK)
+        text_Tau_CR = my_font.render(f'Tau CR: {self.Tau_CR:.3f} [s]',True, BLACK)
+
 
 
         ## DRAW OBJECTS TO SCREEN
@@ -929,11 +952,13 @@ class SAR_Env_2D(gym.Env):
         self.screen.blit(text_Other,        (5,5 + 25*15))
         # self.screen.blit(text_reward,       (5,5 + 25*16))
         self.screen.blit(text_Tau_trg,      (5,5 + 25*17))
+        self.screen.blit(text_Tau_CR,      (5,5 + 25*18))
+
 
 
 
         ## WINDOW/SIM UPDATE RATE
-        self.clock.tick(30) # [Hz]
+        self.clock.tick(60) # [Hz]
         pygame.display.flip()
 
     def close(self):
@@ -993,7 +1018,7 @@ class SAR_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Vel_range=[1,1],Flight_Angle_range=[45,45],Plane_Angle_range=[0,0])
+    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Vel_range=[4,4],Flight_Angle_range=[45,45],Plane_Angle_range=[135,135])
     env.RENDER = True
 
     for ep in range(50):

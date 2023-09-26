@@ -634,7 +634,7 @@ if __name__ == '__main__':
     # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
 
 
-    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Vel_range=[1.0,4.0],Flight_Angle_range=[30,150],Plane_Angle_range=[180,180])
+    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Vel_range=[2.0,2.0],Flight_Angle_range=[30,150],Plane_Angle_range=[180,180])
     # env.RENDER = True
 
 
@@ -658,8 +658,8 @@ if __name__ == '__main__':
     # ================================================================= ##
     
     # RESUME TRAINING DEEP RL MODEL
-    # log_name = "Body_Contact_Reward_11:57:42_0"
-    # t_step_load = 90000
+    # log_name = "Body_Contact_Reward_13:33:06_0"
+    # t_step_load = 120000
     # env.RENDER = True
 
     # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
