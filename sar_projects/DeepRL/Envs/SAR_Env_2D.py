@@ -20,7 +20,7 @@ EPS = 1e-6 # Epsilon (Prevent division by zero)
 
 class SAR_Env_2D(gym.Env):
 
-    def __init__(self,GZ_Timeout=True,My_range=[-8.0e-3,0],Vel_range=[1.5,3.5],Flight_Angle_range=[0,90],Plane_Angle_range=[90,180]):
+    def __init__(self,GZ_Timeout=True,My_range=[-8.0e-3,0],V_mag_range=[1.5,3.5],Flight_Angle_range=[0,90],Plane_Angle_range=[90,180]):
         super().__init__()
         
         ######################
@@ -39,7 +39,7 @@ class SAR_Env_2D(gym.Env):
         self.action_trg = np.zeros(self.action_space.shape,dtype=np.float32) # Action values at triggering
 
         ## TESTING CONDITIONS     
-        self.Vel_range = Vel_range  
+        self.V_mag_range = V_mag_range  
         self.Flight_Angle_range = Flight_Angle_range
         self.Plane_Angle_range = Plane_Angle_range
         self.My_range = My_range
@@ -65,7 +65,7 @@ class SAR_Env_2D(gym.Env):
 
 
         ## PLANE PARAMETERS
-        self.Plane_Pos = [1,0.5]
+        self.Plane_Pos = [1,0]
         self.Plane_Angle = 180
         self.Plane_Angle_rad = np.radians(self.Plane_Angle)
 
@@ -135,10 +135,11 @@ class SAR_Env_2D(gym.Env):
         self.D_min = np.inf
         self.Tau_trg = np.inf
         self.Tau_CR_trg = np.inf
-        self.phi_impact = 0
+        self.phi_impact = np.nan
 
         self.impact_flag = False
         self.BodyContact_flag = False
+        self.pad_connections = 0
         self.MomentCutoff = False
 
         ## RESET/UPDATE TIME CONDITIONS
@@ -195,6 +196,7 @@ class SAR_Env_2D(gym.Env):
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
         self._set_state(r_BO[0],r_BO[1],np.radians(0),V_BO[0],V_BO[1],0)
+        self.initial_state = (r_BO,V_BO)
 
 
         ## CALC TAU OF COLLISION RADIUS
@@ -472,7 +474,7 @@ class SAR_Env_2D(gym.Env):
         #     R_tau = np.exp(-5*(self.Tau_trg - Tau_B))
 
         ## TAU TRIGGER REWARD
-        if self.Tau_CR_trg <= 0:
+        if self.Tau_CR_trg <= 0.1:
             R_tau = 1
         else:
             R_tau = np.exp(-5.0*(self.Tau_CR_trg))
@@ -506,7 +508,7 @@ class SAR_Env_2D(gym.Env):
             R_angle = -0.2
             OverRotate_flag = True
         else:
-            R_angle = -0.2
+            R_angle = 0.0
 
         ## PAD CONTACT REWARD
         if self.pad_connections >= 3: 
@@ -527,8 +529,8 @@ class SAR_Env_2D(gym.Env):
     def _sample_flight_conditions(self):
 
         ## SAMPLE VEL FROM UNIFORM DISTRIBUTION IN VELOCITY RANGE
-        Vel_Low = self.Vel_range[0]
-        Vel_High = self.Vel_range[1]
+        Vel_Low = self.V_mag_range[0]
+        Vel_High = self.V_mag_range[1]
         V_mag = np.random.uniform(low=Vel_Low,high=Vel_High)
 
         ## SAMPLE RELATIVE PHI FROM A WEIGHTED SET OF UNIFORM DISTRIBUTIONS
@@ -857,6 +859,10 @@ class SAR_Env_2D(gym.Env):
         self.surf = pygame.Surface((self.screen_width, self.screen_height))
         self.surf.fill(WHITE)
 
+        ## VELOCITY LINE
+        r_BO,V_BO = self.initial_state
+        self.draw_line_dashed(self.surf,GREY,c2p(r_BO - 5*V_BO),c2p(r_BO + 5*V_BO),width=3)
+
         ## ORIGIN AXES
         pygame.draw.line(self.surf,GREEN,c2p((0,0,0)),c2p((0.1,0)),width=5) # X_w   
         pygame.draw.line(self.surf,BLUE, c2p((0,0,0)),c2p((0,0.1)),width=5) # Z_w   
@@ -872,7 +878,7 @@ class SAR_Env_2D(gym.Env):
                          c2p(self.Plane_Pos + self.R_PW(np.array([-0.5,0]),self.Plane_Angle_rad)),
                          c2p(self.Plane_Pos + self.R_PW(np.array([+0.5,0]),self.Plane_Angle_rad)),width=5)
     
-        # ## LANDING SURFACE AXES
+        ## LANDING SURFACE AXES
         pygame.draw.line(self.surf,GREEN,c2p(self.Plane_Pos),c2p(self.Plane_Pos + self.R_PW(np.array([0.1,0]),self.Plane_Angle_rad)),width=7)  # t_x   
         pygame.draw.line(self.surf,BLUE, c2p(self.Plane_Pos),c2p(self.Plane_Pos + self.R_PW(np.array([0,0.1]),self.Plane_Angle_rad)),width=7)  # n_p 
         pygame.draw.circle(self.surf,RED,c2p(self.Plane_Pos),radius=4,width=0)
@@ -889,7 +895,7 @@ class SAR_Env_2D(gym.Env):
         ## BODY AXES
         pygame.draw.line(self.surf,GREEN,c2p(Pose[0]),c2p(Pose[0] + self.R_BW(np.array([0.05,0]),phi)),width=5)  # B_x   
         pygame.draw.line(self.surf,BLUE,c2p(Pose[0]),c2p(Pose[0] + self.R_BW(np.array([0,0.05]),phi)),width=5)  # B_z  
-        
+
         ## TRIGGER INDICATOR
         if self.Pol_Trg_Flag == True:
             pygame.draw.circle(self.surf,RED,  c2p(Pose[0]),radius=4,width=0)
@@ -924,18 +930,20 @@ class SAR_Env_2D(gym.Env):
         text_Trg_Action = my_font.render(f'Trg_Action: {self.action_trg[0]:3.1f}', True, BLACK)
         text_Rot_Action = my_font.render(f'Rot_Action: {self.action_trg[1]:3.1f}', True, BLACK)
 
-        ## REWARD TEXT
+        ## OTHER TEXT
         text_Other = my_font.render(f'Other:', True, GREY)
-        # text_reward = my_font.render(f'Prev Reward: {self.reward:.3f}',True, BLACK)
+        text_reward = my_font.render(f'Prev Reward: {self.reward:.3f}',True, BLACK)
         text_Tau_trg = my_font.render(f'Tau_trg: {self.Tau_trg:.3f} [s]',True, BLACK)
         text_Tau_CR_trg = my_font.render(f'Tau_CR_trg: {self.Tau_CR_trg:.3f} [s]',True, BLACK)
-
         text_Tau_CR = my_font.render(f'Tau CR: {self.Tau_CR:.3f} [s]',True, BLACK)
+        text_Phi = my_font.render(f'Phi: {np.degrees(phi):.3f} deg',True, BLACK)
+
+
 
 
 
         ## DRAW OBJECTS TO SCREEN
-        self.screen.blit(self.surf,(0,0))
+        self.screen.blit(self.surf,         (0,0))
         self.screen.blit(text_States,       (5,5))
         self.screen.blit(text_t_step,       (5,5 + 25*1))
         self.screen.blit(text_Rel_Angle,    (5,5 + 25*2))
@@ -952,10 +960,12 @@ class SAR_Env_2D(gym.Env):
         self.screen.blit(text_Rot_Action,   (5,5 + 25*13))
 
         self.screen.blit(text_Other,        (5,5 + 25*15))
-        # self.screen.blit(text_reward,       (5,5 + 25*16))
+        self.screen.blit(text_reward,       (5,5 + 25*16))
         self.screen.blit(text_Tau_trg,      (5,5 + 25*17))
         self.screen.blit(text_Tau_CR_trg,   (5,5 + 25*18))
-        self.screen.blit(text_Tau_CR,      (5,5 + 25*19))
+        self.screen.blit(text_Tau_CR,       (5,5 + 25*19))
+        self.screen.blit(text_Phi,          (5,5 + 25*20))
+
 
 
 
@@ -1016,13 +1026,29 @@ class SAR_Env_2D(gym.Env):
 
 
 
+    def draw_line_dashed(self,surface, color, start_pos, end_pos, width = 1, dash_length = 10, exclude_corners = True):
 
+        # convert tuples to numpy arrays
+        start_pos = np.array(start_pos)
+        end_pos   = np.array(end_pos)
+
+        # get euclidian distance between start_pos and end_pos
+        length = np.linalg.norm(end_pos - start_pos)
+
+        # get amount of pieces that line will be split up in (half of it are amount of dashes)
+        dash_amount = int(length / dash_length)
+
+        # x-y-value-pairs of where dashes start (and on next, will end)
+        dash_knots = np.array([np.linspace(start_pos[i], end_pos[i], dash_amount) for i in range(2)]).transpose()
+
+        return [pygame.draw.line(surface, color, tuple(dash_knots[n]), tuple(dash_knots[n+1]), width)
+                for n in range(int(exclude_corners), dash_amount - int(exclude_corners), 2)]
 
 
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Vel_range=[2.0,2.0],Flight_Angle_range=[30,150],Plane_Angle_range=[180,180])
+    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],V_mag_range=[2.0,2.0],Flight_Angle_range=[30,150],Plane_Angle_range=[180,180])
     env.RENDER = True
 
     for ep in range(50):

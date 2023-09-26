@@ -1,0 +1,39 @@
+ENV_SETTINGS:
+  Env_Name: SAR_Env_2D
+  V_mag_Limts:
+  - 2
+  - 2
+  Flight_Angle_Limits:
+  - 5
+  - 175
+  Plane_Angle_Limits:
+  - 90
+  - 135
+MODEL_SETTINGS:
+  Mass: 0.035
+  Ixx: 1.58e-05
+  Iyy: 1.7e-05
+  Izz: 3.12e-05
+  L: 0.15
+  Gamma: 30.0
+  PD: 0.075
+LEARNING_MODEL:
+  Policy: SACPolicy
+  Observation_Layer: 4
+  Network_Layers:
+    pi:
+    - 8
+    - 8
+    qf:
+    - 256
+    - 256
+  Action_Layer: 4
+  Action_Space_High:
+  - 1.0
+  - 1.0
+  Action_Space_Low:
+  - -1.0
+  - -1.0
+  Gamma: 0.999
+  Learning_Rate: 0.002
+  Activation_Function: ''
