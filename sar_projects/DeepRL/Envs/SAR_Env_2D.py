@@ -134,6 +134,7 @@ class SAR_Env_2D(gym.Env):
 
         self.D_min = np.inf
         self.Tau_trg = np.inf
+        self.Tau_CR_trg = np.inf
         self.phi_impact = 0
 
         self.impact_flag = False
@@ -328,7 +329,7 @@ class SAR_Env_2D(gym.Env):
             if self.impact_flag == False:
 
                 ## UPDATE ROTATION FLIGHT STEP
-                self._iter_step_Rot(scaled_action,n_steps=2)
+                self._iter_step_Rot(scaled_action)
 
                 # UPDATE MINIMUM DISTANCE
                 D_perp = self._get_obs()[2]
@@ -364,7 +365,7 @@ class SAR_Env_2D(gym.Env):
                     while not self.Done:
 
                         ## ITERATE THROUGH SWING
-                        beta,dbeta = self._iter_step_Swing(beta,dbeta,impact_leg=1,n_steps=1)
+                        beta,dbeta = self._iter_step_Swing(beta,dbeta,impact_leg=1)
 
                         ## CHECK FOR END CONDITIONS
                         if beta >= self._beta_landing(impact_leg=1):
@@ -406,7 +407,7 @@ class SAR_Env_2D(gym.Env):
                     while not self.Done:
 
                         ## ITERATE THROUGH SWING
-                        beta_2,dbeta_2 = self._iter_step_Swing(beta_2,dbeta_2,impact_leg=2,n_steps=1)
+                        beta_2,dbeta_2 = self._iter_step_Swing(beta_2,dbeta_2,impact_leg=2)
 
                         ## CHECK FOR END CONDITIONS
                         if beta_2 >= self._beta_landing(impact_leg=2):
@@ -452,11 +453,7 @@ class SAR_Env_2D(gym.Env):
             truncated = bool(self.t - self.start_time_trg > self.t_trg_max) 
             
         return self.Done,truncated
-    
-    def Calc_Reward_PreTrg(self):
 
-        return 0
-    
     def Calc_Reward_PostTrg(self):
 
         gamma,L,PD,M,Iyy,I_c = self.params
@@ -467,18 +464,20 @@ class SAR_Env_2D(gym.Env):
         else:
             R_dist = np.exp(-2*(self.D_min - L))
         
-        ## TAU TRIGGER REWARD
-        Tau_B = 0.3
-        if self.Tau_trg <= Tau_B:
-            R_tau = 1
-        else:
-            R_tau = np.exp(-5*(self.Tau_trg - Tau_B))
-
         # ## TAU TRIGGER REWARD
-        # if self.Tau_CR_trg <= 0:
+        # Tau_B = 0.3
+        # if self.Tau_trg <= Tau_B:
         #     R_tau = 1
         # else:
-        #     R_tau = np.exp(-2.5*(self.Tau_CR_trg))
+        #     R_tau = np.exp(-5*(self.Tau_trg - Tau_B))
+
+        ## TAU TRIGGER REWARD
+        if self.Tau_CR_trg <= 0:
+            R_tau = 1
+        else:
+            R_tau = np.exp(-5.0*(self.Tau_CR_trg))
+
+        ## LOOK INTO WHY NEW REWARD FUNCTION IS UNSTABLE
 
 
         ## SOLVE FOR MINIMUM PHI IMPACT ANGLE VIA GEOMETRIC CONSTRAINTS
@@ -493,7 +492,7 @@ class SAR_Env_2D(gym.Env):
 
 
         if self.phi_rel_impact < -190:
-            R_angle = 0
+            R_angle = -0.2
             OverRotate_flag = True
         elif -190 <= self.phi_rel_impact < -self.phi_rel_min:
             R_angle = 1
@@ -504,10 +503,10 @@ class SAR_Env_2D(gym.Env):
         elif self.phi_rel_min <= self.phi_rel_impact < 190:
             R_angle = 1
         elif self.phi_rel_impact >= 190:
-            R_angle = 0
+            R_angle = -0.2
             OverRotate_flag = True
         else:
-            R_angle = 0
+            R_angle = -0.2
 
         ## PAD CONTACT REWARD
         if self.pad_connections >= 3: 
@@ -571,7 +570,7 @@ class SAR_Env_2D(gym.Env):
 
             self.state = (x,z,phi,vx,vz,dphi)
 
-    def _iter_step_Rot(self,Rot_action,n_steps=10):
+    def _iter_step_Rot(self,Rot_action,n_steps=2):
 
         ## PARAMS
         gamma,L,PD,M,Iyy,I_c = self.params
@@ -606,7 +605,7 @@ class SAR_Env_2D(gym.Env):
 
             self.state = (x,z,phi,vx,vz,dphi)
 
-    def _iter_step_Swing(self,beta,dbeta,impact_leg,n_steps=10):
+    def _iter_step_Swing(self,beta,dbeta,impact_leg,n_steps=2):
 
         gamma,L,PD,M,Iyy,I_c = self.params
 
@@ -727,14 +726,14 @@ class SAR_Env_2D(gym.Env):
         V_tx,V_perp = self.R_WP(V_BO,Plane_Angle_rad)
 
         ## CALC OPTICAL FLOW VALUES
-        Theta_x = np.clip(V_tx/D_perp,-20,20)
-        Tau = np.clip(D_perp/V_perp,0,5)
+        Tau = np.clip(D_perp/(V_perp + EPS),0,5)
+        Theta_x = np.clip(V_tx/(D_perp + EPS),-20,20)
 
 
         r_CB = self.R_PW(np.array([0,self.collision_radius]),self.Plane_Angle_rad)
         r_CP = r_PO - (r_CB + r_BO)
         _,D_perp_C = self.R_WP(r_CP,self.Plane_Angle_rad) # Convert to plane coords
-        self.Tau_CR = D_perp_C/V_perp
+        self.Tau_CR = np.clip(D_perp_C/(V_perp + EPS),-5,5)
 
 
         ## OBSERVATION VECTOR
@@ -887,6 +886,10 @@ class SAR_Env_2D(gym.Env):
         pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[4]),width=3) # Prop 2
         pygame.draw.circle(self.surf,GREY,c2p(Pose[0]),radius=self.collision_radius*self.screen_width/self.world_width,width=2)
 
+        ## BODY AXES
+        pygame.draw.line(self.surf,GREEN,c2p(Pose[0]),c2p(Pose[0] + self.R_BW(np.array([0.05,0]),phi)),width=5)  # B_x   
+        pygame.draw.line(self.surf,BLUE,c2p(Pose[0]),c2p(Pose[0] + self.R_BW(np.array([0,0.05]),phi)),width=5)  # B_z  
+        
         ## TRIGGER INDICATOR
         if self.Pol_Trg_Flag == True:
             pygame.draw.circle(self.surf,RED,  c2p(Pose[0]),radius=4,width=0)
@@ -895,9 +898,6 @@ class SAR_Env_2D(gym.Env):
             pygame.draw.circle(self.surf,BLUE, c2p(Pose[0]),radius=4,width=0)
             pygame.draw.circle(self.surf,BLACK,c2p(Pose[0]),radius=5,width=3)
 
-        ## BODY AXES
-        pygame.draw.line(self.surf,GREEN,c2p(Pose[0]),c2p(Pose[0] + self.R_BW(np.array([0.05,0]),phi)),width=5)  # B_x   
-        pygame.draw.line(self.surf,BLUE,c2p(Pose[0]),c2p(Pose[0] + self.R_BW(np.array([0,0.05]),phi)),width=5)  # B_z  
 
 
         ## FLIP IMAGE SO X->RIGHT AND Y->UP
@@ -927,7 +927,9 @@ class SAR_Env_2D(gym.Env):
         ## REWARD TEXT
         text_Other = my_font.render(f'Other:', True, GREY)
         # text_reward = my_font.render(f'Prev Reward: {self.reward:.3f}',True, BLACK)
-        text_Tau_trg = my_font.render(f'Tau trg: {self.Tau_trg:.3f} [s]',True, BLACK)
+        text_Tau_trg = my_font.render(f'Tau_trg: {self.Tau_trg:.3f} [s]',True, BLACK)
+        text_Tau_CR_trg = my_font.render(f'Tau_CR_trg: {self.Tau_CR_trg:.3f} [s]',True, BLACK)
+
         text_Tau_CR = my_font.render(f'Tau CR: {self.Tau_CR:.3f} [s]',True, BLACK)
 
 
@@ -946,19 +948,21 @@ class SAR_Env_2D(gym.Env):
         self.screen.blit(text_Plane_Angle,  (5,5 + 25*9))
 
         self.screen.blit(text_Actions,      (5,5 + 25*11))
-        self.screen.blit(text_Rot_Action,   (5,5 + 25*12))
-        self.screen.blit(text_Trg_Action,   (5,5 + 25*13))
+        self.screen.blit(text_Trg_Action,   (5,5 + 25*12))
+        self.screen.blit(text_Rot_Action,   (5,5 + 25*13))
 
         self.screen.blit(text_Other,        (5,5 + 25*15))
         # self.screen.blit(text_reward,       (5,5 + 25*16))
         self.screen.blit(text_Tau_trg,      (5,5 + 25*17))
-        self.screen.blit(text_Tau_CR,      (5,5 + 25*18))
+        self.screen.blit(text_Tau_CR_trg,   (5,5 + 25*18))
+        self.screen.blit(text_Tau_CR,      (5,5 + 25*19))
+
 
 
 
 
         ## WINDOW/SIM UPDATE RATE
-        self.clock.tick(60) # [Hz]
+        self.clock.tick(30) # [Hz]
         pygame.display.flip()
 
     def close(self):

@@ -277,14 +277,25 @@ class Policy_Trainer_DeepRL():
 
     def test_policy(self,V_mag=None,Flight_Angle=None,Plane_Angle=None,episodes=10):
 
-        for ep in range(episodes):
-            obs,_ = self.env.reset(V_mag=V_mag, Flight_Angle=Flight_Angle,Plane_Angle=Plane_Angle)
-            done = False
-            while not done:
-                action,_ = self.model.predict(obs)
-                obs,reward,done,_,_ = self.env.step(action)
+        obs,_ = self.env.reset(V_mag=V_mag, Flight_Angle=Flight_Angle,Plane_Angle=Plane_Angle)
+        done = False
+        while not done:
+            action,_ = self.model.predict(obs)
+            obs,reward,done,_,_ = self.env.step(action)
 
-            print(f"Episode {ep}: Reward {reward:.3f}")
+        return obs,reward
+
+    def sweep_policy(self,Plane_Angle_range=[180,180],Flight_Angle_range=[45,135],V_mag_range=[1.0,2.0],n=[4,4,2,2]):
+        
+        for Plane_Angle in np.linspace(Plane_Angle_range[0],Plane_Angle_range[1],n[0]):
+            for Flight_Angle in np.linspace(Flight_Angle_range[0],Flight_Angle_range[1],n[1]):
+                for V_mag in np.linspace(V_mag_range[0],V_mag_range[1],n[2]):
+                    for _ in range(n[3]):
+
+                        obs,reward = self.test_policy(V_mag,Flight_Angle,Plane_Angle)
+                        print(f"Reward: {reward:.3f} \t Tau: {obs[0]:.2f}  Theta_x: {obs[1]:.2f}  D_perp: {obs[2]:.2f}")
+                    
+        
 
     def collect_landing_performance(self,fileName=None,Vel_inc=0.25,Phi_inc=5,n_episodes=5):
         """Test trained model over varied velocity and flight angle combinations.
@@ -634,7 +645,7 @@ if __name__ == '__main__':
     # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
 
 
-    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Vel_range=[2.0,2.0],Flight_Angle_range=[30,150],Plane_Angle_range=[180,180])
+    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Vel_range=[1.0,4.0],Flight_Angle_range=[5,175],Plane_Angle_range=[90,180])
     # env.RENDER = True
 
 
@@ -650,21 +661,21 @@ if __name__ == '__main__':
     # ================================================================= ##
 
 
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.create_model()
-    PolicyTrainer.train_model(save_freq=5000)
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.create_model()
+    # PolicyTrainer.train_model(save_freq=5000,total_timesteps=400e3)
 
 
     # ================================================================= ##
     
     # RESUME TRAINING DEEP RL MODEL
-    # log_name = "Body_Contact_Reward_13:33:06_0"
-    # t_step_load = 120000
-    # env.RENDER = True
+    log_name = "Body_Contact_Reward_22:21:51_0"
+    t_step_load = 150000
+    env.RENDER = True
 
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.load_model(log_dir,log_name,t_step_load)
-    # PolicyTrainer.test_policy(episodes=30)
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.load_model(log_dir,log_name,t_step_load)
+    PolicyTrainer.sweep_policy(Plane_Angle_range=[90,180],Flight_Angle_range=[45,135],V_mag_range=[1.0,2.0],n=[4,4,2,2])
 
     # # PolicyTrainer.train_model(save_freq=5000,total_timesteps=60000)
     # # PolicyTrainer.collect_landing_performance()
