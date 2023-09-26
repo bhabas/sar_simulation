@@ -727,8 +727,8 @@ class SAR_Env_2D(gym.Env):
         V_tx,V_perp = self.R_WP(V_BO,Plane_Angle_rad)
 
         ## CALC OPTICAL FLOW VALUES
-        Theta_x = np.clip(V_tx/(D_perp + EPS),-20,20)
-        Tau = np.clip(D_perp/(V_perp + EPS),0,5)
+        Theta_x = np.clip(V_tx/D_perp,-20,20)
+        Tau = np.clip(D_perp/V_perp,0,5)
 
 
         r_CB = self.R_PW(np.array([0,self.collision_radius]),self.Plane_Angle_rad)
@@ -915,7 +915,7 @@ class SAR_Env_2D(gym.Env):
         ## OBSERVATIONS TEXT
         text_Obs = my_font.render(f'Observations:', True, GREY)
         text_Tau = my_font.render(f'Tau: {self._get_obs()[0]:2.2f} [s]', True, BLACK)
-        text_theta_x = my_font.render(f'Theta_x: {1/self._get_obs()[1]:2.2f} [rad/s]', True, BLACK)
+        text_theta_x = my_font.render(f'Theta_x: {self._get_obs()[1]:2.2f} [rad/s]', True, BLACK)
         text_D_perp = my_font.render(f'D_perp: {self._get_obs()[2]:2.2f} [m]', True, BLACK)
         text_Plane_Angle = my_font.render(f'Plane Angle: {self.Plane_Angle:3.1f} [deg]', True, BLACK)
 
@@ -1018,7 +1018,7 @@ class SAR_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Vel_range=[4,4],Flight_Angle_range=[45,45],Plane_Angle_range=[135,135])
+    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Vel_range=[2.0,2.0],Flight_Angle_range=[30,150],Plane_Angle_range=[180,180])
     env.RENDER = True
 
     for ep in range(50):
