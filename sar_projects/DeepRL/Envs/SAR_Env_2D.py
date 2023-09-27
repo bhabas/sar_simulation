@@ -2,7 +2,7 @@ import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
 
-import pygame
+import pygame as pg
 import os
 
 ## DEFINE COLORS
@@ -11,6 +11,7 @@ GREY = (200,200,200)
 BLACK = (0,0,0)
 RED = (204,0,0)
 BLUE = (29,123,243)
+SKY_BLUE = (0,153,153)
 GREEN = (0,153,0)
 PURPLE = (76,0,153)
 ORANGE = (255,128,0)
@@ -135,6 +136,7 @@ class SAR_Env_2D(gym.Env):
         self.D_min = np.inf
         self.Tau_trg = np.inf
         self.Tau_CR_trg = np.inf
+        self.action_trg = np.zeros_like(self.action_trg)
         self.phi_impact = np.nan
 
         self.impact_flag = False
@@ -435,7 +437,7 @@ class SAR_Env_2D(gym.Env):
                         r_B_C2 = self.R_PW(temp,self.Plane_Angle_rad)
                         r_B_W = r_C2_W + r_B_C2
 
-                        temp2 = self.R_Beta2P(np.array([0,L*dbeta]),beta)
+                        temp2 = self.R_Beta2P(np.array([0,L*dbeta_2]),beta_2)
                         v_B_C2 = self.R_PW(temp2,self.Plane_Angle_rad)
 
 
@@ -473,20 +475,11 @@ class SAR_Env_2D(gym.Env):
         else:
             R_dist = np.exp(-2*(self.D_min - L))
         
-        # ## TAU TRIGGER REWARD
-        # Tau_B = 0.3
-        # if self.Tau_trg <= Tau_B:
-        #     R_tau = 1
-        # else:
-        #     R_tau = np.exp(-5*(self.Tau_trg - Tau_B))
-
         ## TAU TRIGGER REWARD
-        if self.Tau_CR_trg <= 0.1:
+        if self.Tau_CR_trg <= 0.3:
             R_tau = 1
         else:
-            R_tau = np.exp(-5.0*(self.Tau_CR_trg))
-
-        ## LOOK INTO WHY NEW REWARD FUNCTION IS UNSTABLE
+            R_tau = np.exp(-5.0*(self.Tau_CR_trg - 0.3))
 
 
         ## SOLVE FOR MINIMUM PHI IMPACT ANGLE VIA GEOMETRIC CONSTRAINTS
@@ -849,11 +842,11 @@ class SAR_Env_2D(gym.Env):
         
         ## INITIATE SCREEN AND CLOCK ON FIRST LOADING
         if self.screen is None:
-            pygame.init()
-            self.screen = pygame.display.set_mode((self.screen_width,self.screen_height))
+            pg.init()
+            self.screen = pg.display.set_mode((self.screen_width,self.screen_height))
         
         if self.clock is None:
-            self.clock = pygame.time.Clock()
+            self.clock = pg.time.Clock()
 
 
         ## GET CURRENT STATE
@@ -863,66 +856,73 @@ class SAR_Env_2D(gym.Env):
         gamma,L,PD,M,Iyy,I_c = self.params
         
         ## CREATE BACKGROUND SURFACE
-        self.surf = pygame.Surface((self.screen_width, self.screen_height))
+        self.surf = pg.Surface((self.screen_width, self.screen_height))
         self.surf.fill(WHITE)
 
-        ## VELOCITY LINE
+        ## TRAJECTORY LINE
         r_BO,V_BO = self.initial_state
         self.draw_line_dashed(self.surf,GREY,c2p(r_BO - 5*V_BO),c2p(r_BO + 5*V_BO),width=3)
 
         ## ORIGIN AXES
-        pygame.draw.line(self.surf,GREEN,c2p((0,0,0)),c2p((0.1,0)),width=5) # X_w   
-        pygame.draw.line(self.surf,BLUE, c2p((0,0,0)),c2p((0,0.1)),width=5) # Z_w   
-        pygame.draw.circle(self.surf,RED,c2p((0,0,0)),radius=4,width=0)
+        pg.draw.line(self.surf,GREEN,c2p((0,0,0)),c2p((0.1,0)),width=5) # X_w   
+        pg.draw.line(self.surf,BLUE, c2p((0,0,0)),c2p((0,0.1)),width=5) # Z_w   
+        pg.draw.circle(self.surf,RED,c2p((0,0,0)),radius=4,width=0)
 
 
         ## LANDING SURFACE
-        pygame.draw.line(self.surf,GREY,
+        pg.draw.line(self.surf,GREY,
                          c2p(self.Plane_Pos + self.R_PW(np.array([-2,0]),self.Plane_Angle_rad)),
                          c2p(self.Plane_Pos + self.R_PW(np.array([+2,0]),self.Plane_Angle_rad)),width=2)
         
-        pygame.draw.line(self.surf,BLACK,
+        pg.draw.line(self.surf,BLACK,
                          c2p(self.Plane_Pos + self.R_PW(np.array([-0.5,0]),self.Plane_Angle_rad)),
                          c2p(self.Plane_Pos + self.R_PW(np.array([+0.5,0]),self.Plane_Angle_rad)),width=5)
     
         ## LANDING SURFACE AXES
-        pygame.draw.line(self.surf,GREEN,c2p(self.Plane_Pos),c2p(self.Plane_Pos + self.R_PW(np.array([0.1,0]),self.Plane_Angle_rad)),width=7)  # t_x   
-        pygame.draw.line(self.surf,BLUE, c2p(self.Plane_Pos),c2p(self.Plane_Pos + self.R_PW(np.array([0,0.1]),self.Plane_Angle_rad)),width=7)  # n_p 
-        pygame.draw.circle(self.surf,RED,c2p(self.Plane_Pos),radius=4,width=0)
+        pg.draw.line(self.surf,GREEN,c2p(self.Plane_Pos),c2p(self.Plane_Pos + self.R_PW(np.array([0.1,0]),self.Plane_Angle_rad)),width=7)  # t_x   
+        pg.draw.line(self.surf,BLUE, c2p(self.Plane_Pos),c2p(self.Plane_Pos + self.R_PW(np.array([0,0.1]),self.Plane_Angle_rad)),width=7)  # n_p 
+        pg.draw.circle(self.surf,RED,c2p(self.Plane_Pos),radius=4,width=0)
 
 
         ## DRAW QUADROTOR
         Pose = self._get_pose()
-        pygame.draw.line(self.surf,RED,c2p(Pose[0]),c2p(Pose[1]),width=3) # Leg 1
-        pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[2]),width=3) # Leg 2
-        pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[3]),width=3) # Prop 1
-        pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[4]),width=3) # Prop 2
-        pygame.draw.circle(self.surf,GREY,c2p(Pose[0]),radius=self.collision_radius*self.screen_width/self.world_width,width=2)
+        pg.draw.line(self.surf,RED,c2p(Pose[0]),c2p(Pose[1]),width=3) # Leg 1
+        pg.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[2]),width=3) # Leg 2
+        pg.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[3]),width=3) # Prop 1
+        pg.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[4]),width=3) # Prop 2
+        pg.draw.circle(self.surf,GREY,c2p(Pose[0]),radius=self.collision_radius*self.screen_width/self.world_width,width=2)
 
         ## BODY AXES
-        pygame.draw.line(self.surf,GREEN,c2p(Pose[0]),c2p(Pose[0] + self.R_BW(np.array([0.05,0]),phi)),width=5)  # B_x   
-        pygame.draw.line(self.surf,BLUE,c2p(Pose[0]),c2p(Pose[0] + self.R_BW(np.array([0,0.05]),phi)),width=5)  # B_z  
+        pg.draw.line(self.surf,GREEN,c2p(Pose[0]),c2p(Pose[0] + self.R_BW(np.array([0.05,0]),phi)),width=5)  # B_x   
+        pg.draw.line(self.surf,BLUE,c2p(Pose[0]),c2p(Pose[0] + self.R_BW(np.array([0,0.05]),phi)),width=5)  # B_z  
 
-        ## VELOCITY VECTOR
+        ## GRAVITY UNIT VECTOR
+        g_hat = np.array([0,-1])
+        pg.draw.line(self.surf,PURPLE,c2p(Pose[0]),c2p(Pose[0]) + g_hat*25,width=3)
+
+        ## VELOCITY UNIT VECTOR
         v = np.array([vx,vz])
         v_hat = v/np.linalg.norm(v)
-        pygame.draw.line(self.surf,ORANGE,c2p(Pose[0]),c2p(Pose[0]) + v_hat*25,width=3)
+        pg.draw.line(self.surf,SKY_BLUE,c2p(Pose[0]),c2p(Pose[0]) + v_hat*25,width=3)
+
+
+
 
         ## TRIGGER INDICATOR
         if self.Pol_Trg_Flag == True:
-            pygame.draw.circle(self.surf,RED,  c2p(Pose[0]),radius=4,width=0)
-            pygame.draw.circle(self.surf,BLACK,c2p(Pose[0]),radius=5,width=3)
+            pg.draw.circle(self.surf,RED,  c2p(Pose[0]),radius=4,width=0)
+            pg.draw.circle(self.surf,BLACK,c2p(Pose[0]),radius=5,width=3)
         else:
-            pygame.draw.circle(self.surf,BLUE, c2p(Pose[0]),radius=4,width=0)
-            pygame.draw.circle(self.surf,BLACK,c2p(Pose[0]),radius=5,width=3)
+            pg.draw.circle(self.surf,BLUE, c2p(Pose[0]),radius=4,width=0)
+            pg.draw.circle(self.surf,BLACK,c2p(Pose[0]),radius=5,width=3)
 
 
 
         ## FLIP IMAGE SO X->RIGHT AND Y->UP
-        self.surf = pygame.transform.flip(self.surf, False, True)
+        self.surf = pg.transform.flip(self.surf, False, True)
 
         ## WINDOW TEXT
-        my_font = pygame.font.SysFont(None, 30)
+        my_font = pg.font.SysFont(None, 30)
 
         ## STATES TEXT
         text_States = my_font.render(f'States:', True, GREY)
@@ -985,7 +985,7 @@ class SAR_Env_2D(gym.Env):
 
         ## WINDOW/SIM UPDATE RATE
         self.clock.tick(30) # [Hz]
-        pygame.display.flip()
+        pg.display.flip()
 
     def close(self):
 
@@ -1053,7 +1053,7 @@ class SAR_Env_2D(gym.Env):
         # x-y-value-pairs of where dashes start (and on next, will end)
         dash_knots = np.array([np.linspace(start_pos[i], end_pos[i], dash_amount) for i in range(2)]).transpose()
 
-        return [pygame.draw.line(surface, color, tuple(dash_knots[n]), tuple(dash_knots[n+1]), width)
+        return [pg.draw.line(surface, color, tuple(dash_knots[n]), tuple(dash_knots[n+1]), width)
                 for n in range(int(exclude_corners), dash_amount - int(exclude_corners), 2)]
 
 
@@ -1061,7 +1061,7 @@ class SAR_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],V_mag_range=[2.0,2.0],Flight_Angle_range=[30,150],Plane_Angle_range=[180,180])
+    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],V_mag_range=[2.0,2.0],Flight_Angle_range=[30,150],Plane_Angle_range=[45,45])
     env.RENDER = True
 
     for ep in range(50):
@@ -1073,7 +1073,7 @@ if __name__ == '__main__':
         while not (Done or truncated):
 
             action = env.action_space.sample()
-            action = np.zeros_like(action)
+            action = np.array([0.6,0])
             obs,reward,Done,truncated,_ = env.step(action)
 
         print(f"Episode: {ep} \t Obs: {obs[2]:.3f} \t Reward: {reward:.3f}")
