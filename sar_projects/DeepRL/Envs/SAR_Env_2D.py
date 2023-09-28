@@ -199,7 +199,7 @@ class SAR_Env_2D(gym.Env):
         r_BO = r_PO + self.R_PW(r_BP,self.Plane_Angle_rad)                                  # Body Position wrt to Origin
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-        self._set_state(r_BO[0],r_BO[1],np.radians(np.random.uniform(-360,360)),V_BO[0],V_BO[1],np.random.uniform(-30,30))
+        self._set_state(r_BO[0],r_BO[1],np.radians(0),V_BO[0],V_BO[1],0)
         self.initial_state = (r_BO,V_BO)
 
 
@@ -474,7 +474,7 @@ class SAR_Env_2D(gym.Env):
         if self.D_min <= L:
             R_dist = 1
         else:
-            R_dist = np.exp(-2*(self.D_min - L))
+            R_dist = np.exp(-2.0*(self.D_min - L))
         
         ## TAU TRIGGER REWARD
         if self.Tau_CR_trg <= 0.3:
@@ -711,22 +711,22 @@ class SAR_Env_2D(gym.Env):
         x,z,phi,vx,vz,dphi = self._get_state()
         
         ## POSITION AND VELOCITY VECTORS
-        r_BO = np.array([x,z])
-        V_BO = np.array([vx,vz])
+        r_B_O = np.array([x,z])
+        V_B_O = np.array([vx,vz])
 
         ## PLANE POSITION AND UNIT VECTORS
-        r_PO = self.Plane_Pos
+        r_P_O = self.Plane_Pos
         Plane_Angle_rad = self.Plane_Angle_rad
 
         ## CALC DISPLACEMENT FROM PLANE CENTER
-        r_PB = r_PO - r_BO
+        r_B_P = r_B_O - r_P_O # {X_W,Z_W}
 
         ## CALC RELATIVE DISTANCE AND VEL
-        D_tx,D_perp = self.R_PW(r_PB,Plane_Angle_rad)
-        V_tx,V_perp = self.R_PW(V_BO,Plane_Angle_rad)
+        _,D_perp = self.R_WP(r_B_P,Plane_Angle_rad)
+        V_tx,V_perp = self.R_WP(V_B_O,Plane_Angle_rad)
 
         ## CALC OPTICAL FLOW VALUES
-        Tau = np.clip(D_perp/(V_perp + EPS),0,5)
+        Tau = np.clip(D_perp/(-V_perp + EPS),0,5)
         Theta_x = np.clip(V_tx/(D_perp + EPS),-20,20)
 
 
@@ -1077,7 +1077,7 @@ class SAR_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],V_mag_range=[2.0,2.0],Flight_Angle_range=[5,175],Plane_Angle_range=[0,180])
+    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],V_mag_range=[2.0,2.0],Flight_Angle_range=[135,135],Plane_Angle_range=[0,0])
     env.RENDER = True
 
     for ep in range(50):
