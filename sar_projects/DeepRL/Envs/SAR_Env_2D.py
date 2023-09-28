@@ -184,7 +184,7 @@ class SAR_Env_2D(gym.Env):
         V_BP = np.array([-V_tx,-V_perp])
 
         ## CONVERT RELATIVE VEL VECTORS TO WORLD COORDS
-        V_BO = self.R_WP(V_BP,self.Plane_Angle_rad)
+        V_BO = self.R_PW(V_BP,self.Plane_Angle_rad)
 
         ## CALCULATE STARTING TAU VALUE
         Tau_rot = self.t_rot    # TTC of collision radius allowing for full body rotation before any body part impacts
@@ -196,7 +196,7 @@ class SAR_Env_2D(gym.Env):
         ## CALC STARTING POSITION IN GLOBAL COORDS
         r_PO = np.array(self.Plane_Pos) # {X_W,Z_W}                                         # Plane Position wrt to Origin
         r_BP = np.array([(Tau_rot + Tau_extra)*V_tx, (self.Tau_Body + Tau_extra)*V_perp])   # Body Position wrt to Plane
-        r_BO = r_PO + self.R_WP(r_BP,self.Plane_Angle_rad)                                  # Body Position wrt to Origin
+        r_BO = r_PO + self.R_PW(r_BP,self.Plane_Angle_rad)                                  # Body Position wrt to Origin
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
         self._set_state(r_BO[0],r_BO[1],np.radians(np.random.uniform(-360,360)),V_BO[0],V_BO[1],np.random.uniform(-30,30))
@@ -205,8 +205,8 @@ class SAR_Env_2D(gym.Env):
 
         ## CALC TAU OF COLLISION RADIUS
         r_CB = np.array([0,-self.collision_radius]) # {t_x,n_p}
-        r_CP = r_PO - (r_BO + self.R_WP(r_CB,self.Plane_Angle_rad)) # {X_W,Z_W}
-        _,D_perp_C = self.R_WP(r_CP,self.Plane_Angle_rad) # Convert to plane coords
+        r_CP = r_PO - (r_BO + self.R_PW(r_CB,self.Plane_Angle_rad)) # {X_W,Z_W}
+        _,D_perp_C = self.R_PW(r_CP,self.Plane_Angle_rad) # Convert to plane coords
         self.Tau_CR = D_perp_C/V_perp
 
         ######################
@@ -387,12 +387,12 @@ class SAR_Env_2D(gym.Env):
                             self.Done = True
 
                         ## CONVERT BODY BACK TO WORLD COORDS
-                        r_B_C1 = self.R_PBeta1(np.array([-L,0]),Beta_1)         # {t_x,n_p}
-                        r_B_C1 = self.R_WP(r_B_C1,self.Plane_Angle_rad)         # {X_W,Z_W}
+                        r_B_C1 = self.R_Beta1P(np.array([-L,0]),Beta_1)         # {t_x,n_p}
+                        r_B_C1 = self.R_PW(r_B_C1,self.Plane_Angle_rad)         # {X_W,Z_W}
                         r_B_W = r_C1_W + r_B_C1                                 # {X_W,Z_W}
 
-                        v_B_C1 = self.R_PBeta1(np.array([0,L*dBeta_1]),Beta_1)  # {t_x,n_p}
-                        v_B_C1 = self.R_WP(v_B_C1,self.Plane_Angle_rad)         # {X_W,Z_W}
+                        v_B_C1 = self.R_Beta1P(np.array([0,L*dBeta_1]),Beta_1)  # {t_x,n_p}
+                        v_B_C1 = self.R_PW(v_B_C1,self.Plane_Angle_rad)         # {X_W,Z_W}
 
                         phi = np.arctan2(-np.cos(Beta_1 + gamma + self.Plane_Angle_rad), \
                                           np.sin(Beta_1 + gamma + self.Plane_Angle_rad))
@@ -433,12 +433,12 @@ class SAR_Env_2D(gym.Env):
                             self.Done = True
 
                         ## CONVERT BODY BACK TO WORLD COORDS
-                        r_B_C2 = self.R_PBeta2(np.array([-L,0]),Beta_2)         # {t_x,n_p}
-                        r_B_C2 = self.R_WP(r_B_C2,self.Plane_Angle_rad)         # {X_W,Z_W}
+                        r_B_C2 = self.R_Beta2P(np.array([-L,0]),Beta_2)         # {t_x,n_p}
+                        r_B_C2 = self.R_PW(r_B_C2,self.Plane_Angle_rad)         # {X_W,Z_W}
                         r_B_W = r_C2_W + r_B_C2                                 # {X_W,Z_W}
 
-                        v_B_C2 = self.R_PBeta2(np.array([0,L*dBeta_2]),Beta_2)  # {t_x,n_p}
-                        v_B_C2 = self.R_WP(v_B_C2,self.Plane_Angle_rad)         # {X_W,Z_W}
+                        v_B_C2 = self.R_Beta2P(np.array([0,L*dBeta_2]),Beta_2)  # {t_x,n_p}
+                        v_B_C2 = self.R_PW(v_B_C2,self.Plane_Angle_rad)         # {X_W,Z_W}
 
 
                         phi = np.arctan2(-np.cos(Beta_2 - gamma + self.Plane_Angle_rad), \
@@ -641,7 +641,7 @@ class SAR_Env_2D(gym.Env):
         gamma,L,PD,M,Iyy,I_c = self.params
         (BodyContact,Leg1Contact,Leg2Contact) = impact_conditions
 
-        V_tx,V_perp = self.R_PW(np.array([vx,vz]),self.Plane_Angle_rad)
+        V_tx,V_perp = self.R_WP(np.array([vx,vz]),self.Plane_Angle_rad)
 
         if Leg1Contact:
 
@@ -722,17 +722,17 @@ class SAR_Env_2D(gym.Env):
         r_PB = r_PO - r_BO
 
         ## CALC RELATIVE DISTANCE AND VEL
-        D_tx,D_perp = self.R_WP(r_PB,Plane_Angle_rad)
-        V_tx,V_perp = self.R_WP(V_BO,Plane_Angle_rad)
+        D_tx,D_perp = self.R_PW(r_PB,Plane_Angle_rad)
+        V_tx,V_perp = self.R_PW(V_BO,Plane_Angle_rad)
 
         ## CALC OPTICAL FLOW VALUES
         Tau = np.clip(D_perp/(V_perp + EPS),0,5)
         Theta_x = np.clip(V_tx/(D_perp + EPS),-20,20)
 
 
-        r_CB = self.R_PW(np.array([0,self.collision_radius]),self.Plane_Angle_rad)
+        r_CB = self.R_WP(np.array([0,self.collision_radius]),self.Plane_Angle_rad)
         r_CP = r_PO - (r_CB + r_BO)
-        _,D_perp_C = self.R_WP(r_CP,self.Plane_Angle_rad) # Convert to plane coords
+        _,D_perp_C = self.R_PW(r_CP,self.Plane_Angle_rad) # Convert to plane coords
         self.Tau_CR = np.clip(D_perp_C/(V_perp + EPS),-5,5)
 
 
@@ -762,10 +762,10 @@ class SAR_Env_2D(gym.Env):
         Prop2 = np.array([-PD,0])
 
         ## CONVERT BODY COORDS TO WORLD COORDS
-        L1 = CG + self.R_WB(L1,phi)
-        L2 = CG + self.R_WB(L2,phi)
-        Prop1 = CG + self.R_WB(Prop1,phi)
-        Prop2 = CG + self.R_WB(Prop2,phi)
+        L1 = CG + self.R_BW(L1,phi)
+        L2 = CG + self.R_BW(L2,phi)
+        Prop1 = CG + self.R_BW(Prop1,phi)
+        Prop2 = CG + self.R_BW(Prop2,phi)
 
         return np.array([CG,L1,L2,Prop1,Prop2])
 
@@ -781,7 +781,7 @@ class SAR_Env_2D(gym.Env):
         ## CHECK FOR PROP CONTACT
         for Prop_Pos in [Prop1_Pos,Prop2_Pos]:
 
-            Prop_wrt_Plane = self.R_PW((Prop_Pos - self.Plane_Pos),self.Plane_Angle_rad)
+            Prop_wrt_Plane = self.R_WP((Prop_Pos - self.Plane_Pos),self.Plane_Angle_rad)
             if Prop_wrt_Plane[1] <= 0:
                 impact_flag = True
                 Body_contact = True
@@ -789,7 +789,7 @@ class SAR_Env_2D(gym.Env):
                 return impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
 
         ## CHECK FOR LEG1 CONTACT
-        Leg1_wrt_Plane = self.R_PW((Leg1_Pos - self.Plane_Pos),self.Plane_Angle_rad)
+        Leg1_wrt_Plane = self.R_WP((Leg1_Pos - self.Plane_Pos),self.Plane_Angle_rad)
         if Leg1_wrt_Plane[1] <= 0:
             impact_flag = True
             Leg1_contact = True
@@ -797,7 +797,7 @@ class SAR_Env_2D(gym.Env):
             return impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
 
         ## CHECK FOR LEG2 CONTACT
-        Leg2_wrt_Plane = self.R_PW((Leg2_Pos - self.Plane_Pos),self.Plane_Angle_rad)
+        Leg2_wrt_Plane = self.R_WP((Leg2_Pos - self.Plane_Pos),self.Plane_Angle_rad)
         if Leg2_wrt_Plane[1] <= 0:
             impact_flag = True
             Leg2_contact = True
@@ -869,16 +869,16 @@ class SAR_Env_2D(gym.Env):
 
         ## LANDING SURFACE
         pg.draw.line(self.surf,GREY,
-                         c2p(self.Plane_Pos + self.R_WP(np.array([-2,0]),self.Plane_Angle_rad)),
-                         c2p(self.Plane_Pos + self.R_WP(np.array([+2,0]),self.Plane_Angle_rad)),width=2)
+                         c2p(self.Plane_Pos + self.R_PW(np.array([-2,0]),self.Plane_Angle_rad)),
+                         c2p(self.Plane_Pos + self.R_PW(np.array([+2,0]),self.Plane_Angle_rad)),width=2)
         
         pg.draw.line(self.surf,BLACK,
-                         c2p(self.Plane_Pos + self.R_WP(np.array([-0.5,0]),self.Plane_Angle_rad)),
-                         c2p(self.Plane_Pos + self.R_WP(np.array([+0.5,0]),self.Plane_Angle_rad)),width=5)
+                         c2p(self.Plane_Pos + self.R_PW(np.array([-0.5,0]),self.Plane_Angle_rad)),
+                         c2p(self.Plane_Pos + self.R_PW(np.array([+0.5,0]),self.Plane_Angle_rad)),width=5)
     
         ## LANDING SURFACE AXES
-        pg.draw.line(self.surf,GREEN,c2p(self.Plane_Pos),c2p(self.Plane_Pos + self.R_WP(np.array([0.1,0]),self.Plane_Angle_rad)),width=7)  # t_x   
-        pg.draw.line(self.surf,BLUE, c2p(self.Plane_Pos),c2p(self.Plane_Pos + self.R_WP(np.array([0,0.1]),self.Plane_Angle_rad)),width=7)  # n_p 
+        pg.draw.line(self.surf,GREEN,c2p(self.Plane_Pos),c2p(self.Plane_Pos + self.R_PW(np.array([0.1,0]),self.Plane_Angle_rad)),width=7)  # t_x   
+        pg.draw.line(self.surf,BLUE, c2p(self.Plane_Pos),c2p(self.Plane_Pos + self.R_PW(np.array([0,0.1]),self.Plane_Angle_rad)),width=7)  # n_p 
         pg.draw.circle(self.surf,RED,c2p(self.Plane_Pos),radius=4,width=0)
 
 
@@ -891,8 +891,8 @@ class SAR_Env_2D(gym.Env):
         pg.draw.circle(self.surf,GREY,c2p(Pose[0]),radius=self.collision_radius*self.screen_width/self.world_width,width=2)
 
         ## BODY AXES
-        pg.draw.line(self.surf,GREEN,c2p(Pose[0]),c2p(Pose[0] + self.R_WB(np.array([0.05,0]),phi)),width=5)  # B_x   
-        pg.draw.line(self.surf,BLUE,c2p(Pose[0]),c2p(Pose[0] + self.R_WB(np.array([0,0.05]),phi)),width=5)  # B_z  
+        pg.draw.line(self.surf,GREEN,c2p(Pose[0]),c2p(Pose[0] + self.R_BW(np.array([0.05,0]),phi)),width=5)  # B_x   
+        pg.draw.line(self.surf,BLUE,c2p(Pose[0]),c2p(Pose[0] + self.R_BW(np.array([0,0.05]),phi)),width=5)  # B_z  
 
         ## GRAVITY UNIT VECTOR
         g_hat = np.array([0,-1])
@@ -989,59 +989,50 @@ class SAR_Env_2D(gym.Env):
 
         return
     
-    def R_WB(self,vec,phi):
+    def R_BW(self,vec,phi):
 
-        R_WB = np.array([
+        R_BW = np.array([
             [ np.cos(phi), np.sin(phi)],
             [-np.sin(phi), np.cos(phi)],
         ])
 
-        return R_WB.dot(vec)
-    
-    def R_PW(self,vec,theta):
-
-        R_PW = np.array([
-            [ np.cos(theta),-np.sin(theta)],
-            [ np.sin(theta), np.cos(theta)]
-        ])
-
-        return R_PW.dot(vec)
+        return R_BW.dot(vec)
     
     def R_WP(self,vec,theta):
 
         R_WP = np.array([
-            [ np.cos(theta), np.sin(theta)],
-            [-np.sin(theta), np.cos(theta)]
+            [ np.cos(theta),-np.sin(theta)],
+            [ np.sin(theta), np.cos(theta)]
         ])
 
         return R_WP.dot(vec)
     
-    def R_Beta1P(self,vec,Beta1):
+    def R_PW(self,vec,theta):
 
-        R_Beta1P = np.array([
-            [ np.cos(Beta1),-np.sin(Beta1)],
-            [ np.sin(Beta1), np.cos(Beta1)]
+        R_PW = np.array([
+            [ np.cos(theta), np.sin(theta)],
+            [-np.sin(theta), np.cos(theta)]
         ])
 
-        return R_Beta1P.dot(vec)
+        return R_PW.dot(vec)
     
     def R_PBeta1(self,vec,Beta1):
 
         R_PBeta1 = np.array([
-            [ np.cos(Beta1), np.sin(Beta1)],
-            [-np.sin(Beta1), np.cos(Beta1)]
+            [ np.cos(Beta1),-np.sin(Beta1)],
+            [ np.sin(Beta1), np.cos(Beta1)]
         ])
 
         return R_PBeta1.dot(vec)
     
-    def R_Beta2P(self,vec,Beta2):
+    def R_Beta1P(self,vec,Beta1):
 
-        R_Beta2P = np.array([
-            [ np.cos(Beta2), np.sin(Beta2)],
-            [-np.sin(Beta2), np.cos(Beta2)]
+        R_Beta1P = np.array([
+            [ np.cos(Beta1), np.sin(Beta1)],
+            [-np.sin(Beta1), np.cos(Beta1)]
         ])
 
-        return R_Beta2P.dot(vec)
+        return R_Beta1P.dot(vec)
     
     def R_PBeta2(self,vec,Beta2):
 
@@ -1051,6 +1042,15 @@ class SAR_Env_2D(gym.Env):
         ])
 
         return R_PBeta2.dot(vec)
+    
+    def R_Beta2P(self,vec,Beta2):
+
+        R_Beta2P = np.array([
+            [ np.cos(Beta2), np.sin(Beta2)],
+            [-np.sin(Beta2), np.cos(Beta2)]
+        ])
+
+        return R_Beta2P.dot(vec)
 
 
 
