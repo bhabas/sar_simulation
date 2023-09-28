@@ -46,7 +46,7 @@ class SAR_Env_2D(gym.Env):
         self.My_range = My_range
 
         ## SAR DIMENSIONAL CONSTRAINTS
-        self.gamma = 30             # Leg Angle [m]
+        self.gamma = 45             # Leg Angle [m]
         self.L = 150.0e-3           # Leg Length [m]
         self.PD = 75e-3             # Prop Distance from COM [m]
         self.M = 35.0e-3            # Body Mass [kg]
@@ -184,30 +184,30 @@ class SAR_Env_2D(gym.Env):
         V_BP = np.array([-V_tx,-V_perp])
 
         ## CONVERT RELATIVE VEL VECTORS TO WORLD COORDS
-        V_BO = self.R_PW(V_BP,self.Plane_Angle_rad)
+        V_BO = self.R_WP(V_BP,self.Plane_Angle_rad)
 
-        # ## CALCULATE STARTING TAU VALUE
-        # Tau_rot = self.t_rot    # TTC of collision radius allowing for full body rotation before any body part impacts
-        # Tau_extra = 0.5*Tau_rot # Buffer time
-        # self.Tau_Body = (Tau_rot + self.collision_radius/V_perp) # Tau read by body
-        # self.Tau_min = self.collision_radius/V_perp
-        # self.t_flight_max = self.Tau_Body*1.25   # [s]
+        ## CALCULATE STARTING TAU VALUE
+        Tau_rot = self.t_rot    # TTC of collision radius allowing for full body rotation before any body part impacts
+        Tau_extra = 0.5*Tau_rot # Buffer time
+        self.Tau_Body = (Tau_rot + self.collision_radius/V_perp) # Tau read by body
+        self.Tau_min = self.collision_radius/V_perp
+        self.t_flight_max = self.Tau_Body*1.25   # [s]
 
-        # ## CALC STARTING POSITION IN GLOBAL COORDS
-        # r_PO = np.array(self.Plane_Pos)                                                     # Plane Position wrt to origin
-        # r_PB = np.array([(Tau_rot + Tau_extra)*V_tx, (self.Tau_Body + Tau_extra)*V_perp])   # Plane Position wrt to Body
-        # r_BO = r_PO - self.R_PW(r_PB,self.Plane_Angle_rad)                                  # Body Position wrt to origin
+        ## CALC STARTING POSITION IN GLOBAL COORDS
+        r_PO = np.array(self.Plane_Pos) # {X_W,Z_W}                                         # Plane Position wrt to Origin
+        r_BP = np.array([(Tau_rot + Tau_extra)*V_tx, (self.Tau_Body + Tau_extra)*V_perp])   # Body Position wrt to Plane
+        r_BO = r_PO + self.R_WP(r_BP,self.Plane_Angle_rad)                                  # Body Position wrt to Origin
 
-        # ## LAUNCH QUAD W/ DESIRED VELOCITY
-        # self._set_state(r_BO[0],r_BO[1],np.radians(0),V_BO[0],V_BO[1],0)
-        # self.initial_state = (r_BO,V_BO)
+        ## LAUNCH QUAD W/ DESIRED VELOCITY
+        self._set_state(r_BO[0],r_BO[1],np.radians(0),V_BO[0],V_BO[1],0)
+        self.initial_state = (r_BO,V_BO)
 
 
-        # ## CALC TAU OF COLLISION RADIUS
-        # r_CB = self.R_PW(np.array([0,self.collision_radius]),self.Plane_Angle_rad)
-        # r_CP = r_PO - (r_CB + r_BO)
-        # _,D_perp_C = self.R_WP(r_CP,self.Plane_Angle_rad) # Convert to plane coords
-        # self.Tau_CR = D_perp_C/V_perp
+        ## CALC TAU OF COLLISION RADIUS
+        r_CB = np.array([0,-self.collision_radius]) # {t_x,n_p}
+        r_CP = r_PO - (r_BO + self.R_WP(r_CB,self.Plane_Angle_rad)) # {X_W,Z_W}
+        _,D_perp_C = self.R_WP(r_CP,self.Plane_Angle_rad) # Convert to plane coords
+        self.Tau_CR = D_perp_C/V_perp
 
         ######################
         #   2D ENV CONFIGS
@@ -615,14 +615,14 @@ class SAR_Env_2D(gym.Env):
             if impact_leg==1:
 
                 ## GRAVITY MOMENT
-                M_g = -M*self.g*L*np.cos(beta)*np.cos(self.Plane_Angle_rad) \
+                M_g = M*self.g*L*np.cos(beta)*np.cos(self.Plane_Angle_rad) \
                         + M*self.g*L*np.sin(beta)*np.sin(self.Plane_Angle_rad)
                 
             if impact_leg==2:
 
                 ## GRAVITY MOMENT
                 M_g = -M*self.g*L*np.cos(beta)*np.cos(self.Plane_Angle_rad) \
-                        - M*self.g*L*np.sin(beta)*np.sin(self.Plane_Angle_rad)
+                        + M*self.g*L*np.sin(beta)*np.sin(self.Plane_Angle_rad)
                 
                 
             ## ITER STEP BETA
@@ -639,7 +639,7 @@ class SAR_Env_2D(gym.Env):
         gamma,L,PD,M,Iyy,I_c = self.params
         (BodyContact,Leg1Contact,Leg2Contact) = impact_conditions
 
-        V_tx,V_perp = self.R_WP(np.array([vx,vz]),self.Plane_Angle_rad)
+        V_tx,V_perp = self.R_PW(np.array([vx,vz]),self.Plane_Angle_rad)
 
         if Leg1Contact:
 
@@ -649,10 +649,10 @@ class SAR_Env_2D(gym.Env):
             Beta_1_deg = np.degrees(Beta_1)
 
             ## CALC DBETA FROM MOMENTUM CONVERSION
-            H_V_perp = M*L*V_perp*np.cos(Beta_1)
-            H_V_tx = -M*L*V_tx*np.sin(Beta_1)
+            H_V_perp = -M*L*V_perp*np.cos(Beta_1)
+            H_V_tx = M*L*V_tx*np.sin(Beta_1)
             H_dphi = Iyy*dphi
-            dBeta_1 = (H_V_perp + H_V_tx + H_dphi)*1/(-I_c)
+            dBeta_1 = 1/(-I_c)*(H_V_perp + H_V_tx + H_dphi)
 
             return Beta_1,dBeta_1
 
@@ -665,11 +665,11 @@ class SAR_Env_2D(gym.Env):
 
 
             ## CALC DBETA FROM MOMENTUM CONVERSION
-            H_V_perp = -M*L*V_perp*np.cos(Beta_2)
-            H_V_tx = -M*L*V_tx*np.sin(Beta_2)
+            H_V_perp = M*L*V_perp*np.cos(Beta_2)
+            H_V_tx = M*L*V_tx*np.sin(Beta_2)
             H_dphi = Iyy*dphi
             
-            dBeta_2 = (H_V_perp + H_V_tx + H_dphi)*1/(I_c)
+            dBeta_2 = 1/(I_c)*(H_V_perp + H_V_tx + H_dphi)
 
             return Beta_2,dBeta_2
 
@@ -677,31 +677,20 @@ class SAR_Env_2D(gym.Env):
 
         gamma,L,PD,M,Iyy,I_c = self.params
 
-        if impact_leg == 1:
-            beta_max = np.pi/2 + gamma
-            return beta_max
+        beta_max = np.pi/2 + gamma
 
-        elif impact_leg == 2:
-            beta_min = np.pi/2 + gamma
-            return beta_min
+        return beta_max
+
         
     def _beta_prop(self,impact_leg):
 
         gamma,L,PD,M,Iyy,I_c = self.params
 
-        if impact_leg == 1:
+        a = np.sqrt(PD**2 + L**2 - 2*PD*L*np.cos(np.pi/2-gamma))
+        beta_min = np.arccos((L**2 + a**2 - PD**2)/(2*a*L))
 
-            a = np.sqrt(PD**2 + L**2 - 2*PD*L*np.cos(np.pi/2-gamma))
-            beta_min = np.arccos((L**2 + a**2 - PD**2)/(2*a*L))
+        return beta_min
 
-            return beta_min
-
-        elif impact_leg == 2:
-            
-            a = np.sqrt(PD**2 + L**2 - 2*PD*L*np.cos(np.pi/2-gamma))
-            beta_max = np.arccos((L**2 + a**2 - PD**2)/(2*a*L))
-
-            return beta_max
 
     def _get_state(self):
 
@@ -782,24 +771,24 @@ class SAR_Env_2D(gym.Env):
         ## CHECK FOR PROP CONTACT
         for Prop_Pos in [Prop1_Pos,Prop2_Pos]:
 
-            Prop_wrt_Plane = self.R_WP(-(self.Plane_Pos - Prop_Pos),self.Plane_Angle_rad)
-            if Prop_wrt_Plane[1] >= 0:
+            Prop_wrt_Plane = self.R_PW((Prop_Pos - self.Plane_Pos),self.Plane_Angle_rad)
+            if Prop_wrt_Plane[1] <= 0:
                 impact_flag = True
                 Body_contact = True
 
                 return impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
 
         ## CHECK FOR LEG1 CONTACT
-        Leg1_wrt_Plane = self.R_WP(-(self.Plane_Pos - Leg1_Pos),self.Plane_Angle_rad)
-        if Leg1_wrt_Plane[1] >= 0:
+        Leg1_wrt_Plane = self.R_PW((Leg1_Pos - self.Plane_Pos),self.Plane_Angle_rad)
+        if Leg1_wrt_Plane[1] <= 0:
             impact_flag = True
             Leg1_contact = True
 
             return impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
 
         ## CHECK FOR LEG2 CONTACT
-        Leg2_wrt_Plane = self.R_WP(-(self.Plane_Pos - Leg2_Pos),self.Plane_Angle_rad)
-        if Leg2_wrt_Plane[1] >= 0:
+        Leg2_wrt_Plane = self.R_PW((Leg2_Pos - self.Plane_Pos),self.Plane_Angle_rad)
+        if Leg2_wrt_Plane[1] <= 0:
             impact_flag = True
             Leg2_contact = True
 
@@ -1060,7 +1049,7 @@ class SAR_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],V_mag_range=[2.0,2.0],Flight_Angle_range=[90,90],Plane_Angle_range=[0,0])
+    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],V_mag_range=[2.0,2.0],Flight_Angle_range=[90,90],Plane_Angle_range=[45,45])
     env.RENDER = True
 
     for ep in range(50):
