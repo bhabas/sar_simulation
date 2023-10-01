@@ -21,7 +21,7 @@ EPS = 1e-6 # Epsilon (Prevent division by zero)
 
 class SAR_Env_2D(gym.Env):
 
-    def __init__(self,GZ_Timeout=True,My_range=[-8.0e-3,0],V_mag_range=[1.5,3.5],Flight_Angle_range=[0,90],Plane_Angle_range=[90,180]):
+    def __init__(self,GZ_Timeout=True,My_range=[-8.0e-3,0],V_mag_range=[1.5,3.5],Flight_Angle_range=[0,90],Plane_Angle_range=[90,180],Render=True):
         super().__init__()
         
         ######################
@@ -116,7 +116,7 @@ class SAR_Env_2D(gym.Env):
         self.screen_width = 1000    # [pixels]
         self.screen_height = self.screen_width*self.world_height/self.world_width # [pixels]
         
-        self.RENDER = False
+        self.RENDER = Render
         self.screen = None
         self.clock = None
         self.isopen = True
@@ -157,8 +157,8 @@ class SAR_Env_2D(gym.Env):
         ## SET PLANE POSE
         if Plane_Angle == None:
 
-            Plane_Angle_Low = -self.Plane_Angle_range[0]
-            Plane_Angle_High = -self.Plane_Angle_range[1]
+            Plane_Angle_Low = self.Plane_Angle_range[0]
+            Plane_Angle_High = self.Plane_Angle_range[1]
             self.Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
             self.Plane_Angle_rad = np.radians(self.Plane_Angle)
 
@@ -181,10 +181,10 @@ class SAR_Env_2D(gym.Env):
         ## RELATIVE VEL VECTORS
         V_perp = V_mag*np.sin(np.deg2rad(Flight_Angle))
         V_tx = V_mag*np.cos(np.deg2rad(Flight_Angle))
-        V_BP = np.array([-V_tx,-V_perp])
+        V_B_P = np.array([V_tx,V_perp]) # {t_x,n_p}
 
         ## CONVERT RELATIVE VEL VECTORS TO WORLD COORDS
-        V_BO = self.R_PW(V_BP,self.Plane_Angle_rad)
+        V_B_O = self.R_PW(V_B_P,self.Plane_Angle_rad) # {X_W,Z_W}
 
         ## CALCULATE STARTING TAU VALUE
         Tau_rot = self.t_rot    # TTC of collision radius allowing for full body rotation before any body part impacts
@@ -194,20 +194,21 @@ class SAR_Env_2D(gym.Env):
         self.t_flight_max = self.Tau_Body*1.25   # [s]
 
         ## CALC STARTING POSITION IN GLOBAL COORDS
-        r_PO = np.array(self.Plane_Pos) # {X_W,Z_W}                                         # Plane Position wrt to Origin
-        r_BP = np.array([(Tau_rot + Tau_extra)*V_tx, (self.Tau_Body + Tau_extra)*V_perp])   # Body Position wrt to Plane
-        r_BO = r_PO + self.R_PW(r_BP,self.Plane_Angle_rad)                                  # Body Position wrt to Origin
+        r_P_O = np.array(self.Plane_Pos)                                                    # Plane Position wrt to Origin - {X_W,Z_W}
+        r_P_B = np.array([(Tau_rot + Tau_extra)*V_tx, (self.Tau_Body + Tau_extra)*V_perp])  # Body Position wrt to Plane - {t_x,n_p}
+        r_B_O = r_P_O - self.R_PW(r_P_B,self.Plane_Angle_rad)                               # Body Position wrt to Origin - {X_W,Z_W}
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-        self._set_state(r_BO[0],r_BO[1],np.radians(0),V_BO[0],V_BO[1],0)
-        self.initial_state = (r_BO,V_BO)
+        self._set_state(r_B_O[0],r_B_O[1],np.radians(0),V_B_O[0],V_B_O[1],0)
+        self.initial_state = (r_B_O,V_B_O)
 
 
         ## CALC TAU OF COLLISION RADIUS
-        r_CB = np.array([0,-self.collision_radius]) # {t_x,n_p}
-        r_CP = r_PO - (r_BO + self.R_PW(r_CB,self.Plane_Angle_rad)) # {X_W,Z_W}
-        _,D_perp_C = self.R_PW(r_CP,self.Plane_Angle_rad) # Convert to plane coords
-        self.Tau_CR = D_perp_C/V_perp
+        r_CR_B = np.array([0,self.collision_radius]) # {t_x,n_p}
+        r_CR_O = r_B_O + self.R_PW(r_CR_B,self.Plane_Angle_rad)
+        r_P_CR = r_P_O - r_CR_O # {X_W,Z_W}
+        _,D_perp_CR = self.R_WP(r_P_CR,self.Plane_Angle_rad) # Convert to plane coords
+        self.Tau_CR = D_perp_CR/V_perp
 
         ######################
         #   2D ENV CONFIGS
@@ -719,21 +720,21 @@ class SAR_Env_2D(gym.Env):
         Plane_Angle_rad = self.Plane_Angle_rad
 
         ## CALC DISPLACEMENT FROM PLANE CENTER
-        r_B_P = r_B_O - r_P_O # {X_W,Z_W}
+        r_P_B = r_P_O - r_B_O # {X_W,Z_W}
 
         ## CALC RELATIVE DISTANCE AND VEL
-        _,D_perp = self.R_WP(r_B_P,Plane_Angle_rad)
+        _,D_perp = self.R_WP(r_P_B,Plane_Angle_rad)
         V_tx,V_perp = self.R_WP(V_B_O,Plane_Angle_rad)
 
         ## CALC OPTICAL FLOW VALUES
-        Tau = np.clip(D_perp/(-V_perp + EPS),0,5)
+        Tau = np.clip(D_perp/(V_perp + EPS),0,5)
         Theta_x = np.clip(V_tx/(D_perp + EPS),-20,20)
 
 
-        r_CB = self.R_WP(np.array([0,self.collision_radius]),self.Plane_Angle_rad)
-        r_CP = r_PO - (r_CB + r_BO)
-        _,D_perp_C = self.R_PW(r_CP,self.Plane_Angle_rad) # Convert to plane coords
-        self.Tau_CR = np.clip(D_perp_C/(V_perp + EPS),-5,5)
+        r_CR_B = np.array([0,self.collision_radius])                        # {t_x,n_p}
+        r_P_CR = r_P_O - (r_B_O + self.R_PW((r_CR_B),self.Plane_Angle_rad)) # {X_W,Z_W}
+        _,D_perp_CR = self.R_WP(r_P_CR,self.Plane_Angle_rad)                 # Convert to plane coords - {t_x,n_p}
+        self.Tau_CR = np.clip(D_perp_CR/(V_perp + EPS),-5,5)
 
 
         ## OBSERVATION VECTOR
@@ -857,9 +858,9 @@ class SAR_Env_2D(gym.Env):
         self.surf = pg.Surface((self.screen_width, self.screen_height))
         self.surf.fill(WHITE)
 
-        # ## TRAJECTORY LINE
-        # r_BO,V_BO = self.initial_state
-        # self.draw_line_dashed(self.surf,GREY,c2p(r_BO - 5*V_BO),c2p(r_BO + 5*V_BO),width=3)
+        ## TRAJECTORY LINE
+        r_B_O,V_B_O = self.initial_state
+        self.draw_line_dashed(self.surf,GREY,c2p(r_B_O - 5*V_B_O),c2p(r_B_O + 5*V_B_O),width=3)
 
         ## ORIGIN AXES
         pg.draw.line(self.surf,GREEN,c2p((0,0,0)),c2p((0.1,0)),width=5) # X_w   
@@ -901,7 +902,7 @@ class SAR_Env_2D(gym.Env):
         ## VELOCITY UNIT VECTOR
         v = np.array([vx,vz])
         v_hat = v/np.linalg.norm(v)
-        pg.draw.line(self.surf,SKY_BLUE,c2p(Pose[0]),c2p(Pose[0]) + v_hat*25,width=3)
+        pg.draw.line(self.surf,ORANGE,c2p(Pose[0]),c2p(Pose[0]) + v_hat*25,width=3)
 
 
 
@@ -1077,7 +1078,7 @@ class SAR_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],V_mag_range=[2.0,2.0],Flight_Angle_range=[135,135],Plane_Angle_range=[0,0])
+    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],V_mag_range=[1,1],Flight_Angle_range=[90,90],Plane_Angle_range=[135,135])
     env.RENDER = True
 
     for ep in range(50):
@@ -1089,7 +1090,7 @@ if __name__ == '__main__':
         while not (Done or truncated):
 
             action = env.action_space.sample()
-            action = np.array([0.6,0])
+            action = np.array([0.0,0])
             obs,reward,Done,truncated,_ = env.step(action)
 
         print(f"Episode: {ep} \t Obs: {obs[2]:.3f} \t Reward: {reward:.3f}")
