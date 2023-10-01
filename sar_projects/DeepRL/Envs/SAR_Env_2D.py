@@ -320,7 +320,6 @@ class SAR_Env_2D(gym.Env):
 
         ## SCALE ACTION
         scaled_action = 0.5 * (action[1] + 1) * (self.My_range[1] - self.My_range[0]) + self.My_range[0]
-        # scaled_action = 0
 
         while not self.Done:
             
@@ -410,7 +409,7 @@ class SAR_Env_2D(gym.Env):
                     Beta_2,dBeta_2 = self._impact_conversion(self.state,self.params,self.impact_conditions)
 
                     ## FIND IMPACT COORDS (wrt World-Coords)
-                    r_C2_W = self._get_pose()[2]
+                    r_C2_O = self._get_pose()[2]
 
                     while not self.Done:
 
@@ -418,12 +417,12 @@ class SAR_Env_2D(gym.Env):
                         Beta_2,dBeta_2 = self._iter_step_Swing(Beta_2,dBeta_2,impact_leg=2)
 
                         ## CHECK FOR END CONDITIONS
-                        if Beta_2 >= self._beta_landing(impact_leg=2):
+                        if Beta_2 >= -self._beta_landing(impact_leg=2):
                             self.BodyContact_flag = False
                             self.pad_connections = 4
                             self.Done = True
 
-                        elif Beta_2 <= self._beta_prop(impact_leg=2):
+                        elif Beta_2 <= -self._beta_prop(impact_leg=2):
                             self.BodyContact_flag = True
                             self.pad_connections = 2
                             self.Done = True
@@ -434,17 +433,16 @@ class SAR_Env_2D(gym.Env):
                             self.Done = True
 
                         ## CONVERT BODY BACK TO WORLD COORDS
-                        r_B_C2 = self.R_Beta2P(np.array([-L,0]),Beta_2)         # {t_x,n_p}
-                        r_B_C2 = self.R_PW(r_B_C2,self.Plane_Angle_rad)         # {X_W,Z_W}
-                        r_B_W = r_C2_W + r_B_C2                                 # {X_W,Z_W}
+                        r_B_C2 = np.array([-L,0])                                           # {e_r1,e_beta1}
+                        r_B_C2 = self.R_PW(self.R_C2P(r_B_C2,Beta_2),self.Plane_Angle_rad)  # {X_W,Z_W}
+                        r_B_O = r_C2_O + r_B_C2                                             # {X_W,Z_W}
 
-                        v_B_C2 = self.R_Beta2P(np.array([0,L*dBeta_2]),Beta_2)  # {t_x,n_p}
-                        v_B_C2 = self.R_PW(v_B_C2,self.Plane_Angle_rad)         # {X_W,Z_W}
-
+                        v_B_C2 = np.array([0,L*dBeta_2])                                    # {e_r1,e_beta1}
+                        v_B_C2 = self.R_PW(self.R_C2P(v_B_C2,Beta_2),self.Plane_Angle_rad)  # {X_W,Z_W}
 
                         phi = np.arctan2(-np.cos(Beta_2 - gamma + self.Plane_Angle_rad), \
                                           np.sin(Beta_2 - gamma + self.Plane_Angle_rad))
-                        self.state = (r_B_W[0],r_B_W[1],phi,v_B_C2[0],v_B_C2[1],0)
+                        self.state = (r_B_O[0],r_B_O[1],phi,v_B_C2[0],v_B_C2[1],0)
 
                         ## UPDATE MINIMUM DISTANCE
                         D_perp = self._get_obs()[2]
@@ -595,39 +593,7 @@ class SAR_Env_2D(gym.Env):
             ## STEP UPDATE
             self.t += self.dt
 
-            z_acc = -self.g*0 ###################################################### WATCH THIS ******************************
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            z_acc = -self.g
             z = z + self.dt*vz
             vz = vz + self.dt*z_acc
 
@@ -1059,39 +1025,39 @@ class SAR_Env_2D(gym.Env):
     
     def R_PC1(self,vec,Beta1):
 
-        R_PBeta1 = np.array([
+        R_PC1 = np.array([
             [ np.cos(Beta1),-np.sin(Beta1)],
             [ np.sin(Beta1), np.cos(Beta1)]
         ])
 
-        return R_PBeta1.dot(vec)
+        return R_PC1.dot(vec)
     
     def R_C1P(self,vec,Beta1):
 
-        R_Beta1P = np.array([
+        R_C1P = np.array([
             [ np.cos(Beta1), np.sin(Beta1)],
             [-np.sin(Beta1), np.cos(Beta1)]
         ])
 
-        return R_Beta1P.dot(vec)
+        return R_C1P.dot(vec)
     
-    def R_PBeta2(self,vec,Beta2):
+    def R_PC2(self,vec,Beta2):
 
-        R_PBeta2 = np.array([
+        R_PC2 = np.array([
             [ np.cos(Beta2), np.sin(Beta2)],
             [-np.sin(Beta2), np.cos(Beta2)]
         ])
 
-        return R_PBeta2.dot(vec)
+        return R_PC2.dot(vec)
     
-    def R_Beta2P(self,vec,Beta2):
+    def R_C2P(self,vec,Beta2):
 
-        R_Beta2P = np.array([
+        R_C2P = np.array([
             [ np.cos(Beta2), np.sin(Beta2)],
             [-np.sin(Beta2), np.cos(Beta2)]
         ])
 
-        return R_Beta2P.dot(vec)
+        return R_C2P.dot(vec)
 
 
 
@@ -1118,7 +1084,7 @@ class SAR_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],V_mag_range=[1,1],Flight_Angle_range=[45,45],Plane_Angle_range=[90,90])
+    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],V_mag_range=[2,2],Flight_Angle_range=[45,45],Plane_Angle_range=[0,0])
     env.RENDER = True
 
     for ep in range(50):
@@ -1130,7 +1096,7 @@ if __name__ == '__main__':
         while not (Done or truncated):
 
             action = env.action_space.sample()
-            action = np.array([0.6,0])
+            # action = np.array([0.6,0])
             obs,reward,Done,truncated,_ = env.step(action)
 
         print(f"Episode: {ep} \t Obs: {obs[2]:.3f} \t Reward: {reward:.3f}")
