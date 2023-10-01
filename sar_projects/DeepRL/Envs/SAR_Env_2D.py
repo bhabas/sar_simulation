@@ -191,7 +191,7 @@ class SAR_Env_2D(gym.Env):
         Tau_extra = 0.5*Tau_rot # Buffer time
         self.Tau_Body = (Tau_rot + self.collision_radius/V_perp) # Tau read by body
         self.Tau_min = self.collision_radius/V_perp
-        self.t_flight_max = self.Tau_Body*1.25   # [s]
+        self.t_flight_max = self.Tau_Body*2   # [s]
 
         ## CALC STARTING POSITION IN GLOBAL COORDS
         r_P_O = np.array(self.Plane_Pos)                                                    # Plane Position wrt to Origin - {X_W,Z_W}
@@ -777,13 +777,21 @@ class SAR_Env_2D(gym.Env):
         Leg1_contact = False
         Leg2_contact = False
 
-        _,Leg1_Pos,Leg2_Pos,Prop1_Pos,Prop2_Pos = self._get_pose()
+        CG_Pos,Leg1_Pos,Leg2_Pos,Prop1_Pos,Prop2_Pos = self._get_pose()
+
+        ## CHECK FOR CG CONTACT 
+        CG_wrt_Plane = self.R_WP((CG_Pos - self.Plane_Pos),self.Plane_Angle_rad)
+        if CG_wrt_Plane[1] >= 0:
+            impact_flag = True
+            Body_contact = True
+
+            return impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
 
         ## CHECK FOR PROP CONTACT
         for Prop_Pos in [Prop1_Pos,Prop2_Pos]:
 
             Prop_wrt_Plane = self.R_WP((Prop_Pos - self.Plane_Pos),self.Plane_Angle_rad)
-            if Prop_wrt_Plane[1] <= 0:
+            if Prop_wrt_Plane[1] >= 0:
                 impact_flag = True
                 Body_contact = True
 
@@ -791,7 +799,7 @@ class SAR_Env_2D(gym.Env):
 
         ## CHECK FOR LEG1 CONTACT
         Leg1_wrt_Plane = self.R_WP((Leg1_Pos - self.Plane_Pos),self.Plane_Angle_rad)
-        if Leg1_wrt_Plane[1] <= 0:
+        if Leg1_wrt_Plane[1] >= 0:
             impact_flag = True
             Leg1_contact = True
 
@@ -799,7 +807,7 @@ class SAR_Env_2D(gym.Env):
 
         ## CHECK FOR LEG2 CONTACT
         Leg2_wrt_Plane = self.R_WP((Leg2_Pos - self.Plane_Pos),self.Plane_Angle_rad)
-        if Leg2_wrt_Plane[1] <= 0:
+        if Leg2_wrt_Plane[1] >= 0:
             impact_flag = True
             Leg2_contact = True
 
@@ -1078,7 +1086,7 @@ class SAR_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],V_mag_range=[1,1],Flight_Angle_range=[90,90],Plane_Angle_range=[135,135])
+    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],V_mag_range=[1,1],Flight_Angle_range=[5,175],Plane_Angle_range=[0,0])
     env.RENDER = True
 
     for ep in range(50):
