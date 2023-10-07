@@ -82,6 +82,7 @@ class SAR_Env_2D(gym.Env):
         self.Pol_Trg_Flag = False
         self.Done = False
         self.reward = 0
+        self.reward_vals = [0,0,0,0,0,0,0]
 
         self.D_min = np.inf
         self.Tau_trg = np.inf
@@ -139,6 +140,8 @@ class SAR_Env_2D(gym.Env):
         self.Tau_trg = np.inf
         self.Tau_CR_trg = np.inf
         self.action_trg = np.zeros_like(self.action_trg)
+        self.obs_trg = np.zeros_like(self.obs_trg)
+        self.state_trg = (0,0,0,0,0,0)
         self.phi_impact = np.nan
 
         self.impact_flag = False
@@ -157,14 +160,14 @@ class SAR_Env_2D(gym.Env):
         ## SET PLANE POSE
         if Plane_Angle == None:
 
-            Plane_Angle_Low = self.Plane_Angle_range[0]
-            Plane_Angle_High = self.Plane_Angle_range[1]
+            Plane_Angle_Low = 180 - self.Plane_Angle_range[0]
+            Plane_Angle_High = 180 - self.Plane_Angle_range[1]
             self.Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
             self.Plane_Angle_rad = np.radians(self.Plane_Angle)
 
         else:
-            self.Plane_Angle = Plane_Angle
-            self.Plane_Angle_rad = np.radians(Plane_Angle)
+            self.Plane_Angle = 180 - Plane_Angle
+            self.Plane_Angle_rad = np.radians(self.Plane_Angle)
 
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
         if V_mag == None or Flight_Angle == None:
@@ -281,14 +284,17 @@ class SAR_Env_2D(gym.Env):
         ########## POST-POLICY TRIGGER ##########
         elif action[0] >= self.Pol_Trg_threshold:
 
-            # GRAB TERMINAL OBS
-            terminal_obs = self._get_obs() # Attribute final reward to triggering state
-            self.Tau_trg = terminal_obs[0]
+            # GRAB TERMINAL OBS/ACTION
+            self.obs_trg = self._get_obs()
+            self.action_trg = action
+
+            self.Tau_trg = self.obs_trg[0]
             self.Tau_CR_trg = self.Tau_CR
             self.start_time_trg = self._get_time()
 
-            # GRAB TERMINAL ACTION
-            self.action_trg = action
+            ## TRIGGER STATE
+            self.state_trg = self._get_state()
+
 
             # 2) UPDATE STATE
             self.Pol_Trg_Flag = True
@@ -306,7 +312,7 @@ class SAR_Env_2D(gym.Env):
 
             # 5) RETURN VALUES
             return(
-                terminal_obs,
+                self.obs_trg,
                 reward,
                 terminated,
                 truncated,
@@ -481,6 +487,14 @@ class SAR_Env_2D(gym.Env):
         else:
             R_tau = np.exp(-5.0*(self.Tau_CR_trg - 0.3))
 
+        
+        ## ROTATION DIRECTION REWARD
+        V_B_O = np.array([self.state_trg[3],0,self.state_trg[4]])
+        V_hat = V_B_O/np.linalg.norm(V_B_O) # {X_W,Z_W}
+        g_vec = np.array([0,0,-1])          # {X_W,Z_W}
+
+        R_Rot = min(1,np.exp(5*np.sign(np.cross(g_vec,V_hat)[1])*self.action_trg[1]))
+
 
         ## SOLVE FOR MINIMUM PHI IMPACT ANGLE VIA GEOMETRIC CONSTRAINTS
         a = np.sqrt(PD**2 + L**2 - 2*PD*L*np.cos(np.pi/2-gamma))
@@ -492,23 +506,21 @@ class SAR_Env_2D(gym.Env):
         self.phi_rel_impact = np.rad2deg(self.phi_rel_impact)
 
 
-
+        ## IMPACT ANGLE REWARD
         if self.phi_rel_impact < -190:
-            R_angle = -0.2
-            OverRotate_flag = True
+            R_phi_rel = -0.2
         elif -190 <= self.phi_rel_impact < -self.phi_rel_min:
-            R_angle = 1
+            R_phi_rel = 1
         elif -self.phi_rel_min <= self.phi_rel_impact < 0:
-            R_angle = self.phi_rel_impact/-self.phi_rel_min
+            R_phi_rel = self.phi_rel_impact/-self.phi_rel_min
         elif 0 <= self.phi_rel_impact < self.phi_rel_min:
-            R_angle = self.phi_rel_impact/self.phi_rel_min
+            R_phi_rel = self.phi_rel_impact/self.phi_rel_min
         elif self.phi_rel_min <= self.phi_rel_impact < 190:
-            R_angle = 1
+            R_phi_rel = 1
         elif self.phi_rel_impact >= 190:
-            R_angle = -0.2
-            OverRotate_flag = True
+            R_phi_rel = -0.2
         else:
-            R_angle = 0.0
+            R_phi_rel = 0.0
 
         ## PAD CONTACT REWARD
         if self.pad_connections >= 3: 
@@ -520,8 +532,8 @@ class SAR_Env_2D(gym.Env):
         else:
             R_legs = 0.0
 
-
-        R = R_dist*0.10 + R_tau*0.10 + R_angle*0.9 + R_legs*0.9
+        self.reward_vals = [R_dist,R_tau,R_Rot,R_phi_rel,R_legs,0,0]
+        R = R_dist*0.10 + R_tau*0.10 + R_Rot*0.8 + R_phi_rel*0.4 + R_legs*0.8
         print(f"Post_Trg: Reward: {R:.3f} \t D: {self.D_min:.3f}")
 
         return R
@@ -683,7 +695,6 @@ class SAR_Env_2D(gym.Env):
 
         elif impact_leg == 2:
             return np.pi/2 - gamma
-
         
     def _beta_prop(self,impact_leg):
 
@@ -699,7 +710,6 @@ class SAR_Env_2D(gym.Env):
         elif impact_leg == 2:
 
             return np.pi-Beta
-
 
     def _get_state(self):
 
@@ -1059,8 +1069,6 @@ class SAR_Env_2D(gym.Env):
 
         return R_C2P.dot(vec)
 
-
-
     def draw_line_dashed(self,surface, color, start_pos, end_pos, width = 1, dash_length = 10, exclude_corners = True):
 
         # convert tuples to numpy arrays
@@ -1084,7 +1092,7 @@ class SAR_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],V_mag_range=[2,2],Flight_Angle_range=[45,45],Plane_Angle_range=[0,0])
+    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],V_mag_range=[2,2],Flight_Angle_range=[45,45],Plane_Angle_range=[180,180])
     env.RENDER = True
 
     for ep in range(50):
