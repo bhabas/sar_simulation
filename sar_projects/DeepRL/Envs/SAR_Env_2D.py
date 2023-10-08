@@ -492,8 +492,16 @@ class SAR_Env_2D(gym.Env):
         V_B_O = np.array([self.state_trg[3],0,self.state_trg[4]])
         V_hat = V_B_O/np.linalg.norm(V_B_O) # {X_W,Z_W}
         g_vec = np.array([0,0,-1])          # {X_W,Z_W}
+      
+        def Rotation_Reward(x,sign):
+            if sign*x<0:
+                return sign*x
+            else:
+                return 1
+        
+        R_Rot = Rotation_Reward(self.action_trg[1],np.sign(np.cross(g_vec,V_hat)[1]))
 
-        R_Rot = min(1,np.exp(5*np.sign(np.cross(g_vec,V_hat)[1])*self.action_trg[1]))
+
 
 
         ## SOLVE FOR MINIMUM PHI IMPACT ANGLE VIA GEOMETRIC CONSTRAINTS
@@ -533,7 +541,7 @@ class SAR_Env_2D(gym.Env):
             R_legs = 0.0
 
         self.reward_vals = [R_dist,R_tau,R_Rot,R_phi_rel,R_legs,0,0]
-        R = R_dist*0.10 + R_tau*0.10 + R_Rot*0.8 + R_phi_rel*0.4 + R_legs*0.8
+        R = R_dist*0.10 + R_tau*0.10 + R_Rot*0.2 + R_phi_rel*0.4*0 + R_legs*0.8*0
         print(f"Post_Trg: Reward: {R:.3f} \t D: {self.D_min:.3f}")
 
         return R

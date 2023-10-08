@@ -649,7 +649,7 @@ if __name__ == '__main__':
     # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
 
 
-    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Plane_Angle_range=[180,180],Flight_Angle_range=[45,135],V_mag_range=[2,2],Render=False)
+    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Plane_Angle_range=[0,180],Flight_Angle_range=[45,135],V_mag_range=[2,2],Render=False)
     # env.RENDER = True
 
     current_datetime = datetime.now()
@@ -660,21 +660,21 @@ if __name__ == '__main__':
     # ================================================================= ##
 
 
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.create_model()
-    PolicyTrainer.train_model(save_freq=5000,total_timesteps=100e3)
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.create_model()
+    # PolicyTrainer.train_model(save_freq=5000,total_timesteps=100e3)
 
 
     # ================================================================= ##
     
     # RESUME TRAINING DEEP RL MODEL
-    log_name = "Body_Contact_Reward_11:06:31_0"
-    t_step_load = 75000
+    log_name = "Body_Contact_Reward_09:09:54_0"
+    t_step_load = 50000
     env.RENDER = True
 
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.load_model(log_dir,log_name,t_step_load)
-    PolicyTrainer.sweep_policy(Plane_Angle_range=[180,180],Flight_Angle_range=[45,135],V_mag_range=[2,2],n=[5,5,1,3])
+    PolicyTrainer.sweep_policy(Plane_Angle_range=[0,180],Flight_Angle_range=[45,135],V_mag_range=[2,2],n=[5,5,1,3])
 
     # # PolicyTrainer.train_model(save_freq=5000,total_timesteps=60000)
     # # PolicyTrainer.collect_landing_performance()

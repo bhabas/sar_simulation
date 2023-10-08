@@ -1,13 +1,13 @@
 ENV_SETTINGS:
   Env_Name: SAR_Env_2D
   V_mag_Limts:
-  - 1.0
-  - 4.0
+  - 2
+  - 2
   Flight_Angle_Limits:
-  - 5
-  - 175
+  - 45
+  - 135
   Plane_Angle_Limits:
-  - 90
+  - 0
   - 180
 MODEL_SETTINGS:
   Mass: 0.035
@@ -15,7 +15,7 @@ MODEL_SETTINGS:
   Iyy: 1.7e-05
   Izz: 3.12e-05
   L: 0.15
-  Gamma: 30.0
+  Gamma: 45.0
   PD: 0.075
 LEARNING_MODEL:
   Policy: SACPolicy
