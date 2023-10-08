@@ -649,8 +649,7 @@ if __name__ == '__main__':
     # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
 
 
-    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Plane_Angle_range=[0,180],Flight_Angle_range=[45,135],V_mag_range=[2,2],Render=False)
-    # env.RENDER = True
+    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Plane_Angle_range=[180,180],Flight_Angle_range=[30,75],V_mag_range=[2,2],Render=False)
 
     current_datetime = datetime.now()
     current_time = current_datetime.strftime("%H:%M:%S")
@@ -660,9 +659,9 @@ if __name__ == '__main__':
     # ================================================================= ##
 
 
-    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    # PolicyTrainer.create_model()
-    # PolicyTrainer.train_model(save_freq=5000,total_timesteps=100e3)
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.create_model()
+    PolicyTrainer.train_model(save_freq=5000,total_timesteps=100e3)
 
 
     # ================================================================= ##

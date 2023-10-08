@@ -474,18 +474,16 @@ class SAR_Env_2D(gym.Env):
     def Calc_Reward_PostTrg(self):
 
         gamma,L,PD,M,Iyy,I_c = self.params
-
-        ## DISTANCE REWARD 
-        if self.D_min <= L:
-            R_dist = 1
-        else:
-            R_dist = np.exp(-2.0*(self.D_min - L))
         
-        ## TAU TRIGGER REWARD
-        if self.Tau_CR_trg <= 0.3:
-            R_tau = 1
-        else:
-            R_tau = np.exp(-5.0*(self.Tau_CR_trg - 0.3))
+        ## DISTANCE & POLICY TRIGGER REWARD 
+        def Exp_Reward(x,b):
+            if x <= b:
+                return 1
+            else:
+                return np.exp(-5.0*(x-b))
+        
+        R_dist = Exp_Reward(self.D_min,L)
+        R_tau_cr = Exp_Reward(self.Tau_CR_trg,0.3)
 
         
         ## ROTATION DIRECTION REWARD
@@ -499,7 +497,8 @@ class SAR_Env_2D(gym.Env):
             else:
                 return 1
         
-        R_Rot = Rotation_Reward(self.action_trg[1],np.sign(np.cross(g_vec,V_hat)[1]))
+        b = np.sign(np.cross(g_vec,V_hat)[1])
+        R_Rot = Rotation_Reward(self.action_trg[1],b)
 
 
 
@@ -530,6 +529,18 @@ class SAR_Env_2D(gym.Env):
         else:
             R_phi_rel = 0.0
 
+
+        ## MOMENTUM TRANSFER REWARD
+        def LT_Reward(x,sign):
+            if -180 <= sign*x < 0:
+                return np.pi/180*sign*x
+            elif 0 <= sign*x <= 180:
+                return np.sin(sign*x)
+            
+        # R_LT = LT_Reward()
+
+
+
         ## PAD CONTACT REWARD
         if self.pad_connections >= 3: 
                 R_legs = 1.0
@@ -540,8 +551,8 @@ class SAR_Env_2D(gym.Env):
         else:
             R_legs = 0.0
 
-        self.reward_vals = [R_dist,R_tau,R_Rot,R_phi_rel,R_legs,0,0]
-        R = R_dist*0.10 + R_tau*0.10 + R_Rot*0.2 + R_phi_rel*0.4*0 + R_legs*0.8*0
+        self.reward_vals = [R_dist,R_tau_cr,R_Rot,R_phi_rel,R_legs,0,0]
+        R = R_dist*0.10 + R_tau_cr*0.10 + R_Rot*0.2 + R_phi_rel*0.4*0 + R_legs*0.8*0
         print(f"Post_Trg: Reward: {R:.3f} \t D: {self.D_min:.3f}")
 
         return R
