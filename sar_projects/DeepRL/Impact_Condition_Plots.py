@@ -14,7 +14,7 @@ Beta_min = np.arccos((L**2 + a**2 - PD**2)/(2*a*L))
 
 
 ## POLICY TRIGGER PLOT
-def Reward_Exp_Decay(x,k,threshold):
+def Reward_Exp_Decay(x,threshold,k=5):
     if 0 < x < threshold:
         return 1
     elif threshold <= x:
@@ -23,7 +23,7 @@ def Reward_Exp_Decay(x,k,threshold):
 
 ## REWARD: TAU_CR TRIGGER
 x = np.linspace(0,2,500)
-R = np.vectorize(Reward_Exp_Decay)(x,5,0.5)
+R = np.vectorize(Reward_Exp_Decay)(x,0.5)
     
 fig = plt.figure()
 ax1 = fig.add_subplot()
@@ -36,12 +36,11 @@ ax1.set_ylim(-0.5,1.5)
 ax1.hlines(0,-300,300)
 ax1.vlines(0,-5,5)
 ax1.grid()
-plt.show()
 
 
 ## REWARD: MINIMUM DISTANCE 
 x = np.linspace(0,2,500)
-R = np.vectorize(Reward_Exp_Decay)(x,5,0.25)
+R = np.vectorize(Reward_Exp_Decay)(x,0.25)
     
 fig = plt.figure()
 ax2 = fig.add_subplot()
@@ -54,7 +53,6 @@ ax2.set_ylim(-0.5,1.5)
 ax2.hlines(0,-300,300)
 ax2.vlines(0,-5,5)
 ax2.grid()
-plt.show()
 
 ## REWARD: MOMENTUM TRANSFER
 def Reward_LT(x_deg,Leg_Num):
@@ -70,7 +68,6 @@ def Reward_LT(x_deg,Leg_Num):
     elif 0 < x_deg <= 180:
         return -0.5/180 * x_deg
 
-    return None
     
 x = np.linspace(-180,180,500)
 R_Leg1 = np.vectorize(Reward_LT)(x,Leg_Num=1)
@@ -91,7 +88,6 @@ ax3.hlines(0,-300,300)
 ax3.vlines(0,-5,5)
 ax3.legend()
 ax3.grid()
-# plt.show()
 
 
 ## REWARD: GRAVITY MOMENT 
@@ -123,15 +119,14 @@ ax4.legend()
 ax4.hlines(0,-300,300)
 ax4.vlines(0,-5,5)
 ax4.grid()
-plt.show()
 
 ## REWARD: IMPACT ANGLE
-def Reward_ImpactAngle(phi,phi_min,Leg_Num=1,phi_thr=200):
+def Reward_ImpactAngle(phi,phi_min,rot_dir=1,phi_thr=200):
 
     phi_max = 180
     phi_b = (phi_min + phi_max)/2
 
-    if Leg_Num == 2:
+    if rot_dir == -1:
         phi = -phi
         
 
@@ -149,8 +144,8 @@ def Reward_ImpactAngle(phi,phi_min,Leg_Num=1,phi_thr=200):
 
 x = np.linspace(-300,300,500)
 phi_min = 90
-R_Leg1 = np.vectorize(Reward_ImpactAngle)(x,phi_min,Leg_Num=1)
-R_Leg2 = np.vectorize(Reward_ImpactAngle)(x,phi_min,Leg_Num=2)
+R_Leg1 = np.vectorize(Reward_ImpactAngle)(x,phi_min,rot_dir= 1)
+R_Leg2 = np.vectorize(Reward_ImpactAngle)(x,phi_min,rot_dir=-1)
     
 fig = plt.figure()
 ax5 = fig.add_subplot()
@@ -167,4 +162,40 @@ ax5.hlines(0,-300,300)
 ax5.vlines(0,-5,5)
 ax5.legend()
 ax5.grid()
+
+
+## REWARD: ROTATION DIRECTION
+def Reward_RotationDirection(x,rot_dir):
+
+    if rot_dir == 1:
+        if x < 0:
+            return x
+        else:
+            return 1
+        
+    elif rot_dir == -1:
+        if x < 0:
+            return 1
+        else:
+            return -x
+
+
+x = np.linspace(-1,1,400)
+R_dir1 = [Reward_RotationDirection(x, 1) for x in x]
+R_dir2 = [Reward_RotationDirection(x,-1) for x in x]
+    
+fig = plt.figure()
+ax6 = fig.add_subplot()
+ax6.plot(x,R_dir1,label="sign(g x v) > 0")
+ax6.plot(x,R_dir2,label="sign(g x v) < 0")
+
+ax6.set_xlim(-1.5,1.5)
+ax6.set_ylim(-2,2)
+ax6.set_title("Reward: Rotation Direction")
+ax6.set_xlabel("a_Rot")
+ax6.set_ylabel("Reward")
+ax6.hlines(0,-300,300)
+ax6.vlines(0,-5,5)
+ax6.legend()
+ax6.grid()
 plt.show()

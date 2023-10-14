@@ -202,7 +202,7 @@ class SAR_Env_2D(gym.Env):
         r_B_O = r_P_O - self.R_PW(r_P_B,self.Plane_Angle_rad)                               # Body Position wrt to Origin - {X_W,Z_W}
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-        self._set_state(r_B_O[0],r_B_O[1],np.radians(0),V_B_O[0],V_B_O[1],0)
+        self._set_state(r_B_O[0],r_B_O[1],np.radians(-5),V_B_O[0],V_B_O[1],0)
         self.initial_state = (r_B_O,V_B_O)
 
 
@@ -475,15 +475,19 @@ class SAR_Env_2D(gym.Env):
 
         gamma,L,PD,M,Iyy,I_c = self.params
         
-        ## DISTANCE & POLICY TRIGGER REWARD 
-        def Exp_Reward(x,b):
-            if x <= b:
+        def Reward_Exp_Decay(x,threshold,k=5):
+            if -0.1 < x < threshold:
                 return 1
+            elif threshold <= x:
+                return np.exp(-k*(x-threshold))
             else:
-                return np.exp(-5.0*(x-b))
+                return 0
         
-        R_dist = Exp_Reward(self.D_min,L)
-        R_tau_cr = Exp_Reward(self.Tau_CR_trg,0.3)
+        ## REWARD: MINIMUM DISTANCE 
+        R_dist = Reward_Exp_Decay(self.D_min,L)
+        
+        ## REWARD: TAU_CR TRIGGER
+        R_tau_cr = Reward_Exp_Decay(self.Tau_CR_trg,0.3)
 
         
         ## ROTATION DIRECTION REWARD
@@ -491,16 +495,22 @@ class SAR_Env_2D(gym.Env):
         V_hat = V_B_O/np.linalg.norm(V_B_O)                         # {X_W,Z_W}
         g_vec = np.array([0,0,-1])                                  # {X_W,Z_W}
       
-        def Rotation_Reward(x,sign):
-            if sign*x<0:
-                return sign*x
-            else:
-                return 1
+        def Reward_RotationDirection(x,b_dir):
+
+            if b_dir == 1:
+                if x < 0:
+                    return x
+                else:
+                    return 1
+                
+            elif b_dir == -1:
+                if x < 0:
+                    return 1
+                else:
+                    return -x
         
         b = np.sign(np.cross(g_vec,V_hat)[1])
-        R_Rot = Rotation_Reward(self.action_trg[1],b)
-
-
+        R_Rot = Reward_RotationDirection(self.action_trg[1],b)
 
 
         ## SOLVE FOR MINIMUM PHI IMPACT ANGLE VIA GEOMETRIC CONSTRAINTS
@@ -513,26 +523,32 @@ class SAR_Env_2D(gym.Env):
         self.phi_rel_impact = np.rad2deg(self.phi_rel_impact)
 
 
-        ## IMPACT ANGLE REWARD
-        if self.phi_rel_impact < -190:
-            R_phi_rel = -0.2
-        elif -190 <= self.phi_rel_impact < -self.phi_rel_min:
-            R_phi_rel = 1
-        elif -self.phi_rel_min <= self.phi_rel_impact < 0:
-            R_phi_rel = self.phi_rel_impact/-self.phi_rel_min
-        elif 0 <= self.phi_rel_impact < self.phi_rel_min:
-            R_phi_rel = self.phi_rel_impact/self.phi_rel_min
-        elif self.phi_rel_min <= self.phi_rel_impact < 190:
-            R_phi_rel = 1
-        elif self.phi_rel_impact >= 190:
-            R_phi_rel = -0.2
-        else:
-            R_phi_rel = 0.0
+        ## REWARD: IMPACT ANGLE
+        def Reward_ImpactAngle(phi,phi_min,rot_dir=1,phi_thr=200):
+
+            phi_max = 180
+            phi_b = (phi_min + phi_max)/2
+
+            if rot_dir == -1:
+                phi = -phi
+                
+
+            if -phi_min < phi <= phi_min:
+                return 0.5*phi/phi_min
+            elif phi_min < phi <= phi_b:
+                return 0.5/(phi_b - phi_min) * (phi - phi_min) + 0.5
+            elif phi_b < phi <= phi_max:
+                return -0.5/(phi_max - phi_b) * (phi - phi_b) + 1.0
+            elif phi_max < phi <= phi_thr:
+                return -1/(phi_thr - phi_max) * (phi - phi_max) + 0.5
+            else:
+                return -0.5
+            
+        R_phi_rel = Reward_ImpactAngle(self.phi_rel_impact,self.phi_rel_min,rot_dir=b)
+
 
 
         ## MOMENTUM TRANSFER REWARD
-
-
         def LT_Reward(x,sign):
             if -180 <= sign*x < 0:
                 return np.pi/180*sign*x
@@ -581,7 +597,7 @@ class SAR_Env_2D(gym.Env):
             R_Legs = 0.0
 
         self.reward_vals = [R_dist,R_tau_cr,R_Rot,R_phi_rel,R_LT,R_Legs,0]
-        R = R_dist*0.10 + R_tau_cr*0.10 + R_Rot*0.2 + R_phi_rel*0.3 + R_LT*0.6 + R_Legs*0.8
+        R = R_dist*0.1 + R_tau_cr*0.1 + R_Rot*0.4 + R_phi_rel*0.3*0 + R_LT*0.6*0 + R_Legs*0.8*0
         print(f"Post_Trg: Reward: {R:.3f} \t D: {self.D_min:.3f}")
 
         return R
@@ -653,7 +669,7 @@ class SAR_Env_2D(gym.Env):
             ## STEP UPDATE
             self.t += self.dt
 
-            z_acc = -self.g
+            z_acc = -self.g*0
             z = z + self.dt*vz
             vz = vz + self.dt*z_acc
 
@@ -1159,7 +1175,7 @@ class SAR_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(My_range=[-8e-3,+8e-3],V_mag_range=[2,2],Flight_Angle_range=[135,135],Plane_Angle_range=[0,0])
+    env = SAR_Env_2D(My_range=[-8e-3,+8e-3],V_mag_range=[2,2],Flight_Angle_range=[45,45],Plane_Angle_range=[180,180])
     env.RENDER = True
 
     for ep in range(50):
@@ -1171,7 +1187,7 @@ if __name__ == '__main__':
         while not (Done or truncated):
 
             action = env.action_space.sample()
-            # action = np.array([0.6,0])
+            action = np.array([0.6,-0.0001])
             obs,reward,Done,truncated,_ = env.step(action)
 
         print(f"Episode: {ep} \t Obs: {obs[2]:.3f} \t Reward: {reward:.3f}")
