@@ -121,36 +121,39 @@ ax4.vlines(0,-5,5)
 ax4.grid()
 
 ## REWARD: IMPACT ANGLE
-def Reward_ImpactAngle(phi,phi_min,rot_dir=1,phi_thr=200):
+def Reward_ImpactAngle(phi_rel,phi_min,rot_dir=-1,phi_thr=-200):
 
-    phi_max = 180
+    phi_max = -180
     phi_b = (phi_min + phi_max)/2
 
-    if rot_dir == -1:
-        phi = -phi
-        
+    if rot_dir == +1:
+        phi_rel = -phi_rel
 
-    if -phi_min < phi <= phi_min:
-        return 0.5*phi/phi_min
-    elif phi_min < phi <= phi_b:
-        return 0.5/(phi_b - phi_min) * (phi - phi_min) + 0.5
-    elif phi_b < phi <= phi_max:
-        return -0.5/(phi_max - phi_b) * (phi - phi_b) + 1.0
-    elif phi_max < phi <= phi_thr:
-        return -1/(phi_thr - phi_max) * (phi - phi_max) + 0.5
+    if phi_rel <= phi_thr:
+        return -0.5
+    elif phi_thr < phi_rel <= phi_max:
+        return -1/(phi_thr - phi_max) * (phi_rel - phi_max) + 0.5
+    elif phi_max < phi_rel <= phi_b:
+        return -0.5/(phi_max - phi_b) * (phi_rel - phi_b) + 1.0      
+    elif phi_b < phi_rel <= phi_min:
+        return 0.5/(phi_b - phi_min) * (phi_rel - phi_min) + 0.5
+    elif phi_min < phi_rel <= -phi_min:
+        return 1.0/(phi_min - (-phi_min)) * (phi_rel - 0) 
     else:
         return -0.5
 
 
+
 x = np.linspace(-300,300,500)
-phi_min = 90
-R_Leg1 = np.vectorize(Reward_ImpactAngle)(x,phi_min,rot_dir= 1)
-R_Leg2 = np.vectorize(Reward_ImpactAngle)(x,phi_min,rot_dir=-1)
+phi_min = -135
+R_dir_neg = np.vectorize(Reward_ImpactAngle)(x,phi_min,rot_dir=-1)
+R_dir_pos = np.vectorize(Reward_ImpactAngle)(x,phi_min,rot_dir= 1)
     
 fig = plt.figure()
 ax5 = fig.add_subplot()
-ax5.plot(x,R_Leg1,label="Leg 1")
-ax5.plot(x,R_Leg2,label="Leg 2")
+ax5.plot(x,R_dir_neg,label="sign(g x v) < 0")
+ax5.plot(x,R_dir_pos,label="sign(g x v) > 0")
+
 
 ax5.set_xticks(np.linspace(-225,225,11))
 ax5.set_xlim(-270,270)
@@ -168,16 +171,9 @@ ax5.grid()
 def Reward_RotationDirection(x,rot_dir):
 
     if rot_dir == 1:
-        if x < 0:
-            return x
-        else:
-            return 1
-        
+        return x if x < 0 else 1
     elif rot_dir == -1:
-        if x < 0:
-            return 1
-        else:
-            return -x
+        return 1 if x < 0 else -x
 
 
 x = np.linspace(-1,1,400)

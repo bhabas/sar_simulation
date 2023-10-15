@@ -160,13 +160,13 @@ class SAR_Env_2D(gym.Env):
         ## SET PLANE POSE
         if Plane_Angle == None:
 
-            Plane_Angle_Low = 180 - self.Plane_Angle_range[0]
-            Plane_Angle_High = 180 - self.Plane_Angle_range[1]
+            Plane_Angle_Low = self.Plane_Angle_range[0]
+            Plane_Angle_High = self.Plane_Angle_range[1]
             self.Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
             self.Plane_Angle_rad = np.radians(self.Plane_Angle)
 
         else:
-            self.Plane_Angle = 180 - Plane_Angle
+            self.Plane_Angle = Plane_Angle
             self.Plane_Angle_rad = np.radians(self.Plane_Angle)
 
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
@@ -202,7 +202,7 @@ class SAR_Env_2D(gym.Env):
         r_B_O = r_P_O - self.R_PW(r_P_B,self.Plane_Angle_rad)                               # Body Position wrt to Origin - {X_W,Z_W}
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-        self._set_state(r_B_O[0],r_B_O[1],np.radians(-5),V_B_O[0],V_B_O[1],0)
+        self._set_state(r_B_O[0],r_B_O[1],np.radians(-190),V_B_O[0],V_B_O[1],0)
         self.initial_state = (r_B_O,V_B_O)
 
 
@@ -473,7 +473,37 @@ class SAR_Env_2D(gym.Env):
 
     def Calc_Reward_PostTrg(self):
 
+        ## LOAD PARAMS
         gamma,L,PD,M,Iyy,I_c = self.params
+
+        ## CALC DESIRED ROTATION DIRECTION
+        V_B_O = np.array([self.state_trg[3],0,self.state_trg[4]])   # {X_W,Z_W}
+        V_hat = V_B_O/np.linalg.norm(V_B_O)                         # {X_W,Z_W}
+        g_vec = np.array([0,0,-1])                                  # {X_W,Z_W}
+        rot_dir = np.sign(np.cross(g_vec,V_hat)[1])
+
+
+
+        ## SOLVE FOR MINIMUM RELATIVE PHI IMPACT ANGLE VIA GEOMETRIC CONSTRAINTS
+        a = np.sqrt(self.PD**2 + self.L**2 - 2*self.PD*self.L*np.cos(np.pi/2-self.gamma))
+        beta_min = np.arccos((self.L**2 + a**2 - self.PD**2)/(2*a*self.L))
+        beta_min = -1 * beta_min # Swap sign to match coordinate notation
+        self.phi_rel_impact_min = np.arctan2(-np.cos(beta_min + gamma), \
+                                              np.sin(beta_min + gamma))
+        self.phi_rel_impact_min_deg = np.rad2deg(self.phi_rel_impact_min)
+
+        ## CALC RELATIVE IMPACT ANGLE
+        self.phi_rel_impact = np.arctan2(np.sin(self.phi_impact - self.Plane_Angle_rad), \
+                                         np.cos(self.phi_impact - self.Plane_Angle_rad))
+        self.phi_rel_impact_deg = np.rad2deg(self.phi_rel_impact)
+
+        ## CHECK IF ROTATED PAST 360 DEG
+        if np.abs(self.phi_impact) >= 2*np.pi:
+            overRotation_Flag = True
+        else:
+            overRotation_Flag = False
+
+
         
         def Reward_Exp_Decay(x,threshold,k=5):
             if -0.1 < x < threshold:
@@ -483,78 +513,62 @@ class SAR_Env_2D(gym.Env):
             else:
                 return 0
         
+        def Reward_RotationDirection(x,rot_dir):
+
+            if rot_dir == +1:
+                return x if x < 0 else 1
+            elif rot_dir == -1:
+                return 1 if x < 0 else -x
+            
+        def Reward_ImpactAngle(phi_rel,phi_min,rot_dir=-1,phi_thr=-200):
+
+            phi_max = -180
+            phi_b = (phi_min + phi_max)/2
+
+            if rot_dir == +1:
+                phi_rel = -phi_rel
+
+            if phi_rel <= phi_thr:
+                return -0.5
+            elif phi_thr < phi_rel <= phi_max:
+                return -1/(phi_thr - phi_max) * (phi_rel - phi_max) + 0.5
+            elif phi_max < phi_rel <= phi_b:
+                return -0.5/(phi_max - phi_b) * (phi_rel - phi_b) + 1.0      
+            elif phi_b < phi_rel <= phi_min:
+                return 0.5/(phi_b - phi_min) * (phi_rel - phi_min) + 0.5
+            elif phi_min < phi_rel <= -phi_min:
+                return 1.0/(phi_min - (-phi_min)) * (phi_rel - 0) 
+            else:
+                return -0.5
+            
+        def Reward_LT(theta_deg,Leg_Num):
+            theta_rad = np.radians(theta_deg)
+
+            if Leg_Num == 2:
+                theta_deg = -theta_deg  # Reflect across the y-axis
+                theta_rad = -theta_rad  # Reflect the radian value as well
+
+
+            if -180 <= theta_deg <= 0:
+                return -np.sin(theta_rad)
+            elif 0 < theta_deg <= 180:
+                return -0.5/180 * theta_deg
+
+            
+
         ## REWARD: MINIMUM DISTANCE 
         R_dist = Reward_Exp_Decay(self.D_min,L)
         
         ## REWARD: TAU_CR TRIGGER
         R_tau_cr = Reward_Exp_Decay(self.Tau_CR_trg,0.3)
 
-        
         ## ROTATION DIRECTION REWARD
-        V_B_O = np.array([self.state_trg[3],0,self.state_trg[4]])   # {X_W,Z_W}
-        V_hat = V_B_O/np.linalg.norm(V_B_O)                         # {X_W,Z_W}
-        g_vec = np.array([0,0,-1])                                  # {X_W,Z_W}
-      
-        def Reward_RotationDirection(x,b_dir):
-
-            if b_dir == 1:
-                if x < 0:
-                    return x
-                else:
-                    return 1
-                
-            elif b_dir == -1:
-                if x < 0:
-                    return 1
-                else:
-                    return -x
-        
-        b = np.sign(np.cross(g_vec,V_hat)[1])
-        R_Rot = Reward_RotationDirection(self.action_trg[1],b)
-
-
-        ## SOLVE FOR MINIMUM PHI IMPACT ANGLE VIA GEOMETRIC CONSTRAINTS
-        a = np.sqrt(PD**2 + L**2 - 2*PD*L*np.cos(np.pi/2-gamma))
-        beta_min = np.arccos((L**2 + a**2 - PD**2)/(2*a*L))
-        self.phi_rel_min = np.abs(np.arcsin(L/PD*np.sin(beta_min))-np.pi)
-        self.phi_rel_min = np.rad2deg(self.phi_rel_min)
-
-        self.phi_rel_impact = self.phi_impact + (self.Plane_Angle_rad - np.pi)
-        self.phi_rel_impact = np.rad2deg(self.phi_rel_impact)
-
+        R_Rot = Reward_RotationDirection(self.action_trg[1],rot_dir)
 
         ## REWARD: IMPACT ANGLE
-        def Reward_ImpactAngle(phi,phi_min,rot_dir=1,phi_thr=200):
-
-            phi_max = 180
-            phi_b = (phi_min + phi_max)/2
-
-            if rot_dir == -1:
-                phi = -phi
-                
-
-            if -phi_min < phi <= phi_min:
-                return 0.5*phi/phi_min
-            elif phi_min < phi <= phi_b:
-                return 0.5/(phi_b - phi_min) * (phi - phi_min) + 0.5
-            elif phi_b < phi <= phi_max:
-                return -0.5/(phi_max - phi_b) * (phi - phi_b) + 1.0
-            elif phi_max < phi <= phi_thr:
-                return -1/(phi_thr - phi_max) * (phi - phi_max) + 0.5
-            else:
-                return -0.5
-            
-        R_phi_rel = Reward_ImpactAngle(self.phi_rel_impact,self.phi_rel_min,rot_dir=b)
-
-
+        R_phi_rel = Reward_ImpactAngle(self.phi_rel_impact_deg,self.phi_rel_impact_min_deg,rot_dir=rot_dir)
 
         ## MOMENTUM TRANSFER REWARD
-        def LT_Reward(x,sign):
-            if -180 <= sign*x < 0:
-                return np.pi/180*sign*x
-            elif 0 <= sign*x <= 180:
-                return np.sin(sign*np.deg2rad(x))
-            
         (BodyContact,Leg1Contact,Leg2Contact) = self.impact_conditions
         if Leg1Contact or Leg2Contact:
             if self.phi_rel_impact < -190:
@@ -571,7 +585,7 @@ class SAR_Env_2D(gym.Env):
                     CP_temp = np.cross(np.array([e_r1[0],0,e_r1[1]]),V_hat)
                     angle = np.degrees(np.arcsin(CP_temp)[1])
 
-                    R_LT = LT_Reward(angle,-np.sign(CP_temp[1]))
+                    R_LT = Reward_LT(angle,-np.sign(CP_temp[1]))
 
                 elif Leg2Contact:
                     r_C2_B = np.array([L,0])                                    # {e_r2,e_beta2}
@@ -581,7 +595,7 @@ class SAR_Env_2D(gym.Env):
                     CP_temp = np.cross(np.array([e_r2[0],0,e_r2[1]]),V_hat)
                     angle = np.degrees(np.arcsin(CP_temp)[1])
 
-                    R_LT = LT_Reward(angle,np.sign(CP_temp[1]))
+                    R_LT = Reward_LT(angle,np.sign(CP_temp[1]))
 
         else:
             R_LT = 0
@@ -1175,7 +1189,7 @@ class SAR_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(My_range=[-8e-3,+8e-3],V_mag_range=[2,2],Flight_Angle_range=[45,45],Plane_Angle_range=[180,180])
+    env = SAR_Env_2D(My_range=[-8e-3,+8e-3],V_mag_range=[2,2],Flight_Angle_range=[45,45],Plane_Angle_range=[0,0])
     env.RENDER = True
 
     for ep in range(50):
