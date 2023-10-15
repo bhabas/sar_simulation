@@ -46,7 +46,7 @@ class SAR_Env_2D(gym.Env):
         self.My_range = My_range
 
         ## SAR DIMENSIONAL CONSTRAINTS
-        self.gamma = 45             # Leg Angle [m]
+        self.gamma = 60             # Leg Angle [m]
         self.L = 150.0e-3           # Leg Length [m]
         self.PD = 75e-3             # Prop Distance from COM [m]
         self.M = 35.0e-3            # Body Mass [kg]
@@ -202,7 +202,7 @@ class SAR_Env_2D(gym.Env):
         r_B_O = r_P_O - self.R_PW(r_P_B,self.Plane_Angle_rad)                               # Body Position wrt to Origin - {X_W,Z_W}
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-        self._set_state(r_B_O[0],r_B_O[1],np.radians(-190),V_B_O[0],V_B_O[1],0)
+        self._set_state(r_B_O[0],r_B_O[1],np.radians(-140),V_B_O[0],V_B_O[1],0)
         self.initial_state = (r_B_O,V_B_O)
 
 
@@ -479,8 +479,8 @@ class SAR_Env_2D(gym.Env):
         ## CALC DESIRED ROTATION DIRECTION
         V_B_O = np.array([self.state_trg[3],0,self.state_trg[4]])   # {X_W,Z_W}
         V_hat = V_B_O/np.linalg.norm(V_B_O)                         # {X_W,Z_W}
-        g_vec = np.array([0,0,-1])                                  # {X_W,Z_W}
-        rot_dir = np.sign(np.cross(g_vec,V_hat)[1])
+        g_hat = np.array([0,0,-1])                                  # {X_W,Z_W}
+        rot_dir = np.sign(np.cross(g_hat,V_hat)[1])
 
 
 
@@ -541,18 +541,22 @@ class SAR_Env_2D(gym.Env):
             else:
                 return -0.5
             
-        def Reward_LT(theta_deg,Leg_Num):
-            theta_rad = np.radians(theta_deg)
+        def Reward_LT(CP_angle_deg,Leg_Num):
 
             if Leg_Num == 2:
-                theta_deg = -theta_deg  # Reflect across the y-axis
-                theta_rad = -theta_rad  # Reflect the radian value as well
+                CP_angle_deg = -CP_angle_deg  # Reflect across the y-axis
 
+            if -180 <= CP_angle_deg <= 0:
+                return -np.sin(np.radians(CP_angle_deg))
+            elif 0 < CP_angle_deg <= 180:
+                return -0.5/180 * CP_angle_deg
+            
+        def Reward_GravityMoment(CP_Angle,Leg_Num):
 
-            if -180 <= theta_deg <= 0:
-                return -np.sin(theta_rad)
-            elif 0 < theta_deg <= 180:
-                return -0.5/180 * theta_deg
+            if Leg_Num == 2:
+                CP_Angle = -CP_Angle  # Reflect across the y-axis
+
+            return -np.sin(np.radians(CP_Angle))
 
             
 
@@ -568,49 +572,60 @@ class SAR_Env_2D(gym.Env):
         ## REWARD: IMPACT ANGLE
         R_phi_rel = Reward_ImpactAngle(self.phi_rel_impact_deg,self.phi_rel_impact_min_deg,rot_dir=rot_dir)
 
-        ## MOMENTUM TRANSFER REWARD
+        ## REWARD: MOMENTUM TRANSFER
         (BodyContact,Leg1Contact,Leg2Contact) = self.impact_conditions
         if Leg1Contact or Leg2Contact:
-            if self.phi_rel_impact < -190:
-                R_LT = 0
-            elif self.phi_rel_impact >= 190:
-                R_LT = 0
-            else:
                 
                 if Leg1Contact:
+                    ## CALC e_r VECT0R
                     r_C1_B = np.array([L,0])                                    # {e_r1,e_beta1}
                     e_r1 = r_C1_B/np.linalg.norm(r_C1_B)                        # {e_r1,e_beta1}
                     e_r1 = self.R_BW(self.R_C1B(e_r1,gamma),self.phi_impact)    # {X_W,Z_W}
+                    e_r_hat = np.array([e_r1[0],0,e_r1[1]])
 
-                    CP_temp = np.cross(np.array([e_r1[0],0,e_r1[1]]),V_hat)
-                    angle = np.degrees(np.arcsin(CP_temp)[1])
+                    ## MOMENTUM TRANSFER REWARD
+                    CP_temp = np.cross(V_hat,e_r_hat)
+                    CP_angle_deg = np.degrees(np.arcsin(CP_temp)[1])
+                    R_LT = Reward_LT(CP_angle_deg,Leg_Num=1)
 
-                    R_LT = Reward_LT(angle,-np.sign(CP_temp[1]))
+                    ## GRAVITY MOMENT REWARD
+                    CP_temp = np.cross(g_hat,e_r_hat)
+                    CP_angle_deg = np.degrees(np.arcsin(CP_temp)[1])
+                    R_GM = Reward_GravityMoment(CP_angle_deg,Leg_Num=1)
 
                 elif Leg2Contact:
+                    ## CALC e_r VECTOR
                     r_C2_B = np.array([L,0])                                    # {e_r2,e_beta2}
                     e_r2 = r_C2_B/np.linalg.norm(r_C2_B)                        # {e_r2,e_beta2}
                     e_r2 = self.R_BW(self.R_C2B(e_r2,gamma),self.phi_impact)    # {X_W,Z_W}
+                    e_r_hat = np.array([e_r2[0],0,e_r2[1]])
 
-                    CP_temp = np.cross(np.array([e_r2[0],0,e_r2[1]]),V_hat)
-                    angle = np.degrees(np.arcsin(CP_temp)[1])
+                    ## MOMENTUM TRANSFER REWARD
+                    CP_temp = np.cross(V_hat,e_r_hat)
+                    CP_angle_deg = np.degrees(np.arcsin(CP_temp)[1])
+                    R_LT = Reward_LT(CP_angle_deg,Leg_Num=2)
 
-                    R_LT = Reward_LT(angle,np.sign(CP_temp[1]))
+                    ## GRAVITY MOMENT REWARD
+                    CP_temp = np.cross(g_hat,e_r_hat)
+                    CP_angle_deg = np.degrees(np.arcsin(CP_temp)[1])
+                    R_GM = Reward_GravityMoment(CP_angle_deg,Leg_Num=2)
 
-        else:
+        elif BodyContact:
             R_LT = 0
 
-        ## PAD CONTACT REWARD
+
+        ## REWARD: PAD CONNECTIONS
         if self.pad_connections >= 3: 
-                R_Legs = 1.0
-
-        elif self.pad_connections == 2: 
-                R_Legs = 0.6
-
+            R_Legs = 1.0
+        elif self.pad_connections == 2:
+            R_Legs = 0.6
         else:
             R_Legs = 0.0
 
-        self.reward_vals = [R_dist,R_tau_cr,R_Rot,R_phi_rel,R_LT,R_Legs,0]
+        if BodyContact:
+            R_Legs = R_Legs*0.5
+
+        self.reward_vals = [R_dist,R_tau_cr,R_Rot,R_phi_rel,R_LT,R_GM,R_Legs]
         R = R_dist*0.1 + R_tau_cr*0.1 + R_Rot*0.4 + R_phi_rel*0.3*0 + R_LT*0.6*0 + R_Legs*0.8*0
         print(f"Post_Trg: Reward: {R:.3f} \t D: {self.D_min:.3f}")
 
@@ -1189,7 +1204,7 @@ class SAR_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(My_range=[-8e-3,+8e-3],V_mag_range=[2,2],Flight_Angle_range=[45,45],Plane_Angle_range=[0,0])
+    env = SAR_Env_2D(My_range=[-8e-3,+8e-3],V_mag_range=[2,2],Flight_Angle_range=[20,20],Plane_Angle_range=[0,0])
     env.RENDER = True
 
     for ep in range(50):
