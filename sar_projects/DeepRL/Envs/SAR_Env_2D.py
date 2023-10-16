@@ -46,7 +46,7 @@ class SAR_Env_2D(gym.Env):
         self.My_range = My_range
 
         ## SAR DIMENSIONAL CONSTRAINTS
-        self.gamma = 60             # Leg Angle [m]
+        self.gamma = 45             # Leg Angle [m]
         self.L = 150.0e-3           # Leg Length [m]
         self.PD = 75e-3             # Prop Distance from COM [m]
         self.M = 35.0e-3            # Body Mass [kg]
@@ -202,7 +202,7 @@ class SAR_Env_2D(gym.Env):
         r_B_O = r_P_O - self.R_PW(r_P_B,self.Plane_Angle_rad)                               # Body Position wrt to Origin - {X_W,Z_W}
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-        self._set_state(r_B_O[0],r_B_O[1],np.radians(-140),V_B_O[0],V_B_O[1],0)
+        self._set_state(r_B_O[0],r_B_O[1],np.radians(0),V_B_O[0],V_B_O[1],0)
         self.initial_state = (r_B_O,V_B_O)
 
 
@@ -482,6 +482,9 @@ class SAR_Env_2D(gym.Env):
         g_hat = np.array([0,0,-1])                                  # {X_W,Z_W}
         rot_dir = np.sign(np.cross(g_hat,V_hat)[1])
 
+        if -1 < rot_dir < 1:
+            rot_dir = 1
+
 
 
         ## SOLVE FOR MINIMUM RELATIVE PHI IMPACT ANGLE VIA GEOMETRIC CONSTRAINTS
@@ -493,17 +496,8 @@ class SAR_Env_2D(gym.Env):
         self.phi_rel_impact_min_deg = np.rad2deg(self.phi_rel_impact_min)
 
         ## CALC RELATIVE IMPACT ANGLE
-        self.phi_rel_impact = np.arctan2(np.sin(self.phi_impact - self.Plane_Angle_rad), \
-                                         np.cos(self.phi_impact - self.Plane_Angle_rad))
+        self.phi_rel_impact = self.phi_impact - self.Plane_Angle_rad
         self.phi_rel_impact_deg = np.rad2deg(self.phi_rel_impact)
-
-        ## CHECK IF ROTATED PAST 360 DEG
-        if np.abs(self.phi_impact) >= 2*np.pi:
-            overRotation_Flag = True
-        else:
-            overRotation_Flag = False
-
-
         
         def Reward_Exp_Decay(x,threshold,k=5):
             if -0.1 < x < threshold:
@@ -558,8 +552,6 @@ class SAR_Env_2D(gym.Env):
 
             return -np.sin(np.radians(CP_Angle))
 
-            
-
         ## REWARD: MINIMUM DISTANCE 
         R_dist = Reward_Exp_Decay(self.D_min,L)
         
@@ -592,6 +584,7 @@ class SAR_Env_2D(gym.Env):
                     CP_temp = np.cross(g_hat,e_r_hat)
                     CP_angle_deg = np.degrees(np.arcsin(CP_temp)[1])
                     R_GM = Reward_GravityMoment(CP_angle_deg,Leg_Num=1)
+                    print()
 
                 elif Leg2Contact:
                     ## CALC e_r VECTOR
@@ -609,24 +602,26 @@ class SAR_Env_2D(gym.Env):
                     CP_temp = np.cross(g_hat,e_r_hat)
                     CP_angle_deg = np.degrees(np.arcsin(CP_temp)[1])
                     R_GM = Reward_GravityMoment(CP_angle_deg,Leg_Num=2)
+                    print()
 
         elif BodyContact:
             R_LT = 0
+            R_GM = 0
 
 
         ## REWARD: PAD CONNECTIONS
         if self.pad_connections >= 3: 
             R_Legs = 1.0
         elif self.pad_connections == 2:
-            R_Legs = 0.6
+            R_Legs = 0.2
         else:
             R_Legs = 0.0
 
-        if BodyContact:
+        if self.BodyContact_flag:
             R_Legs = R_Legs*0.5
 
         self.reward_vals = [R_dist,R_tau_cr,R_Rot,R_phi_rel,R_LT,R_GM,R_Legs]
-        R = R_dist*0.1 + R_tau_cr*0.1 + R_Rot*0.4 + R_phi_rel*0.3*0 + R_LT*0.6*0 + R_Legs*0.8*0
+        R = R_dist*0.1 + R_tau_cr*0.1 + R_Rot*0.4 + R_phi_rel*0.3*0 + R_LT*0.6*0 + R_GM*0.6*0 + R_Legs*1.0
         print(f"Post_Trg: Reward: {R:.3f} \t D: {self.D_min:.3f}")
 
         return R
@@ -1204,7 +1199,7 @@ class SAR_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(My_range=[-8e-3,+8e-3],V_mag_range=[2,2],Flight_Angle_range=[20,20],Plane_Angle_range=[0,0])
+    env = SAR_Env_2D(My_range=[-8e-3,+8e-3],V_mag_range=[2,2],Flight_Angle_range=[135,135],Plane_Angle_range=[180,180])
     env.RENDER = True
 
     for ep in range(50):
