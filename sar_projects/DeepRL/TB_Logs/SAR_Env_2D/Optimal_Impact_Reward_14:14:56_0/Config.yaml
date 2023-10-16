@@ -1,14 +1,14 @@
 ENV_SETTINGS:
   Env_Name: SAR_Env_2D
   V_mag_Limts:
-  - 2
-  - 2
+  - 1
+  - 1
   Flight_Angle_Limits:
-  - 30
-  - 75
+  - 45
+  - 45
   Plane_Angle_Limits:
-  - 180
-  - 180
+  - 0
+  - 0
 MODEL_SETTINGS:
   Mass: 0.035
   Ixx: 1.58e-05
@@ -37,3 +37,11 @@ LEARNING_MODEL:
   Gamma: 0.999
   Learning_Rate: 0.002
   Activation_Function: ''
+REWARD_SETTINGS:
+  W_dist: 0.2
+  W_tau_cr: 0.2
+  W_Rot: 0.0
+  W_phi_rel: 0.0
+  W_LT: 1.0
+  W_GM: 0.0
+  W_Legs: 1.0

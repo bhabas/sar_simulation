@@ -4,8 +4,8 @@ ENV_SETTINGS:
   - 2
   - 2
   Flight_Angle_Limits:
-  - 135
-  - 135
+  - 45
+  - 45
   Plane_Angle_Limits:
   - 0
   - 0

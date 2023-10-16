@@ -83,6 +83,15 @@ class SAR_Env_2D(gym.Env):
         self.Done = False
         self.reward = 0
         self.reward_vals = [0,0,0,0,0,0,0]
+        self.reward_weights = {
+            "W_dist":0.2,
+            "W_tau_cr":0.2,
+            "W_Rot":0.0,
+            "W_phi_rel":0.0,
+            "W_LT":1.0,
+            "W_GM":0.0,
+            "W_Legs":1.0
+        }
 
         self.D_min = np.inf
         self.Tau_trg = np.inf
@@ -95,7 +104,7 @@ class SAR_Env_2D(gym.Env):
         ######################
 
         ## SPECIAL CONFIGS
-        self.state = (0.5,0.5,np.radians(45),0,0,0)
+        self.state = (0.5,0.5,np.radians(0),0,0,0)
         self.V_mag = np.nan
         self.Flight_Angle = np.nan
         self.MomentCutoff = False
@@ -621,7 +630,7 @@ class SAR_Env_2D(gym.Env):
             R_Legs = R_Legs*0.5
 
         self.reward_vals = [R_dist,R_tau_cr,R_Rot,R_phi_rel,R_LT,R_GM,R_Legs]
-        R = R_dist*0.1 + R_tau_cr*0.1 + R_Rot*0.4 + R_phi_rel*0.3*0 + R_LT*0.6*0 + R_GM*0.6*0 + R_Legs*1.0
+        R = np.dot(self.reward_vals,list(self.reward_weights.values()))
         print(f"Post_Trg: Reward: {R:.3f} \t D: {self.D_min:.3f}")
 
         return R
@@ -1199,7 +1208,7 @@ class SAR_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(My_range=[-8e-3,+8e-3],V_mag_range=[2,2],Flight_Angle_range=[135,135],Plane_Angle_range=[180,180])
+    env = SAR_Env_2D(My_range=[-8e-3,+8e-3],V_mag_range=[2,2],Flight_Angle_range=[45,45],Plane_Angle_range=[0,0])
     env.RENDER = True
 
     for ep in range(50):
