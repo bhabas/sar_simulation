@@ -9,18 +9,10 @@ class InteractivePlot:
         self.init_amplitude = 5
         self.init_frequency = 3
 
-        ## SAR DIMENSIONAL CONSTRAINTS
-        self.gamma = 45             # Leg Angle [m]
-        self.L = 150.0e-3           # Leg Length [m]
-        self.PD = 75e-3             # Prop Distance from COM [m]
-
         # Create the figure and the line that we will manipulate
         self.fig, self.ax = plt.subplots()
-        self.line, = self.ax.plot([0,0],[1,1], lw=2)
+        self.line, = self.ax.plot(self.t, self.f(self.t, self.init_amplitude, self.init_frequency), lw=2)
         self.ax.set_xlabel('Time [s]')
-        self.ax.set_xlim(-1,1)
-        self.ax.set_ylim(-1,1)
-        self.ax.hlines(0,-5,5)
 
         # adjust the main plot to make room for the sliders
         self.fig.subplots_adjust(left=0.25, bottom=0.25)
@@ -29,7 +21,7 @@ class InteractivePlot:
         axfreq = self.fig.add_axes([0.25, 0.1, 0.65, 0.03])
         self.freq_slider = Slider(
             ax=axfreq,
-            label='Leg Length [m]',
+            label='Frequency [Hz]',
             valmin=0.1,
             valmax=30,
             valinit=self.init_frequency,
@@ -40,9 +32,9 @@ class InteractivePlot:
         axamp = self.fig.add_axes([0.1, 0.25, 0.0225, 0.63])
         self.amp_slider = Slider(
             ax=axamp,
-            label="Gamma [deg]",
+            label="Amplitude",
             valmin=0,
-            valmax=90,
+            valmax=10,
             valinit=self.init_amplitude,
             valstep=0.1,
             orientation="vertical"
@@ -61,7 +53,7 @@ class InteractivePlot:
         return amplitude * np.sin(2 * np.pi * frequency * t)
 
     def update(self, val):
-        self.line.set_data([0,0.5],[0,0.5])
+        self.line.set_ydata(self.f(self.t, self.amp_slider.val, self.freq_slider.val))
         self.fig.canvas.draw_idle()
 
     def reset(self, event):
@@ -71,8 +63,6 @@ class InteractivePlot:
     def show(self):
         plt.show()
 
-
-if __name__ == '__main__':
-    # Create an instance of the interactive plot and show it
-    plot = InteractivePlot()
-    plot.show()
+# Create an instance of the interactive plot and show it
+plot = InteractivePlot()
+plot.show()
