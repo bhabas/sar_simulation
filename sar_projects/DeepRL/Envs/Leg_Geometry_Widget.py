@@ -30,36 +30,58 @@ class InteractivePlot:
         
 
         # Create the figure and the line that we will manipulate
-        self.fig, self.ax = plt.subplots()
-        self.leg1, = self.ax.plot([0,0],[0,0],'r', lw=2)
-        self.leg2, = self.ax.plot([0,0],[0,0],'k', lw=2)
-        self.prop1, = self.ax.plot([0,0],[0,0],'k', lw=2)
-        self.prop2, = self.ax.plot([0,0],[0,0],'k', lw=2)
+        self.fig, (self.ax1, self.ax2) = plt.subplots(1, 2, figsize=(12, 6))  # Adjust the figsize as needed
 
 
-        self._get_pose()
-        CG,L1,L2,Prop1,Prop2 = self._get_pose()
+        ## PLOT 1
+        self.leg1, = self.ax1.plot([0,0],[0,0],'r', lw=2)
+        self.leg2, = self.ax1.plot([0,0],[0,0],'k', lw=2)
+        self.prop1, = self.ax1.plot([0,0],[0,0],'k', lw=2)
+        self.prop2, = self.ax1.plot([0,0],[0,0],'k', lw=2)       
+
+
+        CG,L1,L2,Prop1,Prop2 = self._get_pose(0,0,0)
         self.leg1.set_data([CG[0],L1[0]],[CG[1],L1[1]])
         self.leg2.set_data([CG[0],L2[0]],[CG[1],L2[1]])
         self.prop1.set_data([CG[0],Prop1[0]],[CG[1],Prop1[1]])
         self.prop2.set_data([CG[0],Prop2[0]],[CG[1],Prop2[1]])
         
+        self.ax1.set_xlim(-0.5,0.5)
+        self.ax1.set_ylim(-0.5,0.5)
+        self.ax1.hlines(0,-5,5)
+        self.ax1.set_aspect('equal', 'box')
+
+        ## PLOT 2
+
+        self.leg1_ax2, = self.ax2.plot([0,0],[0,0],'r', lw=2)
+        self.leg2_ax2, = self.ax2.plot([0,0],[0,0],'k', lw=2)
+        self.prop1_ax2, = self.ax2.plot([0,0],[0,0],'k', lw=2)
+        self.prop2_ax2, = self.ax2.plot([0,0],[0,0],'k', lw=2)       
 
 
-        self.ax.set_xlabel('Time [s]')
-        self.ax.set_xlim(-0.5,0.5)
-        self.ax.set_ylim(-0.5,0.5)
-        self.ax.hlines(0,-5,5)
-        self.ax.set_aspect('equal', 'box')
+        CG,L1,L2,Prop1,Prop2 = self._get_pose(0,0,0)
+        self.leg1_ax2.set_data([CG[0],L1[0]],[CG[1],L1[1]])
+        self.leg2_ax2.set_data([CG[0],L2[0]],[CG[1],L2[1]])
+        self.prop1_ax2.set_data([CG[0],Prop1[0]],[CG[1],Prop1[1]])
+        self.prop2_ax2.set_data([CG[0],Prop2[0]],[CG[1],Prop2[1]])
+        
+        self.ax2.set_xlim(-0.5,0.5)
+        self.ax2.set_ylim(-0.5,0.5)
+        self.ax2.hlines(0,-5,5)
+        self.ax2.set_aspect('equal', 'box')
 
         # adjust the main plot to make room for the sliders
-        self.fig.subplots_adjust(left=0.25, bottom=0.25)
+        self.fig.subplots_adjust(left=0.1, right=0.9, bottom=0.25, wspace=0.2)  # wspace controls the space between subplots
+
+        # Adjust the existing sliders
+        ax_LP = self.fig.add_axes([0.1, 0.1, 0.35, 0.03])
+        ax_gamma = self.fig.add_axes([0.05, 0.25, 0.0225, 0.63])
+        ax_phi = self.fig.add_axes([0.58, 0.1, 0.35, 0.03])
 
         # Make a horizontal slider to control the frequency.
-        ax_LP = self.fig.add_axes([0.25, 0.1, 0.65, 0.03])
         self.LP_Ratio_Slider = Slider(
             ax=ax_LP,
-            label='Leg Prop Ratio [m]',
+            label='Leg Prop \n Ratio [m]',
             valmin=0.1,
             valmax=3,
             valinit=1,
@@ -67,7 +89,6 @@ class InteractivePlot:
         )
 
         # Make a vertically oriented slider to control the amplitude
-        ax_gamma = self.fig.add_axes([0.1, 0.25, 0.0225, 0.63])
         self.gamma_slider = Slider(
             ax=ax_gamma,
             label="Gamma [deg]",
@@ -78,9 +99,21 @@ class InteractivePlot:
             orientation="vertical"
         )
 
+        # Step 3: Add the new slider for the second plot
+        self.phi_slider = Slider(
+            ax=ax_phi,
+            label='Phi [deg]',
+            valmin=-180,
+            valmax=0,  # adjust as needed
+            valinit=-50,  # adjust as needed
+            valstep=1
+        )
+
         # register the update function with each slider
         self.LP_Ratio_Slider.on_changed(self.update)
         self.gamma_slider.on_changed(self.update)
+        self.phi_slider.on_changed(self.update2)  # you'd need to define this function
+
 
         # Create a `matplotlib.widgets.Button` to reset the sliders to initial values.
         resetax = self.fig.add_axes([0.8, 0.025, 0.1, 0.04])
@@ -105,19 +138,42 @@ class InteractivePlot:
         vec = np.array([-self.PD,0]) # {e_r1,e_beta1}
         x,z = self.R_BW(vec,self.phi_min)
 
-        self._set_state(x,z,self.phi_min,0,0,0)
         self.params = (self.gamma,self.L,self.PD,0,0,0)
 
 
-        self._get_pose()
-        CG,L1,L2,Prop1,Prop2 = self._get_pose()
+        CG,L1,L2,Prop1,Prop2 = self._get_pose(x,z,self.phi_min)
         self.leg1.set_data([CG[0],L1[0]],[CG[1],L1[1]])
         self.leg2.set_data([CG[0],L2[0]],[CG[1],L2[1]])
         self.prop1.set_data([CG[0],Prop1[0]],[CG[1],Prop1[1]])
         self.prop2.set_data([CG[0],Prop2[0]],[CG[1],Prop2[1]])
 
+        self.phi_slider.set_val(self.phi_min_deg)
+        self.phi_slider.valmax = self.phi_min_deg
+
         self.fig.canvas.draw_idle()
 
+    def update2(self, val):
+
+        self.gamma = np.radians(self.gamma_slider.val)
+        self.L = self.LP_Ratio_Slider.val*self.PD
+        phi = np.radians(self.phi_slider.val)       
+
+        beta = np.arctan2(np.cos(self.gamma - phi),np.sin(self.gamma - phi)) 
+        beta_deg = np.degrees(beta)
+
+        vec  = np.array([-self.L,0])
+        x,z = self.R_C1P(vec,beta)
+
+
+        CG,L1,L2,Prop1,Prop2 = self._get_pose(x,z,phi)
+        self.leg1_ax2.set_data([CG[0],L1[0]],[CG[1],L1[1]])
+        self.leg2_ax2.set_data([CG[0],L2[0]],[CG[1],L2[1]])
+        self.prop1_ax2.set_data([CG[0],Prop1[0]],[CG[1],Prop1[1]])
+        self.prop2_ax2.set_data([CG[0],Prop2[0]],[CG[1],Prop2[1]])
+
+        self.fig.canvas.draw_idle()
+
+        
     def reset(self, event):
         self.LP_Ratio_Slider.reset()
         self.gamma_slider.reset()
@@ -134,10 +190,9 @@ class InteractivePlot:
         self.state = (x,z,phi,vx,vz,dphi)
 
 
-    def _get_pose(self):
+    def _get_pose(self,x,z,phi):
 
         gamma,L,PD,M,Iyy,I_c = self.params
-        x,z,phi,_,_,_ = self._get_state()
 
         ## MODEL CoG
         CG = np.array([x,z])
