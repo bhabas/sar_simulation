@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.widgets import Slider, Button
+from matplotlib.widgets import Slider, Button, CheckButtons
 
 import matplotlib.patches as patches
 
@@ -52,11 +52,12 @@ class InteractivePlot:
         self.ax1.set_aspect('equal', 'box')
 
         ## PLOT 2
-
         self.leg1_ax2, = self.ax2.plot([0,0],[0,0],'r', lw=2)
         self.leg2_ax2, = self.ax2.plot([0,0],[0,0],'k', lw=2)
         self.prop1_ax2, = self.ax2.plot([0,0],[0,0],'k', lw=2)
         self.prop2_ax2, = self.ax2.plot([0,0],[0,0],'k', lw=2)       
+        self.vel_ax2, = self.ax2.plot([0,0],[0,0],c="orange", lw=2)
+        self.grav_ax2, = self.ax2.plot([0,0],[0,0],c="purple", lw=2)
 
 
         CG,L1,L2,Prop1,Prop2 = self._get_pose(0,0,0)
@@ -64,6 +65,9 @@ class InteractivePlot:
         self.leg2_ax2.set_data([CG[0],L2[0]],[CG[1],L2[1]])
         self.prop1_ax2.set_data([CG[0],Prop1[0]],[CG[1],Prop1[1]])
         self.prop2_ax2.set_data([CG[0],Prop2[0]],[CG[1],Prop2[1]])
+        self.vel_vec = False
+        self.grav_vec = False
+
         
         self.ax2.set_xlim(-0.5,0.5)
         self.ax2.set_ylim(-0.5,0.5)
@@ -76,7 +80,9 @@ class InteractivePlot:
         # Adjust the existing sliders
         ax_LP = self.fig.add_axes([0.1, 0.1, 0.35, 0.03])
         ax_gamma = self.fig.add_axes([0.05, 0.25, 0.0225, 0.63])
-        ax_phi = self.fig.add_axes([0.58, 0.1, 0.35, 0.03])
+        ax_phi = self.fig.add_axes([0.58, 0.15, 0.35, 0.03])
+        ax_vel = self.fig.add_axes([0.58, 0.05, 0.35, 0.03])
+
 
         # Make a horizontal slider to control the frequency.
         self.LP_Ratio_Slider = Slider(
@@ -102,23 +108,37 @@ class InteractivePlot:
         # Step 3: Add the new slider for the second plot
         self.phi_slider = Slider(
             ax=ax_phi,
-            label='Phi [deg]',
+            label='Body Angle \n [deg]',
             valmin=-180,
             valmax=0,  # adjust as needed
             valinit=-50,  # adjust as needed
             valstep=1
         )
 
+        # Make a horizontal slider to control the frequency.
+        self.Vel_Slider = Slider(
+            ax=ax_vel,
+            label='Flight Angle \n [deg]',
+            valmin=0,
+            valmax=180,
+            valinit=0,
+            valstep=5
+        )
+
         # register the update function with each slider
         self.LP_Ratio_Slider.on_changed(self.update)
         self.gamma_slider.on_changed(self.update)
-        self.phi_slider.on_changed(self.update2)  # you'd need to define this function
+        self.phi_slider.on_changed(self.update2)
+        self.Vel_Slider.on_changed(self.update2)  
 
 
-        # Create a `matplotlib.widgets.Button` to reset the sliders to initial values.
-        resetax = self.fig.add_axes([0.8, 0.025, 0.1, 0.04])
-        self.button = Button(resetax, 'Reset', hovercolor='0.975')
-        self.button.on_clicked(self.reset)
+        vel_button_ax = self.fig.add_axes([0.1, 0.025, 0.15, 0.04])
+        self.vel_button = Button(vel_button_ax, 'Show Vel Vector', hovercolor='0.975')
+        self.vel_button.on_clicked(self.vel_visibility)
+
+        gravity_button_ax = self.fig.add_axes([0.3, 0.025, 0.15, 0.04])
+        self.gravity_button = Button(gravity_button_ax, 'Show Grav Vector', hovercolor='0.975')
+        self.gravity_button.on_clicked(self.grav_visability)
 
     def update(self, val):
 
@@ -171,12 +191,43 @@ class InteractivePlot:
         self.prop1_ax2.set_data([CG[0],Prop1[0]],[CG[1],Prop1[1]])
         self.prop2_ax2.set_data([CG[0],Prop2[0]],[CG[1],Prop2[1]])
 
+
+        vel_angle = np.radians(self.Vel_Slider.val)
+
+        vel_mag = 0.03
+        if self.vel_vec == True:
+            self.vel_ax2.set_data([CG[0],CG[0] + 0.1*np.cos(vel_angle)],[CG[1],CG[1] + 0.1*np.sin(vel_angle)])
+        else:
+            self.vel_ax2.set_data([None,None],[None,None])
+
+
+        if self.grav_vec == True:
+            self.grav_ax2.set_data([CG[0],CG[0]],[CG[1],CG[1]-0.1])
+        else:
+            self.grav_ax2.set_data([None,None],[None,None])
+
+
+
         self.fig.canvas.draw_idle()
 
-        
-    def reset(self, event):
-        self.LP_Ratio_Slider.reset()
-        self.gamma_slider.reset()
+    def vel_visibility(self,event):
+
+        if self.vel_vec == True:
+            self.vel_vec = False
+        else:
+            self.vel_vec = True
+
+        self.update2(None)
+
+    def grav_visability(self,event):
+
+        if self.grav_vec == True:
+            self.grav_vec = False
+        else:
+            self.grav_vec = True
+
+        self.update2(None)
+
 
     def show(self):
         plt.show()
