@@ -8,15 +8,15 @@ class InteractivePlot:
     def __init__(self):
 
         ## INITIAL VALUES
-        self.gamma = 45             # Leg Angle [m]
-        self.LP_Ratio = 1.0
-        self.Plane_Angle = 45
+        gamma_deg = 45
+        gamma_rad = np.deg2rad(gamma_deg)         
+        Plane_Angle = 45
+        LP_Ratio = 1.0
 
         ## SAR DIMENSIONAL CONSTRAINTS
         self.PD = 75e-3             # Prop Distance from COM [m]
-        self.L = self.LP_Ratio*self.PD
-        self.params = (np.deg2rad(self.gamma),self.L,self.PD,0,0,0)
-        self.state = (0,0,np.radians(0),0,0,0)
+        L = LP_Ratio*self.PD
+        self.params = (gamma_rad,L,self.PD,0,0,0)
 
         ## CONFIGS
         self.vel_vec = False
@@ -44,8 +44,8 @@ class InteractivePlot:
         self.ax_CG_Marker = self.ax_Plot.add_patch(self.CG_Marker)
 
         self.Swing_Arc = patches.Arc(
-            xy=CG,width=self.L*2,
-            height=self.L*2,
+            xy=CG,width=L*2,
+            height=L*2,
             color="tab:gray",
             zorder=9
         )
@@ -60,7 +60,7 @@ class InteractivePlot:
         ## SLIDER AX OBJECTS
         ax_LP_Ratio_Slider = self.fig.add_axes([0.1, 0.1, 0.35, 0.03])
         ax_Gamma_Slider = self.fig.add_axes([0.05, 0.25, 0.0225, 0.63])
-        ax_Phi_Rel_Slider = self.fig.add_axes([0.58, 0.15, 0.35, 0.03])
+        ax_Beta_Slider = self.fig.add_axes([0.58, 0.15, 0.35, 0.03])
         ax_Vel_Slider = self.fig.add_axes([0.58, 0.05, 0.35, 0.03])
         ax_Plane_Angle_Slider = self.fig.add_axes([0.58, 0.25, 0.35, 0.03])
 
@@ -91,7 +91,7 @@ class InteractivePlot:
             label="Gamma [deg]",
             valmin=0,
             valmax=90,
-            valinit=self.gamma,
+            valinit=gamma_deg,
             valstep=1,
             orientation="vertical"
         )
@@ -106,12 +106,12 @@ class InteractivePlot:
         )
 
         # Step 3: Add the new slider for the second plot
-        self.Phi_Rel_Slider = Slider(
-            ax=ax_Phi_Rel_Slider,
-            label='Phi_Rel Angle \n [deg]',
+        self.Beta_Slider = Slider(
+            ax=ax_Beta_Slider,
+            label='Beta \n [deg]',
             valmin=-180,
-            valmax=180,  # adjust as needed
-            valinit=-50,  # adjust as needed
+            valmax=0,  # adjust as needed
+            valinit=0,  # adjust as needed
             valstep=1
         )
 
@@ -128,13 +128,13 @@ class InteractivePlot:
         
 
         ## UPDATE PLOTS
-        self.Plane_Angle_Slider.on_changed(self.Geometry_Update)  
-        self.LP_Ratio_Slider.on_changed(self.Geometry_Update)
-        self.Gamma_Slider.on_changed(self.Geometry_Update)
-        self.Phi_Rel_Slider.on_changed(self.Phi_Update)
-        self.Vel_Slider.on_changed(self.Phi_Update)  
+        self.Plane_Angle_Slider.on_changed(self.Min_Angle_Update)  
+        self.LP_Ratio_Slider.on_changed(self.Min_Angle_Update)
+        self.Gamma_Slider.on_changed(self.Min_Angle_Update)
+        self.Beta_Slider.on_changed(self.Beta_Update)
+        self.Vel_Slider.on_changed(self.Beta_Update)  
 
-    def Geometry_Update(self, val):
+    def Min_Angle_Update(self, val):
         
         ## UPDATE PLANE DRAWING
         vec = np.array([5,0])
@@ -142,60 +142,53 @@ class InteractivePlot:
         self.Plane_Angle_ax.set_data([-vec[0],vec[0]],[-vec[1],vec[1]])
 
         ## UPDATE GAMMA AND LENGTH
-        self.gamma = np.radians(self.Gamma_Slider.val)
-        self.L = self.LP_Ratio_Slider.val*self.PD
-        self.params = (self.gamma,self.L,self.PD,0,0,0)
+        gamma_deg = self.Gamma_Slider.val
+        gamma_rad = np.radians(gamma_deg)
+        L = self.LP_Ratio_Slider.val*self.PD
+        self.params = (gamma_rad,L,self.PD,0,0,0)
         
         ## UPDATE PLANE ANGLE
-        self.Plane_Angle = self.Plane_Angle_Slider.val
-        self.Plane_Angle_rad = np.radians(self.Plane_Angle)
+        Plane_Angle_deg = self.Plane_Angle_Slider.val
+        Plane_Angle_rad = np.radians(Plane_Angle_deg)
 
-        ## SOLVE FOR MINIMUM RELATIVE PHI IMPACT ANGLE VIA GEOMETRIC CONSTRAINTS
-        a = np.sqrt(self.PD**2 + self.L**2 - 2*self.PD*self.L*np.cos(np.pi/2-self.gamma))
-        self.beta_min = np.arccos((self.L**2 + a**2 - self.PD**2)/(2*a*self.L))
-        self.beta_min = -self.beta_min # Swap sign to match coordinate notation
+        ## SOLVE FOR MINIMUM BETA ANGLE VIA GEOMETRIC CONSTRAINTS
+        a = np.sqrt(self.PD**2 + L**2 - 2*self.PD*L*np.cos(np.pi/2-gamma_rad))
+        self.Beta_min_rad = np.arccos((L**2 + a**2 - self.PD**2)/(2*a*L))
+        self.Beta_min_rad = -self.Beta_min_rad # Swap sign to match coordinate notation
+        self.Beta_min_deg = np.rad2deg(self.Beta_min_rad)
 
-        self.phi_rel_min = np.arctan2(-np.cos(self.beta_min + self.gamma), \
-                                       np.sin(self.beta_min + self.gamma))
-        self.phi_rel_min_deg = np.rad2deg(self.phi_rel_min)
+        self.Beta_Slider.set_val(self.Beta_min_deg)
+        self.Beta_Slider.valmax = self.Beta_min_deg
+        self.Beta_Slider.valmin = -(90 + gamma_deg)
 
-        ## MINIMUM BETA ANGLE
-        beta_min = np.arctan2(np.cos(self.gamma - self.phi_rel_min),
-                              np.sin(self.gamma-self.phi_rel_min))
-        beta_min_deg = np.rad2deg(beta_min)
-
-
-        ## UPDATE PHI SLIDER TO NEW MIN VALUE
-        self.Phi_Rel_Slider.set_val(self.phi_rel_min_deg)
-        # self.Phi_Rel_Slider.valmax = self.phi_rel_min_deg
-
-
-        self.phi = self.phi_rel_min + self.Plane_Angle_rad
-        self.phi_deg = np.radians(self.phi)
-    
 
         ## DRAW ELEMENTS
         self.fig.canvas.draw_idle()
 
-    def Phi_Update(self, val):
+    def Beta_Update(self, val):
 
-        ## READ GAMMA, LENGTH, AND PHI VALUES
-        self.gamma = np.radians(self.Gamma_Slider.val)
-        self.L = self.LP_Ratio_Slider.val*self.PD
-        self.Plane_Angle = self.Plane_Angle_Slider.val
-        self.Plane_Angle_rad = np.radians(self.Plane_Angle)
-        phi = np.radians(self.Phi_Rel_Slider.val)       
+        ## READ GAMMA, LENGTH
+        L = self.LP_Ratio_Slider.val*self.PD
+        gamma_deg = self.Gamma_Slider.val
+        gamma_rad = np.radians(gamma_deg)
+
+        Plane_Angle_deg = self.Plane_Angle_Slider.val
+        Plane_Angle_rad = np.radians(Plane_Angle_deg)
 
         ## UPDATE BETA VALUE
-        Beta_1 = np.arctan2(np.cos(self.gamma - phi),np.sin(self.gamma - phi)) 
-        Beta_1_deg = np.degrees(Beta_1)
+        Beta_deg = self.Beta_Slider.val
+        Beta_rad = np.radians(Beta_deg)
+
+        phi_rad = np.arctan2(-np.cos(Beta_rad + gamma_rad + Plane_Angle_rad), \
+                          np.sin(Beta_rad + gamma_rad + Plane_Angle_rad))
+        phi_deg = np.rad2deg(phi_rad)
 
         ## UPDATE BODY POSITION
-        r_B_C1 = np.array([-self.L,0])                                      # {e_r1,e_beta1}
-        r_B_C1 = self.R_PW(self.R_C1P(r_B_C1,Beta_1),self.Plane_Angle_rad)  # {X_W,Z_W}
+        r_B_C1 = np.array([-L,0])                                       # {e_r1,e_beta1}
+        r_B_C1 = self.R_PW(self.R_C1P(r_B_C1,Beta_rad),Plane_Angle_rad) # {X_W,Z_W}
         r_B_O = r_B_C1   
 
-        CG,L1,L2,Prop1,Prop2 = self._get_pose(r_B_O[0],r_B_O[1],phi)
+        CG,L1,L2,Prop1,Prop2 = self._get_pose(r_B_O[0],r_B_O[1],phi_rad)
 
         ## UPDATE BODY DRAWING
         self.leg1_ax.set_data([CG[0],L1[0]],[CG[1],L1[1]])
@@ -205,10 +198,10 @@ class InteractivePlot:
         self.CG_Marker.set_center(CG)
 
         ## UPDATE ARC VALUES
-        self.Swing_Arc.width = self.Swing_Arc.height = self.L*2
-        self.Swing_Arc.angle = 180
-        self.Swing_Arc.theta1 = np.abs(np.degrees(self.beta_min))
-        self.Swing_Arc.theta2 = 90 + np.degrees(self.gamma)
+        self.Swing_Arc.width = self.Swing_Arc.height = L*2
+        self.Swing_Arc.angle = 180-Plane_Angle_deg
+        self.Swing_Arc.theta1 = np.abs(self.Beta_min_deg)
+        self.Swing_Arc.theta2 = 90 + gamma_deg
 
 
         ## UPDATE VEL VECTOR
@@ -234,7 +227,7 @@ class InteractivePlot:
         else:
             self.vel_vec = True
 
-        self.Phi_Update(None)
+        self.Beta_Update(None)
 
     def Grav_Visible(self,event):
 
@@ -243,19 +236,11 @@ class InteractivePlot:
         else:
             self.grav_vec = True
 
-        self.Phi_Update(None)
+        self.Beta_Update(None)
 
 
     def show(self):
         plt.show()
-
-    def _get_state(self):
-
-        return self.state
-    
-    def _set_state(self,x,z,phi,vx,vz,dphi):
-
-        self.state = (x,z,phi,vx,vz,dphi)
 
     def _get_pose(self,x,z,phi):
 
