@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.widgets import Slider, Button, CheckButtons
+from matplotlib.widgets import Slider, Button, TextBox
 
 import matplotlib.patches as patches
 
@@ -8,10 +8,11 @@ class InteractivePlot:
     def __init__(self):
 
         ## INITIAL VALUES
-        gamma_deg = 45
+        gamma_deg = 20
         gamma_rad = np.deg2rad(gamma_deg)         
-        Plane_Angle = 45
-        LP_Ratio = 1.0
+        self.Contact_Leg = 1
+        LP_Ratio = 2.0
+        Plane_Angle_deg = 0
 
         ## SAR DIMENSIONAL CONSTRAINTS
         self.PD = 75e-3             # Prop Distance from COM [m]
@@ -34,7 +35,7 @@ class InteractivePlot:
         self.prop1_ax, = self.ax_Plot.plot([CG[0],Prop1[0]],[CG[1],Prop1[1]],'k', lw=2)
         self.prop2_ax, = self.ax_Plot.plot([CG[0],Prop2[0]],[CG[1],Prop2[1]],'k', lw=2)
 
-        self.vel_ax, = self.ax_Plot.plot([0,0],[0,0],c="tab:orange", lw=2)
+        self.vel_ax, = self.ax_Plot.plot([0,0],[0,0],c="tab:green", lw=2)
         self.grav_ax, = self.ax_Plot.plot([0,0],[0,0],c="tab:purple", lw=2)
 
         self.Plane_Angle_ax, = self.ax_Plot.plot([-5,5],[0,0],c="k",lw=1,zorder=1)
@@ -47,7 +48,8 @@ class InteractivePlot:
             xy=CG,width=L*2,
             height=L*2,
             color="tab:gray",
-            zorder=9
+            zorder=2,
+            linestyle="--"
         )
         self.ax_Swing_Arc = self.ax_Plot.add_patch(self.Swing_Arc)
 
@@ -66,23 +68,26 @@ class InteractivePlot:
 
 
         ## BUTTON AX OBJECTS
-        ax_Vel_Button = self.fig.add_axes([0.1, 0.025, 0.15, 0.04])
+        ax_Vel_Button = self.fig.add_axes([0.8, 0.6, 0.15, 0.04])
         self.vel_button = Button(ax_Vel_Button, 'Show Vel Vector', hovercolor='0.975')
         self.vel_button.on_clicked(self.Vel_Visible)
 
-        ax_Gravity_Button = self.fig.add_axes([0.3, 0.025, 0.15, 0.04])
+        ax_Gravity_Button = self.fig.add_axes([0.8, 0.5, 0.15, 0.04])
         self.gravity_button = Button(ax_Gravity_Button, 'Show Grav Vector', hovercolor='0.975')
         self.gravity_button.on_clicked(self.Grav_Visible)
 
+        ax_Leg_Button = self.fig.add_axes([0.8, 0.4, 0.15, 0.04])
+        self.leg_button = Button(ax_Leg_Button, 'Switch Leg', hovercolor='0.975')
+        self.leg_button.on_clicked(self.Switch_Leg)
 
         # Make a horizontal slider to control the frequency.
         self.LP_Ratio_Slider = Slider(
             ax=ax_LP_Ratio_Slider,
             label='Leg Prop \n Ratio [m]',
             valmin=0.1,
-            valmax=3,
-            valinit=1,
-            valstep=0.01
+            valmax=4,
+            valinit=LP_Ratio,
+            valstep=0.1
         )
 
         # Make a vertically oriented slider to control the amplitude
@@ -100,29 +105,27 @@ class InteractivePlot:
             ax=ax_Plane_Angle_Slider,
             label='Plane Angle [deg]',
             valmin=0,
-            valmax=180,
-            valinit=0,
-            valstep=10
+            valmax=270,
+            valinit=Plane_Angle_deg,
+            valstep=1
         )
 
-        # Step 3: Add the new slider for the second plot
         self.Beta_Slider = Slider(
             ax=ax_Beta_Slider,
             label='Beta \n [deg]',
-            valmin=-180,
+            valmin=-360,
             valmax=0,  # adjust as needed
             valinit=0,  # adjust as needed
             valstep=1
         )
 
-        # Make a horizontal slider to control the frequency.
         self.Vel_Slider = Slider(
             ax=ax_Vel_Slider,
             label='Flight Angle \n [deg]',
             valmin=-180,
             valmax=180,
             valinit=0,
-            valstep=5
+            valstep=1
         )
 
         
@@ -132,7 +135,9 @@ class InteractivePlot:
         self.LP_Ratio_Slider.on_changed(self.Min_Angle_Update)
         self.Gamma_Slider.on_changed(self.Min_Angle_Update)
         self.Beta_Slider.on_changed(self.Beta_Update)
-        self.Vel_Slider.on_changed(self.Beta_Update)  
+        self.Vel_Slider.on_changed(self.Beta_Update) 
+
+        self.Min_Angle_Update(None) 
 
     def Min_Angle_Update(self, val):
         
@@ -154,12 +159,23 @@ class InteractivePlot:
         ## SOLVE FOR MINIMUM BETA ANGLE VIA GEOMETRIC CONSTRAINTS
         a = np.sqrt(self.PD**2 + L**2 - 2*self.PD*L*np.cos(np.pi/2-gamma_rad))
         self.Beta_min_rad = np.arccos((L**2 + a**2 - self.PD**2)/(2*a*L))
-        self.Beta_min_rad = -self.Beta_min_rad # Swap sign to match coordinate notation
-        self.Beta_min_deg = np.rad2deg(self.Beta_min_rad)
+        
 
-        self.Beta_Slider.set_val(self.Beta_min_deg)
-        self.Beta_Slider.valmax = self.Beta_min_deg
-        self.Beta_Slider.valmin = -(90 + gamma_deg)
+        if self.Contact_Leg == 1:
+            self.Beta_min_rad = -self.Beta_min_rad # Swap sign to match coordinate notation
+            self.Beta_min_deg = np.rad2deg(self.Beta_min_rad)
+
+            self.Beta_Slider.valmax = self.Beta_min_deg
+            self.Beta_Slider.valmin = -(90 + gamma_deg)
+
+        elif self.Contact_Leg == 2:
+            self.Beta_min_rad = -(np.pi - self.Beta_min_rad)
+            self.Beta_min_deg = np.rad2deg(self.Beta_min_rad)
+
+            self.Beta_Slider.valmax = -(90 - gamma_deg)
+            self.Beta_Slider.valmin = self.Beta_min_deg
+
+        self.Beta_Slider.set_val(self.Beta_min_deg)        
 
 
         ## DRAW ELEMENTS
@@ -179,14 +195,38 @@ class InteractivePlot:
         Beta_deg = self.Beta_Slider.val
         Beta_rad = np.radians(Beta_deg)
 
-        phi_rad = np.arctan2(-np.cos(Beta_rad + gamma_rad + Plane_Angle_rad), \
-                          np.sin(Beta_rad + gamma_rad + Plane_Angle_rad))
-        phi_deg = np.rad2deg(phi_rad)
+        if self.Contact_Leg == 1:
+            phi_rad = np.arctan2(-np.cos(Beta_rad + gamma_rad + Plane_Angle_rad), \
+                                np.sin(Beta_rad + gamma_rad + Plane_Angle_rad))
+            phi_deg = np.rad2deg(phi_rad)
 
-        ## UPDATE BODY POSITION
-        r_B_C1 = np.array([-L,0])                                       # {e_r1,e_beta1}
-        r_B_C1 = self.R_PW(self.R_C1P(r_B_C1,Beta_rad),Plane_Angle_rad) # {X_W,Z_W}
-        r_B_O = r_B_C1   
+            ## UPDATE BODY POSITION
+            r_B_C1 = np.array([-L,0])                                       # {e_r1,e_beta1}
+            r_B_C1 = self.R_PW(self.R_C1P(r_B_C1,Beta_rad),Plane_Angle_rad) # {X_W,Z_W}
+            r_B_O = r_B_C1   
+
+
+            ## UPDATE ARC VALUES
+            self.Swing_Arc.width = self.Swing_Arc.height = L*2
+            self.Swing_Arc.angle = 180-Plane_Angle_deg
+            self.Swing_Arc.theta1 = np.abs(self.Beta_min_deg)
+            self.Swing_Arc.theta2 = 90 + gamma_deg
+
+        elif self.Contact_Leg == 2:
+
+            phi_rad = np.arctan2(-np.cos(Beta_rad - gamma_rad + Plane_Angle_rad), \
+                              np.sin(Beta_rad - gamma_rad + Plane_Angle_rad))
+            phi_deg = np.rad2deg(phi_rad)
+
+            r_B_C2 = np.array([-L,0])                                       # {e_r1,e_beta1}
+            r_B_C2 = self.R_PW(self.R_C2P(r_B_C2,Beta_rad),Plane_Angle_rad) # {X_W,Z_W}
+            r_B_O = r_B_C2
+
+            self.Swing_Arc.width = self.Swing_Arc.height = L*2
+            self.Swing_Arc.angle = 180-Plane_Angle_deg
+            self.Swing_Arc.theta1 = 90 - gamma_deg
+            self.Swing_Arc.theta2 = np.abs(self.Beta_min_deg)
+        
 
         CG,L1,L2,Prop1,Prop2 = self._get_pose(r_B_O[0],r_B_O[1],phi_rad)
 
@@ -197,11 +237,7 @@ class InteractivePlot:
         self.prop2_ax.set_data([CG[0],Prop2[0]],[CG[1],Prop2[1]])
         self.CG_Marker.set_center(CG)
 
-        ## UPDATE ARC VALUES
-        self.Swing_Arc.width = self.Swing_Arc.height = L*2
-        self.Swing_Arc.angle = 180-Plane_Angle_deg
-        self.Swing_Arc.theta1 = np.abs(self.Beta_min_deg)
-        self.Swing_Arc.theta2 = 90 + gamma_deg
+        
 
 
         ## UPDATE VEL VECTOR
@@ -237,6 +273,15 @@ class InteractivePlot:
             self.grav_vec = True
 
         self.Beta_Update(None)
+
+    def Switch_Leg(self,event):
+
+        if self.Contact_Leg == 1:
+            self.Contact_Leg = 2
+        else:
+            self.Contact_Leg = 1
+
+        self.Min_Angle_Update(None)
 
 
     def show(self):
