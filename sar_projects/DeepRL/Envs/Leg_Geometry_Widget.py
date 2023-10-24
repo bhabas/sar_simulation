@@ -14,79 +14,66 @@ class InteractivePlot:
         ## SAR DIMENSIONAL CONSTRAINTS
         self.PD = 75e-3             # Prop Distance from COM [m]
         self.L = self.LP_Ratio*self.PD
-        self.M = 35.0e-3            # Body Mass [kg]
-
-        self.Ixx = 15.8e-6          # Body Moment of Inertia [kg*m^2]
-        self.Iyy = 17.0e-6          # Body Moment of Inertia [kg*m^2]
-        self.Izz = 31.2e-6          # Body Moment of Inertia [kg*m^2]
-
-        I_c = self.Iyy + self.M*self.L**2
-        self.params = (np.deg2rad(self.gamma),self.L,self.PD,self.M,self.Iyy,I_c)
-
-
-        ## SPECIAL CONFIGS
+        self.params = (np.deg2rad(self.gamma),self.L,self.PD,0,0,0)
         self.state = (0,0,np.radians(0),0,0,0)
 
-        
-
-        # Create the figure and the line that we will manipulate
-        self.fig, (self.ax1, self.ax2) = plt.subplots(1, 2, figsize=(12, 6))  # Adjust the figsize as needed
-
-
-        ## PLOT 1
-        self.leg1, = self.ax1.plot([0,0],[0,0],'r', lw=2)
-        self.leg2, = self.ax1.plot([0,0],[0,0],'k', lw=2)
-        self.prop1, = self.ax1.plot([0,0],[0,0],'k', lw=2)
-        self.prop2, = self.ax1.plot([0,0],[0,0],'k', lw=2)       
-
-
-        CG,L1,L2,Prop1,Prop2 = self._get_pose(0,0,0)
-        self.leg1.set_data([CG[0],L1[0]],[CG[1],L1[1]])
-        self.leg2.set_data([CG[0],L2[0]],[CG[1],L2[1]])
-        self.prop1.set_data([CG[0],Prop1[0]],[CG[1],Prop1[1]])
-        self.prop2.set_data([CG[0],Prop2[0]],[CG[1],Prop2[1]])
-        
-        self.ax1.set_xlim(-0.5,0.5)
-        self.ax1.set_ylim(-0.5,0.5)
-        self.ax1.hlines(0,-5,5)
-        self.ax1.set_aspect('equal', 'box')
-
-        ## PLOT 2
-        self.leg1_ax2, = self.ax2.plot([0,0],[0,0],'r', lw=2)
-        self.leg2_ax2, = self.ax2.plot([0,0],[0,0],'k', lw=2)
-        self.prop1_ax2, = self.ax2.plot([0,0],[0,0],'k', lw=2)
-        self.prop2_ax2, = self.ax2.plot([0,0],[0,0],'k', lw=2)       
-        self.vel_ax2, = self.ax2.plot([0,0],[0,0],c="orange", lw=2)
-        self.grav_ax2, = self.ax2.plot([0,0],[0,0],c="purple", lw=2)
-
-
-        CG,L1,L2,Prop1,Prop2 = self._get_pose(0,0,0)
-        self.leg1_ax2.set_data([CG[0],L1[0]],[CG[1],L1[1]])
-        self.leg2_ax2.set_data([CG[0],L2[0]],[CG[1],L2[1]])
-        self.prop1_ax2.set_data([CG[0],Prop1[0]],[CG[1],Prop1[1]])
-        self.prop2_ax2.set_data([CG[0],Prop2[0]],[CG[1],Prop2[1]])
+        ## CONFIGS
         self.vel_vec = False
         self.grav_vec = False
 
-        
-        self.ax2.set_xlim(-0.5,0.5)
-        self.ax2.set_ylim(-0.5,0.5)
-        self.ax2.hlines(0,-5,5)
-        self.ax2.set_aspect('equal', 'box')
 
-        # adjust the main plot to make room for the sliders
-        self.fig.subplots_adjust(left=0.1, right=0.9, bottom=0.25, wspace=0.2)  # wspace controls the space between subplots
+        self.fig = plt.figure(figsize=(12,6))
+        self.ax_Plot = self.fig.add_subplot(111)
+        self.fig.subplots_adjust(left=0,right=0.57,bottom=0.25)
 
-        # Adjust the existing sliders
-        ax_LP = self.fig.add_axes([0.1, 0.1, 0.35, 0.03])
-        ax_gamma = self.fig.add_axes([0.05, 0.25, 0.0225, 0.63])
-        ax_phi = self.fig.add_axes([0.58, 0.15, 0.35, 0.03])
-        ax_vel = self.fig.add_axes([0.58, 0.05, 0.35, 0.03])
+        ## QUADROTOR PLOT 
+        CG,L1,L2,Prop1,Prop2 = self._get_pose(0,0,0)
+        self.leg1_ax, = self.ax_Plot.plot([CG[0],L1[0]],[CG[1],L1[1]],'r', lw=2)
+        self.leg2_ax, = self.ax_Plot.plot([CG[0],L2[0]],[CG[1],L2[1]],'k', lw=2)
+        self.prop1_ax, = self.ax_Plot.plot([CG[0],Prop1[0]],[CG[1],Prop1[1]],'k', lw=2)
+        self.prop2_ax, = self.ax_Plot.plot([CG[0],Prop2[0]],[CG[1],Prop2[1]],'k', lw=2)
+
+        self.vel_ax, = self.ax_Plot.plot([0,0],[0,0],c="tab:orange", lw=2)
+        self.grav_ax, = self.ax_Plot.plot([0,0],[0,0],c="tab:purple", lw=2)
+
+        ## INITIAL DATA
+        self.CG_Marker = patches.Circle(CG,radius=0.01,fc='tab:blue',zorder=10)
+        self.ax_CG_Marker = self.ax_Plot.add_patch(self.CG_Marker)
+
+        self.Swing_Arc = patches.Arc(
+            xy=CG,width=self.L*2,
+            height=self.L*2,
+            color="tab:gray",
+            zorder=9
+        )
+        self.ax_Swing_Arc = self.ax_Plot.add_patch(self.Swing_Arc)
+
+
+        self.ax_Plot.set_xlim(-0.5,0.5)
+        self.ax_Plot.set_ylim(-0.5,0.5)
+        self.ax_Plot.hlines(0,-5,5)
+        self.ax_Plot.set_aspect('equal', 'box')
+
+
+        ## SLIDER AX OBJECTS
+        ax_LP_Ratio_Slider = self.fig.add_axes([0.1, 0.1, 0.35, 0.03])
+        ax_Gamma_Slider = self.fig.add_axes([0.05, 0.25, 0.0225, 0.63])
+        ax_Phi_Slider = self.fig.add_axes([0.58, 0.15, 0.35, 0.03])
+        ax_Vel_Slider = self.fig.add_axes([0.58, 0.05, 0.35, 0.03])
+
+        ## BUTTON AX OBJECTS
+        ax_Vel_Button = self.fig.add_axes([0.1, 0.025, 0.15, 0.04])
+        self.vel_button = Button(ax_Vel_Button, 'Show Vel Vector', hovercolor='0.975')
+        self.vel_button.on_clicked(self.Vel_Visible)
+
+        ax_Gravity_Button = self.fig.add_axes([0.3, 0.025, 0.15, 0.04])
+        self.gravity_button = Button(ax_Gravity_Button, 'Show Grav Vector', hovercolor='0.975')
+        self.gravity_button.on_clicked(self.Grav_Visible)
 
 
         # Make a horizontal slider to control the frequency.
         self.LP_Ratio_Slider = Slider(
-            ax=ax_LP,
+            ax=ax_LP_Ratio_Slider,
             label='Leg Prop \n Ratio [m]',
             valmin=0.1,
             valmax=3,
@@ -95,8 +82,8 @@ class InteractivePlot:
         )
 
         # Make a vertically oriented slider to control the amplitude
-        self.gamma_slider = Slider(
-            ax=ax_gamma,
+        self.Gamma_Slider = Slider(
+            ax=ax_Gamma_Slider,
             label="Gamma [deg]",
             valmin=0,
             valmax=90,
@@ -106,8 +93,8 @@ class InteractivePlot:
         )
 
         # Step 3: Add the new slider for the second plot
-        self.phi_slider = Slider(
-            ax=ax_phi,
+        self.Phi_Slider = Slider(
+            ax=ax_Phi_Slider,
             label='Body Angle \n [deg]',
             valmin=-180,
             valmax=0,  # adjust as needed
@@ -117,116 +104,111 @@ class InteractivePlot:
 
         # Make a horizontal slider to control the frequency.
         self.Vel_Slider = Slider(
-            ax=ax_vel,
+            ax=ax_Vel_Slider,
             label='Flight Angle \n [deg]',
             valmin=0,
-            valmax=180,
+            valmax=360,
             valinit=0,
             valstep=5
         )
 
         # register the update function with each slider
-        self.LP_Ratio_Slider.on_changed(self.update)
-        self.gamma_slider.on_changed(self.update)
-        self.phi_slider.on_changed(self.update2)
-        self.Vel_Slider.on_changed(self.update2)  
+        self.LP_Ratio_Slider.on_changed(self.Geometry_Update)
+        self.Gamma_Slider.on_changed(self.Geometry_Update)
+        self.Phi_Slider.on_changed(self.Phi_Update)
+        self.Vel_Slider.on_changed(self.Phi_Update)  
 
 
-        vel_button_ax = self.fig.add_axes([0.1, 0.025, 0.15, 0.04])
-        self.vel_button = Button(vel_button_ax, 'Show Vel Vector', hovercolor='0.975')
-        self.vel_button.on_clicked(self.vel_visibility)
 
-        gravity_button_ax = self.fig.add_axes([0.3, 0.025, 0.15, 0.04])
-        self.gravity_button = Button(gravity_button_ax, 'Show Grav Vector', hovercolor='0.975')
-        self.gravity_button.on_clicked(self.grav_visability)
+    def Geometry_Update(self, val):
 
-    def update(self, val):
-
-        self.gamma = np.radians(self.gamma_slider.val)
+        ## UPDATE GAMMA AND LENGTH
+        self.gamma = np.radians(self.Gamma_Slider.val)
         self.L = self.LP_Ratio_Slider.val*self.PD
+        self.params = (self.gamma,self.L,self.PD,0,0,0)
 
         ## SOLVE FOR MINIMUM RELATIVE PHI IMPACT ANGLE VIA GEOMETRIC CONSTRAINTS
         a = np.sqrt(self.PD**2 + self.L**2 - 2*self.PD*self.L*np.cos(np.pi/2-self.gamma))
-        beta_min = np.arccos((self.L**2 + a**2 - self.PD**2)/(2*a*self.L))
-        beta_min = -beta_min # Swap sign to match coordinate notation
-        self.phi_min = np.arctan2(-np.cos(beta_min + self.gamma), \
-                                              np.sin(beta_min + self.gamma))
+        self.beta_min = np.arccos((self.L**2 + a**2 - self.PD**2)/(2*a*self.L))
+        self.beta_min = -self.beta_min # Swap sign to match coordinate notation
+        self.phi_min = np.arctan2(-np.cos(self.beta_min + self.gamma), \
+                                              np.sin(self.beta_min + self.gamma))
         self.phi_min_deg = np.rad2deg(self.phi_min)
 
         beta = np.arctan2(np.cos(self.gamma - self.phi_min),np.sin(self.gamma-self.phi_min))
         beta_deg = np.rad2deg(beta)
-        vec = np.array([-self.PD,0]) # {e_r1,e_beta1}
-        x,z = self.R_BW(vec,self.phi_min)
 
-        self.params = (self.gamma,self.L,self.PD,0,0,0)
+    
+        ## UPDATE PHI SLIDER TO NEW MIN VALUE
+        self.Phi_Slider.set_val(self.phi_min_deg)
+        self.Phi_Slider.valmax = self.phi_min_deg
 
-
-        CG,L1,L2,Prop1,Prop2 = self._get_pose(x,z,self.phi_min)
-        self.leg1.set_data([CG[0],L1[0]],[CG[1],L1[1]])
-        self.leg2.set_data([CG[0],L2[0]],[CG[1],L2[1]])
-        self.prop1.set_data([CG[0],Prop1[0]],[CG[1],Prop1[1]])
-        self.prop2.set_data([CG[0],Prop2[0]],[CG[1],Prop2[1]])
-
-        self.phi_slider.set_val(self.phi_min_deg)
-        self.phi_slider.valmax = self.phi_min_deg
-
+        ## DRAW ELEMENTS
         self.fig.canvas.draw_idle()
 
-    def update2(self, val):
+    def Phi_Update(self, val):
 
-        self.gamma = np.radians(self.gamma_slider.val)
+        ## READ GAMMA, LENGTH, AND PHI VALUES
+        self.gamma = np.radians(self.Gamma_Slider.val)
         self.L = self.LP_Ratio_Slider.val*self.PD
-        phi = np.radians(self.phi_slider.val)       
+        phi = np.radians(self.Phi_Slider.val)       
 
+        ## UPDATE BETA VALUE
         beta = np.arctan2(np.cos(self.gamma - phi),np.sin(self.gamma - phi)) 
         beta_deg = np.degrees(beta)
 
-        vec  = np.array([-self.L,0])
-        x,z = self.R_C1P(vec,beta)
-
-
+        ## UPDATE BODY POSITION
+        r_B_C1  = np.array([-self.L,0]) # {e_r1,e_beta1}
+        x,z = self.R_C1P(r_B_C1,beta)   # {X_W, Z_W}
         CG,L1,L2,Prop1,Prop2 = self._get_pose(x,z,phi)
-        self.leg1_ax2.set_data([CG[0],L1[0]],[CG[1],L1[1]])
-        self.leg2_ax2.set_data([CG[0],L2[0]],[CG[1],L2[1]])
-        self.prop1_ax2.set_data([CG[0],Prop1[0]],[CG[1],Prop1[1]])
-        self.prop2_ax2.set_data([CG[0],Prop2[0]],[CG[1],Prop2[1]])
+
+        ## UPDATE BODY DRAWING
+        self.leg1_ax.set_data([CG[0],L1[0]],[CG[1],L1[1]])
+        self.leg2_ax.set_data([CG[0],L2[0]],[CG[1],L2[1]])
+        self.prop1_ax.set_data([CG[0],Prop1[0]],[CG[1],Prop1[1]])
+        self.prop2_ax.set_data([CG[0],Prop2[0]],[CG[1],Prop2[1]])
+        self.CG_Marker.set_center(CG)
+
+        ## UPDATE ARC VALUES
+        self.Swing_Arc.width = self.Swing_Arc.height = self.L*2
+        self.Swing_Arc.angle = 180
+        self.Swing_Arc.theta1 = np.abs(np.degrees(self.beta_min))
+        self.Swing_Arc.theta2 = 90 + np.degrees(self.gamma)
 
 
+        ## UPDATE VEL VECTOR
         vel_angle = np.radians(self.Vel_Slider.val)
-
-        vel_mag = 0.03
         if self.vel_vec == True:
-            self.vel_ax2.set_data([CG[0],CG[0] + 0.1*np.cos(vel_angle)],[CG[1],CG[1] + 0.1*np.sin(vel_angle)])
+            self.vel_ax.set_data([CG[0],CG[0] + 0.1*np.cos(vel_angle)],[CG[1],CG[1] + 0.1*np.sin(vel_angle)])
         else:
-            self.vel_ax2.set_data([None,None],[None,None])
+            self.vel_ax.set_data([None,None],[None,None])
 
-
+        ## UPDATE GRAVITY VECTOR
         if self.grav_vec == True:
-            self.grav_ax2.set_data([CG[0],CG[0]],[CG[1],CG[1]-0.1])
+            self.grav_ax.set_data([CG[0],CG[0]],[CG[1],CG[1]-0.1])
         else:
-            self.grav_ax2.set_data([None,None],[None,None])
+            self.grav_ax.set_data([None,None],[None,None])
 
-
-
+        ## DRAW ELEMENTS
         self.fig.canvas.draw_idle()
 
-    def vel_visibility(self,event):
+    def Vel_Visible(self,event):
 
         if self.vel_vec == True:
             self.vel_vec = False
         else:
             self.vel_vec = True
 
-        self.update2(None)
+        self.Phi_Update(None)
 
-    def grav_visability(self,event):
+    def Grav_Visible(self,event):
 
         if self.grav_vec == True:
             self.grav_vec = False
         else:
             self.grav_vec = True
 
-        self.update2(None)
+        self.Phi_Update(None)
 
 
     def show(self):
@@ -239,7 +221,6 @@ class InteractivePlot:
     def _set_state(self,x,z,phi,vx,vz,dphi):
 
         self.state = (x,z,phi,vx,vz,dphi)
-
 
     def _get_pose(self,x,z,phi):
 
@@ -264,7 +245,6 @@ class InteractivePlot:
 
         return np.array([CG,L1,L2,Prop1,Prop2])
     
-        
     def R_BW(self,vec,phi):
 
         R_BW = np.array([
