@@ -10,6 +10,7 @@ class InteractivePlot:
         ## INITIAL VALUES
         self.gamma = 45             # Leg Angle [m]
         self.LP_Ratio = 1.0
+        self.Plane_Angle = 45
 
         ## SAR DIMENSIONAL CONSTRAINTS
         self.PD = 75e-3             # Prop Distance from COM [m]
@@ -36,6 +37,8 @@ class InteractivePlot:
         self.vel_ax, = self.ax_Plot.plot([0,0],[0,0],c="tab:orange", lw=2)
         self.grav_ax, = self.ax_Plot.plot([0,0],[0,0],c="tab:purple", lw=2)
 
+        self.Plane_Angle_ax, = self.ax_Plot.plot([-5,5],[0,0],c="k",lw=1,zorder=1)
+
         ## INITIAL DATA
         self.CG_Marker = patches.Circle(CG,radius=0.01,fc='tab:blue',zorder=10)
         self.ax_CG_Marker = self.ax_Plot.add_patch(self.CG_Marker)
@@ -51,15 +54,16 @@ class InteractivePlot:
 
         self.ax_Plot.set_xlim(-0.5,0.5)
         self.ax_Plot.set_ylim(-0.5,0.5)
-        self.ax_Plot.hlines(0,-5,5)
         self.ax_Plot.set_aspect('equal', 'box')
 
 
         ## SLIDER AX OBJECTS
         ax_LP_Ratio_Slider = self.fig.add_axes([0.1, 0.1, 0.35, 0.03])
         ax_Gamma_Slider = self.fig.add_axes([0.05, 0.25, 0.0225, 0.63])
-        ax_Phi_Slider = self.fig.add_axes([0.58, 0.15, 0.35, 0.03])
+        ax_Phi_Rel_Slider = self.fig.add_axes([0.58, 0.15, 0.35, 0.03])
         ax_Vel_Slider = self.fig.add_axes([0.58, 0.05, 0.35, 0.03])
+        ax_Plane_Angle_Slider = self.fig.add_axes([0.58, 0.25, 0.35, 0.03])
+
 
         ## BUTTON AX OBJECTS
         ax_Vel_Button = self.fig.add_axes([0.1, 0.025, 0.15, 0.04])
@@ -92,12 +96,21 @@ class InteractivePlot:
             orientation="vertical"
         )
 
+        self.Plane_Angle_Slider = Slider(
+            ax=ax_Plane_Angle_Slider,
+            label='Plane Angle [deg]',
+            valmin=0,
+            valmax=180,
+            valinit=0,
+            valstep=10
+        )
+
         # Step 3: Add the new slider for the second plot
-        self.Phi_Slider = Slider(
-            ax=ax_Phi_Slider,
-            label='Body Angle \n [deg]',
+        self.Phi_Rel_Slider = Slider(
+            ax=ax_Phi_Rel_Slider,
+            label='Phi_Rel Angle \n [deg]',
             valmin=-180,
-            valmax=0,  # adjust as needed
+            valmax=180,  # adjust as needed
             valinit=-50,  # adjust as needed
             valstep=1
         )
@@ -106,42 +119,60 @@ class InteractivePlot:
         self.Vel_Slider = Slider(
             ax=ax_Vel_Slider,
             label='Flight Angle \n [deg]',
-            valmin=0,
-            valmax=360,
+            valmin=-180,
+            valmax=180,
             valinit=0,
             valstep=5
         )
 
-        # register the update function with each slider
+        
+
+        ## UPDATE PLOTS
+        self.Plane_Angle_Slider.on_changed(self.Geometry_Update)  
         self.LP_Ratio_Slider.on_changed(self.Geometry_Update)
         self.Gamma_Slider.on_changed(self.Geometry_Update)
-        self.Phi_Slider.on_changed(self.Phi_Update)
+        self.Phi_Rel_Slider.on_changed(self.Phi_Update)
         self.Vel_Slider.on_changed(self.Phi_Update)  
 
-
-
     def Geometry_Update(self, val):
+        
+        ## UPDATE PLANE DRAWING
+        vec = np.array([5,0])
+        vec = self.R_PW(vec,np.radians(self.Plane_Angle_Slider.val))
+        self.Plane_Angle_ax.set_data([-vec[0],vec[0]],[-vec[1],vec[1]])
 
         ## UPDATE GAMMA AND LENGTH
         self.gamma = np.radians(self.Gamma_Slider.val)
         self.L = self.LP_Ratio_Slider.val*self.PD
         self.params = (self.gamma,self.L,self.PD,0,0,0)
+        
+        ## UPDATE PLANE ANGLE
+        self.Plane_Angle = self.Plane_Angle_Slider.val
+        self.Plane_Angle_rad = np.radians(self.Plane_Angle)
 
         ## SOLVE FOR MINIMUM RELATIVE PHI IMPACT ANGLE VIA GEOMETRIC CONSTRAINTS
         a = np.sqrt(self.PD**2 + self.L**2 - 2*self.PD*self.L*np.cos(np.pi/2-self.gamma))
         self.beta_min = np.arccos((self.L**2 + a**2 - self.PD**2)/(2*a*self.L))
         self.beta_min = -self.beta_min # Swap sign to match coordinate notation
-        self.phi_min = np.arctan2(-np.cos(self.beta_min + self.gamma), \
-                                              np.sin(self.beta_min + self.gamma))
-        self.phi_min_deg = np.rad2deg(self.phi_min)
 
-        beta = np.arctan2(np.cos(self.gamma - self.phi_min),np.sin(self.gamma-self.phi_min))
-        beta_deg = np.rad2deg(beta)
+        self.phi_rel_min = np.arctan2(-np.cos(self.beta_min + self.gamma), \
+                                       np.sin(self.beta_min + self.gamma))
+        self.phi_rel_min_deg = np.rad2deg(self.phi_rel_min)
 
-    
+        ## MINIMUM BETA ANGLE
+        beta_min = np.arctan2(np.cos(self.gamma - self.phi_rel_min),
+                              np.sin(self.gamma-self.phi_rel_min))
+        beta_min_deg = np.rad2deg(beta_min)
+
+
         ## UPDATE PHI SLIDER TO NEW MIN VALUE
-        self.Phi_Slider.set_val(self.phi_min_deg)
-        self.Phi_Slider.valmax = self.phi_min_deg
+        self.Phi_Rel_Slider.set_val(self.phi_rel_min_deg)
+        # self.Phi_Rel_Slider.valmax = self.phi_rel_min_deg
+
+
+        self.phi = self.phi_rel_min + self.Plane_Angle_rad
+        self.phi_deg = np.radians(self.phi)
+    
 
         ## DRAW ELEMENTS
         self.fig.canvas.draw_idle()
@@ -151,16 +182,20 @@ class InteractivePlot:
         ## READ GAMMA, LENGTH, AND PHI VALUES
         self.gamma = np.radians(self.Gamma_Slider.val)
         self.L = self.LP_Ratio_Slider.val*self.PD
-        phi = np.radians(self.Phi_Slider.val)       
+        self.Plane_Angle = self.Plane_Angle_Slider.val
+        self.Plane_Angle_rad = np.radians(self.Plane_Angle)
+        phi = np.radians(self.Phi_Rel_Slider.val)       
 
         ## UPDATE BETA VALUE
-        beta = np.arctan2(np.cos(self.gamma - phi),np.sin(self.gamma - phi)) 
-        beta_deg = np.degrees(beta)
+        Beta_1 = np.arctan2(np.cos(self.gamma - phi),np.sin(self.gamma - phi)) 
+        Beta_1_deg = np.degrees(Beta_1)
 
         ## UPDATE BODY POSITION
-        r_B_C1  = np.array([-self.L,0]) # {e_r1,e_beta1}
-        x,z = self.R_C1P(r_B_C1,beta)   # {X_W, Z_W}
-        CG,L1,L2,Prop1,Prop2 = self._get_pose(x,z,phi)
+        r_B_C1 = np.array([-self.L,0])                                      # {e_r1,e_beta1}
+        r_B_C1 = self.R_PW(self.R_C1P(r_B_C1,Beta_1),self.Plane_Angle_rad)  # {X_W,Z_W}
+        r_B_O = r_B_C1   
+
+        CG,L1,L2,Prop1,Prop2 = self._get_pose(r_B_O[0],r_B_O[1],phi)
 
         ## UPDATE BODY DRAWING
         self.leg1_ax.set_data([CG[0],L1[0]],[CG[1],L1[1]])
