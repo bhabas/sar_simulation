@@ -80,6 +80,10 @@ class InteractivePlot:
         self.leg_button = Button(ax_Leg_Button, 'Switch Leg', hovercolor='0.975')
         self.leg_button.on_clicked(self.Switch_Leg)
 
+        ax_text = self.fig.add_axes([0.05, 0.03, 0.35, 0.03])
+        ax_text.axis('off')
+        self.Impact_Window_text = ax_text.text(0.5,0.5,f"Impact Window: {0.0:.2f} [deg]")
+
         # Make a horizontal slider to control the frequency.
         self.LP_Ratio_Slider = Slider(
             ax=ax_LP_Ratio_Slider,
@@ -237,8 +241,11 @@ class InteractivePlot:
         self.prop2_ax.set_data([CG[0],Prop2[0]],[CG[1],Prop2[1]])
         self.CG_Marker.set_center(CG)
 
-        
 
+        
+        ## UPDATE TEXT BOX
+        impact_window = np.abs(self.Swing_Arc.theta2 - self.Swing_Arc.theta1)
+        self.Impact_Window_text.set_text(f"Impact Window: {impact_window:.2f} [deg]")
 
         ## UPDATE VEL VECTOR
         vel_angle = np.radians(self.Vel_Slider.val)
