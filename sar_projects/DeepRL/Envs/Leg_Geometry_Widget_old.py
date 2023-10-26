@@ -4,10 +4,6 @@ from matplotlib.widgets import Slider, Button, TextBox
 
 import matplotlib.patches as patches
 
-import matplotlib
-# matplotlib.use('Qt5Agg')
-
-
 class InteractivePlot:
     def __init__(self):
 
@@ -24,64 +20,116 @@ class InteractivePlot:
 
         ## SAR DIMENSIONAL CONSTRAINTS
         self.PD = 75e-3             # Prop Distance from COM [m]
+        L = LP_Ratio*self.PD
+        self.params = (gamma_rad,L,self.PD,0,0,0)
 
-        self.create_ax()
-        self.init_plots()
-        self.Update_1(None) 
-
-
-    def create_ax(self):
-
-        self.fig = plt.figure(figsize=(14,10),constrained_layout=False)
-        widths = [0.25,6,4]
-        heights = [2,2,2,0.25,0.25,0.25,0.25]
-        gs = self.fig.add_gridspec(ncols=3, nrows=7, width_ratios=widths, height_ratios=heights, wspace=0.4, hspace=0.8)
         
 
-        ## QUAD AX
-        self.ax_Quad = self.fig.add_subplot(gs[0:3,1])
+
+        self.fig = plt.figure(figsize=(12,10))
+        self.ax_Quad = self.fig.add_subplot(111)
         self.ax_Quad.set_xlim(-0.5,0.5)
         self.ax_Quad.set_ylim(-0.5,0.5)
         self.ax_Quad.set_aspect('equal', 'box')
+        self.fig.subplots_adjust(left=0.13,right=0.5,bottom=0.3,top=1.0)
 
-        ## QUAD SLIDERS
-        self.ax_Gamma_Slider = self.fig.add_subplot(gs[0:3,0])
+        ## QUADROTOR PLOT 
+        self.leg1_line, = self.ax_Quad.plot([],[],'r', lw=2)
+        self.leg2_line, = self.ax_Quad.plot([],[],'k', lw=2)
+        self.prop1_line, = self.ax_Quad.plot([],[],'k', lw=2)
+        self.prop2_line, = self.ax_Quad.plot([],[],'k', lw=2)
+
+        self.vel_line, = self.ax_Quad.plot([],[],c="tab:green", lw=2,zorder=8)
+        self.vel_traj_line, = self.ax_Quad.plot([],[],c="tab:grey",linestyle='--',lw=1,zorder=1,alpha=0.7)
+        self.grav_line, = self.ax_Quad.plot([],[],c="tab:purple", lw=2,zorder=5)
+
+        self.n_p_line, = self.ax_Quad.plot([],[],c="tab:green", lw=3,zorder=5)
+        self.t_x_line, = self.ax_Quad.plot([],[],c="tab:blue", lw=3,zorder=5)
+
+
+        self.Plane_Angle_line, = self.ax_Quad.plot([],[],c="k",lw=1,zorder=1)
+
+
+        ## INITIAL DATA
+        CG,L1,L2,Prop1,Prop2 = self._get_pose(0,0,0)
+        self.CG_Marker = patches.Circle(CG,radius=0.01,fc='tab:blue',zorder=10)
+        self.ax_CG_Marker = self.ax_Quad.add_patch(self.CG_Marker)
+
+        self.Swing_Arc = patches.Arc(
+            xy=CG,width=L*2,
+            height=L*2,
+            color="tab:gray",
+            zorder=2,
+            linestyle="--"
+        )
+        self.ax_Swing_Arc = self.ax_Quad.add_patch(self.Swing_Arc)
+
+
+        
+
+
+        ## SLIDER AX OBJECTS
+        ax_Gamma_Slider = self.fig.add_axes([0.05, 0.25, 0.02, 0.6])
+        ax_LP_Ratio_Slider = self.fig.add_axes([0.1, 0.1, 0.35, 0.03])
+        ax_Beta_Slider = self.fig.add_axes([0.58, 0.15, 0.35, 0.03])
+        ax_FA_Slider = self.fig.add_axes([0.58, 0.05, 0.35, 0.03])
+        ax_Plane_Angle_Slider = self.fig.add_axes([0.58, 0.25, 0.35, 0.03])
+
+
+        ## BUTTON AX OBJECTS
+        ax_Leg_Button = self.fig.add_axes([0.8, 0.4, 0.15, 0.04])
+        self.leg_button = Button(ax_Leg_Button, 'Switch Leg', hovercolor='0.975')
+        self.leg_button.on_clicked(self.Switch_Leg)
+
+        ax_Gravity_Button = self.fig.add_axes([0.8, 0.5, 0.15, 0.04])
+        self.gravity_button = Button(ax_Gravity_Button, 'Show Grav Vector', hovercolor='0.975')
+        self.gravity_button.on_clicked(self.Grav_Visible)
+
+        ax_Vel_Button = self.fig.add_axes([0.8, 0.6, 0.15, 0.04])
+        self.vel_button = Button(ax_Vel_Button, 'Show Vel Vector', hovercolor='0.975')
+        self.vel_button.on_clicked(self.Vel_Visible)
+
+        ax_text = self.fig.add_axes([0.05, 0.03, 0.35, 0.03])
+        ax_text.axis('off')
+        self.Impact_Window_text = ax_text.text(0,0.5,f"Impact Window: {0.0:.2f} [deg]     Phi: {0.0: .2f} [deg]")
+
+        ax_text2 = self.fig.add_axes([0.6, 0.8, 0.15, 0.04])
+        ax_text2.axis('off')
+        self.temp_vec_text = ax_text2.text(0,0.5,f"g x v = {0.0:.2f} [deg]")
+
+
+        # Make a horizontal slider to control the frequency.
+        self.LP_Ratio_Slider = Slider(
+            ax=ax_LP_Ratio_Slider,
+            label='Leg Prop \n Ratio [m]',
+            valmin=0.1,
+            valmax=4,
+            valinit=LP_Ratio,
+            valstep=0.1
+        )
+
+        # Make a vertically oriented slider to control the amplitude
         self.Gamma_Slider = Slider(
-            ax=self.ax_Gamma_Slider,
+            ax=ax_Gamma_Slider,
             label="Gamma [deg]",
             valmin=0,
             valmax=90,
-            valinit=30,
+            valinit=gamma_deg,
             valstep=1,
             orientation="vertical"
         )
 
-
-        self.ax_Leg_Slider = self.fig.add_subplot(gs[3,1])
-        self.Leg_Slider = Slider(
-            ax=self.ax_Leg_Slider,
-            label='Leg Prop \n Ratio [m]',
-            valmin=0.1,
-            valmax=4,
-            valinit=1.5,
-            valstep=0.1
-        )
-
-        ## PLANE SLIDER
-        self.ax_Plane_Slider = self.fig.add_subplot(gs[3,2])
         self.Plane_Angle_Slider = Slider(
-            ax=self.ax_Plane_Slider,
-            label='Plane Angle \n [deg]',
+            ax=ax_Plane_Angle_Slider,
+            label='Plane Angle [deg]',
             valmin=0,
             valmax=270,
-            valinit=0,
+            valinit=Plane_Angle_deg,
             valstep=1
         )
 
-        ## BETA SLIDER
-        self.ax_Beta_Slider = self.fig.add_subplot(gs[4,2])
         self.Beta_Slider = Slider(
-            ax=self.ax_Beta_Slider,
+            ax=ax_Beta_Slider,
             label='Beta \n [deg]',
             valmin=-180,
             valmax=90,
@@ -89,10 +137,8 @@ class InteractivePlot:
             valstep=1
         )
 
-        ## FLIGHT ANGLE SLIDER
-        self.ax_V_Angle_Slider = self.fig.add_subplot(gs[5,2])
         self.Flight_Angle_Slider = Slider(
-            ax=self.ax_V_Angle_Slider,
+            ax=ax_FA_Slider,
             label='Flight Angle \n [deg]',
             valmin=5,
             valmax=175,
@@ -100,87 +146,23 @@ class InteractivePlot:
             valstep=1
         )
 
-
-        ## CONFIGS
-        self.ax_Config = self.fig.add_subplot(gs[4:,0:2])
-
-
-
-        self.R_LT  = self.fig.add_subplot(gs[0,-1])
-        self.R_GM  = self.fig.add_subplot(gs[1,-1])
-        self.R_phi = self.fig.add_subplot(gs[2,-1])
-
-
-        ## UPDATE PLOTS
-        self.Plane_Angle_Slider.on_changed(self.Update_1) 
-        self.Leg_Slider.on_changed(self.Update_1)
-        self.Gamma_Slider.on_changed(self.Update_1)
-
-        self.Beta_Slider.on_changed(self.Update_2)  
-        self.Flight_Angle_Slider.on_changed(self.Update_2) 
-
-
-
         
 
+        ## UPDATE PLOTS
+        self.Plane_Angle_Slider.on_changed(self.Min_Angle_Update)  
+        self.LP_Ratio_Slider.on_changed(self.Min_Angle_Update)
+        self.Gamma_Slider.on_changed(self.Min_Angle_Update)
+        self.Beta_Slider.on_changed(self.Beta_Update)
+        self.Flight_Angle_Slider.on_changed(self.Beta_Update) 
 
+        self.Min_Angle_Update(None) 
 
-
-    def init_plots(self):
-
-        ## GEOMETRIC CONSTRAINTS
-        L = self.Leg_Slider.val*self.PD
-        gamma_deg = self.Gamma_Slider.val
-        gamma_rad = np.radians(gamma_deg)
-
-        ## QUAD LINES
-        CG,L1,L2,Prop1,Prop2 = self._get_pose(0,0,0)
-        CG_Marker = patches.Circle(CG,radius=0.01,fc='tab:blue',zorder=10)
-        self.CG_Marker = self.ax_Quad.add_patch(CG_Marker)
-
-
-        self.leg1_line, = self.ax_Quad.plot([],[],'r', lw=2)
-        self.leg2_line, = self.ax_Quad.plot([],[],'k', lw=2)
-        self.prop1_line, = self.ax_Quad.plot([],[],'k', lw=2)
-        self.prop2_line, = self.ax_Quad.plot([],[],'k', lw=2)
-
-        Swing_Arc = patches.Arc(
-            xy=CG,width=L*2,
-            height=L*2,
-            color="tab:gray",
-            zorder=2,
-            linestyle="--"
-        )
-        self.Swing_Arc = self.ax_Quad.add_patch(Swing_Arc)
-
-        ## PLANE LINES
-        self.Plane_line, = self.ax_Quad.plot([],[],lw=1,zorder=1,c="k")
-        self.n_p_line,   = self.ax_Quad.plot([],[],lw=3,zorder=5,c="tab:green")
-        self.t_x_line,   = self.ax_Quad.plot([],[],lw=3,zorder=5,c="tab:blue")
-
-
-        self.vel_line, = self.ax_Quad.plot([],[],c="tab:green", lw=2,zorder=8)
-        self.vel_traj_line, = self.ax_Quad.plot([],[],c="tab:grey",linestyle='--',lw=1,zorder=1,alpha=0.7)
-        self.grav_line, = self.ax_Quad.plot([],[],c="tab:purple", lw=2,zorder=5)
-
-
-
-
-    def Update_1(self,val):
-
-        ## READ GAMMA, LENGTH
-        L = self.Leg_Slider.val*self.PD
-        gamma_deg = self.Gamma_Slider.val
-        gamma_rad = np.radians(gamma_deg)
-
-        ## PLANE DRAW
-        Plane_Angle_deg = self.Plane_Angle_Slider.val
-        Plane_Angle_rad = np.radians(Plane_Angle_deg)
-
+    def Min_Angle_Update(self, val):
+        
         ## UPDATE PLANE DRAWING
         vec = np.array([1,0])
         vec = self.R_PW(vec,np.radians(self.Plane_Angle_Slider.val))
-        self.Plane_line.set_data([-vec[0],vec[0]],[-vec[1],vec[1]])
+        self.Plane_Angle_line.set_data([-vec[0],vec[0]],[-vec[1],vec[1]])
 
         t_x = 0.05*np.array([1,0])
         t_x = self.R_PW(t_x,np.radians(self.Plane_Angle_Slider.val))
@@ -190,16 +172,27 @@ class InteractivePlot:
         n_p = self.R_PW(n_p,np.radians(self.Plane_Angle_Slider.val))
         self.n_p_line.set_data([0,n_p[0]],[0,n_p[1]])
 
+        ## UPDATE GAMMA AND LENGTH
+        gamma_deg = self.Gamma_Slider.val
+        gamma_rad = np.radians(gamma_deg)
+        L = self.LP_Ratio_Slider.val*self.PD
+        self.params = (gamma_rad,L,self.PD,0,0,0)
+        
+        ## UPDATE PLANE ANGLE
+        Plane_Angle_deg = self.Plane_Angle_Slider.val
+        Plane_Angle_rad = np.radians(Plane_Angle_deg)
 
         ## SOLVE FOR MINIMUM BETA ANGLE VIA GEOMETRIC CONSTRAINTS
         a = np.sqrt(self.PD**2 + L**2 - 2*self.PD*L*np.cos(np.pi/2-gamma_rad))
         self.Beta_min_rad = np.arccos((L**2 + a**2 - self.PD**2)/(2*a*L))
+        
 
         if self.Contact_Leg == 1:
             self.Beta_min_rad = -self.Beta_min_rad # Swap sign to match coordinate notation
             self.Beta_min_deg = np.rad2deg(self.Beta_min_rad)
 
             # self.Beta_Slider.valmax = self.Beta_min_deg
+            # self.Beta_Slider.valmax = 0
             # self.Beta_Slider.valmin = -(90 + gamma_deg)
 
         elif self.Contact_Leg == 2:
@@ -207,25 +200,29 @@ class InteractivePlot:
             self.Beta_min_deg = np.rad2deg(self.Beta_min_rad)
 
             # self.Beta_Slider.valmax = -(90 - gamma_deg)
+            # self.Beta_Slider.valmin = -180
+
             # self.Beta_Slider.valmin = self.Beta_min_deg
 
         self.Beta_Slider.set_val(self.Beta_min_deg)        
 
-    def Update_2(self,val):
+
+        ## DRAW ELEMENTS
+        self.fig.canvas.draw_idle()
+
+    def Beta_Update(self, val):
 
         ## READ GAMMA, LENGTH
-        L = self.Leg_Slider.val*self.PD
+        L = self.LP_Ratio_Slider.val*self.PD
         gamma_deg = self.Gamma_Slider.val
         gamma_rad = np.radians(gamma_deg)
 
-        ## UPDATE PLANE ANGLE VALUE
         Plane_Angle_deg = self.Plane_Angle_Slider.val
         Plane_Angle_rad = np.radians(Plane_Angle_deg)
 
         ## UPDATE BETA VALUE
         Beta_deg = self.Beta_Slider.val
         Beta_rad = np.radians(Beta_deg)
-
 
         if self.Contact_Leg == 1:
             phi_rad = np.arctan2(-np.cos(Beta_rad + gamma_rad + Plane_Angle_rad), \
@@ -269,13 +266,71 @@ class InteractivePlot:
         self.prop2_line.set_data([CG[0],Prop2[0]],[CG[1],Prop2[1]])
         self.CG_Marker.set_center(CG)
 
+
+        
+        
+        ## UPDATE VEL VECTOR
+        vel_angle = np.radians(self.Flight_Angle_Slider.val)
+        V_B_P = np.array([np.cos(vel_angle),np.sin(vel_angle)])
+        V_B_O = self.R_PW(V_B_P,Plane_Angle_rad)
+
+        if self.vel_vec == True:
+            self.vel_line.set_data([CG[0],CG[0] + 0.08*V_B_O[0]],[CG[1],CG[1] + 0.08*V_B_O[1]])
+            self.vel_traj_line.set_data([CG[0] + 5*V_B_O[0],CG[0] - 10*V_B_O[0]],[CG[1] + 5*V_B_O[1],CG[1] - 10*V_B_O[1]])
+        else:
+            self.vel_line.set_data([None,None],[None,None])
+            self.vel_traj_line.set_data([None,None],[None,None])
+
+        ## UPDATE GRAVITY VECTOR
+        if self.grav_vec == True:
+            self.grav_line.set_data([CG[0],CG[0]],[CG[1],CG[1]-0.08])
+        else:
+            self.grav_line.set_data([None,None],[None,None])
+
+
+        ## UPDATE TEXT BOX
+        impact_window = np.abs(self.Swing_Arc.theta2 - self.Swing_Arc.theta1)
+        self.Impact_Window_text.set_text(f"Impact Window: {impact_window: .2f} [deg]     Phi: {phi_deg: .2f} [deg]")
+
+        v_hat = V_B_O
+        g_hat = np.array([0,-1])
+        cp_temp = -np.arcsin(np.cross(g_hat,v_hat))
+        self.temp_vec_text.set_text(f"g x v = {np.degrees(cp_temp):.2f} [deg]")
+
+
+        ## DRAW ELEMENTS
         self.fig.canvas.draw_idle()
 
+    def Vel_Visible(self,event):
 
+        if self.vel_vec == True:
+            self.vel_vec = False
+        else:
+            self.vel_vec = True
 
+        self.Beta_Update(None)
+
+    def Grav_Visible(self,event):
+
+        if self.grav_vec == True:
+            self.grav_vec = False
+        else:
+            self.grav_vec = True
+
+        self.Beta_Update(None)
+
+    def Switch_Leg(self,event):
+
+        if self.Contact_Leg == 1:
+            self.Contact_Leg = 2
+        else:
+            self.Contact_Leg = 1
+
+        self.Min_Angle_Update(None)
 
     def show(self):
         plt.show()
+
 
     def Reward_ImpactAngle(self,phi_rel,phi_min,rot_dir=-1,phi_thr=-200):
 
@@ -317,21 +372,18 @@ class InteractivePlot:
 
     def _get_pose(self,x,z,phi):
 
-        L = self.Leg_Slider.val*self.PD
-        gamma_deg = self.Gamma_Slider.val
-        gamma_rad = np.radians(gamma_deg)
-       
+        gamma,L,PD,M,Iyy,I_c = self.params
 
         ## MODEL CoG
         CG = np.array([x,z])
 
         ## LEG COORDS
-        L1 = np.array([ L*np.sin(gamma_rad),-L*np.cos(gamma_rad)])
-        L2 = np.array([-L*np.sin(gamma_rad),-L*np.cos(gamma_rad)])
+        L1 = np.array([ L*np.sin(gamma),-L*np.cos(gamma)])
+        L2 = np.array([-L*np.sin(gamma),-L*np.cos(gamma)])
 
         ## PROP COORDS
-        Prop1 = np.array([ self.PD,0])
-        Prop2 = np.array([-self.PD,0])
+        Prop1 = np.array([ PD,0])
+        Prop2 = np.array([-PD,0])
 
         ## CONVERT BODY COORDS TO WORLD COORDS
         L1 = CG + self.R_BW(L1,phi)
@@ -421,7 +473,6 @@ class InteractivePlot:
         ])
 
         return R_C2B.dot(vec)
-
 
 
 
