@@ -34,9 +34,9 @@ class InteractivePlot:
     def create_ax(self):
 
         self.fig = plt.figure(figsize=(14,10),constrained_layout=False)
-        widths = [0.125, 0.1, 6, 0.4, 4]
-        heights = [2,2,2,0.25,0.25,0.25,0.25]
-        gs = self.fig.add_gridspec(ncols=len(widths), nrows=len(heights), width_ratios=widths, height_ratios=heights, hspace=0.8)
+        widths = [0.125, 0.1, 5, 0.5, 4]
+        heights = [3,3,3,0.5,0.5,0.5]
+        gs = self.fig.add_gridspec(ncols=len(widths), nrows=len(heights), width_ratios=widths, height_ratios=heights, hspace=1.0)
         
 
         ## QUAD AX
@@ -69,7 +69,7 @@ class InteractivePlot:
         )
 
         ## PLANE SLIDER
-        self.ax_Plane_Slider = self.fig.add_subplot(gs[4,-1])
+        self.ax_Plane_Slider = self.fig.add_subplot(gs[3,-1])
         self.Plane_Angle_Slider = Slider(
             ax=self.ax_Plane_Slider,
             label='Plane Angle \n [deg]',
@@ -80,10 +80,10 @@ class InteractivePlot:
         )
 
         ## BETA SLIDER
-        self.ax_Beta_Slider = self.fig.add_subplot(gs[5,-1])
+        self.ax_Beta_Slider = self.fig.add_subplot(gs[4,-1])
         self.Beta_Slider = Slider(
             ax=self.ax_Beta_Slider,
-            label='Beta \n [deg]',
+            label='Beta Angle\n [deg]',
             valmin=-180,
             valmax=90,
             valinit=0,
@@ -91,7 +91,7 @@ class InteractivePlot:
         )
 
         ## FLIGHT ANGLE SLIDER
-        self.ax_V_Angle_Slider = self.fig.add_subplot(gs[6,-1])
+        self.ax_V_Angle_Slider = self.fig.add_subplot(gs[5,-1])
         self.Flight_Angle_Slider = Slider(
             ax=self.ax_V_Angle_Slider,
             label='Flight Angle \n [deg]',
@@ -138,9 +138,9 @@ class InteractivePlot:
 
 
 
-        self.R_LT  = self.fig.add_subplot(gs[0,-1])
-        self.R_GM  = self.fig.add_subplot(gs[1,-1])
-        self.R_phi = self.fig.add_subplot(gs[2,-1])
+        self.R_LT_ax  = self.fig.add_subplot(gs[0,-1])
+        self.R_GM_ax  = self.fig.add_subplot(gs[1,-1])
+        self.R_phi_ax = self.fig.add_subplot(gs[2,-1])
 
 
         ## UPDATE PLOTS
@@ -187,6 +187,50 @@ class InteractivePlot:
         self.Vel_line, = self.ax_Quad.plot([],[],c="tab:green", lw=2,zorder=8)
         self.Vel_traj_line, = self.ax_Quad.plot([],[],c="tab:grey",linestyle='--',lw=1,zorder=1,alpha=0.7)
         self.Grav_line, = self.ax_Quad.plot([],[],c="tab:purple", lw=2,zorder=5)
+
+        ## MOMENTUM TRANSFER PLOT
+        x = np.linspace(-180,180,500)
+        R_Leg1 = np.vectorize(self.Reward_LT)(x,Leg_Num=1)
+        R_Leg2 = np.vectorize(self.Reward_LT)(x,Leg_Num=2)
+        self.R_LT_ax.plot(x,R_Leg1,label="Leg 1")
+        self.R_LT_ax.plot(x,R_Leg2,label="Leg 2")
+        self.R_LT_ax.set_xlim(-200,200)
+        self.R_LT_ax.set_ylim(-0.75,1.25)
+        self.R_LT_ax.set_xticks(np.arange(-180,181,45))
+        self.R_LT_ax.set_yticks(np.arange(-1,1.1,0.5))
+        self.R_LT_ax.set_title("Reward: Angular Momentum Transfer")
+        self.R_LT_ax.set_xlabel("Angle: (v x e_r)")
+        self.R_LT_ax.set_ylabel("Reward")
+        self.R_LT_ax.hlines(0,-300,300)
+        self.R_LT_ax.vlines(0,-5,5)
+        self.R_LT_ax.legend(loc="lower right",ncol=2)
+        self.R_LT_ax.grid()
+        self.R_LT_dot, = self.R_LT_ax.plot([],[],'ro')
+
+
+        ## GRAVITY MOMENT PLOT
+        x = np.linspace(-180,180,500)
+        R_Leg1 = np.vectorize(self.Reward_GravityMoment)(x,Leg_Num=1)
+        R_Leg2 = np.vectorize(self.Reward_GravityMoment)(x,Leg_Num=2)
+        self.R_GM_ax.plot(x,R_Leg1,label="Leg 1")
+        self.R_GM_ax.plot(x,R_Leg2,label="Leg 2")
+        self.R_GM_ax.set_xlim(-200,200)
+        self.R_GM_ax.set_ylim(-1.25,1.25)
+        self.R_GM_ax.set_xticks(np.arange(-180,181,45))
+        self.R_GM_ax.set_yticks(np.arange(-1,1.1,0.5))
+        self.R_GM_ax.set_title("Reward: Gravity Moment")
+        self.R_GM_ax.set_xlabel("Angle: (g x e_r)")
+        self.R_GM_ax.set_ylabel("Reward")
+        self.R_GM_ax.legend(loc="lower right",ncol=2)
+        self.R_GM_ax.hlines(0,-300,300)
+        self.R_GM_ax.vlines(0,-5,5)
+        self.R_GM_ax.grid()
+        self.R_GM_dot, = self.R_GM_ax.plot([],[],'ro')
+
+
+
+        
+
 
     def Update_1(self,val):
 
@@ -248,6 +292,15 @@ class InteractivePlot:
         Beta_deg = self.Beta_Slider.val
         Beta_rad = np.radians(Beta_deg)
 
+        ## UPDATE VELOCITY LINE VECTOR
+        Vel_angle = np.radians(self.Flight_Angle_Slider.val)
+        V_B_P = np.array([np.cos(Vel_angle),np.sin(Vel_angle)])
+        V_B_O = self.R_PW(V_B_P,Plane_Angle_rad)
+        V_hat = V_B_O
+
+        ## GRAVITY VECOTR
+        g_hat = np.array([0,-1]) # {X_W,Z_W}
+
 
         if self.Contact_Leg == 1:
             phi_rad = np.arctan2(-np.cos(Beta_rad + gamma_rad + Plane_Angle_rad), \
@@ -257,17 +310,33 @@ class InteractivePlot:
             phi_rel_rad = phi_rad - Plane_Angle_rad
             phi_rel_deg = np.rad2deg(phi_rel_rad)
 
-            ## UPDATE BODY POSITION
-            r_B_C1 = np.array([-L,0])                                       # {e_r1,e_beta1}
-            r_B_C1 = self.R_PW(self.R_C1P(r_B_C1,Beta_rad),Plane_Angle_rad) # {X_W,Z_W}
-            r_B_O = r_B_C1   
-
-
             ## UPDATE ARC VALUES
             self.Swing_Arc.width = self.Swing_Arc.height = L*2
             self.Swing_Arc.angle = 180-Plane_Angle_deg
             self.Swing_Arc.theta1 = np.abs(self.Beta_min_deg)
             self.Swing_Arc.theta2 = 90 + gamma_deg
+
+            ## UPDATE BODY POSITION
+            r_B_C1 = np.array([-L,0])                                       # {e_r1,e_beta1}
+            r_B_C1 = self.R_PW(self.R_C1P(r_B_C1,Beta_rad),Plane_Angle_rad) # {X_W,Z_W}
+            r_B_O = r_B_C1   
+    
+            r_C1_B = -r_B_C1                       # {X_W,Z_W}
+            e_r1 = r_C1_B/np.linalg.norm(r_C1_B)   # {X_W,Z_W}
+            e_r_hat = np.array([e_r1[0],e_r1[1]])
+
+            ## MOMENTUM TRANSFER REWARD
+            CP_LT = -np.cross(V_hat,e_r_hat) # Swap sign for consitent notation
+            DP_LT = np.dot(V_hat,e_r_hat)
+            CP_LT_angle_deg = np.degrees(np.arctan2(CP_LT,DP_LT))
+            R_LT = self.Reward_LT(CP_LT_angle_deg,Leg_Num=1)
+
+            ## GRAVITY MOMENT REWARD
+            CP_GM = -np.cross(g_hat,e_r_hat) # Swap sign for consitent notation
+            DP_GM = np.dot(g_hat,e_r_hat)
+            CP_GM_angle_deg = np.degrees(np.arctan2(CP_GM,DP_GM))
+            R_GM = self.Reward_GravityMoment(CP_GM_angle_deg,Leg_Num=1)
+           
 
         elif self.Contact_Leg == 2:
 
@@ -278,19 +347,38 @@ class InteractivePlot:
             phi_rel_rad = phi_rad - Plane_Angle_rad
             phi_rel_deg = np.rad2deg(phi_rel_rad)
 
-            r_B_C2 = np.array([-L,0])                                       # {e_r1,e_beta1}
-            r_B_C2 = self.R_PW(self.R_C2P(r_B_C2,Beta_rad),Plane_Angle_rad) # {X_W,Z_W}
-            r_B_O = r_B_C2
-
+            ## UPDATE ARC VALUES
             self.Swing_Arc.width = self.Swing_Arc.height = L*2
             self.Swing_Arc.angle = 180-Plane_Angle_deg
             self.Swing_Arc.theta1 = 90 - gamma_deg
             self.Swing_Arc.theta2 = np.abs(self.Beta_min_deg)
+
+            r_B_C2 = np.array([-L,0])                                       # {e_r1,e_beta1}
+            r_B_C2 = self.R_PW(self.R_C2P(r_B_C2,Beta_rad),Plane_Angle_rad) # {X_W,Z_W}
+            r_B_O = r_B_C2
+
+            r_C2_B = -r_B_C2                       # {X_W,Z_W}
+            e_r2 = r_C2_B/np.linalg.norm(r_C2_B)   # {X_W,Z_W}
+            e_r_hat = np.array([e_r2[0],e_r2[1]])
+
+            ## MOMENTUM TRANSFER REWARD
+            CP_LT = -np.cross(V_hat,e_r_hat) # Swap sign for consitent notation
+            DP_LT = np.dot(V_hat,e_r_hat)
+            CP_LT_angle_deg = np.degrees(np.arctan2(CP_LT,DP_LT))
+            R_LT = self.Reward_LT(CP_LT_angle_deg,Leg_Num=2)
+
+            ## GRAVITY MOMENT REWARD
+            CP_GM = -np.cross(g_hat,e_r_hat) # Swap sign for consitent notation
+            DP_GM = np.dot(g_hat,e_r_hat)
+            CP_GM_angle_deg = np.degrees(np.arctan2(CP_GM,DP_GM))
+            R_GM = self.Reward_GravityMoment(CP_GM_angle_deg,Leg_Num=2)
+
+            
         
 
-        CG,L1,L2,Prop1,Prop2 = self._get_pose(r_B_O[0],r_B_O[1],phi_rad)
 
         ## UPDATE BODY DRAWING
+        CG,L1,L2,Prop1,Prop2 = self._get_pose(r_B_O[0],r_B_O[1],phi_rad)
         self.leg1_line.set_data([CG[0],L1[0]],[CG[1],L1[1]])
         self.leg2_line.set_data([CG[0],L2[0]],[CG[1],L2[1]])
         self.prop1_line.set_data([CG[0],Prop1[0]],[CG[1],Prop1[1]])
@@ -298,10 +386,7 @@ class InteractivePlot:
         self.CG_Marker.set_center(CG)
 
 
-        ## UPDATE VELOCITY LINE VECTOR
-        Vel_angle = np.radians(self.Flight_Angle_Slider.val)
-        V_B_P = np.array([np.cos(Vel_angle),np.sin(Vel_angle)])
-        V_B_O = self.R_PW(V_B_P,Plane_Angle_rad)
+        
 
         if self.Show_Vel_vec == True:
             self.Vel_line.set_data([CG[0],CG[0] + 0.08*V_B_O[0]],[CG[1],CG[1] + 0.08*V_B_O[1]])
@@ -325,10 +410,18 @@ class InteractivePlot:
         self.Phi_rel_text.set_text(f"Phi_rel: {phi_rel_deg: 3.1f} [deg]")
 
         ## G X V TEMP TEXT BOX
-        v_hat = V_B_O
         g_hat = np.array([0,-1])
-        cp_temp = -np.arcsin(np.cross(g_hat,v_hat))
-        self.Temp_GV_text.set_text(f"(g x v): {np.degrees(cp_temp): 3.1f} [deg]")
+        CP_temp = -np.cross(g_hat,V_hat)  # Swap sign for consitent notation
+        DP_temp = np.dot(g_hat,V_hat)
+        CP_temp_angle_deg = np.degrees(np.arctan2(CP_temp,DP_temp))
+        self.Temp_GV_text.set_text(f"(g x v): {CP_temp_angle_deg: 3.1f} [deg]")
+
+        ## MOMENTUM TRANSFER REWARD
+        self.R_LT_dot.set_data(CP_LT_angle_deg,R_LT)
+
+        ## GRAVITY MOMENT REWARD
+        self.R_GM_dot.set_data(CP_GM_angle_deg,R_GM)
+
 
 
 
@@ -347,17 +440,22 @@ class InteractivePlot:
 
         if self.Show_Vel_vec == True:
             self.Show_Vel_vec = False
+            self.R_LT_ax.set_visible(False)
+
         else:
             self.Show_Vel_vec = True
+            self.R_LT_ax.set_visible(True)
 
         self.Update_2(None)
 
     def Grav_Visible(self,event):
-
+        
         if self.Show_grav_vec == True:
             self.Show_grav_vec = False
+            self.R_GM_ax.set_visible(False)
         else:
             self.Show_grav_vec = True
+            self.R_GM_ax.set_visible(True)
 
         self.Update_2(None)
 
