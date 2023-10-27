@@ -92,14 +92,16 @@ class InteractivePlot:
 
         ## FLIGHT ANGLE SLIDER
         self.ax_V_Angle_Slider = self.fig.add_subplot(gs[5,-1])
-        self.Flight_Angle_Slider = Slider(
+        self.V_Angle_Slider = Slider(
             ax=self.ax_V_Angle_Slider,
             label='Flight Angle \n [deg]',
-            valmin=5,
-            valmax=175,
+            valmin=0,
+            valmax=180,
             valinit=0,
             valstep=1
         )
+        self.V_Angle_Slider.valmax = 175
+        self.V_Angle_Slider.valmin = 5
 
 
         ## CONFIGS
@@ -149,7 +151,7 @@ class InteractivePlot:
         self.Gamma_Slider.on_changed(self.Update_1)
 
         self.Beta_Slider.on_changed(self.Update_2)  
-        self.Flight_Angle_Slider.on_changed(self.Update_2) 
+        self.V_Angle_Slider.on_changed(self.Update_2) 
 
     def init_plots(self):
 
@@ -192,8 +194,13 @@ class InteractivePlot:
         x = np.linspace(-180,180,500)
         R_Leg1 = np.vectorize(self.Reward_LT)(x,Leg_Num=1)
         R_Leg2 = np.vectorize(self.Reward_LT)(x,Leg_Num=2)
-        self.R_LT_ax.plot(x,R_Leg1,label="Leg 1")
-        self.R_LT_ax.plot(x,R_Leg2,label="Leg 2")
+        self.R_LT_Line1, = self.R_LT_ax.plot(x,R_Leg1,label="Leg 1",alpha=1.0)
+        self.R_LT_Line2, = self.R_LT_ax.plot(x,R_Leg2,label="Leg 2",alpha=0.2)
+        self.R_LT_dot, = self.R_LT_ax.plot([],[],'ro')
+        self.R_LT_ax.legend(loc="lower right",ncol=2)
+        self.R_LT_ax.grid()
+
+        # CONFIG
         self.R_LT_ax.set_xlim(-200,200)
         self.R_LT_ax.set_ylim(-0.75,1.25)
         self.R_LT_ax.set_xticks(np.arange(-180,181,45))
@@ -203,17 +210,20 @@ class InteractivePlot:
         self.R_LT_ax.set_ylabel("Reward")
         self.R_LT_ax.hlines(0,-300,300)
         self.R_LT_ax.vlines(0,-5,5)
-        self.R_LT_ax.legend(loc="lower right",ncol=2)
-        self.R_LT_ax.grid()
-        self.R_LT_dot, = self.R_LT_ax.plot([],[],'ro')
+
 
 
         ## GRAVITY MOMENT PLOT
         x = np.linspace(-180,180,500)
         R_Leg1 = np.vectorize(self.Reward_GravityMoment)(x,Leg_Num=1)
         R_Leg2 = np.vectorize(self.Reward_GravityMoment)(x,Leg_Num=2)
-        self.R_GM_ax.plot(x,R_Leg1,label="Leg 1")
-        self.R_GM_ax.plot(x,R_Leg2,label="Leg 2")
+        self.R_GM_Line1, = self.R_GM_ax.plot(x,R_Leg1,label="Leg 1",alpha=1.0)
+        self.R_GM_Line2, = self.R_GM_ax.plot(x,R_Leg2,label="Leg 2",alpha=0.2)
+        self.R_GM_dot, = self.R_GM_ax.plot([],[],'ro')
+        self.R_GM_ax.legend(loc="lower right",ncol=2)
+        self.R_GM_ax.grid()
+
+        # CONFIG
         self.R_GM_ax.set_xlim(-200,200)
         self.R_GM_ax.set_ylim(-1.25,1.25)
         self.R_GM_ax.set_xticks(np.arange(-180,181,45))
@@ -221,13 +231,30 @@ class InteractivePlot:
         self.R_GM_ax.set_title("Reward: Gravity Moment")
         self.R_GM_ax.set_xlabel("Angle: (g x e_r)")
         self.R_GM_ax.set_ylabel("Reward")
-        self.R_GM_ax.legend(loc="lower right",ncol=2)
         self.R_GM_ax.hlines(0,-300,300)
         self.R_GM_ax.vlines(0,-5,5)
-        self.R_GM_ax.grid()
-        self.R_GM_dot, = self.R_GM_ax.plot([],[],'ro')
+        
+        ## IMPACT ANGLE PLOT
+        x = np.linspace(-300,300,500)
+        Phi_min = -135
+        R_dir_neg = np.vectorize(self.Reward_ImpactAngle)(x,Phi_min,rot_dir=-1)
+        R_dir_pos = np.vectorize(self.Reward_ImpactAngle)(x,Phi_min,rot_dir= 1)
+        self.R_phi_Line1, = self.R_phi_ax.plot(x,R_dir_neg,label="sign(g x v) < 0")
+        self.R_phi_Line2, = self.R_phi_ax.plot(x,R_dir_pos,label="sign(g x v) > 0")
+        self.R_phi_dot, = self.R_phi_ax.plot([],[],'ro')
+        self.R_phi_ax.legend(loc="lower right",ncol=2)
+        self.R_phi_ax.grid()
 
-
+        # CONFIG
+        self.R_phi_ax.set_xlim(-270,270)
+        self.R_phi_ax.set_ylim(-1.25,1.25)
+        self.R_phi_ax.set_xticks(np.arange(-225,225+1,45))
+        self.R_phi_ax.set_yticks(np.arange(-1,1.1,0.5))
+        self.R_phi_ax.set_title("Reward: Impact Angle Window")
+        self.R_phi_ax.set_xlabel("Angle: Phi_rel")
+        self.R_phi_ax.set_ylabel("Reward")
+        self.R_phi_ax.hlines(0,-300,300)
+        self.R_phi_ax.vlines(0,-5,5)
 
         
 
@@ -262,18 +289,43 @@ class InteractivePlot:
         self.Beta_min_rad = np.arccos((L**2 + a**2 - self.PD**2)/(2*a*L))
 
         if self.Contact_Leg == 1:
+
+            ## CALC BETA BOUNDARY ANGLE
             self.Beta_min_rad = -self.Beta_min_rad # Swap sign to match coordinate notation
             self.Beta_min_deg = np.rad2deg(self.Beta_min_rad)
 
             self.Beta_Slider.valmax = self.Beta_min_deg
             self.Beta_Slider.valmin = -(90 + gamma_deg)
 
+            ## CALC PHI BOUNDARY ANGLE
+            self.Phi_Impact_min_rad = np.arctan2(-np.cos(self.Beta_min_rad + gamma_rad + Plane_Angle_rad), \
+                                                  np.sin(self.Beta_min_rad + gamma_rad + Plane_Angle_rad))
+            self.Phi_Impact_min_deg = np.rad2deg(self.Phi_Impact_min_rad)
+
+            ## CALC RELATIVE PHI BOUNDARY ANGLE
+            self.Phi_rel_Impact_min_rad = self.Phi_Impact_min_rad - Plane_Angle_rad
+            self.Phi_rel_Impact_min_deg = np.rad2deg(self.Phi_rel_Impact_min_rad)
+
+
+
         elif self.Contact_Leg == 2:
+
+            ## CALC BETA BOUNDARY ANGLE
             self.Beta_min_rad = -(np.pi - self.Beta_min_rad)
             self.Beta_min_deg = np.rad2deg(self.Beta_min_rad)
 
             self.Beta_Slider.valmax = -(90 - gamma_deg)
             self.Beta_Slider.valmin = self.Beta_min_deg
+
+            ## CALC PHI BOUNDARY ANGLE
+            self.Phi_Impact_min_rad = np.arctan2(-np.cos(self.Beta_min_rad - gamma_rad + Plane_Angle_rad), \
+                                                  np.sin(self.Beta_min_rad - gamma_rad + Plane_Angle_rad))
+            self.Phi_Impact_min_deg = np.rad2deg(self.Phi_Impact_min_rad)
+
+            ## CALC RELATIVE PHI BOUNDARY ANGLE
+            self.Phi_rel_Impact_min_rad = self.Phi_Impact_min_rad - Plane_Angle_rad
+            self.Phi_rel_Impact_min_deg = np.rad2deg(self.Phi_rel_Impact_min_rad)
+
 
         self.Beta_Slider.set_val(self.Beta_min_deg)        
 
@@ -293,13 +345,14 @@ class InteractivePlot:
         Beta_rad = np.radians(Beta_deg)
 
         ## UPDATE VELOCITY LINE VECTOR
-        Vel_angle = np.radians(self.Flight_Angle_Slider.val)
+        Vel_angle = np.radians(self.V_Angle_Slider.val)
         V_B_P = np.array([np.cos(Vel_angle),np.sin(Vel_angle)])
         V_B_O = self.R_PW(V_B_P,Plane_Angle_rad)
         V_hat = V_B_O
 
-        ## GRAVITY VECOTR
+        ## GRAVITY VECTOR
         g_hat = np.array([0,-1]) # {X_W,Z_W}
+
 
 
         if self.Contact_Leg == 1:
@@ -336,6 +389,11 @@ class InteractivePlot:
             DP_GM = np.dot(g_hat,e_r_hat)
             CP_GM_angle_deg = np.degrees(np.arctan2(CP_GM,DP_GM))
             R_GM = self.Reward_GravityMoment(CP_GM_angle_deg,Leg_Num=1)
+
+            ## PHI IMPACT REWARD
+            Rot_Dir = np.sign(-np.cross(g_hat,V_hat))
+            R_Phi = self.Reward_ImpactAngle(phi_rel_deg,self.Phi_rel_Impact_min_deg,Rot_Dir)
+            
            
 
         elif self.Contact_Leg == 2:
@@ -372,6 +430,10 @@ class InteractivePlot:
             DP_GM = np.dot(g_hat,e_r_hat)
             CP_GM_angle_deg = np.degrees(np.arctan2(CP_GM,DP_GM))
             R_GM = self.Reward_GravityMoment(CP_GM_angle_deg,Leg_Num=2)
+
+            ## PHI IMPACT REWARD
+            Rot_Dir = np.sign(-np.cross(g_hat,V_hat))
+            R_Phi = self.Reward_ImpactAngle(phi_rel_deg,self.Phi_rel_Impact_min_deg,Rot_Dir)
 
             
         
@@ -422,7 +484,14 @@ class InteractivePlot:
         ## GRAVITY MOMENT REWARD
         self.R_GM_dot.set_data(CP_GM_angle_deg,R_GM)
 
+        ## IMPACT ANGLE REWARD
+        x = np.linspace(-300,300,500)
+        R_dir_neg = np.vectorize(self.Reward_ImpactAngle)(x,self.Phi_rel_Impact_min_deg,rot_dir=-1)
+        R_dir_pos = np.vectorize(self.Reward_ImpactAngle)(x,self.Phi_rel_Impact_min_deg,rot_dir= 1)
 
+        self.R_phi_Line1.set_data(x,R_dir_neg)
+        self.R_phi_Line2.set_data(x,R_dir_pos)
+        self.R_phi_dot.set_data(phi_rel_deg,R_Phi)
 
 
         self.fig.canvas.draw_idle()
@@ -431,8 +500,25 @@ class InteractivePlot:
 
         if self.Contact_Leg == 1:
             self.Contact_Leg = 2
-        else:
+
+            ## UPDATE LT ALPHA
+            self.R_LT_Line1.set_alpha(0.2)
+            self.R_LT_Line2.set_alpha(1.0)
+
+            ## UPDATE GM ALPHA
+            self.R_GM_Line1.set_alpha(0.2)
+            self.R_GM_Line2.set_alpha(1.0)
+
+        elif self.Contact_Leg == 2:
             self.Contact_Leg = 1
+
+            ## UPDATE LT ALPHA
+            self.R_LT_Line1.set_alpha(1.0)
+            self.R_LT_Line2.set_alpha(0.2)
+
+            ## UPDATE GM ALPHA
+            self.R_GM_Line1.set_alpha(1.0)
+            self.R_GM_Line2.set_alpha(0.2)
 
         self.Update_1(None)
 
@@ -462,24 +548,24 @@ class InteractivePlot:
     def show(self):
         plt.show()
 
-    def Reward_ImpactAngle(self,phi_rel,phi_min,rot_dir=-1,phi_thr=-200):
+    def Reward_ImpactAngle(self,Phi_rel_deg,Phi_rel_min_deg,rot_dir=-1,Phi_thr=-200):
 
-        phi_max = -180
-        phi_b = (phi_min + phi_max)/2
+        Phi_max = -180
+        Phi_b = (Phi_rel_min_deg + Phi_max)/2
 
         if rot_dir == +1:
-            phi_rel = -phi_rel
+            Phi_rel_deg = -Phi_rel_deg
 
-        if phi_rel <= phi_thr:
+        if Phi_rel_deg <= Phi_thr:
             return -0.5
-        elif phi_thr < phi_rel <= phi_max:
-            return -1/(phi_thr - phi_max) * (phi_rel - phi_max) + 0.5
-        elif phi_max < phi_rel <= phi_b:
-            return -0.5/(phi_max - phi_b) * (phi_rel - phi_b) + 1.0      
-        elif phi_b < phi_rel <= phi_min:
-            return 0.5/(phi_b - phi_min) * (phi_rel - phi_min) + 0.5
-        elif phi_min < phi_rel <= -phi_min:
-            return 1.0/(phi_min - (-phi_min)) * (phi_rel - 0) 
+        elif Phi_thr < Phi_rel_deg <= Phi_max:
+            return -1/(Phi_thr - Phi_max) * (Phi_rel_deg - Phi_max) + 0.5
+        elif Phi_max < Phi_rel_deg <= Phi_b:
+            return -0.5/(Phi_max - Phi_b) * (Phi_rel_deg - Phi_b) + 1.0      
+        elif Phi_b < Phi_rel_deg <= Phi_rel_min_deg:
+            return 0.5/(Phi_b - Phi_rel_min_deg) * (Phi_rel_deg - Phi_rel_min_deg) + 0.5
+        elif Phi_rel_min_deg < Phi_rel_deg <= -Phi_rel_min_deg:
+            return 1.0/(Phi_rel_min_deg - (-Phi_rel_min_deg)) * (Phi_rel_deg - 0) 
         else:
             return -0.5
         
