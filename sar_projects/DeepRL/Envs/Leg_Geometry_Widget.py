@@ -303,7 +303,8 @@ class InteractivePlot:
             self.Phi_Impact_min_deg = np.rad2deg(self.Phi_Impact_min_rad)
 
             ## CALC RELATIVE PHI BOUNDARY ANGLE
-            self.Phi_rel_Impact_min_rad = self.Phi_Impact_min_rad - Plane_Angle_rad
+            self.Phi_rel_Impact_min_rad = np.arctan2(np.sin(self.Phi_Impact_min_rad - Plane_Angle_rad), \
+                                                     np.cos(self.Phi_Impact_min_rad - Plane_Angle_rad))
             self.Phi_rel_Impact_min_deg = np.rad2deg(self.Phi_rel_Impact_min_rad)
 
 
@@ -323,7 +324,8 @@ class InteractivePlot:
             self.Phi_Impact_min_deg = np.rad2deg(self.Phi_Impact_min_rad)
 
             ## CALC RELATIVE PHI BOUNDARY ANGLE
-            self.Phi_rel_Impact_min_rad = self.Phi_Impact_min_rad - Plane_Angle_rad
+            self.Phi_rel_Impact_min_rad = np.arctan2(np.sin(self.Phi_Impact_min_rad - Plane_Angle_rad), \
+                                                     np.cos(self.Phi_Impact_min_rad - Plane_Angle_rad))
             self.Phi_rel_Impact_min_deg = np.rad2deg(self.Phi_rel_Impact_min_rad)
 
 
@@ -352,16 +354,20 @@ class InteractivePlot:
 
         ## GRAVITY VECTOR
         g_hat = np.array([0,-1]) # {X_W,Z_W}
+        Rot_Dir = np.sign(-np.cross(g_hat,V_hat))
+
 
 
 
         if self.Contact_Leg == 1:
-            phi_rad = np.arctan2(-np.cos(Beta_rad + gamma_rad + Plane_Angle_rad), \
-                                np.sin(Beta_rad + gamma_rad + Plane_Angle_rad))
-            phi_deg = np.rad2deg(phi_rad)
+            Phi_rad = np.arctan2(-np.cos(Beta_rad + gamma_rad + Plane_Angle_rad), \
+                                  np.sin(Beta_rad + gamma_rad + Plane_Angle_rad))
+            Phi_deg = np.rad2deg(Phi_rad)
 
-            phi_rel_rad = phi_rad - Plane_Angle_rad
-            phi_rel_deg = np.rad2deg(phi_rel_rad)
+            # Phi_rel_rad = Phi_rad - Plane_Angle_rad
+            Phi_rel_rad = np.arctan2(np.sin(Phi_rad - Plane_Angle_rad), \
+                                     np.cos(Phi_rad - Plane_Angle_rad))
+            Phi_rel_deg = np.rad2deg(Phi_rel_rad)
 
             ## UPDATE ARC VALUES
             self.Swing_Arc.width = self.Swing_Arc.height = L*2
@@ -391,19 +397,20 @@ class InteractivePlot:
             R_GM = self.Reward_GravityMoment(CP_GM_angle_deg,Leg_Num=1)
 
             ## PHI IMPACT REWARD
-            Rot_Dir = np.sign(-np.cross(g_hat,V_hat))
-            R_Phi = self.Reward_ImpactAngle(phi_rel_deg,self.Phi_rel_Impact_min_deg,Rot_Dir)
+            R_Phi = self.Reward_ImpactAngle(Phi_rel_deg,self.Phi_rel_Impact_min_deg,Rot_Dir)
             
            
 
         elif self.Contact_Leg == 2:
 
-            phi_rad = np.arctan2(-np.cos(Beta_rad - gamma_rad + Plane_Angle_rad), \
+            Phi_rad = np.arctan2(-np.cos(Beta_rad - gamma_rad + Plane_Angle_rad), \
                               np.sin(Beta_rad - gamma_rad + Plane_Angle_rad))
-            phi_deg = np.rad2deg(phi_rad)
+            Phi_deg = np.rad2deg(Phi_rad)
 
-            phi_rel_rad = phi_rad - Plane_Angle_rad
-            phi_rel_deg = np.rad2deg(phi_rel_rad)
+            # Phi_rel_rad = Phi_rad - Plane_Angle_rad
+            Phi_rel_rad = np.arctan2(np.sin(Phi_rad - Plane_Angle_rad), \
+                                     np.cos(Phi_rad - Plane_Angle_rad))
+            Phi_rel_deg = np.rad2deg(Phi_rel_rad)
 
             ## UPDATE ARC VALUES
             self.Swing_Arc.width = self.Swing_Arc.height = L*2
@@ -432,15 +439,14 @@ class InteractivePlot:
             R_GM = self.Reward_GravityMoment(CP_GM_angle_deg,Leg_Num=2)
 
             ## PHI IMPACT REWARD
-            Rot_Dir = np.sign(-np.cross(g_hat,V_hat))
-            R_Phi = self.Reward_ImpactAngle(phi_rel_deg,self.Phi_rel_Impact_min_deg,Rot_Dir)
+            R_Phi = self.Reward_ImpactAngle(Phi_rel_deg,self.Phi_rel_Impact_min_deg,Rot_Dir)
 
             
         
 
 
         ## UPDATE BODY DRAWING
-        CG,L1,L2,Prop1,Prop2 = self._get_pose(r_B_O[0],r_B_O[1],phi_rad)
+        CG,L1,L2,Prop1,Prop2 = self._get_pose(r_B_O[0],r_B_O[1],Phi_rad)
         self.leg1_line.set_data([CG[0],L1[0]],[CG[1],L1[1]])
         self.leg2_line.set_data([CG[0],L2[0]],[CG[1],L2[1]])
         self.prop1_line.set_data([CG[0],Prop1[0]],[CG[1],Prop1[1]])
@@ -468,8 +474,8 @@ class InteractivePlot:
         impact_window = np.abs(self.Swing_Arc.theta2 - self.Swing_Arc.theta1)
         self.Impact_Window_text.set_text(f"Impact Window: {impact_window:3.1f} [deg]")
 
-        self.Phi_text.set_text(f"Phi: {phi_deg: 3.1f} [deg]")
-        self.Phi_rel_text.set_text(f"Phi_rel: {phi_rel_deg: 3.1f} [deg]")
+        self.Phi_text.set_text(f"Phi: {Phi_deg: 3.1f} [deg]")
+        self.Phi_rel_text.set_text(f"Phi_rel: {Phi_rel_deg: 3.1f} [deg]")
 
         ## G X V TEMP TEXT BOX
         g_hat = np.array([0,-1])
@@ -489,9 +495,17 @@ class InteractivePlot:
         R_dir_neg = np.vectorize(self.Reward_ImpactAngle)(x,self.Phi_rel_Impact_min_deg,rot_dir=-1)
         R_dir_pos = np.vectorize(self.Reward_ImpactAngle)(x,self.Phi_rel_Impact_min_deg,rot_dir= 1)
 
+        if Rot_Dir >= 0:
+            self.R_phi_Line1.set_alpha(0.2)
+            self.R_phi_Line2.set_alpha(1.0)
+        elif Rot_Dir < 0:
+            self.R_phi_Line1.set_alpha(1.0)
+            self.R_phi_Line2.set_alpha(0.2)
+
+
         self.R_phi_Line1.set_data(x,R_dir_neg)
         self.R_phi_Line2.set_data(x,R_dir_pos)
-        self.R_phi_dot.set_data(phi_rel_deg,R_Phi)
+        self.R_phi_dot.set_data(Phi_rel_deg,R_Phi)
 
 
         self.fig.canvas.draw_idle()
@@ -549,6 +563,8 @@ class InteractivePlot:
         plt.show()
 
     def Reward_ImpactAngle(self,Phi_rel_deg,Phi_rel_min_deg,rot_dir=-1,Phi_thr=-200):
+        
+        Phi_rel_min_deg = -np.abs(Phi_rel_min_deg)
 
         Phi_max = -180
         Phi_b = (Phi_rel_min_deg + Phi_max)/2
