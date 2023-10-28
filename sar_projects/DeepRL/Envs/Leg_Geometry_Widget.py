@@ -21,6 +21,7 @@ class InteractivePlot:
         ## CONFIGS
         self.Show_Vel_vec = True
         self.Show_grav_vec = True
+        self.Beta_Bounds = True
         self.Rot_Dir = -1
 
         ## SAR DIMENSIONAL CONSTRAINTS
@@ -67,24 +68,26 @@ class InteractivePlot:
 
 
         ## CONFIGS
-        widths = [20,80]
+        widths = [40,60]
         heights = [100]
         gs_Configs = gridspec.GridSpecFromSubplotSpec(1, 2, subplot_spec=gs[1,0],width_ratios=widths, height_ratios=heights)
-        gs_Buttons = gridspec.GridSpecFromSubplotSpec(4, 1, subplot_spec=gs_Configs[0,0], wspace=0.5, hspace=0.5)
-        gs_Text    = gridspec.GridSpecFromSubplotSpec(3, 2, subplot_spec=gs_Configs[0,1], wspace=0.5, hspace=0.5)
+        gs_Buttons = gridspec.GridSpecFromSubplotSpec(4, 2, subplot_spec=gs_Configs[0,0], wspace=0.5, hspace=0.5)
+        gs_Text    = gridspec.GridSpecFromSubplotSpec(3, 3, subplot_spec=gs_Configs[0,1], wspace=0.5, hspace=0.5)
 
 
         ax_Leg_Button           = self.fig.add_subplot(gs_Buttons[0, 0])
         ax_Vel_Button           = self.fig.add_subplot(gs_Buttons[1, 0])
         ax_Gravity_Button       = self.fig.add_subplot(gs_Buttons[2, 0])
         ax_Rot_Dir_Button       = self.fig.add_subplot(gs_Buttons[3, 0])
+        ax_Reset_Phi_Button     = self.fig.add_subplot(gs_Buttons[0, 1])
+        ax_Beta_Bounds          = self.fig.add_subplot(gs_Buttons[1, 1])
+
         
         ax_Phi_text             = self.fig.add_subplot(gs_Text[0, 0])
         ax_Phi_rel_text         = self.fig.add_subplot(gs_Text[1, 0])
         ax_Phi_temp_text        = self.fig.add_subplot(gs_Text[2, 0])
         ax_Impact_Window_text   = self.fig.add_subplot(gs_Text[0, 1])
         ax_Temp_GV_text         = self.fig.add_subplot(gs_Text[1, 1])
-        ax_Reset_Phi_Button     = self.fig.add_subplot(gs_Text[2, 1])
 
 
 
@@ -146,6 +149,7 @@ class InteractivePlot:
         )
         self.V_Angle_Slider.valmax = 175
         self.V_Angle_Slider.valmin = 5
+        self.V_Angle_Slider.set_val(5)
         self.V_Angle_Slider.on_changed(self.Update_2) 
 
 
@@ -164,6 +168,9 @@ class InteractivePlot:
 
         self.Reset_Phi_button = Button(ax_Reset_Phi_Button, f'Reset_Phi', hovercolor='0.975')
         self.Reset_Phi_button.on_clicked(self.Reset_Phi)
+
+        self.Beta_Bounds_button = Button(ax_Beta_Bounds, f'Beta_Bounds', hovercolor='0.975')
+        self.Beta_Bounds_button.on_clicked(self.Set_Beta_Bounds)
         
 
 
@@ -251,7 +258,7 @@ class InteractivePlot:
 
         # CONFIG
         self.R_LT_ax.set_xlim(-200,200)
-        self.R_LT_ax.set_ylim(-0.75,1.25)
+        self.R_LT_ax.set_ylim(-1.25,1.25)
         self.R_LT_ax.set_xticks(np.arange(-180,181,45))
         self.R_LT_ax.set_yticks(np.arange(-1,1.1,0.5))
         self.R_LT_ax.set_title("Reward: Angular Momentum Transfer")
@@ -340,8 +347,9 @@ class InteractivePlot:
             self.Beta_min_rad = -self.Beta_min_rad # Swap sign to match coordinate notation
             self.Beta_min_deg = np.rad2deg(self.Beta_min_rad)
 
-            # self.Beta_Slider.valmax = self.Beta_min_deg
-            # self.Beta_Slider.valmin = -(90 + gamma_deg)
+            if self.Beta_Bounds ==  True:
+                self.Beta_Slider.valmax = self.Beta_min_deg
+                self.Beta_Slider.valmin = -(90 + gamma_deg)
 
             ## CALC PHI BOUNDARY ANGLE
             self.Phi_Impact_min_rad = np.arctan2(-np.cos(self.Beta_min_rad + gamma_rad + Plane_Angle_rad), \
@@ -361,8 +369,9 @@ class InteractivePlot:
             self.Beta_min_rad = -(np.pi - self.Beta_min_rad)
             self.Beta_min_deg = np.rad2deg(self.Beta_min_rad)
 
-            # self.Beta_Slider.valmax = -(90 - gamma_deg)
-            # self.Beta_Slider.valmin = self.Beta_min_deg
+            if self.Beta_Bounds ==  True:
+                self.Beta_Slider.valmax = -(90 - gamma_deg)
+                self.Beta_Slider.valmin = self.Beta_min_deg
 
             ## CALC PHI BOUNDARY ANGLE
             self.Phi_Impact_min_rad = np.arctan2(-np.cos(self.Beta_min_rad - gamma_rad + Plane_Angle_rad), \
@@ -375,7 +384,7 @@ class InteractivePlot:
             self.Phi_rel_Impact_min_deg = np.rad2deg(self.Phi_rel_Impact_min_rad)
 
 
-        self.Beta_Slider.set_val(self.Beta_min_deg)        
+        self.Beta_Slider.set_val(self.Beta_min_deg)
 
     def Update_2(self,val):
 
@@ -402,6 +411,10 @@ class InteractivePlot:
         g_hat = np.array([0,-1]) # {X_W,Z_W}
         Rot_Dir = -np.sign(-np.cross(g_hat,V_hat))
 
+        if self.Beta_Bounds ==  False:
+            self.Beta_Slider.valmax =  720
+            self.Beta_Slider.valmin = -720
+
 
 
 
@@ -412,15 +425,6 @@ class InteractivePlot:
 
             Phi_rel_rad = -(Phi_rad - Plane_Angle_rad)
             Phi_rel_deg = np.rad2deg(Phi_rel_rad)
-
-
-            Phi_temp_rad = Phi_rel_rad
-            Phi_temp_deg = np.rad2deg(Phi_temp_rad)
-            
-
-            Phi_rel_norm_rad = Phi_rel_rad
-            Phi_rel_norm_deg = np.rad2deg(Phi_rel_norm_rad)
-
 
 
             ## UPDATE ARC VALUES
@@ -462,15 +466,7 @@ class InteractivePlot:
 
             Phi_rel_rad = -(Phi_rad - Plane_Angle_rad)
             Phi_rel_deg = np.rad2deg(Phi_rel_rad)
-
-
-            Phi_temp_rad = Phi_rel_rad
-            Phi_temp_deg = np.rad2deg(Phi_temp_rad)
-            
-
-            Phi_rel_norm_rad = Phi_rel_rad
-            Phi_rel_norm_deg = np.rad2deg(Phi_rel_norm_rad)
-
+           
 
             ## UPDATE ARC VALUES
             self.Swing_Arc.width = self.Swing_Arc.height = L*2
@@ -546,7 +542,6 @@ class InteractivePlot:
 
         self.Phi_text.set_text(f"Phi: {Phi_deg: 3.1f} [deg]")
         self.Phi_rel_text.set_text(f"Phi_rel: {Phi_rel_deg: 3.1f} [deg]")
-        self.Phi_temp_text.set_text(f"Phi_temp: {Phi_temp_deg: 3.1f} [deg]")
 
 
         ## G X V TEMP TEXT BOX
@@ -653,19 +648,26 @@ class InteractivePlot:
         Plane_Angle_rad = np.radians(Plane_Angle_deg)
 
         phi_rad = 0
+        self.Beta_Bounds = False
 
         if self.Contact_Leg == 1:
             Beta_rad = np.arctan2(np.cos(gamma_rad - phi_rad + Plane_Angle_rad), \
                                   np.sin(gamma_rad - phi_rad + Plane_Angle_rad))
-            self.Beta_Slider.val = np.degrees(Beta_rad)
+            self.Beta_Slider.set_val(np.degrees(Beta_rad))
             
         elif self.Contact_Leg == 2:
             Beta_rad = np.arctan2( np.cos(gamma_rad + phi_rad - Plane_Angle_rad), \
                                   -np.sin(gamma_rad + phi_rad - Plane_Angle_rad))
-            self.Beta_Slider.val = np.degrees(Beta_rad)
+            self.Beta_Slider.set_val(np.degrees(Beta_rad))
 
-        self.Update_2(None)
+    def Set_Beta_Bounds(self,event):
 
+        if self.Beta_Bounds == True:
+            self.Beta_Bounds = False
+            self.Update_2(None)
+        elif self.Beta_Bounds == False:
+            self.Beta_Bounds = True
+            self.Update_1(None)
 
     def R_LT_Plot_Visible(self,event):
 
@@ -696,17 +698,17 @@ class InteractivePlot:
             Phi_rel_deg = -Phi_rel_deg
 
         if Phi_rel_deg <= Phi_thr:
-            return -0.5
+            return -1.0
         elif Phi_thr < Phi_rel_deg <= Phi_max:
-            return -1/(Phi_thr - Phi_max) * (Phi_rel_deg - Phi_max) + 0.5
+            return -0.5/(Phi_thr - Phi_max) * (Phi_rel_deg - Phi_max) + 0.5
         elif Phi_max < Phi_rel_deg <= Phi_b:
             return -0.5/(Phi_max - Phi_b) * (Phi_rel_deg - Phi_b) + 1.0      
         elif Phi_b < Phi_rel_deg <= Phi_rel_min_deg:
             return 0.5/(Phi_b - Phi_rel_min_deg) * (Phi_rel_deg - Phi_rel_min_deg) + 0.5
         elif Phi_rel_min_deg < Phi_rel_deg <= -Phi_rel_min_deg:
-            return 1.0/(Phi_rel_min_deg - (-Phi_rel_min_deg)) * (Phi_rel_deg - 0) 
+            return 1.5/(Phi_rel_min_deg - (-Phi_rel_min_deg)) * (Phi_rel_deg - 0) - 0.25
         else:
-            return -0.5
+            return -1.0
         
     def Reward_LT(self,CP_angle_deg,Leg_Num):
 
@@ -716,7 +718,7 @@ class InteractivePlot:
         if -180 <= CP_angle_deg <= 0:
             return -np.sin(np.radians(CP_angle_deg))
         elif 0 < CP_angle_deg <= 180:
-            return -0.5/180 * CP_angle_deg
+            return -1.0/180 * CP_angle_deg
         
     def Reward_GravityMoment(self,CP_Angle,Leg_Num):
 
