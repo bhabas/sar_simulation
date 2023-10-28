@@ -16,11 +16,12 @@ class InteractivePlot:
         gamma_rad = np.deg2rad(gamma_deg)         
         self.Contact_Leg = 1
         self.L_norm = 1.4
-        self.Plane_Angle_deg = 0
+        self.Plane_Angle_deg = 90
 
         ## CONFIGS
         self.Show_Vel_vec = True
         self.Show_grav_vec = True
+        self.Rot_Dir = -1
 
         ## SAR DIMENSIONAL CONSTRAINTS
         self.PD = 75e-3             # Prop Distance from COM [m]
@@ -59,9 +60,7 @@ class InteractivePlot:
 
 
         ## SLIDERS
-        widths = [100]
-        heights = [33,33,33]
-        gs_Sliders = gridspec.GridSpecFromSubplotSpec(3, 1, subplot_spec=gs[1,1],width_ratios=widths, height_ratios=heights,hspace=1.0)
+        gs_Sliders = gridspec.GridSpecFromSubplotSpec(3, 1, subplot_spec=gs[1,1],hspace=1.0)
         self.ax_Plane_Slider    = self.fig.add_subplot(gs_Sliders[0,0])
         self.ax_Beta_Slider     = self.fig.add_subplot(gs_Sliders[1,0])
         self.ax_V_Angle_Slider  = self.fig.add_subplot(gs_Sliders[2,0])
@@ -71,19 +70,22 @@ class InteractivePlot:
         widths = [20,80]
         heights = [100]
         gs_Configs = gridspec.GridSpecFromSubplotSpec(1, 2, subplot_spec=gs[1,0],width_ratios=widths, height_ratios=heights)
-        gs_Buttons = gridspec.GridSpecFromSubplotSpec(3, 1, subplot_spec=gs_Configs[0,0], wspace=0.5, hspace=0.5)
+        gs_Buttons = gridspec.GridSpecFromSubplotSpec(4, 1, subplot_spec=gs_Configs[0,0], wspace=0.5, hspace=0.5)
         gs_Text    = gridspec.GridSpecFromSubplotSpec(3, 2, subplot_spec=gs_Configs[0,1], wspace=0.5, hspace=0.5)
 
 
         ax_Leg_Button           = self.fig.add_subplot(gs_Buttons[0, 0])
         ax_Vel_Button           = self.fig.add_subplot(gs_Buttons[1, 0])
         ax_Gravity_Button       = self.fig.add_subplot(gs_Buttons[2, 0])
+        ax_Rot_Dir_Button       = self.fig.add_subplot(gs_Buttons[3, 0])
         
         ax_Phi_text             = self.fig.add_subplot(gs_Text[0, 0])
         ax_Phi_rel_text         = self.fig.add_subplot(gs_Text[1, 0])
-        ax_Phi_rel_norm_text    = self.fig.add_subplot(gs_Text[2, 0])
+        ax_Phi_temp_text        = self.fig.add_subplot(gs_Text[2, 0])
         ax_Impact_Window_text   = self.fig.add_subplot(gs_Text[0, 1])
         ax_Temp_GV_text         = self.fig.add_subplot(gs_Text[1, 1])
+        ax_Reset_Phi_Button     = self.fig.add_subplot(gs_Text[2, 1])
+
 
 
 
@@ -126,8 +128,8 @@ class InteractivePlot:
         self.Beta_Slider = Slider(
             ax=self.ax_Beta_Slider,
             label='Beta Angle\n [deg]',
-            valmin=-180,
-            valmax=90,
+            valmin=-720,
+            valmax=720,
             valinit=0,
             valstep=1
         )
@@ -157,6 +159,14 @@ class InteractivePlot:
         self.gravity_button = Button(ax_Gravity_Button, 'Grav. Vector', hovercolor='0.975')
         self.gravity_button.on_clicked(self.Grav_Visible)
 
+        self.Rot_Dir_button = Button(ax_Rot_Dir_Button, f'Rot. Dir: {self.Rot_Dir:d}', hovercolor='0.975')
+        self.Rot_Dir_button.on_clicked(self.Change_Rot_Dir)
+
+        self.Reset_Phi_button = Button(ax_Reset_Phi_Button, f'Reset_Phi', hovercolor='0.975')
+        self.Reset_Phi_button.on_clicked(self.Reset_Phi)
+        
+
+
         self.R_LT_Button = Button(ax_R_LT_Button, '', hovercolor='0.975')
         self.R_LT_Button.on_clicked(self.R_LT_Plot_Visible)
 
@@ -174,15 +184,14 @@ class InteractivePlot:
         ax_Phi_rel_text.axis('off')
         self.Phi_rel_text = ax_Phi_rel_text.text(0,0.5,f"Phi_rel: {0.0: 3.1f} [deg]")
 
-        ax_Phi_rel_norm_text.axis('off')
-        self.Phi_rel_norm_text = ax_Phi_rel_norm_text.text(0,0.5,f"Phi_rel_norm: {0.0: 3.1f} [deg]")
+        ax_Phi_temp_text.axis('off')
+        self.Phi_temp_text = ax_Phi_temp_text.text(0,0.5,f"Phi_temp: {0.0: 3.1f} [deg]")
 
         ax_Impact_Window_text.axis('off')
         self.Impact_Window_text = ax_Impact_Window_text.text(0,0.5,f"Impact Window: {0.0:3.1f} [deg]")
 
         ax_Temp_GV_text.axis('off')
         self.Temp_GV_text = ax_Temp_GV_text.text(0,0.5,f"(g x v): {0.0: 3.1f} [deg]")
-
 
     def init_plots(self):
 
@@ -207,8 +216,8 @@ class InteractivePlot:
         self.leg2_line,  = self.ax_Quad.plot([],[],lw=2,zorder=5,c='black')
         self.prop1_line, = self.ax_Quad.plot([],[],lw=2,zorder=5,c='black')
         self.prop2_line, = self.ax_Quad.plot([],[],lw=2,zorder=5,c='black')
-        self.Z_B_line,   = self.ax_Quad.plot([],[],lw=3,zorder=5,c="tab:green")
-        self.X_B_line,   = self.ax_Quad.plot([],[],lw=3,zorder=5,c="tab:blue")
+        self.Z_B_line,   = self.ax_Quad.plot([],[],lw=3,zorder=5,c="tab:blue")
+        self.X_B_line,   = self.ax_Quad.plot([],[],lw=3,zorder=5,c="tab:green")
 
 
         Swing_Arc = patches.Arc(
@@ -222,8 +231,8 @@ class InteractivePlot:
 
         # PLANE LINES
         self.Plane_line, = self.ax_Quad.plot([],[],lw=1,zorder=1,c="k")
-        self.n_p_line,   = self.ax_Quad.plot([],[],lw=3,zorder=2,c="tab:green")
-        self.t_x_line,   = self.ax_Quad.plot([],[],lw=3,zorder=2,c="tab:blue")
+        self.n_p_line,   = self.ax_Quad.plot([],[],lw=3,zorder=2,c="tab:blue")
+        self.t_x_line,   = self.ax_Quad.plot([],[],lw=3,zorder=2,c="tab:green")
 
         # VECTOR LINES
         self.Vel_line, = self.ax_Quad.plot([],[],c="tab:green", lw=2,zorder=8)
@@ -391,22 +400,28 @@ class InteractivePlot:
 
         ## GRAVITY VECTOR
         g_hat = np.array([0,-1]) # {X_W,Z_W}
-        Rot_Dir = np.sign(-np.cross(g_hat,V_hat))
+        Rot_Dir = -np.sign(-np.cross(g_hat,V_hat))
 
 
 
 
         if self.Contact_Leg == 1:
-            Phi_rad = np.arctan2(-np.cos(Beta_rad + gamma_rad + Plane_Angle_rad), \
-                                  np.sin(Beta_rad + gamma_rad + Plane_Angle_rad))
+
+            Phi_rad = (Beta_rad + gamma_rad + Plane_Angle_rad) - np.pi/2
             Phi_deg = np.rad2deg(Phi_rad)
 
-            Phi_rel_rad = Phi_rad - Plane_Angle_rad
+            Phi_rel_rad = -(Phi_rad - Plane_Angle_rad)
             Phi_rel_deg = np.rad2deg(Phi_rel_rad)
 
-            Phi_rel_norm_rad = np.arctan2(np.sin(Phi_rad - Plane_Angle_rad), \
-                                          np.cos(Phi_rad - Plane_Angle_rad))
+
+            Phi_temp_rad = Phi_rel_rad
+            Phi_temp_deg = np.rad2deg(Phi_temp_rad)
+            
+
+            Phi_rel_norm_rad = Phi_rel_rad
             Phi_rel_norm_deg = np.rad2deg(Phi_rel_norm_rad)
+
+
 
             ## UPDATE ARC VALUES
             self.Swing_Arc.width = self.Swing_Arc.height = L*2
@@ -442,16 +457,20 @@ class InteractivePlot:
 
         elif self.Contact_Leg == 2:
 
-            Phi_rad = np.arctan2(-np.cos(Beta_rad - gamma_rad + Plane_Angle_rad), \
-                              np.sin(Beta_rad - gamma_rad + Plane_Angle_rad))
+            Phi_rad = (Beta_rad - gamma_rad + Plane_Angle_rad) - np.pi/2
             Phi_deg = np.rad2deg(Phi_rad)
 
-            Phi_rel_rad = Phi_rad - Plane_Angle_rad
+            Phi_rel_rad = -(Phi_rad - Plane_Angle_rad)
             Phi_rel_deg = np.rad2deg(Phi_rel_rad)
 
-            Phi_rel_norm_rad = np.arctan2(np.sin(Phi_rad - Plane_Angle_rad), \
-                                          np.cos(Phi_rad - Plane_Angle_rad))
+
+            Phi_temp_rad = Phi_rel_rad
+            Phi_temp_deg = np.rad2deg(Phi_temp_rad)
+            
+
+            Phi_rel_norm_rad = Phi_rel_rad
             Phi_rel_norm_deg = np.rad2deg(Phi_rel_norm_rad)
+
 
             ## UPDATE ARC VALUES
             self.Swing_Arc.width = self.Swing_Arc.height = L*2
@@ -527,7 +546,7 @@ class InteractivePlot:
 
         self.Phi_text.set_text(f"Phi: {Phi_deg: 3.1f} [deg]")
         self.Phi_rel_text.set_text(f"Phi_rel: {Phi_rel_deg: 3.1f} [deg]")
-        self.Phi_rel_norm_text.set_text(f"Phi_rel: {Phi_rel_norm_deg: 3.1f} [deg]")
+        self.Phi_temp_text.set_text(f"Phi_temp: {Phi_temp_deg: 3.1f} [deg]")
 
 
         ## G X V TEMP TEXT BOX
@@ -562,6 +581,11 @@ class InteractivePlot:
 
 
         self.fig.canvas.draw_idle()
+
+
+
+
+
 
     def Switch_Leg(self,event):
 
@@ -608,6 +632,41 @@ class InteractivePlot:
 
         self.Update_2(None)
 
+    def Change_Rot_Dir(self,event):
+
+        if self.Rot_Dir >= 0:
+            self.Rot_Dir = -1
+            self.Rot_Dir_button.label.set_text(f'Rot. Dir: -1')
+
+        elif self.Rot_Dir < 0:
+            self.Rot_Dir = +1
+            self.Rot_Dir_button.label.set_text(f'Rot. Dir: +1')
+
+    def Reset_Phi(self,event):
+
+        ## READ GAMMA
+        gamma_deg = self.Gamma_Slider.val
+        gamma_rad = np.radians(gamma_deg)
+
+        ## READ PLANE ANGLE VALUE
+        Plane_Angle_deg = self.Plane_Angle_Slider.val
+        Plane_Angle_rad = np.radians(Plane_Angle_deg)
+
+        phi_rad = 0
+
+        if self.Contact_Leg == 1:
+            Beta_rad = np.arctan2(np.cos(gamma_rad - phi_rad + Plane_Angle_rad), \
+                                  np.sin(gamma_rad - phi_rad + Plane_Angle_rad))
+            self.Beta_Slider.val = np.degrees(Beta_rad)
+            
+        elif self.Contact_Leg == 2:
+            Beta_rad = np.arctan2( np.cos(gamma_rad + phi_rad - Plane_Angle_rad), \
+                                  -np.sin(gamma_rad + phi_rad - Plane_Angle_rad))
+            self.Beta_Slider.val = np.degrees(Beta_rad)
+
+        self.Update_2(None)
+
+
     def R_LT_Plot_Visible(self,event):
 
         self.R_LT_ax.set_visible(not self.R_LT_ax.get_visible())
@@ -622,10 +681,9 @@ class InteractivePlot:
 
         self.R_Phi_ax.set_visible(not self.R_Phi_ax.get_visible())
         plt.draw()
-
-        
+ 
     def show(self):
-        plt.show()
+        plt.show(block=True)
 
     def Reward_ImpactAngle(self,Phi_rel_deg,Phi_rel_min_deg,rot_dir=-1,Phi_thr=-200):
         
