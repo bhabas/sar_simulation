@@ -15,12 +15,12 @@ class InteractivePlot:
         gamma_deg = 45
         gamma_rad = np.deg2rad(gamma_deg)         
         self.Contact_Leg = 1
-        LP_Ratio = 1.4
-        Plane_Angle_deg = 135
+        self.L_norm = 1.4
+        self.Plane_Angle_deg = 0
 
         ## CONFIGS
-        self.Show_Vel_vec = False
-        self.Show_grav_vec = False
+        self.Show_Vel_vec = True
+        self.Show_grav_vec = True
 
         ## SAR DIMENSIONAL CONSTRAINTS
         self.PD = 75e-3             # Prop Distance from COM [m]
@@ -68,16 +68,22 @@ class InteractivePlot:
 
 
         ## CONFIGS
-        widths = [33,33,33]
-        heights = [33,33,33]
-        gs_Configs = gridspec.GridSpecFromSubplotSpec(3, 3, subplot_spec=gs[1,0], wspace=0.5, hspace=0.5)
-        ax_Leg_Button           = self.fig.add_subplot(gs_Configs[0, 0])
-        ax_Vel_Button           = self.fig.add_subplot(gs_Configs[1, 0])
-        ax_Gravity_Button       = self.fig.add_subplot(gs_Configs[2, 0])
-        ax_Impact_Window_text   = self.fig.add_subplot(gs_Configs[0, 1])
-        ax_Phi_text             = self.fig.add_subplot(gs_Configs[1, 1])
-        ax_Phi_rel_text         = self.fig.add_subplot(gs_Configs[2, 1])
-        ax_Temp_GV_text         = self.fig.add_subplot(gs_Configs[0, 2])
+        widths = [20,80]
+        heights = [100]
+        gs_Configs = gridspec.GridSpecFromSubplotSpec(1, 2, subplot_spec=gs[1,0],width_ratios=widths, height_ratios=heights)
+        gs_Buttons = gridspec.GridSpecFromSubplotSpec(3, 1, subplot_spec=gs_Configs[0,0], wspace=0.5, hspace=0.5)
+        gs_Text    = gridspec.GridSpecFromSubplotSpec(3, 2, subplot_spec=gs_Configs[0,1], wspace=0.5, hspace=0.5)
+
+
+        ax_Leg_Button           = self.fig.add_subplot(gs_Buttons[0, 0])
+        ax_Vel_Button           = self.fig.add_subplot(gs_Buttons[1, 0])
+        ax_Gravity_Button       = self.fig.add_subplot(gs_Buttons[2, 0])
+        
+        ax_Phi_text             = self.fig.add_subplot(gs_Text[0, 0])
+        ax_Phi_rel_text         = self.fig.add_subplot(gs_Text[1, 0])
+        ax_Phi_rel_norm_text    = self.fig.add_subplot(gs_Text[2, 0])
+        ax_Impact_Window_text   = self.fig.add_subplot(gs_Text[0, 1])
+        ax_Temp_GV_text         = self.fig.add_subplot(gs_Text[1, 1])
 
 
 
@@ -99,7 +105,7 @@ class InteractivePlot:
             label='L_norm [m]',
             valmin=0.1,
             valmax=4,
-            valinit=1.5,
+            valinit=self.L_norm,
             valstep=0.1
         )
         self.Leg_Slider.on_changed(self.Update_1)
@@ -111,7 +117,7 @@ class InteractivePlot:
             label='Plane Angle \n [deg]',
             valmin=0,
             valmax=270,
-            valinit=0,
+            valinit=self.Plane_Angle_deg,
             valstep=1
         )
         self.Plane_Angle_Slider.on_changed(self.Update_1) 
@@ -162,14 +168,17 @@ class InteractivePlot:
 
 
         ## TEXT BOXES
-        ax_Impact_Window_text.axis('off')
-        self.Impact_Window_text = ax_Impact_Window_text.text(0,0.5,f"Impact Window: {0.0:3.1f} [deg]")
-
         ax_Phi_text.axis('off')
         self.Phi_text = ax_Phi_text.text(0,0.5,f"Phi: {0.0: 3.1f} [deg]")
 
         ax_Phi_rel_text.axis('off')
         self.Phi_rel_text = ax_Phi_rel_text.text(0,0.5,f"Phi_rel: {0.0: 3.1f} [deg]")
+
+        ax_Phi_rel_norm_text.axis('off')
+        self.Phi_rel_norm_text = ax_Phi_rel_norm_text.text(0,0.5,f"Phi_rel_norm: {0.0: 3.1f} [deg]")
+
+        ax_Impact_Window_text.axis('off')
+        self.Impact_Window_text = ax_Impact_Window_text.text(0,0.5,f"Impact Window: {0.0:3.1f} [deg]")
 
         ax_Temp_GV_text.axis('off')
         self.Temp_GV_text = ax_Temp_GV_text.text(0,0.5,f"(g x v): {0.0: 3.1f} [deg]")
@@ -191,13 +200,16 @@ class InteractivePlot:
         
         # QUAD LINES
         CG,L1,L2,Prop1,Prop2 = self._get_pose(0,0,0)
-        CG_Marker = patches.Circle(CG,radius=0.01,fc='tab:blue',zorder=10)
+        CG_Marker = patches.Circle(CG,radius=0.008,fc='tab:blue',zorder=10)
         self.CG_Marker = self.ax_Quad.add_patch(CG_Marker)
 
         self.leg1_line,  = self.ax_Quad.plot([],[],lw=2,zorder=5,c='red')
         self.leg2_line,  = self.ax_Quad.plot([],[],lw=2,zorder=5,c='black')
         self.prop1_line, = self.ax_Quad.plot([],[],lw=2,zorder=5,c='black')
         self.prop2_line, = self.ax_Quad.plot([],[],lw=2,zorder=5,c='black')
+        self.Z_B_line,   = self.ax_Quad.plot([],[],lw=3,zorder=5,c="tab:green")
+        self.X_B_line,   = self.ax_Quad.plot([],[],lw=3,zorder=5,c="tab:blue")
+
 
         Swing_Arc = patches.Arc(
             xy=CG,width=L*2,
@@ -319,8 +331,8 @@ class InteractivePlot:
             self.Beta_min_rad = -self.Beta_min_rad # Swap sign to match coordinate notation
             self.Beta_min_deg = np.rad2deg(self.Beta_min_rad)
 
-            self.Beta_Slider.valmax = self.Beta_min_deg
-            self.Beta_Slider.valmin = -(90 + gamma_deg)
+            # self.Beta_Slider.valmax = self.Beta_min_deg
+            # self.Beta_Slider.valmin = -(90 + gamma_deg)
 
             ## CALC PHI BOUNDARY ANGLE
             self.Phi_Impact_min_rad = np.arctan2(-np.cos(self.Beta_min_rad + gamma_rad + Plane_Angle_rad), \
@@ -340,8 +352,8 @@ class InteractivePlot:
             self.Beta_min_rad = -(np.pi - self.Beta_min_rad)
             self.Beta_min_deg = np.rad2deg(self.Beta_min_rad)
 
-            self.Beta_Slider.valmax = -(90 - gamma_deg)
-            self.Beta_Slider.valmin = self.Beta_min_deg
+            # self.Beta_Slider.valmax = -(90 - gamma_deg)
+            # self.Beta_Slider.valmin = self.Beta_min_deg
 
             ## CALC PHI BOUNDARY ANGLE
             self.Phi_Impact_min_rad = np.arctan2(-np.cos(self.Beta_min_rad - gamma_rad + Plane_Angle_rad), \
@@ -389,10 +401,12 @@ class InteractivePlot:
                                   np.sin(Beta_rad + gamma_rad + Plane_Angle_rad))
             Phi_deg = np.rad2deg(Phi_rad)
 
-            # Phi_rel_rad = Phi_rad - Plane_Angle_rad
-            Phi_rel_rad = np.arctan2(np.sin(Phi_rad - Plane_Angle_rad), \
-                                     np.cos(Phi_rad - Plane_Angle_rad))
+            Phi_rel_rad = Phi_rad - Plane_Angle_rad
             Phi_rel_deg = np.rad2deg(Phi_rel_rad)
+
+            Phi_rel_norm_rad = np.arctan2(np.sin(Phi_rad - Plane_Angle_rad), \
+                                          np.cos(Phi_rad - Plane_Angle_rad))
+            Phi_rel_norm_deg = np.rad2deg(Phi_rel_norm_rad)
 
             ## UPDATE ARC VALUES
             self.Swing_Arc.width = self.Swing_Arc.height = L*2
@@ -432,10 +446,12 @@ class InteractivePlot:
                               np.sin(Beta_rad - gamma_rad + Plane_Angle_rad))
             Phi_deg = np.rad2deg(Phi_rad)
 
-            # Phi_rel_rad = Phi_rad - Plane_Angle_rad
-            Phi_rel_rad = np.arctan2(np.sin(Phi_rad - Plane_Angle_rad), \
-                                     np.cos(Phi_rad - Plane_Angle_rad))
+            Phi_rel_rad = Phi_rad - Plane_Angle_rad
             Phi_rel_deg = np.rad2deg(Phi_rel_rad)
+
+            Phi_rel_norm_rad = np.arctan2(np.sin(Phi_rad - Plane_Angle_rad), \
+                                          np.cos(Phi_rad - Plane_Angle_rad))
+            Phi_rel_norm_deg = np.rad2deg(Phi_rel_norm_rad)
 
             ## UPDATE ARC VALUES
             self.Swing_Arc.width = self.Swing_Arc.height = L*2
@@ -479,6 +495,16 @@ class InteractivePlot:
         self.CG_Marker.set_center(CG)
 
 
+        X_B = 0.03*np.array([1,0])         # {X_B,Z_B}
+        X_B = self.R_BW(X_B,Phi_rad)    # {X_W,Z_W}
+        self.X_B_line.set_data([CG[0],CG[0]+X_B[0]],[CG[1],CG[1]+X_B[1]])
+
+        Z_B = 0.03*np.array([0,1])         # {X_B,Z_B}
+        Z_B = self.R_BW(Z_B,Phi_rad)    # {X_W,Z_W}
+        self.Z_B_line.set_data([CG[0],CG[0]+Z_B[0]],[CG[1],CG[1]+Z_B[1]])
+
+
+
         
 
         if self.Show_Vel_vec == True:
@@ -501,6 +527,8 @@ class InteractivePlot:
 
         self.Phi_text.set_text(f"Phi: {Phi_deg: 3.1f} [deg]")
         self.Phi_rel_text.set_text(f"Phi_rel: {Phi_rel_deg: 3.1f} [deg]")
+        self.Phi_rel_norm_text.set_text(f"Phi_rel: {Phi_rel_norm_deg: 3.1f} [deg]")
+
 
         ## G X V TEMP TEXT BOX
         g_hat = np.array([0,-1])
