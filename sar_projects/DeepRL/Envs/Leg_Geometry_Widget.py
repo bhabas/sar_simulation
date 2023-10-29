@@ -122,7 +122,7 @@ class InteractivePlot:
             valmin=-180,
             valmax=360,
             valinit=self.Plane_Angle_deg,
-            valstep=1
+            valstep=45
         )
         self.Plane_Angle_Slider.on_changed(self.Update_1) 
 
@@ -168,7 +168,8 @@ class InteractivePlot:
         self.Reset_Phi_button = Button(ax_Reset_Phi_Button, f'Reset_Phi', hovercolor='0.975')
         self.Reset_Phi_button.on_clicked(self.Reset_Phi)
 
-        self.Beta_Bounds_button = Button(ax_Beta_Bounds, f'Beta_Bounds', hovercolor='0.975')
+        self.Beta_Bounds_button = Button(ax_Beta_Bounds, f'Beta_Bounds', hovercolor='0.975',color="tab:green")
+        self.Beta_Bounds_button.label.set_color('white')
         self.Beta_Bounds_button.on_clicked(self.Set_Beta_Bounds)
         
 
@@ -376,10 +377,6 @@ class InteractivePlot:
             else:
                 self.Beta_Slider.set_val(self.Beta_Slider.val)
 
-
-
-        
-
     def Update_2(self,val):
 
         ## READ GAMMA, LENGTH
@@ -572,11 +569,6 @@ class InteractivePlot:
 
         self.fig.canvas.draw_idle()
 
-
-
-
-
-
     def Switch_Leg(self,event):
 
         if self.Contact_Leg == 1:
@@ -626,27 +618,14 @@ class InteractivePlot:
                 Beta1_deg = Phi_deg - gamma_deg - Plane_Angle_deg + 90
                 self.Beta_Slider.set_val(Beta1_deg)
 
- 
-
-
-
     def Vel_Visible(self,event):
 
-        if self.Show_Vel_vec == True:
-            self.Show_Vel_vec = False
-
-        else:
-            self.Show_Vel_vec = True
-
+        self.Show_Vel_vec = not(self.Show_Vel_vec)
         self.Update_2(None)
 
     def Grav_Visible(self,event):
         
-        if self.Show_grav_vec == True:
-            self.Show_grav_vec = False
-        else:
-            self.Show_grav_vec = True
-
+        self.Show_grav_vec = not(self.Show_grav_vec)
         self.Update_2(None)
 
     def Change_Rot_Dir(self,event):
@@ -686,9 +665,11 @@ class InteractivePlot:
 
         if self.Beta_Bounds == True:
             self.Beta_Bounds = False
+            self.Beta_Bounds_button.color = "tab:red"
             self.Update_2(None)
         elif self.Beta_Bounds == False:
             self.Beta_Bounds = True
+            self.Beta_Bounds_button.color = "tab:green"
             self.Update_1(None)
 
     def R_LT_Plot_Visible(self,event):
