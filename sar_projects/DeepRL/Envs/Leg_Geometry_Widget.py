@@ -119,8 +119,8 @@ class InteractivePlot:
         self.Plane_Angle_Slider = Slider(
             ax=self.ax_Plane_Slider,
             label='Plane Angle \n [deg]',
-            valmin=0,
-            valmax=180,
+            valmin=-180,
+            valmax=360,
             valinit=self.Plane_Angle_deg,
             valstep=1
         )
@@ -359,7 +359,10 @@ class InteractivePlot:
                 self.Beta_Slider.valmax = self.Beta_min_deg
                 self.Beta_Slider.valmin = -(90 + gamma_deg)
 
-            self.Beta_Slider.set_val(self.Beta_Slider.valmax)
+                self.Beta_Slider.set_val(self.Beta_Slider.valmax)
+
+            else:
+                self.Beta_Slider.set_val(self.Beta_Slider.val)
 
 
         elif self.Contact_Leg == 2:
@@ -368,7 +371,10 @@ class InteractivePlot:
                 self.Beta_Slider.valmax = -(90 - gamma_deg)
                 self.Beta_Slider.valmin = -180 - (self.Beta_min_deg)
 
-            self.Beta_Slider.set_val(self.Beta_Slider.valmin)
+                self.Beta_Slider.set_val(self.Beta_Slider.valmin)
+                
+            else:
+                self.Beta_Slider.set_val(self.Beta_Slider.val)
 
 
 
@@ -443,7 +449,7 @@ class InteractivePlot:
             R_GM = self.Reward_GravityMoment(CP_GM_angle_deg,Leg_Num=1)
 
             ## PHI IMPACT REWARD
-            R_Phi = self.Reward_ImpactAngle(Phi_rel_deg,self.Phi_rel_Impact_min_deg,self.Contact_Leg)
+            R_Phi = self.Reward_ImpactAngle(Phi_rel_deg,self.Phi_rel_Impact_min_deg)
             
            
 
@@ -484,7 +490,7 @@ class InteractivePlot:
             R_GM = self.Reward_GravityMoment(CP_GM_angle_deg,Leg_Num=2)
 
             ## PHI IMPACT REWARD
-            R_Phi = self.Reward_ImpactAngle(Phi_rel_deg,self.Phi_rel_Impact_min_deg,self.Contact_Leg)
+            R_Phi = self.Reward_ImpactAngle(Phi_rel_deg,self.Phi_rel_Impact_min_deg)
 
             
         
@@ -548,8 +554,8 @@ class InteractivePlot:
 
         ## IMPACT ANGLE REWARD
         x = np.linspace(-500,500,500)
-        R_Leg1 = np.vectorize(self.Reward_ImpactAngle)(x,self.Phi_rel_Impact_min_deg,Leg_Num=1)
-        R_Leg2 = np.vectorize(self.Reward_ImpactAngle)(x,self.Phi_rel_Impact_min_deg,Leg_Num=2)
+        R_Leg1 = np.vectorize(self.Reward_ImpactAngle)(x,self.Phi_rel_Impact_min_deg)
+        R_Leg2 = np.vectorize(self.Reward_ImpactAngle)(-x,self.Phi_rel_Impact_min_deg)
 
         if self.Contact_Leg == 1:
             self.R_phi_Line1.set_alpha(1.0)
@@ -676,34 +682,31 @@ class InteractivePlot:
     def show(self):
         plt.show(block=True)
 
-    def Reward_ImpactAngle(self,Phi_deg,Phi_min,Leg_Num):
+    def Reward_ImpactAngle(self,Phi_deg,Phi_min):
 
         ## NOTE: THESE ARE ALL RELATIVE ANGLES
         Phi_TD = 180
         Phi_w = Phi_TD - Phi_min
         Phi_b = Phi_w/2
 
-        if Leg_Num == 1:
-
-            if -Phi_min < Phi_deg <= Phi_min:
-                return 0.5/(Phi_min - 0) * (Phi_deg - Phi_min) + 0.5
-            elif Phi_min < Phi_deg <= Phi_min + Phi_b:
-                return 0.5/((Phi_min + Phi_b) - Phi_min) * (Phi_deg - Phi_min) + 0.5
-            elif Phi_min + Phi_b < Phi_deg <= Phi_TD:
-                return -0.5/(Phi_TD - (Phi_min + Phi_b)) * (Phi_deg - Phi_TD) + 0.5
-            else:
-                return -0.5
-            
-        elif Leg_Num == 2:
-
-            if Phi_TD < Phi_deg <= Phi_TD + Phi_b:
-                return 0.5/((Phi_TD + Phi_b) - Phi_TD) * (Phi_deg - Phi_TD) + 0.5
-            elif (Phi_TD + Phi_b) < Phi_deg <= (Phi_TD + Phi_w):
-                return -0.5/((Phi_TD + Phi_w) - (Phi_TD + Phi_b)) * (Phi_deg - (Phi_TD + Phi_w)) + 0.5
-            elif (Phi_TD + Phi_w) < Phi_deg <= (360 + Phi_min):
-                return -0.5/(360 - ((Phi_TD + Phi_w))) * (Phi_deg - ((Phi_TD + Phi_w))) + 0.5
-            else:
-                return -0.5
+        if Phi_deg <= -Phi_min:
+            return -0.5
+        elif -Phi_min < Phi_deg <= Phi_min:
+            return 0.5/(Phi_min - 0) * (Phi_deg - Phi_min) + 0.5
+        elif Phi_min < Phi_deg <= Phi_min + Phi_b:
+            return 0.5/((Phi_min + Phi_b) - Phi_min) * (Phi_deg - Phi_min) + 0.5
+        elif Phi_min + Phi_b < Phi_deg <= Phi_TD:
+            return -0.5/(Phi_TD - (Phi_min + Phi_b)) * (Phi_deg - Phi_TD) + 0.5
+        elif Phi_TD < Phi_deg <= Phi_TD + Phi_b:
+            return 0.5/((Phi_TD + Phi_b) - Phi_TD) * (Phi_deg - Phi_TD) + 0.5
+        elif (Phi_TD + Phi_b) < Phi_deg <= (Phi_TD + Phi_w):
+            return -0.5/((Phi_TD + Phi_w) - (Phi_TD + Phi_b)) * (Phi_deg - (Phi_TD + Phi_w)) + 0.5
+        elif (Phi_TD + Phi_w) < Phi_deg <= (360 + Phi_min):
+            return -0.5/(360 - ((Phi_TD + Phi_w))) * (Phi_deg - ((Phi_TD + Phi_w))) + 0.5
+        elif (360 + Phi_min) <= Phi_deg:
+            return -0.5
+        else:
+            return -0.5
         
     def Reward_LT(self,CP_angle_deg,Leg_Num):
 
