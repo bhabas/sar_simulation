@@ -372,7 +372,7 @@ class InteractivePlot:
                 self.Beta_Slider.valmin = -180 - (self.Beta_min_deg)
 
                 self.Beta_Slider.set_val(self.Beta_Slider.valmin)
-                
+
             else:
                 self.Beta_Slider.set_val(self.Beta_Slider.val)
 
@@ -590,6 +590,19 @@ class InteractivePlot:
             self.R_GM_Line1.set_alpha(0.2)
             self.R_GM_Line2.set_alpha(1.0)
 
+            if self.Beta_Bounds == True:
+                self.Update_1(None)
+            else:
+                ## GRAB PHI AND THEN FIND NEW BETA 2 TO MATCH CURRENT PHI
+                Beta1_deg = self.Beta_Slider.val
+                gamma_deg = self.Gamma_Slider.val
+                Plane_Angle_deg = self.Plane_Angle_Slider.val
+
+                Phi_deg = Beta1_deg + gamma_deg + Plane_Angle_deg - 90
+                Beta2_deg = gamma_deg + Phi_deg - Plane_Angle_deg + 90
+                self.Beta_Slider.set_val(Beta2_deg)
+
+
         elif self.Contact_Leg == 2:
             self.Contact_Leg = 1
 
@@ -601,7 +614,21 @@ class InteractivePlot:
             self.R_GM_Line1.set_alpha(1.0)
             self.R_GM_Line2.set_alpha(0.2)
 
-        self.Update_1(None)
+            if self.Beta_Bounds == True:
+                self.Update_1(None)
+            else:
+                Beta2_deg = self.Beta_Slider.val
+                gamma_deg = self.Gamma_Slider.val
+                Plane_Angle_deg = self.Plane_Angle_Slider.val
+
+                Phi_deg = Beta2_deg - gamma_deg + Plane_Angle_deg - 90
+                Phi_deg = Beta2_deg - gamma_deg + Plane_Angle_deg - 90
+                Beta1_deg = Phi_deg - gamma_deg - Plane_Angle_deg + 90
+                self.Beta_Slider.set_val(Beta1_deg)
+
+ 
+
+
 
     def Vel_Visible(self,event):
 
