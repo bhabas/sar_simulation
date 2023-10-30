@@ -14,7 +14,7 @@ class InteractivePlot:
         ## INITIAL VALUES
         self.gamma_deg = 45
         self.L_norm = 1.4
-        self.Plane_Angle_deg = 180
+        self.Plane_Angle_deg = 0
 
         ## CONFIGS
         self.Contact_Leg = 1
@@ -119,10 +119,10 @@ class InteractivePlot:
         self.Plane_Angle_Slider = Slider(
             ax=self.ax_Plane_Slider,
             label='Plane Angle \n [deg]',
-            valmin=-180,
-            valmax=180,
+            valmin=-360,
+            valmax=720,
             valinit=self.Plane_Angle_deg,
-            valstep=45
+            valstep=15
         )
         self.Plane_Angle_Slider.on_changed(self.Update_1) 
 
@@ -141,14 +141,14 @@ class InteractivePlot:
         self.V_Angle_Slider = Slider(
             ax=self.ax_V_Angle_Slider,
             label='V Angle \n [deg]',
-            valmin=0,
-            valmax=180,
+            valmin=-180,
+            valmax=0,
             valinit=0,
-            valstep=15
+            valstep=5
         )
-        self.V_Angle_Slider.valmax = 165
-        self.V_Angle_Slider.valmin = 15
-        self.V_Angle_Slider.set_val(15)
+        self.V_Angle_Slider.valmax = -15
+        self.V_Angle_Slider.valmin = -165
+        self.V_Angle_Slider.set_val(-15)
         self.V_Angle_Slider.on_changed(self.Update_2) 
 
 
@@ -212,6 +212,12 @@ class InteractivePlot:
         self.ax_Quad.set_aspect('equal', 'box')
         self.ax_Quad.set_xlim(-0.5,0.5)
         self.ax_Quad.set_ylim(-0.5,0.5)
+        X_W = 0.05*np.array([1,0])
+        Z_W = 0.05*np.array([0,1])
+        O_W = np.array([-0.45,-0.45])
+        self.X_W_line = self.ax_Quad.plot([O_W[0],O_W[0]+X_W[0]],[O_W[1],O_W[1]+X_W[1]],alpha=0.5,lw=3,zorder=5,c="tab:green")
+        self.Z_W_line = self.ax_Quad.plot([O_W[0],O_W[0]+Z_W[0]],[O_W[1],O_W[1]+Z_W[1]],alpha=0.5,lw=3,zorder=5,c="tab:blue")
+
 
         
         # QUAD LINES
@@ -242,7 +248,7 @@ class InteractivePlot:
         self.t_x_line,   = self.ax_Quad.plot([],[],lw=3,zorder=2,c="tab:green")
 
         # VECTOR LINES
-        self.Vel_line, = self.ax_Quad.plot([],[],c="tab:green", lw=2,zorder=8)
+        self.Vel_line, = self.ax_Quad.plot([],[],c="tab:orange", lw=2,zorder=8)
         self.Vel_traj_line, = self.ax_Quad.plot([],[],c="tab:grey",linestyle='--',lw=1,zorder=1,alpha=0.7)
         self.Grav_line, = self.ax_Quad.plot([],[],c="tab:purple", lw=2,zorder=5)
 
@@ -297,7 +303,9 @@ class InteractivePlot:
         ## IMPACT ANGLE PLOT
         self.R_phi_Line1, = self.R_Phi_ax.plot([],[],label="Leg 1")
         self.R_phi_Line2, = self.R_Phi_ax.plot([],[],label="Leg 2")
+        self.R_phi_Line3, = self.R_Phi_ax.plot([],[],label="Leg 3")
         self.R_phi_dot, = self.R_Phi_ax.plot([],[],'ro')
+        self.R_phi_dot2, = self.R_Phi_ax.plot([],[],'ro')
         self.R_Phi_ax.legend(loc="center left",fontsize=9,bbox_to_anchor=(1.1, 0.5),fancybox=True,)
         self.R_Phi_ax.grid()
 
@@ -392,21 +400,21 @@ class InteractivePlot:
         Beta_deg = self.Beta_Slider.val
         Beta_rad = np.radians(Beta_deg)
 
-        ## UPDATE VELOCITY LINE VECTOR
-        Vel_angle = np.radians(self.V_Angle_Slider.val)
-        V_B_P = np.array([np.cos(Vel_angle),np.sin(Vel_angle)])
+        ## CONVERT VELOCITY ANGLE INTO VECTOR
+        Vel_Angle_deg = self.V_Angle_Slider.val # {t_x,n_p}
+        Vel_Angle_rad = np.radians(Vel_Angle_deg)
+        V_B_P = np.array([np.cos(Vel_Angle_rad),-np.sin(Vel_Angle_rad)])
         V_B_O = self.R_PW(V_B_P,Plane_Angle_rad)
-        V_hat = V_B_O
+        V_hat = V_B_O/np.linalg.norm(V_B_O)
 
-        ## GRAVITY VECTOR
-        g_hat = np.array([0,-1]) # {X_W,Z_W}
-        Rot_Dir = -np.sign(-np.cross(g_hat,V_hat))
+        ## FLIGHT VELOCITY ANGLE RELATIVE TO BODY ORIGINAL ORIENTATION
+        V_Angle_Body_0 = Vel_Angle_deg + Plane_Angle_deg # {X_B,Z_B}
+
+
 
         if self.Beta_Bounds ==  False:
             self.Beta_Slider.valmax =  720
             self.Beta_Slider.valmin = -720
-
-
 
 
         if self.Contact_Leg == 1:
@@ -440,6 +448,7 @@ class InteractivePlot:
             R_LT = self.Reward_LT(CP_LT_angle_deg,Leg_Num=1)
 
             ## GRAVITY MOMENT REWARD
+            g_hat = np.array([0,-1]) # {X_W,Z_W}
             CP_GM = -np.cross(g_hat,e_r_hat) # Swap sign for consitent notation
             DP_GM = np.dot(g_hat,e_r_hat)
             CP_GM_angle_deg = np.degrees(np.arctan2(CP_GM,DP_GM))
@@ -447,6 +456,7 @@ class InteractivePlot:
 
             ## PHI IMPACT REWARD
             R_Phi = self.Reward_ImpactAngle(Phi_rel_deg,self.Phi_rel_Impact_min_deg)
+            R_Phi2 = self.Reward_ImpactAngle(Phi_rel_deg+360,self.Phi_rel_Impact_min_deg)
             
            
 
@@ -481,6 +491,7 @@ class InteractivePlot:
             R_LT = self.Reward_LT(CP_LT_angle_deg,Leg_Num=2)
 
             ## GRAVITY MOMENT REWARD
+            g_hat = np.array([0,-1]) # {X_W,Z_W}
             CP_GM = -np.cross(g_hat,e_r_hat) # Swap sign for consitent notation
             DP_GM = np.dot(g_hat,e_r_hat)
             CP_GM_angle_deg = np.degrees(np.arctan2(CP_GM,DP_GM))
@@ -488,6 +499,7 @@ class InteractivePlot:
 
             ## PHI IMPACT REWARD
             R_Phi = self.Reward_ImpactAngle(Phi_rel_deg,self.Phi_rel_Impact_min_deg)
+            R_Phi2 = self.Reward_ImpactAngle(Phi_rel_deg+360,self.Phi_rel_Impact_min_deg)
 
             
         
@@ -501,22 +513,22 @@ class InteractivePlot:
         self.prop2_line.set_data([CG[0],Prop2[0]],[CG[1],Prop2[1]])
         self.CG_Marker.set_center(CG)
 
-
-        X_B = 0.03*np.array([1,0])         # {X_B,Z_B}
+        ## UPDATE BODY AXES
+        X_B = 0.03*np.array([1,0])      # {X_B,Z_B}
         X_B = self.R_BW(X_B,Phi_rad)    # {X_W,Z_W}
         self.X_B_line.set_data([CG[0],CG[0]+X_B[0]],[CG[1],CG[1]+X_B[1]])
 
-        Z_B = 0.03*np.array([0,1])         # {X_B,Z_B}
+        Z_B = 0.03*np.array([0,1])      # {X_B,Z_B}
         Z_B = self.R_BW(Z_B,Phi_rad)    # {X_W,Z_W}
         self.Z_B_line.set_data([CG[0],CG[0]+Z_B[0]],[CG[1],CG[1]+Z_B[1]])
 
 
 
         
-
+        ## UPDATE VELOCITY VECTOR
         if self.Show_Vel_vec == True:
-            self.Vel_line.set_data([CG[0],CG[0] + 0.08*V_B_O[0]],[CG[1],CG[1] + 0.08*V_B_O[1]])
-            self.Vel_traj_line.set_data([CG[0] + 5*V_B_O[0],CG[0] - 10*V_B_O[0]],[CG[1] + 5*V_B_O[1],CG[1] - 10*V_B_O[1]])
+            self.Vel_line.set_data([CG[0],CG[0] + 0.08*V_hat[0]],[CG[1],CG[1] + 0.08*V_hat[1]])
+            self.Vel_traj_line.set_data([CG[0] + 5*V_hat[0],CG[0] - 10*V_hat[0]],[CG[1] + 5*V_hat[1],CG[1] - 10*V_hat[1]])
         else:
             self.Vel_line.set_data([None,None],[None,None])
             self.Vel_traj_line.set_data([None,None],[None,None])
@@ -534,14 +546,7 @@ class InteractivePlot:
 
         self.Phi_text.set_text(f"Phi: {Phi_deg: 3.1f} [deg]")
         self.Phi_rel_text.set_text(f"Phi_rel: {Phi_rel_deg: 3.1f} [deg]")
-
-
-        ## G X V TEMP TEXT BOX
-        g_hat = np.array([0,-1])
-        CP_temp = -np.cross(g_hat,V_hat)  # Swap sign for consitent notation
-        DP_temp = np.dot(g_hat,V_hat)
-        CP_temp_angle_deg = np.degrees(np.arctan2(CP_temp,DP_temp))
-        self.Temp_GV_text.set_text(f"(g x v): {CP_temp_angle_deg: 3.1f} [deg]")
+        self.Temp_GV_text.set_text(f"V_Angle_Body_0: {V_Angle_Body_0: 3.1f} [deg]")
 
         ## MOMENTUM TRANSFER REWARD
         self.R_LT_dot.set_data(CP_LT_angle_deg,R_LT)
@@ -551,20 +556,27 @@ class InteractivePlot:
 
         ## IMPACT ANGLE REWARD
         x = np.linspace(-1000,1000,500)
-        R_Leg1 = np.vectorize(self.Reward_ImpactAngle)(x,self.Phi_rel_Impact_min_deg)
-        R_Leg2 = np.vectorize(self.Reward_ImpactAngle)(-x,self.Phi_rel_Impact_min_deg)
+        R_Phi_1 = np.vectorize(self.Reward_ImpactAngle)(x,self.Phi_rel_Impact_min_deg)
+        R_Phi_2 = np.vectorize(self.Reward_ImpactAngle)(x+360,self.Phi_rel_Impact_min_deg)
 
-        if self.Contact_Leg == 1:
-            self.R_phi_Line1.set_alpha(1.0)
-            self.R_phi_Line2.set_alpha(0.2)
-        elif self.Contact_Leg == 2:
+        self.R_phi_Line1.set_data(x,R_Phi_1)
+        self.R_phi_Line2.set_data(x,R_Phi_2)
+
+        self.R_phi_dot.set_data(Phi_rel_deg,R_Phi)
+        self.R_phi_dot2.set_data(Phi_rel_deg,R_Phi2)
+
+
+        if V_Angle_Body_0 < -90:
             self.R_phi_Line1.set_alpha(0.2)
             self.R_phi_Line2.set_alpha(1.0)
+        elif -90 <= V_Angle_Body_0:
+            self.R_phi_Line1.set_alpha(1.0)
+            self.R_phi_Line2.set_alpha(0.2)
 
 
-        self.R_phi_Line1.set_data(x,R_Leg1)
-        self.R_phi_Line2.set_data(x,R_Leg2)
-        self.R_phi_dot.set_data(Phi_rel_deg,R_Phi)
+        
+
+        
 
 
         self.fig.canvas.draw_idle()
@@ -650,6 +662,7 @@ class InteractivePlot:
 
         Phi_deg = 0
         self.Beta_Bounds = False
+        self.Beta_Bounds_button.color = "tab:red"
 
         if self.Contact_Leg == 1:
             Beta1_deg = Phi_deg - gamma_deg - Plane_Angle_deg + 90
@@ -727,10 +740,7 @@ class InteractivePlot:
         if Leg_Num == 2:
             CP_angle_deg = -CP_angle_deg  # Reflect across the y-axis
 
-        if -180 <= CP_angle_deg <= 0:
-            return -np.sin(np.radians(CP_angle_deg))
-        elif 0 < CP_angle_deg <= 180:
-            return -1.0/180 * CP_angle_deg
+        return -np.sin(np.radians(CP_angle_deg))
 
     def _get_pose(self,x,z,phi):
 
