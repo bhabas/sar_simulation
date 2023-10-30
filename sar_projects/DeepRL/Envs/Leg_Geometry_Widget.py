@@ -120,7 +120,7 @@ class InteractivePlot:
             ax=self.ax_Plane_Slider,
             label='Plane Angle \n [deg]',
             valmin=-180,
-            valmax=360,
+            valmax=180,
             valinit=self.Plane_Angle_deg,
             valstep=45
         )
@@ -144,11 +144,11 @@ class InteractivePlot:
             valmin=0,
             valmax=180,
             valinit=0,
-            valstep=1
+            valstep=15
         )
-        self.V_Angle_Slider.valmax = 175
-        self.V_Angle_Slider.valmin = 5
-        self.V_Angle_Slider.set_val(5)
+        self.V_Angle_Slider.valmax = 165
+        self.V_Angle_Slider.valmin = 15
+        self.V_Angle_Slider.set_val(15)
         self.V_Angle_Slider.on_changed(self.Update_2) 
 
 
@@ -302,14 +302,14 @@ class InteractivePlot:
         self.R_Phi_ax.grid()
 
         # CONFIG
-        self.R_Phi_ax.set_xlim(-360,450)
-        self.R_Phi_ax.set_ylim(-1.25,1.25)
-        self.R_Phi_ax.set_xticks(np.arange(-360,450+1,60))
+        self.R_Phi_ax.set_xticks(np.arange(-720,720+1,90))
         self.R_Phi_ax.set_yticks(np.arange(-1,1.1,0.5))
+        self.R_Phi_ax.set_xlim(-540,540)
+        self.R_Phi_ax.set_ylim(-1.25,1.25)
         self.R_Phi_ax.set_title("Reward: Impact Angle Window")
         self.R_Phi_ax.set_xlabel("Angle: Phi_rel")
         self.R_Phi_ax.set_ylabel("Reward")
-        self.R_Phi_ax.hlines(0,-500,500)
+        self.R_Phi_ax.hlines(0,-1000,1000)
         self.R_Phi_ax.vlines(0,-5,5)
 
     def Update_1(self,val):
@@ -550,7 +550,7 @@ class InteractivePlot:
         self.R_GM_dot.set_data(CP_GM_angle_deg,R_GM)
 
         ## IMPACT ANGLE REWARD
-        x = np.linspace(-500,500,500)
+        x = np.linspace(-1000,1000,500)
         R_Leg1 = np.vectorize(self.Reward_ImpactAngle)(x,self.Phi_rel_Impact_min_deg)
         R_Leg2 = np.vectorize(self.Reward_ImpactAngle)(-x,self.Phi_rel_Impact_min_deg)
 
@@ -648,18 +648,16 @@ class InteractivePlot:
         Plane_Angle_deg = self.Plane_Angle_Slider.val
         Plane_Angle_rad = np.radians(Plane_Angle_deg)
 
-        phi_rad = 0
+        Phi_deg = 0
         self.Beta_Bounds = False
 
         if self.Contact_Leg == 1:
-            Beta_rad = np.arctan2(np.cos(gamma_rad - phi_rad + Plane_Angle_rad), \
-                                  np.sin(gamma_rad - phi_rad + Plane_Angle_rad))
-            self.Beta_Slider.set_val(np.degrees(Beta_rad))
+            Beta1_deg = Phi_deg - gamma_deg - Plane_Angle_deg + 90
+            self.Beta_Slider.set_val(Beta1_deg)
             
         elif self.Contact_Leg == 2:
-            Beta_rad = np.arctan2( np.cos(gamma_rad + phi_rad - Plane_Angle_rad), \
-                                  -np.sin(gamma_rad + phi_rad - Plane_Angle_rad))
-            self.Beta_Slider.set_val(np.degrees(Beta_rad))
+            Beta2_deg = gamma_deg + Phi_deg - Plane_Angle_deg + 90
+            self.Beta_Slider.set_val(Beta2_deg)
 
     def Set_Beta_Bounds(self,event):
 
@@ -697,9 +695,9 @@ class InteractivePlot:
         Phi_w = Phi_TD - Phi_min
         Phi_b = Phi_w/2
 
-        if Phi_deg <= -Phi_min:
-            return -0.5
-        elif -Phi_min < Phi_deg <= Phi_min:
+        if Phi_deg <= -2*Phi_min:
+            return -1.0
+        elif -2*Phi_min < Phi_deg <= Phi_min:
             return 0.5/(Phi_min - 0) * (Phi_deg - Phi_min) + 0.5
         elif Phi_min < Phi_deg <= Phi_min + Phi_b:
             return 0.5/((Phi_min + Phi_b) - Phi_min) * (Phi_deg - Phi_min) + 0.5
@@ -709,13 +707,11 @@ class InteractivePlot:
             return 0.5/((Phi_TD + Phi_b) - Phi_TD) * (Phi_deg - Phi_TD) + 0.5
         elif (Phi_TD + Phi_b) < Phi_deg <= (Phi_TD + Phi_w):
             return -0.5/((Phi_TD + Phi_w) - (Phi_TD + Phi_b)) * (Phi_deg - (Phi_TD + Phi_w)) + 0.5
-        elif (Phi_TD + Phi_w) < Phi_deg <= (360 + Phi_min):
+        elif (Phi_TD + Phi_w) < Phi_deg <= (360 + 2*Phi_min):
             return -0.5/(360 - ((Phi_TD + Phi_w))) * (Phi_deg - ((Phi_TD + Phi_w))) + 0.5
-        elif (360 + Phi_min) <= Phi_deg:
-            return -0.5
-        else:
-            return -0.5
-        
+        elif (360 + 2*Phi_min) <= Phi_deg:
+            return -1.0
+
     def Reward_LT(self,CP_angle_deg,Leg_Num):
 
         if Leg_Num == 2:
@@ -726,12 +722,15 @@ class InteractivePlot:
         elif 0 < CP_angle_deg <= 180:
             return -1.0/180 * CP_angle_deg
         
-    def Reward_GravityMoment(self,CP_Angle,Leg_Num):
+    def Reward_GravityMoment(self,CP_angle_deg,Leg_Num):
 
         if Leg_Num == 2:
-            CP_Angle = -CP_Angle  # Reflect across the y-axis
+            CP_angle_deg = -CP_angle_deg  # Reflect across the y-axis
 
-        return -np.sin(np.radians(CP_Angle))
+        if -180 <= CP_angle_deg <= 0:
+            return -np.sin(np.radians(CP_angle_deg))
+        elif 0 < CP_angle_deg <= 180:
+            return -1.0/180 * CP_angle_deg
 
     def _get_pose(self,x,z,phi):
 
