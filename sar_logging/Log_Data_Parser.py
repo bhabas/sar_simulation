@@ -14,7 +14,7 @@ np.set_printoptions(suppress=True)
 mpl.rcParams['pdf.fonttype'] = 42
 mpl.rcParams['ps.fonttype'] = 42
 
-class DataFile:
+class Data_Parser:
     def __init__(self,dataPath,fileName,dataType='SIM'):
 
         ## ORGANIZE FILEPATH AND CREATE TRIAL DATAFRAME
@@ -628,6 +628,6 @@ if __name__ == "__main__":
     dataPath = f"/home/bhabas/catkin_ws/src/sar_simulation/crazyflie_logging/local_logs/"
 
     fileName = "Control_Playground--trial_24--NL.csv"
-    trial = DataFile(dataPath,fileName)
+    trial = Data_Parser(dataPath,fileName)
 
     trial.plot_policy_convg()
