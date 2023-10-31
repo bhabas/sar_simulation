@@ -21,7 +21,6 @@ class InteractivePlot:
         self.Show_Vel_vec = True
         self.Show_grav_vec = True
         self.Beta_Bounds = True
-        self.Rot_Dir = -1
 
         ## SAR DIMENSIONAL CONSTRAINTS
         self.PD = 75e-3             # Prop Distance from COM [m]
@@ -77,16 +76,13 @@ class InteractivePlot:
         ax_Leg_Button           = self.fig.add_subplot(gs_Buttons[0, 0])
         ax_Vel_Button           = self.fig.add_subplot(gs_Buttons[1, 0])
         ax_Gravity_Button       = self.fig.add_subplot(gs_Buttons[2, 0])
-        ax_Rot_Dir_Button       = self.fig.add_subplot(gs_Buttons[3, 0])
         ax_Reset_Phi_Button     = self.fig.add_subplot(gs_Buttons[0, 1])
         ax_Beta_Bounds          = self.fig.add_subplot(gs_Buttons[1, 1])
 
         
         ax_Phi_text             = self.fig.add_subplot(gs_Text[0, 0])
         ax_Phi_rel_text         = self.fig.add_subplot(gs_Text[1, 0])
-        ax_Phi_temp_text        = self.fig.add_subplot(gs_Text[2, 0])
-        ax_Impact_Window_text   = self.fig.add_subplot(gs_Text[0, 1])
-        ax_Temp_GV_text         = self.fig.add_subplot(gs_Text[1, 1])
+        ax_Temp_GV_text         = self.fig.add_subplot(gs_Text[2, 0])
 
 
 
@@ -119,8 +115,8 @@ class InteractivePlot:
         self.Plane_Angle_Slider = Slider(
             ax=self.ax_Plane_Slider,
             label='Plane Angle \n [deg]',
-            valmin=-360,
-            valmax=720,
+            valmin=-180,
+            valmax=225,
             valinit=self.Plane_Angle_deg,
             valstep=15
         )
@@ -162,9 +158,6 @@ class InteractivePlot:
         self.gravity_button = Button(ax_Gravity_Button, 'Grav. Vector', hovercolor='0.975')
         self.gravity_button.on_clicked(self.Grav_Visible)
 
-        self.Rot_Dir_button = Button(ax_Rot_Dir_Button, f'Rot. Dir: {self.Rot_Dir:d}', hovercolor='0.975')
-        self.Rot_Dir_button.on_clicked(self.Change_Rot_Dir)
-
         self.Reset_Phi_button = Button(ax_Reset_Phi_Button, f'Reset_Phi', hovercolor='0.975')
         self.Reset_Phi_button.on_clicked(self.Reset_Phi)
 
@@ -191,14 +184,15 @@ class InteractivePlot:
         ax_Phi_rel_text.axis('off')
         self.Phi_rel_text = ax_Phi_rel_text.text(0,0.5,f"Phi_rel: {0.0: 3.1f} [deg]")
 
-        ax_Phi_temp_text.axis('off')
-        self.Phi_temp_text = ax_Phi_temp_text.text(0,0.5,f"Phi_temp: {0.0: 3.1f} [deg]")
+        self.Impact_Window_text = self.ax_Quad.text(0.5,0.95,f"Impact Window {0.0:3.1f} [deg]",
+                                                   transform=self.ax_Quad.transAxes,
+                                                   horizontalalignment='center', 
+                                                   verticalalignment='top',
+                                                   )
 
-        ax_Impact_Window_text.axis('off')
-        self.Impact_Window_text = ax_Impact_Window_text.text(0,0.5,f"Impact Window: {0.0:3.1f} [deg]")
 
         ax_Temp_GV_text.axis('off')
-        self.Temp_GV_text = ax_Temp_GV_text.text(0,0.5,f"(g x v): {0.0: 3.1f} [deg]")
+        self.V_Angle_W_text = ax_Temp_GV_text.text(0,0.5,f"(g x v): {0.0: 3.1f} [deg]")
 
     def init_plots(self):
 
@@ -229,8 +223,8 @@ class InteractivePlot:
         self.leg2_line,  = self.ax_Quad.plot([],[],lw=2,zorder=5,c='black')
         self.prop1_line, = self.ax_Quad.plot([],[],lw=2,zorder=5,c='black')
         self.prop2_line, = self.ax_Quad.plot([],[],lw=2,zorder=5,c='black')
-        self.Z_B_line,   = self.ax_Quad.plot([],[],lw=3,zorder=5,c="tab:blue")
-        self.X_B_line,   = self.ax_Quad.plot([],[],lw=3,zorder=5,c="tab:green")
+        self.Z_B_line,   = self.ax_Quad.plot([],[],lw=3,alpha=0.75,zorder=5,c="tab:blue")
+        self.X_B_line,   = self.ax_Quad.plot([],[],lw=3,alpha=0.75,zorder=5,c="tab:green")
 
 
         Swing_Arc = patches.Arc(
@@ -244,8 +238,8 @@ class InteractivePlot:
 
         # PLANE LINES
         self.Plane_line, = self.ax_Quad.plot([],[],lw=1,zorder=1,c="k")
-        self.n_p_line,   = self.ax_Quad.plot([],[],lw=3,zorder=2,c="tab:blue")
-        self.t_x_line,   = self.ax_Quad.plot([],[],lw=3,zorder=2,c="tab:green")
+        self.n_p_line,   = self.ax_Quad.plot([],[],lw=3,alpha=0.5,zorder=2,c="tab:blue")
+        self.t_x_line,   = self.ax_Quad.plot([],[],lw=3,alpha=0.5,zorder=2,c="tab:green")
 
         # VECTOR LINES
         self.Vel_line, = self.ax_Quad.plot([],[],c="tab:orange", lw=2,zorder=8)
@@ -259,7 +253,7 @@ class InteractivePlot:
         self.R_LT_Line1, = self.R_LT_ax.plot(x,R_Leg1,label="Leg 1")
         self.R_LT_Line2, = self.R_LT_ax.plot(x,R_Leg2,label="Leg 2")
         self.R_LT_dot, = self.R_LT_ax.plot([],[],'ro')
-        self.R_LT_ax.legend(loc="center left",fontsize=9,bbox_to_anchor=(1.1, 0.5),fancybox=True,)
+        self.R_LT_ax.legend(loc="center left",fontsize=9,bbox_to_anchor=(1.05, 0.5),fancybox=True,)
         self.R_LT_Line1.set_alpha(1.0)
         self.R_LT_Line2.set_alpha(0.2)
         self.R_LT_ax.grid()
@@ -284,7 +278,7 @@ class InteractivePlot:
         self.R_GM_Line1, = self.R_GM_ax.plot(x,R_Leg1,label="Leg 1")
         self.R_GM_Line2, = self.R_GM_ax.plot(x,R_Leg2,label="Leg 2")
         self.R_GM_dot, = self.R_GM_ax.plot([],[],'ro')
-        self.R_GM_ax.legend(loc="center left",fontsize=9,bbox_to_anchor=(1.1, 0.5),fancybox=True,)
+        self.R_GM_ax.legend(loc="center left",fontsize=9,bbox_to_anchor=(1.05, 0.5),fancybox=True,)
         self.R_GM_Line1.set_alpha(1.0)
         self.R_GM_Line2.set_alpha(0.2)
         self.R_GM_ax.grid()
@@ -301,13 +295,13 @@ class InteractivePlot:
         self.R_GM_ax.vlines(0,-5,5)
         
         ## IMPACT ANGLE PLOT
-        self.R_phi_Line1, = self.R_Phi_ax.plot([],[],label="Leg 1")
-        self.R_phi_Line2, = self.R_Phi_ax.plot([],[],label="Leg 2")
-        self.R_phi_Line3, = self.R_Phi_ax.plot([],[],label="Leg 3")
+        self.R_phi_Line1, = self.R_Phi_ax.plot([],[],label=r"$V_{\angle,R_W} <$ -90 deg")
+        self.R_phi_Line2, = self.R_Phi_ax.plot([],[],label=r"$V_{\angle,R_W} \geq$ -90 deg")
         self.R_phi_dot, = self.R_Phi_ax.plot([],[],'ro')
-        self.R_phi_dot2, = self.R_Phi_ax.plot([],[],'ro')
-        self.R_Phi_ax.legend(loc="center left",fontsize=9,bbox_to_anchor=(1.1, 0.5),fancybox=True,)
+        self.R_Phi_ax.legend(loc="center left",fontsize=9,bbox_to_anchor=(1.05, 0.5),fancybox=True,)
         self.R_Phi_ax.grid()
+
+        
 
         # CONFIG
         self.R_Phi_ax.set_xticks(np.arange(-720,720+1,90))
@@ -410,6 +404,11 @@ class InteractivePlot:
         ## FLIGHT VELOCITY ANGLE RELATIVE TO BODY ORIGINAL ORIENTATION
         V_Angle_Body_0 = Vel_Angle_deg + Plane_Angle_deg # {X_B,Z_B}
 
+        if -90 <= V_Angle_Body_0:
+            Phi_rel_Impact_condition = 1
+        elif V_Angle_Body_0 < -90:
+            Phi_rel_Impact_condition = 2
+
 
 
         if self.Beta_Bounds ==  False:
@@ -455,9 +454,7 @@ class InteractivePlot:
             R_GM = self.Reward_GravityMoment(CP_GM_angle_deg,Leg_Num=1)
 
             ## PHI IMPACT REWARD
-            R_Phi = self.Reward_ImpactAngle(Phi_rel_deg,self.Phi_rel_Impact_min_deg)
-            R_Phi2 = self.Reward_ImpactAngle(Phi_rel_deg+360,self.Phi_rel_Impact_min_deg)
-            
+            R_Phi = self.Reward_ImpactAngle(Phi_rel_deg,self.Phi_rel_Impact_min_deg,Phi_rel_Impact_condition)
            
 
         elif self.Contact_Leg == 2:
@@ -498,10 +495,7 @@ class InteractivePlot:
             R_GM = self.Reward_GravityMoment(CP_GM_angle_deg,Leg_Num=2)
 
             ## PHI IMPACT REWARD
-            R_Phi = self.Reward_ImpactAngle(Phi_rel_deg,self.Phi_rel_Impact_min_deg)
-            R_Phi2 = self.Reward_ImpactAngle(Phi_rel_deg+360,self.Phi_rel_Impact_min_deg)
-
-            
+            R_Phi = self.Reward_ImpactAngle(Phi_rel_deg,self.Phi_rel_Impact_min_deg,Phi_rel_Impact_condition)
         
 
 
@@ -541,12 +535,9 @@ class InteractivePlot:
 
 
         ## UPDATE TEXT BOX
-        impact_window = np.abs(self.Swing_Arc.theta2 - self.Swing_Arc.theta1)
-        self.Impact_Window_text.set_text(f"Impact Window: {impact_window:3.1f} [deg]")
-
         self.Phi_text.set_text(f"Phi: {Phi_deg: 3.1f} [deg]")
         self.Phi_rel_text.set_text(f"Phi_rel: {Phi_rel_deg: 3.1f} [deg]")
-        self.Temp_GV_text.set_text(f"V_Angle_Body_0: {V_Angle_Body_0: 3.1f} [deg]")
+        self.V_Angle_W_text.set_text(r"$V_{\angle,R_W}$" f"= {V_Angle_Body_0: 3.1f} [deg]")
 
         ## MOMENTUM TRANSFER REWARD
         self.R_LT_dot.set_data(CP_LT_angle_deg,R_LT)
@@ -555,28 +546,23 @@ class InteractivePlot:
         self.R_GM_dot.set_data(CP_GM_angle_deg,R_GM)
 
         ## IMPACT ANGLE REWARD
-        x = np.linspace(-1000,1000,500)
-        R_Phi_1 = np.vectorize(self.Reward_ImpactAngle)(x,self.Phi_rel_Impact_min_deg)
-        R_Phi_2 = np.vectorize(self.Reward_ImpactAngle)(x+360,self.Phi_rel_Impact_min_deg)
+        impact_window = 2*(180 - self.Phi_rel_Impact_min_deg)
+        self.Impact_Window_text.set_text(f"Impact Window: {impact_window:3.1f} [deg]")
 
+
+        x = np.linspace(-1000,1000,2000)
+        R_Phi_1 = np.vectorize(self.Reward_ImpactAngle)(x,self.Phi_rel_Impact_min_deg,Impact_condition=1)
+        R_Phi_2 = np.vectorize(self.Reward_ImpactAngle)(x,self.Phi_rel_Impact_min_deg,Impact_condition=2)
         self.R_phi_Line1.set_data(x,R_Phi_1)
         self.R_phi_Line2.set_data(x,R_Phi_2)
-
         self.R_phi_dot.set_data(Phi_rel_deg,R_Phi)
-        self.R_phi_dot2.set_data(Phi_rel_deg,R_Phi2)
 
-
-        if V_Angle_Body_0 < -90:
-            self.R_phi_Line1.set_alpha(0.2)
-            self.R_phi_Line2.set_alpha(1.0)
-        elif -90 <= V_Angle_Body_0:
+        if Phi_rel_Impact_condition == 1:
             self.R_phi_Line1.set_alpha(1.0)
             self.R_phi_Line2.set_alpha(0.2)
-
-
-        
-
-        
+        elif Phi_rel_Impact_condition == 2:
+            self.R_phi_Line1.set_alpha(0.2)
+            self.R_phi_Line2.set_alpha(1.0)
 
 
         self.fig.canvas.draw_idle()
@@ -640,16 +626,6 @@ class InteractivePlot:
         self.Show_grav_vec = not(self.Show_grav_vec)
         self.Update_2(None)
 
-    def Change_Rot_Dir(self,event):
-
-        if self.Rot_Dir >= 0:
-            self.Rot_Dir = -1
-            self.Rot_Dir_button.label.set_text(f'Rot. Dir: -1')
-
-        elif self.Rot_Dir < 0:
-            self.Rot_Dir = +1
-            self.Rot_Dir_button.label.set_text(f'Rot. Dir: +1')
-
     def Reset_Phi(self,event):
 
         ## READ GAMMA
@@ -701,7 +677,10 @@ class InteractivePlot:
     def show(self):
         plt.show(block=True)
 
-    def Reward_ImpactAngle(self,Phi_deg,Phi_min):
+    def Reward_ImpactAngle(self,Phi_deg,Phi_min,Impact_condition):
+
+        if Impact_condition == 2:
+            Phi_deg = -Phi_deg
 
         ## NOTE: THESE ARE ALL RELATIVE ANGLES
         Phi_TD = 180
