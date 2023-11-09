@@ -16,6 +16,9 @@ class InteractivePlot:
         self.L_norm = 1.4
         self.Plane_Angle_deg = 0
 
+        self.R_vec = [0,0,0]
+        self.W_vec = [1,1,1]
+
         ## CONFIGS
         self.Contact_Leg = 1
         self.Show_Vel_vec = True
@@ -83,6 +86,12 @@ class InteractivePlot:
         ax_Phi_text             = self.fig.add_subplot(gs_Text[0, 0])
         ax_Phi_rel_text         = self.fig.add_subplot(gs_Text[1, 0])
         ax_Temp_GV_text         = self.fig.add_subplot(gs_Text[2, 0])
+
+        ax_Reward_Vec_text      = self.fig.add_subplot(gs_Text[0, 1])
+        ax_Weight_Vec_text      = self.fig.add_subplot(gs_Text[1, 1])
+        ax_Reward_Sum_text      = self.fig.add_subplot(gs_Text[2, 1])
+
+
 
 
 
@@ -184,6 +193,22 @@ class InteractivePlot:
         ax_Phi_rel_text.axis('off')
         self.Phi_rel_text = ax_Phi_rel_text.text(0,0.5,f"Phi_rel: {0.0: 3.1f} [deg]")
 
+        ax_Temp_GV_text.axis('off')
+        self.V_Angle_W_text = ax_Temp_GV_text.text(0,0.5,f"(g x v): {0.0: 3.1f} [deg]")
+
+
+        ax_Reward_Vec_text.axis('off')
+        self.Reward_Vec_text = ax_Reward_Vec_text.text(0,0.5,r"$\mathbf{R} = $" + f"")
+
+        ax_Weight_Vec_text.axis('off')
+        self.Weight_Vec_text = ax_Weight_Vec_text.text(0,0.5,r"$\mathbf{W} = $" + f"")
+
+        ax_Reward_Sum_text.axis('off')
+        self.Reward_Sum_text = ax_Reward_Sum_text.text(0,0.5,r"$R_t = $" + f"")
+
+
+
+
         self.Impact_Window_text = self.ax_Quad.text(0.5,0.95,f"Impact Window {0.0:3.1f} [deg]",
                                                    transform=self.ax_Quad.transAxes,
                                                    horizontalalignment='center', 
@@ -191,8 +216,6 @@ class InteractivePlot:
                                                    )
 
 
-        ax_Temp_GV_text.axis('off')
-        self.V_Angle_W_text = ax_Temp_GV_text.text(0,0.5,f"(g x v): {0.0: 3.1f} [deg]")
 
     def init_plots(self):
 
@@ -545,9 +568,19 @@ class InteractivePlot:
         ## GRAVITY MOMENT REWARD
         self.R_GM_dot.set_data(CP_GM_angle_deg,R_GM)
 
-        ## IMPACT ANGLE REWARD
+        ## IMPACT ANGLE WINDOW
         impact_window = 2*(180 - self.Phi_rel_Impact_min_deg)
         self.Impact_Window_text.set_text(f"Impact Window: {impact_window:3.1f} [deg]")
+
+        ## REWARD VECTOR AND SUM
+        self.R_vec = [R_LT,R_GM,R_Phi]
+        self.R_sum = np.dot(self.R_vec,self.W_vec)
+
+        self.Reward_Vec_text.set_text(r"$\mathbf{R} = $" + f"[{R_LT: >7.2f}    {R_GM: >7.2f}    {R_Phi: >7.2f}]")
+        self.Weight_Vec_text.set_text(r"$\mathbf{W} = $" + f"[{self.W_vec[0]: >7.2f}    {self.W_vec[1]: >7.2f}    {self.W_vec[2]: >7.2f}]")
+        self.Reward_Sum_text.set_text(r"$R_t = $" + f"{self.R_sum: >7.2f}")
+
+
 
 
         x = np.linspace(-1000,1000,2000)
