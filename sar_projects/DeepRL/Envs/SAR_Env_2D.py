@@ -17,7 +17,7 @@ PURPLE = (76,0,153)
 ORANGE = (255,128,0)
 
 EPS = 1e-6 # Epsilon (Prevent division by zero)
-COORD_FLIP = -1  # Used to adjust angles for the inverted y-axis in the xz-plane
+COORD_FLIP = -1  # Swap sign to match proper coordinate notation
 
 
 
@@ -48,22 +48,22 @@ class SAR_Env_2D(gym.Env):
         self.My_range = My_range
 
         ## SAR DIMENSIONAL CONSTRAINTS
-        self.gamma = 45             # Leg Angle [m]
-        self.L = 150.0e-3           # Leg Length [m]
-        self.PD = 75e-3             # Prop Distance from COM [m]
-        self.M = 35.0e-3            # Body Mass [kg]
+        gamma_deg = 45             # Leg Angle [m]
+        L = 105.0e-3           # Leg Length [m]
+        PD = 75e-3             # Prop Distance from COM [m]
+        M = 35.0e-3            # Body Mass [kg]
 
-        self.Ixx = 15.8e-6          # Body Moment of Inertia [kg*m^2]
-        self.Iyy = 17.0e-6          # Body Moment of Inertia [kg*m^2]
-        self.Izz = 31.2e-6          # Body Moment of Inertia [kg*m^2]
+        Ixx = 15.8e-6          # Body Moment of Inertia [kg*m^2]
+        Iyy = 17.0e-6          # Body Moment of Inertia [kg*m^2]
+        Izz = 31.2e-6          # Body Moment of Inertia [kg*m^2]
 
-        I_c = self.Iyy + self.M*self.L**2
-        self.params = (np.deg2rad(self.gamma),self.L,self.PD,self.M,self.Iyy,I_c)
-        self.collision_radius = max(self.L,self.PD)
+        I_c = Iyy + M*L**2
+        self.params = (np.deg2rad(gamma_deg),L,PD,M,Iyy,I_c)
+        self.collision_radius = max(L,PD)
 
         ## SAR CAPABILITY CONSTRAINTS
         My_max = abs(max(My_range,key=abs))
-        self.t_rot = np.sqrt((2*self.Iyy*np.radians(360))/(0.5*My_max + EPS)) ## Allow enough time for a full rotation
+        self.t_rot = np.sqrt((2*Iyy*np.radians(360))/(0.5*My_max + EPS)) ## Allow enough time for a full rotation
         self.t_rot = 0.3
 
 
@@ -84,7 +84,7 @@ class SAR_Env_2D(gym.Env):
         self.Pol_Trg_Flag = False
         self.Done = False
         self.reward = 0
-        self.reward_vals = [0,0,0,0,0,0]
+        self.reward_vals = np.array([0,0,0,0,0,0])
         self.reward_weights = {
             "W_dist":0.2,
             "W_tau_cr":0.2,
@@ -105,13 +105,14 @@ class SAR_Env_2D(gym.Env):
         ######################
 
         ## SPECIAL CONFIGS
-        self.state = (0.5,0.5,np.radians(0),0,0,0)
+        self.state = np.zeros(6)
+        self.impact_state = np.full(6,np.nan)
+
         self.V_mag = np.nan
         self.V_angle = np.nan
         self.MomentCutoff = False
         self.BodyContact_flag = False
         self.pad_connections = 0
-        self.impact_state = (np.nan,np.nan,np.nan,np.nan,np.nan,np.nan)
 
 
         ## PHYSICS PARAMETERS
@@ -124,8 +125,6 @@ class SAR_Env_2D(gym.Env):
         self.world_height = 2.0     # [m]
         self.x_offset = 1           # [m]
         self.y_offset = 1           # [m]
-
-
         self.screen_width = 1000    # [pixels]
         self.screen_height = self.screen_width*self.world_height/self.world_width # [pixels]
         
@@ -134,6 +133,7 @@ class SAR_Env_2D(gym.Env):
         self.clock = None
         self.isopen = True
 
+        ## START SIMULATION
         self.reset()
 
     def reset(self, seed=None, options=None, V_mag=None, V_angle=None, Plane_Angle=None):
@@ -151,11 +151,10 @@ class SAR_Env_2D(gym.Env):
         self.D_min = np.inf
         self.Tau_trg = np.inf
         self.Tau_CR_trg = np.inf
-        self.action_trg = np.zeros_like(self.action_trg)
-        self.obs_trg = np.zeros_like(self.obs_trg)
-        self.state_trg = (0,0,0,0,0,0)
-        self.impact_state = (0,0,0,0,0,0)
-        self.Phi_impact_rad = np.nan
+        self.action_trg = np.full(self.action_trg.shape[0],np.nan)
+        self.obs_trg = np.full(self.obs_trg.shape[0],np.nan)
+        self.state_trg = np.full(6,np.nan)
+        self.impact_state = np.full(6,np.nan)
 
         self.impact_flag = False
         self.BodyContact_flag = False
@@ -187,7 +186,7 @@ class SAR_Env_2D(gym.Env):
             V_mag,V_angle = self._sample_flight_conditions()
 
         else:
-            V_mag = V_mag           # Flight velocity
+            V_mag = V_mag       # Flight velocity
             V_angle = V_angle   # Flight angle  
 
         self.V_mag = V_mag
@@ -215,7 +214,7 @@ class SAR_Env_2D(gym.Env):
         r_B_O = r_P_O - self.R_PW(r_P_B,self.Plane_Angle_rad)                               # Body Position wrt to Origin - {X_W,Z_W}
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-        self._set_state(r_B_O[0],r_B_O[1],np.radians(-45),V_B_O[0],V_B_O[1],0)
+        self._set_state(r_B_O[0],r_B_O[1],np.radians(-135),V_B_O[0],V_B_O[1],0)
         self.initial_state = (r_B_O,V_B_O)
 
 
@@ -261,7 +260,7 @@ class SAR_Env_2D(gym.Env):
 
             # CHECK FOR IMPACT
             x,z,phi,vx,vz,dphi = self._get_state()
-            self.impact_flag,self.impact_conditions = self._get_impact_conditions(x,z,phi)
+            impact_flag,impact_conditions = self._get_impact_conditions(x,z,phi)
 
             # UPDATE MINIMUM DISTANCE
             D_perp = next_obs[2]
@@ -276,7 +275,7 @@ class SAR_Env_2D(gym.Env):
             # 4) CHECK TERMINATION
             self.Done = bool(
                 self.Done
-                or (self.impact_flag or self.BodyContact_flag)
+                or (impact_flag or self.BodyContact_flag)
             )
             terminated = self.Done
             truncated = bool(self._get_time() - self.start_time_episode >= self.t_flight_max) 
@@ -344,7 +343,7 @@ class SAR_Env_2D(gym.Env):
             
             ## CHECK FOR IMPACT
             x,z,Phi,vx,vz,dphi = self._get_state()
-            gamma,L,PD,M,Iyy,I_c = self.params
+            gamma_rad,L,PD,M,Iyy,I_c = self.params
             self.impact_flag,self.impact_conditions = self._get_impact_conditions(x,z,Phi)
 
             ## NO IMPACT
@@ -367,7 +366,6 @@ class SAR_Env_2D(gym.Env):
                 ## START IMPACT TIMER
                 start_time_impact = self.t
                 self.start_time_impact = self._get_time()
-                self.Phi_impact_rad = Phi
                 (BodyContact,Leg1Contact,Leg2Contact) = self.impact_conditions
 
                 ## GRAB IMPACT STATE
@@ -416,8 +414,8 @@ class SAR_Env_2D(gym.Env):
                         v_B_C1 = np.array([0,L*dBeta_1])                                    # {e_r1,e_beta1}
                         v_B_C1 = self.R_PW(self.R_C1P(v_B_C1,Beta_1),self.Plane_Angle_rad)  # {X_W,Z_W}
 
-                        Phi = np.arctan2(-np.cos(Beta_1 + gamma + self.Plane_Angle_rad), \
-                                          np.sin(Beta_1 + gamma + self.Plane_Angle_rad))
+                        Phi = np.arctan2(-np.cos(Beta_1 + gamma_rad + self.Plane_Angle_rad), \
+                                          np.sin(Beta_1 + gamma_rad + self.Plane_Angle_rad))
                         self.state = (r_B_O[0],r_B_O[1],Phi,v_B_C1[0],v_B_C1[1],0)
                         
 
@@ -462,8 +460,8 @@ class SAR_Env_2D(gym.Env):
                         v_B_C2 = np.array([0,L*dBeta_2])                                    # {e_r1,e_beta1}
                         v_B_C2 = self.R_PW(self.R_C2P(v_B_C2,Beta_2),self.Plane_Angle_rad)  # {X_W,Z_W}
 
-                        Phi = np.arctan2(-np.cos(Beta_2 - gamma + self.Plane_Angle_rad), \
-                                          np.sin(Beta_2 - gamma + self.Plane_Angle_rad))
+                        Phi = np.arctan2(-np.cos(Beta_2 - gamma_rad + self.Plane_Angle_rad), \
+                                          np.sin(Beta_2 - gamma_rad + self.Plane_Angle_rad))
                         self.state = (r_B_O[0],r_B_O[1],Phi,v_B_C2[0],v_B_C2[1],0)
 
                         ## UPDATE MINIMUM DISTANCE
@@ -490,19 +488,38 @@ class SAR_Env_2D(gym.Env):
     def Calc_Reward(self):
 
         ## LOAD PARAMS
-        gamma,L,PD,M,Iyy,I_c = self.params
+        gamma_rad,L,PD,M,Iyy,I_c = self.params
 
         ## GAMMA
-        gamma_rad = gamma
+        gamma_rad = gamma_rad
         gamma_deg = np.degrees(gamma_rad)
 
         ## PLANE ANGLE
         Plane_Angle_deg = self.Plane_Angle_deg
         Plane_Angle_rad = np.radians(Plane_Angle_deg)
 
+
+        ## SOLVE FOR MINIMUM BETA ANGLE VIA GEOMETRIC CONSTRAINTS
+        a = np.sqrt(PD**2 + L**2 - 2*PD*L*np.cos(np.pi/2-gamma_rad))
+        Beta_min_rad = np.arccos((L**2 + a**2 - PD**2)/(2*a*L))
+
+        ## CALC BETA BOUNDARY ANGLE
+        Beta_min_rad = Beta_min_rad * COORD_FLIP 
+        Beta_min_deg = np.degrees(Beta_min_rad)
+
+        ## CALC PHI BOUNDARY ANGLE
+        Phi_Impact_min_deg = Beta_min_deg + gamma_deg + Plane_Angle_deg - 90
+
+
+        ## CALC RELATIVE BOUNDARY ANGLE
+        Phi_P_B_Impact_min_deg = Plane_Angle_deg - Phi_Impact_min_deg
+
+
+
+
         ## CALC IMPACT VELOCITY VECTOR
-        x,z,phi,vx,vz,dphi = self.impact_state
-        V_B_O_impact = np.array([vx,vz])
+        _,_,Phi_impact_rad,Vx_impact,Vz_impact,dPhi_impact = self.impact_state
+        V_B_O_impact = np.array([Vx_impact,Vz_impact])
         V_hat_impact = V_B_O_impact/np.linalg.norm(V_B_O_impact)
 
         Vel_Angle_impact_rad = np.arctan2(V_hat_impact[1],V_hat_impact[0])*COORD_FLIP
@@ -511,14 +528,69 @@ class SAR_Env_2D(gym.Env):
 
 
         ## FLIGHT VELOCITY ANGLE RELATIVE TO WORLD ("ORIGINAL BODY ORIENTATION")
-        # V_Angle_Body_0 = Vel_Angle_deg + Plane_Angle_deg # {X_B,Z_B}
+        V_Angle_Body_0 = Vel_Angle_impact_deg + Plane_Angle_deg # {X_B,Z_B}
+        if -90 <= V_Angle_Body_0:
+            Phi_B_P_Impact_Condition = 1
+        elif V_Angle_Body_0 < -90:
+            Phi_B_P_Impact_Condition = 2
+
+
+        (Body_Contact,ForeLeg_Contact,HindLeg_Contact) = self.impact_conditions
+        if ForeLeg_Contact:
+
+            Phi_impact_deg = np.degrees(Phi_impact_rad)
+            Phi_B_P_deg = (Phi_impact_deg - Plane_Angle_deg)
+            Phi_P_B_deg = -Phi_B_P_deg # Phi_rel of plane w.r.t. body
+
+            Beta1_deg = Phi_impact_deg - gamma_deg - Plane_Angle_deg + 90
+            Beta1_rad = np.radians(Beta1_deg)
+
+            ## UPDATE BODY POSITION
+            r_B_C1 = np.array([-L,0])                                           # {e_r1,e_beta1}
+            r_B_C1 = self.R_PW(self.R_C1P(r_B_C1,Beta1_rad),Plane_Angle_rad)    # {X_W,Z_W}
+
+            r_C1_B = -r_B_C1                       # {X_W,Z_W}
+            e_r1 = r_C1_B/np.linalg.norm(r_C1_B)   # {X_W,Z_W}
+            e_r_hat = np.array([e_r1[0],e_r1[1]])
+
+            ## MOMENTUM TRANSFER REWARD
+            CP_LT = -np.cross(V_hat_impact,e_r_hat) # Swap sign for consitent notation
+            DP_LT = np.dot(V_hat_impact,e_r_hat)
+            CP_LT_angle_deg = np.degrees(np.arctan2(CP_LT,DP_LT))
+            R_LT = self.Reward_LT(CP_LT_angle_deg,Leg_Num=1)
+
+                        ## GRAVITY MOMENT REWARD
+            g_hat = np.array([0,-1]) # {X_W,Z_W}
+            CP_GM = -np.cross(g_hat,e_r_hat) # Swap sign for consitent notation
+            DP_GM = np.dot(g_hat,e_r_hat)
+            CP_GM_angle_deg = np.degrees(np.arctan2(CP_GM,DP_GM))
+            R_GM = self.Reward_GravityMoment(CP_GM_angle_deg,Leg_Num=1)
+
+            ## PHI IMPACT REWARD
+            R_Phi = self.Reward_ImpactAngle(Phi_P_B_deg,Phi_P_B_Impact_min_deg,Phi_B_P_Impact_Condition)
+            pass
+
+            
+        elif HindLeg_Contact:
+
+            Phi_impact_deg = np.degrees(Phi_impact_rad)
+            Phi_B_P_deg = (Phi_impact_deg - Plane_Angle_deg)
+            Phi_P_B_deg = -Phi_B_P_deg # Phi_rel of plane w.r.t. body
+
+            Beta2_deg = gamma_deg + Phi_impact_deg - Plane_Angle_deg + 90
+
+            pass
+
+        elif Body_Contact:
+
+            pass
+
+        else:
+            pass
+
 
         return None
     
-
-
-
-
     def Reward_ImpactAngle(self,Phi_deg,Phi_min,Impact_condition):
 
         if Impact_condition == 2:
@@ -562,7 +634,6 @@ class SAR_Env_2D(gym.Env):
             CP_angle_deg = -CP_angle_deg  # Reflect across the y-axis
 
         return -np.sin(np.radians(CP_angle_deg))
-
 
     def _sample_flight_conditions(self):
 
@@ -608,12 +679,12 @@ class SAR_Env_2D(gym.Env):
             phi = phi + self.dt*dphi
             dphi = dphi + self.dt*phi_acc
 
-            self.state = (x,z,phi,vx,vz,dphi)
+            self.state = np.array([x,z,phi,vx,vz,dphi])
 
     def _iter_step_Rot(self,Rot_action,n_steps=2):
 
         ## PARAMS
-        gamma,L,PD,M,Iyy,I_c = self.params
+        gamma_rad,L,PD,M,Iyy,I_c = self.params
 
         ## CURRENT STATE
         x,z,phi,vx,vz,dphi = self._get_state()
@@ -643,11 +714,11 @@ class SAR_Env_2D(gym.Env):
             phi = phi + self.dt*dphi
             dphi = dphi + self.dt*phi_acc
 
-            self.state = (x,z,phi,vx,vz,dphi)
+            self.state = np.array([x,z,phi,vx,vz,dphi])
 
     def _iter_step_Swing(self,Beta,dBeta,impact_leg,n_steps=2):
 
-        gamma,L,PD,M,Iyy,I_c = self.params
+        gamma_rad,L,PD,M,Iyy,I_c = self.params
 
         for _ in range(n_steps):
 
@@ -675,7 +746,7 @@ class SAR_Env_2D(gym.Env):
     def _impact_conversion(self,impact_state,params,impact_conditions):
 
         x,z,phi,vx,vz,dphi = impact_state
-        gamma,L,PD,M,Iyy,I_c = self.params
+        gamma_rad,L,PD,M,Iyy,I_c = self.params
         (BodyContact,Leg1Contact,Leg2Contact) = impact_conditions
 
         V_tx,V_perp = self.R_WP(np.array([vx,vz]),self.Plane_Angle_rad)
@@ -683,8 +754,8 @@ class SAR_Env_2D(gym.Env):
         if Leg1Contact:
 
             ## CALC BETA ANGLE
-            Beta_1 = np.arctan2(np.cos(gamma - phi + self.Plane_Angle_rad), \
-                                np.sin(gamma - phi + self.Plane_Angle_rad))
+            Beta_1 = np.arctan2(np.cos(gamma_rad - phi + self.Plane_Angle_rad), \
+                                np.sin(gamma_rad - phi + self.Plane_Angle_rad))
             Beta_1_deg = np.degrees(Beta_1)
 
             ## CALC DBETA FROM MOMENTUM CONVERSION
@@ -698,8 +769,8 @@ class SAR_Env_2D(gym.Env):
         elif Leg2Contact:
 
             ## CALC BETA ANGLE
-            Beta_2 = np.arctan2( np.cos(gamma + phi - self.Plane_Angle_rad), \
-                                -np.sin(gamma + phi - self.Plane_Angle_rad))
+            Beta_2 = np.arctan2( np.cos(gamma_rad + phi - self.Plane_Angle_rad), \
+                                -np.sin(gamma_rad + phi - self.Plane_Angle_rad))
             Beta2_deg = np.degrees(Beta_2)
 
 
@@ -714,19 +785,19 @@ class SAR_Env_2D(gym.Env):
 
     def _beta_landing(self,impact_leg):
 
-        gamma,L,PD,M,Iyy,I_c = self.params
+        gamma_rad,L,PD,M,Iyy,I_c = self.params
 
         if impact_leg == 1:
-            return np.pi/2 + gamma
+            return np.pi/2 + gamma_rad
 
         elif impact_leg == 2:
-            return np.pi/2 - gamma
+            return np.pi/2 - gamma_rad
         
     def _beta_prop(self,impact_leg):
 
-        gamma,L,PD,M,Iyy,I_c = self.params
+        gamma_rad,L,PD,M,Iyy,I_c = self.params
 
-        a = np.sqrt(PD**2 + L**2 - 2*PD*L*np.cos(np.pi/2-gamma))
+        a = np.sqrt(PD**2 + L**2 - 2*PD*L*np.cos(np.pi/2-gamma_rad))
         Beta = np.arccos((L**2 + a**2 - PD**2)/(2*a*L))
 
         if impact_leg == 1:
@@ -782,15 +853,15 @@ class SAR_Env_2D(gym.Env):
     
     def _get_pose(self):
 
-        gamma,L,PD,M,Iyy,I_c = self.params
+        gamma_rad,L,PD,M,Iyy,I_c = self.params
         x,z,phi,_,_,_ = self._get_state()
 
         ## MODEL CoG
         CG = np.array([x,z])
 
         ## LEG COORDS
-        L1 = np.array([ L*np.sin(gamma),-L*np.cos(gamma)])
-        L2 = np.array([-L*np.sin(gamma),-L*np.cos(gamma)])
+        L1 = np.array([ L*np.sin(gamma_rad),-L*np.cos(gamma_rad)])
+        L2 = np.array([-L*np.sin(gamma_rad),-L*np.cos(gamma_rad)])
 
         ## PROP COORDS
         Prop1 = np.array([ PD,0])
@@ -894,7 +965,7 @@ class SAR_Env_2D(gym.Env):
         x,z,phi,vx,vz,dphi = self._get_state()
 
         ## GET CURRENT PARAMS
-        gamma,L,PD,M,Iyy,I_c = self.params
+        gamma_rad,L,PD,M,Iyy,I_c = self.params
         
         ## CREATE BACKGROUND SURFACE
         self.surf = pg.Surface((self.screen_width, self.screen_height))
@@ -1077,11 +1148,11 @@ class SAR_Env_2D(gym.Env):
 
         return R_C1P.dot(vec)
     
-    def R_C1B(self,vec,gamma):
+    def R_C1B(self,vec,gamma_rad):
 
         R_C1B = np.array([
-            [ np.sin(gamma), np.cos(gamma)],
-            [-np.cos(gamma), np.sin(gamma)],
+            [ np.sin(gamma_rad), np.cos(gamma_rad)],
+            [-np.cos(gamma_rad), np.sin(gamma_rad)],
         ])
 
         return R_C1B.dot(vec)
@@ -1104,11 +1175,11 @@ class SAR_Env_2D(gym.Env):
 
         return R_C2P.dot(vec)
 
-    def R_C2B(self,vec,gamma):
+    def R_C2B(self,vec,gamma_rad):
 
         R_C2B = np.array([
-            [-np.sin(gamma), np.cos(gamma)],
-            [-np.cos(gamma),-np.sin(gamma)],
+            [-np.sin(gamma_rad), np.cos(gamma_rad)],
+            [-np.cos(gamma_rad),-np.sin(gamma_rad)],
         ])
 
         return R_C2B.dot(vec)
@@ -1137,12 +1208,12 @@ class SAR_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(My_range=[-8e-3,+8e-3],V_mag_range=[1,1],V_angle_range=[-45,-45],Plane_Angle_range=[0,0])
+    env = SAR_Env_2D(My_range=[-8e-3,+8e-3],V_mag_range=[2,2],V_angle_range=[-45,-45],Plane_Angle_range=[0,0])
     env.RENDER = True
 
     for ep in range(50):
 
-        obs,_ = env.reset(V_mag=1,V_angle=-45,Plane_Angle=0)
+        obs,_ = env.reset()
 
         Done = False
         truncated = False
@@ -1152,7 +1223,7 @@ if __name__ == '__main__':
             action = np.array([0.6,0])
             obs,reward,Done,truncated,_ = env.step(action)
 
-        print(f"Episode: {ep} \t Obs: {obs[2]:.3f} \t Reward: {reward:.3f}")
+        # print(f"Episode: {ep} \t Obs: {obs[2]:.3f} \t Reward: {reward:.3f}")
 
     env.close()
 
