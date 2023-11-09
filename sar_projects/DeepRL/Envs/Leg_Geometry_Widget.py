@@ -20,7 +20,7 @@ class InteractivePlot:
         self.W_vec = [1,1,1]
 
         ## CONFIGS
-        self.Contact_Leg = 1
+        self.HindLeg_Contact = 1
         self.Show_Vel_vec = True
         self.Show_grav_vec = True
         self.Beta_Bounds = True
@@ -377,7 +377,7 @@ class InteractivePlot:
         self.Phi_rel_Impact_min_deg = np.degrees(self.Phi_rel_Impact_min_rad)
 
 
-        if self.Contact_Leg == 1:
+        if self.HindLeg_Contact == 1:
 
             if self.Beta_Bounds ==  True:
                 self.Beta_Slider.valmax = self.Beta_min_deg
@@ -389,7 +389,7 @@ class InteractivePlot:
                 self.Beta_Slider.set_val(self.Beta_Slider.val)
 
 
-        elif self.Contact_Leg == 2:
+        elif self.HindLeg_Contact == 2:
 
             if self.Beta_Bounds ==  True:
                 self.Beta_Slider.valmax = -(90 - gamma_deg)
@@ -425,10 +425,10 @@ class InteractivePlot:
         ## FLIGHT VELOCITY ANGLE RELATIVE TO BODY ORIGINAL ORIENTATION
         V_Angle_Body_0 = Vel_Angle_deg + Plane_Angle_deg # {X_B,Z_B}
 
-        if -90 <= V_Angle_Body_0:
+        if V_Angle_Body_0 < -90:
+            Phi_rel_Impact_condition = -1
+        elif -90 <= V_Angle_Body_0:
             Phi_rel_Impact_condition = 1
-        elif V_Angle_Body_0 < -90:
-            Phi_rel_Impact_condition = 2
 
 
 
@@ -437,7 +437,7 @@ class InteractivePlot:
             self.Beta_Slider.valmin = -720
 
 
-        if self.Contact_Leg == 1:
+        if self.HindLeg_Contact == 1:
 
             Phi_rad = (Beta_rad + gamma_rad + Plane_Angle_rad) - np.pi/2
             Phi_deg = np.degrees(Phi_rad)
@@ -478,7 +478,7 @@ class InteractivePlot:
             R_Phi = self.Reward_ImpactAngle(Phi_rel_deg,self.Phi_rel_Impact_min_deg,Phi_rel_Impact_condition)
            
 
-        elif self.Contact_Leg == 2:
+        elif self.HindLeg_Contact == 2:
 
             Phi_rad = (Beta_rad - gamma_rad + Plane_Angle_rad) - np.pi/2
             Phi_deg = np.degrees(Phi_rad)
@@ -583,7 +583,7 @@ class InteractivePlot:
 
         x = np.linspace(-1000,1000,2000)
         R_Phi_1 = np.vectorize(self.Reward_ImpactAngle)(x,self.Phi_rel_Impact_min_deg,Impact_condition=1)
-        R_Phi_2 = np.vectorize(self.Reward_ImpactAngle)(x,self.Phi_rel_Impact_min_deg,Impact_condition=2)
+        R_Phi_2 = np.vectorize(self.Reward_ImpactAngle)(x,self.Phi_rel_Impact_min_deg,Impact_condition=-1)
         self.R_phi_Line1.set_data(x,R_Phi_1)
         self.R_phi_Line2.set_data(x,R_Phi_2)
         self.R_phi_dot.set_data(Phi_rel_deg,R_Phi)
@@ -600,8 +600,8 @@ class InteractivePlot:
 
     def Switch_Leg(self,event):
 
-        if self.Contact_Leg == 1:
-            self.Contact_Leg = 2
+        if self.HindLeg_Contact == 1:
+            self.HindLeg_Contact = 2
 
             ## UPDATE LT ALPHA
             self.R_LT_Line1.set_alpha(0.2)
@@ -624,8 +624,8 @@ class InteractivePlot:
                 self.Beta_Slider.set_val(Beta2_deg)
 
 
-        elif self.Contact_Leg == 2:
-            self.Contact_Leg = 1
+        elif self.HindLeg_Contact == 2:
+            self.HindLeg_Contact = 1
 
             ## UPDATE LT ALPHA
             self.R_LT_Line1.set_alpha(1.0)
@@ -671,11 +671,11 @@ class InteractivePlot:
         self.Beta_Bounds = False
         self.Beta_Bounds_button.color = "tab:red"
 
-        if self.Contact_Leg == 1:
+        if self.HindLeg_Contact == 1:
             Beta1_deg = Phi_deg - gamma_deg - Plane_Angle_deg + 90
             self.Beta_Slider.set_val(Beta1_deg)
             
-        elif self.Contact_Leg == 2:
+        elif self.HindLeg_Contact == 2:
             Beta2_deg = gamma_deg + Phi_deg - Plane_Angle_deg + 90
             self.Beta_Slider.set_val(Beta2_deg)
 
@@ -710,7 +710,7 @@ class InteractivePlot:
 
     def Reward_ImpactAngle(self,Phi_deg,Phi_min,Impact_condition):
 
-        if Impact_condition == 2:
+        if Impact_condition == -1:
             Phi_deg = -Phi_deg
 
         ## NOTE: THESE ARE ALL RELATIVE ANGLES

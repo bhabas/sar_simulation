@@ -214,7 +214,7 @@ class SAR_Env_2D(gym.Env):
         r_B_O = r_P_O - self.R_PW(r_P_B,self.Plane_Angle_rad)                               # Body Position wrt to Origin - {X_W,Z_W}
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-        self._set_state(r_B_O[0],r_B_O[1],np.radians(-135),V_B_O[0],V_B_O[1],0)
+        self._set_state(r_B_O[0],r_B_O[1],np.radians(-67),V_B_O[0],V_B_O[1],0)
         self.initial_state = (r_B_O,V_B_O)
 
 
@@ -529,15 +529,16 @@ class SAR_Env_2D(gym.Env):
 
         ## FLIGHT VELOCITY ANGLE RELATIVE TO WORLD ("ORIGINAL BODY ORIENTATION")
         V_Angle_Body_0 = Vel_Angle_impact_deg + Plane_Angle_deg # {X_B,Z_B}
-        if -90 <= V_Angle_Body_0:
+        if V_Angle_Body_0 < -90:
+            Phi_B_P_Impact_Condition = -1
+        elif -90 <= V_Angle_Body_0:
             Phi_B_P_Impact_Condition = 1
-        elif V_Angle_Body_0 < -90:
-            Phi_B_P_Impact_Condition = 2
 
 
         (Body_Contact,ForeLeg_Contact,HindLeg_Contact) = self.impact_conditions
         if ForeLeg_Contact:
 
+            ## CALC IMPACT ANGLE CONDITIONS
             Phi_impact_deg = np.degrees(Phi_impact_rad)
             Phi_B_P_deg = (Phi_impact_deg - Plane_Angle_deg)
             Phi_P_B_deg = -Phi_B_P_deg # Phi_rel of plane w.r.t. body
@@ -545,7 +546,7 @@ class SAR_Env_2D(gym.Env):
             Beta1_deg = Phi_impact_deg - gamma_deg - Plane_Angle_deg + 90
             Beta1_rad = np.radians(Beta1_deg)
 
-            ## UPDATE BODY POSITION
+            ## CALC LEG DIRECTION VECTOR
             r_B_C1 = np.array([-L,0])                                           # {e_r1,e_beta1}
             r_B_C1 = self.R_PW(self.R_C1P(r_B_C1,Beta1_rad),Plane_Angle_rad)    # {X_W,Z_W}
 
@@ -559,7 +560,7 @@ class SAR_Env_2D(gym.Env):
             CP_LT_angle_deg = np.degrees(np.arctan2(CP_LT,DP_LT))
             R_LT = self.Reward_LT(CP_LT_angle_deg,Leg_Num=1)
 
-                        ## GRAVITY MOMENT REWARD
+            ## GRAVITY MOMENT REWARD
             g_hat = np.array([0,-1]) # {X_W,Z_W}
             CP_GM = -np.cross(g_hat,e_r_hat) # Swap sign for consitent notation
             DP_GM = np.dot(g_hat,e_r_hat)
@@ -568,32 +569,69 @@ class SAR_Env_2D(gym.Env):
 
             ## PHI IMPACT REWARD
             R_Phi = self.Reward_ImpactAngle(Phi_P_B_deg,Phi_P_B_Impact_min_deg,Phi_B_P_Impact_Condition)
-            pass
 
             
         elif HindLeg_Contact:
-
+            
+            ## CALC IMPACT ANGLE CONDITIONS
             Phi_impact_deg = np.degrees(Phi_impact_rad)
             Phi_B_P_deg = (Phi_impact_deg - Plane_Angle_deg)
             Phi_P_B_deg = -Phi_B_P_deg # Phi_rel of plane w.r.t. body
 
             Beta2_deg = gamma_deg + Phi_impact_deg - Plane_Angle_deg + 90
+            Beta2_rad = np.radians(Beta2_deg)
 
-            pass
+            ## CALC LEG DIRECTION VECTOR
+            r_B_C2 = np.array([-L,0])                                           # {e_r1,e_beta1}
+            r_B_C2 = self.R_PW(self.R_C2P(r_B_C2,Beta2_rad),Plane_Angle_rad)    # {X_W,Z_W}
+            r_B_O = r_B_C2
+
+            r_C2_B = -r_B_C2                       # {X_W,Z_W}
+            e_r2 = r_C2_B/np.linalg.norm(r_C2_B)   # {X_W,Z_W}
+            e_r_hat = np.array([e_r2[0],e_r2[1]])
+
+            ## MOMENTUM TRANSFER REWARD
+            CP_LT = -np.cross(V_hat_impact,e_r_hat) # Swap sign for consitent notation
+            DP_LT = np.dot(V_hat_impact,e_r_hat)
+            CP_LT_angle_deg = np.degrees(np.arctan2(CP_LT,DP_LT))
+            R_LT = self.Reward_LT(CP_LT_angle_deg,Leg_Num=2)
+
+            ## GRAVITY MOMENT REWARD
+            g_hat = np.array([0,-1]) # {X_W,Z_W}
+            CP_GM = -np.cross(g_hat,e_r_hat) # Swap sign for consitent notation
+            DP_GM = np.dot(g_hat,e_r_hat)
+            CP_GM_angle_deg = np.degrees(np.arctan2(CP_GM,DP_GM))
+            R_GM = self.Reward_GravityMoment(CP_GM_angle_deg,Leg_Num=2)
+
+            ## PHI IMPACT REWARD
+            R_Phi = self.Reward_ImpactAngle(Phi_P_B_deg,Phi_P_B_Impact_min_deg,Phi_B_P_Impact_Condition)
 
         elif Body_Contact:
 
-            pass
+            ## CALC IMPACT ANGLE CONDITIONS
+            Phi_impact_deg = np.degrees(Phi_impact_rad)
+            Phi_B_P_deg = (Phi_impact_deg - Plane_Angle_deg)
+            Phi_P_B_deg = -Phi_B_P_deg # Phi_rel of plane w.r.t. body
+
+            ## CALC REWARD VALUES
+            R_LT = 0
+            R_GM = 0
+            R_Phi = self.Reward_ImpactAngle(Phi_P_B_deg,Phi_P_B_Impact_min_deg,Phi_B_P_Impact_Condition)
 
         else:
-            pass
+
+            ## CALC REWARD VALUES
+            R_LT = 0
+            R_GM = 0
+            R_Phi = 0
+            
 
 
         return None
     
     def Reward_ImpactAngle(self,Phi_deg,Phi_min,Impact_condition):
 
-        if Impact_condition == 2:
+        if Impact_condition == -1:
             Phi_deg = -Phi_deg
 
         ## NOTE: THESE ARE ALL RELATIVE ANGLES
@@ -1208,7 +1246,7 @@ class SAR_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(My_range=[-8e-3,+8e-3],V_mag_range=[2,2],V_angle_range=[-45,-45],Plane_Angle_range=[0,0])
+    env = SAR_Env_2D(My_range=[-8e-3,+8e-3],V_mag_range=[2,2],V_angle_range=[-100,-100],Plane_Angle_range=[165,165])
     env.RENDER = True
 
     for ep in range(50):
