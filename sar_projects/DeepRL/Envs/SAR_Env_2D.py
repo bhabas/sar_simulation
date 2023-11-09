@@ -86,7 +86,7 @@ class SAR_Env_2D(gym.Env):
         self.reward = 0
         self.reward_vals = np.array([0,0,0,0,0,0])
         self.reward_weights = {
-            "W_dist":0.2,
+            "W_Dist":0.2,
             "W_tau_cr":0.2,
             "W_LT":1.0,
             "W_GM":0.0,
@@ -214,7 +214,7 @@ class SAR_Env_2D(gym.Env):
         r_B_O = r_P_O - self.R_PW(r_P_B,self.Plane_Angle_rad)                               # Body Position wrt to Origin - {X_W,Z_W}
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-        self._set_state(r_B_O[0],r_B_O[1],np.radians(-67),V_B_O[0],V_B_O[1],0)
+        self._set_state(r_B_O[0],r_B_O[1],np.radians(0),V_B_O[0],V_B_O[1],np.random.uniform(-5,5))
         self.initial_state = (r_B_O,V_B_O)
 
 
@@ -515,8 +515,6 @@ class SAR_Env_2D(gym.Env):
         Phi_P_B_Impact_min_deg = Plane_Angle_deg - Phi_Impact_min_deg
 
 
-
-
         ## CALC IMPACT VELOCITY VECTOR
         _,_,Phi_impact_rad,Vx_impact,Vz_impact,dPhi_impact = self.impact_state
         V_B_O_impact = np.array([Vx_impact,Vz_impact])
@@ -624,10 +622,47 @@ class SAR_Env_2D(gym.Env):
             R_LT = 0
             R_GM = 0
             R_Phi = 0
-            
 
+        
+        ## REWARD: MINIMUM DISTANCE 
+        R_dist = self.Reward_Exp_Decay(self.D_min,L)
+        
+        ## REWARD: TAU_CR TRIGGER
+        R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.3)
 
-        return None
+        ## REWARD: PAD CONNECTIONS
+        if self.pad_connections >= 3: 
+            R_Legs = 1.0
+        elif self.pad_connections == 2:
+            R_Legs = 0.2
+        else:
+            R_Legs = 0.0
+
+        if self.BodyContact_flag:
+            R_Legs = R_Legs*0.5
+
+        self.reward_vals = [R_dist,R_tau_cr,R_LT,R_GM,R_Phi,R_Legs]
+        R_t = np.dot(self.reward_vals,list(self.reward_weights.values()))
+        print(f"Post_Trg: Reward: {R_t:.3f} \t D: {self.D_min:.3f}")
+        print(np.round(self.reward_vals,2))
+
+        return R_t
+    
+    def Reward_Exp_Decay(self,x,threshold,k=5):
+        if -0.1 < x < threshold:
+            return 1
+        elif threshold <= x:
+            return np.exp(-k*(x-threshold))
+        else:
+            return 0
+    
+    def Reward_RotationDirection(self,x,rot_dir):
+
+        if rot_dir == +1:
+            return x if x < 0 else 1
+        elif rot_dir == -1:
+            return 1 if x < 0 else -x
+        
     
     def Reward_ImpactAngle(self,Phi_deg,Phi_min,Impact_condition):
 
@@ -1246,7 +1281,7 @@ class SAR_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(My_range=[-8e-3,+8e-3],V_mag_range=[2,2],V_angle_range=[-100,-100],Plane_Angle_range=[165,165])
+    env = SAR_Env_2D(My_range=[-8e-3,+8e-3],V_mag_range=[2,2],V_angle_range=[-100,-100],Plane_Angle_range=[0,0])
     env.RENDER = True
 
     for ep in range(50):
