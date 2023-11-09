@@ -651,7 +651,7 @@ if __name__ == '__main__':
     # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
 
 
-    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Plane_Angle_range=[0,0],Flight_Angle_range=[45,45],V_mag_range=[1,1],Render=False)
+    env = SAR_Env_2D(Phi_acc_range=[-8.0e-3,+8.0e-3],Plane_Angle_range=[0,0],V_angle_range=[45,45],V_mag_range=[1,1],Render=False)
 
     current_datetime = datetime.now()
     current_time = current_datetime.strftime("%H:%M:%S")

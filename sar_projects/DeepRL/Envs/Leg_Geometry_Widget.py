@@ -215,8 +215,6 @@ class InteractivePlot:
                                                    verticalalignment='top',
                                                    )
 
-
-
     def init_plots(self):
 
         ## GEOMETRIC CONSTRAINTS

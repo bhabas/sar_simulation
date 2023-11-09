@@ -17,11 +17,13 @@ PURPLE = (76,0,153)
 ORANGE = (255,128,0)
 
 EPS = 1e-6 # Epsilon (Prevent division by zero)
+COORD_FLIP = -1  # Used to adjust angles for the inverted y-axis in the xz-plane
+
 
 
 class SAR_Env_2D(gym.Env):
 
-    def __init__(self,GZ_Timeout=True,My_range=[-8.0e-3,0],V_mag_range=[1.5,3.5],Flight_Angle_range=[0,90],Plane_Angle_range=[90,180],Render=True):
+    def __init__(self,GZ_Timeout=True,My_range=[-8.0e-3,0],V_mag_range=[1.5,3.5],V_angle_range=[-175,-5],Plane_Angle_range=[0,180],Render=True):
         super().__init__()
         
         ######################
@@ -41,7 +43,7 @@ class SAR_Env_2D(gym.Env):
 
         ## TESTING CONDITIONS     
         self.V_mag_range = V_mag_range  
-        self.Flight_Angle_range = Flight_Angle_range
+        self.V_angle_range = V_angle_range
         self.Plane_Angle_range = Plane_Angle_range
         self.My_range = My_range
 
@@ -67,8 +69,8 @@ class SAR_Env_2D(gym.Env):
 
         ## PLANE PARAMETERS
         self.Plane_Pos = [1,0]
-        self.Plane_Angle = 0
-        self.Plane_Angle_rad = np.radians(self.Plane_Angle)
+        self.Plane_Angle_deg = 0
+        self.Plane_Angle_rad = np.radians(self.Plane_Angle_deg)
 
         ## LEARNING/REWARD CONFIGS
         self.Pol_Trg_threshold = 0.5
@@ -82,14 +84,13 @@ class SAR_Env_2D(gym.Env):
         self.Pol_Trg_Flag = False
         self.Done = False
         self.reward = 0
-        self.reward_vals = [0,0,0,0,0,0,0]
+        self.reward_vals = [0,0,0,0,0,0]
         self.reward_weights = {
             "W_dist":0.2,
             "W_tau_cr":0.2,
-            "W_Rot":0.0,
-            "W_phi_rel":0.0,
             "W_LT":1.0,
             "W_GM":0.0,
+            "W_Phi_rel":0.0,
             "W_Legs":1.0
         }
 
@@ -97,7 +98,7 @@ class SAR_Env_2D(gym.Env):
         self.Tau_trg = np.inf
         self.Tau_CR_trg = np.inf
 
-        
+
 
         ######################
         #   2D ENV CONFIGS
@@ -106,10 +107,12 @@ class SAR_Env_2D(gym.Env):
         ## SPECIAL CONFIGS
         self.state = (0.5,0.5,np.radians(0),0,0,0)
         self.V_mag = np.nan
-        self.Flight_Angle = np.nan
+        self.V_angle = np.nan
         self.MomentCutoff = False
         self.BodyContact_flag = False
         self.pad_connections = 0
+        self.impact_state = (np.nan,np.nan,np.nan,np.nan,np.nan,np.nan)
+
 
         ## PHYSICS PARAMETERS
         self.g = 9.81       # Gravity [m/s^2]
@@ -133,7 +136,7 @@ class SAR_Env_2D(gym.Env):
 
         self.reset()
 
-    def reset(self, seed=None, options=None, V_mag=None, Flight_Angle=None, Plane_Angle=None):
+    def reset(self, seed=None, options=None, V_mag=None, V_angle=None, Plane_Angle=None):
 
         ######################
         #    GENERAL CONFIGS
@@ -151,7 +154,8 @@ class SAR_Env_2D(gym.Env):
         self.action_trg = np.zeros_like(self.action_trg)
         self.obs_trg = np.zeros_like(self.obs_trg)
         self.state_trg = (0,0,0,0,0,0)
-        self.phi_impact = np.nan
+        self.impact_state = (0,0,0,0,0,0)
+        self.Phi_impact_rad = np.nan
 
         self.impact_flag = False
         self.BodyContact_flag = False
@@ -171,28 +175,28 @@ class SAR_Env_2D(gym.Env):
 
             Plane_Angle_Low = self.Plane_Angle_range[0]
             Plane_Angle_High = self.Plane_Angle_range[1]
-            self.Plane_Angle = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
-            self.Plane_Angle_rad = np.radians(self.Plane_Angle)
+            self.Plane_Angle_deg = np.random.uniform(Plane_Angle_Low,Plane_Angle_High)
+            self.Plane_Angle_rad = np.radians(self.Plane_Angle_deg)
 
         else:
-            self.Plane_Angle = Plane_Angle
-            self.Plane_Angle_rad = np.radians(self.Plane_Angle)
+            self.Plane_Angle_deg = Plane_Angle
+            self.Plane_Angle_rad = np.radians(self.Plane_Angle_deg)
 
         ## SAMPLE VELOCITY AND FLIGHT ANGLE
-        if V_mag == None or Flight_Angle == None:
-            V_mag,Flight_Angle = self._sample_flight_conditions()
+        if V_mag == None or V_angle == None:
+            V_mag,V_angle = self._sample_flight_conditions()
 
         else:
             V_mag = V_mag           # Flight velocity
-            Flight_Angle = Flight_Angle   # Flight angle  
+            V_angle = V_angle   # Flight angle  
 
         self.V_mag = V_mag
-        self.Flight_Angle = Flight_Angle
+        self.V_angle = V_angle
 
 
         ## RELATIVE VEL VECTORS
-        V_perp = V_mag*np.sin(np.deg2rad(Flight_Angle))
-        V_tx = V_mag*np.cos(np.deg2rad(Flight_Angle))
+        V_tx = V_mag*np.cos(np.deg2rad(V_angle))
+        V_perp = V_mag*np.sin(np.deg2rad(V_angle))*COORD_FLIP
         V_B_P = np.array([V_tx,V_perp]) # {t_x,n_p}
 
         ## CONVERT RELATIVE VEL VECTORS TO WORLD COORDS
@@ -211,7 +215,7 @@ class SAR_Env_2D(gym.Env):
         r_B_O = r_P_O - self.R_PW(r_P_B,self.Plane_Angle_rad)                               # Body Position wrt to Origin - {X_W,Z_W}
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-        self._set_state(r_B_O[0],r_B_O[1],np.radians(0),V_B_O[0],V_B_O[1],0)
+        self._set_state(r_B_O[0],r_B_O[1],np.radians(-45),V_B_O[0],V_B_O[1],0)
         self.initial_state = (r_B_O,V_B_O)
 
 
@@ -311,7 +315,7 @@ class SAR_Env_2D(gym.Env):
 
 
             # 3) CALC REWARD
-            reward = self.Calc_Reward_PostTrg()  
+            reward = self.Calc_Reward()  
 
 
             # 4) CHECK TERMINATION
@@ -339,9 +343,9 @@ class SAR_Env_2D(gym.Env):
         while not self.Done:
             
             ## CHECK FOR IMPACT
-            x,z,phi,vx,vz,dphi = self._get_state()
+            x,z,Phi,vx,vz,dphi = self._get_state()
             gamma,L,PD,M,Iyy,I_c = self.params
-            self.impact_flag,self.impact_conditions = self._get_impact_conditions(x,z,phi)
+            self.impact_flag,self.impact_conditions = self._get_impact_conditions(x,z,Phi)
 
             ## NO IMPACT
             if self.impact_flag == False:
@@ -363,8 +367,11 @@ class SAR_Env_2D(gym.Env):
                 ## START IMPACT TIMER
                 start_time_impact = self.t
                 self.start_time_impact = self._get_time()
-                self.phi_impact = phi
+                self.Phi_impact_rad = Phi
                 (BodyContact,Leg1Contact,Leg2Contact) = self.impact_conditions
+
+                ## GRAB IMPACT STATE
+                self.impact_state = self._get_state()
 
                 ## BODY CONTACT
                 if BodyContact == True:
@@ -409,9 +416,9 @@ class SAR_Env_2D(gym.Env):
                         v_B_C1 = np.array([0,L*dBeta_1])                                    # {e_r1,e_beta1}
                         v_B_C1 = self.R_PW(self.R_C1P(v_B_C1,Beta_1),self.Plane_Angle_rad)  # {X_W,Z_W}
 
-                        phi = np.arctan2(-np.cos(Beta_1 + gamma + self.Plane_Angle_rad), \
+                        Phi = np.arctan2(-np.cos(Beta_1 + gamma + self.Plane_Angle_rad), \
                                           np.sin(Beta_1 + gamma + self.Plane_Angle_rad))
-                        self.state = (r_B_O[0],r_B_O[1],phi,v_B_C1[0],v_B_C1[1],0)
+                        self.state = (r_B_O[0],r_B_O[1],Phi,v_B_C1[0],v_B_C1[1],0)
                         
 
                         if self.RENDER:
@@ -455,9 +462,9 @@ class SAR_Env_2D(gym.Env):
                         v_B_C2 = np.array([0,L*dBeta_2])                                    # {e_r1,e_beta1}
                         v_B_C2 = self.R_PW(self.R_C2P(v_B_C2,Beta_2),self.Plane_Angle_rad)  # {X_W,Z_W}
 
-                        phi = np.arctan2(-np.cos(Beta_2 - gamma + self.Plane_Angle_rad), \
+                        Phi = np.arctan2(-np.cos(Beta_2 - gamma + self.Plane_Angle_rad), \
                                           np.sin(Beta_2 - gamma + self.Plane_Angle_rad))
-                        self.state = (r_B_O[0],r_B_O[1],phi,v_B_C2[0],v_B_C2[1],0)
+                        self.state = (r_B_O[0],r_B_O[1],Phi,v_B_C2[0],v_B_C2[1],0)
 
                         ## UPDATE MINIMUM DISTANCE
                         D_perp = self._get_obs()[2]
@@ -480,160 +487,82 @@ class SAR_Env_2D(gym.Env):
             
         return self.Done,truncated
 
-    def Calc_Reward_PostTrg(self):
+    def Calc_Reward(self):
 
         ## LOAD PARAMS
         gamma,L,PD,M,Iyy,I_c = self.params
 
-        ## CALC DESIRED ROTATION DIRECTION
-        V_B_O = np.array([self.state_trg[3],0,self.state_trg[4]])   # {X_W,Z_W}
-        V_hat = V_B_O/np.linalg.norm(V_B_O)                         # {X_W,Z_W}
-        g_hat = np.array([0,0,-1])                                  # {X_W,Z_W}
-        rot_dir = np.sign(np.cross(g_hat,V_hat)[1])
+        ## GAMMA
+        gamma_rad = gamma
+        gamma_deg = np.degrees(gamma_rad)
 
-        if -1 < rot_dir < 1:
-            rot_dir = 1
+        ## PLANE ANGLE
+        Plane_Angle_deg = self.Plane_Angle_deg
+        Plane_Angle_rad = np.radians(Plane_Angle_deg)
+
+        ## CALC IMPACT VELOCITY VECTOR
+        x,z,phi,vx,vz,dphi = self.impact_state
+        V_B_O_impact = np.array([vx,vz])
+        V_hat_impact = V_B_O_impact/np.linalg.norm(V_B_O_impact)
+
+        Vel_Angle_impact_rad = np.arctan2(V_hat_impact[1],V_hat_impact[0])*COORD_FLIP
+        Vel_Angle_impact_deg = np.degrees(Vel_Angle_impact_rad)
 
 
 
-        ## SOLVE FOR MINIMUM RELATIVE PHI IMPACT ANGLE VIA GEOMETRIC CONSTRAINTS
-        a = np.sqrt(self.PD**2 + self.L**2 - 2*self.PD*self.L*np.cos(np.pi/2-self.gamma))
-        beta_min = np.arccos((self.L**2 + a**2 - self.PD**2)/(2*a*self.L))
-        beta_min = -1 * beta_min # Swap sign to match coordinate notation
-        self.phi_rel_impact_min = np.arctan2(-np.cos(beta_min + gamma), \
-                                              np.sin(beta_min + gamma))
-        self.phi_rel_impact_min_deg = np.rad2deg(self.phi_rel_impact_min)
+        ## FLIGHT VELOCITY ANGLE RELATIVE TO WORLD ("ORIGINAL BODY ORIENTATION")
+        # V_Angle_Body_0 = Vel_Angle_deg + Plane_Angle_deg # {X_B,Z_B}
 
-        ## CALC RELATIVE IMPACT ANGLE
-        self.phi_rel_impact = self.phi_impact - self.Plane_Angle_rad
-        self.phi_rel_impact_deg = np.rad2deg(self.phi_rel_impact)
+        return None
+    
+
+
+
+
+    def Reward_ImpactAngle(self,Phi_deg,Phi_min,Impact_condition):
+
+        if Impact_condition == 2:
+            Phi_deg = -Phi_deg
+
+        ## NOTE: THESE ARE ALL RELATIVE ANGLES
+        Phi_TD = 180
+        Phi_w = Phi_TD - Phi_min
+        Phi_b = Phi_w/2
+
+        if Phi_deg <= -2*Phi_min:
+            return -1.0
+        elif -2*Phi_min < Phi_deg <= Phi_min:
+            return 0.5/(Phi_min - 0) * (Phi_deg - Phi_min) + 0.5
+        elif Phi_min < Phi_deg <= Phi_min + Phi_b:
+            return 0.5/((Phi_min + Phi_b) - Phi_min) * (Phi_deg - Phi_min) + 0.5
+        elif Phi_min + Phi_b < Phi_deg <= Phi_TD:
+            return -0.5/(Phi_TD - (Phi_min + Phi_b)) * (Phi_deg - Phi_TD) + 0.5
+        elif Phi_TD < Phi_deg <= Phi_TD + Phi_b:
+            return 0.5/((Phi_TD + Phi_b) - Phi_TD) * (Phi_deg - Phi_TD) + 0.5
+        elif (Phi_TD + Phi_b) < Phi_deg <= (Phi_TD + Phi_w):
+            return -0.5/((Phi_TD + Phi_w) - (Phi_TD + Phi_b)) * (Phi_deg - (Phi_TD + Phi_w)) + 0.5
+        elif (Phi_TD + Phi_w) < Phi_deg <= (360 + 2*Phi_min):
+            return -0.5/(360 - ((Phi_TD + Phi_w))) * (Phi_deg - ((Phi_TD + Phi_w))) + 0.5
+        elif (360 + 2*Phi_min) <= Phi_deg:
+            return -1.0
+
+    def Reward_LT(self,CP_angle_deg,Leg_Num):
+
+        if Leg_Num == 2:
+            CP_angle_deg = -CP_angle_deg  # Reflect across the y-axis
+
+        if -180 <= CP_angle_deg <= 0:
+            return -np.sin(np.radians(CP_angle_deg))
+        elif 0 < CP_angle_deg <= 180:
+            return -1.0/180 * CP_angle_deg
         
-        def Reward_Exp_Decay(x,threshold,k=5):
-            if -0.1 < x < threshold:
-                return 1
-            elif threshold <= x:
-                return np.exp(-k*(x-threshold))
-            else:
-                return 0
-        
-        def Reward_RotationDirection(x,rot_dir):
+    def Reward_GravityMoment(self,CP_angle_deg,Leg_Num):
 
-            if rot_dir == +1:
-                return x if x < 0 else 1
-            elif rot_dir == -1:
-                return 1 if x < 0 else -x
-            
-        def Reward_ImpactAngle(phi_rel,phi_min,rot_dir=-1,phi_thr=-200):
+        if Leg_Num == 2:
+            CP_angle_deg = -CP_angle_deg  # Reflect across the y-axis
 
-            phi_max = -180
-            phi_b = (phi_min + phi_max)/2
+        return -np.sin(np.radians(CP_angle_deg))
 
-            if rot_dir == +1:
-                phi_rel = -phi_rel
-
-            if phi_rel <= phi_thr:
-                return -0.5
-            elif phi_thr < phi_rel <= phi_max:
-                return -1/(phi_thr - phi_max) * (phi_rel - phi_max) + 0.5
-            elif phi_max < phi_rel <= phi_b:
-                return -0.5/(phi_max - phi_b) * (phi_rel - phi_b) + 1.0      
-            elif phi_b < phi_rel <= phi_min:
-                return 0.5/(phi_b - phi_min) * (phi_rel - phi_min) + 0.5
-            elif phi_min < phi_rel <= -phi_min:
-                return 1.0/(phi_min - (-phi_min)) * (phi_rel - 0) 
-            else:
-                return -0.5
-            
-        def Reward_LT(CP_angle_deg,Leg_Num):
-
-            if Leg_Num == 2:
-                CP_angle_deg = -CP_angle_deg  # Reflect across the y-axis
-
-            if -180 <= CP_angle_deg <= 0:
-                return -np.sin(np.radians(CP_angle_deg))
-            elif 0 < CP_angle_deg <= 180:
-                return -0.5/180 * CP_angle_deg
-            
-        def Reward_GravityMoment(CP_Angle,Leg_Num):
-
-            if Leg_Num == 2:
-                CP_Angle = -CP_Angle  # Reflect across the y-axis
-
-            return -np.sin(np.radians(CP_Angle))
-
-        ## REWARD: MINIMUM DISTANCE 
-        R_dist = Reward_Exp_Decay(self.D_min,L)
-        
-        ## REWARD: TAU_CR TRIGGER
-        R_tau_cr = Reward_Exp_Decay(self.Tau_CR_trg,0.3)
-
-        ## ROTATION DIRECTION REWARD
-        R_Rot = Reward_RotationDirection(self.action_trg[1],rot_dir)
-
-        ## REWARD: IMPACT ANGLE
-        R_phi_rel = Reward_ImpactAngle(self.phi_rel_impact_deg,self.phi_rel_impact_min_deg,rot_dir=rot_dir)
-
-        ## REWARD: MOMENTUM TRANSFER
-        (BodyContact,Leg1Contact,Leg2Contact) = self.impact_conditions
-        if Leg1Contact or Leg2Contact:
-                
-                if Leg1Contact:
-                    ## CALC e_r VECT0R
-                    r_C1_B = np.array([L,0])                                    # {e_r1,e_beta1}
-                    e_r1 = r_C1_B/np.linalg.norm(r_C1_B)                        # {e_r1,e_beta1}
-                    e_r1 = self.R_BW(self.R_C1B(e_r1,gamma),self.phi_impact)    # {X_W,Z_W}
-                    e_r_hat = np.array([e_r1[0],0,e_r1[1]])
-
-                    ## MOMENTUM TRANSFER REWARD
-                    CP_temp = np.cross(V_hat,e_r_hat)
-                    CP_angle_deg = np.degrees(np.arcsin(CP_temp)[1])
-                    R_LT = Reward_LT(CP_angle_deg,Leg_Num=1)
-
-                    ## GRAVITY MOMENT REWARD
-                    CP_temp = np.cross(g_hat,e_r_hat)
-                    CP_angle_deg = np.degrees(np.arcsin(CP_temp)[1])
-                    R_GM = Reward_GravityMoment(CP_angle_deg,Leg_Num=1)
-                    print()
-
-                elif Leg2Contact:
-                    ## CALC e_r VECTOR
-                    r_C2_B = np.array([L,0])                                    # {e_r2,e_beta2}
-                    e_r2 = r_C2_B/np.linalg.norm(r_C2_B)                        # {e_r2,e_beta2}
-                    e_r2 = self.R_BW(self.R_C2B(e_r2,gamma),self.phi_impact)    # {X_W,Z_W}
-                    e_r_hat = np.array([e_r2[0],0,e_r2[1]])
-
-                    ## MOMENTUM TRANSFER REWARD
-                    CP_temp = np.cross(V_hat,e_r_hat)
-                    CP_angle_deg = np.degrees(np.arcsin(CP_temp)[1])
-                    R_LT = Reward_LT(CP_angle_deg,Leg_Num=2)
-
-                    ## GRAVITY MOMENT REWARD
-                    CP_temp = np.cross(g_hat,e_r_hat)
-                    CP_angle_deg = np.degrees(np.arcsin(CP_temp)[1])
-                    R_GM = Reward_GravityMoment(CP_angle_deg,Leg_Num=2)
-                    print()
-
-        elif BodyContact:
-            R_LT = 0
-            R_GM = 0
-
-
-        ## REWARD: PAD CONNECTIONS
-        if self.pad_connections >= 3: 
-            R_Legs = 1.0
-        elif self.pad_connections == 2:
-            R_Legs = 0.2
-        else:
-            R_Legs = 0.0
-
-        if self.BodyContact_flag:
-            R_Legs = R_Legs*0.5
-
-        self.reward_vals = [R_dist,R_tau_cr,R_Rot,R_phi_rel,R_LT,R_GM,R_Legs]
-        R = np.dot(self.reward_vals,list(self.reward_weights.values()))
-        print(f"Post_Trg: Reward: {R:.3f} \t D: {self.D_min:.3f}")
-
-        return R
 
     def _sample_flight_conditions(self):
 
@@ -643,8 +572,8 @@ class SAR_Env_2D(gym.Env):
         V_mag = np.random.uniform(low=Vel_Low,high=Vel_High)
 
         ## SAMPLE RELATIVE PHI FROM A WEIGHTED SET OF UNIFORM DISTRIBUTIONS
-        Rel_Angle_Low = self.Flight_Angle_range[0]
-        Rel_Angle_High = self.Flight_Angle_range[1]
+        Rel_Angle_Low = self.V_angle_range[0]
+        Rel_Angle_High = self.V_angle_range[1]
         Flight_Angle_range = Rel_Angle_High-Rel_Angle_Low
 
         Dist_Num = np.random.choice([0,1,2],p=[0.1,0.8,0.1]) # Probability of sampling distribution
@@ -702,7 +631,7 @@ class SAR_Env_2D(gym.Env):
             ## STEP UPDATE
             self.t += self.dt
 
-            z_acc = -self.g*0
+            z_acc = -self.g*0 #########################################################################33
             z = z + self.dt*vz
             vz = vz + self.dt*z_acc
 
@@ -1040,14 +969,14 @@ class SAR_Env_2D(gym.Env):
         text_States = my_font.render(f'States:', True, GREY)
         text_t_step = my_font.render(f'Time Step: {self.t:7.03f} [s]', True, BLACK)
         text_V_mag = my_font.render(f'V_mag: {self.V_mag:.2f} [m/s]', True, BLACK)
-        text_Rel_Angle = my_font.render(f'Flight_Angle: {self.Flight_Angle:.2f} [deg]', True, BLACK)
+        text_Rel_Angle = my_font.render(f'Flight_Angle: {self.V_angle:.2f} [deg]', True, BLACK)
 
         ## OBSERVATIONS TEXT
         text_Obs = my_font.render(f'Observations:', True, GREY)
         text_Tau = my_font.render(f'Tau: {self._get_obs()[0]:2.2f} [s]', True, BLACK)
         text_theta_x = my_font.render(f'Theta_x: {self._get_obs()[1]:2.2f} [rad/s]', True, BLACK)
         text_D_perp = my_font.render(f'D_perp: {self._get_obs()[2]:2.2f} [m]', True, BLACK)
-        text_Plane_Angle = my_font.render(f'Plane Angle: {self.Plane_Angle:3.1f} [deg]', True, BLACK)
+        text_Plane_Angle = my_font.render(f'Plane Angle: {self.Plane_Angle_deg:3.1f} [deg]', True, BLACK)
 
         ## ACTIONS TEXT
         text_Actions = my_font.render(f'Actions:', True, GREY)
@@ -1208,19 +1137,19 @@ class SAR_Env_2D(gym.Env):
 
 
 if __name__ == '__main__':
-    env = SAR_Env_2D(My_range=[-8e-3,+8e-3],V_mag_range=[2,2],Flight_Angle_range=[45,45],Plane_Angle_range=[0,0])
+    env = SAR_Env_2D(My_range=[-8e-3,+8e-3],V_mag_range=[1,1],V_angle_range=[-45,-45],Plane_Angle_range=[0,0])
     env.RENDER = True
 
     for ep in range(50):
 
-        obs,_ = env.reset(V_mag=None,Flight_Angle=None,Plane_Angle=None)
+        obs,_ = env.reset(V_mag=1,V_angle=-45,Plane_Angle=0)
 
         Done = False
         truncated = False
         while not (Done or truncated):
 
             action = env.action_space.sample()
-            action = np.array([0.6,-0.0001])
+            action = np.array([0.6,0])
             obs,reward,Done,truncated,_ = env.step(action)
 
         print(f"Episode: {ep} \t Obs: {obs[2]:.3f} \t Reward: {reward:.3f}")
