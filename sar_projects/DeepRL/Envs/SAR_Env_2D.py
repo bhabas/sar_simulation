@@ -48,22 +48,22 @@ class SAR_Env_2D(gym.Env):
         self.My_range = My_range
 
         ## SAR DIMENSIONAL CONSTRAINTS
-        gamma_deg = 45             # Leg Angle [m]
-        L = 105.0e-3           # Leg Length [m]
-        PD = 75e-3             # Prop Distance from COM [m]
-        M = 35.0e-3            # Body Mass [kg]
+        self.gamma_deg = 45             # Leg Angle [m]
+        self.L = 105.0e-3           # Leg Length [m]
+        self.PD = 75e-3             # Prop Distance from COM [m]
+        self.M = 35.0e-3            # Body Mass [kg]
 
-        Ixx = 15.8e-6          # Body Moment of Inertia [kg*m^2]
-        Iyy = 17.0e-6          # Body Moment of Inertia [kg*m^2]
-        Izz = 31.2e-6          # Body Moment of Inertia [kg*m^2]
+        self.Ixx = 15.8e-6          # Body Moment of Inertia [kg*m^2]
+        self.Iyy = 17.0e-6          # Body Moment of Inertia [kg*m^2]
+        self.Izz = 31.2e-6          # Body Moment of Inertia [kg*m^2]
 
-        I_c = Iyy + M*L**2
-        self.params = (np.deg2rad(gamma_deg),L,PD,M,Iyy,I_c)
-        self.collision_radius = max(L,PD)
+        I_c = self.Iyy + self.M*self.L**2
+        self.params = (np.deg2rad(self.gamma_deg),self.L,self.PD,self.M,self.Iyy,I_c)
+        self.collision_radius = max(self.L,self.PD)
 
         ## SAR CAPABILITY CONSTRAINTS
         My_max = abs(max(My_range,key=abs))
-        self.t_rot = np.sqrt((2*Iyy*np.radians(360))/(0.5*My_max + EPS)) ## Allow enough time for a full rotation
+        self.t_rot = np.sqrt((2*self.Iyy*np.radians(360))/(0.5*My_max + EPS)) ## Allow enough time for a full rotation
         self.t_rot = 0.3
 
 
@@ -87,12 +87,13 @@ class SAR_Env_2D(gym.Env):
         self.reward_vals = np.array([0,0,0,0,0,0])
         self.reward_weights = {
             "W_Dist":0.2,
-            "W_tau_cr":0.2,
+            "W_tau_cr":0.0,
             "W_LT":1.0,
             "W_GM":0.0,
             "W_Phi_rel":0.0,
-            "W_Legs":1.0
+            "W_Legs":2.0
         }
+        self.W_max = sum(self.reward_weights.values())
 
         self.D_min = np.inf
         self.Tau_trg = np.inf
@@ -214,7 +215,7 @@ class SAR_Env_2D(gym.Env):
         r_B_O = r_P_O - self.R_PW(r_P_B,self.Plane_Angle_rad)                               # Body Position wrt to Origin - {X_W,Z_W}
 
         ## LAUNCH QUAD W/ DESIRED VELOCITY
-        self._set_state(r_B_O[0],r_B_O[1],np.radians(0),V_B_O[0],V_B_O[1],np.random.uniform(-5,5))
+        self._set_state(r_B_O[0],r_B_O[1],np.radians(-1),V_B_O[0],V_B_O[1],0)
         self.initial_state = (r_B_O,V_B_O)
 
 
@@ -625,10 +626,15 @@ class SAR_Env_2D(gym.Env):
 
         
         ## REWARD: MINIMUM DISTANCE 
-        R_dist = self.Reward_Exp_Decay(self.D_min,L)
-        
+        if self.Tau_CR_trg < np.inf:
+
+            R_dist = self.Reward_Exp_Decay(self.D_min,L)
+        else:
+            R_dist = 0
+
         ## REWARD: TAU_CR TRIGGER
-        R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,0.3)
+        # R_tau_cr = self.Reward_Exp_Decay(self.Tau_CR_trg,5)
+        R_tau_cr = 0
 
         ## REWARD: PAD CONNECTIONS
         if self.pad_connections >= 3: 
@@ -643,10 +649,10 @@ class SAR_Env_2D(gym.Env):
 
         self.reward_vals = [R_dist,R_tau_cr,R_LT,R_GM,R_Phi,R_Legs]
         R_t = np.dot(self.reward_vals,list(self.reward_weights.values()))
-        print(f"Post_Trg: Reward: {R_t:.3f} \t D: {self.D_min:.3f}")
+        print(f"R_t_norm: {R_t/self.W_max:.3f} ")
         print(np.round(self.reward_vals,2))
 
-        return R_t
+        return R_t/self.W_max
     
     def Reward_Exp_Decay(self,x,threshold,k=5):
         if -0.1 < x < threshold:
@@ -663,7 +669,6 @@ class SAR_Env_2D(gym.Env):
         elif rot_dir == -1:
             return 1 if x < 0 else -x
         
-    
     def Reward_ImpactAngle(self,Phi_deg,Phi_min,Impact_condition):
 
         if Impact_condition == -1:
@@ -775,7 +780,7 @@ class SAR_Env_2D(gym.Env):
             ## STEP UPDATE
             self.t += self.dt
 
-            z_acc = -self.g*0 #########################################################################33
+            z_acc = -self.g
             z = z + self.dt*vz
             vz = vz + self.dt*z_acc
 
