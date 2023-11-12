@@ -449,7 +449,7 @@
                  That pixel's noise value is added to each of its color
                  channels, which at that point lie in the range [0,1]. -->
             <mean>0.0</mean>
-            <stddev>0.005</stddev> 
+            <stddev>0.005</stddev>  <!--0.005 standard--> 
           </noise>
           <lens>
             <type>sterographic</type>
@@ -916,9 +916,9 @@
       <updateRate>100</updateRate>
       <bodyName>camera_sensor</bodyName>
       <topicName>/CF_Internal/OpticalFlow_Values</topicName>
-      <Theta_x_gaussianNoise>0.0</Theta_x_gaussianNoise>
-      <Theta_y_gaussianNoise>0.0</Theta_y_gaussianNoise>
-      <Theta_z_gaussianNoise>0.0</Theta_z_gaussianNoise>
+      <Theta_x_gaussianNoise>0.1</Theta_x_gaussianNoise>
+      <Theta_y_gaussianNoise>0.1</Theta_y_gaussianNoise>
+      <Theta_z_gaussianNoise>0.1</Theta_z_gaussianNoise>
     </plugin>
 
     <!-- <plugin name='MomentPlugin' filename='libMoment_plugin.so'>

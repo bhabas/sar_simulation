@@ -308,6 +308,7 @@ class CrazyflieEnv_DeepRL(CrazyflieEnv_Sim):
 
 
 
+
     def CalcReward(self):
 
         ## TAU TRIGGER REWARD

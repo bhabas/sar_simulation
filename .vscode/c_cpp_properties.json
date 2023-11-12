@@ -20,7 +20,8 @@
                 "/home/bhabas/catkin_ws/src/crazyflie_experiment/vicon_spoofer/include/**",
                 "/home/bhabas/catkin_ws/src/crazyflie_experiment/Vicon_UKF/include/**",
                 "/usr/include/**",
-                "${workspaceFolder}/example_cpp/include"
+                "${workspaceFolder}/example_cpp/include",
+                "${workspaceFolder}/crazyflie_gazebo/include"
             ],
             "name": "ROS",
             "intelliSenseMode": "gcc-x64",

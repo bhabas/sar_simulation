@@ -29,7 +29,7 @@ current_time = now.strftime("%m_%d-%H:%M")
 if __name__ == '__main__':
 
     ## INITIATE ENVIRONMENT
-    # env = CrazyflieEnv_DeepRL_LDA(GZ_Timeout=True,Vel_range=[0.5,3.5],Phi_range=[30,90])
+    # env = CrazyflieEnv_DeepRL_LDA(GZ_Timeout=True,Vel_range=[2.25,2.25],Phi_range=[30,90])
     
     # log_dir = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/{env.env_name}"
 
@@ -39,23 +39,23 @@ if __name__ == '__main__':
     # PolicyTrainer.create_model()
     # PolicyTrainer.train_model()
     
-    # LOAD DEEP RL MODEL
-    # log_name = "SAC--04_07-20:38--LDA_A05_L50_K08_0"
-    # t_step_load = 80000
+    # ## LOAD DEEP RL MODEL
+    # log_name = "SAC--06_23-00:18--LDA_A05_L100_K32_0"
+    # t_step_load = 44000
 
     # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     # PolicyTrainer.load_model(t_step_load)
-    # PolicyTrainer.train_model()
+    # PolicyTrainer.train_model()s
 
     # ================================================================= ##
 
-    # # COLLECT LANDING PERFORMANCE DATA
+    ## COLLECT LANDING PERFORMANCE DATA
     # log_dir = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/{env.env_name}"
-    # log_name = "SAC--03_18-11:16--LDA_A05_L100_K64_0" #### CHANGE MODEL IN SIM SETTINGS TO MATCH
+    # log_name = "SAC--02_27-23:56--LDA_A30_L75_K32_0" #### CHANGE MODEL IN SIM SETTINGS TO MATCH
     # ############ DID YOU FORGET TO CHANGE MODEL IN SIM SETTINGS
     # #########
     # ############ I HOPE YOU DIDN'T
-    # t_step_load = 127000
+    # t_step_load = 61000
 
     # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     # PolicyTrainer.load_model(t_step_load)
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     # # PLOT LANDING PERFORMANCE
     # env = None
     # log_dir = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/CF_Gazebo"
-    # log_name = "SAC--01_25-20:21--LDA_A60_L100_K64_0"
+    # log_name = "SAC--03_27-00:37--LDA_A05_L75_K32_0"
     # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     # PolicyTrainer.Plot_Landing_Performance(saveFig=True)
 
@@ -74,21 +74,28 @@ if __name__ == '__main__':
 
     # # CONFIGURATION COMPARISON
     # env = None
-    # log_dir = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/CF_Gazebo"
+    # log_dir = f"{BASE_PATHs}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/CF_Gazebo"
     # log_name = "PolicyPerformance_Data_20Trials.csv"
     # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     # PolicyTrainer.Configuration_Comparison(saveFig=True)
 
+    # # CONFIGURATION COMPARISON NOISY
+    env = None
+    log_dir = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/CF_Gazebo"
+    log_name = "PolicyPerformance_Data_20Trials_Noisex20.csv"
+    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    PolicyTrainer.Configuration_Comparison_Noisy(saveFig=True)
+
 
     # # SCREENSHOTS
-    env = CrazyflieEnv_DeepRL_LDA(GZ_Timeout=True,Vel_range=[3.5,3.5],Phi_range=[30,30])
-    log_dir = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/{env.env_name}"
-    log_name = "SAC--03_18-11:16--LDA_A05_L100_K64_0" #### CHANGE MODEL IN SIM SETTINGS TO MATCH
-    ############ DID YOU FORGET TO CHANGE MODEL IN SIM SETTINGS
-    #########
-    ############ I HOPE YOU DIDN'T
-    t_step_load = 127000
+    # env = CrazyflieEnv_DeepRL_LDA(GZ_Timeout=True,Vel_range=[3.5,3.5],Phi_range=[30,30])
+    # log_dir = f"{BASE_PATH}/crazyflie_projects/Leg_Design_Analysis/TB_Logs/{env.env_name}"
+    # log_name = "SAC--03_18-11:16--LDA_A05_L100_K64_0" #### CHANGE MODEL IN SIM SETTINGS TO MATCH
+    # ############ DID YOU FORGET TO CHANGE MODEL IN SIM SETTINGS
+    # #########
+    # ############ I HOPE YOU DIDN'T
+    # t_step_load = 127000
 
-    PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
-    PolicyTrainer.load_model(t_step_load)
-    PolicyTrainer.test_landing_performance()
+    # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
+    # PolicyTrainer.load_model(t_step_load)
+    # PolicyTrainer.test_landing_performance()

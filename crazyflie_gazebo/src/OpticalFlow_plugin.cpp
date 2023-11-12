@@ -1,5 +1,7 @@
 #include "OpticalFlow_plugin.h"
-
+#include <iostream>
+#include <chrono> 
+using namespace std;
 
 
 namespace gazebo
@@ -64,6 +66,8 @@ namespace gazebo
     void OpticalFlow_plugin::Publish_OF_Data()
     {
         ros::Rate rate(updateRate);
+        // int i = 0;
+        // auto t1 = std::chrono::high_resolution_clock::now();
         while(ros::ok)
         {
             // UPDATE POS AND VEL
@@ -88,7 +92,18 @@ namespace gazebo
             Theta_z = V_perp/D_perp + GaussianKernel(0,Theta_z_gaussianNoise);
             Theta_x = V_tx/D_perp + GaussianKernel(0,Theta_x_gaussianNoise);
             Theta_y = V_ty/D_perp + GaussianKernel(0,Theta_y_gaussianNoise);
-
+            
+            // if (i<1000) {
+            // cout << "Theta_x_Noisy: " << Theta_x << endl;
+            // cout << "Theta_x: " << V_tx/D_perp << endl;
+            // cout << "Theta_y_Noisy: " << Theta_y << endl;
+            // cout << "Theta_y: " << V_ty/D_perp << endl;
+            // cout << "Theta_z_Noisy: " << Theta_z << endl;
+            // cout << "Theta_z: " << V_perp/D_perp << endl;
+            // i++;
+            // auto t2 = std::chrono::high_resolution_clock::now();
+            // std::cout << "time " << std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count() << endl;
+            // }
 
             // CLAMP OPTICAL FLOW VALUES
             Theta_x = boost::algorithm::clamp(Theta_x,-50,50);
