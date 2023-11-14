@@ -47,10 +47,12 @@ class InteractivePlot:
         self.ax_Quad            = self.fig.add_subplot(gs[0,1])
 
         ## SLIDERS
-        gs_Sliders = gridspec.GridSpecFromSubplotSpec(3, 1, subplot_spec=gs[1,1],hspace=1.0)
+        gs_Sliders = gridspec.GridSpecFromSubplotSpec(4, 1, subplot_spec=gs[1,1],hspace=1.0)
         self.ax_Plane_Slider    = self.fig.add_subplot(gs_Sliders[0,0])
         self.ax_Phi_rel_Slider  = self.fig.add_subplot(gs_Sliders[1,0])
         self.ax_V_Angle_Slider  = self.fig.add_subplot(gs_Sliders[2,0])
+        self.ax_V_Mag_Slider    = self.fig.add_subplot(gs_Sliders[3,0])
+
 
 
         ## CONFIGS
@@ -98,7 +100,7 @@ class InteractivePlot:
         )
         self.Plane_Angle_Slider.on_changed(self.Update_1) 
 
-        ## PHI SLIDER
+        ## PHI_REL SLIDER
         self.Phi_rel_Slider = Slider(
             ax=self.ax_Phi_rel_Slider,
             label='Phi_rel_impact \n [deg]',
@@ -108,6 +110,28 @@ class InteractivePlot:
             valstep=15
         )
         self.Phi_rel_Slider.on_changed(self.Update_1)
+
+        ## VEL_ANGLE SLIDER
+        self.V_Angle_Slider = Slider(
+            ax=self.ax_V_Angle_Slider,
+            label='Vel Angle \n [deg]',
+            valmin=-175,
+            valmax=-5,
+            valinit=-90,
+            valstep=5
+        )
+        self.V_Angle_Slider.on_changed(self.Update_1)
+
+        ## VEL_MAG SLIDER
+        self.V_Mag_Slider = Slider(
+            ax=self.ax_V_Mag_Slider,
+            label='Vel Mag. \n [m/s]',
+            valmin=0,
+            valmax=5,
+            valinit=1,
+            valstep=0.5
+        )
+        self.V_Mag_Slider.on_changed(self.Update_1)
 
 
         ## BUTTONS
@@ -162,6 +186,11 @@ class InteractivePlot:
         self.Plane_line, = self.ax_Quad.plot([],[],lw=1,zorder=1,c="k")
         self.n_p_line,   = self.ax_Quad.plot([],[],lw=3,alpha=0.5,zorder=2,c="tab:blue")
         self.t_x_line,   = self.ax_Quad.plot([],[],lw=3,alpha=0.5,zorder=2,c="tab:green")
+
+
+        # VECTOR LINES
+        self.Vel_line, = self.ax_Quad.plot([],[],c="tab:orange", lw=2,zorder=8)
+        self.Vel_traj_line, = self.ax_Quad.plot([],[],c="tab:grey",linestyle='--',lw=1,zorder=1,alpha=0.7)
 
 
 
@@ -225,6 +254,21 @@ class InteractivePlot:
         self.Z_B_line.set_data([CG[0],CG[0]+Z_B[0]],[CG[1],CG[1]+Z_B[1]])
 
 
+        ## CALC VELOCTIY VECTOR
+        Vel_Mag = self.V_Mag_Slider.val
+        Vel_max = self.V_Mag_Slider.valmax
+        Vel_Angle_deg = self.V_Angle_Slider.val # {t_x,n_p}
+        Vel_Angle_rad = np.radians(Vel_Angle_deg)
+
+        V_B_P = np.array([np.cos(Vel_Angle_rad),-np.sin(Vel_Angle_rad)])
+        V_B_O = self.R_PW(V_B_P,self.Plane_Angle_rad)
+        V_hat = V_B_O/np.linalg.norm(V_B_O)
+
+
+        self.Vel_line.set_data([CG[0],CG[0] + 0.15*(Vel_Mag/Vel_max)*V_hat[0]],[CG[1],CG[1] + 0.15*(Vel_Mag/Vel_max)*V_hat[1]])
+        self.Vel_traj_line.set_data([CG[0] + 5*V_hat[0],CG[0] - 10*V_hat[0]],[CG[1] + 5*V_hat[1],CG[1] - 10*V_hat[1]])
+
+
 
         
 
@@ -244,7 +288,9 @@ class InteractivePlot:
     def impact_ODE(self,t,y):
         a = self.M*G*self.L/self.I_c
         Beta_rad = y[0]
-        return [y[1], -a * np.cos(Beta_rad)*np.cos(self.Plane_Angle_rad) + a * np.sin(Beta_rad)*np.sin(self.Plane_Angle_rad)]
+        dBeta_rad = y[1]
+        ddBeta_rad = -a * np.cos(Beta_rad)*np.cos(self.Plane_Angle_rad) + a * np.sin(Beta_rad)*np.sin(self.Plane_Angle_rad)
+        return [dBeta_rad, ddBeta_rad]
     
     def equation(self, t, y):
         theta, omega = y
@@ -293,7 +339,7 @@ class InteractivePlot:
 
     def animate_IVP(self,event):
 
-        ## READ PHI_REL_IMPACT
+        ## CALC INITIAL IMPACT CONDITION
         Phi_rel_impact_deg = self.Phi_rel_Slider.val
         Phi_rel_impact_rad = np.radians(Phi_rel_impact_deg)
 
@@ -302,16 +348,29 @@ class InteractivePlot:
 
         Beta_impact_deg = Phi_impact_deg - self.gamma_deg - self.Plane_Angle_deg + 90
         Beta_impact_rad = np.radians(Beta_impact_deg)
+
+        ## CALC INITIAL ANGULAR VELOCITY
+        Vel_Mag = self.V_Mag_Slider.val
+        Vel_max = self.V_Mag_Slider.valmax
+        Vel_Angle_deg = self.V_Angle_Slider.val # {t_x,n_p}
+        Vel_Angle_rad = np.radians(Vel_Angle_deg)
+
+        V_tx,V_perp = Vel_Mag*np.cos(Vel_Angle_rad),-Vel_Mag*np.sin(Vel_Angle_rad)
+
+        dPhi = 0
+
+        H_V_perp = self.M*self.L*V_perp*np.cos(Beta_impact_rad)
+        H_V_tx = self.M*self.L*V_tx*np.sin(Beta_impact_rad)
+        H_dphi = self.Iyy*dPhi
+        dBeta_impact = 1/(self.I_c)*(H_V_perp + H_V_tx + H_dphi)
     
 
-        dBeta_impact = 0
         y0=[Beta_impact_rad, dBeta_impact]
-        t_span=[0, 3]
+        t_span=[0, 1]
         dt=0.01
 
         self.t, self.y = self.solve(y0, t_span, dt)
-        ani = FuncAnimation(self.fig, self.update, frames=len(self.t), blit=True, interval=20,repeat=False)
-        ## CHECK IVP SOLUTION
+        ani = FuncAnimation(self.fig, self.update, frames=len(self.t), blit=True, interval=40,repeat=False)
 
 
     def show(self):
