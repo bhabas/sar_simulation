@@ -298,9 +298,24 @@ class InteractivePlot:
         domega_dt = -(G / 0.1) * np.sin(theta)
         return [dtheta_dt, domega_dt]
     
-    def solve(self, y0, t_span, dt):
+    def solve(self, y0, t_span, dt,Beta_min_rad,Beta_max_rad):
+
+        event1_target = Beta_min_rad
+        event2_target = Beta_max_rad
+
+        def event1(t,y):
+            return y[0] - event1_target
+        
+        def event2(t,y):
+            return y[0] - event2_target
+        
+        event1.terminal = True
+        event2.terminal = True
+        event1.direction = 0
+        event2.direction = 0
+
         t = np.arange(t_span[0], t_span[1], dt)
-        sol = solve_ivp(self.impact_ODE, [t[0], t[-1]], y0, t_eval=t)
+        sol = solve_ivp(self.impact_ODE, [t[0], t[-1]], y0, t_eval=t,events=[event1,event2])
         return sol.t, sol.y
     
     def update(self, i):
@@ -348,6 +363,7 @@ class InteractivePlot:
 
         Beta_impact_deg = Phi_impact_deg - self.gamma_deg - self.Plane_Angle_deg + 90
         Beta_impact_rad = np.radians(Beta_impact_deg)
+        
 
         ## CALC INITIAL ANGULAR VELOCITY
         Vel_Mag = self.V_Mag_Slider.val
@@ -363,13 +379,22 @@ class InteractivePlot:
         H_V_tx = self.M*self.L*V_tx*np.sin(Beta_impact_rad)
         H_dphi = self.Iyy*dPhi
         dBeta_impact = 1/(self.I_c)*(H_V_perp + H_V_tx + H_dphi)
+
+        ## CALC BETA LIMITS
+        a = np.sqrt(self.PD**2 + self.L**2 - 2*self.PD*self.L*np.cos(np.pi/2-self.gamma_rad))
+        Beta_Prop_rad = -np.arccos((self.L**2 + a**2 - self.PD**2)/(2*a*self.L))
+        Beta_Prop_deg = np.degrees(Beta_Prop_rad)
+
+        Beta_Landing_deg =  -(90 + self.gamma_deg)
+        Beta_Landing_rad = np.radians(Beta_Landing_deg)
+
     
 
         y0=[Beta_impact_rad, dBeta_impact]
         t_span=[0, 1]
         dt=0.01
 
-        self.t, self.y = self.solve(y0, t_span, dt)
+        self.t, self.y = self.solve(y0, t_span, dt,Beta_Prop_rad,Beta_Landing_rad)
         ani = FuncAnimation(self.fig, self.update, frames=len(self.t), blit=True, interval=40,repeat=False)
 
 
@@ -402,6 +427,27 @@ class InteractivePlot:
 
         return np.array([CG,L1,L2,Prop1,Prop2])
     
+    def _beta_landing(self,impact_leg):
+
+        if impact_leg == 1:
+            return np.pi/2 + self.gamma_rad
+
+        elif impact_leg == 2:
+            return np.pi/2 - self.gamma_rad
+        
+    def _beta_prop(self,impact_leg):
+
+        a = np.sqrt(self.PD**2 + self.L**2 - 2*self.PD*self.L*np.cos(np.pi/2-self.gamma_rad))
+        Beta = np.arccos((self.L**2 + a**2 - self.PD**2)/(2*a*self.L))
+
+        if impact_leg == 1:
+
+            return Beta
+        
+        elif impact_leg == 2:
+
+            return np.pi-Beta
+        
     def R_BW(self,vec,phi):
 
         R_BW = np.array([
