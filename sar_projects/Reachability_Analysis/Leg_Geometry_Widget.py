@@ -643,7 +643,6 @@ class InteractivePlot:
                 Plane_Angle_deg = self.Plane_Angle_Slider.val
 
                 Phi_deg = Beta2_deg - gamma_deg + Plane_Angle_deg - 90
-                Phi_deg = Beta2_deg - gamma_deg + Plane_Angle_deg - 90
                 Beta1_deg = Phi_deg - gamma_deg - Plane_Angle_deg + 90
                 self.Beta_Slider.set_val(Beta1_deg)
 
