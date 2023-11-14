@@ -5,6 +5,8 @@ from scipy.integrate import solve_ivp
 from matplotlib.widgets import Slider, Button, TextBox
 import matplotlib.patches as patches
 import matplotlib.gridspec as gridspec
+from matplotlib.animation import FuncAnimation
+
 
 G = 9.81 # Gravity [m/s^2]
 
@@ -16,10 +18,13 @@ class InteractivePlot:
         self.L_norm = 1.4
         self.Plane_Angle_deg = 0
 
+        ## SAR DIMENSIONAL CONSTRAINTS
+        self.PD = 75e-3             # Prop Distance from COM [m]
+
 
         self.ax_layout()
         self.init_plots()
-        self.Update_1() 
+        # self.Update_1() 
 
     def ax_layout(self):
 
@@ -28,7 +33,7 @@ class InteractivePlot:
         heights = [80,20]
         gs = self.fig.add_gridspec(ncols=len(widths), nrows=len(heights), width_ratios=widths, height_ratios=heights)
 
-        ## QUAD AX
+        ## POLAR AX
         widths = [3,97]
         heights = [97,3]
         gs_Polar = gridspec.GridSpecFromSubplotSpec(2, 2, subplot_spec=gs[0,0],width_ratios=widths, height_ratios=heights)
@@ -36,11 +41,8 @@ class InteractivePlot:
         self.ax_Gamma_Slider    = self.fig.add_subplot(gs_Polar[0,0])
         self.ax_Leg_Slider      = self.fig.add_subplot(gs_Polar[1,1])
 
-        ## REWARD PLOTS
-        widths = [95,5]
-        heights = [33,33,33]
-        gs_Reward = gridspec.GridSpecFromSubplotSpec(3, 2, subplot_spec=gs[0,1],width_ratios=widths, height_ratios=heights,hspace=0.7,wspace=0)
-
+        ## ANIMATION AX
+        self.ax_Quad            = self.fig.add_subplot(gs[0,1])
 
         ## SLIDERS
         gs_Sliders = gridspec.GridSpecFromSubplotSpec(3, 1, subplot_spec=gs[1,1],hspace=1.0)
@@ -56,7 +58,7 @@ class InteractivePlot:
         gs_Buttons = gridspec.GridSpecFromSubplotSpec(4, 2, subplot_spec=gs_Configs[0,0], wspace=0.5, hspace=0.5)
         gs_Text    = gridspec.GridSpecFromSubplotSpec(3, 3, subplot_spec=gs_Configs[0,1], wspace=0.5, hspace=0.5)
 
-        ## BUTTONS
+        # ## BUTTONS
         ax_Leg_Button           = self.fig.add_subplot(gs_Buttons[0, 0])
 
 
@@ -97,7 +99,7 @@ class InteractivePlot:
         ## PHI SLIDER
         self.Phi_rel_Slider = Slider(
             ax=self.ax_Phi_rel_Slider,
-            label='Phi_rel \n [deg]',
+            label='Phi_rel_impact \n [deg]',
             valmin=-180,
             valmax=225,
             valinit=0,
@@ -108,19 +110,31 @@ class InteractivePlot:
 
         ## BUTTONS
         self.IVP_button = Button(ax_Leg_Button, 'Update IVP', hovercolor='0.975')
-        self.IVP_button.on_clicked(self.collect_IVP_sol)
+        self.IVP_button.on_clicked(self.animate_IVP)
 
     def init_plots(self):
 
-        Phi_rel_deg = self.Phi_rel_Slider.val
-
-        ## CREATE POLAR PLOT
-        self.ax_Polar.set_xlim(-4,4)
-        self.ax_Polar.set_ylim(0,4)
-
+        ## GEOMETRIC CONSTRAINTS
+        L = self.Leg_Slider.val*self.PD
+        gamma_deg = self.Gamma_Slider.val
+        gamma_rad = np.radians(gamma_deg)
 
 
-    def Update_1(self):
+        ## QUAD PLOT
+        self.ax_Quad.set_aspect('equal', 'box')
+        self.ax_Quad.set_xlim(-0.5,0.5)
+        self.ax_Quad.set_ylim(-0.5,0.5)
+        X_W = 0.05*np.array([1,0])
+        Z_W = 0.05*np.array([0,1])
+        O_W = np.array([-0.45,-0.45])
+        self.X_W_line = self.ax_Quad.plot([O_W[0],O_W[0]+X_W[0]],[O_W[1],O_W[1]+X_W[1]],alpha=0.5,lw=3,zorder=5,c="tab:green")
+        self.Z_W_line = self.ax_Quad.plot([O_W[0],O_W[0]+Z_W[0]],[O_W[1],O_W[1]+Z_W[1]],alpha=0.5,lw=3,zorder=5,c="tab:blue")
+
+        self.line, = self.ax_Quad.plot([], [], 'o-', lw=2)
+
+
+
+    def Update_1(self,event):
         
         ## SAR CONSTRAINTS
         self.PD = 75e-3             # Prop Distance from COM [m]
@@ -156,6 +170,39 @@ class InteractivePlot:
         Plane_Angle_rad = np.radians(Plane_Angle_deg)
 
         return [y[1], a * np.cos(y[0])*np.cos(Plane_Angle_rad) + a * np.sin(y[0])*np.sin(Plane_Angle_rad)]
+    
+    def equation(self, t, y):
+        theta, omega = y
+        dtheta_dt = omega
+        domega_dt = -(G / 0.1) * np.sin(theta)
+        return [dtheta_dt, domega_dt]
+    
+    def solve(self, y0, t_span, dt):
+        t = np.arange(t_span[0], t_span[1], dt)
+        sol = solve_ivp(self.equation, [t[0], t[-1]], y0, t_eval=t)
+        return sol.t, sol.y
+    
+    def init(self):
+        self.line.set_data([], [])
+        return self.line,
+
+    def update(self, i):
+            length = 0.2
+            x = length * np.sin(self.y[0, i])
+            y = -length * np.cos(self.y[0, i])
+            self.line.set_data([0, x], [0, y])
+            return self.line,
+
+
+    def animate_IVP(self,event):
+        
+        y0=[np.pi/4, 0]
+        t_span=[0, 10]
+        dt=0.05
+
+        self.t, self.y = self.solve(y0, t_span, dt)
+        ani = FuncAnimation(self.fig, self.update, frames=len(self.t), init_func=self.init, blit=True, interval=20,repeat=False)
+        # plt.show()
 
 
     def show(self):
