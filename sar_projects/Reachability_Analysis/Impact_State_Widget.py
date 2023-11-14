@@ -145,7 +145,18 @@ class InteractivePlot:
         self.X_B_line,   = self.ax_Quad.plot([],[],lw=3,alpha=0.75,zorder=5,c="tab:green")
 
 
-        self.line, = self.ax_Quad.plot([], [], 'o-', lw=2)
+        # QUAD LINES
+        CG,L1,L2,Prop1,Prop2 = self._get_pose(0,0,0)
+        CG_Marker = patches.Circle(CG,radius=0.008,fc='tab:blue',zorder=4)
+        self.bg_CG_Marker = self.ax_Quad.add_patch(CG_Marker)
+        self.bg_leg1_line,  = self.ax_Quad.plot([],[],lw=2,alpha=0.25,zorder=3,c='red')
+        self.bg_leg2_line,  = self.ax_Quad.plot([],[],lw=2,alpha=0.25,zorder=3,c='black')
+        self.bg_prop1_line, = self.ax_Quad.plot([],[],lw=2,alpha=0.25,zorder=3,c='black')
+        self.bg_prop2_line, = self.ax_Quad.plot([],[],lw=2,alpha=0.25,zorder=3,c='black')
+        self.bg_Z_B_line,   = self.ax_Quad.plot([],[],lw=3,alpha=0.25,zorder=3,c="tab:blue")
+        self.bg_X_B_line,   = self.ax_Quad.plot([],[],lw=3,alpha=0.25,zorder=3,c="tab:green")
+
+
 
         # PLANE LINES
         self.Plane_line, = self.ax_Quad.plot([],[],lw=1,zorder=1,c="k")
@@ -159,22 +170,22 @@ class InteractivePlot:
         ## READ GAMMA, LENGTH
         self.L = self.Leg_Slider.val*self.PD
         self.I_c = self.Iyy + self.M*self.L**2
-        gamma_deg = self.Gamma_Slider.val
-        gamma_rad = np.radians(gamma_deg)
+        self.gamma_deg = self.Gamma_Slider.val
+        self.gamma_rad = np.radians(self.gamma_deg)
 
         ## PLANE DRAW
-        Plane_Angle_deg = self.Plane_Angle_Slider.val
-        Plane_Angle_rad = np.radians(Plane_Angle_deg)
+        self.Plane_Angle_deg = self.Plane_Angle_Slider.val
+        self.Plane_Angle_rad = np.radians(self.Plane_Angle_deg)
 
 
         ## READ PHI_REL_IMPACT
         Phi_rel_impact_deg = self.Phi_rel_Slider.val
         Phi_rel_impact_rad = np.radians(Phi_rel_impact_deg)
 
-        Phi_impact_deg = Phi_rel_impact_deg + Plane_Angle_deg
+        Phi_impact_deg = Phi_rel_impact_deg + self.Plane_Angle_deg
         Phi_impact_rad = np.radians(Phi_impact_deg)
 
-        Beta_impact_deg = Phi_impact_deg - gamma_deg - Plane_Angle_deg + 90
+        Beta_impact_deg = Phi_impact_deg - self.gamma_deg - self.Plane_Angle_deg + 90
         Beta_impact_rad = np.radians(Beta_impact_deg)
 
         ## UPDATE PLANE DRAWING
@@ -193,7 +204,7 @@ class InteractivePlot:
 
         ## UPDATE BODY POSITION
         r_B_C1 = np.array([-self.L,0])                                  # {e_r1,e_beta1}
-        r_B_C1 = self.R_PW(self.R_C1P(r_B_C1,Beta_impact_rad),Plane_Angle_rad) # {X_W,Z_W}
+        r_B_C1 = self.R_PW(self.R_C1P(r_B_C1,Beta_impact_rad),self.Plane_Angle_rad) # {X_W,Z_W}
         r_B_O = r_B_C1  
 
         ## UPDATE BODY DRAWING
@@ -232,11 +243,8 @@ class InteractivePlot:
 
     def impact_ODE(self,t,y):
         a = self.M*G*self.L/self.I_c
-
-        Plane_Angle_deg = self.Plane_Angle_Slider.val
-        Plane_Angle_rad = np.radians(Plane_Angle_deg)
-
-        return [y[1], a * np.cos(y[0])*np.cos(Plane_Angle_rad) + a * np.sin(y[0])*np.sin(Plane_Angle_rad)]
+        Beta_rad = y[0]
+        return [y[1], -a * np.cos(Beta_rad)*np.cos(self.Plane_Angle_rad) + a * np.sin(Beta_rad)*np.sin(self.Plane_Angle_rad)]
     
     def equation(self, t, y):
         theta, omega = y
@@ -246,28 +254,64 @@ class InteractivePlot:
     
     def solve(self, y0, t_span, dt):
         t = np.arange(t_span[0], t_span[1], dt)
-        sol = solve_ivp(self.equation, [t[0], t[-1]], y0, t_eval=t)
+        sol = solve_ivp(self.impact_ODE, [t[0], t[-1]], y0, t_eval=t)
         return sol.t, sol.y
     
-    def init(self):
-        self.line.set_data([], [])
-        return self.line,
-
     def update(self, i):
-        x = self.L * np.sin(self.y[0, i])
-        y = -self.L * np.cos(self.y[0, i])
-        self.line.set_data([0, x], [0, y])
-        return self.line,
+
+        Beta_rad = self.y[0, i]
+        Beta_deg = np.degrees(Beta_rad)
+
+        Phi_deg = Beta_deg + self.gamma_deg + self.Plane_Angle_deg - 90
+        Phi_rad = np.radians(Phi_deg)
+
+
+        ## UPDATE BODY POSITION
+        r_B_C1 = np.array([-self.L,0])                                  # {e_r1,e_beta1}
+        r_B_C1 = self.R_PW(self.R_C1P(r_B_C1,Beta_rad),self.Plane_Angle_rad) # {X_W,Z_W}
+        r_B_O = r_B_C1  
+
+        ## UPDATE BODY DRAWING
+        CG,L1,L2,Prop1,Prop2 = self._get_pose(r_B_O[0],r_B_O[1],Phi_rad)
+        self.bg_leg1_line.set_data([CG[0],L1[0]],[CG[1],L1[1]])
+        self.bg_leg2_line.set_data([CG[0],L2[0]],[CG[1],L2[1]])
+        self.bg_prop1_line.set_data([CG[0],Prop1[0]],[CG[1],Prop1[1]])
+        self.bg_prop2_line.set_data([CG[0],Prop2[0]],[CG[1],Prop2[1]])
+        self.bg_CG_Marker.set_center(CG)
+
+        ## UPDATE BODY AXES
+        X_B = 0.03*np.array([1,0])      # {X_B,Z_B}
+        X_B = self.R_BW(X_B,Phi_rad)    # {X_W,Z_W}
+        self.bg_X_B_line.set_data([CG[0],CG[0]+X_B[0]],[CG[1],CG[1]+X_B[1]])
+
+        Z_B = 0.03*np.array([0,1])      # {X_B,Z_B}
+        Z_B = self.R_BW(Z_B,Phi_rad)    # {X_W,Z_W}
+        self.bg_Z_B_line.set_data([CG[0],CG[0]+Z_B[0]],[CG[1],CG[1]+Z_B[1]])
+
+        return self.bg_leg1_line,self.bg_leg2_line,self.bg_prop1_line,self.bg_prop2_line,self.bg_CG_Marker,self.bg_X_B_line,self.bg_Z_B_line
 
 
     def animate_IVP(self,event):
-        
-        y0=[np.pi/4, 0]
-        t_span=[0, 10]
-        dt=0.05
+
+        ## READ PHI_REL_IMPACT
+        Phi_rel_impact_deg = self.Phi_rel_Slider.val
+        Phi_rel_impact_rad = np.radians(Phi_rel_impact_deg)
+
+        Phi_impact_deg = Phi_rel_impact_deg + self.Plane_Angle_deg
+        Phi_impact_rad = np.radians(Phi_impact_deg)
+
+        Beta_impact_deg = Phi_impact_deg - self.gamma_deg - self.Plane_Angle_deg + 90
+        Beta_impact_rad = np.radians(Beta_impact_deg)
+    
+
+        dBeta_impact = 0
+        y0=[Beta_impact_rad, dBeta_impact]
+        t_span=[0, 3]
+        dt=0.01
 
         self.t, self.y = self.solve(y0, t_span, dt)
-        ani = FuncAnimation(self.fig, self.update, frames=len(self.t), init_func=self.init, blit=True, interval=20,repeat=False)
+        ani = FuncAnimation(self.fig, self.update, frames=len(self.t), blit=True, interval=20,repeat=False)
+        ## CHECK IVP SOLUTION
 
 
     def show(self):
