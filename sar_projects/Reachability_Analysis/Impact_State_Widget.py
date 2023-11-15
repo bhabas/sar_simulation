@@ -322,11 +322,11 @@ class InteractivePlot:
 
         print()
 
-    def impact_ODE(self,t,y):
+    def impact_ODE(self,t,y,Theta_p):
         a = self.M*G*self.L/self.I_c
         Beta_rad = y[0]
         dBeta_rad = y[1]
-        ddBeta_rad = -a * np.cos(Beta_rad)*np.cos(0) + a * np.sin(Beta_rad)*np.sin(0)
+        ddBeta_rad = -a * np.cos(Beta_rad)*np.cos(Theta_p) + a * np.sin(Beta_rad)*np.sin(Theta_p)
         return [dBeta_rad, ddBeta_rad]
     
     def solve_impact_ODE(self,Phi_impact_P_B,dPhi_impact,Vel_Mag,Vel_Angle_deg):
@@ -388,14 +388,12 @@ class InteractivePlot:
         t_span=[0, 2]
         dt=0.005
 
-        event1_target = Beta_Prop
-        event2_target = Beta_Landing
 
-        def PropContact_event(t,y):
-            return y[0] - event1_target
+        def PropContact_event(t,y,Theta_p):
+            return y[0] - Beta_Prop
         
-        def LandingContact_event(t,y):
-            return y[0] - event2_target
+        def LandingContact_event(t,y,Theta_p):
+            return y[0] - Beta_Landing
         
         PropContact_event.terminal = True
         PropContact_event.direction = 0
@@ -404,7 +402,7 @@ class InteractivePlot:
         LandingContact_event.direction = 0
 
         t = np.arange(t_span[0], t_span[1], dt)
-        sol = solve_ivp(self.impact_ODE, [t[0], t[-1]], y0, t_eval=t,events=[PropContact_event,LandingContact_event],dense_output=True)
+        sol = solve_ivp(self.impact_ODE, [t[0], t[-1]], y0, args=(Theta_p,),t_eval=t,events=[PropContact_event,LandingContact_event],dense_output=True)
         return sol.t,sol.y,sol.y_events
     
     def update_animation(self, i):
