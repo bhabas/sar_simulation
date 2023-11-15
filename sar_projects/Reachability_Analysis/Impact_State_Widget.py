@@ -19,16 +19,16 @@ class InteractivePlot:
     def __init__(self):
 
         ## INITIAL VALUES
-        self.gamma_deg = 45
+        self.gamma = np.radians(45)
         self.L_norm = 1.4
-        self.Plane_Angle_deg = 0
+        self.Theta_p = np.radians(0)
 
         ## SAR CONSTRAINTS
         self.PD = 75e-3             # Prop Distance from COM [m]
         self.M = 35.0e-3            # Body Mass [kg]
         self.Iyy = 17.0e-6          # Body Moment of Inertia [kg*m^2]
 
-        self.impact_condition = FORELEG_CONTACT
+        self.impact_condition = None
 
 
         self.ax_layout()
@@ -83,7 +83,7 @@ class InteractivePlot:
             label="Gamma [deg]",
             valmin=0,
             valmax=90,
-            valinit=self.gamma_deg,
+            valinit=np.degrees(self.gamma),
             valstep=1,
             orientation="vertical"
         )
@@ -91,7 +91,7 @@ class InteractivePlot:
 
         self.Leg_Slider = Slider(
             ax=self.ax_Leg_Slider,
-            label='L_norm [m]',
+            label='L_norm',
             valmin=0.1,
             valmax=4,
             valinit=self.L_norm,
@@ -106,7 +106,7 @@ class InteractivePlot:
             label='Plane Angle \n [deg]',
             valmin=-180,
             valmax=225,
-            valinit=self.Plane_Angle_deg,
+            valinit=self.Theta_p,
             valstep=15
         )
         self.Plane_Angle_Slider.on_changed(self.Update_1) 
@@ -161,8 +161,7 @@ class InteractivePlot:
 
         ## GEOMETRIC CONSTRAINTS
         L = self.Leg_Slider.val*self.PD
-        gamma_deg = self.Gamma_Slider.val
-        gamma_rad = np.radians(gamma_deg)
+        gamma = np.radians(self.Gamma_Slider.val)
 
 
         ## QUAD PLOT
@@ -216,62 +215,50 @@ class InteractivePlot:
         ## READ GAMMA, LENGTH
         self.L = self.Leg_Slider.val*self.PD
         self.I_c = self.Iyy + self.M*self.L**2
-        self.gamma_deg = self.Gamma_Slider.val
-        self.gamma_rad = np.radians(self.gamma_deg)
+        gamma = np.radians(self.Gamma_Slider.val)
 
         ## PLANE DRAW
-        self.Plane_Angle_deg = self.Plane_Angle_Slider.val
-        self.Plane_Angle_rad = np.radians(self.Plane_Angle_deg)
-
+        Theta_p = np.radians(self.Plane_Angle_Slider.val)
 
         ## READ PHI_IMPACT_P_B
-        Phi_impact_P_B_deg = self.Phi_P_B_Slider.val
-        Phi_impact_P_B_rad = np.radians(Phi_impact_P_B_deg)
-
-        Phi_impact_deg = -(Phi_impact_P_B_deg) + self.Plane_Angle_deg
-        Phi_impact_rad = np.radians(Phi_impact_deg)
+        Phi_impact_P_B = np.radians(self.Phi_P_B_Slider.val)
+        Phi_impact = -Phi_impact_P_B + Theta_p
 
 
         ## CALC IMPACT LIMITS
-        a = np.sqrt(self.PD**2 + self.L**2 - 2*self.PD*self.L*np.cos(np.pi/2-self.gamma_rad))
-        Beta_Prop_rad = -np.arccos((self.L**2 + a**2 - self.PD**2)/(2*a*self.L))
-        Beta_Prop_deg = np.degrees(Beta_Prop_rad)
-        Phi_Prop_P_B_deg = -(Beta_Prop_deg + self.gamma_deg - 90)
-
-        self.Phi_P_B_Slider.valmin = Phi_Prop_P_B_deg
-        self.Phi_P_B_Slider.valmax = 360 - Phi_Prop_P_B_deg
+        Phi_Prop_P_B_deg_min,Phi_Prop_P_B_deg_max = self._calc_impact_limits()
+        self.Phi_P_B_Slider.valmin = np.degrees(Phi_Prop_P_B_deg_min)
+        self.Phi_P_B_Slider.valmax = np.degrees(Phi_Prop_P_B_deg_max)
 
 
         ## DETERMINE IMPACT CONDITIONS
-        if Phi_Prop_P_B_deg <= Phi_impact_P_B_deg <= 180:
+        if Phi_Prop_P_B_deg_min <= Phi_impact_P_B <= np.pi:
             self.impact_condition = FORELEG_CONTACT
-        elif 180 < Phi_impact_P_B_deg <= Phi_Prop_P_B_deg + 180:
+        elif np.pi < Phi_impact_P_B <= Phi_Prop_P_B_deg_max:
             self.impact_condition = HINDLEG_CONTACT
 
 
         ## PLOT POSITION
         if self.impact_condition == FORELEG_CONTACT:
-            Beta_impact_deg = Phi_impact_deg - self.gamma_deg - self.Plane_Angle_deg + 90
-            Beta_impact_rad = np.radians(Beta_impact_deg)
+            Beta_impact = Phi_impact - gamma - Theta_p + np.pi/2
 
             ## UPDATE BODY POSITION
             r_B_C1 = np.array([-self.L,0])                                              # {e_r1,e_beta1}
-            r_B_C1 = self.R_PW(self.R_C1P(r_B_C1,Beta_impact_rad),self.Plane_Angle_rad) # {X_W,Z_W}
+            r_B_C1 = self.R_PW(self.R_C1P(r_B_C1,Beta_impact),Theta_p) # {X_W,Z_W}
             r_B_O = r_B_C1  
 
         elif self.impact_condition == HINDLEG_CONTACT:
 
-            Beta_impact_deg = Phi_impact_deg + self.gamma_deg - self.Plane_Angle_deg + 90
-            Beta_impact_rad = np.radians(Beta_impact_deg)
+            Beta_impact = Phi_impact + gamma - Theta_p + np.pi/2
 
             ## UPDATE BODY POSITION
             r_B_C2 = np.array([-self.L,0])                                              # {e_r2,e_beta2}
-            r_B_C2 = self.R_PW(self.R_C2P(r_B_C2,Beta_impact_rad),self.Plane_Angle_rad) # {X_W,Z_W}
+            r_B_C2 = self.R_PW(self.R_C2P(r_B_C2,Beta_impact),Theta_p) # {X_W,Z_W}
             r_B_O = r_B_C2  
         
 
         ## UPDATE BODY DRAWING
-        CG,L1,L2,Prop1,Prop2 = self._get_pose(r_B_O[0],r_B_O[1],Phi_impact_rad)
+        CG,L1,L2,Prop1,Prop2 = self._get_pose(r_B_O[0],r_B_O[1],Phi_impact)
         self.leg1_line.set_data([CG[0],L1[0]],[CG[1],L1[1]])
         self.leg2_line.set_data([CG[0],L2[0]],[CG[1],L2[1]])
         self.prop1_line.set_data([CG[0],Prop1[0]],[CG[1],Prop1[1]])
@@ -280,11 +267,11 @@ class InteractivePlot:
 
         ## UPDATE BODY AXES
         X_B = 0.03*np.array([1,0])      # {X_B,Z_B}
-        X_B = self.R_BW(X_B,Phi_impact_rad)    # {X_W,Z_W}
+        X_B = self.R_BW(X_B,Phi_impact)    # {X_W,Z_W}
         self.X_B_line.set_data([CG[0],CG[0]+X_B[0]],[CG[1],CG[1]+X_B[1]])
 
         Z_B = 0.03*np.array([0,1])      # {X_B,Z_B}
-        Z_B = self.R_BW(Z_B,Phi_impact_rad)    # {X_W,Z_W}
+        Z_B = self.R_BW(Z_B,Phi_impact)    # {X_W,Z_W}
         self.Z_B_line.set_data([CG[0],CG[0]+Z_B[0]],[CG[1],CG[1]+Z_B[1]])
 
 
@@ -295,7 +282,7 @@ class InteractivePlot:
         Vel_Angle_rad = np.radians(Vel_Angle_deg)
 
         V_B_P = np.array([np.cos(Vel_Angle_rad),-np.sin(Vel_Angle_rad)])
-        V_B_O = self.R_PW(V_B_P,self.Plane_Angle_rad)
+        V_B_O = self.R_PW(V_B_P,Theta_p)
         V_hat = V_B_O/np.linalg.norm(V_B_O)
 
 
@@ -317,8 +304,8 @@ class InteractivePlot:
 
 
         ## UPDATE TEXT BOX
-        self.Phi_text.set_text(f"Phi_impact: {Phi_impact_deg: 3.1f} [deg]")
-        self.Phi_rel_text.set_text(f"Phi_P_B: {Phi_impact_P_B_deg: 3.1f} [deg]")
+        self.Phi_text.set_text(f"Phi_impact: {np.degrees(Phi_impact): 3.1f} [deg]")
+        self.Phi_rel_text.set_text(f"Phi_P_B: {np.degrees(Phi_impact_P_B): 3.1f} [deg]")
 
 
 
@@ -339,56 +326,46 @@ class InteractivePlot:
         a = self.M*G*self.L/self.I_c
         Beta_rad = y[0]
         dBeta_rad = y[1]
-        ddBeta_rad = -a * np.cos(Beta_rad)*np.cos(self.Plane_Angle_rad) + a * np.sin(Beta_rad)*np.sin(self.Plane_Angle_rad)
+        ddBeta_rad = -a * np.cos(Beta_rad)*np.cos(0) + a * np.sin(Beta_rad)*np.sin(0)
         return [dBeta_rad, ddBeta_rad]
     
-    def solve_impact_ODE(self,Phi_impact_B_P_deg,Vel_Mag,Vel_Angle_deg,dPhi_impact_rad):
+    def solve_impact_ODE(self,Phi_impact_P_B,dPhi_impact,Vel_Mag,Vel_Angle_deg):
 
-        ## CALC BETA LIMITS
-        a = np.sqrt(self.PD**2 + self.L**2 - 2*self.PD*self.L*np.cos(np.pi/2-self.gamma_rad))
-        Beta_Prop_rad = -np.arccos((self.L**2 + a**2 - self.PD**2)/(2*a*self.L))
-        Beta_Prop_deg = np.degrees(Beta_Prop_rad)
+        ## READ GAMMA, PLANE ANGLE
+        gamma = np.radians(self.Gamma_Slider.val)
+        Theta_p = np.radians(self.Plane_Angle_Slider.val)
 
-        Phi_Prop_B_P_deg = Beta_Prop_deg + self.gamma_deg - 90
-
-        ## CONVERT TO R_B COORDS
-        Phi_impact_P_B_deg = -Phi_impact_B_P_deg
-        Phi_Prop_P_B_deg = -Phi_Prop_B_P_deg
-
-        if Phi_Prop_P_B_deg < Phi_impact_P_B_deg <= 180:
-            self.impact_condition = FORELEG_CONTACT
-        elif  180  <  Phi_Prop_P_B_deg <= 180 + Phi_Prop_P_B_deg:
-            self.impact_condition = HINDLEG_CONTACT
-        else:
-            self.impact_condition = PROP_CONTACT
-
-
-
+        ## READ PHI_IMPACT_P_B
+        Phi_impact_P_B = np.radians(self.Phi_P_B_Slider.val)
+        Phi_impact = -Phi_impact_P_B + Theta_p
 
         if self.impact_condition == FORELEG_CONTACT:
 
+            ## CALC IMPACT LIMITS
+            Phi_Prop_P_B_min,Phi_Prop_P_B_max = self._calc_impact_limits()
+            Phi_Landing_P_B = np.pi
+
+            Phi_Prop = -Phi_Prop_P_B_min + Theta_p
+            Phi_Landing = -Phi_Landing_P_B + Theta_p
+
             ## CALC INITIAL IMPACT CONDITIONS
-            Beta_impact_deg = Phi_impact_B_P_deg - self.gamma_deg + 90
-            Beta_impact_rad = np.radians(Beta_impact_deg)
-
-            Beta_Landing_deg =  -(90 + self.gamma_deg)
-            Beta_Landing_rad = np.radians(Beta_Landing_deg)
-
-            Beta_Prop_deg = Beta_Prop_deg
-            Beta_Prop_rad = np.radians(Beta_Prop_deg)
+            Beta_impact = Phi_impact - gamma - Theta_p + np.pi/2
+            Beta_Prop = Phi_Prop - gamma - Theta_p + np.pi/2
+            Beta_Landing =  Phi_Landing - gamma - Theta_p + np.pi/2
         
         elif self.impact_condition == HINDLEG_CONTACT:
 
+            ## CALC IMPACT LIMITS
+            Phi_Prop_P_B_min,Phi_Prop_P_B_max = self._calc_impact_limits()
+            Phi_Landing_P_B = np.pi
+
+            Phi_Prop = -Phi_Prop_P_B_max + Theta_p
+            Phi_Landing = -Phi_Landing_P_B + Theta_p
+
             ## CALC INITIAL IMPACT CONDITIONS
-            # Beta_impact_deg = Phi_rel_impact_deg + self.gamma_deg + 90
-            # Beta_impact_rad = np.radians(Beta_impact_deg)
-
-            Beta_Landing_deg =  -(90 - self.gamma_deg)
-            Beta_Landing_rad = np.radians(Beta_Landing_deg)
-
-        elif self.impact_condition == PROP_CONTACT:
-            pass
-
+            Beta_impact = Phi_impact + gamma - Theta_p + np.pi/2
+            Beta_Prop = Phi_Prop + gamma - Theta_p + np.pi/2
+            Beta_Landing =  Phi_Landing + gamma - Theta_p + np.pi/2
 
         
 
@@ -399,21 +376,20 @@ class InteractivePlot:
 
 
         ## ANGULAR MOMENTUM TRANSFER
-        H_V_perp = self.M*self.L*V_perp*np.cos(Beta_impact_rad)
-        H_V_tx = self.M*self.L*V_tx*np.sin(Beta_impact_rad)
-        H_dphi = self.Iyy*dPhi_impact_rad
+        H_V_perp = self.M*self.L*V_perp*np.cos(Beta_impact)
+        H_V_tx = self.M*self.L*V_tx*np.sin(Beta_impact)
+        H_dphi = self.Iyy*dPhi_impact
         dBeta_impact = 1/(self.I_c)*(H_V_perp + H_V_tx + H_dphi)
 
         
 
-        
         ## ODE INITIAL CONDITIONS
-        y0=[Beta_impact_rad, dBeta_impact]
+        y0=[Beta_impact, dBeta_impact]
         t_span=[0, 2]
         dt=0.005
 
-        event1_target = Beta_Prop_rad
-        event2_target = Beta_Landing_rad
+        event1_target = Beta_Prop
+        event2_target = Beta_Landing
 
         def PropContact_event(t,y):
             return y[0] - event1_target
@@ -433,20 +409,32 @@ class InteractivePlot:
     
     def update_animation(self, i):
 
-        Beta_rad = self.y[0, i]
-        Beta_deg = np.degrees(Beta_rad)
+        ## READ GAMMA, PLANE ANGLE
+        gamma = np.radians(self.Gamma_Slider.val)
+        Theta_p = np.radians(self.Plane_Angle_Slider.val)
+        Beta = self.y[0, i]
 
-        Phi_deg = Beta_deg + self.gamma_deg + self.Plane_Angle_deg - 90
-        Phi_rad = np.radians(Phi_deg)
 
+        if self.impact_condition == FORELEG_CONTACT:
 
-        ## UPDATE BODY POSITION
-        r_B_C1 = np.array([-self.L,0])                                  # {e_r1,e_beta1}
-        r_B_C1 = self.R_PW(self.R_C1P(r_B_C1,Beta_rad),self.Plane_Angle_rad) # {X_W,Z_W}
-        r_B_O = r_B_C1  
+            ## UPDATE BODY POSITION
+            Phi = Beta + gamma + Theta_p - np.pi/2
+            r_B_C1 = np.array([-self.L,0])                      # {e_r1,e_beta1}
+            r_B_C1 = self.R_PW(self.R_C1P(r_B_C1,Beta),Theta_p) # {X_W,Z_W}
+            r_B_O = r_B_C1  
+
+        elif self.impact_condition == HINDLEG_CONTACT:
+            
+            ## UPDATE BODY POSITION
+            Phi = Beta - gamma + Theta_p - np.pi/2
+            r_B_C2 = np.array([-self.L,0])                      # {e_r2,e_beta2}
+            r_B_C2 = self.R_PW(self.R_C2P(r_B_C2,Beta),Theta_p) # {X_W,Z_W}
+            r_B_O = r_B_C2  
+        
+
 
         ## UPDATE BODY DRAWING
-        CG,L1,L2,Prop1,Prop2 = self._get_pose(r_B_O[0],r_B_O[1],Phi_rad)
+        CG,L1,L2,Prop1,Prop2 = self._get_pose(r_B_O[0],r_B_O[1],Phi)
         self.bg_leg1_line.set_data([CG[0],L1[0]],[CG[1],L1[1]])
         self.bg_leg2_line.set_data([CG[0],L2[0]],[CG[1],L2[1]])
         self.bg_prop1_line.set_data([CG[0],Prop1[0]],[CG[1],Prop1[1]])
@@ -455,11 +443,11 @@ class InteractivePlot:
 
         ## UPDATE BODY AXES
         X_B = 0.03*np.array([1,0])      # {X_B,Z_B}
-        X_B = self.R_BW(X_B,Phi_rad)    # {X_W,Z_W}
+        X_B = self.R_BW(X_B,Phi)    # {X_W,Z_W}
         self.bg_X_B_line.set_data([CG[0],CG[0]+X_B[0]],[CG[1],CG[1]+X_B[1]])
 
         Z_B = 0.03*np.array([0,1])      # {X_B,Z_B}
-        Z_B = self.R_BW(Z_B,Phi_rad)    # {X_W,Z_W}
+        Z_B = self.R_BW(Z_B,Phi)    # {X_W,Z_W}
         self.bg_Z_B_line.set_data([CG[0],CG[0]+Z_B[0]],[CG[1],CG[1]+Z_B[1]])
 
         return self.bg_leg1_line,self.bg_leg2_line,self.bg_prop1_line,self.bg_prop2_line,self.bg_CG_Marker,self.bg_X_B_line,self.bg_Z_B_line
@@ -467,12 +455,12 @@ class InteractivePlot:
     def animate_IVP(self,event):
 
         ## INITIAL IMPACT CONDITION
-        Phi_rel_impact_deg = self.Phi_P_B_Slider.val
+        Phi_impact_P_B = np.radians(self.Phi_P_B_Slider.val)
+        dPhi_impact = 0
         Vel_Mag = self.V_Mag_Slider.val
         Vel_Angle_deg = self.V_Angle_Slider.val
-        dPhi_impact_rad = 0
 
-        self.t,self.y,self.events = self.solve_impact_ODE(Phi_rel_impact_deg,Vel_Mag,Vel_Angle_deg,dPhi_impact_rad)
+        self.t,self.y,self.events = self.solve_impact_ODE(Phi_impact_P_B,dPhi_impact,Vel_Mag,Vel_Angle_deg)
         FuncAnimation(self.fig, self.update_animation, frames=len(self.t), blit=True, interval=20,repeat=False)
 
     def show(self):
@@ -504,27 +492,19 @@ class InteractivePlot:
 
         return np.array([CG,L1,L2,Prop1,Prop2])
     
-    def _beta_landing(self,impact_leg):
+    def _calc_impact_limits(self):
 
-        if impact_leg == 1:
-            return np.pi/2 + self.gamma_rad
+        gamma = np.radians(self.Gamma_Slider.val)
 
-        elif impact_leg == 2:
-            return np.pi/2 - self.gamma_rad
-        
-    def _beta_prop(self,impact_leg):
+        ## CALC IMPACT LIMITS
+        a = np.sqrt(self.PD**2 + self.L**2 - 2*self.PD*self.L*np.cos(np.pi/2 - gamma))
+        Beta_Prop = -np.arccos((self.L**2 + a**2 - self.PD**2)/(2*a*self.L))
 
-        a = np.sqrt(self.PD**2 + self.L**2 - 2*self.PD*self.L*np.cos(np.pi/2-self.gamma_rad))
-        Beta = np.arccos((self.L**2 + a**2 - self.PD**2)/(2*a*self.L))
+        Phi_Prop_P_B_min = -(Beta_Prop + gamma - np.pi/2)
+        Phi_Prop_P_B_max = 2*np.pi - Phi_Prop_P_B_min
 
-        if impact_leg == 1:
+        return Phi_Prop_P_B_min,Phi_Prop_P_B_max
 
-            return Beta
-        
-        elif impact_leg == 2:
-
-            return np.pi-Beta
-        
     def R_BW(self,vec,phi):
 
         R_BW = np.array([
