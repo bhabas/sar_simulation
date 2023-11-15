@@ -319,7 +319,29 @@ class InteractivePlot:
         csv_file = 'output.csv'
 
         # Data fields (column names)
-        fieldnames = ['Vel_Mag', 'Vel_Angle_deg', 'Phi_impact_P_B', 'Event']  # add other field names as needed
+        fieldnames = [
+            'Vel_Mag_impact',
+            'Vel_Angle_impact',
+            'Theta_p',
+
+            'Phi_P_B_impact',
+            'dPhi_impact',
+            'V_perp',
+            'V_tx',
+
+            'Prop_Contact',
+            '4_Leg_Contact',
+            '2_Leg_Contact',
+
+            'gamma',
+            'L',
+            'PD',
+            'Mass',
+            'Iyy',
+            'I_c'
+        ]
+
+        
 
         # Create a new file and write the header
         with open(csv_file, 'w', newline='') as file:
@@ -330,29 +352,56 @@ class InteractivePlot:
 
         Phi_Prop_P_B_min,Phi_Prop_P_B_max = self._calc_impact_limits()
 
-        Vel_Mag_arr = np.linspace(0,2,10)
-        Vel_Angle_arr = np.linspace(-30,-60,10)
         Phi_impact_P_B_arr = np.linspace(Phi_Prop_P_B_min,Phi_Prop_P_B_max,10)
         dPhi_impact = 0
+        Vel_Mag_arr = np.arange(0,4,1)
+        Vel_Angle_arr = np.arange(-60,-80,-5)
+        Theta_p_arr = np.degrees(np.arange(0,15,15))
 
         # LOOP OVER CONDITIONS
-        for i, Vel_Mag in enumerate(Vel_Mag_arr):
-            for j, Vel_Angle_deg in enumerate(Vel_Angle_arr):
-                for k, Phi_impact_P_B in enumerate(Phi_impact_P_B_arr):
-                    self.t,self.y,self.events = self.solve_impact_ODE(Phi_impact_P_B,dPhi_impact,Vel_Mag,Vel_Angle_deg)
+        for Theta_p in Theta_p_arr:
+            for Vel_Mag in Vel_Mag_arr:
+                for Vel_Angle_deg in Vel_Angle_arr:
+                    for Phi_impact_P_B in Phi_impact_P_B_arr:
 
-                    # Data row for each iteration
-                    data_row = {
-                        'Vel_Mag': Vel_Mag,
-                        'Vel_Angle_deg': Vel_Angle_deg,
-                        'Phi_impact_P_B': Phi_impact_P_B,
-                        'Event': event
-                    }
+                        t,y,events = self.solve_impact_ODE(Phi_impact_P_B,dPhi_impact,Vel_Mag,Vel_Angle_deg,Theta_p)
 
-                    # Write data row to CSV
-                    with open(csv_file, 'a', newline='') as file:
-                        writer = csv.DictWriter(file, fieldnames=fieldnames)
-                        writer.writerow(data_row)
+                        ## DATA CALCULATIONS
+                        V_tx = Vel_Mag*np.cos(np.radians(Vel_Angle_deg))
+                        V_perp = -Vel_Mag*np.sin(np.radians(Vel_Angle_deg))
+
+                        Theta_p_deg = self.Plane_Angle_Slider.val
+                        gamma_deg = self.Gamma_Slider.val
+                        Phi_impact_P_B_deg = np.degrees(Phi_impact_P_B)
+
+
+                        
+                        data_row = {
+                            'Vel_Mag_impact':   Vel_Mag,
+                            'Vel_Angle_impact': Vel_Angle_deg,
+                            'Theta_p':          np.round(Theta_p_deg,0),
+
+                            'Phi_P_B_impact':   np.round(Phi_impact_P_B_deg,2),
+                            'dPhi_impact':      np.round(dPhi_impact,2),
+                            'V_perp':           np.round(V_perp,2),
+                            'V_tx':             np.round(V_tx,2),
+
+                            'Prop_Contact':     events[0].any(),
+                            '4_Leg_Contact':    events[1].any(),
+                            '2_Leg_Contact':    all(event.size == 0 for event in events),
+
+                            'gamma':            np.round(gamma_deg,0),
+                            'L':                np.round(self.L,3),
+                            'PD':               np.round(self.PD,3),
+                            'Mass':             np.round(self.M,3),
+                            'Iyy':              np.round(self.Iyy,9),
+                            'I_c':              np.round(self.I_c,9)
+                        }
+                        
+                        # Write data row to CSV
+                        with open(csv_file, 'a', newline='') as file:
+                            writer = csv.DictWriter(file, fieldnames=fieldnames)
+                            writer.writerow(data_row)
 
         print(f"Done computing. Data written to {csv_file}")
 
@@ -363,11 +412,10 @@ class InteractivePlot:
         ddBeta_rad = -a * np.cos(Beta_rad)*np.cos(Theta_p) + a * np.sin(Beta_rad)*np.sin(Theta_p)
         return [dBeta_rad, ddBeta_rad]
     
-    def solve_impact_ODE(self,Phi_impact_P_B,dPhi_impact,Vel_Mag,Vel_Angle_deg):
+    def solve_impact_ODE(self,Phi_impact_P_B,dPhi_impact,Vel_Mag,Vel_Angle_deg,Theta_p):
 
         ## READ GAMMA, PLANE ANGLE
         gamma = np.radians(self.Gamma_Slider.val)
-        Theta_p = np.radians(self.Plane_Angle_Slider.val)
 
         ## READ PHI_IMPACT_P_B
         Phi_impact_P_B = np.radians(self.Phi_P_B_Slider.val)
@@ -491,8 +539,9 @@ class InteractivePlot:
         dPhi_impact = 0
         Vel_Mag = self.V_Mag_Slider.val
         Vel_Angle_deg = self.V_Angle_Slider.val
+        Theta_p = np.radians(self.Plane_Angle_Slider.val)
 
-        self.t,self.y,self.events = self.solve_impact_ODE(Phi_impact_P_B,dPhi_impact,Vel_Mag,Vel_Angle_deg)
+        self.t,self.y,self.events = self.solve_impact_ODE(Phi_impact_P_B,dPhi_impact,Vel_Mag,Vel_Angle_deg,Theta_p)
         FuncAnimation(self.fig, self.update_animation, frames=len(self.t), blit=True, interval=20,repeat=False)
 
     def show(self):
