@@ -6,14 +6,13 @@ from matplotlib.widgets import Slider, Button, TextBox
 import matplotlib.patches as patches
 import matplotlib.gridspec as gridspec
 from matplotlib.animation import FuncAnimation
-from enum import Enum
+import csv
+import os
  
 
 G = 9.81 # Gravity [m/s^2]
-FOREPROP_CONTACT = 0
 FORELEG_CONTACT = 1
 HINDLEG_CONTACT = 2
-HINDPROP_CONTACT = 3
 
 class InteractivePlot:
     def __init__(self):
@@ -70,7 +69,9 @@ class InteractivePlot:
         gs_Text    = gridspec.GridSpecFromSubplotSpec(3, 3, subplot_spec=gs_Configs[0,1], wspace=0.5, hspace=0.5)
 
         ## BUTTONS
-        ax_Leg_Button           = self.fig.add_subplot(gs_Buttons[0, 0])
+        ax_Ani_button           = self.fig.add_subplot(gs_Buttons[0, 0])
+        ax_IVP_button           = self.fig.add_subplot(gs_Buttons[1, 0])
+
 
         ## TEXT
         ax_Phi_text             = self.fig.add_subplot(gs_Text[0, 0])
@@ -146,8 +147,11 @@ class InteractivePlot:
 
 
         ## BUTTONS
-        self.IVP_button = Button(ax_Leg_Button, 'Update IVP', hovercolor='0.975')
-        self.IVP_button.on_clicked(self.animate_IVP)
+        self.Animation_button = Button(ax_Ani_button, 'Swing Ani.', hovercolor='0.975')
+        self.Animation_button.on_clicked(self.animate_IVP)
+
+        self.IVP_button = Button(ax_IVP_button, 'Collect IVP', hovercolor='0.975')
+        self.IVP_button.on_clicked(self.collect_IVP_sol)
 
 
         ## TEXT BOXES
@@ -311,16 +315,46 @@ class InteractivePlot:
 
     def collect_IVP_sol(self,event):
 
-        initial_angles_deg = np.linspace(30,40,2)
-        initial_angles_rad = np.radians(initial_angles_deg)
-        initial_velocities = np.linspace(3,4,2)
+        # Define the CSV file name
+        csv_file = 'output.csv'
+
+        # Data fields (column names)
+        fieldnames = ['Vel_Mag', 'Vel_Angle_deg', 'Phi_impact_P_B', 'Event']  # add other field names as needed
+
+        # Create a new file and write the header
+        with open(csv_file, 'w', newline='') as file:
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+
+
+
+        Phi_Prop_P_B_min,Phi_Prop_P_B_max = self._calc_impact_limits()
+
+        Vel_Mag_arr = np.linspace(0,2,10)
+        Vel_Angle_arr = np.linspace(-30,-60,10)
+        Phi_impact_P_B_arr = np.linspace(Phi_Prop_P_B_min,Phi_Prop_P_B_max,10)
+        dPhi_impact = 0
 
         # LOOP OVER CONDITIONS
-        for i, angle in enumerate(initial_angles_rad):
-            for j, velocity in enumerate(initial_velocities):
-                sol = solve_ivp(self.impact_ODE, [0, 1], [angle, velocity], dense_output=True)
+        for i, Vel_Mag in enumerate(Vel_Mag_arr):
+            for j, Vel_Angle_deg in enumerate(Vel_Angle_arr):
+                for k, Phi_impact_P_B in enumerate(Phi_impact_P_B_arr):
+                    self.t,self.y,self.events = self.solve_impact_ODE(Phi_impact_P_B,dPhi_impact,Vel_Mag,Vel_Angle_deg)
 
-        print()
+                    # Data row for each iteration
+                    data_row = {
+                        'Vel_Mag': Vel_Mag,
+                        'Vel_Angle_deg': Vel_Angle_deg,
+                        'Phi_impact_P_B': Phi_impact_P_B,
+                        'Event': event
+                    }
+
+                    # Write data row to CSV
+                    with open(csv_file, 'a', newline='') as file:
+                        writer = csv.DictWriter(file, fieldnames=fieldnames)
+                        writer.writerow(data_row)
+
+        print(f"Done computing. Data written to {csv_file}")
 
     def impact_ODE(self,t,y,Theta_p):
         a = self.M*G*self.L/self.I_c
