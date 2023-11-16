@@ -318,7 +318,7 @@ class InteractivePlot:
         # Define the CSV file name
         csv_file = 'output.csv'
 
-        # Data fields (column names)
+        # DATA FIELDS
         fieldnames = [
             'Vel_Mag_impact',
             'Vel_Angle_impact',
@@ -333,75 +333,80 @@ class InteractivePlot:
             '4_Leg_Contact',
             '2_Leg_Contact',
 
-            'gamma',
-            'L',
-            'PD',
-            'Mass',
-            'Iyy',
-            'I_c'
         ]
+        gamma_deg = self.Gamma_Slider.val
+        Theta_p = np.radians(self.Plane_Angle_Slider.val)
 
-        
+        Note_Line = [
+            '#',
+            f'gamma: {gamma_deg:0.0f}',
+            f'L: {self.L:0.3f}',
+            f'PD: {self.PD:0.3f}',
+            f'Mass: {self.M:0.3f}',
+            f'Iyy: {self.Iyy:0.3e}',
+            f'I_c: {self.I_c:0.3e}',
+        ]
 
         # Create a new file and write the header
         with open(csv_file, 'w', newline='') as file:
             writer = csv.DictWriter(file, fieldnames=fieldnames)
+
+            ## WRITE HEADER
             writer.writeheader()
 
+            ## WRITE NOTES
+            writer.writerow(dict(zip(fieldnames, Note_Line)))
 
 
-        Phi_Prop_P_B_min,Phi_Prop_P_B_max = self._calc_impact_limits()
 
-        Phi_impact_P_B_arr = np.linspace(Phi_Prop_P_B_min,Phi_Prop_P_B_max,10)
+        Phi_Prop_P_B_min,Phi_Prop_P_B_max = np.degrees(self._calc_impact_limits())
+        Phi_Prop_P_B_min = Phi_Prop_P_B_min + (5 - Phi_Prop_P_B_min%5)
+
+
+        Phi_impact_P_B_arr = np.arange(Phi_Prop_P_B_min,Phi_Prop_P_B_max+1,5)
+        Phi_impact_P_B_arr = np.radians(Phi_impact_P_B_arr)
         dPhi_impact = 0
         Vel_Mag_arr = np.arange(0,4,1)
         Vel_Angle_arr = np.arange(-60,-80,-5)
-        Theta_p_arr = np.degrees(np.arange(0,15,15))
 
         # LOOP OVER CONDITIONS
-        for Theta_p in Theta_p_arr:
-            for Vel_Mag in Vel_Mag_arr:
-                for Vel_Angle_deg in Vel_Angle_arr:
-                    for Phi_impact_P_B in Phi_impact_P_B_arr:
+        for Vel_Mag in Vel_Mag_arr:
+            for Vel_Angle_deg in Vel_Angle_arr:
+                for Phi_impact_P_B in Phi_impact_P_B_arr:
 
-                        t,y,events = self.solve_impact_ODE(Phi_impact_P_B,dPhi_impact,Vel_Mag,Vel_Angle_deg,Theta_p)
+            
+                    t,y,events = self.solve_impact_ODE(Phi_impact_P_B,dPhi_impact,Vel_Mag,Vel_Angle_deg,Theta_p)
 
-                        ## DATA CALCULATIONS
-                        V_tx = Vel_Mag*np.cos(np.radians(Vel_Angle_deg))
-                        V_perp = -Vel_Mag*np.sin(np.radians(Vel_Angle_deg))
+                    ## DATA CALCULATIONS
+                    V_tx = Vel_Mag*np.cos(np.radians(Vel_Angle_deg))
+                    V_perp = -Vel_Mag*np.sin(np.radians(Vel_Angle_deg))
 
-                        Theta_p_deg = self.Plane_Angle_Slider.val
-                        gamma_deg = self.Gamma_Slider.val
-                        Phi_impact_P_B_deg = np.degrees(Phi_impact_P_B)
+                    
+                    Phi_impact_P_B_deg = np.degrees(Phi_impact_P_B)
 
+
+                    
+                    data_row = {
+                        'Vel_Mag_impact':   Vel_Mag,
+                        'Vel_Angle_impact': Vel_Angle_deg,
+                        'Theta_p':          np.round(np.degrees(Theta_p),0),
+
+                        'Phi_P_B_impact':   np.round(Phi_impact_P_B_deg,2),
+                        'dPhi_impact':      np.round(dPhi_impact,2),
+                        'V_perp':           np.round(V_perp,2),
+                        'V_tx':             np.round(V_tx,2),
+
+                        'Prop_Contact':     events[0].any(),
+                        '4_Leg_Contact':    events[1].any(),
+                        '2_Leg_Contact':    all(event.size == 0 for event in events),
 
                         
-                        data_row = {
-                            'Vel_Mag_impact':   Vel_Mag,
-                            'Vel_Angle_impact': Vel_Angle_deg,
-                            'Theta_p':          np.round(Theta_p_deg,0),
-
-                            'Phi_P_B_impact':   np.round(Phi_impact_P_B_deg,2),
-                            'dPhi_impact':      np.round(dPhi_impact,2),
-                            'V_perp':           np.round(V_perp,2),
-                            'V_tx':             np.round(V_tx,2),
-
-                            'Prop_Contact':     events[0].any(),
-                            '4_Leg_Contact':    events[1].any(),
-                            '2_Leg_Contact':    all(event.size == 0 for event in events),
-
-                            'gamma':            np.round(gamma_deg,0),
-                            'L':                np.round(self.L,3),
-                            'PD':               np.round(self.PD,3),
-                            'Mass':             np.round(self.M,3),
-                            'Iyy':              np.round(self.Iyy,9),
-                            'I_c':              np.round(self.I_c,9)
-                        }
-                        
-                        # Write data row to CSV
-                        with open(csv_file, 'a', newline='') as file:
-                            writer = csv.DictWriter(file, fieldnames=fieldnames)
-                            writer.writerow(data_row)
+                    }
+                    
+                    # Write data row to CSV
+                    with open(csv_file, 'a', newline='') as file:
+                        writer = csv.DictWriter(file, fieldnames=fieldnames)
+                        writer.writerow(data_row)
 
         print(f"Done computing. Data written to {csv_file}")
 
