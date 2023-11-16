@@ -118,7 +118,7 @@ class InteractivePlot:
             label='Phi_impact_P_B \n [deg]',
             valmin=0,
             valmax=360,
-            valinit=95,
+            valinit=130,
             valstep=1
         )
         self.Phi_P_B_Slider.on_changed(self.Update_1)
@@ -129,7 +129,7 @@ class InteractivePlot:
             label='Vel Angle \n [deg]',
             valmin=-175,
             valmax=-5,
-            valinit=-90,
+            valinit=-70,
             valstep=5
         )
         self.V_Angle_Slider.on_changed(self.Update_1)
@@ -231,8 +231,8 @@ class InteractivePlot:
 
         ## CALC IMPACT LIMITS
         Phi_Prop_P_B_deg_min,Phi_Prop_P_B_deg_max = self._calc_impact_limits()
-        self.Phi_P_B_Slider.valmin = np.degrees(Phi_Prop_P_B_deg_min)
-        self.Phi_P_B_Slider.valmax = np.degrees(Phi_Prop_P_B_deg_max)
+        self.Phi_P_B_Slider.valmin = np.round(np.degrees(Phi_Prop_P_B_deg_min),0)
+        self.Phi_P_B_Slider.valmax = np.round(np.degrees(Phi_Prop_P_B_deg_max),0)
 
 
         ## DETERMINE IMPACT CONDITIONS
@@ -329,9 +329,9 @@ class InteractivePlot:
             'V_perp',
             'V_tx',
 
-            'Prop_Contact',
             '4_Leg_Contact',
             '2_Leg_Contact',
+            'Prop_Contact',
 
         ]
         gamma_deg = self.Gamma_Slider.val
@@ -360,14 +360,15 @@ class InteractivePlot:
 
 
         Phi_Prop_P_B_min,Phi_Prop_P_B_max = np.degrees(self._calc_impact_limits())
+        # Phi_Prop_P_B_min = 105.58
         Phi_Prop_P_B_min = Phi_Prop_P_B_min + (5 - Phi_Prop_P_B_min%5)
 
 
         Phi_impact_P_B_arr = np.arange(Phi_Prop_P_B_min,Phi_Prop_P_B_max+1,5)
         Phi_impact_P_B_arr = np.radians(Phi_impact_P_B_arr)
         dPhi_impact = 0
-        Vel_Mag_arr = np.arange(0,4,1)
-        Vel_Angle_arr = np.arange(-60,-80,-5)
+        Vel_Mag_arr = np.arange(1.,4.,0.5)
+        Vel_Angle_arr = np.arange(-70.,-80.,-20)
 
         # LOOP OVER CONDITIONS
         for Vel_Mag in Vel_Mag_arr:
@@ -396,9 +397,9 @@ class InteractivePlot:
                         'V_perp':           np.round(V_perp,2),
                         'V_tx':             np.round(V_tx,2),
 
-                        'Prop_Contact':     events[0].any(),
-                        '4_Leg_Contact':    events[1].any(),
-                        '2_Leg_Contact':    all(event.size == 0 for event in events),
+                        '4_Leg_Contact':    events[0],
+                        '2_Leg_Contact':    events[1],
+                        'Prop_Contact':     events[2],
 
                         
                     }
@@ -423,13 +424,12 @@ class InteractivePlot:
         gamma = np.radians(self.Gamma_Slider.val)
 
         ## READ PHI_IMPACT_P_B
-        Phi_impact_P_B = np.radians(self.Phi_P_B_Slider.val)
         Phi_impact = -Phi_impact_P_B + Theta_p
 
         if self.impact_condition == FORELEG_CONTACT:
 
             ## CALC IMPACT LIMITS
-            Phi_Prop_P_B_min,Phi_Prop_P_B_max = self._calc_impact_limits()
+            Phi_Prop_P_B_min,_ = self._calc_impact_limits()
             Phi_Landing_P_B = np.pi
 
             Phi_Prop = -Phi_Prop_P_B_min + Theta_p
@@ -476,21 +476,54 @@ class InteractivePlot:
         dt=0.005
 
 
-        def PropContact_event(t,y,Theta_p):
-            return y[0] - Beta_Prop
-        
-        def LandingContact_event(t,y,Theta_p):
-            return y[0] - Beta_Landing
-        
-        PropContact_event.terminal = True
-        PropContact_event.direction = 0
-
-        LandingContact_event.terminal = True
-        LandingContact_event.direction = 0
-
         t = np.arange(t_span[0], t_span[1], dt)
-        sol = solve_ivp(self.impact_ODE, [t[0], t[-1]], y0, args=(Theta_p,),t_eval=t,events=[PropContact_event,LandingContact_event],dense_output=True)
-        return sol.t,sol.y,sol.y_events
+        sol = solve_ivp(self.impact_ODE, [t[0], t[-1]], y0, args=(Theta_p,),t_eval=t,dense_output=True)
+        
+        ## CUSTOM EVENT DETECTION
+        if self.impact_condition == FORELEG_CONTACT:
+
+            Contact_4_Leg = np.where(sol.y[0] < Beta_Landing)[0]
+            Contact_Prop = np.where(sol.y[0] > Beta_Prop)[0]
+        elif self.impact_condition == HINDLEG_CONTACT:
+
+            Contact_4_Leg = np.where(sol.y[0] > Beta_Landing)[0]
+            Contact_Prop = np.where(sol.y[0] < Beta_Prop)[0]
+
+
+        if Contact_4_Leg.size > 0 and Contact_Prop.size > 0:
+            first_index = min(Contact_4_Leg[0],Contact_Prop[0])
+        elif Contact_4_Leg.size > 0:
+            first_index = Contact_4_Leg[0]
+        elif Contact_Prop.size > 0:
+            first_index = Contact_Prop[0]
+        else:
+            first_index = None
+        
+        if first_index == None:
+
+            sol.t,sol.y = sol.t,sol.y
+
+            Contact_4_Leg = False
+            Contact_2_Leg = True
+            Contact_Prop = False
+
+        else:
+
+            if first_index in Contact_4_Leg:
+                sol.t,sol.y = sol.t[:first_index],sol.y[:,:first_index]
+                Contact_4_Leg = True
+                Contact_2_Leg = False
+                Contact_Prop = False
+
+            elif first_index in Contact_Prop:
+                sol.t,sol.y = sol.t[:first_index],sol.y[:,:first_index]
+                Contact_4_Leg = False
+                Contact_2_Leg = False
+                Contact_Prop = True
+
+
+        return sol.t,sol.y,(Contact_4_Leg,Contact_2_Leg,Contact_Prop)
+    
     
     def update_animation(self, i):
 
