@@ -11,6 +11,7 @@ import os
  
 
 G = 9.81 # Gravity [m/s^2]
+PROP_CONTACT = 0
 FORELEG_CONTACT = 1
 HINDLEG_CONTACT = 2
 
@@ -230,16 +231,13 @@ class InteractivePlot:
 
 
         ## CALC IMPACT LIMITS
-        Phi_Prop_P_B_deg_min,Phi_Prop_P_B_deg_max = self._calc_impact_limits()
-        self.Phi_P_B_Slider.valmin = np.round(np.degrees(Phi_Prop_P_B_deg_min),0)
-        self.Phi_P_B_Slider.valmax = np.round(np.degrees(Phi_Prop_P_B_deg_max),0)
+        Phi_Prop_P_B_min,Phi_Prop_P_B_max = self._calc_impact_limits()
+        self.Phi_P_B_Slider.valmin = np.round(np.degrees(Phi_Prop_P_B_min),0)
+        self.Phi_P_B_Slider.valmax = np.round(np.degrees(Phi_Prop_P_B_max),0)
 
 
         ## DETERMINE IMPACT CONDITIONS
-        if Phi_Prop_P_B_deg_min <= Phi_impact_P_B <= np.pi:
-            self.impact_condition = FORELEG_CONTACT
-        elif np.pi < Phi_impact_P_B <= Phi_Prop_P_B_deg_max:
-            self.impact_condition = HINDLEG_CONTACT
+        self.impact_condition = self._check_impact_condition(Phi_impact_P_B)
 
 
         ## PLOT POSITION
@@ -426,12 +424,16 @@ class InteractivePlot:
         ## READ PHI_IMPACT_P_B
         Phi_impact = -Phi_impact_P_B + Theta_p
 
-        if self.impact_condition == FORELEG_CONTACT:
+        ## DETERMINE IMPACT CONDITIONS
+        Phi_Prop_P_B_min,Phi_Prop_P_B_max = self._calc_impact_limits()
+        impact_condition = self._check_impact_condition(Phi_impact_P_B)
 
-            ## CALC IMPACT LIMITS
-            Phi_Prop_P_B_min,_ = self._calc_impact_limits()
+
+
+        if impact_condition == FORELEG_CONTACT:
             Phi_Landing_P_B = np.pi
 
+            ## CALC IMPACT LIMITS
             Phi_Prop = -Phi_Prop_P_B_min + Theta_p
             Phi_Landing = -Phi_Landing_P_B + Theta_p
 
@@ -440,12 +442,10 @@ class InteractivePlot:
             Beta_Prop = Phi_Prop - gamma - Theta_p + np.pi/2
             Beta_Landing =  Phi_Landing - gamma - Theta_p + np.pi/2
         
-        elif self.impact_condition == HINDLEG_CONTACT:
-
-            ## CALC IMPACT LIMITS
-            Phi_Prop_P_B_min,Phi_Prop_P_B_max = self._calc_impact_limits()
+        elif impact_condition == HINDLEG_CONTACT:
             Phi_Landing_P_B = np.pi
 
+            ## CALC IMPACT LIMITS
             Phi_Prop = -Phi_Prop_P_B_max + Theta_p
             Phi_Landing = -Phi_Landing_P_B + Theta_p
 
@@ -453,7 +453,12 @@ class InteractivePlot:
             Beta_impact = Phi_impact + gamma - Theta_p + np.pi/2
             Beta_Prop = Phi_Prop + gamma - Theta_p + np.pi/2
             Beta_Landing =  Phi_Landing + gamma - Theta_p + np.pi/2
+        elif impact_condition == PROP_CONTACT:
+            Contact_4_Leg = False
+            Contact_2_Leg = False
+            Contact_Prop = True
 
+            return np.array([]),np.array([],[]),(Contact_4_Leg,Contact_2_Leg,Contact_Prop)
         
 
         ## CALC INITIAL ANGULAR VELOCITY
@@ -480,11 +485,11 @@ class InteractivePlot:
         sol = solve_ivp(self.impact_ODE, [t[0], t[-1]], y0, args=(Theta_p,),t_eval=t,dense_output=True)
         
         ## CUSTOM EVENT DETECTION
-        if self.impact_condition == FORELEG_CONTACT:
+        if impact_condition == FORELEG_CONTACT:
 
             Contact_4_Leg = np.where(sol.y[0] < Beta_Landing)[0]
             Contact_Prop = np.where(sol.y[0] > Beta_Prop)[0]
-        elif self.impact_condition == HINDLEG_CONTACT:
+        elif impact_condition == HINDLEG_CONTACT:
 
             Contact_4_Leg = np.where(sol.y[0] > Beta_Landing)[0]
             Contact_Prop = np.where(sol.y[0] < Beta_Prop)[0]
@@ -623,6 +628,17 @@ class InteractivePlot:
         Phi_Prop_P_B_max = 2*np.pi - Phi_Prop_P_B_min
 
         return Phi_Prop_P_B_min,Phi_Prop_P_B_max
+
+    def _check_impact_condition(self,Phi_impact_P_B):
+
+        Phi_Prop_P_B_min,Phi_Prop_P_B_max = self._calc_impact_limits()
+        
+        if Phi_Prop_P_B_min <= Phi_impact_P_B <= np.pi:
+            return FORELEG_CONTACT
+        elif np.pi < Phi_impact_P_B <= Phi_Prop_P_B_max:
+            return HINDLEG_CONTACT
+        else:
+            return PROP_CONTACT
 
     def R_BW(self,vec,phi):
 
