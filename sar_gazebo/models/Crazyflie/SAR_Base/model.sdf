@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='Base_Model'>
+  <model name='SAR_Base'>
     <link name='SAR_Body'>
       <inertial>
         <mass>0.0343</mass>
@@ -24,7 +24,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Base_Model/meshes/CF_Assembly - CF_Body-1.STL</uri>
+            <uri>model://SAR_Base/meshes/CF_Assembly - CF_Body-1.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -41,7 +41,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Base_Model/meshes/CF_Assembly - Battery_Small-1.STL</uri>
+            <uri>model://SAR_Base/meshes/CF_Assembly - Battery_Small-1.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -58,7 +58,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Base_Model/meshes/CF_Assembly - Battery_Holder1-1.STL</uri>
+            <uri>model://SAR_Base/meshes/CF_Assembly - Battery_Holder1-1.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -75,7 +75,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Base_Model/meshes/CF_Assembly - Pin_Headers-1.STL</uri>
+            <uri>model://SAR_Base/meshes/CF_Assembly - Pin_Headers-1.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -92,7 +92,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Base_Model/meshes/CF_Assembly - Pin_Headers-2.STL</uri>
+            <uri>model://SAR_Base/meshes/CF_Assembly - Pin_Headers-2.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -109,7 +109,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Base_Model/meshes/CF_Assembly - Motor_Mount-1.STL</uri>
+            <uri>model://SAR_Base/meshes/CF_Assembly - Motor_Mount-1.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -127,7 +127,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Base_Model/meshes/CF_Assembly - Motor_Mount-5.STL</uri>
+            <uri>model://SAR_Base/meshes/CF_Assembly - Motor_Mount-5.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -144,7 +144,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Base_Model/meshes/CF_Assembly - Motor_Mount-2.STL</uri>
+            <uri>model://SAR_Base/meshes/CF_Assembly - Motor_Mount-2.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -161,7 +161,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Base_Model/meshes/CF_Assembly - Motor_Mount-6.STL</uri>
+            <uri>model://SAR_Base/meshes/CF_Assembly - Motor_Mount-6.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -179,7 +179,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Base_Model/meshes/CF_Assembly - Motor-2.STL</uri>
+            <uri>model://SAR_Base/meshes/CF_Assembly - Motor-2.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -196,7 +196,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Base_Model/meshes/CF_Assembly - Motor-5.STL</uri>
+            <uri>model://SAR_Base/meshes/CF_Assembly - Motor-5.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -213,7 +213,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Base_Model/meshes/CF_Assembly - Motor-4.STL</uri>
+            <uri>model://SAR_Base/meshes/CF_Assembly - Motor-4.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -230,7 +230,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Base_Model/meshes/CF_Assembly - Motor-3.STL</uri>
+            <uri>model://SAR_Base/meshes/CF_Assembly - Motor-3.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -387,7 +387,12 @@
       </visual>
     </link>
 
-    <link name='Rotor_1'>
+    <joint name='Camera_Joint' type='fixed'>
+      <parent>SAR_Body</parent>
+      <child>Camera</child>
+    </joint>
+
+    <link name='Prop_1'>
       <inertial>
         <mass>1e-6</mass>
         <inertia>
@@ -407,7 +412,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Base_Model/meshes/crazyflie_prop.dae</uri>
+            <uri>model://SAR_Base/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -426,7 +431,7 @@
         <pose>0 0 0 0 0 3.14</pose>
         <geometry>
           <mesh>
-            <uri>model://Base_Model/meshes/crazyflie_prop.dae</uri>
+            <uri>model://SAR_Base/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -443,7 +448,7 @@
       </visual>
     </link>
 
-    <link name='Rotor_2'>
+    <link name='Prop_2'>
       <inertial>
         <mass>1e-6</mass>
         <inertia>
@@ -463,7 +468,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Base_Model/meshes/crazyflie_prop.dae</uri>
+            <uri>model://SAR_Base/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -482,7 +487,7 @@
         <pose>0 0 0 0 0 3.14</pose>
         <geometry>
           <mesh>
-            <uri>model://Base_Model/meshes/crazyflie_prop.dae</uri>
+            <uri>model://SAR_Base/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -499,7 +504,7 @@
       </visual>
     </link>
 
-    <link name='Rotor_3'>
+    <link name='Prop_3'>
       <inertial>
         <mass>1e-6</mass>
         <inertia>
@@ -519,7 +524,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Base_Model/meshes/crazyflie_prop.dae</uri>
+            <uri>model://SAR_Base/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -538,7 +543,7 @@
         <pose>0 0 0 0 0 3.14</pose>
         <geometry>
           <mesh>
-            <uri>model://Base_Model/meshes/crazyflie_prop.dae</uri>
+            <uri>model://SAR_Base/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -555,7 +560,7 @@
       </visual>
     </link>
 
-    <link name='Rotor_4'>
+    <link name='Prop_4'>
       <inertial>
         <mass>1e-6</mass>
         <inertia>
@@ -575,7 +580,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Base_Model/meshes/crazyflie_prop.dae</uri>
+            <uri>model://SAR_Base/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -594,7 +599,7 @@
         <pose>0 0 0 0 0 3.14</pose>
         <geometry>
           <mesh>
-            <uri>model://Base_Model/meshes/crazyflie_prop.dae</uri>
+            <uri>model://SAR_Base/meshes/crazyflie_prop.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -611,9 +616,9 @@
       </visual>
     </link>
 
-    <joint name='Rotor_1_joint' type='revolute'>
+    <joint name='Prop_1_Joint' type='revolute'>
       <parent>SAR_Body</parent>
-      <child>Rotor_1</child>
+      <child>Prop_1</child>
       <pose>0 0 0 0 0 0</pose>
       <axis>
         <xyz>0 0 1</xyz>
@@ -630,9 +635,9 @@
       </axis>
     </joint>
 
-    <joint name='Rotor_2_joint' type='revolute'>
+    <joint name='Prop_2_Joint' type='revolute'>
       <parent>SAR_Body</parent>
-      <child>Rotor_2</child>
+      <child>Prop_2</child>
       <pose>0 0 0 0 0 0</pose>
       <axis>
         <xyz>0 0 1</xyz>
@@ -649,9 +654,9 @@
       </axis>
     </joint>
 
-    <joint name='Rotor_3_joint' type='revolute'>
+    <joint name='Prop_3_Joint' type='revolute'>
       <parent>SAR_Body</parent>
-      <child>Rotor_3</child>
+      <child>Prop_3</child>
       <pose>0 0 0 0 0 0</pose>
       <axis>
         <xyz>0 0 1</xyz>
@@ -668,9 +673,9 @@
       </axis>
     </joint>
 
-    <joint name='Rotor_4_joint' type='revolute'>
+    <joint name='Prop_4_Joint' type='revolute'>
       <parent>SAR_Body</parent>
-      <child>Rotor_4</child>
+      <child>Prop_4</child>
       <pose>0 0 0 0 0 0</pose>
       <axis>
         <xyz>0 0 1</xyz>
@@ -686,60 +691,40 @@
         </dynamics>
       </axis>
     </joint>
+
+    
 
     <plugin name='Motor_1_Plugin' filename='libMotor_Plugin.so'>
-      <motorNumber>1</motorNumber>
-      <jointName>Rotor_1_joint</jointName>
-      <linkName>Rotor_1</linkName>
-      <turningDirection>ccw</turningDirection>
-      <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
-      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
-      <timeConstantUp>0.05</timeConstantUp>
-      <timeConstantDown>0.15</timeConstantDown>
-      <rotorVisualSlowdown>100</rotorVisualSlowdown>
+      <Motor_Number>1</Motor_Number>
+      <Joint_Name>Prop_1_Joint</Joint_Name>
+      <Link_Name>Prop_1</Link_Name>
+      <Turning_Direction>ccw</Turning_Direction>
+      <Visual_Slowdown>100</Visual_Slowdown>
     </plugin>
 
     <plugin name='Motor_2_Plugin' filename='libMotor_Plugin.so'>
-      <motorNumber>2</motorNumber>
-      <jointName>Rotor_2_joint</jointName>
-      <linkName>Rotor_2</linkName>
-      <turningDirection>cw</turningDirection>
-      <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
-      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
-      <timeConstantUp>0.05</timeConstantUp>
-      <timeConstantDown>0.15</timeConstantDown>
-      <rotorVisualSlowdown>100</rotorVisualSlowdown>
+      <Motor_Number>2</Motor_Number>
+      <Joint_Name>Prop_2_Joint</Joint_Name>
+      <Link_Name>Prop_2</Link_Name>
+      <Turning_Direction>cw</Turning_Direction>
+      <Visual_Slowdown>100</Visual_Slowdown>
     </plugin>
 
     <plugin name='Motor_3_Plugin' filename='libMotor_Plugin.so'>
-      <motorNumber>3</motorNumber>
-      <jointName>Rotor_3_joint</jointName>
-      <linkName>Rotor_3</linkName>
-      <turningDirection>ccw</turningDirection>
-      <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
-      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
-      <timeConstantUp>0.05</timeConstantUp>
-      <timeConstantDown>0.15</timeConstantDown>
-      <rotorVisualSlowdown>100</rotorVisualSlowdown>
+      <Motor_Number>3</Motor_Number>
+      <Joint_Name>Prop_3_Joint</Joint_Name>
+      <Link_Name>Prop_3</Link_Name>
+      <Turning_Direction>ccw</Turning_Direction>
+      <Visual_Slowdown>100</Visual_Slowdown>
     </plugin>
 
     <plugin name='Motor_4_Plugin' filename='libMotor_Plugin.so'>
-      <motorNumber>4</motorNumber>
-      <jointName>Rotor_4_joint</jointName>
-      <linkName>Rotor_4</linkName>
-      <turningDirection>cw</turningDirection>
-      <rotorThrustCoeff>2.2e-8</rotorThrustCoeff>
-      <rotorTorqueCoeff>0.00618</rotorTorqueCoeff>
-      <timeConstantUp>0.05</timeConstantUp>
-      <timeConstantDown>0.15</timeConstantDown>
-      <rotorVisualSlowdown>100</rotorVisualSlowdown>
+      <Motor_Number>4</Motor_Number>
+      <Joint_Name>Prop_4_Joint</Joint_Name>
+      <Link_Name>Prop_4</Link_Name>
+      <Turning_Direction>cw</Turning_Direction>
+      <Visual_Slowdown>100</Visual_Slowdown>
     </plugin>
-
-    <joint name='Camera_Joint' type='fixed'>
-      <parent>SAR_Body</parent>
-      <child>Camera</child>
-    </joint>
-    
 
     <plugin name='SAR_Update_Plugin' filename='libSAR_Update_Plugin.so'>
       <CameraJointName>Camera_Joint</CameraJointName>
@@ -770,10 +755,6 @@
     </plugin>
 
 
-    <!-- <plugin name='Cam_Update_Plugin' filename='libCam_Update_Plugin.so'>
-        <bodyName>SAR_Body</bodyName>
-        <jointName>Camera_Joint</jointName>
-    </plugin> -->
 
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>

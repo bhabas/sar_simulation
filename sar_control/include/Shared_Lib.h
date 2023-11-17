@@ -199,7 +199,7 @@ extern bool customThrust_flag;
 extern bool customPWM_flag;
 
 // SENSOR FLAGS
-extern bool isCamActive;
+extern bool CamActive;
 
 // =================================
 //       POLICY INITIALIZATION
@@ -282,6 +282,7 @@ extern struct vec n_hat;        // Plane Unit Normal Vector
 
 extern struct vec r_PO;         // Plane Position Vector        [m]
 extern struct vec r_BO;         // Quad Position Vector         [m]
+extern struct vec r_CB;         // Camera Position Vector       [m]
 extern struct vec r_PB;         // Quad-Plane Distance Vector   [m]
 extern struct vec V_BO;         // Quad Velocity Vector         [m/s]
 

@@ -3,7 +3,7 @@
   <model name='A20_L75_K08'>
 
     <include>
-      <uri>model://Base_Model</uri>
+      <uri>model://SAR_Base</uri>
     </include>
 
     <link name='Leg_1'>
@@ -199,7 +199,7 @@
     </link>
 
     <joint name='Hinge_1_Joint' type='universal'>
-      <parent>Base_Model::SAR_Body</parent>
+      <parent>SAR_Base::SAR_Body</parent>
       <child>Leg_1</child>
       <pose>0 0 0 0 0 0</pose>
       <axis>
@@ -227,7 +227,7 @@
     </joint>
 
     <joint name='Hinge_2_Joint' type='universal'>
-      <parent>Base_Model::SAR_Body</parent>
+      <parent>SAR_Base::SAR_Body</parent>
       <child>Leg_2</child>
       <pose>0 0 0 0 0 0</pose>
       <axis>
@@ -255,7 +255,7 @@
     </joint>
 
     <joint name='Hinge_3_Joint' type='universal'>
-      <parent>Base_Model::SAR_Body</parent>
+      <parent>SAR_Base::SAR_Body</parent>
       <child>Leg_3</child>
       <pose>0 0 0 0 0 0</pose>
       <axis>
@@ -283,7 +283,7 @@
     </joint>
 
     <joint name='Hinge_4_Joint' type='universal'>
-      <parent>Base_Model::SAR_Body</parent>
+      <parent>SAR_Base::SAR_Body</parent>
       <child>Leg_4</child>
       <pose>0 0 0 0 0 0</pose>
       <axis>

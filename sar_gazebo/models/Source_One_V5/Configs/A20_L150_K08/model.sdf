@@ -1,32 +1,32 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='A05_L50_K08'>
+  <model name='A20_L75_K08'>
 
     <include>
-      <uri>model://SAR_Base</uri>
+      <uri>model://Base_Model</uri>
     </include>
 
     <link name='Leg_1'>
-      <pose>2.07e-02 -2.07e-02 -3.25e-03 0 -0.087 -0.785</pose>
+      <pose>17.78e-3 -17.78e-3 -32.0e-3 0 0 -0.7854</pose>
       <inertial>
         <mass>0.570e-3</mass>
         <pose>0 0 0 0 0 0 </pose>
         <inertia>
-          <ixx>0.155e-6</ixx>
+          <ixx>0.477e-6</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>0.155e-6</iyy>
+          <iyy>0.477e-6</iyy>
           <iyz>0</iyz>
-          <izz>0.040e-6</izz>
+          <izz>0.100e-6</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
-      <visual name='Leg_1_Visual'>
+      <visual name='Leg_Visual'>
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://A05_L50_K08/meshes/LegConfig_A05_L50.STL</uri>
+            <uri>model://A20_L150_K08/meshes/Leg_Design_CarbonFiber.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -39,14 +39,14 @@
         </material>
       </visual>
       <collision name="Leg_1_Collision">
-        <pose>0.004 0 -0.05 0 0 0</pose>
+        <pose>0.004 0 -0.075 0 0 0</pose>
         <geometry>
           <sphere>
             <radius>0.002</radius>
           </sphere>
         </geometry>
       </collision>
-      <sensor name="Contact_Sensor_1" type="contact">
+      <sensor name="Contact_Sensor" type="contact">
         <update_rate>100.0</update_rate>
         <contact>
           <collision>Leg_1_Collision</collision>
@@ -55,26 +55,26 @@
     </link>
 
     <link name='Leg_2'>
-      <pose>-2.07e-02 -2.07e-02 -3.25e-03 0 -0.087 -2.358</pose>
+      <pose>-17.78e-3 -17.78e-3 -32.0e-3 0 0 -2.3562</pose>
       <inertial>
         <mass>0.570e-3</mass>
         <pose>0 0 0 0 0 0 </pose>
         <inertia>
-          <ixx>0.155e-6</ixx>
+          <ixx>0.477e-6</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>0.155e-6</iyy>
+          <iyy>0.477e-6</iyy>
           <iyz>0</iyz>
-          <izz>0.040e-6</izz>
+          <izz>0.100e-6</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
-      <visual name='Leg_2_Visual'>
+      <visual name='Leg_Visual'>
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://A05_L50_K08/meshes/LegConfig_A05_L50.STL</uri>
+            <uri>model://A20_L150_K08/meshes/Leg_Design_CarbonFiber.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -87,14 +87,14 @@
         </material>
       </visual>
       <collision name="Leg_2_Collision">
-        <pose>0.004 0 -0.05 0 0 0</pose>
+        <pose>0.004 0 -0.075 0 0 0</pose>
         <geometry>
           <sphere>
             <radius>0.002</radius>
           </sphere>
         </geometry>
       </collision>
-      <sensor name="Contact_Sensor_2" type="contact">
+      <sensor name="Contact_Sensor" type="contact">
         <update_rate>100.0</update_rate>
         <contact>
           <collision>Leg_2_Collision</collision>
@@ -102,27 +102,29 @@
       </sensor>
     </link>
 
+    
+
     <link name='Leg_3'>
-      <pose>-2.07e-02 2.07e-02 -3.25e-03 0 -0.087 2.358</pose>
+      <pose>-17.78e-3 17.78e-3 -32.0e-3 0 0 2.3562</pose>
       <inertial>
         <mass>0.570e-3</mass>
         <pose>0 0 0 0 0 0 </pose>
         <inertia>
-          <ixx>0.155e-6</ixx>
+          <ixx>0.477e-6</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>0.155e-6</iyy>
+          <iyy>0.477e-6</iyy>
           <iyz>0</iyz>
-          <izz>0.040e-6</izz>
+          <izz>0.100e-6</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
-      <visual name='Leg_3_Visual'>
+      <visual name='Leg_Visual'>
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://A05_L50_K08/meshes/LegConfig_A05_L50.STL</uri>
+            <uri>model://A20_L150_K08/meshes/Leg_Design_CarbonFiber.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -135,14 +137,14 @@
         </material>
       </visual>
       <collision name="Leg_3_Collision">
-        <pose>0.004 0 -0.05 0 0 0</pose>
+        <pose>0.004 0 -0.075 0 0 0</pose>
         <geometry>
           <sphere>
             <radius>0.002</radius>
           </sphere>
         </geometry>
       </collision>
-      <sensor name="Contact_Sensor_3" type="contact">
+      <sensor name="Contact_Sensor" type="contact">
         <update_rate>100.0</update_rate>
         <contact>
           <collision>Leg_3_Collision</collision>
@@ -151,26 +153,26 @@
     </link>
 
     <link name='Leg_4'>
-      <pose>2.07e-02 2.07e-02 -3.25e-03 0 -0.087 0.785</pose>
+      <pose>17.78e-3 17.78e-3 -32.0e-3 0 0 0.7854</pose>
       <inertial>
         <mass>0.570e-3</mass>
         <pose>0 0 0 0 0 0 </pose>
         <inertia>
-          <ixx>0.155e-6</ixx>
+          <ixx>0.477e-6</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>0.155e-6</iyy>
+          <iyy>0.477e-6</iyy>
           <iyz>0</iyz>
-          <izz>0.040e-6</izz>
+          <izz>0.100e-6</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
-      <visual name='Leg_4_Visual'>
+      <visual name='Leg_Visual'>
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://A05_L50_K08/meshes/LegConfig_A05_L50.STL</uri>
+            <uri>model://A20_L150_K08/meshes/Leg_Design_CarbonFiber.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -183,14 +185,14 @@
         </material>
       </visual>
       <collision name="Leg_4_Collision">
-        <pose>0.004 0 -0.05 0 0 0</pose>
+        <pose>0.004 0 -0.075 0 0 0</pose>
         <geometry>
           <sphere>
             <radius>0.002</radius>
           </sphere>
         </geometry>
       </collision>
-      <sensor name="Contact_Sensor_4" type="contact">
+      <sensor name="Contact_Sensor" type="contact">
         <update_rate>100.0</update_rate>
         <contact>
           <collision>Leg_4_Collision</collision>
@@ -198,8 +200,8 @@
       </sensor>
     </link>
 
-    <joint name='Hinge_1_Joint' type='universal'>
-      <parent>SAR_Base::SAR_Body</parent>
+    <!-- <joint name='Hinge_1_Joint' type='universal'>
+      <parent>Base_Model::SAR_Body</parent>
       <child>Leg_1</child>
       <pose>0 0 0 0 0 0</pose>
       <axis>
@@ -227,7 +229,7 @@
     </joint>
 
     <joint name='Hinge_2_Joint' type='universal'>
-      <parent>SAR_Base::SAR_Body</parent>
+      <parent>Base_Model::SAR_Body</parent>
       <child>Leg_2</child>
       <pose>0 0 0 0 0 0</pose>
       <axis>
@@ -255,7 +257,7 @@
     </joint>
 
     <joint name='Hinge_3_Joint' type='universal'>
-      <parent>SAR_Base::SAR_Body</parent>
+      <parent>Base_Model::SAR_Body</parent>
       <child>Leg_3</child>
       <pose>0 0 0 0 0 0</pose>
       <axis>
@@ -283,7 +285,7 @@
     </joint>
 
     <joint name='Hinge_4_Joint' type='universal'>
-      <parent>SAR_Base::SAR_Body</parent>
+      <parent>Base_Model::SAR_Body</parent>
       <child>Leg_4</child>
       <pose>0 0 0 0 0 0</pose>
       <axis>
@@ -308,10 +310,10 @@
           <damping>5e-6</damping>
         </dynamics>
       </axis2>
-    </joint>
+    </joint> -->
 
 
-    <plugin name='Leg_1_Plugin' filename='libSticky_Leg_Plugin.so'>
+    <!-- <plugin name='Leg_1_Plugin' filename='libSticky_Leg_Plugin.so'>
       <LegNumber>1</LegNumber>
       <LinkName>Leg_1</LinkName>
       <CollisionName>Leg_1_Collision</CollisionName>
@@ -337,7 +339,7 @@
       <LinkName>Leg_4</LinkName>
       <CollisionName>Leg_4_Collision</CollisionName>
       <JointName>Leg_4_Contact_Joint</JointName>
-    </plugin>
+    </plugin> -->
 
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>

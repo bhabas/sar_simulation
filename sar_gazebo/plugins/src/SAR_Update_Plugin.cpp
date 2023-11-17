@@ -1,10 +1,5 @@
 #include <SAR_Update_Plugin.h>
 
-// UPDATE INTERTIAL VALUES
-//    USE THIS FOR DOMAIN RANDOMIZATION
-// UPDATE LEG STIFFNESS AND DAMPING (----)
-// MOTOR THRUST COEFFICIENTS
-// UPDATE SIM SPEED BASED ON SPEED SETTING ON STARTUP (----)
 
 namespace gazebo
 {
@@ -14,8 +9,8 @@ namespace gazebo
 
         // LOAD MODEL AND LINK POINTERS
         Config_Model_Ptr = _parent;
-        SAR_Body_Ptr = Config_Model_Ptr->GetLink("Base_Model::SAR_Body");
-        Camera_Link_Ptr = Config_Model_Ptr->GetLink("Base_Model::Camera");
+        SAR_Body_Ptr = Config_Model_Ptr->GetLink("SAR_Base::SAR_Body");
+        Camera_Link_Ptr = Config_Model_Ptr->GetLink("SAR_Base::Camera");
         World_Ptr = Config_Model_Ptr->GetWorld();
 
         
@@ -45,7 +40,7 @@ namespace gazebo
 
         // GET POINTER TO CAMERA SENSOR
         Camera_Joint_Name = _sdf->GetElement("CameraJointName")->Get<std::string>();
-        Sensor_Ptr = sensors::get_sensor("Base_Model::Camera");
+        Sensor_Ptr = sensors::get_sensor("SAR_Base::Camera");
         Camera_Ptr = dynamic_cast<sensors::CameraSensor*>(Sensor_Ptr.get());
 
         // UPDATE CAMERA
@@ -71,27 +66,39 @@ namespace gazebo
         //   HINGE JOINT UPDATE
         // =======================
 
-        // LOAD INITIAL LEG PARAMETERS
-        ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/Leg_Angle",Leg_Angle);
-        ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/K_Pitch",K_Pitch);
-        ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/DR_Pitch",DR_Pitch);
-        ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/K_Yaw",K_Yaw);
-        ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/DR_Yaw",DR_Yaw);
+        // CHECK IF LEG LINKS ARE PRESENT
+        bool success = ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/Leg_Angle", Leg_Angle);
 
+        if(success) 
+        {
+            // LOAD INITIAL LEG PARAMETERS
+            ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/Leg_Angle",Leg_Angle);
+            ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/K_Pitch",K_Pitch);
+            ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/DR_Pitch",DR_Pitch);
+            ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/K_Yaw",K_Yaw);
+            ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/DR_Yaw",DR_Yaw);
 
-        // GET LEG LINK AND HINGE POINTERS
-        Leg_1_LinkPtr = Config_Model_Ptr->GetLink("Leg_1");
-        Leg_2_LinkPtr = Config_Model_Ptr->GetLink("Leg_2");
-        Leg_3_LinkPtr = Config_Model_Ptr->GetLink("Leg_3");
-        Leg_4_LinkPtr = Config_Model_Ptr->GetLink("Leg_4");
+            // GET LEG LINK AND HINGE POINTERS
+            Leg_1_LinkPtr = Config_Model_Ptr->GetLink("Leg_1");
+            Leg_2_LinkPtr = Config_Model_Ptr->GetLink("Leg_2");
+            Leg_3_LinkPtr = Config_Model_Ptr->GetLink("Leg_3");
+            Leg_4_LinkPtr = Config_Model_Ptr->GetLink("Leg_4");
 
-        Hinge_1_JointPtr = Config_Model_Ptr->GetJoint("Hinge_1_Joint");
-        Hinge_2_JointPtr = Config_Model_Ptr->GetJoint("Hinge_2_Joint");
-        Hinge_3_JointPtr = Config_Model_Ptr->GetJoint("Hinge_3_Joint");
-        Hinge_4_JointPtr = Config_Model_Ptr->GetJoint("Hinge_4_Joint");
+            Hinge_1_JointPtr = Config_Model_Ptr->GetJoint("Hinge_1_Joint");
+            Hinge_2_JointPtr = Config_Model_Ptr->GetJoint("Hinge_2_Joint");
+            Hinge_3_JointPtr = Config_Model_Ptr->GetJoint("Hinge_3_Joint");
+            Hinge_4_JointPtr = Config_Model_Ptr->GetJoint("Hinge_4_Joint");
 
-        // UPDATE HINGE JOINT
-        Update_Hinge();        
+            // UPDATE HINGE JOINT
+            Update_Hinge();      
+        } 
+        else {
+            ROS_WARN("Failed to retrieve Leg_Angle parameter.");
+        }
+
+        
+
+          
 
         printf("\n\n");
     }
@@ -129,7 +136,7 @@ namespace gazebo
 
     void SAR_Update_Plugin::Update_Inertia()
     {
-        gzmsg << "Updating Base Model Inertia\n";
+        gzmsg << "Updating SAR_Base Inertia\n";
 
         // UPDATE BASE_MODEL INERTIA
         Inertial_Ptr->SetIXX(Ixx_Body);

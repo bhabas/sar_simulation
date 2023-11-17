@@ -17,7 +17,7 @@ void compressSetpoints();
 void compressTrgStates();
 uint32_t compressXY(float x, float y); // Compresses values in range (-32.767 - 32.767)
 
-struct {
+typedef struct {
     // Compressed positions [mm]
     uint32_t xy; 
     int16_t z;
@@ -57,9 +57,9 @@ struct {
     // Compressed Policy Actions
     uint32_t Policy_Actions;
 
-} States_Z;
+} States_Z_Struct;
 
-struct {
+typedef struct {
 
     // Compressed positions [mm]
     uint32_t xy; 
@@ -91,9 +91,9 @@ struct {
     uint32_t Policy_Actions;
 
 
-} TrgStates_Z;
+} TrgStates_Z_Struct;
 
-struct {
+typedef struct {
     
     uint32_t xy;  // Compressed position [mm]
     int16_t z;
@@ -104,4 +104,9 @@ struct {
     uint32_t axy; // Compress accelerations [mm/s^2]
     int16_t az;
 
-} SetPoints_Z;
+} SetPoints_Z_Struct;
+
+// Declaration of the global instances
+extern States_Z_Struct States_Z;
+extern TrgStates_Z_Struct TrgStates_Z;
+extern SetPoints_Z_Struct SetPoints_Z;
