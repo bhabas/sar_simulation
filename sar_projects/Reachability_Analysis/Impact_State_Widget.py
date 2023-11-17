@@ -9,6 +9,8 @@ from matplotlib.animation import FuncAnimation
 import csv
 import os
 import math
+import pandas as pd
+import matplotlib
  
 
 G = 9.81 # Gravity [m/s^2]
@@ -73,6 +75,7 @@ class InteractivePlot:
         ## BUTTONS
         ax_Ani_button           = self.fig.add_subplot(gs_Buttons[0, 0])
         ax_IVP_button           = self.fig.add_subplot(gs_Buttons[1, 0])
+        ax_Plot_button          = self.fig.add_subplot(gs_Buttons[2, 0])
 
 
         ## TEXT
@@ -155,6 +158,9 @@ class InteractivePlot:
         self.IVP_button = Button(ax_IVP_button, 'Collect IVP', hovercolor='0.975')
         self.IVP_button.on_clicked(self.collect_IVP_sol)
 
+        self.Plot_button = Button(ax_Plot_button, 'Plot Data', hovercolor='0.975')
+        self.Plot_button.on_clicked(self.plot_IVP)
+
 
         ## TEXT BOXES
         ax_Phi_text.axis('off')
@@ -168,6 +174,14 @@ class InteractivePlot:
         ## GEOMETRIC CONSTRAINTS
         L = self.Leg_Slider.val*self.PD
         gamma = np.radians(self.Gamma_Slider.val)
+
+        ## POLAR PLOT
+        self.ax_Polar.set_aspect('equal', 'box')
+        self.ax_Polar.set_xlim(-5,5)
+        self.ax_Polar.set_ylim(0,5)
+        # self.ax_Polar.set_rlim(0,5)
+        # self.ax_Polar.set_thetalim(np.radians(0),np.radians(180))
+        
 
 
         ## QUAD PLOT
@@ -325,6 +339,23 @@ class InteractivePlot:
         self.Phi_rel_text.set_text(f"Phi_P_B: {np.degrees(Phi_impact_P_B): 3.1f} [deg]")
 
 
+    def plot_IVP(self,event):
+
+        Phi_P_B_impact = self.Phi_P_B_Slider.val
+
+        filepath = "output.csv"
+
+        dataframe = pd.read_csv(filepath,low_memory=False,comment="#")
+        dataframe = dataframe.query(f"Phi_P_B_impact == {Phi_P_B_impact}")
+
+        V_perp = dataframe.iloc[:]["V_perp"].to_numpy()
+        V_tx = dataframe.iloc[:]["V_tx"].to_numpy()
+        Contact_4_Leg = dataframe.iloc[:]["Contact_4_Leg"].to_numpy()
+
+        self.ax_Polar.scatter(V_tx[Contact_4_Leg],V_perp[Contact_4_Leg],color='blue',label='True')
+        self.ax_Polar.scatter(V_tx[~Contact_4_Leg],V_perp[~Contact_4_Leg],color='red',label='False')
+
+
 
     def collect_IVP_sol(self,event):
 
@@ -342,9 +373,9 @@ class InteractivePlot:
             'V_perp',
             'V_tx',
 
-            '4_Leg_Contact',
-            '2_Leg_Contact',
-            'Prop_Contact',
+            'Contact_4_Leg',
+            'Contact_2_Leg',
+            'Contact_Prop',
 
         ]
         gamma_deg = self.Gamma_Slider.val
@@ -380,8 +411,8 @@ class InteractivePlot:
         Phi_impact_P_B_arr = np.arange(Phi_Prop_P_B_min,Phi_Prop_P_B_max+1,5)
         Phi_impact_P_B_arr = np.radians(Phi_impact_P_B_arr)
         dPhi_impact = 0
-        Vel_Mag_arr = np.arange(1.,4.,0.5)
-        Vel_Angle_arr = np.arange(-70.,-80.,-20)
+        Vel_Mag_arr = np.arange(1,4,0.5)
+        Vel_Angle_arr = np.arange(-5,-175,-5)
 
         # LOOP OVER CONDITIONS
         for Vel_Mag in Vel_Mag_arr:
@@ -410,9 +441,9 @@ class InteractivePlot:
                         'V_perp':           np.round(V_perp,2),
                         'V_tx':             np.round(V_tx,2),
 
-                        '4_Leg_Contact':    events[0],
-                        '2_Leg_Contact':    events[1],
-                        'Prop_Contact':     events[2],
+                        'Contact_4_Leg':    events[0],
+                        'Contact_2_Leg':    events[1],
+                        'Contact_Prop':     events[2],
 
                         
                     }
