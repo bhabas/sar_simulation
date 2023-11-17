@@ -8,6 +8,7 @@ import matplotlib.gridspec as gridspec
 from matplotlib.animation import FuncAnimation
 import csv
 import os
+import math
  
 
 G = 9.81 # Gravity [m/s^2]
@@ -33,7 +34,7 @@ class InteractivePlot:
 
         self.ax_layout()
         self.init_plots()
-        self.Update_1(None) 
+        self.Update_2(None) 
 
     def ax_layout(self):
 
@@ -111,7 +112,7 @@ class InteractivePlot:
             valinit=self.Theta_p,
             valstep=15
         )
-        self.Plane_Angle_Slider.on_changed(self.Update_1) 
+        self.Plane_Angle_Slider.on_changed(self.Update_2) 
 
         ## PHI SLIDER
         self.Phi_P_B_Slider = Slider(
@@ -122,7 +123,7 @@ class InteractivePlot:
             valinit=130,
             valstep=1
         )
-        self.Phi_P_B_Slider.on_changed(self.Update_1)
+        self.Phi_P_B_Slider.on_changed(self.Update_2)
 
         ## VEL_ANGLE SLIDER
         self.V_Angle_Slider = Slider(
@@ -133,7 +134,7 @@ class InteractivePlot:
             valinit=-70,
             valstep=5
         )
-        self.V_Angle_Slider.on_changed(self.Update_1)
+        self.V_Angle_Slider.on_changed(self.Update_2)
 
         ## VEL_MAG SLIDER
         self.V_Mag_Slider = Slider(
@@ -144,7 +145,7 @@ class InteractivePlot:
             valinit=1,
             valstep=0.5
         )
-        self.V_Mag_Slider.on_changed(self.Update_1)
+        self.V_Mag_Slider.on_changed(self.Update_2)
 
 
         ## BUTTONS
@@ -217,6 +218,17 @@ class InteractivePlot:
 
     def Update_1(self,event):
 
+        self.L = self.Leg_Slider.val*self.PD
+
+        ## CALC IMPACT LIMITS
+        Phi_Prop_P_B_min,Phi_Prop_P_B_max = self._calc_impact_limits()
+        self.Phi_P_B_Slider.valmin = math.ceil(np.degrees(Phi_Prop_P_B_min))
+        self.Phi_P_B_Slider.valmax = math.floor(np.degrees(Phi_Prop_P_B_max))
+
+        self.Phi_P_B_Slider.set_val(self.Phi_P_B_Slider.valmin)
+
+    def Update_2(self,event):
+
         ## READ GAMMA, LENGTH
         self.L = self.Leg_Slider.val*self.PD
         self.I_c = self.Iyy + self.M*self.L**2
@@ -225,15 +237,14 @@ class InteractivePlot:
         ## PLANE DRAW
         Theta_p = np.radians(self.Plane_Angle_Slider.val)
 
+        ## CALC IMPACT LIMITS
+        Phi_Prop_P_B_min,Phi_Prop_P_B_max = self._calc_impact_limits()
+        self.Phi_P_B_Slider.valmin = math.ceil(np.degrees(Phi_Prop_P_B_min))
+        self.Phi_P_B_Slider.valmax = math.floor(np.degrees(Phi_Prop_P_B_max))
+
         ## READ PHI_IMPACT_P_B
         Phi_impact_P_B = np.radians(self.Phi_P_B_Slider.val)
         Phi_impact = -Phi_impact_P_B + Theta_p
-
-
-        ## CALC IMPACT LIMITS
-        Phi_Prop_P_B_min,Phi_Prop_P_B_max = self._calc_impact_limits()
-        self.Phi_P_B_Slider.valmin = np.round(np.degrees(Phi_Prop_P_B_min),0)
-        self.Phi_P_B_Slider.valmax = np.round(np.degrees(Phi_Prop_P_B_max),0)
 
 
         ## DETERMINE IMPACT CONDITIONS
@@ -257,6 +268,10 @@ class InteractivePlot:
             r_B_C2 = np.array([-self.L,0])                                              # {e_r2,e_beta2}
             r_B_C2 = self.R_PW(self.R_C2P(r_B_C2,Beta_impact),Theta_p) # {X_W,Z_W}
             r_B_O = r_B_C2  
+
+        else:
+
+            r_B_O = np.array([0,0])
         
 
         ## UPDATE BODY DRAWING
@@ -721,7 +736,8 @@ class InteractivePlot:
 
         return R_C2B.dot(vec)
 
-
+    def round_to_nearest_multiple(self, value, multiple):
+        return round(value / multiple) * multiple
 if __name__ == '__main__':
     # Create an instance of the interactive plot and show it
     plot = InteractivePlot()
