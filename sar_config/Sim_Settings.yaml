@@ -1,7 +1,5 @@
 DATA_TYPE: "SIM"
 
-ENV_SETTINGS:
-  Ground_Name: "GroundPlane_Desert_Physical"
 
 SAR_SETTINGS:
   SAR_Type: "Source_One_V5"
