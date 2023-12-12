@@ -755,6 +755,15 @@
     </plugin>
 
 
+    <!-- **********************************  -->
+
+    <plugin name='Example_Cam_Plugin' filename='libExample_Cam_Plugin.so'>
+    </plugin>
+
+    <!-- **********************************  -->
+
+
+
 
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
