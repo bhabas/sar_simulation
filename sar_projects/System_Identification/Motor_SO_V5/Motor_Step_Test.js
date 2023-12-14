@@ -17,7 +17,10 @@ The '.' represents a sample is recorded. 5 steps will record 6 data rows (one fo
 var protocol = "dshot600";  // ESC protocol
 var escStart = 0;           // ESC start value [NULL THROTTLE DETECTION REQUIRED]
 var minVal = 150;           // Min. input value [150, 2047] 
-var maxVal = 500;           // Max. input value [150, 2047] 
+var maxVal = 300;           // Max. input value [150, 2047] 
+var samplesAvg = 100;       // Number of samples to average at each step
+var repeat = 1; // How many times to repeat the same sequence
+var filePrefix = "StepsTestV2";
 
 // step parameters
 var params = {
@@ -29,9 +32,7 @@ var params = {
     max_slew_rate_us_per_s: 50  // Limits torque from throttle changes
 };
    
-var samplesAvg = 100;     // Number of samples to average
-var repeat = 1; // How many times to repeat the same sequence
-var filePrefix = "StepsTestV2";
+
 
 ///////////////// Beginning of the script //////////////////
 
