@@ -39,7 +39,7 @@ ax_current = fig.add_subplot(2, 3, 6)
 
 
 ## THRUST PLOT
-thrust_data = df[['Time (s)',"Thrust (gf)"]].interpolate()
+thrust_data = df[["Time (s)","Thrust (gf)"]].interpolate()
 ax_thrust.plot(thrust_data["Time (s)"].to_numpy(),thrust_data["Thrust (gf)"].to_numpy())
 ax_thrust.set_title("Thrust")
 ax_thrust.set_xlabel("Time [s]")
@@ -48,7 +48,7 @@ ax_thrust.grid(True)
 # ax_thrust.legend()
 
 ## ESC CMD PLOT
-ESC_data = df[['Time (s)',"ESC signal"]]
+ESC_data = df[["Time (s)","ESC signal"]]
 ax_ESC_signal.plot(ESC_data["Time (s)"].to_numpy(),ESC_data["ESC signal"].to_numpy())
 ax_ESC_signal.set_title("ESC Signal")
 ax_ESC_signal.set_xlabel("Time [s]")
@@ -59,7 +59,7 @@ ax_ESC_signal.grid(True)
 ax_ESC_signal.legend(loc="lower right")
 
 ## NORMALIZED ANGULAR SPEED PLOT
-norm_angular_speed_data = df[['Time (s)',"Motor Optical Speed (rad/s)"]].interpolate()
+norm_angular_speed_data = df[["Time (s)","Motor Optical Speed (rad/s)"]].interpolate()
 norm_angular_speed_data["Motor Optical Speed (rad/s)"] = norm_angular_speed_data["Motor Optical Speed (rad/s)"]/4000
 
 ax_norm_angular_speed.plot(norm_angular_speed_data["Time (s)"].to_numpy(),norm_angular_speed_data["Motor Optical Speed (rad/s)"].to_numpy(),alpha=0.5)
@@ -70,7 +70,7 @@ ax_norm_angular_speed.grid(True)
 
 
 ## ANGULAR SPEED PLOT
-angular_speed_data = df[['Time (s)',"Motor Optical Speed (rad/s)"]].interpolate()
+angular_speed_data = df[["Time (s)","Motor Optical Speed (rad/s)"]].interpolate()
 angular_speed_data["Motor Optical Speed (rad/s)"] = angular_speed_data["Motor Optical Speed (rad/s)"]
 
 ax_angular_speed.plot(angular_speed_data["Time (s)"].to_numpy(),angular_speed_data["Motor Optical Speed (rad/s)"].to_numpy())
@@ -81,7 +81,7 @@ ax_angular_speed.grid(True)
 
 
 ## VOLTAGE PLOT
-voltage_data = df[['Time (s)',"Voltage (V)"]].interpolate()
+voltage_data = df[["Time (s)","Voltage (V)"]].interpolate()
 ax_voltage.plot(voltage_data["Time (s)"].to_numpy(),voltage_data["Voltage (V)"].to_numpy()/NUM_BATT_CELLS)
 ax_voltage.set_title("Voltage")
 ax_voltage.set_xlabel("Time [s]")
@@ -93,7 +93,7 @@ ax_voltage.grid(True)
 # ax_voltage.legend()
 
 ## CURRENT PLOT
-current_data = df[['Time (s)',"Current (A)"]].interpolate()
+current_data = df[["Time (s)","Current (A)"]].interpolate()
 ax_current.plot(current_data["Time (s)"].to_numpy(),current_data["Current (A)"].to_numpy())
 ax_current.set_title("Current")
 ax_current.set_xlabel("Time [s]")
