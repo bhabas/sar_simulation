@@ -14,7 +14,7 @@ NUM_BATT_CELLS = 6
 
 ## DATAPATHS
 dataPath = f"{BASE_PATH}/sar_projects/System_Identification/Motor_SO_V5/Logs/"
-fileName = f"TimeConstant_Test_2023-12-13_130935.csv"
+fileName = f"TimeConstant_Test_2023-12-16_130840.csv"
 filePath = os.path.join(dataPath,fileName)
 
 ## DEFINE FITTING FUNCTIONS AND SYSTEM CONSTANTS
@@ -107,21 +107,29 @@ ax_current.grid(True)
 ## CURVE FITS
 
 curve_fits = {
-    'a': (exp_rise, [1.82, 2.5]),
-    'b': (exp_rise, [6.78, 7.2]),
-    'c': (exp_rise, [10.45, 10.7]),
-    'd': (exp_decay, [15.0, 15.5]),
+    'a': (exp_rise, [12.36, 12.48]),
+    'b': (exp_rise, [16.35, 16.6]),
+    'c': (exp_rise, [20.77, 20.95]),
+    'd': (exp_rise, [25.425, 25.55]),
+    'e': (exp_decay, [28.75, 28.95]),
+    'f': (exp_decay, [31.90, 32.2]),
+    'g': (exp_decay, [35.08, 35.5]),
+    'h': (exp_decay, [37.14, 37.40]),
 
-    'e': (exp_rise, [19.82, 20.2]),
-    'f': (exp_rise, [17.3, 18.0]),
-    'g': (exp_decay, [23.22, 23.5]),
-    'h': (exp_decay, [24.64, 25.2]),
 
-    'i': (exp_rise, [27.58, 28.2]),
-    'j': (exp_decay, [31.6, 32.0]),
+    'i': (exp_rise, [40.2, 40.4]),
+    'j': (exp_rise, [43.3, 43.6]),
 
-    'k': (exp_rise, [33.75, 34.2]),
-    'l': (exp_decay, [36.2, 36.75]),
+    'k': (exp_rise, [49.2, 49.5]),
+    'l': (exp_rise, [52.75, 52.9]),
+
+    'm': (exp_decay, [54.8, 55.1]),
+    'n': (exp_decay, [56.72, 57.3]),
+
+    'o': (exp_decay, [65.07, 65.35]),
+
+
+
 }
 
 
