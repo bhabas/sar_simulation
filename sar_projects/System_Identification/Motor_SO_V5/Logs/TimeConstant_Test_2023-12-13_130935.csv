@@ -4399,20 +4399,20 @@
 39.090889999999895,,,,,-0.0625,0.05859375,-1.04296875,-0.00033713751185049146,-16.134784580604755,23.612001419067383,-0.06270554333925246,0,0,1.4806033783098205,0,0,0,0,0.20703125,,
 
 
-# a-> Type: exp_rise       Time-Constant: 0.032
-# b-> Type: exp_rise       Time-Constant: 0.011
-# c-> Type: exp_rise       Time-Constant: 0.007
-# d-> Type: exp_decay      Time-Constant: 0.010
-# e-> Type: exp_rise       Time-Constant: 0.010
-# f-> Type: exp_rise       Time-Constant: 0.011
-# g-> Type: exp_decay      Time-Constant: 0.031
-# h-> Type: exp_decay      Time-Constant: 0.031
-# i-> Type: exp_rise       Time-Constant: 0.013
-# j-> Type: exp_decay      Time-Constant: 0.009
-# k-> Type: exp_rise       Time-Constant: 0.010
-# l-> Type: exp_decay      Time-Constant: 0.044
+# a-> Type: exp_rise    XX Time-Constant: 0.032    Params: [1.77294111 0.03219412 0.24580187]
+# b-> Type: exp_rise       Time-Constant: 0.011    Params: [6.7742938  0.01106768 0.43697425]
+# c-> Type: exp_rise       Time-Constant: 0.007    Params: [1.04669999e+01 7.32278982e-03 6.12783577e-01]
+# d-> Type: exp_decay   XX Time-Constant: 0.010    Params: [1.50093993e+01 1.01546427e-02 1.58051722e-01]
+# e-> Type: exp_rise       Time-Constant: 0.010    Params: [1.98088229e+01 9.57427402e-03 5.47604437e-01]
+# f-> Type: exp_rise       Time-Constant: 0.011    Params: [1.72867151e+01 1.10279002e-02 3.59244563e-01]
+# g-> Type: exp_decay      Time-Constant: 0.031    Params: [23.17595593  0.03120574  0.53073093]
+# h-> Type: exp_decay      Time-Constant: 0.031    Params: [24.61672146  0.03145675  0.17055553]
+# i-> Type: exp_rise       Time-Constant: 0.013    Params: [2.75575707e+01 1.28750685e-02 5.43932467e-01]
+# j-> Type: exp_decay   XX Time-Constant: 0.009    Params: [3.16003436e+01 9.23191760e-03 9.12445819e-02]
+# k-> Type: exp_rise       Time-Constant: 0.010    Params: [3.37923372e+01 9.55092136e-03 7.37665565e-01]
+# l-> Type: exp_decay      Time-Constant: 0.044    Params: [36.17974739  0.04442837  0.04892483]
 
-# Tau_c_Rise_mean: 0.013
-# Tau_c_Rise_std: 0.0077
-# Tau_c_Decay_mean: 0.025
-# Tau_c_Decay_std: 0.013
+# Tau_c_Rise_mean: 0.011
+# Tau_c_Rise_std: ---
+# Tau_c_Decay_mean: 0.031
+# Tau_c_Decay_std: ---

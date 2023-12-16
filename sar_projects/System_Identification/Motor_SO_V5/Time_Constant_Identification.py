@@ -63,6 +63,7 @@ norm_angular_speed_data = df[["Time (s)","Motor Optical Speed (rad/s)"]].interpo
 norm_angular_speed_data["Motor Optical Speed (rad/s)"] = norm_angular_speed_data["Motor Optical Speed (rad/s)"]/4000
 
 ax_norm_angular_speed.plot(norm_angular_speed_data["Time (s)"].to_numpy(),norm_angular_speed_data["Motor Optical Speed (rad/s)"].to_numpy(),alpha=0.5)
+ax_norm_angular_speed.scatter(norm_angular_speed_data["Time (s)"].to_numpy(),norm_angular_speed_data["Motor Optical Speed (rad/s)"].to_numpy(),alpha=0.5,s=5)
 ax_norm_angular_speed.set_title("Normalized Angular Speed")
 ax_norm_angular_speed.set_xlabel("Time [s]")
 ax_norm_angular_speed.set_ylabel("Norm Angular Speed [rad/s]")
@@ -144,7 +145,7 @@ for key, (exp_func, t_range) in curve_fits.items():
     fitted_curve = exp_func(t_fit,*params)
     ax_norm_angular_speed.plot(t_fit,fitted_curve,'--',color='r',alpha=0.9,label="Curve Fit")
 
-    print(f"{key}-> Type: {exp_func.__name__} \t Time-Constant: {params[1]:.3f}")
+    print(f"{key}-> Type: {exp_func.__name__} \t Time-Constant: {params[1]:.3f} \t Params: {params}")
 
 test_range = np.linspace(23,23.5,1000)
 test_curve = exp_decay(test_range,23.25,0.031,5.3*400)
