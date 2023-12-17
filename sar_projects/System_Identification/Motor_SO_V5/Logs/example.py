@@ -13,12 +13,12 @@ RPM_TO_RAD_PER_SEC = 2*np.pi/60
 NUM_BATT_CELLS = 6
 
 ## DATAPATHS
-dataPath = f"{BASE_PATH}/sar_projects/System_Identification/Motor_SO_V5/Logs/"
-fileName = f"TimeConstant_Test_2023-12-16_130840.csv"
+dataPath = f"{BASE_PATH}/sar_projects/System_Identification/Motor_Impulse_Micro/Logs/"
+fileName = f"StepsTestV2_2023-12-17_153333.csv"
 filePath = os.path.join(dataPath,fileName)
 
 ## LOAD DATA
 df = pd.read_csv(filePath,comment="#")
-df = df.query("`Motor Optical Speed (rad/s)` == 0")
+df["Thrust (gf)"]+=2.3
 
-print()
+df.to_csv(filePath,index=False)
