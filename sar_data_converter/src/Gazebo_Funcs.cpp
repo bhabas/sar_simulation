@@ -184,7 +184,7 @@ void SAR_DataConverter::checkSlowdown()
         }
         else if (Twist.linear.z <= -0.5 && SLOWDOWN_TYPE == 1)
         {
-            SAR_DataConverter::adjustSimSpeed(SIM_SPEED);
+            SAR_DataConverter::adjustSimSpeed(SIM_SLOWDOWN_SPEED);
             SLOWDOWN_TYPE = 2;
         }
     }
