@@ -1,23 +1,23 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='A05_L50_K08'>
+  <model name='A60_L75_K08'>
 
     <include>
       <uri>model://SAR_Base</uri>
     </include>
 
     <link name='Leg_1'>
-      <pose>2.07e-02 -2.07e-02 -3.25e-03 0 -0.087 -0.785</pose>
+      <pose>2.07e-02 -2.07e-02 -3.25e-03 0 -1.047 -0.785</pose>
       <inertial>
         <mass>0.570e-3</mass>
         <pose>0 0 0 0 0 0 </pose>
         <inertia>
-          <ixx>0.155e-6</ixx>
+          <ixx>0.477e-6</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>0.155e-6</iyy>
+          <iyy>0.477e-6</iyy>
           <iyz>0</iyz>
-          <izz>0.040e-6</izz>
+          <izz>0.100e-6</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -26,7 +26,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://A05_L50_K08/meshes/LegConfig_A05_L50.STL</uri>
+            <uri>model://A60_L75_K08/meshes/LegConfig_A60_L75.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -39,7 +39,7 @@
         </material>
       </visual>
       <collision name="Leg_1_Collision">
-        <pose>0 0 -0.05 0 0 0</pose>
+        <pose>0 0 -0.075 0 0 0</pose>
         <geometry>
           <sphere>
             <radius>0.002</radius>
@@ -55,17 +55,17 @@
     </link>
 
     <link name='Leg_2'>
-      <pose>-2.07e-02 -2.07e-02 -3.25e-03 0 -0.087 -2.358</pose>
+      <pose>-2.07e-02 -2.07e-02 -3.25e-03 0 -1.047 -2.356</pose>
       <inertial>
         <mass>0.570e-3</mass>
         <pose>0 0 0 0 0 0 </pose>
         <inertia>
-          <ixx>0.155e-6</ixx>
+          <ixx>0.477e-6</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>0.155e-6</iyy>
+          <iyy>0.477e-6</iyy>
           <iyz>0</iyz>
-          <izz>0.040e-6</izz>
+          <izz>0.100e-6</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -74,7 +74,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://A05_L50_K08/meshes/LegConfig_A05_L50.STL</uri>
+            <uri>model://A60_L75_K08/meshes/LegConfig_A60_L75.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -87,7 +87,7 @@
         </material>
       </visual>
       <collision name="Leg_2_Collision">
-        <pose>0 0 -0.05 0 0 0</pose>
+        <pose>0 0 -0.075 0 0 0</pose>
         <geometry>
           <sphere>
             <radius>0.002</radius>
@@ -103,17 +103,17 @@
     </link>
 
     <link name='Leg_3'>
-      <pose>-2.07e-02 2.07e-02 -3.25e-03 0 -0.087 2.358</pose>
+      <pose>-2.07e-02 2.07e-02 -3.25e-03 0 -1.047 2.356</pose>
       <inertial>
         <mass>0.570e-3</mass>
         <pose>0 0 0 0 0 0 </pose>
         <inertia>
-          <ixx>0.155e-6</ixx>
+          <ixx>0.477e-6</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>0.155e-6</iyy>
+          <iyy>0.477e-6</iyy>
           <iyz>0</iyz>
-          <izz>0.040e-6</izz>
+          <izz>0.100e-6</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -122,7 +122,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://A05_L50_K08/meshes/LegConfig_A05_L50.STL</uri>
+            <uri>model://A60_L75_K08/meshes/LegConfig_A60_L75.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -135,7 +135,7 @@
         </material>
       </visual>
       <collision name="Leg_3_Collision">
-        <pose>0 0 -0.05 0 0 0</pose>
+        <pose>0 0 -0.075 0 0 0</pose>
         <geometry>
           <sphere>
             <radius>0.002</radius>
@@ -151,17 +151,17 @@
     </link>
 
     <link name='Leg_4'>
-      <pose>2.07e-02 2.07e-02 -3.25e-03 0 -0.087 0.785</pose>
+      <pose>2.07e-02 2.07e-02 -3.25e-03 0 -1.047 0.785</pose>
       <inertial>
         <mass>0.570e-3</mass>
         <pose>0 0 0 0 0 0 </pose>
         <inertia>
-          <ixx>0.155e-6</ixx>
+          <ixx>0.477e-6</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>0.155e-6</iyy>
+          <iyy>0.477e-6</iyy>
           <iyz>0</iyz>
-          <izz>0.040e-6</izz>
+          <izz>0.100e-6</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -170,7 +170,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://A05_L50_K08/meshes/LegConfig_A05_L50.STL</uri>
+            <uri>model://A60_L75_K08/meshes/LegConfig_A60_L75.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -183,7 +183,7 @@
         </material>
       </visual>
       <collision name="Leg_4_Collision">
-        <pose>0 0 -0.05 0 0 0</pose>
+        <pose>0 0 -0.075 0 0 0</pose>
         <geometry>
           <sphere>
             <radius>0.002</radius>

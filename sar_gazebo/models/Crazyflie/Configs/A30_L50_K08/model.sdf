@@ -1,13 +1,13 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='A05_L50_K08'>
+  <model name='A30_L50_K08'>
 
     <include>
       <uri>model://SAR_Base</uri>
     </include>
 
     <link name='Leg_1'>
-      <pose>2.07e-02 -2.07e-02 -3.25e-03 0 -0.087 -0.785</pose>
+      <pose>2.07e-02 -2.07e-02 -3.25e-03 0 -0.5236 -0.785</pose>
       <inertial>
         <mass>0.570e-3</mass>
         <pose>0 0 0 0 0 0 </pose>
@@ -26,7 +26,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://A05_L50_K08/meshes/LegConfig_A05_L50.STL</uri>
+            <uri>model://A30_L50_K08/meshes/LegConfig_A30_L50.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -39,7 +39,7 @@
         </material>
       </visual>
       <collision name="Leg_1_Collision">
-        <pose>0 0 -0.05 0 0 0</pose>
+        <pose>0 0 -50e-3 0 0 0</pose>
         <geometry>
           <sphere>
             <radius>0.002</radius>
@@ -55,7 +55,7 @@
     </link>
 
     <link name='Leg_2'>
-      <pose>-2.07e-02 -2.07e-02 -3.25e-03 0 -0.087 -2.358</pose>
+      <pose>-2.07e-02 -2.07e-02 -3.25e-03 0 -0.5236 -2.358</pose>
       <inertial>
         <mass>0.570e-3</mass>
         <pose>0 0 0 0 0 0 </pose>
@@ -74,7 +74,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://A05_L50_K08/meshes/LegConfig_A05_L50.STL</uri>
+            <uri>model://A30_L50_K08/meshes/LegConfig_A30_L50.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -87,7 +87,7 @@
         </material>
       </visual>
       <collision name="Leg_2_Collision">
-        <pose>0 0 -0.05 0 0 0</pose>
+        <pose>0 0 -50e-3 0 0 0</pose>
         <geometry>
           <sphere>
             <radius>0.002</radius>
@@ -103,7 +103,7 @@
     </link>
 
     <link name='Leg_3'>
-      <pose>-2.07e-02 2.07e-02 -3.25e-03 0 -0.087 2.358</pose>
+      <pose>-2.07e-02 2.07e-02 -3.25e-03 0 -0.5236 2.358</pose>
       <inertial>
         <mass>0.570e-3</mass>
         <pose>0 0 0 0 0 0 </pose>
@@ -122,7 +122,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://A05_L50_K08/meshes/LegConfig_A05_L50.STL</uri>
+            <uri>model://A30_L50_K08/meshes/LegConfig_A30_L50.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -135,7 +135,7 @@
         </material>
       </visual>
       <collision name="Leg_3_Collision">
-        <pose>0 0 -0.05 0 0 0</pose>
+        <pose>0 0 -50e-3 0 0 0</pose>
         <geometry>
           <sphere>
             <radius>0.002</radius>
@@ -151,7 +151,7 @@
     </link>
 
     <link name='Leg_4'>
-      <pose>2.07e-02 2.07e-02 -3.25e-03 0 -0.087 0.785</pose>
+      <pose>2.07e-02 2.07e-02 -3.25e-03 0 -0.5236 0.785</pose>
       <inertial>
         <mass>0.570e-3</mass>
         <pose>0 0 0 0 0 0 </pose>
@@ -170,7 +170,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://A05_L50_K08/meshes/LegConfig_A05_L50.STL</uri>
+            <uri>model://A30_L50_K08/meshes/LegConfig_A30_L50.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -183,7 +183,7 @@
         </material>
       </visual>
       <collision name="Leg_4_Collision">
-        <pose>0 0 -0.05 0 0 0</pose>
+        <pose>0 0 -50e-3 0 0 0</pose>
         <geometry>
           <sphere>
             <radius>0.002</radius>
