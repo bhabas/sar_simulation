@@ -11,7 +11,7 @@
 
     <model name='camera'>
       <static>true</static>
-      <pose>0.8 -1 1.98 0 0.22 1.57</pose>
+      <pose>0.7 -0.7 1.99 0 0.22 1.57</pose>
       <link name='link'>
         <visual name='visual'>
           <geometry>
@@ -22,9 +22,6 @@
         </visual>
         <sensor name='my_camera' type='camera'>
           <camera>
-            <save enabled="true">
-              <path>/tmp/camera_save_tutorial</path>
-            </save>
             <horizontal_fov>1.047</horizontal_fov>
             <image>
               <width>1920</width>
@@ -35,8 +32,15 @@
               <far>100</far>
             </clip>
           </camera>
+          <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+            <alwaysOn>true</alwaysOn>
+            <updateRate>0.0</updateRate>
+            <cameraName>ExternalCam</cameraName>
+            <imageTopicName>image_raw</imageTopicName>
+            <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+          </plugin>
           <always_on>1</always_on>
-          <update_rate>100</update_rate>
+          <update_rate>500</update_rate>
         </sensor>
       </link>
     </model>

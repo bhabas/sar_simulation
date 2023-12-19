@@ -75,7 +75,7 @@ SAR_Type:
         Leg_Angle: 5          # Leg Angle [deg]
         Leg_Length: 75.0e-3   # Leg Length [m]
 
-        K_Pitch: 3.20e-3    # Pitch-Axis Stiffness [N*m/rad]
+        K_Pitch: 0.4e-3    # Pitch-Axis Stiffness [N*m/rad]
         DR_Pitch: 0.3         # Pitch-Axis Damping Ratio
         K_Yaw: 1.6e-3      # Yaw-Axis Stiffness [N*m/rad]
         DR_Yaw: 0.8           # Yaw-Axis Damping Ratio
