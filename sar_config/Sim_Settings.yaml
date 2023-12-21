@@ -3,7 +3,7 @@ DATA_TYPE: "SIM"
 
 SAR_SETTINGS:
   SAR_Type: "Crazyflie"
-  SAR_Config: "A05_L75_K08"
+  SAR_Config: "A30_L75_K08"
 
   Policy_Type: "PARAM_OPTIM"
   # Policy_Type: "DEEP_RL_SB3" 
@@ -24,7 +24,7 @@ PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
 
 GROUND_SETTINGS:
   Ground_Type: "Ground_Surface"
-  Ground_Config: "Debug"
+  Ground_Config: "Desert_Pattern"
 
 
 SIM_SETTINGS:

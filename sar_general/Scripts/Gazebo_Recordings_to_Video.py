@@ -1,19 +1,50 @@
 import os
-import sys
-import shutil
+import subprocess
 
+def sort_files(file):
+    """
+    Custom sort function to handle file names numerically.
+    Assumes file names contain numbers that can be used for sorting.
+    """
+    num_part = ''.join(filter(str.isdigit, file))
+    return int(num_part) if num_part.isdigit() else float('inf')
 
-tmp_dir = "/tmp/Gazebo_Recording/NL_2.5_30_500FPS"
+def rename_files(directory, files):
+    """
+    Rename files to a standardized format like 'image_0000.png'.
+    """
+    for i, file in enumerate(files):
+        new_name = f"image_{i:04d}.png"
+        os.rename(os.path.join(directory, file), os.path.join(directory, new_name))
 
+def convert_images_to_video(directory, fps, output_file):
+    # Get all PNG files in the directory
+    files = [f for f in os.listdir(directory) if f.endswith('.png')]
+    files.sort(key=sort_files)
 
+    # Rename files
+    rename_files(directory, files)
 
-# CONVERT IMAGE FILES BACK INTO VIDEO
-# fps = int(input("Input fps as int: "))
-fps = 30
+    # Update file list after renaming
+    files = [f for f in os.listdir(directory) if f.endswith('.png')]
+    files.sort(key=sort_files)
 
-# video_file = input("Video FileName: ")
-video_file = f"Video_Recording.mp4"
-video_path = os.path.join(tmp_dir,video_file)
+    # Prepare the FFmpeg command
+    ffmpeg_command = [
+        'ffmpeg',
+        '-r', str(fps),
+        '-i', os.path.join(directory, 'image_%04d.png'),
+        '-c:v', 'prores_ks',  # Using ProRes codec
+        '-profile:v', '2',    # ProRes 422 HQ; use '2' for ProRes 422
+        '-pix_fmt', 'yuv422p10le',  # Pixel format for ProRes
+        os.path.join(directory,output_file)
+    ]
 
-ffmpeg_cmd = f'ffmpeg -r {fps} -y -i "{tmp_dir}/image_%04d.png" -vcodec libx264 -pix_fmt yuv420p {video_path}'
-os.system(ffmpeg_cmd)
+    # Run the FFmpeg command
+    subprocess.run(ffmpeg_command)
+
+# Usage
+directory = '/home/bhabas/GoogleDrive/Grad_Research/Papers/T_RO_23/Images/Four_Leg_Landing_Efficient_Momentum_Transfer'  # Replace with your directory path
+fps = 30  # Replace with your desired frames per second
+output_file = 'Four_Leg_Landing_Efficient_Momentum_Transfer.mov'  # Replace with your desired output file name
+convert_images_to_video(directory, fps, output_file)

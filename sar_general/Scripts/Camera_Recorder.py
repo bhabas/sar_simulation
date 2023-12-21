@@ -15,12 +15,13 @@ class ImageSaver:
         try:
             # Convert the image to OpenCV format
             cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
+            self.t = int(data.header.stamp.to_time()*1000)
         except CvBridgeError as e:
             rospy.logerr(e)
             return
 
         # Save the image
-        filename = "/tmp/Gazebo_Recording/image_{:04d}.png".format(self.counter)
+        filename = f"/tmp/Gazebo_Recording/image_{self.t:d}.png"
         cv2.imwrite(filename, cv_image)
         rospy.loginfo("Saved image {}".format(filename))
         self.counter += 1
