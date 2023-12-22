@@ -191,7 +191,7 @@ class SAR_DataConverter {
         // =====================
         std::string DATA_TYPE;  // Sim or Experiment Flag
         ros::Time Time_start;   // Initial time in UNIX notation
-        int LOGGING_RATE = 10;  // Default Logging Rate
+        int LOGGING_RATE = 20;  // Default Logging Rate
         bool SHOW_CONSOLE = true;
         bool isInit = false;    // Load these params only on first start of SAR_DC
 
