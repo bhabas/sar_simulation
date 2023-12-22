@@ -1,4 +1,4 @@
-Vel_d,Phi_d,Trial_num,LR_4Leg,Vel_trg,Phi_trg,Tau_trg_mean,Theta_x_trg_mean,D_ceil_trg_mean,My_mean,Vz_trg_mean,Vx_trg_mean,Mu,Sigma
+Vel_d,Phi_d,Trial_num,LR_4Leg,Vel_trg,Phi_trg,Tau_trg_mean,Theta_x_trg_mean,D_ceil_trg_mean,a_Rot_mean,Vz_trg_mean,Vx_trg_mean,Mu,Sigma
 1.5,30.0,0,0.0,,,,,,,,,[2.005 5.452],[0.01  0.078]
 1.5,30.0,1,0.0,,,,,,,,,[2.285 8.994],[0.036 0.014]
 1.5,33.75,0,0.0,,,,,,,,,[1.674 3.224],[0.015 0.012]

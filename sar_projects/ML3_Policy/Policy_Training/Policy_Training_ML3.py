@@ -23,9 +23,7 @@ from sklearn import preprocessing
 
 ## ADD SAR_SIMULATION DIRECTORY TO PYTHONPATH SO ABSOLUTE IMPORTS CAN BE USED
 import sys,rospkg
-BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging'))
-sys.path.insert(0,BASE_PATH)
-from crazyflie_logging.data_analysis.Data_Analysis import DataFile
+from sar_logging.Log_Data_Parser import Data_Parser
 
 
 np.set_printoptions(suppress=True)
@@ -460,13 +458,13 @@ class Policy_Trainer():
     def plotPolicyData_MPL(self,df):
 
         LR = np.where(df["LR_4Leg"] >= 0.8, 1.0, 0)
-        Theta_x = -df["OFy_flip_mean"]
-        Tau = df["Tau_flip_mean"]
-        D_ceil = df["D_ceil_flip_mean"]
+        Theta_x = -df["Theta_x_trg_mean"]
+        Tau = df["Tau_trg_mean"]
+        D_ceil = df["D_ceil_trg_mean"]
 
         X_grid = np.stack((
                 Tau,
-                -Theta_x,
+                Theta_x,
                 D_ceil),axis=1)
 
         y_pred = self.SVM_model.decision_function(self.scaleData(X_grid))
@@ -524,9 +522,9 @@ class Policy_Trainer():
         fig.add_trace(
             go.Scatter3d(
                 ## DATA
-                x=-df["OFy_flip_mean"],
-                y=df["Tau_flip_mean"],
-                z=df["D_ceil_flip_mean"],
+                x=-df["Theta_x_trg_mean"],
+                y=df["Tau_trg_mean"],
+                z=df["D_ceil_trg_mean"],
 
                 ## HOVER DATA
                 customdata=df,
@@ -655,8 +653,8 @@ class Policy_Trainer():
     def plot_Landing_Rate(self,df,saveFig=False):
 
         ## COLLECT DATA
-        Vel_flip = df.iloc[:]['Vel_flip'].to_numpy()
-        Phi_flip = df.iloc[:]['Phi_flip'].to_numpy()
+        Vel_flip = df.iloc[:]['Vel_d'].to_numpy()
+        Phi_flip = df.iloc[:]['Phi_d'].to_numpy()
         LR = df.iloc[:]['LR_4Leg'].to_numpy()
 
 
@@ -691,7 +689,7 @@ class Policy_Trainer():
         ## PLOT DATA
         fig = plt.figure(figsize=(4,4))
 
-        cmap = mpl.cm.jet
+        cmap = mpl.cm.coolwarm
         norm = mpl.colors.Normalize(vmin=0,vmax=1)
 
         ax = fig.add_subplot(projection='polar')
@@ -706,7 +704,7 @@ class Policy_Trainer():
 
         ax.set_xticks(np.radians([30,45,60,75,90]))
         ax.set_yticks([0,1.0,2.0,3.0,3.5])
-        plt.show()
+        plt.show(block=True)
  
         if saveFig==True:
             plt.savefig(f'{self.model_initials}_Polar_LR.pdf',dpi=300)
@@ -746,10 +744,10 @@ if __name__ == "__main__":
     # FileName = "NL_ML3_LR_Trials.csv"
     # FileName = "DeepRL_NL_LR.csv"
     model_initials = FileName[:2]
-    NN_Param_Path = f'{BASEPATH}/crazyflie_projects/ML3_Policy/Policy_Training/Info/NN_Layers_{model_initials}.h'
-    SVM_Param_Path = f'{BASEPATH}/crazyflie_projects/ML3_Policy/Policy_Training/Info/SVM_Params_{model_initials}.h'
+    NN_Param_Path = f'{BASEPATH}/sar_projects/ML3_Policy/Policy_Training/Info/NN_Layers_{model_initials}.h'
+    SVM_Param_Path = f'{BASEPATH}/sar_projects/ML3_Policy/Policy_Training/Info/SVM_Params_{model_initials}.h'
 
-    FilePath = f"{BASEPATH}/crazyflie_projects/ML3_Policy/Data_Logs/"
+    FilePath = f"{BASEPATH}/sar_projects/ML3_Policy/Data_Logs/"
     
 
     ## PRE-INITIALIZE MODELS
@@ -768,26 +766,26 @@ if __name__ == "__main__":
     idx = df_raw.groupby(['Vel_d','Phi_d'])['LR_4Leg'].transform(max) == df_raw['LR_4Leg']
     df_max = df_raw[idx].reset_index()
 
-    ## ORGANIZE DATA
-    Tau = df_train["Tau_flip_mean"]
-    OF_y = df_train["OFy_flip_mean"]
-    d_ceil = df_train["D_ceil_flip_mean"]
-    My = df_train["My_mean"]
+    # ## ORGANIZE DATA
+    # Tau = df_train["Tau_trg_mean"]
+    # Theta_x = df_train["Theta_x_trg_mean"]
+    # D_ceil = df_train["D_ceil_trg_mean"]
+    # My = df_train["a_Rot_mean"]
 
-    ## CREATE SCALER
-    X = np.stack((Tau,OF_y,d_ceil),axis=1)
-    Policy.createScaler(X)
+    # ## CREATE SCALER
+    # X = np.stack((Tau,Theta_x,D_ceil),axis=1)
+    # Policy.createScaler(X)
 
-    ## SPLIT DATA FEATURES INTO TRAINING AND TESTING SETS
-    data_array = np.stack((Tau,OF_y,d_ceil,My),axis=1)
-    df = pd.DataFrame(data_array,columns=['Tau','OFy','d_ceil','My_mean'])
+    # ## SPLIT DATA FEATURES INTO TRAINING AND TESTING SETS
+    # data_array = np.stack((Tau,Theta_x,D_ceil,My),axis=1)
+    # df = pd.DataFrame(data_array,columns=['Tau','OFy','d_ceil','a_Rot_mean'])
 
-    train_df, test_df = train_test_split(df,test_size=0.10,random_state=73)
-    X_train = train_df[['Tau','OFy','d_ceil']].to_numpy()
-    y_train = train_df[['My_mean']].to_numpy()
+    # train_df, test_df = train_test_split(df,test_size=0.10,random_state=73)
+    # X_train = train_df[['Tau','OFy','d_ceil']].to_numpy()
+    # y_train = train_df[['a_Rot_mean']].to_numpy()
 
-    X_test = test_df[['Tau','OFy','d_ceil']].to_numpy()
-    y_test = test_df[['My_mean']].to_numpy()
+    # X_test = test_df[['Tau','OFy','d_ceil']].to_numpy()
+    # y_test = test_df[['a_Rot_mean']].to_numpy()
 
     
 
@@ -799,19 +797,19 @@ if __name__ == "__main__":
     # print(Policy.NN_Predict(np.array([[0.233,-2.778,0.518]])))
 
     ## TRAIN OC_SVM FLIP_CLASSIFICATION POLICY
-    Policy.train_OC_SVM(X)
-    Policy.save_SVM_Params(SVM_Param_Path,FileName)
-    print(Policy.OC_SVM_Predict(np.array([[0.233,-2.778,0.518]])))
+    # Policy.train_OC_SVM(X)
+    # Policy.save_SVM_Params(SVM_Param_Path,FileName)
+    # print(Policy.OC_SVM_Predict(np.array([[0.233,-2.778,0.518]])))
 
 
     # Policy.plotPolicyRegion(df_train,PlotBoundry=True,iso_level=0.0)
-    Policy.plotPolicyData_MPL(df_raw)
+    # Policy.plotPolicyData_MPL(df_raw)
 
     # Policy.plotPolicyRegion(df_raw,PlotBoundry=True,iso_level=0.0)
     # Policy.plotPolicyRegion(df_raw,PlotBoundry=False,iso_level=0.0)
-    # Policy.plot_Landing_Rate(df_max,saveFig=False)
+    Policy.plot_Landing_Rate(df_max,saveFig=False)
     
-    EXP_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging_exp'))
+    # EXP_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging_exp'))
 
     # dataPath = f"{EXP_PATH}/crazyflie_logging_exp/local_logs/"
     # dataPath = f"{BASE_PATH}/crazyflie_projects/ML3_Policy/Data_Logs/ML3_Experimental_Data/"
