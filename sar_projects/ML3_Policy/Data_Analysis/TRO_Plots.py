@@ -10,6 +10,7 @@ from mpl_toolkits import mplot3d
 import matplotlib as mpl
 from matplotlib import cm
 from matplotlib.ticker import (FormatStrFormatter,AutoMinorLocator)
+from matplotlib.colors import LinearSegmentedColormap
 
 import plotly.graph_objects as go
 
@@ -21,12 +22,9 @@ BASEPATH = "/home/bhabas/catkin_ws/src/sar_simulation/sar_projects/ML3_Policy"
 df = pd.read_csv(f"{BASEPATH}/Data_Logs/NL_LR_Trials.csv") # Collected data
 # df = pd.read_csv(f"{BASEPATH}/Data_Logs/NL_Raw/NL_LR_Trials_Raw.csv").dropna() # Collected data
 
-## ORGANIZE DATA
-Tau = df["Tau_trg_mean"]
-OF_y = df["Theta_x_trg_mean"]
-d_ceil = df["D_ceil_trg_mean"]
-landing_rate = df["LR_4Leg"]
-a_Rot = df["a_Rot_mean"]
+idx = (df.groupby(['Vel_d','Phi_d'])['LR_4Leg'].transform(max)) == df['LR_4Leg']
+df = df[idx].reset_index()
+
 
 
 def OFa_LR_Plot():
@@ -47,7 +45,7 @@ def OFa_LR_Plot():
 
 
 
-    cmap = mpl.cm.coolwarm
+    cmap = mpl.cm.rainbow
     norm = mpl.colors.Normalize(vmin=0,vmax=1.0)
     
     # CREATE PLOTS AND COLOR BAR
@@ -60,9 +58,9 @@ def OFa_LR_Plot():
 
 
     # PLOT LIMITS AND INFO
-    ax.set_xlabel(r'$Theta_x \ \mathrm{(rad/s)}$',Fontsize=13)
-    ax.set_ylabel(r'$Tau \ \mathrm{(ss)}$',Fontsize=13)
-    ax.set_zlabel(r'$D_{ceil} \ \mathrm{(m)}$',Fontsize=13)
+    ax.set_xlabel(r'$Theta_x \ \mathrm{(rad/s)}$')
+    ax.set_ylabel(r'$Tau \ \mathrm{(ss)}$')
+    ax.set_zlabel(r'$D_{ceil} \ \mathrm{(m)}$')
 
 
 
@@ -148,8 +146,18 @@ def OFa_aRot_Plot():
     Z_1 = df['D_ceil_trg_mean']
     C_1 = -df['a_Rot_mean']
 
+    color1 = '#fcfb97'
+    color2 = '#39d771'
+    color3 = '#1e5ec4'
 
-    cmap = mpl.cm.rainbow
+
+    colors = [(0, color1), (0.5, color2), (1, color3),]
+    custom_colormap = LinearSegmentedColormap.from_list("custom_gradient", colors)
+
+
+
+    cmap = mpl.cm.terrain_r
+    cmap=custom_colormap
     norm = mpl.colors.Normalize(vmin=0,vmax=8.0)
     
     # CREATE PLOTS AND COLOR BAR
@@ -160,9 +168,9 @@ def OFa_aRot_Plot():
 
 
     # PLOT LIMITS AND INFO
-    ax.set_xlabel(r'$Theta_x \ \mathrm{(rad/s)}$',Fontsize=13)
-    ax.set_ylabel(r'$Tau \ \mathrm{(ss)}$',Fontsize=13)
-    ax.set_zlabel(r'$D_{ceil} \ \mathrm{(m)}$',Fontsize=13)
+    ax.set_xlabel(r'$Theta_x \ \mathrm{(rad/s)}$')
+    ax.set_ylabel(r'$Tau \ \mathrm{(ss)}$')
+    ax.set_zlabel(r'$D_{ceil} \ \mathrm{(m)}$')
 
 
 
@@ -184,6 +192,7 @@ def OFa_aRot_Plot():
 
 def Cartesian_LR_Plot():
 
+    
     ## INITIALIZE FIGURE
     fig = plt.figure()
     ax = fig.add_subplot(111,projection="3d")
@@ -202,7 +211,7 @@ def Cartesian_LR_Plot():
 
 
 
-    cmap = mpl.cm.jet
+    cmap = mpl.cm.rainbow
     norm = mpl.colors.Normalize(vmin=0,vmax=1.0)
     
     # CREATE PLOTS AND COLOR BAR
@@ -235,7 +244,7 @@ def Cartesian_LR_Plot():
     ax.view_init(elev=28, azim=-132)
     fig.tight_layout()
 
-    # plt.savefig(f'SNL_Cartesian_LR_Plot.pdf',dpi=300)
+    plt.savefig(f'SNL_Cartesian_LR_Plot.pdf',dpi=300)
 
 def Cartesian_LR_Plot_2():
 
@@ -289,8 +298,8 @@ if __name__ == "__main__":
     # OFa_LR_Plot()
     # OFa_LR_Shaded_Plot()
 
-    # OFa_aRot_Plot()
-    Cartesian_LR_Plot()
+    OFa_aRot_Plot()
+    # Cartesian_LR_Plot()
     
 
     plt.show(block=True)

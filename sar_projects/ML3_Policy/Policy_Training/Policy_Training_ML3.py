@@ -689,7 +689,7 @@ class Policy_Trainer():
         ## PLOT DATA
         fig = plt.figure(figsize=(4,4))
 
-        cmap = mpl.cm.coolwarm
+        cmap = mpl.cm.rainbow
         norm = mpl.colors.Normalize(vmin=0,vmax=1)
 
         ax = fig.add_subplot(projection='polar')
@@ -704,11 +704,11 @@ class Policy_Trainer():
 
         ax.set_xticks(np.radians([30,45,60,75,90]))
         ax.set_yticks([0,1.0,2.0,3.0,3.5])
-        plt.show(block=True)
  
         if saveFig==True:
             plt.savefig(f'{self.model_initials}_Polar_LR.pdf',dpi=300)
 
+        plt.show(block=True)
 
 ## DEFINE NN MODEL
 class NN_Model(nn.Module):
@@ -740,7 +740,7 @@ if __name__ == "__main__":
 
 
     ## DESIGNATE FILE PATHS
-    FileName = "NL_LR_Trials.csv"
+    FileName = "WS_LR_Trials.csv"
     # FileName = "NL_ML3_LR_Trials.csv"
     # FileName = "DeepRL_NL_LR.csv"
     model_initials = FileName[:2]
@@ -807,7 +807,7 @@ if __name__ == "__main__":
 
     # Policy.plotPolicyRegion(df_raw,PlotBoundry=True,iso_level=0.0)
     # Policy.plotPolicyRegion(df_raw,PlotBoundry=False,iso_level=0.0)
-    Policy.plot_Landing_Rate(df_max,saveFig=False)
+    Policy.plot_Landing_Rate(df_max,saveFig=True)
     
     # EXP_PATH = os.path.dirname(rospkg.RosPack().get_path('crazyflie_logging_exp'))
 
