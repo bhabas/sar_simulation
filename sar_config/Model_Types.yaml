@@ -170,8 +170,6 @@ SAR_Type:
         DR_Yaw: 0.8           # Yaw-Axis Damping Ratio
 
 
-
-
   Source_One_V5:
       CtrlGains:
         ## POSITION XY
