@@ -173,28 +173,28 @@ SAR_Type:
   Source_One_V5:
       CtrlGains:
         ## POSITION XY
-        P_kp_xy: 3.5
-        P_kd_xy: 2.0
-        P_ki_xy: 1.5
-        i_range_xy: 1.0
+        P_kp_xy: 5.0
+        P_kd_xy: 3.2
+        P_ki_xy: 0.0
+        i_range_xy: 0.1
 
         ## POSITION Z
-        P_kp_z: 50.0
-        P_kd_z: 10.0
+        P_kp_z: 30.0
+        P_kd_z: 8.0
         P_ki_z: 0.0
-        i_range_z: 1.0
+        i_range_z: 0.1
 
         ## ORIENTATION XY
-        R_kp_xy: 0.7
-        R_kd_xy: 0.05
+        R_kp_xy: 0.9
+        R_kd_xy: 0.07
         R_ki_xy: 0.0
-        i_range_R_xy: 1.0
+        i_range_R_xy: 0.1
 
         ## ORIENTATION Z
         R_kp_z: 0.012
-        R_kd_z: 0.008
-        R_ki_z: 0.005
-        i_range_R_z: 1.0
+        R_kd_z: 0.013
+        R_ki_z: 0.0003
+        i_range_R_z: 0.1
 
       System_Params:
 
@@ -237,25 +237,25 @@ SAR_Type:
         P_kp_xy: 4.0
         P_kd_xy: 1.8
         P_ki_xy: 0.0
-        i_range_xy: 1.0
+        i_range_xy: 0.1
 
         ## POSITION Z
         P_kp_z: 13.0
         P_kd_z: 3.2
         P_ki_z: 1.0
-        i_range_z: 1.0
+        i_range_z: 0.1
 
         ## ORIENTATION XY
         R_kp_xy: 0.13
         R_kd_xy: 0.014
         R_ki_xy: 0.0
-        i_range_R_xy: 1.0
+        i_range_R_xy: 0.1
 
         ## ORIENTATION Z
         R_kp_z: 0.008
-        R_kd_z: 0.0045
-        R_ki_z: 0.0
-        i_range_R_z: 1.0
+        R_kd_z: 0.005
+        R_ki_z: 0.0003
+        i_range_R_z: 0.1
 
       System_Params:
 
