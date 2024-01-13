@@ -2,7 +2,7 @@ DATA_TYPE: "SIM"
 
 
 SAR_SETTINGS:
-  SAR_Type: "Impulse_Micro"
+  SAR_Type: "Source_One_V5"
   SAR_Config: "Base_Model"
 
   Policy_Type: "PARAM_OPTIM"
@@ -18,20 +18,20 @@ PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
   Plane_Config: "Checkerboard_L02"
   
   Plane_Angle: 180 # [deg]
-  Pos_X: 0.0    # [m]
-  Pos_Y: 1.7    # [m]
-  Pos_Z: 2.0    # [m]
+  Pos_X: 20.0    # [m]
+  Pos_Y: 20.0    # [m]
+  Pos_Z: 20.0    # [m]
 
 GROUND_SETTINGS:
   Ground_Type: "Ground_Surface"
-  Ground_Config: "None"
+  Ground_Config: "Debug"
 
 
 SIM_SETTINGS:
   GUI_Flag: True
   Pause_Flag: True
-  Sim_Speed: 1.0
-  Sim_Slowdown_Speed: 0.1
+  Sim_Speed: 0.5
+  Sim_Slowdown_Speed: 0.5
   Landing_Slowdown_Flag: True
 
 SAR_DC_SETTINGS:

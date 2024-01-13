@@ -100,7 +100,7 @@ namespace gazebo
         Link_Ptr->AddRelativeForce(ignition::math::Vector3d(0, 0, (Thrust*g2Newton)));
 
         // APPLY ROTOR TORQUE TO MAIN BODY
-        Torque = Torque_Coeff*(Thrust*g2Newton);
+        Torque = C_tf*(Thrust*g2Newton);
         ignition::math::Vector3d Torque_Vec(0, 0, -Turn_Direction * Torque); // Torque is opposite direction of rotation
 
         physics::Link_V Parent_Links = Link_Ptr->GetParentJointsLinks(); // Get <vector> of parent links
