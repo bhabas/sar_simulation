@@ -216,7 +216,21 @@ SAR_Type:
           Iyy: 2.71e-3          # [kg*m^2]
           Izz: 5.27e-3          # [kg*m^2] 
 
-        A30_L150_K00:      
+        A30_L00:      
+          Mass: 765.0e-3        # [kg]
+          Ixx: 4.68e-3          # [kg*m^2]
+          Iyy: 4.22e-3          # [kg*m^2]
+          Izz: 5.86e-3          # [kg*m^2]
+
+          Leg_Angle: 30         # Leg Angle [deg]
+          Leg_Length: 100.0e-3  # Leg Length [m]
+
+          K_Pitch: 0.244        # Pitch-Axis Stiffness [N*m/rad]
+          DR_Pitch: 0.3         # Pitch-Axis Damping Ratio
+          K_Yaw: 1.5            # Yaw-Axis Stiffness [N*m/rad]
+          DR_Yaw: 0.8           # Yaw-Axis Damping Ratio
+
+        A30_L150:      
           Mass: 765.0e-3        # [kg]
           Ixx: 4.68e-3          # [kg*m^2]
           Iyy: 4.22e-3          # [kg*m^2]
@@ -230,19 +244,21 @@ SAR_Type:
           K_Yaw: 1.5            # Yaw-Axis Stiffness [N*m/rad]
           DR_Yaw: 0.8           # Yaw-Axis Damping Ratio
 
-        A20_L150_K00: 
+        A30_L200:      
           Mass: 765.0e-3        # [kg]
           Ixx: 4.68e-3          # [kg*m^2]
           Iyy: 4.22e-3          # [kg*m^2]
           Izz: 5.86e-3          # [kg*m^2]
 
           Leg_Angle: 30         # Leg Angle [deg]
-          Leg_Length: 150.0e-3  # Leg Length [m]
+          Leg_Length: 200.0e-3  # Leg Length [m]
 
           K_Pitch: 0.244        # Pitch-Axis Stiffness [N*m/rad]
           DR_Pitch: 0.3         # Pitch-Axis Damping Ratio
           K_Yaw: 1.5            # Yaw-Axis Stiffness [N*m/rad]
           DR_Yaw: 0.8           # Yaw-Axis Damping Ratio
+
+        
 
 
   Impulse_Micro:

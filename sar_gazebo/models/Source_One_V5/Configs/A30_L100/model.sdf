@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='A30_L150_K00'>
+  <model name='A30_L100'>
 
     <include>
       <uri>model://SAR_Base</uri>
@@ -9,15 +9,15 @@
     <link name='Leg_1'>
       <pose>18.5e-3 -18.5e-3 -4.0e-3 0 1.047 -0.785</pose>
       <inertial>
-        <mass>18.1e-3</mass>
+        <mass>16.6e-3</mass>
         <pose>0 0 0 0 0 0 </pose>
         <inertia>
-          <ixx>1.13e-6</ixx>
+          <ixx>1.12e-6</ixx>
           <ixy>0</ixy>
-          <ixz>8.21e-6</ixz>
-          <iyy>2.93e-4</iyy>
+          <ixz>5.96e-6</ixz>
+          <iyy>1.35e-4</iyy>
           <iyz>0</iyz>
-          <izz>2.92e-4</izz>
+          <izz>1.35e-4</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -26,7 +26,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://A30_L150_K00/meshes/30_deg_Sim.STL</uri>
+            <uri>model://Leg_Assemblies/meshes/Leg_Assembly_30_deg--100mm.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -39,7 +39,7 @@
         </material>
       </visual>
       <collision name="Leg_1_Collision">
-        <pose>164.7e-3 0 7.8e-3 0 0 0</pose>
+        <pose>114.7e-3 0 7.9e-3 0 0 0</pose>
         <geometry>
           <sphere>
             <radius>6.5e-3</radius>
@@ -51,15 +51,15 @@
     <link name='Leg_2'>
       <pose>-18.5e-3 -18.5e-3 -4.0e-3 0 1.047 -2.356</pose>
       <inertial>
-        <mass>18.1e-3</mass>
+        <mass>16.6e-3</mass>
         <pose>0 0 0 0 0 0 </pose>
         <inertia>
-          <ixx>1.13e-6</ixx>
+          <ixx>1.12e-6</ixx>
           <ixy>0</ixy>
-          <ixz>8.21e-6</ixz>
-          <iyy>2.93e-4</iyy>
+          <ixz>5.96e-6</ixz>
+          <iyy>1.35e-4</iyy>
           <iyz>0</iyz>
-          <izz>2.92e-4</izz>
+          <izz>1.35e-4</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -68,7 +68,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://A30_L150_K00/meshes/30_deg_Sim.STL</uri>
+            <uri>model://Leg_Assemblies/meshes/Leg_Assembly_30_deg--100mm.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -81,7 +81,7 @@
         </material>
       </visual>
       <collision name="Leg_2_Collision">
-        <pose>164.7e-3 0 7.8e-3 0 0 0</pose>
+        <pose>114.7e-3 0 7.9e-3 0 0 0</pose>
         <geometry>
           <sphere>
             <radius>6.5e-3</radius>
@@ -93,15 +93,15 @@
     <link name='Leg_3'>
       <pose>-18.5e-3 18.5e-3 -4.0e-3 0 1.047 2.356</pose>
       <inertial>
-        <mass>18.1e-3</mass>
+        <mass>16.6e-3</mass>
         <pose>0 0 0 0 0 0 </pose>
         <inertia>
-          <ixx>1.13e-6</ixx>
+          <ixx>1.12e-6</ixx>
           <ixy>0</ixy>
-          <ixz>8.21e-6</ixz>
-          <iyy>2.93e-4</iyy>
+          <ixz>5.96e-6</ixz>
+          <iyy>1.35e-4</iyy>
           <iyz>0</iyz>
-          <izz>2.92e-4</izz>
+          <izz>1.35e-4</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -110,7 +110,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://A30_L150_K00/meshes/30_deg_Sim.STL</uri>
+            <uri>model://Leg_Assemblies/meshes/Leg_Assembly_30_deg--100mm.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -123,7 +123,7 @@
         </material>
       </visual>
       <collision name="Leg_3_Collision">
-        <pose>164.7e-3 0 7.8e-3 0 0 0</pose>
+        <pose>114.7e-3 0 7.9e-3 0 0 0</pose>
         <geometry>
           <sphere>
             <radius>6.5e-3</radius>
@@ -135,15 +135,15 @@
     <link name='Leg_4'>
       <pose>18.5e-3 18.5e-3 -4.0e-3 0 1.047 0.785</pose>
       <inertial>
-        <mass>18.1e-3</mass>
+        <mass>16.6e-3</mass>
         <pose>0 0 0 0 0 0 </pose>
         <inertia>
-          <ixx>1.13e-6</ixx>
+          <ixx>1.12e-6</ixx>
           <ixy>0</ixy>
-          <ixz>8.21e-6</ixz>
-          <iyy>2.93e-4</iyy>
+          <ixz>5.96e-6</ixz>
+          <iyy>1.35e-4</iyy>
           <iyz>0</iyz>
-          <izz>2.92e-4</izz>
+          <izz>1.35e-4</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -152,7 +152,7 @@
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://A30_L150_K00/meshes/30_deg_Sim.STL</uri>
+            <uri>model://Leg_Assemblies/meshes/Leg_Assembly_30_deg--100mm.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -165,7 +165,7 @@
         </material>
       </visual>
       <collision name="Leg_4_Collision">
-        <pose>164.7e-3 0 7.8e-3 0 0 0</pose>
+        <pose>114.7e-3 0 7.9e-3 0 0 0</pose>
         <geometry>
           <sphere>
             <radius>6.5e-3</radius>
