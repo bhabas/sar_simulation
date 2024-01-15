@@ -174,14 +174,15 @@ class SAR_Sim_Interface(SAR_Base_Interface):
     def updateInertia(self):
 
         ## CREATE SERVICE REQUEST MSG
-        srv = Inertia_ParamsRequest() 
-        srv.mass = self.mass
-        srv.Inertia.x = self.Ixx
-        srv.Inertia.y = self.Iyy
-        srv.Inertia.z = self.Izz
+        # srv = Inertia_ParamsRequest() 
+        # srv.mass = self.mass
+        # srv.Inertia.x = self.Ixx
+        # srv.Inertia.y = self.Iyy
+        # srv.Inertia.z = self.Izz
 
-        ## SEND LOGGING REQUEST VIA SERVICE
-        self.callService('/SAR_Internal/Inertia_Params',srv,Inertia_Params)
+        # ## SEND LOGGING REQUEST VIA SERVICE
+        # self.callService('/SAR_Internal/Inertia_Params',srv,Inertia_Params)
+        pass
 
     def setParams(self):
 

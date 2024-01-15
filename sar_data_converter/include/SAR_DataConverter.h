@@ -457,10 +457,10 @@ inline void SAR_DataConverter::LoadParams()
     std::string SAR_Config_str = "/Config/" + SAR_Config;
 
     // UPDATE INTERTIAL PARAMETERS
-    ros::param::get(SAR_Type_str + SAR_Config_str + "/Mass",Mass);
-    ros::param::get(SAR_Type_str + SAR_Config_str + "/Ixx",Ixx);
-    ros::param::get(SAR_Type_str + SAR_Config_str + "/Iyy",Iyy);
-    ros::param::get(SAR_Type_str + SAR_Config_str + "/Izz",Izz);
+    ros::param::get(SAR_Type_str + SAR_Config_str + "/Ref_Mass",Mass);
+    ros::param::get(SAR_Type_str + SAR_Config_str + "/Ref_Ixx",Ixx);
+    ros::param::get(SAR_Type_str + SAR_Config_str + "/Ref_Iyy",Iyy);
+    ros::param::get(SAR_Type_str + SAR_Config_str + "/Ref_Izz",Izz);
 
 
     // PLANE SETTINGS

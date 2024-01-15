@@ -183,10 +183,10 @@ void Controller::loadParams()
 
     
     // UPDATE INERTIAL PARAMETERS
-    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Mass",m);
-    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Ixx",Ixx);
-    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Iyy",Iyy);
-    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Izz",Izz);
+    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Ref_Mass",m);
+    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Ref_Ixx",Ixx);
+    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Ref_Iyy",Iyy);
+    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Ref_Izz",Izz);
 
 
     // UPDATE SYSTEM PARAMETERS
