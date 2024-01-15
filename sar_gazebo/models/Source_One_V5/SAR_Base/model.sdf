@@ -477,24 +477,11 @@
     </plugin>
 
 
-    <!-- <joint name='Pitch_Joint' type='revolute'>
+    <joint name='World_Joint' type='fixed'>
       <parent>world</parent>
       <child>SAR_Body</child>
-      <pose>0 0 26.5e-3 0 0 0</pose>
-      <axis>
-        <xyz>0 1 0</xyz>
-        <limit>
-          <lower>-3.0</lower>
-          <upper>3.0</upper>
-          <effort>-1</effort>
-          <velocity>-1</velocity>
-        </limit>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0</spring_stiffness>
-        </dynamics>
-      </axis>
-    </joint> -->
+      <pose>0 0 0 0 0 0</pose>
+    </joint>
 
 
 
