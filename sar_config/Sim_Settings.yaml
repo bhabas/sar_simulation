@@ -24,7 +24,7 @@ PLANE_SETTINGS: # INITIAL PLANE POSE SETTINGS
 
 GROUND_SETTINGS:
   Ground_Type: "Ground_Surface"
-  Ground_Config: "None"
+  Ground_Config: "Debug"
 
 
 SIM_SETTINGS:
