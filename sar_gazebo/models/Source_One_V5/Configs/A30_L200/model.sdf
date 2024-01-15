@@ -2,15 +2,15 @@
 <sdf version='1.7'>
   <model name='A30_L200'>
 
-    <!-- <include>
+    <include>
       <uri>model://SAR_Base</uri>
-    </include> -->
+    </include>
 
     <link name='Leg_1'>
-      <pose>0 0 0 0 0 0</pose>
+      <pose>18.5e-3 -18.5e-3 -4.0e-3 0 -0.524 -0.785</pose>
       <inertial>
         <mass>5.9e-3</mass>
-        <pose>0 0 0 0 0 0 </pose>
+        <pose>0 0 -0.1 0 0 0 </pose>
         <inertia>
           <ixx>19.667e-6</ixx>
           <ixy>0</ixy>
@@ -23,7 +23,7 @@
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <visual name='Leg_Visual'>
-        <pose>0 0 0 0 0 0</pose>
+        <pose>0 0 -0.1 0 0 0</pose>
         <geometry>
           <cylinder>
             <radius>2.5e-3</radius>
@@ -45,11 +45,11 @@
 
 
     <joint name='Hinge_Joint' type='revolute'>
-      <parent>world</parent>
+      <parent>SAR_Base::SAR_Body</parent>
       <child>Leg_1</child>
-      <pose>0 0 0.1 0 0 0</pose>
+      <pose>0 0 0 0 0 0</pose>
         <axis>
-          <xyz>1 0 0</xyz>
+          <xyz>0 1 0</xyz>
           <limit>
             <lower>-3.0</lower>
             <upper>3.0</upper>
@@ -61,6 +61,34 @@
           </dynamics>
         </axis>
     </joint> 
+
+    <!-- <joint name='Hinge_1_Joint' type='universal'>
+      <parent>SAR_Base::SAR_Body</parent>
+      <child>Leg_1</child>
+      <pose>0 0 0 0 0 0</pose>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <lower>-0.785</lower>
+          <upper>0.524</upper>
+        </limit>
+        <dynamics>
+          <spring_stiffness>0</spring_stiffness>
+          <damping>0</damping>
+        </dynamics>
+      </axis>
+      <axis2>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-0.5</lower>
+          <upper>0.5</upper>
+        </limit>
+        <dynamics>
+          <spring_stiffness>0</spring_stiffness>
+          <damping>0</damping>
+        </dynamics>
+      </axis2>
+    </joint> -->
 
 
     
