@@ -51,10 +51,10 @@ namespace gazebo
         //      INERTIA UPDATE
         // =======================
         // LOAD INTIAL BASE_MODEL INERTIAL PARAMETERS
-        ros::param::get("/SAR_Type/"+SAR_Type+"/Config/Base_Model/Ixx",Ixx_Body);
-        ros::param::get("/SAR_Type/"+SAR_Type+"/Config/Base_Model/Iyy",Iyy_Body);
-        ros::param::get("/SAR_Type/"+SAR_Type+"/Config/Base_Model/Izz",Izz_Body);
-        ros::param::get("/SAR_Type/"+SAR_Type+"/Config/Base_Model/Mass",Mass_Body);
+        ros::param::get("/SAR_Type/"+SAR_Type+"/System_Params/Base_Mass",Mass_Body);
+        ros::param::get("/SAR_Type/"+SAR_Type+"/System_Params/Base_Ixx",Ixx_Body);
+        ros::param::get("/SAR_Type/"+SAR_Type+"/System_Params/Base_Iyy",Iyy_Body);
+        ros::param::get("/SAR_Type/"+SAR_Type+"/System_Params/Base_Izz",Izz_Body);
 
         // GET BASE_MODEL INERTIA POINTER
         Inertial_Ptr = SAR_Body_Ptr->GetInertial();

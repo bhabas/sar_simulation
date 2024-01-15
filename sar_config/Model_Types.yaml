@@ -207,57 +207,75 @@ SAR_Type:
 
         Prop_Front: [72.6e-3, 86.6e-3]  # [x,y] absolute distances [m]
         Prop_Rear:  [72.6e-3, 86.6e-3]  # [x,y] absolute distances [m]
+
+        Base_Mass: 693.0e-3        # [kg]
+        Base_Ixx: 3.17e-3          # [kg*m^2]
+        Base_Iyy: 2.71e-3          # [kg*m^2]
+        Base_Izz: 5.27e-3          # [kg*m^2] 
       
       Config:
 
         Base_Model:      
-          Mass: 693.0e-3        # [kg]
-          Ixx: 3.17e-3          # [kg*m^2]
-          Iyy: 2.71e-3          # [kg*m^2]
-          Izz: 5.27e-3          # [kg*m^2] 
+          Ref_Mass: 693.0e-3        # [kg]
+          Ref_Ixx: 3.17e-3          # [kg*m^2]
+          Ref_Iyy: 2.71e-3          # [kg*m^2]
+          Ref_Izz: 5.27e-3          # [kg*m^2] 
 
-        A30_L00:      
-          Mass: 765.0e-3        # [kg]
-          Ixx: 4.68e-3          # [kg*m^2]
-          Iyy: 4.22e-3          # [kg*m^2]
-          Izz: 5.86e-3          # [kg*m^2]
+        A30_L100:      
+          Ref_Mass: 760.0e-3        # [kg]
+          Ref_Ixx: 4.00e-3          # [kg*m^2]
+          Ref_Iyy: 3.54e-3          # [kg*m^2]
+          Ref_Izz: 5.62e-3          # [kg*m^2]
 
-          Leg_Angle: 30         # Leg Angle [deg]
-          Leg_Length: 100.0e-3  # Leg Length [m]
+          Leg_Angle: 30             # Leg Angle [deg]
+          Leg_Length: 100.0e-3      # Leg Length [m]
 
-          K_Pitch: 0.244        # Pitch-Axis Stiffness [N*m/rad]
-          DR_Pitch: 0.3         # Pitch-Axis Damping Ratio
-          K_Yaw: 1.5            # Yaw-Axis Stiffness [N*m/rad]
-          DR_Yaw: 0.8           # Yaw-Axis Damping Ratio
+          K_y: 0.244                # Y-Axis Stiffness [N*m/rad]
+          DR_y: 0.3                 # Y-Axis Damping Ratio
+          K_x: 1.5                  # X-Axis Stiffness [N*m/rad]
+          DR_x: 0.8                 # X-Axis Damping Ratio
 
         A30_L150:      
-          Mass: 765.0e-3        # [kg]
-          Ixx: 4.68e-3          # [kg*m^2]
-          Iyy: 4.22e-3          # [kg*m^2]
-          Izz: 5.86e-3          # [kg*m^2]
+          Ref_Mass: 765.0e-3        # [kg]
+          Ref_Ixx: 4.68e-3          # [kg*m^2]
+          Ref_Iyy: 4.22e-3          # [kg*m^2]
+          Ref_Izz: 5.86e-3          # [kg*m^2]
 
-          Leg_Angle: 30         # Leg Angle [deg]
-          Leg_Length: 150.0e-3  # Leg Length [m]
+          Leg_Angle: 30             # Leg Angle [deg]
+          Leg_Length: 150.0e-3      # Leg Length [m]
 
-          K_Pitch: 0.244        # Pitch-Axis Stiffness [N*m/rad]
-          DR_Pitch: 0.3         # Pitch-Axis Damping Ratio
-          K_Yaw: 1.5            # Yaw-Axis Stiffness [N*m/rad]
-          DR_Yaw: 0.8           # Yaw-Axis Damping Ratio
+          K_y: 0.244                # Y-Axis Stiffness [N*m/rad]
+          DR_y: 0.3                 # Y-Axis Damping Ratio
+          K_x: 1.5                  # X-Axis Stiffness [N*m/rad]
+          DR_x: 0.8                 # X-Axis Damping Ratio
 
         A30_L200:      
-          Mass: 765.0e-3        # [kg]
-          Ixx: 4.68e-3          # [kg*m^2]
-          Iyy: 4.22e-3          # [kg*m^2]
-          Izz: 5.86e-3          # [kg*m^2]
+          Ref_Mass: 771.0e-3        # [kg]
+          Ref_Ixx: 5.37e-3          # [kg*m^2]
+          Ref_Iyy: 4.91e-3          # [kg*m^2]
+          Ref_Izz: 6.81e-3          # [kg*m^2]
 
-          Leg_Angle: 30         # Leg Angle [deg]
-          Leg_Length: 200.0e-3  # Leg Length [m]
+          Leg_Angle: 30             # Leg Angle [deg]
+          Leg_Length: 200.0e-3      # Leg Length [m]
 
-          K_Pitch: 0.244        # Pitch-Axis Stiffness [N*m/rad]
-          DR_Pitch: 0.3         # Pitch-Axis Damping Ratio
-          K_Yaw: 1.5            # Yaw-Axis Stiffness [N*m/rad]
-          DR_Yaw: 0.8           # Yaw-Axis Damping Ratio
+          K_y: 0.244                # Y-Axis Stiffness [N*m/rad]
+          DR_y: 0.3                 # Y-Axis Damping Ratio
+          K_x: 1.5                  # X-Axis Stiffness [N*m/rad]
+          DR_x: 0.8                 # X-Axis Damping Ratio
 
+        A30_L250:      
+          Ref_Mass: 777.0e-3        # [kg]
+          Ref_Ixx: 6.43e-3          # [kg*m^2]
+          Ref_Iyy: 5.97e-3          # [kg*m^2]
+          Ref_Izz: 7.56e-3          # [kg*m^2]
+
+          Leg_Angle: 30             # Leg Angle [deg]
+          Leg_Length: 200.0e-3      # Leg Length [m]
+
+          K_y: 0.244                # Y-Axis Stiffness [N*m/rad]
+          DR_y: 0.3                 # Y-Axis Damping Ratio
+          K_x: 1.5                  # X-Axis Stiffness [N*m/rad]
+          DR_x: 0.8                 # X-Axis Damping Ratio
         
 
 
