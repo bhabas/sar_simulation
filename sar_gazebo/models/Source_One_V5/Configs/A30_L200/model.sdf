@@ -9,15 +9,15 @@
     <link name='Leg_1'>
       <pose>18.5e-3 -18.5e-3 -4.0e-3 0 1.047 -0.785</pose>
       <inertial>
-        <mass>20.9e-3</mass>
-        <pose>129.0e-3 0 1.8e-3 0 0 0 </pose>
+        <mass>20.8e-3</mass>
+        <pose>130.0e-3 0 1.9e-3 0 0 0 </pose>
         <inertia>
           <ixx>1.11e-6</ixx>
           <ixy>0</ixy>
-          <ixz>5.32e-6</ixz>
-          <iyy>1.72e-4</iyy>
+          <ixz>5.29e-6</ixz>
+          <iyy>1.70e-4</iyy>
           <iyz>0</iyz>
-          <izz>1.71e-4</izz>
+          <izz>1.69e-4</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -57,15 +57,15 @@
     <link name='Leg_2'>
       <pose>-18.5e-3 -18.5e-3 -4.0e-3 0 1.047 -2.35</pose>
       <inertial>
-        <mass>20.9e-3</mass>
-        <pose>129.0e-3 0 1.8e-3 0 0 0 </pose>
+        <mass>20.8e-3</mass>
+        <pose>130.0e-3 0 1.9e-3 0 0 0 </pose>
         <inertia>
           <ixx>1.11e-6</ixx>
           <ixy>0</ixy>
-          <ixz>5.32e-6</ixz>
-          <iyy>1.72e-4</iyy>
+          <ixz>5.29e-6</ixz>
+          <iyy>1.70e-4</iyy>
           <iyz>0</iyz>
-          <izz>1.71e-4</izz>
+          <izz>1.69e-4</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -105,15 +105,15 @@
     <link name='Leg_3'>
       <pose>-18.5e-3 18.5e-3 -4.0e-3 0 1.047 2.35</pose>
       <inertial>
-        <mass>20.9e-3</mass>
-        <pose>129.0e-3 0 1.8e-3 0 0 0 </pose>
+        <mass>20.8e-3</mass>
+        <pose>130.0e-3 0 1.9e-3 0 0 0 </pose>
         <inertia>
           <ixx>1.11e-6</ixx>
           <ixy>0</ixy>
-          <ixz>5.32e-6</ixz>
-          <iyy>1.72e-4</iyy>
+          <ixz>5.29e-6</ixz>
+          <iyy>1.70e-4</iyy>
           <iyz>0</iyz>
-          <izz>1.71e-4</izz>
+          <izz>1.69e-4</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -153,15 +153,15 @@
     <link name='Leg_4'>
       <pose>18.5e-3 18.5e-3 -4.0e-3 0 1.047 0.785</pose>
       <inertial>
-        <mass>20.9e-3</mass>
-        <pose>129.0e-3 0 1.8e-3 0 0 0 </pose>
+        <mass>20.8e-3</mass>
+        <pose>130.0e-3 0 1.9e-3 0 0 0 </pose>
         <inertia>
           <ixx>1.11e-6</ixx>
           <ixy>0</ixy>
-          <ixz>5.32e-6</ixz>
-          <iyy>1.72e-4</iyy>
+          <ixz>5.29e-6</ixz>
+          <iyy>1.70e-4</iyy>
           <iyz>0</iyz>
-          <izz>1.71e-4</izz>
+          <izz>1.69e-4</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -211,15 +211,15 @@
           <upper>0.524</upper>
         </limit>
         <dynamics>
-          <spring_stiffness>0.24</spring_stiffness>
+          <spring_stiffness>0</spring_stiffness>
           <damping>0</damping>
         </dynamics>
       </axis>
       <axis2>
         <xyz>0 0 1</xyz>
         <limit>
-          <lower>-0.5</lower>
-          <upper>0.5</upper>
+          <lower>-0.35</lower>
+          <upper>0.35</upper>
         </limit>
         <dynamics>
           <spring_stiffness>0</spring_stiffness>
@@ -239,15 +239,15 @@
           <upper>0.524</upper>
         </limit>
         <dynamics>
-          <spring_stiffness>0.24</spring_stiffness>
+          <spring_stiffness>0</spring_stiffness>
           <damping>0</damping>
         </dynamics>
       </axis>
       <axis2>
         <xyz>0 0 1</xyz>
         <limit>
-          <lower>-0.5</lower>
-          <upper>0.5</upper>
+          <lower>-0.35</lower>
+          <upper>0.35</upper>
         </limit>
         <dynamics>
           <spring_stiffness>0</spring_stiffness>
@@ -267,15 +267,15 @@
           <upper>0.524</upper>
         </limit>
         <dynamics>
-          <spring_stiffness>0.24</spring_stiffness>
+          <spring_stiffness>0</spring_stiffness>
           <damping>0</damping>
         </dynamics>
       </axis>
       <axis2>
         <xyz>0 0 1</xyz>
         <limit>
-          <lower>-0.5</lower>
-          <upper>0.5</upper>
+          <lower>-0.35</lower>
+          <upper>0.35</upper>
         </limit>
         <dynamics>
           <spring_stiffness>0</spring_stiffness>
@@ -295,15 +295,15 @@
           <upper>0.524</upper>
         </limit>
         <dynamics>
-          <spring_stiffness>0.24</spring_stiffness>
+          <spring_stiffness>0</spring_stiffness>
           <damping>0</damping>
         </dynamics>
       </axis>
       <axis2>
         <xyz>0 0 1</xyz>
         <limit>
-          <lower>-0.5</lower>
-          <upper>0.5</upper>
+          <lower>-0.35</lower>
+          <upper>0.35</upper>
         </limit>
         <dynamics>
           <spring_stiffness>0</spring_stiffness>

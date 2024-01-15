@@ -9,15 +9,15 @@
     <link name='Leg_1'>
       <pose>18.5e-3 -18.5e-3 -4.0e-3 0 1.047 -0.785</pose>
       <inertial>
-        <mass>21.1e-3</mass>
-        <pose>0 0 0 0 0 0 </pose>
+        <mass>22.3e-3</mass>
+        <pose>158.4e-3 0 1.6e-3 0 0 0 </pose>
         <inertia>
-          <ixx>115e-6</ixx>
+          <ixx>1.13e-6</ixx>
           <ixy>0</ixy>
-          <ixz>8.21e-6</ixz>
-          <iyy>1.23e-5</iyy>
+          <ixz>6.58e-6</ixz>
+          <iyy>2.70e-4</iyy>
           <iyz>0</iyz>
-          <izz>8.28e-4</izz>
+          <izz>2.70e-4</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -55,17 +55,17 @@
     </link>
 
     <link name='Leg_2'>
-      <pose>-18.5e-3 -18.5e-3 -4.0e-3 0 1.047 -2.356</pose>
+      <pose>-18.5e-3 -18.5e-3 -4.0e-3 0 1.047 -2.35</pose>
       <inertial>
-        <mass>21.1e-3</mass>
-        <pose>0 0 0 0 0 0 </pose>
+        <mass>22.3e-3</mass>
+        <pose>158.4e-3 0 1.6e-3 0 0 0 </pose>
         <inertia>
-          <ixx>115e-6</ixx>
+          <ixx>1.13e-6</ixx>
           <ixy>0</ixy>
-          <ixz>8.21e-6</ixz>
-          <iyy>1.23e-5</iyy>
+          <ixz>6.58e-6</ixz>
+          <iyy>2.70e-4</iyy>
           <iyz>0</iyz>
-          <izz>8.28e-4</izz>
+          <izz>2.70e-4</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -103,17 +103,17 @@
     </link>
 
     <link name='Leg_3'>
-      <pose>-18.5e-3 18.5e-3 -4.0e-3 0 1.047 2.356</pose>
+      <pose>-18.5e-3 18.5e-3 -4.0e-3 0 1.047 2.35</pose>
       <inertial>
-        <mass>21.1e-3</mass>
-        <pose>0 0 0 0 0 0 </pose>
+        <mass>22.3e-3</mass>
+        <pose>158.4e-3 0 1.6e-3 0 0 0 </pose>
         <inertia>
-          <ixx>115e-6</ixx>
+          <ixx>1.13e-6</ixx>
           <ixy>0</ixy>
-          <ixz>8.21e-6</ixz>
-          <iyy>1.23e-5</iyy>
+          <ixz>6.58e-6</ixz>
+          <iyy>2.70e-4</iyy>
           <iyz>0</iyz>
-          <izz>8.28e-4</izz>
+          <izz>2.70e-4</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -153,15 +153,15 @@
     <link name='Leg_4'>
       <pose>18.5e-3 18.5e-3 -4.0e-3 0 1.047 0.785</pose>
       <inertial>
-        <mass>21.1e-3</mass>
-        <pose>0 0 0 0 0 0 </pose>
+        <mass>22.3e-3</mass>
+        <pose>158.4e-3 0 1.6e-3 0 0 0 </pose>
         <inertia>
-          <ixx>115e-6</ixx>
+          <ixx>1.13e-6</ixx>
           <ixy>0</ixy>
-          <ixz>8.21e-6</ixz>
-          <iyy>1.23e-5</iyy>
+          <ixz>6.58e-6</ixz>
+          <iyy>2.70e-4</iyy>
           <iyz>0</iyz>
-          <izz>8.28e-4</izz>
+          <izz>2.70e-4</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -198,7 +198,7 @@
       </sensor>
     </link>
 
-    
+
 
     <joint name='Hinge_1_Joint' type='universal'>
       <parent>SAR_Base::SAR_Body</parent>
@@ -218,8 +218,8 @@
       <axis2>
         <xyz>0 0 1</xyz>
         <limit>
-          <lower>-0.5</lower>
-          <upper>0.5</upper>
+          <lower>-0.35</lower>
+          <upper>0.35</upper>
         </limit>
         <dynamics>
           <spring_stiffness>0</spring_stiffness>
@@ -246,8 +246,8 @@
       <axis2>
         <xyz>0 0 1</xyz>
         <limit>
-          <lower>-0.5</lower>
-          <upper>0.5</upper>
+          <lower>-0.35</lower>
+          <upper>0.35</upper>
         </limit>
         <dynamics>
           <spring_stiffness>0</spring_stiffness>
@@ -274,8 +274,8 @@
       <axis2>
         <xyz>0 0 1</xyz>
         <limit>
-          <lower>-0.5</lower>
-          <upper>0.5</upper>
+          <lower>-0.35</lower>
+          <upper>0.35</upper>
         </limit>
         <dynamics>
           <spring_stiffness>0</spring_stiffness>
@@ -302,8 +302,8 @@
       <axis2>
         <xyz>0 0 1</xyz>
         <limit>
-          <lower>-0.5</lower>
-          <upper>0.5</upper>
+          <lower>-0.35</lower>
+          <upper>0.35</upper>
         </limit>
         <dynamics>
           <spring_stiffness>0</spring_stiffness>
@@ -311,6 +311,7 @@
         </dynamics>
       </axis2>
     </joint>
+
 
     <plugin name='Leg_1_Plugin' filename='libSticky_Leg_Plugin.so'>
       <LegNumber>1</LegNumber>
