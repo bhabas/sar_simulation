@@ -7,29 +7,28 @@
     </include>
 
     <link name='Leg_1'>
-      <pose>18.5e-3 -18.5e-3 -4.0e-3 0 -0.524 -0.785</pose>
+      <pose>18.5e-3 -18.5e-3 -4.0e-3 0 1.047 -0.785</pose>
       <inertial>
-        <mass>5.9e-3</mass>
-        <pose>0 0 -0.1 0 0 0 </pose>
+        <mass>18.12e-3</mass>
+        <pose>107.66e-3 0 2.36e-3 0 0 0 </pose>
         <inertia>
-          <ixx>19.667e-6</ixx>
+          <ixx>1.03e-6</ixx>
           <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>19.667e-6</iyy>
+          <ixz>3.61e-6</ixz>
+          <iyy>8.25e-5</iyy>
           <iyz>0</iyz>
-          <izz>18.4375e-9</izz>
+          <izz>8.18e-5</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <visual name='Leg_Visual'>
-        <pose>0 0 -0.1 0 0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
         <geometry>
-          <cylinder>
-            <radius>2.5e-3</radius>
-            <length>200.0e-3</length>
-          </cylinder>
-
+          <mesh>
+            <uri>model://Leg_Assemblies/meshes/Leg_Assembly_30_deg--150mm.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
         </geometry>
         <material>
           <script>
@@ -57,7 +56,7 @@
             <velocity>-1</velocity>
           </limit>
           <dynamics>
-            <spring_stiffness>0.001</spring_stiffness>
+            <spring_stiffness>0.01157</spring_stiffness>
           </dynamics>
         </axis>
     </joint> 
