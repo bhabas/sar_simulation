@@ -7,7 +7,7 @@
     </include> -->
 
     <link name='Leg_1'>
-      <pose>0 0 0 0 1.571 0</pose>
+      <pose>0 0 0 0 0 0</pose>
       <inertial>
         <mass>5.9e-3</mass>
         <pose>0 0 0 0 0 0 </pose>
@@ -47,7 +47,7 @@
     <joint name='Hinge_Joint' type='revolute'>
       <parent>world</parent>
       <child>Leg_1</child>
-      <pose>0 0 0 0 0 0</pose>
+      <pose>0 0 0.1 0 0 0</pose>
         <axis>
           <xyz>1 0 0</xyz>
           <limit>
