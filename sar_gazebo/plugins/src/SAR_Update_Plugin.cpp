@@ -57,10 +57,10 @@ namespace gazebo
         ros::param::get("/SAR_Type/"+SAR_Type+"/System_Params/Base_Izz",Izz_Body);
 
         // GET BASE_MODEL INERTIA POINTER
-        Inertial_Ptr = SAR_Body_Ptr->GetInertial();
+        Inertial_Ptr = SAR_Body_Ptr->GetInertial();      
         
         // UPDATE INERTIA
-        // Update_Inertia();
+        Update_Inertia();
 
         // =======================
         //   HINGE JOINT UPDATE
