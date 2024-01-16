@@ -94,6 +94,7 @@ extern float kd_xf; // Pos. Derivative Gain Flag
 // DECLARE STATE VALUES
 extern struct vec statePos;     // Pos [m]
 extern struct vec stateVel;     // Vel [m/s]
+extern struct vec stateAcc;     // Linear Accel. [m/s^2]
 extern struct quat stateQuat;   // Orientation
 extern struct vec stateEul;     // Orientation in Euler Angles [YZX Notation]
 extern struct vec stateOmega;   // Angular Rate [rad/s]
@@ -246,6 +247,7 @@ extern float Policy_Flip_threshold;
 // CARTESIAN STATES
 extern struct vec statePos_trg;      // Pos [m]
 extern struct vec stateVel_trg;      // Vel [m/s]
+extern struct vec stateAcc_trg;      // Linear Accel. [m/s^2]
 extern struct quat stateQuat_trg;    // Orientation
 extern struct vec stateOmega_trg;    // Angular Rate [rad/s]
 extern float D_perp_trg;             // [m/s]

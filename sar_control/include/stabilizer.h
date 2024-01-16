@@ -148,6 +148,10 @@ void Controller::IMU_Update_Callback(const sensor_msgs::Imu::ConstPtr &msg)
     state.attitudeQuaternion.z = msg->orientation.z;
     state.attitudeQuaternion.w = msg->orientation.w;
 
+    state.acc.x = msg->linear_acceleration.x/9.8066; // Convert to Gs to match crazyflie sensors
+    state.acc.y = msg->linear_acceleration.y/9.8066;
+    state.acc.z = msg->linear_acceleration.z/9.8066;
+
 }
 
 // POSE AND TWIST FROM "VICON" SYSTEM (GAZEBO WORLD FRAME)
@@ -287,6 +291,15 @@ void Controller::publishCtrlData()
     CtrlData_msg.Twist.angular.y = stateOmega.y;
     CtrlData_msg.Twist.angular.z = stateOmega.z;
 
+    CtrlData_msg.Accel.linear.x = stateAcc.x;
+    CtrlData_msg.Accel.linear.y = stateAcc.y;
+    CtrlData_msg.Accel.linear.z = stateAcc.z;
+
+    CtrlData_msg.Accel.angular.x = 0;
+    CtrlData_msg.Accel.angular.y = 0;
+    CtrlData_msg.Accel.angular.z = 0;
+
+
     // PLANE RELATIVE STATES
     CtrlData_msg.D_perp = D_perp;
     CtrlData_msg.V_perp = V_perp;
@@ -347,6 +360,14 @@ void Controller::publishCtrlData()
     CtrlData_msg.Twist_trg.angular.x = stateOmega_trg.x;
     CtrlData_msg.Twist_trg.angular.y = stateOmega_trg.y;
     CtrlData_msg.Twist_trg.angular.z = stateOmega_trg.z;
+
+    CtrlData_msg.Accel_trg.linear.x = stateAcc_trg.x;
+    CtrlData_msg.Accel_trg.linear.y = stateAcc_trg.y;
+    CtrlData_msg.Accel_trg.linear.z = stateAcc_trg.z;
+
+    CtrlData_msg.Accel_trg.angular.x = 0;
+    CtrlData_msg.Accel_trg.angular.y = 0;
+    CtrlData_msg.Accel_trg.angular.z = 0;
 
     // OPTICAL FLOW DATA (FLIP)
     CtrlData_msg.Tau_trg = Tau_trg;

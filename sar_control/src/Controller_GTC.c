@@ -99,6 +99,7 @@ void controllerOutOfTreeReset() {
     // RESET LOGGED FLIP VALUES
     statePos_trg = vzero();
     stateVel_trg = vzero();
+    stateAcc_trg = vzero();
     stateQuat_trg = mkquat(0.0f,0.0f,0.0f,1.0f);
     stateOmega_trg = vzero();
 
@@ -121,6 +122,12 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                                             const state_t *state, 
                                             const uint32_t tick) 
 {
+    // STATE UPDATES
+    if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
+
+        stateAcc = mkvec(state->acc.x*9.81f, state->acc.y*9.81f, state->acc.z*9.81f); // [m/s^2]
+    }
+
     // TRAJECTORY UPDATES
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
 
@@ -194,6 +201,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         flip_flag = true;  
                         statePos_trg = statePos;
                         stateVel_trg = stateVel;
+                        stateAcc_trg = stateAcc;
                         stateQuat_trg = stateQuat;
                         stateOmega_trg = stateOmega;
 
@@ -236,6 +244,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         flip_flag = true;  
                         statePos_trg = statePos;
                         stateVel_trg = stateVel;
+                        stateAcc_trg = stateAcc;
                         stateQuat_trg = stateQuat;
                         stateOmega_trg = stateOmega;
 

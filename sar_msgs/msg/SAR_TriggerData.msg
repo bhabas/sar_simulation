@@ -2,6 +2,7 @@ Header header
 bool flip_flag
 geometry_msgs/Pose Pose_trg
 geometry_msgs/Twist Twist_trg
+geometry_msgs/Accel Accel_trg
 geometry_msgs/Vector3 Eul_trg
 
 

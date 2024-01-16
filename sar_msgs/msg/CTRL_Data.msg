@@ -1,7 +1,7 @@
 ## CONTROLLER STATES
 geometry_msgs/Pose Pose
 geometry_msgs/Twist Twist
-
+geometry_msgs/Accel Accel
 
 geometry_msgs/Vector3 x_d
 geometry_msgs/Vector3 v_d
@@ -35,6 +35,7 @@ float64 Theta_y_est
 bool flip_flag
 geometry_msgs/Pose Pose_trg
 geometry_msgs/Twist Twist_trg
+geometry_msgs/Accel Accel_trg
 float64 Tau_trg
 float64 Theta_x_trg
 float64 Theta_y_trg

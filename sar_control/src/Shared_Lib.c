@@ -78,6 +78,7 @@ float kd_xf = 1; // Pos. Derivative Gain Flag
 // INIT STATE VALUES
 struct vec statePos = {0.0,0.0f,0.0f};          // Pos [m]
 struct vec stateVel = {0.0f,0.0f,0.0f};         // Vel [m/s]
+struct vec stateAcc = {0.0f,0.0f,0.0f};         // Linear Accel. [m/s^2]
 struct quat stateQuat = {0.0f,0.0f,0.0f,1.0f};  // Orientation
 struct vec stateEul = {0.0f,0.0f,0.0f};         // Orientation in Euler Angles [YZX Notation]
 struct vec stateOmega = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
@@ -243,6 +244,7 @@ float Policy_Flip_threshold = 1.50f;
 // CARTESIAN STATES
 struct vec statePos_trg = {0.0f,0.0f,0.0f};         // Pos [m]
 struct vec stateVel_trg = {0.0f,0.0f,0.0f};         // Vel [m/s]
+struct vec stateAcc_trg = {0.0f,0.0f,0.0f};         // Linear Accel [m/s^2]
 struct quat stateQuat_trg = {0.0f,0.0f,0.0f,1.0f};  // Orientation
 struct vec stateOmega_trg = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
 float D_perp_trg = 0.0f;     // [m/s]
@@ -521,8 +523,8 @@ void controlOutput(const state_t *state, const sensorData_t *sensors)
     Ki_R = mkvec(R_ki_xy,R_ki_xy,R_ki_z);
 
     // =========== STATE DEFINITIONS =========== //
-    statePos = mkvec(state->position.x, state->position.y, state->position.z);                      // [m]
-    stateVel = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);                      // [m]
+    statePos = mkvec(state->position.x, state->position.y, state->position.z);                          // [m]
+    stateVel = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);                          // [m/s]
     stateOmega = mkvec(radians(sensors->gyro.x), radians(sensors->gyro.y), radians(sensors->gyro.z));   // [rad/s]
     stateQuat = mkquat(state->attitudeQuaternion.x,
                     state->attitudeQuaternion.y,
