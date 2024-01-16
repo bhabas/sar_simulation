@@ -60,7 +60,7 @@ namespace gazebo
         Inertial_Ptr = SAR_Body_Ptr->GetInertial();
         
         // UPDATE INERTIA
-        Update_Inertia();
+        // Update_Inertia();
 
         // =======================
         //   HINGE JOINT UPDATE
@@ -73,10 +73,10 @@ namespace gazebo
         {
             // LOAD INITIAL LEG PARAMETERS
             ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/Leg_Angle",Leg_Angle);
-            ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/K_Pitch",K_Pitch);
-            ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/DR_Pitch",DR_Pitch);
-            ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/K_Yaw",K_Yaw);
-            ros::param::get("/SAR_Type/"+SAR_Type+"/Config/"+SAR_Config+"/DR_Yaw",DR_Yaw);
+            ros::param::get("/SAR_Type/"+SAR_Type+"/Leg_Params/K_Pitch",K_Pitch);
+            ros::param::get("/SAR_Type/"+SAR_Type+"/Leg_Params/DR_Pitch",DR_Pitch);
+            ros::param::get("/SAR_Type/"+SAR_Type+"/Leg_Params/K_Yaw",K_Yaw);
+            ros::param::get("/SAR_Type/"+SAR_Type+"/Leg_Params/DR_Yaw",DR_Yaw);
 
             // GET LEG LINK AND HINGE POINTERS
             Leg_1_LinkPtr = Config_Model_Ptr->GetLink("Leg_1");
@@ -90,7 +90,7 @@ namespace gazebo
             Hinge_4_JointPtr = Config_Model_Ptr->GetJoint("Hinge_4_Joint");
 
             // UPDATE HINGE JOINT
-            // Update_Hinge();      
+            Update_Hinge();      
         } 
         else {
             ROS_WARN("Failed to retrieve Leg_Angle parameter.");
@@ -169,33 +169,47 @@ namespace gazebo
         gzmsg << "Updating Leg Hinge Joint Params\n";
 
         // GET LEG INERTIAL VALUES
-        Iyy_Leg = Leg_1_LinkPtr->GetInertial()->IYY();
         Ixx_Leg = Leg_1_LinkPtr->GetInertial()->IXX();
+        Iyy_Leg = Leg_1_LinkPtr->GetInertial()->IYY();
         Izz_Leg = Leg_1_LinkPtr->GetInertial()->IZZ();
 
         // CALC DAMPING COEFFICIENTS
         C_Pitch = DR_Pitch*2*sqrt(K_Pitch*Iyy_Leg);
         C_Yaw = DR_Yaw*2*sqrt(K_Yaw*Izz_Leg);
 
-        // UPDATE JOINTS
-        Hinge_1_JointPtr->SetUpperLimit(Y_AXIS,(20 + Leg_Angle)*Deg2Rad);
-        Hinge_1_JointPtr->SetLowerLimit(Y_AXIS,-(60 - Leg_Angle)*Deg2Rad);
+        // UPDATE JOINTS LIMITS AND STIFFNESS
+        double Upper_Limit = Leg_Angle*Deg2Rad;
+        double Lower_Limit = ((90-Hinge_Pitch_Bound) - Leg_Angle)*Deg2Rad;
+
+        Hinge_1_JointPtr->SetUpperLimit(Y_AXIS, Upper_Limit);
+        Hinge_1_JointPtr->SetLowerLimit(Y_AXIS,-Lower_Limit);
         Hinge_1_JointPtr->SetStiffnessDamping(Y_AXIS,K_Pitch,C_Pitch,0);
+        Hinge_1_JointPtr->SetUpperLimit(Z_AXIS, Hinge_Yaw_Limit*Deg2Rad);
+        Hinge_1_JointPtr->SetLowerLimit(Z_AXIS,-Hinge_Yaw_Limit*Deg2Rad);
         Hinge_1_JointPtr->SetStiffnessDamping(Z_AXIS,K_Yaw,C_Yaw,0);
 
-        Hinge_2_JointPtr->SetUpperLimit(Y_AXIS,(20 + Leg_Angle)*Deg2Rad);
-        Hinge_2_JointPtr->SetLowerLimit(Y_AXIS,-(60 - Leg_Angle)*Deg2Rad);
-        Hinge_2_JointPtr->SetStiffnessDamping(Y_AXIS,K_Pitch,C_Pitch,0);
+
+        Hinge_2_JointPtr->SetUpperLimit(Y_AXIS, Upper_Limit);
+        Hinge_2_JointPtr->SetLowerLimit(Y_AXIS,-Lower_Limit);
+        Hinge_2_JointPtr->SetStiffnessDamping(Y_AXIS,K_Pitch,C_Pitch,0); 
+        Hinge_2_JointPtr->SetUpperLimit(Z_AXIS, Hinge_Yaw_Limit*Deg2Rad);
+        Hinge_2_JointPtr->SetLowerLimit(Z_AXIS,-Hinge_Yaw_Limit*Deg2Rad);
         Hinge_2_JointPtr->SetStiffnessDamping(Z_AXIS,K_Yaw,C_Yaw,0);
 
-        Hinge_3_JointPtr->SetUpperLimit(Y_AXIS,(20 + Leg_Angle)*Deg2Rad);
-        Hinge_3_JointPtr->SetLowerLimit(Y_AXIS,-(60 - Leg_Angle)*Deg2Rad);
+
+        Hinge_3_JointPtr->SetUpperLimit(Y_AXIS, Upper_Limit);
+        Hinge_3_JointPtr->SetLowerLimit(Y_AXIS,-Lower_Limit);
         Hinge_3_JointPtr->SetStiffnessDamping(Y_AXIS,K_Pitch,C_Pitch,0);
+        Hinge_3_JointPtr->SetUpperLimit(Z_AXIS, Hinge_Yaw_Limit*Deg2Rad);
+        Hinge_3_JointPtr->SetLowerLimit(Z_AXIS,-Hinge_Yaw_Limit*Deg2Rad);
         Hinge_3_JointPtr->SetStiffnessDamping(Z_AXIS,K_Yaw,C_Yaw,0);
 
-        Hinge_4_JointPtr->SetUpperLimit(Y_AXIS,(20 + Leg_Angle)*Deg2Rad);
-        Hinge_4_JointPtr->SetLowerLimit(Y_AXIS,-(60 - Leg_Angle)*Deg2Rad);
+
+        Hinge_4_JointPtr->SetUpperLimit(Y_AXIS, Upper_Limit);
+        Hinge_4_JointPtr->SetLowerLimit(Y_AXIS,-Lower_Limit);
         Hinge_4_JointPtr->SetStiffnessDamping(Y_AXIS,K_Pitch,C_Pitch,0);
+        Hinge_4_JointPtr->SetUpperLimit(Z_AXIS, Hinge_Yaw_Limit*Deg2Rad);
+        Hinge_4_JointPtr->SetLowerLimit(Z_AXIS,-Hinge_Yaw_Limit*Deg2Rad);
         Hinge_4_JointPtr->SetStiffnessDamping(Z_AXIS,K_Yaw,C_Yaw,0);
 
     }

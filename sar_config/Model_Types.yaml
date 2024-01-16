@@ -198,20 +198,27 @@ SAR_Type:
 
       System_Params:
 
-        Thrust_Coeff: 1.43e-6   # Thrust Coeff [N/(rad/s)]
-        Torque_Coeff: 1.57e-8   # Torque Coeff [N*m/(rad/s)]
-        C_tf: 1.1e-2            # Torque-Thrust Coeff [N*m/N]
-        Tau_up: 13.0e-3         # Motor Time Constant (Up) [s]
-        Tau_down: 30.0e-3       # Motor Time Constant (Down) [s]
-        f_max: 600              # Max thrust [g]
+        Thrust_Coeff: 1.43e-6           # Thrust Coeff [N/(rad/s)]
+        Torque_Coeff: 1.57e-8           # Torque Coeff [N*m/(rad/s)]
+        C_tf: 1.1e-2                    # Torque-Thrust Coeff [N*m/N]
+        Tau_up: 13.0e-3                 # Motor Time Constant (Up) [s]
+        Tau_down: 30.0e-3               # Motor Time Constant (Down) [s]
+        f_max: 600                      # Max motor thrust [g]
 
         Prop_Front: [72.6e-3, 86.6e-3]  # [x,y] absolute distances [m]
         Prop_Rear:  [72.6e-3, 86.6e-3]  # [x,y] absolute distances [m]
 
-        Base_Mass: 693.0e-3        # [kg]
-        Base_Ixx: 3.17e-3          # [kg*m^2]
-        Base_Iyy: 2.71e-3          # [kg*m^2]
-        Base_Izz: 5.27e-3          # [kg*m^2] 
+        Base_Mass: 693.0e-3             # [kg]
+        Base_Ixx: 3.17e-3               # [kg*m^2]
+        Base_Iyy: 2.71e-3               # [kg*m^2]
+        Base_Izz: 5.27e-3               # [kg*m^2] 
+
+      Leg_Params:
+
+        K_Pitch: 0.0                  # Y-Axis Stiffness [N*m/rad]
+        DR_Pitch: 1.0                   # Y-Axis Damping Ratio
+        K_Yaw: 0                     # X-Axis Stiffness [N*m/rad]
+        DR_Yaw: 1.0                    # X-Axis Damping Ratio
       
       Config:
 
@@ -231,11 +238,6 @@ SAR_Type:
           Leg_Angle: 15             # Leg Angle [deg]
           Leg_Length: 100.0e-3      # Leg Length [m]
 
-          K_y: 0.244                # Y-Axis Stiffness [N*m/rad]
-          DR_y: 0.3                 # Y-Axis Damping Ratio
-          K_x: 1.5                  # X-Axis Stiffness [N*m/rad]
-          DR_x: 0.8                 # X-Axis Damping Ratio
-
         A15_L150:      
           Ref_Mass: 766.0e-3        
           Ref_Ixx: 4.76e-3          
@@ -245,10 +247,6 @@ SAR_Type:
           Leg_Angle: 15             
           Leg_Length: 150.0e-3      
 
-          K_y: 0.244                
-          DR_y: 0.3                 
-          K_x: 1.5                  
-          DR_x: 0.8                 
 
         A15_L200:      
           Ref_Mass: 772.0e-3        
@@ -259,10 +257,6 @@ SAR_Type:
           Leg_Angle: 15             
           Leg_Length: 200.0e-3      
 
-          K_y: 0.244                
-          DR_y: 0.3                 
-          K_x: 1.5                  
-          DR_x: 0.8                 
 
         A15_L250:      
           Ref_Mass: 777.0e-3        
@@ -272,11 +266,6 @@ SAR_Type:
 
           Leg_Angle: 15             
           Leg_Length: 250.0e-3      
-
-          K_y: 0.244                
-          DR_y: 0.3                 
-          K_x: 1.5                  
-          DR_x: 0.8                 
 
         # ============================================================== # 
         A30_L100:      
@@ -288,10 +277,6 @@ SAR_Type:
           Leg_Angle: 30             # Leg Angle [deg]
           Leg_Length: 100.0e-3      # Leg Length [m]
 
-          K_y: 0.244                # Y-Axis Stiffness [N*m/rad]
-          DR_y: 0.3                 # Y-Axis Damping Ratio
-          K_x: 1.5                  # X-Axis Stiffness [N*m/rad]
-          DR_x: 0.8                 # X-Axis Damping Ratio
 
         A30_L150:      
           Ref_Mass: 765.0e-3        
@@ -302,10 +287,6 @@ SAR_Type:
           Leg_Angle: 30             
           Leg_Length: 150.0e-3      
 
-          K_y: 0.244                
-          DR_y: 0.3                 
-          K_x: 1.5                  
-          DR_x: 0.8                 
 
         A30_L200:      
           Ref_Mass: 771.0e-3        
@@ -316,10 +297,6 @@ SAR_Type:
           Leg_Angle: 30             
           Leg_Length: 200.0e-3      
 
-          K_y: 0.244                
-          DR_y: 0.3                 
-          K_x: 1.5                  
-          DR_x: 0.8                 
 
         A30_L250:      
           Ref_Mass: 777.0e-3        
@@ -330,10 +307,6 @@ SAR_Type:
           Leg_Angle: 30             
           Leg_Length: 250.0e-3      
 
-          K_y: 0.244                
-          DR_y: 0.3                 
-          K_x: 1.5                  
-          DR_x: 0.8
 
         # ============================================================== # 
         A45_L100:      
@@ -345,10 +318,6 @@ SAR_Type:
           Leg_Angle: 45             # Leg Angle [deg]
           Leg_Length: 100.0e-3      # Leg Length [m]
 
-          K_y: 0.244                # Y-Axis Stiffness [N*m/rad]
-          DR_y: 0.3                 # Y-Axis Damping Ratio
-          K_x: 1.5                  # X-Axis Stiffness [N*m/rad]
-          DR_x: 0.8                 # X-Axis Damping Ratio
 
         A45_L150:      
           Ref_Mass: 765.0e-3        
@@ -359,10 +328,6 @@ SAR_Type:
           Leg_Angle: 45             
           Leg_Length: 150.0e-3      
 
-          K_y: 0.244                
-          DR_y: 0.3                 
-          K_x: 1.5                  
-          DR_x: 0.8                 
 
         A45_L200:      
           Ref_Mass: 771.0e-3        
@@ -373,10 +338,6 @@ SAR_Type:
           Leg_Angle: 45             
           Leg_Length: 200.0e-3      
 
-          K_y: 0.244                
-          DR_y: 0.3                 
-          K_x: 1.5                  
-          DR_x: 0.8                 
 
         A45_L250:      
           Ref_Mass: 777.0e-3        
@@ -387,10 +348,6 @@ SAR_Type:
           Leg_Angle: 45             
           Leg_Length: 250.0e-3      
 
-          K_y: 0.244                
-          DR_y: 0.3                 
-          K_x: 1.5                  
-          DR_x: 0.8
 
         # ============================================================== # 
         A60_L100:      
@@ -402,10 +359,6 @@ SAR_Type:
           Leg_Angle: 60             # Leg Angle [deg]
           Leg_Length: 100.0e-3      # Leg Length [m]
 
-          K_y: 0.244                # Y-Axis Stiffness [N*m/rad]
-          DR_y: 0.3                 # Y-Axis Damping Ratio
-          K_x: 1.5                  # X-Axis Stiffness [N*m/rad]
-          DR_x: 0.8                 # X-Axis Damping Ratio
 
         A60_L150:      
           Ref_Mass: 765.0e-3        
@@ -416,10 +369,6 @@ SAR_Type:
           Leg_Angle: 60             
           Leg_Length: 150.0e-3      
 
-          K_y: 0.244                
-          DR_y: 0.3                 
-          K_x: 1.5                  
-          DR_x: 0.8                 
 
         A60_L200:      
           Ref_Mass: 771.0e-3        
@@ -430,10 +379,6 @@ SAR_Type:
           Leg_Angle: 60             
           Leg_Length: 200.0e-3      
 
-          K_y: 0.244                
-          DR_y: 0.3                 
-          K_x: 1.5                  
-          DR_x: 0.8                 
 
         A60_L250:      
           Ref_Mass: 777.0e-3        
@@ -443,12 +388,6 @@ SAR_Type:
 
           Leg_Angle: 60             
           Leg_Length: 250.0e-3      
-
-          K_y: 0.244                
-          DR_y: 0.3                 
-          K_x: 1.5                  
-          DR_x: 0.8
-
         
 
 
