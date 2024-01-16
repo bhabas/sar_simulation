@@ -96,8 +96,8 @@ class SAR_DataConverter {
 
             // INITIALIZE SAR_DC THREADS
             SAR_DC_Thread = std::thread(&SAR_DataConverter::MainLoop, this);
-            ConsoleOutput_Thread = std::thread(&SAR_DataConverter::ConsoleLoop, this);
-            Logging_Thread = std::thread(&SAR_DataConverter::LoggingLoop, this);
+            // ConsoleOutput_Thread = std::thread(&SAR_DataConverter::ConsoleLoop, this);
+            // Logging_Thread = std::thread(&SAR_DataConverter::LoggingLoop, this);
 
 
         }
@@ -357,8 +357,11 @@ class SAR_DataConverter {
 
         bool impact_flag = false;
         bool BodyContact_flag = false;
+        bool LegContact_flag = false;
         bool OnceFlag_impact = false;
-        std::string BodyCollision_str;  // String of Body Name
+        std::string BodyCollision_str = "SAR_Body::Body_Collision_";
+        std::string LegCollision_str = "Leg_Collision_";
+
 
 
         ros::Time Time_impact;
@@ -535,6 +538,7 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
             // RESET IMPACT TIME
             impact_flag = false;
             BodyContact_flag = false;
+            LegContact_flag = false;
             OnceFlag_impact = false;
             Time_impact.sec = 0.0;
             Time_impact.nsec = 0.0;

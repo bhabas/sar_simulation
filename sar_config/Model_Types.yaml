@@ -215,10 +215,10 @@ SAR_Type:
 
       Leg_Params:
 
-        K_Pitch: 0.0                  # Y-Axis Stiffness [N*m/rad]
-        DR_Pitch: 1.0                   # Y-Axis Damping Ratio
-        K_Yaw: 0                     # X-Axis Stiffness [N*m/rad]
-        DR_Yaw: 1.0                    # X-Axis Damping Ratio
+        K_Pitch: 1.46                  # Y-Axis Stiffness [N*m/rad]
+        DR_Pitch: 0.3                  # Y-Axis Damping Ratio
+        K_Yaw: 10.0                    # Z-Axis Stiffness [N*m/rad]
+        DR_Yaw: 0.7                    # Z-Axis Damping Ratio
       
       Config:
 

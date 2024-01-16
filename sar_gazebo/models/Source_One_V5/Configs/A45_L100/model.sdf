@@ -38,7 +38,7 @@
           <lighting>1</lighting>
         </material>
       </visual>
-      <collision name="Leg_1_Collision">
+      <collision name="Leg_Collision_1">
         <pose>116.5e-3 0 6.4e-3 0 0 0</pose>
         <geometry>
           <sphere>
@@ -49,7 +49,7 @@
       <sensor name="Contact_Sensor" type="contact">
         <update_rate>100.0</update_rate>
         <contact>
-          <collision>Leg_1_Collision</collision>
+          <collision>Leg_Collision_1</collision>
         </contact>
       </sensor>
       <self_collide>1</self_collide>
@@ -87,7 +87,7 @@
           <lighting>1</lighting>
         </material>
       </visual>
-      <collision name="Leg_2_Collision">
+      <collision name="Leg_Collision_2">
         <pose>116.5e-3 0 6.4e-3 0 0 0</pose>
         <geometry>
           <sphere>
@@ -98,7 +98,7 @@
       <sensor name="Contact_Sensor" type="contact">
         <update_rate>100.0</update_rate>
         <contact>
-          <collision>Leg_2_Collision</collision>
+          <collision>Leg_Collision_2</collision>
         </contact>
       </sensor>
       <self_collide>1</self_collide>
@@ -136,7 +136,7 @@
           <lighting>1</lighting>
         </material>
       </visual>
-      <collision name="Leg_3_Collision">
+      <collision name="Leg_Collision_3">
         <pose>116.5e-3 0 6.4e-3 0 0 0</pose>
         <geometry>
           <sphere>
@@ -147,7 +147,7 @@
       <sensor name="Contact_Sensor" type="contact">
         <update_rate>100.0</update_rate>
         <contact>
-          <collision>Leg_3_Collision</collision>
+          <collision>Leg_Collision_3</collision>
         </contact>
       </sensor>
       <self_collide>1</self_collide>
@@ -185,7 +185,7 @@
           <lighting>1</lighting>
         </material>
       </visual>
-      <collision name="Leg_4_Collision">
+      <collision name="Leg_Collision_4">
         <pose>116.5e-3 0 6.4e-3 0 0 0</pose>
         <geometry>
           <sphere>
@@ -196,7 +196,7 @@
       <sensor name="Contact_Sensor" type="contact">
         <update_rate>100.0</update_rate>
         <contact>
-          <collision>Leg_4_Collision</collision>
+          <collision>Leg_Collision_4</collision>
         </contact>
       </sensor>
       <self_collide>1</self_collide>
@@ -320,28 +320,28 @@
     <plugin name='Leg_1_Plugin' filename='libSticky_Leg_Plugin.so'>
       <LegNumber>1</LegNumber>
       <LinkName>Leg_1</LinkName>
-      <CollisionName>Leg_1_Collision</CollisionName>
+      <CollisionName>Leg_Collision_1</CollisionName>
       <JointName>Leg_1_Contact_Joint</JointName>
     </plugin>
 
     <plugin name='Leg_2_Plugin' filename='libSticky_Leg_Plugin.so'>
       <LegNumber>2</LegNumber>
       <LinkName>Leg_2</LinkName>
-      <CollisionName>Leg_2_Collision</CollisionName>
+      <CollisionName>Leg_Collision_2</CollisionName>
       <JointName>Leg_2_Contact_Joint</JointName>
     </plugin>
 
     <plugin name='Leg_3_Plugin' filename='libSticky_Leg_Plugin.so'>
       <LegNumber>3</LegNumber>
       <LinkName>Leg_3</LinkName>
-      <CollisionName>Leg_3_Collision</CollisionName>
+      <CollisionName>Leg_Collision_3</CollisionName>
       <JointName>Leg_3_Contact_Joint</JointName>
     </plugin>
 
     <plugin name='Leg_4_Plugin' filename='libSticky_Leg_Plugin.so'>
       <LegNumber>4</LegNumber>
       <LinkName>Leg_4</LinkName>
-      <CollisionName>Leg_4_Collision</CollisionName>
+      <CollisionName>Leg_Collision_4</CollisionName>
       <JointName>Leg_4_Contact_Joint</JointName>
     </plugin>
 

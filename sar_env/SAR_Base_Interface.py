@@ -486,6 +486,7 @@ class SAR_Base_Interface():
             ## IMPACT FLAGS
             self.impact_flag = ImpactData_msg.impact_flag
             self.BodyContact_flag = ImpactData_msg.BodyContact_flag
+            self.LegContact_flag = ImpactData_msg.LegContact_flag
             self.pad_connections = ImpactData_msg.Pad_Connections
 
 

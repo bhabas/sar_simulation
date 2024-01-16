@@ -57,25 +57,32 @@ void SAR_DataConverter::Update_Landing_Surface_Pose(float Pos_x, float Pos_y, fl
 }
 
 /**
- * @brief Records if body of SAR body collides with landing surface so as to serve as a negative aspect to reward
+ * @brief Records if SAR body collides with landing surface so as to serve as a negative aspect to reward
  *
  * @param msg gazebo_msgs::ContactsState
  */
 void SAR_DataConverter::Surface_Contact_Callback(const gazebo_msgs::ContactsState &msg)
 {
-
     // CYCLE THROUGH LIST OF CONTACT MESSAGES
     for (int i = 0; i < msg.states.size(); i++)
     {
         // IF CONTACT MSG MATCHES BODY COLLISION STR THEN TURN ON BODY_CONTACT_FLAG
-        if (BodyContact_flag == false && strcmp(msg.states[i].collision1_name.c_str(), BodyCollision_str.c_str()) == 0)
+        if (msg.states[i].collision1_name.find(BodyCollision_str) != std::string::npos && BodyContact_flag == false)
         {
             BodyContact_flag = true;
+            // std::cout << "Body Contact: " << msg.states[i].collision1_name << std::endl;
         }
 
-        if (impact_flag == false)
+        // IF CONTACT MSG MATCHES LEG COLLISION STR THEN TURN ON LEG_CONTACT_FLAG
+        if (msg.states[i].collision1_name.find(LegCollision_str) != std::string::npos && LegContact_flag == false)
         {
-            // LOCK IN STATE DATA WHEN IMPACT DETECTED
+            LegContact_flag = true;
+            // std::cout << "Leg Contact: " << msg.states[i].collision1_name << std::endl;
+        }
+
+        // LOCK IN STATE DATA WHEN INITIAL IMPACT DETECTED
+        if (impact_flag == false && (BodyContact_flag == true || LegContact_flag == true))
+        {
             impact_flag = true;
 
             // RECORD IMPACT STATE DATA FROM END OF CIRCULAR BUFFER WHEN IMPACT FLAGGED
@@ -95,12 +102,12 @@ void SAR_DataConverter::Surface_Contact_Callback(const gazebo_msgs::ContactsStat
             Eul_impact.y = eul_impact[1] * 180 / M_PI;
             Eul_impact.z = eul_impact[2] * 180 / M_PI;
         }
+
     }
 }
 
 /**
- * @brief Records max impact force from SAR colliding with landing surface. It also records
- * impact states like pose, vel, impact time, and euler angles which are used in reward function.
+ * @brief Records max impact force from SAR colliding with landing surface.
  *
  * @param msg geometry_msgs::WrenchStamped
  */

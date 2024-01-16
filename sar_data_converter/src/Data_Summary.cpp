@@ -120,6 +120,7 @@ void SAR_DataConverter::Publish_ImpactData()
 
     ImpactData_msg.impact_flag = impact_flag;
     ImpactData_msg.BodyContact_flag = BodyContact_flag;
+    ImpactData_msg.LegContact_flag = LegContact_flag;
 
     ImpactData_msg.Force_impact.x = impact_force_x;
     ImpactData_msg.Force_impact.y = impact_force_y;
