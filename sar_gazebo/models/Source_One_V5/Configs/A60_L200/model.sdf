@@ -52,6 +52,7 @@
           <collision>Leg_1_Collision</collision>
         </contact>
       </sensor>
+      <self_collide>1</self_collide>
     </link>
 
     <link name='Leg_2'>
@@ -100,6 +101,7 @@
           <collision>Leg_2_Collision</collision>
         </contact>
       </sensor>
+      <self_collide>1</self_collide>
     </link>
 
     <link name='Leg_3'>
@@ -148,6 +150,7 @@
           <collision>Leg_3_Collision</collision>
         </contact>
       </sensor>
+      <self_collide>1</self_collide>
     </link>
 
     <link name='Leg_4'>
@@ -196,6 +199,7 @@
           <collision>Leg_4_Collision</collision>
         </contact>
       </sensor>
+      <self_collide>1</self_collide>
     </link>
 
 
