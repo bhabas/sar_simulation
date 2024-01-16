@@ -204,7 +204,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                     
                         M_d.x = 0.0f;
-                        M_d.y = -Policy_Flip_Action*1e-3f;
+                        M_d.y = Policy_Flip_Action*Iyy;
                         M_d.z = 0.0f;
 
                         F_thrust_flip = 0.0;
