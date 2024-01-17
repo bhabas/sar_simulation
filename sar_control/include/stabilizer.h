@@ -194,17 +194,19 @@ void Controller::loadParams()
 
 
     // UPDATE SYSTEM PARAMETERS
-    ros::param::get("/SAR_Type/" + SAR_Type +  + "/System_Params/f_max",f_max);
-    ros::param::get("/SAR_Type/" + SAR_Type +  + "/System_Params/C_tf",C_tf);
+    ros::param::get("/SAR_Type/" + SAR_Type + "/System_Params/f_max",f_max);
+    ros::param::get("/SAR_Type/" + SAR_Type + "/System_Params/C_tf",C_tf);
 
 
     // UPDATE PROP DISTANCES
-    ros::param::get("/SAR_Type/" + SAR_Type +  + "/System_Params/Prop_Front",Prop_Front_Vec);
-    Prop_14_x,Prop_14_y = Prop_Front_Vec[0],Prop_Front_Vec[1];
+    ros::param::get("/SAR_Type/" + SAR_Type + "/System_Params/Prop_Front",Prop_Front_Vec);
+    Prop_14_x = Prop_Front_Vec[0];
+    Prop_14_y = Prop_Front_Vec[1];
 
-    ros::param::get("/SAR_Type/" + SAR_Type +  + "/System_Params/Prop_Rear",Prop_Rear_Vec);   
-    Prop_23_x,Prop_23_y = Prop_Rear_Vec[0],Prop_Rear_Vec[1];
 
+    ros::param::get("/SAR_Type/" + SAR_Type + "/System_Params/Prop_Rear",Prop_Rear_Vec);   
+    Prop_23_x = Prop_Rear_Vec[0];
+    Prop_23_y = Prop_Rear_Vec[1];
 
 
     // UPDATE LANDING SURFACE PARAMETERS

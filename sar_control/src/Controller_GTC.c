@@ -311,21 +311,23 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         if(moment_flag == true || flip_flag == true)
         {
             F_thrust = 0.0f;
-            M = M_d;
+            M = vscl(2.0f,M_d);
         }
 
-
+        
         // MOTOR MIXING (GTC_Derivation_V2.pdf) 
         M1_thrust = F_thrust * Prop_23_x/(Prop_14_x + Prop_23_x) - M.x * 1/(Prop_14_y + Prop_23_y) - M.y * 1/(Prop_14_x + Prop_23_x) - M.z * Prop_23_y/(C_tf*(Prop_14_y + Prop_23_y));
         M2_thrust = F_thrust * Prop_14_x/(Prop_14_x + Prop_23_x) - M.x * 1/(Prop_14_y + Prop_23_y) + M.y * 1/(Prop_14_x + Prop_23_x) + M.z * Prop_14_y/(C_tf*(Prop_14_y + Prop_23_y));
         M3_thrust = F_thrust * Prop_14_x/(Prop_14_x + Prop_23_x) + M.x * 1/(Prop_14_y + Prop_23_y) + M.y * 1/(Prop_14_x + Prop_23_x) - M.z * Prop_14_y/(C_tf*(Prop_14_y + Prop_23_y));
         M4_thrust = F_thrust * Prop_23_x/(Prop_14_x + Prop_23_x) + M.x * 1/(Prop_14_y + Prop_23_y) - M.y * 1/(Prop_14_x + Prop_23_x) + M.z * Prop_23_y/(C_tf*(Prop_14_y + Prop_23_y));
 
-        // CLAMP AND CONVER THRUST FROM [N] AND [N*M] TO [g]
+
+        // CLAMP AND CONVERT THRUST FROM [N] AND [N*M] TO [g]
         M1_thrust = clamp((M1_thrust/2.0f)*Newton2g,0.0f,f_max);
         M2_thrust = clamp((M2_thrust/2.0f)*Newton2g,0.0f,f_max);
         M3_thrust = clamp((M3_thrust/2.0f)*Newton2g,0.0f,f_max);
         M4_thrust = clamp((M4_thrust/2.0f)*Newton2g,0.0f,f_max);
+
 
 
         // TUMBLE DETECTION
