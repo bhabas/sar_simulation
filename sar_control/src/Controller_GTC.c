@@ -124,8 +124,23 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 {
     // STATE UPDATES
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
+        
+        // =========== STATE DEFINITIONS =========== //
+        statePos = mkvec(state->position.x, state->position.y, state->position.z);          // [m]
+        stateVel = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);          // [m/s]
+        stateAcc = mkvec(sensors->acc.x*9.81f, sensors->acc.y*9.81f, sensors->acc.z*9.81f); // [m/s^2]
 
-        stateAcc = mkvec(state->acc.x*9.81f, state->acc.y*9.81f, state->acc.z*9.81f); // [m/s^2]
+        stateOmega = mkvec(radians(sensors->gyro.x), radians(sensors->gyro.y), radians(sensors->gyro.z));   // [rad/s]
+        stateQuat = mkquat(state->attitudeQuaternion.x,
+                        state->attitudeQuaternion.y,
+                        state->attitudeQuaternion.z,
+                        state->attitudeQuaternion.w);
+
+        // EULER ANGLES EXPRESSED IN YZX NOTATION
+        stateEul = quat2eul(stateQuat);
+        stateEul.x = degrees(stateEul.x);
+        stateEul.y = degrees(stateEul.y);
+        stateEul.z = degrees(stateEul.z);
     }
 
     // TRAJECTORY UPDATES

@@ -135,8 +135,8 @@ bool Controller::CMD_Service_Resp(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs
 // IMU VALUES FROM MODEL SENSOR PLUGIN
 void Controller::IMU_Update_Callback(const sensor_msgs::Imu::ConstPtr &msg)
 {
-    sensorData.acc.x = msg->linear_acceleration.x/9.8066; // Convert to Gs to match crazyflie sensors
-    sensorData.acc.y = msg->linear_acceleration.y/9.8066;
+    sensorData.acc.x = -msg->linear_acceleration.x/9.8066; // Convert to Gs to match crazyflie sensors
+    sensorData.acc.y = -msg->linear_acceleration.y/9.8066;
     sensorData.acc.z = msg->linear_acceleration.z/9.8066;
 
     sensorData.gyro.x = msg->angular_velocity.x*180.0/M_PI; // Convert to deg/s to match crazyflie sensors
@@ -148,8 +148,8 @@ void Controller::IMU_Update_Callback(const sensor_msgs::Imu::ConstPtr &msg)
     state.attitudeQuaternion.z = msg->orientation.z;
     state.attitudeQuaternion.w = msg->orientation.w;
 
-    state.acc.x = msg->linear_acceleration.x/9.8066; // Convert to Gs to match crazyflie sensors
-    state.acc.y = msg->linear_acceleration.y/9.8066;
+    state.acc.x = -msg->linear_acceleration.x/9.8066; // Convert to Gs to match crazyflie sensors
+    state.acc.y = -msg->linear_acceleration.y/9.8066;
     state.acc.z = msg->linear_acceleration.z/9.8066;
 
 }

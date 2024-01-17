@@ -470,9 +470,6 @@
       <bodyName>SAR_Body</bodyName>
       <topicName>SAR_Internal/IMU</topicName>
       <serviceName>imu_service</serviceName>
-      <gaussianNoise>0.0</gaussianNoise>
-      <xyzOffset>0 0 0</xyzOffset>
-      <rpyOffset>0 0 0</rpyOffset>
       <frameName>SAR_Body</frameName>
     </plugin>
 

@@ -521,21 +521,6 @@ void controlOutput(const state_t *state, const sensorData_t *sensors)
     Kp_R = mkvec(R_kp_xy,R_kp_xy,R_kp_z);
     Kd_R = mkvec(R_kd_xy,R_kd_xy,R_kd_z);
     Ki_R = mkvec(R_ki_xy,R_ki_xy,R_ki_z);
-
-    // =========== STATE DEFINITIONS =========== //
-    statePos = mkvec(state->position.x, state->position.y, state->position.z);                          // [m]
-    stateVel = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);                          // [m/s]
-    stateOmega = mkvec(radians(sensors->gyro.x), radians(sensors->gyro.y), radians(sensors->gyro.z));   // [rad/s]
-    stateQuat = mkquat(state->attitudeQuaternion.x,
-                    state->attitudeQuaternion.y,
-                    state->attitudeQuaternion.z,
-                    state->attitudeQuaternion.w);
-
-    // EULER ANGLES EXPRESSED IN YZX NOTATION
-    stateEul = quat2eul(stateQuat);
-    stateEul.x = degrees(stateEul.x);
-    stateEul.y = degrees(stateEul.y);
-    stateEul.z = degrees(stateEul.z);
     
     // =========== STATE SETPOINTS =========== //
     omega_d = mkvec(0.0f,0.0f,0.0f);    // Omega-desired [rad/s]
