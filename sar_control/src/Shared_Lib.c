@@ -24,6 +24,7 @@ const float g = 9.81f;                        // Gravity [m/s^2]
 const struct vec e_3 = {0.0f, 0.0f, 1.0f};    // Global z-axis
 
 float dt = (float)(1.0f/RATE_100_HZ);
+uint32_t prev_tick = 0;
 struct CTRL_CmdPacket CTRL_Cmd;
 
 // =================================
@@ -81,8 +82,11 @@ struct vec stateVel = {0.0f,0.0f,0.0f};         // Vel [m/s]
 struct vec stateAcc = {0.0f,0.0f,0.0f};         // Linear Accel. [m/s^2]
 struct quat stateQuat = {0.0f,0.0f,0.0f,1.0f};  // Orientation
 struct vec stateEul = {0.0f,0.0f,0.0f};         // Orientation in Euler Angles [YZX Notation]
+
 struct vec stateOmega = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
 struct vec state_dOmega = {0.0f,0.0f,0.0f};     // Angular Accel [rad/s^2]
+struct vec stateOmega_prev  = {0.0f,0.0f,0.0f}; // Prev Angular Rate [rad/s^2]
+
 
 
 

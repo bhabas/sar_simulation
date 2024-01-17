@@ -29,21 +29,22 @@ extern "C" {
 
 
 // DECLARE SYSTEM PARAMETERS
-extern float m;         // [kg]
-extern float Ixx;       // [kg*m^2]
-extern float Iyy;       // [kg*m^2]
-extern float Izz;       // [kg*m^2]
-extern struct mat33 J;  // Rotational Inertia Matrix [kg*m^2]
+extern float m;             // [kg]
+extern float Ixx;           // [kg*m^2]
+extern float Iyy;           // [kg*m^2]
+extern float Izz;           // [kg*m^2]
+extern struct mat33 J;      // Rotational Inertia Matrix [kg*m^2]
 
-extern float C_tf;  // Moment Coeff [Nm/N]
-extern float f_max; // Max thrust per motor [g]
+extern float C_tf;          // Moment Coeff [Nm/N]
+extern float f_max;         // Max thrust per motor [g]
 
-extern float Prop_14_x; // Front Prop Distance - x-axis [m]
-extern float Prop_14_y; // Front Prop Distance - y-axis [m]
-extern float Prop_23_x; // Rear  Prop Distance - x-axis [m]
-extern float Prop_23_y; // Rear  Prop Distance - y-axis [m]
+extern float Prop_14_x;     // Front Prop Distance - x-axis [m]
+extern float Prop_14_y;     // Front Prop Distance - y-axis [m]
+extern float Prop_23_x;     // Rear  Prop Distance - x-axis [m]
+extern float Prop_23_y;     // Rear  Prop Distance - y-axis [m]
 
-extern float dt;    // Controller cycle time
+extern float dt;            // Controller cycle time
+extern uint32_t prev_tick;
 
 
 
@@ -92,16 +93,17 @@ extern float kd_xf; // Pos. Derivative Gain Flag
 
 
 // DECLARE STATE VALUES
-extern struct vec statePos;     // Pos [m]
-extern struct vec stateVel;     // Vel [m/s]
-extern struct vec stateAcc;     // Linear Accel. [m/s^2]
-extern struct quat stateQuat;   // Orientation
-extern struct vec stateEul;     // Orientation in Euler Angles [YZX Notation]
-extern struct vec stateOmega;   // Angular Rate [rad/s]
-extern struct vec state_dOmega; // Angular Accel [rad/s^2]
+extern struct vec statePos;         // Pos [m]
+extern struct vec stateVel;         // Vel [m/s]
+extern struct vec stateAcc;         // Linear Accel. [m/s^2]
+extern struct quat stateQuat;       // Orientation
+extern struct vec stateEul;         // Orientation in Euler Angles [YZX Notation]
+extern struct vec stateOmega;       // Angular Rate [rad/s]
+extern struct vec state_dOmega;     // Angular Accel [rad/s^2]
+extern struct vec stateOmega_prev;  // Prev Angular Rate [rad/s^2]
 
-extern struct mat33 R;          // Orientation as rotation matrix
-extern struct vec b3;           // Current body z-axis in global coord.
+extern struct mat33 R;              // Orientation as rotation matrix
+extern struct vec b3;               // Current body z-axis in global coord.
 
 
 // DECLARE DESIRED STATES
