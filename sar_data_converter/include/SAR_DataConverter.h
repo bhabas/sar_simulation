@@ -293,6 +293,7 @@ class SAR_DataConverter {
 
         geometry_msgs::Pose Pose;
         geometry_msgs::Twist Twist;
+        geometry_msgs::Accel Accel;
         geometry_msgs::Vector3 Eul;
 
         float Vel_mag = 0.0;
@@ -337,6 +338,7 @@ class SAR_DataConverter {
 
         geometry_msgs::Pose Pose_trg;
         geometry_msgs::Twist Twist_trg;
+        geometry_msgs::Accel Accel_trg;
         geometry_msgs::Vector3 Eul_trg;
 
 
@@ -368,6 +370,7 @@ class SAR_DataConverter {
         geometry_msgs::Vector3 Force_impact;
         geometry_msgs::Pose Pose_impact;
         geometry_msgs::Twist Twist_impact;
+        geometry_msgs::Accel Accel_impact;
         geometry_msgs::Vector3 Eul_impact;
 
 
@@ -379,6 +382,8 @@ class SAR_DataConverter {
         // CIRCULAR BUFFERES TO LAG IMPACT STATE DATA (WE WANT STATE DATA THE INSTANT BEFORE IMPACT)
         boost::circular_buffer<geometry_msgs::Pose> Pose_impact_buff {1};
         boost::circular_buffer<geometry_msgs::Twist> Twist_impact_buff {1};
+        boost::circular_buffer<geometry_msgs::Accel> Accel_impact_buff {1};
+
 
         // ==================
         //     MISC DATA
@@ -560,6 +565,14 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
             Twist_impact.angular.x = 0.0;
             Twist_impact.angular.y = 0.0;
             Twist_impact.angular.z = 0.0;
+
+            Accel_impact.linear.x = 0.0;
+            Accel_impact.linear.y = 0.0;
+            Accel_impact.linear.z = 0.0;
+
+            Accel_impact.angular.x = 0.0;
+            Accel_impact.angular.y = 0.0;
+            Accel_impact.angular.z = 0.0;
 
             Eul_impact.x = 0.0;
             Eul_impact.y = 0.0;

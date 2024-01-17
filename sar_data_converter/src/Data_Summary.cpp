@@ -36,6 +36,7 @@ void SAR_DataConverter::Publish_StateData()
     // CARTESIAN SPACE DATA
     StateData_msg.Pose = Pose;
     StateData_msg.Twist = Twist;
+    StateData_msg.Accel = Accel;
 
     StateData_msg.Eul = Eul;
 
@@ -89,6 +90,7 @@ void SAR_DataConverter::Publish_TriggerData()
     // CARTESIAN SPACE DATA
     TriggerData_msg.Pose_trg = Pose_trg;
     TriggerData_msg.Twist_trg = Twist_trg;
+    TriggerData_msg.Accel_trg = Accel_trg;
     TriggerData_msg.Eul_trg = Eul_trg;
 
 
@@ -128,6 +130,7 @@ void SAR_DataConverter::Publish_ImpactData()
 
     ImpactData_msg.Pose_impact = Pose_impact;
     ImpactData_msg.Twist_impact = Twist_impact;
+    ImpactData_msg.Accel_impact = Accel_impact;
     ImpactData_msg.Eul_impact = Eul_impact;
     ImpactData_msg.Impact_Magnitude = impact_magnitude;
 

@@ -10,6 +10,7 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
     Pose = ctrl_msg.Pose;
     Twist = ctrl_msg.Twist;
+    Accel = ctrl_msg.Accel;
     Vel_mag = sqrt(pow(Twist.linear.x,2)+pow(Twist.linear.y,2)+pow(Twist.linear.z,2));
     Phi = atan2(Twist.linear.z,Twist.linear.x)*180/M_PI;
     Alpha = atan2(Twist.linear.y,Twist.linear.x)*180/M_PI;
@@ -60,6 +61,7 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
     Pose_impact_buff.push_back(Pose);
     Twist_impact_buff.push_back(Twist);
+    Accel_impact_buff.push_back(Accel);
 
 
     // =================
@@ -85,6 +87,7 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     flip_flag = ctrl_msg.flip_flag;
     Pose_trg = ctrl_msg.Pose_trg;
     Twist_trg = ctrl_msg.Twist_trg;
+    Accel_trg = ctrl_msg.Accel_trg;
 
     // PROCESS EULER ANGLES
     float quat_trg[4] = {
