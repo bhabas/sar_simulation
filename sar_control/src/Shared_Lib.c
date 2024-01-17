@@ -82,6 +82,8 @@ struct vec stateAcc = {0.0f,0.0f,0.0f};         // Linear Accel. [m/s^2]
 struct quat stateQuat = {0.0f,0.0f,0.0f,1.0f};  // Orientation
 struct vec stateEul = {0.0f,0.0f,0.0f};         // Orientation in Euler Angles [YZX Notation]
 struct vec stateOmega = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
+struct vec state_dOmega = {0.0f,0.0f,0.0f};     // Angular Accel [rad/s^2]
+
 
 
 struct mat33 R;                                 // Orientation as rotation matrix
@@ -247,6 +249,7 @@ struct vec stateVel_trg = {0.0f,0.0f,0.0f};         // Vel [m/s]
 struct vec stateAcc_trg = {0.0f,0.0f,0.0f};         // Linear Accel [m/s^2]
 struct quat stateQuat_trg = {0.0f,0.0f,0.0f,1.0f};  // Orientation
 struct vec stateOmega_trg = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
+struct vec state_dOmega_trg = {0.0f,0.0f,0.0f};     // Angular Accel [rad/s^2]
 float D_perp_trg = 0.0f;     // [m/s]
 
 // OPTICAL FLOW STATES

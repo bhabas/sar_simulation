@@ -295,9 +295,9 @@ void Controller::publishCtrlData()
     CtrlData_msg.Accel.linear.y = stateAcc.y;
     CtrlData_msg.Accel.linear.z = stateAcc.z;
 
-    CtrlData_msg.Accel.angular.x = 0;
-    CtrlData_msg.Accel.angular.y = 0;
-    CtrlData_msg.Accel.angular.z = 0;
+    CtrlData_msg.Accel.angular.x = state_dOmega.x;
+    CtrlData_msg.Accel.angular.y = state_dOmega.y;
+    CtrlData_msg.Accel.angular.z = state_dOmega.z;
 
 
     // PLANE RELATIVE STATES

@@ -98,6 +98,7 @@ extern struct vec stateAcc;     // Linear Accel. [m/s^2]
 extern struct quat stateQuat;   // Orientation
 extern struct vec stateEul;     // Orientation in Euler Angles [YZX Notation]
 extern struct vec stateOmega;   // Angular Rate [rad/s]
+extern struct vec state_dOmega; // Angular Accel [rad/s^2]
 
 extern struct mat33 R;          // Orientation as rotation matrix
 extern struct vec b3;           // Current body z-axis in global coord.
@@ -250,6 +251,7 @@ extern struct vec stateVel_trg;      // Vel [m/s]
 extern struct vec stateAcc_trg;      // Linear Accel. [m/s^2]
 extern struct quat stateQuat_trg;    // Orientation
 extern struct vec stateOmega_trg;    // Angular Rate [rad/s]
+extern struct vec state_dOmega_trg;  // Angular Accel [rad/s^2]
 extern float D_perp_trg;             // [m/s]
 
 // OPTICAL FLOW STATES

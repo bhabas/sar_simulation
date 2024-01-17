@@ -102,6 +102,7 @@ void controllerOutOfTreeReset() {
     stateAcc_trg = vzero();
     stateQuat_trg = mkquat(0.0f,0.0f,0.0f,1.0f);
     stateOmega_trg = vzero();
+    state_dOmega_trg = vzero();
 
     Tau_trg = 0.0f;
     Theta_x_trg = 0.0f;
@@ -131,6 +132,9 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         stateAcc = mkvec(sensors->acc.x*9.81f, sensors->acc.y*9.81f, sensors->acc.z*9.81f); // [m/s^2]
 
         stateOmega = mkvec(radians(sensors->gyro.x), radians(sensors->gyro.y), radians(sensors->gyro.z));   // [rad/s]
+        state_dOmega = mkvec(radians(sensors->gyro.x), radians(sensors->gyro.y), radians(sensors->gyro.z)); // [rad/s^2]
+
+
         stateQuat = mkquat(state->attitudeQuaternion.x,
                         state->attitudeQuaternion.y,
                         state->attitudeQuaternion.z,
@@ -219,6 +223,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         stateAcc_trg = stateAcc;
                         stateQuat_trg = stateQuat;
                         stateOmega_trg = stateOmega;
+                        state_dOmega_trg = state_dOmega;
 
                         Tau_trg = Tau;
                         Theta_x_trg = Theta_x_trg;
@@ -262,6 +267,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         stateAcc_trg = stateAcc;
                         stateQuat_trg = stateQuat;
                         stateOmega_trg = stateOmega;
+                        state_dOmega_trg = state_dOmega;
 
                         Tau_trg = Tau;
                         Theta_x_trg = Theta_x_trg;
