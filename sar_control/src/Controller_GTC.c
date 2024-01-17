@@ -126,18 +126,14 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
     // STATE UPDATES
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
 
-        
-        // =========== STATE DEFINITIONS =========== //
         statePos = mkvec(state->position.x, state->position.y, state->position.z);          // [m]
         stateVel = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);          // [m/s]
         stateAcc = mkvec(sensors->acc.x*9.81f, sensors->acc.y*9.81f, sensors->acc.z*9.81f); // [m/s^2]
+        AccMag = vmag(stateAcc);
+
 
         stateOmega = mkvec(radians(sensors->gyro.x), radians(sensors->gyro.y), radians(sensors->gyro.z));   // [rad/s]
-
-
         state_dOmega =  vdiv(vsub(stateOmega,stateOmega_prev),(tick-prev_tick)/1000.0f); // [rad/s^2]
-
-
         stateQuat = mkquat(state->attitudeQuaternion.x,
                         state->attitudeQuaternion.y,
                         state->attitudeQuaternion.z,

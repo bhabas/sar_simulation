@@ -96,6 +96,8 @@ extern float kd_xf; // Pos. Derivative Gain Flag
 extern struct vec statePos;         // Pos [m]
 extern struct vec stateVel;         // Vel [m/s]
 extern struct vec stateAcc;         // Linear Accel. [m/s^2]
+extern float AccMag;                // Linear Accel. Magnitude [m/s^2]
+
 extern struct quat stateQuat;       // Orientation
 extern struct vec stateEul;         // Orientation in Euler Angles [YZX Notation]
 extern struct vec stateOmega;       // Angular Rate [rad/s]

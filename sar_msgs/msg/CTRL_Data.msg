@@ -2,6 +2,7 @@
 geometry_msgs/Pose Pose
 geometry_msgs/Twist Twist
 geometry_msgs/Accel Accel
+float64 AccMag
 
 geometry_msgs/Vector3 x_d
 geometry_msgs/Vector3 v_d

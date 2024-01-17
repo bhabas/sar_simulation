@@ -80,13 +80,13 @@ float kd_xf = 1; // Pos. Derivative Gain Flag
 struct vec statePos = {0.0,0.0f,0.0f};          // Pos [m]
 struct vec stateVel = {0.0f,0.0f,0.0f};         // Vel [m/s]
 struct vec stateAcc = {0.0f,0.0f,0.0f};         // Linear Accel. [m/s^2]
+float AccMag = 0.0f;                            // Linear Acceleration Magnitude [m/s^2]
+
 struct quat stateQuat = {0.0f,0.0f,0.0f,1.0f};  // Orientation
 struct vec stateEul = {0.0f,0.0f,0.0f};         // Orientation in Euler Angles [YZX Notation]
-
 struct vec stateOmega = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
 struct vec state_dOmega = {0.0f,0.0f,0.0f};     // Angular Accel [rad/s^2]
 struct vec stateOmega_prev  = {0.0f,0.0f,0.0f}; // Prev Angular Rate [rad/s^2]
-
 
 
 

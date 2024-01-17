@@ -299,6 +299,8 @@ void Controller::publishCtrlData()
     CtrlData_msg.Accel.angular.y = state_dOmega.y;
     CtrlData_msg.Accel.angular.z = state_dOmega.z;
 
+    CtrlData_msg.AccMag = AccMag;
+
 
     // PLANE RELATIVE STATES
     CtrlData_msg.D_perp = D_perp;
