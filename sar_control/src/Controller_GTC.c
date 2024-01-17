@@ -131,7 +131,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
         statePos = mkvec(state->position.x, state->position.y, state->position.z);          // [m]
         stateVel = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);          // [m/s]
         stateAcc = mkvec(sensors->acc.x*9.81f, sensors->acc.y*9.81f, sensors->acc.z*9.81f); // [m/s^2]
-        AccMag = vmag(stateAcc);
+        AccMag = firstOrderFilter(vmag(stateAcc),AccMag,0.5f);
 
 
         stateOmega = mkvec(radians(sensors->gyro.x), radians(sensors->gyro.y), radians(sensors->gyro.z));   // [rad/s]
