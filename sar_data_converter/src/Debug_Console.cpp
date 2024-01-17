@@ -27,11 +27,20 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
         mvprintw(8, 0,"Tumble_Detect: %u  Cam_Active:   %u  Slowdown_Type: %u  Custom_PWM:    %u",Tumble_Detection,isCamActive,SLOWDOWN_TYPE,CustomPWM_Flag);
         
         mvprintw(10, 0,"==== System States ====");
-        mvprintw(11, 0,"Pos [m]:\t % 8.3f  % 8.3f  % 8.3f",Pose.position.x,Pose.position.y,Pose.position.z);
-        mvprintw(12, 0,"Vel [m/s]:\t % 8.3f  % 8.3f  % 8.3f",Twist.linear.x,Twist.linear.y,Twist.linear.z);
-        mvprintw(13, 0,"Omega [rad/s]:\t % 8.3f  % 8.3f  % 8.3f",Twist.angular.x,Twist.angular.y,Twist.angular.z);
-        mvprintw(14, 0,"Eul [deg]:\t % 8.3f  % 8.3f  % 8.3f",Eul.x,Eul.y,Eul.z);
-        mvprintw(15, 0,"Vel [mag,phi]:\t % 8.3f  % 8.3f",Vel_mag,Phi);
+        mvprintw(11, 0,"Pos [m]:         % 7.2f % 7.2f % 7.2f",Pose.position.x,Pose.position.y,Pose.position.z);
+        mvprintw(12, 0,"Vel [m/s]:       % 7.2f % 7.2f % 7.2f",Twist.linear.x,Twist.linear.y,Twist.linear.z);
+        mvprintw(13, 0,"Accel [m/s^2]:   % 7.2f % 7.2f % 7.2f",Accel.linear.x,Accel.linear.y,Accel.linear.z);
+        mvprintw(14, 0,"Omega [rad/s]:   % 7.2f % 7.2f % 7.2f",Twist.angular.x,Twist.angular.y,Twist.angular.z);
+        mvprintw(15, 0,"dOmega [rad/s^2]:% 7.2f % 7.2f % 7.2f",Accel.angular.x,Accel.angular.y,Accel.angular.z);
+        // mvprintw(14, 0,"Eul [deg]:    % 8.3f % 8.3f % 8.3f",Eul.x,Eul.y,Eul.z);
+        mvprintw(11, 43,"[V_mag, V_angle]:% 7.2f % 6.1f",Vel_mag,Phi);
+        mvprintw(12, 43,"[V_rel, V_angle_rel]:");
+        mvprintw(13, 43,"Acc_Mag [m/s^2]: % 7.2f",Acc_mag);
+
+
+
+
+
 
         mvprintw(17, 0,"==== Policy States ====");
         mvprintw(18, 0,"D_perp:  % 7.3f  V_perp:      % 7.3f  V_tx:        % 7.3f",D_perp,V_perp,V_tx);

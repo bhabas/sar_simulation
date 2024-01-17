@@ -296,6 +296,7 @@ class SAR_DataConverter {
         geometry_msgs::Accel Accel;
         geometry_msgs::Vector3 Eul;
 
+        float Acc_mag = 0.0;
         float Vel_mag = 0.0;
         float Phi = 0.0;
         float Alpha = 0.0;

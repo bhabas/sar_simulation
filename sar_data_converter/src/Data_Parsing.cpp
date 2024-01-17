@@ -11,6 +11,7 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     Pose = ctrl_msg.Pose;
     Twist = ctrl_msg.Twist;
     Accel = ctrl_msg.Accel;
+    Acc_mag = ctrl_msg.AccMag;
     Vel_mag = sqrt(pow(Twist.linear.x,2)+pow(Twist.linear.y,2)+pow(Twist.linear.z,2));
     Phi = atan2(Twist.linear.z,Twist.linear.x)*180/M_PI;
     Alpha = atan2(Twist.linear.y,Twist.linear.x)*180/M_PI;
