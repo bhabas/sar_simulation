@@ -339,11 +339,14 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
             motorstop_flag = true;
             break;
 
-        case 7: // Execute Moment-Based Flip
+        case 7: // Execute Moment Corresponding to Angular Acceleration
 
-            M_d.x = CTRL_Cmd->cmd_val1*1e-3f;
-            M_d.y = CTRL_Cmd->cmd_val2*1e-3f;
-            M_d.z = CTRL_Cmd->cmd_val3*1e-3f;
+            M_d.x = CTRL_Cmd->cmd_val1*Ixx;
+            M_d.y = CTRL_Cmd->cmd_val2*Iyy;
+            printf("CTRL_Cmd->cmd_val2 = %.2f\n",CTRL_Cmd->cmd_val2);
+            printf("Iyy = %.3e\n",Iyy);
+            printf("M_d.y = %.3f\n",M_d.y);
+            M_d.z = CTRL_Cmd->cmd_val3*Izz;
 
             moment_flag = (bool)CTRL_Cmd->cmd_flag;
             break;

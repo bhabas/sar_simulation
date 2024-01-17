@@ -85,7 +85,7 @@ class SAR_Base_Interface():
             'Vel':2,
             'Yaw':3,
             'Stop':5,
-            'Moment':7,
+            'dOmega':7,
             'Policy':8,
 
             'P2P_traj':10,

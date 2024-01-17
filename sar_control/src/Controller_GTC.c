@@ -310,11 +310,8 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
         if(moment_flag == true || flip_flag == true)
         {
-            // Controller defaults to increase front motor & decrease back motors to flip
-            // Instead double front motors and set back motors to zero for desired body moment
-            // This gives same moment but avoids negative motor speeds
             F_thrust = 0.0f;
-            M = vscl(2.0f,M_d);
+            M = M_d;
         }
 
 

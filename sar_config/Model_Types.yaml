@@ -201,8 +201,8 @@ SAR_Type:
         Thrust_Coeff: 1.43e-6           # Thrust Coeff [N/(rad/s)]
         Torque_Coeff: 1.57e-8           # Torque Coeff [N*m/(rad/s)]
         C_tf: 1.1e-2                    # Torque-Thrust Coeff [N*m/N]
-        Tau_up: 13.0e-3                 # Motor Time Constant (Up) [s]
-        Tau_down: 30.0e-3               # Motor Time Constant (Down) [s]
+        Tau_up: 9.8e-3                 # Motor Time Constant (Up) [s]
+        Tau_down: 31.9e-3               # Motor Time Constant (Down) [s]
         f_max: 800                      # Max motor thrust [g]
 
         Prop_Front: [72.6e-3, 86.6e-3]  # [x,y] absolute distances [m]

@@ -134,7 +134,7 @@
         </inertia>
         <pose>0 0 0 0 0 0</pose>
       </inertial>
-      <pose>72.6e-3 -86.6e-3 28e-3 0 0 0</pose>
+      <pose>72.6e-3 -86.6e-3 28.0e-3 0 0 0</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <visual name='SO_V5_Prop_1'>
@@ -167,7 +167,7 @@
         </inertia>
         <pose>0 0 0 0 0 0</pose>
       </inertial>
-      <pose>-72.6e-3 -86.6e-3 28e-3 0 0 0</pose>
+      <pose>-72.6e-3 -86.6e-3 28.0e-3 0 0 0</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <visual name='SO_V5_Prop_2'>
@@ -200,7 +200,7 @@
         </inertia>
         <pose>0 0 0 0 0 0</pose>
       </inertial>
-      <pose>-72.6e-3 86.6e-3 28e-3 0 0 0</pose>
+      <pose>-72.6e-3 86.6e-3 28.0e-3 0 0 0</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <visual name='SO_V5_Prop_2'>
@@ -233,7 +233,7 @@
         </inertia>
         <pose>0 0 0 0 0 0</pose>
       </inertial>
-      <pose>72.6e-3 86.6e-3 28e-3 0 0 0</pose>
+      <pose>72.6e-3 86.6e-3 28.0e-3 0 0 0</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <visual name='SO_V5_Prop_3'>
@@ -477,6 +477,15 @@
       <parent>world</parent>
       <child>SAR_Body</child>
       <pose>0 0 0 0 0 0</pose>
+    </joint> -->
+    
+    <!-- <joint name='World_Joint' type='revolute'>
+      <parent>world</parent>
+      <child>SAR_Body</child>
+      <pose>0 0 26.5e-3 0 0 0</pose>
+      <axis>
+        <xyz>0 1 0</xyz>
+      </axis>
     </joint> -->
 
     <static>0</static>
