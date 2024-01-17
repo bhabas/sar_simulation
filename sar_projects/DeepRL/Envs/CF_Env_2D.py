@@ -32,10 +32,10 @@ class CF_Env_2D(gym.Env):
 
         ## RESET INITIAL VALUES
         self.K_ep = 0
-        self.Flip_threshold = 0.5
+        self.Rot_threshold = 0.5
         self.D_min = np.inf
         self.Tau_trg = np.inf
-        self.Flip_Flag = False
+        self.Rot_Flag = False
         self.Done = False
 
         ## DEFINE OBSERVATION SPACE
@@ -102,7 +102,7 @@ class CF_Env_2D(gym.Env):
 
         ## RESET PHYSICS PARAMS
         self.t_step = 0
-        self.Flip_Flag = False
+        self.Rot_Flag = False
         self.MomentCutoff = False
         self.impact_flag = False
         self.Impact_events = [False,False,False]
@@ -219,7 +219,7 @@ class CF_Env_2D(gym.Env):
             self.render()
 
         ########## PRE-FLIP TRIGGER ##########
-        if action[0] < self.Flip_threshold:
+        if action[0] < self.Rot_threshold:
 
             ## GRAB CURRENT OBSERVATION
             obs = self._get_obs()
@@ -256,7 +256,7 @@ class CF_Env_2D(gym.Env):
             obs = self._get_obs()
                 
         ########## POST-FLIP TRIGGER ##########
-        elif action[0] > self.Flip_threshold:
+        elif action[0] > self.Rot_threshold:
 
             ## GRAB CURRENT OBSERVATION
             obs = self._get_obs()   # Return this observation because reward and future 
@@ -266,7 +266,7 @@ class CF_Env_2D(gym.Env):
             self.obs_trg = obs
             self.Tau_trg = obs[0]
             self.action_trg = action
-            self.Flip_Flag = True
+            self.Rot_Flag = True
 
 
             ## COMPLETE REST OF SIMULATION
@@ -568,7 +568,7 @@ class CF_Env_2D(gym.Env):
         pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[6]),width=3)
 
         ## FLIP TRIGGER INDICATOR
-        if self.Flip_Flag == True:
+        if self.Rot_Flag == True:
             pygame.draw.circle(self.surf,BLACK,c2p((x,z)),radius=7,width=3)
             pygame.draw.circle(self.surf,RED,c2p((x,z)),radius=4,width=0)
         else:
@@ -578,7 +578,7 @@ class CF_Env_2D(gym.Env):
         
 
         ## FLIP IMAGE SO X->RIGHT AND Y->UP
-        self.surf = pygame.transform.flip(self.surf, False, True)
+        self.surf = pygame.transform.Rot(self.surf, False, True)
 
         Vel = self.start_vals[0]
         phi = self.start_vals[1]
@@ -606,7 +606,7 @@ class CF_Env_2D(gym.Env):
 
         ## WINDOW/SIM UPDATE RATE
         self.clock.tick(60) # [Hz]
-        pygame.display.flip()
+        pygame.display.Rot()
 
     def close(self):
         if self.screen is not None:

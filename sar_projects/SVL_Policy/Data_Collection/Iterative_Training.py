@@ -19,7 +19,7 @@ if __name__ == '__main__':
     ## Home Test List
     df = pd.read_csv(f"{BASE_PATH}/crazyflie_projects/SVL_Policy/Data_Collection/MasterTestList.csv")
     arr = df.to_numpy()
-    # arr = np.flip(arr,axis=0)
+    # arr = np.Rot(arr,axis=0)
     
     ## INIT GAZEBO ENVIRONMENT
     env = CrazyflieEnv_ParamOpt(GZ_Timeout=True)

@@ -319,7 +319,7 @@ class Policy_Trainer_DeepRL():
                     "--",
                     "Pad_Connections","Body_Contact",
 
-                    "Vel_flip","Phi_flip",
+                    "Vel_Rot","Phi_Rot",
 
                     "Tau_trg",
                     "Theta_x_trg",

@@ -323,7 +323,7 @@ void Controller::publishCtrlData()
 
     // NEURAL NETWORK DATA
     CtrlData_msg.Policy_Trg_Action = Policy_Trg_Action;
-    CtrlData_msg.Policy_Flip_Action = Policy_Flip_Action;
+    CtrlData_msg.Policy_Rot_Action = Policy_Rot_Action;
 
     // CONTROL ACTIONS
     CtrlData_msg.FM = {F_thrust,M.x*1.0e3,M.y*1.0e3,M.z*1.0e3};
@@ -345,9 +345,9 @@ void Controller::publishCtrlData()
 
 
     // STATE DATA (FLIP)
-    CtrlData_msg.flip_flag = flip_flag;
+    CtrlData_msg.Rot_flag = Rot_flag;
 
-    // CtrlData_msg.Pose_trg.header.stamp = t_flip;             
+    // CtrlData_msg.Pose_trg.header.stamp = t_Rot;             
     CtrlData_msg.Pose_trg.position.x = statePos_trg.x;
     CtrlData_msg.Pose_trg.position.y = statePos_trg.y;
     CtrlData_msg.Pose_trg.position.z = statePos_trg.z;
@@ -381,10 +381,10 @@ void Controller::publishCtrlData()
 
     // POLICY ACTIONS (FLIP)
     CtrlData_msg.Policy_Trg_Action_trg = Policy_Trg_Action_trg;
-    CtrlData_msg.Policy_Flip_Action_trg = Policy_Flip_Action_trg;
+    CtrlData_msg.Policy_Rot_Action_trg = Policy_Rot_Action_trg;
 
     // CONTROL ACTIONS (FLIP)
-    CtrlData_msg.FM_flip = {F_thrust_flip,M_x_flip,M_y_flip,M_z_flip};
+    CtrlData_msg.FM_Rot = {F_thrust_Rot,M_x_Rot,M_y_Rot,M_z_Rot};
 
     
     CTRL_Data_Publisher.publish(CtrlData_msg);

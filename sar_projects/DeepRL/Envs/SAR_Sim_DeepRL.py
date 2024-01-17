@@ -43,7 +43,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         ## RESET INITIAL VALUES
         self.K_ep = 0
-        self.Flip_threshold = 0.5
+        self.Rot_threshold = 0.5
         self.D_min = np.inf
         self.Tau_trg = np.inf
         self.Done = False
@@ -99,7 +99,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         ## RESET LOGGING CONDITIONS 
         self.K_ep += 1
-        self.eventCaptureFlag_flip = False      # Ensures flip data recorded only once
+        self.eventCaptureFlag_Rot = False      # Ensures Rot data recorded only once
         self.eventCaptureFlag_impact = False    # Ensures impact data recorded only once 
 
 
@@ -202,7 +202,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
     def step(self, action):
 
         ########## PRE-FLIP TRIGGER ##########
-        if action[0] < self.Flip_threshold:
+        if action[0] < self.Rot_threshold:
 
             ## GRAB CURRENT OBSERVATION
             obs = self._get_obs()
@@ -233,7 +233,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             obs = self._get_obs()
 
         ########## POST-FLIP TRIGGER ##########
-        elif action[0] >= self.Flip_threshold:
+        elif action[0] >= self.Rot_threshold:
 
             ## GRAB CURRENT OBSERVATION
             obs = self._get_obs()   # Return this observation because reward and future 
@@ -277,7 +277,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
     def _finish_sim(self,action):
         """This function continues the remaining steps of the simulation at full speed 
-        since policy actions only continue up until flip trigger.
+        since policy actions only continue up until Rot trigger.
 
         Args:
             action (np.array): Action to be performed by controller

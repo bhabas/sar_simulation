@@ -154,7 +154,7 @@ class SAR_DataConverter {
         void create_CSV();
         void append_CSV_states();
         void append_CSV_misc();
-        void append_CSV_flip();
+        void append_CSV_Rot();
         void append_CSV_impact();
         void append_CSV_blank();
 
@@ -320,7 +320,7 @@ class SAR_DataConverter {
         boost::array<uint16_t,4> MS_PWM{0,0,0,0};
 
         double Policy_Trg_Action = 0.0;
-        double Policy_Flip_Action = 0.0;
+        double Policy_Rot_Action = 0.0;
 
         geometry_msgs::Vector3 x_d;
         geometry_msgs::Vector3 v_d;
@@ -332,8 +332,8 @@ class SAR_DataConverter {
         //     FLIP DATA
         // ==================
 
-        bool flip_flag = false;
-        bool OnceFlag_flip = false;
+        bool Rot_flag = false;
+        bool OnceFlag_Rot = false;
 
         ros::Time Time_trg;
 
@@ -351,7 +351,7 @@ class SAR_DataConverter {
         boost::array<double,4> FM_trg{0,0,0,0};
 
         double Policy_Trg_Action_trg = 0.0;
-        double Policy_Flip_Action_trg = 0.0;
+        double Policy_Rot_Action_trg = 0.0;
 
 
         // ===================
@@ -536,7 +536,7 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
     {
         case 0:
             // RESET FLIP TIME
-            OnceFlag_flip = false;
+            OnceFlag_Rot = false;
             Time_trg.sec = 0.0;
             Time_trg.nsec = 0.0;
             Rot_Sum = 0.0;

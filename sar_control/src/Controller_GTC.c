@@ -92,7 +92,7 @@ void controllerOutOfTreeReset() {
 
     // RESET POLICY FLAGS
     policy_armed_flag = false;
-    flip_flag = false;
+    Rot_flag = false;
     onceFlag = false;
 
 
@@ -110,7 +110,7 @@ void controllerOutOfTreeReset() {
     D_perp_trg = 0.0f;
 
     Policy_Trg_Action_trg = 0.0f;
-    Policy_Flip_Action_trg = 0.0f;
+    Policy_Rot_Action_trg = 0.0f;
 
 
     updatePlaneNormal(Plane_Angle);
@@ -228,7 +228,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                         onceFlag = true;
 
                         // UPDATE AND RECORD FLIP VALUES
-                        flip_flag = true;  
+                        Rot_flag = true;  
                         statePos_trg = statePos;
                         stateVel_trg = stateVel;
                         stateAcc_trg = stateAcc;
@@ -243,13 +243,13 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                     
                         M_d.x = 0.0f;
-                        M_d.y = Policy_Flip_Action*Iyy;
+                        M_d.y = Policy_Rot_Action*Iyy;
                         M_d.z = 0.0f;
 
-                        F_thrust_flip = 0.0;
-                        M_x_flip = M_d.x*1e3f;
-                        M_y_flip = M_d.y*1e3f;
-                        M_z_flip = M_d.z*1e3f;
+                        F_thrust_Rot = 0.0;
+                        M_x_Rot = M_d.x*1e3f;
+                        M_y_Rot = M_d.y*1e3f;
+                        M_z_Rot = M_d.z*1e3f;
                         }
                         
                     break;
@@ -263,16 +263,16 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                     Policy_Trg_Action = GaussianSample(Y_output->data[0][0],exp(Y_output->data[2][0]));
 
                     // EXECUTE POLICY
-                    if(Policy_Trg_Action >= Policy_Flip_threshold && onceFlag == false && V_perp > 0.1f){
+                    if(Policy_Trg_Action >= Policy_Rot_threshold && onceFlag == false && V_perp > 0.1f){
 
                         onceFlag = true;
 
                         // SAMPLE AND SCALE BODY FLIP ACTION
-                        Policy_Flip_Action = GaussianSample(Y_output->data[1][0],exp(Y_output->data[3][0]));
-                        Policy_Flip_Action = scale_tanhAction(Policy_Flip_Action,ACTION_MIN,ACTION_MAX);
+                        Policy_Rot_Action = GaussianSample(Y_output->data[1][0],exp(Y_output->data[3][0]));
+                        Policy_Rot_Action = scale_tanhAction(Policy_Rot_Action,ACTION_MIN,ACTION_MAX);
 
                         // UPDATE AND RECORD FLIP VALUES
-                        flip_flag = true;  
+                        Rot_flag = true;  
                         statePos_trg = statePos;
                         stateVel_trg = stateVel;
                         stateAcc_trg = stateAcc;
@@ -287,13 +287,13 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                     
                         M_d.x = 0.0f;
-                        M_d.y = -Policy_Flip_Action*1e-3f;
+                        M_d.y = -Policy_Rot_Action*1e-3f;
                         M_d.z = 0.0f;
 
-                        F_thrust_flip = 0.0;
-                        M_x_flip = M_d.x*1e3f;
-                        M_y_flip = M_d.y*1e3f;
-                        M_z_flip = M_d.z*1e3f;
+                        F_thrust_Rot = 0.0;
+                        M_x_Rot = M_d.x*1e3f;
+                        M_y_Rot = M_d.y*1e3f;
+                        M_z_Rot = M_d.z*1e3f;
                         }
                         
                     break;
@@ -316,7 +316,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
         controlOutput(state,sensors);
 
-        if(moment_flag == true || flip_flag == true)
+        if(moment_flag == true || Rot_flag == true)
         {
             F_thrust = 0.0f;
             M = vscl(2.0f,M_d);
@@ -527,7 +527,7 @@ LOG_ADD(LOG_INT16,  Tau_est,        &TrgStates_Z.Tau_est)
 
 LOG_ADD(LOG_UINT32, PolActions,    &TrgStates_Z.Policy_Actions)
 
-LOG_ADD(LOG_UINT8, Flip_Flag, &flip_flag)
+LOG_ADD(LOG_UINT8, Rot_Flag, &Rot_flag)
 LOG_GROUP_STOP(Z_TrgStates)
 
 

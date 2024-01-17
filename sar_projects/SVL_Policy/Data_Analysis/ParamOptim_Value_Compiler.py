@@ -41,15 +41,15 @@ with open(filePath,'w') as file:
         "Vel_d", "Phi_d", "Trial_num",
         "LR_4Leg",
 
-        "Vel_flip","Phi_flip",
+        "Vel_Rot","Phi_Rot",
 
-        "Tau_flip_mean",
-        "OFy_flip_mean",
-        "D_ceil_flip_mean",
+        "Tau_Rot_mean",
+        "OFy_Rot_mean",
+        "D_ceil_Rot_mean",
         "My_mean",
 
-        "Vz_flip_mean",
-        "Vx_flip_mean",
+        "Vz_Rot_mean",
+        "Vx_Rot_mean",
 
         "Mu","Sigma",
     ])
@@ -76,17 +76,17 @@ for ii,fileName in enumerate(sorted(os.listdir(dataPath))): # Iter over all file
         Trial_num = int(re.split("trial_",fileName)[1][:2])
 
 
-        Vz_flip_mean,vz_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,'vz')
-        Vx_flip_mean,vx_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,'vx')
-        Tau_flip_mean,Tau_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,'Tau')
-        OFy_flip_mean,OFy_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,'OF_y')
-        D_ceil_flip_mean,D_ceil_flip_std,_ = trial.grab_trial_data(trial.grab_flip_state,'d_ceil')
-        My_mean,My_std,_ = trial.grab_trial_data(trial.grab_flip_state,'My')
+        Vz_Rot_mean,vz_Rot_std,_ = trial.grab_trial_data(trial.grab_Rot_state,'vz')
+        Vx_Rot_mean,vx_Rot_std,_ = trial.grab_trial_data(trial.grab_Rot_state,'vx')
+        Tau_Rot_mean,Tau_Rot_std,_ = trial.grab_trial_data(trial.grab_Rot_state,'Tau')
+        OFy_Rot_mean,OFy_Rot_std,_ = trial.grab_trial_data(trial.grab_Rot_state,'OF_y')
+        D_ceil_Rot_mean,D_ceil_Rot_std,_ = trial.grab_trial_data(trial.grab_Rot_state,'d_ceil')
+        My_mean,My_std,_ = trial.grab_trial_data(trial.grab_Rot_state,'My')
         landing_rate_4leg,_,_,_ = trial.landing_rate()
         mu,sigma = trial.grab_finalPolicy()
 
-        Vel_flip = np.sqrt(Vx_flip_mean**2 + Vz_flip_mean**2)
-        Phi_flip = np.rad2deg(np.arctan2(Vz_flip_mean,Vx_flip_mean))
+        Vel_Rot = np.sqrt(Vx_Rot_mean**2 + Vz_Rot_mean**2)
+        Phi_Rot = np.rad2deg(np.arctan2(Vz_Rot_mean,Vx_Rot_mean))
 
 
         ## WRITE FILE HEADER
@@ -96,15 +96,15 @@ for ii,fileName in enumerate(sorted(os.listdir(dataPath))): # Iter over all file
                 Vel_IC, Phi_IC, Trial_num,
                 landing_rate_4leg,
 
-                np.round(Vel_flip,3),np.round(Phi_flip,3),
+                np.round(Vel_Rot,3),np.round(Phi_Rot,3),
 
-                Tau_flip_mean,
-                OFy_flip_mean,
-                D_ceil_flip_mean,
+                Tau_Rot_mean,
+                OFy_Rot_mean,
+                D_ceil_Rot_mean,
                 My_mean,
 
-                Vz_flip_mean,
-                Vx_flip_mean,
+                Vz_Rot_mean,
+                Vx_Rot_mean,
 
                 mu,sigma,
             ])

@@ -13,7 +13,7 @@ float64[4] MotorThrusts
 uint32[4] MS_PWM
 
 float64 Policy_Trg_Action
-float64 Policy_Flip_Action
+float64 Policy_Rot_Action
 
 ## PLANE RELATIVE STATES
 float64 D_perp
@@ -33,7 +33,7 @@ float64 Theta_y_est
 
 
 # STATES AT FLIP TRIGGER
-bool flip_flag
+bool Rot_flag
 geometry_msgs/Pose Pose_trg
 geometry_msgs/Twist Twist_trg
 geometry_msgs/Accel Accel_trg
@@ -43,9 +43,9 @@ float64 Theta_y_trg
 
 float64 D_perp_trg
 
-float64[4] FM_flip
+float64[4] FM_Rot
 
 float64 Policy_Trg_Action_trg
-float64 Policy_Flip_Action_trg
+float64 Policy_Rot_Action_trg
 
 

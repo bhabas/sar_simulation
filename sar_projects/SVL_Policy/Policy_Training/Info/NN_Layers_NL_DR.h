@@ -1,5 +1,5 @@
 // Filename: NL_LR_Trials.csv Time: 07/18-15:18
-static char NN_Params_Flip[] = {
+static char NN_Params_Rot[] = {
 "1,"	"1,"
 "4,"
 "*"

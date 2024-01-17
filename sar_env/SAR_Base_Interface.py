@@ -264,14 +264,14 @@ class SAR_Base_Interface():
         self.FM = [0,0,0,0]             # Controller Force/Moments (F_thrust,Mx,My,Mz) [N,N*mm]
         
         self.Policy_Trg_Action = 0.0
-        self.Policy_Flip_Action = 0.0
+        self.Policy_Rot_Action = 0.0
         
         self.x_d = [0,0,0]
         self.v_d = [0,0,0]
         self.a_d = [0,0,0]
 
         ## INITIALIZE FLIP VALUES
-        self.flip_flag = False      # Flag if model has started flip maneuver
+        self.Rot_flag = False      # Flag if model has started Rot maneuver
 
         self.t_trg = 0.0             # [s]
         self.pos_trg = [0,0,0]       # [m]
@@ -288,7 +288,7 @@ class SAR_Base_Interface():
         self.FM_trg = [0,0,0,0]      # [N,N*mm]
 
         self.Policy_Trg_Action_trg = 0.0
-        self.Policy_Flip_Action_trg = 0.0 # [N*mm]
+        self.Policy_Rot_Action_trg = 0.0 # [N*mm]
 
         self.vel_trg_mag = 0.0       # [m/s]
         self.phi_trg = 0.0           # [deg]
@@ -379,7 +379,7 @@ class SAR_Base_Interface():
         self.callService('/SAR_DC/DataLogging',srv,Logging_CMD)
 
     def capLogging(self,logName):
-        """Cap logging values with Flight, Flip, and Impact conditions and stop continuous logging
+        """Cap logging values with Flight, Rot, and Impact conditions and stop continuous logging
         """        
 
         ## CREATE SERVICE REQUEST MSG
@@ -444,9 +444,9 @@ class SAR_Base_Interface():
     def SAR_TriggerDataCallback(self,TriggerData_msg):
 
         ## FLIP FLAG
-        self.flip_flag = TriggerData_msg.flip_flag
+        self.Rot_flag = TriggerData_msg.Rot_flag
 
-        if TriggerData_msg.flip_flag == True:
+        if TriggerData_msg.Rot_flag == True:
 
             ## FLIP TRIGGERING CONDITIONS
             self.pos_trg = np.round([TriggerData_msg.Pose_trg.position.x,
@@ -476,7 +476,7 @@ class SAR_Base_Interface():
 
             ## POLICY ACTIONS
             self.Policy_Trg_Action_trg = TriggerData_msg.Policy_Trg_Action_trg
-            self.Policy_Flip_Action_trg = TriggerData_msg.Policy_Flip_Action_trg
+            self.Policy_Rot_Action_trg = TriggerData_msg.Policy_Rot_Action_trg
 
 
     def SAR_ImpactDataCallback(self,ImpactData_msg):

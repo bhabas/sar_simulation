@@ -224,12 +224,12 @@ extern nml_mat* Y_output;   // POLICY OUTPUT MATRIX
 
 // POLICY FLAGS
 extern bool policy_armed_flag;
-extern bool flip_flag;
+extern bool Rot_flag;
 extern bool onceFlag;
 
 // POLICY TRIGGER/ACTION VALUES
 extern float Policy_Trg_Action;  
-extern float Policy_Flip_Action;
+extern float Policy_Rot_Action;
 
 extern float ACTION_MIN;
 extern float ACTION_MAX;
@@ -240,7 +240,7 @@ extern float ACTION_MAX;
 // ===============================
 
 extern NN NN_DeepRL;
-extern float Policy_Flip_threshold;
+extern float Policy_Rot_threshold;
 
 
 
@@ -269,14 +269,14 @@ extern float Theta_x_est_trg;        // [rad/s]
 extern float Theta_y_est_trg;        // [rad/s]
 
 // CONTROLLER STATES
-extern float F_thrust_flip;         // [N]
-extern float M_x_flip;              // [N*m]
-extern float M_y_flip;              // [N*m]
-extern float M_z_flip;              // [N*m]
+extern float F_thrust_Rot;         // [N]
+extern float M_x_Rot;              // [N*m]
+extern float M_y_Rot;              // [N*m]
+extern float M_z_Rot;              // [N*m]
 
 // POLICY TRIGGER/ACTION VALUES
 extern float Policy_Trg_Action_trg;    
-extern float Policy_Flip_Action_trg;
+extern float Policy_Rot_Action_trg;
 
 // =================================
 //    LANDING SURFACE PARAMETERS

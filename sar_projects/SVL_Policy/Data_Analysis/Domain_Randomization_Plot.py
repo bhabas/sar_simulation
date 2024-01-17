@@ -25,9 +25,9 @@ if __name__ == "__main__":
     # df = pd.read_csv(f"{BASEPATH}/Data_Logs/NL_Raw/NL_LR_Trials_Raw.csv").dropna() # Collected data
 
     ## ORGANIZE DATA
-    Tau = df["Tau_flip_mean"]
-    OF_y = df["OFy_flip_mean"]
-    d_ceil = df["D_ceil_flip_mean"]
+    Tau = df["Tau_Rot_mean"]
+    OF_y = df["OFy_Rot_mean"]
+    d_ceil = df["D_ceil_Rot_mean"]
     landing_rate = df["LR_4leg"]
     My = df["My_mean"]
 
@@ -85,14 +85,14 @@ if __name__ == "__main__":
     ax = fig.add_subplot(111,projection="3d")
 
 
-    X_1 = df.query('LR_4leg >= 0.1')['OFy_flip_mean']
-    Y_1 = df.query('LR_4leg >= 0.1')['Tau_flip_mean']
-    Z_1 = df.query('LR_4leg >= 0.1')['D_ceil_flip_mean']
+    X_1 = df.query('LR_4leg >= 0.1')['OFy_Rot_mean']
+    Y_1 = df.query('LR_4leg >= 0.1')['Tau_Rot_mean']
+    Z_1 = df.query('LR_4leg >= 0.1')['D_ceil_Rot_mean']
     C_1 = df.query('LR_4leg >= 0.1')['LR_4leg']
 
-    X_2 = df.query('LR_4leg <= 0.1')['OFy_flip_mean']
-    Y_2 = df.query('LR_4leg <= 0.1')['Tau_flip_mean']
-    Z_2 = df.query('LR_4leg <= 0.1')['D_ceil_flip_mean']
+    X_2 = df.query('LR_4leg <= 0.1')['OFy_Rot_mean']
+    Y_2 = df.query('LR_4leg <= 0.1')['Tau_Rot_mean']
+    Z_2 = df.query('LR_4leg <= 0.1')['D_ceil_Rot_mean']
     C_2 = df.query('LR_4leg <= 0.1')['LR_4leg']
 
 

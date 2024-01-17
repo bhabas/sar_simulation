@@ -224,12 +224,12 @@ nml_mat* Y_output;  // POLICY OUTPUT MATRIX
 
 // POLICY FLAGS
 bool policy_armed_flag = false;
-bool flip_flag = false;
+bool Rot_flag = false;
 bool onceFlag = false;
 
 // POLICY TRIGGER/ACTION VALUES
 float Policy_Trg_Action = 0.0f;  
-float Policy_Flip_Action = 0.0f;
+float Policy_Rot_Action = 0.0f;
 
 float ACTION_MIN = 0.0f;
 float ACTION_MAX = 8.0f;
@@ -239,7 +239,7 @@ float ACTION_MAX = 8.0f;
 // ===============================
 
 NN NN_DeepRL;
-float Policy_Flip_threshold = 1.50f;
+float Policy_Rot_threshold = 1.50f;
 
 
 
@@ -267,14 +267,14 @@ float Theta_x_est_trg = 0.0f;    // [rad/s]
 float Theta_y_est_trg = 0.0f;    // [rad/s]
 
 // CONTROLLER STATES
-float F_thrust_flip = 0.0f; // [N]
-float M_x_flip = 0.0f;      // [N*m]
-float M_y_flip = 0.0f;      // [N*m]
-float M_z_flip = 0.0f;      // [N*m]
+float F_thrust_Rot = 0.0f; // [N]
+float M_x_Rot = 0.0f;      // [N*m]
+float M_y_Rot = 0.0f;      // [N*m]
+float M_z_Rot = 0.0f;      // [N*m]
 
 // POLICY TRIGGER/ACTION VALUES
 float Policy_Trg_Action_trg = 0.0f;    
-float Policy_Flip_Action_trg = 0.0f;
+float Policy_Rot_Action_trg = 0.0f;
 
 // =================================
 //    LANDING SURFACE PARAMETERS
@@ -350,7 +350,7 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
 
         case 8: // Arm Policy Maneuver
             Policy_Trg_Action = CTRL_Cmd->cmd_val1;
-            Policy_Flip_Action = CTRL_Cmd->cmd_val2;
+            Policy_Rot_Action = CTRL_Cmd->cmd_val2;
 
             policy_armed_flag = (bool)CTRL_Cmd->cmd_flag;
             break;

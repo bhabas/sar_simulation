@@ -58,7 +58,7 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
     // NEURAL NETWORK DATA
     Policy_Trg_Action = ctrl_msg.Policy_Trg_Action;
-    Policy_Flip_Action = ctrl_msg.Policy_Flip_Action;
+    Policy_Rot_Action = ctrl_msg.Policy_Rot_Action;
 
     Pose_impact_buff.push_back(Pose);
     Twist_impact_buff.push_back(Twist);
@@ -70,14 +70,14 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     // =================
 
     // CARTESIAN SPACE DATA
-    if(ctrl_msg.flip_flag == true && OnceFlag_flip == false)
+    if(ctrl_msg.Rot_flag == true && OnceFlag_Rot == false)
     {   
         Time_trg = ros::Time::now();
-        OnceFlag_flip = true;
+        OnceFlag_Rot = true;
 
     }
 
-    if(ctrl_msg.flip_flag == true && impact_flag == false)
+    if(ctrl_msg.Rot_flag == true && impact_flag == false)
     {
         double Time_delta = Time.toSec()-Time_prev.toSec();
         Rot_Sum += (Time_delta*Twist.angular.y)*180/M_PI;
@@ -85,7 +85,7 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     }
     
 
-    flip_flag = ctrl_msg.flip_flag;
+    Rot_flag = ctrl_msg.Rot_flag;
     Pose_trg = ctrl_msg.Pose_trg;
     Twist_trg = ctrl_msg.Twist_trg;
     Accel_trg = ctrl_msg.Accel_trg;
@@ -110,11 +110,11 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     D_perp_trg = ctrl_msg.D_perp_trg;
 
     // CONTROLLER ACTIONS
-    FM_trg = ctrl_msg.FM_flip;
+    FM_trg = ctrl_msg.FM_Rot;
 
     // NEURAL NETWORK DATA
     Policy_Trg_Action_trg = ctrl_msg.Policy_Trg_Action_trg;
-    Policy_Flip_Action_trg = ctrl_msg.Policy_Flip_Action_trg;
+    Policy_Rot_Action_trg = ctrl_msg.Policy_Rot_Action_trg;
 
 }
 
@@ -224,14 +224,14 @@ void SAR_DataConverter::cf1_PolicyState_Callback(const sar_msgs::GenericLogData:
     float Policy_Action_arr[2];
     decompressXY(log_msg->values[5],Policy_Action_arr);
     Policy_Trg_Action = Policy_Action_arr[0];
-    Policy_Flip_Action = Policy_Action_arr[1];
+    Policy_Rot_Action = Policy_Action_arr[1];
 
     // FLIP FLAG
-    flip_flag = log_msg->values[6];
-    if(flip_flag == true && OnceFlag_flip == false)
+    Rot_flag = log_msg->values[6];
+    if(Rot_flag == true && OnceFlag_Rot == false)
     {
         Time_trg = ros::Time::now();
-        OnceFlag_flip = true;
+        OnceFlag_Rot = true;
     }
 
 }
@@ -339,7 +339,7 @@ void SAR_DataConverter::cf1_TrgState_Callback(const sar_msgs::GenericLogData::Co
     float Policy_Action_arr[2];
     decompressXY(log_msg->values[8],Policy_Action_arr);
     Policy_Trg_Action_trg = Policy_Action_arr[0];
-    Policy_Flip_Action_trg = Policy_Action_arr[1];
+    Policy_Rot_Action_trg = Policy_Action_arr[1];
     
     
 }

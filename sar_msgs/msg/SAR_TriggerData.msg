@@ -1,5 +1,5 @@
 Header header
-bool flip_flag
+bool Rot_flag
 geometry_msgs/Pose Pose_trg
 geometry_msgs/Twist Twist_trg
 geometry_msgs/Accel Accel_trg
@@ -14,4 +14,4 @@ float64 D_perp_trg
 float64[4] FM_trg
 
 float64 Policy_Trg_Action_trg
-float64 Policy_Flip_Action_trg
+float64 Policy_Rot_Action_trg

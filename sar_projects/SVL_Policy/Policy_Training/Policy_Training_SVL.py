@@ -100,7 +100,7 @@ class Policy_Trainer():
 
         date_time = datetime.now().strftime('%m/%d-%H:%M')
         f.write(f"// Filename: {FileName} Time: {date_time}\n")
-        f.write("static char NN_Params_Flip[] = {\n")
+        f.write("static char NN_Params_Rot[] = {\n")
         
         NN_size = np.array([4]).reshape(-1,1)
 
@@ -467,9 +467,9 @@ class Policy_Trainer():
         fig.add_trace(
             go.Scatter3d(
                 ## DATA
-                x=df["OFy_flip_mean"],
-                y=df["Tau_flip_mean"],
-                z=df["D_ceil_flip_mean"],
+                x=df["OFy_Rot_mean"],
+                y=df["Tau_Rot_mean"],
+                z=df["D_ceil_Rot_mean"],
 
                 ## HOVER DATA
                 customdata=df,
@@ -532,7 +532,7 @@ class Policy_Trainer():
             dataFile,k_ep,k_run = PlotTraj
             arr = dataFile.grab_stateData(k_ep,k_run,['Tau','OF_y','d_ceil'])
             Tau,OFy,d_ceil = np.split(arr,3,axis=1)
-            Tau_trg,OFy_trg,d_ceil_trg,My_trg = dataFile.grab_flip_state(k_ep,k_run,['Tau','OF_y','d_ceil','My'])
+            Tau_trg,OFy_trg,d_ceil_trg,My_trg = dataFile.grab_Rot_state(k_ep,k_run,['Tau','OF_y','d_ceil','My'])
 
             fig.add_trace(
                 go.Scatter3d(
@@ -591,8 +591,8 @@ class Policy_Trainer():
     def plot_Landing_Rate(self,df,saveFig=False):
 
         ## COLLECT DATA
-        Vel_flip = df.iloc[:]['Vel_flip'].to_numpy()
-        Phi_flip = df.iloc[:]['Phi_flip'].to_numpy()
+        Vel_Rot = df.iloc[:]['Vel_Rot'].to_numpy()
+        Phi_Rot = df.iloc[:]['Phi_Rot'].to_numpy()
         LR = df.iloc[:]['LR_4Leg'].to_numpy()
 
 
@@ -607,11 +607,11 @@ class Policy_Trainer():
             data = data.astype(np.float64)
             return (data-xmin)/(xmax-xmin)
 
-        Phi_min,Phi_max = Phi_flip.min(),Phi_flip.max()
-        Vel_min,Vel_max = Vel_flip.min(),Vel_flip.max()
+        Phi_min,Phi_max = Phi_Rot.min(),Phi_Rot.max()
+        Vel_min,Vel_max = Vel_Rot.min(),Vel_Rot.max()
 
-        Phi_norm = normalize(Phi_flip,Phi_min,Phi_max)
-        Vel_norm = normalize(Vel_flip,Vel_min,Vel_max)
+        Phi_norm = normalize(Phi_Rot,Phi_min,Phi_max)
+        Vel_norm = normalize(Vel_Rot,Vel_min,Vel_max)
 
         Phi_grid_norm = normalize(Phi_grid,Phi_min,Phi_max)
         Vel_grid_norm = normalize(Vel_grid,Vel_min,Vel_max)
@@ -633,7 +633,7 @@ class Policy_Trainer():
         ax = fig.add_subplot(projection='polar')
         ax.contourf(np.radians(Phi_grid),Vel_grid,LR_interp,levels=30,cmap=cmap,norm=norm)
         # ax.scatter(np.radians(Phi_grid.flatten()),Vel_grid.flatten(),c=LR_interp.flatten(),cmap=cmap,norm=norm)
-        # ax.scatter(np.radians(Phi_flip),Vel_flip,c=LR,cmap=cmap,norm=norm)
+        # ax.scatter(np.radians(Phi_Rot),Vel_Rot,c=LR,cmap=cmap,norm=norm)
 
         ax.set_thetamin(30)
         ax.set_thetamax(90)
@@ -705,9 +705,9 @@ if __name__ == "__main__":
     df_max = df_raw[idx].reset_index()
 
     ## ORGANIZE DATA
-    Tau = df_train["Tau_flip_mean"]
-    OF_y = df_train["OFy_flip_mean"]
-    d_ceil = df_train["D_ceil_flip_mean"]
+    Tau = df_train["Tau_Rot_mean"]
+    OF_y = df_train["OFy_Rot_mean"]
+    d_ceil = df_train["D_ceil_Rot_mean"]
     My = df_train["My_mean"]
 
     ## CREATE SCALER

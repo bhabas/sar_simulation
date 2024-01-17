@@ -22,7 +22,7 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
 
         mvprintw(4, 0,"==== Flags ====");
         mvprintw(5, 0,"Motorstop:     %u  Policy_Armed: %u  Pos_Ctrl:      %u  Moment_Flag:   %u",Motorstop_Flag,Policy_Armed_Flag,Pos_Ctrl_Flag,Moment_Flag);
-        mvprintw(6, 0,"SafeMode:      %u  Flip_Flag:    %u  Vel_Ctrl:      %u  AttCtrl_Flag:  %u",SafeModeEnable,flip_flag,Vel_Ctrl_Flag,AttCtrl_Flag);
+        mvprintw(6, 0,"SafeMode:      %u  Rot_Flag:    %u  Vel_Ctrl:      %u  AttCtrl_Flag:  %u",SafeModeEnable,Rot_flag,Vel_Ctrl_Flag,AttCtrl_Flag);
         mvprintw(7, 0,"Tumbled:       %u  Impact_Flag:  %u  Sticky_Flag:   %u  Custom_Thrust: %u",Tumbled_Flag,impact_flag,Sticky_Flag,CustomThrust_Flag);
         mvprintw(8, 0,"Tumble_Detect: %u  Cam_Active:   %u  Slowdown_Type: %u  Custom_PWM:    %u",Tumble_Detection,isCamActive,SLOWDOWN_TYPE,CustomPWM_Flag);
         
@@ -50,20 +50,20 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
         mvprintw(22, 0,"==== Policy: %s ====",POLICY_TYPE.c_str());
         if (strcmp(POLICY_TYPE.c_str(),"PARAM_OPTIM") == 0)
         {
-            mvprintw(23, 0,"Tau_thr: % 7.3f \tMy: % 7.3f",Policy_Trg_Action,Policy_Flip_Action);
+            mvprintw(23, 0,"Tau_thr: % 7.3f \tMy: % 7.3f",Policy_Trg_Action,Policy_Rot_Action);
         }
         else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL_SB3") == 0)
         {
-            mvprintw(23, 0,"Pol_Trg_Act_trg: % 7.3f \tPol_Flip_Act: % 7.3f ",Policy_Trg_Action,Policy_Flip_Action);
+            mvprintw(23, 0,"Pol_Trg_Act_trg: % 7.3f \tPol_Rot_Act: % 7.3f ",Policy_Trg_Action,Policy_Rot_Action);
         }
         else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL_ONBOARD") == 0)
         {
-            mvprintw(23, 0,"Pol_Trg_Act_trg: % 7.3f \tPol_Flip_Act: % 7.3f ",Policy_Trg_Action,Policy_Flip_Action);
+            mvprintw(23, 0,"Pol_Trg_Act_trg: % 7.3f \tPol_Rot_Act: % 7.3f ",Policy_Trg_Action,Policy_Rot_Action);
         }
 
-        mvprintw(25,0,"==== Flip Trigger Values ====");
+        mvprintw(25,0,"==== Rot Trigger Values ====");
         mvprintw(26,0,"Tau_trg:     % 7.3f \tPol_Trg_Act_trg:  % 7.3f ",Tau_trg,Policy_Trg_Action_trg);
-        mvprintw(27,0,"\u03B8x_trg:     % 7.3f \tPol_Flip_Act_trg: % 7.3f ",Theta_x_trg,Policy_Flip_Action_trg);
+        mvprintw(27,0,"\u03B8x_trg:     % 7.3f \tPol_Rot_Act_trg: % 7.3f ",Theta_x_trg,Policy_Rot_Action_trg);
         mvprintw(28,0,"D_perp_trg:  % 7.3f ",D_perp_trg);
 
         mvprintw(30,0,"==== Setpoints ====");
