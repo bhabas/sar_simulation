@@ -329,11 +329,11 @@ class SAR_DataConverter {
         double Rot_Sum = 0.0;
 
         // ==================
-        //     FLIP DATA
+        //     TRIGGER DATA
         // ==================
 
-        bool Rot_flag = false;
-        bool OnceFlag_Rot = false;
+        bool Trg_flag = false;
+        bool OnceFlag_Trg = false;
 
         ros::Time Time_trg;
 
@@ -358,7 +358,7 @@ class SAR_DataConverter {
         //     IMPACT DATA
         // ===================
 
-        bool impact_flag = false;
+        bool Impact_flag = false;
         bool BodyContact_flag = false;
         bool LegContact_flag = false;
         bool OnceFlag_impact = false;
@@ -535,14 +535,14 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
     switch (req.cmd_type)
     {
         case 0:
-            // RESET FLIP TIME
-            OnceFlag_Rot = false;
+            // RESET TRIGGER TIME
+            OnceFlag_Trg = false;
             Time_trg.sec = 0.0;
             Time_trg.nsec = 0.0;
             Rot_Sum = 0.0;
 
             // RESET IMPACT TIME
-            impact_flag = false;
+            Impact_flag = false;
             BodyContact_flag = false;
             LegContact_flag = false;
             OnceFlag_impact = false;

@@ -224,7 +224,7 @@ nml_mat* Y_output;  // POLICY OUTPUT MATRIX
 
 // POLICY FLAGS
 bool policy_armed_flag = false;
-bool Rot_flag = false;
+bool Trg_flag = false;
 bool onceFlag = false;
 
 // POLICY TRIGGER/ACTION VALUES
@@ -244,7 +244,7 @@ float Policy_Rot_threshold = 1.50f;
 
 
 // ======================================
-//  RECORD SYSTEM STATES AT FLIP TRIGGER
+//  RECORD SYSTEM STATES AT TRIGGER TRIGGER
 // ======================================
 
 // CARTESIAN STATES

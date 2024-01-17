@@ -92,11 +92,11 @@ void controllerOutOfTreeReset() {
 
     // RESET POLICY FLAGS
     policy_armed_flag = false;
-    Rot_flag = false;
+    Trg_flag = false;
     onceFlag = false;
 
 
-    // RESET LOGGED FLIP VALUES
+    // RESET LOGGED TRIGGER VALUES
     statePos_trg = vzero();
     stateVel_trg = vzero();
     stateAcc_trg = vzero();
@@ -227,8 +227,8 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                         onceFlag = true;
 
-                        // UPDATE AND RECORD FLIP VALUES
-                        Rot_flag = true;  
+                        // UPDATE AND RECORD TRIGGER VALUES
+                        Trg_flag = true;  
                         statePos_trg = statePos;
                         stateVel_trg = stateVel;
                         stateAcc_trg = stateAcc;
@@ -267,12 +267,12 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                         onceFlag = true;
 
-                        // SAMPLE AND SCALE BODY FLIP ACTION
+                        // SAMPLE AND SCALE BODY TRIGGER ACTION
                         Policy_Rot_Action = GaussianSample(Y_output->data[1][0],exp(Y_output->data[3][0]));
                         Policy_Rot_Action = scale_tanhAction(Policy_Rot_Action,ACTION_MIN,ACTION_MAX);
 
-                        // UPDATE AND RECORD FLIP VALUES
-                        Rot_flag = true;  
+                        // UPDATE AND RECORD TRIGGER VALUES
+                        Trg_flag = true;  
                         statePos_trg = statePos;
                         stateVel_trg = stateVel;
                         stateAcc_trg = stateAcc;
@@ -316,7 +316,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
         controlOutput(state,sensors);
 
-        if(moment_flag == true || Rot_flag == true)
+        if(moment_flag == true || Trg_flag == true)
         {
             F_thrust = 0.0f;
             M = vscl(2.0f,M_d);
@@ -527,7 +527,7 @@ LOG_ADD(LOG_INT16,  Tau_est,        &TrgStates_Z.Tau_est)
 
 LOG_ADD(LOG_UINT32, PolActions,    &TrgStates_Z.Policy_Actions)
 
-LOG_ADD(LOG_UINT8, Rot_Flag, &Rot_flag)
+LOG_ADD(LOG_UINT8, Trg_flag, &Trg_flag)
 LOG_GROUP_STOP(Z_TrgStates)
 
 

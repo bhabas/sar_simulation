@@ -66,18 +66,18 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
 
     // =================
-    //     FLIP DATA
+    //     TRIGGER DATA
     // =================
 
     // CARTESIAN SPACE DATA
-    if(ctrl_msg.Rot_flag == true && OnceFlag_Rot == false)
+    if(ctrl_msg.Trg_flag == true && OnceFlag_Trg == false)
     {   
         Time_trg = ros::Time::now();
-        OnceFlag_Rot = true;
+        OnceFlag_Trg = true;
 
     }
 
-    if(ctrl_msg.Rot_flag == true && impact_flag == false)
+    if(ctrl_msg.Trg_flag == true && Impact_flag == false)
     {
         double Time_delta = Time.toSec()-Time_prev.toSec();
         Rot_Sum += (Time_delta*Twist.angular.y)*180/M_PI;
@@ -85,7 +85,7 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     }
     
 
-    Rot_flag = ctrl_msg.Rot_flag;
+    Trg_flag = ctrl_msg.Trg_flag;
     Pose_trg = ctrl_msg.Pose_trg;
     Twist_trg = ctrl_msg.Twist_trg;
     Accel_trg = ctrl_msg.Accel_trg;
@@ -226,12 +226,12 @@ void SAR_DataConverter::cf1_PolicyState_Callback(const sar_msgs::GenericLogData:
     Policy_Trg_Action = Policy_Action_arr[0];
     Policy_Rot_Action = Policy_Action_arr[1];
 
-    // FLIP FLAG
-    Rot_flag = log_msg->values[6];
-    if(Rot_flag == true && OnceFlag_Rot == false)
+    // TRIGGER FLAG
+    Trg_flag = log_msg->values[6];
+    if(Trg_flag == true && OnceFlag_Trg == false)
     {
         Time_trg = ros::Time::now();
-        OnceFlag_Rot = true;
+        OnceFlag_Trg = true;
     }
 
 }

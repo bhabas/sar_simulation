@@ -32,8 +32,8 @@ float64 Theta_x_est
 float64 Theta_y_est
 
 
-# STATES AT FLIP TRIGGER
-bool Rot_flag
+# STATES AT TRIGGER TRIGGER
+bool Trg_flag
 geometry_msgs/Pose Pose_trg
 geometry_msgs/Twist Twist_trg
 geometry_msgs/Accel Accel_trg

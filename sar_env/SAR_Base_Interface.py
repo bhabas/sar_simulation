@@ -270,8 +270,8 @@ class SAR_Base_Interface():
         self.v_d = [0,0,0]
         self.a_d = [0,0,0]
 
-        ## INITIALIZE FLIP VALUES
-        self.Rot_flag = False      # Flag if model has started Rot maneuver
+        ## INITIALIZE TRIGGER VALUES
+        self.Trg_flag = False      # Flag if model has started Rot maneuver
 
         self.t_trg = 0.0             # [s]
         self.pos_trg = [0,0,0]       # [m]
@@ -294,7 +294,7 @@ class SAR_Base_Interface():
         self.phi_trg = 0.0           # [deg]
 
         ## INITIALIZE IMPACT VALUES
-        self.impact_flag = False
+        self.Impact_flag = False
         self.BodyContact_flag = False   # Flag if model body impacts ceiling plane
 
         self.t_impact = 0.0
@@ -443,12 +443,12 @@ class SAR_Base_Interface():
 
     def SAR_TriggerDataCallback(self,TriggerData_msg):
 
-        ## FLIP FLAG
-        self.Rot_flag = TriggerData_msg.Rot_flag
+        ## TRIGGER FLAG
+        self.Trg_flag = TriggerData_msg.Trg_flag
 
-        if TriggerData_msg.Rot_flag == True:
+        if TriggerData_msg.Trg_flag == True:
 
-            ## FLIP TRIGGERING CONDITIONS
+            ## TRIGGER TRIGGERING CONDITIONS
             self.pos_trg = np.round([TriggerData_msg.Pose_trg.position.x,
                                     TriggerData_msg.Pose_trg.position.y,
                                     TriggerData_msg.Pose_trg.position.z],3)
@@ -484,7 +484,7 @@ class SAR_Base_Interface():
         if rospy.get_param('/DATA_TYPE') == "SIM": ## Impact values only good in simulation
 
             ## IMPACT FLAGS
-            self.impact_flag = ImpactData_msg.impact_flag
+            self.Impact_flag = ImpactData_msg.Impact_flag
             self.BodyContact_flag = ImpactData_msg.BodyContact_flag
             self.LegContact_flag = ImpactData_msg.LegContact_flag
             self.pad_connections = ImpactData_msg.Pad_Connections

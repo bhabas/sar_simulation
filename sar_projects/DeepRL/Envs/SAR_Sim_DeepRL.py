@@ -201,7 +201,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
     
     def step(self, action):
 
-        ########## PRE-FLIP TRIGGER ##########
+        ########## PRE-TRIGGER TRIGGER ##########
         if action[0] < self.Rot_threshold:
 
             ## GRAB CURRENT OBSERVATION
@@ -210,7 +210,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             ## CHECK FOR DONE
             self.Done = bool(
                 self.Done
-                or (self.impact_flag or self.BodyContact_flag)  # BODY CONTACT W/O FLIP TRIGGER
+                or (self.Impact_flag or self.BodyContact_flag)  # BODY CONTACT W/O TRIGGER TRIGGER
             )       
 
             ## UPDATE MINIMUM DISTANCE
@@ -232,7 +232,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             ## UDPATE OBSERVATION
             obs = self._get_obs()
 
-        ########## POST-FLIP TRIGGER ##########
+        ########## POST-TRIGGER TRIGGER ##########
         elif action[0] >= self.Rot_threshold:
 
             ## GRAB CURRENT OBSERVATION
@@ -286,7 +286,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## SCALE ACTION
         scaled_action = 0.5 * (action[1] + 1) * (self.My_range[1] - self.My_range[0]) + self.My_range[0]
 
-        ## SEND FLIP ACTION TO CONTROLLER
+        ## SEND TRIGGER ACTION TO CONTROLLER
         My = -scaled_action # Body rotational moment [N*mm]
         self.SendCmd("Policy",[0,My,0],cmd_flag=1)
 
@@ -296,7 +296,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         while not self.Done:
 
             ## START IMPACT TERMINATION TIMERS
-            if ((self.impact_flag or self.BodyContact_flag) and self.eventCaptureFlag_impact == False):
+            if ((self.Impact_flag or self.BodyContact_flag) and self.eventCaptureFlag_impact == False):
                 self.start_time_impact = self.getTime()
                 self.eventCaptureFlag_impact = True
 

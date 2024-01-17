@@ -35,7 +35,7 @@ class CF_Env_2D(gym.Env):
         self.Rot_threshold = 0.5
         self.D_min = np.inf
         self.Tau_trg = np.inf
-        self.Rot_Flag = False
+        self.Trg_flag = False
         self.Done = False
 
         ## DEFINE OBSERVATION SPACE
@@ -56,7 +56,7 @@ class CF_Env_2D(gym.Env):
         ## SIM PARAMETERS
         self.Plane_Pos = [0,0,2.1]
         self.MomentCutoff = False
-        self.impact_flag = False
+        self.Impact_flag = False
         self.Impact_events = [False,False,False]
         self.BodyContact_flag = False
         self.pad_connections = 0
@@ -102,9 +102,9 @@ class CF_Env_2D(gym.Env):
 
         ## RESET PHYSICS PARAMS
         self.t_step = 0
-        self.Rot_Flag = False
+        self.Trg_flag = False
         self.MomentCutoff = False
-        self.impact_flag = False
+        self.Impact_flag = False
         self.Impact_events = [False,False,False]
         self.BodyContact_flag = False
         self.pad_connections = 0
@@ -218,7 +218,7 @@ class CF_Env_2D(gym.Env):
         if self.RENDER:
             self.render()
 
-        ########## PRE-FLIP TRIGGER ##########
+        ########## PRE-TRIGGER TRIGGER ##########
         if action[0] < self.Rot_threshold:
 
             ## GRAB CURRENT OBSERVATION
@@ -226,12 +226,12 @@ class CF_Env_2D(gym.Env):
 
             ## CHECK FOR IMPACT
             x,vx,z,vz,theta,dtheta = self._get_state()
-            self.impact_flag,self.Impact_events = self._impact_conditions(x,z,theta)
+            self.Impact_flag,self.Impact_events = self._impact_conditions(x,z,theta)
 
             ## CHECK FOR DONE
             self.Done = bool(
                 self.Done
-                or (self.impact_flag or self.BodyContact_flag)  # BODY CONTACT W/O FLIP TRIGGER
+                or (self.Impact_flag or self.BodyContact_flag)  # BODY CONTACT W/O TRIGGER TRIGGER
             )
 
             ## UPDATE MINIMUM DISTANCE
@@ -255,7 +255,7 @@ class CF_Env_2D(gym.Env):
             ## UDPATE OBSERVATION
             obs = self._get_obs()
                 
-        ########## POST-FLIP TRIGGER ##########
+        ########## POST-TRIGGER TRIGGER ##########
         elif action[0] > self.Rot_threshold:
 
             ## GRAB CURRENT OBSERVATION
@@ -266,7 +266,7 @@ class CF_Env_2D(gym.Env):
             self.obs_trg = obs
             self.Tau_trg = obs[0]
             self.action_trg = action
-            self.Rot_Flag = True
+            self.Trg_flag = True
 
 
             ## COMPLETE REST OF SIMULATION
@@ -312,7 +312,7 @@ class CF_Env_2D(gym.Env):
                 My = 0
 
             ## BODY MOMENT/PROJECTILE FLIGHT
-            if self.impact_flag == False:
+            if self.Impact_flag == False:
 
                 ## UPDATE STATE
                 z_acc = -My/(M_G*PD)*np.sin(np.pi/2-theta) - g
@@ -330,7 +330,7 @@ class CF_Env_2D(gym.Env):
                 self.state = (x,vx,z,vz,theta,dtheta)
 
                 ## CHECK FOR IMPACT
-                self.impact_flag,self.Impact_events = self._impact_conditions(x,z,theta)
+                self.Impact_flag,self.Impact_events = self._impact_conditions(x,z,theta)
 
                 ## CHECK FOR DONE
                 self.Done = bool(
@@ -339,7 +339,7 @@ class CF_Env_2D(gym.Env):
                     or (vz <= -5.0 and self._get_obs()[2] >= 0.5) # IF SAR IS FALLING
                 )
                 
-            elif self.impact_flag == True:
+            elif self.Impact_flag == True:
 
                 self.theta_impact = np.rad2deg(theta)
 
@@ -567,8 +567,8 @@ class CF_Env_2D(gym.Env):
         pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[5]),width=3)
         pygame.draw.line(self.surf,BLACK,c2p(Pose[0]),c2p(Pose[6]),width=3)
 
-        ## FLIP TRIGGER INDICATOR
-        if self.Rot_Flag == True:
+        ## TRIGGER TRIGGER INDICATOR
+        if self.Trg_flag == True:
             pygame.draw.circle(self.surf,BLACK,c2p((x,z)),radius=7,width=3)
             pygame.draw.circle(self.surf,RED,c2p((x,z)),radius=4,width=0)
         else:
@@ -577,7 +577,7 @@ class CF_Env_2D(gym.Env):
     
         
 
-        ## FLIP IMAGE SO X->RIGHT AND Y->UP
+        ## TRIGGER IMAGE SO X->RIGHT AND Y->UP
         self.surf = pygame.transform.Rot(self.surf, False, True)
 
         Vel = self.start_vals[0]
@@ -653,7 +653,7 @@ class CF_Env_2D(gym.Env):
     
     def _impact_conditions(self,x_pos,z_pos,theta):
         
-        impact_flag  = False
+        Impact_flag  = False
         Body_contact = False
         Leg1_contact = False
         Leg2_contact = False
@@ -661,18 +661,18 @@ class CF_Env_2D(gym.Env):
         MO_z,_,_,Leg1_z,Leg2_z,Prop1_z,Prop2_z = self._get_pose(x_pos,z_pos,theta)[:,1]
 
         if any(x >= self.Plane_Pos[2] for x in [MO_z,Prop1_z,Prop2_z]):
-            impact_flag = True
+            Impact_flag = True
             Body_contact = True
             
         if Leg1_z >= self.Plane_Pos[2]:
-            impact_flag = True
+            Impact_flag = True
             Leg1_contact = True
 
         if Leg2_z >= self.Plane_Pos[2]:
-            impact_flag = True
+            Impact_flag = True
             Leg2_contact = True
 
-        return impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
+        return Impact_flag,[Body_contact,Leg1_contact,Leg2_contact]
 
     def _get_pose(self,x_pos,z_pos,theta):           
         """Returns position data of all model lines for a given state

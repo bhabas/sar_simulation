@@ -63,7 +63,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         start_time_ep = time.time()
 
         ## RESET LOGGING CONDITIONS 
-        onceFlag_Rot = False    # Ensures Rot data recorded only once
+        OnceFlag_Trg = False    # Ensures Rot data recorded only once
         onceFlag_impact = False   # Ensures impact data recorded only once 
 
 
@@ -90,12 +90,12 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
             if self.D_perp < self.D_min:
                 self.D_min = self.D_perp 
 
-            ## START FLIP AND IMPACT TERMINATION TIMERS
-            if (self.Rot_flag == True and onceFlag_Rot == False):
+            ## START TRIGGER AND IMPACT TERMINATION TIMERS
+            if (self.Trg_flag == True and OnceFlag_Trg == False):
                 start_time_pitch = t_now    # Starts countdown for when to reset run
-                onceFlag_Rot = True        # Turns on to make sure this only runs once per rollout
+                OnceFlag_Trg = True        # Turns on to make sure this only runs once per rollout
 
-            if ((self.impact_flag or self.BodyContact_flag) and onceFlag_impact == False):
+            if ((self.Impact_flag or self.BodyContact_flag) and onceFlag_impact == False):
                 start_time_impact = t_now
                 onceFlag_impact = True
 

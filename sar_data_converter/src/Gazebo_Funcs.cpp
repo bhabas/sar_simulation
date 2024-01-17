@@ -81,9 +81,9 @@ void SAR_DataConverter::Surface_Contact_Callback(const gazebo_msgs::ContactsStat
         }
 
         // LOCK IN STATE DATA WHEN INITIAL IMPACT DETECTED
-        if (impact_flag == false && (BodyContact_flag == true || LegContact_flag == true))
+        if (Impact_flag == false && (BodyContact_flag == true || LegContact_flag == true))
         {
-            impact_flag = true;
+            Impact_flag = true;
 
             // RECORD IMPACT STATE DATA FROM END OF CIRCULAR BUFFER WHEN IMPACT FLAGGED
             Time_impact = ros::Time::now();
@@ -184,7 +184,7 @@ void SAR_DataConverter::checkSlowdown()
         }
 
         // IF IMPACTED CEILING OR FALLING AWAY, INCREASE SIM SPEED TO DEFAULT
-        if (impact_flag == true && SLOWDOWN_TYPE == 1)
+        if (Impact_flag == true && SLOWDOWN_TYPE == 1)
         {
             SAR_DataConverter::adjustSimSpeed(SIM_SPEED);
             SLOWDOWN_TYPE = 2; // (Don't call adjustSimSpeed more than once)

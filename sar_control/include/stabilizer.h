@@ -344,8 +344,8 @@ void Controller::publishCtrlData()
 
 
 
-    // STATE DATA (FLIP)
-    CtrlData_msg.Rot_flag = Rot_flag;
+    // STATE DATA (TRIGGER)
+    CtrlData_msg.Trg_flag = Trg_flag;
 
     // CtrlData_msg.Pose_trg.header.stamp = t_Rot;             
     CtrlData_msg.Pose_trg.position.x = statePos_trg.x;
@@ -373,17 +373,17 @@ void Controller::publishCtrlData()
     CtrlData_msg.Accel_trg.angular.y = 0;
     CtrlData_msg.Accel_trg.angular.z = 0;
 
-    // OPTICAL FLOW DATA (FLIP)
+    // OPTICAL FLOW DATA (TRIGGER)
     CtrlData_msg.Tau_trg = Tau_trg;
     CtrlData_msg.Theta_x_trg = Theta_x_trg;
     CtrlData_msg.Theta_y_trg = Theta_y_trg;
     CtrlData_msg.D_perp_trg = D_perp_trg;
 
-    // POLICY ACTIONS (FLIP)
+    // POLICY ACTIONS (TRIGGER)
     CtrlData_msg.Policy_Trg_Action_trg = Policy_Trg_Action_trg;
     CtrlData_msg.Policy_Rot_Action_trg = Policy_Rot_Action_trg;
 
-    // CONTROL ACTIONS (FLIP)
+    // CONTROL ACTIONS (TRIGGER)
     CtrlData_msg.FM_Rot = {F_thrust_Rot,M_x_Rot,M_y_Rot,M_z_Rot};
 
     

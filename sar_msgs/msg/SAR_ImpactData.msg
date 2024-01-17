@@ -1,5 +1,5 @@
 Header header
-bool impact_flag
+bool Impact_flag
 bool BodyContact_flag
 bool LegContact_flag
 geometry_msgs/Pose Pose_impact

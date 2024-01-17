@@ -1,5 +1,5 @@
 Header header
-bool Rot_flag
+bool Trg_flag
 geometry_msgs/Pose Pose_trg
 geometry_msgs/Twist Twist_trg
 geometry_msgs/Accel Accel_trg

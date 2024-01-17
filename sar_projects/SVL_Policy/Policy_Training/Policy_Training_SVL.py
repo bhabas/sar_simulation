@@ -734,7 +734,7 @@ if __name__ == "__main__":
     # Policy.load_NN_Params(NN_Param_Path)
     # print(Policy.NN_Predict(np.array([[0.233,-2.778,0.518]])))
 
-    ## TRAIN OC_SVM FLIP_CLASSIFICATION POLICY
+    ## TRAIN OC_SVM TRIGGER_CLASSIFICATION POLICY
     Policy.train_OC_SVM(X)
     Policy.save_SVM_Params(SVM_Param_Path,FileName)
     print(Policy.OC_SVM_Predict(np.array([[0.233,-2.778,0.518]])))

@@ -224,7 +224,7 @@ extern nml_mat* Y_output;   // POLICY OUTPUT MATRIX
 
 // POLICY FLAGS
 extern bool policy_armed_flag;
-extern bool Rot_flag;
+extern bool Trg_flag;
 extern bool onceFlag;
 
 // POLICY TRIGGER/ACTION VALUES
@@ -246,7 +246,7 @@ extern float Policy_Rot_threshold;
 
 
 // ======================================
-//  RECORD SYSTEM STATES AT FLIP TRIGGER
+//  RECORD SYSTEM STATES AT TRIGGER TRIGGER
 // ======================================
 
 // CARTESIAN STATES

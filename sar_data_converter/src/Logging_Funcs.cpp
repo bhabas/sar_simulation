@@ -22,7 +22,7 @@ bool SAR_DataConverter::DataLogging_Callback(sar_msgs::Logging_CMD::Request &req
             fPtr = fopen(req.filePath.c_str(), "a");
             break;
 
-        case 2: // CAP CSV W/ FLIP,IMPACT,MISC DATA
+        case 2: // CAP CSV W/ TRIGGER,IMPACT,MISC DATA
             Logging_Flag = false;
 
             fPtr = fopen(req.filePath.c_str(), "a");
@@ -74,7 +74,7 @@ void SAR_DataConverter::create_CSV()
     fprintf(fPtr,"vx,vy,vz,");
     fprintf(fPtr,"D_perp,Tau,Tau_est,");
     fprintf(fPtr,"Theta_x,Theta_x_est,Theta_y,Theta_y_est,");
-    fprintf(fPtr,"Rot_flag,impact_flag,");
+    fprintf(fPtr,"Trg_flag,Impact_flag,");
 
 
     //  MISC STATE DATA
@@ -116,7 +116,7 @@ void SAR_DataConverter::append_CSV_states()
     fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,",Twist.linear.x,Twist.linear.y,Twist.linear.z);       // vx,vy,vz
     fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,",D_perp,Tau,Tau_est);                    // Tau,Theta_x,Theta_y,D_perp
     fprintf(fPtr,"% 6.3f,% 6.3f,% 6.3f,%.3f,",Theta_x,Theta_x_est,Theta_y,Theta_y_est);                    // Tau_est,Theta_x_est,Theta_y_est
-    fprintf(fPtr,"%s,%s,",formatBool(Rot_flag),formatBool(impact_flag));               // Rot_flag,impact_flag
+    fprintf(fPtr,"%s,%s,",formatBool(Trg_flag),formatBool(Impact_flag));               // Trg_flag,Impact_flag
 
 
     // MISC STATE DATA
@@ -153,7 +153,7 @@ void SAR_DataConverter::append_CSV_misc()
     fprintf(fPtr,"%.3f,%.3f,%.3f,",vel_d[0],vel_d[1],vel_d[2]); // vel_d.x,vel_d.y,vel_d.z
     fprintf(fPtr,"--,--,--,");                                  // D_perp, Tau, Tau_est
     fprintf(fPtr,"--,--,--,--,");                               // Theta_x,Theta_x_est,Theta_y,Theta_y_est,
-    fprintf(fPtr,"%.2f,[%.2f %.2f %.2f %.2f %.2f],",reward,reward_vals[0],reward_vals[1],reward_vals[2],reward_vals[3],reward_vals[4]); // Rot_flag,impact_flag
+    fprintf(fPtr,"%.2f,[%.2f %.2f %.2f %.2f %.2f],",reward,reward_vals[0],reward_vals[1],reward_vals[2],reward_vals[3],reward_vals[4]); // Trg_flag,Impact_flag
 
 
     // MISC STATE DATA
@@ -188,7 +188,7 @@ void SAR_DataConverter::append_CSV_Rot()
     fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist_trg.linear.x,Twist_trg.linear.y,Twist_trg.linear.z);      // vx,vy,vz
     fprintf(fPtr,"%.3f,%.3f,--,",D_perp_trg,Tau_trg);                                             // D_perp,Tau,Tau_est
     fprintf(fPtr,"%.3f,--,%.3f,--,",Theta_x_trg,Theta_y_trg);                                     // Tau_est,Theta_x_est,Theta_y_est
-    fprintf(fPtr,"%s,--,",formatBool(Rot_flag));                                               // Rot_flag,impact_flag
+    fprintf(fPtr,"%s,--,",formatBool(Trg_flag));                                               // Trg_flag,Impact_flag
 
 
 
@@ -224,7 +224,7 @@ void SAR_DataConverter::append_CSV_impact()
     fprintf(fPtr,"%.3f,%.3f,%.3f,",Twist_impact.linear.x,Twist_impact.linear.y,Twist_impact.linear.z);      // vx,vy,vz
     fprintf(fPtr,"--,--,--,");                                                                              // D_perp,Tau,Tau_est,
     fprintf(fPtr,"%u,%u,%u,%u,",Pad1_Contact,Pad2_Contact,Pad3_Contact,Pad4_Contact);   // Theta_x,Theta_x_est,Theta_y,Theta_y_est,
-    fprintf(fPtr,"%s,%s,",formatBool(BodyContact_flag),formatBool(impact_flag));        // Rot_flag,impact_flag
+    fprintf(fPtr,"%s,%s,",formatBool(BodyContact_flag),formatBool(Impact_flag));        // Trg_flag,Impact_flag
 
 
     // MISC STATE DATA

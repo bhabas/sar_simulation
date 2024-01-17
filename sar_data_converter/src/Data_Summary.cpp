@@ -84,7 +84,7 @@ void SAR_DataConverter::Publish_TriggerData()
     ros::Duration Time_delta(Time_trg-Time_start);
     TriggerData_msg.header.stamp.sec = Time_delta.sec;
     TriggerData_msg.header.stamp.nsec = Time_delta.nsec;
-    TriggerData_msg.Rot_flag = Rot_flag;
+    TriggerData_msg.Trg_flag = Trg_flag;
 
 
     // CARTESIAN SPACE DATA
@@ -120,7 +120,7 @@ void SAR_DataConverter::Publish_ImpactData()
     ImpactData_msg.header.stamp.sec = Time_delta.sec;
     ImpactData_msg.header.stamp.nsec = Time_delta.nsec;
 
-    ImpactData_msg.impact_flag = impact_flag;
+    ImpactData_msg.Impact_flag = Impact_flag;
     ImpactData_msg.BodyContact_flag = BodyContact_flag;
     ImpactData_msg.LegContact_flag = LegContact_flag;
 

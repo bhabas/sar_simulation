@@ -111,8 +111,8 @@ class DataFile:
             rewards_avg: array of averaged rewards per episode (np.array)
         """        
         ## CREATE ARRAYS FOR REWARD, K_EP 
-        reward_df = self.trial_df.iloc[:][['k_ep','mu','Rot_flag']].dropna() # Create df from k_ep/rewards and drop blank reward rows
-        reward_df = reward_df.iloc[:][["k_ep","Rot_flag"]].astype('float')
+        reward_df = self.trial_df.iloc[:][['k_ep','mu','Trg_flag']].dropna() # Create df from k_ep/rewards and drop blank reward rows
+        reward_df = reward_df.iloc[:][["k_ep","Trg_flag"]].astype('float')
         rewards_arr = reward_df.to_numpy()
         rewards = rewards_arr[:,1]
         k_ep_r = rewards_arr[:,0]
@@ -333,7 +333,7 @@ class DataFile:
         t = self.grab_stateData(k_ep,k_run,'t')
         t_norm = t - np.min(t) # Normalize time array
 
-        ## GRAB STATE/FLIP DATA
+        ## GRAB STATE/TRIGGER DATA
         for state in stateName:
 
             color = next(ax._get_lines.prop_cycler)['color']
@@ -344,7 +344,7 @@ class DataFile:
 
 
 
-            # ## MARK STATE DATA AT FLIP TIME
+            # ## MARK STATE DATA AT TRIGGER TIME
             # t_Rot,t_Rot_norm = self.grab_Rot_time(k_ep,k_run)
             # state_Rot = self.grab_Rot_state(k_ep,k_run,state)
             # ax.scatter(t_Rot_norm,state_Rot,label=f"{state}-Rot",zorder=2,
@@ -417,7 +417,7 @@ class DataFile:
         return Vel_IC,phi_IC
         
 
-    ## FLIP FUNCTIONS
+    ## TRIGGER FUNCTIONS
     def grab_Rot_time(self,k_ep,k_run):
         """Returns time of Rot
 
@@ -432,7 +432,7 @@ class DataFile:
         """        
 
         run_df,_,Rot_df,_ = self.select_run(k_ep,k_run)
-        if Rot_df.iloc[0]['Rot_flag'] == True: # If Impact Detected
+        if Rot_df.iloc[0]['Trg_flag'] == True: # If Impact Detected
             t_Rot = float(Rot_df.iloc[0]['t'])
             t_Rot_norm = t_Rot - float(run_df.iloc[0]['t']) # Normalize Rot time
         else:
@@ -457,7 +457,7 @@ class DataFile:
         """        
 
         _,_,Rot_df,_ = self.select_run(k_ep,k_run)
-        if Rot_df.iloc[0]['Rot_flag'] == True: # If Impact Detected
+        if Rot_df.iloc[0]['Trg_flag'] == True: # If Impact Detected
 
             state_Rot = float(Rot_df.iloc[0][stateName])
         else:
@@ -485,7 +485,7 @@ class DataFile:
 
 
         run_df,_,_,impact_df = self.select_run(k_ep,k_run)
-        if impact_df.iloc[0]['impact_flag'] == True: # If Impact Detected
+        if impact_df.iloc[0]['Impact_flag'] == True: # If Impact Detected
             t_impact = float(impact_df.iloc[0]['t'])
             t_impact_norm = t_impact - float(run_df.iloc[0]['t']) # Normalize Rot time
         else:
@@ -511,7 +511,7 @@ class DataFile:
 
 
         _,_,_,impact_df = self.select_run(k_ep,k_run)
-        if impact_df.iloc[0]['impact_flag'] == True: # If Impact Detected
+        if impact_df.iloc[0]['Impact_flag'] == True: # If Impact Detected
 
             state_impact = float(impact_df.iloc[0][stateName])
         else:
@@ -542,7 +542,7 @@ class DataFile:
             body_impact (bool): True if body impacted the ceiling
         """        
         _,_,_,impact_df = self.select_run(k_ep,k_run)
-        body_impact = impact_df.iloc[0]['Rot_flag']
+        body_impact = impact_df.iloc[0]['Trg_flag']
         leg_contacts = int(impact_df.iloc[0]['F_thrust'])
         contact_list = impact_df.iloc[0][['Theta_x','Theta_x_est','Theta_y','Theta_y_est']].to_numpy(dtype=np.int8)
 
@@ -566,8 +566,8 @@ class DataFile:
 
         ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
         # Use reward to extract only the valid attempts and not simulation mishaps
-        ep_df = self.trial_df.iloc[:][['k_ep','k_run','mu','Rot_flag']].dropna().drop(columns='mu')
-        ep_df = ep_df.astype('float').query(f'Rot_flag >= {reward_cutoff}') 
+        ep_df = self.trial_df.iloc[:][['k_ep','k_run','mu','Trg_flag']].dropna().drop(columns='mu')
+        ep_df = ep_df.astype('float').query(f'Trg_flag >= {reward_cutoff}') 
         ep_arr = ep_df.iloc[-self.n_rollouts*N:].to_numpy() # Grab episode/run listing from past N rollouts
 
         ## ITERATE THROUGH ALL RUNS AND RECORD VALID LANDINGS
@@ -602,8 +602,8 @@ class DataFile:
 
         ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
         # Use reward to extract only the valid attempts and not simulation mishaps
-        ep_df = self.trial_df.iloc[:][['k_ep','k_run','mu','Rot_flag']].dropna().drop(columns='mu')
-        ep_df = ep_df.astype('float').query(f'Rot_flag >= {reward_cutoff}') 
+        ep_df = self.trial_df.iloc[:][['k_ep','k_run','mu','Trg_flag']].dropna().drop(columns='mu')
+        ep_df = ep_df.astype('float').query(f'Trg_flag >= {reward_cutoff}') 
         ep_arr = ep_df.iloc[-self.n_rollouts*N:].to_numpy() # Grab episode/run listing from past N rollouts
 
         ## ITERATE THROUGH ALL RUNS AND FINDING IMPACT ANGLE 
