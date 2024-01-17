@@ -343,9 +343,6 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
 
             M_d.x = CTRL_Cmd->cmd_val1*Ixx;
             M_d.y = CTRL_Cmd->cmd_val2*Iyy;
-            printf("CTRL_Cmd->cmd_val2 = %.2f\n",CTRL_Cmd->cmd_val2);
-            printf("Iyy = %.3e\n",Iyy);
-            printf("M_d.y = %.3f\n",M_d.y);
             M_d.z = CTRL_Cmd->cmd_val3*Izz;
 
             moment_flag = (bool)CTRL_Cmd->cmd_flag;
@@ -797,6 +794,8 @@ bool updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors
     return true;
 }
 
-
+float firstOrderFilter(float newValue, float prevValue, float alpha) {
+    return alpha * newValue + (1 - alpha) * prevValue;
+}
 
 

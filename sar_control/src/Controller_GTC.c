@@ -126,6 +126,8 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
     // STATE UPDATES
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
 
+        float time_delta = (tick-prev_tick)/1000.0f;
+
         statePos = mkvec(state->position.x, state->position.y, state->position.z);          // [m]
         stateVel = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);          // [m/s]
         stateAcc = mkvec(sensors->acc.x*9.81f, sensors->acc.y*9.81f, sensors->acc.z*9.81f); // [m/s^2]
@@ -133,7 +135,13 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
 
         stateOmega = mkvec(radians(sensors->gyro.x), radians(sensors->gyro.y), radians(sensors->gyro.z));   // [rad/s]
-        state_dOmega =  vdiv(vsub(stateOmega,stateOmega_prev),(tick-prev_tick)/1000.0f); // [rad/s^2]
+
+        // CALC AND FILTER ANGULAR ACCELERATION
+        state_dOmega.x = firstOrderFilter((stateOmega.x - stateOmega_prev.x)/time_delta,state_dOmega.x,0.90f); // [rad/s^2]
+        state_dOmega.y = firstOrderFilter((stateOmega.y - stateOmega_prev.y)/time_delta,state_dOmega.y,0.90f); // [rad/s^2]
+        state_dOmega.z = firstOrderFilter((stateOmega.z - stateOmega_prev.z)/time_delta,state_dOmega.z,0.90f); // [rad/s^2]
+
+
         stateQuat = mkquat(state->attitudeQuaternion.x,
                         state->attitudeQuaternion.y,
                         state->attitudeQuaternion.z,

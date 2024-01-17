@@ -323,6 +323,7 @@ uint16_t thrust2PWM(float f);
 void updatePlaneNormal(float Plane_Angle);
 bool updateOpticalFlowEst();
 bool updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors);
+float firstOrderFilter(float newValue, float prevValue, float alpha);
 
 
 
