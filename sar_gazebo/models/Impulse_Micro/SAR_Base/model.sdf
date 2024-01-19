@@ -482,7 +482,7 @@
     <!-- <joint name='World_Joint' type='revolute'>
       <parent>world</parent>
       <child>SAR_Body</child>
-      <pose>0 0 -21.143e-3 0 0 0</pose>
+      <pose>0 0 -6.3e-3 0 0 0</pose>
       <axis>
         <xyz>0 1 0</xyz>
       </axis>

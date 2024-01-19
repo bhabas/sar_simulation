@@ -436,7 +436,7 @@ SAR_Type:
       CtrlGains:
         ## POSITION XY
         P_kp_xy: 4.0
-        P_kd_xy: 1.8
+        P_kd_xy: 2.2
         P_ki_xy: 0.0
         i_range_xy: 0.1
 
@@ -447,8 +447,8 @@ SAR_Type:
         i_range_z: 0.1
 
         ## ORIENTATION XY
-        R_kp_xy: 0.13
-        R_kd_xy: 0.014
+        R_kp_xy: 0.2
+        R_kd_xy: 0.035
         R_ki_xy: 0.0
         i_range_R_xy: 0.1
 
