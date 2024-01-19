@@ -4,16 +4,16 @@
     <link name='SAR_Body'>
       <pose>0 0 0 0 0 0</pose>
       <inertial>
-        <mass>693.0e-3</mass>
+        <mass>275.0e-3</mass>
         <inertia>
-          <ixx>3.17e-3</ixx>
+          <ixx>6.17e-4</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>2.71e-3</iyy>
+          <iyy>4.64e-4</iyy>
           <iyz>0</iyz>
-          <izz>5.27e-3</izz>
+          <izz>1.02e-3</izz>
         </inertia>
-        <pose>0 0 26.5e-3 0 0 0</pose>
+        <pose>0 0 18.0e-3 0 0 0</pose>
       </inertial>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
@@ -482,7 +482,7 @@
     <joint name='World_Joint' type='revolute'>
       <parent>world</parent>
       <child>SAR_Body</child>
-      <pose>0 0 0.0e-3 0 0 0</pose>
+      <pose>0 0 -24.93e-3 0 0 0</pose>
       <axis>
         <xyz>0 1 0</xyz>
       </axis>

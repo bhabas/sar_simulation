@@ -470,10 +470,10 @@ SAR_Type:
         Prop_Front: [44.5e-3, 58.6e-3]  # [x,y] absolute distances [m]
         Prop_Rear:  [44.5e-3, 58.6e-3]  # [x,y] absolute distances [m]
 
-        Base_Mass: 693.0e-3             # [kg]
-        Base_Ixx: 3.17e-3               # [kg*m^2]
-        Base_Iyy: 2.71e-3               # [kg*m^2]
-        Base_Izz: 5.27e-3               # [kg*m^2] 
+        Base_Mass: 275.0e-3        # [kg]
+        Base_Ixx: 0.62e-3          # [kg*m^2]
+        Base_Iyy: 0.46e-3          # [kg*m^2]
+        Base_Izz: 1.02e-3          # [kg*m^2] 
 
       Leg_Params:
 
