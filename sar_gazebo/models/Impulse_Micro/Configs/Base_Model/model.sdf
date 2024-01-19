@@ -1,0 +1,35 @@
+<?xml version='1.0'?>
+<sdf version='1.7'>
+  <model name='Base_Model'>
+
+    <include>
+      <uri>model://SAR_Base</uri>
+    </include>
+
+    <link name='Mass_1'>
+      <pose>0 0 -26.5e-3 0 0 0</pose>
+      <inertial>
+        <mass>693.0e-3</mass>
+        <inertia>
+          <ixx>1e-6</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1e-6</iyy>
+          <iyz>0</iyz>
+          <izz>1e-6</izz>
+        </inertia>
+        <pose>0 0 0 0 0 0</pose>
+      </inertial>
+    </link>
+
+    <joint name='Hinge_4_Joint' type='fixed'>
+      <parent>SAR_Base::SAR_Body</parent>
+      <child>Mass_1</child>
+      <pose>0 0 0 0 0 0</pose>
+    </joint>
+
+
+    <static>0</static>
+    <allow_auto_disable>1</allow_auto_disable>
+  </model>
+</sdf>
