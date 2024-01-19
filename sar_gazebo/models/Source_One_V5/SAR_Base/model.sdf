@@ -473,20 +473,20 @@
       <frameName>SAR_Body</frameName>
     </plugin>
 
-    <joint name='World_Joint' type='fixed'>
+    <!-- <joint name='World_Joint' type='fixed'>
       <parent>world</parent>
       <child>SAR_Body</child>
       <pose>0 0 0 0 0 0</pose>
-    </joint>
+    </joint> -->
     
-    <!-- <joint name='World_Joint' type='revolute'>
+    <joint name='World_Joint' type='revolute'>
       <parent>world</parent>
       <child>SAR_Body</child>
-      <pose>0 0 26.5e-3 0 0 0</pose>
+      <pose>0 0 15e-3 0 0 0</pose>
       <axis>
         <xyz>0 1 0</xyz>
       </axis>
-    </joint> -->
+    </joint>
 
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
