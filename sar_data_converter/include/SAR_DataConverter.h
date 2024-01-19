@@ -410,7 +410,7 @@ class SAR_DataConverter {
         bool Tumbled_Flag = false;
 
         bool AttCtrl_Flag = false;
-        bool Moment_Flag = false;
+        bool AngAccel_flag = false;
         bool CustomThrust_Flag = false;
         bool CustomPWM_Flag = false;
 

@@ -85,7 +85,7 @@ void controllerOutOfTreeReset() {
     motorstop_flag = false;
     customThrust_flag = false;
     customPWM_flag = false;
-    moment_flag = false;
+    AngAccel_flag = false;
 
     // RESET TRAJECTORY FLAGS
     Traj_Type = NONE;
@@ -316,7 +316,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
         controlOutput(state,sensors);
 
-        if(moment_flag == true || Trg_flag == true)
+        if(AngAccel_flag == true || Trg_flag == true)
         {
             F_thrust = 0.0f;
             M = vscl(2.0f,M_d);
@@ -538,7 +538,7 @@ LOG_ADD(LOG_FLOAT, Vel_Ctrl,        &kd_xf)
 LOG_ADD(LOG_UINT8, Motorstop,       &motorstop_flag)
 LOG_ADD(LOG_UINT8, Tumbled,         &tumbled)
 LOG_ADD(LOG_UINT8, Tumble_Detect,   &tumble_detection)
-LOG_ADD(LOG_UINT8, Moment_Flag,     &moment_flag)
+LOG_ADD(LOG_UINT8, AngAccel_flag,     &AngAccel_flag)
 LOG_ADD(LOG_UINT8, CamActive,     &CamActive)
 LOG_ADD(LOG_UINT8, SafeModeEnable,  &safeModeEnable)
 LOG_ADD(LOG_UINT8, Pol_Armed,       &policy_armed_flag)

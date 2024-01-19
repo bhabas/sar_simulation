@@ -198,7 +198,7 @@ extern bool isOFUpdated;
 extern bool tumbled;
 extern bool tumble_detection;
 extern bool motorstop_flag;
-extern bool moment_flag;
+extern bool AngAccel_flag;
 extern bool attCtrlEnable;
 extern bool safeModeEnable;
 extern bool customThrust_flag;

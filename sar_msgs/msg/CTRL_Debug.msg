@@ -4,6 +4,6 @@ bool Vel_Ctrl
 bool Traj_Active
 bool Tumble_Detection
 bool Tumbled_Flag
-bool Moment_Flag
+bool AngAccel_flag
 bool Policy_Armed
 

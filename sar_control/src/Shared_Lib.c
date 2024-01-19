@@ -202,7 +202,7 @@ bool isOFUpdated = false;
 bool tumbled = false;
 bool tumble_detection = true;
 bool motorstop_flag = false;
-bool moment_flag = false;
+bool AngAccel_flag = false;
 bool attCtrlEnable = false;
 bool safeModeEnable = true;
 bool customThrust_flag = false;
@@ -345,7 +345,7 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
             M_d.y = CTRL_Cmd->cmd_val2*Iyy;
             M_d.z = CTRL_Cmd->cmd_val3*Izz;
 
-            moment_flag = (bool)CTRL_Cmd->cmd_flag;
+            AngAccel_flag = (bool)CTRL_Cmd->cmd_flag;
             break;
 
         case 8: // Arm Policy Maneuver

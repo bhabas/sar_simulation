@@ -126,7 +126,7 @@ void SAR_DataConverter::CtrlDebug_Callback(const sar_msgs::CTRL_Debug &ctrl_msg)
     Traj_Active_Flag = ctrl_msg.Traj_Active;
     Tumble_Detection = ctrl_msg.Tumble_Detection;
     Tumbled_Flag = ctrl_msg.Tumbled_Flag;
-    Moment_Flag = ctrl_msg.Moment_Flag;
+    AngAccel_flag = ctrl_msg.AngAccel_flag;
     Policy_Armed_Flag = ctrl_msg.Policy_Armed;
 }
 
@@ -350,7 +350,7 @@ void SAR_DataConverter::cf1_Flags_Callback(const sar_msgs::GenericLogData::Const
     Pos_Ctrl_Flag = (bool)log_msg->values[0];
     Vel_Ctrl_Flag = (bool)log_msg->values[1];
     Motorstop_Flag = (bool)log_msg->values[2];
-    Moment_Flag = (bool)log_msg->values[3];
+    AngAccel_flag = (bool)log_msg->values[3];
     Tumbled_Flag = (bool)log_msg->values[4];
     Tumble_Detection = (bool)log_msg->values[5];
     Policy_Armed_Flag = (bool)log_msg->values[6];

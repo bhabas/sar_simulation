@@ -265,7 +265,7 @@ void Controller::publishCtrlDebug()
     CtrlDebug_msg.Vel_Ctrl = (bool)kd_xf;
     CtrlDebug_msg.Tumble_Detection = tumble_detection;
     CtrlDebug_msg.Tumbled_Flag = tumbled;
-    CtrlDebug_msg.Moment_Flag = moment_flag; 
+    CtrlDebug_msg.AngAccel_flag = AngAccel_flag; 
     CtrlDebug_msg.Motorstop_Flag = motorstop_flag;
     CtrlDebug_msg.Policy_Armed = policy_armed_flag; 
 
