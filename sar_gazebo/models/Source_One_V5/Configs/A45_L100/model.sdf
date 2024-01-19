@@ -9,15 +9,15 @@
     <link name='Leg_1'>
       <pose>18.5e-3 -18.5e-3 -4.0e-3 0 0.785 -0.785</pose>
       <inertial>
-        <mass>17.8e-3</mass>
-        <pose>72.5e-3 0 1.7e-3 0 0 0 </pose>
+        <mass>1.89E-2</mass>
+        <pose>6.80E-2 0 1.50E-3 0 0 0 </pose>
         <inertia>
-          <ixx>8.54e-7</ixx>
+          <ixx>8.82E-7</ixx>
           <ixy>0</ixy>
-          <ixz>2.24e-6</ixz>
-          <iyy>4.44e-5</iyy>
+          <ixz>2.41E-6</ixz>
+          <iyy>5.01E-5</iyy>
           <iyz>0</iyz>
-          <izz>4.39e-5</izz>
+          <izz>4.96E-5</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -58,15 +58,15 @@
     <link name='Leg_2'>
       <pose>-18.5e-3 -18.5e-3 -4.0e-3 0 0.785 -2.35</pose>
       <inertial>
-        <mass>17.8e-3</mass>
-        <pose>72.5e-3 0 1.7e-3 0 0 0 </pose>
+        <mass>1.89E-2</mass>
+        <pose>6.80E-2 0 1.50E-3 0 0 0 </pose>
         <inertia>
-          <ixx>8.54e-7</ixx>
+          <ixx>8.82E-7</ixx>
           <ixy>0</ixy>
-          <ixz>2.24e-6</ixz>
-          <iyy>4.44e-5</iyy>
+          <ixz>2.41E-6</ixz>
+          <iyy>5.01E-5</iyy>
           <iyz>0</iyz>
-          <izz>4.39e-5</izz>
+          <izz>4.96E-5</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -107,15 +107,15 @@
     <link name='Leg_3'>
       <pose>-18.5e-3 18.5e-3 -4.0e-3 0 0.785 2.35</pose>
       <inertial>
-        <mass>17.8e-3</mass>
-        <pose>72.5e-3 0 1.7e-3 0 0 0 </pose>
+        <mass>1.89E-2</mass>
+        <pose>6.80E-2 0 1.50E-3 0 0 0 </pose>
         <inertia>
-          <ixx>8.54e-7</ixx>
+          <ixx>8.82E-7</ixx>
           <ixy>0</ixy>
-          <ixz>2.24e-6</ixz>
-          <iyy>4.44e-5</iyy>
+          <ixz>2.41E-6</ixz>
+          <iyy>5.01E-5</iyy>
           <iyz>0</iyz>
-          <izz>4.39e-5</izz>
+          <izz>4.96E-5</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
@@ -156,15 +156,15 @@
     <link name='Leg_4'>
       <pose>18.5e-3 18.5e-3 -4.0e-3 0 0.785 0.785</pose>
       <inertial>
-        <mass>17.8e-3</mass>
-        <pose>72.5e-3 0 1.7e-3 0 0 0 </pose>
+        <mass>1.89E-2</mass>
+        <pose>6.80E-2 0 1.50E-3 0 0 0 </pose>
         <inertia>
-          <ixx>8.54e-7</ixx>
+          <ixx>8.82E-7</ixx>
           <ixy>0</ixy>
-          <ixz>2.24e-6</ixz>
-          <iyy>4.44e-5</iyy>
+          <ixz>2.41E-6</ixz>
+          <iyy>5.01E-5</iyy>
           <iyz>0</iyz>
-          <izz>4.39e-5</izz>
+          <izz>4.96E-5</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>

@@ -201,7 +201,7 @@ SAR_Type:
         Thrust_Coeff: 1.43e-6           # Thrust Coeff [N/(rad/s)]
         Torque_Coeff: 1.57e-8           # Torque Coeff [N*m/(rad/s)]
         C_tf: 1.1e-2                    # Torque-Thrust Coeff [N*m/N]
-        Tau_up: 9.8e-3                 # Motor Time Constant (Up) [s]
+        Tau_up: 9.8e-3                  # Motor Time Constant (Up) [s]
         Tau_down: 31.9e-3               # Motor Time Constant (Down) [s]
         f_max: 800                      # Max motor thrust [g]
 
@@ -215,7 +215,7 @@ SAR_Type:
 
       Leg_Params:
 
-        K_Pitch: 1.46                  # Y-Axis Stiffness [N*m/rad]
+        K_Pitch: 0.0                  # Y-Axis Stiffness [N*m/rad]
         DR_Pitch: 0.3                  # Y-Axis Damping Ratio
         K_Yaw: 10.0                    # Z-Axis Stiffness [N*m/rad]
         DR_Yaw: 0.7                    # Z-Axis Damping Ratio
@@ -229,17 +229,26 @@ SAR_Type:
           Ref_Izz: 5.27e-3          # [kg*m^2] 
 
         # ============================================================== # 
-        A15_L100:      
-          Ref_Mass: 760.0e-3        # [kg]
-          Ref_Ixx: 4.03e-3          # [kg*m^2]
-          Ref_Iyy: 3.57e-3          # [kg*m^2]
-          Ref_Izz: 5.45e-3          # [kg*m^2]
+        A15_L75:      
+          Ref_Mass: 766.0e-3        # [kg]
+          Ref_Ixx: 3.76e-3          # [kg*m^2]
+          Ref_Iyy: 3.31e-3          # [kg*m^2]
+          Ref_Izz: 5.42e-3          # [kg*m^2]
 
           Leg_Angle: 15             # Leg Angle [deg]
-          Leg_Length: 100.0e-3      # Leg Length [m]
+          Leg_Length: 75.0e-3      # Leg Length [m]
+
+        A15_L100:      
+          Ref_Mass: 769.0e-3        
+          Ref_Ixx: 4.04e-3          
+          Ref_Iyy: 3.58e-3          
+          Ref_Izz: 5.46e-3          
+
+          Leg_Angle: 15             
+          Leg_Length: 100.0e-3      
 
         A15_L150:      
-          Ref_Mass: 766.0e-3        
+          Ref_Mass: 775.0e-3        
           Ref_Ixx: 4.76e-3          
           Ref_Iyy: 4.30e-3          
           Ref_Izz: 5.54e-3          
@@ -249,17 +258,17 @@ SAR_Type:
 
 
         A15_L200:      
-          Ref_Mass: 772.0e-3        
+          Ref_Mass: 781.0e-3        
           Ref_Ixx: 5.75e-3          
           Ref_Iyy: 5.29e-3          
-          Ref_Izz: 5.65e-3          
+          Ref_Izz: 5.66e-3          
 
           Leg_Angle: 15             
           Leg_Length: 200.0e-3      
 
 
         A15_L250:      
-          Ref_Mass: 777.0e-3        
+          Ref_Mass: 787.0e-3        
           Ref_Ixx: 7.03e-3          
           Ref_Iyy: 6.57e-3          
           Ref_Izz: 5.79e-3          
@@ -268,20 +277,31 @@ SAR_Type:
           Leg_Length: 250.0e-3      
 
         # ============================================================== # 
-        A30_L100:      
-          Ref_Mass: 760.0e-3        # [kg]
-          Ref_Ixx: 4.00e-3          # [kg*m^2]
-          Ref_Iyy: 3.54e-3          # [kg*m^2]
-          Ref_Izz: 5.62e-3          # [kg*m^2]
+
+        A30_L75:      
+          Ref_Mass: 766.0e-3        # [kg]
+          Ref_Ixx: 3.75e-3          # [kg*m^2]
+          Ref_Iyy: 3.29e-3          # [kg*m^2]
+          Ref_Izz: 5.53e-3          # [kg*m^2]
 
           Leg_Angle: 30             # Leg Angle [deg]
-          Leg_Length: 100.0e-3      # Leg Length [m]
+          Leg_Length: 75.0e-3      # Leg Length [m]
+
+
+        A30_L100:      
+          Ref_Mass: 769.0e-3        
+          Ref_Ixx: 4.01e-3          
+          Ref_Iyy: 3.55e-3          
+          Ref_Izz: 5.62e-3          
+
+          Leg_Angle: 30             
+          Leg_Length: 100.0e-3      
 
 
         A30_L150:      
-          Ref_Mass: 765.0e-3        
-          Ref_Ixx: 4.68e-3          
-          Ref_Iyy: 4.22e-3          
+          Ref_Mass: 775.0e-3        
+          Ref_Ixx: 4.69e-3          
+          Ref_Iyy: 4.23e-3          
           Ref_Izz: 5.86e-3          
 
           Leg_Angle: 30             
@@ -289,7 +309,7 @@ SAR_Type:
 
 
         A30_L200:      
-          Ref_Mass: 771.0e-3        
+          Ref_Mass: 781.0e-3        
           Ref_Ixx: 5.61e-3          
           Ref_Iyy: 5.15e-3          
           Ref_Izz: 6.18e-3          
@@ -299,9 +319,9 @@ SAR_Type:
 
 
         A30_L250:      
-          Ref_Mass: 777.0e-3        
-          Ref_Ixx: 6.80e-3          
-          Ref_Iyy: 6.34e-3          
+          Ref_Mass: 786.0e-3        
+          Ref_Ixx: 6.81e-3          
+          Ref_Iyy: 6.35e-3          
           Ref_Izz: 6.58e-3          
 
           Leg_Angle: 30             
@@ -309,40 +329,51 @@ SAR_Type:
 
 
         # ============================================================== # 
-        A45_L100:      
-          Ref_Mass: 759.0e-3        # [kg]
-          Ref_Ixx: 3.93e-3          # [kg*m^2]
-          Ref_Iyy: 3.47e-3          # [kg*m^2]
-          Ref_Izz: 5.80e-3          # [kg*m^2]
+
+        A45_L75:      
+          Ref_Mass: 766.0e-3        # [kg]
+          Ref_Ixx: 3.74e-3          # [kg*m^2]
+          Ref_Iyy: 3.25e-3          # [kg*m^2]
+          Ref_Izz: 5.65e-3          # [kg*m^2]
 
           Leg_Angle: 45             # Leg Angle [deg]
-          Leg_Length: 100.0e-3      # Leg Length [m]
+          Leg_Length: 75.0e-3      # Leg Length [m]
+
+
+        A45_L100:      
+          Ref_Mass: 769.0e-3        
+          Ref_Ixx: 3.94e-3          
+          Ref_Iyy: 3.48e-3          
+          Ref_Izz: 5.81e-3          
+
+          Leg_Angle: 45             
+          Leg_Length: 100.0e-3      
 
 
         A45_L150:      
-          Ref_Mass: 765.0e-3        
-          Ref_Ixx: 4.54e-3          
-          Ref_Iyy: 4.08e-3          
-          Ref_Izz: 6.23e-3          
+          Ref_Mass: 775.0e-3        
+          Ref_Ixx: 4.55e-3          
+          Ref_Iyy: 4.09e-3          
+          Ref_Izz: 6.24e-3          
 
           Leg_Angle: 45             
           Leg_Length: 150.0e-3      
 
 
         A45_L200:      
-          Ref_Mass: 771.0e-3        
-          Ref_Ixx: 5.37e-3          
-          Ref_Iyy: 4.91e-3          
-          Ref_Izz: 6.81e-3          
+          Ref_Mass: 780.0e-3        
+          Ref_Ixx: 5.38e-3          
+          Ref_Iyy: 4.92e-3          
+          Ref_Izz: 6.82e-3          
 
           Leg_Angle: 45             
           Leg_Length: 200.0e-3      
 
 
         A45_L250:      
-          Ref_Mass: 777.0e-3        
-          Ref_Ixx: 6.43e-3          
-          Ref_Iyy: 5.97e-3          
+          Ref_Mass: 786.0e-3        
+          Ref_Ixx: 6.44e-3          
+          Ref_Iyy: 5.98e-3          
           Ref_Izz: 7.56e-3          
 
           Leg_Angle: 45             
@@ -350,18 +381,28 @@ SAR_Type:
 
 
         # ============================================================== # 
-        A60_L100:      
-          Ref_Mass: 759.0e-3        # [kg]
-          Ref_Ixx: 3.85e-3          # [kg*m^2]
-          Ref_Iyy: 3.39e-3          # [kg*m^2]
-          Ref_Izz: 5.98e-3          # [kg*m^2]
+        A60_L75:      
+          Ref_Mass: 766.0e-3        # [kg]
+          Ref_Ixx: 3.66e-3          # [kg*m^2]
+          Ref_Iyy: 3.20e-3          # [kg*m^2]
+          Ref_Izz: 5.76e-3          # [kg*m^2]
 
           Leg_Angle: 60             # Leg Angle [deg]
-          Leg_Length: 100.0e-3      # Leg Length [m]
+          Leg_Length: 75.0e-3       # Leg Length [m]
+
+
+        A60_L100:      
+          Ref_Mass: 769.0e-3        
+          Ref_Ixx: 3.86e-3          
+          Ref_Iyy: 3.40e-3          
+          Ref_Izz: 5.99e-3          
+
+          Leg_Angle: 60             
+          Leg_Length: 100.0e-3      
 
 
         A60_L150:      
-          Ref_Mass: 765.0e-3        
+          Ref_Mass: 774.0e-3        
           Ref_Ixx: 4.38e-3          
           Ref_Iyy: 3.92e-3          
           Ref_Izz: 6.59e-3          
@@ -371,20 +412,20 @@ SAR_Type:
 
 
         A60_L200:      
-          Ref_Mass: 771.0e-3        
-          Ref_Ixx: 5.09e-3          
-          Ref_Iyy: 4.63e-3          
-          Ref_Izz: 7.74e-3          
+          Ref_Mass: 780.0e-3        
+          Ref_Ixx: 5.10e-3          
+          Ref_Iyy: 4.64e-3          
+          Ref_Izz: 7.43e-3          
 
           Leg_Angle: 60             
           Leg_Length: 200.0e-3      
 
 
         A60_L250:      
-          Ref_Mass: 777.0e-3        
+          Ref_Mass: 786.0e-3        
           Ref_Ixx: 6.01e-3          
           Ref_Iyy: 5.55e-3          
-          Ref_Izz: 8.50e-3          
+          Ref_Izz: 8.51e-3          
 
           Leg_Angle: 60             
           Leg_Length: 250.0e-3      
