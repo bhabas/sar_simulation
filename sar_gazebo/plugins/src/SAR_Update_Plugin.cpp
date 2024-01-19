@@ -90,7 +90,7 @@ namespace gazebo
             Hinge_4_JointPtr = Config_Model_Ptr->GetJoint("Hinge_4_Joint");
 
             // UPDATE HINGE JOINT
-            // Update_Hinge();      
+            Update_Hinge();      
         } 
         else {
             ROS_WARN("Failed to retrieve Leg_Angle parameter.");

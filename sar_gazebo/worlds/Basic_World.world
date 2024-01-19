@@ -49,12 +49,12 @@
       <static>1</static>
       <link name='Origin_Link'>
         <pose>0 0 0 0 0 0</pose>
-        <!-- <visual name='Origin_Visual'>
+        <visual name='Origin_Visual'>
           <cast_shadows>0</cast_shadows>
           <pose>0 0 0 0 0 0</pose>
           <geometry>
             <sphere>
-              <radius>0.01</radius>
+              <radius>5.0e-3</radius>
             </sphere>
           </geometry>
           <material>
@@ -66,7 +66,7 @@
               <normal_map>__default__</normal_map>
             </shader>
           </material>
-        </visual> -->
+        </visual>
       </link>
     </model>
 
