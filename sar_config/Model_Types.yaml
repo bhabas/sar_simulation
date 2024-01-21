@@ -27,148 +27,136 @@ SAR_Type:
 
     System_Params:
 
-      Thrust_Coeff: 2.2e-8  # Thrust Coeff [N/(rad/s)]
-      Torque_Coeff: 0.00618    # Torque Coeff [N*m/(rad/s)]
-      C_tf: 0.00618            # Torque-Thrust Coeff [N*m/N]
-      Tau_up: 0.05          # Motor Time Constant (Up) [s]
-      Tau_down: 0.15        # Motor Time Constant (Down) [s]
-      f_max: 15.0           # Max thrust [g]
+      Thrust_Coeff: 2.2e-8              # Thrust Coeff [N/(rad/s)]
+      Torque_Coeff: 135.96e-12          # Torque Coeff [N*m/(rad/s)]
+      C_tf: 6.18e-3                     # Torque-Thrust Coeff [N*m/N]
+      Tau_up: 0.05                      # Motor Time Constant (Up) [s]
+      Tau_down: 0.15                    # Motor Time Constant (Down) [s]
+      f_max: 15.0                       # Max thrust [g]
 
-      Prop_Front: [32.5e-3, 32.5e-3]  # [x,y] absolute distances [m]
-      Prop_Rear:  [32.5e-3, 32.5e-3]  # [x,y] absolute distances [m]
+      Prop_Front: [33.0e-3, 33.0e-3]    # [x,y] absolute distances [m]
+      Prop_Rear:  [33.0e-3, 33.0e-3]    # [x,y] absolute distances [m]
+
+      Base_Mass: 37.0e-3                # [kg]
+        Base_Ixx: 17.2e-6               # [kg*m^2]
+        Base_Iyy: 17.7e-6               # [kg*m^2]
+        Base_Izz: 34.2e-6               # [kg*m^2] 
+
+    Leg_Params:
+
+        K_Pitch: 0.0                    # Y-Axis Stiffness [N*m/rad]
+        DR_Pitch: 0.3                   # Y-Axis Damping Ratio
+        K_Yaw: 10.0                     # Z-Axis Stiffness [N*m/rad]
+        DR_Yaw: 0.7                     # Z-Axis Damping Ratio
 
     Config:
 
-      Base_Model:       # Crazyflie Base_Model
-        Mass: 34.3e-3   # [kg]
-        Ixx: 15.83e-6   # [kg*m^2]
-        Iyy: 17.00e-6   # [kg*m^2]
-        Izz: 31.19e-6   # [kg*m^2] 
+      Base_Model:
+        Mass: 37.0e-3                   # [kg]
+        Ixx: 17.2e-6                    # [kg*m^2]
+        Iyy: 17.7e-6                    # [kg*m^2]
+        Izz: 34.2e-6                    # [kg*m^2] 
 
-      ####################################
-      #    Leg Design Analysis Models
-      ####################################
+      # ============================================================== #
 
-      ## ==================== 
-      ##  05 DEG LEG DESIGNS     
-      ## ==================== 
-      A05_L50_K08: 
-        Mass: 38.1e-3         # [kg]
-        Ixx: 27.93e-6         # [kg*m^2]
-        Iyy: 30.46e-6         # [kg*m^2]
-        Izz: 47.12e-6         # [kg*m^2] 
+      A10_L30:
+          Ref_Mass:  47.10E-3
+          Ref_Ixx:   34.60E-6
+          Ref_Iyy:   35.10E-6
+          Ref_Izz:   51.90E-6
+  
+          Leg_Angle:  10
+          Leg_Length:  30.00E-3
 
-        Leg_Angle: 5          # Leg Angle [deg]
-        Leg_Length: 50.0e-3   # Leg Length [m]
+      A10_L55:
+          Ref_Mass:  49.40E-3
+          Ref_Ixx:   54.40E-6
+          Ref_Iyy:   55.00E-6
+          Ref_Izz:   58.30E-6
+  
+          Leg_Angle:  10
+          Leg_Length:  55.00E-3
 
-        K_Pitch: 3.20e-3    # Pitch-Axis Stiffness [N*m/rad]
-        DR_Pitch: 0.3         # Pitch-Axis Damping Ratio
-        K_Yaw: 1.6e-3      # Yaw-Axis Stiffness [N*m/rad]
-        DR_Yaw: 0.8           # Yaw-Axis Damping Ratio
+      A10_L70:
+          Ref_Mass:  50.78E-3
+          Ref_Ixx:   71.50E-6
+          Ref_Iyy:   72.00E-6
+          Ref_Izz:   62.60E-6
+  
+          Leg_Angle:  10
+          Leg_Length:  70.00E-3
 
-      A05_L75_K08: 
-        Mass: 38.1e-3         # [kg]
-        Ixx: 27.93e-6         # [kg*m^2]
-        Iyy: 30.46e-6         # [kg*m^2]
-        Izz: 47.12e-6         # [kg*m^2] 
+      A15_L90:
+          Ref_Mass:  52.62E-3
+          Ref_Ixx:   102.90E-6
+          Ref_Iyy:   103.40E-6
+          Ref_Izz:   77.60E-6
+  
+          Leg_Angle:  15
+          Leg_Length:  90.00E-3
 
-        Leg_Angle: 5          # Leg Angle [deg]
-        Leg_Length: 75.0e-3   # Leg Length [m]
+      A25_L50:
+          Ref_Mass:  48.93E-3
+          Ref_Ixx:   52.20E-6
+          Ref_Iyy:   52.70E-6
+          Ref_Izz:   67.60E-6
+  
+          Leg_Angle:  25
+          Leg_Length:  50.00E-3
 
-        K_Pitch: 0.4e-3    # Pitch-Axis Stiffness [N*m/rad]
-        DR_Pitch: 0.3         # Pitch-Axis Damping Ratio
-        K_Yaw: 1.6e-3      # Yaw-Axis Stiffness [N*m/rad]
-        DR_Yaw: 0.8           # Yaw-Axis Damping Ratio
+      A30_L25:
+          Ref_Mass:  46.62E-3
+          Ref_Ixx:   33.40E-6
+          Ref_Iyy:   33.90E-6
+          Ref_Izz:   56.00E-6
+  
+          Leg_Angle:  30
+          Leg_Length:  25.00E-3
 
+      A30_L70:
+          Ref_Mass:  50.76E-3
+          Ref_Ixx:   75.90E-6
+          Ref_Iyy:   76.40E-6
+          Ref_Izz:   87.60E-6
+  
+          Leg_Angle:  30
+          Leg_Length:  70.00E-3
 
+      A30_L80:
+          Ref_Mass:  51.69E-3
+          Ref_Ixx:   90.10E-6
+          Ref_Iyy:   90.60E-6
+          Ref_Izz:   97.10E-6
+  
+          Leg_Angle:  30
+          Leg_Length:  80.00E-3
 
-      ## ==================== 
-      ##  20 DEG LEG DESIGNS     
-      ## ==================== 
+      A45_L45:
+          Ref_Mass:  48.43E-3
+          Ref_Ixx:   48.90E-6
+          Ref_Iyy:   49.40E-6
+          Ref_Izz:   77.30E-6
+  
+          Leg_Angle:  45
+          Leg_Length:  45.00E-3
 
-      A20_L75_K08: 
-        Mass: 38.1e-3         # [kg]
-        Ixx: 27.93e-6         # [kg*m^2]
-        Iyy: 30.46e-6         # [kg*m^2]
-        Izz: 47.12e-6         # [kg*m^2] 
+      A50_L60:
+          Ref_Mass:  49.80E-3
+          Ref_Ixx:   64.10E-6
+          Ref_Iyy:   64.60E-6
+          Ref_Izz:   99.10E-6
+  
+          Leg_Angle:  50
+          Leg_Length:  60.00E-3
 
-        Leg_Angle: 20          # Leg Angle [deg]
-        Leg_Length: 75.0e-3   # Leg Length [m]
-
-        K_Pitch: 3.20e-3    # Pitch-Axis Stiffness [N*m/rad]
-        DR_Pitch: 0.3         # Pitch-Axis Damping Ratio
-        K_Yaw: 1.6e-3      # Yaw-Axis Stiffness [N*m/rad]
-        DR_Yaw: 0.8           # Yaw-Axis Damping Ratio
-
-
-
-      ## ==================== 
-      ##  30 DEG LEG DESIGNS     
-      ## ==================== 
-
-      A30_L50_K08: 
-        Mass: 38.1e-3         # [kg]
-        Ixx: 27.93e-6         # [kg*m^2]
-        Iyy: 30.46e-6         # [kg*m^2]
-        Izz: 47.12e-6         # [kg*m^2] 
-
-        Leg_Angle: 30         # Leg Angle [deg]
-        Leg_Length: 50.0e-3   # Leg Length [m]
-
-        K_Pitch: 3.20e-3    # Pitch-Axis Stiffness [N*m/rad]
-        DR_Pitch: 0.3         # Pitch-Axis Damping Ratio
-        K_Yaw: 1.6e-3      # Yaw-Axis Stiffness [N*m/rad]
-        DR_Yaw: 0.8           # Yaw-Axis Damping Ratio
-
-      A30_L75_K08: 
-        Mass: 38.1e-3         # [kg]
-        Ixx: 27.93e-6         # [kg*m^2]
-        Iyy: 30.46e-6         # [kg*m^2]
-        Izz: 47.12e-6         # [kg*m^2] 
-
-        Leg_Angle: 30         # Leg Angle [deg]
-        Leg_Length: 75.0e-3   # Leg Length [m]
-
-        K_Pitch: 3.20e-3    # Pitch-Axis Stiffness [N*m/rad]
-        DR_Pitch: 0.3         # Pitch-Axis Damping Ratio
-        K_Yaw: 1.6e-3      # Yaw-Axis Stiffness [N*m/rad]
-        DR_Yaw: 0.8           # Yaw-Axis Damping Ratio
-
-
-      
-      ## ==================== 
-      ##  60 DEG LEG DESIGNS     
-      ## ==================== 
-
-      A60_L50_K08: 
-        Mass: 38.1e-3         # [kg]
-        Ixx: 27.93e-6         # [kg*m^2]
-        Iyy: 30.46e-6         # [kg*m^2]
-        Izz: 47.12e-6         # [kg*m^2] 
-
-        Leg_Angle: 60         # Leg Angle [deg]
-        Leg_Length: 50.0e-3   # Leg Length [m]
-
-        K_Pitch: 3.20e-3    # Pitch-Axis Stiffness [N*m/rad]
-        DR_Pitch: 0.3         # Pitch-Axis Damping Ratio
-        K_Yaw: 1.6e-3      # Yaw-Axis Stiffness [N*m/rad]
-        DR_Yaw: 0.8           # Yaw-Axis Damping Ratio
-
-
-      A60_L75_K08: 
-        Mass: 38.1e-3         # [kg]
-        Ixx: 27.93e-6         # [kg*m^2]
-        Iyy: 30.46e-6         # [kg*m^2]
-        Izz: 47.12e-6         # [kg*m^2] 
-
-        Leg_Angle: 60         # Leg Angle [deg]
-        Leg_Length: 75.0e-3   # Leg Length [m]
-
-        K_Pitch: 3.20e-3    # Pitch-Axis Stiffness [N*m/rad]
-        DR_Pitch: 0.3         # Pitch-Axis Damping Ratio
-        K_Yaw: 1.6e-3      # Yaw-Axis Stiffness [N*m/rad]
-        DR_Yaw: 0.8           # Yaw-Axis Damping Ratio
-
+      A50_L80:
+          Ref_Mass:  51.65E-3
+          Ref_Ixx:   90.20E-6
+          Ref_Iyy:   90.70E-6
+          Ref_Izz:   131.00E-6
+  
+          Leg_Angle:  50
+          Leg_Length:  80.00E-3
 
   Source_One_V5:
       CtrlGains:
@@ -229,206 +217,156 @@ SAR_Type:
           Ref_Izz: 5.27e-3          # [kg*m^2] 
 
         # ============================================================== # 
-        A15_L75:      
-          Ref_Mass: 766.0e-3        # [kg]
-          Ref_Ixx: 3.76e-3          # [kg*m^2]
-          Ref_Iyy: 3.31e-3          # [kg*m^2]
-          Ref_Izz: 5.42e-3          # [kg*m^2]
+         
+        A15_L100:
+          Ref_Mass:  769.00E-3
+          Ref_Ixx:   4.04E-3
+          Ref_Iyy:   3.58E-3
+          Ref_Izz:   5.46E-3
+  
+          Leg_Angle:  15
+          Leg_Length:  100.00E-3
 
-          Leg_Angle: 15             # Leg Angle [deg]
-          Leg_Length: 75.0e-3      # Leg Length [m]
+        A15_L150:
+          Ref_Mass:  775.23E-3
+          Ref_Ixx:   4.76E-3
+          Ref_Iyy:   4.30E-3
+          Ref_Izz:   5.54E-3
+  
+          Leg_Angle:  15
+          Leg_Length:  150.00E-3
 
-        A15_L100:      
-          Ref_Mass: 769.0e-3        
-          Ref_Ixx: 4.04e-3          
-          Ref_Iyy: 3.58e-3          
-          Ref_Izz: 5.46e-3          
+        A15_L200:
+          Ref_Mass:  781.13E-3
+          Ref_Ixx:   5.75E-3
+          Ref_Iyy:   5.29E-3
+          Ref_Izz:   5.66E-3
+  
+          Leg_Angle:  15
+          Leg_Length:  200.00E-3
 
-          Leg_Angle: 15             
-          Leg_Length: 100.0e-3      
+        A15_L250:
+          Ref_Mass:  787.00E-3
+          Ref_Ixx:   7.03E-3
+          Ref_Iyy:   6.57E-3
+          Ref_Izz:   5.79E-3
+  
+          Leg_Angle:  15
+          Leg_Length:  250.00E-3
 
-        A15_L150:      
-          Ref_Mass: 775.0e-3        
-          Ref_Ixx: 4.76e-3          
-          Ref_Iyy: 4.30e-3          
-          Ref_Izz: 5.54e-3          
+        # ============================================================== #
 
-          Leg_Angle: 15             
-          Leg_Length: 150.0e-3      
+        A30_L100:
+          Ref_Mass:  769.00E-3
+          Ref_Ixx:   4.01E-3
+          Ref_Iyy:   3.55E-3
+          Ref_Izz:   5.62E-3
+  
+          Leg_Angle:  30
+          Leg_Length:  100.00E-3
 
+        A30_L150:
+          Ref_Mass:  774.90E-3
+          Ref_Ixx:   4.69E-3
+          Ref_Iyy:   4.23E-3
+          Ref_Izz:   5.86E-3
+  
+          Leg_Angle:  30
+          Leg_Length:  150.00E-3
 
-        A15_L200:      
-          Ref_Mass: 781.0e-3        
-          Ref_Ixx: 5.75e-3          
-          Ref_Iyy: 5.29e-3          
-          Ref_Izz: 5.66e-3          
+        A30_L200:
+          Ref_Mass:  780.80E-3
+          Ref_Ixx:   5.61E-3
+          Ref_Iyy:   5.15E-3
+          Ref_Izz:   6.18E-3
+  
+          Leg_Angle:  30
+          Leg_Length:  200.00E-3
 
-          Leg_Angle: 15             
-          Leg_Length: 200.0e-3      
+        A30_L250:
+          Ref_Mass:  786.70E-3
+          Ref_Ixx:   6.81E-3
+          Ref_Iyy:   6.35E-3
+          Ref_Izz:   6.58E-3
+  
+          Leg_Angle:  30
+          Leg_Length:  250.00E-3
 
+        # ============================================================== #
 
-        A15_L250:      
-          Ref_Mass: 787.0e-3        
-          Ref_Ixx: 7.03e-3          
-          Ref_Iyy: 6.57e-3          
-          Ref_Izz: 5.79e-3          
+        A45_L100:
+          Ref_Mass:  768.76E-3
+          Ref_Ixx:   3.94E-3
+          Ref_Iyy:   3.48E-3
+          Ref_Izz:   5.81E-3
+  
+          Leg_Angle:  45
+          Leg_Length:  100.00E-3
 
-          Leg_Angle: 15             
-          Leg_Length: 250.0e-3      
+        A45_L150:
+          Ref_Mass:  774.65E-3
+          Ref_Ixx:   4.55E-3
+          Ref_Iyy:   4.09E-3
+          Ref_Izz:   6.24E-3
+  
+          Leg_Angle:  45
+          Leg_Length:  150.00E-3
 
-        # ============================================================== # 
+        A45_L200:
+          Ref_Mass:  780.54E-3
+          Ref_Ixx:   5.38E-3
+          Ref_Iyy:   4.92E-3
+          Ref_Izz:   6.82E-3
+  
+          Leg_Angle:  45
+          Leg_Length:  200.00E-3
 
-        A30_L75:      
-          Ref_Mass: 766.0e-3        # [kg]
-          Ref_Ixx: 3.75e-3          # [kg*m^2]
-          Ref_Iyy: 3.29e-3          # [kg*m^2]
-          Ref_Izz: 5.53e-3          # [kg*m^2]
+        A45_L250:
+          Ref_Mass:  786.43E-3
+          Ref_Ixx:   6.44E-3
+          Ref_Iyy:   5.98E-3
+          Ref_Izz:   7.56E-3
+  
+          Leg_Angle:  45
+          Leg_Length:  250.00E-3
 
-          Leg_Angle: 30             # Leg Angle [deg]
-          Leg_Length: 75.0e-3      # Leg Length [m]
+        # ============================================================== #
 
+        A60_L100:
+          Ref_Mass:  768.50E-3
+          Ref_Ixx:   3.86E-3
+          Ref_Iyy:   3.40E-3
+          Ref_Izz:   5.99E-3
+  
+          Leg_Angle:  60
+          Leg_Length:  100.00E-3
 
-        A30_L100:      
-          Ref_Mass: 769.0e-3        
-          Ref_Ixx: 4.01e-3          
-          Ref_Iyy: 3.55e-3          
-          Ref_Izz: 5.62e-3          
+        A60_L150:
+          Ref_Mass:  774.40E-3
+          Ref_Ixx:   4.39E-3
+          Ref_Iyy:   3.93E-3
+          Ref_Izz:   6.59E-3
+  
+          Leg_Angle:  60
+          Leg_Length:  150.00E-3
 
-          Leg_Angle: 30             
-          Leg_Length: 100.0e-3      
+        A60_L200:
+          Ref_Mass:  780.28E-3
+          Ref_Ixx:   5.10E-3
+          Ref_Iyy:   4.64E-3
+          Ref_Izz:   7.43E-3
+  
+          Leg_Angle:  60
+          Leg_Length:  200.00E-3
 
-
-        A30_L150:      
-          Ref_Mass: 775.0e-3        
-          Ref_Ixx: 4.69e-3          
-          Ref_Iyy: 4.23e-3          
-          Ref_Izz: 5.86e-3          
-
-          Leg_Angle: 30             
-          Leg_Length: 150.0e-3      
-
-
-        A30_L200:      
-          Ref_Mass: 781.0e-3        
-          Ref_Ixx: 5.61e-3          
-          Ref_Iyy: 5.15e-3          
-          Ref_Izz: 6.18e-3          
-
-          Leg_Angle: 30             
-          Leg_Length: 200.0e-3      
-
-
-        A30_L250:      
-          Ref_Mass: 786.0e-3        
-          Ref_Ixx: 6.81e-3          
-          Ref_Iyy: 6.35e-3          
-          Ref_Izz: 6.58e-3          
-
-          Leg_Angle: 30             
-          Leg_Length: 250.0e-3      
-
-
-        # ============================================================== # 
-
-        A45_L75:      
-          Ref_Mass: 766.0e-3        # [kg]
-          Ref_Ixx: 3.74e-3          # [kg*m^2]
-          Ref_Iyy: 3.25e-3          # [kg*m^2]
-          Ref_Izz: 5.65e-3          # [kg*m^2]
-
-          Leg_Angle: 45             # Leg Angle [deg]
-          Leg_Length: 75.0e-3      # Leg Length [m]
-
-
-        A45_L100:      
-          Ref_Mass: 769.0e-3        
-          Ref_Ixx: 3.94e-3          
-          Ref_Iyy: 3.48e-3          
-          Ref_Izz: 5.81e-3          
-
-          Leg_Angle: 45             
-          Leg_Length: 100.0e-3      
-
-
-        A45_L150:      
-          Ref_Mass: 775.0e-3        
-          Ref_Ixx: 4.55e-3          
-          Ref_Iyy: 4.09e-3          
-          Ref_Izz: 6.24e-3          
-
-          Leg_Angle: 45             
-          Leg_Length: 150.0e-3      
-
-
-        A45_L200:      
-          Ref_Mass: 780.0e-3        
-          Ref_Ixx: 5.38e-3          
-          Ref_Iyy: 4.92e-3          
-          Ref_Izz: 6.82e-3          
-
-          Leg_Angle: 45             
-          Leg_Length: 200.0e-3      
-
-
-        A45_L250:      
-          Ref_Mass: 786.0e-3        
-          Ref_Ixx: 6.44e-3          
-          Ref_Iyy: 5.98e-3          
-          Ref_Izz: 7.56e-3          
-
-          Leg_Angle: 45             
-          Leg_Length: 250.0e-3      
-
-
-        # ============================================================== # 
-        A60_L75:      
-          Ref_Mass: 766.0e-3        # [kg]
-          Ref_Ixx: 3.66e-3          # [kg*m^2]
-          Ref_Iyy: 3.20e-3          # [kg*m^2]
-          Ref_Izz: 5.76e-3          # [kg*m^2]
-
-          Leg_Angle: 60             # Leg Angle [deg]
-          Leg_Length: 75.0e-3       # Leg Length [m]
-
-
-        A60_L100:      
-          Ref_Mass: 769.0e-3        
-          Ref_Ixx: 3.86e-3          
-          Ref_Iyy: 3.40e-3          
-          Ref_Izz: 5.99e-3          
-
-          Leg_Angle: 60             
-          Leg_Length: 100.0e-3      
-
-
-        A60_L150:      
-          Ref_Mass: 774.0e-3        
-          Ref_Ixx: 4.38e-3          
-          Ref_Iyy: 3.92e-3          
-          Ref_Izz: 6.59e-3          
-
-          Leg_Angle: 60             
-          Leg_Length: 150.0e-3      
-
-
-        A60_L200:      
-          Ref_Mass: 780.0e-3        
-          Ref_Ixx: 5.10e-3          
-          Ref_Iyy: 4.64e-3          
-          Ref_Izz: 7.43e-3          
-
-          Leg_Angle: 60             
-          Leg_Length: 200.0e-3      
-
-
-        A60_L250:      
-          Ref_Mass: 786.0e-3        
-          Ref_Ixx: 6.01e-3          
-          Ref_Iyy: 5.55e-3          
-          Ref_Izz: 8.51e-3          
-
-          Leg_Angle: 60             
-          Leg_Length: 250.0e-3      
+        A60_L250:
+          Ref_Mass:  786.17E-3
+          Ref_Ixx:   6.01E-3
+          Ref_Iyy:   5.55E-3
+          Ref_Izz:   8.51E-3
+  
+          Leg_Angle:  60
+          Leg_Length:  250.00E-3
         
 
 
@@ -486,211 +424,160 @@ SAR_Type:
 
         Base_Model:      
           Ref_Mass: 275.0e-3        # [kg]
-          Ref_Ixx: 0.62e-3          # [kg*m^2]
-          Ref_Iyy: 0.46e-3          # [kg*m^2]
+          Ref_Ixx: 0.617e-3         # [kg*m^2]
+          Ref_Iyy: 0.464e-3         # [kg*m^2]
           Ref_Izz: 1.02e-3          # [kg*m^2] 
 
         # ============================================================== # 
-        A15_L75:      
-          Ref_Mass: 348.0e-3        # [kg]
-          Ref_Ixx: 1.12e-3          # [kg*m^2]
-          Ref_Iyy: 0.96e-3          # [kg*m^2]
-          Ref_Izz: 1.19e-3          # [kg*m^2]
+        A15_L50:
+          Ref_Mass:  345.45E-3        # [kg]
+          Ref_Ixx:   937.40E-6        # [kg*m^2]
+          Ref_Iyy:   779.60E-6        # [kg*m^2]
+          Ref_Izz:   1.16E-3          # [kg*m^2]
+  
+          Leg_Angle:  15              # [deg]
+          Leg_Length:  50.00E-3       # [m]
 
-          Leg_Angle: 15             # Leg Angle [deg]
-          Leg_Length: 75.0e-3      # Leg Length [m]
+        A15_L100:
+          Ref_Mass:  351.34E-3        
+          Ref_Ixx:   1.35E-3          
+          Ref_Iyy:   1.20E-3          
+          Ref_Izz:   1.23E-3          
+  
+          Leg_Angle:  15             
+          Leg_Length:  100.00E-3      
 
-        A15_L100:      
-          Ref_Mass: 351.0e-3        
-          Ref_Ixx: 1.35e-3          
-          Ref_Iyy: 1.20e-3          
-          Ref_Izz: 1.23e-3          
+        A15_L125:
+          Ref_Mass:  354.29E-3
+          Ref_Ixx:   1.64E-3
+          Ref_Iyy:   1.48E-3
+          Ref_Izz:   1.28E-3
+  
+          Leg_Angle:  15
+          Leg_Length:  125.00E-3
 
-          Leg_Angle: 15             
-          Leg_Length: 100.0e-3      
-
-        A15_L150:      
-          Ref_Mass: 357.0e-3        
-          Ref_Ixx: 1.99e-3          
-          Ref_Iyy: 1.83e-3          
-          Ref_Izz: 1.33e-3          
-
-          Leg_Angle: 15             
-          Leg_Length: 150.0e-3      
-
-
-        A15_L200:      
-          Ref_Mass: 363.1e-3        
-          Ref_Ixx: 2.86e-3          
-          Ref_Iyy: 2.68e-3          
-          Ref_Izz: 1.44e-3          
-
-          Leg_Angle: 15             
-          Leg_Length: 200.0e-3      
-
-
-        A15_L250:      
-          Ref_Mass: 369.0e-3        
-          Ref_Ixx: 3.98e-3          
-          Ref_Iyy: 3.81e-3          
-          Ref_Izz: 1.59e-3          
-
-          Leg_Angle: 15             
-          Leg_Length: 250.0e-3      
+        A15_L150:
+          Ref_Mass:  357.23E-3
+          Ref_Ixx:   1.99E-3
+          Ref_Iyy:   1.83E-3
+          Ref_Izz:   1.33E-3
+  
+          Leg_Angle:  15
+          Leg_Length:  150.00E-3
 
         # ============================================================== # 
 
-        A30_L75:      
-          Ref_Mass: 348.0e-3        # [kg]
-          Ref_Ixx: 1.12e-3          # [kg*m^2]
-          Ref_Iyy: 0.96e-3          # [kg*m^2]
-          Ref_Izz: 1.31e-3          # [kg*m^2]
+        A30_L50:
+          Ref_Mass:  345.14E-3
+          Ref_Ixx:   939.50E-6
+          Ref_Iyy:   780.80E-6
+          Ref_Izz:   1.23E-3
+  
+          Leg_Angle:  30
+          Leg_Length:  50.00E-3
 
-          Leg_Angle: 30             # Leg Angle [deg]
-          Leg_Length: 75.0e-3      # Leg Length [m]
+        A30_L100:
+          Ref_Mass:  351.00E-3
+          Ref_Ixx:   1.34E-3
+          Ref_Iyy:   1.18E-3
+          Ref_Izz:   1.41E-3
+  
+          Leg_Angle:  30
+          Leg_Length:  100.00E-3
 
+        A30_L125:
+          Ref_Mass:  354.00E-3
+          Ref_Ixx:   1.62E-3
+          Ref_Iyy:   1.46E-3
+          Ref_Izz:   1.52E-3
+  
+          Leg_Angle:  30
+          Leg_Length:  125.00E-3
 
-        A30_L100:      
-          Ref_Mass: 351.0e-3        
-          Ref_Ixx: 1.34e-3          
-          Ref_Iyy: 1.18e-3          
-          Ref_Izz: 1.41e-3          
-
-          Leg_Angle: 30             
-          Leg_Length: 100.0e-3      
-
-
-        A30_L150:      
-          Ref_Mass: 357.0e-3        
-          Ref_Ixx: 1.95e-3          
-          Ref_Iyy: 1.79e-3          
-          Ref_Izz: 1.65e-3          
-
-          Leg_Angle: 30             
-          Leg_Length: 150.0e-3      
-
-
-        A30_L200:      
-          Ref_Mass: 363.0e-3        
-          Ref_Ixx: 2.78e-3          
-          Ref_Iyy: 2.61e-3          
-          Ref_Izz: 1.98e-3          
-
-          Leg_Angle: 30             
-          Leg_Length: 200.0e-3      
-
-
-        A30_L250:      
-          Ref_Mass: 369.0e-3        
-          Ref_Ixx: 3.84e-3          
-          Ref_Iyy: 3.67e-3          
-          Ref_Izz: 2.40e-3          
-
-          Leg_Angle: 30             
-          Leg_Length: 250.0e-3      
-
+        A30_L150:
+          Ref_Mass:  356.90E-3
+          Ref_Ixx:   1.95E-3
+          Ref_Iyy:   1.79E-3
+          Ref_Izz:   1.66E-3
+  
+          Leg_Angle:  30
+          Leg_Length:  150.00E-3
 
         # ============================================================== # 
 
-        A45_L75:      
-          Ref_Mass: 348.0e-3        # [kg]
-          Ref_Ixx: 1.10e-3          # [kg*m^2]
-          Ref_Iyy: 0.94e-3          # [kg*m^2]
-          Ref_Izz: 1.43e-3          # [kg*m^2]
+        A45_L50:
+          Ref_Mass:  344.87E-3
+          Ref_Ixx:   930.20E-6
+          Ref_Iyy:   770.70E-6
+          Ref_Izz:   1.30E-3
+  
+          Leg_Angle:  45
+          Leg_Length:  50.00E-3
 
-          Leg_Angle: 45             # Leg Angle [deg]
-          Leg_Length: 75.0e-3      # Leg Length [m]
+        A45_L100:
+          Ref_Mass:  350.76E-3
+          Ref_Ixx:   1.31E-3
+          Ref_Iyy:   1.14E-3
+          Ref_Izz:   1.60E-3
+  
+          Leg_Angle:  45
+          Leg_Length:  100.00E-3
 
+        A45_L125:
+          Ref_Mass:  353.70E-3
+          Ref_Ixx:   1.56E-3
+          Ref_Iyy:   1.40E-3
+          Ref_Izz:   1.80E-3
+  
+          Leg_Angle:  45
+          Leg_Length:  125.00E-3
 
-        A45_L100:      
-          Ref_Mass: 351.0e-3        
-          Ref_Ixx: 1.31e-3          
-          Ref_Iyy: 1.41e-3          
-          Ref_Izz: 1.60e-3          
+        A45_L150:
+          Ref_Mass:  356.65E-3
+          Ref_Ixx:   1.86E-3
+          Ref_Iyy:   1.70E-3
+          Ref_Izz:   2.04E-3
+  
+          Leg_Angle:  45
+          Leg_Length:  150.00E-3
 
-          Leg_Angle: 45             
-          Leg_Length: 100.0e-3      
+        # ============================================================== #
 
+        A60_L50:
+          Ref_Mass:  344.61E-3
+          Ref_Ixx:   912.50E-6
+          Ref_Iyy:   752.30E-6
+          Ref_Izz:   1.36E-3
+  
+          Leg_Angle:  60
+          Leg_Length:  50.00E-3
 
-        A45_L150:      
-          Ref_Mass: 357.0e-3        
-          Ref_Ixx: 1.86e-3          
-          Ref_Iyy: 1.70e-3          
-          Ref_Izz: 2.04e-3          
+        A60_L100:
+          Ref_Mass:  350.50E-3
+          Ref_Ixx:   1.25E-3
+          Ref_Iyy:   1.09E-3
+          Ref_Izz:   1.78E-3
+  
+          Leg_Angle:  60
+          Leg_Length:  100.00E-3
 
-          Leg_Angle: 45             
-          Leg_Length: 150.0e-3      
+        A60_L125:
+          Ref_Mass:  353.45E-3
+          Ref_Ixx:   1.48E-3
+          Ref_Iyy:   1.31E-3
+          Ref_Izz:   2.07E-3
+  
+          Leg_Angle:  60
+          Leg_Length:  125.00E-3
 
-
-        A45_L200:      
-          Ref_Mass: 363.0e-3        
-          Ref_Ixx: 2.62e-3          
-          Ref_Iyy: 2.45e-3          
-          Ref_Izz: 2.64e-3          
-
-          Leg_Angle: 45             
-          Leg_Length: 200.0e-3      
-
-
-        A45_L250:      
-          Ref_Mass: 368.0e-3        
-          Ref_Ixx: 3.59e-3          
-          Ref_Iyy: 3.42e-3          
-          Ref_Izz: 3.40e-3          
-
-          Leg_Angle: 45             
-          Leg_Length: 250.0e-3      
-
-
-        # ============================================================== # 
-        A60_L75:      
-          Ref_Mass: 348.0e-3        # [kg]
-          Ref_Ixx: 1.06e-3          # [kg*m^2]
-          Ref_Iyy: 0.90e-3          # [kg*m^2]
-          Ref_Izz: 1.55e-3          # [kg*m^2]
-
-          Leg_Angle: 60             # Leg Angle [deg]
-          Leg_Length: 75.0e-3       # Leg Length [m]
-
-
-        A60_L100:      
-          Ref_Mass: 350.0e-3        
-          Ref_Ixx: 1.25e-3          
-          Ref_Iyy: 1.09e-3          
-          Ref_Izz: 1.78e-3          
-
-          Leg_Angle: 60             
-          Leg_Length: 100.0e-3      
-
-
-        A60_L150:      
-          Ref_Mass: 356.0e-3        
-          Ref_Ixx: 1.75e-3          
-          Ref_Iyy: 1.58e-3          
-          Ref_Izz: 2.41e-3          
-
-          Leg_Angle: 60             
-          Leg_Length: 150.0e-3      
-
-
-        A60_L200:      
-          Ref_Mass: 362.0e-3        
-          Ref_Ixx: 2.43e-3          
-          Ref_Iyy: 2.25e-3          
-          Ref_Izz: 3.26e-3          
-
-          Leg_Angle: 60             
-          Leg_Length: 200.0e-3      
-
-
-        A60_L250:      
-          Ref_Mass: 368.0e-3        
-          Ref_Ixx: 3.29e-3          
-          Ref_Iyy: 3.12e-3          
-          Ref_Izz: 4.36e-3          
-
-          Leg_Angle: 60             
-          Leg_Length: 250.0e-3   
+        A60_L150:
+          Ref_Mass:  356.40E-3
+          Ref_Ixx:   1.75E-3
+          Ref_Iyy:   1.58E-3
+          Ref_Izz:   2.41E-3
+  
+          Leg_Angle:  60
+          Leg_Length:  150.00E-3
 
 
 
