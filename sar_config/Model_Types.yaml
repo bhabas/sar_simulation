@@ -38,9 +38,9 @@ SAR_Type:
       Prop_Rear:  [33.0e-3, 33.0e-3]    # [x,y] absolute distances [m]
 
       Base_Mass: 37.0e-3                # [kg]
-        Base_Ixx: 17.2e-6               # [kg*m^2]
-        Base_Iyy: 17.7e-6               # [kg*m^2]
-        Base_Izz: 34.2e-6               # [kg*m^2] 
+      Base_Ixx: 17.2e-6               # [kg*m^2]
+      Base_Iyy: 17.7e-6               # [kg*m^2]
+      Base_Izz: 34.2e-6               # [kg*m^2] 
 
     Leg_Params:
 

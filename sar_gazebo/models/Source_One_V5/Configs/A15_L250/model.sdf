@@ -204,7 +204,7 @@
 
 
 
-    <joint name='Hinge_1_Joint' type='fixed'>
+    <joint name='Hinge_1_Joint' type='universal'>
       <parent>SAR_Base::SAR_Body</parent>
       <child>Leg_1</child>
       <pose>0 0 0 0 0 0</pose>
@@ -232,7 +232,7 @@
       </axis2>
     </joint>
 
-    <joint name='Hinge_2_Joint' type='fixed'>
+    <joint name='Hinge_2_Joint' type='universal'>
       <parent>SAR_Base::SAR_Body</parent>
       <child>Leg_2</child>
       <pose>0 0 0 0 0 0</pose>
@@ -260,7 +260,7 @@
       </axis2>
     </joint>
 
-    <joint name='Hinge_3_Joint' type='fixed'>
+    <joint name='Hinge_3_Joint' type='universal'>
       <parent>SAR_Base::SAR_Body</parent>
       <child>Leg_3</child>
       <pose>0 0 0 0 0 0</pose>
@@ -288,7 +288,7 @@
       </axis2>
     </joint>
 
-    <joint name='Hinge_4_Joint' type='fixed'>
+    <joint name='Hinge_4_Joint' type='universal'>
       <parent>SAR_Base::SAR_Body</parent>
       <child>Leg_4</child>
       <pose>0 0 0 0 0 0</pose>
