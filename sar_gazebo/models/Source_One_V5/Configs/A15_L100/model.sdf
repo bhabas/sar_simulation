@@ -14,7 +14,7 @@
         <inertia>
           <ixx>1.26E-6</ixx>
           <ixy>0</ixy>
-          <ixz>3.53E-6</ixz>
+          <ixz>3.54E-6</ixz>
           <iyy>4.74E-5</iyy>
           <iyz>0</iyz>
           <izz>4.65E-5</izz>
@@ -63,7 +63,7 @@
         <inertia>
           <ixx>1.26E-6</ixx>
           <ixy>0</ixy>
-          <ixz>3.53E-6</ixz>
+          <ixz>3.54E-6</ixz>
           <iyy>4.74E-5</iyy>
           <iyz>0</iyz>
           <izz>4.65E-5</izz>
@@ -112,7 +112,7 @@
         <inertia>
           <ixx>1.26E-6</ixx>
           <ixy>0</ixy>
-          <ixz>3.53E-6</ixz>
+          <ixz>3.54E-6</ixz>
           <iyy>4.74E-5</iyy>
           <iyz>0</iyz>
           <izz>4.65E-5</izz>
@@ -161,7 +161,7 @@
         <inertia>
           <ixx>1.26E-6</ixx>
           <ixy>0</ixy>
-          <ixz>3.53E-6</ixz>
+          <ixz>3.54E-6</ixz>
           <iyy>4.74E-5</iyy>
           <iyz>0</iyz>
           <izz>4.65E-5</izz>

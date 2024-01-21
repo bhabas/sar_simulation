@@ -12,7 +12,7 @@
         <mass>2.03E-2</mass>
         <pose>9.68E-2 0 4.00E-4 0 0 0 </pose>
         <inertia>
-          <ixx>6.72E-7</ixx>
+          <ixx>6.71E-7</ixx>
           <ixy>0</ixy>
           <ixz>1.87E-6</ixz>
           <iyy>1.09E-4</iyy>
@@ -61,7 +61,7 @@
         <mass>2.03E-2</mass>
         <pose>9.68E-2 0 4.00E-4 0 0 0 </pose>
         <inertia>
-          <ixx>6.72E-7</ixx>
+          <ixx>6.71E-7</ixx>
           <ixy>0</ixy>
           <ixz>1.87E-6</ixz>
           <iyy>1.09E-4</iyy>
@@ -110,7 +110,7 @@
         <mass>2.03E-2</mass>
         <pose>9.68E-2 0 4.00E-4 0 0 0 </pose>
         <inertia>
-          <ixx>6.72E-7</ixx>
+          <ixx>6.71E-7</ixx>
           <ixy>0</ixy>
           <ixz>1.87E-6</ixz>
           <iyy>1.09E-4</iyy>
@@ -159,7 +159,7 @@
         <mass>2.03E-2</mass>
         <pose>9.68E-2 0 4.00E-4 0 0 0 </pose>
         <inertia>
-          <ixx>6.72E-7</ixx>
+          <ixx>6.71E-7</ixx>
           <ixy>0</ixy>
           <ixz>1.87E-6</ixz>
           <iyy>1.09E-4</iyy>
