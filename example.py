@@ -4,7 +4,7 @@ from scipy.optimize import fsolve
 m = 693.0e-3  # mass in kg
 g = 9.81      # acceleration due to gravity in m/s^2
 L = 18.5e-3       # length in meters
-K = 1*2        # torsional spring constant in Nm/rad
+K = 24*2        # torsional spring constant in Nm/rad
 
 # Define the equation m*g*L*sin(theta) = K*theta
 def equation(theta):
