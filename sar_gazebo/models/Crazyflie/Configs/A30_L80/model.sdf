@@ -1,32 +1,32 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='A15_L50'>
+  <model name='A30_L80'>
 
     <include>
       <uri>model://SAR_Base</uri>
     </include>
 
     <link name='Leg_1'>
-      <pose>18.5e-3 -18.5e-3 -4.0e-3 0 1.309 -0.785</pose>
+      <pose>23.8e-3 -23.8e-3 -1.6e-3 0 1.0472 -0.785</pose>
       <inertial>
-        <mass>1.76E-2</mass>
-        <pose>3.78E-2 0 3.20E-3 0 0 0 </pose>
+        <mass>3.67E-3</mass>
+        <pose>5.78E-2 0 1.00E-3 0 0 0 </pose>
         <inertia>
-          <ixx>1.23E-6</ixx>
+          <ixx>6.97E-8</ixx>
           <ixy>0</ixy>
-          <ixz>2.03E-6</ixz>
-          <iyy>1.41E-5</iyy>
+          <ixz>3.02E-7</ixz>
+          <iyy>3.53E-6</iyy>
           <iyz>0</iyz>
-          <izz>1.32E-5</izz>
+          <izz>3.48E-6</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
-      <self_collide>0</self_collide>
+      <self_collide>1</self_collide>
       <visual name='Leg_Visual'>
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Leg_Assemblies/meshes/Leg_Assembly_15_deg--50mm.STL</uri>
+            <uri>model://Leg_Assemblies/meshes/Leg_Assembly_30_deg--80mm--Crazyflie.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -39,7 +39,7 @@
         </material>
       </visual>
       <collision name="Leg_Collision_1">
-        <pose>62.6e-3 0 8.6e-3 0 0 0</pose>
+        <pose>81.9e-3 0 5.3e-3 0 0 0</pose>
         <geometry>
           <sphere>
             <radius>6.5e-3</radius>
@@ -56,26 +56,26 @@
     </link>
 
     <link name='Leg_2'>
-      <pose>-18.5e-3 -18.5e-3 -4.0e-3 0 1.309 -2.35</pose>
+      <pose>-23.8e-3 -23.8e-3 -1.6e-3 0 1.0472 -2.35</pose>
       <inertial>
-        <mass>1.76E-2</mass>
-        <pose>3.78E-2 0 3.20E-3 0 0 0 </pose>
+        <mass>3.67E-3</mass>
+        <pose>5.78E-2 0 1.00E-3 0 0 0 </pose>
         <inertia>
-          <ixx>1.23E-6</ixx>
+          <ixx>6.97E-8</ixx>
           <ixy>0</ixy>
-          <ixz>2.03E-6</ixz>
-          <iyy>1.41E-5</iyy>
+          <ixz>3.02E-7</ixz>
+          <iyy>3.53E-6</iyy>
           <iyz>0</iyz>
-          <izz>1.32E-5</izz>
+          <izz>3.48E-6</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
-      <self_collide>0</self_collide>
+      <self_collide>1</self_collide>
       <visual name='Leg_Visual'>
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Leg_Assemblies/meshes/Leg_Assembly_15_deg--50mm.STL</uri>
+            <uri>model://Leg_Assemblies/meshes/Leg_Assembly_30_deg--80mm--Crazyflie.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -88,7 +88,7 @@
         </material>
       </visual>
       <collision name="Leg_Collision_2">
-        <pose>62.6e-3 0 8.6e-3 0 0 0</pose>
+        <pose>81.9e-3 0 5.3e-3 0 0 0</pose>
         <geometry>
           <sphere>
             <radius>6.5e-3</radius>
@@ -105,26 +105,26 @@
     </link>
 
     <link name='Leg_3'>
-      <pose>-18.5e-3 18.5e-3 -4.0e-3 0 1.309 2.35</pose>
+      <pose>-23.8e-3 23.8e-3 -1.6e-3 0 1.0472 2.35</pose>
       <inertial>
-        <mass>1.76E-2</mass>
-        <pose>3.78E-2 0 3.20E-3 0 0 0 </pose>
+        <mass>3.67E-3</mass>
+        <pose>5.78E-2 0 1.00E-3 0 0 0 </pose>
         <inertia>
-          <ixx>1.23E-6</ixx>
+          <ixx>6.97E-8</ixx>
           <ixy>0</ixy>
-          <ixz>2.03E-6</ixz>
-          <iyy>1.41E-5</iyy>
+          <ixz>3.02E-7</ixz>
+          <iyy>3.53E-6</iyy>
           <iyz>0</iyz>
-          <izz>1.32E-5</izz>
+          <izz>3.48E-6</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
-      <self_collide>0</self_collide>
+      <self_collide>1</self_collide>
       <visual name='Leg_Visual'>
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Leg_Assemblies/meshes/Leg_Assembly_15_deg--50mm.STL</uri>
+            <uri>model://Leg_Assemblies/meshes/Leg_Assembly_30_deg--80mm--Crazyflie.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -137,7 +137,7 @@
         </material>
       </visual>
       <collision name="Leg_Collision_3">
-        <pose>62.6e-3 0 8.6e-3 0 0 0</pose>
+        <pose>81.9e-3 0 5.3e-3 0 0 0</pose>
         <geometry>
           <sphere>
             <radius>6.5e-3</radius>
@@ -154,26 +154,26 @@
     </link>
 
     <link name='Leg_4'>
-      <pose>18.5e-3 18.5e-3 -4.0e-3 0 1.309 0.785</pose>
+      <pose>23.8e-3 23.8e-3 -1.6e-3 0 1.0472 0.785</pose>
       <inertial>
-        <mass>1.76E-2</mass>
-        <pose>3.78E-2 0 3.20E-3 0 0 0 </pose>
+        <mass>3.67E-3</mass>
+        <pose>5.78E-2 0 1.00E-3 0 0 0 </pose>
         <inertia>
-          <ixx>1.23E-6</ixx>
+          <ixx>6.97E-8</ixx>
           <ixy>0</ixy>
-          <ixz>2.03E-6</ixz>
-          <iyy>1.41E-5</iyy>
+          <ixz>3.02E-7</ixz>
+          <iyy>3.53E-6</iyy>
           <iyz>0</iyz>
-          <izz>1.32E-5</izz>
+          <izz>3.48E-6</izz>
         </inertia>
       </inertial>
       <gravity>1</gravity>
-      <self_collide>0</self_collide>
+      <self_collide>1</self_collide>
       <visual name='Leg_Visual'>
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Leg_Assemblies/meshes/Leg_Assembly_15_deg--50mm.STL</uri>
+            <uri>model://Leg_Assemblies/meshes/Leg_Assembly_30_deg--80mm--Crazyflie.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -186,7 +186,7 @@
         </material>
       </visual>
       <collision name="Leg_Collision_4">
-        <pose>62.6e-3 0 8.6e-3 0 0 0</pose>
+        <pose>81.9e-3 0 5.3e-3 0 0 0</pose>
         <geometry>
           <sphere>
             <radius>6.5e-3</radius>

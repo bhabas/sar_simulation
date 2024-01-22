@@ -54,7 +54,7 @@
         </material>
       </visual>
 
-      <visual name='Crazyflie_Mocap_Ball'>
+      <!-- <visual name='Crazyflie_Mocap_Ball'>
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
@@ -69,7 +69,7 @@
           </script>
           <lighting>1</lighting>
         </material>
-      </visual>
+      </visual> -->
 
       <collision name='Prop_Collision_1'>
         <pose>33.0e-3 -33.0e-3 9.25e-3 0 0 0</pose>
