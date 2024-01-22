@@ -96,9 +96,12 @@ namespace gazebo {
             double DR_Yaw;     // Damping coefficient about pitch axis [N*m*s/rad]
             double C_Yaw;      // Damping Ratio about pitch axis
 
-            double Hinge_Pitch_Bound = 15; // Angle boundary from arm to hinge at max deflection [deg]
-            double Hinge_Yaw_Limit = 20;   // Angle limit of hinge yaw rotation [deg]
+            double PosDir_Pitch_Limit = 0;
+            double NegDir_Pitch_Limit = 75;
 
+            double PosDir_Yaw_Limit = 20;
+            double NegDir_Yaw_Limit = -20;
+           
             // LEG AND HINGE JOINT POINTERS
             physics::LinkPtr Leg_1_LinkPtr;
             physics::LinkPtr Leg_2_LinkPtr;
