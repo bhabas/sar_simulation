@@ -21,7 +21,7 @@
         </inertia>
       </inertial>
       <gravity>1</gravity>
-      <self_collide>0</self_collide>
+      <self_collide>1</self_collide>
       <visual name='Leg_Visual'>
         <pose>0 0 0 0 0 0</pose>
         <geometry>
@@ -70,7 +70,7 @@
         </inertia>
       </inertial>
       <gravity>1</gravity>
-      <self_collide>0</self_collide>
+      <self_collide>1</self_collide>
       <visual name='Leg_Visual'>
         <pose>0 0 0 0 0 0</pose>
         <geometry>
@@ -119,7 +119,7 @@
         </inertia>
       </inertial>
       <gravity>1</gravity>
-      <self_collide>0</self_collide>
+      <self_collide>1</self_collide>
       <visual name='Leg_Visual'>
         <pose>0 0 0 0 0 0</pose>
         <geometry>
@@ -168,7 +168,7 @@
         </inertia>
       </inertial>
       <gravity>1</gravity>
-      <self_collide>0</self_collide>
+      <self_collide>1</self_collide>
       <visual name='Leg_Visual'>
         <pose>0 0 0 0 0 0</pose>
         <geometry>
