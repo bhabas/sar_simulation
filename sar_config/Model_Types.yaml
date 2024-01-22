@@ -52,10 +52,10 @@ SAR_Type:
     Config:
 
       Base_Model:
-        Mass: 37.0e-3                   # [kg]
-        Ixx: 17.2e-6                    # [kg*m^2]
-        Iyy: 17.7e-6                    # [kg*m^2]
-        Izz: 34.2e-6                    # [kg*m^2] 
+        Ref_Mass: 37.0e-3                   # [kg]
+        Ref_Ixx: 17.2e-6                    # [kg*m^2]
+        Ref_Iyy: 17.7e-6                    # [kg*m^2]
+        Ref_Izz: 34.2e-6                    # [kg*m^2] 
 
       # ============================================================== #
 
