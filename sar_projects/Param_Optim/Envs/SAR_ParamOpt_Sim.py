@@ -45,8 +45,8 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
         # ## DOMAIN RANDOMIZATION (UPDATE INERTIA VALUES)
         # self.Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Iyy") + np.random.normal(0,1.5e-6)
-        # self.mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Mass") + np.random.normal(0,0.0005)
-        # self.updateInertia()
+        # self.Mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Mass") + np.random.normal(0,0.0005)
+        # self.setModelInertia()
 
         
 
@@ -185,34 +185,6 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
         return self.reward
 
-    def CalcReward(self):
-
-        ## DISTANCE REWARD 
-        R1 = np.clip(1/np.abs(self.D_min+1e-3),0,10)/10
-        R1 *= 0.1
-
-        ## IMPACT ANGLE REWARD
-        R2 = np.clip(np.abs(self.eul_impact[1])/90,0,1)
-        R2 *= 0.3
-
-        ## PAD CONTACT REWARD
-        if self.pad_connections >= 3: 
-            if self.BodyContact_flag == False:
-                R3 = 0.6
-            else:
-                R3 = 0.3
-        elif self.pad_connections == 2: 
-            if self.BodyContact_flag == False:
-                R3 = 0.2
-            else:
-                R3 = 0.1
-        else:
-            R3 = 0.0
-
-        self.reward_vals = [R1,R2,R3,0,0]
-
-        return R1 + R2 + R3
-
 
 
 if __name__ == "__main__":
@@ -220,10 +192,13 @@ if __name__ == "__main__":
     env = SAR_ParamOpt_Sim(GZ_Timeout=False)
 
     for ii in range(1000):
-        Tau_trg = 0.23
+        Tau_trg = 0.15
         My = 8
         Vel_d = 2.5
         Phi_d = 30
         env.ParamOptim_reset()
         obs,reward,done,info = env.ParamOptim_Flight(Tau_trg,My,Vel_d,Phi_d)
-        print(f"Ep: {ii} \t Reward: {reward:.02f}")
+        print(f"Ep: {ii} \t Reward: {reward:.02f} \t Reward_vec: ",end='')
+        print(' '.join(f"{val:.2f}" for val in env.reward_vals))
+
+

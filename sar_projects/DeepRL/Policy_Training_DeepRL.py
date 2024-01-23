@@ -14,7 +14,6 @@ import rospkg
 ## PLOTTING IMPORTS
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-import plotly.graph_objects as go
 from scipy.interpolate import griddata
 
 
@@ -22,6 +21,7 @@ from scipy.interpolate import griddata
 from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import *
 from stable_baselines3.common import utils
+# from stable_baselines3.common.env_checker import check_env
 
 ## DEFINE BASE PATH
 BASE_PATH = os.path.dirname(rospkg.RosPack().get_path('sar_env'))
@@ -95,10 +95,28 @@ class RewardCallback(BaseCallback):
                 ## RESET EPISODIC REWARD LIST
                 self.episode_rewards = []
 
+            env = self.training_env.envs[0].unwrapped
+
             ## TB LOGGING VALUES
-            self.logger.record('custom/K_ep',self.training_env.envs[0].env.K_ep)
-            self.logger.record('custom/Reward',episode_reward.item())
-            self.logger.record('custom/Reward_avg',self.reward_avg[-1])
+            self.logger.record('s_custom/K_ep',env.K_ep)
+            self.logger.record('s_custom/Vel_mag',env.V_mag)
+            self.logger.record('s_custom/Vel_angle',env.V_angle)
+            self.logger.record('s_custom/Plane_Angle',env.Plane_Angle_deg)
+            self.logger.record('s_custom/Reward',episode_reward.item())
+
+            self.logger.record('s_actions/a_Trg',env.action_trg[0])
+            self.logger.record('s_actions/a_Rot',env.action_trg[1])
+
+
+
+            self.logger.record('Rewards_Components/R_Dist',env.reward_vals[0])
+            self.logger.record('Rewards_Components/R_tau',env.reward_vals[1])
+            self.logger.record('Rewards_Components/R_LT',env.reward_vals[2])
+            self.logger.record('Rewards_Components/R_GM',env.reward_vals[3])
+            self.logger.record('Rewards_Components/R_phi',env.reward_vals[4])
+            self.logger.record('Rewards_Components/R_Legs',env.reward_vals[5])
+
+
 
 
 class Policy_Trainer_DeepRL():
@@ -126,7 +144,7 @@ class Policy_Trainer_DeepRL():
         if not os.path.exists(self.model_dir):
             os.makedirs(self.model_dir,exist_ok=True)
 
-    def create_model(self,gamma=0.999,learning_rate=0.002,net_arch=[8,8]):
+    def create_model(self,gamma=0.999,learning_rate=0.002,net_arch=[16,16]):
         """Create Soft Actor-Critic agent used in training
 
         Args:
@@ -140,14 +158,17 @@ class Policy_Trainer_DeepRL():
             env=self.env,
             gamma=gamma,
             learning_rate=learning_rate,
-            policy_kwargs=dict(activation_fn=th.nn.ReLU,net_arch=dict(pi=net_arch, qf=[256,256])),
+            ent_coef='auto',
+            # target_entropy=0.01,
+            # train_freq=(1,"step"),
+            policy_kwargs=dict(activation_fn=th.nn.LeakyReLU,net_arch=dict(pi=net_arch, qf=[256,256])),
             verbose=1,
             device='cpu',
             tensorboard_log=self.log_dir
         ) 
 
-        if self.env.Env_Name != "CF_Env_2D":
-            self.save_config_file()
+        
+        self.write_config_file()
 
         return self.model
     
@@ -159,8 +180,8 @@ class Policy_Trainer_DeepRL():
         """        
 
         ## MODEL PATHS
-        model_path = os.path.join(model_dir,model_name,"models",f"{t_step}_step_model")
-        replay_buff_path = os.path.join(model_dir,model_name,"models",f"{t_step}_step_replay_buff")
+        model_path = os.path.join(model_dir,model_name,"models",f"{int(t_step)}_step_model")
+        replay_buff_path = os.path.join(model_dir,model_name,"models",f"{int(t_step):d}_step_replay_buff")
 
         ## LOAD MODEL AND REPLAY BUFFER
         self.model = SAC.load(
@@ -170,6 +191,7 @@ class Policy_Trainer_DeepRL():
             tensorboard_log=self.log_dir
         )
         self.model.load_replay_buffer(replay_buff_path)
+        self.model.learning_rate = 0.01
 
     def load_params_from_model(self,model_dir,model_name,t_step):
 
@@ -207,30 +229,50 @@ class Policy_Trainer_DeepRL():
             reset_num_timesteps=reset_timesteps,
         )
 
-    def save_config_file(self):
+    def write_config_file(self):
 
         config_path = os.path.join(self.TB_log_path,"Config.yaml")
 
-        data = dict(
-            PLANE_SETTINGS = dict(
-                Plane_Config = self.env.Plane_Config,
-                Plane_Angle = self.env.Plane_Angle,
-                Plane_Pos = dict(
-                    X = self.env.Plane_Pos[0],
-                    Y = self.env.Plane_Pos[1],
-                    Z = self.env.Plane_Pos[2]
-                ),
-            ),
+        if self.env.Env_Name == "SAR_Sim_DeepRL_Env":
 
-            SAR_SETTINGS = dict(
-                SAR_Type = self.env.SAR_Type,
-                SAR_Config = self.env.SAR_Config,
-            ),
+            Gazebo_Dict = dict(
+
+                PLANE_SETTINGS = dict(
+                    Plane_Type = self.env.Plane_Type,
+                    Plane_Config = self.env.Plane_Config,
+                ),
+
+                SAR_SETTINGS = dict(
+                    SAR_Type = self.env.SAR_Type,
+                    SAR_Config = self.env.SAR_Config,
+                ),
+
+                CAM_SETTINGS = dict(
+                    Cam_Config = self.env.Cam_Config,
+                    Cam_Active = self.env.Cam_Active,
+                ),
+
+            )
+
+        General_Dict = dict(
 
             ENV_SETTINGS = dict(
-                Environment = self.env.Env_Name,
-                Vel_Limts = self.env.Vel_range,
-                Phi_Limits = self.env.Phi_rel_range,
+                Env_Name = self.env.Env_Name,
+                V_mag_Limts = self.env.V_mag_range,
+                V_angle_Limits = self.env.V_angle_range,
+                Plane_Angle_Limits = self.env.Plane_Angle_range,
+            ),
+
+            MODEL_SETTINGS = dict(
+                # Mass_Std = self.env.Mass_std,
+                # Iyy_Std = self.env.Iyy_std,
+                Mass = self.env.M,
+                Ixx = self.env.Ixx,
+                Iyy = self.env.Iyy,
+                Izz = self.env.Izz,
+                L = self.env.L,
+                Gamma = float(self.env.gamma_deg),
+                PD = self.env.PD,
             ),
 
             LEARNING_MODEL = dict(
@@ -243,32 +285,36 @@ class Policy_Trainer_DeepRL():
                 Gamma = self.model.gamma,
                 Learning_Rate = self.model.learning_rate,
                 Activation_Function = "",
-            )
+            ),
+
+            REWARD_SETTINGS=self.env.reward_weights
 
 
         )
 
         with open(config_path, 'w') as outfile:
-            yaml.dump(data,outfile,default_flow_style=False,sort_keys=False)
+            yaml.dump(General_Dict,outfile,default_flow_style=False,sort_keys=False)
 
-    def test_policy(self,Vel=None,Phi=None,episodes=10):
-        """Test the currently loaded policy for a given set of velocity and launch angle conditions
+    def test_policy(self,V_mag=None,V_angle=None,Plane_Angle=None,episodes=10):
 
-        Args:
-            Vel (float, optional): Flight velocity [m/s]. 
-            Phi (float, optional): Flight angle [deg]. 
-            episodes (int, optional): Number of landing tests. Defaults to 1.
-        """        
+        obs,_ = self.env.reset(V_mag=V_mag, V_angle=V_angle, Plane_Angle=Plane_Angle)
+        done = False
+        while not done:
+            action,_ = self.model.predict(obs)
+            obs,reward,done,_,_ = self.env.step(action)
 
-        for ep in range(episodes):
-            obs,_ = self.env.reset(Vel=Vel,Phi=Phi)
-            done = False
-            while not done:
-                action,_ = self.model.predict(obs)
-                obs,reward,done,_,_ = self.env.step(action)
+        return obs,reward
 
-            print(f"Episode {ep}: Reward {reward:.3f}")
+    def sweep_policy(self,Plane_Angle_range=[180,180],V_angle_range=[-45,-135],V_mag_range=[1.0,2.0],n=[4,4,2,2]):
+        
+        for Plane_Angle in np.linspace(Plane_Angle_range[0],Plane_Angle_range[1],n[0]):
+            for Vel_mag in np.linspace(V_mag_range[0],V_mag_range[1],n[1]):
+                for Vel_angle in np.linspace(V_angle_range[0],V_angle_range[1],n[2]):
+                    for _ in range(n[3]):
 
+                        obs,reward = self.test_policy(Vel_mag,Vel_angle,Plane_Angle)
+                        print(f"Reward: {reward:.3f} \t Tau: {obs[0]:.2f}  Theta_x: {obs[1]:.2f}  D_perp: {obs[2]:.2f}")
+                    
     def collect_landing_performance(self,fileName=None,Vel_inc=0.25,Phi_inc=5,n_episodes=5):
         """Test trained model over varied velocity and flight angle combinations.
 
@@ -606,41 +652,44 @@ if __name__ == '__main__':
 
     ## IMPORT ENVIRONMENTS
     from Envs.SAR_Sim_DeepRL import SAR_Sim_DeepRL
-    from Envs.CF_Env_2D import CF_Env_2D
+    from sar_projects.DeepRL.Envs.SAR_Env_2D import SAR_Env_2D
 
 
     # START TRAINING NEW DEEP RL MODEL 
-    env = SAR_Sim_DeepRL(GZ_Timeout=True,Vel_range=[3.0,4.0],Phi_rel_range=[0,180])
-    log_name = f"{env.SAR_Config}--Deg_{env.Plane_Angle}--SAC_{current_time}" 
-    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
+    # env = SAR_Sim_DeepRL(GZ_Timeout=True,My_range=[-8.0,8.0],Vel_range=[3.0,3.0],Phi_rel_range=[40,40],Plane_Angle_range=[180,180])
+    # log_name = f"{env.SAR_Config}--SAC_{current_time}" 
+    # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
 
 
-    # # env = CF_Env_2D(Vel_range=[2.0,4.0],Phi_rel_range=[0,90])
-    # # # env.RENDER = True
-    # # log_name = "Testing_Log"
-    # # log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}"
+    env = SAR_Env_2D(My_range=[-8.0e-3,+8.0e-3],Plane_Angle_range=[0,0],V_angle_range=[-175,-5],V_mag_range=[1,3],Render=False)
 
+    current_datetime = datetime.now()
+    current_time = current_datetime.strftime("%H:%M:%S")
+    log_name = f"Optimal_Impact_Reward_{current_time}"
+    log_dir = f"{BASE_PATH}/sar_projects/DeepRL/TB_Logs/{env.Env_Name}" 
+
+    # ================================================================= ##
 
 
     PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     PolicyTrainer.create_model()
-    PolicyTrainer.train_model(save_freq=5000)
+    PolicyTrainer.train_model(save_freq=5000,total_timesteps=600e3)
 
 
     # ================================================================= ##
     
-    # # # RESUME TRAINING DEEP RL MODEL
-    # log_name = "A30_L75_K08--Deg_180.0--SAC_07_06-12:50_0"
-    # t_step_load = 10000
+    # RESUME TRAINING DEEP RL MODEL
+    # log_name = "Optimal_Impact_Reward_19:29:49_0"
+    # t_step_load = 600e3
     # env.RENDER = True
 
     # PolicyTrainer = Policy_Trainer_DeepRL(env,log_dir,log_name)
     # PolicyTrainer.load_model(log_dir,log_name,t_step_load)
-    # # # PolicyTrainer.train_model(save_freq=5000,total_timesteps=60000)
-    # PolicyTrainer.test_policy(episodes=30)
+    # PolicyTrainer.sweep_policy(Plane_Angle_range=[0,0],V_mag_range=[1,3],V_angle_range=[-175,-5],n=[1,4,7,2])
 
-    # # # PolicyTrainer.collect_landing_performance()
-    # # # PolicyTrainer.plot_landing_performance(saveFig=True)
+    # PolicyTrainer.train_model(save_freq=5000,total_timesteps=400e3,reset_timesteps=True)
+    # PolicyTrainer.collect_landing_performance()
+    # PolicyTrainer.plot_landing_performance(saveFig=True)
 
 
 
