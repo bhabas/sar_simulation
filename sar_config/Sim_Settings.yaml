@@ -3,11 +3,7 @@ DATA_TYPE: "SIM"
 
 SAR_SETTINGS:
   SAR_Type: "Crazyflie"
-<<<<<<< HEAD
-  SAR_Config: "A20_L75_K08"
-=======
   SAR_Config: "A10_L70"
->>>>>>> Model_Reintroduction
 
   # Policy_Type: "PARAM_OPTIM"
   Policy_Type: "DEEP_RL_SB3" 

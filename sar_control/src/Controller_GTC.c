@@ -287,11 +287,7 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                     
                         M_d.x = 0.0f;
-<<<<<<< HEAD
-                        M_d.y = Policy_Rot_Action*1e-3f;
-=======
                         M_d.y = -Policy_Rot_Action*1e-3f;
->>>>>>> Model_Reintroduction
                         M_d.z = 0.0f;
 
                         F_thrust_Rot = 0.0;
