@@ -7,8 +7,7 @@ void SAR_DataConverter::MainInit()
 {
     LoadParams();
     adjustSimSpeed(SIM_SPEED);
-    Time_start = ros::Time::now();
-    
+    Time_start = ros::Time::now(); 
     isInit = true;
 
 }

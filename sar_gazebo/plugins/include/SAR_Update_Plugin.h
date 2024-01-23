@@ -92,11 +92,16 @@ namespace gazebo {
             double C_Pitch;     // Damping coefficient about pitch axis [N*m*s/rad]
             double DR_Pitch;    // Damping Ratio about pitch axis
 
-            double K_Yaw;       // Stiffness about pitch axis [N*m/rad]
-            double DR_Yaw;      // Damping coefficient about pitch axis [N*m*s/rad]
-            double C_Yaw;       // Damping Ratio about pitch axis
+            double K_Yaw;      // Stiffness about pitch axis [N*m/rad]
+            double DR_Yaw;     // Damping coefficient about pitch axis [N*m*s/rad]
+            double C_Yaw;      // Damping Ratio about pitch axis
 
+            double PosDir_Pitch_Limit = 0;
+            double NegDir_Pitch_Limit = 75;
 
+            double PosDir_Yaw_Limit = 20;
+            double NegDir_Yaw_Limit = -20;
+           
             // LEG AND HINGE JOINT POINTERS
             physics::LinkPtr Leg_1_LinkPtr;
             physics::LinkPtr Leg_2_LinkPtr;

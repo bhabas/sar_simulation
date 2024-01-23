@@ -174,14 +174,15 @@ class SAR_Sim_Interface(SAR_Base_Interface):
     def setModelInertia(self,Mass,Inertia):
 
         ## CREATE SERVICE REQUEST MSG
-        srv = Inertia_ParamsRequest() 
-        srv.Mass = Mass
-        srv.Inertia.x = Inertia[0]
-        srv.Inertia.y = Inertia[1]
-        srv.Inertia.z = Inertia[2]
+        # srv = Inertia_ParamsRequest() 
+        # srv.mass = self.mass
+        # srv.Inertia.x = self.Ixx
+        # srv.Inertia.y = self.Iyy
+        # srv.Inertia.z = self.Izz
 
-        ## SEND LOGGING REQUEST VIA SERVICE
-        self.callService('/SAR_Internal/Inertia_Params',srv,Inertia_Params)
+        # ## SEND LOGGING REQUEST VIA SERVICE
+        # self.callService('/SAR_Internal/Inertia_Params',srv,Inertia_Params)
+        pass
 
     def setParams(self):
 
@@ -195,15 +196,15 @@ class SAR_Sim_Interface(SAR_Base_Interface):
     # ================================
 
     def launch_GZ_Sim(self):
-        cmd = "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun sar_launch launch_gazebo.bash"
+        cmd = "gnome-terminal --disable-factory  --geometry 81x48+1050+0 -- rosrun sar_launch launch_gazebo.bash"
         self.GZ_Sim_process = subprocess.Popen(cmd, shell=True)
 
     def launch_SAR_DC(self):
-        cmd = "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun sar_data_converter SAR_DataConverter"
+        cmd = "gnome-terminal --disable-factory  --geometry 81x48+1050+0 -- rosrun sar_data_converter SAR_DataConverter"
         self.SAR_DC_process = subprocess.Popen(cmd, shell=True)
 
     def launch_controller(self):
-        cmd = "gnome-terminal --disable-factory  --geometry 70x48+1050+0 -- rosrun sar_control SAR_Controller"
+        cmd = "gnome-terminal --disable-factory  --geometry 81x48+1050+0 -- rosrun sar_control SAR_Controller"
         self.SAR_Ctrl_process = subprocess.Popen(cmd, shell=True)
 
     def start_monitoring_subprocesses(self):

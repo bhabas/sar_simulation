@@ -143,7 +143,7 @@ class Demo(QWidget):
         norm = mpl.colors.Normalize(vmin=0,vmax=10)
         
         self.ax1 = self.fig.add_subplot(121,projection='3d')
-        self.ax1.scatter(df["vx"],df["vz"],df["flip_d_mean"],c=df["My_d"],cmap=cmap,norm=norm)
+        self.ax1.scatter(df["vx"],df["vz"],df["Rot_d_mean"],c=df["My_d"],cmap=cmap,norm=norm)
         self.POI_1, = self.ax1.plot([],[],[],'ko')
         self.traj_1, = self.ax1.plot([],[],[])
         self.ax1.scatter(vx_range,vz_range,d_range)
@@ -157,7 +157,7 @@ class Demo(QWidget):
         self.ax1.set_zlabel("d_ceil [m]")
 
         self.ax2 = self.fig.add_subplot(122,projection='3d')
-        self.ax2.scatter(df["OF_y_flip_mean"],df["RREV_flip_mean"],df["flip_d_mean"],c=df["My_d"],cmap=cmap,norm=norm)
+        self.ax2.scatter(df["OF_y_Rot_mean"],df["RREV_Rot_mean"],df["Rot_d_mean"],c=df["My_d"],cmap=cmap,norm=norm)
         self.POI_2, = self.ax2.plot([],[],[],'ko')
         self.traj_2, = self.ax2.plot([],[],[])
         self.ax2.scatter(OFy_range,RREV_range,d_range)

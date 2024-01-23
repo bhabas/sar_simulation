@@ -2,29 +2,29 @@
 <sdf version='1.7'>
   <model name='SAR_Base'>
     <link name='SAR_Body'>
-      <pose>0 0 -32.0e-3 0 0 0</pose>
+      <pose>0 0 0 0 0 0</pose>
       <inertial>
-        <mass>590.0e-3</mass>
+        <mass>693.0e-3</mass>
         <inertia>
-          <ixx>1.83e-3</ixx>
+          <ixx>3.17e-3</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>1.986e-3</iyy>
+          <iyy>2.71e-3</iyy>
           <iyz>0</iyz>
-          <izz>2.87e-3</izz>
+          <izz>5.27e-3</izz>
         </inertia>
-        <pose>0 0 32.0e-3 0 0 0</pose>
+        <pose>0 0 26.5e-3 0 0 0</pose>
       </inertial>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
 
-      <visual name='Source_One_Body'>
+      <visual name='SO_V5_Base_Assembly'>
         <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://SAR_Base/meshes/Source_One_V5.STL</uri>
+            <uri>model://SAR_Base/meshes/SO_V5_Base_Assembly.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -37,11 +37,28 @@
         </material>
       </visual>
 
-      <visual name='2207_Motor_1'>
-        <pose>72.64e-3 -86.56e-3 8.0e-3 0 0 0</pose>
+      <visual name='SO_V5_Prop_Guards'>
+        <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://SAR_Base/meshes/2207_Motor.STL</uri>
+            <uri>model://SAR_Base/meshes/SO_V5_Prop_Guards.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/White</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+          <lighting>1</lighting>
+        </material>
+      </visual>
+
+      <visual name='SO_V5_Prop_Guard_Standoffs'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://SAR_Base/meshes/SO_V5_Prop_Guard_Standoffs.STL</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -50,74 +67,190 @@
             <name>Gazebo/DarkGrey</name>
             <uri>file://media/materials/scripts/gazebo.material</uri>
           </script>
+          <lighting>1</lighting>
         </material>
       </visual>
 
-      <visual name='2207_Motor_2'>
-        <pose>-72.64e-3 -86.56e-3 8.0e-3 0 0 0</pose>
+      <collision name='Body_Collision_Prop_1'>
+        <pose>72.6e-3 -86.6e-3 20.5e-3 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/2207_Motor.STL</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/DarkGrey</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-        </material>
-      </visual>
-
-      <visual name='2207_Motor_3'>
-        <pose>-72.64e-3 86.56e-3 8.0e-3 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/2207_Motor.STL</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/DarkGrey</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-        </material>
-      </visual>
-
-      <visual name='2207_Motor_4'>
-        <pose>72.64e-3 86.56e-3 8.0e-3 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/2207_Motor.STL</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/DarkGrey</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-        </material>
-      </visual>
-
-      <collision name='Prop_Collision'>
-        <pose>0 0 32.0e-3 0 0 0</pose>
-        <geometry>
-          <box>
-            <size>275.0e-3 305.0e-3 16.0e-3</size>
-          </box>
+          <cylinder>
+            <length>41.0e-3</length>
+            <radius>77.0e-3</radius>
+          </cylinder>
         </geometry>
       </collision>
 
-      <collision name='Base_Collision'>
-        <pose>0 0 12.5e-3 0 0 0</pose>
+      <collision name='Body_Collision_Prop_2'>
+        <pose>-72.6e-3 -86.6e-3 20.5e-3 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>41.0e-3</length>
+            <radius>77.0e-3</radius>
+          </cylinder>
+        </geometry>
+      </collision>
+
+      <collision name='Body_Collision_Prop_3'>
+        <pose>-72.6e-3 86.6e-3 20.5e-3 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>41.0e-3</length>
+            <radius>77.0e-3</radius>
+          </cylinder>
+        </geometry>
+      </collision>
+
+      <collision name='Body_Collision_Prop_4'>
+        <pose>72.6e-3 86.6e-3 20.5e-3 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>41.0e-3</length>
+            <radius>77.0e-3</radius>
+          </cylinder>
+        </geometry>
+      </collision>
+
+      <collision name='Body_Collision_Battery'>
+        <pose>2.88e-3 0 35.0e-3 0 0 0</pose>
         <geometry>
           <box>
-            <size>185.0e-3 215.0e-3 25.0e-3</size>
+            <size>80.0e-3 45.0e-3 70.0e-3 </size>
           </box>
         </geometry>
       </collision>
+    </link>
+
+    <link name='Prop_1'>
+      <inertial>
+        <mass>1e-6</mass>
+        <inertia>
+          <ixx>1e-9</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1e-9</iyy>
+          <iyz>0</iyz>
+          <izz>1e-9</izz>
+        </inertia>
+        <pose>0 0 0 0 0 0</pose>
+      </inertial>
+      <pose>72.6e-3 -86.6e-3 28.0e-3 0 0 0</pose>
+      <gravity>1</gravity>
+      <self_collide>0</self_collide>
+      <visual name='SO_V5_Prop_1'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://SAR_Base/meshes/SO_V5_Propeller.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/BlueTransparent </name>
+          </script>
+        </material>
+      </visual>
+    </link>
+
+    <link name='Prop_2'>
+      <inertial>
+        <mass>1e-6</mass>
+        <inertia>
+          <ixx>1e-9</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1e-9</iyy>
+          <iyz>0</iyz>
+          <izz>1e-9</izz>
+        </inertia>
+        <pose>0 0 0 0 0 0</pose>
+      </inertial>
+      <pose>-72.6e-3 -86.6e-3 28.0e-3 0 0 0</pose>
+      <gravity>1</gravity>
+      <self_collide>0</self_collide>
+      <visual name='SO_V5_Prop_2'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://SAR_Base/meshes/SO_V5_Propeller.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/BlueTransparent </name>
+          </script>
+        </material>
+      </visual>
+    </link>
+
+    <link name='Prop_3'>
+      <inertial>
+        <mass>1e-6</mass>
+        <inertia>
+          <ixx>1e-9</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1e-9</iyy>
+          <iyz>0</iyz>
+          <izz>1e-9</izz>
+        </inertia>
+        <pose>0 0 0 0 0 0</pose>
+      </inertial>
+      <pose>-72.6e-3 86.6e-3 28.0e-3 0 0 0</pose>
+      <gravity>1</gravity>
+      <self_collide>0</self_collide>
+      <visual name='SO_V5_Prop_2'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://SAR_Base/meshes/SO_V5_Propeller.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/BlueTransparent </name>
+          </script>
+        </material>
+      </visual>
+    </link>
+
+    <link name='Prop_4'>
+      <inertial>
+        <mass>1e-6</mass>
+        <inertia>
+          <ixx>1e-9</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1e-9</iyy>
+          <iyz>0</iyz>
+          <izz>1e-9</izz>
+        </inertia>
+        <pose>0 0 0 0 0 0</pose>
+      </inertial>
+      <pose>72.6e-3 86.6e-3 28.0e-3 0 0 0</pose>
+      <gravity>1</gravity>
+      <self_collide>0</self_collide>
+      <visual name='SO_V5_Prop_3'>
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://SAR_Base/meshes/SO_V5_Propeller.STL</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/BlueTransparent </name>
+          </script>
+        </material>
+      </visual>
     </link>
 
     <link name='Camera'>
@@ -159,7 +292,7 @@
                  That pixel's noise value is added to each of its color
                  channels, which at that point lie in the range [0,1]. -->
             <mean>0.0</mean>
-            <stddev>0.005</stddev>
+            <stddev>0.000</stddev>
           </noise>
           <lens>
             <type>sterographic</type>
@@ -197,138 +330,6 @@
           <shader type='pixel'>
             <normal_map>__default__</normal_map>
           </shader>
-        </material>
-      </visual>
-    </link>
-
-    <link name='Prop_1'>
-      <inertial>
-        <mass>1e-6</mass>
-        <inertia>
-          <ixx>1e-9</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>1e-9</iyy>
-          <iyz>0</iyz>
-          <izz>1e-9</izz>
-        </inertia>
-        <pose>0 0 0 0 0 0</pose>
-      </inertial>
-      <pose>72.64e-3 -86.56e-3 0 0 0 0</pose>
-      <gravity>1</gravity>
-      <self_collide>0</self_collide>
-      <visual name='Propeller'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/5_inch_Prop.STL</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/BlueTransparent </name>
-          </script>
-        </material>
-      </visual>
-    </link>
-
-    <link name='Prop_2'>
-      <inertial>
-        <mass>1e-6</mass>
-        <inertia>
-          <ixx>1e-9</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>1e-9</iyy>
-          <iyz>0</iyz>
-          <izz>1e-9</izz>
-        </inertia>
-        <pose>0 0 0 0 0 0</pose>
-      </inertial>
-      <pose>-72.64e-3 -86.56e-3 0 0 0 0</pose>
-      <gravity>1</gravity>
-      <self_collide>0</self_collide>
-      <visual name='Propeller'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/5_inch_Prop.STL</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/BlueTransparent </name>
-          </script>
-        </material>
-      </visual>
-    </link>
-
-    <link name='Prop_3'>
-      <inertial>
-        <mass>1e-6</mass>
-        <inertia>
-          <ixx>1e-9</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>1e-9</iyy>
-          <iyz>0</iyz>
-          <izz>1e-9</izz>
-        </inertia>
-        <pose>0 0 0 0 0 0</pose>
-      </inertial>
-      <pose>-72.64e-3 86.56e-3 0 0 0 0</pose>
-      <gravity>1</gravity>
-      <self_collide>0</self_collide>
-      <visual name='Propeller'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/5_inch_Prop.STL</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/BlueTransparent </name>
-          </script>
-        </material>
-      </visual>
-    </link>
-
-    <link name='Prop_4'>
-      <inertial>
-        <mass>1e-6</mass>
-        <inertia>
-          <ixx>1e-9</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>1e-9</iyy>
-          <iyz>0</iyz>
-          <izz>1e-9</izz>
-        </inertia>
-        <pose>0 0 0 0 0 0</pose>
-      </inertial>
-      <pose>72.64e-3 86.56e-3 0 0 0 0</pose>
-      <gravity>1</gravity>
-      <self_collide>0</self_collide>
-      <visual name='Propeller'>
-        <pose>0 0 0 0 0 0</pose>
-        <geometry>
-          <mesh>
-            <uri>model://SAR_Base/meshes/5_inch_Prop.STL</uri>
-            <scale>1 1 1</scale>
-          </mesh>
-        </geometry>
-        <material>
-          <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/BlueTransparent </name>
-          </script>
         </material>
       </visual>
     </link>
@@ -420,7 +421,7 @@
       <Joint_Name>Prop_1_Joint</Joint_Name>
       <Link_Name>Prop_1</Link_Name>
       <Turning_Direction>ccw</Turning_Direction>
-      <Visual_Slowdown>100</Visual_Slowdown>
+      <Visual_Slowdown>200</Visual_Slowdown>
     </plugin>
 
     <plugin name='Motor_2_Plugin' filename='libMotor_Plugin.so'>
@@ -428,7 +429,7 @@
       <Joint_Name>Prop_2_Joint</Joint_Name>
       <Link_Name>Prop_2</Link_Name>
       <Turning_Direction>cw</Turning_Direction>
-      <Visual_Slowdown>100</Visual_Slowdown>
+      <Visual_Slowdown>200</Visual_Slowdown>
     </plugin>
 
     <plugin name='Motor_3_Plugin' filename='libMotor_Plugin.so'>
@@ -436,7 +437,7 @@
       <Joint_Name>Prop_3_Joint</Joint_Name>
       <Link_Name>Prop_3</Link_Name>
       <Turning_Direction>ccw</Turning_Direction>
-      <Visual_Slowdown>100</Visual_Slowdown>
+      <Visual_Slowdown>200</Visual_Slowdown>
     </plugin>
 
     <plugin name='Motor_4_Plugin' filename='libMotor_Plugin.so'>
@@ -444,7 +445,7 @@
       <Joint_Name>Prop_4_Joint</Joint_Name>
       <Link_Name>Prop_4</Link_Name>
       <Turning_Direction>cw</Turning_Direction>
-      <Visual_Slowdown>100</Visual_Slowdown>
+      <Visual_Slowdown>200</Visual_Slowdown>
     </plugin>
 
     <plugin name='SAR_Update_Plugin' filename='libSAR_Update_Plugin.so'>
@@ -469,11 +470,23 @@
       <bodyName>SAR_Body</bodyName>
       <topicName>SAR_Internal/IMU</topicName>
       <serviceName>imu_service</serviceName>
-      <gaussianNoise>0.0</gaussianNoise>
-      <xyzOffset>0 0 0</xyzOffset>
-      <rpyOffset>0 0 0</rpyOffset>
       <frameName>SAR_Body</frameName>
     </plugin>
+
+    <!-- <joint name='World_Joint' type='fixed'>
+      <parent>world</parent>
+      <child>SAR_Body</child>
+      <pose>0 0 0 0 0 0</pose>
+    </joint> -->
+    
+    <!-- <joint name='World_Joint' type='revolute'>
+      <parent>world</parent>
+      <child>SAR_Body</child>
+      <pose>0 0 15e-3 0 0 0</pose>
+      <axis>
+        <xyz>0 1 0</xyz>
+      </axis>
+    </joint> -->
 
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>

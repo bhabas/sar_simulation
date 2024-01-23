@@ -83,18 +83,18 @@ class Data_Parser:
             Experiment:
                 tuple: run_df,IC_df,__,__
             Sim:
-                tuple: run_df,IC_df,flip_df,impact_df
+                tuple: run_df,IC_df,Rot_df,impact_df
         """        
 
         ## CREATE RUN DATAFRAME
         run_df = self.trial_df[(self.trial_df['k_ep']==k_ep) & (self.trial_df['k_run']==k_run)]
 
         IC_df = run_df.iloc[[-3]]       # Create DF of initial conditions
-        flip_df = run_df.iloc[[-2]]     # Create DF of flip conditions
+        Rot_df = run_df.iloc[[-2]]     # Create DF of Rot conditions
         impact_df = run_df.iloc[[-1]]   # Create DF of impact conditions
         run_df = run_df[:-3]            # Drop special rows from dataframe
 
-        return run_df,IC_df,flip_df,impact_df
+        return run_df,IC_df,Rot_df,impact_df
 
     def grab_rewardData(self):
         """Returns summary of rewards
@@ -111,8 +111,8 @@ class Data_Parser:
             rewards_avg: array of averaged rewards per episode (np.array)
         """        
         ## CREATE ARRAYS FOR REWARD, K_EP 
-        reward_df = self.trial_df.iloc[:][['k_ep','mu','flip_flag']].dropna() # Create df from k_ep/rewards and drop blank reward rows
-        reward_df = reward_df.iloc[:][["k_ep","flip_flag"]].astype('float')
+        reward_df = self.trial_df.iloc[:][['k_ep','mu','Trg_flag']].dropna() # Create df from k_ep/rewards and drop blank reward rows
+        reward_df = reward_df.iloc[:][["k_ep","Trg_flag"]].astype('float')
         rewards_arr = reward_df.to_numpy()
         rewards = rewards_arr[:,1]
         k_ep_r = rewards_arr[:,0]
@@ -333,7 +333,7 @@ class Data_Parser:
         t = self.grab_stateData(k_ep,k_run,'t')
         t_norm = t - np.min(t) # Normalize time array
 
-        ## GRAB STATE/FLIP DATA
+        ## GRAB STATE/TRIGGER DATA
         for state in stateName:
 
             color = next(ax._get_lines.prop_cycler)['color']
@@ -344,18 +344,18 @@ class Data_Parser:
 
 
 
-            # ## MARK STATE DATA AT FLIP TIME
-            # t_flip,t_flip_norm = self.grab_flip_time(k_ep,k_run)
-            # state_flip = self.grab_flip_state(k_ep,k_run,state)
-            # ax.scatter(t_flip_norm,state_flip,label=f"{state}-Flip",zorder=2,
+            # ## MARK STATE DATA AT TRIGGER TIME
+            # t_Rot,t_Rot_norm = self.grab_Rot_time(k_ep,k_run)
+            # state_Rot = self.grab_Rot_state(k_ep,k_run,state)
+            # ax.scatter(t_Rot_norm,state_Rot,label=f"{state}-Rot",zorder=2,
             #             marker='x',
             #             color=color,
             #             s=100)
 
             # # ## MARK STATE DATA AT IMPACT TIME
             # t_impact,t_impact_norm = self.grab_impact_time(k_ep,k_run)
-            # state_flip = self.grab_impact_state(k_ep,k_run,state)
-            # ax.scatter(t_impact_norm,state_flip,label=f"{state}-Impact",zorder=2,
+            # state_Rot = self.grab_impact_state(k_ep,k_run,state)
+            # ax.scatter(t_impact_norm,state_Rot,label=f"{state}-Impact",zorder=2,
             #             marker='s',
             #             color=color,
             #             s=50)
@@ -395,9 +395,9 @@ class Data_Parser:
         """Return IC velocities
 
         Returns:
-            vx_IC (float): Desired flip x-velocity
-            vy_IC (float): Desired flip y-velocity
-            vz_IC (float): Desired flip z-velocity
+            vx_IC (float): Desired Rot x-velocity
+            vy_IC (float): Desired Rot y-velocity
+            vz_IC (float): Desired Rot z-velocity
         """        
         vel_df = self.trial_df[['mu','vx','vy','vz']].dropna()
         vx_IC,vy_IC,vz_IC = vel_df.iloc[0][['vx','vy','vz']]
@@ -417,9 +417,9 @@ class Data_Parser:
         return Vel_IC,phi_IC
         
 
-    ## FLIP FUNCTIONS
-    def grab_flip_time(self,k_ep,k_run):
-        """Returns time of flip
+    ## TRIGGER FUNCTIONS
+    def grab_Rot_time(self,k_ep,k_run):
+        """Returns time of Rot
 
         Data Type: Sim/Exp
 
@@ -428,22 +428,22 @@ class Data_Parser:
             k_run (int): Run number
 
         Returns:
-            float: t_flip,t_flip_normalized
+            float: t_Rot,t_Rot_normalized
         """        
 
-        run_df,_,flip_df,_ = self.select_run(k_ep,k_run)
-        if flip_df.iloc[0]['flip_flag'] == True: # If Impact Detected
-            t_flip = float(flip_df.iloc[0]['t'])
-            t_flip_norm = t_flip - float(run_df.iloc[0]['t']) # Normalize flip time
+        run_df,_,Rot_df,_ = self.select_run(k_ep,k_run)
+        if Rot_df.iloc[0]['Trg_flag'] == True: # If Impact Detected
+            t_Rot = float(Rot_df.iloc[0]['t'])
+            t_Rot_norm = t_Rot - float(run_df.iloc[0]['t']) # Normalize Rot time
         else:
-            t_flip = np.nan
-            t_flip_norm = np.nan
+            t_Rot = np.nan
+            t_Rot_norm = np.nan
 
-        return t_flip,t_flip_norm
+        return t_Rot,t_Rot_norm
 
 
-    def grab_flip_state(self,k_ep,k_run,stateName: list):
-        """Returns desired state at time of flip
+    def grab_Rot_state(self,k_ep,k_run,stateName: list):
+        """Returns desired state at time of Rot
 
         Data Type: Sim/Exp
 
@@ -453,19 +453,19 @@ class Data_Parser:
             stateName (str): State name
 
         Returns:
-            float: state_flip
+            float: state_Rot
         """        
 
-        _,_,flip_df,_ = self.select_run(k_ep,k_run)
-        if flip_df.iloc[0]['flip_flag'] == True: # If Impact Detected
+        _,_,Rot_df,_ = self.select_run(k_ep,k_run)
+        if Rot_df.iloc[0]['Trg_flag'] == True: # If Impact Detected
 
-            state_flip = float(flip_df.iloc[0][stateName])
+            state_Rot = float(Rot_df.iloc[0][stateName])
         else:
-            state_flip = np.nan
+            state_Rot = np.nan
 
 
 
-        return state_flip
+        return state_Rot
         
 
     ## IMPACT FUNCTIONS
@@ -485,9 +485,9 @@ class Data_Parser:
 
 
         run_df,_,_,impact_df = self.select_run(k_ep,k_run)
-        if impact_df.iloc[0]['impact_flag'] == True: # If Impact Detected
+        if impact_df.iloc[0]['Impact_flag'] == True: # If Impact Detected
             t_impact = float(impact_df.iloc[0]['t'])
-            t_impact_norm = t_impact - float(run_df.iloc[0]['t']) # Normalize flip time
+            t_impact_norm = t_impact - float(run_df.iloc[0]['t']) # Normalize Rot time
         else:
             t_impact = np.nan
             t_impact_norm = np.nan
@@ -511,7 +511,7 @@ class Data_Parser:
 
 
         _,_,_,impact_df = self.select_run(k_ep,k_run)
-        if impact_df.iloc[0]['impact_flag'] == True: # If Impact Detected
+        if impact_df.iloc[0]['Impact_flag'] == True: # If Impact Detected
 
             state_impact = float(impact_df.iloc[0][stateName])
         else:
@@ -522,10 +522,10 @@ class Data_Parser:
 
 
     def trigger2impact(self,k_ep,k_run):
-        t_flip,_ = self.grab_flip_time(k_ep,k_run)
+        t_Rot,_ = self.grab_Rot_time(k_ep,k_run)
         t_impact,_ = self.grab_impact_time(k_ep,k_run)
 
-        t_delta = t_impact-t_flip
+        t_delta = t_impact-t_Rot
         return t_delta
 
 
@@ -542,7 +542,7 @@ class Data_Parser:
             body_impact (bool): True if body impacted the ceiling
         """        
         _,_,_,impact_df = self.select_run(k_ep,k_run)
-        body_impact = impact_df.iloc[0]['flip_flag']
+        body_impact = impact_df.iloc[0]['Trg_flag']
         leg_contacts = int(impact_df.iloc[0]['F_thrust'])
         contact_list = impact_df.iloc[0][['Theta_x','Theta_x_est','Theta_y','Theta_y_est']].to_numpy(dtype=np.int8)
 
@@ -566,8 +566,8 @@ class Data_Parser:
 
         ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
         # Use reward to extract only the valid attempts and not simulation mishaps
-        ep_df = self.trial_df.iloc[:][['k_ep','k_run','mu','flip_flag']].dropna().drop(columns='mu')
-        ep_df = ep_df.astype('float').query(f'flip_flag >= {reward_cutoff}') 
+        ep_df = self.trial_df.iloc[:][['k_ep','k_run','mu','Trg_flag']].dropna().drop(columns='mu')
+        ep_df = ep_df.astype('float').query(f'Trg_flag >= {reward_cutoff}') 
         ep_arr = ep_df.iloc[-self.n_rollouts*N:].to_numpy() # Grab episode/run listing from past N rollouts
 
         ## ITERATE THROUGH ALL RUNS AND RECORD VALID LANDINGS
@@ -602,8 +602,8 @@ class Data_Parser:
 
         ## CREATE ARRAY OF ALL EP/RUN COMBINATIONS FROM LAST 3 ROLLOUTS
         # Use reward to extract only the valid attempts and not simulation mishaps
-        ep_df = self.trial_df.iloc[:][['k_ep','k_run','mu','flip_flag']].dropna().drop(columns='mu')
-        ep_df = ep_df.astype('float').query(f'flip_flag >= {reward_cutoff}') 
+        ep_df = self.trial_df.iloc[:][['k_ep','k_run','mu','Trg_flag']].dropna().drop(columns='mu')
+        ep_df = ep_df.astype('float').query(f'Trg_flag >= {reward_cutoff}') 
         ep_arr = ep_df.iloc[-self.n_rollouts*N:].to_numpy() # Grab episode/run listing from past N rollouts
 
         ## ITERATE THROUGH ALL RUNS AND FINDING IMPACT ANGLE 

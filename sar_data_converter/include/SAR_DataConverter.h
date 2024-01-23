@@ -97,7 +97,7 @@ class SAR_DataConverter {
             // INITIALIZE SAR_DC THREADS
             SAR_DC_Thread = std::thread(&SAR_DataConverter::MainLoop, this);
             ConsoleOutput_Thread = std::thread(&SAR_DataConverter::ConsoleLoop, this);
-            Logging_Thread = std::thread(&SAR_DataConverter::LoggingLoop, this);
+            // Logging_Thread = std::thread(&SAR_DataConverter::LoggingLoop, this);
 
 
         }
@@ -154,7 +154,7 @@ class SAR_DataConverter {
         void create_CSV();
         void append_CSV_states();
         void append_CSV_misc();
-        void append_CSV_flip();
+        void append_CSV_Rot();
         void append_CSV_impact();
         void append_CSV_blank();
 
@@ -293,8 +293,10 @@ class SAR_DataConverter {
 
         geometry_msgs::Pose Pose;
         geometry_msgs::Twist Twist;
+        geometry_msgs::Accel Accel;
         geometry_msgs::Vector3 Eul;
 
+        float Acc_mag = 0.0;
         float Vel_mag = 0.0;
         float Phi = 0.0;
         float Alpha = 0.0;
@@ -329,16 +331,17 @@ class SAR_DataConverter {
         double Rot_Sum = 0.0;
 
         // ==================
-        //     FLIP DATA
+        //     TRIGGER DATA
         // ==================
 
-        bool flip_flag = false;
-        bool OnceFlag_flip = false;
+        bool Trg_flag = false;
+        bool OnceFlag_Trg = false;
 
         ros::Time Time_trg;
 
         geometry_msgs::Pose Pose_trg;
         geometry_msgs::Twist Twist_trg;
+        geometry_msgs::Accel Accel_trg;
         geometry_msgs::Vector3 Eul_trg;
 
 
@@ -357,15 +360,20 @@ class SAR_DataConverter {
         //     IMPACT DATA
         // ===================
 
-        bool impact_flag = false;
+        bool Impact_flag = false;
         bool BodyContact_flag = false;
+        bool LegContact_flag = false;
         bool OnceFlag_impact = false;
+        std::string BodyCollision_str = "SAR_Body::Body_Collision_";
+        std::string LegCollision_str = "Leg_Collision_";
+
 
 
         ros::Time Time_impact;
         geometry_msgs::Vector3 Force_impact;
         geometry_msgs::Pose Pose_impact;
         geometry_msgs::Twist Twist_impact;
+        geometry_msgs::Accel Accel_impact;
         geometry_msgs::Vector3 Eul_impact;
 
 
@@ -377,6 +385,8 @@ class SAR_DataConverter {
         // CIRCULAR BUFFERES TO LAG IMPACT STATE DATA (WE WANT STATE DATA THE INSTANT BEFORE IMPACT)
         boost::circular_buffer<geometry_msgs::Pose> Pose_impact_buff {1};
         boost::circular_buffer<geometry_msgs::Twist> Twist_impact_buff {1};
+        boost::circular_buffer<geometry_msgs::Accel> Accel_impact_buff {1};
+
 
         // ==================
         //     MISC DATA
@@ -402,7 +412,7 @@ class SAR_DataConverter {
         bool Tumbled_Flag = false;
 
         bool AttCtrl_Flag = false;
-        bool Moment_Flag = false;
+        bool AngAccel_flag = false;
         bool CustomThrust_Flag = false;
         bool CustomPWM_Flag = false;
 
@@ -458,10 +468,10 @@ inline void SAR_DataConverter::LoadParams()
     std::string SAR_Config_str = "/Config/" + SAR_Config;
 
     // UPDATE INTERTIAL PARAMETERS
-    ros::param::get(SAR_Type_str + SAR_Config_str + "/Mass",Mass);
-    ros::param::get(SAR_Type_str + SAR_Config_str + "/Ixx",Ixx);
-    ros::param::get(SAR_Type_str + SAR_Config_str + "/Iyy",Iyy);
-    ros::param::get(SAR_Type_str + SAR_Config_str + "/Izz",Izz);
+    ros::param::get(SAR_Type_str + SAR_Config_str + "/Ref_Mass",Mass);
+    ros::param::get(SAR_Type_str + SAR_Config_str + "/Ref_Ixx",Ixx);
+    ros::param::get(SAR_Type_str + SAR_Config_str + "/Ref_Iyy",Iyy);
+    ros::param::get(SAR_Type_str + SAR_Config_str + "/Ref_Izz",Izz);
 
 
     // PLANE SETTINGS
@@ -527,15 +537,16 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
     switch (req.cmd_type)
     {
         case 0:
-            // RESET FLIP TIME
-            OnceFlag_flip = false;
+            // RESET TRIGGER TIME
+            OnceFlag_Trg = false;
             Time_trg.sec = 0.0;
             Time_trg.nsec = 0.0;
             Rot_Sum = 0.0;
 
             // RESET IMPACT TIME
-            impact_flag = false;
+            Impact_flag = false;
             BodyContact_flag = false;
+            LegContact_flag = false;
             OnceFlag_impact = false;
             Time_impact.sec = 0.0;
             Time_impact.nsec = 0.0;
@@ -557,6 +568,14 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
             Twist_impact.angular.x = 0.0;
             Twist_impact.angular.y = 0.0;
             Twist_impact.angular.z = 0.0;
+
+            Accel_impact.linear.x = 0.0;
+            Accel_impact.linear.y = 0.0;
+            Accel_impact.linear.z = 0.0;
+
+            Accel_impact.angular.x = 0.0;
+            Accel_impact.angular.y = 0.0;
+            Accel_impact.angular.z = 0.0;
 
             Eul_impact.x = 0.0;
             Eul_impact.y = 0.0;

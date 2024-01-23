@@ -5,9 +5,45 @@
     <!-- Default camera pose -->
     <gui>
       <camera name="user_camera">
-        <pose frame=''>1.4 -5 1.9 0.0 0.12 1.57</pose>
+        <pose>0.2 -0.83 0.684 0 0.364 1.58</pose>
       </camera>
     </gui>
+
+    <model name='camera'>
+      <static>true</static>
+      <pose>0 -2.3 1.9 0 0.2 1.57</pose>
+      <link name='link'>
+        <visual name='visual'>
+          <geometry>
+            <box>
+              <size>0.1 0.1 0.1</size>
+            </box>
+          </geometry>
+        </visual>
+        <sensor name='my_camera' type='camera'>
+          <camera>
+            <horizontal_fov>1.047</horizontal_fov>
+            <image>
+              <width>1920</width>
+              <height>1080</height>
+            </image>
+            <clip>
+              <near>0.1</near>
+              <far>100</far>
+            </clip>
+          </camera>
+          <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+            <alwaysOn>true</alwaysOn>
+            <updateRate>0.0</updateRate>
+            <cameraName>ExternalCam</cameraName>
+            <imageTopicName>image_raw</imageTopicName>
+            <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+          </plugin>
+          <always_on>1</always_on>
+          <update_rate>500</update_rate>
+        </sensor>
+      </link>
+    </model>
 
     <model name='World_Origin'>
       <static>1</static>
@@ -18,7 +54,7 @@
           <pose>0 0 0 0 0 0</pose>
           <geometry>
             <sphere>
-              <radius>0.01</radius>
+              <radius>5.0e-3</radius>
             </sphere>
           </geometry>
           <material>

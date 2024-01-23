@@ -135,8 +135,8 @@ bool Controller::CMD_Service_Resp(sar_msgs::CTRL_Cmd_srv::Request &req, sar_msgs
 // IMU VALUES FROM MODEL SENSOR PLUGIN
 void Controller::IMU_Update_Callback(const sensor_msgs::Imu::ConstPtr &msg)
 {
-    sensorData.acc.x = msg->linear_acceleration.x/9.8066; // Convert to Gs to match crazyflie sensors
-    sensorData.acc.y = msg->linear_acceleration.y/9.8066;
+    sensorData.acc.x = -msg->linear_acceleration.x/9.8066; // Convert to Gs to match crazyflie sensors
+    sensorData.acc.y = -msg->linear_acceleration.y/9.8066;
     sensorData.acc.z = msg->linear_acceleration.z/9.8066;
 
     sensorData.gyro.x = msg->angular_velocity.x*180.0/M_PI; // Convert to deg/s to match crazyflie sensors
@@ -147,6 +147,10 @@ void Controller::IMU_Update_Callback(const sensor_msgs::Imu::ConstPtr &msg)
     state.attitudeQuaternion.y = msg->orientation.y;
     state.attitudeQuaternion.z = msg->orientation.z;
     state.attitudeQuaternion.w = msg->orientation.w;
+
+    state.acc.x = -msg->linear_acceleration.x/9.8066; // Convert to Gs to match crazyflie sensors
+    state.acc.y = -msg->linear_acceleration.y/9.8066;
+    state.acc.z = msg->linear_acceleration.z/9.8066;
 
 }
 
@@ -183,24 +187,26 @@ void Controller::loadParams()
 
     
     // UPDATE INERTIAL PARAMETERS
-    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Mass",m);
-    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Ixx",Ixx);
-    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Iyy",Iyy);
-    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Izz",Izz);
+    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Ref_Mass",m);
+    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Ref_Ixx",Ixx);
+    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Ref_Iyy",Iyy);
+    ros::param::get("/SAR_Type/" + SAR_Type + "/Config/" + SAR_Config + "/Ref_Izz",Izz);
 
 
     // UPDATE SYSTEM PARAMETERS
-    ros::param::get("/SAR_Type/" + SAR_Type +  + "/System_Params/f_max",f_max);
-    ros::param::get("/SAR_Type/" + SAR_Type +  + "/System_Params/C_tf",C_tf);
+    ros::param::get("/SAR_Type/" + SAR_Type + "/System_Params/f_max",f_max);
+    ros::param::get("/SAR_Type/" + SAR_Type + "/System_Params/C_tf",C_tf);
 
 
     // UPDATE PROP DISTANCES
-    ros::param::get("/SAR_Type/" + SAR_Type +  + "/System_Params/Prop_Front",Prop_Front_Vec);
-    Prop_14_x,Prop_14_y = Prop_Front_Vec[0],Prop_Front_Vec[1];
+    ros::param::get("/SAR_Type/" + SAR_Type + "/System_Params/Prop_Front",Prop_Front_Vec);
+    Prop_14_x = Prop_Front_Vec[0];
+    Prop_14_y = Prop_Front_Vec[1];
 
-    ros::param::get("/SAR_Type/" + SAR_Type +  + "/System_Params/Prop_Rear",Prop_Rear_Vec);   
-    Prop_23_x,Prop_23_y = Prop_Rear_Vec[0],Prop_Rear_Vec[1];
 
+    ros::param::get("/SAR_Type/" + SAR_Type + "/System_Params/Prop_Rear",Prop_Rear_Vec);   
+    Prop_23_x = Prop_Rear_Vec[0];
+    Prop_23_y = Prop_Rear_Vec[1];
 
 
     // UPDATE LANDING SURFACE PARAMETERS
@@ -259,7 +265,7 @@ void Controller::publishCtrlDebug()
     CtrlDebug_msg.Vel_Ctrl = (bool)kd_xf;
     CtrlDebug_msg.Tumble_Detection = tumble_detection;
     CtrlDebug_msg.Tumbled_Flag = tumbled;
-    CtrlDebug_msg.Moment_Flag = moment_flag; 
+    CtrlDebug_msg.AngAccel_flag = AngAccel_flag; 
     CtrlDebug_msg.Motorstop_Flag = motorstop_flag;
     CtrlDebug_msg.Policy_Armed = policy_armed_flag; 
 
@@ -286,6 +292,17 @@ void Controller::publishCtrlData()
     CtrlData_msg.Twist.angular.x = stateOmega.x;
     CtrlData_msg.Twist.angular.y = stateOmega.y;
     CtrlData_msg.Twist.angular.z = stateOmega.z;
+
+    CtrlData_msg.Accel.linear.x = stateAcc.x;
+    CtrlData_msg.Accel.linear.y = stateAcc.y;
+    CtrlData_msg.Accel.linear.z = stateAcc.z;
+
+    CtrlData_msg.Accel.angular.x = state_dOmega.x;
+    CtrlData_msg.Accel.angular.y = state_dOmega.y;
+    CtrlData_msg.Accel.angular.z = state_dOmega.z;
+
+    CtrlData_msg.AccMag = AccMag;
+
 
     // PLANE RELATIVE STATES
     CtrlData_msg.D_perp = D_perp;
@@ -330,10 +347,10 @@ void Controller::publishCtrlData()
 
 
 
-    // STATE DATA (FLIP)
-    CtrlData_msg.flip_flag = flip_flag;
+    // STATE DATA (TRIGGER)
+    CtrlData_msg.Trg_flag = Trg_flag;
 
-    // CtrlData_msg.Pose_trg.header.stamp = t_flip;             
+    // CtrlData_msg.Pose_trg.header.stamp = t_Rot;             
     CtrlData_msg.Pose_trg.position.x = statePos_trg.x;
     CtrlData_msg.Pose_trg.position.y = statePos_trg.y;
     CtrlData_msg.Pose_trg.position.z = statePos_trg.z;
@@ -351,18 +368,26 @@ void Controller::publishCtrlData()
     CtrlData_msg.Twist_trg.angular.y = stateOmega_trg.y;
     CtrlData_msg.Twist_trg.angular.z = stateOmega_trg.z;
 
-    // OPTICAL FLOW DATA (FLIP)
+    CtrlData_msg.Accel_trg.linear.x = stateAcc_trg.x;
+    CtrlData_msg.Accel_trg.linear.y = stateAcc_trg.y;
+    CtrlData_msg.Accel_trg.linear.z = stateAcc_trg.z;
+
+    CtrlData_msg.Accel_trg.angular.x = 0;
+    CtrlData_msg.Accel_trg.angular.y = 0;
+    CtrlData_msg.Accel_trg.angular.z = 0;
+
+    // OPTICAL FLOW DATA (TRIGGER)
     CtrlData_msg.Tau_trg = Tau_trg;
     CtrlData_msg.Theta_x_trg = Theta_x_trg;
     CtrlData_msg.Theta_y_trg = Theta_y_trg;
     CtrlData_msg.D_perp_trg = D_perp_trg;
 
-    // POLICY ACTIONS (FLIP)
+    // POLICY ACTIONS (TRIGGER)
     CtrlData_msg.Policy_Trg_Action_trg = Policy_Trg_Action_trg;
     CtrlData_msg.Policy_Rot_Action_trg = Policy_Rot_Action_trg;
 
-    // CONTROL ACTIONS (FLIP)
-    CtrlData_msg.FM_flip = {F_thrust_flip,M_x_flip,M_y_flip,M_z_flip};
+    // CONTROL ACTIONS (TRIGGER)
+    CtrlData_msg.FM_Rot = {F_thrust_Rot,M_x_Rot,M_y_Rot,M_z_Rot};
 
     
     CTRL_Data_Publisher.publish(CtrlData_msg);

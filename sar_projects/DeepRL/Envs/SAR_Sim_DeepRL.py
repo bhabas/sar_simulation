@@ -43,7 +43,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         ## RESET INITIAL VALUES
         self.K_ep = 0
-        self.Trg_threshold = 0.5
+        self.Rot_threshold = 0.5
         self.D_min = np.inf
         self.Tau_trg = np.inf
         self.Done = False
@@ -109,7 +109,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
         ## RESET LOGGING CONDITIONS 
         self.K_ep += 1
-        self.eventCaptureFlag_flip = False      # Ensures flip data recorded only once
+        self.eventCaptureFlag_Rot = False      # Ensures Rot data recorded only once
         self.eventCaptureFlag_impact = False    # Ensures impact data recorded only once 
 
         
@@ -183,8 +183,8 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
     
     def step(self, action):
 
-        ########## PRE-FLIP TRIGGER ##########
-        if action[0] < self.Trg_threshold:
+        ########## PRE-TRIGGER TRIGGER ##########
+        if action[0] < self.Rot_threshold:
 
             ## GRAB CURRENT OBSERVATION
             obs = self._get_obs()
@@ -192,7 +192,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             ## CHECK FOR DONE
             self.Done = bool(
                 self.Done
-                or (self.impact_flag or self.BodyContact_flag)  # BODY CONTACT W/O FLIP TRIGGER
+                or (self.Impact_flag or self.BodyContact_flag)  # BODY CONTACT W/O TRIGGER TRIGGER
             )       
 
             ## UPDATE MINIMUM DISTANCE
@@ -214,8 +214,8 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
             ## UDPATE OBSERVATION
             obs = self._get_obs()
 
-        ########## POST-FLIP TRIGGER ##########
-        elif action[0] >= self.Trg_threshold:
+        ########## POST-TRIGGER TRIGGER ##########
+        elif action[0] >= self.Rot_threshold:
 
             ## GRAB CURRENT OBSERVATION
             obs = self._get_obs()   # Return this observation because reward and future 
@@ -259,7 +259,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
 
     def _finish_sim(self,action):
         """This function continues the remaining steps of the simulation at full speed 
-        since policy actions only continue up until flip trigger.
+        since policy actions only continue up until Rot trigger.
 
         Args:
             action (np.array): Action to be performed by controller
@@ -268,9 +268,9 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         ## SCALE ACTION
         scaled_action = 0.5 * (action[1] + 1) * (self.My_range[1] - self.My_range[0]) + self.My_range[0]
 
-        ## SEND FLIP ACTION TO CONTROLLER
-        Tau_max = 100 # Automatically trigger policy
-        self.SendCmd("Policy",[Tau_max,scaled_action,0],cmd_flag=1) # Body rotational moment [N*mm]
+        ## SEND TRIGGER ACTION TO CONTROLLER
+        My = -scaled_action # Body rotational moment [N*mm]
+        self.SendCmd("Policy",[0,My,0],cmd_flag=1)
 
         ## RUN REMAINING STEPS AT FULL SPEED
         self.pause_physics(False)
@@ -278,7 +278,7 @@ class SAR_Sim_DeepRL(SAR_Sim_Interface,gym.Env):
         while not self.Done:
 
             ## START IMPACT TERMINATION TIMERS
-            if ((self.impact_flag or self.BodyContact_flag) and self.eventCaptureFlag_impact == False):
+            if ((self.Impact_flag or self.BodyContact_flag) and self.eventCaptureFlag_impact == False):
                 self.start_time_impact = self.getTime()
                 self.eventCaptureFlag_impact = True
 

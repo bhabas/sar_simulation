@@ -21,17 +21,26 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
         mvprintw(2, 0,"SAR Config: %s\t  Plane Angle: % 6.2f",SAR_Config.c_str(),Plane_Angle);
 
         mvprintw(4, 0,"==== Flags ====");
-        mvprintw(5, 0,"Motorstop:     %u  Policy_Armed: %u  Pos_Ctrl:      %u  Moment_Flag:   %u",Motorstop_Flag,Policy_Armed_Flag,Pos_Ctrl_Flag,Moment_Flag);
-        mvprintw(6, 0,"SafeMode:      %u  Flip_Flag:    %u  Vel_Ctrl:      %u  AttCtrl_Flag:  %u",SafeModeEnable,flip_flag,Vel_Ctrl_Flag,AttCtrl_Flag);
-        mvprintw(7, 0,"Tumbled:       %u  Impact_Flag:  %u  Sticky_Flag:   %u  Custom_Thrust: %u",Tumbled_Flag,impact_flag,Sticky_Flag,CustomThrust_Flag);
+        mvprintw(5, 0,"Motorstop:     %u  Policy_Armed: %u  Pos_Ctrl:      %u  AngAccel_flag:   %u",Motorstop_Flag,Policy_Armed_Flag,Pos_Ctrl_Flag,AngAccel_flag);
+        mvprintw(6, 0,"SafeMode:      %u  Trg_flag:    %u  Vel_Ctrl:      %u  AttCtrl_Flag:  %u",SafeModeEnable,Trg_flag,Vel_Ctrl_Flag,AttCtrl_Flag);
+        mvprintw(7, 0,"Tumbled:       %u  Impact_Flag:  %u  Sticky_Flag:   %u  Custom_Thrust: %u",Tumbled_Flag,Impact_flag,Sticky_Flag,CustomThrust_Flag);
         mvprintw(8, 0,"Tumble_Detect: %u  Cam_Active:   %u  Slowdown_Type: %u  Custom_PWM:    %u",Tumble_Detection,isCamActive,SLOWDOWN_TYPE,CustomPWM_Flag);
         
         mvprintw(10, 0,"==== System States ====");
-        mvprintw(11, 0,"Pos [m]:\t % 8.3f  % 8.3f  % 8.3f",Pose.position.x,Pose.position.y,Pose.position.z);
-        mvprintw(12, 0,"Vel [m/s]:\t % 8.3f  % 8.3f  % 8.3f",Twist.linear.x,Twist.linear.y,Twist.linear.z);
-        mvprintw(13, 0,"Omega [rad/s]:\t % 8.3f  % 8.3f  % 8.3f",Twist.angular.x,Twist.angular.y,Twist.angular.z);
-        mvprintw(14, 0,"Eul [deg]:\t % 8.3f  % 8.3f  % 8.3f",Eul.x,Eul.y,Eul.z);
-        mvprintw(15, 0,"Vel [mag,phi]:\t % 8.3f  % 8.3f",Vel_mag,Phi);
+        mvprintw(11, 0,"Pos [m]:         % 7.2f % 7.2f % 7.2f",Pose.position.x,Pose.position.y,Pose.position.z);
+        mvprintw(12, 0,"Vel [m/s]:       % 7.2f % 7.2f % 7.2f",Twist.linear.x,Twist.linear.y,Twist.linear.z);
+        mvprintw(13, 0,"Accel [m/s^2]:   % 7.2f % 7.2f % 7.2f",Accel.linear.x,Accel.linear.y,Accel.linear.z);
+        mvprintw(14, 0,"Omega [rad/s]:   % 7.2f % 7.2f % 7.2f",Twist.angular.x,Twist.angular.y,Twist.angular.z);
+        mvprintw(15, 0,"dOmega [rad/s^2]:% 7.2f % 7.2f % 7.2f",Accel.angular.x,Accel.angular.y,Accel.angular.z);
+        // mvprintw(14, 0,"Eul [deg]:    % 8.3f % 8.3f % 8.3f",Eul.x,Eul.y,Eul.z);
+        mvprintw(11, 43,"[V_mag, V_angle]:% 7.2f % 6.1f",Vel_mag,Phi);
+        mvprintw(12, 43,"[V_rel, V_angle_rel]:");
+        mvprintw(13, 43,"Acc_Mag [m/s^2]: % 7.2f",Acc_mag);
+
+
+
+
+
 
         mvprintw(17, 0,"==== Relative States ====");
         mvprintw(18, 0,"D_perp:  % 7.3f  V_perp:      % 7.3f  V_tx:        % 7.3f",D_perp,V_perp,V_tx);
@@ -43,21 +52,21 @@ void SAR_DataConverter::ConsoleLoop() // MAIN CONTROLLER LOOP
         mvprintw(23, 0,"==== Policy: %s ====",POLICY_TYPE.c_str());
         if (strcmp(POLICY_TYPE.c_str(),"PARAM_OPTIM") == 0)
         {
-            mvprintw(24, 0,"Tau_thr: % 7.3f \tMy: % 7.3f",Policy_Trg_Action,Policy_Rot_Action);
+            mvprintw(23, 0,"Tau_thr: % 7.3f \tMy: % 7.3f",Policy_Trg_Action,Policy_Rot_Action);
         }
         else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL_SB3") == 0)
         {
-            mvprintw(24, 0,"Pol_Trg_Act: % 7.3f \tPol_Rot_Act: % 7.3f ",Policy_Trg_Action,Policy_Rot_Action);
+            mvprintw(23, 0,"Pol_Trg_Act_trg: % 7.3f \tPol_Rot_Act: % 7.3f ",Policy_Trg_Action,Policy_Rot_Action);
         }
         else if (strcmp(POLICY_TYPE.c_str(),"DEEP_RL_ONBOARD") == 0)
         {
-            mvprintw(24, 0,"Pol_Trg_Act: % 7.3f \tPol_Rot_Act: % 7.3f ",Policy_Trg_Action,Policy_Rot_Action);
+            mvprintw(23, 0,"Pol_Trg_Act_trg: % 7.3f \tPol_Rot_Act: % 7.3f ",Policy_Trg_Action,Policy_Rot_Action);
         }
 
-        mvprintw(26,0,"==== Trigger Values ====");
-        mvprintw(27,0,"Tau_trg:     % 7.3f \tPol_Trg_Act_trg:  % 7.3f ",Tau_trg,Policy_Trg_Action_trg);
-        mvprintw(28,0,"\u03B8x_trg:     % 7.3f \tPol_Rot_Act_trg: % 7.3f ",Theta_x_trg,Policy_Rot_Action_trg);
-        mvprintw(29,0,"D_perp_trg:  % 7.3f ",D_perp_trg);
+        mvprintw(25,0,"==== Rot Trigger Values ====");
+        mvprintw(26,0,"Tau_trg:     % 7.3f \tPol_Trg_Act_trg:  % 7.3f ",Tau_trg,Policy_Trg_Action_trg);
+        mvprintw(27,0,"\u03B8x_trg:     % 7.3f \tPol_Rot_Act_trg: % 7.3f ",Theta_x_trg,Policy_Rot_Action_trg);
+        mvprintw(28,0,"D_perp_trg:  % 7.3f ",D_perp_trg);
 
         mvprintw(31,0,"==== Setpoints ====");
         mvprintw(32,0,"x_d: % 7.3f  % 7.3f  % 7.3f",x_d.x,x_d.y,x_d.z);

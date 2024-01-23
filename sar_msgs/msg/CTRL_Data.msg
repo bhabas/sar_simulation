@@ -1,7 +1,8 @@
 ## CONTROLLER STATES
 geometry_msgs/Pose Pose
 geometry_msgs/Twist Twist
-
+geometry_msgs/Accel Accel
+float64 AccMag
 
 geometry_msgs/Vector3 x_d
 geometry_msgs/Vector3 v_d
@@ -33,17 +34,18 @@ float64 Theta_x_est
 float64 Theta_y_est
 
 
-# STATES AT FLIP TRIGGER
-bool flip_flag
+# STATES AT TRIGGER TRIGGER
+bool Trg_flag
 geometry_msgs/Pose Pose_trg
 geometry_msgs/Twist Twist_trg
+geometry_msgs/Accel Accel_trg
 float64 Tau_trg
 float64 Theta_x_trg
 float64 Theta_y_trg
 
 float64 D_perp_trg
 
-float64[4] FM_flip
+float64[4] FM_Rot
 
 float64 Policy_Trg_Action_trg
 float64 Policy_Rot_Action_trg

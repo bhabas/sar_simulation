@@ -1,8 +1,10 @@
 Header header
-bool impact_flag
+bool Impact_flag
 bool BodyContact_flag
+bool LegContact_flag
 geometry_msgs/Pose Pose_impact
 geometry_msgs/Twist Twist_impact
+geometry_msgs/Accel Accel_impact
 geometry_msgs/Vector3 Eul_impact
 float64 Rot_Sum
 

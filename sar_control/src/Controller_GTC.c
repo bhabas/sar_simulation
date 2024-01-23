@@ -85,22 +85,24 @@ void controllerOutOfTreeReset() {
     motorstop_flag = false;
     customThrust_flag = false;
     customPWM_flag = false;
-    moment_flag = false;
+    AngAccel_flag = false;
 
     // RESET TRAJECTORY FLAGS
     Traj_Type = NONE;
 
     // RESET POLICY FLAGS
     policy_armed_flag = false;
-    flip_flag = false;
+    Trg_flag = false;
     onceFlag = false;
 
 
-    // RESET LOGGED FLIP VALUES
+    // RESET LOGGED TRIGGER VALUES
     statePos_trg = vzero();
     stateVel_trg = vzero();
+    stateAcc_trg = vzero();
     stateQuat_trg = mkquat(0.0f,0.0f,0.0f,1.0f);
     stateOmega_trg = vzero();
+    state_dOmega_trg = vzero();
 
     Tau_trg = 0.0f;
     Theta_x_trg = 0.0f;
@@ -121,6 +123,41 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                                             const state_t *state, 
                                             const uint32_t tick) 
 {
+    // STATE UPDATES
+    if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
+
+        float time_delta = (tick-prev_tick)/1000.0f;
+
+        statePos = mkvec(state->position.x, state->position.y, state->position.z);          // [m]
+        stateVel = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);          // [m/s]
+        stateAcc = mkvec(sensors->acc.x*9.81f, sensors->acc.y*9.81f, sensors->acc.z*9.81f); // [m/s^2]
+        AccMag = firstOrderFilter(vmag(stateAcc),AccMag,0.5f);
+
+
+        stateOmega = mkvec(radians(sensors->gyro.x), radians(sensors->gyro.y), radians(sensors->gyro.z));   // [rad/s]
+
+        // CALC AND FILTER ANGULAR ACCELERATION
+        state_dOmega.x = firstOrderFilter((stateOmega.x - stateOmega_prev.x)/time_delta,state_dOmega.x,0.90f); // [rad/s^2]
+        state_dOmega.y = firstOrderFilter((stateOmega.y - stateOmega_prev.y)/time_delta,state_dOmega.y,0.90f); // [rad/s^2]
+        state_dOmega.z = firstOrderFilter((stateOmega.z - stateOmega_prev.z)/time_delta,state_dOmega.z,0.90f); // [rad/s^2]
+
+
+        stateQuat = mkquat(state->attitudeQuaternion.x,
+                        state->attitudeQuaternion.y,
+                        state->attitudeQuaternion.z,
+                        state->attitudeQuaternion.w);
+
+        // EULER ANGLES EXPRESSED IN YZX NOTATION
+        stateEul = quat2eul(stateQuat);
+        stateEul.x = degrees(stateEul.x);
+        stateEul.y = degrees(stateEul.y);
+        stateEul.z = degrees(stateEul.z);
+
+        // SAVE PREVIOUS VALUES
+        stateOmega_prev = stateOmega;
+        prev_tick = tick;
+    }
+
     // TRAJECTORY UPDATES
     if (RATE_DO_EXECUTE(RATE_100_HZ, tick)) {
 
@@ -190,12 +227,14 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                         onceFlag = true;
 
-                        // UPDATE AND RECORD FLIP VALUES
-                        flip_flag = true;  
+                        // UPDATE AND RECORD TRIGGER VALUES
+                        Trg_flag = true;  
                         statePos_trg = statePos;
                         stateVel_trg = stateVel;
+                        stateAcc_trg = stateAcc;
                         stateQuat_trg = stateQuat;
                         stateOmega_trg = stateOmega;
+                        state_dOmega_trg = state_dOmega;
 
                         Tau_trg = Tau;
                         Theta_x_trg = Theta_x_trg;
@@ -204,45 +243,13 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                     
                         M_d.x = 0.0f;
-                        M_d.y = Policy_Rot_Action*1e-3f;
+                        M_d.y = Policy_Rot_Action*Iyy;
                         M_d.z = 0.0f;
 
-                        F_thrust_flip = 0.0;
-                        M_x_flip = M_d.x*1e3f;
-                        M_y_flip = M_d.y*1e3f;
-                        M_z_flip = M_d.z*1e3f;
-                        }
-                        
-                    break;
-
-                case DEEP_RL_SB3:
-
-                    // EXECUTE POLICY IF TRIGGERED
-                    if(Tau <= Policy_Trg_Action && onceFlag == false && Vel_rel > 0.5f){
-
-                        onceFlag = true;
-
-                        // UPDATE AND RECORD FLIP VALUES
-                        flip_flag = true;  
-                        statePos_trg = statePos;
-                        stateVel_trg = stateVel;
-                        stateQuat_trg = stateQuat;
-                        stateOmega_trg = stateOmega;
-
-                        Tau_trg = Tau;
-                        Theta_x_trg = Theta_x_trg;
-                        Theta_y_trg = Theta_y_trg;
-                        D_perp_trg = D_perp;
-
-                    
-                        M_d.x = 0.0f;
-                        M_d.y = Policy_Rot_Action*1e-3f;
-                        M_d.z = 0.0f;
-
-                        F_thrust_flip = 0.0;
-                        M_x_flip = M_d.x*1e3f;
-                        M_y_flip = M_d.y*1e3f;
-                        M_z_flip = M_d.z*1e3f;
+                        F_thrust_Rot = 0.0;
+                        M_x_Rot = M_d.x*1e3f;
+                        M_y_Rot = M_d.y*1e3f;
+                        M_z_Rot = M_d.z*1e3f;
                         }
                         
                     break;
@@ -256,20 +263,22 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
                     Policy_Trg_Action = GaussianSample(Y_output->data[0][0],exp(Y_output->data[2][0]));
 
                     // EXECUTE POLICY
-                    if(Policy_Trg_Action >= Policy_Flip_threshold && onceFlag == false && V_perp > 0.1f){
+                    if(Policy_Trg_Action >= Policy_Rot_threshold && onceFlag == false && V_perp > 0.1f){
 
                         onceFlag = true;
 
-                        // SAMPLE AND SCALE BODY FLIP ACTION
+                        // SAMPLE AND SCALE BODY TRIGGER ACTION
                         Policy_Rot_Action = GaussianSample(Y_output->data[1][0],exp(Y_output->data[3][0]));
                         Policy_Rot_Action = scale_tanhAction(Policy_Rot_Action,ACTION_MIN,ACTION_MAX);
 
-                        // UPDATE AND RECORD FLIP VALUES
-                        flip_flag = true;  
+                        // UPDATE AND RECORD TRIGGER VALUES
+                        Trg_flag = true;  
                         statePos_trg = statePos;
                         stateVel_trg = stateVel;
+                        stateAcc_trg = stateAcc;
                         stateQuat_trg = stateQuat;
                         stateOmega_trg = stateOmega;
+                        state_dOmega_trg = state_dOmega;
 
                         Tau_trg = Tau;
                         Theta_x_trg = Theta_x_trg;
@@ -278,13 +287,17 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
                     
                         M_d.x = 0.0f;
+<<<<<<< HEAD
                         M_d.y = Policy_Rot_Action*1e-3f;
+=======
+                        M_d.y = -Policy_Rot_Action*1e-3f;
+>>>>>>> Model_Reintroduction
                         M_d.z = 0.0f;
 
-                        F_thrust_flip = 0.0;
-                        M_x_flip = M_d.x*1e3f;
-                        M_y_flip = M_d.y*1e3f;
-                        M_z_flip = M_d.z*1e3f;
+                        F_thrust_Rot = 0.0;
+                        M_x_Rot = M_d.x*1e3f;
+                        M_y_Rot = M_d.y*1e3f;
+                        M_z_Rot = M_d.z*1e3f;
                         }
                         
                     break;
@@ -303,27 +316,26 @@ void controllerOutOfTree(control_t *control,const setpoint_t *setpoint,
 
         controlOutput(state,sensors);
 
-        if(moment_flag == true || flip_flag == true)
+        if(AngAccel_flag == true || Trg_flag == true)
         {
-            // Controller defaults to increase front motor & decrease back motors to flip
-            // Instead double front motors and set back motors to zero for desired body moment
-            // This gives same moment but avoids negative motor speeds
             F_thrust = 0.0f;
             M = vscl(2.0f,M_d);
         }
 
-
+        
         // MOTOR MIXING (GTC_Derivation_V2.pdf) 
         M1_thrust = F_thrust * Prop_23_x/(Prop_14_x + Prop_23_x) - M.x * 1/(Prop_14_y + Prop_23_y) - M.y * 1/(Prop_14_x + Prop_23_x) - M.z * Prop_23_y/(C_tf*(Prop_14_y + Prop_23_y));
         M2_thrust = F_thrust * Prop_14_x/(Prop_14_x + Prop_23_x) - M.x * 1/(Prop_14_y + Prop_23_y) + M.y * 1/(Prop_14_x + Prop_23_x) + M.z * Prop_14_y/(C_tf*(Prop_14_y + Prop_23_y));
         M3_thrust = F_thrust * Prop_14_x/(Prop_14_x + Prop_23_x) + M.x * 1/(Prop_14_y + Prop_23_y) + M.y * 1/(Prop_14_x + Prop_23_x) - M.z * Prop_14_y/(C_tf*(Prop_14_y + Prop_23_y));
         M4_thrust = F_thrust * Prop_23_x/(Prop_14_x + Prop_23_x) + M.x * 1/(Prop_14_y + Prop_23_y) - M.y * 1/(Prop_14_x + Prop_23_x) + M.z * Prop_23_y/(C_tf*(Prop_14_y + Prop_23_y));
 
-        // CLAMP AND CONVER THRUST FROM [N] AND [N*M] TO [g]
+
+        // CLAMP AND CONVERT THRUST FROM [N] AND [N*M] TO [g]
         M1_thrust = clamp((M1_thrust/2.0f)*Newton2g,0.0f,f_max);
         M2_thrust = clamp((M2_thrust/2.0f)*Newton2g,0.0f,f_max);
         M3_thrust = clamp((M3_thrust/2.0f)*Newton2g,0.0f,f_max);
         M4_thrust = clamp((M4_thrust/2.0f)*Newton2g,0.0f,f_max);
+
 
 
         // TUMBLE DETECTION
@@ -515,7 +527,7 @@ LOG_ADD(LOG_INT16,  Tau_est,        &TrgStates_Z.Tau_est)
 
 LOG_ADD(LOG_UINT32, PolActions,    &TrgStates_Z.Policy_Actions)
 
-LOG_ADD(LOG_UINT8, Flip_Flag, &flip_flag)
+LOG_ADD(LOG_UINT8, Trg_flag, &Trg_flag)
 LOG_GROUP_STOP(Z_TrgStates)
 
 
@@ -526,7 +538,7 @@ LOG_ADD(LOG_FLOAT, Vel_Ctrl,        &kd_xf)
 LOG_ADD(LOG_UINT8, Motorstop,       &motorstop_flag)
 LOG_ADD(LOG_UINT8, Tumbled,         &tumbled)
 LOG_ADD(LOG_UINT8, Tumble_Detect,   &tumble_detection)
-LOG_ADD(LOG_UINT8, Moment_Flag,     &moment_flag)
+LOG_ADD(LOG_UINT8, AngAccel_flag,     &AngAccel_flag)
 LOG_ADD(LOG_UINT8, CamActive,     &CamActive)
 LOG_ADD(LOG_UINT8, SafeModeEnable,  &safeModeEnable)
 LOG_ADD(LOG_UINT8, Pol_Armed,       &policy_armed_flag)

@@ -10,6 +10,8 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
     Pose = ctrl_msg.Pose;
     Twist = ctrl_msg.Twist;
+    Accel = ctrl_msg.Accel;
+    Acc_mag = ctrl_msg.AccMag;
     Vel_mag = sqrt(pow(Twist.linear.x,2)+pow(Twist.linear.y,2)+pow(Twist.linear.z,2));
     Phi = atan2(Twist.linear.z,Twist.linear.x)*180/M_PI;
     Alpha = atan2(Twist.linear.y,Twist.linear.x)*180/M_PI;
@@ -63,21 +65,22 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
 
     Pose_impact_buff.push_back(Pose);
     Twist_impact_buff.push_back(Twist);
+    Accel_impact_buff.push_back(Accel);
 
 
     // =================
-    //     FLIP DATA
+    //     TRIGGER DATA
     // =================
 
     // CARTESIAN SPACE DATA
-    if(ctrl_msg.flip_flag == true && OnceFlag_flip == false)
+    if(ctrl_msg.Trg_flag == true && OnceFlag_Trg == false)
     {   
         Time_trg = ros::Time::now();
-        OnceFlag_flip = true;
+        OnceFlag_Trg = true;
 
     }
 
-    if(ctrl_msg.flip_flag == true && impact_flag == false)
+    if(ctrl_msg.Trg_flag == true && Impact_flag == false)
     {
         double Time_delta = Time.toSec()-Time_prev.toSec();
         Rot_Sum += (Time_delta*Twist.angular.y)*180/M_PI;
@@ -85,9 +88,10 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     }
     
 
-    flip_flag = ctrl_msg.flip_flag;
+    Trg_flag = ctrl_msg.Trg_flag;
     Pose_trg = ctrl_msg.Pose_trg;
     Twist_trg = ctrl_msg.Twist_trg;
+    Accel_trg = ctrl_msg.Accel_trg;
 
     // PROCESS EULER ANGLES
     float quat_trg[4] = {
@@ -109,7 +113,7 @@ void SAR_DataConverter::CtrlData_Callback(const sar_msgs::CTRL_Data &ctrl_msg)
     D_perp_trg = ctrl_msg.D_perp_trg;
 
     // CONTROLLER ACTIONS
-    FM_trg = ctrl_msg.FM_flip;
+    FM_trg = ctrl_msg.FM_Rot;
 
     // NEURAL NETWORK DATA
     Policy_Trg_Action_trg = ctrl_msg.Policy_Trg_Action_trg;
@@ -125,7 +129,7 @@ void SAR_DataConverter::CtrlDebug_Callback(const sar_msgs::CTRL_Debug &ctrl_msg)
     Traj_Active_Flag = ctrl_msg.Traj_Active;
     Tumble_Detection = ctrl_msg.Tumble_Detection;
     Tumbled_Flag = ctrl_msg.Tumbled_Flag;
-    Moment_Flag = ctrl_msg.Moment_Flag;
+    AngAccel_flag = ctrl_msg.AngAccel_flag;
     Policy_Armed_Flag = ctrl_msg.Policy_Armed;
 }
 
@@ -225,12 +229,12 @@ void SAR_DataConverter::cf1_PolicyState_Callback(const sar_msgs::GenericLogData:
     Policy_Trg_Action = Policy_Action_arr[0];
     Policy_Rot_Action = Policy_Action_arr[1];
 
-    // FLIP FLAG
-    flip_flag = log_msg->values[6];
-    if(flip_flag == true && OnceFlag_flip == false)
+    // TRIGGER FLAG
+    Trg_flag = log_msg->values[6];
+    if(Trg_flag == true && OnceFlag_Trg == false)
     {
         Time_trg = ros::Time::now();
-        OnceFlag_flip = true;
+        OnceFlag_Trg = true;
     }
 
 }
@@ -349,7 +353,7 @@ void SAR_DataConverter::cf1_Flags_Callback(const sar_msgs::GenericLogData::Const
     Pos_Ctrl_Flag = (bool)log_msg->values[0];
     Vel_Ctrl_Flag = (bool)log_msg->values[1];
     Motorstop_Flag = (bool)log_msg->values[2];
-    Moment_Flag = (bool)log_msg->values[3];
+    AngAccel_flag = (bool)log_msg->values[3];
     Tumbled_Flag = (bool)log_msg->values[4];
     Tumble_Detection = (bool)log_msg->values[5];
     Policy_Armed_Flag = (bool)log_msg->values[6];

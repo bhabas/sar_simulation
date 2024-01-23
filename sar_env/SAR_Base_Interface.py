@@ -93,7 +93,7 @@ class SAR_Base_Interface():
             'Vel':2,
             'Yaw':3,
             'Stop':5,
-            'Moment':7,
+            'dOmega':7,
             'Policy':8,
 
             'P2P_traj':10,
@@ -245,10 +245,10 @@ class SAR_Base_Interface():
 
     def preInit_Values(self):
 
-        self.Mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Mass")
-        self.Ixx = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ixx")
-        self.Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Iyy")
-        self.Izz = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Izz")
+        self.mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Mass")
+        self.Ixx = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Ixx")
+        self.Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Iyy")
+        self.Izz = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Izz")
         
 
         ## INITIALIZE STATE VALUES
@@ -282,8 +282,8 @@ class SAR_Base_Interface():
         self.v_d = [0,0,0]
         self.a_d = [0,0,0]
 
-        ## INITIALIZE FLIP VALUES
-        self.flip_flag = False      # Flag if model has started flip maneuver
+        ## INITIALIZE TRIGGER VALUES
+        self.Trg_flag = False      # Flag if model has started Rot maneuver
 
         self.t_trg = 0.0             # [s]
         self.pos_trg = [0,0,0]       # [m]
@@ -306,7 +306,7 @@ class SAR_Base_Interface():
         self.phi_trg = 0.0           # [deg]
 
         ## INITIALIZE IMPACT VALUES
-        self.impact_flag = False
+        self.Impact_flag = False
         self.BodyContact_flag = False   # Flag if model body impacts ceiling plane
 
         self.t_impact = 0.0
@@ -391,7 +391,7 @@ class SAR_Base_Interface():
         self.callService('/SAR_DC/DataLogging',srv,Logging_CMD)
 
     def capLogging(self,logName):
-        """Cap logging values with Flight, Flip, and Impact conditions and stop continuous logging
+        """Cap logging values with Flight, Rot, and Impact conditions and stop continuous logging
         """        
 
         ## CREATE SERVICE REQUEST MSG
@@ -455,12 +455,12 @@ class SAR_Base_Interface():
 
     def SAR_TriggerDataCallback(self,TriggerData_msg):
 
-        ## FLIP FLAG
-        self.flip_flag = TriggerData_msg.flip_flag
+        ## TRIGGER FLAG
+        self.Trg_flag = TriggerData_msg.Trg_flag
 
-        if TriggerData_msg.flip_flag == True:
+        if TriggerData_msg.Trg_flag == True:
 
-            ## FLIP TRIGGERING CONDITIONS
+            ## TRIGGER TRIGGERING CONDITIONS
             self.pos_trg = np.round([TriggerData_msg.Pose_trg.position.x,
                                     TriggerData_msg.Pose_trg.position.y,
                                     TriggerData_msg.Pose_trg.position.z],3)
@@ -496,8 +496,9 @@ class SAR_Base_Interface():
         if rospy.get_param('/DATA_TYPE') == "SIM": ## Impact values only good in simulation
 
             ## IMPACT FLAGS
-            self.impact_flag = ImpactData_msg.impact_flag
+            self.Impact_flag = ImpactData_msg.Impact_flag
             self.BodyContact_flag = ImpactData_msg.BodyContact_flag
+            self.LegContact_flag = ImpactData_msg.LegContact_flag
             self.pad_connections = ImpactData_msg.Pad_Connections
 
 

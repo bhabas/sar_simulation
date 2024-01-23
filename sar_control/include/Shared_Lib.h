@@ -29,21 +29,22 @@ extern "C" {
 
 
 // DECLARE SYSTEM PARAMETERS
-extern float m;         // [kg]
-extern float Ixx;       // [kg*m^2]
-extern float Iyy;       // [kg*m^2]
-extern float Izz;       // [kg*m^2]
-extern struct mat33 J;  // Rotational Inertia Matrix [kg*m^2]
+extern float m;             // [kg]
+extern float Ixx;           // [kg*m^2]
+extern float Iyy;           // [kg*m^2]
+extern float Izz;           // [kg*m^2]
+extern struct mat33 J;      // Rotational Inertia Matrix [kg*m^2]
 
-extern float C_tf;  // Moment Coeff [Nm/N]
-extern float f_max; // Max thrust per motor [g]
+extern float C_tf;          // Moment Coeff [Nm/N]
+extern float f_max;         // Max thrust per motor [g]
 
-extern float Prop_14_x; // Front Prop Distance - x-axis [m]
-extern float Prop_14_y; // Front Prop Distance - y-axis [m]
-extern float Prop_23_x; // Rear  Prop Distance - x-axis [m]
-extern float Prop_23_y; // Rear  Prop Distance - y-axis [m]
+extern float Prop_14_x;     // Front Prop Distance - x-axis [m]
+extern float Prop_14_y;     // Front Prop Distance - y-axis [m]
+extern float Prop_23_x;     // Rear  Prop Distance - x-axis [m]
+extern float Prop_23_y;     // Rear  Prop Distance - y-axis [m]
 
-extern float dt;    // Controller cycle time
+extern float dt;            // Controller cycle time
+extern uint32_t prev_tick;
 
 
 
@@ -92,14 +93,19 @@ extern float kd_xf; // Pos. Derivative Gain Flag
 
 
 // DECLARE STATE VALUES
-extern struct vec statePos;     // Pos [m]
-extern struct vec stateVel;     // Vel [m/s]
-extern struct quat stateQuat;   // Orientation
-extern struct vec stateEul;     // Orientation in Euler Angles [YZX Notation]
-extern struct vec stateOmega;   // Angular Rate [rad/s]
+extern struct vec statePos;         // Pos [m]
+extern struct vec stateVel;         // Vel [m/s]
+extern struct vec stateAcc;         // Linear Accel. [m/s^2]
+extern float AccMag;                // Linear Accel. Magnitude [m/s^2]
 
-extern struct mat33 R;          // Orientation as rotation matrix
-extern struct vec b3;           // Current body z-axis in global coord.
+extern struct quat stateQuat;       // Orientation
+extern struct vec stateEul;         // Orientation in Euler Angles [YZX Notation]
+extern struct vec stateOmega;       // Angular Rate [rad/s]
+extern struct vec state_dOmega;     // Angular Accel [rad/s^2]
+extern struct vec stateOmega_prev;  // Prev Angular Rate [rad/s^2]
+
+extern struct mat33 R;              // Orientation as rotation matrix
+extern struct vec b3;               // Current body z-axis in global coord.
 
 
 // DECLARE DESIRED STATES
@@ -192,7 +198,7 @@ extern bool isOFUpdated;
 extern bool tumbled;
 extern bool tumble_detection;
 extern bool motorstop_flag;
-extern bool moment_flag;
+extern bool AngAccel_flag;
 extern bool attCtrlEnable;
 extern bool safeModeEnable;
 extern bool customThrust_flag;
@@ -218,7 +224,7 @@ extern nml_mat* Y_output;   // POLICY OUTPUT MATRIX
 
 // POLICY FLAGS
 extern bool policy_armed_flag;
-extern bool flip_flag;
+extern bool Trg_flag;
 extern bool onceFlag;
 
 // POLICY TRIGGER/ACTION VALUES
@@ -234,20 +240,22 @@ extern float ACTION_MAX;
 // ===============================
 
 extern NN NN_DeepRL;
-extern float Policy_Flip_threshold;
+extern float Policy_Rot_threshold;
 
 
 
 
 // ======================================
-//  RECORD SYSTEM STATES AT FLIP TRIGGER
+//  RECORD SYSTEM STATES AT TRIGGER TRIGGER
 // ======================================
 
 // CARTESIAN STATES
 extern struct vec statePos_trg;      // Pos [m]
 extern struct vec stateVel_trg;      // Vel [m/s]
+extern struct vec stateAcc_trg;      // Linear Accel. [m/s^2]
 extern struct quat stateQuat_trg;    // Orientation
 extern struct vec stateOmega_trg;    // Angular Rate [rad/s]
+extern struct vec state_dOmega_trg;  // Angular Accel [rad/s^2]
 extern float D_perp_trg;             // [m/s]
 
 // OPTICAL FLOW STATES
@@ -261,10 +269,10 @@ extern float Theta_x_est_trg;        // [rad/s]
 extern float Theta_y_est_trg;        // [rad/s]
 
 // CONTROLLER STATES
-extern float F_thrust_flip;         // [N]
-extern float M_x_flip;              // [N*m]
-extern float M_y_flip;              // [N*m]
-extern float M_z_flip;              // [N*m]
+extern float F_thrust_Rot;         // [N]
+extern float M_x_Rot;              // [N*m]
+extern float M_y_Rot;              // [N*m]
+extern float M_z_Rot;              // [N*m]
 
 // POLICY TRIGGER/ACTION VALUES
 extern float Policy_Trg_Action_trg;    
@@ -317,6 +325,7 @@ uint16_t thrust2PWM(float f);
 void updatePlaneNormal(float Plane_Angle);
 bool updateOpticalFlowEst();
 bool updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors);
+float firstOrderFilter(float newValue, float prevValue, float alpha);
 
 
 

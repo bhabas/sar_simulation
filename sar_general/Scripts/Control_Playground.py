@@ -13,7 +13,7 @@ def cmd_send(env,logName):
             2:'Vel',
             3:'Yaw',
             5:'Stop',
-            7:'Moment',
+            7:'dOmega',
             8:'Policy',
 
             10:'P2P_traj',
@@ -92,9 +92,9 @@ def cmd_send(env,logName):
 
                 env.SendCmd(action,cmd_vals,cmd_flag)
 
-            elif action=='Moment':
-                cmd_vals = env.userInput("Set desired Moment values (x,y,z) N*mm: ",float)
-                cmd_flag = env.userInput("Moment control On/Off (1,0): ",int)
+            elif action=='dOmega':
+                cmd_vals = env.userInput("Set desired dOmega values (x,y,z) rad/s^2: ",float)
+                cmd_flag = env.userInput("dOmega control On/Off (1,0): ",int)
                 env.SendCmd(action,cmd_vals,cmd_flag)
 
 
@@ -104,13 +104,6 @@ def cmd_send(env,logName):
                 print("Reset ROS Parameters\n")
 
                 env.setParams()
-                env.SendCmd(action,cmd_vals,cmd_flag)
-
-            elif action=='Moment':
-                cmd_vals = env.userInput("Set desired moment values (x,y,z): ",float)
-                cmd_flag = 1
-                print()
-
                 env.SendCmd(action,cmd_vals,cmd_flag)
 
             elif action=='Policy':

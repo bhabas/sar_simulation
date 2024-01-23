@@ -24,6 +24,7 @@ const float g = 9.81f;                        // Gravity [m/s^2]
 const struct vec e_3 = {0.0f, 0.0f, 1.0f};    // Global z-axis
 
 float dt = (float)(1.0f/RATE_100_HZ);
+uint32_t prev_tick = 0;
 struct CTRL_CmdPacket CTRL_Cmd;
 
 // =================================
@@ -78,9 +79,15 @@ float kd_xf = 1; // Pos. Derivative Gain Flag
 // INIT STATE VALUES
 struct vec statePos = {0.0,0.0f,0.0f};          // Pos [m]
 struct vec stateVel = {0.0f,0.0f,0.0f};         // Vel [m/s]
+struct vec stateAcc = {0.0f,0.0f,0.0f};         // Linear Accel. [m/s^2]
+float AccMag = 0.0f;                            // Linear Acceleration Magnitude [m/s^2]
+
 struct quat stateQuat = {0.0f,0.0f,0.0f,1.0f};  // Orientation
 struct vec stateEul = {0.0f,0.0f,0.0f};         // Orientation in Euler Angles [YZX Notation]
 struct vec stateOmega = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
+struct vec state_dOmega = {0.0f,0.0f,0.0f};     // Angular Accel [rad/s^2]
+struct vec stateOmega_prev  = {0.0f,0.0f,0.0f}; // Prev Angular Rate [rad/s^2]
+
 
 
 struct mat33 R;                                 // Orientation as rotation matrix
@@ -195,7 +202,7 @@ bool isOFUpdated = false;
 bool tumbled = false;
 bool tumble_detection = true;
 bool motorstop_flag = false;
-bool moment_flag = false;
+bool AngAccel_flag = false;
 bool attCtrlEnable = false;
 bool safeModeEnable = true;
 bool customThrust_flag = false;
@@ -217,7 +224,7 @@ nml_mat* Y_output;  // POLICY OUTPUT MATRIX
 
 // POLICY FLAGS
 bool policy_armed_flag = false;
-bool flip_flag = false;
+bool Trg_flag = false;
 bool onceFlag = false;
 
 // POLICY TRIGGER/ACTION VALUES
@@ -232,19 +239,21 @@ float ACTION_MAX = 8.0f;
 // ===============================
 
 NN NN_DeepRL;
-float Policy_Flip_threshold = 1.50f;
+float Policy_Rot_threshold = 1.50f;
 
 
 
 // ======================================
-//  RECORD SYSTEM STATES AT FLIP TRIGGER
+//  RECORD SYSTEM STATES AT TRIGGER TRIGGER
 // ======================================
 
 // CARTESIAN STATES
 struct vec statePos_trg = {0.0f,0.0f,0.0f};         // Pos [m]
 struct vec stateVel_trg = {0.0f,0.0f,0.0f};         // Vel [m/s]
+struct vec stateAcc_trg = {0.0f,0.0f,0.0f};         // Linear Accel [m/s^2]
 struct quat stateQuat_trg = {0.0f,0.0f,0.0f,1.0f};  // Orientation
 struct vec stateOmega_trg = {0.0f,0.0f,0.0f};       // Angular Rate [rad/s]
+struct vec state_dOmega_trg = {0.0f,0.0f,0.0f};     // Angular Accel [rad/s^2]
 float D_perp_trg = 0.0f;     // [m/s]
 
 // OPTICAL FLOW STATES
@@ -258,10 +267,10 @@ float Theta_x_est_trg = 0.0f;    // [rad/s]
 float Theta_y_est_trg = 0.0f;    // [rad/s]
 
 // CONTROLLER STATES
-float F_thrust_flip = 0.0f; // [N]
-float M_x_flip = 0.0f;      // [N*m]
-float M_y_flip = 0.0f;      // [N*m]
-float M_z_flip = 0.0f;      // [N*m]
+float F_thrust_Rot = 0.0f; // [N]
+float M_x_Rot = 0.0f;      // [N*m]
+float M_y_Rot = 0.0f;      // [N*m]
+float M_z_Rot = 0.0f;      // [N*m]
 
 // POLICY TRIGGER/ACTION VALUES
 float Policy_Trg_Action_trg = 0.0f;    
@@ -333,13 +342,13 @@ void CTRL_Command(struct CTRL_CmdPacket *CTRL_Cmd)
             motorstop_flag = true;
             break;
 
-        case 7: // Execute Moment-Based Flip
+        case 7: // Execute Moment Corresponding to Angular Acceleration
 
-            M_d.x = CTRL_Cmd->cmd_val1*1e-3f;
-            M_d.y = CTRL_Cmd->cmd_val2*1e-3f;
-            M_d.z = CTRL_Cmd->cmd_val3*1e-3f;
+            M_d.x = CTRL_Cmd->cmd_val1*Ixx;
+            M_d.y = CTRL_Cmd->cmd_val2*Iyy;
+            M_d.z = CTRL_Cmd->cmd_val3*Izz;
 
-            moment_flag = (bool)CTRL_Cmd->cmd_flag;
+            AngAccel_flag = (bool)CTRL_Cmd->cmd_flag;
             break;
 
         case 8: // Arm Policy Maneuver
@@ -522,21 +531,6 @@ void controlOutput(const state_t *state, const sensorData_t *sensors)
     Kp_R = mkvec(R_kp_xy,R_kp_xy,R_kp_z);
     Kd_R = mkvec(R_kd_xy,R_kd_xy,R_kd_z);
     Ki_R = mkvec(R_ki_xy,R_ki_xy,R_ki_z);
-
-    // =========== STATE DEFINITIONS =========== //
-    statePos = mkvec(state->position.x, state->position.y, state->position.z);                      // [m]
-    stateVel = mkvec(state->velocity.x, state->velocity.y, state->velocity.z);                      // [m]
-    stateOmega = mkvec(radians(sensors->gyro.x), radians(sensors->gyro.y), radians(sensors->gyro.z));   // [rad/s]
-    stateQuat = mkquat(state->attitudeQuaternion.x,
-                    state->attitudeQuaternion.y,
-                    state->attitudeQuaternion.z,
-                    state->attitudeQuaternion.w);
-
-    // EULER ANGLES EXPRESSED IN YZX NOTATION
-    stateEul = quat2eul(stateQuat);
-    stateEul.x = degrees(stateEul.x);
-    stateEul.y = degrees(stateEul.y);
-    stateEul.z = degrees(stateEul.z);
     
     // =========== STATE SETPOINTS =========== //
     omega_d = mkvec(0.0f,0.0f,0.0f);    // Omega-desired [rad/s]
@@ -806,6 +800,8 @@ bool updateOpticalFlowAnalytic(const state_t *state, const sensorData_t *sensors
     return true;
 }
 
-
+float firstOrderFilter(float newValue, float prevValue, float alpha) {
+    return alpha * newValue + (1 - alpha) * prevValue;
+}
 
 
