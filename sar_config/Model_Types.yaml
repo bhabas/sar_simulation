@@ -36,11 +36,15 @@ SAR_Type:
 
       Prop_Front: [33.0e-3, 33.0e-3]    # [x,y] absolute distances [m]
       Prop_Rear:  [33.0e-3, 33.0e-3]    # [x,y] absolute distances [m]
+      Forward_Reach: 57.0e-3         # [m]
 
       Base_Mass: 37.0e-3                # [kg]
       Base_Ixx: 17.2e-6               # [kg*m^2]
       Base_Iyy: 17.7e-6               # [kg*m^2]
       Base_Izz: 34.2e-6               # [kg*m^2] 
+
+      TrajAcc_Max: [1.0, 1.0, 3.1]    # Max Accel for trajectory generation [m/s^2]
+
 
     Leg_Params:
 
@@ -198,13 +202,17 @@ SAR_Type:
         Tau_down: 31.9e-3               # Motor Time Constant (Down) [s]
         f_max: 800                      # Max motor thrust [g]
 
-        Prop_Front: [72.6e-3, 86.6e-3]  # [x,y] absolute distances [m]
-        Prop_Rear:  [72.6e-3, 86.6e-3]  # [x,y] absolute distances [m]
+        Prop_Front: [72.6e-3, 86.6e-3]  # Front Prop Location [m]
+        Prop_Rear:  [72.6e-3, 86.6e-3]  # Rear Prop Location [m]
+        Forward_Reach: 150.0e-3         # Max Forward Reach [m]
+
 
         Base_Mass: 693.0e-3             # [kg]
         Base_Ixx: 3.17e-3               # [kg*m^2]
         Base_Iyy: 2.71e-3               # [kg*m^2]
         Base_Izz: 5.27e-3               # [kg*m^2] 
+
+        TrajAcc_Max: [1.0, 1.0, 3.1]    # Max Accel for trajectory generation [m/s^2]
 
       Leg_Params:
 
@@ -254,6 +262,9 @@ SAR_Type:
   
           Leg_Angle:  15
           Leg_Length:  200.00E-3
+
+          Gamma_eff: 17.0
+          L_eff: 216.4e-3
 
         A15_L250:
           Ref_Mass:  787.00E-3
@@ -408,20 +419,25 @@ SAR_Type:
 
       System_Params:
 
-        Thrust_Coeff: 1.45e-7     # Thrust Coeff [N/(rad/s)]
-        Torque_Coeff: 9.97e-10   # Torque Coeff [N*m/(rad/s)]
-        C_tf: 6.7e-3            # Torque-Thrust Coeff [N*m/N]
-        Tau_up: 27.0e-3           # Motor Time Constant (Up) [s]
-        Tau_down: 34.0e-3         # Motor Time Constant (Down) [s]
-        f_max: 225                # Max thrust [g]
+        Thrust_Coeff: 1.45e-7           # Thrust Coeff [N/(rad/s)]
+        Torque_Coeff: 9.97e-10          # Torque Coeff [N*m/(rad/s)]
+        C_tf: 6.7e-3                    # Torque-Thrust Coeff [N*m/N]
+        Tau_up: 27.0e-3                 # Motor Time Constant (Up) [s]
+        Tau_down: 34.0e-3               # Motor Time Constant (Down) [s]
+        f_max: 225                      # Max thrust [g]
 
         Prop_Front: [44.5e-3, 58.6e-3]  # [x,y] absolute distances [m]
         Prop_Rear:  [44.5e-3, 58.6e-3]  # [x,y] absolute distances [m]
+        Forward_Reach: 100.0e-3         # [m]
+
 
         Base_Mass: 275.0e-3        # [kg]
         Base_Ixx: 0.62e-3          # [kg*m^2]
         Base_Iyy: 0.46e-3          # [kg*m^2]
         Base_Izz: 1.02e-3          # [kg*m^2] 
+
+        TrajAcc_Max: [1.0, 1.0, 3.1]    # Max Accel for trajectory generation [m/s^2]
+
 
       Leg_Params:
 

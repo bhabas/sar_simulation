@@ -31,6 +31,19 @@ class SAR_Base_Interface():
         self.SAR_Config = rospy.get_param('/SAR_SETTINGS/SAR_Config')
         self.preInit_Values()
 
+
+        self.Leg_Length = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Leg_Length")
+        self.Leg_Angle = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Leg_Angle")
+
+        self.Forward_Reach = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/Forward_Reach")
+
+        self.L_eff = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/L_eff")
+        self.Gamma_eff = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Gamma_eff")
+        self.Lx_eff = self.L_eff*np.sin(np.radians(self.Gamma_eff))
+        self.Lz_eff = self.L_eff*np.cos(np.radians(self.Gamma_eff))
+
+        self.Beta_Min = self.Gamma_eff + np.degrees(np.arctan2(self.Forward_Reach-self.Lx_eff,self.Lz_eff))
+
         ## PLANE PARAMETERS
         self.Plane_Type = rospy.get_param('/PLANE_SETTINGS/Plane_Type')
         self.Plane_Config = rospy.get_param('/PLANE_SETTINGS/Plane_Config')
@@ -40,8 +53,8 @@ class SAR_Base_Interface():
         self.Cam_Active = rospy.get_param('/CAM_SETTINGS/Cam_Active')
 
         self.pos_0 = [0.0, 0.0, 0.4]      # Default hover position [m]
-        self.accCF_max = [1.0, 1.0, 3.1]    # Max acceleration values for trajectory generation [m/s^2]
-
+        self.TrajAcc_Max = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/System_Params/TrajAcc_Max")
+        
 
         ## PLANE PARAMETERS
         self.Plane_Config = rospy.get_param('/PLANE_SETTINGS/Plane_Config')
@@ -245,10 +258,10 @@ class SAR_Base_Interface():
 
     def preInit_Values(self):
 
-        self.mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Mass")
-        self.Ixx = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Ixx")
-        self.Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Iyy")
-        self.Izz = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Izz")
+        self.Ref_Mass = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Mass")
+        self.Ref_Ixx = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Ixx")
+        self.Ref_Iyy = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Iyy")
+        self.Ref_Izz = rospy.get_param(f"/SAR_Type/{self.SAR_Type}/Config/{self.SAR_Config}/Ref_Izz")
         
 
         ## INITIALIZE STATE VALUES
@@ -268,7 +281,6 @@ class SAR_Base_Interface():
         self.V_perp = 0.0
         self.V_tx = 0.0
         self.V_ty = 0.0
-
 
 
         self.MS_pwm = [0,0,0,0]         # Controller Motor Speeds (MS1,MS2,MS3,MS4) [PWM]
