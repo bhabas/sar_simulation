@@ -363,7 +363,7 @@ class SAR_DataConverter {
         bool Impact_flag = false;
         bool BodyContact_flag = false;
         bool LegContact_flag = false;
-        bool OnceFlag_impact = false;
+        bool OnceFlag_Impact = false;
         std::string BodyCollision_str = "SAR_Body::Body_Collision_";
         std::string LegCollision_str = "Leg_Collision_";
 
@@ -547,7 +547,7 @@ inline bool SAR_DataConverter::Send_Cmd2Ctrl(sar_msgs::CTRL_Cmd_srv::Request &re
             Impact_flag = false;
             BodyContact_flag = false;
             LegContact_flag = false;
-            OnceFlag_impact = false;
+            OnceFlag_Impact = false;
             Time_impact.sec = 0.0;
             Time_impact.nsec = 0.0;
 

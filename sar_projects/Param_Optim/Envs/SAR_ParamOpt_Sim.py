@@ -53,18 +53,18 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         obs = None
         return obs
 
-    def ParamOptim_Flight(self,Tau,My,vel,phi):
+    def ParamOptim_Flight(self,Tau,Rot_acc,vel,phi):
 
         ## RESET/UPDATE RUN CONDITIONS
         start_time_rollout = self.getTime()
-        start_time_pitch = np.nan
+        t_Rot_Action = np.nan
         start_time_impact = np.nan
 
         start_time_ep = time.time()
 
         ## RESET LOGGING CONDITIONS 
         OnceFlag_Trg = False    # Ensures Rot data recorded only once
-        onceFlag_impact = False   # Ensures impact data recorded only once 
+        OnceFlag_Impact = False   # Ensures impact data recorded only once 
 
 
         vz = vel*np.sin(np.deg2rad(phi))
@@ -72,12 +72,12 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
         # tau_0 = 0.5
         # z_0 = 2.10 - tau_0*vz
-        z_0 = 1.0
+        z_0 = 0.5
 
         self.Vel_Launch([0,0,z_0],[vx,0,vz])
         self.pause_physics(False)
         self.sleep(0.05)
-        self.SendCmd("Policy",cmd_vals=[Tau,My,0.0],cmd_flag=1)
+        self.SendCmd("Policy",cmd_vals=[Tau,Rot_acc,0.0],cmd_flag=1)
 
 
         
@@ -92,19 +92,19 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
             ## START TRIGGER AND IMPACT TERMINATION TIMERS
             if (self.Trg_flag == True and OnceFlag_Trg == False):
-                start_time_pitch = t_now    # Starts countdown for when to reset run
+                t_Rot_Action = t_now    # Starts countdown for when to reset run
                 OnceFlag_Trg = True        # Turns on to make sure this only runs once per rollout
 
-            if ((self.Impact_flag or self.BodyContact_flag) and onceFlag_impact == False):
+            if ((self.Impact_flag or self.BodyContact_flag) and OnceFlag_Impact == False):
                 start_time_impact = t_now
-                onceFlag_impact = True
+                OnceFlag_Impact = True
 
             # ============================
             ##    Termination Criteria 
             # ============================
 
             ## PITCH TIMEOUT  
-            if (t_now-start_time_pitch) > 2.25:
+            if (t_now-t_Rot_Action) > 2.25:
                 self.error_str = "Rollout Completed: Pitch Timeout"
                 self.done = True
                 # print(self.error_str)
@@ -150,7 +150,7 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
         R_dist = np.clip(1/np.abs(self.D_min + 1e-3),0,15)/15
         
         ## TAU TRIGGER REWARD
-        R_tau = np.clip(1/np.abs(self.Tau_trg - 0.2),0,15)/15
+        R_tau = np.clip(1/np.abs(self.Tau_trg - 0.30),0,15)/15
 
 
         ## IMPACT ANGLE REWARD # (Derivation: Research_Notes_Book_3.pdf (6/21/23))
@@ -185,19 +185,19 @@ class SAR_ParamOpt_Sim(SAR_Sim_Interface):
 
         return self.reward
 
-
+5
 
 if __name__ == "__main__":
 
     env = SAR_ParamOpt_Sim(GZ_Timeout=False)
 
     for ii in range(1000):
-        Tau_trg = 0.15
-        My = 8
+        Tau_trg = 0.30
+        Rot_acc = -50
         Vel_d = 2.5
-        Phi_d = 30
+        Phi_d = 60
         env.ParamOptim_reset()
-        obs,reward,done,info = env.ParamOptim_Flight(Tau_trg,My,Vel_d,Phi_d)
+        obs,reward,done,info = env.ParamOptim_Flight(Tau_trg,Rot_acc,Vel_d,Phi_d)
         print(f"Ep: {ii} \t Reward: {reward:.02f} \t Reward_vec: ",end='')
         print(' '.join(f"{val:.2f}" for val in env.reward_vals))
 
